@@ -10,7 +10,13 @@ written in portable Standard ML '97 so that the same files run
   specification, and
 * against Rune's Basis Library compiled by those systems ("xc1"
   configurations), which checks that Rune's implementation does not depend on
-  accidents of Rune.
+  accidents of Rune, and
+* against a host's Basis Library compiled by Rune ("xc2", so far
+  `xc2:mlton`): the host's library source with its primitives made of
+  Rune's ([xc2/README.md](xc2/README.md)), which checks Rune's compiler and
+  VM on another implementation's code: a check that the host fails and xc2
+  passes, or the reverse, is a difference between the compilers or of the
+  shim.
 
 An `xc1` test used to compile the whole of lib/basis before its own code,
 which was most of what a run cost. Four things now keep that down, and a
@@ -65,6 +71,7 @@ described in [docs/basis-compat.md](../../docs/basis-compat.md).
 | `spec-sigs/<SIG>.sml` | `signature SPEC_<SIG>`: the signature transcribed from the specification page, independently of `lib/basis` |
 | `fn/<name>.sml` | helpers and test functors shared by tests, named in their `uses:` headers |
 | `host/` | what the `xc1` configurations need: `gen-host-basis.sh` and `rune-prim.sml`, the VM's primitives on a host's library |
+| `xc2/` | what the `xc2` configurations need: a generator, a shim and a patch of the host's sources per host (`xc2/mlton/`), and what they share ([xc2/README.md](xc2/README.md)) |
 | `deviations.txt` | every known failure, with its category and reason |
 | `run-examples.sh` | tries the examples of the library's documentation that are equations (`docs/doc-comments.md`): `runedoc --examples` writes a program for each signature into `tests/out/basis-examples`, and each is compiled and run with Rune. `make test-basis` runs it after the suite |
 | `annotations.txt` | what `deviations.txt` says about the hosts, in the format the documentation generator reads (`runedoc --annotations`); made by `gen-annotations.sh`, committed, and checked by `make check-docs`. After a change to a host line of `deviations.txt`: `sh tests/basis/gen-annotations.sh`, then `make docs` |
@@ -161,10 +168,14 @@ implement the member yet), `HOST-BUG` (the host departs from it), `HOST-ABSENT`
 sometimes, or only on some machines: for an ordinary user and not for
 root), `SPEC-AMBIGUOUS` (the specification allows both behaviours; the
 reason states the reading the test takes), `WIDTH` (follows from the
-precision of a type), `XC1-NA` (not meaningful for Rune's library on a host).
+precision of a type), `XC1-NA` (not meaningful for Rune's library on a host),
+`XC2-NA` (not meaningful for a host's library on Rune, or not made by its shim).
 A line that stops matching a failure is an error, so fixed deviations must be
 removed; a `HOST-FLAKY` line is exempt. Besides checks, a label can be `@section/TEST/NAME`
 (a section that does not load), `@load/TEST` (a test that does not load or
 runs out of time) or, for `rune` only, `@absent/TEST` (a test that needs a
 structure Rune lacks). A `RUNE-DEV` or `SPEC-AMBIGUOUS` line for `rune` holds
 for the `xc1` configurations too, which run the same library source.
+A line for `native:HOST` holds for `xc2:HOST` too, which runs the host's
+library source; an `xc2` line records a difference, of the shim or of the
+compilers.

@@ -13,8 +13,10 @@
 #   * the lines about Rune: they are notes of the doc comments; and those
 #     about Rune on the VMs of Windows (rune:windows...), which say what
 #     Windows does otherwise (docs/building.md);
-#   * WIDTH, XC1-NA and HOST-FLAKY, which describe the suite and not a host;
-#   * the lines for xc1 configurations only: Rune's library on a host;
+#   * WIDTH, XC1-NA, XC2-NA and HOST-FLAKY, which describe the suite and not a
+#     host;
+#   * the lines for xc1 configurations only (Rune's library on a host) and xc2
+#     ones (a host's library on Rune);
 #   * the labels @section/..., @load/... and @absent/..., which name no member;
 #   * the labels of the checks on the results of the functors PrimIO,
 #     StreamIO and ImperativeIO (io_functors.sml), which name no structure.
@@ -36,7 +38,7 @@ function trim(x) { sub(/^[ \t]+/, "", x); sub(/[ \t]+$/, "", x); return x }
 function host(config,   kind, rest, name, version, at, h, bits) {
   if (config == "rune") return ""
   kind = config; sub(/:.*/, "", kind)
-  if (kind == "xc1" || kind == "rune") return ""
+  if (kind == "xc1" || kind == "xc2" || kind == "rune") return ""
   rest = config; sub(/^[^:]*:/, "", rest)
   at = index(rest, "@")
   if (at > 0) { name = substr(rest, 1, at - 1); version = substr(rest, at + 1) } else { name = rest; version = "*" }
@@ -70,7 +72,7 @@ BEGIN {
   # the reason is the rest of the line: it may hold a bar itself
   reason = f[4]; for (i = 5; i <= n; i++) reason = reason "|" f[i]
   reason = trim(reason)
-  if (category == "WIDTH" || category == "XC1-NA" || category == "HOST-FLAKY") next
+  if (category == "WIDTH" || category == "XC1-NA" || category == "XC2-NA" || category == "HOST-FLAKY") next
   if (label ~ /^@/) next
   if (label ~ /^(PrimIO|StreamIO|ImperativeIO)\./) next
   h = host(config)

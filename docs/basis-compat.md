@@ -47,6 +47,12 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
   portable Standard ML, that its `_prim` annotations agree with
   `runtime/prims.def`, and that its code is right independently of Rune's compiler
   and VM.
+* `xc2:mlton`: the suite on MLton's library (its sources, `lib/mlton/sml/basis`
+  of the host) compiled by Rune, with MLton's primitives and C functions
+  made of Rune's (`tests/basis/xc2`). This checks Rune's compiler and VM on
+  another implementation's 37,000 lines of library, as the tests use them:
+  where it fails a check that `native:mlton` passes, or passes one that it
+  fails, the compilers or the shim differ.
 * `rune:windows` and `rune:windows32`: the suite on Rune, on the VMs of
   Windows (`make windows`, `make test-windows`; [building.md](building.md)).
   Their lines of `deviations.txt` are `WINDOWS`: what Windows does not

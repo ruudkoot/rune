@@ -17,6 +17,9 @@
 #                   the reading the test takes
 #   WIDTH           follows from the precision of a type
 #   XC1-NA          not meaningful for Rune's library on a host
+#   XC2-NA          not meaningful for a host's library on Rune, or what the shim
+#                   of tests/basis/xc2 does not make (a C function of the
+#                   host's runtime, threads)
 #   WINDOWS         what Windows does not have or does otherwise, which the
 #                   system layer (runtime/sys/sys_win.c) cannot make good, or a check
 #                   that asks sh or starts another program of POSIX; each
@@ -32,6 +35,10 @@
 # primitive of tests/basis/host/rune-prim.sml written on the host's function.
 # A failure without a line fails the run, and so does a line that matches no
 # failure of a configuration it names: remove a line when its cause is fixed.
+# A line for native:HOST holds for xc2:HOST as well, which runs the host's
+# library source on Rune (not counted when the line is checked for being
+# stale); an xc2 line records what differs there: a defect of the shim or of
+# Rune's compiler.
 # docs/basis-compat.md describes the differences recorded here.
 
 # ---- General
@@ -252,6 +259,7 @@ native:mlkit@* | *ArraySlice.copy*/Subscript-not-Overflow* | HOST-BUG | copy and
 
 # ---- Array2
 native:mlton@* | Array2.copy/overlap-[lr]* | HOST-BUG | copy within one array to the left or the right in the same rows copies elements that it has already overwritten
+xc2:mlton@* | *Array2.*/Subscript-not-Overflow-sum-* | HOST-BUG | with an int of 64 bits (xc2 builds the library so; native MLton's int has 32) the check of a region adds its start and its length with +!, which does not check for Overflow: for a length of Int.maxInt the sum wraps round and the region passes (appi, foldi and modifyi raise no Subscript); MLton -default-type int64 does the same
 native:smlnj*@* | Array2.*/no-[rc]* | HOST-BUG | Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
 native:smlnj*@* | Array2.row/Subscript-no-rows | HOST-BUG | row (a, 0) of an array without rows is an empty vector instead of Subscript
 native:smlnj*@* | Array2.*/nothing-* | HOST-BUG | a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array

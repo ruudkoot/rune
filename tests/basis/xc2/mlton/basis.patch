@@ -1,0 +1,569 @@
+diff -ruN a/arrays-and-vectors/array2.sml b/arrays-and-vectors/array2.sml
+--- a/arrays-and-vectors/array2.sml
++++ b/arrays-and-vectors/array2.sml
+@@ -298,6 +298,8 @@
+ 
+       fun modify trv f a = modifyi trv (f o #3) (wholeRegion a)
+ 
++      (* xc2: without reading the elements of the new array first, as modifyi
++       * does: they have no value yet
+       fun tabulate trv (rows, cols, f) =
+          let 
+             val a = alloc (rows, cols)
+@@ -305,7 +307,20 @@
+          in 
+             a
+          end
+-
++       *)
++      fun tabulate trv (rows, cols, f) =
++         let
++            val a = alloc (rows, cols)
++            fun each (n, g) =
++               let fun loop i = if Int.>= (i, n) then () else (g i; loop (Int.+ (i, 1)))
++               in loop 0 end
++            val () =
++               case trv of
++                  RowMajor => each (rows, fn r => each (cols, fn c => update (a, r, c, f (r, c))))
++                | ColMajor => each (cols, fn c => each (rows, fn r => update (a, r, c, f (r, c))))
++         in
++            a
++         end
+       fun copy {src = src as {base, ...}: 'a region,
+                 dst, dst_row, dst_col} =
+          let
+diff -ruN a/arrays-and-vectors/mono-array.fun b/arrays-and-vectors/mono-array.fun
+--- a/arrays-and-vectors/mono-array.fun
++++ b/arrays-and-vectors/mono-array.fun
+@@ -40,3 +40,46 @@
+             val toPoly = fn s => s
+          end
+    end
++
++(* xc2: MonoArray, where MV.vector is not a vector of elem but a string. *)
++functor XC2StringMonoArray (type elem
++                            structure MV: EQTYPE_MONO_VECTOR_EXTRA
++                              where type elem = elem)
++                           : MONO_ARRAY_EXTRA
++                                where type elem = elem
++                                  and type vector = MV.vector
++                                  and type vector_slice = MV.MonoVectorSlice.slice =
++   struct
++      open Array
++
++      type elem = MV.elem
++      type array = elem array
++      type vector = MV.vector
++      type vector_slice = MV.MonoVectorSlice.slice
++
++      val fromPoly = fn a => a
++      val toPoly = fn a => a
++      fun vector a = MV.fromPoly (Array.vector a)
++      fun copyVec {src, dst, di} =
++         if di < 0 orelse di > Array.length dst - MV.length src
++            then raise Subscript
++         else MV.appi (fn (i, x) => Array.update (dst, di + i, x)) src
++
++      structure MonoArraySlice =
++         struct
++            open ArraySlice
++
++            type elem = elem
++            type array = array
++            type slice = elem slice
++            type vector = vector
++            type vector_slice = vector_slice
++
++            val toPoly = fn s => s
++            fun vector sl = MV.fromPoly (ArraySlice.vector sl)
++            fun copyVec {src, dst, di} =
++               if di < 0 orelse di > Array.length dst - MV.MonoVectorSlice.length src
++                  then raise Subscript
++               else MV.MonoVectorSlice.appi (fn (i, x) => Array.update (dst, di + i, x)) src
++         end
++   end
+diff -ruN a/arrays-and-vectors/mono-array2.fun b/arrays-and-vectors/mono-array2.fun
+--- a/arrays-and-vectors/mono-array2.fun
++++ b/arrays-and-vectors/mono-array2.fun
+@@ -22,3 +22,21 @@
+                      nrows: int option,
+                      ncols: int option}
+    end
++
++(* xc2: MonoArray2, where MV.vector is not a vector of elem but a string. *)
++functor XC2StringMonoArray2 (type elem
++                             structure MV: MONO_VECTOR_EXTRA
++                               where type elem = elem): MONO_ARRAY2 =
++   struct
++      type elem = MV.elem
++      type vector = MV.vector
++      open Array2
++      type array = elem array
++      type region = {base: array,
++                     row: int,
++                     col: int,
++                     nrows: int option,
++                     ncols: int option}
++      fun row (a, i) = MV.fromPoly (Array2.row (a, i))
++      fun column (a, j) = MV.fromPoly (Array2.column (a, j))
++   end
+diff -ruN a/arrays-and-vectors/mono-vector.fun b/arrays-and-vectors/mono-vector.fun
+--- a/arrays-and-vectors/mono-vector.fun
++++ b/arrays-and-vectors/mono-vector.fun
+@@ -47,3 +47,48 @@
+             val toPoly = fn s => s
+          end
+    end
++
++(* xc2: a mono vector that is String8.string or String32.string, which are
++ * Rune's strings, not vectors of their characters: MLton's sequence
++ * algorithms over the string (Sequence (P)), where EqtypeMonoVector takes
++ * those over the polymorphic vector. *)
++functor XC2StringMonoVector (type elem
++                             eqtype vector
++                             structure P: PRIM_SEQUENCE
++                               where type 'a sequence = vector
++                                 and type 'a elt = elem
++                             val fromPoly: elem Vector.vector -> vector
++                             val toPoly: vector -> elem Vector.vector)
++                            : EQTYPE_MONO_VECTOR_EXTRA
++                                 where type elem = elem
++                                   and type vector = vector =
++   struct
++      structure S = Sequence (P)
++      open S
++      type array = elem array
++      type elem = elem
++      type vector = vector
++      type vector_eqtype = vector
++      val vectorFromPoly = fromPoly
++      val vectorToPoly = toPoly
++      val fromPoly = vectorFromPoly
++      val toPoly = vectorToPoly
++      fun update (v, i, x) = fromPoly (Vector.update (toPoly v, i, x))
++      val isSubvector = isSubsequence
++      fun unsafeFromArray a = P.unsafeFromArray a
++      val vector = new
++      structure MonoVectorSlice =
++         struct
++            open Slice
++            type elem = elem
++            type vector = vector
++            type slice = elem slice
++            val vector = sequence
++            val isSubvector = isSubsequence
++            val span = fn (sl, sl') =>
++               P.Slice.span (op = : vector * vector -> bool) (sl, sl')
++            (* only the elements of the slice: its base is converted to no purpose *)
++            fun fromPoly sl = full (vectorFromPoly (VectorSlice.vector sl))
++            fun toPoly sl = VectorSlice.full (vectorToPoly (vector sl))
++         end
++   end
+diff -ruN a/arrays-and-vectors/mono.sml b/arrays-and-vectors/mono.sml
+--- a/arrays-and-vectors/mono.sml
++++ b/arrays-and-vectors/mono.sml
+@@ -184,7 +184,21 @@
+ 
+ 
+ local
+-   structure S = EqtypeMonoX (type elem = Char.char)
++   (* xc2: CharVector.vector is String8.string, Rune's string *)
++   structure S =
++      struct
++         type elem = Char.char
++         structure MonoVector =
++            XC2StringMonoVector (type elem = Char.char
++                                 type vector = Primitive.String8.string
++                                 structure P = Primitive.String8Seq
++                                 val fromPoly = XC2String8.fromVector
++                                 val toPoly = XC2String8.toVector)
++         structure MonoArray = XC2StringMonoArray (type elem = elem
++                                                   structure MV = MonoVector)
++         structure MonoArray2 = XC2StringMonoArray2 (type elem = elem
++                                                     structure MV = MonoVector)
++      end
+    open S
+ in
+    structure CharVector = MonoVector
+@@ -194,7 +208,21 @@
+    structure CharArray2 = MonoArray2
+ end
+ local
+-   structure S = EqtypeMonoX (type elem = WideChar.char)
++   (* xc2: WideCharVector.vector is String32.string, Rune's WideString.string *)
++   structure S =
++      struct
++         type elem = WideChar.char
++         structure MonoVector =
++            XC2StringMonoVector (type elem = WideChar.char
++                                 type vector = Primitive.String32.string
++                                 structure P = Primitive.String32Seq
++                                 val fromPoly = XC2String32.fromVector
++                                 val toPoly = XC2String32.toVector)
++         structure MonoArray = XC2StringMonoArray (type elem = elem
++                                                   structure MV = MonoVector)
++         structure MonoArray2 = XC2StringMonoArray2 (type elem = elem
++                                                     structure MV = MonoVector)
++      end
+    open S
+ in
+    structure WideCharVector = MonoVector
+diff -ruN a/arrays-and-vectors/sequence0.sml b/arrays-and-vectors/sequence0.sml
+--- a/arrays-and-vectors/sequence0.sml
++++ b/arrays-and-vectors/sequence0.sml
+@@ -474,6 +474,38 @@
+ 
+    end
+ 
++(* xc2: String8.string and String32.string, which are Rune's string and
++ * WideString.string, and not vectors, are sequences of their own. *)
++functor XC2StringSequence (type char
++                           eqtype string
++                           val copyUnsafe: char array * SeqIndex.int * string * SeqIndex.int * SeqIndex.int -> unit
++                           val fromArray: char array -> string
++                           val length: string -> SeqIndex.int
++                           val subUnsafe: string * SeqIndex.int -> char) =
++   struct
++      local
++         exception String_uninitIsNop
++         exception String_uninitUnsafe
++         exception String_updateUnsafe
++         structure P = PrimSequence (type 'a sequence = string
++                                     type 'a elt = char
++                                     val copyUnsafe = copyUnsafe
++                                     val fromArray = fromArray
++                                     val isMutable = false
++                                     val length = length
++                                     val sameArray = fn _ => false
++                                     val subUnsafe = subUnsafe
++                                     val uninitIsNop = fn _ =>
++                                                       raise String_uninitIsNop
++                                     val uninitUnsafe = fn _ =>
++                                                        raise String_uninitUnsafe
++                                     val updateUnsafe = fn _ =>
++                                                        raise String_updateUnsafe)
++      in
++         open P
++      end
++   end
++
+ structure Primitive = struct
+ open Primitive
+ 
+@@ -573,6 +605,13 @@
+       end
+    end
+ 
++structure String8Seq = XC2StringSequence (type char = Char8.char
++                                          type string = String8.string
++                                          open XC2String8)
++structure String32Seq = XC2StringSequence (type char = Char32.char
++                                           type string = String32.string
++                                           open XC2String32)
++
+ end
+ 
+ structure Array =
+diff -ruN a/config/c/errno.sml b/config/c/errno.sml
+--- a/config/c/errno.sml
++++ b/config/c/errno.sml
+@@ -5,7 +5,8 @@
+  * See the file MLton-LICENSE for details.
+  *)
+ 
+-structure C_Errno :>
++(* xc2: transparent, for the shim's C functions, which return the value *)
++structure C_Errno :
+    sig
+       type 'a t
+       val check: 'a t -> 'a
+diff -ruN a/general/general.sml b/general/general.sml
+--- a/general/general.sml
++++ b/general/general.sml
+@@ -13,10 +13,10 @@
+       type exn = exn
+       exception Bind = Bind
+       exception Match = Match
+-      exception Chr
++      exception Chr = XC2RuneExn.Chr (* xc2 *)
+       exception Div = Div
+       exception Domain = Domain
+-      exception Fail of string
++      exception Fail = XC2RuneExn.Fail (* xc2 *)
+       exception Overflow = Overflow
+       exception Size = Size
+       exception Span = Span
+diff -ruN a/integer/int-inf0.sml b/integer/int-inf0.sml
+--- a/integer/int-inf0.sml
++++ b/integer/int-inf0.sml
+@@ -408,7 +408,8 @@
+          0w0 <> W.andb (W.andb (Prim.toWord i, Prim.toWord i'), 0w1)
+ 
+       (* Return the number of `limbs' in a bigInt. *)
+-      fun bigNumLimbs i = S.- (V.length (Prim.toVector i), 1)
++      (* xc2: without making the vector of the limbs *)
++      fun bigNumLimbs i = XC2IntInf.numLimbs i
+       fun numLimbs i = 
+          if isSmall i
+             then 1
+@@ -982,7 +983,7 @@
+       (* Given a bignum bigint, test if it is (strictly) negative.
+        *)
+       fun bigIsNeg (arg: bigInt): bool =
+-         V.unsafeSub (Prim.toVector arg, 0) <> 0w0
++         XC2IntInf.isNeg arg (* xc2: V.unsafeSub (Prim.toVector arg, 0) <> 0w0 *)
+ 
+       local
+          fun make (smallOp, bigOp, limbsFn, extra)
+diff -ruN a/libs/basis-2002/top-level/basis.sig b/libs/basis-2002/top-level/basis.sig
+--- a/libs/basis-2002/top-level/basis.sig
++++ b/libs/basis-2002/top-level/basis.sig
+@@ -32,7 +32,7 @@
+       exception Subscript
+ 
+       (* Top-level values *)
+-      val = : ''a * ''a -> bool
++      (* xc2: SML does not let a signature specify = *)
+       val <> : ''a * ''a -> bool
+ 
+       val ! : 'a ref -> 'a
+diff -ruN a/libs/basis-extra/top-level/basis.sig b/libs/basis-extra/top-level/basis.sig
+--- a/libs/basis-extra/top-level/basis.sig
++++ b/libs/basis-extra/top-level/basis.sig
+@@ -32,7 +32,7 @@
+       exception Subscript
+ 
+       (* Top-level values *)
+-      val = : ''a * ''a -> bool
++      (* xc2: SML does not let a signature specify = *)
+       val <> : ''a * ''a -> bool
+ 
+       val ! : 'a ref -> 'a
+diff -ruN a/libs/basis-extra/top-level/basis.sml b/libs/basis-extra/top-level/basis.sml
+--- a/libs/basis-extra/top-level/basis.sml
++++ b/libs/basis-extra/top-level/basis.sml
+@@ -271,7 +271,7 @@
+            VectorGlobal
+            WordGlobal
+       val real = real
+-      val op = = op =
++      (* xc2: nor a structure rebind it *)
+       val op <> = op <>
+       val vector = vector
+       datatype ref = datatype ref
+diff -ruN a/mlton/thread.sml b/mlton/thread.sml
+--- a/mlton/thread.sml
++++ b/mlton/thread.sml
+@@ -173,7 +173,10 @@
+ in
+    fun amInSignalHandler () = InHandler = !state
+ 
+-   fun setSignalHandler (f: Runnable.t -> Runnable.t): unit =
++   (* xc2: signals are not caught, and there is no thread to run their
++    * handler in *)
++   fun setSignalHandler (_: Runnable.t -> Runnable.t): unit = ()
++   fun xc2SetSignalHandler (f: Runnable.t -> Runnable.t): unit =
+       let
+          val _ = Primitive.MLton.installSignalHandler ()
+          fun loop (): unit =
+@@ -276,8 +279,12 @@
+             in
+                handlerLoop ()
+             end
++         (* xc2: no thread is made or switched to; the library exports no
++          * function to C (MLton_FFI_numExports is 0)
+          val handlerThread = toPrimitive (new handlerLoop)
+          val _ = Prim.setCallFromCHandler (gcState (), handlerThread)
++          *)
++         val _ = handlerLoop
+       in
+          fn (i, f) => Array.update (exports, i, f)
+       end
+diff -ruN a/posix/file-sys.sml b/posix/file-sys.sml
+--- a/posix/file-sys.sml
++++ b/posix/file-sys.sml
+@@ -130,7 +130,7 @@
+                           then i
+                        else loop (i + 1)
+             in
+-               ArraySlice.vector (ArraySlice.slice (a, 0, SOME (loop 0)))
++               CharArraySlice.vector (CharArraySlice.slice (a, 0, SOME (loop 0)) (* xc2 *))
+             end
+ 
+          fun extract a = extractToChar (a, #"\000")
+@@ -298,7 +298,7 @@
+                SysCall.syscall'
+                ({errVal = C_SSize.castFromFixedInt ~1}, fn () =>
+                 (Prim.readlink (path, buf, C_Size.fromInt size), fn len =>
+-                 ArraySlice.vector (ArraySlice.slice (buf, 0, SOME (C_SSize.toInt len)))))
++                 CharArraySlice.vector (CharArraySlice.slice (buf, 0, SOME (C_SSize.toInt len)) (* xc2 *))))
+             end
+       end
+ 
+diff -ruN a/posix/io.sml b/posix/io.sml
+--- a/posix/io.sml
++++ b/posix/io.sml
+@@ -414,7 +414,7 @@
+    val {mkReader = mkTextReader, mkWriter = mkTextWriter, ...} =
+       make {RD = TextPrimIO.RD,
+             WR = TextPrimIO.WR,
+-            fromVector = fn v => v,
++            fromVector = CharVector.fromPoly, (* xc2: a string is not a vector *)
+             readArr = readChar8,
+             setMode = Prim.settext,
+             toArraySlice = CharArraySlice.toPoly,
+diff -ruN a/primitive/prim-basis.sml b/primitive/prim-basis.sml
+--- a/primitive/prim-basis.sml
++++ b/primitive/prim-basis.sml
+@@ -250,17 +250,17 @@
+ 
+ structure String8 =
+    struct
+-      type t = Char8.t vector
++      type t = string (* xc2: Rune's string, not a char vector *)
+       type string = t
+    end
+ structure String16 =
+    struct
+-      type t = Char16.t vector
++      type t = WideString.string (* xc2 *)
+       type string = t
+    end
+ structure String32 =
+    struct
+-      type t = Char32.t vector
++      type t = WideString.string (* xc2 *)
+       type string = t
+    end
+ 
+diff -ruN a/primitive/prim-nullstring.sml b/primitive/prim-nullstring.sml
+--- a/primitive/prim-nullstring.sml
++++ b/primitive/prim-nullstring.sml
+@@ -15,7 +15,8 @@
+ (* NullString is used for strings that must be passed to C and hence must be
+  * null terminated.
+  *)
+-structure NullString8 :>
++(* xc2: transparent, for the shim's C functions, which take the string *)
++structure NullString8 :
+    sig
+       type t
+ 
+@@ -26,7 +27,7 @@
+       type t = String8.string
+ 
+       fun fromString s =
+-         if #"\000" = Vector.subUnsafe (s, SeqIndex.- (Vector.length s, 1))
++         if #"\000" = XC2String8.subUnsafe (s, SeqIndex.- (XC2String8.length s, 1)) (* xc2 *)
+             then s
+          else raise Exn.Fail8 "NullString.fromString"
+ 
+diff -ruN a/primitive/prim1.sml b/primitive/prim1.sml
+--- a/primitive/prim1.sml
++++ b/primitive/prim1.sml
+@@ -17,8 +17,9 @@
+       type 'a t = (unit -> 'a) * ('a -> unit)
+    end
+ 
+-structure PreThread :> sig type t end = struct type t = Thread.t end
+-structure Thread :> sig type t end = struct type t = Thread.t end
++(* xc2: transparent, for the shim *)
++structure PreThread : sig type t end = struct type t = Thread.t end
++structure Thread : sig type t end = struct type t = Thread.t end
+ 
+ (**************************************************************************)
+ 
+@@ -42,15 +43,16 @@
+ 
+       val name = _prim "Exn_name": exn -> String8.string;
+ 
+-      exception Div
+-      exception Domain
+-      exception Fail8 of String8.string
++      (* xc2: the exceptions that Rune's machine and library raise *)
++      exception Div = XC2RuneExn.Div
++      exception Domain = XC2RuneExn.Domain
++      exception Fail8 = XC2RuneExn.Fail
+       exception Fail16 of String16.string
+       exception Fail32 of String32.string
+-      exception Overflow
+-      exception Size
+-      exception Span
+-      exception Subscript
++      exception Overflow = XC2RuneExn.Overflow
++      exception Size = XC2RuneExn.Size
++      exception Span = XC2RuneExn.Span
++      exception Subscript = XC2RuneExn.Subscript
+ 
+       (* Fusing of adjacent `Word<N>_<op>` and `Word{S,U}<N>_<op>CheckP` primitives
+        * by the codegens may depend on the relative order of `!a` and `?a`;
+diff -ruN a/real/real.sml b/real/real.sml
+--- a/real/real.sml
++++ b/real/real.sml
+@@ -389,7 +389,7 @@
+                   val i = upd (i, #"E")
+                   val i = CharVector.foldl (fn (c, i) => upd (i, c)) i exp
+                   val _ = upd (i, #"\000")
+-                  val str = Vector.unsafeFromArray a
++                  val str = CharVector.unsafeFromArray a (* xc2: a string is not a vector *)
+                   val x = strtor (NullString.fromString str, rounding_mode)
+                in
+                   x
+diff -ruN a/system/date.sml b/system/date.sml
+--- a/system/date.sml
++++ b/system/date.sml
+@@ -327,7 +327,7 @@
+                    val len = C_Size.toInt len
+                 in if len = 0
+                       then raise Fail "Date.fmt"
+-                   else ArraySlice.vector (ArraySlice.slice (buf, 0, SOME len))
++                   else CharArraySlice.vector (CharArraySlice.slice (buf, 0, SOME len)) (* xc2 *)
+                 end
+              val max = size fmtStr
+              fun loop (i, start, accum) =
+diff -ruN a/text/string.sml b/text/string.sml
+--- a/text/string.sml
++++ b/text/string.sml
+@@ -57,7 +57,8 @@
+          open S
+       end
+       
+-      fun Stranslate f = String.fromPoly o Vector.translate f o toPoly
++      (* xc2: String.string is not a vector *)
++      fun Stranslate f = String.concat o List.map f o toList
+ 
+       val toString = Stranslate Char.toString
+       val toCString = Stranslate Char.toCString
+diff -ruN a/top-level/arithmetic.sml b/top-level/arithmetic.sml
+--- a/top-level/arithmetic.sml
++++ b/top-level/arithmetic.sml
+@@ -6,13 +6,19 @@
+  * See the file MLton-LICENSE for details.
+  *)
+ 
+-val ~ = Int.~
+-val ( op + ) = Int.+
+-val ( op - ) = Int.-
+-val ( op * ) = Int.*
+-val ( op div ) = Int.div
+-val ( op mod ) = Int.mod
+-val ( op < ) = Int.<
+-val ( op <= ) = Int.<=
+-val ( op > ) = Int.>
+-val ( op >= ) = Int.>=
++(* xc2: Rune's overloaded operators, which the top level keeps: MLton binds
++ * them to Int's here and overloads them again at the end, in
++ * libs/basis-2002/top-level/overloads.sml, which Rune cannot read. They
++ * default to int, which is Int.int, as the bindings of this file are.
++ *)
++
++(* val ~ = Int.~ *)
++(* val ( op + ) = Int.+ *)
++(* val ( op - ) = Int.- *)
++(* val ( op * ) = Int.* *)
++(* val ( op div ) = Int.div *)
++(* val ( op mod ) = Int.mod *)
++(* val ( op < ) = Int.< *)
++(* val ( op <= ) = Int.<= *)
++(* val ( op > ) = Int.> *)
++(* val ( op >= ) = Int.>= *)
