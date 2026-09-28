@@ -7,11 +7,21 @@ val () = Check.laws [
      (fn i => let open Colors in (0 <= i andalso i < 3) end,
       fn i => let open Colors in index (fromIndex i) end,
       fn i => let open Colors in i end)),
+  ("COLORS.index/law-2@Colors",
+   fn () => Prop.equalIf (let val a = Arb.pair (IntArb.arb, IntArb.arb) in {gen = Gen.bind (#gen (Arb.unit)) (fn () => Gen.bind (let val (lo, hi) = let open Colors in ((0) + 1, (3)) end handle _ => raise Gen.Discarded in if lo > hi then raise Gen.Discarded else Gen.intRange (lo, hi) end) (fn n => Gen.bind (let val (lo, hi) = let open Colors in ((0), (n) - 1) end handle _ => raise Gen.Discarded in if lo > hi then raise Gen.Discarded else Gen.intRange (lo, hi) end) (fn i => Gen.return (n, i)))), show = #show a, co = #co a, eq = #eq a} end, IntArb.arb)
+     (fn (n, i) => let open Colors in (0 <= i andalso i < n andalso n <= 3) end,
+      fn (n, i) => let open Colors in index (fromIndex (List.nth (List.tabulate (n, fn k => k), i))) end,
+      fn (n, i) => let open Colors in i end)),
   ("COLORS.fromIndex/law-1@Colors",
    fn () => Prop.equalIf (IntArb.arb, IntArb.arb)
      (fn _ => true,
       fn i => let open Colors in index (fromIndex (i mod 3)) end,
       fn i => let open Colors in index (fromIndex ((i + 3) mod 3)) end)),
+  ("COLORS.fromIndex/law-2@Colors",
+   fn () => Prop.equalIf (let val a = Arb.pair (IntArb.arb, IntArb.arb) in {gen = Gen.bind (#gen (IntArb.arb)) (fn i => Gen.bind (Gen.return i) (fn j => Gen.return (i, j))), show = #show a, co = #co a, eq = #eq a} end, IntArb.arb)
+     (fn (i, j) => let open Colors in (i = j) end,
+      fn (i, j) => let open Colors in index (fromIndex (i mod 3)) end,
+      fn (i, j) => let open Colors in index (fromIndex (j mod 3)) end)),
   ("COLORS.keep/law-1@Colors",
    fn () => Prop.holdsIf (Arb.pair (Arb.pureFunction (IntArb.arb, Arb.bool), Arb.list (IntArb.arb)))
      (fn _ => true,
@@ -35,4 +45,9 @@ val () = Check.laws [
    fn () => Prop.equalIf (Arb.triple (Arb.pureFunction (IntArb.arb, Arb.bool), Arb.pureFunction (IntArb.arb, Arb.bool), Arb.list (IntArb.arb)), Arb.list (IntArb.arb))
      (fn _ => true,
       fn (f, g, l) => let open Colors in keep (f, keep (g, l)) end,
-      fn (f, g, l) => let open Colors in keep (g, keep (f, l)) end))]
+      fn (f, g, l) => let open Colors in keep (g, keep (f, l)) end)),
+  ("COLORS.keep/law-6@Colors",
+   fn () => Prop.equalIf (Arb.pair ((Arb.intRange (~2, 7)), (Arb.intRange (0, 5))), IntArb.arb)
+     (fn _ => true,
+      fn (m, n) => let open Colors in List.length (keep (fn k => k < m, List.tabulate (n, fn k => k))) end,
+      fn (m, n) => let open Colors in Int.min (Int.max (m, 0), n) end))]

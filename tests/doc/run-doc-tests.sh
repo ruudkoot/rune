@@ -26,7 +26,8 @@
 #   NAME.lib.laws   the programs that `--laws` writes for it, one after
 #                   another, where the expectation exists
 # A library with a suite is generated with --tests, so that pins are checked,
-# one with a file ANNOTATIONS with --annotations, and one with a file ON-BASIS
+# one with a file ANNOTATIONS with --annotations, one with a file LAW-SKIPS
+# with --law-skips, and one with a file ON-BASIS
 # as `--lib lib --library ./tests/doc/NAME.lib`, on top of the Basis Library,
 # and one with a file BASIS-DOCS with --basis-docs and what the file says.
 # --update rewrites the expectations that exist; review them line by line as
@@ -99,6 +100,7 @@ for lib in tests/doc/*.lib; do
   suite=""
   [ -d "$lib/tests" ] && suite="--tests $lib/tests"
   [ -f "$lib/ANNOTATIONS" ] && suite="$suite --annotations $lib/ANNOTATIONS"
+  [ -f "$lib/LAW-SKIPS" ] && suite="$suite --law-skips $lib/LAW-SKIPS"
   # a library with a file ON-BASIS uses the Basis Library: it is named by its
   # directory, and LIBDIR is the one that has basis in it
   where="--lib tests/doc --library $name.lib"

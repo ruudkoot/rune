@@ -11,17 +11,23 @@
 # cannot hold, because the memory runs out or the watchdog stops it, is
 # skipped: the program is started again with that case skipped
 # (RUNE_PROPERTY_SKIP), from the law it was in (RUNE_PROPERTY_AFTER), and the
-# law is judged on its other cases. A law with ten such cases is STOPPED and
-# the program goes on after it. (A case that goes past a million reads and
-# calls of the property library's own is discarded inside the program.) In
+# law is judged on its other cases. A law with ten cases that the watchdog
+# stopped, or fifty such cases in all, is STOPPED and the program goes on
+# after it: a case that runs out of memory at once costs only a start. (A
+# case that goes past a million reads and calls of the property library's own
+# is discarded inside the program.) In
 # tests/out/laws: the programs, each one's output, results.txt with a line for
 # every law (PASS, FAIL, or STOPPED with the reason) and for every program
 # that did not compile (COMPILE), skips.txt with every case skipped and why,
 # and times.txt with the seconds each program took to compile and to run.
+# tests/basis/law-skips.txt ($LAWS_SKIPS) lists the laws that do not hold or
+# are not tested (D12): a failure it lists is known (known.txt), and a law it
+# lists that passes is a line to remove (stale.txt). The run fails on any
+# other failure or stop, and on such a pass.
 # The environment of the programs chooses how the laws run (Check.laws):
 # RUNE_PROPERTY_DEEP=1 for the deep mode, RUNE_PROPERTY_ONLY=LABEL for one
 # law, RUNE_PROPERTY_REPLAY=TOKEN for one case. It is not part of `make check`
-# until every law holds (D12). Override the tools with RUNE=, RUNEVM= and
+# until the hunt ends (D12). Override the tools with RUNE=, RUNEVM= and
 # RUNEDOC=.
 set -u
 cd "$(dirname "$0")/../.."
@@ -31,6 +37,7 @@ runevm=${RUNEVM:-bin/runevm}
 runedoc=${RUNEDOC:-bin/runedoc}
 timeout=${LAWS_TIMEOUT:-60}
 memory=${LAWS_MEMORY:-4096}
+skips=${LAWS_SKIPS:-tests/basis/law-skips.txt}
 jobs=1
 filter=""
 while [ $# -gt 0 ]; do
@@ -74,6 +81,7 @@ one() {
   : > "$o.result"
   last=""
   skips=""
+  slow=""
   while :; do
     ( ulimit -v $((memory * 1024))
       RUNE_PROPERTY_CASES=1 RUNE_PROPERTY_AT=$at RUNE_PROPERTY_AFTER=$last RUNE_PROPERTY_SKIP=$skips exec "$runevm" "$out/$name.rbc" ) > "$o.run" 2>&1 &
@@ -99,9 +107,11 @@ one() {
     # the case the machine could not hold: the last one of the law it was in
     case=$(sed -n "/^LAW $(echo "$stuck" | sed 's/[][\/.^$*]/\\&/g')\$/,\$p" "$o.run" | grep '^CASE ' | tail -1 | cut -d' ' -f2)
     count=$(echo "$skips" | tr ' ' '\n' | grep -c "^$stuck:")
-    if [ -n "$case" ] && [ "$count" -lt 10 ]; then
+    slows=$(echo "$slow" | tr ' ' '\n' | grep -c "^$stuck:")
+    if [ -n "$case" ] && [ "$count" -lt 50 ] && { [ $stopped -eq 0 ] || [ "$slows" -lt 10 ]; }; then
       echo "SKIPPED $stuck case $case: $why" >> "$o.skips"
       skips="$skips $stuck:$case"
+      [ $stopped -eq 1 ] && slow="$slow $stuck:$case"
       # run the law again, after the one before it in this run
       prev=$(grep '^LAW ' "$o.run" | tail -2 | head -1 | cut -d' ' -f2)
       [ "$prev" != "$stuck" ] && last=$prev
@@ -140,5 +150,27 @@ gaveup=$(grep -c '^FAIL .*: gave up after' "$out/results.txt")
 stopped=$(grep -c '^STOPPED ' "$out/results.txt")
 broken=$(grep -c '^COMPILE ' "$out/results.txt")
 skippedcases=$(wc -l < "$out/skips.txt")
-echo "test-laws: $laws laws at their structures, $passed pass, $failed fail ($gaveup of them gave up on their conditions), $stopped stopped; $skippedcases cases skipped; $broken programs did not compile (see $out/results.txt)"
-[ "$failed" -eq 0 ] && [ "$stopped" -eq 0 ] && [ "$broken" -eq 0 ]
+# the list of the laws that do not hold, or are not tested: the failure of a
+# law it names is known (known.txt), and a law it names that passes is a line
+# to remove (stale.txt)
+listed() {
+  [ -f "$skips" ] || return 1
+  while IFS='|' read -r glob _; do
+    glob=$(echo "$glob" | sed 's/^ *//; s/ *$//')
+    case "$glob" in '' | '#'*) continue ;; esac
+    # shellcheck disable=SC2254
+    case "$1" in $glob) return 0 ;; esac
+  done < "$skips"
+  return 1
+}
+: > "$out/known.txt"
+: > "$out/stale.txt"
+grep -E '^(PASS|FAIL|STOPPED) ' "$out/results.txt" | while read -r result label rest; do
+  if listed "${label%:}"; then
+    if [ "$result" = PASS ]; then echo "$result $label $rest" >> "$out/stale.txt"; else echo "$result $label $rest" >> "$out/known.txt"; fi
+  fi
+done
+known=$(wc -l < "$out/known.txt")
+stale=$(wc -l < "$out/stale.txt")
+echo "test-laws: $laws laws at their structures, $passed pass, $failed fail ($gaveup of them gave up on their conditions), $stopped stopped; $known of the failures and stops are listed in $skips, and $stale laws listed there pass; $skippedcases cases skipped; $broken programs did not compile (see $out/results.txt)"
+[ $((failed + stopped - known)) -eq 0 ] && [ "$stale" -eq 0 ] && [ "$broken" -eq 0 ]

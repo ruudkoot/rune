@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`ARB`](../sig/ARB.md) |
 | Status | required |
-| Members | 26 |
+| Members | 28 |
 | Tests | not listed |
 | Source | [lib/test/property/arb.sml](../../../../../lib/test/property/arb.sml) |
 
@@ -34,6 +34,7 @@ What each means is on [`ARB`](../sig/ARB.md); the types are this structure's own
 | val | [`function`](../sig/ARB.md#val-function) | `'a arb * 'b arb -> ('a -> 'b) arb` |
 | val | [`int`](../sig/ARB.md#val-int) | `int arb` |
 | val | [`intInf`](../sig/ARB.md#val-intinf) | `IntInf.int arb` |
+| val | [`intRange`](../sig/ARB.md#val-intrange) | `int * int -> int arb` |
 | val | [`list`](../sig/ARB.md#val-list) | `'a arb -> 'a list arb` |
 | val | [`option`](../sig/ARB.md#val-option) | `'a arb -> 'a option arb` |
 | val | [`order`](../sig/ARB.md#val-order) | `order arb` |
@@ -48,6 +49,7 @@ What each means is on [`ARB`](../sig/ARB.md); the types are this structure's own
 | val | [`vectorSlice`](../sig/ARB.md#val-vectorslice) | `'a arb -> 'a VectorSlice.slice arb` |
 | val | [`word`](../sig/ARB.md#val-word) | `word arb` |
 | val | [`word64`](../sig/ARB.md#val-word64) | `Word64.word arb` |
+| val | [`wordRange`](../sig/ARB.md#val-wordrange) | `word * word -> word arb` |
 
 ---
 

@@ -1,0 +1,4 @@
+# Lines that are wrong: a kind that is neither FAILS nor UNTESTED, and a glob
+# that names no law at a structure.
+COLORS.index/law-1@Colors | BROKEN | no such kind.
+COLORS.nothing/law-1@* | FAILS | no such law.

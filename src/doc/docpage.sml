@@ -116,22 +116,31 @@ struct
   (* The variables of a law of a signature, where it elaborated: set by the
      site when the library has been elaborated (quickcheck M7). *)
   val lawVariables : (string * string -> DocElab.variable list option) ref = ref (fn _ => NONE)
+  (* What the list of laws that do not hold, or are not tested, says of a law
+     of a signature (--law-skips): its kind, FAILS or UNTESTED, why, and the
+     structures it is listed at. Set by the site. *)
+  val lawSkips : (string * string -> {kind : string, why : string, at : string list} list) ref = ref (fn _ => [])
 
   fun blocksWith (strict : bool)
                  (env : env, page : string, sigName : string, path : string list, args : string list, span : Source.span)
                  (doc : I.doc) : string =
     let
-      fun link c =
+      (* quiet: a reference that leads nowhere is plain code, as the
+         arbitrary of a law's domain is, which names the tester's library *)
+      fun linkWith quiet c =
         case R.resolve (#index env, sigName, path, args) c of
           R.Target t => SOME (href (env, page, t, span))
         | R.Unresolved =>
             (case outside env c of
                SOME l => l
              | NONE =>
-                 ((if strict andalso #ratchet env sigName then DocDiag.error else DocDiag.warn)
-                    (span, "`" ^ c ^ "` names nothing that is documented"); NONE))
+                 (if quiet then ()
+                  else (if strict andalso #ratchet env sigName then DocDiag.error else DocDiag.warn)
+                         (span, "`" ^ c ^ "` names nothing that is documented");
+                  NONE))
         | R.Unknown => Option.join (outside env c)
         | _ => NONE
+      val link = linkWith false
       val inl = M.inlines link
       fun labelled (label, body) = "**" ^ label ^ "** " ^ inl body ^ "\n\n"
       fun quoted s = String.concatWith "\n" (List.map (fn l => if l = "" then ">" else "> " ^ l)
@@ -153,17 +162,34 @@ struct
              | "Law" =>
                  (* the variables each law holds for, as elaboration typed them *)
                  let
-                   val vars = List.concat (List.mapPartial (fn l => !lawVariables (sigName, l))
-                                                           (#laws (DocLawGrammar.parts body)))
+                   val parts = DocLawGrammar.parts body
+                   val vars = List.concat (List.mapPartial (fn l => !lawVariables (sigName, l)) (#laws parts))
+                   val gens = List.map #2 (#domains parts)
+                   val inl = M.inlines (fn c => linkWith (List.exists (fn g => g = c) gens) c)
+                   fun labelled (label, body) = "**" ^ label ^ "** " ^ inl body ^ "\n\n"
                    val once = List.foldl (fn (v : DocElab.variable, acc) =>
                                             if List.exists (fn (w : DocElab.variable) => #name w = #name v) acc then acc
                                             else acc @ [v]) [] vars
                    val head = case modifier of SOME m => "Law (" ^ M.escape m ^ ")" | NONE => "Law"
+                   (* a law on the list of those that do not hold, or are
+                      not tested, says so beneath it *)
+                   fun listing [x] = x
+                     | listing [x, y] = x ^ " and " ^ y
+                     | listing (x :: rest) = x ^ ", " ^ listing rest
+                     | listing [] = ""
+                   fun mark (code, {kind, why, at}) =
+                     "> **" ^ (if kind = "FAILS" then "Does not hold in Rune" else "Not tested in Rune") ^ "**"
+                     ^ (if List.length (#laws parts) > 1 then " (" ^ M.code code ^ ")" else "")
+                     ^ " at " ^ listing (List.map M.code at) ^ ": " ^ inl (T.inlines (fn _ => ()) why) ^ "\n\n"
+                   val marks = String.concat (List.concat (List.map (fn code => List.map (fn m => mark (code, m))
+                                                                                          (!lawSkips (sigName, code)))
+                                                                    (#laws parts)))
                  in
-                   if List.null once then labelled (head, body)
-                   else "**" ^ head ^ "** " ^ inl body ^ " (for every "
-                        ^ String.concatWith ", " (List.map (fn {name, ty, ...} => M.code (name ^ " : " ^ ty)) once)
-                        ^ ")\n\n"
+                   (if List.null once then labelled (head, body)
+                    else "**" ^ head ^ "** " ^ inl body ^ " (for every "
+                         ^ String.concatWith ", " (List.map (fn {name, ty, ...} => M.code (name ^ " : " ^ ty)) once)
+                         ^ ")\n\n")
+                   ^ marks
                  end
              | "Example" => labelled ("Example", body)
              | "Counterexample" => labelled ("Counterexample", body)

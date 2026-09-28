@@ -8,7 +8,7 @@
 - `int` (val): [ARB](../sig/ARB.md#val-int), [CO](../sig/CO.md#val-int), [GEN](../sig/GEN.md#val-int), [SHOW](../sig/SHOW.md#val-int)
 - `intInf` (val): [ARB](../sig/ARB.md#val-intinf), [GEN](../sig/GEN.md#val-intinf)
 - `intInfRange` (val): [GEN](../sig/GEN.md#val-intinfrange)
-- `intRange` (val): [GEN](../sig/GEN.md#val-intrange)
+- `intRange` (val): [ARB](../sig/ARB.md#val-intrange), [GEN](../sig/GEN.md#val-intrange)
 - `iodesc` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-iodesc)
 
 ---
