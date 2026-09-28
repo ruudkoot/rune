@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`GEN`](../sig/GEN.md) |
 | Status | required |
-| Members | 43 |
+| Members | 44 |
 | Tests | not listed |
 | Source | [lib/test/property/gen.sml](../../../../../lib/test/property/gen.sml) |
 
@@ -30,7 +30,7 @@ What each means is on [`GEN`](../sig/GEN.md); the types are this structure's own
 | val | [`bool`](../sig/GEN.md#val-bool) | `bool gen` |
 | val | [`char`](../sig/GEN.md#val-char) | `char gen` |
 | val | [`code`](../sig/GEN.md#val-code) | `int -> int gen` |
-| val | [`draw`](../sig/GEN.md#val-draw) | `'a gen -> {calls : ({address : Word64.word, path : Word64.word list} * string) list ref, cleanups : (unit -> unit) list ref, effects : string list ref, over : bool ref, seed : Word64.word, sequences : {length : Word64.word, marks : Word64.word list option, parts : Word64.word list} list ref, set : {address : Word64.word, bound : Word64.word, kind : PropertySource.kind, path : Word64.word list, word : Word64.word} list, size : int, trail : {address : Word64.word, bound : Word64.word, kind : PropertySource.kind, path : Word64.word list, word : Word64.word} list ref, work : int ref, zeros : Word64.word list list} * {address : Word64.word, path : Word64.word list} -> 'a` |
+| val | [`draw`](../sig/GEN.md#val-draw) | `'a gen -> {calls : ({address : Word64.word, path : Word64.word list} * string) list ref, cleanups : (unit -> unit) list ref, effects : string list ref, made : (Word64.word * exn) list ref, over : bool ref, seed : Word64.word, sequences : {length : Word64.word, marks : Word64.word list option, parts : Word64.word list} list ref, set : {address : Word64.word, bound : Word64.word, kind : PropertySource.kind, path : Word64.word list, word : Word64.word} list, size : int, trail : {address : Word64.word, bound : Word64.word, kind : PropertySource.kind, path : Word64.word list, word : Word64.word} list ref, work : int ref, zeros : Word64.word list list} * {address : Word64.word, path : Word64.word list} -> 'a` |
 | val | [`elements`](../sig/GEN.md#val-elements) | `'a vector -> 'a gen` |
 | val | [`filter`](../sig/GEN.md#val-filter) | `('a -> bool) -> 'a gen -> 'a gen` |
 | val | [`fix`](../sig/GEN.md#val-fix) | `('a gen -> 'a gen) -> 'a gen` |
@@ -50,13 +50,14 @@ What each means is on [`GEN`](../sig/GEN.md); the types are this structure's own
 | val | [`option`](../sig/GEN.md#val-option) | `'a gen -> 'a option gen` |
 | val | [`order`](../sig/GEN.md#val-order) | `order gen` |
 | val | [`pair`](../sig/GEN.md#val-pair) | `'a gen * 'b gen -> ('a * 'b) gen` |
-| val | [`primitive`](../sig/GEN.md#val-primitive) | `({calls : ({address : Word64.word, path : Word64.word list} * string) list ref, cleanups : (unit -> unit) list ref, effects : string list ref, over : bool ref, seed : Word64.word, sequences : {length : Word64.word, marks : Word64.word list option, parts : Word64.word list} list ref, set : {address : Word64.word, bound : Word64.word, kind : PropertySource.kind, path : Word64.word list, word : Word64.word} list, size : int, trail : {address : Word64.word, bound : Word64.word, kind : PropertySource.kind, path : Word64.word list, word : Word64.word} list ref, work : int ref, zeros : Word64.word list list} * {address : Word64.word, path : Word64.word list} -> 'a) -> 'a gen` |
+| val | [`primitive`](../sig/GEN.md#val-primitive) | `({calls : ({address : Word64.word, path : Word64.word list} * string) list ref, cleanups : (unit -> unit) list ref, effects : string list ref, made : (Word64.word * exn) list ref, over : bool ref, seed : Word64.word, sequences : {length : Word64.word, marks : Word64.word list option, parts : Word64.word list} list ref, set : {address : Word64.word, bound : Word64.word, kind : PropertySource.kind, path : Word64.word list, word : Word64.word} list, size : int, trail : {address : Word64.word, bound : Word64.word, kind : PropertySource.kind, path : Word64.word list, word : Word64.word} list ref, work : int ref, zeros : Word64.word list list} * {address : Word64.word, path : Word64.word list} -> 'a) -> 'a gen` |
 | val | [`pureOf`](../sig/GEN.md#val-pureof) | `('a -> Word64.word) * ('a -> string) * ('b -> string) * 'b gen -> ('a -> 'b) gen` |
 | val | [`real`](../sig/GEN.md#val-real) | `real gen` |
 | val | [`resize`](../sig/GEN.md#val-resize) | `int -> 'a gen -> 'a gen` |
 | val | [`resource`](../sig/GEN.md#val-resource) | `'a gen * ('a -> unit) -> 'a gen` |
 | val | [`return`](../sig/GEN.md#val-return) | `'a -> 'a gen` |
 | val | [`sample`](../sig/GEN.md#val-sample) | `'a gen -> Word64.word -> int -> 'a` |
+| val | [`shared`](../sig/GEN.md#val-shared) | `'a gen * ('a -> unit) -> 'a gen` |
 | val | [`sized`](../sig/GEN.md#val-sized) | `(int -> 'a gen) -> 'a gen` |
 | val | [`string`](../sig/GEN.md#val-string) | `string gen` |
 | val | [`triple`](../sig/GEN.md#val-triple) | `'a gen * 'b gen * 'c gen -> ('a * 'b * 'c) gen` |

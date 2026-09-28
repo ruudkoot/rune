@@ -6,13 +6,13 @@
 
 | Signature |  | Status | Documented |
 | --- | --- | --- | --- |
-| [`ARB`](sig/ARB.md) | Arbitraries: the generator, the printer, the observer and the equality of a type, as one record -- what QuickCheck finds by a type class and a program here passes by name (docs/plans/quickcheck.md, D4). | required | 26 of 26 |
+| [`ARB`](sig/ARB.md) | Arbitraries: the generator, the printer, the observer and the equality of a type, as one record -- what QuickCheck finds by a type class and a program here passes by name (docs/plans/quickcheck.md, D4). | required | 28 of 28 |
 | [`ARB_OF`](sig/ARB_OF.md) | The arbitrary of one type of a structure: what the functors of the library make of a structure of the Basis Library, and what the structures [`Int8Arb`](str/Int8Arb.md), [`Word8Arb`](str/Word8Arb.md), [`CharArraySliceArb`](str/CharArraySliceArb.md) and the rest are. | required | 2 of 2 |
-| [`BASIS_DATA_ARB`](sig/BASIS_DATA_ARB.md) | The arbitraries of the small datatypes and readers of the Basis Library. | required | 4 of 4 |
+| [`BASIS_DATA_ARB`](sig/BASIS_DATA_ARB.md) | The arbitraries of the small datatypes and readers of the Basis Library. | required | 5 of 5 |
 | [`CHECK`](sig/CHECK.md) | Running properties: many cases, each from its own seed at a size that grows over the run, and a report. | required | 9 of 9 |
 | [`CO`](sig/CO.md) | Observers: what a generated function sees of its argument (QuickCheck's CoArbitrary, reduced to a hash). Two arguments with the same observation get the same result from a generated function. | required | 14 of 14 |
-| [`DATE_ARB`](sig/DATE_ARB.md) | The arbitraries of `Date.date`, of its months, weekdays and record of fields, by the generator principle P12 (docs/plans/quickcheck.md). | required | 5 of 5 |
-| [`GEN`](sig/GEN.md) | Generators: values drawn from the source of a case of a property. | required | 43 of 43 |
+| [`DATE_ARB`](sig/DATE_ARB.md) | The arbitraries of `Date.date`, of its months, weekdays and record of fields, by the generator principle P12 (docs/plans/quickcheck.md). | required | 6 of 6 |
+| [`GEN`](sig/GEN.md) | Generators: values drawn from the source of a case of a property. | required | 44 of 44 |
 | [`IEEE_REAL_ARB`](sig/IEEE_REAL_ARB.md) | The arbitraries of `IEEEReal`'s types, by the generator principle P12. | required | 3 of 3 |
 | [`INET6_SOCK_ARB`](sig/INET6_SOCK_ARB.md) | The arbitraries of Rune's IPv6 sockets and addresses (docs/plans/quickcheck.md, M6), apart from [`SYSTEM_ARB`](sig/SYSTEM_ARB.md) because `INet6Sock` is Rune's own. | required | 2 of 2 |
 | [`PROP`](sig/PROP.md) | Properties: what must hold for every value a generator draws. | required | 15 of 15 |

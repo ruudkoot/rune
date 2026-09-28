@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 4 of 4 entries documented |
+| Documentation | 5 of 5 entries documented |
 | Tests | not listed |
 | Source | [lib/test/property/data\_sig.sml](../../../../../lib/test/property/data_sig.sml) |
 
@@ -31,6 +31,7 @@ sig
   val <a href="#val-buffermode">bufferMode</a> : IO.buffer_mode Arb.arb
   val <a href="#val-radix">radix</a> : StringCvt.radix Arb.arb
   val <a href="#val-traversal">traversal</a> : Array2.traversal Arb.arb
+  val <a href="#val-canonicalabsolutepath">canonicalAbsolutePath</a> : string Arb.arb
   val <a href="#val-reader">reader</a> : (char, int) StringCvt.reader Arb.arb
 end
 </pre>
@@ -59,6 +60,16 @@ val traversal : Array2.traversal Arb.arb
 
 The arbitrary of the orders in which [`Array2`](../../../basis/str/Array2.md) traverses an array,
 [`Array2.RowMajor`](../../../basis/sig/ARRAY2.md#con-rowmajor) the simplest.
+
+### <a name="val-canonicalabsolutepath"></a>`canonicalAbsolutePath`
+
+```sml
+val canonicalAbsolutePath : string Arb.arb
+```
+
+The arbitrary of canonical absolute paths: `/` and names of letters and digits between slashes, as many as a list's length.
+
+A domain for the laws of [`OS.Path`](../../../basis/str/OS.Path.md) about such paths (D7).
 
 ### <a name="val-reader"></a>`reader`
 

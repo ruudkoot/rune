@@ -7,6 +7,7 @@
 - `word` (val): [ARB](../sig/ARB.md#val-word), [CO](../sig/CO.md#val-word), [GEN](../sig/GEN.md#val-word), [SHOW](../sig/SHOW.md#val-word)
 - `word64` (val): [ARB](../sig/ARB.md#val-word64), [CO](../sig/CO.md#val-word64), [GEN](../sig/GEN.md#val-word64), [SHOW](../sig/SHOW.md#val-word64)
 - `wordBits` (val): [GEN](../sig/GEN.md#val-wordbits)
+- `wordRange` (val): [ARB](../sig/ARB.md#val-wordrange)
 
 ---
 

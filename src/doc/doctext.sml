@@ -232,6 +232,8 @@ struct
                         (case rest of _ :: T.Code g :: _ => Domain g | _ => Condition)
                       else if noEffects next orelse andThenPure then Pure
                       else Condition
+                    else if w = SOME "and" andalso startsWith (next, "from") then
+                      (case rest of _ :: T.Code g :: _ => Domain g | _ => Condition)
                     else if w = SOME "and" then
                       (case r of Law => Law | Condition => Condition | Pure => Pure | _ => Prose)
                     else Prose

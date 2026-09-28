@@ -28,6 +28,10 @@ struct
     \  --annotations FILE  what others say about the members, as lines\n\
     \                  `label-glob | whom it is about | text`; shown with the\n\
     \                  members that have a check with such a label\n\
+    \  --law-skips FILE  the laws that do not hold, or are not tested, as\n\
+    \                  lines `label-glob | FAILS or UNTESTED | why`, where\n\
+    \                  the glob matches a law's label at a structure; each is\n\
+    \                  marked on its page\n\
     \  --examples DIR  write the examples of the comments, claims of type bool,\n\
     \                  as a program for each signature, and stop\n\
     \  --laws DIR      write the laws of the comments as a program for each\n\
@@ -59,6 +63,7 @@ struct
   val check = ref false
   val tests : string option ref = ref NONE
   val annotations : string option ref = ref NONE
+  val lawSkips : string option ref = ref NONE
   val examples : string option ref = ref NONE
   val lawsDir : string option ref = ref NONE
   val labels = ref false
@@ -81,6 +86,7 @@ struct
     | "--title" :: text :: rest => (title := SOME text; parse rest)
     | "--tests" :: dir :: rest => (tests := SOME dir; parse rest)
     | "--annotations" :: file :: rest => (annotations := SOME file; parse rest)
+    | "--law-skips" :: file :: rest => (lawSkips := SOME file; parse rest)
     | "--examples" :: dir :: rest => (examples := SOME dir; parse rest)
     | "--laws" :: dir :: rest => (lawsDir := SOME dir; parse rest)
     | "--labels" :: rest => (labels := true; parse rest)
@@ -165,7 +171,7 @@ struct
       val lib = directoryOf name
       val dir = case !out of SOME d => d | NONE => raise Usage "no output directory (use --out DIR)"
       val shown = List.last (String.tokens (fn c => c = #"/") name) handle Empty => name
-      val files = DocSite.build {dir = lib, prelude = preludeOf lib, out = dir, tests = !tests, annotations = !annotations,
+      val files = DocSite.build {dir = lib, prelude = preludeOf lib, out = dir, tests = !tests, annotations = !annotations, lawSkips = !lawSkips,
                                  title = (case !title of SOME t => t | NONE => shown), basisDocs = !basisDocs}
                   handle BasisManifest.Usage why => raise Usage why
       val status = report ()

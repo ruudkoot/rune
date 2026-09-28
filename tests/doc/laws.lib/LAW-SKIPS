@@ -1,0 +1,3 @@
+# The laws of the fixture that do not hold, or are not tested (runedoc --law-skips).
+COLORS.fromIndex/law-1@Colors | FAILS | `i + 3` overflows at the largest `int`.
+COLORS.keep/law-constant-*@* | UNTESTED | a listed law of a paragraph with two is named beneath it.

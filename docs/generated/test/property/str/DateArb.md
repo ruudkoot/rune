@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`DATE_ARB`](../sig/DATE_ARB.md) |
 | Status | required |
-| Members | 5 |
+| Members | 6 |
 | Tests | not listed |
 | Source | [lib/test/property/data.sml](../../../../../lib/test/property/data.sml) |
 
@@ -25,6 +25,7 @@ What each means is on [`DATE_ARB`](../sig/DATE_ARB.md); the types are this struc
 | type | [`t`](../sig/DATE_ARB.md#type-t) | `Date.date` |
 | val | [`arb`](../sig/DATE_ARB.md#val-arb) | `{co : Date.date -> Word64.word, eq : (Date.date * Date.date -> bool) option, gen : Date.date Gen.gen, show : Date.date -> string}` |
 | val | [`fields`](../sig/DATE_ARB.md#val-fields) | `{co : {day : int, hour : int, minute : int, month : Date.month, offset : Time.time option, second : int, year : int} -> Word64.word, eq : ({day : int, hour : int, minute : int, month : Date.month, offset : Time.time option, second : int, year : int} * {day : int, hour : int, minute : int, month : Date.month, offset : Time.time option, second : int, year : int} -> bool) option, gen : {day : int, hour : int, minute : int, month : Date.month, offset : Time.time option, second : int, year : int} Gen.gen, show : {day : int, hour : int, minute : int, month : Date.month, offset : Time.time option, second : int, year : int} -> string}` |
+| val | [`fieldsInRange`](../sig/DATE_ARB.md#val-fieldsinrange) | `{co : {day : int, hour : int, minute : int, month : Date.month, offset : Time.time option, second : int, year : int} -> Word64.word, eq : ({day : int, hour : int, minute : int, month : Date.month, offset : Time.time option, second : int, year : int} * {day : int, hour : int, minute : int, month : Date.month, offset : Time.time option, second : int, year : int} -> bool) option, gen : {day : int, hour : int, minute : int, month : Date.month, offset : Time.time option, second : int, year : int} Gen.gen, show : {day : int, hour : int, minute : int, month : Date.month, offset : Time.time option, second : int, year : int} -> string}` |
 | val | [`month`](../sig/DATE_ARB.md#val-month) | `{co : Date.month -> Word64.word, eq : (Date.month * Date.month -> bool) option, gen : Date.month Gen.gen, show : Date.month -> string}` |
 | val | [`weekday`](../sig/DATE_ARB.md#val-weekday) | `{co : Date.weekday -> Word64.word, eq : (Date.weekday * Date.weekday -> bool) option, gen : Date.weekday Gen.gen, show : Date.weekday -> string}` |
 

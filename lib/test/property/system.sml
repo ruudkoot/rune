@@ -116,14 +116,14 @@ struct
 
 
   val fileId : OS.FileSys.file_id Arb.arb =
-    {gen = Gen.map #1 (Gen.resource (Gen.primitive (fn _ => let val name = scratch "" in (OS.FileSys.fileId name, name) end),
+    {gen = Gen.map #1 (Gen.shared (Gen.primitive (fn _ => let val name = scratch "" in (OS.FileSys.fileId name, name) end),
                                      fn (_, name) => remove name)),
      show = comment "the id of a file", co = fn _ => 0w0, eq = SOME (fn (a, b) => OS.FileSys.compare (a, b) = EQUAL)}
 
   (* ---- pipes ---- *)
 
   val pipe : Posix.FileSys.file_desc Gen.gen =
-    Gen.map #infd (Gen.resource (Gen.primitive (fn _ => Posix.IO.pipe ()),
+    Gen.map #infd (Gen.shared (Gen.primitive (fn _ => Posix.IO.pipe ()),
                                  fn {infd, outfd} => (Posix.IO.close infd handle _ => (); Posix.IO.close outfd handle _ => ())))
 
   val fileDesc : Posix.FileSys.file_desc Arb.arb =
@@ -271,7 +271,7 @@ struct
      co = fn t => Random.hashString (Socket.SOCK.toString t), eq = SOME (op =)}
 
   fun inetStreamSock () : 'mode INetSock.stream_sock Arb.arb =
-    {gen = Gen.resource (Gen.primitive (fn _ => INetSock.TCP.socket ()), fn s => Socket.close s handle _ => ()),
+    {gen = Gen.shared (Gen.primitive (fn _ => INetSock.TCP.socket ()), fn s => Socket.close s handle _ => ()),
      show = comment "a new TCP socket", co = fn _ => 0w0, eq = NONE}
 
   val inAddr : NetHostDB.in_addr Arb.arb =

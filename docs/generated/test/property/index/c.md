@@ -2,6 +2,7 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) **c** [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [symbols](symbols.md)
 
+- `canonicalAbsolutePath` (val): [BASIS_DATA_ARB](../sig/BASIS_DATA_ARB.md#val-canonicalabsolutepath)
 - `char` (val): [ARB](../sig/ARB.md#val-char), [CO](../sig/CO.md#val-char), [GEN](../sig/GEN.md#val-char), [SHOW](../sig/SHOW.md#val-char)
 - `check` (val): [CHECK](../sig/CHECK.md#val-check)
 - `classify` (val): [PROP](../sig/PROP.md#val-classify)
