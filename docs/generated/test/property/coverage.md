@@ -28,14 +28,14 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-140 structures have a page, with 457 members, of which 418 (91%) are described by a signature.
+140 structures have a page, with 461 members, of which 418 (90%) are described by a signature.
 
 | Structure | Members | Described |  |
 | --- | --- | --- | --- |
 | [`PropertyAround`](str/PropertyAround.md) | 1 | 0 | 0% |
 | [`PropertyDimensions`](str/PropertyDimensions.md) | 3 | 0 | 0% |
 | [`PropertyScratch`](str/PropertyScratch.md) | 2 | 0 | 0% |
-| [`PropertySource`](str/PropertySource.md) | 31 | 0 | 0% |
+| [`PropertySource`](str/PropertySource.md) | 35 | 0 | 0% |
 | [`WideTextArb`](str/WideTextArb.md) | 2 | 0 | 0% |
 
 ## Examples that are run

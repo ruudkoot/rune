@@ -21,7 +21,7 @@ arb.sml       | demand | yes | Arb            | ARB Array Array2 ArraySlice Co G
 prop_sig.sml  | demand | yes | PROP           | Arb Gen PropertySource
 prop.sml      | demand | yes | Prop           | Arb Gen PROP PropertySource String
 check_sig.sml | demand | yes | CHECK          | Prop Word64
-check.sml     | demand | yes | Check          | CHECK Int List OS Option Prop PropertySource Random Real String StringCvt TextIO Word Word64
+check.sml     | demand | yes | Check          | CHECK Char Int List OS Option Prop PropertySource Random Real String StringCvt TextIO Word Word64
 family_sig.sml | demand | yes | ARB_OF        | Arb
 family.sml    | demand | yes | CharArbFn IntegerArbFn MonoArray2ArbFn MonoArrayArbFn MonoArraySliceArbFn MonoVectorArbFn MonoVectorSliceArbFn PropertyDimensions RealArbFn StringArbFn SubstringArbFn WordArbFn | ARB_OF Arb Array2 CHAR Co Gen IEEEReal INTEGER Int IntInf List ListPair MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE PropertySource REAL Random Real STRING SUBSTRING Show StringCvt Vector WORD Word Word64
 data_sig.sml  | demand | yes | BASIS_DATA_ARB DATE_ARB IEEE_REAL_ARB | Arb Array2 Date IEEEReal IO StringCvt Time
