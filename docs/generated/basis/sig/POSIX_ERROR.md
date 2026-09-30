@@ -805,7 +805,7 @@ The descriptor cannot be positioned: it is a pipe, a socket or a terminal.
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ 110.99.9** &mdash; Posix.IO.lseek on a pipe raises another exception than SysErr (spipe); outside the suite the runtime stops with "bogus overflow fault"
+- **SML/NJ** &mdash; Posix.IO.lseek on a pipe raises another exception than SysErr (spipe); outside the suite the runtime stops with "bogus overflow fault"
 - **MLKit** &mdash; lseek of a pipe returns 2147483647 instead of raising OS.SysErr: the runtime's sml\_lseek takes and returns C ints, so -1 comes back as 2^31-1 (and an offset of 2^30 or more is cut to 32 bits)
 
 </details>

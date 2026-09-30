@@ -16,8 +16,9 @@ The hosts are the releases `make hosts` installs under
 |---|---|---|---|
 | Rune | | 64 bits | 64 bits |
 | MLton | 20241230 | 32 bits (64 with `-default-type int64`) | 32 bits (64 with `-default-type word64`) |
-| SML/NJ | 110.99.9, 64-bit build (`smlnj`) | 63 bits | 63 bits |
+| SML/NJ | 110.99.9, 64-bit build (`smlnj-legacy`) | 63 bits | 63 bits |
 | SML/NJ | 110.99.9, 32-bit build (`smlnj32`) | 31 bits | 31 bits |
+| SML/NJ | 2026.2, development line (`smlnj-dev`) | 63 bits | 63 bits |
 | Poly/ML | 5.9.2 | 63 bits | 63 bits |
 | MLKit | 4.7.23 | 63 bits | 63 bits |
 
@@ -57,40 +58,43 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
 
 ## Summary
 
-The last run of `make matrix` (every configuration), on 2026-09-27 on a
-virtual machine of 4 CPUs without IPv6. A check that fails is explained by a line of
-`tests/basis/deviations.txt` or fails the run. A test is absent where the
-system lacks a structure it requires (an optional one: the hosts lack most
-of the monomorphic families and some of `IntN`, `WordN` and `Pack*`; see the
-table of structures below), and N/A in an `xc1` configuration whose host does
-not load the file of lib/basis it needs.
+The last run of `make matrix` (every configuration), on 2026-09-28. A check
+that fails is explained by a line of `tests/basis/deviations.txt` or fails
+the run. A test is absent where the system lacks a structure it requires (an
+optional one: the hosts lack most of the monomorphic families and some of
+`IntN`, `WordN` and `Pack*`; see the table of structures below), and N/A in
+an `xc1` configuration whose host does not load the file of lib/basis it
+needs.
 
 | Configuration | Checks | Pass | Explained | Skipped | Tests absent | Tests N/A |
 |---|---:|---:|---:|---:|---:|---:|
-| `rune` | 137,276 | 137,266 | 0 | 10 | 0 | 0 |
-| `native:mlton@20241230` | 136,934 | 136,587 | 347 | 0 | 10 | 0 |
-| `native:smlnj@110.99.9` | 61,627 | 60,969 | 658 | 0 | 63 | 0 |
-| `native:smlnj32@110.99.9` | 48,918 | 47,462 | 1,456 | 0 | 63 | 0 |
-| `native:polyml@5.9.2` | 68,207 | 67,487 | 720 | 0 | 52 | 0 |
-| `native:mlkit@4.7.23` | 111,531 | 110,554 | 977 | 0 | 43 | 0 |
-| `xc1:mlton@20241230` | 137,220 | 136,897 | 313 | 10 | 2 | 0 |
-| `xc1:smlnj@110.99.9` | 137,240 | 136,820 | 410 | 10 | 2 | 0 |
-| `xc1:smlnj32@110.99.9` | 93,306 | 91,191 | 2,105 | 10 | 2 | 38 |
-| `xc1:polyml@5.9.2` | 137,192 | 136,818 | 364 | 10 | 2 | 0 |
-| `xc1:mlkit@4.7.23` | 137,119 | 136,624 | 485 | 10 | 2 | 0 |
+| `rune` | 139,211 | 139,211 | 0 | 0 | 0 | 0 |
+| `native:mlton@20241230` | 138,613 | 138,246 | 367 | 0 | 11 | 0 |
+| `native:smlnj-legacy@110.99.9` | 61,677 | 61,008 | 669 | 0 | 64 | 0 |
+| `native:smlnj32@110.99.9` | 48,968 | 47,502 | 1,466 | 0 | 64 | 0 |
+| `native:smlnj-dev@2026.2` | 61,677 | 61,011 | 666 | 0 | 64 | 0 |
+| `native:polyml@5.9.2` | 68,572 | 67,810 | 762 | 0 | 53 | 0 |
+| `native:mlkit@4.7.23` | 111,897 | 110,859 | 1,038 | 0 | 44 | 0 |
+| `xc1:mlton@20241230` | 139,155 | 138,831 | 313 | 11 | 2 | 0 |
+| `xc1:smlnj-legacy@110.99.9` | 139,175 | 138,749 | 415 | 11 | 2 | 0 |
+| `xc1:smlnj32@110.99.9` | 95,200 | 93,080 | 2,109 | 11 | 2 | 38 |
+| `xc1:smlnj-dev@2026.2` | 139,175 | 138,752 | 412 | 11 | 2 | 0 |
+| `xc1:polyml@5.9.2` | 139,125 | 138,750 | 364 | 11 | 2 | 0 |
+| `xc1:mlkit@4.7.23` | 139,054 | 138,524 | 519 | 11 | 2 | 0 |
 
-On Rune every check passes; the 10 skipped are those of `INet6Sock` that
-need a socket of IPv6, which the machine did not have. The `xc1`
-configurations fail the checks the shim cannot run (sockets, `poll`, and on
-MLKit what its `Posix` lacks), the checks where a host's function under a
-primitive of the shim is wrong, and on the 32-bit SML/NJ whatever needs more
-than 31 bits of `int` (`Time` counts microseconds since 1970).
+On Rune every check passes. The `xc1` configurations skip the 11 checks of
+`INet6Sock` that open a socket, which the shim declines, and fail the checks
+the shim cannot run (sockets, `poll`, and on MLKit what its `Posix` lacks),
+the checks where a host's function under a primitive of the shim is wrong,
+and on the 32-bit SML/NJ whatever needs more than 31 bits of `int` (`Time`
+counts microseconds since 1970).
 
 ## Structures each system provides
 
 `tests/basis/structures.sh` probes `structure Probe = NAME` for every
 structure of the specification on each system (the 32-bit SML/NJ has the
-library of the 64-bit one):
+library of the 64-bit one, and SML/NJ 2026.2 provides the same structures
+as 110.99.9):
 
 | Structure | Rune | MLton 20241230 | SML/NJ 110.99.9 | Poly/ML 5.9.2 | MLKit 4.7.23 |
 |---|:---:|:---:|:---:|:---:|:---:|
@@ -322,7 +326,12 @@ documentation has every line under the member it is about, in a block
   negative count raises `Subscript`. On a loaded machine it sometimes gets a
   floating-point result wrong (about one run in ten of 32 at once, never
   alone): those are the `HOST-FLAKY` lines, which need not match.
-* **SML/NJ 110.99.9, 32-bit** (160 lines). Everything of the 64-bit build,
+* **SML/NJ 2026.2, 64-bit** (`smlnj-dev`). The failures are those of the
+  64-bit 110.99.9 library. Matching an exception value built under one name
+  of an exception against another name of it takes the right rule
+  (`General.*/as-value`, in the native configuration and in `xc1`).
+* **SML/NJ 110.99.9, 32-bit** (160 lines). Everything of the 64-bit 110.99.9
+  build,
   and: `Int64` is emulated with two words and comes out wrong throughout
   (`Int64.+ (~2, ~3)` is 1073741819), `Int32.div (minInt, ~1)` kills the
   runtime with the processor's trap instead of raising `Overflow`, the

@@ -77,7 +77,7 @@ What each means is on [`GENERAL`](../sig/GENERAL.md); the types are this structu
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ** &mdash; compiler bug: \`case General.Fail "v" of Fail s =\> s \| \_ =\> ...\` takes the default rule when the value is built and matched in one compilation unit under two names of the same exception
+- **SML/NJ 110.99.9** &mdash; compiler bug: \`case General.Fail "v" of Fail s =\> s \| \_ =\> ...\` takes the default rule when the value is built and matched in one compilation unit under two names of the same exception
 - **SML/NJ** &mdash; exnMessage of Bind, Match, Div, Domain, Overflow, Size and Subscript is a phrase ("divide by zero", "subscript out of bounds", ...) that does not contain exnName ex
 
 </details>

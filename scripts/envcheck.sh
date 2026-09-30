@@ -396,7 +396,8 @@ if have curl; then
   }
   net_one github https://github.com/MLton/mlton/releases/download/on-20241230-release/mlton-20241230-1.amd64-linux.ubuntu-24.04_glibc2.39.tgz
   net_one pypi https://files.pythonhosted.org/packages/source/n/numpy/numpy-2.1.0.tar.gz
-  net_one smlnj https://smlnj.cs.uchicago.edu/dist/working/110.99.9/boot.amd64-unix.tgz
+  net_one smlnj-legacy https://smlnj.cs.uchicago.edu/dist/working/110.99.9/boot.amd64-unix.tgz
+  net_one smlnj-dev https://smlnj.org/dist/working/2026.2/smlnj-amd64-unix-2026.2.tgz
   net_one ubuntu https://releases.ubuntu.com/24.04/ubuntu-24.04.3-live-server-amd64.iso
   grep -q '^net\..*MB/s' "$res" || put net.note "no source answered: no network, or none of these hosts is allowed"
 else

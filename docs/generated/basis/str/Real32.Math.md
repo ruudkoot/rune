@@ -44,12 +44,9 @@ What each means is on [`MATH`](../sig/MATH.md); the types are this structure's o
 | val | [`tan`](../sig/MATH.md#val-tan) | `Real32.real -> Real32.real` |
 | val | [`tanh`](../sig/MATH.md#val-tanh) | `Real32.real -> Real32.real` |
 
-<details><summary>Other implementations (4)</summary>
+<details><summary>Other implementations (1)</summary>
 
 - **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
-- **SML/NJ** &mdash; Math.sinh (\~0.0) and Math.tanh (\~0.0) are 0.0, not \~0.0, and Real32.Math computes with them
-- **SML/NJ** &mdash; Math.tan (\~0.0) is 0.0, not \~0.0, and Real32.Math computes with it
-- **SML/NJ** &mdash; Math.tanh posInf is NaN, and Real32.Math computes with it
 
 </details>
 

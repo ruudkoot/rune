@@ -1,8 +1,9 @@
 # make check (AGENTS.md) on every pull request and every push to master, on
 # a machine set up as cloud/SETUP.md describes: the packages make doctor
 # asks for, and the host SML systems of make hosts, kept in the Actions
-# cache between runs (a fresh build of the five takes about 3 minutes;
-# the cache key follows scripts/fetch-hosts.sh, so a change of host renews it).
+# cache between runs (a fresh build of the hosts takes a few minutes, and
+# SML/NJ 2026.2 longer because it compiles LLVM; the cache key follows
+# scripts/fetch-hosts.sh, so a change of host renews it).
 name: check
 
 on:
@@ -21,7 +22,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
 
@@ -29,7 +30,7 @@ jobs:
         run: |
           sudo apt-get update -q
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
-            libgmp-dev gcc-multilib gdb lldb dwarfdump valgrind
+            libgmp-dev gcc-multilib cmake g++ python3 gdb lldb dwarfdump valgrind
 
       - name: Host SML systems (cache)
         uses: actions/cache@v4

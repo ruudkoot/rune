@@ -66,16 +66,16 @@ What each means is on [`BIN_IO`](../sig/BIN_IO.md) and [`IMPERATIVE_IO`](../sig/
 <details><summary>Other implementations (11)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
-- **MLton, SML/NJ 110.99.9, Poly/ML, MLKit** &mdash; getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+- **MLton, SML/NJ, Poly/ML, MLKit** &mdash; getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
 - **MLton, MLKit** &mdash; the input1 that returns NONE leaves the stream before the end-of-stream; a second one consumes it
-- **SML/NJ, SML/NJ 110.99.9** &mdash; input1 never moves past an end-of-stream
+- **SML/NJ** &mdash; input1 never moves past an end-of-stream
 - **Poly/ML** &mdash; another reading of the specification: inputAll after an end-of-stream does not read what the file has gained; the test takes the reading of MLton and SML/NJ
 - **Poly/ML** &mdash; inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it: the example of stream-io.html ("abc", end-of-stream, "defg") gives "abc" and then "" for good
 - **MLKit** &mdash; inputAll on a stream that openIn made leaves it at the end-of-stream where it stops, not "immediately past" it: after the file has grown, the next inputAll returns the empty vector and only the one after it the new elements
 - **SML/NJ** &mdash; inputN (strm, \~1) raises Subscript, not Size
 - **Poly/ML** &mdash; another reading of the specification: reports the qualified name ("TextIO.openIn"); the test takes the unqualified name, as MLton and SML/NJ do
 - **MLton, MLKit** &mdash; output1 on a closed stream raises Io with function "output"
-- **SML/NJ 110.99.9** &mdash; setPosOut neither flushes nor moves the writer: output goes on at the end
+- **SML/NJ** &mdash; setPosOut neither flushes nor moves the writer: output goes on at the end
 
 </details>
 

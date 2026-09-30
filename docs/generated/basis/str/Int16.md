@@ -57,8 +57,8 @@ What each means is on [`INTEGER`](../sig/INTEGER.md); the types are this structu
 
 <details><summary>Other implementations (3)</summary>
 
-- **SML/NJ (64-bit)** &mdash; mod (minInt, \~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
-- **SML/NJ (64-bit)** &mdash; rem (minInt, \~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
+- **SML/NJ (64-bit), SML/NJ development** &mdash; mod (minInt, \~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
+- **SML/NJ (64-bit), SML/NJ development** &mdash; rem (minInt, \~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
 - **SML/NJ** &mdash; scan does not skip vertical tab, form feed and carriage return
 
 </details>

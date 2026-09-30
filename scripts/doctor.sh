@@ -4,7 +4,7 @@
 #   scripts/doctor.sh [--quiet] [--scope SCOPE]...
 # Scopes (default: all):
 #   vm      C99 compiler for bin/runevm
-#   mlton smlnj smlnj32 polyml mlkit   the SML system behind
+#   mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit   the SML system behind
 #           bin/rune-<scope>: the release that scripts/fetch-hosts.sh
 #           installed (`make hosts`)
 #   check   the test runners (tests/run-tests.sh, scripts/check-*.sh)
@@ -22,7 +22,7 @@
 #   portability  a 32-bit x86 compiler and a big-endian 64-bit PowerPC one,
 #           with qemu to run the latter (make portability,
 #           make test-portability); not part of all either
-#   build = vm mlton      hosts = mlton smlnj smlnj32 polyml mlkit
+#   build = vm mlton      hosts = mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit
 #   all = everything but windows
 # Tools every target needs (sh, make, awk, ...) are checked with any scope.
 # Exit status: 0 when everything required by the scopes is present, else 1.
@@ -41,10 +41,10 @@ done
 expanded=""
 for s in $scopes; do
   case "$s" in
-    all) expanded="$expanded vm mlton smlnj smlnj32 polyml mlkit check asan sys matrix perf native" ;;
+    all) expanded="$expanded vm mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit check asan sys matrix perf native" ;;
     build) expanded="$expanded vm mlton" ;;
-    hosts) expanded="$expanded mlton smlnj smlnj32 polyml mlkit" ;;
-    vm|mlton|smlnj|smlnj32|polyml|mlkit|check|asan|sys|matrix|perf|native|windows|portability) expanded="$expanded $s" ;;
+    hosts) expanded="$expanded mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit" ;;
+    vm|mlton|smlnj-legacy|smlnj32|smlnj-dev|polyml|mlkit|check|asan|sys|matrix|perf|native|windows|portability) expanded="$expanded $s" ;;
     *) echo "doctor: unknown scope '$s'" >&2; exit 2 ;;
   esac
 done
@@ -60,8 +60,9 @@ MAKE_CMD=${MAKE:-make}
 # The host SML systems: those of scripts/fetch-hosts.sh, never the machine's.
 hosts=${RUNE_HOSTS:-$HOME/.local/rune-hosts}
 MLTON=${MLTON:-$hosts/mlton/bin/mlton}
-SMLNJ=${SMLNJ:-$hosts/smlnj/bin/sml}
+SMLNJ=${SMLNJ:-$hosts/smlnj-legacy/bin/sml}
 SMLNJ32=${SMLNJ32:-$hosts/smlnj32/bin/sml}
+SMLNJ_DEV=${SMLNJ_DEV:-$hosts/smlnj-dev/bin/sml}
 POLYC=${POLYC:-$hosts/polyml/bin/polyc}
 POLY=${POLY:-$(dirname "$POLYC")/poly}
 MLKIT=${MLKIT:-$hosts/mlkit/bin/mlkit}
@@ -84,6 +85,10 @@ pkg() {
     apt:cc) echo build-essential ;;       dnf:cc) echo gcc ;;
     pacman:cc) echo base-devel ;;         brew:cc) echo gcc ;;
     apt:cxx) echo g++ ;;                  dnf:cxx) echo gcc-c++ ;;
+    apt:cmake) echo cmake ;;              dnf:cmake) echo cmake ;;
+    pacman:cmake) echo cmake ;;           brew:cmake) echo cmake ;;
+    apt:python3) echo python3 ;;          dnf:python3) echo python3 ;;
+    pacman:python3) echo python ;;        brew:python3) echo python ;;
     pacman:cxx) echo base-devel ;;        brew:cxx) echo gcc ;;
     apt:asan) echo libasan8 libubsan1 ;;  dnf:asan) echo libasan libubsan ;;
     apt:gmp) echo libgmp-dev ;;           dnf:gmp) echo gmp-devel ;;
@@ -262,8 +267,9 @@ smlnj_scope() {
   else bad ml-build "not installed: $(dirname "$2")/ml-build" hosts
   fi
 }
-in_scope smlnj && smlnj_scope smlnj "$SMLNJ" 64-bit
+in_scope smlnj-legacy && smlnj_scope smlnj-legacy "$SMLNJ" 64-bit
 in_scope smlnj32 && smlnj_scope smlnj32 "$SMLNJ32" 32-bit
+in_scope smlnj-dev && smlnj_scope smlnj-dev "$SMLNJ_DEV" 2026.2
 
 if in_scope polyml; then
   section "Poly/ML (bin/rune-polyml)"
@@ -336,6 +342,24 @@ if in_scope matrix; then
   have xz xz
   have gzip gzip
   have g++ cxx
+  have python3 python3
+  # SML/NJ 2026.2 compiles a bundled LLVM and needs CMake 3.23.
+  if ! path=$(command -v cmake 2> /dev/null); then bad cmake "not found (SML/NJ 2026.2 needs CMake 3.23 or later)" cmake
+  else
+    cv=$(cmake --version | awk 'NR == 1 { print $3 }')
+    major=${cv%%.*}
+    rest=${cv#*.}
+    minor=${rest%%.*}
+    if [ "${major:-0}" -gt 3 ] || { [ "${major:-0}" -eq 3 ] && [ "${minor:-0}" -ge 23 ]; }; then
+      ok cmake "$cv ($path)"
+    else bad cmake "CMake $cv is older than 3.23 (SML/NJ 2026.2)" cmake
+    fi
+  fi
+  printf 'int main() { return 0; }\n' > "$tmp/cxx17.cpp"
+  if g++ -std=c++17 -o "$tmp/cxx17" "$tmp/cxx17.cpp" > "$tmp/cxx17.log" 2>&1; then
+    ok cxx17 "g++ -std=c++17"
+  else bad cxx17 "g++ cannot compile C++17: $(head -1 "$tmp/cxx17.log")" cxx
+  fi
   printf '#include <gmp.h>\nint main(void) { mpz_t x; mpz_init(x); mpz_clear(x); return 0; }\n' > "$tmp/gmp.c"
   if "$CC" -o "$tmp/gmp" "$tmp/gmp.c" -lgmp > "$tmp/gmp.log" 2>&1; then ok gmp "headers and library present"
   else bad gmp "cannot compile against GMP: $(head -1 "$tmp/gmp.log")" gmp
@@ -351,10 +375,12 @@ if in_scope matrix; then
   where=$prefix
   while [ ! -d "$where" ] && [ "$where" != / ] && [ "$where" != . ]; do where=$(dirname "$where"); done
   free=$(df -Pk "$where" 2> /dev/null | awk 'NR == 2 { print int($4 / 1048576) }')
-  if [ -n "$free" ] && [ "$free" -ge 3 ]; then ok disk "$free GB free under $prefix"
-  else warn disk "less than 3 GB free under $prefix (${free:-?} GB)"
+  # SML/NJ 2026.2 builds LLVM beside the other hosts. 8 GB covers that
+  # build; the installed tree is smaller, and the sources are removed.
+  if [ -n "$free" ] && [ "$free" -ge 8 ]; then ok disk "$free GB free under $prefix"
+  else warn disk "less than 8 GB free under $prefix (${free:-?} GB): SML/NJ 2026.2 builds LLVM"
   fi
-  for h in mlton smlnj smlnj32 polyml mlkit; do
+  for h in mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit; do
     if [ -d "$prefix/$h" ]; then ok "$h" "installed under $prefix/$h"
     else note "$h" "not installed under $prefix/$h (run: make hosts)"
     fi

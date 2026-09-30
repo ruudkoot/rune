@@ -41,9 +41,10 @@ filtered run of four tests went from 1 m 18 s to 5 s on SML/NJ, 1 m 40 s to
 off, which is how the numbers above were measured.
 
 The hosts are the releases `make hosts` installs (scripts/fetch-hosts.sh):
-MLton, SML/NJ built for 64 and for 32 bits (its 31-bit `int` and `word` have
-found many portability bugs), Poly/ML and MLKit (63-bit `int` and `word`),
-never the machine's own.
+MLton, SML/NJ 110.99.9 built for 64 and for 32 bits (its 31-bit `int` and
+`word` have found many portability bugs), SML/NJ 2026.2 (the development
+line, 64-bit only), Poly/ML and MLKit (63-bit `int` and `word`), never the
+machine's own.
 `make matrix` runs every configuration, `make matrix-quick` Rune and the
 `xc1` ones, `make test-windows` Rune on the two VMs of Windows
 (`--configs windows`), and `sh tests/basis/run-matrix.sh --configs all [FILTER]` runs
@@ -151,7 +152,7 @@ end
 
 ```
 config-glob | label-glob | CATEGORY | reason
-native:smlnj@110.99.9 | Real.fmt/* | HOST-BUG | prints ~0.0 as 0.0
+native:smlnj-legacy@110.99.9 | Real.fmt/* | HOST-BUG | prints ~0.0 as 0.0
 ```
 
 Categories: `RUNE-DEV` (Rune departs from the specification, or does not

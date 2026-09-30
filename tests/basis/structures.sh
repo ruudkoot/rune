@@ -103,14 +103,16 @@ probe_session() {
 
 systems="rune"
 mlton=${MLTON:-$hosts/mlton/bin/mlton}
-smlnj=${SMLNJ:-$hosts/smlnj/bin/sml}
+smlnj_legacy=${SMLNJ:-$hosts/smlnj-legacy/bin/sml}
+smlnj_dev=${SMLNJ_DEV:-$hosts/smlnj-dev/bin/sml}
 poly=${POLY:-$hosts/polyml/bin/poly}
 mlkit=${MLKIT:-$hosts/mlkit/bin/mlkit}
 mlkit_lib=${MLKIT_LIB:-$(dirname "$(dirname "$mlkit")")/lib/mlkit}
 {
   probe_rune rune
   system=mlton; probe_mlton "$system" "$mlton"
-  system=smlnj; probe_session "$system" "$smlnj"
+  system=smlnj-legacy; probe_session "$system" "$smlnj_legacy"
+  system=smlnj-dev; probe_session "$system" "$smlnj_dev"
   system=polyml; probe_session "$system" "$poly" -q --use
   system=mlkit; probe_mlkit "$system" "$mlkit" "$mlkit_lib"
 } > "$work/results"
@@ -119,7 +121,8 @@ version() {
   case "$1" in
     rune) echo Rune ;;
     mlton) echo "MLton $("$mlton" 2> /dev/null | sed -n '1s/^MLton \([0-9.]*\).*/\1/p')" ;;
-    smlnj) echo "SML/NJ $("$smlnj" @SMLversion 2> /dev/null | sed -n '1s/^sml \([0-9.]*\).*/\1/p')" ;;
+    smlnj-legacy) echo "SML/NJ $("$smlnj_legacy" @SMLversion 2> /dev/null | sed -n '1{s/^sml //;s/^\([0-9.]*\).*/\1/p;}')" ;;
+    smlnj-dev) echo "SML/NJ $("$smlnj_dev" @SMLversion 2> /dev/null | sed -n '1{s/^sml //;s/^\([0-9.]*\).*/\1/p;}')" ;;
     polyml) echo "Poly/ML $("$poly" -v 2> /dev/null | sed -n '1s/^Poly\/ML \([0-9.]*\).*/\1/p')" ;;
     mlkit) echo "MLKit $("$mlkit" --version 2> /dev/null | sed -n '1s/^MLKit v\([0-9.]*\).*/\1/p')" ;;
   esac

@@ -75,7 +75,7 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 - **MLKit, Poly/ML** &mdash; reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
 - **SML/NJ** &mdash; scan does not skip vertical tab, form feed and carriage return
 - **MLKit, Poly/ML** &mdash; 0w is not a prefix of the hexadecimal format, but 0w12 is read as 0wx12
-- **SML/NJ (64-bit)** &mdash; Int.fromLarge (LargeWord.toLargeInt w) is fused into a signed test, so the conversion through LargeWord that the specification gives for toInt raises no Overflow where toInt does (docs/bugreport/smlnj/Int.fromLarge/fused-conversions)
+- **SML/NJ (64-bit), SML/NJ development** &mdash; Int.fromLarge (LargeWord.toLargeInt w) is fused into a signed test, so the conversion through LargeWord that the specification gives for toInt raises no Overflow where toInt does (docs/bugreport/smlnj/Int.fromLarge/fused-conversions)
 - **Poly/ML** &mdash; \~\>\> by a shift of all ones gives 0, not the word filled with its sign bit
 - **Poly/ML** &mdash; Word64.\~\>\> by a shift of 64 or more does not give 0 or all ones: it keeps the word as it is, or only its sign bit (0wx8000000000000000)
 

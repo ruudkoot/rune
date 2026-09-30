@@ -225,7 +225,7 @@ is zero.
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ 110.99.9** &mdash; toString of a NaN with the sign set is "nan", not "\~nan"
+- **SML/NJ** &mdash; toString of a NaN with the sign set is "nan", not "\~nan"
 - **Poly/ML 5.9.2** &mdash; follows from Real.fmt StringCvt.EXACT 0.0, which is "0.0E1"
 
 </details>
@@ -263,7 +263,7 @@ so that nothing is rounded.
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ 110.99.9** &mdash; scan consumes a decimal point that no digit follows ("3.x" leaves "x")
+- **SML/NJ** &mdash; scan consumes a decimal point that no digit follows ("3.x" leaves "x")
 - **MLton, SML/NJ, Poly/ML, MLKit** &mdash; another reading of the specification: reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
 
 </details>

@@ -8,7 +8,7 @@ set -u
 cd "$(dirname "$0")/.."
 out=tests/out/doc-cross
 mkdir -p "$out"
-builds="mlton smlnj smlnj32 polyml mlkit"
+builds="mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit"
 [ -x bin/runedoc-boot ] && builds="$builds boot"
 status=0
 

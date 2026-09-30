@@ -489,7 +489,7 @@ Its sign is the divisor's, where that of [`rem`](#val-rem) is the dividend's:
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ (64-bit)** &mdash; mod (minInt, \~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
+- **SML/NJ (64-bit), SML/NJ development** &mdash; mod (minInt, \~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
 - **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
@@ -554,7 +554,7 @@ Its sign is the dividend's, where that of [`mod`](#val-mod) is the divisor's:
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ (64-bit)** &mdash; rem (minInt, \~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
+- **SML/NJ (64-bit), SML/NJ development** &mdash; rem (minInt, \~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
 - **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
@@ -678,7 +678,7 @@ val abs : int -> int
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ 110.99.9 (64-bit)** &mdash; Int32.abs minInt gives minInt instead of raising Overflow
+- **SML/NJ 110.99.9 (64-bit), SML/NJ development 2026.2** &mdash; Int32.abs minInt gives minInt instead of raising Overflow
 - **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
@@ -885,8 +885,8 @@ structure.
 <details><summary>Other implementations (7)</summary>
 
 - **SML/NJ** &mdash; scan does not skip vertical tab, form feed and carriage return
-- **SML/NJ 110.99.9** &mdash; IntInf.scan StringCvt.BIN accepts characters that are not binary digits ("2" is 2, "0b101" and "0x1" are numbers)
-- **SML/NJ 110.99.9** &mdash; IntInf.scan StringCvt.OCT accepts the digits 8 and 9 and the letter x ("0x17" is 15)
+- **SML/NJ** &mdash; IntInf.scan StringCvt.BIN accepts characters that are not binary digits ("2" is 2, "0b101" and "0x1" are numbers)
+- **SML/NJ** &mdash; IntInf.scan StringCvt.OCT accepts the digits 8 and 9 and the letter x ("0x17" is 15)
 - **MLKit** &mdash; scan and fromString of IntInf skip space, tab and newline only, not vertical tab, form feed and carriage return
 - **MLKit** &mdash; a sign after the digits is read as the sign of a further group of digits: "1\~2" is SOME (98, ""), not SOME (1, "\~2")
 - **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong, and scan and the numbers of the checks are made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)

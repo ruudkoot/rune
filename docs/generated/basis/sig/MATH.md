@@ -236,9 +236,8 @@ It is a NaN for an infinite `x`.
 > of pi/2, so the function is finite everywhere, and what is asked of it
 > is only that its magnitude near the singularity be large.
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (1)</summary>
 
-- **SML/NJ** &mdash; Math.tan (\~0.0) is 0.0, not \~0.0, and Real32.Math computes with it
 - **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
 
 </details>
@@ -528,10 +527,9 @@ It keeps the sign of a zero, and overflows to an infinity of the sign of
 
 **Example** `Real.signBit (sinh ~0.0) = true`
 
-<details><summary>Other implementations (3)</summary>
+<details><summary>Other implementations (2)</summary>
 
 - **SML/NJ** &mdash; Math.sinh (\~0.0) and Math.tanh (\~0.0) are 0.0, not \~0.0
-- **SML/NJ** &mdash; Math.sinh (\~0.0) and Math.tanh (\~0.0) are 0.0, not \~0.0, and Real32.Math computes with them
 - **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
 
 </details>
@@ -592,13 +590,11 @@ there.
 
 **Example** `Real.== (tanh 1000.0, 1.0) = true`
 
-<details><summary>Other implementations (6)</summary>
+<details><summary>Other implementations (4)</summary>
 
 - **SML/NJ** &mdash; Math.sinh (\~0.0) and Math.tanh (\~0.0) are 0.0, not \~0.0
 - **SML/NJ** &mdash; Math.tanh posInf is NaN
 - **SML/NJ** &mdash; Math.tanh 1000.0 is NaN
-- **SML/NJ** &mdash; Math.sinh (\~0.0) and Math.tanh (\~0.0) are 0.0, not \~0.0, and Real32.Math computes with them
-- **SML/NJ** &mdash; Math.tanh posInf is NaN, and Real32.Math computes with it
 - **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
 
 </details>

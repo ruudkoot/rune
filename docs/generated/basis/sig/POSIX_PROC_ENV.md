@@ -434,7 +434,7 @@ val time : unit -> Time.time
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ 110.99.9 (64-bit)** &mdash; time () is negative: the seconds since the Epoch overflow 32 bits
+- **SML/NJ 110.99.9 (64-bit), SML/NJ development 2026.2** &mdash; time () is negative: the seconds since the Epoch overflow 32 bits
 
 </details>
 
@@ -471,7 +471,7 @@ val times : unit
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ 110.99.9 (64-bit)** &mdash; the elapsed time of times is negative
+- **SML/NJ 110.99.9 (64-bit), SML/NJ development 2026.2** &mdash; the elapsed time of times is negative
 
 </details>
 

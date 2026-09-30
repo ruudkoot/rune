@@ -128,16 +128,16 @@ What each means is on [`DATE`](../sig/DATE.md); the types are this structure's o
 <details><summary>Other implementations (30)</summary>
 
 - **MLton, SML/NJ (32-bit)** &mdash; date of year 10^8 raises Overflow, not Date
-- **SML/NJ 110.99.9** &mdash; toTime ignores the offset of a date
+- **SML/NJ** &mdash; toTime ignores the offset of a date
 - **SML/NJ** &mdash; fmt "%%Y" gives "1995": after %% the Y is taken as a directive, not the character Y
 - **SML/NJ (32-bit)** &mdash; fmt "%Z" raises Date for a UTC date
 - **Poly/ML** &mdash; fmt "" raises Date instead of giving ""
-- **MLton, SML/NJ 110.99.9 (64-bit)** &mdash; fmt "%Z" of a UTC date gives the name of the local time zone ("NST"), not that of UTC
+- **MLton, SML/NJ 110.99.9 (64-bit), SML/NJ development 2026.2** &mdash; fmt "%Z" of a UTC date gives the name of the local time zone ("NST"), not that of UTC
 - **Poly/ML** &mdash; fmt "%Z" raises Date for a UTC date (an empty result of strftime)
 - **MLKit** &mdash; fmt "%Z" of a UTC date gives the name of the local time zone ("NST") or garbage: the runtime's sml\_strftime leaves tm\_zone unset, and strftime reads it (for a local date it may crash)
 - **SML/NJ** &mdash; scan and fromString do not skip initial whitespace ("after ignoring possible initial whitespace")
 - **MLton, SML/NJ (32-bit), SML/NJ** &mdash; toTime of a date before 1970 raises Date
-- **SML/NJ 110.99.9** &mdash; fromTimeUniv is off by twice the local offset, the wrong way: 23:59:59 UTC comes back as 4:59:59 the next day in summer time (2:30 west) and 6:59:59 in winter (3:30 west)
+- **SML/NJ** &mdash; fromTimeUniv is off by twice the local offset, the wrong way: 23:59:59 UTC comes back as 4:59:59 the next day in summer time (2:30 west) and 6:59:59 in winter (3:30 west)
 - **MLKit** &mdash; toTime of a date before 1970 raises Date, and fromTimeUniv truncates a negative time towards zero instead of flooring it to its second
 - **SML/NJ** &mdash; localOffset is east of UTC (110.79), or toTime reads UTC dates as local time (110.99.9), so it disagrees with the offset of fromTimeLocal
 - **MLton** &mdash; offset reports the time east of UTC modulo a day (an offset of 5 hours west gives 19 hours, 5:30 east gives 5:30), not "the amount of time west of UTC"
@@ -150,9 +150,9 @@ What each means is on [`DATE`](../sig/DATE.md); the types are this structure's o
 - **MLton** &mdash; toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200")
 - **SML/NJ (32-bit)** &mdash; date does not add the whole days of an offset of 24 hours or more to the hours, so that the date is another time
 - **SML/NJ** &mdash; toTime of a UTC date from fromTimeUniv is not the time converted: it is off by the local offset
-- **SML/NJ 110.99.9 (64-bit)** &mdash; toTime of a date of year 10^8 gives a time of the year 2092 instead of raising Date
+- **SML/NJ 110.99.9 (64-bit), SML/NJ development 2026.2** &mdash; toTime of a date of year 10^8 gives a time of the year 2092 instead of raising Date
 - **SML/NJ (32-bit)** &mdash; toTime of a date after 2038 raises Date (32-bit time; "support date values ranging from around 1900 to 2200")
-- **SML/NJ 110.99.9** &mdash; toTime ignores the offset of a date (12:00 at 5 hours west is 12:00 UTC)
+- **SML/NJ** &mdash; toTime ignores the offset of a date (12:00 at 5 hours west is 12:00 UTC)
 - **Poly/ML, MLKit** &mdash; toTime of a date of year 10^8 raises Time, not Date ("It raises Date if the date date cannot be represented as a Time.time value")
 - **MLKit** &mdash; date keeps an offset of more than a day east whole while it moves the date back a day, so that the date is a day earlier than the time given
 - **MLKit** &mdash; toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200"), and of one after 2038-01-19 03:14:07 UTC raises Time

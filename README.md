@@ -70,10 +70,10 @@ See [docs/building.md](docs/building.md). In short:
 make hosts         # install the SML systems Rune is built with, under ~/.local/rune-hosts
 make doctor        # check the environment: compilers, tools, how to install what is missing
 make               # bin/rune (the self-hosted compiler) + bin/runevm
-make host-builds   # bin/rune-mlton, bin/rune-smlnj, bin/rune-smlnj32, bin/rune-polyml, bin/rune-mlkit
+make host-builds   # bin/rune-mlton, bin/rune-smlnj-legacy, bin/rune-smlnj32, bin/rune-smlnj-dev, bin/rune-polyml, bin/rune-mlkit
 make test          # run the suite with bin/rune
-make test-all      # ... with each of the five host builds
-make check-cross   # identical bytecode from all six builds, the self-hosted one included
+make test-all      # ... with each of the six host builds
+make check-cross   # identical bytecode from all seven builds, the self-hosted one included
 make check-docs    # docs <-> tests <-> .def files in sync
 make test-basis    # the Basis Library suite (tests/basis) with bin/rune
 make perf-check    # instruction and allocation budgets (tests/perf); same numbers on every machine
