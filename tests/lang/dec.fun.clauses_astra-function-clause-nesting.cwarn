@@ -1,0 +1,2 @@
+tests/lang/dec.fun.clauses_astra-function-clause-nesting.sml:1:9: warning: match is not exhaustive (missing case: false)
+tests/lang/dec.fun.clauses_astra-function-clause-nesting.sml:4:9: warning: match is not exhaustive (missing case: false)

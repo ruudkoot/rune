@@ -33,7 +33,7 @@ while [ $# -gt 0 ]; do
     *) echo "usage: scripts/check-jit.sh [--rune BIN] [--vm BIN] [-j N]" >&2; exit 2 ;;
   esac
 done
-out=tests/out/jit-check
+out=tests/out/jit-check-$(basename "$vm")
 mkdir -p "$out"
 # a run that never ends (code that loops, or a compile that does) is
 # stopped after ten minutes where the system has timeout, so that the
@@ -151,9 +151,13 @@ else
     jit="--jit=$mode"; [ "$mode" = odd ] && jit="--jit=all --jit-only=odd"
     [ "$mode" = opt ] && jit="--jit=all --jit-tier=2"
     [ "$mode" = deopt ] && jit="--jit=all --jit-tier=2 --deopt-stress=7"
+    # The driver now reads and protects its output path. Use one path and
+    # the same initial filesystem state so its work is identical in each mode.
+    rm -f "$out/bootstrap/compiled.rbc" "$out/bootstrap/by.$mode.rbc"
     # shellcheck disable=SC2086
-    "$vm" --count $jit --heap-size 67108864 "$out/bootstrap/rune.rbc" --lib lib -o "$out/bootstrap/by.$mode.rbc" $srcs 2> "$out/bootstrap/stderr.$mode"
+    "$vm" --count $jit --heap-size 67108864 "$out/bootstrap/rune.rbc" --lib lib -o "$out/bootstrap/compiled.rbc" $srcs 2> "$out/bootstrap/stderr.$mode"
     echo "exit $?" >> "$out/bootstrap/stderr.$mode"
+    [ ! -f "$out/bootstrap/compiled.rbc" ] || cp "$out/bootstrap/compiled.rbc" "$out/bootstrap/by.$mode.rbc"
   done
   for mode in all odd baseline opt deopt; do
     what="--jit=$mode"; [ "$mode" = odd ] && what="every other function compiled"

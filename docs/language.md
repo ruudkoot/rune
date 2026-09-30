@@ -77,7 +77,7 @@ SML rejects, or reject some that SML accepts.
 | exp.record.select | Selectors `#lab` (including numeric labels `#2`) | Supported | The record type must be determined by the end of the program. |
 | exp.list | List syntax `[a, b, c]` | Supported | |
 | exp.seq | Sequencing `(e1; e2; e3)` | Supported | |
-| exp.let | `let dec in exp; exp end` | Supported | |
+| exp.let | `let dec in exp; exp end` | Supported | A datatype introduced inside a `let` may not escape in its result or through types shared with the surrounding environment. Closures may capture its values when their exposed type does not mention it. |
 | exp.fn | `fn pat => exp \| ...` | Supported | |
 | exp.app | Function application, left-to-right evaluation (function, then argument) | Supported | |
 | exp.infix | Infix application respecting precedence and associativity, `o`, `before`, `:=`, `^`, `@`, `::` | Supported | |
@@ -97,7 +97,7 @@ SML rejects, or reject some that SML accepts.
 | pat.wild | Wildcard `_` | Supported | |
 | pat.var | Variable patterns | Supported | Identifiers bound as constructors in scope are constructors, otherwise variables. |
 | pat.const | Constant patterns: int, word, string, char | Supported | Real constants are rejected. |
-| pat.con | Constructor patterns, nullary and with arguments, nested | Supported | |
+| pat.con | Constructor patterns, nullary and with arguments, nested | Supported | An application head is an unparenthesized constructor identifier; `(C) p` is rejected, while `(C p)` is a grouped application. |
 | pat.tuple | Tuple patterns and `()` | Supported | |
 | pat.record | Record patterns `{a, b = p, c : ty}` | Supported | |
 | pat.record.flex | Flexible record patterns `{a, ...}` | Supported | The full set of labels must be determined by the end of the program. |
@@ -178,7 +178,7 @@ Where each part of the Definition is exercised. The rows are the ids above.
 | rt.tailcall | Proper tail calls (constant stack for tail recursion) | Supported | Not in the body of a `handle`. |
 | rt.deeprec | Deep non-tail recursion (the VM stack grows on demand) | Supported | |
 | rt.stack | A recursion without end stops at the stack's limit (`runevm --stack-size N`, 1 GiB by default) with `stack overflow` and status 2, not with the machine's memory | Supported | |
-| rt.gc | Garbage collection (copying collector, heap grows as needed) | Supported | `runevm --heap-size N` sets the initial semispace. |
+| rt.gc | Garbage collection (copying collector, heap grows as needed) | Supported | `runevm --heap-size N` sets the initial semispace. `--heap-limit N` caps one semispace (at least 4096 bytes); no cap by default. Collection may reach the cap even when the requested fill ratio cannot be met; a retained graph plus a new allocation that cannot fit fails with `heap limit exceeded` and status 2. Two semispaces and non-heap storage are outside the managed size of live objects. |
 | rt.trace | A stack trace: the frames as data (`Runtime.trace`), written by `Runtime.printTrace`, and printed by the VM under an uncaught exception and a fatal error | Supported | Each frame is the name the compiler recorded for the function, qualified by the structures it is in, and the position it is stopped at, from the line table of the `.rbc` (`docs/bytecode.md`). A tail call replaces the frame it is made from, so it leaves none to report. A function the optimiser inlined is still a frame of its own, as its call would have been (`docs/ir.md`, *Positions*). |
 | rt.save | `Runtime.save` writes the running program to a file, and `runevm --restore FILE` carries it on in another process | Supported | The image is the format of `vm/image.c`, which no machine can call its own: one written by the 64-bit VM is restored by `bin/runevm32.exe`. `Posix.Process.fork` where the system has none writes the same format to a second VM (`--emulate-fork` takes that path on Linux). |
 | rt.restore | `Runtime.restore` makes a running program become the world in an image | Supported | The image carries its own code, constants, names and line table, so the world that starts is consistent with itself and nothing of the caller's program is left to disagree with it. It is read into a world of its own and moved over only once whole, so a bad image raises where the program can still handle it; the world it leaves is freed. An image is checked as a `.rbc` is (`vm/loader.c`), since it too now comes from a file. |
@@ -186,7 +186,7 @@ Where each part of the Definition is exercised. The rows are the ids above.
 | rt.exit | `OS.Process.exit` terminates with the given status | Supported | |
 | rt.overflow | `int` arithmetic raises `Overflow`; `word` arithmetic wraps | Supported | |
 | rt.div | `div`/`mod` floor semantics, `quot`/`rem` truncate, `Div` on zero, IEEE reals | Supported | |
-| rt.equality | Structural equality on immutable data, identity on `ref`/`array` | Supported | |
+| rt.equality | Structural equality on immutable data, identity on `ref`/`array` | Supported | Uses an explicit worklist with at most 65536 pending comparisons. `--equality-work N` sets the step budget (1000000 by default); exceeding either limit is a VM failure with status 2. |
 | rt.closure | Closures capture variables by value (refs for mutation), mutual recursion | Supported | |
 | rt.args | Command line arguments after the bytecode file | Supported | |
 | rt.stdin | Reading standard input | Supported | |
@@ -283,3 +283,13 @@ Library that are not listed are not available.
 
 Tags of `option` (`NONE` = 0, `SOME` = 1) and `order` are fixed by the basis
 because VM primitives construct these values directly.
+
+## Compiler resource budgets
+
+Type traversal during elaboration is limited to 10000000 steps per top-level
+declaration (`--type-work=N`); exhaustiveness and redundancy analysis is limited
+to 1000000 steps per match (`--match-work=N`) and recursion depth 512. Both step
+budgets can be raised with a positive decimal integer at most 1000000000. Exhausting a budget is a
+source-located compile error, and preserves any previously generated bytecode.
+Bytecode output is replaced atomically after a successful write. An output path
+that names any explicit input, including a symlink or hard-link alias, is rejected.

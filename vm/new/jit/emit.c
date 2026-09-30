@@ -144,9 +144,8 @@ static void equal(Jit *j, int32_t d, int32_t x, int32_t y, int poly, AsmLabel *s
         return;
     }
     AsmLabel no, done, heap; as_label_init(&no); as_label_init(&done); as_label_init(&heap);
-    /* a pointer, or a real under poly_eq, is values_equal's: the lean
-       helper, which touches nothing of the VM (imm_eq's pointer is the
-       primitive's error) */
+    /* Structural comparison may stop at its work limit, so its helper
+       needs the exact VM for the fatal error and its trace. */
     AsmLabel *deep = poly ? &heap : slow;
     ms_load_tag(M, R_S0, x);
     as_cmp_ri(A, R_S0, T_PTR);
@@ -169,10 +168,11 @@ static void equal(Jit *j, int32_t d, int32_t x, int32_t y, int poly, AsmLabel *s
     if (poly) {
         as_jmp(A, &done);
         as_bind(A, &heap);
-        ms_writeback(M, M->cur_pc);   /* the slots of x and y whole, and the homes safe (M9) */
+        ms_sync(M, j->next, 0);
         as_lea(A, ms_arg(M, 1), BASER, -1, 1, 16 * x);
         as_lea(A, ms_arg(M, 2), BASER, -1, 1, 16 * y);
-        ms_call_lean(M, (MsHelper)jit_h_values_equal);
+        ms_call(M, (MsHelper)jit_h_values_equal);
+        ms_reload(M);
         ms_set_reg(M, d, T_CON0, R_S0);
         as_test_rr(A, R_S0, R_S0);
     }

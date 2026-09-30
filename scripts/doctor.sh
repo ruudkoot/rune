@@ -299,6 +299,7 @@ fi
 # ---------------------------------------------------------------- check
 if in_scope check; then
   section "test runners"
+  have python3 python3
   if [ "$(printf 'a\nb\n' | xargs -n 1 -P 2 echo 2> /dev/null | sort | tr -d '\n')" = ab ]; then ok xargs "supports -P"
   else bad xargs "xargs -n 1 -P N does not work" findutils
   fi

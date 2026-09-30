@@ -8,6 +8,8 @@ static void usage(void) {
     fprintf(stderr,
         "usage: runevm [options] file.rbc [args ...]\n"
         "  --heap-size N   initial semispace size in bytes (default 4194304)\n"
+        "  --heap-limit N  maximum semispace size in bytes, at least 4096 (unlimited by default)\n"
+        "  --equality-work N  maximum steps per structural comparison (default 1000000)\n"
         "  --stack-size N  the most bytes the stack may grow to (default 1073741824): a\n"
         "                  recursion without end stops here, not at the machine's memory\n"
         "  --disasm        print the bytecode and exit\n"
@@ -43,13 +45,14 @@ static int size_arg(const char *text, size_t *out) {
     char *end;
     errno = 0;
     unsigned long long v = strtoull(text, &end, 10);
-    if (errno != 0 || end == text || *end != 0 || text[0] == '-' || v > SIZE_MAX) return 0;
+    if (errno != 0 || end == text || *end != 0 || text[0] < '0' || text[0] > '9' || v > SIZE_MAX) return 0;
     *out = (size_t)v;
     return 1;
 }
 
 int main(int argc, char **argv) {
     size_t heap = 4u << 20, gc_stress = 0, heap_fill = 50, stack = (size_t)1 << 30;
+    size_t heap_limit = 0, equality_work = 0;
     int disasm = 0, trace = 0, stats = 0, count = 0, emulate_fork = 0, checked = 0;
     int jit_check = 0, jit_given = 0;
     JitOptions jit;
@@ -60,6 +63,10 @@ int main(int argc, char **argv) {
         if (strcmp(argv[i], "--heap-size") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &heap)) { usage(); return 2; }
             if (heap < 4096) heap = 4096;
+        } else if (strcmp(argv[i], "--heap-limit") == 0 && i + 1 < argc) {
+            if (!size_arg(argv[++i], &heap_limit) || heap_limit < 4096) { usage(); return 2; }
+        } else if (strcmp(argv[i], "--equality-work") == 0 && i + 1 < argc) {
+            if (!size_arg(argv[++i], &equality_work) || equality_work == 0) { usage(); return 2; }
         } else if (strcmp(argv[i], "--stack-size") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &stack) || stack < 65536) { usage(); return 2; }
         } else if (strcmp(argv[i], "--disasm") == 0) disasm = 1;
@@ -102,6 +109,7 @@ int main(int argc, char **argv) {
         VM *vm = calloc(1, sizeof(VM));
         char err[256];
         if (vm) vm->stack_limit = stack;   /* before the image's stack is made */
+        if (vm) { vm->heap_limit = heap_limit; vm->equality_work = equality_work; }
         if (!vm || !vm_restore(vm, restore, err, sizeof err)) {
             fprintf(stderr, "runevm: --restore: %s\n", vm ? err : "out of memory");
             if (vm) vm_destroy(vm);
@@ -117,6 +125,7 @@ int main(int argc, char **argv) {
         VM *vm = calloc(1, sizeof(VM));
         char err[256];
         if (vm) vm->stack_limit = stack;
+        if (vm) { vm->heap_limit = heap_limit; vm->equality_work = equality_work; }
         if (!vm || !vm_resume(vm, resume, err, sizeof err)) {
             fprintf(stderr, "runevm: --resume: %s\n", vm ? err : "out of memory");
             if (vm) vm_destroy(vm);
@@ -139,6 +148,8 @@ int main(int argc, char **argv) {
     vm->argc = argc - i - 1;
     vm->argv = argv + i + 1;
     vm->stack_limit = stack;
+    vm->heap_limit = heap_limit;
+    vm->equality_work = equality_work;
     vm_init(vm, heap);
     vm->heap_fill = (unsigned)heap_fill;
 

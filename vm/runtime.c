@@ -59,6 +59,12 @@ void vm_fatal(VM *vm, const char *fmt, ...) {
    made without vm_init (one an image is read into) has the default. */
 #define STACK_LIMIT_DEFAULT ((size_t)1 << 30)   /* 1 GiB: 67 million values, or 26 million frames */
 static size_t stack_limit(const VM *vm) { return vm->stack_limit ? vm->stack_limit : STACK_LIMIT_DEFAULT; }
+void vm_limit(VM *vm, const char *message) {
+    fflush(stdout);
+    fprintf(stderr, "runevm: %s\n", message);
+    vm_print_trace(vm, stderr);
+    exit(2);
+}
 static void stack_overflow(VM *vm) {
     fprintf(stderr, "runevm: stack overflow: the stack would exceed %zu bytes (--stack-size N raises the limit)\n", stack_limit(vm));
     exit(2);
@@ -112,42 +118,84 @@ void vm_cons(VM *vm) {
 }
 
 /* --- structural equality --- */
-int values_equal(Value a, Value b) {
+int values_equal(VM *vm, Value a, Value b) {
+    typedef struct { Obj *x, *y; uint32_t next; } Pending;
+    Pending local[32], *pending = local;
+    size_t count = 0, capacity = 32, steps = 0;
+    size_t limit = vm->equality_work ? vm->equality_work : 1000000;
+    int equal = 0;
     for (;;) {
-        if (a.tag != b.tag) return 0;
+        if (steps == limit) {
+            if (pending != local) free(pending);
+            vm_limit(vm, "equality work limit exceeded");
+        }
+        steps++;
+        if (a.tag != b.tag) break;
         switch (a.tag) {
-        case T_UNIT: return 1;
-        case T_INT: case T_CHAR: case T_CON0: return a.u.i == b.u.i;
-        case T_WORD: return a.u.w == b.u.w;
-        case T_REAL: return a.u.d == b.u.d;
+        case T_UNIT: goto matched;
+        case T_INT: case T_CHAR: case T_CON0:
+            if (a.u.i != b.u.i) goto done;
+            goto matched;
+        case T_WORD:
+            if (a.u.w != b.u.w) goto done;
+            goto matched;
+        case T_REAL:
+            if (a.u.d != b.u.d) goto done;
+            goto matched;
         case T_PTR: {
             Obj *x = a.u.p, *y = b.u.p;
-            if (x == y) return 1;
-            if (x->kind != y->kind) return 0;
+            if (x == y) goto matched;
+            if (x->kind != y->kind) goto done;
             switch (x->kind) {
             case K_STRING:
-                return x->len == y->len && memcmp(OBJ_BYTES(x), OBJ_BYTES(y), x->len) == 0;
+                if (x->len != y->len || memcmp(OBJ_BYTES(x), OBJ_BYTES(y), x->len) != 0) goto done;
+                goto matched;
             case K_REF: case K_ARRAY: case K_CLOSURE: case K_EXNCON:
-                return 0;
+                goto done;
             case K_CON:
-                if (x->contag != y->contag) return 0;
+                if (x->contag != y->contag) goto done;
                 /* fall through */
-            case K_TUPLE: case K_EXN: {
-                if (x->len != y->len) return 0;
-                if (x->len == 0) return 1;
-                Value *fx = OBJ_FIELDS(x), *fy = OBJ_FIELDS(y);
-                for (uint32_t i = 0; i + 1 < x->len; i++)
-                    if (!values_equal(fx[i], fy[i])) return 0;
-                a = fx[x->len - 1];
-                b = fy[x->len - 1];
+            case K_TUPLE: case K_EXN:
+                if (x->len != y->len) goto done;
+                if (x->len == 0) goto matched;
+                if (x->len > 1) {
+                    if (count == 65536) {
+                        if (pending != local) free(pending);
+                        vm_limit(vm, "equality exceeds 65536 pending comparisons");
+                    }
+                    if (count == capacity) {
+                        size_t cap = capacity * 2;
+                        Pending *grown = malloc(cap * sizeof(Pending));
+                        if (!grown) {
+                            if (pending != local) free(pending);
+                            vm_fatal(vm, "out of memory comparing values");
+                        }
+                        memcpy(grown, pending, count * sizeof(Pending));
+                        if (pending != local) free(pending);
+                        pending = grown;
+                        capacity = cap;
+                    }
+                    pending[count++] = (Pending){ x, y, 1 };
+                }
+                a = OBJ_FIELDS(x)[0];
+                b = OBJ_FIELDS(y)[0];
                 continue;
-            }
-            default: return 0;
+            default: goto done;
             }
         }
-        default: return 0;
+        default: goto done;
         }
+matched:
+        if (count == 0) { equal = 1; break; }
+        Pending *p = &pending[count - 1];
+        a = OBJ_FIELDS(p->x)[p->next];
+        b = OBJ_FIELDS(p->y)[p->next];
+        p->next++;
+        if (p->next == p->x->len) count--;
     }
+done:
+    if (pending != local) free(pending);
+    return equal;
 }
 
 /* --- exceptions --- */

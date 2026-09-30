@@ -7,7 +7,7 @@
 # is), N at a time, except the programs tests/windows-skip.txt lists; its
 # header gives the reasons. What a program must print and how it must exit
 # are checked as tests/run-tests.sh checks them, from the same siblings
-# (.args, .vmargs, .stdin, .exitcode, .stderr, .cwarn). The results of
+# (.args, .vmargs, .stdin, .exitcode, .stderr, .stderr-head, .cwarn, .restore). The results of
 # bin/runevmSUFFIX.exe go to tests/out/windowsSUFFIX. Then tests/vm runs on
 # each VM, and a few programs run with --count on each and on bin/runevm:
 # the counts of instructions, bytes and objects must be the same, since a
@@ -96,6 +96,18 @@ if [ "$mode" = --run-one ]; then
     echo "FAIL $name: stdout differs (diff tests/lang/$name.expected $OUT/$name.stdout)"
   elif [ -f "$base.stderr" ] && ! cmp -s "$out/$name.stderr" "$base.stderr"; then
     echo "FAIL $name: stderr differs (diff tests/lang/$name.stderr $OUT/$name.stderr)"
+  elif [ -f "$base.stderr-head" ] && [ "$(head -1 "$out/$name.stderr")" != "$(cat "$base.stderr-head")" ]; then
+    echo "FAIL $name: runtime error differs (first line of $out/$name.stderr)"
+  elif [ -f "$base.restore" ]; then
+    (cd "$dir" && "$VM" --restore "tests/out/$name.img" > "$out/$name.restored" 2> "$out/$name.restored.err")
+    restored=$?
+    if [ "$restored" != 0 ]; then
+      echo "FAIL $name: restore exited $restored: $(head -1 "$out/$name.restored.err")"
+    elif ! cmp -s "$out/$name.restored" "$base.restore"; then
+      echo "FAIL $name: restored output differs (diff $base.restore $out/$name.restored)"
+    else
+      echo PASS
+    fi
   else
     echo PASS
   fi > "$out/$name.result"

@@ -603,12 +603,15 @@ test-portability: portability $(RUNE) vm bin/rune-new
 # ---------------------------------------------------------------- tests
 # Depending on $(RUNE) builds whichever compiler the override names.
 test: $(RUNE) vm | build/.doctor-check
+	python3 tests/compiler/run-tests.py --rune $(RUNE)
+	python3 tests/vm/run-limits.py --rune $(RUNE) --vm $(RUNEVM)
 	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE) --vm $(RUNEVM)
 	sh tests/vm/run-vm-tests.sh --vm $(RUNEVM)
 
 test-all: host-builds vm | build/.doctor-check
 	@for c in mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit; do \
 	  echo "=== testing with $$c build ==="; \
+	  python3 tests/compiler/run-tests.py --rune bin/rune-$$c || exit 1; \
 	  sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-$$c --vm bin/runevm || exit 1; \
 	done
 
@@ -746,6 +749,7 @@ bin/runevm-opt: scripts/runevm-opt.sh
 
 ifeq ($(NATIVE_HOST),yes)
 test-native: bin/runevm-opt bin/runeopt-mlton build/librune.a $(RUNE) vm | build/.doctor-native
+	python3 tests/vm/run-limits.py --rune $(RUNE) --vm bin/runevm-opt
 	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm-opt --skip tests/opt-skip.txt
 	sh tests/opt/run-counts.sh -j $(JOBS) $$(for t in tests/lang/*.sml; do echo tests/out/$$(basename $$t .sml).rbc; done)
 	RUNE=$(abspath $(RUNE)) RUNE_MATRIX_BYTECODE="$(ROOT)/tests/out/matrix/rune" \
@@ -826,6 +830,7 @@ bin/rune-new: bin/rune Makefile
 # tests of the language, allocation and the bootstrap against runevm, and
 # the Basis Library.
 test-new: bin/rune-new bin/runevm-new $(RUNE) vm
+	python3 tests/vm/run-limits.py --rune bin/rune-new --vm bin/runevm-new
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new --out tests/out/new
 	sh scripts/check-new.sh -j $(JOBS)
 	RUNE_NEW=$(abspath bin/rune-new) RUNEVM_NEW=$(abspath bin/runevm-new) sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:new

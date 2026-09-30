@@ -25,6 +25,11 @@ baked into `bin/rune.rbc`, so it does not depend on where the checkout is.
 
 ## Prerequisites
 
+The acceptance tests also need Python 3. The compiler-driver tests use its
+POSIX resource controls to interrupt a bytecode write and check that the previous
+artifact survives, and the VM tests check saved limits and stricter restore
+policies (`tests/compiler/run-tests.py`, `tests/vm/run-limits.py`).
+
 * A C compiler (`cc`; gcc 13 and clang 18 are tested), GNU make 4.3 or later, POSIX `sh`, `awk`. The VMs are built as C17 (`-std=c17`), and what they take from it beyond C99 is behind a test of `__STDC_VERSION__` (the header word of a `Value`, `vm/vm.h`), so `make CFLAGS='-std=c99 -O2'` builds them too, a little slower. Where the compiler is gcc or clang the VM's loop goes from instruction to instruction by computed goto, a GNU extension; `make CFLAGS='-std=c99 -O2 -DRUNE_SWITCH'` builds the switch every C compiler has.
 * The SML systems that build the compiler, which `make hosts`
   (`scripts/fetch-hosts.sh`) installs under `${RUNE_HOSTS:-~/.local/rune-hosts}`:

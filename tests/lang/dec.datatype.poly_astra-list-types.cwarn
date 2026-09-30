@@ -1,0 +1,1 @@
+tests/lang/dec.datatype.poly_astra-list-types.sml:9:17: warning: binding is not exhaustive (missing case: nil)

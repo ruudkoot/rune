@@ -1,0 +1,2 @@
+tests/lang/dec.datatype.poly_astra-case-warnings.sml:2:57: warning: redundant match rule
+tests/lang/dec.datatype.poly_astra-case-warnings.sml:3:17: warning: binding is not exhaustive (missing case: false)

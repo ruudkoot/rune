@@ -407,3 +407,27 @@ raised as noted.
   put where they were left (`tests/lang/rt.save_restore`);
 * `rune --dump-code file.sml` prints the generated code with symbolic labels
   before serialization; `--dump-lambda` prints the intermediate representation.
+
+### Resource limits and images
+
+`--heap-limit N` caps the size of one semispace, in bytes (at least 4096).
+The initial size is reduced to the cap if needed. The collector reclaims dead
+objects before reporting `heap limit exceeded`; the fill target can be exceeded
+at the cap when the live objects and requested allocation still fit. Both
+semispaces can consume memory, and stacks, code, host allocation overhead and the
+comparison worklist are outside this cap. Native programs take the same option
+from `RUNEVM_OPTIONS` or `runeopt --options`.
+
+`--equality-work N` bounds a structural comparison to N visited value pairs
+(1000000 by default). At most 65536 aggregate continuations may be pending;
+unary chains and list tails are traversed without C recursion. A comparison
+that exceeds these limits fails with status 2. Native programs accept the same
+option, and the JIT synchronizes the VM before calling the comparison helper so
+its error trace is current.
+
+Image version 7 records both limits. Emulated fork inherits them; restore uses
+the stricter of saved and explicitly requested process limits. A restore that
+cannot fit the saved live heap is refused before allocating that heap. A saved
+semispace larger than the limit can be reduced when its live data fits.
+`Runtime.restore` keeps these restrictions when replacing the running world.
+Version 6 images must be recreated with this VM; the `.rbc` format is unchanged.

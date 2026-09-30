@@ -15,6 +15,7 @@ size_t obj_size(const Obj *o) {
 }
 
 void heap_init(VM *vm, size_t semispace_bytes) {
+    if (vm->heap_limit && semispace_bytes > vm->heap_limit) semispace_bytes = vm->heap_limit;
     vm->heap_size = semispace_bytes;
     vm->heap_from = malloc(semispace_bytes);
     vm->heap_to = NULL;
@@ -149,6 +150,8 @@ static size_t fill_of(const VM *vm, size_t n) {
 static size_t grown(const VM *vm, size_t size, size_t used, size_t needed) {
     size_t want = size;
     while (used > fill_of(vm, want) || needed > fill_of(vm, want) - used) {
+        if (vm->heap_limit && want >= vm->heap_limit) return vm->heap_limit;
+        if (vm->heap_limit && want > vm->heap_limit / 2) return vm->heap_limit;
         if (want > SIZE_MAX / 2) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
         want *= 2;
     }
@@ -177,6 +180,7 @@ void vm_gc(VM *vm, size_t needed) {
     collect_into(vm, grown(vm, vm->heap_size, guess, needed));
     size_t want = grown(vm, vm->heap_size, vm->heap_used, needed);
     if (want != vm->heap_size) collect_into(vm, want);
+    if (needed > vm->heap_size - vm->heap_used) vm_limit(vm, "heap limit exceeded");
     vm->live_before = vm->live_last;
     vm->live_last = vm->heap_used;
     vm->gc_user_us += sys_time_user() - user0;

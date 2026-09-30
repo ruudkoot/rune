@@ -207,6 +207,11 @@ program written by hand. The grammar is at the head of
 
 ## Matches
 
+The final `Match` raise carries a `Mark` for its `case` or `fn` expression,
+or the declared function location; a `Bind` raise carries the binding pattern's
+location. Both compilation strategies keep that mark, so failure locations and
+inlined function frames agree across optimization levels.
+
 `MatchComp` compiles a match two ways:
 
 * **Rule by rule** (at `-O0`, for a match of one rule, and where a tree
