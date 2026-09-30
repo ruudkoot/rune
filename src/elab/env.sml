@@ -23,6 +23,21 @@ struct
   fun tys (Env e) = #tys e
   fun strs (Env e) = #strs e
 
+  fun noEscape (first, sp, env : env) : unit =
+    let
+      fun value v =
+        Types.noEscape (first, sp,
+          case v of Val {scheme, ...} => scheme | Con {scheme, ...} => scheme
+                  | Prim {scheme, ...} => scheme | ConAsVal {scheme, ...} => scheme
+                  | Exn {ty, ...} => ty | ExnAsVal {ty, ...} => ty)
+      fun tystr (TyStr {fcn, ...}) =
+        case fcn of TName _ => () | TAbbrev (_, t) => Types.noEscape (first, sp, t)
+    in
+      StringMap.app value (vals env);
+      StringMap.app tystr (tys env);
+      StringMap.app (fn e => noEscape (first, sp, e)) (strs env)
+    end
+
   fun bindVal (Env {vals, tys, strs}, name, v) = Env {vals = StringMap.insert (vals, name, v), tys = tys, strs = strs}
   fun bindTy (Env {vals, tys, strs}, name, t) = Env {vals = vals, tys = StringMap.insert (tys, name, t), strs = strs}
   fun bindStr (Env {vals, tys, strs}, name, s) = Env {vals = vals, tys = tys, strs = StringMap.insert (strs, name, s)}

@@ -22,6 +22,7 @@ struct
       val ntoks = Vector.length toks
       val pos = ref 0
       val fixenv : Fixity.env ref = ref initialFixity
+      val groupedPatHeads : bool IntTable.table = IntTable.table 32
 
       fun tokAt i = if i < ntoks then Vector.sub (toks, i) else Vector.sub (toks, ntoks - 1)
       fun peek () = #1 (tokAt (!pos))
@@ -244,7 +245,10 @@ struct
           val items = collect []
           fun app (f, a) =
             case f of
-              PVar (id, _, sp) => PApp (id, ref NONE, a, Source.join (sp, spanOfPat a))
+              PVar (id, _, sp) =>
+                if Option.isSome (IntTable.find (groupedPatHeads, #start sp)) then
+                  errAt (sp, "only an unparenthesized constructor identifier can be applied in a pattern")
+                else PApp (id, ref NONE, a, Source.join (sp, spanOfPat a))
             | _ => errAt (spanOfPat f, "only a constructor can be applied in a pattern")
           fun binop (s, sp, l, r) =
             PApp (([], s), ref NONE, PTuple ([l, r], Source.join (spanOfPat l, spanOfPat r)),
@@ -317,7 +321,8 @@ struct
                       let fun loop acc = if peek () = COMMA then (advance (); loop (parsePat () :: acc)) else List.rev acc
                           val ps = loop [p]
                       in expect RPAREN; PTuple (ps, spanFrom start) end
-                    else (expect RPAREN; p)
+                    else (expect RPAREN;
+                          (case p of PVar (_, _, sp) => IntTable.insert (groupedPatHeads, #start sp, true) | _ => ()); p)
                   end
               end
           | LBRACKET =>

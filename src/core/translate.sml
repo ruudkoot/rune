@@ -288,12 +288,12 @@ struct
           LetRec ([(loop, t, Fn (u, t, If (transExp c, Seq (transExp b, App (Var loop, Unit)), Unit)))],
                   App (Var loop, Unit))
         end
-    | ECase (e, rules, _) =>
+    | ECase (e, rules, sp) =>
         let val x = MatchComp.freshVar ()
-        in Let (x, transExp e, MatchComp.compileMatch (x, transRules rules, raiseBuiltin exnMatch)) end
+        in Let (x, transExp e, MatchComp.compileMatch (x, transRules rules, Mark (sp, raiseBuiltin exnMatch))) end
     | EFn (rules, slot, sp) =>
         let val x = MatchComp.freshVar ()
-        in Fn (x, ty (slot, sp), MatchComp.compileMatch (x, transRules rules, raiseBuiltin exnMatch)) end
+        in Fn (x, ty (slot, sp), MatchComp.compileMatch (x, transRules rules, Mark (sp, raiseBuiltin exnMatch))) end
     | EPrim (name, _, slot, sp) => etaPrim (name, ty (slot, sp))
 
   and transRules rules = List.map (fn (p, e) => (p, transExp e)) rules
@@ -382,7 +382,7 @@ struct
             | _ => general (p, e, k)
           and general (p, e, k) =
             let val t = MatchComp.freshVar ()
-            in Let (t, transExp e, MatchComp.compileMatch (t, [(p, k ())], raiseBuiltin exnBind)) end
+            in Let (t, transExp e, MatchComp.compileMatch (t, [(p, k ())], Mark (spanOfPat p, raiseBuiltin exnBind))) end
           fun go [] = k ()
             | go (b :: rest) = one (b, fn () => go rest)
         in go binds end
@@ -418,7 +418,7 @@ struct
               val arity = case #clauses f of c :: _ => List.length (#pats c) | [] => 0
               val params = List.tabulate (arity, fn _ => MatchComp.freshVar ())
               val clauses = List.map (fn {pats, body, ...} => (pats, transExp body)) (#clauses f)
-              val body = MatchComp.compileClauses (params, clauses, raiseBuiltin exnMatch)
+              val body = MatchComp.compileClauses (params, clauses, Mark (#span f, raiseBuiltin exnMatch))
               (* under the position of the declaration, so that the closure
                  is made where the function is written *)
               val fty =

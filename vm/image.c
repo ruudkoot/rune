@@ -164,6 +164,8 @@ static void write_image(VM *vm, Stream *s, int kind) {
     put_u32(s, (uint32_t)vm->emulate_fork);
     put_u32(s, (uint32_t)fegetround());
     put_u32(s, (uint32_t)vm->heap_fill);
+    put_u64(s, (uint64_t)vm->heap_limit);
+    put_u64(s, (uint64_t)(vm->equality_work ? vm->equality_work : 1000000));
     put_u64(s, (uint64_t)vm->gc_stress);
     put_u64(s, (uint64_t)vm->gc_count);
     put_u64(s, (uint64_t)vm->gc_user_us);
@@ -482,6 +484,15 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     vm->heap_fill = get_u32(&s);
     if (s.ok && (vm->heap_fill < 1 || vm->heap_fill > 100))
         return failed(&s, err, errlen, "the image is not sound");
+    uint64_t heap_limit = get_u64(&s), equality_work = get_u64(&s);
+    if (!s.ok || heap_limit > SIZE_MAX || (heap_limit && heap_limit < 4096) ||
+        equality_work == 0 || equality_work > SIZE_MAX)
+        return failed(&s, err, errlen, "bad resource limits in the image");
+    /* A child inherits the limits; a restore cannot relax a limit supplied
+       by this process. Zero denotes an unlimited heap, or an unspecified
+       equality budget supplied by the caller. */
+    if (heap_limit && (!vm->heap_limit || heap_limit < vm->heap_limit)) vm->heap_limit = (size_t)heap_limit;
+    if (!vm->equality_work || equality_work < vm->equality_work) vm->equality_work = (size_t)equality_work;
     vm->gc_stress = (size_t)get_u64(&s);
     vm->gc_count = (size_t)get_u64(&s);
     vm->gc_user_us = (int64_t)get_u64(&s);
@@ -508,6 +519,10 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
         return failed(&s, err, errlen, "the image is cut short");
     vm->heap_size = (size_t)heap_size;
     vm->heap_used = (size_t)heap_used;
+    if (vm->heap_limit) {
+        if (vm->heap_used > vm->heap_limit) return failed(&s, err, errlen, "heap limit exceeded");
+        if (vm->heap_size > vm->heap_limit) vm->heap_size = vm->heap_limit;
+    }
     vm->heap_from = malloc(vm->heap_size > 0 ? vm->heap_size : 1);
     if (!vm->heap_from) return failed(&s, err, errlen, "cannot allocate heap");
     if (!get_heap(&s, vm)) return failed(&s, err, errlen, "the heap of the image is not sound");
@@ -737,6 +752,8 @@ int vm_become(VM *vm, const char *path) {
     VM *next = calloc(1, sizeof(VM));
     char err[256];
     if (!next) { vm->io_errno = ENOMEM; return 0; }
+    next->heap_limit = vm->heap_limit;
+    next->equality_work = vm->equality_work;
     fflush(NULL);
     if (!read_image(next, sys_fopen(path, "rb"), IMAGE_SAVE, err, sizeof err)) {
         vm_release(next);

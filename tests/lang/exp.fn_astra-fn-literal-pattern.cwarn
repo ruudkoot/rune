@@ -1,0 +1,1 @@
+tests/lang/exp.fn_astra-fn-literal-pattern.sml:1:9: warning: match is not exhaustive (missing case: _)

@@ -1,0 +1,1 @@
+tests/lang/dec.fun.clauses_astra-fun-literal-pattern.sml:1:5: warning: match is not exhaustive (missing case: false)

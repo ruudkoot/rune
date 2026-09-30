@@ -17,7 +17,7 @@ struct
   fun fail msg = raise Bad msg
 
   (* IMAGE_MAGIC of vm/image.c, with the fingerprint of the instruction set *)
-  val magic = "runevm image 6 isa " ^ Opcodes.fingerprintHex ^ "\000"
+  val magic = "runevm image 7 isa " ^ Opcodes.fingerprintHex ^ "\000"
   val big = Rbc.big
 
   type reader = {data : string, pos : int ref}
@@ -111,7 +111,7 @@ struct
                then #pos r := String.size magic else fail "not an image of this runevm"
       val _ = u32 r                                   (* the kind *)
       val () = List.app (fn _ => ignore (u32 r)) [1, 2, 3, 4, 5, 6]
-      val () = List.app (fn _ => ignore (uN (r, 8))) [1, 2, 3, 4, 5, 6, 7]
+      val () = List.app (fn _ => ignore (uN (r, 8))) [1, 2, 3, 4, 5, 6, 7, 8, 9]
       val _ = u32 r                                   (* pc *)
       val _ = u32 r                                   (* io_errno *)
       val _ = str r                                   (* progname *)

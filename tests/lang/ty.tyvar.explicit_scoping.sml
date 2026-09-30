@@ -19,7 +19,7 @@ fun 'a wrap (x : 'a) =
     exception Boxed of 'a
     datatype box = Box of 'a
   in
-    (Box x, (raise Boxed x) handle Boxed y => y)
+    ((case Box x of Box y => y), (raise Boxed x) handle Boxed y => y)
   end
 val () = print (case wrap 7 of (_, y) => Int.toString y ^ "\n")
 (* ''a: an explicit equality type variable *)

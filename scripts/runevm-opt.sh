@@ -29,7 +29,7 @@ options=""
 while [ $# -gt 0 ]; do
   case $1 in
     --count|--stats|--emulate-fork|--checked) options="$options $1"; shift ;;
-    --heap-size|--heap-fill|--gc-stress) options="$options $1 ${2:-}"; shift 2 ;;
+    --heap-size|--heap-limit|--equality-work|--heap-fill|--gc-stress) options="$options $1 ${2:-}"; shift 2 ;;
     --restore)
       image=${2:-}
       [ -f "$image" ] || exec "$vm" "$@"

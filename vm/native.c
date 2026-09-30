@@ -265,7 +265,7 @@ void native_fatal(VM *vm, int what, int32_t a) {
 /* ---------------------------------------------------------------- main */
 
 typedef struct Options {
-    size_t heap, gc_stress, heap_fill;
+    size_t heap, gc_stress, heap_fill, heap_limit, equality_work;
     int stats, count, emulate_fork, checked;
     char *restore;
 } Options;
@@ -275,7 +275,7 @@ static int size_arg(const char *text, size_t *out) {
     char *end;
     errno = 0;
     unsigned long long v = strtoull(text, &end, 10);
-    if (errno != 0 || end == text || *end != 0 || text[0] == '-' || v > SIZE_MAX) return 0;
+    if (errno != 0 || end == text || *end != 0 || text[0] < '0' || text[0] > '9' || v > SIZE_MAX) return 0;
     *out = (size_t)v;
     return 1;
 }
@@ -298,7 +298,11 @@ static void options(const char *text, const char *where, Options *o) {
         else if (strcmp(w, "--heap-size") == 0 && i + 1 < n && size_arg(words[i + 1], &o->heap)) {
             if (o->heap < 4096) o->heap = 4096;
             i++;
-        } else if (strcmp(w, "--gc-stress") == 0 && i + 1 < n && size_arg(words[i + 1], &o->gc_stress) && o->gc_stress > 0)
+        } else if (strcmp(w, "--heap-limit") == 0 && i + 1 < n && size_arg(words[i + 1], &o->heap_limit) && o->heap_limit >= 4096)
+            i++;
+        else if (strcmp(w, "--equality-work") == 0 && i + 1 < n && size_arg(words[i + 1], &o->equality_work) && o->equality_work > 0)
+            i++;
+        else if (strcmp(w, "--gc-stress") == 0 && i + 1 < n && size_arg(words[i + 1], &o->gc_stress) && o->gc_stress > 0)
             i++;
         else if (strcmp(w, "--heap-fill") == 0 && i + 1 < n && size_arg(words[i + 1], &o->heap_fill)
                  && o->heap_fill >= 1 && o->heap_fill <= 100)
@@ -310,7 +314,7 @@ static void options(const char *text, const char *where, Options *o) {
             strcpy(o->restore, words[++i]);
         } else {
             fprintf(stderr, "runevm: %s: %s is not an option of a native program "
-                    "(--count, --stats, --heap-size N, --heap-fill P, --gc-stress N, --checked, --emulate-fork, "
+                    "(--count, --stats, --heap-size N, --heap-limit N, --equality-work N, --heap-fill P, --gc-stress N, --checked, --emulate-fork, "
                     "--restore FILE)\n", where, w);
             exit(2);
         }
@@ -322,7 +326,7 @@ static void options(const char *text, const char *where, Options *o) {
 static char *program_name;
 
 int main(int argc, char **argv) {
-    Options o = { 4u << 20, 0, 50, 0, 0, 0, 0, NULL };
+    Options o = { .heap = 4u << 20, .heap_fill = 50 };
     vm_same_program = same_program;
     options(rune_options, "runeopt --options", &o);
     /* The options are the runtime's, as runevm's are, and not part of what
@@ -339,6 +343,8 @@ int main(int argc, char **argv) {
         VM *vm = calloc(1, sizeof(VM));
         char err[256];
         if (!vm) { fprintf(stderr, "runevm: out of memory\n"); return 2; }
+        vm->heap_limit = o.heap_limit;
+        vm->equality_work = o.equality_work;
         int ok = child ? vm_resume(vm, argv[2], err, sizeof err) : vm_restore(vm, o.restore, err, sizeof err);
         if (ok && !same_program(vm)) { ok = 0; snprintf(err, sizeof err, "the image is of another program"); }
         const void *code = ok ? prepare_resume(vm, err, sizeof err) : NULL;
@@ -366,6 +372,8 @@ int main(int argc, char **argv) {
     vm->progname = program_name ? program_name : argv[0];
     vm->argc = argc - 1;
     vm->argv = argv + 1;
+    vm->heap_limit = o.heap_limit;
+    vm->equality_work = o.equality_work;
     vm_init(vm, o.heap);
     vm->heap_fill = (unsigned)o.heap_fill;
 

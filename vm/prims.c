@@ -75,7 +75,7 @@ static int mul_ov(int64_t a, int64_t b, int64_t *r) {
 }
 
 /* ================================================================ poly */
-static int p_poly_eq(VM *vm) { return ret(vm, 2, mk_bool(values_equal(ARG(1), ARG(0)))); }
+static int p_poly_eq(VM *vm) { return ret(vm, 2, mk_bool(values_equal(vm, ARG(1), ARG(0)))); }
 /* `=` where the compiler knows the type's values are never in the heap
    (middle-end M11): their tags and bits. */
 static int p_imm_eq(VM *vm) {

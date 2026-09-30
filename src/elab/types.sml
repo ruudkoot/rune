@@ -37,6 +37,23 @@ struct
 
   val genericLevel = 1000000000
 
+  (* A fresh budget for each top-level declaration. Outside elaboration the
+     backend may read types without spending inference work. *)
+  val workLimit = ref 10000000
+  val workLeft = ref 1000000000
+  val working = ref false
+  val workSpan = ref Source.noSpan
+  fun startWork sp = (workSpan := sp; workLeft := !workLimit; working := true)
+  fun stopWork () = (working := false; workLeft := 1000000000)
+  fun step () =
+    let val left = !workLeft
+    in
+      if left = 0 then
+        if !working then Error.error (!workSpan, "type inference exceeds " ^ Int.toString (!workLimit) ^ " steps")
+        else workLeft := 1000000000
+      else workLeft := left - 1
+    end
+
   fun sameTycon (a : tycon, b : tycon) = #stamp a = #stamp b
 
   (* --- builtin type constructors --- *)
@@ -137,11 +154,24 @@ struct
      one link on the way; one link is left as it is, since writing it again
      would allocate. *)
   fun prune (t as TVar r) =
-      (case !r of
+      (step (); case !r of
          Bound (t' as TVar _) => let val t'' = prune t' in r := Bound t''; t'' end
        | Bound t' => t'
        | _ => t)
-    | prune t = t
+    | prune t = (step (); t)
+
+  (* Names generated inside a let cannot occur in its result or in a type
+     shared with its surrounding environment, including flexible records. *)
+  fun noEscape (first : int, sp : Source.span, t : ty) : unit =
+    case prune t of
+      TVar (ref (Unbound {kind = KFlex (fields, _), ...})) =>
+        List.app (fn (_, a) => noEscape (first, sp, a)) fields
+    | TVar _ => ()
+    | TCon (c, args) =>
+        if #stamp c >= first then Error.error (sp, "local datatype escapes its scope: " ^ #name c)
+        else List.app (fn a => noEscape (first, sp, a)) args
+    | TRecord fields => List.app (fn (_, a) => noEscape (first, sp, a)) fields
+    | TArrow (a, b) => (noEscape (first, sp, a); noEscape (first, sp, b))
 
   (* Fully dereference (for the backend). *)
   fun resolve t =

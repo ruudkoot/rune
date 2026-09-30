@@ -42,6 +42,8 @@ struct
     \                    their sources, and exit\n\
     \  --allow-prim      allow the _prim extension in the inputs\n\
     \  --typecheck-only  stop after type checking\n\
+    \  --type-work=N     type traversal budget per top-level declaration (10000000)\n\
+    \  --match-work=N    pattern-analysis budget per match (1000000)\n\
     \  --no-warnings     do not print warnings (nonexhaustive or redundant matches)\n\
     \  --dump-tokens     print the tokens of the input files and stop\n\
     \  --dump-ast        print the parsed program\n\
@@ -118,7 +120,18 @@ struct
              (case Int.fromString v of
                 SOME n => if n >= 0 then (Pass.fuel := SOME n; parse rest) else raise Usage "--fuel requires a number"
               | NONE => raise Usage "--fuel requires a number")
+         | SOME ("--type-work", v) => (Types.workLimit := workCount ("--type-work", v); parse rest)
+         | SOME ("--match-work", v) => (Exhaust.workLimit := workCount ("--match-work", v); parse rest)
          | _ =>
              if String.isPrefix "-" a andalso a <> "-" then raise Usage ("unknown option: " ^ a)
              else (inputs := !inputs @ [a]; parse rest))
+  and workCount (option, text) =
+    let
+      fun bad () = raise Usage (option ^ " requires a positive integer at most 1000000000")
+      fun digit (c, n) =
+        if not (Char.isDigit c) then bad ()
+        else let val d = Char.ord c - Char.ord #"0"
+             in if n > (1000000000 - d) div 10 then bad () else n * 10 + d end
+      val n = List.foldl digit 0 (String.explode text)
+    in if n = 0 then bad () else n end
 end

@@ -268,6 +268,8 @@ typedef struct VM {
     size_t gc_stress;        /* --gc-stress N: collect before every Nth allocation; 0 = off */
     unsigned heap_fill;      /* --heap-fill P: the heap grows until at most P% of it is in use
                                 after a collection; 50 unless the option says otherwise */
+    size_t heap_limit;       /* maximum semispace size; 0 = unlimited */
+    size_t equality_work;    /* comparison steps; 0 = the default 1000000 */
 
     uint32_t pc;
     int trace;
@@ -315,6 +317,7 @@ int heap_relocate(VM *vm, uintptr_t old_base);  /* after an image is read: 0 whe
 
 void vm_init(VM *vm, size_t heap);           /* the standard files and the heap */
 VM_NORETURN void vm_fatal(VM *vm, const char *fmt, ...);
+VM_NORETURN void vm_limit(VM *vm, const char *message);
 void vm_grow_stack(VM *vm, size_t need);     /* make room for `need` values in total */
 void vm_grow_frames(VM *vm);                 /* make room for another frame */
 static inline void vm_push(VM *vm, Value v) {
@@ -355,7 +358,7 @@ int vm_raise_builtin(VM *vm, int k);
 void vm_push_handler(VM *vm, uint32_t pc);
 void vm_start(VM *vm);                       /* the builtin exceptions, and function 0 called with () */
 void vm_cons(VM *vm);                        /* stack: ..., hd, tl  ->  ..., hd :: tl */
-int values_equal(Value a, Value b);
+int values_equal(VM *vm, Value a, Value b);
 void vm_print_trace(VM *vm, FILE *out);
 void vm_release(VM *vm);                     /* free what a VM holds, but not the VM */
 void vm_destroy(VM *vm);                     /* and the VM */
@@ -393,7 +396,7 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen);
 
 /* What each VM's instruction set gives (vm/isa_stack.c, vm/new/isa_regs.c):
    the fingerprint an .rbc must carry, and the first bytes of an image. */
-#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 5 isa 00000000")
+#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 7 isa 00000000")
 extern const uint32_t isa_fingerprint;
 extern const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE];
 const LineEntry *line_at(const Program *p, uint32_t pc);

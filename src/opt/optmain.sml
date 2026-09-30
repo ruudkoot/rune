@@ -19,7 +19,8 @@ struct
     \  -S          write the assembly to FILE (default FILE.rbc with .s) and stop\n\
     \  --options TEXT  options of runevm the program is to run with, as\n\
     \              RUNEVM_OPTIONS gives them when it runs, which come after\n\
-    \              these: --count, --stats, --heap-size N, --gc-stress N\n\
+    \              these: --count, --stats, --heap-size N, --heap-limit N,\n\
+    \              --equality-work N, --gc-stress N\n\
     \  --from-image IMAGE  the program of an image Runtime.save wrote, which\n\
     \              RUNEVM_OPTIONS=\"--restore IMAGE\" then carries on; its .rbc is\n\
     \              written beside the executable (FILE.rbc)\n\
