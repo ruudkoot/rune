@@ -108,10 +108,12 @@ make bench-check BENCH_FILTER=primes
 ```
 
 The default `rune,hosts` selects Rune and the six hosts installed by
-`make hosts`. Standalone `xc1` library setup is left to M6. Missing requested
+`make hosts`. Standalone `xc1` exports remain unavailable; see the measurement
+document for the adapter limitation. Missing requested
 configurations fail visibly; they do not count as passing comparisons.
-These commands check correctness. They do not publish timing comparisons.
-The timing and count commands in the roadmap are M6 work.
+These commands check correctness. `make bench`, `make bench-count` and
+`make bench-stats` provide separate serial timing, count and runtime-statistics
+runs. See [measurement commands and limitations](measurement.md).
 
 The [manifest](manifest.tsv) records ordered sources, source identity,
 profile arguments, expected-result files, limits, diagnostic tags, input files, result-check mode and implementation

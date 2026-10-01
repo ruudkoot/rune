@@ -969,15 +969,28 @@ install:
 uninstall:
 	sh scripts/install.sh --uninstall $(INSTALL_FLAGS)
 
-# The portable benchmark pilots (docs/plans/benchmarks.md, M1). Wall-clock
-# comparisons and deterministic count budgets are subsequent milestones.
-BENCH_PROFILE ?= smoke
-BENCH_CONFIGS ?= rune,hosts
+# Portable suite correctness, serial measurements and deterministic counts
+# (docs/plans/benchmarks.md). Timing thresholds stay outside make check.
+BENCH_PROFILE ?= $(if $(filter bench bench-count bench-stats,$(MAKECMDGOALS)),normal,smoke)
+BENCH_TIMING_CONFIGS = rune,native:mlton,native:smlnj-legacy,native:polyml
+BENCH_COUNT_CONFIGS = rune,rune:opt,rune:new,rune:jit
+BENCH_CHECK_CONFIGS = rune,hosts
+BENCH_CONFIGS ?= $(if $(filter bench-count bench-stats,$(MAKECMDGOALS)),$(BENCH_COUNT_CONFIGS),$(if $(filter bench,$(MAKECMDGOALS)),$(BENCH_TIMING_CONFIGS),$(BENCH_CHECK_CONFIGS)))
 BENCH_FILTER ?=
-.PHONY: bench-check
+.PHONY: bench-check bench bench-count bench-stats
 build/bench-catalog.rbc: examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml $(RUNE)
 	$(RUNE) --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml -o $@
 
 bench-check: build/bench-catalog.rbc vm
 	bin/runevm build/bench-catalog.rbc --check
 	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' sh scripts/run-benchmarks.sh
+
+build/bench-report.rbc: examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml $(RUNE)
+	$(RUNE) --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml -o $@
+
+build/bench-counts.rbc: examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml $(RUNE)
+	$(RUNE) --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml -o $@
+
+bench bench-count bench-stats: build/bench-catalog.rbc build/bench-report.rbc build/bench-counts.rbc vm
+	bin/runevm build/bench-catalog.rbc --check
+	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' BENCH_LEVEL=$(BENCH_LEVEL) BENCH_MODE=$(BENCH_MODE) BENCH_SAMPLES=$(BENCH_SAMPLES) BENCH_REPETITIONS=$(BENCH_REPETITIONS) sh scripts/measure-benchmarks.sh $(if $(filter bench-count,$@),count,$(if $(filter bench-stats,$@),stats,time))

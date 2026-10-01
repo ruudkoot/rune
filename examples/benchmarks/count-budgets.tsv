@@ -1,0 +1,9 @@
+benchmark	profile	config	level	instructions	bytes	objects
+primes-lazy	smoke	rune	O2	16511	38755	1073
+primes-lazy	smoke	rune:opt	O2	16511	38755	1073
+primes-lazy	smoke	rune:new	O2	9970	38755	1073
+primes-lazy	smoke	rune:jit	O2	9970	38755	1073
+primes-strict	smoke	rune	O2	21893	36784	948
+primes-strict	smoke	rune:opt	O2	21893	36784	948
+primes-strict	smoke	rune:new	O2	13208	36784	948
+primes-strict	smoke	rune:jit	O2	13208	36784	948

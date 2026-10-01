@@ -1,0 +1,2 @@
+primes-lazy	30	1048576	shared/input.sml shared/primes.sml primes-lazy/benchmark.sml shared/main.sml	10 1	primes-lazy/smoke.expected	-
+primes-strict	30	1048576	shared/input.sml shared/primes.sml primes-strict/benchmark.sml shared/main.sml	10 1	primes-strict/smoke.expected	-

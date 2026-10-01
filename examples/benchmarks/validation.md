@@ -154,3 +154,24 @@ explicit integer result type, avoiding an unresolved top-level type variable.
 The current `timeout 1800 make JOBS=4 check` passed with required subprocess
 and socket access. Cross-host compiler, documentation generator and native
 generator checks passed. This acceptance run preceded M7 routine integration.
+
+## M6 measurement and comparison record (complete)
+
+The [initial reports](results/m6/README.md) preserve 80 accepted fresh-process
+samples and 80 repeated rounds on two normal primes variants across Rune,
+MLton, SML/NJ and Poly/ML. Separate compile phases, correctness prerequisites,
+all samples, metadata, source/data snapshots, identities and raw outputs are
+retained. The recorded dirty state and OS-clock resolution are explicit.
+
+Eight O2 count configurations agree on instruction counts within execution
+models and on allocation across Rune engines. Reviewed ten-percent smoke
+bounds were created, then passed a separate budget-check run. Four O0 Tak
+engines also agree; those counts are explicitly unbudgeted. Separate runtime
+statistics runs passed. Ten statistical/counter checks on each primary
+compiler test median/IQR, model boundaries, deliberate instruction/allocation
+mismatches and budget failures. A wrong expected result fails before any
+portable timing sample is emitted.
+
+Standalone xc1 export support and optional hardware-counter adapters remain
+unavailable; requests fail explicitly. The initial report demonstrates the
+protocol without asserting compiler rankings, steady state or coverage closure.

@@ -1,0 +1,4 @@
+RESULT 54700
+PASS primes-strict
+SAMPLE 1 1.411331000
+SUMMARY 1 checks, 0 failed
