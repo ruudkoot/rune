@@ -245,6 +245,10 @@ struct
   and emitProgramAs (fingerprint : int, inputs : string list, prog : Code.program) : OS.Process.status =
     let
       val out = case !Options.output of SOME f => f | NONE => defaultOutput (List.hd inputs)
+      fun absolute p = OS.Path.mkCanonical (OS.Path.mkAbsolute {path = p, relativeTo = OS.FileSys.getDir ()})
+      fun same p = absolute p = absolute out orelse
+                   ((OS.FileSys.fileId p = OS.FileSys.fileId out) handle OS.SysErr _ => false)
+      val () = if List.exists same inputs then raise Options.Usage "output must differ from every input file" else ()
     in
       Emit.writeFileAs (fingerprint, out, prog);
       OS.Process.success

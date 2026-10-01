@@ -1,0 +1,5 @@
+val _ = print (Int.toString (2 + 3 * 4 - 1) ^ "\n")
+val _ = print (Int.toString (~7 div 3) ^ "," ^ Int.toString (~7 mod 3) ^ "\n")
+val _ = print (Int.toString (7 div ~3) ^ "," ^ Int.toString (7 mod ~3) ^ "\n")
+val _ = print (Int.toString (~7 div ~3) ^ "," ^ Int.toString (~7 mod ~3) ^ "\n")
+val _ = print (Int.toString (~ (2 + 6)) ^ "\n")

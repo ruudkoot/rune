@@ -1,0 +1,1 @@
+tests/lang/rt.exn.uncaught_astra-match-multiple-fn.sml:1:9: warning: match is not exhaustive (missing case: _ :: :: _)

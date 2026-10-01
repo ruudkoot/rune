@@ -1,0 +1,2 @@
+tests/lang/dec.fun.clauses_astra-refutable-functions.sml:2:15: warning: match is not exhaustive (missing case: B)
+tests/lang/dec.fun.clauses_astra-refutable-functions.sml:3:5: warning: match is not exhaustive (missing case: B _)

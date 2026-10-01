@@ -307,9 +307,10 @@ Made fast (M7): **the primitives of `fastprim.h` are in line**
 a slow path -- the helper, which does the primitive as the loop would
 and may raise -- wherever `prim_fast` would answer 0 (a tag that is not
 the one, an overflow, a divisor of 0 or -1, an index out of bounds);
-`poly_eq` on a pointer or a real and `string_order` go to helpers that
-touch nothing of the VM (`jit_h_values_equal`, `jit_h_string_order`),
-called with nothing synced or reloaded, and `ref_new` is an allocation
+`string_order` goes to `jit_h_string_order`, which touches nothing of the
+VM and is called with nothing synced or reloaded. `poly_eq` on a pointer
+or a real calls `jit_h_values_equal` with the VM exact and reloaded after:
+structural equality can end the process at its work limit. `ref_new` is an allocation
 in line. **A primitive not in line is called as the loop calls it:** its
 arguments pushed above the registers, the VM exact, the primitive's own
 C, the result it left on the stack taken; after a raise, on in the
@@ -534,7 +535,7 @@ FFI):
    it), push and pop frames, raise (which pops frames and handlers and
    leaves the handler's frame on top), change the program
    (`Runtime.restore`) or end the process. A helper that does none of
-   these -- compares two strings, `values_equal` -- is called with
+   these -- compares two strings -- is called with
    nothing synced or reloaded (M7), and says so where it is declared. What it may not do is run
    bytecode: a helper never calls the loop or native code (no nesting;
    *The driver*), and a foreign function that calls back into SML is the

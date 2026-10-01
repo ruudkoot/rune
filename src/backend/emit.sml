@@ -176,10 +176,20 @@ struct
   fun writeFileAs (fingerprint : int, path : string, p : program) : unit =
     let
       val chunks = serialize (fingerprint, p)
-      val out = TextIO.openOut path
+      val {dir, file} = OS.Path.splitDirFile path
+      val reservation = OS.FileSys.tmpName ()
+      val temporary = OS.Path.joinDirFile {dir = dir, file = "." ^ file ^ "." ^ OS.Path.file reservation}
+      fun remove p = OS.FileSys.remove p handle _ => ()
+      fun clean () = (remove temporary; remove reservation)
+      fun write () =
+        let val out = TextIO.openOut temporary
+        in
+          (List.app (fn s => TextIO.output (out, s)) chunks; TextIO.closeOut out)
+          handle ex => (TextIO.closeOut out handle _ => (); raise ex)
+        end
     in
-      List.app (fn s => TextIO.output (out, s)) chunks;
-      TextIO.closeOut out
+      (write (); OS.FileSys.rename {old = temporary, new = path}; remove reservation)
+      handle ex => (clean (); raise ex)
     end
 
   fun writeFile (path : string, p : program) : unit = writeFileAs (Opcodes.fingerprint, path, p)

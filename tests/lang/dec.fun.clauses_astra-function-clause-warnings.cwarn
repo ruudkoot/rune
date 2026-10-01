@@ -1,0 +1,4 @@
+tests/lang/dec.fun.clauses_astra-function-clause-warnings.sml:1:5: warning: match is not exhaustive (missing case: true false)
+tests/lang/dec.fun.clauses_astra-function-clause-warnings.sml:2:65: warning: redundant match rule
+tests/lang/dec.fun.clauses_astra-function-clause-warnings.sml:3:31: warning: redundant match rule
+tests/lang/dec.fun.clauses_astra-function-clause-warnings.sml:4:5: warning: match is not exhaustive (missing case: true (:: _))

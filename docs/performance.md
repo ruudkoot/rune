@@ -116,6 +116,18 @@ directory on the Windows side (`tests/windows-dir.sh`).
   the bootstrap and by `runedoc` -- are the budgets of `make perf-check`
   (`tests/perf/*.budget`).
 
+The Astra safeguards port measures the stack-bytecode bootstrap at 904523719
+instructions, 1110238456 allocated bytes and 24566927 objects. The type-work
+counter and scope checks add compiler work; its instruction budget is refreshed
+with the usual 10 percent headroom (994976090), while its byte and object budgets
+remain unchanged. These counts measure the compiler including the added code;
+the timing tables above retain their recorded snapshots.
+
+For the register bytecode, bootstrap measures 488703726 instructions and
+compile-sigs 49714901. Their refreshed instruction budgets likewise retain
+10 percent headroom (537574098 and 54686391); their allocation budgets are
+unchanged.
+
 ## MLKit
 
 MLKit 4.7.23 joined the hosts after the tables above were made. Its numbers

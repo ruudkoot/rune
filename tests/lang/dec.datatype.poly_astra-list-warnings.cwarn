@@ -1,0 +1,3 @@
+tests/lang/dec.datatype.poly_astra-list-warnings.sml:1:69: warning: redundant match rule
+tests/lang/dec.datatype.poly_astra-list-warnings.sml:2:17: warning: binding is not exhaustive (missing case: :: _)
+tests/lang/dec.datatype.poly_astra-list-warnings.sml:3:17: warning: match is not exhaustive (missing case: nil)

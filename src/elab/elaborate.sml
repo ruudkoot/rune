@@ -474,9 +474,14 @@ struct
         end
     | ESeq (es, _) =>
         List.foldl (fn (e, _) => elabExp (env, level, scope, e)) unitTy es
-    | ELet (decs, body, _) =>
-        let val delta = elabDecs (env, level, false, scope, decs)
-        in elabExp (plus (env, delta), level, scope, body) end
+    | ELet (decs, body, sp) =>
+        let
+          val first = !tyconCounter
+          val delta = elabDecs (env, level, false, scope, decs)
+          val result = elabExp (plus (env, delta), level, scope, body)
+          val () = if !tyconCounter = first then ()
+                   else (Types.noEscape (first, sp, result); Env.noEscape (first, sp, env))
+        in result end
     | EApp (f, a, sp) =>
         let
           val tf = elabExp (env, level, scope, f)
@@ -1013,9 +1018,11 @@ struct
   fun elabTop (env : env ref, decs : dec list) : unit =
     List.app (fn d =>
                 let
+                  val () = Types.startWork (spanOfDec d)
                   val () = Unify.flexHook := (fn r => pendingFlex := (r, spanOfDec d) :: !pendingFlex)
                   val delta = elabDec (!env, 0, true, ref StringMap.empty, d)
-                in resolvePending (); checkClosed (delta, spanOfDec d); env := plus (!env, delta) end) decs
+                in resolvePending (); checkClosed (delta, spanOfDec d); env := plus (!env, delta);
+                   Types.stopWork () end) decs
 
   fun elabProgram (decs : dec list) : env =
     let val env = ref Env.initial

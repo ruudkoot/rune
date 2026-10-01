@@ -1,0 +1,1 @@
+tests/lang/dec.datatype.poly_astra-case-nesting.sml:2:31: warning: match is not exhaustive (missing case: false)

@@ -88,6 +88,7 @@ int jit_h_primpush(VM *vm, int prim, const uint8_t *L);
    moved), so that the code calls them with nothing synced or reloaded
    (M7): the VM is their first argument all the same, unused */
 int64_t jit_h_string_order(VM *vm, const Obj *a, const Obj *b);
+/* Needs the exact VM: comparison can end the process at its work limit. */
 int64_t jit_h_values_equal(VM *vm, const Value *x, const Value *y);
 
 /* the compiler: 1 when function f now has an entry, 0 when it stays interpreted */

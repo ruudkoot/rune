@@ -8,7 +8,8 @@
 #   .restore (the standard output of `runevm --restore` on the image the
 #   program wrote to tests/out/NAME.img with Runtime.save),
 #   .exitcode (expected status, default 0), .stderr (expected stderr, compared
-#   exactly when present), .cwarn (expected compiler stderr, i.e. warnings,
+#   exactly when present), .stderr-head (expected first runtime error line),
+#   .cwarn (expected compiler stderr, i.e. warnings,
 #   compared exactly when present; otherwise the compiler must print nothing).
 # tests/errors/<id>_<name>.sml : must fail to compile; the first line of the
 #   compiler's stderr must contain the text in the .expected file.
@@ -103,6 +104,13 @@ run_lang() {
   if [ -f "$base.stderr" ] && ! cmp -s "$out/$name.stderr" "$base.stderr"; then
     echo "FAIL $name: stderr differs (diff $base.stderr $out/$name.stderr)"
     return
+  fi
+  if [ -f "$base.stderr-head" ]; then
+    head -1 "$out/$name.stderr" > "$out/$name.stderr-head"
+    if ! cmp -s "$out/$name.stderr-head" "$base.stderr-head"; then
+      echo "FAIL $name: runtime error differs (diff $base.stderr-head $out/$name.stderr-head)"
+      return
+    fi
   fi
   # A program that writes itself to $out/$name.img with Runtime.save is
   # carried on by a second VM, whose standard output is the .restore file.
