@@ -239,4 +239,6 @@ normal profile on all four primary compilers. Its copying/tuple transformations
 and floating Park-Miller generator are retained; the old primitive-based
 mini-Basis is replaced by equivalent SML97 operations. A separate integer
 generator/Python-sort oracle confirms all three selected fixtures. Large is
-still unexecuted.
+still unexecuted. The inherited VM-instrumentation guard also passed the
+measurement checks on all four compilers and rejects instrumented options
+from headline timing before starting a measurement.

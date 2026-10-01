@@ -73,6 +73,8 @@ timeouts, memory limits and quota-setup failures have distinct statuses.
 Native compilation is measured separately. `bench-stats` retains Rune's
 runtime/GC output in a separate instrumented run. Hardware counters are an
 optional future adapter; these reports make no hardware-counter claim.
+Timing rejects count/statistics/trace instrumentation inherited through
+`RUNEVM_OPTIONS`, so it cannot silently enter headline samples.
 
 `bench-count` uses the deterministic correctness driver without clocks.
 Instructions agree within stack/native or register/JIT execution models;

@@ -29,6 +29,12 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 case $action in time|count|stats) ;; *) echo 'action must be time, count or stats' >&2; exit 2 ;; esac
+if [ "$action" = time ]; then
+  case " $base_vm_options " in
+    *' --count '*|*' --stats '*|*' --jit-stats '*|*' --trace '*)
+      echo 'instrumented VM options require a separate count/stats run' >&2; exit 2 ;;
+  esac
+fi
 case $mode in fresh) rounds=1 ;; repeated) ;; *) echo 'mode must be fresh or repeated' >&2; exit 2 ;; esac
 case $level in 0|2) ;; *) echo 'level must be 0 or 2' >&2; exit 2 ;; esac
 for value in "$samples" "$rounds"; do

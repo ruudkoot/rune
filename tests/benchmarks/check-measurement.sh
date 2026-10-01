@@ -18,3 +18,8 @@ if bin/runevm "$out/negative.rbc" < "$out/input" > "$out/negative.out"; then ech
 ! grep -q '^SAMPLE ' "$out/negative.out"
 grep -q '^FAIL ' "$out/negative.out"
 echo 'bench-measurement: wrong results supply no repeated timing samples'
+if RUNEVM_OPTIONS=--count sh scripts/measure-benchmarks.sh time --filter tak > "$out/instrumented.log" 2>&1; then
+  echo 'instrumented run accepted as headline timing' >&2; exit 1
+fi
+grep -q 'instrumented VM options' "$out/instrumented.log"
+echo 'bench-measurement: instrumentation rejected from headline timing'
