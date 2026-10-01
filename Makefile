@@ -968,3 +968,16 @@ install:
 
 uninstall:
 	sh scripts/install.sh --uninstall $(INSTALL_FLAGS)
+
+# The portable benchmark pilots (docs/plans/benchmarks.md, M1). Wall-clock
+# comparisons and deterministic count budgets are subsequent milestones.
+BENCH_PROFILE ?= smoke
+BENCH_CONFIGS ?= rune,hosts
+BENCH_FILTER ?=
+.PHONY: bench-check
+build/bench-catalog.rbc: examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml $(RUNE)
+	$(RUNE) --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml -o $@
+
+bench-check: build/bench-catalog.rbc vm
+	bin/runevm build/bench-catalog.rbc --check
+	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' sh scripts/run-benchmarks.sh

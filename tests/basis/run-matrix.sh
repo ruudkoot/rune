@@ -2,6 +2,11 @@
 # Run the Basis Library suite (tests/basis/*.sml) on a matrix of configurations.
 #   tests/basis/run-matrix.sh [-j N] [--configs C1,C2,...] [FILTER]
 #   tests/basis/run-matrix.sh --perf [--configs C1,C2,...] [FILTER]
+#   tests/basis/run-matrix.sh --program-list FILE --program-input FILE
+#       --program-out tests/out/DIR [--configs C1,C2,...]
+# Standalone checked programs reuse host resolution and loaders. Source paths
+# are one per line. RUNE_MATRIX_TIMEOUT limits each compile/run phase and
+# RUNE_MATRIX_MEMORY is KiB of address space (Poly/ML: data plus a heap cap).
 #
 # Configurations (default: rune):
 #   rune                   bin/rune, the self-hosted compiler, + bin/runevm
@@ -127,6 +132,9 @@ jobs=""
 perf=${RUNE_MATRIX_PERF:-0}
 refresh=${RUNE_MATRIX_REFRESH:-0}
 configs=rune
+program_list=""
+program_input=/dev/null
+program_out=""
 filter=""
 one_config=""
 one_test=""
@@ -137,6 +145,9 @@ while [ $# -gt 0 ]; do
     --one) one_config=$2; one_test=$3; shift 3 ;;
     --perf) perf=1; shift ;;
     --refresh) refresh=1; shift ;;
+    --program-list) program_list=$2; shift 2 ;;
+    --program-input) program_input=$2; shift 2 ;;
+    --program-out) program_out=$2; shift 2 ;;
     -*) echo "usage: tests/basis/run-matrix.sh [-j N] [--perf] [--refresh] [--configs C1,C2,...] [FILTER]" >&2; exit 2 ;;
     *) filter=$1; shift ;;
   esac
@@ -157,6 +168,16 @@ cd "$(dirname "$0")/../.."
 root=$(pwd)
 suite=$root/tests/basis
 out=$root/tests/out/matrix
+if [ -n "$program_list" ]; then
+  [ "$perf" = 0 ] && [ -z "$one_config" ] || { echo "run-matrix: standalone program mode cannot be combined with perf or worker mode" >&2; exit 2; }
+  case $program_list in /*) ;; *) program_list=$root/$program_list ;; esac
+  case $program_input in /*) ;; *) program_input=$root/$program_input ;; esac
+  if [ -n "$program_out" ]; then
+    case $program_out in /*) out=$program_out ;; *) out=$root/$program_out ;; esac
+    case $out in */../*|*/..|*/./*|*/.) echo "run-matrix: invalid program output path" >&2; exit 2 ;; esac
+    case $out in "$root"/tests/out/*) ;; *) echo "run-matrix: program output must be under tests/out" >&2; exit 2 ;; esac
+  fi
+fi
 limit=${RUNE_MATRIX_TIMEOUT:-120}
 # the virtual memory an MLKit program may have, in KiB (4 GiB)
 mlkit_memory=${RUNE_MATRIX_MEMORY:-4194304}
@@ -263,6 +284,7 @@ load() {
   loaddir=$1
   mode=$2
   shift 2
+  load_status=0
   rm -rf "$loaddir"
   mkdir -p "$loaddir"
   : > "$loaddir/stdout"
@@ -276,7 +298,15 @@ load() {
       if fresh_bytecode "$loaddir" "$@"; then
         cp "$RUNE_MATRIX_BYTECODE/${loaddir##*/}/prog.rbc" "$loaddir/prog.rbc"
       else
-        "$cmd1" "$@" -o "$loaddir/prog.rbc" > "$loaddir/log" 2>&1 || return 1
+        program_flags=""
+        [ -z "$program_list" ] || program_flags=${RUNE_BENCH_COMPILE_OPTIONS:-}
+        if [ -n "$program_list" ]; then
+          # shellcheck disable=SC2086
+          timeout "$limit" "$cmd1" $program_flags "$@" -o "$loaddir/prog.rbc" > "$loaddir/log" 2>&1 ||
+            { load_status=$?; [ "$load_status" != 124 ] || echo "compile timed out after $limit s" >> "$loaddir/log"; return 1; }
+        else
+          "$cmd1" "$@" -o "$loaddir/prog.rbc" > "$loaddir/log" 2>&1 || return 1
+        fi
       fi
       program_key "$@" > "$loaddir/prog.key"
       case $host in
@@ -288,9 +318,9 @@ load() {
           rm -rf "$windows_dir"
           mkdir -p "$windows_dir"
           cp "$loaddir/prog.rbc" "$windows_dir/prog.rbc"
-          (cd "$windows_dir" && timeout "$limit" "$cmd2" prog.rbc > "$loaddir/stdout" 2>> "$loaddir/log" < /dev/null)
+          (cd "$windows_dir" && timeout "$limit" "$cmd2" prog.rbc > "$loaddir/stdout" 2>> "$loaddir/log" < "$program_input")
           ;;
-        *) (cd "$loaddir" && timeout "$limit" "$cmd2" prog.rbc > stdout 2>> log < /dev/null) ;;
+        *) (cd "$loaddir" && timeout "$limit" "$cmd2" prog.rbc > stdout 2>> log < "$program_input") ;;
       esac
       ;;
     *:mlton)
@@ -304,7 +334,7 @@ load() {
       fi
       # shellcheck disable=SC2086
       timeout "$limit" "$cmd1" $flags -output "$loaddir/prog" "$loaddir/prog.mlb" > "$loaddir/log" 2>&1 || return 1
-      (cd "$loaddir" && timeout "$limit" ./prog > stdout 2>> log < /dev/null)
+      (cd "$loaddir" && timeout "$limit" ./prog > stdout 2>> log < "$program_input")
       ;;
     *:mlkit)
       # MLKit keeps what it compiles in MLB/ beside each source and in the
@@ -339,7 +369,7 @@ load() {
       # with a cap on its memory: IntInf.toString of a number that MLKit's
       # IntInf.scan made wrong allocates until the machine has no more
       # (docs/bugreport/mlkit/IntInf.scan/sign-inside-the-digits)
-      (cd "$loaddir" && ulimit -v "$mlkit_memory" && timeout "$limit" ./prog > stdout 2>> log < /dev/null)
+      (cd "$loaddir" && ulimit -v "$mlkit_memory" && timeout "$limit" ./prog > stdout 2>> log < "$program_input")
       ;;
     *:smlnj-legacy|*:smlnj32|*:smlnj-dev)
       # With a heap image of the library the program starts from it and uses
@@ -352,13 +382,17 @@ load() {
         fi
         shift "$prefix_count"
         write_driver "$loaddir/driver.sml" "$@"
-        (cd "$loaddir" && timeout "$limit" "$cmd1" "@SMLload=$cfgout/basis.heap" > stdout 2> log < /dev/null)
+        (cd "$loaddir" && timeout "$limit" "$cmd1" "@SMLload=$cfgout/basis.heap" > stdout 2> log < "$program_input")
       else
         write_driver "$loaddir/driver.sml" "$@"
-        (cd "$loaddir" && timeout "$limit" "$cmd1" driver.sml > stdout 2> log < /dev/null)
+        (cd "$loaddir" && timeout "$limit" "$cmd1" driver.sml > stdout 2> log < "$program_input")
       fi
       ;;
     *:polyml)
+      program_heap_flags=""
+      # Compact Poly/ML reserves 16 GiB for objects and 2 GiB for code without
+      # committing it. Program mode uses a data quota and bounded ML heap.
+      [ -z "$program_list" ] || program_heap_flags="-H 16 --maxheap $((mlkit_memory / 2048)) --stackspace 64"
       if [ "$kind" = xc1 ] && [ -f "$cfgout/basis.image" ]; then
         prefix_count=$(prefix | wc -w)
         if [ "$prefix_count" -gt "$#" ]; then
@@ -371,11 +405,13 @@ load() {
       else
         write_driver "$loaddir/driver.sml" "$@"
       fi
-      (cd "$loaddir" && timeout "$limit" "$cmd1" -q --error-exit --use driver.sml > stdout 2> log < /dev/null)
+      # shellcheck disable=SC2086
+      (cd "$loaddir" && timeout "$limit" "$cmd1" $program_heap_flags -q --error-exit --use driver.sml > stdout 2> log < "$program_input")
       ;;
     *) echo "unknown configuration kind $kind:$host" > "$loaddir/log"; return 1 ;;
   esac
   status=$?
+  load_status=$status
   [ $status = 124 ] && echo "timed out after $limit s" >> "$loaddir/log"
   grep -q '^SUMMARY ' "$loaddir/stdout"
 }
@@ -1098,6 +1134,50 @@ trap 'rm -rf "$run"' EXIT HUP INT TERM
 : > "$run/configs"
 for c in $(expand "$configs"); do resolve "$c" || exit 2; done
 ids=$(cut -f 1 "$run/configs")
+
+# Standalone checked programs reuse these loaders and the configuration
+# resolver. Their portable driver prints PASS/FAIL and SUMMARY, like a test.
+if [ -n "$program_list" ]; then
+  [ -f "$program_list" ] && [ -r "$program_input" ] || { echo "run-matrix: missing program sources or input" >&2; exit 2; }
+  set --
+  while IFS= read -r source; do
+    [ -z "$source" ] || set -- "$@" "$source"
+  done < "$program_list"
+  [ "$#" -gt 0 ] || { echo "run-matrix: empty program source list" >&2; exit 2; }
+  (ulimit -v "$mlkit_memory") 2>/dev/null || { echo "run-matrix: memory limit unavailable" >&2; exit 2; }
+  program_status=0
+  for config in $ids; do
+    kind=$(config_field "$config" 2)
+    host=$(config_field "$config" 3)
+    cmd1=$(config_field "$config" 4)
+    cmd2=$(config_field "$config" 5)
+    cfgout=$out/$(dirname_of "$config")
+    [ "$kind" != xc1 ] || { echo "run-matrix: standalone xc1 programs require library setup" >&2; exit 2; }
+    mkdir -p "$cfgout"
+    (
+      if [ "$host" = polyml ]; then
+        ulimit -d "$mlkit_memory" || exit 2
+        echo "PROGRAM LIMIT DATA $mlkit_memory KiB; ML heap $((mlkit_memory / 2048)) MiB"
+      else
+        ulimit -v "$mlkit_memory" || exit 2
+        echo "PROGRAM LIMIT AS $mlkit_memory KiB"
+      fi
+      loaded=0
+      load "$cfgout/program" run "$@" || loaded=$?
+      cat "$cfgout/program/stdout"
+      if [ "$loaded" = 0 ] && [ "$load_status" = 0 ] &&
+          grep -q '^SUMMARY .* checks, 0 failed$' "$cfgout/program/stdout" &&
+          ! grep -q '^FAIL ' "$cfgout/program/stdout"; then
+        echo "PROGRAM PASS $config"
+      else
+        echo "PROGRAM FAIL $config (load $loaded, exit $load_status)" >&2
+        first_error "$cfgout/program/log" "$cfgout/program/stdout" >&2
+        exit 1
+      fi
+    ) || program_status=1
+  done
+  exit "$program_status"
+fi
 
 tests=""
 if [ "$perf" = 1 ]; then

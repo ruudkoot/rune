@@ -5,3 +5,4 @@ build/
 tests/out/
 vm/version.h
 MLB/
+__pycache__/

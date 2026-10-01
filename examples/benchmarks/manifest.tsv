@@ -1,0 +1,16 @@
+benchmark	profile	upstream	source_path	args	expected	sources	timeout	memory_kib	tags
+tak	smoke	mlton	benchmark/tests/tak.sml	18 12 6 1	tak/smoke.expected	shared/input.sml,tak/benchmark.sml,shared/main.sml	30	1048576	calls-recursion,pilot
+tak	normal	mlton	benchmark/tests/tak.sml	24 16 8 10	tak/normal.expected	shared/input.sml,tak/benchmark.sml,shared/main.sml	600	4194304	calls-recursion,pilot
+tak	large	mlton	benchmark/tests/tak.sml	33 22 11 1	tak/large.expected	shared/input.sml,tak/benchmark.sml,shared/main.sml	3600	8388608	calls-recursion,pilot
+kittmergesort	smoke	mlkit	test/kittmergesort.sml	100	kittmergesort/smoke.expected	shared/input.sml,kittmergesort/benchmark.sml,shared/main.sml	30	1048576	lists-streams,allocation-lifetimes,pilot
+kittmergesort	normal	mlkit	test/kittmergesort.sml	50000	kittmergesort/normal.expected	shared/input.sml,kittmergesort/benchmark.sml,shared/main.sml	600	4194304	lists-streams,allocation-lifetimes,pilot
+kittmergesort	large	mlkit	test/kittmergesort.sml	100000	kittmergesort/large.expected	shared/input.sml,kittmergesort/benchmark.sml,shared/main.sml	3600	8388608	lists-streams,allocation-lifetimes,pilot
+primes-lazy	smoke	nofib	imaginary/primes	10 1	primes-lazy/smoke.expected	shared/input.sml,shared/primes.sml,primes-lazy/benchmark.sml,shared/main.sml	30	1048576	lists-streams,closures,sharing,pilot
+primes-lazy	normal	nofib	imaginary/primes	100 100	primes-lazy/normal.expected	shared/input.sml,shared/primes.sml,primes-lazy/benchmark.sml,shared/main.sml	600	4194304	lists-streams,closures,sharing,pilot
+primes-lazy	large	nofib	imaginary/primes	400 100	primes-lazy/large.expected	shared/input.sml,shared/primes.sml,primes-lazy/benchmark.sml,shared/main.sml	3600	8388608	lists-streams,closures,sharing,pilot
+primes-strict	smoke	nofib	imaginary/primes	10 1	primes-strict/smoke.expected	shared/input.sml,shared/primes.sml,primes-strict/benchmark.sml,shared/main.sml	30	1048576	lists-streams,allocation-lifetimes,pilot
+primes-strict	normal	nofib	imaginary/primes	100 100	primes-strict/normal.expected	shared/input.sml,shared/primes.sml,primes-strict/benchmark.sml,shared/main.sml	600	4194304	lists-streams,allocation-lifetimes,pilot
+primes-strict	large	nofib	imaginary/primes	400 100	primes-strict/large.expected	shared/input.sml,shared/primes.sml,primes-strict/benchmark.sml,shared/main.sml	3600	8388608	lists-streams,allocation-lifetimes,pilot
+bdd	smoke	sandmark	benchmarks/bdd/bdd.exe	8 100	bdd/smoke.expected	shared/input.sml,bdd/benchmark.sml,shared/main.sml	30	1048576	symbolic-search,arrays,allocation-lifetimes,pilot
+bdd	normal	sandmark	benchmarks/bdd/bdd.exe	18 100	bdd/normal.expected	shared/input.sml,bdd/benchmark.sml,shared/main.sml	600	4194304	symbolic-search,arrays,allocation-lifetimes,pilot
+bdd	large	sandmark	benchmarks/bdd/bdd.exe	22 100	bdd/large.expected	shared/input.sml,bdd/benchmark.sml,shared/main.sml	3600	8388608	symbolic-search,arrays,allocation-lifetimes,pilot
