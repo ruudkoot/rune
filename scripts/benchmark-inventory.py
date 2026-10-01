@@ -24,6 +24,20 @@ FIELDS = ["source", "path", "name", "rune_name", "milestone", "disposition",
 EXTENSIONS = {".sml", ".sig", ".mlb", ".cm", ".hs", ".lhs", ".ml", ".mli", ".c", ".h"}
 MLKIT_WORKLOADS = set("DLXSimulator PermuteList FuhMishra boyer checksum count-graphs fft fxp life longlife matrix-multiply mpuz msort msortrun peek perm perm1 professor professor2 professor_game psdes-random pseudokit ratio-regions raytrace smith-normal-form stringconcat tailfib tak tsp tyan vector-concat vector-rev wc-input1 wc-scanStream weeks4 zern kkb36c kkb36d kkb_eq klife_eq tststrcmp".split())
 MLKIT_DEV_WORKLOADS = set("fib fib0 hanoi life listsort professor_game professor_game_debug rev many_refs".split())
+# M2 source review: project members and entrypoint-only aliases.
+MLKIT_REVIEW = {
+    "test/kitfib35_mlton.sml": ("duplicate", "same n<1 Fibonacci kernel and argument 35 as test/kitfib35.sml; only top-level driver wrapping differs; share the kitfib35 implementation and preserve both source paths"),
+    "test/kitfib35_smlnj.sml": ("duplicate", "same n<1 Fibonacci kernel and argument 35 as test/kitfib35.sml; only callable driver wrapping differs; share the kitfib35 implementation and preserve both source paths"),
+    "test/kittmergesort_smlnj.sml": ("duplicate", "same copying mergesort, generator, seed and 100000-element input as test/kittmergesort.sml; the sole diff is val result versus fun doit(); the ten-repetition _tp variant remains separate"),
+    "test/FuhMishra.sml": ("duplicate", "same application source loaded by FuhMishra.mlb with required lib.sml; retain the project entrypoint and this provenance rather than compiling the incomplete source alone"),
+    "test/msort.sml": ("exclude", "support module defining msort; msort.mlb supplies upto.sml and msortrun.sml for the actual invocation"),
+    "test/msortrun.sml": ("duplicate", "same invocation msort(upto(50000)) loaded by msort.mlb; retain the complete ordered project and this driver provenance"),
+    "test/perm.mlb": ("exclude", "type-inference project containing only declarations from perm1.sml and perm.sml; no computation or timed invocation"),
+    "test/perm.sml": ("exclude", "declarations for the perm.mlb type-inference case; prj/findSome are never invoked, not a benchmark workload"),
+    "test/perm1.sml": ("exclude", "composePartial helper declaration for perm.mlb, without a workload invocation"),
+    "test/stringconcat.sml": ("exclude", "argument-transformation regression: concatenates two literal strings once and prints Hello world; its source comment explicitly checks -no_opt compiler behavior"),
+    "test/tststrcmp.sml": ("exclude", "enumerated string-comparison correctness checks with expected booleans and numbered ok reports, not a repeated benchmark workload"),
+}
 SANDMARK_PACKAGES = {"alt-ergo", "coq", "cpdf", "cubicle", "decompress", "frama-c", "irmin", "menhir", "owl", "soli", "thread-lwt", "yojson"}
 
 
@@ -220,6 +234,11 @@ def classify(source, root, item, files, text):
         candidate = stem.startswith("kit") or stem in MLKIT_WORKLOADS or (path.startswith("test_dev/") and stem in MLKIT_DEV_WORKLOADS)
         if not candidate:
             disposition, milestone, reason = "exclude", "-", "regression or support source outside the benchmark families; test/all.tst and test_dev/Makefile distinguish compiler/Basis tests"
+        if disposition == "import" and re.search(r"\b(?:resetRegions|forceResetting)\b", text):
+            disposition, reason = "defer", "calls ML Kit region-reset controls; removing these changes the measured storage policy; reconsider with equivalent region lifetime controls, and retain portable algorithm variants separately"
+        if path in MLKIT_REVIEW:
+            disposition, reason = MLKIT_REVIEW[path]
+            if disposition == "exclude": milestone = "-"
         if path == "test_dev/kitsimple.sml":
             disposition, reason = "duplicate", "identical source and hardcoded workload to mlkit:test/kitsimple.sml; retain the test entry and both provenance paths"
     if source == "smlnj":

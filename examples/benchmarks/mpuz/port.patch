@@ -1,0 +1,43 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -7,14 +7,14 @@
+  *)
+ 
+ (* override print so the benchmark is silent *)
+-fun print _ = ()
++fun print text = BenchOutput.put text
+ 
+ structure List =
+    struct
+       open List
+ 
+       fun exists(l, p) = List.exists p l
+-         
++
+       fun map(l, f) = List.map f l
+ 
+       fun fold(l, b, f) =
+@@ -118,7 +118,7 @@
+          end
+    end
+ 
+-structure Main =
++structure MpuzKernel =
+    struct
+       fun doit() =
+          Mpuz.solve("AGH", "FB", "CBEE", "GHFD", "FGIJE")
+@@ -139,3 +139,14 @@
+             loop size
+          end
+    end
++
++structure Benchmark =
++struct
++  val name="mpuz"
++  fun run [reps] =
++    let val n=BenchInput.between(1,100)(BenchInput.integer reps)
++        val _=BenchOutput.reset()
++        val _=MpuzKernel.doit n
++    in BenchOutput.summary() end
++  | run _=raise Fail "mpuz expects repetitions"
++end

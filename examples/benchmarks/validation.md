@@ -64,3 +64,53 @@ Outstanding work is the scheduled corpus imports (M2-M5), timing and count
 reports (M6), routine-check integration (M7) and coverage closure (M8).
 Standalone `xc1` library setup and additional benchmark platforms are not
 validated by this pilot record.
+
+## M2 first collection wave (in progress)
+
+The catalogue now contains 68 programs, including all 48 pinned MLton
+workloads, eleven ML Kit workload entries and six SML/NJ entries, alongside
+the nofib/Sandmark pilots. M2 remains in progress: the other suitable
+SML/NJ and ML Kit entries are still scheduled, not declared complete.
+
+[Attempt ledger](validation/m2-attempts.tsv) records configuration, profile,
+actual arguments and expected result, observed status/result, compilation
+identity where available, output digest and artifact directory. It includes
+failed attempts and superseded profiles; it is not a blanket current-source
+validation claim. Matrix PROGRAM PASS and driver correctness must both be
+present before an attempt is recorded as passing. Native interactive source
+identity remains a documentation limitation until M6 records full source
+snapshots and configuration metadata for measurements.
+
+The required `timeout 1800 make JOBS=4 check` passed with subprocess/socket
+operations permitted. The initial sandboxed attempt failed socket checks and
+stalled in rt.fork_image after a child socket error; that stalled process was
+terminated and the failed attempt is retained. No compiler/runtime changes
+were made to bypass it. Cross-host compiler, documentation-generator and
+native-generator bytecode checks also passed.
+
+Independent classic checks run on Rune and all six supplied hosts: checksum
+nonzero/endian/modular cases, seven RFC 1321 MD5 vectors plus a split-block
+update, nine finite-number/tolerance cases, six image-checker cases and six
+assembly-checker cases. These include deliberately wrong results, wrong
+signed zero, nonfinite values, malformed literals and pixels beyond bounds.
+
+Source compatibility review now accounts for 21 ML Kit region-reset
+variants as deferred, five additional duplicate entrypoint/project forms,
+and six support/regression exclusions. Each reason is explicit in the
+reproducible inventory; 21 discovery/classification tests pass.
+
+Known comparison gaps remain explicit. Poly/ML 5.9.2 does not expose Int64
+for peek/vector64-concat. ML Kit 4.7.23 crashes compiling Boyer,
+Knuth-Bendix Tyan and FXP; these are compile failures, never measurements.
+Renderer reference sets and numerical bounds are recorded with their
+source-sensitive CSG-boundary evidence. FXP's original individual notice
+is still an outstanding provenance lookup: the historical links are broken;
+its aggregate project notice and observed authorship/source identity are
+retained without claiming that the aggregate notice resolves every component.
+
+The final 68-program wave checked 476 smoke configuration/program pairs:
+470 passed, two were unavailable Int64 comparisons on Poly/ML, and four
+were ML Kit compile failures (Boyer, Knuth-Bendix, Tyan, FXP). Every one of
+those 68 programs passed its normal profile on Rune. The current catalogue
+also has four later SML/NJ ports; their validation remains separately
+recorded rather than being included in the completed 68-program run.

@@ -128,3 +128,17 @@ candidates deferred under the roadmap's feature policy.
 Per-import README sections must add the program's own provenance and useful
 specific references. A shared family reference is not a substitute for that
 history, and uncertain attribution must stay explicitly uncertain.
+
+## References added with M2 imports
+
+* [Gibbons, Unbounded Spigot Algorithms for the Digits of Pi](https://www.cs.ox.ac.uk/people/jeremy.gibbons/publications/spigot.pdf):
+  linear-fractional streaming algorithm used by pidigits. Its SML driver
+  selects zero occurrences instead of a digit-count bound.
+* [Yan, The Geobucket Data Structure for Polynomials](https://doi.org/10.1006/jsco.1997.0176),
+  Journal of Symbolic Computation 25(3), 285-293 (1998): the source citation
+  misspells the title and reports volume 23. This corrects the bibliography;
+  the pinned source header remains unchanged. Diagnostic claims about the
+  specific Tyan source still require inspection and measurements.
+* [Rivest, RFC 1321](https://www.rfc-editor.org/rfc/rfc1321): MD5 algorithm
+  and standard result vectors; seven vectors are included in the independent
+  correctness target.

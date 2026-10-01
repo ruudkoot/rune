@@ -132,6 +132,8 @@ jobs=""
 perf=${RUNE_MATRIX_PERF:-0}
 refresh=${RUNE_MATRIX_REFRESH:-0}
 configs=rune
+program_data=""
+program_data_list=""
 program_list=""
 program_input=/dev/null
 program_out=""
@@ -147,6 +149,8 @@ while [ $# -gt 0 ]; do
     --refresh) refresh=1; shift ;;
     --program-list) program_list=$2; shift 2 ;;
     --program-input) program_input=$2; shift 2 ;;
+    --program-data) program_data=$2; shift 2 ;;
+    --program-data-list) program_data_list=$2; shift 2 ;;
     --program-out) program_out=$2; shift 2 ;;
     -*) echo "usage: tests/basis/run-matrix.sh [-j N] [--perf] [--refresh] [--configs C1,C2,...] [FILTER]" >&2; exit 2 ;;
     *) filter=$1; shift ;;
@@ -289,6 +293,13 @@ load() {
   mkdir -p "$loaddir"
   : > "$loaddir/stdout"
   : > "$loaddir/log"
+  if [ -n "$program_data_list" ]; then
+    while IFS= read -r path; do
+      case $path in ""|/*|../*|*/../*|*/..|./*|*/./*|*/.) echo "invalid program data path" >&2; return 1 ;; esac
+      mkdir -p "$loaddir/$(dirname "$path")"
+      cp "$program_data/$path" "$loaddir/$path" || return 1
+    done < "$program_data_list"
+  fi
   case "$kind:$host" in
     rune:*)
       if [ "$mode" = check ]; then
@@ -1144,6 +1155,9 @@ if [ -n "$program_list" ]; then
     [ -z "$source" ] || set -- "$@" "$source"
   done < "$program_list"
   [ "$#" -gt 0 ] || { echo "run-matrix: empty program source list" >&2; exit 2; }
+  if [ -n "$program_data_list" ]; then
+    [ -d "$program_data" ] && [ -r "$program_data_list" ] || { echo "run-matrix: missing program data" >&2; exit 2; }
+  fi
   (ulimit -v "$mlkit_memory") 2>/dev/null || { echo "run-matrix: memory limit unavailable" >&2; exit 2; }
   program_status=0
   for config in $ids; do

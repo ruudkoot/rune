@@ -16,10 +16,19 @@ again at each import. No program passes merely by appearing in the inventory.
 |---|---:|---:|---:|---:|---:|
 | MLton | 48 | 48 | 0 | 0 | 0 |
 | SML/NJ | 45 | 35 | 8 | 2 | 0 |
-| ML Kit | 438 | 112 | 0 | 325 | 1 |
+| ML Kit | 438 | 80 | 21 | 331 | 6 |
 | nofib | 187 | 128 | 48 | 11 | 0 |
 | Sandmark | 143 | 66 | 77 | 0 | 0 |
-| Total | 861 | 389 | 133 | 338 | 1 |
+| Total | 861 | 357 | 154 | 344 | 6 |
+
+The M2 compatibility audit additionally identified 21 ML Kit workloads
+that call region-reset controls. Their original storage model requires
+unavailable runtime controls, so they are now explicitly deferred. Removing
+the calls would change the benchmark; portable related variants remain
+scheduled. A further source review accounts for five entrypoint/project aliases
+and six support/regression entries. Their exact reasons are recorded in
+MLKIT_REVIEW; the ten-repetition copying-mergesort workload remains distinct.
+The scanner checks executable code, ignoring prose and strings.
 
 These are source entries, not 861 distinct benchmark algorithms. ML Kit's
 count includes regression and support files so exclusions are explicit.

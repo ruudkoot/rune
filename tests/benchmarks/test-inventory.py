@@ -31,6 +31,18 @@ class InventoryTest(unittest.TestCase):
     def build(self, source):
         return AUDIT.build(source, self.root, {"notices": ""})
 
+    def test_region_reset_variants_require_their_storage_model(self):
+        (self.root / "test_dev").mkdir()
+        self.file("test/kitlife35u.sml", "fun run () = resetRegions ()\n")
+        row = self.build("mlkit")[0]
+        self.assertEqual(row["disposition"], "defer")
+        self.assertIn("region-reset", row["reason"])
+
+    def test_region_reset_in_prose_is_not_a_runtime_dependency(self):
+        (self.root / "test_dev").mkdir()
+        self.file("test/kitfib35.sml", "(* resetRegions () was removed *)\nfun fib n = n\n")
+        self.assertEqual(self.build("mlkit")[0]["disposition"], "import")
+
     def test_haskell_main_need_not_be_named_Main(self):
         self.nofib_roots()
         self.file("gc/hash/Makefile", "SRCS = hash.hs\n")

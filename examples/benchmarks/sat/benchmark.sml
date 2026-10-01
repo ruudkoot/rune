@@ -1,0 +1,60 @@
+(* main.sml
+ *
+ * COPYRIGHT (c) 2025 The Fellowship of SML/NJ (https://www.smlnj.org)
+ * All rights reserved.
+ *)
+
+structure SatKernel =
+  struct
+
+    val name = "sat"
+
+    val results : string list = []
+
+    fun AND [] = true
+      | AND (false::_) = false
+      | AND (true::bs) = AND bs
+
+    fun OR [] = false
+      | OR (true::_) = true
+      | OR (false::bs) = OR bs
+
+    fun phi (x1, x2, x3, x4, x5, x6, x7, x8, x9, x10) = AND [
+            OR[x1, x2],
+            OR[x1, not x2, not x3],
+            OR[x3, x4],
+            OR[not x4, x1],
+            OR[not x2, not x3],
+            OR[x4, x2],
+            OR[not x5, x1, x2],
+            OR[not x2, not x6],
+            OR[not x4, x7]
+          ]
+
+    val checkPhi = phi
+
+    fun solve () = let
+          fun try f = f true orelse f false
+          in
+            try (fn x1 =>
+              try (fn x2 =>
+                try (fn x3 =>
+                  try (fn x4 =>
+                    try (fn x5 =>
+                      try (fn x6 =>
+                        try (fn x7 =>
+                          try (fn x8 =>
+                            try (fn x9 =>
+                              try (fn x10 =>
+                                checkPhi (x1, x2, x3, x4, x5, x6, x7, x8, x9, x10)))))))))))
+          end
+
+end
+structure Benchmark =
+struct
+  val name="sat"
+  fun run [reps]=
+    let val n=BenchInput.between(1,1000000)(BenchInput.integer reps)
+    in IntInf.toString(BenchInput.repeat n(fn()=>if SatKernel.solve() then 1 else raise Fail "unsatisfied fixed formula")) end
+  | run _=raise Fail "sat expects solver repetitions"
+end

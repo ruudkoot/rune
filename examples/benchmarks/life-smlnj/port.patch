@@ -1,0 +1,44 @@
+--- upstream/ordered-sources
++++ benchmark.sml
+@@ -4,7 +4,7 @@
+  * All rights reserved.
+  *)
+ 
+-structure Main : BMARK =
++structure LifeMain =
+   struct
+ 
+     val name = "life"
+@@ -148,15 +148,20 @@
+ 
+     fun show pr = (app (fn s => (pr s; pr "\n"))) o plot o alive
+ 
+-    fun runOnce () = nthgen gun 50
+-
+-    fun doit () = let
+-          fun lp 0 = ()
+-            | lp n = (runOnce(); lp(n-1))
+-          in
+-            lp 1000
+-          end
+-
+-    fun testit () = show Log.print (runOnce())
+-
+-  end (* Main *)
++end
++structure Benchmark =
++struct
++  val name="life-smlnj"
++  fun one n =
++    let val cells=LifeMain.alive(LifeMain.nthgen LifeMain.gun n)
++        fun loop([],count,hash)=Int.toString count^" "^Word32.toString hash
++          | loop((x,y)::rest,count,hash)=loop(rest,count+1,Word32.+(Word32.*(Word32.+(Word32.*(hash,0w16777619),Word32.fromInt x),0w16777619),Word32.fromInt y))
++    in loop(cells,0,0w0) end
++  fun run [generations,reps]=
++    let val n=BenchInput.between(0,1000)(BenchInput.integer generations)
++        val count=BenchInput.between(1,1000)(BenchInput.integer reps)
++        fun loop(0,values)=String.concatWith ";"(List.rev values)
++          | loop(k,values)=loop(k-1,one n::values)
++    in loop(count,[]) end
++  | run _=raise Fail "life-smlnj expects generations repetitions"
++end

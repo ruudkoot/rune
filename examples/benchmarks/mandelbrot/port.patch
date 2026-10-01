@@ -1,0 +1,55 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -1,20 +1,12 @@
+-(* From the SML/NJ benchmark suite. *)
+-
+-signature BMARK =
+-  sig
+-    val doit : int -> unit
+-    val testit : TextIO.outstream -> unit
+-  end;
+-(* mandelbrot.sml *)
+-
+-structure Main : BMARK =
+-  struct
++structure Benchmark =
++struct
++  val name="mandelbrot"
++  fun kernel (sz,maxCount) =
++    let
+     val x_base = ~2.0
+     val y_base = 1.25
+     val side = 2.5
+ 
+-    val sz = 32768
+-    val maxCount = 2048
+ 
+     val delta = side / (real sz)
+ 
+@@ -54,21 +46,8 @@
+               loop1 (i+1)
+             end
+ 
+-    fun doit () = (sum_iterations := 0; loop1 0)
+-
+-    val doit =
+-       fn size =>
+-       let
+-          fun loop n =
+-             if n = 0
+-                then ()
+-             else (doit();
+-                   loop(n-1))
+-       in loop size
+-       end
+-    fun testit outstrm = (
+-          sum_iterations := 0;
+-          loop1 0;
+-          TextIO.output (outstrm, Int.toString(!sum_iterations) ^ " iterations\n"))
+-
+-  end (* Mandelbrot *)
++    in loop1 0; !sum_iterations end
++  fun run [size,limit]=Int.toString(kernel(BenchInput.between(1,32768)(BenchInput.integer size),
++      BenchInput.between(1,2048)(BenchInput.integer limit)))
++  | run _=raise Fail "mandelbrot expects side iteration-limit"
++end

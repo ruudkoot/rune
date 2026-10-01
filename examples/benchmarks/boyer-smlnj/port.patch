@@ -1,0 +1,43 @@
+--- upstream/ordered-sources
++++ benchmark.sml
+@@ -812,7 +812,7 @@
+     open Terms
+ 
+ fun toS (Var i) = "$" ^ Int.toString i
+-  | toS (Prop(head, ts)) = concat[headname head, "(", String.concatWithMap "," toS ts, ")"]
++  | toS (Prop(head, ts)) = concat[headname head, "(", String.concatWith "," (List.map toS ts), ")"]
+ 
+     fun mem x [] = false
+       | mem x (y::L) = x=y orelse mem x L
+@@ -852,7 +852,7 @@
+  * All rights reserved.
+  *)
+ 
+-structure Main : BMARK =
++structure BoyerMain =
+   struct
+ 
+     open Terms
+@@ -915,14 +915,11 @@
+                     Prop (get "implies",[Var 20, Var 22])])])]),
+               Prop (get "implies",[Var 23, Var 22])])
+ 
+-    fun testit () = if tautp (apply_subst subst term)
+-	  then Log.print "OK\n"
+-	  else Log.print "FAIL\n"
+-
+-    fun loop n = if n <= 0
+-          then ()
+-          else (tautp (apply_subst subst term); loop (n - 1))
+-
+-    fun doit () = loop 1300
+-
+-  end (* Main *)
++end
++structure Benchmark =
++struct
++  val name="boyer-smlnj"
++  fun run [reps]=IntInf.toString(BenchInput.repeat(BenchInput.between(1,1300)(BenchInput.integer reps))
++    (fn()=>if Boyer.tautp(Terms.apply_subst BoyerMain.subst BoyerMain.term) then 1 else raise Fail "unproved theorem"))
++  | run _=raise Fail "boyer-smlnj expects theorem repetitions"
++end

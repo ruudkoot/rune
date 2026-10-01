@@ -1,0 +1,29 @@
+--- upstream/main.c
++++ reference.c
+@@ -30,9 +30,9 @@
+         pz += b->vz * b->mass;
+     }
+     struct planet * b = &(bodies[0]);
+-    b->vx = - px / solar_mass;
+-    b->vy = - py / solar_mass;
+-    b->vz = - pz / solar_mass;
++    b->vx -= px / solar_mass;
++    b->vy -= py / solar_mass;
++    b->vz -= pz / solar_mass;
+ }
+ 
+ double energy(int nbodies, struct planet * bodies)
+@@ -131,10 +131,11 @@
+     };
+ 
+     offset_momentum(NBODIES,bodies);
+-    printf ("%.9f\n", energy(NBODIES,bodies));
++    offset_momentum(NBODIES,bodies);
++    printf ("%.17g\n", energy(NBODIES,bodies));
+     for (int i=0; i<n; ++i)
+         advance(NBODIES,bodies, 0.01);
+-    printf ("%.9f\n", energy(NBODIES,bodies));
++    printf ("%.17g\n", energy(NBODIES,bodies));
+ }
+ 
+ int main(int argc, char *argv[])

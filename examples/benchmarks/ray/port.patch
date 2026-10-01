@@ -1,0 +1,128 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -1,3 +1,4 @@
++structure RaySize=struct val side=ref 512 end
+ (* From the SML/NJ benchmark suite. *)
+ 
+ (* objects.sml
+@@ -64,17 +65,17 @@
+       fun ordof(s, i) = Char.ord(String.sub(s, i))
+       exception NotAChar
+       exception NotAReal
+-      fun fromStr x = 
++      fun fromStr x =
+         (case Char.fromString x
+           of SOME c => c
+            | NONE => raise NotAChar)
+ 
+-     fun strToReal s = 
++     fun strToReal s =
+       (case Real.fromString s
+         of SOME r => r
+         | _ => raise NotAReal)
+ 
+-    fun intToReal x = 
++    fun intToReal x =
+      (strToReal ((Int.toString x) ^ ".0"))
+ 
+ 
+@@ -185,7 +186,7 @@
+                         in
+                           if (hd = ord (#"/"))
+                             then (LITERAL(substring(tok, 1, size tok - 1)), deferred)
+-                          else 
++                          else
+                             if ((Char.isDigit (chr hd)) orelse (hd = ord (#"-")))
+                             then (NUMBER(strToReal(tok)), deferred)
+                             else (NAME tok, deferred)
+@@ -339,13 +340,14 @@
+     fun image objList (x, y) = shade (trace(camera(x, y), objList))
+ 
+     fun picture (picName, objList) = let
++          val size = !RaySize.side
+           val outStrm = TextIO.openOut picName
+           val image = image objList
+           val print = fn x => TextIO.output (outStrm, x)
+           fun putc c = TextIO.output1(outStrm, chr c)
+           fun doPixel (i, j) = let
+-                val x = (real i) / 512.0
+-                val y = (real j) / 512.0
++                val x = (real i) / Real.fromInt size
++                val y = (real j) / Real.fromInt size
+                 val (Color c) = image (x, y)
+                 fun cvt x = if (x >= 1.0) then 255 else floor(256.0*x)
+                 in
+@@ -353,9 +355,9 @@
+                   putc (cvt (#grn c));
+                   putc (cvt (#blu c))
+                 end
+-          fun lp_j j = if (j < 512)
++          fun lp_j j = if (j < size)
+                 then let
+-                  fun lp_i i = if (i < 512)
++                  fun lp_i i = if (i < size)
+                         then (doPixel(i, j); lp_i(i+1))
+                         else ()
+                   in
+@@ -364,7 +366,7 @@
+                 else ()
+           in
+             print "TYPE=dump\n";
+-            print "WINDOW=0 0 512 512\n";
++            print ("WINDOW=0 0 "^Int.toString size^" "^Int.toString size^"\n");
+             print "NCHAN=3\n";
+             print "CHAN=rgb\n";
+             print "\n";
+@@ -422,38 +424,17 @@
+     end (* local *)
+   end;
+ 
+-signature BMARK =
+-  sig
+-    val doit : int -> unit
+-    val testit : TextIO.outstream -> unit
+-  end;
+-(* main.sml
+- *
+- * COPYRIGHT (c) 1992 AT&T Bell Laboratories
+- *
+- * Main structure for running raytracer as benchmark.
+- *)
+-
+-structure Main : BMARK =
+-  struct
+-
+-    fun doit n =
+-       let
+-          fun loop n =
+-             if n = 0
+-                then ()
+-             else
+-                let
+-                   val strm = TextIO.openIn "DATA/ray"
+-                   val _ = Interface.rtInit()
+-                   val _ = Interp.parse strm
+-                   val _ = TextIO.closeIn strm
+-                in
+-                   loop (n - 1)
+-                end
+-       in
+-          loop n
+-       end
+-
+-    fun testit _ = ()
+-  end
++structure Benchmark =
++struct
++  val name="ray"
++  fun run [size,file,reference]=
++    let val n=BenchInput.between(16,1024)(BenchInput.integer size)
++        val _=if file="DATA/ray" then () else raise Fail "scene file"
++        val _=RaySize.side:=n
++        val input=TextIO.openIn file
++        val _=Interface.rtInit()
++        val _=(Interp.parse input handle e=>(TextIO.closeIn input;raise e))
++        val _=TextIO.closeIn input
++    in BenchFiles.same("TEST",reference) end
++  | run _=raise Fail "ray expects image-side scene reference"
++end

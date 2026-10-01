@@ -16,22 +16,29 @@ while [ "$#" -gt 0 ]; do
 done
 catalog=$root/build/bench-catalog.rbc
 [ -f "$catalog" ] || { echo "run make bench-check to build the catalogue" >&2; exit 2; }
-out=$root/tests/out/benchmarks/$profile
-mkdir -p "$out"
+base=$root/tests/out/benchmarks/$profile
+mkdir -p "$base"
+out=$(mktemp -d "$base/run.XXXXXX")
+printf '%s\n' "$out" > "$base/latest-run"
+echo "BENCH OUTPUT $out"
 "$root/bin/runevm" "$catalog" --list "$profile" "$filter" > "$out/jobs.tsv"
 [ -s "$out/jobs.tsv" ] || { echo "bench-check: no benchmark matches" >&2; exit 2; }
 status=0
-while IFS="$(printf '\t')" read -r name seconds memory sources args expected; do
+while IFS="$(printf '\t')" read -r name seconds memory sources args expected input_files; do
   job=$out/$name
   mkdir -p "$job"
   : > "$job/sources.txt"
   # Catalogue validation restricts paths to portable relative source names.
   for source in $sources; do printf '%s\n' "$root/examples/benchmarks/$source" >> "$job/sources.txt"; done
   { printf '%s\n%s\n' "$name" "$args"; cat "$root/examples/benchmarks/$expected"; } > "$job/input"
+  : > "$job/data.txt"
+  if [ "$input_files" != - ]; then
+    for path in $input_files; do printf '%s\n' "$path" >> "$job/data.txt"; done
+  fi
   echo "BENCH $name $profile"
   RUNE_MATRIX_TIMEOUT=$seconds RUNE_MATRIX_MEMORY=$memory \
     sh tests/basis/run-matrix.sh --configs "$configs" --program-list "$job/sources.txt" \
-      --program-input "$job/input" --program-out "$job/matrix" < /dev/null > "$job/result.log" 2>&1 || status=1
+      --program-input "$job/input" --program-data "$root/examples/benchmarks/$name" --program-data-list "$job/data.txt" --program-out "$job/matrix" < /dev/null > "$job/result.log" 2>&1 || status=1
   grep -E '^(RESULT |PASS |FAIL |SUMMARY |PROGRAM |run-matrix:)' "$job/result.log" || true
 done < "$out/jobs.tsv"
 exit "$status"

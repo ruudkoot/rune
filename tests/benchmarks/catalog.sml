@@ -11,7 +11,8 @@ struct
   fun changed profile sources : BenchCatalog.entry =
     {name = #name base, profile = profile, upstream = #upstream base,
      sourcePath = #sourcePath base, args = #args base, expected = #expected base,
-     sources = sources, seconds = #seconds base, memory = #memory base, tags = #tags base}
+     sources = sources, seconds = #seconds base, memory = #memory base, tags = #tags base, inputFiles = #inputFiles base,
+     resultCheck = #resultCheck base, status = #status base}
   val _ = T.check ("benchmark.catalog/profile", fn () =>
     rejected "invalid benchmark profile" (fn () => BenchCatalog.validate (changed "unknown" (#sources base) :: tl entries)))
   val _ = T.check ("benchmark.catalog/escape", fn () =>

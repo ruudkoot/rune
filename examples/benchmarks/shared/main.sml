@@ -11,6 +11,8 @@ struct
         then String.substring (s, 0, String.size s - 1)
         else s
 
+  fun print text = TextIO.output (TextIO.stdOut, text)
+
   fun main () =
     let
       val name = line ()

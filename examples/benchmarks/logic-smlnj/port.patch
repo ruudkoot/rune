@@ -1,0 +1,42 @@
+--- upstream/ordered-sources
++++ benchmark.sml
+@@ -347,31 +347,11 @@
+   end (* local *)
+ end; (* Data *)
+ 
+-(* main.sml
+- *
+- * COPYRIGHT (c) 2024 The Fellowship of SML/NJ (https://www.smlnj.org)
+- * All rights reserved.
+- *)
+-
+-structure Main : BMARK =
+-  struct
+-
+-    val name = "logic"
+-
+-    val results : string list = []
+-
+-    exception Done
+-
+-    fun testit () = Data.exists(fn Z => Data.solution2 Z (fn () => raise Done))
+-	  handle Done => Log.print "OK\n"
+-
+-    fun loop n = if n <= 0
+-	  then ()
+-          else (
+-	    Data.exists(fn Z => Data.solution2 Z (fn () => raise Done))
+-              handle Done => ();
+-            loop (n - 1))
+-
+-    fun doit () = loop 60
+-
+-  end; (* Main *)
++structure Benchmark =
++struct
++  val name="logic-smlnj"
++  exception Done
++  fun one()=(Data.exists(fn z=>Data.solution2 z(fn()=>raise Done));raise Fail "no solitaire solution") handle Done=>1
++  fun run [reps]=IntInf.toString(BenchInput.repeat(BenchInput.between(1,600)(BenchInput.integer reps))one)
++  | run _=raise Fail "logic-smlnj expects solver repetitions"
++end

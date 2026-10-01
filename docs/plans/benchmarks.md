@@ -1,8 +1,7 @@
 # Benchmark suite roadmap
 
 Status: **in progress**, 2026-10-01. M0 and M1 are complete with
-[recorded validation](../../examples/benchmarks/validation.md). M2-M8 remain
-planned. Source inventory entries are scheduled work, not passing ports.
+[recorded validation](../../examples/benchmarks/validation.md). M2 is in progress; M3-M8 remain planned. Source inventory entries are scheduled work, not passing ports.
 
 ## Goal and current baseline
 
@@ -32,8 +31,9 @@ Build on these tools rather than creating a second configuration matrix.
 Keep the existing performance checks as the baseline while the broader
 suite grows. Implementation starts with the
 [pinned source inventory and audit](../../examples/benchmarks/audit.md).
-The [five runnable pilots](../../examples/benchmarks/README.md) implement M1.
-Broader imports and measurement tooling remain subsequent milestones.
+The [runnable catalogue](../../examples/benchmarks/README.md) contains the M1
+pilots and the growing M2 classic collection. M2 remains open while its
+scheduled imports and normal-profile validation are reconciled.
 
 ## Sources, naming, and portable programs
 
@@ -174,7 +174,7 @@ fixture references, and profile completeness.
 |---|---|---|---|
 | **M0 — Inventory and literature review** | Complete | Audit SML/NJ, MLton, ML Kit, nofib, and Sandmark at pinned revisions. Inspect build manifests, nested workloads, dependencies, datasets, and existing Rune adaptations. Group related variants and map workloads to compiler and runtime concerns. | Every discovered workload has an explicit disposition: import, duplicate, defer, or exclude. Every disposition has evidence or a reason. The bibliography and naming map are recorded. |
 | **M1 — Suite foundation and pilots** | Complete | Establish the directory contract, manifest, documentation template, portable drivers, deterministic inputs, and correctness runner. Pilot classic `tak` and list sorting, nofib primes in lazy and strict forms, and Sandmark `bdd`. | Pilots build and validate on Rune, MLton, SML/NJ, and Poly/ML. Lazy and strict variants agree on results. Negative checks demonstrate that incorrect output and resource-limit failures are detected. |
-| **M2 — Classic SML collection** | Planned | Import suitable workloads from the three SML sources. Begin with recursive kernels, rewriting, sorting, numerical programs, and search; then add larger generators, simulators, and applications. Reuse reviewed external-runner adaptations. | Every suitable classic SML workload is imported and documented. Remaining entries have concrete blockers. Each import passes smoke checks and has a validated normal profile. |
+| **M2 — Classic SML collection** | In progress | Import suitable workloads from the three SML sources. Begin with recursive kernels, rewriting, sorting, numerical programs, and search; then add larger generators, simulators, and applications. Reuse reviewed external-runner adaptations. | Every suitable classic SML workload is imported and documented. Remaining entries have concrete blockers. Each import passes smoke checks and has a validated normal profile. |
 | **M3 — nofib kernels and GC workloads** | Planned | Port suitable `imaginary`, `spectral`, `shootout`, and `gc` workloads, including nested collections such as `spectral/hartel`. Cover streams, higher-order functions, symbolic processing, graphs, arithmetic, and allocation patterns. | Every suitable kernel has a validated port. Each port records its treatment of laziness, sharing, numeric types, and forcing. Materially different lazy and strict variants are separately named and measured. |
 | **M4 — nofib applications** | Planned | Port suitable `real` applications in dependency order. Prioritize parsing, type inference, compression, interpreters, symbolic algebra, rendering, and scientific workloads. | Each application includes its required portable modules and deterministic data. Results agree with upstream fixtures or the original Haskell program. Feature-dependent applications have explicit blockers. |
 | **M5 — Sandmark sequential workloads** | Planned | Port self-contained sequential workloads first, including decision diagrams, rewriting, streams, numerical programs, rendering, and graph processing. Audit individual executables within collection directories. | Every suitable workload is imported or scheduled with its dependencies. OCaml library replacements and evaluation-order changes are documented. Ecosystem applications and runtime-specific workloads have explicit dispositions. |

@@ -1,0 +1,161 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -125,7 +125,7 @@
+       }
+ 
+     fun eqBody(Body{mass,pos,vel,acc,phi},
+-               Body{mass=m1,pos=p1,vel=v1,acc=a1,phi=h1}) = 
++               Body{mass=m1,pos=p1,vel=v1,acc=a1,phi=h1}) =
+       (Real.==(mass, m1) andalso Real.==(!phi, !h1)
+        andalso V.equal(!pos, !p1) andalso V.equal(!vel, !v1)
+        andalso V.equal(!acc, !a1))
+@@ -322,7 +322,7 @@
+   (* initialize tree structure for hack force calculation. *)
+     fun makeTree (bodies, rmin, rsize) = let
+           fun build ([], space) = space
+-            | build ((body as S.Body{mass, ...}) :: r, space) = 
++            | build ((body as S.Body{mass, ...}) :: r, space) =
+                if Real.==(mass, 0.0) then build (r, space)
+                else let
+                    val box = expandBox (body, space)
+@@ -392,7 +392,7 @@
+ (*print(implode["    walksub: dsq = ", makestring dsq, ", ", S.prNode p, "\n"]);*)
+                 case p
+                  of S.Empty => (phi0, acc0)
+-                  | (S.Node{cell = S.BodyCell body, ...}) => 
++                  | (S.Node{cell = S.BodyCell body, ...}) =>
+                       if S.eqBody(body, pskip)
+                         then (skipSelf := true; (phi0, acc0))
+                         else gravsub (p, phi0, acc0, NONE)
+@@ -813,7 +813,7 @@
+     val norm : real -> real
+       (* r -> r / (randMax + 1.0) *)
+ 
+-    val range : (int * int) -> real -> int 
++    val range : (int * int) -> real -> int
+       (* Map v, randMin <= v <= randMax to integer range [i,j]
+        * Exception -
+        *   BadArg if j < i
+@@ -825,7 +825,7 @@
+  * COPYRIGHT (c) 1991 by AT&T Bell Laboratories.  See COPYRIGHT file for details
+  *
+  * Random number generator taken from Paulson, pp. 170-171.
+- * Recommended by Stephen K. Park and Keith W. Miller, 
++ * Recommended by Stephen K. Park and Keith W. Miller,
+  * Random number generators: good ones are hard to find,
+  * CACM 31 (1988), 1192-1201
+  *
+@@ -841,10 +841,10 @@
+     val randMin = 1.0
+     val randMax = m - 1.0
+ 
+-    fun random seed = let 
++    fun random seed = let
+           val t = a*seed
+           in
+-            t - m * real(floor(t/m))  
++            t - m * real(floor(t/m))
+           end
+ 
+     fun mkRandom seed = let
+@@ -855,10 +855,10 @@
+ 
+     fun norm r = r / m
+ 
+-    fun range (i,j) = 
+-          if j < i 
++    fun range (i,j) =
++          if j < i
+             then raise Fail "Rand.range"
+-            else let 
++            else let
+               val R = real(j - i + 1)
+               in
+                 fn r => i + floor(R*(r/m))
+@@ -911,7 +911,7 @@
+   (* some math utilities *)
+ (** NOTE: these are part of the Math structure in the new basis *)
+     val pi = 3.14159265358979323846
+-    fun pow(x, y) = 
++    fun pow(x, y) =
+       if Real.==(y, 0.0) then 1.0 else Math.exp (y * Math.ln x)
+ 
+   (* random numbers *)
+@@ -1207,44 +1207,36 @@
+ 
+   end (* VectMath *)
+ 
+-signature BMARK =
+-  sig
+-    val doit : int -> unit
+-    val testit : TextIO.outstream -> unit
+-  end;
+-(* load file for bmark version *)
+-
+-(*
+-app use [
+-    "rand-sig.sml",
+-    "rand.sml",
+-    "vector-sig.sml",
+-    "space.sml",
+-    "load.sml",
+-    "grav.sml",
+-    "getparam.sml",
+-    "data-io.sml",
+-    "main.sml",
+-    "vector3.sml"
+-  ];
+-*)
+-structure Main : BMARK =
+-  struct
+-    structure M3 = Main(Vector3);
+-
+-    val name = "Barnes-Hut (3d)"
+-
+-    fun testit strm = ()
+-
+-    fun doit n = (
+-          M3.srand 123;
+-          M3.go {
+-              output = fn _ => (),
+-              bodies = M3.testdata n,
+-              tnow = 0.0, tstop = 2.0,
+-              dtime = 0.025, eps = 0.05, tol = 1.0,
+-              rmin = M3.S.V.tabulate (fn _ => ~2.0),
+-              rsize = 4.0
+-            })
+-  end;
+-
++
++structure BH = Main(Vector3)
++structure Benchmark =
++struct
++  val name="barnes-hut"
++  fun realArg s = case Real.fromString s of SOME r=>r | NONE=>raise Fail "invalid real argument"
++  fun bodies n stop =
++    let val _=BH.srand 123
++        val bodies=BH.testdata n
++        val calls=ref 0
++        val _=BH.go{output=fn _=>calls:= !calls+1,bodies=bodies,tnow=0.0,tstop=stop,
++          dtime=0.025,eps=0.05,tol=1.0,rmin=BH.S.V.tabulate(fn _=> ~2.0),rsize=4.0}
++    in (bodies,!calls) end
++  fun coordinates (BH.S.Body{pos,vel,...}) = BH.S.V.explode(!pos) @ BH.S.V.explode(!vel)
++  fun run [size,until,file] =
++    let val n=BenchInput.between(2,8192)(BenchInput.integer size)
++        val stop=realArg until
++        val _=if stop>=0.05 andalso stop<=2.0 then () else raise Fail "stop time"
++        val _=if List.exists(fn p=>p=file)["expected/smoke.tsv","expected/normal.tsv","expected/large.tsv"] then () else raise Fail "reference file"
++        val(actual,calls)=bodies n stop
++        val input=TextIO.openIn file
++        fun read ()=case TextIO.inputLine input of NONE=>NONE | SOME line=>SOME(List.map realArg(String.tokens Char.isSpace line))
++        fun equal ([],[])=true
++          | equal(x::xs,y::ys)=BenchInput.closeReal(x,y,0.00000001,0.000001) andalso equal(xs,ys)
++          | equal _=false
++        fun check []=if Option.isSome(read()) then raise Fail "extra reference body" else ()
++          | check(b::bs)=case read() of NONE=>raise Fail "missing reference body" | SOME values=>
++              if equal(coordinates b,values) then check bs else raise Fail "body state differs"
++        val _=(check actual handle e=>(TextIO.closeIn input;raise e))
++        val _=TextIO.closeIn input
++    in Int.toString(List.length actual)^" "^Int.toString calls end
++  | run _=raise Fail "barnes-hut expects body-count stop-time reference"
++end

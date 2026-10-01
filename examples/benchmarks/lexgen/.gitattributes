@@ -1,0 +1,4 @@
+upstream/* whitespace=-trailing-space
+expected/* whitespace=-trailing-space
+port.patch whitespace=-trailing-space
+DATA/* whitespace=-trailing-space

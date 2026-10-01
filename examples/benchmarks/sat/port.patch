@@ -1,0 +1,52 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -4,7 +4,7 @@
+  * All rights reserved.
+  *)
+ 
+-structure Main : BMARK =
++structure SatKernel =
+   struct
+ 
+     val name = "sat"
+@@ -31,16 +31,7 @@
+             OR[not x4, x7]
+           ]
+ 
+-    fun checkPhi (x1, x2, x3, x4, x5, x6, x7, x8, x9, x10) = let
+-          fun b2s true = "T" | b2s false = "F"
+-          val res = phi(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10)
+-          in
+-            Log.say [
+-                "φ(", String.concatWithMap "," b2s [x1, x2, x3, x4, x5, x6, x7, x8, x9, x10],
+-                ") = ", b2s res, "\n"
+-              ];
+-            res
+-          end
++    val checkPhi = phi
+ 
+     fun solve () = let
+           fun try f = f true orelse f false
+@@ -58,13 +49,12 @@
+                                 checkPhi (x1, x2, x3, x4, x5, x6, x7, x8, x9, x10)))))))))))
+           end
+ 
+-    fun testit () = ignore(solve ())
+-
+-    fun doit () = let
+-          fun lp (0, k) = ()
+-            | lp (n, k) = if solve () then lp (n-1, k+1) else lp (n-1, k)
+-          in
+-            lp (1000000, 0)
+-          end
+-
+-  end
++end
++structure Benchmark =
++struct
++  val name="sat"
++  fun run [reps]=
++    let val n=BenchInput.between(1,1000000)(BenchInput.integer reps)
++    in IntInf.toString(BenchInput.repeat n(fn()=>if SatKernel.solve() then 1 else raise Fail "unsatisfied fixed formula")) end
++  | run _=raise Fail "sat expects solver repetitions"
++end

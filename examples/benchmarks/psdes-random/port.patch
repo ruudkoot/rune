@@ -1,0 +1,51 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -2,7 +2,7 @@
+ (*
+  * Random number generator based on page 302 of Numerical Recipes in C.
+  *)
+-fun once () =      
++fun once count =
+    let
+    fun natFold (start, stop, ac, f) =
+       let
+@@ -33,7 +33,7 @@
+        in (irword,
+            xorb (lword, itmpl * itmph + xorb (c2 i, reverse ib)))
+        end)
+-   val zero: word = 0wx13 
++   val zero: word = 0wx13
+    val lword: word ref = ref 0w13
+    val irword: word ref = ref 0w14
+    val needTo = ref true
+@@ -52,22 +52,15 @@
+             ; !irword)
+    fun loop (i, w) =
+       if i = 0
+-         then
+-            if w = 0wx132B1B67
+-               then ()
+-            else raise Fail "bug"
++         then w
+       else loop (Int.- (i, 1), w + word())
+    in
+-      loop (150000000, 0w0)
++      loop (count, 0w0)
+    end
+ 
+-structure Main =
+-   struct
+-      fun doit n =
+-         if n = 0
+-            then ()
+-         else (once ()
+-               ; doit (n - 1))
+-   end
+-
+-val _ = Main.doit 2
++structure Benchmark =
++struct
++  val name="psdes-random"
++  fun run [size]=Word32.toString(once(BenchInput.between(1,150000000)(BenchInput.integer size)))
++  | run _=raise Fail "psdes-random expects generated words"
++end

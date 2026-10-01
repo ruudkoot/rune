@@ -3,7 +3,7 @@ structure BenchCatalog =
 struct
   type entry = {name: string, profile: string, upstream: string, sourcePath: string,
                 args: string list, expected: string, sources: string list,
-                seconds: int, memory: int, tags: string list}
+                seconds: int, memory: int, tags: string list, inputFiles: string list, resultCheck: string, status: string}
   val root = "examples/benchmarks/"
 
   fun lines path =
@@ -38,18 +38,20 @@ struct
     let
       fun row text : entry =
         case String.fields (fn c => c = #"\t") (strip text) of
-          [name, profile, upstream, sourcePath, args, expected, sources, seconds, memory, tags] =>
+          [name, profile, upstream, sourcePath, args, expected, sources, seconds, memory, tags, inputFiles, resultCheck, status] =>
             {name=name, profile=profile, upstream=upstream, sourcePath=sourcePath,
              args=String.tokens Char.isSpace args, expected=expected,
              sources=String.fields (fn c => c = #",") sources,
              seconds=integer seconds, memory=integer memory,
-             tags=String.fields (fn c => c = #",") tags}
+             tags=String.fields (fn c => c = #",") tags,
+             inputFiles=if inputFiles = "-" then [] else String.fields (fn c => c = #",") inputFiles,
+             resultCheck=resultCheck, status=status}
         | _ => raise Fail "invalid benchmark manifest row"
     in
       case lines path of
         [] => raise Fail "empty benchmark manifest"
       | header :: rows =>
-          if strip header <> "benchmark\tprofile\tupstream\tsource_path\targs\texpected\tsources\ttimeout\tmemory_kib\ttags"
+          if strip header <> "benchmark\tprofile\tupstream\tsource_path\targs\texpected\tsources\ttimeout\tmemory_kib\ttags\tinput_files\tresult_check\tstatus"
           then raise Fail "invalid benchmark manifest header"
           else List.map row rows
     end
@@ -62,11 +64,14 @@ struct
         | _ => raise Fail "invalid source inventory") (lines (root ^ "inventory.tsv"))
       fun check (entry : entry) =
         let
-          val {name, profile, upstream, sourcePath, args, expected, sources, seconds, memory, tags} = entry
+          val {name, profile, upstream, sourcePath, args, expected, sources, seconds, memory, tags, inputFiles, resultCheck, status} = entry
           val _ = if relative name andalso not (String.isSubstring "/" name) then () else raise Fail "invalid benchmark name"
           val _ = if List.exists (fn p => p = profile) ["smoke", "normal", "large"] then () else raise Fail "invalid benchmark profile"
           val _ = if List.exists (fn key => key = (upstream, sourcePath)) inventory then () else raise Fail "unknown benchmark source"
           val _ = if List.null args orelse List.null sources orelse List.null tags then raise Fail "incomplete benchmark entry" else ()
+          val _ = if List.exists (fn c => c = resultCheck) ["exact", "checked-numerical"] then () else raise Fail "invalid result check"
+          val _ = if status = "implemented" then () else raise Fail "benchmark is not implemented"
+          val _ = List.app (fn path => localFile (name ^ "/" ^ path)) inputFiles
           val _ = List.app localFile sources
           val _ = localFile expected
           val _ = case lines (root ^ expected) of
@@ -86,7 +91,7 @@ struct
       fun complete name =
         List.app (fn profile =>
           if List.exists (fn (entry : entry) => #name entry = name andalso #profile entry = profile) entries
-          then () else raise Fail "missing benchmark profile") ["smoke", "normal", "large"]
+          then () else raise Fail "missing benchmark profile") ["smoke", "normal"]
     in List.app complete names end
 
   fun selected entries profile filter =
@@ -97,5 +102,5 @@ struct
   fun emit (entry : entry) =
     print (String.concatWith "\t" [#name entry, Int.toString (#seconds entry),
       Int.toString (#memory entry), String.concatWith " " (#sources entry),
-      String.concatWith " " (#args entry), #expected entry] ^ "\n")
+      String.concatWith " " (#args entry), #expected entry, if List.null (#inputFiles entry) then "-" else String.concatWith " " (#inputFiles entry)] ^ "\n")
 end
