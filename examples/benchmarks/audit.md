@@ -16,19 +16,38 @@ again at each import. No program passes merely by appearing in the inventory.
 |---|---:|---:|---:|---:|---:|
 | MLton | 48 | 48 | 0 | 0 | 0 |
 | SML/NJ | 45 | 35 | 8 | 2 | 0 |
-| ML Kit | 438 | 80 | 21 | 331 | 6 |
+| ML Kit | 438 | 67 | 16 | 331 | 24 |
 | nofib | 187 | 128 | 48 | 11 | 0 |
 | Sandmark | 143 | 66 | 77 | 0 | 0 |
-| Total | 861 | 357 | 154 | 344 | 6 |
+| Total | 861 | 344 | 149 | 344 | 24 |
 
-The M2 compatibility audit additionally identified 21 ML Kit workloads
-that call region-reset controls. Their original storage model requires
-unavailable runtime controls, so they are now explicitly deferred. Removing
-the calls would change the benchmark; portable related variants remain
-scheduled. A further source review accounts for five entrypoint/project aliases
-and six support/regression entries. Their exact reasons are recorded in
-MLKIT_REVIEW; the ten-repetition copying-mergesort workload remains distinct.
-The scanner checks executable code, ignoring prose and strings.
+The initial M2 review classified 21 ML Kit region-control variants as deferred.
+A closer audit found that five upstream host variants already define their
+region-control functions as no-ops. Those are portable, distinct storage
+variants and remain scheduled for import. Sixteen programs call actual
+unavailable controls and remain deferred; removing those calls would change
+the measured storage model.
+
+Eighteen additional ML Kit entrypoint aliases share the complete original
+kernel and hardcoded parameters with their canonical files. Byte-preserving
+comparisons remove only the reviewed final invocation/export adapters (and
+one driver comment), retaining strings and all algorithm/input bytes. Changed
+kernels or strings prevent this duplicate classification. Existing vector
+variants with different element representations and regeneration behavior
+remain separate. The inventory records both source paths, identities and
+notices. Five earlier project/entrypoint aliases and six support/regression
+exclusions remain accounted for; the ten-repetition mergesort is distinct.
+The scanner ignores prose/strings for facility detection, while duplicate
+checks deliberately retain string contents.
+
+nofib's individually inventoried Main files now include their transitive
+local Haskell/literate modules and local/shared NofibUtils. The compression
+and inference entrypoints previously recorded only Main.hs and therefore
+omitted their algorithms and dependencies from the member digest; that
+metadata gap is corrected. Individual notices beside file entrypoints are
+also discovered. Explicit EXCLUDED_SRCS test programs retain exclusions with
+their upstream build evidence. These refinements change source identities,
+not the pinned revisions or the runnable programs.
 
 These are source entries, not 861 distinct benchmark algorithms. ML Kit's
 count includes regression and support files so exclusions are explicit.

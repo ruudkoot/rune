@@ -38,6 +38,19 @@ MLKIT_REVIEW = {
     "test/stringconcat.sml": ("exclude", "argument-transformation regression: concatenates two literal strings once and prints Hello world; its source comment explicitly checks -no_opt compiler behavior"),
     "test/tststrcmp.sml": ("exclude", "enumerated string-comparison correctness checks with expected booleans and numbered ok reports, not a repeated benchmark workload"),
 }
+# These pairs were reviewed at the pinned revision. Their complete bodies and
+# hardcoded parameters agree; only the top-level invocation/export differs.
+MLKIT_ENTRYPOINT_ALIASES = {
+    "DLXSimulator_smlnj": "DLXSimulator", "checksum_smlnj": "checksum",
+    "matrix-multiply_smlnj": "matrix-multiply", "mpuz_smlnj": "mpuz",
+    "peek_smlnj": "peek", "psdes-random_smlnj": "psdes-random",
+    "ratio-regions_smlnj": "ratio-regions", "raytrace_smlnj": "raytrace",
+    "smith-normal-form_smlnj": "smith-normal-form", "tailfib_smlnj": "tailfib",
+    "tak_smlnj": "tak", "tsp_smlnj": "tsp", "tyan_smlnj": "tyan",
+    "wc-input1_smlnj": "wc-input1", "wc-scanStream_smlnj": "wc-scanStream",
+    "zern_smlnj": "zern", "kitsimple_smlnj": "kitsimple",
+    "kitlife35u_mlton": "kitlife35u_smlnj",
+}
 SANDMARK_PACKAGES = {"alt-ergo", "coq", "cpdf", "cubicle", "decompress", "frama-c", "irmin", "menhir", "owl", "soli", "thread-lwt", "yojson"}
 
 
@@ -57,6 +70,23 @@ def source_files(root, path):
     if p.is_dir():
         return sorted(q for q in p.rglob("*") if q.is_file() and q.suffix in EXTENSIONS)
     files = [p] if p.exists() else []
+    if p.suffix in {".hs", ".lhs"} and p.exists():
+        # Multi-entrypoint directories have one inventory key per executable,
+        # but each key still needs its transitive local modules. A Main.hs
+        # record alone loses the actual application and its feature/notices.
+        pending = [p]
+        while pending:
+            member = pending.pop()
+            for module in re.findall(r"^\s*import\s+(?:qualified\s+)?([A-Z][\w.]*)", haskell_code(member), re.M):
+                relative = Path(*module.split("."))
+                for base in (p.parent, root / "common"):
+                    candidates = [base / relative.with_suffix(ext) for ext in (".hs", ".lhs")]
+                    dependency = next((candidate for candidate in candidates if candidate.is_file()), None)
+                    if dependency is not None:
+                        if dependency not in files:
+                            files.append(dependency)
+                            pending.append(dependency)
+                        break
     if p.suffix == ".mlb" and p.exists():
         # Local source members, including directories referenced by projects.
         for word in re.findall(r"[\w./-]+\.(?:sml|sig|mlb)", p.read_text(errors="replace")):
@@ -96,6 +126,17 @@ def code_only(text, language="ml"):
         else:
             out.append(text[pos]); pos += 1
     return "".join(out)
+
+
+def mlkit_entrypoint_body(path):
+    """Retain strings and every algorithm byte; remove only reviewed adapters."""
+    text = path.read_text(encoding="latin-1")
+    text = text.removeprefix("(* Added val _ = Main.doit() at end of file -- mael 2001-10-19 *)\n")
+    if path.stem in {"kitlife35u_mlton", "kitlife35u_smlnj"}:
+        text = re.sub(r'\s*(?:val _ = \(testit \(\); testit \(\); testit \(\)\))?\s*in\s*val done = "done";\s*(?:fun doit\(\) = \(testit\(\); testit\(\); testit\(\)\))?\s*end\s*$', "", text)
+    if path.stem == "kitsimple_smlnj":
+        text = re.sub(r"structure Main\s*=\s*struct\s*val doit = doit\s*end\s*$", "", text)
+    return re.sub(r"\s*(?:val\s+_\s*=\s*(?:Main\.)?doit\s*\(\s*\)\s*;?|fun\s+doit\s*\(\s*\)\s*=\s*Main\.doit\s*\(\s*\))\s*$", "", text).strip()
 
 
 def digest(root, files):
@@ -234,11 +275,20 @@ def classify(source, root, item, files, text):
         candidate = stem.startswith("kit") or stem in MLKIT_WORKLOADS or (path.startswith("test_dev/") and stem in MLKIT_DEV_WORKLOADS)
         if not candidate:
             disposition, milestone, reason = "exclude", "-", "regression or support source outside the benchmark families; test/all.tst and test_dev/Makefile distinguish compiler/Basis tests"
-        if disposition == "import" and re.search(r"\b(?:resetRegions|forceResetting)\b", text):
-            disposition, reason = "defer", "calls ML Kit region-reset controls; removing these changes the measured storage policy; reconsider with equivalent region lifetime controls, and retain portable algorithm variants separately"
+        region_names = set(re.findall(r"\b(?:resetRegions|forceResetting)\b", text))
+        noops = set(re.findall(r"\bfun\s+(resetRegions|forceResetting)\s+_\s*=\s*\(\s*\)", text))
+        if disposition == "import" and region_names:
+            if region_names <= noops:
+                reason = "portable upstream variant defines region-control functions as no-ops; preserve this distinct storage policy and its original algorithm"
+            else:
+                disposition, reason = "defer", "calls ML Kit region-reset controls; removing these changes the measured storage policy; reconsider with equivalent region lifetime controls, and retain portable algorithm variants separately"
         if path in MLKIT_REVIEW:
             disposition, reason = MLKIT_REVIEW[path]
             if disposition == "exclude": milestone = "-"
+        if path.startswith("test/") and name in MLKIT_ENTRYPOINT_ALIASES:
+            canonical = root / "test" / (MLKIT_ENTRYPOINT_ALIASES[name] + ".sml")
+            if canonical.is_file() and mlkit_entrypoint_body(root / path) == mlkit_entrypoint_body(canonical):
+                disposition, reason = "duplicate", "same complete kernel and hardcoded parameters as " + str(canonical.relative_to(root)) + "; only the reviewed top-level invocation/export adapter differs; share that implementation and retain both provenance paths"
         if path == "test_dev/kitsimple.sml":
             disposition, reason = "duplicate", "identical source and hardcoded workload to mlkit:test/kitsimple.sml; retain the test entry and both provenance paths"
     if source == "smlnj":
@@ -249,8 +299,15 @@ def classify(source, root, item, files, text):
         elif name in {"cml-sieve", "pingpong"}:
             disposition, reason = "defer", "requires Concurrent ML message passing; reconsider when a compatible concurrency facility exists"
     if source == "nofib":
+        makefile = (root / path).parent / "Makefile"
+        excluded = set()
+        if (root / path).is_file() and makefile.is_file():
+            for value in re.findall(r"^EXCLUDED_SRCS\s*[:?+]?=\s*(.*)$", makefile.read_text(errors="replace"), re.M):
+                excluded.update(value.split())
         direct = [p for p in files if p.parent == root / path or p == root / path]
-        if not any(re.search(r"^[ \t]*(?:module[ \t]+Main\b|main[ \t]*(?:::|=))", haskell_code(p), re.M) for p in direct if p.suffix in {".hs", ".lhs"}):
+        if Path(path).name in excluded:
+            disposition, milestone, reason = "exclude", "-", "upstream Makefile lists this test entrypoint in EXCLUDED_SRCS; retain the application entrypoint and record this support/correctness program separately"
+        elif not any(re.search(r"^[ \t]*(?:module[ \t]+Main\b|main[ \t]*(?:::|=))", haskell_code(p), re.M) for p in direct if p.suffix in {".hs", ".lhs"}):
             disposition, milestone, reason = "exclude", "-", "aggregate, support directory, or old source fragment without a standalone Main entrypoint"
         elif path.startswith(("parallel/", "smp/")):
             disposition, reason = "defer", "parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities"
@@ -326,7 +383,7 @@ def build(source, root, lock):
             if candidate.is_relative_to(root) and candidate.is_file():
                 inputs.add(str(candidate.relative_to(root)))
         notices = lock["notices"].split(";") if lock["notices"] not in {"", "-"} else []
-        if files and parent.exists() and ((root / path).is_dir() or (source == "sandmark" and path.startswith("benchmarks/"))):
+        if files and parent.exists() and ((root / path).is_dir() or source == "nofib" or (source == "sandmark" and path.startswith("benchmarks/"))):
             for notice in parent.rglob("*"):
                 if notice.is_file() and re.fullmatch(r"(?:LICENSE|COPYING|COPYRIGHT)(?:\.[\w-]+)?", notice.name, re.I):
                     notices.append(str(notice.relative_to(root)))

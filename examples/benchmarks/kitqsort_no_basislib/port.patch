@@ -1,0 +1,114 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -1,71 +1,9 @@
+-(*kitknuth_bendix36c.sml*)
++(* The algorithm is retained; the old primitive-based mini-Basis is replaced
++   by SML97's equivalent map/real/floor/list/equality operations. *)
++structure SortKernel =
++struct
++  fun print (_ : string) = ()
+ 
+-(* quicksort-random.sml
+- *
+- * Input....:	Random list (pseudo-random integers)
+- * Optimised:	'arg as ...' in quickSort'() and  partition().
+- *              Copying left-parts after partitioning inside quickSort'().
+- *              `Bertelsen transformation' of argument to tail-recursive
+- *              call to quickSort'().
+- *
+- * Sestoft & Bertelsen, December 1995
+- *)
+-
+-
+-infix  7  * / div mod
+-infix  6  + - ^
+-infixr 5  :: @
+-infix  4  = <> > >= < <=
+-infix  3  := o
+-infix  0  before
+-
+-
+-    type unit = unit
+-    type exn = exn
+-    type 'a ref = 'a ref
+-    type real = real
+-
+-    exception Bind = Bind
+-    exception Match = Match
+-    exception Subscript
+-    exception Size
+-    exception Overflow = Overflow
+-    exception Domain
+-    exception Div = Div
+-    exception Chr
+-    exception Fail of string
+-
+-fun (a:real) / (b:real) : real = prim ("divFloat", (a,b))
+-fun implode (chars : char list) : string = prim ("implodeCharsML", chars)
+-fun concat (ss : string list) : string = prim ("implodeStringML", ss)
+-fun (s : string) ^ (s' : string) : string = prim ("concatStringML", (s, s'))
+-fun str (c : char) : string = implode [c]
+-
+-fun chr (i:int) : char =
+-    if i>=0 andalso i<256 then prim ("id", i)
+-    else raise Chr
+-
+-fun ord (c : char) : int = prim ("id", c)
+-fun print (x:string):unit = prim("printStringML",x)
+-
+-fun append [] ys = ys
+-  | append (x::xs) ys = x :: append xs ys
+-fun xs @ ys = append xs ys
+-
+-fun real (x : int) : real = prim ("realInt", x)
+-
+-fun getCtx () : foreignptr = prim("__get_ctx",())
+-
+-fun floor (x : real) : int = prim ("floorFloat", (getCtx(),x))    (* may raise Overflow *)
+-
+-fun not true = false
+-  | not false = true
+-fun (f o g) x = f(g x)
+-
+-fun op = (x: ''a, y: ''a): bool = prim ("=", (x, y))
+-
+-val _ =
+-let
+ fun map f nil = nil
+   | map f (x :: L) = f x :: map f L
+ fun rev l =
+@@ -105,7 +43,7 @@
+     | quickSort' ([a], sorted) = ([], a::sorted)
+     | quickSort' (a::bs, sorted) =  (* "a" is the pivot *)
+         let
+-  	  fun partition (arg as (_, _, []: elem list)) = arg
++          fun partition (arg as (_, _, []: elem list)) = arg
+ 	    | partition (left, right, x::xr) =
+ 	        if x<=a then partition(x::left, right, xr)
+ 	                else partition(left, x::right, xr)
+@@ -158,7 +96,22 @@
+     | isSorted [x: elem] = true
+     | isSorted (x::(xr as (y::yr))) = (x <= y) andalso (isSorted xr)
+ 
+-in
+-  if isSorted (quickSort(randomList 25000)) then say("Ok!\n")
+-  else say("Oops...\n")
+ end
++structure Benchmark =
++struct
++  val name = "kitqsort_no_basislib"
++  fun run [size] =
++    let val n = BenchInput.between (1,1000000) (BenchInput.integer size)
++        val _ = if Real.radix = 2 andalso Real.precision = 53 then ()
++                else raise Fail "generator requires binary64 Real"
++        val sorted = SortKernel.quickSort (SortKernel.randomList n)
++        val _ = if SortKernel.isSorted sorted then () else raise Fail "unordered quicksort result"
++        fun scan ([],count,sum,hash) =
++              if count = n then Int.toString count ^ " " ^ IntInf.toString sum ^ " " ^ Word32.toString hash
++              else raise Fail "quicksort lost elements"
++          | scan (x::xs,count,sum,hash) =
++              scan (xs,count+1,IntInf.+ (sum,IntInf.fromInt x),
++                    Word32.+ (Word32.* (hash,0w16777619),Word32.fromInt x))
++    in scan (sorted,0,0,0w0) end
++    | run _ = raise Fail "kitqsort_no_basislib expects list size"
++end

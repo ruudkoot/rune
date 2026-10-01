@@ -87,6 +87,9 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
 | [queens-strict](#queens-strict) | nofib | Count queen placements using eagerly generated list levels. |
 | [nqueens](#nqueens) | Sandmark | Count queen placements by depth-first search with mutable sibling totals. |
 | [rec_seq_ack](#rec_seq_ack) | Sandmark | Evaluate strict Ackermann calls and consume every repeated result. |
+| [klife_eq](#klife_eq) | Classic SML / ML Kit | Evolve a glider gun with explicit double generation and intermediate-list copying. |
+| [kitlife35u_smlnj](#kitlife35u_smlnj) | Classic SML / ML Kit | Evolve the same glider gun with typed equality, copying and upstream no-op region calls. |
+| [kitqsort_no_basislib](#kitqsort_no_basislib) | Classic SML / ML Kit | Sort seeded lists with copied partitions and transformed tail-recursive tuple arguments. |
 
 ## Running and interpreting checks
 
@@ -2062,3 +2065,96 @@ source-based diagnostic hypotheses, not measured conclusions. See
 [Larceny overlap and the Sandmark literature](../literature.md).
 
 See [provenance and original files](rec_seq_ack/PROVENANCE.md).
+
+## klife_eq
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/klife_eq.sml`.
+Individual author/notice is not identified in this file; the three aggregate
+ML Kit/GPL/SML-NJ notices and pristine source are retained without claiming
+that every aggregate notice applies to this individual program.
+
+Retain double copying of generation arguments, survivor lists, dead-neighbor
+lists, newborn lists and explicit boolean copying. The neighbor function is
+passed explicitly and equality uses ordinary polymorphic equality. Normal
+preserves the original three 50-generation calls; large selects 250.
+
+Wrap the original outer let/local declarations in LifeKernel to expose iter
+and alive. Suppress per-generation progress and ASCII rendering; consume
+every final sorted coordinate in the same fixed Word32 summary used by the
+other Life variants. Retain algorithms, custom list functions, generator,
+copying and ordinary integer arithmetic. Selected coordinates fit 31 bits;
+the checksum is explicitly modulo 2^32. Smoke selects ten generations once.
+
+Fixtures come from an independent set-based eight-neighbor simulation of
+the exact 44-cell glider-gun seed, with sorted-coordinate checksum review.
+They agree mathematically with life-smlnj; these implementations differ in
+copying, equality specialization and argument shape and remain separately
+named. Those differences are source-based diagnostic hypotheses, not
+measured causal findings. See [the ML Kit region/lifetime literature](../literature.md).
+
+See [source and adaptation provenance](klife_eq/PROVENANCE.md).
+
+## kitlife35u_smlnj
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/kitlife35u_smlnj.sml`.
+Individual author/notice is not identified in this file; the three aggregate
+ML Kit/GPL/SML-NJ notices and pristine source are retained without claiming
+that every aggregate notice applies to this individual program.
+
+Retain typed integer/pair equality functions and explicit integer, boolean
+and generation copying. The upstream resetRegions function already returns
+unit without any effect; keep its calls and double generation copies. No
+region facility is required or added. Large preserves three 250-generation
+calls; normal selects three 50-generation calls. The MLton-host sibling has
+the same body and count but a different launcher, recorded separately in
+the inventory as an exact entrypoint duplicate sharing this implementation.
+Its pristine source is retained at `upstream/host-mlton.sml`.
+
+Wrap the original outer let/local declarations in LifeKernel to expose iter
+and alive. Suppress per-generation progress and ASCII rendering; consume
+every final sorted coordinate in the same fixed Word32 summary used by the
+other Life variants. Retain algorithms, custom list functions, generator,
+copying and ordinary integer arithmetic. Selected coordinates fit 31 bits;
+the checksum is explicitly modulo 2^32. Smoke selects ten generations once.
+
+Fixtures come from an independent set-based eight-neighbor simulation of
+the exact 44-cell glider-gun seed, with sorted-coordinate checksum review.
+They agree mathematically with life-smlnj; these implementations differ in
+copying, equality specialization and argument shape and remain separately
+named. Those differences are source-based diagnostic hypotheses, not
+measured causal findings. See [the ML Kit region/lifetime literature](../literature.md).
+
+See [source and adaptation provenance](kitlife35u_smlnj/PROVENANCE.md).
+
+## kitqsort_no_basislib
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`,
+`test_dev/kitqsort_no_basislib.sml`. Source attributes the copying/argument
+transformation to Sestoft and Bertelsen, December 1995, and references
+Paulson pages 96/98 and exercise 3.29 for generation/quicksort. Original
+source and the aggregate ML Kit/GPL/SML-NJ notices are retained; no individual
+license is asserted beyond what those notices establish.
+
+Retain the pivot/partition order, copies of left partitions, right-first
+recursive sort, tuple arguments, aliases and tail recursion. This differs
+from copying mergesort and from later variants with active forceResetting.
+The forceResetting mention here is inside a comment and stays inert.
+
+Replace the old primitive-based mini-Basis by equivalent SML97 operations:
+real division, Real.floor, Real.fromInt, string operations, print and
+polymorphic equality. The foreign context pointer was only an implementation
+argument to floorFloat; the algorithm requires no foreign call or runtime
+facility. Keep all custom list and sorting functions from the kernel, and
+wrap its outer let in SortKernel. Suppress old Ok/Oops output; validate order,
+length, IntInf sum and every sorted element in a fixed Word32 checksum.
+
+Keep the original floating Park-Miller generator, seed 117, multiplier
+16807, modulus 2147483647 and value range 1..100000. Require binary64 Real;
+all generator intermediate integer products fit its exact 53-bit range,
+allowing an independent integer-modular Python oracle. Smoke sorts 100,
+normal preserves 25000 and large selects 100000. No filesystem input or
+random operating-system state is used. The added complete result scan is
+measured work. Copying, tuple lifetimes and specialization are source-based
+hypotheses, not measured explanations; see [ML Kit/Paulson references](../literature.md).
+
+See [the original source and adaptation patch](kitqsort_no_basislib/PROVENANCE.md).

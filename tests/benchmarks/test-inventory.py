@@ -43,6 +43,41 @@ class InventoryTest(unittest.TestCase):
         self.file("test/kitfib35.sml", "(* resetRegions () was removed *)\nfun fib n = n\n")
         self.assertEqual(self.build("mlkit")[0]["disposition"], "import")
 
+    def test_upstream_noop_region_controls_are_portable_variants(self):
+        (self.root / "test_dev").mkdir()
+        self.file("test/kitlife35u_smlnj.sml", "fun resetRegions _ = ()\nfun run x = resetRegions x\n")
+        row = self.build("mlkit")[0]
+        self.assertEqual(row["disposition"], "import")
+        self.assertIn("no-ops", row["reason"])
+
+    def test_one_noop_does_not_hide_another_missing_region_control(self):
+        (self.root / "test_dev").mkdir()
+        self.file("test/kitlife35u_smlnj.sml", "fun resetRegions _ = ()\nfun run x = (resetRegions x; forceResetting x)\n")
+        self.assertEqual(self.build("mlkit")[0]["disposition"], "defer")
+
+    def test_entrypoint_only_alias_is_a_duplicate(self):
+        (self.root / "test_dev").mkdir()
+        self.file("test/tak.sml", "fun tak n = n\nval _ = Main.doit()\n")
+        self.file("test/tak_smlnj.sml", "fun tak n = n\nfun doit() = Main.doit()\n")
+        rows = {r["path"]: r for r in self.build("mlkit")}
+        self.assertEqual(rows["test/tak_smlnj.sml"]["disposition"], "duplicate")
+
+    def test_changed_alias_kernel_or_string_is_preserved(self):
+        (self.root / "test_dev").mkdir()
+        self.file("test/checksum.sml", 'val data = "original"\nval _ = Main.doit()\n')
+        self.file("test/checksum_smlnj.sml", 'val data = "changed"\nfun doit() = Main.doit()\n')
+        rows = {r["path"]: r for r in self.build("mlkit")}
+        self.assertEqual(rows["test/checksum_smlnj.sml"]["disposition"], "import")
+
+    def test_noop_life_host_launchers_share_one_implementation(self):
+        (self.root / "test_dev").mkdir()
+        body = 'local\nfun resetRegions _ = ()\nfun testit _ = show(iter 250)\n'
+        self.file("test/kitlife35u_mlton.sml", body + 'val _ = (testit (); testit (); testit ())\nin\nval done = "done";\nend\n')
+        self.file("test/kitlife35u_smlnj.sml", body + 'in\nval done = "done";\nfun doit() = (testit(); testit(); testit())\nend\n')
+        rows = {r["path"]: r for r in self.build("mlkit")}
+        self.assertEqual(rows["test/kitlife35u_mlton.sml"]["disposition"], "duplicate")
+        self.assertEqual(rows["test/kitlife35u_smlnj.sml"]["disposition"], "import")
+
     def test_haskell_main_need_not_be_named_Main(self):
         self.nofib_roots()
         self.file("gc/hash/Makefile", "SRCS = hash.hs\n")
@@ -86,6 +121,32 @@ class InventoryTest(unittest.TestCase):
         rows = self.build("nofib")
         self.assertEqual({r["path"] for r in rows}, {"parallel/OLD/kernels/one.hs", "parallel/OLD/kernels/two.lhs"})
         self.assertTrue(all(r["disposition"] == "defer" for r in rows))
+
+    def test_file_entrypoint_retains_transitive_local_dependencies(self):
+        self.nofib_roots()
+        self.file("real/app/Makefile", "\n")
+        self.file("real/app/Main.hs", "module Main where\nimport First\nmain = print First.value\n")
+        self.file("real/app/Other.hs", "module Main where\nmain = print 2\n")
+        self.file("real/app/First.hs", "module First where\nimport qualified Second\nvalue = Second.value\n")
+        self.file("real/app/Second.lhs", "> module Second where\n> import NofibUtils\n> value = 1\n")
+        self.file("common/NofibUtils.hs", "module NofibUtils where\nhash = id\n")
+        self.file("real/app/LICENSE", "individual program notice\n")
+        rows = {r["path"]: r for r in self.build("nofib")}
+        row = rows["real/app/Main.hs"]
+        self.assertIn("real/app/First.hs", row["members"])
+        self.assertIn("real/app/Second.lhs", row["members"])
+        self.assertIn("common/NofibUtils.hs", row["members"])
+        self.assertNotIn("Other.hs", row["members"])
+        self.assertIn("real/app/LICENSE", row["notices"])
+
+    def test_excluded_test_entrypoints_are_not_application_workloads(self):
+        self.nofib_roots()
+        self.file("real/app/Makefile", "EXCLUDED_SRCS=Test.hs\n")
+        self.file("real/app/Main.hs", "module Main where\nmain = print 1\n")
+        self.file("real/app/Test.hs", "module Main where\nmain = print True\n")
+        rows = {r["path"]: r for r in self.build("nofib")}
+        self.assertEqual(rows["real/app/Main.hs"]["disposition"], "import")
+        self.assertEqual(rows["real/app/Test.hs"]["disposition"], "exclude")
 
     def sandmark_program(self, name, text):
         self.file("benchmarks/kernels/dune", "(executable (name " + name + ") (modes native byte))\n")

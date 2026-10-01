@@ -67,8 +67,8 @@ validated by this pilot record.
 
 ## M2 first collection wave (in progress)
 
-The catalogue now contains 79 programs, including all 48 pinned MLton
-workloads, eleven ML Kit workload entries and thirteen SML/NJ entries, alongside
+The catalogue now contains 82 programs, including all 48 pinned MLton
+workloads, fourteen ML Kit workload entries and thirteen SML/NJ entries, alongside
 the nofib/Sandmark pilots. M2 remains in progress: the other suitable
 SML/NJ and ML Kit entries are still scheduled, not declared complete.
 
@@ -94,8 +94,9 @@ update, nine finite-number/tolerance cases, six image-checker cases and six
 assembly-checker cases. These include deliberately wrong results, wrong
 signed zero, nonfinite values, malformed literals and pixels beyond bounds.
 
-Source compatibility review now accounts for 21 ML Kit region-reset
-variants as deferred, five additional duplicate entrypoint/project forms,
+The first-wave source review classified 21 ML Kit region-control
+variants as deferred; the later audit below corrects five upstream no-op
+variants. That wave also recorded five additional duplicate entrypoint/project forms,
 and six support/regression exclusions. Each reason is explicit in the
 reproducible inventory; 21 discovery/classification tests pass.
 
@@ -201,3 +202,41 @@ The final routine run, including metadata corruption checks and a compiler
 rebuild after Makefile changes, passed in 15.54 seconds with 945636 KiB peak
 RSS. The earlier cached 8.30-second run excluded the new negative-metadata
 step. Neither observation is enforced as a timing limit.
+
+## Continued source audit
+
+The ML Kit audit now distinguishes sixteen actual region-control blockers
+from five portable upstream variants that already define those functions as
+no-ops. Eighteen more exact entrypoint aliases are recorded as duplicates;
+strings and complete kernel/input bytes are compared before sharing a
+canonical implementation. Changed vector representations remain separate.
+
+File-based nofib entrypoints now retain transitive local modules and their
+individual notices in the inventory digest, including compression and type
+inference dependencies. Twenty-eight inventory tests pass, including changed
+string rejection, no-op versus missing runtime controls, transitive modules
+and upstream-excluded test entrypoints. This audit adds no compiler features
+and does not claim that the newly scheduled portable variants are imported.
+
+## Further M2 copying variants
+
+`klife_eq` and `kitlife35u_smlnj` passed smoke and normal on Rune, MLton,
+SML/NJ and Poly/ML. They retain their distinct copying/equality/argument
+policies. The latter retains upstream no-op region calls without requiring
+new runtime facilities; its MLton-host entrypoint is an exact duplicate with
+source and provenance retained in the same directory. Large 250-generation
+profiles have independent fixtures but are not yet recorded as executed.
+
+The final `timeout 1800 make JOBS=4 check` passed with M7 integrated: metadata
+corruption rejection and all ten routine smoke programs ran in the acceptance
+sequence. Compiler/runedoc/runeopt cross-host checks also passed. The source
+audit refinements and additional Life imports were validated separately
+after that invocation; this is not a claim that their Python checks ran in
+the earlier acceptance recipe.
+
+`kitqsort_no_basislib` additionally passed smoke and the original 25000-item
+normal profile on all four primary compilers. Its copying/tuple transformations
+and floating Park-Miller generator are retained; the old primitive-based
+mini-Basis is replaced by equivalent SML97 operations. A separate integer
+generator/Python-sort oracle confirms all three selected fixtures. Large is
+still unexecuted.
