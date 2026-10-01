@@ -1,0 +1,89 @@
+--- upstream/ordered-sources
++++ benchmark.sml
+@@ -47,7 +47,7 @@
+     fun isOccupied (b,i) = Option.isSome(List.nth(b, i))
+ 
+     (* isEmpty : board * int -> bool *)
+-    fun isEmpty (b, i) = Option.isNone (List.nth(b, i))
++    fun isEmpty (b, i) = (fn x => not(Option.isSome x)) (List.nth(b, i))
+ 
+     (* find : board * int -> player option *)
+     fun find (b, i) = List.nth (b, i)
+@@ -225,57 +225,23 @@
+           end
+ 
+   end
+-(* main.sml
+- *
+- * COPYRIGHT (c) 2025 The Fellowship of SML/NJ (https://smlnj.org)
+- * All rights reserved.
+- *)
+-
+-structure Main : BMARK =
+-  struct
+-
+-    structure T = TicTacToe
+-
+-    val name = "minimax"
+-
+-    val results : string list = []
+-
+-    val iters = 10
+-
+-    fun doit () = let
+-	    fun doit () = (
+-                  T.gameTree();
+-                  T.gameTreeWithTT())
+-            fun loop n = if n = 0
+-                  then ()
+-                  else (doit () ; loop (n-1))
+-            in
+-              loop iters
+-            end
+-
+-    (* print the size of the tree *)
+-    fun printTree tr = let
+-          fun sz (T.Rose(_, kids)) = let
+-                fun doKid (t, (n, d)) = let
+-                      val (n', d') = sz t
+-                      in
+-                        (n+n', Int.max(d, d'))
+-                      end
+-                val (n, d) = List.foldl doKid (0, 0) kids
+-                in
+-                  (n+1, d+1)
+-                end
+-          val (n, d) = sz tr
+-          in
+-            Log.say [
+-                "# nodes = ", Int.toString n, ", max depth = ", Int.toString d, "\n"
+-              ]
+-          end
+-
+-    fun testit () = (
+-          Log.print "Minimax: ";
+-          printTree (T.gameTree());
+-          Log.print "Minimax+TT: ";
+-          printTree (T.gameTreeWithTT()))
+-
+-  end
++
++structure Benchmark =
++struct
++  val name="minimax"
++  fun summary (TicTacToe.Rose((_,score),kids)) =
++    let fun child(tree,(count,depth))=let val(n,d,_)=summary tree in(count+n,Int.max(depth,d))end
++        val(count,depth)=List.foldl child (0,0)kids
++    in(count+1,depth+1,score)end
++  fun one() =
++    let val(n,d,s)=summary(TicTacToe.gameTree())
++        val(n2,d2,s2)=summary(TicTacToe.gameTreeWithTT())
++        val _=if s=0 andalso s2=0 then () else raise Fail "tic-tac-toe root score"
++    in String.concatWith " "(List.map Int.toString[n,d,s,n2,d2,s2])end
++  fun run [reps]=
++    let val count=BenchInput.between(1,10)(BenchInput.integer reps)
++        fun loop(0,values)=String.concatWith ";"(List.rev values)
++          | loop(k,values)=loop(k-1,one()::values)
++    in loop(count,[])end
++  | run _=raise Fail "minimax expects full-tree repetitions"
++end

@@ -67,8 +67,8 @@ validated by this pilot record.
 
 ## M2 first collection wave (in progress)
 
-The catalogue now contains 68 programs, including all 48 pinned MLton
-workloads, eleven ML Kit workload entries and six SML/NJ entries, alongside
+The catalogue now contains 79 programs, including all 48 pinned MLton
+workloads, eleven ML Kit workload entries and thirteen SML/NJ entries, alongside
 the nofib/Sandmark pilots. M2 remains in progress: the other suitable
 SML/NJ and ML Kit entries are still scheduled, not declared complete.
 
@@ -114,3 +114,43 @@ were ML Kit compile failures (Boyer, Knuth-Bendix, Tyan, FXP). Every one of
 those 68 programs passed its normal profile on Rune. The current catalogue
 also has four later SML/NJ ports; their validation remains separately
 recorded rather than being included in the completed 68-program run.
+
+### Second classic wave
+
+Minimax, iterative pi digits and maze generation were added after the first
+checkpoint. Minimax smoke passed MLton, SML/NJ and Poly/ML at 1 GiB but Rune
+reported out of memory; the documented 2-GiB smoke override passed Rune. Its
+normal profile passed Rune at 4 GiB. A separate exhaustive board oracle
+confirmed both complete-tree and transposition-table summaries. Maze smoke
+and normal passed all four primary compilers, and a union-find oracle
+confirmed the complete fixtures and connected, acyclic structure. Iterative
+pi smoke and the selected 100-digit normal profile passed all four primary
+compilers. Earlier 2000- and 500-digit normal attempts timed out after 600
+seconds on Rune and passed the references; those attempts are retained. The
+2000-digit original input remains an explicitly selected large profile, whose
+Rune execution is not yet validated.
+The full digit fixtures are independently calculated using Chudnovsky.
+
+## M3/M5 initial search wave (in progress)
+
+Added nofib queens in memoized lazy and eager strict forms, preserving
+board-first enumeration and suffix sharing. Added Sandmark
+`nqueens` (depth-first mutable sibling counter) and `rec_seq_ack`
+(sequential Ackermann). The unchanged GHC 9.4.7 and OCaml 4.14.1 originals
+confirmed the selected fixtures. Ackermann fixtures also follow the
+independent closed form for m=3; all repetitions are consumed in SML.
+Validation artifacts remain under `tests/out/benchmarks/upstream-wave`.
+The nofib individual author/notice lookup remains explicit, rather than
+assigning the Sandmark or GHC compiler license to the queens program.
+
+M3 and M5 remain open; these ports do not represent collection closure.
+
+Both queens variants, Sandmark nqueens and Ackermann passed smoke and normal
+on Rune, MLton, SML/NJ and Poly/ML. Fourteen semantic checks on each primary
+compiler validate lazy demand, sharing, memoized exceptions, recursive-force
+rejection and queen counts for sizes 1 through 10. The test delay has an
+explicit integer result type, avoiding an unresolved top-level type variable.
+
+The current `timeout 1800 make JOBS=4 check` passed with required subprocess
+and socket access. Cross-host compiler, documentation generator and native
+generator checks passed. This acceptance run preceded M7 routine integration.

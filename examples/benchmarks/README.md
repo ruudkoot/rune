@@ -42,7 +42,6 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
 | [zebra](#zebra) | Classic SML / MLton | Solve the zebra puzzle using constraint propagation and fluid state. |
 | [count-graphs](#count-graphs) | Classic SML / MLton | Enumerate graph isomorphism classes with pruning and higher-order folds. |
 | [many_refs](#many_refs) | Classic SML / ML Kit | Retain three tables of real references and repeatedly update every element. |
-
 | [tensor](#tensor) | Classic SML / MLton | Apply real and paired-complex elementwise and contraction operators, checking every result. |
 | [zern](#zern) | Classic SML / MLton | Accumulate phase screens and validate every complex E-field value. |
 | [smith-normal-form](#smith-normal-form) | Classic SML / MLton | Reduce an IntInf matrix to Smith normal form and consume its diagonal. |
@@ -54,39 +53,43 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
 | [lexgen](#lexgen) | Classic SML / MLton | Generate a lexer from the original SML specification and compare every output byte. |
 | [mlyacc](#mlyacc) | Classic SML / MLton | Generate an LALR parser from the original SML grammar and compare its source and signature. |
 | [hamlet](#hamlet) | Classic SML / MLton | Parse, elaborate and evaluate a unary arithmetic program with the HaMLet interpreter. |
-
-| [kitfib35](#kitfib35) | Classic SML / MLton | Evaluate the ML Kit Fibonacci recurrence with its single n<1 base case. |
-| [fib0](#fib0) | Classic SML / MLton | Evaluate the two-base-case development Fibonacci recurrence. |
-| [kitreynolds2](#kitreynolds2) | Classic SML / MLton | Search a shared tree with a chain of ancestor predicates. |
-| [kitreynolds3](#kitreynolds3) | Classic SML / MLton | Search the same shared tree using explicit ancestor lists. |
-| [kitloop2](#kitloop2) | Classic SML / MLton | Count down a lexicographic pair using a tail-recursive loop. |
-| [kitdangle](#kitdangle) | Classic SML / MLton | Build and consume one closure chain retaining list payloads. |
-| [kitdangle3](#kitdangle3) | Classic SML / MLton | Build and release three closure chains sequentially. |
-| [msort](#msort) | Classic SML / MLton | Sort the original ascending sequence with alternating-split copying mergesort. |
-| [kittmergesort_tp](#kittmergesort_tp) | Classic SML / MLton | Regenerate and sort ten lists in process using the shared copying kernel. |
-
+| [kitfib35](#kitfib35) | Classic SML / ML Kit | Evaluate the ML Kit Fibonacci recurrence with its single n<1 base case. |
+| [fib0](#fib0) | Classic SML / ML Kit | Evaluate the two-base-case development Fibonacci recurrence. |
+| [kitreynolds2](#kitreynolds2) | Classic SML / ML Kit | Search a shared tree with a chain of ancestor predicates. |
+| [kitreynolds3](#kitreynolds3) | Classic SML / ML Kit | Search the same shared tree using explicit ancestor lists. |
+| [kitloop2](#kitloop2) | Classic SML / ML Kit | Count down a lexicographic pair using a tail-recursive loop. |
+| [kitdangle](#kitdangle) | Classic SML / ML Kit | Build and consume one closure chain retaining list payloads. |
+| [kitdangle3](#kitdangle3) | Classic SML / ML Kit | Build and release three closure chains sequentially. |
+| [msort](#msort) | Classic SML / ML Kit | Sort the original ascending sequence with alternating-split copying mergesort. |
+| [kittmergesort_tp](#kittmergesort_tp) | Classic SML / ML Kit | Regenerate and sort ten lists in process using the shared copying kernel. |
 | [barnes-hut](#barnes-hut) | Classic SML / MLton | Advance a seeded three-dimensional N-body model with octree force approximation. |
 | [tsp](#tsp) | Classic SML / MLton | Build and validate a divide-and-conquer travelling-salesman tour. |
-| [fannkuch](#fannkuch) | Classic SML / MLton | Enumerate permutations, flip their prefixes and consume the alternating checksum. |
-| [f-arith](#f-arith) | Classic SML / MLton | Accumulate paired Leibniz-series terms and check the approximation of pi. |
-| [stream-sieve](#stream-sieve) | Classic SML / MLton | Demand a prime from the original nonmemoized infinite-stream sieve. |
-| [twenty-four](#twenty-four) | Classic SML / MLton | Enumerate arithmetic-expression solutions using continuation callbacks. |
+| [fannkuch](#fannkuch) | Classic SML / SML/NJ | Enumerate permutations, flip their prefixes and consume the alternating checksum. |
+| [f-arith](#f-arith) | Classic SML / SML/NJ | Accumulate paired Leibniz-series terms and check the approximation of pi. |
+| [stream-sieve](#stream-sieve) | Classic SML / SML/NJ | Demand a prime from the original nonmemoized infinite-stream sieve. |
+| [twenty-four](#twenty-four) | Classic SML / SML/NJ | Enumerate arithmetic-expression solutions using continuation callbacks. |
 | [simple](#simple) | Classic SML / MLton | Compute a hydrodynamic time step and check all final state arrays. |
-| [nbody](#nbody) | Classic SML / MLton | Advance five immutable solar-system records and validate their total energy. |
+| [nbody](#nbody) | Classic SML / SML/NJ | Advance five immutable solar-system records and validate their total energy. |
 | [output1](#output1) | Classic SML / MLton | Write individual characters to a regular file and validate every output byte. |
 | [ray](#ray) | Classic SML / MLton | Interpret the original sphere scene and validate its rendered dump image. |
 | [raytrace](#raytrace) | Classic SML / MLton | Render the original chess scene and check every quantized RGB pixel. |
 | [vliw](#vliw) | Classic SML / MLton | Schedule and compress instructions, then validate both assembly streams. |
-
 | [fxp](#fxp) | Classic SML / MLton | Parse deterministic generated XML and validate its complete tag and attribute counts. |
 | [model-elimination](#model-elimination) | Classic SML / MLton | Search the original first-order problem sets with deterministic inference budgets. |
-
-| [sat](#sat) | Classic SML / MLton | Solve a fixed Boolean formula with nested higher-order choices. |
-| [boyer-smlnj](#boyer-smlnj) | Classic SML / MLton | Prove the original theorem using the modern modular SML/NJ rewriting checker. |
-| [logic-smlnj](#logic-smlnj) | Classic SML / MLton | Find a peg-solitaire solution through the modern modular unifier and trail. |
-| [life-smlnj](#life-smlnj) | Classic SML / MLton | Repeat fifty-generation glider-gun evolutions with complete coordinate checks. |
+| [sat](#sat) | Classic SML / SML/NJ | Solve a fixed Boolean formula with nested higher-order choices. |
+| [boyer-smlnj](#boyer-smlnj) | Classic SML / SML/NJ | Prove the original theorem using the modern modular SML/NJ rewriting checker. |
+| [logic-smlnj](#logic-smlnj) | Classic SML / SML/NJ | Find a peg-solitaire solution through the modern modular unifier and trail. |
+| [life-smlnj](#life-smlnj) | Classic SML / SML/NJ | Repeat fifty-generation glider-gun evolutions with complete coordinate checks. |
+| [minimax](#minimax) | Classic SML / SML/NJ | Build and score complete tic-tac-toe trees with and without a transposition table. |
+| [iter-pidigits](#iter-pidigits) | Classic SML / SML/NJ | Generate a fixed number of pi digits with the iterative IntInf spigot. |
+| [mazefun](#mazefun) | Classic SML / SML/NJ | Generate and validate complete deterministic mazes using persistent list matrices. |
+| [queens-lazy](#queens-lazy) | nofib | Count queen placements using memoized level-generation streams. |
+| [queens-strict](#queens-strict) | nofib | Count queen placements using eagerly generated list levels. |
+| [nqueens](#nqueens) | Sandmark | Count queen placements by depth-first search with mutable sibling totals. |
+| [rec_seq_ack](#rec_seq_ack) | Sandmark | Evaluate strict Ackermann calls and consume every repeated result. |
 
 ## Running and interpreting checks
+
 
 From the repository root:
 
@@ -118,22 +121,6 @@ provide the evidence for correctness on specific hosts and profiles.
 The shared SML catalogue validates it before the thin shell runner executes
 jobs through the existing matrix. Source inventory metadata is separate
 from this runnable catalogue.
-
-Smoke and normal profiles are required for imported programs. Large profiles
-are explicitly selected; an application need not invent a large profile.
-The manifest records overrides to the standard limits.
-
-Smoke and normal profiles are required for imported programs. Large profiles
-are explicitly selected; an application need not invent a large profile.
-The manifest records overrides to the standard limits.
-
-Smoke and normal profiles are required for imported programs. Large profiles
-are explicitly selected; an application need not invent a large profile.
-The manifest records overrides to the standard limits.
-
-Smoke and normal profiles are required for imported programs. Large profiles
-are explicitly selected; an application need not invent a large profile.
-The manifest records overrides to the standard limits.
 
 Smoke and normal profiles are required for imported programs. Large profiles
 are explicitly selected; an application need not invent a large profile.
@@ -1885,3 +1872,187 @@ policy differs materially from the long single evolution in MLton life.
 | large | `50 1000` | `54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3` |
 
 Source inspection suggests sensitivity to symbolic, search. These are hypotheses; no measured attribution to a compiler feature is claimed. Related source variants remain in the inventory until their code, inputs and representations have been compared. See the [literature survey](literature.md) for family references.
+
+## minimax
+
+SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, programs/minimax.
+Copyright 2025 Fellowship of SML/NJ; source and notice retained.
+
+Retains the complete tic-tac-toe rose tree and the separate transposition-table
+version with 59049 slots. Each call builds both as upstream. Traverse every
+returned node, consuming node count, maximum depth and root score. An
+independent exhaustive Python search in `oracle.py` gives a draw (score zero)
+and confirms both tree-size/depth fixtures from upstream testit. Normal uses
+two calls; large preserves ten. Smoke has recorded 120-second and 2-GiB overrides
+because even one call constructs the complete game tree. The 1-GiB
+smoke run passed the three reference hosts but Rune reported out of memory;
+the larger quota preserves the complete allocation workload.
+No cache is reused between separate transposition-table constructions.
+
+Replace the SML/NJ extension `Option.isNone` with `not o Option.isSome`.
+The ordinary option list representation, move order and scoring are unchanged.
+The read-only traversal is additional measured work; both root scores must
+be zero before the six-integer summary reaches the suite's exact checker.
+The full tree versus cache-pruned tree distinguishes allocation and lookup
+costs. These are source-based hypotheses, not measured explanations.
+
+Profiles repeat both constructions 1, 2 and 10 times for smoke, normal and large.
+
+## iter-pidigits
+
+SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`,
+`programs/iter-pidigits/pi-digits.sml` and `main.sml`.
+Copyright 2026 The Fellowship of SML/NJ; notice and pristine sources retained.
+The upstream README identifies the Benchmarks Game C version (retained in
+the pinned tree at `other/pidigits.c`) and Jeremy Gibbons's
+[Unbounded Spigot Algorithms for the Digits of Pi](https://www.cs.ox.ac.uk/people/jeremy.gibbons/publications/spigot.pdf), section 5.
+
+This is an iterative IntInf spigot, distinct from the lazy stream and
+zero-count stopping condition of `pidigits`. Keep its arithmetic, column
+counter and termination. Capture each emitted digit, omit the human-readable
+column labels, then validate every digit against an independently calculated
+Chudnovsky fixture (`oracle.py`). Smoke retains upstream's 30-digit check;
+normal selects 100 digits; large preserves upstream's 2000. The original
+2000- and 500-digit normal runs passed the reference hosts but timed out after 600
+seconds on Rune. Moving that input to the 3600-second large profile preserves
+the algorithm and stopping condition without changing its arithmetic. There are no external
+datasets or random seeds. Arbitrary-precision division and multiplication
+and iterative control flow are source-based diagnostic hypotheses.
+
+## mazefun
+
+SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/mazefun/main.sml`.
+Copyright 2024 The Fellowship of SML/NJ; notice and pristine source retained.
+Marc Feeley's Larceny Scheme maze generator was ported by Kavon Farvardin
+for Manticore. Upstream calls the benchmark `mazefn`; the directory and
+established Scheme name are `mazefun`. Record `mazefn` as an alias.
+
+Preserve persistent list matrices, recursive cavity relabeling, hole order,
+and the integer generator `(seed*3581+12751) mod 131072`, seeded at zero for
+each shuffle. Rename the module to expose `makeMaze` to a portable driver.
+Flatten the complete rendered matrix into one line with slash row separators
+and compare every character; suppress direct logging. Repetitions check
+each regenerated maze against the first. Smoke is the 11-by-11 maze printed
+in the upstream comment; normal uses 100 repetitions of its 15-by-15 maze;
+large retains the original 10000 repetitions. Each consumes its result.
+
+Independent fixtures come from the union-find Python oracle, whose different
+representation also verifies a connected, acyclic maze. The 11-by-11 fixture
+was reviewed against the source comment. No external dataset is required.
+Persistent updates, flood-fill recursion and intermediate lists are
+diagnostic hypotheses from source inspection. No performance finding is
+claimed. The Larceny/R6RS family remains a coverage candidate in the
+[literature review](../literature.md); this port records that overlap.
+
+See [retained source and patch](mazefun/) and the
+[executable independent oracle](mazefun/oracle.py).
+
+## queens-lazy
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/queens/Main.hs`.
+The source says it was taken from the LML distribution. Individual author
+and notice are not stated in this file; `NOTICE` records that outstanding
+lookup rather than assigning another collection's license. Original source,
+Makefile and fast/normal/slow fixtures are retained.
+
+Enumerate placements by levels: each prior board precedes columns 1 through
+n, with the original short-circuit row/diagonal safety test. The Haskell
+list comprehension is translated into memoized stream tails in
+`shared/queens.sml`; pending functions are released after forcing. Exceptions
+are memoized and recursive forcing is detected by `shared/lazy.sml`. The
+outer count forces the complete solution stream; board suffixes remain
+shared. No complete solution list is retained by the counter. Integer values
+and counts fit a signed 31-bit integer for selected profiles; repetition
+totals use IntInf. There are no external inputs or random choices.
+
+Smoke counts size 4 (2); normal counts size 10 (724); large counts size 12
+(14200), preserving upstream's fast input. Upstream normal/slow sizes 13/14
+and their 73712/365596 fixtures remain recorded rather than being silently
+replaced. The unchanged Haskell original compiled with GHC agrees on all
+selected sizes. The strict variant uses the same board/safety/order logic
+but eagerly constructs levels; different forcing, retention and allocation
+justify separate names. Sandmark `nqueens` instead counts depth-first with
+mutable sibling counters. These differences are source-based hypotheses;
+no measured performance cause is claimed. See
+[Partain and the nofib survey](../literature.md).
+
+See [provenance and original files](queens-lazy/PROVENANCE.md).
+
+## queens-strict
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/queens/Main.hs`.
+The source attributes its origin to the LML distribution; individual author
+and license are unstated. Original source/build parameters/fixtures and the
+unresolved individual-notice lookup are retained in this directory.
+
+Preserve the board-first list-comprehension order, columns 1 through n,
+short-circuit safety test and shared board suffixes. Evaluate the generated
+levels eagerly using map, mapPartial and concatenation before taking length.
+This deliberately changes Haskell's demand and allocation behavior; the
+faithful memoized `queens-lazy` variant remains separately available.
+No mutation, randomness, numeric-width substitution or external data is
+introduced. Selected counts fit signed 31-bit integers; the outer repetition
+total uses IntInf. Newly written SML97 translation lives in
+`shared/queens.sml`; the thin named driver consumes its count.
+
+Profiles select sizes 4/10/12 once, yielding 2/724/14200. Size 12 is the
+original fast input; upstream's normal 13 (73712) and slow 14 (365596)
+are preserved in the retained Makefile/fixtures. GHC's unchanged Haskell
+program agrees for selected sizes; semantic tests independently check
+both SML variants for every size 1 through 10. Sandmark `nqueens` uses a
+different depth-first mutable counter and stays separate. Level retention,
+intermediate lists and allocation are hypotheses from source inspection,
+not measured causal findings. See [the nofib literature](../literature.md).
+
+See [provenance and original files](queens-strict/PROVENANCE.md).
+
+## nqueens
+
+Sandmark `5605805954a00497ed197c930641cddd580e1507`,
+`benchmarks/multicore-numerical/nqueens.ml`, executable `nqueens.exe`.
+No individual author or notice is stated in the file. Sandmark's root
+public-domain notice is retained in `LICENSE`; the original file is retained.
+This is the sequential executable in a directory also containing a separate
+parallel implementation; no Domainslib or multicore facility is needed.
+
+Translate depth-first row search directly, preserving the zero-based column
+loop, shared immutable board suffixes, short-circuit conflicts, and mutable
+sibling count. Explicit SML tail recursion replaces OCaml's for loop. The
+count is consumed rather than formatted as a human-readable sentence.
+There are no external inputs or seeds. Selected counters fit signed 31-bit
+integers; no OCaml wrapping arithmetic is exercised by these profiles.
+
+Smoke size 4 gives 2, normal size 10 gives 724, and large preserves the
+upstream default size 13 giving 73712. All three are in the original source
+comment and agree with the unchanged OCaml program. nofib queens counts
+the same mathematical solutions through level generation, with distinct
+lazy and strict retention; those are different algorithms/workloads, not
+duplicates. Search, recursion, board sharing and local mutable counters are
+source-based hypotheses. See [the Sandmark literature](../literature.md).
+
+See [provenance and original files](nqueens/PROVENANCE.md).
+
+## rec_seq_ack
+
+Sandmark `5605805954a00497ed197c930641cddd580e1507`,
+`benchmarks/multicore-effects/rec_seq_ack.ml`, executable `rec_seq_ack.exe`.
+The file references the Larceny/R6RS benchmarks (spelled Larcenry upstream)
+but does not identify an individual author/notice. Sandmark's root
+public-domain notice and pristine program are retained. This sequential
+member uses no effect handlers; the effect-based executable remains deferred.
+
+Preserve the three-case Ackermann recurrence and nested strict call. Move
+launcher defaults into fixed runtime profiles: smoke `(reps,m,n)=(1,3,6)`,
+normal `(2,3,8)`, large the original `(2,3,11)`. Consume every repetition
+in an IntInf sum rather than discard the upstream accumulator and print only
+the final value. This is documented additional checking/allocation work.
+The kernel retains ordinary signed integer arithmetic; selected results fit
+31 bits. No filesystem data or random input is used.
+
+The formula A(3,n)=2^(n+3)-3 independently gives 509, 2045 and 16381;
+summed fixtures are 509, 4090 and 32762. The unchanged OCaml program agrees
+with each individual result. Recursive calls and deep stack activity are
+source-based diagnostic hypotheses, not measured conclusions. See
+[Larceny overlap and the Sandmark literature](../literature.md).
+
+See [provenance and original files](rec_seq_ack/PROVENANCE.md).
