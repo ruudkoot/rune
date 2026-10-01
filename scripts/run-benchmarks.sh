@@ -6,11 +6,13 @@ root=$(pwd)
 profile=${BENCH_PROFILE:-smoke}
 configs=${BENCH_CONFIGS:-rune,hosts}
 filter=${BENCH_FILTER:-}
+routine=${BENCH_ROUTINE:-0}
 while [ "$#" -gt 0 ]; do
   case $1 in
     --profile) profile=$2; shift 2 ;;
     --configs) configs=$2; shift 2 ;;
     --filter) filter=$2; shift 2 ;;
+    --routine) routine=1; profile=smoke; shift ;;
     *) echo "usage: run-benchmarks.sh [--profile PROFILE] [--configs CONFIGS] [--filter TEXT]" >&2; exit 2 ;;
   esac
 done
@@ -21,7 +23,11 @@ mkdir -p "$base"
 out=$(mktemp -d "$base/run.XXXXXX")
 printf '%s\n' "$out" > "$base/latest-run"
 echo "BENCH OUTPUT $out"
-"$root/bin/runevm" "$catalog" --list "$profile" "$filter" > "$out/jobs.tsv"
+if [ "$routine" = 1 ]; then
+  "$root/bin/runevm" "$catalog" --routine "$filter" > "$out/jobs.tsv"
+else
+  "$root/bin/runevm" "$catalog" --list "$profile" "$filter" > "$out/jobs.tsv"
+fi
 [ -s "$out/jobs.tsv" ] || { echo "bench-check: no benchmark matches" >&2; exit 2; }
 status=0
 while IFS="$(printf '\t')" read -r name seconds memory sources args expected input_files; do

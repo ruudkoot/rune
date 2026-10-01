@@ -1,0 +1,11 @@
+benchmark	reason
+tak	Strict recursive calls and branching.
+kittmergesort	Persistent list sorting, deterministic generation and copying.
+primes-lazy	Haskell demand and memoized stream tails.
+primes-strict	Strict translation of the same Haskell workload.
+bdd	OCaml symbolic port, arrays and decision diagrams.
+md5	Modular Word32 arithmetic and byte processing.
+fft	Floating-point numerical validation.
+binary-trees	Allocation, traversal and retained trees.
+smith-normal-form	IntInf arithmetic and algebraic validation.
+nqueens	Sequential OCaml search with mutable sibling counters.

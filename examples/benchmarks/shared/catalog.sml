@@ -103,4 +103,22 @@ struct
     print (String.concatWith "\t" [#name entry, Int.toString (#seconds entry),
       Int.toString (#memory entry), String.concatWith " " (#sources entry),
       String.concatWith " " (#args entry), #expected entry, if List.null (#inputFiles entry) then "-" else String.concatWith " " (#inputFiles entry)] ^ "\n")
+
+  fun routine entries =
+    let
+      val names = List.map (fn line =>
+        case String.fields (fn c => c = #"\t") (strip line) of
+          [name,reason] => if reason <> "" then name else raise Fail "missing routine benchmark reason"
+        | _ => raise Fail "invalid routine benchmark row")
+        (case lines (root ^ "routine.tsv") of
+           header::rest => if strip header = "benchmark\treason" then rest else raise Fail "invalid routine header"
+         | [] => raise Fail "empty routine selection")
+      fun check [] seen = seen
+        | check (name::rest) seen =
+            if List.exists (fn n => n = name) seen then raise Fail "duplicate routine benchmark"
+            else if List.exists (fn (r:entry) => #name r = name andalso #profile r = "smoke") entries
+            then check rest (name::seen) else raise Fail "unknown routine benchmark"
+      val _ = if List.null names then raise Fail "empty routine selection" else ()
+      val _ = check names []
+    in List.filter (fn (r:entry) => #profile r = "smoke" andalso List.exists (fn n => n = #name r) names) entries end
 end

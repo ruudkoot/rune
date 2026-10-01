@@ -175,3 +175,29 @@ portable timing sample is emitted.
 Standalone xc1 export support and optional hardware-counter adapters remain
 unavailable; requests fail explicitly. The initial report demonstrates the
 protocol without asserting compiler rankings, steady state or coverage closure.
+
+## M7 routine verification (complete)
+
+`timeout 1800 make JOBS=4 check` passed with required subprocess/socket
+access. The new ten-program routine target also passed separately after
+its integration; a cached `make JOBS=4 bench-smoke` took 8.30 seconds and
+136420 KiB peak RSS on this machine. That is practical-cost evidence, not a
+portable timing threshold. The recorded full acceptance invocation started
+before routine-target integration, so its original top-level recipe did not
+include that new step; the separate routine run supplies that evidence.
+
+The routine manifest validates names, duplicates, reasons and smoke profiles.
+`bench-check-all` explicitly covers smoke and normal for the full catalogue.
+Known host failures remain failures in broad runs. No timing comparison or
+timing threshold is added to `make check`.
+
+Metadata corruption checks reject unknown/duplicate routine entries, missing
+reasons, duplicate profiles and absent fixtures before any benchmark runs.
+The routine set is pinned in `routine.tsv`; all imports remain covered by
+the explicit smoke/normal catalogue target. New measurement statistics and
+count logic remain portable SML97; adapters handle host exports and OS quotas.
+
+The final routine run, including metadata corruption checks and a compiler
+rebuild after Makefile changes, passed in 15.54 seconds with 945636 KiB peak
+RSS. The earlier cached 8.30-second run excluded the new negative-metadata
+step. Neither observation is enforced as a timing limit.

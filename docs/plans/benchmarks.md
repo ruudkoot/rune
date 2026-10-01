@@ -1,7 +1,7 @@
 # Benchmark suite roadmap
 
 Status: **in progress**, 2026-10-01. M0 and M1 are complete with
-[recorded validation](../../examples/benchmarks/validation.md). M2, M3 and M5 are in progress; M6 is complete with recorded evidence; M4 and M7-M8 remain planned. Source inventory entries are scheduled work, not passing ports.
+[recorded validation](../../examples/benchmarks/validation.md). M2, M3 and M5 are in progress; M6 and M7 are complete with recorded evidence; M4 and M8 remain planned. Source inventory entries are scheduled work, not passing ports.
 
 ## Goal and current baseline
 
@@ -179,7 +179,7 @@ fixture references, and profile completeness.
 | **M4 — nofib applications** | Planned | Port suitable `real` applications in dependency order. Prioritize parsing, type inference, compression, interpreters, symbolic algebra, rendering, and scientific workloads. | Each application includes its required portable modules and deterministic data. Results agree with upstream fixtures or the original Haskell program. Feature-dependent applications have explicit blockers. |
 | **M5 — Sandmark sequential workloads** | In progress | Port self-contained sequential workloads first, including decision diagrams, rewriting, streams, numerical programs, rendering, and graph processing. Audit individual executables within collection directories. | Every suitable workload is imported or scheduled with its dependencies. OCaml library replacements and evaluation-order changes are documented. Ecosystem applications and runtime-specific workloads have explicit dispositions. |
 | **M6 — Measurement and comparisons** | Complete | Extend Rune's existing matrix, count, and profiling tools to consume the manifest. Add serial timing runs, compile measurements, raw results, and reports. | A recorded run reproduces selected inputs and configurations. Reports include correctness status, complete samples, configuration metadata, and separate failure categories. |
-| **M7 — Routine verification** | Planned | Select a bounded smoke set covering the main workload families and translation styles. Add metadata validation and smoke correctness to routine checks; retain broader explicit targets. | Routine checks remain practical. Every imported benchmark is covered by a broader correctness target. Incorrect results cannot contribute timing results. |
+| **M7 — Routine verification** | Complete | Select a bounded smoke set covering the main workload families and translation styles. Add metadata validation and smoke correctness to routine checks; retain broader explicit targets. | Routine checks remain practical. Every imported benchmark is covered by a broader correctness target. Incorrect results cannot contribute timing results. |
 | **M8 — Coverage closure and maintenance** | Planned | Reconcile imports against pinned inventories, close documentation gaps, publish the initial report, and rank additional candidates. Document upstream refresh and baseline-update procedures. | Every inventory entry is accounted for. Imported programs satisfy the suite contract. Recorded validation and outstanding checks are clearly distinguished. |
 
 M1 depends on M0. M2, M3, and M5 build on M1; M4 follows M3's translation

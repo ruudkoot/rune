@@ -940,6 +940,7 @@ check:
 	@$(MAKE) --no-print-directory test-new
 	@$(MAKE) --no-print-directory test-new-jit
 	@$(MAKE) --no-print-directory perf-check
+	@$(MAKE) --no-print-directory bench-smoke
 	@$(MAKE) --no-print-directory check-positions
 	@$(MAKE) --no-print-directory check-cross check-docs check-isa
 
@@ -977,13 +978,26 @@ BENCH_COUNT_CONFIGS = rune,rune:opt,rune:new,rune:jit
 BENCH_CHECK_CONFIGS = rune,hosts
 BENCH_CONFIGS ?= $(if $(filter bench-count bench-stats,$(MAKECMDGOALS)),$(BENCH_COUNT_CONFIGS),$(if $(filter bench,$(MAKECMDGOALS)),$(BENCH_TIMING_CONFIGS),$(BENCH_CHECK_CONFIGS)))
 BENCH_FILTER ?=
-.PHONY: bench-check bench bench-count bench-stats
+.PHONY: bench-check bench-check-all bench-smoke bench bench-count bench-stats
 build/bench-catalog.rbc: examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml $(RUNE)
 	$(RUNE) --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml -o $@
 
 bench-check: build/bench-catalog.rbc vm
 	bin/runevm build/bench-catalog.rbc --check
 	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' sh scripts/run-benchmarks.sh
+
+# Bounded correctness/metadata only; wall-clock thresholds stay outside check.
+bench-smoke: build/bench-catalog.rbc vm
+	bin/runevm build/bench-catalog.rbc --check
+	sh tests/benchmarks/check-catalog.sh
+	RUNE_BENCH_COMPILE_OPTIONS=-O2 sh scripts/run-benchmarks.sh --routine --configs rune
+
+# Every imported program has a smoke and normal profile. This explicit target
+# covers the complete catalogue; request extra hosts/engines through filters.
+bench-check-all: build/bench-catalog.rbc vm
+	bin/runevm build/bench-catalog.rbc --check
+	sh scripts/run-benchmarks.sh --profile smoke --configs '$(BENCH_CONFIGS)' --filter '$(BENCH_FILTER)'
+	sh scripts/run-benchmarks.sh --profile normal --configs '$(BENCH_CONFIGS)' --filter '$(BENCH_FILTER)'
 
 build/bench-report.rbc: examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml $(RUNE)
 	$(RUNE) --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml -o $@

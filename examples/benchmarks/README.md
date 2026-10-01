@@ -90,6 +90,10 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
 
 ## Running and interpreting checks
 
+`make check` includes metadata validation and the ten-program
+[bounded routine smoke set](routine.tsv) through `make bench-smoke`.
+`make bench-check-all` covers smoke and normal for every imported program.
+See [recorded validation](validation.md) for passing configurations and gaps.
 
 From the repository root:
 
