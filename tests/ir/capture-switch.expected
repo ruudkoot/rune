@@ -1,0 +1,32 @@
+(* after lower *)
+function f0 <toplevel> (v1, 0 captured)
+  b0:
+    v2 = closure f1 
+    v3 = setglobal g1 v2
+    v4 = ()
+    return v4
+function f1 dead (v1, 0 captured)
+  b0:
+    v2 = closure f2 
+    return v2
+  reps v1:int
+function f2 fn (v1, 0 captured)
+  b0:
+    switch v1 0:b1 1:b2 2:b3 else b4
+  b1:
+    v2 = decon 0 v1
+    return v2
+  b2:
+    v3 = decon 1 v1
+    v4 = const 1
+    v5 = prim int_add v3 v4
+    return v5
+  b3:
+    v6 = decon 2 v1
+    v7 = const 2
+    v8 = prim int_add v6 v7
+    return v8
+  b4:
+    v9 = const 0
+    return v9
+  reps v1:ptr v2:int v3:int v4:int v5:int v6:int v7:int v8:int v9:int

@@ -15,7 +15,11 @@
      with none;
    * calls: a known call (CallK) is of a function of the program, with an
      argument for each of its parameters; a function with other than one
-     parameter is never made a closure, since a closure is called with one.
+     parameter is never made a closure, since a closure is called with one;
+   * closures: a closure is given a value for each its function captures,
+     and the function reads each of them (Env i, i below their number) --
+     one it never reads it read some other way, as a variable of another
+     function, whose variables are numbered as its own are.
    A breach is a bug of the compiler, raised as Error.Bug. *)
 structure LowLint =
 struct
@@ -25,9 +29,12 @@ struct
     let
       fun bug msg = Error.bug msg
 
-      (* the number of parameters of each function, by its id *)
+      (* the number of parameters of each function, and of values it
+         captures, by its id *)
       val arity : int IntMap.map =
         List.foldl (fn ({id, params, ...} : func, m) => IntMap.insert (m, id, List.length params)) IntMap.empty p
+      val captures : int IntMap.map =
+        List.foldl (fn ({id, ncaptured, ...} : func, m) => IntMap.insert (m, id, ncaptured)) IntMap.empty p
       fun known (where', f, args) =
         case IntMap.find (arity, f) of
           NONE => bug (where' ^ ": a known call of no function f" ^ Int.toString f)
@@ -35,13 +42,16 @@ struct
             if n = List.length args then ()
             else bug (where' ^ ": f" ^ Int.toString f ^ " of " ^ Int.toString n ^ " parameters given "
                       ^ Int.toString (List.length args) ^ " arguments")
-      fun closure (where', f) =
-        case IntMap.find (arity, f) of
-          SOME 1 => ()
-        | SOME n => bug (where' ^ ": a closure of f" ^ Int.toString f ^ ", which has " ^ Int.toString n ^ " parameters")
-        | NONE => bug (where' ^ ": a closure of no function f" ^ Int.toString f)
+      fun closure (where', f, vs) =
+        case (IntMap.find (arity, f), IntMap.find (captures, f)) of
+          (SOME 1, SOME n) =>
+            if n = List.length vs then ()
+            else bug (where' ^ ": a closure of f" ^ Int.toString f ^ ", which captures " ^ Int.toString n
+                      ^ " values, given " ^ Int.toString (List.length vs))
+        | (SOME n, _) => bug (where' ^ ": a closure of f" ^ Int.toString f ^ ", which has " ^ Int.toString n ^ " parameters")
+        | (NONE, _) => bug (where' ^ ": a closure of no function f" ^ Int.toString f)
 
-      fun func ({id, params, nvars, blocks, ...} : func) =
+      fun func ({id, params, ncaptured, nvars, blocks, ...} : func) =
         let
           val where' = "function f" ^ Int.toString id
           val defined = Array.array (Int.max (nvars, 1), false)
@@ -102,7 +112,7 @@ struct
                         (List.app (fn y => needs (avail, y)) (uses oper); define x;
                          case oper of
                            CallK (f, args) => known (here, f, args)
-                         | Closure (f, _) => closure (here, f)
+                         | Closure (f, vs) => closure (here, f, vs)
                          | _ => ();
                          (IntMap.insert (avail, x, ()), depth, pushed))
                     | Push h =>
@@ -138,8 +148,19 @@ struct
                        if depth = 0 then () else bug (here ^ ": a tail call with a handler pushed"))
                   | Raise _ => ()
                 end
+          (* what it reads of what it captured, in any block *)
+          val read = Array.array (Int.max (ncaptured, 1), false)
+          fun env (Def (_, Env i)) =
+                if i < 0 orelse i >= ncaptured then
+                  bug (where' ^ ": env " ^ Int.toString i ^ " of a function that captures " ^ Int.toString ncaptured)
+                else Array.update (read, i, true)
+            | env _ = ()
         in
-          Vector.appi block bv
+          Vector.appi block bv;
+          List.app (fn ({instrs, ...} : block) => List.app env instrs) blocks;
+          case List.find (fn i => not (Array.sub (read, i))) (List.tabulate (ncaptured, fn i => i)) of
+            SOME i => bug (where' ^ ": env " ^ Int.toString i ^ " is captured and never read")
+          | NONE => ()
         end
     in
       List.app func p
