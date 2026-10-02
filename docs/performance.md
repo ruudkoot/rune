@@ -3,9 +3,9 @@
 What each configuration of Rune costs to run a program and to compile one,
 against the SML systems Rune is built with. Why it costs that, and what is
 being done about it, is in [plans/performance.md](plans/performance.md)
-(the VMs and native code) and [plans/middle-end.md](plans/middle-end.md)
-(the compiler's optimisations); how native code is made is in
-[native.md](native.md).
+(the VMs and native code), [plans/jit.md](plans/jit.md) (the JIT of `vm/new`)
+and [plans/middle-end.md](plans/middle-end.md) (the compiler's
+optimisations); how native code is made is in [native.md](native.md).
 
 ## The configurations
 
@@ -13,201 +13,201 @@ being done about it, is in [plans/performance.md](plans/performance.md)
 |---|---|
 | `rune` | the stack bytecode of the self-hosted compiler, on `runevm` ([bytecode.md](bytecode.md)) |
 | `rune:opt` | the same bytecode translated into x86-64 code by `runeopt` ([native.md](native.md)) |
-| `rune:new` | the register bytecode, on the first loop of `vm/new` ([bytecode.md](bytecode.md), The register bytecode) |
-| `rune:windows`, `rune:windows32` | `runevm` built for 64- and 32-bit Windows (`make windows`), run from WSL |
-| `rune:linux32` | `runevm` built for 32-bit x86 Linux (`make portability`) |
-| `rune:ppc64` | `runevm` built for big-endian 64-bit PowerPC (`make portability`), run under qemu: its times are qemu's |
+| `rune:new` | the register bytecode on `vm/new` ([bytecode.md](bytecode.md), The register bytecode), at one of the JIT levels below |
 | `native:HOST` | the program on the host's own Basis Library, compiled by the host |
 | `xc1:HOST` | the program on Rune's Basis Library (`lib/basis`), compiled by the host ([basis-compat.md](basis-compat.md)) |
 
 The hosts are MLton 20241230, SML/NJ 110.99.9 (64 and 32 bits), SML/NJ
-2026.2, Poly/ML 5.9.2 and MLKit 4.7.23 (`make hosts`). The times below were
-taken before SML/NJ 2026.2 joined them. MLKit came later, and its numbers
-were taken on another machine: they are in a section of their own, *MLKit*.
+2026.2, Poly/ML 5.9.2 and MLKit 4.7.23 (`make hosts`).
+
+`vm/new` runs its register bytecode at a JIT level
+([vm/new/ARCHITECTURE.md](../vm/new/ARCHITECTURE.md), Tier 1 and Tier 2),
+chosen by `--jit=MODE` and `--jit-tier=N`, or by `RUNEVM_JIT` and
+`RUNEVM_JIT_TIER` where the VM is started by a runner:
+
+| Level | Options | What is compiled |
+|---|---|---|
+| `off` | `--jit=off` | nothing: the interpreter alone |
+| `baseline` | `--jit=baseline` | a function at tier 1, the baseline compiler, when its counters say it is hot |
+| `opt` | `--jit=opt` (the default) | a function at tier 2, which gives registers homes, when the same counters say so |
+| `all` | `--jit=all` | every function at tier 1, when the program is loaded |
+| `all+t2` | `--jit=all --jit-tier=2` | every function at tier 2, when the program is loaded (`rune:jit` of the matrix) |
+
+`--jit=baseline --jit-tier=2` is `opt` by another name, and is not measured
+apart.
 
 ## Running programs
 
-`make perf` on an x86_64 machine with 16 CPUs, idle but for the one program
-being timed, on 2026-09-25 at `a1a145c`. Each cell is the milliseconds of
+`make perf` on an x86_64 machine with 16 CPUs (Xeon E5-1680 v3), on
+2026-10-02 at `4652d4a`. One single-threaded job of another worktree and an
+editor's language server were running beside it, so the times are those of a
+machine that is nearly, not wholly, idle. Each cell is the milliseconds of
 one run of a program of `tests/perf`: the program is run R times in a row
 (the `wall R` line of its `.budget` file) in three rounds, and the fastest
-round counts; SML/NJ and Poly/ML compile it before the timer starts, like
-the others. In parentheses: the time divided by the baseline of the same
+round counts; the SML systems compile it before the timer starts, like the
+others. In parentheses: the time divided by the baseline of the same
 configuration, the geometric mean of `fib` and `tak`, which use no Basis
 Library. That ratio separates what a library costs from how fast a system
 runs code at all.
 
-| Program | rune | rune:opt | rune:new | rune:windows | rune:windows32 | rune:linux32 | rune:ppc64 | native:mlton | native:smlnj-legacy | native:smlnj32 | native:polyml | xc1:mlton | xc1:smlnj-legacy | xc1:smlnj32 | xc1:polyml |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| array_sieve | 8.42 (2.7) | 4.67 (4.0) | 17.79 (2.4) | 9.10 (2.4) | 15.75 (2.9) | 11.89 (2.8) | 90.47 (2.7) | 0.43 (1.7) | 1.19 (3.9) | 0.94 (3.0) | 0.58 (3.1) | 0.47 (2.1) | 1.27 (3.7) | n/a | 0.66 (3.5) |
-| fib | 5.50 (1.8) | 2.35 (2.0) | 12.35 (1.7) | 6.42 (1.7) | 9.30 (1.7) | 7.72 (1.8) | 53.49 (1.6) | 0.42 (1.6) | 0.40 (1.3) | 0.41 (1.3) | 0.30 (1.6) | 0.37 (1.6) | 0.38 (1.1) | n/a | 0.29 (1.6) |
-| intinf_fact | 55.19 (17.9) | 25.28 (21.5) | 88.23 (11.9) | 55.01 (14.5) | 86.33 (16.0) | 75.75 (17.8) | 533.95 (16.1) | 0.04 (0.2) | 0.25 (0.8) | 0.41 (1.3) | 0.07 (0.4) | n/a | n/a | n/a | n/a |
-| list_ops | 5.40 (1.8) | 2.57 (2.2) | 9.32 (1.3) | 7.30 (1.9) | 8.40 (1.6) | 7.61 (1.8) | 54.93 (1.7) | 1.74 (6.7) | 1.62 (5.3) | 1.40 (4.5) | 1.15 (6.1) | 1.15 (5.0) | 1.75 (5.1) | n/a | 1.22 (6.5) |
-| real_nbody | 2.84 (0.9) | 1.28 (1.1) | 7.41 (1.0) | 3.38 (0.9) | 5.15 (1.0) | 4.09 (1.0) | 47.62 (1.4) | 0.56 (2.2) | 0.50 (1.7) | 0.51 (1.6) | 1.10 (5.8) | 0.59 (2.6) | 0.47 (1.4) | n/a | 1.13 (6.0) |
-| string_ops | 10.29 (3.3) | 5.62 (4.8) | 15.79 (2.1) | 10.85 (2.9) | 14.53 (2.7) | 13.08 (3.1) | 100.35 (3.0) | 1.52 (5.9) | 2.25 (7.4) | 2.00 (6.4) | 1.96 (10.3) | 2.00 (8.8) | 3.54 (10.3) | n/a | 3.30 (17.6) |
-| tak | 1.72 (0.6) | 0.59 (0.5) | 4.42 (0.6) | 2.23 (0.6) | 3.12 (0.6) | 2.35 (0.6) | 20.63 (0.6) | 0.16 (0.6) | 0.23 (0.8) | 0.24 (0.8) | 0.12 (0.6) | 0.14 (0.6) | 0.31 (0.9) | n/a | 0.12 (0.6) |
-| word_bits | 4.61 (1.5) | 1.33 (1.1) | 10.24 (1.4) | 4.80 (1.3) | 9.00 (1.7) | 6.71 (1.6) | 53.24 (1.6) | 0.10 (0.4) | 0.25 (0.8) | 0.22 (0.7) | 0.14 (0.7) | 0.10 (0.4) | 0.34 (1.0) | n/a | 0.14 (0.7) |
+Rune on `runevm`, as native code, and on `vm/new` at each JIT level:
+
+| Program | rune | rune:opt | rune:new off | rune:new baseline | rune:new opt | rune:new all | rune:new all+t2 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| array_sieve | 8.69 (2.5) | 4.62 (3.9) | 8.20 (2.5) | 3.93 (3.3) | 2.34 (2.4) | 3.95 (3.4) | 2.38 (2.4) |
+| fib | 6.42 (1.8) | 2.27 (1.9) | 5.49 (1.7) | 2.28 (1.9) | 1.66 (1.7) | 2.20 (1.9) | 1.72 (1.7) |
+| intinf_fact | 52.76 (15.2) | 26.62 (22.6) | 54.98 (17.1) | 24.02 (20.4) | 23.73 (24.2) | 25.04 (21.4) | 23.65 (23.7) |
+| list_ops | 5.79 (1.7) | 2.65 (2.3) | 5.60 (1.7) | 2.81 (2.4) | 2.78 (2.8) | 3.29 (2.8) | 2.51 (2.5) |
+| real_nbody | 2.91 (0.8) | 1.28 (1.1) | 2.17 (0.7) | 0.87 (0.7) | 0.52 (0.5) | 0.87 (0.7) | 0.53 (0.5) |
+| string_ops | 10.77 (3.1) | 5.70 (4.8) | 10.20 (3.2) | 6.14 (5.2) | 5.80 (5.9) | 6.67 (5.7) | 5.91 (5.9) |
+| tak | 1.88 (0.5) | 0.61 (0.5) | 1.89 (0.6) | 0.61 (0.5) | 0.58 (0.6) | 0.62 (0.5) | 0.58 (0.6) |
+| word_bits | 4.67 (1.3) | 1.28 (1.1) | 3.72 (1.2) | 1.00 (0.8) | 0.43 (0.4) | 1.07 (0.9) | 0.43 (0.4) |
+
+The hosts, each on its own Basis Library (`native`) and on Rune's (`xc1`):
+
+| Program | native:mlton | native:smlnj-legacy | native:smlnj32 | native:smlnj-dev | native:polyml | native:mlkit |
+|---|---:|---:|---:|---:|---:|---:|
+| array_sieve | 0.50 (2.0) | 1.20 (3.7) | 0.97 (2.7) | 0.72 (2.4) | 0.64 (2.9) | 0.86 (1.0) |
+| fib | 0.42 (1.7) | 0.43 (1.3) | 0.45 (1.3) | 0.39 (1.3) | 0.33 (1.5) | 1.46 (1.8) |
+| intinf_fact | 0.03 (0.1) | 0.25 (0.8) | 0.43 (1.2) | 0.21 (0.7) | 0.13 (0.6) | 2.48 (3.0) |
+| list_ops | 1.96 (7.8) | 1.96 (6.0) | 1.40 (3.9) | 1.21 (4.0) | 1.43 (6.4) | 1.43 (1.7) |
+| real_nbody | 0.58 (2.3) | 0.51 (1.6) | 0.52 (1.5) | 0.50 (1.6) | 1.28 (5.8) | 1.43 (1.7) |
+| string_ops | 1.58 (6.3) | 2.12 (6.5) | 2.14 (6.0) | 1.42 (4.6) | 2.02 (9.1) | 3.03 (3.7) |
+| tak | 0.15 (0.6) | 0.25 (0.8) | 0.28 (0.8) | 0.24 (0.8) | 0.15 (0.7) | 0.47 (0.6) |
+| word_bits | 0.12 (0.5) | 0.28 (0.9) | 0.25 (0.7) | 0.13 (0.4) | 0.17 (0.8) | 0.30 (0.4) |
+
+| Program | xc1:mlton | xc1:smlnj-legacy | xc1:smlnj32 | xc1:smlnj-dev | xc1:polyml | xc1:mlkit |
+|---|---:|---:|---:|---:|---:|---:|
+| array_sieve | 0.46 (1.8) | 1.33 (3.9) | n/a | 1.15 (4.0) | 0.63 (2.8) | 0.76 (0.9) |
+| fib | 0.39 (1.5) | 0.47 (1.4) | n/a | 0.35 (1.2) | 0.34 (1.5) | 1.36 (1.6) |
+| intinf_fact | n/a | n/a | n/a | n/a | n/a | n/a |
+| list_ops | 1.14 (4.4) | 1.89 (5.5) | n/a | 1.19 (4.1) | 1.53 (6.8) | 1.73 (2.1) |
+| real_nbody | 0.59 (2.3) | 0.51 (1.5) | n/a | 0.50 (1.7) | 1.13 (5.0) | 1.45 (1.7) |
+| string_ops | 2.62 (10.2) | 3.63 (10.6) | n/a | 2.51 (8.7) | 3.24 (14.3) | 4.35 (5.2) |
+| tak | 0.17 (0.7) | 0.25 (0.7) | n/a | 0.24 (0.8) | 0.15 (0.7) | 0.51 (0.6) |
+| word_bits | 0.13 (0.5) | 0.53 (1.5) | n/a | 0.13 (0.4) | 0.17 (0.8) | 0.31 (0.4) |
 
 Not measured: `intinf_fact` in the `xc1` configurations, whose `IntInf`
 constants a host types at its own `IntInf`, not at that of `lib/basis`; and
 anything on `xc1:smlnj32`, where the `LargeInt` the wrapper times with is
 not that of `lib/basis`, which does not load on a 31-bit `int`.
 
-What the table says:
+What the tables say:
 
-* **`runevm` runs plain code 10 to 25 times slower than the hosts' native
-  code**: `fib` 5.5 ms against 0.30 to 0.42, `tak` 1.7 against 0.12 to
-  0.24. This is the interpreter; [plans/performance.md](plans/performance.md)
+* **`runevm` runs plain code 7 to 19 times slower than the native code of
+  MLton, SML/NJ and Poly/ML**: `fib` 6.4 ms against 0.33 to 0.45, `tak`
+  1.9 against 0.15 to 0.28. Against MLKit, whose calls are slow, it is 4
+  times slower. This is the interpreter; [plans/performance.md](plans/performance.md)
   is about it.
-* **Native code (`rune:opt`) runs these programs 1.8 to 3.5 times faster
-  than `runevm`** (`fib` 2.35 ms, `tak` 0.59, `word_bits` 1.33 against
-  4.61), and 3 to 15 times slower than the hosts.
-* **`vm/new` is 1.5 to 2.6 times slower than `runevm`.** Its loop is the
-  first one (middle-end M5), with none of the work that made `runevm`'s
-  fast (middle-end M6: the state in locals, computed goto); making it fast
-  belongs to `vm/new`'s own plan.
-* **The same VM elsewhere:** on 64-bit Windows about as fast as on Linux
-  (5 to 30% slower, for starting a process from WSL); built for 32 bits,
-  1.4 (Linux) to 1.8 (Windows) times slower, since a value of 64 bits is
-  two words there. The PowerPC column is qemu's emulation, about ten times
-  slower.
+* **Native code (`rune:opt`) runs these programs 1.9 to 3.6 times faster
+  than `runevm`** (`fib` 2.27 ms, `tak` 0.61, `word_bits` 1.28 against
+  4.67), and 2 to 11 times slower than MLton, SML/NJ and Poly/ML on `fib`,
+  `tak` and `word_bits`.
+* **`vm/new` interpreting alone (`off`) is as fast as `runevm`**, and up to
+  25% faster where reals are involved (`real_nbody` 2.17 ms against 2.91):
+  `tak` is 1.89 against 1.88, `fib` 5.49 against 6.42.
+* **Tier 1 (`baseline`) is 1.7 to 3.7 times faster than `off`**, the more so
+  the more of the time is in calls and in arithmetic of the program's own:
+  `word_bits` 3.7 times, `tak` 3.1, `fib` 2.4; `string_ops` 1.7.
+* **Tier 2 (`opt`, the default) adds nothing where the time is in the
+  runtime, and up to 2.3 times where it is in arithmetic**: `word_bits`
+  1.00 to 0.43 ms, `array_sieve` 3.93 to 2.34, `real_nbody` 0.87 to 0.52,
+  `fib` 2.28 to 1.66, while `intinf_fact`, `list_ops`, `string_ops` and
+  `tak` change by 6% or less. The default is 1.9 to 11 times faster than
+  `runevm` and is faster than `rune:opt` on all but `list_ops` (2.78 ms
+  against 2.65) and `string_ops` (5.80 against 5.70), which are about equal.
+  On `real_nbody` it is as fast as MLton, SML/NJ and Poly/ML do it (0.52 ms
+  against 0.50 to 0.58, 1.28 for Poly/ML); on `fib` and `tak` it is 4
+  times MLton's.
+* **Compiling every function when the program is loaded (`all`, `all+t2`)
+  gives the code of the counters' levels**: the times of `all` are those of
+  `baseline`, and the times of `all+t2` those of `opt`, to within 20%
+  (`list_ops` 3.29 against 2.81 for the first pair, 2.51 against 2.78 for
+  the second). What it costs is in *Compiling* below, where the
+  whole compiler is compiled at the start.
 * **Relative to its baseline, the library costs Rune less than it costs
-  the hosts**: `list_ops` 1.8 times the baseline on Rune, 4.5 to 6.7 on the
-  hosts; `string_ops` 3.3 against 5.9 to 10.3. `IntInf` is the exception:
-  18 times the baseline on Rune, 0.2 to 1.3 on the hosts, which use GMP
-  (MLton) or native code. Its limbs of 30 bits are an SML datatype, and
-  every limb operation is a call.
-* **The `xc1` columns** run Rune's library compiled by each host, about as
-  fast as that host's own library (`list_ops` 1.15 ms on MLton against
-  1.74 native, `string_ops` 2.00 against 1.52): the algorithms of
-  `lib/basis` are not what makes Rune slow.
+  the hosts**: `list_ops` 1.7 times the baseline on Rune, 3.9 to 7.8 on the
+  hosts but MLKit; `string_ops` 3.1 against 4.6 to 9.1 on the same. `IntInf` is the
+  exception: 15 times the baseline on `runevm`, 0.1 to 1.2 on the hosts,
+  which use GMP (MLton) or native code, and 3.0 on MLKit. Its limbs of 30
+  bits are an SML datatype, and every limb operation is a call.
+* **MLKit is slow at calls and relatively quick in its Basis Library**: its
+  baseline, `fib` and `tak`, is 3 to 4 times MLton's, while `list_ops`
+  takes 0.7 and `array_sieve` 1.7 times as long as MLton's, so that its
+  ratios to the baseline are among the lowest of the tables.
+* **The `xc1` columns** run Rune's library compiled by each host, between
+  0.6 and 1.9 times as slow as that host's own library (`list_ops` 1.14 ms
+  on MLton against 1.96 native, `string_ops` 2.62 against 1.58): the
+  algorithms of `lib/basis` are not what makes Rune slow.
 
 ## Compiling
 
 Each build of the compiler compiling `examples/hello.sml`, and compiling
 the compiler itself (`BOOT_SRCS`, the bootstrap's input), the same day at
-the same commit: wall-clock time, the fastest of three rounds, a round of
-`hello` being 20 compiles. The builds of the hosts are what `make
-host-builds` makes (`bin/rune-mlton`, `bin/rune-smlnj-legacy`, `bin/rune-smlnj32`,
-`bin/rune-smlnj-dev`, `bin/rune-polyml`); the others are the self-hosted compiler, `bin/rune.rbc`,
-on each VM, and translated by `runeopt`.
+the same commit and on the same machine as above: wall-clock time, the
+fastest of three rounds, a round of `hello` being 20 compiles. The builds
+of the hosts are what `make host-builds` makes (`bin/rune-mlton`,
+`bin/rune-smlnj-legacy`, `bin/rune-smlnj32`, `bin/rune-smlnj-dev`,
+`bin/rune-polyml`, `bin/rune-mlkit`); the others are the self-hosted
+compiler, `bin/rune.rbc`, on `runevm` and translated by `runeopt`, and
+`bin/rune.new.rbc` on `vm/new` at each JIT level.
 
 | Build | `hello` | the compiler |
 |---|---:|---:|
-| MLton | 5.9 ms | 0.89 s |
-| Poly/ML | 8.1 ms | 0.83 s |
-| SML/NJ, 64 bits | 19.1 ms | 2.16 s |
-| SML/NJ, 32 bits | 18.1 ms | 1.71 s |
-| `runevm` (`bin/rune`, what is shipped) | 21.7 ms | 5.03 s |
-| native code (`runeopt` of `bin/rune.rbc`) | 14.5 ms | 2.82 s |
-| `vm/new` (`bin/rune.new.rbc`) | 29.3 ms | 6.01 s |
-| `runevm`, 32-bit Linux | 25.4 ms | 5.39 s |
-| `runevm`, PowerPC under qemu | 193.8 ms | 31.54 s |
+| MLton | 6.7 ms | 1.12 s |
+| Poly/ML | 9.3 ms | 1.08 s |
+| MLKit | 8.4 ms | 1.90 s |
+| SML/NJ 110.99.9, 64 bits | 21.8 ms | 2.56 s |
+| SML/NJ 110.99.9, 32 bits | 21.2 ms | 2.34 s |
+| SML/NJ 2026.2 | 24.9 ms | 2.38 s |
+| `runevm` (`bin/rune`, what is shipped) | 26.2 ms | 6.01 s |
+| native code (`runeopt` of `bin/rune.rbc`) | 17.0 ms | 3.12 s |
+| `vm/new`, `off` | 22.9 ms | 5.44 s |
+| `vm/new`, `baseline` | 36.1 ms | 3.24 s |
+| `vm/new`, `opt` (the default) | 37.8 ms | 3.04 s |
+| `vm/new`, `all` | 157.1 ms | 3.23 s |
+| `vm/new`, `all+t2` | 187.9 ms | 3.18 s |
 
-Not measured: the Windows VMs, which need the program and its library in a
-directory on the Windows side (`tests/windows-dir.sh`).
+Not measured: the VMs built for Windows, 32-bit Linux and PowerPC.
 
-* The shipped compiler compiles itself in 5.0 s, 5.7 times as long as the
-  build MLton makes; translated into native code, in 2.8 s, 3.2 times.
-* A small program costs little on any: `hello` is 22 ms on `runevm`, most
-  of it reading and elaborating the part of the Basis Library it uses.
+* The shipped compiler compiles itself in 6.0 s, 5.4 times as long as the
+  build MLton makes; translated into native code, in 3.1 s, 2.8 times.
+* `vm/new` with its JIT on (`baseline`, `opt`) compiles the compiler in 3.0
+  to 3.2 s, twice as fast as `runevm`, as fast as native code, 1.2 to 1.3
+  times SML/NJ's builds and 2.7 times MLton's. Tier 2 is no faster than
+  tier 1 here, as on `list_ops` and `string_ops`.
+* A small program costs little on any: `hello` is 26 ms on `runevm`, most
+  of it reading and elaborating the part of the Basis Library it uses. The
+  JIT makes it dearer, 36 to 38 ms against 23 for the interpreter alone,
+  and compiling all of the compiler up front (`all`) costs 157 to 188 ms.
 * The counts that do not depend on the machine -- instructions executed,
   and bytes and objects allocated, by the compiler compiling `hello`, by
   the bootstrap and by `runedoc` -- are the budgets of `make perf-check`
-  (`tests/perf/*.budget`).
-
-The Astra safeguards port measures the stack-bytecode bootstrap at 904523719
-instructions, 1110238456 allocated bytes and 24566927 objects. The type-work
-counter and scope checks add compiler work; its instruction budget is refreshed
-with the usual 10 percent headroom (994976090), while its byte and object budgets
-remain unchanged. These counts measure the compiler including the added code;
-the timing tables above retain their recorded snapshots.
-
-For the register bytecode, bootstrap measures 488703726 instructions and
-compile-sigs 49714901. Their refreshed instruction budgets likewise retain
-10 percent headroom (537574098 and 54686391); their allocation budgets are
-unchanged.
-
-## MLKit
-
-MLKit 4.7.23 joined the hosts after the tables above were made. Its numbers
-were taken on 2026-09-27 at `2e7d313`, on a virtual machine of 4 CPUs (Intel
-Emerald Rapids, `cloud/ENVIRONMENT.md`), idle but for the one program
-timed, with Rune, MLton and Poly/ML measured again beside it so that they
-can be compared. `make perf PERF_CONFIGS=rune,native:mlton,native:polyml,native:mlkit,xc1:mlton,xc1:mlkit`,
-milliseconds of one run, in parentheses divided by the baseline of the
-configuration as above:
-
-| Program | rune | native:mlton | native:polyml | native:mlkit | xc1:mlton | xc1:mlkit |
-|---|---:|---:|---:|---:|---:|---:|
-| array_sieve | 5.60 (2.5) | 0.35 (2.1) | 0.39 (1.9) | 0.53 (0.6) | 0.34 (2.0) | 0.51 (0.5) |
-| fib | 3.66 (1.7) | 0.29 (1.7) | 0.34 (1.6) | 1.65 (1.7) | 0.30 (1.7) | 1.68 (1.8) |
-| intinf_fact | 33.29 (15.1) | 0.02 (0.1) | 0.06 (0.3) | 1.58 (1.7) | n/a | n/a |
-| list_ops | 3.84 (1.7) | 1.21 (7.1) | 1.25 (6.0) | 1.04 (1.1) | 0.49 (2.8) | 1.48 (1.6) |
-| real_nbody | 1.93 (0.9) | 0.49 (2.9) | 0.87 (4.1) | 0.71 (0.8) | 0.53 (3.1) | 0.67 (0.7) |
-| string_ops | 8.92 (4.1) | 1.07 (6.3) | 1.27 (6.0) | 2.34 (2.5) | 1.29 (7.5) | 3.78 (4.0) |
-| tak | 1.32 (0.6) | 0.10 (0.6) | 0.13 (0.6) | 0.54 (0.6) | 0.10 (0.6) | 0.52 (0.6) |
-| word_bits | 2.69 (1.2) | 0.09 (0.5) | 0.13 (0.6) | 0.25 (0.3) | 0.08 (0.5) | 0.20 (0.2) |
-
-`intinf_fact` is n/a in the `xc1` configurations for the reason above.
-
-* MLKit is slow at calls and relatively quick in its Basis Library: its
-  baseline, fib and tak, is 5 to 6 times MLton's, while the programs that
-  are mostly the library take from 0.9 (`list_ops`) to 2.8 (`word_bits`)
-  times as long as MLton's, so that their ratios to the baseline are the
-  lowest of the table.
-* Rune's library compiled by MLKit (`xc1:mlkit`) is about as fast as
-  MLKit's own on arrays, reals and words, and takes 1.4 and 1.6 times as
-  long on `list_ops` and `string_ops`.
-
-Compiling, as in *Compiling* above:
-
-| Build | `hello` | the compiler |
-|---|---:|---:|
-| MLton | 5.4 ms | 0.66 s |
-| Poly/ML | 6.8 ms | 0.68 s |
-| MLKit | 7.6 ms | 1.15 s |
-| `runevm` (`bin/rune`, what is shipped) | 18.6 ms | 3.47 s |
-
-MLKit itself takes 70 s to build the compiler from nothing (MLton: 24 s),
-and less when some of its object files, which it keeps in `MLB/` beside the
-sources, still hold.
-
-## Since the middle end
-
-The tables this page replaces were taken on 2026-09-20 (`rune`) and
-2026-09-24 (`rune:opt`), before the middle-end roadmap
-([plans/middle-end.md](plans/middle-end.md)) and codegen's M10 to M15.
-Milliseconds of one run then and now, on the same machine:
-
-| Program | rune, 09-20 | rune, now | faster | rune:opt, 09-24 | rune:opt, now | faster |
-|---|---:|---:|---:|---:|---:|---:|
-| array_sieve | 39.61 | 8.42 | 4.7x | 16.26 | 4.67 | 3.5x |
-| fib | 11.19 | 5.50 | 2.0x | 5.64 | 2.35 | 2.4x |
-| intinf_fact | 295.00 | 55.19 | 5.3x | 110.69 | 25.28 | 4.4x |
-| list_ops | 34.27 | 5.40 | 6.3x | 16.75 | 2.57 | 6.5x |
-| real_nbody | 9.53 | 2.84 | 3.4x | 2.50 | 1.28 | 2.0x |
-| string_ops | 33.67 | 10.29 | 3.3x | 18.36 | 5.62 | 3.3x |
-| tak | 9.07 | 1.72 | 5.3x | 3.74 | 0.59 | 6.3x |
-| word_bits | 14.62 | 4.61 | 3.2x | 6.02 | 1.33 | 4.5x |
-
-On 2026-09-24 the compiler compiled itself in 10.2 s on `runevm` and 5.5 s
-in native code; it is 5.0 and 2.8 now.
+  (`tests/perf/*.budget`). At this commit the bootstrap executes 951
+  million instructions of stack bytecode and 515 million of register
+  bytecode and allocates 1.17 GB in 26.0 million objects; compiling `hello`
+  takes 3.08 million instructions, 3.5 MB and 53.6 thousand objects.
 
 ## How to reproduce
 
 ```sh
 make                              # bin/rune, bin/runevm
 make host-builds runeopt bin/runevm-opt bin/rune-new bin/runevm-new
-make windows portability          # the VMs of rune:windows*, rune:linux32, rune:ppc64
 make hosts                        # MLton, SML/NJ, Poly/ML and MLKit, once
-make perf PERF_CONFIGS=rune,rune:opt,rune:new,rune:windows,rune:windows32,rune:linux32,rune:ppc64,hosts,xc1
-                                  # the table, in tests/out/perf/wall.md
+make perf PERF_CONFIGS=rune,rune:opt,rune:new,hosts,xc1
+                                  # the tables, in tests/out/perf/wall.md
 ```
 
+`rune:new` runs at `--jit=opt` unless the environment names another level:
+the other columns are `RUNEVM_JIT=off`, `RUNEVM_JIT=baseline`,
+`RUNEVM_JIT=all` and `RUNEVM_JIT=all RUNEVM_JIT_TIER=2` before `make perf
+PERF_CONFIGS=rune:new`.
+
 The compile times: `make bin/rune.new.rbc`, then `bin/runeopt-mlton
-bin/rune.rbc -o bin/rune-native` for the native compiler, and each build
-run as `BUILD -o out.rbc examples/hello.sml` and `BUILD -o out.rbc
-$(BOOT_SRCS)`, where `BUILD` is `bin/rune-HOST`, or `VM --heap-size
-67108864 bin/rune.rbc --lib lib` (`bin/rune.new.rbc` on `bin/runevm-new`),
-or `bin/rune-native --lib lib`.
+--options "--heap-size 67108864" bin/rune.rbc -o bin/rune-native` for the
+native compiler, and each build run as `BUILD -o out.rbc examples/hello.sml`
+and `BUILD -o out.rbc $(BOOT_SRCS)`, where `BUILD` is `bin/rune-HOST`, or
+`VM --heap-size 67108864 bin/rune.rbc --lib lib` (`bin/rune.new.rbc` on
+`bin/runevm-new`, with the JIT options of the level), or `bin/rune-native
+--lib lib`. `scripts/perf-cycles.sh` measures cycles and instructions of the
+same runs, with `jit-off`, `jit-baseline`, `jit-all` and `+t2` for the levels.
