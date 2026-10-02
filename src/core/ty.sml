@@ -36,14 +36,28 @@ struct
      stamp of its fresh name *)
   val realizations : Types.tyfcn IntTable.table = IntTable.table 256
 
+  (* A datatype declared in a function may name the function's type
+     variables (`fun 'a f ... = let datatype t = T of 'a ...`): an instance
+     of the function -- inlined, specialised -- gives them other types, which
+     a type of t must say for its constructors' arguments to agree. So each
+     such variable is a parameter of t after its own, which every type made
+     of t (fromTypes) gives as itself: the generic variables its
+     constructors name that are not its parameters, and those of the
+     datatypes they name. Worked out once the elaborator has given every
+     datatype (extrasOf); in most programs no datatype has any. *)
+  datatype extras = Unknown | NoExtras | Extras of int list IntMap.map
+  val extras = ref Unknown
+
   fun bindVar (stamp : int, t : Types.ty) = IntTable.insert (binders, stamp, t)
   fun bindExn (stamp : int, arg : Types.ty option) = IntTable.insert (exnArgs, stamp, arg)
   fun bindDatatype (stamp : int, {params, cons} : {params : int list, cons : (int * string * Types.ty option) list}) =
-    datatypes := IntMap.insert (!datatypes, stamp,
-                                {params = params, cons = List.map (fn (t, n, a) => (t, n, Option.map FromElab a)) cons})
+    (extras := Unknown;
+     datatypes := IntMap.insert (!datatypes, stamp,
+                                 {params = params, cons = List.map (fn (t, n, a) => (t, n, Option.map FromElab a)) cons}))
   fun bindDatatypeDirect (stamp : int, {params, cons} : {params : int list, cons : (int * string * ty option) list}) =
-    datatypes := IntMap.insert (!datatypes, stamp,
-                                {params = params, cons = List.map (fn (t, n, a) => (t, n, Option.map Direct a)) cons})
+    (extras := Unknown;
+     datatypes := IntMap.insert (!datatypes, stamp,
+                                 {params = params, cons = List.map (fn (t, n, a) => (t, n, Option.map Direct a)) cons}))
   fun bindRealization (stamp : int, fcn : Types.tyfcn) = IntTable.insert (realizations, stamp, fcn)
 
   (* bool and list, which no declaration makes *)
@@ -59,6 +73,96 @@ struct
 
   (* ---- from the elaborator's types ---- *)
 
+  (* the generic variables an elaborator's type names, and the datatypes,
+     added to acc *)
+  fun scan (t : Types.ty, acc as (gens, stamps) : unit IntMap.map * unit IntMap.map) =
+    case Types.prune t of
+      Types.TVar (ref (Types.Unbound {id, level, ...})) =>
+        if level = Types.genericLevel then (IntMap.insert (gens, id, ()), stamps) else acc
+    | Types.TVar (ref (Types.Bound t)) => scan (t, acc)
+    | Types.TCon (c, args) =>
+        (case IntTable.find (realizations, #stamp c) of
+           SOME (Types.TName c') => scan (Types.TCon (c', args), acc)
+         | SOME (Types.TAbbrev (params, body)) => scan (Types.substitute (params, args, body), acc)
+         | NONE => List.foldl scan (gens, IntMap.insert (stamps, #stamp c, ())) args)
+    | Types.TRecord fields => List.foldl (fn ((_, t), acc) => scan (t, acc)) acc fields
+    | Types.TArrow (a, b) => scan (b, scan (a, acc))
+
+  (* whether an elaborator's type names a generic variable not in params *)
+  fun namesOther (params : int list) (t : Types.ty) : bool =
+    case Types.prune t of
+      Types.TVar (ref (Types.Unbound {id, level, ...})) =>
+        level = Types.genericLevel andalso not (List.exists (fn p => p = id) params)
+    | Types.TVar (ref (Types.Bound t)) => namesOther params t
+    | Types.TCon (c, args) =>
+        (case IntTable.find (realizations, #stamp c) of
+           SOME (Types.TName c') => namesOther params (Types.TCon (c', args))
+         | SOME (Types.TAbbrev (ps, body)) => namesOther params (Types.substitute (ps, args, body))
+         | NONE => List.exists (namesOther params) args)
+    | Types.TRecord fields => List.exists (namesOther params o #2) fields
+    | Types.TArrow (a, b) => namesOther params a orelse namesOther params b
+
+  (* each datatype's extra parameters (extras), where it has some *)
+  fun workOutExtras () : int list IntMap.map =
+    let
+      (* each datatype of the elaborator's: the variables its
+         constructors name that are not its parameters, and the
+         datatypes they name *)
+      val direct =
+        IntMap.map (fn {params, cons} =>
+                      let
+                        val (gens, stamps) =
+                          List.foldl (fn ((_, _, SOME (FromElab t)), acc) => scan (t, acc) | (_, acc) => acc)
+                                     (IntMap.empty, IntMap.empty) cons
+                      in
+                        (IntMap.filteri (fn (g, ()) => not (List.exists (fn p => p = g) params)) gens,
+                         IntMap.listKeys stamps)
+                      end)
+                   (!datatypes)
+      (* and those of the datatypes they name, until no more come *)
+      fun round m =
+        let
+          val m' =
+            IntMap.mapi (fn (s, gens) =>
+                           case IntMap.find (direct, s) of
+                             SOME (_, named) =>
+                               List.foldl (fn (n, g) =>
+                                             case IntMap.find (m, n) of
+                                               SOME g' => IntMap.unionWith #1 (g, g')
+                                             | NONE => g)
+                                          gens named
+                           | NONE => gens)
+                        m
+        in
+          if IntMap.foldl (fn (g, n) => n + IntMap.numItems g) 0 m'
+             = IntMap.foldl (fn (g, n) => n + IntMap.numItems g) 0 m
+          then m else round m'
+        end
+    in
+      IntMap.map (fn gs => IntMap.listKeys gs)
+                 (IntMap.filteri (fn (_, gs) => not (IntMap.isEmpty gs)) (round (IntMap.map #1 direct)))
+    end
+
+  (* the table, worked out only where some datatype names a variable not
+     among its parameters *)
+  fun computeExtras () : extras =
+    let
+      val some =
+        IntMap.foldl (fn ({params, cons}, any) =>
+                        any orelse List.exists (fn (_, _, SOME (FromElab t)) => namesOther params t | _ => false) cons)
+                     false (!datatypes)
+      val e = if not some then NoExtras
+              else let val m = workOutExtras () in if IntMap.isEmpty m then NoExtras else Extras m end
+    in
+      extras := e; e
+    end
+
+  fun extrasOf (stamp : int) : int list =
+    case (case !extras of Unknown => computeExtras () | e => e) of
+      NoExtras => []
+    | Extras m => (case IntMap.find (m, stamp) of SOME l => l | NONE => [])
+    | Unknown => []
+
   fun fromTypes (t : Types.ty) : ty =
     case Types.prune t of
       Types.TVar (ref (Types.Unbound {id, level, ...})) =>
@@ -68,18 +172,30 @@ struct
         (case IntTable.find (realizations, #stamp c) of
            SOME (Types.TName c') => fromTypes (Types.TCon (c', args))
          | SOME (Types.TAbbrev (params, body)) => fromTypes (Types.substitute (params, args, body))
-         | NONE => Con (#stamp c, #name c, List.map fromTypes args))
+         | NONE =>
+             (case !extras of
+                NoExtras => Con (#stamp c, #name c, List.map fromTypes args)
+              | _ =>
+                  (case extrasOf (#stamp c) of
+                     [] => Con (#stamp c, #name c, List.map fromTypes args)
+                   | extra => Con (#stamp c, #name c, List.map fromTypes args @ List.map Gen extra))))
     | Types.TRecord fields => Tuple (List.map (fromTypes o #2) fields)
     | Types.TArrow (a, b) => Arrow (fromTypes a, fromTypes b)
 
   fun argOf (FromElab t) = fromTypes t
     | argOf (Direct t) = t
 
-  (* A datatype, its constructors' arguments as types. *)
+  (* A datatype's parameters, its extra ones after its own, and its
+     constructors' arguments as types. *)
+  fun paramsOf (stamp : int, params : int list) =
+    case !extras of
+      NoExtras => params
+    | _ => (case extrasOf stamp of [] => params | extra => params @ extra)
   fun datatypeOf (stamp : int) : {params : int list, cons : (int * string * ty option) list} option =
     case IntMap.find (!datatypes, stamp) of
       NONE => NONE
-    | SOME {params, cons} => SOME {params = params, cons = List.map (fn (t, n, a) => (t, n, Option.map argOf a)) cons}
+    | SOME {params, cons} =>
+        SOME {params = paramsOf (stamp, params), cons = List.map (fn (t, n, a) => (t, n, Option.map argOf a)) cons}
 
   (* ---- the types the translation makes ---- *)
 
@@ -143,13 +259,16 @@ struct
         (case List.find (fn (t, _, _) => t = tag) cons of
            NONE => NONE
          | SOME (_, _, arg) =>
-             if List.length params <> List.length args then NONE
-             else
-               let
-                 val s = ListPair.foldl (fn (p, a, s) => IntMap.insert (s, p, a)) IntMap.empty (params, args)
-               in
-                 SOME (Option.map (subst s o argOf) arg)
-               end)
+             let val params = paramsOf (stamp, params)
+             in
+               if List.length params <> List.length args then NONE
+               else
+                 let
+                   val s = ListPair.foldl (fn (p, a, s) => IntMap.insert (s, p, a)) IntMap.empty (params, args)
+                 in
+                   SOME (Option.map (subst s o argOf) arg)
+                 end
+             end)
 
   (* A type as text, a variable written as the functions given say. *)
   fun format (gen : int -> string, var : int -> string) (t : ty) : string =

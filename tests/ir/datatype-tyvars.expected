@@ -1,0 +1,22 @@
+(* after mid *)
+(datatype t ('a 'b) (0 "T" : 'b * 'a))
+(datatype u ('b) (0 "U" : (int, 'b) t))
+(funs
+  (fn g1 ['b] ((v1 : 'b * int)) : 'b * int
+    (let (v2 : 'b) (select 0 v1)
+    (let (v3 : 'b) v2
+    (let (v4 : int) (select 1 v1)
+    (let (v5 : int) v4
+    (let (v6 : 'b * int) (tuple v3 v5)
+    (let (v7 : (int, 'b) t) (con 0 v6 : (int, 'b) t)
+    (let (v8 : 'b u) (con 0 v7 : 'b u)
+    (let (v9 : (int, 'b) t) (decon 0 v8 : 'b u)
+    (let (v10 : 'b * int) (decon 0 v9 : (int, 'b) t)
+    (let (v11 : 'b) (select 0 v10)
+    (let (v12 : 'b) v11
+    (let (v13 : int) (select 1 v10)
+    (let (v14 : int) v13
+    (return (tuple v12 v14)))))))))))))))))
+(val g2 : bool * int
+  (let (v15 : bool * int) (tuple (con0 1 : bool) 1)
+  (return (app g1[bool] v15))))
