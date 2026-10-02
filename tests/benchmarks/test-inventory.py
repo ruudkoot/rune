@@ -38,6 +38,14 @@ class InventoryTest(unittest.TestCase):
         self.assertEqual(row["disposition"], "defer")
         self.assertIn("region-reset", row["reason"])
 
+    def test_named_development_regressions_are_not_misidentified_as_kernels(self):
+        (self.root / "test").mkdir()
+        for name in ("life", "rev", "listsort"):
+            self.file("test_dev/" + name + ".sml", "val example = [0,1]\n")
+        rows = self.build("mlkit")
+        self.assertTrue(all(r["disposition"] == "exclude" for r in rows))
+        self.assertTrue(all(r["reason"] for r in rows))
+
     def test_region_reset_in_prose_is_not_a_runtime_dependency(self):
         (self.root / "test_dev").mkdir()
         self.file("test/kitfib35.sml", "(* resetRegions () was removed *)\nfun fib n = n\n")
@@ -77,6 +85,30 @@ class InventoryTest(unittest.TestCase):
         rows = {r["path"]: r for r in self.build("mlkit")}
         self.assertEqual(rows["test/kitlife35u_mlton.sml"]["disposition"], "duplicate")
         self.assertEqual(rows["test/kitlife35u_smlnj.sml"]["disposition"], "import")
+
+    def test_sml_functor_members_are_included_in_directory_inventory(self):
+        self.file("README.md", "# benchmarks\n")
+        self.file("programs/generator/sources.cm", "Group is table.fun main.sml\n")
+        self.file("programs/generator/table.fun", "functor Table()=struct end\n")
+        self.file("programs/generator/main.sml", "structure Main=struct end\n")
+        rows = self.build("smlnj")
+        row = next(r for r in rows if r["path"] == "programs/generator")
+        self.assertIn("programs/generator/table.fun", row["members"])
+
+    def test_native_reference_build_caches_do_not_change_source_inventory(self):
+        self.file("README.md", "# benchmarks\n")
+        self.file("programs/generator/main.sml", "structure Main=struct end\n")
+        before = self.build("smlnj")
+        self.file("programs/generator/.cm/SKEL/main.sml", "binary source-looking cache")
+        self.file("programs/generator/MLB/RI_GC/generated.sml", "cached generated source")
+        self.assertEqual(before, self.build("smlnj"))
+
+    def test_generated_ocaml_build_tree_does_not_invent_workloads(self):
+        self.sandmark_program("main", "let result = 42\n")
+        before = self.build("sandmark")
+        self.file("benchmarks/_build/default/copied/dune", "(executable (name copy))\n")
+        self.file("benchmarks/_build/default/copied/copy.ml", "let result = 17\n")
+        self.assertEqual(before, self.build("sandmark"))
 
     def test_haskell_main_need_not_be_named_Main(self):
         self.nofib_roots()

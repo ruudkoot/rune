@@ -1,0 +1,254 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -1,8 +1,10 @@
++structure Kernel=struct
++fun print s=BenchOutput.put s
+ (*kitkbjul9.sml*)
+ 
+ (* kitknuth-bendixnewcopy.sml
+- 
+- This is a revised version of knuth-bendix.sml in which 
++
++ This is a revised version of knuth-bendix.sml in which
+     (a) val has been converted to fun for function values
+     (b) exceptions that carry values have been avoided
+     (c) functions have been moved around to pass fewer of them
+@@ -17,7 +19,7 @@
+ fun eq_integer (x: int, y: int): bool = (x=y)
+ fun eq_string  (x: string, y: string): bool = (x=y)
+ 
+-(* 
++(*
+ signature KB =
+   sig
+     datatype term = Var of int | Term of string * term list
+@@ -31,38 +33,38 @@
+       ('a * ('b * (term * term))) list -> unit
+     include BMARK
+   end;
+-*)  
+-(*
+-structure Main : KB = 
++*)
++(*
++structure Main : KB =
+   struct
+ *)
+     fun length l = let
+-	  fun j(k, nil) = k
+-	    | j(k, a::x) = j(k+1,x)
+-	  in
+-	    j(0,l)
+-	  end
++          fun j(k, nil) = k
++            | j(k, a::x) = j(k+1,x)
++          in
++            j(0,l)
++          end
+     fun op @ (nil, l) = l
+       | op @ (a::r, l) = a :: (r@l)
+     fun rev l = let
+-	  fun f (nil, h) = h
+-	    | f (a::r, h) = f(r, a::h)
+-	  in
+-	    f(l,nil)
+-	  end
++          fun f (nil, h) = h
++            | f (a::r, h) = f(r, a::h)
++          in
++            f(l,nil)
++          end
+     fun app f = let
+-	  fun app_rec [] = ()
++          fun app_rec [] = ()
+             | app_rec (a::L) = (f a; app_rec L)
+         in
+-	  app_rec
++          app_rec
+         end
+ (*
+     fun map f = let
+-	  fun map_rec [] = []
++          fun map_rec [] = []
+             | map_rec (a::L) = f a :: map_rec L
+           in
+-	    map_rec
+-  	  end
++            map_rec
++          end
+ *)
+ 
+ (******* Quelques definitions du prelude CAML **************)
+@@ -118,7 +120,7 @@
+   in for_all_rec
+   end
+ 
+-fun rev_append   []    L  = L 
++fun rev_append   []    L  = L
+   | rev_append (x::L1) L2 = rev_append L1 (x::L2)
+ 
+ fun try_find f =
+@@ -222,9 +224,9 @@
+   | copy_term (Term(s, l)) = Term(s, map' copy_term l)
+ 
+ fun eq_term x =
+-  (fn (Var i1, Var i2) => 
++  (fn (Var i1, Var i2) =>
+        eq_integer(i1,i2)
+-   | (Term(s1,ts1),Term(s2,ts2)) => 
++   | (Term(s1,ts1),Term(s2,ts2)) =>
+        eq_string(s1,s2) andalso (eq_term_list(ts1,ts2))
+    | _ => false) x
+ and eq_term_list x =
+@@ -256,7 +258,7 @@
+   end
+ 
+ (* Term replacement replace M u N => M[u<-N] *)
+-fun replace M u N = 
++fun replace M u N =
+   let fun reprec (_, []) = N
+         | reprec (Term(oper,sons), (n::u)) =
+              Term(oper, change (fn P => reprec(P,u)) sons n)
+@@ -272,7 +274,7 @@
+           else
+             (v,M) :: subst
+         | match_rec subst (Term(op1,sons1), Term(op2,sons2)) =
+-	  if eq_string(op1,op2) then it_list2 match_rec subst sons1 sons2
++          if eq_string(op1,op2) then it_list2 match_rec subst sons1 sons2
+                        else raise FailMatching
+         | match_rec _ _ = raise FailMatching
+   in match_rec [] (term1,term2)
+@@ -280,7 +282,7 @@
+ 
+ (* A naive unification algorithm *)
+ 
+-fun compsubst subst1 subst2 = 
++fun compsubst subst1 subst2 =
+   (map (fn (v,t) => (v, substitute subst1 t)) subst2) @ subst1
+ 
+ fun occurs n =
+@@ -297,8 +299,8 @@
+       if occurs n2 term1 then raise FailUnify
+       else [(n2,term1)]
+   | unify (Term(op1,sons1), Term(op2,sons2)) =
+-      if eq_string(op1,op2) then 
+-	it_list2 (fn s => fn (t1,t2) => compsubst (unify(substitute s t1,
++      if eq_string(op1,op2) then
++        it_list2 (fn s => fn (t1,t2) => compsubst (unify(substitute s t1,
+                                                          substitute s t2)) s)
+                  [] sons1 sons2
+       else raise FailUnify
+@@ -320,7 +322,7 @@
+       else
+        (print_string oper;
+         case sons of
+-	     []   => ()
++             []   => ()
+           | t::lt =>(print_string "(";
+                      pretty_term t;
+                      app (fn t => (print_string ","; pretty_term t)) lt;
+@@ -455,10 +457,10 @@
+             | lexrec ( _ , []) = Greater
+             | lexrec (x1::l1, x2::l2) =
+                 case order (x1,x2) of
+-                  Greater => if for_all (fn N' => gt_ord order (M,N')) l2 
++                  Greater => if for_all (fn N' => gt_ord order (M,N')) l2
+                              then Greater else NotGE
+                 | Equal => lexrec (l1,l2)
+-                | NotGE => if exists (fn M' => ge_ord order (M',N)) l1 
++                | NotGE => if exists (fn M' => ge_ord order (M',N)) l1
+                            then Greater else NotGE
+       in lexrec (sons1, sons2)
+       end
+@@ -512,7 +514,7 @@
+ 
+ fun rpo () =
+   let fun rporec (M,N) =
+-    if eq_term(M,N) then Equal else 
++    if eq_term(M,N) then Equal else
+       case M of
+           Var m => NotGE
+         | Term(op1,sons1) =>
+@@ -543,15 +545,15 @@
+    with principal unifier sig *)
+ 
+ fun super M =
+-  let fun suprec (N as Term(_,sons)) =  
++  let fun suprec (N as Term(_,sons)) =
+         let fun collate (pairs,n) son =
+                   (pairs @ map (fn (u,sigma) => (n::u,sigma)) (suprec son), n+1)
+             val insides  : (int list * (int*term)list)list  =  (*type constraint added (mads)*)
+                   fst (it_list collate ([],1) sons)
+-        in ([], unify(M,N)) ::  insides   handle _ => insides 
++        in ([], unify(M,N)) ::  insides   handle _ => insides
+         end
+     | suprec _ = []
+-  in suprec 
++  in suprec
+   end
+ 
+ 
+@@ -559,7 +561,7 @@
+ 
+ Ex :
+ 
+-let (M,_) = <<F(A,B)>> 
++let (M,_) = <<F(A,B)>>
+ and (N,_) = <<H(F(A,x),F(x,y))>> in super M N;;
+ ==> [[1],[2,Term ("B",[])];                      x <- B
+      [2],[2,Term ("A",[]); 1,Term ("B",[])]]     x <- A  y <- B
+@@ -648,7 +650,7 @@
+                       let fun left_reducible (_,(_,(L,_))) = reducible left L
+                           val (redl,irredl) = partition left_reducible rules
+                       in (app deletion_message redl;
+-                          let fun right_reduce (m,(_,(L,R))) = 
++                          let fun right_reduce (m,(_,(L,R))) =
+                               (m,mk_rule L (mrewrite_all (new_rule::rules) R));
+                               val irreds = map right_reduce irredl
+                               val eqs' = map (fn (_,(_,pair)) => pair) redl
+@@ -661,9 +663,9 @@
+                       end)
+                     end
+               in if eq_term(M',N') then processkl eqs else
+-                 if greater(M',N') then enter_rule( M', N') 
++                 if greater(M',N') then enter_rule( M', N')
+                  else
+-                 if greater(N',M') then enter_rule( N', M') 
++                 if greater(N',M') then enter_rule( N', M')
+                  else
+                        (process ( ((M', N')::failures)) ( (k,l)) ( eqs))
+               end
+@@ -674,7 +676,7 @@
+                if eq_integer(k,l) then
+                  processf (k,l) (strict_critical_pairs el (rename v el))
+                else
+-                (let val (_,ek) = get_rule k in 
++                (let val (_,ek) = get_rule k in
+                     processf (k,l) (mutual_critical_pairs el (rename v ek))
+                  end
+                  handle FailFind (*rule k deleted*) =>
+@@ -705,9 +707,9 @@
+     let val n = check_rules complete_rules
+         val eqs = map (fn (_,(_,pair)) => pair) rules
+         (* letregion r2656 *)
+-        val completed_rules = 
++        val completed_rules =
+                (* the copying in the line below is to avoid that kb_completion is called with attop modes *)
+-               kb_completion(false,n+0, copy_rules complete_rules, [], (n+0,n+0), copy_termpairlist eqs) 
++               kb_completion(false,n+0, copy_rules complete_rules, [], (n+0,n+0), copy_termpairlist eqs)
+     in (message "Canonical set found :";
+         pretty_rules (rev completed_rules);
+         (* end r2683 *)
+@@ -722,5 +724,11 @@
+   end (* Main *)
+ *)
+ 
+-fun doit() = (run(); run(); run())
+-      +
++end
++
++structure Benchmark=struct val name="kitkbjul9_smlnj"
++fun one()=(BenchOutput.reset();Kernel.run();BenchOutput.summary())
++fun run [reps]=let val r=BenchInput.between(1,10)(BenchInput.integer reps)
++fun loop(0,acc)=String.concatWith ";"(List.rev acc)|loop(k,acc)=loop(k-1,one()::acc)
++in loop(r,[])end |run _=raise Fail "copying KB expects completion repetitions"end

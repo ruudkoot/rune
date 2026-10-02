@@ -17,3 +17,9 @@ permission and cites his 1998 Journal of Symbolic Computation article,
 volume 25(3), pages 285-293. The source header misspells the title and gives
 volume 23; bibliographic metadata is corrected here, with the original
 header retained unchanged.
+
+Historical ML Kit test/weeks4.sml at 6dab5582db22a5f5672ca1fc5244171687d83ce5
+is the same cyclic-u6 kernel and twenty-call input as this MLton form.
+Its name is an alias, not an additional polynomial algorithm; only email
+spelling and the fixed outer driver differ. The pristine alias source is
+retained here. Older test/tyan.sml remains a separately reviewed variant.

@@ -28,3 +28,7 @@ limits 8192, 1200000 and 4800000, permitting a final-element overshoot.
 
 The URI retrieval helper checks OS.Process.isSuccess instead of comparing
 opaque status values for equality, matching the current Basis contract.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/fxp.sml`,
+is an additional source for this implementation. The complete source agrees
+with the MLton source after whitespace normalization, including its driver.

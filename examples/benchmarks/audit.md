@@ -1,6 +1,6 @@
 # Initial source audit
 
-Recorded 2026-10-01, on the `benchmarks` worktree branching from
+Recorded 2026-10-01; classic review extended 2026-10-02, on the `benchmarks` worktree branching from
 `origin/master` at `b30fba275d685600da4d64cf0d9f7288bed0663e`.
 
 M0 is **complete** as a source-audit baseline. All five trees are pinned,
@@ -16,10 +16,10 @@ again at each import. No program passes merely by appearing in the inventory.
 |---|---:|---:|---:|---:|---:|
 | MLton | 48 | 48 | 0 | 0 | 0 |
 | SML/NJ | 45 | 35 | 8 | 2 | 0 |
-| ML Kit | 438 | 67 | 16 | 331 | 24 |
+| ML Kit | 438 | 51 | 16 | 336 | 35 |
 | nofib | 187 | 128 | 48 | 11 | 0 |
 | Sandmark | 143 | 66 | 77 | 0 | 0 |
-| Total | 861 | 344 | 149 | 344 | 24 |
+| Total | 861 | 328 | 149 | 349 | 35 |
 
 The initial M2 review classified 21 ML Kit region-control variants as deferred.
 A closer audit found that five upstream host variants already define their
@@ -119,8 +119,13 @@ primes entry will expand into explicitly named lazy and strict ports.
 
 ## Findings requiring care during imports
 
-* SML/NJ documents six broken variants, which remain deferred rather than
-  inheriting a passing result from a similarly named MLton implementation.
+* Native SML/NJ 2026.2 probes confirm concrete blockers for the six
+  advertised broken entries: Barnes-Hut's launcher signature mismatch,
+  DeltaBlue's runtime cycle failure on a chain, DLX launcher syntax errors,
+  kCFA's missing common/lib-base.sml, PIA's data-only directory and the
+  absent regex source directory. Reconsider after the documented repair
+  and independent reference-validation condition is met. These original
+  variants do not inherit results from the imported monolithic versions.
   Its `cml-sieve` and `pingpong` require Concurrent ML.
 * Review of nofib Makefiles excludes eight auxiliary/alternate files from
   `compress`, `infer` and `fulsom`; their `Main` module declarations alone
@@ -185,3 +190,30 @@ input/result records in the suite README. The remaining entries are scheduled
 work, deferred facilities or documented exclusions, not completed benchmark
 imports. New compatibility blockers found while porting must update the
 inventory rather than being hidden by a passing similarly named variant.
+
+## Classic source reconciliation
+
+The M2 review maps every suitable classic entry to the runnable manifest.
+Reviewed duplicate kernels include ML Kit FXP (entire normalized program),
+Zern (repeat launcher only), TSP (size/repetition launcher only), checksum,
+Boyer, weeks4/Tyan and the old PLClub renderer (legacy checked/unchecked
+access and Byte conversion). All original source paths and parameters are
+retained in the canonical provenance, with meaningful representations kept
+as separate programs. The Petri-net _smlnj source differs in legacy Basis/time
+adapters; deterministic elapsed-clock data is shared, not a new runtime facility.
+PermuteList and pseudokit are declaration-only support/module regressions;
+development life/rev/listsort are small correctness regressions rather than
+benchmark computations. Their individual source reasons remain in the inventory.
+SML functor `.fun` members are now included in member identities/notices;
+this covers ML-Lex red-black.fun and VLIW sort.fun.
+
+The branch was rebased onto origin/master
+`f8e351ab704ee78f40d52e7ef05956578f49ac90` before the final M2 validation.
+The pre-rebase branch is retained locally as `benchmarks-baseline-b30`, so
+historical M6 compiler revisions remain reachable. Rebase is not new evidence
+for old measurements; new correctness runs identify their actual sources/builds.
+
+Native reference builds create source-looking cache filenames. Discovery
+now excludes `.cm`, `MLB`, `_build`, `.git`, `dist-newstyle` and Python cache
+directories from workload members, fixtures/notices and recursive discovery.
+Tests verify that native caches cannot change the pinned source inventory.

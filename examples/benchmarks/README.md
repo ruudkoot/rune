@@ -8,88 +8,148 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
 
 | Name | Source | Description |
 |---|---|---|
-| [tak](#tak) | Classic SML / MLton | Evaluate the strict Takeuchi recurrence and sum repeated results. |
-| [kittmergesort](#kittmergesort) | Classic SML / ML Kit | Sort deterministic integer lists with the region-friendly copying merge. |
-| [primes-lazy](#primes-lazy) | nofib | Demand only the required prefix of the finite iterative sieve using memoized tails. |
-| [primes-strict](#primes-strict) | nofib | Evaluate each finite sieve list strictly to produce the same prime. |
-| [bdd](#bdd) | Sandmark | Construct and check a hidden-weighted-bit binary decision diagram. |
-| [fib](#fib) | Classic SML / MLton | Evaluate naive binary-recursive Fibonacci. |
-| [tailfib](#tailfib) | Classic SML / MLton | Evaluate tail-recursive Fibonacci with two accumulators. |
-| [even-odd](#even-odd) | Classic SML / MLton | Call mutually recursive parity predicates. |
-| [merge](#merge) | Classic SML / MLton | Merge interleaved sorted lists using non-tail recursion. |
-| [tailmerge](#tailmerge) | Classic SML / MLton | Merge sorted lists using a reversed tail-recursive accumulator. |
-| [imp-for](#imp-for) | Classic SML / MLton | Traverse seven nested mutable-counter loops. |
-| [vector-rev](#vector-rev) | Classic SML / MLton | Reverse a vector twice and consume every element. |
-| [vector32-concat](#vector32-concat) | Classic SML / MLton | Concatenate Int32 vectors and validate their contents. |
-| [vector64-concat](#vector64-concat) | Classic SML / MLton | Concatenate Int64 vectors and validate their contents. |
-| [string-concat](#string-concat) | Classic SML / MLton | Concatenate cyclic alphabet strings and consume every character. |
-| [wc-input1](#wc-input1) | Classic SML / MLton | Count newline characters by reading a generated file one character at a time. |
-| [wc-scanStream](#wc-scanstream) | Classic SML / MLton | Count newline characters through a stream scanner. |
-| [checksum](#checksum) | Classic SML / MLton | Fold packed 32-bit words into a modular network checksum. |
-| [boyer](#boyer) | Classic SML / MLton | Prove a substituted theorem with the classic symbolic rewriting checker. |
-| [nucleic](#nucleic) | Classic SML / MLton | Search Pseudoknot nucleotide conformations and check the maximum atom distance. |
-| [life](#life) | Classic SML / MLton | Advance a list-based Game of Life glider gun and summarize its live cells. |
-| [matrix-multiply](#matrix-multiply) | Classic SML / MLton | Multiply dense matrices and validate every product entry against a closed form. |
-| [md5](#md5) | Classic SML / MLton | Compress deterministic byte blocks using the MD5 rounds and padding. |
-| [fft](#fft) | Classic SML / MLton | Transform analytical Fourier data and check the resulting ramp. |
-| [binary-trees](#binary-trees) | Classic SML / SML/NJ | Build, traverse and retain binary trees of varying depths. |
-| [flat-array](#flat-array) | Classic SML / MLton | Fold a vector of pairs using explicit checked 32-bit arithmetic. |
-| [peek](#peek) | Classic SML / MLton | Retrieve mixed-width values from generative-exception property lists. |
-| [psdes-random](#psdes-random) | Classic SML / MLton | Generate Word32 values with the four-round pseudo-DES generator. |
-| [mandelbrot](#mandelbrot) | Classic SML / MLton | Evaluate the original escape-iteration loop with its unusual coordinate formula. |
-| [pidigits](#pidigits) | Classic SML / MLton | Produce pi digits until a selected zero occurrence using an IntInf spigot. |
-| [logic](#logic) | Classic SML / MLton | Find the first peg-solitaire solution by continuation-based unification. |
-| [zebra](#zebra) | Classic SML / MLton | Solve the zebra puzzle using constraint propagation and fluid state. |
-| [count-graphs](#count-graphs) | Classic SML / MLton | Enumerate graph isomorphism classes with pruning and higher-order folds. |
-| [many_refs](#many_refs) | Classic SML / ML Kit | Retain three tables of real references and repeatedly update every element. |
-| [tensor](#tensor) | Classic SML / MLton | Apply real and paired-complex elementwise and contraction operators, checking every result. |
-| [zern](#zern) | Classic SML / MLton | Accumulate phase screens and validate every complex E-field value. |
-| [smith-normal-form](#smith-normal-form) | Classic SML / MLton | Reduce an IntInf matrix to Smith normal form and consume its diagonal. |
-| [ratio-regions](#ratio-regions) | Classic SML / MLton | Segment a fixed grid by preflow-push max flow and validate its min-cut mask. |
-| [mpuz](#mpuz) | Classic SML / MLton | Enumerate distinct digit assignments to a fixed multiplication puzzle. |
-| [DLXSimulator](#dlxsimulator) | Classic SML / MLton | Interpret five embedded DLX programs and consume every simulated output. |
-| [knuth-bendix](#knuth-bendix) | Classic SML / MLton | Complete geometric group equations and validate the resulting rewrite rules. |
-| [tyan](#tyan) | Classic SML / MLton | Compute the cyclic polynomial Groebner basis over F17 and consume its term summaries. |
-| [lexgen](#lexgen) | Classic SML / MLton | Generate a lexer from the original SML specification and compare every output byte. |
-| [mlyacc](#mlyacc) | Classic SML / MLton | Generate an LALR parser from the original SML grammar and compare its source and signature. |
-| [hamlet](#hamlet) | Classic SML / MLton | Parse, elaborate and evaluate a unary arithmetic program with the HaMLet interpreter. |
-| [kitfib35](#kitfib35) | Classic SML / ML Kit | Evaluate the ML Kit Fibonacci recurrence with its single n<1 base case. |
-| [fib0](#fib0) | Classic SML / ML Kit | Evaluate the two-base-case development Fibonacci recurrence. |
-| [kitreynolds2](#kitreynolds2) | Classic SML / ML Kit | Search a shared tree with a chain of ancestor predicates. |
-| [kitreynolds3](#kitreynolds3) | Classic SML / ML Kit | Search the same shared tree using explicit ancestor lists. |
-| [kitloop2](#kitloop2) | Classic SML / ML Kit | Count down a lexicographic pair using a tail-recursive loop. |
-| [kitdangle](#kitdangle) | Classic SML / ML Kit | Build and consume one closure chain retaining list payloads. |
-| [kitdangle3](#kitdangle3) | Classic SML / ML Kit | Build and release three closure chains sequentially. |
-| [msort](#msort) | Classic SML / ML Kit | Sort the original ascending sequence with alternating-split copying mergesort. |
-| [kittmergesort_tp](#kittmergesort_tp) | Classic SML / ML Kit | Regenerate and sort ten lists in process using the shared copying kernel. |
-| [barnes-hut](#barnes-hut) | Classic SML / MLton | Advance a seeded three-dimensional N-body model with octree force approximation. |
-| [tsp](#tsp) | Classic SML / MLton | Build and validate a divide-and-conquer travelling-salesman tour. |
-| [fannkuch](#fannkuch) | Classic SML / SML/NJ | Enumerate permutations, flip their prefixes and consume the alternating checksum. |
-| [f-arith](#f-arith) | Classic SML / SML/NJ | Accumulate paired Leibniz-series terms and check the approximation of pi. |
-| [stream-sieve](#stream-sieve) | Classic SML / SML/NJ | Demand a prime from the original nonmemoized infinite-stream sieve. |
-| [twenty-four](#twenty-four) | Classic SML / SML/NJ | Enumerate arithmetic-expression solutions using continuation callbacks. |
-| [simple](#simple) | Classic SML / MLton | Compute a hydrodynamic time step and check all final state arrays. |
-| [nbody](#nbody) | Classic SML / SML/NJ | Advance five immutable solar-system records and validate their total energy. |
-| [output1](#output1) | Classic SML / MLton | Write individual characters to a regular file and validate every output byte. |
-| [ray](#ray) | Classic SML / MLton | Interpret the original sphere scene and validate its rendered dump image. |
-| [raytrace](#raytrace) | Classic SML / MLton | Render the original chess scene and check every quantized RGB pixel. |
-| [vliw](#vliw) | Classic SML / MLton | Schedule and compress instructions, then validate both assembly streams. |
-| [fxp](#fxp) | Classic SML / MLton | Parse deterministic generated XML and validate its complete tag and attribute counts. |
-| [model-elimination](#model-elimination) | Classic SML / MLton | Search the original first-order problem sets with deterministic inference budgets. |
-| [sat](#sat) | Classic SML / SML/NJ | Solve a fixed Boolean formula with nested higher-order choices. |
-| [boyer-smlnj](#boyer-smlnj) | Classic SML / SML/NJ | Prove the original theorem using the modern modular SML/NJ rewriting checker. |
-| [logic-smlnj](#logic-smlnj) | Classic SML / SML/NJ | Find a peg-solitaire solution through the modern modular unifier and trail. |
-| [life-smlnj](#life-smlnj) | Classic SML / SML/NJ | Repeat fifty-generation glider-gun evolutions with complete coordinate checks. |
-| [minimax](#minimax) | Classic SML / SML/NJ | Build and score complete tic-tac-toe trees with and without a transposition table. |
-| [iter-pidigits](#iter-pidigits) | Classic SML / SML/NJ | Generate a fixed number of pi digits with the iterative IntInf spigot. |
-| [mazefun](#mazefun) | Classic SML / SML/NJ | Generate and validate complete deterministic mazes using persistent list matrices. |
-| [queens-lazy](#queens-lazy) | nofib | Count queen placements using memoized level-generation streams. |
-| [queens-strict](#queens-strict) | nofib | Count queen placements using eagerly generated list levels. |
-| [nqueens](#nqueens) | Sandmark | Count queen placements by depth-first search with mutable sibling totals. |
-| [rec_seq_ack](#rec_seq_ack) | Sandmark | Evaluate strict Ackermann calls and consume every repeated result. |
-| [klife_eq](#klife_eq) | Classic SML / ML Kit | Evolve a glider gun with explicit double generation and intermediate-list copying. |
-| [kitlife35u_smlnj](#kitlife35u_smlnj) | Classic SML / ML Kit | Evolve the same glider gun with typed equality, copying and upstream no-op region calls. |
-| [kitqsort_no_basislib](#kitqsort_no_basislib) | Classic SML / ML Kit | Sort seeded lists with copied partitions and transformed tail-recursive tuple arguments. |
+| [tak](#tak) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/tak.sml) | Evaluate the strict Takeuchi recurrence and sum repeated results. |
+| [kittmergesort](#kittmergesort) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/kittmergesort.sml) | Sort deterministic integer lists with the region-friendly copying merge. |
+| [primes-lazy](#primes-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/primes) | Demand only the required prefix of the finite iterative sieve using memoized tails. |
+| [primes-strict](#primes-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/primes) | Evaluate each finite sieve list strictly to produce the same prime. |
+| [bdd](#bdd) | [Sandmark](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/bdd/bdd.exe) | Construct and check a hidden-weighted-bit binary decision diagram. |
+| [fib](#fib) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/fib.sml) | Evaluate naive binary-recursive Fibonacci. |
+| [tailfib](#tailfib) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/tailfib.sml) | Evaluate tail-recursive Fibonacci with two accumulators. |
+| [even-odd](#even-odd) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/even-odd.sml) | Call mutually recursive parity predicates. |
+| [merge](#merge) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/merge.sml) | Merge interleaved sorted lists using non-tail recursion. |
+| [tailmerge](#tailmerge) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/tailmerge.sml) | Merge sorted lists using a reversed tail-recursive accumulator. |
+| [imp-for](#imp-for) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/imp-for.sml) | Traverse seven nested mutable-counter loops. |
+| [vector-rev](#vector-rev) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/vector-rev.sml) | Reverse a vector twice and consume every element. |
+| [vector32-concat](#vector32-concat) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/vector32-concat.sml) | Concatenate Int32 vectors and validate their contents. |
+| [vector64-concat](#vector64-concat) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/vector64-concat.sml) | Concatenate Int64 vectors and validate their contents. |
+| [string-concat](#string-concat) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/string-concat.sml) | Concatenate cyclic alphabet strings and consume every character. |
+| [wc-input1](#wc-input1) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/wc-input1.sml) | Count newline characters by reading a generated file one character at a time. |
+| [wc-scanStream](#wc-scanstream) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/wc-scanStream.sml) | Count newline characters through a stream scanner. |
+| [checksum](#checksum) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/checksum.sml) | Fold packed 32-bit words into a modular network checksum. |
+| [boyer](#boyer) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/boyer.sml) | Prove a substituted theorem with the classic symbolic rewriting checker. |
+| [nucleic](#nucleic) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/nucleic.sml) | Search Pseudoknot nucleotide conformations and check the maximum atom distance. |
+| [life](#life) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/life.sml) | Advance a list-based Game of Life glider gun and summarize its live cells. |
+| [matrix-multiply](#matrix-multiply) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/matrix-multiply.sml) | Multiply dense matrices and validate every product entry against a closed form. |
+| [md5](#md5) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/md5.sml) | Compress deterministic byte blocks using the MD5 rounds and padding. |
+| [fft](#fft) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/fft.sml) | Transform analytical Fourier data and check the resulting ramp. |
+| [binary-trees](#binary-trees) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/binary-trees) | Build, traverse and retain binary trees of varying depths. |
+| [flat-array](#flat-array) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/flat-array.sml) | Fold a vector of pairs using explicit checked 32-bit arithmetic. |
+| [peek](#peek) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/peek.sml) | Retrieve mixed-width values from generative-exception property lists. |
+| [psdes-random](#psdes-random) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/psdes-random.sml) | Generate Word32 values with the four-round pseudo-DES generator. |
+| [mandelbrot](#mandelbrot) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/mandelbrot.sml) | Evaluate the original escape-iteration loop with its unusual coordinate formula. |
+| [pidigits](#pidigits) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/pidigits.sml) | Produce pi digits until a selected zero occurrence using an IntInf spigot. |
+| [logic](#logic) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/logic.sml) | Find the first peg-solitaire solution by continuation-based unification. |
+| [zebra](#zebra) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/zebra.sml) | Solve the zebra puzzle using constraint propagation and fluid state. |
+| [count-graphs](#count-graphs) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/count-graphs.sml) | Enumerate graph isomorphism classes with pruning and higher-order folds. |
+| [many_refs](#many_refs) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test_dev/many_refs.sml) | Retain three tables of real references and repeatedly update every element. |
+| [tensor](#tensor) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/tensor.sml) | Apply real and paired-complex elementwise and contraction operators, checking every result. |
+| [zern](#zern) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/zern.sml) | Accumulate phase screens and validate every complex E-field value. |
+| [smith-normal-form](#smith-normal-form) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/smith-normal-form.sml) | Reduce an IntInf matrix to Smith normal form and consume its diagonal. |
+| [ratio-regions](#ratio-regions) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/ratio-regions.sml) | Segment a fixed grid by preflow-push max flow and validate its min-cut mask. |
+| [mpuz](#mpuz) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/mpuz.sml) | Enumerate distinct digit assignments to a fixed multiplication puzzle. |
+| [DLXSimulator](#dlxsimulator) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/DLXSimulator.sml) | Interpret five embedded DLX programs and consume every simulated output. |
+| [knuth-bendix](#knuth-bendix) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/knuth-bendix.sml) | Complete geometric group equations and validate the resulting rewrite rules. |
+| [tyan](#tyan) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/tyan.sml) | Compute the cyclic polynomial Groebner basis over F17 and consume its term summaries. |
+| [lexgen](#lexgen) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/lexgen.sml) | Generate a lexer from the original SML specification and compare every output byte. |
+| [mlyacc](#mlyacc) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/mlyacc.sml) | Generate an LALR parser from the original SML grammar and compare its source and signature. |
+| [hamlet](#hamlet) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/hamlet.sml) | Parse, elaborate and evaluate a unary arithmetic program with the HaMLet interpreter. |
+| [kitfib35](#kitfib35) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/kitfib35.sml) | Evaluate the ML Kit Fibonacci recurrence with its single n<1 base case. |
+| [fib0](#fib0) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test_dev/fib0.sml) | Evaluate the two-base-case development Fibonacci recurrence. |
+| [kitreynolds2](#kitreynolds2) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/kitreynolds2.sml) | Search a shared tree with a chain of ancestor predicates. |
+| [kitreynolds3](#kitreynolds3) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/kitreynolds3.sml) | Search the same shared tree using explicit ancestor lists. |
+| [kitloop2](#kitloop2) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/kitloop2.sml) | Count down a lexicographic pair using a tail-recursive loop. |
+| [kitdangle](#kitdangle) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/kitdangle.sml) | Build and consume one closure chain retaining list payloads. |
+| [kitdangle3](#kitdangle3) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/kitdangle3.sml) | Build and release three closure chains sequentially. |
+| [msort](#msort) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/msort.mlb) | Sort the original ascending sequence with alternating-split copying mergesort. |
+| [kittmergesort_tp](#kittmergesort_tp) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/kittmergesort_tp.sml) | Regenerate and sort ten lists in process using the shared copying kernel. |
+| [barnes-hut](#barnes-hut) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/barnes-hut.sml) | Advance a seeded three-dimensional N-body model with octree force approximation. |
+| [tsp](#tsp) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/tsp.sml) | Build and validate a divide-and-conquer travelling-salesman tour. |
+| [fannkuch](#fannkuch) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/fannkuch) | Enumerate permutations, flip their prefixes and consume the alternating checksum. |
+| [f-arith](#f-arith) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/f-arith) | Accumulate paired Leibniz-series terms and check the approximation of pi. |
+| [stream-sieve](#stream-sieve) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/stream-sieve) | Demand a prime from the original nonmemoized infinite-stream sieve. |
+| [twenty-four](#twenty-four) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/twenty-four) | Enumerate arithmetic-expression solutions using continuation callbacks. |
+| [simple](#simple) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/simple.sml) | Compute a hydrodynamic time step and check all final state arrays. |
+| [nbody](#nbody) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/nbody) | Advance five immutable solar-system records and validate their total energy. |
+| [output1](#output1) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/output1.sml) | Write individual characters to a regular file and validate every output byte. |
+| [ray](#ray) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/ray.sml) | Interpret the original sphere scene and validate its rendered dump image. |
+| [raytrace](#raytrace) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/raytrace.sml) | Render the original chess scene and check every quantized RGB pixel. |
+| [vliw](#vliw) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/vliw.sml) | Schedule and compress instructions, then validate both assembly streams. |
+| [fxp](#fxp) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/fxp.sml) | Parse deterministic generated XML and validate its complete tag and attribute counts. |
+| [model-elimination](#model-elimination) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/model-elimination.sml) | Search the original first-order problem sets with deterministic inference budgets. |
+| [sat](#sat) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/sat) | Solve a fixed Boolean formula with nested higher-order choices. |
+| [boyer-smlnj](#boyer-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/boyer) | Prove the original theorem using the modern modular SML/NJ rewriting checker. |
+| [logic-smlnj](#logic-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/logic) | Find a peg-solitaire solution through the modern modular unifier and trail. |
+| [life-smlnj](#life-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/life) | Repeat fifty-generation glider-gun evolutions with complete coordinate checks. |
+| [minimax](#minimax) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/minimax) | Build and score complete tic-tac-toe trees with and without a transposition table. |
+| [iter-pidigits](#iter-pidigits) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/iter-pidigits) | Generate a fixed number of pi digits with the iterative IntInf spigot. |
+| [mazefun](#mazefun) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/mazefun) | Generate and validate complete deterministic mazes using persistent list matrices. |
+| [queens-lazy](#queens-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/queens) | Count queen placements using memoized level-generation streams. |
+| [queens-strict](#queens-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/queens) | Count queen placements using eagerly generated list levels. |
+| [nqueens](#nqueens) | [Sandmark](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-numerical/nqueens.exe) | Count queen placements by depth-first search with mutable sibling totals. |
+| [rec_seq_ack](#rec_seq_ack) | [Sandmark](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-effects/rec_seq_ack.exe) | Evaluate strict Ackermann calls and consume every repeated result. |
+| [klife_eq](#klife_eq) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/klife_eq.sml) | Evolve a glider gun with explicit double generation and intermediate-list copying. |
+| [kitlife35u_smlnj](#kitlife35u_smlnj) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/kitlife35u_smlnj.sml) | Evolve the same glider gun with typed equality, copying and upstream no-op region calls. |
+| [kitqsort_no_basislib](#kitqsort_no_basislib) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test_dev/kitqsort_no_basislib.sml) | Sort seeded lists with copied partitions and transformed tail-recursive tuple arguments. |
+| [tailfib-mlkit](#tailfib-mlkit) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/tailfib.sml) | Repeat the original 38-step tail Fibonacci recurrence. |
+| [tak-mlkit](#tak-mlkit) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/tak.sml) | Repeat strict Takeuchi calls at the original ML Kit coordinates. |
+| [matrix-multiply-mlkit](#matrix-multiply-mlkit) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/matrix-multiply.sml) | Multiply freshly allocated all-ones Array2 matrices and validate every product. |
+| [vector-rev-mlkit](#vector-rev-mlkit) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/vector-rev.sml) | Regenerate pair vectors and reverse each twice. |
+| [vector-rev_smlnj](#vector-rev_smlnj) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/vector-rev_smlnj.sml) | Retain one integer vector while repeatedly reversing it twice. |
+| [vector-concat](#vector-concat) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/vector-concat.sml) | Regenerate pair vectors and concatenate two copies. |
+| [vector-concat_smlnj](#vector-concat_smlnj) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/vector-concat_smlnj.sml) | Retain one integer vector while repeatedly concatenating two copies. |
+| [peek-mlkit](#peek-mlkit) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/peek.sml) | Retrieve an integer from a generative-exception property list. |
+| [wc-input1-mlkit](#wc-input1-mlkit) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/wc-input1.sml) | Count generated newlines by reading one character at a time. |
+| [wc-scanStream-mlkit](#wc-scanstream-mlkit) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/wc-scanStream.sml) | Count generated newlines with the original EOF-returning stream scanner. |
+| [psdes-random-mlkit](#psdes-random-mlkit) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/psdes-random.sml) | Generate alternating Word32 outputs with stateful four-round pseudo-DES. |
+| [safe-for-space](#safe-for-space) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/safe-for-space) | Retain nested closures while testing whether large captured lists can become unreachable. |
+| [pidigits-smlnj](#pidigits-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/pidigits) | Generate pi digits with the original nonmemoized linear-fractional stream spigot. |
+| [fft-smlnj](#fft-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/fft) | Transform analytical Fourier data over the original doubling size sweep. |
+| [nucleic-smlnj](#nucleic-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/nucleic) | Count anticodon conformations with the modern Pseudoknot geometry search. |
+| [count-graphs-smlnj](#count-graphs-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/count-graphs) | Sweep cumulative sparse graph-isomorphism counts with higher-order folds. |
+| [matrix-multiply-ramp](#matrix-multiply-ramp) | [MLton](https://github.com/MLton/mlton/blob/b15e2d289c3d701131733665a74e2dd8438410b6/benchmark/tests/matrix-multiply.sml) | Multiply ramp-valued matrices and check their analytical products. |
+| [kitreynolds2_no_basislib](#kitreynolds2_no_basislib) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test_dev/kitreynolds2_no_basislib.sml) | Search a shared tree through captured ancestor predicates from the no-Basis variant. |
+| [kitreynolds3_no_basislib](#kitreynolds3_no_basislib) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test_dev/kitreynolds3_no_basislib.sml) | Search shared subtrees with explicit ancestor lists from the no-Basis variant. |
+| [kittmergesort_no_basislib](#kittmergesort_no_basislib) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test_dev/kittmergesort_no_basislib.sml) | Sort the original 25000-element integer-generator profile with the shared copying kernel. |
+| [hanoi](#hanoi) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test_dev/hanoi.sml) | Generate, observe and validate every recursive Hanoi move. |
+| [fib-mlkit](#fib-mlkit) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test_dev/fib.sml) | Evaluate the one-based Fibonacci recurrence while retaining its complete call trace. |
+| [mandelbrot-smlnj](#mandelbrot-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/mandelbrot) | Evaluate corrected binary64 Mandelbrot coordinates and consume every escape count. |
+| [mandelbrot-rat](#mandelbrot-rat) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/mandelbrot-rat) | Evaluate the original truncated-rational Mandelbrot arithmetic with checked signed-63-bit emulation. |
+| [kitmandelbrot](#kitmandelbrot) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/kitmandelbrot.sml) | Retain the legacy multiplicative coordinate and pixel counter while observing actual escape work. |
+| [FuhMishra](#fuhmishra) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/FuhMishra.mlb) | Infer subtype constraints for six expressions and validate complete TYPE/MATCH reports. |
+| [black-scholes](#black-scholes) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/black-scholes) | Compute and validate DerivaGem residuals for the original option datasets. |
+| [professor2](#professor2) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/professor2.sml) | Search the original professor tile puzzle and validate every returned board. |
+| [professor2_tp](#professor2_tp) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/professor2_tp.sml) | Search the original professor tile puzzle and validate every returned board. |
+| [professor_game](#professor_game) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/professor_game.sml) | Search the original professor tile puzzle and validate every returned board. |
+| [professor_game-mlkit](#professor_game-mlkit) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test_dev/professor_game.sml) | Search the original professor tile puzzle and validate every returned board. |
+| [professor_game_debug](#professor_game_debug) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test_dev/professor_game_debug.sml) | Search the original professor tile puzzle and validate every returned board. |
+| [kkb_eq](#kkb_eq) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/kkb_eq.sml) | Complete geometric rewrite rules with the retained copying and argument transformations. |
+| [kitkbjul9_smlnj](#kitkbjul9_smlnj) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/kitkbjul9_smlnj.sml) | Complete geometric rewrite rules with the retained copying and argument transformations. |
+| [kkb36c_smlnj](#kkb36c_smlnj) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/kkb36c_smlnj.sml) | Complete geometric rewrite rules with the retained copying and argument transformations. |
+| [ratio-regions-mlkit](#ratio-regions-mlkit) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/ratio-regions.sml) | Segment the original central-square grid with preflow-push and validate the complete cut. |
+| [ratio-regions_tp](#ratio-regions_tp) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/ratio-regions_tp.sml) | Segment the original central-square grid with preflow-push and validate the complete cut. |
+| [ratio-regions-smlnj](#ratio-regions-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/ratio-regions) | Segment the original central-square grid with preflow-push and validate the complete cut. |
+| [count-graphs-mlkit](#count-graphs-mlkit) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/count-graphs.sml) | Sweep cumulative sparse graph classes with the original higher-order folds. |
+| [mpuz-mlkit](#mpuz-mlkit) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/mpuz.sml) | Enumerate fixed multiplication-puzzle assignments through the original tuple-based adapters. |
+| [knuth-bendix-smlnj](#knuth-bendix-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/knuth-bendix) | Complete geometric rewrite equations with direct term ordering. |
+| [tyan-smlnj](#tyan-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/tyan) | Compute cyclic-u6 Groebner bases over F17 and consume every term summary. |
+| [tyan-mlkit](#tyan-mlkit) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/tyan.sml) | Compute cyclic-u6 Groebner bases over F17 and consume every term summary. |
+| [smith-normal-form-mlkit](#smith-normal-form-mlkit) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/smith-normal-form.sml) | Reduce the original dimension-32 IntInf matrix to Smith normal form. |
+| [smith-nf](#smith-nf) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/smith-nf) | Reduce the modern SML/NJ dimension-33 IntInf matrix to Smith normal form. |
+| [lexgen-smlnj](#lexgen-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/lexgen) | Generate a lexer from the modern SML/NJ ML-Lex specification and validate every byte. |
+| [mlyacc-smlnj](#mlyacc-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/mlyacc) | Generate an LALR parser from the modern SML/NJ ML-Yacc grammar and validate both files. |
+| [kitsimple](#kitsimple) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/kitsimple.sml) | Compute a hydrodynamic time step using lists of references as arrays. |
+| [kitsimple_tp](#kitsimple_tp) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/kitsimple_tp.sml) | Repeat three one-step hydrodynamic runs using the original list-reference array representation. |
+| [kitsimple_no_basislib](#kitsimple_no_basislib) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test_dev/kitsimple_no_basislib.sml) | Compute a hydrodynamic time step with the miniature Basis and list-reference arrays. |
+| [simple-smlnj](#simple-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/simple) | Compute a hydrodynamic time step with modern SML/NJ flat arrays and validate all state. |
+| [tsp-smlnj](#tsp-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/tsp) | Build a MINSTD-seeded spatial tree and validate every vertex and link of its tour. |
+| [DLXSimulator-mlkit](#dlxsimulator-mlkit) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/DLXSimulator.sml) | Interpret the older DLX Simple program with direct I/O traps and immutable arrays. |
+| [aobench](#aobench) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/aobench) | Render ambient occlusion by seeded hemisphere sampling against spheres and a plane. |
+| [id-ray](#id-ray) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/id-ray) | Trace the Id/Manticore sphere scene with the original overlapping image writes. |
+| [plclub-ray](#plclub-ray) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/plclub-ray) | Interpret and render the ICFP chess scene using the modern modular SML/NJ port. |
+| [mc-ray](#mc-ray) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/mc-ray) | Trace a seeded random sphere scene with sampled camera rays and material scattering. |
+| [ray-smlnj](#ray-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/ray) | Interpret sphere scenes and validate every channel of the modern SML/NJ P6 image. |
+| [kitmolgard](#kitmolgard) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/kitmolgard.sml) | Run a deterministic coloured Petri-net counting simulation and validate complete reports. |
+| [vliw-smlnj](#vliw-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/vliw) | Schedule and compress abstract assembly using the modern modular SML/NJ implementation. |
 
 ## Running and interpreting checks
 
@@ -579,7 +639,8 @@ Source inspection suggests sensitivity to io, strings. These are diagnostic hypo
 
 ## checksum
 
-Fold packed 32-bit words into a modular network checksum. See [provenance](checksum/PROVENANCE.md), the retained notices, and the source adaptation.
+ML Kit's checksum/checksum_smlnj forms share this exact kernel and all-zero
+workload; their additional provenance is retained in this directory.
 
 MLton revision `b15e2d289c3d701131733665a74e2dd8438410b6`,
 `benchmark/tests/checksum.sml`.
@@ -593,6 +654,13 @@ test is required separately, since a zero-input benchmark alone is weak.
 Runtime input sizes are fixed by the three manifest profiles. Each result
 is checked against an independent mathematical or data-generation oracle.
 The checksum consumes the complete result. LICENSE preserves the source notice.
+
+ML Kit test/checksum.sml and checksum_smlnj.sml at
+6dab5582db22a5f5672ca1fc5244171687d83ce5 share the same packed-fold kernel,
+all-zero ten-million-byte input and fifty scans. Only the legacy Pack32Little
+name/conversion, email spelling and invocation adapter differ. Both pristine
+forms are retained here. The input distribution is all-zero in both
+collections; it is not patterned byte data.
 
 | Profile | Arguments | Expected result |
 |---|---|---|
@@ -616,6 +684,12 @@ Main.testit as Proved. This observes the actual computation without adding
 a second theorem invocation. The repetition count is runtime input.
 
 The unmodified source and separate adaptation patch accompany the port.
+
+ML Kit test/boyer.sml at 6dab5582db22a5f5672ca1fc5244171687d83ce5
+shares the complete same kernel, theorem, substitution and rules. Its
+original wrapper repeats fifty times and prints a progress dot; the canonical
+parameterized driver accepts that count and records suppression of progress
+output. The additional pristine source is retained here.
 
 | Profile | Arguments | Expected result |
 |---|---|---|
@@ -678,23 +752,24 @@ Source inspection suggests sensitivity to application. These are diagnostic hypo
 
 ## matrix-multiply
 
-Multiply dense matrices and validate every product entry against a closed form. See [provenance](matrix-multiply/PROVENANCE.md), the retained notices, and the source adaptation.
+MLton `b15e2d289c3d701131733665a74e2dd8438410b6`,
+`benchmark/tests/matrix-multiply.sml`, Stephen Weeks. Original notice and
+source identity are retained; the kernel is shared in `shared/matrix-multiply.sml`.
 
-MLton b15e2d289c3d701131733665a74e2dd8438410b6, `benchmark/tests/matrix-multiply.sml`.
-Source notice in LICENSE; original and adaptation patch are retained.
+Preserve Array2 multiplication, dot-product traversal and the original
+all-ones input. Large keeps dimension 500; smoke and normal scale to 4/50.
+Every output entry must equal n exactly, and the full matrix sum n^3 is
+independently derived in IntInf for narrow hosts. Integral doubles are exact
+for these selected operations, so no floating tolerance is needed.
 
-Stephen Weeks. Retains Array2 multiplication and dot-product traversal.
-Large preserves dimension 500. Every entry is checked against the independent
-closed form n*i*j+(i+j)*sum(k)+sum(k*k). The total uses IntInf for narrow
-hosts. These inputs produce exactly representable integral doubles.
+The first adaptation changed the input to a ramp, which affects numerical
+values and boxed-input allocation. That adaptation is retained separately
+as matrix-multiply-ramp with explicit provenance. The ML Kit version selects
+200 and regenerates input on two calls; it shares the reviewed kernel but
+retains its own profiles. Array specialization/unboxing, traversal and
+allocation are hypotheses from source analysis, not measured explanations.
 
-| Profile | Arguments | Expected result |
-|---|---|---|
-| smoke | `4` | `656` |
-| normal | `50` | `326156250` |
-| large | `500` | `33729281250000` |
-
-Source inspection suggests sensitivity to numerical, arrays. These are diagnostic hypotheses; no performance finding is claimed. Related sources remain separate inventory entries until their algorithms, representations and inputs have been compared. The [literature survey](literature.md) provides family references; benchmark-specific references are added where the pinned source identifies them.
+Additional source review is recorded in [provenance](matrix-multiply/PROVENANCE.md).
 
 ## md5
 
@@ -850,10 +925,21 @@ zero index and returned digit position are zero based. Chudnovsky expansion
 provides an independent oracle. Stream functions are nonmemoized as in this
 SML source; no Haskell demand equivalence is claimed.
 
+The initial normal zero index 100 timed out on Rune under the 600-second
+limit. The subsequent zero index 30 also timed out at -O0 in the stack interpreter.
+Normal is now fixed at zero index 10 (digit position 121),
+with an independently computed Chudnovsky fixture. This input revision
+changes the workload identity; the unsuccessful larger run is recorded.
+
+See [Gibbons, Unbounded Spigot Algorithms for the Digits of Pi](https://www.cs.ox.ac.uk/people/jeremy.gibbons/publications/spigot.pdf)
+for the linear-fractional streaming formulation. The zero-occurrence driver
+is specific to this upstream SML workload, rather than the paper's usual
+fixed digit-count presentation.
+
 | Profile | Arguments | Expected result |
 |---|---|---|
 | smoke | `3` | `65` |
-| normal | `30` | `330` |
+| normal | `10` | `121` |
 | large | `1000` | `10376` |
 
 Source inspection suggests sensitivity to big-integers, streams. These are diagnostic hypotheses; no performance finding is claimed. Related sources remain separate inventory entries until their algorithms, representations and inputs have been compared. The [literature survey](literature.md) provides family references; benchmark-specific references are added where the pinned source identifies them.
@@ -907,8 +993,9 @@ mlton `b15e2d289c3d701131733665a74e2dd8438410b6`, `benchmark/tests/count-graphs.
 Henry Cejtin graph isomorphism-class enumeration using permutation, subset
 and graph folds. Retains pruning and graph criterion, replaces progress
 printing with the actual class count. Reference counts 2, 20 and 250 come from the pinned unmodified source
-compiled by MLton; the added driver only exposes f(n). Smoke counts the two
-nonisomorphic four-vertex/four-edge graphs (cycle and triangle with a tail).
+compiled by MLton; the added driver only exposes f(n). Smoke counts two cumulative qualifying classes up to four vertices:
+the two-vertex edge and four-cycle. A triangle violates the induced-subgraph
+sparsity condition. The count is cumulative, not restricted to four vertices.
 
 | Profile | Arguments | Expected result |
 |---|---|---|
@@ -984,6 +1071,12 @@ Uses the standard default RealArray name, requiring binary radix and
 53-bit precision explicitly. Poly/ML does not expose the optional Real64Array
 name; its RealArray has the required representation. No change of floating
 precision is permitted by this adapter.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/zern.sml`,
+is an additional source for this implementation. The complete kernel/input
+agree; its launcher uses 1000 repetitions rather than a parameter. This
+count remains accepted by the portable driver and is recorded as an
+upstream invocation, rather than duplicating the implementation.
 
 | Profile | Arguments | Expected result |
 |---|---|---|
@@ -1119,7 +1212,16 @@ fixed system.
 Allyn Dimock adapted the TIL version to SML97; Stephen Weeks fixed the u6
 input in 2001. The source explicitly records Thomas Yan's benchmark-use
 permission and cites his 1998 Journal of Symbolic Computation article,
-The Geobucked Data Structure For Polynomials, volume 23(3), pages 285-293.
+[The Geobucket Data Structure for Polynomials](https://doi.org/10.1006/jsco.1997.0176),
+volume 25(3), pages 285-293. The source header misspells the title and gives
+volume 23; bibliographic metadata is corrected here, with the original
+header retained unchanged.
+
+Historical ML Kit test/weeks4.sml at 6dab5582db22a5f5672ca1fc5244171687d83ce5
+is the same cyclic-u6 kernel and twenty-call input as this MLton form.
+Its name is an alias, not an additional polynomial algorithm; only email
+spelling and the fixed outer driver differ. The pristine alias source is
+retained here. Older test/tyan.sml remains a separately reviewed variant.
 
 | Profile | Arguments | Expected result |
 |---|---|---|
@@ -1449,6 +1551,14 @@ MLton result with absolute and relative tolerance 1e-8. Large uses the
 initial 32767-point setting; the later MLton 2097151 override is not selected.
 Additional cycle validation/sorting is included in the workload.
 
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/tsp.sml`,
+is an additional source for this implementation. Tree/TSP/Rand/BuildTree agree.
+ML Kit selects 32767 vertices and four tours; `test/tsp_tp.sml` changes
+only the call count to eight. MLton selects 2097151 vertices with a
+parameterized repeat count. Selected profiles bound the work; these
+original invocations remain documented. Repetitions do not change the
+algorithm, representation or deterministic tree distribution.
+
 | Profile | Arguments | Expected result |
 |---|---|---|
 | smoke | `31 10 5.0285603627720601` | `31` |
@@ -1662,7 +1772,7 @@ lighting, camera, intersections and shader. Keeps the original chess scene;
 only its final render dimensions vary: 16x12 smoke, original 400x300 normal,
 800x600 large. The original driver swallowed all exceptions; this driver
 propagates them and consumes the full PPM image. Output is checked at every RGB pixel after 8-bit quantization against
-two reviewed upstream images (MLton and SML/NJ), with at most two intensity
+reviewed upstream images (MLton and both monolithic and suite-driver SML/NJ builds), with at most two intensity
 levels of error per channel. Headers and image dimensions remain exact. File I/O is included.
 
 The smoke pixel (12,6) exposes a measured numerical discontinuity: on
@@ -1670,7 +1780,7 @@ MLton its reflected ray has no intersection, while SML/NJ reports an interval
 with both endpoints 0.04810688415066595. The original filter tests only
 its starting distance, so this zero-width interval changes the reflected
 color. The initial hit endpoints differ by less than 1e-15. The original
-kernel remains unchanged; each pixel must match one of the two original
+kernel remains unchanged; each pixel must match one of the recorded original-kernel
 program outputs within two 8-bit levels per channel. This is a specified
 reference-set bound, not a claim that arbitrary large color errors are
 acceptable. Other large reference differences are recorded as hypotheses
@@ -1679,6 +1789,21 @@ of the same discontinuity until individually traced.
 The chess input credits Leif Kornstaedt, copyright 2000, revision 1.6.
 Its notice is retained in the pristine input. Reference images are generated
 from that input by the pinned SML translation on the recorded host versions.
+
+The normal SML/NJ suite-driver build differs at five further pixels from
+its monolithic entrypoint. Instrumenting the render can also change these
+boundary results. A separate suite-driver reference is retained; this is
+recorded source/compilation sensitivity, not a claim that the kernel isolates
+a single compiler optimization. Outside the reviewed reference sets, errors
+above two intensity levels remain failures.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/raytrace.sml`,
+is an additional source for this implementation. The source differences
+are legacy Byte.unpackString(array,offset,length), unchecked lexer
+Vector/CharVector reads and a one-call launcher. SML97 checked reads and
+Word8ArraySlice conversion produce the existing port exactly. Removing
+unchecked reads can affect cost and is recorded as a library adaptation;
+this does not establish equal upstream performance.
 
 | Profile | Arguments | Expected result |
 |---|---|---|
@@ -1752,6 +1877,10 @@ limits 8192, 1200000 and 4800000, permitting a final-element overshoot.
 
 The URI retrieval helper checks OS.Process.isSuccess instead of comparing
 opaque status values for equality, matching the current Basis contract.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/fxp.sml`,
+is an additional source for this implementation. The complete source agrees
+with the MLton source after whitespace normalization, including its driver.
 
 | Profile | Arguments | Expected result |
 |---|---|---|
@@ -2158,3 +2287,1615 @@ measured work. Copying, tuple lifetimes and specialization are source-based
 hypotheses, not measured explanations; see [ML Kit/Paulson references](../literature.md).
 
 See [the original source and adaptation patch](kitqsort_no_basislib/PROVENANCE.md).
+
+## tailfib-mlkit
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/tailfib.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+Exact entrypoint aliases sharing this implementation: `test/tailfib_smlnj.sml`. Their pristine sources are retained.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/tailfib.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+Exact entrypoint aliases sharing this implementation: `test/tailfib_smlnj.sml`. Their pristine sources are retained.
+
+Keep the original 38-step accumulator recurrence; large retains fifty million
+repetitions. MLton tailfib instead selects 44 steps and one million repetitions.
+Runtime parameterization and an IntInf checksum are driver adaptations.
+Independent iterative Fibonacci supplies fixtures; the kernel is unmemoized.
+
+Selected profiles and exact expected results are recorded below. All results
+are consumed and validated by the portable driver. Diagnostic tags calls,recursion
+are source-based hypotheses, not measured causal findings. See the
+[ML Kit and classic SML literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `20 1` | `6765` |
+| normal | `38 1000` | `39088169000` |
+| large | `38 50000000` | `1954408450000000` |
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `20 1` | `6765` |
+| normal | `38 1000` | `39088169000` |
+| large | `38 50000000` | `1954408450000000` |
+
+
+## tak-mlkit
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/tak.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+Exact entrypoint aliases sharing this implementation: `test/tak_smlnj.sml`. Their pristine sources are retained.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/tak.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+Exact entrypoint aliases sharing this implementation: `test/tak_smlnj.sml`. Their pristine sources are retained.
+
+Keep the strict Takeuchi recurrence and original (18,12,6) input. Large
+retains 5000 calls; normal selects 100. The MLton profile uses different
+coordinates, so this remains a named parameter variant. The independent
+memoized oracle changes only fixture generation; the kernel remains unmemoized.
+
+Selected profiles and exact expected results are recorded below. All results
+are consumed and validated by the portable driver. Diagnostic tags calls,recursion
+are source-based hypotheses, not measured causal findings. See the
+[ML Kit and classic SML literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `18 12 6 1` | `7` |
+| normal | `18 12 6 100` | `700` |
+| large | `18 12 6 5000` | `35000` |
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `18 12 6 1` | `7` |
+| normal | `18 12 6 100` | `700` |
+| large | `18 12 6 5000` | `35000` |
+
+
+## matrix-multiply-mlkit
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/matrix-multiply.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+Exact entrypoint aliases sharing this implementation: `test/matrix-multiply_smlnj.sml`. Their pristine sources are retained.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/matrix-multiply.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+Exact entrypoint aliases sharing this implementation: `test/matrix-multiply_smlnj.sml`. Their pristine sources are retained.
+
+Stephen Weeks. Preserve Array2 dot-product multiplication and the original
+all-ones distribution, regenerated for each call. Large preserves dimension
+200 twice. This differs from MLton ramp data/dimension 500. Check every
+result element equals n exactly (selected integral doubles are exact); sum
+n^3 per call is independently derived. No floating tolerance is needed.
+
+Selected profiles and exact expected results are recorded below. All results
+are consumed and validated by the portable driver. Diagnostic tags arrays,numerical
+are source-based hypotheses, not measured causal findings. See the
+[ML Kit and classic SML literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `4 1` | `64` |
+| normal | `100 2` | `2000000` |
+| large | `200 2` | `16000000` |
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `4 1` | `64` |
+| normal | `100 2` | `2000000` |
+| large | `200 2` | `16000000` |
+
+
+## vector-rev-mlkit
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/vector-rev.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/vector-rev.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+
+Stephen Weeks. Preserve pair elements, regeneration inside every iteration
+and two reversal allocations. The original counter condition k<0 means
+initial trials+1 executions, retained explicitly. Large preserves upstream
+length/counter. Complete indexed validation and IntInf result accumulation
+replace the head-only or aggregate-only observation. Fixtures follow the
+independent ordered-sequence sum. These representation/lifetime variants
+remain distinct from each other and MLton fixed-width vectors.
+
+Selected profiles and exact expected results are recorded below. All results
+are consumed and validated by the portable driver. Diagnostic tags vectors,allocation,representation
+are source-based hypotheses, not measured causal findings. See the
+[ML Kit and classic SML literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `16 0` | `240` |
+| normal | `10000 10` | `1099890000` |
+| large | `10000 10000` | `999999990000` |
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `16 0` | `240` |
+| normal | `10000 10` | `1099890000` |
+| large | `10000 10000` | `999999990000` |
+
+
+## vector-rev_smlnj
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/vector-rev_smlnj.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/vector-rev_smlnj.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+
+Stephen Weeks. Preserve integer elements, one retained input outside the loop
+and two reversal allocations. The original counter condition k<0 means
+initial trials+1 executions, retained explicitly. Large preserves upstream
+length/counter. Complete indexed validation and IntInf result accumulation
+replace the head-only or aggregate-only observation. Fixtures follow the
+independent ordered-sequence sum. These representation/lifetime variants
+remain distinct from each other and MLton fixed-width vectors.
+
+Selected profiles and exact expected results are recorded below. All results
+are consumed and validated by the portable driver. Diagnostic tags vectors,allocation,representation
+are source-based hypotheses, not measured causal findings. See the
+[ML Kit and classic SML literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `16 0` | `120` |
+| normal | `10000 10` | `549945000` |
+| large | `10000 10000` | `499999995000` |
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `16 0` | `120` |
+| normal | `10000 10` | `549945000` |
+| large | `10000 10000` | `499999995000` |
+
+
+## vector-concat
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/vector-concat.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/vector-concat.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+
+Stephen Weeks. Preserve pair elements, regeneration inside every iteration
+and concatenation of two copies. The original counter condition k<0 means
+initial trials+1 executions, retained explicitly. Large preserves upstream
+length/counter. Complete indexed validation and IntInf result accumulation
+replace the head-only or aggregate-only observation. Fixtures follow the
+independent ordered-sequence sum. These representation/lifetime variants
+remain distinct from each other and MLton fixed-width vectors.
+
+Selected profiles and exact expected results are recorded below. All results
+are consumed and validated by the portable driver. Diagnostic tags vectors,allocation,representation
+are source-based hypotheses, not measured causal findings. See the
+[ML Kit and classic SML literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `16 0` | `480` |
+| normal | `100 100` | `1999800` |
+| large | `100 10000` | `198019800` |
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `16 0` | `480` |
+| normal | `100 100` | `1999800` |
+| large | `100 10000` | `198019800` |
+
+
+## vector-concat_smlnj
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/vector-concat_smlnj.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/vector-concat_smlnj.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+
+Stephen Weeks. Preserve integer elements, one retained input outside the loop
+and concatenation of two copies. The original counter condition k<0 means
+initial trials+1 executions, retained explicitly. Large preserves upstream
+length/counter. Complete indexed validation and IntInf result accumulation
+replace the head-only or aggregate-only observation. Fixtures follow the
+independent ordered-sequence sum. These representation/lifetime variants
+remain distinct from each other and MLton fixed-width vectors.
+
+Selected profiles and exact expected results are recorded below. All results
+are consumed and validated by the portable driver. Diagnostic tags vectors,allocation,representation
+are source-based hypotheses, not measured causal findings. See the
+[ML Kit and classic SML literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `16 0` | `240` |
+| normal | `1000 100` | `100899000` |
+| large | `1000 100000` | `99900999000` |
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `16 0` | `240` |
+| normal | `1000 100` | `100899000` |
+| large | `1000 100000` | `99900999000` |
+
+
+## peek-mlkit
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/peek.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+Exact entrypoint aliases sharing this implementation: `test/peek_smlnj.sml`. Their pristine sources are retained.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/peek.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+Exact entrypoint aliases sharing this implementation: `test/peek_smlnj.sml`. Their pristine sources are retained.
+
+Stephen Weeks. Keep the generative-exception property list with one integer
+entry, regenerated for each outer iteration. Large preserves ten million
+lookups five times. MLton tests mixed widths and deeper lists; this variant
+requires no Int64 and is portable on Poly/ML. Inner sums fit 31 bits; outer
+checksums use IntInf. Independent arithmetic gives 13*lookups*repetitions.
+
+Selected profiles and exact expected results are recorded below. All results
+are consumed and validated by the portable driver. Diagnostic tags exceptions,closures,lookup
+are source-based hypotheses, not measured causal findings. See the
+[ML Kit and classic SML literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `100 1` | `1300` |
+| normal | `100000 5` | `6500000` |
+| large | `10000000 5` | `650000000` |
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `100 1` | `1300` |
+| normal | `100000 5` | `6500000` |
+| large | `10000000 5` | `650000000` |
+
+
+## wc-input1-mlkit
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/wc-input1.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+Exact entrypoint aliases sharing this implementation: `test/wc-input1_smlnj.sml`. Their pristine sources are retained.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/wc-input1.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+Exact entrypoint aliases sharing this implementation: `test/wc-input1_smlnj.sml`. Their pristine sources are retained.
+
+Stephen Weeks. Keep the million-byte newline-every-ten distribution and
+twenty scans in large. Generate once per call, scan the same file repeatedly,
+then delete it. Replace the random temporary name by fixed input.txt in
+the fresh working directory. Retain input1 traversal and explicit close.
+Suppress console reporting and consume every actual count; ceil(bytes/10)
+is the independent fixture formula. No upstream input file is needed.
+
+Selected profiles and exact expected results are recorded below. All results
+are consumed and validated by the portable driver. Diagnostic tags io,bytes,streams
+are source-based hypotheses, not measured causal findings. See the
+[ML Kit and classic SML literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `1000 1` | `100` |
+| normal | `100000 5` | `50000` |
+| large | `1000000 20` | `2000000` |
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `1000 1` | `100` |
+| normal | `100000 5` | `50000` |
+| large | `1000000 20` | `2000000` |
+
+
+## wc-scanStream-mlkit
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/wc-scanStream.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+Exact entrypoint aliases sharing this implementation: `test/wc-scanStream_smlnj.sml`. Their pristine sources are retained.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/wc-scanStream.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+Exact entrypoint aliases sharing this implementation: `test/wc-scanStream_smlnj.sml`. Their pristine sources are retained.
+
+Stephen Weeks. Keep the million-byte newline-every-ten distribution and
+twenty scans in large. Generate once per call, scan the same file repeatedly,
+then delete it. Replace the random temporary name by fixed input.txt in
+the fresh working directory. Retain scanStream returning NONE and closing at EOF; a driver ref observes its count.
+Suppress console reporting and consume every actual count; ceil(bytes/10)
+is the independent fixture formula. No upstream input file is needed.
+
+Selected profiles and exact expected results are recorded below. All results
+are consumed and validated by the portable driver. Diagnostic tags io,bytes,streams
+are source-based hypotheses, not measured causal findings. See the
+[ML Kit and classic SML literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `1000 1` | `100` |
+| normal | `100000 5` | `50000` |
+| large | `1000000 20` | `2000000` |
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `1000 1` | `100` |
+| normal | `100000 5` | `50000` |
+| large | `1000000 20` | `2000000` |
+
+
+## psdes-random-mlkit
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/psdes-random.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+Exact entrypoint aliases sharing this implementation: `test/psdes-random_smlnj.sml`. Their pristine sources are retained.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/psdes-random.sml`.
+Pristine source, adaptation patch and aggregate ML Kit/GPL/SML-NJ notices
+are retained; inspect individual headers for attribution rather than assigning
+all aggregate licenses to every component.
+Exact entrypoint aliases sharing this implementation: `test/psdes-random_smlnj.sml`. Their pristine sources are retained.
+
+Stephen Weeks, following Numerical Recipes in C page 302. Preserve four
+Word32 rounds, lookup arrays, seeds 13/14 and alternating half outputs. Add
+an explicit reset at each driver call so repeated execution agrees with a
+fresh process; do not recreate the constant lookup arrays each repetition.
+Large keeps ten million outputs and its upstream EAD56832 fixture. Smaller
+fixtures use an independent integer-modular Python implementation.
+
+Selected profiles and exact expected results are recorded below. All results
+are consumed and validated by the portable driver. Diagnostic tags word32,arithmetic,mutation
+are source-based hypotheses, not measured causal findings. See the
+[ML Kit and classic SML literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `100` | `1E220B3` |
+| normal | `100000` | `96543236` |
+| large | `10000000` | `EAD56832` |
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `100` | `1E220B3` |
+| normal | `100000` | `96543236` |
+| large | `10000000` | `EAD56832` |
+
+## safe-for-space
+
+SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/safe-for-space`.
+Pristine ordered sources, individual headers, project notice and adaptation
+patch are retained.
+
+John Reppy 2020; based on Zhong Shao and Andrew Appel,
+[Efficient and Safe-for-Space Closure Conversion](https://doi.org/10.1145/345099.345125),
+TOPLAS 22(1), 2000. Keep strict big-list creation and all nested g/h/i
+functions, retaining every h before observing it. Parameterize the big-list
+length and outer count; large preserves 10000/100000. Invoke each h/i to
+validate (3,list-size), whose sum is independently derived. Additional
+observation work is measured. Closure capture/lifetime is a diagnostic
+question; successful output alone does not prove space safety.
+
+All selected profiles retain meaningful source parameters; diagnostics closures,retention,allocation
+are source-based hypotheses, not measured causal findings. See the
+[classic SML and benchmark-specific literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](safe-for-space/PROVENANCE.md).
+
+## pidigits-smlnj
+
+SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/pidigits`.
+Pristine ordered sources, individual headers, project notice and adaptation
+patch are retained.
+
+Copyright 2026 Fellowship of SML/NJ. Preserve the linear-fractional
+IntInf spigot and original nonmemoized Stream.unfold/map combinators. The
+consumer forces exactly the requested digits; no sharing/memoization is
+introduced. Unlike old MLton pidigits, stopping counts digits rather than
+zero occurrences. Normal 100 digits fits Rune; large retains original 2000.
+Capture all digits and omit human column formatting. Independent Chudnovsky
+fixtures are shared with the separately named iterative version.
+
+All selected profiles retain meaningful source parameters; diagnostics intinf,streams,arithmetic
+are source-based hypotheses, not measured causal findings. See the
+[classic SML and benchmark-specific literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](pidigits-smlnj/PROVENANCE.md).
+
+## fft-smlnj
+
+SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/fft`.
+Pristine ordered sources, individual headers, project notice and adaptation
+patch are retained.
+
+Copyright 2024 Fellowship of SML/NJ, alias fft64. Preserve the
+analytical input, radix-two transform, and doubling sweep beginning at 16.
+Large retains 21 levels, ending at 16777216 points. Replace optional
+Real64Array/Real64 names by RealArray/Real guarded at radix 2/precision 53.
+Return and validate the measured maximum residual against the analytical
+ramp; absolute bound 1e-8*n follows the reviewed classic FFT checker.
+Suppress progress printing. This bound is benchmark-specific and failed
+residuals cannot become timings.
+
+All selected profiles retain meaningful source parameters; diagnostics numerical,arrays,fft
+are source-based hypotheses, not measured causal findings. See the
+[classic SML and benchmark-specific literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](fft-smlnj/PROVENANCE.md).
+
+## nucleic-smlnj
+
+SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/nucleic`.
+Pristine ordered sources, individual headers, project notice and adaptation
+patch are retained.
+
+Marc Feeley's Scheme-origin Pseudoknot, ported by the May 1994 Dagstuhl
+workshop group. Retain the modern SML/NJ anticodon search, molecular
+coordinates, constraints, queue and Math.atan2. This variant counts
+anticodon solutions; old MLton nucleic reports a maximum atom distance.
+Every returned count is consumed. Large preserves 5000 searches. Golden
+count comes from the unmodified upstream Nucleic implementation on MLton
+and SML/NJ, reviewed before committing. See the Hartel et al. Pseudoknot
+paper in the literature survey.
+
+All selected profiles retain meaningful source parameters; diagnostics numerical,search,geometry
+are source-based hypotheses, not measured causal findings. See the
+[classic SML and benchmark-specific literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](nucleic-smlnj/PROVENANCE.md).
+
+## count-graphs-smlnj
+
+SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/count-graphs`.
+Pristine ordered sources, individual headers, project notice and adaptation
+patch are retained.
+
+Henry Cejtin, modernized by John Reppy. Preserve higher-order
+permutation/subset/graph folds, class pruning and mutable vertex caches.
+Each f(maximum) counts classes at every size <=maximum satisfying
+3*V-4-2*E=0 and its induced-subgraph sparsity condition; it is not a count
+of all graphs of exactly the requested size. Preserve the original
+0..11 sweep repeated three times in large; selected normal sweep ends at 6.
+Return every sweep value instead of discard/progress output. Golden
+values come from the unchanged upstream f on two native hosts.
+
+All selected profiles retain meaningful source parameters; diagnostics graphs,higher-order,search
+are source-based hypotheses, not measured causal findings. See the
+[classic SML and benchmark-specific literature](../literature.md).
+
+Additional source review is recorded in [provenance](count-graphs-smlnj/PROVENANCE.md).
+
+## matrix-multiply-ramp
+
+MLton b15e2d289c3d701131733665a74e2dd8438410b6, `benchmark/tests/matrix-multiply.sml`.
+Source notice in LICENSE; original and adaptation patch are retained.
+
+Stephen Weeks. Retains Array2 multiplication and dot-product traversal.
+Large preserves dimension 500. Every entry is checked against the independent
+closed form n*i*j+(i+j)*sum(k)+sum(k*k). The total uses IntInf for narrow
+hosts. These inputs produce exactly representable integral doubles.
+
+This is a supplemental ramp-input diagnostic, not the source-faithful
+all-ones workload. It was the original suite adaptation; the unsuffixed
+benchmark now restores the original distribution. Both use BenchMatrix.
+
+Additional source review is recorded in [provenance](matrix-multiply-ramp/PROVENANCE.md).
+
+## kitreynolds2_no_basislib
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test_dev/kitreynolds2_no_basislib.sml`.
+Individual source headers, original bytes, adaptation patch and aggregate
+ML Kit/GPL/SML-NJ notices are retained.
+
+Preserve the custom list helpers and shared subtree construction. The search carries a chain of ancestor predicates.
+Replace primitive mini-Basis string/equality/printing helpers with equivalent
+SML97 operations, removing only unused primitive declarations. The original
+depth is 20. Unlike the standard-Basis variant, its original main
+selects this depth once. All path labels strictly decrease, independently
+proving that the observed result is false. No memoization is introduced.
+
+Diagnostic tags closures,sharing,allocation are source-based hypotheses. No causal performance
+finding is asserted. See [the classic/ML Kit literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](kitreynolds2_no_basislib/PROVENANCE.md).
+
+## kitreynolds3_no_basislib
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test_dev/kitreynolds3_no_basislib.sml`.
+Individual source headers, original bytes, adaptation patch and aggregate
+ML Kit/GPL/SML-NJ notices are retained.
+
+Preserve the custom list helpers and shared subtree construction. The search carries explicit ancestor lists.
+Replace primitive mini-Basis string/equality/printing helpers with equivalent
+SML97 operations, removing only unused primitive declarations. The original
+depth is 10. Unlike the standard-Basis variant, its original main
+selects this depth once. All path labels strictly decrease, independently
+proving that the observed result is false. No memoization is introduced.
+
+Diagnostic tags closures,sharing,allocation are source-based hypotheses. No causal performance
+finding is asserted. See [the classic/ML Kit literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](kitreynolds3_no_basislib/PROVENANCE.md).
+
+## kittmergesort_no_basislib
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test_dev/kittmergesort_no_basislib.sml`.
+Individual source headers, original bytes, adaptation patch and aggregate
+ML Kit/GPL/SML-NJ notices are retained.
+
+Preserve copying mergesort and the integer 167/mod2147 seed-1 generator.
+The no-Basis source selects 25000 elements, while the canonical file selects
+100000; the algorithm/generator are byte-equivalent after mini-Basis
+replacement and are shared in BenchKittSort. Full sorted-element validation
+and independently generated fixtures replace console progress output.
+Normal retains 25000; large selects 100000.
+
+Diagnostic tags sorting,copying,lists are source-based hypotheses. No causal performance
+finding is asserted. See [the classic/ML Kit literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](kittmergesort_no_basislib/PROVENANCE.md).
+
+## hanoi
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test_dev/hanoi.sml`.
+Individual source headers, original bytes, adaptation patch and aggregate
+ML Kit/GPL/SML-NJ notices are retained.
+
+Keep the original recursive calls and move ordering, and normal ten-disk
+input. Replace primitive printing by a deterministic captured trace. Validate
+every move against three explicit towers and the final target tower; this
+additional checking work is measured. Independent iterative Gray-code disk
+selection supplies count and complete-trace checksum fixtures. No disk
+representation or stopping condition changes; source printing becomes
+in-memory capture and fixed result output.
+
+Diagnostic tags recursion,trace,mutation are source-based hypotheses. No causal performance
+finding is asserted. See [the classic/ML Kit literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](hanoi/PROVENANCE.md).
+
+## fib-mlkit
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test_dev/fib.sml`.
+Individual source headers, original bytes, adaptation patch and aggregate
+ML Kit/GPL/SML-NJ notices are retained.
+
+Retain both base cases returning one, x-2 before x-1 evaluation, and the
+per-call numeric trace. Normal preserves original n=10. Replace primitive
+printing by in-memory capture, including Before/After lines; this is a
+trace-producing variant, not the pure MLton Fibonacci kernel. Independent
+recursive trace generation and iterative Fibonacci values supply fixtures.
+
+Diagnostic tags recursion,trace,allocation are source-based hypotheses. No causal performance
+finding is asserted. See [the classic/ML Kit literature](../literature.md).
+
+Additional source review is recorded in [provenance](fib-mlkit/PROVENANCE.md).
+
+## mandelbrot-smlnj
+
+smlnj `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/mandelbrot`.
+Source/individual headers, notice and adaptation patch are retained.
+
+Retain corrected x_base+delta*j coordinates, initial z=c, ordinary
+binary64 iteration, 1024 escape limit, actual iteration sum and default
+2048-square grid. This is materially different from the old MLton/ML Kit
+multiplication coordinate. Parameterize only dimension and recompute delta
+for that dimension. Smoke/normal select 16/128; large preserves 2048.
+Independent native upstream execution supplies fixtures; selected sums fit
+32-bit signed arithmetic. Floating equality at escape boundaries is checked
+against both MLton and SML/NJ before accepting the exact iteration count.
+
+Diagnostic questions concern numerical representation, branching and loop
+allocation. These are source-based hypotheses; see [the literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](mandelbrot-smlnj/PROVENANCE.md).
+
+## mandelbrot-rat
+
+smlnj `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/mandelbrot-rat`.
+Source/individual headers, notice and adaptation patch are retained.
+
+Retain the original rational numerator/denominator arithmetic, gcd, signed
+shift-by-four truncation at 0x7FFFFFFF, corrected coordinates, 512 escape
+limit and default 256-square image. Original intermediates require signed
+63-bit arithmetic. Int63 emulates that range and Overflow in portable
+IntInf, including counters, without depending on optional Int64. This
+carrier changes allocation and is explicitly a translation decision.
+Arithmetic right shift is IntInf.~>>, equivalent within the original range.
+Fixtures are obtained from the original signed-63-bit SML/NJ computation.
+Normal selects 32 square; large preserves 256. No exact-rational substitute
+removes the original lossy truncation.
+
+Diagnostic questions concern numerical representation, branching and loop
+allocation. These are source-based hypotheses; see [the literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](mandelbrot-rat/PROVENANCE.md).
+
+## kitmandelbrot
+
+mlkit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/kitmandelbrot.sml`.
+Source/individual headers, notice and adaptation patch are retained.
+
+Preserve the legacy multiplication coordinate x_base*(delta+j), initial
+z=c, 1024 escape cap and pixel-count observation. The source increments
+its sum by one rather than escape count; its old comment claiming 1084512
+is stale for size 2048. Record both actual pixels and actual escape-step
+sum so unused count computation cannot vanish from the validated workload.
+This additional observation is documented measured work. Large preserves
+three original 2048-square calls. Independent binary64 iteration supplies
+fixtures for the old coordinate rule; modern SML/NJ uses addition instead.
+
+Diagnostic questions concern numerical representation, branching and loop
+allocation. These are source-based hypotheses; see [the literature](../literature.md).
+
+Additional source review is recorded in [provenance](kitmandelbrot/PROVENANCE.md).
+
+## FuhMishra
+
+mlkit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/FuhMishra.mlb`.
+Pristine sources, observed source notices and adaptation patch are retained.
+
+Mads's 1997 ML Kit port of the MATCH/TYPE subtyping checker from Fuh and
+Mishra. Retain list-based sets, constraint generation/matching, type-variable
+counter reset and all six original expressions/environment. Load lib.sml
+before the application as the original project does. Move top-level six
+invocations to a repeated portable driver and suppress progress printing.
+Every byte of each generated TYPE/MATCH report is checked against the
+unmodified upstream program's reviewed native output. File generation and
+validation are measured work. No new type-inference/runtime feature is
+introduced to Rune by this benchmark.
+
+Diagnostic questions are hypotheses until measured. See the
+[classic SML literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](FuhMishra/PROVENANCE.md).
+
+## black-scholes
+
+smlnj `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/black-scholes`.
+Pristine sources, observed source notices and adaptation patch are retained.
+
+Damon Wang's Manticore-origin SML port; Fellowship of SML/NJ 2025.
+Preserve the original normal-CDF polynomial, option record/list distribution,
+pricing operations and residual-returning price function. Large preserves
+65536 records replicated 32 times with ten passes. Normal uses all 4096
+upstream small records; smoke selects its first sixteen. Data loading and
+replication move inside the measured driver and are explicit additional
+work relative to upstream preload. Every result is checked against the
+embedded DerivaGem reference using 1e-6 + 7.5e-8*(spot+discounted strike),
+derived from the source's Abramowitz-Stegun CDF approximation bound.
+The original dataset bytes and embedded reference values are retained.
+No separate dataset license/origin is stated in its headers; this remains
+an explicit provenance lookup, not an assertion that the program notice
+covers the dataset.
+
+Diagnostic questions are hypotheses until measured. See the
+[classic SML literature](../literature.md).
+
+Additional source review is recorded in [provenance](black-scholes/PROVENANCE.md).
+
+## professor2
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/professor2.sml`.
+Niels Hallenberg, 27 December 1995. Original source/header, aggregate notice
+and adaptation patch are retained.
+
+Keep the original sixteen fixed jacket/trouser cards, order, list copying,
+row-major placement and matching search. Replace primitive mini-Basis
+operations by SML97 where present, and suppress console/debug logging.
+Enumerate every returned board, including duplicate-valued tile instances.
+Validate each board's tile multiset and every horizontal/vertical pair using
+an independent colour/parity coding, then consume an order-independent
+Word32 checksum of every complete board. This is additional checking work.
+Normal preserves one complete search; large repeats four for scaling.
+Source variants retain their custom list/helper organization rather than
+assuming equivalence from names. Legacy optional profiling primitive names
+are adapters, not added runtime facilities. The debug source's stray final
+comment closer is outside the retained kernel. Search, copying and lifetime
+are hypotheses; see [the ML Kit literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](professor2/PROVENANCE.md).
+
+## professor2_tp
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/professor2_tp.sml`.
+Niels Hallenberg, 27 December 1995. Original source/header, aggregate notice
+and adaptation patch are retained.
+
+Keep the original sixteen fixed jacket/trouser cards, order, list copying,
+row-major placement and matching search. Replace primitive mini-Basis
+operations by SML97 where present, and suppress console/debug logging.
+Enumerate every returned board, including duplicate-valued tile instances.
+Validate each board's tile multiset and every horizontal/vertical pair using
+an independent colour/parity coding, then consume an order-independent
+Word32 checksum of every complete board. This is additional checking work.
+Large preserves eight complete searches.
+Source variants retain their custom list/helper organization rather than
+assuming equivalence from names. Legacy optional profiling primitive names
+are adapters, not added runtime facilities. The debug source's stray final
+comment closer is outside the retained kernel. Search, copying and lifetime
+are hypotheses; see [the ML Kit literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](professor2_tp/PROVENANCE.md).
+
+## professor_game
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/professor_game.sml`.
+Niels Hallenberg, 27 December 1995. Original source/header, aggregate notice
+and adaptation patch are retained.
+
+Keep the original sixteen fixed jacket/trouser cards, order, list copying,
+row-major placement and matching search. Replace primitive mini-Basis
+operations by SML97 where present, and suppress console/debug logging.
+Enumerate every returned board, including duplicate-valued tile instances.
+Validate each board's tile multiset and every horizontal/vertical pair using
+an independent colour/parity coding, then consume an order-independent
+Word32 checksum of every complete board. This is additional checking work.
+Normal preserves one complete search; large repeats four for scaling.
+Source variants retain their custom list/helper organization rather than
+assuming equivalence from names. Legacy optional profiling primitive names
+are adapters, not added runtime facilities. The debug source's stray final
+comment closer is outside the retained kernel. Search, copying and lifetime
+are hypotheses; see [the ML Kit literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](professor_game/PROVENANCE.md).
+
+## professor_game-mlkit
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test_dev/professor_game.sml`.
+Niels Hallenberg, 27 December 1995. Original source/header, aggregate notice
+and adaptation patch are retained.
+
+Keep the original sixteen fixed jacket/trouser cards, order, list copying,
+row-major placement and matching search. Replace primitive mini-Basis
+operations by SML97 where present, and suppress console/debug logging.
+Enumerate every returned board, including duplicate-valued tile instances.
+Validate each board's tile multiset and every horizontal/vertical pair using
+an independent colour/parity coding, then consume an order-independent
+Word32 checksum of every complete board. This is additional checking work.
+Normal preserves one complete search; large repeats four for scaling.
+Source variants retain their custom list/helper organization rather than
+assuming equivalence from names. Legacy optional profiling primitive names
+are adapters, not added runtime facilities. The debug source's stray final
+comment closer is outside the retained kernel. Search, copying and lifetime
+are hypotheses; see [the ML Kit literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](professor_game-mlkit/PROVENANCE.md).
+
+## professor_game_debug
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test_dev/professor_game_debug.sml`.
+Niels Hallenberg, 27 December 1995. Original source/header, aggregate notice
+and adaptation patch are retained.
+
+Keep the original sixteen fixed jacket/trouser cards, order, list copying,
+row-major placement and matching search. Replace primitive mini-Basis
+operations by SML97 where present, and suppress console/debug logging.
+Retain first-success exception DONE, observing that exact first board.
+Validate each board's tile multiset and every horizontal/vertical pair using
+an independent colour/parity coding, then consume an order-independent
+Word32 checksum of every complete board. This is additional checking work.
+Normal preserves one complete search; large repeats four for scaling.
+Source variants retain their custom list/helper organization rather than
+assuming equivalence from names. Legacy optional profiling primitive names
+are adapters, not added runtime facilities. The debug source's stray final
+comment closer is outside the retained kernel. Search, copying and lifetime
+are hypotheses; see [the ML Kit literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](professor_game_debug/PROVENANCE.md).
+
+## kkb_eq
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/kkb_eq.sml`.
+Individual headers and aggregate notice are retained with the pristine
+source and patch.
+
+Keep geometric Knuth-Bendix equations, ordering, typed equality where
+present, recursive tuple argument shape, copied terms/rules and the
+source's one-step tail-recursion batching. This equality variant contains no active region-control call.
+Wrap the outer let/local declarations to expose one completion. Capture
+the complete actual diagnostic/canonical-rule trace instead of console
+printing; every byte influences the fixed Word32 summary. Normal preserves
+three completions; smoke selects one, large ten. Golden traces are
+reviewed native executions of this unchanged algorithm on MLton/SML/NJ,
+with separate independent equation/rule checks in the classic KB tests.
+No prerequisite compiler/runtime feature is added. Copying, lifetime and
+argument shape are hypotheses; see [ML Kit/rewriting literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](kkb_eq/PROVENANCE.md).
+
+## kitkbjul9_smlnj
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/kitkbjul9_smlnj.sml`.
+Individual headers and aggregate notice are retained with the pristine
+source and patch.
+
+Keep geometric Knuth-Bendix equations, ordering, typed equality where
+present, recursive tuple argument shape, copied terms/rules and the
+source's one-step tail-recursion batching. The upstream region functions are already no-ops and are retained.
+Wrap the outer let/local declarations to expose one completion. Capture
+the complete actual diagnostic/canonical-rule trace instead of console
+printing; every byte influences the fixed Word32 summary. Normal preserves
+three completions; smoke selects one, large ten. Golden traces are
+reviewed native executions of this unchanged algorithm on MLton/SML/NJ,
+with separate independent equation/rule checks in the classic KB tests.
+No prerequisite compiler/runtime feature is added. Copying, lifetime and
+argument shape are hypotheses; see [ML Kit/rewriting literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](kitkbjul9_smlnj/PROVENANCE.md).
+
+## kkb36c_smlnj
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/kkb36c_smlnj.sml`.
+Individual headers and aggregate notice are retained with the pristine
+source and patch.
+
+Keep geometric Knuth-Bendix equations, ordering, typed equality where
+present, recursive tuple argument shape, copied terms/rules and the
+source's one-step tail-recursion batching. The upstream region functions are already no-ops and are retained.
+Wrap the outer let/local declarations to expose one completion. Capture
+the complete actual diagnostic/canonical-rule trace instead of console
+printing; every byte influences the fixed Word32 summary. Normal preserves
+three completions; smoke selects one, large ten. Golden traces are
+reviewed native executions of this unchanged algorithm on MLton/SML/NJ,
+with separate independent equation/rule checks in the classic KB tests.
+No prerequisite compiler/runtime feature is added. Copying, lifetime and
+argument shape are hypotheses; see [ML Kit/rewriting literature](../literature.md).
+
+Additional source review is recorded in [provenance](kkb36c_smlnj/PROVENANCE.md).
+
+## ratio-regions-mlkit
+
+mlkit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/ratio-regions.sml`.
+Original/headers, aggregate notice and adaptation patch are retained.
+
+Jeff Siskind's ratio-region reduction, tracing Cox/Rao/Zhong, Blicher,
+Goldberg and Roy. Preserve the preflow-push algorithm, relabel/scheduling
+heuristics, fixed synthetic central-square capacities and complete min-cut
+array. Parameterize only grid side/repetitions, suppress diagnostics and
+check every mask cell against the independently known central square.
+Large keeps upstream side 64 and 1 calls; the four-call _tp
+variant remains separately named. Ordinary integer operations stay in
+range for selected dimensions; no flow/capacity representation changes.
+
+Diagnostic explanations remain source-based hypotheses, not measured
+causes. See [the source-family literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](ratio-regions-mlkit/PROVENANCE.md).
+
+## ratio-regions_tp
+
+mlkit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/ratio-regions_tp.sml`.
+Original/headers, aggregate notice and adaptation patch are retained.
+
+Jeff Siskind's ratio-region reduction, tracing Cox/Rao/Zhong, Blicher,
+Goldberg and Roy. Preserve the preflow-push algorithm, relabel/scheduling
+heuristics, fixed synthetic central-square capacities and complete min-cut
+array. Parameterize only grid side/repetitions, suppress diagnostics and
+check every mask cell against the independently known central square.
+Large keeps upstream side 64 and 4 calls; the four-call _tp
+variant remains separately named. Ordinary integer operations stay in
+range for selected dimensions; no flow/capacity representation changes.
+
+Diagnostic explanations remain source-based hypotheses, not measured
+causes. See [the source-family literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](ratio-regions_tp/PROVENANCE.md).
+
+## ratio-regions-smlnj
+
+smlnj `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/ratio-regions`.
+Original/headers, aggregate notice and adaptation patch are retained.
+
+Jeff Siskind's ratio-region reduction, tracing Cox/Rao/Zhong, Blicher,
+Goldberg and Roy. Preserve the preflow-push algorithm, relabel/scheduling
+heuristics, fixed synthetic central-square capacities and complete min-cut
+array. Parameterize only grid side/repetitions, suppress diagnostics and
+check every mask cell against the independently known central square.
+Large keeps upstream side 500 and 1 calls; the four-call _tp
+variant remains separately named. Ordinary integer operations stay in
+range for selected dimensions; no flow/capacity representation changes.
+
+Diagnostic explanations remain source-based hypotheses, not measured
+causes. See [the source-family literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](ratio-regions-smlnj/PROVENANCE.md).
+
+## count-graphs-mlkit
+
+mlkit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/count-graphs.sml`.
+Original/headers, aggregate notice and adaptation patch are retained.
+
+Henry Cejtin's original higher-order sparse graph folds. Preserve the
+subset/permutation iteration, graph criterion, class pruning and mutable
+cache implementation. Large retains 0..9 repeated ten times rather than
+modern SML/NJ's 0..11 three times. f is cumulative up to its argument:
+3*V-4-2*E=0 with induced-subgraph sparsity, not all graphs at exactly n.
+Consume the complete count sequence; unmodified native SML/NJ/MLton
+references and the two-vertex edge/four-cycle proof supply fixtures.
+
+Diagnostic explanations remain source-based hypotheses, not measured
+causes. See [the source-family literature](../literature.md).
+
+Additional source review is recorded in [provenance](count-graphs-mlkit/PROVENANCE.md).
+
+## mpuz-mlkit
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/mpuz.sml`.
+Stephen Weeks, 1999-08-31, loosely based on Laurent Vaucher's OCaml solution.
+Source/header, notice and adaptation patch are retained.
+
+Keep the fixed AGH/FB/CBEE/GHFD/FGIJE multiplication puzzle, all distinct-digit
+assignments including zero, mutable usage flags and tuple-based List/String
+adapters. These differ from the modern MLton helper interfaces. Replace the
+silent print override by complete deterministic capture of actual solution
+assignments; no invented success marker is accepted. One original solve is
+normal; large selects ten repeats. The captured assignment stream is checked
+against the original native solver and the source's known assignment.
+Search, tuple calls and allocation are hypotheses; see the classic literature.
+
+Additional source review is recorded in [provenance](mpuz-mlkit/PROVENANCE.md).
+
+## knuth-bendix-smlnj
+
+smlnj `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/knuth-bendix`.
+All source modules/notices and adaptation patch are retained.
+
+Modern SML/NJ direct Knuth-Bendix completion. Preserve the geometric
+equations, recursive path ordering, term structures, rule queues and
+exception-driven rewrites. Retain 300 completions in large; normal selects
+three. Capture actual computed rule/diagnostic output instead of console
+logging. Unlike the ML Kit copying variants, this retains the direct
+completion argument/exception organization.
+
+Complete computed traces influence a Word32 checksum; empty output fails.
+No measured causal attribution is claimed. See the rewriting/Geobucket
+references in [the literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](knuth-bendix-smlnj/PROVENANCE.md).
+
+## tyan-smlnj
+
+smlnj `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/tyan`.
+All source modules/notices and adaptation patch are retained.
+
+Thomas Yan's F17 Geobucket polynomial calculation, modern SML/NJ
+modular version. Preserve field arithmetic, monomial/trie representations,
+heap-polynomial operations, auto-reduction and cyclic-u6 input. Source
+headers credit the modern Fellowship version; historical authorship is
+shared with the classic TIL-derived variants. Keep maxDeg=1000000 and
+192 calls in large. Suppress progress; consume every computed leading
+monomial and term count. Do not replace F17 by rational arithmetic.
+
+Complete computed traces influence a Word32 checksum; empty output fails.
+No measured causal attribution is claimed. See the rewriting/Geobucket
+references in [the literature](../literature.md).
+
+
+Additional source review is recorded in [provenance](tyan-smlnj/PROVENANCE.md).
+
+## tyan-mlkit
+
+mlkit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/tyan.sml`.
+All source modules/notices and adaptation patch are retained.
+
+Thomas Yan; TIL adaptation by Allyn Dimock, hardwired input/driver
+by Stephen Weeks in 2001. Retain this older array/polynomial helper
+organization and original two-call normal profile, distinct from weeks4
+and the modern modular SML/NJ variant. Keep F17, cyclic-u6 strings and
+actual leading-term/term-count output. Suppress only progress prints;
+large selects twenty calls. Source explicitly records benchmark permission
+from Thomas Yan; the original notice is retained.
+
+Complete computed traces influence a Word32 checksum; empty output fails.
+No measured causal attribution is claimed. See the rewriting/Geobucket
+references in [the literature](../literature.md).
+
+Additional source review is recorded in [provenance](tyan-mlkit/PROVENANCE.md).
+
+## smith-normal-form-mlkit
+
+Reduce the original dimension-32 IntInf matrix to Smith normal form. See [provenance](smith-normal-form-mlkit/PROVENANCE.md) and retained originals/patch.
+
+mlkit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/smith-normal-form.sml`.
+Henry Cejtin. Original modules/individual headers, aggregate notice and patch
+are retained.
+
+Keep the source matrix abstraction, arbitrary-precision Euclidean row/column
+operations and the complete original integer table. Parameterize its selected
+leading dimension, check every off-diagonal zero and consume every actual
+signed diagonal entry. Large preserves dimension 32 and 1 calls.
+Fixtures are reviewed native original reductions. Their absolute diagonal
+product agrees with independent fraction-free Bareiss determinants; gcd-one
+cofactor witnesses and diagonal divisibility verify the invariant factors.
+Signed factors preserve the original reduction output.
+The MLton source instead selects dimension 35. IntInf is never replaced
+by machine arithmetic. Allocation/representation are source hypotheses,
+not measured causes; see [arithmetic literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `4 1` | `1,~1,1,~7506` |
+| normal | `12 1` | `1,1,~1,1,~1,~1,~1,~1,1,1,1,~6096777698704` |
+| large | `32 1` | `1,~1,~1,1,1,1,~1,~1,1,~1,1,~1,~1,~1,~1,1,1,~1,1,~1,1,~1,~1,~1,~1,~1,1,1,1,~1,~1,~8074709755269798283190497453463562613129` |
+
+## smith-nf
+
+Reduce the modern SML/NJ dimension-33 IntInf matrix to Smith normal form. See [provenance](smith-nf/PROVENANCE.md) and retained originals/patch.
+
+smlnj `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/smith-nf`.
+Henry Cejtin. Original modules/individual headers, aggregate notice and patch
+are retained.
+
+Keep the source matrix abstraction, arbitrary-precision Euclidean row/column
+operations and the complete original integer table. Parameterize its selected
+leading dimension, check every off-diagonal zero and consume every actual
+signed diagonal entry. Large preserves dimension 33 and 5 calls.
+Fixtures are reviewed native original reductions. Their absolute diagonal
+product agrees with independent fraction-free Bareiss determinants; gcd-one
+cofactor witnesses and diagonal divisibility verify the invariant factors.
+Signed factors preserve the original reduction output.
+The MLton source instead selects dimension 35. IntInf is never replaced
+by machine arithmetic. Allocation/representation are source hypotheses,
+not measured causes; see [arithmetic literature](../literature.md).
+
+The upstream dimension-33 Main expected literal is stale: it gives
+`~1027954043102083189860753402541358641712697245`, while its actual
+table/reduction gives `~174455975010120216862039859605035043439271`.
+The independent determinant and cofactor check support the latter. The
+full signed diagonal is retained rather than copying the stale literal.
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `4 1` | `1,~1,1,~7506` |
+| normal | `12 1` | `1,1,~1,1,~1,~1,~1,~1,1,1,1,~6096777698704` |
+| large | `33 5` | `1,~1,~1,1,1,1,~1,~1,1,~1,1,~1,~1,~1,~1,1,1,~1,1,~1,1,~1,~1,~1,~1,~1,1,1,1,~1,~1,~1,~174455975010120216862039859605035043439271;1,~1,~1,1,1,1,~1,~1,1,~1,1,~1,~1,~1,~1,1,1,~1,1,~1,1,~1,~1,~1,~1,~1,1,1,1,~1,~1,~1,~174455975010120216862039859605035043439271;1,~1,~1,1,1,1,~1,~1,1,~1,1,~1,~1,~1,~1,1,1,~1,1,~1,1,~1,~1,~1,~1,~1,1,1,1,~1,~1,~1,~174455975010120216862039859605035043439271;1,~1,~1,1,1,1,~1,~1,1,~1,1,~1,~1,~1,~1,1,1,~1,1,~1,1,~1,~1,~1,~1,~1,1,1,1,~1,~1,~1,~174455975010120216862039859605035043439271;1,~1,~1,1,1,1,~1,~1,1,~1,1,~1,~1,~1,~1,1,1,~1,1,~1,1,~1,~1,~1,~1,~1,1,1,1,~1,~1,~1,~174455975010120216862039859605035043439271` |
+
+## lexgen-smlnj
+
+Generate a lexer from the modern SML/NJ ML-Lex specification and validate every byte. See [provenance](lexgen-smlnj/PROVENANCE.md) and retained originals/patch.
+
+SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/lexgen`.
+Original module order, individual headers/notices and adaptation patch are
+retained.
+
+James Mattson and David Tarditi's lexical generator. Retain its RedBlack
+functor, DFA construction, rule processing and original Standard ML lexer
+input. Modern module organization differs from the old MLton monolith.
+Suppress console diagnostics; errors propagate. Move the original generator
+invocation into the driver. Every generated source/signature byte is checked
+against the reviewed native original output. Large preserves 500 calls;
+normal selects two. Input origins and individual notices are retained in
+the source headers/dataset. File generation/validation are measured work.
+No compiler/runtime feature is added through this port. Diagnostic questions
+are source-based; see [compiler literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `1` | `110723 B8C8AF8D` |
+| normal | `2` | `110723 B8C8AF8D` |
+| large | `500` | `110723 B8C8AF8D` |
+
+## mlyacc-smlnj
+
+Generate an LALR parser from the modern SML/NJ ML-Yacc grammar and validate both files. See [provenance](mlyacc-smlnj/PROVENANCE.md) and retained originals/patch.
+
+SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/mlyacc`.
+Original module order, individual headers/notices and adaptation patch are
+retained.
+
+David Tarditi and Andrew Appel's parser-generator collection. Preserve
+ordered parser/lexer, grammar, core, LALR lookahead, table construction,
+compression and code generation modules, with the original Standard ML
+grammar.
+Suppress console diagnostics; errors propagate. Move the original generator
+invocation into the driver. Every generated source/signature byte is checked
+against the reviewed native original output. Large preserves 250 calls;
+normal selects two. Input origins and individual notices are retained in
+the source headers/dataset. File generation/validation are measured work.
+No compiler/runtime feature is added through this port. Diagnostic questions
+are source-based; see [compiler literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `1` | `3150 27A50FF4;111569 D6E21727` |
+| normal | `2` | `3150 27A50FF4;111569 D6E21727` |
+| large | `250` | `3150 27A50FF4;111569 D6E21727` |
+
+## kitsimple
+
+Compute a hydrodynamic time step using lists of references as arrays. See [provenance](kitsimple/PROVENANCE.md) and retained originals/patch.
+
+mlkit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/kitsimple.sml`.
+Original modules/headers, aggregate notice and adaptation patch are retained.
+
+Preserve one hydrodynamic step, initial-state distribution, boundary handling
+and every final velocity/position/pressure/density/energy array. This ML Kit variant uses lists of references as arrays; replacing them by
+flat arrays would change its lifetime/traversal workload and is not done.
+Move the simulation declarations into a parameterized compute scope; retain
+original array representations. Suppress progress and validate every actual
+state element against native reference output, abs 1e-8 plus rel 1e-7.
+Normal selects a practical grid; large preserves the original dimension
+and 1 calls. Input generation and full observation are measured work.
+Representation/lifetimes/numerical cost are source hypotheses, not measured
+causes; see [the classic/ML Kit literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `5 1 expected/smoke.txt` | `281` |
+| normal | `10 1 expected/normal.txt` | `1106` |
+| large | `30 1 expected/large.txt` | `9906` |
+
+## kitsimple_tp
+
+Repeat three hydrodynamic steps using the original list-reference array representation. See [provenance](kitsimple_tp/PROVENANCE.md) and retained originals/patch.
+
+mlkit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/kitsimple_tp.sml`.
+Original modules/headers, aggregate notice and adaptation patch are retained.
+
+Preserve one hydrodynamic step, initial-state distribution, boundary handling
+and every final velocity/position/pressure/density/energy array. This ML Kit variant uses lists of references as arrays; replacing them by
+flat arrays would change its lifetime/traversal workload and is not done.
+Move the simulation declarations into a parameterized compute scope; retain
+original array representations. Suppress progress and validate every actual
+state element against native reference output, abs 1e-8 plus rel 1e-7.
+Normal selects a practical grid; large preserves the original dimension
+and 3 calls. Input generation and full observation are measured work.
+Representation/lifetimes/numerical cost are source hypotheses, not measured
+causes; see [the classic/ML Kit literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `5 3 expected/smoke.txt` | `843` |
+| normal | `10 3 expected/normal.txt` | `3318` |
+| large | `30 3 expected/large.txt` | `29718` |
+
+## kitsimple_no_basislib
+
+Compute a hydrodynamic time step with the miniature Basis and list-reference arrays. See [provenance](kitsimple_no_basislib/PROVENANCE.md) and retained originals/patch.
+
+mlkit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test_dev/kitsimple_no_basislib.sml`.
+Original modules/headers, aggregate notice and adaptation patch are retained.
+
+Preserve one hydrodynamic step, initial-state distribution, boundary handling
+and every final velocity/position/pressure/density/energy array. This ML Kit variant uses lists of references as arrays; replacing them by
+flat arrays would change its lifetime/traversal workload and is not done.
+The miniature primitive Basis is mapped to equivalent SML97 Math/string/ref
+operations, while retaining custom list/array operations and tan=sin/cos.
+Move the simulation declarations into a parameterized compute scope; retain
+original array representations. Suppress progress and validate every actual
+state element against native reference output, abs 1e-8 plus rel 1e-7.
+Normal selects a practical grid; large preserves the original dimension
+and 1 calls. Input generation and full observation are measured work.
+Representation/lifetimes/numerical cost are source hypotheses, not measured
+causes; see [the classic/ML Kit literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `5 1 expected/smoke.txt` | `281` |
+| normal | `10 1 expected/normal.txt` | `1106` |
+| large | `30 1 expected/large.txt` | `9906` |
+
+## simple-smlnj
+
+Compute a hydrodynamic time step with modern SML/NJ flat arrays and validate all state. See [provenance](simple-smlnj/PROVENANCE.md) and retained originals/patch.
+
+smlnj `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/simple`.
+Original modules/headers, aggregate notice and adaptation patch are retained.
+
+Preserve one hydrodynamic step, initial-state distribution, boundary handling
+and every final velocity/position/pressure/density/energy array. This modern SML/NJ variant uses its original flat custom Array2 and default
+560 grid. The expectedDelta/C functor constants are output checks, not
+inputs to the simulation; the full-state checker replaces them.
+Move the simulation declarations into a parameterized compute scope; retain
+original array representations. Suppress progress and validate every actual
+state element against native reference output, abs 1e-8 plus rel 1e-7.
+Normal selects a practical grid; large preserves the original dimension
+and 1 calls. Input generation and full observation are measured work.
+Representation/lifetimes/numerical cost are source hypotheses, not measured
+causes; see [the classic/ML Kit literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `5 1 expected/smoke.txt` | `281` |
+| normal | `30 1 expected/normal.txt` | `9906` |
+| large | `560 1 expected/large.txt` | `3449606` |
+
+## tsp-smlnj
+
+Build a MINSTD-seeded spatial tree and validate every vertex and link of its tour. See [provenance](tsp-smlnj/PROVENANCE.md), original sources and adaptation patch.
+
+SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/tsp`.
+AT&T Bell Laboratories, SML/NJ Fellowship. Preserve individual notices,
+all ordered modules and original launcher.
+
+Build a seeded two-dimensional spatial tree and construct a tour by
+recursive division and conquest. Seed 314 restarts for each tree; threshold
+150 is preserved for normal and large. The modern MINSTD generator uses
+two word folds instead of the older Int32 quotient/remainder recurrence.
+Use explicit Word64 to preserve its intermediate product on default-32-bit
+hosts; Real64 becomes SML97 Real, requiring at least 53-bit precision.
+Tree layout, construction order and tour linking are preserved. Suppress
+progress, require cardinality and backlinks, compare complete coordinate
+multisets before/after, and check tour length at abs 1e-8 plus rel 1e-8.
+The standard SML left-to-right evaluation order is retained. Full observation
+is included in measured execution. Large selects original 262143 vertices
+and 25 calls; normal is the bounded 1023-vertex profile. Modern RNG, closure
+and linking costs are source hypotheses, not measured causes. See the
+[classic and numerical literature](../literature.md); upstream Rand cites
+Park and Miller, CACM 31 (1988), 1192-1201, updated multiplier 48271.
+
+SML/NJ 110.99.9 for 32 bits fails the recorded result checks. The seeded
+Word64 generators are affected by its existing [64-bit literal/low-half
+report](../../../docs/bugreport/smlnj/Word64-low-half/BUGREPORT.md) and
+[shift report](../../../docs/bugreport/smlnj/Word64/shifts-and-negation/BUGREPORT.md).
+A direct RNG comparison against compiled expected literals diverges from
+the third draw. Agreement on earlier draws is weak evidence because this
+host also miscompiles those literals; conversion/formatting loses bit 30. These
+are host correctness failures, not additional valid numerical fixtures.
+The portable source is preserved; those failed runs cannot supply timings.
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `31 10 1 5.0285603627720601` | `31` |
+| normal | `1023 150 1 34.594758416849281` | `1023` |
+| large | `262143 150 25 540.82472201646453` | `6553575` |
+
+## DLXSimulator-mlkit
+
+Interpret the older DLX Simple program with direct I/O traps and immutable arrays. See [provenance](DLXSimulator-mlkit/PROVENANCE.md), original sources and adaptation patch.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/DLXSimulator.sml`.
+Matthew Thomas Fluet, Harvey Mudd College; Stephen Weeks benchmark driver,
+Martin Elsman 2001 repetition adjustment. Individual source notices and
+aggregate ML Kit notice are retained.
+
+Simulate the DLX RISC instruction set with immutable register/memory arrays,
+cache bookkeeping and decoding. This older version uses a three-component
+PC/register/memory state and direct I/O instructions. The newer MLton version
+carries a fourth trap state with general input/output callbacks and selects
+five programs. Preserve the old simulator kernel and its Simple-only workload.
+Smoke/normal/large run Simple 1/10/100 times; 100 is the original count.
+The program loads hexadecimal 0x2F (decimal 47) into register 14, traps to output it and halts: review
+its instructions and require every output line to equal `Output: 47`.
+Legacy Word.fromLargeWord calls become Word.fromLarge(Word32.toLarge ...);
+pre-SML97 string inputLine is explicitly unwrapped. Quiet statistics/progress
+and capture actual trap output; unsupported input is not used by selected
+programs. Preserve Word32 modular arithmetic and signed register interpretation.
+Immutable-array/caching costs are source hypotheses, not measurements.
+The individual header references Patterson and Hennessy, Computer Architecture:
+A Quantitative Approach, second edition (1996); see [literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `1` | `1 47` |
+| normal | `10` | `10 47` |
+| large | `100` | `100 47` |
+
+## aobench
+
+Render ambient occlusion by seeded hemisphere sampling against spheres and a plane. See [provenance](aobench/PROVENANCE.md), original sources and adaptation patch.
+
+SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/aobench`.
+SML/NJ Fellowship; original headers, modules and aggregate notice retained.
+
+Render ambient occlusion by sphere/plane ray intersections and 8x8 hemisphere
+samples. The original C/SML algorithm is preserved, with one/one/three
+subsamples in smoke/normal/large. Large preserves the upstream 512-square
+three-subsample workload. Rand48 seed 0x1234abcd330e is reset per run to its
+upstream initial state; otherwise repeated calls advance RNG demand. Replace
+Unsafe.Real64.castFromWord by exact conversion of a 48-bit integer divided
+by 2^48, the same binary64 value as the original bit construction. Explicit
+Word64 preserves modular 48-bit state. Real64Array becomes SML97 RealArray.
+The source draws randomness only on hits: preserve demand and draw order.
+Every header, dimension, data length and actual quantized RGB channel is
+validated against reviewed original MLton and separately loaded original SML/NJ
+renders. Original separate-unit and concatenated SML/NJ normal frames differ at
+one RGB pixel by 32 levels; the interactive frame agrees with MLton. An
+earlier portable SML/NJ build differed at two pixels by 12/8 levels. Ten
+thousand RNG draws using original bit construction versus portable numeric
+conversion agreed exactly; this does not establish a cause for the image
+sensitivity. Discrete hit-test boundaries are a source hypothesis. Every
+whole RGB pixel must match one original reference pixel, with at most one level
+per 8-bit channel for floating-point rounding at quantization boundaries;
+this is a benchmark-specific output tolerance, not permission to change
+geometry. Allocation/traversal/real-operation concerns are source hypotheses;
+no measured attribution is claimed. See [rendering literature](../literature.md).
+
+SML/NJ 110.99.9 for 32 bits fails the recorded result checks. The seeded
+Word64 generators are affected by its existing [64-bit literal/low-half
+report](../../../docs/bugreport/smlnj/Word64-low-half/BUGREPORT.md) and
+[shift report](../../../docs/bugreport/smlnj/Word64/shifts-and-negation/BUGREPORT.md).
+A direct RNG comparison against compiled expected literals diverges from
+the third draw. Agreement on earlier draws is weak evidence because this
+host also miscompiles those literals; conversion/formatting loses bit 30. These
+are host correctness failures, not additional valid numerical fixtures.
+The portable source is preserved; those failed runs cannot supply timings.
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `8 1 expected/smoke.ppm` | `64` |
+| normal | `64 1 expected/normal.ppm` | `4096` |
+| large | `512 3 expected/large.ppm` | `262144` |
+
+## id-ray
+
+Trace the Id/Manticore sphere scene with the original overlapping image writes. See [provenance](id-ray/PROVENANCE.md), original sources and adaptation patch.
+
+SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/id-ray`.
+SML/NJ Fellowship; original headers, modules and aggregate notice retained.
+
+Render the original fixed Id/Manticore scene with reflections, transparency,
+shadows, lighting and recursive ray intersections. Preserve the original
+custom image representation, including its source indexing `width*row+col`
+for RGB writes (rather than `3*(width*row+col)`). This overlaps channel writes
+and leaves the trailing two-thirds zero; it is a known upstream defect,
+kept visible in the fixture rather than silently changing the workload.
+The source also ignores its output filename and uses out.ppm. Large preserves
+1024 square; smoke/normal are bounded 8/128-square renders. Sampling is not
+used by this deterministic renderer; the adapter passes a documented 1.
+Source comments identify a negative-vector limitation retained in the kernel.
+Every header, dimension, data length and actual quantized RGB channel is
+validated against reviewed native source renders. Permit at most one level
+per 8-bit channel for floating-point rounding at quantization boundaries;
+this is a benchmark-specific output tolerance, not permission to change
+geometry. Allocation/traversal/real-operation concerns are source hypotheses;
+no measured attribution is claimed. See [rendering literature](../literature.md).
+
+The full original `DATA/spheres.txt` supplements the embedded test spheres;
+no per-dataset notice or origin is given in the data, so its notice/origin
+remains an explicit provenance gap. Scene loading at structure initialization
+is included in fresh-process runs; repeated in-process calls reuse it.
+
+SML/NJ 110.99.9 for 32 bits fails the normal image check; the cause has not
+been isolated. Its documented [numeric host defects](../../../docs/bugreport/smlnj/README.md)
+are relevant diagnostic candidates. Do not count this as a pass or widen
+tolerances to accept an unreviewed output.
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `8 1 expected/smoke.ppm` | `64` |
+| normal | `128 1 expected/normal.ppm` | `16384` |
+| large | `1024 1 expected/large.ppm` | `1048576` |
+
+## ray-smlnj
+
+Interpret sphere scenes and validate every channel of the modern SML/NJ P6 image. See [provenance](ray-smlnj/PROVENANCE.md), original sources and adaptation patch.
+
+SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/ray`.
+Individual module/data notices and aggregate notice are retained with the
+ordered originals and patch.
+
+Interpret the original fixed sphere scenes and shade every pixel. This
+modern modular SML/NJ variant emits P6 RGB rather than the old Dump format.
+Preserve scene parsing, sphere order, ray/camera distributions, lighting and
+quantization. Add a dimension ref to the picture adapter and replace 512
+coordinate/loop/header constants uniformly; smoke is the upstream three-
+sphere test at 16 square, normal the nine-sphere benchmark at 128 square,
+large the original 512-square scene and 500 repetitions. Only output paths
+are changed in DATA copies; original data notices are retained.
+Validate P6 headers, dimensions and every RGB channel against reviewed
+native original renders, with at most one 8-bit level of rounding tolerance.
+Result consumption and file output/validation are measured work. Algorithm,
+real-operation, closure and allocation sensitivity are source hypotheses,
+not established performance causes. See [literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `DATA/smoke.txt 16 1 expected/smoke.ppm` | `256` |
+| normal | `DATA/normal.txt 128 1 expected/normal.ppm` | `16384` |
+| large | `DATA/large.txt 512 500 expected/large.ppm` | `131072000` |
+
+## plclub-ray
+
+Interpret and render the ICFP chess scene using the modern modular SML/NJ port. See [provenance](plclub-ray/PROVENANCE.md), original sources and adaptation patch.
+
+SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/plclub-ray`.
+Individual module/data notices and aggregate notice are retained with the
+ordered originals and patch.
+
+Modern modular SML port of the PLClub 2000 ICFP contest renderer, Stephen
+Weeks original translation. Chess data by Leif Kornstaedt, 2000, with its
+individual copyright header preserved. Same scene, recursive depth three,
+60-degree view and 4:3 aspect; only image dimensions change for smoke/normal.
+Large preserves 1024x768 and ten renders. Unsafe.Array calls become checked
+SML97 Array calls. Preserve interpreter, geometric objects, CSG interval
+ordering, matrix operations and mutable inline-closure/render callbacks.
+Close scene input streams explicitly and propagate failures, unlike the
+upstream catch-all launcher. Its missing DATA path separator is a launcher
+error; fixed deterministic suite scene paths replace it. Numerical CSG
+zero-width intervals can select different surfaces with host math rounding:
+check every actual pixel against independently rendered MLton, Poly/ML and independent native SML/NJ
+reference pixels, permitting at most two levels in all three channels of a
+single reference pixel, as documented for the classic raytrace port.
+Result consumption and file output/validation are measured work. Algorithm,
+real-operation, closure and allocation sensitivity are source hypotheses,
+not established performance causes. See [literature](../literature.md).
+
+The SML/NJ fixture is generated by a separate render-only driver loading
+shared support and the portable kernel as separate source units. At smoke
+pixel 86, it produces RGB (136,136,97), while the concatenated native
+reference produces (176,176,126). At pixel 108, original SML/NJ can produce
+(100,100,70), while MLton/Poly produce (255,255,231). Both coherent outcomes
+are retained from independent native reference contexts; no global tolerance
+is widened. Earlier original-context frames are archived separately as
+`expected/*-upstream-smlnj.ppm`. The compilation-context difference is
+observed evidence; attribution to CSG zero-width intervals remains a
+source-based explanation, not a measured compiler-cause claim.
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `DATA/smoke.txt 16 1 expected/smoke.ppm expected/smoke-poly.ppm` | `192` |
+| normal | `DATA/normal.txt 64 1 expected/normal.ppm expected/normal-poly.ppm` | `3072` |
+| large | `DATA/large.txt 1024 10 expected/large.ppm expected/large-poly.ppm` | `7864320` |
+
+## mc-ray
+
+Trace a seeded random sphere scene with sampled camera rays and material scattering. See [provenance](mc-ray/PROVENANCE.md), original sources and adaptation patch.
+
+SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/mc-ray`.
+Individual module/data notices and aggregate notice are retained with the
+ordered originals and patch.
+
+Monte Carlo recursive ray tracing from John Reppy and the SML3d project.
+Keep sphere/material generation, camera sampling, dielectric/metal/diffuse
+paths and demand-dependent RNG draws. Reset MINSTD seed 1234567 each run;
+explicit Word64 preserves the 64-bit multiplier/folding implementation on
+32-bit default hosts. Real64 aliases become SML97 Real; binary64 precision
+is required. Smoke/normal reduce dimensions and samples; large preserves
+150x100 with 50 samples. Keep original list-pixel and object data structures.
+Validate P6 headers, dimensions and every RGB channel against reviewed
+native original renders, with at most one 8-bit level of rounding tolerance.
+Result consumption and file output/validation are measured work. Algorithm,
+real-operation, closure and allocation sensitivity are source hypotheses,
+not established performance causes. See [literature](../literature.md).
+
+SML/NJ 110.99.9 for 32 bits fails the recorded result checks. The seeded
+Word64 generators are affected by its existing [64-bit literal/low-half
+report](../../../docs/bugreport/smlnj/Word64-low-half/BUGREPORT.md) and
+[shift report](../../../docs/bugreport/smlnj/Word64/shifts-and-negation/BUGREPORT.md).
+A direct RNG comparison against compiled expected literals diverges from
+the third draw. Agreement on earlier draws is weak evidence because this
+host also miscompiles those literals; conversion/formatting loses bit 30. These
+are host correctness failures, not additional valid numerical fixtures.
+The portable source is preserved; those failed runs cannot supply timings.
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `8 6 1 expected/smoke.ppm` | `48` |
+| normal | `48 32 4 expected/normal.ppm` | `1536` |
+| large | `150 100 50 expected/large.ppm` | `15000` |
+
+## kitmolgard
+
+Run a deterministic coloured Petri-net counting simulation and validate complete reports. See [provenance](kitmolgard/PROVENANCE.md), original sources and adaptation patch.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/kitmolgard.sml`.
+Generated CPN/Design simulator, Niels 2001-02-17 benchmark adaptation.
+Individual source history and aggregate notice are retained. No model-author
+name is supplied beyond the source history; do not infer authorship from
+this filename. The _smlnj source differs only in launcher/legacy Basis/time
+adapters, all recorded and retained with the same simulation implementation.
+
+Simulate the four-transition counting/logging coloured Petri net with the
+original markings, bindings, random transition selection and mutable tables.
+Seed 87 is explicit upstream state and is preserved per invocation. Select
+100/10000/100000 counting transitions per batch and five completed batches;
+large preserves actual upstream maxcnt=100000 and report indices 0..5.
+The header's "25 lines" description is stale; the code stops at index 5.
+Replace process exit with a loop-stop flag so results can be consumed and
+repeated. Replace wall-clock elapsed seconds in diagnostic clock tokens by
+zero for the initial full marking, then one logical second per completed batch; this clock does not decide which
+transition is enabled. Batch counter/marking logic and RNG draw order stay
+unchanged. Parameterized deterministic work permits count correctness.
+Read and compare every complete counter/clock report and verify the number
+of fired transitions independently: one set, six get/out pairs (the initial count marking is already full),
+and five batches of n count firings, totaling 1+12+5*n.
+Legacy Byte array tuple unpacking becomes Word8ArraySlice, TextIO.input
+becomes inputAll in inactive interactive helpers, and its erroneous unused
+closeIn alias is corrected. Existing upstream unavailable interactive/export
+stubs remain unavailable and are not reached by this simulation. Close the
+fixed log file at completion. Original data and all initialization are inside
+the parameterized run. Event selection/mutable marking costs are source
+hypotheses, not measured causes; see [simulation/ML Kit literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `100 expected/smoke.txt` | `513` |
+| normal | `10000 expected/normal.txt` | `50013` |
+| large | `100000 expected/large.txt` | `500013` |
+
+## vliw-smlnj
+
+Schedule and compress abstract assembly using the modern modular SML/NJ implementation. See [provenance](vliw-smlnj/PROVENANCE.md), original sources and adaptation patch.
+
+SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/vliw`.
+All ordered modules, notices and original assembly data are retained.
+
+Read ndotprod abstract assembly, build dependency nodes, schedule/compress
+instructions with window nine and emit uncompressed/compressed assembly.
+Preserve the modern modular implementation, custom sets/maps, sorting,
+delay/idempotency logic and source input. Smoke/normal/large repeat the full
+workload 1/3/250 times; 250 is the original modern count. The older monolith
+uses a different launcher and contains historical runtime adapters.
+Hide the BMARK launcher ascription to call the existing parameterized run;
+suppress debug progress, close input/output files and validate every emitted
+instruction from independent original fixture streams. Normalize GETREAL
+literal spelling to an exact binary64 mantissa/exponent so numeric formatting
+differences are accepted without accepting a changed value or instruction.
+No simulator feature is added: upstream disables SimStuff.cmprog itself
+because it raises Subscript. Scheduling/allocation/window effects are source
+hypotheses, not measured performance causes. See [literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `9 1 expected/tmp.s expected/cmp.s` | `458 CDC06C0F;398 ADC5A56C` |
+| normal | `9 3 expected/tmp.s expected/cmp.s` | `458 CDC06C0F;398 ADC5A56C|458 CDC06C0F;398 ADC5A56C|458 CDC06C0F;398 ADC5A56C` |
+| large | `9 250 expected/tmp.s expected/cmp.s` | [complete result](vliw-smlnj/large.expected) |

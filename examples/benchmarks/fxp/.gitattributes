@@ -1,2 +1,2 @@
-upstream/* whitespace=-trailing-space
+upstream/* -whitespace
 port.patch whitespace=-trailing-space

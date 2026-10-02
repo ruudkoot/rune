@@ -1,0 +1,81 @@
+--- upstream/ordered-sources
++++ ordered-port-sources
+@@ -1,3 +1,5 @@
++fun print (_:string)=()
++structure Log=struct fun print (_:string)=()fun say (_:string list)=()end
+ (* ref.sml
+  *)
+ 
+@@ -3536,7 +3538,7 @@
+  * All rights reserved.
+  *)
+ 
+-structure Main : BMARK =
++structure Main =
+   struct
+ 
+     val name = "vliw"
+@@ -3630,3 +3632,63 @@
+ 
+   end
+ 
++structure VliwCheck =
++struct
++  fun realToken text =
++    let val n=String.size text
++        fun digits i = if i<n andalso Char.isDigit(String.sub(text,i)) then digits(i+1) else i
++        val start=if n>0 andalso (String.sub(text,0) = #"~" orelse String.sub(text,0) = #"-") then 1 else 0
++        val whole=digits start
++        val fraction=if whole<n andalso String.sub(text,whole) = #"." then digits(whole+1) else whole
++        val finish=if fraction<n andalso (String.sub(text,fraction) = #"E" orelse String.sub(text,fraction) = #"e") then
++          let val at=fraction+1
++              val at=if at<n andalso (String.sub(text,at) = #"~" orelse String.sub(text,at) = #"-" orelse String.sub(text,at) = #"+") then at+1 else at
++              val last=digits at
++          in if last=at then ~1 else last end
++          else fraction
++    in if whole=start orelse finish<>n then raise Fail "invalid assembly real literal"
++       else case Real.fromString text of SOME x=>if Real.isFinite x then x else raise Fail "nonfinite assembly real" | NONE=>raise Fail "assembly real" end
++  fun normalized values =
++    case values of
++      ["GETREAL",label,assign,value] =>
++        let val x=realToken value
++            val {man,exp}=Real.toManExp(Real.abs x)
++            val bits=Real.toLargeInt IEEEReal.TO_NEAREST(man*9007199254740992.0)
++            val token=(if Real.signBit x then "~" else "+")^IntInf.toString bits^"E"^Int.toString(exp-53)
++        in ["GETREAL",label,assign,token] end
++    | _ => values
++  fun same(actual,reference)=
++    let val input=TextIO.openIn actual
++        val gold=TextIO.openIn reference
++        fun update(text,hash)=
++          let fun loop(i,h)=if i=String.size text then h else
++                loop(i+1,Word32.+(Word32.*(h,0w16777619),Word32.fromInt(Char.ord(String.sub(text,i)))))
++          in loop(0,hash) end
++        fun loop(lines,hash)=
++          case (TextIO.inputLine input,TextIO.inputLine gold) of
++            (NONE,NONE)=>(lines,hash)
++          | (SOME a,SOME b)=>
++              let val av=normalized(String.tokens Char.isSpace a)
++                  val bv=normalized(String.tokens Char.isSpace b)
++              in if av=bv then loop(lines+1,update(String.concatWith " " av^"\n",hash)) else raise Fail "assembly instruction differs" end
++          | _=>raise Fail "assembly line count differs"
++        val (lines,hash)=loop(0,0w2166136261) handle e=>(TextIO.closeIn input;TextIO.closeIn gold;raise e)
++        val _=TextIO.closeIn input
++        val _=TextIO.closeIn gold
++    in Int.toString lines^" "^Word32.toString hash end
++end
++
++structure Benchmark =
++struct
++  val name="vliw-smlnj"
++  fun run [window,reps,uncompressed,compressed]=
++    let val n=BenchInput.between(1,20)(BenchInput.integer window)
++        val count=BenchInput.between(1,250)(BenchInput.integer reps)
++        fun one()=(Delay.idempotency:=0;
++          Main.run("DATA/ndotprod.s","DATA/tmp.s","DATA/cmp.s",n);
++          VliwCheck.same("DATA/tmp.s",uncompressed)^";"^VliwCheck.same("DATA/cmp.s",compressed))
++        fun loop(0,values)=String.concatWith "|"(List.rev values)
++          | loop(k,values)=loop(k-1,one()::values)
++    in loop(count,[]) end
++  | run _=raise Fail "vliw expects window repetitions uncompressed-reference compressed-reference"
++end

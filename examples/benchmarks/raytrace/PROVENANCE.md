@@ -32,3 +32,11 @@ boundary results. A separate suite-driver reference is retained; this is
 recorded source/compilation sensitivity, not a claim that the kernel isolates
 a single compiler optimization. Outside the reviewed reference sets, errors
 above two intensity levels remain failures.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/raytrace.sml`,
+is an additional source for this implementation. The source differences
+are legacy Byte.unpackString(array,offset,length), unchecked lexer
+Vector/CharVector reads and a one-call launcher. SML97 checked reads and
+Word8ArraySlice conversion produce the existing port exactly. Removing
+unchecked reads can affect cost and is recorded as a library adaptation;
+this does not establish equal upstream performance.

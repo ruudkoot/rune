@@ -3,13 +3,16 @@
 set -eu
 cd "$(dirname "$0")/../.."
 root=$(pwd)
+python3 tests/benchmarks/smith-oracle.py
+python3 tests/benchmarks/kb-oracle.py
 out=$root/tests/out/benchmarks/classic-validation
 mkdir -p "$out"
-for suite in checksum md5 numerical render vliw; do
+for suite in checksum md5 numerical render ppm vliw; do
   {
     printf '%s\n' "$root/tests/basis/harness.sml" "$root/examples/benchmarks/shared/input.sml"
     case $suite in
       numerical) ;;
+      ppm) printf '%s\n' "$root/examples/benchmarks/shared/ppm.sml" ;;
       render) printf '%s\n' "$root/examples/benchmarks/raytrace/check.sml" ;;
       vliw) printf '%s\n' "$root/examples/benchmarks/shared/files.sml" "$root/examples/benchmarks/vliw/benchmark.sml" ;;
       *) printf '%s\n' "$root/examples/benchmarks/$suite/benchmark.sml" ;;

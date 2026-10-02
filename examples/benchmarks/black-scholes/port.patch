@@ -1,0 +1,125 @@
+--- upstream/ordered-sources
++++ benchmark.sml
+@@ -9,15 +9,15 @@
+     datatype option_ty = Put | Call
+ 
+     datatype option_t = Option of {
+-	spot : real,          (* spot price *)
+-	strike : real,        (* strike price *)
+-	interest : real,      (* risk-free interest rate *)
+-	div_rate : real,      (* dividend rate *)
+-	volatility : real,    (* volatility *)
+-	time : real,          (* years to maturity or expiration: 6mos = .5, etc. *)
+-	opt_type : option_ty,(* Put or Call *)
+-	div_vals : real,      (* dividend values (not used here) *)
+-	derivagem : real      (* expected answer from DerivaGem *)
++        spot : real,          (* spot price *)
++        strike : real,        (* strike price *)
++        interest : real,      (* risk-free interest rate *)
++        div_rate : real,      (* dividend rate *)
++        volatility : real,    (* volatility *)
++        time : real,          (* years to maturity or expiration: 6mos = .5, etc. *)
++        opt_type : option_ty,(* Put or Call *)
++        div_vals : real,      (* dividend values (not used here) *)
++        derivagem : real      (* expected answer from DerivaGem *)
+       }
+ 
+     val dummy_option : option_t
+@@ -31,23 +31,23 @@
+     datatype option_ty = Put | Call
+ 
+     datatype option_t = Option of {
+-	spot : real,          (* spot price *)
+-	strike : real,        (* strike price *)
+-	interest : real,      (* risk-free interest rate *)
+-	div_rate : real,      (* dividend rate *)
+-	volatility : real,    (* volatility *)
+-	time : real,          (* years to maturity or expiration: 6mos = .5, etc. *)
+-	opt_type : option_ty,(* Put or Call *)
+-	div_vals : real,      (* dividend values (not used here) *)
+-	derivagem : real      (* expected answer from DerivaGem *)
++        spot : real,          (* spot price *)
++        strike : real,        (* strike price *)
++        interest : real,      (* risk-free interest rate *)
++        div_rate : real,      (* dividend rate *)
++        volatility : real,    (* volatility *)
++        time : real,          (* years to maturity or expiration: 6mos = .5, etc. *)
++        opt_type : option_ty,(* Put or Call *)
++        div_vals : real,      (* dividend values (not used here) *)
++        derivagem : real      (* expected answer from DerivaGem *)
+       }
+ 
+     val dummy_option = Option{
+-	    spot=123.0, strike=234.0, interest=345.0,
+-	    div_rate=456.0, volatility=567.0, time=678.0,
+-	    opt_type=Put, div_vals=789.0,
+-	    derivagem=890.0
+-	  }
++            spot=123.0, strike=234.0, interest=345.0,
++            div_rate=456.0, volatility=567.0, time=678.0,
++            opt_type=Put, div_vals=789.0,
++            derivagem=890.0
++          }
+ 
+   (* readData : string -> option_t list *)
+   fun readData (infname : string) : option_t list = let
+@@ -134,46 +134,19 @@
+                 (* end case *))
+           in
+             Real.abs (retval - derivagem)
+-	  end
++          end
+ 
+   end
+ 
+-(* main.sml
+- *
+- * COPYRIGHT (c) 2025 The Fellowship of SML/NJ (https://www.smlnj.org)
+- * All rights reserved.
+- *)
+-
+-structure Main : BMARK =
+-  struct
+-
+-    val name = "black-scholes"
+-
+-    val results : string list = []
+-
+-    (* preload the data for the timing tests; the "large" data set has 64K entries;
+-     * we scale that up to 2M entries by concatenating the list.
+-     *)
+-    val data = let
+-          val data = BlackScholes.readData "DATA/simlarge.txt"
+-          in
+-            List.concat(List.tabulate(32, fn _ => data))
+-          end
+-
+-    fun testit () = let
+-          fun f opt = Log.say [Real.toString(BlackScholes.price opt), "\n"]
+-          in
+-            List.app f (BlackScholes.readData "DATA/simsmall.txt")
+-          end
+-
+-    fun doOne () = let
+-          val prices = List.map BlackScholes.price data
+-	  in
+-	    Log.say [Real.toString(hd prices), "\n"]
+-	  end
+-
+-    fun loop n = if n <= 0 then () else (doOne (); loop (n - 1))
+-
+-    fun doit () = loop 10
+-
+-  end
++structure Benchmark=struct val name="black-scholes"
++fun run [dataset,limit,replicas,passes]=let
++val path=case dataset of "small"=>"DATA/simsmall.txt"|"large"=>"DATA/simlarge.txt"|_=>raise Fail "unknown option dataset"
++val n=BenchInput.between(1,65536)(BenchInput.integer limit) val copies=BenchInput.between(1,32)(BenchInput.integer replicas) val rounds=BenchInput.between(1,10)(BenchInput.integer passes)
++val loaded=BlackScholes.readData path val _=if List.length loaded>=n then()else raise Fail "short option data"
++val selected=List.take(loaded,n) val data=List.concat(List.tabulate(copies,fn _=>selected))
++fun check(opt as BlackScholes.Option{spot,strike,interest,time,derivagem,...})=
++let val residual=BlackScholes.price opt
++val bound=0.000001+0.000000075*(spot+strike*Math.exp(~interest*time))
++in if Real.isFinite derivagem andalso residual>=0.0 andalso BenchInput.closeReal(residual,0.0,bound,0.0)then residual else raise Fail "option residual"end
++fun one()=let val results=List.map check data in List.length results end
++in IntInf.toString(BenchInput.repeat rounds one)end |run _=raise Fail "black-scholes expects dataset records replicas passes"end

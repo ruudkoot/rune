@@ -13,3 +13,9 @@ Uses the standard default RealArray name, requiring binary radix and
 53-bit precision explicitly. Poly/ML does not expose the optional Real64Array
 name; its RealArray has the required representation. No change of floating
 precision is permitted by this adapter.
+
+ML Kit `6dab5582db22a5f5672ca1fc5244171687d83ce5`, `test/zern.sml`,
+is an additional source for this implementation. The complete kernel/input
+agree; its launcher uses 1000 repetitions rather than a parameter. This
+count remains accepted by the portable driver and is recorded as an
+upstream invocation, rather than duplicating the implementation.

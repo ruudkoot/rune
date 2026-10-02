@@ -1,0 +1,54 @@
+--- upstream/ordered-sources
++++ benchmark.sml
+@@ -1,3 +1,4 @@
++structure Log=struct fun print (_:string)=() fun say (_:string list)=() end
+ (* main.sml
+  *
+  * COPYRIGHT (c) 2024 The Fellowship of SML/NJ (https://www.smlnj.org)
+@@ -6,15 +7,15 @@
+  * The "Fast Fourier Transform" (FFT) benchmark (double precision).
+  *)
+ 
+-structure Main : BMARK =
++structure Kernel =
+   struct
+ 
+     val name = "fft64"
+ 
+     val results : string list = []
+ 
+-    structure A = Real64Array
+-    structure R = Real64
++    structure A = RealArray
++    structure R = Real
+     structure M = R.Math
+ 
+     val say = Log.print
+@@ -195,17 +196,15 @@
+           val (zr, zi) = loop_i 0 0.0 0.0 0 0
+           val zm = if R.abs zr < R.abs zi then zi else zr
+           in
+-            printr zm; say "\n"
++            zm
+           end (* test *)
+ 
+-    val N = 21
+-
+-    fun loop_np i np = if i > N
+-          then ()
+-          else (test np; loop_np (i+1) (np*2))
+-
+-    fun doit () = loop_np 1 16
+-
+-    fun testit () = loop_np 1 16
+-
+-  end;
++
++end
++
++structure Benchmark=struct val name="fft-smlnj"
++fun run [levels]=let val count=BenchInput.between(1,21)(BenchInput.integer levels)
++val _=if Real.radix=2 andalso Real.precision=53 then () else raise Fail "FFT requires binary64 Real"
++fun loop(i,n)=if i>count then () else let val error=Kernel.test n val bound=Real.fromInt n*0.00000001
++in if BenchInput.closeReal(error,0.0,bound,0.0)then loop(i+1,n*2)else raise Fail "FFT residual"end
++val _=loop(1,16)in Int.toString count end |run _=raise Fail "fft-smlnj expects doubling levels"end

@@ -242,3 +242,50 @@ generator/Python-sort oracle confirms all three selected fixtures. Large is
 still unexecuted. The inherited VM-instrumentation guard also passed the
 measurement checks on all four compilers and rejects instrumented options
 from headline timing before starting a measurement.
+
+## M2 coverage and expanded validation, 2026-10-02
+
+The catalogue contains 142 programs and 420 profiles, including 135 classic
+SML programs. All 48 MLton, 35 suitable SML/NJ and 51 suitable ML Kit
+inventory entries have implementations; one additional matrix-ramp diagnostic
+retains the earlier adapted input separately. Thirty-five ML Kit duplicate
+entries retain their original sources and individual explanations. Sixteen
+region-control variants and eight SML/NJ entries retain concrete blockers;
+see [the native broken-source probes](validation/broken-classic.tsv).
+
+The four primary hosts were checked throughout the import waves. A complete
+additional six-host smoke/normal attempt records missing Int64 facilities in
+Poly/ML, ML Kit compiler failures, ML Kit numerical failures and an unresolved
+Barnes-Hut normal result difference on SML/NJ 64 bits. These failures remain
+rejected; they are not additional valid fixtures. SML/NJ 32-bit was rerun
+outside the sandbox after SIGSYS exits. Its actual numeric failures are
+separately documented in [the Word64 diagnostic](validation/word64-host.md).
+
+Before the compiler correction, every catalogue smoke/normal profile passed
+on stack, register interpreter, tier-2 JIT and native Rune at -O2. At -O0,
+AOBench exposed a captured-record lowering bug and the pi stream normal
+profile exceeded 600 seconds in the stack interpreter. The compiler bug is
+fixed in `97de792`, with a minimal independent 3*n*n regression and a full
+acceptance run: 326 language fixtures pass, and 493 programs produce identical
+bytecode with all seven builds. AOBench subsequently passes smoke/normal on
+all four engines at both -O0 and -O2 without changing its algorithm or fixtures.
+The pi normal zero index is reduced from 30 to 10, digit position 121 checked
+independently with Chudnovsky; all four engines pass at both levels. The
+historical timeouts and incorrect results remain in the attempt ledger.
+
+Full-state corruption is rejected for classic Simple, ML Kit list-reference
+Simple and modern flat-array Simple. Image checks reject out-of-bound channels,
+incorrect dimensions and malformed/truncated files. Smith diagonals agree with
+independent Bareiss determinants, divisibility and gcd-one minor witnesses;
+see [the evidence](validation/smith-determinants.tsv). An independent rewrite
+interpreter validates 24 final Knuth-Bendix rules against seven open axioms and
+700 deterministic ground instances, and rejects an omitted rule. VLIW outputs
+agree byte for byte with the original modern upstream assembly fixtures.
+
+`make JOBS=4 check` passed twice after rebasing to origin/master f8e351a;
+the second includes the captured-record correction. Inventory regression
+checks now total 32 and include source-looking native build-cache rejection.
+The current per-attempt record is [m2-attempts.tsv](validation/m2-attempts.tsv).
+Large inputs have reviewed source/native oracles but are not claimed to have
+passed every engine/host. Full certification after the compiler correction
+and the outstanding native numerical differences remain explicit checks.

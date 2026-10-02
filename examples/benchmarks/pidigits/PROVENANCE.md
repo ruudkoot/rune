@@ -10,7 +10,8 @@ provides an independent oracle. Stream functions are nonmemoized as in this
 SML source; no Haskell demand equivalence is claimed.
 
 The initial normal zero index 100 timed out on Rune under the 600-second
-limit. Normal is now fixed at zero index 30 (digit position 330),
+limit. The subsequent zero index 30 also timed out at -O0 in the stack interpreter.
+Normal is now fixed at zero index 10 (digit position 121),
 with an independently computed Chudnovsky fixture. This input revision
 changes the workload identity; the unsuccessful larger run is recorded.
 

@@ -1,0 +1,33 @@
+
+Result of TYPE:
+
+
+ 
+Coersion set:     
+    'a9 |> 'a13, 
+    'a7 |> 'a13->'a14, 
+    'a14 |> 'a11, 
+    'a7 |> 'a11->'a12, 
+    'a12 |> 'a10, 
+    'a9->'a10 |> 'a8, 
+    'a7->'a8 |> 'a6
+Type environment: 
+Expression:       (fn f =>(fn x =>(f @ (f @ x))))
+Type:             'a6
+
+
+Result of MATCH:
+
+
+ 
+Coersion set:     
+    'a9 |> 'a13, 
+    'a15->'a16 |> 'a13->'a14, 
+    'a14 |> 'a11, 
+    'a15->'a16 |> 'a11->'a12, 
+    'a12 |> 'a10, 
+    'a9->'a10 |> 'a19->'a20, 
+    ('a15->'a16)->'a19->'a20 |> ('a23->'a24)->'a25->'a26
+Type environment: 
+Expression:       (fn f =>(fn x =>(f @ (f @ x))))
+Type:             ('a23->'a24)->'a25->'a26

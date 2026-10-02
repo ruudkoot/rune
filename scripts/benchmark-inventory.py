@@ -21,11 +21,17 @@ ROOT = Path(__file__).resolve().parent.parent
 SUITE = ROOT / "examples/benchmarks"
 FIELDS = ["source", "path", "name", "rune_name", "milestone", "disposition",
           "family", "related", "authors", "sha256", "members", "inputs", "notices", "evidence", "reason"]
-EXTENSIONS = {".sml", ".sig", ".mlb", ".cm", ".hs", ".lhs", ".ml", ".mli", ".c", ".h"}
+EXTENSIONS = {".fun", ".sml", ".sig", ".mlb", ".cm", ".hs", ".lhs", ".ml", ".mli", ".c", ".h"}
 MLKIT_WORKLOADS = set("DLXSimulator PermuteList FuhMishra boyer checksum count-graphs fft fxp life longlife matrix-multiply mpuz msort msortrun peek perm perm1 professor professor2 professor_game psdes-random pseudokit ratio-regions raytrace smith-normal-form stringconcat tailfib tak tsp tyan vector-concat vector-rev wc-input1 wc-scanStream weeks4 zern kkb36c kkb36d kkb_eq klife_eq tststrcmp".split())
 MLKIT_DEV_WORKLOADS = set("fib fib0 hanoi life listsort professor_game professor_game_debug rev many_refs".split())
 # M2 source review: project members and entrypoint-only aliases.
 MLKIT_REVIEW = {
+    "test/kitmolgard_smlnj.sml": ("duplicate", "same complete generated Petri-net model, marking/transition logic, RNG and six-report workload as test/kitmolgard.sml; only callable launcher, old inputLine/Byte/Timer record adapters and integer versus Time elapsed-clock carriers differ; portable deterministic clock and SML97 adapters are shared under kitmolgard"),
+    "test/fxp.sml": ("duplicate", "complete 17500-line FXP program is identical to mlton:benchmark/tests/fxp.sml after whitespace normalization, including data handling and invocation; retain the original source and notices under fxp"),
+    "test/zern.sml": ("duplicate", "same complete FastRealArray2/MSpeed Zernike kernel and 128-square input as mlton:benchmark/tests/zern.sml; only the fixed 1000-repeat launcher replaces the parameterized launcher; retain the original count and source under zern"),
+    "test/tsp.sml": ("duplicate", "same Tree/TSP/Rand/BuildTree algorithms as mlton:benchmark/tests/tsp.sml; selected size 32767 and four calls differ from MLton size 2097151 and parameterized calls; document these workload parameters and retain the source under tsp"),
+    "test/tsp_tp.sml": ("duplicate", "same complete test/tsp.sml program except eight calls instead of four; repetition is a profile/driver parameter, not a separate algorithm or representation; retain both invocations under tsp"),
+    "test/raytrace.sml": ("duplicate", "same full PLClub chess-scene renderer as mlton:benchmark/tests/raytrace.sml; only legacy Byte.unpackString tuple and unchecked lexer Vector/CharVector access differ, with both mapped to the same SML97 checked calls in the portable port; one-call launcher retained as provenance under raytrace"),
     "test/kitfib35_mlton.sml": ("duplicate", "same n<1 Fibonacci kernel and argument 35 as test/kitfib35.sml; only top-level driver wrapping differs; share the kitfib35 implementation and preserve both source paths"),
     "test/kitfib35_smlnj.sml": ("duplicate", "same n<1 Fibonacci kernel and argument 35 as test/kitfib35.sml; only callable driver wrapping differs; share the kitfib35 implementation and preserve both source paths"),
     "test/kittmergesort_smlnj.sml": ("duplicate", "same copying mergesort, generator, seed and 100000-element input as test/kittmergesort.sml; the sole diff is val result versus fun doit(); the ten-repetition _tp variant remains separate"),
@@ -37,6 +43,16 @@ MLKIT_REVIEW = {
     "test/perm1.sml": ("exclude", "composePartial helper declaration for perm.mlb, without a workload invocation"),
     "test/stringconcat.sml": ("exclude", "argument-transformation regression: concatenates two literal strings once and prints Hello world; its source comment explicitly checks -no_opt compiler behavior"),
     "test/tststrcmp.sml": ("exclude", "enumerated string-comparison correctness checks with expected booleans and numbered ok reports, not a repeated benchmark workload"),
+    "test/PermuteList.sml": ("exclude", "support module implementing PERMUTELIST and declaring projection/search functions; it contains no workload invocation, input or driver; retain it as a dependency if an importing application needs it"),
+    "test_dev/life.sml": ("exclude", "compiler copy-string/debug regression: maps only the literal list [0,1] and prints progress; contains no Life evolution or benchmark invocation"),
+    "test_dev/rev.sml": ("exclude", "two-element primitive printList/reversal compiler example using only [1,2]; no benchmark loop or representative input; larger list workloads are inventoried separately"),
+    "test_dev/listsort.sml": ("exclude", "explicit Testing structure Listsort correctness program with test1/test2 boolean checks and Random.newgen; not the copying mergesort benchmark or a standalone sorting kernel"),
+    "test/checksum.sml": ("duplicate", "same packed Word32 fold, ten-million-byte all-zero array and fifty scans as mlton:benchmark/tests/checksum.sml; legacy Pack32Little/fromLarge naming and invocation adapter are the only changes; retain both sources under checksum"),
+    "test/boyer.sml": ("duplicate", "same complete property-list rewriting kernel, rules, substitution and theorem as mlton:benchmark/tests/boyer.sml; the fixed fifty-iteration wrapper and progress dots are driver differences, documented as original parameters/output adaptations under boyer"),
+    "test/weeks4.sml": ("duplicate", "complete cyclic-u6 F17 Groebner kernel and twenty-repetition workload match mlton:benchmark/tests/tyan.sml; only author email spelling and parameterized versus fixed outer driver differ; retain this historical alias/source under tyan"),
+    "test/pseudokit.sml": ("exclude", "module/type-sharing compiler regression declaring miniature Set/FinMap/Tools/Basics functors and one instantiation; no Pseudoknot calculation, input or timed workload despite its filename"),
+    "test/professor2_smlnj.sml": ("duplicate", "same complete professor2 search, sixteen-card dataset and one-solve workload as test/professor2.sml; only opaque Main packaging and the callable invocation adapter differ; retain the alias source under professor2"),
+    "test/kkb36c_mlton.sml": ("duplicate", "same no-op region functions, copying completion kernel, geometric equations and three completions as test/kkb36c_smlnj.sml; only the exposed launcher/helper name and unused testit differ; retain the host source under kkb36c_smlnj"),
 }
 # These pairs were reviewed at the pinned revision. Their complete bodies and
 # hardcoded parameters agree; only the top-level invocation/export differs.
@@ -65,10 +81,17 @@ def table(path):
         return rows
 
 
+def upstream_file(root, path):
+    # Native reference builds leave caches with source-looking suffixes (for
+    # example .cm/SKEL/main.sml); they are not pinned workload sources.
+    ignored = {".cm", ".git", "MLB", "_build", "dist-newstyle", "__pycache__"}
+    return not any(part in ignored for part in path.relative_to(root).parts)
+
+
 def source_files(root, path):
     p = root / path
     if p.is_dir():
-        return sorted(q for q in p.rglob("*") if q.is_file() and q.suffix in EXTENSIONS)
+        return sorted(q for q in p.rglob("*") if q.is_file() and q.suffix in EXTENSIONS and upstream_file(root, q))
     files = [p] if p.exists() else []
     if p.suffix in {".hs", ".lhs"} and p.exists():
         # Multi-entrypoint directories have one inventory key per executable,
@@ -211,6 +234,8 @@ def discover(source, root):
     elif source == "nofib":
         for category in ("imaginary", "spectral", "real", "gc", "shootout", "parallel", "smp"):
             for p in sorted((root / category).rglob("Makefile")):
+                if not upstream_file(root, p):
+                    continue
                 if p.parent != root / category:
                     entries = [q for q in p.parent.iterdir() if q.suffix in {".hs", ".lhs"} and q.is_file()
                                and re.search(r"^[ \t]*(?:module[ \t]+Main\b|main[ \t]*(?:::|=))", haskell_code(q), re.M)]
@@ -221,6 +246,8 @@ def discover(source, root):
                         add(str(p.parent.relative_to(root)), p.parent.name, str(p.relative_to(root)))
     elif source == "sandmark":
         for p in sorted((root / "benchmarks").rglob("*")):
+            if not upstream_file(root, p):
+                continue
             if not p.is_file() or not (p.name == "dune" or p.name.endswith("-dune.inc")):
                 continue
             for form in walk_forms(sexps(p.read_text())):
@@ -295,7 +322,15 @@ def classify(source, root, item, files, text):
         if name in {"BASIS", "common"}:
             disposition, milestone, reason = "exclude", "-", "shared library/benchmark interface, not an independent workload"
         elif name in {"barnes-hut", "delta-blue", "dlx", "kcfa", "pia", "regex"}:
-            disposition, reason = "defer", "upstream README marks this variant broken; repair and establish an independent result before import"
+            blockers = {
+                "barnes-hut": "native SML/NJ 2026.2 CM.make fails at main.sml:7-61: BMARK.testit requires unit->unit but the source exports TextIO.outstream->unit; upstream also marks it broken; review/repair the launcher and establish independent full-state results before importing this variant",
+                "delta-blue": "native SML/NJ 2026.2 CM.make succeeds, but Main.testit() fails constructing the second chain equality with Fail: Cycle encountered; projectionTest also checks dst instead of src after inverse propagation; repair and independently validate the constraint solver before import",
+                "dlx": "native SML/NJ 2026.2 CM.make reports a missing end at main.sml:27 and a syntax error at line 42; its original launcher cannot run; repair the pinned modular variant and independently validate all trap outputs before import (older/newer monolithic DLX ports remain separate)",
+                "kcfa": "sources.cm requires ../common/lib-base.sml, absent from the pinned checkout; native SML/NJ 2026.2 CM.make fails opening that module; restore/review its library exception contract and establish reference state/store summaries before import",
+                "pia": "pinned programs/pia contains only DATA simulation datasets, with no SML implementation or build manifest; restore the advertised program and a runnable reference before considering a port",
+                "regex": "advertised by upstream README but no programs/regex source directory exists at the pinned revision; restore the implementation and reference inputs/results before considering a port",
+            }
+            disposition, reason = "defer", blockers[name]
         elif name in {"cml-sieve", "pingpong"}:
             disposition, reason = "defer", "requires Concurrent ML message passing; reconsider when a compatible concurrency facility exists"
     if source == "nofib":
@@ -374,6 +409,8 @@ def build(source, root, lock):
         inputs = set()
         if files and parent.exists() and path.startswith(("programs/", "benchmarks/", "imaginary/", "spectral/", "real/", "gc/", "shootout/", "parallel/", "smp/")):
             for fixture in parent.rglob("*"):
+                if not upstream_file(root, fixture):
+                    continue
                 if fixture.is_file() and (fixture.name == "ANSWER" or fixture.suffix in {".stdin", ".stdout", ".faststdin", ".faststdout", ".slowstdin", ".slowstdout", ".expected", ".out", ".ok"} or "DATA" in fixture.relative_to(parent).parts):
                     inputs.add(str(fixture.relative_to(root)))
         for ref in re.findall(r'"([^"\n]+)"', text):
@@ -385,6 +422,8 @@ def build(source, root, lock):
         notices = lock["notices"].split(";") if lock["notices"] not in {"", "-"} else []
         if files and parent.exists() and ((root / path).is_dir() or source == "nofib" or (source == "sandmark" and path.startswith("benchmarks/"))):
             for notice in parent.rglob("*"):
+                if not upstream_file(root, notice):
+                    continue
                 if notice.is_file() and re.fullmatch(r"(?:LICENSE|COPYING|COPYRIGHT)(?:\.[\w-]+)?", notice.name, re.I):
                     notices.append(str(notice.relative_to(root)))
         authors = set()

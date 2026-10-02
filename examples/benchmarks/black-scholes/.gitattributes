@@ -1,0 +1,3 @@
+upstream/* -whitespace
+port.patch -whitespace
+expected/* -whitespace

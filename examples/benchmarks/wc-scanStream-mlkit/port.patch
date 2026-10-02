@@ -1,0 +1,54 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -1,43 +1,9 @@
+-(* Written by Stephen Weeks (sweeks@acm.org). *)
+-
+-structure Main =
+-   struct
+-      fun doit () =
+-	 let
+-	    open TextIO
+-	    val f = OS.FileSys.tmpName ()
+-	    val out = openOut f
+-	    val _ =
+-	       output (out,
+-		       String.implode
+-		       (List.tabulate (1000000, fn i =>
+-				       if i mod 10 = 0 then #"\n" else #"a")))
+-	    val _ = closeOut out
+-	    fun wc f =
+-	       let
+-		  val ins = openIn f
+-	       in TextIO.scanStream
+-		  (fn reader => fn s =>
+-		   let
+-		      fun loop (s, ns) =
+-			 case reader s of
+-			    NONE => (closeIn ins
+-				     ; print (concat [Int.toString ns,
+-						    " newlines\n"])
+-				     ; NONE)
+-			  | SOME (c, s') =>
+-			       loop (s', if c = #"\n" then ns + 1 else ns)
+-		   in loop (s, 0)
+-		   end)
+-		  ins
+-	       end
+-	    val rec loop =
+-	       fn 0 => ()
+-		| n => (wc f; loop (n - 1))
+-	    val _ = loop 20
+-	    val _ = OS.FileSys.remove f
+-	 in ()
+-	 end
+-   end
+-
+-val _ = Main.doit()+structure Benchmark=struct val name="wc-scanStream-mlkit"
++fun read()=let val ins=TextIO.openIn "input.txt" val observed=ref 0
++val _=TextIO.scanStream (fn reader=>fn state=>let fun loop(s,n)=case reader s of NONE=>(observed:=n;TextIO.closeIn ins;NONE) |SOME(c,s')=>loop(s',if c = #"\n" then n+1 else n) in loop(state,0)end) ins
++in !observed end
++fun run [bytes,reps]=let val n=BenchInput.between(1,1000000)(BenchInput.integer bytes) val r=BenchInput.between(1,1000)(BenchInput.integer reps)
++val out=TextIO.openOut "input.txt" val _=TextIO.output(out,String.implode(List.tabulate(n,fn i=>if i mod 10=0 then #"\n" else #"a"))) val _=TextIO.closeOut out
++fun one()=let val result=read() in if result=(n+9)div 10 then result else raise Fail "newline count"end
++val result=BenchInput.repeat r one val _=OS.FileSys.remove "input.txt"
++in IntInf.toString result end |run _=raise Fail "wc expects bytes repetitions"end

@@ -1,0 +1,23 @@
+
+Result of TYPE:
+
+
+ 
+Coersion set:     
+    'a7 |> 'a8, 
+    'a7->'a8 |> 'a6
+Type environment: 
+Expression:       (fn x =>x)
+Type:             'a6
+
+
+Result of MATCH:
+
+
+ 
+Coersion set:     
+    'a7 |> 'a8, 
+    'a7->'a8 |> 'a9->'a10
+Type environment: 
+Expression:       (fn x =>x)
+Type:             'a9->'a10
