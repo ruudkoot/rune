@@ -1,0 +1,174 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 1dbae4f..e9e4f1d 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -150,6 +150,11 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [ray-smlnj](#ray-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/ray) | Interpret sphere scenes and validate every channel of the modern SML/NJ P6 image. |
+ | [kitmolgard](#kitmolgard) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/kitmolgard.sml) | Run a deterministic coloured Petri-net counting simulation and validate complete reports. |
+ | [vliw-smlnj](#vliw-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/vliw) | Schedule and compress abstract assembly using the modern modular SML/NJ implementation. |
++| [rfib](#rfib) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/rfib) | Evaluate the Double nfib recurrence and validate it with an independent integer recurrence. |
++| [tak-nofib-lazy](#tak-nofib-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/tak) | Demand Takeuchi arguments through explicit memoized delays. |
++| [tak-nofib-strict](#tak-nofib-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/tak) | Evaluate all three Takeuchi arguments strictly while preserving the function result. |
++| [exp3_8-lazy](#exp3_8-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/exp3_8) | Compute 3^n by lazy Peano addition and multiplication, then force the complete unary result. |
++| [exp3_8-strict](#exp3_8-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/exp3_8) | Compute 3^n by strict Peano addition and multiplication, then force the complete unary result. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -3899,3 +3904,134 @@ hypotheses, not measured performance causes. See [literature](../literature.md).
+ | smoke | `9 1 expected/tmp.s expected/cmp.s` | `458 CDC06C0F;398 ADC5A56C` |
+ | normal | `9 3 expected/tmp.s expected/cmp.s` | `458 CDC06C0F;398 ADC5A56C|458 CDC06C0F;398 ADC5A56C|458 CDC06C0F;398 ADC5A56C` |
+ | large | `9 250 expected/tmp.s expected/cmp.s` | [complete result](vliw-smlnj/large.expected) |
++
++## rfib
++
++Evaluate the Double nfib recurrence and validate it with an independent integer recurrence. See [provenance](rfib/PROVENANCE.md) and retained Haskell source/Makefile.
++
++nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/rfib/Main.hs`.
++No author or individual licence notice is supplied by this source; retain this gap explicitly.
++Retain the complete upstream source, Makefile and available output fixtures.
++
++Evaluate the Double nfib recurrence and consume both recursive subresults.
++
++Both recursive Double results are demanded exactly once; no sharing or unused argument changes the workload. The SML port evaluates n-1 before n-2 and preserves the two additions and floating comparisons. Integral profile arguments produce exact binary64 results at these sizes. An independent integer Fibonacci recurrence validates the complete result. A lazy variant is not added because all recursive subresults are consumed and no shared result is recomputed.
++Smoke and normal bound work without changing the algorithm. Large is explicitly
++selected from upstream parameters, and is not claimed as executed on every
++engine. Process/argument plumbing is a thin SML driver; return and validate
++the actual result. Calls, thunk forcing and allocation are source hypotheses
++until measured. See [Partain and the nofib literature](../literature.md).
++
++| Profile | Arguments | Expected result |
++|---|---|---|
++| smoke | `12` | `465` |
++| normal | `28` | `1028457` |
++| large | `40` | `331160281` |
++
++## tak-nofib-lazy
++
++Demand Takeuchi arguments through explicit memoized delays. See [provenance](tak-nofib-lazy/PROVENANCE.md) and retained Haskell source/Makefile.
++
++nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/tak/Main.hs`.
++Authorship is unknown: the source explicitly records unknown provenance (Partain, 1995-01-25).
++Retain the complete upstream source, Makefile and available output fixtures.
++
++Demand Takeuchi arguments through memoized delays, preserving sharing.
++
++The Haskell source can leave the third recursive argument unevaluated when the outer comparison returns another result. The lazy port memoizes each argument computation and passes the same delay cells into recursive calls, preserving demand and sharing. The strict port fully evaluates all three calls, changing work/allocation while retaining the same function value. Both variants are separately named and checked. Selected inputs fit every supported machine integer width; large preserves nofib normal parameters 35/17/8.
++Smoke and normal bound work without changing the algorithm. Large is explicitly
++selected from upstream parameters, and is not claimed as executed on every
++engine. Process/argument plumbing is a thin SML driver; return and validate
++the actual result. Calls, thunk forcing and allocation are source hypotheses
++until measured. See [Partain and the nofib literature](../literature.md).
++
++| Profile | Arguments | Expected result |
++|---|---|---|
++| smoke | `9 6 3` | `6` |
++| normal | `18 12 6` | `7` |
++| large | `35 17 8` | `9` |
++
++## tak-nofib-strict
++
++Evaluate all three Takeuchi arguments strictly while preserving the function result. See [provenance](tak-nofib-strict/PROVENANCE.md) and retained Haskell source/Makefile.
++
++nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/tak/Main.hs`.
++Authorship is unknown: the source explicitly records unknown provenance (Partain, 1995-01-25).
++Retain the complete upstream source, Makefile and available output fixtures.
++
++Evaluate all three recursive Takeuchi arguments strictly.
++
++The Haskell source can leave the third recursive argument unevaluated when the outer comparison returns another result. The lazy port memoizes each argument computation and passes the same delay cells into recursive calls, preserving demand and sharing. The strict port fully evaluates all three calls, changing work/allocation while retaining the same function value. Both variants are separately named and checked. Selected inputs fit every supported machine integer width; large preserves nofib normal parameters 35/17/8.
++Smoke and normal bound work without changing the algorithm. Large is explicitly
++selected from upstream parameters, and is not claimed as executed on every
++engine. Process/argument plumbing is a thin SML driver; return and validate
++the actual result. Calls, thunk forcing and allocation are source hypotheses
++until measured. See [Partain and the nofib literature](../literature.md).
++
++| Profile | Arguments | Expected result |
++|---|---|---|
++| smoke | `9 6 3` | `6` |
++| normal | `18 12 6` | `7` |
++| large | `35 17 8` | `9` |
++
++## exp3_8-lazy
++
++Compute 3^n by lazy Peano addition and multiplication, then force the complete unary result. See [provenance](exp3_8-lazy/PROVENANCE.md).
++
++nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/exp3_8/Main.hs`.
++Lennart Augustsson's 1992 Haskell translation; the source retains Joern von
++Holten's discussion of the original ASpecT 3^8 benchmark. Preserve the full
++mail history, source and Makefile. No individual licence statement is given;
++record that gap rather than assigning an inferred licence.
++
++Compute 3^n by lazy Peano addition and multiplication, then force the complete unary result.
++Keep Z/S unary naturals, recursive addition, multiplication x*(S y)=x*y+x,
++and exponentiation by recursive unary multiplication. Do not replace the
++workload by machine exponentiation. The independent integer 3^n calculation
++is used only after forcing/counting every constructor of the actual result.
++Lazy successor fields and operations are explicit memoized delays, including
++sharing of the same x operand on every multiplication branch. Z/S pattern
++matching forces exactly the source operand; addition defers its second
++operand until the first ends. Final integer conversion forces the complete
++result.
++Smoke uses exponent 3; normal 8 is the upstream fast parameter and large 9
++is the upstream normal/slow parameter. All selected counts fit machine ints
++on every host; the unary representation stays unchanged. Process arguments
++are thin driver input. Forcing, thunk allocation, recursion and retained
++constructors are source hypotheses; see [nofib literature](../literature.md).
++
++| Profile | Exponent | Expected result |
++|---|---|---|
++| smoke | `3` | `27` |
++| normal | `8` | `6561` |
++| large | `9` | `19683` |
++
++## exp3_8-strict
++
++Compute 3^n by strict Peano addition and multiplication, then force the complete unary result. See [provenance](exp3_8-strict/PROVENANCE.md).
++
++nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/exp3_8/Main.hs`.
++Lennart Augustsson's 1992 Haskell translation; the source retains Joern von
++Holten's discussion of the original ASpecT 3^8 benchmark. Preserve the full
++mail history, source and Makefile. No individual licence statement is given;
++record that gap rather than assigning an inferred licence.
++
++Compute 3^n by strict Peano addition and multiplication, then force the complete unary result.
++Keep Z/S unary naturals, recursive addition, multiplication x*(S y)=x*y+x,
++and exponentiation by recursive unary multiplication. Do not replace the
++workload by machine exponentiation. The independent integer 3^n calculation
++is used only after forcing/counting every constructor of the actual result.
++The strict variant fully evaluates recursive products/additions before
++constructing successors, materially changing evaluation/allocation and sharing
++relative to the lazy source. It is separately named and measured.
++Smoke uses exponent 3; normal 8 is the upstream fast parameter and large 9
++is the upstream normal/slow parameter. All selected counts fit machine ints
++on every host; the unary representation stays unchanged. Process arguments
++are thin driver input. Forcing, thunk allocation, recursion and retained
++constructors are source hypotheses; see [nofib literature](../literature.md).
++
++| Profile | Exponent | Expected result |
++|---|---|---|
++| smoke | `3` | `27` |
++| normal | `8` | `6561` |
++| large | `9` | `19683` |
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index a07a8a1..4f3bb66 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -419,3 +419,18 @@ kitmolgard	large	mlkit	test/kitmolgard.sml	100000 expected/large.txt	kitmolgard/
+ vliw-smlnj	smoke	smlnj	programs/vliw	9 1 expected/tmp.s expected/cmp.s	vliw-smlnj/smoke.expected	shared/input.sml,vliw-smlnj/benchmark.sml,shared/main.sml	30	1048576	compiler-application,graphs,scheduling	DATA/ndotprod.s,expected/tmp.s,expected/cmp.s	exact	implemented
+ vliw-smlnj	normal	smlnj	programs/vliw	9 3 expected/tmp.s expected/cmp.s	vliw-smlnj/normal.expected	shared/input.sml,vliw-smlnj/benchmark.sml,shared/main.sml	600	4194304	compiler-application,graphs,scheduling	DATA/ndotprod.s,expected/tmp.s,expected/cmp.s	exact	implemented
+ vliw-smlnj	large	smlnj	programs/vliw	9 250 expected/tmp.s expected/cmp.s	vliw-smlnj/large.expected	shared/input.sml,vliw-smlnj/benchmark.sml,shared/main.sml	3600	8388608	compiler-application,graphs,scheduling	DATA/ndotprod.s,expected/tmp.s,expected/cmp.s	exact	implemented
++rfib	smoke	nofib	imaginary/rfib	12	rfib/smoke.expected	shared/input.sml,rfib/benchmark.sml,shared/main.sml	30	1048576	calls,recursion,real	-	exact	implemented
++rfib	normal	nofib	imaginary/rfib	28	rfib/normal.expected	shared/input.sml,rfib/benchmark.sml,shared/main.sml	600	4194304	calls,recursion,real	-	exact	implemented
++rfib	large	nofib	imaginary/rfib	40	rfib/large.expected	shared/input.sml,rfib/benchmark.sml,shared/main.sml	3600	8388608	calls,recursion,real	-	exact	implemented
++tak-nofib-strict	smoke	nofib	imaginary/tak	9 6 3	tak-nofib-strict/smoke.expected	shared/input.sml,tak-nofib-strict/benchmark.sml,shared/main.sml	30	1048576	calls,recursion,strict	-	exact	implemented
++tak-nofib-strict	normal	nofib	imaginary/tak	18 12 6	tak-nofib-strict/normal.expected	shared/input.sml,tak-nofib-strict/benchmark.sml,shared/main.sml	600	4194304	calls,recursion,strict	-	exact	implemented
++tak-nofib-strict	large	nofib	imaginary/tak	35 17 8	tak-nofib-strict/large.expected	shared/input.sml,tak-nofib-strict/benchmark.sml,shared/main.sml	3600	8388608	calls,recursion,strict	-	exact	implemented
++tak-nofib-lazy	smoke	nofib	imaginary/tak	9 6 3	tak-nofib-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,tak-nofib-lazy/benchmark.sml,shared/main.sml	30	1048576	calls,recursion,lazy-sharing	-	exact	implemented
++tak-nofib-lazy	normal	nofib	imaginary/tak	18 12 6	tak-nofib-lazy/normal.expected	shared/input.sml,shared/lazy.sml,tak-nofib-lazy/benchmark.sml,shared/main.sml	600	4194304	calls,recursion,lazy-sharing	-	exact	implemented
++tak-nofib-lazy	large	nofib	imaginary/tak	35 17 8	tak-nofib-lazy/large.expected	shared/input.sml,shared/lazy.sml,tak-nofib-lazy/benchmark.sml,shared/main.sml	3600	8388608	calls,recursion,lazy-sharing	-	exact	implemented
++exp3_8-lazy	smoke	nofib	imaginary/exp3_8	3	exp3_8-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,exp3_8-lazy/benchmark.sml,shared/main.sml	30	1048576	unary-arithmetic,recursion,lazy	-	exact	implemented
++exp3_8-lazy	normal	nofib	imaginary/exp3_8	8	exp3_8-lazy/normal.expected	shared/input.sml,shared/lazy.sml,exp3_8-lazy/benchmark.sml,shared/main.sml	600	4194304	unary-arithmetic,recursion,lazy	-	exact	implemented
++exp3_8-lazy	large	nofib	imaginary/exp3_8	9	exp3_8-lazy/large.expected	shared/input.sml,shared/lazy.sml,exp3_8-lazy/benchmark.sml,shared/main.sml	3600	8388608	unary-arithmetic,recursion,lazy	-	exact	implemented
++exp3_8-strict	smoke	nofib	imaginary/exp3_8	3	exp3_8-strict/smoke.expected	shared/input.sml,exp3_8-strict/benchmark.sml,shared/main.sml	30	1048576	unary-arithmetic,recursion,strict	-	exact	implemented
++exp3_8-strict	normal	nofib	imaginary/exp3_8	8	exp3_8-strict/normal.expected	shared/input.sml,exp3_8-strict/benchmark.sml,shared/main.sml	600	4194304	unary-arithmetic,recursion,strict	-	exact	implemented
++exp3_8-strict	large	nofib	imaginary/exp3_8	9	exp3_8-strict/large.expected	shared/input.sml,exp3_8-strict/benchmark.sml,shared/main.sml	3600	8388608	unary-arithmetic,recursion,strict	-	exact	implemented

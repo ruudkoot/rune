@@ -24,7 +24,7 @@ expect_failure() {
   grep -q '^PROGRAM FAIL ' "$out/$label.log" || { cat "$out/$label.log"; exit 1; }
 }
 {
-  for source in shared/input.sml tak/benchmark.sml shared/main.sml; do printf '%s\n' "$root/examples/benchmarks/$source"; done
+  for source in shared/input.sml shared/tak.sml tak/benchmark.sml shared/main.sml; do printf '%s\n' "$root/examples/benchmarks/$source"; done
 } > "$out/tak.sources"
 printf 'tak\n18 12 6 1\n999\n' > "$out/wrong.input"
 expect_failure wrong-result 30 1048576 "$out/tak.sources" "$out/wrong.input"

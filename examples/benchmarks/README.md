@@ -150,6 +150,13 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
 | [ray-smlnj](#ray-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/ray) | Interpret sphere scenes and validate every channel of the modern SML/NJ P6 image. |
 | [kitmolgard](#kitmolgard) | [ML Kit](https://github.com/melsman/mlkit/blob/6dab5582db22a5f5672ca1fc5244171687d83ce5/test/kitmolgard.sml) | Run a deterministic coloured Petri-net counting simulation and validate complete reports. |
 | [vliw-smlnj](#vliw-smlnj) | [SML/NJ](https://github.com/smlnj/benchmarks/tree/75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0/programs/vliw) | Schedule and compress abstract assembly using the modern modular SML/NJ implementation. |
+| [rfib](#rfib) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/rfib) | Evaluate the Double nfib recurrence and validate it with an independent integer recurrence. |
+| [tak-nofib-lazy](#tak-nofib-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/tak) | Demand Takeuchi arguments through explicit memoized delays. |
+| [tak-nofib-strict](#tak-nofib-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/tak) | Evaluate all three Takeuchi arguments strictly while preserving the function result. |
+| [exp3_8-lazy](#exp3_8-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/exp3_8) | Compute 3^n by lazy Peano addition and multiplication, then force the complete unary result. |
+| [exp3_8-strict](#exp3_8-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/exp3_8) | Compute 3^n by strict Peano addition and multiplication, then force the complete unary result. |
+| [digits-of-e1-lazy](#digits-of-e1-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/digits-of-e1) | Produce e digits with memoized continued-fraction transformations. |
+| [digits-of-e2-lazy](#digits-of-e2-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/digits-of-e2) | Produce e digits with memoized factorial-base carry propagation. |
 
 ## Running and interpreting checks
 
@@ -212,6 +219,21 @@ configurations use a virtual-address-space quota. Compact Poly/ML reserves
 a managed heap capped at half that quota, and a 64 MiB stack-space reservation.
 Actual limit settings appear in each result log. These accounting methods
 are recorded explicitly and are not RSS measurements or equal-heap claims.
+
+For validating other Rune changes, the bounded routine set is `make bench-smoke`.
+Use the complete imported smoke and normal coverage explicitly:
+
+```sh
+make bench-check-all BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt RUNE_BENCH_COMPILE_OPTIONS=-O0
+make bench-check-all BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt RUNE_BENCH_COMPILE_OPTIONS=-O2
+```
+
+`BENCH_FILTER` selects benchmark names by substring. For example,
+`make bench-check BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt BENCH_FILTER=aobench`
+checks the captured-record workload on all four engines. The default reference
+host set has recorded failures; see [reference-host caveats](validation/reference-hosts.md)
+before using host agreement as an acceptance condition. The roadmap remains
+in progress while these imported programs and tools are available for use.
 
 The independent and negative tests are:
 
@@ -3899,3 +3921,201 @@ hypotheses, not measured performance causes. See [literature](../literature.md).
 | smoke | `9 1 expected/tmp.s expected/cmp.s` | `458 CDC06C0F;398 ADC5A56C` |
 | normal | `9 3 expected/tmp.s expected/cmp.s` | `458 CDC06C0F;398 ADC5A56C|458 CDC06C0F;398 ADC5A56C|458 CDC06C0F;398 ADC5A56C` |
 | large | `9 250 expected/tmp.s expected/cmp.s` | [complete result](vliw-smlnj/large.expected) |
+
+## rfib
+
+Evaluate the Double nfib recurrence and validate it with an independent integer recurrence. See [provenance](rfib/PROVENANCE.md) and retained Haskell source/Makefile.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/rfib/Main.hs`.
+No author or individual licence notice is supplied by this source; retain this gap explicitly.
+Retain the complete upstream source, Makefile and available output fixtures.
+
+Evaluate the Double nfib recurrence and consume both recursive subresults.
+
+Both recursive Double results are demanded exactly once; no sharing or unused argument changes the workload. The SML port evaluates n-1 before n-2 and preserves the two additions and floating comparisons. Integral profile arguments produce exact binary64 results at these sizes. An independent integer Fibonacci recurrence validates the complete result. A lazy variant is not added because all recursive subresults are consumed and no shared result is recomputed.
+Smoke and normal bound work without changing the algorithm. Large is explicitly
+selected from upstream parameters, and is not claimed as executed on every
+engine. Process/argument plumbing is a thin SML driver; return and validate
+the actual result. Calls, thunk forcing and allocation are source hypotheses
+until measured. See [Partain and the nofib literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `12` | `465` |
+| normal | `28` | `1028457` |
+| large | `40` | `331160281` |
+
+## tak-nofib-lazy
+
+Demand Takeuchi arguments through explicit memoized delays. See [provenance](tak-nofib-lazy/PROVENANCE.md) and retained Haskell source/Makefile.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/tak/Main.hs`.
+Authorship is unknown: the source explicitly records unknown provenance (Partain, 1995-01-25).
+Retain the complete upstream source, Makefile and available output fixtures.
+
+Demand Takeuchi arguments through memoized delays, preserving sharing.
+
+The Haskell source can leave the third recursive argument unevaluated when the outer comparison returns another result. The lazy port memoizes each argument computation and passes the same delay cells into recursive calls, preserving demand and sharing. The strict port fully evaluates all three calls, changing work/allocation while retaining the same function value. Both variants are separately named and checked. Selected inputs fit every supported machine integer width; large preserves nofib normal parameters 35/17/8.
+Smoke and normal bound work without changing the algorithm. Large is explicitly
+selected from upstream parameters, and is not claimed as executed on every
+engine. Process/argument plumbing is a thin SML driver; return and validate
+the actual result. Calls, thunk forcing and allocation are source hypotheses
+until measured. See [Partain and the nofib literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `9 6 3` | `6` |
+| normal | `18 12 6` | `7` |
+| large | `35 17 8` | `9` |
+
+## tak-nofib-strict
+
+The strict recurrence is the shared classic `tak` implementation in
+`shared/tak.sml`; nofib retains its own driver and fixed input profiles.
+
+Evaluate all three Takeuchi arguments strictly while preserving the function result. See [provenance](tak-nofib-strict/PROVENANCE.md) and retained Haskell source/Makefile.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/tak/Main.hs`.
+Authorship is unknown: the source explicitly records unknown provenance (Partain, 1995-01-25).
+Retain the complete upstream source, Makefile and available output fixtures.
+
+Evaluate all three recursive Takeuchi arguments strictly.
+
+The Haskell source can leave the third recursive argument unevaluated when the outer comparison returns another result. The lazy port memoizes each argument computation and passes the same delay cells into recursive calls, preserving demand and sharing. The strict port fully evaluates all three calls, changing work/allocation while retaining the same function value. Both variants are separately named and checked. Selected inputs fit every supported machine integer width; large preserves nofib normal parameters 35/17/8.
+Smoke and normal bound work without changing the algorithm. Large is explicitly
+selected from upstream parameters, and is not claimed as executed on every
+engine. Process/argument plumbing is a thin SML driver; return and validate
+the actual result. Calls, thunk forcing and allocation are source hypotheses
+until measured. See [Partain and the nofib literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `9 6 3` | `6` |
+| normal | `18 12 6` | `7` |
+| large | `35 17 8` | `9` |
+
+## exp3_8-lazy
+
+Compute 3^n by lazy Peano addition and multiplication, then force the complete unary result. See [provenance](exp3_8-lazy/PROVENANCE.md).
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/exp3_8/Main.hs`.
+Lennart Augustsson's 1992 Haskell translation; the source retains Joern von
+Holten's discussion of the original ASpecT 3^8 benchmark. Preserve the full
+mail history, source and Makefile. No individual licence statement is given;
+record that gap rather than assigning an inferred licence.
+
+Compute 3^n by lazy Peano addition and multiplication, then force the complete unary result.
+Keep Z/S unary naturals, recursive addition, multiplication x*(S y)=x*y+x,
+and exponentiation by recursive unary multiplication. Do not replace the
+workload by machine exponentiation. The independent integer 3^n calculation
+is used only after forcing/counting every constructor of the actual result.
+Lazy successor fields and operations are explicit memoized delays, including
+sharing of the same x operand on every multiplication branch. Z/S pattern
+matching forces exactly the source operand; addition defers its second
+operand until the first ends. Final integer conversion forces the complete
+result.
+Smoke uses exponent 3; normal 8 is the upstream fast parameter and large 9
+is the upstream normal/slow parameter. All selected counts fit machine ints
+on every host; the unary representation stays unchanged. Process arguments
+are thin driver input. Forcing, thunk allocation, recursion and retained
+constructors are source hypotheses; see [nofib literature](../literature.md).
+
+| Profile | Exponent | Expected result |
+|---|---|---|
+| smoke | `3` | `27` |
+| normal | `8` | `6561` |
+| large | `9` | `19683` |
+
+## exp3_8-strict
+
+Compute 3^n by strict Peano addition and multiplication, then force the complete unary result. See [provenance](exp3_8-strict/PROVENANCE.md).
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/exp3_8/Main.hs`.
+Lennart Augustsson's 1992 Haskell translation; the source retains Joern von
+Holten's discussion of the original ASpecT 3^8 benchmark. Preserve the full
+mail history, source and Makefile. No individual licence statement is given;
+record that gap rather than assigning an inferred licence.
+
+Compute 3^n by strict Peano addition and multiplication, then force the complete unary result.
+Keep Z/S unary naturals, recursive addition, multiplication x*(S y)=x*y+x,
+and exponentiation by recursive unary multiplication. Do not replace the
+workload by machine exponentiation. The independent integer 3^n calculation
+is used only after forcing/counting every constructor of the actual result.
+The strict variant fully evaluates recursive products/additions before
+constructing successors, materially changing evaluation/allocation and sharing
+relative to the lazy source. It is separately named and measured.
+Smoke uses exponent 3; normal 8 is the upstream fast parameter and large 9
+is the upstream normal/slow parameter. All selected counts fit machine ints
+on every host; the unary representation stays unchanged. Process arguments
+are thin driver input. Forcing, thunk allocation, recursion and retained
+constructors are source hypotheses; see [nofib literature](../literature.md).
+
+| Profile | Exponent | Expected result |
+|---|---|---|
+| smoke | `3` | `27` |
+| normal | `8` | `6561` |
+| large | `9` | `19683` |
+
+## digits-of-e1-lazy
+
+Produce e digits with memoized continued-fraction transformations. See [provenance](digits-of-e1-lazy/PROVENANCE.md).
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/digits-of-e1/Main.lhs`.
+Dale Thurston, August 2001. Preserve complete literate source/algorithm
+explanation, Makefile and upstream hash fixtures. No individual licence notice
+is present; its absence remains an explicit provenance gap.
+
+Compute e digits by lazy continued-fraction linear transformations.
+Keep the infinite e continued fraction [2,1,2,1,1,4,1,1,6,...], the
+source pole/interval guards and exact IntInf.div floor arithmetic. The quotient
+is calculated only after the pole guard permits it, preserving short-circuit
+demand. Memoize continued-fraction tails and transformation tails; the global
+continued fraction remains shared across repetitions as the Haskell CAF.
+Count includes the initial 2 but no decimal point.
+Every actual output character is consumed and compared with an independent
+reviewed high-precision exp(1) fixture; output changes from a hash of Haskell
+Show to a complete digit checker and repetition count. Normal uses upstream
+fast size; large upstream normal size. Smoke/normal/large repeats 1/100/100
+computations; 100 is the original replicateM count. No strict approximation
+is added: forcing an infinite continued fraction or the unreachable finite
+carry tail would change termination/input semantics. Big-integer arithmetic,
+sharing and demand are source hypotheses; see [nofib literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `10 1 expected/smoke.txt` | `10` |
+| normal | `50 100 expected/normal.txt` | `5000` |
+| large | `150 100 expected/large.txt` | `15000` |
+
+## digits-of-e2-lazy
+
+Produce e digits with memoized factorial-base carry propagation. See [provenance](digits-of-e2-lazy/PROVENANCE.md).
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/digits-of-e2/Main.lhs`.
+John Hughes, August 2001. Preserve complete literate source/algorithm
+explanation, Makefile and upstream hash fixtures. No individual licence notice
+is present; its absence remains an explicit provenance gap.
+
+Compute e digits by lazy factorial-base carry propagation.
+Keep the original finite 2*n factorial-series bound, integer-valued digits,
+multiplication by ten, carry guesses and corrections. Both list spines and
+head arithmetic are memoized delays: a successful carry guess emits its head
+without forcing the next carry. The second digit and fractional tail retain
+shared next-carry state. Exhausting the finite source is an error, not zero
+padding. Count includes the initial 2 and decimal point, like source take n.
+Every actual output character is consumed and compared with an independent
+reviewed high-precision exp(1) fixture; output changes from a hash of Haskell
+Show to a complete digit checker and repetition count. Smoke/normal use upstream
+fast size 90; large upstream normal size 300. The attempted 10-character
+smoke input exhausts the original Haskell finite carry bound and is rejected;
+retain that original failure rather than adding zero padding. Smoke/normal/large repeats 1/100/100
+computations; 100 is the original replicateM count. No strict approximation
+is added: forcing an infinite continued fraction or the unreachable finite
+carry tail would change termination/input semantics. Big-integer arithmetic,
+sharing and demand are source hypotheses; see [nofib literature](../literature.md).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `90 1 expected/smoke.txt` | `90` |
+| normal | `90 100 expected/normal.txt` | `9000` |
+| large | `300 100 expected/large.txt` | `30000` |

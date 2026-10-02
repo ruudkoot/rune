@@ -1,0 +1,2 @@
+tak-nofib-strict	600	4194304	shared/input.sml tak-nofib-strict/benchmark.sml shared/main.sml	18 12 6	tak-nofib-strict/normal.expected	-
+tak-nofib-lazy	600	4194304	shared/input.sml shared/lazy.sml tak-nofib-lazy/benchmark.sml shared/main.sml	18 12 6	tak-nofib-lazy/normal.expected	-

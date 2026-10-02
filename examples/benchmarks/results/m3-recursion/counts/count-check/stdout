@@ -1,0 +1,9 @@
+COUNT unbudgeted tak-nofib-strict normal rune
+COUNT unbudgeted tak-nofib-strict normal rune:new
+COUNT unbudgeted tak-nofib-strict normal rune:jit
+COUNT unbudgeted tak-nofib-strict normal rune:opt
+COUNT unbudgeted tak-nofib-lazy normal rune
+COUNT unbudgeted tak-nofib-lazy normal rune:new
+COUNT unbudgeted tak-nofib-lazy normal rune:jit
+COUNT unbudgeted tak-nofib-lazy normal rune:opt
+COUNT comparisons agree

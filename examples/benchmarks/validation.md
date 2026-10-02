@@ -264,10 +264,12 @@ separately documented in [the Word64 diagnostic](validation/word64-host.md).
 Before the compiler correction, every catalogue smoke/normal profile passed
 on stack, register interpreter, tier-2 JIT and native Rune at -O2. At -O0,
 AOBench exposed a captured-record lowering bug and the pi stream normal
-profile exceeded 600 seconds in the stack interpreter. The compiler bug is
-fixed in `97de792`, with a minimal independent 3*n*n regression and a full
-acceptance run: 326 language fixtures pass, and 493 programs produce identical
-bytecode with all seven builds. AOBench subsequently passes smoke/normal on
+profile exceeded 600 seconds in the stack interpreter. The compiler bug was initially
+fixed in historical commit `97de792`, with a minimal independent 3*n*n
+regression and a full acceptance run: 326 language fixtures pass, and 493 programs produce identical
+bytecode with all seven builds. That commit was dropped during the subsequent
+rebase because master provides the broader correction in `f3cd52a`, including
+function ownership and capture-use lint checks. AOBench subsequently passes smoke/normal on
 all four engines at both -O0 and -O2 without changing its algorithm or fixtures.
 The pi normal zero index is reduced from 30 to 10, digit position 121 checked
 independently with Chudnovsky; all four engines pass at both levels. The
@@ -289,3 +291,71 @@ The current per-attempt record is [m2-attempts.tsv](validation/m2-attempts.tsv).
 Large inputs have reviewed source/native oracles but are not claimed to have
 passed every engine/host. Full certification after the compiler correction
 and the outstanding native numerical differences remain explicit checks.
+
+## M3 recursive and exact-arithmetic wave, 2026-10-02
+
+Seven nofib ports extend the catalogue to 149 programs and 441 profiles:
+rfib, lazy/strict Takeuchi, lazy/strict unary Peano exponentiation, and two
+lazy e-digit generators. The ports retain upstream sources, notices or explicit
+notice gaps, fixed profiles, complete result checks, and translation decisions.
+Original GHC programs agree with the reviewed fixtures. Independent Fibonacci,
+machine-power and decimal-exp oracles also agree; the e2 finite-series port
+preserves the upstream exhaustion behavior instead of padding a short stream.
+
+All seven pass smoke and normal on the four Rune engines at -O0/-O2 and on
+MLton, SML/NJ 64-bit and Poly/ML. The
+[correctness ledger](results/m3-recursion/correctness-attempts.tsv) retains
+310 passing attempts, including 112 covering all seven ports after the master
+rebase and 44 additional Takeuchi reruns after sharing the strict kernel. Large profiles
+are recorded but are not claimed to have run on every configuration.
+
+The [measurement archive](results/m3-recursion/README.md) records ten serial
+fresh samples per primary compiler for each Takeuchi variant, plus separate
+Rune counts. Instruction totals agree within the stack/native and register/JIT
+pairs; allocation agrees across all four engines. Strict uses 19968 bytes and
+524 objects, while explicit lazy uses 12233024 bytes and 382186 objects on
+18/12/6. OS timing resolution is 0.01 seconds, so these samples support no
+precise speed ranking. The archive retains its original pre-rebase source,
+revision, configuration and dirty-state metadata. M3 remains in progress.
+
+## Master rebase and use as a validation suite, 2026-10-02
+
+Rebased onto `origin/master` at `3d48b00`. The eight existing benchmark commits
+retain their changes, confirmed by `git range-diff`; historical compiler commit
+`97de792` is dropped in favor of master's broader `f3cd52a` fix. Compiler sources
+and IR/language documentation now match master. Pre-rebase history is retained
+in local `benchmarks-before-rebase-20261002` so historical compiler identities
+in measurement archives remain available.
+
+AOBench passes smoke and normal on all four Rune engines at both -O0 and -O2
+with the replacement fix. All 112 new nofib Rune attempts also pass after the
+rebase. The inventory's 32 regression tests and recorded-source audit pass.
+[Reference-host notes](validation/reference-hosts.md) record the reproduced
+SML/NJ GC defect and unresolved Barnes-Hut mismatch, without relaxing fixtures.
+The [README](README.md) gives bounded and comprehensive Rune validation commands.
+The branch can deliver the imported suite before the remaining roadmap imports
+are complete; this does not claim closure of M2, M3, M4, M5 or M8.
+
+The identical strict recurrence for classic tak, ML Kit tak and strict nofib
+Takeuchi is now one implementation in `shared/tak.sml`; their drivers,
+profiles and upstream provenance remain separate. All affected classic and
+nofib drivers pass smoke/normal on four Rune engines at both optimization
+levels and the three primary native hosts; the
+[shared-kernel ledger](validation/shared-tak-attempts.tsv) records 110 passing
+attempts, including reruns of the ML Kit wrapper after extraction. Pilot
+failure checks and the measurement correctness guard also pass with the new
+source order. [Rebased count samples](validation/shared-tak-counts.tsv) retain
+the same strict/lazy allocation totals and instruction agreement across the
+applicable engine pairs. The earlier measurement archive retains its earlier
+source snapshots.
+
+The full rebased `make JOBS=4 check` exits successfully. It includes 330
+language fixtures on each compiler build, 139211 Basis checks on the stack,
+native and register engines, JIT checks, 795 documented examples, 513
+optimization checks, 24 IR checks, optimization-level agreement, bootstrap,
+performance budgets, the bounded benchmark routine set, and documentation/ISA
+validation. All seven builds produce identical bytecode for 497 programs;
+runedoc and runeopt builds also agree. The
+[acceptance transcript](validation/rebase-acceptance.log) records the complete
+run. This is local acceptance evidence; GitHub CI for the rebased branch has
+not run, and no push or merge is included in this checkpoint.

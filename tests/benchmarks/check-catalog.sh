@@ -8,7 +8,7 @@ suite=$out/examples/benchmarks
 mkdir -p "$suite/shared" "$suite/tak"
 awk -F '\t' 'NR==1 || ($1=="tak" && $2!="large")' examples/benchmarks/manifest.tsv > "$suite/manifest.tsv"
 cp examples/benchmarks/inventory.tsv "$suite/"
-cp examples/benchmarks/shared/input.sml examples/benchmarks/shared/main.sml "$suite/shared/"
+cp examples/benchmarks/shared/input.sml examples/benchmarks/shared/tak.sml examples/benchmarks/shared/main.sml "$suite/shared/"
 cp examples/benchmarks/tak/benchmark.sml examples/benchmarks/tak/smoke.expected examples/benchmarks/tak/normal.expected "$suite/tak/"
 printf 'benchmark\treason\ntak\trecursive pilot\n' > "$suite/routine.tsv"
 (cd "$out" && "$root/bin/runevm" "$root/build/bench-catalog.rbc" --check) > "$out/valid.log"

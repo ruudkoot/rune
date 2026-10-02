@@ -21,3 +21,6 @@ are source-based hypotheses, not measured causal findings. See the
 | smoke | `18 12 6 1` | `7` |
 | normal | `18 12 6 100` | `700` |
 | large | `18 12 6 5000` | `35000` |
+
+The recurrence is identical to classic tak and uses `../shared/tak.sml`.
+The original ML Kit driver parameters and repetition profile remain separate.
