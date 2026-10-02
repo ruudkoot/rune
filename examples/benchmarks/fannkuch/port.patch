@@ -1,0 +1,41 @@
+--- upstream/sources
++++ benchmark.sml
+@@ -4,7 +4,7 @@
+  * All rights reserved.
+  *)
+ 
+-structure Main : BMARK =
++structure FannkuchKernel =
+   struct
+ 
+     structure A = Array
+@@ -75,15 +75,17 @@
+                   loop (lp r, maxFlips, checkSum, nPerm+1)
+                 end
+           val (maxFlips, checkSum) = loop (n, 0, 0, 0)
+-          in
+-            Log.say [
+-                Int.toString checkSum,
+-                "\nPfannkuchen(", Int.toString n, ") = ", Int.toString maxFlips, "\n"
+-              ]
+-          end
+-
+-    fun testit () = fannkuch 7
+-
+-    fun doit () = (fannkuch 11; fannkuch 11; fannkuch 11)
+-
+-  end
++          in (maxFlips,checkSum) end
++end
++structure Benchmark =
++struct
++  val name="fannkuch"
++  fun run [size,reps]=
++    let val n=BenchInput.between(3,11)(BenchInput.integer size)
++        val count=BenchInput.between(1,3)(BenchInput.integer reps)
++        fun loop(0,max,sum)=Int.toString max^" "^IntInf.toString sum
++          | loop(k,max,sum)=let val(m,s)=FannkuchKernel.fannkuch n
++            in loop(k-1,Int.max(max,m),IntInf.+(sum,IntInf.fromInt s)) end
++    in loop(count,0,0) end
++  | run _=raise Fail "fannkuch expects permutation-size repetitions"
++end

@@ -1,0 +1,9 @@
+COUNT within-budget primes-lazy rune
+COUNT within-budget primes-lazy rune:opt
+COUNT within-budget primes-lazy rune:new
+COUNT within-budget primes-lazy rune:jit
+COUNT within-budget primes-strict rune
+COUNT within-budget primes-strict rune:opt
+COUNT within-budget primes-strict rune:new
+COUNT within-budget primes-strict rune:jit
+COUNT comparisons agree

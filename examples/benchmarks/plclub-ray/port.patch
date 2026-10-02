@@ -1,0 +1,58 @@
+--- upstream/ordered-sources
++++ ordered-port-sources
+@@ -1,3 +1,4 @@
++structure Log=struct structure BinIO=BinIO fun print (_:string)=()fun say (_:string list)=()fun error xs=raise Fail(String.concat xs)end
+ (* caml.sml
+  *
+  * COPYRIGHT (c) 2024 The Fellowship of SML/NJ (https://www.smlnj.org)
+@@ -31,8 +32,8 @@
+          val length = length
+          val sub = sub
+          val update = update
+-         val unsafe_get = Unsafe.Array.sub
+-         val unsafe_set = Unsafe.Array.update
++         val unsafe_get = Array.sub
++         val unsafe_set = Array.update
+          val make = array
+          fun map f a = Array.tabulate(length a, fn i => f(Array.sub(a, i)))
+          val init = tabulate
+@@ -2353,34 +2354,8 @@
+ 
+ end
+ 
+-(* main.sml
+- *
+- * COPYRIGHT (c) 2024 The Fellowship of SML/NJ (https://www.smlnj.org)
+- * All rights reserved.
+- *)
+-
+-structure Main : BMARK =
+-   struct
+-
+-    val name = "plclub-ray"
+-
+-    val results : string list = ["chess.ppm"]
+-
+-    fun runOnce gmlFile =
+-       Eval.f (Program.read (TextIO.openIn("DATA" ^ gmlFile)))
+-       handle _ => ()
+-
+-    fun run n = let
+-          fun loop n = if n = 0 then () else (runOnce "bmark.gml"; loop(n-1))
+-          in loop n
+-          end
+-
+-    fun testit () =
+-          Log.print (
+-            (runOnce "test.gml"; "OK\n")
+-              handle ex => exnMessage ex ^ "\n")
+-
+-    fun doit () = run 10
+-
+-   end
+-
++structure RenderDriver=struct fun render(path,_)=let val input=TextIO.openIn path val program=Program.read input handle e=>(TextIO.closeIn input;raise e)val _=TextIO.closeIn input in Eval.f program end end
++structure Benchmark=struct val name="plclub-ray"fun run[path,size,reps,reference,alternate,smlnjReference]=let val n=BenchInput.between(1,1024)(BenchInput.integer size)val r=BenchInput.between(1,500)(BenchInput.integer reps)
++val _=if List.exists(fn p=>p=path)["DATA/smoke.txt","DATA/normal.txt","DATA/large.txt"]then()else raise Fail "scene path"
++fun one()=let val _=RenderDriver.render(path,n)val pixels=ChessImageCheck.sameSet("chess.ppm",[reference,alternate,smlnjReference])in case Int.fromString pixels of SOME n=>n|NONE=>raise Fail "image pixel count"end
++in IntInf.toString(BenchInput.repeat r one)end|run _=raise Fail "renderer expects scene size repetitions references"end

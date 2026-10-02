@@ -1,0 +1,206 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -259,7 +259,7 @@
+     val norm : rand -> real
+       (* Map values in the range [randMin,randMax] to (0.0,1.0) *)
+ 
+-    val range : (int * int) -> rand -> int 
++    val range : (int * int) -> rand -> int
+       (* Map v, randMin <= v <= randMax, to integer range [i,j]
+        * Exception -
+        *   Fail if j < i
+@@ -273,7 +273,7 @@
+  * COPYRIGHT (c) 1998 by AT&T Laboratories.  See COPYRIGHT file for details
+  *
+  * Random number generator taken from Paulson, pp. 170-171.
+- * Recommended by Stephen K. Park and Keith W. Miller, 
++ * Recommended by Stephen K. Park and Keith W. Miller,
+  * Random number generators: good ones are hard to find,
+  * CACM 31 (1988), 1192-1201
+  * Updated to include the new preferred multiplier of 48271
+@@ -287,16 +287,16 @@
+   struct
+ 
+     type rand = Word.word
+-    type rand' = Int.int  (* internal representation *)
++    type rand' = IntInf.int  (* internal representation *)
+ 
+     val a : rand' = 48271
+-    val m : rand' = valOf Int.maxInt  (* 2^31 - 1 *)
++    val m : rand' = 2147483647  (* 2^31 - 1 *)
+     val m_1 = m - 1
+     val q = m div a
+     val r = m mod a
+ 
+-    val extToInt = Word.toInt
+-    val intToExt = Word.fromInt
++    val extToInt = Word.toLargeInt
++    val intToExt = Word.fromLargeInt
+ 
+     val randMin : rand = 0w1
+     val randMax : rand = intToExt m_1
+@@ -305,7 +305,7 @@
+       | chk 0wx7fffffff = m_1
+       | chk seed = extToInt seed
+ 
+-    fun random' seed = let 
++    fun random' seed = let
+           val hi = seed div q
+           val lo = seed mod q
+           val test = a * lo - r * hi
+@@ -321,16 +321,16 @@
+             fn () => (seed := random' (!seed); intToExt (!seed))
+           end
+ 
+-    val real_m = Real.fromInt m
+-    fun norm s = (Real.fromInt (Word.toInt s)) / real_m
+-
+-    fun range (i,j) = 
+-          if j < i 
++    val real_m = Real.fromLargeInt m
++    fun norm s = (Real.fromLargeInt (Word.toLargeInt s)) / real_m
++
++    fun range (i,j) =
++          if j < i
+             then raise Fail "Random.range: hi < lo"
+           else if j = i then fn _ => i
+-          else let 
+-            val R = Int.fromInt j - Int.fromInt i
+-            val cvt = Word.toIntX o Word.fromInt
++          else let
++            val R = IntInf.- (IntInf.fromInt j, IntInf.fromInt i)
++            val cvt = IntInf.toInt
+             in
+               if R = m then Word.toIntX
+               else fn s => i + cvt ((extToInt s) mod (R+1))
+@@ -408,85 +408,48 @@
+ 
+   end; (* Build *)
+ 
+-signature BMARK =
+-  sig
+-    val doit : int -> unit
+-    val testit : TextIO.outstream -> unit
+-  end;
+-(* main.sml
+- *
+- * COPYRIGHT (c) 1994 AT&T Bell Laboratories.
+- *
+- *)
+-
+-structure Main : sig
+-
+-    include BMARK
+-
+-    val dumpPS : TextIO.outstream -> unit
+-
+-  end = struct
+-
+-    val name = "TSP"
+-
+-    val problemSz = ref 32767
+-    val divideSz = ref 150
+-
+-    fun printLength (outS, Tree.NULL) = print "(* 0 points *)\n"
+-      | printLength (outS, start as Tree.ND{next, x, y, ...}) = let
+-          fun cycle (Tree.ND{next=next', ...}) = (next = next')
+-            | cycle _ = false
+-          fun distance (ax, ay, bx, by) = let
+-                val dx = ax-bx and dy = ay-by
+-                in
+-                  Math.sqrt (dx*dx + dy*dy)
+-                end
+-          fun length (Tree.NULL, px, py, n, len) = (n, len+distance(px, py, x, y))
+-            | length (t as Tree.ND{x, y, next, ...}, px, py, n, len) =
+-                if (cycle t)
+-                  then (n, len+distance(px, py, x, y))
+-                  else length(!next, x, y, n+1, len+distance(px, py, x, y))
+-          in
+-            if (cycle(!next))
+-              then TextIO.output (outS, "(* 1 point *)\n")
+-              else let
+-                val (n, len) = length(!next, x, y, 1, 0.0)
+-                in
+-                  TextIO.output (outS, concat[
+-                      "(* ", Int.toString n, "points, cycle length = ",
+-                      Real.toString len, " *)\n"
+-                    ])
+-                end
+-          end
+-
+-    fun mkTree n = BuildTree.buildTree {
+-            n=n, dir=BuildTree.X_AXIS,
+-            min_x=0.0, max_x=1.0, 
+-            min_y=0.0, max_y=1.0
+-          }
+-
+-    fun doit' n = TSP.tsp (mkTree n, !divideSz)
+-
+-    fun dumpPS outS = (
+-          TextIO.output (outS, "newgraph\n");
+-          TextIO.output (outS, "newcurve pts\n");
+-          Tree.printList (outS, doit' (!problemSz));
+-          TextIO.output (outS, "linetype solid\n"))
+-
+-    fun testit strm = printLength (strm, doit' (!problemSz))
+-
+-    val _ = problemSz := 2097151
+-    fun doit () = doit' (!problemSz)
+-
+-    val doit =
+-       fn n =>
+-       let
+-          fun loop n =
+-             if n = 0
+-                then ()
+-             else (doit();
+-                   loop(n-1))
+-       in loop n
+-       end
+-
+-  end
++
++structure Benchmark =
++struct
++  val name="tsp"
++  fun distance((x,y),(x1,y1))=Math.sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1))
++  fun less((x,y:real),(x1,y1:real))=x<x1 orelse (Real.==(x,x1) andalso y<y1)
++  fun merge([],ys)=ys | merge(xs,[])=xs
++    | merge(xs as x::xr,ys as y::yr)=if less(x,y) then x::merge(xr,ys) else y::merge(xs,yr)
++  fun split xs =
++    let fun loop([],a,b)=(a,b) | loop([x],a,b)=(x::a,b) | loop(x::y::rest,a,b)=loop(rest,x::a,y::b)
++    in loop(xs,[],[]) end
++  fun sort []=[] | sort[x]=[x] | sort xs=let val(a,b)=split xs in merge(sort a,sort b) end
++  fun points Tree.NULL=[] | points(Tree.ND{x,y,left,right,...})=(x,y)::(points left @ points right)
++  fun tour (Tree.NULL,n)=raise Fail "empty tour"
++    | tour(start as Tree.ND{x,y,next,...},n)=
++      let val first=next
++          fun loop(Tree.NULL,_,_,_)=raise Fail "open tour"
++            | loop(t as Tree.ND{x=tx,y=ty,next=link,prev,...},k,last,acc)=
++              if link=first then if k=n then ((x,y)::acc,distance(last,(x,y))) else raise Fail "tour cardinality"
++              else if k>=n then raise Fail "tour does not close" else
++                (case !prev of Tree.ND{next=back,...}=>
++                    (case !back of Tree.ND{next=here,...}=>if here=link then () else raise Fail "backlink" | _=>raise Fail "backlink")
++                  | _=>raise Fail "missing previous vertex";
++                 let val(rest,len)=loop(!link,k+1,(tx,ty),(tx,ty)::acc)
++                 in(rest,distance(last,(tx,ty))+len)end)
++          val(vertices,len)=loop(!next,1,(x,y),[])
++      in (vertices,len) end
++  fun computed(n,divide)=
++    let val input=BuildTree.buildTree{n=n,dir=BuildTree.X_AXIS,min_x=0.0,max_x=1.0,min_y=0.0,max_y=1.0}
++        val initialPoints=sort(points input)
++        val result=TSP.tsp(input,divide)
++        val(vertices,length)=tour(result,n)
++        val after=sort vertices
++        fun same([],[])=true | same((x,y)::xs,(a,b)::ys)=Real.==(x,a) andalso Real.==(y,b) andalso same(xs,ys) | same _=false
++        val _=if same(initialPoints,after) then () else raise Fail "tour loses or repeats vertices"
++    in length end
++  fun run [size,divide,want]=
++    let val n=BenchInput.between(3,32767)(BenchInput.integer size)
++        val _=if n mod 2=1 then () else raise Fail "requires odd tree size"
++        val cut=BenchInput.between(2,150)(BenchInput.integer divide)
++        val target=case Real.fromString want of SOME x=>x | NONE=>raise Fail "reference length"
++        val length=computed(n,cut)
++    in if BenchInput.closeReal(length,target,0.00000001,0.00000001) then Int.toString n else raise Fail "tour length" end
++  | run _=raise Fail "tsp expects vertices conquer-threshold reference-length"
++end

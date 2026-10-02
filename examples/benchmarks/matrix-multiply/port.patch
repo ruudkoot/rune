@@ -1,0 +1,66 @@
+--- upstream/ordered-sources
++++ ordered-port-sources
+@@ -1,6 +1,8 @@
++structure BenchMatrix =
++struct
+ (* Written by Stephen Weeks (sweeks@sweeks.com). *)
+ structure Array = Array2
+-   
++
+ fun 'a fold (n : int, b : 'a, f : int * 'a -> 'a) =
+    let
+       fun loop (i : int, b : 'a) : 'a =
+@@ -12,7 +14,7 @@
+ 
+ fun foreach (n : int, f : int -> unit) : unit =
+    fold (n, (), f o #1)
+-      
++
+ fun mult (a1 : real Array.array, a2 : real Array.array) : real Array.array =
+    let
+       val r1 = Array.nRows a1
+@@ -33,28 +35,20 @@
+          end
+    end
+ 
+-structure Main =
+-   struct
+-      fun doit () =
+-         let
+-            val dim = 500
+-            val a = Array.tabulate Array.RowMajor (dim, dim, fn (r, c) =>
+-                                                   Real.fromInt (r + c))
+-         in
+-            if Real.== (41541750.0, Array2.sub (mult (a, a), 0, 0))
+-               then ()
+-            else raise Fail "bug"
+-         end
+-      
+-      val doit =
+-         fn size =>
+-         let
+-            fun loop n =
+-               if n = 0
+-                  then ()
+-               else (doit ();
+-                     loop (n-1))
+-         in loop size
+-         end
+-   end
+ 
++
++end
++
++structure Benchmark =
++struct
++  val name = "matrix-multiply"
++  fun run [size] =
++    let val n = BenchInput.between (1,500) (BenchInput.integer size)
++        val input = Array2.array (n,n,1.0)
++        val result = BenchMatrix.mult (input,input)
++        val _ = Array2.app Array2.RowMajor
++          (fn x => if Real.==(x,Real.fromInt n) then () else raise Fail "matrix product") result
++        val ni = IntInf.fromInt n
++    in IntInf.toString (IntInf.* (IntInf.* (ni,ni),ni)) end
++    | run _ = raise Fail "matrix-multiply expects dimension"
++end

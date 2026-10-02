@@ -1,0 +1,108 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -1,3 +1,19 @@
++structure Int63 =
++struct
++  type int = IntInf.int
++  val minimum : int = ~4611686018427387904
++  val maximum : int = 4611686018427387903
++  fun checked x = if x < minimum orelse x > maximum then raise Overflow else x
++  fun op + (a,b) = checked (IntInf.+(a,b))
++  fun op - (a,b) = checked (IntInf.-(a,b))
++  fun op * (a,b) = checked (IntInf.*(a,b))
++  fun op ~ a = checked (IntInf.~ a)
++  fun op div (a,b) = checked (IntInf.div(a,b))
++  val op mod = IntInf.mod
++  val op < = IntInf.< val op > = IntInf.> val op <= = IntInf.<= val op >= = IntInf.>=
++  fun abs x = checked (IntInf.abs x)
++  val toString = IntInf.toString
++end
+ (* mandelbrot-rat.sml
+  *
+  * COPYRIGHT (c) 2024 The Fellowship of SML/NJ (https://www.smlnj.org)
+@@ -6,8 +22,13 @@
+  * Mandelbrot sets using rational numbers instead of floating-point.
+  *)
+ 
+-structure Main : BMARK =
++structure Kernel =
+   struct
++  structure Int = Int63
++  type int = Int63.int
++  val op + = Int63.+ val op - = Int63.- val op * = Int63.* val op ~ = Int63.~
++  val op div = Int63.div val op mod = Int63.mod
++  val op < = Int63.< val op > = Int63.> val op <= = Int63.<= val op >= = Int63.>=
+ 
+     val name = "mandelbrot-rat"
+ 
+@@ -18,9 +39,9 @@
+ 
+     fun gcd (m, n) = if n = 0 then m else gcd (n, m mod n)
+ 
+-    fun fromInt n = (n, 1)
++    fun fromInt (n : int) : fixed = (n, 1)
+ 
+-    fun shr (n, i) = Word.toIntX (Word.~>> (Word.fromInt n, i))
++    fun shr (n, i) = IntInf.~>> (n, i)
+ 
+     fun truncate (n, d) = if Int.abs d > 0x7FFFFFFF orelse Int.abs n > 0x7FFFFFFF
+           then truncate (shr (n, 0w4), shr (d, 0w4))
+@@ -67,31 +88,31 @@
+     val op -- = (sub : fixed * fixed -> fixed)
+     val op ** = (mul : fixed * fixed -> fixed)
+     val op // = (divide : fixed * int -> fixed)
+-    val op over = (Fn.id : int * int -> fixed)
++    val op over = ((fn x => x) : int * int -> fixed)
+ 
+     val x_base = ~2 over 1
+     val y_base = 9 over 8
+     val side = 5 over 4
+ 
+-    val sz = 256
+-    val maxCount = 512
++    val sz : int ref = ref 256
++    val maxCount : int = 512
+ 
+-    val delta = side // sz
++    fun delta () = side // (!sz)
+ 
+-    val sum_iterations = ref 0
++    val sum_iterations : int ref = ref 0
+ 
+-    fun loop1 i = if (i >= sz)
++    fun loop1 i = if (i >= !sz)
+           then ()
+           else let
+-            val c_im : fixed = y_base -- (delta ** fromInt i)
+-            fun loop2 j = if (j >= sz)
++            val c_im : fixed = y_base -- (delta() ** fromInt i)
++            fun loop2 j = if (j >= !sz)
+                   then ()
+                   else let
+                   (* NOTE: older versions of the benchmark had the following
+                    * incorrect code:
+                     val c_re = x_base * (delta + real_j)
+                    *)
+-                    val c_re = x_base ++ (delta ** fromInt j)
++                    val c_re = x_base ++ (delta() ** fromInt j)
+                     fun loop3 (count, z_re : fixed, z_im : fixed) = if (count < maxCount)
+                           then let
+                             val z_re_sq = z_re ** z_re
+@@ -118,11 +139,10 @@
+               loop1 (i+1)
+             end
+ 
+-    fun doit () = (sum_iterations := 0; loop1 0; ())
+ 
+-    fun testit _ = (
+-          sum_iterations := 0;
+-          loop1 0;
+-          print (Int.toString(!sum_iterations) ^ " iterations\n"))
+-
+-  end (* Mandelbrot *)
++end
++structure Benchmark=struct val name="mandelbrot-rat"
++fun run [size,reps]=let val n=BenchInput.between(1,256)(BenchInput.integer size) val r=BenchInput.between(1,10)(BenchInput.integer reps)
++fun one()=(Kernel.sz:=IntInf.fromInt n; Kernel.sum_iterations:=(0:IntInf.int); Kernel.loop1 (0:IntInf.int); IntInf.toString(!Kernel.sum_iterations))
++fun loop(0,acc)=String.concatWith ";"(List.rev acc)|loop(k,acc)=loop(k-1,one()::acc)
++in loop(r,[])end |run _=raise Fail "Mandelbrot expects dimension repetitions"end

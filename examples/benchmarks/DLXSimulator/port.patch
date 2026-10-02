@@ -1,0 +1,68 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -2871,48 +2871,20 @@
+ val _ = DLXSimulatorC1.run_prog GCD
+ *)
+ 
+-structure Main =
+-   struct
+-      fun doit last (instructions, inputs) =
+-         let
+-            fun inputFn {state = (inputs, outputs)} =
+-               case inputs of
+-                  [] => {input = 0,
+-                         state = ([], outputs)}
+-                | input::inputs => {input = input,
+-                                    state = (inputs, outputs)}
+-            fun outputFn {output, state = (inputs, outputs)} =
+-               {state = (inputs, output::outputs)}
+-            val state = (inputs, [])
+-            val trap = {inputFn = inputFn,
+-                        outputFn = outputFn,
+-                        state = state}
+-            val {state = (_, outputs), statistics} =
+-               DLXSimulatorC1.run_prog {instructions = instructions, trap = trap}
+-         in
+-            if last
+-               then (app (fn output => print ("Output: " ^ (Int.toString output) ^ "\n")) outputs;
+-                     print (statistics ());
+-                     print "\n";
+-                     ())
+-               else ()
+-         end
+-      val doit = fn last =>
+-         app (doit last)
+-             [(Simple, []),
+-              (Twos, [10]),
+-              (Abs, [~10]),
+-              (Fact, [12]),
+-              (GCD, [123456789,98765])]
+-
+-      val doit =
+-         fn size =>
+-         let
+-            fun loop n =
+-               if n = 0
+-                  then ()
+-               else (doit(n = 1);
+-                     loop(n-1))
+-         in loop size
+-         end
+-   end
++
++structure Benchmark =
++struct
++  val name="DLXSimulator"
++  fun one (instructions,inputs) =
++    let fun inputFn {state=(inputs,outputs)}=case inputs of []=>{input=0,state=([],outputs)} | x::xs=>{input=x,state=(xs,outputs)}
++        fun outputFn {output,state=(inputs,outputs)}={state=(inputs,output::outputs)}
++        val {state=(_,outputs),statistics}=DLXSimulatorC1.run_prog{instructions=instructions,trap={inputFn=inputFn,outputFn=outputFn,state=(inputs,[])}}
++    in List.map Int.toString outputs end
++  fun run [reps] =
++    let val n=BenchInput.between(1,1000)(BenchInput.integer reps)
++        fun loop(0,acc)=String.concatWith " " (List.rev acc)
++          | loop(k,acc)=let val result=List.concat(List.map one [(Simple,[]),(Twos,[10]),(Abs,[~10]),(Fact,[12]),(GCD,[123456789,98765])])
++                       in loop(k-1,List.revAppend(result,acc)) end
++    in loop(n,[]) end
++  | run _=raise Fail "DLXSimulator expects repetitions"
++end

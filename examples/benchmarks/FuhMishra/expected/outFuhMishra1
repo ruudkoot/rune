@@ -1,0 +1,35 @@
+
+Result of TYPE:
+
+
+ 
+Coersion set:     
+    REAL |> 'a13, 
+    'a7 |> 'a13->'a14, 
+    'a14 |> 'a8, 
+    'a9 |> 'a12, 
+    'a9 |> 'a11, 
+    'a11*'a12 |> 'a10, 
+    'a9->'a10 |> 'a7, 
+    'a8 |> 'a6
+Type environment: 
+Expression:       let makepair=(fn x =>(x,x)) in (makepair @ 3.?)end
+Type:             'a6
+
+
+Result of MATCH:
+
+
+ 
+Coersion set:     
+    REAL |> 'a13, 
+    'a15->'a29*'a30 |> 'a13->'a31*'a32, 
+    'a31*'a32 |> 'a23*'a24, 
+    'a9 |> 'a12, 
+    'a9 |> 'a11, 
+    'a11*'a12 |> 'a19*'a20, 
+    'a9->'a19*'a20 |> 'a15->'a29*'a30, 
+    'a23*'a24 |> 'a35*'a36
+Type environment: 
+Expression:       let makepair=(fn x =>(x,x)) in (makepair @ 3.?)end
+Type:             'a35*'a36

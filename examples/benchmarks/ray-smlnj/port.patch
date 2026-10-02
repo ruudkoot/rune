@@ -1,0 +1,89 @@
+--- upstream/ordered-sources
++++ ordered-port-sources
+@@ -1,3 +1,4 @@
++structure Log=struct structure BinIO=BinIO fun print (_:string)=()fun say (_:string list)=()fun error xs=raise Fail(String.concat xs)end
+ (* objects.sml
+  *
+  * COPYRIGHT (c) 2025 The Fellowship of SML/NJ (https://www.smlnj.org)
+@@ -351,13 +352,14 @@
+     structure BinIO = Log.BinIO
+ 
+ (* TODO: switch to PPM output *)
++    val dimension=ref 512
+     fun picture (picName, objList) = let
+           val outStrm = BinIO.openOut picName
+           val image = image objList
+           fun put b = BinIO.output1 (outStrm, b)
+           fun doPixel (i, j) = let
+-                val x = (real i) / 512.0
+-                val y = (real j) / 512.0
++                val x = (real i) / real(!dimension)
++                val y = (real j) / real(!dimension)
+                 val (Color c) = image (x, y)
+                 fun cvt x = if (x >= 1.0) then 0w255 else Word8.fromInt(floor(256.0*x))
+                 in
+@@ -365,9 +367,9 @@
+                   put (cvt (#grn c));
+                   put (cvt (#blu c))
+                 end
+-          fun lp_j j = if (j < 512)
++          fun lp_j j = if (j < !dimension)
+                 then let
+-                  fun lp_i i = if (i < 512)
++                  fun lp_i i = if (i < !dimension)
+                         then (doPixel(i, j); lp_i(i+1))
+                         else ()
+                   in
+@@ -376,7 +378,7 @@
+                 else ()
+           in
+             BinIO.output (outStrm, Byte.stringToBytes (concat [
+-                "P6\n512 512\n255\n"
++                "P6\n"^Int.toString(!dimension)^" "^Int.toString(!dimension)^"\n255\n"
+               ]));
+             lp_j 0;
+             BinIO.closeOut outStrm
+@@ -435,38 +437,8 @@
+ 
+   end
+ 
+-(* main.sml
+- *
+- * COPYRIGHT (c) 2025 The Fellowship of SML/NJ (https://www.smlnj.org)
+- * All rights reserved.
+- *
+- * Main structure for running the benchmark.
+- *)
+-
+-structure Main : BMARK =
+-  struct
+-
+-    val name = "ray"
+-
+-    val results = ["out.ppm"]
+-
+-    fun trace file = let
+-	  val strm = TextIO.openIn file
+-	  in
+-	    Interface.rtInit ();
+-	    Interp.parse strm;
+-	    TextIO.closeIn strm
+-	  end
+-
+-    fun doit () = let
+-          fun loop n = if n = 0
+-                then ()
+-                else (trace "DATA/bmark.txt"; loop (n - 1))
+-          in
+-            loop 500
+-          end
+-
+-    fun testit _ = trace "DATA/test.txt"
+-
+-  end
+-
++structure RenderDriver=struct fun render(path,n)=let val _=Ray.dimension:=n val _=Interface.rtInit()val input=TextIO.openIn path val _=Interp.parse input handle e=>(TextIO.closeIn input;raise e)in TextIO.closeIn input end end
++structure Benchmark=struct val name="ray-smlnj"fun run[path,size,reps,reference]=let val n=BenchInput.between(1,1024)(BenchInput.integer size)val r=BenchInput.between(1,500)(BenchInput.integer reps)
++val _=if List.exists(fn p=>p=path)["DATA/smoke.txt","DATA/normal.txt","DATA/large.txt"]then()else raise Fail "scene path"
++fun one()=let val _=RenderDriver.render(path,n)val pixels=BenchPPM.same("out.ppm",reference)in case Int.fromString pixels of SOME n=>n|NONE=>raise Fail "image pixel count"end
++in IntInf.toString(BenchInput.repeat r one)end|run _=raise Fail "renderer expects scene size repetitions references"end

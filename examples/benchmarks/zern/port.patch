@@ -1,0 +1,242 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -2,11 +2,11 @@
+  * From David McClain's language study.
+  * http://www.azstarnet.com/~dmcclain/LanguageStudy.html
+  *
+- * Stephen Weeks replaced Unsafe.Real64Array with Real64Array.
++ * Stephen Weeks replaced Unsafe.RealArray with RealArray.
+  *)
+ 
+ fun print _ = ()
+-   
++
+ (* array2.sml
+  *
+  * COPYRIGHT (c) 1998 D.McClain/MCFA
+@@ -55,7 +55,7 @@
+         val binopi : array * array * array * (real * real * int -> real) -> unit
+         val fill : array * real -> unit
+         val fillf : array * (int -> real) -> unit
+-            
++
+         val transpose : array -> array
+         val extract : region -> array
+ 
+@@ -65,20 +65,20 @@
+     end =
+   struct
+ 
+-    structure A      = (*Unsafe.*)Real64Array
++    structure A      = (*Unsafe.*)RealArray
+ 
+     type rawArray    = A.array
+-        
++
+     val unsafeUpdate = A.update
+     val unsafeSub    = A.sub
+     fun mkRawArray n = A.array (n, 0.0)
+ 
+-        
++
+     type array = {data  : rawArray,
+                   nrows : int,
+                   ncols : int,
+                   nelts : int}
+-        
++
+     type region = {base  : array,
+                    row   : int,
+                    col   : int,
+@@ -87,7 +87,7 @@
+ 
+     datatype traversal = RowMajor | ColMajor
+ 
+-        
++
+     fun dotimes n f =
+         let (* going forward is twice as fast as backward! *)
+             fun iter k = if k >= n then ()
+@@ -96,7 +96,7 @@
+             iter 0
+         end
+ 
+-    
++
+     fun mkArray(n,v) =
+         let
+             val arr = mkRawArray n
+@@ -118,7 +118,7 @@
+         else raise General.Subscript
+ 
+     val max_length = 4096 * 4096; (* arbitrary - but this is 128 MB *)
+-        
++
+     fun chkSize (nrows, ncols) =
+           if (nrows <= 0) orelse (ncols <= 0)
+             then raise General.Size
+@@ -159,7 +159,7 @@
+               ncols = ncols,
+               nelts = nelts }
+           end
+-      
++
+     fun tabulateRM (nrows, ncols, f) =
+         let
+             val nelts = chkSize(nrows, ncols)
+@@ -197,7 +197,7 @@
+ 
+     fun tabulate RowMajor = tabulateRM
+       | tabulate ColMajor = tabulateCM
+-        
++
+     fun sub (a, i, j) = unsafeSub(#data a, index(a, i, j))
+     fun update (a, i, j, v) = unsafeUpdate(#data a, index(a, i, j), v)
+     fun dimensions ({nrows, ncols, ...}: array) = (nrows, ncols)
+@@ -231,7 +231,7 @@
+                 else mkVec ((nelts - ncols) + j, [])
+             end
+         else raise General.Subscript
+-            
++
+     datatype index = DONE | INDX of {i:int, r:int, c:int}
+ 
+     fun chkRegion {base={data, nrows, ncols, ...}: array,
+@@ -326,7 +326,7 @@
+         in
+             appf 0
+         end
+-    
++
+     fun appCM f {data, ncols, nrows, nelts} = let
+           val delta = nelts - 1
+           fun appf (i, k) = if (i < nrows)
+@@ -366,7 +366,7 @@
+         in
+             modf 0
+         end
+-    
++
+     fun modifyCM f {data, ncols, nrows, nelts} = let
+           val delta = nelts - 1
+           fun modf (i, k) = if (i < nrows)
+@@ -497,11 +497,11 @@
+                f) =
+         dotimes nelts
+         (fn ix => unsafeUpdate(dst,ix,f(unsafeSub(src,ix),ix)))
+-        
++
+     fun fill ({data=dst,nelts=nelts,...}: array,v) =
+         dotimes nelts
+         (fn ix => unsafeUpdate(dst,ix,v))
+-         
++
+     fun fillf ({data=dst,nelts=nelts,...}: array,f) =
+         dotimes nelts
+         (fn ix => unsafeUpdate(dst,ix,f(ix)))
+@@ -513,10 +513,10 @@
+ structure MSpeed =
+     struct
+         structure F = FastRealArray2
+-            
++
+         val sin = Math.sin
+         val cos = Math.cos
+-            
++
+         val fromInt = LargeReal.fromInt
+ 
+         (* setup working vectors and arrays *)
+@@ -537,7 +537,7 @@
+         fun mulsv (dst, sf, a) =
+             F.unop(dst,a,fn(vsrc) => sf * vsrc)
+ 
+-            
++
+         (* compute the complex exponential of an array *)
+         fun cisv (a, rpart, ipart) =
+             (F.unop(rpart,a,cos);
+@@ -548,57 +548,35 @@
+         fun mpadd dst (sf, src) =
+             F.binop(dst,dst,src,fn(vdst,vsrc) => vdst + sf * vsrc)
+ 
+-            
++
+         (* compute an E-field from a set of Zernike screens *)
+         fun zern (dst, rpart, ipart, coefs, zerns) =
+             (mulsv (dst, hd coefs, hd zerns);
+              ListPair.app (mpadd dst) (tl coefs, tl zerns);
+              cisv (dst, rpart, ipart))
+-            
+-        (* timing tests and reporting *)
+-        fun report_times(niter, nel, (start, stop)) =
+-            let
+-                val secs = Time.-(stop,start)
+-                val dur  = Time.toReal(secs) * 1.0E6
+-                val ops_per_us = ((fromInt niter) * (fromInt nel)) / dur
+-                val ns_per_op = 1000.0 / ops_per_us
+-            in
+-                print(Time.toString (Time.-(stop,start)));
+-                print("\n");
+-                { ops_per_us = ops_per_us, ns_per_op = ns_per_op}
+-            end
+-
+-        fun time_iterations f niter =
+-            let
+-                fun iter 0 = Time.now()
+-                  | iter n = (ignore (f()); iter (n-1))
+-            in
+-                (Time.now(), iter niter)
+-            end
+-
+-        fun ztest niter =
+-            report_times(niter, nel,
+-                         time_iterations
+-                         (fn () =>
+-                          let val sum   = F.array(ny,nx, 0.0)
+-                             val rpart = F.array(ny,nx, 0.0)
+-                             val ipart = F.array(ny,nx, 0.0)                
+-                             val coefs = collect ncoefs (fn(x) => real(1 + x))
+-                             val zerns =
+-                                collect ncoefs
+-                                (fn(x) => F.tabulate F.RowMajor
+-                                 (ny, nx, fn(r,c) => 0.01 * real(nx * r + c)))
+-                             val (rpart, _) =
+-                                zern (sum, rpart, ipart, coefs, zerns)
+-                          in if Real.abs(FastRealArray2.sub(rpart, 0, 1) - 0.219)
+-                                 < 0.001
+-                                then ()
+-                             else raise Fail "compiler bug"
+-                          end)
+-                         niter)
++
+ end
+-
+-structure Main =
+-   struct
+-      fun doit n = MSpeed.ztest n
+-   end
++structure Benchmark =
++struct
++  val name="zern"
++  val _=if Real.precision=53 andalso Real.radix=2 then () else raise Fail "requires binary64 real arithmetic"
++  fun run [dimension,reps] =
++    let val n=BenchInput.between(2,128)(BenchInput.integer dimension)
++        val count=BenchInput.between(1,1000)(BenchInput.integer reps)
++    in IntInf.toString(BenchInput.repeat count(fn()=>
++      let val sum=FastRealArray2.array(n,n,0.0)
++          val rpart=FastRealArray2.array(n,n,0.0)
++          val ipart=FastRealArray2.array(n,n,0.0)
++          val coefs=MSpeed.collect 15(fn x=>Real.fromInt(1+x))
++          val screens=MSpeed.collect 15(fn _=>FastRealArray2.tabulate FastRealArray2.RowMajor(n,n,fn(r,c)=>0.01*Real.fromInt(n*r+c)))
++          val _=MSpeed.zern(sum,rpart,ipart,coefs,screens)
++          fun check i=if i=n*n then () else
++            let val theta=1.35*Real.fromInt i
++                val r=FastRealArray2.sub(rpart,i div n,i mod n)
++                val im=FastRealArray2.sub(ipart,i div n,i mod n)
++            in if BenchInput.closeReal(r,Math.cos theta,0.00000001,0.0) andalso
++                  BenchInput.closeReal(im,Math.sin theta,0.00000001,0.0)
++               then check(i+1) else raise Fail "phase-screen field" end
++      in check 0;1 end)) end
++  | run _=raise Fail "zern expects side repetitions"
++end

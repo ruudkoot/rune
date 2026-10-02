@@ -1,0 +1,119 @@
+--- upstream/ordered-sources
++++ benchmark.sml
+@@ -1,40 +1,41 @@
++structure Log=struct fun print s=BenchOutput.put s fun say xs=List.app print xs end
+ (* main.sml
+  *
+  * COPYRIGHT (c) 2024 The Fellowship of SML/NJ (https://www.smlnj.org)
+  * All rights reserved.
+  *)
+ 
+-structure Main : BMARK =
++structure Kernel =
+   struct
+ 
+     val name = "knuth-bendix"
+ 
+     fun length l = let
+-	  fun j(k, nil) = k
+-	    | j(k, a::x) = j(k+1,x)
+-	  in
+-	    j(0,l)
+-	  end
++          fun j(k, nil) = k
++            | j(k, a::x) = j(k+1,x)
++          in
++            j(0,l)
++          end
+     fun op @ (nil, l) = l
+       | op @ (a::r, l) = a :: (r@l)
+     fun rev l = let
+-	  fun f (nil, h) = h
+-	    | f (a::r, h) = f(r, a::h)
+-	  in
+-	    f(l,nil)
+-	  end
++          fun f (nil, h) = h
++            | f (a::r, h) = f(r, a::h)
++          in
++            f(l,nil)
++          end
+     fun app f = let
+-	  fun app_rec [] = ()
++          fun app_rec [] = ()
+             | app_rec (a::L) = (f a; app_rec L)
+         in
+-	  app_rec
++          app_rec
+         end
+     fun map f = let
+-	  fun map_rec [] = []
++          fun map_rec [] = []
+             | map_rec (a::L) = f a :: map_rec L
+           in
+-	    map_rec
+-  	  end
++            map_rec
++          end
+ 
+ (******* Quelques definitions du prelude CAML **************)
+ 
+@@ -173,7 +174,7 @@
+           else
+             (v,M) :: subst
+         | match_rec subst (Term(op1,sons1), Term(op2,sons2)) =
+-	  if op1 = op2 then it_list2 match_rec subst sons1 sons2
++          if op1 = op2 then it_list2 match_rec subst sons1 sons2
+                        else failwith "matching"
+         | match_rec _ _ = failwith "matching"
+   in match_rec [] (term1,term2)
+@@ -199,7 +200,7 @@
+       else [(n2,term1)]
+   | unify (Term(op1,sons1), Term(op2,sons2)) =
+       if op1 = op2 then
+-	it_list2 (fn s => fn (t1,t2) => compsubst (unify(substitute s t1,
++        it_list2 (fn s => fn (t1,t2) => compsubst (unify(substitute s t1,
+                                                          substitute s t2)) s)
+                  [] sons1 sons2
+       else failwith "unify"
+@@ -221,7 +222,7 @@
+       else
+        (print_string oper;
+         case sons of
+-	     []   => ()
++             []   => ()
+           | t::lt =>(print_string "(";
+                      pretty_term t;
+                      app (fn t => (print_string ","; pretty_term t)) lt;
+@@ -246,8 +247,8 @@
+ 
+ (* checks that rules are numbered in sequence and returns their number *)
+ fun check_rules l = it_list (fn n => fn (k,_) =>
+-	  if k=n+1 then k else failwith "Rule numbers not in sequence")
+-	0 l
++          if k=n+1 then k else failwith "Rule numbers not in sequence")
++        0 l
+ 
+ fun pretty_rule (k,(n,(M,N))) =
+  (print_num k; print_string " : ";
+@@ -567,14 +568,9 @@
+ 
+     fun greater pair = (case Group_order pair of Greater => true | _ => false)
+ 
+-    fun loop n = if n <= 0
+-          then ()
+-          else (kb_complete greater [] Geom_rules; loop (n - 1))
+-
+-    val results = []
+-
+-    fun doit () = loop 300
+-    fun testit _ = () (* FIXME *)
+-
+-  end (* Main *)
+-
++
++end
++structure Benchmark=struct val name="knuth-bendix-smlnj"
++fun run [reps]=let val r=BenchInput.between(1,300)(BenchInput.integer reps)
++val _=BenchOutput.reset()fun loop 0=()|loop n=(Kernel.kb_complete Kernel.greater [] Kernel.Geom_rules;loop(n-1))
++val _=loop r in BenchOutput.summary()end |run _=raise Fail "KB expects completions"end

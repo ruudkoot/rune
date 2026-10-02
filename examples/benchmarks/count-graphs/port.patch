@@ -1,0 +1,29 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -519,19 +519,10 @@
+         | NONE =>
+                 print "NOT A NUMBER\n")
+ 
+-   structure Main =
+-      struct
+-         fun doit() =
+-            List.app doOne ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"]
+-
+-         val doit =
+-            fn size =>
+-            let
+-               fun loop n =
+-                  if n = 0
+-                     then ()
+-                  else (doit();
+-                        loop(n-1))
+-            in loop size
+-            end
+-      end
++
++structure Benchmark =
++struct
++  val name="count-graphs"
++  fun run [size]=Int.toString(f(BenchInput.between(0,11)(BenchInput.integer size)))
++  | run _=raise Fail "count-graphs expects maximum vertices"
++end

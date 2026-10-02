@@ -1,0 +1,43 @@
+--- upstream/sources
++++ benchmark.sml
+@@ -4,7 +4,7 @@
+  * All rights reserved.
+  *)
+ 
+-structure Main : BMARK =
++structure PiKernel =
+   struct
+ 
+     val name = "f-arith"
+@@ -22,18 +22,16 @@
+             4.0 * loop (steps, 0.0, 1.0)
+           end
+ 
+-    fun run n = let
+-          val pi = computePi n
+-          in
+-            Log.say [
+-                "This should be an approximation of pi: ",
+-                Real.toString pi, " (", Int.toString n, " steps)\n"
+-              ]
+-          end
+-
+-    fun testit () = run 100000000
+-
+-    (* takes roughly 5.8 seconds on M4 MacBook Air *)
+-    fun doit () = run 5000000000
+-
+-  end
++end
++structure Benchmark =
++struct
++  val name="f-arith"
++  fun run [steps]=
++    let val n=BenchInput.integer steps
++        val _=if n>0 then () else raise Fail "positive step count required"
++        val result=PiKernel.computePi n
++        val count=Real.fromInt n
++        val bound=4.0/(4.0*count+1.0)+8.0*count*0.00000000000000011102230246251565
++    in if BenchInput.closeReal(result,Math.pi,bound,0.0) then "1" else raise Fail "pi series error" end
++  | run _=raise Fail "f-arith expects paired-series steps"
++end

@@ -1,0 +1,53 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -28,9 +28,10 @@
+          end
+    end
+ 
+-structure Main =
++
++structure PeekKernel =
+    struct
+-      fun inner () =
++      fun inner count =
+          let
+             val l1 = Plist.new ()
+             val l2 = Plist.new ()
+@@ -53,20 +54,25 @@
+                if i = 0
+                   then (ac1, ac2)
+                else loop (i - 1, ac1 + peek l1, ac2 + peek l2)
+-            val (n1, n2) = loop (10000000, 0, 0)
++            val (n1, n2) = loop (count, 0, 0)
+             val _ =
+-               if n1 <> 640000000 orelse n2 <> 580000000
++               if n1 <> 64 * count orelse n2 <> 58 * count
+                   then raise Fail "bug"
+                   else ()
+-         in ()
++         in (n1,n2)
+          end
+ 
+-      fun doit size =
+-         let
+-            fun loop i =
+-               if i = 0
+-                  then ()
+-               else (inner (); loop (i - 1))
+-         in loop size
+-         end
+-   end
++
++end
++structure Benchmark =
++struct
++  val name="peek"
++  fun run [size,reps]=
++    let val n=BenchInput.between(1,10000000)(BenchInput.integer size)
++        val count=BenchInput.between(1,1000)(BenchInput.integer reps)
++        fun loop(0,a,b)=(a,b) | loop(k,a,b)=let val(x,y)=PeekKernel.inner n
++          in loop(k-1,IntInf.+(a,IntInf.fromInt x),IntInf.+(b,IntInf.fromInt y)) end
++        val(a,b)=loop(count,0,0)
++    in IntInf.toString a^" "^IntInf.toString b end
++  | run _=raise Fail "peek expects iterations repetitions"
++end

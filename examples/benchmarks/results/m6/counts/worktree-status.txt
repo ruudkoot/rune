@@ -1,0 +1,32 @@
+ M Makefile
+ M docs/plans/benchmarks.md
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/shared/catalog-main.sml
+ M examples/benchmarks/shared/catalog.sml
+ M examples/benchmarks/validation.md
+ M examples/benchmarks/validation/m2-attempts.tsv
+ M scripts/run-benchmarks.sh
+ M tests/basis/run-matrix.sh
+?? examples/benchmarks/iter-pidigits/
+?? examples/benchmarks/mazefun/
+?? examples/benchmarks/measurement.md
+?? examples/benchmarks/minimax/
+?? examples/benchmarks/nqueens/
+?? examples/benchmarks/queens-lazy/
+?? examples/benchmarks/queens-strict/
+?? examples/benchmarks/rec_seq_ack/
+?? examples/benchmarks/routine.tsv
+?? examples/benchmarks/shared/counts-main.sml
+?? examples/benchmarks/shared/counts.sml
+?? examples/benchmarks/shared/lazy.sml
+?? examples/benchmarks/shared/measure.sml
+?? examples/benchmarks/shared/queens.sml
+?? examples/benchmarks/shared/report-main.sml
+?? examples/benchmarks/shared/report.sml
+?? scripts/measure-benchmarks.sh
+?? tests/benchmarks/check-catalog.sh
+?? tests/benchmarks/check-measurement.sh
+?? tests/benchmarks/check-queens.sh
+?? tests/benchmarks/measurement.sml
+?? tests/benchmarks/queens.sml

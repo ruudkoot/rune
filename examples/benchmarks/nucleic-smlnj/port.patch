@@ -1,0 +1,37 @@
+--- upstream/ordered-sources
++++ benchmark.sml
+@@ -3166,29 +3166,13 @@
+ (* Anticodon*)
+ 
+     fun anticodon () =
+-	  queue_to_list (search [] (anticodon_domains ()) anticodon_constraint)
++          queue_to_list (search [] (anticodon_domains ()) anticodon_constraint)
+ 
+     fun anticodon_length () = length(anticodon())
+ 
+ end;
+ 
+-(* main.sml
+- *
+- * COPYRIGHT (c) 2024 The Fellowship of SML/NJ (https://www.smlnj.org)
+- * All rights reserved.
+- *)
+-
+-structure Main : BMARK =
+-  struct
+-
+-    val name = "nucleic"
+-
+-    val results : string list = []
+-
+-    fun loop n = if n <= 0 then () else (Nucleic.anticodon_length (); loop (n - 1))
+-
+-    fun doit () = loop 5000
+-
+-    fun testit () = Log.say [Int.toString (Nucleic.anticodon_length ()), "\n"]
+-
+-  end
++
++structure Benchmark=struct val name="nucleic-smlnj"
++fun run [reps]=let val r=BenchInput.between(1,5000)(BenchInput.integer reps)
++in IntInf.toString(BenchInput.repeat r Nucleic.anticodon_length)end |run _=raise Fail "nucleic-smlnj expects anticodon searches"end

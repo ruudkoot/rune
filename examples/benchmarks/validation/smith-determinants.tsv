@@ -1,0 +1,9 @@
+smith-normal-form	smoke	4	7506	6	1
+smith-normal-form	normal	12	6096777698704	2	1
+smith-normal-form	large	26	-60208115211646196979849372947415	28	1
+smith-normal-form-mlkit	smoke	4	7506	6	1
+smith-normal-form-mlkit	normal	12	6096777698704	2	1
+smith-normal-form-mlkit	large	32	8074709755269798283190497453463562613129	3	1
+smith-nf	smoke	4	7506	6	1
+smith-nf	normal	12	6096777698704	2	1
+smith-nf	large	33	-174455975010120216862039859605035043439271	3	1

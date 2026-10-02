@@ -1,0 +1,4 @@
+upstream/* -whitespace
+port.patch whitespace=-trailing-space
+expected/*.dump binary
+expected/*.ppm binary

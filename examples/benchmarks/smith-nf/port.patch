@@ -1,0 +1,60 @@
+--- upstream/ordered-sources
++++ benchmark.sml
+@@ -1,3 +1,4 @@
++structure Log=struct fun print (_:string)=()fun say (_:string list)=()end
+ (* matrix.sml
+  *)
+ 
+@@ -347,7 +348,7 @@
+ (* main.sml
+  *)
+ 
+-structure Main : BMARK =
++structure Table =
+   struct
+ 
+     val name = "smith-nf"
+@@ -405,30 +406,16 @@
+              [ 6,   6,  ~5,  ~2,  ~8,  ~2,  ~9,   0,   2,   4,  ~6,  ~9,   9,   0,  ~8,  ~3,  ~1,  ~2,  ~1,   6,   8,   2,  ~9,   5,  ~2,   1,   7,  ~6,   5,   1,  ~1,   4,  ~4,  ~7,  ~6,  ~3,  ~8,   2,   2,   5,   5,  ~6,   5,   3,   3,   7,   4,   7,  ~3,  ~9],
+              [~9,   6,  ~4,   1,   3,  ~8,  ~8,  ~8,  ~1,   5,   1,   1,  ~1,   6,   5,   1,  ~1,   5,  ~8,   8,  ~7,  ~5,  ~1,  ~1,   6,  ~8,  ~3,  ~1,  ~2,  ~6,  ~5,  ~5,  ~6,   0,   2,   2,   7,  ~1,  ~5,  ~7,  ~1,  ~3,   7,   6,   0,   2,   4,  ~5,   0,  ~4]]
+ 
+-    fun f (x, y) = List.nth (List.nth (table, x), y)
+-    fun show m = print (Matrix.toString (m, IntInf.toString))
+-
+-    fun snf () = let
+-          val dim = 33
+-          val big = Matrix.map (Matrix.make (dim, dim, f), IntInf.fromInt)
+-          in
+-            Matrix.fetch(SmithNormalForm.smithNormalForm big, dim - 1, dim - 1)
+-          end
+-
+-    fun testit outS = let
+-          val entry = snf()
+-          in
+-            if entry = ~1027954043102083189860753402541358641712697245
+-              then Log.print "OK\n"
+-              else Log.say ["FAIL: ", IntInf.toString entry, "\n"]
+-          end
+-
+-    fun doit () = let
+-          fun loop 0 = ()
+-            | loop n = (snf(); loop(n-1))
+-          in
+-            loop 5
+-          end
+-
+-  end
+-
++
++end
++
++structure Benchmark=struct val name="smith-nf"
++fun one n=let fun entry(i,j)=List.nth(List.nth(Table.table,i),j)
++val big=Matrix.map(Matrix.make(n,n,entry),IntInf.fromInt)
++val result=SmithNormalForm.smithNormalForm big
++fun check(i,j)=if i=n then()else if j=n then check(i+1,0)else(if i<>j andalso Matrix.fetch(result,i,j)<>0 then raise Fail "Smith off-diagonal"else();check(i,j+1))
++val _=check(0,0)
++in String.concatWith ","(List.tabulate(n,fn i=>IntInf.toString(Matrix.fetch(result,i,i))))end
++fun run [dimension,reps]=let val n=BenchInput.between(2,33)(BenchInput.integer dimension)val r=BenchInput.between(1,5)(BenchInput.integer reps)
++fun loop(0,acc)=String.concatWith ";"(List.rev acc)|loop(k,acc)=loop(k-1,one n::acc)
++in loop(r,[])end |run _=raise Fail "Smith expects dimension repetitions"end

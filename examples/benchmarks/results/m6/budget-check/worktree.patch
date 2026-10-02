@@ -1,0 +1,768 @@
+diff --git a/Makefile b/Makefile
+index 74d0db5..56c16df 100644
+--- a/Makefile
++++ b/Makefile
+@@ -935,6 +935,7 @@ check:
+ 	@$(MAKE) --no-print-directory test-new
+ 	@$(MAKE) --no-print-directory test-new-jit
+ 	@$(MAKE) --no-print-directory perf-check
++	@$(MAKE) --no-print-directory bench-smoke
+ 	@$(MAKE) --no-print-directory check-positions
+ 	@$(MAKE) --no-print-directory check-cross check-docs check-isa
+ 
+@@ -966,13 +967,38 @@ uninstall:
+ 
+ # The portable benchmark pilots (docs/plans/benchmarks.md, M1). Wall-clock
+ # comparisons and deterministic count budgets are subsequent milestones.
+-BENCH_PROFILE ?= smoke
+-BENCH_CONFIGS ?= rune,hosts
++BENCH_PROFILE ?= $(if $(filter bench bench-count bench-stats,$(MAKECMDGOALS)),normal,smoke)
++BENCH_TIMING_CONFIGS = rune,native:mlton,native:smlnj-legacy,native:polyml
++BENCH_COUNT_CONFIGS = rune,rune:opt,rune:new,rune:jit
++BENCH_CHECK_CONFIGS = rune,hosts
++BENCH_CONFIGS ?= $(if $(filter bench-count bench-stats,$(MAKECMDGOALS)),$(BENCH_COUNT_CONFIGS),$(if $(filter bench,$(MAKECMDGOALS)),$(BENCH_TIMING_CONFIGS),$(BENCH_CHECK_CONFIGS)))
+ BENCH_FILTER ?=
+-.PHONY: bench-check
++.PHONY: bench-check bench-check-all bench-smoke bench bench-count bench-stats
+ build/bench-catalog.rbc: examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml $(RUNE)
+ 	$(RUNE) --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml -o $@
+ 
+ bench-check: build/bench-catalog.rbc vm
+ 	bin/runevm build/bench-catalog.rbc --check
+ 	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' sh scripts/run-benchmarks.sh
++
++# Bounded correctness/metadata only; wall-clock thresholds stay outside check.
++bench-smoke: build/bench-catalog.rbc vm
++	bin/runevm build/bench-catalog.rbc --check
++	RUNE_BENCH_COMPILE_OPTIONS=-O2 sh scripts/run-benchmarks.sh --routine --configs rune
++
++# Every imported program has a smoke and normal profile. This explicit target
++# covers the complete catalogue; request extra hosts/engines through filters.
++bench-check-all: build/bench-catalog.rbc vm
++	bin/runevm build/bench-catalog.rbc --check
++	sh scripts/run-benchmarks.sh --profile smoke --configs '$(BENCH_CONFIGS)' --filter '$(BENCH_FILTER)'
++	sh scripts/run-benchmarks.sh --profile normal --configs '$(BENCH_CONFIGS)' --filter '$(BENCH_FILTER)'
++
++build/bench-report.rbc: examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml $(RUNE)
++	$(RUNE) --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml -o $@
++
++build/bench-counts.rbc: examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml $(RUNE)
++	$(RUNE) --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml -o $@
++
++bench bench-count bench-stats: build/bench-catalog.rbc build/bench-report.rbc build/bench-counts.rbc vm
++	bin/runevm build/bench-catalog.rbc --check
++	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' BENCH_LEVEL=$(BENCH_LEVEL) BENCH_MODE=$(BENCH_MODE) BENCH_SAMPLES=$(BENCH_SAMPLES) BENCH_REPETITIONS=$(BENCH_REPETITIONS) sh scripts/measure-benchmarks.sh $(if $(filter bench-count,$@),count,$(if $(filter bench-stats,$@),stats,time))
+diff --git a/docs/plans/benchmarks.md b/docs/plans/benchmarks.md
+index f417181..22576fb 100644
+--- a/docs/plans/benchmarks.md
++++ b/docs/plans/benchmarks.md
+@@ -1,7 +1,7 @@
+ # Benchmark suite roadmap
+ 
+ Status: **in progress**, 2026-10-01. M0 and M1 are complete with
+-[recorded validation](../../examples/benchmarks/validation.md). M2 is in progress; M3-M8 remain planned. Source inventory entries are scheduled work, not passing ports.
++[recorded validation](../../examples/benchmarks/validation.md). M2, M3, M5 and M6 are in progress; M4 and M7-M8 remain planned. Source inventory entries are scheduled work, not passing ports.
+ 
+ ## Goal and current baseline
+ 
+@@ -175,10 +175,10 @@ fixture references, and profile completeness.
+ | **M0 — Inventory and literature review** | Complete | Audit SML/NJ, MLton, ML Kit, nofib, and Sandmark at pinned revisions. Inspect build manifests, nested workloads, dependencies, datasets, and existing Rune adaptations. Group related variants and map workloads to compiler and runtime concerns. | Every discovered workload has an explicit disposition: import, duplicate, defer, or exclude. Every disposition has evidence or a reason. The bibliography and naming map are recorded. |
+ | **M1 — Suite foundation and pilots** | Complete | Establish the directory contract, manifest, documentation template, portable drivers, deterministic inputs, and correctness runner. Pilot classic `tak` and list sorting, nofib primes in lazy and strict forms, and Sandmark `bdd`. | Pilots build and validate on Rune, MLton, SML/NJ, and Poly/ML. Lazy and strict variants agree on results. Negative checks demonstrate that incorrect output and resource-limit failures are detected. |
+ | **M2 — Classic SML collection** | In progress | Import suitable workloads from the three SML sources. Begin with recursive kernels, rewriting, sorting, numerical programs, and search; then add larger generators, simulators, and applications. Reuse reviewed external-runner adaptations. | Every suitable classic SML workload is imported and documented. Remaining entries have concrete blockers. Each import passes smoke checks and has a validated normal profile. |
+-| **M3 — nofib kernels and GC workloads** | Planned | Port suitable `imaginary`, `spectral`, `shootout`, and `gc` workloads, including nested collections such as `spectral/hartel`. Cover streams, higher-order functions, symbolic processing, graphs, arithmetic, and allocation patterns. | Every suitable kernel has a validated port. Each port records its treatment of laziness, sharing, numeric types, and forcing. Materially different lazy and strict variants are separately named and measured. |
++| **M3 — nofib kernels and GC workloads** | In progress | Port suitable `imaginary`, `spectral`, `shootout`, and `gc` workloads, including nested collections such as `spectral/hartel`. Cover streams, higher-order functions, symbolic processing, graphs, arithmetic, and allocation patterns. | Every suitable kernel has a validated port. Each port records its treatment of laziness, sharing, numeric types, and forcing. Materially different lazy and strict variants are separately named and measured. |
+ | **M4 — nofib applications** | Planned | Port suitable `real` applications in dependency order. Prioritize parsing, type inference, compression, interpreters, symbolic algebra, rendering, and scientific workloads. | Each application includes its required portable modules and deterministic data. Results agree with upstream fixtures or the original Haskell program. Feature-dependent applications have explicit blockers. |
+-| **M5 — Sandmark sequential workloads** | Planned | Port self-contained sequential workloads first, including decision diagrams, rewriting, streams, numerical programs, rendering, and graph processing. Audit individual executables within collection directories. | Every suitable workload is imported or scheduled with its dependencies. OCaml library replacements and evaluation-order changes are documented. Ecosystem applications and runtime-specific workloads have explicit dispositions. |
+-| **M6 — Measurement and comparisons** | Planned | Extend Rune's existing matrix, count, and profiling tools to consume the manifest. Add serial timing runs, compile measurements, raw results, and reports. | A recorded run reproduces selected inputs and configurations. Reports include correctness status, complete samples, configuration metadata, and separate failure categories. |
++| **M5 — Sandmark sequential workloads** | In progress | Port self-contained sequential workloads first, including decision diagrams, rewriting, streams, numerical programs, rendering, and graph processing. Audit individual executables within collection directories. | Every suitable workload is imported or scheduled with its dependencies. OCaml library replacements and evaluation-order changes are documented. Ecosystem applications and runtime-specific workloads have explicit dispositions. |
++| **M6 — Measurement and comparisons** | In progress | Extend Rune's existing matrix, count, and profiling tools to consume the manifest. Add serial timing runs, compile measurements, raw results, and reports. | A recorded run reproduces selected inputs and configurations. Reports include correctness status, complete samples, configuration metadata, and separate failure categories. |
+ | **M7 — Routine verification** | Planned | Select a bounded smoke set covering the main workload families and translation styles. Add metadata validation and smoke correctness to routine checks; retain broader explicit targets. | Routine checks remain practical. Every imported benchmark is covered by a broader correctness target. Incorrect results cannot contribute timing results. |
+ | **M8 — Coverage closure and maintenance** | Planned | Reconcile imports against pinned inventories, close documentation gaps, publish the initial report, and rank additional candidates. Document upstream refresh and baseline-update procedures. | Every inventory entry is accounted for. Imported programs satisfy the suite contract. Recorded validation and outstanding checks are clearly distinguished. |
+ 
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 9fa9aed..a193652 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -42,7 +42,6 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [zebra](#zebra) | Classic SML / MLton | Solve the zebra puzzle using constraint propagation and fluid state. |
+ | [count-graphs](#count-graphs) | Classic SML / MLton | Enumerate graph isomorphism classes with pruning and higher-order folds. |
+ | [many_refs](#many_refs) | Classic SML / ML Kit | Retain three tables of real references and repeatedly update every element. |
+-
+ | [tensor](#tensor) | Classic SML / MLton | Apply real and paired-complex elementwise and contraction operators, checking every result. |
+ | [zern](#zern) | Classic SML / MLton | Accumulate phase screens and validate every complex E-field value. |
+ | [smith-normal-form](#smith-normal-form) | Classic SML / MLton | Reduce an IntInf matrix to Smith normal form and consume its diagonal. |
+@@ -54,37 +53,40 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [lexgen](#lexgen) | Classic SML / MLton | Generate a lexer from the original SML specification and compare every output byte. |
+ | [mlyacc](#mlyacc) | Classic SML / MLton | Generate an LALR parser from the original SML grammar and compare its source and signature. |
+ | [hamlet](#hamlet) | Classic SML / MLton | Parse, elaborate and evaluate a unary arithmetic program with the HaMLet interpreter. |
+-
+-| [kitfib35](#kitfib35) | Classic SML / MLton | Evaluate the ML Kit Fibonacci recurrence with its single n<1 base case. |
+-| [fib0](#fib0) | Classic SML / MLton | Evaluate the two-base-case development Fibonacci recurrence. |
+-| [kitreynolds2](#kitreynolds2) | Classic SML / MLton | Search a shared tree with a chain of ancestor predicates. |
+-| [kitreynolds3](#kitreynolds3) | Classic SML / MLton | Search the same shared tree using explicit ancestor lists. |
+-| [kitloop2](#kitloop2) | Classic SML / MLton | Count down a lexicographic pair using a tail-recursive loop. |
+-| [kitdangle](#kitdangle) | Classic SML / MLton | Build and consume one closure chain retaining list payloads. |
+-| [kitdangle3](#kitdangle3) | Classic SML / MLton | Build and release three closure chains sequentially. |
+-| [msort](#msort) | Classic SML / MLton | Sort the original ascending sequence with alternating-split copying mergesort. |
+-| [kittmergesort_tp](#kittmergesort_tp) | Classic SML / MLton | Regenerate and sort ten lists in process using the shared copying kernel. |
+-
++| [kitfib35](#kitfib35) | Classic SML / ML Kit | Evaluate the ML Kit Fibonacci recurrence with its single n<1 base case. |
++| [fib0](#fib0) | Classic SML / ML Kit | Evaluate the two-base-case development Fibonacci recurrence. |
++| [kitreynolds2](#kitreynolds2) | Classic SML / ML Kit | Search a shared tree with a chain of ancestor predicates. |
++| [kitreynolds3](#kitreynolds3) | Classic SML / ML Kit | Search the same shared tree using explicit ancestor lists. |
++| [kitloop2](#kitloop2) | Classic SML / ML Kit | Count down a lexicographic pair using a tail-recursive loop. |
++| [kitdangle](#kitdangle) | Classic SML / ML Kit | Build and consume one closure chain retaining list payloads. |
++| [kitdangle3](#kitdangle3) | Classic SML / ML Kit | Build and release three closure chains sequentially. |
++| [msort](#msort) | Classic SML / ML Kit | Sort the original ascending sequence with alternating-split copying mergesort. |
++| [kittmergesort_tp](#kittmergesort_tp) | Classic SML / ML Kit | Regenerate and sort ten lists in process using the shared copying kernel. |
+ | [barnes-hut](#barnes-hut) | Classic SML / MLton | Advance a seeded three-dimensional N-body model with octree force approximation. |
+ | [tsp](#tsp) | Classic SML / MLton | Build and validate a divide-and-conquer travelling-salesman tour. |
+-| [fannkuch](#fannkuch) | Classic SML / MLton | Enumerate permutations, flip their prefixes and consume the alternating checksum. |
+-| [f-arith](#f-arith) | Classic SML / MLton | Accumulate paired Leibniz-series terms and check the approximation of pi. |
+-| [stream-sieve](#stream-sieve) | Classic SML / MLton | Demand a prime from the original nonmemoized infinite-stream sieve. |
+-| [twenty-four](#twenty-four) | Classic SML / MLton | Enumerate arithmetic-expression solutions using continuation callbacks. |
++| [fannkuch](#fannkuch) | Classic SML / SML/NJ | Enumerate permutations, flip their prefixes and consume the alternating checksum. |
++| [f-arith](#f-arith) | Classic SML / SML/NJ | Accumulate paired Leibniz-series terms and check the approximation of pi. |
++| [stream-sieve](#stream-sieve) | Classic SML / SML/NJ | Demand a prime from the original nonmemoized infinite-stream sieve. |
++| [twenty-four](#twenty-four) | Classic SML / SML/NJ | Enumerate arithmetic-expression solutions using continuation callbacks. |
+ | [simple](#simple) | Classic SML / MLton | Compute a hydrodynamic time step and check all final state arrays. |
+-| [nbody](#nbody) | Classic SML / MLton | Advance five immutable solar-system records and validate their total energy. |
++| [nbody](#nbody) | Classic SML / SML/NJ | Advance five immutable solar-system records and validate their total energy. |
+ | [output1](#output1) | Classic SML / MLton | Write individual characters to a regular file and validate every output byte. |
+ | [ray](#ray) | Classic SML / MLton | Interpret the original sphere scene and validate its rendered dump image. |
+ | [raytrace](#raytrace) | Classic SML / MLton | Render the original chess scene and check every quantized RGB pixel. |
+ | [vliw](#vliw) | Classic SML / MLton | Schedule and compress instructions, then validate both assembly streams. |
+-
+ | [fxp](#fxp) | Classic SML / MLton | Parse deterministic generated XML and validate its complete tag and attribute counts. |
+ | [model-elimination](#model-elimination) | Classic SML / MLton | Search the original first-order problem sets with deterministic inference budgets. |
+-
+-| [sat](#sat) | Classic SML / MLton | Solve a fixed Boolean formula with nested higher-order choices. |
+-| [boyer-smlnj](#boyer-smlnj) | Classic SML / MLton | Prove the original theorem using the modern modular SML/NJ rewriting checker. |
+-| [logic-smlnj](#logic-smlnj) | Classic SML / MLton | Find a peg-solitaire solution through the modern modular unifier and trail. |
+-| [life-smlnj](#life-smlnj) | Classic SML / MLton | Repeat fifty-generation glider-gun evolutions with complete coordinate checks. |
++| [sat](#sat) | Classic SML / SML/NJ | Solve a fixed Boolean formula with nested higher-order choices. |
++| [boyer-smlnj](#boyer-smlnj) | Classic SML / SML/NJ | Prove the original theorem using the modern modular SML/NJ rewriting checker. |
++| [logic-smlnj](#logic-smlnj) | Classic SML / SML/NJ | Find a peg-solitaire solution through the modern modular unifier and trail. |
++| [life-smlnj](#life-smlnj) | Classic SML / SML/NJ | Repeat fifty-generation glider-gun evolutions with complete coordinate checks. |
++| [minimax](#minimax) | Classic SML / SML/NJ | Build and score complete tic-tac-toe trees with and without a transposition table. |
++| [iter-pidigits](#iter-pidigits) | Classic SML / SML/NJ | Generate a fixed number of pi digits with the iterative IntInf spigot. |
++| [mazefun](#mazefun) | Classic SML / SML/NJ | Generate and validate complete deterministic mazes using persistent list matrices. |
++| [queens-lazy](#queens-lazy) | nofib | Count queen placements using memoized level-generation streams. |
++| [queens-strict](#queens-strict) | nofib | Count queen placements using eagerly generated list levels. |
++| [nqueens](#nqueens) | Sandmark | Count queen placements by depth-first search with mutable sibling totals. |
++| [rec_seq_ack](#rec_seq_ack) | Sandmark | Evaluate strict Ackermann calls and consume every repeated result. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -107,8 +109,9 @@ make bench-check BENCH_FILTER=primes
+ The default `rune,hosts` selects Rune and the six hosts installed by
+ `make hosts`. Standalone `xc1` library setup is left to M6. Missing requested
+ configurations fail visibly; they do not count as passing comparisons.
+-These commands check correctness. They do not publish timing comparisons.
+-The timing and count commands in the roadmap are M6 work.
++These commands check correctness. `make bench`, `make bench-count` and
++`make bench-stats` provide separate serial timing, count and runtime-statistics
++runs. See [measurement commands and limitations](measurement.md).
+ 
+ The [manifest](manifest.tsv) records ordered sources, source identity,
+ profile arguments, expected-result files, limits, diagnostic tags, input files, result-check mode and implementation
+@@ -123,22 +126,6 @@ Smoke and normal profiles are required for imported programs. Large profiles
+ are explicitly selected; an application need not invent a large profile.
+ The manifest records overrides to the standard limits.
+ 
+-Smoke and normal profiles are required for imported programs. Large profiles
+-are explicitly selected; an application need not invent a large profile.
+-The manifest records overrides to the standard limits.
+-
+-Smoke and normal profiles are required for imported programs. Large profiles
+-are explicitly selected; an application need not invent a large profile.
+-The manifest records overrides to the standard limits.
+-
+-Smoke and normal profiles are required for imported programs. Large profiles
+-are explicitly selected; an application need not invent a large profile.
+-The manifest records overrides to the standard limits.
+-
+-Smoke and normal profiles are required for imported programs. Large profiles
+-are explicitly selected; an application need not invent a large profile.
+-The manifest records overrides to the standard limits.
+-
+ Every program reads its benchmark name, space-separated arguments and
+ expected result as three input lines. The runner supplies a fixed regular
+ input file and records output in an isolated `tests/out/benchmarks/PROFILE/run.XXXXXX/NAME`
+@@ -1885,3 +1872,187 @@ policy differs materially from the long single evolution in MLton life.
+ | large | `50 1000` | `54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3;54 4E6F7BB3` |
+ 
+ Source inspection suggests sensitivity to symbolic, search. These are hypotheses; no measured attribution to a compiler feature is claimed. Related source variants remain in the inventory until their code, inputs and representations have been compared. See the [literature survey](literature.md) for family references.
++
++## minimax
++
++SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, programs/minimax.
++Copyright 2025 Fellowship of SML/NJ; source and notice retained.
++
++Retains the complete tic-tac-toe rose tree and the separate transposition-table
++version with 59049 slots. Each call builds both as upstream. Traverse every
++returned node, consuming node count, maximum depth and root score. An
++independent exhaustive Python search in `oracle.py` gives a draw (score zero)
++and confirms both tree-size/depth fixtures from upstream testit. Normal uses
++two calls; large preserves ten. Smoke has recorded 120-second and 2-GiB overrides
++because even one call constructs the complete game tree. The 1-GiB
++smoke run passed the three reference hosts but Rune reported out of memory;
++the larger quota preserves the complete allocation workload.
++No cache is reused between separate transposition-table constructions.
++
++Replace the SML/NJ extension `Option.isNone` with `not o Option.isSome`.
++The ordinary option list representation, move order and scoring are unchanged.
++The read-only traversal is additional measured work; both root scores must
++be zero before the six-integer summary reaches the suite's exact checker.
++The full tree versus cache-pruned tree distinguishes allocation and lookup
++costs. These are source-based hypotheses, not measured explanations.
++
++Profiles repeat both constructions 1, 2 and 10 times for smoke, normal and large.
++
++## iter-pidigits
++
++SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`,
++`programs/iter-pidigits/pi-digits.sml` and `main.sml`.
++Copyright 2026 The Fellowship of SML/NJ; notice and pristine sources retained.
++The upstream README identifies the Benchmarks Game C version (retained in
++the pinned tree at `other/pidigits.c`) and Jeremy Gibbons's
++[Unbounded Spigot Algorithms for the Digits of Pi](https://www.cs.ox.ac.uk/people/jeremy.gibbons/publications/spigot.pdf), section 5.
++
++This is an iterative IntInf spigot, distinct from the lazy stream and
++zero-count stopping condition of `pidigits`. Keep its arithmetic, column
++counter and termination. Capture each emitted digit, omit the human-readable
++column labels, then validate every digit against an independently calculated
++Chudnovsky fixture (`oracle.py`). Smoke retains upstream's 30-digit check;
++normal selects 100 digits; large preserves upstream's 2000. The original
++2000- and 500-digit normal runs passed the reference hosts but timed out after 600
++seconds on Rune. Moving that input to the 3600-second large profile preserves
++the algorithm and stopping condition without changing its arithmetic. There are no external
++datasets or random seeds. Arbitrary-precision division and multiplication
++and iterative control flow are source-based diagnostic hypotheses.
++
++## mazefun
++
++SML/NJ `75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0`, `programs/mazefun/main.sml`.
++Copyright 2024 The Fellowship of SML/NJ; notice and pristine source retained.
++Marc Feeley's Larceny Scheme maze generator was ported by Kavon Farvardin
++for Manticore. Upstream calls the benchmark `mazefn`; the directory and
++established Scheme name are `mazefun`. Record `mazefn` as an alias.
++
++Preserve persistent list matrices, recursive cavity relabeling, hole order,
++and the integer generator `(seed*3581+12751) mod 131072`, seeded at zero for
++each shuffle. Rename the module to expose `makeMaze` to a portable driver.
++Flatten the complete rendered matrix into one line with slash row separators
++and compare every character; suppress direct logging. Repetitions check
++each regenerated maze against the first. Smoke is the 11-by-11 maze printed
++in the upstream comment; normal uses 100 repetitions of its 15-by-15 maze;
++large retains the original 10000 repetitions. Each consumes its result.
++
++Independent fixtures come from the union-find Python oracle, whose different
++representation also verifies a connected, acyclic maze. The 11-by-11 fixture
++was reviewed against the source comment. No external dataset is required.
++Persistent updates, flood-fill recursion and intermediate lists are
++diagnostic hypotheses from source inspection. No performance finding is
++claimed. The Larceny/R6RS family remains a coverage candidate in the
++[literature review](../literature.md); this port records that overlap.
++
++See [retained source and patch](mazefun/) and the
++[executable independent oracle](mazefun/oracle.py).
++
++## queens-lazy
++
++nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/queens/Main.hs`.
++The source says it was taken from the LML distribution. Individual author
++and notice are not stated in this file; `NOTICE` records that outstanding
++lookup rather than assigning another collection's license. Original source,
++Makefile and fast/normal/slow fixtures are retained.
++
++Enumerate placements by levels: each prior board precedes columns 1 through
++n, with the original short-circuit row/diagonal safety test. The Haskell
++list comprehension is translated into memoized stream tails in
++`shared/queens.sml`; pending functions are released after forcing. Exceptions
++are memoized and recursive forcing is detected by `shared/lazy.sml`. The
++outer count forces the complete solution stream; board suffixes remain
++shared. No complete solution list is retained by the counter. Integer values
++and counts fit a signed 31-bit integer for selected profiles; repetition
++totals use IntInf. There are no external inputs or random choices.
++
++Smoke counts size 4 (2); normal counts size 10 (724); large counts size 12
++(14200), preserving upstream's fast input. Upstream normal/slow sizes 13/14
++and their 73712/365596 fixtures remain recorded rather than being silently
++replaced. The unchanged Haskell original compiled with GHC agrees on all
++selected sizes. The strict variant uses the same board/safety/order logic
++but eagerly constructs levels; different forcing, retention and allocation
++justify separate names. Sandmark `nqueens` instead counts depth-first with
++mutable sibling counters. These differences are source-based hypotheses;
++no measured performance cause is claimed. See
++[Partain and the nofib survey](../literature.md).
++
++See [provenance and original files](queens-lazy/PROVENANCE.md).
++
++## queens-strict
++
++nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/queens/Main.hs`.
++The source attributes its origin to the LML distribution; individual author
++and license are unstated. Original source/build parameters/fixtures and the
++unresolved individual-notice lookup are retained in this directory.
++
++Preserve the board-first list-comprehension order, columns 1 through n,
++short-circuit safety test and shared board suffixes. Evaluate the generated
++levels eagerly using map, mapPartial and concatenation before taking length.
++This deliberately changes Haskell's demand and allocation behavior; the
++faithful memoized `queens-lazy` variant remains separately available.
++No mutation, randomness, numeric-width substitution or external data is
++introduced. Selected counts fit signed 31-bit integers; the outer repetition
++total uses IntInf. Newly written SML97 translation lives in
++`shared/queens.sml`; the thin named driver consumes its count.
++
++Profiles select sizes 4/10/12 once, yielding 2/724/14200. Size 12 is the
++original fast input; upstream's normal 13 (73712) and slow 14 (365596)
++are preserved in the retained Makefile/fixtures. GHC's unchanged Haskell
++program agrees for selected sizes; semantic tests independently check
++both SML variants for every size 1 through 10. Sandmark `nqueens` uses a
++different depth-first mutable counter and stays separate. Level retention,
++intermediate lists and allocation are hypotheses from source inspection,
++not measured causal findings. See [the nofib literature](../literature.md).
++
++See [provenance and original files](queens-strict/PROVENANCE.md).
++
++## nqueens
++
++Sandmark `5605805954a00497ed197c930641cddd580e1507`,
++`benchmarks/multicore-numerical/nqueens.ml`, executable `nqueens.exe`.
++No individual author or notice is stated in the file. Sandmark's root
++public-domain notice is retained in `LICENSE`; the original file is retained.
++This is the sequential executable in a directory also containing a separate
++parallel implementation; no Domainslib or multicore facility is needed.
++
++Translate depth-first row search directly, preserving the zero-based column
++loop, shared immutable board suffixes, short-circuit conflicts, and mutable
++sibling count. Explicit SML tail recursion replaces OCaml's for loop. The
++count is consumed rather than formatted as a human-readable sentence.
++There are no external inputs or seeds. Selected counters fit signed 31-bit
++integers; no OCaml wrapping arithmetic is exercised by these profiles.
++
++Smoke size 4 gives 2, normal size 10 gives 724, and large preserves the
++upstream default size 13 giving 73712. All three are in the original source
++comment and agree with the unchanged OCaml program. nofib queens counts
++the same mathematical solutions through level generation, with distinct
++lazy and strict retention; those are different algorithms/workloads, not
++duplicates. Search, recursion, board sharing and local mutable counters are
++source-based hypotheses. See [the Sandmark literature](../literature.md).
++
++See [provenance and original files](nqueens/PROVENANCE.md).
++
++## rec_seq_ack
++
++Sandmark `5605805954a00497ed197c930641cddd580e1507`,
++`benchmarks/multicore-effects/rec_seq_ack.ml`, executable `rec_seq_ack.exe`.
++The file references the Larceny/R6RS benchmarks (spelled Larcenry upstream)
++but does not identify an individual author/notice. Sandmark's root
++public-domain notice and pristine program are retained. This sequential
++member uses no effect handlers; the effect-based executable remains deferred.
++
++Preserve the three-case Ackermann recurrence and nested strict call. Move
++launcher defaults into fixed runtime profiles: smoke `(reps,m,n)=(1,3,6)`,
++normal `(2,3,8)`, large the original `(2,3,11)`. Consume every repetition
++in an IntInf sum rather than discard the upstream accumulator and print only
++the final value. This is documented additional checking/allocation work.
++The kernel retains ordinary signed integer arithmetic; selected results fit
++31 bits. No filesystem data or random input is used.
++
++The formula A(3,n)=2^(n+3)-3 independently gives 509, 2045 and 16381;
++summed fixtures are 509, 4090 and 32762. The unchanged OCaml program agrees
++with each individual result. Recursive calls and deep stack activity are
++source-based diagnostic hypotheses, not measured conclusions. See
++[Larceny overlap and the Sandmark literature](../literature.md).
++
++See [provenance and original files](rec_seq_ack/PROVENANCE.md).
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index aa5908f..e137736 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -209,3 +209,24 @@ logic-smlnj	large	smlnj	programs/logic	600	logic-smlnj/large.expected	shared/inp
+ life-smlnj	smoke	smlnj	programs/life	10 1	life-smlnj/smoke.expected	shared/input.sml,life-smlnj/benchmark.sml,shared/main.sml	30	1048576	symbolic,search	-	exact	implemented
+ life-smlnj	normal	smlnj	programs/life	50 100	life-smlnj/normal.expected	shared/input.sml,life-smlnj/benchmark.sml,shared/main.sml	600	4194304	symbolic,search	-	exact	implemented
+ life-smlnj	large	smlnj	programs/life	50 1000	life-smlnj/large.expected	shared/input.sml,life-smlnj/benchmark.sml,shared/main.sml	3600	8388608	symbolic,search	-	exact	implemented
++minimax	smoke	smlnj	programs/minimax	1	minimax/smoke.expected	shared/input.sml,minimax/benchmark.sml,shared/main.sml	120	2097152	symbolic,trees,transposition-table	-	exact	implemented
++minimax	normal	smlnj	programs/minimax	2	minimax/normal.expected	shared/input.sml,minimax/benchmark.sml,shared/main.sml	600	4194304	symbolic,trees,transposition-table	-	exact	implemented
++minimax	large	smlnj	programs/minimax	10	minimax/large.expected	shared/input.sml,minimax/benchmark.sml,shared/main.sml	3600	8388608	symbolic,trees,transposition-table	-	exact	implemented
++iter-pidigits	smoke	smlnj	programs/iter-pidigits	30	iter-pidigits/smoke.expected	shared/input.sml,shared/output.sml,iter-pidigits/benchmark.sml,shared/main.sml	30	1048576	arithmetic,intinf,iteration	-	exact	implemented
++iter-pidigits	normal	smlnj	programs/iter-pidigits	100	iter-pidigits/normal.expected	shared/input.sml,shared/output.sml,iter-pidigits/benchmark.sml,shared/main.sml	600	4194304	arithmetic,intinf,iteration	-	exact	implemented
++iter-pidigits	large	smlnj	programs/iter-pidigits	2000	iter-pidigits/large.expected	shared/input.sml,shared/output.sml,iter-pidigits/benchmark.sml,shared/main.sml	3600	8388608	arithmetic,intinf,iteration	-	exact	implemented
++mazefun	smoke	smlnj	programs/mazefun	11 11 1	mazefun/smoke.expected	shared/input.sml,shared/output.sml,mazefun/benchmark.sml,shared/main.sml	30	1048576	lists,graphs,generation	-	exact	implemented
++mazefun	normal	smlnj	programs/mazefun	15 15 100	mazefun/normal.expected	shared/input.sml,shared/output.sml,mazefun/benchmark.sml,shared/main.sml	600	4194304	lists,graphs,generation	-	exact	implemented
++mazefun	large	smlnj	programs/mazefun	15 15 10000	mazefun/large.expected	shared/input.sml,shared/output.sml,mazefun/benchmark.sml,shared/main.sml	3600	8388608	lists,graphs,generation	-	exact	implemented
++queens-lazy	smoke	nofib	imaginary/queens	4 1	queens-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/queens.sml,queens-lazy/benchmark.sml,shared/main.sml	30	1048576	search,lists,laziness,sharing	-	exact	implemented
++queens-lazy	normal	nofib	imaginary/queens	10 1	queens-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/queens.sml,queens-lazy/benchmark.sml,shared/main.sml	600	4194304	search,lists,laziness,sharing	-	exact	implemented
++queens-lazy	large	nofib	imaginary/queens	12 1	queens-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/queens.sml,queens-lazy/benchmark.sml,shared/main.sml	3600	8388608	search,lists,laziness,sharing	-	exact	implemented
++queens-strict	smoke	nofib	imaginary/queens	4 1	queens-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/queens.sml,queens-strict/benchmark.sml,shared/main.sml	30	1048576	search,lists,strictness,allocation	-	exact	implemented
++queens-strict	normal	nofib	imaginary/queens	10 1	queens-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/queens.sml,queens-strict/benchmark.sml,shared/main.sml	600	4194304	search,lists,strictness,allocation	-	exact	implemented
++queens-strict	large	nofib	imaginary/queens	12 1	queens-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/queens.sml,queens-strict/benchmark.sml,shared/main.sml	3600	8388608	search,lists,strictness,allocation	-	exact	implemented
++nqueens	smoke	sandmark	benchmarks/multicore-numerical/nqueens.exe	4	nqueens/smoke.expected	shared/input.sml,nqueens/benchmark.sml,shared/main.sml	30	1048576	search,recursion,mutation	-	exact	implemented
++nqueens	normal	sandmark	benchmarks/multicore-numerical/nqueens.exe	10	nqueens/normal.expected	shared/input.sml,nqueens/benchmark.sml,shared/main.sml	600	4194304	search,recursion,mutation	-	exact	implemented
++nqueens	large	sandmark	benchmarks/multicore-numerical/nqueens.exe	13	nqueens/large.expected	shared/input.sml,nqueens/benchmark.sml,shared/main.sml	3600	8388608	search,recursion,mutation	-	exact	implemented
++rec_seq_ack	smoke	sandmark	benchmarks/multicore-effects/rec_seq_ack.exe	1 3 6	rec_seq_ack/smoke.expected	shared/input.sml,rec_seq_ack/benchmark.sml,shared/main.sml	30	1048576	calls,recursion,integer	-	exact	implemented
++rec_seq_ack	normal	sandmark	benchmarks/multicore-effects/rec_seq_ack.exe	2 3 8	rec_seq_ack/normal.expected	shared/input.sml,rec_seq_ack/benchmark.sml,shared/main.sml	600	4194304	calls,recursion,integer	-	exact	implemented
++rec_seq_ack	large	sandmark	benchmarks/multicore-effects/rec_seq_ack.exe	2 3 11	rec_seq_ack/large.expected	shared/input.sml,rec_seq_ack/benchmark.sml,shared/main.sml	3600	8388608	calls,recursion,integer	-	exact	implemented
+diff --git a/examples/benchmarks/shared/catalog-main.sml b/examples/benchmarks/shared/catalog-main.sml
+index cbcbf6b..3cdeb2c 100644
+--- a/examples/benchmarks/shared/catalog-main.sml
++++ b/examples/benchmarks/shared/catalog-main.sml
+@@ -4,10 +4,12 @@ struct
+     let
+       val entries = BenchCatalog.load "examples/benchmarks/manifest.tsv"
+       val _ = BenchCatalog.validate entries
++      val routine = BenchCatalog.routine entries
+     in
+       case CommandLine.arguments () of
+         ["--check"] => print ("bench-catalog: OK (" ^ Int.toString (List.length entries) ^ " profiles)\n")
+       | ["--list", profile, filter] => List.app BenchCatalog.emit (BenchCatalog.selected entries profile filter)
++      | ["--routine", filter] => List.app BenchCatalog.emit (BenchCatalog.selected routine "smoke" filter)
+       | _ => raise Fail "usage: bench-catalog --check | --list PROFILE FILTER"
+     end
+   val _ = main () handle e =>
+diff --git a/examples/benchmarks/shared/catalog.sml b/examples/benchmarks/shared/catalog.sml
+index e9dc99e..da7452f 100644
+--- a/examples/benchmarks/shared/catalog.sml
++++ b/examples/benchmarks/shared/catalog.sml
+@@ -103,4 +103,22 @@ struct
+     print (String.concatWith "\t" [#name entry, Int.toString (#seconds entry),
+       Int.toString (#memory entry), String.concatWith " " (#sources entry),
+       String.concatWith " " (#args entry), #expected entry, if List.null (#inputFiles entry) then "-" else String.concatWith " " (#inputFiles entry)] ^ "\n")
++
++  fun routine entries =
++    let
++      val names = List.map (fn line =>
++        case String.fields (fn c => c = #"\t") (strip line) of
++          [name,reason] => if reason <> "" then name else raise Fail "missing routine benchmark reason"
++        | _ => raise Fail "invalid routine benchmark row")
++        (case lines (root ^ "routine.tsv") of
++           header::rest => if strip header = "benchmark\treason" then rest else raise Fail "invalid routine header"
++         | [] => raise Fail "empty routine selection")
++      fun check [] seen = seen
++        | check (name::rest) seen =
++            if List.exists (fn n => n = name) seen then raise Fail "duplicate routine benchmark"
++            else if List.exists (fn (r:entry) => #name r = name andalso #profile r = "smoke") entries
++            then check rest (name::seen) else raise Fail "unknown routine benchmark"
++      val _ = if List.null names then raise Fail "empty routine selection" else ()
++      val _ = check names []
++    in List.filter (fn (r:entry) => #profile r = "smoke" andalso List.exists (fn n => n = #name r) names) entries end
+ end
+diff --git a/examples/benchmarks/validation.md b/examples/benchmarks/validation.md
+index 715bf3a..9cd93ba 100644
+--- a/examples/benchmarks/validation.md
++++ b/examples/benchmarks/validation.md
+@@ -67,8 +67,8 @@ validated by this pilot record.
+ 
+ ## M2 first collection wave (in progress)
+ 
+-The catalogue now contains 68 programs, including all 48 pinned MLton
+-workloads, eleven ML Kit workload entries and six SML/NJ entries, alongside
++The catalogue now contains 79 programs, including all 48 pinned MLton
++workloads, eleven ML Kit workload entries and thirteen SML/NJ entries, alongside
+ the nofib/Sandmark pilots. M2 remains in progress: the other suitable
+ SML/NJ and ML Kit entries are still scheduled, not declared complete.
+ 
+@@ -114,3 +114,54 @@ were ML Kit compile failures (Boyer, Knuth-Bendix, Tyan, FXP). Every one of
+ those 68 programs passed its normal profile on Rune. The current catalogue
+ also has four later SML/NJ ports; their validation remains separately
+ recorded rather than being included in the completed 68-program run.
++
++### Second classic wave
++
++Minimax, iterative pi digits and maze generation were added after the first
++checkpoint. Minimax smoke passed MLton, SML/NJ and Poly/ML at 1 GiB but Rune
++reported out of memory; the documented 2-GiB smoke override passed Rune. Its
++normal profile passed Rune at 4 GiB. A separate exhaustive board oracle
++confirmed both complete-tree and transposition-table summaries. Maze smoke
++and normal passed all four primary compilers, and a union-find oracle
++confirmed the complete fixtures and connected, acyclic structure. Iterative
++pi smoke and the selected 100-digit normal profile passed all four primary
++compilers. Earlier 2000- and 500-digit normal attempts timed out after 600
++seconds on Rune and passed the references; those attempts are retained. The
++2000-digit original input remains an explicitly selected large profile, whose
++Rune execution is not yet validated.
++The full digit fixtures are independently calculated using Chudnovsky.
++
++## M3/M5 initial search wave (in progress)
++
++Added nofib queens in memoized lazy and eager strict forms, preserving
++board-first enumeration and suffix sharing. Added Sandmark
++`nqueens` (depth-first mutable sibling counter) and `rec_seq_ack`
++(sequential Ackermann). The unchanged GHC 9.4.7 and OCaml 4.14.1 originals
++confirmed the selected fixtures. Ackermann fixtures also follow the
++independent closed form for m=3; all repetitions are consumed in SML.
++Validation artifacts remain under `tests/out/benchmarks/upstream-wave`.
++The nofib individual author/notice lookup remains explicit, rather than
++assigning the Sandmark or GHC compiler license to the queens program.
++
++M3 and M5 remain open; these ports do not represent collection closure.
++
++Both queens variants, Sandmark nqueens and Ackermann passed smoke and normal
++on Rune, MLton, SML/NJ and Poly/ML. Fourteen semantic checks on each primary
++compiler validate lazy demand, sharing, memoized exceptions, recursive-force
++rejection and queen counts for sizes 1 through 10. The test delay has an
++explicit integer result type, avoiding an unresolved top-level type variable.
++
++## Current acceptance and routine verification
++
++`timeout 1800 make JOBS=4 check` passed with required subprocess/socket
++access. The new ten-program routine target also passed separately after
++its integration; a cached `make JOBS=4 bench-smoke` took 8.30 seconds and
++136420 KiB peak RSS on this machine. That is practical-cost evidence, not a
++portable timing threshold. The recorded full acceptance invocation started
++before routine-target integration, so its original top-level recipe did not
++include that new step; the separate routine run supplies that evidence.
++
++The routine manifest validates names, duplicates, reasons and smoke profiles.
++`bench-check-all` explicitly covers smoke and normal for the full catalogue.
++Known host failures remain failures in broad runs. No timing comparison or
++timing threshold is added to `make check`.
+diff --git a/examples/benchmarks/validation/m2-attempts.tsv b/examples/benchmarks/validation/m2-attempts.tsv
+index ca76623..66733f5 100644
+--- a/examples/benchmarks/validation/m2-attempts.tsv
++++ b/examples/benchmarks/validation/m2-attempts.tsv
+@@ -42,6 +42,7 @@ bdd	smoke	native-polyml-5.9.2	8 100	8 382 100	pass	RESULT 8 382 100	-	b607b89bfa
+ bdd	smoke	native-smlnj-dev-2026.2	8 100	8 382 100	pass	RESULT 8 382 100	-	39b45be744d3f1c1bb585b25305c499a6474c01fe9175e3f773ca378d3937ae3	tests/out/benchmarks/smoke/run.OLHmC3/bdd
+ bdd	smoke	native-smlnj-legacy-110.99.9	8 100	8 382 100	pass	RESULT 8 382 100	-	cfb87d7e87eeb6d7e755add93fa7c49ef199c62811dfe2f70d916fecd8566b70	tests/out/benchmarks/smoke/run.OLHmC3/bdd
+ bdd	smoke	native-smlnj32-110.99.9	8 100	8 382 100	pass	RESULT 8 382 100	-	52e3c15ea1562df4cb61441f37c032bf2ed39f454142ab8162801560093512c3	tests/out/benchmarks/smoke/run.OLHmC3/bdd
++bdd	smoke	rune	8 100	8 382 100	pass	RESULT 8 382 100	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/bdd/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 3806754982 10795	b607b89bfa9e92774d6b09a23bbf968ae1fb1dfdf7b8cb1e15a02da3ac7784b2	tests/out/benchmarks/smoke/run.LKZlK7/bdd
+ bdd	smoke	rune	8 100	8 382 100	pass	RESULT 8 382 100	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/bdd/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 3806754982 10795	b607b89bfa9e92774d6b09a23bbf968ae1fb1dfdf7b8cb1e15a02da3ac7784b2	tests/out/benchmarks/smoke/run.OLHmC3/bdd
+ binary-trees	normal	native-mlkit-4.7.23	12	16383 649904 8191	pass	RESULT 16383 649904 8191	-	e8982654d876cdf7b763cea2cd7e4a42677c709cc5ecfe27cceae55aae8370fa	tests/out/benchmarks/normal/run.RK50kW/binary-trees
+ binary-trees	normal	native-mlton-20241230	12	16383 649904 8191	pass	RESULT 16383 649904 8191	-	e8982654d876cdf7b763cea2cd7e4a42677c709cc5ecfe27cceae55aae8370fa	tests/out/benchmarks/normal/run.RK50kW/binary-trees
+@@ -57,6 +58,7 @@ binary-trees	smoke	native-polyml-5.9.2	6	255 4016 127	pass	RESULT 255 4016 127	-
+ binary-trees	smoke	native-smlnj-dev-2026.2	6	255 4016 127	pass	RESULT 255 4016 127	-	afe4ba2b779e308205467b5ea0d3314f0fc5787891e70bf2217344ed8e5f1077	tests/out/benchmarks/smoke/run.OLHmC3/binary-trees
+ binary-trees	smoke	native-smlnj-legacy-110.99.9	6	255 4016 127	pass	RESULT 255 4016 127	-	a31ef5d794e4c7ef17cc9eb5730073e2d146b4e0ac0484c3dded46963af73207	tests/out/benchmarks/smoke/run.OLHmC3/binary-trees
+ binary-trees	smoke	native-smlnj32-110.99.9	6	255 4016 127	pass	RESULT 255 4016 127	-	51385888278efa4cd4e754e56d03c7442436337cc6481fae889393ef0767b774	tests/out/benchmarks/smoke/run.OLHmC3/binary-trees
++binary-trees	smoke	rune	6	255 4016 127	pass	RESULT 255 4016 127	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/binary-trees/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 2776552712 3551	30a47a5d9d678e756f6f0e0b3a48c4192748f5a539bbbb005198e271111e4fc0	tests/out/benchmarks/smoke/run.LKZlK7/binary-trees
+ binary-trees	smoke	rune	6	255 4016 127	pass	RESULT 255 4016 127	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/binary-trees/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 2776552712 3551	30a47a5d9d678e756f6f0e0b3a48c4192748f5a539bbbb005198e271111e4fc0	tests/out/benchmarks/smoke/run.OLHmC3/binary-trees
+ boyer	normal	native-mlkit-4.7.23	10	10	compile-error		-	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	tests/out/benchmarks/normal/run.RK50kW/boyer
+ boyer	normal	native-mlton-20241230	10	10	pass	RESULT 10	-	a73937ffda284bd8d325e81ce5e8227e3e533174ef2b4df2f2b7146598e096b5	tests/out/benchmarks/normal/run.RK50kW/boyer
+@@ -163,6 +165,7 @@ fft	smoke	native-polyml-5.9.2	256 1	1	pass	RESULT 1	-	814e6bd804a638395a08db2b4a
+ fft	smoke	native-smlnj-dev-2026.2	256 1	1	pass	RESULT 1	-	ea617e4924d00dc726ced12ac8448771b5c608c768574e5ba4f4726c4920378d	tests/out/benchmarks/smoke/run.OLHmC3/fft
+ fft	smoke	native-smlnj-legacy-110.99.9	256 1	1	pass	RESULT 1	-	e87a17cd1d3bb45f638940e8b72ff9ec1ffd41a7118258aba6bd6b7e8fc54f86	tests/out/benchmarks/smoke/run.OLHmC3/fft
+ fft	smoke	native-smlnj32-110.99.9	256 1	1	pass	RESULT 1	-	b645c2479b21bd1de9546ecf489d97050e20413ee67b2848b75dc69d3bd63363	tests/out/benchmarks/smoke/run.OLHmC3/fft
++fft	smoke	rune	256 1	1	pass	RESULT 1	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/fft/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 630110019 11413	814e6bd804a638395a08db2b4a49ba0477558d9b8657c4698cdb72dda955d648	tests/out/benchmarks/smoke/run.LKZlK7/fft
+ fft	smoke	rune	256 1	1	pass	RESULT 1	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/fft/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 630110019 11413	814e6bd804a638395a08db2b4a49ba0477558d9b8657c4698cdb72dda955d648	tests/out/benchmarks/smoke/run.OLHmC3/fft
+ fib	normal	native-mlkit-4.7.23	30 1	832040	pass	RESULT 832040	-	625022d05b565b26b96077ed7bdbc63d2264823cb250f346ee7b768ff8ebe946	tests/out/benchmarks/normal/run.RK50kW/fib
+ fib	normal	native-mlton-20241230	30 1	832040	pass	RESULT 832040	-	625022d05b565b26b96077ed7bdbc63d2264823cb250f346ee7b768ff8ebe946	tests/out/benchmarks/normal/run.RK50kW/fib
+@@ -277,6 +280,22 @@ imp-for	smoke	native-smlnj-dev-2026.2	2 1	128	pass	RESULT 128	-	f9391d820993c21d
+ imp-for	smoke	native-smlnj-legacy-110.99.9	2 1	128	pass	RESULT 128	-	829dd4ab44002a99e776802c31b1053ab8c7432655e62f4b380fe38f647c5d6c	tests/out/benchmarks/smoke/run.OLHmC3/imp-for
+ imp-for	smoke	native-smlnj32-110.99.9	2 1	128	pass	RESULT 128	-	9bb62944dd57929d8f0fae229ebde4611b9098ac95d6cd915f05ecd6bd98628a	tests/out/benchmarks/smoke/run.OLHmC3/imp-for
+ imp-for	smoke	rune	2 1	128	pass	RESULT 128	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/imp-for/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 3025414624 3389	0166d9aa39ea75446290cd25de535653c0fc23f4f99275c672b0168bb0448c85	tests/out/benchmarks/smoke/run.OLHmC3/imp-for
++iter-pidigits	normal	native-mlton-20241230	100	3141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067	pass	RESULT 3141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067	-	159302f90b2a41ec0ecd3ca1ce11154f5c174d1860e8c9248d3a30c6c71956e3	tests/out/benchmarks/normal/run.QiZK7b/iter-pidigits
++iter-pidigits	normal	native-mlton-20241230	2000	31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491298336733624406566430860213949463952247371907021798609437027705392171762931767523846748184676694051320005681271452635608277857713427577896091736371787214684409012249534301465495853710507922796892589235420199561121290219608640344181598136297747713099605187072113499999983729780499510597317328160963185950244594553469083026425223082533446850352619311881710100031378387528865875332083814206171776691473035982534904287554687311595628638823537875937519577818577805321712268066130019278766111959092164201989380952572010654858632788659361533818279682303019520353018529689957736225994138912497217752834791315155748572424541506959508295331168617278558890750983817546374649393192550604009277016711390098488240128583616035637076601047101819429555961989467678374494482553797747268471040475346462080466842590694912933136770289891521047521620569660240580381501935112533824300355876402474964732639141992726042699227967823547816360093417216412199245863150302861829745557067498385054945885869269956909272107975093029553211653449872027559602364806654991198818347977535663698074265425278625518184175746728909777727938000816470600161452491921732172147723501414419735685481613611573525521334757418494684385233239073941433345477624168625189835694855620992192221842725502542568876717904946016534668049886272327917860857843838279679766814541009538837863609506800642251252051173929848960841284886269456042419652850222106611863067442786220391949450471237137869609563643719172874677646575739624138908658326459958133904780275900	pass	RESULT 31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491298336733624406566430860213949463952247371907021798609437027705392171762931767523846748184676694051320005681271452635608277857713427577896091736371787214684409012249534301465495853710507922796892589235420199561121290219608640344181598136297747713099605187072113499999983729780499510597317328160963185950244594553469083026425223082533446850352619311881710100031378387528865875332083814206171776691473035982534904287554687311595628638823537875937519577818577805321712268066130019278766111959092164201989380952572010654858632788659361533818279682303019520353018529689957736225994138912497217752834791315155748572424541506959508295331168617278558890750983817546374649393192550604009277016711390098488240128583616035637076601047101819429555961989467678374494482553797747268471040475346462080466842590694912933136770289891521047521620569660240580381501935112533824300355876402474964732639141992726042699227967823547816360093417216412199245863150302861829745557067498385054945885869269956909272107975093029553211653449872027559602364806654991198818347977535663698074265425278625518184175746728909777727938000816470600161452491921732172147723501414419735685481613611573525521334757418494684385233239073941433345477624168625189835694855620992192221842725502542568876717904946016534668049886272327917860857843838279679766814541009538837863609506800642251252051173929848960841284886269456042419652850222106611863067442786220391949450471237137869609563643719172874677646575739624138908658326459958133904780275900	-	31aaefa1ca1d5cf9d98c3ecaf82e3cac1277019c3515a7e05c6618c24d413f36	tests/out/benchmarks/normal/run.P0OH1p/iter-pidigits
++iter-pidigits	normal	native-mlton-20241230	500	31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491	pass	RESULT 31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491	-	ae6206e6b06a4876e89d99f45ad7cb54dcaa400b1603d37e82d9b275e987d2f9	tests/out/benchmarks/normal/run.W7bice/iter-pidigits
++iter-pidigits	normal	native-polyml-5.9.2	100	3141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067	pass	RESULT 3141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067	-	159302f90b2a41ec0ecd3ca1ce11154f5c174d1860e8c9248d3a30c6c71956e3	tests/out/benchmarks/normal/run.QiZK7b/iter-pidigits
++iter-pidigits	normal	native-polyml-5.9.2	2000	31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491298336733624406566430860213949463952247371907021798609437027705392171762931767523846748184676694051320005681271452635608277857713427577896091736371787214684409012249534301465495853710507922796892589235420199561121290219608640344181598136297747713099605187072113499999983729780499510597317328160963185950244594553469083026425223082533446850352619311881710100031378387528865875332083814206171776691473035982534904287554687311595628638823537875937519577818577805321712268066130019278766111959092164201989380952572010654858632788659361533818279682303019520353018529689957736225994138912497217752834791315155748572424541506959508295331168617278558890750983817546374649393192550604009277016711390098488240128583616035637076601047101819429555961989467678374494482553797747268471040475346462080466842590694912933136770289891521047521620569660240580381501935112533824300355876402474964732639141992726042699227967823547816360093417216412199245863150302861829745557067498385054945885869269956909272107975093029553211653449872027559602364806654991198818347977535663698074265425278625518184175746728909777727938000816470600161452491921732172147723501414419735685481613611573525521334757418494684385233239073941433345477624168625189835694855620992192221842725502542568876717904946016534668049886272327917860857843838279679766814541009538837863609506800642251252051173929848960841284886269456042419652850222106611863067442786220391949450471237137869609563643719172874677646575739624138908658326459958133904780275900	pass	RESULT 31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491298336733624406566430860213949463952247371907021798609437027705392171762931767523846748184676694051320005681271452635608277857713427577896091736371787214684409012249534301465495853710507922796892589235420199561121290219608640344181598136297747713099605187072113499999983729780499510597317328160963185950244594553469083026425223082533446850352619311881710100031378387528865875332083814206171776691473035982534904287554687311595628638823537875937519577818577805321712268066130019278766111959092164201989380952572010654858632788659361533818279682303019520353018529689957736225994138912497217752834791315155748572424541506959508295331168617278558890750983817546374649393192550604009277016711390098488240128583616035637076601047101819429555961989467678374494482553797747268471040475346462080466842590694912933136770289891521047521620569660240580381501935112533824300355876402474964732639141992726042699227967823547816360093417216412199245863150302861829745557067498385054945885869269956909272107975093029553211653449872027559602364806654991198818347977535663698074265425278625518184175746728909777727938000816470600161452491921732172147723501414419735685481613611573525521334757418494684385233239073941433345477624168625189835694855620992192221842725502542568876717904946016534668049886272327917860857843838279679766814541009538837863609506800642251252051173929848960841284886269456042419652850222106611863067442786220391949450471237137869609563643719172874677646575739624138908658326459958133904780275900	-	31aaefa1ca1d5cf9d98c3ecaf82e3cac1277019c3515a7e05c6618c24d413f36	tests/out/benchmarks/normal/run.P0OH1p/iter-pidigits
++iter-pidigits	normal	native-polyml-5.9.2	500	31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491	pass	RESULT 31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491	-	ae6206e6b06a4876e89d99f45ad7cb54dcaa400b1603d37e82d9b275e987d2f9	tests/out/benchmarks/normal/run.W7bice/iter-pidigits
++iter-pidigits	normal	native-smlnj-legacy-110.99.9	100	3141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067	pass	RESULT 3141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067	-	98f4959d129cd286619dfef14490b9c7b6f31a6993879d99b6a61a0b86757ffd	tests/out/benchmarks/normal/run.QiZK7b/iter-pidigits
++iter-pidigits	normal	native-smlnj-legacy-110.99.9	2000	31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491298336733624406566430860213949463952247371907021798609437027705392171762931767523846748184676694051320005681271452635608277857713427577896091736371787214684409012249534301465495853710507922796892589235420199561121290219608640344181598136297747713099605187072113499999983729780499510597317328160963185950244594553469083026425223082533446850352619311881710100031378387528865875332083814206171776691473035982534904287554687311595628638823537875937519577818577805321712268066130019278766111959092164201989380952572010654858632788659361533818279682303019520353018529689957736225994138912497217752834791315155748572424541506959508295331168617278558890750983817546374649393192550604009277016711390098488240128583616035637076601047101819429555961989467678374494482553797747268471040475346462080466842590694912933136770289891521047521620569660240580381501935112533824300355876402474964732639141992726042699227967823547816360093417216412199245863150302861829745557067498385054945885869269956909272107975093029553211653449872027559602364806654991198818347977535663698074265425278625518184175746728909777727938000816470600161452491921732172147723501414419735685481613611573525521334757418494684385233239073941433345477624168625189835694855620992192221842725502542568876717904946016534668049886272327917860857843838279679766814541009538837863609506800642251252051173929848960841284886269456042419652850222106611863067442786220391949450471237137869609563643719172874677646575739624138908658326459958133904780275900	pass	RESULT 31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491298336733624406566430860213949463952247371907021798609437027705392171762931767523846748184676694051320005681271452635608277857713427577896091736371787214684409012249534301465495853710507922796892589235420199561121290219608640344181598136297747713099605187072113499999983729780499510597317328160963185950244594553469083026425223082533446850352619311881710100031378387528865875332083814206171776691473035982534904287554687311595628638823537875937519577818577805321712268066130019278766111959092164201989380952572010654858632788659361533818279682303019520353018529689957736225994138912497217752834791315155748572424541506959508295331168617278558890750983817546374649393192550604009277016711390098488240128583616035637076601047101819429555961989467678374494482553797747268471040475346462080466842590694912933136770289891521047521620569660240580381501935112533824300355876402474964732639141992726042699227967823547816360093417216412199245863150302861829745557067498385054945885869269956909272107975093029553211653449872027559602364806654991198818347977535663698074265425278625518184175746728909777727938000816470600161452491921732172147723501414419735685481613611573525521334757418494684385233239073941433345477624168625189835694855620992192221842725502542568876717904946016534668049886272327917860857843838279679766814541009538837863609506800642251252051173929848960841284886269456042419652850222106611863067442786220391949450471237137869609563643719172874677646575739624138908658326459958133904780275900	-	7edbd17e8cbd1c265a69b68da94c893fa8c0f6cf3f0dc5826f2404fe7d9332dd	tests/out/benchmarks/normal/run.P0OH1p/iter-pidigits
++iter-pidigits	normal	native-smlnj-legacy-110.99.9	500	31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491	pass	RESULT 31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491	-	1edabf6188c6b1d5f70961908f35cae63c62be086d43c89b02edaac9fff7ffc8	tests/out/benchmarks/normal/run.W7bice/iter-pidigits
++iter-pidigits	normal	rune	100	3141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067	pass	RESULT 3141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/output.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/iter-pidigits/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 2607868668 5549	159302f90b2a41ec0ecd3ca1ce11154f5c174d1860e8c9248d3a30c6c71956e3	tests/out/benchmarks/normal/run.QiZK7b/iter-pidigits
++iter-pidigits	normal	rune	2000	31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491298336733624406566430860213949463952247371907021798609437027705392171762931767523846748184676694051320005681271452635608277857713427577896091736371787214684409012249534301465495853710507922796892589235420199561121290219608640344181598136297747713099605187072113499999983729780499510597317328160963185950244594553469083026425223082533446850352619311881710100031378387528865875332083814206171776691473035982534904287554687311595628638823537875937519577818577805321712268066130019278766111959092164201989380952572010654858632788659361533818279682303019520353018529689957736225994138912497217752834791315155748572424541506959508295331168617278558890750983817546374649393192550604009277016711390098488240128583616035637076601047101819429555961989467678374494482553797747268471040475346462080466842590694912933136770289891521047521620569660240580381501935112533824300355876402474964732639141992726042699227967823547816360093417216412199245863150302861829745557067498385054945885869269956909272107975093029553211653449872027559602364806654991198818347977535663698074265425278625518184175746728909777727938000816470600161452491921732172147723501414419735685481613611573525521334757418494684385233239073941433345477624168625189835694855620992192221842725502542568876717904946016534668049886272327917860857843838279679766814541009538837863609506800642251252051173929848960841284886269456042419652850222106611863067442786220391949450471237137869609563643719172874677646575739624138908658326459958133904780275900	timeout		/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/output.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/iter-pidigits/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 2607868668 5549	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	tests/out/benchmarks/normal/run.P0OH1p/iter-pidigits
++iter-pidigits	normal	rune	500	31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491	timeout		/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/output.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/iter-pidigits/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 2607868668 5549	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	tests/out/benchmarks/normal/run.W7bice/iter-pidigits
++iter-pidigits	smoke	native-mlton-20241230	30	314159265358979323846264338327	pass	RESULT 314159265358979323846264338327	-	050a8b25afc42165f79b36de617a11f061ee174de39627478afcc93f2d059c3c	tests/out/benchmarks/smoke/run.Hf0Tke/iter-pidigits
++iter-pidigits	smoke	native-polyml-5.9.2	30	314159265358979323846264338327	pass	RESULT 314159265358979323846264338327	-	050a8b25afc42165f79b36de617a11f061ee174de39627478afcc93f2d059c3c	tests/out/benchmarks/smoke/run.Hf0Tke/iter-pidigits
++iter-pidigits	smoke	native-smlnj-legacy-110.99.9	30	314159265358979323846264338327	pass	RESULT 314159265358979323846264338327	-	9e937578cb159001f7a17e22d6b8d7c079b640e8e21c2ddab6d896f885d49077	tests/out/benchmarks/smoke/run.Hf0Tke/iter-pidigits
++iter-pidigits	smoke	rune	30	314159265358979323846264338327	pass	RESULT 314159265358979323846264338327	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/output.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/iter-pidigits/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 2607868668 5549	050a8b25afc42165f79b36de617a11f061ee174de39627478afcc93f2d059c3c	tests/out/benchmarks/smoke/run.Hf0Tke/iter-pidigits
+ kitdangle	normal	native-mlkit-4.7.23	1000 2000	500500	pass	RESULT 500500	-	699fac00b3fa8d86dbf588d6c3a778b6b5cb3dacc9dea40eecbe84808f1d8174	tests/out/benchmarks/normal/run.RK50kW/kitdangle
+ kitdangle	normal	native-mlton-20241230	1000 2000	500500	pass	RESULT 500500	-	699fac00b3fa8d86dbf588d6c3a778b6b5cb3dacc9dea40eecbe84808f1d8174	tests/out/benchmarks/normal/run.RK50kW/kitdangle
+ kitdangle	normal	native-polyml-5.9.2	1000 2000	500500	pass	RESULT 500500	-	699fac00b3fa8d86dbf588d6c3a778b6b5cb3dacc9dea40eecbe84808f1d8174	tests/out/benchmarks/normal/run.RK50kW/kitdangle
+@@ -439,6 +458,7 @@ kittmergesort	smoke	native-smlnj32-110.99.9	100	100 98940 43BE5438	pass	RESULT 1
+ kittmergesort	smoke	native-smlnj32-110.99.9	100	100 98940 43BE5438	pass	RESULT 100 98940 43BE5438	-	cd378e8eb8d76020d4162eb921fc56c04135d9f1d34276460f3c8a0812a95c3b	tests/out/benchmarks/smoke/run.OLHmC3/kittmergesort
+ kittmergesort	smoke	rune	100	100 98940 43BE5438	pass	RESULT 100 98940 43BE5438	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/kittmergesort/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 2469401193 4088	691fa473bf64a5227d5f70ae3d3866d4bfb842a48baf98c7dd013f428495229a	tests/out/benchmarks/smoke/run.A0zaHQ/kittmergesort
+ kittmergesort	smoke	rune	100	100 98940 43BE5438	pass	RESULT 100 98940 43BE5438	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/kittmergesort.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/kittmergesort/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 2332920189 4244	691fa473bf64a5227d5f70ae3d3866d4bfb842a48baf98c7dd013f428495229a	tests/out/benchmarks/smoke/run.vMk39T/kittmergesort
++kittmergesort	smoke	rune	100	100 98940 43BE5438	pass	RESULT 100 98940 43BE5438	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/kittmergesort.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/kittmergesort/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 733955449 4502	691fa473bf64a5227d5f70ae3d3866d4bfb842a48baf98c7dd013f428495229a	tests/out/benchmarks/smoke/run.LKZlK7/kittmergesort
+ kittmergesort	smoke	rune	100	100 98940 43BE5438	pass	RESULT 100 98940 43BE5438	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/kittmergesort.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/kittmergesort/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 733955449 4502	691fa473bf64a5227d5f70ae3d3866d4bfb842a48baf98c7dd013f428495229a	tests/out/benchmarks/smoke/run.OLHmC3/kittmergesort
+ kittmergesort_tp	normal	native-mlkit-4.7.23	100000 10	100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55	pass	RESULT 100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55	-	9f432a24a5b4f524462480113ba7c17423224e31a475510f159c6c2a819c8602	tests/out/benchmarks/normal/run.RK50kW/kittmergesort_tp
+ kittmergesort_tp	normal	native-mlton-20241230	100000 10	100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55	pass	RESULT 100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55;100000 105840457 7531BE55	-	9f432a24a5b4f524462480113ba7c17423224e31a475510f159c6c2a819c8602	tests/out/benchmarks/normal/run.RK50kW/kittmergesort_tp
+@@ -595,6 +615,14 @@ matrix-multiply	smoke	native-smlnj-dev-2026.2	4	656	pass	RESULT 656	-	6aa807b4a1
+ matrix-multiply	smoke	native-smlnj-legacy-110.99.9	4	656	pass	RESULT 656	-	7ff858f8123bda7c2634aa528a344bccbef854d460306357a0540d602bba13c3	tests/out/benchmarks/smoke/run.OLHmC3/matrix-multiply
+ matrix-multiply	smoke	native-smlnj32-110.99.9	4	656	pass	RESULT 656	-	55639e4e4ced1e18d6d337e0a966a311553e95312db77569ec866b2bb01e8ed1	tests/out/benchmarks/smoke/run.OLHmC3/matrix-multiply
+ matrix-multiply	smoke	rune	4	656	pass	RESULT 656	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/matrix-multiply/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 2703782948 4510	f0d33e6ad0ef4d6296f45f4c9351717f45a4b7d3d2e4da9c1e24205a5c080d81	tests/out/benchmarks/smoke/run.OLHmC3/matrix-multiply
++mazefun	normal	native-mlton-20241230	15 15 100	 _ _ _ * _ * _ _ _ _ _ * _ * _/ _ * * * _ * _ * _ * * * _ * _/ _ _ _ _ _ * _ * _ * _ _ _ * _/ _ * * * * * * * _ * * * _ * _/ _ _ _ _ _ _ _ _ _ _ _ * _ _ _/ * * * * * * _ * * * * * _ * */ _ _ _ _ _ _ _ * _ _ _ _ _ _ _/ * * _ * * * * * * * * * * * _/ _ * _ * _ _ _ * _ _ _ * _ _ _/ _ * _ * _ * * * _ * _ * * * _/ _ _ _ * _ * _ * _ * _ * _ * _/ _ * _ * _ * _ * * * _ * _ * _/ _ * _ _ _ * _ * _ _ _ _ _ * _/ _ * * * _ * _ * * * * * _ * _/ _ * _ _ _ _ _ _ _ _ _ _ _ _ _	pass	RESULT  _ _ _ * _ * _ _ _ _ _ * _ * _/ _ * * * _ * _ * _ * * * _ * _/ _ _ _ _ _ * _ * _ * _ _ _ * _/ _ * * * * * * * _ * * * _ * _/ _ _ _ _ _ _ _ _ _ _ _ * _ _ _/ * * * * * * _ * * * * * _ * */ _ _ _ _ _ _ _ * _ _ _ _ _ _ _/ * * _ * * * * * * * * * * * _/ _ * _ * _ _ _ * _ _ _ * _ _ _/ _ * _ * _ * * * _ * _ * * * _/ _ _ _ * _ * _ * _ * _ * _ * _/ _ * _ * _ * _ * * * _ * _ * _/ _ * _ _ _ * _ * _ _ _ _ _ * _/ _ * * * _ * _ * * * * * _ * _/ _ * _ _ _ _ _ _ _ _ _ _ _ _ _	-	a87c0fa783cf71708f4e514e0b17ba01252d29d9ff592ffa17dadc3c9fc21e1d	tests/out/benchmarks/normal/run.nPJSXk/mazefun
++mazefun	normal	native-polyml-5.9.2	15 15 100	 _ _ _ * _ * _ _ _ _ _ * _ * _/ _ * * * _ * _ * _ * * * _ * _/ _ _ _ _ _ * _ * _ * _ _ _ * _/ _ * * * * * * * _ * * * _ * _/ _ _ _ _ _ _ _ _ _ _ _ * _ _ _/ * * * * * * _ * * * * * _ * */ _ _ _ _ _ _ _ * _ _ _ _ _ _ _/ * * _ * * * * * * * * * * * _/ _ * _ * _ _ _ * _ _ _ * _ _ _/ _ * _ * _ * * * _ * _ * * * _/ _ _ _ * _ * _ * _ * _ * _ * _/ _ * _ * _ * _ * * * _ * _ * _/ _ * _ _ _ * _ * _ _ _ _ _ * _/ _ * * * _ * _ * * * * * _ * _/ _ * _ _ _ _ _ _ _ _ _ _ _ _ _	pass	RESULT  _ _ _ * _ * _ _ _ _ _ * _ * _/ _ * * * _ * _ * _ * * * _ * _/ _ _ _ _ _ * _ * _ * _ _ _ * _/ _ * * * * * * * _ * * * _ * _/ _ _ _ _ _ _ _ _ _ _ _ * _ _ _/ * * * * * * _ * * * * * _ * */ _ _ _ _ _ _ _ * _ _ _ _ _ _ _/ * * _ * * * * * * * * * * * _/ _ * _ * _ _ _ * _ _ _ * _ _ _/ _ * _ * _ * * * _ * _ * * * _/ _ _ _ * _ * _ * _ * _ * _ * _/ _ * _ * _ * _ * * * _ * _ * _/ _ * _ _ _ * _ * _ _ _ _ _ * _/ _ * * * _ * _ * * * * * _ * _/ _ * _ _ _ _ _ _ _ _ _ _ _ _ _	-	a87c0fa783cf71708f4e514e0b17ba01252d29d9ff592ffa17dadc3c9fc21e1d	tests/out/benchmarks/normal/run.nPJSXk/mazefun
++mazefun	normal	native-smlnj-legacy-110.99.9	15 15 100	 _ _ _ * _ * _ _ _ _ _ * _ * _/ _ * * * _ * _ * _ * * * _ * _/ _ _ _ _ _ * _ * _ * _ _ _ * _/ _ * * * * * * * _ * * * _ * _/ _ _ _ _ _ _ _ _ _ _ _ * _ _ _/ * * * * * * _ * * * * * _ * */ _ _ _ _ _ _ _ * _ _ _ _ _ _ _/ * * _ * * * * * * * * * * * _/ _ * _ * _ _ _ * _ _ _ * _ _ _/ _ * _ * _ * * * _ * _ * * * _/ _ _ _ * _ * _ * _ * _ * _ * _/ _ * _ * _ * _ * * * _ * _ * _/ _ * _ _ _ * _ * _ _ _ _ _ * _/ _ * * * _ * _ * * * * * _ * _/ _ * _ _ _ _ _ _ _ _ _ _ _ _ _	pass	RESULT  _ _ _ * _ * _ _ _ _ _ * _ * _/ _ * * * _ * _ * _ * * * _ * _/ _ _ _ _ _ * _ * _ * _ _ _ * _/ _ * * * * * * * _ * * * _ * _/ _ _ _ _ _ _ _ _ _ _ _ * _ _ _/ * * * * * * _ * * * * * _ * */ _ _ _ _ _ _ _ * _ _ _ _ _ _ _/ * * _ * * * * * * * * * * * _/ _ * _ * _ _ _ * _ _ _ * _ _ _/ _ * _ * _ * * * _ * _ * * * _/ _ _ _ * _ * _ * _ * _ * _ * _/ _ * _ * _ * _ * * * _ * _ * _/ _ * _ _ _ * _ * _ _ _ _ _ * _/ _ * * * _ * _ * * * * * _ * _/ _ * _ _ _ _ _ _ _ _ _ _ _ _ _	-	394ab20743681a15893d247c8b6375938acce1b4c9cd1cfdfc83f5c24e2b0603	tests/out/benchmarks/normal/run.nPJSXk/mazefun
++mazefun	normal	rune	15 15 100	 _ _ _ * _ * _ _ _ _ _ * _ * _/ _ * * * _ * _ * _ * * * _ * _/ _ _ _ _ _ * _ * _ * _ _ _ * _/ _ * * * * * * * _ * * * _ * _/ _ _ _ _ _ _ _ _ _ _ _ * _ _ _/ * * * * * * _ * * * * * _ * */ _ _ _ _ _ _ _ * _ _ _ _ _ _ _/ * * _ * * * * * * * * * * * _/ _ * _ * _ _ _ * _ _ _ * _ _ _/ _ * _ * _ * * * _ * _ * * * _/ _ _ _ * _ * _ * _ * _ * _ * _/ _ * _ * _ * _ * * * _ * _ * _/ _ * _ _ _ * _ * _ _ _ _ _ * _/ _ * * * _ * _ * * * * * _ * _/ _ * _ _ _ _ _ _ _ _ _ _ _ _ _	pass	RESULT  _ _ _ * _ * _ _ _ _ _ * _ * _/ _ * * * _ * _ * _ * * * _ * _/ _ _ _ _ _ * _ * _ * _ _ _ * _/ _ * * * * * * * _ * * * _ * _/ _ _ _ _ _ _ _ _ _ _ _ * _ _ _/ * * * * * * _ * * * * * _ * */ _ _ _ _ _ _ _ * _ _ _ _ _ _ _/ * * _ * * * * * * * * * * * _/ _ * _ * _ _ _ * _ _ _ * _ _ _/ _ * _ * _ * * * _ * _ * * * _/ _ _ _ * _ * _ * _ * _ * _ * _/ _ * _ * _ * _ * * * _ * _ * _/ _ * _ _ _ * _ * _ _ _ _ _ * _/ _ * * * _ * _ * * * * * _ * _/ _ * _ _ _ _ _ _ _ _ _ _ _ _ _	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/output.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/mazefun/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 1619355912 9526	a87c0fa783cf71708f4e514e0b17ba01252d29d9ff592ffa17dadc3c9fc21e1d	tests/out/benchmarks/normal/run.nPJSXk/mazefun
++mazefun	smoke	native-mlton-20241230	11 11 1	 _ * _ _ _ _ _ _ _ _ _/ _ * * * * * * * _ * */ _ _ _ * _ _ _ * _ _ _/ _ * _ * _ * _ * _ * _/ _ * _ _ _ * _ * _ * _/ * * _ * * * * * _ * _/ _ * _ _ _ _ _ _ _ * _/ _ * _ * _ * * * * * */ _ _ _ * _ _ _ _ _ _ _/ _ * * * * * * * _ * */ _ * _ _ _ _ _ _ _ _ _	pass	RESULT  _ * _ _ _ _ _ _ _ _ _/ _ * * * * * * * _ * */ _ _ _ * _ _ _ * _ _ _/ _ * _ * _ * _ * _ * _/ _ * _ _ _ * _ * _ * _/ * * _ * * * * * _ * _/ _ * _ _ _ _ _ _ _ * _/ _ * _ * _ * * * * * */ _ _ _ * _ _ _ _ _ _ _/ _ * * * * * * * _ * */ _ * _ _ _ _ _ _ _ _ _	-	53df108f7b851686b661edc11ccf242394a689f1813802cacacf0d0a6833ee5a	tests/out/benchmarks/smoke/run.KArA1U/mazefun
++mazefun	smoke	native-polyml-5.9.2	11 11 1	 _ * _ _ _ _ _ _ _ _ _/ _ * * * * * * * _ * */ _ _ _ * _ _ _ * _ _ _/ _ * _ * _ * _ * _ * _/ _ * _ _ _ * _ * _ * _/ * * _ * * * * * _ * _/ _ * _ _ _ _ _ _ _ * _/ _ * _ * _ * * * * * */ _ _ _ * _ _ _ _ _ _ _/ _ * * * * * * * _ * */ _ * _ _ _ _ _ _ _ _ _	pass	RESULT  _ * _ _ _ _ _ _ _ _ _/ _ * * * * * * * _ * */ _ _ _ * _ _ _ * _ _ _/ _ * _ * _ * _ * _ * _/ _ * _ _ _ * _ * _ * _/ * * _ * * * * * _ * _/ _ * _ _ _ _ _ _ _ * _/ _ * _ * _ * * * * * */ _ _ _ * _ _ _ _ _ _ _/ _ * * * * * * * _ * */ _ * _ _ _ _ _ _ _ _ _	-	53df108f7b851686b661edc11ccf242394a689f1813802cacacf0d0a6833ee5a	tests/out/benchmarks/smoke/run.KArA1U/mazefun
++mazefun	smoke	native-smlnj-legacy-110.99.9	11 11 1	 _ * _ _ _ _ _ _ _ _ _/ _ * * * * * * * _ * */ _ _ _ * _ _ _ * _ _ _/ _ * _ * _ * _ * _ * _/ _ * _ _ _ * _ * _ * _/ * * _ * * * * * _ * _/ _ * _ _ _ _ _ _ _ * _/ _ * _ * _ * * * * * */ _ _ _ * _ _ _ _ _ _ _/ _ * * * * * * * _ * */ _ * _ _ _ _ _ _ _ _ _	pass	RESULT  _ * _ _ _ _ _ _ _ _ _/ _ * * * * * * * _ * */ _ _ _ * _ _ _ * _ _ _/ _ * _ * _ * _ * _ * _/ _ * _ _ _ * _ * _ * _/ * * _ * * * * * _ * _/ _ * _ _ _ _ _ _ _ * _/ _ * _ * _ * * * * * */ _ _ _ * _ _ _ _ _ _ _/ _ * * * * * * * _ * */ _ * _ _ _ _ _ _ _ _ _	-	295e25883f612d89bdf9e50bf78c08b511bd9845a39392a6bcd86d09de2be7d3	tests/out/benchmarks/smoke/run.KArA1U/mazefun
++mazefun	smoke	rune	11 11 1	 _ * _ _ _ _ _ _ _ _ _/ _ * * * * * * * _ * */ _ _ _ * _ _ _ * _ _ _/ _ * _ * _ * _ * _ * _/ _ * _ _ _ * _ * _ * _/ * * _ * * * * * _ * _/ _ * _ _ _ _ _ _ _ * _/ _ * _ * _ * * * * * */ _ _ _ * _ _ _ _ _ _ _/ _ * * * * * * * _ * */ _ * _ _ _ _ _ _ _ _ _	pass	RESULT  _ * _ _ _ _ _ _ _ _ _/ _ * * * * * * * _ * */ _ _ _ * _ _ _ * _ _ _/ _ * _ * _ * _ * _ * _/ _ * _ _ _ * _ * _ * _/ * * _ * * * * * _ * _/ _ * _ _ _ _ _ _ _ * _/ _ * _ * _ * * * * * */ _ _ _ * _ _ _ _ _ _ _/ _ * * * * * * * _ * */ _ * _ _ _ _ _ _ _ _ _	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/output.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/mazefun/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 1619355912 9526	53df108f7b851686b661edc11ccf242394a689f1813802cacacf0d0a6833ee5a	tests/out/benchmarks/smoke/run.KArA1U/mazefun
+ md5	normal	native-mlkit-4.7.23	1000 100	333cc4cfc0deca30c684f147b4a800a1	pass	RESULT 333cc4cfc0deca30c684f147b4a800a1	-	a71ff409ac5c211dfa15f57ef0d7313a5a37421c4de84a3fddd729ca3a078178	tests/out/benchmarks/normal/run.RK50kW/md5
+ md5	normal	native-mlton-20241230	1000 100	333cc4cfc0deca30c684f147b4a800a1	pass	RESULT 333cc4cfc0deca30c684f147b4a800a1	-	a71ff409ac5c211dfa15f57ef0d7313a5a37421c4de84a3fddd729ca3a078178	tests/out/benchmarks/normal/run.RK50kW/md5
+ md5	normal	native-polyml-5.9.2	1000 100	333cc4cfc0deca30c684f147b4a800a1	pass	RESULT 333cc4cfc0deca30c684f147b4a800a1	-	a71ff409ac5c211dfa15f57ef0d7313a5a37421c4de84a3fddd729ca3a078178	tests/out/benchmarks/normal/run.RK50kW/md5
+@@ -609,6 +637,7 @@ md5	smoke	native-polyml-5.9.2	64 1	b2d3f56bc197fd985d5965079b5e7148	pass	RESULT
+ md5	smoke	native-smlnj-dev-2026.2	64 1	b2d3f56bc197fd985d5965079b5e7148	pass	RESULT b2d3f56bc197fd985d5965079b5e7148	-	ce31771468f1e97aea70ade1822e5b6df2d147dbead7a23acb7da86348d40114	tests/out/benchmarks/smoke/run.OLHmC3/md5
+ md5	smoke	native-smlnj-legacy-110.99.9	64 1	b2d3f56bc197fd985d5965079b5e7148	pass	RESULT b2d3f56bc197fd985d5965079b5e7148	-	319953fc625f7a8cbf00fac0a726dd40aca19df49d3a88cfc346f53d049d385e	tests/out/benchmarks/smoke/run.OLHmC3/md5
+ md5	smoke	native-smlnj32-110.99.9	64 1	b2d3f56bc197fd985d5965079b5e7148	pass	RESULT b2d3f56bc197fd985d5965079b5e7148	-	cdcba6f2da8dc48d2a1e150c83dbc218e17d019d70e98f106699835759725d30	tests/out/benchmarks/smoke/run.OLHmC3/md5
++md5	smoke	rune	64 1	b2d3f56bc197fd985d5965079b5e7148	pass	RESULT b2d3f56bc197fd985d5965079b5e7148	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/md5/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 220629852 12251	1ebb2262d474383e2b6f110a53755a0383984c5f700e7c08d9f541d49da061c7	tests/out/benchmarks/smoke/run.LKZlK7/md5
+ md5	smoke	rune	64 1	b2d3f56bc197fd985d5965079b5e7148	pass	RESULT b2d3f56bc197fd985d5965079b5e7148	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/md5/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 220629852 12251	1ebb2262d474383e2b6f110a53755a0383984c5f700e7c08d9f541d49da061c7	tests/out/benchmarks/smoke/run.OLHmC3/md5
+ merge	normal	native-mlkit-4.7.23	10000 10	1999900000	pass	RESULT 1999900000	-	2ff5c329edd230dc2dea4a66ce92301e98fd477e10bb3b7ac18e54c910d38996	tests/out/benchmarks/normal/run.RK50kW/merge
+ merge	normal	native-mlton-20241230	10000 10	1999900000	pass	RESULT 1999900000	-	2ff5c329edd230dc2dea4a66ce92301e98fd477e10bb3b7ac18e54c910d38996	tests/out/benchmarks/normal/run.RK50kW/merge
+@@ -625,6 +654,12 @@ merge	smoke	native-smlnj-dev-2026.2	100 1	19900	pass	RESULT 19900	-	280b4c9c075d
+ merge	smoke	native-smlnj-legacy-110.99.9	100 1	19900	pass	RESULT 19900	-	c489fb90437a0eb7bed12a1e9a1375f9e062895a4bdb763c91c3911bffcfa80d	tests/out/benchmarks/smoke/run.OLHmC3/merge
+ merge	smoke	native-smlnj32-110.99.9	100 1	19900	pass	RESULT 19900	-	2d9457d08f6862ec9716710eb523f05c98ab0d37a869edfff058ddc33a3cf92d	tests/out/benchmarks/smoke/run.OLHmC3/merge
+ merge	smoke	rune	100 1	19900	pass	RESULT 19900	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/merge/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 1854804320 3798	4cd8b72828ac8b96881e762270881eed05fa8e7ea358df3027079280e409b55e	tests/out/benchmarks/smoke/run.OLHmC3/merge
++minimax	normal	rune	2	549946 10 0 16168 10 0;549946 10 0 16168 10 0	pass	RESULT 549946 10 0 16168 10 0;549946 10 0 16168 10 0	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/minimax/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 2928506000 10235	3650f462a0b35f21214eff14eb63f04becafb94a651e6131545e718db8a409c7	tests/out/benchmarks/normal/run.05KSjE/minimax
++minimax	smoke	native-mlton-20241230	1	549946 10 0 16168 10 0	pass	RESULT 549946 10 0 16168 10 0	-	fffa05eb5f08a9792b8e9811bd00349663aa54556ed3cf22df2f2e136eeedaf1	tests/out/benchmarks/smoke/run.gY7mQ8/minimax
++minimax	smoke	native-polyml-5.9.2	1	549946 10 0 16168 10 0	pass	RESULT 549946 10 0 16168 10 0	-	fffa05eb5f08a9792b8e9811bd00349663aa54556ed3cf22df2f2e136eeedaf1	tests/out/benchmarks/smoke/run.gY7mQ8/minimax
++minimax	smoke	native-smlnj-legacy-110.99.9	1	549946 10 0 16168 10 0	pass	RESULT 549946 10 0 16168 10 0	-	1ab34d3bd792ce20deb791bf5fce69410eb9d45c9547439d66791cadd1ae992b	tests/out/benchmarks/smoke/run.gY7mQ8/minimax
++minimax	smoke	rune	1	549946 10 0 16168 10 0	failure		/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/minimax/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 2928506000 10235	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	tests/out/benchmarks/smoke/run.gY7mQ8/minimax
++minimax	smoke	rune	1	549946 10 0 16168 10 0	pass	RESULT 549946 10 0 16168 10 0	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/minimax/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 2928506000 10235	fffa05eb5f08a9792b8e9811bd00349663aa54556ed3cf22df2f2e136eeedaf1	tests/out/benchmarks/smoke/run.DT0zkK/minimax
+ mlyacc	normal	native-mlkit-4.7.23	3	117863 CDA6CD68;3150 27A50FF4	pass	RESULT 117863 CDA6CD68;3150 27A50FF4	-	9976fca8a66480ae4623883e91c1d1bbc43f813d3315a67fe3731aec1d458543	tests/out/benchmarks/normal/run.RK50kW/mlyacc
+ mlyacc	normal	native-mlton-20241230	3	117863 CDA6CD68;3150 27A50FF4	pass	RESULT 117863 CDA6CD68;3150 27A50FF4	-	9976fca8a66480ae4623883e91c1d1bbc43f813d3315a67fe3731aec1d458543	tests/out/benchmarks/normal/run.3W7Tur/mlyacc
+ mlyacc	normal	native-mlton-20241230	3	117863 CDA6CD68;3150 27A50FF4	pass	RESULT 117863 CDA6CD68;3150 27A50FF4	-	9976fca8a66480ae4623883e91c1d1bbc43f813d3315a67fe3731aec1d458543	tests/out/benchmarks/normal/run.RK50kW/mlyacc
+@@ -721,6 +756,15 @@ nbody	smoke	native-smlnj32-110.99.9	100 ~0.1690507623824094	100	pass	RESULT 100
+ nbody	smoke	rune	100 ~0.1690507623824094	100	pass	RESULT 100	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/nbody/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 3222282374 8344	bbd3fbd88c4c568ed419c364edf9a07b600ce96e26906ee5d7256c588c672857	tests/out/benchmarks/smoke/run.OLHmC3/nbody
+ nbody	smoke	rune	100 ~0.1690507623824094	100	pass	RESULT 100	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/nbody/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 3222282374 8344	bbd3fbd88c4c568ed419c364edf9a07b600ce96e26906ee5d7256c588c672857	tests/out/benchmarks/smoke/run.mKVBDa/nbody
+ nbody	smoke	rune	100 ~0.16926665164096838	100	failure	FAIL nbody -- Fail: solar-system energy	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/nbody/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 3222282374 8344	32a9ad73b07b14c6a7511e59693e7cc7a2c1e62c0f6389a503e9914b7d7a237a	tests/out/benchmarks/smoke/run.46Eigg/nbody
++nqueens	normal	native-mlton-20241230	10	724	pass	RESULT 724	-	2fc52f4fa1417fb04c583e0f1e824642c45faa78791392bb160844c0f11f40c4	tests/out/benchmarks/normal/run.e6qHe0/nqueens
++nqueens	normal	native-polyml-5.9.2	10	724	pass	RESULT 724	-	2fc52f4fa1417fb04c583e0f1e824642c45faa78791392bb160844c0f11f40c4	tests/out/benchmarks/normal/run.e6qHe0/nqueens
++nqueens	normal	native-smlnj-legacy-110.99.9	10	724	pass	RESULT 724	-	9effce73eddf4510a853b17ba53e4622f328fe1235982220f007fff7b667c59c	tests/out/benchmarks/normal/run.e6qHe0/nqueens
++nqueens	normal	rune	10	724	pass	RESULT 724	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/nqueens/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 3074267169 3202	2fc52f4fa1417fb04c583e0f1e824642c45faa78791392bb160844c0f11f40c4	tests/out/benchmarks/normal/run.e6qHe0/nqueens
++nqueens	smoke	native-mlton-20241230	4	2	pass	RESULT 2	-	aee9a422c74a79c27094801c90b8cb3571061d9f2938338e250cde1195daca9e	tests/out/benchmarks/smoke/run.t988Jj/nqueens
++nqueens	smoke	native-polyml-5.9.2	4	2	pass	RESULT 2	-	aee9a422c74a79c27094801c90b8cb3571061d9f2938338e250cde1195daca9e	tests/out/benchmarks/smoke/run.t988Jj/nqueens
++nqueens	smoke	native-smlnj-legacy-110.99.9	4	2	pass	RESULT 2	-	c63371ef23f23be25071cb2098e65607ef931d02a615879a2550b0d208171889	tests/out/benchmarks/smoke/run.t988Jj/nqueens
++nqueens	smoke	rune	4	2	pass	RESULT 2	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/nqueens/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 3074267169 3202	aee9a422c74a79c27094801c90b8cb3571061d9f2938338e250cde1195daca9e	tests/out/benchmarks/smoke/run.LKZlK7/nqueens
++nqueens	smoke	rune	4	2	pass	RESULT 2	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/nqueens/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 3074267169 3202	aee9a422c74a79c27094801c90b8cb3571061d9f2938338e250cde1195daca9e	tests/out/benchmarks/smoke/run.t988Jj/nqueens
+ nucleic	normal	native-mlkit-4.7.23	4	4	pass	RESULT 4	-	e05f9d684fabab345168f9c90425dce08d60de614a981afa388de57f9d52f88d	tests/out/benchmarks/normal/run.RK50kW/nucleic
+ nucleic	normal	native-mlton-20241230	4	4	pass	RESULT 4	-	e05f9d684fabab345168f9c90425dce08d60de614a981afa388de57f9d52f88d	tests/out/benchmarks/normal/run.RK50kW/nucleic
+ nucleic	normal	native-polyml-5.9.2	4	4	pass	RESULT 4	-	77cdcd9b8a235f269cd0679aada795f8e8579f516e890ee5c4227beabd4819d4	tests/out/benchmarks/normal/run.RK50kW/nucleic
+@@ -793,6 +837,7 @@ primes-lazy	smoke	native-polyml-5.9.2	10 1	31	pass	RESULT 31	-	fb524a73e00488248
+ primes-lazy	smoke	native-smlnj-dev-2026.2	10 1	31	pass	RESULT 31	-	89ade32478cd7472abe8d4679b31208c82162bb70edbc0e3d05141561b9c58f7	tests/out/benchmarks/smoke/run.OLHmC3/primes-lazy
+ primes-lazy	smoke	native-smlnj-legacy-110.99.9	10 1	31	pass	RESULT 31	-	38e59323cbd3b2af7cfc56cd9212d78feac6fb00b2445ef1e744c20d4c8e944a	tests/out/benchmarks/smoke/run.OLHmC3/primes-lazy
+ primes-lazy	smoke	native-smlnj32-110.99.9	10 1	31	pass	RESULT 31	-	8628983717b376046bf856f53f15203a95e7cbb1951fb4a2106710fb2e01700c	tests/out/benchmarks/smoke/run.OLHmC3/primes-lazy
++primes-lazy	smoke	rune	10 1	31	pass	RESULT 31	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/primes.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/primes-lazy/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 3399356948 4187	fb524a73e004882481fe757c5f6d74341fe09c10e989bce5cc13c7412f0a660d	tests/out/benchmarks/smoke/run.LKZlK7/primes-lazy
+ primes-lazy	smoke	rune	10 1	31	pass	RESULT 31	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/primes.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/primes-lazy/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 3399356948 4187	fb524a73e004882481fe757c5f6d74341fe09c10e989bce5cc13c7412f0a660d	tests/out/benchmarks/smoke/run.OLHmC3/primes-lazy
+ primes-strict	normal	native-mlkit-4.7.23	100 100	54700	pass	RESULT 54700	-	755eda8db34b917eed275661a403e8fe19748fc5af70134541a1bb1ece46ebc9	tests/out/benchmarks/normal/run.RK50kW/primes-strict
+ primes-strict	normal	native-mlton-20241230	100 100	54700	pass	RESULT 54700	-	755eda8db34b917eed275661a403e8fe19748fc5af70134541a1bb1ece46ebc9	tests/out/benchmarks/normal/run.RK50kW/primes-strict
+@@ -808,6 +853,7 @@ primes-strict	smoke	native-polyml-5.9.2	10 1	31	pass	RESULT 31	-	28ef59554320716
+ primes-strict	smoke	native-smlnj-dev-2026.2	10 1	31	pass	RESULT 31	-	77713945ed98594a0ab3dd0ab0f60dd9b16ad67de0684e2e4cb17535a7a17953	tests/out/benchmarks/smoke/run.OLHmC3/primes-strict
+ primes-strict	smoke	native-smlnj-legacy-110.99.9	10 1	31	pass	RESULT 31	-	b137dbec5bb100b88a227eddc3e5835805d8dc20323161304bab27b729b642e3	tests/out/benchmarks/smoke/run.OLHmC3/primes-strict
+ primes-strict	smoke	native-smlnj32-110.99.9	10 1	31	pass	RESULT 31	-	aca5380862ef2ea11296bc5d21158fa7ac8c62431db59ae530586607d1c6d95d	tests/out/benchmarks/smoke/run.OLHmC3/primes-strict
++primes-strict	smoke	rune	10 1	31	pass	RESULT 31	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/primes.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/primes-strict/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 1355060471 4191	28ef595543207168f07296d3d0bdf8d7b67e3632dfebb52d4e284e0e1aef535a	tests/out/benchmarks/smoke/run.LKZlK7/primes-strict
+ primes-strict	smoke	rune	10 1	31	pass	RESULT 31	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/primes.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/primes-strict/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 1355060471 4191	28ef595543207168f07296d3d0bdf8d7b67e3632dfebb52d4e284e0e1aef535a	tests/out/benchmarks/smoke/run.OLHmC3/primes-strict
+ psdes-random	normal	native-mlkit-4.7.23	1000000	43E080E	pass	RESULT 43E080E	-	5808a01b5538d36b4d7f9c9efd0b7cda8cbc1580e82039f25d4cc167d3ef2e36	tests/out/benchmarks/normal/run.RK50kW/psdes-random
+ psdes-random	normal	native-mlton-20241230	1000000	43E080E	pass	RESULT 43E080E	-	5808a01b5538d36b4d7f9c9efd0b7cda8cbc1580e82039f25d4cc167d3ef2e36	tests/out/benchmarks/normal/run.RK50kW/psdes-random
+@@ -824,6 +870,22 @@ psdes-random	smoke	native-smlnj-dev-2026.2	1000	CA36C720	pass	RESULT CA36C720	-
+ psdes-random	smoke	native-smlnj-legacy-110.99.9	1000	CA36C720	pass	RESULT CA36C720	-	eddb8863e4729bccec0a55260799f46c1c4b05d3a9dbc633b5924daa51da5e32	tests/out/benchmarks/smoke/run.OLHmC3/psdes-random
+ psdes-random	smoke	native-smlnj32-110.99.9	1000	CA36C720	pass	RESULT CA36C720	-	03d7d77d5e2ec6ce01adf3b55bd8f1b843c6e96205c6d6cc190eff2f9f5d666c	tests/out/benchmarks/smoke/run.OLHmC3/psdes-random
+ psdes-random	smoke	rune	1000	CA36C720	pass	RESULT CA36C720	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/psdes-random/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 3688970640 4309	b03ef79a2b41d3bdb8afca787e119e767ad0401e9fc5bb8968959efd902580e8	tests/out/benchmarks/smoke/run.OLHmC3/psdes-random
++queens-lazy	normal	native-mlton-20241230	10 1	724	pass	RESULT 724	-	9c37464a7a133934d1be9d876ad29d06e34c63d8c9b492980c61e490271df3f7	tests/out/benchmarks/normal/run.e6qHe0/queens-lazy
++queens-lazy	normal	native-polyml-5.9.2	10 1	724	pass	RESULT 724	-	9c37464a7a133934d1be9d876ad29d06e34c63d8c9b492980c61e490271df3f7	tests/out/benchmarks/normal/run.e6qHe0/queens-lazy
++queens-lazy	normal	native-smlnj-legacy-110.99.9	10 1	724	pass	RESULT 724	-	aa8266c8e64e78994e72d4348cc9b17d26464cb77e0c8264cac8d3c89e09cfc4	tests/out/benchmarks/normal/run.e6qHe0/queens-lazy
++queens-lazy	normal	rune	10 1	724	pass	RESULT 724	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/queens.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/queens-lazy/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 22954330 4592	9c37464a7a133934d1be9d876ad29d06e34c63d8c9b492980c61e490271df3f7	tests/out/benchmarks/normal/run.e6qHe0/queens-lazy
++queens-lazy	smoke	native-mlton-20241230	4 1	2	pass	RESULT 2	-	f242ae7fab82452cb1c113672a714bc1c91a94e3637fd65d5efd47c18b8a917e	tests/out/benchmarks/smoke/run.t988Jj/queens-lazy
++queens-lazy	smoke	native-polyml-5.9.2	4 1	2	pass	RESULT 2	-	f242ae7fab82452cb1c113672a714bc1c91a94e3637fd65d5efd47c18b8a917e	tests/out/benchmarks/smoke/run.t988Jj/queens-lazy
++queens-lazy	smoke	native-smlnj-legacy-110.99.9	4 1	2	pass	RESULT 2	-	56487c3a8f26bd298f92dd6c1ef0ecc22a8b539099f194c0880a2ae8b4ae2e2b	tests/out/benchmarks/smoke/run.t988Jj/queens-lazy
++queens-lazy	smoke	rune	4 1	2	pass	RESULT 2	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/queens.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/queens-lazy/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 22954330 4592	f242ae7fab82452cb1c113672a714bc1c91a94e3637fd65d5efd47c18b8a917e	tests/out/benchmarks/smoke/run.t988Jj/queens-lazy
++queens-strict	normal	native-mlton-20241230	10 1	724	pass	RESULT 724	-	aa46c93c003886e3140a4004d540da2ed31bc22ba58011415fde3666eb119b2e	tests/out/benchmarks/normal/run.e6qHe0/queens-strict
++queens-strict	normal	native-polyml-5.9.2	10 1	724	pass	RESULT 724	-	aa46c93c003886e3140a4004d540da2ed31bc22ba58011415fde3666eb119b2e	tests/out/benchmarks/normal/run.e6qHe0/queens-strict
++queens-strict	normal	native-smlnj-legacy-110.99.9	10 1	724	pass	RESULT 724	-	2dc6e20c8974fadf22a3b55d75f0bf67daf327f9a5011d88bf0ade313aeafcc0	tests/out/benchmarks/normal/run.e6qHe0/queens-strict
++queens-strict	normal	rune	10 1	724	pass	RESULT 724	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/queens.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/queens-strict/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 2937630466 4598	aa46c93c003886e3140a4004d540da2ed31bc22ba58011415fde3666eb119b2e	tests/out/benchmarks/normal/run.e6qHe0/queens-strict
++queens-strict	smoke	native-mlton-20241230	4 1	2	pass	RESULT 2	-	7ae5c42ae83d56aae8329634cc386b7316146cdc963a7749f6e3adc1d10756d2	tests/out/benchmarks/smoke/run.t988Jj/queens-strict
++queens-strict	smoke	native-polyml-5.9.2	4 1	2	pass	RESULT 2	-	7ae5c42ae83d56aae8329634cc386b7316146cdc963a7749f6e3adc1d10756d2	tests/out/benchmarks/smoke/run.t988Jj/queens-strict
++queens-strict	smoke	native-smlnj-legacy-110.99.9	4 1	2	pass	RESULT 2	-	217d181548ab26b28607d306f6252ee41c6c068ba709fadd73b0c8f2cb807f81	tests/out/benchmarks/smoke/run.t988Jj/queens-strict
++queens-strict	smoke	rune	4 1	2	pass	RESULT 2	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/queens.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/queens-strict/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 2937630466 4598	7ae5c42ae83d56aae8329634cc386b7316146cdc963a7749f6e3adc1d10756d2	tests/out/benchmarks/smoke/run.t988Jj/queens-strict
+ ratio-regions	normal	native-mlkit-4.7.23	32	256	pass	RESULT 256	-	c1f6d6bf79b1e22ce6a471c069c8d1e024cd93886c89b3ff1ca59f62dee4ce03	tests/out/benchmarks/normal/run.RK50kW/ratio-regions
+ ratio-regions	normal	native-mlton-20241230	32	256	pass	RESULT 256	-	c1f6d6bf79b1e22ce6a471c069c8d1e024cd93886c89b3ff1ca59f62dee4ce03	tests/out/benchmarks/normal/run.RK50kW/ratio-regions
+ ratio-regions	normal	native-polyml-5.9.2	32	256	pass	RESULT 256	-	c1f6d6bf79b1e22ce6a471c069c8d1e024cd93886c89b3ff1ca59f62dee4ce03	tests/out/benchmarks/normal/run.RK50kW/ratio-regions
+@@ -877,6 +939,14 @@ raytrace	smoke	native-smlnj32-110.99.9	DATA/smoke.gml expected/smoke.ppm expecte
+ raytrace	smoke	rune	DATA/smoke.gml expected/smoke.ppm	619 A007AE98	pass	RESULT 619 A007AE98	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/files.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/raytrace/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 2779812813 80578	fa92ab5f239d61e4e2f646dcc57a01158566d97a89f3fd04365c011cfc6ac6bc	tests/out/benchmarks/smoke/run.N7XKnF/raytrace
+ raytrace	smoke	rune	DATA/smoke.gml expected/smoke.ppm expected/smoke-smlnj.ppm	192	pass	RESULT 192	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/files.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/raytrace/check.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/raytrace/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 4159676126 82318	b8f8b486ab65a3935d951186e3c5c0568d7600e13dbccb13286b20a4a74f52a1	tests/out/benchmarks/smoke/run.fT2XDw/raytrace
+ raytrace	smoke	rune	DATA/smoke.gml expected/smoke.ppm expected/smoke-smlnj.ppm expected/smoke-smlnj-suite.ppm	192	pass	RESULT 192	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/files.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/raytrace/check.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/raytrace/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 243384210 82345	b8f8b486ab65a3935d951186e3c5c0568d7600e13dbccb13286b20a4a74f52a1	tests/out/benchmarks/smoke/run.OLHmC3/raytrace
++rec_seq_ack	normal	native-mlton-20241230	2 3 8	4090	pass	RESULT 4090	-	1037526e2ac55ad638bc3d7b16fef5bbbd627db9387c65178e14f23ba24777ab	tests/out/benchmarks/normal/run.8HMHAA/rec_seq_ack
++rec_seq_ack	normal	native-polyml-5.9.2	2 3 8	4090	pass	RESULT 4090	-	1037526e2ac55ad638bc3d7b16fef5bbbd627db9387c65178e14f23ba24777ab	tests/out/benchmarks/normal/run.8HMHAA/rec_seq_ack
++rec_seq_ack	normal	native-smlnj-legacy-110.99.9	2 3 8	4090	pass	RESULT 4090	-	e401a9bc001aae995a1d6ea1f3a4c4a1e93b5a5b1027ad058ae416cfd4f60df9	tests/out/benchmarks/normal/run.8HMHAA/rec_seq_ack
++rec_seq_ack	normal	rune	2 3 8	4090	pass	RESULT 4090	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/rec_seq_ack/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 2575412104 2920	1037526e2ac55ad638bc3d7b16fef5bbbd627db9387c65178e14f23ba24777ab	tests/out/benchmarks/normal/run.8HMHAA/rec_seq_ack
++rec_seq_ack	smoke	native-mlton-20241230	1 3 6	509	pass	RESULT 509	-	8fdb5454cef5e7ad430015984cbb4f051dd70de8aed89bbcc2ec4cec5ebee2ca	tests/out/benchmarks/smoke/run.W56YgS/rec_seq_ack
++rec_seq_ack	smoke	native-polyml-5.9.2	1 3 6	509	pass	RESULT 509	-	8fdb5454cef5e7ad430015984cbb4f051dd70de8aed89bbcc2ec4cec5ebee2ca	tests/out/benchmarks/smoke/run.W56YgS/rec_seq_ack
++rec_seq_ack	smoke	native-smlnj-legacy-110.99.9	1 3 6	509	pass	RESULT 509	-	4e2786d9d4db1cb7746194d7e5ac39653725c951881ecdb7bfeabf670b94737a	tests/out/benchmarks/smoke/run.W56YgS/rec_seq_ack
++rec_seq_ack	smoke	rune	1 3 6	509	pass	RESULT 509	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/rec_seq_ack/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 2575412104 2920	8fdb5454cef5e7ad430015984cbb4f051dd70de8aed89bbcc2ec4cec5ebee2ca	tests/out/benchmarks/smoke/run.W56YgS/rec_seq_ack
+ sat	normal	rune	10000	10000	pass	RESULT 10000	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/sat/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 2453450461 3977	7cdffa388d2db342eea9488f74446ddde963a808c95d01757d77c1ba439aed0d	tests/out/benchmarks/normal/run.eSBP2C/sat
+ sat	smoke	native-mlton-20241230	1	1	pass	RESULT 1	-	d1b0e342cea50c665bb0b52a0edd293a79cadc49418cf0a43dd5561fc6836da7	tests/out/benchmarks/smoke/run.E4T14e/sat
+ sat	smoke	native-polyml-5.9.2	1	1	pass	RESULT 1	-	d1b0e342cea50c665bb0b52a0edd293a79cadc49418cf0a43dd5561fc6836da7	tests/out/benchmarks/smoke/run.E4T14e/sat
+@@ -910,6 +980,7 @@ smith-normal-form	smoke	native-polyml-5.9.2	4	1 ~1 1 ~7506	pass	RESULT 1 ~1 1 ~7
+ smith-normal-form	smoke	native-smlnj-dev-2026.2	4	1 ~1 1 ~7506	pass	RESULT 1 ~1 1 ~7506	-	2999411367a4535e6f993d010af71713159eb78a40fcd3188e6ce0700deff9d9	tests/out/benchmarks/smoke/run.OLHmC3/smith-normal-form
+ smith-normal-form	smoke	native-smlnj-legacy-110.99.9	4	1 ~1 1 ~7506	pass	RESULT 1 ~1 1 ~7506	-	15ab3a2f161c205aed76a1638f4002ac4675ea4fad5204858a85563771e82dd6	tests/out/benchmarks/smoke/run.OLHmC3/smith-normal-form
+ smith-normal-form	smoke	native-smlnj32-110.99.9	4	1 ~1 1 ~7506	pass	RESULT 1 ~1 1 ~7506	-	304901d0aa1cc7ef81e64e5ebed17b87408f327ec4815ab4402647059707ac2a	tests/out/benchmarks/smoke/run.OLHmC3/smith-normal-form
++smith-normal-form	smoke	rune	4	1 ~1 1 ~7506	pass	RESULT 1 ~1 1 ~7506	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/smith-normal-form/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 4078497210 28948	f114f64fb4ae1557b4907e8e8959ee631005944c927a00586e8f57dce5a3ebf5	tests/out/benchmarks/smoke/run.LKZlK7/smith-normal-form
+ smith-normal-form	smoke	rune	4	1 ~1 1 ~7506	pass	RESULT 1 ~1 1 ~7506	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/smith-normal-form/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 4078497210 28948	f114f64fb4ae1557b4907e8e8959ee631005944c927a00586e8f57dce5a3ebf5	tests/out/benchmarks/smoke/run.OLHmC3/smith-normal-form
+ stream-sieve	normal	rune	1000	7927	pass	RESULT 7927	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/stream-sieve/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 989492533 4268	8fb66cffbcc70a77b44bb753bd4397cec172f0d9629f59d0a6f7a0d09ae2ef73	tests/out/benchmarks/normal/run.H1vVCF/stream-sieve
+ stream-sieve	normal	rune	1000	7927	pass	RESULT 7927	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/stream-sieve/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 989492533 4268	8fb66cffbcc70a77b44bb753bd4397cec172f0d9629f59d0a6f7a0d09ae2ef73	tests/out/benchmarks/normal/run.Rr4K49/stream-sieve
+@@ -983,6 +1054,7 @@ tak	smoke	native-polyml-5.9.2	18 12 6 1	7	pass	RESULT 7	-	ce68f9b084ad0467a5a361
+ tak	smoke	native-smlnj-dev-2026.2	18 12 6 1	7	pass	RESULT 7	-	b7bc51b144bb6896d4f94471cb84734356df04f7c16c26678b2f29fc02d441ba	tests/out/benchmarks/smoke/run.OLHmC3/tak
+ tak	smoke	native-smlnj-legacy-110.99.9	18 12 6 1	7	pass	RESULT 7	-	86ad8bbf8f2f2642ab0c7c9a8c7d25b1508e9f8248c148ea56491831d2dd69b3	tests/out/benchmarks/smoke/run.OLHmC3/tak
+ tak	smoke	native-smlnj32-110.99.9	18 12 6 1	7	pass	RESULT 7	-	00981182bd0dba4909ac8a088af83bf2b372e7924481fd5f6588138c44c22087	tests/out/benchmarks/smoke/run.OLHmC3/tak
++tak	smoke	rune	18 12 6 1	7	pass	RESULT 7	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/tak/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 4105010894 3310	ce68f9b084ad0467a5a3612e159e4c77a08edb634df1a2eb105702fe2f55a7bb	tests/out/benchmarks/smoke/run.LKZlK7/tak
+ tak	smoke	rune	18 12 6 1	7	pass	RESULT 7	/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/tak/benchmark.sml /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml 4105010894 3310	ce68f9b084ad0467a5a3612e159e4c77a08edb634df1a2eb105702fe2f55a7bb	tests/out/benchmarks/smoke/run.OLHmC3/tak
+ tensor	normal	native-mlkit-4.7.23	100 1	1	pass	RESULT 1	-	00ba4f79e2ff75bd19894098282211f2e5407e58dd259dc75aaf77f3a362c91f	tests/out/benchmarks/normal/run.RK50kW/tensor
+ tensor	normal	native-mlton-20241230	100 1	1	pass	RESULT 1	-	00ba4f79e2ff75bd19894098282211f2e5407e58dd259dc75aaf77f3a362c91f	tests/out/benchmarks/normal/run.RK50kW/tensor
+diff --git a/scripts/run-benchmarks.sh b/scripts/run-benchmarks.sh
+index 5f69959..cee42f3 100644
+--- a/scripts/run-benchmarks.sh
++++ b/scripts/run-benchmarks.sh
+@@ -6,11 +6,13 @@ root=$(pwd)
+ profile=${BENCH_PROFILE:-smoke}
+ configs=${BENCH_CONFIGS:-rune,hosts}
+ filter=${BENCH_FILTER:-}
++routine=${BENCH_ROUTINE:-0}
+ while [ "$#" -gt 0 ]; do
+   case $1 in
+     --profile) profile=$2; shift 2 ;;
+     --configs) configs=$2; shift 2 ;;
+     --filter) filter=$2; shift 2 ;;
++    --routine) routine=1; profile=smoke; shift ;;
+     *) echo "usage: run-benchmarks.sh [--profile PROFILE] [--configs CONFIGS] [--filter TEXT]" >&2; exit 2 ;;
+   esac
+ done
+@@ -21,7 +23,11 @@ mkdir -p "$base"
+ out=$(mktemp -d "$base/run.XXXXXX")
+ printf '%s\n' "$out" > "$base/latest-run"
+ echo "BENCH OUTPUT $out"
+-"$root/bin/runevm" "$catalog" --list "$profile" "$filter" > "$out/jobs.tsv"
++if [ "$routine" = 1 ]; then
++  "$root/bin/runevm" "$catalog" --routine "$filter" > "$out/jobs.tsv"
++else
++  "$root/bin/runevm" "$catalog" --list "$profile" "$filter" > "$out/jobs.tsv"
++fi
+ [ -s "$out/jobs.tsv" ] || { echo "bench-check: no benchmark matches" >&2; exit 2; }
+ status=0
+ while IFS="$(printf '\t')" read -r name seconds memory sources args expected input_files; do
+diff --git a/tests/basis/run-matrix.sh b/tests/basis/run-matrix.sh
+index c04cdee..c05a77d 100755
+--- a/tests/basis/run-matrix.sh
++++ b/tests/basis/run-matrix.sh
+@@ -137,6 +137,7 @@ program_data_list=""
+ program_list=""
+ program_input=/dev/null
+ program_out=""
++resolve_out=""
+ filter=""
+ one_config=""
+ one_test=""
+@@ -152,6 +153,7 @@ while [ $# -gt 0 ]; do
+     --program-data) program_data=$2; shift 2 ;;
+     --program-data-list) program_data_list=$2; shift 2 ;;
+     --program-out) program_out=$2; shift 2 ;;
++    --resolve-out) resolve_out=$2; shift 2 ;;
+     -*) echo "usage: tests/basis/run-matrix.sh [-j N] [--perf] [--refresh] [--configs C1,C2,...] [FILTER]" >&2; exit 2 ;;
+     *) filter=$1; shift ;;
+   esac
+@@ -1146,6 +1148,13 @@ trap 'rm -rf "$run"' EXIT HUP INT TERM
+ for c in $(expand "$configs"); do resolve "$c" || exit 2; done
+ ids=$(cut -f 1 "$run/configs")
+ 
++# The benchmark measurement adapter uses exactly the same host selection and
++# version identities. Resolution does not load a program or probe a library.
++if [ -n "$resolve_out" ]; then
++  cp "$run/configs" "$resolve_out" || exit 2
++  exit 0
++fi
++
+ # Standalone checked programs reuse these loaders and the configuration
+ # resolver. Their portable driver prints PASS/FAIL and SUMMARY, like a test.
+ if [ -n "$program_list" ]; then

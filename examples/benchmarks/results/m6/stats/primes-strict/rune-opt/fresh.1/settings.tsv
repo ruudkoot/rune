@@ -1,0 +1,4 @@
+timeout_seconds	30
+memory_kib	1048576
+quota	v
+runtime_options	 --stats

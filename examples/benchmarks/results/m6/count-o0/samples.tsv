@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+tak	smoke	rune	O0	compile	0	0	pass	0.99	0.94	0.07	136020	-	-	-	tak/rune/build/compile
+tak	smoke	rune	O0	correctness	0	0	pass	0.01	0.00	0.00	5992	1737455	3639424	65838	tak/rune/correctness.0
+tak	smoke	rune	O0	count	1	1	pass	0.01	0.00	0.00	5976	1737455	3639424	65838	tak/rune/fresh.1
+tak	smoke	rune:opt	O0	compile	0	0	pass	1.06	0.98	0.11	135776	-	-	-	tak/rune-opt/build/compile
+tak	smoke	rune:opt	O0	native-compile	0	0	pass	0.86	0.60	0.15	38032	-	-	-	tak/rune-opt/build/native-compile
+tak	smoke	rune:opt	O0	correctness	0	0	pass	0.00	0.00	0.00	7916	1737455	3639424	65838	tak/rune-opt/correctness.0
+tak	smoke	rune:opt	O0	count	1	1	pass	0.00	0.00	0.00	7860	1737455	3639424	65838	tak/rune-opt/fresh.1
+tak	smoke	rune:new	O0	compile	0	0	pass	1.07	1.05	0.05	135744	-	-	-	tak/rune-new/build/compile
+tak	smoke	rune:new	O0	correctness	0	0	pass	0.01	0.00	0.00	6580	919002	3639424	65838	tak/rune-new/correctness.0
+tak	smoke	rune:new	O0	count	1	1	pass	0.01	0.01	0.00	6544	919002	3639424	65838	tak/rune-new/fresh.1
+tak	smoke	rune:jit	O0	compile	0	0	pass	1.07	1.02	0.07	135772	-	-	-	tak/rune-jit/build/compile
+tak	smoke	rune:jit	O0	correctness	0	0	pass	0.05	0.04	0.01	10876	919002	3639424	65838	tak/rune-jit/correctness.0
+tak	smoke	rune:jit	O0	count	1	1	pass	0.05	0.04	0.01	10764	919002	3639424	65838	tak/rune-jit/fresh.1
+	smoke	rune:jit	O0	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

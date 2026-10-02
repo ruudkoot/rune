@@ -1,0 +1,71 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -1,10 +1,10 @@
+ (* From the SML/NJ benchmark suite. *)
+-fun print _ = ()
+ signature BMARK =
+   sig
+     val doit : int -> unit
+   end;
+-structure Main: BMARK = struct
++structure FFTKernel = struct
++fun print _ = ()
+ 
+ local
+ open Array Math
+@@ -111,7 +111,7 @@
+            print "Use "; printi n; print " point fft\n"
+         end
+      else ();
+-        
++
+      let
+         fun loop_k k n2 =
+            if k >= m then ()
+@@ -173,7 +173,7 @@
+      in
+         loop_k 1 n
+      end;
+-     
++
+ (************************************)
+ (*  Last stage, length=2 butterfly  *)
+ (************************************)
+@@ -227,7 +227,7 @@
+   end;
+ 
+   n
+-  
++
+   end
+ 
+ fun abs x = if x >= 0.0 then x else ~x
+@@ -285,7 +285,7 @@
+       val (zr, zi) = loop_i 0 0.0 0.0 0 0
+       val zm = if abs zr < abs zi then zi else zr
+   in
+-    printr zm; print "\n"
++    zm
+   end
+ 
+ fun loop_np i np = if i > 15 then () else
+@@ -298,3 +298,19 @@
+ 
+ end
+ end;
++
++structure Benchmark =
++struct
++  val name = "fft"
++  fun run [size,repetitions] =
++        let val n = BenchInput.between (2,8388608) (BenchInput.integer size)
++            val count = BenchInput.between (1,1000) (BenchInput.integer repetitions)
++            fun power n = n=1 orelse (n mod 2=0 andalso power(n div 2))
++            val _ = if power n then () else raise Fail "FFT size must be a power of two"
++            fun one () =
++              let val error = FFTKernel.test n
++                  val bound = Real.fromInt n * 0.00000001
++              in if error >= 0.0 andalso BenchInput.closeReal(error,0.0,bound,0.0) then 1 else raise Fail "FFT numeric residual" end
++        in IntInf.toString(BenchInput.repeat count one) end
++    | run _ = raise Fail "fft expects size repetitions"
++end

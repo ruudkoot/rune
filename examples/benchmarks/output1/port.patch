@@ -1,0 +1,46 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -1,22 +1,21 @@
+-structure Main =
+-   struct
+-      fun once () =
+-         let
+-            val count = 1000000000
+-            open TextIO
+-            val out = openOut "/dev/null"
+-            fun loop n =
+-               if n = 0
+-                  then ()
+-               else (output1 (out, #"a"); loop (n - 1))
+-            val _ = loop count
+-            val _ = closeOut out
+-         in
+-            ()
+-         end
+-
+-      fun doit n =
+-         if n = 0
+-            then ()
+-         else (once (); doit (n - 1))
+-   end
++(* MLton output1; changes and notices are in PROVENANCE.md. *)
++structure Benchmark =
++struct
++  val name="output1"
++  fun run [characters] =
++    let val n=BenchInput.between(1,1000000000)(BenchInput.integer characters)
++        val out=TextIO.openOut "output.data"
++        fun write 0=() | write k=(TextIO.output1(out,#"a");write(k-1))
++        val _=(write n handle e=>(TextIO.closeOut out;raise e))
++        val _=TextIO.closeOut out
++        val input=BinIO.openIn "output.data"
++        fun consume count=
++          let val chunk=BinIO.inputN(input,4096)
++          in if Word8Vector.length chunk=0 then count else
++             if Word8Vector.all(fn b=>b=0w97)chunk then consume(count+Word8Vector.length chunk)
++             else raise Fail "output character differs" end
++        val count=(consume 0 handle e=>(BinIO.closeIn input;raise e))
++        val _=BinIO.closeIn input
++    in if count=n then Int.toString count else raise Fail "output byte count" end
++  | run _=raise Fail "output1 expects character count"
++end

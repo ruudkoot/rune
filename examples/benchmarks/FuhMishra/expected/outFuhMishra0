@@ -1,0 +1,39 @@
+
+Result of TYPE:
+
+
+ 
+Coersion set:     
+    REAL |> 'a15, 
+    'a7 |> 'a15->'a16, 
+    'a16 |> 'a12, 
+    INT |> 'a13, 
+    'a7 |> 'a13->'a14, 
+    'a14 |> 'a11, 
+    'a11*'a12 |> 'a8, 
+    'a9 |> 'a10, 
+    'a9->'a10 |> 'a7, 
+    'a8 |> 'a6
+Type environment: 
+Expression:       let Id=(fn x =>x) in ((Id @ 3),(Id @ 4.?))end
+Type:             'a6
+
+
+Result of MATCH:
+
+
+ 
+Coersion set:     
+    REAL |> 'a15, 
+    'a17->'a18 |> 'a15->'a16, 
+    'a16 |> 'a12, 
+    INT |> 'a13, 
+    'a17->'a18 |> 'a13->'a14, 
+    'a14 |> 'a11, 
+    'a11*'a12 |> 'a21*'a22, 
+    'a9 |> 'a10, 
+    'a9->'a10 |> 'a17->'a18, 
+    'a21*'a22 |> 'a25*'a26
+Type environment: 
+Expression:       let Id=(fn x =>x) in ((Id @ 3),(Id @ 4.?))end
+Type:             'a25*'a26

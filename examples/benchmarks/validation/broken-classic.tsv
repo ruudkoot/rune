@@ -1,0 +1,7 @@
+benchmark	configuration	check	status	evidence
+barnes-hut	native:smlnj-dev@2026.2	CM.make	compile-error	main.sml:7-61 BMARK.testit unit->unit versus TextIO.outstream->unit
+delta-blue	native:smlnj-dev@2026.2	CM.make; Main.testit()	runtime-failure	CM.make true; second chain equality raises Fail: Cycle encountered
+dlx	native:smlnj-dev@2026.2	CM.make	compile-error	main.sml:27 missing END; main.sml:42 syntax error
+kcfa	native:smlnj-dev@2026.2	CM.make	missing-source	../common/lib-base.sml absent
+pia	pinned-source	source inventory	missing-source	only DATA files; no SML implementation/build manifest
+regex	pinned-source	source inventory	missing-source	advertised but no program directory

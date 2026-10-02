@@ -1,0 +1,4 @@
+RESULT 54700
+PASS primes-lazy
+SAMPLE 1 0.040558000
+SUMMARY 1 checks, 0 failed

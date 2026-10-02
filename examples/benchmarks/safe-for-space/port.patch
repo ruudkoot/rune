@@ -1,0 +1,42 @@
+--- upstream/ordered-sources
++++ benchmark.sml
+@@ -7,7 +7,7 @@
+  * Conversion" paper by Zhong Shao and Andrew Appel (TOPLAS 2000).
+  *)
+ 
+-structure Main : BMARK =
++structure Kernel =
+   struct
+ 
+     val name = "safe-for-space"
+@@ -37,20 +37,23 @@
+ 
+     fun big n = if n < 1 then nil else n :: big(n-1);
+ 
+-    fun loop (n, res) =
++    fun loop (bigSize, n, res) =
+           if (n < 1)
+             then res
+             else let
+-              val s = f (big N, 0, 0, 0, 0) ()
++              val s = f (big bigSize, 0, 0, 0, 0) ()
+               in
+-                loop (n-1, s::res)
++                loop (bigSize, n-1, s::res)
+               end
+ 
+     (*
+     val result = loop (N, [])
+     *)
+-    fun doit () = ignore (loop (100000, []))
+ 
+-    fun testit () = (ignore (loop (50, [])); Log.print "OK\n")
+-
+-  end
++end
++structure Benchmark=struct val name="safe-for-space"
++fun run [size,closures]=let val n=BenchInput.between(1,100000)(BenchInput.integer size) val r=BenchInput.between(1,100000)(BenchInput.integer closures)
++val retained=Kernel.loop(n,r,[])
++fun use(h,(count,sum))=let val(i,u)=h() val v=i() in if v=3 andalso u=n then(count+1,IntInf.+(sum,IntInf.fromInt(v+u)))else raise Fail "closure result"end
++val(count,sum)=List.foldl use (0,0)retained val _=if count=r then () else raise Fail "closure count"
++in IntInf.toString sum end |run _=raise Fail "safe-for-space expects list size retained closures"end

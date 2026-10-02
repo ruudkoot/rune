@@ -1,0 +1,12 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening docs/bugreport/smlnj/GC/real-corrupted-on-64-bit/bug.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+bits 52C0000000000000 -> 78E029CC0000
+bits 4120000000000000 -> FFF0000000000000
+bits 1D80000000000000 -> 78E029CC0000
+bits BE0000000000000 -> FFF0000000000000
+bits 7A10000000000000 -> FFF0000000000000
+591 of 300000 wrong

@@ -1,0 +1,21 @@
+date_utc	2026-10-01T18:50:15Z
+revision	e2f183fa7a395f27e42fa02441305e03be869fff
+dirty	33
+action	count
+mode	fresh
+samples	1
+repetitions	1
+level	0
+profile	smoke
+configs	rune,rune:opt,rune:new,rune:jit
+filter	tak
+machine	Linux ThinkStation 6.18.33.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+time_tool	time (GNU Time) UNKNOWN
+runtime_options	
+timezone	NST3:30NDT,M3.2.0,M11.1.0
+locale	C
+limit_method	AS except PolyML data quota and capped managed heap
+compile_samples	1 fresh build per workload/configuration
+os_clock_resolution	GNU time wall seconds printed to hundredths
+in_process_clock	SML Time.now, formatted to nanoseconds; precision is host dependent
+native_options	compiler defaults; level column refers to Rune only

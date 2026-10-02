@@ -1,0 +1,311 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -18,7 +18,7 @@
+     val foldli : ((int * elem * 'a) -> 'a) -> 'a -> (vector * int * int option) -> 'a
+     val foldri : ((int * elem * 'a) -> 'a) -> 'a -> (vector * int * int option) -> 'a
+     val foldl : ((elem * 'a) -> 'a) -> 'a -> vector -> 'a
+-    val foldr : ((elem * 'a) -> 'a) -> 'a -> vector -> 'a 
++    val foldr : ((elem * 'a) -> 'a) -> 'a -> vector -> 'a
+   end
+ 
+ (*
+@@ -29,7 +29,7 @@
+ *)
+ 
+ (* COPYRIGHT
+- 
++
+ Redistribution and use in source and binary forms, with or
+ without modification, are permitted provided that the following
+ conditions are met:
+@@ -460,7 +460,7 @@
+ (*
+  Copyright (c) Juan Jose Garcia Ripoll.
+  All rights reserved.
+- 
++
+  Refer to the COPYRIGHT file for license conditions
+ *)
+ 
+@@ -549,7 +549,7 @@
+ (*
+  Copyright (c) Juan Jose Garcia Ripoll.
+  All rights reserved.
+- 
++
+  Refer to the COPYRIGHT file for license conditions
+ *)
+ 
+@@ -557,7 +557,7 @@
+     struct
+         structure Array = Array
+         structure Index = Index
+-            
++
+         type index = Index.t
+         type 'a tensor = {shape : index, indexer : Index.indexer, data : 'a array}
+ 
+@@ -581,7 +581,7 @@
+         fun splitList (l as (a::rest), place) =
+             let fun loop (left,here,right) 0 =  (List.rev left,here,right)
+                   | loop (_,_,[]) place = raise Index
+-                  | loop (left,here,a::right) place = 
++                  | loop (left,here,a::right) place =
+                 loop (here::left,a,right) (place-1)
+             in
+                 if place <= 0 then
+@@ -620,7 +620,7 @@
+                 raise Shape
+ 
+         fun fromArray (s, a) =
+-            case Index.validShape s andalso 
++            case Index.validShape s andalso
+                  ((Index.length s) = (Array.length a)) of
+                  true => make'(s, a)
+                | false => raise Shape
+@@ -708,7 +708,7 @@
+ (*
+  Copyright (c) Juan Jose Garcia Ripoll.
+  All rights reserved.
+- 
++
+  Refer to the COPYRIGHT file for license conditions
+ *)
+ 
+@@ -1086,7 +1086,7 @@
+                else loop n
+             end
+ 
+-        fun recip (r1, i1) = 
++        fun recip (r1, i1) =
+             let val modulus = abs2(r1, i1)
+             in (Real./(r1, modulus), Real./(Real.~ i1, modulus))
+             end
+@@ -1152,7 +1152,7 @@
+             in (y', Real.~ x')
+             end
+ 
+-        fun acos (z as (x,y)) = 
++        fun acos (z as (x,y)) =
+             let val (x', y') = sqrt (one + z * z)
+                 val (x'', y'') = ln (z + (Real.~ y', x'))
+             in (y'', Real.~ x'')
+@@ -1172,7 +1172,7 @@
+ 
+         fun scan getc =
+             let val scanner = Real.scan getc
+-            in fn stream => 
++            in fn stream =>
+                   case scanner stream of
+                       NONE => NONE
+                     | SOME (a, rest) =>
+@@ -1186,7 +1186,7 @@
+ (*
+  Copyright (c) Juan Jose Garcia Ripoll.
+  All rights reserved.
+- 
++
+  Refer to the COPYRIGHT file for license conditions
+ *)
+ 
+@@ -1209,9 +1209,9 @@
+ 
+ structure RNumberArray =
+     struct
+-        open Real64Array
+-        val sub = Unsafe.Real64Array.sub
+-        val update = Unsafe.Real64Array.update
++        open RealArray
++        val sub = RealArray.sub
++        val update = RealArray.update
+         fun map f a = tabulate(length a, fn x => (f (sub(a,x))))
+         fun mapi f a = tabulate(length a, fn x => (f (x,sub(a,x))))
+         fun map2 f a b = tabulate(length a, fn x => (f(sub(a,x),sub(b,x))))
+@@ -1548,7 +1548,7 @@
+                    then raise Domain
+                else loop n
+             end
+-        fun recip (r1, i1) = 
++        fun recip (r1, i1) =
+             let val modulus = abs2(r1, i1)
+             in (Real./(r1, modulus), Real./(Real.~ i1, modulus))
+             end
+@@ -1607,7 +1607,7 @@
+                 val (x',y') = ln ((Real.~ y, x) + w)
+             in (y', Real.~ x')
+             end
+-        fun acos (z as (x,y)) = 
++        fun acos (z as (x,y)) =
+             let val (x', y') = sqrt (one + z * z)
+                 val (x'', y'') = ln (z + (Real.~ y', x'))
+             in (y'', Real.~ x'')
+@@ -1623,7 +1623,7 @@
+         fun atanh x = ln ((one + x) / sqrt(one - x * x))
+         fun scan getc =
+             let val scanner = Real.scan getc
+-            in fn stream => 
++            in fn stream =>
+                   case scanner stream of
+                       NONE => NONE
+                     | SOME (a, rest) =>
+@@ -1661,7 +1661,7 @@
+              Int of int |
+              Real of real |
+              Complex of CNumber.t |
+-             String of string     
++             String of string
+     fun list _ [] = print "[]"
+       | list cvt (a::resta) =
+         let fun loop a [] = (print(cvt a); print "]")
+@@ -1726,9 +1726,9 @@
+     end
+ structure RNumberArray =
+     struct
+-        open Real64Array
+-        val sub = Unsafe.Real64Array.sub
+-        val update = Unsafe.Real64Array.update
++        open RealArray
++        val sub = RealArray.sub
++        val update = RealArray.update
+         fun map f a = tabulate(length a, fn x => (f (sub(a,x))))
+         fun mapi f a = tabulate(length a, fn x => (f (x,sub(a,x))))
+         fun map2 f a b = tabulate(length a, fn x => (f(sub(a,x),sub(b,x))))
+@@ -1936,7 +1936,7 @@
+         fun splitList (l as (a::rest), place) =
+             let fun loop (left,here,right) 0 =  (List.rev left,here,right)
+                   | loop (_,_,[]) place = raise Index
+-                  | loop (left,here,a::right) place = 
++                  | loop (left,here,a::right) place =
+                 loop (here::left,a,right) (place-1)
+             in
+                 if place <= 0 then
+@@ -1967,7 +1967,7 @@
+             else
+                 raise Shape
+         fun fromArray (s, a) =
+-            case Index.validShape s andalso 
++            case Index.validShape s andalso
+                  ((Index.length s) = (Array.length a)) of
+                  true => make'(s, a)
+                | false => raise Shape
+@@ -2221,7 +2221,7 @@
+         fun splitList (l as (a::rest), place) =
+             let fun loop (left,here,right) 0 =  (List.rev left,here,right)
+                   | loop (_,_,[]) place = raise Index
+-                  | loop (left,here,a::right) place = 
++                  | loop (left,here,a::right) place =
+                 loop (here::left,a,right) (place-1)
+             in
+                 if place <= 0 then
+@@ -2252,7 +2252,7 @@
+             else
+                 raise Shape
+         fun fromArray (s, a) =
+-            case Index.validShape s andalso 
++            case Index.validShape s andalso
+                  ((Index.length s) = (Array.length a)) of
+                  true => make'(s, a)
+                | false => raise Shape
+@@ -2533,7 +2533,7 @@
+         fun splitList (l as (a::rest), place) =
+             let fun loop (left,here,right) 0 =  (List.rev left,here,right)
+                   | loop (_,_,[]) place = raise Index
+-                  | loop (left,here,a::right) place = 
++                  | loop (left,here,a::right) place =
+                 loop (here::left,a,right) (place-1)
+             in
+                 if place <= 0 then
+@@ -2564,7 +2564,7 @@
+             else
+                 raise Shape
+         fun fromArray (s, a) =
+-            case Index.validShape s andalso 
++            case Index.validShape s andalso
+                  ((Index.length s) = (Array.length a)) of
+                  true => make'(s, a)
+                | false => raise Shape
+@@ -2912,60 +2912,27 @@
+ fun complexTensorWrite file x = (intListWrite file (CTensor.shape x); CTensor.app (fn x => (complexWrite file x)) x)
+ end
+ 
+-fun loop 0 _ = ()
+-  | loop n f = (f(); loop (n-1) f)
+-
+-fun test_operator new list_op list_sizes =
+-    let fun test_many list_op size =
+-        let fun test_op (times,f) =
+-            let val a = new size
+-            in (EvalTimer.timerOn();
+-                loop times (fn _ => f(a,a));
+-                let val t = LargeInt.toInt(EvalTimer.timerRead()) div times
+-                    val i = StringCvt.padLeft #" " 6 (Int.toString t)
+-                in print i
+-                end)
+-            end
+-        in
+-            print (Int.toString size);
+-            print " ";
+-            List.app test_op list_op;
+-            print "\n"
+-        end
+-    in List.app (test_many list_op) list_sizes
+-    end
+-
+-structure Main =
+-   struct
+-      fun one() =
+-         let
+-            val _ =
+-               let val operators = [(20, RTensor.+), (20, RTensor.* ), (20, RTensor./),
+-                                    (4, fn (a,b) => RTensor.+* a b),
+-                                    (4, fn (a,b) => RTensor.*+ a b)]
+-                  fun constructor size = RTensor.new([size,size],1.0)
+-               in
+-                  print "Real tensors: (+, *, /, +*, *+)\n";
+-                  test_operator constructor operators [100,200,300,400,500];
+-                  print "\n\n"
+-               end
+-            
+-      val _ =
+-         let val operators = [(20, CTensor.+), (20, CTensor.* ), (20, CTensor./),
+-                              (4, fn (a,b) => CTensor.+* a b),
+-                              (4, fn (a,b) => CTensor.*+ a b)]
+-            fun constructor size = CTensor.new([size,size],CNumber.one)
+-         in
+-            print "Real tensors: (+, *, /, +*, *+)\n";
+-            test_operator constructor operators [100,200,300,400,500];
+-            print "\n\n"
+-         end
+-         in ()
+-         end
+-
+-      fun doit n =
+-         if n = 0
+-            then ()
+-         else (one ()
+-               ; doit (n - 1))
+-   end
++
++structure Benchmark =
++struct
++  val name="tensor"
++  val _=if Real.precision=53 andalso Real.radix=2 then () else raise Fail "requires binary64 real arithmetic"
++  fun run [size,reps] =
++    let val n=BenchInput.between(1,500)(BenchInput.integer size)
++        val count=BenchInput.between(1,20)(BenchInput.integer reps)
++        fun checked want value=if BenchInput.closeReal(value,want,0.00000001,0.00000001) then () else raise Fail "tensor value"
++        fun realOne () =
++          let val a=RTensor.new([n,n],1.0)
++              fun all want t = RTensor.app (checked want) t
++              fun elem 0=() | elem k=(all 2.0(RTensor.+(a,a));all 1.0(RTensor.*(a,a));all 1.0(RTensor./(a,a));elem(k-1))
++              fun contracted 0=() | contracted k=(all(Real.fromInt n)(RTensor.+* a a);all(Real.fromInt n)(RTensor.*+ a a);contracted(k-1))
++          in elem 20;contracted 4 end
++        fun complexOne () =
++          let val a=CTensor.new([n,n],CNumber.one)
++              fun all want t = CTensor.app(fn x=>let val(r,i)=CNumber.split x in checked want r;checked 0.0 i end)t
++              fun elem 0=() | elem k=(all 2.0(CTensor.+(a,a));all 1.0(CTensor.*(a,a));all 1.0(CTensor./(a,a));elem(k-1))
++              fun contracted 0=() | contracted k=(all(Real.fromInt n)(CTensor.+* a a);all(Real.fromInt n)(CTensor.*+ a a);contracted(k-1))
++          in elem 20;contracted 4 end
++    in IntInf.toString(BenchInput.repeat count(fn()=> (realOne();complexOne();1))) end
++  | run _=raise Fail "tensor expects dimension repetitions"
++end

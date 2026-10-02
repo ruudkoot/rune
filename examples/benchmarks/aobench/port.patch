@@ -1,0 +1,75 @@
+--- upstream/ordered-sources
++++ ordered-port-sources
+@@ -1,3 +1,4 @@
++structure Log=struct structure BinIO=BinIO fun print (_:string)=()fun say (_:string list)=()end
+ (* rand48.sml
+  *
+  * COPYRIGHT (c) 2026 The Fellowship of SML/NJ (https://smlnj.org)
+@@ -80,11 +81,7 @@
+           end
+ 
+     (* convert a 48-bit value to a IEEE double in the range [0..1) *)
+-    fun mkReal w = let
+-          val r = Unsafe.Real64.castFromWord (W64.orb(ieeeExpBias, W64.<<(w, 0w4)))
+-          in
+-            r - 1.0
+-          end
++    fun mkReal w = Real.fromLargeInt(Word64.toLargeInt w) / 281474976710656.0
+ 
+     fun drand () = mkReal (randStep buffer)
+ 
+@@ -108,7 +105,7 @@
+   end*) = struct
+ 
+     structure W8A = Word8Array
+-    structure R64A = Real64Array
++    structure R64A = RealArray
+ 
+     val drand48 = Rand48.drand
+ 
+@@ -324,36 +321,12 @@
+ 
+   end
+ 
+-(* main.sml
+- *
+- * COPYRIGHT (c) 2026 The Fellowship of SML/NJ (https://smlnj.org)
+- * All rights reserved.
+- *)
+-
+-structure Main : BMARK =
+-  struct
+-
+-    val name = "aobench"
+-
+-    fun savePPM (fname, wid, ht, img) = let
+-          val outS = BinIO.openOut fname
+-          in
+-            BinIO.output (outS, Byte.stringToBytes (concat [
+-                "P6\n", Int.toString wid, " ", Int.toString ht, "\n255\n"
+-              ]));
+-            Word8Array.app (fn b => BinIO.output1 (outS, b)) img;
+-            BinIO.closeOut outS
+-          end
+-
+-    fun doit () = ignore (AOBench.render{wid = 512, ht = 512, nSubsamples = 3})
+-
+-    fun testit () = (
+-          savePPM (
+-            "out.ppm", 256, 256,
+-            AOBench.render{wid = 256, ht = 256, nSubsamples = 2});
+-          Log.print "OK\n")
+-
+-    val results = ["out.ppm"]
+-
+-  end
+-
++structure RenderDriver=struct
++fun render(n,samples)=let val _=ignore(Rand48.seed 0wx1234abcd330e)val img=AOBench.render{wid=n,ht=n,nSubsamples=samples}val out=BinIO.openOut "out.ppm"
++val _=BinIO.output(out,Byte.stringToBytes("P6\n"^Int.toString n^" "^Int.toString n^"\n255\n"))
++val _=Word8Array.app(fn b=>BinIO.output1(out,b))img in BinIO.closeOut out end end
++structure Benchmark=struct val name="aobench"
++fun run [size,sampling,reference,alternate]=let val n=BenchInput.between(8,512)(BenchInput.integer size)val samples=BenchInput.between(1,3)(BenchInput.integer sampling)
++val _=if List.exists(fn p=>p=reference)["expected/smoke.ppm","expected/normal.ppm","expected/large.ppm"]then()else raise Fail "image reference path"
++val _=if Real.precision>=53 then()else raise Fail "requires binary64 precision"
++val _=RenderDriver.render(n,samples)in BenchPPM.sameSet("out.ppm",[reference,alternate])end|run _=raise Fail "renderer expects dimension samples reference"end

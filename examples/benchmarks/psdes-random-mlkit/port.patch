@@ -1,0 +1,84 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -5,10 +5,10 @@
+ local
+    fun natFold (start, stop, ac, f) =
+       let
+-	 fun loop (i, ac) =
+-	    if i = stop
+-	       then ac
+-	    else loop (i + 1, f (i, ac))
++         fun loop (i, ac) =
++            if i = stop
++               then ac
++            else loop (i + 1, f (i, ac))
+       in loop (start, ac)
+       end
+    val niter: int = 4
+@@ -25,46 +25,35 @@
+       natFold
+       (0, niter, (lword, irword), fn (i, (lword, irword)) =>
+        let
+-	  val ia = xorb (irword, c1 i)
+-	  val itmpl = andb (ia, 0wxffff)
+-	  val itmph = >> (ia, half)
+-	  val ib = itmpl * itmpl + notb (itmph * itmph)
++          val ia = xorb (irword, c1 i)
++          val itmpl = andb (ia, 0wxffff)
++          val itmph = >> (ia, half)
++          val ib = itmpl * itmpl + notb (itmph * itmph)
+        in (irword,
+-	   xorb (lword, itmpl * itmph + xorb (c2 i, reverse ib)))
++           xorb (lword, itmpl * itmph + xorb (c2 i, reverse ib)))
+        end)
+-   val zero: word = 0wx13 
++   val zero: word = 0wx13
+    val lword: word ref = ref 0w13
+    val irword: word ref = ref 0w14
+    val needTo = ref true
+ in
++   fun reset () = (lword := 0w13; irword := 0w14; needTo := true)
+    fun word () =
+       if !needTo
+-	 then
+-	    let
+-	       val (l, i) = psdes (!lword, !irword)
+-	       val _ = lword := l
+-	       val _ = irword := i
+-	       val _ = needTo := false
+-	    in
+-	       l
+-	    end
++         then
++            let
++               val (l, i) = psdes (!lword, !irword)
++               val _ = lword := l
++               val _ = irword := i
++               val _ = needTo := false
++            in
++               l
++            end
+       else (needTo := true
+-	    ; !irword)
++            ; !irword)
+ end
+ 
+-structure Main =
+-   struct
+-      fun doit n =
+-	 let
+-	    fun loop (i, w) =
+-	       if i = 0
+-		  then
+-		     if w = 0wxEAD56832
+-			then print "OK\n"
+-		     else print ("ERROR: w is " ^ Word32.toString w ^ "\n")
+-	       else loop (i - 1, w + word())
+-	 in loop (10000000, 0w0)
+-	 end
+-   end
+-
+-val _ = Main.doit()+structure Benchmark=struct val name="psdes-random-mlkit"
++fun run [words]=let val n=BenchInput.between(1,10000000)(BenchInput.integer words) val _=reset()
++fun loop(0,sum)=sum |loop(k,sum)=loop(k-1,Word32.+(sum,word()))
++in Word32.toString(loop(n,0w0))end |run _=raise Fail "pseudo-DES expects generated words"end

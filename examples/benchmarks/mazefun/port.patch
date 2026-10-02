@@ -1,0 +1,39 @@
+--- upstream/ordered-sources
++++ benchmark.sml
+@@ -8,7 +8,7 @@
+  * was done by Kavon Farvardin as part of the Manticore project.
+  *)
+ 
+-structure Main : BMARK =
++structure Maze =
+   struct
+ 
+     datatype maze_elm
+@@ -44,7 +44,7 @@
+        | Empty => " *"
+       (* end case *))
+ 
+-    fun printStringMat mat = app (fn lst => (app Log.print lst; Log.print "\n")) mat
++    fun printStringMat mat = app (fn lst => (app BenchOutput.put lst; BenchOutput.put "\n")) mat
+ 
+   (***********)
+ 
+@@ -251,3 +251,18 @@
+     fun testit () = printStringMat (makeMaze n m)
+ 
+ end
++
++structure Benchmark = struct
++  val name = "mazefun"
++  fun run [width,height,reps] =
++    let val w = BenchInput.between (3,31) (BenchInput.integer width)
++        val h = BenchInput.between (3,31) (BenchInput.integer height)
++        val r = BenchInput.between (1,10000) (BenchInput.integer reps)
++        fun one () = String.concatWith "/" (List.map String.concat (Maze.makeMaze w h))
++        val first = one ()
++        fun loop 0 = ()
++          | loop n = if one () = first then loop (n-1) else raise Fail "nondeterministic maze"
++        val _ = loop (r-1)
++    in first end
++    | run _ = raise Fail "mazefun expects rows columns repetitions"
++end

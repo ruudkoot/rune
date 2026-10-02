@@ -1,0 +1,2 @@
+primes-lazy	600	4194304	shared/input.sml shared/primes.sml primes-lazy/benchmark.sml shared/main.sml	100 100	primes-lazy/normal.expected	-
+primes-strict	600	4194304	shared/input.sml shared/primes.sml primes-strict/benchmark.sml shared/main.sml	100 100	primes-strict/normal.expected	-

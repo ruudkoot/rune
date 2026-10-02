@@ -1,0 +1,4 @@
+RESULT 7
+PASS tak-nofib-strict
+SAMPLE 1 0.000437000
+SUMMARY 1 checks, 0 failed

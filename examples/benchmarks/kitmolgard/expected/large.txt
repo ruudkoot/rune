@@ -1,0 +1,6 @@
+Start
+(0,0,0,1)      counts/sekund= 100000     average= 100000
+(0,0,0,2)      counts/sekund= 100000     average= 100000
+(0,0,0,3)      counts/sekund= 100000     average= 100000
+(0,0,0,4)      counts/sekund= 100000     average= 100000
+(0,0,0,5)      counts/sekund= 100000     average= 100000

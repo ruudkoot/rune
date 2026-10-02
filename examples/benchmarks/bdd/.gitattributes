@@ -1,0 +1,3 @@
+# Preserve the original upstream text byte for byte, including its whitespace.
+upstream/* whitespace=-trailing-space
+port.patch whitespace=-trailing-space

@@ -1,0 +1,5 @@
+# Retain original source/data bytes, including upstream indentation and EOFs.
+**/upstream/** -whitespace
+**/DATA/** -whitespace
+# P6 images can contain no NUL byte but are still binary RGB artifacts.
+**/*.ppm binary

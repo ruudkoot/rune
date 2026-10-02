@@ -1,0 +1,3 @@
+/home/ruud/rune/.worktrees/benchmarks/bin/runevm
+--stats
+prog.rbc

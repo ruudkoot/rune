@@ -1,0 +1,93 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -1,3 +1,4 @@
++structure Kernel=struct
+ (*kitmandelbrot.sml*)
+ 
+ fun digit n = chr(ord #"0" + n)
+@@ -10,30 +11,31 @@
+ (* mandelbrot.sml *)
+ 
+ (*
+-structure Main : BMARK =
++structure Kernel =
+   struct
+ *)
+     val x_base = ~2.0
+     val y_base = 1.25
+     val side = 2.5
+ 
+-    val sz = 2048
++    val sz = ref 2048
+     val maxCount = 1024
+ 
+-    val delta = side / (real sz)
++    fun delta () = side / (real (!sz))
+ 
+     val sum_iterations = ref 0
++    val sum_steps = ref 0
+ 
+-    fun loop1 i = if (i >= sz)
+-	  then ()
+-	  else let
+-            val c_im : real = y_base - (delta * real i)
+-            fun loop2 j = if (j >= sz)
+-		  then ()
+-		  else let
+-                    val c_re = x_base * (delta + real j)
+-		    fun loop3 (count, z_re : real, z_im : real) = if (count < maxCount)
+-			  then let
++    fun loop1 i = if (i >= !sz)
++          then ()
++          else let
++            val c_im : real = y_base - (delta() * real i)
++            fun loop2 j = if (j >= !sz)
++                  then ()
++                  else let
++                    val c_re = x_base * (delta() + real j)
++                    fun loop3 (count, z_re : real, z_im : real) = if (count < maxCount)
++                          then let
+                             val z_re_sq = z_re * z_re
+                             val z_im_sq = z_im * z_im
+                             in
+@@ -47,27 +49,22 @@
+                                        z_re_im + z_re_im + c_im)
+                                   end
+                             end (* loop3 *)
+-			  else count
+-		    val count = loop3 (0, c_re, c_im)
+-		    in
+-		      sum_iterations := !sum_iterations + 1(*count*);
+-		      loop2 (j+1)
+-		    end
++                          else count
++                    val count = loop3 (0, c_re, c_im)
++                    in
++                      sum_iterations := !sum_iterations + 1(*count*);
++              sum_steps := !sum_steps + count;
++                      loop2 (j+1)
++                    end
+             in
+               loop2 0;
+               loop1 (i+1)
+             end
+ 
+-    fun doit () = (sum_iterations := 0; loop1 0)
+ 
+-    fun testit () = (
+-	  sum_iterations := 0;
+-	  loop1 0;
+-	  print(int_to_string(!sum_iterations) ^ " iterations\n"))
+-(*
+-  end (* Mandelbrot *)
+-*)
+-
+-(*val _ = (doit (); doit(); doit());*)
+-
+-val _  = (testit (); testit (); testit ());   (* this should give ``1084512 iterations'' *) 
++end
++structure Benchmark=struct val name="kitmandelbrot"
++fun run [size,reps]=let val n=BenchInput.between(1,2048)(BenchInput.integer size) val r=BenchInput.between(1,10)(BenchInput.integer reps)
++fun one()=(Kernel.sz:=n; Kernel.sum_iterations:=0; Kernel.sum_steps:=0;Kernel.loop1 0; Int.toString(!Kernel.sum_iterations)^" "^Int.toString(!Kernel.sum_steps))
++fun loop(0,acc)=String.concatWith ";"(List.rev acc)|loop(k,acc)=loop(k-1,one()::acc)
++in loop(r,[])end |run _=raise Fail "Mandelbrot expects dimension repetitions"end

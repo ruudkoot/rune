@@ -1,0 +1,243 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -1,3 +1,4 @@
++fun print _ = ()
+ (* Written by Henry Cejtin (henry@sourcelight.com). *)
+ signature MATRIX =
+    sig
+@@ -19,17 +20,17 @@
+       val map: 'entry1 matrix * ('entry1 -> 'entry2) -> 'entry2 matrix
+       val toString: 'entry matrix * ('entry -> string) -> string
+    end
+-   
++
+ structure Matrix:> MATRIX =
+    struct
+       type 'entry matrix = int * int * 'entry array
+-   
++
+       exception sizeError
+-   
++
+       exception index
+-   
++
+       exception foldError
+-   
++
+       fun make (height: int, width: int, generator: int * int -> 'entry)
+          : 'entry matrix =
+          if height < 0 orelse width < 0
+@@ -39,11 +40,11 @@
+                Array.tabulate (height*width,
+                                fn z => generator (z div width,
+                                                   z mod width)))
+-   
++
+       fun height (height, _, _) = height
+-   
++
+       fun width (width, _, _) = width
+-   
++
+       fun fetch ((height, width, mat), row, col) =
+          if 0 <= row
+             andalso row < height
+@@ -51,7 +52,7 @@
+             andalso col < width
+             then Array.sub (mat, col + width*row)
+          else raise index
+-   
++
+       fun fetchRow ((height, width, mat), row) =
+          if 0 <= row andalso row < height
+             then let val offset = width * row
+@@ -61,7 +62,7 @@
+                     else raise index
+                  end
+          else raise index
+-   
++
+       fun fetchCol ((height, width, mat), col) =
+          if 0 <= col andalso col < width
+             then fn row =>
+@@ -69,7 +70,7 @@
+                   then Array.sub (mat, col + width*row)
+                else raise index
+          else raise index
+-   
++
+       fun store ((height, width, mat), row, col, entry) =
+          if 0 <= row
+             andalso row < height
+@@ -77,7 +78,7 @@
+             andalso col < width
+             then Array.update (mat, col + width*row, entry)
+          else raise index
+-   
++
+       fun storeRow ((height, width, mat), row) =
+          if 0 <= row andalso row < height
+             then let val offset = width * row
+@@ -87,7 +88,7 @@
+                     else raise index
+                  end
+          else raise index
+-   
++
+       fun storeCol ((height, width, mat), col) =
+          if 0 <= col andalso col < width
+             then fn (row, entry) =>
+@@ -95,7 +96,7 @@
+                   then Array.update (mat, col + width*row, entry)
+                else raise index
+          else raise index
+-   
++
+       fun swapLoop (from1: int -> 'entry,
+                     to1: int * 'entry -> unit,
+                     from2: int -> 'entry,
+@@ -111,7 +112,7 @@
+                  end
+          in loop 0
+          end
+-   
++
+       fun rowSwap (mat as (height, width, _), row1, row2): unit =
+          if 0 <= row1 andalso row1 < height
+             andalso 0 <= row2 andalso row2 < height
+@@ -123,7 +124,7 @@
+                                 storeRow (mat, row2),
+                                 width)
+          else raise index
+-   
++
+       fun colSwap (mat as (height, width, _), col1, col2): unit =
+          if 0 <= col1 andalso col1 < width
+             andalso 0 <= col2 andalso col2 < width
+@@ -135,7 +136,7 @@
+                                 storeCol (mat, col2),
+                                 height)
+          else raise index
+-   
++
+       fun opLoop (from1: int -> 'entry,
+                   from2: int -> 'entry,
+                   to2: int * 'entry -> unit,
+@@ -150,7 +151,7 @@
+                   loop (i + 1))
+          in loop 0
+          end
+-   
++
+       fun rowOp (mat as (height, width, _),
+                  row1,
+                  row2,
+@@ -164,7 +165,7 @@
+                          width,
+                          f)
+          else raise index
+-   
++
+       fun colOp (mat as (height, width, _),
+                  col1,
+                  col2,
+@@ -178,13 +179,13 @@
+                          height,
+                          f)
+          else raise index
+-   
++
+       fun copy ((height, width, mat)) =
+          (height,
+           width,
+           Array.tabulate (Array.length mat,
+                           fn i => Array.sub (mat, i)))
+-   
++
+       fun map ((height, width, mat: 'entry1 Array.array),
+                f: 'entry1 -> 'entry2)
+          : 'entry2 matrix =
+@@ -192,7 +193,7 @@
+           width,
+           Array.tabulate (Array.length mat,
+                           fn i => f (Array.sub (mat, i))))
+-   
++
+       (* Natural fold a range of integers in reverse. *)
+       fun naturalFold (limit: int,
+                        state: 'state,
+@@ -205,16 +206,16 @@
+                then raise foldError
+             else loop (limit, state)
+          end
+-   
+-   
++
++
+       local val blank8 = Byte.charToByte #" "
+-   
++
+          fun makeBlanks size =
+             let val blanks = Word8Vector.tabulate (size,
+                                                    fn _ => blank8)
+             in Byte.bytesToString blanks
+             end
+-   
++
+       in fun toString (mat: 'entry matrix, f: 'entry -> string): string =
+          let val mat as (height, width, _) = map (mat, f)
+             fun maxSize from (i, width) = Int.max (String.size (from i),
+@@ -253,11 +254,11 @@
+    end
+ 
+ val zero = IntInf.fromInt 0
+-   
++
+ fun smaller (a: IntInf.int, b: IntInf.int): bool =
+    (not (a = zero))
+    andalso (b = zero orelse IntInf.< (IntInf.abs a , IntInf.abs b))
+-   
++
+ fun smithNormalForm (mat: IntInf.int Matrix.matrix): IntInf.int Matrix.matrix =
+    let val height = Matrix.height mat
+       val width = Matrix.width mat
+@@ -376,23 +377,18 @@
+ 
+ fun f (x, y) = List.nth (List.nth (table, x), y)
+ fun show m = print (Matrix.toString (m, IntInf.toString))
+-structure Main =
+-   struct
+-      fun snf() =
+-         let val dim = 35
+-            val big = Matrix.map (Matrix.make (dim, dim, f), IntInf.fromInt)
+-            val entry = Matrix.fetch(smithNormalForm big, dim - 1, dim - 1)
+-(*          val _ = print (concat [IntInf.toString entry, "\n"]) *)
+-         in if entry = valOf (IntInf.fromString
+-                              "~1027954043102083189860753402541358641712697245")
+-               then ()
+-            else raise Fail "bug"
+-         end
+-      fun doit n =
+-         let
+-            val rec loop =
+-               fn 0 => ()
+-                | n => (snf(); loop(n - 1))
+-         in loop n
+-         end
+-   end
++
++structure Benchmark =
++struct
++  val name="smith-normal-form"
++  fun run [size] =
++    let val n=BenchInput.between(1,35)(BenchInput.integer size)
++        val input=Matrix.map(Matrix.make(n,n,f),IntInf.fromInt)
++        val result=smithNormalForm input
++        fun row(i,j)=if i=n then () else if j=n then row(i+1,0) else
++          if i<>j andalso Matrix.fetch(result,i,j)<>0 then raise Fail "Smith off diagonal" else row(i,j+1)
++        val _=row(0,0)
++        val diag=List.tabulate(n,fn i=>Matrix.fetch(result,i,i))
++    in String.concatWith " " (List.map IntInf.toString diag) end
++  | run _=raise Fail "smith-normal-form expects matrix dimension"
++end

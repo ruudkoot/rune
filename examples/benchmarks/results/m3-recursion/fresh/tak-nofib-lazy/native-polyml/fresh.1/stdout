@@ -1,0 +1,4 @@
+RESULT 7
+PASS tak-nofib-lazy
+SAMPLE 1 0.007902000
+SUMMARY 1 checks, 0 failed

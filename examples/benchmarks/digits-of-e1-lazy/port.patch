@@ -1,0 +1,76 @@
+--- upstream/Main.lhs
++++ benchmark.sml
+@@ -1,47 +1,26 @@
+-Compute the digits of "e" using continued fractions.
+-Original program due to Dale Thurston, Aug 2001
+-
+-> module Main where
+-> import System.Environment (getArgs)
+-> import Control.Monad (replicateM_)
+-> import NofibUtils (hash)
+-
+-> type ContFrac = [Integer]
+-
+-Compute the decimal representation of e progressively.
+-
+-A continued fraction expansion for e is
+-
+-[2,1,2,1,1,4,1,1,6,1,...]
+-
+-> eContFrac :: ContFrac
+-> eContFrac = 2:aux 2 where aux n = 1:n:1:aux (n+2)
+-
+-We need a general function that applies an arbitrary linear fractional
+-transformation to a legal continued fraction, represented as a list of
+-positive integers.  The complicated guard is to see if we can output a
+-digit regardless of what the input is; i.e., to see if the interval
+-[1,infinity) is mapped into [k,k+1) for some k.
+-
+-> -- ratTrans (a,b,c,d) x: compute (a + bx)/(c+dx) as a continued fraction
+-> ratTrans :: (Integer,Integer,Integer,Integer) -> ContFrac -> ContFrac
+-> -- Output a digit if we can
+-> ratTrans (a,b,c,d) xs |
+->   ((signum c == signum d) || (abs c < abs d)) && -- No pole in range
+->   (c+d)*q <= a+b && (c+d)*q + (c+d) > a+b       -- Next digit is determined
+->      = q:ratTrans (c,d,a-q*c,b-q*d) xs
+->   where q = b `div` d
+-> ratTrans (a,b,c,d) (x:xs) = ratTrans (b,a+x*b,d,c+x*d) xs
+-
+-Finally, we convert a continued fraction to digits by repeatedly multiplying by 10.
+-
+-> takeDigits :: Int -> ContFrac -> [Integer]
+-> takeDigits 0 _ = []
+-> takeDigits n (x:xs) = x:takeDigits (n-1) (ratTrans (10,0,0,1) xs)
+-
+-> e :: Int -> [Integer]
+-> e n = takeDigits n eContFrac
+-
+-> main = replicateM_ 100 $ do
+->	[digits] <- getArgs
+->	print (hash (show (e (read digits))))
++structure Kernel=struct
++ datatype stream=C of IntInf.int * stream BenchLazy.delay
++ fun aux n=BenchLazy.delay(fn()=>C(1,BenchLazy.delay(fn()=>C(n,BenchLazy.delay(fn()=>C(1,aux(n+2)))))))
++ val continued=BenchLazy.delay(fn()=>C(2,aux 2))
++ fun transform(a:IntInf.int,b,c,d,xs)=BenchLazy.delay(fn()=>
++   let fun consume()=let val C(x,rest)=BenchLazy.force xs
++      in BenchLazy.force(transform(b,a+x*b,d,c+x*d,rest))end
++   in if IntInf.sign c=IntInf.sign d orelse IntInf.abs c<IntInf.abs d then
++      let val q=IntInf.div(b,d)val cd=c+d
++      in if cd*q<=a+b andalso cd*q+cd>a+b
++         then C(q,BenchLazy.delay(fn()=>BenchLazy.force(transform(c,d,a-q*c,b-q*d,xs))))
++         else consume()end
++      else consume()end)
++ fun digits n=let
++   fun take(0,_,acc)=String.concat(List.rev acc)
++     |take(k,xs,acc)=let val C(x,rest)=BenchLazy.force xs
++       val _=if x>=0 andalso x<=9 then()else raise Fail "e continued-fraction digit"
++       in take(k-1,BenchLazy.delay(fn()=>BenchLazy.force(transform(10,0,0,1,rest))),IntInf.toString x::acc)end
++   in take(n,continued,[])end
++end
++structure Benchmark=struct val name="digits-of-e1-lazy"
++ fun run[count,reps,reference]=let val n=BenchInput.between(3,150)(BenchInput.integer count)val r=BenchInput.between(1,100)(BenchInput.integer reps)
++ val _=if List.exists(fn p=>p=reference)["expected/smoke.txt","expected/normal.txt","expected/large.txt"]then()else raise Fail "e reference path"
++ val input=TextIO.openIn reference val want=TextIO.inputAll input val _=TextIO.closeIn input
++ fun one()=let val actual=Kernel.digits n in if actual^"\n"=want then n else raise Fail "e complete digits"end
++ in IntInf.toString(BenchInput.repeat r one)end|run _=raise Fail "e expects digit-count repetitions reference"end

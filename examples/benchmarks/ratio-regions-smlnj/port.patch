@@ -1,0 +1,33 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -1,10 +1,11 @@
++structure Log=struct fun print (_:string)=()fun say (_:string list)=()end
+ (* main.sml
+  *
+  * COPYRIGHT (c) 2026 The Fellowship of SML/NJ (https://smlnj.org)
+  * All rights reserved.
+  *)
+ 
+-structure Main : BMARK =
++structure Kernel =
+   struct
+ 
+     structure A = Array
+@@ -595,8 +596,12 @@
+                          lg_max_v)
+         end
+ 
+-    fun testit () = ignore (run 50)
+-
+-    fun doit () = ignore (run 500)
+-
+-  end
++
++end
++structure Benchmark=struct val name="ratio-regions-smlnj"
++fun run [side,reps]=let val n=BenchInput.between(4,500)(BenchInput.integer side)val r=BenchInput.between(1,10)(BenchInput.integer reps)
++val _=if n mod 4=0 then()else raise Fail "ratio grid must be divisible by four"
++fun one()=let val result=Kernel.run n
++val _=Array.appi(fn(y,row)=>Array.appi(fn(x,v)=>if v=(y>=n div 4 andalso y<3*n div 4 andalso x>=n div 4 andalso x<3*n div 4)then()else raise Fail "min-cut mask")row)result
++in Array.foldl(fn(row,sum)=>Array.foldl(fn(v,sum)=>if v then sum+1 else sum)sum row)0 result end
++in IntInf.toString(BenchInput.repeat r one)end |run _=raise Fail "ratio expects grid side repetitions"end

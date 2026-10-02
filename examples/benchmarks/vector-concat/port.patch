@@ -1,0 +1,36 @@
+--- upstream/original.sml
++++ benchmark.sml
+@@ -1,25 +1,10 @@
+-(* Written by Stephen Weeks (sweeks@acm.org). *)
++structure Benchmark=struct val name="vector-concat"
++fun reverse v=let val len=Vector.length v in Vector.tabulate(len,fn i=>Vector.sub(v,len-1-i))end
++fun run [size,trials]=let val n=BenchInput.between(1,10000)(BenchInput.integer size) val r=BenchInput.between(0,1000000)(BenchInput.integer trials)
+ 
+-structure Main =
+-   struct
+-      fun doit () =
+-	 let
+-	    val len = 100
+-	    val sum = 2 * len * (len - 1)
+-	    fun loop n =
+-	       if n < 0
+-		  then ()
+-	       else
+-		   let val v = Vector.tabulate (len, fn i => (i,i))
+-		   in
+-		       if sum = 			   
+-			   Vector.foldl (fn ((x,y),a) => x+y+a) 0 (Vector.concat [v, v])
+-			   then loop (n - 1)
+-		       else raise Fail "bug"
+-		   end
+-	    val numTrials = 10000
+-	 in loop numTrials
+-	 end
+-   end
+-
+-val _ = Main.doit()+fun one()=let val input=Vector.tabulate(n,fn i=>(i,i)) val result=Vector.concat[input,input]
++fun scan(k,sum)=if k=2*n then sum else let val i=k mod n val (x,y)=Vector.sub(result,k)
++in if x=i andalso y=i then scan(k+1,IntInf.+(sum,IntInf.fromInt(2*i)))else raise Fail "vector contents"end
++in scan(0,0)end
++fun loop(k,sum)=if k<0 then sum else loop(k-1,IntInf.+(sum,one()))
++in IntInf.toString(loop(r,0))end |run _=raise Fail "vector expects length initial trial counter" end

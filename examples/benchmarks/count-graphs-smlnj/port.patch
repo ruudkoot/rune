@@ -1,0 +1,55 @@
+--- upstream/ordered-sources
++++ benchmark.sml
+@@ -1,3 +1,4 @@
++structure Log=struct fun print (_:string)=() fun say (_:string list)=() end
+ (* main.sml
+  *
+  * Written by Henry Cejtin (henry@sourcelight.com).
+@@ -5,7 +6,7 @@
+  * Modified for the SML/NJ Benchmark Suite by John Reppy
+  *)
+ 
+-structure Main : BMARK =
++structure Kernel =
+   struct
+ 
+ (*
+@@ -523,30 +524,11 @@
+ 
+     val results : string list = []
+ 
+-    fun testit outS = let
+-          fun doOne arg = (
+-                Log.say [arg, " -> "];
+-                case Int.fromString arg
+-                 of SOME n => Log.say [Int.toString (f n), "\n"]
+-                  | NONE => Log.print "NOT A NUMBER\n"
+-                (* end case *))
+-          in
+-            List.app doOne [
+-                "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"
+-              ]
+-          end
+-
+-    fun doit () = let
+-          fun doOne arg = (case Int.fromString arg
+-                 of SOME n => ignore (f n)
+-                  | NONE => raise Fail "NOT A NUMBER"
+-                (* end case *))
+-          in
+-            List.app doOne [
+-                "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
+-                "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
+-                "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"
+-              ]
+-          end
+-
+-  end
++
++end
++
++structure Benchmark=struct val name="count-graphs-smlnj"
++fun run [maximum,reps]=let val n=BenchInput.between(0,11)(BenchInput.integer maximum) val r=BenchInput.between(1,3)(BenchInput.integer reps)
++fun one()=String.concatWith ","(List.tabulate(n+1,fn i=>Int.toString(Kernel.f i)))
++fun loop(0,values)=String.concatWith ";"(List.rev values)|loop(k,values)=loop(k-1,one()::values)
++in loop(r,[])end |run _=raise Fail "count-graphs expects maximum vertices repetitions"end

@@ -1,0 +1,41 @@
+--- upstream/sources
++++ benchmark.sml
+@@ -4,7 +4,7 @@
+  * All rights reserved.
+  *)
+ 
+-structure Main : BMARK =
++structure NBodyKernel =
+   struct
+ 
+     val solarMass = 4.0 * Math.pi * Math.pi
+@@ -148,18 +148,14 @@
+             energy bodies
+           end
+ 
+-    val name = "nbody"
+-
+-    val results : string list = []
+-
+-    fun doit () = ignore (run (50000000, offsetMomentum bodies))
+-
+-    fun testit () = let
+-          fun pr e = Log.say [Real.fmt (StringCvt.FIX(SOME 9)) e, "\n"]
+-          val bodies = offsetMomentum bodies
+-          in
+-            pr (energy bodies);
+-            pr (run (1000, bodies))
+-          end
+-
+-  end
++end
++structure Benchmark =
++struct
++  val name="nbody"
++  fun run [steps,reference]=
++    let val n=BenchInput.between(1,50000000)(BenchInput.integer steps)
++        val want=case Real.fromString reference of SOME x=>x | NONE=>raise Fail "energy reference"
++        val result=NBodyKernel.run(n,NBodyKernel.offsetMomentum NBodyKernel.bodies)
++    in if BenchInput.closeReal(result,want,0.000000001,0.000000001) then Int.toString n else raise Fail "solar-system energy" end
++  | run _=raise Fail "nbody expects steps energy-reference"
++end
