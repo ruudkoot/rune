@@ -234,20 +234,20 @@ for manifest in $(cd "$root/lib" && find . -name MANIFEST | sort); do
   done
 done
 
-copy "$root/man/rune.1" "$mandir/rune.1" 644
-copy "$root/man/runevm.1" "$mandir/runevm.1" 644
-copy "$root/completions/rune.bash" "$bashdir/rune" 644
-copy "$root/completions/_rune" "$zshdir/_rune" 644
-copy "$root/completions/_runevm" "$zshdir/_runevm" 644
+copy "$root/share/man/rune.1" "$mandir/rune.1" 644
+copy "$root/share/man/runevm.1" "$mandir/runevm.1" 644
+copy "$root/share/completions/rune.bash" "$bashdir/rune" 644
+copy "$root/share/completions/_rune" "$zshdir/_rune" 644
+copy "$root/share/completions/_runevm" "$zshdir/_runevm" 644
 if [ -n "$doc" ]; then
-  copy "$root/man/runedoc.1" "$mandir/runedoc.1" 644
-  copy "$root/completions/runedoc.bash" "$bashdir/runedoc" 644
-  copy "$root/completions/_runedoc" "$zshdir/_runedoc" 644
+  copy "$root/share/man/runedoc.1" "$mandir/runedoc.1" 644
+  copy "$root/share/completions/runedoc.bash" "$bashdir/runedoc" 644
+  copy "$root/share/completions/_runedoc" "$zshdir/_runedoc" 644
 fi
 if [ -n "$opt" ]; then
-  copy "$root/man/runeopt.1" "$mandir/runeopt.1" 644
-  copy "$root/completions/runeopt.bash" "$bashdir/runeopt" 644
-  copy "$root/completions/_runeopt" "$zshdir/_runeopt" 644
+  copy "$root/share/man/runeopt.1" "$mandir/runeopt.1" 644
+  copy "$root/share/completions/runeopt.bash" "$bashdir/runeopt" 644
+  copy "$root/share/completions/_runeopt" "$zshdir/_runeopt" 644
 fi
 
 echo "installed $installed${doc:+, runedoc}${opt:+, runeopt}, runevm and runevm-new in $prefix/bin, the basis library in $prefix/lib/rune"

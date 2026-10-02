@@ -53,12 +53,12 @@ slower on `IntInf`. The compiler compiles itself in 3.0 s, MLton's build in
 |---|---|
 | `src/` | the compiler: frontend, elaboration, intermediate representations, backend, driver; `src/isa/` describes the instruction set and the primitives |
 | `vm/` | the virtual machine in C; `vm/new/` is the register VM and its JIT |
-| `lib/basis/` | the Basis Library; `lib/random/` and `lib/test/property/` are libraries beside it |
+| `lib/` | the Basis Library in `lib/basis/`, and libraries beside it |
 | `tests/` | `lang/` run tests, `errors/` compile-error tests, `basis/` the Basis Library suite, `perf/` benchmarks with budgets |
 | `docs/` | the documentation; `docs/generated/basis/` is generated from `lib/basis` |
 | `examples/` | small programs and benchmarks |
 | `scripts/` | generators, consistency checks, `doctor.sh`, `install.sh` |
-| `man/`, `completions/` | man pages and shell completions |
+| `share/` | man pages and shell completions |
 
 ## Documentation
 
