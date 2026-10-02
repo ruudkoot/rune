@@ -26,6 +26,8 @@ struct
      (docs/bytecode.md, The representations). *)
   datatype rep = RAny | RInt | RWord | RReal | RChar | RCon0 | RPtr | RCon | RUnit
   fun repCode r = case r of RAny => 0 | RInt => 1 | RWord => 2 | RReal => 3 | RChar => 4 | RCon0 => 5 | RPtr => 6 | RCon => 7 | RUnit => 8
+  fun repOfCode c =
+    case c of 1 => RInt | 2 => RWord | 3 => RReal | 4 => RChar | 5 => RCon0 | 6 => RPtr | 7 => RCon | 8 => RUnit | _ => RAny
   fun repName r = case r of RAny => "any" | RInt => "int" | RWord => "word" | RReal => "real" | RChar => "char"
                           | RCon0 => "con0" | RPtr => "ptr" | RCon => "con" | RUnit => "unit"
 

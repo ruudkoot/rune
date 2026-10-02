@@ -397,6 +397,14 @@ leaves implicit is explicit.
   Each function numbers its variables from 0, so one of another function
   is to *SSA* one of its own; a value captured and never read is what
   shows that it read the value so instead.
+* **Representations:** a variable holds what its representation says,
+  where something else says too: the operation that makes it, a primitive
+  that takes it (`Prims.repsOf`, made from the primitive's type in
+  `src/isa/prims.sml`), a field of a tuple or a constructor made in the
+  function, a block's or a known function's parameter it is passed to,
+  what a closure's function reads of a value it captures, and an
+  exception. Two agree where a value can be both: any with every one, con
+  with con0 and ptr.
 
 Low carries no types, but what each variable holds, as a representation
 (`Low.rep`, from Mid's types in `Lower.repOfTy`; plans/jit.md, M8): an

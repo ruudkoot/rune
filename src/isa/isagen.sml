@@ -187,21 +187,32 @@ struct
                "#endif"])}
     end
 
+  (* The representation of a value of a type as a primitive's description
+     writes it ("int", "'a array"): a built-in type, or a type variable or a
+     type made of others, of which nothing is said (0). *)
+  fun repOfName (t : string) : int =
+    case t of
+      "int" => 1 | "word" => 2 | "real" => 3 | "char" => 4 | "bool" => 5 | "order" => 5
+    | "string" => 6 | "exn" => 6 | "unit" => 8
+    | _ => if String.isSuffix " array" t orelse String.isSuffix " vector" t orelse String.isSuffix " ref" t then 6
+           else if String.isSuffix " list" t then 7
+           else 0
+
   (* The representation of a primitive's result, from the type its
-     description gives it ("int * int -> int"): the part after the arrow,
-     which names a built-in type, or a type variable or a type made of
-     others, of which nothing is said (0). *)
+     description gives it ("int * int -> int"): the part after the arrow. *)
   fun resultRep (ty : string) : int =
+    let val (_, after) = Substring.position "-> " (Substring.full ty)
+    in repOfName (Substring.string (Substring.dropl Char.isSpace (Substring.triml 3 after))) end
+
+  (* ... and of its arguments: the parts before the arrow, one for each,
+     where they are as many as it takes; nothing is said of them otherwise *)
+  fun argReps (ty : string, arity : int) : int list =
     let
-      val (_, after) = Substring.position "-> " (Substring.full ty)
-      val res = Substring.string (Substring.dropl Char.isSpace (Substring.triml 3 after))
+      val (args, _) = Substring.position " -> " (Substring.full ty)
+      val parts = List.map (fn s => Substring.string (Substring.dropl Char.isSpace (Substring.dropr Char.isSpace s)))
+                           (Substring.fields (fn c => c = #"*") args)
     in
-      case res of
-        "int" => 1 | "word" => 2 | "real" => 3 | "char" => 4 | "bool" => 5 | "order" => 5
-      | "string" => 6 | "exn" => 6 | "unit" => 8
-      | _ => if String.isSuffix " array" res orelse String.isSuffix " vector" res orelse String.isSuffix " ref" res then 6
-             else if String.isSuffix " list" res then 7
-             else 0
+      if List.length parts = arity then List.map repOfName parts else List.tabulate (arity, fn _ => 0)
     end
 
   fun primsH (prims : primitive list) : file =
@@ -386,6 +397,22 @@ struct
                end)
             @ ["  ])",
                "  fun removable name = StringMap.member (removables, name)",
+               "  (* what each primitive takes and gives, from the type of its",
+               "     description: Low.rep's codes (docs/bytecode.md, The",
+               "     representations), 0 where the type says nothing; made when",
+               "     first asked, by LowLint *)",
+               "  val reps : (int list * int) StringMap.map option ref = ref NONE",
+               "  fun repsOf name =",
+               "    case !reps of",
+               "      SOME m => StringMap.find (m, name)",
+               "    | NONE =>",
+               "        (reps := SOME (StringMap.fromList ["]
+            @ List.map (fn (k, p : primitive) =>
+                          "           (\"" ^ #name p ^ "\", ([" ^ commaList (List.map Int.toString (argReps (#ty p, #arity p)))
+                          ^ "], " ^ Int.toString (resultRep (#ty p)) ^ "))" ^ (if k < n - 1 then "," else ""))
+                       ps
+            @ ["         ]);",
+               "         repsOf name)",
                "end"])}
     end
 
