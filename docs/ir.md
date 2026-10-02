@@ -335,10 +335,11 @@ function is blocks with parameters in SSA form (decision D2), and what Mid
 leaves implicit is explicit.
 
 * **Closures:** `Lower` converts them as it goes. A function captures the
-  variables free in it, in the order of their stamps, less itself, which it
-  reads as `Self`; captured values are read with `Env i`. The functions of
-  a group capture each other, and those not made yet are set after
-  (`SetEnv`): flat closures.
+  variables free in the code it makes of it -- not those of a branch a
+  `Switch` leaves out (*Blocks*) -- in the order of their stamps, less
+  itself, which it reads as `Self`; captured values are read with `Env i`.
+  The functions of a group capture each other, and those not made yet are
+  set after (`SetEnv`): flat closures.
 * **Constructors** (`Rep`, `src/backend/rep.sml`, M11): one whose declared
   argument is a tuple of two or more is one object of those fields, its
   tag in the header -- `Con` of the fields, and `Field (tag, i, v)` to take
@@ -351,7 +352,9 @@ leaves implicit is explicit.
   field taken of it, is its parts; the argument of such a constructor,
   each of whose uses in its function takes a field, is its fields; and a
   use that needs either whole makes it there -- the argument whole is then
-  a copy.
+  a copy. The parts are variables of the function that binds the tuple: a
+  function that captures it is given it whole, made where its closure is,
+  and takes it apart.
 * **Blocks:** a join point of Mid is a block whose parameters are the join
   point's; an `If` two blocks; a match on a constructor's tag one `IfTag`,
   and three or more of the same value, each in the else of the one before,
@@ -378,7 +381,7 @@ leaves implicit is explicit.
 
 `LowLint` checks, after `lower`:
 
-* **SSA:** every variable is defined once in the program and on every way
+* **SSA:** every variable is defined once in its function and on every way
   to each of its uses; a handler's block sees only what was defined where
   it was pushed, since its region may raise anywhere.
 * **Blocks:** a jump goes to a block of its function, with an argument for
@@ -389,6 +392,11 @@ leaves implicit is explicit.
   function returns, or calls in tail position, with none.
 * **Calls:** a known call is of a function of the program, with as many
   arguments as it has parameters; a closure is only of a function of one.
+* **Closures:** a closure is given a value for each its function captures,
+  and the function reads each of them (`Env i`, `i` below their number).
+  Each function numbers its variables from 0, so one of another function
+  is to *SSA* one of its own; a value captured and never read is what
+  shows that it read the value so instead.
 
 Low carries no types, but what each variable holds, as a representation
 (`Low.rep`, from Mid's types in `Lower.repOfTy`; plans/jit.md, M8): an
