@@ -188,6 +188,95 @@ Not measured: the VMs built for Windows, 32-bit Linux and PowerPC.
   bytecode and allocates 1.17 GB in 26.0 million objects; compiling `hello`
   takes 3.08 million instructions, 3.5 MB and 53.6 thousand objects.
 
+## Why `vm/new` at `opt` is slower than MLton
+
+Measured on the same day and machine as the tables above, with `perf stat`
+(user cycles and instructions of the wrapped `tests/perf` programs),
+MLton's generated assembly (`-keep g`), and the tier-2 machine code of the
+hot functions, dumped from a running `runevm-new --jit-perf-map` and
+single-stepped under gdb for 20 to 30 thousand instructions each. The
+traces are samples of the steady state of one function, not of a whole run.
+
+| Program | Time, opt / MLton | Instructions, opt / MLton | IPC, opt and MLton | Dominant cause |
+|---|---:|---:|---:|---|
+| fib | 4.0 | 5.0 | 2.3, 2.0 | call and return protocol |
+| tak | 3.9 | 4.1 | 2.4, 2.1 | call and return protocol |
+| word_bits | 3.6 | 4.7 | 3.4, 3.2 | work around every operation |
+| array_sieve | 4.7 | 4.6 | 1.7, 1.9 | work around every operation, 16-byte elements |
+| real_nbody | 0.9 | 4.0 | 1.2, 0.3 | floating-point latency |
+| string_ops | 3.7 | 2.9 | 1.8, 2.1 | lists of characters, runtime C code |
+| list_ops | 1.4 (user cycles 2.8) | 1.9 | 1.2, 1.8 | cache misses; MLton's page faults |
+| intinf_fact | about 800 | n/a | n/a | the algorithms of `lib/basis/intinf.sml` |
+
+Where the cycle ratio follows the instruction ratio, which it does for
+every program but `real_nbody`, `list_ops` and `intinf_fact`, the cost is
+the number of instructions, not stalls.
+
+* **`fib` and `tak`: the cost of a call.** A call of `fib` costs 84.5
+  instructions on `vm/new` and about 17 on MLton. The trace of `fib`
+  divides the 84.5 into 32 for the call (spilling the live registers as
+  16-byte tagged Values, checking the register stack and the frame depth,
+  building a 40-byte frame record on a separate frame stack, jumping, and
+  loading the registers back after the return), 22 for the return (popping
+  the record, storing the result as a Value in the caller's register,
+  an indirect jump), 6 to fill the callee's registers with unit at its
+  entry, 5.5 for the `--count` counter (`lea r15, [r15+N]`), 5 to make a
+  comparison a stored boolean Value and test it, 8 for constants and
+  operands moved through scratch registers, and 6 for the rest. MLton calls
+  with a return address stored in a 16-byte frame, `fib` having a stack
+  check, a compare and a jump; Rune's frame is a window of 6 registers of 16
+  bytes plus the 40-byte record.
+* **`word_bits` and `array_sieve`: work around every operation.** An
+  iteration of `bits` is about 50 instructions against 11 for MLton: 7 are
+  counters, 10 store the tag and payload of each result into its register
+  slot, 3 load constants through a table (two loads each), 4 are tag checks
+  and materialised booleans, and the loop's word goes through its slot in
+  memory, so that an iteration takes 16.8 cycles against 3.8. The `strike`
+  loop of `array_sieve` is 36 instructions per element against about 8: the
+  global `n` is tag-checked each time, and the bounds check, the compare and
+  the store of a 16-byte element are separate. MLton's array holds 4 bytes
+  per element, Rune's 16, so that it allocates 3.4 times as much (37.6 MB
+  against 11.1 MB) and has 2.5 times the L1 load misses. About 40% of
+  `array_sieve` is in `Array.foldli`, `Vector` and `List` code, not in
+  `strike`.
+* **`real_nbody`: latency.** The loop is a chain of `sqrt` and two
+  divisions. A C loop of the same computation at `-O2` takes 80 cycles per
+  iteration on this CPU; `vm/new` takes 88 and MLton 94. `vm/new` executes
+  about 108 instructions per iteration and MLton 27, but the instructions
+  are hidden behind the latency.
+* **`string_ops`: lists and the runtime.** `vm/new` allocates 1.8 times as
+  much (136.6 MB against 77.0 MB), spends about 37% of its cycles in the
+  runtime's C code (`p_string_*`, `vm_alloc`, `vm_cons`, `vm_string_from`)
+  and 10% in the collector, and has 3.5 times the L1 load misses. `String.map`
+  and `String.translate` are `implode (List.map f (explode s))`
+  (`lib/basis/string.sml`), so each character is a list cell.
+* **`list_ops`: the cache, and MLton's page faults.** In user cycles MLton
+  is 2.8 times faster, in wall-clock time 1.4 times. `vm/new` has 4.3 times
+  the L1 load misses and spends 12.5% of its cycles in the collector, though
+  both allocate the same amount (56.6 MB and 58.0 MB). MLton spends half of
+  its time in the kernel, faulting in 12.1 thousand pages (`vm/new`: 7.2
+  thousand). A recursion over a list, like `List.filter`, costs about 62
+  instructions per element on `vm/new`, the call and return being most of
+  it. What makes the misses 4.3 times as many is not isolated.
+* **`intinf_fact`: algorithms.** `vm/new` allocates 76 MB, MLton (GMP) 0.38
+  MB. An `IntInf` is a list of 30-bit limbs; `mulMag` does, for each limb
+  of its right operand, a `mulSmall`, a `shiftLimbs` that allocates a
+  list of zeros, and an `addMag` that copies the accumulator, so a
+  multiplication is quadratic in the length of the big operand even when the
+  other is one limb, as in `fact`. `divModMag` finds each quotient limb by a
+  binary search of 30 steps, each a `mulSmall` and a `cmpMag` (which takes
+  two `List.length` and two `List.rev`). Of the 15 million VM instructions
+  of one run, about 10 million are `fact 300` and 5 million the `divMod`;
+  `toString` and `pow` are almost nothing.
+
+What recurs: the tagged 16-byte Values written to memory at every result,
+the frame record of every call, the instruction counter of `--count` in
+compiled code, the registers filled with unit at entry, constants loaded
+through a table; and MLton's whole-program optimisation, which inlines and
+defunctionalises closures, folds `n` in `array_sieve` to a constant, and
+uses 4-byte `bool`, `int` and `word`. None of these was switched off to
+measure its share: the figures are instruction counts of the traces.
+
 ## How to reproduce
 
 ```sh
