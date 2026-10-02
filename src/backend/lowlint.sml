@@ -19,7 +19,14 @@
    * closures: a closure is given a value for each its function captures,
      and the function reads each of them (Env i, i below their number) --
      one it never reads it read some other way, as a variable of another
-     function, whose variables are numbered as its own are.
+     function, whose variables are numbered as its own are;
+   * representations: a variable holds what its representation says, where
+     something else says too -- the operation that makes it, a primitive
+     that takes it (Prims.repsOf, from the primitive's type), a field of a
+     tuple or a constructor made in the function, a block's or a known
+     function's parameter it is passed to, what a closure's function reads
+     of a value it captures, and an exception. Two agree where a value can
+     be both: any with every one, con with con0 and ptr.
    A breach is a bug of the compiler, raised as Error.Bug. *)
 structure LowLint =
 struct
@@ -162,7 +169,123 @@ struct
             SOME i => bug (where' ^ ": env " ^ Int.toString i ^ " is captured and never read")
           | NONE => ()
         end
+
+      (* ---- representations ---- *)
+
+      fun repIn (rs : rep vector, x : var) = if x >= 0 andalso x < Vector.length rs then Vector.sub (rs, x) else RAny
+      (* two agree where a value can be both: any with every one, con with
+         con0 and ptr *)
+      fun agree (a, b) =
+        a = RAny orelse b = RAny orelse a = b
+        orelse (a = RCon andalso (b = RCon0 orelse b = RPtr))
+        orelse (b = RCon andalso (a = RCon0 orelse a = RPtr))
+      (* what an operation makes, where it alone says *)
+      fun makes (oper : operation) : rep =
+        case oper of
+          Const (Lambda.CInt _) => RInt
+        | Const (Lambda.CWord _) => RWord
+        | Const (Lambda.CReal _) => RReal
+        | Const (Lambda.CString _) => RPtr
+        | Const (Lambda.CChar _) => RChar
+        | Unit => RUnit
+        | Con0 _ => RCon0
+        | Self => RPtr
+        | Prim (name, _) => (case Prims.repsOf name of SOME (_, r) => repOfCode r | NONE => RAny)
+        | Tuple (_ :: _) => RPtr
+        | Con _ => RPtr
+        | ConTag _ => RInt
+        | NewExn _ => RPtr
+        | BuiltinExn _ => RPtr
+        | MkExn _ => RPtr
+        | ExnCon _ => RPtr
+        | Closure _ => RPtr
+        | _ => RAny
+      (* each function's parameters, and what it reads of what it captured
+         where it says what that is *)
+      val paramReps : rep list IntMap.map =
+        List.foldl (fn ({id, params, reps, ...} : func, m) => IntMap.insert (m, id, List.map (fn x => repIn (reps, x)) params))
+                   IntMap.empty p
+      val envReps : (int * rep) list IntMap.map =
+        List.foldl (fn ({id, blocks, reps, ...} : func, m) =>
+                      IntMap.insert (m, id, List.concat (List.map (fn ({instrs, ...} : block) =>
+                                                                      List.mapPartial (fn Def (x, Env i) => if repIn (reps, x) = RAny then NONE else SOME (i, repIn (reps, x))
+                                                                                        | _ => NONE) instrs) blocks)))
+                   IntMap.empty p
+
+      (* Each variable holds what it says: what an operation makes, a field
+         of a tuple or a constructor made in the function, what a primitive
+         takes, a known call's and a jump's parameters, what a closure's
+         function reads of each value it captures, and an exception. *)
+      fun representations ({id, blocks, reps = rs, ...} : func) =
+        let
+          val where' = "function f" ^ Int.toString id
+          fun repOf x = repIn (rs, x)
+          val paramsOf : var list IntMap.map =
+            List.foldl (fn ({label, params, ...} : block, m) => IntMap.insert (m, label, params)) IntMap.empty blocks
+          (* what made each variable, for those whose parts are read back *)
+          val made : operation IntTable.table = IntTable.table 64
+          fun want (here, x, r, what) =
+            if agree (repOf x, r) then ()
+            else bug (here ^ ": v" ^ Int.toString x ^ " is " ^ repName (repOf x) ^ " where " ^ what ^ " is " ^ repName r)
+          fun args (here, xs, rs, what) =
+            let
+              fun go (k, x :: xs, r :: rs) = (want (here, x, r, what k); go (k + 1, xs, rs))
+                | go _ = ()
+            in go (0, xs, rs) end
+          fun call (here, f, xs) =
+            case IntMap.find (paramReps, f) of
+              SOME rs => args (here, xs, rs, fn k => "parameter " ^ Int.toString k ^ " of f" ^ Int.toString f)
+            | NONE => ()
+          fun captured (here, f, i, x) =
+            List.app (fn (j, r) => if i = j then want (here, x, r, "env " ^ Int.toString i ^ " of f" ^ Int.toString f) else ())
+                     (case IntMap.find (envReps, f) of SOME l => l | NONE => [])
+          fun field (here, x, v, parts, i) =
+            if i < List.length parts then
+              let val y = List.nth (parts, i)
+              in want (here, x, repOf y, "field " ^ Int.toString i ^ " of v" ^ Int.toString v ^ ", v" ^ Int.toString y ^ ",") end
+            else ()
+          fun instr here i =
+            case i of
+              Def (x, oper) =>
+                (want (here, x, makes oper, "what makes it");
+                 case oper of
+                   Prim (name, xs) =>
+                     (case Prims.repsOf name of
+                        SOME (rs, _) => args (here, xs, List.map repOfCode rs, fn k => "argument " ^ Int.toString k ^ " of " ^ name)
+                      | NONE => ())
+                 | Select (k, v) => (case IntTable.find (made, v) of SOME (Tuple parts) => field (here, x, v, parts, k) | _ => ())
+                 | Field (tag, k, v) =>
+                     (case IntTable.find (made, v) of SOME (Con (tag', parts)) => if tag = tag' then field (here, x, v, parts, k) else () | _ => ())
+                 | Decon (tag, v) =>
+                     (case IntTable.find (made, v) of SOME (Con (tag', [a])) => if tag = tag' then field (here, x, v, [a], 0) else () | _ => ())
+                 | CallK (f, xs) => call (here, f, xs)
+                 | Closure (f, xs) =>
+                     ignore (List.foldl (fn (y, k) => ((case y of SOME y => captured (here, f, k, y) | NONE => ()); k + 1)) 0 xs)
+                 | SetEnv (c, k, y) => (case IntTable.find (made, c) of SOME (Closure (f, _)) => captured (here, f, k, y) | _ => ())
+                 | _ => ();
+                 IntTable.insert (made, x, oper))
+            | Push h =>
+                (case IntMap.find (paramsOf, h) of
+                   SOME [e] => want (here, e, RPtr, "the exception")
+                 | _ => ())
+            | _ => ()
+          fun block ({label, instrs, transfer, ...} : block) =
+            let val here = where' ^ ", b" ^ Int.toString label
+            in
+              List.app (instr here) instrs;
+              case transfer of
+                Goto (l, xs) =>
+                  (case IntMap.find (paramsOf, l) of
+                     SOME ps => args (here, xs, List.map repOf ps, fn k => "parameter " ^ Int.toString k ^ " of b" ^ Int.toString l)
+                   | NONE => ())
+              | TailCallK (f, xs) => call (here, f, xs)
+              | _ => ()
+            end
+        in
+          List.app block blocks
+        end
     in
-      List.app func p
+      List.app func p;
+      List.app representations p
     end
 end

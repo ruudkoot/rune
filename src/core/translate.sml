@@ -350,7 +350,9 @@ struct
   and transTopDecs (decs : dec list, k : unit -> lexp) : lexp =
     case decs of
       [] => k ()
-    | d :: rest => transTopDec (d, fn () => Rest (transTopDecs (rest, k)))
+    | d :: rest =>
+        (Types.startWorkOn ("type translation", spanOfDec d);
+         transTopDec (d, fn () => Rest (transTopDecs (rest, k))))
 
   and transTopDec (d : dec, k : unit -> lexp) : lexp =
     case d of
@@ -506,5 +508,7 @@ struct
     end
 
   fun transProgram (decs : dec list) : lexp =
-    (funNames := IntMap.empty; structPath := []; schemes := IntTable.table 4096; transTopDecs (decs, fn () => Unit))
+    (funNames := IntMap.empty; structPath := []; schemes := IntTable.table 4096;
+     let val e = transTopDecs (decs, fn () => Unit) handle x => (Types.stopWork (); raise x)
+     in Types.stopWork (); e end)
 end

@@ -10,6 +10,7 @@
 #               does not provide
 #   SLOW        does not finish in the runner's 20 seconds on the interpreter
 #   SCOPE       needs a part of the Basis Library that Rune leaves out
+#   LIMIT       exceeds a compiler resource budget (docs/language.md)
 # Remove a line when its program passes.
 abstype DEFINITION: MLton treats abstype as a datatype; the Definition forbids equality on the type outside the body (rule 19)
 args-create EXTENSION: MLton.Process
@@ -26,6 +27,7 @@ date-localOffset EXTENSION: MLton.ProcEnv.setenv
 eq EXTENSION: MLton.eq
 exn-history EXTENSION: SMLofNJ.exnHistory
 exn-history3 EXTENSION: SMLofNJ.exnHistory
+exponential LIMIT: f applied 32 times has a type of 2^32 nodes once unshared; type translation exceeds --type-work (docs/plans/type-checker.md)
 fast SLOW: too slow on the interpreter
 filesys HARNESS: needs the file README and the links testlink, testcycl and testbadl where it runs
 finalize EXTENSION: MLton.Finalizable
