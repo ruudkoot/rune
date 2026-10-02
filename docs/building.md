@@ -106,7 +106,7 @@ name the tools to check.
 | `make matrix-quick` | the Basis Library suite on Rune and on Rune's library compiled by each host (the `xc1` configurations); not part of `make check` |
 | `make matrix` | `matrix-quick` and the suite on each host's own library |
 | `make perf` | the wall-clock times of the programs of `tests/perf` in the configurations of the matrix (`PERF_CONFIGS` selects others), one at a time, in `tests/out/perf/wall.md`; not part of `make check` |
-| `make install` | install `rune`, `runevm`, `runedoc`, the basis library, the man pages and the shell completions under `PREFIX` |
+| `make install` | install `rune`, `runevm`, `runevm-new`, `runedoc`, the basis library, the man pages and the shell completions under `PREFIX` |
 | `make uninstall` | remove them again |
 | `make clean` | remove `bin/`, `build/`, generated files and test output |
 
@@ -280,6 +280,7 @@ $PREFIX/bin/rune                     wrapper: runevm + rune.rbc + --lib
 $PREFIX/bin/runedoc                  wrapper: runevm + runedoc.rbc + --lib
 $PREFIX/bin/runeopt                  wrapper: runevm + runeopt.rbc + --runtime
 $PREFIX/bin/runevm                   the VM
+$PREFIX/bin/runevm-new               the VM of the register bytecode, with its JIT
 $PREFIX/lib/rune/rune.rbc            the compiler
 $PREFIX/lib/rune/runedoc.rbc         the documentation generator
 $PREFIX/lib/rune/runeopt.rbc         the native code generator
@@ -428,10 +429,17 @@ rules so that one source tree builds everywhere and emits identical output:
 ```
 bin/rune [options] file.sml ...      # produces first-file.rbc (or -o FILE)
 bin/runevm [options] file.rbc [args] # runs it
+bin/rune --target=registers file.sml -o file.rbc  # register bytecode instead
+bin/runevm-new [options] file.rbc [args]          # runs that, compiling the code that gets hot (--jit=MODE: off, baseline, opt (the default), all)
 bin/rune-mlton [options] file.sml ... # the same compiler, built by MLton
 bin/runeopt file.rbc -o prog          # an executable of it (Linux, x86-64)
 RUNEVM_OPTIONS=--count ./prog [args]  # runs it, with the options of runevm
 ```
+
+The two targets make files of different instruction sets, which only their own VM
+loads. What a program is given is the same on both: the words after the `.rbc`
+file are `CommandLine.arguments ()`, and `TextIO.stdIn`, `stdOut` and `stdErr`
+are the VM's standard streams.
 
 A library other than the basis library is compiled with `--library NAME`:
 the directory `NAME` of the `--lib` directory (`lib/test/property`, say),
@@ -449,5 +457,5 @@ bin/rune --library test/property prog.sml   # prog.sml with the property-testing
 Run `bin/rune --help` and `bin/runevm --help` for the option lists, or
 `man rune` and `man runevm` after `make install`. Exit
 status of `rune`: 0 success, 1 compile error or usage error. Exit status of
-`runevm`: the program's `OS.Process.exit` status, 1 for an uncaught exception,
+`runevm` and `runevm-new`: the program's `OS.Process.exit` status, 1 for an uncaught exception,
 2 for VM errors (bad bytecode file, out of memory).

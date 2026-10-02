@@ -1,5 +1,6 @@
 #!/bin/sh
-# Install (or remove) Rune: the rune wrapper, runevm, the compiler it runs, the
+# Install (or remove) Rune: the rune wrapper, runevm and runevm-new (the VM of
+# the register bytecode, with its JIT), the compiler it runs, the
 # basis library, the man pages and the shell completions; and runedoc, the
 # documentation generator, and runeopt, the native code generator, when they
 # are built (bin/runedoc.rbc, or bin/runedoc-NAME with --host, and the same of
@@ -67,7 +68,7 @@ zshdir=$destdir$prefix/share/zsh/site-functions
 
 # ------------------------------------------------------------------ uninstall
 if [ "$uninstall" = 1 ]; then
-  rm -f "$bindir/rune" "$bindir/runevm" \
+  rm -f "$bindir/rune" "$bindir/runevm" "$bindir/runevm-new" \
         "$bindir/rune-mlton" "$bindir/rune-smlnj-legacy" "$bindir/rune-smlnj-dev" \
         "$bindir/rune-polyml" "$bindir/rune-mlkit" \
         "$bindir/runedoc" "$bindir/runedoc-mlton" "$bindir/runedoc-smlnj-legacy" \
@@ -87,6 +88,7 @@ missing=""
 need() { [ -e "$1" ] || missing="$missing $1"; }
 
 need "$root/bin/runevm"
+need "$root/bin/runevm-new"
 if [ -z "$host" ]; then
   need "$root/bin/rune.rbc"
 elif sml_for_host "$host" > /dev/null; then
@@ -115,6 +117,7 @@ copy() { # args SRC DST MODE
 mkdir -p "$bindir" "$libdir/basis" "$mandir" "$bashdir" "$zshdir"
 
 copy "$root/bin/runevm" "$bindir/runevm" 755
+copy "$root/bin/runevm-new" "$bindir/runevm-new" 755
 
 # The wrapper finds the library beside itself, so the tree can be moved.
 if [ -z "$host" ]; then
@@ -247,7 +250,7 @@ if [ -n "$opt" ]; then
   copy "$root/completions/_runeopt" "$zshdir/_runeopt" 644
 fi
 
-echo "installed $installed${doc:+, runedoc}${opt:+, runeopt} and runevm in $prefix/bin, the basis library in $prefix/lib/rune"
+echo "installed $installed${doc:+, runedoc}${opt:+, runeopt}, runevm and runevm-new in $prefix/bin, the basis library in $prefix/lib/rune"
 if sml=$(sml_for_host "$host"); then
   echo "note: rune-$host runs with $sml"
 fi
