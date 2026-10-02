@@ -72,4 +72,12 @@ with tempfile.TemporaryDirectory(dir=out) as d:
     assert result.returncode != 0 and b'type inference exceeds 1 steps' in result.stderr, result.stderr
     result = run('--no-prelude', '--typecheck-only', '--type-work=10000', source)
     assert result.returncode == 0, result.stderr
+    # types shared while inferred, 2^12 nodes once translated (MLton's regression exponential)
+    source.write_text('fun f x = x\nfun g y = f f f f f f f f f f f f y\nval _ = g 3\n')
+    result = run('--no-prelude', '--typecheck-only', '--type-work=2000', source)
+    assert result.returncode == 0, result.stderr
+    result = run('--no-prelude', '--type-work=2000', '-o', target, source)
+    assert result.returncode != 0 and b'type translation exceeds 2000 steps' in result.stderr, result.stderr
+    result = run('--no-prelude', '--type-work=1000000', '-o', target, source)
+    assert result.returncode == 0, result.stderr
 print('PASS compiler output protection and resource budgets')

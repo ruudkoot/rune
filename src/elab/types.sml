@@ -37,19 +37,23 @@ struct
 
   val genericLevel = 1000000000
 
-  (* A fresh budget for each top-level declaration. Outside elaboration the
-     backend may read types without spending inference work. *)
+  (* A fresh budget for each top-level declaration, while it is elaborated
+     and while it is translated (Translate), whose conversion of the types
+     unshares them (docs/plans/type-checker.md). Outside these the backend
+     may read types without spending work. *)
   val workLimit = ref 10000000
   val workLeft = ref 1000000000
   val working = ref false
   val workSpan = ref Source.noSpan
-  fun startWork sp = (workSpan := sp; workLeft := !workLimit; working := true)
+  val workWhat = ref "type inference"
+  fun startWorkOn (what, sp) = (workWhat := what; workSpan := sp; workLeft := !workLimit; working := true)
+  fun startWork sp = startWorkOn ("type inference", sp)
   fun stopWork () = (working := false; workLeft := 1000000000)
   fun step () =
     let val left = !workLeft
     in
       if left = 0 then
-        if !working then Error.error (!workSpan, "type inference exceeds " ^ Int.toString (!workLimit) ^ " steps")
+        if !working then Error.error (!workSpan, !workWhat ^ " exceeds " ^ Int.toString (!workLimit) ^ " steps")
         else workLeft := 1000000000
       else workLeft := left - 1
     end

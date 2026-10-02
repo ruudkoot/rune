@@ -94,6 +94,10 @@ compiler shows as a node whose parts do not fit. The types are `Ty.ty`
   themselves (`Ty.extrasOf`): those its constructors name, and those of the
   datatypes they name. An instance of the function -- inlined, specialised
   -- then gives its constructors' arguments the instance's types.
+* **Trees:** a type is a tree here, where the elaborator's was shared, so
+  one of n nodes there can be of 2^n here; the translation of each
+  top-level declaration's types spends `--type-work`
+  ([plans/type-checker.md](plans/type-checker.md)).
 
 The elaborator fills four tables as it goes (`Ty.binders`, `Ty.exnArgs`,
 `Ty.datatypes`, `Ty.realizations`): the scheme of every variable, the
