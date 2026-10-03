@@ -1,0 +1,1 @@
+reverse-complement	600	4194304	reverse-complement/benchmark.sml shared/main.sml	DATA/normal.fasta expected/normal.fasta	reverse-complement/normal.expected	DATA/normal.fasta expected/normal.fasta

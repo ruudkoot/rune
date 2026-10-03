@@ -1,0 +1,27 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/reverse-complement/benchmark.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/reverse-complement/benchmark.sml:24.27 Warning: calling polyEqual
+structure Benchmark : sig
+  val name : string
+  datatype buffer = Buf of int * int * char array
+  val from : string
+  val to : string
+  val newSize : int -> int -> int
+  val putBuf : string -> int -> int -> buffer -> buffer
+  val find : (int -> ''a) -> int -> int -> ''a -> int option
+  val clear : buffer -> buffer
+  val output : string -> string
+  val file : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 1095
+PASS reverse-complement
+SUMMARY 1 checks, 0 failed

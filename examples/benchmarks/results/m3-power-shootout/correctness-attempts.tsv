@@ -1,0 +1,245 @@
+benchmark	profile	optimization	configuration	arguments	status	artifact_directory
+fasta	normal	O0	rune	75000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.7cdRgG/fasta
+fasta	normal	O0	rune-jit	75000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.7cdRgG/fasta
+fasta	normal	O0	rune-new	75000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.7cdRgG/fasta
+fasta	normal	O0	rune-opt	75000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.7cdRgG/fasta
+fasta	normal	O2	rune	75000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.ozXerj/fasta
+fasta	normal	O2	rune-jit	75000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.ozXerj/fasta
+fasta	normal	O2	rune-new	75000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.ozXerj/fasta
+fasta	normal	O2	rune-opt	75000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.ozXerj/fasta
+fasta	normal	host-default	native-mlton-20241230	75000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.HVqWl0/fasta
+fasta	normal	host-default	native-polyml-5.9.2	75000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.HVqWl0/fasta
+fasta	normal	host-default	native-smlnj-dev-2026.2	75000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.HVqWl0/fasta
+fasta	normal	host-default	native-smlnj-legacy-110.99.9	75000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.HVqWl0/fasta
+fasta	smoke	O0	rune	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ntV4Vl/fasta
+fasta	smoke	O0	rune-jit	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ntV4Vl/fasta
+fasta	smoke	O0	rune-new	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ntV4Vl/fasta
+fasta	smoke	O0	rune-opt	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ntV4Vl/fasta
+fasta	smoke	O2	rune	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.uGrjv3/fasta
+fasta	smoke	O2	rune	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ym2CUF/fasta
+fasta	smoke	O2	rune-jit	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.uGrjv3/fasta
+fasta	smoke	O2	rune-jit	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ym2CUF/fasta
+fasta	smoke	O2	rune-new	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.uGrjv3/fasta
+fasta	smoke	O2	rune-new	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ym2CUF/fasta
+fasta	smoke	O2	rune-opt	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.uGrjv3/fasta
+fasta	smoke	O2	rune-opt	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ym2CUF/fasta
+fasta	smoke	host-default	native-mlton-20241230	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.IUzfJb/fasta
+fasta	smoke	host-default	native-mlton-20241230	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.uGrjv3/fasta
+fasta	smoke	host-default	native-polyml-5.9.2	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.IUzfJb/fasta
+fasta	smoke	host-default	native-polyml-5.9.2	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.uGrjv3/fasta
+fasta	smoke	host-default	native-smlnj-dev-2026.2	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.IUzfJb/fasta
+fasta	smoke	host-default	native-smlnj-dev-2026.2	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.uGrjv3/fasta
+fasta	smoke	host-default	native-smlnj-legacy-110.99.9	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.IUzfJb/fasta
+fasta	smoke	host-default	native-smlnj-legacy-110.99.9	13 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.uGrjv3/fasta
+n-body	normal	O0	rune	10000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.aqCN0r/n-body
+n-body	normal	O0	rune	10000 expected/normal.txt 2E~10 2E~10	pass	tests/out/benchmarks/normal/run.zIM2mU/n-body
+n-body	normal	O0	rune-jit	10000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.aqCN0r/n-body
+n-body	normal	O0	rune-jit	10000 expected/normal.txt 2E~10 2E~10	pass	tests/out/benchmarks/normal/run.zIM2mU/n-body
+n-body	normal	O0	rune-new	10000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.aqCN0r/n-body
+n-body	normal	O0	rune-new	10000 expected/normal.txt 2E~10 2E~10	pass	tests/out/benchmarks/normal/run.zIM2mU/n-body
+n-body	normal	O0	rune-opt	10000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.aqCN0r/n-body
+n-body	normal	O0	rune-opt	10000 expected/normal.txt 2E~10 2E~10	pass	tests/out/benchmarks/normal/run.zIM2mU/n-body
+n-body	normal	O2	rune	10000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.C3IOZL/n-body
+n-body	normal	O2	rune	10000 expected/normal.txt 2E~10 2E~10	pass	tests/out/benchmarks/normal/run.jvujj3/n-body
+n-body	normal	O2	rune-jit	10000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.C3IOZL/n-body
+n-body	normal	O2	rune-jit	10000 expected/normal.txt 2E~10 2E~10	pass	tests/out/benchmarks/normal/run.jvujj3/n-body
+n-body	normal	O2	rune-new	10000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.C3IOZL/n-body
+n-body	normal	O2	rune-new	10000 expected/normal.txt 2E~10 2E~10	pass	tests/out/benchmarks/normal/run.jvujj3/n-body
+n-body	normal	O2	rune-opt	10000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.C3IOZL/n-body
+n-body	normal	O2	rune-opt	10000 expected/normal.txt 2E~10 2E~10	pass	tests/out/benchmarks/normal/run.jvujj3/n-body
+n-body	normal	host-default	native-mlton-20241230	10000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.om4NB9/n-body
+n-body	normal	host-default	native-mlton-20241230	10000 expected/normal.txt 2E~10 2E~10	pass	tests/out/benchmarks/normal/run.aFhYUv/n-body
+n-body	normal	host-default	native-polyml-5.9.2	10000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.om4NB9/n-body
+n-body	normal	host-default	native-polyml-5.9.2	10000 expected/normal.txt 2E~10 2E~10	pass	tests/out/benchmarks/normal/run.aFhYUv/n-body
+n-body	normal	host-default	native-smlnj-dev-2026.2	10000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.om4NB9/n-body
+n-body	normal	host-default	native-smlnj-dev-2026.2	10000 expected/normal.txt 2E~10 2E~10	pass	tests/out/benchmarks/normal/run.aFhYUv/n-body
+n-body	normal	host-default	native-smlnj-legacy-110.99.9	10000 expected/normal.txt	pass	tests/out/benchmarks/normal/run.om4NB9/n-body
+n-body	normal	host-default	native-smlnj-legacy-110.99.9	10000 expected/normal.txt 2E~10 2E~10	pass	tests/out/benchmarks/normal/run.aFhYUv/n-body
+n-body	smoke	O0	rune	10 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.dmtF2j/n-body
+n-body	smoke	O0	rune	10 expected/smoke.txt	rejected	tests/out/benchmarks/smoke/run.tTiGpd/n-body
+n-body	smoke	O0	rune	10 expected/smoke.txt 2E~10 2E~10	pass	tests/out/benchmarks/smoke/run.fCMqVT/n-body
+n-body	smoke	O0	rune-jit	10 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.dmtF2j/n-body
+n-body	smoke	O0	rune-jit	10 expected/smoke.txt	rejected	tests/out/benchmarks/smoke/run.tTiGpd/n-body
+n-body	smoke	O0	rune-jit	10 expected/smoke.txt 2E~10 2E~10	pass	tests/out/benchmarks/smoke/run.fCMqVT/n-body
+n-body	smoke	O0	rune-new	10 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.dmtF2j/n-body
+n-body	smoke	O0	rune-new	10 expected/smoke.txt	rejected	tests/out/benchmarks/smoke/run.tTiGpd/n-body
+n-body	smoke	O0	rune-new	10 expected/smoke.txt 2E~10 2E~10	pass	tests/out/benchmarks/smoke/run.fCMqVT/n-body
+n-body	smoke	O0	rune-opt	10 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.dmtF2j/n-body
+n-body	smoke	O0	rune-opt	10 expected/smoke.txt	rejected	tests/out/benchmarks/smoke/run.tTiGpd/n-body
+n-body	smoke	O0	rune-opt	10 expected/smoke.txt 2E~10 2E~10	pass	tests/out/benchmarks/smoke/run.fCMqVT/n-body
+n-body	smoke	O2	rune	10 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.p6QFiA/n-body
+n-body	smoke	O2	rune	10 expected/smoke.txt	rejected	tests/out/benchmarks/smoke/run.EervtX/n-body
+n-body	smoke	O2	rune	10 expected/smoke.txt 2E~10 2E~10	pass	tests/out/benchmarks/smoke/run.7ybKgl/n-body
+n-body	smoke	O2	rune-jit	10 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.p6QFiA/n-body
+n-body	smoke	O2	rune-jit	10 expected/smoke.txt	rejected	tests/out/benchmarks/smoke/run.EervtX/n-body
+n-body	smoke	O2	rune-jit	10 expected/smoke.txt 2E~10 2E~10	pass	tests/out/benchmarks/smoke/run.7ybKgl/n-body
+n-body	smoke	O2	rune-new	10 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.p6QFiA/n-body
+n-body	smoke	O2	rune-new	10 expected/smoke.txt	rejected	tests/out/benchmarks/smoke/run.EervtX/n-body
+n-body	smoke	O2	rune-new	10 expected/smoke.txt 2E~10 2E~10	pass	tests/out/benchmarks/smoke/run.7ybKgl/n-body
+n-body	smoke	O2	rune-opt	10 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.p6QFiA/n-body
+n-body	smoke	O2	rune-opt	10 expected/smoke.txt	rejected	tests/out/benchmarks/smoke/run.EervtX/n-body
+n-body	smoke	O2	rune-opt	10 expected/smoke.txt 2E~10 2E~10	pass	tests/out/benchmarks/smoke/run.7ybKgl/n-body
+n-body	smoke	host-default	native-mlton-20241230	10 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.yAkVJ1/n-body
+n-body	smoke	host-default	native-mlton-20241230	10 expected/smoke.txt	rejected	tests/out/benchmarks/smoke/run.EervtX/n-body
+n-body	smoke	host-default	native-mlton-20241230	10 expected/smoke.txt 2E~10 2E~10	pass	tests/out/benchmarks/smoke/run.PKufOP/n-body
+n-body	smoke	host-default	native-polyml-5.9.2	10 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.yAkVJ1/n-body
+n-body	smoke	host-default	native-polyml-5.9.2	10 expected/smoke.txt	rejected	tests/out/benchmarks/smoke/run.EervtX/n-body
+n-body	smoke	host-default	native-polyml-5.9.2	10 expected/smoke.txt 2E~10 2E~10	pass	tests/out/benchmarks/smoke/run.PKufOP/n-body
+n-body	smoke	host-default	native-smlnj-dev-2026.2	10 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.yAkVJ1/n-body
+n-body	smoke	host-default	native-smlnj-dev-2026.2	10 expected/smoke.txt	rejected	tests/out/benchmarks/smoke/run.EervtX/n-body
+n-body	smoke	host-default	native-smlnj-dev-2026.2	10 expected/smoke.txt 2E~10 2E~10	pass	tests/out/benchmarks/smoke/run.PKufOP/n-body
+n-body	smoke	host-default	native-smlnj-legacy-110.99.9	10 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.yAkVJ1/n-body
+n-body	smoke	host-default	native-smlnj-legacy-110.99.9	10 expected/smoke.txt	rejected	tests/out/benchmarks/smoke/run.EervtX/n-body
+n-body	smoke	host-default	native-smlnj-legacy-110.99.9	10 expected/smoke.txt 2E~10 2E~10	pass	tests/out/benchmarks/smoke/run.PKufOP/n-body
+power	normal	O0	rune	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.9ak2PZ/power
+power	normal	O0	rune	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.EOqnhR/power
+power	normal	O0	rune	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.eyVA2F/power
+power	normal	O0	rune-jit	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.9ak2PZ/power
+power	normal	O0	rune-jit	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.EOqnhR/power
+power	normal	O0	rune-jit	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.eyVA2F/power
+power	normal	O0	rune-new	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.9ak2PZ/power
+power	normal	O0	rune-new	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.EOqnhR/power
+power	normal	O0	rune-new	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.eyVA2F/power
+power	normal	O0	rune-opt	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.9ak2PZ/power
+power	normal	O0	rune-opt	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.EOqnhR/power
+power	normal	O0	rune-opt	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.eyVA2F/power
+power	normal	O2	rune	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.5Y4GQz/power
+power	normal	O2	rune	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.AYG5ye/power
+power	normal	O2	rune	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.Z1FCpC/power
+power	normal	O2	rune-jit	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.5Y4GQz/power
+power	normal	O2	rune-jit	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.AYG5ye/power
+power	normal	O2	rune-jit	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.Z1FCpC/power
+power	normal	O2	rune-new	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.5Y4GQz/power
+power	normal	O2	rune-new	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.AYG5ye/power
+power	normal	O2	rune-new	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.Z1FCpC/power
+power	normal	O2	rune-opt	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.5Y4GQz/power
+power	normal	O2	rune-opt	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.AYG5ye/power
+power	normal	O2	rune-opt	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.Z1FCpC/power
+power	normal	host-default	native-mlton-20241230	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.19JUR2/power
+power	normal	host-default	native-mlton-20241230	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.QOFMcF/power
+power	normal	host-default	native-mlton-20241230	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.RgkooG/power
+power	normal	host-default	native-polyml-5.9.2	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.19JUR2/power
+power	normal	host-default	native-polyml-5.9.2	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.QOFMcF/power
+power	normal	host-default	native-polyml-5.9.2	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.RgkooG/power
+power	normal	host-default	native-smlnj-dev-2026.2	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.19JUR2/power
+power	normal	host-default	native-smlnj-dev-2026.2	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.QOFMcF/power
+power	normal	host-default	native-smlnj-dev-2026.2	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.RgkooG/power
+power	normal	host-default	native-smlnj-legacy-110.99.9	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.19JUR2/power
+power	normal	host-default	native-smlnj-legacy-110.99.9	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.QOFMcF/power
+power	normal	host-default	native-smlnj-legacy-110.99.9	12 expected/normal.txt	pass	tests/out/benchmarks/normal/run.RgkooG/power
+power	smoke	O0	rune	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.3XoyLy/power
+power	smoke	O0	rune	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.EG4Ou9/power
+power	smoke	O0	rune	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.QBo7XC/power
+power	smoke	O0	rune-jit	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.3XoyLy/power
+power	smoke	O0	rune-jit	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.EG4Ou9/power
+power	smoke	O0	rune-jit	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.QBo7XC/power
+power	smoke	O0	rune-new	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.3XoyLy/power
+power	smoke	O0	rune-new	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.EG4Ou9/power
+power	smoke	O0	rune-new	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.QBo7XC/power
+power	smoke	O0	rune-opt	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.3XoyLy/power
+power	smoke	O0	rune-opt	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.EG4Ou9/power
+power	smoke	O0	rune-opt	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.QBo7XC/power
+power	smoke	O2	rune	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.B4lOTM/power
+power	smoke	O2	rune	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.GIUiXJ/power
+power	smoke	O2	rune	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.S3GbVX/power
+power	smoke	O2	rune	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.cvPejU/power
+power	smoke	O2	rune-jit	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.B4lOTM/power
+power	smoke	O2	rune-jit	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.GIUiXJ/power
+power	smoke	O2	rune-jit	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.S3GbVX/power
+power	smoke	O2	rune-jit	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.cvPejU/power
+power	smoke	O2	rune-new	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.B4lOTM/power
+power	smoke	O2	rune-new	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.GIUiXJ/power
+power	smoke	O2	rune-new	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.S3GbVX/power
+power	smoke	O2	rune-new	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.cvPejU/power
+power	smoke	O2	rune-opt	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.B4lOTM/power
+power	smoke	O2	rune-opt	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.GIUiXJ/power
+power	smoke	O2	rune-opt	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.S3GbVX/power
+power	smoke	O2	rune-opt	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.cvPejU/power
+power	smoke	host-default	native-mlton-20241230	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ADQ6hL/power
+power	smoke	host-default	native-mlton-20241230	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.S3GbVX/power
+power	smoke	host-default	native-mlton-20241230	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.o3mpZ5/power
+power	smoke	host-default	native-mlton-20241230	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.vSoXOb/power
+power	smoke	host-default	native-polyml-5.9.2	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ADQ6hL/power
+power	smoke	host-default	native-polyml-5.9.2	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.S3GbVX/power
+power	smoke	host-default	native-polyml-5.9.2	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.o3mpZ5/power
+power	smoke	host-default	native-polyml-5.9.2	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.vSoXOb/power
+power	smoke	host-default	native-smlnj-dev-2026.2	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ADQ6hL/power
+power	smoke	host-default	native-smlnj-dev-2026.2	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.o3mpZ5/power
+power	smoke	host-default	native-smlnj-dev-2026.2	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.vSoXOb/power
+power	smoke	host-default	native-smlnj-dev-2026.2	5 expected/smoke.txt	rejected	tests/out/benchmarks/smoke/run.S3GbVX/power
+power	smoke	host-default	native-smlnj-legacy-110.99.9	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ADQ6hL/power
+power	smoke	host-default	native-smlnj-legacy-110.99.9	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.o3mpZ5/power
+power	smoke	host-default	native-smlnj-legacy-110.99.9	5 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.vSoXOb/power
+power	smoke	host-default	native-smlnj-legacy-110.99.9	5 expected/smoke.txt	rejected	tests/out/benchmarks/smoke/run.S3GbVX/power
+power-nofib	normal	O0	rune	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.9ak2PZ/power-nofib
+power-nofib	normal	O0	rune	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.EOqnhR/power-nofib
+power-nofib	normal	O0	rune-jit	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.9ak2PZ/power-nofib
+power-nofib	normal	O0	rune-jit	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.EOqnhR/power-nofib
+power-nofib	normal	O0	rune-new	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.9ak2PZ/power-nofib
+power-nofib	normal	O0	rune-new	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.EOqnhR/power-nofib
+power-nofib	normal	O0	rune-opt	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.9ak2PZ/power-nofib
+power-nofib	normal	O0	rune-opt	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.EOqnhR/power-nofib
+power-nofib	normal	O2	rune	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.5Y4GQz/power-nofib
+power-nofib	normal	O2	rune	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.Z1FCpC/power-nofib
+power-nofib	normal	O2	rune-jit	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.5Y4GQz/power-nofib
+power-nofib	normal	O2	rune-jit	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.Z1FCpC/power-nofib
+power-nofib	normal	O2	rune-new	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.5Y4GQz/power-nofib
+power-nofib	normal	O2	rune-new	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.Z1FCpC/power-nofib
+power-nofib	normal	O2	rune-opt	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.5Y4GQz/power-nofib
+power-nofib	normal	O2	rune-opt	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.Z1FCpC/power-nofib
+power-nofib	normal	host-default	native-mlton-20241230	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.19JUR2/power-nofib
+power-nofib	normal	host-default	native-mlton-20241230	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.QOFMcF/power-nofib
+power-nofib	normal	host-default	native-polyml-5.9.2	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.19JUR2/power-nofib
+power-nofib	normal	host-default	native-polyml-5.9.2	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.QOFMcF/power-nofib
+power-nofib	normal	host-default	native-smlnj-dev-2026.2	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.19JUR2/power-nofib
+power-nofib	normal	host-default	native-smlnj-dev-2026.2	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.QOFMcF/power-nofib
+power-nofib	normal	host-default	native-smlnj-legacy-110.99.9	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.19JUR2/power-nofib
+power-nofib	normal	host-default	native-smlnj-legacy-110.99.9	14 200 expected/normal.txt	pass	tests/out/benchmarks/normal/run.QOFMcF/power-nofib
+power-nofib	smoke	O0	rune	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.3XoyLy/power-nofib
+power-nofib	smoke	O0	rune	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.QBo7XC/power-nofib
+power-nofib	smoke	O0	rune-jit	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.3XoyLy/power-nofib
+power-nofib	smoke	O0	rune-jit	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.QBo7XC/power-nofib
+power-nofib	smoke	O0	rune-new	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.3XoyLy/power-nofib
+power-nofib	smoke	O0	rune-new	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.QBo7XC/power-nofib
+power-nofib	smoke	O0	rune-opt	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.3XoyLy/power-nofib
+power-nofib	smoke	O0	rune-opt	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.QBo7XC/power-nofib
+power-nofib	smoke	O2	rune	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.GIUiXJ/power-nofib
+power-nofib	smoke	O2	rune	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.cvPejU/power-nofib
+power-nofib	smoke	O2	rune-jit	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.GIUiXJ/power-nofib
+power-nofib	smoke	O2	rune-jit	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.cvPejU/power-nofib
+power-nofib	smoke	O2	rune-new	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.GIUiXJ/power-nofib
+power-nofib	smoke	O2	rune-new	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.cvPejU/power-nofib
+power-nofib	smoke	O2	rune-opt	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.GIUiXJ/power-nofib
+power-nofib	smoke	O2	rune-opt	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.cvPejU/power-nofib
+power-nofib	smoke	host-default	native-mlton-20241230	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ADQ6hL/power-nofib
+power-nofib	smoke	host-default	native-mlton-20241230	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.vSoXOb/power-nofib
+power-nofib	smoke	host-default	native-polyml-5.9.2	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ADQ6hL/power-nofib
+power-nofib	smoke	host-default	native-polyml-5.9.2	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.vSoXOb/power-nofib
+power-nofib	smoke	host-default	native-smlnj-dev-2026.2	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ADQ6hL/power-nofib
+power-nofib	smoke	host-default	native-smlnj-dev-2026.2	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.vSoXOb/power-nofib
+power-nofib	smoke	host-default	native-smlnj-legacy-110.99.9	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ADQ6hL/power-nofib
+power-nofib	smoke	host-default	native-smlnj-legacy-110.99.9	5 1 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.vSoXOb/power-nofib
+reverse-complement	normal	O0	rune	DATA/normal.fasta expected/normal.fasta	pass	tests/out/benchmarks/normal/run.toqh4C/reverse-complement
+reverse-complement	normal	O0	rune-jit	DATA/normal.fasta expected/normal.fasta	pass	tests/out/benchmarks/normal/run.toqh4C/reverse-complement
+reverse-complement	normal	O0	rune-new	DATA/normal.fasta expected/normal.fasta	pass	tests/out/benchmarks/normal/run.toqh4C/reverse-complement
+reverse-complement	normal	O0	rune-opt	DATA/normal.fasta expected/normal.fasta	pass	tests/out/benchmarks/normal/run.toqh4C/reverse-complement
+reverse-complement	normal	O2	rune	DATA/normal.fasta expected/normal.fasta	pass	tests/out/benchmarks/normal/run.itJB7R/reverse-complement
+reverse-complement	normal	O2	rune-jit	DATA/normal.fasta expected/normal.fasta	pass	tests/out/benchmarks/normal/run.itJB7R/reverse-complement
+reverse-complement	normal	O2	rune-new	DATA/normal.fasta expected/normal.fasta	pass	tests/out/benchmarks/normal/run.itJB7R/reverse-complement
+reverse-complement	normal	O2	rune-opt	DATA/normal.fasta expected/normal.fasta	pass	tests/out/benchmarks/normal/run.itJB7R/reverse-complement
+reverse-complement	normal	host-default	native-mlton-20241230	DATA/normal.fasta expected/normal.fasta	pass	tests/out/benchmarks/normal/run.QY2ccj/reverse-complement
+reverse-complement	normal	host-default	native-polyml-5.9.2	DATA/normal.fasta expected/normal.fasta	pass	tests/out/benchmarks/normal/run.QY2ccj/reverse-complement
+reverse-complement	normal	host-default	native-smlnj-dev-2026.2	DATA/normal.fasta expected/normal.fasta	pass	tests/out/benchmarks/normal/run.QY2ccj/reverse-complement
+reverse-complement	normal	host-default	native-smlnj-legacy-110.99.9	DATA/normal.fasta expected/normal.fasta	pass	tests/out/benchmarks/normal/run.QY2ccj/reverse-complement
+reverse-complement	smoke	O0	rune	DATA/smoke.fasta expected/smoke.fasta	pass	tests/out/benchmarks/smoke/run.P8lxfm/reverse-complement
+reverse-complement	smoke	O0	rune-jit	DATA/smoke.fasta expected/smoke.fasta	pass	tests/out/benchmarks/smoke/run.P8lxfm/reverse-complement
+reverse-complement	smoke	O0	rune-new	DATA/smoke.fasta expected/smoke.fasta	pass	tests/out/benchmarks/smoke/run.P8lxfm/reverse-complement
+reverse-complement	smoke	O0	rune-opt	DATA/smoke.fasta expected/smoke.fasta	pass	tests/out/benchmarks/smoke/run.P8lxfm/reverse-complement
+reverse-complement	smoke	O2	rune	DATA/smoke.fasta expected/smoke.fasta	pass	tests/out/benchmarks/smoke/run.uU9L7P/reverse-complement
+reverse-complement	smoke	O2	rune-jit	DATA/smoke.fasta expected/smoke.fasta	pass	tests/out/benchmarks/smoke/run.uU9L7P/reverse-complement
+reverse-complement	smoke	O2	rune-new	DATA/smoke.fasta expected/smoke.fasta	pass	tests/out/benchmarks/smoke/run.uU9L7P/reverse-complement
+reverse-complement	smoke	O2	rune-opt	DATA/smoke.fasta expected/smoke.fasta	pass	tests/out/benchmarks/smoke/run.uU9L7P/reverse-complement
+reverse-complement	smoke	host-default	native-mlton-20241230	DATA/smoke.fasta expected/smoke.fasta	pass	tests/out/benchmarks/smoke/run.MOFAXc/reverse-complement
+reverse-complement	smoke	host-default	native-polyml-5.9.2	DATA/smoke.fasta expected/smoke.fasta	pass	tests/out/benchmarks/smoke/run.MOFAXc/reverse-complement
+reverse-complement	smoke	host-default	native-smlnj-dev-2026.2	DATA/smoke.fasta expected/smoke.fasta	pass	tests/out/benchmarks/smoke/run.MOFAXc/reverse-complement
+reverse-complement	smoke	host-default	native-smlnj-legacy-110.99.9	DATA/smoke.fasta expected/smoke.fasta	pass	tests/out/benchmarks/smoke/run.MOFAXc/reverse-complement

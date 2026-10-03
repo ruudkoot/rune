@@ -1,0 +1,46 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (540 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt BENCH_FILTER='power' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.QBo7XC
+BENCH power smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 5
+PASS power
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 5
+PASS power
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 5
+PASS power
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 5
+PASS power
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+BENCH power-nofib smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 5
+PASS power-nofib
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 5
+PASS power-nofib
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 5
+PASS power-nofib
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 5
+PASS power-nofib
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt

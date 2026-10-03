@@ -1,0 +1,1 @@
+fasta	600	4194304	shared/input.sml shared/fasta.sml fasta/benchmark.sml shared/main.sml	75000 expected/normal.txt	fasta/normal.expected	expected/normal.txt

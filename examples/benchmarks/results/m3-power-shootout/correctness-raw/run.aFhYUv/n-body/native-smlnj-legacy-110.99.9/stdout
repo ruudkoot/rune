@@ -1,0 +1,41 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/n-body/benchmark.sml]
+[autoloading]
+[autoloading done]
+structure Benchmark : sig
+  val name : string
+  val daysPerYear : real
+  val solarMass : real
+  val delta : real
+  val initial : real list
+  type vector = real * real * real
+  val plus : vector * vector -> real * real * real
+  val minus : vector * vector -> real * real * real
+  val scale : real -> vector -> real * real * real
+  val magnitude2 : vector -> real
+  val get : 'a array -> int -> 'a * 'a * 'a
+  val put : 'a array -> int -> 'a * 'a * 'a -> unit
+  val mass : 'a array -> int -> 'a
+  val offsetMomentum : real array -> unit
+  val energy : real array -> real
+  val advance : real array -> unit
+  val matchesWith : real * real -> real list -> real list -> bool
+  val matches : real list -> real list -> bool
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 10000
+PASS n-body
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,5 @@
+COUNT unbudgeted n-body normal rune
+COUNT unbudgeted n-body normal rune:opt
+COUNT unbudgeted n-body normal rune:new
+COUNT unbudgeted n-body normal rune:jit
+COUNT comparisons agree

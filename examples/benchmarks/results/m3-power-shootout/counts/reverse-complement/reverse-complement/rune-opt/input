@@ -1,0 +1,3 @@
+reverse-complement
+DATA/normal.fasta expected/normal.fasta
+762577

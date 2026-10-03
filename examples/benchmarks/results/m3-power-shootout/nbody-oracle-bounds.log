@@ -1,0 +1,3 @@
+smoke 10 max_abs_error 4.440892098500626e-16
+normal 10000 max_abs_error 3.255840042015734e-12
+large 500000 max_abs_error 1.8514749733355984e-09

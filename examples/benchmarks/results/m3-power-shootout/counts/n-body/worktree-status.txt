@@ -1,0 +1,15 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/fasta/
+?? examples/benchmarks/n-body/
+?? examples/benchmarks/power-nofib/
+?? examples/benchmarks/power/
+?? examples/benchmarks/reverse-complement/
+?? examples/benchmarks/shared/fasta.sml
+?? examples/benchmarks/shared/power-series.sml
+?? examples/benchmarks/shared/power-workload.sml
+?? tests/benchmarks/check-power-series.sh
+?? tests/benchmarks/check-shootout.sh
+?? tests/benchmarks/power-series.sml
+?? tests/benchmarks/reverse-complement.sml
+?? tests/benchmarks/shootout.sml

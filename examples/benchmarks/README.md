@@ -193,6 +193,11 @@ inventory entry.
 | [spellcheck-lazy](#spellcheck-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/spellcheck) | Check Latin-1 words against the original weight-balanced set with streamed tokens. |
 | [spellcheck-strict](#spellcheck-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/spellcheck) | Check eagerly materialized Latin-1 tokens against the same weight-balanced set. |
 | [cse](#cse) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/cse) | Label expression trees with pure state computations and share equal subtrees. |
+| [power](#power) | [nofib gc/power](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/power) | Compute exact rational identities and integer generating functions with memoized series. |
+| [power-nofib](#power-nofib) | [nofib spectral/power](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/power) | Force rational power-series identities and generating functions repeatedly. |
+| [n-body](#n-body) | [nofib shootout/n-body](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/shootout/n-body) | Advance five bodies in a contiguous mutable array and validate energies and final state. |
+| [fasta](#fasta) | [nofib shootout/fasta](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/shootout/fasta) | Generate deterministic FASTA DNA with binary32 distribution tables and mutable line buffers. |
+| [reverse-complement](#reverse-complement) | [nofib shootout/reverse-complement](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/shootout/reverse-complement) | Reverse-complement FASTA records using a growing mutable buffer and in-place swaps. |
 
 ## Running and interpreting checks
 
@@ -283,6 +288,8 @@ sh tests/benchmarks/check-gc-ports.sh
 sh tests/benchmarks/check-extended-gcd.sh
 sh tests/benchmarks/check-treejoin.sh
 sh tests/benchmarks/check-word-set.sh
+sh tests/benchmarks/check-power-series.sh
+sh tests/benchmarks/check-shootout.sh
 python3 tests/benchmarks/test-inventory.py
 python3 scripts/benchmark-inventory.py --check
 python3 tests/benchmarks/latency-oracle.py --check
@@ -5220,3 +5227,254 @@ shared graph objects are source-derived hypotheses until measured. References:
 original Jones explanation/example graphs and nofib survey.
 
 [Complete provenance](cse/PROVENANCE.md).
+
+## power
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `gc/power/Main.hs`.
+
+### Algorithm, history and variants
+
+Compute exact rational identities and integer generating functions with memoized series.
+
+The GC variant prints rational coefficients for two identities and Integer
+coefficients for Catalan/tree series. Smoke/normal/large select 5/12/50
+coefficients once; large preserves original FAST 50, while NORM 80/SLOW 90 remain
+recorded. IntInf preserves arbitrary precision. The spectral variant differs
+in coefficient types, repetition, forcing and output, and is named power-nofib.
+
+Douglas McIlroy's *Power series, power serious*, JFP 9(3), May 1999, is
+identified in the original header. The individual program licence is unspecified;
+this provenance gap remains explicit. Original source/builds/fixtures are retained
+with SHA256 identities. Exact rational normalization follows the pinned GHC
+9.4.7 base Integer Ratio operations; the library source, revision and notice are
+retained separately and do not license the nofib program.
+
+### Translation and runtime questions
+
+Preserve finite Pz, memoized coefficient/spine demand and sharing, scalar
+multiplication, the original product recurrence (including x*fs*gs), leading-zero
+division, composition, reversion, differentiation, integration and square roots.
+Integration emits zero before inspecting its operand, as required by the source's
+differential-equation construction. Sine/cosine, geometric, Catalan and tree
+series remain shared recursive knots. SML97 references implement delays; no
+finite-array algebra or eager infinite-series variant replaces the algorithm.
+Only operations used by the workload and finite boundary checks are ported; the
+full original module remains available. Fractional operations are not applied
+to the integer instantiation. Negative numerators retain GHC Show parentheses.
+
+### Inputs, validation and references
+
+Every requested coefficient is rendered and checked exactly. Original GHC
+and read-only observers agree with all fixtures. Independent analytic identities
+supply the two zero series; binomial Catalan counts supply the two combinatorial
+series. Semantic checks cover finite-product length, derivative/integral values,
+leading-zero division, demand before operand inspection and coefficient sharing.
+Added rendering/validation work is included. Rational normalization, delay
+closures, prefix retention and recursive sharing are source-derived diagnostic
+hypotheses until measured. Large SML execution is not universally claimed.
+
+[McIlroy, Power series, power serious](https://doi.org/10.1017/S0956796899003299)
+motivates exact compositional streams. The concrete recurrence/forcing decisions
+above come from the retained source; they are not measured performance findings.
+
+[Complete provenance](power/PROVENANCE.md).
+
+## power-nofib
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `spectral/power/Main.hs`.
+
+### Algorithm, history and variants
+
+Force rational power-series identities and generating functions repeatedly.
+
+The spectral variant uses Rational for all four lists due to rnfListOfRational
+and repeats 200 times. Positive counts preserve salt=min0 p and exponent2.
+Smoke5x1 bounds routine work; normal14x200 preserves original FAST, and
+large26x200 preserves original NORM. Original SLOW 36 remains recorded.
+Rendering/validation additionally consumes results discarded by original rnf.
+The GC variant power retains integer generating functions and one printed run.
+
+Douglas McIlroy's *Power series, power serious*, JFP 9(3), May 1999, is
+identified in the original header. The individual program licence is unspecified;
+this provenance gap remains explicit. Original source/builds/fixtures are retained
+with SHA256 identities. Exact rational normalization follows the pinned GHC
+9.4.7 base Integer Ratio operations; the library source, revision and notice are
+retained separately and do not license the nofib program.
+
+### Translation and runtime questions
+
+Preserve finite Pz, memoized coefficient/spine demand and sharing, scalar
+multiplication, the original product recurrence (including x*fs*gs), leading-zero
+division, composition, reversion, differentiation, integration and square roots.
+Integration emits zero before inspecting its operand, as required by the source's
+differential-equation construction. Sine/cosine, geometric, Catalan and tree
+series remain shared recursive knots. SML97 references implement delays; no
+finite-array algebra or eager infinite-series variant replaces the algorithm.
+Only operations used by the workload and finite boundary checks are ported; the
+full original module remains available. Fractional operations are not applied
+to the integer instantiation. Negative numerators retain GHC Show parentheses.
+
+### Inputs, validation and references
+
+Every requested coefficient is rendered and checked exactly. Original GHC
+and read-only observers agree with all fixtures. Independent analytic identities
+supply the two zero series; binomial Catalan counts supply the two combinatorial
+series. Semantic checks cover finite-product length, derivative/integral values,
+leading-zero division, demand before operand inspection and coefficient sharing.
+Added rendering/validation work is included. Rational normalization, delay
+closures, prefix retention and recursive sharing are source-derived diagnostic
+hypotheses until measured. Large SML execution is not universally claimed.
+
+[McIlroy, Power series, power serious](https://doi.org/10.1017/S0956796899003299)
+motivates exact compositional streams. The concrete recurrence/forcing decisions
+above come from the retained source; they are not measured performance findings.
+
+[Complete provenance](power-nofib/PROVENANCE.md).
+
+## n-body
+
+Advance five bodies in a contiguous mutable array and validate energies and final state.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `shootout/n-body`.
+
+### Algorithm and history
+
+The Computer Language Benchmarks Game implementation is contributed by Olof
+Kraigher and Don Stewart. The pinned source retains its compiler pragmas and
+historical GCC note. It supplies no individual licence; this gap remains explicit.
+The full source and build settings are retained with SHA256 identities.
+
+### Variants and translation
+
+Preserve all 35 Double slots (three position values, three velocity values, one mass for each body),
+right-fold momentum initialization, pair visitation, and immediate velocity
+updates. Each body's position is updated after its pairs, as in the original.
+Energy subtracts pair potentials before adding that body's kinetic energy.
+Portable SML arrays replace pointer/malloc storage; checked indexing and tuple
+vectors replace unsafe pointer arithmetic and Haskell Vector3 values. The FFI
+only supplies storage access here; no foreign computation or runtime facility
+is required. All numerical constants, timestep 0.01, and solar-mass formula remain.
+The classic nbody uses immutable body records and different update/reduction
+structure, so it remains a separate established-name workload.
+
+### Inputs, validation and references
+
+Profiles select 10/10000/500000 steps. Large preserves original FAST 500000;
+original NORM 5000000/SLOW 25000000 and optional50000000 remain recorded.
+Read-only GHC observers give both energies and all 35 state values at17 digits.
+An independent Newtonian pair-force integrator updates all positions after the
+pair sweep and checks the complete fixtures. SML accepts only finite values
+within absolute 2e-10 plus relative 2e-10 error per value for smoke/normal.
+Large uses absolute 2e-8 plus relative 2e-10: the independent integrator differs
+from GHC by up to 1.86e-9 after 500000 steps, versus 3.26e-12 after 10000.
+Bounds are explicit profile arguments and both reject deliberate perturbations. This bounds differences
+in binary64 evaluation while detecting perturbations in energy or individual
+state fields; targeted checks reject truncation, nonfinite values and deviations
+outside the bound. The chosen bound is tighter than the original nine-decimal
+energy output's quantization near zero. Complete-state validation is added work.
+Large SML execution is not universally claimed.
+
+Mutable storage, boxing of real tuples, checked access, reduction order and
+numerical operations are source-derived diagnostic hypotheses until measured.
+References: retained Kraigher/Stewart source and the suite's
+[Benchmarks Game literature entry](../literature.md).
+
+[Complete provenance](n-body/PROVENANCE.md).
+
+## fasta
+
+Generate deterministic FASTA DNA with binary32 distribution tables and mutable line buffers.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `shootout/fasta`.
+
+### Algorithm and history
+
+Bryan O'Sullivan contributed the Haskell Benchmarks Game implementation. Mr
+Ledrug contributed the independent C generator used by nofib's boot.sh. Both
+sources, build scripts, parameters and notices are retained with SHA256 identities.
+Their individual licence terms are unspecified in the pinned files; this remains
+an explicit provenance gap rather than a GHC compiler-licence assignment.
+
+### Variants and translation
+
+Preserve the cyclic ALU sequence, lengths2n/3n/5n,60-column lines, seed 42,
+modulus 139968, multiplier 3877, increment 29573, and seed carried between the two
+random sequences. Preserve cumulative Float probabilities, inclusive lookup
+cutoffs floor(modulus*p+1), and table clamping. Every literal/add/multiply/add
+is explicitly rounded to binary32 using24 significand bits and ties to even.
+Only positive normal finite values in the original table builder occur; the
+helper is not a general substitute for all IEEE special/subnormal behavior.
+All table cutoffs match an independent binary32 reference. The generator's
+integer product fits31-bit signed Int for every permitted seed.
+
+Portable SML strings replace strict/lazy ByteStrings and the cyclic byte chunks;
+a checked60-character mutable array replaces the CString line buffer. Table
+construction and array mutation remain; no direct probabilistic scan replaces
+lookup. The complete generated output is collected in SML strings instead of
+streamed through stdout, changing retention and copy costs. No foreign runtime
+or computation is needed. These representation/evaluation changes are explicit.
+
+### Inputs, validation and references
+
+Profiles select n=13/75000/750000; large preserves original FAST 750000.
+Original NORM 7500000/SLOW 25000000 remain recorded. The partial smoke lines
+exercise remainder handling. Complete outputs agree with unchanged GHC and
+nofib's independent C reference for every selected profile. Every header, base,
+newline and seed-dependent character is checked. Semantic tests cover the
+reviewed distribution cutoffs and halfway rounding. Added collection/validation
+is included; large SML execution is not universally claimed.
+
+Binary32 table construction, byte representation, buffer mutation, slicing/copying
+and input/output retention are source-derived hypotheses until measured.
+References: the retained O'Sullivan/Ledrug implementations and
+[the literature survey](../literature.md).
+
+[Complete provenance](fasta/PROVENANCE.md).
+
+## reverse-complement
+
+Reverse-complement FASTA records using a growing mutable buffer and in-place swaps.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `shootout/reverse-complement`.
+
+### Algorithm and history
+
+Louis Wasserman contributed the Haskell Benchmarks Game implementation.
+The retained boot.sh generates input with Mr Ledrug's fasta-c.c and expected
+output with the separately retained revcomp-c.c. Original sources/build scripts
+and notices have SHA256 identities. Individual licence terms are unspecified
+in these pinned program files; this gap remains explicit.
+
+### Variants and translation
+
+Preserve the82-byte reader, first-header search,1024-byte initial buffer,
+doubling capacity, reset/reuse on record boundaries,200-entry identity/complement
+table, and in-place inward swap loop. Keep lowercase/uppercase ambiguity mappings,
+headers and newline positions. SML checked character arrays replace malloc,
+realloc, pointer access and memchr; the input file is materialized earlier as
+one byte string. Rendering collects completed records instead of hPutBuf output,
+changing retention/copying costs. No alternative record parser or sequence list
+replaces the buffering and swap algorithm; no foreign runtime feature is needed.
+
+The original reader handles only the first '>' in each82-byte chunk. Tiny input
+n=13 packs multiple headers into a chunk and original GHC output disagrees with
+independent FASTA reversal. That unsuitable smoke candidate was rejected;
+selected n=100 has sufficiently spaced headers. This source limitation is
+preserved and documented rather than silently repairing the benchmark.
+
+### Inputs, validation and references
+
+Profiles are generated with original fasta-c.c at n=100/75000/750000. The same
+size parameter/input distribution is retained; source FAST 5000000 and
+NORM/SLOW 50000000 remain recorded, including the C parser-overflow warning in
+Makefile. Inputs/expected outputs are fixed files rather than generated during
+measurement. All selected fixtures agree with unchanged GHC, original C, and an
+independent per-record complement/reversal oracle that preserves line positions.
+Every output byte is checked. Boundary tests cover all mappings, odd centers,
+line positions, growth beyond1024 and headers crossing reader chunks. Added full
+output collection/validation is included; large SML execution is not universally
+claimed. Buffer growth, copying, mutation and byte representation are hypotheses
+until measured. References: retained source/boot scripts and
+[the literature survey](../literature.md).
+
+[Complete provenance](reverse-complement/PROVENANCE.md).

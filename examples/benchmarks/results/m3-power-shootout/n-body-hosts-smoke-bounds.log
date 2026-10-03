@@ -1,0 +1,25 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (540 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=native:mlton,native:smlnj-legacy,native:smlnj-dev,native:polyml BENCH_FILTER='n-body' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.PKufOP
+BENCH n-body smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 10
+PASS n-body
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 10
+PASS n-body
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 10
+PASS n-body
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+RESULT 10
+PASS n-body
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2

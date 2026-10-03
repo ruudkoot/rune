@@ -1,0 +1,46 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (540 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt BENCH_FILTER='power' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.5Y4GQz
+BENCH power normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 12
+PASS power
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 12
+PASS power
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 12
+PASS power
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 12
+PASS power
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+BENCH power-nofib normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 2800
+PASS power-nofib
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 2800
+PASS power-nofib
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 2800
+PASS power-nofib
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 2800
+PASS power-nofib
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt

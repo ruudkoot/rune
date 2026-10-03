@@ -1,0 +1,242 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/rational.sml]
+structure BenchRational : 
+  sig
+    type rational = IntInf.int * IntInf.int
+    val gcd : IntInf.int * ?.intinf -> IntInf.int
+    val ratio : IntInf.int * ?.intinf -> IntInf.int * IntInf.int
+    val add : rational * rational -> IntInf.int * IntInf.int
+    val show : IntInf.int * IntInf.int -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/power-series.sml]
+signature BENCH_POWER_NUMBER = 
+  sig
+    type t
+    val zero : t
+    val one : t
+    val fromInt : int -> t
+    val equal : t * t -> bool
+    val add : t * t -> t
+    val negate : t -> t
+    val multiply : t * t -> t
+    val divide : t * t -> t
+    val show : t -> string
+  end
+functor BenchPowerFn(N: sig
+                        type t
+                        val zero : t
+                        val one : t
+                        val fromInt : int -> t
+                        val equal : t * t -> bool
+                        val add : t * t -> t
+                        val negate : t -> t
+                        val multiply : t * t -> t
+                        val divide : t * t -> t
+                        val show : t -> string
+                      end) :
+                    
+                      sig
+                        structure L : <sig>
+                        structure S : <sig>
+                        type series
+                        val zero : series
+                        val coefficient : N.t -> N.t BenchLazy.state ref
+                        val cons : N.t * N.t BenchStream.node BenchLazy.delay
+                                    -> N.t BenchStream.node BenchLazy.state 
+                                      ref
+                        val constant : N.t -> series
+                        val one : series
+                        val x : N.t BenchStream.node BenchLazy.state ref
+                        val negate : N.t BenchStream.node BenchLazy.delay
+                                      -> N.t BenchStream.node BenchLazy.delay
+                        val add : N.t BenchStream.node BenchLazy.delay
+                                   -> N.t BenchStream.node BenchLazy.delay
+                                   -> N.t BenchStream.node BenchLazy.delay
+                        val subtract : N.t BenchStream.node BenchLazy.delay
+                                        -> N.t BenchStream.node 
+                                          BenchLazy.delay
+                                        -> N.t BenchStream.node 
+                                          BenchLazy.delay
+                        val scale : N.t BenchLazy.state ref
+                                     -> N.t BenchStream.node BenchLazy.delay
+                                     -> N.t BenchStream.node BenchLazy.delay
+                        val multiply : N.t BenchStream.node BenchLazy.state 
+                                          ref
+                                        -> N.t BenchStream.node 
+                                          BenchLazy.delay
+                                        -> N.t BenchStream.node 
+                                            BenchLazy.state ref
+                        val square : N.t BenchStream.node BenchLazy.state ref
+                                      -> N.t BenchStream.node BenchLazy.state 
+                                        ref
+                        val divide : series
+                                      -> N.t BenchStream.node BenchLazy.delay
+                                      -> N.t BenchStream.node BenchLazy.state 
+                                        ref
+                        val compose : N.t BenchStream.node BenchLazy.delay
+                                       -> N.t BenchStream.node BenchLazy.state 
+                                         ref
+                                       -> N.t BenchStream.node BenchLazy.delay
+                        val revert : N.t BenchStream.node BenchLazy.state ref
+                                      -> N.t BenchStream.node BenchLazy.state 
+                                        ref
+                        val derivativeFrom : N.t BenchStream.node 
+                                                BenchLazy.delay
+                                              -> int
+                                              -> N.t BenchStream.node 
+                                                  BenchLazy.state ref
+                        val derivative : N.t BenchStream.node BenchLazy.state 
+                                            ref
+                                          -> N.t BenchStream.node 
+                                              BenchLazy.state ref
+                        val integralFrom : N.t BenchStream.node 
+                                              BenchLazy.delay
+                                            -> int
+                                            -> N.t BenchStream.node 
+                                              BenchLazy.delay
+                        val integral : N.t BenchStream.node BenchLazy.delay
+                                        -> N.t BenchStream.node 
+                                            BenchLazy.state ref
+                        val squareRoot : N.t BenchStream.node BenchLazy.state 
+                                            ref
+                                          -> N.t BenchStream.node 
+                                            BenchLazy.delay
+                        val render : int
+                                      -> N.t BenchStream.node BenchLazy.state 
+                                        ref
+                                      -> string
+                      end
+structure BenchPowerInteger : 
+  sig
+    type t = IntInf.int
+    val zero : t
+    val one : t
+    val fromInt : int -> IntInf.int
+    val equal : t * t -> bool
+    val add : IntInf.int * IntInf.int -> IntInf.int
+    val negate : IntInf.int -> IntInf.int
+    val multiply : IntInf.int * IntInf.int -> IntInf.int
+    val divide : t * t -> t
+    val show : IntInf.int -> string
+  end
+structure BenchPowerRational : 
+  sig
+    type t = BenchRational.rational
+    val zero : t
+    val one : t
+    val fromInt : int -> t
+    val equal : t * t -> bool
+    val add : BenchRational.rational * BenchRational.rational
+               -> IntInf.int * IntInf.int
+    val negate : IntInf.int * 'a -> IntInf.int * 'a
+    val multiply : t * t -> IntInf.int * IntInf.int
+    val divide : t * t -> IntInf.int * IntInf.int
+    val show : IntInf.int * IntInf.int -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/power-workload.sml]
+functor BenchPowerWorkloadFn(TreeNumber: sig
+                                type t
+                                val zero : t
+                                val one : t
+                                val fromInt : int -> t
+                                val equal : t * t -> bool
+                                val add : t * t -> t
+                                val negate : t -> t
+                                val multiply : t * t -> t
+                                val divide : t * t -> t
+                                val show : t -> string
+                              end) :
+                            
+                              sig
+                                structure R : <sig>
+                                structure I : <sig>
+                                structure L : <sig>
+                                structure S : <sig>
+                                val cosine : R.series option ref
+                                val sinx : BenchPowerRational.t 
+                                                  BenchStream.node 
+                                                BenchLazy.state ref
+                                val cosx : BenchPowerRational.t 
+                                                BenchStream.node 
+                                              BenchLazy.delay
+                                val ts : TreeNumber.t BenchStream.node 
+                                              BenchLazy.state ref
+                                val list : TreeNumber.t BenchStream.node 
+                                                BenchLazy.state ref
+                                val tree : TreeNumber.t BenchStream.node 
+                                                BenchLazy.state ref
+                                val output : int -> string
+                              end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/power-nofib/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Workload : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 2800
+PASS power-nofib
+SUMMARY 1 checks, 0 failed

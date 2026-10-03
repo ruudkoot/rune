@@ -1,0 +1,40 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/fasta.sml]
+[autoloading]
+[autoloading done]
+structure BenchFasta : sig
+  val modulus : int
+  val single : real -> real
+  val alu : string
+  val iub : (char * real) list
+  val homo : (char * real) list
+  val cumulative : ('a * real) list -> ('a * real) list
+  val cutoffs : ('a * real) list -> ('a * int) list
+  val lookup : (char * real) list -> string
+  val writeAlu : int -> string
+  val make : int -> (char * real) list -> int -> string * int
+  val output : int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/fasta/benchmark.sml]
+[autoloading]
+[autoloading done]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 762577
+PASS fasta
+SUMMARY 1 checks, 0 failed

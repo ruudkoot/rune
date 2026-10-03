@@ -1,0 +1,9 @@
+[1 of 2] Compiling Main             ( tests/out/benchmarks/power-spectral-originals/Main.hs, tests/out/benchmarks/power-spectral-originals/Main.o )
+
+tests/out/benchmarks/power-spectral-originals/Main.hs:43:14: warning: [-Wtabs]
+    Tab character found here, and in 56 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+43 | extract 0 ps         = []
+   |              ^^^
+[2 of 2] Linking tests/out/benchmarks/power-spectral-originals/observer

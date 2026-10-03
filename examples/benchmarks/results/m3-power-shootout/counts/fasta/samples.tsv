@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+fasta	normal	rune	O2	compile	0	0	pass	1.24	1.14	0.08	135172	-	-	-	fasta/rune/build/compile
+fasta	normal	rune	O2	correctness	0	0	pass	0.24	0.23	0.00	23124	50810174	107543616	2292768	fasta/rune/correctness.0
+fasta	normal	rune	O2	count	1	1	pass	0.27	0.25	0.02	23120	50810174	107543616	2292768	fasta/rune/fresh.1
+fasta	normal	rune:opt	O2	compile	0	0	pass	1.28	1.21	0.07	135196	-	-	-	fasta/rune-opt/build/compile
+fasta	normal	rune:opt	O2	native-compile	0	0	pass	0.29	0.12	0.02	12260	-	-	-	fasta/rune-opt/build/native-compile
+fasta	normal	rune:opt	O2	correctness	0	0	pass	0.12	0.09	0.02	23504	50810174	107543616	2292768	fasta/rune-opt/correctness.0
+fasta	normal	rune:opt	O2	count	1	1	pass	0.13	0.11	0.01	23456	50810174	107543616	2292768	fasta/rune-opt/fresh.1
+fasta	normal	rune:new	O2	compile	0	0	pass	1.23	1.16	0.06	135240	-	-	-	fasta/rune-new/build/compile
+fasta	normal	rune:new	O2	correctness	0	0	pass	0.27	0.23	0.04	43568	33089452	107543616	2292768	fasta/rune-new/correctness.0
+fasta	normal	rune:new	O2	count	1	1	pass	0.24	0.20	0.03	43572	33089452	107543616	2292768	fasta/rune-new/fresh.1
+fasta	normal	rune:jit	O2	compile	0	0	pass	1.24	1.20	0.03	135248	-	-	-	fasta/rune-jit/build/compile
+fasta	normal	rune:jit	O2	correctness	0	0	pass	0.16	0.11	0.04	44076	33089452	107543616	2292768	fasta/rune-jit/correctness.0
+fasta	normal	rune:jit	O2	count	1	1	pass	0.15	0.12	0.03	44192	33089452	107543616	2292768	fasta/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

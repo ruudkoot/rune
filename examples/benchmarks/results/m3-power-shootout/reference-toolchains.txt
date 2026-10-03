@@ -1,0 +1,6 @@
+GHC: 9.4.7
+OCaml: 4.14.1
+C compiler: cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+Haskell references: ghc -O2 Main.hs -outputdir DIRECTORY -o PROGRAM
+C references: cc -O2 UPSTREAM.c -o PROGRAM
+All references run in a fresh process with the recorded fixed inputs.

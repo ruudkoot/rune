@@ -1,0 +1,2 @@
+power	600	4194304	shared/input.sml shared/lazy.sml shared/stream.sml shared/rational.sml shared/power-series.sml shared/power-workload.sml power/benchmark.sml shared/main.sml	12 expected/normal.txt	power/normal.expected	expected/normal.txt
+power-nofib	600	4194304	shared/input.sml shared/lazy.sml shared/stream.sml shared/rational.sml shared/power-series.sml shared/power-workload.sml power-nofib/benchmark.sml shared/main.sml	14 200 expected/normal.txt	power-nofib/normal.expected	expected/normal.txt

@@ -1,0 +1,25 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (540 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=native:mlton,native:smlnj-legacy,native:smlnj-dev,native:polyml BENCH_FILTER='reverse-complement' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.QY2ccj
+BENCH reverse-complement normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 762577
+PASS reverse-complement
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 762577
+PASS reverse-complement
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 762577
+PASS reverse-complement
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 762577
+PASS reverse-complement
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2

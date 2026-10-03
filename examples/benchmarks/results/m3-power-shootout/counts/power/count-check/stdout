@@ -1,0 +1,9 @@
+COUNT unbudgeted power normal rune
+COUNT unbudgeted power normal rune:opt
+COUNT unbudgeted power normal rune:new
+COUNT unbudgeted power normal rune:jit
+COUNT unbudgeted power-nofib normal rune
+COUNT unbudgeted power-nofib normal rune:opt
+COUNT unbudgeted power-nofib normal rune:new
+COUNT unbudgeted power-nofib normal rune:jit
+COUNT comparisons agree
