@@ -1,0 +1,12 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/lcss-nofib-lazy/
+?? examples/benchmarks/lcss-nofib-strict/
+?? examples/benchmarks/rsa-lazy/
+?? examples/benchmarks/rsa-strict/
+?? examples/benchmarks/shared/rsa-driver.sml
+?? examples/benchmarks/shared/rsa.sml
+?? examples/benchmarks/treejoin-nofib-lazy/
+?? examples/benchmarks/treejoin-nofib-strict/
+?? tests/benchmarks/check-rsa.sh
+?? tests/benchmarks/rsa.sml

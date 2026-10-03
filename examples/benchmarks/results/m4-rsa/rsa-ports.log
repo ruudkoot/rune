@@ -1,0 +1,6 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/rsa-validation._fdg8lmu
+Traceback (most recent call last):
+  File "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/rsa-originals/check-ports.py", line 22, in <module>
+    assert result.returncode == 0,job
+           ^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/rsa-validation._fdg8lmu/rsa-lazy/smoke/O0

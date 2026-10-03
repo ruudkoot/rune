@@ -1,0 +1,9 @@
+COUNT unbudgeted lcss-nofib-lazy normal rune
+COUNT unbudgeted lcss-nofib-lazy normal rune:opt
+COUNT unbudgeted lcss-nofib-lazy normal rune:new
+COUNT unbudgeted lcss-nofib-lazy normal rune:jit
+COUNT unbudgeted lcss-nofib-strict normal rune
+COUNT unbudgeted lcss-nofib-strict normal rune:opt
+COUNT unbudgeted lcss-nofib-strict normal rune:new
+COUNT unbudgeted lcss-nofib-strict normal rune:jit
+COUNT comparisons agree

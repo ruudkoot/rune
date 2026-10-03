@@ -1,0 +1,2 @@
+lcss-nofib-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/stream.sml shared/lcss.sml lcss-lazy/benchmark.sml lcss-nofib-lazy/benchmark.sml shared/main.sml	1 2 60 30 31 90 expected/normal.txt 500	lcss-nofib-lazy/normal.expected	expected/normal.txt
+lcss-nofib-strict	600	4194304	shared/input.sml shared/lazy.sml shared/stream.sml shared/lcss.sml lcss-strict/benchmark.sml lcss-nofib-strict/benchmark.sml shared/main.sml	1 2 60 30 31 90 expected/normal.txt 500	lcss-nofib-strict/normal.expected	expected/normal.txt

@@ -1,0 +1,3 @@
+treejoin-nofib-lazy
+DATA/normal.1 DATA/normal.2 expected/normal.txt 100
+1500 1500 19

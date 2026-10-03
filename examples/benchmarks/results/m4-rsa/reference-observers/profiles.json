@@ -1,0 +1,14 @@
+{
+  "smoke": [
+    "fast",
+    1
+  ],
+  "normal": [
+    "fast",
+    10
+  ],
+  "large": [
+    "normal",
+    150
+  ]
+}

@@ -1,0 +1,3 @@
+RESULT 125 125 0
+PASS treejoin-nofib-strict
+SUMMARY 1 checks, 0 failed

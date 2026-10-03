@@ -1,0 +1,21 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/validation/mlkit-compress.md
+?? examples/benchmarks/lcss-nofib-lazy/
+?? examples/benchmarks/lcss-nofib-strict/
+?? examples/benchmarks/life-nofib-lazy/
+?? examples/benchmarks/life-nofib-strict/
+?? examples/benchmarks/results/m3-shared-spectral/
+?? examples/benchmarks/results/m4-rsa/
+?? examples/benchmarks/rsa-lazy/
+?? examples/benchmarks/rsa-strict/
+?? examples/benchmarks/shared/cell-sequence.sml
+?? examples/benchmarks/shared/nofib-life.sml
+?? examples/benchmarks/shared/rsa-driver.sml
+?? examples/benchmarks/shared/rsa.sml
+?? examples/benchmarks/treejoin-nofib-lazy/
+?? examples/benchmarks/treejoin-nofib-strict/
+?? tests/benchmarks/check-nofib-life.sh
+?? tests/benchmarks/check-rsa.sh
+?? tests/benchmarks/nofib-life.sml
+?? tests/benchmarks/rsa.sml

@@ -617,6 +617,36 @@ bytecode agreement for 498 programs across seven builds. runedoc and runeopt
 also agree. The [complete acceptance transcript](validation/oct03-compress-acceptance.log)
 records this run, and all 32 inventory tests pass.
 
+## M3/M4 shared spectral kernels and RSA, 2026-10-03
+
+Six variants add spectral LCSS/treejoin and the RSA application, bringing the
+catalogue to 198 programs and 588 profiles. M3 and M4 remain in progress.
+The spectral ports share reviewed kernels while retaining 500 LCSS repetitions,
+100 treejoin repetitions and the shuffled relation datasets. Their
+[96 primary cases](results/m3-shared-spectral/correctness.tsv) pass on four Rune
+engines at both levels and four primary native hosts. Complete sequences/joins
+agree with GHC observers and independent references.
+
+RSA's [attempt ledger](results/m4-rsa/correctness-attempts.tsv) retains a rejected
+411-byte smoke timeout on the unoptimized stack VM. Its selected 64-byte prefix
+keeps one full exponentiation at the original key widths. All 48 final primary
+smoke/normal cases pass. Every ciphertext block and hash sum agrees with GHC
+and independent modular pow. Portable input acquisition, exact wide arithmetic,
+memoized versus eager encoding and added full-output validation are explicit.
+Eight semantics checks pass nine configurations at both levels; the paired
+ML Kit compiler failure is [recorded separately](validation/mlkit-compress.md).
+
+The [RSA](results/m4-rsa/README.md) and
+[spectral](results/m3-shared-spectral/README.md) count archives retain complete
+samples and identities. All allocation and applicable instruction comparisons
+agree. No headline timing or universal large SML execution is claimed.
+
+The complete repository acceptance transcript passes all 588 catalogue profiles,
+331 language fixtures per compiler, bootstrap/performance checks, and bytecode
+agreement for 498 programs across seven builds. runedoc and runeopt also agree.
+The [full transcript](validation/oct03-rsa-shared-spectral-acceptance.log) records
+those checks; all 32 inventory tests pass.
+
 ## M5 lazy and CPS workloads, 2026-10-03
 
 Lazy primes, lazy-list allocation and the CPS sequence pipeline bring the

@@ -1,0 +1,58 @@
+{
+  "lcss-nofib-lazy": {
+    "smoke": [
+      "1 2 20 10 11 30 expected/smoke.txt 1",
+      11
+    ],
+    "normal": [
+      "1 2 60 30 31 90 expected/normal.txt 500",
+      15500
+    ],
+    "large": [
+      "1 2 200 100 101 300 expected/large.txt 500",
+      50500
+    ]
+  },
+  "lcss-nofib-strict": {
+    "smoke": [
+      "1 2 20 10 11 30 expected/smoke.txt 1",
+      11
+    ],
+    "normal": [
+      "1 2 60 30 31 90 expected/normal.txt 500",
+      15500
+    ],
+    "large": [
+      "1 2 200 100 101 300 expected/large.txt 500",
+      50500
+    ]
+  },
+  "treejoin-nofib-lazy": {
+    "smoke": [
+      "DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1",
+      "125 125 0"
+    ],
+    "normal": [
+      "DATA/normal.1 DATA/normal.2 expected/normal.txt 100",
+      "1500 1500 19"
+    ],
+    "large": [
+      "DATA/large.1 DATA/large.2 expected/large.txt 100",
+      "8000 8000 266"
+    ]
+  },
+  "treejoin-nofib-strict": {
+    "smoke": [
+      "DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1",
+      "125 125 0"
+    ],
+    "normal": [
+      "DATA/normal.1 DATA/normal.2 expected/normal.txt 100",
+      "1500 1500 19"
+    ],
+    "large": [
+      "DATA/large.1 DATA/large.2 expected/large.txt 100",
+      "8000 8000 266"
+    ]
+  }
+}

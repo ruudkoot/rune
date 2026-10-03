@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/rsa-validation.hp4zvp80
+PASS rsa-lazy smoke O0
+PASS rsa-lazy smoke O2
+PASS rsa-lazy smoke hosts
+PASS rsa-lazy normal O0
+PASS rsa-lazy normal O2
+PASS rsa-lazy normal hosts
+PASS rsa-strict smoke O0
+PASS rsa-strict smoke O2
+PASS rsa-strict smoke hosts
+PASS rsa-strict normal O0
+PASS rsa-strict normal O2
+PASS rsa-strict normal hosts

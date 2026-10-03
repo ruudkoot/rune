@@ -208,6 +208,12 @@ inventory entry.
 | [sequence_cps](#sequence_cps) | [Sandmark sequence_cps](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/sequence/sequence_cps.ml) | Compose CPS map/filter layers and consume them with a mutable callback fold. |
 | [compress-lazy](#compress-lazy) | [nofib compress](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/compress) | Compress bytes with memoized persistent prefix-tree LZW. |
 | [compress-strict](#compress-strict) | [nofib compress](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/compress) | Compress bytes with eager persistent prefix-tree LZW. |
+| [lcss-nofib-lazy](#lcss-nofib-lazy) | [nofib spectral/lcss](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/lcss) | Repeat Hirschberg longest-common-subsequence with the spectral input profiles. |
+| [treejoin-nofib-lazy](#treejoin-nofib-lazy) | [nofib spectral/treejoin](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/treejoin) | Repeat persistent relation-tree joins over the shuffled spectral datasets. |
+| [lcss-nofib-strict](#lcss-nofib-strict) | [nofib spectral/lcss](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/lcss) | Repeat Hirschberg longest-common-subsequence with the spectral input profiles. |
+| [treejoin-nofib-strict](#treejoin-nofib-strict) | [nofib spectral/treejoin](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/treejoin) | Repeat persistent relation-tree joins over the shuffled spectral datasets. |
+| [rsa-lazy](#rsa-lazy) | [nofib real/rsa](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/rsa) | Encrypt fixed ASCII blocks with exact modular exponentiation and memoized encodings. |
+| [rsa-strict](#rsa-strict) | [nofib real/rsa](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/rsa) | Encrypt fixed ASCII blocks with exact modular exponentiation and eager encodings. |
 
 ## Running and interpreting checks
 
@@ -303,6 +309,7 @@ sh tests/benchmarks/check-shootout.sh
 sh tests/benchmarks/check-ocaml-lazy.sh
 sh tests/benchmarks/check-sequence-cps.sh
 sh tests/benchmarks/check-compress.sh
+sh tests/benchmarks/check-rsa.sh
 python3 tests/benchmarks/test-inventory.py
 python3 scripts/benchmark-inventory.py --check
 python3 tests/benchmarks/latency-oracle.py --check
@@ -5966,3 +5973,267 @@ Computer 17(6),8-19(1984); retained Sanders correspondence/implementation and
 behavior, and measured count findings remain distinct.
 
 [Complete provenance](compress-strict/PROVENANCE.md).
+
+## lcss-nofib-lazy
+
+Repeat Hirschberg longest-common-subsequence with the spectral input profiles.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `spectral/lcss`.
+
+Complete pinned sources, build parameters, input/output fixtures and SHA256
+identities are retained. Individual licence notices remain unspecified where
+not present in source. Kernels and shared translation support are SML97.
+Source inspection explains the following behavior; performance sensitivities
+remain hypotheses until measured. Large SML execution is not universally claimed.
+
+## Algorithm, history and variants
+
+Andrew J. Bromage's November 2002 submission describes Hirschberg's algorithm
+and its eager O(N) space behavior. The spectral and GC bodies agree exactly;
+this driver reuses the reviewed lazy GC kernel rather than adding an algorithm
+copy. The spectral program repeats 500 times and prints full sequences, while
+the GC driver computes once with larger input ranges. Both sources and names
+remain. Preserve last-tie split selection, row-pair layout, difference-list
+composition and sequence generation.
+
+## Translation, input and validation
+
+The lazy variant memoizes row values and result tails; strict materializes them.
+The spectral driver invokes the same full-sequence validator per repetition and
+returns the consumed sum of actual lengths. Smoke uses 1..20 and 10..30 once;
+normal preserves FAST 1..60 and 30..90 with 500 repetitions; large preserves
+NORM 1..200 and 100..300 with 500. SLOW 300/150..450 remains recorded. All values
+fit 31 bits. Original GHC's500 outputs agree with independent ordered intersections
+for these monotone unique sequences; previously reviewed general LCSS tests cover
+ties/duplicates and lazy suffix demand. Row allocation, sharing, retention and
+repetition costs are hypotheses until measured. References: retained Bromage
+submission and the shared LCSS provenance/literature survey.
+
+[Complete provenance](lcss-nofib-lazy/PROVENANCE.md).
+
+## treejoin-nofib-lazy
+
+Repeat persistent relation-tree joins over the shuffled spectral datasets.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `spectral/treejoin`.
+
+Complete pinned sources, build parameters, input/output fixtures and SHA256
+identities are retained. Individual licence notices remain unspecified where
+not present in source. Kernels and shared translation support are SML97.
+Source inspection explains the following behavior; performance sensitivities
+remain hypotheses until measured. Large SML execution is not universally claimed.
+
+## Algorithm, history and variants
+
+The complete tree algorithm agrees with the GC treejoin source; the spectral
+variant repeats 100 times and uses shuffled relation files 1500/8000/27000.
+These are materially different input shapes from the monotone GC datasets.
+Share the reviewed lazy boundary-tree implementation, while retaining
+all original files, stopping conditions, notices and naming. The individual
+spectral author is not stated; the related GC 1993 mail remains separate evidence.
+
+## Translation, inputs and validation
+
+Preserve unbalanced persistent insertion, key boundaries, third-left/first-right
+join lookup, duplicate rules and right-before-left accumulation. Lazy fields and
+branches remain memoized; strict fields/updates remain eager. Every repetition
+reads the fixed relation files and validates all five result fields, adding
+rendering/reference-check work to the original forceTree unit output. The reported
+record/match counts are consumed. Smoke uses the first 125 records of both 1500
+files once; normal preserves complete 1500 files 100 times; large preserves 8000
+files 100 times. Original27000/SLOW remains available. Numeric fields fit 31 bits.
+Original GHC full-state observers and independent relational dictionary joins
+agree with complete sorted fixtures. Input byte strings replace lazy file lists,
+with that materialization/retention change documented. Shared-versus-eager tree
+paths, shuffled insertion depth and join selectivity are hypotheses until measured.
+References: retained source, related submission history and nofib survey.
+
+[Complete provenance](treejoin-nofib-lazy/PROVENANCE.md).
+
+## lcss-nofib-strict
+
+Repeat Hirschberg longest-common-subsequence with the spectral input profiles.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `spectral/lcss`.
+
+Complete pinned sources, build parameters, input/output fixtures and SHA256
+identities are retained. Individual licence notices remain unspecified where
+not present in source. Kernels and shared translation support are SML97.
+Source inspection explains the following behavior; performance sensitivities
+remain hypotheses until measured. Large SML execution is not universally claimed.
+
+## Algorithm, history and variants
+
+Andrew J. Bromage's November 2002 submission describes Hirschberg's algorithm
+and its eager O(N) space behavior. The spectral and GC bodies agree exactly;
+this driver reuses the reviewed strict GC kernel rather than adding an algorithm
+copy. The spectral program repeats 500 times and prints full sequences, while
+the GC driver computes once with larger input ranges. Both sources and names
+remain. Preserve last-tie split selection, row-pair layout, difference-list
+composition and sequence generation.
+
+## Translation, input and validation
+
+The lazy variant memoizes row values and result tails; strict materializes them.
+The spectral driver invokes the same full-sequence validator per repetition and
+returns the consumed sum of actual lengths. Smoke uses 1..20 and 10..30 once;
+normal preserves FAST 1..60 and 30..90 with 500 repetitions; large preserves
+NORM 1..200 and 100..300 with 500. SLOW 300/150..450 remains recorded. All values
+fit 31 bits. Original GHC's500 outputs agree with independent ordered intersections
+for these monotone unique sequences; previously reviewed general LCSS tests cover
+ties/duplicates and lazy suffix demand. Row allocation, sharing, retention and
+repetition costs are hypotheses until measured. References: retained Bromage
+submission and the shared LCSS provenance/literature survey.
+
+[Complete provenance](lcss-nofib-strict/PROVENANCE.md).
+
+## treejoin-nofib-strict
+
+Repeat persistent relation-tree joins over the shuffled spectral datasets.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `spectral/treejoin`.
+
+Complete pinned sources, build parameters, input/output fixtures and SHA256
+identities are retained. Individual licence notices remain unspecified where
+not present in source. Kernels and shared translation support are SML97.
+Source inspection explains the following behavior; performance sensitivities
+remain hypotheses until measured. Large SML execution is not universally claimed.
+
+## Algorithm, history and variants
+
+The complete tree algorithm agrees with the GC treejoin source; the spectral
+variant repeats 100 times and uses shuffled relation files 1500/8000/27000.
+These are materially different input shapes from the monotone GC datasets.
+Share the reviewed strict boundary-tree implementation, while retaining
+all original files, stopping conditions, notices and naming. The individual
+spectral author is not stated; the related GC 1993 mail remains separate evidence.
+
+## Translation, inputs and validation
+
+Preserve unbalanced persistent insertion, key boundaries, third-left/first-right
+join lookup, duplicate rules and right-before-left accumulation. Lazy fields and
+branches remain memoized; strict fields/updates remain eager. Every repetition
+reads the fixed relation files and validates all five result fields, adding
+rendering/reference-check work to the original forceTree unit output. The reported
+record/match counts are consumed. Smoke uses the first 125 records of both 1500
+files once; normal preserves complete 1500 files 100 times; large preserves 8000
+files 100 times. Original27000/SLOW remains available. Numeric fields fit 31 bits.
+Original GHC full-state observers and independent relational dictionary joins
+agree with complete sorted fixtures. Input byte strings replace lazy file lists,
+with that materialization/retention change documented. Shared-versus-eager tree
+paths, shuffled insertion depth and join selectivity are hypotheses until measured.
+References: retained source, related submission history and nofib survey.
+
+[Complete provenance](treejoin-nofib-strict/PROVENANCE.md).
+
+## rsa-lazy
+
+Encrypt fixed ASCII blocks with exact modular exponentiation and memoized encodings.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `real/rsa`.
+
+Complete pinned sources, build parameters, input/output fixtures and SHA256
+identities are retained. Individual licence notices remain unspecified where
+not present in source. Kernels and shared translation support are SML97.
+Source inspection explains the following behavior; performance sensitivities
+remain hypotheses until measured. Large SML execution is not universally claimed.
+
+## Algorithm, history and variants
+
+The source's individual author/licence is unspecified. Fixed large modulus and
+exponent from Main.hs remain exact IntInf values. Preserve base 128 block coding,
+block size(decimal digit length*47 div100), recursive exponent halving for even
+powers and decrement/product for odd powers, modulus placement, decimal lines
+and trailing newlines. Unused decrypt/key-generation helpers remain in the
+original source. No built-in modular-power routine replaces this recurrence.
+
+## Translation and runtime questions
+
+Both variants share one algorithm. Lazy base-code arithmetic and ciphertext
+chunk heads/spines are memoized; strict evaluates those finite encodings eagerly.
+The selected entire ciphertext is needed, but intermediate retention/allocation
+and input-encoding demand differ. Exponent0 returns1 without forcing the lazy
+base, including modulus 1, matching the source's exact stopping rule. All RSA
+arithmetic is arbitrary precision; block indices/counts fit 31 bits. Fixed inputs
+are ASCII, so SML byte/character values agree with original Haskell input.
+SML materializes input/block/output strings instead of character lists.
+
+Repeated BinIO input acquisition is the portable observable substitute for
+nofib's NOINLINE IO salt. This adds file I/O and copying per repetition; it is
+explicitly included rather than adding a compiler opacity feature. A preloaded
+ciphertext fixture validates every line before the wrapping64-bit source hash;
+an IntInf sum consumes all repetitions. Standard timing comparisons use these
+identical SML sources; Haskell originals are correctness references.
+
+## Inputs, validation and references
+
+Smoke takes the first 64 bytes of original FAST 411 and one repetition. The full
+411-byte smoke input timed out after 30seconds on the unoptimized stack engine;
+that rejected attempt remains recorded. Normal uses full FAST 411 with 10
+repetitions; large uses original NORM 3169 bytes with 150 repetitions. Original
+FAST 100/SLOW 250 and SLOW 10052-byte input remain retained. Every ciphertext block
+agrees with GHC and independent Python modular pow, including the exact source
+block-width rule. Semantic tests cover base 128 encoding, exponent parity,
+empty input, block width and unneeded-base demand. The combined paired test
+shares the recorded ML Kit StatObject compiler-crash limitation; passing
+configurations and standalone runs remain distinguished. Big-integer division,
+encoding thunks, decimal conversion and retention are source hypotheses until
+measured. References: retained implementation and nofib literature survey.
+
+[Complete provenance](rsa-lazy/PROVENANCE.md).
+
+## rsa-strict
+
+Encrypt fixed ASCII blocks with exact modular exponentiation and eager encodings.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `real/rsa`.
+
+Complete pinned sources, build parameters, input/output fixtures and SHA256
+identities are retained. Individual licence notices remain unspecified where
+not present in source. Kernels and shared translation support are SML97.
+Source inspection explains the following behavior; performance sensitivities
+remain hypotheses until measured. Large SML execution is not universally claimed.
+
+## Algorithm, history and variants
+
+The source's individual author/licence is unspecified. Fixed large modulus and
+exponent from Main.hs remain exact IntInf values. Preserve base 128 block coding,
+block size(decimal digit length*47 div100), recursive exponent halving for even
+powers and decrement/product for odd powers, modulus placement, decimal lines
+and trailing newlines. Unused decrypt/key-generation helpers remain in the
+original source. No built-in modular-power routine replaces this recurrence.
+
+## Translation and runtime questions
+
+Both variants share one algorithm. Lazy base-code arithmetic and ciphertext
+chunk heads/spines are memoized; strict evaluates those finite encodings eagerly.
+The selected entire ciphertext is needed, but intermediate retention/allocation
+and input-encoding demand differ. Exponent0 returns1 without forcing the lazy
+base, including modulus 1, matching the source's exact stopping rule. All RSA
+arithmetic is arbitrary precision; block indices/counts fit 31 bits. Fixed inputs
+are ASCII, so SML byte/character values agree with original Haskell input.
+SML materializes input/block/output strings instead of character lists.
+
+Repeated BinIO input acquisition is the portable observable substitute for
+nofib's NOINLINE IO salt. This adds file I/O and copying per repetition; it is
+explicitly included rather than adding a compiler opacity feature. A preloaded
+ciphertext fixture validates every line before the wrapping64-bit source hash;
+an IntInf sum consumes all repetitions. Standard timing comparisons use these
+identical SML sources; Haskell originals are correctness references.
+
+## Inputs, validation and references
+
+Smoke takes the first 64 bytes of original FAST 411 and one repetition. The full
+411-byte smoke input timed out after 30seconds on the unoptimized stack engine;
+that rejected attempt remains recorded. Normal uses full FAST 411 with 10
+repetitions; large uses original NORM 3169 bytes with 150 repetitions. Original
+FAST 100/SLOW 250 and SLOW 10052-byte input remain retained. Every ciphertext block
+agrees with GHC and independent Python modular pow, including the exact source
+block-width rule. Semantic tests cover base 128 encoding, exponent parity,
+empty input, block width and unneeded-base demand. The combined paired test
+shares the recorded ML Kit StatObject compiler-crash limitation; passing
+configurations and standalone runs remain distinguished. Big-integer division,
+encoding thunks, decimal conversion and retention are source hypotheses until
+measured. References: retained implementation and nofib literature survey.
+
+[Complete provenance](rsa-strict/PROVENANCE.md).

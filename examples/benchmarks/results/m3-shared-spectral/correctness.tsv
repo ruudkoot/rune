@@ -1,0 +1,97 @@
+benchmark	profile	optimization	configuration	arguments	status	artifact_directory
+lcss-nofib-lazy	normal	O0	rune	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/normal/O0/matrix/rune/program
+lcss-nofib-lazy	normal	O0	rune-jit	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/normal/O0/matrix/rune-jit/program
+lcss-nofib-lazy	normal	O0	rune-new	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/normal/O0/matrix/rune-new/program
+lcss-nofib-lazy	normal	O0	rune-opt	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/normal/O0/matrix/rune-opt/program
+lcss-nofib-lazy	normal	O2	rune	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/normal/O2/matrix/rune/program
+lcss-nofib-lazy	normal	O2	rune-jit	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/normal/O2/matrix/rune-jit/program
+lcss-nofib-lazy	normal	O2	rune-new	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/normal/O2/matrix/rune-new/program
+lcss-nofib-lazy	normal	O2	rune-opt	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/normal/O2/matrix/rune-opt/program
+lcss-nofib-lazy	normal	host-default	native-mlton-20241230	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/normal/hosts/matrix/native-mlton-20241230/program
+lcss-nofib-lazy	normal	host-default	native-polyml-5.9.2	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/normal/hosts/matrix/native-polyml-5.9.2/program
+lcss-nofib-lazy	normal	host-default	native-smlnj-dev-2026.2	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/normal/hosts/matrix/native-smlnj-dev-2026.2/program
+lcss-nofib-lazy	normal	host-default	native-smlnj-legacy-110.99.9	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
+lcss-nofib-lazy	smoke	O0	rune	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/smoke/O0/matrix/rune/program
+lcss-nofib-lazy	smoke	O0	rune-jit	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/smoke/O0/matrix/rune-jit/program
+lcss-nofib-lazy	smoke	O0	rune-new	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/smoke/O0/matrix/rune-new/program
+lcss-nofib-lazy	smoke	O0	rune-opt	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/smoke/O0/matrix/rune-opt/program
+lcss-nofib-lazy	smoke	O2	rune	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/smoke/O2/matrix/rune/program
+lcss-nofib-lazy	smoke	O2	rune-jit	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/smoke/O2/matrix/rune-jit/program
+lcss-nofib-lazy	smoke	O2	rune-new	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/smoke/O2/matrix/rune-new/program
+lcss-nofib-lazy	smoke	O2	rune-opt	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/smoke/O2/matrix/rune-opt/program
+lcss-nofib-lazy	smoke	host-default	native-mlton-20241230	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/smoke/hosts/matrix/native-mlton-20241230/program
+lcss-nofib-lazy	smoke	host-default	native-polyml-5.9.2	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/smoke/hosts/matrix/native-polyml-5.9.2/program
+lcss-nofib-lazy	smoke	host-default	native-smlnj-dev-2026.2	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
+lcss-nofib-lazy	smoke	host-default	native-smlnj-legacy-110.99.9	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-lazy/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program
+lcss-nofib-strict	normal	O0	rune	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/normal/O0/matrix/rune/program
+lcss-nofib-strict	normal	O0	rune-jit	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/normal/O0/matrix/rune-jit/program
+lcss-nofib-strict	normal	O0	rune-new	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/normal/O0/matrix/rune-new/program
+lcss-nofib-strict	normal	O0	rune-opt	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/normal/O0/matrix/rune-opt/program
+lcss-nofib-strict	normal	O2	rune	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/normal/O2/matrix/rune/program
+lcss-nofib-strict	normal	O2	rune-jit	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/normal/O2/matrix/rune-jit/program
+lcss-nofib-strict	normal	O2	rune-new	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/normal/O2/matrix/rune-new/program
+lcss-nofib-strict	normal	O2	rune-opt	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/normal/O2/matrix/rune-opt/program
+lcss-nofib-strict	normal	host-default	native-mlton-20241230	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/normal/hosts/matrix/native-mlton-20241230/program
+lcss-nofib-strict	normal	host-default	native-polyml-5.9.2	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/normal/hosts/matrix/native-polyml-5.9.2/program
+lcss-nofib-strict	normal	host-default	native-smlnj-dev-2026.2	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/normal/hosts/matrix/native-smlnj-dev-2026.2/program
+lcss-nofib-strict	normal	host-default	native-smlnj-legacy-110.99.9	1 2 60 30 31 90 expected/normal.txt 500	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
+lcss-nofib-strict	smoke	O0	rune	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/smoke/O0/matrix/rune/program
+lcss-nofib-strict	smoke	O0	rune-jit	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/smoke/O0/matrix/rune-jit/program
+lcss-nofib-strict	smoke	O0	rune-new	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/smoke/O0/matrix/rune-new/program
+lcss-nofib-strict	smoke	O0	rune-opt	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/smoke/O0/matrix/rune-opt/program
+lcss-nofib-strict	smoke	O2	rune	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/smoke/O2/matrix/rune/program
+lcss-nofib-strict	smoke	O2	rune-jit	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/smoke/O2/matrix/rune-jit/program
+lcss-nofib-strict	smoke	O2	rune-new	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/smoke/O2/matrix/rune-new/program
+lcss-nofib-strict	smoke	O2	rune-opt	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/smoke/O2/matrix/rune-opt/program
+lcss-nofib-strict	smoke	host-default	native-mlton-20241230	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/smoke/hosts/matrix/native-mlton-20241230/program
+lcss-nofib-strict	smoke	host-default	native-polyml-5.9.2	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/smoke/hosts/matrix/native-polyml-5.9.2/program
+lcss-nofib-strict	smoke	host-default	native-smlnj-dev-2026.2	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
+lcss-nofib-strict	smoke	host-default	native-smlnj-legacy-110.99.9	1 2 20 10 11 30 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/lcss-nofib-strict/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program
+treejoin-nofib-lazy	normal	O0	rune	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/normal/O0/matrix/rune/program
+treejoin-nofib-lazy	normal	O0	rune-jit	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/normal/O0/matrix/rune-jit/program
+treejoin-nofib-lazy	normal	O0	rune-new	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/normal/O0/matrix/rune-new/program
+treejoin-nofib-lazy	normal	O0	rune-opt	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/normal/O0/matrix/rune-opt/program
+treejoin-nofib-lazy	normal	O2	rune	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/normal/O2/matrix/rune/program
+treejoin-nofib-lazy	normal	O2	rune-jit	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/normal/O2/matrix/rune-jit/program
+treejoin-nofib-lazy	normal	O2	rune-new	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/normal/O2/matrix/rune-new/program
+treejoin-nofib-lazy	normal	O2	rune-opt	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/normal/O2/matrix/rune-opt/program
+treejoin-nofib-lazy	normal	host-default	native-mlton-20241230	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/normal/hosts/matrix/native-mlton-20241230/program
+treejoin-nofib-lazy	normal	host-default	native-polyml-5.9.2	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/normal/hosts/matrix/native-polyml-5.9.2/program
+treejoin-nofib-lazy	normal	host-default	native-smlnj-dev-2026.2	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/normal/hosts/matrix/native-smlnj-dev-2026.2/program
+treejoin-nofib-lazy	normal	host-default	native-smlnj-legacy-110.99.9	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
+treejoin-nofib-lazy	smoke	O0	rune	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/smoke/O0/matrix/rune/program
+treejoin-nofib-lazy	smoke	O0	rune-jit	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/smoke/O0/matrix/rune-jit/program
+treejoin-nofib-lazy	smoke	O0	rune-new	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/smoke/O0/matrix/rune-new/program
+treejoin-nofib-lazy	smoke	O0	rune-opt	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/smoke/O0/matrix/rune-opt/program
+treejoin-nofib-lazy	smoke	O2	rune	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/smoke/O2/matrix/rune/program
+treejoin-nofib-lazy	smoke	O2	rune-jit	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/smoke/O2/matrix/rune-jit/program
+treejoin-nofib-lazy	smoke	O2	rune-new	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/smoke/O2/matrix/rune-new/program
+treejoin-nofib-lazy	smoke	O2	rune-opt	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/smoke/O2/matrix/rune-opt/program
+treejoin-nofib-lazy	smoke	host-default	native-mlton-20241230	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/smoke/hosts/matrix/native-mlton-20241230/program
+treejoin-nofib-lazy	smoke	host-default	native-polyml-5.9.2	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/smoke/hosts/matrix/native-polyml-5.9.2/program
+treejoin-nofib-lazy	smoke	host-default	native-smlnj-dev-2026.2	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
+treejoin-nofib-lazy	smoke	host-default	native-smlnj-legacy-110.99.9	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-lazy/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program
+treejoin-nofib-strict	normal	O0	rune	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/normal/O0/matrix/rune/program
+treejoin-nofib-strict	normal	O0	rune-jit	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/normal/O0/matrix/rune-jit/program
+treejoin-nofib-strict	normal	O0	rune-new	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/normal/O0/matrix/rune-new/program
+treejoin-nofib-strict	normal	O0	rune-opt	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/normal/O0/matrix/rune-opt/program
+treejoin-nofib-strict	normal	O2	rune	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/normal/O2/matrix/rune/program
+treejoin-nofib-strict	normal	O2	rune-jit	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/normal/O2/matrix/rune-jit/program
+treejoin-nofib-strict	normal	O2	rune-new	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/normal/O2/matrix/rune-new/program
+treejoin-nofib-strict	normal	O2	rune-opt	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/normal/O2/matrix/rune-opt/program
+treejoin-nofib-strict	normal	host-default	native-mlton-20241230	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/normal/hosts/matrix/native-mlton-20241230/program
+treejoin-nofib-strict	normal	host-default	native-polyml-5.9.2	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/normal/hosts/matrix/native-polyml-5.9.2/program
+treejoin-nofib-strict	normal	host-default	native-smlnj-dev-2026.2	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/normal/hosts/matrix/native-smlnj-dev-2026.2/program
+treejoin-nofib-strict	normal	host-default	native-smlnj-legacy-110.99.9	DATA/normal.1 DATA/normal.2 expected/normal.txt 100	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
+treejoin-nofib-strict	smoke	O0	rune	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/smoke/O0/matrix/rune/program
+treejoin-nofib-strict	smoke	O0	rune-jit	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/smoke/O0/matrix/rune-jit/program
+treejoin-nofib-strict	smoke	O0	rune-new	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/smoke/O0/matrix/rune-new/program
+treejoin-nofib-strict	smoke	O0	rune-opt	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/smoke/O0/matrix/rune-opt/program
+treejoin-nofib-strict	smoke	O2	rune	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/smoke/O2/matrix/rune/program
+treejoin-nofib-strict	smoke	O2	rune-jit	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/smoke/O2/matrix/rune-jit/program
+treejoin-nofib-strict	smoke	O2	rune-new	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/smoke/O2/matrix/rune-new/program
+treejoin-nofib-strict	smoke	O2	rune-opt	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/smoke/O2/matrix/rune-opt/program
+treejoin-nofib-strict	smoke	host-default	native-mlton-20241230	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/smoke/hosts/matrix/native-mlton-20241230/program
+treejoin-nofib-strict	smoke	host-default	native-polyml-5.9.2	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/smoke/hosts/matrix/native-polyml-5.9.2/program
+treejoin-nofib-strict	smoke	host-default	native-smlnj-dev-2026.2	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
+treejoin-nofib-strict	smoke	host-default	native-smlnj-legacy-110.99.9	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt 1	pass	tests/out/benchmarks/spectral-shared.muqbjgba/treejoin-nofib-strict/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program

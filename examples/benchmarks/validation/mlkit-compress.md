@@ -32,3 +32,18 @@ BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt,native:mlton,native:smlnj-legacy,n
 The failed O0 build and completed nine-configuration O2 run are retained with
 the application's correctness/count evidence. Primary smoke/normal benchmark
 validation remains separate from this additional semantics target.
+
+## Paired RSA test
+
+The same managed compiler emits the identical StatObject internal error while
+compiling tests/benchmarks/rsa.sml, which also instantiates a suspension
+functor in memoized and strict forms. Eight RSA semantic checks pass on the
+nine other configurations at both levels. Matching error text does not establish
+a common cause; neither crash has been isolated further.
+
+```sh
+BENCH_CONFIGS=native:mlkit sh tests/benchmarks/check-rsa.sh
+```
+
+This failure is recorded with the RSA test's compilation transcript. Its
+benchmark validation is separate from this paired-functor test.

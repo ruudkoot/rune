@@ -1,0 +1,2 @@
+rsa-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/nofib-hash.sml shared/rsa.sml shared/rsa-driver.sml rsa-lazy/benchmark.sml shared/main.sml	DATA/normal.txt 10 expected/normal.txt	rsa-lazy/normal.expected	DATA/normal.txt expected/normal.txt
+rsa-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/nofib-hash.sml shared/rsa.sml shared/rsa-driver.sml rsa-strict/benchmark.sml shared/main.sml	DATA/normal.txt 10 expected/normal.txt	rsa-strict/normal.expected	DATA/normal.txt expected/normal.txt
