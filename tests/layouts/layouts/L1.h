@@ -77,9 +77,22 @@ ALWAYS_INLINE int mul_ov(val a, val b, val *r) { int64_t x; if (__builtin_mul_ov
 #define NSHAPES 1
 #define PAIR_FWD_MARK ((val)0xFFFFFFFFFFFFFFF8ull)
 ALWAYS_INLINE int lay_shape_of_mask(uint32_t mask) { (void)mask; return 0; }
+#if defined(PAIR_CODES) && PAIR_CODES == 2
+/* Two of the three codes name a pair -- 010 a tuple or a constructor of
+   tag 0, 100 a constructor of tag 1 -- and the third, 110, is kept for a
+   lazy front end: "an object with a header, known to be evaluated"
+   (docs/plans/heap-layout.md, *A lazy front end*). The strict kernels never
+   set it; masking it off a pointer is all it costs them. */
+ALWAYS_INLINE uint64_t lay_pair_bits(int kind, int contag, uint32_t mask) { (void)mask; return (kind == K_CON && contag) ? 4 : 2; }
+#define PAIR_CONTAG(v) ((int)(((v) & 6) >> 1) - 1)
+#define EVAL_CODE ((val)6)
+#else
 ALWAYS_INLINE uint64_t lay_pair_bits(int kind, int contag, uint32_t mask) { (void)mask; return kind == K_TUPLE ? 2 : (contag ? 6 : 4); }
 #define PAIR_CONTAG(v) ((int)(((v) & 6) >> 1) - 2)
+#endif
 #define LAY_PAIR_SHAPE(v) 0
+#elif defined(PAIR_CODES)
+#error "PAIR_CODES is a variant of PAIRS"
 #endif
 
 #include "objs8.h"
@@ -141,13 +154,13 @@ static int poly_eq(val a, val b) {
     if (a == b) return 1;
     if ((a | b) & 1) return 0;
 #ifdef PAIRS
-    if ((a | b) & 6) {
+    if (lay_is_pair(a) || lay_is_pair(b)) {
         if ((a & 7) != (b & 7)) return 0;
         val *p = (val *)(a & ~(uint64_t)7), *q = (val *)(b & ~(uint64_t)7);
         return poly_eq(p[0], q[0]) && poly_eq(p[1], q[1]);
     }
 #endif
-    obj *x = (obj *)a, *y = (obj *)b;
+    obj *x = ptr_of(a), *y = ptr_of(b);
     int k = obj_kind(x);
     if (k != obj_kind(y) || obj_contag(x) != obj_contag(y) || obj_len(x) != obj_len(y)) return 0;
     if (k == K_STRING) return memcmp(FIELDS_RAW(x), FIELDS_RAW(y), obj_len(x)) == 0;

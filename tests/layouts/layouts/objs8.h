@@ -55,11 +55,27 @@ static inline size_t lay_obj_size(const obj *o) { obj *m = (obj *)o; return allo
 static inline int lay_is_forwarded(const obj *o) { return obj_kind((obj *)o) == K_FORWARD; }
 static inline obj *lay_forward_of(const obj *o) { obj *n; memcpy(&n, FIELDS_RAW(o), 8); return n; }
 static inline void lay_set_forward(obj *o, obj *n) { hdr_set_kind(o, K_FORWARD); memcpy(FIELDS_RAW(o), &n, 8); }
+#ifdef EVAL_CODE
+/* a pointer to an object with a header may carry the code "known to be
+   evaluated", which the collector keeps */
+static inline obj *lay_ptr_obj(val v) { return (obj *)(v & ~(val)6); }
+static inline val lay_obj_retag(val old, obj *n) { return (val)n | (old & 6); }
+#else
 static inline obj *lay_ptr_obj(val v) { return (obj *)v; }
 static inline val lay_obj_retag(val old, obj *n) { (void)old; return (val)n; }
+#endif
 static inline void lay_scan_obj(obj *o);
+/* an indirection: what a thunk becomes once it has its value, which is its
+   field 0 (a pointer field: the mask says so where a layout has one) */
+ALWAYS_INLINE void obj_become_ind(obj *o) { hdr_init(o, K_IND, 0, obj_len(o), 1); }
+static inline int lay_is_ind(const obj *o) { return obj_kind((obj *)o) == K_IND; }
+static inline val lay_ind_value(const obj *o) { return FIELDS((obj *)o)[0]; }
 #ifdef PAIRS
+#ifdef EVAL_CODE
+static inline int lay_is_pair(val v) { return (v & 6) != 0 && (v & 6) != EVAL_CODE; }
+#else
 static inline int lay_is_pair(val v) { return (v & 6) != 0; }
+#endif
 static inline uint64_t *lay_pair_addr(val v) { return (uint64_t *)(v & ~(uint64_t)7); }
 static inline int lay_pair_shape(val v) { (void)v; return LAY_PAIR_SHAPE(v); }   /* the layout's: one shape in L1, three in L4 */
 static inline val lay_pair_retag(val old, uint64_t *n) { return (val)n | (old & 7); }
@@ -147,7 +163,7 @@ ALWAYS_INLINE val head(val l) { return pair_get(l, 0); }
 ALWAYS_INLINE val tail(val l) { return pair_get(l, 1); }
 ALWAYS_INLINE int con_tag(val v) {
 #ifdef PAIRS
-    if (v & 6) return PAIR_CONTAG(v);
+    if (lay_is_pair(v)) return PAIR_CONTAG(v);
 #endif
     return obj_contag(ptr_of(v));
 }

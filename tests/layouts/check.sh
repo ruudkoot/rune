@@ -36,6 +36,13 @@ strings 200000 4
 poly_eq_tree 200000 24
 gc_churn8 20000 32
 gc_churn64 5000 128
+lazy_case_header10 1000000 4
+lazy_case_code10 1000000 4
+lazy_case_enter10 1000000 4
+lazy_case_header50 1000000 4
+lazy_case_code0 1000000 4
+lazy_stream 1200 4
+lazy_update_old 500000 4
 KERNELS
 [ $fail = 0 ] && echo "check.sh: all checksums agree" || echo "check.sh: FAILED"
 exit $fail

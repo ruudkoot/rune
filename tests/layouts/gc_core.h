@@ -40,6 +40,8 @@ static inline void lay_scan_obj(obj *o);                   /* gc_forward on ever
 static inline int lay_is_ptr(val v);                       /* a heap pointer, pair or object */
 static inline obj *lay_ptr_obj(val v);
 static inline val lay_obj_retag(val old, obj *n);
+static inline int lay_is_ind(const obj *o);                /* a thunk that has its value: an indirection to it */
+static inline val lay_ind_value(const obj *o);
 #ifdef PAIRS
 static inline int lay_is_pair(val v);
 static inline uint64_t *lay_pair_addr(val v);
@@ -74,6 +76,8 @@ static val *root_sp = root_stack_mem;
 #define ROOT_RESET(m) (root_sp = (m))
 
 static uint64_t gc_cycles, gc_count, gc_bytes_copied;
+static uint64_t gc_ind_skipped, gc_ind_bytes;   /* indirections a collection took out, by reference, and their bytes */
+static char *gc_old_limit;                      /* what is below it survived a collection: old, to a generational eye */
 static size_t heap_semispace;
 
 static inline size_t round_up(size_t x, size_t a) { return (x + a - 1) & ~(a - 1); }
@@ -242,7 +246,21 @@ static inline void gc_forward(val *slot) {
 #ifdef PAIRS
     if (lay_is_pair(v)) { *slot = lay_pair_retag(v, gc_copy_pair(lay_pair_addr(v), lay_pair_shape(v), v, slot)); return; }
 #endif
-    *slot = lay_obj_retag(v, gc_copy_obj(lay_ptr_obj(v)));
+    obj *o = lay_ptr_obj(v);
+    /* an indirection is not copied: what points at it is made to point at
+       its value (the short-circuit every lazy collector does). One compare
+       of the kind the copy reads next; no strict kernel has one. */
+    while (UNLIKELY(lay_is_ind(o))) {
+        gc_ind_skipped++; gc_ind_bytes += lay_obj_size(o);
+        v = lay_ind_value(o);
+        *slot = v;
+        if (!lay_is_ptr(v)) return;
+#ifdef PAIRS
+        if (lay_is_pair(v)) { *slot = lay_pair_retag(v, gc_copy_pair(lay_pair_addr(v), lay_pair_shape(v), v, slot)); return; }
+#endif
+        o = lay_ptr_obj(v);
+    }
+    *slot = lay_obj_retag(v, gc_copy_obj(o));
 }
 
 #ifdef PAIRS
@@ -308,6 +326,7 @@ static NOINLINE void gc_collect(size_t need) {
     }
     struct space *t = sp_cur; sp_cur = sp_oth; sp_oth = t;
     space_load(sp_cur);
+    gc_old_limit = hp_free;
     gc_count++;
     gc_cycles += cycles_now() - t0;
     if (need && hp_free + need > hp_limit) die("heap full: live data does not fit the semispace");

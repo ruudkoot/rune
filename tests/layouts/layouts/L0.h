@@ -91,6 +91,10 @@ static inline int lay_is_ptr(val v) { return v.tag == T_PTR; }
 static inline obj *lay_ptr_obj(val v) { return v.u.p; }
 static inline val lay_obj_retag(val old, obj *n) { old.u.p = n; return old; }
 static inline void lay_scan_obj(obj *o);
+/* an indirection: what a thunk becomes once it has its value, its field 0 */
+ALWAYS_INLINE void obj_become_ind(obj *o) { o->kind = K_IND; o->contag = 0; }
+static inline int lay_is_ind(const obj *o) { return o->kind == K_IND; }
+static inline val lay_ind_value(const obj *o) { return FIELDS((obj *)o)[0]; }
 
 #include "../gc_core.h"
 

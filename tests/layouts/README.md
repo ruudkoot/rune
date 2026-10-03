@@ -3,7 +3,7 @@
 One C program, the same kernels compiled once per candidate layout, each
 with a Cheney copier of its own: what a native or JIT-compiled program
 would pay, in the mutator and in the collector, under each layout of
-`docs/plans/heap-layout.md`. `make -C tests/layouts` builds the twenty
+`docs/plans/heap-layout.md`. `make -C tests/layouts` builds the twenty-two
 configurations of the `Makefile` into `tests/out/layouts/<cc>/harness-NAME`
 (`CC=clang-18` for a second compiler); `make check-layouts` at the top
 builds them with the tree's compiler and runs `check.sh`, which requires
@@ -29,6 +29,28 @@ one. Part of `make check`.
   structural equality, and a churn of short-lived data under a live tree.
   Each prints `kernel n checksum cycles gc_cycles gc_share`; `harness micro`
   times the primitive operations alone.
+* The `lazy_` kernels stand in for a lazy front end, which Rune has not
+  (the roadmap's *A lazy front end*, M4). `harness.h` has the suspension: a
+  thunk (`K_THUNK`: its code in the header's tag, its free variables), the
+  update that makes it an indirection (`K_IND`) through the write barrier's
+  hook, and the collector takes an indirection out when it meets one
+  (`gc_core.h`, `gc_forward`). `L1+PAIRS2` is the pairs build with two of a
+  pointer's three codes naming a pair and the third kept for "an object
+  with a header, known to be evaluated" (`EVAL_CODE`); `L1+PAIRS` gives all
+  three to pairs. `lazy_case_WAYn` scans an array of a three-constructor
+  datatype with a `case`, n percent of its elements made thunks again
+  before every round, the scrutinee known to be a value by its header
+  (`header`), by the pointer's code where the build has one (`code`; the
+  header's way elsewhere), or by an indirect call as GHC's before 2007
+  (`enter`). `lazy_stream` is the sieve over a stream whose every tail is a
+  thunk; `lazy_update_old` forces thunks that have survived a collection,
+  each update an old object given a young value. A lazy kernel prints a
+  second line to standard error: the thunks forced, the indirections the
+  collections took out and the bytes they held, the old-to-young updates,
+  and under `BARRIER_CARD` the cards dirtied. The strict kernels under
+  `L1+PAIRS2` against `L1+PAIRS` are what the reserved code costs SML.
+  `measure.sh -k "lazy_case_header0 lazy_case_code0 ..." L1+PAIRS2` measures
+  them; they are not in its default list.
 * `measure.sh` runs every configuration under `perf stat` (five runs, the
   least cycles, reruns when the spread exceeds 5%, waits for an idle
   machine) into `tests/out/layouts/harness-raw.tsv`; `micro.sh` the
