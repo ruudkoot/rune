@@ -1,0 +1,11 @@
+ M docs/plans/benchmarks.md
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/compress-lazy/
+?? examples/benchmarks/compress-strict/
+?? examples/benchmarks/shared/compress-driver.sml
+?? examples/benchmarks/shared/compress.sml
+?? tests/benchmarks/check-compress.sh
+?? tests/benchmarks/compress.sml
+?? tests/benchmarks/data/.gitattributes
+?? tests/benchmarks/data/compress-freeze.bin

@@ -1,0 +1,4 @@
+Impossible: StatObject.instance_with_types.wrong number of types
+[[ERR in sub process:
+  CRASH]]
+Stopping compilation of MLB-file due to error (code 1).

@@ -1,0 +1,14 @@
+{
+  "smoke": [
+    "DATA/input.bin 1 expected",
+    6416268572697873158
+  ],
+  "normal": [
+    "DATA/input.bin 200 expected",
+    267673520321527625090
+  ],
+  "large": [
+    "DATA/input.bin 200 expected",
+    69111035861285693541
+  ]
+}

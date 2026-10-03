@@ -65,6 +65,13 @@ physical inputs and approximation parameters.
 
 ## Decision diagrams and closure lifetimes
 
+Welch's [*A Technique for High-Performance Data Compression*](https://doi.org/10.1109/MC.1984.1659158)
+(Computer 17(6), 8-19, 1984) anchors LZW ancestry. Sanders's nofib implementation
+retains a persistent prefix tree, fixed 12-bit codes and a specific odd-code
+packing rule. Those details come from the program, not a claim that every
+LZW implementation shares its representation. Inspect lookup depth, path copying,
+dictionary saturation and lazy versus eager updates before assigning costs.
+
 Randal E. Bryant's [*Graph-Based Algorithms for Boolean Function
 Manipulation*](https://www.cs.cmu.edu/~bryant/pubdir/ieeetc86.pdf) (1986)
 explains ordered reduced decision diagrams and operations on them. Sandmark's

@@ -1,0 +1,16 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (570 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=native:mlkit BENCH_FILTER='compress' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.bIqBlS
+BENCH compress-lazy normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 267673520321527625090
+PASS compress-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+BENCH compress-strict normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 267673520321527625090
+PASS compress-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

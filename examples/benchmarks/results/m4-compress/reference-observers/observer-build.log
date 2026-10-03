@@ -1,0 +1,6 @@
+[1 of 6] Compiling BinConv          ( tests/out/benchmarks/compress-originals/BinConv.hs, tests/out/benchmarks/compress-originals/observer-build/BinConv.o )
+[2 of 6] Compiling Defaults         ( tests/out/benchmarks/compress-originals/Defaults.hs, tests/out/benchmarks/compress-originals/observer-build/Defaults.o )
+[3 of 6] Compiling PTTrees          ( tests/out/benchmarks/compress-originals/PTTrees.hs, tests/out/benchmarks/compress-originals/observer-build/PTTrees.o )
+[4 of 6] Compiling Encode           ( tests/out/benchmarks/compress-originals/Encode.hs, tests/out/benchmarks/compress-originals/observer-build/Encode.o )
+[5 of 6] Compiling Main             ( tests/out/benchmarks/compress-originals/Observer.hs, tests/out/benchmarks/compress-originals/observer-build/Main.o )
+[6 of 6] Linking tests/out/benchmarks/compress-originals/observer

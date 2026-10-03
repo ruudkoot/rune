@@ -1,0 +1,7 @@
+[1 of 7] Compiling BinConv          ( tests/out/benchmarks/compress-originals/BinConv.hs, tests/out/benchmarks/compress-originals/build/BinConv.o )
+[2 of 7] Compiling Defaults         ( tests/out/benchmarks/compress-originals/Defaults.hs, tests/out/benchmarks/compress-originals/build/Defaults.o )
+[3 of 7] Compiling NofibUtils       ( tests/out/benchmarks/compress-originals/NofibUtils.hs, tests/out/benchmarks/compress-originals/build/NofibUtils.o )
+[4 of 7] Compiling PTTrees          ( tests/out/benchmarks/compress-originals/PTTrees.hs, tests/out/benchmarks/compress-originals/build/PTTrees.o )
+[5 of 7] Compiling Encode           ( tests/out/benchmarks/compress-originals/Encode.hs, tests/out/benchmarks/compress-originals/build/Encode.o )
+[6 of 7] Compiling Main             ( tests/out/benchmarks/compress-originals/Main.hs, tests/out/benchmarks/compress-originals/build/Main.o )
+[7 of 7] Linking tests/out/benchmarks/compress-originals/compress

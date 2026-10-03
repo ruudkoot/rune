@@ -586,6 +586,37 @@ agreement for 498 programs across seven builds. runedoc and runeopt also agree.
 The [acceptance transcript](validation/oct03-sandmark-recursive-acceptance.log)
 records the complete run.
 
+## M4 prefix-tree LZW application, 2026-10-03
+
+Paul Sanders's compressor is the first nofib real application port, in
+memoized and strict forms sharing one implementation. M4 is now in progress;
+the other applications remain scheduled. The catalogue has 192 programs and
+570 profiles.
+
+[All 48 primary smoke/normal cases](results/m4-compress/correctness.tsv) pass:
+four Rune engines at -O0/-O2 and four managed native hosts. Standalone ML Kit
+smoke and normal programs also pass. Every compressed byte is checked before
+hashing; all 31 cut fixtures per profile and all 200 normal/large hash samples
+agree with original GHC and an independent executable dictionary/packing oracle.
+The source's persistent prefix tree, foldr insertion order, fixed 12-bit codes,
+4096-entry freeze and odd-code packing are preserved. Byte input, materialized
+output, fixture validation and accumulated hashes are documented adaptations.
+
+Seven semantic checks pass nine configurations at both levels, including full
+byte range, EOF demand and dictionary freeze. ML Kit 4.7.23 crashes compiling
+the combined two-functor test; its [failure and reproduction](validation/mlkit-compress.md)
+are recorded separately from passing standalone benchmark runs. No workaround
+or alternate expected result is introduced. Separate
+[count archives](results/m4-compress/README.md) retain complete samples and
+source/input/tool identities; all allocations and applicable instruction
+comparisons agree. No headline timing or universal large SML pass is claimed.
+
+The full `make JOBS=4 check` passes, including all 570 catalogue profiles,
+331 language fixtures per compiler, performance budgets and bootstrap, and
+bytecode agreement for 498 programs across seven builds. runedoc and runeopt
+also agree. The [complete acceptance transcript](validation/oct03-compress-acceptance.log)
+records this run, and all 32 inventory tests pass.
+
 ## M5 lazy and CPS workloads, 2026-10-03
 
 Lazy primes, lazy-list allocation and the CPS sequence pipeline bring the

@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress-validation.v_lxeckw
+PASS compress-lazy smoke O0
+PASS compress-lazy smoke O2
+PASS compress-lazy smoke hosts
+PASS compress-lazy normal O0
+PASS compress-lazy normal O2
+PASS compress-lazy normal hosts
+PASS compress-strict smoke O0
+PASS compress-strict smoke O2
+PASS compress-strict smoke hosts
+PASS compress-strict normal O0
+PASS compress-strict normal O2
+PASS compress-strict normal hosts
