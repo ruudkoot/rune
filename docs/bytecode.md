@@ -433,3 +433,9 @@ cannot fit the saved live heap is refused before allocating that heap. A saved
 semispace larger than the limit can be reduced when its live data fits.
 `Runtime.restore` keeps these restrictions when replacing the running world.
 Version 6 images must be recreated with this VM; the `.rbc` format is unchanged.
+
+Image version 8 (the word prototype of `docs/plans/heap-layout.md`, M4) writes
+each constant of the program with what the bytecode said it is (an int, a
+word, a real, a string, a char) and its 64 bits as the bytecode has them,
+beside the value as the VM lays it out: a value that is one word does not
+say which it is, and `runeopt --from-image` and `--disasm` need to know.

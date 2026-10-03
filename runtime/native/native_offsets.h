@@ -57,6 +57,8 @@
     X("K_REF", K_REF) \
     X("K_ARRAY", K_ARRAY) \
     X("K_EXN", K_EXN) \
-    X("K_EXNCON", K_EXNCON)
+    X("K_EXNCON", K_EXNCON) \
+    X("K_REAL", K_REAL) \
+    X("K_BOX", K_BOX)
 
 #endif

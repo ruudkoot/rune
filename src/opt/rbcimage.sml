@@ -4,7 +4,10 @@
    constants, functions, code, files, line table and the frames of the
    functions inlined -- after the heap, from
    which the string constants are taken; what comes after the program, the
-   state of the world, is not read.
+   state of the world, is not read. A constant is written with what the
+   bytecode said it is and its 64 bits as the bytecode has them, beside the
+   value as the VM lays it out, so nothing here knows that layout but the
+   sizes the heap is walked by.
 
    A real constant is 64 bits in an image and text in an .rbc. It is written
    as C's hexadecimal notation, which strtod reads back to the same bits and
@@ -17,7 +20,7 @@ struct
   fun fail msg = raise Bad msg
 
   (* IMAGE_MAGIC of runtime/image.c, with the fingerprint of the instruction set *)
-  val magic = "runevm image 7 isa " ^ Opcodes.fingerprintHex ^ "\000"
+  val magic = "runevm image 8 isa " ^ Opcodes.fingerprintHex ^ "\000"
   val big = Rbc.big
 
   type reader = {data : string, pos : int ref}
@@ -58,8 +61,9 @@ struct
   (* A value: its tag and its 8 bytes. *)
   fun value r = (u8 r, uN (r, 8))
 
-  val kString = 4                         (* K_STRING of runtime/vm.h *)
-  val tInt = 1 val tWord = 2 val tReal = 3 val tChar = 4 val tPtr = 6
+  (* the kinds of a constant (enum ConstKind of runtime/vm.h, which are the
+     bytecode's) *)
+  val cInt = 0 val cWord = 1 val cReal = 2 val cString = 3 val cChar = 4
 
   (* the heap's rounding of a payload, from the layout the JIT has (X64Layout,
      generated from runtime/value.h's numbers: M3 of docs/plans/heap-layout.md) *)
@@ -79,8 +83,11 @@ struct
             val _ = u16 r
             val len = u32 r
             val () = if len > big div X64Layout.valueSize then fail "an object of the image is too large" else ()
+            (* a string's bytes; a box's 64 bits (a real or a number the
+               word has no immediate for); else the fields, 9 bytes each *)
             val (acc, payload) =
-              if kind = kString then (IntMap.insert (acc, at, take (r, len)), len)
+              if kind = X64Layout.K_STRING then (IntMap.insert (acc, at, take (r, len)), len)
+              else if kind = X64Layout.K_REAL orelse kind = X64Layout.K_BOX then (ignore (take (r, 8)); (acc, 8))
               else (ignore (take (r, 9 * len)); (acc, X64Layout.valueSize * len))
           in
             go (at + X64Layout.headerSize + payloadSize payload, acc)
@@ -134,13 +141,15 @@ struct
       fun consts (0, acc) = List.rev acc
         | consts (n, acc) =
             let
-              val (tag, w) = value r
+              val kind = u8 r
+              val _ = value r                         (* as the VM lays it out *)
+              val w = uN (r, 8)
               val c =
-                if tag = tInt then Rbc.CInt (Rbc.signed64 w)
-                else if tag = tWord then Rbc.CWord w
-                else if tag = tReal then Rbc.CReal (realText w)
-                else if tag = tChar then Rbc.CChar (IntInf.toInt w)
-                else if tag = tPtr then Rbc.CString (stringAt (IntInf.toInt w))
+                if kind = cInt then Rbc.CInt (Rbc.signed64 w)
+                else if kind = cWord then Rbc.CWord w
+                else if kind = cReal then Rbc.CReal (realText w)
+                else if kind = cChar then Rbc.CChar (IntInf.toInt w)
+                else if kind = cString then Rbc.CString (stringAt (IntInf.toInt w))
                 else fail "a constant of a kind no .rbc has"
             in
               consts (n - 1, c :: acc)

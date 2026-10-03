@@ -198,7 +198,7 @@ keeps the names it was written with; to read it against the tree:
 
 Branch `heap-layout-word`, from 2026-10-03; what follows is the state on
 that day, not the gate's table. The prototype is the tagged word of D1 B
-in every engine but `runeopt` (below): a value is one 8-byte word, an
+in every engine, `runeopt` since 2026-10-04: a value is one 8-byte word, an
 immediate `2n+1`, a pointer the address; a real is Koka-encoded in the
 word or a `K_REAL` box (D3 C); an integer or a word past 63 bits is a
 `K_BOX` (D2 A, the default of the prototype, so that every suite runs
@@ -208,7 +208,10 @@ unchanged), with D2 B's 63 bits (`RUNE_INT63`) and D3 B's boxed reals
 8-byte one of today; fields are tagged words (raw typed fields are the
 next stage). It passes `make test`, `test-register` (the Basis suite's
 139,210 checks), `test-register-jit`, `test-stress` and
-`test-register-asan`, and the bootstrap's fixed point holds.
+`test-register-asan`, and the bootstrap's fixed point holds; as native
+code, `test-opt`, `test-native` (the Basis suite's 139,211, the counts
+of 264 programs equal to the stack VM's, the compiler as native code
+reproducing itself), `test-native-stress` and `test-native-asan`.
 
 What building it found, that the plan did not have:
 
@@ -315,10 +318,23 @@ What the table says so far:
   968.6M, 114 collections against none). Every suite passes with the
   switch on.
 
-Not built yet: `runeopt`'s templates over the word; the Windows,
-aarch64, 32-bit and big-endian builds of the prototype; raw typed
-fields; prototype 2 (headerless pairs) and the rest of M4's list. The
-budgets are not moved.
+`runeopt` on the word (2026-10-04) cost what D11 said it would: the
+text backend of the assembler lost its tag bytes and gained the seven
+new operations, the generator's list became the operations on words
+(`twoImm`, `intAdd`, `setWord`, the reals with the label of their slow
+path), and `src/opt/x64.sml`'s inline primitives were rewritten over
+them, 190 lines; no template is written by hand. One thing the word
+took away had to be given back: **a constant no longer says what it
+is.** A value of one word does not tell an int from a word, a char or
+an encoded real, and two readers need to: `--disasm`, and `runeopt
+--from-image`, which makes a bytecode file of an image's program. The
+program keeps the kind the bytecode gave each constant, and the image
+(version 8) writes it with the constant's 64 bits as the bytecode has
+them, so the reader in SML knows nothing of the encoding.
+
+Not built yet: the Windows, aarch64, 32-bit and big-endian builds of
+the prototype; raw typed fields; prototype 2 (headerless pairs) and the
+rest of M4's list. The budgets are not moved.
 
 ## The request
 

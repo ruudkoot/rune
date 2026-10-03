@@ -190,8 +190,26 @@ static void write_image(VM *vm, Stream *s, int kind) {
     put_u64(s, (uint64_t)vm->heap_used);
     put_heap(s, vm);
 
+    /* a constant: what the bytecode said it is, the value as this VM has
+       it, and its 64 bits as the bytecode has them -- the number, the bits
+       of the real -- for a reader that makes a bytecode file of the
+       program again (runeopt --from-image) and knows nothing of how a
+       value is laid out; a string's is its offset, as the value's */
     put_u32(s, p->nconsts);
-    for (uint32_t i = 0; i < p->nconsts; i++) put_value(s, p->consts[i], vm);
+    for (uint32_t i = 0; i < p->nconsts; i++) {
+        Value v = p->consts[i];
+        uint64_t plain = 0;
+        switch (p->const_kinds[i]) {
+        case CONST_INT: plain = (uint64_t)val_int(v); break;
+        case CONST_WORD: plain = val_word(v); break;
+        case CONST_REAL: plain = real_bits(val_real(v)); break;
+        case CONST_CHAR: plain = (uint64_t)val_char(v); break;
+        default: plain = val_ptr(v) ? (uint64_t)((const char *)val_ptr(v) - vm->heap_from) : OFF_NONE; break;
+        }
+        put_u8(s, p->const_kinds[i]);
+        put_value(s, v, vm);
+        put_u64(s, plain);
+    }
     put_u32(s, p->nglobals);
     put_u32(s, p->nfuncs);
     for (uint32_t i = 0; i < p->nfuncs; i++) {
@@ -540,8 +558,14 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     p->nconsts = get_u32(&s);
     if (!s.ok || !fits(p->nconsts, sizeof(Value))) return failed(&s, err, errlen, "the image is cut short");
     p->consts = calloc(p->nconsts > 0 ? p->nconsts : 1, sizeof(Value));
-    if (!p->consts) return failed(&s, err, errlen, "out of memory");
-    for (uint32_t i = 0; i < p->nconsts; i++) p->consts[i] = get_value(&s);
+    p->const_kinds = calloc(p->nconsts > 0 ? p->nconsts : 1, 1);
+    if (!p->consts || !p->const_kinds) return failed(&s, err, errlen, "out of memory");
+    for (uint32_t i = 0; i < p->nconsts; i++) {
+        p->const_kinds[i] = get_u8(&s);
+        p->consts[i] = get_value(&s);
+        (void)get_u64(&s);   /* the bits as the bytecode has them: for another reader */
+        if (p->const_kinds[i] > CONST_CHAR) return failed(&s, err, errlen, "the image is cut short");
+    }
     p->nglobals = get_u32(&s);
     p->nfuncs = get_u32(&s);
     if (!s.ok || !fits(p->nfuncs, sizeof(Function))) return failed(&s, err, errlen, "the image is cut short");

@@ -76,9 +76,13 @@ typedef struct Inlined {
     uint32_t parent;
 } Inlined;
 
+/* the kinds of a constant, as a bytecode file numbers them */
+enum ConstKind { CONST_INT = 0, CONST_WORD = 1, CONST_REAL = 2, CONST_STRING = 3, CONST_CHAR = 4 };
+
 typedef struct Program {
     uint32_t nconsts;
     Value *consts;
+    uint8_t *const_kinds;   /* what the bytecode said each is (CONST_INT ...): a value does not say, and an image must */
     uint32_t nglobals;
     uint32_t nfuncs;
     Function *funcs;
@@ -320,7 +324,7 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen);
 
 /* What each VM's instruction set gives (runtime/stack/isa_stack.c, runtime/register/isa_regs.c):
    the fingerprint an .rbc must carry, and the first bytes of an image. */
-#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 7 isa 00000000")
+#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 8 isa 00000000")
 extern const uint32_t isa_fingerprint;
 extern const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE];
 const LineEntry *line_at(const Program *p, uint32_t pc);

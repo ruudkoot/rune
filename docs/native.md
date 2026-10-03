@@ -71,7 +71,7 @@ target starts a run.
 |---|---|
 | `r12` | the VM |
 | `r13` | `vm->stack`, reloaded after every call into C |
-| `rbp` | 16 times the base of the current frame, reloaded where the frame changes: at a return, at a handler, at an entry from C |
+| `rbp` | the base of the current frame in bytes (its index times the size of a value), reloaded where the frame changes: at a return, at a handler, at an entry from C |
 | `r15` | the count of instructions executed |
 
 A slot at height `k` is `16 * (nlocals + k)(%r13,%rbp)`. `rbx` and `r14` are
