@@ -49,3 +49,7 @@ has recorded compiler and numerical failures on some larger classic programs.
 [The attempt ledger](m2-attempts.tsv) retains these failures. A green Rune
 validation target does not imply that every reference host passes every
 program. The suite keeps the same sources and checkers across hosts.
+
+The new [lazy-regex observer](regex-host.md) also records three different
+legacy hashes for one pure input while modern SML/NJ agrees with all independent
+references. Its normal result remains rejected; the precise cause is unisolated.

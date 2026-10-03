@@ -165,6 +165,19 @@ inventory entry.
 | [latency-ring](#latency-ring) | [Rune](latency-ring/PROVENANCE.md) | Keep a window of 1 KiB messages in a ring array, storing a young message into the old array at every step. |
 | [latency-map](#latency-map) | [Rune](latency-map/PROVENANCE.md) | Keep the same window of messages in a persistent AVL tree, copying a path at every step. |
 | [latency-static-map](#latency-static-map) | [Rune](latency-static-map/PROVENANCE.md) | Serve requests that allocate from a large map built once and never changed. |
+| [kahan](#kahan) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/kahan) | Perform compensated summation over 100 seeded unsigned-word coordinates. |
+| [x2n1-lazy](#x2n1-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/x2n1) | Sum memoized complex roots raised to their integer orders. |
+| [x2n1-strict](#x2n1-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/x2n1) | Materialize complex root powers before summing both components. |
+| [integrate-lazy](#integrate-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/integrate) | Integrate bilinear terms through shared memoized running-total streams. |
+| [integrate-strict](#integrate-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/integrate) | Build finite numerical integration and running-total lists eagerly. |
+| [bernouilli-lazy](#bernouilli-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/bernouilli) | Compute exact Bernoulli rationals with shared power and Pascal streams. |
+| [bernouilli-strict](#bernouilli-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/bernouilli) | Compute exact Bernoulli rationals from eagerly generated finite rows. |
+| [wheel-sieve1-lazy](#wheel-sieve1-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/wheel-sieve1) | Enumerate primes with circular memoized Mark I wheel streams. |
+| [wheel-sieve2-lazy](#wheel-sieve2-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/wheel-sieve2) | Enumerate primes with the original Mark II spiral and shared lazy spans. |
+| [gen_regexps-lazy](#gen_regexps-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/gen_regexps) | Expand numeric and alphabetic ranges through memoized character streams. |
+| [gen_regexps-strict](#gen_regexps-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/gen_regexps) | Materialize range-expansion character lists before the 64-bit hash fold. |
+| [paraffins-lazy](#paraffins-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/paraffins) | Count shared alkyl radicals and paraffin centres without forcing unused tree heads. |
+| [paraffins-strict](#paraffins-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/paraffins) | Construct finite radical and paraffin object lists before counting them. |
 
 ## Running and interpreting checks
 
@@ -248,6 +261,9 @@ The independent and negative tests are:
 ```sh
 sh tests/benchmarks/check-pilots.sh
 sh tests/benchmarks/check-classic.sh
+sh tests/benchmarks/check-streams.sh
+sh tests/benchmarks/check-numeric-ports.sh
+sh tests/benchmarks/check-symbolic-ports.sh
 python3 tests/benchmarks/test-inventory.py
 python3 scripts/benchmark-inventory.py --check
 python3 tests/benchmarks/latency-oracle.py --check
@@ -4218,3 +4234,430 @@ that the map stays live, REQUESTS, and the digest of every response;
 The evaluation set runs 1,300,000 entries (about 200 MB live) and 1,000,000
 requests with TIME 1, and as extras 130,000 and 5,200,000 entries (about 20
 and 800 MB) for the pause against the live data.
+## kahan
+
+Perform compensated summation over 100 seeded unsigned-word coordinates.
+
+Algorithm: retain the 100-element sum/correction arrays, outer seeds 1..n,
+xorshift steps 13/7/17, and exact (t-s)-y correction order. GHC Word is fixed
+explicitly to unsigned 64 bits. The unused final RNG value is not evaluated.
+History: individual authorship/licensing is unspecified by this source;
+retain its comments (including the SG initials) and this notice gap.
+Adaptation: STUArray Double becomes portable mutable real arrays; representation
+and unboxing therefore depend on the SML compiler. Word64.toLargeInt followed
+by Real.fromLargeInt preserves unsigned input conversion. The driver observes
+all sums and checks correction bounds instead of merely forcing the array.
+Profiles: 4/15000/150000 vectors. Large preserves upstream FAST; upstream
+normal 1500000 and slow 7500000 remain recorded, not certified profiles.
+Validation: independent Python unbounded-integer xorshift sums supply all 100
+exact totals; an unchanged GHC kernel with a read-only sum/correction observer
+agrees. Coordinate zero is exact with zero compensation at these sizes.
+For other coordinates use |s-round(exact)| <= 1024*n + 4*u*abs(exact), u=2^-52.
+The first term bounds conversion rounding of n unsigned 64-bit inputs; the
+second covers compensated accumulation and target conversion. Corrections
+must be finite and bounded by 2*u*(abs(s)+2^64). These are conservative selected
+profile checks, not a proof for arbitrary inputs or a licence to reassociate
+(t-s)-y. Deliberately perturbed sum/correction states must be rejected.
+Performance: array updates, real representation, word operations, conversion
+and GC are source-derived diagnostic hypotheses until separately measured.
+Reference: Kahan, Further Remarks on Reducing Truncation Errors (1965),
+https://doi.org/10.1145/363707.363723; the pinned nofib source and suite survey.
+
+[Complete provenance and adaptations](kahan/PROVENANCE.md).
+
+## x2n1-lazy
+
+Sum memoized complex roots raised to their integer orders.
+
+Algorithm: for n=1..range evaluate mkPolar 1 (2*pi/n)^n, then left-sum.
+Complex components are strict, as in Data.Complex; list heads/spines are
+memoized and consumed incrementally. The common helper preserves multiplication
+and exponentiation order from GHC 9.4.7 base-4.17.2.0, including the f/g positive
+power loop. Retain those library sources and their BSD licence.
+History: Lennart Augustsson, December 1992; the source preserves his letter
+to Will Partain explaining the benchmark's complex-number motivation.
+Variants: strict computes the same values/order into an eager finite list
+before summation. This changes evaluation and retention, so names remain
+separate; both share one arithmetic kernel. No GC/compiler causal claim is made.
+Adaptation: rectangular pairs replace strict Complex Double, explicit memoized
+nodes replace lazy lists, and the driver observes both real and imaginary
+components rather than only rounding the final real component.
+Profiles: 64/10000/1000000 roots; large preserves upstream FAST, while original
+normal 8000000 and slow 30000000 remain recorded but unexecuted.
+Validation: each term is finite and within 16*u*n of (1,0); each final component
+is within 32*u*range^2 of (range,0), u=2^-52. The final rounded real count must
+also equal range. These conservative budgets cover input/trigonometric and
+repeated multiplication/addition rounding on the selected positive ranges;
+negative tests reject perturbations and nonfinite values. Original GHC output
+agrees on all selected profiles. Reference: Augustsson's original letter,
+GHC base sources and the nofib survey; unboxing, calls and retention are
+source-derived hypotheses until measured.
+
+[Complete provenance and adaptations](x2n1-lazy/PROVENANCE.md).
+
+## x2n1-strict
+
+Materialize complex root powers before summing both components.
+
+See ../x2n1-lazy/PROVENANCE.md for authorship, history, numerical checks,
+profiles and references. This separately named strict variant preserves the
+same complex arithmetic and power order via ../shared/x2n1.sml. All root
+powers are computed into an ordinary finite list before summation. This
+changes allocation/retention and evaluation order relative to demanded list
+nodes, while retaining the same element and accumulation order. Both components
+are consumed and checked. Strict/lazy results agree on smoke and normal.
+The original letter, source, Makefile and fixtures are retained here too.
+
+[Complete provenance and adaptations](x2n1-strict/PROVENANCE.md).
+
+## integrate-lazy
+
+Integrate bilinear terms through shared memoized running-total streams.
+
+Algorithm: preserve two nested nine-point trapezoidal sums for x*y on
+[0,u] x [0,2u], the analytical fourth powers, shared infinite integer inputs,
+self-referential running totals, and sum of squared differences. The nine
+finite samples use ordinary SML lists: every sample is demanded and used
+once, in unchanged left-sum order. Laziness and sharing of the infinite
+inputs and feedback totals use explicit memoized heads/spines and tied roots.
+History: no individual author/licence notice is supplied; retain that gap.
+Variants: strict projects the selected finite range, eagerly builds its lists
+and cumulative totals, and omits infinite CAF memoization. It preserves
+term/arithmetic order but changes evaluation, allocation and retained data.
+Adaptation: explicit delays make call-by-need portable in SML97. Numerical
+functions have explicit real types across hosts. Replace the True/False
+output switch with an always-active checker, fixed range and reference path.
+Profiles: 32/10000/100000 terms; large preserves original FAST. Original
+normal 1000000 and slow 5000000 are retained but not selected/certified.
+Validation: original GHC gives accumulated squared error exactly 0 on these
+profiles, so their scalar error bound is 0. Also check both final cumulative
+streams against the independent exact sum of fourth powers,
+n(n+1)(2n+1)(3n^2+3n-1)/30. Their bound is 2*gamma*abs(exact), where
+gamma=(n+200)*u/(1-(n+200)*u), u=2^-52; 200 covers the fixed numerical kernel
+and target conversion. All states must be finite. Perturbed scalar and total
+states must be rejected. This is selected-profile evidence, not an assertion
+that arbitrary ranges/platforms have zero accumulated numerical error.
+Performance: feedback sharing, higher-order calls, scalar representation and
+retained prefixes are source hypotheses until measured. References: pinned
+nofib source, its analytical bilinear integral, and the suite literature survey.
+
+[Complete provenance and adaptations](integrate-lazy/PROVENANCE.md).
+
+## integrate-strict
+
+Build finite numerical integration and running-total lists eagerly.
+
+See ../integrate-lazy/PROVENANCE.md for the algorithm, authorship gap,
+profiles, exact polynomial oracle, numerical bounds and references.
+This strict finite projection uses the same ../shared/integrate.sml kernel,
+then builds ordinary input, integral, fourth-power, cumulative-total and
+squared-error lists before summation. It omits infinite memoized CAFs and
+changes retention/evaluation; the selected values and arithmetic order are
+unchanged. Both final cumulative streams and scalar error are consumed and
+validated. Preserve the original source, Makefile and fixture here too.
+
+[Complete provenance and adaptations](integrate-strict/PROVENANCE.md).
+
+## bernouilli-lazy
+
+Compute exact Bernoulli rationals with shared power and Pascal streams.
+
+Algorithm: preserve the alternating power-sum formula, globally shared
+infinite power rows and Pascal rows, signed powers, normalized arbitrary
+precision ratios, and 64-bit nofib Show hashing. Numerators/denominators are
+IntInf; ratio construction/addition follow GHC 9.4.7's reduce/gcd/cross-product
+order. The spelling bernouilli is the established nofib name; Bernoulli is
+the mathematical alias. No individual author/licence is supplied; the source
+records a March 2003 Haskell-cafe discussion and its own GMP-performance caveat.
+Variants: strict builds needed finite power/Pascal rows eagerly per repetition
+and drops the global memoized cache. The recurrence and exact arithmetic are
+preserved; forcing, caching, recomputation and retention differ materially.
+Adaptation: memoized list heads/spines and explicitly tied roots preserve
+feedback sharing; SML IntInf replaces Integer/Ratio. Haskell Show syntax,
+including parentheses around negative numerators, and wrapping 64-bit hashes
+are retained. SML strings materialize the shown characters; record this
+representation change. Replace 500 printed hashes with checked computations
+and one consumed repetition sum. Every rational and hash is validated.
+Profiles: (8,1)/(60,5)/(180,500). Normal uses original FAST size; large uses
+original NORM and 500 repetitions. Original SLOW size 320 remains recorded.
+Validation: independent Akiyama-Tanigawa rational recurrence agrees with
+unchanged GHC numerator/denominator observers at 8/60/180. The 60-index hash
+also agrees with the pinned original fast fixture; other hashes use an
+independent 64-bit polynomial fold over reviewed Show strings. Performance
+questions about sharing, gcd, big integers and allocation remain hypotheses
+until measured. References: original source/discussion note, pinned GHC Ratio
+operations, nofib survey. Large SML execution is not universally claimed.
+
+[Complete provenance and adaptations](bernouilli-lazy/PROVENANCE.md).
+
+## bernouilli-strict
+
+Compute exact Bernoulli rationals from eagerly generated finite rows.
+
+See ../bernouilli-lazy/PROVENANCE.md for history, alias, source notice gap,
+profiles, exact references, ratio arithmetic and Show/hash semantics.
+The strict variant uses ordinary finite power and Pascal lists and recomputes
+them per repetition, omitting the lazy port's shared global caches. It keeps
+the same multiply-by-base recurrence and signed power-sum formula, with
+identical normalized IntInf ratio operations in ../shared/rational.sml.
+Demand, recomputation, allocation and retained data therefore differ; this
+is a separately named strict workload, not a claim about GHC's optimized
+execution. Full rational values and original 64-bit hashes are checked.
+
+[Complete provenance and adaptations](bernouilli-strict/PROVENANCE.md).
+
+## wheel-sieve1-lazy
+
+Enumerate primes with circular memoized Mark I wheel streams.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/wheel-sieve1/Main.hs`.
+
+Colin Runciman, March 1996. The source cites his 1997 functional pearl
+[Lazy wheel sieves and spirals of primes](https://doi.org/10.1017/S0956796897002670).
+Keep the established Mark I/Mark II variant distinction. Complete source,
+Makefile and available fixtures are retained with individual SHA256 identities;
+the program supplies no explicit individual licence notice, recorded as a gap.
+
+Both ports preserve circular prime dependencies, delayed list heads and spines,
+wheel residues and periods, prime squares, bounds, and indexed result selection.
+The helper retains lazy folds whose branch may ignore the remainder and a
+shared lazy span whose prefix can be consumed without forcing the full split.
+There is no strict approximation: prematurely forcing these infinite/circular
+structures changes termination and the algorithm. IntInf replaces machine Int
+for wheel arithmetic and n^2/n^4 bounds, preventing host-width overflow.
+Selected guard values fit the original GHC 64-bit range; this representation
+change adds arbitrary-precision arithmetic costs, explicitly part of the port.
+
+The original 100 printed results become separately selected repetition counts
+and one consumed sum. Each invocation builds its own prime knot, while sharing
+within that knot is preserved. Smoke/normal use one invocation; large preserves
+100. Zero-based prime indices are unchanged. Independent finite Eratosthenes
+fixtures agree with the original GHC kernel on all selected inputs. All actual
+prime values are checked. Incorrect values, loss of sharing or excessive forcing
+are rejected by result and stream-semantic checks.
+
+The paper supports the algorithm distinction and the need to avoid black holes.
+Effects of memoization, bigint representation, retention and compiler
+specialization are source-derived hypotheses until measured on these ports.
+See [the literature survey](../literature.md).
+
+Mark I retains the wheel rotations and divisibility filters. The leading
+offset is available before the upper-bound expression reads the prime stream,
+so the initial prime can be produced without recursive forcing. The original
+self-reference in the wheel stream is retained. Profiles are (128,1), (3000,1)
+and (12000,100); normal/large preserve original FAST/NORM indices. Original SLOW
+40000 is recorded in the retained Makefile, not claimed as executed.
+
+[Complete provenance](wheel-sieve1-lazy/PROVENANCE.md).
+
+## wheel-sieve2-lazy
+
+Enumerate primes with the original Mark II spiral and shared lazy spans.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/wheel-sieve2/Main.hs`.
+
+Colin Runciman, March 1996. The source cites his 1997 functional pearl
+[Lazy wheel sieves and spirals of primes](https://doi.org/10.1017/S0956796897002670).
+Keep the established Mark I/Mark II variant distinction. Complete source,
+Makefile and available fixtures are retained with individual SHA256 identities;
+the program supplies no explicit individual licence notice, recorded as a gap.
+
+Both ports preserve circular prime dependencies, delayed list heads and spines,
+wheel residues and periods, prime squares, bounds, and indexed result selection.
+The helper retains lazy folds whose branch may ignore the remainder and a
+shared lazy span whose prefix can be consumed without forcing the full split.
+There is no strict approximation: prematurely forcing these infinite/circular
+structures changes termination and the algorithm. IntInf replaces machine Int
+for wheel arithmetic and n^2/n^4 bounds, preventing host-width overflow.
+Selected guard values fit the original GHC 64-bit range; this representation
+change adds arbitrary-precision arithmetic costs, explicitly part of the port.
+
+The original 100 printed results become separately selected repetition counts
+and one consumed sum. Each invocation builds its own prime knot, while sharing
+within that knot is preserved. Smoke/normal use one invocation; large preserves
+100. Zero-based prime indices are unchanged. Independent finite Eratosthenes
+fixtures agree with the original GHC kernel on all selected inputs. All actual
+prime values are checked. Incorrect values, loss of sharing or excessive forcing
+are rejected by result and stream-semantic checks.
+
+The paper supports the algorithm distinction and the need to avoid black holes.
+Effects of memoization, bigint representation, retention and compiler
+specialization are source-derived hypotheses until measured on these ports.
+See [the literature survey](../literature.md).
+
+Mark II retains the spiral's turn0/turn/roll functions, branch replacement
+by the next spiral, dropWhile alignment, and span-based residue split. In
+particular the initial candidate 2 is emitted before forcing its square bound.
+The source's recursively re-created wheel stream is retained rather than
+replacing it with Mark I's single self-referential wheel root. Profiles are
+(32,1), (700,1), (2000,100); normal/large preserve original FAST/NORM indices.
+Original SLOW 4000 and its Haskell 300 MiB runtime heap setting are recorded;
+our manifest's standard per-profile limits are separately explicit.
+
+[Complete provenance](wheel-sieve2-lazy/PROVENANCE.md).
+
+## gen_regexps-lazy
+
+Expand numeric and alphabetic ranges through memoized character streams.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/gen_regexps/Main.hs` and its NofibUtils hash.
+The source identifies Wentworth's version and an RJE output adaptation; fuller
+authorship and an individual licence are unspecified, recorded as gaps. Preserve
+source, Makefile and fixtures with their notices and SHA256 identities.
+
+This is an expansion workload for literals, [a-b] alphabetic ranges and <u-v>
+zero-padded numeric ranges, not a general regexp matcher. Ascending/descending
+ranges, inclusive endpoints, padding width and expansion order are unchanged.
+Selected inputs are ASCII and well-formed; SML parsing explicitly rejects other
+literal characters and malformed numeric ranges. Numeric endpoint parsing and
+shared representation are ordinary SML97. Both variants recompute expand(rest)
+inside each outer range choice, as in the source comprehension. A compiler may
+hoist common suffixes; that is a performance hypothesis, not assumed sharing.
+
+Preserve the nofib polynomial hash with explicit wrapping 64-bit arithmetic,
+matching the reference GHC Int width. The driver also observes character count;
+both hash and count must agree. Python Cartesian-product enumeration and an
+original GHC observer agree on all selected profiles. Output is a consumed
+character-count sum instead of 500 printed hashes. Normal retains the original
+NORM expression with one repetition; large retains SLOW with 500. Smoke uses
+[a-b]<09-10> to cover padding; original FAST remains in the retained Makefile.
+
+The lazy port memoizes both expansion-list and character-list heads/spines;
+concatenation and hashing consume prefixes without materializing all output.
+The strict variant creates finite character lists and their concatenation
+before hashing. Both share parsing, ranges and modular semantics. Allocation,
+fusion, suffix recomputation and retention are source hypotheses until measured.
+Large SML execution is not universally claimed. References: pinned original
+source/history comments and the nofib literature survey.
+
+Legacy SML/NJ 110.99.9 rejects the lazy normal profile: repeated read-only
+observers return different hashes for the same 622080 characters. Modern 2026.2,
+MLton, Poly/ML and Rune agree with the reference. Keep the failed result rejected;
+no alternate fixture or host workaround is introduced. Its precise cause is
+not isolated; the known legacy GC-root bug is a candidate explanation.
+
+[Complete provenance](gen_regexps-lazy/PROVENANCE.md).
+
+## gen_regexps-strict
+
+Materialize range-expansion character lists before the 64-bit hash fold.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/gen_regexps/Main.hs` and its NofibUtils hash.
+The source identifies Wentworth's version and an RJE output adaptation; fuller
+authorship and an individual licence are unspecified, recorded as gaps. Preserve
+source, Makefile and fixtures with their notices and SHA256 identities.
+
+This is an expansion workload for literals, [a-b] alphabetic ranges and <u-v>
+zero-padded numeric ranges, not a general regexp matcher. Ascending/descending
+ranges, inclusive endpoints, padding width and expansion order are unchanged.
+Selected inputs are ASCII and well-formed; SML parsing explicitly rejects other
+literal characters and malformed numeric ranges. Numeric endpoint parsing and
+shared representation are ordinary SML97. Both variants recompute expand(rest)
+inside each outer range choice, as in the source comprehension. A compiler may
+hoist common suffixes; that is a performance hypothesis, not assumed sharing.
+
+Preserve the nofib polynomial hash with explicit wrapping 64-bit arithmetic,
+matching the reference GHC Int width. The driver also observes character count;
+both hash and count must agree. Python Cartesian-product enumeration and an
+original GHC observer agree on all selected profiles. Output is a consumed
+character-count sum instead of 500 printed hashes. Normal retains the original
+NORM expression with one repetition; large retains SLOW with 500. Smoke uses
+[a-b]<09-10> to cover padding; original FAST remains in the retained Makefile.
+
+The lazy port memoizes both expansion-list and character-list heads/spines;
+concatenation and hashing consume prefixes without materializing all output.
+The strict variant creates finite character lists and their concatenation
+before hashing. Both share parsing, ranges and modular semantics. Allocation,
+fusion, suffix recomputation and retention are source hypotheses until measured.
+Large SML execution is not universally claimed. References: pinned original
+source/history comments and the nofib literature survey.
+
+Legacy SML/NJ 110.99.9 rejects the lazy normal profile: repeated read-only
+observers return different hashes for the same 622080 characters. Modern 2026.2,
+MLton, Poly/ML and Rune agree with the reference. Keep the failed result rejected;
+no alternate fixture or host workaround is introduced. Its precise cause is
+not isolated; the known legacy GC-root bug is a candidate explanation.
+
+[Complete provenance](gen_regexps-strict/PROVENANCE.md).
+
+## paraffins-lazy
+
+Count shared alkyl radicals and paraffin centres without forcing unused tree heads.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/paraffins/Main.hs`.
+Steve Heller's Id example, forwarded from MIT by RPaul and acquired by SLPJ
+in August 1993 according to the retained source. No individual licence notice is
+supplied; record the gap. Retain the source, optional C implementation, build
+manifest and upstream fixtures with SHA256 identities.
+
+Preserve three/four-part partitions, suffix-based selection of repeated-size
+radicals, immutable shared subtrees, the lazy array of radical rows, and bridge/
+vertex-centred paraffin generation. Each invocation produces all four original
+count vectors: radical rows, bridge centres, vertex centres and their combined
+counts. Separate generators for those observations remain separate, while the
+combined function shares one generator for both centre forms.
+
+The lazy port has memoized row/spine/head cells and delayed constructor fields.
+Its length observer forces list spines but leaves radical/paraffin values
+unforced, as the original count-only workload does. The strict variant builds
+ordinary lists and constructor objects eagerly. Representation, demand, retained
+subtrees and possible constructor elimination differ materially. The shared
+partition arithmetic retains the original ceiling operation on small, exact
+half-integer arguments. No closed-form counting algorithm replaces the kernel.
+
+Independent combinatorial fixtures count combinations with replacement for
+equal-sized branches and independently enumerate centre partitions. They agree
+with the original Haskell observer and all four selected count vectors; the
+combined counts include 159 at 11 carbons and 1858 at 14. Every vector is rendered
+and compared in full, then the actual count sum is consumed. Profiles are
+(4,1), (11,1), (14,1000); normal/large preserve original FAST/NORM sizes, and
+large retains 1000 source repetitions. SLOW size 15 remains recorded.
+
+References: the original Id/source provenance, the nofib survey, and the
+[alkyl-radical](https://oeis.org/A000598) and [alkane](https://oeis.org/A000602)
+count sequences for additional mathematical context. Performance effects of
+sharing, demand, object lifetimes and compiler elimination are hypotheses until
+measured on these ports. Large execution is not universally claimed.
+
+[Complete provenance](paraffins-lazy/PROVENANCE.md).
+
+## paraffins-strict
+
+Construct finite radical and paraffin object lists before counting them.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/paraffins/Main.hs`.
+Steve Heller's Id example, forwarded from MIT by RPaul and acquired by SLPJ
+in August 1993 according to the retained source. No individual licence notice is
+supplied; record the gap. Retain the source, optional C implementation, build
+manifest and upstream fixtures with SHA256 identities.
+
+Preserve three/four-part partitions, suffix-based selection of repeated-size
+radicals, immutable shared subtrees, the lazy array of radical rows, and bridge/
+vertex-centred paraffin generation. Each invocation produces all four original
+count vectors: radical rows, bridge centres, vertex centres and their combined
+counts. Separate generators for those observations remain separate, while the
+combined function shares one generator for both centre forms.
+
+The lazy port has memoized row/spine/head cells and delayed constructor fields.
+Its length observer forces list spines but leaves radical/paraffin values
+unforced, as the original count-only workload does. The strict variant builds
+ordinary lists and constructor objects eagerly. Representation, demand, retained
+subtrees and possible constructor elimination differ materially. The shared
+partition arithmetic retains the original ceiling operation on small, exact
+half-integer arguments. No closed-form counting algorithm replaces the kernel.
+
+Independent combinatorial fixtures count combinations with replacement for
+equal-sized branches and independently enumerate centre partitions. They agree
+with the original Haskell observer and all four selected count vectors; the
+combined counts include 159 at 11 carbons and 1858 at 14. Every vector is rendered
+and compared in full, then the actual count sum is consumed. Profiles are
+(4,1), (11,1), (14,1000); normal/large preserve original FAST/NORM sizes, and
+large retains 1000 source repetitions. SLOW size 15 remains recorded.
+
+References: the original Id/source provenance, the nofib survey, and the
+[alkyl-radical](https://oeis.org/A000598) and [alkane](https://oeis.org/A000602)
+count sequences for additional mathematical context. Performance effects of
+sharing, demand, object lifetimes and compiler elimination are hypotheses until
+measured on these ports. Large execution is not universally claimed.
+
+[Complete provenance](paraffins-strict/PROVENANCE.md).
