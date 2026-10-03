@@ -32,8 +32,8 @@ Keep the existing performance checks as the baseline while the broader
 suite grows. Implementation starts with the
 [pinned source inventory and audit](../../examples/benchmarks/audit.md).
 The [runnable catalogue](../../examples/benchmarks/README.md) contains the M1
-pilots and the growing M2 classic collection. M2 remains open while its
-scheduled imports and normal-profile validation are reconciled.
+pilots and the validated M2 classic collection. M3 and M5 continue the nofib
+and Sandmark imports; M4 applications and M8 coverage closure remain planned.
 
 ## Sources, naming, and portable programs
 

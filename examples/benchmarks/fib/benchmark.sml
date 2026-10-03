@@ -3,7 +3,7 @@
 structure Benchmark =
 struct
   val name = "fib"
-  fun fib 0 = 0 | fib 1 = 1 | fib n = fib (n - 1) + fib (n - 2)
+  val fib = BenchFib.fib
   fun run [size, reps] =
         let val n = BenchInput.between (0, 44) (BenchInput.integer size)
             val count = BenchInput.between (1, 10000) (BenchInput.integer reps)
