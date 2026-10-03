@@ -46,6 +46,8 @@ int main(void) {
     T("lsl x0, x1, #4", "20ec7cd3", a64_lsl_ri(&a, X0, X1, 4));
     T("lsr x0, x1, #4", "20fc44d3", a64_lsr_ri(&a, X0, X1, 4));
     T("asr x0, x1, #63", "20fc7f93", a64_asr_ri(&a, X0, X1, 63));
+    T("ror x10, x10, #12", "4a31ca93", a64_ror_ri(&a, X10, X10, 12));
+    T("ror x0, x9, #52", "20d1c993", a64_ror_ri(&a, X0, X9, 52));
     T("lsl x0, x1, x2", "2020c29a", a64_lslv(&a, X0, X1, X2));
     T("lsr x0, x1, x2", "2024c29a", a64_lsrv(&a, X0, X1, X2));
     T("asr x0, x1, x2", "2028c29a", a64_asrv(&a, X0, X1, X2));
