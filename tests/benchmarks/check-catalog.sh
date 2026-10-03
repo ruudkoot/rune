@@ -3,6 +3,7 @@
 set -eu
 cd "$(dirname "$0")/../.."
 root=$(pwd)
+mkdir -p "$root/tests/out/benchmarks"
 out=$(mktemp -d "$root/tests/out/benchmarks/catalog-tests.XXXXXX")
 suite=$out/examples/benchmarks
 mkdir -p "$suite/shared" "$suite/tak"

@@ -49,6 +49,7 @@ fi
 LC_ALL=C; export LC_ALL
 TZ='NST3:30NDT,M3.2.0,M11.1.0'; export TZ
 [ -x /usr/bin/time ] || { echo '/usr/bin/time is required' >&2; exit 2; }
+mkdir -p "$root/tests/out/benchmarks"
 out=$(mktemp -d "$root/tests/out/benchmarks/measurement.XXXXXX")
 echo "BENCH MEASUREMENT $out"
 bin/runevm build/bench-catalog.rbc --list "$profile" "$filter" > "$out/jobs.tsv"
