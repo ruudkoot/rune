@@ -1,7 +1,7 @@
 # Benchmark suite roadmap
 
 Status: **in progress**, 2026-10-03. M0, M1 and M2 are complete with
-[recorded validation](../../examples/benchmarks/validation.md). M3 and M5 are in progress; M6 and M7 are complete with recorded evidence; M4 and M8 remain planned. Source inventory entries are scheduled work, not passing ports.
+[recorded validation](../../examples/benchmarks/validation.md). M3 and M5 are in progress; M6 and M7 are complete with recorded evidence; M4 is in progress and M8 remains planned. Source inventory entries are scheduled work, not passing ports.
 
 ## Goal and current baseline
 
@@ -33,7 +33,7 @@ suite grows. Implementation starts with the
 [pinned source inventory and audit](../../examples/benchmarks/audit.md).
 The [runnable catalogue](../../examples/benchmarks/README.md) contains the M1
 pilots and the validated M2 classic collection. M3 and M5 continue the nofib
-and Sandmark imports; M4 applications and M8 coverage closure remain planned.
+and Sandmark imports; M4 applications are in progress and M8 coverage closure remains planned.
 
 ## Sources, naming, and portable programs
 
@@ -176,7 +176,7 @@ fixture references, and profile completeness.
 | **M1 — Suite foundation and pilots** | Complete | Establish the directory contract, manifest, documentation template, portable drivers, deterministic inputs, and correctness runner. Pilot classic `tak` and list sorting, nofib primes in lazy and strict forms, and Sandmark `bdd`. | Pilots build and validate on Rune, MLton, SML/NJ, and Poly/ML. Lazy and strict variants agree on results. Negative checks demonstrate that incorrect output and resource-limit failures are detected. |
 | **M2 — Classic SML collection** | Complete | Import suitable workloads from the three SML sources. Begin with recursive kernels, rewriting, sorting, numerical programs, and search; then add larger generators, simulators, and applications. Reuse reviewed external-runner adaptations. | Every suitable classic SML workload is imported and documented. Remaining entries have concrete blockers. Each import passes smoke checks and has a validated normal profile. |
 | **M3 — nofib kernels and GC workloads** | In progress | Port suitable `imaginary`, `spectral`, `shootout`, and `gc` workloads, including nested collections such as `spectral/hartel`. Cover streams, higher-order functions, symbolic processing, graphs, arithmetic, and allocation patterns. | Every suitable kernel has a validated port. Each port records its treatment of laziness, sharing, numeric types, and forcing. Materially different lazy and strict variants are separately named and measured. |
-| **M4 — nofib applications** | Planned | Port suitable `real` applications in dependency order. Prioritize parsing, type inference, compression, interpreters, symbolic algebra, rendering, and scientific workloads. | Each application includes its required portable modules and deterministic data. Results agree with upstream fixtures or the original Haskell program. Feature-dependent applications have explicit blockers. |
+| **M4 — nofib applications** | In progress | Port suitable `real` applications in dependency order. Prioritize parsing, type inference, compression, interpreters, symbolic algebra, rendering, and scientific workloads. | Each application includes its required portable modules and deterministic data. Results agree with upstream fixtures or the original Haskell program. Feature-dependent applications have explicit blockers. |
 | **M5 — Sandmark sequential workloads** | In progress | Port self-contained sequential workloads first, including decision diagrams, rewriting, streams, numerical programs, rendering, and graph processing. Audit individual executables within collection directories. | Every suitable workload is imported or scheduled with its dependencies. OCaml library replacements and evaluation-order changes are documented. Ecosystem applications and runtime-specific workloads have explicit dispositions. |
 | **M6 — Measurement and comparisons** | Complete | Extend Rune's existing matrix, count, and profiling tools to consume the manifest. Add serial timing runs, compile measurements, raw results, and reports. | A recorded run reproduces selected inputs and configurations. Reports include correctness status, complete samples, configuration metadata, and separate failure categories. |
 | **M7 — Routine verification** | Complete | Select a bounded smoke set covering the main workload families and translation styles. Add metadata validation and smoke correctness to routine checks; retain broader explicit targets. | Routine checks remain practical. Every imported benchmark is covered by a broader correctness target. Incorrect results cannot contribute timing results. |

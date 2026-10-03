@@ -1,0 +1,3 @@
+*.bin binary
+# Preserve the historical mail's seven-equals section separator verbatim.
+upstream/MAIL conflict-marker-size=32
