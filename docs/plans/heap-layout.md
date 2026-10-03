@@ -42,7 +42,7 @@ What it rests on:
 | M1 | Measure in the tree | done 2026-09-27, `36ef0a3` |
 | M2 | The simulator and the harness in the tree | done 2026-09-27, `3f17fd2` |
 | M3 | The layout behind an interface | done 2026-09-27, `93cc674` |
-| M4 | Prototypes at full scale; the gate | begun on branch `heap-layout-word` |
+| M4 | Prototypes at full scale; the gate | begun on branch `heap-layout-word`: prototype 1 runs and is measured (*M4, the first prototype so far*) |
 | M5 | The chosen layout, complete | |
 | M6 | Roots and maps | |
 | M7 | The collector on the new layout, and the hooks for the next | |
@@ -193,6 +193,132 @@ keeps the names it was written with; to read it against the tree:
   `test-register`, `test-register-jit` and `test-register-asan`. The
   configuration names of the tables (`rune`, `rune:new`, `rune:jit`,
   `rune:opt`) and the variables that go with them are as they were.
+
+### M4, the first prototype so far
+
+Branch `heap-layout-word`, from 2026-10-03; what follows is the state on
+that day, not the gate's table. The prototype is the tagged word of D1 B
+in every engine but `runeopt` (below): a value is one 8-byte word, an
+immediate `2n+1`, a pointer the address; a real is Koka-encoded in the
+word or a `K_REAL` box (D3 C); an integer or a word past 63 bits is a
+`K_BOX` (D2 A, the default of the prototype, so that every suite runs
+unchanged), with D2 B's 63 bits (`RUNE_INT63`) and D3 B's boxed reals
+(`RUNE_REAL_BOXED`) as compile-time switches, each with a VM of its own
+(`make bin/runevm-int63 bin/runevm-realboxed`). The header is the
+8-byte one of today; fields are tagged words (raw typed fields are the
+next stage). It passes `make test`, `test-register` (the Basis suite's
+139,210 checks), `test-register-jit`, `test-stress` and
+`test-register-asan`, and the bootstrap's fixed point holds.
+
+What building it found, that the plan did not have:
+
+* **The payload is rounded to a word, not to 16 bytes.** Rounded as
+  today the bootstrap's bytes were 0.654 of the 16-byte layout's; with
+  `PAYLOAD_ALIGN` 8 (the smallest object 16 bytes) they are 849,752,320
+  against 1,434,024,896: 0.5926, where the census said 0.5925 for L1.
+* **Two numbers are equal by their words, or as two boxes by their
+  bits.** An immediate is never the number of a box, so one of each is
+  two numbers; comparing signed payloads said otherwise (a box of
+  2^64 - 1 and the immediate 2^63 - 1). One function, `val_same_imm`,
+  for `imm_eq`, `values_equal` and the fast paths.
+* **The representation's boxes are counted apart.** A `K_REAL` or
+  `K_BOX` is the layout's, not the program's: `--count` leaves them
+  out, so objects agree between engines and with the 16-byte layout,
+  and `--stats` prints them on a line of their own. Tier 2 would
+  otherwise count a box at each write-back that the interpreter never
+  makes; `Runtime.stats`' live bytes leave them out too.
+* **Tier 2 keeps a real as a double.** An `xmm` home holds the double
+  and its slot may be behind; the word is made (encoded, or boxed by a
+  helper that reuses the slot's box when the bits are the same) where
+  something needs it: a safepoint, a store, a move to a register without
+  such a home. Without this `real_nbody` was 3.4 times slower at tier 2
+  than on the 16-byte layout; with it, level.
+* **An int or a word in a general home is its word**, so writing it
+  back is one store and arithmetic is done tagged (`lea`, `add`, `jo`
+  gives the overflow of 63 bits). Under D2 A each operand needs a test
+  for the box and a word's result a test for the 64th bit, which is
+  what `word_bits` pays below.
+* **Raw typed fields are not sound as planned for a tuple that
+  polymorphic code reads.** A reader at `'a` does not know a field is
+  raw, so either every reader of a real or `'a` field tests the
+  descriptor, or raw fields are confined to where no polymorphic reader
+  can reach: constructor fields of a declared ground type and
+  monomorphic arrays. Only reals (and `Int64`/`Word64` under D2 B) gain
+  anything. For the gate; the next stage builds the confined form.
+
+Cycles (`scripts/perf-cycles.sh --configs jit-off,new`, least of five;
+16-byte is branch `heap-layout` at M3, the same sources; the two
+variants through `--vm`):
+
+| Program | 16-byte | word | word, reals boxed | word, 63 bits |
+|---|---:|---:|---:|---:|
+| *`runevm` as it runs (tiering)* | | | | |
+| array_sieve | 156.0M | 118.7M | 118.3M | 114.8M |
+| fib | 267.9M | 234.4M | 235.1M | 242.1M |
+| intinf_fact | 216.3M | 166.7M | 165.1M | 169.5M |
+| list_ops | 167.5M | 124.7M | 121.7M | 116.3M |
+| real_nbody | 176.3M | 181.8M | 179.2M | 178.9M |
+| string_ops | 409.7M | 276.4M | 270.9M | 264.1M |
+| tak | 76.7M | 68.1M | 68.2M | 67.7M |
+| word_bits | 82.2M | 91.5M | 92.1M | 75.1M |
+| compile-sigs | 756.6M | 616.5M | 596.5M | 593.6M |
+| runedoc-page | 355.4M | 286.0M | 285.6M | 281.2M |
+| bootstrap | 8.0G | 6.6G | 6.7G | 6.7G |
+| *the interpreter alone (`--jit=off`)* | | | | |
+| array_sieve | 571.2M | 388.7M | 384.0M | 380.8M |
+| fib | 894.8M | 804.0M | 783.3M | 786.1M |
+| intinf_fact | 515.5M | 415.9M | 404.2M | 402.2M |
+| list_ops | 402.8M | 313.8M | 296.1M | 286.2M |
+| real_nbody | 675.2M | 968.6M | 2.2G | 943.8M |
+| string_ops | 712.6M | 603.1M | 577.3M | 559.5M |
+| tak | 228.2M | 206.9M | 200.9M | 197.0M |
+| word_bits | 600.5M | 559.0M | 570.4M | 533.5M |
+| compile-sigs | 1.2G | 984.5M | 952.5M | 956.5M |
+| runedoc-page | 722.7M | 612.0M | 610.6M | 612.3M |
+| bootstrap | 16.5G | 13.8G | 13.5G | 13.3G |
+
+The bootstrap at the defaults, measured alone twice more: 7.98G and
+8.03G cycles on the 16-byte layout, 6.56G and 6.61G on the word (0.82),
+2.83 s against 2.15 s of `task-clock`, 234,501 page faults against
+102,723, a semispace of 268 MB against 134 MB, 491.7 MB copied against
+350.7 MB. Beside other work on the machine the same run read 7.1G and
+7.5G: a difference under a tenth between two columns of the table is
+not a result.
+
+What the table says so far:
+
+* **The word against 16 bytes:** 0.67 to 0.89 of the cycles on every
+  program that allocates or moves values, 0.82 on the bootstrap, under
+  the JIT and under the interpreter alike. Two programs lose.
+  `real_nbody` under the interpreter is 1.43 times slower: every real
+  operation decodes and encodes (3.2G instructions against 2.0G); at
+  tier 2 the homes make it level. `word_bits` at tier 2 is 1.11 times
+  slower under D2 A, the tests for the box.
+* **D2 B against D2 A** (the last column against the second):
+  `word_bits` 0.82, the rest within the noise or a few percent; the
+  bootstrap 8.4G instructions against 8.6G. Run on the library and the
+  compiler as they are, which believe in 64 bits, 63 bits fail 7 of
+  the language suite's 331 programs (the literals and limits of `Int`
+  and `Word`, `IntInf`'s conversions) and in the Basis suite seven
+  programs that do not load (`word`, `word8`, `word_large`, `real` and
+  three of `intn_word`: 16,163 checks not reached) and 34 checks (32 of
+  `PackReal`, whose bytes go through a 64-bit word and lose the sign
+  bit, and `Int64.precision` twice). The bootstrap runs but its output differs from
+  the fixed point, so its column is the work, not a result. That is
+  the list M5 would work through under D2 B: the Basis' `Int` and
+  `Word` at 63, `Int64`/`Word64`/`LargeWord` on boxes or two words,
+  `PackReal` and `Real`'s conversions by another path, the compiler's
+  constants of the target's width held wider than its own `int`.
+* **D3 B against D3 C** (the third column against the second): level
+  at tier 2, where a real lives in its home either way; under the
+  interpreter `real_nbody` is 2.3 times slower again (2.2G against
+  968.6M, 114 collections against none). Every suite passes with the
+  switch on.
+
+Not built yet: `runeopt`'s templates over the word; the Windows,
+aarch64, 32-bit and big-endian builds of the prototype; raw typed
+fields; prototype 2 (headerless pairs) and the rest of M4's list. The
+budgets are not moved.
 
 ## The request
 

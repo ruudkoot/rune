@@ -113,7 +113,11 @@ static void decode_real(Masm *m, int xmm, AsmLabel *unless) {
     as_test_ri(&m->a, R_S2, 1);
     as_jcc(&m->a, CC_E, &box);
 #ifdef RUNE_REAL_BOXED
-    if (unless) as_jmp(&m->a, unless); else as_trap(&m->a);   /* every real is a box */
+    /* every real is a box; a register trusted to be a real that is an
+       immediate is one not yet defined, unit, and reads as the encoding
+       would read it: zero */
+    if (unless) as_jmp(&m->a, unless);
+    else { as_fzero(&m->a, xmm); as_jmp(&m->a, &done); }
 #else
     {
         AsmLabel mid; as_label_init(&mid);
