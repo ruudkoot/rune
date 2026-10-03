@@ -12,7 +12,9 @@ behind an interface that makes the second change cheap. It prepares the
 collectors that come after it and stops short of building them. It was
 written on 2026-09-26 against `228b7b7`, jit M10 on branch `jit`, which
 the merge of the JIT roadmap (`d278153`, 2026-09-27) rebased to
-`bd28e89`; the citations were checked against the merged tree.
+`bd28e89`; the citations were checked against the merged tree. On
+2026-10-03 the branch was rebased onto `origin/master` at `3b86b52`;
+*After the rebase* says what that changed here.
 
 What it rests on:
 * a reading of `vm/vm.h`, `vm/heap.c`, `vm/prims.c`, `vm/image.c`, the
@@ -37,10 +39,10 @@ What it rests on:
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done |
-| M1 | Measure in the tree | done 2026-09-27, `7a67008` |
-| M2 | The simulator and the harness in the tree | done 2026-09-27 |
-| M3 | The layout behind an interface | done 2026-09-27 |
-| M4 | Prototypes at full scale; the gate | |
+| M1 | Measure in the tree | done 2026-09-27, `36ef0a3` |
+| M2 | The simulator and the harness in the tree | done 2026-09-27, `3f17fd2` |
+| M3 | The layout behind an interface | done 2026-09-27, `93cc674` |
+| M4 | Prototypes at full scale; the gate | begun on branch `heap-layout-word` |
 | M5 | The chosen layout, complete | |
 | M6 | Roots and maps | |
 | M7 | The collector on the new layout, and the hooks for the next | |
@@ -53,6 +55,110 @@ benchmarked there. The JIT roadmap finished the same day (M11
 `798c002`, M12 `1f7e55b`, merged as PR #21, `d278153`), and the
 milestones run on branch `heap-layout`, one commit each. M5 to M8 are
 sized now and planned again at the gate.
+
+### After the rebase
+
+On 2026-10-03 the branch was rebased from `d278153` onto `origin/master`
+at `3b86b52`, 66 commits later; the hashes of the table are the rebased
+commits'. The text below was written at `228b7b7` and its numbers,
+names and `file:line` citations are that tree's unless it says
+otherwise. What master changed that this roadmap names, and what each
+change does to it:
+
+* **The register bytecode is the compiler's default, and `bin/rune`
+  runs on `runevm-new`** (`6618017`). `bin/rune.rbc` is the register
+  compiler, the `bin/rune.new.rbc` of the text; the stack bytecode is
+  `--target=stack`, `bin/rune.stack.rbc` and the wrapper
+  `bin/rune-stack`, and `runeopt` translates that one. D15's target
+  configuration, "the default to come", is the default. The tools of
+  M1 and M2 follow the names.
+* **The bootstrap is another run.** The reference program was the
+  register compiler writing the stack bytecode. It is now the shipped
+  compiler writing the register bytecode, the register backend's work
+  included, and it is a third larger:
+
+  | the bootstrap | at `228b7b7` | rebased |
+  |---|---:|---:|
+  | instructions | 458,049,116 | 584,981,676 |
+  | bytes | 1,087,242,872 | 1,434,979,904 |
+  | objects | 24,051,681 | 32,290,596 |
+  | the list cell's share of the bytes | 27.3% | 37.1% |
+  | constructors' share of the bytes | 62% | 64.5% |
+  | largest live size (forced collections) | 82.6 MB | 86.7 MB |
+  | survival of a 1 MiB nursery (bytes) | 26.2% | 21.8% |
+  | L1, the tagged word | 0.5908 | 0.5925 |
+  | L1 + headerless pairs | 0.5022 | 0.4873 |
+  | L1 + 16-byte alignment | 0.6961 | 0.7113 |
+  | L4-mono, L4-uniform | 0.6319, 0.7067 | 0.6326, 0.7096 |
+
+  (`scripts/census.sh --summary bootstrap` on the rebased tree, 376 s;
+  the left column is M1's census in the tree.) Two thirds of what was
+  added are list cells, 5.9 million of them, and they die young: the
+  live data grew by 5% where the allocation grew by 32%. So nothing
+  decided moves, and two things lean further the way they were
+  decided: headerless pairs (D4 C) take 1.5 points more, and the
+  nursery of the next roadmap (D7) sees less survive. Compile-sigs is
+  where it was (L1 0.5925, with pairs 0.5126, L4-mono 0.6121,
+  L4-uniform 0.6896). The tables of *The experiments* stand as
+  measured at `228b7b7`; M4 and D15 compare a prototype with the
+  16-byte layout built from the same sources, the branch at M3, since
+  a number of `228b7b7` is no longer a number of the same program.
+* **Two more things a count depends on** (docs/testing.md, *What the
+  input is*). Whether the output file exists: the compiler now refuses
+  an output that is one of its sources (`fd10179`), and the check costs
+  one object and four instructions more per source when the output is
+  not there yet, so the census's two runs of the compiler no longer
+  agreed until each started without the file (`scripts/census.sh`,
+  `tools/heapsim/validate.sh`). And where the tree is: MLton's `lexgen`,
+  `mlyacc` and `vliw` build their inputs' names from the current
+  directory, which the rebase's worktree showed; they get a relative
+  one now (`tests/external/mlton-bench/*.sed`) and
+  `tests/perf/mlton-bench.txt` their counts without it. The other 30
+  programs under 2 GB count on the rebased compiler what they counted
+  before; the 14 above were not run again.
+* **Resource limits** (`fd10179`). `--heap-limit N` caps the semispace
+  and `--equality-work N` the steps of one structural comparison; a
+  program past either stops through `vm_limit`. `values_equal` takes
+  the VM and walks with a stack of pending objects of its own instead
+  of recursing, and the rebase rewrote that walk over `value.h`, so M3's
+  recount holds. The image is version 7 and carries both limits. For
+  this roadmap: the heap has a cap, which *The collector today* said
+  it had not, and M7's copier keeps it; D12's walk by header is this
+  walk; D10's one bump at M5 makes the image version 8.
+* **Seven builds, not five.** MLKit and SML/NJ 2026.2 joined the hosts
+  (`3d83f11`, `a9e0198`), so six host builds and the self-hosted one
+  are held to one output, the generated `src/opt/x64_layout.sml` and
+  whatever M4 and M5 add to the compiler included.
+* **The compiler checks its representations** (`0e85e23`, `f3cd52a`).
+  LowLint holds every variable to its `Low.rep` wherever an operation,
+  a primitive, a field or a parameter says what it is, and every
+  capture to being read. D1 B's raw typed fields and M4's field kinds
+  rest on those representations, which until now only tier 2 trusted
+  and nothing checked.
+* **A benchmark suite is in the tree** (`examples/benchmarks`,
+  benchmarks.md): 149 programs from MLton, SML/NJ, the ML Kit, nofib
+  and Sandmark, each with profiles and a result check;
+  `make bench-smoke` runs in `make check`, and
+  `examples/benchmarks/count-budgets.tsv` holds counts. It has MLton's
+  set, which M1 reaches through `tests/external/run-mlton-bench.sh`, as
+  ports with checks. M4 measures on both: M1's runner at the sizes this
+  roadmap's tables were made at, and the suite's `normal` profile. Its
+  lazy variants are the lazy workloads M4 was to port (M4). Its count
+  budgets move with the layout as every `.budget` does (M5).
+* **`lib/random` and `lib/test/property` are in the tree** (the
+  property-testing roadmap, merged). The SplitMix64 generator D2 notes
+  is `lib/random/random.sml`, `Word64` throughout; `make test-lib`
+  runs it in `make check`, and `make test-laws` every law of the
+  documentation on its generators. Under D2 B it is code every
+  prototype must pass, not only a workload for the gate.
+* **docs/performance.md says why `vm/new` is slower than MLton**
+  (`c72dc95`), from instruction traces of tier 2's code: "the tagged
+  16-byte Values written to memory at every result" among what recurs,
+  ten instructions of an iteration of `word_bits` storing tags and
+  payloads, `array_sieve` allocating 3.4 times MLton's bytes at 16 a
+  cell. These are costs D1, D3 and M8 take away, measured without this
+  roadmap's instruments; M4's table quotes the same programs.
+* **Paths.** The man pages are under `share/man` (`87eebe6`).
 
 ## The request
 
@@ -217,20 +323,22 @@ places (`vm/prims.c:1583,1607`, `vm/new/fastprim.h:150,157`,
 `vm/new/reg_cases.h:352-362`, `vm/new/jit/emit.c`, `src/opt/x64.sml`);
 everything else initialises a fresh object. Large objects have no space
 of their own: an array of a gigabyte is copied at every collection. The
-heap has no cap; the stack has one since jit M9.
+heap has no cap; the stack has one since jit M9. (Since `fd10179`,
+2026-10-01, it has: `--heap-limit`; *After the rebase*.)
 
 The primitives (297; `vm/prims.c`, 2,148 lines) read their arguments on
 the value stack and pop them only when the result exists, so that a
 collection inside the call finds them (`prims.c:1-19`); C code holds no
 heap pointer across an allocation (architecture.md, the GC discipline),
 and `--gc-stress 1` with the sanitiser build is how a violation is found.
-`values_equal` (`vm/runtime.c:115-152`) walks objects by kind for
+`values_equal` (`vm/runtime.c:115-152`; since `fd10179` with a stack of
+its own and a work limit) walks objects by kind for
 polymorphic equality; `imm_eq` compares tags and bits where the
 simplifier knows the type has no heap values (middle-end M11).
 
 ### Images and counts
 
-An image (`vm/image.c`, 766 lines; version 6) writes every value in 9
+An image (`vm/image.c`, 766 lines; version 6, and 7 since `fd10179`) writes every value in 9
 bytes, tag and payload, with a pointer as its offset in the heap plus
 one, and the heap object by object -- kind, contag, len, then the fields
 or the bytes -- so that any VM restores what any other saved, across
@@ -279,7 +387,7 @@ layout, or an `mk_` constructor.
 | the compiler | `Rep`, `Lower.repOfTy`, `Simplify.immediate`, `Target.intBits = 64`, `Low.rep` | representations, not bytes |
 | `lib/basis` | `runtime_sig.sml:45-48` states 16, 24 and 40; `intinf.sml`; `IntN`/`WordN`/`Real32` in 64-bit immediates; byte arrays as cell arrays | |
 | tests | `tests/basis/runtime.sml:40-53` (40 and 24), `tests/new/masm_test.c:70-73`, every `.budget`, the count equality of `run-portability.sh:94-103`, `run-windows.sh:184-193`, `check-new.sh`, `check-jit.sh`, `run-counts.sh` | |
-| docs | runtime.md, bytecode.md, architecture.md, building.md, native.md, `vm/new/ARCHITECTURE.md`, `man/runevm.1`, the generated `RUNTIME.md`; `examples/runtime/stats.sml:23-25` still says a list cell is two objects | |
+| docs | runtime.md, bytecode.md, architecture.md, building.md, native.md, `vm/new/ARCHITECTURE.md`, `share/man/runevm.1`, the generated `RUNTIME.md`; `examples/runtime/stats.sml:23-25` still says a list cell is two objects | |
 
 M3 (2026-09-27) counted again, by the same rule, after the rewrite:
 `vm/value.h` 40 lines (the definitions and every operation),
@@ -1316,7 +1424,7 @@ only a prototype can.
 
 | Workload | What it is | Why |
 |---|---|---|
-| bootstrap | `bin/rune.new.rbc` compiling the compiler's sources, `--heap-size 67108864` | the reference program: 1.12 GB, 24.6 M objects, live data to 205 MB |
+| bootstrap | `bin/rune.new.rbc` compiling the compiler's sources, `--heap-size 67108864` (since the rebase `bin/rune.rbc`, writing the register bytecode: *After the rebase*) | the reference program: 1.12 GB, 24.6 M objects, live data to 205 MB; rebased, 1.43 GB and 32.3 M objects |
 | compile-sigs, compile-hello | the compiler on `tests/perf/compile-sigs.sml` and on a hello program | a compiler run with less live data; a short one |
 | runedoc-ir, runedoc-page | `runedoc` on `docs/ir.md` and on a Basis page | the other large program |
 | list_ops, string_ops, array_sieve, intinf_fact | `tests/perf` | the allocating perf programs |
@@ -1330,7 +1438,8 @@ gates, not workloads.
 
 A build of `vm/new` with hooks under `RUNE_CENSUS` (`bin/runevm-census`,
 run with `--jit=off` since the JIT allocates inline; on programs
-compiled with `--target=registers`, since only the register bytecode
+compiled with `--target=registers`, the compiler's default since the
+rebase, since only the register bytecode
 carries representations). It gives every object an identity (an id word
 added to the header in this build alone; `--count` still prints the
 stock numbers, which is its acceptance test), records at each
@@ -2042,9 +2151,10 @@ the two they rest on.
   to the layout of a value, the heap or `vm/image.c` is done
   (`AGENTS.md`); `make windows` and `make test-windows` before a change
   to the VM core.
-* **One output from five builds; the interpreter stays complete.** The
+* **One output from every build; the interpreter stays complete.** The
   stack VM, `vm/new` at every tier and `runeopt` run the same layout,
-  since they share `vm/`; the compiler's five builds emit the same
+  since they share `vm/`; the compiler's builds (five when this was
+  written, seven since the rebase) emit the same
   bytecode; tier 0 runs everything. There is no layout for one engine
   alone (D11).
 * **Nothing of a program on the machine stack; frames are the VM's**
@@ -2278,7 +2388,9 @@ the two builds are compared on the same source, not the same `.rbc`.
 M4 builds it as a variant and M5 keeps it.
 
 Noted on 2026-09-27, from the property-testing roadmap
-(`docs/plans/quickcheck.md` on branch `quickcheck`, its *Risks*).
+(`docs/plans/quickcheck.md`, its *Risks*; merged into master since, with
+the generator as `lib/random/random.sml` and its tests in `make check`:
+*After the rebase*).
 - **The workload.** Its random generator, SplitMix64, is `Word64` arithmetic of `word_loop`'s shape, in a library whose generators pass 64-bit addresses and seeds as arguments at every node.
 - **What B does to it.** Under B with D5 A, those words are raw only in tier 2's register homes and in typed fields. They are boxed wherever they cross a slot: an argument, a result, the interpreter's frames, `runevm`. "Monomorphic" alone does not keep them unboxed.
 - **What the harness says.** `word_loop` costs 2.77 times today's cycles boxed (6.15 under clang), against 0.44 unboxed in locals. With the top bit set in half the outputs, A's switch boxes them too.
@@ -2743,7 +2855,13 @@ in hand.
 settings (`rune:new` in docs/performance.md) first: the owner named it
 the optimisation target on 2026-09-27, as the fastest way to run Rune
 today and the default to come; `runevm` and `runeopt`'s code are
-reported beside it and held only to "not slower" (target 3).
+reported beside it and held only to "not slower" (target 3). Since the
+rebase of 2026-10-03 that configuration is the default, and the
+baseline of every target is the 16-byte layout on the rebased sources
+(the branch at M3), where the text says `228b7b7`: the bootstrap is a
+third larger there, and its shares are in *After the rebase* (the
+collector's 17.1% and 15.9% of target 2 are measured again at M4,
+before the prototype is).
 
 1. After M5, the bootstrap allocates at most 60% of its bytes under
    `228b7b7` at the same object count plus the boxes (the census's
@@ -2883,14 +3001,19 @@ about 2,000 and are planned again at the gate.
   passing on both; the budgets not moved (they are checked against
   each prototype's own numbers by hand). Measured with M1: cycles,
   `task-clock`, the collector's share, bytes, the heap-size sweep, on
-  every workload, against `228b7b7` and against the simulator's and the
+  every workload, against `228b7b7` (since the rebase: against the
+  branch at M3, the 16-byte layout on the same sources) and against the simulator's and the
   harness's predictions -- on `runevm-new` at its defaults first, with
   `perf record --jit-perf-map` and the counters (`r0203`, L1d and TLB
   misses) by compiled function, since that is where the layout's
   effect on the real code is read; the interpreter and `runeopt` beside
   it. The workloads include the property-testing roadmap's SplitMix64
   kernel (D2, noted on 2026-09-27), the case where 64-bit words cross
-  slots.
+  slots, and since the rebase the `normal` profile of
+  `examples/benchmarks` beside M1's runner (*After the rebase*); the
+  suites both prototypes pass include `make test-lib`, `make test-laws`
+  and `make bench-smoke`, whose count budgets are checked by hand as
+  the others are.
 * **For a lazy front end** (*A lazy front end*, added on 2026-09-28).
   No lazy program runs on Rune, so the harness and SML programs over
   suspensions stand in; about 450 lines of the milestone's total.
@@ -2921,7 +3044,13 @@ about 2,000 and are planned again at the gate.
     `primes`, `wheel-sieve1`, `digits-of-e1`, `exp3_8`) in SML over a
     structure of memoised suspensions (a ref to a thunk or a value),
     under `tests/perf/lazy`, censused and simulated as the other
-    workloads. The census's stores by age class give the share of
+    workloads. (Since the rebase three of the four are in the tree,
+    with `digits-of-e2`, `queens` and `tak` beside them:
+    `examples/benchmarks/*-lazy` over `shared/lazy.sml`, a ref to a
+    pending thunk or a value, each but the two `digits-of-e` with a
+    strict twin that is the control. M4 censuses those and ports
+    nothing; `wheel-sieve1` joins when the benchmark roadmap imports
+    it.) The census's stores by age class give the share of
     updates that point old to young, and the simulator's
     remembered-set model (the table of `sim-remset.md`) their cost. A
     suspension is two objects here where GHC's thunk is one, so the
@@ -2934,8 +3063,8 @@ about 2,000 and are planned again at the gate.
   is planned again from here: M5's content is the chosen layout.
 * **Done when:** both prototypes pass the suites, the table is in this
   file with the lazy kernels' and workloads' rows, the decisions are
-  recorded. The prototypes are branches, not
-  commits to `jit`; the winner becomes M5.
+  recorded. The prototypes are branches (`heap-layout-word` the
+  first), not commits to `heap-layout`; the winner becomes M5.
 * **Touches:** the compiler (field kinds), the FFI (the convention of a
   value into C appears in `masm.c`'s call operation).
 
@@ -2955,10 +3084,11 @@ about 2,000 and are planned again at the gate.
   D3 C;
   `runtime_sig.sml`'s sentence; `IntInf`'s limbs if a raw word helps
   them; `Real32` untouched), every budget re-based
-  in one commit that quotes old and new, `tests/basis/runtime.sml`'s
+  in one commit that quotes old and new (those of `tests/perf` and,
+  since the rebase, `examples/benchmarks/count-budgets.tsv`), `tests/basis/runtime.sml`'s
   40 and 24 replaced by the new sizes, `masm_test.c`, the docs
   (runtime.md's *Values and objects*, bytecode.md, native.md or its
-  retirement, `ARCHITECTURE.md`, `man/runevm.1`, the examples), and
+  retirement, `ARCHITECTURE.md`, `share/man/runevm.1`, the examples), and
   the small items D4 notes if cheap (a nullary exception immediate).
   For a lazy front end (*A lazy front end*): the kinds `K_THUNK` and
   `K_IND` reserved and asserted, unused by SML; and, if the gate
@@ -3272,6 +3402,9 @@ output from every build).
 |---|---|
 | performance.md item 19 (8-byte values, "half the heap and half the collector's work") | D1, D2, D3; the numbers of *The experiments* |
 | performance.md item 13 (generational collector) | D7; M7's hooks and brief; the next roadmap |
+| docs/performance.md, *Why `vm/new` at `opt` is slower than MLton* (2026-10-02): the 16-byte tagged Value written at every result, the 16-byte array cell | D1, D3, M8; D15's targets on the same programs (*After the rebase*) |
+| benchmarks.md (`examples/benchmarks`, 149 programs with result checks; `make bench-smoke` and its count budgets) | a workload set for M4 beside M1's runner; its lazy variants are M4's lazy workloads; its budgets move at M5 |
+| quickcheck.md (`lib/random`, `lib/test/property`; `make test-lib`, `make test-laws`) | D2's note: `Word64` code that every prototype passes and M4 measures |
 | performance.md items 10, 16 (done) and its measured-and-dropped (huge pages, fill 25%) | *Where we are*; the sweep of *The experiments* |
 | jit.md D10 (16-byte value kept; item 19 before M9) | decided here (D1); M9 built on the 16-byte value, unchanged in what it does |
 | jit.md D11 (`runeopt` and images) | D11 here: `runeopt` decided before M3 |
@@ -3347,6 +3480,16 @@ output from every build).
     the common paths (a `case`, a force, an update) need nothing more,
     and nofib's programs in SML over suspensions are a proxy for a lazy
     program, not one: they double the objects of a thunk.
+12. **Master moves under the branch.** The rebase of 2026-10-03 took 66
+    commits. One of them rewrote `values_equal` by tag and `OBJ_FIELDS`,
+    which compiles under today's layout whether or not it goes through
+    `value.h`; another made the reference program a third larger. Until
+    M1 to M3 are on master, code written there knows nothing of the
+    interface, and a prototype's branch meets it at the next rebase.
+    After every rebase the recount of *Who depends on the layout* is
+    run again (it is how that function was found, beside the conflict),
+    the census of the bootstrap is made again, and M1 to M3, which
+    change no layout, are worth merging before M4's gate, not after.
 
 ## Testing a layout change
 
@@ -3366,7 +3509,9 @@ output from every build).
   (M7's tests).
 * **The Basis suite on every VM** (137,276 checks), the MLton
   regression corpus and the benchmark set as the language-level
-  instrument.
+  instrument; since the rebase also the libraries' suites and laws
+  (`make test-lib`, `make test-laws`) and the benchmark catalogue's
+  result checks (`make bench-smoke`).
 * **Rules for `AGENTS.md`** (M3): a fact of the layout lives in
   `vm/value.h` or `vm/new/jit/masm.c` and nowhere else; an emitter
   takes an offset by `offsetof` and asserts it; a primitive that stores
@@ -3378,7 +3523,7 @@ output from every build).
 * **The target configuration** is `runevm-new` at its default settings
   (`rune:new`; tier 2 by the counters since jit M10), the fastest way to
   run Rune today and the default to come, as the owner said on
-  2026-09-27. Every table leads with it and every target is stated for
+  2026-09-27, and the default since `6618017`. Every table leads with it and every target is stated for
   it; `runevm` and `runeopt`'s native code are measured beside it, for
   the portable VM's and the ahead-of-time compiler's sake.
 * **Cycles and time:** `perf stat -e cycles:u,instructions:u,task-clock,
@@ -3412,7 +3557,9 @@ output from every build).
   compile-sigs and runedoc-page as programs;
   `tests/external/run-mlton-bench.sh` runs MLton's benchmarks from
   `/home/ruud/reference` at the sizes of `tests/perf/mlton-bench.txt`
-  and checks their counts. M2 put the simulator in `tools/heapsim`
+  and checks their counts (the benchmark roadmap's
+  `scripts/measure-benchmarks.sh` times the catalogue of
+  `examples/benchmarks`, with result checks, since the rebase). M2 put the simulator in `tools/heapsim`
   (`bin/heapsim`, `bin/heapsim-gen`; `test.sh`, `validate.sh`, `sweep.sh`,
   `report.py`; `make check-heapsim` in `make check`) and the harness in
   `tests/layouts` (`make -C tests/layouts`, `check.sh`, `measure.sh`,
