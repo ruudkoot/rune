@@ -2,6 +2,7 @@
 set -eu
 cd "$(dirname "$0")/../.."
 root=$(pwd)
+mkdir -p "$root/tests/out/benchmarks"
 out=$(mktemp -d "$root/tests/out/benchmarks/queens-tests.XXXXXX")
 for source in tests/basis/harness.sml examples/benchmarks/shared/lazy.sml examples/benchmarks/shared/queens.sml tests/benchmarks/queens.sml tests/basis/finish.sml; do
   printf '%s\n' "$root/$source"

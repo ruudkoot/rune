@@ -3,6 +3,7 @@
 set -eu
 cd "$(dirname "$0")/../.."
 root=$(pwd)
+mkdir -p "$root/tests/out/benchmarks"
 out=$(mktemp -d "$root/tests/out/benchmarks/state-negative.XXXXXX")
 for name in simple kitsimple simple-smlnj; do
   job=$out/$name
