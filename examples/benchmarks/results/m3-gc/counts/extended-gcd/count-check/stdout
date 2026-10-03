@@ -1,0 +1,9 @@
+COUNT unbudgeted gcd-lazy normal rune
+COUNT unbudgeted gcd-lazy normal rune:opt
+COUNT unbudgeted gcd-lazy normal rune:new
+COUNT unbudgeted gcd-lazy normal rune:jit
+COUNT unbudgeted gcd-strict normal rune
+COUNT unbudgeted gcd-strict normal rune:opt
+COUNT unbudgeted gcd-strict normal rune:new
+COUNT unbudgeted gcd-strict normal rune:jit
+COUNT comparisons agree

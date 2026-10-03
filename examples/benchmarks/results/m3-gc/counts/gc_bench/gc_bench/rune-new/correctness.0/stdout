@@ -1,0 +1,3 @@
+RESULT 163468 8191 8191 16000
+PASS gc_bench
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,2 @@
+lcss-lazy	600	4194304	shared/input.sml shared/lcss.sml shared/lazy.sml shared/stream.sml lcss-lazy/benchmark.sml shared/main.sml	1 2 200 100 101 400 expected/normal.txt	lcss-lazy/normal.expected	expected/normal.txt
+lcss-strict	600	4194304	shared/input.sml shared/lcss.sml lcss-strict/benchmark.sml shared/main.sml	1 2 200 100 101 400 expected/normal.txt	lcss-strict/normal.expected	expected/normal.txt

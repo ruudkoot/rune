@@ -1,0 +1,9 @@
+COUNT unbudgeted mutstore1 normal rune
+COUNT unbudgeted mutstore1 normal rune:opt
+COUNT unbudgeted mutstore1 normal rune:new
+COUNT unbudgeted mutstore1 normal rune:jit
+COUNT unbudgeted mutstore2 normal rune
+COUNT unbudgeted mutstore2 normal rune:opt
+COUNT unbudgeted mutstore2 normal rune:new
+COUNT unbudgeted mutstore2 normal rune:jit
+COUNT comparisons agree

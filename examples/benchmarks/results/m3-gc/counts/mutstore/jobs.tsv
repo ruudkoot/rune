@@ -1,0 +1,2 @@
+mutstore1	600	4194304	shared/input.sml shared/mutstore-check.sml mutstore1/benchmark.sml shared/main.sml	1000	mutstore1/normal.expected	-
+mutstore2	600	4194304	shared/input.sml shared/mutstore-check.sml mutstore2/benchmark.sml shared/main.sml	1000	mutstore2/normal.expected	-

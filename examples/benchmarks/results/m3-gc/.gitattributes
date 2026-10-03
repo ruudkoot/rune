@@ -1,0 +1,6 @@
+**/stdout whitespace=-trailing-space
+**/stderr whitespace=-trailing-space
+**/worktree.patch -whitespace
+**/report.md whitespace=-blank-at-eof
+**/machine.txt whitespace=-trailing-space
+**/*.tsv whitespace=-trailing-space

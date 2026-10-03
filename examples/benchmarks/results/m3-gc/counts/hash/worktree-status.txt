@@ -1,0 +1,15 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/gc_bench/
+?? examples/benchmarks/hash/
+?? examples/benchmarks/lcss-lazy/
+?? examples/benchmarks/lcss-strict/
+?? examples/benchmarks/mutstore1/
+?? examples/benchmarks/mutstore2/
+?? examples/benchmarks/pidigits-nofib-lazy/
+?? examples/benchmarks/pidigits-nofib-strict/
+?? examples/benchmarks/shared/lcss.sml
+?? examples/benchmarks/shared/mutstore-check.sml
+?? examples/benchmarks/shared/pidigits-nofib.sml
+?? tests/benchmarks/check-gc-ports.sh
+?? tests/benchmarks/gc-ports.sml

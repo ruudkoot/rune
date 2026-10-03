@@ -1,0 +1,9 @@
+COUNT unbudgeted pidigits-nofib-lazy normal rune
+COUNT unbudgeted pidigits-nofib-lazy normal rune:opt
+COUNT unbudgeted pidigits-nofib-lazy normal rune:new
+COUNT unbudgeted pidigits-nofib-lazy normal rune:jit
+COUNT unbudgeted pidigits-nofib-strict normal rune
+COUNT unbudgeted pidigits-nofib-strict normal rune:opt
+COUNT unbudgeted pidigits-nofib-strict normal rune:new
+COUNT unbudgeted pidigits-nofib-strict normal rune:jit
+COUNT comparisons agree

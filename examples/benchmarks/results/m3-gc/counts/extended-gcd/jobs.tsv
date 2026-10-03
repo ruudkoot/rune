@@ -1,0 +1,2 @@
+gcd-lazy	600	4194304	shared/input.sml shared/extended-gcd.sml shared/lazy.sml shared/stream.sml gcd-lazy/benchmark.sml shared/main.sml	100 5051	gcd-lazy/normal.expected	-
+gcd-strict	600	4194304	shared/input.sml shared/extended-gcd.sml gcd-strict/benchmark.sml shared/main.sml	100 5051	gcd-strict/normal.expected	-

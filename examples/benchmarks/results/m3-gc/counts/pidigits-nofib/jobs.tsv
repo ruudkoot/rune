@@ -1,0 +1,2 @@
+pidigits-nofib-lazy	600	4194304	shared/input.sml shared/pidigits-nofib.sml shared/lazy.sml shared/stream.sml pidigits-nofib-lazy/benchmark.sml shared/main.sml	200 expected/normal.txt	pidigits-nofib-lazy/normal.expected	expected/normal.txt
+pidigits-nofib-strict	600	4194304	shared/input.sml shared/pidigits-nofib.sml pidigits-nofib-strict/benchmark.sml shared/main.sml	200 expected/normal.txt	pidigits-nofib-strict/normal.expected	expected/normal.txt

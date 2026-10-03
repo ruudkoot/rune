@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+gc_bench	normal	rune	O2	compile	0	0	pass	1.59	1.53	0.06	135288	-	-	-	gc_bench/rune/build/compile
+gc_bench	normal	rune	O2	correctness	0	0	pass	0.10	0.08	0.01	18612	15985709	22119744	546668	gc_bench/rune/correctness.0
+gc_bench	normal	rune	O2	count	1	1	pass	0.12	0.10	0.01	18600	15985709	22119744	546668	gc_bench/rune/fresh.1
+gc_bench	normal	rune:opt	O2	compile	0	0	pass	1.55	1.47	0.07	135260	-	-	-	gc_bench/rune-opt/build/compile
+gc_bench	normal	rune:opt	O2	native-compile	0	0	pass	0.40	0.18	0.05	12276	-	-	-	gc_bench/rune-opt/build/native-compile
+gc_bench	normal	rune:opt	O2	correctness	0	0	pass	0.04	0.01	0.03	19068	15985709	22119744	546668	gc_bench/rune-opt/correctness.0
+gc_bench	normal	rune:opt	O2	count	1	1	pass	0.05	0.04	0.00	19080	15985709	22119744	546668	gc_bench/rune-opt/fresh.1
+gc_bench	normal	rune:new	O2	compile	0	0	pass	1.61	1.54	0.06	135260	-	-	-	gc_bench/rune-new/build/compile
+gc_bench	normal	rune:new	O2	correctness	0	0	pass	0.09	0.07	0.01	18652	9798901	22119744	546668	gc_bench/rune-new/correctness.0
+gc_bench	normal	rune:new	O2	count	1	1	pass	0.10	0.10	0.00	18668	9798901	22119744	546668	gc_bench/rune-new/fresh.1
+gc_bench	normal	rune:jit	O2	compile	0	0	pass	1.62	1.51	0.10	135344	-	-	-	gc_bench/rune-jit/build/compile
+gc_bench	normal	rune:jit	O2	correctness	0	0	pass	0.04	0.03	0.00	19712	9798901	22119744	546668	gc_bench/rune-jit/correctness.0
+gc_bench	normal	rune:jit	O2	count	1	1	pass	0.05	0.02	0.02	19776	9798901	22119744	546668	gc_bench/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check
