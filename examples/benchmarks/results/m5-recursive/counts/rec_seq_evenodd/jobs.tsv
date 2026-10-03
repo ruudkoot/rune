@@ -1,0 +1,1 @@
+rec_seq_evenodd	600	4194304	shared/input.sml rec_seq_evenodd/benchmark.sml shared/main.sml	2 100000	rec_seq_evenodd/normal.expected	-

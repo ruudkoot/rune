@@ -198,6 +198,11 @@ inventory entry.
 | [n-body](#n-body) | [nofib shootout/n-body](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/shootout/n-body) | Advance five bodies in a contiguous mutable array and validate energies and final state. |
 | [fasta](#fasta) | [nofib shootout/fasta](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/shootout/fasta) | Generate deterministic FASTA DNA with binary32 distribution tables and mutable line buffers. |
 | [reverse-complement](#reverse-complement) | [nofib shootout/reverse-complement](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/shootout/reverse-complement) | Reverse-complement FASTA records using a growing mutable buffer and in-place swaps. |
+| [rec_seq_evenodd](#rec_seq_evenodd) | [Sandmark rec_seq_evenodd](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-effects/rec_seq_evenodd.ml) | Alternate mutual tail calls and preserve short-circuit parity evaluation. |
+| [rec_seq_motzkin](#rec_seq_motzkin) | [Sandmark rec_seq_motzkin](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-effects/rec_seq_motzkin.ml) | Compute Motzkin numbers with unmemoized recursive products and sums. |
+| [rec_seq_sudan](#rec_seq_sudan) | [Sandmark rec_seq_sudan](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-effects/rec_seq_sudan.ml) | Evaluate the nested Sudan recurrence with explicit wide integer values. |
+| [rec_seq_fib](#rec_seq_fib) | [Sandmark rec_seq_fib](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-effects/rec_seq_fib.ml) | Compute strict Fibonacci with Sandmark's retained repetition profiles. |
+| [rec_seq_tak](#rec_seq_tak) | [Sandmark rec_seq_tak](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-effects/rec_seq_tak.ml) | Run the shared strict Takeuchi kernel with Sandmark's curried-source input profiles. |
 
 ## Running and interpreting checks
 
@@ -5478,3 +5483,205 @@ until measured. References: retained source/boot scripts and
 [the literature survey](../literature.md).
 
 [Complete provenance](reverse-complement/PROVENANCE.md).
+
+## rec_seq_evenodd
+
+Alternate mutual tail calls and preserve short-circuit parity evaluation.
+
+Sandmark `5605805954a00497ed197c930641cddd580e1507`, `benchmarks/multicore-effects/rec_seq_evenodd.ml`,
+executable `rec_seq_evenodd.exe`. Original source, executable-group dune manifest and
+SHA256 identities are retained. No individual author is stated in the source;
+the aggregate public-domain notice is retained in LICENSE. The sequential
+program uses no effects; its effect-based sibling remains separately inventoried
+with the required effect-handler runtime capability as its blocker.
+
+## Algorithm and variants
+
+Mutual tail recursion for parity, with a short-circuit even/odd expression.
+
+Preserve even(0)=true, odd(0)=false, alternating tail calls, and
+`even n andalso not(odd n)`. An odd input skips the odd call, as OCaml && does.
+The classic MLton even-odd driver evaluates both parity functions to check
+agreement, so this evaluation difference remains a separately named workload.
+Smoke uses one iteration at 33 (false), normal two at 100000 (true), and large
+preserves the original two at 500000000. All inputs/intermediates fit 31 bits.
+The result counts true repetitions rather than discarding the upstream OR
+accumulator and printing only its last value. Every repetition remains consumed.
+Parity modulo 2 independently supplies results0/2/2, and unchanged OCaml agrees
+with the individual smoke/normal booleans. No universal large execution is claimed.
+Tail-call handling, mutual recursion and short-circuit work are source-derived
+performance questions until measured.
+
+## Translation, inputs and validation
+
+The kernels are strict SML97. Recursive arithmetic operands follow SML's
+left-to-right evaluation instead of OCaml's usual right-to-left order; these
+pure kernels have no operand side effects, but call order/stack behavior can
+differ. Fixed checked runtime arguments replace launcher defaults/fallbacks.
+The original Sys.opaque_identity barrier is replaced by consumed, validated
+results rather than a new compiler primitive. Drivers record the additional
+checking/accumulation work. Literature anchors are the retained source links,
+Sandmark's suite sources, and the shared literature survey.
+
+[Complete provenance](rec_seq_evenodd/PROVENANCE.md).
+
+## rec_seq_motzkin
+
+Compute Motzkin numbers with unmemoized recursive products and sums.
+
+Sandmark `5605805954a00497ed197c930641cddd580e1507`, `benchmarks/multicore-effects/rec_seq_motzkin.ml`,
+executable `rec_seq_motzkin.exe`. Original source, executable-group dune manifest and
+SHA256 identities are retained. No individual author is stated in the source;
+the aggregate public-domain notice is retained in LICENSE. The sequential
+program uses no effects; its effect-based sibling remains separately inventoried
+with the required effect-handler runtime capability as its blocker.
+
+## Algorithm and variants
+
+Compute Motzkin numbers through repeated unmemoized recursive products.
+
+Preserve the n<=1 base case, recursive motz(n-1), ascending convolution
+sum, and repeated recursive products. No memoization or dynamic programming
+replaces this intentionally recursive kernel. Smoke/normal select one at 6 and
+two at 15; large preserves the original four at 21. All kernel results and original
+accumulators fit 31 bits. The SML driver consumes every repetition in an IntInf
+sum rather than discarding the original accumulator and printing only the last
+value. The combinatorial formula sum_k binomial(n,2k)*Catalan(k) independently
+gives 51/310572/142547559, and unchanged OCaml agrees. Summed fixtures are
+51/621144/570190236. The source links [OEIS A001006](https://oeis.org/A001006) and describes nonintersecting
+chords; those links/wording remain in the pristine source. Repeated calls,
+branching and intermediate integer lifetimes are hypotheses until measured.
+No universal large SML execution is claimed.
+
+## Translation, inputs and validation
+
+The kernels are strict SML97. Recursive arithmetic operands follow SML's
+left-to-right evaluation instead of OCaml's usual right-to-left order; these
+pure kernels have no operand side effects, but call order/stack behavior can
+differ. Fixed checked runtime arguments replace launcher defaults/fallbacks.
+The original Sys.opaque_identity barrier is replaced by consumed, validated
+results rather than a new compiler primitive. Drivers record the additional
+checking/accumulation work. Literature anchors are the retained source links,
+Sandmark's suite sources, and the shared literature survey.
+
+[Complete provenance](rec_seq_motzkin/PROVENANCE.md).
+
+## rec_seq_sudan
+
+Evaluate the nested Sudan recurrence with explicit wide integer values.
+
+Sandmark `5605805954a00497ed197c930641cddd580e1507`, `benchmarks/multicore-effects/rec_seq_sudan.ml`,
+executable `rec_seq_sudan.exe`. Original source, executable-group dune manifest and
+SHA256 identities are retained. No individual author is stated in the source;
+the aggregate public-domain notice is retained in LICENSE. The sequential
+program uses no effects; its effect-based sibling remains separately inventoried
+with the required effect-handler runtime capability as its blocker.
+
+## Algorithm and variants
+
+Evaluate the Sudan recurrence with explicit wide integer values.
+
+Preserve the order-zero sum, y=0 base case, shared inner result and
+nested recursive call. The original OCaml 63 -bit integer result 15569256417
+exceeds31 bits. Portable IntInf preserves the selected exact values on every
+SML host. This changes representation/allocation relative to OCaml's machine
+integers and is explicitly included; it is not an OCaml machine-integer timing
+comparison. All supported inputs (order/x/y from 0 to2) and repetition counts
+up to10000000 remain within the original 63 -bit result/accumulator range, so
+no modular overflow is lost. No broader unbounded OCaml equivalence is claimed.
+Smoke selects(1,1,2,2), normal(1000,2,2,2), and large preserves original
+(10000000,2,2,2). Every repetition is summed instead of discarding the original
+accumulator. The independently derived order-one identity
+F(1,x,y)=2^y*(x+2)-y-2 and iterative order-two substitution give12 and 15569256417;
+unchanged OCaml agrees with those individual values. Full fixtures are 12,
+15569256417000 and 155692564170000000. The source's Sudan-function link is retained.
+Wide arithmetic costs, nested calls, shared inner values and repeated execution
+are source-derived hypotheses until measured. No universal large execution is claimed.
+
+## Translation, inputs and validation
+
+The kernels are strict SML97. Recursive arithmetic operands follow SML's
+left-to-right evaluation instead of OCaml's usual right-to-left order; these
+pure kernels have no operand side effects, but call order/stack behavior can
+differ. Fixed checked runtime arguments replace launcher defaults/fallbacks.
+The original Sys.opaque_identity barrier is replaced by consumed, validated
+results rather than a new compiler primitive. Drivers record the additional
+checking/accumulation work. Literature anchors are the retained source links,
+Sandmark's suite sources, and the shared literature survey.
+
+[Complete provenance](rec_seq_sudan/PROVENANCE.md).
+
+## rec_seq_fib
+
+Compute strict Fibonacci with Sandmark's retained repetition profiles.
+
+Sandmark `5605805954a00497ed197c930641cddd580e1507`, `benchmarks/multicore-effects/rec_seq_fib.ml`,
+executable `rec_seq_fib.exe`.
+
+## Algorithm, history and variants
+
+Compute strict Fibonacci with Sandmark's retained repetition profiles.
+
+The individual author is not stated. The source, dune executable manifest,
+and SHA256 identities are retained alongside the aggregate public-domain notice.
+This is the sequential member; its effect-based sibling remains inventoried
+with effect-handler support as its blocker. SML97 follows left-to-right operand
+evaluation instead of OCaml's usual right-to-left evaluation. These kernels are
+pure, so values agree while call order/stack behavior can differ. Consumed
+runtime arguments/results replace Sys.opaque_identity without adding compiler
+features. Every repetition contributes to a checked IntInf sum rather than
+discarding the upstream accumulator and printing only its last value.
+
+## Translation, inputs and validation
+
+The 0/1 base cases and binary recurrence match classic MLton fib exactly.
+Both named drivers share one implementation in shared/fib.sml. This kernel is
+extracted unchanged from the existing classic port; the two upstream sources
+and launchers remain available. Smoke/normal use one call at 20 and two at 30;
+large preserves original four at 40, versus MLton's original 41. Kernel values
+and original accumulators fit 31 bits. Iterative Fibonacci independently gives
+6765/832040/102334155; unchanged OCaml agrees with the individual values.
+Summed fixtures are 6765/1664080/409336620. Exponential calls, strict operand
+order and stack behavior are source-derived questions until measured. See the
+classic Fibonacci provenance and the shared literature survey. Large SML
+execution is not universally claimed.
+
+[Complete provenance](rec_seq_fib/PROVENANCE.md).
+
+## rec_seq_tak
+
+Run the shared strict Takeuchi kernel with Sandmark's curried-source input profiles.
+
+Sandmark `5605805954a00497ed197c930641cddd580e1507`, `benchmarks/multicore-effects/rec_seq_tak.ml`,
+executable `rec_seq_tak.exe`.
+
+## Algorithm, history and variants
+
+Run the shared strict Takeuchi kernel with Sandmark's curried-source input profiles.
+
+The individual author is not stated. The source, dune executable manifest,
+and SHA256 identities are retained alongside the aggregate public-domain notice.
+This is the sequential member; its effect-based sibling remains inventoried
+with effect-handler support as its blocker. SML97 follows left-to-right operand
+evaluation instead of OCaml's usual right-to-left evaluation. These kernels are
+pure, so values agree while call order/stack behavior can differ. Consumed
+runtime arguments/results replace Sys.opaque_identity without adding compiler
+features. Every repetition contributes to a checked IntInf sum rather than
+discarding the upstream accumulator and printing only its last value.
+
+## Translation, inputs and validation
+
+The strict Takeuchi recurrence matches the classic kernel. The curried
+OCaml calls become tuple calls to shared/tak.sml, already used by classic
+and strict nofib ports. No duplicate algorithm implementation is added.
+Both source histories and their profiles remain. Smoke/normal use one call
+at(18,12,6) and(24,16,8); large preserves original(40,20,11), which differs
+from MLton's original(33,22,11). Inputs, intermediate values and accumulators
+fit 31 bits. An independent memoized recurrence supplies 7/9/12 while the
+benchmark remains unmemoized; unchanged OCaml supplies the same values.
+Calls, branching, evaluation order and input-shaped recursion are hypotheses
+until measured. Gabriel's recursive-benchmark survey is a family reference,
+not attribution of this particular source. Large SML execution is not
+universally claimed.
+
+[Complete provenance](rec_seq_tak/PROVENANCE.md).

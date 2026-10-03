@@ -1,0 +1,5 @@
+COUNT unbudgeted rec_seq_sudan normal rune
+COUNT unbudgeted rec_seq_sudan normal rune:opt
+COUNT unbudgeted rec_seq_sudan normal rune:new
+COUNT unbudgeted rec_seq_sudan normal rune:jit
+COUNT comparisons agree

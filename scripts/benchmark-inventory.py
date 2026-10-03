@@ -363,6 +363,15 @@ def classify(source, root, item, files, text):
             disposition, reason = "defer", "source uses OCaml-specific effects, concurrency, GC/weak-reference introspection, unsafe objects or C bindings; reconsider with equivalent runtime facilities"
         elif "multicore" in name or "parallel" in name or "multiprocess" in name or group in {"mpl", "multicore-gcroots", "multicore-structures", "multicore-grammatrix"}:
             disposition, reason = "defer", "parallel/runtime-specific executable; retain its original execution model"
+        if disposition == "import" and path in {
+                "benchmarks/multicore-effects/rec_seq_fib.exe",
+                "benchmarks/multicore-effects/rec_seq_tak.exe"}:
+            kernel = "fib" if name == "rec_seq_fib" else "tak"
+            reason = ("reviewed strict recurrence matches the classic " + kernel
+                      + " kernel; share one SML implementation and retain both provenances; "
+                      "keep this established executable name and its original input/repetition "
+                      "profiles, which differ from the classic launcher; document OCaml "
+                      "operand evaluation order and consumed repetition results")
     if source == "mlton" and name == "tak":
         milestone = "M1"
     if source == "mlkit" and path == "test/kittmergesort.sml":
@@ -450,7 +459,8 @@ def build(source, root, lock):
 
 
 def related(rows):
-    aliases = {"nucleic": "pseudoknot", "nucleic2": "pseudoknot", "DLXSimulator": "dlx", "smith-nf": "smith-normal-form", "kb": "knuth-bendix"}
+    aliases = {"nucleic": "pseudoknot", "nucleic2": "pseudoknot", "DLXSimulator": "dlx", "smith-nf": "smith-normal-form", "kb": "knuth-bendix",
+               "rec_seq_fib": "fib", "rec_seq_tak": "tak", "rec_seq_evenodd": "even-odd"}
     groups = collections.defaultdict(list)
     for row in rows:
         base = re.sub(r"_(smlnj|mlton|tp|no_basislib)$", "", row["name"])

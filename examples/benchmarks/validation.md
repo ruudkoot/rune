@@ -550,3 +550,38 @@ language fixtures per compiler, performance budgets and bootstrap, and bytecode
 agreement for 498 programs across all seven builds. runedoc and runeopt builds
 also agree. The [complete acceptance transcript](validation/oct03-power-shootout-acceptance.log)
 records this run; all 32 inventory tests pass.
+
+## M5 sequential recursive controls, 2026-10-03
+
+Five Sandmark ports add even/odd, Fibonacci, Motzkin, Sudan and Takeuchi.
+Together with the earlier Ackermann port, all six sequential recursive controls
+are covered. Their effect-based siblings remain deferred. The catalogue has
+187 programs and 555 profiles; M5 remains in progress for the other workloads.
+
+[The recorded ledger](results/m5-recursive/correctness.tsv) has 144 successful
+runs: 120 for the five ports and 24 for the classic Fibonacci kernel extracted
+unchanged into shared/fib.sml. Smoke/normal pass on four Rune engines at both
+levels and four primary managed native hosts. Complete stdout and compilation
+logs are retained. Fibonacci and Takeuchi share kernels while preserving the
+Sandmark source, established names and original input/repetition profiles.
+
+Independent iterative Fibonacci, memoized Takeuchi, binomial/Catalan Motzkin
+counts and a closed-form Sudan identity agree with the fixtures. Original
+OCaml programs validate individual smoke/normal results and the recorded
+Fibonacci/Motzkin/Takeuchi large results. Sudan's wide values use portable
+IntInf within the original selected 63-bit range; its changed representation
+is explicit. Each repetition contributes to the result. SML operand order,
+added accumulation and optional original optimization barriers are documented.
+No universal large SML execution is claimed.
+
+Separate [count archives](results/m5-recursive/README.md) retain source/input
+snapshots, metadata and all samples. All allocation and applicable instruction
+comparisons agree. The pinned Sandmark rebuild preserves every source identity
+and disposition while adding reviewed kernel relationships; all 32 inventory
+tests pass. M2's stale introductory status is corrected in the roadmap.
+
+The full `make JOBS=4 check` passes, including all 555 catalogue profiles,
+331 language fixtures per compiler, performance budgets, bootstrap and bytecode
+agreement for 498 programs across seven builds. runedoc and runeopt also agree.
+The [acceptance transcript](validation/oct03-sandmark-recursive-acceptance.log)
+records the complete run.

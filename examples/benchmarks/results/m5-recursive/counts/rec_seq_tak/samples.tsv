@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+rec_seq_tak	normal	rune	O2	compile	0	0	pass	1.13	1.01	0.12	135076	-	-	-	rec_seq_tak/rune/build/compile
+rec_seq_tak	normal	rune	O2	correctness	0	0	pass	0.09	0.08	0.00	2292	27438499	21216	562	rec_seq_tak/rune/correctness.0
+rec_seq_tak	normal	rune	O2	count	1	1	pass	0.07	0.07	0.00	2348	27438499	21216	562	rec_seq_tak/rune/fresh.1
+rec_seq_tak	normal	rune:opt	O2	compile	0	0	pass	1.22	1.12	0.10	135188	-	-	-	rec_seq_tak/rune-opt/build/compile
+rec_seq_tak	normal	rune:opt	O2	native-compile	0	0	pass	0.31	0.12	0.04	12196	-	-	-	rec_seq_tak/rune-opt/build/native-compile
+rec_seq_tak	normal	rune:opt	O2	correctness	0	0	pass	0.02	0.02	0.00	2664	27438499	21216	562	rec_seq_tak/rune-opt/correctness.0
+rec_seq_tak	normal	rune:opt	O2	count	1	1	pass	0.02	0.02	0.00	2792	27438499	21216	562	rec_seq_tak/rune-opt/fresh.1
+rec_seq_tak	normal	rune:new	O2	compile	0	0	pass	1.24	1.14	0.10	135260	-	-	-	rec_seq_tak/rune-new/build/compile
+rec_seq_tak	normal	rune:new	O2	correctness	0	0	pass	0.10	0.10	0.00	2464	14967143	21216	562	rec_seq_tak/rune-new/correctness.0
+rec_seq_tak	normal	rune:new	O2	count	1	1	pass	0.07	0.07	0.00	2372	14967143	21216	562	rec_seq_tak/rune-new/fresh.1
+rec_seq_tak	normal	rune:jit	O2	compile	0	0	pass	1.15	1.07	0.08	135260	-	-	-	rec_seq_tak/rune-jit/build/compile
+rec_seq_tak	normal	rune:jit	O2	correctness	0	0	pass	0.03	0.02	0.00	3324	14967143	21216	562	rec_seq_tak/rune-jit/correctness.0
+rec_seq_tak	normal	rune:jit	O2	count	1	1	pass	0.04	0.03	0.00	3328	14967143	21216	562	rec_seq_tak/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

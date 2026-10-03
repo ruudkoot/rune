@@ -1,0 +1,1 @@
+rec_seq_tak	600	4194304	shared/input.sml shared/tak.sml rec_seq_tak/benchmark.sml shared/main.sml	1 24 16 8	rec_seq_tak/normal.expected	-

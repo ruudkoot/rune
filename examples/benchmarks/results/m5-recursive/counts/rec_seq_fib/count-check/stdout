@@ -1,0 +1,5 @@
+COUNT unbudgeted rec_seq_fib normal rune
+COUNT unbudgeted rec_seq_fib normal rune:opt
+COUNT unbudgeted rec_seq_fib normal rune:new
+COUNT unbudgeted rec_seq_fib normal rune:jit
+COUNT comparisons agree

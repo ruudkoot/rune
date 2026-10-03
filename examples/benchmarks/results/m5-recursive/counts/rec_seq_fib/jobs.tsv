@@ -1,0 +1,1 @@
+rec_seq_fib	600	4194304	shared/input.sml shared/fib.sml rec_seq_fib/benchmark.sml shared/main.sml	2 30	rec_seq_fib/normal.expected	-

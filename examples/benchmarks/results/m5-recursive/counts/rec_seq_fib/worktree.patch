@@ -1,0 +1,49 @@
+diff --git a/examples/benchmarks/fib/benchmark.sml b/examples/benchmarks/fib/benchmark.sml
+index 63d6615..cfa0881 100644
+--- a/examples/benchmarks/fib/benchmark.sml
++++ b/examples/benchmarks/fib/benchmark.sml
+@@ -3,7 +3,7 @@
+ structure Benchmark =
+ struct
+   val name = "fib"
+-  fun fib 0 = 0 | fib 1 = 1 | fib n = fib (n - 1) + fib (n - 2)
++  val fib = BenchFib.fib
+   fun run [size, reps] =
+         let val n = BenchInput.between (0, 44) (BenchInput.integer size)
+             val count = BenchInput.between (1, 10000) (BenchInput.integer reps)
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 7404f86..7db78da 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -14,9 +14,9 @@ primes-strict	large	nofib	imaginary/primes	400 100	primes-strict/large.expected
+ bdd	smoke	sandmark	benchmarks/bdd/bdd.exe	8 100	bdd/smoke.expected	shared/input.sml,bdd/benchmark.sml,shared/main.sml	30	1048576	symbolic-search,arrays,allocation-lifetimes,pilot	-	exact	implemented
+ bdd	normal	sandmark	benchmarks/bdd/bdd.exe	18 100	bdd/normal.expected	shared/input.sml,bdd/benchmark.sml,shared/main.sml	600	4194304	symbolic-search,arrays,allocation-lifetimes,pilot	-	exact	implemented
+ bdd	large	sandmark	benchmarks/bdd/bdd.exe	22 100	bdd/large.expected	shared/input.sml,bdd/benchmark.sml,shared/main.sml	3600	8388608	symbolic-search,arrays,allocation-lifetimes,pilot	-	exact	implemented
+-fib	smoke	mlton	benchmark/tests/fib.sml	20 1	fib/smoke.expected	shared/input.sml,fib/benchmark.sml,shared/main.sml	30	1048576	calls-recursion,m2-core	-	exact	implemented
+-fib	normal	mlton	benchmark/tests/fib.sml	30 1	fib/normal.expected	shared/input.sml,fib/benchmark.sml,shared/main.sml	600	4194304	calls-recursion,m2-core	-	exact	implemented
+-fib	large	mlton	benchmark/tests/fib.sml	41 1	fib/large.expected	shared/input.sml,fib/benchmark.sml,shared/main.sml	3600	8388608	calls-recursion,m2-core	-	exact	implemented
++fib	smoke	mlton	benchmark/tests/fib.sml	20 1	fib/smoke.expected	shared/input.sml,shared/fib.sml,fib/benchmark.sml,shared/main.sml	30	1048576	calls-recursion,m2-core	-	exact	implemented
++fib	normal	mlton	benchmark/tests/fib.sml	30 1	fib/normal.expected	shared/input.sml,shared/fib.sml,fib/benchmark.sml,shared/main.sml	600	4194304	calls-recursion,m2-core	-	exact	implemented
++fib	large	mlton	benchmark/tests/fib.sml	41 1	fib/large.expected	shared/input.sml,shared/fib.sml,fib/benchmark.sml,shared/main.sml	3600	8388608	calls-recursion,m2-core	-	exact	implemented
+ tailfib	smoke	mlton	benchmark/tests/tailfib.sml	20 1	tailfib/smoke.expected	shared/input.sml,tailfib/benchmark.sml,shared/main.sml	30	1048576	calls-recursion,m2-core	-	exact	implemented
+ tailfib	normal	mlton	benchmark/tests/tailfib.sml	44 1000	tailfib/normal.expected	shared/input.sml,tailfib/benchmark.sml,shared/main.sml	600	4194304	calls-recursion,m2-core	-	exact	implemented
+ tailfib	large	mlton	benchmark/tests/tailfib.sml	44 1000000	tailfib/large.expected	shared/input.sml,tailfib/benchmark.sml,shared/main.sml	3600	8388608	calls-recursion,m2-core	-	exact	implemented
+@@ -539,3 +539,18 @@ fasta	large	nofib	shootout/fasta	750000 expected/large.txt	fasta/large.expected
+ reverse-complement	smoke	nofib	shootout/reverse-complement	DATA/smoke.fasta expected/smoke.fasta	reverse-complement/smoke.expected	reverse-complement/benchmark.sml,shared/main.sml	30	1048576	dna,mutable-arrays,buffers	DATA/smoke.fasta,expected/smoke.fasta	exact	implemented
+ reverse-complement	normal	nofib	shootout/reverse-complement	DATA/normal.fasta expected/normal.fasta	reverse-complement/normal.expected	reverse-complement/benchmark.sml,shared/main.sml	600	4194304	dna,mutable-arrays,buffers	DATA/normal.fasta,expected/normal.fasta	exact	implemented
+ reverse-complement	large	nofib	shootout/reverse-complement	DATA/large.fasta expected/large.fasta	reverse-complement/large.expected	reverse-complement/benchmark.sml,shared/main.sml	3600	8388608	dna,mutable-arrays,buffers	DATA/large.fasta,expected/large.fasta	exact	implemented
++rec_seq_evenodd	smoke	sandmark	benchmarks/multicore-effects/rec_seq_evenodd.exe	1 33	rec_seq_evenodd/smoke.expected	shared/input.sml,rec_seq_evenodd/benchmark.sml,shared/main.sml	30	1048576	calls-recursion,sequential-control	-	exact	implemented
++rec_seq_evenodd	normal	sandmark	benchmarks/multicore-effects/rec_seq_evenodd.exe	2 100000	rec_seq_evenodd/normal.expected	shared/input.sml,rec_seq_evenodd/benchmark.sml,shared/main.sml	600	4194304	calls-recursion,sequential-control	-	exact	implemented
++rec_seq_evenodd	large	sandmark	benchmarks/multicore-effects/rec_seq_evenodd.exe	2 500000000	rec_seq_evenodd/large.expected	shared/input.sml,rec_seq_evenodd/benchmark.sml,shared/main.sml	3600	8388608	calls-recursion,sequential-control	-	exact	implemented
++rec_seq_motzkin	smoke	sandmark	benchmarks/multicore-effects/rec_seq_motzkin.exe	1 6	rec_seq_motzkin/smoke.expected	shared/input.sml,rec_seq_motzkin/benchmark.sml,shared/main.sml	30	1048576	calls-recursion,sequential-control	-	exact	implemented
++rec_seq_motzkin	normal	sandmark	benchmarks/multicore-effects/rec_seq_motzkin.exe	2 15	rec_seq_motzkin/normal.expected	shared/input.sml,rec_seq_motzkin/benchmark.sml,shared/main.sml	600	4194304	calls-recursion,sequential-control	-	exact	implemented
++rec_seq_motzkin	large	sandmark	benchmarks/multicore-effects/rec_seq_motzkin.exe	4 21	rec_seq_motzkin/large.expected	shared/input.sml,rec_seq_motzkin/benchmark.sml,shared/main.sml	3600	8388608	calls-recursion,sequential-control	-	exact	implemented
++rec_seq_sudan	smoke	sandmark	benchmarks/multicore-effects/rec_seq_sudan.exe	1 1 2 2	rec_seq_sudan/smoke.expected	shared/input.sml,rec_seq_sudan/benchmark.sml,shared/main.sml	30	1048576	calls-recursion,sequential-control	-	exact	implemented
++rec_seq_sudan	normal	sandmark	benchmarks/multicore-effects/rec_seq_sudan.exe	1000 2 2 2	rec_seq_sudan/normal.expected	shared/input.sml,rec_seq_sudan/benchmark.sml,shared/main.sml	600	4194304	calls-recursion,sequential-control	-	exact	implemented
++rec_seq_sudan	large	sandmark	benchmarks/multicore-effects/rec_seq_sudan.exe	10000000 2 2 2	rec_seq_sudan/large.expected	shared/input.sml,rec_seq_sudan/benchmark.sml,shared/main.sml	3600	8388608	calls-recursion,sequential-control	-	exact	implemented
++rec_seq_fib	smoke	sandmark	benchmarks/multicore-effects/rec_seq_fib.exe	1 20	rec_seq_fib/smoke.expected	shared/input.sml,shared/fib.sml,rec_seq_fib/benchmark.sml,shared/main.sml	30	1048576	calls-recursion,sequential-control	-	exact	implemented
++rec_seq_fib	normal	sandmark	benchmarks/multicore-effects/rec_seq_fib.exe	2 30	rec_seq_fib/normal.expected	shared/input.sml,shared/fib.sml,rec_seq_fib/benchmark.sml,shared/main.sml	600	4194304	calls-recursion,sequential-control	-	exact	implemented
++rec_seq_fib	large	sandmark	benchmarks/multicore-effects/rec_seq_fib.exe	4 40	rec_seq_fib/large.expected	shared/input.sml,shared/fib.sml,rec_seq_fib/benchmark.sml,shared/main.sml	3600	8388608	calls-recursion,sequential-control	-	exact	implemented
++rec_seq_tak	smoke	sandmark	benchmarks/multicore-effects/rec_seq_tak.exe	1 18 12 6	rec_seq_tak/smoke.expected	shared/input.sml,shared/tak.sml,rec_seq_tak/benchmark.sml,shared/main.sml	30	1048576	calls-recursion,sequential-control	-	exact	implemented
++rec_seq_tak	normal	sandmark	benchmarks/multicore-effects/rec_seq_tak.exe	1 24 16 8	rec_seq_tak/normal.expected	shared/input.sml,shared/tak.sml,rec_seq_tak/benchmark.sml,shared/main.sml	600	4194304	calls-recursion,sequential-control	-	exact	implemented
++rec_seq_tak	large	sandmark	benchmarks/multicore-effects/rec_seq_tak.exe	1 40 20 11	rec_seq_tak/large.expected	shared/input.sml,shared/tak.sml,rec_seq_tak/benchmark.sml,shared/main.sml	3600	8388608	calls-recursion,sequential-control	-	exact	implemented

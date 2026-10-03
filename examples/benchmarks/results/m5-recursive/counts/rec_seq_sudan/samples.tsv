@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+rec_seq_sudan	normal	rune	O2	compile	0	0	pass	1.18	1.08	0.09	135108	-	-	-	rec_seq_sudan/rune/build/compile
+rec_seq_sudan	normal	rune	O2	correctness	0	0	pass	0.15	0.15	0.00	10404	40534601	62694888	1794611	rec_seq_sudan/rune/correctness.0
+rec_seq_sudan	normal	rune	O2	count	1	1	pass	0.16	0.15	0.00	10444	40534601	62694888	1794611	rec_seq_sudan/rune/fresh.1
+rec_seq_sudan	normal	rune:opt	O2	compile	0	0	pass	1.21	1.10	0.10	135296	-	-	-	rec_seq_sudan/rune-opt/build/compile
+rec_seq_sudan	normal	rune:opt	O2	native-compile	0	0	pass	0.31	0.12	0.03	12256	-	-	-	rec_seq_sudan/rune-opt/build/native-compile
+rec_seq_sudan	normal	rune:opt	O2	correctness	0	0	pass	0.06	0.06	0.00	10780	40534601	62694888	1794611	rec_seq_sudan/rune-opt/correctness.0
+rec_seq_sudan	normal	rune:opt	O2	count	1	1	pass	0.06	0.06	0.00	10844	40534601	62694888	1794611	rec_seq_sudan/rune-opt/fresh.1
+rec_seq_sudan	normal	rune:new	O2	compile	0	0	pass	1.31	1.25	0.05	135240	-	-	-	rec_seq_sudan/rune-new/build/compile
+rec_seq_sudan	normal	rune:new	O2	correctness	0	0	pass	0.14	0.14	0.00	10544	23660650	62694888	1794611	rec_seq_sudan/rune-new/correctness.0
+rec_seq_sudan	normal	rune:new	O2	count	1	1	pass	0.18	0.17	0.00	10444	23660650	62694888	1794611	rec_seq_sudan/rune-new/fresh.1
+rec_seq_sudan	normal	rune:jit	O2	compile	0	0	pass	1.14	1.09	0.04	135348	-	-	-	rec_seq_sudan/rune-jit/build/compile
+rec_seq_sudan	normal	rune:jit	O2	correctness	0	0	pass	0.06	0.05	0.00	11560	23660650	62694888	1794611	rec_seq_sudan/rune-jit/correctness.0
+rec_seq_sudan	normal	rune:jit	O2	count	1	1	pass	0.06	0.05	0.00	11560	23660650	62694888	1794611	rec_seq_sudan/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check
