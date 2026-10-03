@@ -651,6 +651,175 @@ static NOINLINE void k_micro(int64_t n) {
     heap_reset(); ROOT_RESET(mark);
 }
 
+/* ================= a lazy front end's kernels =================
+   No lazy program runs on Rune: these stand in for one
+   (docs/plans/heap-layout.md, *A lazy front end* and M4). What a lazy value
+   is, and how it is forced, is harness.h's. */
+enum { TH_CON = 0, TH_FROM, TH_FILTER, TH_SIEVE, TH_COUNT };
+
+/* datatype t = A of int | B of int * int * int | C of int * int * int * int:
+   three constructors, each with a header */
+static NOINLINE val t_new(int64_t seed) {
+    int tag = (int)(seed % 3);
+    uint32_t n = tag == 0 ? 1 : tag == 1 ? 3 : 4;
+    size_t sz = alloc_size(K_CON, tag, n);
+    GUARD0(sz);
+    obj *o = alloc(K_CON, tag, n, 0);
+    for (uint32_t i = 0; i < n; i++) FIELDS(o)[i] = MONO_INT(seed + i);
+    return EVALUATED(ptr_val(o));
+}
+static val th_con(obj *t) { return t_new(MONO_INT_OF(field_get(t, 0))); }
+
+/* case v of A x => x | B (_, y, _) => 3 * y | C (_, _, _, z) => ~z */
+ALWAYS_INLINE int64_t t_case(val v) {
+    obj *o = ptr_of(v);
+    switch (obj_contag(o)) {
+    case 0: return MONO_INT_OF(field_get(o, 0));
+    case 1: return MONO_INT_OF(field_get(o, 1)) * 3;
+    default: return -MONO_INT_OF(field_get(o, 3));
+    }
+}
+/* Three ways for a case to know its scrutinee is a value. By the header:
+   its kind says a value, an indirection or a thunk. */
+ALWAYS_INLINE val whnf_header(val v) {
+    if (LIKELY(obj_kind(ptr_of(v)) == K_CON)) return v;
+    return lazy_whnf_slow(v);
+}
+/* By the pointer's code, where the layout keeps one for "evaluated"
+   (EVAL_CODE); elsewhere this is the header's way again. */
+ALWAYS_INLINE val whnf_code(val v) {
+#ifdef EVAL_CODE
+    if (LIKELY((v & 6) == EVAL_CODE)) return v;
+    return lazy_whnf_slow(v);
+#else
+    return whnf_header(v);
+#endif
+}
+/* By entering it, as GHC did before 2007 (Marlow, Yakushev & Peyton Jones,
+   "Faster laziness using dynamic pointer tagging"): an indirect call
+   through what the object is, which returns at once for a value. */
+typedef val (*enterfn)(val v);
+static val enter_value(val v) { return v; }
+static val enter_other(val v) { return lazy_whnf_slow(v); }
+static enterfn entertab[16] = { [K_CON] = enter_value, [K_THUNK] = enter_other, [K_IND] = enter_other };
+static enterfn *volatile entertab_p = entertab;
+ALWAYS_INLINE val whnf_enter(val v) { enterfn *t = entertab_p; return t[obj_kind(ptr_of(v))](v); }
+
+#define LAZY_N (1u << 14)
+#define LAZY_SCAN(NAME, WHNF) \
+static NOINLINE int64_t NAME(val *as, uint32_t n) { \
+    int64_t acc = 0; \
+    for (uint32_t i = 0; i < n; i++) acc += t_case(WHNF(array_get(ptr_of(*as), i))); \
+    return acc; \
+}
+LAZY_SCAN(scan_header, whnf_header)
+LAZY_SCAN(scan_code, whnf_code)
+LAZY_SCAN(scan_enter, whnf_enter)
+
+/* An array of LAZY_N values of t, scanned by a case round after round;
+   before each round `share` percent of its elements, picked at random, are
+   made thunks again. So of a round's scrutinees share percent are thunks,
+   those of the round before are indirections until a collection takes them
+   out, and the rest are values. */
+static void lazy_case(int64_t n, int64_t (*scan)(val *, uint32_t), unsigned share) {
+    ROOT_MARK_T mark = ROOT_MARK();
+    int64_t rounds = n / LAZY_N; if (rounds < 1) rounds = 1;
+    val *as = PROOT_PUSH(ptr_val(array_new(LAZY_N, NIL, 1)));
+    for (uint32_t i = 0; i < LAZY_N; i++) { val v = t_new(i); array_set(ptr_of(*as), i, v); }
+    uint64_t seed = 88172645463325252ULL;
+    int64_t acc = 0;
+    for (int64_t r = 0; r < rounds; r++) {
+        if (share)
+            for (uint32_t i = 0; i < LAZY_N; i++)
+                if (xorshift64(&seed) % 100 < share) {
+                    val th = thunk_new1(TH_CON, MONO_INT((int64_t)i + r), 0);
+                    array_set(ptr_of(*as), i, th);
+                }
+        acc += scan(as, LAZY_N);
+    }
+    ck_add((uint64_t)acc);
+    ROOT_RESET(mark);
+}
+#define LAZY_CASE(WAY, SHARE) static NOINLINE void k_lazy_case_##WAY##SHARE(int64_t n) { lazy_case(n, scan_##WAY, SHARE); }
+LAZY_CASE(header, 0) LAZY_CASE(header, 1) LAZY_CASE(header, 10) LAZY_CASE(header, 50)
+LAZY_CASE(code, 0) LAZY_CASE(code, 1) LAZY_CASE(code, 10) LAZY_CASE(code, 50)
+LAZY_CASE(enter, 0) LAZY_CASE(enter, 1) LAZY_CASE(enter, 10) LAZY_CASE(enter, 50)
+
+/* A stream of ints whose every tail is a suspension -- Cons of int * stream
+   susp, two fields: a headerless pair under -DPAIRS -- and the sieve over
+   it: every element taken forces a thunk for each prime before it, each
+   updated with a cell that holds the next thunk. The update path, the
+   indirections a collection takes out, and the bytes they hold until then. */
+ALWAYS_INLINE val stream_cons(int64_t x, val tl) { return mk_pair(K_CON, 0, MONO_INT(x), tl, 2); }
+/* from n = Cons (n, delay (fn () => from (n + 1))) */
+static val th_from(obj *t) {
+    int64_t n = MONO_INT_OF(field_get(t, 0));
+    return stream_cons(n, thunk_new1(TH_FROM, MONO_INT(n + 1), 0));
+}
+/* filter p s: the first x of s that p does not divide, and the rest filtered */
+static val th_filter(obj *t) {
+    int64_t p = MONO_INT_OF(field_get(t, 0));
+    val s = field_get(t, 1);
+    for (;;) {
+        val c = lazy_whnf(s);
+        int64_t x = MONO_INT_OF(pair_get(c, 0));
+        val rest = pair_get(c, 1);
+        if (x % p != 0) return stream_cons(x, thunk_new2(TH_FILTER, MONO_INT(p), rest));
+        s = rest;
+    }
+}
+/* sieve (Cons (p, s)) = Cons (p, delay (fn () => sieve (filter p s))) */
+static val th_sieve(obj *t) {
+    val c = lazy_whnf(field_get(t, 0));
+    int64_t p = MONO_INT_OF(pair_get(c, 0));
+    val f = thunk_new2(TH_FILTER, MONO_INT(p), pair_get(c, 1));
+    return stream_cons(p, thunk_new1(TH_SIEVE, f, 1));
+}
+thunkfn thunktab[TH_COUNT] = { th_con, th_from, th_filter, th_sieve };
+thunkfn *volatile thunktab_p = thunktab;
+
+static NOINLINE void k_lazy_stream(int64_t n) {
+    ROOT_MARK_T mark = ROOT_MARK();
+    val from = thunk_new1(TH_FROM, MONO_INT(2), 0);
+    val *s = PROOT_PUSH(thunk_new1(TH_SIEVE, from, 1));
+    int64_t sum = 0, last = 0;
+    for (int64_t i = 0; i < n; i++) {
+        val c = lazy_whnf(*s);
+        last = MONO_INT_OF(pair_get(c, 0));
+        sum += last;
+        *s = pair_get(c, 1);
+    }
+    ck_add((uint64_t)sum); ck_add((uint64_t)last);
+    ROOT_RESET(mark);
+}
+
+/* Old thunks given young values: LAZY_N suspensions that have survived a
+   collection, forced in an order of its own. Every update stores a pointer
+   to a fresh value into an old object, which a generational collector must
+   remember: the count is printed (old to young), and with -DBARRIER_CARD
+   the cards the updates dirty. */
+static NOINLINE void k_lazy_update_old(int64_t n) {
+    ROOT_MARK_T mark = ROOT_MARK();
+    int64_t rounds = n / LAZY_N; if (rounds < 1) rounds = 1;
+    val *as = PROOT_PUSH(ptr_val(array_new(LAZY_N, NIL, 1)));
+    uint64_t seed = 0x9E3779B97F4A7C15ULL;
+    int64_t acc = 0;
+    for (int64_t r = 0; r < rounds; r++) {
+        for (uint32_t i = 0; i < LAZY_N; i++) {
+            val th = thunk_new1(TH_CON, MONO_INT((int64_t)i + r), 0);
+            array_set(ptr_of(*as), i, th);
+        }
+        gc_collect(0);   /* the thunks are old now */
+        uint32_t stride = (uint32_t)xorshift64(&seed) | 1u, at = (uint32_t)xorshift64(&seed);
+        for (uint32_t k = 0; k < LAZY_N; k++) {
+            at += stride;
+            acc += t_case(lazy_whnf(array_get(ptr_of(*as), at & (LAZY_N - 1))));
+        }
+    }
+    ck_add((uint64_t)acc);
+    ROOT_RESET(mark);
+}
+
 /* ================= the table ================= */
 typedef struct { const char *name; void (*fn)(int64_t); int64_t n; unsigned semispace_mib; } kernel_def;
 static const kernel_def kernels[] = {
@@ -668,5 +837,19 @@ static const kernel_def kernels[] = {
     { "gc_churn8",    k_gc_churn8,    200000,   64 },
     { "gc_churn64",   k_gc_churn64,   200000,   128 },
     { "micro",        k_micro,        20000000, 64 },
+    { "lazy_case_header0",  k_lazy_case_header0,  160000000, 64 },
+    { "lazy_case_header1",  k_lazy_case_header1,  100000000, 64 },
+    { "lazy_case_header10", k_lazy_case_header10, 40000000,  64 },
+    { "lazy_case_header50", k_lazy_case_header50, 12000000,  64 },
+    { "lazy_case_code0",    k_lazy_case_code0,    160000000, 64 },
+    { "lazy_case_code1",    k_lazy_case_code1,    100000000, 64 },
+    { "lazy_case_code10",   k_lazy_case_code10,   40000000,  64 },
+    { "lazy_case_code50",   k_lazy_case_code50,   12000000,  64 },
+    { "lazy_case_enter0",   k_lazy_case_enter0,   160000000, 64 },
+    { "lazy_case_enter1",   k_lazy_case_enter1,   100000000, 64 },
+    { "lazy_case_enter10",  k_lazy_case_enter10,  40000000,  64 },
+    { "lazy_case_enter50",  k_lazy_case_enter50,  12000000,  64 },
+    { "lazy_stream",        k_lazy_stream,        6000,      64 },
+    { "lazy_update_old",    k_lazy_update_old,    8000000,   64 },
     { NULL, NULL, 0, 0 }
 };

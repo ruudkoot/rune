@@ -51,5 +51,17 @@ int main(int argc, char **argv) {
            (unsigned long long)total_cycles, (unsigned long long)gc_cycles, share);
     fprintf(stderr, "# %s %s: gc_count %llu copied %llu MiB semispace %zu MiB\n", LAYOUT_NAME, kd->name,
             (unsigned long long)gc_count, (unsigned long long)(gc_bytes_copied >> 20), semi >> 20);
+    if (lazy_forced) {
+        /* a lazy kernel: the thunks forced, the indirections the collections
+           took out (by reference) and the bytes they held until then, and the
+           updates that stored a young value into an old thunk */
+        unsigned long long cards = 0;
+#ifdef BARRIER_CARD
+        for (size_t i = 0; i < sizeof card_table; i++) cards += card_table[i] != 0;
+#endif
+        fprintf(stderr, "# %s %s: forced %llu ind_out %llu ind_bytes %llu old_to_young %llu cards %llu\n", LAYOUT_NAME, kd->name,
+                (unsigned long long)lazy_forced, (unsigned long long)gc_ind_skipped, (unsigned long long)gc_ind_bytes,
+                (unsigned long long)lazy_old_to_young, cards);
+    }
     return 0;
 }

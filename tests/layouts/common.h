@@ -13,7 +13,10 @@
 /* vm.h's ObjKind, plus K_BOX: one raw 8-byte payload (a real in L1/L2, a
    64-bit int/word in L1/L2/L3, an int/real at a polymorphic position in
    L4); the collector never scans a box's payload. */
-enum { K_TUPLE = 1, K_CON, K_CLOSURE, K_STRING, K_REF, K_ARRAY, K_EXN, K_EXNCON, K_FORWARD, K_BOX };
+enum { K_TUPLE = 1, K_CON, K_CLOSURE, K_STRING, K_REF, K_ARRAY, K_EXN, K_EXNCON, K_FORWARD, K_BOX,
+       /* a lazy front end's two (docs/plans/heap-layout.md, *A lazy front end*):
+          a suspension, and what it becomes once it has its value */
+       K_THUNK, K_IND };
 
 #define LIKELY(x) __builtin_expect(!!(x), 1)
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)

@@ -184,4 +184,79 @@ ALWAYS_INLINE val closure_call(val clo, val arg) {
     fnptr *t = fntab_p;
     return t[fn](c, arg);
 }
+
+/* ---- suspensions, for a lazy front end (docs/plans/heap-layout.md, *A lazy
+   front end*). A lazy value is a pointer to a thunk (K_THUNK: the index of
+   its code in the header's tag, then its free variables, one at least), to
+   an indirection (K_IND: what a thunk becomes once it has its value, in
+   field 0, until a collection takes the indirection out), or to the value
+   itself. Where the layout keeps a pointer code for it (L1 with -DPAIRS
+   -DPAIR_CODES=2: EVAL_CODE), a pointer to a value with a header carries
+   the code, and a pair's own code says as much: a case rules a thunk out
+   without the header. A thunk's code is given the thunk, reads its free
+   variables before it allocates, and returns the value, evaluated. ---- */
+#ifdef EVAL_CODE
+#define EVALUATED(v) ((v) | EVAL_CODE)
+#else
+#define EVALUATED(v) (v)
+#endif
+typedef val (*thunkfn)(obj *thunk);
+extern thunkfn thunktab[];
+extern thunkfn *volatile thunktab_p;
+static uint64_t lazy_forced, lazy_old_to_young;
+
+static NOINLINE val thunk_new1(int code, val fv, int isptr) {
+    size_t sz = alloc_size(K_THUNK, code, 1);
+    GUARD1(sz, fv, isptr);
+    obj *o = alloc(K_THUNK, code, 1, isptr ? 1u : 0u);
+    FIELDS(o)[0] = fv;
+    return ptr_val(o);
+}
+/* a MONO int and a pointer */
+static NOINLINE val thunk_new2(int code, val k, val p) {
+    size_t sz = alloc_size(K_THUNK, code, 2);
+    GUARD2(sz, k, 0, p, 1);
+    obj *o = alloc(K_THUNK, code, 2, 2u);
+    FIELDS(o)[0] = k; FIELDS(o)[1] = p;
+    return ptr_val(o);
+}
+/* the update: the thunk becomes an indirection to its value. The store is
+   the write barrier's (field_set): an old thunk given a young value is what
+   a lazy program gives a generational collector to remember. */
+ALWAYS_INLINE void thunk_update(obj *t, val v) {
+    obj_become_ind(t);
+    field_set(t, 0, v);
+    if ((char *)t < gc_old_limit && is_ptr(v) && (char *)ptr_of(v) >= gc_old_limit) lazy_old_to_young++;
+}
+static NOINLINE val lazy_force(val t) {
+    val *ts = PROOT_PUSH(t);
+    thunkfn *tab = thunktab_p;
+    val v = tab[obj_contag(ptr_of(t))](ptr_of(t));
+    thunk_update(ptr_of(*ts), v);
+    ROOT_POP();
+    lazy_forced++;
+    return v;
+}
+/* to weak head normal form by the header: a value, or through the
+   indirections to one, or the thunk forced */
+static NOINLINE val lazy_whnf_slow(val v) {
+    for (;;) {
+        obj *o = ptr_of(v);
+        int k = obj_kind(o);
+        if (k == K_IND) { v = field_get(o, 0); if (!is_ptr(v)) return v; continue; }
+        if (k == K_THUNK) return lazy_force(v);
+        return v;
+    }
+}
+/* the same as a program would do it for a value of any lazy type: a pair's
+   code is a value's; else the header */
+ALWAYS_INLINE val lazy_whnf(val v) {
+#ifdef PAIRS
+    if (v & 6) return v;
+#endif
+    obj *o = ptr_of(v);
+    int k = obj_kind(o);
+    if (LIKELY(k != K_IND && k != K_THUNK)) return v;
+    return lazy_whnf_slow(v);
+}
 #endif
