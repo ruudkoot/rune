@@ -89,10 +89,10 @@ static inline int prim_fast(int prim, uint32_t n, const Value *base, const uint8
     /* `=` on two values that are neither pointers nor reals: tags and bits */
     case PRIM_poly_eq:
         if (val_is(*x, T_PTR) || val_is(*y, T_PTR) || val_is(*x, T_REAL) || val_is(*y, T_REAL)) return 0;
-        r = mk_bool(val_tag(*x) == val_tag(*y) && val_imm(*x) == val_imm(*y)); break;
+        r = mk_bool(val_same_imm(*x, *y)); break;
     case PRIM_imm_eq:
         if (val_is(*x, T_PTR) || val_is(*y, T_PTR)) return 0;
-        r = mk_bool(val_tag(*x) == val_tag(*y) && val_imm(*x) == val_imm(*y)); break;
+        r = mk_bool(val_same_imm(*x, *y)); break;
 
     case PRIM_int_add: { INT2; int64_t v; if (!fast_add(val_imm(*x), val_imm(*y), &v) || !int_fits(v)) return 0; r = mk_int(v); break; }
     case PRIM_int_sub: { INT2; int64_t v; if (!fast_sub(val_imm(*x), val_imm(*y), &v) || !int_fits(v)) return 0; r = mk_int(v); break; }

@@ -104,7 +104,7 @@ static int p_poly_eq(VM *vm) { return ret(vm, 2, mk_bool(values_equal(vm, ARG(1)
 static int p_imm_eq(VM *vm) {
     Value a = ARG(1), b = ARG(0);
     if (val_is(a, T_PTR) || val_is(b, T_PTR)) vm_fatal(vm, "primitive imm_eq: a value in the heap");
-    return ret(vm, 2, mk_bool(val_tag(a) == val_tag(b) && val_imm(a) == val_imm(b)));
+    return ret(vm, 2, mk_bool(val_same_imm(a, b)));
 }
 /* exn values are K_EXN [constructor, payload]; a constructor is K_EXNCON [name]. */
 static int p_exn_name(VM *vm) {
@@ -115,7 +115,7 @@ static int p_exn_name(VM *vm) {
 }
 static int p_ptr_eq(VM *vm) {
     Value a = ARG(1), b = ARG(0);
-    int eq = val_tag(a) == val_tag(b) && (val_is(a, T_PTR) ? val_ptr(a) == val_ptr(b) : val_imm(a) == val_imm(b));
+    int eq = val_is(a, T_PTR) ? val_is(b, T_PTR) && val_ptr(a) == val_ptr(b) : val_same_imm(a, b);
     return ret(vm, 2, mk_bool(eq));
 }
 

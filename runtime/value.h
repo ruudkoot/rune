@@ -186,7 +186,19 @@ static inline uint64_t val_bits(Value v) { return v; }
 static inline Value mk_tagged(int tag, uint64_t bits) { (void)tag; return bits; }
 /* two values that are the same immediate (imm_eq; values_equal's case for
    the tags that are not a real or a pointer) */
-static inline int val_same_imm(Value a, Value b) { return a == b; }
+static inline int val_same_imm(Value a, Value b) {
+    if (a == b) return 1;
+#ifdef RUNE_INT64
+    /* two boxes of one number: an int or a word past 63 bits. An immediate
+       is never the number of a box, so one of each is two numbers -- which
+       their payloads read as signed would not say (a box of 2^64 - 1 and
+       the immediate 2^63 - 1 are both ~1 that way). */
+    if (!val_is_imm(a) && !val_is_imm(b) && a != 0 && b != 0
+        && obj_kind(val_ptr(a)) == K_BOX && obj_kind(val_ptr(b)) == K_BOX)
+        return box_bits(a) == box_bits(b);
+#endif
+    return 0;
+}
 /* whether a value's payload is what a pointer is not: needs no scan */
 static inline int val_is_immediate(Value v) { return val_is_imm(v); }
 

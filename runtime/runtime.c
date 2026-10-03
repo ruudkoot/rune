@@ -134,7 +134,7 @@ int values_equal(VM *vm, Value a, Value b) {
         switch (val_tag(a)) {
         case T_UNIT: goto matched;
         case T_INT: case T_CHAR: case T_CON0:
-            if (val_imm(a) != val_imm(b)) goto done;
+            if (!val_same_imm(a, b)) goto done;
             goto matched;
         case T_WORD:
             if (val_word(a) != val_word(b)) goto done;
