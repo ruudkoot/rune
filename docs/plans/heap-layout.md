@@ -332,8 +332,16 @@ program keeps the kind the bytecode gave each constant, and the image
 (version 8) writes it with the constant's 64 bits as the bytecode has
 them, so the reader in SML knows nothing of the encoding.
 
-Not built yet: the Windows, aarch64, 32-bit and big-endian builds of
-the prototype; raw typed fields; prototype 2 (headerless pairs) and the
+The other machines (2026-10-04): `make test-portability` and `make
+test-windows` pass on the prototype as it is, with no change for them.
+The language suite, the runtime's tests and the Basis suite pass on the
+32-bit and big-endian builds of both VMs and on aarch64 with its JIT,
+`--count` agrees on every one of them and an image of each is read by
+every other; on Windows the four VMs pass the same, the JIT under the
+Windows convention included. A value is 8 bytes on every width here
+(D13 A): the 32-bit VMs' own word (D13 B) is M5's.
+
+Not built yet: raw typed fields; prototype 2 (headerless pairs) and the
 rest of M4's list. The budgets are not moved.
 
 ## The request
