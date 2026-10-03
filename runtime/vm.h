@@ -249,8 +249,8 @@ static inline Value *vm_top(VM *vm, size_t depth) {    /* pointer to stack[sp-1-
 /* The object v points to, which must be of that kind; the instructions stop
    the program with "expected <what>" where it is not. */
 static inline Obj *vm_expect_obj(VM *vm, Value v, int kind, const char *what) {
-    if (v.tag != T_PTR || v.u.p->kind != kind) vm_fatal(vm, "expected %s", what);
-    return v.u.p;
+    if (!val_is(v, T_PTR) || !val_ptr(v) || obj_kind(val_ptr(v)) != kind) vm_fatal(vm, "expected %s", what);
+    return val_ptr(v);
 }
 static inline void vm_push_frame(VM *vm, uint32_t func, Obj *closure, uint32_t ret_pc, size_t base) {
     size_t idx = vm->frames_active ? vm->fp + 1 : 0;

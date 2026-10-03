@@ -43,8 +43,6 @@
     X("OBJ_LEN", offsetof(Obj, len)) \
     X("OBJ_FIELDS", sizeof(Obj)) \
     X("VALUE_SIZE", sizeof(Value)) \
-    X("VALUE_TAG", offsetof(Value, tag)) \
-    X("VALUE_PAYLOAD", offsetof(Value, u)) \
     X("T_UNIT", T_UNIT) \
     X("T_INT", T_INT) \
     X("T_WORD", T_WORD) \

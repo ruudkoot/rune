@@ -3,6 +3,7 @@
    forwarding pointer always fits. */
 #include "vm.h"
 #include "sys/sys.h"
+#include <string.h>
 
 /* The census VM (runtime/census/census.h) carries an id word in every header, 8 bytes
    more per object: the sizes the stock VM counts and collects by are kept
@@ -23,6 +24,36 @@
 #endif
 
 size_t obj_size(const Obj *o) { return obj_size_of(obj_kind(o), obj_len(o)); }
+
+/* what the word cannot hold, as a small raw object (runtime/value.h) */
+static Value alloc_box(VM *vm, int kind, uint64_t bits) {
+    Obj *o = vm_alloc(vm, (uint8_t)kind, 0, 1, 8);
+    memcpy(obj_bytes(o), &bits, 8);
+    return mk_ptr(o);
+}
+Value mk_real(VM *vm, double d) {
+    Value v;
+    if (mk_real_imm(d, &v)) return v;
+    return alloc_box(vm, K_REAL, real_bits(d));
+}
+Value mk_int_vm(VM *vm, int64_t i) {
+    if (int_fits(i)) return mk_imm(i);
+#ifdef RUNE_INT64
+    return alloc_box(vm, K_BOX, (uint64_t)i);
+#else
+    vm_fatal(vm, "an int beyond 63 bits: %lld", (long long)i);
+    return mk_unit();
+#endif
+}
+Value mk_word_vm(VM *vm, uint64_t w) {
+    if (word_fits(w)) return mk_imm((int64_t)w);
+#ifdef RUNE_INT64
+    return alloc_box(vm, K_BOX, w);
+#else
+    (void)vm;
+    return mk_imm((int64_t)(w & ((UINT64_C(1) << 63) - 1)));
+#endif
+}
 
 void heap_init(VM *vm, size_t semispace_bytes) {
     if (vm->heap_limit && semispace_bytes > vm->heap_limit) semispace_bytes = vm->heap_limit;
@@ -97,9 +128,10 @@ static Obj *copy_obj(Obj *o) {
        knows is a few moves, where one of any size is a call of memcpy, which
        was 4.5% of the time of the compiler compiling itself natively. */
     switch (size) {
-    case OBJ_SIZE_FIELDS(1): memcpy(n, o, OBJ_SIZE_FIELDS(1)); break;
+    /* the word: one or two fields, three or four, five or six */
     case OBJ_SIZE_FIELDS(2): memcpy(n, o, OBJ_SIZE_FIELDS(2)); break;
-    case OBJ_SIZE_FIELDS(3): memcpy(n, o, OBJ_SIZE_FIELDS(3)); break;
+    case OBJ_SIZE_FIELDS(4): memcpy(n, o, OBJ_SIZE_FIELDS(4)); break;
+    case OBJ_SIZE_FIELDS(6): memcpy(n, o, OBJ_SIZE_FIELDS(6)); break;
     default: memcpy(n, o, size); break;
     }
     to_used += size;
@@ -112,7 +144,7 @@ static Obj *copy_obj(Obj *o) {
 }
 
 static void copy_value(Value *v) {
-    if (val_is(*v, T_PTR) && val_ptr(*v)) *v = mk_ptr(copy_obj(val_ptr(*v)));
+    if (val_is_ptr(*v)) *v = mk_ptr(copy_obj(val_ptr(*v)));
 }
 
 /* The heap is two semispaces, both kept: the one collected from is the next
@@ -148,7 +180,7 @@ static void collect_into(VM *vm, size_t new_size) {
     while (scan < to_used) {
         Obj *o = (Obj *)(to_space + scan);
         size_t size = obj_size(o);
-        if (obj_kind(o) != K_STRING) {
+        if (obj_has_fields(o)) {
             Value *f = obj_fields(o);
             for (uint32_t i = 0; i < obj_len(o); i++) copy_value(&f[i]);
         }
@@ -236,7 +268,7 @@ static Obj *relocate_obj(VM *vm, Obj *o) {
 }
 
 static void relocate_value(VM *vm, Value *v) {
-    if (val_is(*v, T_PTR) && val_ptr(*v)) *v = mk_ptr(relocate_obj(vm, val_ptr(*v)));
+    if (val_is_ptr(*v)) *v = mk_ptr(relocate_obj(vm, val_ptr(*v)));
 }
 
 int heap_relocate(VM *vm, uintptr_t old_base) {
@@ -245,10 +277,10 @@ int heap_relocate(VM *vm, uintptr_t old_base) {
     size_t scan = 0;
     while (reloc_ok && scan < vm->heap_used) {
         Obj *o = (Obj *)(vm->heap_from + scan);
-        if (vm->heap_used - scan < OBJ_HEADER_SIZE || obj_kind(o) < K_TUPLE || obj_kind(o) > K_EXNCON) return 0;
+        if (vm->heap_used - scan < OBJ_HEADER_SIZE || obj_kind(o) < K_TUPLE || obj_kind(o) > K_BOX || obj_kind(o) == K_FORWARD) return 0;
         size_t size = obj_size(o);
         if (size > vm->heap_used - scan) return 0;
-        if (obj_kind(o) != K_STRING) {
+        if (obj_has_fields(o)) {
             Value *f = obj_fields(o);
             for (uint32_t i = 0; i < obj_len(o); i++) relocate_value(vm, &f[i]);
         }

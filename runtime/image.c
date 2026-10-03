@@ -118,12 +118,13 @@ static void put_obj(Stream *s, const Obj *o, const VM *vm) {
 }
 
 static void put_value(Stream *s, Value v, const VM *vm) {
-    uint64_t w = val_is(v, T_PTR)
-               ? (val_ptr(v) ? (uint64_t)((const char *)val_ptr(v) - vm->heap_from) : OFF_NONE)
-               : val_word(v);
+    /* an immediate as its bits; anything in the heap, a box too, as its offset */
+    int ptr = !val_is_imm(v);
+    uint64_t w = ptr ? (val_ptr(v) ? (uint64_t)((const char *)val_ptr(v) - vm->heap_from) : OFF_NONE)
+                     : val_bits(v);
     uint8_t *b = room(s, 9);
     if (!b) return;
-    b[0] = val_tag(v);
+    b[0] = ptr ? T_PTR : T_INT;
     for (int i = 0; i < 8; i++) b[i + 1] = (uint8_t)(w >> (8 * i));
 }
 
@@ -142,8 +143,8 @@ static void put_heap(Stream *s, VM *vm) {
         put_u8(s, obj_kind(o));
         put_u16(s, obj_contag(o));
         put_u32(s, obj_len(o));
-        if (obj_kind(o) == K_STRING) {
-            put(s, obj_bytes(o), obj_len(o));
+        if (!obj_has_fields(o)) {
+            put(s, obj_bytes(o), obj_payload_bytes(obj_kind(o), obj_len(o)));
         } else {
             Value *f = obj_fields(o);
             for (uint32_t i = 0; i < obj_len(o); i++) put_value(s, f[i], vm);
@@ -386,7 +387,8 @@ static uint64_t get_u64(Stream *s) {
    is not in the heap. */
 static Obj *get_obj(Stream *s) {
     uint64_t w = get_u64(s);
-    return w == OFF_NONE ? NULL : (Obj *)(uintptr_t)(w + 1);
+    /* the offset plus 2 until heap_relocate: never an address (8-aligned) and, under the word, still a pointer (even) */
+    return w == OFF_NONE ? NULL : (Obj *)(uintptr_t)(w + 2);
 }
 
 static Value get_value(Stream *s) {
@@ -400,7 +402,7 @@ static Value get_value(Stream *s) {
         tag = get_u8(s);
         w = get_u64(s);
     }
-    if (tag == T_PTR) return mk_ptr(w == OFF_NONE ? NULL : (Obj *)(uintptr_t)(w + 1));
+    if (tag == T_PTR) return mk_ptr(w == OFF_NONE ? NULL : (Obj *)(uintptr_t)(w + 2));
     return mk_tagged(tag, w);
 }
 
@@ -415,11 +417,11 @@ static int get_heap(Stream *s, VM *vm) {
         uint16_t contag = get_u16(s);
         uint32_t len = get_u32(s);
         obj_init(o, kind, contag, len);
-        if (!s->ok || obj_kind(o) < K_TUPLE || obj_kind(o) > K_EXNCON) return 0;
+        if (!s->ok || obj_kind(o) < K_TUPLE || obj_kind(o) > K_BOX || obj_kind(o) == K_FORWARD) return 0;
         size_t size = obj_size(o);
         if (size > vm->heap_used - scan) return 0;
-        if (obj_kind(o) == K_STRING) {
-            get(s, obj_bytes(o), obj_len(o));
+        if (!obj_has_fields(o)) {
+            get(s, obj_bytes(o), obj_payload_bytes(obj_kind(o), obj_len(o)));
         } else {
             Value *f = obj_fields(o);
             for (uint32_t i = 0; i < obj_len(o); i++) f[i] = get_value(s);
@@ -695,7 +697,7 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     /* every pointer is a distance from the start of the heap, and one more:
        moving them by where the heap is now both places them and checks that
        they are in it */
-    if (!heap_relocate(vm, 1)) {
+    if (!heap_relocate(vm, 2)) {
         snprintf(err, errlen, "the heap of the image is not sound");
         return 0;
     }

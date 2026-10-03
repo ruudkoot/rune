@@ -138,9 +138,8 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
             case ROP_CONST: {
                 int32_t c = read_i32(p->code + at + 5);
                 if (c >= 0 && (uint32_t)c < p->nconsts)
-                    made = val_is(p->consts[c], T_INT) ? REP_INT : val_is(p->consts[c], T_WORD) ? REP_WORD
-                         : val_is(p->consts[c], T_REAL) ? REP_REAL : val_is(p->consts[c], T_CHAR) ? REP_CHAR
-                         : val_is(p->consts[c], T_PTR) ? REP_PTR : -1;
+                    /* an immediate's kind is not in its bits under the word: the compiler's rep stands */
+                    made = val_tag(p->consts[c]) == T_PTR ? REP_PTR : -1;
                 break;
             }
             case ROP_PRIM: {

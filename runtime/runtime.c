@@ -200,6 +200,7 @@ done:
 
 /* --- exceptions --- */
 static void print_exn_payload(FILE *out, Value v) {
+    if (val_same_imm(v, mk_unit())) return;   /* under the word, unit and 0 are one immediate */
     switch (val_tag(v)) {
     case T_UNIT: break;
     case T_INT: fprintf(out, " %lld", (long long)val_imm(v)); break;

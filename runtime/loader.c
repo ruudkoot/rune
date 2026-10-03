@@ -108,14 +108,14 @@ int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t
     for (uint32_t i = 0; i < p->nconsts; i++) {
         uint8_t kind = rd_u8(&r);
         switch (kind) {
-        case 0: p->consts[i] = mk_int(rd_i64(&r)); break;
-        case 1: p->consts[i] = mk_word((uint64_t)rd_i64(&r)); break;
+        case 0: p->consts[i] = mk_int_vm(vm, rd_i64(&r)); break;
+        case 1: p->consts[i] = mk_word_vm(vm, (uint64_t)rd_i64(&r)); break;
         case 2: {
             uint32_t n = rd_u32(&r);
             if (!need(&r, n) || n > 64) return fail(err, errlen, "bad real constant");
             char buf[65];
             memcpy(buf, data + r.pos, n); buf[n] = 0; r.pos += n;
-            p->consts[i] = mk_real(strtod(buf, NULL));
+            p->consts[i] = mk_real(vm, strtod(buf, NULL));
             break;
         }
         case 3: {
