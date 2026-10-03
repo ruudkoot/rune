@@ -32,7 +32,7 @@ enum { VMR = R_VM, STACKR = R_STACK, BASEI = R_BASEI, BASER = R_BASER, COUNTR = 
 
 /* A slow path, emitted after the function's code: where it begins, where
    it goes back to, and what it is. */
-enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_FRAMES, SLOW_RET, SLOW_PRIM, SLOW_GROW_RAX, SLOW_TAKEN, SLOW_DEOPT };
+enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_FRAMES, SLOW_RET, SLOW_PRIM, SLOW_GROW_RAX, SLOW_TAKEN, SLOW_DEOPT, SLOW_BOXREAL };
 typedef struct Slow {
     AsmLabel here;
     AsmLabel back;
@@ -54,9 +54,20 @@ typedef struct Slow {
    after (ms_reload), so that C, the interpreter and an image see the
    slot, and the collector's roots are the slots as before: under
    RUNE_INT64 the word of an int or a word may be a pointer to its box,
-   which the collector moves between the two. A real has no home yet
-   (MS_REAL_HOMES). */
-#define MS_REAL_HOMES 0
+   which the collector moves between the two.
+
+   A real's home is an xmm register that holds the double itself, so that
+   arithmetic between homes costs what it did. Its slot holds a word and
+   may be behind: the word is made when something needs it -- a safepoint,
+   a store into the heap, a move to a register that has no such home -- by
+   encoding the double, or, where it has no immediate, by a helper that
+   boxes it. That helper may collect, so it is called only where a
+   collection may happen: from a write-back, and from ms_need_word, which
+   an emitter calls at the start of an instruction that will store the
+   register's word. Within an instruction the masm remembers which slots
+   it has brought up to date (cur_reals); a store of a real's word that
+   finds its slot behind is an emitter's mistake, said at compile time. */
+#define MS_REAL_HOMES 1
 enum HomeKind { HOME_SLOT = 0, HOME_GPR, HOME_XMM };
 typedef struct Home {
     uint8_t kind;
@@ -89,6 +100,11 @@ typedef struct Masm {
        tag, kind and length tests the loop and tier 1 make are left out;
        NULL: every value tested */
     const uint8_t *reps;
+    /* the registers with a real's home whose slot holds the home's word:
+       brought up to date in the code of the instruction being emitted, in
+       a straight line from where it was done, and not written since */
+    uint64_t cur_reals;
+    void (*box_real)(void);   /* the helper that boxes a real into a slot (compile.c, jit_h_box_real) */
 } Masm;
 /* whether the shape of R(s) is trusted for an object of kind (REP_PTR; a
    constructor with fields for K_CON from a datatype with nullary ones too) */
@@ -156,6 +172,15 @@ void ms_set_word(Masm *m, int32_t d, int r, AsmLabel *slow);       /* R(d) := th
    tags; and loaded again from the slots */
 void ms_writeback(Masm *m, uint32_t pc);
 void ms_reload_homes(Masm *m, uint32_t pc);
+/* the instruction at pc begins: what the masm remembers of the last is forgotten */
+void ms_begin(Masm *m, uint32_t pc);
+/* R(s)'s word will be stored by this instruction: where s is a real in its
+   home, its slot brought up to date now, at the instruction's start, where
+   the helper that boxes may collect (nothing pushed, nothing kept in a
+   scratch register) */
+void ms_need_word(Masm *m, int32_t s);
+void ms_move(Masm *m, int32_t d, int32_t s);                       /* the instruction MOVE: ms_need_word where it is wanted, then ms_copy */
+void ms_emit_box_real(Masm *m, Slow *s);                           /* the slow path of a real with no immediate (SLOW_BOXREAL) */
 /* the home of register s, or NULL where it is its slot */
 static inline const Home *ms_home(const Masm *m, int32_t s) {
     return m->homes && (uint32_t)s < m->nlocals && m->homes[s].kind != HOME_SLOT ? &m->homes[s] : NULL;

@@ -2073,7 +2073,7 @@ static int p_rt_instructions(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->ins
 static int p_rt_bytes(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->bytes_allocated)); }
 static int p_rt_objects(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->objects_allocated)); }
 static int p_rt_collections(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->gc_count)); }
-static int p_rt_live(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->heap_used)); }
+static int p_rt_live(VM *vm) { return ret(vm, 1, mk_int((int64_t)(vm->heap_used - vm->box_bytes_live))); }
 static int p_rt_heap_size(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->heap_size)); }
 
 /* A collection on demand. It moves every object, so nothing of the heap may

@@ -342,6 +342,9 @@ void vm_exit(VM *vm, int status) {
                 "copied %llu, max live %zu, gc %lld us\n",
                 vm->gc_count, (unsigned long long)vm->bytes_allocated, vm->heap_size, vm->heap_used,
                 (unsigned long long)vm->copied, vm->max_live, (long long)(vm->gc_user_us + vm->gc_sys_us));
+    if (vm->stats && vm->boxes_allocated)   /* the representation's own, which --count leaves out (vm.h) */
+        fprintf(stderr, "runevm: %llu boxes, %llu bytes\n",
+                (unsigned long long)vm->boxes_allocated, (unsigned long long)vm->box_bytes_allocated);
     fflush(stderr);
     vm_destroy(vm);
     exit(status);

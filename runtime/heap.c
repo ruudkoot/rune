@@ -72,6 +72,9 @@ void heap_init(VM *vm, size_t semispace_bytes) {
     vm->gc_sys_us = 0;
     vm->bytes_allocated = 0;
     vm->objects_allocated = 0;
+    vm->boxes_allocated = 0;
+    vm->box_bytes_allocated = 0;
+    vm->box_bytes_live = 0;
     vm->copied = 0;
     vm->max_live = 0;
     if (!vm->heap_from) { fprintf(stderr, "runevm: cannot allocate heap\n"); exit(2); }
@@ -81,15 +84,15 @@ Obj *vm_alloc(VM *vm, uint8_t kind, uint16_t contag, uint32_t len, size_t payloa
     size_t size = obj_alloc_size(payload_bytes);
     CENSUS_FLUSH();
     if (STOCK(size) > vm->heap_size - USED_STOCK(vm) ||
-        (vm->gc_stress && vm->objects_allocated % vm->gc_stress == 0) ||
+        (vm->gc_stress && (vm->objects_allocated + vm->boxes_allocated) % vm->gc_stress == 0) ||
         CENSUS_FORCED()) {
         vm_gc(vm, STOCK(size));
     }
     Obj *o = (Obj *)(vm->heap_from + vm->heap_used);
     vm->heap_used += size;
     ADD_STOCK(vm, size);
-    vm->bytes_allocated += STOCK(size);
-    vm->objects_allocated++;
+    if (kind == K_REAL || kind == K_BOX) { vm->box_bytes_allocated += STOCK(size); vm->boxes_allocated++; vm->box_bytes_live += size; }
+    else { vm->bytes_allocated += STOCK(size); vm->objects_allocated++; }
     obj_init(o, kind, contag, len);
     CENSUS_ALLOC(vm, o, size);
     return o;
@@ -120,9 +123,11 @@ static size_t to_used;
 static size_t to_used_stock;
 #endif
 
+static size_t to_boxes;   /* of to_used, the boxes (vm.h, box_bytes_live) */
 static Obj *copy_obj(Obj *o) {
     if (obj_forwarded(o)) return obj_forwarding(o);
     size_t size = obj_size(o);
+    if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) to_boxes += size;
     Obj *n = (Obj *)(to_space + to_used);
     /* Most objects have one to three fields: a copy of a size the compiler
        knows is a few moves, where one of any size is a call of memcpy, which
@@ -162,6 +167,7 @@ static void collect_into(VM *vm, size_t new_size) {
     }
     vm->heap_to = NULL;
     to_used = 0;
+    to_boxes = 0;
 #ifdef RUNE_CENSUS
     to_used_stock = 0;
     census_collect_begin();
@@ -193,6 +199,7 @@ static void collect_into(VM *vm, size_t new_size) {
     else free(vm->heap_from);
     vm->heap_from = to_space;
     vm->heap_used = to_used;
+    vm->box_bytes_live = to_boxes;
 #ifdef RUNE_CENSUS
     USED_STOCK(vm) = to_used_stock;
 #endif

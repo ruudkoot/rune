@@ -176,6 +176,15 @@ typedef struct VM {
     int64_t gc_sys_us;
     uint64_t bytes_allocated;  /* not size_t: --count prints the same where it is 32 bits */
     uint64_t objects_allocated;
+    /* The boxes of the representation -- a real with no immediate, an int
+       or a word past 63 bits under RUNE_INT64 -- are counted apart: they
+       are the layout's, not the program's, and where one is made is the
+       engine's (tier 2 boxes a real when a safepoint wants its word, the
+       loop when it is produced), so --count leaves them out and stays the
+       same on every engine and under every layout; --stats reports them. */
+    uint64_t boxes_allocated;
+    uint64_t box_bytes_allocated;
+    size_t box_bytes_live;     /* of heap_used, what is boxes: Runtime.stats's live leaves them out, as its bytes do */
     uint64_t copied;         /* bytes every collection copied, in all (--stats) */
     size_t max_live;         /* the most a collection kept (--stats) */
     uint64_t instructions;   /* executed so far */
@@ -193,6 +202,7 @@ typedef struct VM {
     int checked;             /* --checked: DECON tests its tag (decision D14), for the test suites */
     int native;              /* a program runeopt made, whose code is not bytecode (runtime/native/native.c) */
     JitOptions jit;          /* the --jit options, runtime/register's (runtime/register/jit.h); all 0 in runevm-stack */
+    uint64_t jit_fspill[14]; /* tier 2's reals in their xmm homes, raw, across the helper that boxes one (jit/masm.c) */
 
     int argc;
     char **argv;             /* arguments after the bytecode file */

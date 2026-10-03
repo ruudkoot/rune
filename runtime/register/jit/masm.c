@@ -47,6 +47,8 @@ void ms_init(Masm *m, uint32_t nlocals, uint32_t maxstack, int win, const void *
     m->sync_pc = 0;
     m->cur_pc = 0;
     m->reps = NULL;
+    m->cur_reals = 0;
+    m->box_real = NULL;
     m->slow = NULL;
     m->nslow = m->slow_cap = 0;
 }
@@ -60,20 +62,146 @@ int ms_arg(const Masm *m, int i) { return as_arg(m->win, i); }
 
 /* ---- values ---- */
 
+static int is_xmm(const Home *h) { return h && h->kind == HOME_XMM; }
+static int real_current(const Masm *m, int32_t s) { return s >= 0 && s < 64 && ((m->cur_reals >> s) & 1); }
+static void real_behind(Masm *m, int32_t s) { if (s >= 0 && s < 64) m->cur_reals &= ~((uint64_t)1 << s); }
+static void real_made(Masm *m, int32_t s) { if (s >= 0 && s < 64) m->cur_reals |= (uint64_t)1 << s; }
+/* the word of a real in its home is wanted where its slot is behind: an
+   emitter that did not say ms_need_word at the instruction's start */
+static void want_current(const Masm *m, int32_t s) {
+    if (!real_current(m, s)) bug("the word of a real whose slot is behind (ms_need_word)", s, (long long)m->cur_pc);
+}
+
+/* R_S2 := the word of the real in xmm where it has an immediate (value.h,
+   real_encode: an exponent of 0, of all ones, or of 0x201 to 0x5fe); else
+   to fail. R_S3 clobbered. */
+static void encode_real(Masm *m, int xmm, AsmLabel *fail) {
+#ifdef RUNE_REAL_BOXED
+    (void)xmm;
+    as_jmp(&m->a, fail);
+#else
+    AsmLabel ok, mid; as_label_init(&ok); as_label_init(&mid);
+    as_fmov_rf(&m->a, R_S2, xmm);
+    as_ror_ri(&m->a, R_S2, 52);              /* left by 12: the sign and the exponent lowest */
+    as_mov_rr(&m->a, R_S3, R_S2);
+    as_and_ri(&m->a, R_S3, 0x7ff);
+    as_test_rr(&m->a, R_S3, R_S3);
+    as_jcc(&m->a, CC_E, &ok);                /* 0 stays 0 */
+    as_cmp_ri(&m->a, R_S3, 0x7ff);
+    as_jcc(&m->a, CC_NE, &mid);
+    as_mov_ri(&m->a, R_S3, 0x3ff);
+    as_jmp(&m->a, &ok);
+    as_bind(&m->a, &mid);
+    as_sub_ri(&m->a, R_S3, 0x201);           /* 0x201..0x5fe to 0..0x3fd, anything else past it */
+    as_cmp_ri(&m->a, R_S3, 0x3fd);
+    as_jcc(&m->a, CC_A, fail);
+    as_add_ri(&m->a, R_S3, 1);
+    as_bind(&m->a, &ok);
+    as_and_ri(&m->a, R_S2, ~0x7ff);
+    as_lea(&m->a, R_S2, R_S2, R_S3, 2, 1);
+    as_label_free(&ok); as_label_free(&mid);
+#endif
+}
+/* xmm := the real of the word in R_S2: an immediate, decoded (the exponent
+   of ten bits back to eleven: 0 and all ones are zero's and infinity's,
+   the rest is 0x200 short; then the word rotated back), or a box, read.
+   To unless where it is neither; with unless NULL the word is trusted to
+   be a real's (tier 2, a register the section says is one). R_S3
+   clobbered. */
+static void decode_real(Masm *m, int xmm, AsmLabel *unless) {
+    AsmLabel box, join, done; as_label_init(&box); as_label_init(&join); as_label_init(&done);
+    as_test_ri(&m->a, R_S2, 1);
+    as_jcc(&m->a, CC_E, &box);
+#ifdef RUNE_REAL_BOXED
+    if (unless) as_jmp(&m->a, unless); else as_trap(&m->a);   /* every real is a box */
+#else
+    {
+        AsmLabel mid; as_label_init(&mid);
+        as_mov_rr(&m->a, R_S3, R_S2);
+        as_shr_ri(&m->a, R_S3, 1);
+        as_and_ri(&m->a, R_S3, 0x3ff);
+        as_test_rr(&m->a, R_S3, R_S3);
+        as_jcc(&m->a, CC_E, &join);
+        as_cmp_ri(&m->a, R_S3, 0x3ff);
+        as_jcc(&m->a, CC_NE, &mid);
+        as_mov_ri(&m->a, R_S3, 0x7ff);
+        as_jmp(&m->a, &join);
+        as_bind(&m->a, &mid);
+        as_add_ri(&m->a, R_S3, 0x200);
+        as_label_free(&mid);
+    }
+    as_bind(&m->a, &join);
+    as_and_ri(&m->a, R_S2, ~0x7ff);
+    as_or_rr(&m->a, R_S2, R_S3);
+    as_ror_ri(&m->a, R_S2, 12);
+    as_fmov_fr(&m->a, xmm, R_S2);
+    as_jmp(&m->a, &done);
+#endif
+    as_bind(&m->a, &box);
+    if (unless) {
+        as_test_rr(&m->a, R_S2, R_S2);
+        as_jcc(&m->a, CC_E, unless);
+        as_cmp8_mi(&m->a, R_S2, (int32_t)offsetof(Obj, kind), K_REAL);
+        as_jcc(&m->a, CC_NE, unless);
+    }
+    as_fld(&m->a, xmm, R_S2, (int32_t)sizeof(Obj));
+    as_bind(&m->a, &done);
+    as_label_free(&box); as_label_free(&join); as_label_free(&done);
+}
+
+/* A real's home to its slot: encoded, or boxed by the slow path, which
+   may collect (pushed: what is above the frame's registers on the stack,
+   for the collector; live: the pc whose live homes the slow path saves).
+   Nothing where the slot is up to date. */
+static void real_to_slot(Masm *m, int32_t s, const Home *h, int pushed, uint32_t live) {
+    if (real_current(m, s)) return;
+    Slow *sl = ms_slow(m, SLOW_BOXREAL, m->cur_pc);
+    if (!sl) return;
+    sl->a = s; sl->b = h->reg; sl->c = pushed; sl->n = live;
+    int which = m->nslow - 1;
+    encode_real(m, h->reg, &m->slow[which].here);
+    as_st64(&m->a, BASER, SLOT(s), R_S2);
+    as_bind(&m->a, &m->slow[which].back);
+    real_made(m, s);
+}
 /* A home holds its value's word, as the slot does: written back and loaded
-   by a plain move. */
+   by a plain move -- but a real's, which holds the double. */
 static void home_to_slot(Masm *m, int32_t s, const Home *h) {
-    if (h->kind != HOME_GPR) bug("a home that is no general register", h->kind, HOME_GPR);
+    if (is_xmm(h)) { want_current(m, s); return; }
     as_st64(&m->a, BASER, SLOT(s), h->reg);
 }
 static void slot_to_home(Masm *m, int32_t s, const Home *h) {
-    if (h->kind != HOME_GPR) bug("a home that is no general register", h->kind, HOME_GPR);
+    if (is_xmm(h)) {
+        as_ld64(&m->a, R_S2, BASER, SLOT(s));
+        decode_real(m, h->reg, NULL);
+        real_made(m, s);   /* the slot is the home's word */
+        return;
+    }
     as_ld64(&m->a, h->reg, BASER, SLOT(s));
+}
+void ms_begin(Masm *m, uint32_t pc) { m->cur_pc = pc; m->cur_reals = 0; }
+void ms_need_word(Masm *m, int32_t s) {
+    const Home *h = ms_home(m, s);
+    if (is_xmm(h)) real_to_slot(m, s, h, 0, m->cur_pc);
 }
 
 void ms_copy(Masm *m, int32_t d, int32_t s) {
     const Home *hd = ms_home(m, d), *hs = ms_home(m, s);
     if (d == s) return;
+    if (is_xmm(hd)) {
+        if (is_xmm(hs)) as_fmov(&m->a, hd->reg, hs->reg);
+        else if (hs) bug("a real's home given what is in a general register", d, s);
+        else { as_ld64(&m->a, R_S2, BASER, SLOT(s)); decode_real(m, hd->reg, NULL); }
+        real_behind(m, d);
+        return;
+    }
+    if (is_xmm(hs)) {
+        if (hd) bug("a general register given a real's home", d, s);
+        want_current(m, s);   /* its slot has its word */
+        as_fld(&m->a, F_S0, BASER, SLOT(s));
+        as_fst(&m->a, BASER, SLOT(d), F_S0);
+        return;
+    }
     if (hd && hs) as_mov_rr(&m->a, hd->reg, hs->reg);
     else if (hd) slot_to_home(m, s, hd);
     else if (hs) home_to_slot(m, d, hs);
@@ -82,17 +210,28 @@ void ms_copy(Masm *m, int32_t d, int32_t s) {
         as_fst(&m->a, BASER, SLOT(d), F_S0);
     }
 }
+void ms_move(Masm *m, int32_t d, int32_t s) {
+    if (d != s && !is_xmm(ms_home(m, d))) ms_need_word(m, s);
+    ms_copy(m, d, s);
+}
 /* the word of the value of tag and payload */
 static int64_t word_of(int tag, int64_t payload) { return tag == T_PTR ? payload : IMM(payload); }
 void ms_set(Masm *m, int32_t d, int tag, int64_t payload) {
     const Home *h = ms_home(m, d);
     int64_t w = word_of(tag, payload);
+    if (is_xmm(h)) bug("a real's home set to an immediate that is none", d, tag);
     if (h) { as_mov_ri(&m->a, h->reg, w); return; }
     if (w >= INT32_MIN && w <= INT32_MAX) as_st64i(&m->a, BASER, SLOT(d), (int32_t)w);
     else { as_mov_ri(&m->a, R_S0, w); as_st64(&m->a, BASER, SLOT(d), R_S0); }
 }
 void ms_set_bits(Masm *m, int32_t d, int r) {
     const Home *h = ms_home(m, d);
+    if (is_xmm(h)) {   /* a real's word: into the home as the double */
+        if (r != R_S2) as_mov_rr(&m->a, R_S2, r);
+        decode_real(m, h->reg, NULL);
+        real_behind(m, d);
+        return;
+    }
     if (h) as_mov_rr(&m->a, h->reg, r);
     else as_st64(&m->a, BASER, SLOT(d), r);
 }
@@ -102,6 +241,7 @@ void ms_set_reg(Masm *m, int32_t d, int tag, int r) {
 }
 void ms_load_bits(Masm *m, int r, int32_t s) {
     const Home *h = ms_home(m, s);
+    if (is_xmm(h)) { want_current(m, s); as_ld64(&m->a, r, BASER, SLOT(s)); return; }
     if (h) as_mov_rr(&m->a, r, h->reg);
     else as_ld64(&m->a, r, BASER, SLOT(s));
 }
@@ -111,13 +251,20 @@ void ms_load_payload(Masm *m, int r, int32_t s) {
 }
 void ms_load_value(Masm *m, int32_t d, int base, int32_t disp) {
     const Home *h = ms_home(m, d);
+    if (is_xmm(h)) {
+        as_ld64(&m->a, R_S2, base, disp);
+        decode_real(m, h->reg, NULL);
+        real_behind(m, d);
+        return;
+    }
     if (h) { as_ld64(&m->a, h->reg, base, disp); return; }
     as_fld(&m->a, F_S0, base, disp);
     as_fst(&m->a, BASER, SLOT(d), F_S0);
 }
 void ms_store_value(Masm *m, int base, int32_t disp, int32_t s) {
     const Home *h = ms_home(m, s);
-    if (h) { as_st64(&m->a, base, disp, h->reg); return; }
+    if (h && !is_xmm(h)) { as_st64(&m->a, base, disp, h->reg); return; }
+    if (h) want_current(m, s);   /* a real: its slot has its word */
     as_fld(&m->a, F_S0, BASER, SLOT(s));
     as_fst(&m->a, base, disp, F_S0);
 }
@@ -125,19 +272,22 @@ void ms_value_to(Masm *m, int base, int32_t disp, int32_t s) { ms_store_value(m,
 void ms_value_from(Masm *m, int32_t d, int base, int32_t disp) { ms_load_value(m, d, base, disp); }
 void ms_cmp_bits(Masm *m, int r, int32_t s) {
     const Home *h = ms_home(m, s);
-    if (h) as_cmp_rr(&m->a, r, h->reg);
+    if (is_xmm(h)) want_current(m, s);
+    if (h && !is_xmm(h)) as_cmp_rr(&m->a, r, h->reg);
     else as_cmp_rm(&m->a, r, BASER, SLOT(s));
 }
 void ms_test_false(Masm *m, int32_t s) {
     const Home *h = ms_home(m, s);
+    if (is_xmm(h)) bug("a real tested as a bool", s, 0);
     if (h) as_cmp_ri(&m->a, h->reg, (int32_t)IMM(0));
     else as_cmp_mi(&m->a, BASER, SLOT(s), (int32_t)IMM(0));
 }
 void ms_bool_flags(Masm *m, int r) { as_cmp_ri(&m->a, r, (int32_t)IMM(0)); }
 void ms_load_xmm(Masm *m, int xmm, int32_t s) {
     const Home *h = ms_home(m, s);
-    if (h) as_fmov_fr(&m->a, xmm, h->reg);
-    else as_fld(&m->a, xmm, BASER, SLOT(s));
+    if (h && !is_xmm(h)) { as_fmov_fr(&m->a, xmm, h->reg); return; }
+    if (h) want_current(m, s);
+    as_fld(&m->a, xmm, BASER, SLOT(s));
 }
 void ms_xmm_to(Masm *m, int base, int32_t disp, int xmm) { as_fst(&m->a, base, disp, xmm); }
 void ms_unit_to(Masm *m, int base, int32_t disp) { as_st64i(&m->a, base, disp, (int32_t)IMM(0)); }
@@ -157,6 +307,7 @@ static int imm_tested(const Masm *m, int32_t s, int tag) {
 }
 void ms_check_tag(Masm *m, int32_t s, int tag, AsmLabel *unless) {
     const Home *h = ms_home(m, s);
+    if (is_xmm(h)) { if (tag != T_REAL) as_jmp(&m->a, unless); return; }
     if (tag == T_PTR) {
         if (h) { as_jmp(&m->a, unless); return; }   /* a home holds no object the program sees */
         as_test8_mi(&m->a, BASER, SLOT(s), 1);
@@ -314,83 +465,17 @@ void ms_set_word(Masm *m, int32_t d, int r, AsmLabel *slow) {
 }
 
 /* ---- reals: Koka's encoding in the word, or a box (value.h) ---- */
-
-/* xmm := the real of the word in R_S2: an immediate, decoded; or a box of
-   K_REAL, read */
 void ms_load_real(Masm *m, int xmm, int32_t s, AsmLabel *unless) {
-    AsmLabel box, join, done; as_label_init(&box); as_label_init(&join); as_label_init(&done);
+    const Home *h = ms_home(m, s);
+    if (is_xmm(h)) { as_fmov(&m->a, xmm, h->reg); return; }
     ms_load_bits(m, R_S2, s);
-    as_test_ri(&m->a, R_S2, 1);
-    as_jcc(&m->a, CC_E, &box);
-#ifdef RUNE_REAL_BOXED
-    as_jmp(&m->a, unless);   /* every real is a box */
-#else
-    /* the exponent of ten bits back to eleven: 0 and all ones are zero and
-       infinity's, the rest is 0x200 short; then the word rotated back */
-    as_mov_rr(&m->a, R_S3, R_S2);
-    as_shr_ri(&m->a, R_S3, 1);
-    as_and_ri(&m->a, R_S3, 0x3ff);
-    as_test_rr(&m->a, R_S3, R_S3);
-    as_jcc(&m->a, CC_E, &join);
-    {
-        AsmLabel mid; as_label_init(&mid);
-        as_cmp_ri(&m->a, R_S3, 0x3ff);
-        as_jcc(&m->a, CC_NE, &mid);
-        as_mov_ri(&m->a, R_S3, 0x7ff);
-        as_jmp(&m->a, &join);
-        as_bind(&m->a, &mid);
-        as_add_ri(&m->a, R_S3, 0x200);
-        as_label_free(&mid);
-    }
-    as_bind(&m->a, &join);
-    as_and_ri(&m->a, R_S2, ~0x7ff);
-    as_or_rr(&m->a, R_S2, R_S3);
-    as_ror_ri(&m->a, R_S2, 12);
-    as_fmov_fr(&m->a, xmm, R_S2);
-    as_jmp(&m->a, &done);
-#endif
-    as_bind(&m->a, &box);
-    as_test_rr(&m->a, R_S2, R_S2);
-    as_jcc(&m->a, CC_E, unless);
-    as_cmp8_mi(&m->a, R_S2, (int32_t)offsetof(Obj, kind), K_REAL);
-    as_jcc(&m->a, CC_NE, unless);
-    as_fld(&m->a, xmm, R_S2, (int32_t)sizeof(Obj));
-    as_bind(&m->a, &done);
-    as_label_free(&box); as_label_free(&join); as_label_free(&done);
+    decode_real(m, xmm, unless);
 }
-/* R(d) := the real in xmm where its exponent fits ten bits (value.h,
-   real_encode): 0, all ones, or 0x201 to 0x5fe */
 void ms_set_real(Masm *m, int32_t d, int xmm, AsmLabel *slow) {
-#ifdef RUNE_REAL_BOXED
-    (void)d; (void)xmm;
-    as_jmp(&m->a, slow);
-#else
-    AsmLabel ok; as_label_init(&ok);
-    as_fmov_rf(&m->a, R_S2, xmm);
-    as_ror_ri(&m->a, R_S2, 52);              /* left by 12: the sign and the exponent lowest */
-    as_mov_rr(&m->a, R_S3, R_S2);
-    as_and_ri(&m->a, R_S3, 0x7ff);
-    as_test_rr(&m->a, R_S3, R_S3);
-    as_jcc(&m->a, CC_E, &ok);                /* 0 stays 0 */
-    {
-        AsmLabel mid; as_label_init(&mid);
-        as_cmp_ri(&m->a, R_S3, 0x7ff);
-        as_jcc(&m->a, CC_NE, &mid);
-        as_mov_ri(&m->a, R_S3, 0x3ff);
-        as_jmp(&m->a, &ok);
-        as_bind(&m->a, &mid);
-        as_sub_ri(&m->a, R_S3, 0x201);       /* 0x201..0x5fe to 0..0x3fd, anything else past it */
-        as_cmp_ri(&m->a, R_S3, 0x3fd);
-        as_jcc(&m->a, CC_A, slow);
-        as_add_ri(&m->a, R_S3, 1);
-        as_label_free(&mid);
-    }
-    as_bind(&m->a, &ok);
-    as_and_ri(&m->a, R_S2, ~0x7ff);
-    as_lea(&m->a, R_S2, R_S2, R_S3, 2, 1);
+    const Home *h = ms_home(m, d);
+    if (is_xmm(h)) { as_fmov(&m->a, h->reg, xmm); real_behind(m, d); return; }
+    encode_real(m, xmm, slow);
     ms_set_bits(m, d, R_S2);
-    as_label_free(&ok);
-#endif
 }
 
 /* tier 2: the safepoints' write-back and reload of the homes live at pc */
@@ -398,10 +483,44 @@ static int live_at(const Masm *m, uint32_t pc, uint32_t r) {
     if (!m->live) return 1;
     return (m->live[pc - m->from] >> r) & 1;
 }
-void ms_writeback(Masm *m, uint32_t pc) {
+/* the general homes first, so that the slow path of a real that must be
+   boxed finds them in their slots */
+static void writeback(Masm *m, uint32_t pc, int pushed) {
     if (!m->homes) return;
     for (uint32_t r = 0; r < m->nlocals; r++)
-        if (m->homes[r].kind != HOME_SLOT && live_at(m, pc, r)) home_to_slot(m, (int32_t)r, &m->homes[r]);
+        if (m->homes[r].kind == HOME_GPR && live_at(m, pc, r)) home_to_slot(m, (int32_t)r, &m->homes[r]);
+    for (uint32_t r = 0; r < m->nlocals; r++)
+        if (m->homes[r].kind == HOME_XMM && live_at(m, pc, r)) real_to_slot(m, (int32_t)r, &m->homes[r], pushed, pc);
+}
+void ms_writeback(Masm *m, uint32_t pc) { writeback(m, pc, 0); }
+/* The slow path of a real's write-back: the double has no immediate, and
+   the helper boxes it into the slot. It may collect, so the VM is given
+   its stack pointer, every live general home is in its slot (stored again
+   here: ms_need_word comes with no write-back before it) and loaded
+   again after, and the live reals, which C does not keep, wait in the VM. */
+void ms_emit_box_real(Masm *m, Slow *sp) {
+    Slow s = *sp;
+    uint32_t live = s.n;
+    for (uint32_t r = 0; r < m->nlocals; r++) {
+        const Home *h = &m->homes[r];
+        if (h->kind == HOME_GPR && live_at(m, live, r)) as_st64(&m->a, BASER, SLOT((int32_t)r), h->reg);
+        if (h->kind == HOME_XMM && live_at(m, live, r)) as_fst(&m->a, VMR, OFF(jit_fspill) + 8 * (h->reg - F_H0), h->reg);
+    }
+    as_fst(&m->a, VMR, OFF(jit_fspill) + 8 * (s.b - F_H0), s.b);   /* the one to box, live or not */
+    as_st32i(&m->a, VMR, OFF(pc), (int32_t)s.pc);
+    as_lea(&m->a, R_S0, BASEI, -1, 1, (int32_t)(m->nlocals + (uint32_t)s.c));
+    as_st64(&m->a, VMR, OFF(sp), R_S0);
+    as_st64(&m->a, VMR, OFF(instructions), COUNTR);
+    as_mov_ri(&m->a, ms_arg(m, 1), s.a);
+    as_ld64(&m->a, ms_arg(m, 2), VMR, OFF(jit_fspill) + 8 * (s.b - F_H0));
+    ms_call(m, (MsHelper)m->box_real);
+    for (uint32_t r = 0; r < m->nlocals; r++) {
+        const Home *h = &m->homes[r];
+        if (h->kind == HOME_GPR && live_at(m, live, r)) as_ld64(&m->a, h->reg, BASER, SLOT((int32_t)r));
+        if (h->kind == HOME_XMM && live_at(m, live, r)) as_fld(&m->a, h->reg, VMR, OFF(jit_fspill) + 8 * (h->reg - F_H0));
+    }
+    as_fld(&m->a, s.b, VMR, OFF(jit_fspill) + 8 * (s.b - F_H0));
+    as_jmp(&m->a, &s.back);
 }
 void ms_reload_homes(Masm *m, uint32_t pc) {
     if (!m->homes) return;
@@ -464,7 +583,7 @@ void ms_load_tag_of_con(Masm *m, int r, int32_t s, AsmLabel *unless) {
 
 /* ---- the VM ---- */
 void ms_sync(Masm *m, uint32_t pc, int pushed) {
-    ms_writeback(m, m->cur_pc);
+    writeback(m, m->cur_pc, pushed);
     m->sync_pc = pc;
     as_st32i(&m->a, VMR, OFF(pc), (int32_t)pc);
     as_lea(&m->a, R_S0, BASEI, -1, 1, (int32_t)(m->nlocals + (uint32_t)pushed));

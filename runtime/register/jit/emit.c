@@ -18,7 +18,7 @@ void emit_HALT(Jit *j, uint32_t pc) {
     ms_sync(M, j->next, 0);
     ms_handback(M, RUN_HALT);
 }
-void emit_MOVE(Jit *j, uint32_t pc, int32_t a, int32_t b) { (void)pc; ms_copy(M, a, b); }
+void emit_MOVE(Jit *j, uint32_t pc, int32_t a, int32_t b) { (void)pc; ms_move(M, a, b); }
 void emit_INT(Jit *j, uint32_t pc, int32_t a, int32_t b) { (void)pc; ms_set(M, a, T_INT, b); }
 void emit_CONST(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     (void)pc;
@@ -37,6 +37,7 @@ void emit_GLOBAL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
 }
 void emit_SETGLOBAL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     (void)pc;
+    ms_need_word(M, b);
     as_ld64(A, R_S0, VMR, OFF(globals));
     ms_store_nth(M, R_S0, (uint32_t)a, b);
     as_ld64(A, R_S0, VMR, OFF(global_set));
@@ -136,6 +137,8 @@ static void floor_div(Jit *j, int mod) {
    imm_eq, which the compiler gives only what is never there (under
    RUNE_INT64 the box of an int past 63 bits). */
 static void equal(Jit *j, int32_t d, int32_t x, int32_t y, int poly, AsmLabel *slow) {
+    ms_need_word(M, x);
+    ms_need_word(M, y);
     /* two values of one representation that is an immediate (tier 2,
        M10): the words alone */
     if (ms_immediate(M, x) && ms_immediate(M, y)) {
@@ -317,6 +320,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         break;
     case PRIM_ref_get: ms_load_obj(M, R_S0, x, K_REF, slow); ms_load_field(M, d, R_S0, 0); break;
     case PRIM_ref_set:
+        ms_need_word(M, y);
         ms_load_obj(M, R_S0, x, K_REF, slow);
         ms_store_field(M, R_S0, 0, y);
         ms_set(M, d, T_UNIT, 0);
@@ -329,6 +333,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         ms_load_field(M, d, R_S0, 0);
         break;
     case PRIM_array_update:
+        ms_need_word(M, z);
         ms_load_obj(M, R_S0, x, K_ARRAY, slow);
         index_of(j, y, slow);
         element(j);
@@ -373,6 +378,7 @@ void emit_PRIM(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint
         as_mov_ri(A, R_S0, (int64_t)(intptr_t)&j->jit->prim_calls[a]);
         as_add_mi(A, R_S0, 0, 1);
     }
+    for (uint32_t i = 0; i < n; i++) ms_need_word(M, read_i32(L + 4 * i));   /* before anything is pushed */
     for (uint32_t i = 0; i < n; i++) ms_copy(M, (int32_t)(j->m.nlocals + i), read_i32(L + 4 * i));
     ms_sync(M, j->next, (int)n);
     ms_call(M, (MsHelper)prim_table[a]);
@@ -401,6 +407,15 @@ void emit_PRIM(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint
 /* an object of n fields, fast in line or through the helper, then filled
    and stored into d */
 static void alloc(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d, int32_t a, int32_t b, const uint8_t *L) {
+    /* the words the fill stores, asked for before the object is there: a
+       real that must be boxed is boxed by a helper that may collect */
+    switch (fill) {
+    case FILL_LIST: for (uint32_t i = 0; i < n; i++) ms_need_word(M, read_i32(L + 4 * i)); break;
+    case FILL_ONE: ms_need_word(M, a); break;
+    case FILL_CLOSURE: for (uint32_t i = 0; i + 1 < n; i++) ms_need_word(M, read_i32(L + 4 * i)); break;
+    case FILL_MKEXN: ms_need_word(M, a); ms_need_word(M, b); break;
+    default: break;
+    }
     AsmLabel *slow = jit_alloc_slow(j, kind, contag, n, fill, d, a, b, L);
     if (!slow) return;
     /* the slow path's index, not its address: the fill may add a slow path
@@ -479,6 +494,7 @@ void emit_EXNARG(Jit *j, uint32_t pc, int32_t a, int32_t b) {
 }
 void emit_SETENV(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     (void)pc;
+    ms_need_word(M, c);
     ms_load_obj(M, R_S0, a, K_CLOSURE, jit_fatal(j, FATAL_EXPECT_CLOSURE, 0, 0, 0));
     ms_need_len(M, R_S0, (uint32_t)b + 1, jit_fatal(j, FATAL_ENV_RANGE, b, 0, 0));
     ms_store_field(M, R_S0, (uint32_t)b + 1, c);
@@ -692,6 +708,7 @@ void emit_TAILCALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L,
     const Function *fn = &j->vm->prog.funcs[a];
     uint32_t need = j->m.nlocals + n;
     if (fn->nlocals + fn->maxstack > need) need = fn->nlocals + fn->maxstack;
+    for (uint32_t i = 0; i < n; i++) ms_need_word(M, read_i32(L + 4 * i));
     room(j, need);
     /* the arguments above the frame first, since they are its registers */
     ms_slot_addr(M, R_S4, (int32_t)j->m.nlocals);
@@ -895,6 +912,7 @@ void emit_RESULT(Jit *j, uint32_t pc, int32_t a) {
 void emit_RET(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;
     AsmLabel no_result, go, interp; as_label_init(&no_result); as_label_init(&go); as_label_init(&interp);
+    ms_need_word(M, a);
     Slow *s = ms_slow(M, SLOW_RET, j->next);
     if (!s) return;
     s->a = a;
@@ -909,7 +927,10 @@ void emit_RET(Jit *j, uint32_t pc, int32_t a) {
        (tier 2), which the popping leaves alone and which is stored whole
        where it goes, rather than through its slot (a 16-byte load of two
        8-byte stores stalls) */
+    /* (a real's home holds the double, not the word: its word is taken
+       from its slot, brought up to date above, before the frame goes) */
     const Home *h = ms_home(M, a);
+    if (h && h->kind != HOME_GPR) h = NULL;
     if (!h) ms_load_xmm(M, F_S0, a);
     as_ld64(A, R_S4, R_S1, FR(native_ret));
     as_ld32s(A, R_S3, R_S1, FR(result));

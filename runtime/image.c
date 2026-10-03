@@ -143,7 +143,11 @@ static void put_heap(Stream *s, VM *vm) {
         put_u8(s, obj_kind(o));
         put_u16(s, obj_contag(o));
         put_u32(s, obj_len(o));
-        if (!obj_has_fields(o)) {
+        if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) {
+            /* a box: its 64 bits as a number, whichever end the machine has first */
+            uint64_t bits; memcpy(&bits, obj_bytes(o), 8);
+            put_u64(s, bits);
+        } else if (!obj_has_fields(o)) {
             put(s, obj_bytes(o), obj_payload_bytes(obj_kind(o), obj_len(o)));
         } else {
             Value *f = obj_fields(o);
@@ -410,6 +414,7 @@ static Value get_value(Stream *s) {
    distances the rest of the image holds stay true. */
 static int get_heap(Stream *s, VM *vm) {
     size_t scan = 0;
+    vm->box_bytes_live = 0;
     while (scan < vm->heap_used) {
         if (vm->heap_used - scan < OBJ_HEADER_SIZE) return 0;
         Obj *o = (Obj *)(vm->heap_from + scan);
@@ -420,7 +425,11 @@ static int get_heap(Stream *s, VM *vm) {
         if (!s->ok || obj_kind(o) < K_TUPLE || obj_kind(o) > K_BOX || obj_kind(o) == K_FORWARD) return 0;
         size_t size = obj_size(o);
         if (size > vm->heap_used - scan) return 0;
-        if (!obj_has_fields(o)) {
+        if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) {
+            uint64_t bits = get_u64(s);
+            memcpy(obj_bytes(o), &bits, 8);
+            vm->box_bytes_live += size;
+        } else if (!obj_has_fields(o)) {
             get(s, obj_bytes(o), obj_payload_bytes(obj_kind(o), obj_len(o)));
         } else {
             Value *f = obj_fields(o);
