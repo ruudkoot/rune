@@ -31,9 +31,9 @@ static inline Value fast_order(int lt, int gt) { return mk_con0(1 + gt - lt); }
    primitive does it; without RUNE_INT64 a word wraps at 63 bits */
 #define FAST_INT(v) do { if (!int_fits(v)) return 0; r = mk_int(v); } while (0)
 #ifdef RUNE_INT64
-#define FAST_WORD(w) do { if (!word_fits(w)) return 0; FAST_WORD(w); } while (0)
+#define FAST_WORD(w) do { uint64_t w_ = (w); if (!word_fits(w_)) return 0; r = mk_word(w_); } while (0)
 #else
-#define FAST_WORD(w) do { FAST_WORD((w) & (UINT64_C(1) << 63) - 1); } while (0)
+#define FAST_WORD(w) do { r = mk_word((w) & ((UINT64_C(1) << 63) - 1)); } while (0)
 #endif
 #define FAST_REAL(d) do { if (!mk_real_imm((d), &r)) return 0; } while (0)
 

@@ -80,6 +80,10 @@ void x64_add_ri(X64 *a, int dst, int32_t imm);
 void x64_sub_ri(X64 *a, int dst, int32_t imm);
 void x64_and_ri(X64 *a, int dst, int32_t imm);
 void x64_cmp_ri(X64 *a, int r, int32_t imm);
+void x64_or_ri(X64 *a, int dst, int32_t imm);
+void x64_test_ri(X64 *a, int r, int32_t imm);                  /* the flags of r & imm */
+void x64_ror_ri(X64 *a, int r, int imm);
+void x64_test8_mi(X64 *a, int base, int32_t disp, int imm8);    /* the flags of byte [base + disp] & imm8 */
 void x64_imul_rr(X64 *a, int dst, int src);
 void x64_imul_rri(X64 *a, int dst, int src, int32_t imm);   /* dst := src * imm */
 void x64_neg_r(X64 *a, int r);

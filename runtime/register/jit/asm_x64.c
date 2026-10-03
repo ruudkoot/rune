@@ -49,6 +49,13 @@ void as_test_rr(Asm *a, int ra, int rb) { x64_test_rr(a, ra, rb); }
 void as_add_ri(Asm *a, int rd, int32_t v) { x64_add_ri(a, rd, v); }
 void as_sub_ri(Asm *a, int rd, int32_t v) { x64_sub_ri(a, rd, v); }
 void as_cmp_ri(Asm *a, int r, int32_t v) { x64_cmp_ri(a, r, v); }
+void as_and_ri(Asm *a, int rd, int32_t v) { x64_and_ri(a, rd, v); }
+void as_or_ri(Asm *a, int rd, int32_t v) { x64_or_ri(a, rd, v); }
+void as_test_ri(Asm *a, int r, int32_t v) { x64_test_ri(a, r, v); }
+void as_test8_mi(Asm *a, int base, int32_t disp, int v) { x64_test8_mi(a, base, disp, v); }
+void as_ror_ri(Asm *a, int r, int n) { x64_ror_ri(a, r, n); }
+void as_add_jc(Asm *a, int rd, int rs, AsmLabel *carry) { x64_add_rr(a, rd, rs); x64_jcc(a, CC_B, carry); }
+void as_sub_jb(Asm *a, int rd, int rs, AsmLabel *borrow) { x64_sub_rr(a, rd, rs); x64_jcc(a, CC_B, borrow); }
 void as_mul_rr(Asm *a, int rd, int rs) { x64_imul_rr(a, rd, rs); }
 void as_mul_ri(Asm *a, int rd, int rs, int32_t v) { x64_imul_rri(a, rd, rs, v); }
 void as_mul_jo(Asm *a, int rd, int rs, AsmLabel *overflow) { x64_imul_rr(a, rd, rs); x64_jcc(a, CC_O, overflow); }

@@ -11,7 +11,7 @@
      rbp  the frame's base, as an index into the stack
      r14  the frame's registers: r13 + 16 * rbp
      r15  the count of instructions executed
-   Register k of the frame is the 16 bytes at [r14 + 16 k]. The frame's
+   Register k of the frame is the word at [r14 + 8 k]. The frame's
    stack pointer is rbp + nlocals, plus what a primitive's arguments push.
    rax, rcx, rdx, rsi, rdi, r8 to r11 and xmm0, xmm1 are scratch; rbx is
    free. The machine stack holds only the call into C in progress: the
@@ -47,12 +47,16 @@ typedef struct Slow {
 /* Where a register's value lives while the function's code runs (tier 2,
    docs/plans/jit.md M9): in its slot, as tier 1 keeps every one, or in a
    machine register -- a general one for an int, a word, a char or a
-   nullary constructor, an xmm for a real -- the payload alone, the tag
-   being the representation's. A home is written back to the slot, with
-   its tag, at every safepoint (ms_sync) and loaded again after
-   (ms_reload), so that C, the interpreter and an image see the slot; a
-   pointer never has a home, so the collector's roots are the slots as
-   before. */
+   nullary constructor, which holds the value's word as the slot would
+   (docs/plans/heap-layout.md, M4: the tagged word), so that writing it
+   back is one store and arithmetic is done on the words. A home is
+   written back to the slot at every safepoint (ms_sync) and loaded again
+   after (ms_reload), so that C, the interpreter and an image see the
+   slot, and the collector's roots are the slots as before: under
+   RUNE_INT64 the word of an int or a word may be a pointer to its box,
+   which the collector moves between the two. A real has no home yet
+   (MS_REAL_HOMES). */
+#define MS_REAL_HOMES 0
 enum HomeKind { HOME_SLOT = 0, HOME_GPR, HOME_XMM };
 typedef struct Home {
     uint8_t kind;
@@ -106,9 +110,10 @@ int ms_arg(const Masm *m, int i);
 /* values in the frame's registers */
 void ms_copy(Masm *m, int32_t d, int32_t s);                       /* R(d) := R(s) */
 void ms_set(Masm *m, int32_t d, int tag, int64_t payload);         /* R(d) := a value of tag and payload */
-void ms_set_reg(Masm *m, int32_t d, int tag, int r);               /* R(d) := tag and the payload in r */
-void ms_load_tag(Masm *m, int r, int32_t s);                       /* r := the tag of R(s) */
-void ms_load_payload(Masm *m, int r, int32_t s);                   /* r := the payload of R(s) */
+void ms_set_reg(Masm *m, int32_t d, int tag, int r);               /* R(d) := the value of tag whose payload is in r; r is left holding its word */
+void ms_set_bits(Masm *m, int32_t d, int r);                       /* R(d) := the word in r */
+void ms_load_bits(Masm *m, int r, int32_t s);                      /* r := the word of R(s) */
+void ms_load_payload(Masm *m, int r, int32_t s);                   /* r := the payload of the immediate in R(s), signed */
 void ms_load_value(Masm *m, int32_t d, int base, int32_t disp);    /* R(d) := the Value at [base + disp] */
 void ms_store_value(Masm *m, int base, int32_t disp, int32_t s);   /* [base + disp] := R(s) */
 void ms_check_tag(Masm *m, int32_t s, int tag, AsmLabel *unless);  /* to unless where R(s) has another tag */
@@ -119,11 +124,34 @@ void ms_load_tag_of_con(Masm *m, int r, int32_t s, AsmLabel *unless);      /* r 
    through here from M9, so that a register's home may be elsewhere */
 void ms_value_to(Masm *m, int base, int32_t disp, int32_t s);      /* [base + disp] := R(s), as a Value (16 bytes) */
 void ms_value_from(Masm *m, int32_t d, int base, int32_t disp);    /* R(d) := the Value at [base + disp] */
-void ms_load_real(Masm *m, int xmm, int32_t s);                    /* xmm := the real in R(s) */
-void ms_set_real(Masm *m, int32_t d, int xmm);                     /* R(d) := the real in xmm */
-void ms_cmp_payload(Masm *m, int r, int32_t s);                    /* flags := r against the payload of R(s) */
+void ms_load_real(Masm *m, int xmm, int32_t s, AsmLabel *unless);  /* xmm := the real in R(s), an immediate decoded or a box read; to unless where it is neither; R_S2 and R_S3 clobbered */
+void ms_set_real(Masm *m, int32_t d, int xmm, AsmLabel *slow);     /* R(d) := the real in xmm as an immediate; to slow where it has none (the box is a helper's to make); R_S2 and R_S3 clobbered */
+void ms_cmp_bits(Masm *m, int r, int32_t s);                       /* flags := r against the word of R(s) */
 void ms_test_false(Masm *m, int32_t s);                            /* flags: ZF where the bool in R(s) is false */
-void ms_load_xmm(Masm *m, int xmm, int32_t s);                     /* xmm := R(s), as a Value (16 bytes) */
+void ms_bool_flags(Masm *m, int r);                                /* flags: ZF where the bool whose word is in r is false */
+void ms_load_xmm(Masm *m, int xmm, int32_t s);                     /* xmm := R(s), the value whole */
+void ms_xmm_to(Masm *m, int base, int32_t disp, int xmm);          /* [base + disp] := the value ms_load_xmm put in xmm */
+void ms_unit_to(Masm *m, int base, int32_t disp);                  /* [base + disp] := unit */
+void ms_next_value(Masm *m, int r);                                /* r := r + the size of a value */
+
+/* Ints, words, chars and nullary constructors as their words (the tagged
+   word: 2n+1), in R_S0 and R_S1: arithmetic and comparison are done on
+   the words, and R_S2 is clobbered. To slow where an operand is no
+   immediate (under RUNE_INT64 an int or a word past 63 bits is a box) or
+   the result is none: the primitive's own C does those. */
+enum MsArith { MS_ADD, MS_SUB, MS_MUL, MS_AND, MS_OR, MS_XOR };
+void ms_one_imm(Masm *m, int32_t x, int tag, AsmLabel *slow);              /* R_S0 := the word of R(x), an immediate */
+void ms_two_imm(Masm *m, int32_t x, int32_t y, int tag, AsmLabel *slow);   /* R_S0, R_S1 := the words of R(x), R(y), immediates both */
+void ms_two_words(Masm *m, int32_t x, int32_t y, AsmLabel *heap);          /* R_S0, R_S1 := the words of R(x), R(y), whatever they hold; to heap where either is no immediate */
+void ms_int_arith(Masm *m, int op, AsmLabel *slow);                /* R_S0 := R_S0 op R_S1 (MS_ADD, MS_SUB, MS_MUL), to slow on overflow */
+void ms_int_neg(Masm *m, AsmLabel *slow);                          /* R_S0 := ~R_S0, to slow on overflow */
+void ms_int_to_char(Masm *m, AsmLabel *slow);                      /* the int in R_S0 as a char: to slow where it is not 0 to 255 */
+void ms_word_arith(Masm *m, int op, AsmLabel *slow);               /* R_S0 := R_S0 op R_S1 for words: modulo the word size, or to slow where the result is no immediate */
+void ms_word_not(Masm *m, AsmLabel *slow);                         /* R_S0 := notb R_S0 */
+void ms_word_to_int(Masm *m, int x, AsmLabel *slow);               /* the word in R_S0 as an int: x for toIntX; to slow where it is none */
+void ms_int_to_word(Masm *m, AsmLabel *slow);                      /* the int in R_S0 as a word */
+void ms_untag(Masm *m, int r, int tag);                            /* r := the payload of the immediate word in r: unsigned for T_WORD */
+void ms_set_word(Masm *m, int32_t d, int r, AsmLabel *slow);       /* R(d) := the word whose payload, 64 bits, is in r; to slow where it is no immediate */
 /* tier 2: the homes live at pc written back to their slots, with their
    tags; and loaded again from the slots */
 void ms_writeback(Masm *m, uint32_t pc);

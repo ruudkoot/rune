@@ -74,7 +74,7 @@ void emit_SELF(Jit *j, uint32_t pc, int32_t a) {
 static void set_bool(Jit *j, int32_t d, int cc) {
     as_setcc(A, R_S0, cc);
     ms_set_reg(M, d, T_CON0, R_S0);
-    as_test_rr(A, R_S0, R_S0);   /* and back into the flags (ZF: false), for a branch fused onto it */
+    ms_bool_flags(M, R_S0);   /* and back into the flags (ZF: false), for a branch fused onto it */
 }
 /* LESS, EQUAL or GREATER (0, 1, 2) of the flags into d: ge + g */
 static void set_order(Jit *j, int32_t d, int cc_ge, int cc_g) {
@@ -83,21 +83,21 @@ static void set_order(Jit *j, int32_t d, int cc_ge, int cc_g) {
     as_add_rr(A, R_S0, R_S1);
     ms_set_reg(M, d, T_CON0, R_S0);
 }
-/* the two arguments, of one tag, into rax and rcx */
-static void two(Jit *j, int32_t x, int32_t y, int tag, AsmLabel *slow) {
-    ms_check_tag(M, x, tag, slow);
-    ms_check_tag(M, y, tag, slow);
-    ms_load_payload(M, R_S0, x);
-    ms_load_payload(M, R_S1, y);
+/* the two arguments, immediates of one tag, as their words in rax and rcx:
+   what a comparison compares, and what the arithmetic of masm.h takes */
+static void two(Jit *j, int32_t x, int32_t y, int tag, AsmLabel *slow) { ms_two_imm(M, x, y, tag, slow); }
+/* the same as their payloads: what a division divides */
+static void two_payloads(Jit *j, int32_t x, int32_t y, int tag, AsmLabel *slow) {
+    ms_two_imm(M, x, y, tag, slow);
+    ms_untag(M, R_S0, tag);
+    ms_untag(M, R_S1, tag);
 }
 /* the two real arguments into xmm0 and xmm1 (or the other way round) */
 static void two_real(Jit *j, int32_t x, int32_t y, AsmLabel *slow) {
-    ms_check_tag(M, x, T_REAL, slow);
-    ms_check_tag(M, y, T_REAL, slow);
-    ms_load_real(M, F_S0, x);
-    ms_load_real(M, F_S1, y);
+    ms_load_real(M, F_S0, x, slow);
+    ms_load_real(M, F_S1, y, slow);
 }
-static void set_real(Jit *j, int32_t d) { ms_set_real(M, d, F_S0); }
+static void set_real(Jit *j, int32_t d, AsmLabel *slow) { ms_set_real(M, d, F_S0, slow); }
 /* rcx := the index in y, checked against the length of the object in rax */
 static void index_of(Jit *j, int32_t y, AsmLabel *slow) {
     ms_check_tag(M, y, T_INT, slow);
@@ -131,39 +131,25 @@ static void floor_div(Jit *j, int mod) {
     as_bind(A, &done);
     as_label_free(&done);
 }
-/* `=` on two values that are neither pointers nor (for poly_eq) reals:
-   the tags the same and the payloads the same */
+/* `=` on two immediates: their words the same. A value in the heap is the
+   helper's for poly_eq, which walks it, and the primitive's own C for
+   imm_eq, which the compiler gives only what is never there (under
+   RUNE_INT64 the box of an int past 63 bits). */
 static void equal(Jit *j, int32_t d, int32_t x, int32_t y, int poly, AsmLabel *slow) {
     /* two values of one representation that is an immediate (tier 2,
-       M10): the same tags, so the payloads alone */
+       M10): the words alone */
     if (ms_immediate(M, x) && ms_immediate(M, y)) {
-        ms_load_payload(M, R_S0, x);
-        ms_cmp_payload(M, R_S0, y);
+        ms_load_bits(M, R_S0, x);
+        ms_cmp_bits(M, R_S0, y);
         set_bool(j, d, CC_E);
         return;
     }
-    AsmLabel no, done, heap; as_label_init(&no); as_label_init(&done); as_label_init(&heap);
+    AsmLabel done, heap; as_label_init(&done); as_label_init(&heap);
     /* Structural comparison may stop at its work limit, so its helper
        needs the exact VM for the fatal error and its trace. */
-    AsmLabel *deep = poly ? &heap : slow;
-    ms_load_tag(M, R_S0, x);
-    as_cmp_ri(A, R_S0, T_PTR);
-    as_jcc(A, CC_E, deep);
-    if (poly) { as_cmp_ri(A, R_S0, T_REAL); as_jcc(A, CC_E, deep); }
-    ms_load_tag(M, R_S1, y);
-    as_cmp_ri(A, R_S1, T_PTR);
-    as_jcc(A, CC_E, deep);
-    if (poly) { as_cmp_ri(A, R_S1, T_REAL); as_jcc(A, CC_E, deep); }
+    ms_two_words(M, x, y, poly ? &heap : slow);
     as_cmp_rr(A, R_S0, R_S1);
-    as_jcc(A, CC_NE, &no);
-    ms_load_payload(M, R_S0, x);
-    ms_cmp_payload(M, R_S0, y);
     set_bool(j, d, CC_E);
-    as_jmp(A, &done);
-    as_bind(A, &no);
-    ms_set(M, d, T_CON0, 0);
-    as_xor_rr(A, R_S0, R_S0);
-    as_test_rr(A, R_S0, R_S0);   /* false, in the flags too */
     if (poly) {
         as_jmp(A, &done);
         as_bind(A, &heap);
@@ -173,10 +159,10 @@ static void equal(Jit *j, int32_t d, int32_t x, int32_t y, int poly, AsmLabel *s
         ms_call(M, (MsHelper)jit_h_values_equal);
         ms_reload(M);
         ms_set_reg(M, d, T_CON0, R_S0);
-        as_test_rr(A, R_S0, R_S0);
+        ms_bool_flags(M, R_S0);
     }
     as_bind(A, &done);
-    as_label_free(&no); as_label_free(&done); as_label_free(&heap);
+    as_label_free(&done); as_label_free(&heap);
 }
 
 static void alloc(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d, int32_t a, int32_t b, const uint8_t *L);
@@ -224,11 +210,11 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         alloc(j, K_REF, 0, 1, FILL_ONE, d, x, 0, NULL);
         break;
 
-    case PRIM_int_add: two(j, x, y, T_INT, slow); as_add_rr(A, R_S0, R_S1); as_jcc(A, CC_O, slow); ms_set_reg(M, d, T_INT, R_S0); break;
-    case PRIM_int_sub: two(j, x, y, T_INT, slow); as_sub_rr(A, R_S0, R_S1); as_jcc(A, CC_O, slow); ms_set_reg(M, d, T_INT, R_S0); break;
-    case PRIM_int_mul: two(j, x, y, T_INT, slow); as_mul_jo(A, R_S0, R_S1, slow); ms_set_reg(M, d, T_INT, R_S0); break;
+    case PRIM_int_add: two(j, x, y, T_INT, slow); ms_int_arith(M, MS_ADD, slow); ms_set_bits(M, d, R_S0); break;
+    case PRIM_int_sub: two(j, x, y, T_INT, slow); ms_int_arith(M, MS_SUB, slow); ms_set_bits(M, d, R_S0); break;
+    case PRIM_int_mul: two(j, x, y, T_INT, slow); ms_int_arith(M, MS_MUL, slow); ms_set_bits(M, d, R_S0); break;
     case PRIM_int_div: case PRIM_int_mod: case PRIM_int_quot: case PRIM_int_rem:
-        two(j, x, y, T_INT, slow);
+        two_payloads(j, x, y, T_INT, slow);
         as_test_rr(A, R_S1, R_S1);
         as_jcc(A, CC_E, slow);
         as_cmp_ri(A, R_S1, -1);
@@ -239,33 +225,19 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         else if (p == PRIM_int_quot) ms_set_reg(M, d, T_INT, R_S0);
         else ms_set_reg(M, d, T_INT, R_S2);
         break;
-    case PRIM_int_neg:
-        ms_check_tag(M, x, T_INT, slow);
-        ms_load_payload(M, R_S0, x);
-        as_mov_ri(A, R_S1, INT64_MIN);
-        as_cmp_rr(A, R_S0, R_S1);
-        as_jcc(A, CC_E, slow);
-        as_neg(A, R_S0);
-        ms_set_reg(M, d, T_INT, R_S0);
-        break;
+    case PRIM_int_neg: ms_one_imm(M, x, T_INT, slow); ms_int_neg(M, slow); ms_set_bits(M, d, R_S0); break;
     case PRIM_int_lt: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_L); break;
     case PRIM_int_le: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_LE); break;
     case PRIM_int_gt: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_G); break;
     case PRIM_int_ge: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_GE); break;
     case PRIM_int_order: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_order(j, d, CC_GE, CC_G); break;
-    case PRIM_int_to_char:
-        ms_check_tag(M, x, T_INT, slow);
-        ms_load_payload(M, R_S0, x);
-        as_cmp_ri(A, R_S0, 255);
-        as_jcc(A, CC_A, slow);   /* unsigned: negative is out too */
-        ms_set_reg(M, d, T_CHAR, R_S0);
-        break;
+    case PRIM_int_to_char: ms_one_imm(M, x, T_INT, slow); ms_int_to_char(M, slow); ms_set_bits(M, d, R_S0); break;
 
-    case PRIM_word_add: two(j, x, y, T_WORD, slow); as_add_rr(A, R_S0, R_S1); ms_set_reg(M, d, T_WORD, R_S0); break;
-    case PRIM_word_sub: two(j, x, y, T_WORD, slow); as_sub_rr(A, R_S0, R_S1); ms_set_reg(M, d, T_WORD, R_S0); break;
-    case PRIM_word_mul: two(j, x, y, T_WORD, slow); as_mul_rr(A, R_S0, R_S1); ms_set_reg(M, d, T_WORD, R_S0); break;
+    case PRIM_word_add: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_ADD, slow); ms_set_bits(M, d, R_S0); break;
+    case PRIM_word_sub: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_SUB, slow); ms_set_bits(M, d, R_S0); break;
+    case PRIM_word_mul: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_MUL, slow); ms_set_bits(M, d, R_S0); break;
     case PRIM_word_div: case PRIM_word_mod:
-        two(j, x, y, T_WORD, slow);
+        two_payloads(j, x, y, T_WORD, slow);
         as_test_rr(A, R_S1, R_S1);
         as_jcc(A, CC_E, slow);
         as_udivmod(A, R_S1);
@@ -276,19 +248,14 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_word_gt: two(j, x, y, T_WORD, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_A); break;
     case PRIM_word_ge: two(j, x, y, T_WORD, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_AE); break;
     case PRIM_word_order: two(j, x, y, T_WORD, slow); as_cmp_rr(A, R_S0, R_S1); set_order(j, d, CC_AE, CC_A); break;
-    case PRIM_word_andb: two(j, x, y, T_WORD, slow); as_and_rr(A, R_S0, R_S1); ms_set_reg(M, d, T_WORD, R_S0); break;
-    case PRIM_word_orb: two(j, x, y, T_WORD, slow); as_or_rr(A, R_S0, R_S1); ms_set_reg(M, d, T_WORD, R_S0); break;
-    case PRIM_word_xorb: two(j, x, y, T_WORD, slow); as_xor_rr(A, R_S0, R_S1); ms_set_reg(M, d, T_WORD, R_S0); break;
-    case PRIM_word_notb:
-        ms_check_tag(M, x, T_WORD, slow);
-        ms_load_payload(M, R_S0, x);
-        as_not(A, R_S0);
-        ms_set_reg(M, d, T_WORD, R_S0);
-        break;
+    case PRIM_word_andb: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_AND, slow); ms_set_bits(M, d, R_S0); break;
+    case PRIM_word_orb: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_OR, slow); ms_set_bits(M, d, R_S0); break;
+    case PRIM_word_xorb: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_XOR, slow); ms_set_bits(M, d, R_S0); break;
+    case PRIM_word_notb: ms_one_imm(M, x, T_WORD, slow); ms_word_not(M, slow); ms_set_bits(M, d, R_S0); break;
     case PRIM_word_lsl: case PRIM_word_lsr: {
         /* a count of 64 or more gives 0, where the machine would take it mod 64 */
         AsmLabel ok, done; as_label_init(&ok); as_label_init(&done);
-        two(j, x, y, T_WORD, slow);
+        two_payloads(j, x, y, T_WORD, slow);
         as_cmp_ri(A, R_S1, 64);
         as_jcc(A, CC_B, &ok);
         as_xor_rr(A, R_S0, R_S0);
@@ -296,36 +263,30 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         as_bind(A, &ok);
         if (p == PRIM_word_lsl) as_shl_rr(A, R_S0); else as_shr_rr(A, R_S0);
         as_bind(A, &done);
-        ms_set_reg(M, d, T_WORD, R_S0);
+        ms_set_word(M, d, R_S0, slow);   /* a word of the word size, or the primitive's to box */
         as_label_free(&ok); as_label_free(&done);
         break;
     }
-    case PRIM_word_to_int:
-        ms_check_tag(M, x, T_WORD, slow);
-        ms_load_payload(M, R_S0, x);
-        as_test_rr(A, R_S0, R_S0);
-        as_jcc(A, CC_S, slow);   /* above INT64_MAX */
-        ms_set_reg(M, d, T_INT, R_S0);
-        break;
-    case PRIM_word_to_int_x: ms_check_tag(M, x, T_WORD, slow); ms_load_payload(M, R_S0, x); ms_set_reg(M, d, T_INT, R_S0); break;
-    case PRIM_word_from_int: ms_check_tag(M, x, T_INT, slow); ms_load_payload(M, R_S0, x); ms_set_reg(M, d, T_WORD, R_S0); break;
+    case PRIM_word_to_int: ms_one_imm(M, x, T_WORD, slow); ms_word_to_int(M, 0, slow); ms_set_bits(M, d, R_S0); break;
+    case PRIM_word_to_int_x: ms_one_imm(M, x, T_WORD, slow); ms_word_to_int(M, 1, slow); ms_set_bits(M, d, R_S0); break;
+    case PRIM_word_from_int: ms_one_imm(M, x, T_INT, slow); ms_int_to_word(M, slow); ms_set_bits(M, d, R_S0); break;
 
-    case PRIM_real_add: two_real(j, x, y, slow); as_fadd(A, F_S0, F_S1); set_real(j, d); break;
-    case PRIM_real_sub: two_real(j, x, y, slow); as_fsub(A, F_S0, F_S1); set_real(j, d); break;
-    case PRIM_real_mul: two_real(j, x, y, slow); as_fmul(A, F_S0, F_S1); set_real(j, d); break;
-    case PRIM_real_div: two_real(j, x, y, slow); as_fdiv(A, F_S0, F_S1); set_real(j, d); break;
+    case PRIM_real_add: two_real(j, x, y, slow); as_fadd(A, F_S0, F_S1); set_real(j, d, slow); break;
+    case PRIM_real_sub: two_real(j, x, y, slow); as_fsub(A, F_S0, F_S1); set_real(j, d, slow); break;
+    case PRIM_real_mul: two_real(j, x, y, slow); as_fmul(A, F_S0, F_S1); set_real(j, d, slow); break;
+    case PRIM_real_div: two_real(j, x, y, slow); as_fdiv(A, F_S0, F_S1); set_real(j, d, slow); break;
     case PRIM_real_neg:
-        ms_check_tag(M, x, T_REAL, slow);
-        ms_load_payload(M, R_S0, x);
+        ms_load_real(M, F_S0, x, slow);
+        as_fmov_rf(A, R_S0, F_S0);
         as_mov_ri(A, R_S1, INT64_MIN);   /* the sign bit */
         as_xor_rr(A, R_S0, R_S1);
-        ms_set_reg(M, d, T_REAL, R_S0);
+        as_fmov_fr(A, F_S0, R_S0);
+        set_real(j, d, slow);
         break;
     case PRIM_real_sqrt:   /* sqrtsd is what sqrt gives, a NaN for a negative (M10) */
-        ms_check_tag(M, x, T_REAL, slow);
-        ms_load_real(M, F_S0, x);
+        ms_load_real(M, F_S0, x, slow);
         as_fsqrt(A, F_S0, F_S0);
-        set_real(j, d);
+        set_real(j, d, slow);
         break;
     /* a comparison with a NaN is false: CC_FA and CC_FAE are the target's
        conditions that read an unordered pair as false (asm.h); x < y is
@@ -337,12 +298,10 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_real_eq:
         two_real(j, x, y, slow);
         as_fcmp(A, F_S0, F_S1);
-        as_setcc(A, R_S0, CC_FE);   /* equal and ordered */
-        as_test_rr(A, R_S0, R_S0);  /* the flags: false, for a branch fused onto it */
-        ms_set_reg(M, d, T_CON0, R_S0);
+        set_bool(j, d, CC_FE);   /* equal and ordered */
         break;
 
-    case PRIM_char_ord: ms_check_tag(M, x, T_CHAR, slow); ms_load_payload(M, R_S0, x); ms_set_reg(M, d, T_INT, R_S0); break;
+    case PRIM_char_ord: ms_one_imm(M, x, T_CHAR, slow); ms_set_bits(M, d, R_S0); break;
     case PRIM_char_lt: two(j, x, y, T_CHAR, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_L); break;
     case PRIM_char_le: two(j, x, y, T_CHAR, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_LE); break;
     case PRIM_char_gt: two(j, x, y, T_CHAR, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_G); break;
@@ -812,7 +771,6 @@ static void room_dynamic(Jit *j, int which, int base_reg) {
    (jit_fill_from, M7), and at least the second */
 static void fill_unit_dynamic(Jit *j) {
     AsmLabel loop, done; as_label_init(&loop); as_label_init(&done);
-    as_fzero(A, F_S1);
     /* from the first register the callee does not write before anything
        could see it (jit_fill_from, M7), and at least the second */
     AsmLabel ok; as_label_init(&ok);
@@ -832,8 +790,8 @@ static void fill_unit_dynamic(Jit *j) {
     as_bind(A, &loop);
     as_cmp_rr(A, R_S0, R_H2);
     as_jcc(A, CC_AE, &done);
-    as_st128(A, R_S0, 0, F_S1);
-    as_add_ri(A, R_S0, 16);
+    ms_unit_to(M, R_S0, 0);
+    ms_next_value(M, R_S0);
     as_jmp(A, &loop);
     as_bind(A, &done);
     as_label_free(&loop); as_label_free(&done);
@@ -969,7 +927,7 @@ void emit_RET(Jit *j, uint32_t pc, int32_t a) {
        into its register, and on past it */
     ms_scale_index(M, R_S3);
     if (h) { as_lea(A, R_S6, BASER, R_S3, 1, 0); ms_value_to(M, R_S6, 0, a); }
-    else as_st128x(A, BASER, R_S3, F_S0);
+    else { as_lea(A, R_S6, BASER, R_S3, 1, 0); ms_xmm_to(M, R_S6, 0, F_S0); }
     as_jmp_r(A, R_S4);
     as_bind(A, &interp);
     /* the interpreter goes on: at the RESULT's register and past it, or
@@ -979,14 +937,14 @@ void emit_RET(Jit *j, uint32_t pc, int32_t a) {
     as_jcc(A, CC_E, &no_result);
     ms_scale_index(M, R_S3);
     if (h) { as_lea(A, R_S6, BASER, R_S3, 1, 0); ms_value_to(M, R_S6, 0, a); }
-    else as_st128x(A, BASER, R_S3, F_S0);
+    else { as_lea(A, R_S6, BASER, R_S3, 1, 0); ms_xmm_to(M, R_S6, 0, F_S0); }
     as_add_ri(A, R_S0, 5);
     as_jmp(A, &go);
     as_bind(A, &no_result);
     as_mov_rr(A, R_S2, R_S5);
     ms_scale_index(M, R_S2);
     if (h) { as_lea(A, R_S6, STACKR, R_S2, 1, 0); ms_value_to(M, R_S6, 0, a); }
-    else as_st128x(A, STACKR, R_S2, F_S0);
+    else { as_lea(A, R_S6, STACKR, R_S2, 1, 0); ms_xmm_to(M, R_S6, 0, F_S0); }
     as_add_ri(A, R_S5, 1);
     as_bind(A, &go);
     as_st32(A, VMR, OFF(pc), R_S0);

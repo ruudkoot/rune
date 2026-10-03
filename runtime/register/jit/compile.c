@@ -443,7 +443,7 @@ static int choose_homes(Jit *j) {
             if (homes[r].kind != HOME_SLOT || weight[r] == 0) continue;
             int rep = fn->reps[r];
             int gpr = rep == REP_INT || rep == REP_WORD || rep == REP_CHAR || rep == REP_CON0;
-            int xmm = rep == REP_REAL;
+            int xmm = MS_REAL_HOMES && rep == REP_REAL;   /* a real is a word in its slot until masm.h gives it a home */
             if (!(gpr && ngpr < 3) && !(xmm && nxmm < 14)) continue;
             if (best == UINT32_MAX || weight[r] > weight[best]) best = r;
         }
