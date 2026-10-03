@@ -11,9 +11,9 @@
 #   tests/out/mlton-bench/NAME.sml = tests/external/mlton-bench/NAME.shim.sml
 #   (when it exists), then DIR/NAME.sml passed through NAME.sed (when it
 #   exists), then `val _ = Main.doit N` unless NAME.nowrap exists; compiled
-#   by --rune (bin/rune-new: the register bytecode) to NAME.rbc, and run in
+#   by --rune (bin/rune: the register bytecode) to NAME.rbc, and run in
 #   tests/out/mlton-bench (DIR/DATA copied there, fxp's input generated) by
-#   --vm (bin/runevm-new) with --count and OPTS, the words of NAME.args as
+#   --vm (bin/runevm) with --count and OPTS, the words of NAME.args as
 #   its arguments, standard input from /dev/null, under --timeout (600 s).
 # PASS when the bytes and objects of --count equal the file's (the count
 # oracle of docs/testing.md), COUNT when they differ, COMPILE, RUNTIME and
@@ -24,8 +24,8 @@
 # program fails; SKIPs do not count.
 set -u
 dir=${MLTON_BENCH:-/home/ruud/reference/mlton/benchmark/tests}
-rune=bin/rune-new
-vm=bin/runevm-new
+rune=bin/rune
+vm=bin/runevm
 vmopts=""
 tmo=600
 all=0

@@ -425,7 +425,7 @@ the variables of representation anything left out.
 
 ### The stack target
 
-`Stack` makes `runevm`'s bytecode from Low (`Target.stack` says what the
+`Stack` makes `runevm-stack`'s bytecode from Low (`Target.stack` says what the
 middle end may ask of it):
 
 * **Trees:** a value used once, by an instruction of its own block that
@@ -450,7 +450,7 @@ middle end may ask of it):
 
 ### The register target
 
-`Regs` makes the register bytecode of `vm/new` from the same Low
+`Regs` makes the register bytecode of `runtime/register` from the same Low
 ([bytecode.md](bytecode.md), The register bytecode; decision D4):
 
 * **Registers:** every variable has one, shared by linear scan as the
@@ -470,7 +470,7 @@ middle end may ask of it):
 * **Jumps** move their arguments into the block's parameters in parallel,
   fall through, or return as the stack target's do.
 
-`make test-new` runs the suites through it and `vm/new`'s first loop; see
+`make test-register` runs the suites through it and `runtime/register`'s first loop; see
 [plans/middle-end.md](plans/middle-end.md), M5, for how it compares with the
 stack target.
 
@@ -486,7 +486,7 @@ stack target.
 * **`make check-levels`** (`scripts/check-levels.sh`): every program of
   `tests/lang` and `tests/perf` compiled at `-O0` and at `-O2`, with the
   lint on and Mid's text checked against itself (`--mid-roundtrip`). Both
-  run under `runevm --checked` (a `DECON` of another constructor than it
+  run under `runevm-stack --checked` (a `DECON` of another constructor than it
   names stops the program), and must print and exit the same, on both
   streams: traces too, where inlining has moved code into another
   function (`tests/lang/rt.trace_inlined.sml`).

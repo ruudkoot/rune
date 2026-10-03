@@ -1,7 +1,7 @@
 # The runtime
 
 `runevm` is the program a compiled Rune program runs on: it loads a `.rbc`
-file, checks it, and interprets it (`vm/`, about 9,500 lines of C). This
+file, checks it, and interprets it (`runtime/`, about 9,500 lines of C). This
 page is about what a running program can count on -- how a value is laid out,
 when the collector moves it, how much memory and how many objects a program
 may have, what makes a run reproducible, and where the platform shows
@@ -9,7 +9,7 @@ through.
 
 Two neighbouring pages: [bytecode.md](bytecode.md) is the file format, the
 instruction set, the primitives and the command line;
-[architecture.md](architecture.md) is which file of `vm/` does what.
+[architecture.md](architecture.md) is which file of `runtime/` does what.
 [building.md](building.md) covers building the VM, including for Windows.
 
 ## Values and objects
@@ -164,10 +164,10 @@ the clock, the environment, the file system.
 
 ## The system layer
 
-Everything the VM needs from the operating system is behind `vm/sys.h`: time,
+Everything the VM needs from the operating system is behind `runtime/sys/sys.h`: time,
 files, directories, descriptors, processes, sockets and the `Posix`
-structure. `vm/sys_posix.c` implements it for POSIX systems, `vm/sys_win.c`
-for Windows ([building.md](building.md)), and `vm/sys_none.c` fails every
+structure. `runtime/sys/sys_posix.c` implements it for POSIX systems, `runtime/sys/sys_win.c`
+for Windows ([building.md](building.md)), and `runtime/sys/sys_none.c` fails every
 call with `ENOSYS`, which keeps the rest of the VM ISO C with no platform
 code in it (`make SYS=none`).
 
@@ -180,7 +180,7 @@ of `tests/basis/deviations.txt`.
 do without. Windows has none, so `Posix.Process.fork` starts a second VM and
 hands it this one's whole state -- the heap, the stacks, the program, the
 open files, sockets and directory streams -- and the child carries on from
-the `fork` as a copied process would (`vm/image.c`). `runevm --emulate-fork`
+the `fork` as a copied process would (`runtime/image.c`). `runevm --emulate-fork`
 takes that path on a POSIX system too, which is how `make check` tests it.
 
 The same image is what `Runtime.save` writes to a file and
@@ -208,7 +208,7 @@ the collector maintains. The page of the signature is
 
 `runevm` treats a `.rbc` file as untrusted input: every offset, length and
 index is checked before anything runs, and a file that does not pass is
-refused with a message and status 2; `tests/vm`, part of `make test`, is a
+refused with a message and status 2; `tests/runtime`, part of `make test`, is a
 suite of crafted files and command lines that must all be refused so. A file
 of another bytecode version is refused as well. There is no dynamic loading
 afterwards: a program is one file, the basis library included.

@@ -1,0 +1,100 @@
+/* Compiling a function of the register bytecode to machine code, tier 1
+   of runtime/register's JIT (docs/plans/jit.md, M4): one instruction at a time, in
+   the order of the bytecode, each doing what its case in the interpreter
+   does, in the same frame, with every value in its slot -- runeopt's
+   contract (docs/native.md) for the register bytecode, at run time. The
+   emitters (emit.c) are written over the macro-assembler (masm.h); this is
+   what runs them: the scan of a function, its labels and its runs, the
+   slow paths, the helpers the code calls into, and where the code goes. */
+#ifndef RUNE_JIT_COMPILE_H
+#define RUNE_JIT_COMPILE_H
+
+#include "masm.h"
+#include "register/regvm.h"
+
+/* The context of a function being compiled. */
+typedef struct Jit {
+    Masm m;
+    VM *vm;
+    JitProgram *jit;
+    uint32_t f;             /* the function */
+    uint32_t next;          /* the pc after the instruction being emitted */
+    AsmLabel *labels;       /* one per byte of the function's code, bound where an instruction that is a target begins */
+    uint32_t from, to;      /* the function's code */
+    int unsupported;        /* an instruction tier 1 does not compile was met */
+    /* a fused compare and branch (M7): the register whose bool the flags
+       hold (ZF: it is false) after the instruction just emitted, or -1;
+       and the same for the instruction before this one */
+    int32_t flags_for, flags_prev;
+    /* the profile's sites (--jit-profile, M8): as many as the scan counted
+       calls through a closure, branches and jumps back, filled as the
+       code is emitted */
+    Site *sites;
+    uint32_t nsites, sites_cap;
+    /* tier 2 (M9): the homes of the registers (NULL at tier 1), which
+       registers are live at the entry of each instruction (a bit per
+       register, one word per byte of code), and the landings: where the
+       code is entered from outside -- a call returning, a raise, the
+       interpreter mid-way, the entry itself -- which load the homes live
+       there and go on to the instruction's label */
+    AsmLabel entry;         /* the code's start: the fill of the registers with unit (M10), then the entry's landing */
+    int tier;
+    Home *homes;
+    uint64_t *live_in;
+    AsmLabel *landings;
+} Jit;
+
+/* what native code says on a fatal error: the message of the interpreter */
+enum JitFatal {
+    FATAL_EXPECT_TUPLE, FATAL_EXPECT_CON, FATAL_EXPECT_CON_FIELDS, FATAL_EXPECT_CLOSURE, FATAL_EXPECT_EXN,
+    FATAL_GLOBAL_UNSET, FATAL_ENV_RANGE, FATAL_SELF, FATAL_TUPLE_INDEX, FATAL_DECON_TAG, FATAL_CONTAG,
+    FATAL_MKEXN, FATAL_JUMPIF, FATAL_JUMPIFNOT, FATAL_JUMPIFNOTTAG, FATAL_SWITCH, FATAL_FIELD_TAG, FATAL_FIELD_INDEX,
+    FATAL_POPHANDLER, FATAL_RAISE, FATAL_CALL, FATAL_FUNCTION, FATAL_NEW_WORLD
+};
+
+/* the label of the instruction at pc, for a jump */
+AsmLabel *jit_label(Jit *j, uint32_t pc);
+/* a fatal error at the instruction being emitted, out of line: the label to
+   jump to; where the message wants a value found at run time, the code
+   leaves it in rcx and says so with rcx_arg */
+AsmLabel *jit_fatal(Jit *j, int what, int32_t a, int32_t b, int rcx_arg);
+/* an allocation's slow path: the object of n fields made by the helper,
+   then filled and stored by fill, as the fast path did */
+enum { FILL_LIST, FILL_ONE, FILL_CLOSURE, FILL_NEWEXN, FILL_MKEXN };
+AsmLabel *jit_alloc_slow(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d, int32_t a, int32_t b, const uint8_t *L);
+/* fill the object in rax as fill says, then R(d) := it */
+void jit_fill(Jit *j, int kind, int fill, uint32_t n, int32_t d, int32_t a, int32_t b, const uint8_t *L);
+/* an instruction tier 1 does not compile: the function stays interpreted */
+void jit_unsupported(Jit *j);
+/* where the code is entered from outside at pc (tier 2: a landing that
+   loads the homes; tier 1: the instruction's label) */
+AsmLabel *jit_landing(Jit *j, uint32_t pc);
+/* a site of the profile for the instruction at pc, or NULL without --jit-profile (M8) */
+Site *jit_site(Jit *j, int kind, uint32_t pc);
+
+/* the helpers native code calls */
+int jit_h_prim(VM *vm, int prim, int32_t d, const uint8_t *L);
+Obj *jit_h_alloc(VM *vm, int kind, int contag, uint32_t n);
+int jit_h_ret(VM *vm, int32_t s);
+void jit_h_fatal(VM *vm, int what, int32_t a, int32_t b);
+void jit_h_grow(VM *vm, size_t need);
+void jit_h_grow_frames(VM *vm);
+const void *jit_h_call(VM *vm, int32_t a, int32_t b, const void *after);
+const void *jit_h_tailcall(VM *vm, int32_t a, int32_t b);
+void jit_h_push_handler(VM *vm, int32_t pc, const void *native);
+const void *jit_h_raise(VM *vm, int32_t s);
+int jit_h_primpush(VM *vm, int prim, const uint8_t *L);
+/* helpers that touch no state of the VM (no allocation, no raise, nothing
+   moved), so that the code calls them with nothing synced or reloaded
+   (M7): the VM is their first argument all the same, unused */
+int64_t jit_h_string_order(VM *vm, const Obj *a, const Obj *b);
+/* Needs the exact VM: comparison can end the process at its work limit. */
+int64_t jit_h_values_equal(VM *vm, const Value *x, const Value *y);
+
+/* the compiler: 1 when function f now has an entry, 0 when it stays interpreted */
+int jit_compile(VM *vm, JitProgram *jit, uint32_t f);
+int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier);
+/* the code region and its stubs, made once; 0 on failure */
+int jit_region_init(VM *vm, JitProgram *jit);
+
+#endif

@@ -1,15 +1,15 @@
-(* RunePrim: the primitives of vm/prims.def written on the Basis Library of a
+(* RunePrim: the primitives of runtime/prims.def written on the Basis Library of a
    host system, for the xc1 configurations of tests/basis/run-matrix.sh, which
    compile lib/basis with MLton, SML/NJ and Poly/ML.
 
    tests/basis/host/gen-host-basis.sh turns `_prim "name"` in lib/basis into
    `RunePrim.name` and generates signature RUNE_PRIM from the TYPE column of
-   vm/prims.def, so the host checks three things Rune takes on trust: that
-   each `_prim` annotation in lib/basis agrees with vm/prims.def, that this
+   runtime/prims.def, so the host checks three things Rune takes on trust: that
+   each `_prim` annotation in lib/basis agrees with runtime/prims.def, that this
    structure does, and that lib/basis is portable Standard ML.
 
-   Every primitive follows its description in vm/prims.def and is written
-   independently of vm/prims.c. `int` and `word` are the default types of the
+   Every primitive follows its description in runtime/prims.def and is written
+   independently of runtime/prims.c. `int` and `word` are the default types of the
    host, whatever their precision. *)
 structure RunePrim : RUNE_PRIM =
 struct

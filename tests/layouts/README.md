@@ -22,7 +22,7 @@ one. Part of `make check`.
   compile-time flags (`PAIRS` headerless pairs, `HDR4`, `ALIGN16`,
   `REALIMM` Koka's immediate reals, `FLATREAL`, `COMPACTBYTES`,
   `BARRIER_CARD`, `L4_MONO`/`L4_UNIFORM`, `L1_UNBOXED_LOCALS`). The size
-  models are `vm/layouts.h`, shared with the census VM and the simulator.
+  models are `runtime/census/layouts.h`, shared with the census VM and the simulator.
 * `kernels.c` holds the kernels, SML-shaped: list building, the compiler's
   ordered map on ints and on strings, its int table of refs, closures,
   integer and word loops, reals in registers and in arrays, strings,

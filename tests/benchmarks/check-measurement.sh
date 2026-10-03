@@ -15,7 +15,7 @@ echo 'bench-measurement: statistics, execution-model comparisons and budget fail
 echo 'val _ = OS.Process.exit (BenchMeasure.main ())' > "$out/launch.sml"
 bin/rune --target=stack --lint examples/benchmarks/shared/input.sml examples/benchmarks/shared/tak.sml examples/benchmarks/tak/benchmark.sml examples/benchmarks/shared/measure.sml "$out/launch.sml" -o "$out/negative.rbc"
 printf 'tak\n18 12 6 1\n999\n3\n' > "$out/input"
-if bin/runevm "$out/negative.rbc" < "$out/input" > "$out/negative.out"; then echo 'wrong result accepted' >&2; exit 1; fi
+if bin/runevm-stack "$out/negative.rbc" < "$out/input" > "$out/negative.out"; then echo 'wrong result accepted' >&2; exit 1; fi
 ! grep -q '^SAMPLE ' "$out/negative.out"
 grep -q '^FAIL ' "$out/negative.out"
 echo 'bench-measurement: wrong results supply no repeated timing samples'

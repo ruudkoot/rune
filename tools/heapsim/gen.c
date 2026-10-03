@@ -1,7 +1,7 @@
 /* gen.c -- a synthetic allocation-trace generator in the census VM's formats
    (docs/census.md), for developing and unit-testing sim.c before
    real traces exist. It also computes, with exact liveness (every object has
-   a planned death clock), what the stock collector (vm/heap.c's policy) would
+   a planned death clock), what the stock collector (runtime/heap.c's policy) would
    do on the trace, so sim's L0+copier output can be checked against an
    independent implementation, and it writes death.bin/samples.bin from the
    same death clocks by different code paths than sim reads them with.

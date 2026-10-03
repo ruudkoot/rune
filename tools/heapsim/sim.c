@@ -23,7 +23,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include "layouts.h"
+#include "census/layouts.h"
 
 typedef struct { uint8_t kind, site_kind; uint16_t contag; uint32_t len, site, func; } AllocRec;
 typedef struct { uint32_t clock16, src, dst; uint16_t field; uint8_t site, flags; } StoreRec;
@@ -253,7 +253,7 @@ static void pass2(void) {
     }
 }
 
-/* ---- the copier (vm/heap.c's policy) ---- */
+/* ---- the copier (runtime/heap.c's policy) ---- */
 typedef struct {
     size_t size, used, live_last, live_before, count, to_size, max_footprint, max_size;
     uint64_t copied, copied_cls[NCLS];

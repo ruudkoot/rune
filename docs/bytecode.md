@@ -1,9 +1,9 @@
 # Rune bytecode (`.rbc`) and VM
 
 `rune` emits a single `.rbc` file per program (basis library included);
-`runevm` loads, validates and interprets it. The instruction set and the
+`runevm-stack` loads, validates and interprets it. The instruction set and the
 primitives are described in `src/isa/stack.sml` and `src/isa/prims.sml`,
-from which `runeisa` writes `vm/opcodes.def`, `vm/prims.def` and the tables
+from which `runeisa` writes `runtime/stack/opcodes.def`, `runtime/prims.def` and the tables
 of the VM and the compiler; `make check-docs` verifies every opcode and
 primitive they define is mentioned here.
 
@@ -66,7 +66,7 @@ carries the section (`nmeta` is `nfuncs`); the stack bytecode none
 holds the section to the code: a block or a loop begins at an instruction
 of its function, and where an instruction says what it writes -- `INT`,
 `CONST`, `UNIT`, `CON0`, `CONTAG`, the allocating ones, a `PRIM` whose
-result its description types (`prim_result` in `vm/prims_table.h`) --
+result its description types (`prim_result` in `runtime/prims_table.h`) --
 the register's representation agrees, or the file is refused ("the
 representation of register d of f disagrees with the code at pc").
 
@@ -101,7 +101,7 @@ what keeps the table to that, and the compiler within its budgets.
 
 The loader refuses a table that does not decode, that has bytes left over, or
 whose `pc` is past the code, whose file is not one the table names, or whose
-line or column is below 1 (`tests/vm`). The positions themselves are the
+line or column is below 1 (`tests/runtime`). The positions themselves are the
 compiler's business: `make check-positions` verifies that every one of them
 names a line its file really has.
 
@@ -166,7 +166,7 @@ object. Options are `CON0 0` (`NONE`) and `CON 1 x` (`SOME x`).
 
 The heap is managed by a Cheney semispace copying collector; the semispace
 doubles whenever it is more than half full after a collection, or the share
-`runevm --heap-fill P` gives, P percent.
+`runevm-stack --heap-fill P` gives, P percent.
 
 ## Machine state
 
@@ -213,9 +213,9 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 | `TUPLE n` | count | Pop `n` values (first pushed is field 0) and push a tuple; `n = 0` pushes `()`. |
 | `SELECT i` | index | Pop a tuple, push field `i`. |
 | `CON t` | tag | Pop a value, push `t` applied to it. |
-| `DECON t` | tag | Pop a constructor value, of tag `t`, push its argument. The tag is tested only under `runevm --checked`. |
+| `DECON t` | tag | Pop a constructor value, of tag `t`, push its argument. The tag is tested only under `runevm-stack --checked`. |
 | `CONN t, n` | tag, count | Pop `n` values (first pushed is field 0) and push `t` made of them: one object of `n` fields, the tag in its header -- how a constructor whose argument is a tuple of `n` is made (`src/backend/rep.sml`). |
-| `FIELD t, i` | tag, index | Pop a constructor value that `CONN` made, of tag `t`, push its field `i`. The tag is tested only under `runevm --checked`. |
+| `FIELD t, i` | tag, index | Pop a constructor value that `CONN` made, of tag `t`, push its field `i`. The tag is tested only under `runevm-stack --checked`. |
 | `CONTAG` | | Pop a constructor value (nullary or not), push its tag as an int. |
 | `CLOSURE f, n` | function, count | Pop `n` values into the environment of a new closure of function `f`. |
 | `SETENV e` | slot | Pop value `v`, pop closure `c`, set `c.env[e] := v` (patches mutually recursive closures). |
@@ -234,14 +234,14 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 | `EXNCON` / `EXNARG` | | Pop an exception value, push its constructor / payload. |
 | `PRIM p` | primitive | Invoke primitive `p`: pops its arguments (first pushed is the first argument) and pushes the result, or raises. |
 
-## The register bytecode (vm/new)
+## The register bytecode (runtime/register)
 
-`vm/new`'s loop (`bin/runevm-new`, `vm/new/interp.c`; `vm/new/ARCHITECTURE.md`
+`runtime/register`'s loop (`bin/runevm`, `runtime/register/interp.c`; `runtime/register/ARCHITECTURE.md`
 is the VM as built) runs a second instruction set, of 41 registers
 instructions (`src/isa/regs.sml`; decision D4 of
 [plans/middle-end.md](plans/middle-end.md)). `rune` makes it unless told
 `--target=stack`, from `-O1`. Its `.rbc` is laid out as the stack bytecode's, with the
-register instruction set's fingerprint (`vm/new/regs.def`), so that each VM
+register instruction set's fingerprint (`runtime/register/regs.def`), so that each VM
 refuses the other's file and image.
 
 * **Registers** are the slots of the frame, from its base: register 0 is the
@@ -259,27 +259,27 @@ refuses the other's file and image.
 * **Calls** leave their result on the stack, as the stack bytecode's do, and
   the instruction after the call takes it into a register (`RESULT`); a
   handler's code begins with `CATCH`, which takes the exception a raise left
-  there. `vm/new` shares `runevm`'s runtime this way (`build/librune.a`).
+  there. `runtime/register` shares `runevm-stack`'s runtime this way (`build/librune.a`).
   The loop's `RET` writes the value into the register of the `RESULT` the
   caller goes on at and passes over that `RESULT`, so `--count` counts one
   instruction fewer for each call than the code has; a program resumed from
   an image at a `RESULT` takes its value from the stack as before.
 * **Primitives** done in the loop: the common case of the primitives
   `runeopt` does in line (`runeopt --inlined`; [native.md](native.md)) is
-  done from the registers, with nothing pushed (`vm/new/fastprim.h`), and
+  done from the registers, with nothing pushed (`runtime/register/fastprim.h`), and
   the primitive itself is called for the rest -- an overflow, a divisor of
   zero, an index out of bounds. The result is the primitive's either way,
-  which `scripts/check-new.sh` holds `tests/opt/prims.sml` to on both VMs.
+  which `scripts/check-register.sh` holds `tests/opt/prims.sml` to on both VMs.
 * **A primitive that saves or restores an image** (`rt_save`, `rt_restore`,
   `posix_fork`) is `PRIMPUSH` and `RESULT`, so that a program resumed from
   an image finds its result where `RESULT` takes it.
-* **The JIT** (`docs/plans/jit.md`; `vm/new/ARCHITECTURE.md`, The driver
+* **The JIT** (`docs/plans/jit.md`; `runtime/register/ARCHITECTURE.md`, The driver
   and Tier 1): `--jit=off|baseline|opt|all` says which functions get
   native code (`RUNEVM_JIT=MODE` in the environment where no `--jit=` is
-  given, which `runevm` ignores, since the compiler runs on it), `--jit-stats`
+  given, which `runevm-stack` ignores, since the compiler runs on it), `--jit-stats`
   prints at exit what the JIT did, and `--jit-check` runs a few bytes of
-  code from executable memory and exits. `runevm` refuses all three
-  options: the JIT is `vm/new`'s. Compiled code counts, allocates
+  code from executable memory and exits. `runevm-stack` refuses all three
+  options: the JIT is `runtime/register`'s. Compiled code counts, allocates
   and prints what the loop does: `scripts/check-jit.sh` holds it to that.
   `--trace` runs every instruction interpreted, whatever `--jit=` says.
   `--jit-only=LO-HI`, `odd` or `even` gives code to those functions alone:
@@ -350,9 +350,9 @@ raised as noted.
 | Group | Primitives |
 |---|---|
 | Polymorphic | `poly_eq` (structural equality; refs/arrays/closures by identity), `ptr_eq` (identity), `exn_name` (the constructor name of an exception value), `imm_eq` (the equality of two values never in the heap -- ints, words, chars, nullary constructors of a type that has no other -- by tag and bits, which the compiler makes of `poly_eq` where it knows the type is one of those) |
-| System (`vm/sys.h`, ISO C99 core plus `vm/sys_posix.c`, `vm/sys_win.c` or `vm/sys_none.c`) | `sys_errno sys_error_msg sys_error_name sys_error_of_name` (the last failure, its text and its POSIX name), `time_now time_user time_sys time_sleep` (microseconds), `time_gc_user time_gc_sys` (the processor time the collector has taken, which the VM adds up around every collection, for `Timer.checkCPUTimes` and `checkGCTime`), `date_parts date_seconds date_offset date_format` (broken-down time as a nine-element `int list`: second, minute, hour, day, month 0–11, year − 1900, weekday, day of the year, daylight saving; `date_format` is `strftime` in the C locale, written in the core so that it is the same everywhere, which asks the system only for the name of the local zone), `os_system os_getenv`, the file system (`os_mkdir os_rmdir os_chdir os_getcwd os_remove os_rename os_access os_file_kind os_link_kind os_file_size os_mod_time os_set_time os_read_link os_real_path os_tmp_name os_file_id`), directories (`os_open_dir os_read_dir os_rewind_dir os_close_dir`) and descriptors (`os_desc_kind os_poll`). POSIX itself: `posix_const` gives the value of a named constant (an errno, a signal, a flag of `open`, a bit of a file mode), and the rest are the calls behind `Posix` (`posix_fork posix_exec posix_exece posix_waitpid posix_kill posix_alarm posix_pause posix_exit`, the last ending the process with nothing flushed; where the system has no fork, `posix_fork` starts a second VM and hands it this one's state (`vm/image.c`); `posix_spawn` starts a program with three descriptors as its standard streams, as fork, dup2 and exec would, without the fork (`Unix.execute`); `posix_lock` is `fcntl` with a `struct flock` (the locks of `Posix.IO`), `posix_pathconf` is `pathconf`/`fpathconf` with the limit named without its `_PC_` prefix, and `posix_utime` sets both times of a file; `posix_tcgetattr`, `posix_tcsetattr` and `posix_tcop` are the calls on a terminal (`Posix.TTY`), the process and user numbers (`posix_getpid posix_getppid posix_getuid posix_geteuid posix_getgid posix_getegid posix_setuid posix_setgid posix_getgroups posix_getlogin posix_getpgrp posix_setsid posix_setpgid`), `posix_uname posix_times posix_environ posix_ctermid posix_ttyname posix_isatty posix_sysconf`, `posix_openf posix_close posix_dup posix_dup2 posix_pipe posix_read posix_write posix_lseek posix_fsync posix_fcntl posix_ftruncate posix_stat posix_chmod posix_chown posix_link posix_symlink posix_mkfifo posix_umask posix_getpw posix_getgr`). Sockets: `socket_create socket_pair socket_bind socket_connect socket_listen socket_accept socket_send socket_sendto socket_recv socket_recvfrom socket_shutdown socket_name socket_peer socket_getopt socket_setopt`, the addresses (`socket_inet_addr socket_unix_addr socket_addr_family socket_inet_parts socket_unix_path`, which keep an address as the bytes of a `sockaddr`, with `socket_inet6_addr` and `socket_inet6_parts` for the `sockaddr_in6` of IPv6 (`INet6Sock`)), the options that are no `int` (`socket_linger`, a `struct linger`; `socket_query`, `FIONREAD` and `sockatmark`) and the databases (`netdb_host_byname netdb_host_byaddr netdb_hostname netdb_proto_byname netdb_proto_bynumber netdb_serv_byname netdb_serv_byport`). A call that fails gives `~1`, or `""` or `[]`, and leaves the reason in `sys_errno` |
-| Windows (`lib/basis/windows.sml`; `vm/sys_win.c`, `ENOSYS` on every other system) | The registry (`win_reg_open win_reg_close win_reg_delete win_reg_enum win_reg_query win_reg_set`, a key being a number of the system layer, the seven at the roots 0 to 6), the machine (`win_config win_version win_volume`), the shell (`win_find_executable win_shell_execute`), programs started with one command line (`win_spawn`) and waited for with the whole code they end with (`win_wait`), and dynamic data exchange (`win_dde_start win_dde_execute win_dde_stop`) |
-| Runtime (`lib/basis/runtime.sml`) | The counters the VM keeps for the program it runs, each reading one field and allocating nothing: `rt_instructions` (what `--count` prints), `rt_bytes` and `rt_objects` (allocated since the start, collected or not), `rt_collections`, `rt_live` (the bytes of the current semispace in use) and `rt_heap_size` (one semispace); `rt_collect`, which collects the heap on demand; and `rt_version`, the version the VM was built as, which `--version` prints and `scripts/gen-build-files.sh` writes into `vm/version.h` and `build/config.sml` alike; `rt_trace` gives the frames of the call stack, innermost first, leaving out the innermost n of them, each as its function's name and the position it is stopped at (the line table above); `rt_save` writes the whole VM to a file for `runevm --restore`, and `rt_restore` makes this VM become the world in such a file, bytecode and all, so that it does not come back (`vm/image.c`) |
+| System (`runtime/sys/sys.h`, ISO C99 core plus `runtime/sys/sys_posix.c`, `runtime/sys/sys_win.c` or `runtime/sys/sys_none.c`) | `sys_errno sys_error_msg sys_error_name sys_error_of_name` (the last failure, its text and its POSIX name), `time_now time_user time_sys time_sleep` (microseconds), `time_gc_user time_gc_sys` (the processor time the collector has taken, which the VM adds up around every collection, for `Timer.checkCPUTimes` and `checkGCTime`), `date_parts date_seconds date_offset date_format` (broken-down time as a nine-element `int list`: second, minute, hour, day, month 0–11, year − 1900, weekday, day of the year, daylight saving; `date_format` is `strftime` in the C locale, written in the core so that it is the same everywhere, which asks the system only for the name of the local zone), `os_system os_getenv`, the file system (`os_mkdir os_rmdir os_chdir os_getcwd os_remove os_rename os_access os_file_kind os_link_kind os_file_size os_mod_time os_set_time os_read_link os_real_path os_tmp_name os_file_id`), directories (`os_open_dir os_read_dir os_rewind_dir os_close_dir`) and descriptors (`os_desc_kind os_poll`). POSIX itself: `posix_const` gives the value of a named constant (an errno, a signal, a flag of `open`, a bit of a file mode), and the rest are the calls behind `Posix` (`posix_fork posix_exec posix_exece posix_waitpid posix_kill posix_alarm posix_pause posix_exit`, the last ending the process with nothing flushed; where the system has no fork, `posix_fork` starts a second VM and hands it this one's state (`runtime/image.c`); `posix_spawn` starts a program with three descriptors as its standard streams, as fork, dup2 and exec would, without the fork (`Unix.execute`); `posix_lock` is `fcntl` with a `struct flock` (the locks of `Posix.IO`), `posix_pathconf` is `pathconf`/`fpathconf` with the limit named without its `_PC_` prefix, and `posix_utime` sets both times of a file; `posix_tcgetattr`, `posix_tcsetattr` and `posix_tcop` are the calls on a terminal (`Posix.TTY`), the process and user numbers (`posix_getpid posix_getppid posix_getuid posix_geteuid posix_getgid posix_getegid posix_setuid posix_setgid posix_getgroups posix_getlogin posix_getpgrp posix_setsid posix_setpgid`), `posix_uname posix_times posix_environ posix_ctermid posix_ttyname posix_isatty posix_sysconf`, `posix_openf posix_close posix_dup posix_dup2 posix_pipe posix_read posix_write posix_lseek posix_fsync posix_fcntl posix_ftruncate posix_stat posix_chmod posix_chown posix_link posix_symlink posix_mkfifo posix_umask posix_getpw posix_getgr`). Sockets: `socket_create socket_pair socket_bind socket_connect socket_listen socket_accept socket_send socket_sendto socket_recv socket_recvfrom socket_shutdown socket_name socket_peer socket_getopt socket_setopt`, the addresses (`socket_inet_addr socket_unix_addr socket_addr_family socket_inet_parts socket_unix_path`, which keep an address as the bytes of a `sockaddr`, with `socket_inet6_addr` and `socket_inet6_parts` for the `sockaddr_in6` of IPv6 (`INet6Sock`)), the options that are no `int` (`socket_linger`, a `struct linger`; `socket_query`, `FIONREAD` and `sockatmark`) and the databases (`netdb_host_byname netdb_host_byaddr netdb_hostname netdb_proto_byname netdb_proto_bynumber netdb_serv_byname netdb_serv_byport`). A call that fails gives `~1`, or `""` or `[]`, and leaves the reason in `sys_errno` |
+| Windows (`lib/basis/windows.sml`; `runtime/sys/sys_win.c`, `ENOSYS` on every other system) | The registry (`win_reg_open win_reg_close win_reg_delete win_reg_enum win_reg_query win_reg_set`, a key being a number of the system layer, the seven at the roots 0 to 6), the machine (`win_config win_version win_volume`), the shell (`win_find_executable win_shell_execute`), programs started with one command line (`win_spawn`) and waited for with the whole code they end with (`win_wait`), and dynamic data exchange (`win_dde_start win_dde_execute win_dde_stop`) |
+| Runtime (`lib/basis/runtime.sml`) | The counters the VM keeps for the program it runs, each reading one field and allocating nothing: `rt_instructions` (what `--count` prints), `rt_bytes` and `rt_objects` (allocated since the start, collected or not), `rt_collections`, `rt_live` (the bytes of the current semispace in use) and `rt_heap_size` (one semispace); `rt_collect`, which collects the heap on demand; and `rt_version`, the version the VM was built as, which `--version` prints and `scripts/gen-build-files.sh` writes into `runtime/version.h` and `build/config.sml` alike; `rt_trace` gives the frames of the call stack, innermost first, leaving out the innermost n of them, each as its function's name and the position it is stopped at (the line table above); `rt_save` writes the whole VM to a file for `runevm-stack --restore`, and `rt_restore` makes this VM become the world in such a file, bytecode and all, so that it does not come back (`runtime/image.c`) |
 | Real, from the C library (ISO C99) | `real_floor_r real_ceil_r real_trunc_r real_round_r` (integral reals; `real_round_r` rounds ties to even in every rounding mode), `real_sign_bit`, `real_copy_sign`, `real_to_bits real_from_bits` (the 64 bits of IEEE 754 binary64, for `PackReal`), `real_to_single real_single_from_string` (rounding to IEEE 754 binary32 and C `strtof`, for `Real32`), `real_frexp_man real_frexp_exp real_ldexp` (`frexp`, `ldexp`), `real_next_after`, `real_rem` (`fmod`), `real_fmt_e real_fmt_f` (`printf` `%.*e` and `%.*f` of a finite real; `Size` for a precision that is negative or above 100000), `real_shortest` (the `%.*e` text with the fewest digits that reads back as the same real), `real_set_round real_get_round` (0 nearest, 1 downward, 2 upward, 3 toward zero), `real_sinh real_cosh real_tanh` |
 | Int (64-bit, `Overflow` checked) | `int_add int_sub int_mul int_div int_mod int_quot int_rem int_neg int_abs int_lt int_le int_gt int_ge int_order int_to_string int_from_string int_to_char int_to_real` — `int_div/int_mod` floor, `int_quot/int_rem` truncate, both raise `Div` on zero; `int_to_char` raises `Chr`; `int_order` gives `LESS`, `EQUAL` or `GREATER`, and so do `word_order`, `char_order` and `string_order`, which `compare` of each structure is bound to |
 | Word (64-bit, wrapping) | `word_add word_sub word_mul word_div word_mod word_lt word_le word_gt word_ge word_order word_neg word_andb word_orb word_xorb word_notb word_lsl word_lsr word_to_int word_to_int_x word_from_int word_to_string` — `word_div/word_mod` raise `Div`; `word_to_int` raises `Overflow`; `word_to_string` is uppercase hex |
@@ -365,45 +365,45 @@ raised as noted.
 
 ## Tools
 
-* `runevm --disasm file.rbc` prints constants, globals and code;
-* `runevm --trace file.rbc` traces every instruction to stderr;
-* `runevm --stats file.rbc` prints heap statistics at exit (collections,
+* `runevm-stack --disasm file.rbc` prints constants, globals and code;
+* `runevm-stack --trace file.rbc` traces every instruction to stderr;
+* `runevm-stack --stats file.rbc` prints heap statistics at exit (collections,
   bytes allocated, semispace, live, copied, the largest live size, the
   collector's time);
-* `runevm --count file.rbc` prints the instructions executed and the bytes and
+* `runevm-stack --count file.rbc` prints the instructions executed and the bytes and
   objects allocated at exit (also after the `exit` primitive and an uncaught
   exception). The numbers depend on the program and its input only, not on
   the machine or the heap size, so they serve as performance budgets;
-* `runevm --gc-stress N file.rbc` collects before every Nth allocation. With
+* `runevm-stack --gc-stress N file.rbc` collects before every Nth allocation. With
   N = 1 every allocation moves every live object, which exposes a primitive
   that keeps a heap pointer in a C variable across an allocation
   (`make test-stress`);
-* `runevm --checked file.rbc` makes `DECON` test the tag it is given and
+* `runevm-stack --checked file.rbc` makes `DECON` test the tag it is given and
   stop the program where the value has another. A match that names every
   constructor of a datatype leaves the last untested (decision D14 of
   plans/middle-end.md), so a wrong tag would otherwise go unseen; the test
   suites run so (`tests/run-tests.sh`, `make check-levels`);
-* `runevm --heap-size N file.rbc` sets the initial semispace size in bytes;
-* `runevm --stack-size N file.rbc` sets the most bytes the stack (its
+* `runevm-stack --heap-size N file.rbc` sets the initial semispace size in bytes;
+* `runevm-stack --stack-size N file.rbc` sets the most bytes the stack (its
   values, frames or handlers) may grow to, 1 GiB by default: a recursion
   without end ends with `stack overflow` and status 2, not with the
   machine's memory gone (`tests/lang/rt.stack_limit`);
-* `runevm --heap-fill P file.rbc` grows the heap after a collection until at
+* `runevm-stack --heap-fill P file.rbc` grows the heap after a collection until at
   most P percent of it is in use (1 to 100, 50 by default);
-* `runevm --emulate-fork file.rbc` makes `posix_fork` what it is on Windows,
-  which has no fork: a second `runevm` is started as `runevm --resume` and
-  handed the whole state of this one (`vm/image.c`), and it carries on with
+* `runevm-stack --emulate-fork file.rbc` makes `posix_fork` what it is on Windows,
+  which has no fork: a second `runevm-stack` is started as `runevm-stack --resume` and
+  handed the whole state of this one (`runtime/image.c`), and it carries on with
   `fork` returning 0. `tests/lang/rt.fork_image` runs so, under ASan and
   `make test-stress` too;
 * `Runtime.restore` does the same from inside a program that is already
   running, so that it becomes another world; an image is therefore checked as
   a `.rbc` is -- its opcodes, its operands, its jump targets, and the places
   the world it holds is stopped at -- before anything of it runs;
-* `runevm --restore FILE` carries on the world that `Runtime.save` wrote to
+* `runevm-stack --restore FILE` carries on the world that `Runtime.save` wrote to
   FILE, which comes back from that call as `Restored` where the world that
   wrote it had `Saved`. It is the same format a fork is handed, which nothing
-  in it ties to a machine: an image written by `bin/runevm` is restored by
-  `bin/runevm32.exe`. What the system layer holds -- a socket, a directory
+  in it ties to a machine: an image written by `bin/runevm-stack` is restored by
+  `bin/runevm-stack32.exe`. What the system layer holds -- a socket, a directory
   stream, a pipe -- goes to a fork's child and not into a file, so a restored
   world does not have them; the files the program opened come back by name,
   put where they were left (`tests/lang/rt.save_restore`);

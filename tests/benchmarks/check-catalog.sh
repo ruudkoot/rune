@@ -12,10 +12,10 @@ cp examples/benchmarks/inventory.tsv "$suite/"
 cp examples/benchmarks/shared/input.sml examples/benchmarks/shared/tak.sml examples/benchmarks/shared/main.sml "$suite/shared/"
 cp examples/benchmarks/tak/benchmark.sml examples/benchmarks/tak/smoke.expected examples/benchmarks/tak/normal.expected "$suite/tak/"
 printf 'benchmark\treason\ntak\trecursive pilot\n' > "$suite/routine.tsv"
-(cd "$out" && "$root/bin/runevm" "$root/build/bench-catalog.rbc" --check) > "$out/valid.log"
+(cd "$out" && "$root/bin/runevm-stack" "$root/build/bench-catalog.rbc" --check) > "$out/valid.log"
 reject() {
   label=$1
-  if (cd "$out" && "$root/bin/runevm" "$root/build/bench-catalog.rbc" --check) > "$out/$label.log" 2>&1; then
+  if (cd "$out" && "$root/bin/runevm-stack" "$root/build/bench-catalog.rbc" --check) > "$out/$label.log" 2>&1; then
     echo "corrupt catalogue accepted: $label" >&2; exit 1
   fi
 }

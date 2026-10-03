@@ -8,8 +8,8 @@
    go to the handler's block (an exceptional edge to each block of the
    region).
 
-   The stack target (Stack) makes the bytecode of runevm from it; the
-   register target (M5) will make vm/new's. *)
+   The stack target (Stack) makes the bytecode of runevm-stack from it; the
+   register target (M5) will make runtime/register's. *)
 structure Low =
 struct
   type var = int

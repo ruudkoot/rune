@@ -1,6 +1,6 @@
 # An .rbc from a listing, written as the escapes of printf(1) (every byte as
 # \ooo), for the tests of runeopt to make programs the compiler never would:
-#   printf "$(awk -v opdefs=vm/opcodes.def -v primdefs=vm/prims.def \
+#   printf "$(awk -v opdefs=runtime/stack/opcodes.def -v primdefs=runtime/prims.def \
 #                 -f tests/opt/rbcasm.awk LISTING)" > FILE.rbc
 # The numbers of the opcodes and primitives come from the .def files. A
 # listing has, one to a line (# begins a comment):
@@ -13,7 +13,7 @@
 #                             &FUNCTION, or a primitive's name where the
 #                             .def says the operand is one (a PRIM's first)
 # An instruction whose last operand the .def writes with "..." (a list of
-# registers, vm/new/regs.def) takes the rest of the line. There is no debug
+# registers, runtime/register/regs.def) takes the rest of the line. There is no debug
 # information.
 function le(v, bytes,    s, i, b) {
   s = ""

@@ -1,5 +1,5 @@
 (* runeopt, the native code generator: the command line. It reads an .rbc
-   as the loader of runevm does, checks what a translation relies on, and
+   as the loader of runevm-stack does, checks what a translation relies on, and
    translates it into an executable for Linux on x86-64.
    docs/native.md says how. *)
 structure OptMain =
@@ -17,7 +17,7 @@ struct
     \       runeopt --facts FILE.rbc ...\n\
     \  -o FILE     the executable to write (default: FILE.rbc without .rbc)\n\
     \  -S          write the assembly to FILE (default FILE.rbc with .s) and stop\n\
-    \  --options TEXT  options of runevm the program is to run with, as\n\
+    \  --options TEXT  options of runevm-stack the program is to run with, as\n\
     \              RUNEVM_OPTIONS gives them when it runs, which come after\n\
     \              these: --count, --stats, --heap-size N, --heap-limit N,\n\
     \              --equality-work N, --gc-stress N\n\
@@ -28,9 +28,9 @@ struct
     \  --runtime DIR  where librune.a and rune-offsets.s are (the wrappers\n\
     \              pass it)\n\
     \  --check     check that each file is one runeopt can translate: one the\n\
-    \              loader of runevm accepts, whose code keeps what the\n\
+    \              loader of runevm-stack accepts, whose code keeps what the\n\
     \              translation relies on (docs/native.md)\n\
-    \  --disasm    print the bytecode as runevm --disasm does\n\
+    \  --disasm    print the bytecode as runevm-stack --disasm does\n\
     \  --inlined   list the primitives whose common case the code does itself\n\
     \  --lines     print the line table of the file: pc file:line:column of\n\
     \              each entry, which the debug information of the program says\n\

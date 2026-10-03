@@ -1,6 +1,6 @@
-# A program that runs every instruction of vm/opcodes.def at least once, HALT
+# A program that runs every instruction of runtime/stack/opcodes.def at least once, HALT
 # and JUMPIF among them, which the compiler never writes: tests/opt makes it
-# with rbcasm.awk, runs it under runevm and as runeopt translates it, and
+# with rbcasm.awk, runs it under runevm-stack and as runeopt translates it, and
 # wants the same output and the same counts. A new opcode goes in here too.
 
 const start string "every opcode\n"

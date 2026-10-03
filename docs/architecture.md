@@ -6,14 +6,14 @@ source files ──► Lexer ──► Parser ──► Elaborate ──► Tran
                                                                                                              items (Code)
 .rbc ──► loader (validate) ──► interp (stack machine, prims, Cheney GC)
 
-Low ──► Regs (the default target) ──► register .rbc ──► vm/new's first loop
-                                                        (bin/runevm-new, on the runtime of runevm)
+Low ──► Regs (the default target) ──► register .rbc ──► runtime/register's first loop
+                                                        (bin/runevm, on the runtime of runevm-stack)
 ```
 
 `rune` makes the register bytecode unless told `--target=stack`, which ends the
-pipeline in Stack and the stack `.rbc` that `bin/runevm` runs.
+pipeline in Stack and the stack `.rbc` that `bin/runevm-stack` runs.
 
-The compiler is a classic multi-pass design in `src/`; the VM is in `vm/`.
+The compiler is a classic multi-pass design in `src/`; the VM is in `runtime/`.
 Every pass is a separate structure with a small interface so the pipeline can
 be inspected with `rune --dump-tokens | --dump-ast` and, for each stage from
 one intermediate representation to the next, `--dump-before=PASS` and
@@ -33,7 +33,7 @@ one intermediate representation to the next, `--dump-before=PASS` and
 | Optimisation (from `-O1`) | `src/core/shake.sml`, `lift.sml`, `workers.sml`, `simplify.sml`, `target.sml` | Mid → Mid | Tree shaking (the globals nothing done for its effect reaches go), lambda lifting, workers and wrappers, then shrinking reductions in rounds after a census, with inlining (its frames kept for traces) and the specialisation of higher-order functions to known functions; see [ir.md](ir.md), *The optimisations of Mid*. `Target` says what the middle end is told of the machine, such as the precision constants are folded at. `-O0` runs none of them. |
 | Lowering | `src/backend/low.sml`, `lower.sml`, `lowlint.sml` | Mid → `Low.program` | Blocks with parameters in SSA form, one function per function of the program. Flat closure conversion: a function captures its free variables in the order of their stamps; self reference is `Self`; a group of functions patches its closures with `SetEnv`. Handlers are pushed and popped around their regions. |
 | Stack target | `src/backend/target.sml`, `code.sml`, `stack.sml` | Low → per-function instruction lists (`Code`) | A value used once stays on the stack; the others get locals shared by linear scan; jumps fall through or become returns where they can. `Code` holds the instruction lists and the tables of the program (constants, globals, files, inlined frames) that both targets fill and Emit writes. |
-| Register target | `src/backend/regs.sml`, `regcodes.sml` (generated) | Low → register bytecode | Every variable a register, shared by linear scan; `CALL` then `RESULT`; with `--target=registers`, for `vm/new` ([bytecode.md](bytecode.md), The register bytecode). |
+| Register target | `src/backend/regs.sml`, `regcodes.sml` (generated) | Low → register bytecode | Every variable a register, shared by linear scan; `CALL` then `RESULT`; with `--target=registers`, for `runtime/register` ([bytecode.md](bytecode.md), The register bytecode). |
 | Emission | `src/backend/emit.sml` | program → bytes | Resolves labels to absolute offsets, writes the `.rbc` layout documented in `docs/bytecode.md` as string chunks through `TextIO`. |
 | Driver | `src/driver/basismanifest.sml`, `options.sml`, `main.sml` | CLI | `BasisManifest` reads `lib/basis/MANIFEST` and chooses the files a program loads (the documentation generator uses it too). The driver tokenizes the user files, picks the files of the basis library they need from `lib/basis/MANIFEST` (the always-loaded files, the files that provide a name among the identifiers of the program, and the closure of their requires column; `--basis all` takes every file), and compiles those and the user files as one program. `--basis-deps` prints the choice; `--basis-check` verifies the MANIFEST against the sources. |
 
@@ -63,26 +63,26 @@ writes an executable for Linux on x86-64: the bytecode translated an
 instruction at a time into assembly, which `cc` assembles and links with
 `build/librune.a`. The code keeps the value stack, the frames and the
 handlers where the interpreter keeps them, so the collector, traces,
-`Runtime.stats` and images see the machine they see under `runevm`.
+`Runtime.stats` and images see the machine they see under `runevm-stack`.
 
 | Module | File | Role |
 |---|---|---|
-| `Rbc` | `src/opt/rbc.sml` | Reads an `.rbc` as `load_program` and `validate_program` of `vm/loader.c` do, and refuses what they refuse with their messages. No number of the file is read into an `int` that could not hold it on a 31-bit host. |
-| `RbcImage` | `src/opt/rbcimage.sml` | `runeopt --from-image`: the program of an image of `vm/image.c` as an `.rbc`, its real constants written as C's hexadecimal notation from their bits, with integers alone. |
+| `Rbc` | `src/opt/rbc.sml` | Reads an `.rbc` as `load_program` and `validate_program` of `runtime/loader.c` do, and refuses what they refuse with their messages. No number of the file is read into an `int` that could not hold it on a 31-bit host. |
+| `RbcImage` | `src/opt/rbcimage.sml` | `runeopt --from-image`: the program of an image of `runtime/image.c` as an `.rbc`, its real constants written as C's hexadecimal notation from their bits, with integers alone. |
 | `RbcCheck` | `src/opt/rbccheck.sml` | What a translation relies on and the loader does not promise: the stack height and handler depth agree on every path into an instruction, no path underflows, leaves its function or runs off its end, no `TAILCALL` or `RET` has a handler of its function installed. Gives the height before every instruction and each function's highest stack. |
-| `RbcDisasm` | `src/opt/rbcdisasm.sml` | `runeopt --disasm`, line for line what `runevm --disasm` prints (a real constant as its text). |
-| `X64` | `src/opt/x64.sml` | The translation: for every instruction the code that does what its case in `vm/interp.c` does, in the order of the bytecode. The VM is in `r12`, the stack in `r13`, 16 times the frame's base in `rbp`, the count of instructions in `r15`; a slot is an address in the frame, since the height of the stack is known. Calls and returns push and pop the VM's frames themselves, and allocation bumps the heap itself, with `vm/native.c` as the slow path; raises go through `vm/native.c`, primitives through `prim_table`, but for the 59 whose common case the code does itself (`fastPrim`, `runeopt --inlined`: the arithmetic and comparisons of ints, words, reals and chars, `=` on two immediates, references, and the length and elements of strings, vectors and arrays), which call the primitive only for what they leave to it: an overflow, a divisor of zero, an index out of bounds. Also the tables of the program: the `.rbc` (by `.incbin`), each function's entries and highest stack, each handler's code, the places an image can resume at. |
+| `RbcDisasm` | `src/opt/rbcdisasm.sml` | `runeopt --disasm`, line for line what `runevm-stack --disasm` prints (a real constant as its text). |
+| `X64` | `src/opt/x64.sml` | The translation: for every instruction the code that does what its case in `runtime/stack/interp.c` does, in the order of the bytecode. The VM is in `r12`, the stack in `r13`, 16 times the frame's base in `rbp`, the count of instructions in `r15`; a slot is an address in the frame, since the height of the stack is known. Calls and returns push and pop the VM's frames themselves, and allocation bumps the heap itself, with `runtime/native/native.c` as the slow path; raises go through `runtime/native/native.c`, primitives through `prim_table`, but for the 59 whose common case the code does itself (`fastPrim`, `runeopt --inlined`: the arithmetic and comparisons of ints, words, reals and chars, `=` on two immediates, references, and the length and elements of strings, vectors and arrays), which call the primitive only for what they leave to it: an overflow, a divisor of zero, an index out of bounds. Also the tables of the program: the `.rbc` (by `.incbin`), each function's entries and highest stack, each handler's code, the places an image can resume at. |
 | `OptMain` | `src/opt/optmain.sml` | The command line: `runeopt FILE.rbc [-o EXE] [-S]`, `--check`, `--disasm`, `--facts`. |
 
-On the side of the VM, `vm/native.c` is the `main` of a program `runeopt`
-made and what its code calls: the cases of `vm/interp.c` for a call, a
+On the side of the VM, `runtime/native/native.c` is the `main` of a program `runeopt`
+made and what its code calls: the cases of `runtime/stack/interp.c` for a call, a
 return, a raise and an allocation, taken out of the loop, each returning the
 native code to go on at. The code does the common case of a call, a return
-and an allocation itself, and calls these for the rest. It reads the options of `runevm` from
+and an allocation itself, and calls these for the rest. It reads the options of `runevm-stack` from
 `RUNEVM_OPTIONS`, and carries on an image of its program (`--restore`, the
 child of an emulated fork, `Runtime.restore`): the code has a table of the
 places an image can stop at, the instruction after a call and after a
-primitive that writes an image. `vm/native_offsets.c` prints the layout of the VM as
+primitive that writes an image. `runtime/native/native_offsets.c` prints the layout of the VM as
 assembler directives, `build/rune-offsets.s`, which the code includes, so
 that what `runeopt` writes names fields and never gives their offsets.
 
@@ -132,7 +132,7 @@ application.
 
 The compiler is compiled by itself, and the result is what Rune ships:
 `make boot` compiles the sources with a host build (`BOOTHOST`, by default
-MLton) into `bin/rune.rbc`, which `runevm-new` executes as `bin/rune-boot`, and
+MLton) into `bin/rune.rbc`, which `runevm` executes as `bin/rune-boot`, and
 `bin/rune` names that. The host builds `bin/rune-mlton`, `bin/rune-smlnj-legacy`,
 `bin/rune-smlnj32`, `bin/rune-smlnj-dev`, `bin/rune-polyml` and `bin/rune-mlkit`
 exist to bootstrap it and to check it: `make bootstrap` verifies that the
@@ -153,25 +153,35 @@ the payload beside it. The bytecode therefore contains no path, and
 
 | File | Contents |
 |---|---|
-| `vm/vm.h` | `VM` and the shared API; the enumerations of tags and kinds. |
-| `vm/value.h` | The layout: `Value`, `Obj`, and every operation on them -- tag tests, `mk_*`, the payloads, the header, fields, sizes, forwarding. The one place in C that knows it; `vm/new/jit/masm.c` is the same in machine code (docs/plans/heap-layout.md, M3). |
-| `vm/loader.c` | Reads and validates `.rbc` (see `docs/bytecode.md`), from a file or from memory; disassembler. |
-| `vm/runtime.c` | What a VM does besides dispatching: stacks, frames, handlers, exception raising and the trace of a failure, structural equality, `vm_start` (how a program begins) and `vm_exit` (how a run ends). |
-| `vm/interp.c` | The dispatch loop: `vm_run` is `vm_start`, then `vm_loop`. Its cases are the bodies of `src/isa/stack.sml`, which `runeisa` writes into `vm/interp_cases.h`, and into `vm/ops.h` those that `vm/native.c` shares. |
-| `vm/heap.c` | Allocation and the Cheney semispace collector. Roots: value stack, globals, constants, frame closures, builtin exception constructors. |
-| `vm/image.c` | `fork` where the system has none (Windows) or `runevm --emulate-fork` asks: the VM's whole state is written to a second `runevm`, started as `runevm --resume`, which moves the heap's pointers to its own heap and carries on in the dispatch loop with `fork` returning 0. |
-| `vm/prims.c` | One function per primitive; the dispatch table is generated from `src/isa/prims.sml`. |
-| `vm/sys.h`, `vm/sys_posix.c`, `vm/sys_win.c`, `vm/sys_none.c` | The system layer: what the primitives of time, files, processes, `Posix` and sockets need from the operating system. `sys_posix.c` is the one for POSIX systems and `sys_win.c` the one of `make windows` (see `docs/building.md`); `make SYS=none` links `sys_none.c` instead, which fails every call with `ENOSYS`, so the rest of the VM stays ISO C. |
-| `vm/main.c` | Command line handling. |
-| `vm/new/interp.c`, `vm/new/reg_loop.h` | `vm/new`'s loop for the register bytecode (`bin/runevm-new`; [bytecode.md](bytecode.md), The register bytecode): the words its bodies are written in, and the loop itself, included twice, plain and traced. Its cases are the bodies of `src/isa/regs.sml`, which `runeisa` writes into `vm/new/reg_cases.h`, with `vm/new/reg_labels.h` for the computed goto and the tables of `vm/new/regops.h`. |
-| `vm/new/isa_regs.c`, `vm/new/regvm.h` | What of `vm/new` is its instruction set's: the check of a program (with each function's deepest stack), the disassembler, the fingerprint. Linked in place of `vm/isa_stack.c`. |
-| `vm/new/fastprim.h` | The common case of the primitives `runeopt` does in line, done in the loop from the registers. |
-| `vm/new/jit.h`, `vm/new/jit.c` | The JIT's view of a program (a code object per function) and the protocol between the driver, `vm_loop`, and the engines that run a frame ([plans/jit.md](plans/jit.md)); the compiler itself comes with M4. |
-| `vm/new/ARCHITECTURE.md` | `vm/new` as built, kept current by every change to it ([plans/jit.md](plans/jit.md)). |
+| `runtime/vm.h` | `VM` and the shared API; the enumerations of tags and kinds. |
+| `runtime/value.h` | The layout: `Value`, `Obj`, and every operation on them -- tag tests, `mk_*`, the payloads, the header, fields, sizes, forwarding. The one place in C that knows it; `runtime/register/jit/masm.c` is the same in machine code (docs/plans/heap-layout.md, M3). |
+| `runtime/isa.h` | Generated by `runeisa`: what the two instruction sets share -- the version of an `.rbc`, the fingerprint of each set, the enum their flow tables are written in. The shared files include it and nothing of `runtime/stack`. |
+| `runtime/loader.c` | Reads and validates `.rbc` (see `docs/bytecode.md`), from a file or from memory; disassembler. |
+| `runtime/runtime.c` | What a VM does besides dispatching: stacks, frames, handlers, exception raising and the trace of a failure, structural equality, `vm_start` (how a program begins) and `vm_exit` (how a run ends). |
+| `runtime/stack/interp.c` | The dispatch loop: `vm_run` is `vm_start`, then `vm_loop`. Its cases are the bodies of `src/isa/stack.sml`, which `runeisa` writes into `runtime/stack/interp_cases.h`, and into `runtime/stack/ops.h` those that `runtime/native/native.c` shares. |
+| `runtime/heap.c` | Allocation and the Cheney semispace collector. Roots: value stack, globals, constants, frame closures, builtin exception constructors. |
+| `runtime/image.c` | `fork` where the system has none (Windows) or `runevm --emulate-fork` asks: the VM's whole state is written to a second VM, started as `runevm --resume`, which moves the heap's pointers to its own heap and carries on in the dispatch loop with `fork` returning 0. |
+| `runtime/prims.c` | One function per primitive; the dispatch table is generated from `src/isa/prims.sml`. |
+| `runtime/sys/sys.h`, `runtime/sys/sys_posix.c`, `runtime/sys/sys_win.c`, `runtime/sys/sys_none.c` | The system layer: what the primitives of time, files, processes, `Posix` and sockets need from the operating system. `sys_posix.c` is the one for POSIX systems and `sys_win.c` the one of `make windows` (see `docs/building.md`); `make SYS=none` links `sys_none.c` instead, which fails every call with `ENOSYS`, so the rest of the VM stays ISO C. |
+| `runtime/main.c` | Command line handling. |
+| `runtime/register/interp.c`, `runtime/register/reg_loop.h` | `runtime/register`'s loop for the register bytecode (`bin/runevm`; [bytecode.md](bytecode.md), The register bytecode): the words its bodies are written in, and the loop itself, included twice, plain and traced. Its cases are the bodies of `src/isa/regs.sml`, which `runeisa` writes into `runtime/register/reg_cases.h`, with `runtime/register/reg_labels.h` for the computed goto and the tables of `runtime/register/regops.h`. |
+| `runtime/register/isa_regs.c`, `runtime/register/regvm.h` | What of `runtime/register` is its instruction set's: the check of a program (with each function's deepest stack), the disassembler, the fingerprint. Linked in place of `runtime/stack/isa_stack.c`. |
+| `runtime/register/fastprim.h` | The common case of the primitives `runeopt` does in line, done in the loop from the registers. |
+| `runtime/register/jit.h`, `runtime/register/jit.c` | The JIT's view of a program (a code object per function) and the protocol between the driver, `vm_loop`, and the engines that run a frame ([plans/jit.md](plans/jit.md)); the compiler itself comes with M4. |
+| `runtime/register/ARCHITECTURE.md` | `runtime/register` as built, kept current by every change to it ([plans/jit.md](plans/jit.md)). |
 
-Everything but `interp.c`, `main.c` and `vm/new` is the runtime, which the
-Makefile also builds as `build/librune.a` for this machine: `bin/runevm` is
-the two linked against it, `bin/runevm-new` is `vm/new` linked against it,
+The folders say what depends on what. The runtime both VMs link is directly
+under `runtime/`, with the system layer in `runtime/sys/`; `runtime/stack/`
+and `runtime/register/` are the two VMs' loops and instruction sets;
+`runtime/native/` is what a program of `runeopt` links, and
+`runtime/census/` the instrumented build ([census.md](census.md)). A file
+names a header of another folder by its path from `runtime/`
+(`sys/sys.h`, `register/jit.h`), so a dependency across folders shows in
+the include.
+
+Everything but `runtime/stack/interp.c`, `runtime/main.c` and `runtime/register` is the runtime, which the
+Makefile also builds as `build/librune.a` for this machine: `bin/runevm-stack` is
+the two linked against it, `bin/runevm` is `runtime/register` linked against it,
 and a program made by the native code generator ([native.md](native.md))
 links it in place of them.
 
@@ -227,7 +237,7 @@ elaborates a library on the same terms (`DocElab.library`).
    to Lambda; the rest of the pipeline (Mid, Low and the targets) only if
    a new Lambda construct is required.
 2. If the VM needs a new instruction or primitive: `src/isa/stack.sml` /
-   `src/isa/prims.sml` and `make isa`, implement in `vm/`, document in
+   `src/isa/prims.sml` and `make isa`, implement in `runtime/`, document in
    `docs/bytecode.md`.
 3. Add `tests/lang/<id>_<name>.sml` + `.expected` (verify the expected output
    by hand, not just by running Rune) and the row `<id>` in `docs/language.md`.

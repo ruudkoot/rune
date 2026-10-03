@@ -10,7 +10,7 @@
 set -u
 cd "$(dirname "$0")/.."
 rune=bin/rune-stack
-vm=bin/runevm
+vm=bin/runevm-stack
 while [ $# -gt 0 ]; do
   case "$1" in
     --rune) rune=$2; shift 2 ;;

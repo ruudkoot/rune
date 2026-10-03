@@ -18,7 +18,7 @@
 #   WIDTH           follows from the precision of a type
 #   XC1-NA          not meaningful for Rune's library on a host
 #   WINDOWS         what Windows does not have or does otherwise, which the
-#                   system layer (vm/sys_win.c) cannot make good, or a check
+#                   system layer (runtime/sys/sys_win.c) cannot make good, or a check
 #                   that asks sh or starts another program of POSIX; each
 #                   line says so after `stays:` (docs/building.md)
 #   EMULATED        true of a VM that runs under an emulator rather than of
@@ -827,7 +827,7 @@ xc1:* | INet6Sock.fromAddr/* | XC1-NA | INet6Sock.fromAddr rests on socket_inet6
 xc1:* | INet6Sock.sock_addr/* | XC1-NA | INet6Sock.any rests on socket_inet6_addr, which tests/basis/host/rune-prim.sml fails with ENOSYS
 xc1:* | INet6Sock:INET6_SOCK/sock_addr-is-Socket.sock_addr | XC1-NA | INet6Sock.any rests on socket_inet6_addr, which tests/basis/host/rune-prim.sml fails with ENOSYS
 
-# ---- Windows: Rune on bin/runevm.exe and bin/runevm32.exe (make test-windows).
+# ---- Windows: Rune on bin/runevm-stack.exe and bin/runevm-stack32.exe (make test-windows).
 # What Windows cannot do as POSIX does, and the checks that ask sh or start
 # another program of POSIX, which Windows has not: every line says which
 # after `stays:`, and the two VMs fail the same checks.
@@ -873,5 +873,5 @@ rune:windows* | Posix.Process.* | WINDOWS | stays: the child the test forks runs
 rune:windows* | Posix.Signal.*/kill-l | WINDOWS | stays: the test asks sh (kill -l)
 rune:windows* | Posix.Signal.* | WINDOWS | stays: the test signals a /bin/sh that a child made by fork runs, and Windows has no /bin/sh
 rune:windows* | Unix.* | WINDOWS | stays: the programs the test starts (/bin/sh, /bin/cat, /bin/echo, /usr/bin/env) are POSIX's; basis.unix_pipes starts cmd.exe on Windows
-rune:*new* | Runtime.collect/drops-what-is-unreachable | RUNE-DEV | vm/new keeps every register a root until it is written again (vm/new/ARCHITECTURE.md, conservative in liveness): the register that held the list is dead but not yet reused, since a register is shared only among values of one representation (plans/jit.md, M8); roots precise by liveness are tier 2's (M9)
+rune:*new* | Runtime.collect/drops-what-is-unreachable | RUNE-DEV | runtime/register keeps every register a root until it is written again (runtime/register/ARCHITECTURE.md, conservative in liveness): the register that held the list is dead but not yet reused, since a register is shared only among values of one representation (plans/jit.md, M8); roots precise by liveness are tier 2's (M9)
 rune:jit | Runtime.collect/drops-what-is-unreachable | RUNE-DEV | the same, with every function compiled

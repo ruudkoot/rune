@@ -2,6 +2,6 @@
 #
 #   NAME CATEGORY: reason
 #
-# The list is empty: both Windows VMs, bin/runevm.exe and bin/runevm32.exe,
+# The list is empty: both Windows VMs, bin/runevm-stack.exe and bin/runevm-stack32.exe,
 # run every program of tests/lang (docs/building.md). A category is added
 # here again only with a program to go under it.

@@ -1,7 +1,7 @@
 (* The primitives of the VMs, in the language of src/isa/isa.sml: a
    primitive's number is its place in this list, from 0, so a new one goes
    at the end. lib/basis binds each with `_prim "name" : ty`, and its C is
-   `p_<name>` in vm/prims.c. `ty` is the type the library gives it, for
+   `p_<name>` in runtime/prims.c. `ty` is the type the library gives it, for
    documentation and for the hosts' RUNE_PRIM (tests/basis/host). Primitives
    that return an option rely on the prelude declaring
    `datatype 'a option = NONE | SOME of 'a` (NONE = tag 0, SOME = tag 1), and
@@ -556,7 +556,7 @@ struct
           doc = "The bytes of an IPv6 sockaddr for a host in the text of inet_pton and a port; \"\" on failure."},
          {name = "socket_inet6_parts", arity = 1, ty = "string -> string list", effects = anything,
           doc = "The host and the port of such a sockaddr, as two strings; [] when it is not one."}],
-       group "Windows (lib/basis/windows.sml; vm/sys_win.c, ENOSYS on other systems)"
+       group "Windows (lib/basis/windows.sml; runtime/sys/sys_win.c, ENOSYS on other systems)"
         [{name = "win_reg_open", arity = 4, ty = "int * string * int * int -> int list", effects = anything,
           doc = "Open (or with the fourth argument 1, create) a subkey of the registry with the given rights: [1 created or 2 opened, the key]; [] on failure."},
          {name = "win_reg_close", arity = 1, ty = "int -> int", effects = anything,

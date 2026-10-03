@@ -1,8 +1,8 @@
 # The census VM
 
-`bin/runevm-census` is `runevm-new` built with `-DRUNE_CENSUS` (`make
+`bin/runevm-census` is `runevm` built with `-DRUNE_CENSUS` (`make
 vm-census`): the same runtime and the same register-bytecode loop, with the
-hooks of `vm/census.h` compiled in. It interprets everything (the JIT
+hooks of `runtime/census/census.h` compiled in. It interprets everything (the JIT
 allocates in line with its own idea of the header, so `--jit` is ignored)
 and reports the stock VM's `--count` line, which is its correctness check
 (`scripts/check-census.sh`, part of `make check`). What it adds is a record
@@ -27,7 +27,7 @@ survival table comes from the birth sample kept in each object's header.
 `--census-static FILE.rbc` prints the static census of the program (below)
 and exits. `scripts/census.sh WORKLOAD...` runs a workload on both VMs,
 checks them against each other and keeps the traces under
-`tests/out/census/WORKLOAD`; `vm/layouts.h` holds the size models of the
+`tests/out/census/WORKLOAD`; `runtime/census/layouts.h` holds the size models of the
 candidate layouts that the first-order sizes of `census.txt` use.
 
 The header of an object is 16 bytes in this build (an `id` word after the
@@ -45,7 +45,7 @@ own header is 16 bytes (an id word) but no L0 size counts it.
 
 ### alloc.bin -- 16 bytes per object, index = id
     u8  kind        vm.h ObjKind: TUPLE 1, CON 2, CLOSURE 3, STRING 4, REF 5, ARRAY 6, EXN 7, EXNCON 8
-    u8  site_kind   0 = an opcode of vm/new (site = its pc), 1 = a primitive under PRIM/PRIMPUSH
+    u8  site_kind   0 = an opcode of runtime/register (site = its pc), 1 = a primitive under PRIM/PRIMPUSH
                     (site = pc of that PRIM, prim = prim number in the high 16 bits of func? no: see census.txt),
                     2 = runtime (loader, vm_start, vm_raise_builtin): site = 0xFFFFFFFF
     u16 contag

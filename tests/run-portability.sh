@@ -3,13 +3,13 @@
 #   tests/run-portability.sh [--rune BIN] [--vm BIN]... [--native BIN] [--def FILE] [-j N] [FILTER]
 #
 # Each VM named by --vm runs every program of tests/lang and the whole of
-# tests/vm, as tests/run-tests.sh runs them here -- the bytecode is the same
-# file for every VM, so only the VM differs. bin/runevm32 is a 32-bit x86,
-# where a pointer is four bytes; bin/runevm-ppc64 is a big-endian 64-bit
+# tests/runtime, as tests/run-tests.sh runs them here -- the bytecode is the same
+# file for every VM, so only the VM differs. bin/runevm-stack32 is a 32-bit x86,
+# where a pointer is four bytes; bin/runevm-stack-ppc64 is a big-endian 64-bit
 # PowerPC under qemu, where the bytes of a word are the other way round.
-# For vm/new (docs/plans/jit.md, M2) the same, with --rune bin/rune-new,
-# --vm bin/runevm-new32 --vm bin/runevm-new-ppc64, --native bin/runevm-new
-# for the counts of this machine and --def vm/new/regs.def for tests/vm.
+# For runtime/register (docs/plans/jit.md, M2) the same, with --rune bin/rune,
+# --vm bin/runevm32 --vm bin/runevm-ppc64, --native bin/runevm
+# for the counts of this machine and --def runtime/register/regs.def for tests/runtime.
 #
 # Then two things no single VM can show:
 #
@@ -18,9 +18,9 @@
 #    allocated, which depend on the program and its input alone -- so a VM
 #    that lays out a value differently says so here. That is what caught a
 #    `Value` of 12 bytes where the 32-bit System V ABI aligns an int64_t to
-#    four (vm/vm.h).
+#    four (runtime/vm.h).
 #  * an image of one VM must be read by the others, in every direction: it is
-#    what vm/image.c claims and only two machines can test.
+#    what runtime/image.c claims and only two machines can test.
 #
 # tests/portability-skip.txt is what either VM would leave out, and is empty. A
 # fork by a second VM needs qemu registered under /proc/sys/fs/binfmt_misc, or
@@ -34,8 +34,8 @@ TZ='NST3:30NDT,M3.2.0,M11.1.0'
 export TZ
 
 rune=bin/rune-stack
-native=bin/runevm
-def=vm/opcodes.def
+native=bin/runevm-stack
+def=runtime/stack/opcodes.def
 vms=""
 jobs=""
 filter=""
@@ -52,7 +52,7 @@ while [ $# -gt 0 ]; do
 done
 cd "$(dirname "$0")/.."
 root=$(pwd)
-[ -n "$vms" ] || vms="bin/runevm32 bin/runevm-ppc64"
+[ -n "$vms" ] || vms="bin/runevm-stack32 bin/runevm-stack-ppc64"
 [ -n "$jobs" ] || jobs=$(sh scripts/ncpus.sh)
 # A VM under qemu forks by exec of its own binary, which the kernel must
 # know how to start: without qemu registered under binfmt_misc the child
@@ -86,12 +86,12 @@ for vm in $vms; do
   name=$(basename "$vm")
   # tests/portability-skip.txt is empty, and says what would go in it.
   skip="--skip tests/portability-skip.txt"
-  echo "=== $name: the language suite and tests/vm"
-  # its own directory: the bytecode of vm/new's compiler is not the stack
+  echo "=== $name: the language suite and tests/runtime"
+  # its own directory: the bytecode of runtime/register's compiler is not the stack
   # bytecode that tests/out holds for the other suites (test-opt reads it)
   # shellcheck disable=SC2086
   sh tests/run-tests.sh -j "$jobs" --rune "$rune" --vm "$vm" --out "$out/$name-lang" $skip $filter || status=1
-  sh tests/vm/run-vm-tests.sh --vm "$vm" --out "$out/$name-vm" --def "$def" || status=1
+  sh tests/runtime/run-vm-tests.sh --vm "$vm" --out "$out/$name-vm" --def "$def" || status=1
 done
 
 # ------------------------------------------- the counts, the same everywhere

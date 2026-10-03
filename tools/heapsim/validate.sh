@@ -3,7 +3,7 @@
 # The simulator's copier model against the stock VM (docs/plans/heap-layout.md,
 # *The experiments*): for each workload, whose census trace
 # tests/out/census/WORKLOAD scripts/census.sh makes when it is missing, the
-# stock VM (bin/runevm-new --jit=off --stats) runs the census's own command
+# stock VM (bin/runevm --jit=off --stats) runs the census's own command
 # (the DONE file's cwd and cmd lines) at five settings -- an initial semispace
 # of 4 MiB, 64 MiB and 256 MiB at --heap-fill 50, and 64 MiB at fills 25 and
 # 80 -- and bin/heapsim replays the trace under L0 and the copier model in
@@ -23,7 +23,7 @@ out=tests/out/heapsim
 cd "$(dirname "$0")/../.."
 root=$(pwd)
 sim=$root/bin/heapsim
-stock=$root/bin/runevm-new
+stock=$root/bin/runevm
 settings="4194304:50 67108864:50 268435456:50 67108864:25 67108864:80"
 mkdir -p "$out"
 status=0

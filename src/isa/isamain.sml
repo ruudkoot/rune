@@ -33,6 +33,8 @@ struct
           let
             val files = IsaGen.files (StackIsa.instructions, PrimIsa.primitives)
                         @ RegGen.files (RegIsa.instructions, PrimIsa.primitives)
+                        @ [IsaGen.isaH {stack = IsaGen.fingerprint (StackIsa.instructions, PrimIsa.primitives),
+                                        register = RegGen.fingerprint (RegIsa.instructions, PrimIsa.primitives)}]
             fun at path = root ^ "/" ^ path
             val stale = List.filter (fn {path, text} => readFile (at path) <> SOME text) files
           in

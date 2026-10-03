@@ -23,10 +23,10 @@ standard output is compared with its `.expected` sibling; `.args`,
 (`tests/run-tests.sh:6-7,66-74`). This is the ordinary test.
 
 **The counts.** `runevm --count` prints, at exit, the instructions
-executed and the bytes and objects allocated (`vm/runtime.c:285`). The
+executed and the bytes and objects allocated (`runtime/runtime.c:285`). The
 numbers are exact, and the same on every engine: the suites check that
 the two compilers' bytecodes allocate the same bytes and objects
-(`scripts/check-new.sh`), that the interpreter and every JIT mode report
+(`scripts/check-register.sh`), that the interpreter and every JIT mode report
 identical counts (`scripts/check-jit.sh:62-79`), that the 32-bit and the
 big-endian VM agree with this machine's to the byte
 (`tests/run-portability.sh:97-111`), that the three Windows VMs do
@@ -53,7 +53,7 @@ in the input, and the input is larger than it looks.
 [runtime.md](runtime.md) says the counts depend on the program and its
 input alone, not on the machine, the pointer width, the heap size or the
 collector's schedule. What the input includes, measured (a 50,000-object
-program, `runevm-new --jit=off --count`, one thing changed at a time):
+program, `runevm --jit=off --count`, one thing changed at a time):
 
 1. **The program's name and arguments.** `CommandLine.name` and
    `CommandLine.arguments` are strings on the heap, and a string's payload
@@ -63,7 +63,12 @@ program, `runevm-new --jit=off --count`, one thing changed at a time):
    harnesses therefore run every program from a directory of its own under
    a fixed name (`scripts/check-jit.sh:65`: `cd "$out/$name"`, then
    `prog.rbc`), and a count taken by hand with the program's full path is
-   not comparable with the harness's. The current directory's name is the
+   not comparable with the harness's. The two sides of a comparison need
+   paths of the same length, not only the same file name:
+   `scripts/check-register.sh` ran its two VMs from directories named
+   `stack` and `new`, two characters apart, and every program agreed until
+   the directory above them got a name five characters longer and one
+   program's name crossed a 16-byte boundary on one side alone. The current directory's name is the
    same kind of input for a program that asks for it: MLton's `lexgen`,
    `mlyacc` and `vliw` build the names of their inputs from
    `OS.FileSys.getDir ()`, and `vliw` walks that name a character at a
@@ -83,7 +88,7 @@ program, `runevm-new --jit=off --count`, one thing changed at a time):
    from a terminal, or with its output through `tee`, does not count the
    same as in a harness. The harnesses fix all three: standard input from
    `/dev/null` unless the test has a `.stdin` sibling, standard output and
-   error to files (`tests/run-tests.sh:69-74`, `scripts/check-new.sh:40-49`,
+   error to files (`tests/run-tests.sh:69-74`, `scripts/check-register.sh:40-49`,
    `scripts/check-jit.sh:49-65`, `tests/run-windows.sh:88-91`). The
    portability runner lets the VMs inherit its own standard input
    (`tests/run-portability.sh:107-109`), which is fine because every VM in
@@ -177,5 +182,5 @@ change*).
 4. Different VMs or widths: the layout of a value or an object
    ([runtime.md](runtime.md)); `test-portability` and `test-windows` say
    which VM disagrees with this machine's.
-5. Two compilers: `check-new.sh` diffs the counts of their bytecodes, and
+5. Two compilers: `check-register.sh` diffs the counts of their bytecodes, and
    `--disasm` shows where the code differs.

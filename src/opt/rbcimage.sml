@@ -1,4 +1,4 @@
-(* The program in an image (vm/image.c), as an .rbc: what runeopt --from-image
+(* The program in an image (runtime/image.c), as an .rbc: what runeopt --from-image
    translates, so that the executable resumes the image (docs/native.md,
    Images). An image carries its program whole --
    constants, functions, code, files, line table and the frames of the
@@ -16,7 +16,7 @@ struct
 
   fun fail msg = raise Bad msg
 
-  (* IMAGE_MAGIC of vm/image.c, with the fingerprint of the instruction set *)
+  (* IMAGE_MAGIC of runtime/image.c, with the fingerprint of the instruction set *)
   val magic = "runevm image 7 isa " ^ Opcodes.fingerprintHex ^ "\000"
   val big = Rbc.big
 
@@ -58,11 +58,11 @@ struct
   (* A value: its tag and its 8 bytes. *)
   fun value r = (u8 r, uN (r, 8))
 
-  val kString = 4                         (* K_STRING of vm/vm.h *)
+  val kString = 4                         (* K_STRING of runtime/vm.h *)
   val tInt = 1 val tWord = 2 val tReal = 3 val tChar = 4 val tPtr = 6
 
   (* the heap's rounding of a payload, from the layout the JIT has (X64Layout,
-     generated from vm/value.h's numbers: M3 of docs/plans/heap-layout.md) *)
+     generated from runtime/value.h's numbers: M3 of docs/plans/heap-layout.md) *)
   fun payloadSize bytes =
     let val a = X64Layout.payloadAlign
         val s = (bytes + a - 1) div a * a
@@ -113,7 +113,7 @@ struct
     let
       val r = {data = data, pos = ref 0} : reader
       val () = if String.size data >= String.size magic andalso String.substring (data, 0, String.size magic) = magic
-               then #pos r := String.size magic else fail "not an image of this runevm"
+               then #pos r := String.size magic else fail "not an image of this runevm-stack"
       val _ = u32 r                                   (* the kind *)
       val () = List.app (fn _ => ignore (u32 r)) [1, 2, 3, 4, 5, 6]
       val () = List.app (fn _ => ignore (uN (r, 8))) [1, 2, 3, 4, 5, 6, 7, 8, 9]

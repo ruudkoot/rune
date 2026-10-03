@@ -28,8 +28,8 @@
 # measurements: do that for a deliberate change, and say why in the commit.
 # Override the compiler and the VM with RUNE= and RUNEVM=.
 #
-# --new measures vm/new instead (docs/plans/middle-end.md, M5): each program
-# compiled to the register bytecode and run by bin/runevm-new (RUNEVM_NEW=),
+# --new measures runtime/register instead (docs/plans/middle-end.md, M5): each program
+# compiled to the register bytecode and run by bin/runevm (RUNEVM_NEW=),
 # the compiler and runedoc as bin/rune.rbc and bin/runedoc.rbc, and
 # the budgets are tests/perf/new/NAME.budget, beside the measurement that
 # tests/perf/NAME.budget describes.
@@ -47,13 +47,13 @@ while [ $# -gt 0 ]; do
 done
 cd "$(dirname "$0")/../.."
 rune=${RUNE:-bin/rune}
-vm=${RUNEVM:-bin/runevm}
+vm=${RUNEVM:-bin/runevm-stack}
 flags=--target=stack
 compiler=bin/rune.stack.rbc
 runedocrbc=bin/runedoc.stack.rbc
 out=tests/out/perf
 if [ $new = 1 ]; then
-  vm=${RUNEVM_NEW:-bin/runevm-new}
+  vm=${RUNEVM_NEW:-bin/runevm}
   flags=--target=registers
   compiler=bin/rune.rbc
   runedocrbc=bin/runedoc.rbc
@@ -102,7 +102,7 @@ measure() {
 for spec in tests/perf/*.budget; do
   name=$(basename "$spec" .budget)
   case "$name" in *"$filter"*) ;; *) continue ;; esac
-  # the numbers: runevm's beside the description, vm/new's apart
+  # the numbers: runevm-stack's beside the description, runtime/register's apart
   budget=$spec
   if [ $new = 1 ]; then
     budget=tests/perf/new/$name.budget

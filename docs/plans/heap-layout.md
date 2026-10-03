@@ -160,6 +160,40 @@ change does to it:
   roadmap's instruments; M4's table quotes the same programs.
 * **Paths.** The man pages are under `share/man` (`87eebe6`).
 
+### After the rename
+
+On 2026-10-03, after the rebase, the owner had `vm/` renamed to
+`runtime/` and the binaries renamed with it. The text of this roadmap
+keeps the names it was written with; to read it against the tree:
+
+* **Folders.** The runtime both VMs link is directly under `runtime/`
+  (`vm.h`, `value.h`, `heap.c`, `loader.c`, `prims.c`, `image.c`,
+  `runtime.c`, `main.c`). `runtime/sys/` is the system layer,
+  `runtime/stack/` the stack VM (`interp.c`, `isa_stack.c`, the opcode
+  tables), `runtime/register/` what was `vm/new/`, with the JIT in
+  `runtime/register/jit/` (so `vm/new/jit/masm.c` is
+  `runtime/register/jit/masm.c`), `runtime/native/` what a program of
+  `runeopt` links (`native.c`, `native_offsets.h`), and
+  `runtime/census/` the census build with `layouts.h`. A file names a
+  header of another folder by its path from `runtime/`, with one include
+  path, so a dependency across folders shows in the include.
+* **What the instruction sets share** is the generated `runtime/isa.h`:
+  the `.rbc` version, both fingerprints and the flow enum, which were in
+  the stack opcode header. The shared `vm.h` includes nothing of the
+  stack VM any more.
+* **Binaries.** `runevm-new` is `runevm`, in every variant
+  (`runevm-opt` is now the register VM at tier 2, `runevm32`,
+  `runevm.exe`). The stack VM is `runevm-stack` (`runevm-stack32`,
+  `runevm-stack.exe`). `runeopt`'s wrapper, which was `runevm-opt`, is
+  `runevm-native`. `bin/rune-new` is gone: `bin/rune` makes the register
+  bytecode. Messages still begin `runevm:` on both VMs.
+* **Tests and targets.** `tests/vm` is `tests/runtime`, `tests/new` is
+  `tests/register`, `scripts/check-new.sh` is `check-register.sh`, and
+  `make test-new`, `test-new-jit` and `test-new-asan` are
+  `test-register`, `test-register-jit` and `test-register-asan`. The
+  configuration names of the tables (`rune`, `rune:new`, `rune:jit`,
+  `rune:opt`) and the variables that go with them are as they were.
+
 ## The request
 
 The owner's brief, as written:

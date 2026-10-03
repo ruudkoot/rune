@@ -10,7 +10,7 @@
 set -u
 cd "$(dirname "$0")/.."
 rune=bin/rune-stack
-vm=bin/runevm
+vm=bin/runevm-stack
 jobs=$(sh scripts/ncpus.sh)
 one=""
 while [ $# -gt 0 ]; do

@@ -1,6 +1,6 @@
 (* The translation of a program into x86-64 assembly, for the GNU assembler
    (docs/native.md). Every instruction becomes the code that does what its
-   case in vm/interp.c does, in the order of the bytecode: nothing is
+   case in runtime/stack/interp.c does, in the order of the bytecode: nothing is
    dropped, merged or moved. The value stack, the frames and the handlers
    are the interpreter's; the code keeps four things in registers:
 
@@ -14,11 +14,11 @@
    The height of the stack before every instruction is known (RbcCheck), so
    a slot is an address in the frame, and vm->sp is written only before a
    call into C. A call and a return push and pop the VM's frame here, and an
-   allocation bumps the heap here, with vm/native.c as the slow path, which
+   allocation bumps the heap here, with runtime/native/native.c as the slow path, which
    answers with the native code to jump to; a raise goes through
-   vm/native.c, and a primitive is a call through prim_table unless its
+   runtime/native/native.c, and a primitive is a call through prim_table unless its
    common case is done here (fastPrim). The offsets and numbers of the VM's
-   layout are names that rune-offsets.s, made from vm/vm.h, defines. *)
+   layout are names that rune-offsets.s, made from runtime/vm.h, defines. *)
 structure X64 =
 struct
   structure L = X64Layout
@@ -39,7 +39,7 @@ struct
   fun endsRun opc = Isa.endsRun (Vector.sub (RbcCheck.info, opc))
 
   (* The numbers the checks of the code give native_fatal, which has the
-     messages of vm/interp.c. *)
+     messages of runtime/stack/interp.c. *)
   val fatalTuple = 0 val fatalCon = 1 val fatalExn = 2 val fatalEnv = 3 val fatalSelf = 4
   val fatalGlobal = 5 val fatalSelect = 6 val fatalContag = 7 val fatalJumpIfNot = 8
   val fatalJumpIf = 9 val fatalPopHandler = 10 val fatalJumpIfNotTag = 11 val fatalSwitch = 12
@@ -54,12 +54,12 @@ struct
      one of them checks the tags (and the kinds, and the bounds) of its
      arguments and does the operation; anything else -- a wrong tag, an
      overflow, a divisor of zero, an index out of bounds, a real or a pointer
-     for poly_eq -- goes to `slow`, where the primitive of vm/prims.c is
+     for poly_eq -- goes to `slow`, where the primitive of runtime/prims.c is
      called as it is for any other, and raises or stops as it does. So a
      program cannot tell the one from the other, and a PRIM still counts as
      one instruction. The arguments are at heights h - arity .. h - 1, the
      last on top, and the result goes where the first was. tests/opt runs
-     every one of them on its edge cases (prims.sml), natively and on runevm,
+     every one of them on its edge cases (prims.sml), natively and on runevm-stack,
      and runeopt --inlined lists them. *)
   fun fastPrim (name : string, h : int, pc : int,
                 {line, put, sd} : {line : string -> unit, put : string -> unit, sd : int -> string})
@@ -834,7 +834,7 @@ struct
       line ".include \"rune-offsets.s\"";
       Vector.appi (fn (k, file) => line (".file " ^ Int.toString (k + 1) ^ " " ^ quote file)) (#files p);
       line ".text";
-      (* The way in from vm/native.c: the registers C wants kept are kept,
+      (* The way in from runtime/native/native.c: the registers C wants kept are kept,
          once, since the code never returns; the stack is left aligned for
          every call the code makes into C. *)
       line ".globl rune_enter";

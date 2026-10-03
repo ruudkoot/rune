@@ -1,7 +1,7 @@
 /* L0.h -- today's layout: a 16-byte tagged value built exactly as vm.h's
    mk_* build it (a header word, then the payload), an 8-byte object header
    {kind, pad, contag, len}, payload rounded to 16 and at least 16, objects
-   8-byte aligned (vm/heap.c). No variants. */
+   8-byte aligned (runtime/heap.c). No variants. */
 #ifndef HARNESS_L0_H
 #define HARNESS_L0_H
 #include "../common.h"

@@ -1,6 +1,6 @@
 .TH RUNEVM 1 "2026" "runevm 0.3.0" "Rune Manual"
 .SH NAME
-runevm, runevm\-new \- run Rune bytecode
+runevm, runevm\-stack \- run Rune bytecode
 .SH SYNOPSIS
 .B runevm
 .RI [ options ]
@@ -10,29 +10,28 @@ runevm, runevm\-new \- run Rune bytecode
 .B runevm \-\-restore
 .I file
 .br
-.B runevm\-new
+.B runevm\-stack
 .RI [ options ]
 .I file.rbc
 .RI [ args " ...]"
 .SH DESCRIPTION
-.B runevm\-new
+.B runevm
 runs the register bytecode that
 .BR rune (1)
 makes by default, and compiles the functions that get hot to machine code
 as the program runs.
-.B runevm
+.B runevm\-stack
 runs the stack bytecode of
 .BR "rune \-\-target=stack" .
 Both take the options below, and
-.B runevm\-new
+.B runevm
 takes the
 .B \-\-jit
 options as well.
 .PP
-.B runevm
-loads a bytecode file produced by
+Each loads a bytecode file produced by
 .BR rune (1)
-and interprets it. Everything after
+and runs it. Everything after
 .I file.rbc
 is passed to the program and is what its
 .B CommandLine.arguments
@@ -91,15 +90,13 @@ so.
 .B \-\-emulate\-fork
 Fork as on Windows, which has no
 .BR fork (2):
-by a second
-.B runevm
+by a second process of the same VM
 that is handed this one's state. This tests that path where the system has a
 fork of its own.
 .TP
 .BI \-\-resume " TOKEN"
 Carry on as the child of such a fork.
-.B runevm
-passes this to the second VM itself; it is not for use by hand.
+The VM passes this to the second one itself; it is not for use by hand.
 .TP
 .BI \-\-restore " FILE"
 Carry on the world that
@@ -113,7 +110,7 @@ this time. No
 is given: the image carries its program.
 .TP
 .BI \-\-jit= MODE
-.RB ( runevm\-new )
+.RB ( runevm )
 .B off
 runs the interpreter alone,
 .B baseline
@@ -126,7 +123,7 @@ compiles every function when the program is loaded.
 fixes the tier under any mode.
 .TP
 .B \-\-jit\-stats
-.RB ( runevm\-new )
+.RB ( runevm )
 Print what the JIT did to standard error at exit.
 .TP
 .B \-\-version
@@ -135,8 +132,7 @@ Print the version and exit.
 .B \-\-help
 Print a usage summary and exit.
 .SH EXIT STATUS
-.B runevm
-exits with the status the program passed to
+Each exits with the status the program passed to
 .BR OS.Process.exit ,
 0 when the program returns normally, and 1 after reporting an uncaught
 exception on standard error. It exits 2 when the options are wrong, when the

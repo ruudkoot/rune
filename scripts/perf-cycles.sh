@@ -4,10 +4,10 @@
 #   scripts/perf-cycles.sh [--runs N] [--configs C1,C2,...] [--events LIST] [--vm-opts OPTS]
 #                          [--gc] [--profile CONFIG[:PROGRAM]] [--mlton-bench DIR NFILE]
 #                          [--sweep] [FILTER]
-# The configurations are rune (bin/runevm), new (bin/runevm-new as it
+# The configurations are rune (bin/runevm-stack), new (bin/runevm as it
 # runs by default: tiering up, since M6), opt (runeopt's native code) and
 # mlton (MLton's build); all four unless --configs says otherwise. jit is
-# bin/runevm-new --jit=all, every function given to the JIT
+# bin/runevm --jit=all, every function given to the JIT
 # (docs/plans/jit.md, M3), and the same for jit-off (the interpreter
 # alone), -baseline and -opt; jit-baseline+c10+w100 is --jit=baseline
 # --jit-calls=10 --jit-work=100 (M6, the sweep), and +t2 adds --jit-tier=2
@@ -66,7 +66,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 [ $gc = 1 ] && vmopts="$vmopts --stats"
-# a native program's options (vm/native.c): after those it was made with
+# a native program's options (runtime/native/native.c): after those it was made with
 export RUNEVM_OPTIONS="$vmopts"
 cd "$(dirname "$0")/.."
 perf=${PERF:-perf}
@@ -136,13 +136,13 @@ build() {
   case "$1" in
     rune)
       "$rune" --target=stack "$3" -o "$out/$2.rbc" 2> "$out/$2.rune.err" || return 1
-      echo "bin/runevm $out/$2.rbc" ;;
+      echo "bin/runevm-stack $out/$2.rbc" ;;
     new)
       "$rune" --target=registers "$3" -o "$out/$2.new.rbc" 2> "$out/$2.new.err" || return 1
-      echo "bin/runevm-new $out/$2.new.rbc" ;;
+      echo "bin/runevm $out/$2.new.rbc" ;;
     jit|jit-*)
       "$rune" --target=registers "$3" -o "$out/$2.new.rbc" 2> "$out/$2.new.err" || return 1
-      echo "bin/runevm-new $(jit_mode "$1") $out/$2.new.rbc" ;;
+      echo "bin/runevm $(jit_mode "$1") $out/$2.new.rbc" ;;
     opt)
       "$rune" --target=stack "$3" -o "$out/$2.rbc" 2> "$out/$2.rune.err" || return 1
       bin/runeopt-mlton "$out/$2.rbc" -o "$out/$2.native" 2> "$out/$2.opt.err" || return 1
@@ -159,11 +159,11 @@ build() {
 bootstrap() {
   srcs=$(boot_sources | tr '\n' ' ')
   case "$1" in
-    rune) echo "bin/runevm --heap-size 67108864 bin/rune.stack.rbc --lib lib --target=stack -o $out/boot.$1.rbc $srcs" ;;
+    rune) echo "bin/runevm-stack --heap-size 67108864 bin/rune.stack.rbc --lib lib --target=stack -o $out/boot.$1.rbc $srcs" ;;
     new) [ -f bin/rune.rbc ] || return 1
-         echo "bin/runevm-new --heap-size 67108864 bin/rune.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
+         echo "bin/runevm --heap-size 67108864 bin/rune.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
     jit|jit-*) [ -f bin/rune.rbc ] || return 1
-         echo "bin/runevm-new $(jit_mode "$1") --heap-size 67108864 bin/rune.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
+         echo "bin/runevm $(jit_mode "$1") --heap-size 67108864 bin/rune.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
     opt) bin/runeopt-mlton --options "--heap-size 67108864" bin/rune.stack.rbc -o "$out/rune.native" 2> "$out/rune.native.err" || return 1
          echo "$out/rune.native --lib lib --target=stack -o $out/boot.$1.rbc $srcs" ;;
     mlton) [ -x bin/rune-mlton ] || return 1
@@ -238,11 +238,11 @@ compile_program() {
   fi
   case "$1" in
     rune) [ -f "bin/$prog.stack.rbc" ] || return 1
-          echo "bin/runevm --heap-size 67108864 bin/$prog.stack.rbc$target $args" ;;
+          echo "bin/runevm-stack --heap-size 67108864 bin/$prog.stack.rbc$target $args" ;;
     new) [ -f "bin/$prog.rbc" ] || return 1
-         echo "bin/runevm-new --heap-size 67108864 bin/$prog.rbc $args" ;;
+         echo "bin/runevm --heap-size 67108864 bin/$prog.rbc $args" ;;
     jit|jit-*) [ -f "bin/$prog.rbc" ] || return 1
-         echo "bin/runevm-new $(jit_mode "$1") --heap-size 67108864 bin/$prog.rbc $args" ;;
+         echo "bin/runevm $(jit_mode "$1") --heap-size 67108864 bin/$prog.rbc $args" ;;
     opt) [ -f "bin/$prog.stack.rbc" ] || return 1
          bin/runeopt-mlton --options "--heap-size 67108864" "bin/$prog.stack.rbc" -o "$out/$prog.native" 2> "$out/$prog.native.err" || return 1
          echo "$out/$prog.native$target $args" ;;
@@ -338,7 +338,7 @@ if [ -n "$profile" ]; then
   case "$profile" in *:*) pprog=${profile#*:} ;; esac
   cmd=$(command_of "$pconfig" "$pprog") || { echo "perf-cycles: cannot build $pprog in $pconfig" >&2; exit 1; }
   # the JIT's functions named in the report (--jit-perf-map, M7)
-  case "$pconfig" in new|jit*) cmd=$(echo "$cmd" | sed 's|^bin/runevm-new |bin/runevm-new --jit-perf-map |') ;; esac
+  case "$pconfig" in new|jit*) cmd=$(echo "$cmd" | sed 's|^bin/runevm |bin/runevm --jit-perf-map |') ;; esac
   graph=""
   frame_pointers "${cmd%% *}" && graph="--call-graph fp"
   # shellcheck disable=SC2086

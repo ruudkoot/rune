@@ -52,7 +52,7 @@ TZ='NST3:30NDT,M3.2.0,M11.1.0'; export TZ
 mkdir -p "$root/tests/out/benchmarks"
 out=$(mktemp -d "$root/tests/out/benchmarks/measurement.XXXXXX")
 echo "BENCH MEASUREMENT $out"
-bin/runevm build/bench-catalog.rbc --list "$profile" "$filter" > "$out/jobs.tsv"
+bin/runevm-stack build/bench-catalog.rbc --list "$profile" "$filter" > "$out/jobs.tsv"
 [ -s "$out/jobs.tsv" ] || { echo 'no benchmark matches' >&2; exit 2; }
 printf 'benchmark\tprofile\tconfig\tlevel\tphase\tprocess\tround\tstatus\tseconds\tuser_seconds\tsystem_seconds\tmax_rss_kib\tinstructions\tbytes\tobjects\tartifact\n' > "$out/samples.tsv"
 {
@@ -174,7 +174,7 @@ while IFS="$(printf '\t')" read -r name seconds memory sources args expected inp
     if [ "$kind" = rune ]; then
       sha256sum "$runtime" > "$bundle/runtime.sha256"
       (cd "$root" && sha256sum lib/basis/MANIFEST lib/basis/*.sml) > "$bundle/basis.sha256"
-      sha256sum "$root/bin/rune.rbc" "$root/bin/rune.stack.rbc" "$root/bin/runevm" "$root/bin/runevm-new" > "$bundle/rune-payloads.sha256"
+      sha256sum "$root/bin/rune.rbc" "$root/bin/rune.stack.rbc" "$root/bin/runevm-stack" "$root/bin/runevm" > "$bundle/rune-payloads.sha256"
     fi
     # Portable main plus the thin host-specific launch/export adapter.
     if [ "$action" = time ]; then
@@ -291,7 +291,7 @@ if [ "$action" = count ]; then
   if [ "$status" = 0 ]; then
     count_exit=0
     mkdir -p "$out/count-check"
-    bin/runevm build/bench-counts.rbc "$out/samples.tsv" examples/benchmarks/count-budgets.tsv "$budget_mode" > "$out/count-check/stdout" 2> "$out/count-check/stderr" || count_exit=$?
+    bin/runevm-stack build/bench-counts.rbc "$out/samples.tsv" examples/benchmarks/count-budgets.tsv "$budget_mode" > "$out/count-check/stdout" 2> "$out/count-check/stderr" || count_exit=$?
     phase_dir=$out/count-check
     counters=$(printf '%s\t%s\t%s' - - -)
     category=pass
@@ -304,6 +304,6 @@ if [ "$action" = count ]; then
     cat "$phase_dir/stdout" "$phase_dir/stderr"
   fi
 fi
-bin/runevm build/bench-report.rbc "$out/samples.tsv" > "$out/report.md"
+bin/runevm-stack build/bench-report.rbc "$out/samples.tsv" > "$out/report.md"
 echo "BENCH REPORT $out/report.md"
 exit "$status"

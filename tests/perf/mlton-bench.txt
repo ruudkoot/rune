@@ -4,7 +4,7 @@
 #   NAME N BYTES OBJECTS  # note
 # N is the argument of Main.doit, chosen so that a program allocates 200 MB to
 # 2 GB where its size can be chosen (MLton's own N where it cannot); BYTES and
-# OBJECTS are what bin/runevm-new --jit=off --count reports, the same on every
+# OBJECTS are what bin/runevm --jit=off --count reports, the same on every
 # engine (docs/testing.md); `-` marks a program that does not run. A program
 # over 2 GB runs only with --all. --update rewrites the numbers after a
 # deliberate change to the compiler or the layout.

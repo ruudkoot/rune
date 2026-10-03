@@ -2,7 +2,7 @@
 
 `runeopt` translates a `.rbc` of the stack bytecode (`rune --target=stack`)
 into a program for Linux on x86-64, linked
-against the runtime `runevm` is built from. This page is how it does that as
+against the runtime `runevm-stack` is built from. This page is how it does that as
 built: the rules its code keeps, what the executable holds, and what has to
 change together when the runtime or the instruction set does. How it came
 to be, and what is left to revisit, is [plans/codegen.md](plans/codegen.md).
@@ -15,14 +15,14 @@ listed in [architecture.md](architecture.md).
 
 **An instruction at a time.** Every instruction of the `.rbc` becomes a
 template of machine code, in the order of the bytecode. The template does
-what the instruction's case in `vm/interp.c` does. Nothing is reordered,
+what the instruction's case in `runtime/stack/interp.c` does. Nothing is reordered,
 merged or dropped, and every instruction the interpreter would count is
 counted. The one fused test, `JUMPIFNOTTAG`, is an opcode of the compiler,
 not something the translator merges.
 
 **The VM is exact where C can look.** The value stack, the frames and the
 handlers are the interpreter's own structures, so the collector, traces,
-`Runtime.stats` and images see the machine they see under `runevm`. State
+`Runtime.stats` and images see the machine they see under `runevm-stack`. State
 may sit in registers between the points where it must be exact:
 
 * `vm->sp` and `vm->fp` before every call into C that reads them (all but
@@ -44,7 +44,7 @@ may sit in registers between the points where it must be exact:
   it to read there (see *A pushed local read in place*).
 
 **What the translation relies on.** `src/opt/rbccheck.sml` checks it and
-refuses a file that breaks it, with a message. `runevm` stays the place
+refuses a file that breaks it, with a message. `runevm-stack` stays the place
 where any file its loader accepts can run. It checks:
 
 * on every path into an instruction, the stack height and the handler depth
@@ -115,7 +115,7 @@ address the frame returns to, is never written into an image.
   goes on after it.
 * **RET** puts the result in local 0, pops the frame and jumps through
   `native_ret`. The code there reloads `r13` and `rbp` from the frame.
-* **The slow paths** are `vm/native.c`'s `native_call`, `native_tailcall`
+* **The slow paths** are `runtime/native/native.c`'s `native_call`, `native_tailcall`
   and `native_ret`, the interpreter's cases taken out of the loop, which
   answer with the native code to go on at: for a value that is no closure,
   an index out of range, a full array of frames, and the RET of the top
@@ -180,7 +180,7 @@ difference and a PRIM still counts as one instruction. Reals use SSE2,
 whose MXCSR holds the rounding mode C uses. None of them allocates.
 
 `tests/opt/prims.sml` runs every one on its edge values, natively and on
-`runevm`, and wants the same output and counts; `tests/opt` fails if the
+`runevm-stack`, and wants the same output and counts; `tests/opt` fails if the
 program stops using one of them.
 
 ## Counting
@@ -197,7 +197,7 @@ reader of the count. `vm_fatal` and running out of memory end the program
 without printing it. `r15` is reloaded after a primitive answers with a new
 world and when a program starts from an image.
 
-`tests/opt/run-counts.sh` holds `--count` to `runevm`'s for every program of
+`tests/opt/run-counts.sh` holds `--count` to `runevm-stack`'s for every program of
 `tests/lang`, and the Basis Library suite runs as `rune:opt`, so the bytes
 and objects agree only if every allocation is made as the interpreter makes
 it.
@@ -205,14 +205,14 @@ it.
 ## What the executable holds
 
 `runeopt` writes GNU assembler text (`runeopt -S` keeps it), which `cc`
-assembles and links with `build/librune.a`: `vm/runtime.c`, `heap.c`,
+assembles and links with `build/librune.a`: `runtime/runtime.c`, `heap.c`,
 `loader.c`, `prims.c`, `image.c`, the system layer, and the glue
-`vm/native.c`.
+`runtime/native/native.c`.
 
 * **Position independent.** Everything is reached through `%rip`, and the
   tables hold 32-bit offsets from their own start. A
   `.note.GNU-stack` section keeps the stack non-executable.
-* **Symbolic layout.** `vm/native_offsets.c` prints the offsets and numbers
+* **Symbolic layout.** `runtime/native/native_offsets.c` prints the offsets and numbers
   of the VM's layout as `build/rune-offsets.s`, which the code includes. The
   translation writes names, never numbers, so it does not depend on the
   layout, and the five builds of `runeopt` write the same text
@@ -231,7 +231,7 @@ assembles and links with `build/librune.a`: `vm/runtime.c`, `heap.c`,
 
 ## Images
 
-A native program writes the image `runevm` writes, since its frames,
+A native program writes the image `runevm-stack` writes, since its frames,
 handlers and pc are in bytecode terms. It resumes one, whoever wrote it, if
 the image's program is its own. That covers `RUNEVM_OPTIONS="--restore
 FILE"`, `Runtime.restore`, and the child of `--emulate-fork`.
@@ -284,34 +284,34 @@ Its limits:
 
 ## The command line and the environment
 
-* **The options of `runevm`** (`--count`, `--stats`, `--heap-size`,
+* **The options of `runevm-stack`** (`--count`, `--stats`, `--heap-size`,
   `--heap-fill`, `--gc-stress`, `--checked`, `--emulate-fork`, `--restore`)
   come from `runeopt --options` and then the environment variable
   `RUNEVM_OPTIONS`.
 * **`RUNEVM_NAME`** is the name `CommandLine.name ()` gives. The suites'
   wrapper sets it to the `.rbc`.
 * **Both variables** are taken out of the environment, so the program and
-  its children see the environment they would see under `runevm`.
+  its children see the environment they would see under `runevm-stack`.
 * **Messages** begin `runevm:`, as the runtime's always have.
-* **The child of an emulated fork** is started as `runevm --resume TOKEN`.
+* **The child of an emulated fork** is started as `runevm-stack --resume TOKEN`.
   A native program takes itself for one only when its `argv[0]` is
-  `runevm`, which no shell gives a program.
+  `runevm-stack`, which no shell gives a program.
 
 ## Tests
 
 * **`make test-opt`** (`tests/opt/run-opt-tests.sh`):
   * the loader's refusals with its messages, and the contract's with
     `runeopt`'s;
-  * `--disasm` against `runevm --disasm`;
+  * `--disasm` against `runevm-stack --disasm`;
   * `every-opcode.rasm`, which runs every instruction;
   * `prims.sml`;
   * images crossing both ways, and the image of another program.
 * **`make test-native`**, part of `make check`:
-  * `tests/lang` and the Basis Library suite run through `bin/runevm-opt`,
+  * `tests/lang` and the Basis Library suite run through `bin/runevm-native`,
     a wrapper that translates each `.rbc` once, keeping it by its checksum
     (the Makefile empties that cache whenever it builds `runeopt` or the
     runtime again), with `tests/opt-skip.txt`, which is empty;
-  * `--count` against `runevm`;
+  * `--count` against `runevm-stack`;
   * the native compiler compiling itself to `bin/rune.stack.rbc` byte for byte;
   * the debug information.
 * **`make test-native-stress`** and **`make test-native-asan`**, outside
@@ -329,15 +329,15 @@ Its limits:
   stack effect, flow and body, from which `runeisa` writes the interpreter's
   case, the loader's and `Rbc`'s checks and `RbcCheck`'s effects -- its
   template, which MLton's build refuses to go without, a helper in
-  `vm/native.c` if it calls into C (for a shared body, `op_<NAME>` of the
-  generated `vm/ops.h`), its prose in [bytecode.md](bytecode.md), and a use
+  `runtime/native/native.c` if it calls into C (for a shared body, `op_<NAME>` of the
+  generated `runtime/stack/ops.h`), its prose in [bytecode.md](bytecode.md), and a use
   in `every-opcode.rasm`.
 * **A field of the VM** that the code touches is named in the table of
-  `vm/native_offsets.h`, never written as a number.
+  `runtime/native/native_offsets.h`, never written as a number.
 * **The layout of a value or an object** -- a tag test, a field, a
   header, an allocation -- is `src/opt/x64_layout.sml`, generated from the
-  JIT's macro-assembler: `bin/runeopt-templates` (`vm/new/jit/templates.c`)
-  runs each operation of `vm/new/jit/masm.c` against the text backend of
+  JIT's macro-assembler: `bin/runeopt-templates` (`runtime/register/jit/templates.c`)
+  runs each operation of `runtime/register/jit/masm.c` against the text backend of
   the JIT's assembler (`asm_text.c`), which prints it as the assembler
   lines runeopt writes, with the operation's parameters as holes, and
   `x64.sml` is written over those templates as the JIT's emitters are

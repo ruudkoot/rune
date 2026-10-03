@@ -1,5 +1,5 @@
 # runeopt --disasm prints a real constant as the text the .rbc carries, and
-# runevm --disasm prints the number with C's %g. awk's printf is C's, so this
+# runevm-stack --disasm prints the number with C's %g. awk's printf is C's, so this
 # turns the one into the other -- but for the sign of a negative zero, which
 # awk's conversion from text loses.
 /^const [0-9]+ = -?([0-9]*\.[0-9]*|[0-9]+)([eE][-+]?[0-9]+)?$/ && /[.eE]/ {

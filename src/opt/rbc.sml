@@ -1,4 +1,4 @@
-(* The .rbc format read back, as the loader of runevm reads it (vm/loader.c):
+(* The .rbc format read back, as the loader of runevm-stack reads it (runtime/loader.c):
    a file that the loader refuses is refused here, at the same point and with
    the same message. docs/bytecode.md is the format; docs/native.md is
    how runeopt translates, which this is the first part of.
@@ -40,7 +40,7 @@ struct
      `big - x`, for a literal big that is its Int.maxInt, into code that
      overflows whatever x is. *)
   val big = valOf (Int.fromString "1073741823")
-  val builtinExns = 8               (* NUM_BUILTIN_EXNS of vm/vm.h *)
+  val builtinExns = 8               (* NUM_BUILTIN_EXNS of runtime/vm.h *)
 
   fun byte (s, i) = Char.ord (String.sub (s, i))
 

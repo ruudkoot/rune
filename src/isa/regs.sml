@@ -1,4 +1,4 @@
-(* The register bytecode of vm/new (docs/plans/middle-end.md, M5; its loop
+(* The register bytecode of runtime/register (docs/plans/middle-end.md, M5; its loop
    docs/plans/jit.md, M2), in the language of src/isa/isa.sml and its own
    kinds of operand: a register is a slot of the frame, and a list of
    registers is as long as an operand before it says, or as the arity of
@@ -10,14 +10,14 @@
    longer used still holds a value). Above them the frame pushes only the
    arguments of a primitive, a call's result and the exception a raise
    leaves for CATCH: the checker works out how deep that goes
-   (Function.maxstack, vm/new/isa_regs.c), a call makes room for it, and a
+   (Function.maxstack, runtime/register/isa_regs.c), a call makes room for it, and a
    push does not check. A call leaves its result for the instruction after
    it, RESULT, which the RET of the callee does itself where it can; a
    handler's code begins with CATCH, which takes the exception the raise
-   left there. Both are how the runtime of vm/portable returns and raises,
-   which vm/new shares (build/librune.a).
+   left there. Both are how the runtime of runevm-stack returns and raises,
+   which runtime/register shares (build/librune.a).
 
-   A body is the lines of C of its case in vm/new's loop (vm/new/interp.c),
+   A body is the lines of C of its case in runtime/register's loop (runtime/register/interp.c),
    written in the loop's words, since the loop keeps the frame's registers,
    the stack pointer, the pc and the count in its own variables:
    * `vm`, `p` (the program), `code`, `fr` (the frame), `pc` (already past
@@ -32,7 +32,7 @@
      the stack too;
    * ENTER(slot, fn), the frame's registers at slot and fn's code entered;
      HANDOVER(f), the frame handed to the driver where function f has
-     native code (vm/new/jit.h), RETURN_NATIVE(at), where a return lands
+     native code (runtime/register/jit.h), RETURN_NATIVE(at), where a return lands
      in native code, RAISED(), on after a raise, into the handler's native
      code where it has some, BACKWARD(t), a loop's jump back, counted and
      gone on in the function's code where it has some, RESUME_NATIVE(f, pc),
@@ -162,7 +162,7 @@ struct
      rraising
        (rinst ("PRIM", [("p", K Primitive), ("d", reg), ("args", PrimArgs 0)], Next,
                "Register d := primitive p applied to the registers of args.")
-          ["/* the common case of the primitives done in the loop (vm/new/fastprim.h) */",
+          ["/* the common case of the primitives done in the loop (runtime/register/fastprim.h) */",
            "if (prim_fast(a, n, base, L, &R(b))) NEXT;",
            "for (uint32_t i = 0; i < n; i++) PUSH(R(LIST(i)));",
            "SYNC();",

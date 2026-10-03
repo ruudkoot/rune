@@ -1,7 +1,7 @@
 #!/bin/sh
 # The census VM against the stock one (docs/census.md): one small program of
-# tests/perf, compiled to the register bytecode by bin/rune-new, run by
-# bin/runevm-new --jit=off --count and by bin/runevm-census with a trace
+# tests/perf, compiled to the register bytecode by bin/rune, run by
+# bin/runevm --jit=off --count and by bin/runevm-census with a trace
 # directory. The two --count lines and the two outputs must be equal, the
 # census's tables must account for every byte and object the count reports,
 # the summary mode must report the same count, and the static census must
@@ -9,8 +9,8 @@
 # exits 1 on a failure. Override the binaries with RUNE_NEW, RUNEVM_NEW and
 # RUNEVM_CENSUS; PROGRAM names another source (default tests/perf/list_ops.sml).
 set -u
-rune=${RUNE_NEW:-bin/rune-new}
-vm=${RUNEVM_NEW:-bin/runevm-new}
+rune=${RUNE_NEW:-bin/rune}
+vm=${RUNEVM_NEW:-bin/runevm}
 census=${RUNEVM_CENSUS:-bin/runevm-census}
 prog=${PROGRAM:-tests/perf/list_ops.sml}
 out=tests/out/census-check   # its own directory: scripts/census.sh keeps workloads under tests/out/census

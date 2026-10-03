@@ -156,7 +156,7 @@ locally, leave this file alone.
   (96%), `check-positions` (95%) and `test-native` (92%) fill them longest.
   Memory peaks at 2.6 GiB of 15 during the build (MLton compiling the
   compiler, 1.3 GiB in one process) and stays under 1.4 GiB in the tests
-  (`runevm` at most 470 MiB). I/O wait 0 to 3%, steal 0.4 to 0.6% (3% at
+  (`runevm-stack` at most 470 MiB). I/O wait 0 to 3%, steal 0.4 to 0.6% (3% at
   most).
 
 ## 2. Claude Code on the web (Anthropic cloud), Emerald Rapids, 2026-09-25

@@ -179,7 +179,7 @@ static obj *gc_copy_obj(obj *o) {
     size_t size = lay_obj_size(o);
     obj *n = (obj *)gc_to->free;
     if (UNLIKELY(gc_to->free + size > gc_to->page_top)) die("out of memory in gc");
-    /* fixed-size copies for the common sizes, as vm/heap.c copy_obj */
+    /* fixed-size copies for the common sizes, as runtime/heap.c copy_obj */
     switch (size) {
     case 16: memcpy(n, o, 16); break;
     case 24: memcpy(n, o, 24); break;

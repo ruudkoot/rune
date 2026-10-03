@@ -2,7 +2,7 @@
 # *The experiments*): one binary per (layout + variant) in
 # ../out/layouts/$(CCNAME)/harness-NAME, built from the same kernels
 # (kernels.c) over the layout headers (layouts/*.h) and the size models of
-# vm/layouts.h. `make -C tests/layouts` with the tree's CC; `make -C
+# runtime/census/layouts.h. `make -C tests/layouts` with the tree's CC; `make -C
 # tests/layouts CC=clang-18` for a second compiler (CCNAME is the compiler's
 # basename). The top-level `make check-layouts` builds and runs check.sh.
 CC      ?= cc
@@ -36,12 +36,12 @@ FLAGS_L4MONO+COMPACT:= -DLAYOUT=L4 -DL4_MONO -DCOMPACTBYTES
 FLAGS_L4UNI+PAIRS   := -DLAYOUT=L4 -DL4_UNIFORM -DPAIRS
 
 BINS := $(addprefix $(OUT)/harness-,$(CONFIGS))
-SRCS := main.c kernels.c harness.h common.h gc_core.h map_impl.h layouts/iface.h layouts/objs8.h layouts/L0.h layouts/L1.h layouts/L2.h layouts/L3.h layouts/L4.h ../../vm/layouts.h
+SRCS := main.c kernels.c harness.h common.h gc_core.h map_impl.h layouts/iface.h layouts/objs8.h layouts/L0.h layouts/L1.h layouts/L2.h layouts/L3.h layouts/L4.h ../../runtime/census/layouts.h
 
 all: $(BINS)
 
 $(OUT)/harness-%: $(SRCS) | $(OUT)
-	$(CC) $(CFLAGS) $(FLAGS_$*) -I../../vm -o $@ main.c $(LDFLAGS)
+	$(CC) $(CFLAGS) $(FLAGS_$*) -I../../runtime -o $@ main.c $(LDFLAGS)
 
 $(OUT):
 	mkdir -p $(OUT)

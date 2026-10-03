@@ -1,7 +1,7 @@
 #!/bin/sh
 # The census of a workload (docs/census.md):
 #   scripts/census.sh [--out DIR] [--every BYTES] [--summary] [--timeout S] WORKLOAD...
-# Each workload runs on the stock VM (bin/runevm-new --jit=off --count) and
+# Each workload runs on the stock VM (bin/runevm --jit=off --count) and
 # on the census VM (bin/runevm-census, `make vm-census`) with its traces in
 # DIR/WORKLOAD (DIR defaults to tests/out/census); the two --count lines and
 # the two outputs must agree, and DIR/WORKLOAD/DONE then records the count,
@@ -13,7 +13,7 @@
 # Workloads: bootstrap (the compiler compiling its sources), compile-sigs,
 # compile-hello, runedoc-ir, runedoc-page (the compiler and runedoc on the
 # inputs of their tests/perf budgets, as register bytecode: bin/rune.rbc,
-# bin/runedoc.rbc), a program of tests/perf (compiled by bin/rune-new,
+# bin/runedoc.rbc), a program of tests/perf (compiled by bin/rune,
 # run with the args of its .budget), mlton-NAME (one of MLton's benchmarks
 # at the size of tests/perf/mlton-bench.txt, prepared by
 # tests/external/run-mlton-bench.sh --prepare), or a FILE.rbc of register
@@ -36,8 +36,8 @@ done
 [ $# -gt 0 ] || { echo "scripts/census.sh: no workload" >&2; exit 2; }
 cd "$(dirname "$0")/.."
 root=$(pwd)
-rune=${RUNE_NEW:-bin/rune-new}
-stock=${RUNEVM_NEW:-$root/bin/runevm-new}
+rune=${RUNE_NEW:-bin/rune}
+stock=${RUNEVM_NEW:-$root/bin/runevm}
 census=${RUNEVM_CENSUS:-$root/bin/runevm-census}
 [ -x "$census" ] || { echo "scripts/census.sh: no $census (make vm-census)" >&2; exit 2; }
 command -v timeout > /dev/null 2>&1 || tmo=""

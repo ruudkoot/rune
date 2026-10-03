@@ -1,8 +1,8 @@
-(* The stack bytecode of vm/portable (runevm) and of the programs runeopt
+(* The stack bytecode of runevm-stack (runtime/stack) and of the programs runeopt
    makes, in the language of src/isa/isa.sml. An opcode's number is its
    place in this list, from 0. docs/bytecode.md says what each does; the
    loader of the VM checks the operands by their kinds; the body of each is
-   its case of the interpreter's loop (vm/interp_cases.h, which runeisa
+   its case of the interpreter's loop (runtime/stack/interp_cases.h, which runeisa
    writes). *)
 structure StackIsa =
 struct
@@ -14,7 +14,7 @@ struct
   val rbcVersion = 5
 
   (* A body that is not shared is written in the words of the loop
-     (vm/interp.c), which keeps the stack pointer, the frame's base, the pc
+     (runtime/stack/interp.c), which keeps the stack pointer, the frame's base, the pc
      and the count of instructions in its own variables:
      * PUSH(v), POP(), TOP(k) (the k-th from the top, which can be written)
        and LOCALV(l) (local l of the frame, which can be written) use the
@@ -26,7 +26,7 @@ struct
        collector, a raise, a primitive, a frame pushed -- and RELOAD() takes
        it back after what may have changed it;
      * FATAL(...) and EXPECT(v, kind, what) stop the program where it is.
-     A shared body (sharedBody) is a function of vm/ops.h, which runeopt's
+     A shared body (sharedBody) is a function of runtime/stack/ops.h, which runeopt's
      code calls too, and is written against the VM itself (vm_push, vm_pop,
      vm_top); the loop gives it the VM's state first and takes it back
      after. *)
@@ -100,7 +100,7 @@ struct
            "obj_fill_field(c, 0, *vm_top(vm, 0));",
            "*vm_top(vm, 0) = mk_ptr(c);"]),
      inst ("DECON", [("t", Tag)], (Fixed 1, 1), Next,
-           "Pop a constructor value, of tag t, and push its argument; runevm --checked stops where the tag is another.")
+           "Pop a constructor value, of tag t, and push its argument; runevm-stack --checked stops where the tag is another.")
        ["Value v = POP();",
         "Obj *c = EXPECT(v, K_CON, \"constructor with argument\");",
         "/* the tag is not tested but --checked (decision D14): a match that",
@@ -268,7 +268,7 @@ struct
            "vm->sp -= (size_t)b;",
            "vm_push(vm, mk_ptr(c));"]),
      inst ("FIELD", [("t", Tag), ("i", Field)], (Fixed 1, 1), Next,
-           "Pop a constructor value that CONN made, of tag t, and push its field i; runevm --checked stops where the tag is another.")
+           "Pop a constructor value that CONN made, of tag t, and push its field i; runevm-stack --checked stops where the tag is another.")
        ["Value v = POP();",
         "Obj *c = EXPECT(v, K_CON, \"constructor with fields\");",
         "/* the tag is not tested but --checked, as DECON's (decision D14) */",
