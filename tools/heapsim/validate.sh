@@ -30,7 +30,15 @@ status=0
 command -v timeout > /dev/null 2>&1 && limit="timeout 3600" || limit=""
 for name in "$@"; do
   tr=tests/out/census/$name
-  grep -q '^cmd ' "$tr/DONE" 2> /dev/null || sh scripts/census.sh "$name" > "$out/$name.census.log" 2>&1 || { echo "FAIL $name: $(tail -1 "$out/$name.census.log")"; status=1; continue; }
+  # a trace is kept from run to run, but not one of another program: where
+  # the bytecode its DONE names is gone or newer than the trace (another
+  # compiler made it since), the census is made again
+  kept=""
+  if grep -q '^cmd ' "$tr/DONE" 2> /dev/null; then
+    rbc=$(sed -n 's/^cmd \([^ ]*\).*/\1/p' "$tr/DONE")
+    [ -f "$rbc" ] && [ ! "$rbc" -nt "$tr/DONE" ] && kept=yes
+  fi
+  [ -n "$kept" ] || sh scripts/census.sh "$name" > "$out/$name.census.log" 2>&1 || { echo "FAIL $name: $(tail -1 "$out/$name.census.log")"; status=1; continue; }
   cwd=$(sed -n 's/^cwd //p' "$tr/DONE"); cmd=$(sed -n 's/^cmd //p' "$tr/DONE"); outf=$(sed -n 's/^out //p' "$tr/DONE")
   [ -n "$cmd" ] || { echo "FAIL $name: no cmd line in $tr/DONE (scripts/census.sh of M2 or later)"; status=1; continue; }
   $sim --check --trace "$tr" --layout L0 > "$out/$name.check" 2>&1 || { echo "CHECK $name: $(head -c 300 "$out/$name.check")"; status=1; }
