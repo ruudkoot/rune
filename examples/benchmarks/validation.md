@@ -359,3 +359,31 @@ runedoc and runeopt builds also agree. The
 [acceptance transcript](validation/rebase-acceptance.log) records the complete
 run. This is local acceptance evidence; GitHub CI for the rebased branch has
 not run, and no push or merge is included in this checkpoint.
+
+## M2 completed validation, 2026-10-03
+
+All 135 imported classic programs passed smoke and normal on the stack VM,
+register interpreter, JIT and native engine at -O0 and -O2. The
+[certification ledger](validation/m2-certification.tsv) records all 2160
+successful attempts, their input arguments, expected results, configuration,
+stdout SHA256, compile identity where supplied, and artifact directory.
+The four complete batches used the `d2ac5de` baseline with unchanged imported
+classic sources and the suite's existing per-profile limits and matrix loaders.
+They include the shared classic/ML Kit Takeuchi kernel.
+
+Together with the pinned inventory, retained notices and adaptations, reviewed
+normal fixtures and independent full-state/oracle checks, this closes M2's
+import and validation criteria. Every suitable classic inventory entry has an
+implementation; the remaining entries retain their documented source or runtime
+blockers. The broader six-host attempts and identified native host failures
+remain in their existing ledger and [reference-host notes](validation/reference-hosts.md).
+Completion does not claim that defective or feature-incomplete host configurations
+pass every program, nor that all large profiles have been executed.
+
+The working branch subsequently rebases onto `4652d4a`, which adds IR/type
+checks. Its full `make JOBS=4 check` run passes, including 331 language fixtures
+per compiler build and bytecode agreement for 498 programs across all seven
+builds. Documentation and native-code generator builds agree too. The dated
+certification above describes the compiler configuration actually used for
+those 2160 benchmark attempts; the subsequent acceptance run is retained in
+[oct03-acceptance.log](validation/oct03-acceptance.log).

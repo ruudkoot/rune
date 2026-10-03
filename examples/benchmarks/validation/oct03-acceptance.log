@@ -1,0 +1,896 @@
+/home/ruud/.local/rune-hosts/mlton/bin/mlton -output bin/rune-mlton.bin build/rune.mlb
+/home/ruud/.local/rune-hosts/smlnj-legacy/bin/ml-build build/rune.cm Main.main bin/rune-smlnj-legacy.heap
+cm=$(sh scripts/smlnj-dev-root.sh build/rune.cm); \
+  /home/ruud/.local/rune-hosts/smlnj-dev/bin/ml-build "$cm" Main.main bin/rune-smlnj-dev.heap
+/home/ruud/.local/rune-hosts/polyml/bin/polyc -o bin/rune-polyml.bin build/polyml-build.sml
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[scanning build/rune.cm]
+[parsing build/(rune.cm):../src/elab/types.sml]
+[parsing build/(rune.cm):../src/core/ty.sml]
+[parsing build/(rune.cm):../src/backend/prims.sml]
+[parsing build/(rune.cm):../src/core/translate.sml]
+[parsing build/(rune.cm):../src/backend/low.sml]
+[parsing build/(rune.cm):../src/backend/lowlint.sml]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[loading build/(rune.cm):../src/core/target.sml]
+[loading build/(rune.cm):../src/util/scon.sml]
+[loading build/(rune.cm):../src/util/ordmap.sml]
+[loading build/(rune.cm):../src/util/source.sml]
+[loading build/(rune.cm):../src/util/error.sml]
+[compiling build/(rune.cm):../src/elab/types.sml]
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[code: 39615, data: 463, env: 3516 bytes]
+[compiling build/(rune.cm):../src/frontend/ast.sml]
+[code: 76993, data: 537, env: 8741 bytes]
+[compiling build/(rune.cm):../src/elab/exhaust.sml]
+[code: 34489, data: 465, env: 8113 bytes]
+[loading build/(rune.cm):../src/util/inttable.sml]
+[compiling build/(rune.cm):../src/core/ty.sml]
+[code: 47345, data: 337, env: 1976 bytes]
+[compiling build/(rune.cm):../src/core/lambda.sml]
+[code: 46455, data: 575, env: 2506 bytes]
+[compiling build/(rune.cm):../src/elab/overload.sml]
+[code: 6258, data: 338, env: 1015 bytes]
+[compiling build/(rune.cm):../src/backend/prims.sml]
+[code: 11705, data: 8993, env: 480 bytes]
+[compiling build/(rune.cm):../src/elab/env.sml]
+[code: 32124, data: 412, env: 5386 bytes]
+[loading build/(rune.cm):../src/elab/unifyexn.sml]
+[compiling build/(rune.cm):../src/elab/unify.sml]
+[code: 33879, data: 1951, env: 3567 bytes]
+[compiling build/(rune.cm):../src/elab/sigmatch.sml]
+[code: 74972, data: 1236, env: 5956 bytes]
+[compiling build/(rune.cm):../src/elab/elaborate.sml]
+src/elab/elaborate.sml:165.82 Warning: calling polyEqual
+src/elab/elaborate.sml:155.53 Warning: calling polyEqual
+[code: 224126, data: 2214, env: 13843 bytes]
+[loading build/(rune.cm):../src/util/pass.sml]
+[compiling build/(rune.cm):../src/core/matchcomp.sml]
+[code: 79383, data: 855, env: 9841 bytes]
+[compiling build/(rune.cm):../src/core/translate.sml]
+[code: 68822, data: 750, env: 9857 bytes]
+[loading build/(rune.cm):../src/backend/opcodes.sml]
+[compiling build/(rune.cm):../src/backend/code.sml]
+[code: 21301, data: 317, env: 3752 bytes]
+[compiling build/(rune.cm):../src/backend/low.sml]
+[code: 34651, data: 483, env: 3171 bytes]
+[loading build/(rune.cm):../src/backend/regcodes.sml]
+[compiling build/(rune.cm):../src/backend/target.sml]
+[code: 73, data: 1, env: 762 bytes]
+[compiling build/(rune.cm):../src/backend/regs.sml]
+[code: 70531, data: 1187, env: 1184 bytes]
+[loading build/(rune.cm):../src/frontend/fixity.sml]
+[loading build/(rune.cm):../src/frontend/token.sml]
+[loading build/(rune.cm):config.sml]
+[compiling build/(rune.cm):../src/core/mid.sml]
+[code: 3571, data: 27, env: 2778 bytes]
+[compiling build/(rune.cm):../src/core/midlint.sml]
+SML_LIB=/home/ruud/.local/rune-hosts/mlkit/lib/mlkit /home/ruud/.local/rune-hosts/mlkit/bin/mlkit -j 4 -o bin/rune-mlkit.bin build/rune-mlkit.mlb
+[code: 42040, data: 984, env: 2173 bytes]
+[loading build/(rune.cm):../src/frontend/lexer.sml]
+[compiling build/(rune.cm):../src/backend/rep.sml]
+[code: 3001, data: 25, env: 252 bytes]
+[compiling build/(rune.cm):../src/backend/lower.sml]
+[reading source file:	build/../src/elab/types.sml][code: 110101, data: 445, env: 3733 bytes]
+[compiling build/(rune.cm):../src/core/simplify.sml]
+
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/types.sml.s]
+[reading source file:	build/../src/core/ty.sml[code: 186223, data: 463, env: 4955 bytes]
+[compiling build/(rune.cm):../src/core/workers.sml]
+][code: 67963, data: 51, env: 2636 bytes]
+[compiling build/(rune.cm):../src/core/tomid.sml]
+build/smlnj-dev-root/src/elab/elaborate.sml:165.82 Warning: calling polyEqual
+build/smlnj-dev-root/src/elab/elaborate.sml:155.53 Warning: calling polyEqual
+[code: 51277, data: 389, env: 1656 bytes]
+[compiling build/(rune.cm):../src/core/shake.sml]
+
+[code: 28411, data: 35, env: 2264 bytes]
+[compiling build/(rune.cm):../src/backend/stack.sml]
+[code: 71273, data: 1345, env: 1185 bytes]
+[compiling build/(rune.cm):../src/backend/emit.sml]
+[code: 46149, data: 597, env: 4096 bytes]
+[loading build/(rune.cm):../src/driver/basismanifest.sml]
+[compiling build/(rune.cm):../src/core/lift.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/ty.sml.s]
+[reading source file:	build/../src/elab/overload.sml[code: 67579, data: 43, env: 2679 bytes]
+[compiling build/(rune.cm):../src/driver/options.sml]
+][code: 15397, data: 3389, env: 773 bytes]
+[compiling build/(rune.cm):../src/core/midtext.sml]
+
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/overload.sml.s]
+[reading source file:	build/../src/frontend/ast.sml][code: 134114, data: 1666, env: 3087 bytes]
+[compiling build/(rune.cm):../src/core/lambdalint.sml]
+[code: 37149, data: 1077, env: 2099 bytes]
+[compiling build/(rune.cm):../src/backend/lowlint.sml]
+[code: 62832, data: 1496, env: 2600 bytes]
+[compiling build/(rune.cm):../src/frontend/parser.sml]
+
+[code: 207973, data: 2725, env: 9130 bytes]
+[wrote X64 code file:	build/../src/frontend/MLB/RI_GC/ast.sml.s]
+[compiling build/(rune.cm):../src/driver/main.sml]
+src/driver/main.sml:250.42 Warning: calling polyEqual
+[reading source file:	build/../src/frontend/fixity.sml][code: 62807, data: 1095, env: 2243 bytes]
+[scanning 9860-export.cm]
+[scanning (9860-export.cm):build/rune.cm]
+[parsing (9860-export.cm):9860-export.sml]
+[compiling (9860-export.cm):9860-export.sml]
+[code: 256, data: 48, env: 39 bytes]
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/rune-smlnj-legacy.heap" --lib "$d/../lib" "$@"\n' "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml" > bin/rune-smlnj-legacy
+chmod +x bin/rune-smlnj-legacy
+/home/ruud/.local/rune-hosts/mlton/bin/mlton -output bin/runedoc-mlton.bin build/runedoc.mlb
+
+[wrote X64 code file:	build/../src/frontend/MLB/RI_GC/fixity.sml.s]
+[reading source file:	build/../src/frontend/parser.sml]
+[wrote X64 code file:	build/../src/frontend/MLB/RI_GC/parser.sml.s]
+[reading source file:	build/../src/elab/unifyexn.sml]
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/unifyexn.sml.s]
+[reading source file:	build/../src/elab/unify.sml]
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/unify.sml.s]
+[reading source file:	build/../src/elab/env.sml]
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/env.sml.s]
+[reading source file:	build/../src/elab/sigmatch.sml]
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/sigmatch.sml.s]
+[reading source file:	build/../src/elab/exhaust.sml]
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/exhaust.sml.s]
+[reading source file:	build/../src/backend/opcodes.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/opcodes.sml.s]
+[reading source file:	build/../src/backend/prims.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/prims.sml.s]
+[reading source file:	build/../src/elab/elaborate.sml]build/smlnj-dev-root/src/driver/main.sml:250.42 Warning: calling polyEqual
+
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/rune-smlnj-dev.heap" --lib "$d/../lib" "$@"\n' "/home/ruud/.local/rune-hosts/smlnj-dev/bin/sml" > bin/rune-smlnj-dev
+chmod +x bin/rune-smlnj-dev
+/home/ruud/.local/rune-hosts/polyml/bin/polyc -o bin/runedoc-polyml.bin build/runedoc-polyml-build.sml
+[wrote X64 code file:	build/../src/elab/MLB/RI_GC/elaborate.sml.s]
+[reading source file:	build/../src/core/lambda.sml/home/ruud/.local/rune-hosts/mlton/bin/mlton -output bin/runeopt-mlton.bin build/runeopt.mlb
+]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/lambda.sml.s]
+[reading source file:	build/../src/core/lambdalint.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/lambdalint.sml.s]
+[reading source file:	build/../src/core/matchcomp.sml]
+make[1]: Nothing to be done for 'vm'.
+/home/ruud/.local/rune-hosts/polyml/bin/polyc -o bin/runeopt-polyml.bin build/runeopt-polyml-build.sml
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/matchcomp.sml.s]
+[reading source file:	build/../src/core/translate.sml]printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/rune-mlton.bin" --lib "$d/../lib" "$@"\n' > bin/rune-mlton
+chmod +x bin/rune-mlton
+/home/ruud/.local/rune-hosts/smlnj32/bin/ml-build build/rune.cm Main.main bin/rune-smlnj32.heap
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[scanning build/rune.cm]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[loading build/(rune.cm):../src/util/ordmap.sml]
+[loading build/(rune.cm):../src/util/source.sml]
+[loading build/(rune.cm):../src/util/error.sml]
+[compiling build/(rune.cm):../src/elab/types.sml]
+[code: 33877, data: 1629, env: 3516 bytes]
+[loading build/(rune.cm):../src/util/inttable.sml]
+[compiling build/(rune.cm):../src/core/ty.sml]
+[code: 43288, data: 1556, env: 1975 bytes]
+[compiling build/(rune.cm):../src/core/lambda.sml]
+[code: 38593, data: 1137, env: 2507 bytes]
+[compiling build/(rune.cm):../src/core/mid.sml]
+[code: 2714, data: 74, env: 2779 bytes]
+[loading build/(rune.cm):../src/core/target.sml]
+[loading build/(rune.cm):../src/util/scon.sml]
+[compiling build/(rune.cm):../src/frontend/ast.sml]
+
+[code: 61612, data: 1436, env: 8742 bytes]
+[compiling build/(rune.cm):../src/elab/overload.sml]
+[code: 7082, data: 1550, env: 1015 bytes]
+[compiling build/(rune.cm):../src/elab/env.sml]
+[code: 27450, data: 1546, env: 5386 bytes]
+[loading build/(rune.cm):../src/elab/unifyexn.sml]
+[compiling build/(rune.cm):../src/elab/unify.sml]
+[code: 29740, data: 2668, env: 3567 bytes]
+[compiling build/(rune.cm):../src/elab/exhaust.sml]
+[code: 28607, data: 1231, env: 8114 bytes]
+[compiling build/(rune.cm):../src/elab/sigmatch.sml]
+[code: 65131, data: 2399, env: 5957 bytes]
+[compiling build/(rune.cm):../src/backend/prims.sml]
+[code: 42028, data: 39796, env: 480 bytes]
+[compiling build/(rune.cm):../src/elab/elaborate.sml]
+src/elab/elaborate.sml:165.82 Warning: calling polyEqual
+src/elab/elaborate.sml:155.53 Warning: calling polyEqual
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/translate.sml.s]
+[reading source file:	build/../src/core/mid.sml][code: 216622, data: 5274, env: 13846 bytes]
+[loading build/(rune.cm):../src/util/pass.sml]
+[compiling build/(rune.cm):../src/core/matchcomp.sml]
+
+[code: 69267, data: 2167, env: 9843 bytes]
+[compiling build/(rune.cm):../src/core/translate.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/mid.sml.s]
+[reading source file:	build/../src/core/midlint.sml][code: 56351, data: 1591, env: 9858 bytes]
+[compiling build/(rune.cm):../src/core/lift.sml]
+[code: 58645, data: 1029, env: 2679 bytes]
+[compiling build/(rune.cm):../src/backend/rep.sml]
+[code: 2481, data: 109, env: 251 bytes]
+[compiling build/(rune.cm):../src/core/midtext.sml]
+
+[code: 113121, data: 3413, env: 3088 bytes]
+[compiling build/(rune.cm):../src/backend/low.sml]
+[code: 27314, data: 1030, env: 3172 bytes]
+[compiling build/(rune.cm):../src/backend/lower.sml]
+[code: 101113, data: 1889, env: 3733 bytes]
+[compiling build/(rune.cm):../src/core/midlint.sml]
+[code: 35863, data: 1667, env: 2174 bytes]
+[compiling build/(rune.cm):../src/backend/lowlint.sml]
+[code: 53697, data: 2741, env: 2601 bytes]
+[compiling build/(rune.cm):../src/core/simplify.sml]
+[code: 164245, data: 2093, env: 4956 bytes]
+[loading build/(rune.cm):../src/backend/opcodes.sml]
+[compiling build/(rune.cm):../src/backend/code.sml]
+[code: 18237, data: 761, env: 3754 bytes]
+[compiling build/(rune.cm):../src/backend/emit.sml]
+[code: 38065, data: 1425, env: 4098 bytes]
+[loading build/(rune.cm):../src/frontend/token.sml]
+[loading build/(rune.cm):../src/frontend/lexer.sml]
+[loading build/(rune.cm):../src/driver/basismanifest.sml]
+[compiling build/(rune.cm):../src/core/tomid.sml]
+[code: 43529, data: 1029, env: 1656 bytes]
+[compiling build/(rune.cm):../src/core/workers.sml]
+[code: 59260, data: 1224, env: 2636 bytes]
+[loading build/(rune.cm):../src/frontend/fixity.sml]
+[compiling build/(rune.cm):../src/frontend/parser.sml]
+rm -rf tests/out/opt-cache tests/out/opt-cache-asan
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/rune-polyml.bin" --lib "$d/../lib" "$@"\n' > bin/rune-polyml
+chmod +x bin/rune-polyml
+cm=$(sh scripts/smlnj-dev-root.sh build/runedoc.cm); \
+  /home/ruud/.local/rune-hosts/smlnj-dev/bin/ml-build "$cm" DocMain.main bin/runedoc-smlnj-dev.heap
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runedoc-polyml.bin" --lib "$d/../lib" "$@"\n' > bin/runedoc-polyml
+chmod +x bin/runedoc-polyml
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runeopt-mlton.bin" --runtime "$d/../build" "$@"\n' > bin/runeopt-mlton
+chmod +x bin/runeopt-mlton
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runeopt-polyml.bin" --runtime "$d/../build" "$@"\n' > bin/runeopt-polyml
+chmod +x bin/runeopt-polyml
+bin/rune-mlton --lint --mid-roundtrip -o bin/rune.rbc build/config.sml src/util/scon.sml src/util/ordmap.sml src/util/inttable.sml src/util/source.sml src/util/error.sml src/util/pass.sml src/frontend/token.sml src/frontend/lexer.sml src/elab/types.sml src/core/ty.sml src/elab/overload.sml src/frontend/ast.sml src/frontend/fixity.sml src/frontend/parser.sml src/elab/unifyexn.sml src/elab/unify.sml src/elab/env.sml src/elab/sigmatch.sml src/elab/exhaust.sml src/backend/opcodes.sml src/backend/prims.sml src/elab/elaborate.sml src/core/lambda.sml src/core/lambdalint.sml src/core/matchcomp.sml src/core/translate.sml src/core/mid.sml src/core/midlint.sml src/core/midtext.sml src/core/tomid.sml src/core/target.sml src/core/shake.sml src/core/lift.sml src/core/simplify.sml src/core/workers.sml src/backend/code.sml src/backend/low.sml src/backend/target.sml src/backend/lowlint.sml src/backend/rep.sml src/backend/lower.sml src/backend/stack.sml src/backend/regcodes.sml src/backend/regs.sml src/backend/emit.sml src/driver/basismanifest.sml src/driver/options.sml src/driver/main.sml src/main/rune-main.sml
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+build/smlnj-dev-root/src/doc/dochead.sml:116.74 Warning: calling polyEqual
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/midlint.sml.s]
+[reading source file:	build/../src/core/midtext.sml][code: 176944, data: 4424, env: 9131 bytes]
+[compiling build/(rune.cm):../src/driver/options.sml]
+[code: 13794, data: 3682, env: 773 bytes]
+[compiling build/(rune.cm):../src/core/lambdalint.sml]
+[code: 31285, data: 1777, env: 2101 bytes]
+[loading build/(rune.cm):config.sml]
+[compiling build/(rune.cm):../src/core/shake.sml]
+[code: 23693, data: 569, env: 2265 bytes]
+[loading build/(rune.cm):../src/backend/regcodes.sml]
+[compiling build/(rune.cm):../src/backend/target.sml]
+[code: 64, env: 763 bytes]
+[compiling build/(rune.cm):../src/backend/stack.sml]
+[code: 65887, data: 2663, env: 1187 bytes]
+[compiling build/(rune.cm):../src/backend/regs.sml]
+[code: 65431, data: 2679, env: 1186 bytes]
+[compiling build/(rune.cm):../src/driver/main.sml]
+src/driver/main.sml:250.42 Warning: calling polyEqual
+
+[code: 55011, data: 2107, env: 2246 bytes]
+[scanning 10652-export.cm]
+[scanning (10652-export.cm):build/rune.cm]
+[parsing (10652-export.cm):10652-export.sml]
+[compiling (10652-export.cm):10652-export.sml]
+[code: 245, data: 65, env: 39 bytes]
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/rune-smlnj32.heap" --lib "$d/../lib" "$@"\n' "/home/ruud/.local/rune-hosts/smlnj32/bin/sml" > bin/rune-smlnj32
+chmod +x bin/rune-smlnj32
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runedoc-mlton.bin" --lib "$d/../lib" "$@"\n' > bin/runedoc-mlton
+chmod +x bin/runedoc-mlton
+/home/ruud/.local/rune-hosts/smlnj-legacy/bin/ml-build build/runedoc.cm DocMain.main bin/runedoc-smlnj-legacy.heap
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[scanning build/runedoc.cm]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[loading build/(runedoc.cm):../src/util/scon.sml]
+[loading build/(runedoc.cm):../src/util/ordmap.sml]
+[loading build/(runedoc.cm):../src/util/source.sml]
+[loading build/(runedoc.cm):../src/util/error.sml]
+[loading build/(runedoc.cm):../src/elab/types.sml]
+[loading build/(runedoc.cm):../src/frontend/ast.sml]
+[loading build/(runedoc.cm):../src/elab/exhaust.sml]
+[loading build/(runedoc.cm):../src/util/inttable.sml]
+[loading build/(runedoc.cm):../src/doc/docdiag.sml]
+[loading build/(runedoc.cm):../src/frontend/token.sml]
+[loading build/(runedoc.cm):../src/frontend/lexer.sml]
+[loading build/(runedoc.cm):../src/frontend/fixity.sml]
+[loading build/(runedoc.cm):../src/frontend/parser.sml]
+[compiling build/(runedoc.cm):../src/doc/doctests.sml]
+[code: 39961, data: 417, env: 1039 bytes]
+[loading build/(runedoc.cm):../src/doc/doctext.sml]
+[compiling build/(runedoc.cm):../src/doc/dochead.sml]
+src/doc/dochead.sml:116.74 Warning: calling polyEqual
+[code: 18760, data: 408, env: 534 bytes]
+[compiling build/(runedoc.cm):../src/doc/docir.sml]
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" --heap-size 67108864 "$d/rune.rbc" --lib "$d/../lib" "$@"\n' > bin/rune-boot
+chmod +x bin/rune-boot
+ln -sf rune-boot bin/rune
+bin/rune -o bin/runedoc.rbc build/config.sml src/util/scon.sml src/util/ordmap.sml src/util/inttable.sml src/util/source.sml src/util/error.sml src/frontend/token.sml src/frontend/lexer.sml src/elab/types.sml src/core/ty.sml src/elab/overload.sml src/frontend/ast.sml src/frontend/fixity.sml src/frontend/parser.sml src/elab/unifyexn.sml src/elab/unify.sml src/elab/env.sml src/elab/sigmatch.sml src/elab/exhaust.sml src/backend/prims.sml src/elab/elaborate.sml src/driver/basismanifest.sml src/doc/docsource.sml src/doc/docdiag.sml src/doc/doccomments.sml src/doc/doctext.sml src/doc/dochead.sml src/doc/docir.sml src/doc/docextract.sml src/doc/docanchor.sml src/doc/docmarkdown.sml src/doc/docclaims.sml src/doc/docelab.sml src/doc/doctests.sml src/doc/docnotes.sml src/doc/docannot.sml src/doc/docresolve.sml src/doc/docpage.sml src/doc/docexamples.sml src/doc/doclaws.sml src/doc/docsite.sml src/doc/docmain.sml src/main/runedoc-rune-main.sml
+[code: 39678, data: 502, env: 3474 bytes]
+[compiling build/(runedoc.cm):../src/doc/docnotes.sml]
+[code: 28456, data: 376, env: 1367 bytes]
+[loading build/(runedoc.cm):../src/driver/basismanifest.sml]
+[loading build/(runedoc.cm):../src/elab/env.sml]
+[loading build/(runedoc.cm):../src/core/ty.sml]
+[loading build/(runedoc.cm):../src/elab/overload.sml]
+[loading build/(runedoc.cm):../src/elab/unifyexn.sml]
+[loading build/(runedoc.cm):../src/elab/unify.sml]
+[loading build/(runedoc.cm):../src/elab/sigmatch.sml]
+[loading build/(runedoc.cm):../src/backend/prims.sml]
+[loading build/(runedoc.cm):../src/elab/elaborate.sml]
+[compiling build/(runedoc.cm):../src/doc/docclaims.sml]
+[code: 17206, data: 390, env: 1161 bytes]
+[compiling build/(runedoc.cm):../src/doc/docelab.sml]
+[code: 129391, data: 3711, env: 3173 bytes]
+[loading build/(runedoc.cm):../src/doc/docmarkdown.sml]
+[compiling build/(runedoc.cm):../src/doc/docanchor.sml]
+[code: 6236, data: 356, env: 503 bytes]
+[compiling build/(runedoc.cm):../src/doc/docresolve.sml]
+[code: 32678, data: 166, env: 1614 bytes]
+[compiling build/(runedoc.cm):../src/doc/docpage.sml]
+[code: 153302, data: 1750, env: 3524 bytes]
+[compiling build/(runedoc.cm):../src/doc/docexamples.sml]
+[code: 17398, data: 1158, env: 1328 bytes]
+[loading build/(runedoc.cm):../src/doc/docsource.sml]
+[loading build/(runedoc.cm):../src/doc/doccomments.sml]
+[compiling build/(runedoc.cm):../src/doc/docextract.sml]
+[code: 79140, data: 476, env: 3280 bytes]
+[compiling build/(runedoc.cm):../src/doc/doclaws.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/midtext.sml.s]
+[code: 27239, data: 751, env: 1668 bytes]
+[compiling build/(runedoc.cm):../src/doc/docannot.sml]
+[reading source file:	build/../src/core/tomid.sml[code: 40447, data: 591, env: 761 bytes]
+[compiling build/(runedoc.cm):../src/doc/docsite.sml]
+]src/doc/docsite.sml:1698.82 Warning: calling polyEqual
+src/doc/docsite.sml:1686.44 Warning: calling polyEqual
+src/doc/docsite.sml:1687.53 Warning: calling polyEqual
+src/doc/docsite.sml:1619.87 Warning: calling polyEqual
+src/doc/docsite.sml:1240.78 Warning: calling polyEqual
+src/doc/docsite.sml:573.82 Warning: calling polyEqual
+
+[code: 534321, data: 14529, env: 5122 bytes]
+[loading build/(runedoc.cm):config.sml]
+[compiling build/(runedoc.cm):../src/doc/docmain.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/tomid.sml.s]
+[code: 39528, data: 4056, env: 1157 bytes]
+[scanning 10991-export.cm]
+[scanning (10991-export.cm):build/runedoc.cm]
+[parsing (10991-export.cm):10991-export.sml]
+[reading source file:	build/../src/core/target.sml[compiling (10991-export.cm):10991-export.sml]
+[code: 259, data: 51, env: 39 bytes]
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/runedoc-smlnj-legacy.heap" --lib "$d/../lib" "$@"\n' "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml" > bin/runedoc-smlnj-legacy
+chmod +x bin/runedoc-smlnj-legacy
+bin/rune -o bin/runeopt.rbc build/config.sml src/util/ordmap.sml src/isa/isa.sml src/isa/stack.sml src/isa/prims.sml src/backend/opcodes.sml src/backend/prims.sml src/opt/rbc.sml src/opt/rbcimage.sml src/opt/rbccheck.sml src/opt/rbcdisasm.sml src/opt/x64.sml src/opt/optmain.sml src/main/runeopt-rune-main.sml
+]/home/ruud/.local/rune-hosts/smlnj32/bin/ml-build build/runedoc.cm DocMain.main bin/runedoc-smlnj32.heap
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[scanning build/runedoc.cm]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[loading build/(runedoc.cm):../src/util/ordmap.sml]
+[loading build/(runedoc.cm):../src/backend/prims.sml]
+[loading build/(runedoc.cm):../src/doc/doctext.sml]
+[loading build/(runedoc.cm):../src/util/source.sml]
+[loading build/(runedoc.cm):../src/util/scon.sml]
+[loading build/(runedoc.cm):../src/frontend/token.sml]
+[loading build/(runedoc.cm):../src/util/error.sml]
+[loading build/(runedoc.cm):../src/elab/types.sml]
+[loading build/(runedoc.cm):../src/frontend/ast.sml]
+[loading build/(runedoc.cm):../src/frontend/lexer.sml]
+[loading build/(runedoc.cm):../src/frontend/fixity.sml]
+[loading build/(runedoc.cm):../src/util/inttable.sml]
+[loading build/(runedoc.cm):../src/frontend/parser.sml]
+[compiling build/(runedoc.cm):../src/doc/dochead.sml]
+src/doc/dochead.sml:116.74 Warning: calling polyEqual
+
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/target.sml.s]
+[reading source file:	build/../src/core/shake.sml[code: 15026, data: 754, env: 534 bytes]
+[compiling build/(runedoc.cm):../src/doc/docir.sml]
+][code: 30888, data: 912, env: 3475 bytes]
+[loading build/(runedoc.cm):../src/elab/unifyexn.sml]
+[compiling build/(runedoc.cm):../src/doc/doctests.sml]
+[code: 33766, data: 1170, env: 1039 bytes]
+[compiling build/(runedoc.cm):../src/doc/docanchor.sml]
+[code: 5878, data: 1034, env: 504 bytes]
+[loading build/(runedoc.cm):../src/driver/basismanifest.sml]
+[loading build/(runedoc.cm):../src/elab/env.sml]
+[loading build/(runedoc.cm):../src/elab/overload.sml]
+[loading build/(runedoc.cm):../src/elab/unify.sml]
+[loading build/(runedoc.cm):../src/core/ty.sml]
+[loading build/(runedoc.cm):../src/elab/exhaust.sml]
+[loading build/(runedoc.cm):../src/elab/sigmatch.sml]
+[loading build/(runedoc.cm):../src/elab/elaborate.sml]
+[loading build/(runedoc.cm):../src/doc/docdiag.sml]
+[compiling build/(runedoc.cm):../src/doc/docclaims.sml]
+[code: 14298, data: 754, env: 1162 bytes]
+[compiling build/(runedoc.cm):../src/doc/docelab.sml]
+
+build/smlnj-dev-root/src/doc/docsite.sml:1698.82 Warning: calling polyEqual
+build/smlnj-dev-root/src/doc/docsite.sml:1687.53 Warning: calling polyEqual
+build/smlnj-dev-root/src/doc/docsite.sml:1686.44 Warning: calling polyEqual
+build/smlnj-dev-root/src/doc/docsite.sml:1619.87 Warning: calling polyEqual
+build/smlnj-dev-root/src/doc/docsite.sml:1240.78 Warning: calling polyEqual
+build/smlnj-dev-root/src/doc/docsite.sml:573.82 Warning: calling polyEqual
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/shake.sml.s]
+[reading source file:	build/../src/core/lift.sml[code: 126526, data: 7678, env: 3176 bytes]
+[loading build/(runedoc.cm):../src/doc/docmarkdown.sml]
+[compiling build/(runedoc.cm):../src/doc/docresolve.sml]
+][code: 28355, data: 823, env: 1615 bytes]
+[compiling build/(runedoc.cm):../src/doc/docpage.sml]
+[code: 136828, data: 3980, env: 3526 bytes]
+[compiling build/(runedoc.cm):../src/doc/doclaws.sml]
+[code: 22083, data: 1183, env: 1669 bytes]
+[loading build/(runedoc.cm):../src/doc/docsource.sml]
+[loading build/(runedoc.cm):../src/doc/doccomments.sml]
+[loading build/(runedoc.cm):config.sml]
+[compiling build/(runedoc.cm):../src/doc/docextract.sml]
+
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" --heap-size 67108864 "$d/runedoc.rbc" --lib "$d/../lib" "$@"\n' > bin/runedoc-boot
+chmod +x bin/runedoc-boot
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" --heap-size 67108864 "$d/runeopt.rbc" --runtime "$d/../build" "$@"\n' > bin/runeopt-boot
+chmod +x bin/runeopt-boot
+rm -rf tests/out/opt-cache tests/out/opt-cache-asan
+ln -sf runedoc-boot bin/runedoc
+ln -sf runeopt-boot bin/runeopt
+[code: 67698, data: 1498, env: 3281 bytes]
+[compiling build/(runedoc.cm):../src/doc/docnotes.sml]
+[code: 23343, data: 915, env: 1368 bytes]
+[compiling build/(runedoc.cm):../src/doc/docannot.sml]
+[code: 33364, data: 1488, env: 761 bytes]
+[compiling build/(runedoc.cm):../src/doc/docexamples.sml]
+[code: 14748, data: 1460, env: 1329 bytes]
+[compiling build/(runedoc.cm):../src/doc/docsite.sml]
+src/doc/docsite.sml:1698.82 Warning: calling polyEqual
+src/doc/docsite.sml:1686.44 Warning: calling polyEqual
+src/doc/docsite.sml:1687.53 Warning: calling polyEqual
+src/doc/docsite.sml:1619.87 Warning: calling polyEqual
+src/doc/docsite.sml:1240.78 Warning: calling polyEqual
+src/doc/docsite.sml:573.82 Warning: calling polyEqual
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/lift.sml.s]
+[reading source file:	build/../src/core/simplify.sml]
+[code: 580908, data: 21432, env: 5128 bytes]
+[compiling build/(runedoc.cm):../src/doc/docmain.sml]
+[code: 33254, data: 4674, env: 1159 bytes]
+[scanning 11056-export.cm]
+[scanning (11056-export.cm):build/runedoc.cm]
+[parsing (11056-export.cm):11056-export.sml]
+[compiling (11056-export.cm):11056-export.sml]
+[code: 248, data: 68, env: 39 bytes]
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/runedoc-smlnj32.heap" --lib "$d/../lib" "$@"\n' "/home/ruud/.local/rune-hosts/smlnj32/bin/sml" > bin/runedoc-smlnj32
+chmod +x bin/runedoc-smlnj32
+/home/ruud/.local/rune-hosts/smlnj-legacy/bin/ml-build build/runeopt.cm OptMain.main bin/runeopt-smlnj-legacy.heap
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[scanning build/runeopt.cm]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[loading build/(runeopt.cm):../src/util/ordmap.sml]
+[loading build/(runeopt.cm):../src/backend/prims.sml]
+[loading build/(runeopt.cm):config.sml]
+[loading build/(runeopt.cm):../src/backend/opcodes.sml]
+[loading build/(runeopt.cm):../src/isa/isa.sml]
+[loading build/(runeopt.cm):../src/isa/stack.sml]
+[compiling build/(runeopt.cm):../src/opt/rbc.sml]
+src/opt/rbc.sml:494.47 Warning: calling polyEqual
+src/opt/rbc.sml:492.39 Warning: calling polyEqual
+[code: 75887, data: 1519, env: 2311 bytes]
+[compiling build/(runeopt.cm):../src/opt/rbccheck.sml]
+[code: 26420, data: 1876, env: 1122 bytes]
+[loading build/(runeopt.cm):../src/isa/prims.sml]
+[compiling build/(runeopt.cm):../src/opt/x64.sml]
+[code: 224591, data: 6087, env: 1559 bytes]
+[loading build/(runeopt.cm):../src/opt/rbcdisasm.sml]
+[loading build/(runeopt.cm):../src/opt/rbcimage.sml]
+[loading build/(runeopt.cm):../src/opt/optmain.sml]
+[scanning 11119-export.cm]
+[scanning (11119-export.cm):build/runeopt.cm]
+[parsing (11119-export.cm):11119-export.sml]
+[compiling (11119-export.cm):11119-export.sml]
+[code: 259, data: 51, env: 39 bytes]
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/runeopt-smlnj-legacy.heap" --runtime "$d/../build" "$@"\n' "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml" > bin/runeopt-smlnj-legacy
+chmod +x bin/runeopt-smlnj-legacy
+/home/ruud/.local/rune-hosts/smlnj32/bin/ml-build build/runeopt.cm OptMain.main bin/runeopt-smlnj32.heap
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[scanning build/runeopt.cm]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[loading build/(runeopt.cm):../src/backend/opcodes.sml]
+[loading build/(runeopt.cm):../src/util/ordmap.sml]
+[loading build/(runeopt.cm):../src/isa/isa.sml]
+[loading build/(runeopt.cm):../src/isa/stack.sml]
+[loading build/(runeopt.cm):../src/backend/prims.sml]
+[compiling build/(runeopt.cm):../src/opt/rbc.sml]
+src/opt/rbc.sml:494.47 Warning: calling polyEqual
+src/opt/rbc.sml:492.39 Warning: calling polyEqual
+[code: 63072, data: 2524, env: 2312 bytes]
+[compiling build/(runeopt.cm):../src/opt/rbccheck.sml]
+[code: 24336, data: 2836, env: 1122 bytes]
+[loading build/(runeopt.cm):config.sml]
+[loading build/(runeopt.cm):../src/isa/prims.sml]
+[compiling build/(runeopt.cm):../src/opt/x64.sml]
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/simplify.sml.s]
+[reading source file:	build/../src/core/workers.sml][code: 174814, data: 8650, env: 1560 bytes]
+[loading build/(runeopt.cm):../src/opt/rbcimage.sml]
+[loading build/(runeopt.cm):../src/opt/rbcdisasm.sml]
+[loading build/(runeopt.cm):../src/opt/optmain.sml]
+[scanning 11148-export.cm]
+[scanning (11148-export.cm):build/runeopt.cm]
+[parsing (11148-export.cm):11148-export.sml]
+[compiling (11148-export.cm):11148-export.sml]
+[code: 248, data: 68, env: 39 bytes]
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/runeopt-smlnj32.heap" --runtime "$d/../build" "$@"\n' "/home/ruud/.local/rune-hosts/smlnj32/bin/sml" > bin/runeopt-smlnj32
+chmod +x bin/runeopt-smlnj32
+
+[wrote X64 code file:	build/../src/core/MLB/RI_GC/workers.sml.s]
+[reading source file:	build/../src/backend/code.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/code.sml.s]
+[reading source file:	build/../src/backend/low.sml]printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/runedoc-smlnj-dev.heap" --lib "$d/../lib" "$@"\n' "/home/ruud/.local/rune-hosts/smlnj-dev/bin/sml" > bin/runedoc-smlnj-dev
+chmod +x bin/runedoc-smlnj-dev
+cm=$(sh scripts/smlnj-dev-root.sh build/runeopt.cm); \
+  /home/ruud/.local/rune-hosts/smlnj-dev/bin/ml-build "$cm" OptMain.main bin/runeopt-smlnj-dev.heap
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+build/smlnj-dev-root/src/opt/rbc.sml:492.39 Warning: calling polyEqual
+build/smlnj-dev-root/src/opt/rbc.sml:494.47 Warning: calling polyEqual
+
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/low.sml.s]
+[reading source file:	build/../src/backend/target.sml]
+[reading source file:	build/../src/backend/lowlint.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/lowlint.sml.s]
+[reading source file:	build/../src/backend/rep.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/rep.sml.s]
+[reading source file:	build/../src/backend/lower.sml]printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/runeopt-smlnj-dev.heap" --runtime "$d/../build" "$@"\n' "/home/ruud/.local/rune-hosts/smlnj-dev/bin/sml" > bin/runeopt-smlnj-dev
+chmod +x bin/runeopt-smlnj-dev
+
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/lower.sml.s]
+[reading source file:	build/../src/backend/stack.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/stack.sml.s]
+[reading source file:	build/../src/backend/regcodes.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/regcodes.sml.s]
+[reading source file:	build/../src/backend/regs.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/regs.sml.s]
+[reading source file:	build/../src/backend/emit.sml]
+[wrote X64 code file:	build/../src/backend/MLB/RI_GC/emit.sml.s]
+[reading source file:	build/../src/driver/basismanifest.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/basismanifest.sml.s]
+[reading source file:	build/../src/driver/options.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/options.sml.s]
+[reading source file:	build/../src/driver/main.sml]
+[wrote X64 code file:	build/../src/driver/MLB/RI_GC/main.sml.s]
+[reading source file:	build/../src/main/mlkit-main.sml]
+[wrote X64 code file:	build/../src/main/MLB/RI_GC/mlkit-main.sml.s]
+[wrote X64 code file:	MLB/RI_GC/base-link_objects.s]
+[wrote executable file:	bin/rune-mlkit.bin]
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/rune-mlkit.bin" --lib "$d/../lib" "$@"\n' > bin/rune-mlkit
+chmod +x bin/rune-mlkit
+SML_LIB=/home/ruud/.local/rune-hosts/mlkit/lib/mlkit /home/ruud/.local/rune-hosts/mlkit/bin/mlkit -j 4 -o bin/runedoc-mlkit.bin build/runedoc-mlkit.mlb
+[reading source file:	build/../src/doc/docsource.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docsource.sml.s]
+[reading source file:	build/../src/doc/docdiag.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docdiag.sml.s]
+[reading source file:	build/../src/doc/doccomments.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/doccomments.sml.s]
+[reading source file:	build/../src/doc/doctext.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/doctext.sml.s]
+[reading source file:	build/../src/doc/dochead.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/dochead.sml.s]
+[reading source file:	build/../src/doc/docir.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docir.sml.s]
+[reading source file:	build/../src/doc/docextract.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docextract.sml.s]
+[reading source file:	build/../src/doc/docanchor.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docanchor.sml.s]
+[reading source file:	build/../src/doc/docmarkdown.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docmarkdown.sml.s]
+[reading source file:	build/../src/doc/docclaims.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docclaims.sml.s]
+[reading source file:	build/../src/doc/docelab.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docelab.sml.s]
+[reading source file:	build/../src/doc/doctests.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/doctests.sml.s]
+[reading source file:	build/../src/doc/docnotes.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docnotes.sml.s]
+[reading source file:	build/../src/doc/docannot.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docannot.sml.s]
+[reading source file:	build/../src/doc/docresolve.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docresolve.sml.s]
+[reading source file:	build/../src/doc/docpage.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docpage.sml.s]
+[reading source file:	build/../src/doc/docexamples.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docexamples.sml.s]
+[reading source file:	build/../src/doc/doclaws.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/doclaws.sml.s]
+[reading source file:	build/../src/doc/docsite.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docsite.sml.s]
+[reading source file:	build/../src/doc/docmain.sml]
+[wrote X64 code file:	build/../src/doc/MLB/RI_GC/docmain.sml.s]
+[reading source file:	build/../src/main/runedoc-mlkit-main.sml]
+[wrote X64 code file:	build/../src/main/MLB/RI_GC/runedoc-mlkit-main.sml.s]
+[wrote X64 code file:	MLB/RI_GC/base-link_objects.s]
+[wrote executable file:	bin/runedoc-mlkit.bin]
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runedoc-mlkit.bin" --lib "$d/../lib" "$@"\n' > bin/runedoc-mlkit
+chmod +x bin/runedoc-mlkit
+SML_LIB=/home/ruud/.local/rune-hosts/mlkit/lib/mlkit /home/ruud/.local/rune-hosts/mlkit/bin/mlkit -j 4 -o bin/runeopt-mlkit.bin build/runeopt-mlkit.mlb
+[reading source file:	build/../src/opt/rbc.sml]
+[wrote X64 code file:	build/../src/opt/MLB/RI_GC/rbc.sml.s]
+[reading source file:	build/../src/opt/rbcimage.sml]
+[wrote X64 code file:	build/../src/opt/MLB/RI_GC/rbcimage.sml.s]
+[reading source file:	build/../src/opt/rbccheck.sml]
+[wrote X64 code file:	build/../src/opt/MLB/RI_GC/rbccheck.sml.s]
+[reading source file:	build/../src/opt/rbcdisasm.sml]
+[wrote X64 code file:	build/../src/opt/MLB/RI_GC/rbcdisasm.sml.s]
+[reading source file:	build/../src/opt/x64.sml]
+[wrote X64 code file:	build/../src/opt/MLB/RI_GC/x64.sml.s]
+[reading source file:	build/../src/opt/optmain.sml]
+[wrote X64 code file:	build/../src/opt/MLB/RI_GC/optmain.sml.s]
+[reading source file:	build/../src/main/runeopt-mlkit-main.sml]
+[wrote X64 code file:	build/../src/main/MLB/RI_GC/runeopt-mlkit-main.sml.s]
+[wrote X64 code file:	MLB/RI_GC/base-link_objects.s]
+[wrote executable file:	bin/runeopt-mlkit.bin]
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runeopt-mlkit.bin" --runtime "$d/../build" "$@"\n' > bin/runeopt-mlkit
+chmod +x bin/runeopt-mlkit
+python3 tests/compiler/run-tests.py --rune bin/rune
+bin/rune-boot -o bin/rune.stage2.rbc build/config.sml src/util/scon.sml src/util/ordmap.sml src/util/inttable.sml src/util/source.sml src/util/error.sml src/util/pass.sml src/frontend/token.sml src/frontend/lexer.sml src/elab/types.sml src/core/ty.sml src/elab/overload.sml src/frontend/ast.sml src/frontend/fixity.sml src/frontend/parser.sml src/elab/unifyexn.sml src/elab/unify.sml src/elab/env.sml src/elab/sigmatch.sml src/elab/exhaust.sml src/backend/opcodes.sml src/backend/prims.sml src/elab/elaborate.sml src/core/lambda.sml src/core/lambdalint.sml src/core/matchcomp.sml src/core/translate.sml src/core/mid.sml src/core/midlint.sml src/core/midtext.sml src/core/tomid.sml src/core/target.sml src/core/shake.sml src/core/lift.sml src/core/simplify.sml src/core/workers.sml src/backend/code.sml src/backend/low.sml src/backend/target.sml src/backend/lowlint.sml src/backend/rep.sml src/backend/lower.sml src/backend/stack.sml src/backend/regcodes.sml src/backend/regs.sml src/backend/emit.sml src/driver/basismanifest.sml src/driver/options.sml src/driver/main.sml src/main/rune-main.sml
+PASS compiler output protection and resource budgets
+python3 tests/vm/run-limits.py --rune bin/rune --vm bin/runevm
+PASS saved resource policies and stricter restore limits
+sh tests/run-tests.sh -j 4 --rune bin/rune --vm bin/runevm
+cmp bin/rune.rbc bin/rune.stage2.rbc
+bootstrap: bin/rune.rbc reproduces itself
+passed 331, failed 0
+sh tests/vm/run-vm-tests.sh --vm bin/runevm
+vm: passed 30, failed 0
+RUNEDOC=bin/runedoc sh tests/doc/run-doc-tests.sh
+test-doc: passed 55, failed 0
+RUNE=bin/rune RUNEVM=bin/runevm RUNEDOC=bin/runedoc sh tests/lib/run-lib-tests.sh
+test-lib: passed 22, failed 0
+=== testing with mlton build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with smlnj-legacy build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with smlnj32 build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with smlnj-dev build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with polyml build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with mlkit build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+RUNE=/home/ruud/rune/.worktrees/benchmarks/bin/rune RUNEVM=/home/ruud/rune/.worktrees/benchmarks/bin/runevm \
+  sh tests/basis/run-matrix.sh -j 4 --configs rune
+rune                         139211 checks: 139211 pass,    0 explained,    0 FAILED, 0 skipped; of 221 tests 0 absent, 0 n/a
+timing: 75.8 s for the programs and probes on 4 job slots, busy 98% of the time (298.4 s of work)
+  configuration                work s  fallback s  slowest program
+  rune                           298.4         3.1  mono.largeint (6.7 s)
+  by host: rune 298.4 s
+  slowest programs: rune mono.largeint 6.7 s, rune mono.largereal 6.5 s, rune mono.int64 6.5 s, rune mono.int 6.4 s, rune mono.int32 6.3 s, rune mono.real32 6.3 s, rune mono.int16 6.3 s, rune mono.real 6.3 s, rune mono.largeword 6.3 s, rune mono.real64 6.3 s, rune mono.word64 6.3 s, rune mono.word 6.2 s
+timing: report 0.133 s, all 75.972 s
+report: tests/out/matrix/report.md
+RUNE=bin/rune RUNEVM=bin/runevm RUNEDOC=bin/runedoc sh tests/basis/run-examples.sh
+test-examples: 795 examples of 65 signatures hold, 0 do not
+sh tests/opt/run-opt-tests.sh -j 4 --runeopt bin/runeopt --rune bin/rune --vm bin/runevm
+opt: passed 514, failed 0 (488 programs checked and disassembled)
+sh tests/ir/run-ir-tests.sh --rune bin/rune
+sh scripts/check-levels.sh --rune bin/rune --vm bin/runevm -j 4
+ir: passed 25, failed 0
+check-levels: 273 programs, the same at -O0 and -O2
+python3 tests/vm/run-limits.py --rune bin/rune --vm bin/runevm-opt
+PASS saved resource policies and stricter restore limits
+sh tests/run-tests.sh -j 4 --rune bin/rune --vm bin/runevm-opt --skip tests/opt-skip.txt
+passed 331, failed 0
+sh tests/opt/run-counts.sh -j 4 $(for t in tests/lang/*.sml; do echo tests/out/$(basename $t .sml).rbc; done)
+counts: 264 programs agree with runevm, 0 differ
+RUNE=/home/ruud/rune/.worktrees/benchmarks/bin/rune RUNE_MATRIX_BYTECODE="/home/ruud/rune/.worktrees/benchmarks/tests/out/matrix/rune" \
+  sh tests/basis/run-matrix.sh -j 4 --configs rune:opt
+rune:opt                     139211 checks: 139211 pass,    0 explained,    0 FAILED, 0 skipped; of 221 tests 0 absent, 0 n/a
+timing: 52.5 s for the programs and probes on 4 job slots, busy 97% of the time (204.7 s of work)
+  configuration                work s  fallback s  slowest program
+  rune:opt                       204.7         3.8  posix_process (4.8 s)
+  by host: opt 204.7 s
+  slowest programs: rune:opt posix_process 4.8 s, rune:opt mono.real32 4.6 s, rune:opt mono.real 4.6 s, rune:opt mono.largereal 4.5 s, rune:opt mono.int16 4.5 s, rune:opt mono.int64 4.5 s, rune:opt mono.int 4.4 s, rune:opt mono.word32 4.4 s, rune:opt mono.largeint 4.4 s, rune:opt mono.word64 4.4 s, rune:opt mono.int32 4.4 s, rune:opt mono.word16 4.1 s
+timing: report 0.144 s, all 52.686 s
+report: tests/out/matrix/report.md
+RUNE_HEAP=67108864 sh tests/opt/run-bootstrap.sh
+opt-bootstrap: the compiler as native code reproduces bin/rune.rbc
+bin/rune examples/nqueens.sml -o tests/out/opt-debug/nqueens.rbc
+sh tests/opt/run-debug.sh -j 4 --debuggers tests/out/opt-debug/nqueens.rbc bin/rune.rbc \
+  $(for t in tests/lang/*.sml; do echo tests/out/$(basename $t .sml).rbc; done)
+debug: 266 programs have the line table of their bytecode, and the debuggers stop at a line
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/rune" --target=registers "$@"\n' > bin/rune-new
+chmod +x bin/rune-new
+python3 tests/vm/run-limits.py --rune bin/rune-new --vm bin/runevm-new
+PASS saved resource policies and stricter restore limits
+sh tests/run-tests.sh -j 4 --rune bin/rune-new --vm bin/runevm-new --out tests/out/new
+passed 331, failed 0
+sh scripts/check-new.sh -j 4
+check-new: 273 programs allocate the same on vm/new and runevm, the compiler on vm/new makes the bytecode it makes on runevm, and the primitives done in the loop print the same
+RUNE_NEW=/home/ruud/rune/.worktrees/benchmarks/bin/rune-new RUNEVM_NEW=/home/ruud/rune/.worktrees/benchmarks/bin/runevm-new sh tests/basis/run-matrix.sh -j 4 --configs rune:new
+rune:new                     139211 checks: 139210 pass,    1 explained,    0 FAILED, 0 skipped; of 221 tests 0 absent, 0 n/a
+timing: 105.2 s for the programs and probes on 4 job slots, busy 98% of the time (413.2 s of work)
+  configuration                work s  fallback s  slowest program
+  rune:new                       413.2         5.8  mono.real (8.6 s)
+  by host: new 413.2 s
+  slowest programs: rune:new mono.real 8.6 s, rune:new mono.int32 8.0 s, rune:new mono.int16 8.0 s, rune:new mono.int8 7.9 s, rune:new mono.int 7.1 s, rune:new mono.word16 7.1 s, rune:new mono.word64 6.8 s, rune:new posix_process 6.8 s, rune:new mono.largeint 6.0 s, rune:new mono.largeword 6.0 s, rune:new mono.real32 6.0 s, rune:new mono.int64 5.9 s
+timing: report 0.140 s, all 105.330 s
+report: tests/out/matrix/report.md
+printf '#!/bin/sh\nexec "/home/ruud/rune/.worktrees/benchmarks/bin/runevm-new" --jit=all "$@"\n' > bin/runevm-new-jit
+chmod +x bin/runevm-new-jit
+sh tests/run-tests.sh -j 4 --rune bin/rune-new --vm bin/runevm-new-jit --out tests/out/new-jit
+passed 331, failed 0
+printf '#!/bin/sh\nexec "/home/ruud/rune/.worktrees/benchmarks/bin/runevm-new" --jit=all --jit-tier=2 "$@"\n' > bin/runevm-new-opt
+chmod +x bin/runevm-new-opt
+sh tests/run-tests.sh -j 4 --rune bin/rune-new --vm bin/runevm-new-opt --out tests/out/new-opt
+passed 331, failed 0
+sh scripts/check-jit.sh -j 4
+check-jit: 276 programs print and count the same under --jit=off, --jit=all, with every other function compiled, under --jit-stress, at tier 2 and under --deopt-stress, and use every instruction
+check-asm: the emitters name no encoder
+RUNE_NEW=/home/ruud/rune/.worktrees/benchmarks/bin/rune-new RUNEVM_NEW_JIT=/home/ruud/rune/.worktrees/benchmarks/bin/runevm-new-opt sh tests/basis/run-matrix.sh -j 4 --configs rune:jit
+rune:jit                     139211 checks: 139210 pass,    1 explained,    0 FAILED, 0 skipped; of 221 tests 0 absent, 0 n/a
+timing: 113.4 s for the programs and probes on 4 job slots, busy 98% of the time (443.0 s of work)
+  configuration                work s  fallback s  slowest program
+  rune:jit                       443.0         8.0  mono.word32 (9.4 s)
+  by host: jit 443.0 s
+  slowest programs: rune:jit mono.word32 9.4 s, rune:jit mono.real32 9.0 s, rune:jit mono.real64 8.9 s, rune:jit mono.int16 8.6 s, rune:jit posix_process 5.7 s, rune:jit mono.word16 5.4 s, rune:jit mono.int64 5.4 s, rune:jit mono.word 5.1 s, rune:jit mono.largereal 4.9 s, rune:jit mono.largeint 4.9 s, rune:jit mono.int8 4.9 s, rune:jit mono.real 4.8 s
+timing: report 0.159 s, all 113.606 s
+report: tests/out/matrix/report.md
+bin/runevm-new --jit-check
+jit-check: ok
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Ivm -Ivm/new -Ivm/new/jit -o build/new/x64_test tests/new/x64_test.c vm/new/jit/x64.c vm/sys_posix.c
+build/new/x64_test
+x64: ok
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Ivm -Ivm/new -Ivm/new/jit -o build/new/a64_test tests/new/a64_test.c vm/new/jit/a64.c
+build/new/a64_test
+a64: ok
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Ivm -Ivm/new -Ivm/new/jit -o build/new/masm_test tests/new/masm_test.c vm/new/jit/masm.c vm/new/jit/x64.c vm/new/jit/asm_x64.c vm/sys_posix.c
+build/new/masm_test
+masm: ok
+bin/rune-new tests/lang/rt.deeprec_stack.sml -o tests/out/new-jit/deeprec.rbc
+(ulimit -s 1024 && bin/runevm-new --jit=all tests/out/new-jit/deeprec.rbc > tests/out/new-jit/deeprec.out) && \
+  cmp tests/out/new-jit/deeprec.out tests/lang/rt.deeprec_stack.expected && echo "test-new-jit: the driver never nests"
+test-new-jit: the driver never nests
+(ulimit -s 1024 && bin/runevm-new --jit=baseline --jit-calls=1 --jit-work=1 --jit-stress=3 tests/out/new-jit/deeprec.rbc > tests/out/new-jit/deeprec-tiered.out) && \
+  cmp tests/out/new-jit/deeprec-tiered.out tests/lang/rt.deeprec_stack.expected && echo "test-new-jit: nor while tiering up and invalidating"
+test-new-jit: nor while tiering up and invalidating
+bin/rune-mlton --target=registers -o bin/rune.new.rbc build/config.sml src/util/scon.sml src/util/ordmap.sml src/util/inttable.sml src/util/source.sml src/util/error.sml src/util/pass.sml src/frontend/token.sml src/frontend/lexer.sml src/elab/types.sml src/core/ty.sml src/elab/overload.sml src/frontend/ast.sml src/frontend/fixity.sml src/frontend/parser.sml src/elab/unifyexn.sml src/elab/unify.sml src/elab/env.sml src/elab/sigmatch.sml src/elab/exhaust.sml src/backend/opcodes.sml src/backend/prims.sml src/elab/elaborate.sml src/core/lambda.sml src/core/lambdalint.sml src/core/matchcomp.sml src/core/translate.sml src/core/mid.sml src/core/midlint.sml src/core/midtext.sml src/core/tomid.sml src/core/target.sml src/core/shake.sml src/core/lift.sml src/core/simplify.sml src/core/workers.sml src/backend/code.sml src/backend/low.sml src/backend/target.sml src/backend/lowlint.sml src/backend/rep.sml src/backend/lower.sml src/backend/stack.sml src/backend/regcodes.sml src/backend/regs.sml src/backend/emit.sml src/driver/basismanifest.sml src/driver/options.sml src/driver/main.sml src/main/rune-main.sml
+bin/rune --target=registers -o bin/runedoc.new.rbc build/config.sml src/util/scon.sml src/util/ordmap.sml src/util/inttable.sml src/util/source.sml src/util/error.sml src/frontend/token.sml src/frontend/lexer.sml src/elab/types.sml src/core/ty.sml src/elab/overload.sml src/frontend/ast.sml src/frontend/fixity.sml src/frontend/parser.sml src/elab/unifyexn.sml src/elab/unify.sml src/elab/env.sml src/elab/sigmatch.sml src/elab/exhaust.sml src/backend/prims.sml src/elab/elaborate.sml src/driver/basismanifest.sml src/doc/docsource.sml src/doc/docdiag.sml src/doc/doccomments.sml src/doc/doctext.sml src/doc/dochead.sml src/doc/docir.sml src/doc/docextract.sml src/doc/docanchor.sml src/doc/docmarkdown.sml src/doc/docclaims.sml src/doc/docelab.sml src/doc/doctests.sml src/doc/docnotes.sml src/doc/docannot.sml src/doc/docresolve.sml src/doc/docpage.sml src/doc/docexamples.sml src/doc/doclaws.sml src/doc/docsite.sml src/doc/docmain.sml src/main/runedoc-rune-main.sml
+RUNE=bin/rune RUNEVM=bin/runevm sh tests/perf/run-perf.sh
+ok   array_sieve: 3083863 instructions 1881600 bytes 18208 objects, n^1.01
+ok   bootstrap: 951799395 instructions 1170663568 bytes 25986774 objects
+ok   compile-hello: 3095249 instructions 3559344 bytes 54072 objects
+ok   compile-sigs: 88663633 instructions 95132152 bytes 2040223 objects
+ok   fib: 1501424 instructions 608 bytes 24 objects
+ok   intinf_fact: 15634263 instructions 25329192 bytes 635499 objects
+ok   list_ops: 1724765 instructions 2830064 bytes 70766 objects, n^0.79
+ok   real_nbody: 1000995 instructions 752 bytes 28 objects
+ok   runedoc-ir: 42935517 instructions 41337576 bytes 918487 objects
+ok   runedoc-page: 59791549 instructions 76678760 bytes 1643095 objects
+ok   string_ops: 2412626 instructions 6828960 bytes 184520 objects, n^1.00
+ok   tak: 700632 instructions 584 bytes 23 objects
+ok   word_bits: 1526870 instructions 4624 bytes 126 objects
+perf-check: within budget
+RUNE=bin/rune sh tests/perf/run-perf.sh --new
+ok   array_sieve: 1844333 instructions 1881600 bytes 18208 objects, n^1.02
+ok   bootstrap: 515362636 instructions 1170687920 bytes 25987382 objects
+ok   compile-hello: 1779786 instructions 3560176 bytes 54092 objects
+ok   compile-sigs: 49814094 instructions 95132984 bytes 2040243 objects
+ok   fib: 1125986 instructions 608 bytes 24 objects
+ok   intinf_fact: 8524003 instructions 25329192 bytes 635499 objects
+ok   list_ops: 1008344 instructions 2830064 bytes 70766 objects, n^0.83
+ok   real_nbody: 600671 instructions 752 bytes 28 objects
+ok   runedoc-ir: 24957765 instructions 41337592 bytes 918487 objects
+ok   runedoc-page: 33980224 instructions 76678776 bytes 1643095 objects
+ok   string_ops: 1491103 instructions 6828960 bytes 184520 objects, n^1.00
+ok   tak: 382273 instructions 584 bytes 23 objects
+ok   word_bits: 1134578 instructions 4624 bytes 126 objects
+perf-check: within budget
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (474 profiles)
+sh tests/benchmarks/check-catalog.sh
+bench-catalog: unknown/duplicate routine entries, missing reason, duplicate profiles and missing fixtures rejected
+RUNE_BENCH_COMPILE_OPTIONS=-O2 sh scripts/run-benchmarks.sh --routine --configs rune
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.xLiIyQ
+BENCH tak smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 7
+PASS tak
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH kittmergesort smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 100 98940 43BE5438
+PASS kittmergesort
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH primes-lazy smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 31
+PASS primes-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH primes-strict smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 31
+PASS primes-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH bdd smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 8 382 100
+PASS bdd
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH md5 smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT b2d3f56bc197fd985d5965079b5e7148
+PASS md5
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH fft smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 1
+PASS fft
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH binary-trees smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 255 4016 127
+PASS binary-trees
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH smith-normal-form smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 1 ~1 1 ~7506
+PASS smith-normal-form
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH nqueens smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 2
+PASS nqueens
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH kahan smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 4 100
+PASS kahan
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH wheel-sieve2-lazy smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 137
+PASS wheel-sieve2-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+sh scripts/check-positions.sh -j 4 --rune bin/rune --vm bin/runevm
+check-positions: every instruction of 273 programs comes from a line that exists
+sh scripts/check-cross.sh -j 4
+sh scripts/check-docs.sh
+bin/rune -o bin/runeisa.rbc build/config.sml src/util/ordmap.sml src/isa/isa.sml src/isa/stack.sml src/isa/prims.sml src/isa/regs.sml src/isa/isagen.sml src/isa/reggen.sml src/isa/isamain.sml src/main/runeisa-rune-main.sml
+/home/ruud/.local/rune-hosts/mlton/bin/mlton -output bin/runeisa-mlton.bin build/runeisa.mlb
+printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runeisa-mlton.bin" "$@"\n' > bin/runeisa-mlton
+chmod +x bin/runeisa-mlton
+bin/runeisa-mlton --root . --check
+bin/runevm bin/runeisa.rbc --root . --check
+check-docs: OK (177 documented features, 264 tests, 221 Basis Library suite files)
+RUNE=bin/rune sh scripts/gen-basis-sigs.sh --check
+gen-basis-sigs: OK (65 signatures have the tokens of their transcriptions)
+bin/rune --basis-check
+basis-check: OK (250 files)
+bin/runedoc --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)
+sh tests/basis/gen-annotations.sh --check
+gen-annotations: annotations.txt is up to date (472 annotations)
+bin/runedoc --lib lib --library basis --tests tests/basis --annotations tests/basis/annotations.txt --out docs/generated/basis --title "The Standard ML Basis Library" --check
+runedoc: docs/generated/basis is up to date (306 files)
+bin/runedoc --lib lib --library random --out docs/generated/random --basis-docs ../basis --title "Random numbers" --check
+runedoc: docs/generated/random is up to date (22 files)
+bin/runedoc --lib lib --library test/property --out docs/generated/test/property --basis-docs ../../basis --title "Property testing" --check
+runedoc: docs/generated/test/property is up to date (195 files)
+sh tests/basis/check-claims.sh
+check-claims: OK (200 pairs of a structure and a signature, claimed and tested)
+sh tests/basis/check-notes.sh
+check-notes: OK (0 rune lines and 0 notes that differ agree; 18 host readings of documented signatures have their note)
+check-cross: 498 programs produce identical bytecode with all builds (mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit boot)
+check-doc-cross: the builds of runedoc agree (mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit boot)
+check-opt-cross: the builds of runeopt agree (mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit boot)
