@@ -32,6 +32,14 @@ distinct entries until their workloads are compared.
 
 ## Numerical workloads
 
+McIlroy's [*Power series, power serious*](https://doi.org/10.1017/S0956796899003299)
+(JFP 9(3), 325-337, 1999) motivates exact compositional streams for generating
+functions and differential equations. nofib's GC and spectral versions retain
+recursive series knots but differ in coefficient types and forcing/output.
+Their explicit SML delays preserve the demand needed for integration to emit
+a leading zero before inspecting its operand. These are source-supported
+translation decisions; closure costs and retained prefixes require measurements.
+
 Hartel et al.'s [*Benchmarking Implementations of Functional Languages with
 Pseudoknot, a Float-Intensive Benchmark*](https://doi.org/10.1017/S0956796800001891)
 (JFP 1996) identifies a cross-language workload also named `nucleic` and

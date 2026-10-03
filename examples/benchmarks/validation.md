@@ -513,3 +513,40 @@ The complete `make JOBS=4 check` passes, including 525 catalogue profiles,
 across all seven builds. Documentation and native-generator builds also agree.
 The [acceptance transcript](validation/oct03-persistent-acceptance.log) and
 32 passing inventory tests record the final validation.
+
+## M3 exact series and sequential shootout wave, 2026-10-03
+
+Five ports add GC/spectral power series, n-body, FASTA and reverse complement.
+The catalogue contains 182 programs and 540 profiles. All four eligible
+sequential shootout workloads are now covered, including the earlier pidigits
+port. Other GC and spectral entries remain scheduled; M3 is still in progress.
+
+Final smoke/normal profiles pass on four Rune engines at both -O0 and -O2 and
+on managed MLton, both 64-bit SML/NJ versions, and Poly/ML. The
+[attempt ledger and raw results](results/m3-power-shootout/README.md) preserve
+244 attempts and rejected early ports. Original GHC observers and independent
+analytic/Catalan identities validate every power coefficient; its GC integer
+and spectral rational generating functions remain distinct. Thirteen semantics
+checks cover finite boundaries, sharing, integration demand and division's
+pattern demand order, on all ten configurations at both levels.
+
+FASTA matches unchanged Haskell and independent C byte for byte, including
+binary32 probability-table cutoffs. Reverse complement agrees with Haskell,
+C and independent record reversal. A rejected tiny smoke candidate exposed
+the upstream 82-byte reader's single-header-per-chunk assumption; selected
+smoke input respects that documented limitation without changing the algorithm.
+N-body checks both energies and all 35 final fields against GHC; an independent
+pair-force integrator confirms the reviewed per-profile error bounds. Seventeen
+shootout semantics checks reject perturbed, incomplete and nonfinite results
+and test rounding and buffer boundaries, on all ten configurations at both levels.
+
+Separate instrumented count archives retain complete samples, configurations,
+tool/source/input identities and raw observations. Allocation counts agree across
+all four engines; applicable instruction comparisons agree. This records no
+headline timing claim or universal large SML execution.
+
+The full `make JOBS=4 check` passes, including 540 catalogue profiles, 331
+language fixtures per compiler, performance budgets and bootstrap, and bytecode
+agreement for 498 programs across all seven builds. runedoc and runeopt builds
+also agree. The [complete acceptance transcript](validation/oct03-power-shootout-acceptance.log)
+records this run; all 32 inventory tests pass.
