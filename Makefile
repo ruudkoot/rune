@@ -108,7 +108,7 @@ BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit
 SYS ?= posix
 RT_SRCS := vm/runtime.c vm/heap.c vm/loader.c vm/isa_stack.c vm/prims.c vm/image.c
 VM_SRCS := vm/main.c vm/interp.c $(RT_SRCS) vm/sys_$(SYS).c
-VM_HDRS := vm/vm.h vm/loop.h vm/sys.h vm/version.h $(GEN_C)
+VM_HDRS := vm/vm.h vm/value.h vm/native_offsets.h vm/loop.h vm/sys.h vm/version.h $(GEN_C)
 RT_OBJS := $(patsubst vm/%.c,build/librune/%.o,$(RT_SRCS) vm/sys_$(SYS).c)
 AR      ?= ar
 
