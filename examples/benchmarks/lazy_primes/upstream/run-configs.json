@@ -1,0 +1,67 @@
+{
+  "micro_multicore.json": {
+    "sha256": "0c72bb8a01c8a54c59fad4701eba9ff469856ba3fd56ef335c878b8ed153530c",
+    "entries": [
+      {
+        "executable": "benchmarks/simple-tests/lazy_primes.exe",
+        "name": "lazy_primes",
+        "tags": [
+          "lt_1s",
+          "sequential"
+        ],
+        "runs": [
+          {
+            "params": "1000"
+          },
+          {
+            "params": "2000"
+          },
+          {
+            "params": "3000"
+          }
+        ]
+      },
+      {
+        "executable": "benchmarks/simple-tests/lazy_primes.exe",
+        "name": "lazy_primes",
+        "tags": [
+          "1s_10s",
+          "sequential"
+        ],
+        "runs": [
+          {
+            "params": "4000"
+          },
+          {
+            "params": "5000"
+          },
+          {
+            "params": "6000"
+          },
+          {
+            "params": "7000"
+          },
+          {
+            "params": "8000"
+          }
+        ]
+      },
+      {
+        "executable": "benchmarks/simple-tests/lazy_primes.exe",
+        "name": "lazy_primes",
+        "tags": [
+          "10s_100s",
+          "sequential"
+        ],
+        "runs": [
+          {
+            "params": "9000"
+          },
+          {
+            "params": "10000"
+          }
+        ]
+      }
+    ]
+  }
+}

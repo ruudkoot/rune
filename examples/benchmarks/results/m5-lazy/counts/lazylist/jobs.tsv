@@ -1,0 +1,1 @@
+lazylist	600	4194304	shared/input.sml shared/lazy.sml shared/ocaml-lazylist.sml lazylist/benchmark.sml shared/main.sml	1000 10000	lazylist/normal.expected	-

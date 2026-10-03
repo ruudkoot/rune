@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sandmark-lazy.3bp_gphi
+PASS lazy_primes smoke O0
+PASS lazy_primes smoke O2
+PASS lazy_primes smoke hosts
+PASS lazy_primes normal O0
+PASS lazy_primes normal O2
+PASS lazy_primes normal hosts
+PASS lazylist smoke O0
+PASS lazylist smoke O2
+PASS lazylist smoke hosts
+PASS lazylist normal O0
+PASS lazylist normal O2
+PASS lazylist normal hosts

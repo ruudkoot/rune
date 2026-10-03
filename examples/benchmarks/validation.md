@@ -585,3 +585,32 @@ The full `make JOBS=4 check` passes, including all 555 catalogue profiles,
 agreement for 498 programs across seven builds. runedoc and runeopt also agree.
 The [acceptance transcript](validation/oct03-sandmark-recursive-acceptance.log)
 records the complete run.
+
+## M5 lazy and CPS workloads, 2026-10-03
+
+Lazy primes, lazy-list allocation and the CPS sequence pipeline bring the
+catalogue to 190 programs and 564 profiles. All
+[72 required smoke/normal cases](results/m5-lazy/correctness.tsv) pass on four
+Rune engines at both levels and four primary managed native hosts. M5 remains
+in progress for other suitable sequential workloads.
+
+Primes preserve strict heads/memoized tails and the next-tail demand of take1.
+Lazy-list heads independently reference the original zero; validation walks
+the allocated spine while leaving unused heads unforced. CPS retains unfolder
+records, map/filter layers and mutable callback folding, specializing used
+types for SML97. Portable IntInf preserves selected 63-bit sums beyond 31 bits.
+Representation, evaluation, traversal and original-observer changes are explicit.
+
+Original OCaml agrees with independent trial division, list identities and
+weighted-square sums. Eight lazy and seven CPS semantics checks pass all ten
+configurations at both levels. A rejected early CPS test transcript is retained:
+SML/NJ required an explicit type on its empty trace reference. This changes the
+test only. Separate [count archives](results/m5-lazy/README.md) retain all samples
+and source/input/tool identities; all allocations and applicable instruction
+comparisons agree. No headline timing or universal large SML pass is claimed.
+
+The full `make JOBS=4 check` passes, including 564 catalogue profiles,
+331 language fixtures per compiler, bootstrap and performance budgets, and
+bytecode agreement for 498 programs across all seven builds. runedoc and runeopt
+builds also agree. The [acceptance transcript](validation/oct03-sandmark-lazy-acceptance.log)
+records the complete run.

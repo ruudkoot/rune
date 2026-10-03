@@ -1,0 +1,5 @@
+COUNT unbudgeted lazy_primes normal rune
+COUNT unbudgeted lazy_primes normal rune:opt
+COUNT unbudgeted lazy_primes normal rune:new
+COUNT unbudgeted lazy_primes normal rune:jit
+COUNT comparisons agree

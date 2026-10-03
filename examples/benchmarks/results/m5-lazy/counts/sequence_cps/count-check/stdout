@@ -1,0 +1,5 @@
+COUNT unbudgeted sequence_cps normal rune
+COUNT unbudgeted sequence_cps normal rune:opt
+COUNT unbudgeted sequence_cps normal rune:new
+COUNT unbudgeted sequence_cps normal rune:jit
+COUNT comparisons agree

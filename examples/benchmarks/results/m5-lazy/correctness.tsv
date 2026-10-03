@@ -1,0 +1,73 @@
+benchmark	profile	optimization	configuration	arguments	status	artifact_directory
+lazy_primes	normal	O0	rune	1000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/normal/O0/matrix/rune/program
+lazy_primes	normal	O0	rune-jit	1000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/normal/O0/matrix/rune-jit/program
+lazy_primes	normal	O0	rune-new	1000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/normal/O0/matrix/rune-new/program
+lazy_primes	normal	O0	rune-opt	1000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/normal/O0/matrix/rune-opt/program
+lazy_primes	normal	O2	rune	1000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/normal/O2/matrix/rune/program
+lazy_primes	normal	O2	rune-jit	1000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/normal/O2/matrix/rune-jit/program
+lazy_primes	normal	O2	rune-new	1000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/normal/O2/matrix/rune-new/program
+lazy_primes	normal	O2	rune-opt	1000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/normal/O2/matrix/rune-opt/program
+lazy_primes	normal	host-default	native-mlton-20241230	1000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/normal/hosts/matrix/native-mlton-20241230/program
+lazy_primes	normal	host-default	native-polyml-5.9.2	1000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/normal/hosts/matrix/native-polyml-5.9.2/program
+lazy_primes	normal	host-default	native-smlnj-dev-2026.2	1000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/normal/hosts/matrix/native-smlnj-dev-2026.2/program
+lazy_primes	normal	host-default	native-smlnj-legacy-110.99.9	1000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
+lazy_primes	smoke	O0	rune	10	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/smoke/O0/matrix/rune/program
+lazy_primes	smoke	O0	rune-jit	10	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/smoke/O0/matrix/rune-jit/program
+lazy_primes	smoke	O0	rune-new	10	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/smoke/O0/matrix/rune-new/program
+lazy_primes	smoke	O0	rune-opt	10	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/smoke/O0/matrix/rune-opt/program
+lazy_primes	smoke	O2	rune	10	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/smoke/O2/matrix/rune/program
+lazy_primes	smoke	O2	rune-jit	10	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/smoke/O2/matrix/rune-jit/program
+lazy_primes	smoke	O2	rune-new	10	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/smoke/O2/matrix/rune-new/program
+lazy_primes	smoke	O2	rune-opt	10	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/smoke/O2/matrix/rune-opt/program
+lazy_primes	smoke	host-default	native-mlton-20241230	10	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/smoke/hosts/matrix/native-mlton-20241230/program
+lazy_primes	smoke	host-default	native-polyml-5.9.2	10	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/smoke/hosts/matrix/native-polyml-5.9.2/program
+lazy_primes	smoke	host-default	native-smlnj-dev-2026.2	10	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
+lazy_primes	smoke	host-default	native-smlnj-legacy-110.99.9	10	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazy_primes/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program
+lazylist	normal	O0	rune	1000 10000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/normal/O0/matrix/rune/program
+lazylist	normal	O0	rune-jit	1000 10000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/normal/O0/matrix/rune-jit/program
+lazylist	normal	O0	rune-new	1000 10000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/normal/O0/matrix/rune-new/program
+lazylist	normal	O0	rune-opt	1000 10000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/normal/O0/matrix/rune-opt/program
+lazylist	normal	O2	rune	1000 10000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/normal/O2/matrix/rune/program
+lazylist	normal	O2	rune-jit	1000 10000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/normal/O2/matrix/rune-jit/program
+lazylist	normal	O2	rune-new	1000 10000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/normal/O2/matrix/rune-new/program
+lazylist	normal	O2	rune-opt	1000 10000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/normal/O2/matrix/rune-opt/program
+lazylist	normal	host-default	native-mlton-20241230	1000 10000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/normal/hosts/matrix/native-mlton-20241230/program
+lazylist	normal	host-default	native-polyml-5.9.2	1000 10000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/normal/hosts/matrix/native-polyml-5.9.2/program
+lazylist	normal	host-default	native-smlnj-dev-2026.2	1000 10000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/normal/hosts/matrix/native-smlnj-dev-2026.2/program
+lazylist	normal	host-default	native-smlnj-legacy-110.99.9	1000 10000	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
+lazylist	smoke	O0	rune	10 0	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/smoke/O0/matrix/rune/program
+lazylist	smoke	O0	rune-jit	10 0	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/smoke/O0/matrix/rune-jit/program
+lazylist	smoke	O0	rune-new	10 0	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/smoke/O0/matrix/rune-new/program
+lazylist	smoke	O0	rune-opt	10 0	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/smoke/O0/matrix/rune-opt/program
+lazylist	smoke	O2	rune	10 0	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/smoke/O2/matrix/rune/program
+lazylist	smoke	O2	rune-jit	10 0	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/smoke/O2/matrix/rune-jit/program
+lazylist	smoke	O2	rune-new	10 0	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/smoke/O2/matrix/rune-new/program
+lazylist	smoke	O2	rune-opt	10 0	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/smoke/O2/matrix/rune-opt/program
+lazylist	smoke	host-default	native-mlton-20241230	10 0	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/smoke/hosts/matrix/native-mlton-20241230/program
+lazylist	smoke	host-default	native-polyml-5.9.2	10 0	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/smoke/hosts/matrix/native-polyml-5.9.2/program
+lazylist	smoke	host-default	native-smlnj-dev-2026.2	10 0	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
+lazylist	smoke	host-default	native-smlnj-legacy-110.99.9	10 0	pass	tests/out/benchmarks/sandmark-lazy.3bp_gphi/lazylist/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program
+sequence_cps	normal	O0	rune	1000	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/normal/O0/matrix/rune/program
+sequence_cps	normal	O0	rune-jit	1000	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/normal/O0/matrix/rune-jit/program
+sequence_cps	normal	O0	rune-new	1000	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/normal/O0/matrix/rune-new/program
+sequence_cps	normal	O0	rune-opt	1000	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/normal/O0/matrix/rune-opt/program
+sequence_cps	normal	O2	rune	1000	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/normal/O2/matrix/rune/program
+sequence_cps	normal	O2	rune-jit	1000	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/normal/O2/matrix/rune-jit/program
+sequence_cps	normal	O2	rune-new	1000	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/normal/O2/matrix/rune-new/program
+sequence_cps	normal	O2	rune-opt	1000	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/normal/O2/matrix/rune-opt/program
+sequence_cps	normal	host-default	native-mlton-20241230	1000	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/normal/hosts/matrix/native-mlton-20241230/program
+sequence_cps	normal	host-default	native-polyml-5.9.2	1000	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/normal/hosts/matrix/native-polyml-5.9.2/program
+sequence_cps	normal	host-default	native-smlnj-dev-2026.2	1000	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/normal/hosts/matrix/native-smlnj-dev-2026.2/program
+sequence_cps	normal	host-default	native-smlnj-legacy-110.99.9	1000	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
+sequence_cps	smoke	O0	rune	10	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/smoke/O0/matrix/rune/program
+sequence_cps	smoke	O0	rune-jit	10	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/smoke/O0/matrix/rune-jit/program
+sequence_cps	smoke	O0	rune-new	10	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/smoke/O0/matrix/rune-new/program
+sequence_cps	smoke	O0	rune-opt	10	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/smoke/O0/matrix/rune-opt/program
+sequence_cps	smoke	O2	rune	10	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/smoke/O2/matrix/rune/program
+sequence_cps	smoke	O2	rune-jit	10	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/smoke/O2/matrix/rune-jit/program
+sequence_cps	smoke	O2	rune-new	10	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/smoke/O2/matrix/rune-new/program
+sequence_cps	smoke	O2	rune-opt	10	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/smoke/O2/matrix/rune-opt/program
+sequence_cps	smoke	host-default	native-mlton-20241230	10	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/smoke/hosts/matrix/native-mlton-20241230/program
+sequence_cps	smoke	host-default	native-polyml-5.9.2	10	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/smoke/hosts/matrix/native-polyml-5.9.2/program
+sequence_cps	smoke	host-default	native-smlnj-dev-2026.2	10	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
+sequence_cps	smoke	host-default	native-smlnj-legacy-110.99.9	10	pass	tests/out/benchmarks/sequence-cps.x5z_i8g0/sequence_cps/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program

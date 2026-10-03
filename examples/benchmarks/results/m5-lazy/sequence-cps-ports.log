@@ -1,0 +1,7 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sequence-cps.x5z_i8g0
+PASS sequence_cps smoke O0
+PASS sequence_cps smoke O2
+PASS sequence_cps smoke hosts
+PASS sequence_cps normal O0
+PASS sequence_cps normal O2
+PASS sequence_cps normal hosts

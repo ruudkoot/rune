@@ -1,0 +1,338 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index dd7eadf..1c996e4 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -195,6 +195,9 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [rec_seq_sudan](#rec_seq_sudan) | [Sandmark rec_seq_sudan](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-effects/rec_seq_sudan.ml) | Evaluate the nested Sudan recurrence with explicit wide integer values. |
+ | [rec_seq_fib](#rec_seq_fib) | [Sandmark rec_seq_fib](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-effects/rec_seq_fib.ml) | Compute strict Fibonacci with Sandmark's retained repetition profiles. |
+ | [rec_seq_tak](#rec_seq_tak) | [Sandmark rec_seq_tak](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-effects/rec_seq_tak.ml) | Run the shared strict Takeuchi kernel with Sandmark's curried-source input profiles. |
++| [lazy_primes](#lazy_primes) | [Sandmark lazy_primes](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/simple-tests/lazy_primes.ml) | Sieve primes through streams with strict heads and memoized lazy tails. |
++| [lazylist](#lazylist) | [Sandmark lazylist](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/simple-tests/lazylist.ml) | Allocate a strict list of independent lazy heads sharing one zero cell. |
++| [sequence_cps](#sequence_cps) | [Sandmark sequence_cps](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/sequence/sequence_cps.ml) | Compose CPS map/filter layers and consume them with a mutable callback fold. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -287,6 +290,8 @@ sh tests/benchmarks/check-treejoin.sh
+ sh tests/benchmarks/check-word-set.sh
+ sh tests/benchmarks/check-power-series.sh
+ sh tests/benchmarks/check-shootout.sh
++sh tests/benchmarks/check-ocaml-lazy.sh
++sh tests/benchmarks/check-sequence-cps.sh
+ python3 tests/benchmarks/test-inventory.py
+ python3 scripts/benchmark-inventory.py --check
+ ```
+@@ -5587,3 +5592,116 @@ not attribution of this particular source. Large SML execution is not
+ universally claimed.
+ 
+ [Complete provenance](rec_seq_tak/PROVENANCE.md).
++
++## lazy_primes
++
++Sieve primes through streams with strict heads and memoized lazy tails.
++
++Sandmark `5605805954a00497ed197c930641cddd580e1507`, `benchmarks/simple-tests/lazy_primes.ml`.
++
++The individual author is unspecified. Original source, dune declarations,
++SHA256 identities and the aggregate public-domain notice are retained. Kernels
++and translation support are SML97. Compiler/runtime explanations below come
++from source inspection and remain performance hypotheses until measured.
++
++## Algorithm, history and variants
++
++Keep Cons(strict head, memoized tail), the infinite integer stream from2,
++removing filter, and successive sieve layers. The ordinal is one-based.
++`take 1 (drop (nth-1) primes)` forces the next tail even though take0 returns
++empty: preserve this extra demand from strict OCaml arguments. This differs
++from the nofib lazy-head/lazy-spine ports, which retain their own names and
++forcing decisions. No array sieve, trial division or eager infinite list
++replaces the algorithm. Unused take/drop/zip helpers remain in pristine source.
++
++## Translation, inputs and validation
++
++BenchLazy preserves memoized tails and exceptions. Source heads remain strict;
++no separate head delay is added. All selected values fit31 bits. Fixed profiles
++use ordinals10/1000/5000; normal/large preserve entries in micro_multicore.json,
++and the other original ordinals2000..10000 are retained in reviewed config
++extracts with complete file identities. Results29/7919/48611 agree with unchanged
++OCaml and independent trial division. Semantic checks verify the additional
++tail demand, memoization, predicate-removing filter and prime prefixes. Stream
++retention, sieve closures and demand are hypotheses until measured. Large SML
++execution is not universally claimed. References: retained source/configuration
++and the shared nofib/Sandmark literature survey.
++
++[Complete provenance](lazy_primes/PROVENANCE.md).
++
++## lazylist
++
++Allocate a strict list of independent lazy heads sharing one zero cell.
++
++Sandmark `5605805954a00497ed197c930641cddd580e1507`, `benchmarks/simple-tests/lazylist.ml`.
++
++The individual author is unspecified. Original source, dune declarations,
++SHA256 identities and the aggregate public-domain notice are retained. Kernels
++and translation support are SML97. Compiler/runtime explanations below come
++from source inspection and remain performance hypotheses until measured.
++
++## Algorithm, history and variants
++
++Preserve add_lazy's unchanged original list parameter: every new delay computes
++1 plus the same original zero, not the preceding new head. The strict spine has
++length n+1, and only its first delay is forced by each original iteration.
++There is no incrementing lazy chain. Preserve inclusive iterations0..iterations
++and create a fresh base/list for each repetition. Unused delays remain unforced.
++
++## Translation, inputs and validation
++
++BenchLazy supplies SML97 memoization. The program additionally walks the
++allocated spine before forcing its head, preventing elimination of the workload
++when replacing Sys.opaque_identity with consumption. This adds traversal work
++and can affect liveness; it does not force the other head delays. Actual lengths
++and head values are summed separately. Smoke(length10,iterations0), normal
++(1000,10000), and large(100000,100) give11:1,10011001:10001 and10100101:101.
++Normal/large preserve original run_config.json configurations; the other
++10000/1000 configuration and bytecode settings remain in reviewed extracts.
++Original read-only OCaml observers and independent length/head identities agree.
++Semantic tests verify pending heads, their independent shared-zero references,
++and zero-length extension. Closure capture, memoization, strict spine allocation,
++list depth and retention are hypotheses until measured. Large SML execution is
++not universally claimed. References: retained source/configs and literature survey.
++
++[Complete provenance](lazylist/PROVENANCE.md).
++
++## sequence_cps
++
++Compose CPS map/filter layers and consume them with a mutable callback fold.
++
++Sandmark `5605805954a00497ed197c930641cddd580e1507`, `benchmarks/sequence/sequence_cps.ml`.
++
++The individual author is unspecified. Original source, dune declarations,
++SHA256 identities and the aggregate public-domain notice are retained. Kernels
++and translation support are SML97. Compiler/runtime explanations below come
++from source inspection and remain performance hypotheses until measured.
++
++## Algorithm, history and variants
++
++Preserve the Sequence state/unfolder record, continuation-based map/filter,
++three callback cases, and original mutable fold_2. The pipeline maps x+3,
++filters even values with bitwise and1, squares, and folds addition. The outer
++loop includes0..n. No fused direct sum or pull iterator replaces the CPS layers.
++The used state is int and payload integer; unfold's continuation result is bool
++because fold_2 is the selected implementation. Specialize those concrete types
++for SML97 rather than requiring unused existential/GADT/rank-polymorphic cases.
++Unused fold_1 remains in the original source.
++
++## Translation, inputs and validation
++
++Original OCaml63-bit sums exceed31 bits. Portable IntInf retains every selected
++value, including bitwise filtering, without overflow through n=10000; its
++representation/allocation differs from OCaml machine integers and is explicit.
++Profiles n=10/1000/10000 preserve the size argument; large uses the original
++run_config.json and bytecode setting10000. All results agree with unchanged
++OCaml and independent sum over odd x<n of (n-x)*(x+3)^2, retaining both inclusive
++outer bounds and pipeline order. Semantic checks cover empty/skip/yield/done,
++state advancement, exact wide sums and inclusive bounds. The optional
++OCAML_GC_STATS file observer is replaced by the suite's separate statistics
++mode; no GC facility is added to the kernel. References: original source and
++Sandmark configuration/literature. Closure layers, callback specialization,
++mutable state and wide arithmetic are source-derived hypotheses until measured.
++Large SML execution is not universally claimed.
++
++[Complete provenance](sequence_cps/PROVENANCE.md).
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 7db78da..e199c82 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -554,3 +554,12 @@ rec_seq_fib	large	sandmark	benchmarks/multicore-effects/rec_seq_fib.exe	4 40	rec
+ rec_seq_tak	smoke	sandmark	benchmarks/multicore-effects/rec_seq_tak.exe	1 18 12 6	rec_seq_tak/smoke.expected	shared/input.sml,shared/tak.sml,rec_seq_tak/benchmark.sml,shared/main.sml	30	1048576	calls-recursion,sequential-control	-	exact	implemented
+ rec_seq_tak	normal	sandmark	benchmarks/multicore-effects/rec_seq_tak.exe	1 24 16 8	rec_seq_tak/normal.expected	shared/input.sml,shared/tak.sml,rec_seq_tak/benchmark.sml,shared/main.sml	600	4194304	calls-recursion,sequential-control	-	exact	implemented
+ rec_seq_tak	large	sandmark	benchmarks/multicore-effects/rec_seq_tak.exe	1 40 20 11	rec_seq_tak/large.expected	shared/input.sml,shared/tak.sml,rec_seq_tak/benchmark.sml,shared/main.sml	3600	8388608	calls-recursion,sequential-control	-	exact	implemented
++lazy_primes	smoke	sandmark	benchmarks/simple-tests/lazy_primes.exe	10	lazy_primes/smoke.expected	shared/input.sml,shared/lazy.sml,shared/ocaml-primes.sml,lazy_primes/benchmark.sml,shared/main.sml	30	1048576	streams,lazy,strict-heads	-	exact	implemented
++lazy_primes	normal	sandmark	benchmarks/simple-tests/lazy_primes.exe	1000	lazy_primes/normal.expected	shared/input.sml,shared/lazy.sml,shared/ocaml-primes.sml,lazy_primes/benchmark.sml,shared/main.sml	600	4194304	streams,lazy,strict-heads	-	exact	implemented
++lazy_primes	large	sandmark	benchmarks/simple-tests/lazy_primes.exe	5000	lazy_primes/large.expected	shared/input.sml,shared/lazy.sml,shared/ocaml-primes.sml,lazy_primes/benchmark.sml,shared/main.sml	3600	8388608	streams,lazy,strict-heads	-	exact	implemented
++lazylist	smoke	sandmark	benchmarks/simple-tests/lazylist.exe	10 0	lazylist/smoke.expected	shared/input.sml,shared/lazy.sml,shared/ocaml-lazylist.sml,lazylist/benchmark.sml,shared/main.sml	30	1048576	allocation,lazy,lists	-	exact	implemented
++lazylist	normal	sandmark	benchmarks/simple-tests/lazylist.exe	1000 10000	lazylist/normal.expected	shared/input.sml,shared/lazy.sml,shared/ocaml-lazylist.sml,lazylist/benchmark.sml,shared/main.sml	600	4194304	allocation,lazy,lists	-	exact	implemented
++lazylist	large	sandmark	benchmarks/simple-tests/lazylist.exe	100000 100	lazylist/large.expected	shared/input.sml,shared/lazy.sml,shared/ocaml-lazylist.sml,lazylist/benchmark.sml,shared/main.sml	3600	8388608	allocation,lazy,lists	-	exact	implemented
++sequence_cps	smoke	sandmark	benchmarks/sequence/sequence_cps.exe	10	sequence_cps/smoke.expected	shared/input.sml,sequence_cps/benchmark.sml,shared/main.sml	30	1048576	cps,higher-order,mutable-state,integer-width	-	exact	implemented
++sequence_cps	normal	sandmark	benchmarks/sequence/sequence_cps.exe	1000	sequence_cps/normal.expected	shared/input.sml,sequence_cps/benchmark.sml,shared/main.sml	600	4194304	cps,higher-order,mutable-state,integer-width	-	exact	implemented
++sequence_cps	large	sandmark	benchmarks/sequence/sequence_cps.exe	10000	sequence_cps/large.expected	shared/input.sml,sequence_cps/benchmark.sml,shared/main.sml	3600	8388608	cps,higher-order,mutable-state,integer-width	-	exact	implemented
+diff --git a/examples/benchmarks/results/m5-recursive/correctness.tsv b/examples/benchmarks/results/m5-recursive/correctness.tsv
+index e5509a9..7e0af68 100644
+--- a/examples/benchmarks/results/m5-recursive/correctness.tsv
++++ b/examples/benchmarks/results/m5-recursive/correctness.tsv
+@@ -7,10 +7,10 @@ fib	normal	O2	rune	30 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fi
+ fib	normal	O2	rune-jit	30 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/normal/O2/matrix/rune-jit/program
+ fib	normal	O2	rune-new	30 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/normal/O2/matrix/rune-new/program
+ fib	normal	O2	rune-opt	30 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/normal/O2/matrix/rune-opt/program
+-fib	normal	hosts	native-mlton-20241230	30 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/normal/hosts/matrix/native-mlton-20241230/program
+-fib	normal	hosts	native-polyml-5.9.2	30 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/normal/hosts/matrix/native-polyml-5.9.2/program
+-fib	normal	hosts	native-smlnj-dev-2026.2	30 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/normal/hosts/matrix/native-smlnj-dev-2026.2/program
+-fib	normal	hosts	native-smlnj-legacy-110.99.9	30 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
++fib	normal	host-default	native-mlton-20241230	30 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/normal/hosts/matrix/native-mlton-20241230/program
++fib	normal	host-default	native-polyml-5.9.2	30 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/normal/hosts/matrix/native-polyml-5.9.2/program
++fib	normal	host-default	native-smlnj-dev-2026.2	30 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/normal/hosts/matrix/native-smlnj-dev-2026.2/program
++fib	normal	host-default	native-smlnj-legacy-110.99.9	30 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
+ fib	smoke	O0	rune	20 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/smoke/O0/matrix/rune/program
+ fib	smoke	O0	rune-jit	20 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/smoke/O0/matrix/rune-jit/program
+ fib	smoke	O0	rune-new	20 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/smoke/O0/matrix/rune-new/program
+@@ -19,10 +19,10 @@ fib	smoke	O2	rune	20 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib
+ fib	smoke	O2	rune-jit	20 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/smoke/O2/matrix/rune-jit/program
+ fib	smoke	O2	rune-new	20 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/smoke/O2/matrix/rune-new/program
+ fib	smoke	O2	rune-opt	20 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/smoke/O2/matrix/rune-opt/program
+-fib	smoke	hosts	native-mlton-20241230	20 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/smoke/hosts/matrix/native-mlton-20241230/program
+-fib	smoke	hosts	native-polyml-5.9.2	20 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/smoke/hosts/matrix/native-polyml-5.9.2/program
+-fib	smoke	hosts	native-smlnj-dev-2026.2	20 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
+-fib	smoke	hosts	native-smlnj-legacy-110.99.9	20 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program
++fib	smoke	host-default	native-mlton-20241230	20 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/smoke/hosts/matrix/native-mlton-20241230/program
++fib	smoke	host-default	native-polyml-5.9.2	20 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/smoke/hosts/matrix/native-polyml-5.9.2/program
++fib	smoke	host-default	native-smlnj-dev-2026.2	20 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
++fib	smoke	host-default	native-smlnj-legacy-110.99.9	20 1	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/fib/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program
+ rec_seq_evenodd	normal	O0	rune	2 100000	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/normal/O0/matrix/rune/program
+ rec_seq_evenodd	normal	O0	rune-jit	2 100000	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/normal/O0/matrix/rune-jit/program
+ rec_seq_evenodd	normal	O0	rune-new	2 100000	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/normal/O0/matrix/rune-new/program
+@@ -31,10 +31,10 @@ rec_seq_evenodd	normal	O2	rune	2 100000	pass	tests/out/benchmarks/sandmark-recur
+ rec_seq_evenodd	normal	O2	rune-jit	2 100000	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/normal/O2/matrix/rune-jit/program
+ rec_seq_evenodd	normal	O2	rune-new	2 100000	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/normal/O2/matrix/rune-new/program
+ rec_seq_evenodd	normal	O2	rune-opt	2 100000	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/normal/O2/matrix/rune-opt/program
+-rec_seq_evenodd	normal	hosts	native-mlton-20241230	2 100000	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/normal/hosts/matrix/native-mlton-20241230/program
+-rec_seq_evenodd	normal	hosts	native-polyml-5.9.2	2 100000	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/normal/hosts/matrix/native-polyml-5.9.2/program
+-rec_seq_evenodd	normal	hosts	native-smlnj-dev-2026.2	2 100000	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/normal/hosts/matrix/native-smlnj-dev-2026.2/program
+-rec_seq_evenodd	normal	hosts	native-smlnj-legacy-110.99.9	2 100000	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
++rec_seq_evenodd	normal	host-default	native-mlton-20241230	2 100000	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/normal/hosts/matrix/native-mlton-20241230/program
++rec_seq_evenodd	normal	host-default	native-polyml-5.9.2	2 100000	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/normal/hosts/matrix/native-polyml-5.9.2/program
++rec_seq_evenodd	normal	host-default	native-smlnj-dev-2026.2	2 100000	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/normal/hosts/matrix/native-smlnj-dev-2026.2/program
++rec_seq_evenodd	normal	host-default	native-smlnj-legacy-110.99.9	2 100000	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
+ rec_seq_evenodd	smoke	O0	rune	1 33	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/smoke/O0/matrix/rune/program
+ rec_seq_evenodd	smoke	O0	rune-jit	1 33	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/smoke/O0/matrix/rune-jit/program
+ rec_seq_evenodd	smoke	O0	rune-new	1 33	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/smoke/O0/matrix/rune-new/program
+@@ -43,10 +43,10 @@ rec_seq_evenodd	smoke	O2	rune	1 33	pass	tests/out/benchmarks/sandmark-recursive.
+ rec_seq_evenodd	smoke	O2	rune-jit	1 33	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/smoke/O2/matrix/rune-jit/program
+ rec_seq_evenodd	smoke	O2	rune-new	1 33	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/smoke/O2/matrix/rune-new/program
+ rec_seq_evenodd	smoke	O2	rune-opt	1 33	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/smoke/O2/matrix/rune-opt/program
+-rec_seq_evenodd	smoke	hosts	native-mlton-20241230	1 33	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/smoke/hosts/matrix/native-mlton-20241230/program
+-rec_seq_evenodd	smoke	hosts	native-polyml-5.9.2	1 33	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/smoke/hosts/matrix/native-polyml-5.9.2/program
+-rec_seq_evenodd	smoke	hosts	native-smlnj-dev-2026.2	1 33	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
+-rec_seq_evenodd	smoke	hosts	native-smlnj-legacy-110.99.9	1 33	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program
++rec_seq_evenodd	smoke	host-default	native-mlton-20241230	1 33	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/smoke/hosts/matrix/native-mlton-20241230/program
++rec_seq_evenodd	smoke	host-default	native-polyml-5.9.2	1 33	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/smoke/hosts/matrix/native-polyml-5.9.2/program
++rec_seq_evenodd	smoke	host-default	native-smlnj-dev-2026.2	1 33	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
++rec_seq_evenodd	smoke	host-default	native-smlnj-legacy-110.99.9	1 33	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_evenodd/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program
+ rec_seq_fib	normal	O0	rune	2 30	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/normal/O0/matrix/rune/program
+ rec_seq_fib	normal	O0	rune-jit	2 30	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/normal/O0/matrix/rune-jit/program
+ rec_seq_fib	normal	O0	rune-new	2 30	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/normal/O0/matrix/rune-new/program
+@@ -55,10 +55,10 @@ rec_seq_fib	normal	O2	rune	2 30	pass	tests/out/benchmarks/sandmark-recursive.9oo
+ rec_seq_fib	normal	O2	rune-jit	2 30	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/normal/O2/matrix/rune-jit/program
+ rec_seq_fib	normal	O2	rune-new	2 30	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/normal/O2/matrix/rune-new/program
+ rec_seq_fib	normal	O2	rune-opt	2 30	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/normal/O2/matrix/rune-opt/program
+-rec_seq_fib	normal	hosts	native-mlton-20241230	2 30	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/normal/hosts/matrix/native-mlton-20241230/program
+-rec_seq_fib	normal	hosts	native-polyml-5.9.2	2 30	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/normal/hosts/matrix/native-polyml-5.9.2/program
+-rec_seq_fib	normal	hosts	native-smlnj-dev-2026.2	2 30	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/normal/hosts/matrix/native-smlnj-dev-2026.2/program
+-rec_seq_fib	normal	hosts	native-smlnj-legacy-110.99.9	2 30	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
++rec_seq_fib	normal	host-default	native-mlton-20241230	2 30	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/normal/hosts/matrix/native-mlton-20241230/program
++rec_seq_fib	normal	host-default	native-polyml-5.9.2	2 30	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/normal/hosts/matrix/native-polyml-5.9.2/program
++rec_seq_fib	normal	host-default	native-smlnj-dev-2026.2	2 30	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/normal/hosts/matrix/native-smlnj-dev-2026.2/program
++rec_seq_fib	normal	host-default	native-smlnj-legacy-110.99.9	2 30	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
+ rec_seq_fib	smoke	O0	rune	1 20	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/smoke/O0/matrix/rune/program
+ rec_seq_fib	smoke	O0	rune-jit	1 20	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/smoke/O0/matrix/rune-jit/program
+ rec_seq_fib	smoke	O0	rune-new	1 20	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/smoke/O0/matrix/rune-new/program
+@@ -67,10 +67,10 @@ rec_seq_fib	smoke	O2	rune	1 20	pass	tests/out/benchmarks/sandmark-recursive.9oo5
+ rec_seq_fib	smoke	O2	rune-jit	1 20	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/smoke/O2/matrix/rune-jit/program
+ rec_seq_fib	smoke	O2	rune-new	1 20	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/smoke/O2/matrix/rune-new/program
+ rec_seq_fib	smoke	O2	rune-opt	1 20	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/smoke/O2/matrix/rune-opt/program
+-rec_seq_fib	smoke	hosts	native-mlton-20241230	1 20	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/smoke/hosts/matrix/native-mlton-20241230/program
+-rec_seq_fib	smoke	hosts	native-polyml-5.9.2	1 20	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/smoke/hosts/matrix/native-polyml-5.9.2/program
+-rec_seq_fib	smoke	hosts	native-smlnj-dev-2026.2	1 20	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
+-rec_seq_fib	smoke	hosts	native-smlnj-legacy-110.99.9	1 20	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program
++rec_seq_fib	smoke	host-default	native-mlton-20241230	1 20	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/smoke/hosts/matrix/native-mlton-20241230/program
++rec_seq_fib	smoke	host-default	native-polyml-5.9.2	1 20	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/smoke/hosts/matrix/native-polyml-5.9.2/program
++rec_seq_fib	smoke	host-default	native-smlnj-dev-2026.2	1 20	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
++rec_seq_fib	smoke	host-default	native-smlnj-legacy-110.99.9	1 20	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_fib/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program
+ rec_seq_motzkin	normal	O0	rune	2 15	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/normal/O0/matrix/rune/program
+ rec_seq_motzkin	normal	O0	rune-jit	2 15	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/normal/O0/matrix/rune-jit/program
+ rec_seq_motzkin	normal	O0	rune-new	2 15	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/normal/O0/matrix/rune-new/program
+@@ -79,10 +79,10 @@ rec_seq_motzkin	normal	O2	rune	2 15	pass	tests/out/benchmarks/sandmark-recursive
+ rec_seq_motzkin	normal	O2	rune-jit	2 15	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/normal/O2/matrix/rune-jit/program
+ rec_seq_motzkin	normal	O2	rune-new	2 15	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/normal/O2/matrix/rune-new/program
+ rec_seq_motzkin	normal	O2	rune-opt	2 15	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/normal/O2/matrix/rune-opt/program
+-rec_seq_motzkin	normal	hosts	native-mlton-20241230	2 15	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/normal/hosts/matrix/native-mlton-20241230/program
+-rec_seq_motzkin	normal	hosts	native-polyml-5.9.2	2 15	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/normal/hosts/matrix/native-polyml-5.9.2/program
+-rec_seq_motzkin	normal	hosts	native-smlnj-dev-2026.2	2 15	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/normal/hosts/matrix/native-smlnj-dev-2026.2/program
+-rec_seq_motzkin	normal	hosts	native-smlnj-legacy-110.99.9	2 15	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
++rec_seq_motzkin	normal	host-default	native-mlton-20241230	2 15	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/normal/hosts/matrix/native-mlton-20241230/program
++rec_seq_motzkin	normal	host-default	native-polyml-5.9.2	2 15	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/normal/hosts/matrix/native-polyml-5.9.2/program
++rec_seq_motzkin	normal	host-default	native-smlnj-dev-2026.2	2 15	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/normal/hosts/matrix/native-smlnj-dev-2026.2/program
++rec_seq_motzkin	normal	host-default	native-smlnj-legacy-110.99.9	2 15	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
+ rec_seq_motzkin	smoke	O0	rune	1 6	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/smoke/O0/matrix/rune/program
+ rec_seq_motzkin	smoke	O0	rune-jit	1 6	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/smoke/O0/matrix/rune-jit/program
+ rec_seq_motzkin	smoke	O0	rune-new	1 6	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/smoke/O0/matrix/rune-new/program
+@@ -91,10 +91,10 @@ rec_seq_motzkin	smoke	O2	rune	1 6	pass	tests/out/benchmarks/sandmark-recursive.v
+ rec_seq_motzkin	smoke	O2	rune-jit	1 6	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/smoke/O2/matrix/rune-jit/program
+ rec_seq_motzkin	smoke	O2	rune-new	1 6	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/smoke/O2/matrix/rune-new/program
+ rec_seq_motzkin	smoke	O2	rune-opt	1 6	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/smoke/O2/matrix/rune-opt/program
+-rec_seq_motzkin	smoke	hosts	native-mlton-20241230	1 6	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/smoke/hosts/matrix/native-mlton-20241230/program
+-rec_seq_motzkin	smoke	hosts	native-polyml-5.9.2	1 6	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/smoke/hosts/matrix/native-polyml-5.9.2/program
+-rec_seq_motzkin	smoke	hosts	native-smlnj-dev-2026.2	1 6	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
+-rec_seq_motzkin	smoke	hosts	native-smlnj-legacy-110.99.9	1 6	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program
++rec_seq_motzkin	smoke	host-default	native-mlton-20241230	1 6	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/smoke/hosts/matrix/native-mlton-20241230/program
++rec_seq_motzkin	smoke	host-default	native-polyml-5.9.2	1 6	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/smoke/hosts/matrix/native-polyml-5.9.2/program
++rec_seq_motzkin	smoke	host-default	native-smlnj-dev-2026.2	1 6	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
++rec_seq_motzkin	smoke	host-default	native-smlnj-legacy-110.99.9	1 6	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_motzkin/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program
+ rec_seq_sudan	normal	O0	rune	1000 2 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/normal/O0/matrix/rune/program
+ rec_seq_sudan	normal	O0	rune-jit	1000 2 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/normal/O0/matrix/rune-jit/program
+ rec_seq_sudan	normal	O0	rune-new	1000 2 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/normal/O0/matrix/rune-new/program
+@@ -103,10 +103,10 @@ rec_seq_sudan	normal	O2	rune	1000 2 2 2	pass	tests/out/benchmarks/sandmark-recur
+ rec_seq_sudan	normal	O2	rune-jit	1000 2 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/normal/O2/matrix/rune-jit/program
+ rec_seq_sudan	normal	O2	rune-new	1000 2 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/normal/O2/matrix/rune-new/program
+ rec_seq_sudan	normal	O2	rune-opt	1000 2 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/normal/O2/matrix/rune-opt/program
+-rec_seq_sudan	normal	hosts	native-mlton-20241230	1000 2 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/normal/hosts/matrix/native-mlton-20241230/program
+-rec_seq_sudan	normal	hosts	native-polyml-5.9.2	1000 2 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/normal/hosts/matrix/native-polyml-5.9.2/program
+-rec_seq_sudan	normal	hosts	native-smlnj-dev-2026.2	1000 2 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/normal/hosts/matrix/native-smlnj-dev-2026.2/program
+-rec_seq_sudan	normal	hosts	native-smlnj-legacy-110.99.9	1000 2 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
++rec_seq_sudan	normal	host-default	native-mlton-20241230	1000 2 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/normal/hosts/matrix/native-mlton-20241230/program
++rec_seq_sudan	normal	host-default	native-polyml-5.9.2	1000 2 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/normal/hosts/matrix/native-polyml-5.9.2/program
++rec_seq_sudan	normal	host-default	native-smlnj-dev-2026.2	1000 2 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/normal/hosts/matrix/native-smlnj-dev-2026.2/program
++rec_seq_sudan	normal	host-default	native-smlnj-legacy-110.99.9	1000 2 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
+ rec_seq_sudan	smoke	O0	rune	1 1 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/smoke/O0/matrix/rune/program
+ rec_seq_sudan	smoke	O0	rune-jit	1 1 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/smoke/O0/matrix/rune-jit/program
+ rec_seq_sudan	smoke	O0	rune-new	1 1 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/smoke/O0/matrix/rune-new/program
+@@ -115,10 +115,10 @@ rec_seq_sudan	smoke	O2	rune	1 1 2 2	pass	tests/out/benchmarks/sandmark-recursive
+ rec_seq_sudan	smoke	O2	rune-jit	1 1 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/smoke/O2/matrix/rune-jit/program
+ rec_seq_sudan	smoke	O2	rune-new	1 1 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/smoke/O2/matrix/rune-new/program
+ rec_seq_sudan	smoke	O2	rune-opt	1 1 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/smoke/O2/matrix/rune-opt/program
+-rec_seq_sudan	smoke	hosts	native-mlton-20241230	1 1 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/smoke/hosts/matrix/native-mlton-20241230/program
+-rec_seq_sudan	smoke	hosts	native-polyml-5.9.2	1 1 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/smoke/hosts/matrix/native-polyml-5.9.2/program
+-rec_seq_sudan	smoke	hosts	native-smlnj-dev-2026.2	1 1 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
+-rec_seq_sudan	smoke	hosts	native-smlnj-legacy-110.99.9	1 1 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program
++rec_seq_sudan	smoke	host-default	native-mlton-20241230	1 1 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/smoke/hosts/matrix/native-mlton-20241230/program
++rec_seq_sudan	smoke	host-default	native-polyml-5.9.2	1 1 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/smoke/hosts/matrix/native-polyml-5.9.2/program
++rec_seq_sudan	smoke	host-default	native-smlnj-dev-2026.2	1 1 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
++rec_seq_sudan	smoke	host-default	native-smlnj-legacy-110.99.9	1 1 2 2	pass	tests/out/benchmarks/sandmark-recursive.vk_75bmc/rec_seq_sudan/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program
+ rec_seq_tak	normal	O0	rune	1 24 16 8	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/normal/O0/matrix/rune/program
+ rec_seq_tak	normal	O0	rune-jit	1 24 16 8	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/normal/O0/matrix/rune-jit/program
+ rec_seq_tak	normal	O0	rune-new	1 24 16 8	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/normal/O0/matrix/rune-new/program
+@@ -127,10 +127,10 @@ rec_seq_tak	normal	O2	rune	1 24 16 8	pass	tests/out/benchmarks/sandmark-recursiv
+ rec_seq_tak	normal	O2	rune-jit	1 24 16 8	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/normal/O2/matrix/rune-jit/program
+ rec_seq_tak	normal	O2	rune-new	1 24 16 8	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/normal/O2/matrix/rune-new/program
+ rec_seq_tak	normal	O2	rune-opt	1 24 16 8	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/normal/O2/matrix/rune-opt/program
+-rec_seq_tak	normal	hosts	native-mlton-20241230	1 24 16 8	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/normal/hosts/matrix/native-mlton-20241230/program
+-rec_seq_tak	normal	hosts	native-polyml-5.9.2	1 24 16 8	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/normal/hosts/matrix/native-polyml-5.9.2/program
+-rec_seq_tak	normal	hosts	native-smlnj-dev-2026.2	1 24 16 8	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/normal/hosts/matrix/native-smlnj-dev-2026.2/program
+-rec_seq_tak	normal	hosts	native-smlnj-legacy-110.99.9	1 24 16 8	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
++rec_seq_tak	normal	host-default	native-mlton-20241230	1 24 16 8	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/normal/hosts/matrix/native-mlton-20241230/program
++rec_seq_tak	normal	host-default	native-polyml-5.9.2	1 24 16 8	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/normal/hosts/matrix/native-polyml-5.9.2/program
++rec_seq_tak	normal	host-default	native-smlnj-dev-2026.2	1 24 16 8	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/normal/hosts/matrix/native-smlnj-dev-2026.2/program
++rec_seq_tak	normal	host-default	native-smlnj-legacy-110.99.9	1 24 16 8	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program
+ rec_seq_tak	smoke	O0	rune	1 18 12 6	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/smoke/O0/matrix/rune/program
+ rec_seq_tak	smoke	O0	rune-jit	1 18 12 6	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/smoke/O0/matrix/rune-jit/program
+ rec_seq_tak	smoke	O0	rune-new	1 18 12 6	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/smoke/O0/matrix/rune-new/program
+@@ -139,7 +139,7 @@ rec_seq_tak	smoke	O2	rune	1 18 12 6	pass	tests/out/benchmarks/sandmark-recursive
+ rec_seq_tak	smoke	O2	rune-jit	1 18 12 6	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/smoke/O2/matrix/rune-jit/program
+ rec_seq_tak	smoke	O2	rune-new	1 18 12 6	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/smoke/O2/matrix/rune-new/program
+ rec_seq_tak	smoke	O2	rune-opt	1 18 12 6	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/smoke/O2/matrix/rune-opt/program
+-rec_seq_tak	smoke	hosts	native-mlton-20241230	1 18 12 6	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/smoke/hosts/matrix/native-mlton-20241230/program
+-rec_seq_tak	smoke	hosts	native-polyml-5.9.2	1 18 12 6	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/smoke/hosts/matrix/native-polyml-5.9.2/program
+-rec_seq_tak	smoke	hosts	native-smlnj-dev-2026.2	1 18 12 6	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
+-rec_seq_tak	smoke	hosts	native-smlnj-legacy-110.99.9	1 18 12 6	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program
++rec_seq_tak	smoke	host-default	native-mlton-20241230	1 18 12 6	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/smoke/hosts/matrix/native-mlton-20241230/program
++rec_seq_tak	smoke	host-default	native-polyml-5.9.2	1 18 12 6	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/smoke/hosts/matrix/native-polyml-5.9.2/program
++rec_seq_tak	smoke	host-default	native-smlnj-dev-2026.2	1 18 12 6	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/smoke/hosts/matrix/native-smlnj-dev-2026.2/program
++rec_seq_tak	smoke	host-default	native-smlnj-legacy-110.99.9	1 18 12 6	pass	tests/out/benchmarks/sandmark-recursive.9oo552z5/rec_seq_tak/smoke/hosts/matrix/native-smlnj-legacy-110.99.9/program

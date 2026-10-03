@@ -1,0 +1,48 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-primes.sml]
+structure BenchOcamlPrimes : sig
+  datatype 'a stream = Cons of 'a * 'a stream BenchLazy.delay
+  val head : 'a stream -> 'a
+  val tail : 'a stream -> 'a stream
+  val from : int -> int stream
+  val take : int -> 'a stream -> 'a list
+  val drop : int -> 'a stream -> 'a stream
+  val filter : ('a -> bool) -> 'a stream -> 'a stream
+  val sieve : int stream -> int stream
+  val primes : int stream
+  val nth : int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/lazy_primes/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 7919
+PASS lazy_primes
+SUMMARY 1 checks, 0 failed

@@ -203,6 +203,9 @@ inventory entry.
 | [rec_seq_sudan](#rec_seq_sudan) | [Sandmark rec_seq_sudan](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-effects/rec_seq_sudan.ml) | Evaluate the nested Sudan recurrence with explicit wide integer values. |
 | [rec_seq_fib](#rec_seq_fib) | [Sandmark rec_seq_fib](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-effects/rec_seq_fib.ml) | Compute strict Fibonacci with Sandmark's retained repetition profiles. |
 | [rec_seq_tak](#rec_seq_tak) | [Sandmark rec_seq_tak](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-effects/rec_seq_tak.ml) | Run the shared strict Takeuchi kernel with Sandmark's curried-source input profiles. |
+| [lazy_primes](#lazy_primes) | [Sandmark lazy_primes](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/simple-tests/lazy_primes.ml) | Sieve primes through streams with strict heads and memoized lazy tails. |
+| [lazylist](#lazylist) | [Sandmark lazylist](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/simple-tests/lazylist.ml) | Allocate a strict list of independent lazy heads sharing one zero cell. |
+| [sequence_cps](#sequence_cps) | [Sandmark sequence_cps](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/sequence/sequence_cps.ml) | Compose CPS map/filter layers and consume them with a mutable callback fold. |
 
 ## Running and interpreting checks
 
@@ -295,6 +298,8 @@ sh tests/benchmarks/check-treejoin.sh
 sh tests/benchmarks/check-word-set.sh
 sh tests/benchmarks/check-power-series.sh
 sh tests/benchmarks/check-shootout.sh
+sh tests/benchmarks/check-ocaml-lazy.sh
+sh tests/benchmarks/check-sequence-cps.sh
 python3 tests/benchmarks/test-inventory.py
 python3 scripts/benchmark-inventory.py --check
 python3 tests/benchmarks/latency-oracle.py --check
@@ -5685,3 +5690,116 @@ not attribution of this particular source. Large SML execution is not
 universally claimed.
 
 [Complete provenance](rec_seq_tak/PROVENANCE.md).
+
+## lazy_primes
+
+Sieve primes through streams with strict heads and memoized lazy tails.
+
+Sandmark `5605805954a00497ed197c930641cddd580e1507`, `benchmarks/simple-tests/lazy_primes.ml`.
+
+The individual author is unspecified. Original source, dune declarations,
+SHA256 identities and the aggregate public-domain notice are retained. Kernels
+and translation support are SML97. Compiler/runtime explanations below come
+from source inspection and remain performance hypotheses until measured.
+
+## Algorithm, history and variants
+
+Keep Cons(strict head, memoized tail), the infinite integer stream from 2,
+removing filter, and successive sieve layers. The ordinal is one-based.
+`take 1 (drop (nth-1) primes)` forces the next tail even though take 0 returns
+empty: preserve this extra demand from strict OCaml arguments. This differs
+from the nofib lazy-head/lazy-spine ports, which retain their own names and
+forcing decisions. No array sieve, trial division or eager infinite list
+replaces the algorithm. Unused take/drop/zip helpers remain in pristine source.
+
+## Translation, inputs and validation
+
+BenchLazy preserves memoized tails and exceptions. Source heads remain strict;
+no separate head delay is added. All selected values fit 31 bits. Fixed profiles
+use ordinals 10/1000/5000; normal/large preserve entries in micro_multicore.json,
+and the other original ordinals 2000..10000 are retained in reviewed config
+extracts with complete file identities. Results29/7919/48611 agree with unchanged
+OCaml and independent trial division. Semantic checks verify the additional
+tail demand, memoization, predicate-removing filter and prime prefixes. Stream
+retention, sieve closures and demand are hypotheses until measured. Large SML
+execution is not universally claimed. References: retained source/configuration
+and the shared nofib/Sandmark literature survey.
+
+[Complete provenance](lazy_primes/PROVENANCE.md).
+
+## lazylist
+
+Allocate a strict list of independent lazy heads sharing one zero cell.
+
+Sandmark `5605805954a00497ed197c930641cddd580e1507`, `benchmarks/simple-tests/lazylist.ml`.
+
+The individual author is unspecified. Original source, dune declarations,
+SHA256 identities and the aggregate public-domain notice are retained. Kernels
+and translation support are SML97. Compiler/runtime explanations below come
+from source inspection and remain performance hypotheses until measured.
+
+## Algorithm, history and variants
+
+Preserve add_lazy's unchanged original list parameter: every new delay computes
+1 plus the same original zero, not the preceding new head. The strict spine has
+length n+1, and only its first delay is forced by each original iteration.
+There is no incrementing lazy chain. Preserve inclusive iterations 0..iterations
+and create a fresh base/list for each repetition. Unused delays remain unforced.
+
+## Translation, inputs and validation
+
+BenchLazy supplies SML97 memoization. The program additionally walks the
+allocated spine before forcing its head, preventing elimination of the workload
+when replacing Sys.opaque_identity with consumption. This adds traversal work
+and can affect liveness; it does not force the other head delays. Actual lengths
+and head values are summed separately. Smoke(length 10,iterations 0), normal
+(1000,10000), and large(100000,100) give11:1,10011001:10001 and 10100101:101.
+Normal/large preserve original run_config.json configurations; the other
+10000/1000 configuration and bytecode settings remain in reviewed extracts.
+Original read-only OCaml observers and independent length/head identities agree.
+Semantic tests verify pending heads, their independent shared-zero references,
+and zero-length extension. Closure capture, memoization, strict spine allocation,
+list depth and retention are hypotheses until measured. Large SML execution is
+not universally claimed. References: retained source/configs and literature survey.
+
+[Complete provenance](lazylist/PROVENANCE.md).
+
+## sequence_cps
+
+Compose CPS map/filter layers and consume them with a mutable callback fold.
+
+Sandmark `5605805954a00497ed197c930641cddd580e1507`, `benchmarks/sequence/sequence_cps.ml`.
+
+The individual author is unspecified. Original source, dune declarations,
+SHA256 identities and the aggregate public-domain notice are retained. Kernels
+and translation support are SML97. Compiler/runtime explanations below come
+from source inspection and remain performance hypotheses until measured.
+
+## Algorithm, history and variants
+
+Preserve the Sequence state/unfolder record, continuation-based map/filter,
+three callback cases, and original mutable fold_2. The pipeline maps x+3,
+filters even values with bitwise and 1, squares, and folds addition. The outer
+loop includes 0..n. No fused direct sum or pull iterator replaces the CPS layers.
+The used state is int and payload integer; unfold's continuation result is bool
+because fold_2 is the selected implementation. Specialize those concrete types
+for SML97 rather than requiring unused existential/GADT/rank-polymorphic cases.
+Unused fold_1 remains in the original source.
+
+## Translation, inputs and validation
+
+Original OCaml 63-bit sums exceed31 bits. Portable IntInf retains every selected
+value, including bitwise filtering, without overflow through n=10000; its
+representation/allocation differs from OCaml machine integers and is explicit.
+Profiles n=10/1000/10000 preserve the size argument; large uses the original
+run_config.json and bytecode setting 10000. All results agree with unchanged
+OCaml and independent sum over odd x<n of (n-x)*(x+3)^2, retaining both inclusive
+outer bounds and pipeline order. Semantic checks cover empty/skip/yield/done,
+state advancement, exact wide sums and inclusive bounds. The optional
+OCAML_GC_STATS file observer is replaced by the suite's separate statistics
+mode; no GC facility is added to the kernel. References: original source and
+Sandmark configuration/literature. Closure layers, callback specialization,
+mutable state and wide arithmetic are source-derived hypotheses until measured.
+Large SML execution is not universally claimed.
+
+[Complete provenance](sequence_cps/PROVENANCE.md).

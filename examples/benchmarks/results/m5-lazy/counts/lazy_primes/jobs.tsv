@@ -1,0 +1,1 @@
+lazy_primes	600	4194304	shared/input.sml shared/lazy.sml shared/ocaml-primes.sml lazy_primes/benchmark.sml shared/main.sml	1000	lazy_primes/normal.expected	-

@@ -1,0 +1,12 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/results/m5-recursive/correctness.tsv
+?? examples/benchmarks/lazy_primes/
+?? examples/benchmarks/lazylist/
+?? examples/benchmarks/sequence_cps/
+?? examples/benchmarks/shared/ocaml-lazylist.sml
+?? examples/benchmarks/shared/ocaml-primes.sml
+?? tests/benchmarks/check-ocaml-lazy.sh
+?? tests/benchmarks/check-sequence-cps.sh
+?? tests/benchmarks/ocaml-lazy.sml
+?? tests/benchmarks/sequence-cps.sml

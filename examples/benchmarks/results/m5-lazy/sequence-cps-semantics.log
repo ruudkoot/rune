@@ -1,0 +1,396 @@
+PROGRAM LIMIT AS 4194304 KiB
+PASS sequence/empty
+PASS sequence/skip-first-odd
+PASS sequence/yield-even-square
+PASS sequence/two-even-squares
+PASS sequence/inclusive-outer-loop
+PASS sequence/wide-inner-sum
+PASS sequence/skip-yield-done-state
+SUMMARY 7 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+PASS sequence/empty
+PASS sequence/skip-first-odd
+PASS sequence/yield-even-square
+PASS sequence/two-even-squares
+PASS sequence/inclusive-outer-loop
+PASS sequence/wide-inner-sum
+PASS sequence/skip-yield-done-state
+SUMMARY 7 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+PASS sequence/empty
+PASS sequence/skip-first-odd
+PASS sequence/yield-even-square
+PASS sequence/two-even-squares
+PASS sequence/inclusive-outer-loop
+PASS sequence/wide-inner-sum
+PASS sequence/skip-yield-done-state
+SUMMARY 7 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+PASS sequence/empty
+PASS sequence/skip-first-odd
+PASS sequence/yield-even-square
+PASS sequence/two-even-squares
+PASS sequence/inclusive-outer-loop
+PASS sequence/wide-inner-sum
+PASS sequence/skip-yield-done-state
+SUMMARY 7 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 4194304 KiB
+PASS sequence/empty
+PASS sequence/skip-first-odd
+PASS sequence/yield-even-square
+PASS sequence/two-even-squares
+PASS sequence/inclusive-outer-loop
+PASS sequence/wide-inner-sum
+PASS sequence/skip-yield-done-state
+SUMMARY 7 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/sequence_cps/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  type unfold =
+    int -> bool -> (int -> bool) -> (int -> IntInf.int -> bool) -> bool
+  datatype sequence = Sequence of int * {unfold:unfold}
+  val map : sequence -> (IntInf.int -> IntInf.int) -> sequence
+  val filter : sequence -> (IntInf.int -> bool) -> sequence
+  val fold : sequence -> 'a -> ('a * IntInf.int -> 'a) -> 'a
+  val test : int -> ?.intinf
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sequence-cps.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sequence-cps.sml:9.7-9.22 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sequence-cps.sml:12.6-12.60 Error: case object and rules do not agree [overload - bad instantiation]
+  rule domain: 'Z[INT]
+  object: ?.X1
+  in expression:
+    (case state
+    of 0 => skip 1
+     | 1 => (yield 2) 5
+     | _ => done)
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sequence-cps.sml:10.7-12.63 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int * {unfold:Benchmark.unfold}
+  operand:         int
+                    * {unfold:?.X1
+                     -> 'Z
+                     -> ('Y[INT] -> 'Z) -> ('X[INT] -> 'W[INT] -> 'Z) -> _}
+  in expression:
+    Sequence
+    (0,{unfold=(fn state => (fn done => (fn skip => (fn <pat> => <exp>))))})
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sequence-cps.sml:14.79-14.104 Error: operator and operand do not agree [equality type required]
+  operator domain: ''Z * ''Z
+  operand:         ?.X1 list * 'Y[INT] list
+  in expression:
+    List.rev (! states) = 0 :: 1 :: 2 :: nil
+uncaught exception CompileError [CompileError]
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sequence-cps.sml:12.6-12.60 Error: case object and rules do not agree [overload - bad instantiation]
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/sequence_cps/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  type unfold =
+    int -> bool -> (int -> bool) -> (int -> IntInf.int -> bool) -> bool
+  datatype sequence = Sequence of int * {unfold:unfold}
+  val map : sequence -> (IntInf.int -> IntInf.int) -> sequence
+  val filter : sequence -> (IntInf.int -> bool) -> sequence
+  val fold : sequence -> 'a -> ('a * IntInf.int -> 'a) -> 'a
+  val test : int -> ?.intinf
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sequence-cps.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sequence-cps.sml:9.7-9.22 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sequence-cps.sml:12.6-12.60 Error: case object and rules do not agree [overload - bad instantiation]
+  rule domain: 'Z[INT]
+  object: ?.X1
+  in expression:
+    (case state
+    of 0 => skip 1
+     | 1 => (yield 2) 5
+     | _ => done)
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sequence-cps.sml:10.7-12.63 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int * {unfold:Benchmark.unfold}
+  operand:         int
+                    * {unfold:?.X1
+                     -> 'Z
+                     -> ('Y[INT] -> 'Z) -> ('X[INT] -> 'W[INT] -> 'Z) -> _}
+  in expression:
+    Sequence
+    (0,{unfold=(fn state => (fn done => (fn skip => (fn <pat> => <exp>))))})
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sequence-cps.sml:14.79-14.104 Error: operator and operand do not agree [equality type required]
+  operator domain: ''Z * ''Z
+  operand:         ?.X1 list * 'Y[INT] list
+  in expression:
+    List.rev (! states) = 0 :: 1 :: 2 :: nil
+uncaught exception CompileError [CompileError]
+PROGRAM FAIL native:smlnj32@110.99.9 (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sequence-cps.sml:12.6-12.60 Error: case object and rules do not agree [overload - bad instantiation]
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/sequence_cps/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    type unfold =
+      int -> bool -> (int -> bool) -> (int -> IntInf.int -> bool) -> bool
+    datatype sequence = Sequence of int * {unfold:unfold}
+    val map : sequence -> (IntInf.int -> IntInf.int) -> sequence
+    val filter : sequence -> (IntInf.int -> bool) -> sequence
+    val fold : sequence -> 'a -> ('a * IntInf.int -> 'a) -> 'a
+    val test : int -> ?.intinf
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sequence-cps.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sequence-cps.sml:9.7-9.22 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sequence-cps.sml:12.6-12.60 Error: case object and rules do not agree [overload - bad instantiation]
+  rule domain: 'Z[INT]
+  object: ?.X1
+  in expression:
+    (case state
+    of 0 => skip 1
+     | 1 => (yield 2) 5
+     | _ => done)
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sequence-cps.sml:10.7-12.63 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int * {unfold:Benchmark.unfold}
+  operand:         int
+                    * {unfold:?.X1
+                     -> 'Z
+                     -> ('Y[INT] -> 'Z) -> ('X[INT] -> 'W[INT] -> 'Z) -> _}
+  in expression:
+    Sequence
+    (0,{unfold=(fn state => (fn done => (fn skip => (fn <pat> => <exp>))))})
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sequence-cps.sml:14.79-14.104 Error: operator and operand do not agree [equality type required]
+  operator domain: ''Z * ''Z
+  operand:         ?.X1 list * 'Y[INT] list
+  in expression:
+    List.rev (! states) = 0 :: 1 :: 2 :: nil
+uncaught exception CompileError [CompileError]
+PROGRAM FAIL native:smlnj-dev@2026.2 (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sequence-cps.sml:12.6-12.60 Error: case object and rules do not agree [overload - bad instantiation]
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+PASS sequence/empty
+PASS sequence/skip-first-odd
+PASS sequence/yield-even-square
+PASS sequence/two-even-squares
+PASS sequence/inclusive-outer-loop
+PASS sequence/wide-inner-sum
+PASS sequence/skip-yield-done-state
+SUMMARY 7 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+PASS sequence/empty
+PASS sequence/skip-first-odd
+PASS sequence/yield-even-square
+PASS sequence/two-even-squares
+PASS sequence/inclusive-outer-loop
+PASS sequence/wide-inner-sum
+PASS sequence/skip-yield-done-state
+SUMMARY 7 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

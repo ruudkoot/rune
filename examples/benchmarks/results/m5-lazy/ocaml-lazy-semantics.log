@@ -1,0 +1,1 @@
+bench-ocaml-lazy: strict heads, memoized tails and independent lazy-list heads hold (/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/ocaml-lazy-checks.5IiKoj)

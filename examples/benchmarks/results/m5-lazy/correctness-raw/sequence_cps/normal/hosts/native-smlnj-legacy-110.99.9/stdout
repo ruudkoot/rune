@@ -1,0 +1,31 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/sequence_cps/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  type unfold =
+    int -> bool -> (int -> bool) -> (int -> IntInf.int -> bool) -> bool
+  datatype sequence = Sequence of int * {unfold:unfold}
+  val map : sequence -> (IntInf.int -> IntInf.int) -> sequence
+  val filter : sequence -> (IntInf.int -> bool) -> sequence
+  val fold : sequence -> 'a -> ('a * IntInf.int -> 'a) -> 'a
+  val test : int -> ?.intinf
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 42169001000
+PASS sequence_cps
+SUMMARY 1 checks, 0 failed
