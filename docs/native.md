@@ -1,6 +1,7 @@
 # Native code
 
-`runeopt` translates a `.rbc` into a program for Linux on x86-64, linked
+`runeopt` translates a `.rbc` of the stack bytecode (`rune --target=stack`)
+into a program for Linux on x86-64, linked
 against the runtime `runevm` is built from. This page is how it does that as
 built: the rules its code keeps, what the executable holds, and what has to
 change together when the runtime or the instruction set does. How it came
@@ -311,7 +312,7 @@ Its limits:
     (the Makefile empties that cache whenever it builds `runeopt` or the
     runtime again), with `tests/opt-skip.txt`, which is empty;
   * `--count` against `runevm`;
-  * the native compiler compiling itself to `bin/rune.rbc` byte for byte;
+  * the native compiler compiling itself to `bin/rune.stack.rbc` byte for byte;
   * the debug information.
 * **`make test-native-stress`** and **`make test-native-asan`**, outside
   `make check`: the suites with a collection every 101st allocation, and

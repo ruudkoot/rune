@@ -9,7 +9,7 @@
 #   scripts/check-levels.sh [--rune BIN] [--vm BIN] [-j N]
 set -u
 cd "$(dirname "$0")/.."
-rune=bin/rune
+rune=bin/rune-stack
 vm=bin/runevm
 jobs=$(sh scripts/ncpus.sh)
 one=""

@@ -34,7 +34,7 @@ check() {
   shift
   failed=""
   for c in $builds; do
-    "bin/rune-$c" "$@" -o "$out/$name.$c.rbc" 2> "$out/$name.$c.err" || failed="$failed $c"
+    "bin/rune-$c" $target "$@" -o "$out/$name.$c.rbc" 2> "$out/$name.$c.err" || failed="$failed $c"
   done
   if [ -n "$failed" ]; then
     if [ "$may_fail" = 1 ] && [ "$failed" = " $builds" ]; then
@@ -65,7 +65,10 @@ check() {
 # Library suite that runs tests/basis/TEST.sml, `basis-all` for a program
 # compiled with every file of the basis library (--basis all), `rune` for
 # the compiler itself, `runedoc` for the documentation generator, or `runeopt`
-# for the native code generator.
+# for the native code generator; the last three also as `rune-stack`,
+# `runedoc-stack` and `runeopt-stack`, which are made for runevm, the stack
+# bytecode (--target=stack), where the others are in the default register
+# bytecode.
 result_name() {
   case "$1" in
     basis:*) echo "basis-${1#basis:}" ;;
@@ -76,6 +79,7 @@ result_name() {
 
 if [ -n "$one" ]; then
   may_fail=0
+  target=""
   case "$one" in
     # shellcheck disable=SC2046
     rune) check rune build/config.sml $(grep -v '^[[:space:]]*#' sources.txt | grep -v '^[[:space:]]*$') src/main/rune-main.sml ;;
@@ -83,6 +87,12 @@ if [ -n "$one" ]; then
     runedoc) check runedoc build/config.sml $(grep -v '^[[:space:]]*#' sources-doc.txt | grep -v '^[[:space:]]*$') src/main/runedoc-rune-main.sml ;;
     # shellcheck disable=SC2046
     runeopt) check runeopt build/config.sml $(grep -v '^[[:space:]]*#' sources-opt.txt | grep -v '^[[:space:]]*$') src/main/runeopt-rune-main.sml ;;
+    # shellcheck disable=SC2046
+    rune-stack) target=--target=stack; check rune-stack build/config.sml $(grep -v '^[[:space:]]*#' sources.txt | grep -v '^[[:space:]]*$') src/main/rune-main.sml ;;
+    # shellcheck disable=SC2046
+    runedoc-stack) target=--target=stack; check runedoc-stack build/config.sml $(grep -v '^[[:space:]]*#' sources-doc.txt | grep -v '^[[:space:]]*$') src/main/runedoc-rune-main.sml ;;
+    # shellcheck disable=SC2046
+    runeopt-stack) target=--target=stack; check runeopt-stack build/config.sml $(grep -v '^[[:space:]]*#' sources-opt.txt | grep -v '^[[:space:]]*$') src/main/runeopt-rune-main.sml ;;
     basis-all) check basis-all --basis all examples/hello.sml ;;
     basis:*)
       may_fail=1
@@ -111,11 +121,11 @@ rm -f "$out"/*.result
 # The compiler is the longest job, so it goes first.
 # shellcheck disable=SC2086
 sources="$sources basis-all"
-printf '%s\n' rune runedoc runeopt $sources | xargs -n 1 -P "$jobs" sh scripts/check-cross.sh --one
+printf '%s\n' rune rune-stack runedoc runedoc-stack runeopt runeopt-stack $sources | xargs -n 1 -P "$jobs" sh scripts/check-cross.sh --one
 
 status=0
 count=0
-for p in $sources rune runedoc runeopt; do
+for p in $sources rune rune-stack runedoc runedoc-stack runeopt runeopt-stack; do
   name=$(result_name "$p")
   result=$(cat "$out/$name.result" 2> /dev/null)
   if [ "$result" = OK ]; then

@@ -9,18 +9,18 @@
 # RUNE_MATRIX_MEMORY is KiB of address space (Poly/ML: data plus a heap cap).
 #
 # Configurations (default: rune):
-#   rune                   bin/rune, the self-hosted compiler, + bin/runevm
+#   rune                   bin/rune-stack, the self-hosted compiler for the stack bytecode, + bin/runevm
 #                          (override: RUNE=, RUNEVM=; both must be absolute)
 #   rune:windows  rune:windows32  rune:windows-new  rune:windows32-new
 #   rune:linux32  rune:ppc64   the same on a VM of another machine: a 32-bit
 #                          x86, and a big-endian 64-bit PowerPC under qemu
 #                          (make portability; RUNEVM_LINUX32=, RUNEVM_PPC64=)
-#                          bin/rune + bin/runevm.exe or bin/runevm32.exe, the
+#                          bin/rune-stack + bin/runevm.exe or bin/runevm32.exe, the
 #                          VMs of make windows (RUNEVM_WINDOWS=,
 #                          RUNEVM_WINDOWS32=); a program runs in a directory
 #                          on the Windows side (tests/windows-dir.sh), and
 #                          needs Windows, or WSL, which starts an .exe
-#   rune:opt               bin/rune, and every program translated to native
+#   rune:opt               bin/rune-stack, and every program translated to native
 #                          code by runeopt and run so: bin/runevm-opt
 #                          (RUNEVM_OPT=; docs/native.md)
 #   rune:jit               the same, with every function compiled at tier 2
@@ -445,7 +445,7 @@ set_needed() {
   needed=""
   [ "$kind" = xc1 ] && [ "$host" = mlton ] || return 0
   [ "${RUNE_MATRIX_NO_SUBSET:-0}" = 0 ] || return 0
-  runebin=${RUNE:-$root/bin/rune}
+  runebin=${RUNE:-$root/bin/rune-stack}
   [ -x "$runebin" ] || return 0
   deps=$cfgout/$test.deps
   # shellcheck disable=SC2086
@@ -1020,13 +1020,13 @@ resolve() {
   cmd2=""
   case "$kind:$host" in
     rune:)
-      cmd1=${RUNE:-$root/bin/rune}
+      cmd1=${RUNE:-$root/bin/rune-stack}
       cmd2=${RUNEVM:-$root/bin/runevm}
       id=rune
       [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make)" >&2; return 1; }
       ;;
     rune:windows|rune:windows32)
-      cmd1=${RUNE:-$root/bin/rune}
+      cmd1=${RUNE:-$root/bin/rune-stack}
       if [ "$host" = windows ]; then cmd2=${RUNEVM_WINDOWS:-$root/bin/runevm.exe}
       else cmd2=${RUNEVM_WINDOWS32:-$root/bin/runevm32.exe}
       fi
@@ -1042,7 +1042,7 @@ resolve() {
       # The library and the compiler of the `rune` configuration, and every
       # program run as native code: bin/runevm-opt translates the bytecode
       # with runeopt and runs the executable (docs/native.md, Tests).
-      cmd1=${RUNE:-$root/bin/rune}
+      cmd1=${RUNE:-$root/bin/rune-stack}
       cmd2=${RUNEVM_OPT:-$root/bin/runevm-opt}
       id=rune:opt
       [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make bin/runevm-opt)" >&2; return 1; }
@@ -1070,7 +1070,7 @@ resolve() {
       # 64-bit PowerPC, which its own wrapper runs under qemu. Nothing of the
       # suite differs -- the bytecode is the same file -- so what is tested is
       # the VM.
-      cmd1=${RUNE:-$root/bin/rune}
+      cmd1=${RUNE:-$root/bin/rune-stack}
       if [ "$host" = linux32 ]; then cmd2=${RUNEVM_LINUX32:-$root/bin/runevm32}
       else cmd2=${RUNEVM_PPC64:-$root/bin/runevm-ppc64}
       fi

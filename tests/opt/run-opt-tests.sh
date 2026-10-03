@@ -19,7 +19,7 @@
 #    and one of another program, which native code refuses.
 set -u
 opt=bin/runeopt
-rune=bin/rune
+rune=bin/rune-stack
 vm=bin/runevm
 jobs=""
 one=""
@@ -136,7 +136,7 @@ refuse empty-function "function f has no code" "$out/empty-function.rbc"
 # The programs: every one the suites have compiled, and the two tools.
 [ -n "$jobs" ] || jobs=$(sh scripts/ncpus.sh)
 programs=""
-for f in bin/rune.rbc bin/runedoc.rbc tests/out/*.rbc tests/out/matrix/rune/*.dir/prog.rbc; do
+for f in bin/rune.stack.rbc bin/runedoc.stack.rbc tests/out/*.rbc tests/out/matrix/rune/*.dir/prog.rbc; do
   [ -f "$f" ] && programs="$programs $f"
 done
 # shellcheck disable=SC2086

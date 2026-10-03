@@ -1,4 +1,4 @@
-# bash completion for rune(1) and runevm(1).
+# bash completion for rune(1), runevm(1) and runevm-new(1).
 
 _rune() {
     local cur prev
@@ -23,7 +23,7 @@ _rune() {
     if [[ $cur == -* ]]; then
         COMPREPLY=($(compgen -W '-o --lib --no-prelude --basis --basis-deps --basis-check --allow-prim
             --typecheck-only --no-warnings --dump-tokens --dump-ast
-            --dump-lambda --dump-code --version --help' -- "$cur"))
+            --dump-lambda --dump-code --target=registers --target=stack --version --help' -- "$cur"))
         return
     fi
 
@@ -48,10 +48,11 @@ _runevm() {
 
     if [[ $cur == -* ]]; then
         COMPREPLY=($(compgen -W '--heap-size --heap-fill --disasm --trace --stats --count
-            --gc-stress --emulate-fork --restore --version --help' -- "$cur"))
+            --gc-stress --emulate-fork --restore --jit=off --jit=baseline --jit=opt --jit=all
+            --version --help' -- "$cur"))
         return
     fi
 
     COMPREPLY=($(compgen -f -X '!*.rbc' -- "$cur") $(compgen -d -- "$cur"))
 }
-complete -F _runevm runevm
+complete -F _runevm runevm runevm-new

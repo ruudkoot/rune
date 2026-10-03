@@ -9,7 +9,7 @@
 # wrong position is invisible otherwise -- the program still runs -- which is
 # why it is checked over every program rather than a few.
 set -u
-rune=bin/rune
+rune=bin/rune-stack
 vm=bin/runevm
 jobs=
 filter=

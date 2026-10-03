@@ -27,7 +27,8 @@ runeopt \- translate Rune bytecode into a native program
 .SH DESCRIPTION
 .B runeopt
 translates a bytecode file made by
-.BR rune (1)
+.B rune \-\-target=stack
+.RB ( rune (1))
 into an executable for Linux on x86-64: every instruction becomes the machine
 code that does what
 .BR runevm (1)

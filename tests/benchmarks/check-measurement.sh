@@ -13,7 +13,7 @@ echo 'bench-measurement: statistics, execution-model comparisons and budget fail
 # Exercise the portable measurement entrypoint with a deliberately wrong fixture.
 # Add the same portable launch used by the adapter.
 echo 'val _ = OS.Process.exit (BenchMeasure.main ())' > "$out/launch.sml"
-bin/rune --lint examples/benchmarks/shared/input.sml examples/benchmarks/shared/tak.sml examples/benchmarks/tak/benchmark.sml examples/benchmarks/shared/measure.sml "$out/launch.sml" -o "$out/negative.rbc"
+bin/rune --target=stack --lint examples/benchmarks/shared/input.sml examples/benchmarks/shared/tak.sml examples/benchmarks/tak/benchmark.sml examples/benchmarks/shared/measure.sml "$out/launch.sml" -o "$out/negative.rbc"
 printf 'tak\n18 12 6 1\n999\n3\n' > "$out/input"
 if bin/runevm "$out/negative.rbc" < "$out/input" > "$out/negative.out"; then echo 'wrong result accepted' >&2; exit 1; fi
 ! grep -q '^SAMPLE ' "$out/negative.out"

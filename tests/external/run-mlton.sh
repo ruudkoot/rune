@@ -11,7 +11,7 @@
 # Prints one line per program and a summary; exits 1 if a program not on the
 # skip list fails.
 set -u
-rune=bin/rune
+rune=bin/rune-stack
 vm=bin/runevm
 jobs=$(sh scripts/ncpus.sh 2>/dev/null || echo 4)
 dir=""

@@ -239,8 +239,8 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 `vm/new`'s loop (`bin/runevm-new`, `vm/new/interp.c`; `vm/new/ARCHITECTURE.md`
 is the VM as built) runs a second instruction set, of 41 registers
 instructions (`src/isa/regs.sml`; decision D4 of
-[plans/middle-end.md](plans/middle-end.md)). `rune --target=registers` makes
-it, from `-O1`. Its `.rbc` is laid out as the stack bytecode's, with the
+[plans/middle-end.md](plans/middle-end.md)). `rune` makes it unless told
+`--target=stack`, from `-O1`. Its `.rbc` is laid out as the stack bytecode's, with the
 register instruction set's fingerprint (`vm/new/regs.def`), so that each VM
 refuses the other's file and image.
 

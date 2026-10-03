@@ -32,7 +32,7 @@ export TZ
 WSLENV="TZ${WSLENV:+:$WSLENV}"
 export WSLENV
 
-rune=bin/rune
+rune=bin/rune-stack
 native=bin/runevm
 def=vm/opcodes.def
 vms=""

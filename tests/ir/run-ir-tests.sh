@@ -12,7 +12,7 @@
 #   tests/ir/run-ir-tests.sh [--rune BIN] [--update] [FILTER]
 set -u
 cd "$(dirname "$0")/../.."
-rune=bin/rune
+rune=bin/rune-stack
 update=0
 filter=""
 while [ $# -gt 0 ]; do

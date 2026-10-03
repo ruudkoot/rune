@@ -84,7 +84,7 @@ jit_mode() {
 build() {
   case "$1" in
     rune)
-      "$rune" "$3" -o "$out/$2.rbc" 2> "$out/$2.rune.err" || return 1
+      "$rune" --target=stack "$3" -o "$out/$2.rbc" 2> "$out/$2.rune.err" || return 1
       echo "bin/runevm $out/$2.rbc" ;;
     new)
       "$rune" --target=registers "$3" -o "$out/$2.new.rbc" 2> "$out/$2.new.err" || return 1
@@ -93,7 +93,7 @@ build() {
       "$rune" --target=registers "$3" -o "$out/$2.new.rbc" 2> "$out/$2.new.err" || return 1
       echo "bin/runevm-new $(jit_mode "$1") $out/$2.new.rbc" ;;
     opt)
-      "$rune" "$3" -o "$out/$2.rbc" 2> "$out/$2.rune.err" || return 1
+      "$rune" --target=stack "$3" -o "$out/$2.rbc" 2> "$out/$2.rune.err" || return 1
       bin/runeopt-mlton "$out/$2.rbc" -o "$out/$2.native" 2> "$out/$2.opt.err" || return 1
       echo "$out/$2.native" ;;
     mlton)
@@ -108,15 +108,15 @@ build() {
 bootstrap() {
   srcs=$(boot_sources | tr '\n' ' ')
   case "$1" in
-    rune) echo "bin/runevm --heap-size 67108864 bin/rune.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
-    new) [ -f bin/rune.new.rbc ] || return 1
-         echo "bin/runevm-new --heap-size 67108864 bin/rune.new.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
-    jit|jit-*) [ -f bin/rune.new.rbc ] || return 1
-         echo "bin/runevm-new $(jit_mode "$1") --heap-size 67108864 bin/rune.new.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
-    opt) bin/runeopt-mlton --options "--heap-size 67108864" bin/rune.rbc -o "$out/rune.native" 2> "$out/rune.native.err" || return 1
-         echo "$out/rune.native --lib lib -o $out/boot.$1.rbc $srcs" ;;
+    rune) echo "bin/runevm --heap-size 67108864 bin/rune.stack.rbc --lib lib --target=stack -o $out/boot.$1.rbc $srcs" ;;
+    new) [ -f bin/rune.rbc ] || return 1
+         echo "bin/runevm-new --heap-size 67108864 bin/rune.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
+    jit|jit-*) [ -f bin/rune.rbc ] || return 1
+         echo "bin/runevm-new $(jit_mode "$1") --heap-size 67108864 bin/rune.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
+    opt) bin/runeopt-mlton --options "--heap-size 67108864" bin/rune.stack.rbc -o "$out/rune.native" 2> "$out/rune.native.err" || return 1
+         echo "$out/rune.native --lib lib --target=stack -o $out/boot.$1.rbc $srcs" ;;
     mlton) [ -x bin/rune-mlton ] || return 1
-           echo "bin/rune-mlton -o $out/boot.$1.rbc $srcs" ;;
+           echo "bin/rune-mlton --target=stack -o $out/boot.$1.rbc $srcs" ;;
     *) return 1 ;;
   esac
 }

@@ -1,5 +1,6 @@
 #!/bin/sh
-# Install (or remove) Rune: the rune wrapper, runevm, the compiler it runs, the
+# Install (or remove) Rune: the rune wrapper, runevm and runevm-new (the VM of
+# the register bytecode, with its JIT), the compiler it runs, the
 # basis library, the man pages and the shell completions; and runedoc, the
 # documentation generator, and runeopt, the native code generator, when they
 # are built (bin/runedoc.rbc, or bin/runedoc-NAME with --host, and the same of
@@ -67,7 +68,7 @@ zshdir=$destdir$prefix/share/zsh/site-functions
 
 # ------------------------------------------------------------------ uninstall
 if [ "$uninstall" = 1 ]; then
-  rm -f "$bindir/rune" "$bindir/runevm" \
+  rm -f "$bindir/rune" "$bindir/runevm" "$bindir/runevm-new" \
         "$bindir/rune-mlton" "$bindir/rune-smlnj-legacy" "$bindir/rune-smlnj-dev" \
         "$bindir/rune-polyml" "$bindir/rune-mlkit" \
         "$bindir/runedoc" "$bindir/runedoc-mlton" "$bindir/runedoc-smlnj-legacy" \
@@ -75,7 +76,7 @@ if [ "$uninstall" = 1 ]; then
         "$bindir/runeopt" "$bindir/runeopt-mlton" "$bindir/runeopt-smlnj-legacy" \
         "$bindir/runeopt-smlnj-dev" "$bindir/runeopt-polyml" "$bindir/runeopt-mlkit"
   rm -rf "$libdir"
-  rm -f "$mandir/rune.1" "$mandir/runevm.1" "$mandir/runedoc.1" "$mandir/runeopt.1"
+  rm -f "$mandir/rune.1" "$mandir/runevm.1" "$mandir/runevm-new.1" "$mandir/runedoc.1" "$mandir/runeopt.1"
   rm -f "$bashdir/rune" "$bashdir/runedoc" "$bashdir/runeopt"
   rm -f "$zshdir/_rune" "$zshdir/_runevm" "$zshdir/_runedoc" "$zshdir/_runeopt"
   echo "uninstalled rune from $prefix"
@@ -87,6 +88,7 @@ missing=""
 need() { [ -e "$1" ] || missing="$missing $1"; }
 
 need "$root/bin/runevm"
+need "$root/bin/runevm-new"
 if [ -z "$host" ]; then
   need "$root/bin/rune.rbc"
 elif sml_for_host "$host" > /dev/null; then
@@ -115,11 +117,12 @@ copy() { # args SRC DST MODE
 mkdir -p "$bindir" "$libdir/basis" "$mandir" "$bashdir" "$zshdir"
 
 copy "$root/bin/runevm" "$bindir/runevm" 755
+copy "$root/bin/runevm-new" "$bindir/runevm-new" 755
 
 # The wrapper finds the library beside itself, so the tree can be moved.
 if [ -z "$host" ]; then
   copy "$root/bin/rune.rbc" "$libdir/rune.rbc" 644
-  printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" --heap-size %s "$d/../lib/rune/rune.rbc" --lib "$d/../lib/rune" "$@"\n' \
+  printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm-new" --heap-size %s "$d/../lib/rune/rune.rbc" --lib "$d/../lib/rune" "$@"\n' \
     "$heap" > "$bindir/rune"
   chmod 755 "$bindir/rune"
   installed=rune
@@ -148,7 +151,7 @@ doc=""
 if [ -z "$host" ]; then
   if [ -e "$root/bin/runedoc.rbc" ]; then
     copy "$root/bin/runedoc.rbc" "$libdir/runedoc.rbc" 644
-    printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" --heap-size %s "$d/../lib/rune/runedoc.rbc" --lib "$d/../lib/rune" "$@"\n' \
+    printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm-new" --heap-size %s "$d/../lib/rune/runedoc.rbc" --lib "$d/../lib/rune" "$@"\n' \
       "$heap" > "$bindir/runedoc"
     chmod 755 "$bindir/runedoc"
     doc=runedoc
@@ -181,7 +184,7 @@ if [ -e "$root/build/librune.a" ] && [ -e "$root/build/rune-offsets.s" ]; then
   if [ -z "$host" ]; then
     if [ -e "$root/bin/runeopt.rbc" ]; then
       copy "$root/bin/runeopt.rbc" "$libdir/runeopt.rbc" 644
-      printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" --heap-size %s "$d/../lib/rune/runeopt.rbc" --runtime "$d/../lib/rune/runtime" "$@"\n' \
+      printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm-new" --heap-size %s "$d/../lib/rune/runeopt.rbc" --runtime "$d/../lib/rune/runtime" "$@"\n' \
         "$heap" > "$bindir/runeopt"
       chmod 755 "$bindir/runeopt"
       opt=runeopt
@@ -231,23 +234,24 @@ for manifest in $(cd "$root/lib" && find . -name MANIFEST | sort); do
   done
 done
 
-copy "$root/man/rune.1" "$mandir/rune.1" 644
-copy "$root/man/runevm.1" "$mandir/runevm.1" 644
-copy "$root/completions/rune.bash" "$bashdir/rune" 644
-copy "$root/completions/_rune" "$zshdir/_rune" 644
-copy "$root/completions/_runevm" "$zshdir/_runevm" 644
+copy "$root/share/man/rune.1" "$mandir/rune.1" 644
+copy "$root/share/man/runevm.1" "$mandir/runevm.1" 644
+copy "$root/share/man/runevm-new.1" "$mandir/runevm-new.1" 644
+copy "$root/share/completions/rune.bash" "$bashdir/rune" 644
+copy "$root/share/completions/_rune" "$zshdir/_rune" 644
+copy "$root/share/completions/_runevm" "$zshdir/_runevm" 644
 if [ -n "$doc" ]; then
-  copy "$root/man/runedoc.1" "$mandir/runedoc.1" 644
-  copy "$root/completions/runedoc.bash" "$bashdir/runedoc" 644
-  copy "$root/completions/_runedoc" "$zshdir/_runedoc" 644
+  copy "$root/share/man/runedoc.1" "$mandir/runedoc.1" 644
+  copy "$root/share/completions/runedoc.bash" "$bashdir/runedoc" 644
+  copy "$root/share/completions/_runedoc" "$zshdir/_runedoc" 644
 fi
 if [ -n "$opt" ]; then
-  copy "$root/man/runeopt.1" "$mandir/runeopt.1" 644
-  copy "$root/completions/runeopt.bash" "$bashdir/runeopt" 644
-  copy "$root/completions/_runeopt" "$zshdir/_runeopt" 644
+  copy "$root/share/man/runeopt.1" "$mandir/runeopt.1" 644
+  copy "$root/share/completions/runeopt.bash" "$bashdir/runeopt" 644
+  copy "$root/share/completions/_runeopt" "$zshdir/_runeopt" 644
 fi
 
-echo "installed $installed${doc:+, runedoc}${opt:+, runeopt} and runevm in $prefix/bin, the basis library in $prefix/lib/rune"
+echo "installed $installed${doc:+, runedoc}${opt:+, runeopt}, runevm and runevm-new in $prefix/bin, the basis library in $prefix/lib/rune"
 if sml=$(sml_for_host "$host"); then
   echo "note: rune-$host runs with $sml"
 fi

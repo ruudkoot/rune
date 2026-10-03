@@ -6,9 +6,12 @@ source files ──► Lexer ──► Parser ──► Elaborate ──► Tran
                                                                                                              items (Code)
 .rbc ──► loader (validate) ──► interp (stack machine, prims, Cheney GC)
 
-Low ──► Regs (--target=registers) ──► register .rbc ──► vm/new's first loop
+Low ──► Regs (the default target) ──► register .rbc ──► vm/new's first loop
                                                         (bin/runevm-new, on the runtime of runevm)
 ```
+
+`rune` makes the register bytecode unless told `--target=stack`, which ends the
+pipeline in Stack and the stack `.rbc` that `bin/runevm` runs.
 
 The compiler is a classic multi-pass design in `src/`; the VM is in `vm/`.
 Every pass is a separate structure with a small interface so the pipeline can
@@ -129,11 +132,12 @@ application.
 
 The compiler is compiled by itself, and the result is what Rune ships:
 `make boot` compiles the sources with a host build (`BOOTHOST`, by default
-MLton) into `bin/rune.rbc`, which `runevm` executes as `bin/rune-boot`, and
+MLton) into `bin/rune.rbc`, which `runevm-new` executes as `bin/rune-boot`, and
 `bin/rune` names that. The host builds `bin/rune-mlton`, `bin/rune-smlnj-legacy`,
 `bin/rune-smlnj32`, `bin/rune-smlnj-dev`, `bin/rune-polyml` and `bin/rune-mlkit`
 exist to bootstrap it and to check it: `make bootstrap` verifies that the
-self-hosted compiler reproduces `bin/rune.rbc` byte for byte, and `check-cross`
+self-hosted compiler reproduces `bin/rune.rbc` byte for byte (and `bin/rune.stack.rbc`, the stack
+bytecode of the same compiler), and `check-cross`
 verifies that all seven builds agree on every test program. This works because every
 pass is deterministic (ordered maps, counter-generated stamps, reals passed
 through as text) and because the compiler sources use only what Rune itself
