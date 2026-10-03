@@ -1,0 +1,2 @@
+paraffins-lazy	600	4194304	shared/input.sml shared/paraffins.sml shared/lazy.sml shared/stream.sml paraffins-lazy/benchmark.sml shared/main.sml	11 1 expected/normal.txt	paraffins-lazy/normal.expected	expected/normal.txt
+paraffins-strict	600	4194304	shared/input.sml shared/paraffins.sml paraffins-strict/benchmark.sml shared/main.sml	11 1 expected/normal.txt	paraffins-strict/normal.expected	expected/normal.txt

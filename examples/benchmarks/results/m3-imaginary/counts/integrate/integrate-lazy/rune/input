@@ -1,0 +1,3 @@
+integrate-lazy
+10000 expected/normal.txt
+10000

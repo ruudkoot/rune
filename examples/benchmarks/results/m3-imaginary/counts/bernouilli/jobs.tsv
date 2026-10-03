@@ -1,0 +1,2 @@
+bernouilli-lazy	600	4194304	shared/input.sml shared/rational.sml shared/nofib-hash.sml shared/bernoulli-check.sml shared/lazy.sml shared/stream.sml bernouilli-lazy/benchmark.sml shared/main.sml	60 5 expected/normal.txt	bernouilli-lazy/normal.expected	expected/normal.txt
+bernouilli-strict	600	4194304	shared/input.sml shared/rational.sml shared/nofib-hash.sml shared/bernoulli-check.sml bernouilli-strict/benchmark.sml shared/main.sml	60 5 expected/normal.txt	bernouilli-strict/normal.expected	expected/normal.txt

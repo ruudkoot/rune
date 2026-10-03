@@ -1,0 +1,9 @@
+COUNT unbudgeted wheel-sieve1-lazy normal rune
+COUNT unbudgeted wheel-sieve1-lazy normal rune:opt
+COUNT unbudgeted wheel-sieve1-lazy normal rune:new
+COUNT unbudgeted wheel-sieve1-lazy normal rune:jit
+COUNT unbudgeted wheel-sieve2-lazy normal rune
+COUNT unbudgeted wheel-sieve2-lazy normal rune:opt
+COUNT unbudgeted wheel-sieve2-lazy normal rune:new
+COUNT unbudgeted wheel-sieve2-lazy normal rune:jit
+COUNT comparisons agree

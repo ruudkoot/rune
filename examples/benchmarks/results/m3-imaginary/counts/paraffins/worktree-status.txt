@@ -1,0 +1,29 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/routine.tsv
+?? examples/benchmarks/bernouilli-lazy/
+?? examples/benchmarks/bernouilli-strict/
+?? examples/benchmarks/gen_regexps-lazy/
+?? examples/benchmarks/gen_regexps-strict/
+?? examples/benchmarks/integrate-lazy/
+?? examples/benchmarks/integrate-strict/
+?? examples/benchmarks/kahan/
+?? examples/benchmarks/paraffins-lazy/
+?? examples/benchmarks/paraffins-strict/
+?? examples/benchmarks/shared/bernoulli-check.sml
+?? examples/benchmarks/shared/integrate.sml
+?? examples/benchmarks/shared/nofib-hash.sml
+?? examples/benchmarks/shared/paraffins.sml
+?? examples/benchmarks/shared/rational.sml
+?? examples/benchmarks/shared/regex.sml
+?? examples/benchmarks/shared/stream.sml
+?? examples/benchmarks/shared/wheel-check.sml
+?? examples/benchmarks/shared/x2n1.sml
+?? examples/benchmarks/wheel-sieve1-lazy/
+?? examples/benchmarks/wheel-sieve2-lazy/
+?? examples/benchmarks/x2n1-lazy/
+?? examples/benchmarks/x2n1-strict/
+?? tests/benchmarks/check-numeric-ports.sh
+?? tests/benchmarks/check-streams.sh
+?? tests/benchmarks/numeric-ports.sml
+?? tests/benchmarks/streams.sml

@@ -9,3 +9,5 @@ fft	Floating-point numerical validation.
 binary-trees	Allocation, traversal and retained trees.
 smith-normal-form	IntInf arithmetic and algebraic validation.
 nqueens	Sequential OCaml search with mutable sibling counters.
+kahan	Unsigned Word64 generation, compensated real-array updates and exact input sums.
+wheel-sieve2-lazy	Circular prime streams, delayed folds and shared span projections.

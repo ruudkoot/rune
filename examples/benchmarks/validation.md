@@ -387,3 +387,49 @@ builds. Documentation and native-code generator builds agree too. The dated
 certification above describes the compiler configuration actually used for
 those 2160 benchmark attempts; the subsequent acceptance run is retained in
 [oct03-acceptance.log](validation/oct03-acceptance.log).
+
+## M3 imaginary workloads, 2026-10-03
+
+Thirteen further ports cover kahan, x2n1, integrate, bernouilli, both wheel
+sieves, gen_regexps and paraffins, with separately named meaningful lazy/strict
+variants. All 15 workloads in the pinned nofib `imaginary` collection now have
+implementations. The suite contains 162 programs and 480 profiles; M3 remains
+in progress for spectral, shootout and GC coverage, and M4/M5/M8 are not closed.
+
+Each new port passes smoke/normal on all four Rune engines at both -O0 and -O2
+on the latest `4652d4a` base. The [latest-base ledger](results/m3-imaginary/latest-base-attempts.tsv)
+records those attempts. Original GHC programs and independent exact integer,
+rational, prime, Cartesian-product and combinatorial references agree with
+reviewed fixtures. Primary native hosts pass except legacy SML/NJ's lazy-regex
+normal hash. [The full attempt ledger](results/m3-imaginary/correctness-attempts.tsv)
+retains earlier port errors and rejected results, with unknown optimization
+settings explicit where no surviving log identifies them.
+
+Stream checks verify delayed heads, ignored tails, recursive sharing, memoized
+exceptions and shared span projections. Numerical negatives reject altered
+complete sums/corrections, complex components and final integration streams;
+exact rational and 64-bit Show/hash semantics are checked too. Symbolic tests
+show paraffin counts do not force unused tree values and range expansions retain
+order, descending endpoints and padding. These targets are reproducible through
+check-streams.sh, check-numeric-ports.sh and check-symbolic-ports.sh.
+
+Separate [count reports](results/m3-imaginary/README.md) cover the numerical,
+exact-arithmetic, wheel and symbolic variants. Allocations agree across all four
+Rune engines; stack/native and register/JIT instruction counts agree within
+their applicable pairs. Complete raw records, source/input snapshots, compiler
+identities and tool sources are retained. Count-run times are instrumented
+observations and are not headline comparisons or warmup claims.
+
+The [lazy-regex diagnosis](validation/regex-host.md) observes three different
+legacy hashes for one pure input, while all independent references and modern
+SML/NJ agree. This establishes a wrong legacy execution but does not isolate
+which GC/calling-convention defect causes it. No alternate fixture or workaround
+is accepted. The original radical and paraffin arrays remain fully validated;
+large selected fixtures are reviewed but not claimed to pass every SML engine.
+
+The bounded routine set grows from 10 to 12 programs with kahan and the Mark II
+wheel sieve. A final `make bench-smoke` validates all 480 metadata profiles and
+passes the complete routine set. The preceding full acceptance run, already
+recorded above, validated 474 profiles before the final paraffin registration;
+its compiler/runtime checks remain successful. All final added kernels have
+their explicit broader correctness checks recorded separately.

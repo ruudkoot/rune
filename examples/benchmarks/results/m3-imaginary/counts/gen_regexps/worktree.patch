@@ -1,0 +1,352 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 123fd98..f8ca1d9 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -157,6 +157,15 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [exp3_8-strict](#exp3_8-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/exp3_8) | Compute 3^n by strict Peano addition and multiplication, then force the complete unary result. |
+ | [digits-of-e1-lazy](#digits-of-e1-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/digits-of-e1) | Produce e digits with memoized continued-fraction transformations. |
+ | [digits-of-e2-lazy](#digits-of-e2-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/digits-of-e2) | Produce e digits with memoized factorial-base carry propagation. |
++| [kahan](#kahan) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/kahan) | Perform compensated summation over 100 seeded unsigned-word coordinates. |
++| [x2n1-lazy](#x2n1-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/x2n1) | Sum memoized complex roots raised to their integer orders. |
++| [x2n1-strict](#x2n1-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/x2n1) | Materialize complex root powers before summing both components. |
++| [integrate-lazy](#integrate-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/integrate) | Integrate bilinear terms through shared memoized running-total streams. |
++| [integrate-strict](#integrate-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/integrate) | Build finite numerical integration and running-total lists eagerly. |
++| [bernouilli-lazy](#bernouilli-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/bernouilli) | Compute exact Bernoulli rationals with shared power and Pascal streams. |
++| [bernouilli-strict](#bernouilli-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/bernouilli) | Compute exact Bernoulli rationals from eagerly generated finite rows. |
++| [wheel-sieve1-lazy](#wheel-sieve1-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/wheel-sieve1) | Enumerate primes with circular memoized Mark I wheel streams. |
++| [wheel-sieve2-lazy](#wheel-sieve2-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/wheel-sieve2) | Enumerate primes with the original Mark II spiral and shared lazy spans. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -240,6 +249,8 @@ The independent and negative tests are:
+ ```sh
+ sh tests/benchmarks/check-pilots.sh
+ sh tests/benchmarks/check-classic.sh
++sh tests/benchmarks/check-streams.sh
++sh tests/benchmarks/check-numeric-ports.sh
+ python3 tests/benchmarks/test-inventory.py
+ python3 scripts/benchmark-inventory.py --check
+ ```
+@@ -4119,3 +4130,265 @@ sharing and demand are source hypotheses; see [nofib literature](../literature.m
+ | smoke | `90 1 expected/smoke.txt` | `90` |
+ | normal | `90 100 expected/normal.txt` | `9000` |
+ | large | `300 100 expected/large.txt` | `30000` |
++
++## kahan
++
++Perform compensated summation over 100 seeded unsigned-word coordinates.
++
++Algorithm: retain the 100-element sum/correction arrays, outer seeds 1..n,
++xorshift steps 13/7/17, and exact (t-s)-y correction order. GHC Word is fixed
++explicitly to unsigned 64 bits. The unused final RNG value is not evaluated.
++History: individual authorship/licensing is unspecified by this source;
++retain its comments (including the SG initials) and this notice gap.
++Adaptation: STUArray Double becomes portable mutable real arrays; representation
++and unboxing therefore depend on the SML compiler. Word64.toLargeInt followed
++by Real.fromLargeInt preserves unsigned input conversion. The driver observes
++all sums and checks correction bounds instead of merely forcing the array.
++Profiles: 4/15000/150000 vectors. Large preserves upstream FAST; upstream
++normal 1500000 and slow 7500000 remain recorded, not certified profiles.
++Validation: independent Python unbounded-integer xorshift sums supply all 100
++exact totals; an unchanged GHC kernel with a read-only sum/correction observer
++agrees. Coordinate zero is exact with zero compensation at these sizes.
++For other coordinates use |s-round(exact)| <= 1024*n + 4*u*abs(exact), u=2^-52.
++The first term bounds conversion rounding of n unsigned 64-bit inputs; the
++second covers compensated accumulation and target conversion. Corrections
++must be finite and bounded by 2*u*(abs(s)+2^64). These are conservative selected
++profile checks, not a proof for arbitrary inputs or a licence to reassociate
++(t-s)-y. Deliberately perturbed sum/correction states must be rejected.
++Performance: array updates, real representation, word operations, conversion
++and GC are source-derived diagnostic hypotheses until separately measured.
++Reference: Kahan, Further Remarks on Reducing Truncation Errors (1965),
++https://doi.org/10.1145/363707.363723; the pinned nofib source and suite survey.
++
++[Complete provenance and adaptations](kahan/PROVENANCE.md).
++
++## x2n1-lazy
++
++Sum memoized complex roots raised to their integer orders.
++
++Algorithm: for n=1..range evaluate mkPolar 1 (2*pi/n)^n, then left-sum.
++Complex components are strict, as in Data.Complex; list heads/spines are
++memoized and consumed incrementally. The common helper preserves multiplication
++and exponentiation order from GHC 9.4.7 base-4.17.2.0, including the f/g positive
++power loop. Retain those library sources and their BSD licence.
++History: Lennart Augustsson, December 1992; the source preserves his letter
++to Will Partain explaining the benchmark's complex-number motivation.
++Variants: strict computes the same values/order into an eager finite list
++before summation. This changes evaluation and retention, so names remain
++separate; both share one arithmetic kernel. No GC/compiler causal claim is made.
++Adaptation: rectangular pairs replace strict Complex Double, explicit memoized
++nodes replace lazy lists, and the driver observes both real and imaginary
++components rather than only rounding the final real component.
++Profiles: 64/10000/1000000 roots; large preserves upstream FAST, while original
++normal 8000000 and slow 30000000 remain recorded but unexecuted.
++Validation: each term is finite and within 16*u*n of (1,0); each final component
++is within 32*u*range^2 of (range,0), u=2^-52. The final rounded real count must
++also equal range. These conservative budgets cover input/trigonometric and
++repeated multiplication/addition rounding on the selected positive ranges;
++negative tests reject perturbations and nonfinite values. Original GHC output
++agrees on all selected profiles. Reference: Augustsson's original letter,
++GHC base sources and the nofib survey; unboxing, calls and retention are
++source-derived hypotheses until measured.
++
++[Complete provenance and adaptations](x2n1-lazy/PROVENANCE.md).
++
++## x2n1-strict
++
++Materialize complex root powers before summing both components.
++
++See ../x2n1-lazy/PROVENANCE.md for authorship, history, numerical checks,
++profiles and references. This separately named strict variant preserves the
++same complex arithmetic and power order via ../shared/x2n1.sml. All root
++powers are computed into an ordinary finite list before summation. This
++changes allocation/retention and evaluation order relative to demanded list
++nodes, while retaining the same element and accumulation order. Both components
++are consumed and checked. Strict/lazy results agree on smoke and normal.
++The original letter, source, Makefile and fixtures are retained here too.
++
++[Complete provenance and adaptations](x2n1-strict/PROVENANCE.md).
++
++## integrate-lazy
++
++Integrate bilinear terms through shared memoized running-total streams.
++
++Algorithm: preserve two nested nine-point trapezoidal sums for x*y on
++[0,u] x [0,2u], the analytical fourth powers, shared infinite integer inputs,
++self-referential running totals, and sum of squared differences. The nine
++finite samples use ordinary SML lists: every sample is demanded and used
++once, in unchanged left-sum order. Laziness and sharing of the infinite
++inputs and feedback totals use explicit memoized heads/spines and tied roots.
++History: no individual author/licence notice is supplied; retain that gap.
++Variants: strict projects the selected finite range, eagerly builds its lists
++and cumulative totals, and omits infinite CAF memoization. It preserves
++term/arithmetic order but changes evaluation, allocation and retained data.
++Adaptation: explicit delays make call-by-need portable in SML97. Numerical
++functions have explicit real types across hosts. Replace the True/False
++output switch with an always-active checker, fixed range and reference path.
++Profiles: 32/10000/100000 terms; large preserves original FAST. Original
++normal 1000000 and slow 5000000 are retained but not selected/certified.
++Validation: original GHC gives accumulated squared error exactly 0 on these
++profiles, so their scalar error bound is 0. Also check both final cumulative
++streams against the independent exact sum of fourth powers,
++n(n+1)(2n+1)(3n^2+3n-1)/30. Their bound is 2*gamma*abs(exact), where
++gamma=(n+200)*u/(1-(n+200)*u), u=2^-52; 200 covers the fixed numerical kernel
++and target conversion. All states must be finite. Perturbed scalar and total
++states must be rejected. This is selected-profile evidence, not an assertion
++that arbitrary ranges/platforms have zero accumulated numerical error.
++Performance: feedback sharing, higher-order calls, scalar representation and
++retained prefixes are source hypotheses until measured. References: pinned
++nofib source, its analytical bilinear integral, and the suite literature survey.
++
++[Complete provenance and adaptations](integrate-lazy/PROVENANCE.md).
++
++## integrate-strict
++
++Build finite numerical integration and running-total lists eagerly.
++
++See ../integrate-lazy/PROVENANCE.md for the algorithm, authorship gap,
++profiles, exact polynomial oracle, numerical bounds and references.
++This strict finite projection uses the same ../shared/integrate.sml kernel,
++then builds ordinary input, integral, fourth-power, cumulative-total and
++squared-error lists before summation. It omits infinite memoized CAFs and
++changes retention/evaluation; the selected values and arithmetic order are
++unchanged. Both final cumulative streams and scalar error are consumed and
++validated. Preserve the original source, Makefile and fixture here too.
++
++[Complete provenance and adaptations](integrate-strict/PROVENANCE.md).
++
++## bernouilli-lazy
++
++Compute exact Bernoulli rationals with shared power and Pascal streams.
++
++Algorithm: preserve the alternating power-sum formula, globally shared
++infinite power rows and Pascal rows, signed powers, normalized arbitrary
++precision ratios, and 64-bit nofib Show hashing. Numerators/denominators are
++IntInf; ratio construction/addition follow GHC 9.4.7's reduce/gcd/cross-product
++order. The spelling bernouilli is the established nofib name; Bernoulli is
++the mathematical alias. No individual author/licence is supplied; the source
++records a March 2003 Haskell-cafe discussion and its own GMP-performance caveat.
++Variants: strict builds needed finite power/Pascal rows eagerly per repetition
++and drops the global memoized cache. The recurrence and exact arithmetic are
++preserved; forcing, caching, recomputation and retention differ materially.
++Adaptation: memoized list heads/spines and explicitly tied roots preserve
++feedback sharing; SML IntInf replaces Integer/Ratio. Haskell Show syntax,
++including parentheses around negative numerators, and wrapping 64-bit hashes
++are retained. SML strings materialize the shown characters; record this
++representation change. Replace 500 printed hashes with checked computations
++and one consumed repetition sum. Every rational and hash is validated.
++Profiles: (8,1)/(60,5)/(180,500). Normal uses original FAST size; large uses
++original NORM and 500 repetitions. Original SLOW size 320 remains recorded.
++Validation: independent Akiyama-Tanigawa rational recurrence agrees with
++unchanged GHC numerator/denominator observers at 8/60/180. The 60-index hash
++also agrees with the pinned original fast fixture; other hashes use an
++independent 64-bit polynomial fold over reviewed Show strings. Performance
++questions about sharing, gcd, big integers and allocation remain hypotheses
++until measured. References: original source/discussion note, pinned GHC Ratio
++operations, nofib survey. Large SML execution is not universally claimed.
++
++[Complete provenance and adaptations](bernouilli-lazy/PROVENANCE.md).
++
++## bernouilli-strict
++
++Compute exact Bernoulli rationals from eagerly generated finite rows.
++
++See ../bernouilli-lazy/PROVENANCE.md for history, alias, source notice gap,
++profiles, exact references, ratio arithmetic and Show/hash semantics.
++The strict variant uses ordinary finite power and Pascal lists and recomputes
++them per repetition, omitting the lazy port's shared global caches. It keeps
++the same multiply-by-base recurrence and signed power-sum formula, with
++identical normalized IntInf ratio operations in ../shared/rational.sml.
++Demand, recomputation, allocation and retained data therefore differ; this
++is a separately named strict workload, not a claim about GHC's optimized
++execution. Full rational values and original 64-bit hashes are checked.
++
++[Complete provenance and adaptations](bernouilli-strict/PROVENANCE.md).
++
++## wheel-sieve1-lazy
++
++Enumerate primes with circular memoized Mark I wheel streams.
++
++nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/wheel-sieve1/Main.hs`.
++
++Colin Runciman, March 1996. The source cites his 1997 functional pearl
++[Lazy wheel sieves and spirals of primes](https://doi.org/10.1017/S0956796897002670).
++Keep the established Mark I/Mark II variant distinction. Complete source,
++Makefile and available fixtures are retained with individual SHA256 identities;
++the program supplies no explicit individual licence notice, recorded as a gap.
++
++Both ports preserve circular prime dependencies, delayed list heads and spines,
++wheel residues and periods, prime squares, bounds, and indexed result selection.
++The helper retains lazy folds whose branch may ignore the remainder and a
++shared lazy span whose prefix can be consumed without forcing the full split.
++There is no strict approximation: prematurely forcing these infinite/circular
++structures changes termination and the algorithm. IntInf replaces machine Int
++for wheel arithmetic and n^2/n^4 bounds, preventing host-width overflow.
++Selected guard values fit the original GHC 64-bit range; this representation
++change adds arbitrary-precision arithmetic costs, explicitly part of the port.
++
++The original 100 printed results become separately selected repetition counts
++and one consumed sum. Each invocation builds its own prime knot, while sharing
++within that knot is preserved. Smoke/normal use one invocation; large preserves
++100. Zero-based prime indices are unchanged. Independent finite Eratosthenes
++fixtures agree with the original GHC kernel on all selected inputs. All actual
++prime values are checked. Incorrect values, loss of sharing or excessive forcing
++are rejected by result and stream-semantic checks.
++
++The paper supports the algorithm distinction and the need to avoid black holes.
++Effects of memoization, bigint representation, retention and compiler
++specialization are source-derived hypotheses until measured on these ports.
++See [the literature survey](../literature.md).
++
++Mark I retains the wheel rotations and divisibility filters. The leading
++offset is available before the upper-bound expression reads the prime stream,
++so the initial prime can be produced without recursive forcing. The original
++self-reference in the wheel stream is retained. Profiles are (128,1), (3000,1)
++and (12000,100); normal/large preserve original FAST/NORM indices. Original SLOW
++40000 is recorded in the retained Makefile, not claimed as executed.
++
++[Complete provenance](wheel-sieve1-lazy/PROVENANCE.md).
++
++## wheel-sieve2-lazy
++
++Enumerate primes with the original Mark II spiral and shared lazy spans.
++
++nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `imaginary/wheel-sieve2/Main.hs`.
++
++Colin Runciman, March 1996. The source cites his 1997 functional pearl
++[Lazy wheel sieves and spirals of primes](https://doi.org/10.1017/S0956796897002670).
++Keep the established Mark I/Mark II variant distinction. Complete source,
++Makefile and available fixtures are retained with individual SHA256 identities;
++the program supplies no explicit individual licence notice, recorded as a gap.
++
++Both ports preserve circular prime dependencies, delayed list heads and spines,
++wheel residues and periods, prime squares, bounds, and indexed result selection.
++The helper retains lazy folds whose branch may ignore the remainder and a
++shared lazy span whose prefix can be consumed without forcing the full split.
++There is no strict approximation: prematurely forcing these infinite/circular
++structures changes termination and the algorithm. IntInf replaces machine Int
++for wheel arithmetic and n^2/n^4 bounds, preventing host-width overflow.
++Selected guard values fit the original GHC 64-bit range; this representation
++change adds arbitrary-precision arithmetic costs, explicitly part of the port.
++
++The original 100 printed results become separately selected repetition counts
++and one consumed sum. Each invocation builds its own prime knot, while sharing
++within that knot is preserved. Smoke/normal use one invocation; large preserves
++100. Zero-based prime indices are unchanged. Independent finite Eratosthenes
++fixtures agree with the original GHC kernel on all selected inputs. All actual
++prime values are checked. Incorrect values, loss of sharing or excessive forcing
++are rejected by result and stream-semantic checks.
++
++The paper supports the algorithm distinction and the need to avoid black holes.
++Effects of memoization, bigint representation, retention and compiler
++specialization are source-derived hypotheses until measured on these ports.
++See [the literature survey](../literature.md).
++
++Mark II retains the spiral's turn0/turn/roll functions, branch replacement
++by the next spiral, dropWhile alignment, and span-based residue split. In
++particular the initial candidate 2 is emitted before forcing its square bound.
++The source's recursively re-created wheel stream is retained rather than
++replacing it with Mark I's single self-referential wheel root. Profiles are
++(32,1), (700,1), (2000,100); normal/large preserve original FAST/NORM indices.
++Original SLOW 4000 and its Haskell 300 MiB runtime heap setting are recorded;
++our manifest's standard per-profile limits are separately explicit.
++
++[Complete provenance](wheel-sieve2-lazy/PROVENANCE.md).
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 4e05c16..5746b4b 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -440,3 +440,42 @@ digits-of-e1-lazy	large	nofib	imaginary/digits-of-e1	150 100 expected/large.txt
+ digits-of-e2-lazy	smoke	nofib	imaginary/digits-of-e2	90 1 expected/smoke.txt	digits-of-e2-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,digits-of-e2-lazy/benchmark.sml,shared/main.sml	30	1048576	intinf,streams,lazy-sharing	expected/smoke.txt	exact	implemented
+ digits-of-e2-lazy	normal	nofib	imaginary/digits-of-e2	90 100 expected/normal.txt	digits-of-e2-lazy/normal.expected	shared/input.sml,shared/lazy.sml,digits-of-e2-lazy/benchmark.sml,shared/main.sml	600	4194304	intinf,streams,lazy-sharing	expected/normal.txt	exact	implemented
+ digits-of-e2-lazy	large	nofib	imaginary/digits-of-e2	300 100 expected/large.txt	digits-of-e2-lazy/large.expected	shared/input.sml,shared/lazy.sml,digits-of-e2-lazy/benchmark.sml,shared/main.sml	3600	8388608	intinf,streams,lazy-sharing	expected/large.txt	exact	implemented
++kahan	smoke	nofib	imaginary/kahan	4 expected/smoke.txt	kahan/smoke.expected	shared/input.sml,kahan/benchmark.sml,shared/main.sml	30	1048576	arrays,numerical,word64,compensated-summation	expected/smoke.txt	checked-numerical	implemented
++kahan	normal	nofib	imaginary/kahan	15000 expected/normal.txt	kahan/normal.expected	shared/input.sml,kahan/benchmark.sml,shared/main.sml	600	4194304	arrays,numerical,word64,compensated-summation	expected/normal.txt	checked-numerical	implemented
++kahan	large	nofib	imaginary/kahan	150000 expected/large.txt	kahan/large.expected	shared/input.sml,kahan/benchmark.sml,shared/main.sml	3600	8388608	arrays,numerical,word64,compensated-summation	expected/large.txt	checked-numerical	implemented
++x2n1-lazy	smoke	nofib	imaginary/x2n1	64	x2n1-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/x2n1.sml,x2n1-lazy/benchmark.sml,shared/main.sml	30	1048576	numerical,complex,lazy,streams	-	checked-numerical	implemented
++x2n1-lazy	normal	nofib	imaginary/x2n1	10000	x2n1-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/x2n1.sml,x2n1-lazy/benchmark.sml,shared/main.sml	600	4194304	numerical,complex,lazy,streams	-	checked-numerical	implemented
++x2n1-lazy	large	nofib	imaginary/x2n1	1000000	x2n1-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/x2n1.sml,x2n1-lazy/benchmark.sml,shared/main.sml	3600	8388608	numerical,complex,lazy,streams	-	checked-numerical	implemented
++x2n1-strict	smoke	nofib	imaginary/x2n1	64	x2n1-strict/smoke.expected	shared/input.sml,shared/x2n1.sml,x2n1-strict/benchmark.sml,shared/main.sml	30	1048576	numerical,complex,strict,lists	-	checked-numerical	implemented
++x2n1-strict	normal	nofib	imaginary/x2n1	10000	x2n1-strict/normal.expected	shared/input.sml,shared/x2n1.sml,x2n1-strict/benchmark.sml,shared/main.sml	600	4194304	numerical,complex,strict,lists	-	checked-numerical	implemented
++x2n1-strict	large	nofib	imaginary/x2n1	1000000	x2n1-strict/large.expected	shared/input.sml,shared/x2n1.sml,x2n1-strict/benchmark.sml,shared/main.sml	3600	8388608	numerical,complex,strict,lists	-	checked-numerical	implemented
++integrate-lazy	smoke	nofib	imaginary/integrate	32 expected/smoke.txt	integrate-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/integrate.sml,integrate-lazy/benchmark.sml,shared/main.sml	30	1048576	numerical,lazy,sharing,streams	expected/smoke.txt	checked-numerical	implemented
++integrate-lazy	normal	nofib	imaginary/integrate	10000 expected/normal.txt	integrate-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/integrate.sml,integrate-lazy/benchmark.sml,shared/main.sml	600	4194304	numerical,lazy,sharing,streams	expected/normal.txt	checked-numerical	implemented
++integrate-lazy	large	nofib	imaginary/integrate	100000 expected/large.txt	integrate-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/integrate.sml,integrate-lazy/benchmark.sml,shared/main.sml	3600	8388608	numerical,lazy,sharing,streams	expected/large.txt	checked-numerical	implemented
++integrate-strict	smoke	nofib	imaginary/integrate	32 expected/smoke.txt	integrate-strict/smoke.expected	shared/input.sml,shared/integrate.sml,integrate-strict/benchmark.sml,shared/main.sml	30	1048576	numerical,strict,lists	expected/smoke.txt	checked-numerical	implemented
++integrate-strict	normal	nofib	imaginary/integrate	10000 expected/normal.txt	integrate-strict/normal.expected	shared/input.sml,shared/integrate.sml,integrate-strict/benchmark.sml,shared/main.sml	600	4194304	numerical,strict,lists	expected/normal.txt	checked-numerical	implemented
++integrate-strict	large	nofib	imaginary/integrate	100000 expected/large.txt	integrate-strict/large.expected	shared/input.sml,shared/integrate.sml,integrate-strict/benchmark.sml,shared/main.sml	3600	8388608	numerical,strict,lists	expected/large.txt	checked-numerical	implemented
++bernouilli-lazy	smoke	nofib	imaginary/bernouilli	8 1 expected/smoke.txt	bernouilli-lazy/smoke.expected	shared/input.sml,shared/rational.sml,shared/nofib-hash.sml,shared/bernoulli-check.sml,shared/lazy.sml,shared/stream.sml,bernouilli-lazy/benchmark.sml,shared/main.sml	30	1048576	arbitrary-precision,rational,lazy,sharing	expected/smoke.txt	exact	implemented
++bernouilli-lazy	normal	nofib	imaginary/bernouilli	60 5 expected/normal.txt	bernouilli-lazy/normal.expected	shared/input.sml,shared/rational.sml,shared/nofib-hash.sml,shared/bernoulli-check.sml,shared/lazy.sml,shared/stream.sml,bernouilli-lazy/benchmark.sml,shared/main.sml	600	4194304	arbitrary-precision,rational,lazy,sharing	expected/normal.txt	exact	implemented
++bernouilli-lazy	large	nofib	imaginary/bernouilli	180 500 expected/large.txt	bernouilli-lazy/large.expected	shared/input.sml,shared/rational.sml,shared/nofib-hash.sml,shared/bernoulli-check.sml,shared/lazy.sml,shared/stream.sml,bernouilli-lazy/benchmark.sml,shared/main.sml	3600	8388608	arbitrary-precision,rational,lazy,sharing	expected/large.txt	exact	implemented
++bernouilli-strict	smoke	nofib	imaginary/bernouilli	8 1 expected/smoke.txt	bernouilli-strict/smoke.expected	shared/input.sml,shared/rational.sml,shared/nofib-hash.sml,shared/bernoulli-check.sml,bernouilli-strict/benchmark.sml,shared/main.sml	30	1048576	arbitrary-precision,rational,strict,sharing	expected/smoke.txt	exact	implemented
++bernouilli-strict	normal	nofib	imaginary/bernouilli	60 5 expected/normal.txt	bernouilli-strict/normal.expected	shared/input.sml,shared/rational.sml,shared/nofib-hash.sml,shared/bernoulli-check.sml,bernouilli-strict/benchmark.sml,shared/main.sml	600	4194304	arbitrary-precision,rational,strict,sharing	expected/normal.txt	exact	implemented
++bernouilli-strict	large	nofib	imaginary/bernouilli	180 500 expected/large.txt	bernouilli-strict/large.expected	shared/input.sml,shared/rational.sml,shared/nofib-hash.sml,shared/bernoulli-check.sml,bernouilli-strict/benchmark.sml,shared/main.sml	3600	8388608	arbitrary-precision,rational,strict,sharing	expected/large.txt	exact	implemented
++wheel-sieve1-lazy	smoke	nofib	imaginary/wheel-sieve1	128 1 727	wheel-sieve1-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/wheel-check.sml,wheel-sieve1-lazy/benchmark.sml,shared/main.sml	30	1048576	lazy,sharing,streams,primes,arbitrary-precision	-	exact	implemented
++wheel-sieve1-lazy	normal	nofib	imaginary/wheel-sieve1	3000 1 27457	wheel-sieve1-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/wheel-check.sml,wheel-sieve1-lazy/benchmark.sml,shared/main.sml	600	4194304	lazy,sharing,streams,primes,arbitrary-precision	-	exact	implemented
++wheel-sieve1-lazy	large	nofib	imaginary/wheel-sieve1	12000 100 128201	wheel-sieve1-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/wheel-check.sml,wheel-sieve1-lazy/benchmark.sml,shared/main.sml	3600	8388608	lazy,sharing,streams,primes,arbitrary-precision	-	exact	implemented
++wheel-sieve2-lazy	smoke	nofib	imaginary/wheel-sieve2	32 1 137	wheel-sieve2-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/wheel-check.sml,wheel-sieve2-lazy/benchmark.sml,shared/main.sml	30	1048576	lazy,sharing,streams,primes,arbitrary-precision	-	exact	implemented
++wheel-sieve2-lazy	normal	nofib	imaginary/wheel-sieve2	700 1 5281	wheel-sieve2-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/wheel-check.sml,wheel-sieve2-lazy/benchmark.sml,shared/main.sml	600	4194304	lazy,sharing,streams,primes,arbitrary-precision	-	exact	implemented
++wheel-sieve2-lazy	large	nofib	imaginary/wheel-sieve2	2000 100 17393	wheel-sieve2-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/wheel-check.sml,wheel-sieve2-lazy/benchmark.sml,shared/main.sml	3600	8388608	lazy,sharing,streams,primes,arbitrary-precision	-	exact	implemented
++gen_regexps-lazy	smoke	nofib	imaginary/gen_regexps	[a-b]<09-10> 1 2505555599190184844 12	gen_regexps-lazy/smoke.expected	shared/input.sml,shared/regex.sml,shared/lazy.sml,shared/stream.sml,gen_regexps-lazy/benchmark.sml,shared/main.sml	30	1048576	symbolic,strings,word64,lazy	-	exact	implemented
++gen_regexps-lazy	normal	nofib	imaginary/gen_regexps	[a-l][a-l][a-l][a-l][1-1]abcdefghijklmnopqrstuvwxy 1 ~1989802086544331776 622080	gen_regexps-lazy/normal.expected	shared/input.sml,shared/regex.sml,shared/lazy.sml,shared/stream.sml,gen_regexps-lazy/benchmark.sml,shared/main.sml	600	4194304	symbolic,strings,word64,lazy	-	exact	implemented
++gen_regexps-lazy	large	nofib	imaginary/gen_regexps	[a-l][a-l][a-l][a-l][1-5]abcdefghijklmnopqrstuvwxy 500 ~5842250375086935552 3110400	gen_regexps-lazy/large.expected	shared/input.sml,shared/regex.sml,shared/lazy.sml,shared/stream.sml,gen_regexps-lazy/benchmark.sml,shared/main.sml	3600	8388608	symbolic,strings,word64,lazy	-	exact	implemented
++gen_regexps-strict	smoke	nofib	imaginary/gen_regexps	[a-b]<09-10> 1 2505555599190184844 12	gen_regexps-strict/smoke.expected	shared/input.sml,shared/regex.sml,gen_regexps-strict/benchmark.sml,shared/main.sml	30	1048576	symbolic,strings,word64,strict	-	exact	implemented
++gen_regexps-strict	normal	nofib	imaginary/gen_regexps	[a-l][a-l][a-l][a-l][1-1]abcdefghijklmnopqrstuvwxy 1 ~1989802086544331776 622080	gen_regexps-strict/normal.expected	shared/input.sml,shared/regex.sml,gen_regexps-strict/benchmark.sml,shared/main.sml	600	4194304	symbolic,strings,word64,strict	-	exact	implemented
++gen_regexps-strict	large	nofib	imaginary/gen_regexps	[a-l][a-l][a-l][a-l][1-5]abcdefghijklmnopqrstuvwxy 500 ~5842250375086935552 3110400	gen_regexps-strict/large.expected	shared/input.sml,shared/regex.sml,gen_regexps-strict/benchmark.sml,shared/main.sml	3600	8388608	symbolic,strings,word64,strict	-	exact	implemented
++paraffins-lazy	smoke	nofib	imaginary/paraffins	4 1 expected/smoke.txt	paraffins-lazy/smoke.expected	shared/input.sml,shared/paraffins.sml,shared/lazy.sml,shared/stream.sml,paraffins-lazy/benchmark.sml,shared/main.sml	30	1048576	symbolic,graphs,sharing,lazy	expected/smoke.txt	exact	implemented
++paraffins-lazy	normal	nofib	imaginary/paraffins	11 1 expected/normal.txt	paraffins-lazy/normal.expected	shared/input.sml,shared/paraffins.sml,shared/lazy.sml,shared/stream.sml,paraffins-lazy/benchmark.sml,shared/main.sml	600	4194304	symbolic,graphs,sharing,lazy	expected/normal.txt	exact	implemented
++paraffins-lazy	large	nofib	imaginary/paraffins	14 1000 expected/large.txt	paraffins-lazy/large.expected	shared/input.sml,shared/paraffins.sml,shared/lazy.sml,shared/stream.sml,paraffins-lazy/benchmark.sml,shared/main.sml	3600	8388608	symbolic,graphs,sharing,lazy	expected/large.txt	exact	implemented
++paraffins-strict	smoke	nofib	imaginary/paraffins	4 1 expected/smoke.txt	paraffins-strict/smoke.expected	shared/input.sml,shared/paraffins.sml,paraffins-strict/benchmark.sml,shared/main.sml	30	1048576	symbolic,graphs,sharing,strict	expected/smoke.txt	exact	implemented
++paraffins-strict	normal	nofib	imaginary/paraffins	11 1 expected/normal.txt	paraffins-strict/normal.expected	shared/input.sml,shared/paraffins.sml,paraffins-strict/benchmark.sml,shared/main.sml	600	4194304	symbolic,graphs,sharing,strict	expected/normal.txt	exact	implemented
++paraffins-strict	large	nofib	imaginary/paraffins	14 1000 expected/large.txt	paraffins-strict/large.expected	shared/input.sml,shared/paraffins.sml,paraffins-strict/benchmark.sml,shared/main.sml	3600	8388608	symbolic,graphs,sharing,strict	expected/large.txt	exact	implemented
+diff --git a/examples/benchmarks/routine.tsv b/examples/benchmarks/routine.tsv
+index 5e28e75..53a8387 100644
+--- a/examples/benchmarks/routine.tsv
++++ b/examples/benchmarks/routine.tsv
+@@ -9,3 +9,5 @@ fft	Floating-point numerical validation.
+ binary-trees	Allocation, traversal and retained trees.
+ smith-normal-form	IntInf arithmetic and algebraic validation.
+ nqueens	Sequential OCaml search with mutable sibling counters.
++kahan	Unsigned Word64 generation, compensated real-array updates and exact input sums.
++wheel-sieve2-lazy	Circular prime streams, delayed folds and shared span projections.
