@@ -15,8 +15,8 @@
 
    This branch's layout: the tagged 8-byte word (below), and an object with
    an 8-byte header (kind, pad, contag, len) and a payload of words, or of
-   bytes for a string, rounded up to 16 bytes and at least 16 (a forwarding
-   pointer fits). Included by vm.h. */
+   bytes for a string, rounded up to a word and at least one (a forwarding
+   pointer fits): the least object is 16 bytes. Included by vm.h. */
 #ifndef RUNE_VALUE_H
 #define RUNE_VALUE_H
 
@@ -217,10 +217,11 @@ static inline int obj_has_fields(const Obj *o) { return o->kind != K_STRING && o
 /* ---- sizes ---- */
 /* the payload of an object, rounded to what the heap allocates: PAYLOAD_MIN
    bytes at least, so that a forwarding pointer fits, and a multiple of
-   PAYLOAD_ALIGN (runeopt's image reader has the same numbers through
-   src/opt/x64_layout.sml) */
-#define PAYLOAD_ALIGN 16
-#define PAYLOAD_MIN 16
+   PAYLOAD_ALIGN: a word each under this layout, so that an object is its
+   header and its fields, 8-aligned, and the least one 16 bytes (runeopt's
+   image reader has the same numbers through src/opt/x64_layout.sml) */
+#define PAYLOAD_ALIGN 8
+#define PAYLOAD_MIN 8
 static inline size_t payload_size(size_t bytes) {
     size_t r = (bytes + PAYLOAD_ALIGN - 1) & ~(size_t)(PAYLOAD_ALIGN - 1);
     return r < PAYLOAD_MIN ? PAYLOAD_MIN : r;

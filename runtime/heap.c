@@ -1,6 +1,6 @@
 /* Cheney semispace copying collector. Objects are 8-byte aligned; the payload
-   is rounded up to a multiple of 16 bytes and is at least 16 bytes so that a
-   forwarding pointer always fits. */
+   is rounded up to what runtime/value.h says (a word under this layout) and
+   is at least that, so that a forwarding pointer always fits. */
 #include "vm.h"
 #include "sys/sys.h"
 #include <string.h>
@@ -128,9 +128,11 @@ static Obj *copy_obj(Obj *o) {
        knows is a few moves, where one of any size is a call of memcpy, which
        was 4.5% of the time of the compiler compiling itself natively. */
     switch (size) {
-    /* the word: one or two fields, three or four, five or six */
+    case OBJ_SIZE_FIELDS(1): memcpy(n, o, OBJ_SIZE_FIELDS(1)); break;
     case OBJ_SIZE_FIELDS(2): memcpy(n, o, OBJ_SIZE_FIELDS(2)); break;
+    case OBJ_SIZE_FIELDS(3): memcpy(n, o, OBJ_SIZE_FIELDS(3)); break;
     case OBJ_SIZE_FIELDS(4): memcpy(n, o, OBJ_SIZE_FIELDS(4)); break;
+    case OBJ_SIZE_FIELDS(5): memcpy(n, o, OBJ_SIZE_FIELDS(5)); break;
     case OBJ_SIZE_FIELDS(6): memcpy(n, o, OBJ_SIZE_FIELDS(6)); break;
     default: memcpy(n, o, size); break;
     }
