@@ -178,6 +178,16 @@ inventory entry.
 | [gen_regexps-strict](#gen_regexps-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/gen_regexps) | Materialize range-expansion character lists before the 64-bit hash fold. |
 | [paraffins-lazy](#paraffins-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/paraffins) | Count shared alkyl radicals and paraffin centres without forcing unused tree heads. |
 | [paraffins-strict](#paraffins-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/paraffins) | Construct finite radical and paraffin object lists before counting them. |
+| [mutstore1](#mutstore1) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/mutstore1) | Retain immutable vectors of mutable list buckets across repeated insertions. |
+| [mutstore2](#mutstore2) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/mutstore2) | Retain mutable arrays of list buckets across repeated insertions. |
+| [gc_bench](#gc_bench) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/gc_bench) | Build mutable and immutable trees while retaining trees and a numerical array. |
+| [pidigits-nofib-lazy](#pidigits-nofib-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/shootout/pidigits) | Generate and verify formatted pi digit blocks with memoized coefficients. |
+| [pidigits-nofib-strict](#pidigits-nofib-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/shootout/pidigits) | Generate and verify pi digit blocks with strict arbitrary-precision state. |
+| [hash](#hash) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/hash) | Grow a mutable bucket table with the original high-word hash and stable redistribution. |
+| [lcss-lazy](#lcss-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/lcss) | Compute Hirschberg LCSS through delayed row values and a lazy result suffix. |
+| [lcss-strict](#lcss-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/lcss) | Compute Hirschberg LCSS with eagerly evaluated dynamic-programming rows. |
+| [gcd-lazy](#gcd-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/gcd) | Evaluate extended Euclid over a shared lazy grid with deferred coefficients. |
+| [gcd-strict](#gcd-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/gcd) | Evaluate extended Euclid over eagerly materialized pair and result lists. |
 
 ## Running and interpreting checks
 
@@ -264,6 +274,8 @@ sh tests/benchmarks/check-classic.sh
 sh tests/benchmarks/check-streams.sh
 sh tests/benchmarks/check-numeric-ports.sh
 sh tests/benchmarks/check-symbolic-ports.sh
+sh tests/benchmarks/check-gc-ports.sh
+sh tests/benchmarks/check-extended-gcd.sh
 python3 tests/benchmarks/test-inventory.py
 python3 scripts/benchmark-inventory.py --check
 python3 tests/benchmarks/latency-oracle.py --check
@@ -4661,3 +4673,356 @@ sharing, demand, object lifetimes and compiler elimination are hypotheses until
 measured on these ports. Large execution is not universally claimed.
 
 [Complete provenance](paraffins-strict/PROVENANCE.md).
+
+## mutstore1
+
+Retain immutable vectors of mutable list buckets across repeated insertions.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `gc/mutstore1/Main.hs` and Store1.hs.
+No individual author or licence notice is supplied; keep that gap explicit.
+Original source/build manifests and their SHA256 identities are retained.
+
+Preserve ten buckets per store, bucket index 3, inserted value 17, five insertions
+per testSequence and five full passes over the retained store list. Variant 1
+uses an immutable vector of references to lists; variant 2 a mutable array of
+lists. These are distinct layout/update workloads, not duplicate implementations.
+IORef/IOArray operations become ordinary SML refs/arrays with the same state and
+traversal order. All stores remain live through all passes and the final checker.
+SML integer widths differ from GHC's 64-bit Int, but every selected value/count
+fits supported widths; no wrapping arithmetic is required.
+
+The originally discarded state is now observed: every bucket has its expected
+length and all values are 17, then actual store/entry/value totals are consumed.
+Original GHC observers agree with the independent 25*n and 425*n arithmetic
+checks. This added scan is included in the port's work and extends retention
+through validation. Selected store counts are 4/1000/100000; large preserves
+original FAST. Original NORMAL/SLOW and heap settings remain in the Makefiles.
+Large SML execution is not universally claimed. Allocation, write costs and
+retained lists are source-derived hypotheses until separately measured.
+References: pinned nofib source and suite survey; compare the two source layouts.
+
+[Complete provenance](mutstore1/PROVENANCE.md).
+
+## mutstore2
+
+Retain mutable arrays of list buckets across repeated insertions.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `gc/mutstore2/Main.hs` and Store2.hs.
+No individual author or licence notice is supplied; keep that gap explicit.
+Original source/build manifests and their SHA256 identities are retained.
+
+Preserve ten buckets per store, bucket index 3, inserted value 17, five insertions
+per testSequence and five full passes over the retained store list. Variant 1
+uses an immutable vector of references to lists; variant 2 a mutable array of
+lists. These are distinct layout/update workloads, not duplicate implementations.
+IORef/IOArray operations become ordinary SML refs/arrays with the same state and
+traversal order. All stores remain live through all passes and the final checker.
+SML integer widths differ from GHC's 64-bit Int, but every selected value/count
+fits supported widths; no wrapping arithmetic is required.
+
+The originally discarded state is now observed: every bucket has its expected
+length and all values are 17, then actual store/entry/value totals are consumed.
+Original GHC observers agree with the independent 25*n and 425*n arithmetic
+checks. This added scan is included in the port's work and extends retention
+through validation. Selected store counts are 4/1000/100000; large preserves
+original FAST. Original NORMAL/SLOW and heap settings remain in the Makefiles.
+Large SML execution is not universally claimed. Allocation, write costs and
+retained lists are source-derived hypotheses until separately measured.
+References: pinned nofib source and suite survey; compare the two source layouts.
+
+[Complete provenance](mutstore2/PROVENANCE.md).
+
+## gc_bench
+
+Build mutable and immutable trees while retaining trees and a numerical array.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `gc/gc_bench/Main.hs`.
+The retained source includes the Ellis-Kovac/Boehm benchmark's history and
+limitations. John Ellis and Pete Kovac designed the original; Hans Boehm
+modified it. The individual Haskell translator/licence is unspecified, recorded
+as a gap. Retain the complete source notice, including its historical Java
+listing, plus build manifests and source identities.
+
+Port the Haskell variant: deeply forced immutable trees, top-down mutable trees
+with two child references, two retained trees and a half-filled real array.
+There is no extra stretch-tree phase in this Haskell main, despite the historical
+Java example. Tree-size, integer iteration counts, depth stepping/parity and
+mutable node labels are unchanged. Retain the original left-depth walk's zero
+return value rather than silently fixing it. SML's strict immutable construction
+replaces Haskell deepSeq; refs replace IORefs, and arrays replace IOArray Double.
+
+Driver CPU-time reads and the unused old-time import are removed from the SML
+program; external tools measure execution. A GHC read-only observer removes only
+the unused System.Time import to build on the reference host. It agrees on both
+retained tree sizes/labels and array fill counts. Full temporary/retained tree
+observers count actual nodes, validate immutable zero labels and mutable label
+sum 2^(depth+2)-depth-4, and scan every array value with a documented reciprocal
+relative bound 2^-51. These observers consume results and add traversal work,
+including on mutable temporary trees; this is explicitly part of the port.
+Independent tree-size/iteration formulas validate the consumed temporary total.
+
+Profiles (retained-depth,array-size,min-depth,max-depth) are (4,32,2,6),
+(12,16000,4,12), (17,400000,4,17); large preserves original FAST. The original
+normal/slow dimensions and Haskell heap settings remain recorded. Profile limits
+are operating-system quotas, not a claim of equal GC heap sizes or the original
+32 MiB recommendation. The literature supports allocation/lifetime diagnostics
+and explains limitations; this artificial workload is not a prediction of
+application performance. Potential hoisting/sharing/elimination of pure immutable
+construction is a compiler hypothesis until measured.
+Reference: [Boehm's GCBench overview](https://www.hboehm.info/gc/gc_bench.html),
+original source comments and the nofib survey. Large execution is not universally
+claimed; no pause-time claim is made.
+
+[Complete provenance](gc_bench/PROVENANCE.md).
+
+## pidigits-nofib-lazy
+
+Generate and verify formatted pi digit blocks with memoized coefficients.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `shootout/pidigits/Main.hs`.
+Bryan O'Sullivan contributed the Benchmarks Game program; Eugene Kirpichov changed
+its output construction according to the retained header. No individual licence
+is supplied; retain the notice gap, complete source, fixtures and build manifest.
+This is a distinct variant of the classic pidigits programs, preserving its
+step-before-extraction recurrence and formatting; collision names use -nofib.
+
+Preserve all exact Integer arithmetic as IntInf, quotient/remainder conditions,
+index advancement and digit extraction. In particular n>a short-circuits before
+expensive division. The lazy port memoizes each coefficient and digit/spine;
+the strict variant evaluates coefficient triples eagerly. It avoids computing
+an unused final scaled state. Arithmetic values and output agree, while delayed
+work, retained coefficients and allocation differ materially. The bounded term
+index fits all supported machine Int widths. No arbitrary-precision operations
+are replaced with floating point or host-width wrapping arithmetic.
+
+The shared formatter preserves ten-character blocks, final space padding,
+TAB-colon indices and newlines, using linear block splitting. Every output byte
+is checked against original GHC output and independently computed high-precision
+Chudnovsky digits, including the partial 27-digit smoke block. SML materializes
+the selected prefix and final string instead of printing the Haskell lazy String;
+record this representation/retention change. The actual byte count is consumed.
+Profiles select 27/200/3500 digits; large preserves original FAST, while original
+normal 11000 and slow 22000 remain recorded and unexecuted on all SML engines.
+References: original author/header, exact upstream fixtures and the nofib/Benchmarks
+Game literature. Arithmetic, demand, sharing and formatting costs are source
+hypotheses until separately measured. Large SML execution is not universally claimed.
+
+[Complete provenance](pidigits-nofib-lazy/PROVENANCE.md).
+
+## pidigits-nofib-strict
+
+Generate and verify pi digit blocks with strict arbitrary-precision state.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `shootout/pidigits/Main.hs`.
+Bryan O'Sullivan contributed the Benchmarks Game program; Eugene Kirpichov changed
+its output construction according to the retained header. No individual licence
+is supplied; retain the notice gap, complete source, fixtures and build manifest.
+This is a distinct variant of the classic pidigits programs, preserving its
+step-before-extraction recurrence and formatting; collision names use -nofib.
+
+Preserve all exact Integer arithmetic as IntInf, quotient/remainder conditions,
+index advancement and digit extraction. In particular n>a short-circuits before
+expensive division. The lazy port memoizes each coefficient and digit/spine;
+the strict variant evaluates coefficient triples eagerly. It avoids computing
+an unused final scaled state. Arithmetic values and output agree, while delayed
+work, retained coefficients and allocation differ materially. The bounded term
+index fits all supported machine Int widths. No arbitrary-precision operations
+are replaced with floating point or host-width wrapping arithmetic.
+
+The shared formatter preserves ten-character blocks, final space padding,
+TAB-colon indices and newlines, using linear block splitting. Every output byte
+is checked against original GHC output and independently computed high-precision
+Chudnovsky digits, including the partial 27-digit smoke block. SML materializes
+the selected prefix and final string instead of printing the Haskell lazy String;
+record this representation/retention change. The actual byte count is consumed.
+Profiles select 27/200/3500 digits; large preserves original FAST, while original
+normal 11000 and slow 22000 remain recorded and unexecuted on all SML engines.
+References: original author/header, exact upstream fixtures and the nofib/Benchmarks
+Game literature. Arithmetic, demand, sharing and formatting costs are source
+hypotheses until separately measured. Large SML execution is not universally claimed.
+
+[Complete provenance](pidigits-nofib-strict/PROVENANCE.md).
+
+## hash
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `gc/hash/hash.hs` and `HashTable.hs`.
+The retained table source credits the University of Glasgow (2003), gives a
+BSD-style notice and identifies the earlier Data.HashTable module. The base
+BSD licence is retained. It cites Per-Ake Larson, Dynamic Hash Tables, CACM
+31(4), April 1988, pages 446-457. The driver author is unspecified.
+
+Preserve mutable bucket arrays, a reference to strict table state, association
+lists, initial eight buckets/mask seven, load factor seven, hysteresis 64,
+stable doubling partitions and maximum mask 33554431. The exact growth condition
+is count-64 > 7*mask, not bucket-count times seven. Each insertion retains earlier
+entries. The benchmark needs new/insert/lookup; unused library APIs and disabled
+instrumentation are not added to the SML kernel, while the complete original
+module is retained for provenance.
+
+The hash multiplies by 1013904242 and extracts the high 32 bits before adding
+the key. Selected nonnegative inputs/products fit the original signed ranges;
+Word64 implements the wide product/shift and SML machine integers hold the final
+hash and counters. SML31-bit hosts can represent every selected counter/hash;
+no arbitrary-precision replacement is used in the kernel. The independent
+checker uses IntInf to verify placement mathematically, so a host word bug cannot
+validate itself merely by repeating its faulty hash function.
+
+Original GHC lookup returns Just 100 at all selected sizes. The port additionally
+consumes every stored key/value, detects missing/duplicate/out-of-range entries,
+validates placement against the exact formula and checks n(n+1)/2. The checker
+and its temporary seen array add work/allocations and are included. Selected
+sizes are 128/10000/1000000; large preserves original FAST. Original NORM5000000,
+SLOW100000000 and heap settings remain recorded, not universally executed.
+
+Growth, bucket chains, stable redistribution, integer representation and retained
+entries are source hypotheses until measured. Reference: retained HashTable
+module and its Larson citation, plus the nofib survey. No compiler/runtime
+features or alternative hash-table algorithm are introduced.
+
+[Complete provenance](hash/PROVENANCE.md).
+
+## lcss-lazy
+
+Compute Hirschberg LCSS through delayed row values and a lazy result suffix.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `gc/lcss/Main.hs`. Andrew J. Bromage contributed this
+Hirschberg longest-common-subsequence example in November 2002; the original
+mail/header is retained. It explicitly discusses quadratic time and linear
+space assuming eager evaluation. An individual licence is unspecified, recorded
+as a gap. Source, Makefile and fixtures retain their SHA256 identities.
+
+Preserve row-pair updates, forward/reversed score rows, integer middle split,
+last-maximum tie selection (>=), and difference-list result composition. The
+lazy variant memoizes row values/spines, reverses cells without forcing their
+values and delays the recursive result suffix so left output does not force the
+right subtree early. The strict variant computes finite row lists and eager
+recursive results. This changes evaluation/retention while preserving the
+algorithm, arithmetic and selected sequence. No array-based or alternative LCS
+kernel substitutes for the original list-pair algorithm.
+
+The driver preserves six arithmetic-sequence parameters. Nonzero step and a
+nonempty first sequence are required: the original missing empty-first case is
+not silently repaired. Selected inputs fit machine integer widths. Profiles
+are (1,2,16;8,9,24), (1,2,200;100,101,400), (1,2,2000;1000,1001,2000); large
+preserves original FAST. Original NORM/SLOW and heap flags remain recorded.
+The complete returned list is consumed and checked, not just its length. Original
+GHC output agrees with an independent dynamic-programming oracle and the unique
+ascending intersection for these profiles. SML materializes the result prefix
+for full validation; output becomes its actual length. Large SML execution is
+not universally claimed.
+
+Row sharing, retained deferred values, repeated prefix traversal, higher-order
+composition and compiler specialization are source-derived performance questions
+until measured. The strict/lazy distinction is material to the source's space
+claim. References: original Bromage explanation, its Hirschberg attribution and
+the nofib survey; no broader mathematical or timing claim is inferred from one
+input family.
+
+[Complete provenance](lcss-lazy/PROVENANCE.md).
+
+## lcss-strict
+
+Compute Hirschberg LCSS with eagerly evaluated dynamic-programming rows.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `gc/lcss/Main.hs`. Andrew J. Bromage contributed this
+Hirschberg longest-common-subsequence example in November 2002; the original
+mail/header is retained. It explicitly discusses quadratic time and linear
+space assuming eager evaluation. An individual licence is unspecified, recorded
+as a gap. Source, Makefile and fixtures retain their SHA256 identities.
+
+Preserve row-pair updates, forward/reversed score rows, integer middle split,
+last-maximum tie selection (>=), and difference-list result composition. The
+lazy variant memoizes row values/spines, reverses cells without forcing their
+values and delays the recursive result suffix so left output does not force the
+right subtree early. The strict variant computes finite row lists and eager
+recursive results. This changes evaluation/retention while preserving the
+algorithm, arithmetic and selected sequence. No array-based or alternative LCS
+kernel substitutes for the original list-pair algorithm.
+
+The driver preserves six arithmetic-sequence parameters. Nonzero step and a
+nonempty first sequence are required: the original missing empty-first case is
+not silently repaired. Selected inputs fit machine integer widths. Profiles
+are (1,2,16;8,9,24), (1,2,200;100,101,400), (1,2,2000;1000,1001,2000); large
+preserves original FAST. Original NORM/SLOW and heap flags remain recorded.
+The complete returned list is consumed and checked, not just its length. Original
+GHC output agrees with an independent dynamic-programming oracle and the unique
+ascending intersection for these profiles. SML materializes the result prefix
+for full validation; output becomes its actual length. Large SML execution is
+not universally claimed.
+
+Row sharing, retained deferred values, repeated prefix traversal, higher-order
+composition and compiler specialization are source-derived performance questions
+until measured. The strict/lazy distinction is material to the source's space
+claim. References: original Bromage explanation, its Hirschberg attribution and
+the nofib survey; no broader mathematical or timing claim is inferred from one
+input family.
+
+[Complete provenance](lcss-strict/PROVENANCE.md).
+
+## gcd-lazy
+
+Evaluate extended Euclid over a shared lazy grid with deferred coefficients.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `spectral/gcd/Main.hs`. Sergey Mechveliani contributed
+this Integer-performance test. The retained header explains replacing a sum
+with a maximum to avoid distorted large numbers. The individual licence is
+unspecified; source, Makefile and fixtures retain their notices and SHA256 IDs.
+
+Preserve the inclusive grid 5000..5000+d by 10000..10000+d, extended-Euclidean
+quotRem recurrence, arbitrary-precision Integer arithmetic, coefficient update
+order and maximum abs(g+u+v). IntInf is used throughout; this is not a machine
+integer benchmark. The lazy variant shares finite input streams, memoizes
+coefficient expressions and demands pairs/triples/results through explicit
+streams. The strict variant uses eager coefficient triples and materializes
+ordinary pair/triple/result lists. The selected mathematical work and maximum
+agree; evaluation, intermediate retention and allocation differ materially.
+
+Every computed result is consumed and checked: g is positive, divides both
+inputs, and equals u*x+v*y. Together these identities independently establish
+the greatest common divisor. The additional checks are part of the SML workload.
+Original GHC maxima agree with a separate Python reference also checked by
+math.gcd. Profiles select d=2/100/400; large preserves original FAST, while
+original normal1200 and slow2700 remain recorded. Large SML execution is not
+universally claimed. Output is the actual reviewed maximum; no success constant
+or floating-point approximation replaces the kernel.
+
+References: original Mechveliani explanation and nofib survey. Big-integer
+costs, coefficient demand/sharing, lazy traversal and retained intermediate
+lists are source-derived diagnostic questions until measured. No compiler or
+runtime features are prerequisites of this port.
+
+[Complete provenance](gcd-lazy/PROVENANCE.md).
+
+## gcd-strict
+
+Evaluate extended Euclid over eagerly materialized pair and result lists.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `spectral/gcd/Main.hs`. Sergey Mechveliani contributed
+this Integer-performance test. The retained header explains replacing a sum
+with a maximum to avoid distorted large numbers. The individual licence is
+unspecified; source, Makefile and fixtures retain their notices and SHA256 IDs.
+
+Preserve the inclusive grid 5000..5000+d by 10000..10000+d, extended-Euclidean
+quotRem recurrence, arbitrary-precision Integer arithmetic, coefficient update
+order and maximum abs(g+u+v). IntInf is used throughout; this is not a machine
+integer benchmark. The lazy variant shares finite input streams, memoizes
+coefficient expressions and demands pairs/triples/results through explicit
+streams. The strict variant uses eager coefficient triples and materializes
+ordinary pair/triple/result lists. The selected mathematical work and maximum
+agree; evaluation, intermediate retention and allocation differ materially.
+
+Every computed result is consumed and checked: g is positive, divides both
+inputs, and equals u*x+v*y. Together these identities independently establish
+the greatest common divisor. The additional checks are part of the SML workload.
+Original GHC maxima agree with a separate Python reference also checked by
+math.gcd. Profiles select d=2/100/400; large preserves original FAST, while
+original normal1200 and slow2700 remain recorded. Large SML execution is not
+universally claimed. Output is the actual reviewed maximum; no success constant
+or floating-point approximation replaces the kernel.
+
+References: original Mechveliani explanation and nofib survey. Big-integer
+costs, coefficient demand/sharing, lazy traversal and retained intermediate
+lists are source-derived diagnostic questions until measured. No compiler or
+runtime features are prerequisites of this port.
+
+[Complete provenance](gcd-strict/PROVENANCE.md).

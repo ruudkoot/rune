@@ -433,3 +433,50 @@ passes the complete routine set. The preceding full acceptance run, already
 recorded above, validated 474 profiles before the final paraffin registration;
 its compiler/runtime checks remain successful. All final added kernels have
 their explicit broader correctness checks recorded separately.
+
+## M3 allocation, sequence and exact-arithmetic wave, 2026-10-03
+
+Ten ports add the two mutable-store layouts, the Haskell GCBench variant,
+extensible hashing, lazy/strict Hirschberg LCSS, lazy/strict shootout pi and
+lazy/strict spectral extended GCD. The suite now contains 172 programs and
+510 profiles. M3 remains in progress; remaining GC, shootout and spectral
+workloads are still scheduled, and M4/M5/M8 are not closed.
+
+Each final smoke/normal profile passes on all four Rune engines at -O0/-O2;
+[the latest attempt record](results/m3-gc/latest-attempts.tsv) identifies those
+160 successful cases and the [broader ledger](results/m3-gc/correctness-attempts.tsv)
+retains earlier failures. Managed MLton, Poly/ML and both 64-bit SML/NJ versions
+also validate selected profiles. Original GHC observers and independent tree,
+store, bucket-placement, sequence, pi and integer-arithmetic references agree.
+
+Mutable-store checks inspect every bucket/value. Tree checks reject incorrect
+balance, individual labels and compensating bad labels while retaining both
+live trees and the numerical array. Hash-table checks inspect every pair and
+use independent mathematical placement, not the same potentially faulty host
+hash operation. LCSS checks the full returned sequence; pi checks every digit,
+partial-block space, index and newline. Extended GCD checks both Bézout identity
+and common divisibility on every result. The reproducible full-state targets
+are check-gc-ports.sh and check-extended-gcd.sh.
+
+The initial 1000-digit pi normal profile exceeded 600 seconds on the unoptimized
+stack VM. Its timeout and aborted remainder are retained without being accepted
+as results. The selected 200-digit normal input agrees with original GHC and an
+independent reviewed Chudnovsky prefix, and now passes both levels/engines.
+The original larger parameters remain available in upstream provenance/large
+profiles. Original GCBench's historical Java stretch phase is not added to the
+Haskell variant. Added full-state observers and representation/demand changes
+are recorded per benchmark rather than hidden in a uniform driver.
+
+Separate [count archives](results/m3-gc/README.md) retain source/input snapshots,
+configuration/revision/dirty-state metadata and raw observations. Allocation
+agrees across all four engines; instruction comparisons agree within the
+applicable stack/native and register/JIT pairs. Instrumented run times are not
+headline comparisons or warmup conclusions. No universal large SML pass or
+unresolved-host-failure workaround is claimed.
+
+The full `make JOBS=4 check` run passes for the final wave, including all 510
+metadata profiles, 331 language fixtures per compiler build, exact engine and
+count comparisons, bootstrap, performance budgets, documentation/ISA checks,
+and identical bytecode for 498 programs across all seven builds. runedoc and
+runeopt builds also agree. The complete
+[acceptance transcript](validation/oct03-gc-acceptance.log) records that run.
