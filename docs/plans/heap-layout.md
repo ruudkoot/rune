@@ -120,6 +120,7 @@ choices). Recorded in the *Decisions* table and per decision.
 | the literature and the implementations | *What the literature says*, *What the implementations do*, *References* |
 | every choice clear about its tradeoffs; 63-bit words in particular | each decision's options; D2 with the census's and the harness's numbers |
 | 64-bit on 64-bit machines, 32-bit on 32-bit, one bytecode, if it costs nothing (2026-09-27) | D13 |
+| whether the layout suits a Haskell 98 front end, perhaps with a bytecode made for lazy languages; the findings added and their benchmarks done in M4 (2026-09-28) | *A lazy front end*; M4, M5, M7 |
 
 ## Where we are
 
@@ -1999,7 +2000,11 @@ would break (the MLton corpus is the instrument, after the prototype
 exists); `IntInf`'s limbs under a raw word; `Real` boxing as seen
 through equality and images; and everything the simulator does not
 model -- locality, fragmentation of a non-moving space, the barrier's
-cost inside the loop and in JIT code. The decisions say, each, which of
+cost inside the loop and in JIT code. And what a lazy front end's
+`case` and update cost under each assignment of D4 C's pointer codes:
+no lazy program runs on Rune, so M4's lazy kernels and its SML
+programs over suspensions stand in (*A lazy front end*); the census
+prices only the bytes. The decisions say, each, which of
 the two they rest on.
 
 ## Constraints
@@ -2138,7 +2143,9 @@ state and the header bits; the FFI at the compact byte array and the
 pin bit (M8) and at the value-in-a-register convention; the JIT's M11
 maps at the roots interface; incremental compilation's `rt_load` at the
 same roots and the descriptor table (if D4 chooses one) that grows per
-unit; the lazy front end at the tag bits of L5, if chosen.
+unit; a lazy front end at the pointer code the gate may reserve, the
+two kinds M5 reserves and the update M7 gives a barrier (*A lazy front
+end*).
 
 ## Decisions
 
@@ -2269,6 +2276,13 @@ deviation mechanism exists). It is a target option, not a VM flag
 alone: a 63-bit and a 64-bit build compile a program differently, and
 the two builds are compared on the same source, not the same `.rbc`.
 M4 builds it as a variant and M5 keeps it.
+
+Noted on 2026-09-27, from the property-testing roadmap
+(`docs/plans/quickcheck.md` on branch `quickcheck`, its *Risks*).
+- **The workload.** Its random generator, SplitMix64, is `Word64` arithmetic of `word_loop`'s shape, in a library whose generators pass 64-bit addresses and seeds as arguments at every node.
+- **What B does to it.** Under B with D5 A, those words are raw only in tier 2's register homes and in typed fields. They are boxed wherever they cross a slot: an argument, a result, the interpreter's frames, `runevm`. "Monomorphic" alone does not keep them unboxed.
+- **What the harness says.** `word_loop` costs 2.77 times today's cycles boxed (6.15 under clang), against 0.44 unboxed in locals. With the top bit set in half the outputs, A's switch boxes them too.
+- **For M4's gate.** Its `Word64` kernel is a workload: `exp_speed.sml` with `splitmix.sml` and `prop.sml` under `~/.cache/claude-rune-drafts/quickcheck/proto/`. It is run as that roadmap's E2 on `runevm`, `runevm-new` with and without the JIT, and MLton. It prices B, A's switch and D5 B's maps on real `Word64`-heavy code, as the compiler prices the allocating kernels.
 
 * **A. `Int` and `Word` stay 64 bits.** In a typed register or field
   the value is raw (B of D1); in a polymorphic position it is
@@ -2466,6 +2480,22 @@ immediate tag and one spare.
   linux32. The table is emitted per program by the compiler, checked
   by the loader, carried by every image and merged per unit under
   incremental compilation. D stays the road to C of D1 on every width.
+
+Noted on 2026-09-28, for a lazy front end (*A lazy front end*):
+- **C's codes are not yet assigned.** The two bits give three
+  non-zero codes. A lazy front end wants one of them to mean "a
+  headered object, known to be evaluated", so that a `case` need not
+  load a header to rule out a thunk.
+- **What that costs SML.** The census prices it at 0.093% of the
+  bootstrap's bytes and nothing on MLton's set, first order: the
+  headerless objects a third shape would have kept. M4 builds both
+  assignments behind a switch, and the gate decides.
+  **Recommended:** reserve it.
+- **C's 0.502 is an upper bound.** The simulator makes every two-field
+  constructor headerless, which three codes cannot. About 0.94% of the
+  bootstrap's bytes keep a header under any assignment, and M4
+  re-makes the number for the codes built.
+- **A's kind reserves two values**, `K_THUNK` and `K_IND`, in M5.
 
 ### D5. Roots
 
@@ -2832,7 +2862,7 @@ about 2,000 and are planned again at the gate.
   *Who depends on the layout*. `make check`, `test-portability` and
   `test-windows` green; every count unchanged.
 
-### M4. Prototypes at full scale, and the gate (XL, about 2,500)
+### M4. Prototypes at full scale, and the gate (XL, about 2,950)
 
 * **What:** two implementations of `value.h` and of `masm.c`'s
   operations, complete enough that every workload of *The workloads*
@@ -2858,12 +2888,53 @@ about 2,000 and are planned again at the gate.
   `perf record --jit-perf-map` and the counters (`r0203`, L1d and TLB
   misses) by compiled function, since that is where the layout's
   effect on the real code is read; the interpreter and `runeopt` beside
-  it.
+  it. The workloads include the property-testing roadmap's SplitMix64
+  kernel (D2, noted on 2026-09-27), the case where 64-bit words cross
+  slots.
+* **For a lazy front end** (*A lazy front end*, added on 2026-09-28).
+  No lazy program runs on Rune, so the harness and SML programs over
+  suspensions stand in; about 450 lines of the milestone's total.
+  - *The pointer codes.* Prototype (2) builds the assignment behind a
+    compile-time switch: three headerless shapes, or two with code 11
+    reserved for "headered, evaluated". The simulator gets `LV_PAIRS`
+    limited to the codes built (`PAIRS3`: constructor tags 0 to 2;
+    `PAIRS2`: 0 and 1), so that it predicts the layout built rather
+    than the any-two-field bound. Bytes, bytes copied and cycles of
+    both builds on every workload; the census's first-order price
+    (0.093% of the bootstrap's bytes) is what they confirm or correct.
+  - *The harness's lazy kernels.* `iface.h` gets a thunk, an
+    indirection and the reserved code, and `kernels.c` three kernels:
+    `lazy_case`, a `case` on a headered three-constructor datatype with
+    0, 1, 10 and 50% of its scrutinees thunks, tested by a header load,
+    by the reserved code, and by an indirect call as GHC's before 2007;
+    `lazy_stream`, a sieve over a stream whose every tail is a thunk
+    (the update path, the copier's short-circuit of indirections, the
+    bytes indirections hold until the next collection); and
+    `lazy_update_old`, old thunks updated with young values under
+    `BARRIER_CARD` (the cards and remembered entries a lazy program
+    makes). `check.sh` holds them to one checksum under every layout,
+    as the others. The existing kernels under the reserved-code build
+    must be within noise of the three-shape build: masking a code that
+    is never set is all it costs SML.
+  - *Lazy workloads for the collector's question.* Four of nofib's
+    imaginary programs (`/home/ruud/reference/ghc/nofib/imaginary`:
+    `primes`, `wheel-sieve1`, `digits-of-e1`, `exp3_8`) in SML over a
+    structure of memoised suspensions (a ref to a thunk or a value),
+    under `tests/perf/lazy`, censused and simulated as the other
+    workloads. The census's stores by age class give the share of
+    updates that point old to young, and the simulator's
+    remembered-set model (the table of `sim-remset.md`) their cost. A
+    suspension is two objects here where GHC's thunk is one, so the
+    bytes are an upper bound; the update pattern is the measurement,
+    and it goes into M7's brief.
 * **The gate:** the owner confirms or changes D1 to D5 on these
-  numbers, as they said they might (D3 and D4 changed already, on the census and the harness; D5 B). The roadmap
+  numbers, as they said they might (D3 and D4 changed already, on the census and the harness; D5 B), and decides D4 C's third pointer code (a
+  headerless shape, or reserved for a lazy front end: *A lazy front
+  end*). The roadmap
   is planned again from here: M5's content is the chosen layout.
 * **Done when:** both prototypes pass the suites, the table is in this
-  file, the decisions are recorded. The prototypes are branches, not
+  file with the lazy kernels' and workloads' rows, the decisions are
+  recorded. The prototypes are branches, not
   commits to `jit`; the winner becomes M5.
 * **Touches:** the compiler (field kinds), the FFI (the convention of a
   value into C appears in `masm.c`'s call operation).
@@ -2889,6 +2960,11 @@ about 2,000 and are planned again at the gate.
   (runtime.md's *Values and objects*, bytecode.md, native.md or its
   retirement, `ARCHITECTURE.md`, `man/runevm.1`, the examples), and
   the small items D4 notes if cheap (a nullary exception immediate).
+  For a lazy front end (*A lazy front end*): the kinds `K_THUNK` and
+  `K_IND` reserved and asserted, unused by SML; and, if the gate
+  reserved code 11, `val_ptr` masking it and the collector,
+  `values_equal`, the printer and images reading it as a headered
+  pointer, with `tests/lang/rt.every_kind` making such a pointer.
 * **Done when:** every suite green on every VM at every tier, with
   `--gc-stress 1` and the sanitiser; `make test-portability` carries an
   image of the new layout between every pair of VMs; D15's targets 1
@@ -2920,12 +2996,16 @@ about 2,000 and are planned again at the gate.
   old told apart by address (the semispaces in one reserved range, or a
   range test that a nursery will reuse); `field_set`'s barrier as a
   no-op operation in C and in `masm.c`, with a build flag that makes it
-  a card mark so that its cost is measured now; the large-object space
+  a card mark so that its cost is measured now, and the same hook on
+  the update of an object in place, a header rewritten with its first
+  field (a thunk's update to an indirection, *A lazy front end*), with
+  the scan of `K_IND` reading that field alone; the large-object space
   if D6 chose it; `--stats` and `Runtime.stats` with the fields the
   next collector reports; the census hooks kept working; and the brief
   of the generational roadmap written from the simulator's tables
   (nursery size, survival, remembered set, what a sticky-bit old space
-  would save) as `docs/plans/collector.md`.
+  would save) as `docs/plans/collector.md`, with the lazy workloads of
+  M4 beside the strict ones.
 * **Done when:** the copier's behaviour is unchanged on every test
   (collections, live, `--stats` equal); the barrier flag's cost is in
   this file; the brief exists.
@@ -3012,11 +3092,12 @@ they from it:
 * **Delimited continuations and green threads.** Frames stay the VM's
   and slots stay self-describing (D5 A), so a captured stack segment is
   copied as data with no map, which is the simplest case for both.
-* **A lazy front end.** Pointer tagging of the STG kind wants the tag
-  bits of L5 (D4 C, decided): with 8-byte alignment the word of D1 B
-  leaves two pointer bits, and L5 spends them on the pair and its
-  constructor, so a lazy front end would need 16-byte alignment or a
-  scheme of its own for its tags; noted, not walked through.
+* **A lazy front end** (a Haskell 98 front end, perhaps with a bytecode
+  of its own). Walked through in *A lazy front end* below (2026-09-28):
+  the layout fits it without 16-byte alignment, given one choice at
+  M4's gate (the third pointer code of D4 C), two kinds reserved in M5
+  and the update as an operation of M7's barrier; M4 measures what the
+  choice rests on.
 * **Web-native** (wasm32). D13: the machine's 4-byte word there, as on
   the i386 VM, with 32-bit integers; a host-managed heap (WasmGC) would
   be another layout behind the same interface.
@@ -3027,6 +3108,163 @@ they from it:
   inspection (ide.md) and the owner's "heap walking (space leaks)" want
   a traversal the collector exposes: M1's census hooks are that
   traversal's first form.
+
+## A lazy front end
+
+The owner's notes ask for it -- "we may want to add a Haskell 98
+front-end later or support high-performance lazy evaluation in Rune in
+the future. The roadmap should get us ready for that"
+(`~/notes/virtual-machine.md`) -- and on 2026-09-28 the owner asked
+whether this layout is compatible with Haskell 98, possibly under a
+bytecode made for lazy languages. It is, with one choice for M4's gate
+and two reservations, for M5 and M7; M4 measures what the choice rests
+on. The earlier note here said a lazy front end would need 16-byte
+alignment or tags of its own; walked through, it needs neither.
+
+**What a lazy language asks of a layout.** GHC's runtime is the model
+(`rts/include/rts/storage/ClosureTypes.h` in `/home/ruud/reference/ghc`):
+* a *thunk*: an object that holds a suspended computation and is
+  overwritten when forced;
+* an *indirection* (`IND`): what a forced thunk becomes, a pointer to
+  its value. The copier short-circuits it, so that no one pays for it
+  after the next collection (`rts/sm/Evac.c:978-982`);
+* a cheap way for a `case` to tell an evaluated value from a thunk.
+  GHC puts it in the pointer's low bits (Marlow, Yakushev and Peyton
+  Jones 2007: 14% for 2% more code);
+* a *blackhole*: a thunk under evaluation, so that a loop is detected
+  and, with threads, a second thread waits instead of evaluating twice;
+* the *selector thunk*: `fst p` unevaluated, which the collector
+  evaluates once `p` is, so that a pair's dead half is not kept alive
+  (Wadler 1987; `eval_thunk_selector`, `Evac.c:974-976`);
+* the partial application, which Rune's closures already are.
+
+**What the decided layout already gives it:**
+* **The word (D1 B).** A lazy field of type `Int`, `Char` or `Double`
+  holds either the evaluated value, immediate, or a pointer to a thunk,
+  and the low bit tells them apart: forcing it is a bit test with no
+  load. GHC boxes these at every lazy position (`I# n`, `D# d`); here
+  they are boxed only where D3 C's encoding runs out.
+* **63-bit `Int` (D2 B).** The Haskell 98 Report asks less: "The
+  finite-precision integer type `Int` covers at least the range
+  [-2^29, 2^29 - 1]", and overflow is undefined ("an implementation
+  may choose error (⊥, semantically), a truncated value, or a special
+  value", section 6.4). SML's `Overflow` and a wrap both conform, and
+  the 32-bit VMs' 31 bits (D13 B) are above the Report's 30. `Integer`
+  is `IntInf`, its small values immediate.
+* **Raw typed fields (D1 B).** Haskell 98's strict fields
+  (`data T = T !Int !Double`) are the positions a thunk can never
+  occupy, and so the ones a raw field may take; a lazy field stays a
+  word. D4 A's descriptor says which, as for SML.
+* **Self-describing slots (D5 A).** The frame that updates a thunk when
+  its value returns (GHC's update frame) is a VM frame like any other.
+  A lazy program's deep stacks (a `foldl` chain) are scanned with no
+  map, where GHC's stack is a heap object with info-table bitmaps.
+* **The minimum object (D6).** A header and one word, so every thunk,
+  however small, can be overwritten in place by an indirection. A
+  thunk's first field is its function index, as a closure's is
+  (`K_CLOSURE`), and becomes the indirection's target.
+* **Headerless pairs (D4 C).** A thunk needs its header, so a headerless
+  object is never a thunk: its pointer's code already says "evaluated,
+  and this constructor", and a `case` on a list or a tuple gets pointer
+  tagging's gain without a load. Lists and tuples are the commonest
+  lazy data as they are the commonest strict data (`String` is
+  `[Char]`: 16 bytes a character here, 24 in GHC).
+
+**The one choice: the third pointer code.** With 8-byte alignment the
+two bits beside the immediate bit give three non-zero codes, and D4 C
+spends them on headerless shapes. What a lazy front end wants from them
+is one code that means "a headered object, known to be evaluated" (a
+`Just x`, a tree's node, a record). A pointer without it may be a
+thunk, and a `case` loads the header to find out. Two ways:
+* **Reserve code 11 for it.** Strict code never sets it: `val_ptr`
+  masks the two bits under D4 C anyway, and the collector, equality,
+  printing and images read 11 as 00, a headered object. The copier
+  keeps a pointer's code as it copies, and when it short-circuits an
+  indirection it writes the target's, so a thunk's referrers learn the
+  value is evaluated at the next collection, as in GHC's (`Evac.c`:
+  the tag kept at 698-699 and 274-309, the indirectee taken at
+  978-982). What SML gives up is a third headerless shape. The census
+  prices it, first
+  order, from each `census.txt`'s (kind, contag, len) table, with the
+  pointer carrying the constructor tag (codes for tags 0, 1 and 2, a
+  tuple sharing tag 0's). The objects that take a header under two
+  codes and not under three are, as a share of the bytes under
+  L1+PAIRS:
+
+  | workload | two codes' cost |
+  |---|---|
+  | bootstrap | 0.093% |
+  | compile-sigs | 0.146% |
+  | compile-hello | 0.063% |
+  | runedoc-ir, runedoc-page | 0.028%, 0.015% |
+  | every MLton program traced | 0 |
+
+  Made by `results/pointer-codes.py` in the drafts directory (its table
+  in `results/pointer-codes.md`), over the top 300 shapes of each
+  table: those hold all but 0.73% of the bootstrap's bytes (all but
+  4.4% of `runedoc-page`'s), so the costs are exact to that.
+  **Recommended**, for the gate.
+* **Spend it on a third shape**, and a lazy front end loads the header
+  on a `case` of a headered type. What that costs is the load and a
+  compare, not the indirect jump into the closure that GHC made before
+  2007, whose mispredictions were "much of" the 14%. It is unmeasured;
+  M4's harness measures it.
+
+A side finding for D4 C itself. The simulator's `LV_PAIRS`
+(`vm/layouts.h:31, 81`) makes every two-field constructor headerless
+whatever its tag, which three codes cannot do: 5.3% of the bootstrap's
+two-field objects have a constructor tag above 2 and keep a header
+under any assignment, 0.94% of its bytes under L1+PAIRS (0.97% of
+compile-sigs'). The 0.502 of *The experiments* is an upper bound by
+about that much; M4 re-makes it for the codes the prototype builds.
+
+On 32-bit machines (D4 B and D) there are no headerless pairs, and
+4-byte alignment leaves one bit beside the immediate bit (D4): that bit
+can be the evaluated code there, with nothing competing for it.
+
+**Two reservations:**
+* **Kinds (M5).** D4 A's kind is four bits. With `K_REAL` and `K_BOX`
+  the prototype uses 11 of the 15 non-zero values (`vm/value.h`'s
+  `enum ObjKind`), and M8's compact kinds may take more. M5 reserves
+  two, `K_THUNK` and `K_IND`, asserted and unused by SML. A blackhole
+  and a selector thunk are states of `K_THUNK` in the constructor-tag
+  field (a blackhole is one header write; a selector's field number is
+  its tag), and a partial application is a `K_CLOSURE`; GHC's 66
+  closure types are its info tables' business, not a header's. `K_IND`
+  is not `K_FORWARD`: the mutator follows one, the collector alone the
+  other.
+* **The update is an operation of the interface (M7).** Forcing a thunk
+  writes its header (to `K_IND`) and its first field (the value), in an
+  object that may be old: a store, and under the next roadmap's
+  collector the commonest old-to-young store of a lazy program (Sansom
+  and Peyton Jones 1993, *What the literature says*). `field_set`
+  covers a field, not a header, so M7's barrier hook covers a header
+  rewritten with its field, as one operation in C and in `masm.c`. The
+  scan of a `K_IND` reads its first field alone: the thunk's other
+  fields are dead free variables, and scanning them is a space leak.
+  An image writes the target, not the indirection (D10).
+
+**What it asks of the next roadmap.** A lazy program's old objects
+point to young ones through updates, so its remembered set, not its
+survival, is the cost, and *Variants*' mutable objects segregated
+(Poly/ML's answer) stops being an answer when most of what is
+allocated is a thunk that will be written once. The generational
+roadmap's brief (M7) states the lazy case beside the strict one, from
+M4's lazy workloads. With threads (D8), two threads may force one
+thunk; GHC lets them race and tolerates the duplicate evaluation (lazy
+blackholing), and a compare-and-swap of the header (8 bytes, or 4 on
+32-bit machines) serves either answer.
+
+**The bytecode.** The layout sits under the bytecode. A lazy front end
+may bring instructions of its own -- thunk, force and update in the
+same description, as jit.md's *Prerequisites and flags* sketches them,
+or a loop of its own -- as long as it is one more reader of `value.h`
+and of `masm.c`'s operations, which is what M3's interface is for; D13's
+one bytecode is one across widths, not one for every front end. Sharing
+the layout is what lets Haskell and SML code share a heap and call each
+other. What a new loop must keep is D5 A (its frames the VM's, its
+slots self-describing) and *Constraints* (`--count`, the images, one
+output from every build).
 
 ## Relation to the other plans
 
@@ -3040,7 +3278,8 @@ they from it:
 | jit.md D14 (collector after M7) | held; M7 here is the collector's code, not its algorithm |
 | jit.md M10 item 6 (block allocation, measured and not built) | the bump path of D6; unchanged |
 | jit.md M11 (maps at tier-2 safepoints) | consumed through M3's interface; D5 |
-| jit.md *Prerequisites and flags* (the FFI critical at M4/M5 and M9; green threads; a lazy front end) | D9, M8; D8; D4 C |
+| jit.md *Prerequisites and flags* (the FFI critical at M4/M5 and M9; green threads; a lazy front end) | D9, M8; D8; *A lazy front end*, D4 C, M4, M5, M7 |
+| the owner's `virtual-machine.md`: "a Haskell 98 front-end later or ... high-performance lazy evaluation", "the roadmap should get us ready for that" | *A lazy front end*; M4's lazy kernels and workloads; the third pointer code at the gate |
 | middle-end.md D12 (int precision per target; "a `vm/new` with 8-byte values might have 63-bit ints") | D2: 64 bits kept, per target still |
 | middle-end.md M11 (`Rep`, CONN/FIELD, `imm_eq`) | kept; the constructor's tag in the header (D4 A) and, for the pair, in the pointer (D4 C) |
 | middle-end.md *Ready for, not built* (other collectors; `Alloc`, `Store`, `Safepoint`; stack maps from liveness; escape analysis and regions) | `Store` is `field_set`; maps in D5 B; escape analysis is the owner's note and nothing here precludes it |
@@ -3100,6 +3339,14 @@ they from it:
     traces live on the fast disk only while simulated; the archive is
     `/mnt/h/HEAPSIM`; the tools of M1 write `census.txt` alone by
     default.
+11. **A lazy front end outgrows what is reserved for it.** Two kinds,
+    one pointer code and an update with a barrier are what *A lazy
+    front end* found necessary; GHC has 66 closure types. What a front
+    end needs beyond them goes in `K_THUNK`'s constructor-tag field or
+    its function's metadata, not the kind. M4's lazy kernels check that
+    the common paths (a `case`, a force, an update) need nothing more,
+    and nofib's programs in SML over suspensions are a proxy for a lazy
+    program, not one: they double the objects of a thunk.
 
 ## Testing a layout change
 
@@ -3256,6 +3503,10 @@ give their URL. Where a source could not be read beyond its abstract,
 * Blackburn et al. "The DaCapo benchmarks: Java benchmarking development and analysis." OOPSLA 2006. doi:10.1145/1167473.1167488
 * Barrett, Bolz-Tereick, Killick, Mount and Tratt. "Virtual machine warmup blows hot and cold." OOPSLA 2017. doi:10.1145/3133876
 * Mytkowicz, Diwan, Hauswirth and Sweeney. "Producing wrong data without doing anything obviously wrong!" ASPLOS 2009. doi:10.1145/1508244.1508275
+
+**Lazy evaluation** (*A lazy front end*, added 2026-09-28; the DOI checked against Crossref and the Report read that day; Marlow, Yakushev and Peyton Jones 2007 and Sansom and Peyton Jones 1993 are above; GHC's runtime and nofib are cited by path under `/home/ruud/reference/ghc`):
+* Peyton Jones (ed.). "Haskell 98 Language and Libraries: The Revised Report." 2003. Section 6.4, *Numbers*. https://www.haskell.org/onlinereport/basic.html
+* Wadler. "Fixing some space leaks with a garbage collector." Software: Practice and Experience 17(9), 1987. doi:10.1002/spe.4380170904
 
 **Engines and their documents** (*What the implementations do*; the sources under `/home/ruud/reference` are cited by path in the text):
 * OCaml manual. "Interfacing C with OCaml." https://ocaml.org/manual/latest/intfc.html
