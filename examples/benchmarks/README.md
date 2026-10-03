@@ -188,6 +188,11 @@ inventory entry.
 | [lcss-strict](#lcss-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/lcss) | Compute Hirschberg LCSS with eagerly evaluated dynamic-programming rows. |
 | [gcd-lazy](#gcd-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/gcd) | Evaluate extended Euclid over a shared lazy grid with deferred coefficients. |
 | [gcd-strict](#gcd-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/gcd) | Evaluate extended Euclid over eagerly materialized pair and result lists. |
+| [treejoin-lazy](#treejoin-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/treejoin) | Join persistent relation trees with delayed keys, fields and branches. |
+| [treejoin-strict](#treejoin-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/treejoin) | Join the same persistent relation trees with eager fields and insertion. |
+| [spellcheck-lazy](#spellcheck-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/spellcheck) | Check Latin-1 words against the original weight-balanced set with streamed tokens. |
+| [spellcheck-strict](#spellcheck-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/spellcheck) | Check eagerly materialized Latin-1 tokens against the same weight-balanced set. |
+| [cse](#cse) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/cse) | Label expression trees with pure state computations and share equal subtrees. |
 
 ## Running and interpreting checks
 
@@ -276,6 +281,8 @@ sh tests/benchmarks/check-numeric-ports.sh
 sh tests/benchmarks/check-symbolic-ports.sh
 sh tests/benchmarks/check-gc-ports.sh
 sh tests/benchmarks/check-extended-gcd.sh
+sh tests/benchmarks/check-treejoin.sh
+sh tests/benchmarks/check-word-set.sh
 python3 tests/benchmarks/test-inventory.py
 python3 scripts/benchmark-inventory.py --check
 python3 tests/benchmarks/latency-oracle.py --check
@@ -5026,3 +5033,190 @@ lists are source-derived diagnostic questions until measured. No compiler or
 runtime features are prerequisites of this port.
 
 [Complete provenance](gcd-strict/PROVENANCE.md).
+
+## treejoin-lazy
+
+Join persistent relation trees with delayed keys, fields and branches.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `gc/treejoin/Main.hs`, relation files 27000.1/27000.2
+and the retained MAIL. The 1993 submission is from kh@dcs.gla.ac.uk; the full
+individual author/licence and dataset notice are not specified, recorded as gaps.
+Original source, data, build settings and mail are retained with SHA256 identities.
+
+Keep the unbalanced persistent binary-tree representation, boundary keys,
+insertion/duplicate-key rules, key lookup and right-before-left join accumulation.
+The left relation is keyed by its first field; its third field looks up the first
+field of the right relation. Joined values have the original five fields. Both
+variants instantiate one algorithm with eager or memoized suspension adapters.
+The lazy adapter delays numeric accumulation, tree roots/branches and stored
+fields: unmatched records leave unused fields unforced. The strict adapter
+forces these operations eagerly; allocation, work order and retention differ.
+No balanced tree, hash join or alternative relational algorithm is substituted.
+
+SML reads complete file byte strings instead of Haskell lazy file characters;
+numeric/tree demand is preserved after that input representation change. Inputs
+are positive ASCII integers fitting supported widths. Profiles take the original
+first 125/2000/all27000 records from both files without reordering or regeneration.
+Subsets retain their origin but change size/selectivity; they contain 0/28/2700
+matches. Large preserves the original complete workload and build heap settings
+remain recorded separately. No universal large SML execution is claimed.
+
+The full sorted five-field join is checked against original GHC with a read-only
+observer and independent dictionary-based relational joins. Every result field
+is consumed rather than merely printing forceTree's unit result. The added
+rendering/validation is included. Demand tests verify unmatched fields remain
+unforced, lookup boundaries and duplicate rejection. Dynamic insertion, search,
+structural sharing and forcing are source hypotheses until measured. References:
+original submission/mail and the nofib survey; historical timing tables are
+provenance, not current comparative measurements.
+
+[Complete provenance](treejoin-lazy/PROVENANCE.md).
+
+## treejoin-strict
+
+Join the same persistent relation trees with eager fields and insertion.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `gc/treejoin/Main.hs`, relation files 27000.1/27000.2
+and the retained MAIL. The 1993 submission is from kh@dcs.gla.ac.uk; the full
+individual author/licence and dataset notice are not specified, recorded as gaps.
+Original source, data, build settings and mail are retained with SHA256 identities.
+
+Keep the unbalanced persistent binary-tree representation, boundary keys,
+insertion/duplicate-key rules, key lookup and right-before-left join accumulation.
+The left relation is keyed by its first field; its third field looks up the first
+field of the right relation. Joined values have the original five fields. Both
+variants instantiate one algorithm with eager or memoized suspension adapters.
+The lazy adapter delays numeric accumulation, tree roots/branches and stored
+fields: unmatched records leave unused fields unforced. The strict adapter
+forces these operations eagerly; allocation, work order and retention differ.
+No balanced tree, hash join or alternative relational algorithm is substituted.
+
+SML reads complete file byte strings instead of Haskell lazy file characters;
+numeric/tree demand is preserved after that input representation change. Inputs
+are positive ASCII integers fitting supported widths. Profiles take the original
+first 125/2000/all27000 records from both files without reordering or regeneration.
+Subsets retain their origin but change size/selectivity; they contain 0/28/2700
+matches. Large preserves the original complete workload and build heap settings
+remain recorded separately. No universal large SML execution is claimed.
+
+The full sorted five-field join is checked against original GHC with a read-only
+observer and independent dictionary-based relational joins. Every result field
+is consumed rather than merely printing forceTree's unit result. The added
+rendering/validation is included. Demand tests verify unmatched fields remain
+unforced, lookup boundaries and duplicate rejection. Dynamic insertion, search,
+structural sharing and forcing are source hypotheses until measured. References:
+original submission/mail and the nofib survey; historical timing tables are
+provenance, not current comparative measurements.
+
+[Complete provenance](treejoin-strict/PROVENANCE.md).
+
+## spellcheck-lazy
+
+Check Latin-1 words against the original weight-balanced set with streamed tokens.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `gc/spellcheck/spellcheck.hs`, words dictionary and the
+input generated by concatenating it ten times. Individual driver/dictionary
+licences and authors are unspecified, recorded as provenance gaps. The copied
+Data.Set used by reference GHC is containers 0.6.7 at
+9f4a93604c66a5e605ce46fc30003b71802b3cfd, with its BSD notice/licence retained.
+
+Preserve Data.Set's cached subtree sizes, weight balancing (delta3, ratio2),
+special rotations, ascending-run construction path and fallback insertion. This
+is not an AVL-tree substitution. Only operations used by fromList/member are
+ported; the full library source is retained. Portable SML has no immutable
+pointer-equality primitive, so its duplicate-value optimization is omitted while
+key replacement semantics remain unchanged. Byte strings replace Haskell lists
+of Unicode characters; byte order matches Latin-1 code-point order for these data.
+Latin-1 whitespace includes NEL/NBSP explicitly. Original non-ASCII bytes are
+preserved rather than misread as UTF-8; the dictionary has 241 such bytes.
+
+Both variants build the same set. Lazy token heads/spines are memoized and
+consumed while checking; strict creates the complete token list before filtering.
+SML materializes each complete input file earlier than Haskell lazy hGetContents;
+this representation/retention change is explicit. All dictionary members and
+set balance/size are additionally validated. The returned missing-word sequence
+is checked completely, with actual dictionary/input/missing counts consumed.
+
+Profiles use the first125/5000/all98569 dictionary lines and ten concatenated
+copies as input, preserving source order/bytes and the original input-generation
+rule. Upstream input is retained verbatim for large. Prefixes contain124/4999
+actual words because blank lines are retained. Original GHC and an independent
+set check agree. Tree shape matches the pinned GHC set on the smoke dictionary;
+other tests cover duplicates, reversed/mixed order and missing words. Large SML
+execution is not universally claimed. Balancing, token retention, string
+representation and pointer-identity optimization are source hypotheses until
+measured. References: retained Data.Set/source notices and nofib survey.
+
+[Complete provenance](spellcheck-lazy/PROVENANCE.md).
+
+## spellcheck-strict
+
+Check eagerly materialized Latin-1 tokens against the same weight-balanced set.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `gc/spellcheck/spellcheck.hs`, words dictionary and the
+input generated by concatenating it ten times. Individual driver/dictionary
+licences and authors are unspecified, recorded as provenance gaps. The copied
+Data.Set used by reference GHC is containers 0.6.7 at
+9f4a93604c66a5e605ce46fc30003b71802b3cfd, with its BSD notice/licence retained.
+
+Preserve Data.Set's cached subtree sizes, weight balancing (delta3, ratio2),
+special rotations, ascending-run construction path and fallback insertion. This
+is not an AVL-tree substitution. Only operations used by fromList/member are
+ported; the full library source is retained. Portable SML has no immutable
+pointer-equality primitive, so its duplicate-value optimization is omitted while
+key replacement semantics remain unchanged. Byte strings replace Haskell lists
+of Unicode characters; byte order matches Latin-1 code-point order for these data.
+Latin-1 whitespace includes NEL/NBSP explicitly. Original non-ASCII bytes are
+preserved rather than misread as UTF-8; the dictionary has 241 such bytes.
+
+Both variants build the same set. Lazy token heads/spines are memoized and
+consumed while checking; strict creates the complete token list before filtering.
+SML materializes each complete input file earlier than Haskell lazy hGetContents;
+this representation/retention change is explicit. All dictionary members and
+set balance/size are additionally validated. The returned missing-word sequence
+is checked completely, with actual dictionary/input/missing counts consumed.
+
+Profiles use the first125/5000/all98569 dictionary lines and ten concatenated
+copies as input, preserving source order/bytes and the original input-generation
+rule. Upstream input is retained verbatim for large. Prefixes contain124/4999
+actual words because blank lines are retained. Original GHC and an independent
+set check agree. Tree shape matches the pinned GHC set on the smoke dictionary;
+other tests cover duplicates, reversed/mixed order and missing words. Large SML
+execution is not universally claimed. Balancing, token retention, string
+representation and pointer-identity optimization are source hypotheses until
+measured. References: retained Data.Set/source notices and nofib survey.
+
+[Complete provenance](spellcheck-strict/PROVENANCE.md).
+
+## cse
+
+Label expression trees with pure state computations and share equal subtrees.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `spectral/cse/Main.hs` and StateMonad.hs. Mark P. Jones,
+1992. The source's history/explanations and example diagrams are retained; an
+individual licence notice is unspecified. Source/build identities are recorded.
+
+Preserve the pure state-function representation s -> (s,value), bind/map-list,
+left-to-right preorder labels, tree-to-graph conversion, right fold over the graph,
+closure-based label renaming and first matching equivalent subtree selection.
+No mutable label counter or hash-consing algorithm replaces the source's state
+and association-list operations. Complete graph labels, symbols and child-label
+lists agree with original GHC and independent bottom-up subtree interning.
+The SML state tuple is explicitly closed for portability across the hosts.
+
+The original six expression examples are retained. Main selects take(i mod6)
+for i=1..n, so the sixth example is never selected by the timed loop; this
+stopping behavior is preserved, while all six golden graphs are independently
+reviewed. SML eagerly represents the small input trees/lists; all selected output
+graphs are fully forced as original rnf requires. Added full-graph rendering and
+validation replaces discarded unit outputs, and actual node totals are consumed.
+Unused pretty-printers/unGraph helpers are retained in the original but not added
+to the runnable kernel. The added check work is included.
+
+Profiles use6/120/30000 iterations; large preserves original FAST, and original
+normal300000/slow1500000 remain in Makefile. Large execution is not universally
+claimed. Closure specialization, state tuple representation, label renaming and
+shared graph objects are source-derived hypotheses until measured. References:
+original Jones explanation/example graphs and nofib survey.
+
+[Complete provenance](cse/PROVENANCE.md).

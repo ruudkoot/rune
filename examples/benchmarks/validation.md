@@ -480,3 +480,36 @@ count comparisons, bootstrap, performance budgets, documentation/ISA checks,
 and identical bytecode for 498 programs across all seven builds. runedoc and
 runeopt builds also agree. The complete
 [acceptance transcript](validation/oct03-gc-acceptance.log) records that run.
+
+## M3 persistent structures and graph conversion, 2026-10-03
+
+Five ports add lazy/strict treejoin, lazy/strict spellcheck, and CSE. The
+catalogue contains 177 programs and 525 profiles. M3 remains in progress;
+these imports do not close the remaining GC, spectral, or shootout coverage.
+
+[Recorded attempts](results/m3-persistent/correctness-attempts.tsv) include
+all 80 required final smoke/normal Rune cases, which pass on four engines at
+both -O0 and -O2. Managed MLton, legacy and modern 64-bit SML/NJ, and Poly/ML
+also pass both profiles. An initial CSE tuple-selector portability error is
+retained as a rejected port attempt, rather than classified as a host bug.
+
+Original GHC and independent joins, sets, and subtree-interning oracles agree
+on the complete fixtures. Treejoin preserves the unbalanced persistent tree,
+lookup boundaries, right-first accumulation, and delayed unused fields.
+Spellcheck preserves containers 0.6.7's weight-balanced set and ascending-list
+construction, checked against its exact smoke tree shape. Original Latin-1
+data remain byte-identical. CSE preserves pure state functions, preorder
+labels, association lists, and closure-based renaming. Each adaptation and
+notice gap is documented in its benchmark provenance.
+
+The treejoin and word-set semantic targets pass all ten configurations at both
+optimization levels. Separate [count archives](results/m3-persistent/README.md)
+retain source/input identities and all samples: allocations agree across all
+four engines and applicable instruction comparisons agree. No headline timing
+or universal large-profile pass is claimed.
+
+The complete `make JOBS=4 check` passes, including 525 catalogue profiles,
+331 language fixtures per compiler, and bytecode agreement for 498 programs
+across all seven builds. Documentation and native-generator builds also agree.
+The [acceptance transcript](validation/oct03-persistent-acceptance.log) and
+32 passing inventory tests record the final validation.
