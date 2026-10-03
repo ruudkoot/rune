@@ -306,12 +306,12 @@ What the table says so far:
   programs that do not load (`word`, `word8`, `word_large`, `real` and
   three of `intn_word`: 16,163 checks not reached) and 34 checks (32 of
   `PackReal`, whose bytes go through a 64-bit word and lose the sign
-  bit, and `Int64.precision` twice). The bootstrap runs but its output differs from
-  the fixed point, so its column is the work, not a result. That is
-  the list M5 would work through under D2 B: the Basis' `Int` and
-  `Word` at 63, `Int64`/`Word64`/`LargeWord` on boxes or two words,
-  `PackReal` and `Real`'s conversions by another path, the compiler's
-  constants of the target's width held wider than its own `int`.
+  bit, and `Int64.precision` twice). The compiler does not notice: its
+  bootstrap on the 63-bit VM writes the bytecode the 64-bit one writes,
+  byte for byte. That is the list M5 would work through under D2 B:
+  the Basis' `Int` and `Word` at 63, `Int64`/`Word64`/`LargeWord` on
+  boxes or two words, `PackReal` and `Real`'s conversions by another
+  path.
 * **D3 B against D3 C** (the third column against the second): level
   at tier 2, where a real lives in its home either way; under the
   interpreter `real_nbody` is 2.3 times slower again (2.2G against
