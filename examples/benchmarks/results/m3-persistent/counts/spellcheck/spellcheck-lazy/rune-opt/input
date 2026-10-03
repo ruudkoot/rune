@@ -1,0 +1,3 @@
+spellcheck-lazy
+DATA/normal.words DATA/normal.input expected/normal.txt
+4999 49990 0

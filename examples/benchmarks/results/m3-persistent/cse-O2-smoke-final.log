@@ -1,0 +1,22 @@
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.H4ROrM
+BENCH cse smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 47
+PASS cse
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 47
+PASS cse
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 47
+PASS cse
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 47
+PASS cse
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt

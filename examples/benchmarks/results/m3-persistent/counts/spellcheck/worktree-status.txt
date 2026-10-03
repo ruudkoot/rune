@@ -1,0 +1,17 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/cse/
+?? examples/benchmarks/shared/spellcheck.sml
+?? examples/benchmarks/shared/state-monad.sml
+?? examples/benchmarks/shared/suspend.sml
+?? examples/benchmarks/shared/treejoin.sml
+?? examples/benchmarks/shared/word-set.sml
+?? examples/benchmarks/spellcheck-lazy/
+?? examples/benchmarks/spellcheck-strict/
+?? examples/benchmarks/treejoin-lazy/
+?? examples/benchmarks/treejoin-strict/
+?? tests/benchmarks/check-treejoin.sh
+?? tests/benchmarks/check-word-set.sh
+?? tests/benchmarks/data/
+?? tests/benchmarks/treejoin.sml
+?? tests/benchmarks/word-set.sml

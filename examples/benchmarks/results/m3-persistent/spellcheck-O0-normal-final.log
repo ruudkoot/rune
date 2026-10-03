@@ -1,0 +1,43 @@
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.WlMkWw
+BENCH spellcheck-lazy normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 4999 49990 0
+PASS spellcheck-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 4999 49990 0
+PASS spellcheck-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 4999 49990 0
+PASS spellcheck-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 4999 49990 0
+PASS spellcheck-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+BENCH spellcheck-strict normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 4999 49990 0
+PASS spellcheck-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 4999 49990 0
+PASS spellcheck-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 4999 49990 0
+PASS spellcheck-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 4999 49990 0
+PASS spellcheck-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt

@@ -1,0 +1,43 @@
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.qfIZ18
+BENCH treejoin-lazy normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 2000 2000 28
+PASS treejoin-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 2000 2000 28
+PASS treejoin-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 2000 2000 28
+PASS treejoin-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 2000 2000 28
+PASS treejoin-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+BENCH treejoin-strict normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 2000 2000 28
+PASS treejoin-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 2000 2000 28
+PASS treejoin-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 2000 2000 28
+PASS treejoin-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 2000 2000 28
+PASS treejoin-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2

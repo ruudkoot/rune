@@ -1,0 +1,43 @@
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.yzH2c8
+BENCH treejoin-lazy smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 125 125 0
+PASS treejoin-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 125 125 0
+PASS treejoin-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 125 125 0
+PASS treejoin-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 125 125 0
+PASS treejoin-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+BENCH treejoin-strict smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 125 125 0
+PASS treejoin-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 125 125 0
+PASS treejoin-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 125 125 0
+PASS treejoin-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 125 125 0
+PASS treejoin-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt

@@ -1,0 +1,22 @@
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.av0d0f
+BENCH cse normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 940
+PASS cse
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 940
+PASS cse
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 940
+PASS cse
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 940
+PASS cse
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt

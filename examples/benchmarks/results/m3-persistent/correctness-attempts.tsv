@@ -1,0 +1,156 @@
+benchmark	profile	optimization	configuration	arguments	status	artifact_directory
+cse	normal	O0	rune	120 expected/graphs.txt	pass	tests/out/benchmarks/normal/run.av0d0f/cse
+cse	normal	O0	rune-jit	120 expected/graphs.txt	pass	tests/out/benchmarks/normal/run.av0d0f/cse
+cse	normal	O0	rune-new	120 expected/graphs.txt	pass	tests/out/benchmarks/normal/run.av0d0f/cse
+cse	normal	O0	rune-opt	120 expected/graphs.txt	pass	tests/out/benchmarks/normal/run.av0d0f/cse
+cse	normal	O2	rune	120 expected/graphs.txt	pass	tests/out/benchmarks/normal/run.6VtK5M/cse
+cse	normal	O2	rune-jit	120 expected/graphs.txt	pass	tests/out/benchmarks/normal/run.6VtK5M/cse
+cse	normal	O2	rune-new	120 expected/graphs.txt	pass	tests/out/benchmarks/normal/run.6VtK5M/cse
+cse	normal	O2	rune-opt	120 expected/graphs.txt	pass	tests/out/benchmarks/normal/run.6VtK5M/cse
+cse	normal	host-default	native-mlton-20241230	120 expected/graphs.txt	pass	tests/out/benchmarks/normal/run.ic6LpL/cse
+cse	normal	host-default	native-polyml-5.9.2	120 expected/graphs.txt	pass	tests/out/benchmarks/normal/run.ic6LpL/cse
+cse	normal	host-default	native-smlnj-dev-2026.2	120 expected/graphs.txt	pass	tests/out/benchmarks/normal/run.ic6LpL/cse
+cse	normal	host-default	native-smlnj-legacy-110.99.9	120 expected/graphs.txt	pass	tests/out/benchmarks/normal/run.ic6LpL/cse
+cse	smoke	O0	rune	6 expected/graphs.txt	pass	tests/out/benchmarks/smoke/run.ko7wiA/cse
+cse	smoke	O0	rune-jit	6 expected/graphs.txt	pass	tests/out/benchmarks/smoke/run.ko7wiA/cse
+cse	smoke	O0	rune-new	6 expected/graphs.txt	pass	tests/out/benchmarks/smoke/run.ko7wiA/cse
+cse	smoke	O0	rune-opt	6 expected/graphs.txt	pass	tests/out/benchmarks/smoke/run.ko7wiA/cse
+cse	smoke	O2	rune	6 expected/graphs.txt	pass	tests/out/benchmarks/smoke/run.H4ROrM/cse
+cse	smoke	O2	rune	6 expected/graphs.txt	pass	tests/out/benchmarks/smoke/run.K27mYj/cse
+cse	smoke	O2	rune-jit	6 expected/graphs.txt	pass	tests/out/benchmarks/smoke/run.H4ROrM/cse
+cse	smoke	O2	rune-jit	6 expected/graphs.txt	pass	tests/out/benchmarks/smoke/run.K27mYj/cse
+cse	smoke	O2	rune-new	6 expected/graphs.txt	pass	tests/out/benchmarks/smoke/run.H4ROrM/cse
+cse	smoke	O2	rune-new	6 expected/graphs.txt	pass	tests/out/benchmarks/smoke/run.K27mYj/cse
+cse	smoke	O2	rune-opt	6 expected/graphs.txt	pass	tests/out/benchmarks/smoke/run.H4ROrM/cse
+cse	smoke	O2	rune-opt	6 expected/graphs.txt	pass	tests/out/benchmarks/smoke/run.K27mYj/cse
+cse	smoke	host-default	native-mlton-20241230	6 expected/graphs.txt	pass	tests/out/benchmarks/smoke/run.j2XoVg/cse
+cse	smoke	host-default	native-mlton-20241230	6 expected/graphs.txt	rejected	tests/out/benchmarks/smoke/run.K27mYj/cse
+cse	smoke	host-default	native-polyml-5.9.2	6 expected/graphs.txt	pass	tests/out/benchmarks/smoke/run.j2XoVg/cse
+cse	smoke	host-default	native-polyml-5.9.2	6 expected/graphs.txt	rejected	tests/out/benchmarks/smoke/run.K27mYj/cse
+cse	smoke	host-default	native-smlnj-dev-2026.2	6 expected/graphs.txt	pass	tests/out/benchmarks/smoke/run.j2XoVg/cse
+cse	smoke	host-default	native-smlnj-legacy-110.99.9	6 expected/graphs.txt	pass	tests/out/benchmarks/smoke/run.j2XoVg/cse
+cse	smoke	host-default	native-smlnj-legacy-110.99.9	6 expected/graphs.txt	rejected	tests/out/benchmarks/smoke/run.K27mYj/cse
+spellcheck-lazy	normal	O0	rune	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.WlMkWw/spellcheck-lazy
+spellcheck-lazy	normal	O0	rune-jit	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.WlMkWw/spellcheck-lazy
+spellcheck-lazy	normal	O0	rune-new	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.WlMkWw/spellcheck-lazy
+spellcheck-lazy	normal	O0	rune-opt	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.WlMkWw/spellcheck-lazy
+spellcheck-lazy	normal	O2	rune	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.KL08aw/spellcheck-lazy
+spellcheck-lazy	normal	O2	rune-jit	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.KL08aw/spellcheck-lazy
+spellcheck-lazy	normal	O2	rune-new	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.KL08aw/spellcheck-lazy
+spellcheck-lazy	normal	O2	rune-opt	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.KL08aw/spellcheck-lazy
+spellcheck-lazy	normal	host-default	native-mlton-20241230	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.NtZL13/spellcheck-lazy
+spellcheck-lazy	normal	host-default	native-polyml-5.9.2	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.NtZL13/spellcheck-lazy
+spellcheck-lazy	normal	host-default	native-smlnj-dev-2026.2	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.NtZL13/spellcheck-lazy
+spellcheck-lazy	normal	host-default	native-smlnj-legacy-110.99.9	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.NtZL13/spellcheck-lazy
+spellcheck-lazy	smoke	O0	rune	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.BqJ1Sn/spellcheck-lazy
+spellcheck-lazy	smoke	O0	rune-jit	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.BqJ1Sn/spellcheck-lazy
+spellcheck-lazy	smoke	O0	rune-new	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.BqJ1Sn/spellcheck-lazy
+spellcheck-lazy	smoke	O0	rune-opt	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.BqJ1Sn/spellcheck-lazy
+spellcheck-lazy	smoke	O2	rune	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.Hkwj3C/spellcheck-lazy
+spellcheck-lazy	smoke	O2	rune	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.gjw0Az/spellcheck-lazy
+spellcheck-lazy	smoke	O2	rune-jit	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.Hkwj3C/spellcheck-lazy
+spellcheck-lazy	smoke	O2	rune-jit	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.gjw0Az/spellcheck-lazy
+spellcheck-lazy	smoke	O2	rune-new	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.Hkwj3C/spellcheck-lazy
+spellcheck-lazy	smoke	O2	rune-new	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.gjw0Az/spellcheck-lazy
+spellcheck-lazy	smoke	O2	rune-opt	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.Hkwj3C/spellcheck-lazy
+spellcheck-lazy	smoke	O2	rune-opt	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.gjw0Az/spellcheck-lazy
+spellcheck-lazy	smoke	host-default	native-mlton-20241230	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.9ge0JA/spellcheck-lazy
+spellcheck-lazy	smoke	host-default	native-mlton-20241230	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.Hkwj3C/spellcheck-lazy
+spellcheck-lazy	smoke	host-default	native-polyml-5.9.2	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.9ge0JA/spellcheck-lazy
+spellcheck-lazy	smoke	host-default	native-polyml-5.9.2	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.Hkwj3C/spellcheck-lazy
+spellcheck-lazy	smoke	host-default	native-smlnj-dev-2026.2	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.9ge0JA/spellcheck-lazy
+spellcheck-lazy	smoke	host-default	native-smlnj-legacy-110.99.9	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.9ge0JA/spellcheck-lazy
+spellcheck-lazy	smoke	host-default	native-smlnj-legacy-110.99.9	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.Hkwj3C/spellcheck-lazy
+spellcheck-strict	normal	O0	rune	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.WlMkWw/spellcheck-strict
+spellcheck-strict	normal	O0	rune-jit	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.WlMkWw/spellcheck-strict
+spellcheck-strict	normal	O0	rune-new	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.WlMkWw/spellcheck-strict
+spellcheck-strict	normal	O0	rune-opt	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.WlMkWw/spellcheck-strict
+spellcheck-strict	normal	O2	rune	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.KL08aw/spellcheck-strict
+spellcheck-strict	normal	O2	rune-jit	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.KL08aw/spellcheck-strict
+spellcheck-strict	normal	O2	rune-new	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.KL08aw/spellcheck-strict
+spellcheck-strict	normal	O2	rune-opt	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.KL08aw/spellcheck-strict
+spellcheck-strict	normal	host-default	native-mlton-20241230	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.NtZL13/spellcheck-strict
+spellcheck-strict	normal	host-default	native-polyml-5.9.2	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.NtZL13/spellcheck-strict
+spellcheck-strict	normal	host-default	native-smlnj-dev-2026.2	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.NtZL13/spellcheck-strict
+spellcheck-strict	normal	host-default	native-smlnj-legacy-110.99.9	DATA/normal.words DATA/normal.input expected/normal.txt	pass	tests/out/benchmarks/normal/run.NtZL13/spellcheck-strict
+spellcheck-strict	smoke	O0	rune	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.BqJ1Sn/spellcheck-strict
+spellcheck-strict	smoke	O0	rune-jit	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.BqJ1Sn/spellcheck-strict
+spellcheck-strict	smoke	O0	rune-new	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.BqJ1Sn/spellcheck-strict
+spellcheck-strict	smoke	O0	rune-opt	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.BqJ1Sn/spellcheck-strict
+spellcheck-strict	smoke	O2	rune	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.Hkwj3C/spellcheck-strict
+spellcheck-strict	smoke	O2	rune	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.gjw0Az/spellcheck-strict
+spellcheck-strict	smoke	O2	rune-jit	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.Hkwj3C/spellcheck-strict
+spellcheck-strict	smoke	O2	rune-jit	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.gjw0Az/spellcheck-strict
+spellcheck-strict	smoke	O2	rune-new	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.Hkwj3C/spellcheck-strict
+spellcheck-strict	smoke	O2	rune-new	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.gjw0Az/spellcheck-strict
+spellcheck-strict	smoke	O2	rune-opt	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.Hkwj3C/spellcheck-strict
+spellcheck-strict	smoke	O2	rune-opt	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.gjw0Az/spellcheck-strict
+spellcheck-strict	smoke	host-default	native-mlton-20241230	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.9ge0JA/spellcheck-strict
+spellcheck-strict	smoke	host-default	native-mlton-20241230	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.Hkwj3C/spellcheck-strict
+spellcheck-strict	smoke	host-default	native-polyml-5.9.2	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.9ge0JA/spellcheck-strict
+spellcheck-strict	smoke	host-default	native-polyml-5.9.2	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.Hkwj3C/spellcheck-strict
+spellcheck-strict	smoke	host-default	native-smlnj-dev-2026.2	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.9ge0JA/spellcheck-strict
+spellcheck-strict	smoke	host-default	native-smlnj-legacy-110.99.9	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.9ge0JA/spellcheck-strict
+spellcheck-strict	smoke	host-default	native-smlnj-legacy-110.99.9	DATA/smoke.words DATA/smoke.input expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.Hkwj3C/spellcheck-strict
+treejoin-lazy	normal	O0	rune	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.P7cPtP/treejoin-lazy
+treejoin-lazy	normal	O0	rune-jit	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.P7cPtP/treejoin-lazy
+treejoin-lazy	normal	O0	rune-new	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.P7cPtP/treejoin-lazy
+treejoin-lazy	normal	O0	rune-opt	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.P7cPtP/treejoin-lazy
+treejoin-lazy	normal	O2	rune	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.fc0Mzg/treejoin-lazy
+treejoin-lazy	normal	O2	rune-jit	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.fc0Mzg/treejoin-lazy
+treejoin-lazy	normal	O2	rune-new	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.fc0Mzg/treejoin-lazy
+treejoin-lazy	normal	O2	rune-opt	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.fc0Mzg/treejoin-lazy
+treejoin-lazy	normal	host-default	native-mlton-20241230	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.qfIZ18/treejoin-lazy
+treejoin-lazy	normal	host-default	native-polyml-5.9.2	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.qfIZ18/treejoin-lazy
+treejoin-lazy	normal	host-default	native-smlnj-dev-2026.2	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.qfIZ18/treejoin-lazy
+treejoin-lazy	normal	host-default	native-smlnj-legacy-110.99.9	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.qfIZ18/treejoin-lazy
+treejoin-lazy	smoke	O0	rune	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.WQEGZ3/treejoin-lazy
+treejoin-lazy	smoke	O0	rune-jit	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.WQEGZ3/treejoin-lazy
+treejoin-lazy	smoke	O0	rune-new	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.WQEGZ3/treejoin-lazy
+treejoin-lazy	smoke	O0	rune-opt	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.WQEGZ3/treejoin-lazy
+treejoin-lazy	smoke	O2	rune	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ra2NQj/treejoin-lazy
+treejoin-lazy	smoke	O2	rune	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.yzH2c8/treejoin-lazy
+treejoin-lazy	smoke	O2	rune-jit	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ra2NQj/treejoin-lazy
+treejoin-lazy	smoke	O2	rune-jit	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.yzH2c8/treejoin-lazy
+treejoin-lazy	smoke	O2	rune-new	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ra2NQj/treejoin-lazy
+treejoin-lazy	smoke	O2	rune-new	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.yzH2c8/treejoin-lazy
+treejoin-lazy	smoke	O2	rune-opt	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ra2NQj/treejoin-lazy
+treejoin-lazy	smoke	O2	rune-opt	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.yzH2c8/treejoin-lazy
+treejoin-lazy	smoke	host-default	native-mlton-20241230	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ielY00/treejoin-lazy
+treejoin-lazy	smoke	host-default	native-mlton-20241230	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ra2NQj/treejoin-lazy
+treejoin-lazy	smoke	host-default	native-polyml-5.9.2	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ielY00/treejoin-lazy
+treejoin-lazy	smoke	host-default	native-polyml-5.9.2	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ra2NQj/treejoin-lazy
+treejoin-lazy	smoke	host-default	native-smlnj-dev-2026.2	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ielY00/treejoin-lazy
+treejoin-lazy	smoke	host-default	native-smlnj-legacy-110.99.9	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ielY00/treejoin-lazy
+treejoin-lazy	smoke	host-default	native-smlnj-legacy-110.99.9	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ra2NQj/treejoin-lazy
+treejoin-strict	normal	O0	rune	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.P7cPtP/treejoin-strict
+treejoin-strict	normal	O0	rune-jit	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.P7cPtP/treejoin-strict
+treejoin-strict	normal	O0	rune-new	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.P7cPtP/treejoin-strict
+treejoin-strict	normal	O0	rune-opt	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.P7cPtP/treejoin-strict
+treejoin-strict	normal	O2	rune	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.fc0Mzg/treejoin-strict
+treejoin-strict	normal	O2	rune-jit	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.fc0Mzg/treejoin-strict
+treejoin-strict	normal	O2	rune-new	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.fc0Mzg/treejoin-strict
+treejoin-strict	normal	O2	rune-opt	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.fc0Mzg/treejoin-strict
+treejoin-strict	normal	host-default	native-mlton-20241230	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.qfIZ18/treejoin-strict
+treejoin-strict	normal	host-default	native-polyml-5.9.2	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.qfIZ18/treejoin-strict
+treejoin-strict	normal	host-default	native-smlnj-dev-2026.2	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.qfIZ18/treejoin-strict
+treejoin-strict	normal	host-default	native-smlnj-legacy-110.99.9	DATA/normal.1 DATA/normal.2 expected/normal.txt	pass	tests/out/benchmarks/normal/run.qfIZ18/treejoin-strict
+treejoin-strict	smoke	O0	rune	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.WQEGZ3/treejoin-strict
+treejoin-strict	smoke	O0	rune-jit	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.WQEGZ3/treejoin-strict
+treejoin-strict	smoke	O0	rune-new	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.WQEGZ3/treejoin-strict
+treejoin-strict	smoke	O0	rune-opt	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.WQEGZ3/treejoin-strict
+treejoin-strict	smoke	O2	rune	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ra2NQj/treejoin-strict
+treejoin-strict	smoke	O2	rune	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.yzH2c8/treejoin-strict
+treejoin-strict	smoke	O2	rune-jit	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ra2NQj/treejoin-strict
+treejoin-strict	smoke	O2	rune-jit	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.yzH2c8/treejoin-strict
+treejoin-strict	smoke	O2	rune-new	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ra2NQj/treejoin-strict
+treejoin-strict	smoke	O2	rune-new	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.yzH2c8/treejoin-strict
+treejoin-strict	smoke	O2	rune-opt	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ra2NQj/treejoin-strict
+treejoin-strict	smoke	O2	rune-opt	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.yzH2c8/treejoin-strict
+treejoin-strict	smoke	host-default	native-mlton-20241230	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ielY00/treejoin-strict
+treejoin-strict	smoke	host-default	native-mlton-20241230	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ra2NQj/treejoin-strict
+treejoin-strict	smoke	host-default	native-polyml-5.9.2	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ielY00/treejoin-strict
+treejoin-strict	smoke	host-default	native-polyml-5.9.2	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ra2NQj/treejoin-strict
+treejoin-strict	smoke	host-default	native-smlnj-dev-2026.2	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ielY00/treejoin-strict
+treejoin-strict	smoke	host-default	native-smlnj-legacy-110.99.9	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ielY00/treejoin-strict
+treejoin-strict	smoke	host-default	native-smlnj-legacy-110.99.9	DATA/smoke.1 DATA/smoke.2 expected/smoke.txt	pass	tests/out/benchmarks/smoke/run.ra2NQj/treejoin-strict

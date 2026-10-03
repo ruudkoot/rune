@@ -1,0 +1,2 @@
+treejoin-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/treejoin.sml treejoin-lazy/benchmark.sml shared/main.sml	DATA/normal.1 DATA/normal.2 expected/normal.txt	treejoin-lazy/normal.expected	DATA/normal.1 DATA/normal.2 expected/normal.txt
+treejoin-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/treejoin.sml treejoin-strict/benchmark.sml shared/main.sml	DATA/normal.1 DATA/normal.2 expected/normal.txt	treejoin-strict/normal.expected	DATA/normal.1 DATA/normal.2 expected/normal.txt

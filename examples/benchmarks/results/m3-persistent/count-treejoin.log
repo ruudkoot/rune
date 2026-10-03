@@ -1,0 +1,16 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (525 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='treejoin' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.brkvKD
+BENCH MEASURE treejoin-lazy normal count
+BENCH MEASURE treejoin-strict normal count
+COUNT unbudgeted treejoin-lazy normal rune
+COUNT unbudgeted treejoin-lazy normal rune:opt
+COUNT unbudgeted treejoin-lazy normal rune:new
+COUNT unbudgeted treejoin-lazy normal rune:jit
+COUNT unbudgeted treejoin-strict normal rune
+COUNT unbudgeted treejoin-strict normal rune:opt
+COUNT unbudgeted treejoin-strict normal rune:new
+COUNT unbudgeted treejoin-strict normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.brkvKD/report.md

@@ -1,0 +1,43 @@
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.P7cPtP
+BENCH treejoin-lazy normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 2000 2000 28
+PASS treejoin-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 2000 2000 28
+PASS treejoin-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 2000 2000 28
+PASS treejoin-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 2000 2000 28
+PASS treejoin-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+BENCH treejoin-strict normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 2000 2000 28
+PASS treejoin-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 2000 2000 28
+PASS treejoin-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 2000 2000 28
+PASS treejoin-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 2000 2000 28
+PASS treejoin-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
