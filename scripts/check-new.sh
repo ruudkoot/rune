@@ -40,7 +40,7 @@ if [ -n "$one" ]; then
   stdin=/dev/null; [ -f "$one.stdin" ] && stdin=$one.stdin
   for side in stack new; do
     mkdir -p "$out/$side"
-    if [ $side = new ]; then flags=--target=registers; run=$new; else flags=""; run=$vm; fi
+    if [ $side = new ]; then flags=--target=registers; run=$new; else flags=--target=stack; run=$vm; fi
     # shellcheck disable=SC2086
     if ! "$rune" $flags "$one.sml" -o "$out/$side/$name.rbc" 2> "$out/$side/$name.cerr"; then
       echo "FAIL new.$name: $side: $(grep -m1 . "$out/$side/$name.cerr")"; exit 0
@@ -67,7 +67,7 @@ if ! "$rune" --target=registers -o "$out/rune.new.rbc" $srcs 2> "$out/boot.err";
   boot="FAIL new.bootstrap: the compiler does not compile to the register bytecode: $(head -1 "$out/boot.err")"
 else
   # shellcheck disable=SC2086
-  "$vm" --heap-size 67108864 bin/rune.rbc --lib lib -o "$out/by-stack.rbc" $srcs 2> "$out/boot.err" &&
+  "$vm" --heap-size 67108864 bin/rune.stack.rbc --lib lib -o "$out/by-stack.rbc" $srcs 2> "$out/boot.err" &&
   "$new" --heap-size 67108864 "$out/rune.new.rbc" --lib lib -o "$out/by-new.rbc" $srcs 2>> "$out/boot.err" ||
     boot="FAIL new.bootstrap: $(head -1 "$out/boot.err")"
   if [ -z "$boot" ] && ! cmp -s "$out/by-stack.rbc" "$out/by-new.rbc"; then
@@ -77,7 +77,7 @@ fi
 
 # the primitives done in the loop, on their edge cases, against runevm
 prims=""
-if ! "$rune" tests/opt/prims.sml -o "$out/prims.rbc" 2> "$out/prims.err" ||
+if ! "$rune" --target=stack tests/opt/prims.sml -o "$out/prims.rbc" 2> "$out/prims.err" ||
    ! "$rune" --target=registers tests/opt/prims.sml -o "$out/prims.new.rbc" 2>> "$out/prims.err"; then
   prims="FAIL new.prims: $(head -1 "$out/prims.err")"
 else

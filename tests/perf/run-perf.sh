@@ -7,10 +7,10 @@
 # that cannot flake. Every tests/perf/NAME.budget is one measurement:
 #
 #   args A...          command-line arguments of the program (optional)
-#   compile FILE...    measure the compiler (bin/rune.rbc) compiling these
+#   compile FILE...    measure the compiler (bin/rune.stack.rbc) compiling these
 #                      files instead of running tests/perf/NAME.sml;
 #                      @boot stands for the compiler's own sources
-#   runedoc ARG...     measure the documentation generator (bin/runedoc.rbc)
+#   runedoc ARG...     measure the documentation generator (bin/runedoc.stack.rbc)
 #                      with these arguments instead; the shell expands a *
 #   scale N EXPONENT   also run with the arguments N and 4N: the instructions
 #                      may grow with at most N^(EXPONENT + 0.15)
@@ -30,7 +30,7 @@
 #
 # --new measures vm/new instead (docs/plans/middle-end.md, M5): each program
 # compiled to the register bytecode and run by bin/runevm-new (RUNEVM_NEW=),
-# the compiler and runedoc as bin/rune.new.rbc and bin/runedoc.new.rbc, and
+# the compiler and runedoc as bin/rune.rbc and bin/runedoc.rbc, and
 # the budgets are tests/perf/new/NAME.budget, beside the measurement that
 # tests/perf/NAME.budget describes.
 set -u
@@ -48,15 +48,15 @@ done
 cd "$(dirname "$0")/../.."
 rune=${RUNE:-bin/rune}
 vm=${RUNEVM:-bin/runevm}
-flags=""
-compiler=bin/rune.rbc
-runedocrbc=bin/runedoc.rbc
+flags=--target=stack
+compiler=bin/rune.stack.rbc
+runedocrbc=bin/runedoc.stack.rbc
 out=tests/out/perf
 if [ $new = 1 ]; then
   vm=${RUNEVM_NEW:-bin/runevm-new}
   flags=--target=registers
-  compiler=bin/rune.new.rbc
-  runedocrbc=bin/runedoc.new.rbc
+  compiler=bin/rune.rbc
+  runedocrbc=bin/runedoc.rbc
   out=tests/out/perf-new
   mkdir -p tests/perf/new
 fi
@@ -90,7 +90,7 @@ measure() {
       if [ "$f" = @boot ]; then files="$files $(boot_sources | tr '\n' ' ')"; else files="$files $f"; fi
     done
     # shellcheck disable=SC2086
-    "$vm" --count --heap-size 67108864 "$compiler" --lib lib -o "$out/$name.out.rbc" $files \
+    "$vm" --count --heap-size 67108864 "$compiler" --lib lib $flags -o "$out/$name.out.rbc" $files \
       > "$out/$name.stdout" 2> "$out/$name.stderr"
   else
     # shellcheck disable=SC2086

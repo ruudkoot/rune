@@ -76,7 +76,7 @@ if [ "$uninstall" = 1 ]; then
         "$bindir/runeopt" "$bindir/runeopt-mlton" "$bindir/runeopt-smlnj-legacy" \
         "$bindir/runeopt-smlnj-dev" "$bindir/runeopt-polyml" "$bindir/runeopt-mlkit"
   rm -rf "$libdir"
-  rm -f "$mandir/rune.1" "$mandir/runevm.1" "$mandir/runedoc.1" "$mandir/runeopt.1"
+  rm -f "$mandir/rune.1" "$mandir/runevm.1" "$mandir/runevm-new.1" "$mandir/runedoc.1" "$mandir/runeopt.1"
   rm -f "$bashdir/rune" "$bashdir/runedoc" "$bashdir/runeopt"
   rm -f "$zshdir/_rune" "$zshdir/_runevm" "$zshdir/_runedoc" "$zshdir/_runeopt"
   echo "uninstalled rune from $prefix"
@@ -122,7 +122,7 @@ copy "$root/bin/runevm-new" "$bindir/runevm-new" 755
 # The wrapper finds the library beside itself, so the tree can be moved.
 if [ -z "$host" ]; then
   copy "$root/bin/rune.rbc" "$libdir/rune.rbc" 644
-  printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" --heap-size %s "$d/../lib/rune/rune.rbc" --lib "$d/../lib/rune" "$@"\n' \
+  printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm-new" --heap-size %s "$d/../lib/rune/rune.rbc" --lib "$d/../lib/rune" "$@"\n' \
     "$heap" > "$bindir/rune"
   chmod 755 "$bindir/rune"
   installed=rune
@@ -151,7 +151,7 @@ doc=""
 if [ -z "$host" ]; then
   if [ -e "$root/bin/runedoc.rbc" ]; then
     copy "$root/bin/runedoc.rbc" "$libdir/runedoc.rbc" 644
-    printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" --heap-size %s "$d/../lib/rune/runedoc.rbc" --lib "$d/../lib/rune" "$@"\n' \
+    printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm-new" --heap-size %s "$d/../lib/rune/runedoc.rbc" --lib "$d/../lib/rune" "$@"\n' \
       "$heap" > "$bindir/runedoc"
     chmod 755 "$bindir/runedoc"
     doc=runedoc
@@ -184,7 +184,7 @@ if [ -e "$root/build/librune.a" ] && [ -e "$root/build/rune-offsets.s" ]; then
   if [ -z "$host" ]; then
     if [ -e "$root/bin/runeopt.rbc" ]; then
       copy "$root/bin/runeopt.rbc" "$libdir/runeopt.rbc" 644
-      printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" --heap-size %s "$d/../lib/rune/runeopt.rbc" --runtime "$d/../lib/rune/runtime" "$@"\n' \
+      printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm-new" --heap-size %s "$d/../lib/rune/runeopt.rbc" --runtime "$d/../lib/rune/runtime" "$@"\n' \
         "$heap" > "$bindir/runeopt"
       chmod 755 "$bindir/runeopt"
       opt=runeopt
@@ -236,6 +236,7 @@ done
 
 copy "$root/share/man/rune.1" "$mandir/rune.1" 644
 copy "$root/share/man/runevm.1" "$mandir/runevm.1" 644
+copy "$root/share/man/runevm-new.1" "$mandir/runevm-new.1" 644
 copy "$root/share/completions/rune.bash" "$bashdir/rune" 644
 copy "$root/share/completions/_rune" "$zshdir/_rune" 644
 copy "$root/share/completions/_runevm" "$zshdir/_runevm" 644

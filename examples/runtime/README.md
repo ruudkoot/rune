@@ -14,13 +14,13 @@ ML Basis Library, so nothing here ports
 | `become.sml` | `restore`, which makes a running program become the world in an image |
 
 ```sh
-bin/rune --lib lib examples/runtime/stats.sml -o stats.rbc && bin/runevm stats.rbc
-bin/runevm --count stats.rbc          # the same instruction count, from outside
+bin/rune --lib lib examples/runtime/stats.sml -o stats.rbc && bin/runevm-new stats.rbc
+bin/runevm-new --count stats.rbc          # the same instruction count, from outside
 
 bin/rune --lib lib examples/runtime/checkpoint.sml -o checkpoint.rbc
-bin/runevm checkpoint.rbc             # writes checkpoint.img and stops
-bin/runevm --restore checkpoint.img   # carries on, as often as you like
+bin/runevm-new checkpoint.rbc         # writes checkpoint.img and stops
+bin/runevm-new --restore checkpoint.img # carries on, as often as you like
 
 bin/rune --lib lib examples/runtime/become.sml -o become.rbc
-bin/runevm become.rbc                 # becomes checkpoint.img from inside
+bin/runevm-new become.rbc             # becomes checkpoint.img from inside
 ```

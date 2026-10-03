@@ -9,7 +9,7 @@
 #   scripts/bisect-fuel.sh [--rune BIN] [--vm BIN] PROGRAM.sml [ARGS ...]
 set -u
 cd "$(dirname "$0")/.."
-rune=bin/rune
+rune=bin/rune-stack
 vm=bin/runevm
 while [ $# -gt 0 ]; do
   case "$1" in

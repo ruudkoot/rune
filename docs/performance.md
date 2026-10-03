@@ -142,15 +142,16 @@ What the tables say:
 
 ## Compiling
 
-Each build of the compiler compiling `examples/hello.sml`, and compiling
-the compiler itself (`BOOT_SRCS`, the bootstrap's input), the same day at
+Each build of the compiler compiling `examples/hello.sml` to the stack
+bytecode (`--target=stack`, which was the default when this was measured),
+and compiling the compiler itself (`BOOT_SRCS`, the bootstrap's input), the same day at
 the same commit and on the same machine as above: wall-clock time, the
 fastest of three rounds, a round of `hello` being 20 compiles. The builds
 of the hosts are what `make host-builds` makes (`bin/rune-mlton`,
 `bin/rune-smlnj-legacy`, `bin/rune-smlnj32`, `bin/rune-smlnj-dev`,
 `bin/rune-polyml`, `bin/rune-mlkit`); the others are the self-hosted
-compiler, `bin/rune.rbc`, on `runevm` and translated by `runeopt`, and
-`bin/rune.new.rbc` on `vm/new` at each JIT level.
+compiler, `bin/rune.stack.rbc`, on `runevm` and translated by `runeopt`, and
+`bin/rune.rbc` on `vm/new` at each JIT level.
 
 | Build | `hello` | the compiler |
 |---|---:|---:|
@@ -160,18 +161,19 @@ compiler, `bin/rune.rbc`, on `runevm` and translated by `runeopt`, and
 | SML/NJ 110.99.9, 64 bits | 21.8 ms | 2.56 s |
 | SML/NJ 110.99.9, 32 bits | 21.2 ms | 2.34 s |
 | SML/NJ 2026.2 | 24.9 ms | 2.38 s |
-| `runevm` (`bin/rune`, what is shipped) | 26.2 ms | 6.01 s |
-| native code (`runeopt` of `bin/rune.rbc`) | 17.0 ms | 3.12 s |
+| `runevm` (`bin/rune.stack.rbc`) | 26.2 ms | 6.01 s |
+| native code (`runeopt` of `bin/rune.stack.rbc`) | 17.0 ms | 3.12 s |
 | `vm/new`, `off` | 22.9 ms | 5.44 s |
 | `vm/new`, `baseline` | 36.1 ms | 3.24 s |
-| `vm/new`, `opt` (the default) | 37.8 ms | 3.04 s |
+| `vm/new`, `opt` (the default; `bin/rune`, what is shipped) | 37.8 ms | 3.04 s |
 | `vm/new`, `all` | 157.1 ms | 3.23 s |
 | `vm/new`, `all+t2` | 187.9 ms | 3.18 s |
 
 Not measured: the VMs built for Windows, 32-bit Linux and PowerPC.
 
-* The shipped compiler compiles itself in 6.0 s, 5.4 times as long as the
-  build MLton makes; translated into native code, in 3.1 s, 2.8 times.
+* The compiler on `runevm` compiles itself in 6.0 s, 5.4 times as long as
+  the build MLton makes; translated into native code, in 3.1 s, 2.8 times.
+  The shipped one, on `vm/new`, takes 3.0 s.
 * `vm/new` with its JIT on (`baseline`, `opt`) compiles the compiler in 3.0
   to 3.2 s, twice as fast as `runevm`, as fast as native code, 1.2 to 1.3
   times SML/NJ's builds and 2.7 times MLton's. Tier 2 is no faster than
@@ -184,9 +186,9 @@ Not measured: the VMs built for Windows, 32-bit Linux and PowerPC.
   and bytes and objects allocated, by the compiler compiling `hello`, by
   the bootstrap and by `runedoc` -- are the budgets of `make perf-check`
   (`tests/perf/*.budget`). At this commit the bootstrap executes 951
-  million instructions of stack bytecode and 515 million of register
+  million instructions of stack bytecode and 585 million of register
   bytecode and allocates 1.17 GB in 26.0 million objects; compiling `hello`
-  takes 3.08 million instructions, 3.5 MB and 53.6 thousand objects.
+  takes 3.10 million instructions, 3.6 MB and 54.1 thousand objects.
 
 ## Why `vm/new` at `opt` is slower than MLton
 
@@ -292,11 +294,11 @@ the other columns are `RUNEVM_JIT=off`, `RUNEVM_JIT=baseline`,
 `RUNEVM_JIT=all` and `RUNEVM_JIT=all RUNEVM_JIT_TIER=2` before `make perf
 PERF_CONFIGS=rune:new`.
 
-The compile times: `make bin/rune.new.rbc`, then `bin/runeopt-mlton
---options "--heap-size 67108864" bin/rune.rbc -o bin/rune-native` for the
+The compile times: `make bin/rune.stack.rbc`, then `bin/runeopt-mlton
+--options "--heap-size 67108864" bin/rune.stack.rbc -o bin/rune-native` for the
 native compiler, and each build run as `BUILD -o out.rbc examples/hello.sml`
 and `BUILD -o out.rbc $(BOOT_SRCS)`, where `BUILD` is `bin/rune-HOST`, or
-`VM --heap-size 67108864 bin/rune.rbc --lib lib` (`bin/rune.new.rbc` on
+`bin/runevm --heap-size 67108864 bin/rune.stack.rbc --lib lib` (`bin/rune.rbc` on
 `bin/runevm-new`, with the JIT options of the level), or `bin/rune-native
 --lib lib`. `scripts/perf-cycles.sh` measures cycles and instructions of the
 same runs, with `jit-off`, `jit-baseline`, `jit-all` and `+t2` for the levels.

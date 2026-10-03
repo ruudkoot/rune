@@ -119,7 +119,7 @@ keep these invariants:
   `pops`/`pushes` must say what it does.
 * **vm/new** (`vm/new/`, `bin/runevm-new`; `vm/new/ARCHITECTURE.md` is the
   VM as built, and every change to `vm/new` keeps it so) runs the register
-  bytecode (`src/isa/regs.sml`, `rune --target=registers`) on the runtime
+  bytecode (`src/isa/regs.sml`, what `rune` makes unless told `--target=stack`) on the runtime
   of `runevm`, whose part that is the stack bytecode's is `vm/isa_stack.c`
   and vm/new's `vm/new/isa_regs.c`. Its loop keeps its state in its own
   variables as the stack VM's does: a body of `src/isa/regs.sml` is written

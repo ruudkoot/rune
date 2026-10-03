@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--rune', default='bin/rune')
+parser.add_argument('--rune', default='bin/rune-stack')
 args = parser.parse_args()
 compiler = str(Path(args.rune).resolve())
 out = Path('tests/out/compiler')

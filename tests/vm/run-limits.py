@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--rune', default='bin/rune')
+parser.add_argument('--rune', default='bin/rune-stack')
 parser.add_argument('--vm', default='bin/runevm')
 args = parser.parse_args()
 compiler = str(Path(args.rune).resolve())

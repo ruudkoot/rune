@@ -30,7 +30,7 @@ that gets hot to machine code as the program runs.
 ```
 make hosts    # once: MLton and the other SML systems, under ~/.local/rune-hosts
 make          # the compiler, bin/rune, and the VM, bin/runevm-new
-bin/rune --target=registers examples/hello.sml -o hello.rbc
+bin/rune examples/hello.sml -o hello.rbc
 bin/runevm-new hello.rbc
 Hello, world!
 ```

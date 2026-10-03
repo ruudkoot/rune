@@ -174,7 +174,7 @@ while IFS="$(printf '\t')" read -r name seconds memory sources args expected inp
     if [ "$kind" = rune ]; then
       sha256sum "$runtime" > "$bundle/runtime.sha256"
       (cd "$root" && sha256sum lib/basis/MANIFEST lib/basis/*.sml) > "$bundle/basis.sha256"
-      sha256sum "$root/bin/rune.rbc" "$root/bin/rune.new.rbc" "$root/bin/runevm" "$root/bin/runevm-new" > "$bundle/rune-payloads.sha256"
+      sha256sum "$root/bin/rune.rbc" "$root/bin/rune.stack.rbc" "$root/bin/runevm" "$root/bin/runevm-new" > "$bundle/rune-payloads.sha256"
     fi
     # Portable main plus the thin host-specific launch/export adapter.
     if [ "$action" = time ]; then

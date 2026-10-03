@@ -15,8 +15,8 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 | `workers` | `Mid` | `Mid`, tupled and curried functions split into workers and wrappers (`src/core/workers.sml`), from `-O1` | `MidLint` |
 | `simplify` | `Mid` | `Mid`, shrunk (`src/core/simplify.sml`), from `-O1` | `MidLint` |
 | `lower` | `Mid` | `Low` (`src/backend/low.sml`, by `Lower`) | `LowLint` |
-| `stack` | `Low` | instruction lists (`src/backend/stack.sml`) | none yet |
-| `registers` | `Low` | instruction lists of the register bytecode (`src/backend/regs.sml`), with `--target=registers` | none yet |
+| `stack` | `Low` | instruction lists (`src/backend/stack.sml`), with `--target=stack` | none yet |
+| `registers` | `Low` | instruction lists of the register bytecode (`src/backend/regs.sml`), the default target | none yet |
 | emission | instruction lists | the `.rbc` | |
 
 `-O0` is the same stages with no optional pass; `-O0` and `-O2` must give
@@ -40,7 +40,7 @@ what `simplify` does besides shrinking, each of which may be left out.
 |---|---|
 | `-O0`, `-O1`, `-O2` | the level; `-O1` when none is given |
 | `--passes=P,...` | run these optional passes, whatever the level |
-| `--dump-before=P`, `--dump-after=P` | print what the pass `P` is given or makes (`all`: every pass); `--dump-lambda` and `--dump-code` are `--dump-after=translate` and `--dump-after=stack` (`registers` with `--target=registers`) |
+| `--dump-before=P`, `--dump-after=P` | print what the pass `P` is given or makes (`all`: every pass); `--dump-lambda` and `--dump-code` are `--dump-after=translate` and `--dump-after=registers` (`stack` with `--target=stack`) |
 | `--lint` | check what every pass makes, and stop with `Error.Bug`, which names the pass, at the first breach |
 | `--fuel=N` | make no more than `N` rewrites: a pass that rewrites asks `Pass.spend` before each |
 | `--pass-stats` | the size of what every pass makes and its time, on standard error |

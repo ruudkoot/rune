@@ -14,5 +14,5 @@ exe=""
 if [ "${1:-}" = -o ]; then exe=$2; shift 2; fi
 [ $# -gt 0 ] || { echo "usage: scripts/opt.sh [-o EXE] FILE.sml ..." >&2; exit 2; }
 [ -n "$exe" ] || exe=${1%.sml}
-"$rune" "$@" -o "$exe.rbc"
+"$rune" --target=stack "$@" -o "$exe.rbc"
 "$runeopt" "$exe.rbc" -o "$exe"

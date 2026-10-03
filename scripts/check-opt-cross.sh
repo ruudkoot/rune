@@ -27,8 +27,8 @@ run() {
   done
 }
 
-run facts --facts bin/rune.rbc bin/runedoc.rbc
-run disasm-rune --disasm bin/rune.rbc
+run facts --facts bin/rune.stack.rbc bin/runedoc.stack.rbc
+run disasm-rune --disasm bin/rune.stack.rbc
 # a file the loader refuses
 printf "$(sed -n 's/^# rbc header //p' vm/opcodes.def)\\001\\000\\000\\000\\003\\360\\377\\377\\377" > "$out/bad.rbc"
 run refused --check "$out/bad.rbc"
@@ -36,7 +36,7 @@ run refused --check "$out/bad.rbc"
 # The assembly of a program, from every build: runeopt's own, and that of the
 # program of tests/opt that runs every instruction.
 printf "$(awk -v opdefs=vm/opcodes.def -v primdefs=vm/prims.def -f tests/opt/rbcasm.awk tests/opt/every-opcode.rasm)" > "$out/every-opcode.rbc"
-for prog in bin/runeopt.rbc "$out/every-opcode.rbc"; do
+for prog in bin/runeopt.stack.rbc "$out/every-opcode.rbc"; do
   name=$(basename "$prog" .rbc)
   for c in $builds; do
     "bin/runeopt-$c" -S "$prog" -o "$out/$name.$c.s" 2> "$out/$name.$c.s.err" ||
@@ -51,7 +51,7 @@ done
 # The program of an image (--from-image), which a runevm wrote: every build
 # must make the same .rbc of it, and the same assembly. They write to the same
 # names in turn, since the assembly names the .rbc it embeds.
-if bin/rune tests/lang/rt.save_first.sml -o "$out/first.rbc" 2> /dev/null && bin/runevm "$out/first.rbc" > /dev/null 2>&1; then
+if bin/rune --target=stack tests/lang/rt.save_first.sml -o "$out/first.rbc" 2> /dev/null && bin/runevm "$out/first.rbc" > /dev/null 2>&1; then
   for c in $builds; do
     "bin/runeopt-$c" --from-image tests/out/rt.save_first.img -S -o "$out/image.s" > "$out/image.$c.err" 2>&1 ||
       { echo "FAIL opt-cross image: runeopt-$c --from-image failed: $(head -1 "$out/image.$c.err")"; status=1; }

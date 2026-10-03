@@ -6,7 +6,7 @@ virtual machine `runevm` (C17, and C99 with a switch). The compiler builds uncha
 builds produce byte-identical bytecode (`make check-cross` verifies this).
 
 The compiler Rune ships is the one it compiled itself: **`bin/rune`** is
-`bin/rune.rbc` running on `runevm`. The host builds `bin/rune-mlton`,
+`bin/rune.rbc` running on `runevm-new`. The host builds `bin/rune-mlton`,
 `bin/rune-smlnj-legacy`, `bin/rune-smlnj32`, `bin/rune-smlnj-dev`, `bin/rune-polyml` and `bin/rune-mlkit` have two jobs — to
 bootstrap that one, and to check it (`make check-cross`, `make test-all`). Everything that runs,
 tests or measures the compiler goes through `bin/rune`.
@@ -21,6 +21,18 @@ lives next to it as `bin/rune-mlton.bin`, `bin/rune-polyml.bin`,
 `bin/rune-smlnj32.heap.x86-linux`. Because the wrapper puts `--lib` first, a
 `--lib` of yours comes later on the command line and wins. Nothing absolute is
 baked into `bin/rune.rbc`, so it does not depend on where the checkout is.
+
+The compiler makes the register bytecode of `bin/runevm-new` unless told
+`--target=stack`, the stack bytecode of `bin/runevm`. `bin/rune.rbc`,
+`runedoc.rbc` and `runeopt.rbc` are register bytecode, which their wrappers
+(`bin/rune-boot`, `runedoc-boot`, `runeopt-boot`) run on `runevm-new`. The
+same programs in stack bytecode, `bin/rune.stack.rbc`, `runedoc.stack.rbc`
+and `runeopt.stack.rbc`, are for what needs it: the budgets of `runevm`,
+and what `runeopt` translates. The suites that run `runevm` compile with
+`bin/rune-stack`, the compiler under test (`RUNE=`, `bin/rune` by default)
+with `--target=stack`; that wrapper is written whenever make reads its
+Makefile, and is where the scripts of `tests/` look when they are run by
+hand.
 
 
 ## Prerequisites
@@ -80,12 +92,12 @@ name the tools to check.
 | `make mlton` / `make smlnj-legacy` / `make smlnj32` / `make smlnj-dev` / `make polyml` / `make mlkit` | `bin/rune-mlton`, `bin/rune-smlnj-legacy`, `bin/rune-smlnj32`, `bin/rune-smlnj-dev`, `bin/rune-polyml`, `bin/rune-mlkit`; none of them is `bin/rune` |
 | `make host-builds` | all six host builds, of the compiler, of `runedoc` and of `runeopt` |
 | `make runedoc` | `bin/runedoc`, the documentation generator ([docs/plans/docgen.md](plans/docgen.md)) compiled by `bin/rune`: `bin/runedoc.rbc` and the wrapper `bin/runedoc-boot`. `make runedoc-host-builds` makes `bin/runedoc-mlton`, `-smlnj-legacy`, `-smlnj32`, `-smlnj-dev`, `-polyml` and `-mlkit` |
-| `make runeopt` | `bin/runeopt`, the native code generator ([docs/native.md](native.md)) compiled by `bin/rune`: `bin/runeopt.rbc` and the wrapper `bin/runeopt-boot`. `make runeopt-host-builds` makes `bin/runeopt-mlton`, `-smlnj-legacy`, `-smlnj32`, `-smlnj-dev`, `-polyml` and `-mlkit`. `runeopt prog.rbc -o prog` makes an executable of a program; `scripts/opt.sh prog.sml` does both steps |
+| `make runeopt` | `bin/runeopt`, the native code generator ([docs/native.md](native.md)) compiled by `bin/rune`: `bin/runeopt.rbc` and the wrapper `bin/runeopt-boot`. `make runeopt-host-builds` makes `bin/runeopt-mlton`, `-smlnj-legacy`, `-smlnj32`, `-smlnj-dev`, `-polyml` and `-mlkit`. `runeopt prog.rbc -o prog` makes an executable of a program compiled with `--target=stack`; `scripts/opt.sh prog.sml` does both steps |
 | `make vm` | `bin/runevm`, and `bin/runevm-new`, `vm/new`'s loop for the register bytecode |
 | `make vm-asan` | `bin/runevm-asan` and `bin/runevm-new-asan` with AddressSanitizer/UBSan; `make test-new-asan` runs `tests/lang` on the latter |
 | `make test-new-jit` | `vm/new` with every function compiled (`--jit=all`): `tests/lang` and the Basis Library suite (`rune:jit`), every program of `tests/lang` and `tests/perf`, `tests/opt/prims.sml` and the compiler compiling itself printing and counting the same interpreted, compiled, with every other function compiled (`--jit-only=odd`, so that calls, returns and raises cross between the tiers both ways) and under `--jit-stress` (tiered up at the lowest thresholds and invalidated every fifth call) and every instruction occurring in them (`scripts/check-jit.sh`), `runevm-new --jit-check`, and a recursion 200,000 deep under a machine stack of 1 MB, which holds the driver to never nesting ([plans/jit.md](plans/jit.md), M3-M5); part of `make check`. `make RUNE_JIT=0` builds `vm/new` without the JIT. `RUNEVM_JIT=MODE` in the environment is the mode where no `--jit=` is given |
-| `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-$(BOOTHOST)`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot` |
-| `make test` | run `tests/run-tests.sh` with `bin/rune`, and `tests/vm/run-vm-tests.sh`: bytecode files and options the VM must refuse with a message |
+| `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-$(BOOTHOST)`), the `bin/rune-boot` wrapper that runs it on `runevm-new`, and `bin/rune` → `rune-boot`; `bin/rune.stack.rbc` is the same compiler in the stack bytecode |
+| `make test` | run `tests/run-tests.sh` with `bin/rune-stack` (`bin/rune --target=stack`, written by every `make`, for `RUNE=` if you give one), and `tests/vm/run-vm-tests.sh`: bytecode files and options the VM must refuse with a message |
 | `make test-all` | run the suite with each of the six host builds |
 | `make isa` | write the tables of the instruction set and the primitives again from their descriptions in `src/isa`, with `runeisa` built by MLton: `vm/opcodes.def`, `vm/prims.def`, `vm/opcodes.h`, `vm/prims_table.h`, `src/backend/opcodes.sml`, `src/backend/prims.sml`; they are committed |
 | `make check-isa` | fail when one of those files is not what `src/isa` gives, with `runeisa` built by MLton and by the self-hosted compiler; part of `make check` |
@@ -100,7 +112,7 @@ name the tools to check.
 | `make check-docs` | verify docs, tests and `.def` files are in sync, that the library's signatures have the tokens of their transcriptions, that the comments of `lib/basis` and `src` are in the language of doc comments (`runedoc --lint`, [doc-comments.md](doc-comments.md)), that `docs/generated/basis` is up to date (which includes that the Basis Library suite has a check for every specified member of every structure: `runedoc` reads the suite's labels), and that the structures the library says implement a signature are the ones the suite matches against it (`tests/basis/check-claims.sh`), and that the notes of the documentation and `tests/basis/deviations.txt` agree (`tests/basis/check-notes.sh`) |
 | `make test-basis` | run the Basis Library suite (`tests/basis`) with `bin/rune` |
 | `make perf-check` | verify the performance budgets of `tests/perf`: instructions executed and bytes and objects allocated (`runevm --count`) by benchmark programs, by the compiler compiling `examples/hello.sml`, by the bootstrap and by `runedoc`, each at most 10 % above the recorded value, and the growth of the instruction count from n to 4n. The numbers are the same on every machine. `sh tests/perf/run-perf.sh --update` records new values after a deliberate change |
-| `make bootstrap` | compile the compiler with `bin/rune` and check the result equals `bin/rune.rbc` |
+| `make bootstrap` | compile the compiler with `bin/rune` and check the result equals `bin/rune.rbc`, and again with `--target=stack` against `bin/rune.stack.rbc` |
 | `make check` | all of the above (about 3 minutes on 16 CPUs, most of it spent running the compiler on the interpreter) |
 | `make doctor` | check that the tools of all targets are installed and work; print how to install missing ones |
 | `make matrix-quick` | the Basis Library suite on Rune and on Rune's library compiled by each host (the `xc1` configurations); not part of `make check` |
@@ -134,7 +146,7 @@ host build that compiles stage 1 of the bootstrap.
 `bin/runevm.exe` and `bin/runevm-new.exe`, and for 32 bits,
 `bin/runevm32.exe` and `bin/runevm-new32.exe`. `make test-windows` runs the
 language suite and `tests/vm` on all four (`tests/run-windows.sh`, once with
-the stack bytecode of `bin/rune` and once with the register bytecode of
+the stack bytecode of `bin/rune-stack` and once with the register bytecode of
 `bin/rune-new`), then the Basis Library suite on each.
 Neither is part of any other target: `make check` never compiles
 `vm/sys_win.c`, and nothing else in the tree depends on it. The toolchains
@@ -184,7 +196,7 @@ The child checks the program in the image as it would a `.rbc`, since
 `Runtime.restore` means an image can now come from a file rather than only
 from a parent (`vm/loader.c`, `validate_program`). That check costs about
 3 µs for each KB of code: 14 µs for a program of the size of
-`examples/hello.sml`, and 1.5 ms for `bin/rune.rbc`, which at 479 KB of code
+`examples/hello.sml`, and 1.5 ms for `bin/rune.stack.rbc`, which at 479 KB of code
 in 2,343 functions is the largest program in the tree. Against the 30 ms a
 fork costs anyway that is under a tenth of a percent for an ordinary program
 and about 5% for the largest, so there is no way to turn it off: an image that
@@ -276,9 +288,9 @@ this system in the same way.
 `/usr/local` when the effective user is root and to `~/.local` otherwise:
 
 ```
-$PREFIX/bin/rune                     wrapper: runevm + rune.rbc + --lib
-$PREFIX/bin/runedoc                  wrapper: runevm + runedoc.rbc + --lib
-$PREFIX/bin/runeopt                  wrapper: runevm + runeopt.rbc + --runtime
+$PREFIX/bin/rune                     wrapper: runevm-new + rune.rbc + --lib
+$PREFIX/bin/runedoc                  wrapper: runevm-new + runedoc.rbc + --lib
+$PREFIX/bin/runeopt                  wrapper: runevm-new + runeopt.rbc + --runtime
 $PREFIX/bin/runevm                   the VM
 $PREFIX/bin/runevm-new               the VM of the register bytecode, with its JIT
 $PREFIX/lib/rune/rune.rbc            the compiler
@@ -360,7 +372,7 @@ where it runs (`man runeopt`).
   points end a failure with `Posix.Process.exit 0w1`, the status of the
   other builds. Each of the `bin/rune*` files is a generated shell wrapper
   that passes `--lib` and execs the payload next to it (`rune.rbc` on
-  `runevm`, `rune-mlton.bin`, `rune-polyml.bin`, `rune-mlkit.bin`, or the
+  `runevm-new`, `rune-mlton.bin`, `rune-polyml.bin`, `rune-mlkit.bin`, or the
   heap image with the `sml` of `make hosts`).
 
 ## Bootstrapping
@@ -371,7 +383,7 @@ the result is the compiler you get:
 1. `make boot` compiles `build/config.sml`, the files of `sources.txt` and
    `src/main/rune-main.sml` with `bin/rune-$(BOOTHOST)` into `bin/rune.rbc`
    (stage 1), writes `bin/rune-boot`, a wrapper that runs
-   `runevm --heap-size $(RUNE_HEAP) bin/rune.rbc`, and points `bin/rune` at
+   `runevm-new --heap-size $(RUNE_HEAP) bin/rune.rbc`, and points `bin/rune` at
    it. `make` does this too. `BOOTHOST` is `mlton`, `smlnj-legacy`, `smlnj32`,
    `smlnj-dev`, `polyml` or `mlkit`; they all emit the same bytecode, so it only decides which host
    build compiles stage 1.
@@ -382,7 +394,8 @@ the result is the compiler you get:
    hence the name `bin/rune-boot`.
 3. `make bootstrap` compiles the compiler with `bin/rune` into
    `bin/rune.stage2.rbc` and checks with `cmp` that it is identical to
-   `bin/rune.rbc`: the compiler reproduces itself byte for byte.
+   `bin/rune.rbc`: the compiler reproduces itself byte for byte. It does the
+   same with `--target=stack` against `bin/rune.stack.rbc`.
 
 `RUNE_HEAP` (64 MiB) is only the semispace mapped up front; the heap grows on
 demand. Between 32 MiB and 256 MiB the bootstrap varies by under 3%, so the
@@ -427,12 +440,12 @@ rules so that one source tree builds everywhere and emits identical output:
 ## Using the compiler
 
 ```
-bin/rune [options] file.sml ...      # produces first-file.rbc (or -o FILE)
-bin/runevm [options] file.rbc [args] # runs it
-bin/rune --target=registers file.sml -o file.rbc  # register bytecode instead
-bin/runevm-new [options] file.rbc [args]          # runs that, compiling the code that gets hot (--jit=MODE: off, baseline, opt (the default), all)
+bin/rune [options] file.sml ...      # produces first-file.rbc (or -o FILE): register bytecode
+bin/runevm-new [options] file.rbc [args] # runs it, compiling the code that gets hot (--jit=MODE: off, baseline, opt (the default), all)
+bin/rune --target=stack file.sml -o file.rbc  # stack bytecode instead
+bin/runevm [options] file.rbc [args] # runs that
 bin/rune-mlton [options] file.sml ... # the same compiler, built by MLton
-bin/runeopt file.rbc -o prog          # an executable of it (Linux, x86-64)
+bin/runeopt file.rbc -o prog          # an executable of a stack .rbc (Linux, x86-64)
 RUNEVM_OPTIONS=--count ./prog [args]  # runs it, with the options of runevm
 ```
 

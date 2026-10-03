@@ -33,7 +33,7 @@ set -u
 TZ='NST3:30NDT,M3.2.0,M11.1.0'
 export TZ
 
-rune=bin/rune
+rune=bin/rune-stack
 native=bin/runevm
 def=vm/opcodes.def
 vms=""
