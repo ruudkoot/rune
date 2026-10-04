@@ -790,3 +790,32 @@ records the run; all 32 inventory tests pass.
 All 28 additional smoke/normal cases on ML Kit and 32-bit SML/NJ pass,
 bringing eff correctness coverage to 196 successful cases across all six
 managed native hosts and four Rune engines.
+
+## M3 shared GC/spectral CSP solvers, 2026-10-04
+
+Two variants bring the catalogue to 217 programs and 645 profiles. Reviewed
+identical GC/spectral programs share one implementation and retain all source,
+fixture and runtime-setting provenance. The guarded inventory classification
+has 35 passing discovery/classification tests.
+
+[All 56 final cases](results/m3-constraints/correctness.tsv) pass smoke/normal
+on four Rune engines at both levels and all six managed native hosts. The
+[attempt ledger](results/m3-constraints/correctness-attempts.tsv) retains the
+rejected generic driver projection and a 600-second -O0 stack timeout.
+Explicit tuple typing and a recorded strict-normal 1,200-second override resolve
+those cases; input size 6 and all 240 normal repetitions remain fixed. Full
+ordered solution checks agree with GHC and independent permutations for every
+method, including the source's backmarking zero-case behavior.
+
+Nine semantic checks pass nine final-path configurations at both levels.
+ML Kit's [test compilation crash](validation/mlkit-constraints.md) remains separate
+from passing standalone benchmark runs. Final source count comparisons agree;
+intermediate pre-typing driver samples are distinctly archived. No headline
+timing or universal large validation is claimed. M3 remains in progress.
+
+Full `make JOBS=4 check` passes with 645 catalogue profiles, the bounded routine
+set, 331 language fixtures per compiler, performance budgets, bootstrap and
+bytecode agreement for 498 programs across seven builds. runedoc and runeopt
+also agree. The [complete transcript](validation/oct04-constraints-acceptance.log)
+records that run. After the final timeout-only metadata update, catalogue
+validation/negative checks and the recorded normal retries pass.

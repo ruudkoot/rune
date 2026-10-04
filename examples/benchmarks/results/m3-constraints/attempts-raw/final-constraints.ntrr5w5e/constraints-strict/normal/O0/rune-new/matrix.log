@@ -1,0 +1,18 @@
+PROGRAM LIMIT AS 4194304 KiB
+PROGRAM FAIL rune (load 1, exit 124)
+timed out after 600 s
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 960,960,960,960,960
+PASS constraints-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 960,960,960,960,960
+PASS constraints-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 960,960,960,960,960
+PASS constraints-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt

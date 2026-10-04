@@ -1,0 +1,10 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (645 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune BENCH_FILTER='=constraints-strict' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.3Q8kRa
+BENCH constraints-strict normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 960,960,960,960,960
+PASS constraints-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune

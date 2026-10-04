@@ -1,0 +1,5 @@
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 960,960,960,960,960
+PASS constraints-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune

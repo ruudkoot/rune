@@ -1,0 +1,15 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-constraints.ntrr5w5e
+PASS constraints-lazy smoke O0
+PASS constraints-lazy smoke O2
+PASS constraints-lazy smoke hosts
+PASS constraints-lazy normal O0
+PASS constraints-lazy normal O2
+PASS constraints-lazy normal hosts
+PASS constraints-strict smoke O0
+PASS constraints-strict smoke O2
+PASS constraints-strict smoke hosts
+Traceback (most recent call last):
+  File "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/constraints-originals/check-final.py", line 18, in <module>
+    assert result.returncode==0,job
+           ^^^^^^^^^^^^^^^^^^^^
+AssertionError: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-constraints.ntrr5w5e/constraints-strict/normal/O0

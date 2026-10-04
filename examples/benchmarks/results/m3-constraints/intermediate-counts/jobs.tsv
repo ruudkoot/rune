@@ -1,0 +1,2 @@
+constraints-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-constraints.sml constraints-lazy/benchmark.sml shared/main.sml	6 240 expected/normal.txt	constraints-lazy/normal.expected	expected/normal.txt
+constraints-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-constraints.sml constraints-strict/benchmark.sml shared/main.sml	6 240 expected/normal.txt	constraints-strict/normal.expected	expected/normal.txt

@@ -1,0 +1,45 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (645 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt,native:mlton,native:smlnj-legacy,native:smlnj-dev,native:polyml BENCH_FILTER='=constraints-strict' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.gU6r8t
+BENCH constraints-strict normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 960,960,960,960,960
+PASS constraints-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 960,960,960,960,960
+PASS constraints-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 960,960,960,960,960
+PASS constraints-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 960,960,960,960,960
+PASS constraints-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 960,960,960,960,960
+PASS constraints-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 960,960,960,960,960
+PASS constraints-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 960,960,960,960,960
+PASS constraints-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 960,960,960,960,960
+PASS constraints-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2

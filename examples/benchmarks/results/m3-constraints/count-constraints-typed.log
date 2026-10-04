@@ -1,0 +1,16 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (645 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='constraints-' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.O3pzMW
+BENCH MEASURE constraints-lazy normal count
+BENCH MEASURE constraints-strict normal count
+COUNT unbudgeted constraints-lazy normal rune
+COUNT unbudgeted constraints-lazy normal rune:opt
+COUNT unbudgeted constraints-lazy normal rune:new
+COUNT unbudgeted constraints-lazy normal rune:jit
+COUNT unbudgeted constraints-strict normal rune
+COUNT unbudgeted constraints-strict normal rune:opt
+COUNT unbudgeted constraints-strict normal rune:new
+COUNT unbudgeted constraints-strict normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.O3pzMW/report.md
