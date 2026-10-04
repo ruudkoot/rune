@@ -53,7 +53,7 @@ void ms_init(Masm *m, uint32_t nlocals, uint32_t maxstack, int win, const void *
     m->nslow = m->slow_cap = 0;
 }
 void ms_free(Masm *m) {
-    for (int i = 0; i < m->nslow; i++) { as_label_free(&m->slow[i].here); as_label_free(&m->slow[i].back); }
+    for (int i = 0; i < m->nslow; i++) { as_label_free(&m->slow[i]->here); as_label_free(&m->slow[i]->back); free(m->slow[i]); }
     free(m->slow);
     as_free(&m->a);
 }
@@ -181,9 +181,9 @@ static void real_to_slot(Masm *m, int32_t s, const Home *h, int pushed, uint32_t
     if (!sl) return;
     sl->a = s; sl->b = h->reg; sl->c = pushed; sl->n = live;
     int which = m->nslow - 1;
-    encode_real(m, h->reg, &m->slow[which].here);
+    encode_real(m, h->reg, &m->slow[which]->here);
     as_st64(&m->a, BASER, SLOT(s), R_S2);
-    as_bind(&m->a, &m->slow[which].back);
+    as_bind(&m->a, &m->slow[which]->back);
     real_made(m, s);
 }
 #ifdef RUNE_INT64
@@ -231,9 +231,9 @@ static void num_to_slot(Masm *m, int32_t s, const Home *h, int pushed, uint32_t 
     if (!sl) return;
     sl->a = s; sl->b = h->reg; sl->c = pushed; sl->n = live;
     int which = m->nslow - 1;
-    encode_num(m, h->reg, h->tag, &m->slow[which].here);
+    encode_num(m, h->reg, h->tag, &m->slow[which]->here);
     as_st64(&m->a, BASER, SLOT(s), R_S2);
-    as_bind(&m->a, &m->slow[which].back);
+    as_bind(&m->a, &m->slow[which]->back);
     real_made(m, s);
 }
 #endif
@@ -545,9 +545,9 @@ void ms_set_num(Masm *m, int32_t d, int tag, int r, AsmLabel *slow) {
     if (!sl) return;
     sl->a = d; sl->b = r; sl->c = 0; sl->n = m->cur_pc;
     int which = m->nslow - 1;
-    encode_num(m, r, tag, &m->slow[which].here);
+    encode_num(m, r, tag, &m->slow[which]->here);
     as_st64(&m->a, BASER, SLOT(d), R_S2);
-    as_bind(&m->a, &m->slow[which].back);
+    as_bind(&m->a, &m->slow[which]->back);
 }
 void ms_set_payload(Masm *m, int32_t d, int tag, int r, AsmLabel *slow) { ms_set_num(m, d, tag, r, slow); }
 void ms_set_word(Masm *m, int32_t d, int r, AsmLabel *slow) { ms_set_num(m, d, T_WORD, r, slow); }
@@ -928,13 +928,16 @@ void ms_slot_from_nth_raw(Masm *m, int32_t d, int base, uint32_t k) {
 Slow *ms_slow(Masm *m, int kind, uint32_t pc) {
     if (m->nslow == m->slow_cap) {
         int cap = m->slow_cap ? m->slow_cap * 2 : 8;
-        Slow *s = realloc(m->slow, (size_t)cap * sizeof *s);
-        if (!s) { m->a.failed = 1; return NULL; }
-        m->slow = s;
+        Slow **all = realloc(m->slow, (size_t)cap * sizeof *all);
+        if (!all) { m->a.failed = 1; return NULL; }
+        m->slow = all;
         m->slow_cap = cap;
     }
-    Slow *s = &m->slow[m->nslow++];
-    memset(s, 0, sizeof *s);
+    /* a record of its own, so that a pointer to one, or to its labels,
+       holds while the emitter that has it adds another slow path */
+    Slow *s = calloc(1, sizeof *s);
+    if (!s) { m->a.failed = 1; return NULL; }
+    m->slow[m->nslow++] = s;
     as_label_init(&s->here);
     as_label_init(&s->back);
     s->kind = kind;
@@ -944,8 +947,8 @@ Slow *ms_slow(Masm *m, int kind, uint32_t pc) {
 }
 void ms_emit_slow_paths(Masm *m, void (*emit)(Masm *m, Slow *s)) {
     for (int i = 0; i < m->nslow; i++) {
-        as_bind(&m->a, &m->slow[i].here);
-        emit(m, &m->slow[i]);
+        as_bind(&m->a, &m->slow[i]->here);
+        emit(m, m->slow[i]);
     }
 }
 

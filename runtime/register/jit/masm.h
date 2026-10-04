@@ -84,7 +84,7 @@ typedef struct Masm {
     uint32_t nslots;      /* the registers and what a primitive's arguments push: the frame's slots */
     uint32_t nfields;     /* the fields of the object ms_alloc last made, or UINT32_MAX where the object in hand is another's */
     const void *leave;    /* the leave stub: where the code hands the VM back */
-    Slow *slow;
+    Slow **slow;          /* the slow paths, each a record of its own: a label of one stays where it is as others are added */
     int nslow, slow_cap;
     /* tier 2: the homes, one per register (NULL: every value in its slot),
        and which registers are live after each pc of the function (a bit

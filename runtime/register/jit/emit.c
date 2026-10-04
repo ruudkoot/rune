@@ -206,7 +206,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     if (!s) return 1;
     s->a = p; s->b = d; s->L = L;
     int which = M->nslow - 1;
-    AsmLabel *slow = &M->slow[which].here;
+    AsmLabel *slow = &M->slow[which]->here;
     switch (p) {
     case PRIM_poly_eq: equal(j, d, x, y, 1, slow); break;
     case PRIM_imm_eq: equal(j, d, x, y, 0, slow); break;
@@ -360,7 +360,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         ms_load_field(M, d, R_S0, 0);
         break;
     }
-    as_bind(A, &M->slow[which].back);
+    as_bind(A, &M->slow[which]->back);
     /* a comparison leaves its bool in the flags, for the branch after
        (M7): said to the walk, and to its slow path */
     switch (p) {
@@ -370,7 +370,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_real_lt: case PRIM_real_le: case PRIM_real_gt: case PRIM_real_ge: case PRIM_real_eq:
     case PRIM_char_lt: case PRIM_char_le: case PRIM_char_gt: case PRIM_char_ge:
         j->flags_for = d;
-        M->slow[which].c = 1;
+        M->slow[which]->c = 1;
         break;
     default: break;
     }
@@ -435,7 +435,7 @@ static void alloc(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d,
     int which = j->m.nslow - 1;
     ms_alloc(M, kind, contag, n, slow);
     jit_fill(j, kind, fill, n, d, a, b, L);
-    as_bind(A, &j->m.slow[which].back);
+    as_bind(A, &j->m.slow[which]->back);
 }
 void emit_TUPLE(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint32_t n) {
     (void)pc; (void)b;
@@ -533,11 +533,11 @@ static void branch(Jit *j, uint32_t pc, int32_t a, int32_t b, int cc, int what) 
         st->L = (const uint8_t *)s;
         st->a = b;
         int which = M->nslow - 1;
-        if (j->flags_prev == a) as_jcc(A, cc, &M->slow[which].here);
+        if (j->flags_prev == a) as_jcc(A, cc, &M->slow[which]->here);
         else {
             ms_check_tag(M, a, T_CON0, jit_fatal(j, what, 0, 0, 0));
             ms_test_false(M, a);
-            as_jcc(A, cc, &M->slow[which].here);
+            as_jcc(A, cc, &M->slow[which]->here);
         }
         count_site(j, s, (int)offsetof(Site, n1));
         return;
@@ -782,7 +782,7 @@ static int grow_slow(Jit *j) {
     Slow *s = ms_slow(M, SLOW_GROW_RAX, j->next);
     if (!s) return -1;
     int which = M->nslow - 1;
-    as_bind(A, &M->slow[which].back);
+    as_bind(A, &M->slow[which]->back);
     return which;
 }
 /* the room a frame of the Function in rcx needs at base (an index in
@@ -793,7 +793,7 @@ static void room_dynamic(Jit *j, int which, int base_reg) {
     as_add_rr(A, R_S0, R_S3);
     as_add_rr(A, R_S0, base_reg);
     as_cmp_rm(A, R_S0, VMR, OFF(stack_cap));
-    as_jcc(A, CC_A, &M->slow[which].here);
+    as_jcc(A, CC_A, &M->slow[which]->here);
 }
 /* unit into the callee's registers at r9 (its nlocals in r8, its index in
    r11) from the first it does not write before anything could see it
