@@ -105,6 +105,24 @@ static inline Value mk_ptr(Obj *p) { return (Value)(uintptr_t)p; }
    comes back bit for bit; the rest are boxed (K_REAL). */
 static inline uint64_t real_bits(double d) { uint64_t b; memcpy(&b, &d, 8); return b; }
 static inline double real_of_bits(uint64_t b) { double d; memcpy(&d, &b, 8); return d; }
+#ifdef RUNE_REAL_ROT
+/* -DRUNE_REAL_ROT, a second encoding for M4's measurements: the double's bits
+   with 2^61 added and rotated left by two, an immediate where that left the
+   low bit set -- which it does for the same exponents but 0x200 and 0x5ff
+   more, 0x200 to 0x5ff, since the sum's bit 62 is the test. Back by the
+   rotation and the subtraction: no case for an exponent of 0 or of all ones,
+   so zero, the subnormals, infinity and NaN are boxes, and +0.0, which is
+   everywhere, has the VM's one box (vm->real_zero; mk_real). */
+#define REAL_ROT_OFF ((uint64_t)1 << 61)
+static inline int real_encode(double d, Value *v) {
+    uint64_t u = real_bits(d) + REAL_ROT_OFF;
+    u = (u << 2) | (u >> 62);
+    if (!(u & 1)) return 0;
+    *v = u;
+    return 1;
+}
+static inline double real_decode(Value v) { return real_of_bits(((v >> 2) | (v << 62)) - REAL_ROT_OFF); }
+#else
 static inline int real_encode(double d, Value *v) {
     uint64_t u = real_bits(d);
     u = (u << 12) | (u >> 52);
@@ -125,6 +143,7 @@ static inline double real_decode(Value v) {
     uint64_t u = (v & ~(uint64_t)0x7ff) | e;
     return real_of_bits((u >> 12) | (u << 52));
 }
+#endif
 /* a real as a value without allocating: 0 where it needs a box (a fast
    path answers 0 and the primitive boxes) */
 static inline int mk_real_imm(double d, Value *v) {

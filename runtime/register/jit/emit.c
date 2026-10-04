@@ -22,6 +22,13 @@ void emit_MOVE(Jit *j, uint32_t pc, int32_t a, int32_t b) { (void)pc; ms_move(M,
 void emit_INT(Jit *j, uint32_t pc, int32_t a, int32_t b) { (void)pc; ms_set(M, a, T_INT, b); }
 void emit_CONST(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     (void)pc;
+#if !RUNE_VALUE_HDR
+    /* a real constant into a home that holds the double: decoded here, once */
+    if (ms_real_home(M, a) && j->vm && (uint32_t)b < j->vm->prog.nconsts) {
+        ms_set_real_known(M, a, real_bits(val_real(j->vm->prog.consts[b])));
+        return;
+    }
+#endif
     as_ld64(A, R_S0, VMR, OFF(prog.consts));
     ms_load_nth(M, a, R_S0, (uint32_t)b);
 }

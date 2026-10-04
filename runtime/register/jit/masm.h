@@ -234,6 +234,8 @@ void ms_string_byte(Masm *m, int r, int obj, int index);            /* r := byte
 /* arrays of values outside the heap's objects: the constants, the globals,
    a frame's registers at an address */
 void ms_load_nth(Masm *m, int32_t d, int base, uint32_t i);         /* R(d) := the i-th value at base */
+int ms_real_home(const Masm *m, int32_t d);                         /* R(d)'s home holds a real's double */
+void ms_set_real_known(Masm *m, int32_t d, uint64_t bits);          /* R(d) := the double of these bits (ms_real_home) */
 void ms_store_nth(Masm *m, int base, uint32_t i, int32_t s);        /* the i-th value at base := R(s) */
 void ms_slot_addr(Masm *m, int r, int32_t s);                       /* r := the address of R(s) */
 void ms_fill_units(Masm *m, int base, uint32_t from, uint32_t to);  /* the values from..to-1 at base := unit */

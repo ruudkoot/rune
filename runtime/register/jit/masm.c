@@ -106,6 +106,24 @@ static void encode_real(Masm *m, int xmm, AsmLabel *fail) {
 #ifdef RUNE_REAL_BOXED
     (void)xmm;
     as_jmp(&m->a, fail);
+#elif defined(RUNE_REAL_ROT)
+    /* 2^61 added and the sum rotated left by two: an immediate where the low
+       bit is set; +0.0, which became 2^63, has the VM's box once it is made */
+    AsmLabel ok; as_label_init(&ok);
+    as_fmov_rf(&m->a, R_S2, xmm);
+    as_mov_ri(&m->a, R_S3, (int64_t)REAL_ROT_OFF);
+    as_add_rr(&m->a, R_S2, R_S3);
+    as_ror_ri(&m->a, R_S2, 62);
+    as_test_ri(&m->a, R_S2, 1);
+    as_jcc(&m->a, CC_NE, &ok);
+    as_shl_ri(&m->a, R_S3, 2);
+    as_cmp_rr(&m->a, R_S2, R_S3);
+    as_jcc(&m->a, CC_NE, fail);
+    as_ld64(&m->a, R_S2, VMR, OFF(real_zero));
+    as_test_rr(&m->a, R_S2, R_S2);
+    as_jcc(&m->a, CC_E, fail);
+    as_bind(&m->a, &ok);
+    as_label_free(&ok);
 #else
     AsmLabel ok, mid; as_label_init(&ok); as_label_init(&mid);
     as_fmov_rf(&m->a, R_S2, xmm);
@@ -145,6 +163,12 @@ static void decode_real(Masm *m, int xmm, AsmLabel *unless) {
        would read it: zero */
     if (unless) as_jmp(&m->a, unless);
     else { as_fzero(&m->a, xmm); as_jmp(&m->a, &done); }
+#elif defined(RUNE_REAL_ROT)
+    as_ror_ri(&m->a, R_S2, 2);
+    as_mov_ri(&m->a, R_S3, (int64_t)REAL_ROT_OFF);
+    as_sub_rr(&m->a, R_S2, R_S3);
+    as_fmov_fr(&m->a, xmm, R_S2);
+    as_jmp(&m->a, &done);
 #else
     {
         AsmLabel mid; as_label_init(&mid);
@@ -965,6 +989,16 @@ void ms_string_byte(Masm *m, int r, int obj, int index) {
     as_ld8(&m->a, r, obj, (int32_t)sizeof(Obj));
 }
 void ms_load_nth(Masm *m, int32_t d, int base, uint32_t i) { ms_load_value(m, d, base, (int32_t)(VALUE_SIZE * i)); }
+/* R(d) := a real known as the code is made (a constant), where d's home
+   holds a real's double: the double's bits, not its word decoded each time
+   the code runs. ms_real_home says whether d has such a home. */
+int ms_real_home(const Masm *m, int32_t d) { return is_xmm(ms_home(m, d)); }
+void ms_set_real_known(Masm *m, int32_t d, uint64_t bits) {
+    const Home *h = ms_home(m, d);
+    if (bits == 0) as_fzero(&m->a, h->reg);
+    else { as_mov_ri(&m->a, R_S2, (int64_t)bits); as_fmov_fr(&m->a, h->reg, R_S2); }
+    real_behind(m, d);
+}
 void ms_store_nth(Masm *m, int base, uint32_t i, int32_t s) { ms_store_value(m, base, (int32_t)(VALUE_SIZE * i), s); }
 void ms_slot_addr(Masm *m, int r, int32_t s) { as_lea(&m->a, r, BASER, -1, 1, SLOT(s)); }
 void ms_fill_units(Masm *m, int base, uint32_t from, uint32_t to) {

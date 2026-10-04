@@ -34,6 +34,12 @@ static Value alloc_box(VM *vm, int kind, uint64_t bits) {
 Value mk_real(VM *vm, double d) {
     Value v;
     if (mk_real_imm(d, &v)) return v;
+#ifdef RUNE_REAL_ROT
+    if (real_bits(d) == 0) {
+        if (!vm->real_zero) vm->real_zero = val_ptr(alloc_box(vm, K_REAL, 0));
+        return mk_ptr(vm->real_zero);
+    }
+#endif
     return alloc_box(vm, K_REAL, real_bits(d));
 }
 Value mk_int_vm(VM *vm, int64_t i) {
@@ -183,6 +189,7 @@ static void collect_into(VM *vm, size_t new_size) {
             if (vm->frames[i].closure) vm->frames[i].closure = copy_obj(vm->frames[i].closure);
     for (int i = 0; i < NUM_BUILTIN_EXNS; i++)
         if (vm->builtin_exns[i]) vm->builtin_exns[i] = copy_obj(vm->builtin_exns[i]);
+    if (vm->real_zero) vm->real_zero = copy_obj(vm->real_zero);
 
     /* scan */
     size_t scan = 0;
@@ -304,5 +311,6 @@ int heap_relocate(VM *vm, uintptr_t old_base) {
             if (vm->frames[i].closure) vm->frames[i].closure = relocate_obj(vm, vm->frames[i].closure);
     for (int i = 0; i < NUM_BUILTIN_EXNS; i++)
         if (vm->builtin_exns[i]) vm->builtin_exns[i] = relocate_obj(vm, vm->builtin_exns[i]);
+    if (vm->real_zero) vm->real_zero = relocate_obj(vm, vm->real_zero);
     return reloc_ok;
 }

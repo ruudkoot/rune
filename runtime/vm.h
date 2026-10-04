@@ -222,6 +222,7 @@ typedef struct VM {
                                 inherit descriptors from (Runtime.save); NULL for the standard streams */
     size_t nfiles, files_cap;
     int io_errno;            /* errno of the last failed file_open / file_write */
+    Obj *real_zero;          /* -DRUNE_REAL_ROT: the one box of +0.0, made where first wanted (a root) */
 } VM;
 
 /* heap.c */
