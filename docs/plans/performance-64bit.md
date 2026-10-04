@@ -205,10 +205,10 @@ Each is small unless it says otherwise. The programs are at the end.
   `R_GO` in `masm.c`, `emit.c` and `compile.c`, what it holds and
   across what; for every pinned register, the instructions that read
   it, counted in tier 2's code for the bootstrap. (2) Make the table
-  one place: the enum of `asm.h` already is, and `make
-  test-register-jit` already refuses a machine register named in the
-  emitters, so a candidate layout is an edit there plus whatever the
-  audit found hard-wired (the division and the shift in
+  one place: the enum of `asm.h` already is, and the emitters name
+  roles (`R_VM`, `R_S0`, `R_H0`) and no machine register, so a
+  candidate layout is an edit there plus whatever the audit found
+  hard-wired (the division and the shift in
   `asm_x64.c`, `as_arg`, the entry and leave stubs, and `runeopt`'s
   `src/opt/x64.sml`, which writes `(%r13,%rbp)` itself). (3)
   Candidates, each measured: the VM out of `r12`; homes in preserved
