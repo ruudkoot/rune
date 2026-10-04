@@ -28,28 +28,28 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md); the types are this
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`elem`](../sig/MONO_VECTOR.md#type-elem) | `word64` |
+| type | [`elem`](../sig/MONO_VECTOR.md#type-elem) | `Word64.word` |
 | type | [`vector`](../sig/MONO_VECTOR.md#type-vector) | *a type of its own* |
-| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(word64 -> bool) -> Word64Vector.vector -> bool` |
-| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(word64 -> unit) -> Word64Vector.vector -> unit` |
-| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * word64 -> unit) -> Word64Vector.vector -> unit` |
-| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(word64 * word64 -> order) -> Word64Vector.vector * Word64Vector.vector -> order` |
+| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(Word64.word -> bool) -> Word64Vector.vector -> bool` |
+| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(Word64.word -> unit) -> Word64Vector.vector -> unit` |
+| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * Word64.word -> unit) -> Word64Vector.vector -> unit` |
+| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(Word64.word * Word64.word -> order) -> Word64Vector.vector * Word64Vector.vector -> order` |
 | val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `Word64Vector.vector list -> Word64Vector.vector` |
-| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(word64 -> bool) -> Word64Vector.vector -> bool` |
-| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(word64 -> bool) -> Word64Vector.vector -> word64 option` |
-| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * word64 -> bool) -> Word64Vector.vector -> (int * word64) option` |
-| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(word64 * 'a -> 'a) -> 'a -> Word64Vector.vector -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * word64 * 'a -> 'a) -> 'a -> Word64Vector.vector -> 'a` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(word64 * 'a -> 'a) -> 'a -> Word64Vector.vector -> 'a` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * word64 * 'a -> 'a) -> 'a -> Word64Vector.vector -> 'a` |
-| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `word64 list -> Word64Vector.vector` |
+| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(Word64.word -> bool) -> Word64Vector.vector -> bool` |
+| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(Word64.word -> bool) -> Word64Vector.vector -> Word64.word option` |
+| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * Word64.word -> bool) -> Word64Vector.vector -> (int * Word64.word) option` |
+| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(Word64.word * 'a -> 'a) -> 'a -> Word64Vector.vector -> 'a` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Word64.word * 'a -> 'a) -> 'a -> Word64Vector.vector -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Word64.word * 'a -> 'a) -> 'a -> Word64Vector.vector -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Word64.word * 'a -> 'a) -> 'a -> Word64Vector.vector -> 'a` |
+| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `Word64.word list -> Word64Vector.vector` |
 | val | [`length`](../sig/MONO_VECTOR.md#val-length) | `Word64Vector.vector -> int` |
-| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(word64 -> word64) -> Word64Vector.vector -> Word64Vector.vector` |
-| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * word64 -> word64) -> Word64Vector.vector -> Word64Vector.vector` |
+| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(Word64.word -> Word64.word) -> Word64Vector.vector -> Word64Vector.vector` |
+| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * Word64.word -> Word64.word) -> Word64Vector.vector -> Word64Vector.vector` |
 | val | [`maxLen`](../sig/MONO_VECTOR.md#val-maxlen) | `int` |
-| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `Word64Vector.vector * int -> word64` |
-| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> word64) -> Word64Vector.vector` |
-| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `Word64Vector.vector * int * word64 -> Word64Vector.vector` |
+| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `Word64Vector.vector * int -> Word64.word` |
+| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> Word64.word) -> Word64Vector.vector` |
+| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `Word64Vector.vector * int * Word64.word -> Word64Vector.vector` |
 
 <details><summary>Other implementations (1)</summary>
 

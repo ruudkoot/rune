@@ -38,7 +38,7 @@ What each means is on [`SHOW`](../sig/SHOW.md); the types are this structure's o
 | val | [`unit`](../sig/SHOW.md#val-unit) | `unit show` |
 | val | [`vector`](../sig/SHOW.md#val-vector) | `'a show -> 'a vector show` |
 | val | [`word`](../sig/SHOW.md#val-word) | `word show` |
-| val | [`word64`](../sig/SHOW.md#val-word64) | `word64 show` |
+| val | [`word64`](../sig/SHOW.md#val-word64) | `Word64.word show` |
 
 ---
 

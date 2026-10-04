@@ -45,9 +45,9 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 | val | [`div`](../sig/WORD.md#val-div) | `word * word -> word` |
 | val | [`fmt`](../sig/WORD.md#val-fmt) | `StringCvt.radix -> word -> string` |
 | val | [`fromInt`](../sig/WORD.md#val-fromint) | `int -> word` |
-| val | [`fromLarge`](../sig/WORD.md#val-fromlarge) | `word64 -> word` |
+| val | [`fromLarge`](../sig/WORD.md#val-fromlarge) | `Word64.word -> word` |
 | val | [`fromLargeInt`](../sig/WORD.md#val-fromlargeint) | `IntInf.int -> word` |
-| val | [`fromLargeWord`](../sig/WORD.md#val-fromlargeword) | `word64 -> word` |
+| val | [`fromLargeWord`](../sig/WORD.md#val-fromlargeword) | `Word64.word -> word` |
 | val | [`fromString`](../sig/WORD.md#val-fromstring) | `string -> word option` |
 | val | [`max`](../sig/WORD.md#val-max) | `word * word -> word` |
 | val | [`min`](../sig/WORD.md#val-min) | `word * word -> word` |
@@ -57,12 +57,12 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 | val | [`scan`](../sig/WORD.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (word * 'a) option` |
 | val | [`toInt`](../sig/WORD.md#val-toint) | `word -> int` |
 | val | [`toIntX`](../sig/WORD.md#val-tointx) | `word -> int` |
-| val | [`toLarge`](../sig/WORD.md#val-tolarge) | `word -> word64` |
+| val | [`toLarge`](../sig/WORD.md#val-tolarge) | `word -> Word64.word` |
 | val | [`toLargeInt`](../sig/WORD.md#val-tolargeint) | `word -> IntInf.int` |
 | val | [`toLargeIntX`](../sig/WORD.md#val-tolargeintx) | `word -> IntInf.int` |
-| val | [`toLargeWord`](../sig/WORD.md#val-tolargeword) | `word -> word64` |
-| val | [`toLargeWordX`](../sig/WORD.md#val-tolargewordx) | `word -> word64` |
-| val | [`toLargeX`](../sig/WORD.md#val-tolargex) | `word -> word64` |
+| val | [`toLargeWord`](../sig/WORD.md#val-tolargeword) | `word -> Word64.word` |
+| val | [`toLargeWordX`](../sig/WORD.md#val-tolargewordx) | `word -> Word64.word` |
+| val | [`toLargeX`](../sig/WORD.md#val-tolargex) | `word -> Word64.word` |
 | val | [`toString`](../sig/WORD.md#val-tostring) | `word -> string` |
 | val | [`wordSize`](../sig/WORD.md#val-wordsize) | `int` |
 | val | [`xorb`](../sig/WORD.md#val-xorb) | `word * word -> word` |

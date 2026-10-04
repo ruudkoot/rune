@@ -22,8 +22,8 @@ What each means is on [`INET6_SOCK_ARB`](../sig/INET6_SOCK_ARB.md); the types ar
 
 |  | Member | Is |
 | --- | --- | --- |
-| val | [`inAddr`](../sig/INET6_SOCK_ARB.md#val-inaddr) | `{co : INet6Sock.in6_addr -> word64, eq : (INet6Sock.in6_addr * INet6Sock.in6_addr -> bool) option, gen : INet6Sock.in6_addr Gen.gen, show : INet6Sock.in6_addr -> string}` |
-| val | [`streamSock`](../sig/INET6_SOCK_ARB.md#val-streamsock) | `unit -> {co : (inet6', 'a stream') Socket.sock -> word64, eq : ((inet6', 'a stream') Socket.sock * (inet6', 'a stream') Socket.sock -> bool) option, gen : (inet6', 'a stream') Socket.sock Gen.gen, show : (inet6', 'a stream') Socket.sock -> string}` |
+| val | [`inAddr`](../sig/INET6_SOCK_ARB.md#val-inaddr) | `{co : INet6Sock.in6_addr -> Word64.word, eq : (INet6Sock.in6_addr * INet6Sock.in6_addr -> bool) option, gen : INet6Sock.in6_addr Gen.gen, show : INet6Sock.in6_addr -> string}` |
+| val | [`streamSock`](../sig/INET6_SOCK_ARB.md#val-streamsock) | `unit -> {co : (inet6', 'a stream') Socket.sock -> Word64.word, eq : ((inet6', 'a stream') Socket.sock * (inet6', 'a stream') Socket.sock -> bool) option, gen : (inet6', 'a stream') Socket.sock Gen.gen, show : (inet6', 'a stream') Socket.sock -> string}` |
 
 ---
 

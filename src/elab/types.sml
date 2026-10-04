@@ -76,9 +76,10 @@ struct
   (* Int64.int and Word64.word: 64 bits whatever the width of int and word,
      which are the VM's immediates (63 bits: docs/plans/heap-layout.md, D2).
      The Basis Library names them with `_prim "int64"` and `_prim "word64"`
-     in a type; a program has them through its structures alone. *)
-  val int64Tycon = mk ("int64", 12, 0, true)
-  val word64Tycon = mk ("word64", 13, 0, true)
+     in a type; a program has them through its structures alone, by whose
+     names a message and the documentation show them. *)
+  val int64Tycon = mk ("Int64.int", 12, 0, true)
+  val word64Tycon = mk ("Word64.word", 13, 0, true)
 
   val builtinTycons =
     [intTycon, wordTycon, realTycon, charTycon, stringTycon, boolTycon, listTycon, refTycon,

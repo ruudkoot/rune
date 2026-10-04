@@ -23,7 +23,7 @@ What each means is on [`ARB_OF`](../sig/ARB_OF.md); the types are this structure
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`t`](../sig/ARB_OF.md#type-t) | `Substring.substring` |
-| val | [`arb`](../sig/ARB_OF.md#val-arb) | `{co : Substring.substring -> word64, eq : (Substring.substring * Substring.substring -> bool) option, gen : Substring.substring Gen.gen, show : Substring.substring -> string}` |
+| val | [`arb`](../sig/ARB_OF.md#val-arb) | `{co : Substring.substring -> Word64.word, eq : (Substring.substring * Substring.substring -> bool) option, gen : Substring.substring Gen.gen, show : Substring.substring -> string}` |
 
 ---
 

@@ -13,8 +13,9 @@
    kind number named ({kind}) -- and, for a numeric parameter (a field
    index, a count, a payload), run again with the parameter moved, so that
    every number of the text that moves with it is fitted as a linear
-   expression of it (`num (8 + 8 * n)`, or `num (1 + 2 * v)` for the word
-   of an immediate) and checked at a third point. A
+   expression of it (8 + 8 * n, or 1 + 2 * v for the word of an immediate,
+   written as IntInf arithmetic: a host's int may be 31 bits) and checked at
+   a third point. A
    parameter the text does not depend on linearly stops the generator. */
 #include "masm.h"
 #include "native/native_offsets.h"
@@ -159,17 +160,20 @@ static void template(const Op *op) {
             for (int j = 0; j < op->nparams; j++) expect += coeff[j] * check[j];
             if (expect != tc[k].num) die("a number that is not linear in the parameters");
             if (!varies) { char lit[32]; snprintf(lit, sizeof lit, "%lld", (long long)t0[k].num); piece_lit(lit, (int)strlen(lit)); continue; }
-            char e[128] = "num (";
-            int first = 1;
-            if (c) { char part[40]; snprintf(part, sizeof part, "%s%lld", c < 0 ? "~" : "", (long long)(c < 0 ? -c : c)); strcat(e, part); first = 0; }
+            /* the sum as an IntInf.int, written out: a host's int may be 31
+               bits, which the word of a payload near 2^30 is past */
+            char e[512] = "num (";
+            char sum[400] = "";
+            if (c) snprintf(sum, sizeof sum, "IntInf.fromInt %s%lld", c < 0 ? "~" : "", (long long)(c < 0 ? -c : c));
             for (int j = 0; j < op->nparams; j++) if (coeff[j]) {
-                char part[48];
-                if (!first) strcat(e, " + ");
-                if (coeff[j] == 1) snprintf(part, sizeof part, "%s", op->params[j].name);
-                else snprintf(part, sizeof part, "%s%lld * %s", coeff[j] < 0 ? "~" : "", (long long)(coeff[j] < 0 ? -coeff[j] : coeff[j]), op->params[j].name);
-                strcat(e, part);
-                first = 0;
+                char term[96], next[400];
+                if (coeff[j] == 1) snprintf(term, sizeof term, "IntInf.fromInt %s", op->params[j].name);
+                else snprintf(term, sizeof term, "IntInf.* (IntInf.fromInt %s%lld, IntInf.fromInt %s)", coeff[j] < 0 ? "~" : "",
+                              (long long)(coeff[j] < 0 ? -coeff[j] : coeff[j]), op->params[j].name);
+                if (sum[0]) snprintf(next, sizeof next, "IntInf.+ (%s, %s)", sum, term); else snprintf(next, sizeof next, "%s", term);
+                snprintf(sum, sizeof sum, "%s", next);
             }
+            strcat(e, sum);
             strcat(e, ")");
             piece_expr(e);
         }
@@ -350,7 +354,8 @@ int main(void) {
            "   what has no immediate. *)\n"
            "structure X64Layout =\n"
            "struct\n"
-           "  fun num (n : int) : string = if n < 0 then \"-\" ^ Int.toString (~n) else Int.toString n\n"
+           "  fun num (n : IntInf.int) : string =\n"
+           "    if IntInf.< (n, IntInf.fromInt 0) then \"-\" ^ IntInf.toString (IntInf.~ n) else IntInf.toString n\n"
            "  val RAX = 0 val RCX = 1 val RDX = 2 val RBX = 3 val RSI = 6 val RDI = 7\n"
            "  val R8 = 8 val R9 = 9 val R10 = 10 val R11 = 11\n"
            "  val regs64 = Vector.fromList [\"%%rax\", \"%%rcx\", \"%%rdx\", \"%%rbx\", \"%%rsp\", \"%%rbp\", \"%%rsi\", \"%%rdi\",\n"
@@ -375,8 +380,8 @@ int main(void) {
                (long long)((zero - (int64_t)INT32_MIN) / step), (long long)(((int64_t)INT32_MAX - zero) / step));
     }
     printf("  (* the displacement of frame slot i from (%%r13,%%rbp), and of field i from an object *)\n"
-           "  fun slotDisp i = num (valueSize * i)\n"
-           "  fun fieldDisp i = \"OBJ_FIELDS+\" ^ num (valueSize * i)\n");
+           "  fun slotDisp i = num (IntInf.fromInt (valueSize * i))\n"
+           "  fun fieldDisp i = \"OBJ_FIELDS+\" ^ num (IntInf.fromInt (valueSize * i))\n");
     printf("  (* the kinds, by number, for alloc *)\n");
 #define KIND(name, value) if (name[0] == 'K' && name[1] == '_') printf("  val %s = %d\n", name, (int)(value));
     NATIVE_OFFSETS(KIND)

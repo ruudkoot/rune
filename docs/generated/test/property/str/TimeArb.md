@@ -29,7 +29,7 @@ What each means is on [`ARB_OF`](../sig/ARB_OF.md); the types are this structure
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`t`](../sig/ARB_OF.md#type-t) | `Time.time` |
-| val | [`arb`](../sig/ARB_OF.md#val-arb) | `{co : Time.time -> word64, eq : (Time.time * Time.time -> bool) option, gen : Time.time Gen.gen, show : Time.time -> string}` |
+| val | [`arb`](../sig/ARB_OF.md#val-arb) | `{co : Time.time -> Word64.word, eq : (Time.time * Time.time -> bool) option, gen : Time.time Gen.gen, show : Time.time -> string}` |
 
 ---
 

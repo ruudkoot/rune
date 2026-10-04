@@ -22,9 +22,9 @@ What each means is on [`IEEE_REAL_ARB`](../sig/IEEE_REAL_ARB.md); the types are 
 
 |  | Member | Is |
 | --- | --- | --- |
-| val | [`decimalApprox`](../sig/IEEE_REAL_ARB.md#val-decimalapprox) | `{co : {class : IEEEReal.float_class, digits : int list, exp : int, sign : bool} -> word64, eq : ({class : IEEEReal.float_class, digits : int list, exp : int, sign : bool} * {class : IEEEReal.float_class, digits : int list, exp : int, sign : bool} -> bool) option, gen : {class : IEEEReal.float_class, digits : int list, exp : int, sign : bool} Gen.gen, show : {class : IEEEReal.float_class, digits : int list, exp : int, sign : bool} -> string}` |
-| val | [`floatClass`](../sig/IEEE_REAL_ARB.md#val-floatclass) | `{co : IEEEReal.float_class -> word64, eq : (IEEEReal.float_class * IEEEReal.float_class -> bool) option, gen : IEEEReal.float_class Gen.gen, show : IEEEReal.float_class -> string}` |
-| val | [`roundingMode`](../sig/IEEE_REAL_ARB.md#val-roundingmode) | `{co : IEEEReal.rounding_mode -> word64, eq : (IEEEReal.rounding_mode * IEEEReal.rounding_mode -> bool) option, gen : IEEEReal.rounding_mode Gen.gen, show : IEEEReal.rounding_mode -> string}` |
+| val | [`decimalApprox`](../sig/IEEE_REAL_ARB.md#val-decimalapprox) | `{co : {class : IEEEReal.float_class, digits : int list, exp : int, sign : bool} -> Word64.word, eq : ({class : IEEEReal.float_class, digits : int list, exp : int, sign : bool} * {class : IEEEReal.float_class, digits : int list, exp : int, sign : bool} -> bool) option, gen : {class : IEEEReal.float_class, digits : int list, exp : int, sign : bool} Gen.gen, show : {class : IEEEReal.float_class, digits : int list, exp : int, sign : bool} -> string}` |
+| val | [`floatClass`](../sig/IEEE_REAL_ARB.md#val-floatclass) | `{co : IEEEReal.float_class -> Word64.word, eq : (IEEEReal.float_class * IEEEReal.float_class -> bool) option, gen : IEEEReal.float_class Gen.gen, show : IEEEReal.float_class -> string}` |
+| val | [`roundingMode`](../sig/IEEE_REAL_ARB.md#val-roundingmode) | `{co : IEEEReal.rounding_mode -> Word64.word, eq : (IEEEReal.rounding_mode * IEEEReal.rounding_mode -> bool) option, gen : IEEEReal.rounding_mode Gen.gen, show : IEEEReal.rounding_mode -> string}` |
 
 ---
 

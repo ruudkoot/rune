@@ -31,44 +31,44 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`word`](../sig/WORD.md#type-word) | `word64` |
-| val | [`*`](../sig/WORD.md#val-op-star) | `word64 * word64 -> word64` |
-| val | [`+`](../sig/WORD.md#val-op-plus) | `word64 * word64 -> word64` |
-| val | [`-`](../sig/WORD.md#val-op-minus) | `word64 * word64 -> word64` |
-| val | [`<`](../sig/WORD.md#val-op-lt) | `word64 * word64 -> bool` |
-| val | [`<<`](../sig/WORD.md#val-op-lt-lt) | `word64 * word -> word64` |
-| val | [`<=`](../sig/WORD.md#val-op-lt-eq) | `word64 * word64 -> bool` |
-| val | [`>`](../sig/WORD.md#val-op-gt) | `word64 * word64 -> bool` |
-| val | [`>=`](../sig/WORD.md#val-op-gt-eq) | `word64 * word64 -> bool` |
-| val | [`>>`](../sig/WORD.md#val-op-gt-gt) | `word64 * word -> word64` |
-| val | [`andb`](../sig/WORD.md#val-andb) | `word64 * word64 -> word64` |
-| val | [`compare`](../sig/WORD.md#val-compare) | `word64 * word64 -> order` |
-| val | [`div`](../sig/WORD.md#val-div) | `word64 * word64 -> word64` |
-| val | [`fmt`](../sig/WORD.md#val-fmt) | `StringCvt.radix -> word64 -> string` |
-| val | [`fromInt`](../sig/WORD.md#val-fromint) | `int -> word64` |
-| val | [`fromLarge`](../sig/WORD.md#val-fromlarge) | `word64 -> word64` |
-| val | [`fromLargeInt`](../sig/WORD.md#val-fromlargeint) | `IntInf.int -> word64` |
-| val | [`fromLargeWord`](../sig/WORD.md#val-fromlargeword) | `word64 -> word64` |
-| val | [`fromString`](../sig/WORD.md#val-fromstring) | `string -> word64 option` |
-| val | [`max`](../sig/WORD.md#val-max) | `word64 * word64 -> word64` |
-| val | [`min`](../sig/WORD.md#val-min) | `word64 * word64 -> word64` |
-| val | [`mod`](../sig/WORD.md#val-mod) | `word64 * word64 -> word64` |
-| val | [`notb`](../sig/WORD.md#val-notb) | `word64 -> word64` |
-| val | [`orb`](../sig/WORD.md#val-orb) | `word64 * word64 -> word64` |
-| val | [`scan`](../sig/WORD.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (word64 * 'a) option` |
-| val | [`toInt`](../sig/WORD.md#val-toint) | `word64 -> int` |
-| val | [`toIntX`](../sig/WORD.md#val-tointx) | `word64 -> int` |
-| val | [`toLarge`](../sig/WORD.md#val-tolarge) | `word64 -> word64` |
-| val | [`toLargeInt`](../sig/WORD.md#val-tolargeint) | `word64 -> IntInf.int` |
-| val | [`toLargeIntX`](../sig/WORD.md#val-tolargeintx) | `word64 -> IntInf.int` |
-| val | [`toLargeWord`](../sig/WORD.md#val-tolargeword) | `word64 -> word64` |
-| val | [`toLargeWordX`](../sig/WORD.md#val-tolargewordx) | `word64 -> word64` |
-| val | [`toLargeX`](../sig/WORD.md#val-tolargex) | `word64 -> word64` |
-| val | [`toString`](../sig/WORD.md#val-tostring) | `word64 -> string` |
+| type | [`word`](../sig/WORD.md#type-word) | `Word64.word` |
+| val | [`*`](../sig/WORD.md#val-op-star) | `Word64.word * Word64.word -> Word64.word` |
+| val | [`+`](../sig/WORD.md#val-op-plus) | `Word64.word * Word64.word -> Word64.word` |
+| val | [`-`](../sig/WORD.md#val-op-minus) | `Word64.word * Word64.word -> Word64.word` |
+| val | [`<`](../sig/WORD.md#val-op-lt) | `Word64.word * Word64.word -> bool` |
+| val | [`<<`](../sig/WORD.md#val-op-lt-lt) | `Word64.word * word -> Word64.word` |
+| val | [`<=`](../sig/WORD.md#val-op-lt-eq) | `Word64.word * Word64.word -> bool` |
+| val | [`>`](../sig/WORD.md#val-op-gt) | `Word64.word * Word64.word -> bool` |
+| val | [`>=`](../sig/WORD.md#val-op-gt-eq) | `Word64.word * Word64.word -> bool` |
+| val | [`>>`](../sig/WORD.md#val-op-gt-gt) | `Word64.word * word -> Word64.word` |
+| val | [`andb`](../sig/WORD.md#val-andb) | `Word64.word * Word64.word -> Word64.word` |
+| val | [`compare`](../sig/WORD.md#val-compare) | `Word64.word * Word64.word -> order` |
+| val | [`div`](../sig/WORD.md#val-div) | `Word64.word * Word64.word -> Word64.word` |
+| val | [`fmt`](../sig/WORD.md#val-fmt) | `StringCvt.radix -> Word64.word -> string` |
+| val | [`fromInt`](../sig/WORD.md#val-fromint) | `int -> Word64.word` |
+| val | [`fromLarge`](../sig/WORD.md#val-fromlarge) | `Word64.word -> Word64.word` |
+| val | [`fromLargeInt`](../sig/WORD.md#val-fromlargeint) | `IntInf.int -> Word64.word` |
+| val | [`fromLargeWord`](../sig/WORD.md#val-fromlargeword) | `Word64.word -> Word64.word` |
+| val | [`fromString`](../sig/WORD.md#val-fromstring) | `string -> Word64.word option` |
+| val | [`max`](../sig/WORD.md#val-max) | `Word64.word * Word64.word -> Word64.word` |
+| val | [`min`](../sig/WORD.md#val-min) | `Word64.word * Word64.word -> Word64.word` |
+| val | [`mod`](../sig/WORD.md#val-mod) | `Word64.word * Word64.word -> Word64.word` |
+| val | [`notb`](../sig/WORD.md#val-notb) | `Word64.word -> Word64.word` |
+| val | [`orb`](../sig/WORD.md#val-orb) | `Word64.word * Word64.word -> Word64.word` |
+| val | [`scan`](../sig/WORD.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (Word64.word * 'a) option` |
+| val | [`toInt`](../sig/WORD.md#val-toint) | `Word64.word -> int` |
+| val | [`toIntX`](../sig/WORD.md#val-tointx) | `Word64.word -> int` |
+| val | [`toLarge`](../sig/WORD.md#val-tolarge) | `Word64.word -> Word64.word` |
+| val | [`toLargeInt`](../sig/WORD.md#val-tolargeint) | `Word64.word -> IntInf.int` |
+| val | [`toLargeIntX`](../sig/WORD.md#val-tolargeintx) | `Word64.word -> IntInf.int` |
+| val | [`toLargeWord`](../sig/WORD.md#val-tolargeword) | `Word64.word -> Word64.word` |
+| val | [`toLargeWordX`](../sig/WORD.md#val-tolargewordx) | `Word64.word -> Word64.word` |
+| val | [`toLargeX`](../sig/WORD.md#val-tolargex) | `Word64.word -> Word64.word` |
+| val | [`toString`](../sig/WORD.md#val-tostring) | `Word64.word -> string` |
 | val | [`wordSize`](../sig/WORD.md#val-wordsize) | `int` |
-| val | [`xorb`](../sig/WORD.md#val-xorb) | `word64 * word64 -> word64` |
-| val | [`~`](../sig/WORD.md#val-op-tilde) | `word64 -> word64` |
-| val | [`~>>`](../sig/WORD.md#val-op-tilde-gt-gt) | `word64 * word -> word64` |
+| val | [`xorb`](../sig/WORD.md#val-xorb) | `Word64.word * Word64.word -> Word64.word` |
+| val | [`~`](../sig/WORD.md#val-op-tilde) | `Word64.word -> Word64.word` |
+| val | [`~>>`](../sig/WORD.md#val-op-tilde-gt-gt) | `Word64.word * word -> Word64.word` |
 
 <details><summary>Other implementations (8)</summary>
 

@@ -14,7 +14,8 @@
    what has no immediate. *)
 structure X64Layout =
 struct
-  fun num (n : int) : string = if n < 0 then "-" ^ Int.toString (~n) else Int.toString n
+  fun num (n : IntInf.int) : string =
+    if IntInf.< (n, IntInf.fromInt 0) then "-" ^ IntInf.toString (IntInf.~ n) else IntInf.toString n
   val RAX = 0 val RCX = 1 val RDX = 2 val RBX = 3 val RSI = 6 val RDI = 7
   val R8 = 8 val R9 = 9 val R10 = 10 val R11 = 11
   val regs64 = Vector.fromList ["%rax", "%rcx", "%rdx", "%rbx", "%rsp", "%rbp", "%rsi", "%rdi",
@@ -35,8 +36,8 @@ struct
   val setMin = ~1073741824
   val setMax = 1073741823
   (* the displacement of frame slot i from (%r13,%rbp), and of field i from an object *)
-  fun slotDisp i = num (valueSize * i)
-  fun fieldDisp i = "OBJ_FIELDS+" ^ num (valueSize * i)
+  fun slotDisp i = num (IntInf.fromInt (valueSize * i))
+  fun fieldDisp i = "OBJ_FIELDS+" ^ num (IntInf.fromInt (valueSize * i))
   (* the kinds, by number, for alloc *)
   val K_TUPLE = 1
   val K_CON = 2
@@ -52,9 +53,9 @@ struct
     (line ("testb $1, " ^ s ^ "(%r13,%rbp)");
      line ("je " ^ unless))
   fun set line (d, v) =
-    (line ("movq $" ^ num (1 + 2 * v) ^ ", " ^ d ^ "(%r13,%rbp)"))
+    (line ("movq $" ^ num (IntInf.+ (IntInf.fromInt 1, IntInf.* (IntInf.fromInt 2, IntInf.fromInt v))) ^ ", " ^ d ^ "(%r13,%rbp)"))
   fun setWide line (d, v) =
-    (line ("movabs $" ^ num (1 + 2 * v) ^ ", %rax");
+    (line ("movabs $" ^ num (IntInf.+ (IntInf.fromInt 1, IntInf.* (IntInf.fromInt 2, IntInf.fromInt v))) ^ ", %rax");
      line ("mov %rax, " ^ d ^ "(%r13,%rbp)"))
   fun setImm line (d, r) =
     (line ("lea 1(" ^ reg64 r ^ "," ^ reg64 r ^ ",1), " ^ reg64 r);
@@ -273,35 +274,35 @@ struct
     (line ("cmpq $0, VM_GC_STRESS(%r12)");
      line ("jne " ^ slow);
      line ("mov VM_HEAP_USED(%r12), %rax");
-     line ("lea " ^ num (8 + 8 * n) ^ "(%rax), %rcx");
+     line ("lea " ^ num (IntInf.+ (IntInf.fromInt 8, IntInf.* (IntInf.fromInt 8, IntInf.fromInt n))) ^ "(%rax), %rcx");
      line ("cmp VM_HEAP_SIZE(%r12), %rcx");
      line ("ja " ^ slow);
      line ("mov %rcx, VM_HEAP_USED(%r12)");
-     line ("addq $" ^ num (8 + 8 * n) ^ ", VM_BYTES_ALLOCATED(%r12)");
+     line ("addq $" ^ num (IntInf.+ (IntInf.fromInt 8, IntInf.* (IntInf.fromInt 8, IntInf.fromInt n))) ^ ", VM_BYTES_ALLOCATED(%r12)");
      line ("addq $1, VM_OBJECTS_ALLOCATED(%r12)");
      line ("add VM_HEAP_FROM(%r12), %rax");
-     line ("movl $" ^ num (kind + 65536 * contag) ^ ", (%rax)");
-     line ("movl $" ^ num (n) ^ ", OBJ_LEN(%rax)"))
+     line ("movl $" ^ num (IntInf.+ (IntInf.fromInt kind, IntInf.* (IntInf.fromInt 65536, IntInf.fromInt contag))) ^ ", (%rax)");
+     line ("movl $" ^ num (IntInf.fromInt n) ^ ", OBJ_LEN(%rax)"))
   fun storeField line (b, i, s) =
     (line ("movsd " ^ s ^ "(%r13,%rbp), %xmm0");
-     line ("movsd %xmm0, OBJ_FIELDS+" ^ num (8 * i) ^ "(" ^ reg64 b ^ ")"))
+     line ("movsd %xmm0, OBJ_FIELDS+" ^ num (IntInf.* (IntInf.fromInt 8, IntInf.fromInt i)) ^ "(" ^ reg64 b ^ ")"))
   fun loadField line (d, b, i) =
-    (line ("movsd OBJ_FIELDS+" ^ num (8 * i) ^ "(" ^ reg64 b ^ "), %xmm0");
+    (line ("movsd OBJ_FIELDS+" ^ num (IntInf.* (IntInf.fromInt 8, IntInf.fromInt i)) ^ "(" ^ reg64 b ^ "), %xmm0");
      line ("movsd %xmm0, " ^ d ^ "(%r13,%rbp)"))
   fun loadLen line (r, b) =
     (line ("mov OBJ_LEN(" ^ reg64 b ^ "), " ^ reg32 r))
   fun checkLen line (b, n, unless) =
-    (line ("cmpl $" ^ num (n) ^ ", OBJ_LEN(" ^ reg64 b ^ ")");
+    (line ("cmpl $" ^ num (IntInf.fromInt n) ^ ", OBJ_LEN(" ^ reg64 b ^ ")");
      line ("jne " ^ unless))
   fun loadContag line (r, b) =
     (line ("movzwl OBJ_CONTAG(" ^ reg64 b ^ "), " ^ reg32 r))
   fun needLen line (b, n, unless) =
-    (line ("cmpl $" ^ num (n) ^ ", OBJ_LEN(" ^ reg64 b ^ ")");
+    (line ("cmpl $" ^ num (IntInf.fromInt n) ^ ", OBJ_LEN(" ^ reg64 b ^ ")");
      line ("jbe " ^ unless))
   fun storeFieldImm line (b, i, v) =
-    (line ("movq $" ^ num (1 + 2 * v) ^ ", OBJ_FIELDS+" ^ num (8 * i) ^ "(" ^ reg64 b ^ ")"))
+    (line ("movq $" ^ num (IntInf.+ (IntInf.fromInt 1, IntInf.* (IntInf.fromInt 2, IntInf.fromInt v))) ^ ", OBJ_FIELDS+" ^ num (IntInf.* (IntInf.fromInt 8, IntInf.fromInt i)) ^ "(" ^ reg64 b ^ ")"))
   fun loadFieldPayload line (r, b, i) =
-    (line ("mov OBJ_FIELDS+" ^ num (8 * i) ^ "(" ^ reg64 b ^ "), " ^ reg64 r);
+    (line ("mov OBJ_FIELDS+" ^ num (IntInf.* (IntInf.fromInt 8, IntInf.fromInt i)) ^ "(" ^ reg64 b ^ "), " ^ reg64 r);
      line ("sar $1, " ^ reg64 r))
   fun element line () =
     (line ("shl $3, %rcx");

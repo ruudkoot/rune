@@ -22,7 +22,7 @@ What each means is on [`CO`](../sig/CO.md); the types are this structure's own.
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`co`](../sig/CO.md#type-co) | `'a -> word64` |
+| type | [`co`](../sig/CO.md#type-co) | `'a -> Word64.word` |
 | val | [`bool`](../sig/CO.md#val-bool) | `bool co` |
 | val | [`char`](../sig/CO.md#val-char) | `char co` |
 | val | [`int`](../sig/CO.md#val-int) | `int co` |
@@ -35,7 +35,7 @@ What each means is on [`CO`](../sig/CO.md); the types are this structure's own.
 | val | [`triple`](../sig/CO.md#val-triple) | `'a co * 'b co * 'c co -> ('a * 'b * 'c) co` |
 | val | [`unit`](../sig/CO.md#val-unit) | `unit co` |
 | val | [`word`](../sig/CO.md#val-word) | `word co` |
-| val | [`word64`](../sig/CO.md#val-word64) | `word64 co` |
+| val | [`word64`](../sig/CO.md#val-word64) | `Word64.word co` |
 
 ---
 
