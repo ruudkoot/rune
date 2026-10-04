@@ -340,22 +340,65 @@ Each is small unless it says otherwise. The programs are at the end.
   with a little work:* a box, `string_from_char` (the 256 of them
   could be made once), `array_new`, `string_concat`, `string_extract`,
   `string_implode`. *The C library's functions of reals:* `real_sin`,
-  `real_cos`, `real_atan`, `real_atan2`, `real_pow`. These are no
-  system calls either. The work is the library's, but the call need
-  not be a primitive's: three million calls of `Math.sin` in a loop
-  cost 225 instructions each on M5's VM and 163 on the 16-byte VM,
-  where the C library's `sin` called from C takes 105. The 120 over it
-  are the convention -- the argument encoded and pushed, decoded in
-  the primitive, the result encoded there and decoded again, the
+  `real_cos`, `real_atan`, `real_atan2`, `real_pow`, which are no
+  system calls either (the next two items). *The system's:*
+  `file_write` and its like, which is where a primitive's call
+  belongs.
+* **Whether the machine has an instruction for a function of the
+  library.** Three different answers. SSE2 has none, and neither has
+  anything later on x86-64: of this kind there is `sqrtsd`, and
+  SSE4.1's `roundsd` for `floor`, `ceil`, `trunc` and `round`
+  (`Math.sqrt` is in line already). The x87 unit has them: `fsin`,
+  `fcos`, `fpatan`, and `fyl2x` with `f2xm1` and `fscale` for a power.
+  aarch64 has none at all.
+* **The x87 instructions, measured** (the owner asked for the
+  experiment, 2026-10-04). Three million calls with the argument in
+  [0, 3), the x87 instruction in line with its argument and result
+  moved between an XMM register and the x87 stack through memory, as
+  compiled code of Rune would have to; Xeon E5-1680 v3 (Haswell),
+  glibc 2.39; cycles and instructions a call, the loop taken off:
+
+  | Function | library, cycles | x87, cycles | library, instructions | x87, instructions |
+  |---|---:|---:|---:|---:|
+  | `sin` | 33 | 113 | 86 | 4 |
+  | `cos` | 34 | 112 | 88 | 4 |
+  | `atan` | 35 | 156 | 73 | 5 |
+  | `atan2` | 65 | 163 | 156 | 9 |
+  | `pow` | 73 | 182 | 137 | 15 |
+
+  The instructions are microcoded: a twentieth of the library's
+  instructions and 2.5 to 4.5 times its cycles (a count of
+  instructions, which the rest of this file leans on, says the
+  opposite here). Their results against the library's over a million
+  random arguments: in [0, 3) one in a thousand differs, by a unit in
+  the last place (`cos`: eight of them by up to three); `atan`,
+  `atan2` and `pow` stayed within one unit wherever tried. `fsin` and
+  `fcos` reduce their argument by a 66-bit pi: between 3.14159 and
+  3.1416 every sine differs, by up to five million units; over
+  [0, 10^6) 72% differ by more than one; past 2^63 the instruction
+  hands its argument back. So x87 in line is ruled out by
+  measurement, not by assumption: it is slower than the call it would
+  replace (113 cycles against the 91 below), and its results differ
+  from aarch64's and from the other engines'.
+* **What the call costs around the library's work.** `Math.sin` three
+  million times in a loop, from compiled code, the arguments from 0.5
+  to 3000.5:
+
+  | | cycles a call | instructions a call |
+  |---|---:|---:|
+  | the library's `sin`, called from C | 49 | 103 |
+  | `Math.sin`, the 16-byte VM | 74 | 163 |
+  | `Math.sin`, M5's VM | 91 | 225 |
+
+  The 41 cycles and 120 instructions over the library's on M5 are the
+  primitive's convention -- the argument encoded and pushed, decoded
+  in the primitive, the result encoded there and decoded again, the
   homes written back and loaded -- and a call straight to the library
   with the argument in an XMM register has none of them, since such a
-  function neither allocates nor raises. (x86 has instructions for
-  some of these on its x87 unit, `fsin`, `fpatan`, `fyl2x`; they are
-  not proposed: the library's code is the faster and the more exact,
-  as far as is known here without having measured it, and aarch64 has
-  none, so the two machines would differ in their answers.) *The
-  system's:* `file_write` and its like, which is where a primitive's
-  call belongs.
+  function neither allocates nor raises. That is what is proposed for
+  this kind: the library's code, reached directly. (The library's
+  algorithm copied in line would save the call instruction and its
+  return beyond that, a few cycles of 49; not proposed.)
 * **How.** (1) The ranking for every workload: the bootstrap,
   `tests/perf`, MLton's set, the six programs of this file, with the
   helpers that box counted beside the primitives. (2) What one call
@@ -370,8 +413,8 @@ Each is small unless it says otherwise. The programs are at the end.
   its templates being made from it.
 * **What it changes.** `raytrace` and `mandelbrot` among the programs
   of reals (their calls are a conversion a pixel or a ray), `nucleic`
-  (1.4 million calls of the library, 120 instructions of convention
-  each), the compiler's strings, and experiment 4's box, which is one of these.
+  (1.4 million calls of the library at some 40 cycles of convention
+  each, 60M of its 1.3G cycles), the compiler's strings, and experiment 4's box, which is one of these.
 * **Size.** The ranking an hour; each primitive of the first kind a
   few lines of `emit.c`; the allocating ones a day each.
 
@@ -437,3 +480,31 @@ val () = print (Word64.toString (rep (8, 0w1)) ^ "\n")
 Each is run as `bin/runevm --count --stats FILE.rbc` under `perf stat
 -e instructions:u,cycles:u`, on the 16-byte VM (branch `heap-layout`
 before M5, where `Word64` is `Word`) and on M5's.
+
+Experiment 10's loop of `Math.sin`, and the x87 instructions it was
+measured against (gcc, `-O2 -fno-math-errno`; each function summed
+over three million arguments under `perf stat`, the loop alone taken
+off, and its results compared with the library's bit by bit):
+
+```sml
+fun loop (0, x : real, acc : real) = acc
+  | loop (i, x, acc) = loop (i - 1, x + 0.001, acc + Math.sin x)
+val () = print (Real.toString (loop (3000000, 0.5, 0.0)) ^ "\n")
+```
+
+```c
+static inline double x_sin(double x) { double r; __asm__("fsin" : "=t"(r) : "0"(x)); return r; }
+static inline double x_cos(double x) { double r; __asm__("fcos" : "=t"(r) : "0"(x)); return r; }
+static inline double x_atan(double x) { double r; __asm__("fld1\n\tfpatan" : "=t"(r) : "0"(x)); return r; }
+static inline double x_atan2(double y, double x) {
+  double r; __asm__("fpatan" : "=t"(r) : "0"(x), "u"(y) : "st(1)"); return r;
+}
+/* x > 0: 2^(y log2 x), the exponent split into its integer and the rest */
+static inline double x_pow(double x, double y) {
+  double r;
+  __asm__("fyl2x\n\tfld %%st(0)\n\tfrndint\n\tfxch\n\tfsub %%st(1), %%st\n\t"
+          "f2xm1\n\tfld1\n\tfaddp\n\tfscale\n\tfstp %%st(1)"
+          : "=t"(r) : "0"(x), "u"(y) : "st(1)", "st(2)");
+  return r;
+}
+```
