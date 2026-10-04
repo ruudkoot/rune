@@ -414,7 +414,10 @@ Each is small unless it says otherwise. The programs are at the end.
 
   In line saves 6.5 cycles of 47.6 over the direct call, 14%; against
   the 91 that `Math.sin` costs on M5 today, a direct call would be
-  about 48 and in line about 41. The 41 is a lower bound for code the
+  about 48 and in line about 41 (estimates from the C loop: neither
+  is built, and a direct call still saves the real homes that are
+  live across it, every XMM register being the callee's to use under
+  the System V convention). The 41 is a lower bound for code the
   JIT would emit: the C compiler also keeps the sine's constants in
   registers across the loop, which a copy emitted at a call site does
   not get. The library asks for the rounding mode at every call
