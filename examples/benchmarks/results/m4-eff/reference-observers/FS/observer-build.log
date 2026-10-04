@@ -1,0 +1,13 @@
+[1 of 3] Compiling EffBench         ( /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/eff-originals/FS/EffBench.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/eff-originals/FS/observer-build/EffBench.o )
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/eff-originals/FS/EffBench.hs:39:3: warning: [-Wnoncanonical-monad-instances]
+    Noncanonical ‘return’ definition detected
+    in the instance declaration for ‘Monad (FS s)’.
+    ‘return’ will eventually be removed in favour of ‘pure’
+    Either remove definition for ‘return’ (recommended) or define as ‘return = pure’
+    See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+   |
+39 |   return = Pure
+   |   ^^^^^^^^^^^^^
+[2 of 3] Compiling Main             ( /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/eff-originals/FS/Observer.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/eff-originals/FS/observer-build/Main.o )
+[3 of 3] Linking /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/eff-originals/FS/observer

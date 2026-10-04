@@ -1,0 +1,40 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-class-church-state.sml]
+structure BenchClassChurchState : 
+  sig
+    type runner = int -> unit * int
+    type dictionary =
+      {get:(int -> runner) -> runner, pure:unit -> runner,
+        put:int -> runner -> runner}
+    val stateDictionary : dictionary
+    val times : dictionary -> int -> runner
+    val run : int -> unit * int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/CSD/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT ():100
+PASS CSD
+SUMMARY 1 checks, 0 failed

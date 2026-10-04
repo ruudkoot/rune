@@ -1,0 +1,52 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-free-state.sml]
+structure BenchFreeState : sig
+  structure L : <sig>
+  datatype node
+    = Get of int -> node BenchLazy.delay
+    | Pure
+    | Put of int * node BenchLazy.delay
+  type action = node BenchLazy.delay
+  val pure : unit -> node BenchLazy.state ref
+  val bind :
+      node BenchLazy.delay
+       -> (unit -> node BenchLazy.state ref) -> node BenchLazy.delay
+  val modify : (int -> int) -> node BenchLazy.state ref
+  val times : int -> node BenchLazy.delay -> node BenchLazy.state ref
+  val runState : node BenchLazy.delay -> int -> unit * int
+  val run : int -> unit * int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/FS/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT ():1000000
+PASS FS
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,773 @@
+PROGRAM LIMIT AS 4194304 KiB
+PASS eff/S-counter-unforced-at-pair
+PASS eff/S-counter-force-and-share
+PASS eff/S-unused-throwing-counter
+PASS eff/CS-strict-new-state
+PASS eff/FS-strict-put-field
+PASS eff/strict-variant-results
+PASS eff/CS-action-count
+PASS eff/FS-action-count
+PASS eff/FS-continuation-unused-before-put
+PASS eff/VS-result
+PASS eff/VSD-result
+PASS eff/VSM-result
+PASS eff/VSD-strict-modify
+PASS eff/VSM-strict-modify
+SUMMARY 14 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+PASS eff/S-counter-unforced-at-pair
+PASS eff/S-counter-force-and-share
+PASS eff/S-unused-throwing-counter
+PASS eff/CS-strict-new-state
+PASS eff/FS-strict-put-field
+PASS eff/strict-variant-results
+PASS eff/CS-action-count
+PASS eff/FS-action-count
+PASS eff/FS-continuation-unused-before-put
+PASS eff/VS-result
+PASS eff/VSD-result
+PASS eff/VSM-result
+PASS eff/VSD-strict-modify
+PASS eff/VSM-strict-modify
+SUMMARY 14 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+PASS eff/S-counter-unforced-at-pair
+PASS eff/S-counter-force-and-share
+PASS eff/S-unused-throwing-counter
+PASS eff/CS-strict-new-state
+PASS eff/FS-strict-put-field
+PASS eff/strict-variant-results
+PASS eff/CS-action-count
+PASS eff/FS-action-count
+PASS eff/FS-continuation-unused-before-put
+PASS eff/VS-result
+PASS eff/VSD-result
+PASS eff/VSM-result
+PASS eff/VSD-strict-modify
+PASS eff/VSM-strict-modify
+SUMMARY 14 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+PASS eff/S-counter-unforced-at-pair
+PASS eff/S-counter-force-and-share
+PASS eff/S-unused-throwing-counter
+PASS eff/CS-strict-new-state
+PASS eff/FS-strict-put-field
+PASS eff/strict-variant-results
+PASS eff/CS-action-count
+PASS eff/FS-action-count
+PASS eff/FS-continuation-unused-before-put
+PASS eff/VS-result
+PASS eff/VSD-result
+PASS eff/VSM-result
+PASS eff/VSD-strict-modify
+PASS eff/VSM-strict-modify
+SUMMARY 14 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 4194304 KiB
+PASS eff/S-counter-unforced-at-pair
+PASS eff/S-counter-force-and-share
+PASS eff/S-unused-throwing-counter
+PASS eff/CS-strict-new-state
+PASS eff/FS-strict-put-field
+PASS eff/strict-variant-results
+PASS eff/CS-action-count
+PASS eff/FS-action-count
+PASS eff/FS-continuation-unused-before-put
+PASS eff/VS-result
+PASS eff/VSD-result
+PASS eff/VSM-result
+PASS eff/VSD-strict-modify
+PASS eff/VSM-strict-modify
+SUMMARY 14 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-stock-state.sml]
+structure BenchStockState : sig
+  structure L : <sig>
+  type counter = int BenchLazy.delay
+  type 'a state = counter -> 'a * counter
+  val value : 'a -> 'a BenchLazy.state ref
+  val pure : 'a -> 'b -> 'a * 'b
+  val bind : ('a -> 'b * 'c) -> ('b -> 'c -> 'd) -> 'a -> 'd
+  val modify :
+      ('a -> 'b) -> 'a BenchLazy.state ref -> unit * 'b BenchLazy.state ref
+  val get : 'a -> 'a * 'a
+  val put : 'a -> 'b -> unit * 'a
+  val times : int -> ('a -> 'b * 'a) -> 'a -> unit * 'a
+  val run : int -> unit * int BenchLazy.state ref
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-church-state.sml]
+structure BenchChurchState : sig
+  type result = unit * int
+  type runner = int -> result
+  type church =
+    (unit -> runner)
+     -> ((int -> runner) -> runner) -> (int -> runner -> runner) -> runner
+  val pure : 'a -> ('a -> 'b) -> 'c -> 'd -> 'b
+  val bind :
+      (('a -> 'b) -> 'c -> 'd -> 'e)
+       -> ('a -> 'f -> 'c -> 'd -> 'b) -> 'f -> 'c -> 'd -> 'e
+  val modify :
+      ('a -> 'b)
+       -> (unit -> 'c) -> (('a -> 'd) -> 'e) -> ('b -> 'c -> 'd) -> 'e
+  val times :
+      int -> (('a -> 'b) -> 'c -> 'd -> 'b) -> (unit -> 'b) -> 'c -> 'd -> 'b
+  val runState :
+      (('a -> 'b -> 'a * 'b)
+        -> (('c -> 'c -> 'd) -> 'c -> 'd)
+        -> ('e -> ('e -> 'f) -> 'g -> 'f) -> 'h -> 'i)
+       -> 'h -> 'i
+  val run : int -> unit * int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-class-church-state.sml]
+structure BenchClassChurchState : sig
+  type runner = int -> unit * int
+  type dictionary =
+    {get:(int -> runner) -> runner, pure:unit -> runner,
+      put:int -> runner -> runner}
+  val stateDictionary : dictionary
+  val times : dictionary -> int -> runner
+  val run : int -> unit * int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-free-state.sml]
+structure BenchFreeState : sig
+  structure L : <sig>
+  datatype node
+    = Get of int -> node BenchLazy.delay
+    | Pure
+    | Put of int * node BenchLazy.delay
+  type action = node BenchLazy.delay
+  val pure : unit -> node BenchLazy.state ref
+  val bind :
+      node BenchLazy.delay
+       -> (unit -> node BenchLazy.state ref) -> node BenchLazy.delay
+  val modify : (int -> int) -> node BenchLazy.state ref
+  val times : int -> node BenchLazy.delay -> node BenchLazy.state ref
+  val runState : node BenchLazy.delay -> int -> unit * int
+  val run : int -> unit * int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-van-state.sml]
+structure BenchVanState : sig
+  type 'a state = int -> 'a * int
+  type handlers =
+    {bindInt:int state -> (int -> unit state) -> unit state,
+      bindUnit:unit state -> (unit -> unit state) -> unit state,
+      get:int state, pure:unit -> unit state, put:int -> unit state}
+  type encoded = handlers -> unit state
+  val statePure : 'a -> 'b -> 'a * 'b
+  val stateBind : ('a -> 'b * 'c) -> ('b -> 'c -> 'd * 'e) -> 'a -> 'd * 'e
+  val handlers : handlers
+  val pure : unit -> handlers -> unit state
+  val bind :
+      (handlers -> unit state)
+       -> (unit -> handlers -> unit state) -> handlers -> unit state
+  val modify : (int -> int) -> handlers -> unit state
+  val times : int -> (handlers -> unit state) -> handlers -> unit state
+  val run : int -> unit * int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-class-van-state.sml]
+structure BenchClassVanState : sig
+  structure S : <sig>
+  structure L : <sig>
+  type dictionary =
+    {get:BenchStockState.counter BenchStockState.state,
+      put:BenchStockState.counter -> unit BenchStockState.state}
+  val stateDictionary : dictionary
+  val modify :
+      dictionary
+       -> (int -> int)
+       -> BenchStockState.counter -> unit * BenchStockState.counter
+  val run : int -> unit * BenchStockState.counter
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-van-mtl-state.sml]
+structure BenchVanMtlState : sig
+  structure S : <sig>
+  structure L : <sig>
+  type encoded =
+    BenchStockState.counter BenchStockState.state
+     -> (BenchStockState.counter -> unit BenchStockState.state)
+     -> unit BenchStockState.state
+  val pure : 'a -> 'b -> 'c -> 'd -> 'a * 'd
+  val bind :
+      ('a -> 'b -> 'c -> 'd * 'e)
+       -> ('d -> 'a -> 'b -> 'e -> 'f) -> 'a -> 'b -> 'c -> 'f
+  val modify :
+      ('a -> 'b)
+       -> ('c -> 'a BenchLazy.state ref * 'd)
+       -> ('b BenchLazy.state ref -> 'd -> 'e) -> 'c -> 'e
+  val times :
+      int -> ('a -> 'b -> 'c -> 'd * 'c) -> 'a -> 'b -> 'c -> unit * 'c
+  val run : int -> unit * int BenchLazy.state ref
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/eff-state.sml]
+PASS eff/S-counter-unforced-at-pair
+PASS eff/S-counter-force-and-share
+PASS eff/S-unused-throwing-counter
+PASS eff/CS-strict-new-state
+PASS eff/FS-strict-put-field
+PASS eff/strict-variant-results
+PASS eff/CS-action-count
+PASS eff/FS-action-count
+PASS eff/FS-continuation-unused-before-put
+PASS eff/VS-result
+PASS eff/VSD-result
+PASS eff/VSM-result
+PASS eff/VSD-strict-modify
+PASS eff/VSM-strict-modify
+structure BenchEffTests : sig
+  structure L : <sig>
+  structure S : <sig>
+  structure C : <sig>
+  structure D : <sig>
+  structure F : <sig>
+  val calls : int ref
+  val increment : int -> int
+  val state : int BenchLazy.state ref
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 14 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-stock-state.sml]
+structure BenchStockState : sig
+  structure L : <sig>
+  type counter = int BenchLazy.delay
+  type 'a state = counter -> 'a * counter
+  val value : 'a -> 'a BenchLazy.state ref
+  val pure : 'a -> 'b -> 'a * 'b
+  val bind : ('a -> 'b * 'c) -> ('b -> 'c -> 'd) -> 'a -> 'd
+  val modify :
+      ('a -> 'b) -> 'a BenchLazy.state ref -> unit * 'b BenchLazy.state ref
+  val get : 'a -> 'a * 'a
+  val put : 'a -> 'b -> unit * 'a
+  val times : int -> ('a -> 'b * 'a) -> 'a -> unit * 'a
+  val run : int -> unit * int BenchLazy.state ref
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-church-state.sml]
+structure BenchChurchState : sig
+  type result = unit * int
+  type runner = int -> result
+  type church =
+    (unit -> runner)
+     -> ((int -> runner) -> runner) -> (int -> runner -> runner) -> runner
+  val pure : 'a -> ('a -> 'b) -> 'c -> 'd -> 'b
+  val bind :
+      (('a -> 'b) -> 'c -> 'd -> 'e)
+       -> ('a -> 'f -> 'c -> 'd -> 'b) -> 'f -> 'c -> 'd -> 'e
+  val modify :
+      ('a -> 'b)
+       -> (unit -> 'c) -> (('a -> 'd) -> 'e) -> ('b -> 'c -> 'd) -> 'e
+  val times :
+      int -> (('a -> 'b) -> 'c -> 'd -> 'b) -> (unit -> 'b) -> 'c -> 'd -> 'b
+  val runState :
+      (('a -> 'b -> 'a * 'b)
+        -> (('c -> 'c -> 'd) -> 'c -> 'd)
+        -> ('e -> ('e -> 'f) -> 'g -> 'f) -> 'h -> 'i)
+       -> 'h -> 'i
+  val run : int -> unit * int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-class-church-state.sml]
+structure BenchClassChurchState : sig
+  type runner = int -> unit * int
+  type dictionary =
+    {get:(int -> runner) -> runner, pure:unit -> runner,
+      put:int -> runner -> runner}
+  val stateDictionary : dictionary
+  val times : dictionary -> int -> runner
+  val run : int -> unit * int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-free-state.sml]
+structure BenchFreeState : sig
+  structure L : <sig>
+  datatype node
+    = Get of int -> node BenchLazy.delay
+    | Pure
+    | Put of int * node BenchLazy.delay
+  type action = node BenchLazy.delay
+  val pure : unit -> node BenchLazy.state ref
+  val bind :
+      node BenchLazy.delay
+       -> (unit -> node BenchLazy.state ref) -> node BenchLazy.delay
+  val modify : (int -> int) -> node BenchLazy.state ref
+  val times : int -> node BenchLazy.delay -> node BenchLazy.state ref
+  val runState : node BenchLazy.delay -> int -> unit * int
+  val run : int -> unit * int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-van-state.sml]
+structure BenchVanState : sig
+  type 'a state = int -> 'a * int
+  type handlers =
+    {bindInt:int state -> (int -> unit state) -> unit state,
+      bindUnit:unit state -> (unit -> unit state) -> unit state,
+      get:int state, pure:unit -> unit state, put:int -> unit state}
+  type encoded = handlers -> unit state
+  val statePure : 'a -> 'b -> 'a * 'b
+  val stateBind : ('a -> 'b * 'c) -> ('b -> 'c -> 'd * 'e) -> 'a -> 'd * 'e
+  val handlers : handlers
+  val pure : unit -> handlers -> unit state
+  val bind :
+      (handlers -> unit state)
+       -> (unit -> handlers -> unit state) -> handlers -> unit state
+  val modify : (int -> int) -> handlers -> unit state
+  val times : int -> (handlers -> unit state) -> handlers -> unit state
+  val run : int -> unit * int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-class-van-state.sml]
+structure BenchClassVanState : sig
+  structure S : <sig>
+  structure L : <sig>
+  type dictionary =
+    {get:BenchStockState.counter BenchStockState.state,
+      put:BenchStockState.counter -> unit BenchStockState.state}
+  val stateDictionary : dictionary
+  val modify :
+      dictionary
+       -> (int -> int)
+       -> BenchStockState.counter -> unit * BenchStockState.counter
+  val run : int -> unit * BenchStockState.counter
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-van-mtl-state.sml]
+structure BenchVanMtlState : sig
+  structure S : <sig>
+  structure L : <sig>
+  type encoded =
+    BenchStockState.counter BenchStockState.state
+     -> (BenchStockState.counter -> unit BenchStockState.state)
+     -> unit BenchStockState.state
+  val pure : 'a -> 'b -> 'c -> 'd -> 'a * 'd
+  val bind :
+      ('a -> 'b -> 'c -> 'd * 'e)
+       -> ('d -> 'a -> 'b -> 'e -> 'f) -> 'a -> 'b -> 'c -> 'f
+  val modify :
+      ('a -> 'b)
+       -> ('c -> 'a BenchLazy.state ref * 'd)
+       -> ('b BenchLazy.state ref -> 'd -> 'e) -> 'c -> 'e
+  val times :
+      int -> ('a -> 'b -> 'c -> 'd * 'c) -> 'a -> 'b -> 'c -> unit * 'c
+  val run : int -> unit * int BenchLazy.state ref
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/eff-state.sml]
+PASS eff/S-counter-unforced-at-pair
+PASS eff/S-counter-force-and-share
+PASS eff/S-unused-throwing-counter
+PASS eff/CS-strict-new-state
+PASS eff/FS-strict-put-field
+PASS eff/strict-variant-results
+PASS eff/CS-action-count
+PASS eff/FS-action-count
+PASS eff/FS-continuation-unused-before-put
+PASS eff/VS-result
+PASS eff/VSD-result
+PASS eff/VSM-result
+PASS eff/VSD-strict-modify
+PASS eff/VSM-strict-modify
+structure BenchEffTests : sig
+  structure L : <sig>
+  structure S : <sig>
+  structure C : <sig>
+  structure D : <sig>
+  structure F : <sig>
+  val calls : int ref
+  val increment : int -> int
+  val state : int BenchLazy.state ref
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 14 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-stock-state.sml]
+structure BenchStockState : 
+  sig
+    structure L : <sig>
+    type counter = int BenchLazy.delay
+    type 'a state = counter -> 'a * counter
+    val value : 'a -> 'a BenchLazy.state ref
+    val pure : 'a -> 'b -> 'a * 'b
+    val bind : ('a -> 'b * 'c) -> ('b -> 'c -> 'd) -> 'a -> 'd
+    val modify : ('a -> 'b)
+                  -> 'a BenchLazy.state ref -> unit * 'b BenchLazy.state ref
+    val get : 'a -> 'a * 'a
+    val put : 'a -> 'b -> unit * 'a
+    val times : int -> ('a -> 'b * 'a) -> 'a -> unit * 'a
+    val run : int -> unit * int BenchLazy.state ref
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-church-state.sml]
+structure BenchChurchState : 
+  sig
+    type result = unit * int
+    type runner = int -> result
+    type church =
+      (unit -> runner)
+       -> ((int -> runner) -> runner) -> (int -> runner -> runner) -> runner
+    val pure : 'a -> ('a -> 'b) -> 'c -> 'd -> 'b
+    val bind : (('a -> 'b) -> 'c -> 'd -> 'e)
+                -> ('a -> 'f -> 'c -> 'd -> 'b) -> 'f -> 'c -> 'd -> 'e
+    val modify : ('a -> 'b)
+                  -> (unit -> 'c)
+                  -> (('a -> 'd) -> 'e) -> ('b -> 'c -> 'd) -> 'e
+    val times : int
+                 -> (('a -> 'b) -> 'c -> 'd -> 'b)
+                 -> (unit -> 'b) -> 'c -> 'd -> 'b
+    val runState : (('a -> 'b -> 'a * 'b)
+                     -> (('c -> 'c -> 'd) -> 'c -> 'd)
+                     -> ('e -> ('e -> 'f) -> 'g -> 'f) -> 'h -> 'i)
+                    -> 'h -> 'i
+    val run : int -> unit * int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-class-church-state.sml]
+structure BenchClassChurchState : 
+  sig
+    type runner = int -> unit * int
+    type dictionary =
+      {get:(int -> runner) -> runner, pure:unit -> runner,
+        put:int -> runner -> runner}
+    val stateDictionary : dictionary
+    val times : dictionary -> int -> runner
+    val run : int -> unit * int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-free-state.sml]
+structure BenchFreeState : 
+  sig
+    structure L : <sig>
+    datatype node
+      = Get of int -> node BenchLazy.delay
+    | Pure
+    | Put of int * node BenchLazy.delay
+    type action = node BenchLazy.delay
+    val pure : unit -> node BenchLazy.state ref
+    val bind : node BenchLazy.delay
+                -> (unit -> node BenchLazy.state ref) -> node BenchLazy.delay
+    val modify : (int -> int) -> node BenchLazy.state ref
+    val times : int -> node BenchLazy.delay -> node BenchLazy.state ref
+    val runState : node BenchLazy.delay -> int -> unit * int
+    val run : int -> unit * int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-van-state.sml]
+structure BenchVanState : 
+  sig
+    type 'a state = int -> 'a * int
+    type handlers =
+      {bindInt:int state -> (int -> unit state) -> unit state,
+        bindUnit:unit state -> (unit -> unit state) -> unit state,
+        get:int state, pure:unit -> unit state, put:int -> unit state}
+    type encoded = handlers -> unit state
+    val statePure : 'a -> 'b -> 'a * 'b
+    val stateBind : ('a -> 'b * 'c) -> ('b -> 'c -> 'd * 'e) -> 'a -> 'd * 'e
+    val handlers : handlers
+    val pure : unit -> handlers -> unit state
+    val bind : (handlers -> unit state)
+                -> (unit -> handlers -> unit state) -> handlers -> unit state
+    val modify : (int -> int) -> handlers -> unit state
+    val times : int -> (handlers -> unit state) -> handlers -> unit state
+    val run : int -> unit * int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-class-van-state.sml]
+structure BenchClassVanState : 
+  sig
+    structure S : <sig>
+    structure L : <sig>
+    type dictionary =
+      {get:BenchStockState.counter BenchStockState.state,
+        put:BenchStockState.counter -> unit BenchStockState.state}
+    val stateDictionary : dictionary
+    val modify : dictionary
+                  -> (int -> int)
+                  -> BenchStockState.counter -> unit * BenchStockState.counter
+    val run : int -> unit * BenchStockState.counter
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-van-mtl-state.sml]
+structure BenchVanMtlState : 
+  sig
+    structure S : <sig>
+    structure L : <sig>
+    type encoded =
+      BenchStockState.counter BenchStockState.state
+       -> (BenchStockState.counter -> unit BenchStockState.state)
+       -> unit BenchStockState.state
+    val pure : 'a -> 'b -> 'c -> 'd -> 'a * 'd
+    val bind : ('a -> 'b -> 'c -> 'd * 'e)
+                -> ('d -> 'a -> 'b -> 'e -> 'f) -> 'a -> 'b -> 'c -> 'f
+    val modify : ('a -> 'b)
+                  -> ('c -> 'a BenchLazy.state ref * 'd)
+                  -> ('b BenchLazy.state ref -> 'd -> 'e) -> 'c -> 'e
+    val times : int
+                 -> ('a -> 'b -> 'c -> 'd * 'c) -> 'a -> 'b -> 'c -> unit * 'c
+    val run : int -> unit * int BenchLazy.state ref
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/eff-state.sml]
+PASS eff/S-counter-unforced-at-pair
+PASS eff/S-counter-force-and-share
+PASS eff/S-unused-throwing-counter
+PASS eff/CS-strict-new-state
+PASS eff/FS-strict-put-field
+PASS eff/strict-variant-results
+PASS eff/CS-action-count
+PASS eff/FS-action-count
+PASS eff/FS-continuation-unused-before-put
+PASS eff/VS-result
+PASS eff/VSD-result
+PASS eff/VSM-result
+PASS eff/VSD-strict-modify
+PASS eff/VSM-strict-modify
+structure BenchEffTests : 
+  sig
+    structure L : <sig>
+    structure S : <sig>
+    structure C : <sig>
+    structure D : <sig>
+    structure F : <sig>
+    val calls : int ref
+    val increment : int -> int
+    val state : int BenchLazy.state ref
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 14 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+PASS eff/S-counter-unforced-at-pair
+PASS eff/S-counter-force-and-share
+PASS eff/S-unused-throwing-counter
+PASS eff/CS-strict-new-state
+PASS eff/FS-strict-put-field
+PASS eff/strict-variant-results
+PASS eff/CS-action-count
+PASS eff/FS-action-count
+PASS eff/FS-continuation-unused-before-put
+PASS eff/VS-result
+PASS eff/VSD-result
+PASS eff/VSM-result
+PASS eff/VSD-strict-modify
+PASS eff/VSM-strict-modify
+SUMMARY 14 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+PASS eff/S-counter-unforced-at-pair
+PASS eff/S-counter-force-and-share
+PASS eff/S-unused-throwing-counter
+PASS eff/CS-strict-new-state
+PASS eff/FS-strict-put-field
+PASS eff/strict-variant-results
+PASS eff/CS-action-count
+PASS eff/FS-action-count
+PASS eff/FS-continuation-unused-before-put
+PASS eff/VS-result
+PASS eff/VSD-result
+PASS eff/VSM-result
+PASS eff/VSD-strict-modify
+PASS eff/VSM-strict-modify
+SUMMARY 14 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

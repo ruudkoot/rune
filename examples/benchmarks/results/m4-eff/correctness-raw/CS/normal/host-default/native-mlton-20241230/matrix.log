@@ -1,0 +1,124 @@
+PROGRAM LIMIT AS 4194304 KiB
+RESULT ():1000000
+PASS CS
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-church-state.sml]
+structure BenchChurchState : sig
+  type result = unit * int
+  type runner = int -> result
+  type church =
+    (unit -> runner)
+     -> ((int -> runner) -> runner) -> (int -> runner -> runner) -> runner
+  val pure : 'a -> ('a -> 'b) -> 'c -> 'd -> 'b
+  val bind :
+      (('a -> 'b) -> 'c -> 'd -> 'e)
+       -> ('a -> 'f -> 'c -> 'd -> 'b) -> 'f -> 'c -> 'd -> 'e
+  val modify :
+      ('a -> 'b)
+       -> (unit -> 'c) -> (('a -> 'd) -> 'e) -> ('b -> 'c -> 'd) -> 'e
+  val times :
+      int -> (('a -> 'b) -> 'c -> 'd -> 'b) -> (unit -> 'b) -> 'c -> 'd -> 'b
+  val runState :
+      (('a -> 'b -> 'a * 'b)
+        -> (('c -> 'c -> 'd) -> 'c -> 'd)
+        -> ('e -> ('e -> 'f) -> 'g -> 'f) -> 'h -> 'i)
+       -> 'h -> 'i
+  val run : int -> unit * int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/CS/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT ():1000000
+PASS CS
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-church-state.sml]
+structure BenchChurchState : 
+  sig
+    type result = unit * int
+    type runner = int -> result
+    type church =
+      (unit -> runner)
+       -> ((int -> runner) -> runner) -> (int -> runner -> runner) -> runner
+    val pure : 'a -> ('a -> 'b) -> 'c -> 'd -> 'b
+    val bind : (('a -> 'b) -> 'c -> 'd -> 'e)
+                -> ('a -> 'f -> 'c -> 'd -> 'b) -> 'f -> 'c -> 'd -> 'e
+    val modify : ('a -> 'b)
+                  -> (unit -> 'c)
+                  -> (('a -> 'd) -> 'e) -> ('b -> 'c -> 'd) -> 'e
+    val times : int
+                 -> (('a -> 'b) -> 'c -> 'd -> 'b)
+                 -> (unit -> 'b) -> 'c -> 'd -> 'b
+    val runState : (('a -> 'b -> 'a * 'b)
+                     -> (('c -> 'c -> 'd) -> 'c -> 'd)
+                     -> ('e -> ('e -> 'f) -> 'g -> 'f) -> 'h -> 'i)
+                    -> 'h -> 'i
+    val run : int -> unit * int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/CS/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT ():1000000
+PASS CS
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT ():1000000
+PASS CS
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2

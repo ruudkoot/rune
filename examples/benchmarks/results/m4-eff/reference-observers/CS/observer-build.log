@@ -1,0 +1,23 @@
+[1 of 3] Compiling EffBench         ( /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/eff-originals/CS/EffBench.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/eff-originals/CS/observer-build/EffBench.o )
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/eff-originals/CS/EffBench.hs:47:3: warning: [-Wnoncanonical-monad-instances]
+    Noncanonical ‘return’ definition detected
+    in the instance declaration for ‘Monad (CS s)’.
+    ‘return’ will eventually be removed in favour of ‘pure’
+    Either remove definition for ‘return’ (recommended) or define as ‘return = pure’
+    See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+   |
+47 |   return a = CS $ \pure get put -> pure a
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/eff-originals/CS/EffBench.hs:52:3: warning: [-Wnoncanonical-monad-instances]
+    Noncanonical ‘(>>)’ definition detected
+    in the instance declaration for ‘Monad (CS s)’.
+    ‘(>>)’ will eventually be removed in favour of ‘(*>)’
+    Either remove definition for ‘(>>)’ (recommended) or define as ‘(>>) = (*>)’
+    See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+   |
+52 |   CS ma >> CS mb = CS $ \pure get put -> ma (\_ -> mb pure get put) get put
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2 of 3] Compiling Main             ( /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/eff-originals/CS/Observer.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/eff-originals/CS/observer-build/Main.o )
+[3 of 3] Linking /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/eff-originals/CS/observer

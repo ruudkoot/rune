@@ -1,0 +1,15 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (639 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=native:mlkit,native:smlnj32 BENCH_FILTER='=VSD' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.KEFo1f
+BENCH VSD normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT ():1000000
+PASS VSD
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+PROGRAM LIMIT AS 4194304 KiB
+RESULT ():1000000
+PASS VSD
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9

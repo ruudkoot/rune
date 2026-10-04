@@ -1,0 +1,71 @@
+PROGRAM LIMIT AS 4194304 KiB
+RESULT ():1000000
+PASS VSD
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-stock-state.sml]
+structure BenchStockState : sig
+  structure L : <sig>
+  type counter = int BenchLazy.delay
+  type 'a state = counter -> 'a * counter
+  val value : 'a -> 'a BenchLazy.state ref
+  val pure : 'a -> 'b -> 'a * 'b
+  val bind : ('a -> 'b * 'c) -> ('b -> 'c -> 'd) -> 'a -> 'd
+  val modify :
+      ('a -> 'b) -> 'a BenchLazy.state ref -> unit * 'b BenchLazy.state ref
+  val get : 'a -> 'a * 'a
+  val put : 'a -> 'b -> unit * 'a
+  val times : int -> ('a -> 'b * 'a) -> 'a -> unit * 'a
+  val run : int -> unit * int BenchLazy.state ref
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-class-van-state.sml]
+structure BenchClassVanState : sig
+  structure S : <sig>
+  structure L : <sig>
+  type dictionary =
+    {get:BenchStockState.counter BenchStockState.state,
+      put:BenchStockState.counter -> unit BenchStockState.state}
+  val stateDictionary : dictionary
+  val modify :
+      dictionary
+       -> (int -> int)
+       -> BenchStockState.counter -> unit * BenchStockState.counter
+  val run : int -> unit * BenchStockState.counter
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/VSD/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT ():1000000
+PASS VSD
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9

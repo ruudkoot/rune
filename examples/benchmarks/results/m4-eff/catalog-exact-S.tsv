@@ -1,0 +1,1 @@
+S	600	4194304	shared/input.sml shared/lazy.sml shared/eff-stock-state.sml S/benchmark.sml shared/main.sml	1000000	S/normal.expected	-

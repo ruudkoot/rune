@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+VSD	normal	rune	O2	compile	0	0	pass	1.20	1.13	0.10	135260	-	-	-	VSD/rune/build/compile
+VSD	normal	rune	O2	correctness	0	0	pass	0.30	0.30	0.00	10352	63010473	224019192	6000505	VSD/rune/correctness.0
+VSD	normal	rune	O2	count	1	1	pass	0.28	0.28	0.00	10356	63010473	224019192	6000505	VSD/rune/fresh.1
+VSD	normal	rune:opt	O2	compile	0	0	pass	1.19	1.14	0.09	135112	-	-	-	VSD/rune-opt/build/compile
+VSD	normal	rune:opt	O2	native-compile	0	0	pass	0.29	0.10	0.05	12096	-	-	-	VSD/rune-opt/build/native-compile
+VSD	normal	rune:opt	O2	correctness	0	0	pass	0.15	0.15	0.00	10716	63010473	224019192	6000505	VSD/rune-opt/correctness.0
+VSD	normal	rune:opt	O2	count	1	1	pass	0.14	0.13	0.01	10716	63010473	224019192	6000505	VSD/rune-opt/fresh.1
+VSD	normal	rune:new	O2	compile	0	0	pass	1.10	1.05	0.08	135132	-	-	-	VSD/rune-new/build/compile
+VSD	normal	rune:new	O2	correctness	0	0	pass	0.30	0.29	0.01	10500	39006353	224019192	6000505	VSD/rune-new/correctness.0
+VSD	normal	rune:new	O2	count	1	1	pass	0.30	0.30	0.00	10432	39006353	224019192	6000505	VSD/rune-new/fresh.1
+VSD	normal	rune:jit	O2	compile	0	0	pass	1.16	1.11	0.08	135228	-	-	-	VSD/rune-jit/build/compile
+VSD	normal	rune:jit	O2	correctness	0	0	pass	0.13	0.12	0.00	11276	39006353	224019192	6000505	VSD/rune-jit/correctness.0
+VSD	normal	rune:jit	O2	count	1	1	pass	0.15	0.14	0.01	11376	39006353	224019192	6000505	VSD/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

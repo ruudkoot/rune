@@ -1,0 +1,5 @@
+COUNT unbudgeted S normal rune
+COUNT unbudgeted S normal rune:opt
+COUNT unbudgeted S normal rune:new
+COUNT unbudgeted S normal rune:jit
+COUNT comparisons agree

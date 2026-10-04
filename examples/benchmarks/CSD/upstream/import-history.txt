@@ -1,0 +1,23 @@
+commit c7e6c9074511f74f73eaa3b41051afc94aeb653a
+Author:     Matthew Pickering <matthewtpickering@gmail.com>
+AuthorDate: Mon Aug 14 20:45:33 2017 -0400
+Commit:     Ben Gamari <ben@smart-cactus.org>
+CommitDate: Mon Aug 14 20:45:33 2017 -0400
+
+    Add State monad benchmarks by Andras Kovacs
+    
+    Summary:
+    They are originally from
+    https://github.com/AndrasKovacs/misc-stuff/blob/master/haskell/Eff/EffBench.hs
+    
+    They show interesting interactions with call arity, spec constr and SAT.
+    
+    Reviewers: O26 nofib, michalt, simonpj, bgamari
+    
+    Reviewed By: bgamari
+    
+    Subscribers: RyanGlScott
+    
+    GHC Trac Issues: #13892
+    
+    Differential Revision: https://phabricator.haskell.org/D3683

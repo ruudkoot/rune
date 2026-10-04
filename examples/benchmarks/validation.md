@@ -760,3 +760,33 @@ records the run; all 32 inventory tests pass.
 Eight additional standalone smoke/normal cases pass on ML Kit and 32-bit
 SML/NJ, bringing Stack correctness coverage to 56 successful cases. These
 passing benchmarks are distinct from ML Kit's test-program compilation crash.
+
+## M4 pure state encodings, 2026-10-04
+
+Seven variants bring the catalogue to 215 programs and 639 profiles. All
+[168 primary smoke/normal cases](results/m4-eff/correctness.tsv) pass on four
+Rune engines at both levels and four primary native hosts. Fourteen semantic
+checks pass all ten configurations at both levels. Original GHC observers
+agree on selected results and S's deferred counter; strict variants additionally
+validate counters already forced by their original increment/bind rules.
+
+Handler callbacks, free constructors, class dictionaries, bind layers and
+interpreter traversal remain distinct. Used ground types, explicit delays,
+source State-library replacements and notices are documented. Normal uses
+1,000,000 operations and large preserves the original 10,000,000; large SML
+validation is not universally claimed. S's unit result permits limited output
+discrimination, documented alongside demand tests and count evidence. All seven
+count groups agree across applicable Rune engines; no headline timing is claimed.
+Exact-name filters such as `BENCH_FILTER='=S'` select these short established names;
+eight catalogue unit checks verify exact/substring selection and metadata failures.
+M4 remains in progress.
+
+Full `make JOBS=4 check` passes with all 639 catalogue profiles and the bounded
+14-program routine set, 331 language fixtures per compiler, performance budgets,
+bootstrap and bytecode agreement for 498 programs across seven builds. runedoc
+and runeopt also agree. The [complete transcript](validation/oct04-eff-acceptance.log)
+records the run; all 32 inventory tests pass.
+
+All 28 additional smoke/normal cases on ML Kit and 32-bit SML/NJ pass,
+bringing eff correctness coverage to 196 successful cases across all six
+managed native hosts and four Rune engines.

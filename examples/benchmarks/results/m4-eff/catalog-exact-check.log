@@ -1,0 +1,9 @@
+PASS benchmark.catalog/exact-filter
+PASS benchmark.catalog/substring-filter
+PASS benchmark.catalog/empty-exact-filter
+PASS benchmark.catalog/valid
+PASS benchmark.catalog/duplicate
+PASS benchmark.catalog/missing-profile
+PASS benchmark.catalog/profile
+PASS benchmark.catalog/escape
+SUMMARY 8 checks, 0 failed

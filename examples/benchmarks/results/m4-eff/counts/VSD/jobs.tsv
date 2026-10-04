@@ -1,0 +1,1 @@
+VSD	600	4194304	shared/input.sml shared/lazy.sml shared/eff-stock-state.sml shared/eff-class-van-state.sml VSD/benchmark.sml shared/main.sml	1000000	VSD/normal.expected	-

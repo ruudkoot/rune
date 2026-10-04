@@ -1,0 +1,116 @@
+PROGRAM LIMIT AS 1048576 KiB
+RESULT ():100
+PASS VS
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-van-state.sml]
+structure BenchVanState : sig
+  type 'a state = int -> 'a * int
+  type handlers =
+    {bindInt:int state -> (int -> unit state) -> unit state,
+      bindUnit:unit state -> (unit -> unit state) -> unit state,
+      get:int state, pure:unit -> unit state, put:int -> unit state}
+  type encoded = handlers -> unit state
+  val statePure : 'a -> 'b -> 'a * 'b
+  val stateBind : ('a -> 'b * 'c) -> ('b -> 'c -> 'd * 'e) -> 'a -> 'd * 'e
+  val handlers : handlers
+  val pure : unit -> handlers -> unit state
+  val bind :
+      (handlers -> unit state)
+       -> (unit -> handlers -> unit state) -> handlers -> unit state
+  val modify : (int -> int) -> handlers -> unit state
+  val times : int -> (handlers -> unit state) -> handlers -> unit state
+  val run : int -> unit * int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/VS/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT ():100
+PASS VS
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/eff-van-state.sml]
+structure BenchVanState : 
+  sig
+    type 'a state = int -> 'a * int
+    type handlers =
+      {bindInt:int state -> (int -> unit state) -> unit state,
+        bindUnit:unit state -> (unit -> unit state) -> unit state,
+        get:int state, pure:unit -> unit state, put:int -> unit state}
+    type encoded = handlers -> unit state
+    val statePure : 'a -> 'b -> 'a * 'b
+    val stateBind : ('a -> 'b * 'c) -> ('b -> 'c -> 'd * 'e) -> 'a -> 'd * 'e
+    val handlers : handlers
+    val pure : unit -> handlers -> unit state
+    val bind : (handlers -> unit state)
+                -> (unit -> handlers -> unit state) -> handlers -> unit state
+    val modify : (int -> int) -> handlers -> unit state
+    val times : int -> (handlers -> unit state) -> handlers -> unit state
+    val run : int -> unit * int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/VS/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT ():100
+PASS VS
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+RESULT ():100
+PASS VS
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2

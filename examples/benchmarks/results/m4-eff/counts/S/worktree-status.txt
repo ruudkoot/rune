@@ -1,0 +1,20 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/shared/catalog.sml
+ M tests/benchmarks/catalog.sml
+?? examples/benchmarks/CS/
+?? examples/benchmarks/CSD/
+?? examples/benchmarks/FS/
+?? examples/benchmarks/S/
+?? examples/benchmarks/VS/
+?? examples/benchmarks/VSD/
+?? examples/benchmarks/VSM/
+?? examples/benchmarks/shared/eff-church-state.sml
+?? examples/benchmarks/shared/eff-class-church-state.sml
+?? examples/benchmarks/shared/eff-class-van-state.sml
+?? examples/benchmarks/shared/eff-free-state.sml
+?? examples/benchmarks/shared/eff-stock-state.sml
+?? examples/benchmarks/shared/eff-van-mtl-state.sml
+?? examples/benchmarks/shared/eff-van-state.sml
+?? tests/benchmarks/check-eff-state.sh
+?? tests/benchmarks/eff-state.sml

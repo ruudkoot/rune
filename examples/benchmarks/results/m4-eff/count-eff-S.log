@@ -1,0 +1,13 @@
+bin/rune --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml -o build/bench-report.rbc
+bin/rune --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml -o build/bench-counts.rbc
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (639 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=S' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.RmifmB
+BENCH MEASURE S normal count
+COUNT unbudgeted S normal rune
+COUNT unbudgeted S normal rune:opt
+COUNT unbudgeted S normal rune:new
+COUNT unbudgeted S normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.RmifmB/report.md
