@@ -300,6 +300,50 @@ enum Prim {
   PRIM_char_order = 294,
   PRIM_string_order = 295,
   PRIM_imm_eq = 296,
+  PRIM_int64_add = 297,
+  PRIM_int64_sub = 298,
+  PRIM_int64_mul = 299,
+  PRIM_int64_div = 300,
+  PRIM_int64_mod = 301,
+  PRIM_int64_quot = 302,
+  PRIM_int64_rem = 303,
+  PRIM_int64_neg = 304,
+  PRIM_int64_abs = 305,
+  PRIM_int64_lt = 306,
+  PRIM_int64_le = 307,
+  PRIM_int64_gt = 308,
+  PRIM_int64_ge = 309,
+  PRIM_int64_order = 310,
+  PRIM_int64_to_string = 311,
+  PRIM_int64_to_int = 312,
+  PRIM_int64_from_int = 313,
+  PRIM_word64_add = 314,
+  PRIM_word64_sub = 315,
+  PRIM_word64_mul = 316,
+  PRIM_word64_div = 317,
+  PRIM_word64_mod = 318,
+  PRIM_word64_neg = 319,
+  PRIM_word64_lt = 320,
+  PRIM_word64_le = 321,
+  PRIM_word64_gt = 322,
+  PRIM_word64_ge = 323,
+  PRIM_word64_order = 324,
+  PRIM_word64_andb = 325,
+  PRIM_word64_orb = 326,
+  PRIM_word64_xorb = 327,
+  PRIM_word64_notb = 328,
+  PRIM_word64_lsl = 329,
+  PRIM_word64_lsr = 330,
+  PRIM_word64_asr = 331,
+  PRIM_word64_to_int = 332,
+  PRIM_word64_to_int_x = 333,
+  PRIM_word64_from_int = 334,
+  PRIM_word64_to_word = 335,
+  PRIM_word64_from_word = 336,
+  PRIM_word64_from_word_x = 337,
+  PRIM_word64_to_string = 338,
+  PRIM_word64_to_int64 = 339,
+  PRIM_word64_from_int64 = 340,
   PRIM__COUNT
 };
 
@@ -601,6 +645,50 @@ static const char *const prim_names[] = {
   "char_order",
   "string_order",
   "imm_eq",
+  "int64_add",
+  "int64_sub",
+  "int64_mul",
+  "int64_div",
+  "int64_mod",
+  "int64_quot",
+  "int64_rem",
+  "int64_neg",
+  "int64_abs",
+  "int64_lt",
+  "int64_le",
+  "int64_gt",
+  "int64_ge",
+  "int64_order",
+  "int64_to_string",
+  "int64_to_int",
+  "int64_from_int",
+  "word64_add",
+  "word64_sub",
+  "word64_mul",
+  "word64_div",
+  "word64_mod",
+  "word64_neg",
+  "word64_lt",
+  "word64_le",
+  "word64_gt",
+  "word64_ge",
+  "word64_order",
+  "word64_andb",
+  "word64_orb",
+  "word64_xorb",
+  "word64_notb",
+  "word64_lsl",
+  "word64_lsr",
+  "word64_asr",
+  "word64_to_int",
+  "word64_to_int_x",
+  "word64_from_int",
+  "word64_to_word",
+  "word64_from_word",
+  "word64_from_word_x",
+  "word64_to_string",
+  "word64_to_int64",
+  "word64_from_int64",
 };
 
 static const unsigned char prim_arity[] = {
@@ -901,6 +989,50 @@ static const unsigned char prim_arity[] = {
   2,
   2,
   2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2,
+  1,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  1,
+  2,
+  2,
+  2,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
 };
 
 /* what each primitive's result is (the representations of
@@ -1164,7 +1296,7 @@ static const unsigned char prim_result[] = {
   7,
   1,
   1,
-  2,
+  10,
   3,
   7,
   1,
@@ -1204,6 +1336,50 @@ static const unsigned char prim_result[] = {
   5,
   5,
   5,
+  9,
+  9,
+  9,
+  9,
+  9,
+  9,
+  9,
+  9,
+  9,
+  5,
+  5,
+  5,
+  5,
+  5,
+  6,
+  1,
+  9,
+  10,
+  10,
+  10,
+  10,
+  10,
+  10,
+  5,
+  5,
+  5,
+  5,
+  5,
+  10,
+  10,
+  10,
+  10,
+  10,
+  10,
+  10,
+  1,
+  1,
+  10,
+  2,
+  10,
+  10,
+  6,
+  9,
+  10,
 };
 
 #define RUNE_PRIM_LIST(X) \
@@ -1503,6 +1679,50 @@ static const unsigned char prim_result[] = {
   X(word_order) \
   X(char_order) \
   X(string_order) \
-  X(imm_eq)
+  X(imm_eq) \
+  X(int64_add) \
+  X(int64_sub) \
+  X(int64_mul) \
+  X(int64_div) \
+  X(int64_mod) \
+  X(int64_quot) \
+  X(int64_rem) \
+  X(int64_neg) \
+  X(int64_abs) \
+  X(int64_lt) \
+  X(int64_le) \
+  X(int64_gt) \
+  X(int64_ge) \
+  X(int64_order) \
+  X(int64_to_string) \
+  X(int64_to_int) \
+  X(int64_from_int) \
+  X(word64_add) \
+  X(word64_sub) \
+  X(word64_mul) \
+  X(word64_div) \
+  X(word64_mod) \
+  X(word64_neg) \
+  X(word64_lt) \
+  X(word64_le) \
+  X(word64_gt) \
+  X(word64_ge) \
+  X(word64_order) \
+  X(word64_andb) \
+  X(word64_orb) \
+  X(word64_xorb) \
+  X(word64_notb) \
+  X(word64_lsl) \
+  X(word64_lsr) \
+  X(word64_asr) \
+  X(word64_to_int) \
+  X(word64_to_int_x) \
+  X(word64_from_int) \
+  X(word64_to_word) \
+  X(word64_from_word) \
+  X(word64_from_word_x) \
+  X(word64_to_string) \
+  X(word64_to_int64) \
+  X(word64_from_int64)
 
 #endif

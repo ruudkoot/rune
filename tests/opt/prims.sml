@@ -17,7 +17,7 @@ fun ord3 LESS = "LESS" | ord3 EQUAL = "EQUAL" | ord3 GREATER = "GREATER"
 (* ---- int: int_add int_sub int_mul int_neg int_div int_mod int_quot int_rem int_lt int_le int_gt int_ge int_order *)
 val maxInt = valOf Int.maxInt
 val minInt = valOf Int.minInt
-val ints = [0, 1, ~1, 2, ~2, 7, ~7, 3, maxInt, minInt, maxInt - 1, minInt + 1, 4611686018427387904]
+val ints = [0, 1, ~1, 2, ~2, 7, ~7, 3, maxInt, minInt, maxInt - 1, minInt + 1, 2305843009213693952]
 fun int2 (x, y) =
   let val p = Int.toString x ^ " " ^ Int.toString y
   in
@@ -35,7 +35,7 @@ val () = List.app (fn x => List.app (fn y => int2 (x, y)) ints) ints
 val () = List.app (fn x => show ("~ " ^ Int.toString x) (fn () => Int.toString (~ x))) ints
 
 (* ---- word: word_add word_sub word_mul word_div word_mod word_lt word_le word_gt word_ge word_order word_andb word_orb word_xorb word_notb word_lsl word_lsr *)
-val words = [0w0, 0w1, 0w2, 0w3, 0w7, 0w63, 0w64, 0w65, Word.fromInt ~1, Word.fromInt minInt, 0wx8000000000000001]
+val words = [0w0, 0w1, 0w2, 0w3, 0w7, 0w63, 0w64, 0w65, Word.fromInt ~1, Word.fromInt minInt, 0wx4000000000000001]
 fun word2 (x, y) =
   let val p = Word.toString x ^ " " ^ Word.toString y
   in

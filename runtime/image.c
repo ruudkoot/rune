@@ -118,12 +118,13 @@ static void put_obj(Stream *s, const Obj *o, const VM *vm) {
 }
 
 static void put_value(Stream *s, Value v, const VM *vm) {
-    uint64_t w = val_is(v, T_PTR)
-               ? (val_ptr(v) ? (uint64_t)((const char *)val_ptr(v) - vm->heap_from) : OFF_NONE)
-               : val_word(v);
+    /* an immediate as its bits; anything in the heap, a box too, as its offset */
+    int ptr = !val_is_imm(v);
+    uint64_t w = ptr ? (val_ptr(v) ? (uint64_t)((const char *)val_ptr(v) - vm->heap_from) : OFF_NONE)
+                     : val_bits(v);
     uint8_t *b = room(s, 9);
     if (!b) return;
-    b[0] = val_tag(v);
+    b[0] = ptr ? T_PTR : T_INT;
     for (int i = 0; i < 8; i++) b[i + 1] = (uint8_t)(w >> (8 * i));
 }
 
@@ -142,8 +143,12 @@ static void put_heap(Stream *s, VM *vm) {
         put_u8(s, obj_kind(o));
         put_u16(s, obj_contag(o));
         put_u32(s, obj_len(o));
-        if (obj_kind(o) == K_STRING) {
-            put(s, obj_bytes(o), obj_len(o));
+        if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) {
+            /* a box: its 64 bits as a number, whichever end the machine has first */
+            uint64_t bits; memcpy(&bits, obj_bytes(o), 8);
+            put_u64(s, bits);
+        } else if (!obj_has_fields(o)) {
+            put(s, obj_bytes(o), obj_payload_bytes(obj_kind(o), obj_len(o)));
         } else {
             Value *f = obj_fields(o);
             for (uint32_t i = 0; i < obj_len(o); i++) put_value(s, f[i], vm);
@@ -185,8 +190,28 @@ static void write_image(VM *vm, Stream *s, int kind) {
     put_u64(s, (uint64_t)vm->heap_used);
     put_heap(s, vm);
 
+    /* a constant: what the bytecode said it is, the value as this VM has
+       it, and its 64 bits as the bytecode has them -- the number, the bits
+       of the real -- for a reader that makes a bytecode file of the
+       program again (runeopt --from-image) and knows nothing of how a
+       value is laid out; a string's is its offset, as the value's */
     put_u32(s, p->nconsts);
-    for (uint32_t i = 0; i < p->nconsts; i++) put_value(s, p->consts[i], vm);
+    for (uint32_t i = 0; i < p->nconsts; i++) {
+        Value v = p->consts[i];
+        uint64_t plain = 0;
+        switch (p->const_kinds[i]) {
+        case CONST_INT: plain = (uint64_t)val_int(v); break;
+        case CONST_WORD: plain = val_word(v); break;
+        case CONST_INT64: plain = (uint64_t)val_int64(v); break;
+        case CONST_WORD64: plain = val_word64(v); break;
+        case CONST_REAL: plain = real_bits(val_real(v)); break;
+        case CONST_CHAR: plain = (uint64_t)val_char(v); break;
+        default: plain = val_ptr(v) ? (uint64_t)((const char *)val_ptr(v) - vm->heap_from) : OFF_NONE; break;
+        }
+        put_u8(s, p->const_kinds[i]);
+        put_value(s, v, vm);
+        put_u64(s, plain);
+    }
     put_u32(s, p->nglobals);
     put_u32(s, p->nfuncs);
     for (uint32_t i = 0; i < p->nfuncs; i++) {
@@ -238,6 +263,7 @@ static void write_image(VM *vm, Stream *s, int kind) {
     for (uint32_t i = 0; i < p->nglobals; i++) put_value(s, vm->globals[i], vm);
     put(s, vm->global_set, p->nglobals);
     for (int i = 0; i < NUM_BUILTIN_EXNS; i++) put_obj(s, vm->builtin_exns[i], vm);
+    for (int i = 0; i < REAL_BOXES; i++) put_obj(s, vm->real_boxes[i], vm);
     put_u64(s, (uint64_t)vm->sp);
     for (size_t i = 0; i < vm->sp; i++) put_value(s, vm->stack[i], vm);
     put_u32(s, (uint32_t)vm->frames_active);
@@ -386,7 +412,8 @@ static uint64_t get_u64(Stream *s) {
    is not in the heap. */
 static Obj *get_obj(Stream *s) {
     uint64_t w = get_u64(s);
-    return w == OFF_NONE ? NULL : (Obj *)(uintptr_t)(w + 1);
+    /* the offset plus 2 until heap_relocate: never an address (8-aligned) and, under the word, still a pointer (even) */
+    return w == OFF_NONE ? NULL : (Obj *)(uintptr_t)(w + 2);
 }
 
 static Value get_value(Stream *s) {
@@ -400,7 +427,7 @@ static Value get_value(Stream *s) {
         tag = get_u8(s);
         w = get_u64(s);
     }
-    if (tag == T_PTR) return mk_ptr(w == OFF_NONE ? NULL : (Obj *)(uintptr_t)(w + 1));
+    if (tag == T_PTR) return mk_ptr(w == OFF_NONE ? NULL : (Obj *)(uintptr_t)(w + 2));
     return mk_tagged(tag, w);
 }
 
@@ -408,6 +435,7 @@ static Value get_value(Stream *s) {
    distances the rest of the image holds stay true. */
 static int get_heap(Stream *s, VM *vm) {
     size_t scan = 0;
+    vm->box_bytes_live = 0;
     while (scan < vm->heap_used) {
         if (vm->heap_used - scan < OBJ_HEADER_SIZE) return 0;
         Obj *o = (Obj *)(vm->heap_from + scan);
@@ -415,11 +443,15 @@ static int get_heap(Stream *s, VM *vm) {
         uint16_t contag = get_u16(s);
         uint32_t len = get_u32(s);
         obj_init(o, kind, contag, len);
-        if (!s->ok || obj_kind(o) < K_TUPLE || obj_kind(o) > K_EXNCON) return 0;
+        if (!s->ok || obj_kind(o) < K_TUPLE || obj_kind(o) > K_LAST || obj_kind(o) == K_FORWARD) return 0;
         size_t size = obj_size(o);
         if (size > vm->heap_used - scan) return 0;
-        if (obj_kind(o) == K_STRING) {
-            get(s, obj_bytes(o), obj_len(o));
+        if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) {
+            uint64_t bits = get_u64(s);
+            memcpy(obj_bytes(o), &bits, 8);
+            vm->box_bytes_live += size;
+        } else if (!obj_has_fields(o)) {
+            get(s, obj_bytes(o), obj_payload_bytes(obj_kind(o), obj_len(o)));
         } else {
             Value *f = obj_fields(o);
             for (uint32_t i = 0; i < obj_len(o); i++) f[i] = get_value(s);
@@ -524,13 +556,21 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     }
     vm->heap_from = malloc(vm->heap_size > 0 ? vm->heap_size : 1);
     if (!vm->heap_from) return failed(&s, err, errlen, "cannot allocate heap");
+    /* 8-aligned, as every heap is: bits 1 and 2 of a pointer stay clear (value.h) */
+    if (((uintptr_t)vm->heap_from & 7) != 0) return failed(&s, err, errlen, "cannot allocate an aligned heap");
     if (!get_heap(&s, vm)) return failed(&s, err, errlen, "the heap of the image is not sound");
 
     p->nconsts = get_u32(&s);
     if (!s.ok || !fits(p->nconsts, sizeof(Value))) return failed(&s, err, errlen, "the image is cut short");
     p->consts = calloc(p->nconsts > 0 ? p->nconsts : 1, sizeof(Value));
-    if (!p->consts) return failed(&s, err, errlen, "out of memory");
-    for (uint32_t i = 0; i < p->nconsts; i++) p->consts[i] = get_value(&s);
+    p->const_kinds = calloc(p->nconsts > 0 ? p->nconsts : 1, 1);
+    if (!p->consts || !p->const_kinds) return failed(&s, err, errlen, "out of memory");
+    for (uint32_t i = 0; i < p->nconsts; i++) {
+        p->const_kinds[i] = get_u8(&s);
+        p->consts[i] = get_value(&s);
+        (void)get_u64(&s);   /* the bits as the bytecode has them: for another reader */
+        if (p->const_kinds[i] >= CONST__COUNT) return failed(&s, err, errlen, "the image is cut short");
+    }
     p->nglobals = get_u32(&s);
     p->nfuncs = get_u32(&s);
     if (!s.ok || !fits(p->nfuncs, sizeof(Function))) return failed(&s, err, errlen, "the image is cut short");
@@ -616,6 +656,7 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     for (uint32_t i = 0; i < p->nglobals; i++) vm->globals[i] = get_value(&s);
     get(&s, vm->global_set, p->nglobals);
     for (int i = 0; i < NUM_BUILTIN_EXNS; i++) vm->builtin_exns[i] = get_obj(&s);
+    for (int i = 0; i < REAL_BOXES; i++) vm->real_boxes[i] = get_obj(&s);
 
     uint64_t sp = get_u64(&s);
     if (!s.ok || !fits(sp, sizeof(Value))) return failed(&s, err, errlen, "the image is cut short");
@@ -695,7 +736,7 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     /* every pointer is a distance from the start of the heap, and one more:
        moving them by where the heap is now both places them and checks that
        they are in it */
-    if (!heap_relocate(vm, 1)) {
+    if (!heap_relocate(vm, 2)) {
         snprintf(err, errlen, "the heap of the image is not sound");
         return 0;
     }

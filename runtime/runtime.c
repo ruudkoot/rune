@@ -134,7 +134,7 @@ int values_equal(VM *vm, Value a, Value b) {
         switch (val_tag(a)) {
         case T_UNIT: goto matched;
         case T_INT: case T_CHAR: case T_CON0:
-            if (val_imm(a) != val_imm(b)) goto done;
+            if (!val_same_imm(a, b)) goto done;
             goto matched;
         case T_WORD:
             if (val_word(a) != val_word(b)) goto done;
@@ -200,6 +200,7 @@ done:
 
 /* --- exceptions --- */
 static void print_exn_payload(FILE *out, Value v) {
+    if (val_same_imm(v, mk_unit())) return;   /* under the word, unit and 0 are one immediate */
     switch (val_tag(v)) {
     case T_UNIT: break;
     case T_INT: fprintf(out, " %lld", (long long)val_imm(v)); break;
@@ -299,6 +300,7 @@ void vm_release(VM *vm) {
     for (uint32_t i = 0; vm->prog.funcs && i < vm->prog.nfuncs; i++) free(vm->prog.funcs[i].name);
     free(vm->prog.funcs);
     free(vm->prog.consts);
+    free(vm->prog.const_kinds);
     free(vm->prog.code);
     for (uint32_t i = 0; vm->prog.files && i < vm->prog.nfiles; i++) free(vm->prog.files[i]);
     free(vm->prog.files);
@@ -341,6 +343,9 @@ void vm_exit(VM *vm, int status) {
                 "copied %llu, max live %zu, gc %lld us\n",
                 vm->gc_count, (unsigned long long)vm->bytes_allocated, vm->heap_size, vm->heap_used,
                 (unsigned long long)vm->copied, vm->max_live, (long long)(vm->gc_user_us + vm->gc_sys_us));
+    if (vm->stats && vm->boxes_allocated)   /* the representation's own, which --count leaves out (vm.h) */
+        fprintf(stderr, "runevm: %llu boxes, %llu bytes\n",
+                (unsigned long long)vm->boxes_allocated, (unsigned long long)vm->box_bytes_allocated);
     fflush(stderr);
     vm_destroy(vm);
     exit(status);

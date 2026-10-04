@@ -284,7 +284,15 @@ struct
          TRecord (sortFields (List.map (fn (l, t) => (l, elabTy (env, scope, level, t))) fields)))
     | TyTuple (ts, _) => tupleTy (List.map (fn t => elabTy (env, scope, level, t)) ts)
     | TyCon (args, longid, sp) =>
-        let val args' = List.map (fn t => elabTy (env, scope, level, t)) args
+        let
+          val args' = List.map (fn t => elabTy (env, scope, level, t)) args
+          val () =
+            case longid of
+              ([], name) =>
+                if String.isPrefix "_" name andalso not (!allowPrim)
+                then err (sp, "_prim is only allowed when compiling with --allow-prim")
+                else ()
+            | _ => ()
         in
           case findTy (env, longid) of
             NONE => err (sp, "unbound type constructor: " ^ longidToString longid)

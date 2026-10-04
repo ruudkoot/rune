@@ -24,12 +24,15 @@ struct
      exception, a datatype of non-nullary constructors only); Con a datatype
      with both kinds of constructor (a list). The numbers are the file's
      (docs/bytecode.md, The representations). *)
-  datatype rep = RAny | RInt | RWord | RReal | RChar | RCon0 | RPtr | RCon | RUnit
+  datatype rep = RAny | RInt | RWord | RReal | RChar | RCon0 | RPtr | RCon | RUnit | RInt64 | RWord64
   fun repCode r = case r of RAny => 0 | RInt => 1 | RWord => 2 | RReal => 3 | RChar => 4 | RCon0 => 5 | RPtr => 6 | RCon => 7 | RUnit => 8
+                          | RInt64 => 9 | RWord64 => 10
   fun repOfCode c =
-    case c of 1 => RInt | 2 => RWord | 3 => RReal | 4 => RChar | 5 => RCon0 | 6 => RPtr | 7 => RCon | 8 => RUnit | _ => RAny
+    case c of 1 => RInt | 2 => RWord | 3 => RReal | 4 => RChar | 5 => RCon0 | 6 => RPtr | 7 => RCon | 8 => RUnit
+            | 9 => RInt64 | 10 => RWord64 | _ => RAny
   fun repName r = case r of RAny => "any" | RInt => "int" | RWord => "word" | RReal => "real" | RChar => "char"
                           | RCon0 => "con0" | RPtr => "ptr" | RCon => "con" | RUnit => "unit"
+                          | RInt64 => "int64" | RWord64 => "word64"
 
   (* A place in the source, and the functions its code was inlined from on
      the way, innermost first (Mid.pos). *)

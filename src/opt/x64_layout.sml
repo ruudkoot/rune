@@ -5,11 +5,17 @@
    Each function prints, through `line`, what the macro-assembler emits for the
    operation, in runeopt's conventions (docs/native.md): s and d are the texts
    of frame-slot displacements (slotDisp), b and r registers by number (RAX ...),
-   tag and kind the names of rune-offsets.s, unless and slow labels, l a prefix
-   for the labels an operation makes for itself (printed through line too). *)
+   kind a name of rune-offsets.s, unless and slow labels, l a prefix for the
+   labels an operation makes for itself (printed through line too). A value is
+   one word and an immediate is its payload doubled and one more: the templates
+   of ints, words, chars and constructor tags (oneImm ... setWord) work on the
+   words in %rax and %rcx and clobber %rdx, and those of reals use %rdx and
+   %r8; each takes the label of the slow path, where the primitive's C does
+   what has no immediate. *)
 structure X64Layout =
 struct
-  fun num (n : int) : string = if n < 0 then "-" ^ Int.toString (~n) else Int.toString n
+  fun num (n : IntInf.int) : string =
+    if IntInf.< (n, IntInf.fromInt 0) then "-" ^ IntInf.toString (IntInf.~ n) else IntInf.toString n
   val RAX = 0 val RCX = 1 val RDX = 2 val RBX = 3 val RSI = 6 val RDI = 7
   val R8 = 8 val R9 = 9 val R10 = 10 val R11 = 11
   val regs64 = Vector.fromList ["%rax", "%rcx", "%rdx", "%rbx", "%rsp", "%rbp", "%rsi", "%rdi",
@@ -20,14 +26,18 @@ struct
   fun reg32 r = Vector.sub (regs32, r)
   (* the sizes the frame and an object's fields are cut by, and the
      rounding of an object's payload (runtime/value.h) *)
-  val valueSize = 16
-  val valueShift = 4
+  val valueSize = 8
+  val valueShift = 3
   val headerSize = 8
-  val payloadAlign = 16
-  val payloadMin = 16
+  val payloadAlign = 8
+  val payloadMin = 8
+  (* the payloads `set` can write: those whose word a store of 32 bits holds;
+     setWide writes the others through %rax *)
+  val setMin = ~1073741824
+  val setMax = 1073741823
   (* the displacement of frame slot i from (%r13,%rbp), and of field i from an object *)
-  fun slotDisp i = num (valueSize * i)
-  fun fieldDisp i = "OBJ_FIELDS+" ^ num (valueSize * i)
+  fun slotDisp i = num (IntInf.fromInt (valueSize * i))
+  fun fieldDisp i = "OBJ_FIELDS+" ^ num (IntInf.fromInt (valueSize * i))
   (* the kinds, by number, for alloc *)
   val K_TUPLE = 1
   val K_CON = 2
@@ -37,48 +47,194 @@ struct
   val K_ARRAY = 6
   val K_EXN = 7
   val K_EXNCON = 8
-  fun checkTag line (s, tag, unless) =
-    (line ("cmpb $" ^ tag ^ ", " ^ s ^ "(%r13,%rbp)");
-     line ("jne " ^ unless))
-  fun set line (d, tag, v) =
-    (line ("movq $" ^ tag ^ ", " ^ d ^ "(%r13,%rbp)");
-     line ("movq $" ^ num (v) ^ ", " ^ d ^ "+8(%r13,%rbp)"))
-  fun setReg line (d, tag, r) =
-    (line ("movq $" ^ tag ^ ", " ^ d ^ "(%r13,%rbp)");
-     line ("mov " ^ reg64 r ^ ", " ^ d ^ "+8(%r13,%rbp)"))
-  fun loadTag line (r, s) =
-    (line ("movzbl " ^ s ^ "(%r13,%rbp), " ^ reg32 r))
+  val K_REAL = 10
+  val K_BOX = 11
+  fun checkImm line (s, unless) =
+    (line ("testb $1, " ^ s ^ "(%r13,%rbp)");
+     line ("je " ^ unless))
+  fun set line (d, v) =
+    (line ("movq $" ^ num (IntInf.+ (IntInf.fromInt 1, IntInf.* (IntInf.fromInt 2, IntInf.fromInt v))) ^ ", " ^ d ^ "(%r13,%rbp)"))
+  fun setWide line (d, v) =
+    (line ("movabs $" ^ num (IntInf.+ (IntInf.fromInt 1, IntInf.* (IntInf.fromInt 2, IntInf.fromInt v))) ^ ", %rax");
+     line ("mov %rax, " ^ d ^ "(%r13,%rbp)"))
+  fun setImm line (d, r) =
+    (line ("lea 1(" ^ reg64 r ^ "," ^ reg64 r ^ ",1), " ^ reg64 r);
+     line ("mov " ^ reg64 r ^ ", " ^ d ^ "(%r13,%rbp)"))
+  fun setBits line (d, r) =
+    (line ("mov " ^ reg64 r ^ ", " ^ d ^ "(%r13,%rbp)"))
+  fun loadBits line (r, s) =
+    (line ("mov " ^ s ^ "(%r13,%rbp), " ^ reg64 r))
   fun loadPayload line (r, s) =
-    (line ("mov " ^ s ^ "+8(%r13,%rbp), " ^ reg64 r))
+    (line ("mov " ^ s ^ "(%r13,%rbp), " ^ reg64 r);
+     line ("sar $1, " ^ reg64 r))
   fun copy line (d, s) =
-    (line ("movdqu " ^ s ^ "(%r13,%rbp), %xmm0");
-     line ("movdqu %xmm0, " ^ d ^ "(%r13,%rbp)"))
-  fun loadReal line s =
-    (line ("movsd " ^ s ^ "+8(%r13,%rbp), %xmm0"))
-  fun loadReal1 line s =
-    (line ("movsd " ^ s ^ "+8(%r13,%rbp), %xmm1"))
-  fun setReal line d =
-    (line ("movq $T_REAL, " ^ d ^ "(%r13,%rbp)");
-     line ("movsd %xmm0, " ^ d ^ "+8(%r13,%rbp)"))
-  fun cmpPayload line (r, s) =
-    (line ("cmp " ^ s ^ "+8(%r13,%rbp), " ^ reg64 r))
-  fun testFalse line s =
-    (line ("cmpq $0, " ^ s ^ "+8(%r13,%rbp)"))
-  fun loadObj line (r, s, kind, unless) =
-    (line ("cmpb $T_PTR, " ^ s ^ "(%r13,%rbp)");
+    (line ("movsd " ^ s ^ "(%r13,%rbp), %xmm0");
+     line ("movsd %xmm0, " ^ d ^ "(%r13,%rbp)"))
+  fun loadReal line (s, unless, l) =
+    (line ("mov " ^ s ^ "(%r13,%rbp), %rdx");
+     line ("test $1, %rdx");
+     line ("je " ^ l ^ "_a");
+     line ("ror $2, %rdx");
+     line ("movabs $2305843009213693952, %r8");
+     line ("sub %r8, %rdx");
+     line ("movq %rdx, %xmm0");
+     line ("jmp " ^ l ^ "_b");
+     line (l ^ "_a:");
+     line ("test %rdx, %rdx");
+     line ("je " ^ unless);
+     line ("cmpb $K_REAL, OBJ_KIND(%rdx)");
      line ("jne " ^ unless);
-     line ("mov " ^ s ^ "+8(%r13,%rbp), " ^ reg64 r);
+     line ("movsd OBJ_FIELDS(%rdx), %xmm0");
+     line (l ^ "_b:"))
+  fun loadReal1 line (s, unless, l) =
+    (line ("mov " ^ s ^ "(%r13,%rbp), %rdx");
+     line ("test $1, %rdx");
+     line ("je " ^ l ^ "_a");
+     line ("ror $2, %rdx");
+     line ("movabs $2305843009213693952, %r8");
+     line ("sub %r8, %rdx");
+     line ("movq %rdx, %xmm1");
+     line ("jmp " ^ l ^ "_b");
+     line (l ^ "_a:");
+     line ("test %rdx, %rdx");
+     line ("je " ^ unless);
+     line ("cmpb $K_REAL, OBJ_KIND(%rdx)");
+     line ("jne " ^ unless);
+     line ("movsd OBJ_FIELDS(%rdx), %xmm1");
+     line (l ^ "_b:"))
+  fun setReal line (d, slow, l) =
+    (line ("movq %xmm0, %rdx");
+     line ("movabs $2305843009213693952, %r8");
+     line ("add %r8, %rdx");
+     line ("ror $62, %rdx");
+     line ("test $1, %rdx");
+     line ("jne " ^ l ^ "_a");
+     line ("shl $2, %r8");
+     line ("cmp %r8, %rdx");
+     line ("jne " ^ slow);
+     line ("mov VM_REAL_ZERO(%r12), %rdx");
+     line (l ^ "_a:");
+     line ("mov %rdx, " ^ d ^ "(%r13,%rbp)"))
+  fun testFalse line s =
+    (line ("cmpq $1, " ^ s ^ "(%r13,%rbp)"))
+  fun oneInt line (x, slow, l) =
+    (line ("mov " ^ x ^ "(%r13,%rbp), %rax");
+     line ("test $1, %rax");
+     line ("je " ^ slow))
+  fun oneWord line (x, slow, l) =
+    (line ("mov " ^ x ^ "(%r13,%rbp), %rax");
+     line ("test $1, %rax");
+     line ("je " ^ slow))
+  fun oneChar line (x, slow, l) =
+    (line ("mov " ^ x ^ "(%r13,%rbp), %rax");
+     line ("test $1, %rax");
+     line ("je " ^ slow))
+  fun twoInt line (x, y, slow, l) =
+    (line ("mov " ^ x ^ "(%r13,%rbp), %rax");
+     line ("mov " ^ y ^ "(%r13,%rbp), %rcx");
+     line ("mov %rax, %rdx");
+     line ("and %rcx, %rdx");
+     line ("test $1, %rdx");
+     line ("je " ^ slow))
+  fun twoWord line (x, y, slow, l) =
+    (line ("mov " ^ x ^ "(%r13,%rbp), %rax");
+     line ("mov " ^ y ^ "(%r13,%rbp), %rcx");
+     line ("mov %rax, %rdx");
+     line ("and %rcx, %rdx");
+     line ("test $1, %rdx");
+     line ("je " ^ slow))
+  fun twoChar line (x, y, slow, l) =
+    (line ("mov " ^ x ^ "(%r13,%rbp), %rax");
+     line ("mov " ^ y ^ "(%r13,%rbp), %rcx");
+     line ("mov %rax, %rdx");
+     line ("and %rcx, %rdx");
+     line ("test $1, %rdx");
+     line ("je " ^ slow))
+  fun twoWords line (x, y, slow) =
+    (line ("mov " ^ x ^ "(%r13,%rbp), %rax");
+     line ("mov " ^ y ^ "(%r13,%rbp), %rcx");
+     line ("mov %rax, %rdx");
+     line ("and %rcx, %rdx");
+     line ("test $1, %rdx");
+     line ("je " ^ slow))
+  fun setInt line (d, r, slow) =
+    (line ("mov " ^ reg64 r ^ ", " ^ d ^ "(%r13,%rbp)"))
+  fun setWord line (d, r, slow) =
+    (line ("mov " ^ reg64 r ^ ", " ^ d ^ "(%r13,%rbp)"))
+  fun setChar line (d, r, slow) =
+    (line ("mov " ^ reg64 r ^ ", " ^ d ^ "(%r13,%rbp)"))
+  fun setPayInt line (d, r, slow) =
+    (line ("lea 1(" ^ reg64 r ^ "," ^ reg64 r ^ ",1), " ^ reg64 r);
+     line ("mov " ^ reg64 r ^ ", " ^ d ^ "(%r13,%rbp)"))
+  fun setPayWord line (d, r, slow) =
+    (line ("lea 1(" ^ reg64 r ^ "," ^ reg64 r ^ ",1), " ^ reg64 r);
+     line ("mov " ^ reg64 r ^ ", " ^ d ^ "(%r13,%rbp)"))
+  fun intAdd line slow =
+    (line ("lea -1(%rax), %rax");
+     line ("add %rcx, %rax");
+     line ("jo " ^ slow))
+  fun intSub line slow =
+    (line ("sub %rcx, %rax");
+     line ("jo " ^ slow);
+     line ("lea 1(%rax), %rax"))
+  fun intMul line slow =
+    (line ("sar $1, %rcx");
+     line ("lea -1(%rax), %rax");
+     line ("imul %rcx, %rax");
+     line ("jo " ^ slow);
+     line ("lea 1(%rax), %rax"))
+  fun intNeg line slow =
+    (line ("mov $2, %rcx");
+     line ("sub %rax, %rcx");
+     line ("jo " ^ slow);
+     line ("mov %rcx, %rax"))
+  fun intToChar line slow =
+    (line ("cmp $511, %rax");
+     line ("ja " ^ slow))
+  fun wordAdd line slow =
+    (line ("lea -1(%rax), %rax");
+     line ("add %rcx, %rax"))
+  fun wordSub line slow =
+    (line ("sub %rcx, %rax");
+     line ("lea 1(%rax), %rax"))
+  fun wordMul line slow =
+    (line ("shr $1, %rcx");
+     line ("lea -1(%rax), %rax");
+     line ("imul %rcx, %rax");
+     line ("lea 1(%rax), %rax"))
+  fun wordAnd line slow =
+    (line ("and %rcx, %rax"))
+  fun wordOr line slow =
+    (line ("or %rcx, %rax"))
+  fun wordXor line slow =
+    (line ("xor %rcx, %rax");
+     line ("lea 1(%rax), %rax"))
+  fun wordNot line slow =
+    (line ("neg %rax"))
+  fun wordToInt line slow =
+    (line ("test %rax, %rax");
+     line ("js " ^ slow))
+  fun wordToIntX line slow =
+    ()
+  fun intToWord line slow =
+    ()
+  fun untagInt line r =
+    (line ("sar $1, " ^ reg64 r))
+  fun untagWord line r =
+    (line ("shr $1, " ^ reg64 r))
+  fun loadObj line (r, s, kind, unless) =
+    (line ("mov " ^ s ^ "(%r13,%rbp), " ^ reg64 r);
+     line ("test $1, " ^ reg64 r);
+     line ("jne " ^ unless);
      line ("cmpb $" ^ kind ^ ", OBJ_KIND(" ^ reg64 r ^ ")");
      line ("jne " ^ unless))
   fun loadTagOfCon line (r, s, unless, l) =
-    (line ("cmpb $T_CON0, " ^ s ^ "(%r13,%rbp)");
-     line ("jne " ^ l ^ "_a");
-     line ("mov " ^ s ^ "+8(%r13,%rbp), " ^ reg64 r);
+    (line ("mov " ^ s ^ "(%r13,%rbp), " ^ reg64 r);
+     line ("test $1, " ^ reg64 r);
+     line ("je " ^ l ^ "_a");
+     line ("sar $1, " ^ reg64 r);
      line ("jmp " ^ l ^ "_b");
      line (l ^ "_a:");
-     line ("cmpb $T_PTR, " ^ s ^ "(%r13,%rbp)");
-     line ("jne " ^ unless);
-     line ("mov " ^ s ^ "+8(%r13,%rbp), " ^ reg64 r);
      line ("cmpb $K_CON, OBJ_KIND(" ^ reg64 r ^ ")");
      line ("jne " ^ unless);
      line ("movzwl OBJ_CONTAG(" ^ reg64 r ^ "), " ^ reg32 r);
@@ -87,43 +243,43 @@ struct
     (line ("cmpq $0, VM_GC_STRESS(%r12)");
      line ("jne " ^ slow);
      line ("mov VM_HEAP_USED(%r12), %rax");
-     line ("lea " ^ num (8 + 16 * n) ^ "(%rax), %rcx");
+     line ("lea " ^ num (IntInf.+ (IntInf.fromInt 8, IntInf.* (IntInf.fromInt 8, IntInf.fromInt n))) ^ "(%rax), %rcx");
      line ("cmp VM_HEAP_SIZE(%r12), %rcx");
      line ("ja " ^ slow);
      line ("mov %rcx, VM_HEAP_USED(%r12)");
-     line ("addq $" ^ num (8 + 16 * n) ^ ", VM_BYTES_ALLOCATED(%r12)");
+     line ("addq $" ^ num (IntInf.+ (IntInf.fromInt 8, IntInf.* (IntInf.fromInt 8, IntInf.fromInt n))) ^ ", VM_BYTES_ALLOCATED(%r12)");
      line ("addq $1, VM_OBJECTS_ALLOCATED(%r12)");
      line ("add VM_HEAP_FROM(%r12), %rax");
-     line ("movl $" ^ num (kind + 65536 * contag) ^ ", (%rax)");
-     line ("movl $" ^ num (n) ^ ", OBJ_LEN(%rax)"))
+     line ("movl $" ^ num (IntInf.+ (IntInf.fromInt kind, IntInf.* (IntInf.fromInt 65536, IntInf.fromInt contag))) ^ ", (%rax)");
+     line ("movl $" ^ num (IntInf.fromInt n) ^ ", OBJ_LEN(%rax)"))
   fun storeField line (b, i, s) =
-    (line ("movdqu " ^ s ^ "(%r13,%rbp), %xmm0");
-     line ("movdqu %xmm0, OBJ_FIELDS+" ^ num (16 * i) ^ "(" ^ reg64 b ^ ")"))
+    (line ("movsd " ^ s ^ "(%r13,%rbp), %xmm0");
+     line ("movsd %xmm0, OBJ_FIELDS+" ^ num (IntInf.* (IntInf.fromInt 8, IntInf.fromInt i)) ^ "(" ^ reg64 b ^ ")"))
   fun loadField line (d, b, i) =
-    (line ("movdqu OBJ_FIELDS+" ^ num (16 * i) ^ "(" ^ reg64 b ^ "), %xmm0");
-     line ("movdqu %xmm0, " ^ d ^ "(%r13,%rbp)"))
+    (line ("movsd OBJ_FIELDS+" ^ num (IntInf.* (IntInf.fromInt 8, IntInf.fromInt i)) ^ "(" ^ reg64 b ^ "), %xmm0");
+     line ("movsd %xmm0, " ^ d ^ "(%r13,%rbp)"))
   fun loadLen line (r, b) =
     (line ("mov OBJ_LEN(" ^ reg64 b ^ "), " ^ reg32 r))
   fun checkLen line (b, n, unless) =
-    (line ("cmpl $" ^ num (n) ^ ", OBJ_LEN(" ^ reg64 b ^ ")");
+    (line ("cmpl $" ^ num (IntInf.fromInt n) ^ ", OBJ_LEN(" ^ reg64 b ^ ")");
      line ("jne " ^ unless))
   fun loadContag line (r, b) =
     (line ("movzwl OBJ_CONTAG(" ^ reg64 b ^ "), " ^ reg32 r))
   fun needLen line (b, n, unless) =
-    (line ("cmpl $" ^ num (n) ^ ", OBJ_LEN(" ^ reg64 b ^ ")");
+    (line ("cmpl $" ^ num (IntInf.fromInt n) ^ ", OBJ_LEN(" ^ reg64 b ^ ")");
      line ("jbe " ^ unless))
-  fun storeFieldImm line (b, i, tag, v) =
-    (line ("movq $" ^ tag ^ ", OBJ_FIELDS+" ^ num (16 * i) ^ "(" ^ reg64 b ^ ")");
-     line ("movq $" ^ num (v) ^ ", OBJ_FIELDS+" ^ num (8 + 16 * i) ^ "(" ^ reg64 b ^ ")"))
+  fun storeFieldImm line (b, i, v) =
+    (line ("movq $" ^ num (IntInf.+ (IntInf.fromInt 1, IntInf.* (IntInf.fromInt 2, IntInf.fromInt v))) ^ ", OBJ_FIELDS+" ^ num (IntInf.* (IntInf.fromInt 8, IntInf.fromInt i)) ^ "(" ^ reg64 b ^ ")"))
   fun loadFieldPayload line (r, b, i) =
-    (line ("mov OBJ_FIELDS+" ^ num (8 + 16 * i) ^ "(" ^ reg64 b ^ "), " ^ reg64 r))
+    (line ("mov OBJ_FIELDS+" ^ num (IntInf.* (IntInf.fromInt 8, IntInf.fromInt i)) ^ "(" ^ reg64 b ^ "), " ^ reg64 r);
+     line ("sar $1, " ^ reg64 r))
   fun element line () =
-    (line ("shl $4, %rcx");
+    (line ("shl $3, %rcx");
      line ("add %rcx, %rax"))
   fun stringByte line () =
     (line ("add %rcx, %rax");
      line ("movzbl OBJ_FIELDS(%rax), %ecx"))
   fun copyMem line (from, to) =
-    (line ("movdqu " ^ from ^ ", %xmm0");
-     line ("movdqu %xmm0, " ^ to))
+    (line ("movsd " ^ from ^ ", %xmm0");
+     line ("movsd %xmm0, " ^ to))
 end

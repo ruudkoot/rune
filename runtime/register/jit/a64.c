@@ -121,6 +121,7 @@ void a64_lsl_ri(A64 *a, int rd, int rn, int shift) {
 }
 void a64_lsr_ri(A64 *a, int rd, int rn, int shift) { a64_word(a, 0xD3400000 | (uint32_t)(shift & 63) << 16 | 63u << 10 | R(rn) << 5 | R(rd)); }
 void a64_asr_ri(A64 *a, int rd, int rn, int shift) { a64_word(a, 0x93400000 | (uint32_t)(shift & 63) << 16 | 63u << 10 | R(rn) << 5 | R(rd)); }
+void a64_ror_ri(A64 *a, int rd, int rn, int shift) { a64_word(a, 0x93C00000 | R(rn) << 16 | (uint32_t)(shift & 63) << 10 | R(rn) << 5 | R(rd)); }   /* extr rd, rn, rn, #shift */
 void a64_ubfx(A64 *a, int rd, int rn, int lsb, int width) { a64_word(a, 0xD3400000 | (uint32_t)lsb << 16 | (uint32_t)(lsb + width - 1) << 10 | R(rn) << 5 | R(rd)); }
 void a64_sxtw(A64 *a, int rd, int rn) { a64_word(a, 0x93407C00 | R(rn) << 5 | R(rd)); }
 void a64_and_mask(A64 *a, int rd, int rn, int bits) { a64_word(a, 0x92400000 | (uint32_t)(bits - 1) << 10 | R(rn) << 5 | R(rd)); }

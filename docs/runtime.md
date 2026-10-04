@@ -14,27 +14,53 @@ instruction set, the primitives and the command line;
 
 ## Values and objects
 
-A `Value` is 16 bytes: a tag and, beside it, an `int64_t`, a `uint64_t`, a
-`double` or a pointer. That is so whatever the machine's pointer width, which
-is why `Int`, `Word`, `Real` and the positions of files are the same on a
-32-bit VM as on a 64-bit one.
+A `Value` is one 64-bit word, on every machine. Its low bit says what it
+is: set, the word is an *immediate*; clear, it is a pointer to an object in
+the heap. That is so whatever the machine's pointer width, which is why
+`Int`, `Word`, `Real` and the positions of files are the same on a 32-bit
+VM as on a 64-bit one.
 
-These are immediate, and cost nothing to make: `unit`, `int`, `word`, `real`,
-`char`, and a constructor with no argument (`nil`, `true`, `NONE`, and every
-other nullary one, which is its tag as a number).
+These are immediates, and cost nothing to make:
+
+* `unit`, an `int`, a `word`, a `char` and a constructor with no argument
+  (`nil`, `true`, `NONE`, and every other nullary one, which is its tag as
+  a number): the number *n* as the word 2*n* + 1. That leaves 63 bits, which
+  is the width of `int` and `word` ([Numbers](#numbers)).
+* a `real` whose exponent is in the middle half of a double's, a number
+  from 2^-511 up to 2^513: its bits with 2^61 added, rotated left by two,
+  which sets the low bit for exactly those.
+
+Which of them an immediate is, the word does not say and the program's
+types do: an `int` and a `char` of the same number are the same word.
+
+What does not fit a word is a *box*, an object of 16 bytes that holds 8
+raw bytes: a real outside that range -- zero, the subnormals, the
+infinities and NaN among them -- and an `Int64.int` or a `Word64.word`
+that needs its 64th bit. The VM keeps one box each of `+0.0`, `-0.0`, the
+two infinities and the quiet NaN from its start, so the ones a program
+meets everywhere are never allocated.
 
 Everything else is an object in the heap: an 8-byte header -- kind, a
-constructor tag and a length -- and a payload rounded up to a multiple of 16
-bytes, at least 16. The smallest object is therefore 24 bytes, and a tuple of
-*n* fields is 8 + 16*n* bytes. The kinds are a tuple (also a record and a
-vector), a constructor with an argument, a closure, a string, a `ref`, an
-array, an exception and an exception constructor.
+constructor tag and a length -- and a payload of 8-byte fields, or of
+bytes rounded up to a multiple of 8, at least 8. The smallest object is
+therefore 16 bytes, and a tuple of *n* fields is 8 + 8*n* bytes. The kinds
+are a tuple (also a record and a vector), a constructor with an argument,
+a closure, a string, a `ref`, an array, an exception, an exception
+constructor and the two boxes.
 
 A constructor whose argument is a tuple is one object of the tuple's
 fields, its tag in the header (`CONN`; `src/backend/rep.sml`); one of any
-other argument is an object of one field around it, 24 bytes. So a list
-cell, `::` of head and tail, is one object of 40 bytes. `runevm --stats`
-and `--count` report what a program really allocates.
+other argument is an object of one field around it, 16 bytes. So a list
+cell, `::` of head and tail, is one object of 24 bytes. `runevm --stats`
+and `--count` report what a program really allocates; `--count` leaves
+the boxes out, so that its bytes and objects are the program's own and
+the same on every engine, and `--stats` gives them a line of their own.
+
+Two switches of the build, for measurements and not for use
+([plans/heap-layout.md](plans/heap-layout.md), D2 and D3): `-DRUNE_INT64`
+makes a VM whose `int` and `word` keep 64 bits, with a box past 63, for
+bytecode compiled with `rune --int-bits=64`; `-DRUNE_REAL_BOXED` one that
+boxes every real.
 
 An exception constructor is an object, and its identity is its address: that
 is what makes two exceptions declared by the same code in two calls different
@@ -46,8 +72,9 @@ The collector is a Cheney two-space copier. Allocation is a bump of a pointer
 in the current semispace; when a request does not fit, the live data is
 copied into the other semispace, which is kept for the next collection
 while the heap stays the same size. The roots are the value
-stack, the globals, the constants of the program, the closure of each frame
-and the built-in exception constructors; from those the whole live graph is
+stack, the globals, the constants of the program, the closure of each frame,
+the built-in exception constructors and the VM's boxes of zero, the
+infinities and NaN; from those the whole live graph is
 copied, so anything unreachable disappears without being visited.
 
 A collection moves every object. Nothing of that is visible to an SML
@@ -112,9 +139,13 @@ It means the bytecode or the VM is wrong, never the program's input.
 
 ## Numbers
 
-`Int` and `Word` are 64 bits on every VM, whatever the pointer width, and
-`Int` arithmetic raises `Overflow` where `Word` wraps. `Real` is an IEEE
-double.
+`Int` and `Word` are 63 bits on every VM, whatever the pointer width -- a
+word of the VM less the bit that tells a number from a pointer -- and `Int`
+arithmetic raises `Overflow` where `Word` wraps. `Int64` (which is also
+`FixedInt`) and `Word64` (which is also `LargeWord`) are 64 bits on every
+VM: a number of theirs is an immediate where it fits 63 bits and a box
+where it does not, and tier 2 of the JIT keeps the 64 bits in a register.
+`Real` is an IEEE double.
 
 `IEEEReal.setRoundingMode` sets the hardware's rounding mode, and a child
 made by `fork` inherits it, emulated `fork` included. Reading a numeral

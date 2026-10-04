@@ -56,6 +56,55 @@ struct
   val word_to_string = Word.toString
   val word_neg = Word.~
 
+  (* ---- Int64.int and Word64.word: the host's, which `_prim "int64"` and
+     `_prim "word64"` in a type are here (gen-host-basis.sh) ---- *)
+  type int64 = Int64.int
+  type word64 = Word64.word
+  val int64_add = Int64.+
+  val int64_sub = Int64.-
+  val int64_mul = Int64.*
+  val int64_div = Int64.div
+  val int64_mod = Int64.mod
+  val int64_quot = Int64.quot
+  val int64_rem = Int64.rem
+  val int64_neg = Int64.~
+  val int64_abs = Int64.abs
+  val int64_lt = Int64.<
+  val int64_le = Int64.<=
+  val int64_gt = Int64.>
+  val int64_ge = Int64.>=
+  val int64_order = Int64.compare
+  val int64_to_string = Int64.toString
+  val int64_to_int = Int64.toInt
+  val int64_from_int = Int64.fromInt
+  val word64_add = Word64.+
+  val word64_sub = Word64.-
+  val word64_mul = Word64.*
+  val word64_div = Word64.div
+  val word64_mod = Word64.mod
+  val word64_neg = Word64.~
+  val word64_lt = Word64.<
+  val word64_le = Word64.<=
+  val word64_gt = Word64.>
+  val word64_ge = Word64.>=
+  val word64_order = Word64.compare
+  val word64_andb = Word64.andb
+  val word64_orb = Word64.orb
+  val word64_xorb = Word64.xorb
+  val word64_notb = Word64.notb
+  val word64_lsl = Word64.<<
+  val word64_lsr = Word64.>>
+  val word64_asr = Word64.~>>
+  val word64_to_int = Word64.toInt
+  val word64_to_int_x = Word64.toIntX
+  val word64_from_int = Word64.fromInt
+  fun word64_to_word w = Word.fromLarge (Word64.toLarge w)
+  fun word64_from_word w = Word64.fromLarge (Word.toLarge w)
+  fun word64_from_word_x w = Word64.fromLarge (Word.toLargeX w)
+  val word64_to_string = Word64.toString
+  fun word64_to_int64 w = Int64.fromLarge (Word64.toLargeIntX w)
+  fun word64_from_int64 i = Word64.fromLargeInt (Int64.toLarge i)
+
   (* ---- real ---- *)
   val real_add = Real.+
   val real_sub = Real.-
@@ -165,10 +214,10 @@ struct
                           Real.toLargeInt IEEEReal.TO_NEAREST (Real.fromManExp {man = 2.0 * man - 1.0, exp = 52}))
               else Real.toLargeInt IEEEReal.TO_NEAREST (Real.fromManExp {man = a, exp = 1074})
             end
-      in Word.fromLargeInt (IntInf.+ (sign, body)) end
+      in Word64.fromLargeInt (IntInf.+ (sign, body)) end
     fun real_from_bits w =
       let
-        val i = Word.toLargeInt w
+        val i = Word64.toLargeInt w
         val negative = IntInf.>= (i, two63)
         val m = if negative then IntInf.- (i, two63) else i
         val e = IntInf.toInt (IntInf.div (m, two52))

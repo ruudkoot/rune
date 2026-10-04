@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's MANIFEST records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 582 requirements between the 147 files become 249 arrows.
+library and not a wall of lines: the 589 requirements between the 147 files become 249 arrows.
 The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -124,17 +124,17 @@ flowchart TD
 flowchart TD
   n6["IntInf<br>LargeInt"]
   n7["Int"]
-  n8["Word<br>LargeWord<br>SysWord"]
-  n9(["WORD"])
-  n10(["INTEGER"])
-  n11["Int8"]
-  n12["Int16"]
-  n13["Int32"]
-  n14["FixedInt<br>Int64"]
-  n15["Word8"]
-  n16["Word16"]
-  n17["Word32"]
-  n18["Word64"]
+  n8["Word<br>SysWord"]
+  n9["Word64<br>LargeWord"]
+  n10(["WORD"])
+  n11(["INTEGER"])
+  n12["Int8"]
+  n13["Int16"]
+  n14["Int32"]
+  n15["FixedInt<br>Int64"]
+  n16["Word8"]
+  n17["Word16"]
+  n18["Word32"]
   n21["IEEEReal"]
   n22["Real<br>Math<br>LargeReal<br>Real64"]
   n34["PackWord* (6)"]
@@ -151,21 +151,21 @@ flowchart TD
   n7 --> n6
   n8 --> n7
   n9 --> n8
-  n10 --> n7
-  n11 --> n10
-  n12 --> n10
-  n13 --> n10
-  n14 --> n10
-  n15 --> n9
-  n16 --> n9
-  n17 --> n9
-  n18 --> n9
+  n10 --> n9
+  n11 --> n7
+  n12 --> n11
+  n13 --> n11
+  n14 --> n11
+  n15 --> n7
+  n16 --> n10
+  n17 --> n10
+  n18 --> n10
   n22 --> n21
   n22 --> n7
   n35 --> n22
   n35 --> n34
   n59 --> n7
-  n100 --> n10
+  n100 --> n11
   n100 --> n8
   n129 --> n22
   n129 --> n104
@@ -209,8 +209,8 @@ flowchart TD
   n51["Word32* (5)"]
   n52["Real* (5)"]
   n53["Int64* (5)"]
-  n54["LargeWord* (5)"]
-  n55["Word64* (5)"]
+  n54["Word64* (5)"]
+  n55["LargeWord* (5)"]
   n56["LargeReal* (5)"]
   n57["Real64* (5)"]
   n87(["ARRAY"])
@@ -262,9 +262,9 @@ flowchart TD
   n52 --> n40
   n53 --> n27
   n53 --> n40
-  n54 --> n49
-  n55 --> n27
-  n55 --> n40
+  n54 --> n27
+  n54 --> n40
+  n55 --> n54
   n56 --> n52
   n57 --> n52
   n87 --> n23

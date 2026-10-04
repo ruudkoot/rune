@@ -7,7 +7,7 @@
 | Signature | [`WORD`](../sig/WORD.md) |
 | Status | required |
 | Members | 38 |
-| Tests | 271 checks |
+| Tests | 269 checks |
 | Source | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
 
 ## Synopsis
@@ -16,13 +16,13 @@
 structure Word : WORD
 ```
 
-Word: unsigned words of 64 bits, the type of the top-level [`word`](../sig/WORD.md#type-word) and of
-its literals.
+Word: unsigned words of the VM's width less the bit of a value's tag, 63
+bits, the type of the top-level [`word`](../sig/WORD.md#type-word) and of its literals.
 
-[`LargeWord`](Word.md) and [`SysWord`](Word.md) are this structure by other names; [`Word64`](../str/Word64.md) has
-the same width and operations but a type of its own. The size is found by
-shifting a bit out, so that this file means the same to a system whose
-word is narrower.
+[`SysWord`](Word.md) is this structure by another name. [`Word64`](../str/Word64.md), which is also
+[`LargeWord`](../str/Word64.md), is the type that has 64 bits whatever the VM (word64.sml).
+The size is found by shifting a bit out, so that this file means the same
+to a system whose word is another width.
 
 ## Members
 
@@ -45,9 +45,9 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 | val | [`div`](../sig/WORD.md#val-div) | `word * word -> word` |
 | val | [`fmt`](../sig/WORD.md#val-fmt) | `StringCvt.radix -> word -> string` |
 | val | [`fromInt`](../sig/WORD.md#val-fromint) | `int -> word` |
-| val | [`fromLarge`](../sig/WORD.md#val-fromlarge) | `word -> word` |
+| val | [`fromLarge`](../sig/WORD.md#val-fromlarge) | `Word64.word -> word` |
 | val | [`fromLargeInt`](../sig/WORD.md#val-fromlargeint) | `IntInf.int -> word` |
-| val | [`fromLargeWord`](../sig/WORD.md#val-fromlargeword) | `word -> word` |
+| val | [`fromLargeWord`](../sig/WORD.md#val-fromlargeword) | `Word64.word -> word` |
 | val | [`fromString`](../sig/WORD.md#val-fromstring) | `string -> word option` |
 | val | [`max`](../sig/WORD.md#val-max) | `word * word -> word` |
 | val | [`min`](../sig/WORD.md#val-min) | `word * word -> word` |
@@ -57,12 +57,12 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 | val | [`scan`](../sig/WORD.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (word * 'a) option` |
 | val | [`toInt`](../sig/WORD.md#val-toint) | `word -> int` |
 | val | [`toIntX`](../sig/WORD.md#val-tointx) | `word -> int` |
-| val | [`toLarge`](../sig/WORD.md#val-tolarge) | `word -> word` |
+| val | [`toLarge`](../sig/WORD.md#val-tolarge) | `word -> Word64.word` |
 | val | [`toLargeInt`](../sig/WORD.md#val-tolargeint) | `word -> IntInf.int` |
 | val | [`toLargeIntX`](../sig/WORD.md#val-tolargeintx) | `word -> IntInf.int` |
-| val | [`toLargeWord`](../sig/WORD.md#val-tolargeword) | `word -> word` |
-| val | [`toLargeWordX`](../sig/WORD.md#val-tolargewordx) | `word -> word` |
-| val | [`toLargeX`](../sig/WORD.md#val-tolargex) | `word -> word` |
+| val | [`toLargeWord`](../sig/WORD.md#val-tolargeword) | `word -> Word64.word` |
+| val | [`toLargeWordX`](../sig/WORD.md#val-tolargewordx) | `word -> Word64.word` |
+| val | [`toLargeX`](../sig/WORD.md#val-tolargex) | `word -> Word64.word` |
 | val | [`toString`](../sig/WORD.md#val-tostring) | `word -> string` |
 | val | [`wordSize`](../sig/WORD.md#val-wordsize) | `int` |
 | val | [`xorb`](../sig/WORD.md#val-xorb) | `word * word -> word` |
@@ -79,10 +79,13 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 
 ### word
 
-> **Implementation** `Word.word/64-bits`. [`Word.word`](../sig/WORD.md#type-word) is the top-level
-> [`word`](../sig/WORD.md#type-word), of 64 bits, and so are [`LargeWord`](Word.md), [`SysWord`](Word.md) and [`Word64`](../str/Word64.md);
-> [`Word8`](../str/Word8.md), [`Word16`](../str/Word16.md) and [`Word32`](../str/Word32.md) are kept in a word of the machine whose
-> upper bits are zero.
+> **Implementation** `Word.word/63-bits`. [`Word.word`](../sig/WORD.md#type-word) is the top-level
+> [`word`](../sig/WORD.md#type-word), of 63 bits -- a word of the machine less the bit that tells a
+> number from a pointer -- and so is [`SysWord`](Word.md). [`Word64`](../str/Word64.md), which is also
+> [`LargeWord`](../str/Word64.md), has 64 bits on every machine: a word of its type is kept in
+> a word of the machine where it fits 63 bits and in a small object where
+> it needs the 64th. [`Word8`](../str/Word8.md), [`Word16`](../str/Word16.md) and [`Word32`](../str/Word32.md) are kept in a word of
+> the machine whose upper bits are zero.
 
 > **Implementation** `Word.word/constants-overloaded`. A word constant has the
 > word type that its context asks for, [`Word8.word`](../sig/WORD.md#type-word) as well as [`word`](../sig/WORD.md#type-word), and

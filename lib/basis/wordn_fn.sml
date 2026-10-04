@@ -1,7 +1,7 @@
-(* WordN: words of `wordSize` bits (less than 64), kept in a word of the VM
-   whose upper bits are zero; every operation that could set one of them
+(* WordN: words of `wordSize` bits (less than Word's), kept in a word of the
+   VM whose upper bits are zero; every operation that could set one of them
    clears it again. One file per instance (word8.sml, word16.sml,
-   word32.sml); Word64 is Word itself. *)
+   word32.sml); Word64 is the VM's own 64-bit word (word64.sml). *)
 functor RuneWordNFn (val wordSize : int) :> WORD =
 struct
   type word = Word.word
@@ -13,12 +13,12 @@ struct
   (* the word with the sign bit of the N bits extended *)
   fun extend (w : Word.word) = if Word.>= (w, signBit) then Word.orb (w, Word.notb low) else w
 
-  fun toLarge w = w
-  val toLargeX = extend
+  val toLarge = Word.toLarge
+  fun toLargeX w = Word.toLargeX (extend w)
   val toLargeWord = toLarge
   val toLargeWordX = toLargeX
-  val fromLarge = keep
-  val fromLargeWord = keep
+  fun fromLarge l = keep (Word.fromLarge l)
+  val fromLargeWord = fromLarge
   val toLargeInt = Word.toLargeInt
   fun toLargeIntX w = Word.toLargeIntX (extend w)
   fun fromLargeInt i = keep (Word.fromLargeInt i)

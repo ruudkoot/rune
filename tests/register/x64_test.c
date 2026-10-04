@@ -41,6 +41,12 @@ int main(void) {
     x64_init(&a); x64_movaps_xx(&a, XMM3, XMM9); fails += expect("movaps xmm3, xmm9", &a, "410f28d9"); x64_free(&a);
     x64_init(&a); x64_movaps_xx(&a, XMM0, XMM2); fails += expect("movaps xmm0, xmm2", &a, "0f28c2"); x64_free(&a);
     x64_init(&a); x64_cmp8_mi(&a, RAX, 0, 6); fails += expect("cmp byte [rax], 6", &a, "803806"); x64_free(&a);
+    /* what the tagged word tests, sets and rotates (docs/plans/heap-layout.md, M4) */
+    x64_init(&a); x64_test_ri(&a, R9, 1); fails += expect("test r9, 1", &a, "49f7c101000000"); x64_free(&a);
+    x64_init(&a); x64_test8_mi(&a, R14, 8, 1); fails += expect("test byte [r14+8], 1", &a, "41f6460801"); x64_free(&a);
+    x64_init(&a); x64_or_ri(&a, RAX, 1); fails += expect("or rax, 1", &a, "4883c801"); x64_free(&a);
+    x64_init(&a); x64_ror_ri(&a, RDX, 12); fails += expect("ror rdx, 12", &a, "48c1ca0c"); x64_free(&a);
+    x64_init(&a); x64_ror_ri(&a, RAX, 52); fails += expect("ror rax, 52", &a, "48c1c834"); x64_free(&a);
     x64_init(&a); x64_add_ri(&a, R15, 3); fails += expect("add r15, 3", &a, "4983c703"); x64_free(&a);
     x64_init(&a); x64_lea(&a, RAX, R13, RBP, 1, 48); fails += expect("lea rax, [r13+rbp+48]", &a, "498d442d30"); x64_free(&a);
     x64_init(&a); x64_jmp_r(&a, R11); fails += expect("jmp r11", &a, "41ffe3"); x64_free(&a);

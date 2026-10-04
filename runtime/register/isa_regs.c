@@ -5,7 +5,7 @@
 #include "regvm.h"
 
 const uint32_t isa_fingerprint = REG_ISA_FINGERPRINT;
-const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 7 isa " REG_ISA_FINGERPRINT_HEX;
+const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 9 isa " REG_ISA_FINGERPRINT_HEX;
 
 static int fail(char *err, size_t errlen, const char *msg) {
     snprintf(err, errlen, "%s", msg);
@@ -138,9 +138,17 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
             case ROP_CONST: {
                 int32_t c = read_i32(p->code + at + 5);
                 if (c >= 0 && (uint32_t)c < p->nconsts)
-                    made = val_is(p->consts[c], T_INT) ? REP_INT : val_is(p->consts[c], T_WORD) ? REP_WORD
-                         : val_is(p->consts[c], T_REAL) ? REP_REAL : val_is(p->consts[c], T_CHAR) ? REP_CHAR
-                         : val_is(p->consts[c], T_PTR) ? REP_PTR : -1;
+                    /* by the kind the bytecode gave it: an immediate's is not in its bits */
+                    switch (p->const_kinds[c]) {
+                    case CONST_INT: made = REP_INT; break;
+                    case CONST_WORD: made = REP_WORD; break;
+                    case CONST_INT64: made = REP_INT64; break;
+                    case CONST_WORD64: made = REP_WORD64; break;
+                    case CONST_REAL: made = REP_REAL; break;
+                    case CONST_CHAR: made = REP_CHAR; break;
+                    case CONST_STRING: made = REP_PTR; break;
+                    default: break;
+                    }
                 break;
             }
             case ROP_PRIM: {
@@ -172,12 +180,14 @@ void disassemble(const Program *p, FILE *out) {
     for (uint32_t i = 0; i < p->nconsts; i++) {
         Value c = p->consts[i];
         fprintf(out, "const %u = ", i);
-        switch (val_tag(c)) {
-        case T_INT: fprintf(out, "%lld\n", (long long)val_imm(c)); break;
-        case T_WORD: fprintf(out, "0wx%llX\n", (unsigned long long)val_word(c)); break;
-        case T_REAL: fprintf(out, "%g\n", val_real(c)); break;
-        case T_CHAR: fprintf(out, "#%lld\n", (long long)val_imm(c)); break;
-        case T_PTR: fprintf(out, "\"%.*s\"\n", (int)obj_len(val_ptr(c)), obj_bytes(val_ptr(c))); break;
+        switch (p->const_kinds[i]) {   /* what the bytecode said: the value does not */
+        case CONST_INT: fprintf(out, "%lld\n", (long long)val_int(c)); break;
+        case CONST_WORD: fprintf(out, "0wx%llX\n", (unsigned long long)val_word(c)); break;
+        case CONST_INT64: fprintf(out, "%lld\n", (long long)val_int64(c)); break;
+        case CONST_WORD64: fprintf(out, "0wx%llX\n", (unsigned long long)val_word64(c)); break;
+        case CONST_REAL: fprintf(out, "%g\n", val_real(c)); break;
+        case CONST_CHAR: fprintf(out, "#%lld\n", (long long)val_char(c)); break;
+        case CONST_STRING: fprintf(out, "\"%.*s\"\n", (int)obj_len(val_ptr(c)), obj_bytes(val_ptr(c))); break;
         default: fprintf(out, "?\n");
         }
     }

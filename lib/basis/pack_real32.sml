@@ -38,13 +38,13 @@ struct
   in
     fun toBytes r =
       let val a = Word8Array.array (4, Word8.fromInt 0)
-      in W.update (a, 0, toBits r); Word8Array.vector a end
+      in W.update (a, 0, Word.toLarge (toBits r)); Word8Array.vector a end
     (* "Subscript if the argument vector does not have length at least
        bytesPerElem; otherwise the first bytesPerElem bytes are used" *)
-    fun fromBytes v = fromBits (W.subVec (v, 0))
-    fun subVec (v, i) = fromBits (W.subVec (v, i))
-    fun subArr (a, i) = fromBits (W.subArr (a, i))
-    fun update (a, i, r) = W.update (a, i, toBits r)
+    fun fromBytes v = fromBits (Word.fromLarge (W.subVec (v, 0)))
+    fun subVec (v, i) = fromBits (Word.fromLarge (W.subVec (v, i)))
+    fun subArr (a, i) = fromBits (Word.fromLarge (W.subArr (a, i)))
+    fun update (a, i, r) = W.update (a, i, Word.toLarge (toBits r))
   end
 end
 

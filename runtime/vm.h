@@ -49,7 +49,9 @@ typedef struct Function {
 
 /* What a register holds, as the compiler says (Low.rep; the numbers are the
    file's) */
-enum Rep { REP_ANY = 0, REP_INT, REP_WORD, REP_REAL, REP_CHAR, REP_CON0, REP_PTR, REP_CON, REP_UNIT, REP__COUNT };
+enum Rep { REP_ANY = 0, REP_INT, REP_WORD, REP_REAL, REP_CHAR, REP_CON0, REP_PTR, REP_CON, REP_UNIT,
+           REP_INT64, REP_WORD64,   /* Int64.int, Word64.word: an immediate or a K_BOX */
+           REP__COUNT };
 
 /* Where an instruction came from: the file, line and column the compiler
    recorded for the instructions from `pc` up to the next entry's, and the
@@ -76,9 +78,14 @@ typedef struct Inlined {
     uint32_t parent;
 } Inlined;
 
+/* the kinds of a constant, as a bytecode file numbers them */
+enum ConstKind { CONST_INT = 0, CONST_WORD = 1, CONST_REAL = 2, CONST_STRING = 3, CONST_CHAR = 4,
+                 CONST_INT64 = 5, CONST_WORD64 = 6, CONST__COUNT };
+
 typedef struct Program {
     uint32_t nconsts;
     Value *consts;
+    uint8_t *const_kinds;   /* what the bytecode said each is (CONST_INT ...): a value does not say, and an image must */
     uint32_t nglobals;
     uint32_t nfuncs;
     Function *funcs;
@@ -176,6 +183,15 @@ typedef struct VM {
     int64_t gc_sys_us;
     uint64_t bytes_allocated;  /* not size_t: --count prints the same where it is 32 bits */
     uint64_t objects_allocated;
+    /* The boxes of the representation -- a real with no immediate, an int
+       or a word past 63 bits under RUNE_INT64 -- are counted apart: they
+       are the layout's, not the program's, and where one is made is the
+       engine's (tier 2 boxes a real when a safepoint wants its word, the
+       loop when it is produced), so --count leaves them out and stays the
+       same on every engine and under every layout; --stats reports them. */
+    uint64_t boxes_allocated;
+    uint64_t box_bytes_allocated;
+    size_t box_bytes_live;     /* of heap_used, what is boxes: Runtime.stats's live leaves them out, as its bytes do */
     uint64_t copied;         /* bytes every collection copied, in all (--stats) */
     size_t max_live;         /* the most a collection kept (--stats) */
     uint64_t instructions;   /* executed so far */
@@ -193,6 +209,8 @@ typedef struct VM {
     int checked;             /* --checked: DECON tests its tag (decision D14), for the test suites */
     int native;              /* a program runeopt made, whose code is not bytecode (runtime/native/native.c) */
     JitOptions jit;          /* the --jit options, runtime/register's (runtime/register/jit.h); all 0 in runevm-stack */
+    uint64_t jit_fspill[14]; /* tier 2's reals in their xmm homes, raw, across the helper that boxes one (jit/masm.c) */
+    uint64_t jit_gspill[4];  /* and its general homes, an int's or a word's 64 bits among them; then the number being boxed where it is in no home */
 
     int argc;
     char **argv;             /* arguments after the bytecode file */
@@ -207,6 +225,8 @@ typedef struct VM {
                                 inherit descriptors from (Runtime.save); NULL for the standard streams */
     size_t nfiles, files_cap;
     int io_errno;            /* errno of the last failed file_open / file_write */
+    Obj *real_boxes[REAL_BOXES];   /* the boxes of the reals that have no immediate and are everywhere
+                                      (value.h): made as the VM starts, roots, in an image */
 } VM;
 
 /* heap.c */
@@ -249,8 +269,8 @@ static inline Value *vm_top(VM *vm, size_t depth) {    /* pointer to stack[sp-1-
 /* The object v points to, which must be of that kind; the instructions stop
    the program with "expected <what>" where it is not. */
 static inline Obj *vm_expect_obj(VM *vm, Value v, int kind, const char *what) {
-    if (v.tag != T_PTR || v.u.p->kind != kind) vm_fatal(vm, "expected %s", what);
-    return v.u.p;
+    if (!val_is(v, T_PTR) || !val_ptr(v) || obj_kind(val_ptr(v)) != kind) vm_fatal(vm, "expected %s", what);
+    return val_ptr(v);
 }
 static inline void vm_push_frame(VM *vm, uint32_t func, Obj *closure, uint32_t ret_pc, size_t base) {
     size_t idx = vm->frames_active ? vm->fp + 1 : 0;
@@ -310,7 +330,7 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen);
 
 /* What each VM's instruction set gives (runtime/stack/isa_stack.c, runtime/register/isa_regs.c):
    the fingerprint an .rbc must carry, and the first bytes of an image. */
-#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 7 isa 00000000")
+#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 9 isa 00000000")
 extern const uint32_t isa_fingerprint;
 extern const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE];
 const LineEntry *line_at(const Program *p, uint32_t pc);

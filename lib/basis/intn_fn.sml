@@ -1,7 +1,7 @@
-(* IntN: integers of `precision` bits, kept in an int of the VM (64 bits).
+(* IntN: integers of `precision` bits, kept in an int of the VM (63 bits).
    Every operation works on the int and raises Overflow when the result is
    outside the range of the precision. One file per instance (int8.sml,
-   int16.sml, int32.sml); Int64 is Int itself. *)
+   int16.sml, int32.sml); Int64 is the VM's own 64-bit integer (int64.sml). *)
 functor RuneIntNFn (val precision : int) :> INTEGER =
 struct
   type int = Int.int

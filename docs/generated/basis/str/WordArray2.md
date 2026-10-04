@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md) |
 | Status | optional |
 | Members | 22 |
-| Tests | 253 checks |
+| Tests | 252 checks |
 | Source | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 ## Synopsis

@@ -16,7 +16,7 @@
 structure Int : INTEGER
 ```
 
-Int: fixed precision integers with Overflow checking: 64 bits on the VM.
+Int: fixed precision integers with Overflow checking: 63 bits on the VM.
 The bounds are found with the arithmetic itself (2n + 1 until it overflows),
 so that this file means the same to a system whose int is narrower; see
 tests/basis/README.md on the xc1 configurations.
@@ -62,13 +62,15 @@ What each means is on [`INTEGER`](../sig/INTEGER.md); the types are this structu
 
 ### int
 
-> **Implementation** `Int.int/64-bits`. [`Int.int`](../sig/INTEGER.md#type-int) is the top-level [`int`](../sig/INTEGER.md#type-int),
-> whose width is the VM's: 64 bits on this one, so that [`Int.precision`](../sig/INTEGER.md#val-precision) is
-> `SOME 64`. [`Position`](Int.md) is [`Int`](Int.md). [`Int64`](../str/Int64.md) and [`FixedInt`](../str/Int64.md) are of 64 bits as
-> well, but sealed away from [`Int.int`](../sig/INTEGER.md#type-int), so that no program can take the one
-> for the other and the VM stays free to choose the width of [`Int`](Int.md); [`Int8`](../str/Int8.md),
-> [`Int16`](../str/Int16.md) and [`Int32`](../str/Int32.md) keep a value of their own width, and [`LargeInt`](../str/IntInf.md) is
-> [`IntInf`](../str/IntInf.md), which has no width. Constants of each are checked against its
+> **Implementation** `Int.int/63-bits`. [`Int.int`](../sig/INTEGER.md#type-int) is the top-level [`int`](../sig/INTEGER.md#type-int),
+> whose width is the VM's: 63 bits on this one, a word of the machine less
+> the bit that tells a number from a pointer, so that [`Int.precision`](../sig/INTEGER.md#val-precision) is
+> `SOME 63`. [`Position`](Int.md) is [`Int`](Int.md). [`Int64`](../str/Int64.md) and [`FixedInt`](../str/Int64.md) are of 64 bits, a
+> type of their own: a number of theirs is kept in a word where it fits 63
+> bits and in a small object where it needs the 64th, so that code written
+> for 64 bits has them on every machine; [`Int8`](../str/Int8.md), [`Int16`](../str/Int16.md) and [`Int32`](../str/Int32.md) keep
+> a value of their own width, and [`LargeInt`](../str/IntInf.md) is [`IntInf`](../str/IntInf.md), which has no
+> width. Constants of each are checked against its
 > range where they are written.
 
 ### mod

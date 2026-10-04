@@ -13,18 +13,17 @@
 ## Synopsis
 
 ```sml
-structure Int64 :> INTEGER
+structure Int64 : INTEGER
 ```
 
 Int64: the 64-bit integers, and FixedInt, the largest of the
 fixed-precision ones, which is the same structure.
 
-The implementation is [`Int`](../str/Int.md), whose width the VM decides, but the type is
-sealed away from [`Int.int`](../sig/INTEGER.md#type-int) so that no program can take the two for one:
-[`Int`](../str/Int.md) is of no fixed width as far as a program can see, which leaves the
-VM free to choose it. Every operation is [`Int`](../str/Int.md)'s, so the seal costs
-nothing; [`toInt`](../sig/INTEGER.md#val-toint) and [`fromInt`](../sig/INTEGER.md#val-fromint) are the way between them, as the
-specification intends.
+The type is the VM's own 64-bit integer and not [`Int.int`](../sig/INTEGER.md#type-int), whose width the
+VM decides (63 bits: an int is a word of the VM with a bit taken for its
+tag). A number here is kept in such a word where it fits and in a small
+object where it needs the 64th bit, so arithmetic that stays small costs
+what [`Int`](../str/Int.md)'s does; [`toInt`](../sig/INTEGER.md#val-toint) and [`fromInt`](../sig/INTEGER.md#val-fromint) are the way between the two types.
 
 ## Members
 
@@ -32,7 +31,7 @@ What each means is on [`INTEGER`](../sig/INTEGER.md); the types are this structu
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`int`](../sig/INTEGER.md#type-int) | *a type of its own* |
+| type | [`int`](../sig/INTEGER.md#type-int) | `Int64.int` |
 | val | [`*`](../sig/INTEGER.md#val-op-star) | `Int64.int * Int64.int -> Int64.int` |
 | val | [`+`](../sig/INTEGER.md#val-op-plus) | `Int64.int * Int64.int -> Int64.int` |
 | val | [`-`](../sig/INTEGER.md#val-op-minus) | `Int64.int * Int64.int -> Int64.int` |

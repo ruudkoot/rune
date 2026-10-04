@@ -74,6 +74,7 @@ void a64_asrv(A64 *a, int rd, int rn, int rm);
 void a64_lsl_ri(A64 *a, int rd, int rn, int shift);      /* 0 to 63 */
 void a64_lsr_ri(A64 *a, int rd, int rn, int shift);
 void a64_asr_ri(A64 *a, int rd, int rn, int shift);
+void a64_ror_ri(A64 *a, int rd, int rn, int shift);
 void a64_ubfx(A64 *a, int rd, int rn, int lsb, int width);
 void a64_sxtw(A64 *a, int rd, int rn);
 void a64_and_mask(A64 *a, int rd, int rn, int bits);     /* rd := rn & ((1 << bits) - 1), bits 1 to 63 */

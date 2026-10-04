@@ -141,6 +141,13 @@ struct
             TYVAR v => (advance (); TyVar (v, start))
           | ID s => if s = "*" then err "expected type" else (advance (); TyCon ([], ([], s), start))
           | LONGID (p, s) => (advance (); TyCon ([], (p, s), start))
+          | PRIM =>
+              (* `_prim "name"` as a type: a type of the VM's that has no
+                 name in the initial basis (Int64.int, Word64.word) *)
+              (advance ();
+               case next () of
+                 STRING s => TyCon ([], ([], "_" ^ s), spanFrom start)
+               | _ => err "expected string literal after _prim")
           | LBRACE =>
               let
                 val () = advance ()

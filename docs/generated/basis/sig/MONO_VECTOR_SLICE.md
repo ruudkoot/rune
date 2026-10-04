@@ -46,7 +46,7 @@ structure WordVectorSlice :> MONO_VECTOR_SLICE where type vector = WordVector.ve
 | [`IntVectorSlice`](../str/IntVectorSlice.md) | IntVectorSlice: stretches of [`IntVector`](../str/IntVector.md) vectors, without a copy. | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
 | [`LargeIntVectorSlice`](../str/LargeIntVectorSlice.md) | LargeIntVectorSlice: stretches of [`LargeIntVector`](../str/LargeIntVector.md) vectors, without a copy. | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
 | [`LargeRealVectorSlice`](../str/RealVectorSlice.md) |  | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
-| [`LargeWordVectorSlice`](../str/WordVectorSlice.md) |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
+| [`LargeWordVectorSlice`](../str/Word64VectorSlice.md) |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
 | [`Real32VectorSlice`](../str/Real32VectorSlice.md) | Real32VectorSlice: stretches of [`Real32Vector`](../str/Real32Vector.md) vectors, without a copy. | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
 | [`Real64VectorSlice`](../str/RealVectorSlice.md) |  | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
 | [`RealVectorSlice`](../str/RealVectorSlice.md) | RealVectorSlice: stretches of [`RealVector`](../str/RealVector.md) vectors, without a copy. | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
@@ -113,7 +113,7 @@ The type of the elements: [`Word8.word`](../sig/WORD.md#type-word) for [`Word8Ve
 
 <details><summary>Tests (1)</summary>
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `eight-distinct-samples`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `eight-distinct-samples`
 
 </details>
 
@@ -157,7 +157,7 @@ For `CharVectorSlice`, in [tests/basis/charvectorslice.sml](../../../../tests/ba
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `NONE`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `middle` &middot; `full` &middot; `empty` &middot; `model*` &middot; `long`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `middle` &middot; `full` &middot; `empty` &middot; `model*` &middot; `long`
 
 </details>
 
@@ -181,7 +181,7 @@ For `Word8VectorSlice`, in [tests/basis/word8vectorslice.sml](../../../../tests/
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `each` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-negative` (raises Subscript)
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `BoolVectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `first` &middot; `last` &middot; `Subscript-length-within-the-vector` (raises Subscript) &middot; `Subscript-negative-within-the-vector` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long` &middot; `Subscript-not-Overflow` (raises Subscript) &middot; `Subscript-not-Overflow-least` (raises Subscript)
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `BoolVectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `first` &middot; `last` &middot; `Subscript-length-within-the-vector` (raises Subscript) &middot; `Subscript-negative-within-the-vector` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long` &middot; `Subscript-not-Overflow` (raises Subscript) &middot; `Subscript-not-Overflow-least` (raises Subscript)
 
 </details>
 
@@ -203,7 +203,7 @@ For `CharVectorSlice`, in [tests/basis/charvectorslice.sml](../../../../tests/ba
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `empty` &middot; `is-slice-0-NONE`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `basic` &middot; `base` &middot; `empty-vector` &middot; `empty-vector-base` &middot; `model*`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `basic` &middot; `base` &middot; `empty-vector` &middot; `empty-vector-base` &middot; `model*`
 
 </details>
 
@@ -234,7 +234,7 @@ For `Word8VectorSlice`, in [tests/basis/word8vectorslice.sml](../../../../tests/
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `SOME` &middot; `NONE` &middot; `NONE-at-length` &middot; `SOME-zero` &middot; `Subscript-NONE-beyond` (raises Subscript) &middot; `Subscript-too-long` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-negative-size` (raises Subscript)
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `BoolVectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `NONE-from-zero` &middot; `NONE-middle` &middot; `NONE-last` &middot; `NONE-at-length` &middot; `NONE-middle-base` &middot; `NONE-at-length-base` &middot; `NONE-Subscript-negative` (raises Subscript) &middot; `NONE-Subscript-beyond` (raises Subscript) &middot; `SOME-middle` &middot; `SOME-all` &middot; `SOME-one` &middot; `SOME-zero` &middot; `SOME-zero-at-length` &middot; `SOME-middle-base` &middot; `SOME-zero-base` &middot; `SOME-Subscript-negative-start` (raises Subscript) &middot; `SOME-Subscript-negative-size` (raises Subscript) &middot; `SOME-Subscript-too-long` (raises Subscript) &middot; `SOME-Subscript-beyond` (raises Subscript) &middot; `of-empty-vector` &middot; `of-empty-vector-Subscript` (raises Subscript) &middot; `every-argument` &middot; `model*` &middot; `SOME-Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-size` (raises Subscript) &middot; `NONE-Subscript-not-Overflow` (raises Subscript) &middot; `NONE-Subscript-not-Overflow-least` (raises Subscript)
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `BoolVectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `NONE-from-zero` &middot; `NONE-middle` &middot; `NONE-last` &middot; `NONE-at-length` &middot; `NONE-middle-base` &middot; `NONE-at-length-base` &middot; `NONE-Subscript-negative` (raises Subscript) &middot; `NONE-Subscript-beyond` (raises Subscript) &middot; `SOME-middle` &middot; `SOME-all` &middot; `SOME-one` &middot; `SOME-zero` &middot; `SOME-zero-at-length` &middot; `SOME-middle-base` &middot; `SOME-zero-base` &middot; `SOME-Subscript-negative-start` (raises Subscript) &middot; `SOME-Subscript-negative-size` (raises Subscript) &middot; `SOME-Subscript-too-long` (raises Subscript) &middot; `SOME-Subscript-beyond` (raises Subscript) &middot; `of-empty-vector` &middot; `of-empty-vector-Subscript` (raises Subscript) &middot; `every-argument` &middot; `model*` &middot; `SOME-Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-size` (raises Subscript) &middot; `NONE-Subscript-not-Overflow` (raises Subscript) &middot; `NONE-Subscript-not-Overflow-least` (raises Subscript)
 
 </details>
 
@@ -267,7 +267,7 @@ For `CharVectorSlice`, in [tests/basis/charvectorslice.sml](../../../../tests/ba
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `NONE` &middot; `SOME` &middot; `at-length` &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-too-long` (raises Subscript) &middot; `Subscript-negative` (raises Subscript)
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `BoolVectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `NONE-from-zero` &middot; `NONE-middle` &middot; `NONE-at-length` &middot; `NONE-middle-base` &middot; `NONE-at-length-base` &middot; `NONE-Subscript-negative` (raises Subscript) &middot; `NONE-Subscript-beyond` (raises Subscript) &middot; `SOME-middle` &middot; `SOME-all` &middot; `SOME-zero` &middot; `SOME-middle-base` &middot; `of-subslice-base` &middot; `SOME-Subscript-negative-start` (raises Subscript) &middot; `SOME-Subscript-negative-size` (raises Subscript) &middot; `SOME-Subscript-within-the-vector` (raises Subscript) &middot; `SOME-Subscript-beyond` (raises Subscript) &middot; `of-empty` &middot; `of-empty-Subscript` (raises Subscript) &middot; `every-argument` &middot; `model*` &middot; `model*` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-size` (raises Subscript) &middot; `NONE-Subscript-not-Overflow` (raises Subscript) &middot; `NONE-Subscript-not-Overflow-least` (raises Subscript)
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `BoolVectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `NONE-from-zero` &middot; `NONE-middle` &middot; `NONE-at-length` &middot; `NONE-middle-base` &middot; `NONE-at-length-base` &middot; `NONE-Subscript-negative` (raises Subscript) &middot; `NONE-Subscript-beyond` (raises Subscript) &middot; `SOME-middle` &middot; `SOME-all` &middot; `SOME-zero` &middot; `SOME-middle-base` &middot; `of-subslice-base` &middot; `SOME-Subscript-negative-start` (raises Subscript) &middot; `SOME-Subscript-negative-size` (raises Subscript) &middot; `SOME-Subscript-within-the-vector` (raises Subscript) &middot; `SOME-Subscript-beyond` (raises Subscript) &middot; `of-empty` &middot; `of-empty-Subscript` (raises Subscript) &middot; `every-argument` &middot; `model*` &middot; `model*` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-size` (raises Subscript) &middot; `NONE-Subscript-not-Overflow` (raises Subscript) &middot; `NONE-Subscript-not-Overflow-least` (raises Subscript)
 
 </details>
 
@@ -287,7 +287,7 @@ For `CharVectorSlice`, in [tests/basis/charvectorslice.sml](../../../../tests/ba
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `slice` &middot; `subslice`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `middle` &middot; `empty` &middot; `round-trip` &middot; `model*`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `middle` &middot; `empty` &middot; `round-trip` &middot; `model*`
 
 </details>
 
@@ -309,7 +309,7 @@ For `Word8VectorSlice`, in [tests/basis/word8vectorslice.sml](../../../../tests/
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `empty`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `middle` &middot; `full` &middot; `empty` &middot; `model*` &middot; `long`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `middle` &middot; `full` &middot; `empty` &middot; `model*` &middot; `long`
 
 </details>
 
@@ -334,7 +334,7 @@ For `CharVectorSlice`, in [tests/basis/charvectorslice.sml](../../../../tests/ba
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `nil`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `BoolVectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `basic` &middot; `nil` &middot; `one` &middot; `empties` &middot; `same-twice` &middot; `model*` &middot; `many` &middot; `Size-above-maxLen` (raises Size)
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `BoolVectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `basic` &middot; `nil` &middot; `one` &middot; `empties` &middot; `same-twice` &middot; `model*` &middot; `many` &middot; `Size-above-maxLen` (raises Size)
 
 </details>
 
@@ -356,7 +356,7 @@ For `CharVectorSlice`, in [tests/basis/charvectorslice.sml](../../../../tests/ba
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `false` &middot; `true`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `empty` &middot; `empty-at-length` &middot; `empty-vector` &middot; `one` &middot; `middle` &middot; `model*`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `empty` &middot; `empty-at-length` &middot; `empty-vector` &middot; `one` &middot; `middle` &middot; `model*`
 
 </details>
 
@@ -379,7 +379,7 @@ For `CharVectorSlice`, in [tests/basis/charvectorslice.sml](../../../../tests/ba
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `first` &middot; `rest-of-the-same-vector` &middot; `empty`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `first` &middot; `rest` &middot; `rest-base` &middot; `last-rest-is-empty` &middot; `empty` &middot; `every-item` &middot; `model*` &middot; `long`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `first` &middot; `rest` &middot; `rest-base` &middot; `last-rest-is-empty` &middot; `empty` &middot; `every-item` &middot; `model*` &middot; `long`
 
 </details>
 
@@ -399,7 +399,7 @@ The index is that of the element in the slice, counted from 0.
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `slice-indices`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `order` &middot; `empty` &middot; `model*`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `order` &middot; `empty` &middot; `model*`
 
 </details>
 
@@ -417,7 +417,7 @@ val app : (elem -> unit) -> slice -> unit
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `order`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `order` &middot; `empty` &middot; `model*`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `order` &middot; `empty` &middot; `model*`
 
 </details>
 
@@ -440,7 +440,7 @@ For `CharVectorSlice`, in [tests/basis/charvectorslice.sml](../../../../tests/ba
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `slice-indices` &middot; `order`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `basic` &middot; `index-in-the-slice` &middot; `empty` &middot; `order` &middot; `model*`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `basic` &middot; `index-in-the-slice` &middot; `empty` &middot; `order` &middot; `model*`
 
 </details>
 
@@ -464,7 +464,7 @@ For `Word8VectorSlice`, in [tests/basis/word8vectorslice.sml](../../../../tests/
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `not` &middot; `order`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `basic` &middot; `empty` &middot; `order` &middot; `argument-unchanged` &middot; `model*` &middot; `long`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `basic` &middot; `empty` &middot; `order` &middot; `argument-unchanged` &middot; `model*` &middot; `long`
 
 </details>
 
@@ -484,7 +484,7 @@ The index is that of the element in the slice, counted from 0.
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model*`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model*`
 
 </details>
 
@@ -506,7 +506,7 @@ For `CharVectorSlice`, in [tests/basis/charvectorslice.sml](../../../../tests/ba
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `conses-in-order` &middot; `nonassociative` &middot; `empty` &middot; `model*` &middot; `long`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `conses-in-order` &middot; `nonassociative` &middot; `empty` &middot; `model*` &middot; `long`
 
 </details>
 
@@ -528,7 +528,7 @@ For `Word8VectorSlice`, in [tests/basis/word8vectorslice.sml](../../../../tests/
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model*` &middot; `long`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model*` &middot; `long`
 
 </details>
 
@@ -548,7 +548,7 @@ The index is that of the element in the slice, counted from 0.
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `conses-in-order` &middot; `nonassociative` &middot; `empty` &middot; `model*`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `conses-in-order` &middot; `nonassociative` &middot; `empty` &middot; `model*`
 
 </details>
 
@@ -569,7 +569,7 @@ and not after the first position that satisfies it.
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `slice-index` &middot; `none` &middot; `stops`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `first-match` &middot; `by-index` &middot; `index-zero` &middot; `none-outside-the-slice` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `first-match` &middot; `by-index` &middot; `index-zero` &middot; `none-outside-the-slice` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*`
 
 </details>
 
@@ -589,7 +589,7 @@ val find : (elem -> bool) -> slice -> elem option
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `stops` &middot; `true` &middot; `none-in-the-slice`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `first-match` &middot; `last-element` &middot; `none-outside-the-slice` &middot; `empty` &middot; `stops` &middot; `model*`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `first-match` &middot; `last-element` &middot; `none-outside-the-slice` &middot; `empty` &middot; `stops` &middot; `model*`
 
 </details>
 
@@ -611,7 +611,7 @@ Only the elements of the slice are looked at, not the rest of its vector.
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `stops` &middot; `only-the-slice` &middot; `true`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `true` &middot; `false-outside-the-slice` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `true` &middot; `false-outside-the-slice` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*`
 
 </details>
 
@@ -631,7 +631,7 @@ val all : (elem -> bool) -> slice -> bool
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `stops` &middot; `only-the-slice` &middot; `false`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `true-but-not-outside-the-slice` &middot; `false` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*` &middot; `de-morgan*`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `true-but-not-outside-the-slice` &middot; `false` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*` &middot; `de-morgan*`
 
 </details>
 
@@ -655,7 +655,7 @@ For `Word8VectorSlice`, in [tests/basis/word8vectorslice.sml](../../../../tests/
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `equal` &middot; `less` &middot; `prefix-greater`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `equal-in-different-vectors` &middot; `same-slice` &middot; `empty-empty` &middot; `empty-less` &middot; `empty-greater` &middot; `prefix-less` &middot; `prefix-greater` &middot; `first-difference` &middot; `not-by-length` &middot; `given-ordering` &middot; `argument-order` &middot; `model*` &middot; `reflexive*` &middot; `long`
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `Word64VectorSlice`, `LargeWordVectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `equal-in-different-vectors` &middot; `same-slice` &middot; `empty-empty` &middot; `empty-less` &middot; `empty-greater` &middot; `prefix-less` &middot; `prefix-greater` &middot; `first-difference` &middot; `not-by-length` &middot; `given-ordering` &middot; `argument-order` &middot; `model*` &middot; `reflexive*` &middot; `long`
 
 </details>
 

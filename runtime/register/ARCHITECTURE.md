@@ -31,15 +31,18 @@ stale) and committed, so that the VM builds with a C compiler alone.
 
 ## Values, objects and the heap
 
-As `runevm-stack`'s ([docs/runtime.md](../../docs/runtime.md)): a `Value` is 16
-bytes, a tag byte and a payload of 8 (`runtime/value.h`), with the tag and its
-padding also one 64-bit word, the header, so that a value is made in two
-registers and stored in two stores (a byte store read back as 16 bytes
-stalls); objects have an 8-byte header and a payload in multiples of 16;
+As `runevm-stack`'s ([docs/runtime.md](../../docs/runtime.md)): a `Value` is
+one 64-bit word (`runtime/value.h`), an immediate where its low bit is set
+-- an int, a word, a char or a tag as 2n + 1, or a real in its encoding --
+and a pointer where it is clear, so that a value is made in one register
+and stored in one store; a real outside the encoding and an `Int64.int` or
+`Word64.word` past 63 bits are boxes of 8 raw bytes; objects have an 8-byte
+header and a payload in multiples of 8;
 the collector is a Cheney two-space copier that runs only inside
 `vm_alloc`, with the value stack below `sp`, the globals, the constants,
 each frame's closure and the built-in exceptions as its roots. There are
-no stack maps and no write barrier: every slot carries its tag, and the
+no stack maps and no write barrier: every slot is a word whose low bit
+tells an immediate from a pointer, and the
 stores into the heap are `SETENV`, the primitives `ref_set` and
 `array_update` (in `runtime/prims.c`, and in the loop through `HEAP_STORE` of
 `runtime/register/fastprim.h`) and a few more primitives.
@@ -216,7 +219,7 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
 * **`x64.h`, `x64.c`**: the encoder. A buffer of bytes, labels bound and
   patched (a rel32 to a label, or a table entry relative to a table's
   start), and the instructions the macro-assembler is written in: moves,
-  16-byte copies through an xmm register, arithmetic, SSE2 on doubles,
+  8-byte copies through an xmm register, arithmetic, SSE2 on doubles,
   branches, calls. Nothing here knows a Value or a VM.
 * **`masm.h`, `masm.c`**: the macro-assembler, and the conventions the
   code keeps. `r12` is the VM, `r13` the value stack, `rbp` the frame's
@@ -348,29 +351,34 @@ So tier 2 takes the registers as they are and chooses, per function,
 which of them live in a machine register:
 
 * **Which.** A register whose representation a machine register can
-  hold -- an int, a word, a char or a nullary constructor in `rbx`,
-  `rsi` or `rdi`, a real in `xmm2` to `xmm15` -- the most used first, a
-  use inside a loop (the section's loop heads to the last jump back)
-  counting for eight (`choose_homes`, `compile.c`). Three general
-  registers, since the emitters use the others as scratch and for the
-  arguments of calls into C. A pointer never has a home: the collector's
-  roots are the slots, as at tier 1, and a home holds a payload alone,
-  the tag being the representation's (`Home`, `masm.h`).
+  hold -- an int, a word, a char, a nullary constructor, an `Int64.int`
+  or a `Word64.word` in `rbx`, `rsi` or `rdi`, a real in `xmm2` to
+  `xmm15` -- the most used first, a use inside a loop (the section's
+  loop heads to the last jump back) counting for eight (`choose_homes`,
+  `compile.c`). Three general registers, since the emitters use the
+  others as scratch and for the arguments of calls into C. A pointer
+  never has a home: the collector's roots are the slots, as at tier 1.
+  The home of an int, a word, a char or a tag holds its word, as the
+  slot does. The home of a real, of an `Int64.int` and of a
+  `Word64.word` is *raw*: the double, or the 64 bits themselves, which
+  for a number past 63 bits no word has -- its slot gets the word, or
+  a box, where the value leaves the register (`Home`, `masm.h`;
+  `is_raw`, `masm.c`).
 * **The accessors know.** Every operation of the macro-assembler that
   reads or writes a register (`ms_copy`, `ms_set`, `ms_load_payload`,
   `ms_check_tag`, `ms_store_field`, `ms_value_to`, ...) consults the
   homes, so the emitters are tier 1's, unchanged: a tag test of a homed
   register is decided when the code is made (the tag is the
-  representation's), and the slot is made whole where 16 bytes are
-  copied (`ms_load_xmm`, a `RET`).
+  representation's), and the slot of a raw home is given its word where
+  the word is wanted (`ms_need_word`, a `RET`).
 * **Liveness.** The registers live at the entry of each instruction are
   computed backwards over the function (`liveness`), the handlers of the
   function being successors of every instruction that may raise or call
   -- at the instruction's entry, since a raise happens before it defines
   anything.
 * **Safepoints.** `ms_sync` writes the homes live at the instruction's
-  entry back to their slots, with their tags, before the VM is made
-  exact; `ms_reload` loads again, after the call into C, the homes live
+  entry back to their slots -- a raw one encoded, or boxed by a helper
+  where it has no immediate -- before the VM is made exact; `ms_reload` loads again, after the call into C, the homes live
   at the entry and at the end of the instruction (C may have written the
   slot of the register the instruction defines, and clobbered `rsi`,
   `rdi` and the xmm registers). A helper that touches nothing of the VM
@@ -428,8 +436,8 @@ run counting with it.
 The roadmap planned maps from machine registers to the interpreter's
 at every safepoint, and inline frames made VM frames again. The design
 as built needs neither: tier 2 has no inlining, and at every safepoint
-the frame is the interpreter's -- the slots hold every value with its
-tag (the homes written back), the VM its stack pointer, pc and count.
+the frame is the interpreter's -- the slots hold every value as its
+word (the homes written back), the VM its stack pointer, pc and count.
 So leaving the code for the interpreter -- an *OSR exit*, the
 deoptimisation this JIT has -- is a jump to the leave stub with
 `RUN_INTERP` and the pc to go on at, which the code did for a callee

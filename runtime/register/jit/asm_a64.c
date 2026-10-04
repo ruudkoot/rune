@@ -52,6 +52,14 @@ void as_test_rr(Asm *a, int ra, int rb) { a64_tst_rr(a, ra, rb); }
 void as_add_ri(Asm *a, int rd, int32_t v) { a64_adds_ri(a, rd, rd, v); }
 void as_sub_ri(Asm *a, int rd, int32_t v) { a64_subs_ri(a, rd, rd, v); }
 void as_cmp_ri(Asm *a, int r, int32_t v) { a64_cmp_ri(a, r, v); }
+void as_and_ri(Asm *a, int rd, int32_t v) { a64_mov_ri(a, R_T, v); a64_and_rr(a, rd, rd, R_T); }
+void as_or_ri(Asm *a, int rd, int32_t v) { a64_mov_ri(a, R_T, v); a64_orr_rr(a, rd, rd, R_T); }
+void as_test_ri(Asm *a, int r, int32_t v) { a64_mov_ri(a, R_T, v); a64_tst_rr(a, r, R_T); }
+void as_test8_mi(Asm *a, int base, int32_t disp, int v) { a64_ldrb(a, R_T, base, disp); a64_mov_ri(a, X16, v); a64_tst_rr(a, R_T, X16); }
+void as_ror_ri(Asm *a, int r, int n) { a64_ror_ri(a, r, r, n); }
+/* after adds the carry is set where the sum went past 64 bits; after subs it is clear where it borrowed */
+void as_add_jc(Asm *a, int rd, int rs, AsmLabel *carry) { a64_adds_rr(a, rd, rd, rs); a64_bcond(a, A64_HS, carry); }
+void as_sub_jb(Asm *a, int rd, int rs, AsmLabel *borrow) { a64_subs_rr(a, rd, rd, rs); a64_bcond(a, A64_LO, borrow); }
 void as_mul_rr(Asm *a, int rd, int rs) { a64_mul(a, rd, rd, rs); }
 void as_mul_ri(Asm *a, int rd, int rs, int32_t v) { a64_mov_ri(a, R_T, v); a64_mul(a, rd, rs, R_T); }
 void as_mul_jo(Asm *a, int rd, int rs, AsmLabel *overflow) {

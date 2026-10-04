@@ -180,6 +180,9 @@ void x64_add_ri(X64 *a, int dst, int32_t imm) { alu_ri(a, 0, dst, imm); }
 void x64_sub_ri(X64 *a, int dst, int32_t imm) { alu_ri(a, 5, dst, imm); }
 void x64_and_ri(X64 *a, int dst, int32_t imm) { alu_ri(a, 4, dst, imm); }
 void x64_cmp_ri(X64 *a, int r, int32_t imm) { alu_ri(a, 7, r, imm); }
+void x64_or_ri(X64 *a, int dst, int32_t imm) { alu_ri(a, 1, dst, imm); }
+void x64_test_ri(X64 *a, int r, int32_t imm) { op_rr(a, 1, 0xF7, -1, 0, r); x64_u32(a, (uint32_t)imm); }
+void x64_ror_ri(X64 *a, int r, int imm) { op_rr(a, 1, 0xC1, -1, 1, r); x64_byte(a, (uint8_t)imm); }
 void x64_imul_rr(X64 *a, int dst, int src) { op_rr(a, 1, 0x0F, 0xAF, dst, src); }
 void x64_imul_rri(X64 *a, int dst, int src, int32_t imm) { op_rr(a, 1, 0x69, -1, dst, src); x64_u32(a, (uint32_t)imm); }
 void x64_neg_r(X64 *a, int r) { op_rr(a, 1, 0xF7, -1, 3, r); }
@@ -206,6 +209,7 @@ void x64_cmp_mi(X64 *a, int base, int32_t disp, int32_t imm) {
     else { op_rm(a, 1, 0x81, -1, 7, base, -1, 1, disp); x64_u32(a, (uint32_t)imm); }
 }
 void x64_cmp8_mi(X64 *a, int base, int32_t disp, int imm8) { op_rm(a, 0, 0x80, -1, 7, base, -1, 1, disp); x64_byte(a, (uint8_t)imm8); }
+void x64_test8_mi(X64 *a, int base, int32_t disp, int imm8) { op_rm(a, 0, 0xF6, -1, 0, base, -1, 1, disp); x64_byte(a, (uint8_t)imm8); }
 void x64_cmp32_mi(X64 *a, int base, int32_t disp, int32_t imm) { op_rm(a, 0, 0x81, -1, 7, base, -1, 1, disp); x64_u32(a, (uint32_t)imm); }
 void x64_setcc_r8(X64 *a, int cc, int r) {
     rex8(a, 0, 0, -1, r, r);

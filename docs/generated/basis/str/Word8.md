@@ -39,9 +39,9 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 | val | [`div`](../sig/WORD.md#val-div) | `Word8.word * Word8.word -> Word8.word` |
 | val | [`fmt`](../sig/WORD.md#val-fmt) | `StringCvt.radix -> Word8.word -> string` |
 | val | [`fromInt`](../sig/WORD.md#val-fromint) | `int -> Word8.word` |
-| val | [`fromLarge`](../sig/WORD.md#val-fromlarge) | `word -> Word8.word` |
+| val | [`fromLarge`](../sig/WORD.md#val-fromlarge) | `Word64.word -> Word8.word` |
 | val | [`fromLargeInt`](../sig/WORD.md#val-fromlargeint) | `IntInf.int -> Word8.word` |
-| val | [`fromLargeWord`](../sig/WORD.md#val-fromlargeword) | `word -> Word8.word` |
+| val | [`fromLargeWord`](../sig/WORD.md#val-fromlargeword) | `Word64.word -> Word8.word` |
 | val | [`fromString`](../sig/WORD.md#val-fromstring) | `string -> Word8.word option` |
 | val | [`max`](../sig/WORD.md#val-max) | `Word8.word * Word8.word -> Word8.word` |
 | val | [`min`](../sig/WORD.md#val-min) | `Word8.word * Word8.word -> Word8.word` |
@@ -51,12 +51,12 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 | val | [`scan`](../sig/WORD.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (Word8.word * 'a) option` |
 | val | [`toInt`](../sig/WORD.md#val-toint) | `Word8.word -> int` |
 | val | [`toIntX`](../sig/WORD.md#val-tointx) | `Word8.word -> int` |
-| val | [`toLarge`](../sig/WORD.md#val-tolarge) | `Word8.word -> word` |
+| val | [`toLarge`](../sig/WORD.md#val-tolarge) | `Word8.word -> Word64.word` |
 | val | [`toLargeInt`](../sig/WORD.md#val-tolargeint) | `Word8.word -> IntInf.int` |
 | val | [`toLargeIntX`](../sig/WORD.md#val-tolargeintx) | `Word8.word -> IntInf.int` |
-| val | [`toLargeWord`](../sig/WORD.md#val-tolargeword) | `Word8.word -> word` |
-| val | [`toLargeWordX`](../sig/WORD.md#val-tolargewordx) | `Word8.word -> word` |
-| val | [`toLargeX`](../sig/WORD.md#val-tolargex) | `Word8.word -> word` |
+| val | [`toLargeWord`](../sig/WORD.md#val-tolargeword) | `Word8.word -> Word64.word` |
+| val | [`toLargeWordX`](../sig/WORD.md#val-tolargewordx) | `Word8.word -> Word64.word` |
+| val | [`toLargeX`](../sig/WORD.md#val-tolargex) | `Word8.word -> Word64.word` |
 | val | [`toString`](../sig/WORD.md#val-tostring) | `Word8.word -> string` |
 | val | [`wordSize`](../sig/WORD.md#val-wordsize) | `int` |
 | val | [`xorb`](../sig/WORD.md#val-xorb) | `Word8.word * Word8.word -> Word8.word` |

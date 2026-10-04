@@ -14,7 +14,7 @@
    See also: `INTEGER`, `WORD`
 
    Implementation: `IntInf.int/limbs`. A sign and a list of digits in base
-   2^30, written in SML on top of the 64-bit `int`; equal numbers are equal
+   2^30, written in SML on top of `int`; equal numbers are equal
    values, so `=` compares them. `LargeInt` is `IntInf`.
 
    Implementation: `INT_INF/constants`. An integer constant may have the type

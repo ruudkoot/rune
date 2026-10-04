@@ -87,9 +87,9 @@ machine, the pointer width, the heap size or when the collector ran --
 so two runs of one program report the same. The last two depend on the
 heap size and so on `runevm --heap-size`.
 
-A value is 16 bytes and an object costs an 8-byte header and a payload
-rounded up to 16, so the smallest object is 24 bytes and a list cell,
-one object of two fields, is 40.
+A value is 8 bytes and an object costs an 8-byte header and a payload
+of 8-byte fields, so the smallest object is 16 bytes and a list cell,
+one object of two fields, is 24.
 
 | Field | Type | Description |
 | --- | --- | --- |

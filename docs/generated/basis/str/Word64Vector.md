@@ -7,7 +7,7 @@
 | Signature | [`MONO_VECTOR`](../sig/MONO_VECTOR.md) |
 | Status | optional |
 | Members | 22 |
-| Tests | 134 checks |
+| Tests | 137 checks |
 | Source | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
 
 ## Synopsis

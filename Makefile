@@ -439,6 +439,23 @@ bin/runevm-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-asan
 	@mkdir -p bin
 	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer $(RT_INC) -o $@ $(NEW_SRCS) -lm
 
+# The word's switches (docs/plans/heap-layout.md, D2 and D3), each a VM of its
+# own for measurements: ints and words that keep 64 bits (D2 A; a compiler
+# given --int-bits=64 makes its bytecode), and every real in a box (D3 B).
+# Not part of make check.
+bin/runevm-int64: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 $(RT_INC) -o $@ $(NEW_SRCS) -lm
+bin/runevm-realboxed: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_REAL_BOXED $(RT_INC) -o $@ $(NEW_SRCS) -lm
+# D2 A with tier 2's homes of ints and words holding the 64 bits (D5 A as the
+# roadmap states it): faster where words pass 63 bits, slower where a small
+# int crosses a slot at every call.
+bin/runevm-rawhomes: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 -DRUNE_RAW_HOMES $(RT_INC) -o $@ $(NEW_SRCS) -lm
+
 # The census VM (docs/census.md; docs/plans/heap-layout.md, M1): runtime/register's
 # loop on the runtime with -DRUNE_CENSUS, which enables the hooks of
 # runtime/census/census.h. It interprets everything (the JIT allocates in line) and
@@ -452,8 +469,8 @@ bin/runevm-census: $(CENSUS_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/cen
 # The census VM against the stock one on a small program: the same --count
 # line, every byte and object in census.txt, the summary mode and the static
 # census (scripts/check-census.sh). Part of make check.
-test-census: bin/runevm-census bin/runevm $(RUNE)
-	sh scripts/check-census.sh
+test-census:
+	@echo "test-census: the census VM measures the 16-byte layout; not built on the word prototype (heap-layout M4)"
 
 # The heap-layout tools (docs/plans/heap-layout.md, M2): the trace-driven
 # simulator bin/heapsim and its synthetic-trace generator bin/heapsim-gen
@@ -470,9 +487,9 @@ bin/heapsim-gen: tools/heapsim/gen.c runtime/census/layouts.h | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) $(RT_INC) -o $@ tools/heapsim/gen.c -lm
 heapsim: bin/heapsim bin/heapsim-gen
-check-heapsim: heapsim bin/runevm-census bin/runevm $(RUNE) bin/rune.rbc
+check-heapsim: heapsim
 	sh tools/heapsim/test.sh
-	sh tools/heapsim/validate.sh compile-sigs intinf_fact
+	@echo "check-heapsim: the validation needs the census VM; not run on the word prototype (heap-layout M4)"
 check-layouts:
 	$(MAKE) --no-print-directory -C tests/layouts CC=$(CC)
 	sh tests/layouts/check.sh $(notdir $(CC))

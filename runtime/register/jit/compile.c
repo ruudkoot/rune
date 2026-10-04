@@ -137,7 +137,7 @@ int jit_h_prim(VM *vm, int prim, int32_t d, const uint8_t *L) {
     if (jit->prim_calls) jit->prim_calls[prim]++;
     Value *base = vm->stack + vm->frames[vm->fp].base;
     uint32_t n = prim_arity[prim];
-    if (prim_fast(prim, n, base, L, &base[d])) return 0;
+    if (prim_fast(vm, prim, n, base, L, &base[d])) return 0;
     for (uint32_t i = 0; i < n; i++) {
         Value v = vm->stack[vm->frames[vm->fp].base + (size_t)read_i32(L + 4 * i)];
         vm_push(vm, v);
@@ -268,6 +268,31 @@ int64_t jit_h_string_order(VM *vm, const Obj *a, const Obj *b) {
     return obj_len(a) < obj_len(b) ? 0 : 2;
 }
 int64_t jit_h_values_equal(VM *vm, const Value *x, const Value *y) { return values_equal(vm, *x, *y); }
+/* a real of tier 2 that has no immediate, boxed into its register's slot
+   (masm.c, ms_emit_box_real): the allocation may collect, and the VM's
+   stack pointer says what of the frame is there */
+void jit_h_box_real(VM *vm, int32_t slot, uint64_t bits) {
+    double d;
+    memcpy(&d, &bits, sizeof d);
+    size_t base = vm->frames[vm->fp].base;
+    /* the box of the last write-back, where the register has not changed:
+       a real that stays in its home across many safepoints is boxed once */
+    Value old = vm->stack[base + (size_t)slot];
+    if (val_is_ptr(old) && obj_kind(val_ptr(old)) == K_REAL && box_bits(old) == bits) return;
+    Value v = mk_real(vm, d);
+    vm->stack[base + (size_t)slot] = v;
+}
+
+/* the same for a number past 63 bits -- an Int64.int, a Word64.word, or
+   under RUNE_INT64 an int or a word: its home holds the bits, its slot the
+   box */
+void jit_h_box_num(VM *vm, int32_t slot, uint64_t bits) {
+    size_t base = vm->frames[vm->fp].base;
+    Value old = vm->stack[base + (size_t)slot];
+    if (val_is_ptr(old) && obj_kind(val_ptr(old)) == K_BOX && box_bits(old) == bits) return;
+    Value v = mk_box_vm(vm, bits);
+    vm->stack[base + (size_t)slot] = v;
+}
 
 int jit_h_primpush(VM *vm, int prim, const uint8_t *L) {
     uint32_t n = prim_arity[prim];
@@ -442,8 +467,9 @@ static int choose_homes(Jit *j) {
         for (uint32_t r = 0; r < n; r++) {
             if (homes[r].kind != HOME_SLOT || weight[r] == 0) continue;
             int rep = fn->reps[r];
-            int gpr = rep == REP_INT || rep == REP_WORD || rep == REP_CHAR || rep == REP_CON0;
-            int xmm = rep == REP_REAL;
+            int gpr = rep == REP_INT || rep == REP_WORD || rep == REP_CHAR || rep == REP_CON0
+                   || rep == REP_INT64 || rep == REP_WORD64;   /* the 64-bit types: the 64 bits, raw (masm.c) */
+            int xmm = MS_REAL_HOMES && rep == REP_REAL;   /* a real is a word in its slot until masm.h gives it a home */
             if (!(gpr && ngpr < 3) && !(xmm && nxmm < 14)) continue;
             if (best == UINT32_MAX || weight[r] > weight[best]) best = r;
         }
@@ -452,7 +478,8 @@ static int choose_homes(Jit *j) {
         if (rep == REP_REAL) { homes[best].kind = HOME_XMM; homes[best].reg = (uint8_t)(F_H0 + nxmm++); homes[best].tag = T_REAL; }
         else {
             homes[best].kind = HOME_GPR; homes[best].reg = (uint8_t)gprs[ngpr++];
-            homes[best].tag = (uint8_t)(rep == REP_INT ? T_INT : rep == REP_WORD ? T_WORD : rep == REP_CHAR ? T_CHAR : T_CON0);
+            homes[best].tag = (uint8_t)(rep == REP_INT ? T_INT : rep == REP_WORD ? T_WORD : rep == REP_CHAR ? T_CHAR
+                                        : rep == REP_INT64 ? T_INT64 : rep == REP_WORD64 ? T_WORD64 : T_CON0);
         }
     }
     free(weight);
@@ -522,12 +549,17 @@ void jit_unsupported(Jit *j) { j->unsupported = 1; }
 static void emit_slow(Masm *m, Slow *sp) {
     Jit *j = (Jit *)m;   /* the Masm is the first member */
     Slow s = *sp;
-    m->cur_pc = s.cur;
-    if (s.kind == SLOW_FATAL) {
-        /* rcx, a value the message wants, before anything uses it */
-        if (s.d) as_mov_rr(&m->a, ms_arg(m, 2), R_S1);
+    ms_begin(m, s.cur);
+    if (s.kind == SLOW_BOXREAL || s.kind == SLOW_BOXNUM) {
+        ms_emit_box(m, sp);
+    } else if (s.kind == SLOW_FATAL) {
+        /* rcx, a value the message wants, kept where the write-back of
+           the sync leaves it (a real's word is made in the registers the
+           arguments go in) */
+        if (s.d) as_mov_rr(&m->a, R_S6, R_S1);
         ms_sync(m, s.pc, 0);
         as_mov_ri(&m->a, ms_arg(m, 1), s.a);
+        if (s.d) as_mov_rr(&m->a, ms_arg(m, 2), R_S6);
         if (!s.d) as_mov_ri(&m->a, ms_arg(m, 2), s.b);
         as_mov_ri(&m->a, ms_arg(m, 3), s.c);
         ms_call(m, (MsHelper)jit_h_fatal);
@@ -692,7 +724,7 @@ static int emit_function(Jit *j, Scan *sc) {
         uint8_t op = code[pc];
         uint32_t l = rop_length(code + pc);
         j->next = pc + l;
-        m->cur_pc = pc;
+        ms_begin(m, pc);
         /* the flags of a comparison hold to the next instruction, unless
            control can arrive there from elsewhere (M7) */
         j->flags_prev = sc->target[at] ? -1 : j->flags_for;
@@ -765,6 +797,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     Jit j;
     memset(&j, 0, sizeof j);
     ms_init(&j.m, fn->nlocals, fn->maxstack, JIT_WIN, jit->leave_at);
+    j.m.box_num = (MsHelper)jit_h_box_num;   /* at either tier: a result past 63 bits on its way to a slot */
     j.vm = vm; j.jit = jit; j.f = f;
     j.flags_for = j.flags_prev = -1;
     j.tier = tier;
@@ -804,6 +837,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
             else {
                 for (uint32_t i = 0; i <= len; i++) as_label_init(&j.landings[i]);
                 j.m.homes = j.homes;
+                j.m.box_real = (MsHelper)jit_h_box_real;
                 j.m.live = j.live_in;
                 j.m.from = j.from;
                 /* the entry: the parameters' homes loaded */
@@ -823,7 +857,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
         for (uint32_t i = 1; i < len; i++)
             if (sc.target[i] && j.labels[i].at >= 0) {
                 as_bind(&j.m.a, &j.landings[i]);
-                j.m.cur_pc = j.from + i;
+                ms_begin(&j.m, j.from + i);
                 land(&j, j.from + i);
                 as_jmp(&j.m.a, &j.labels[i]);
             }

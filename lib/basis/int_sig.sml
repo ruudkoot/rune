@@ -27,13 +27,15 @@ sig
 
   (* The type of integers of this structure.
 
-     Implementation: `Int.int/64-bits`. `Int.int` is the top-level `int`,
-     whose width is the VM's: 64 bits on this one, so that `Int.precision` is
-     `SOME 64`. `Position` is `Int`. `Int64` and `FixedInt` are of 64 bits as
-     well, but sealed away from `Int.int`, so that no program can take the one
-     for the other and the VM stays free to choose the width of `Int`; `Int8`,
-     `Int16` and `Int32` keep a value of their own width, and `LargeInt` is
-     `IntInf`, which has no width. Constants of each are checked against its
+     Implementation: `Int.int/63-bits`. `Int.int` is the top-level `int`,
+     whose width is the VM's: 63 bits on this one, a word of the machine less
+     the bit that tells a number from a pointer, so that `Int.precision` is
+     `SOME 63`. `Position` is `Int`. `Int64` and `FixedInt` are of 64 bits, a
+     type of their own: a number of theirs is kept in a word where it fits 63
+     bits and in a small object where it needs the 64th, so that code written
+     for 64 bits has them on every machine; `Int8`, `Int16` and `Int32` keep
+     a value of their own width, and `LargeInt` is `IntInf`, which has no
+     width. Constants of each are checked against its
      range where they are written. *)
   eqtype int
 
@@ -80,7 +82,9 @@ sig
 
   (* `precision` is the number of bits of an integer of this structure, sign included, or `NONE` when there is no bound.
 
-     Example: `precision = SOME 64`
+     Example: `Int.precision = SOME 63`
+
+     Example: `Int64.precision = SOME 64`
 
      Example: `IntInf.precision = NONE` *)
   val precision : Int.int option
@@ -90,7 +94,9 @@ sig
      Law: `case precision of SOME p => minInt = SOME (fromLarge (IntInf.~
      (IntInf.pow (2, Int.- (p, 1))))) | NONE => true`
 
-     Example: `minInt = SOME ~9223372036854775808` *)
+     Example: `Int.minInt = SOME ~4611686018427387904`
+
+     Example: `Int64.minInt = SOME ~9223372036854775808` *)
   val minInt : int option
 
   (* `maxInt` is the largest integer of this structure, or `NONE` when there is none.
@@ -101,7 +107,9 @@ sig
      Law: `case precision of SOME p => maxInt = SOME (fromLarge (IntInf.-
      (IntInf.pow (2, Int.- (p, 1)), 1))) | NONE => true`
 
-     Example: `Int.maxInt = SOME 9223372036854775807` *)
+     Example: `Int.maxInt = SOME 4611686018427387903`
+
+     Example: `Int64.maxInt = SOME 9223372036854775807` *)
   val maxInt : int option
 
   (* ---- Arithmetic ---- *)

@@ -125,6 +125,13 @@ void as_test_rr(Asm *a, int ra, int rb);
 void as_add_ri(Asm *a, int rd, int32_t v);
 void as_sub_ri(Asm *a, int rd, int32_t v);
 void as_cmp_ri(Asm *a, int r, int32_t v);
+void as_and_ri(Asm *a, int rd, int32_t v);                  /* flags undefined, as and */
+void as_or_ri(Asm *a, int rd, int32_t v);
+void as_test_ri(Asm *a, int r, int32_t v);                  /* the flags of r & v, for CC_E and CC_NE */
+void as_test8_mi(Asm *a, int base, int32_t disp, int v);    /* the flags of the byte at [base + disp] & v */
+void as_ror_ri(Asm *a, int r, int n);                       /* rotate right by n, 1 to 63 */
+void as_add_jc(Asm *a, int rd, int rs, AsmLabel *carry);    /* rd += rs; to carry where the sum, unsigned, is past 64 bits */
+void as_sub_jb(Asm *a, int rd, int rs, AsmLabel *borrow);   /* rd -= rs; to borrow where rd, unsigned, was below rs */
 void as_mul_rr(Asm *a, int rd, int rs);
 void as_mul_ri(Asm *a, int rd, int rs, int32_t v);
 void as_mul_jo(Asm *a, int rd, int rs, AsmLabel *overflow);

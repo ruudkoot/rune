@@ -26,10 +26,13 @@ sig
 
   (* The type of words of this structure.
 
-     Implementation: `Word.word/64-bits`. `Word.word` is the top-level
-     `word`, of 64 bits, and so are `LargeWord`, `SysWord` and `Word64`;
-     `Word8`, `Word16` and `Word32` are kept in a word of the machine whose
-     upper bits are zero.
+     Implementation: `Word.word/63-bits`. `Word.word` is the top-level
+     `word`, of 63 bits -- a word of the machine less the bit that tells a
+     number from a pointer -- and so is `SysWord`. `Word64`, which is also
+     `LargeWord`, has 64 bits on every machine: a word of its type is kept in
+     a word of the machine where it fits 63 bits and in a small object where
+     it needs the 64th. `Word8`, `Word16` and `Word32` are kept in a word of
+     the machine whose upper bits are zero.
 
      Implementation: `Word.word/constants-overloaded`. A word constant has the
      word type that its context asks for, `Word8.word` as well as `word`, and
@@ -41,7 +44,9 @@ sig
 
   (* `wordSize` is the number of bits of a word of this structure.
 
-     Example: `Word8.wordSize = 8` and `Word.wordSize = 64` *)
+     Example: `Word8.wordSize = 8` and `Word.wordSize = 63`
+
+     Example: `Word64.wordSize = 64` and `LargeWord.wordSize = 64` *)
   val wordSize : int
 
   (* ---- Conversions between word structures ---- *)
@@ -112,7 +117,7 @@ sig
 
      Example: `Word8.toInt 0wxFF = 255`
 
-     Example: `(toInt 0wxFFFFFFFFFFFFFFFF handle Overflow => ~1) = ~1` *)
+     Example: `(Word64.toInt 0wxFFFFFFFFFFFFFFFF handle Overflow => ~1) = ~1` *)
   val toInt : word -> int
 
   (* `toIntX w` is the number that `w` stands for read as a signed one, as an `Int.int`.
@@ -150,7 +155,9 @@ sig
 
      Law: `notb w = ~w - 0w1`
 
-     Example: `Word.notb 0w0 = 0wxFFFFFFFFFFFFFFFF` *)
+     Example: `Word64.notb 0w0 = 0wxFFFFFFFFFFFFFFFF`
+
+     Example: `Word.notb 0w0 = 0wx7FFFFFFFFFFFFFFF` *)
   val notb : word -> word
 
   (* `<< (w, n)` is `w` shifted left by `n` bits, with zeros coming in and what leaves the width dropped.
@@ -197,7 +204,9 @@ sig
 
   (* `a - b` is the difference, taken modulo `2^wordSize`: it wraps round for `a < b`.
 
-     Example: `Word.- (0w0, 0w1) = 0wxFFFFFFFFFFFFFFFF` *)
+     Example: `Word64.- (0w0, 0w1) = 0wxFFFFFFFFFFFFFFFF`
+
+     Example: `Word.- (0w0, 0w1) = 0wx7FFFFFFFFFFFFFFF` *)
   val - : word * word -> word
 
   (* `a * b` is the product, taken modulo `2^wordSize`.

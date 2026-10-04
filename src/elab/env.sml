@@ -173,6 +173,10 @@ struct
      ("exn", nameStr (exnTycon, [])),
      ("array", nameStr (arrayTycon, [])),
      ("vector", nameStr (vectorTycon, [])),
+     (* `_prim "int64"` and `_prim "word64"` as types (the parser gives them
+        these names, which no identifier of a program is) *)
+     ("_int64", nameStr (int64Tycon, [])),
+     ("_word64", nameStr (word64Tycon, [])),
      ("unit", TyStr {fcn = TAbbrev ([], unitTy), cons = []})]
 
   val initial =

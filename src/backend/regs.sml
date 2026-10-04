@@ -22,7 +22,7 @@ struct
   structure R = RegCodes
 
   type code = Code.program
-  val info : Target.t = {name = "registers", machine = Target.Registers, intBits = 64, maxArgs = 64, switch = false,
+  val info : Target.t = {name = "registers", machine = Target.Registers, maxArgs = 64, switch = false,
                          barriers = false, safepoints = false}
 
   fun bug msg = Error.bug ("Regs: " ^ msg)
