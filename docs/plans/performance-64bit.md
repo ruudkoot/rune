@@ -149,9 +149,25 @@ Each is small unless it says otherwise. The programs are at the end.
   `inline`, `lcg`, `fnv` and the bootstrap do with five and with
   eight. The bootstrap is in it because a home is saved and loaded
   around every call: more homes are not free for code that calls.
+* **The registers** (`runtime/register/jit/asm.h`). On x86-64 all
+  sixteen are spoken for: six pinned (`rsp`; `r12` the VM, `r13` the
+  value stack, `rbp` and `r14` the frame's base as an index and as a
+  pointer, `r15` the instruction count), seven scratch (`rax`, `rcx`,
+  `rdx`, `r8` to `r11`) and the three homes (`rbx`, `rsi`, `rdi`). Of
+  the scratch ones `rax`, `rcx`, `rdx` and `r8` do nearly all the
+  emitters' work; `r9`, `r10` and `r11` are named in a few dozen
+  places (a call's frame, the profile's counters, some slow paths), so
+  six homes are within reach by rewriting those. Seven or eight would
+  take one of the two forms of the frame's base, or the instruction
+  count, out of a register, which is a change to the calling
+  sequence. On aarch64 the convention leaves `x28`, `x15` and `x16`
+  untouched and uses `x1` to `x8` for C's arguments alone. Reals have
+  fourteen homes of their own.
+* **What a home costs.** One that is live is written back to its slot
+  before a call into C and loaded again after it, and of the three
+  only `rbx` is one that C preserves on Linux.
 * **How.** `choose_homes` (`runtime/register/jit/compile.c`) takes the
-  three registers of `gprs`; the machine has more that the JIT's
-  convention leaves free, callee-saved ones first.
+  three registers of `gprs`; give it five, then eight.
 * **What it changes.** Whether A is this or experiment 3.
 
 ### 3. A temporary that is never a word
