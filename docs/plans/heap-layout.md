@@ -346,40 +346,55 @@ of 2026-09-27 asked for). `lib/random`'s SplitMix64 as a program: three
 million words from one generator, and a tree of 2^18 splits, where a
 generator, two `Word64`s in a record, is passed at every node. Half of
 what it computes has its top bit set, which under D2 A has no immediate.
-Instructions at the default tiering, bytes and boxes:
+Instructions at the default tiering (they do not depend on the machine's
+load, as cycles do), with three programs of small numbers beside it:
 
-| | instructions | bytes | boxes |
-|---|---:|---:|---:|
-| 16-byte layout | 1.01G | 176.6 MB | none |
-| the word, D2 A, as first built | 9.36G | 105.6 MB | 21.6M, 345.9 MB |
-| with raw homes in tier 2 | 2.11G | 105.6 MB | 8.3M, 132.8 MB |
+| | SplitMix64 | its boxes | fib | tak | word_bits |
+|---|---:|---:|---:|---:|---:|
+| 16-byte layout | 1.01G | none | 635M | 184M | 251M |
+| the word, D2 A: a home holds the word | 9.36G | 21.6M, 346 MB | 687M | 186M | 331M |
+| the word, D2 A, raw homes (`bin/runevm-rawhomes`) | 2.11G | 8.3M, 133 MB | 822M | 245M | 449M |
+| the word, D2 B (`bin/runevm-int63`) | another answer | none | 612M | 177M | 251M |
 
-* **As first built it was nine times the instructions of today**, and
-  the JIT gained nothing over the interpreter (9.36G against 9.40G): a
-  general home held the word, an operand or a result past 63 bits sent
-  the operation to the primitive's C, and every such result was a box.
-  The perf programs did not show it; `word_bits` has few such words.
-* **Raw homes are D5 A as the roadmap states it**, and the prototype
-  has them now: at tier 2 an int's or a word's home holds its 64 bits,
-  arithmetic between homes is the machine's with no test (a word's has
-  none at all), an operand in a slot is unboxed in line, and a result
-  is given its word, or boxed by a helper, only where it goes to a
-  slot. The same mechanism as a real's home, with the same rule for an
-  emitter (`ms_need_word`). It brought the workload to 2.1 times
+* **With a home that holds the word, SplitMix64 is nine times the
+  instructions of today**, and the JIT gains nothing over the
+  interpreter (9.36G against 9.40G): an operand or a result past 63
+  bits sends the operation to the primitive's C, and every such result
+  is a box. The perf programs do not show it; `word_bits` keeps its
+  words to 30 bits.
+* **Raw homes are D5 A as the roadmap states it**, built as a switch
+  (`RUNE_RAW_HOMES`): at tier 2 an int's or a word's home holds its 64
+  bits, arithmetic between homes is the machine's with no test (a
+  word's has none at all), an operand in a slot is unboxed in line, and
+  a result is given its word, or boxed by a helper, only where it goes
+  to a slot. The same mechanism as a real's home, with the same rule
+  for an emitter (`ms_need_word`). SplitMix64 comes to 2.1 times
   today's instructions.
-* **What is left is the slots.** x86-64 leaves tier 2 three general
-  registers for homes, so most of SplitMix64's intermediates live in
-  slots, and D5 A says a slot holds a word: a 64-bit result bound for a
-  slot is boxed, 16 bytes each (26% of the remaining instructions are
-  the boxing helper). The record of two `Word64`s boxes its fields as
-  well, which raw typed fields would not (D1 B's second half: this
-  workload, not the reals, is the case for them). Short of typed slots
-  (D5 B) the price of 64-bit words that do not fit 63 is a box wherever
-  one rests outside a home.
-* **D2 B does not escape it.** With `Int` and `Word` at 63 bits the
-  library's `Word64` is a type of its own, boxed in every slot whatever
-  its value, so SplitMix64 pays at least this. The 63-bit VM as it is
-  runs the program and prints another answer: its words wrap at 63.
+* **And they cost the small numbers.** A value that crosses a slot is
+  decoded on the way in and encoded on the way out, and a call crosses
+  slots: `fib` runs 822M instructions against 687M, `tak` 245M against
+  186M, `word_bits` 449M against 331M. That is why they are a switch
+  and not the prototype's default: the two kinds of program want
+  opposite things of a home, and nothing tier 2 knows when it compiles
+  says which kind it has. A tier 2 that counted a function's trips to
+  the box's slow path and compiled it again with raw homes would have
+  both; it is not built.
+* **What is left with raw homes is the slots.** x86-64 leaves tier 2
+  three general registers for homes, so most of SplitMix64's
+  intermediates live in slots, and D5 A says a slot holds a word: a
+  64-bit result bound for a slot is boxed, 16 bytes each (26% of the
+  remaining instructions are the boxing helper, which allocating in
+  line would shorten). The record of two `Word64`s boxes its fields as
+  well, which raw typed fields would not: this workload, not the reals,
+  is the case for D1 B's second half. Short of typed slots (D5 B) the
+  price of a 64-bit word that does not fit 63 is a box wherever it
+  rests outside a home.
+* **D2 B does not escape it, and is the cheapest for small numbers.**
+  With `Int` and `Word` at 63 bits nothing tests for a box (`fib` 612M,
+  below today's 635M), and the library's `Word64` is a type of its own,
+  boxed in every slot whatever its value, so SplitMix64 pays at least
+  what raw homes leave. The 63-bit VM as it is runs the program and
+  prints another answer: its words wrap at 63.
 
 Not built yet: raw typed fields; prototype 2 (headerless pairs) and the
 rest of M4's list. The budgets are not moved.

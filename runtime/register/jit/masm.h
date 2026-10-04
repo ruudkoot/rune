@@ -55,10 +55,11 @@ typedef struct Slow {
    image see the slot, and the collector's roots are the slots as before.
 
    A raw home holds the value itself and not its word: a real's is an xmm
-   register with the double, and where the VM keeps ints and words of 64
-   bits (RUNE_INT64, D2 A) an int's or a word's general register holds the
-   64 bits, so that arithmetic between homes costs what it did and needs no
-   test for a box. A raw home's slot holds a word and may be behind: the
+   register with the double, and with RUNE_RAW_HOMES, where the VM keeps
+   ints and words of 64 bits (RUNE_INT64, D2 A), an int's or a word's
+   general register holds the 64 bits, so that arithmetic between homes
+   needs no test for a box (without the switch it holds the word, which
+   may be a box's address). A raw home's slot holds a word and may be behind: the
    word is made when something needs it -- a safepoint, a store into the
    heap, a move to a register that has no such home -- by encoding the
    value, or, where it has no immediate, by a helper that boxes it. That

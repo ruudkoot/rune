@@ -448,6 +448,12 @@ bin/runevm-int63: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor
 bin/runevm-realboxed: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_REAL_BOXED $(RT_INC) -o $@ $(NEW_SRCS) -lm
+# D2 A with tier 2's homes of ints and words holding the 64 bits (D5 A as the
+# roadmap states it): faster where words pass 63 bits, slower where a small
+# int crosses a slot at every call.
+bin/runevm-rawhomes: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_RAW_HOMES $(RT_INC) -o $@ $(NEW_SRCS) -lm
 
 # The census VM (docs/census.md; docs/plans/heap-layout.md, M1): runtime/register's
 # loop on the runtime with -DRUNE_CENSUS, which enables the hooks of
