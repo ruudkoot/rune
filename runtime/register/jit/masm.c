@@ -63,6 +63,24 @@ int ms_arg(const Masm *m, int i) { return as_arg(m->win, i); }
 /* ---- values ---- */
 
 static int is_xmm(const Home *h) { return h && h->kind == HOME_XMM; }
+/* A home that holds its value raw, not as its word: a real's double, and,
+   where the VM keeps ints and words of 64 bits (RUNE_INT64), an int's or a
+   word's 64 bits -- a number past 63 has no word but a box's address, and
+   arithmetic on the bits themselves needs no test for one. A raw home's
+   slot may be behind (cur_reals says which are not). */
+static int is_raw_gpr(const Home *h) {
+#ifdef RUNE_INT64
+    return h && h->kind == HOME_GPR && (h->tag == T_INT || h->tag == T_WORD);
+#else
+    (void)h;
+    return 0;
+#endif
+}
+static int is_raw(const Home *h) { return is_xmm(h) || is_raw_gpr(h); }
+const Home *ms_word_home(const Masm *m, int32_t s) {
+    const Home *h = ms_home(m, s);
+    return h && !is_raw(h) ? h : NULL;
+}
 static int real_current(const Masm *m, int32_t s) { return s >= 0 && s < 64 && ((m->cur_reals >> s) & 1); }
 static void real_behind(Masm *m, int32_t s) { if (s >= 0 && s < 64) m->cur_reals &= ~((uint64_t)1 << s); }
 static void real_made(Masm *m, int32_t s) { if (s >= 0 && s < 64) m->cur_reals |= (uint64_t)1 << s; }
@@ -168,10 +186,62 @@ static void real_to_slot(Masm *m, int32_t s, const Home *h, int pushed, uint32_t
     as_bind(&m->a, &m->slow[which].back);
     real_made(m, s);
 }
+#ifdef RUNE_INT64
+/* R_S2 := the word of the 64-bit int or word in r, which is left as it
+   was; to fail where it has no immediate (it is past 63 bits) */
+static void encode_num(Masm *m, int r, int tag, AsmLabel *fail) {
+    if (tag == T_WORD) {
+        as_test_rr(&m->a, r, r);
+        as_jcc(&m->a, CC_S, fail);
+        as_lea(&m->a, R_S2, r, r, 1, 1);
+    } else {
+        as_mov_rr(&m->a, R_S2, r);
+        as_add_rr(&m->a, R_S2, R_S2);
+        as_jcc(&m->a, CC_O, fail);
+        as_lea(&m->a, R_S2, R_S2, -1, 1, 1);
+    }
+}
+/* reg := the 64 bits of the int or word whose word is in R_S2: an
+   immediate's payload, or its box's bits. To unless where it is neither;
+   with unless NULL the word is trusted (tier 2, a register the section
+   says holds an int or a word; unit, a register not yet defined, is 0). */
+static void decode_num(Masm *m, int reg, int tag, AsmLabel *unless) {
+    AsmLabel box, done; as_label_init(&box); as_label_init(&done);
+    as_test_ri(&m->a, R_S2, 1);
+    as_jcc(&m->a, CC_E, &box);
+    if (reg != R_S2) as_mov_rr(&m->a, reg, R_S2);
+    if (tag == T_WORD) as_shr_ri(&m->a, reg, 1); else as_sar_ri(&m->a, reg, 1);
+    as_jmp(&m->a, &done);
+    as_bind(&m->a, &box);
+    if (unless) {
+        as_test_rr(&m->a, R_S2, R_S2);
+        as_jcc(&m->a, CC_E, unless);
+        as_cmp8_mi(&m->a, R_S2, (int32_t)offsetof(Obj, kind), K_BOX);
+        as_jcc(&m->a, CC_NE, unless);
+    }
+    as_ld64(&m->a, reg, R_S2, (int32_t)sizeof(Obj));
+    as_bind(&m->a, &done);
+    as_label_free(&box); as_label_free(&done);
+}
+/* A raw int's or word's home to its slot: its word, or boxed by the slow
+   path where it has none, as a real's (real_to_slot). */
+static void num_to_slot(Masm *m, int32_t s, const Home *h, int pushed, uint32_t live) {
+    if (real_current(m, s)) return;
+    Slow *sl = ms_slow(m, SLOW_BOXNUM, m->cur_pc);
+    if (!sl) return;
+    sl->a = s; sl->b = h->reg; sl->c = pushed; sl->n = live;
+    int which = m->nslow - 1;
+    encode_num(m, h->reg, h->tag, &m->slow[which].here);
+    as_st64(&m->a, BASER, SLOT(s), R_S2);
+    as_bind(&m->a, &m->slow[which].back);
+    real_made(m, s);
+}
+#endif
 /* A home holds its value's word, as the slot does: written back and loaded
-   by a plain move -- but a real's, which holds the double. */
+   by a plain move -- but a raw one (is_raw), whose slot is brought up to
+   date where a word is wanted and read back by decoding it. */
 static void home_to_slot(Masm *m, int32_t s, const Home *h) {
-    if (is_xmm(h)) { want_current(m, s); return; }
+    if (is_raw(h)) { want_current(m, s); return; }
     as_st64(&m->a, BASER, SLOT(s), h->reg);
 }
 static void slot_to_home(Masm *m, int32_t s, const Home *h) {
@@ -181,12 +251,23 @@ static void slot_to_home(Masm *m, int32_t s, const Home *h) {
         real_made(m, s);   /* the slot is the home's word */
         return;
     }
+#ifdef RUNE_INT64
+    if (is_raw_gpr(h)) {
+        as_ld64(&m->a, R_S2, BASER, SLOT(s));
+        decode_num(m, h->reg, h->tag, NULL);
+        real_made(m, s);
+        return;
+    }
+#endif
     as_ld64(&m->a, h->reg, BASER, SLOT(s));
 }
 void ms_begin(Masm *m, uint32_t pc) { m->cur_pc = pc; m->cur_reals = 0; }
 void ms_need_word(Masm *m, int32_t s) {
     const Home *h = ms_home(m, s);
     if (is_xmm(h)) real_to_slot(m, s, h, 0, m->cur_pc);
+#ifdef RUNE_INT64
+    else if (is_raw_gpr(h)) num_to_slot(m, s, h, 0, m->cur_pc);
+#endif
 }
 
 void ms_copy(Masm *m, int32_t d, int32_t s) {
@@ -206,6 +287,22 @@ void ms_copy(Masm *m, int32_t d, int32_t s) {
         as_fst(&m->a, BASER, SLOT(d), F_S0);
         return;
     }
+#ifdef RUNE_INT64
+    if (is_raw_gpr(hd)) {   /* an int's or a word's 64 bits */
+        if (is_raw_gpr(hs)) as_mov_rr(&m->a, hd->reg, hs->reg);
+        else if (hs) { as_mov_rr(&m->a, hd->reg, hs->reg); as_sar_ri(&m->a, hd->reg, 1); }   /* a char's or a tag's word */
+        else { as_ld64(&m->a, R_S2, BASER, SLOT(s)); decode_num(m, hd->reg, hd->tag, NULL); }
+        real_behind(m, d);
+        return;
+    }
+    if (is_raw_gpr(hs)) {
+        if (hd) bug("a home of words given an int's 64 bits", d, s);
+        want_current(m, s);
+        as_fld(&m->a, F_S0, BASER, SLOT(s));
+        as_fst(&m->a, BASER, SLOT(d), F_S0);
+        return;
+    }
+#endif
     if (hd && hs) as_mov_rr(&m->a, hd->reg, hs->reg);
     else if (hd) slot_to_home(m, s, hd);
     else if (hs) home_to_slot(m, d, hs);
@@ -215,7 +312,7 @@ void ms_copy(Masm *m, int32_t d, int32_t s) {
     }
 }
 void ms_move(Masm *m, int32_t d, int32_t s) {
-    if (d != s && !is_xmm(ms_home(m, d))) ms_need_word(m, s);
+    if (d != s && !is_raw(ms_home(m, d))) ms_need_word(m, s);
     ms_copy(m, d, s);
 }
 /* the word of the value of tag and payload */
@@ -224,6 +321,7 @@ void ms_set(Masm *m, int32_t d, int tag, int64_t payload) {
     const Home *h = ms_home(m, d);
     int64_t w = word_of(tag, payload);
     if (is_xmm(h)) bug("a real's home set to an immediate that is none", d, tag);
+    if (is_raw_gpr(h)) { as_mov_ri(&m->a, h->reg, payload); real_behind(m, d); return; }
     if (h) { as_mov_ri(&m->a, h->reg, w); return; }
     if (w >= INT32_MIN && w <= INT32_MAX) as_st64i(&m->a, BASER, SLOT(d), (int32_t)w);
     else { as_mov_ri(&m->a, R_S0, w); as_st64(&m->a, BASER, SLOT(d), R_S0); }
@@ -236,20 +334,32 @@ void ms_set_bits(Masm *m, int32_t d, int r) {
         real_behind(m, d);
         return;
     }
+#ifdef RUNE_INT64
+    if (is_raw_gpr(h)) {   /* an int's or a word's word: into the home as its 64 bits */
+        if (r != R_S2) as_mov_rr(&m->a, R_S2, r);
+        decode_num(m, h->reg, h->tag, NULL);
+        real_behind(m, d);
+        return;
+    }
+#endif
     if (h) as_mov_rr(&m->a, h->reg, r);
     else as_st64(&m->a, BASER, SLOT(d), r);
 }
 void ms_set_reg(Masm *m, int32_t d, int tag, int r) {
+    const Home *h = ms_home(m, d);
+    if (is_raw_gpr(h)) { as_mov_rr(&m->a, h->reg, r); real_behind(m, d); return; }   /* the payload is the home's */
     if (tag != T_PTR) as_lea(&m->a, r, r, r, 1, 1);   /* 2n+1; the flags are left as they were */
     ms_set_bits(m, d, r);
 }
 void ms_load_bits(Masm *m, int r, int32_t s) {
     const Home *h = ms_home(m, s);
-    if (is_xmm(h)) { want_current(m, s); as_ld64(&m->a, r, BASER, SLOT(s)); return; }
+    if (is_raw(h)) { want_current(m, s); as_ld64(&m->a, r, BASER, SLOT(s)); return; }
     if (h) as_mov_rr(&m->a, r, h->reg);
     else as_ld64(&m->a, r, BASER, SLOT(s));
 }
 void ms_load_payload(Masm *m, int r, int32_t s) {
+    const Home *h = ms_home(m, s);
+    if (is_raw_gpr(h)) { as_mov_rr(&m->a, r, h->reg); return; }
     ms_load_bits(m, r, s);
     as_sar_ri(&m->a, r, 1);
 }
@@ -261,14 +371,22 @@ void ms_load_value(Masm *m, int32_t d, int base, int32_t disp) {
         real_behind(m, d);
         return;
     }
+#ifdef RUNE_INT64
+    if (is_raw_gpr(h)) {
+        as_ld64(&m->a, R_S2, base, disp);
+        decode_num(m, h->reg, h->tag, NULL);
+        real_behind(m, d);
+        return;
+    }
+#endif
     if (h) { as_ld64(&m->a, h->reg, base, disp); return; }
     as_fld(&m->a, F_S0, base, disp);
     as_fst(&m->a, BASER, SLOT(d), F_S0);
 }
 void ms_store_value(Masm *m, int base, int32_t disp, int32_t s) {
     const Home *h = ms_home(m, s);
-    if (h && !is_xmm(h)) { as_st64(&m->a, base, disp, h->reg); return; }
-    if (h) want_current(m, s);   /* a real: its slot has its word */
+    if (h && !is_raw(h)) { as_st64(&m->a, base, disp, h->reg); return; }
+    if (h) want_current(m, s);   /* a raw home: its slot has its word */
     as_fld(&m->a, F_S0, BASER, SLOT(s));
     as_fst(&m->a, base, disp, F_S0);
 }
@@ -276,20 +394,20 @@ void ms_value_to(Masm *m, int base, int32_t disp, int32_t s) { ms_store_value(m,
 void ms_value_from(Masm *m, int32_t d, int base, int32_t disp) { ms_load_value(m, d, base, disp); }
 void ms_cmp_bits(Masm *m, int r, int32_t s) {
     const Home *h = ms_home(m, s);
-    if (is_xmm(h)) want_current(m, s);
-    if (h && !is_xmm(h)) as_cmp_rr(&m->a, r, h->reg);
+    if (is_raw(h)) want_current(m, s);
+    if (h && !is_raw(h)) as_cmp_rr(&m->a, r, h->reg);
     else as_cmp_rm(&m->a, r, BASER, SLOT(s));
 }
 void ms_test_false(Masm *m, int32_t s) {
     const Home *h = ms_home(m, s);
-    if (is_xmm(h)) bug("a real tested as a bool", s, 0);
+    if (is_raw(h)) bug("a real or a number tested as a bool", s, 0);
     if (h) as_cmp_ri(&m->a, h->reg, (int32_t)IMM(0));
     else as_cmp_mi(&m->a, BASER, SLOT(s), (int32_t)IMM(0));
 }
 void ms_bool_flags(Masm *m, int r) { as_cmp_ri(&m->a, r, (int32_t)IMM(0)); }
 void ms_load_xmm(Masm *m, int xmm, int32_t s) {
     const Home *h = ms_home(m, s);
-    if (h && !is_xmm(h)) { as_fmov_fr(&m->a, xmm, h->reg); return; }
+    if (h && !is_raw(h)) { as_fmov_fr(&m->a, xmm, h->reg); return; }
     if (h) want_current(m, s);
     as_fld(&m->a, xmm, BASER, SLOT(s));
 }
@@ -301,17 +419,13 @@ void ms_next_value(Masm *m, int r) { as_add_ri(&m->a, r, VALUE_SIZE); }
    a slot's always; a home's holds what its representation says, which
    under RUNE_INT64 is, for an int or a word, an immediate or its box */
 static int imm_tested(const Masm *m, int32_t s, int tag) {
-    if (!ms_home(m, s)) return 1;
-#ifdef RUNE_INT64
-    return tag == T_INT || tag == T_WORD;
-#else
     (void)tag;
-    return 0;
-#endif
+    return !ms_home(m, s);
 }
 void ms_check_tag(Masm *m, int32_t s, int tag, AsmLabel *unless) {
     const Home *h = ms_home(m, s);
     if (is_xmm(h)) { if (tag != T_REAL) as_jmp(&m->a, unless); return; }
+    if (is_raw_gpr(h)) { if (tag == T_PTR || tag == T_REAL) as_jmp(&m->a, unless); return; }   /* a number, whatever its size */
     if (tag == T_PTR) {
         if (h) { as_jmp(&m->a, unless); return; }   /* a home holds no object the program sees */
         as_test8_mi(&m->a, BASER, SLOT(s), 1);
@@ -324,7 +438,120 @@ void ms_check_tag(Masm *m, int32_t s, int tag, AsmLabel *unless) {
     as_jcc(&m->a, CC_E, unless);
 }
 
-/* ---- ints and words, on their words ---- */
+/* ---- ints and words ----
+   The operands of an arithmetic or a comparison come into R_S0 and R_S1 in
+   the form the arithmetic is done in, and the result goes from that form
+   into its register (ms_set_num). With ints and words of 63 bits (D2 B)
+   the form is the word itself, 2n+1: the machine's overflow of a sum of
+   words is the overflow of 63 bits, a word wraps where its word does, and
+   nothing is ever a box. With 64 bits kept (RUNE_INT64, D2 A) it is the 64
+   bits: an operand's are its immediate's payload or its box's, tier 2's
+   homes hold them as they are, the machine's overflow is the int's, a
+   word's arithmetic has no test at all, and a result is given its word, or
+   handed to the primitive's C where it needs a box, only when it goes to a
+   slot. R_S2 is clobbered. */
+void ms_two_words(Masm *m, int32_t x, int32_t y, AsmLabel *heap) {
+    ms_load_bits(m, R_S0, x);
+    ms_load_bits(m, R_S1, y);
+    as_mov_rr(&m->a, R_S2, R_S0);
+    as_and_rr(&m->a, R_S2, R_S1);
+    as_test_ri(&m->a, R_S2, 1);
+    as_jcc(&m->a, CC_E, heap);
+}
+#ifdef RUNE_INT64
+/* reg := the 64 bits of the int, word, char or tag in R(s); to slow where
+   it is none (a slot the section does not vouch for) */
+static void load_num(Masm *m, int reg, int32_t s, int tag, AsmLabel *slow) {
+    const Home *h = ms_home(m, s);
+    if (is_xmm(h)) bug("a real read as a number", s, tag);
+    if (is_raw_gpr(h)) { as_mov_rr(&m->a, reg, h->reg); return; }
+    if (h) { as_mov_rr(&m->a, reg, h->reg); as_sar_ri(&m->a, reg, 1); return; }   /* a char or a tag: its word */
+    as_ld64(&m->a, R_S2, BASER, SLOT(s));
+    if (tag == T_CHAR || tag == T_CON0) {   /* never a box */
+        as_test_ri(&m->a, R_S2, 1);
+        as_jcc(&m->a, CC_E, slow);
+        as_mov_rr(&m->a, reg, R_S2);
+        as_sar_ri(&m->a, reg, 1);
+        return;
+    }
+    int trusted = m->reps && (uint32_t)s < m->nlocals && (m->reps[s] == REP_INT || m->reps[s] == REP_WORD);
+    decode_num(m, reg, tag, trusted ? NULL : slow);
+}
+void ms_one_imm(Masm *m, int32_t x, int tag, AsmLabel *slow) { load_num(m, R_S0, x, tag, slow); }
+void ms_two_imm(Masm *m, int32_t x, int32_t y, int tag, AsmLabel *slow) {
+    load_num(m, R_S0, x, tag, slow);
+    load_num(m, R_S1, y, tag, slow);
+}
+void ms_int_arith(Masm *m, int op, AsmLabel *slow) {
+    switch (op) {
+    case MS_ADD: as_add_rr(&m->a, R_S0, R_S1); as_jcc(&m->a, CC_O, slow); break;
+    case MS_SUB: as_sub_rr(&m->a, R_S0, R_S1); as_jcc(&m->a, CC_O, slow); break;
+    case MS_MUL: as_mul_jo(&m->a, R_S0, R_S1, slow); break;
+    default: bug("an operation ints do not have", op, MS_MUL);
+    }
+}
+void ms_int_neg(Masm *m, AsmLabel *slow) {
+    as_mov_ri(&m->a, R_S1, 0);
+    as_sub_rr(&m->a, R_S1, R_S0);
+    as_jcc(&m->a, CC_O, slow);
+    as_mov_rr(&m->a, R_S0, R_S1);
+}
+void ms_int_to_char(Masm *m, AsmLabel *slow) {
+    as_cmp_ri(&m->a, R_S0, 255);
+    as_jcc(&m->a, CC_A, slow);   /* unsigned: negative is out too */
+}
+void ms_word_arith(Masm *m, int op, AsmLabel *slow) {
+    (void)slow;   /* modulo 2^64, as the machine's */
+    switch (op) {
+    case MS_ADD: as_add_rr(&m->a, R_S0, R_S1); break;
+    case MS_SUB: as_sub_rr(&m->a, R_S0, R_S1); break;
+    case MS_MUL: as_mul_rr(&m->a, R_S0, R_S1); break;
+    case MS_AND: as_and_rr(&m->a, R_S0, R_S1); break;
+    case MS_OR: as_or_rr(&m->a, R_S0, R_S1); break;
+    case MS_XOR: as_xor_rr(&m->a, R_S0, R_S1); break;
+    default: bug("an operation words do not have", op, MS_XOR);
+    }
+}
+void ms_word_not(Masm *m, AsmLabel *slow) { (void)slow; as_not(&m->a, R_S0); }
+/* a word as an int: toInt of one past 2^63 - 1 is Overflow, the
+   primitive's; toIntX is the same bits */
+void ms_word_to_int(Masm *m, int x, AsmLabel *slow) {
+    if (x) return;
+    as_test_rr(&m->a, R_S0, R_S0);
+    as_jcc(&m->a, CC_S, slow);
+}
+void ms_int_to_word(Masm *m, AsmLabel *slow) { (void)m; (void)slow; }
+void ms_untag(Masm *m, int r, int tag) { (void)m; (void)r; (void)tag; }   /* the form is the payload already */
+void ms_set_num(Masm *m, int32_t d, int tag, int r, AsmLabel *slow) {
+    const Home *h = ms_home(m, d);
+    if (is_xmm(h)) bug("a number into a real's home", d, tag);
+    if (is_raw_gpr(h)) { if (r != h->reg) as_mov_rr(&m->a, h->reg, r); real_behind(m, d); return; }
+    if (tag == T_CHAR || tag == T_CON0) {   /* always an immediate */
+        as_lea(&m->a, R_S2, r, r, 1, 1);
+        if (h) as_mov_rr(&m->a, h->reg, R_S2); else as_st64(&m->a, BASER, SLOT(d), R_S2);
+        return;
+    }
+    if (h) bug("an int or a word into a home of words", d, tag);
+    /* into a slot: its word, or where it has none its box, which a helper
+       makes from the bits (the primitive need not be done again in C);
+       where there is no such helper (runeopt's templates) the slow path is
+       the primitive's */
+    if (!m->box_num) {
+        encode_num(m, r, tag, slow);
+        as_st64(&m->a, BASER, SLOT(d), R_S2);
+        return;
+    }
+    Slow *sl = ms_slow(m, SLOW_BOXNUM, m->cur_pc);
+    if (!sl) return;
+    sl->a = d; sl->b = r; sl->c = 0; sl->n = m->cur_pc;
+    int which = m->nslow - 1;
+    encode_num(m, r, tag, &m->slow[which].here);
+    as_st64(&m->a, BASER, SLOT(d), R_S2);
+    as_bind(&m->a, &m->slow[which].back);
+}
+void ms_set_payload(Masm *m, int32_t d, int tag, int r, AsmLabel *slow) { ms_set_num(m, d, tag, r, slow); }
+void ms_set_word(Masm *m, int32_t d, int r, AsmLabel *slow) { ms_set_num(m, d, T_WORD, r, slow); }
+#else
 void ms_one_imm(Masm *m, int32_t x, int tag, AsmLabel *slow) {
     ms_load_bits(m, R_S0, x);
     if (imm_tested(m, x, tag)) { as_test_ri(&m->a, R_S0, 1); as_jcc(&m->a, CC_E, slow); }
@@ -342,14 +569,6 @@ void ms_two_imm(Masm *m, int32_t x, int32_t y, int tag, AsmLabel *slow) {
         as_test_ri(&m->a, tx ? R_S0 : R_S1, 1);
         as_jcc(&m->a, CC_E, slow);
     }
-}
-void ms_two_words(Masm *m, int32_t x, int32_t y, AsmLabel *heap) {
-    ms_load_bits(m, R_S0, x);
-    ms_load_bits(m, R_S1, y);
-    as_mov_rr(&m->a, R_S2, R_S0);
-    as_and_rr(&m->a, R_S2, R_S1);
-    as_test_ri(&m->a, R_S2, 1);
-    as_jcc(&m->a, CC_E, heap);
 }
 /* 2a+1 and 2b+1: the sum is (2a) + (2b+1), the difference (2a+1) - (2b+1)
    + 1, the product (2a) * b + 1, and the machine's overflow of each is the
@@ -385,41 +604,24 @@ void ms_int_to_char(Masm *m, AsmLabel *slow) {
     as_cmp_ri(&m->a, R_S0, (int32_t)IMM(255));
     as_jcc(&m->a, CC_A, slow);   /* unsigned: negative is out too */
 }
-/* A word is 63 bits (RUNE_INT63) and arithmetic is modulo 2^63, which the
-   words' own arithmetic modulo 2^64 gives; or 64 (RUNE_INT64), where a
-   result past 63 bits is a box, which the primitive's C makes. */
+/* A word is 63 bits and its arithmetic is modulo 2^63, which the words'
+   own arithmetic modulo 2^64 gives. */
 void ms_word_arith(Masm *m, int op, AsmLabel *slow) {
+    (void)slow;
     switch (op) {
     case MS_ADD:
         as_lea(&m->a, R_S0, R_S0, -1, 1, -1);
-#ifdef RUNE_INT64
-        as_add_jc(&m->a, R_S0, R_S1, slow);
-#else
-        (void)slow;
         as_add_rr(&m->a, R_S0, R_S1);
-#endif
         break;
     case MS_SUB:
-#ifdef RUNE_INT64
-        as_sub_jb(&m->a, R_S0, R_S1, slow);
-#else
         as_sub_rr(&m->a, R_S0, R_S1);
-#endif
         as_lea(&m->a, R_S0, R_S0, -1, 1, 1);
         break;
     case MS_MUL:
-#ifdef RUNE_INT64
-        /* two numbers below 2^63: the signed product overflows where it is not below 2^63 */
-        as_shr_ri(&m->a, R_S0, 1);
-        as_shr_ri(&m->a, R_S1, 1);
-        as_mul_jo(&m->a, R_S0, R_S1, slow);
-        as_lea(&m->a, R_S0, R_S0, R_S0, 1, 1);
-#else
         as_shr_ri(&m->a, R_S1, 1);
         as_lea(&m->a, R_S0, R_S0, -1, 1, -1);
         as_mul_rr(&m->a, R_S0, R_S1);
         as_lea(&m->a, R_S0, R_S0, -1, 1, 1);
-#endif
         break;
     case MS_AND: as_and_rr(&m->a, R_S0, R_S1); break;
     case MS_OR: as_or_rr(&m->a, R_S0, R_S1); break;
@@ -428,45 +630,29 @@ void ms_word_arith(Masm *m, int op, AsmLabel *slow) {
     }
 }
 void ms_word_not(Masm *m, AsmLabel *slow) {
-#ifdef RUNE_INT64
-    as_jmp(&m->a, slow);   /* the complement of a word below 2^63 is not below it */
-#else
     (void)slow;
     as_neg(&m->a, R_S0);   /* -(2w+1) = 2(~w)+1 */
-#endif
 }
 /* A word as an int: the same bits, where the int has them -- a word of 62
-   bits or fewer, whose word has its top bit clear. toIntX of 63 bits is
-   the same word; of 64, an int past 63 bits is a box. */
+   bits or fewer, whose word has its top bit clear. toIntX is the same
+   word. */
 void ms_word_to_int(Masm *m, int x, AsmLabel *slow) {
-#ifndef RUNE_INT64
     if (x) return;
-#else
-    (void)x;
-#endif
     as_test_rr(&m->a, R_S0, R_S0);
     as_jcc(&m->a, CC_S, slow);
 }
-void ms_int_to_word(Masm *m, AsmLabel *slow) {
-#ifdef RUNE_INT64
-    as_test_rr(&m->a, R_S0, R_S0);   /* a negative int is a word past 63 bits */
-    as_jcc(&m->a, CC_S, slow);
-#else
-    (void)m; (void)slow;
-#endif
-}
+void ms_int_to_word(Masm *m, AsmLabel *slow) { (void)m; (void)slow; }
 void ms_untag(Masm *m, int r, int tag) {
     if (tag == T_WORD) as_shr_ri(&m->a, r, 1); else as_sar_ri(&m->a, r, 1);
 }
 void ms_set_word(Masm *m, int32_t d, int r, AsmLabel *slow) {
-#ifdef RUNE_INT64
-    as_test_rr(&m->a, r, r);
-    as_jcc(&m->a, CC_S, slow);
-#else
     (void)slow;
-#endif
     ms_set_reg(m, d, T_WORD, r);
 }
+/* the result of the arithmetic is its word already; a payload is given one */
+void ms_set_num(Masm *m, int32_t d, int tag, int r, AsmLabel *slow) { (void)tag; (void)slow; ms_set_bits(m, d, r); }
+void ms_set_payload(Masm *m, int32_t d, int tag, int r, AsmLabel *slow) { (void)slow; ms_set_reg(m, d, tag, r); }
+#endif
 
 /* ---- reals: Koka's encoding in the word, or a box (value.h) ---- */
 void ms_load_real(Masm *m, int xmm, int32_t s, AsmLabel *unless) {
@@ -487,43 +673,59 @@ static int live_at(const Masm *m, uint32_t pc, uint32_t r) {
     if (!m->live) return 1;
     return (m->live[pc - m->from] >> r) & 1;
 }
-/* the general homes first, so that the slow path of a real that must be
-   boxed finds them in their slots */
 static void writeback(Masm *m, uint32_t pc, int pushed) {
     if (!m->homes) return;
-    for (uint32_t r = 0; r < m->nlocals; r++)
-        if (m->homes[r].kind == HOME_GPR && live_at(m, pc, r)) home_to_slot(m, (int32_t)r, &m->homes[r]);
-    for (uint32_t r = 0; r < m->nlocals; r++)
-        if (m->homes[r].kind == HOME_XMM && live_at(m, pc, r)) real_to_slot(m, (int32_t)r, &m->homes[r], pushed, pc);
-}
-void ms_writeback(Masm *m, uint32_t pc) { writeback(m, pc, 0); }
-/* The slow path of a real's write-back: the double has no immediate, and
-   the helper boxes it into the slot. It may collect, so the VM is given
-   its stack pointer, every live general home is in its slot (stored again
-   here: ms_need_word comes with no write-back before it) and loaded
-   again after, and the live reals, which C does not keep, wait in the VM. */
-void ms_emit_box_real(Masm *m, Slow *sp) {
-    Slow s = *sp;
-    uint32_t live = s.n;
     for (uint32_t r = 0; r < m->nlocals; r++) {
         const Home *h = &m->homes[r];
-        if (h->kind == HOME_GPR && live_at(m, live, r)) as_st64(&m->a, BASER, SLOT((int32_t)r), h->reg);
+        if (h->kind == HOME_SLOT || !live_at(m, pc, r)) continue;
+        if (h->kind == HOME_XMM) real_to_slot(m, (int32_t)r, h, pushed, pc);
+#ifdef RUNE_INT64
+        else if (is_raw_gpr(h)) num_to_slot(m, (int32_t)r, h, pushed, pc);
+#endif
+        else home_to_slot(m, (int32_t)r, h);
+    }
+}
+void ms_writeback(Masm *m, uint32_t pc) { writeback(m, pc, 0); }
+/* where a general home waits in the VM across the helper that boxes; a
+   register that is no home (a result on its way to a slot) has the cell
+   after them */
+static int32_t gspill(int reg) {
+    static const int gprs[3] = { R_H0, R_H1, R_H2 };
+    for (int i = 0; i < 3; i++) if (gprs[i] == reg) return OFF(jit_gspill) + 8 * i;
+    return OFF(jit_gspill) + 8 * 3;
+}
+/* The slow path of a raw home's write-back: the real, or the int or word
+   of 64 bits, has no immediate, and the helper boxes it into the slot. It
+   may collect, so the VM is given its stack pointer; and C keeps none of
+   the homes, so every live one waits in the VM and is loaded again after
+   -- there and not in its slot, where a raw home's bits are no value. A
+   home that waits is an immediate, a number's bits or a double: nothing a
+   collection moves. */
+void ms_emit_box(Masm *m, Slow *sp) {
+    Slow s = *sp;
+    uint32_t live = s.n;
+    int real = s.kind == SLOW_BOXREAL;
+    int32_t at = real ? OFF(jit_fspill) + 8 * (s.b - F_H0) : gspill(s.b);
+    for (uint32_t r = 0; m->homes && r < m->nlocals; r++) {
+        const Home *h = &m->homes[r];
+        if (h->kind == HOME_GPR && live_at(m, live, r)) as_st64(&m->a, VMR, gspill(h->reg), h->reg);
         if (h->kind == HOME_XMM && live_at(m, live, r)) as_fst(&m->a, VMR, OFF(jit_fspill) + 8 * (h->reg - F_H0), h->reg);
     }
-    as_fst(&m->a, VMR, OFF(jit_fspill) + 8 * (s.b - F_H0), s.b);   /* the one to box, live or not */
+    /* the one to box, live or not */
+    if (real) as_fst(&m->a, VMR, at, s.b); else as_st64(&m->a, VMR, at, s.b);
     as_st32i(&m->a, VMR, OFF(pc), (int32_t)s.pc);
     as_lea(&m->a, R_S0, BASEI, -1, 1, (int32_t)(m->nlocals + (uint32_t)s.c));
     as_st64(&m->a, VMR, OFF(sp), R_S0);
     as_st64(&m->a, VMR, OFF(instructions), COUNTR);
     as_mov_ri(&m->a, ms_arg(m, 1), s.a);
-    as_ld64(&m->a, ms_arg(m, 2), VMR, OFF(jit_fspill) + 8 * (s.b - F_H0));
-    ms_call(m, (MsHelper)m->box_real);
-    for (uint32_t r = 0; r < m->nlocals; r++) {
+    as_ld64(&m->a, ms_arg(m, 2), VMR, at);
+    ms_call(m, (MsHelper)(real ? m->box_real : m->box_num));
+    for (uint32_t r = 0; m->homes && r < m->nlocals; r++) {
         const Home *h = &m->homes[r];
-        if (h->kind == HOME_GPR && live_at(m, live, r)) as_ld64(&m->a, h->reg, BASER, SLOT((int32_t)r));
+        if (h->kind == HOME_GPR && live_at(m, live, r)) as_ld64(&m->a, h->reg, VMR, gspill(h->reg));
         if (h->kind == HOME_XMM && live_at(m, live, r)) as_fld(&m->a, h->reg, VMR, OFF(jit_fspill) + 8 * (h->reg - F_H0));
     }
-    as_fld(&m->a, s.b, VMR, OFF(jit_fspill) + 8 * (s.b - F_H0));
+    if (real) as_fld(&m->a, s.b, VMR, at); else as_ld64(&m->a, s.b, VMR, at);
     as_jmp(&m->a, &s.back);
 }
 void ms_reload_homes(Masm *m, uint32_t pc) {
@@ -541,6 +743,15 @@ int ms_immediate(const Masm *m, int32_t s) {
     return rep == REP_CHAR || rep == REP_CON0;
 #else
     return rep == REP_INT || rep == REP_WORD || rep == REP_CHAR || rep == REP_CON0;
+#endif
+}
+int ms_number(const Masm *m, int32_t s) {
+#ifdef RUNE_INT64
+    if (!m->reps || (uint32_t)s >= m->nlocals) return 0;
+    return m->reps[s] == REP_INT ? T_INT : m->reps[s] == REP_WORD ? T_WORD : 0;
+#else
+    (void)m; (void)s;
+    return 0;
 #endif
 }
 int ms_trusts(const Masm *m, int32_t s, int kind) {

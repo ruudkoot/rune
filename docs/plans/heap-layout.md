@@ -341,6 +341,46 @@ every other; on Windows the four VMs pass the same, the JIT under the
 Windows convention included. A value is 8 bytes on every width here
 (D13 A): the 32-bit VMs' own word (D13 B) is M5's.
 
+**64-bit words that cross slots** (2026-10-04; the workload D2's note
+of 2026-09-27 asked for). `lib/random`'s SplitMix64 as a program: three
+million words from one generator, and a tree of 2^18 splits, where a
+generator, two `Word64`s in a record, is passed at every node. Half of
+what it computes has its top bit set, which under D2 A has no immediate.
+Instructions at the default tiering, bytes and boxes:
+
+| | instructions | bytes | boxes |
+|---|---:|---:|---:|
+| 16-byte layout | 1.01G | 176.6 MB | none |
+| the word, D2 A, as first built | 9.36G | 105.6 MB | 21.6M, 345.9 MB |
+| with raw homes in tier 2 | 2.11G | 105.6 MB | 8.3M, 132.8 MB |
+
+* **As first built it was nine times the instructions of today**, and
+  the JIT gained nothing over the interpreter (9.36G against 9.40G): a
+  general home held the word, an operand or a result past 63 bits sent
+  the operation to the primitive's C, and every such result was a box.
+  The perf programs did not show it; `word_bits` has few such words.
+* **Raw homes are D5 A as the roadmap states it**, and the prototype
+  has them now: at tier 2 an int's or a word's home holds its 64 bits,
+  arithmetic between homes is the machine's with no test (a word's has
+  none at all), an operand in a slot is unboxed in line, and a result
+  is given its word, or boxed by a helper, only where it goes to a
+  slot. The same mechanism as a real's home, with the same rule for an
+  emitter (`ms_need_word`). It brought the workload to 2.1 times
+  today's instructions.
+* **What is left is the slots.** x86-64 leaves tier 2 three general
+  registers for homes, so most of SplitMix64's intermediates live in
+  slots, and D5 A says a slot holds a word: a 64-bit result bound for a
+  slot is boxed, 16 bytes each (26% of the remaining instructions are
+  the boxing helper). The record of two `Word64`s boxes its fields as
+  well, which raw typed fields would not (D1 B's second half: this
+  workload, not the reals, is the case for them). Short of typed slots
+  (D5 B) the price of 64-bit words that do not fit 63 is a box wherever
+  one rests outside a home.
+* **D2 B does not escape it.** With `Int` and `Word` at 63 bits the
+  library's `Word64` is a type of its own, boxed in every slot whatever
+  its value, so SplitMix64 pays at least this. The 63-bit VM as it is
+  runs the program and prints another answer: its words wrap at 63.
+
 Not built yet: raw typed fields; prototype 2 (headerless pairs) and the
 rest of M4's list. The budgets are not moved.
 

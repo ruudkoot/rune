@@ -256,6 +256,7 @@ struct VM;
 Value mk_real(struct VM *vm, double d);          /* encoded, or a K_REAL box */
 Value mk_int_vm(struct VM *vm, int64_t i);       /* an immediate, or under RUNE_INT64 a K_BOX; without it, a fatal error: the callers keep to 63 bits */
 Value mk_word_vm(struct VM *vm, uint64_t w);     /* an immediate, or a K_BOX under RUNE_INT64; without it the word's low 63 bits */
+Value mk_box_vm(struct VM *vm, uint64_t bits);   /* the K_BOX of an int or a word that has no immediate */
 
 /* ---- forwarding (runtime/heap.c): a copied object points at its copy ---- */
 static inline int obj_forwarded(const Obj *o) { return o->kind == K_FORWARD; }

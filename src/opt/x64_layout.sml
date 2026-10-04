@@ -147,80 +147,179 @@ struct
      line ("mov %rdx, " ^ d ^ "(%r13,%rbp)"))
   fun testFalse line s =
     (line ("cmpq $1, " ^ s ^ "(%r13,%rbp)"))
-  fun oneImm line (x, slow) =
-    (line ("mov " ^ x ^ "(%r13,%rbp), %rax");
-     line ("test $1, %rax");
-     line ("je " ^ slow))
-  fun twoImm line (x, y, slow) =
+  fun oneInt line (x, slow, l) =
+    (line ("mov " ^ x ^ "(%r13,%rbp), %rdx");
+     line ("test $1, %rdx");
+     line ("je " ^ l ^ "_a");
+     line ("mov %rdx, %rax");
+     line ("sar $1, %rax");
+     line ("jmp " ^ l ^ "_b");
+     line (l ^ "_a:");
+     line ("test %rdx, %rdx");
+     line ("je " ^ slow);
+     line ("cmpb $K_BOX, OBJ_KIND(%rdx)");
+     line ("jne " ^ slow);
+     line ("mov OBJ_FIELDS(%rdx), %rax");
+     line (l ^ "_b:"))
+  fun oneWord line (x, slow, l) =
+    (line ("mov " ^ x ^ "(%r13,%rbp), %rdx");
+     line ("test $1, %rdx");
+     line ("je " ^ l ^ "_a");
+     line ("mov %rdx, %rax");
+     line ("shr $1, %rax");
+     line ("jmp " ^ l ^ "_b");
+     line (l ^ "_a:");
+     line ("test %rdx, %rdx");
+     line ("je " ^ slow);
+     line ("cmpb $K_BOX, OBJ_KIND(%rdx)");
+     line ("jne " ^ slow);
+     line ("mov OBJ_FIELDS(%rdx), %rax");
+     line (l ^ "_b:"))
+  fun oneChar line (x, slow, l) =
+    (line ("mov " ^ x ^ "(%r13,%rbp), %rdx");
+     line ("test $1, %rdx");
+     line ("je " ^ slow);
+     line ("mov %rdx, %rax");
+     line ("sar $1, %rax"))
+  fun twoInt line (x, y, slow, l) =
+    (line ("mov " ^ x ^ "(%r13,%rbp), %rdx");
+     line ("test $1, %rdx");
+     line ("je " ^ l ^ "_a");
+     line ("mov %rdx, %rax");
+     line ("sar $1, %rax");
+     line ("jmp " ^ l ^ "_b");
+     line (l ^ "_a:");
+     line ("test %rdx, %rdx");
+     line ("je " ^ slow);
+     line ("cmpb $K_BOX, OBJ_KIND(%rdx)");
+     line ("jne " ^ slow);
+     line ("mov OBJ_FIELDS(%rdx), %rax");
+     line (l ^ "_b:");
+     line ("mov " ^ y ^ "(%r13,%rbp), %rdx");
+     line ("test $1, %rdx");
+     line ("je " ^ l ^ "_c");
+     line ("mov %rdx, %rcx");
+     line ("sar $1, %rcx");
+     line ("jmp " ^ l ^ "_d");
+     line (l ^ "_c:");
+     line ("test %rdx, %rdx");
+     line ("je " ^ slow);
+     line ("cmpb $K_BOX, OBJ_KIND(%rdx)");
+     line ("jne " ^ slow);
+     line ("mov OBJ_FIELDS(%rdx), %rcx");
+     line (l ^ "_d:"))
+  fun twoWord line (x, y, slow, l) =
+    (line ("mov " ^ x ^ "(%r13,%rbp), %rdx");
+     line ("test $1, %rdx");
+     line ("je " ^ l ^ "_a");
+     line ("mov %rdx, %rax");
+     line ("shr $1, %rax");
+     line ("jmp " ^ l ^ "_b");
+     line (l ^ "_a:");
+     line ("test %rdx, %rdx");
+     line ("je " ^ slow);
+     line ("cmpb $K_BOX, OBJ_KIND(%rdx)");
+     line ("jne " ^ slow);
+     line ("mov OBJ_FIELDS(%rdx), %rax");
+     line (l ^ "_b:");
+     line ("mov " ^ y ^ "(%r13,%rbp), %rdx");
+     line ("test $1, %rdx");
+     line ("je " ^ l ^ "_c");
+     line ("mov %rdx, %rcx");
+     line ("shr $1, %rcx");
+     line ("jmp " ^ l ^ "_d");
+     line (l ^ "_c:");
+     line ("test %rdx, %rdx");
+     line ("je " ^ slow);
+     line ("cmpb $K_BOX, OBJ_KIND(%rdx)");
+     line ("jne " ^ slow);
+     line ("mov OBJ_FIELDS(%rdx), %rcx");
+     line (l ^ "_d:"))
+  fun twoChar line (x, y, slow, l) =
+    (line ("mov " ^ x ^ "(%r13,%rbp), %rdx");
+     line ("test $1, %rdx");
+     line ("je " ^ slow);
+     line ("mov %rdx, %rax");
+     line ("sar $1, %rax");
+     line ("mov " ^ y ^ "(%r13,%rbp), %rdx");
+     line ("test $1, %rdx");
+     line ("je " ^ slow);
+     line ("mov %rdx, %rcx");
+     line ("sar $1, %rcx"))
+  fun twoWords line (x, y, slow) =
     (line ("mov " ^ x ^ "(%r13,%rbp), %rax");
      line ("mov " ^ y ^ "(%r13,%rbp), %rcx");
      line ("mov %rax, %rdx");
      line ("and %rcx, %rdx");
      line ("test $1, %rdx");
      line ("je " ^ slow))
+  fun setInt line (d, r, slow) =
+    (line ("mov " ^ reg64 r ^ ", %rdx");
+     line ("add %rdx, %rdx");
+     line ("jo " ^ slow);
+     line ("lea 1(%rdx), %rdx");
+     line ("mov %rdx, " ^ d ^ "(%r13,%rbp)"))
+  fun setWord line (d, r, slow) =
+    (line ("test " ^ reg64 r ^ ", " ^ reg64 r);
+     line ("js " ^ slow);
+     line ("lea 1(" ^ reg64 r ^ "," ^ reg64 r ^ ",1), %rdx");
+     line ("mov %rdx, " ^ d ^ "(%r13,%rbp)"))
+  fun setChar line (d, r, slow) =
+    (line ("lea 1(" ^ reg64 r ^ "," ^ reg64 r ^ ",1), %rdx");
+     line ("mov %rdx, " ^ d ^ "(%r13,%rbp)"))
+  fun setPayInt line (d, r, slow) =
+    (line ("mov " ^ reg64 r ^ ", %rdx");
+     line ("add %rdx, %rdx");
+     line ("jo " ^ slow);
+     line ("lea 1(%rdx), %rdx");
+     line ("mov %rdx, " ^ d ^ "(%r13,%rbp)"))
+  fun setPayWord line (d, r, slow) =
+    (line ("test " ^ reg64 r ^ ", " ^ reg64 r);
+     line ("js " ^ slow);
+     line ("lea 1(" ^ reg64 r ^ "," ^ reg64 r ^ ",1), %rdx");
+     line ("mov %rdx, " ^ d ^ "(%r13,%rbp)"))
   fun intAdd line slow =
-    (line ("lea -1(%rax), %rax");
-     line ("add %rcx, %rax");
+    (line ("add %rcx, %rax");
      line ("jo " ^ slow))
   fun intSub line slow =
     (line ("sub %rcx, %rax");
-     line ("jo " ^ slow);
-     line ("lea 1(%rax), %rax"))
+     line ("jo " ^ slow))
   fun intMul line slow =
-    (line ("sar $1, %rcx");
-     line ("lea -1(%rax), %rax");
-     line ("imul %rcx, %rax");
-     line ("jo " ^ slow);
-     line ("lea 1(%rax), %rax"))
+    (line ("imul %rcx, %rax");
+     line ("jo " ^ slow))
   fun intNeg line slow =
-    (line ("mov $2, %rcx");
+    (line ("mov $0, %rcx");
      line ("sub %rax, %rcx");
      line ("jo " ^ slow);
      line ("mov %rcx, %rax"))
   fun intToChar line slow =
-    (line ("cmp $511, %rax");
+    (line ("cmp $255, %rax");
      line ("ja " ^ slow))
   fun wordAdd line slow =
-    (line ("lea -1(%rax), %rax");
-     line ("add %rcx, %rax");
-     line ("jb " ^ slow))
+    (line ("add %rcx, %rax"))
   fun wordSub line slow =
-    (line ("sub %rcx, %rax");
-     line ("jb " ^ slow);
-     line ("lea 1(%rax), %rax"))
+    (line ("sub %rcx, %rax"))
   fun wordMul line slow =
-    (line ("shr $1, %rax");
-     line ("shr $1, %rcx");
-     line ("imul %rcx, %rax");
-     line ("jo " ^ slow);
-     line ("lea 1(%rax,%rax,1), %rax"))
+    (line ("imul %rcx, %rax"))
   fun wordAnd line slow =
     (line ("and %rcx, %rax"))
   fun wordOr line slow =
     (line ("or %rcx, %rax"))
   fun wordXor line slow =
-    (line ("xor %rcx, %rax");
-     line ("lea 1(%rax), %rax"))
+    (line ("xor %rcx, %rax"))
   fun wordNot line slow =
-    (line ("jmp " ^ slow))
+    (line ("not %rax"))
   fun wordToInt line slow =
     (line ("test %rax, %rax");
      line ("js " ^ slow))
   fun wordToIntX line slow =
-    (line ("test %rax, %rax");
-     line ("js " ^ slow))
+    ()
   fun intToWord line slow =
-    (line ("test %rax, %rax");
-     line ("js " ^ slow))
+    ()
   fun untagInt line r =
-    (line ("sar $1, " ^ reg64 r))
+    ()
   fun untagWord line r =
-    (line ("shr $1, " ^ reg64 r))
-  fun setWord line (d, r, slow) =
-    (line ("test " ^ reg64 r ^ ", " ^ reg64 r);
-     line ("js " ^ slow);
-     line ("lea 1(" ^ reg64 r ^ "," ^ reg64 r ^ ",1), " ^ reg64 r);
-     line ("mov " ^ reg64 r ^ ", " ^ d ^ "(%r13,%rbp)"))
+    ()
   fun loadObj line (r, s, kind, unless) =
     (line ("mov " ^ s ^ "(%r13,%rbp), " ^ reg64 r);
      line ("test $1, " ^ reg64 r);

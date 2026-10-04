@@ -111,7 +111,7 @@ static void index_of(Jit *j, int32_t y, AsmLabel *slow) {
 static void length_of(Jit *j, int32_t d, int32_t x, int k, AsmLabel *slow) {
     ms_load_obj(M, R_S0, x, k, slow);
     ms_load_len(M, R_S1, R_S0);
-    ms_set_reg(M, d, T_INT, R_S1);
+    ms_set_payload(M, d, T_INT, R_S1, slow);
 }
 /* rax := the address of element rcx of the object in rax (16 bytes each) */
 static void element(Jit *j) {
@@ -137,13 +137,23 @@ static void floor_div(Jit *j, int mod) {
    imm_eq, which the compiler gives only what is never there (under
    RUNE_INT64 the box of an int past 63 bits). */
 static void equal(Jit *j, int32_t d, int32_t x, int32_t y, int poly, AsmLabel *slow) {
-    ms_need_word(M, x);
-    ms_need_word(M, y);
+    if (!(ms_number(M, x) && ms_number(M, x) == ms_number(M, y))) {
+        ms_need_word(M, x);
+        ms_need_word(M, y);
+    }
     /* two values of one representation that is an immediate (tier 2,
        M10): the words alone */
     if (ms_immediate(M, x) && ms_immediate(M, y)) {
         ms_load_bits(M, R_S0, x);
         ms_cmp_bits(M, R_S0, y);
+        set_bool(j, d, CC_E);
+        return;
+    }
+    /* two ints or two words by the section, where the VM keeps 64 bits: the
+       bits, which two boxes of one number have and two words of them do not */
+    if (ms_number(M, x) && ms_number(M, x) == ms_number(M, y)) {
+        ms_two_imm(M, x, y, ms_number(M, x), slow);   /* each as what it is: an int's payload is signed */
+        as_cmp_rr(A, R_S0, R_S1);
         set_bool(j, d, CC_E);
         return;
     }
@@ -213,9 +223,9 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         alloc(j, K_REF, 0, 1, FILL_ONE, d, x, 0, NULL);
         break;
 
-    case PRIM_int_add: two(j, x, y, T_INT, slow); ms_int_arith(M, MS_ADD, slow); ms_set_bits(M, d, R_S0); break;
-    case PRIM_int_sub: two(j, x, y, T_INT, slow); ms_int_arith(M, MS_SUB, slow); ms_set_bits(M, d, R_S0); break;
-    case PRIM_int_mul: two(j, x, y, T_INT, slow); ms_int_arith(M, MS_MUL, slow); ms_set_bits(M, d, R_S0); break;
+    case PRIM_int_add: two(j, x, y, T_INT, slow); ms_int_arith(M, MS_ADD, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
+    case PRIM_int_sub: two(j, x, y, T_INT, slow); ms_int_arith(M, MS_SUB, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
+    case PRIM_int_mul: two(j, x, y, T_INT, slow); ms_int_arith(M, MS_MUL, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
     case PRIM_int_div: case PRIM_int_mod: case PRIM_int_quot: case PRIM_int_rem:
         two_payloads(j, x, y, T_INT, slow);
         as_test_rr(A, R_S1, R_S1);
@@ -223,38 +233,40 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         as_cmp_ri(A, R_S1, -1);
         as_jcc(A, CC_E, slow);
         as_divmod(A, R_S1);
-        if (p == PRIM_int_div) { floor_div(j, 0); ms_set_reg(M, d, T_INT, R_S0); }
-        else if (p == PRIM_int_mod) { floor_div(j, 1); ms_set_reg(M, d, T_INT, R_S2); }
-        else if (p == PRIM_int_quot) ms_set_reg(M, d, T_INT, R_S0);
-        else ms_set_reg(M, d, T_INT, R_S2);
+        /* the remainder out of R_S2, which giving a slot its word uses */
+        if (p == PRIM_int_div) { floor_div(j, 0); ms_set_payload(M, d, T_INT, R_S0, slow); }
+        else if (p == PRIM_int_mod) { floor_div(j, 1); as_mov_rr(A, R_S0, R_S2); ms_set_payload(M, d, T_INT, R_S0, slow); }
+        else if (p == PRIM_int_quot) ms_set_payload(M, d, T_INT, R_S0, slow);
+        else { as_mov_rr(A, R_S0, R_S2); ms_set_payload(M, d, T_INT, R_S0, slow); }
         break;
-    case PRIM_int_neg: ms_one_imm(M, x, T_INT, slow); ms_int_neg(M, slow); ms_set_bits(M, d, R_S0); break;
+    case PRIM_int_neg: ms_one_imm(M, x, T_INT, slow); ms_int_neg(M, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
     case PRIM_int_lt: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_L); break;
     case PRIM_int_le: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_LE); break;
     case PRIM_int_gt: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_G); break;
     case PRIM_int_ge: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_GE); break;
     case PRIM_int_order: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_order(j, d, CC_GE, CC_G); break;
-    case PRIM_int_to_char: ms_one_imm(M, x, T_INT, slow); ms_int_to_char(M, slow); ms_set_bits(M, d, R_S0); break;
+    case PRIM_int_to_char: ms_one_imm(M, x, T_INT, slow); ms_int_to_char(M, slow); ms_set_num(M, d, T_CHAR, R_S0, slow); break;
 
-    case PRIM_word_add: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_ADD, slow); ms_set_bits(M, d, R_S0); break;
-    case PRIM_word_sub: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_SUB, slow); ms_set_bits(M, d, R_S0); break;
-    case PRIM_word_mul: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_MUL, slow); ms_set_bits(M, d, R_S0); break;
+    case PRIM_word_add: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_ADD, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
+    case PRIM_word_sub: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_SUB, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
+    case PRIM_word_mul: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_MUL, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
     case PRIM_word_div: case PRIM_word_mod:
         two_payloads(j, x, y, T_WORD, slow);
         as_test_rr(A, R_S1, R_S1);
         as_jcc(A, CC_E, slow);
         as_udivmod(A, R_S1);
-        ms_set_reg(M, d, T_WORD, p == PRIM_word_div ? R_S0 : R_S2);
+        if (p == PRIM_word_mod) as_mov_rr(A, R_S0, R_S2);
+        ms_set_payload(M, d, T_WORD, R_S0, slow);
         break;
     case PRIM_word_lt: two(j, x, y, T_WORD, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_B); break;
     case PRIM_word_le: two(j, x, y, T_WORD, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_BE); break;
     case PRIM_word_gt: two(j, x, y, T_WORD, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_A); break;
     case PRIM_word_ge: two(j, x, y, T_WORD, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_AE); break;
     case PRIM_word_order: two(j, x, y, T_WORD, slow); as_cmp_rr(A, R_S0, R_S1); set_order(j, d, CC_AE, CC_A); break;
-    case PRIM_word_andb: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_AND, slow); ms_set_bits(M, d, R_S0); break;
-    case PRIM_word_orb: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_OR, slow); ms_set_bits(M, d, R_S0); break;
-    case PRIM_word_xorb: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_XOR, slow); ms_set_bits(M, d, R_S0); break;
-    case PRIM_word_notb: ms_one_imm(M, x, T_WORD, slow); ms_word_not(M, slow); ms_set_bits(M, d, R_S0); break;
+    case PRIM_word_andb: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_AND, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
+    case PRIM_word_orb: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_OR, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
+    case PRIM_word_xorb: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_XOR, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
+    case PRIM_word_notb: ms_one_imm(M, x, T_WORD, slow); ms_word_not(M, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
     case PRIM_word_lsl: case PRIM_word_lsr: {
         /* a count of 64 or more gives 0, where the machine would take it mod 64 */
         AsmLabel ok, done; as_label_init(&ok); as_label_init(&done);
@@ -266,13 +278,13 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         as_bind(A, &ok);
         if (p == PRIM_word_lsl) as_shl_rr(A, R_S0); else as_shr_rr(A, R_S0);
         as_bind(A, &done);
-        ms_set_word(M, d, R_S0, slow);   /* a word of the word size, or the primitive's to box */
+        ms_set_payload(M, d, T_WORD, R_S0, slow);   /* a word of the word size, or the primitive's to box */
         as_label_free(&ok); as_label_free(&done);
         break;
     }
-    case PRIM_word_to_int: ms_one_imm(M, x, T_WORD, slow); ms_word_to_int(M, 0, slow); ms_set_bits(M, d, R_S0); break;
-    case PRIM_word_to_int_x: ms_one_imm(M, x, T_WORD, slow); ms_word_to_int(M, 1, slow); ms_set_bits(M, d, R_S0); break;
-    case PRIM_word_from_int: ms_one_imm(M, x, T_INT, slow); ms_int_to_word(M, slow); ms_set_bits(M, d, R_S0); break;
+    case PRIM_word_to_int: ms_one_imm(M, x, T_WORD, slow); ms_word_to_int(M, 0, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
+    case PRIM_word_to_int_x: ms_one_imm(M, x, T_WORD, slow); ms_word_to_int(M, 1, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
+    case PRIM_word_from_int: ms_one_imm(M, x, T_INT, slow); ms_int_to_word(M, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
 
     case PRIM_real_add: two_real(j, x, y, slow); as_fadd(A, F_S0, F_S1); set_real(j, d, slow); break;
     case PRIM_real_sub: two_real(j, x, y, slow); as_fsub(A, F_S0, F_S1); set_real(j, d, slow); break;
@@ -304,7 +316,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         set_bool(j, d, CC_FE);   /* equal and ordered */
         break;
 
-    case PRIM_char_ord: ms_one_imm(M, x, T_CHAR, slow); ms_set_bits(M, d, R_S0); break;
+    case PRIM_char_ord: ms_one_imm(M, x, T_CHAR, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
     case PRIM_char_lt: two(j, x, y, T_CHAR, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_L); break;
     case PRIM_char_le: two(j, x, y, T_CHAR, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_LE); break;
     case PRIM_char_gt: two(j, x, y, T_CHAR, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_G); break;
@@ -929,8 +941,8 @@ void emit_RET(Jit *j, uint32_t pc, int32_t a) {
        8-byte stores stalls) */
     /* (a real's home holds the double, not the word: its word is taken
        from its slot, brought up to date above, before the frame goes) */
-    const Home *h = ms_home(M, a);
-    if (h && h->kind != HOME_GPR) h = NULL;
+    /* (so does an int's or a word's that holds its 64 bits: ms_word_home) */
+    const Home *h = ms_word_home(M, a);
     if (!h) ms_load_xmm(M, F_S0, a);
     as_ld64(A, R_S4, R_S1, FR(native_ret));
     as_ld32s(A, R_S3, R_S1, FR(result));

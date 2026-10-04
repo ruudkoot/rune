@@ -206,8 +206,25 @@ static void op_load_real(const int64_t *p) { (void)p; ms_load_real(&M, F_S0, SLO
 static void op_load_real1(const int64_t *p) { (void)p; ms_load_real(&M, F_S1, SLOT_S, &unless_label); }
 static void op_set_real(const int64_t *p) { (void)p; ms_set_real(&M, SLOT_D, F_S0, &slow_label); }
 static void op_test_false(const int64_t *p) { (void)p; ms_test_false(&M, SLOT_S); }
-static void op_one_imm(const int64_t *p) { (void)p; ms_one_imm(&M, SLOT_X, T_INT, &slow_label); }
-static void op_two_imm(const int64_t *p) { (void)p; ms_two_imm(&M, SLOT_X, SLOT_Y, T_INT, &slow_label); }
+/* The operands of an int's, a word's or a char's arithmetic, in the form it
+   is done in (masm.h): their words where an int is 63 bits, their 64 bits
+   where the VM keeps 64, an int's payload signed and a word's not. */
+static void op_one_int(const int64_t *p) { (void)p; ms_one_imm(&M, SLOT_X, T_INT, &slow_label); }
+static void op_one_word(const int64_t *p) { (void)p; ms_one_imm(&M, SLOT_X, T_WORD, &slow_label); }
+static void op_one_char(const int64_t *p) { (void)p; ms_one_imm(&M, SLOT_X, T_CHAR, &slow_label); }
+static void op_two_int(const int64_t *p) { (void)p; ms_two_imm(&M, SLOT_X, SLOT_Y, T_INT, &slow_label); }
+static void op_two_word(const int64_t *p) { (void)p; ms_two_imm(&M, SLOT_X, SLOT_Y, T_WORD, &slow_label); }
+static void op_two_char(const int64_t *p) { (void)p; ms_two_imm(&M, SLOT_X, SLOT_Y, T_CHAR, &slow_label); }
+/* two values as their words, for `=`: to the label where either is in the heap */
+static void op_two_words(const int64_t *p) { (void)p; ms_two_words(&M, SLOT_X, SLOT_Y, &slow_label); }
+/* the result of that arithmetic into its slot, and a payload (a quotient, a
+   shifted word) into its: to the slow path where a slot wants a word the
+   number has none for */
+static void op_set_int(const int64_t *p) { (void)p; ms_set_num(&M, SLOT_D, T_INT, REG_R, &slow_label); }
+static void op_set_wordnum(const int64_t *p) { (void)p; ms_set_num(&M, SLOT_D, T_WORD, REG_R, &slow_label); }
+static void op_set_char(const int64_t *p) { (void)p; ms_set_num(&M, SLOT_D, T_CHAR, REG_R, &slow_label); }
+static void op_set_pay_int(const int64_t *p) { (void)p; ms_set_payload(&M, SLOT_D, T_INT, REG_R, &slow_label); }
+static void op_set_pay_word(const int64_t *p) { (void)p; ms_set_payload(&M, SLOT_D, T_WORD, REG_R, &slow_label); }
 static void op_int_add(const int64_t *p) { (void)p; ms_int_arith(&M, MS_ADD, &slow_label); }
 static void op_int_sub(const int64_t *p) { (void)p; ms_int_arith(&M, MS_SUB, &slow_label); }
 static void op_int_mul(const int64_t *p) { (void)p; ms_int_arith(&M, MS_MUL, &slow_label); }
@@ -225,7 +242,6 @@ static void op_word_to_int_x(const int64_t *p) { (void)p; ms_word_to_int(&M, 1, 
 static void op_int_to_word(const int64_t *p) { (void)p; ms_int_to_word(&M, &slow_label); }
 static void op_untag_int(const int64_t *p) { (void)p; ms_untag(&M, REG_R, T_INT); }
 static void op_untag_word(const int64_t *p) { (void)p; ms_untag(&M, REG_R, T_WORD); }
-static void op_set_word(const int64_t *p) { (void)p; ms_set_word(&M, SLOT_D, REG_R, &slow_label); }
 static void op_load_obj(const int64_t *p) { (void)p; ms_load_obj(&M, REG_R, SLOT_S, KIND_MARK, &unless_label); }
 static void op_load_tag_of_con(const int64_t *p) { (void)p; ms_load_tag_of_con(&M, REG_R, SLOT_S, &unless_label); }
 static void op_alloc(const int64_t *p) { ms_alloc(&M, (int)p[0], (int)p[1], (uint32_t)p[2], &slow_label); }
@@ -257,8 +273,18 @@ static const Op ops[] = {
     { "loadReal1 line (s, unless, l)", op_load_real1, {{0,0}}, 0, 1 },
     { "setReal line (d, slow, l)", op_set_real, {{0,0}}, 0, 1 },
     { "testFalse line s", op_test_false, {{0,0}}, 0, 0 },
-    { "oneImm line (x, slow)", op_one_imm, {{0,0}}, 0, 1 },
-    { "twoImm line (x, y, slow)", op_two_imm, {{0,0}}, 0, 1 },
+    { "oneInt line (x, slow, l)", op_one_int, {{0,0}}, 0, 1 },
+    { "oneWord line (x, slow, l)", op_one_word, {{0,0}}, 0, 1 },
+    { "oneChar line (x, slow, l)", op_one_char, {{0,0}}, 0, 1 },
+    { "twoInt line (x, y, slow, l)", op_two_int, {{0,0}}, 0, 1 },
+    { "twoWord line (x, y, slow, l)", op_two_word, {{0,0}}, 0, 1 },
+    { "twoChar line (x, y, slow, l)", op_two_char, {{0,0}}, 0, 1 },
+    { "twoWords line (x, y, slow)", op_two_words, {{0,0}}, 0, 1 },
+    { "setInt line (d, r, slow)", op_set_int, {{0,0}}, 0, 0 },
+    { "setWord line (d, r, slow)", op_set_wordnum, {{0,0}}, 0, 0 },
+    { "setChar line (d, r, slow)", op_set_char, {{0,0}}, 0, 0 },
+    { "setPayInt line (d, r, slow)", op_set_pay_int, {{0,0}}, 0, 0 },
+    { "setPayWord line (d, r, slow)", op_set_pay_word, {{0,0}}, 0, 0 },
     { "intAdd line slow", op_int_add, {{0,0}}, 0, 1 },
     { "intSub line slow", op_int_sub, {{0,0}}, 0, 1 },
     { "intMul line slow", op_int_mul, {{0,0}}, 0, 1 },
@@ -276,7 +302,6 @@ static const Op ops[] = {
     { "intToWord line slow", op_int_to_word, {{0,0}}, 0, 1 },
     { "untagInt line r", op_untag_int, {{0,0}}, 0, 0 },
     { "untagWord line r", op_untag_word, {{0,0}}, 0, 0 },
-    { "setWord line (d, r, slow)", op_set_word, {{0,0}}, 0, 0 },
     { "loadObj line (r, s, kind, unless)", op_load_obj, {{0,0}}, 0, 0 },
     { "loadTagOfCon line (r, s, unless, l)", op_load_tag_of_con, {{0,0}}, 0, 0 },
     { "alloc line (kind, contag, n, slow)", op_alloc, {{"kind", 1}, {"contag", 3}, {"n", 2}}, 3, 1 },

@@ -32,7 +32,7 @@ enum { VMR = R_VM, STACKR = R_STACK, BASEI = R_BASEI, BASER = R_BASER, COUNTR = 
 
 /* A slow path, emitted after the function's code: where it begins, where
    it goes back to, and what it is. */
-enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_FRAMES, SLOW_RET, SLOW_PRIM, SLOW_GROW_RAX, SLOW_TAKEN, SLOW_DEOPT, SLOW_BOXREAL };
+enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_FRAMES, SLOW_RET, SLOW_PRIM, SLOW_GROW_RAX, SLOW_TAKEN, SLOW_DEOPT, SLOW_BOXREAL, SLOW_BOXNUM };
 typedef struct Slow {
     AsmLabel here;
     AsmLabel back;
@@ -46,27 +46,29 @@ typedef struct Slow {
 
 /* Where a register's value lives while the function's code runs (tier 2,
    docs/plans/jit.md M9): in its slot, as tier 1 keeps every one, or in a
-   machine register -- a general one for an int, a word, a char or a
-   nullary constructor, which holds the value's word as the slot would
-   (docs/plans/heap-layout.md, M4: the tagged word), so that writing it
-   back is one store and arithmetic is done on the words. A home is
-   written back to the slot at every safepoint (ms_sync) and loaded again
-   after (ms_reload), so that C, the interpreter and an image see the
-   slot, and the collector's roots are the slots as before: under
-   RUNE_INT64 the word of an int or a word may be a pointer to its box,
-   which the collector moves between the two.
+   machine register. A general one for a char or a nullary constructor
+   holds the value's word as the slot would (docs/plans/heap-layout.md, M4:
+   the tagged word), and so does an int's or a word's where they are 63
+   bits (D2 B): writing it back is one store and arithmetic is done on the
+   words. A home is written back to the slot at every safepoint (ms_sync)
+   and loaded again after (ms_reload), so that C, the interpreter and an
+   image see the slot, and the collector's roots are the slots as before.
 
-   A real's home is an xmm register that holds the double itself, so that
-   arithmetic between homes costs what it did. Its slot holds a word and
-   may be behind: the word is made when something needs it -- a safepoint,
-   a store into the heap, a move to a register that has no such home -- by
-   encoding the double, or, where it has no immediate, by a helper that
-   boxes it. That helper may collect, so it is called only where a
-   collection may happen: from a write-back, and from ms_need_word, which
-   an emitter calls at the start of an instruction that will store the
-   register's word. Within an instruction the masm remembers which slots
-   it has brought up to date (cur_reals); a store of a real's word that
-   finds its slot behind is an emitter's mistake, said at compile time. */
+   A raw home holds the value itself and not its word: a real's is an xmm
+   register with the double, and where the VM keeps ints and words of 64
+   bits (RUNE_INT64, D2 A) an int's or a word's general register holds the
+   64 bits, so that arithmetic between homes costs what it did and needs no
+   test for a box. A raw home's slot holds a word and may be behind: the
+   word is made when something needs it -- a safepoint, a store into the
+   heap, a move to a register that has no such home -- by encoding the
+   value, or, where it has no immediate, by a helper that boxes it. That
+   helper may collect, so it is called only where a collection may happen:
+   from a write-back, from ms_need_word, which an emitter calls at the
+   start of an instruction that will store the register's word, and from
+   ms_set_num, where a result goes to a slot. Within an instruction the
+   masm remembers which slots it has brought up to date (cur_reals); a
+   store of a raw home's word that finds its slot behind is an emitter's
+   mistake, said at compile time. */
 #define MS_REAL_HOMES 1
 enum HomeKind { HOME_SLOT = 0, HOME_GPR, HOME_XMM };
 typedef struct Home {
@@ -105,12 +107,15 @@ typedef struct Masm {
        a straight line from where it was done, and not written since */
     uint64_t cur_reals;
     void (*box_real)(void);   /* the helper that boxes a real into a slot (compile.c, jit_h_box_real) */
+    void (*box_num)(void);    /* and the one that boxes an int or a word of 64 bits (jit_h_box_num) */
 } Masm;
 /* whether the shape of R(s) is trusted for an object of kind (REP_PTR; a
    constructor with fields for K_CON from a datatype with nullary ones too) */
 int ms_trusts(const Masm *m, int32_t s, int kind);
 /* whether R(s) is an immediate by the section: an int, a word, a char or a nullary constructor */
 int ms_immediate(const Masm *m, int32_t s);
+/* T_INT or T_WORD where R(s) is one by the section and the VM keeps 64 bits of them (else 0): compared by its bits, not by its word */
+int ms_number(const Masm *m, int32_t s);
 
 /* An emitter that names a register the frame has not, or a field the
    object has not, is a mistake of the VM's own, not of the program's: the
@@ -167,6 +172,8 @@ void ms_word_not(Masm *m, AsmLabel *slow);                         /* R_S0 := no
 void ms_word_to_int(Masm *m, int x, AsmLabel *slow);               /* the word in R_S0 as an int: x for toIntX; to slow where it is none */
 void ms_int_to_word(Masm *m, AsmLabel *slow);                      /* the int in R_S0 as a word */
 void ms_untag(Masm *m, int r, int tag);                            /* r := the payload of the immediate word in r: unsigned for T_WORD */
+void ms_set_num(Masm *m, int32_t d, int tag, int r, AsmLabel *slow);       /* R(d) := the int, word or char of tag that the arithmetic left in r, in its form; to slow where a slot wants a word it has none for; R_S2 clobbered */
+void ms_set_payload(Masm *m, int32_t d, int tag, int r, AsmLabel *slow);   /* the same for a payload in r (a quotient, a length) */
 void ms_set_word(Masm *m, int32_t d, int r, AsmLabel *slow);       /* R(d) := the word whose payload, 64 bits, is in r; to slow where it is no immediate */
 /* tier 2: the homes live at pc written back to their slots, with their
    tags; and loaded again from the slots */
@@ -180,7 +187,10 @@ void ms_begin(Masm *m, uint32_t pc);
    scratch register) */
 void ms_need_word(Masm *m, int32_t s);
 void ms_move(Masm *m, int32_t d, int32_t s);                       /* the instruction MOVE: ms_need_word where it is wanted, then ms_copy */
-void ms_emit_box_real(Masm *m, Slow *s);                           /* the slow path of a real with no immediate (SLOW_BOXREAL) */
+void ms_emit_box(Masm *m, Slow *s);                                /* the slow path of a real, or of an int or a word of 64 bits, with no immediate (SLOW_BOXREAL, SLOW_BOXNUM) */
+/* the home of register s where it holds the value's word, as a slot does:
+   NULL for a slot and for a raw home (a real's, an int's or word's 64 bits) */
+const Home *ms_word_home(const Masm *m, int32_t s);
 /* the home of register s, or NULL where it is its slot */
 static inline const Home *ms_home(const Masm *m, int32_t s) {
     return m->homes && (uint32_t)s < m->nlocals && m->homes[s].kind != HOME_SLOT ? &m->homes[s] : NULL;

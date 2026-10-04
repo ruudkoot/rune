@@ -91,6 +91,7 @@ int64_t jit_h_string_order(VM *vm, const Obj *a, const Obj *b);
 /* Needs the exact VM: comparison can end the process at its work limit. */
 int64_t jit_h_values_equal(VM *vm, const Value *x, const Value *y);
 void jit_h_box_real(VM *vm, int32_t slot, uint64_t bits);
+void jit_h_box_num(VM *vm, int32_t slot, uint64_t bits);
 
 /* the compiler: 1 when function f now has an entry, 0 when it stays interpreted */
 int jit_compile(VM *vm, JitProgram *jit, uint32_t f);

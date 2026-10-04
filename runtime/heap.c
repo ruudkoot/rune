@@ -45,6 +45,7 @@ Value mk_int_vm(VM *vm, int64_t i) {
     return mk_unit();
 #endif
 }
+Value mk_box_vm(VM *vm, uint64_t bits) { return alloc_box(vm, K_BOX, bits); }
 Value mk_word_vm(VM *vm, uint64_t w) {
     if (word_fits(w)) return mk_imm((int64_t)w);
 #ifdef RUNE_INT64

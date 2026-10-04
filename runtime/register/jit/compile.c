@@ -283,6 +283,16 @@ void jit_h_box_real(VM *vm, int32_t slot, uint64_t bits) {
     vm->stack[base + (size_t)slot] = v;
 }
 
+/* the same for an int or a word of tier 2 past 63 bits, where the VM keeps
+   64 (RUNE_INT64): its home holds the bits, its slot the box */
+void jit_h_box_num(VM *vm, int32_t slot, uint64_t bits) {
+    size_t base = vm->frames[vm->fp].base;
+    Value old = vm->stack[base + (size_t)slot];
+    if (val_is_ptr(old) && obj_kind(val_ptr(old)) == K_BOX && box_bits(old) == bits) return;
+    Value v = mk_box_vm(vm, bits);
+    vm->stack[base + (size_t)slot] = v;
+}
+
 int jit_h_primpush(VM *vm, int prim, const uint8_t *L) {
     uint32_t n = prim_arity[prim];
     for (uint32_t i = 0; i < n; i++) {
@@ -537,8 +547,8 @@ static void emit_slow(Masm *m, Slow *sp) {
     Jit *j = (Jit *)m;   /* the Masm is the first member */
     Slow s = *sp;
     ms_begin(m, s.cur);
-    if (s.kind == SLOW_BOXREAL) {
-        ms_emit_box_real(m, sp);
+    if (s.kind == SLOW_BOXREAL || s.kind == SLOW_BOXNUM) {
+        ms_emit_box(m, sp);
     } else if (s.kind == SLOW_FATAL) {
         /* rcx, a value the message wants, kept where the write-back of
            the sync leaves it (a real's word is made in the registers the
@@ -784,6 +794,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     Jit j;
     memset(&j, 0, sizeof j);
     ms_init(&j.m, fn->nlocals, fn->maxstack, JIT_WIN, jit->leave_at);
+    j.m.box_num = (MsHelper)jit_h_box_num;   /* at either tier: a result past 63 bits on its way to a slot */
     j.vm = vm; j.jit = jit; j.f = f;
     j.flags_for = j.flags_prev = -1;
     j.tier = tier;
