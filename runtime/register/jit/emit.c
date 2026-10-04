@@ -431,6 +431,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         ms_need_word(M, y);
         ms_load_obj(M, R_S0, x, K_REF, slow);
         ms_store_field(M, R_S0, 0, y);
+        ms_barrier(M, R_S0);
         ms_set(M, d, T_UNIT, 0);
         break;
     case PRIM_array_length: length_of(j, d, x, K_ARRAY, slow); break;
@@ -445,7 +446,8 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         ms_load_obj(M, R_S0, x, K_ARRAY, slow);
         index_of(j, y, slow);
         element(j);
-        ms_store_field(M, R_S0, 0, z);   /* where a barrier goes, for an element */
+        ms_store_field(M, R_S0, 0, z);
+        ms_barrier(M, R_S0);   /* of the element's address */
         ms_set(M, d, T_UNIT, 0);
         break;
     case PRIM_vector_length: length_of(j, d, x, K_TUPLE, slow); break;
@@ -606,6 +608,7 @@ void emit_SETENV(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     ms_load_obj(M, R_S0, a, K_CLOSURE, jit_fatal(j, FATAL_EXPECT_CLOSURE, 0, 0, 0));
     ms_need_len(M, R_S0, (uint32_t)b + 1, jit_fatal(j, FATAL_ENV_RANGE, b, 0, 0));
     ms_store_field(M, R_S0, (uint32_t)b + 1, c);
+    ms_barrier(M, R_S0);
 }
 /* --jit-profile (M8): the count at s's field; add clobbers the flags, so
    after any branch on them */

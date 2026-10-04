@@ -61,7 +61,11 @@ its operands do not name would lose it at a collection. `-DRUNE_ROOTS_ALL`
 builds a VM with every register a root, to measure against. The
 stores into the heap are `SETENV`, the primitives `ref_set` and
 `array_update` (in `runtime/prims.c`, and in the loop through `HEAP_STORE` of
-`runtime/register/fastprim.h`) and a few more primitives.
+`runtime/register/fastprim.h`) and a few more primitives; each is
+`obj_set_field` (`runtime/value.h`), whose barrier is empty, and
+`ms_barrier` in compiled code. The collector's state and the allocation
+state are structs of the VM (`GcState`, `AllocState`, `runtime/vm.h`): the
+fast path bumps `alloc.used` against `alloc.size`.
 
 ## Frames, registers and the stack
 
@@ -250,8 +254,15 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   call into C takes the System V or the Windows convention (`ms_call`;
   the VM is argument 0). The allocation fast path is `vm_alloc`'s in
   line -- `--gc-stress` to the slow path, the room, the bump, the counts,
-  the header -- and every store into an object goes through
-  `ms_store_field`, where a collector's barrier goes. Slow paths (a fatal
+  the header -- and a store into an object that exists (`ref_set`,
+  `array_update`, `SETENV`) is followed by `ms_barrier`, the barrier's
+  place in compiled code, which emits nothing today and a card mark in
+  the VM built to measure one (`bin/runevm-cards`); a fill of a fresh
+  object is `ms_store_field` alone. A kind is tested by `kind_is`: the
+  header's first byte compared whole, as `obj_kind` reads it in C, since
+  the four bits it shares with the kind are the collector's and zero;
+  both take the kind's bits alone in the VM whose collector sets the
+  others (`bin/runevm-gcbits`, `RUNE_GC_BITS`). Slow paths (a fatal
   error, an allocation the fast path could not make) are emitted after
   the function's code. The stubs: `enter(vm, at)` saves the callee-saved
   registers, loads the VM's into the code's and jumps to `at`; `leave`

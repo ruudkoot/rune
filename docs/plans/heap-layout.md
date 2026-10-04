@@ -45,7 +45,7 @@ What it rests on:
 | M4 | Prototypes at full scale; the gate | done 2026-10-04: both prototypes run, pass the suites and are measured (branches `heap-layout-word` and `heap-layout-pairs`; the four sections *M4, ...* below), and the owner decided the gate that day (*M4, for the gate*). Not built in M4, and no longer wanted before M5: raw typed fields, the 32-bit header and its table, typed slots |
 | M5 | The chosen layout, complete | done 2026-10-04 on `heap-layout-word`, merged into `heap-layout`: the 64-bit types, the reals by the rotation, every consumer and what is kept open (*M5, the first step* to *M5, the third and fourth steps*), measured against the 16-byte layout under every engine (*M5, done*). D15's targets 1 and 3 are met, with what each section says beside them, and target 2 is measured. Raw real fields: the owner decides after experiments 1, 5 and 10 of `performance-64bit.md` |
 | M6 | Roots and maps | done 2026-10-04: the collector asks the engine which registers of a waiting frame are live (`VM.frame_live`, the JIT's liveness in `runtime/register/live.c`) and drops the dead ones, at every tier; the root list written once (*M6, done*). The bootstrap copies 12% fewer bytes. Tier 2's writes of unit, the plan's way, were not needed |
-| M7 | The collector on the new layout, and the hooks for the next | |
+| M7 | The collector on the new layout, and the hooks for the next | done 2026-10-04: the collector's state in the VM, the header's four bits named and tested, the barrier as one empty operation with a card mark behind a switch, young by address, the indirection in place, the growth of the heap measured and kept, the longest collection in `--stats`, and `docs/plans/collector.md` (*M7, done*) |
 | M8 | Flat arrays, strings and the FFI's objects | |
 
 The owner decided every decision on 2026-09-27 (*Decisions*), D1 to D5
@@ -1501,6 +1501,122 @@ taken for dead is unit where the program reads it. No budget moved:
 the counts are the allocations', which a collection does not change.
 The merge of M5 into `heap-layout` (`352ab70f`) passed the same on the
 main tree before this.
+
+### M7, done: the copier on the new layout, and the hooks
+
+Built on 2026-10-04 on branch `heap-layout-m7`.
+
+* **No variable of the collector is the file's.** What a collection in
+  progress has (the space copied into, how much of it is taken, the
+  boxes among that) and a relocation's two words are `GcState`, in the
+  VM; where the next object goes is `AllocState` (`alloc.from`,
+  `alloc.size`, `alloc.used`), named as the allocating thread's state
+  and read under those names by `vm_alloc`, the JIT's `ms_alloc`, the
+  images and `runeopt`'s offsets. Two VMs of a process collect each by
+  itself, which a test holds. The collector's time on the bootstrap is
+  what it was.
+* **The header's four bits** are named and asserted in
+  `runtime/value.h`: two of age or colour, remembered, pinned, the
+  high half of the first byte, the kind the low half. They are zero:
+  nothing through M8 sets one (D9's pinning is a copy around the call
+  until a space does not move), and whether the next collector puts
+  its bits there or in a table beside the heap is its roadmap's. So a
+  kind is read as the byte whole, through one operation in C
+  (`obj_kind`) and one in compiled code (`kind_is`), at no cost; the
+  copier carries the byte, and an image refuses one that is not a
+  kind. The VM built with `RUNE_GC_BITS` (`bin/runevm-gcbits`) is the
+  test that they can be used: its collector sets all four on every
+  object it copies and both readers take the kind's bits alone, and
+  `tests/lang` passes on it, as it comes and with every function
+  compiled and a collection at every allocation. (C masked in every
+  build at first, 1.4% of the interpreter's instructions on the
+  bootstrap for bits no build sets; the owner asked whether one would,
+  and it was taken out.)
+* **The barrier is one operation with no body:** `BARRIER` in
+  `obj_set_field` for C (`:=`, `Array.update`, `SETENV`, in the
+  primitives, the interpreters' fast paths) and `ms_barrier` after
+  the store at the three places compiled code stores into an object
+  that exists; a fill of a fresh object goes through neither.
+  `RUNE_BARRIER_CARDS` (`bin/runevm-cards`) makes it a card mark, four
+  instructions in compiled code, to measure one now.
+* **An object becomes an indirection in place** (`obj_become_ind`):
+  the kind rewritten, the first field the value, through the barrier;
+  the collector follows that field alone (`obj_scanned_fields`) and
+  copies the object at its size. `K_THUNK` and `K_IND` are still past
+  `K_LAST` for an image and the loader.
+* **Young by address:** `heap_is_young`, a range test of the space
+  objects are made in.
+* **`--stats` has the longest collection**, the pause: 62 ms on the
+  bootstrap, 80 ms on `fft`. `Runtime.stats` is left as it is: the
+  fields a generational collector reports are listed in the brief and
+  are added once, with it.
+* **The brief** is `docs/plans/collector.md`.
+
+**What the hooks cost**, in instructions, on the VM of M6, of M7, and
+M7's two built with a switch (cycles differed by 3% to 4% between
+runs of one binary that day, and say nothing at this size):
+
+| | M7 against M6 | the card mark against M7 | the bits set and masked against M7 |
+|---|---:|---:|---:|
+| bootstrap, default tiering | 0.993 | 1.003 | 1.044 |
+| bootstrap, interpreter | 0.998 | 1.000 | 1.025 |
+| `imp-for` (a loop of `:=`) | 1.000 | 1.047 | 1.045 |
+| `checksum` | 0.994 | 1.000 | 1.003 |
+| `tailmerge` | 0.986 | 1.000 | 1.098 |
+| `array_sieve` | 1.000 | 1.036 | 1.002 |
+
+M7 itself costs nothing. The card mark is under 5% of instructions on
+a loop that does nothing but store, and 0.3% on the bootstrap. The
+third column is what a collector that used the header's bits would
+pay at most: 2.5% of the interpreter's instructions on the bootstrap
+for C's mask, and in compiled code an upper bound, since the kind's
+bits are tested one by one there and the collector writes the header
+of every object it copies.
+
+**The growth of the heap, measured and left as it is.** With a step
+of P percent where the heap doubles (`-DRUNE_HEAP_GROW=P`), the
+bootstrap from 64 MiB:
+
+| growth | `--heap-fill` | collections | semispace | bytes copied |
+|---|---:|---:|---:|---:|
+| doubling | 50 | 10 | 134 MB | 306 MB |
+| doubling | 33 | 6 | 268 MB | 182 MB |
+| by 50% | 50 | 14 | 101 MB | 450 MB |
+| by 50% | 33 | 9 | 151 MB | 272 MB |
+| by 25% | 50 | 18 | 105 MB | 590 MB |
+| by 25% | 33 | 9 | 165 MB | 276 MB |
+| by 12% | 50 | 18 | 95 MB | 588 MB |
+| by 12% | 33 | 12 | 152 MB | 390 MB |
+
+A finer step makes the heap fit, and a copier pays for a heap that
+fits with everything that is live at every collection more: a quarter
+less memory for nearly twice the copying (`hamlet`: 5 MB for 8 and
+23% more copied; `fft`: 232 MB for 256 and 2.6 times). What M5 took
+as memory can be had back as collections with the option there
+already is: at `--heap-fill 33` the bootstrap runs in the 16-byte
+layout's 268 MB and makes 6 collections that copy 182 MB, where that
+layout made 9 that copied 492 MB. Doubling stays; the finer step is
+for an old space that is not copied whole, which is the next
+roadmap's (the brief says so).
+
+**The tests.** `tests/runtime/heap_test.c`, in `make test` on the
+runtime as built and in `make test-heap` with each switch: the bits
+survive a collection with their object and its kind is read through
+them; an indirection is followed through its first field and what its
+other fields held is not copied; young is told by address; each root
+of the list is one; two VMs collect independently; a store marks its
+card and a fill does not. `make test-heap` then runs `tests/lang` on
+the two VMs. A VM that an image became had no card table, which those
+tests found.
+
+**The suites.** The nineteen targets of M6 pass on M7, `test-census`
+(the census VM on the collector's new state), `check-templates`
+(`runeopt`'s templates are the same lines: the barrier emits nothing),
+`test-portability` and `test-windows` among them, and `test-heap`: the
+C test in its three builds, and `tests/lang` 337 of 337 on the VM
+whose collector sets the header's bits, as it comes and with every
+function compiled and a collection at every allocation, and on the VM
+whose barrier marks a card. No budget moved.
 
 ## The request
 
@@ -4609,6 +4725,10 @@ have come in.
 * **Done when:** the copier's behaviour is unchanged on every test
   (collections, live, `--stats` equal); the barrier flag's cost is in
   this file; the brief exists.
+* **Done** (2026-10-04; *M7, done: the copier on the new layout, and
+  the hooks*). Not built, by D6: the large-object space. Left for the
+  collector that needs them: the mask in compiled code as the default,
+  and new fields of `Runtime.stats`.
 * **Touches:** the multithreading roadmap (the state), the FFI (the
   pin bit).
 
@@ -4877,6 +4997,7 @@ output from every build).
 |---|---|
 | performance.md item 19 (8-byte values, "half the heap and half the collector's work") | D1, D2, D3; the numbers of *The experiments* |
 | performance.md item 13 (generational collector) | D7; M7's hooks and brief; the next roadmap |
+| collector.md (2026-10-04: the brief of the next collector's roadmap) | written by M7 from *The simulator* and from M5 to M7's measurements; what is in place for it is `docs/runtime.md`'s last section on the collector |
 | performance-64bit.md (2026-10-04: the programs that lose under the word, 64-bit words and reals, where their cost is and what would recover it) | D2's price as M5 leaves it; raw typed fields and the JIT's homes, after M5 |
 | real-encoding.md (2026-10-04: the experiments left on how a real sits in the word) | D3 at the gate; M5's second step; raw real fields, undecided until after M5 |
 | 32-bit-vm.md (2026-10-04: the experiments that would decide a 32-bit VM's own word) | D13 A for M5 at the gate; D13 B, D4 B and D, not prototyped |

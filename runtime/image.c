@@ -116,13 +116,13 @@ static void put_u64(Stream *s, uint64_t v) {
 #define OFF_NONE UINT64_MAX
 
 static void put_obj(Stream *s, const Obj *o, const VM *vm) {
-    put_u64(s, o ? (uint64_t)((const char *)o - vm->heap_from) : OFF_NONE);
+    put_u64(s, o ? (uint64_t)((const char *)o - vm->alloc.from) : OFF_NONE);
 }
 
 static void put_value(Stream *s, Value v, const VM *vm) {
     /* an immediate as its bits; anything in the heap, a box too, as its offset */
     int ptr = !val_is_imm(v);
-    uint64_t w = ptr ? (val_ptr(v) ? (uint64_t)((const char *)val_ptr(v) - vm->heap_from) : OFF_NONE)
+    uint64_t w = ptr ? (val_ptr(v) ? (uint64_t)((const char *)val_ptr(v) - vm->alloc.from) : OFF_NONE)
                      : val_bits(v);
     uint8_t *b = room(s, 9);
     if (!b) return;
@@ -140,8 +140,8 @@ static void put_string(Stream *s, const char *text) {
    width, then the fields, or the bytes of a string. */
 static void put_heap(Stream *s, VM *vm) {
     size_t scan = 0;
-    while (s->ok && scan < vm->heap_used) {
-        Obj *o = (Obj *)(vm->heap_from + scan);
+    while (s->ok && scan < vm->alloc.used) {
+        Obj *o = (Obj *)(vm->alloc.from + scan);
         put_u8(s, obj_kind(o));
         put_u16(s, obj_contag(o));
         put_u32(s, obj_len(o));
@@ -188,8 +188,8 @@ static void write_image(VM *vm, Stream *s, int kind) {
     for (int i = 0; i < vm->argc; i++) put_string(s, vm->argv[i]);
 
     /* the heap first, so that what follows can be written as offsets into it */
-    put_u64(s, (uint64_t)vm->heap_size);
-    put_u64(s, (uint64_t)vm->heap_used);
+    put_u64(s, (uint64_t)vm->alloc.size);
+    put_u64(s, (uint64_t)vm->alloc.used);
     put_heap(s, vm);
 
     /* a constant: what the bytecode said it is, the value as this VM has
@@ -208,7 +208,7 @@ static void write_image(VM *vm, Stream *s, int kind) {
         case CONST_WORD64: plain = val_word64(v); break;
         case CONST_REAL: plain = real_bits(val_real(v)); break;
         case CONST_CHAR: plain = (uint64_t)val_char(v); break;
-        default: plain = val_ptr(v) ? (uint64_t)((const char *)val_ptr(v) - vm->heap_from) : OFF_NONE; break;
+        default: plain = val_ptr(v) ? (uint64_t)((const char *)val_ptr(v) - vm->alloc.from) : OFF_NONE; break;
         }
         put_u8(s, p->const_kinds[i]);
         put_value(s, v, vm);
@@ -438,16 +438,17 @@ static Value get_value(Stream *s) {
 static int get_heap(Stream *s, VM *vm) {
     size_t scan = 0;
     vm->box_bytes_live = 0;
-    while (scan < vm->heap_used) {
-        if (vm->heap_used - scan < OBJ_HEADER_SIZE) return 0;
-        Obj *o = (Obj *)(vm->heap_from + scan);
+    while (scan < vm->alloc.used) {
+        if (vm->alloc.used - scan < OBJ_HEADER_SIZE) return 0;
+        Obj *o = (Obj *)(vm->alloc.from + scan);
         int kind = get_u8(s);
         uint16_t contag = get_u16(s);
         uint32_t len = get_u32(s);
+        /* the byte is a kind and nothing else: an image has none of the collector's bits */
+        if (!s->ok || kind < K_TUPLE || kind > K_LAST || kind == K_FORWARD) return 0;
         obj_init(o, kind, contag, len);
-        if (!s->ok || obj_kind(o) < K_TUPLE || obj_kind(o) > K_LAST || obj_kind(o) == K_FORWARD) return 0;
         size_t size = obj_size(o);
-        if (size > vm->heap_used - scan) return 0;
+        if (size > vm->alloc.used - scan) return 0;
         if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) {
             uint64_t bits = get_u64(s);
             memcpy(obj_bytes(o), &bits, 8);
@@ -550,16 +551,16 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     uint64_t heap_used = get_u64(&s);
     if (!s.ok || heap_used > heap_size || heap_size > SIZE_MAX)
         return failed(&s, err, errlen, "the image is cut short");
-    vm->heap_size = (size_t)heap_size;
-    vm->heap_used = (size_t)heap_used;
+    vm->alloc.size = (size_t)heap_size;
+    vm->alloc.used = (size_t)heap_used;
     if (vm->heap_limit) {
-        if (vm->heap_used > vm->heap_limit) return failed(&s, err, errlen, "heap limit exceeded");
-        if (vm->heap_size > vm->heap_limit) vm->heap_size = vm->heap_limit;
+        if (vm->alloc.used > vm->heap_limit) return failed(&s, err, errlen, "heap limit exceeded");
+        if (vm->alloc.size > vm->heap_limit) vm->alloc.size = vm->heap_limit;
     }
-    vm->heap_from = malloc(vm->heap_size > 0 ? vm->heap_size : 1);
-    if (!vm->heap_from) return failed(&s, err, errlen, "cannot allocate heap");
+    vm->alloc.from = malloc(vm->alloc.size > 0 ? vm->alloc.size : 1);
+    if (!vm->alloc.from) return failed(&s, err, errlen, "cannot allocate heap");
     /* 8-aligned, as every heap is: bits 1 and 2 of a pointer stay clear (value.h) */
-    if (((uintptr_t)vm->heap_from & 7) != 0) return failed(&s, err, errlen, "cannot allocate an aligned heap");
+    if (((uintptr_t)vm->alloc.from & 7) != 0) return failed(&s, err, errlen, "cannot allocate an aligned heap");
     if (!get_heap(&s, vm)) return failed(&s, err, errlen, "the heap of the image is not sound");
 
     p->nconsts = get_u32(&s);

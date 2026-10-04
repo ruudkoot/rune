@@ -228,7 +228,38 @@ static inline int val_same_imm(Value a, Value b) {
 static inline int val_is_immediate(Value v) { return val_is_imm(v); }
 
 /* ---- an object: the header and the fields ---- */
+/* The header's first byte is the kind, in its low four bits, and four bits
+   that are the collector's (docs/plans/heap-layout.md, D4 A; named and
+   asserted from M7): an age or a colour in two, "in the remembered set",
+   and "not to be moved". No collector sets one, and none is planned to in
+   this roadmap: they are zero in every object, the copier carries them
+   with the header, and a reader of a kind reads the byte whole, in C
+   (obj_kind) and in compiled code (runtime/register/jit/masm.c, kind_is),
+   which costs nothing. A VM built with RUNE_GC_BITS is the test that a
+   collector to come may use them: its collector sets them on every object
+   it copies, and both readers take the low four bits alone. A collector
+   that sets them makes that the build. */
+#define OBJ_KIND_MASK 0x0f
+#define OBJ_GC_BITS 0xf0
+#define OBJ_GC_AGE 0x30          /* two bits: the collections survived, to three; or a colour */
+#define OBJ_GC_AGE_ONE 0x10
+#define OBJ_GC_REMEMBERED 0x40   /* in the remembered set: it holds a pointer the collector must find */
+#define OBJ_GC_PINNED 0x80       /* not to be moved (docs/plans/heap-layout.md, D9) */
+_Static_assert(offsetof(struct Obj, kind) == 0, "the kind and the collector's bits are the header's first byte");
+_Static_assert((OBJ_KIND_MASK & OBJ_GC_BITS) == 0 && (OBJ_KIND_MASK | OBJ_GC_BITS) == 0xff,
+               "the kind and the collector's bits share the byte and nothing else is in it");
+_Static_assert((OBJ_GC_AGE | OBJ_GC_REMEMBERED | OBJ_GC_PINNED) == OBJ_GC_BITS &&
+               (OBJ_GC_AGE & OBJ_GC_REMEMBERED) == 0 && (OBJ_GC_AGE & OBJ_GC_PINNED) == 0 &&
+               (OBJ_GC_REMEMBERED & OBJ_GC_PINNED) == 0 && OBJ_GC_AGE == 3 * OBJ_GC_AGE_ONE,
+               "the collector's four bits: two of age, remembered, pinned");
+_Static_assert(K_IND <= OBJ_KIND_MASK, "every kind fits the four bits the header has for it");
+static inline int obj_gc_bits(const Obj *o) { return o->kind & OBJ_GC_BITS; }
+#ifdef RUNE_GC_BITS
+static inline int obj_kind(const Obj *o) { return o->kind & OBJ_KIND_MASK; }
+static inline void obj_set_gc_bits(Obj *o, int bits) { o->kind = (uint8_t)((o->kind & OBJ_KIND_MASK) | (bits & OBJ_GC_BITS)); }
+#else
 static inline int obj_kind(const Obj *o) { return o->kind; }
+#endif
 static inline uint32_t obj_len(const Obj *o) { return o->len; }
 static inline uint16_t obj_contag(const Obj *o) { return o->contag; }
 /* the header of a fresh object; the fields are the caller's to fill */
@@ -245,11 +276,41 @@ static inline const char *obj_bytes_c(const Obj *o) { return (const char *)(o) +
 static inline Value obj_field(const Obj *o, uint32_t i) { return obj_fields_c(o)[i]; }
 /* a field of a fresh object, being filled: no barrier */
 static inline void obj_fill_field(Obj *o, uint32_t i, Value v) { OBJ_FIELDS(o)[i] = v; }
-/* a store into an object that exists (ref_set, array_update, SETENV): where
-   a write barrier goes (docs/plans/heap-layout.md, D7); none today */
-static inline void obj_set_field(Obj *o, uint32_t i, Value v) { OBJ_FIELDS(o)[i] = v; }
+/* THE BARRIER: what a store into an object that exists does beside the
+   store. Nothing today: the copier needs none. It is one operation, here
+   for C and ms_barrier for compiled code (runtime/register/jit/masm.c), so
+   that a collector that needs one writes its body in two places and finds
+   every store already going through it. RUNE_BARRIER_CARDS makes it a card
+   mark, to measure what a barrier of that kind costs before there is a
+   collector that reads the cards (docs/plans/heap-layout.md, M7): one byte
+   for every 512 bytes of address, in a table the address is folded into. */
+#ifdef RUNE_BARRIER_CARDS
+#define CARD_SHIFT 9
+#define CARD_COUNT ((uintptr_t)1 << 20)
+extern uint8_t *rune_cards;   /* CARD_COUNT bytes (runtime/heap.c) */
+#define BARRIER(o) (rune_cards[((uintptr_t)(o) >> CARD_SHIFT) & (CARD_COUNT - 1)] = 1)
+#else
+#define BARRIER(o) ((void)0)
+#endif
+/* a store into an object that exists (ref_set, array_update, SETENV),
+   through the barrier */
+static inline void obj_set_field(Obj *o, uint32_t i, Value v) { BARRIER(o); OBJ_FIELDS(o)[i] = v; }
+/* An object becomes an indirection to a value, in place: the header's kind
+   is rewritten and the first field is the value, which is what a lazy front
+   end's update of a suspension is (docs/plans/heap-layout.md, *A lazy front
+   end*; no program of SML does it). The store goes through the barrier, the
+   object existing and the value being newer. The length stays, so the
+   object keeps its size; the collector follows the first field alone
+   (runtime/heap.c), the others being dead from here on. */
+static inline void obj_become_ind(Obj *o, Value v) {
+    BARRIER(o);
+    o->kind = (uint8_t)((o->kind & OBJ_GC_BITS) | K_IND);
+    OBJ_FIELDS(o)[0] = v;
+}
 /* whether the object's payload holds values the collector follows */
-static inline int obj_has_fields(const Obj *o) { return o->kind != K_STRING && o->kind != K_REAL && o->kind != K_BOX; }
+static inline int obj_has_fields(const Obj *o) { int k = obj_kind(o); return k != K_STRING && k != K_REAL && k != K_BOX; }
+/* how many of them it follows: every field, or an indirection's one */
+static inline uint32_t obj_scanned_fields(const Obj *o) { return obj_kind(o) == K_IND ? 1 : o->len; }
 
 /* ---- sizes ---- */
 /* the payload of an object, rounded to what the heap allocates: PAYLOAD_MIN
@@ -299,7 +360,7 @@ Value mk_word64_vm(struct VM *vm, uint64_t w);   /* a Word64.word: an immediate,
 Value mk_box_vm(struct VM *vm, uint64_t bits);   /* the K_BOX of a number that has no immediate */
 
 /* ---- forwarding (runtime/heap.c): a copied object points at its copy ---- */
-static inline int obj_forwarded(const Obj *o) { return o->kind == K_FORWARD; }
+static inline int obj_forwarded(const Obj *o) { return obj_kind(o) == K_FORWARD; }
 static inline Obj *obj_forwarding(const Obj *o) { Obj *n; memcpy(&n, obj_bytes_c(o), sizeof n); return n; }
 static inline void obj_forward(Obj *o, Obj *to) { o->kind = K_FORWARD; memcpy(OBJ_BYTES(o), &to, sizeof to); }
 

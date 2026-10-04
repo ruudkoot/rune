@@ -158,6 +158,30 @@ typedef struct JitOptions {
 
 #define NUM_BUILTIN_EXNS 8
 
+/* Where the next object goes: the state of the thread that allocates. There
+   is one thread, and one of these, in the VM; a nursery of a thread's own or
+   a buffer it bumps in is this struct and the fast path of vm_alloc, of the
+   JIT's ms_alloc and of runeopt's template, changed together
+   (docs/plans/heap-layout.md, M7; D6, D8). */
+typedef struct AllocState {
+    char *from;      /* the semispace objects go into */
+    size_t size;     /* the size of one semispace */
+    size_t used;     /* how much of it is taken */
+} AllocState;
+
+/* The collector's own (runtime/heap.c): nothing of it is a variable of the
+   file, so every VM of a process collects by itself. */
+typedef struct GcState {
+    char *kept;          /* the other semispace, kept while the heap stays the size it is;
+                            NULL before the first collection and after one that grew the heap */
+    char *to;            /* during a collection: the space copied into */
+    size_t to_used;      /* and how much of it is taken */
+    size_t to_boxes;     /* of to_used, the boxes (box_bytes_live) */
+    size_t to_used_stock;   /* the census VM's count of to_used by the stock sizes */
+    uintptr_t reloc_old; /* heap_relocate: where the heap was */
+    int reloc_ok;
+} GcState;
+
 typedef struct VM {
     Program prog;
 
@@ -178,17 +202,17 @@ typedef struct VM {
     Obj *builtin_exns[NUM_BUILTIN_EXNS];
 
     /* heap (Cheney semispace) */
-    char *heap_from, *heap_to;
-    size_t heap_size;        /* size of one semispace */
-    size_t heap_used;
+    AllocState alloc;        /* where the next object goes */
+    GcState gc;              /* the collector's own */
 #ifdef RUNE_CENSUS
-    size_t census_used_stock;  /* heap_used as the stock VM would count it (8-byte headers): the collector's trigger */
+    size_t census_used_stock;  /* alloc.used as the stock VM would count it (8-byte headers): the collector's trigger */
 #endif
     size_t gc_count;
     size_t live_last;        /* bytes the last collection kept, and the one before it: */
     size_t live_before;      /* vm_gc guesses from them whether the heap must grow */
     int64_t gc_user_us;      /* processor time spent collecting, in microseconds */
     int64_t gc_sys_us;
+    int64_t gc_longest_us;   /* the longest of the collections, both times together (--stats): what the program waited at once */
     uint64_t bytes_allocated;  /* not size_t: --count prints the same where it is 32 bits */
     uint64_t objects_allocated;
     /* The boxes of the representation -- a real with no immediate, an int
@@ -199,7 +223,7 @@ typedef struct VM {
        same on every engine and under every layout; --stats reports them. */
     uint64_t boxes_allocated;
     uint64_t box_bytes_allocated;
-    size_t box_bytes_live;     /* of heap_used, what is boxes: Runtime.stats's live leaves them out, as its bytes do */
+    size_t box_bytes_live;     /* of alloc.used, what is boxes: Runtime.stats's live leaves them out, as its bytes do */
     uint64_t copied;         /* bytes every collection copied, in all (--stats) */
     size_t max_live;         /* the most a collection kept (--stats) */
     uint64_t instructions;   /* executed so far */
@@ -241,7 +265,18 @@ typedef struct VM {
        the engine does not say, and every slot of the stack is a root: the
        stack bytecode, a program runeopt made. */
     uint64_t (*frame_live)(struct VM *vm, uint32_t func, uint32_t ret_pc);
+#ifdef RUNE_BARRIER_CARDS
+    uint8_t *jit_cards;      /* the measuring barrier's table, where compiled code finds it (value.h, BARRIER) */
+#endif
 } VM;
+
+/* Whether p points into the space objects are made in. Young and old are
+   told apart by address, not by a bit of the header (docs/plans/heap-layout.md,
+   D7): this is the test a nursery will make, of its own range. Today every
+   object is there. */
+static inline int heap_is_young(const VM *vm, const void *p) {
+    return (uintptr_t)((const char *)p - vm->alloc.from) < (uintptr_t)vm->alloc.size;
+}
 
 /* heap.c */
 void heap_init(VM *vm, size_t semispace_bytes);
@@ -252,6 +287,9 @@ Obj *vm_string_from(VM *vm, const char *s, uint32_t len);
 size_t obj_size(const Obj *o);      /* header and payload, rounded as the heap lays it out */
 void vm_gc(VM *vm, size_t needed);
 int heap_relocate(VM *vm, uintptr_t old_base);  /* after an image is read: 0 when it is not sound */
+#ifdef RUNE_BARRIER_CARDS
+void heap_cards(VM *vm);
+#endif
 
 /* runtime.c: all of a VM but its dispatch loop and its command line. What
    the loop does at every instruction is inline here, where it can be made

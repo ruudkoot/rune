@@ -174,6 +174,9 @@ int vm_loop(VM *vm) {
 #ifndef RUNE_ROOTS_ALL   /* the switch: every register a root, as before heap-layout M6 */
     vm->frame_live = reg_frame_live;
 #endif
+#ifdef RUNE_BARRIER_CARDS
+    heap_cards(vm);
+#endif
     int r = RUN_INTERP;
     for (;;) {
         /* the program may have become another (Runtime.restore) */

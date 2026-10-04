@@ -26,9 +26,9 @@
     X("VM_BUILTIN_EXNS", offsetof(VM, builtin_exns)) \
     X("VM_INSTRUCTIONS", offsetof(VM, instructions)) \
     X("VM_PC", offsetof(VM, pc)) \
-    X("VM_HEAP_FROM", offsetof(VM, heap_from)) \
-    X("VM_HEAP_SIZE", offsetof(VM, heap_size)) \
-    X("VM_HEAP_USED", offsetof(VM, heap_used)) \
+    X("VM_HEAP_FROM", offsetof(VM, alloc.from)) \
+    X("VM_HEAP_SIZE", offsetof(VM, alloc.size)) \
+    X("VM_HEAP_USED", offsetof(VM, alloc.used)) \
     X("VM_BYTES_ALLOCATED", offsetof(VM, bytes_allocated)) \
     X("VM_OBJECTS_ALLOCATED", offsetof(VM, objects_allocated)) \
     X("VM_GC_STRESS", offsetof(VM, gc_stress)) \

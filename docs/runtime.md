@@ -42,7 +42,9 @@ meets everywhere are never allocated.
 
 Everything else is an object in the heap: an 8-byte header -- kind, a
 constructor tag and a length -- and a payload of 8-byte fields, or of
-bytes rounded up to a multiple of 8, at least 8. The smallest object is
+bytes rounded up to a multiple of 8, at least 8. The kind is the low four
+bits of the header's first byte; the other four are the collector's and
+are zero under today's (*The garbage collector*). The smallest object is
 therefore 16 bytes, and a tuple of *n* fields is 8 + 8*n* bytes. The kinds
 are a tuple (also a record and a vector), a constructor with an argument,
 a closure, a string, a `ref`, an array, an exception, an exception
@@ -190,8 +192,10 @@ what `Runtime.stats` says is live.
 * `runevm --stats` prints, at exit, the number of collections, the bytes
   allocated, the size of a semispace, the bytes in use (live data and the
   garbage since the last collection), the bytes every collection copied in
-  all, the most a collection kept, and the collector's processor time in
-  microseconds; and the boxes the program made, which `--count` leaves out.
+  all, the most a collection kept, the collector's processor time in
+  microseconds and the longest single collection, which is the longest the
+  program stood still; and the boxes the program made, which `--count`
+  leaves out.
 * `Runtime.stats ()` gives the collections, the bytes in use (boxes left
   out) and the size of a semispace to the program. The bytes in use are an
   upper bound of what is live, and right after `Runtime.collect ()` they
@@ -210,6 +214,40 @@ what `Runtime.stats` says is live.
 Since a collection moves everything, C code inside the VM reads its arguments
 from the value stack rather than holding them in variables; the pattern is in
 [architecture.md](architecture.md).
+
+### What is in place for a collector to come
+
+The copier needs none of these; they are there, and tested, so that a
+generational collector is a change to the collector and not to everything
+that touches the heap ([plans/collector.md](plans/collector.md) is its
+brief).
+
+* **Four bits of the header are the collector's:** two for an age or a
+  colour, one for "in the remembered set", one for "not to be moved"
+  (`runtime/value.h`). They are zero in every object: no collector sets
+  one, and none is planned to before the next collector's roadmap decides
+  whether its bits go there or in a table beside the heap. So a kind is
+  read as the whole byte, in C and in compiled code, which costs nothing.
+  `bin/runevm-gcbits` is a VM whose collector sets the bits on every
+  object it copies and whose readers take the kind's four bits alone, and
+  `make test-heap` runs the language's tests on it: what a collector that
+  uses them would turn on. An image does not hold them.
+* **A store into an object that exists goes through one operation,**
+  `obj_set_field` in C and `ms_barrier` after the store in compiled code,
+  whose barrier is empty. The stores are `:=`, `Array.update` and their
+  like, and the closing of a recursive closure (`SETENV`). `bin/runevm-cards`
+  is a VM whose barrier marks a card, to measure a barrier before there is
+  a collector that reads one: on a loop of `:=` it runs 4.7% more
+  instructions, on the compiler compiling itself 0.3%.
+* **Young and old are told apart by address** (`heap_is_young`): the test
+  a nursery will make of its own range. Today every object is young.
+* **An object can become an indirection in place** (`obj_become_ind`), its
+  first field the value, and the collector follows that field alone: a
+  lazy language's update of a suspension. No program of SML does it.
+* **The collector's state is the VM's** (`GcState`), and where the next
+  object goes is the allocating thread's (`AllocState`): no variable of
+  the collector is the process's, so two VMs of a process collect each by
+  itself, and a thread's own allocation buffer is one struct to change.
 
 ## Stacks, calls and exceptions
 

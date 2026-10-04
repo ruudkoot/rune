@@ -28,6 +28,30 @@ _Static_assert((1 << VALUE_SHIFT) == sizeof(Value), "masm.c scales an index by 8
 
 _Static_assert(offsetof(Obj, kind) == 0 && offsetof(Obj, contag) == 2 && offsetof(Obj, len) == 4 && sizeof(Obj) == 8, "masm.c reads the header as kind, contag, len, then the fields");
 
+/* The object at r is of the kind, else to unless. The header's first byte
+   is the kind and the collector's four bits (value.h), which are zero while
+   no collector sets one, so the byte is compared whole: one instruction.
+   Under RUNE_GC_BITS, the VM whose collector sets them, the kind's four
+   bits are tested alone and nothing else is touched: the bits the kind has
+   not must be clear, and each it has set. (A collector that used the bits
+   would load the byte and mask it, three instructions with a register this
+   does not ask for; what is here is the test that every reader is ready,
+   not that sequence's price.) */
+static void kind_is(Masm *m, int r, int kind, AsmLabel *unless) {
+#ifdef RUNE_GC_BITS
+    as_test8_mi(&m->a, r, (int32_t)offsetof(Obj, kind), OBJ_KIND_MASK & ~kind);
+    as_jcc(&m->a, CC_NE, unless);
+    for (int bit = 1; bit <= OBJ_KIND_MASK; bit <<= 1)
+        if (kind & bit) {
+            as_test8_mi(&m->a, r, (int32_t)offsetof(Obj, kind), bit);
+            as_jcc(&m->a, CC_E, unless);
+        }
+#else
+    as_cmp8_mi(&m->a, r, (int32_t)offsetof(Obj, kind), kind);
+    as_jcc(&m->a, CC_NE, unless);
+#endif
+}
+
 /* an emitter's mistake (masm.h) */
 static void bug(const char *what, long long k, long long of) {
     fprintf(stderr, "runevm: jit: internal error: %s: %lld of %lld\n", what, k, of);
@@ -150,8 +174,7 @@ static void decode_real(Masm *m, int xmm, AsmLabel *unless) {
     if (unless) {
         as_test_rr(&m->a, R_S2, R_S2);
         as_jcc(&m->a, CC_E, unless);
-        as_cmp8_mi(&m->a, R_S2, (int32_t)offsetof(Obj, kind), K_REAL);
-        as_jcc(&m->a, CC_NE, unless);
+        kind_is(m, R_S2, K_REAL, unless);
     }
     as_fld(&m->a, xmm, R_S2, (int32_t)sizeof(Obj));
     as_bind(&m->a, &done);
@@ -202,8 +225,7 @@ static void decode_num(Masm *m, int reg, int tag, AsmLabel *unless) {
     if (unless) {
         as_test_rr(&m->a, R_S2, R_S2);
         as_jcc(&m->a, CC_E, unless);
-        as_cmp8_mi(&m->a, R_S2, (int32_t)offsetof(Obj, kind), K_BOX);
-        as_jcc(&m->a, CC_NE, unless);
+        kind_is(m, R_S2, K_BOX, unless);
     }
     as_ld64(&m->a, reg, R_S2, (int32_t)sizeof(Obj));
     as_bind(&m->a, &done);
@@ -829,8 +851,7 @@ void ms_load_obj(Masm *m, int r, int32_t s, int kind, AsmLabel *unless) {
     if (ms_trusts(m, s, kind)) return;   /* tier 2: the section says so (M10) */
     as_test_ri(&m->a, r, 1);
     as_jcc(&m->a, CC_NE, unless);
-    as_cmp8_mi(&m->a, r, (int32_t)offsetof(Obj, kind), kind);
-    as_jcc(&m->a, CC_NE, unless);
+    kind_is(m, r, kind, unless);
 }
 void ms_load_obj_tested(Masm *m, int r, int32_t s, int kind, AsmLabel *unless) {
     const uint8_t *reps = m->reps;
@@ -854,7 +875,7 @@ void ms_load_tag_of_con(Masm *m, int r, int32_t s, AsmLabel *unless) {
     /* not nullary: a pointer to a constructor, which the section
        vouches for at tier 2 (M10); else tested */
     int trusted = m->reps && (uint32_t)s < m->nlocals && m->reps[s] == REP_CON;
-    if (!trusted) { as_cmp8_mi(&m->a, r, (int32_t)offsetof(Obj, kind), K_CON); as_jcc(&m->a, CC_NE, unless); }
+    if (!trusted) kind_is(m, r, K_CON, unless);
     as_ld16(&m->a, r, r, (int32_t)offsetof(Obj, contag));
     as_bind(&m->a, &done);
     as_label_free(&ptr); as_label_free(&done);
@@ -927,14 +948,14 @@ void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow) {
     uint32_t size = (uint32_t)obj_size_of(kind, n);
     as_cmp_mi(&m->a, VMR, OFF(gc_stress), 0);
     as_jcc(&m->a, CC_NE, slow);
-    as_ld64(&m->a, R_S0, VMR, OFF(heap_used));
+    as_ld64(&m->a, R_S0, VMR, OFF(alloc.used));
     as_lea(&m->a, R_S1, R_S0, -1, 1, (int32_t)size);
-    as_cmp_rm(&m->a, R_S1, VMR, OFF(heap_size));
+    as_cmp_rm(&m->a, R_S1, VMR, OFF(alloc.size));
     as_jcc(&m->a, CC_A, slow);
-    as_st64(&m->a, VMR, OFF(heap_used), R_S1);
+    as_st64(&m->a, VMR, OFF(alloc.used), R_S1);
     as_add_mi(&m->a, VMR, OFF(bytes_allocated), (int32_t)size);
     as_add_mi(&m->a, VMR, OFF(objects_allocated), 1);
-    as_add_rm(&m->a, R_S0, VMR, OFF(heap_from));
+    as_add_rm(&m->a, R_S0, VMR, OFF(alloc.from));
     /* the header: kind, pad 0, contag; then len */
     as_st32i(&m->a, R_S0, 0, (int32_t)((uint32_t)kind | ((uint32_t)contag << 16)));
     as_st32i(&m->a, R_S0, 4, (int32_t)n);
@@ -956,6 +977,21 @@ void ms_load_contag(Masm *m, int r, int obj) { as_ld16(&m->a, r, obj, (int32_t)o
 void ms_need_len(Masm *m, int obj, uint32_t n, AsmLabel *unless) {
     as_cmp32_mi(&m->a, obj, (int32_t)offsetof(Obj, len), (int32_t)n);
     as_jcc(&m->a, CC_BE, unless);
+}
+/* THE BARRIER, in compiled code: what a store into an object that exists
+   does beside the store (value.h, BARRIER). Nothing today. It comes after
+   the store and may use the register that held the object, or the address
+   stored at, which no emitter needs again: under RUNE_BARRIER_CARDS it
+   marks the card of that address, as C's does. */
+void ms_barrier(Masm *m, int obj) {
+#ifdef RUNE_BARRIER_CARDS
+    as_shr_ri(&m->a, obj, CARD_SHIFT);
+    as_and_ri(&m->a, obj, (int32_t)(CARD_COUNT - 1));
+    as_add_rm(&m->a, obj, VMR, OFF(jit_cards));
+    as_st8i(&m->a, obj, 0, 1);
+#else
+    (void)m; (void)obj;
+#endif
 }
 void ms_store_field_imm(Masm *m, int obj, uint32_t i, int tag, int32_t payload) {
     as_st64i(&m->a, obj, FIELD_OFF(i), (int32_t)word_of(tag, payload));

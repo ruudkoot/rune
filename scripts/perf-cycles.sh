@@ -208,7 +208,7 @@ counters() {
 # gc_stats LABEL: the --stats line of the run that counts (--gc), as
 # "collections copied gc-us semispace"; nothing where there is none
 gc_stats() {
-  sed -n 's/^runevm: \([0-9]*\) collections, [0-9]* bytes allocated, semispace \([0-9]*\) bytes, [0-9]* live, copied \([0-9]*\), max live [0-9]*, gc \([0-9]*\) us$/\1 \3 \4 \2/p' "$out/$1.best.stderr" | tail -1
+  sed -n 's/^runevm: \([0-9]*\) collections, [0-9]* bytes allocated, semispace \([0-9]*\) bytes, [0-9]* live, copied \([0-9]*\), max live [0-9]*, gc \([0-9]*\) us, longest [0-9]* us$/\1 \3 \4 \2/p' "$out/$1.best.stderr" | tail -1
 }
 
 # human N: N in millions, or in thousands of millions from 1G, one decimal
@@ -371,7 +371,7 @@ if [ $sweep = 1 ]; then
   echo "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|"
   # sweep_stats LABEL: "collections semispace live copied max_live gc_us" of the run that counts
   sweep_stats() {
-    sed -n 's/^runevm: \([0-9]*\) collections, [0-9]* bytes allocated, semispace \([0-9]*\) bytes, \([0-9]*\) live, copied \([0-9]*\), max live \([0-9]*\), gc \([0-9]*\) us$/\1 \2 \3 \4 \5 \6/p' "$out/$1.best.stderr" | tail -1
+    sed -n 's/^runevm: \([0-9]*\) collections, [0-9]* bytes allocated, semispace \([0-9]*\) bytes, \([0-9]*\) live, copied \([0-9]*\), max live \([0-9]*\), gc \([0-9]*\) us, longest [0-9]* us$/\1 \2 \3 \4 \5 \6/p' "$out/$1.best.stderr" | tail -1
   }
   # sweep_counter LABEL EVENT: that counter of the run that counts
   sweep_counter() { sed -n "s/^\([0-9]*\),[^,]*,$2,.*/\1/p" "$out/$1.best.perf" | head -1; }

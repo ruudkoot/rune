@@ -455,6 +455,16 @@ bin/runevm-realboxed: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.do
 bin/runevm-rawhomes: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 -DRUNE_RAW_HOMES $(RT_INC) -o $@ $(NEW_SRCS) -lm
+# The hooks for the collector to come (docs/plans/heap-layout.md, M7), each a
+# VM of its own to test or to measure with: the collector sets the header's
+# four bits on every object it copies and every reader of a kind masks them;
+# and the barrier marks a card at every store into an object that exists.
+bin/runevm-gcbits: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_GC_BITS $(RT_INC) -o $@ $(NEW_SRCS) -lm
+bin/runevm-cards: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_BARRIER_CARDS $(RT_INC) -o $@ $(NEW_SRCS) -lm
 
 # The census VM (docs/census.md; docs/plans/heap-layout.md, M1): runtime/register's
 # loop on the runtime with -DRUNE_CENSUS, which enables the hooks of
@@ -686,6 +696,31 @@ test: $(RUNE) vm | build/.doctor-check
 	python3 tests/runtime/run-limits.py --rune $(RUNE_STACK) --vm $(RUNEVM)
 	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm $(RUNEVM)
 	sh tests/runtime/run-vm-tests.sh --vm $(RUNEVM)
+	@mkdir -p build
+	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
+	build/heap_test
+
+# The hooks for the collector to come (docs/plans/heap-layout.md, M7). The C
+# test of them (tests/runtime/heap_test.c) on the runtime as built and as
+# built with each switch: the header's four bits set by the collector on
+# every object it copies (RUNE_GC_BITS), and the barrier as a card mark
+# (RUNE_BARRIER_CARDS). Then tests/lang on the VM of the first, as it comes
+# and with every function compiled and a collection at every allocation, so
+# that a reader of a kind that does not mask the bits fails, and on the VM
+# of the second.
+test-heap: bin/runevm-gcbits bin/runevm-cards $(RUNE) vm | build/.doctor-check
+	@mkdir -p build
+	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
+	build/heap_test
+	$(CC) $(CFLAGS) -DRUNE_GC_BITS $(RT_INC) -o build/heap_test-gcbits tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
+	build/heap_test-gcbits
+	$(CC) $(CFLAGS) -DRUNE_BARRIER_CARDS $(RT_INC) -o build/heap_test-cards tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
+	build/heap_test-cards
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-gcbits" --jit=all --gc-stress 1 "$$@"\n' > bin/runevm-gcbits-stress
+	chmod +x bin/runevm-gcbits-stress
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gcbits --out tests/out/register-gcbits
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gcbits-stress --out tests/out/register-gcbits-stress
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-cards --out tests/out/register-cards
 
 test-all: host-builds vm | build/.doctor-check
 	@for c in mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit; do \

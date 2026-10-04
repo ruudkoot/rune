@@ -237,7 +237,8 @@ void ms_handback_rax(Masm *m);                                     /* with the a
 /* the heap: rax := an object of n fields, or to slow where it would not
    fit or --gc-stress asks; the header written, the counts kept */
 void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow);
-void ms_store_field(Masm *m, int obj, uint32_t i, int32_t s);       /* field i of the object in obj := R(s): where a barrier goes */
+void ms_store_field(Masm *m, int obj, uint32_t i, int32_t s);       /* field i of the object in obj := R(s) */
+void ms_barrier(Masm *m, int obj);   /* after a store into an object that exists, at obj: the barrier (nothing today); obj is not kept */
 void ms_load_field(Masm *m, int32_t d, int obj, uint32_t i);        /* R(d) := field i of the object in obj (a program's object: its length tested by the caller) */
 void ms_load_len(Masm *m, int r, int obj);                          /* r := the length of the object in obj (fields, or bytes of a string) */
 void ms_check_len(Masm *m, int obj, uint32_t n, AsmLabel *unless);  /* to unless where the object in obj has not exactly n fields */

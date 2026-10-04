@@ -35,7 +35,7 @@ int main(void) {
     vm.stack = stack; vm.sp = 7; vm.stack_cap = 64;
     vm.frames = frames; vm.fp = 1; vm.frames_active = 1;
     frames[1].base = 3;
-    vm.heap_from = heap; vm.heap_size = sizeof heap; vm.heap_used = 32;
+    vm.alloc.from = heap; vm.alloc.size = sizeof heap; vm.alloc.used = 32;
     vm.instructions = 100;
     stack[3] = mk_int(7);
     stack[4] = mk_ptr(NULL);
@@ -72,10 +72,10 @@ int main(void) {
         if ((char *)t != heap + 32 || obj_kind(t) != K_TUPLE || obj_len(t) != 2 || obj_contag(t) != 0) { printf("FAIL header\n"); fails++; }
         if (val_imm(obj_field(t, 0)) != 7 || val_imm(obj_field(t, 1)) != 42) { printf("FAIL fields\n"); fails++; }
     }
-    if (vm.heap_used != 32 + OBJ_SIZE_FIELDS(2) || vm.bytes_allocated != OBJ_SIZE_FIELDS(2) || vm.objects_allocated != 1) { printf("FAIL counts %zu %llu\n", vm.heap_used, (unsigned long long)vm.bytes_allocated); fails++; }
+    if (vm.alloc.used != 32 + OBJ_SIZE_FIELDS(2) || vm.bytes_allocated != OBJ_SIZE_FIELDS(2) || vm.objects_allocated != 1) { printf("FAIL counts %zu %llu\n", vm.alloc.used, (unsigned long long)vm.bytes_allocated); fails++; }
     if (vm.pc != 77 || vm.sp != 7 || vm.instructions != 105) { printf("FAIL sync pc %u sp %zu count %llu\n", vm.pc, vm.sp, (unsigned long long)vm.instructions); fails++; }
     /* the slow path: no room */
-    vm.heap_used = sizeof heap - 8;
+    vm.alloc.used = sizeof heap - 8;
     r = as_enter(stubs)(&vm, code);
     if (r != 9) { printf("FAIL slow %d\n", r); fails++; }
     printf(fails ? "masm: %d failures\n" : "masm: ok\n", fails);
