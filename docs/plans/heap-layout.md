@@ -43,7 +43,7 @@ What it rests on:
 | M2 | The simulator and the harness in the tree | done 2026-09-27, `3f17fd2` |
 | M3 | The layout behind an interface | done 2026-09-27, `93cc674` |
 | M4 | Prototypes at full scale; the gate | done 2026-10-04: both prototypes run, pass the suites and are measured (branches `heap-layout-word` and `heap-layout-pairs`; the four sections *M4, ...* below), and the owner decided the gate that day (*M4, for the gate*). Not built in M4, and no longer wanted before M5: raw typed fields, the 32-bit header and its table, typed slots |
-| M5 | The chosen layout, complete | in progress on `heap-layout-word`: the first of its four steps, the 64-bit types, is built and passes every suite (*M5, the first step*); the reals' encoding is next |
+| M5 | The chosen layout, complete | done 2026-10-04 on `heap-layout-word`, merged into `heap-layout`: the 64-bit types, the reals by the rotation, every consumer and what is kept open (*M5, the first step* to *M5, the third and fourth steps*), measured against the 16-byte layout under every engine (*M5, done*). D15's targets 1 and 3 are met, with what each section says beside them, and target 2 is measured. Put to the owner: raw real fields, recommended not now |
 | M6 | Roots and maps | |
 | M7 | The collector on the new layout, and the hooks for the next | |
 | M8 | Flat arrays, strings and the FFI's objects | |
@@ -1201,6 +1201,191 @@ immediate (D4's small item), `IntInf`'s limbs in a raw word, and the
 * *The header's second byte* is zero and is the one kept for a
   descriptor of raw fields, D1 B's second half, which the gate left
   to be decided after M5.
+
+### M5, done: the tables and the targets
+
+Measured on 2026-10-04 on the build of `4872a16e`, against the
+16-byte layout as branch `heap-layout` had it before this milestone
+was merged (its VMs and bytecode are kept in
+`~/.cache/claude-rune-drafts/heap-layout/baseline-16byte`, with the
+scripts and the raw lines of every table here under `results`).
+Every ratio is M5 over the 16-byte layout, from runs that alternate
+between the two on a quiet machine, the least of six (the engines) or
+of three (MLton's set).
+
+**The suites.** The twenty targets of the first step pass on the
+final build. `make test-laws`, the one that does not pass on the
+16-byte layout either: 1,733 laws at their structures, 1,318 pass, 313
+fail, 102 stopped, and the verdict of every one of the 1,733 is the
+16-byte layout's (60 lines differ in the number of cases drawn before
+a condition gave up: a generator draws from 63 bits now).
+
+**Cycles under every engine**, the eleven programs of
+`scripts/perf-cycles.sh`:
+
+| Program | 16-byte, default tiering | stack VM | register interpreter | default tiering | native code |
+|---|---:|---:|---:|---:|---:|
+| bootstrap | 8.24G | 0.88 | 0.85 | 0.84 | 0.81 |
+| compile-sigs | 725M | 0.91 | 0.86 | 0.89 | 0.76 |
+| runedoc-page | 345M | 0.89 | 0.85 | 0.83 | 0.74 |
+| list_ops | 164M | 0.94 | 0.81 | 0.72 | 0.75 |
+| string_ops | 376M | 0.85 | 0.83 | 0.71 | 0.65 |
+| array_sieve | 153M | 0.89 | 0.69 | 0.77 | 0.52 |
+| intinf_fact | 216M | 0.92 | 0.84 | 0.79 | 0.76 |
+| fib | 271M | 0.97 | 0.94 | 0.91 | 0.64 |
+| tak | 76M | 1.01 | 0.87 | 0.88 | 0.87 |
+| word_bits | 73M | 0.89 | 0.90 | 1.04 | 0.68 |
+| real_nbody | 176M | 1.30 | 1.03 | 1.02 | 0.94 |
+| geometric mean | | 0.94 | 0.86 | 0.85 | 0.73 |
+
+Nothing got slower but reals in an interpreter: `real_nbody` on the
+stack VM is at 1.30 (1.27 in a second measurement), where a real is
+decoded and encoded at every operation. That is D3 C's price and the
+exception target 3 names; with every real boxed (D3 B) the same VM is
+at 1.74, with 30 million boxes. `word_bits` at the default tiering
+is 2.7% behind in cycles at the same instructions (73.5M and 75.5M,
+the least of eight alternating runs), which was not explained; under
+the other three engines it is 10% to 32% ahead.
+
+**The collector on the bootstrap**, with `task-clock` and page
+faults (three rounds of three runs, in turn):
+
+| | 16-byte, default tiering | M5 | | 16-byte, native code | M5 | |
+|---|---:|---:|---:|---:|---:|---:|
+| cycles | 8.10G | 6.99G | 0.86 | 7.94G | 6.51G | 0.82 |
+| `task-clock` | 3,022 ms | 2,346 ms | 0.78 | 2,799 ms | 2,136 ms | 0.76 |
+| page faults | 234,502 | 102,767 | 0.44 | 232,623 | 101,262 | 0.44 |
+| semispace | 268 MB | 134 MB | 0.50 | 268 MB | 134 MB | 0.50 |
+| collections | 9 | 10 | | 8 | 8 | |
+| bytes copied | 491.7M | 349.1M | 0.71 | 410.5M | 261.7M | 0.64 |
+| the collector's time | 538 ms | 468 ms | 0.87 | 464 ms | 372 ms | 0.80 |
+| its share of `task-clock` | 17.8% | 20.0% | | 16.6% | 17.4% | |
+
+The collector's time fell and its share did not: the rest of the
+program fell by more. The policy sizes the heap by what survives a
+collection, which is 48 MB at most where it was 75 MB, and that falls
+on the other side of a doubling: a semispace of 134 MB against 268 MB.
+So the new layout collects as often as the old one in half the
+memory. The gain was taken as memory; M7's growth policy is where it
+can be traded for fewer collections.
+
+**MLton's set**, the 33 programs at the default tiering; bytes for
+those that allocate:
+
+| Program | 16-byte, cycles | M5 | instructions | bytes |
+|---|---:|---:|---:|---:|
+| barnes-hut | 657M | 0.95 | 1.48 | 0.588 |
+| boyer | 1.57G | 0.82 | 0.99 | 0.600 |
+| checksum | 1.90G | 0.76 | 1.08 | 0.571 |
+| even-odd | 21.97G | 0.81 | 1.05 |  |
+| fft | 27.22G | 0.93 | 1.42 | 0.571 |
+| fib | 45.34G | 0.83 | 0.97 |  |
+| fxp | 2.61G | 0.74 | 0.98 | 0.574 |
+| hamlet | 4.89G | 0.74 | 0.97 | 0.598 |
+| imp-for | 5.69G | 0.71 | 0.98 | 0.625 |
+| knuth-bendix | 701M | 0.75 | 0.95 | 0.584 |
+| lexgen | 1.83G | 0.83 | 1.05 | 0.603 |
+| logic | 2.07G | 0.73 | 0.97 | 0.594 |
+| mandelbrot | 114.77G | 1.07 | 1.33 |  |
+| merge | 908M | 0.57 | 0.86 | 0.600 |
+| mlyacc | 1.72G | 0.82 | 0.95 | 0.604 |
+| nucleic | 1.14G | 1.15 | 1.36 | 0.559 |
+| peek | 13.07G | 1.03 | 1.05 | 0.667 |
+| pidigits | 1.02G | 0.87 | 1.03 | 0.600 |
+| ratio-regions | 987M | 0.68 | 0.99 | 0.529 |
+| ray | 839M | 1.05 | 1.21 | 0.590 |
+| raytrace | 5.69G | 1.14 | 1.32 | 0.563 |
+| simple | 1.08G | 0.84 | 1.19 | 0.592 |
+| smith-normal-form | 1.42G | 0.77 | 1.00 | 0.600 |
+| tailfib | 9.98G | 0.95 | 1.00 |  |
+| tailmerge | 619M | 0.56 | 0.89 | 0.600 |
+| tak | 20.31G | 0.88 | 0.98 |  |
+| tensor | 552M | 0.67 | 1.19 | 0.593 |
+| tsp | 27.07G | 1.06 | 1.24 | 0.572 |
+| tyan | 1.41G | 0.72 | 0.95 | 0.606 |
+| vliw | 756M | 0.91 | 0.97 | 0.609 |
+| wc-input1 | 1.28G | 0.65 | 0.94 | 0.604 |
+| wc-scanStream | 1.29G | 0.62 | 0.94 | 0.607 |
+| zern | 846M | 0.74 | 1.13 | 0.579 |
+| geometric mean of 33; the bytes of all | | 0.82 | 1.06 | 0.595 |
+
+27 are faster, one is within 3%, five are slower: `nucleic` 1.15,
+`raytrace` 1.14, `mandelbrot` 1.07, `tsp` 1.06 and `ray` 1.05,
+the programs of reals (in the second step's table, another afternoon's
+runs, the first two were at 1.10 and 1.09). No program of the 33
+makes a box: every real they compute is an immediate or one of the
+VM's six. Bytes copied are 0.53 of the 16-byte layout's, collections
+1,969 against 2,913, the collector's time 1.39 s against 2.20 s.
+22 of the 33 make 4 to 37 more objects and run about 520 more
+instructions as they start, the Basis' two new structures; `checksum` runs
+3.7% more instructions, `fxp` 1.9% and `peek` 1.6%, where words
+are converted that were the same type before.
+
+**D15's targets.**
+
+1. *Bytes: met at the same object count.* The bootstrap allocates
+   886,942,272 bytes where the 16-byte layout allocates 1,434,067,888,
+   which is 0.618, for a compiler that has grown: 33,743,531 objects
+   against 32,267,602, the 64-bit types and their structures being
+   compiled and compiling. A byte per object it is 26.28 against
+   44.44, 0.591, the census's figure to the third digit, and on the
+   same sources prototype 1 measured 0.5926 (*M4, the first
+   prototype*). It makes no box. MLton's 33 are at 0.595 (prototype 1:
+   0.594), and each program the census has is within a unit of the
+   third digit of its column for reals kept immediate (`hamlet` 0.598, `mlyacc` 0.604,
+   `lexgen` 0.603, `knuth-bendix` 0.584, `logic` 0.594, `boyer`
+   0.600, `peek` 0.667, `checksum` 0.571, `fft` 0.571, `nucleic`
+   0.559, `ray` 0.590, `raytrace` 0.563, `simple` 0.592, `tsp`
+   0.572, `zern` 0.579).
+2. *The collector: measured; the cycles and the clock met, the share
+   not.* The bootstrap's cycles at the default tiering fell by 14% in
+   this measurement and by 16% in the engines' (10% was the target),
+   its `task-clock` by 22% (15% was the target), its page faults by
+   56%. The collector's share did not fall by the bytes it no longer
+   copies: it copies 29% fewer and takes 13% less time, and is 20.0%
+   of a shorter run where it was 17.8% (native code: 36% fewer, 20%
+   less time, 17.4% where it was 16.6%), for the reason under the
+   table.
+3. *Nothing slower: met, with the exception the target names and one
+   more.* Of 44 measurements 39 are faster and `tak` on the stack VM
+   is within 2%; `real_nbody` is behind under every engine but native
+   code (1.30 on the stack VM, 1.03 in the register interpreter, 1.02
+   at the default tiering), D3 C's cost, quoted against the B build
+   above; `word_bits` at the default tiering is 3% to 4% behind.
+4. *The hooks* are M7's to assert; M5 keeps what its fourth step
+   lists.
+
+**The question the gate left for after M5: raw real fields.** What
+they could still buy, by these tables:
+
+* *No bytes.* A real in a field is an immediate under the rotation:
+  the programs of reals are at 0.56 to 0.59 of the 16-byte layout's
+  bytes and make no box.
+* *Time on five programs of 33,* 5% to 15% each, and nothing on the
+  other three programs of reals (`barnes-hut` 0.95, `fft` 0.93,
+  `simple` 0.84). The eight together are at the 16-byte layout's
+  cycles (geometric mean 1.02 here, 1.00 in the second step's runs)
+  with a third more instructions, the decoding and encoding.
+* *Not all of that is fields.* `performance-64bit.md` found
+  `nucleic` making 1.4 million calls of the C library through the
+  primitive's convention, some 60M of its 1.3G cycles, and
+  `raytrace` 1.1 million calls for a truncation, an absolute value
+  or a conversion; `mandelbrot` keeps its reals in registers and
+  passes them at calls (4.3 billion cross one, by the census), which
+  a field's layout does not reach.
+
+Recommended to the owner: not now. Raw fields are a descriptor in
+the header, a scan that reads it and the compiler's field types to
+every allocating site, a milestone of their own, for a part of 5% to
+15% on five programs; experiments 1, 5 and 10 of
+`performance-64bit.md` say first how much of it is fields at all,
+and cost days. The header's byte stays free for them (the fourth
+step).
+
+**Not done in M5,** none of which changes a result: the 64-bit
+primitives in line in `runeopt`'s code, `word64_asr` and the reals'
+bits in line in the JIT, the folding of 64-bit arithmetic, a nullary
+exception as an immediate, `IntInf`'s limbs in a raw word.
 
 ## The request
 
