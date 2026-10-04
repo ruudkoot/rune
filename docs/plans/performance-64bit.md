@@ -339,23 +339,39 @@ Each is small unless it says otherwise. The programs are at the end.
   bits are of this kind too and are not in line either. *Allocation
   with a little work:* a box, `string_from_char` (the 256 of them
   could be made once), `array_new`, `string_concat`, `string_extract`,
-  `string_implode`. *The C library's and the system's:* `real_sin`,
-  `real_atan`, `real_pow`, `file_write`, which is where a call
-  belongs.
+  `string_implode`. *The C library's functions of reals:* `real_sin`,
+  `real_cos`, `real_atan`, `real_atan2`, `real_pow`. These are no
+  system calls either. The work is the library's, but the call need
+  not be a primitive's: three million calls of `Math.sin` in a loop
+  cost 225 instructions each on M5's VM and 163 on the 16-byte VM,
+  where the C library's `sin` called from C takes 105. The 120 over it
+  are the convention -- the argument encoded and pushed, decoded in
+  the primitive, the result encoded there and decoded again, the
+  homes written back and loaded -- and a call straight to the library
+  with the argument in an XMM register has none of them, since such a
+  function neither allocates nor raises. (x86 has instructions for
+  some of these on its x87 unit, `fsin`, `fpatan`, `fyl2x`; they are
+  not proposed: the library's code is the faster and the more exact,
+  as far as is known here without having measured it, and aarch64 has
+  none, so the two machines would differ in their answers.) *The
+  system's:* `file_write` and its like, which is where a primitive's
+  call belongs.
 * **How.** (1) The ranking for every workload: the bootstrap,
   `tests/perf`, MLton's set, the six programs of this file, with the
   helpers that box counted beside the primitives. (2) What one call
   costs: a loop around each candidate, instructions with it in line
   against through C. (3) The first two kinds in line, the most called
-  first, each measured in runs that alternate on the program that
-  calls it most and on the bootstrap; an allocation in line bumps the
+  first, and the third as a direct call to the library, each measured
+  in runs that alternate on the program that calls it most and on the
+  bootstrap; an allocation in line bumps the
   heap as `ms_alloc` does for a tuple and goes to C only when the heap
   is full. The interpreter's fast path (`prim_fast`) has the same
   list to go through. `runeopt` gets what the macro-assembler gets,
   its templates being made from it.
 * **What it changes.** `raytrace` and `mandelbrot` among the programs
-  of reals (their calls are a conversion a pixel or a ray), the
-  compiler's strings, and experiment 4's box, which is one of these.
+  of reals (their calls are a conversion a pixel or a ray), `nucleic`
+  (1.4 million calls of the library, 120 instructions of convention
+  each), the compiler's strings, and experiment 4's box, which is one of these.
 * **Size.** The ranking an hour; each primitive of the first kind a
   few lines of `emit.c`; the allocating ones a day each.
 
