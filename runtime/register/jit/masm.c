@@ -28,6 +28,38 @@ _Static_assert((1 << VALUE_SHIFT) == sizeof(Value), "masm.c scales an index by 8
 
 _Static_assert(offsetof(Obj, kind) == 0 && offsetof(Obj, contag) == 2 && offsetof(Obj, len) == 4 && sizeof(Obj) == 8, "masm.c reads the header as kind, contag, len, then the fields");
 
+/* A measuring build (docs/plans/performance-64bit.md, experiments 1 and
+   5): every conversion between a raw number and its word that compiled
+   code makes is counted as it runs, by the instruction that makes it and
+   by whether it is that instruction's own work, a write-back at a
+   safepoint or a reload of the homes; runevm --jit-stats prints the
+   table. */
+#ifdef RUNE_JIT_CONV
+uint64_t jit_conv[3][256][13];
+enum { CONV_REAL_DEC, CONV_REAL_ENC, CONV_REAL_BOX, CONV_NUM_DEC, CONV_NUM_ENC, CONV_NUM_BOX,
+       /* a field read into a register that is not a raw home, by what the
+          section says the register holds: a real, any value, something
+          else, or nothing said (tier 1) */
+       CONV_LOAD_REAL_SLOT, CONV_LOAD_ANY, CONV_LOAD_OTHER, CONV_LOAD_T1,
+       /* a field written from a register of reals: one with a home, one without */
+       CONV_STORE_REAL_HOME, CONV_STORE_REAL_SLOT,
+       /* a field written from a register of 64-bit ints or words */
+       CONV_STORE_NUM };
+static int conv_rep(const Masm *m, int32_t r) { return m->reps && (uint32_t)r < m->nlocals ? m->reps[r] : -1; }
+uint64_t jit_conv_prim[PRIM__COUNT][2];   /* a primitive's own decodes and encodes of reals */
+static void conv_at(Masm *m, int what, uint32_t pc) {
+    int op = m->conv_code ? m->conv_code[pc] : 0;
+    as_count(&m->a, &jit_conv[m->conv_ctx][op][what]);
+    if (op == m->conv_prim_op && m->conv_ctx == 0 && what <= CONV_REAL_ENC) {
+        int32_t prim = read_i32(m->conv_code + pc + 1);
+        if (prim >= 0 && prim < PRIM__COUNT) as_count(&m->a, &jit_conv_prim[prim][what]);
+    }
+}
+#define CONV(m, what) conv_at((m), (what), (m)->cur_pc)
+#else
+#define CONV(m, what) ((void)0)
+#endif
+
 /* The object at r is of the kind, else to unless. The header's first byte
    is the kind and the collector's four bits (value.h), which are zero while
    no collector sets one, so the byte is compared whole: one instruction.
@@ -131,6 +163,7 @@ static void want_current(const Masm *m, int32_t s) {
    where the low bit is then set); +0.0, which becomes 2^63, has the VM's
    box; else to fail. R_S3 clobbered. */
 static void encode_real(Masm *m, int xmm, AsmLabel *fail) {
+    CONV(m, CONV_REAL_ENC);
 #ifdef RUNE_REAL_BOXED
     (void)xmm;
     as_jmp(&m->a, fail);
@@ -155,6 +188,7 @@ static void encode_real(Masm *m, int xmm, AsmLabel *fail) {
    neither; with unless NULL the word is trusted to be a real's (tier 2, a
    register the section says is one). R_S3 clobbered. */
 static void decode_real(Masm *m, int xmm, AsmLabel *unless) {
+    CONV(m, CONV_REAL_DEC);
     AsmLabel box, done; as_label_init(&box); as_label_init(&done);
     as_test_ri(&m->a, R_S2, 1);
     as_jcc(&m->a, CC_E, &box);
@@ -199,6 +233,7 @@ static void real_to_slot(Masm *m, int32_t s, const Home *h, int pushed, uint32_t
 /* R_S2 := the word of the 64-bit int or word in r, which is left as it
    was; to fail where it has no immediate (it is past 63 bits) */
 static void encode_num(Masm *m, int r, int tag, AsmLabel *fail) {
+    CONV(m, CONV_NUM_ENC);
     if (word_tag(tag)) {
         as_test_rr(&m->a, r, r);
         as_jcc(&m->a, CC_S, fail);
@@ -215,6 +250,7 @@ static void encode_num(Masm *m, int r, int tag, AsmLabel *fail) {
    with unless NULL the word is trusted (tier 2, a register the section
    says holds an int or a word; unit, a register not yet defined, is 0). */
 static void decode_num(Masm *m, int reg, int tag, AsmLabel *unless) {
+    CONV(m, CONV_NUM_DEC);
     AsmLabel box, done; as_label_init(&box); as_label_init(&done);
     as_test_ri(&m->a, R_S2, 1);
     as_jcc(&m->a, CC_E, &box);
@@ -376,12 +412,20 @@ void ms_load_value(Masm *m, int32_t d, int base, int32_t disp) {
         real_behind(m, d);
         return;
     }
+#ifdef RUNE_JIT_CONV
+    { int r = conv_rep(m, d); CONV(m, r < 0 ? CONV_LOAD_T1 : r == REP_REAL ? CONV_LOAD_REAL_SLOT : r == REP_ANY ? CONV_LOAD_ANY : CONV_LOAD_OTHER); }
+#endif
     if (h) { as_ld64(&m->a, h->reg, base, disp); return; }
     as_fld(&m->a, F_S0, base, disp);
     as_fst(&m->a, BASER, SLOT(d), F_S0);
 }
 void ms_store_value(Masm *m, int base, int32_t disp, int32_t s) {
     const Home *h = ms_home(m, s);
+#ifdef RUNE_JIT_CONV
+    if (is_xmm(h)) CONV(m, CONV_STORE_REAL_HOME);
+    else if (conv_rep(m, s) == REP_REAL) CONV(m, CONV_STORE_REAL_SLOT);
+    else if (conv_rep(m, s) == REP_INT64 || conv_rep(m, s) == REP_WORD64) CONV(m, CONV_STORE_NUM);
+#endif
     if (h && !is_raw(h)) { as_st64(&m->a, base, disp, h->reg); return; }
     if (h) want_current(m, s);   /* a raw home: its slot has its word */
     as_fld(&m->a, F_S0, BASER, SLOT(s));
@@ -762,6 +806,10 @@ static int live_at(const Masm *m, uint32_t pc, uint32_t r) {
 }
 static void writeback(Masm *m, uint32_t pc, int pushed) {
     if (!m->homes) return;
+#ifdef RUNE_JIT_CONV
+    int ctx = m->conv_ctx;
+    m->conv_ctx = 1;
+#endif
     for (uint32_t r = 0; r < m->nlocals; r++) {
         const Home *h = &m->homes[r];
         if (h->kind == HOME_SLOT || !live_at(m, pc, r)) continue;
@@ -769,6 +817,9 @@ static void writeback(Masm *m, uint32_t pc, int pushed) {
         else if (is_raw_gpr(h)) num_to_slot(m, (int32_t)r, h, pushed, pc);
         else home_to_slot(m, (int32_t)r, h);
     }
+#ifdef RUNE_JIT_CONV
+    m->conv_ctx = ctx;
+#endif
 }
 void ms_writeback(Masm *m, uint32_t pc) { writeback(m, pc, 0); }
 /* where a general home waits in the VM across the helper that boxes; a
@@ -790,6 +841,9 @@ void ms_emit_box(Masm *m, Slow *sp) {
     Slow s = *sp;
     uint32_t live = s.n;
     int real = s.kind == SLOW_BOXREAL;
+#ifdef RUNE_JIT_CONV
+    conv_at(m, real ? CONV_REAL_BOX : CONV_NUM_BOX, s.cur);
+#endif
     int32_t at = real ? OFF(jit_fspill) + 8 * (s.b - F_H0) : gspill(s.b);
     for (uint32_t r = 0; m->homes && r < m->nlocals; r++) {
         const Home *h = &m->homes[r];
@@ -815,8 +869,15 @@ void ms_emit_box(Masm *m, Slow *sp) {
 }
 void ms_reload_homes(Masm *m, uint32_t pc) {
     if (!m->homes) return;
+#ifdef RUNE_JIT_CONV
+    int ctx = m->conv_ctx;
+    m->conv_ctx = 2;
+#endif
     for (uint32_t r = 0; r < m->nlocals; r++)
         if (m->homes[r].kind != HOME_SLOT && live_at(m, pc, r)) slot_to_home(m, (int32_t)r, &m->homes[r]);
+#ifdef RUNE_JIT_CONV
+    m->conv_ctx = ctx;
+#endif
 }
 /* an immediate by the section, whose word is the value: under RUNE_INT64
    an int or a word may be a box, and two boxes of one number are not one

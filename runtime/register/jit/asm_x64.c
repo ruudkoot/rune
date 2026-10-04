@@ -104,6 +104,16 @@ void as_setcc(Asm *a, int rd, int cc) {
     x64_setcc_r8(a, cc, rd);
     x64_movzx8_rr(a, rd, rd);
 }
+#ifdef RUNE_JIT_CONV
+void as_count(Asm *a, uint64_t *counter) {
+    x64_push_r(a, RAX); x64_push_r(a, RCX);
+    x64_mov_ri(a, RAX, (int64_t)(intptr_t)counter);
+    x64_mov_rm(a, RCX, RAX, 0);
+    x64_lea(a, RCX, RCX, -1, 1, 1);
+    x64_mov_mr(a, RAX, 0, RCX);
+    x64_pop_r(a, RCX); x64_pop_r(a, RAX);
+}
+#endif
 void as_push(Asm *a, int r) { x64_push_r(a, r); x64_sub_ri(a, RSP, 8); }
 void as_pop(Asm *a, int r) { x64_add_ri(a, RSP, 8); x64_pop_r(a, r); }
 

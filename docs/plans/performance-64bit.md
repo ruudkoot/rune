@@ -458,6 +458,139 @@ Each is small unless it says otherwise. The programs are at the end.
 * **Size.** The ranking an hour; each primitive of the first kind a
   few lines of `emit.c`; the allocating ones a day each.
 
+## Experiments 1 and 5, run
+
+On 2026-10-04, after the heap layout's M7, for the decision on raw real
+fields. The instrument is a VM built with `-DRUNE_JIT_CONV`
+(`bin/runevm-conv`, x86-64): compiled code counts, as it runs, every
+conversion between a raw number in a home and its word -- a real
+decoded or encoded, a 64-bit number decoded, encoded or boxed -- by the
+instruction that makes it and by whether it is that instruction's own
+work, a write-back at a safepoint or a reload of the homes; and every
+read of a field by what the reader's register holds. `runevm-conv
+--jit-stats` prints the table. All of each program's compiled code was
+at tier 2.
+
+**The reals.** MLton's eight programs of reals at their benchmark
+sizes; a decode is seven instructions and a branch, an encode six:
+
+| Program | conversions | per 100 bytecode instructions | fields | arrays and refs | primitives through C | calls of SML functions | arithmetic on a register in its slot, and the rest |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| nucleic | 122.6M | 49 | 49.4M (40%) | 0 | 26.6M (22%) | 11.3M (9%) | 35.2M (29%) |
+| raytrace | 499.4M | 37 | 299.2M (60%) | 118.7M (24%) | 14.6M (3%) | 60.1M (12%) | 6.8M (1%) |
+| mandelbrot | 13,959M | 44 | 0 | 0 | 4,295M (31%) | 7,516M (54%) | 2,148M (15%) |
+| tsp | 1,883M | 35 | 680.0M (36%) | 0 | 383.9M (20%) | 806.2M (43%) | 12.6M (1%) |
+| ray | 53.2M | 39 | 37.2M (70%) | 0 | 4.7M (9%) | 10.7M (20%) | 0.5M (1%) |
+| barnes-hut | 69.4M | 70 | 27.0M (39%) | 1.3M (2%) | 3.6M (5%) | 37.4M (54%) | 0.1M |
+| fft | 1,281M | 51 | 33.6M (3%) | 777.3M (61%) | 327.1M (26%) | 109.0M (9%) | 33.6M (3%) |
+| simple | 33.9M | 19 | 1.9M (6%) | 0.5M (2%) | 8.7M (26%) | 22.4M (66%) | 0.3M (1%) |
+
+* *Fields:* a real read from a tuple or a constructor into a home
+  (decoded) and written into one from a home (encoded). This is what
+  raw real fields would make a move.
+* *Arrays and refs:* `Array.sub`, `Array.update` and their like on
+  elements that are reals. Flat arrays of reals, the heap layout's M8,
+  make these a move.
+* *Primitives through C:* the homes written back before the call and
+  loaded again after it, and the result. `nucleic`'s 1.4 million calls
+  of `sin`, `cos` and `atan` are 18 conversions each (experiment 10
+  measured 120 instructions a call in a loop with two reals live;
+  here there are more); `mandelbrot`'s are one
+  `Real.fromInt` a pixel, three homes loaded again for it.
+* *Calls of SML functions:* the homes written back before a call,
+  loaded again after it and at a function's entry, and a real
+  returned. An argument and a result cross as words.
+* *Arithmetic on a register in its slot:* `real_mul`, `real_add` and
+  the comparisons on an operand that has no home or has just come as a
+  word. `nucleic` has functions of more reals than the fourteen XMM
+  homes.
+
+No loop that is a jump makes any: `mandelbrot`'s inner loop, a
+function calling itself in tail position, converts nothing, and all of
+its 14 billion are the 13 a pixel around it. So what the programs of
+reals lose is at the boundaries a real crosses as a word: a field, an
+element, a call, a primitive in C.
+
+**What raw real fields would have to pay for.** The fields' reads and
+fills, by what the register holds:
+
+| Program | reads of a real into a home | into a slot | field reads at `any` | at another representation | fills of a real from a home | from a slot |
+|---|---:|---:|---:|---:|---:|---:|
+| nucleic | 35.8M | 8.4M | 45.8M | 18.1M | 13.6M | 0.9M |
+| raytrace | 235.4M | 0 | 0.9M | 72.3M | 63.8M | 0 |
+| tsp | 675.6M | 0 | 0 | 520.8M | 4.3M | 0 |
+| ray | 27.3M | 0 | 0.5M | 17.8M | 10.0M | 0 |
+| barnes-hut | 18.4M | 0 | 0.1M | 9.8M | 8.6M | 0 |
+| fft | 16.8M | 0 | 130 | 16.8M | 16.8M | 0 |
+| simple | 1.8M | 0 | 1.9M | 48.9M | 0.1M | 0 |
+
+A raw field saves about six instructions at a read into a home and
+five at a fill from one. It costs a test of the object's descriptor at
+every read whose reader does not know the field (the reads at `any`:
+more of them in `nucleic` than its reads of reals), an encode where a
+raw field is read into a slot, and, unless the compiler proves that
+every tuple of a type is built with the same layout, the same test at
+the reads that do know, since a tuple of reals built by polymorphic
+code holds words.
+
+**An estimate from the counts, not a measurement.** The instructions a
+program runs more than on the 16-byte layout are its conversions: 6.4
+to 7.9 for each, on seven of the eight (10.7 on `simple`). At six
+saved a read, five a fill, two for a test and six for an encode, the
+lower figure with the test at every read of a real and the higher
+without:
+
+| Program | instructions, 16-byte | M5 | more | raw fields would save | of M5's | of the more | cycles, M5 against 16-byte |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| raytrace | 10.80G | 14.30G | 3.49G | 1.26G to 1.73G | 9% to 12% | 36% to 50% | 1.14 |
+| ray | 1.62G | 1.97G | 0.35G | 0.16G to 0.21G | 8% to 11% | 46% to 62% | 1.05 |
+| barnes-hut | 0.97G | 1.43G | 0.46G | 0.12G to 0.15G | 8% to 11% | 25% to 33% | 0.95 |
+| tsp | 62.9G | 77.9G | 15.0G | 2.7G to 4.1G | 3% to 5% | 18% to 27% | 1.06 |
+| nucleic | 2.18G | 2.96G | 0.78G | 0.07G to 0.14G | 2% to 5% | 9% to 18% | 1.15 |
+| fft | 23.3G | 33.1G | 9.8G | 0.15G to 0.19G | 0.5% | 2% | 0.93 |
+| simple | 1.90G | 2.27G | 0.36G | under 0.01G | 0.3% | 2% | 0.84 |
+| mandelbrot | 299G | 397G | 98G | none | | | 1.07 |
+
+If the cycles a program loses go as its conversions do, raw fields
+would bring `raytrace` from 1.14 to about 1.08, `ray` from 1.05 to
+1.02 or 1.03, `tsp` from 1.06 to 1.04 or 1.05, and `nucleic` from 1.15
+to between 1.12 and 1.14.
+
+**The 64-bit words.** The six programs of this file:
+
+| Program | boxes | made at a primitive's result | at a move | at a fill or a call | 64-bit values written into fields |
+|---|---:|---:|---:|---:|---:|
+| stream | 6.0M | 4.5M | 1.5M | 10 | 6.0M |
+| tree | 5.7M | 5.4M | 3,610 | 0.4M | 2.1M |
+| inline | 6.0M | 4.5M | 1.5M | 0 | 0 |
+| lcg | 1.5M | 1.5M | 0 | 0 | 0 |
+| lcg2 | 3.0M | 0 | 3.0M | 0 | 0 |
+| fnv | 4.2M | 4.2M | 0 | 0 | 0 |
+
+Every box is made where a result or a copy goes to a register that has
+no home: tier 2 has three general homes, and `lcg`'s loop wants them
+for its counter, its state, a product and two constants, which it
+decodes again at every turn (six million decodes of constants in three
+million turns). None is made at a fill. `stream` writes two 64-bit
+values into a tuple at every step, which would need their words there
+if they did not have them already; `inline`, `lcg`, `lcg2` and `fnv`
+keep nothing and box all the same. So for these programs the order is
+A (homes, experiments 2 and 3) before anything about fields.
+
+**What it says for the decision.**
+
+* Raw real fields reach 36% to 70% of the conversions of five
+  programs (`ray`, `raytrace`, `nucleic`, `barnes-hut`, `tsp`) and
+  nothing of the other three.
+* Flat arrays of reals, which M8 builds in any case, reach 61% of
+  `fft`'s and 24% of `raytrace`'s.
+* Calls and primitives through C are all of `mandelbrot`'s, 92% of
+  `simple`'s, 63% of `tsp`'s, 59% of `barnes-hut`'s and 31% of
+  `nucleic`'s: the JIT's calling convention (D) and experiment 10.
+* A raw field is not free at the reader: a test at every read that
+  does not know the field's type, and at those that do unless tuples
+  are built by type.
+
 ## What would decide it
 
 * If experiment 1 puts most boxes on temporaries, A comes first: it
@@ -466,7 +599,8 @@ Each is small unless it says otherwise. The programs are at the end.
 * Raw fields (C) are decided on what is left after A: `tree`,
   `nucleic` and `raytrace` are the programs to read. The owner decides
   them after experiments 1, 5 and 10 (2026-10-04, at the end of the
-  heap layout's M5, whose tables are in `heap-layout.md`, *M5, done*).
+  heap layout's M5, whose tables are in `heap-layout.md`, *M5, done*);
+  experiments 1 and 5 are run, above.
 * D is the JIT roadmap's, and worth its cost only if `mandelbrot` and
   `tsp` matter.
 

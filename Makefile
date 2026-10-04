@@ -465,6 +465,13 @@ bin/runevm-gcbits: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.docto
 bin/runevm-cards: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_BARRIER_CARDS $(RT_INC) -o $@ $(NEW_SRCS) -lm
+# The instrument of docs/plans/performance-64bit.md's experiments 1 and 5
+# (x86-64): compiled code counts every conversion between a raw number in a
+# home and its word, by the instruction that makes it; runevm-conv
+# --jit-stats prints the table.
+bin/runevm-conv: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_JIT_CONV $(RT_INC) -o $@ $(NEW_SRCS) -lm
 
 # The census VM (docs/census.md; docs/plans/heap-layout.md, M1): runtime/register's
 # loop on the runtime with -DRUNE_CENSUS, which enables the hooks of

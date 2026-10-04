@@ -159,6 +159,9 @@ void as_call_r(Asm *a, int r);
 void as_ret(Asm *a);
 void as_trap(Asm *a);
 void as_setcc(Asm *a, int rd, int cc);
+#ifdef RUNE_JIT_CONV
+void as_count(Asm *a, uint64_t *counter);   /* *counter += 1; every register and the flags kept (a measuring build's; x86-64) */
+#endif
 void as_push(Asm *a, int r);
 void as_pop(Asm *a, int r);
 

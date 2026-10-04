@@ -708,6 +708,10 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     Jit j;
     memset(&j, 0, sizeof j);
     ms_init(&j.m, fn->nlocals, fn->maxstack, JIT_WIN, jit->leave_at);
+#ifdef RUNE_JIT_CONV
+    j.m.conv_code = vm->prog.code;
+    j.m.conv_prim_op = ROP_PRIM;
+#endif
     j.m.box_num = (MsHelper)jit_h_box_num;   /* at either tier: a result past 63 bits on its way to a slot */
     j.vm = vm; j.jit = jit; j.f = f;
     j.flags_for = j.flags_prev = -1;

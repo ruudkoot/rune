@@ -96,6 +96,11 @@ typedef struct Masm {
     uint32_t from;
     uint32_t sync_pc;     /* the pc of the last ms_sync, for the reload after */
     uint32_t cur_pc;      /* the pc of the instruction being emitted: what is live at its entry is written back */
+#ifdef RUNE_JIT_CONV
+    const uint8_t *conv_code;   /* the program's code: the opcode at a pc, for the count of conversions (masm.c) */
+    int conv_ctx;               /* 0 in an instruction's own work, 1 in a write-back, 2 in a reload of the homes */
+    int conv_prim_op;           /* the opcode of PRIM, whose primitive is counted too */
+#endif
     /* tier 2 (M10): the representations of the registers, trusted for the
        shape of a value -- a register the section says holds a pointer
        holds a pointer to an object of the kind the instruction expects,
