@@ -955,9 +955,11 @@ on 2026-10-04; the tables are in the four sections above.
 
 Not measured yet: `examples/benchmarks` at its `normal` profile, and
 `runeopt`'s code beside the JIT's. `make test-lib` (22 programs) and
-`make bench-smoke` pass on prototype 1; `make test-laws` had not run
-on either prototype when the gate was decided (its script had been
-broken by the rename of the VMs' binaries, mended in `b3e6092e`).
+`make bench-smoke` pass on prototype 1, and `make test-laws` gives on
+it what it gives on the 16-byte layout, law for law: 1,733 laws at
+their structures, 1,318 passing, 313 failing, 102 stopped (run the
+day of the gate, after it: its script had been broken by the rename
+of the VMs' binaries, mended in `b3e6092e`).
 
 ## The request
 
