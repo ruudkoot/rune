@@ -227,7 +227,9 @@ static void pass2(void) {
         while (bx < nsboxes && sboxes[bx].id == id) { diff_add(0, sboxes[bx].j, sboxes[bx].d, sboxes[bx].size); clockL += sboxes[bx].size; bx++; }
         const AllocRec *a = &alloc_rec[id];
         unsigned elem = layout_compact_elem(V, a->kind, homog[id] >> 7, homog[id] & 7, (homog[id] >> 3) & 7);
-        size_t s = layout_obj_size(L, V, a->kind, a->len, elem);
+        /* a pair by the codes built (PAIRS3, PAIRS2) is sized as LV_PAIRS sizes one */
+        int coded_pair = L != L0 && (V & (LV_PAIRS3 | LV_PAIRS2)) && layout_is_pair(V, a->kind, a->contag, a->len);
+        size_t s = layout_obj_size(L, coded_pair ? (V | LV_PAIRS) : V, a->kind, a->len, elem);
         if (elem) {   /* a compact array's elements are unboxed by definition: withdraw their boxes */
             compact_objs++;
             if (box_bytes[id]) {
@@ -235,7 +237,7 @@ static void pass2(void) {
                 boxes_by_tag[et] -= nb; box_bytes_by_tag[et] -= nb * box_size; box_bytes[id] = 0;
             }
         }
-        if ((V & LV_PAIRS) && L != L0 && (a->kind == LK_CON || a->kind == LK_TUPLE) && a->len == 2) pair_objs++;
+        if (L != L0 && layout_is_pair(V, a->kind, a->contag, a->len)) pair_objs++;
         size_L[id] = (uint32_t)s;
         if (box_bytes[id]) diff_add(0, k, death[id], box_bytes[id]);
         clockL += box_bytes[id];
@@ -590,7 +592,7 @@ static size_t size_arg(const char *s) {
     return (size_t)v;
 }
 static const struct { const char *name; unsigned flag; } vnames[] = {
-    { "HDR4", LV_HDR4 }, { "ALIGN16", LV_ALIGN16 }, { "COMPACT", LV_COMPACT }, { "MUTSEG", LV_MUTSEG }, { "PAIRS", LV_PAIRS },
+    { "HDR4", LV_HDR4 }, { "ALIGN16", LV_ALIGN16 }, { "COMPACT", LV_COMPACT }, { "MUTSEG", LV_MUTSEG }, { "PAIRS", LV_PAIRS }, { "PAIRS3", LV_PAIRS3 }, { "PAIRS2", LV_PAIRS2 },
     { "REALIMM", LV_REALIMM }, { "L4UNIFORM", LV_L4UNIFORM }, { "NAN51", LV_NAN51 } };
 static void parse_variant(const char *s) {
     char buf[256]; snprintf(buf, sizeof buf, "%s", s);

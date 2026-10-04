@@ -33,8 +33,19 @@ enum {
     LV_L4UNIFORM= 1 << 6,  /* L4: box every INT/WORD/REAL field of CON/CONN/REF/ARRAY objects and of
                               tuples with any polymorphic source (upper bound); default L4-mono boxes
                               only fields whose source rep is polymorphic */
-    LV_NAN51    = 1 << 7   /* L3: 51-bit ints instead of 48 */
+    LV_NAN51    = 1 << 7,  /* L3: 51-bit ints instead of 48 */
+    /* LV_PAIRS as M4's second prototype builds it (docs/plans/heap-layout.md):
+       a pointer has three codes for a pair, and a constructor's tag picks
+       one, so only a tuple of two and a constructor of two fields with tag
+       0, 1 or 2 are headerless -- or with tag 0 or 1, where the third code
+       is kept for a lazy front end */
+    LV_PAIRS3   = 1 << 8,
+    LV_PAIRS2   = 1 << 9
 };
+
+/* whether an object is a headerless pair under the variant: any two-field
+   tuple or constructor (LV_PAIRS, the bound), or those the codes reach */
+static inline int layout_is_pair(unsigned v, uint8_t kind, uint32_t contag, uint32_t len);
 
 typedef struct { unsigned header, width, align, minpay; } LayoutParams;
 
@@ -68,6 +79,13 @@ static inline unsigned layout_compact_elem(unsigned v, uint8_t kind, int homogen
     if (elem_tag == LT_CHAR) return 1;
     if (elem_tag == LT_WORD && elem_bc == BC_8) return 1;
     if (elem_tag == LT_REAL || elem_tag == LT_INT || elem_tag == LT_WORD) return 8;
+    return 0;
+}
+
+static inline int layout_is_pair(unsigned v, uint8_t kind, uint32_t contag, uint32_t len) {
+    if (len != 2 || (kind != LK_CON && kind != LK_TUPLE)) return 0;
+    if (v & LV_PAIRS) return 1;
+    if (v & (LV_PAIRS3 | LV_PAIRS2)) return kind == LK_TUPLE || contag < ((v & LV_PAIRS3) ? 3u : 2u);
     return 0;
 }
 

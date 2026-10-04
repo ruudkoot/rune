@@ -1,6 +1,6 @@
 #!/bin/sh
 # The census of a workload (docs/census.md):
-#   scripts/census.sh [--out DIR] [--every BYTES] [--summary] [--timeout S] WORKLOAD...
+#   scripts/census.sh [--out DIR] [--every BYTES] [--summary] [--timeout S] [--stdin FILE] [--cwd DIR] WORKLOAD...
 # Each workload runs on the stock VM (bin/runevm --jit=off --count) and
 # on the census VM (bin/runevm-census, `make vm-census`) with its traces in
 # DIR/WORKLOAD (DIR defaults to tests/out/census); the two --count lines and
@@ -17,25 +17,36 @@
 # run with the args of its .budget), mlton-NAME (one of MLton's benchmarks
 # at the size of tests/perf/mlton-bench.txt, prepared by
 # tests/external/run-mlton-bench.sh --prepare), or a FILE.rbc of register
-# bytecode. Exits 1 if a workload fails.
+# bytecode. --stdin FILE gives each run FILE as its standard input (a program
+# of examples/benchmarks reads its name and arguments there), and --cwd DIR
+# runs a FILE.rbc in DIR (where it finds its data). Exits 1 if a workload
+# fails.
 set -u
 out=tests/out/census
 every=262144
 summary=""
 tmo=3600
+stdin=/dev/null
+rundir=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --out) out=$2; shift 2 ;;
     --every) every=$2; shift 2 ;;
     --summary) summary="--census-summary"; shift ;;
     --timeout) tmo=$2; shift 2 ;;
-    -*) echo "usage: scripts/census.sh [--out DIR] [--every BYTES] [--summary] [--timeout S] WORKLOAD..." >&2; exit 2 ;;
+    --stdin) stdin=$2; shift 2 ;;
+    --cwd) rundir=$2; shift 2 ;;
+    -*) echo "usage: scripts/census.sh [--out DIR] [--every BYTES] [--summary] [--timeout S] [--stdin FILE] [--cwd DIR] WORKLOAD..." >&2; exit 2 ;;
     *) break ;;
   esac
 done
 [ $# -gt 0 ] || { echo "scripts/census.sh: no workload" >&2; exit 2; }
 cd "$(dirname "$0")/.."
 root=$(pwd)
+# the traces' directory by its full name where a workload runs elsewhere
+# (--cwd); as it was given otherwise, since the compiler's counts depend on
+# the name of its output file, which is under it (docs/testing.md)
+[ -n "$rundir" ] && case "$out" in /*) ;; *) out=$root/$out ;; esac
 rune=${RUNE_NEW:-bin/rune}
 stock=${RUNEVM_NEW:-$root/bin/runevm}
 census=${RUNEVM_CENSUS:-$root/bin/runevm-census}
@@ -73,7 +84,7 @@ for w in "$@"; do
       rbc=$cwd/${w#mlton-}.rbc
       [ -f "$cwd/${w#mlton-}.args" ] && args=$(cat "$cwd/${w#mlton-}.args") ;;
     *.rbc)
-      rbc=$w ;;
+      rbc=$w; [ -n "$rundir" ] && cwd=$rundir ;;
     *)
       [ -f "tests/perf/$w.sml" ] || { echo "FAIL $w: not a workload"; status=1; continue; }
       rbc=$dir/$w.rbc; args=$(budget_args "$w")
@@ -84,14 +95,15 @@ for w in "$@"; do
   # finds one counts differently from a run that does not (docs/testing.md):
   # each run starts without it.
   [ -n "$outfile" ] && rm -f "$outfile"
+  case "$dir" in /*) cdir=$dir ;; *) cdir=$root/$dir ;; esac
   # shellcheck disable=SC2086
-  (cd "$cwd" && limit "$stock" --jit=off --count --heap-size $heap "$rbc" $args < /dev/null > "$dir/stock.stdout" 2> "$dir/stock.stderr")
+  (cd "$cwd" && limit "$stock" --jit=off --count --heap-size $heap "$rbc" $args < "$stdin" > "$dir/stock.stdout" 2> "$dir/stock.stderr")
   sx=$?
   sline=$(grep '^runevm: count:' "$dir/stock.stderr" | tail -1)
   t0=$(date +%s)
   [ -n "$outfile" ] && rm -f "$outfile"
   # shellcheck disable=SC2086
-  (cd "$cwd" && limit "$census" --jit=off --count --stats --heap-size 1073741824 --heap-fill 50 --census-dir "$root/$dir" --census-every "$every" $summary "$rbc" $args < /dev/null > "$dir/census.stdout" 2> "$dir/census.stderr")
+  (cd "$cwd" && limit "$census" --jit=off --count --stats --heap-size 1073741824 --heap-fill 50 --census-dir "$cdir" --census-every "$every" $summary "$rbc" $args < "$stdin" > "$dir/census.stdout" 2> "$dir/census.stderr")
   cx=$?
   wall=$(( $(date +%s) - t0 ))
   cline=$(grep '^runevm: count:' "$dir/census.stderr" | tail -1)
