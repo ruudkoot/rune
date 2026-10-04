@@ -143,32 +143,90 @@ Each is small unless it says otherwise. The programs are at the end.
   eight programs of reals, the property library's tests.
 * **What it changes.** It orders A to D by what they would remove.
 
-### 2. More homes
+### 2. The registers, laid out again
 
-* **The question.** How many general homes tier 2 can have, and what
-  `inline`, `lcg`, `fnv` and the bootstrap do with five and with
-  eight. The bootstrap is in it because a home is saved and loaded
-  around every call: more homes are not free for code that calls.
-* **The registers** (`runtime/register/jit/asm.h`). On x86-64 all
-  sixteen are spoken for: six pinned (`rsp`; `r12` the VM, `r13` the
-  value stack, `rbp` and `r14` the frame's base as an index and as a
-  pointer, `r15` the instruction count), seven scratch (`rax`, `rcx`,
-  `rdx`, `r8` to `r11`) and the three homes (`rbx`, `rsi`, `rdi`). Of
-  the scratch ones `rax`, `rcx`, `rdx` and `r8` do nearly all the
+* **The question.** Not "three homes or five" alone: which of the
+  machine's registers should hold what. The assignment was made for
+  tier 1 and grew a tier 2 beside it, and x86-64's registers are not
+  alike, so the whole table is reconsidered, and how many homes there
+  are falls out of it. The owner asked for this on 2026-10-04.
+* **The assignment today** (`runtime/register/jit/asm.h`). On x86-64
+  all sixteen are spoken for: six pinned (`rsp`; `r12` the VM, `r13`
+  the value stack, `rbp` and `r14` the frame's base as an index and as
+  a pointer, `r15` the instruction count), seven scratch (`rax`,
+  `rcx`, `rdx`, `r8` to `r11`) and three homes (`rbx`, `rsi`, `rdi`).
+  Of the scratch ones `rax`, `rcx`, `rdx` and `r8` do nearly all the
   emitters' work; `r9`, `r10` and `r11` are named in a few dozen
-  places (a call's frame, the profile's counters, some slow paths), so
-  six homes are within reach by rewriting those. Seven or eight would
-  take one of the two forms of the frame's base, or the instruction
-  count, out of a register, which is a change to the calling
-  sequence. On aarch64 the convention leaves `x28`, `x15` and `x16`
-  untouched and uses `x1` to `x8` for C's arguments alone. Reals have
-  fourteen homes of their own.
+  places (a call's frame, the profile's counters, some slow paths).
+  Reals have fourteen homes of their own, `xmm2` to `xmm15`.
+* **What is not alike on x86-64**, each a constraint on the table:
+  - *Instructions that name their registers.* A shift by a variable
+    count takes it in `cl`; a division takes `rdx:rax` and leaves the
+    quotient in `rax` and the remainder in `rdx`; the widening multiply
+    and `cqo` use the same pair. So `rax`, `rcx` and `rdx` are scratch
+    whatever else is decided, unless shifts go through BMI2's `shlx`,
+    `shrx` and `sarx`, which not every x86-64 has.
+  - *What a call into C keeps.* On Linux C preserves `rbx`, `rbp` and
+    `r12` to `r15`, six registers; on Windows also `rsi` and `rdi`,
+    eight, and `xmm6` to `xmm15` where Linux preserves no XMM
+    register. A home in a preserved register needs no reload after a
+    helper; today five of Linux's six hold pinned state and only one
+    home, `rbx`, is preserved.
+  - *Where C's arguments go.* `rdi`, `rsi`, `rdx`, `rcx` on Linux,
+    `rcx`, `rdx`, `r8`, `r9` on Windows. Two of the three homes are
+    Linux's first two argument registers, so every call into C there
+    both loses them and has to move them out of the way first.
+  - *What an address costs to encode.* A base of `rsp` or `r12` takes
+    a SIB byte in every memory operand, and a base of `rbp` or `r13`
+    cannot be written without a displacement. The VM is in `r12`, so
+    every field of the VM that the code touches -- the allocation
+    pointer and its limit, the counters, the VM's boxes -- is a byte
+    longer than it would be from `rbx`, `rsi`, `rdi`, `r14` or `r15`.
+  - *The prefix.* `r8` to `r15` need a REX prefix. A 64-bit operation
+    has one anyway, so it costs a byte only on 32-bit and byte
+    operations (a header's fields, a tag test), and `sil`, `dil` and
+    `bpl` need one as bytes too.
+  - *Registers with a use of their own.* `r11` is lost to a `syscall`
+    and is what a linker's stub may use; `r10` is C's static chain.
+    Neither matters while they are scratch.
+* **What the pinned state is worth.** Whether each of the six needs a
+  register at all is part of the question: the frame's base is kept
+  twice (`rbp` as an index into the value stack, `r14` as the pointer
+  that index gives), and `r15` is incremented at every bytecode
+  instruction for `--count` and the tiering's budgets, which a block
+  could add once at its end if every exit corrected it.
 * **What a home costs.** One that is live is written back to its slot
-  before a call into C and loaded again after it, and of the three
-  only `rbx` is one that C preserves on Linux.
-* **How.** `choose_homes` (`runtime/register/jit/compile.c`) takes the
-  three registers of `gprs`; give it five, then eight.
-* **What it changes.** Whether A is this or experiment 3.
+  before a call that may collect or raise and loaded again after it;
+  in a preserved register the load goes away for helpers that touch no
+  frame, the write-back does not. So more homes help a loop that calls
+  nothing and can hurt code that calls at every step, which is what
+  the compiler is.
+* **How.** (1) Audit: for every `R_S4`, `R_S5`, `R_S6`, `R_T` and
+  `R_GO` in `masm.c`, `emit.c` and `compile.c`, what it holds and
+  across what; for every pinned register, the instructions that read
+  it, counted in tier 2's code for the bootstrap. (2) Make the table
+  one place: the enum of `asm.h` already is, and `make
+  test-register-jit` already refuses a machine register named in the
+  emitters, so a candidate layout is an edit there plus whatever the
+  audit found hard-wired (the division and the shift in
+  `asm_x64.c`, `as_arg`, the entry and leave stubs, and `runeopt`'s
+  `src/opt/x64.sml`, which writes `(%r13,%rbp)` itself). (3)
+  Candidates, each measured: the VM out of `r12`; homes in preserved
+  registers first; five homes and eight; the frame's base once; the
+  count out of a register; and one layout for Linux and Windows or one
+  each, since what C preserves differs. (4) Measured by the bytes of
+  code tier 2 makes (`--jit-stats`), and by instructions and cycles in
+  runs that alternate, on the six programs above, the eight programs
+  of reals, the bootstrap and `compile-sigs`; `make test-windows` and
+  `make test-native` hold the Windows convention and `runeopt` to the
+  result. aarch64's registers are alike and its table is a separate,
+  smaller question: the convention leaves `x28`, `x15` and `x16`
+  untouched and uses `x1` to `x8` for C's arguments alone.
+* **What it changes.** Whether A is this or experiment 3, and the
+  JIT's convention for both tiers and for `runeopt`.
+* **Size.** The audit a day; each candidate a day or two once the
+  table is one place; the frame's base and the count are changes to
+  the calling sequence, a week.
 
 ### 3. A temporary that is never a word
 
