@@ -89,7 +89,7 @@ one() {
 
 programs=$(ls "$out/programs"/*.sml | grep -- "$filter")
 if [ "$jobs" -gt 1 ]; then
-  export out rune runevm-stack timeout memory top
+  export out rune runevm timeout memory top
   # shellcheck disable=SC2016
   echo "$programs" | xargs -P "$jobs" -I{} sh -c "$(sed -n '/^one() {$/,/^}$/p' "$0"); one {}"
 else
