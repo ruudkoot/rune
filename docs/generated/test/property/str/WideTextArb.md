@@ -19,7 +19,7 @@ The types are this structure's own.
 
 |  | Member | Is |
 | --- | --- | --- |
-| val | `pos` | `{co : WideTextPrimIO.pos -> Word64.word, eq : (WideTextPrimIO.pos * WideTextPrimIO.pos -> bool) option, gen : WideTextPrimIO.pos Gen.gen, show : WideTextPrimIO.pos -> string}` |
+| val | `pos` | `{co : WideTextPrimIO.pos -> word64, eq : (WideTextPrimIO.pos * WideTextPrimIO.pos -> bool) option, gen : WideTextPrimIO.pos Gen.gen, show : WideTextPrimIO.pos -> string}` |
 | val | `positionIn` | `WideCharVector.vector * int -> WideTextPrimIO.pos` |
 
 ---

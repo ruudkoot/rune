@@ -24,30 +24,30 @@ What each means is on [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md); the ty
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`elem`](../sig/MONO_VECTOR_SLICE.md#type-elem) | `Word64.word` |
+| type | [`elem`](../sig/MONO_VECTOR_SLICE.md#type-elem) | `word64` |
 | type | [`slice`](../sig/MONO_VECTOR_SLICE.md#type-slice) | *a type of its own* |
 | type | [`vector`](../sig/MONO_VECTOR_SLICE.md#type-vector) | `Word64Vector.vector` |
-| val | [`all`](../sig/MONO_VECTOR_SLICE.md#val-all) | `(Word64.word -> bool) -> slice -> bool` |
-| val | [`app`](../sig/MONO_VECTOR_SLICE.md#val-app) | `(Word64.word -> unit) -> slice -> unit` |
-| val | [`appi`](../sig/MONO_VECTOR_SLICE.md#val-appi) | `(int * Word64.word -> unit) -> slice -> unit` |
+| val | [`all`](../sig/MONO_VECTOR_SLICE.md#val-all) | `(word64 -> bool) -> slice -> bool` |
+| val | [`app`](../sig/MONO_VECTOR_SLICE.md#val-app) | `(word64 -> unit) -> slice -> unit` |
+| val | [`appi`](../sig/MONO_VECTOR_SLICE.md#val-appi) | `(int * word64 -> unit) -> slice -> unit` |
 | val | [`base`](../sig/MONO_VECTOR_SLICE.md#val-base) | `slice -> Word64Vector.vector * int * int` |
-| val | [`collate`](../sig/MONO_VECTOR_SLICE.md#val-collate) | `(Word64.word * Word64.word -> order) -> slice * slice -> order` |
+| val | [`collate`](../sig/MONO_VECTOR_SLICE.md#val-collate) | `(word64 * word64 -> order) -> slice * slice -> order` |
 | val | [`concat`](../sig/MONO_VECTOR_SLICE.md#val-concat) | `slice list -> Word64Vector.vector` |
-| val | [`exists`](../sig/MONO_VECTOR_SLICE.md#val-exists) | `(Word64.word -> bool) -> slice -> bool` |
-| val | [`find`](../sig/MONO_VECTOR_SLICE.md#val-find) | `(Word64.word -> bool) -> slice -> Word64.word option` |
-| val | [`findi`](../sig/MONO_VECTOR_SLICE.md#val-findi) | `(int * Word64.word -> bool) -> slice -> (int * Word64.word) option` |
-| val | [`foldl`](../sig/MONO_VECTOR_SLICE.md#val-foldl) | `(Word64.word * 'a -> 'a) -> 'a -> slice -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR_SLICE.md#val-foldli) | `(int * Word64.word * 'a -> 'a) -> 'a -> slice -> 'a` |
-| val | [`foldr`](../sig/MONO_VECTOR_SLICE.md#val-foldr) | `(Word64.word * 'a -> 'a) -> 'a -> slice -> 'a` |
-| val | [`foldri`](../sig/MONO_VECTOR_SLICE.md#val-foldri) | `(int * Word64.word * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`exists`](../sig/MONO_VECTOR_SLICE.md#val-exists) | `(word64 -> bool) -> slice -> bool` |
+| val | [`find`](../sig/MONO_VECTOR_SLICE.md#val-find) | `(word64 -> bool) -> slice -> word64 option` |
+| val | [`findi`](../sig/MONO_VECTOR_SLICE.md#val-findi) | `(int * word64 -> bool) -> slice -> (int * word64) option` |
+| val | [`foldl`](../sig/MONO_VECTOR_SLICE.md#val-foldl) | `(word64 * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`foldli`](../sig/MONO_VECTOR_SLICE.md#val-foldli) | `(int * word64 * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR_SLICE.md#val-foldr) | `(word64 * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR_SLICE.md#val-foldri) | `(int * word64 * 'a -> 'a) -> 'a -> slice -> 'a` |
 | val | [`full`](../sig/MONO_VECTOR_SLICE.md#val-full) | `Word64Vector.vector -> slice` |
-| val | [`getItem`](../sig/MONO_VECTOR_SLICE.md#val-getitem) | `slice -> (Word64.word * slice) option` |
+| val | [`getItem`](../sig/MONO_VECTOR_SLICE.md#val-getitem) | `slice -> (word64 * slice) option` |
 | val | [`isEmpty`](../sig/MONO_VECTOR_SLICE.md#val-isempty) | `slice -> bool` |
 | val | [`length`](../sig/MONO_VECTOR_SLICE.md#val-length) | `slice -> int` |
-| val | [`map`](../sig/MONO_VECTOR_SLICE.md#val-map) | `(Word64.word -> Word64.word) -> slice -> Word64Vector.vector` |
-| val | [`mapi`](../sig/MONO_VECTOR_SLICE.md#val-mapi) | `(int * Word64.word -> Word64.word) -> slice -> Word64Vector.vector` |
+| val | [`map`](../sig/MONO_VECTOR_SLICE.md#val-map) | `(word64 -> word64) -> slice -> Word64Vector.vector` |
+| val | [`mapi`](../sig/MONO_VECTOR_SLICE.md#val-mapi) | `(int * word64 -> word64) -> slice -> Word64Vector.vector` |
 | val | [`slice`](../sig/MONO_VECTOR_SLICE.md#val-slice) | `Word64Vector.vector * int * int option -> slice` |
-| val | [`sub`](../sig/MONO_VECTOR_SLICE.md#val-sub) | `slice * int -> Word64.word` |
+| val | [`sub`](../sig/MONO_VECTOR_SLICE.md#val-sub) | `slice * int -> word64` |
 | val | [`subslice`](../sig/MONO_VECTOR_SLICE.md#val-subslice) | `slice * int * int option -> slice` |
 | val | [`vector`](../sig/MONO_VECTOR_SLICE.md#val-vector) | `slice -> Word64Vector.vector` |
 

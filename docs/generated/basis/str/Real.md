@@ -109,10 +109,10 @@ What each means is on [`REAL`](../sig/REAL.md); the types are this structure's o
 
 ### floor
 
-> **Implementation** `Real.floor/at-the-ends-of-int`. An `int` has 64 bits and
-> a real 53, so near the ends of `int` not every integer is a real. `fromInt maxInt` is 2^63, which is one more than `maxInt`, and [`floor`](../sig/REAL.md#val-floor) of it raises
+> **Implementation** `Real.floor/at-the-ends-of-int`. An `int` has 63 bits and
+> a real 53, so near the ends of `int` not every integer is a real. `fromInt maxInt` is 2^62, which is one more than `maxInt`, and [`floor`](../sig/REAL.md#val-floor) of it raises
 > [`Overflow`](../sig/GENERAL.md#exn-overflow); the largest real that [`floor`](../sig/REAL.md#val-floor), [`ceil`](../sig/REAL.md#val-ceil), [`trunc`](../sig/REAL.md#val-trunc) and [`round`](../sig/REAL.md#val-round)
-> take is 2^63 - 1024. `minInt` is a real, and `minInt - 0.5` is `minInt`
+> take is 2^62 - 512. `minInt` is a real, and `minInt - 0.5` is `minInt`
 > itself, so all four give `minInt` for it.
 
 ### fmt

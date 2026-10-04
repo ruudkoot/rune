@@ -27,11 +27,11 @@ What each means is on [`PACK_WORD`](../sig/PACK_WORD.md); the types are this str
 | --- | --- | --- |
 | val | [`bytesPerElem`](../sig/PACK_WORD.md#val-bytesperelem) | `int` |
 | val | [`isBigEndian`](../sig/PACK_WORD.md#val-isbigendian) | `bool` |
-| val | [`subArr`](../sig/PACK_WORD.md#val-subarr) | `Word8Array.array * int -> word` |
-| val | [`subArrX`](../sig/PACK_WORD.md#val-subarrx) | `Word8Array.array * int -> word` |
-| val | [`subVec`](../sig/PACK_WORD.md#val-subvec) | `Word8Vector.vector * int -> word` |
-| val | [`subVecX`](../sig/PACK_WORD.md#val-subvecx) | `Word8Vector.vector * int -> word` |
-| val | [`update`](../sig/PACK_WORD.md#val-update) | `Word8Array.array * int * word -> unit` |
+| val | [`subArr`](../sig/PACK_WORD.md#val-subarr) | `Word8Array.array * int -> word64` |
+| val | [`subArrX`](../sig/PACK_WORD.md#val-subarrx) | `Word8Array.array * int -> word64` |
+| val | [`subVec`](../sig/PACK_WORD.md#val-subvec) | `Word8Vector.vector * int -> word64` |
+| val | [`subVecX`](../sig/PACK_WORD.md#val-subvecx) | `Word8Vector.vector * int -> word64` |
+| val | [`update`](../sig/PACK_WORD.md#val-update) | `Word8Array.array * int * word64 -> unit` |
 
 <details><summary>Other implementations (2)</summary>
 

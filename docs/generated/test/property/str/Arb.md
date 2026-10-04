@@ -22,7 +22,7 @@ What each means is on [`ARB`](../sig/ARB.md); the types are this structure's own
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`arb`](../sig/ARB.md#type-arb) | `{co : 'a -> Word64.word, eq : ('a * 'a -> bool) option, gen : 'a Gen.gen, show : 'a -> string}` |
+| type | [`arb`](../sig/ARB.md#type-arb) | `{co : 'a -> word64, eq : ('a * 'a -> bool) option, gen : 'a Gen.gen, show : 'a -> string}` |
 | val | [`array`](../sig/ARB.md#val-array) | `'a arb -> 'a array arb` |
 | val | [`array2`](../sig/ARB.md#val-array2) | `'a arb -> 'a Array2.array arb` |
 | val | [`arraySlice`](../sig/ARB.md#val-arrayslice) | `'a arb -> 'a ArraySlice.slice arb` |
@@ -47,7 +47,7 @@ What each means is on [`ARB`](../sig/ARB.md); the types are this structure's own
 | val | [`vector`](../sig/ARB.md#val-vector) | `'a arb -> 'a vector arb` |
 | val | [`vectorSlice`](../sig/ARB.md#val-vectorslice) | `'a arb -> 'a VectorSlice.slice arb` |
 | val | [`word`](../sig/ARB.md#val-word) | `word arb` |
-| val | [`word64`](../sig/ARB.md#val-word64) | `Word64.word arb` |
+| val | [`word64`](../sig/ARB.md#val-word64) | `word64 arb` |
 
 ---
 

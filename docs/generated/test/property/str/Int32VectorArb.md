@@ -23,7 +23,7 @@ What each means is on [`ARB_OF`](../sig/ARB_OF.md); the types are this structure
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`t`](../sig/ARB_OF.md#type-t) | `Int32Vector.vector` |
-| val | [`arb`](../sig/ARB_OF.md#val-arb) | `{co : Int32Vector.vector -> Word64.word, eq : (Int32Vector.vector * Int32Vector.vector -> bool) option, gen : Int32Vector.vector Gen.gen, show : Int32Vector.vector -> string}` |
+| val | [`arb`](../sig/ARB_OF.md#val-arb) | `{co : Int32Vector.vector -> word64, eq : (Int32Vector.vector * Int32Vector.vector -> bool) option, gen : Int32Vector.vector Gen.gen, show : Int32Vector.vector -> string}` |
 
 ---
 

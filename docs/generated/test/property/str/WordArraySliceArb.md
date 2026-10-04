@@ -23,7 +23,7 @@ What each means is on [`ARB_OF`](../sig/ARB_OF.md); the types are this structure
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`t`](../sig/ARB_OF.md#type-t) | `WordArraySlice.slice` |
-| val | [`arb`](../sig/ARB_OF.md#val-arb) | `{co : WordArraySlice.slice -> Word64.word, eq : (WordArraySlice.slice * WordArraySlice.slice -> bool) option, gen : WordArraySlice.slice Gen.gen, show : WordArraySlice.slice -> string}` |
+| val | [`arb`](../sig/ARB_OF.md#val-arb) | `{co : WordArraySlice.slice -> word64, eq : (WordArraySlice.slice * WordArraySlice.slice -> bool) option, gen : WordArraySlice.slice Gen.gen, show : WordArraySlice.slice -> string}` |
 
 ---
 

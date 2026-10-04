@@ -23,18 +23,18 @@ What each means is on [`RANDOM`](../sig/RANDOM.md); the types are this structure
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`gen`](../sig/RANDOM.md#type-gen) | *a type of its own* |
-| val | [`below`](../sig/RANDOM.md#val-below) | `Word64.word -> gen -> Word64.word * gen` |
+| val | [`below`](../sig/RANDOM.md#val-below) | `word64 -> gen -> word64 * gen` |
 | val | [`bool`](../sig/RANDOM.md#val-bool) | `gen -> bool * gen` |
 | val | [`fromEntropy`](../sig/RANDOM.md#val-fromentropy) | `unit -> gen` |
-| val | [`fromSeed`](../sig/RANDOM.md#val-fromseed) | `Word64.word -> gen` |
+| val | [`fromSeed`](../sig/RANDOM.md#val-fromseed) | `word64 -> gen` |
 | val | [`fromString`](../sig/RANDOM.md#val-fromstring) | `string -> gen option` |
-| val | [`hash`](../sig/RANDOM.md#val-hash) | `Word64.word -> Word64.word` |
-| val | [`hashString`](../sig/RANDOM.md#val-hashstring) | `string -> Word64.word` |
+| val | [`hash`](../sig/RANDOM.md#val-hash) | `word64 -> word64` |
+| val | [`hashString`](../sig/RANDOM.md#val-hashstring) | `string -> word64` |
 | val | [`int`](../sig/RANDOM.md#val-int) | `int * int -> gen -> int * gen` |
 | val | [`real`](../sig/RANDOM.md#val-real) | `gen -> real * gen` |
 | val | [`split`](../sig/RANDOM.md#val-split) | `gen -> gen * gen` |
 | val | [`toString`](../sig/RANDOM.md#val-tostring) | `gen -> string` |
-| val | [`word64`](../sig/RANDOM.md#val-word64) | `gen -> Word64.word * gen` |
+| val | [`word64`](../sig/RANDOM.md#val-word64) | `gen -> word64 * gen` |
 
 ---
 

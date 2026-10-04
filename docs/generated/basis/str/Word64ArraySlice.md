@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md) |
 | Status | optional |
 | Members | 30 |
-| Tests | 240 checks |
+| Tests | 241 checks |
 | Source | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
 
 ## Synopsis
@@ -26,34 +26,34 @@ What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the type
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`array`](../sig/MONO_ARRAY_SLICE.md#type-array) | `Word64Array.array` |
-| type | [`elem`](../sig/MONO_ARRAY_SLICE.md#type-elem) | `Word64.word` |
+| type | [`elem`](../sig/MONO_ARRAY_SLICE.md#type-elem) | `word64` |
 | type | [`slice`](../sig/MONO_ARRAY_SLICE.md#type-slice) | *a type of its own* |
 | type | [`vector`](../sig/MONO_ARRAY_SLICE.md#type-vector) | `Word64Vector.vector` |
 | type | [`vector_slice`](../sig/MONO_ARRAY_SLICE.md#type-vector_slice) | `Word64VectorSlice.slice` |
-| val | [`all`](../sig/MONO_ARRAY_SLICE.md#val-all) | `(Word64.word -> bool) -> slice -> bool` |
-| val | [`app`](../sig/MONO_ARRAY_SLICE.md#val-app) | `(Word64.word -> unit) -> slice -> unit` |
-| val | [`appi`](../sig/MONO_ARRAY_SLICE.md#val-appi) | `(int * Word64.word -> unit) -> slice -> unit` |
+| val | [`all`](../sig/MONO_ARRAY_SLICE.md#val-all) | `(word64 -> bool) -> slice -> bool` |
+| val | [`app`](../sig/MONO_ARRAY_SLICE.md#val-app) | `(word64 -> unit) -> slice -> unit` |
+| val | [`appi`](../sig/MONO_ARRAY_SLICE.md#val-appi) | `(int * word64 -> unit) -> slice -> unit` |
 | val | [`base`](../sig/MONO_ARRAY_SLICE.md#val-base) | `slice -> Word64Array.array * int * int` |
-| val | [`collate`](../sig/MONO_ARRAY_SLICE.md#val-collate) | `(Word64.word * Word64.word -> order) -> slice * slice -> order` |
+| val | [`collate`](../sig/MONO_ARRAY_SLICE.md#val-collate) | `(word64 * word64 -> order) -> slice * slice -> order` |
 | val | [`copy`](../sig/MONO_ARRAY_SLICE.md#val-copy) | `{di : int, dst : Word64Array.array, src : slice} -> unit` |
 | val | [`copyVec`](../sig/MONO_ARRAY_SLICE.md#val-copyvec) | `{di : int, dst : Word64Array.array, src : Word64VectorSlice.slice} -> unit` |
-| val | [`exists`](../sig/MONO_ARRAY_SLICE.md#val-exists) | `(Word64.word -> bool) -> slice -> bool` |
-| val | [`find`](../sig/MONO_ARRAY_SLICE.md#val-find) | `(Word64.word -> bool) -> slice -> Word64.word option` |
-| val | [`findi`](../sig/MONO_ARRAY_SLICE.md#val-findi) | `(int * Word64.word -> bool) -> slice -> (int * Word64.word) option` |
-| val | [`foldl`](../sig/MONO_ARRAY_SLICE.md#val-foldl) | `(Word64.word * 'a -> 'a) -> 'a -> slice -> 'a` |
-| val | [`foldli`](../sig/MONO_ARRAY_SLICE.md#val-foldli) | `(int * Word64.word * 'a -> 'a) -> 'a -> slice -> 'a` |
-| val | [`foldr`](../sig/MONO_ARRAY_SLICE.md#val-foldr) | `(Word64.word * 'a -> 'a) -> 'a -> slice -> 'a` |
-| val | [`foldri`](../sig/MONO_ARRAY_SLICE.md#val-foldri) | `(int * Word64.word * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`exists`](../sig/MONO_ARRAY_SLICE.md#val-exists) | `(word64 -> bool) -> slice -> bool` |
+| val | [`find`](../sig/MONO_ARRAY_SLICE.md#val-find) | `(word64 -> bool) -> slice -> word64 option` |
+| val | [`findi`](../sig/MONO_ARRAY_SLICE.md#val-findi) | `(int * word64 -> bool) -> slice -> (int * word64) option` |
+| val | [`foldl`](../sig/MONO_ARRAY_SLICE.md#val-foldl) | `(word64 * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`foldli`](../sig/MONO_ARRAY_SLICE.md#val-foldli) | `(int * word64 * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`foldr`](../sig/MONO_ARRAY_SLICE.md#val-foldr) | `(word64 * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`foldri`](../sig/MONO_ARRAY_SLICE.md#val-foldri) | `(int * word64 * 'a -> 'a) -> 'a -> slice -> 'a` |
 | val | [`full`](../sig/MONO_ARRAY_SLICE.md#val-full) | `Word64Array.array -> slice` |
-| val | [`getItem`](../sig/MONO_ARRAY_SLICE.md#val-getitem) | `slice -> (Word64.word * slice) option` |
+| val | [`getItem`](../sig/MONO_ARRAY_SLICE.md#val-getitem) | `slice -> (word64 * slice) option` |
 | val | [`isEmpty`](../sig/MONO_ARRAY_SLICE.md#val-isempty) | `slice -> bool` |
 | val | [`length`](../sig/MONO_ARRAY_SLICE.md#val-length) | `slice -> int` |
-| val | [`modify`](../sig/MONO_ARRAY_SLICE.md#val-modify) | `(Word64.word -> Word64.word) -> slice -> unit` |
-| val | [`modifyi`](../sig/MONO_ARRAY_SLICE.md#val-modifyi) | `(int * Word64.word -> Word64.word) -> slice -> unit` |
+| val | [`modify`](../sig/MONO_ARRAY_SLICE.md#val-modify) | `(word64 -> word64) -> slice -> unit` |
+| val | [`modifyi`](../sig/MONO_ARRAY_SLICE.md#val-modifyi) | `(int * word64 -> word64) -> slice -> unit` |
 | val | [`slice`](../sig/MONO_ARRAY_SLICE.md#val-slice) | `Word64Array.array * int * int option -> slice` |
-| val | [`sub`](../sig/MONO_ARRAY_SLICE.md#val-sub) | `slice * int -> Word64.word` |
+| val | [`sub`](../sig/MONO_ARRAY_SLICE.md#val-sub) | `slice * int -> word64` |
 | val | [`subslice`](../sig/MONO_ARRAY_SLICE.md#val-subslice) | `slice * int * int option -> slice` |
-| val | [`update`](../sig/MONO_ARRAY_SLICE.md#val-update) | `slice * int * Word64.word -> unit` |
+| val | [`update`](../sig/MONO_ARRAY_SLICE.md#val-update) | `slice * int * word64 -> unit` |
 | val | [`vector`](../sig/MONO_ARRAY_SLICE.md#val-vector) | `slice -> Word64Vector.vector` |
 
 <details><summary>Other implementations (3)</summary>

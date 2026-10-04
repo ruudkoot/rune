@@ -29,36 +29,36 @@ The types are this structure's own.
 |  | Member | Is |
 | --- | --- | --- |
 | datatype | `kind` | `IntNode` &#124; `WordNode` &#124; `CharNode` &#124; `RealNode` &#124; `BoolNode` &#124; `MarkNode` &#124; `LengthNode` &#124; `ChoiceNode` |
-| type | `node` | `{address : Word64.word, bound : Word64.word, kind : kind, path : Word64.word list, word : Word64.word}` |
-| type | `position` | `{address : Word64.word, path : Word64.word list}` |
-| type | `sequence` | `{length : Word64.word, marks : Word64.word list option, parts : Word64.word list}` |
-| type | `source` | `{calls : (position * string) list ref, cleanups : (unit -> unit) list ref, effects : string list ref, seed : Word64.word, sequences : sequence list ref, set : node list, size : int, trail : node list ref, zeros : Word64.word list list}` |
-| val | `addressOf` | `Word64.word list -> Word64.word` |
-| val | `bitsOf` | `real -> Word64.word` |
+| type | `node` | `{address : word64, bound : word64, kind : kind, path : word64 list, word : word64}` |
+| type | `position` | `{address : word64, path : word64 list}` |
+| type | `sequence` | `{length : word64, marks : word64 list option, parts : word64 list}` |
+| type | `source` | `{calls : (position * string) list ref, cleanups : (unit -> unit) list ref, effects : string list ref, seed : word64, sequences : sequence list ref, set : node list, size : int, trail : node list ref, zeros : word64 list list}` |
+| val | `addressOf` | `word64 list -> word64` |
+| val | `bitsOf` | `real -> word64` |
 | val | `call` | `source * position * string -> unit` |
 | val | `calls` | `source -> (position * string) list` |
 | val | `child` | `position * int -> position` |
-| val | `childAt` | `position * Word64.word -> position` |
+| val | `childAt` | `position * word64 -> position` |
 | val | `cleanUp` | `source -> unit` |
 | val | `cleanup` | `source * (unit -> unit) -> unit` |
 | val | `effect` | `source * string -> unit` |
-| val | `isPrefix` | `Word64.word list * Word64.word list -> bool` |
-| val | `new` | `Word64.word * int * node list * Word64.word list list -> source` |
+| val | `isPrefix` | `word64 list * word64 list -> bool` |
+| val | `new` | `word64 * int * node list * word64 list list -> source` |
 | val | `nodes` | `source -> node list` |
-| val | `read` | `source * position * kind * (Word64.word -> Word64.word) -> Word64.word` |
-| val | `readIn` | `source * position * kind * Word64.word * (Word64.word -> Word64.word) -> Word64.word` |
-| val | `realOf` | `Word64.word -> real` |
+| val | `read` | `source * position * kind * (word64 -> word64) -> word64` |
+| val | `readIn` | `source * position * kind * word64 * (word64 -> word64) -> word64` |
+| val | `realOf` | `word64 -> real` |
 | val | `resized` | `source * int -> source` |
 | val | `root` | `position` |
-| val | `seed` | `source -> Word64.word` |
+| val | `seed` | `source -> word64` |
 | val | `sequence` | `source * sequence -> unit` |
 | val | `sequences` | `source -> sequence list` |
 | val | `size` | `source -> int` |
-| val | `step` | `Word64.word * Word64.word -> Word64.word` |
+| val | `step` | `word64 * word64 -> word64` |
 | val | `takeEffects` | `source -> string list` |
 | val | `two52` | `real` |
-| val | `withPath` | `node * Word64.word list * Word64.word -> node` |
-| val | `withWord` | `node * Word64.word -> node` |
+| val | `withPath` | `node * word64 list * word64 -> node` |
+| val | `withWord` | `node * word64 -> node` |
 
 ---
 

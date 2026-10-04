@@ -23,7 +23,7 @@ What each means is on [`ARB_OF`](../sig/ARB_OF.md); the types are this structure
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`t`](../sig/ARB_OF.md#type-t) | `RealArray.array` |
-| val | [`arb`](../sig/ARB_OF.md#val-arb) | `{co : RealArray.array -> Word64.word, eq : (RealArray.array * RealArray.array -> bool) option, gen : RealArray.array Gen.gen, show : RealArray.array -> string}` |
+| val | [`arb`](../sig/ARB_OF.md#val-arb) | `{co : RealArray.array -> word64, eq : (RealArray.array * RealArray.array -> bool) option, gen : RealArray.array Gen.gen, show : RealArray.array -> string}` |
 
 ---
 

@@ -26,30 +26,30 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`array`](../sig/MONO_ARRAY.md#type-array) | *a type of its own* |
-| type | [`elem`](../sig/MONO_ARRAY.md#type-elem) | `Int64.int` |
+| type | [`elem`](../sig/MONO_ARRAY.md#type-elem) | `int64` |
 | type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `Int64Vector.vector` |
-| val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(Int64.int -> bool) -> Int64Array.array -> bool` |
-| val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(Int64.int -> unit) -> Int64Array.array -> unit` |
-| val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * Int64.int -> unit) -> Int64Array.array -> unit` |
-| val | [`array`](../sig/MONO_ARRAY.md#val-array) | `int * Int64.int -> Int64Array.array` |
-| val | [`collate`](../sig/MONO_ARRAY.md#val-collate) | `(Int64.int * Int64.int -> order) -> Int64Array.array * Int64Array.array -> order` |
+| val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(int64 -> bool) -> Int64Array.array -> bool` |
+| val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(int64 -> unit) -> Int64Array.array -> unit` |
+| val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * int64 -> unit) -> Int64Array.array -> unit` |
+| val | [`array`](../sig/MONO_ARRAY.md#val-array) | `int * int64 -> Int64Array.array` |
+| val | [`collate`](../sig/MONO_ARRAY.md#val-collate) | `(int64 * int64 -> order) -> Int64Array.array * Int64Array.array -> order` |
 | val | [`copy`](../sig/MONO_ARRAY.md#val-copy) | `{di : int, dst : Int64Array.array, src : Int64Array.array} -> unit` |
 | val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : Int64Array.array, src : Int64Vector.vector} -> unit` |
-| val | [`exists`](../sig/MONO_ARRAY.md#val-exists) | `(Int64.int -> bool) -> Int64Array.array -> bool` |
-| val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(Int64.int -> bool) -> Int64Array.array -> Int64.int option` |
-| val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * Int64.int -> bool) -> Int64Array.array -> (int * Int64.int) option` |
-| val | [`foldl`](../sig/MONO_ARRAY.md#val-foldl) | `(Int64.int * 'a -> 'a) -> 'a -> Int64Array.array -> 'a` |
-| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * Int64.int * 'a -> 'a) -> 'a -> Int64Array.array -> 'a` |
-| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(Int64.int * 'a -> 'a) -> 'a -> Int64Array.array -> 'a` |
-| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * Int64.int * 'a -> 'a) -> 'a -> Int64Array.array -> 'a` |
-| val | [`fromList`](../sig/MONO_ARRAY.md#val-fromlist) | `Int64.int list -> Int64Array.array` |
+| val | [`exists`](../sig/MONO_ARRAY.md#val-exists) | `(int64 -> bool) -> Int64Array.array -> bool` |
+| val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(int64 -> bool) -> Int64Array.array -> int64 option` |
+| val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * int64 -> bool) -> Int64Array.array -> (int * int64) option` |
+| val | [`foldl`](../sig/MONO_ARRAY.md#val-foldl) | `(int64 * 'a -> 'a) -> 'a -> Int64Array.array -> 'a` |
+| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * int64 * 'a -> 'a) -> 'a -> Int64Array.array -> 'a` |
+| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(int64 * 'a -> 'a) -> 'a -> Int64Array.array -> 'a` |
+| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * int64 * 'a -> 'a) -> 'a -> Int64Array.array -> 'a` |
+| val | [`fromList`](../sig/MONO_ARRAY.md#val-fromlist) | `int64 list -> Int64Array.array` |
 | val | [`length`](../sig/MONO_ARRAY.md#val-length) | `Int64Array.array -> int` |
 | val | [`maxLen`](../sig/MONO_ARRAY.md#val-maxlen) | `int` |
-| val | [`modify`](../sig/MONO_ARRAY.md#val-modify) | `(Int64.int -> Int64.int) -> Int64Array.array -> unit` |
-| val | [`modifyi`](../sig/MONO_ARRAY.md#val-modifyi) | `(int * Int64.int -> Int64.int) -> Int64Array.array -> unit` |
-| val | [`sub`](../sig/MONO_ARRAY.md#val-sub) | `Int64Array.array * int -> Int64.int` |
-| val | [`tabulate`](../sig/MONO_ARRAY.md#val-tabulate) | `int * (int -> Int64.int) -> Int64Array.array` |
-| val | [`update`](../sig/MONO_ARRAY.md#val-update) | `Int64Array.array * int * Int64.int -> unit` |
+| val | [`modify`](../sig/MONO_ARRAY.md#val-modify) | `(int64 -> int64) -> Int64Array.array -> unit` |
+| val | [`modifyi`](../sig/MONO_ARRAY.md#val-modifyi) | `(int * int64 -> int64) -> Int64Array.array -> unit` |
+| val | [`sub`](../sig/MONO_ARRAY.md#val-sub) | `Int64Array.array * int -> int64` |
+| val | [`tabulate`](../sig/MONO_ARRAY.md#val-tabulate) | `int * (int -> int64) -> Int64Array.array` |
+| val | [`update`](../sig/MONO_ARRAY.md#val-update) | `Int64Array.array * int * int64 -> unit` |
 | val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `Int64Array.array -> Int64Vector.vector` |
 
 ---

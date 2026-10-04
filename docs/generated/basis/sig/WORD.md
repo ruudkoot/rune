@@ -19,18 +19,18 @@ structure SysWord : WORD  (* optional *)
 structure Word : WORD
 structure Word16 : WORD  (* optional *)
 structure Word32 : WORD  (* optional *)
-structure Word64 :> WORD  (* optional *)
+structure Word64 : WORD  (* optional *)
 structure Word8 : WORD
 ```
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`LargeWord`](../str/Word.md) | LargeWord: the widest words, which are [`Word`](../str/Word.md). | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
+| [`LargeWord`](../str/Word64.md) | LargeWord: the widest words, which are [`Word64`](../str/Word64.md). | [lib/basis/word64.sml](../../../../lib/basis/word64.sml) |
 | [`SysWord`](../str/Word.md) | SysWord: the words in which the operating system's flags and modes are counted, which are [`Word`](../str/Word.md). | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
-| [`Word`](../str/Word.md) | Word: unsigned words of 64 bits, the type of the top-level [`word`](#type-word) and of its literals. | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
+| [`Word`](../str/Word.md) | Word: unsigned words of the VM's width less the bit of a value's tag, 63 bits, the type of the top-level [`word`](#type-word) and of its literals. | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
 | [`Word16`](../str/Word16.md) | Word16: words of 16 bits. | [lib/basis/word16.sml](../../../../lib/basis/word16.sml) |
 | [`Word32`](../str/Word32.md) | Word32: words of 32 bits. | [lib/basis/word32.sml](../../../../lib/basis/word32.sml) |
-| [`Word64`](../str/Word64.md) | Word64: the 64-bit words. | [lib/basis/word64.sml](../../../../lib/basis/word64.sml) |
+| [`Word64`](../str/Word64.md) | Word64: the 64-bit words, and LargeWord, the widest ones, which is the same structure. | [lib/basis/word64.sml](../../../../lib/basis/word64.sml) |
 | [`Word8`](../str/Word8.md) | Word8: words of 8 bits, the element type of the byte-oriented structures. | [lib/basis/word8.sml](../../../../lib/basis/word8.sml) |
 
 Words: integers of a fixed number of bits, without a sign, whose
@@ -48,7 +48,7 @@ top bit is the sign, as in two's complement. The functions with an `X` in
 their name are those that sign-extend; the others fill with zeros.
 
 The structures differ in their width: [`Word`](../str/Word.md) is the default one and
-[`Word8`](../str/Word8.md), [`Word16`](../str/Word16.md), [`Word32`](../str/Word32.md) and [`Word64`](../str/Word64.md) are the sized ones; [`LargeWord`](../str/Word.md)
+[`Word8`](../str/Word8.md), [`Word16`](../str/Word16.md), [`Word32`](../str/Word32.md) and [`Word64`](../str/Word64.md) are the sized ones; [`LargeWord`](../str/Word64.md)
 is the widest, and [`SysWord`](../str/Word.md) is what the operating system's flags are
 counted in.
 
@@ -118,10 +118,13 @@ eqtype word
 
 The type of words of this structure.
 
-> **Implementation** `Word.word/64-bits`. [`Word.word`](#type-word) is the top-level
-> [`word`](#type-word), of 64 bits, and so are [`LargeWord`](../str/Word.md), [`SysWord`](../str/Word.md) and [`Word64`](../str/Word64.md);
-> [`Word8`](../str/Word8.md), [`Word16`](../str/Word16.md) and [`Word32`](../str/Word32.md) are kept in a word of the machine whose
-> upper bits are zero.
+> **Implementation** `Word.word/63-bits`. [`Word.word`](#type-word) is the top-level
+> [`word`](#type-word), of 63 bits -- a word of the machine less the bit that tells a
+> number from a pointer -- and so is [`SysWord`](../str/Word.md). [`Word64`](../str/Word64.md), which is also
+> [`LargeWord`](../str/Word64.md), has 64 bits on every machine: a word of its type is kept in
+> a word of the machine where it fits 63 bits and in a small object where
+> it needs the 64th. [`Word8`](../str/Word8.md), [`Word16`](../str/Word16.md) and [`Word32`](../str/Word32.md) are kept in a word of
+> the machine whose upper bits are zero.
 
 > **Implementation** `Word.word/constants-overloaded`. A word constant has the
 > word type that its context asks for, [`Word8.word`](#type-word) as well as [`word`](#type-word), and
@@ -144,11 +147,15 @@ val wordSize : int
 
 [`wordSize`](#val-wordsize) is the number of bits of a word of this structure.
 
-**Example** `Word8.wordSize = 8` and `Word.wordSize = 64`
+**Example** `Word8.wordSize = 8` and `Word.wordSize = 63`
+
+**Example** `Word64.wordSize = 64` and `LargeWord.wordSize = 64`
 
 <details><summary>Tests (13)</summary>
 
-For `Word`, in [tests/basis/word\_large.sml](../../../../tests/basis/word_large.sml): `at-most-LargeInt.precision` &middot; `at-least-Word.wordSize`
+For `Word64`, in [tests/basis/intn\_word64.sml](../../../../tests/basis/intn_word64.sml): `64`
+
+For `Word64`, in [tests/basis/word\_large.sml](../../../../tests/basis/word_large.sml): `at-most-LargeInt.precision` &middot; `at-least-Word.wordSize`
 
 For `LargeWord`, in [tests/basis/word\_large.sml](../../../../tests/basis/word_large.sml): `at-most-LargeInt.precision` &middot; `at-least-Word.wordSize`
 
@@ -158,11 +165,9 @@ For `Word16`, in [tests/basis/intn\_word16.sml](../../../../tests/basis/intn_wor
 
 For `Word32`, in [tests/basis/intn\_word32.sml](../../../../tests/basis/intn_word32.sml): `32`
 
-For `Word64`, in [tests/basis/intn\_word64.sml](../../../../tests/basis/intn_word64.sml): `64`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `at-least-8` &middot; `top-bit-is-not-zero` &middot; `two-to-the-wordSize-is-zero` &middot; `all-ones-is-not-zero`
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `at-least-8` &middot; `top-bit-is-not-zero` &middot; `two-to-the-wordSize-is-zero` &middot; `all-ones-is-not-zero`
-
-In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `at-most-LargeWord.wordSize`
+In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `at-most-LargeWord.wordSize`
 
 </details>
 
@@ -174,7 +179,7 @@ In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn
 val toLarge : word -> LargeWord.word
 ```
 
-`toLarge w` is `w` as a word of [`LargeWord`](../str/Word.md), with zeros in the bits above [`wordSize`](#val-wordsize).
+`toLarge w` is `w` as a word of [`LargeWord`](../str/Word64.md), with zeros in the bits above [`wordSize`](#val-wordsize).
 
 **Law** `fromLarge (toLarge w) = w` (for every `w : word`)
 
@@ -182,7 +187,7 @@ val toLarge : word -> LargeWord.word
 
 <details><summary>Tests (5)</summary>
 
-In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `zero` &middot; `200` &middot; `all-ones` &middot; `top-bit` &middot; `model*`
+In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `zero` &middot; `200` &middot; `all-ones` &middot; `top-bit` &middot; `model*`
 
 </details>
 
@@ -192,7 +197,7 @@ In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn
 val toLargeX : word -> LargeWord.word
 ```
 
-`toLargeX w` is `w` as a word of [`LargeWord`](../str/Word.md), with the top bit of `w` copied into the bits above it.
+`toLargeX w` is `w` as a word of [`LargeWord`](../str/Word64.md), with the top bit of `w` copied into the bits above it.
 
 **Law** `toLargeX w = toLarge w` when `w < << (0w1, Word.fromInt (Int.- (wordSize, 1)))` (for every `w : word`)
 
@@ -201,7 +206,7 @@ val toLargeX : word -> LargeWord.word
 
 <details><summary>Tests (6)</summary>
 
-In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `zero` &middot; `100` &middot; `all-ones` &middot; `top-bit` &middot; `below-top-bit` &middot; `model*`
+In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `zero` &middot; `100` &middot; `all-ones` &middot; `top-bit` &middot; `below-top-bit` &middot; `model*`
 
 </details>
 
@@ -215,7 +220,7 @@ val toLargeWord : word -> LargeWord.word
 
 <details><summary>Tests (2)</summary>
 
-In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `200` &middot; `synonym*`
+In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `200` &middot; `synonym*`
 
 </details>
 
@@ -229,7 +234,7 @@ val toLargeWordX : word -> LargeWord.word
 
 <details><summary>Tests (2)</summary>
 
-In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `all-ones` &middot; `synonym*`
+In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `all-ones` &middot; `synonym*`
 
 </details>
 
@@ -247,7 +252,7 @@ What does not fit is dropped: nothing is raised.
 
 <details><summary>Tests (10)</summary>
 
-In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `zero` &middot; `200` &middot; `all-ones` &middot; `low-ones` &middot; `two-to-the-wordSize` &middot; `two-to-the-wordSize-plus-five` &middot; `high-ones` &middot; `model*` &middot; `toLarge*` &middot; `toLargeX*`
+In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `zero` &middot; `200` &middot; `all-ones` &middot; `low-ones` &middot; `two-to-the-wordSize` &middot; `two-to-the-wordSize-plus-five` &middot; `high-ones` &middot; `model*` &middot; `toLarge*` &middot; `toLargeX*`
 
 </details>
 
@@ -261,7 +266,7 @@ val fromLargeWord : LargeWord.word -> word
 
 <details><summary>Tests (2)</summary>
 
-In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `200` &middot; `synonym*`
+In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `200` &middot; `synonym*`
 
 </details>
 
@@ -282,7 +287,7 @@ happen where [`LargeInt`](../str/IntInf.md) is [`IntInf`](../str/IntInf.md).
 
 <details><summary>Tests (5)</summary>
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `zero` &middot; `200` &middot; `all-ones` &middot; `top-bit` &middot; `model*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `zero` &middot; `200` &middot; `all-ones` &middot; `top-bit` &middot; `model*`
 
 </details>
 
@@ -300,7 +305,7 @@ It never raises: [`LargeInt`](../str/IntInf.md) is at least as wide as every wor
 
 <details><summary>Tests (6)</summary>
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `zero` &middot; `100` &middot; `all-ones` &middot; `top-bit` &middot; `below-top-bit` &middot; `model*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `zero` &middot; `100` &middot; `all-ones` &middot; `top-bit` &middot; `below-top-bit` &middot; `model*`
 
 </details>
 
@@ -327,7 +332,7 @@ dropped.
 
 <details><summary>Tests (15)</summary>
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `zero` &middot; `200` &middot; `minus-one` &middot; `minus-three` &middot; `all-ones` &middot; `two-to-the-wordSize` &middot; `two-to-the-wordSize-plus-five` &middot; `minus-two-to-the-wordSize-minus-three` &middot; `two-to-twice-the-wordSize-plus-seven` &middot; `minus-two-to-twice-the-wordSize-minus-one` &middot; `minus-top-bit` &middot; `model*` &middot; `plus-multiple*` &middot; `minus-multiple*` &middot; `signed*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `zero` &middot; `200` &middot; `minus-one` &middot; `minus-three` &middot; `all-ones` &middot; `two-to-the-wordSize` &middot; `two-to-the-wordSize-plus-five` &middot; `minus-two-to-the-wordSize-minus-three` &middot; `two-to-twice-the-wordSize-plus-seven` &middot; `minus-two-to-twice-the-wordSize-minus-one` &middot; `minus-top-bit` &middot; `model*` &middot; `plus-multiple*` &middot; `minus-multiple*` &middot; `signed*`
 
 </details>
 
@@ -344,7 +349,7 @@ which a word as wide as an `int` can reach.
 
 **Example** `Word8.toInt 0wxFF = 255`
 
-**Example** `(toInt 0wxFFFFFFFFFFFFFFFF handle Overflow => ~1) = ~1`
+**Example** `(Word64.toInt 0wxFFFFFFFFFFFFFFFF handle Overflow => ~1) = ~1`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -356,9 +361,9 @@ which a word as wide as an `int` can reach.
 
 For `Word`, in [tests/basis/word.sml](../../../../tests/basis/word.sml): `constant`
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `zero` &middot; `200` &middot; `sum` &middot; `all-ones` &middot; `top-bit` &middot; `Overflow-all-ones` &middot; `Overflow-top-bit` &middot; `below-top-bit` &middot; `Overflow-below-top-bit` &middot; `model*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `zero` &middot; `200` &middot; `sum` &middot; `all-ones` &middot; `top-bit` &middot; `Overflow-all-ones` &middot; `Overflow-top-bit` &middot; `below-top-bit` &middot; `Overflow-below-top-bit` &middot; `model*`
 
-In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `through-LargeWord*`
+In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `through-LargeWord*`
 
 </details>
 
@@ -382,9 +387,9 @@ For `Word16`, in [tests/basis/intn\_word16.sml](../../../../tests/basis/intn_wor
 
 For `Word32`, in [tests/basis/intn\_word32.sml](../../../../tests/basis/intn_word32.sml): `all-ones-constant`
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `zero` &middot; `100` &middot; `all-ones` &middot; `all-ones-but-one` &middot; `fromInt-negative` &middot; `below-top-bit` &middot; `top-bit` &middot; `Overflow-below-top-bit` &middot; `Overflow-top-bit` &middot; `model*` &middot; `fromInt*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `zero` &middot; `100` &middot; `all-ones` &middot; `all-ones-but-one` &middot; `fromInt-negative` &middot; `below-top-bit` &middot; `top-bit` &middot; `Overflow-below-top-bit` &middot; `Overflow-top-bit` &middot; `model*` &middot; `fromInt*`
 
-In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `through-LargeWord*`
+In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `through-LargeWord*`
 
 </details>
 
@@ -406,9 +411,9 @@ For `Word`, in [tests/basis/word.sml](../../../../tests/basis/word.sml): `decima
 
 For `Word8`, in [tests/basis/word8.sml](../../../../tests/basis/word8.sml): `keeps-the-low-byte`
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `distinct` &middot; `minus-one` &middot; `minus-two` &middot; `minus-128` &middot; `round-trip` &middot; `Int.maxInt` &middot; `Int.minInt` &middot; `model*` &middot; `samples-built`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `distinct` &middot; `minus-one` &middot; `minus-two` &middot; `minus-128` &middot; `round-trip` &middot; `Int.maxInt` &middot; `Int.minInt` &middot; `model*` &middot; `samples-built`
 
-In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `through-LargeWord*`
+In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `through-LargeWord*`
 
 </details>
 
@@ -426,7 +431,7 @@ val andb : word * word -> word
 
 <details><summary>Tests (5)</summary>
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `all-ones` &middot; `top-bit` &middot; `model*` &middot; `de-morgan*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `all-ones` &middot; `top-bit` &middot; `model*` &middot; `de-morgan*`
 
 </details>
 
@@ -442,7 +447,7 @@ val orb : word * word -> word
 
 <details><summary>Tests (5)</summary>
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `all-ones` &middot; `top-bit` &middot; `model*` &middot; `de-morgan*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `all-ones` &middot; `top-bit` &middot; `model*` &middot; `de-morgan*`
 
 </details>
 
@@ -458,7 +463,7 @@ val xorb : word * word -> word
 
 <details><summary>Tests (4)</summary>
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `top-bit` &middot; `model*` &middot; `orb-minus-andb*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `top-bit` &middot; `model*` &middot; `orb-minus-andb*`
 
 </details>
 
@@ -472,7 +477,9 @@ val notb : word -> word
 
 **Law** `notb w = ~w - 0w1` (for every `w : word`)
 
-**Example** `Word.notb 0w0 = 0wxFFFFFFFFFFFFFFFF`
+**Example** `Word64.notb 0w0 = 0wxFFFFFFFFFFFFFFFF`
+
+**Example** `Word.notb 0w0 = 0wx7FFFFFFFFFFFFFFF`
 
 <details><summary>Tests (9)</summary>
 
@@ -482,7 +489,7 @@ For `Word16`, in [tests/basis/intn\_word16.sml](../../../../tests/basis/intn_wor
 
 For `Word32`, in [tests/basis/intn\_word32.sml](../../../../tests/basis/intn_word32.sml): `32-bits`
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `zero` &middot; `all-ones` &middot; `top-bit` &middot; `ten` &middot; `model*` &middot; `plus-self-is-all-ones*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `zero` &middot; `all-ones` &middot; `top-bit` &middot; `ten` &middot; `model*` &middot; `plus-self-is-all-ones*`
 
 </details>
 
@@ -507,7 +514,7 @@ of this structure (for every `w : word`, `n : word`)
 
 For `Word`, in [tests/basis/word.sml](../../../../tests/basis/word.sml): `amount-is-a-word`
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `one-to-top-bit` &middot; `three-to-top-bit` &middot; `all-ones-to-top-bit` &middot; `all-ones-by-one` &middot; `top-bit-by-one` &middot; `by-*` &middot; `one-by-*` &middot; `model*` &middot; `times-power*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `one-to-top-bit` &middot; `three-to-top-bit` &middot; `all-ones-to-top-bit` &middot; `all-ones-by-one` &middot; `top-bit-by-one` &middot; `by-*` &middot; `one-by-*` &middot; `model*` &middot; `times-power*`
 
 </details>
 
@@ -529,7 +536,7 @@ A shift of [`wordSize`](#val-wordsize) bits or more gives 0.
 
 For `Word`, in [tests/basis/word.sml](../../../../tests/basis/word.sml): `amount-is-a-word`
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `top-bit-to-one` &middot; `all-ones-to-one` &middot; `all-ones-by-one` &middot; `all-ones-by-zero` &middot; `below-top-bit` &middot; `by-*` &middot; `top-bit-by-*` &middot; `model*` &middot; `by-power*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `top-bit-to-one` &middot; `all-ones-to-one` &middot; `all-ones-by-one` &middot; `all-ones-by-zero` &middot; `below-top-bit` &middot; `by-*` &middot; `top-bit-by-*` &middot; `model*` &middot; `by-power*`
 
 </details>
 
@@ -550,9 +557,9 @@ infinity.
 
 <details><summary>Other implementations (3)</summary>
 
-- **Poly/ML** &mdash; Word8.\~\>\> by a shift of all ones does not give the sign-filled byte
 - **Poly/ML** &mdash; \~\>\> by a shift of all ones gives 0, not the word filled with its sign bit
 - **Poly/ML** &mdash; Word64.\~\>\> by a shift of 64 or more does not give 0 or all ones: it keeps the word as it is, or only its sign bit (0wx8000000000000000)
+- **Poly/ML** &mdash; Word8.\~\>\> by a shift of all ones does not give the sign-filled byte
 
 </details>
 
@@ -562,7 +569,7 @@ For `Word`, in [tests/basis/word.sml](../../../../tests/basis/word.sml): `amount
 
 For `Word8`, in [tests/basis/word8.sml](../../../../tests/basis/word8.sml): `sign-bit-constant`
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `top-bit-to-all-ones` &middot; `top-bit-by-one` &middot; `all-ones-by-one` &middot; `all-ones-by-zero` &middot; `minus-two-by-one` &middot; `minus-three-by-one` &middot; `minus-100-by-three` &middot; `below-top-bit-to-one` &middot; `below-top-bit-to-zero` &middot; `negative-by-*` &middot; `all-ones-by-*` &middot; `non-negative-by-*` &middot; `one-by-*` &middot; `model*` &middot; `floor-by-power*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `top-bit-to-all-ones` &middot; `top-bit-by-one` &middot; `all-ones-by-one` &middot; `all-ones-by-zero` &middot; `minus-two-by-one` &middot; `minus-three-by-one` &middot; `minus-100-by-three` &middot; `below-top-bit-to-one` &middot; `below-top-bit-to-zero` &middot; `negative-by-*` &middot; `all-ones-by-*` &middot; `non-negative-by-*` &middot; `one-by-*` &middot; `model*` &middot; `floor-by-power*`
 
 </details>
 
@@ -588,7 +595,7 @@ For `Word16`, in [tests/basis/intn\_word16.sml](../../../../tests/basis/intn_wor
 
 For `Word32`, in [tests/basis/intn\_word32.sml](../../../../tests/basis/intn_word32.sml): `wraps`
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `all-ones-plus-one` &middot; `one-plus-all-ones` &middot; `all-ones-twice` &middot; `top-bit-twice` &middot; `below-top-bit-plus-one` &middot; `model*` &middot; `andb-plus-orb*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `all-ones-plus-one` &middot; `one-plus-all-ones` &middot; `all-ones-twice` &middot; `top-bit-twice` &middot; `below-top-bit-plus-one` &middot; `model*` &middot; `andb-plus-orb*`
 
 </details>
 
@@ -600,13 +607,15 @@ val - : word * word -> word
 
 `a - b` is the difference, taken modulo `2^wordSize`: it wraps round for `a < b`.
 
-**Example** `Word.- (0w0, 0w1) = 0wxFFFFFFFFFFFFFFFF`
+**Example** `Word64.- (0w0, 0w1) = 0wxFFFFFFFFFFFFFFFF`
+
+**Example** `Word.- (0w0, 0w1) = 0wx7FFFFFFFFFFFFFFF`
 
 <details><summary>Tests (10)</summary>
 
 For `Word`, in [tests/basis/word.sml](../../../../tests/basis/word.sml): `toplevel*` &middot; `toplevel-wraps`
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `zero-minus-one` &middot; `three-minus-five` &middot; `top-bit-minus-one` &middot; `zero-minus-all-ones` &middot; `below-top-bit-minus-all-ones` &middot; `model*` &middot; `plus-complement*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `zero-minus-one` &middot; `three-minus-five` &middot; `top-bit-minus-one` &middot; `zero-minus-all-ones` &middot; `below-top-bit-minus-all-ones` &middot; `model*` &middot; `plus-complement*`
 
 </details>
 
@@ -624,7 +633,7 @@ val * : word * word -> word
 
 For `Word`, in [tests/basis/word.sml](../../../../tests/basis/word.sml): `toplevel*`
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `all-ones-squared` &middot; `all-ones-times-two` &middot; `top-bit-times-two` &middot; `top-bit-times-three` &middot; `top-bit-squared` &middot; `all-ones-times-five` &middot; `model*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `all-ones-squared` &middot; `all-ones-times-two` &middot; `top-bit-times-two` &middot; `top-bit-times-three` &middot; `top-bit-squared` &middot; `all-ones-times-five` &middot; `model*`
 
 </details>
 
@@ -646,7 +655,7 @@ val div : word * word -> word
 
 For `Word`, in [tests/basis/word.sml](../../../../tests/basis/word.sml): `toplevel*` &middot; `toplevel-Div` (raises Div)
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `all-ones-by-one` &middot; `all-ones-by-all-ones` &middot; `all-ones-by-two` &middot; `one-by-all-ones` &middot; `top-bit-by-all-ones` &middot; `all-ones-by-top-bit` &middot; `top-bit-by-two` &middot; `Div` &middot; `Div-zero-by-zero` &middot; `Div-all-ones` &middot; `model*` &middot; `law*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `all-ones-by-one` &middot; `all-ones-by-all-ones` &middot; `all-ones-by-two` &middot; `one-by-all-ones` &middot; `top-bit-by-all-ones` &middot; `all-ones-by-top-bit` &middot; `top-bit-by-two` &middot; `Div` &middot; `Div-zero-by-zero` &middot; `Div-all-ones` &middot; `model*` &middot; `law*`
 
 </details>
 
@@ -668,7 +677,7 @@ val mod : word * word -> word
 
 For `Word`, in [tests/basis/word.sml](../../../../tests/basis/word.sml): `toplevel*` &middot; `toplevel-Div` (raises Div)
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `all-ones-by-two` &middot; `all-ones-by-top-bit` &middot; `top-bit-by-all-ones` &middot; `all-ones-by-all-ones` &middot; `one-by-all-ones` &middot; `Div` &middot; `Div-zero-by-zero` &middot; `Div-all-ones` &middot; `model*` &middot; `less-than-divisor*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `all-ones-by-two` &middot; `all-ones-by-top-bit` &middot; `top-bit-by-all-ones` &middot; `all-ones-by-all-ones` &middot; `one-by-all-ones` &middot; `Div` &middot; `Div-zero-by-zero` &middot; `Div-all-ones` &middot; `model*` &middot; `less-than-divisor*`
 
 </details>
 
@@ -686,7 +695,7 @@ val compare : word * word -> order
 
 <details><summary>Tests (3)</summary>
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `model*` &middot; `reflexive*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `model*` &middot; `reflexive*`
 
 </details>
 
@@ -710,7 +719,7 @@ For `Word`, in [tests/basis/word.sml](../../../../tests/basis/word.sml): `toplev
 
 For `Word8`, in [tests/basis/word8.sml](../../../../tests/basis/word8.sml): `overloaded`
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `model*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `model*`
 
 </details>
 
@@ -728,7 +737,7 @@ val ~ : word -> word
 
 <details><summary>Tests (8)</summary>
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `zero` &middot; `one` &middot; `all-ones` &middot; `top-bit` &middot; `five` &middot; `fromInt-negative` &middot; `model*` &middot; `notb-plus-one*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `zero` &middot; `one` &middot; `all-ones` &middot; `top-bit` &middot; `five` &middot; `fromInt-negative` &middot; `model*` &middot; `notb-plus-one*`
 
 </details>
 
@@ -744,7 +753,7 @@ val min : word * word -> word
 
 <details><summary>Tests (2)</summary>
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `model*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `model*`
 
 </details>
 
@@ -760,7 +769,7 @@ val max : word * word -> word
 
 <details><summary>Tests (2)</summary>
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `model*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `model*`
 
 </details>
 
@@ -784,7 +793,7 @@ The hexadecimal digits above 9 are the capitals `A` to `F`.
 
 <details><summary>Tests (2)</summary>
 
-In [tests/basis/fn/word\_scan\_fn.sml](../../../../tests/basis/fn/word_scan_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `model*`
+In [tests/basis/fn/word\_scan\_fn.sml](../../../../tests/basis/fn/word_scan_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `model*`
 
 </details>
 
@@ -802,9 +811,9 @@ val toString : word -> string
 
 <details><summary>Tests (6)</summary>
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `all-ones` &middot; `top-bit` &middot; `below-top-bit` &middot; `model*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `all-ones` &middot; `top-bit` &middot; `below-top-bit` &middot; `model*`
 
-In [tests/basis/fn/word\_scan\_fn.sml](../../../../tests/basis/fn/word_scan_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `fmt-HEX-*`
+In [tests/basis/fn/word\_scan\_fn.sml](../../../../tests/basis/fn/word_scan_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `fmt-HEX-*`
 
 </details>
 
@@ -840,7 +849,7 @@ bits.
 
 <details><summary>Tests (5)</summary>
 
-In [tests/basis/fn/word\_scan\_fn.sml](../../../../tests/basis/fn/word_scan_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `string-position` &middot; `model*` &middot; `model-prefix-lower-case-rest*` &middot; `fmt-round-trip*`
+In [tests/basis/fn/word\_scan\_fn.sml](../../../../tests/basis/fn/word_scan_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `string-position` &middot; `model*` &middot; `model-prefix-lower-case-rest*` &middot; `fmt-round-trip*`
 
 </details>
 
@@ -869,9 +878,9 @@ val fromString : string -> word option
 
 <details><summary>Tests (16)</summary>
 
-In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `all-ones` &middot; `all-ones-lower-case` &middot; `all-ones-with-prefix` &middot; `all-ones-with-leading-zeros` &middot; `top-bit` &middot; `Overflow-two-to-the-wordSize` &middot; `Overflow-with-prefix` &middot; `Overflow-two-to-the-wordSize-plus-one` &middot; `Overflow-one-more-digit` &middot; `Overflow-after-whitespace` &middot; `Overflow-many-digits` &middot; `model*` &middot; `model-lower-case-with-prefix*` &middot; `round-trip*`
+In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `*` &middot; `all-ones` &middot; `all-ones-lower-case` &middot; `all-ones-with-prefix` &middot; `all-ones-with-leading-zeros` &middot; `top-bit` &middot; `Overflow-two-to-the-wordSize` &middot; `Overflow-with-prefix` &middot; `Overflow-two-to-the-wordSize-plus-one` &middot; `Overflow-one-more-digit` &middot; `Overflow-after-whitespace` &middot; `Overflow-many-digits` &middot; `model*` &middot; `model-lower-case-with-prefix*` &middot; `round-trip*`
 
-In [tests/basis/fn/word\_scan\_fn.sml](../../../../tests/basis/fn/word_scan_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `scanString-*`
+In [tests/basis/fn/word\_scan\_fn.sml](../../../../tests/basis/fn/word_scan_fn.sml), applied to `Word`, `Word64`, `Word8`, `Word16`, `Word32`: `scanString-*`
 
 </details>
 

@@ -22,7 +22,7 @@ What each means is on [`SML90_ARB`](../sig/SML90_ARB.md); the types are this str
 
 |  | Member | Is |
 | --- | --- | --- |
-| val | [`instream`](../sig/SML90_ARB.md#val-instream) | `{co : SML90.instream -> Word64.word, eq : (SML90.instream * SML90.instream -> bool) option, gen : SML90.instream Gen.gen, show : SML90.instream -> string}` |
+| val | [`instream`](../sig/SML90_ARB.md#val-instream) | `{co : SML90.instream -> word64, eq : (SML90.instream * SML90.instream -> bool) option, gen : SML90.instream Gen.gen, show : SML90.instream -> string}` |
 
 ---
 

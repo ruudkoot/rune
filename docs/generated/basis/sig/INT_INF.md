@@ -19,7 +19,7 @@ structure IntInf : INT_INF  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`IntInf`](../str/IntInf.md) | IntInf: arbitrary precision integers implemented in SML on top of the 64-bit int. A value is a sign and a little-endian list of base-2^30 limbs without high zero limbs; zero is never negative. The representation is therefore canonical and structural equality is value equality. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
+| [`IntInf`](../str/IntInf.md) | IntInf: arbitrary precision integers implemented in SML on top of the VM's int (63 bits). A value is a sign and a little-endian list of base-2^30 limbs without high zero limbs; zero is never negative. The representation is therefore canonical and structural equality is value equality. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
 
 Integers of arbitrary precision: everything [`INTEGER`](../sig/INTEGER.md) has, and the
 operations that make sense only, or mostly, without a bound.
@@ -31,7 +31,7 @@ infinite string of bits in two's complement, so that a negative number has
 infinitely many leading ones and `notb i` is `~(i + 1)`.
 
 > **Implementation** `IntInf.int/limbs`. A sign and a list of digits in base
-> 2^30, written in SML on top of the 64-bit [`int`](../sig/INTEGER.md#type-int); equal numbers are equal
+> 2^30, written in SML on top of [`int`](../sig/INTEGER.md#type-int); equal numbers are equal
 > values, so `=` compares them. [`LargeInt`](../str/IntInf.md) is [`IntInf`](../str/IntInf.md).
 
 > **Implementation** `INT_INF/constants`. An integer constant may have the type

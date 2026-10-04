@@ -117,7 +117,7 @@ it must.
 
 **Raises** [`Domain`](../../basis/sig/GENERAL.md#exn-domain) if `n` is zero.
 
-**Law** `#1 (below n g) < n = true` for `n <> 0w0` (for every `n : Word64.word`, `g : Random.gen`)
+**Law** `#1 (below n g) < n = true` for `n <> 0w0` (for every `n : word64`, `g : Random.gen`)
 
 **Example** `#1 (below 0w1 (fromSeed 0w3)) = 0w0`
 

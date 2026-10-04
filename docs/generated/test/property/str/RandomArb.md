@@ -27,7 +27,7 @@ What each means is on [`ARB_OF`](../sig/ARB_OF.md); the types are this structure
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`t`](../sig/ARB_OF.md#type-t) | `Random.gen` |
-| val | [`arb`](../sig/ARB_OF.md#val-arb) | `{co : Random.gen -> Word64.word, eq : (Random.gen * Random.gen -> bool) option, gen : Random.gen Gen.gen, show : Random.gen -> string}` |
+| val | [`arb`](../sig/ARB_OF.md#val-arb) | `{co : Random.gen -> word64, eq : (Random.gen * Random.gen -> bool) option, gen : Random.gen Gen.gen, show : Random.gen -> string}` |
 
 ---
 

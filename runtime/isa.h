@@ -5,7 +5,7 @@
 /* What the two instruction sets share: the version of the layout of an
    .rbc, and the fingerprint of each set, which its .rbc and its images
    carry. */
-#define RBC_VERSION 5
+#define RBC_VERSION 6
 #define STACK_ISA_FINGERPRINT 0x00bb7669u
 #define STACK_ISA_FINGERPRINT_HEX "00bb7669"
 #define REG_ISA_FINGERPRINT 0x0064c0bcu
