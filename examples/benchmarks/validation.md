@@ -734,3 +734,29 @@ bootstrap and bytecode agreement for 498 programs across seven builds.
 runedoc and runeopt also agree. The [complete acceptance transcript](validation/oct04-hamming-scc-awards-acceptance.log)
 records this run. All 32 inventory tests pass. The separate measurement regression
 validates the final configuration-isolation change and its negative checks.
+
+## M5 mutable Stack workloads, 2026-10-04
+
+Two Stack modes bring the catalogue to 208 programs and 618 profiles. All
+[48 primary cases](results/m5-stack/correctness.tsv) pass smoke/normal on four
+Rune engines at both levels and four primary native hosts. Original normal
+iteration counts, list/length invariants, library algorithm and exact source
+notices are retained. Complete OCaml observers and independent arithmetic
+agree. Representation and added per-iteration checks/accumulators are explicit.
+
+Nine semantic checks pass nine configurations at both levels. The final test
+crashes ML Kit with an internal type-substitution error; the
+[report](validation/mlkit-stack.md) records this separately from scratch-path
+successes and standalone benchmark checks. Count allocations and applicable
+instruction pairs agree. No headline timing or universal large SML validation
+is claimed. M5 remains in progress.
+
+Full `make JOBS=4 check` passes with 618 catalogue profiles, the 14-program routine
+set, 331 language fixtures per compiler, performance budgets, bootstrap and
+bytecode agreement for 498 programs across seven builds. runedoc and runeopt
+also agree. The [complete transcript](validation/oct04-stack-acceptance.log)
+records the run; all 32 inventory tests pass.
+
+Eight additional standalone smoke/normal cases pass on ML Kit and 32-bit
+SML/NJ, bringing Stack correctness coverage to 56 successful cases. These
+passing benchmarks are distinct from ML Kit's test-program compilation crash.

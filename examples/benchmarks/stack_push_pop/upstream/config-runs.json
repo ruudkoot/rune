@@ -1,0 +1,45 @@
+{
+  "run_config.json": {
+    "sha256": "2acf290d36e665a5148dd2b3a2f437ebd1a0883238494d33e4701edd77c050b3",
+    "entries": [
+      {
+        "executable": "benchmarks/stdlib/stack_bench.exe",
+        "name": "stack_bench",
+        "tags": [
+          "lt_1s"
+        ],
+        "runs": [
+          {
+            "params": "stack_fold 2500000"
+          }
+        ]
+      },
+      {
+        "executable": "benchmarks/stdlib/stack_bench.exe",
+        "name": "stack_bench",
+        "tags": [
+          "1s_10s"
+        ],
+        "runs": [
+          {
+            "params": "stack_push_pop 100000000"
+          }
+        ]
+      }
+    ]
+  },
+  "run_config_byte.json": {
+    "sha256": "731d0ccd0356043c0f8bdccf0648f62e2fec39b1d723bee9f683780b33976767",
+    "entries": [
+      {
+        "executable": "benchmarks/stdlib/stack_bench.bc",
+        "name": "stack_bench.bc",
+        "runs": [
+          {
+            "params": "stack_push_pop 100000000"
+          }
+        ]
+      }
+    ]
+  }
+}
