@@ -157,3 +157,11 @@ history, and uncertain attribution must stay explicitly uncertain.
 * [Rivest, RFC 1321](https://www.rfc-editor.org/rfc/rfc1321): MD5 algorithm
   and standard result vectors; seven vectors are included in the independent
   correctness target.
+
+## SCC historical reference
+
+The pinned nofib SCC main identifies its graph as Figure 6.4 of
+[Peyton Jones, *The Implementation of Functional Programming Languages*](https://simon.peytonjones.org/slpj-book-1987/),
+Prentice Hall, 1987. The author provides a searchable edition. The port's lazy
+tuple-field explanation is established by its source and GHC demand observer;
+its performance implications remain hypotheses for measurements.

@@ -24,3 +24,13 @@ if RUNEVM_OPTIONS=--count sh scripts/measure-benchmarks.sh time --filter tak > "
 fi
 grep -q 'instrumented VM options' "$out/instrumented.log"
 echo 'bench-measurement: instrumentation rejected from headline timing'
+# A resolver must not reuse an inherited matrix worker directory: separate
+# tool invocations can have the same shell PID in isolated PID namespaces.
+mkdir -p "$out/shared-run"
+printf 'keep this matrix worker\n' > "$out/shared-run/keep"
+RUNE_MATRIX_RUN="$out/shared-run" sh scripts/measure-benchmarks.sh count \
+  --profile smoke --filter primes-strict --configs rune > "$out/isolated.log" 2>&1
+[ "$(cat "$out/shared-run/keep")" = 'keep this matrix worker' ] || { echo 'measurement removed another matrix worker' >&2; exit 1; }
+measurement=$(sed -n 's/^BENCH MEASUREMENT //p' "$out/isolated.log")
+[ "$(wc -l < "$measurement/primes-strict/rune/config.tsv")" = 1 ] || { echo 'configuration resolution collided' >&2; exit 1; }
+echo 'bench-measurement: configuration resolution preserves other matrix workers'

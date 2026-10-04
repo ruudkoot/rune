@@ -217,6 +217,11 @@ inventory entry.
 | [life-nofib-lazy](#life-nofib-lazy) | [nofib life](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/life) | Evolve a memoized list-grid to the first adjacent Life fixpoint. |
 | [life-nofib-strict](#life-nofib-strict) | [nofib life](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/life) | Evolve an eager list-grid to the same adjacent Life fixpoint. |
 | [maillist](#maillist) | [nofib maillist](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/maillist) | Parse address paragraphs and create exact LaTeX mailing-label pages. |
+| [hamming](#hamming) | [sandmark hamming](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/hamming) | Generate shared lazy Hamming streams with the original signed 64-bit component arithmetic. |
+| [scc-lazy](#scc-lazy) | [nofib scc](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/scc) | Find strongly connected components with memoized finish lists and two list-based DFS passes. |
+| [scc-strict](#scc-strict) | [nofib scc](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/scc) | Run the same two DFS passes with eagerly materialized finish and component lists. |
+| [awards-lazy](#awards-lazy) | [nofib awards](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/awards) | Select awards using shared candidate sums and demand-sensitive stable quicksort. |
+| [awards-strict](#awards-strict) | [nofib awards](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/awards) | Select the same awards while eagerly sorting the finite candidate lists. |
 
 ## Running and interpreting checks
 
@@ -6392,3 +6397,262 @@ execution is not universally claimed. References: original Hudak description,
 retained LaTeX style and nofib application survey.
 
 [Complete provenance](maillist/PROVENANCE.md).
+
+## hamming
+
+Sandmark `5605805954a00497ed197c930641cddd580e1507`,
+`benchmarks/hamming/hamming.ml` and its dune executable. The individual author
+is unspecified. Preserve the original source, build declarations, aggregate
+public-domain notice and SHA256 identities. Reviewed run-configuration extracts
+include complete source-file identities. There are no upstream datasets.
+
+### Algorithm, history and variants
+
+Keep the mutually recursive shared Hamming stream, its 2/3/5 mapped streams,
+nested two-way merge and duplicate elimination. OCaml heads are strict and
+list cells/tails use memoized Lazy values. The SML97 BenchLazy adapter keeps
+those boundaries and the three root map indirections. A separate fully eager
+infinite list would not terminate; it is not a meaningful runnable variant.
+This differs from a heap generator or an unbounded mathematical Hamming list.
+
+The original two-component number uses a base of 10^18 and signed Int64
+multiplication/addition with wraparound. Preserve both components and every
+arithmetic step, using portable IntInf carriers with explicit signed 64-bit
+wrapping. Preserve truncating division/remainder, signed component comparison
+and the original decimal low-component padding. No reliance on host Int width
+or optional Int64 support is introduced. Carrier allocation is an adaptation
+and a source-derived performance hypothesis.
+
+### Translation, inputs and validation
+
+The original skips 88,000 values and defaults to 200 outputs. Normal retains
+that exact window. Smoke explicitly selects a smaller prefix, skip 100/count 10.
+Large retains the bytecode configuration's count 10,000 after skip 88,000;
+the native configuration's count 1,000,000 remains recorded as an unselected
+upstream parameter. A checked skip argument and full-result fixture replace
+stdout-only observation. Results consume every selected value, compare the
+complete newline-delimited output and report its actual last value. Checking,
+string construction and reference-file acquisition costs are explicit.
+
+Original OCaml agrees with an independent fixed-width cursor implementation
+on every value of all three profiles. A separate arbitrary-precision heap
+reference agrees with normal, then establishes that the original first diverges
+from mathematical Hamming numbers at zero-based index 88,967. Large deliberately
+preserves those wrapped source results. The complete large fixture also passes
+Rune's stack VM at -O0; broader large SML validation is not claimed.
+
+Eight semantic checks cover carries, overflow, formatting, shared merge prefixes,
+memoization, strict mapped heads and unused-tail demand. A direct experiment
+with the managed OCaml compiler observes left-to-right scrutinee forcing; the
+port follows that observed order. Earlier test attempts had an incorrect order
+expectation and are retained separately. Stream retention, map closures and
+wide-number representation are hypotheses until measured. References: retained
+source, configurations and the Sandmark runtime literature survey.
+
+[Complete provenance](hamming/PROVENANCE.md).
+
+
+## scc-lazy
+
+Memoized variant; its strict companion retains the same algorithm.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `spectral/scc/Main.hs`
+and `Digraph.hs`. The main header credits John Launchbury and identifies the
+fixed graph as Figure 6.4 of SLPJ 1987. Original Haskell, historical Miranda
+support source, Makefile, stdout fixture and SHA256 identities are retained.
+The individual licence notice is unspecified. The graph is defined in source;
+no external dataset is acquired.
+
+### Algorithm and variants
+
+Preserve the two DFS passes, list-based visited membership, edge-list scanning
+for each adjacency range, reverse edges, finish-list concatenation and exact
+component/member order. No array adjacency table, hash set or different SCC
+algorithm substitutes for this implementation. Haskell's first traversal
+produces a visited list and a lazy accumulated finish list; the second builds
+components in reverse discovery order. SML memoizes both tuple fields and each shared recursive result, so finish
+heads can be consumed before the last visited subtree is demanded. Finish-list
+spines/heads remain memoized in the lazy variant. The strict variant eagerly builds those finite lists. Both share
+one functor and retain separately named implementations.
+
+### Translation, inputs and validation
+
+SML97 int is sufficient for the seven original vertices. BenchCellSequence
+represents finish/component list demand; known input edges and visited nodes
+remain ordinary lists. Preserve the original graph in smoke and normal, each
+with one kernel invocation. This is a small fixed diagnostic whose fresh-process
+measurements include substantial startup cost. Large explicitly adds 10,000
+repeated invocations of the same graph. Pure repeated work may be optimized or
+hoisted by a compiler; this is a source-derived hypothesis, not an assertion of
+steady state or enlarged-graph scaling.
+
+The driver validates the complete component order against the original fixture
+on every invocation and consumes actual rendered byte counts. Formatting,
+fixture acquisition and checks are added costs. Original GHC matches the pinned
+stdout fixture; independent mutual reachability validates the complete partition.
+Nine checks cover the original order, disconnected vertices, cycles, duplicate
+edges, unused finish-list demand, lazy tuple projections, recursive field sharing
+and lazy/strict agreement. An initial test used
+an incorrect expected partition/order; the reviewed correction and rejected
+attempt are retained. Primary smoke/normal validation is recorded separately;
+large SML execution is not universally claimed. References: [Peyton Jones, *The Implementation of Functional Programming Languages*](https://simon.peytonjones.org/slpj-book-1987/), Prentice Hall, 1987
+(the source identifies Figure 6.4) and the nofib survey. Adjacency scans, finish concatenation,
+visited membership and retained lists are hypotheses until measured. The initial
+prototype produced correct complete results but demanded visited recursion too
+early. Source inspection and the GHC demand observer led to the memoized tuple
+projection correction before suite registration. Intermediate results are
+distinguished from final source validation.
+
+[Complete provenance](scc-lazy/PROVENANCE.md).
+
+
+## scc-strict
+
+Strict variant; its memoized companion retains the same algorithm.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `spectral/scc/Main.hs`
+and `Digraph.hs`. The main header credits John Launchbury and identifies the
+fixed graph as Figure 6.4 of SLPJ 1987. Original Haskell, historical Miranda
+support source, Makefile, stdout fixture and SHA256 identities are retained.
+The individual licence notice is unspecified. The graph is defined in source;
+no external dataset is acquired.
+
+### Algorithm and variants
+
+Preserve the two DFS passes, list-based visited membership, edge-list scanning
+for each adjacency range, reverse edges, finish-list concatenation and exact
+component/member order. No array adjacency table, hash set or different SCC
+algorithm substitutes for this implementation. Haskell's first traversal
+produces a visited list and a lazy accumulated finish list; the second builds
+components in reverse discovery order. SML memoizes both tuple fields and each shared recursive result, so finish
+heads can be consumed before the last visited subtree is demanded. Finish-list
+spines/heads remain memoized in the lazy variant. The strict variant eagerly builds those finite lists. Both share
+one functor and retain separately named implementations.
+
+### Translation, inputs and validation
+
+SML97 int is sufficient for the seven original vertices. BenchCellSequence
+represents finish/component list demand; known input edges and visited nodes
+remain ordinary lists. Preserve the original graph in smoke and normal, each
+with one kernel invocation. This is a small fixed diagnostic whose fresh-process
+measurements include substantial startup cost. Large explicitly adds 10,000
+repeated invocations of the same graph. Pure repeated work may be optimized or
+hoisted by a compiler; this is a source-derived hypothesis, not an assertion of
+steady state or enlarged-graph scaling.
+
+The driver validates the complete component order against the original fixture
+on every invocation and consumes actual rendered byte counts. Formatting,
+fixture acquisition and checks are added costs. Original GHC matches the pinned
+stdout fixture; independent mutual reachability validates the complete partition.
+Nine checks cover the original order, disconnected vertices, cycles, duplicate
+edges, unused finish-list demand, lazy tuple projections, recursive field sharing
+and lazy/strict agreement. An initial test used
+an incorrect expected partition/order; the reviewed correction and rejected
+attempt are retained. Primary smoke/normal validation is recorded separately;
+large SML execution is not universally claimed. References: [Peyton Jones, *The Implementation of Functional Programming Languages*](https://simon.peytonjones.org/slpj-book-1987/), Prentice Hall, 1987
+(the source identifies Figure 6.4) and the nofib survey. Adjacency scans, finish concatenation,
+visited membership and retained lists are hypotheses until measured. The initial
+prototype produced correct complete results but demanded visited recursion too
+early. Source inspection and the GHC demand observer led to the memoized tuple
+projection correction before suite registration. Intermediate results are
+distinguished from final source validation.
+
+[Complete provenance](scc-strict/PROVENANCE.md).
+
+
+## awards-lazy
+
+Memoized variant; its strict companion retains the same algorithm.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `spectral/awards/Main.hs`
+and `QSort.hs`. Kevin's June 1995 submission is retained with its
+`kh@dcs.gla.ac.uk` attribution; QSort credits Lennart Augustsson. Preserve both
+sources, Makefile, boot script, original output template and SHA256 identities.
+Individual licence notices are unspecified. The source explicitly identifies
+its four competitors' data as fake.
+
+### Algorithm and variants
+
+Preserve ordered three-element combinations (despite the source function name
+perms), shared total/triple pairs, Gold/Silver/Bronze thresholds 70/60/50,
+inclusive threshold tests and lexicographic sorting by (total,triple).
+Select the first available tier and its smallest sorted qualifying total,
+then remove each used score's first occurrence and recurse. Do not substitute
+maximum-score awards or a search for the globally optimal award combination.
+
+Keep Augustsson's six-function stable/anti-stable quicksort structure with
+reversed partition lists, accumulated suffixes and no concatenation in sorting.
+The lazy variant memoizes list cells, candidate heads, totals and sorted suffixes;
+all three award tiers share the same sums. The strict variant eagerly evaluates
+these finite lists. Both share one SML97 functor. Score triples are finite
+ordinary integer lists; all selected scores/totals fit 31 bits.
+
+### Translation, inputs and validation
+
+Keep the original i mod 100 input distribution and competitor lists. Smoke uses
+one source iteration; normal uses FAST 2,000 and large uses NORM 20,000.
+SLOW 100,000 remains recorded and supported by the checked argument. Replace
+printing each result by complete per-iteration validation against a reviewed
+100-input cycle and accumulated actual byte counts. Formatting, cycle-file
+loading and checks are included costs.
+
+Both variants' complete 100-input output agrees with original GHC and an
+independent combinations/sort/greedy-removal oracle. The pinned FAST output
+template equals the cycle repeated 20 times. Nine semantic checks verify
+combination order, stable sorting, deferred versus eager suffix demand,
+threshold inclusion, duplicate score removal, tier/minimum-total priority and
+all input-cycle variant results. Large SML execution is not universally claimed.
+References: retained Kevin submission, Augustsson QSort explanation and nofib
+survey. Candidate generation, shared totals, discarded award tiers and unused
+sorted suffixes are source-derived hypotheses until measured.
+
+[Complete provenance](awards-lazy/PROVENANCE.md).
+
+
+## awards-strict
+
+Strict variant; its memoized companion retains the same algorithm.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `spectral/awards/Main.hs`
+and `QSort.hs`. Kevin's June 1995 submission is retained with its
+`kh@dcs.gla.ac.uk` attribution; QSort credits Lennart Augustsson. Preserve both
+sources, Makefile, boot script, original output template and SHA256 identities.
+Individual licence notices are unspecified. The source explicitly identifies
+its four competitors' data as fake.
+
+### Algorithm and variants
+
+Preserve ordered three-element combinations (despite the source function name
+perms), shared total/triple pairs, Gold/Silver/Bronze thresholds 70/60/50,
+inclusive threshold tests and lexicographic sorting by (total,triple).
+Select the first available tier and its smallest sorted qualifying total,
+then remove each used score's first occurrence and recurse. Do not substitute
+maximum-score awards or a search for the globally optimal award combination.
+
+Keep Augustsson's six-function stable/anti-stable quicksort structure with
+reversed partition lists, accumulated suffixes and no concatenation in sorting.
+The lazy variant memoizes list cells, candidate heads, totals and sorted suffixes;
+all three award tiers share the same sums. The strict variant eagerly evaluates
+these finite lists. Both share one SML97 functor. Score triples are finite
+ordinary integer lists; all selected scores/totals fit 31 bits.
+
+### Translation, inputs and validation
+
+Keep the original i mod 100 input distribution and competitor lists. Smoke uses
+one source iteration; normal uses FAST 2,000 and large uses NORM 20,000.
+SLOW 100,000 remains recorded and supported by the checked argument. Replace
+printing each result by complete per-iteration validation against a reviewed
+100-input cycle and accumulated actual byte counts. Formatting, cycle-file
+loading and checks are included costs.
+
+Both variants' complete 100-input output agrees with original GHC and an
+independent combinations/sort/greedy-removal oracle. The pinned FAST output
+template equals the cycle repeated 20 times. Nine semantic checks verify
+combination order, stable sorting, deferred versus eager suffix demand,
+threshold inclusion, duplicate score removal, tier/minimum-total priority and
+all input-cycle variant results. Large SML execution is not universally claimed.
+References: retained Kevin submission, Augustsson QSort explanation and nofib
+survey. Candidate generation, shared totals, discarded award tiers and unused
+sorted suffixes are source-derived hypotheses until measured.
+
+[Complete provenance](awards-strict/PROVENANCE.md).

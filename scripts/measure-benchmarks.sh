@@ -141,7 +141,7 @@ while IFS="$(printf '\t')" read -r name seconds memory sources args expected inp
     config_dir=$out/$name/$(printf '%s' "$spec" | tr ':/' '--')
     mkdir -p "$config_dir"
     id=$spec; counters=$(printf '%s\t%s\t%s' - - -)
-    if ! sh tests/basis/run-matrix.sh --configs "$spec" --resolve-out "$config_dir/config.tsv" < /dev/null > "$config_dir/resolve.log" 2>&1; then
+    if ! RUNE_MATRIX_RUN="$config_dir/resolve-work" sh tests/basis/run-matrix.sh --configs "$spec" --resolve-out "$config_dir/config.tsv" < /dev/null > "$config_dir/resolve.log" 2>&1; then
       phase_dir=$config_dir; record configuration 0 0 missing-configuration 0; status=1; continue
     fi
     # Alias groups are expanded by the caller into one row per configuration.

@@ -701,3 +701,36 @@ and runeopt also agree. The [complete acceptance transcript](validation/oct04-li
 records the run. The [sandboxed attempt](validation/oct04-life-maillist-sandbox-attempt.log)
 retains its socket failures and terminated blocked fork-image test; it is not
 passing evidence. All 32 inventory tests pass.
+
+## M3 SCC/awards and M5 Hamming, 2026-10-04
+
+Five variants bring the catalogue to 206 programs and 612 profiles. All
+[48 SCC](results/m3-scc/correctness.tsv),
+[48 awards](results/m3-awards/correctness.tsv) and
+[24 Hamming](results/m5-hamming/correctness.tsv) final primary smoke/normal cases
+pass on four Rune engines at both levels and four primary native hosts.
+These matrices use final canonical suite source paths and inputs.
+
+SCC preserves lazy tuple projections and shared recursive results; its complete
+partition agrees with independent mutual reachability and its order with GHC.
+Awards retains stable/anti-stable quicksort, shared totals and score consumption;
+all 100 source inputs agree with GHC, an independent oracle and the FAST template.
+Hamming preserves signed 64-bit component overflow; its complete large window
+also passes Rune and the fixed-width independent oracle. Broader large host
+validation is not claimed. Semantic checks pass all ten configurations at both
+levels: nine each for SCC and awards, eight for Hamming.
+
+Complete instrumented counts agree across applicable Rune engines. A
+[resolver race](results/m6-resolver-isolation/README.md) discovered by concurrent
+count runs is fixed with private temporary paths and a regression that preserves
+an inherited matrix worker. Initial failed attempts remain recorded separately.
+No headline timing is inferred. The bounded routine smoke set adds maillist and
+sequence_cps, covering file I/O applications and CPS callback translation in
+14 programs. M3 and M5 remain in progress; M8 remains planned.
+
+Full `make JOBS=4 check` passes with all 612 catalogue profiles and the expanded
+14-program smoke set, 331 language fixtures per compiler, performance budgets,
+bootstrap and bytecode agreement for 498 programs across seven builds.
+runedoc and runeopt also agree. The [complete acceptance transcript](validation/oct04-hamming-scc-awards-acceptance.log)
+records this run. All 32 inventory tests pass. The separate measurement regression
+validates the final configuration-isolation change and its negative checks.
