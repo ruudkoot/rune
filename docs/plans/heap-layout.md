@@ -42,7 +42,7 @@ What it rests on:
 | M1 | Measure in the tree | done 2026-09-27, `36ef0a3` |
 | M2 | The simulator and the harness in the tree | done 2026-09-27, `3f17fd2` |
 | M3 | The layout behind an interface | done 2026-09-27, `93cc674` |
-| M4 | Prototypes at full scale; the gate | both prototypes run, pass the suites and are measured (branches `heap-layout-word` and `heap-layout-pairs`; *M4, the first prototype so far* and the two sections after it); raw real fields, the 32-bit header and typed slots are not built; the gate is the owner's |
+| M4 | Prototypes at full scale; the gate | both prototypes run, pass the suites and are measured (branches `heap-layout-word` and `heap-layout-pairs`; *M4, the first prototype so far* and the two sections after it); *M4, what was measured for the gate* has the heap sizes, the peak memory, 63 bits on MLton's set and the reals' encoding; raw real fields, the 32-bit header and typed slots are not built; the gate is the owner's |
 | M5 | The chosen layout, complete | |
 | M6 | Roots and maps | |
 | M7 | The collector on the new layout, and the hooks for the next | |
@@ -556,8 +556,10 @@ across layouts. Against the 16-byte layout:
   reals stay in their homes. Boxing them instead (D3 B) is worse on
   every one (`nucleic` 13.4G instructions against 4.0G and the 16-byte
   layout's 2.2G; `fft` 70.7G against 46.5G and 23.3G).
-* **So raw real fields are worth their cost after all**, for time and
-  not for space: a real field that holds the double, the header saying
+* **So raw real fields are worth their cost after all** (as it stood
+  that day; *M4, what was measured for the gate* found the cost at
+  every crossing and not only at fields, and a shorter encoding that
+  removes most of it), for time and not for space: a real field that holds the double, the header saying
   so (D1 B's second half, D4 A's descriptor), read and written with no
   encoding where the reader's register is a real's. That is the next
   thing to build on prototype 1, with flat real arrays (M8) beside it,
@@ -661,22 +663,232 @@ Cycles (`measure.sh`, gcc, an idle machine):
   for 6,000 primes in ten collections, 40,903 of its updates (0.2%)
   old to young.
 
+### M4, what was measured for the gate
+
+On 2026-10-04, after the three sections above, for the four choices
+the gate comes down to: 63 or 64 bits, the pairs, the reals, the third
+code.
+
+**The heap-size sweep** (`scripts/perf-cycles.sh --sweep`, an idle
+machine, the default tiering). L is the most a collection keeps, found
+at `--heap-fill 99` from a 4 MiB heap; the cycles there are the first
+row, then at a semispace of k times each layout's own L:
+
+| Bootstrap | 16-byte | word | pairs |
+|---|---:|---:|---:|
+| L | 86.4 MB | 51.7 MB (0.60) | 39.8 MB (0.46) |
+| at L: collections, copied, cycles | 76, 3.64 GB, 13.6G | 70, 1.83 GB, 10.5G | 53, 1.16 GB, 9.7G |
+| 1.25 L: semispace, cycles | 108 MB, 10.5G | 65 MB, 9.1G | 50 MB, 10.0G |
+| 1.5 L | 130 MB, 9.3G | 78 MB, 7.8G | 60 MB, 8.8G |
+| 2 L | 173 MB, 8.3G | 103 MB, 6.9G | 80 MB, 7.5G |
+| 3 L | 259 MB, 7.5G | 155 MB, 6.1G | 119 MB, 6.5G |
+| 4 L | 346 MB, 7.2G | 207 MB, 6.0G | 159 MB, 6.5G |
+| 6 L | 518 MB, 7.2G | 310 MB, 5.7G | 239 MB, 6.2G |
+| 8 L | 691 MB, 7.1G | 414 MB, 6.0G | 318 MB, 6.1G |
+| 2 GiB, no collection | 6.6G | 5.3G | 5.5G |
+
+* **The word wins at every heap size**, and by more where the heap is
+  tight: with no collection at all it runs 0.81 of the 16-byte
+  layout's cycles (the mutator alone: half the bytes written and
+  read), at 173 MB 0.73, at 108 MB 0.65.
+* **The pairs buy memory and not time.** Their L is 0.77 of the
+  word's, so at the same multiple of L they run in three quarters of
+  the memory for 1.01 to 1.13 of the cycles. Read at the
+  same semispace instead (interpolated along each curve): 0.97 of the
+  word's cycles at 80 MB and 0.99 at 108 MB, level at 130 MB, and 1.05
+  to 1.06 from 173 MB up, where the collector has little to do and
+  what remains is the mutator's mask at each field read. With no
+  collection 1.03. Only where the heap is as small as it can be do
+  they win clearly: 0.92 at L.
+* `compile-sigs` says the same on a seventh of the data: L 13.6, 8.3
+  and 7.5 MB; with no collection 657M, 598M and 639M cycles. On the
+  two kernels the pairs are level or ahead: `string_ops` 243M to 281M
+  cycles from 1.5 L up against the word's 258M to 309M (and 302M
+  against 269M at 1.25 L), `list_ops` 110M to 126M against 110M to
+  132M.
+
+**Peak memory** (the resident set, `/usr/bin/time %M`, each VM at its
+defaults; the bootstrap and the two compiler workloads from the 64 MiB
+heap the budgets give them):
+
+| Workload | 16-byte | word | pairs |
+|---|---:|---:|---:|
+| bootstrap | 532.9 MB | 274.4 MB | 274.8 MB |
+| its semispace at exit | 256 MB | 128 MB | 128 MB |
+| the most a collection kept | 72.0 MB | 44.9 MB | 35.9 MB |
+| bootstrap from the VM's own 4 MiB | 534.8 MB | 273.2 MB | 273.5 MB |
+| compile-sigs | 114.2 MB | 66.0 MB | 59.5 MB |
+| runedoc-page | 84.8 MB | 53.7 MB | 47.0 MB |
+| string_ops | 38.1 MB | 20.7 MB | 20.7 MB |
+| list_ops | 21.9 MB | 12.5 MB | 12.5 MB |
+| array_sieve | 17.5 MB | 10.2 MB | 9.9 MB |
+| MLton's 33, the sum of their peaks | 3,363 MB | 1,985 MB | 1,590 MB |
+| MLton's 33, geometric mean | 1.00 | 0.827 | 0.771 |
+| the 14 of them over 16 MB | 1.00 | 0.637 | 0.534 |
+
+* **The word halves the compiler's peak** (533 to 274 MB), and the
+  programs that hold data follow: 0.64 in the mean of the fourteen of
+  MLton's set whose peak is above the VM's own floor.
+* **The pairs do not lower the compiler's peak**, though they keep a
+  fifth less at a collection (44.9 to 35.9 MB): the semispace grows by
+  doubling and both land on 128 MB. Where they cross a doubling they
+  save a third to a half: `checksum` 384 to 231 MB, `fft` 355 to 227,
+  `merge` 133 to 88, `tailmerge` 141 to 77, `knuth-bendix` 19 to 11.
+  On MLton's set 0.93 of the word's peak in the mean, 0.84 on the
+  fourteen. A growth policy finer than doubling would turn the
+  compiler's 20% into resident memory too; that is M7's.
+* The peak is two semispaces and the VM: a collector that does not
+  copy everything (M7's successor) halves it again under any layout.
+
+**MLton's set on 63 bits** (`bin/runevm-int63`, the same idle-machine
+method as the word's column). The geometric mean of the 33 programs'
+cycles against the 16-byte layout is 0.870, where the word that keeps
+64 bits has 0.945: **63 bits are 8% faster than 64 across the set**
+(0.921; 0.928 on the twelve programs whose object counts are the same
+to the unit). Nothing is slower by more than what two builds differ
+by (`barnes-hut` 1.05, `fft` 1.04, `knuth-bendix` 1.03); `tyan` runs
+0.53 of the 64-bit word's cycles, `tailfib` 0.75, `simple` 0.82,
+`even-odd` and `tsp` 0.85, `tensor` and `wc-scanStream` 0.87. The two
+programs that boxed by the million under D2 A box nothing (`tsp` 6.3
+million boxes, `tyan` 5.7 million), and every program prints what it
+printed. The eleven slower than today become seven, every one a
+program of reals (below).
+
+**The strict kernels under the reserved code, again**, the six whose
+runs were too far apart, on an idle machine: `L1+PAIRS2` against
+`L1+PAIRS` is `list_ops` 1.07, `intmap` 1.00, `inttable` 0.97,
+`closures` 1.01, `int_loop` 1.01, `poly_eq_tree` 1.04. Their runs
+still spread by 9% to 73% (ten of each), so the harness cannot say
+more than that nothing here contradicts the VM's own number: 0.067% of
+the bootstrap's bytes and no cycles that show.
+
+**Where the reals' cost is.** The eight programs of reals censused
+(`scripts/census.sh --summary`, under `tests/out/census-reals`), their
+reals by where they arise:
+
+| Program | results of primitives | crossing a call | stored in a new object | stored later | zero among the results |
+|---|---:|---:|---:|---:|---:|
+| barnes-hut | 16.7M | 10.6M | 8.6M | 18,674 | 0.03% |
+| fft | 1,309M | 39.1M | 33.6M | 272.1M | 2.3% |
+| mandelbrot | 6,717M | 4,295M | none | none | 0.001% |
+| nucleic | 83.0M | 3.8M | 15.0M | none | 0.2% |
+| ray | 28.6M | 2.9M | 10.0M | none | 21% |
+| raytrace | 609.5M | 16.8M | 66.5M | 0.4M | 21% |
+| simple | 9.5M | 12.9M | 3.9M | 0.3M | 31% |
+| tsp | 1,397M | 215.0M | 4.3M | none | 0.02% |
+
+* **The fields are the smaller part.** A real crosses a call as often
+  as it is stored in an object or more often on four of the eight
+  (`mandelbrot`, `tsp`, `simple`, `barnes-hut`), and `mandelbrot`,
+  1.45 times slower under the word, stores none: it allocates 353
+  objects in its run. So raw real fields, which the second prototype's
+  section called the next thing to build, would not have touched it.
+* **The cost is the encoding, wherever a real leaves its home.** Tier
+  2 keeps a real in an XMM register and the slots stay words (D5 A),
+  so a real is encoded at every argument of a call, every result,
+  every home written back around a primitive that may collect, and
+  decoded on the way back, besides the fields. Koka's encoding squeezes
+  the exponent by cases (zero, all ones, the middle), which in the
+  JIT's code is fifteen instructions and four conditional branches to
+  decode and fourteen to encode, where the 16-byte layout has one
+  `movsd`. `mandelbrot`'s inner function is 27 KB of code under the
+  word against 4 KB, and it decoded the constant 4.0 from the
+  constant table at every iteration.
+* **Zero is everywhere**: a fifth of what `ray` and `raytrace` compute,
+  a third of `simple`'s, half of what `fft` stores in new objects
+  (16.8 of 33.6 million). Whatever encodes a real must keep zero
+  cheap. Apart from zero the reals outside Koka's range are none to
+  speak of (129,844 of `raytrace`'s 66.5 million stored, 1,352 of its
+  609.5 million results).
+
+**Two changes on prototype 1 for it** (branch `heap-layout-word`):
+
+1. *A real constant is decoded when the code is made*
+   (`ms_set_real_known`): where the constant's register has a home,
+   the code loads the double's bits. In the default build; 4% of
+   `mandelbrot`'s instructions.
+2. *A second encoding, by rotation*, behind `-DRUNE_REAL_ROT`
+   (`bin/runevm-realrot`; `runtime/value.h`): the double's bits with
+   2^61 added, rotated left by two; the word is an immediate where
+   that leaves the low bit set, which is for the exponents 0x200 to
+   0x5ff, Koka's range and two more. Decoding is the rotation back
+   and the subtraction: seven instructions and one branch against
+   fifteen and four, six to encode against fourteen. There are no
+   cases, so zero, the subnormals, the infinities and NaN are not
+   immediates: `+0.0` has one box that the VM keeps (`vm->real_zero`,
+   a root, made where first wanted, loaded by the JIT's code in
+   line), the rest are boxed where they are made. `tests/lang` passes
+   at tier 1, at tier 2 and at the default tiering (331 each), and the
+   Basis at the default tiering and at tier 2 (139,210 checks, as the
+   word's).
+
+Cycles and instructions against the 16-byte layout, the default
+tiering, an idle machine, the least of three runs (of six for the
+16-byte layout and the last column):
+
+| Program | 16-byte | Koka's, 64-bit ints | rotation, 64-bit ints | Koka's, 63-bit | rotation, 63-bit | instructions: Koka's | rotation |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| barnes-hut | 0.60G | 1.32 | 1.05 | 1.34 | 0.99 | 2.09 | 1.51 |
+| fft | 25.8G | 1.20 | 0.99 | 1.19 | 0.92 | 1.98 | 1.52 |
+| mandelbrot | 113.9G | 1.41 | 1.11 | 1.35 | 1.08 | 1.78 | 1.38 |
+| nucleic | 1.17G | 1.50 | 1.17 | 1.49 | 1.12 | 1.83 | 1.36 |
+| ray | 0.82G | 1.27 | 1.17 | 1.25 | 1.05 | 1.50 | 1.24 |
+| raytrace | 5.44G | 1.52 | 1.20 | 1.49 | 1.16 | 1.71 | 1.35 |
+| simple | 1.06G | 0.93 | 1.02 | 0.96 | 0.88 | 1.35 | 1.25 |
+| tsp | 26.7G | 1.37 | 1.14 | 1.28 | 1.08 | 1.52 | 1.28 |
+| geometric mean | | 1.30 | 1.10 | 1.29 | 1.03 | 1.70 | 1.36 |
+| real_nbody | 0.18G | 1.02 | 1.01 | 1.02 | 1.01 | 1.11 | 1.10 |
+
+* **The rotation takes the programs of reals from 1.30 of today's
+  cycles to 1.10**, and with 63-bit integers, the build nearest to
+  what is decided, to **1.03** (0.88 to 1.16). The word's one loss
+  against the 16-byte layout is then three programs at 1.08 to 1.16
+  (`mandelbrot`, `nucleic`, `raytrace`) and `tsp` at 1.08.
+* What is left is seven instructions at a crossing where the 16-byte
+  layout has one. Raw real fields would remove the crossings at
+  fields, typed slots (D5 B) those at calls; neither is needed to make
+  numeric code about as fast as today, which is what the second
+  prototype's section asked raw fields for. The encoding is in the
+  line of Melançon, Serrano and Feeley's self-tagging (2025, known
+  here by its abstract): an invertible transformation of the float's
+  bits that leaves the tag in the word for the floats met in practice;
+  here a rotation, one tag bit, and an offset to put the common
+  exponents under it.
+* **The price of the rotation.** A zero in a field is a pointer the
+  collector follows to the one box, where Koka's was skipped as an
+  immediate. `-0.0`, the infinities and NaN allocate where they are
+  made (16 bytes; a box each that the VM keeps would cover them as it
+  covers zero). The interpreter's fast path has no VM at hand and
+  leaves a zero result to the primitive; M5 would hand it the box.
+  `simple`, a third of whose results are zero, is the one program not
+  faster for the rotation with 64-bit integers (1.02 against 0.93) and
+  the fastest with 63 (0.88), which is within what its runs differ by:
+  two runs of one binary differ by up to 17% on `nucleic` and `ray`
+  (a second or less, 80 to 105 collections) and by under 3% on the
+  long ones.
+* Not built: the same encoding in `runeopt`'s templates (they are
+  made from the macro-assembler, so it is a regeneration), and in the
+  pairs' branch, where it applies unchanged.
+
 ### M4, for the gate
 
 What the two prototypes say to each decision the gate is to confirm,
-on 2026-10-04; the tables are in the three sections above.
+on 2026-10-04; the tables are in the four sections above.
 
 * **D1, the word: confirmed.** 0.59 of the bytes on the bootstrap and
   on MLton's set, 0.84 of the bootstrap's cycles, 0.61 to 0.90 on the
-  programs that build structures. Its second half, raw typed fields,
-  is not built and is needed: the programs of reals run 1.2 to 1.6
-  times slower without raw real fields, and a record of 64-bit words
-  boxes them. As planned it is not sound for a tuple that polymorphic
-  code reads; the form to build has the header's descriptor say which
-  fields are raw and a reader test it where its register is a real's
-  or `'a`. **Recommended:** raw real fields and flat real arrays on
-  prototype 1 before M5 is planned, since D1 B without them makes
-  numeric code slower than today.
+  programs that build structures; half the peak memory (533 to 274 MB
+  on the bootstrap), and faster at every heap size. Its second half,
+  raw typed fields, is not built, and is no longer what the programs
+  of reals wait for: their loss was the encoding's (D3), and the
+  shorter one brings them to 1.03 of today's cycles with every field a
+  word. As planned raw fields are not sound for a tuple that
+  polymorphic code reads; the form to build has the header's
+  descriptor say which fields are raw and a reader test it where its
+  register is a real's or `'a`. **Recommended:** M5 without raw
+  fields; flat real arrays in M8 as planned; raw real fields decided
+  after M5 on what `nucleic` and `raytrace` (1.12 and 1.16) still
+  lose.
 * **D2, integers and words: B holds, on new evidence.** At tier 2 the
   63-bit build is level with today on small numbers; keeping 64 bits
   costs 1.25 to 1.32 on a loop of ints or words (a test for the box at
@@ -688,17 +900,33 @@ on 2026-10-04; the tables are in the three sections above.
   mechanism is built (`RUNE_RAW_HOMES`) and brings SplitMix64 from 9.4
   to 2.1 times today's instructions. Neither choice makes 64-bit words
   that cross slots free: that takes typed slots (D5 B) or raw fields.
-* **D3, reals: C over B, and not enough alone.** Boxing every real is
-  worse wherever it differs (2.3 times on `real_nbody` under the
-  interpreter, three times the instructions on `nucleic`). The
-  encoding costs what D1's raw real fields are for.
+  On MLton's set 63 bits are 8% faster than 64 in the mean, nothing is
+  slower, and `tyan` and `tailfib` go from 1.43 and 1.28 of today's
+  cycles to 0.76 and 0.96.
+* **D3, reals: C over B, by a shorter encoding than Koka's.** Boxing
+  every real is worse wherever it differs (2.3 times on `real_nbody`
+  under the interpreter, three times the instructions on `nucleic`).
+  Koka's encoding is what made the programs of reals 1.2 to 1.5 times
+  slower than today: fifteen instructions and four branches wherever a
+  real leaves a register. The rotation (`RUNE_REAL_ROT`) is seven and
+  one, and takes the eight programs from 1.30 to 1.10, to 1.03 with
+  63-bit integers; its price is zero as a pointer to one box and a box
+  for each infinity, NaN and subnormal made. **Recommended:** the
+  rotation as D3 C's encoding in M5, with the VM's boxes for `-0.0`,
+  the infinities and NaN beside zero's.
 * **D4, headers: A as built; C is the owner's call.** The pairs pass
   every suite on every machine and save memory: 0.83 of the word's
   bytes on the bootstrap, 0.85 on MLton's set, a quarter to a third
-  less copied. They save little time: 0.92 to 0.97 on the kernels of
+  less copied, a fifth less kept at a collection (the bootstrap runs
+  in 39.8 MB where the word needs 51.7), and 0.93 of the word's peak
+  on MLton's set, though none of the compiler's, whose semispace
+  doubles to the same 128 MB. They save little time: 0.92 to 0.97 on
+  the kernels of
   lists and strings and nothing measurable on the compiler or on
   MLton's set (1.01 of the word's cycles in the mean), against
-  the harness's promise of a quarter to a third. Their price is a
+  the harness's promise of a quarter to a third; on the bootstrap
+  they win 1% to 3% where the heap is tight and lose 5% where it is
+  roomy. Their price is a
   second region in the heap, a mask where a tuple's or a constructor's
   field is read, and bytes and images that are per width. The third code costs
   nothing to keep back (0.067% of the bootstrap's bytes, nothing on
@@ -709,9 +937,8 @@ on 2026-10-04; the tables are in the three sections above.
   the interpreter's shifts do not show outside real arithmetic. B is
   not built; SplitMix64 is the measure of what A costs a 64-bit word.
 
-Not measured yet: six of the harness's strict kernels under the
-reserved code on a quiet machine, `examples/benchmarks` at its `normal`
-profile, the heap-size sweep, and `runeopt`'s code beside the JIT's.
+Not measured yet: `examples/benchmarks` at its `normal` profile, and
+`runeopt`'s code beside the JIT's.
 
 ## The request
 
@@ -4143,6 +4370,7 @@ give their URL. Where a source could not be read beyond its abstract,
 * Shao and Appel. "Space-efficient closure representations." LFP 1994. doi:10.1145/182409.156783
 * Appel and Shao. "Empirical and analytic study of stack versus heap cost for languages with closures." Journal of Functional Programming 6(1), 1996. doi:10.1017/s095679680000157x
 * Kennedy and Syme. "Design and implementation of generics for the .NET Common Language Runtime." PLDI 2001. doi:10.1145/378795.378797
+* Melançon, Serrano and Feeley. "Float self-tagging." Proceedings of the ACM on Programming Languages 9 (OOPSLA2), 2025. doi:10.1145/3763108 (checked against Crossref on 2026-10-04; its abstract only; *M4, what was measured for the gate*)
 
 **Roots and maps** (D5, M6):
 * Diwan, Moss and Hudson. "Compiler support for garbage collection in a statically typed language." PLDI 1992. doi:10.1145/143095.143140
