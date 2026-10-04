@@ -98,9 +98,14 @@ struct
           then () else raise Fail "missing benchmark profile") ["smoke", "normal"]
     in List.app complete names end
 
+  fun matches filter name =
+    if String.size filter > 0 andalso String.sub(filter,0) = #"=" then
+      name = String.extract(filter,1,NONE)
+    else String.isSubstring filter name
+
   fun selected entries profile filter =
     if List.exists (fn p => p = profile) ["smoke", "normal", "large"] then
-      List.filter (fn (entry : entry) => #profile entry = profile andalso String.isSubstring filter (#name entry)) entries
+      List.filter (fn (entry : entry) => #profile entry = profile andalso matches filter (#name entry)) entries
     else raise Fail "invalid benchmark profile"
 
   fun emit (entry : entry) =

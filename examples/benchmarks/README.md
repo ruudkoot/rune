@@ -224,6 +224,13 @@ inventory entry.
 | [awards-strict](#awards-strict) | [nofib awards](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/awards) | Select the same awards while eagerly sorting the finite candidate lists. |
 | [stack_fold](#stack_fold) | [Sandmark Stack](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Repeatedly fold addition over a mutable stack of integers 1 through 100. |
 | [stack_push_pop](#stack_push_pop) | [Sandmark Stack](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Repeatedly push and pop units while retaining a one-element mutable stack. |
+| [S](#s) | [nofib eff/S](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/eff/S) | Sequence strict State tuples while keeping the counter field unforced. |
+| [CS](#cs) | [nofib eff/CS](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/eff/CS) | Thread state through Church-encoded pure/get/put callbacks. |
+| [CSD](#csd) | [nofib eff/CSD](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/eff/CSD) | Thread state with a specialized three-operation Church dictionary. |
+| [FS](#fs) | [nofib eff/FS](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/eff/FS) | Interpret free-state constructors with suspended bind continuations. |
+| [VS](#vs) | [nofib eff/VS](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/eff/VS) | Thread state through van Laarhoven callbacks and a strict tuple interpreter. |
+| [VSD](#vsd) | [nofib eff/VSD](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/eff/VSD) | Use a get/put class dictionary over the shared State monad. |
+| [VSM](#vsm) | [nofib eff/VSM](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/eff/VSM) | Retain a van Laarhoven get/put abstraction and shared monadic bind layers. |
 
 ## Running and interpreting checks
 
@@ -295,7 +302,8 @@ make bench-check-all BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt RUNE_BENCH_CO
 make bench-check-all BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt RUNE_BENCH_COMPILE_OPTIONS=-O2
 ```
 
-`BENCH_FILTER` selects benchmark names by substring. For example,
+`BENCH_FILTER` selects benchmark names by substring. Prefix `=` for an exact
+name, for example `BENCH_FILTER='=S'`. For example,
 `make bench-check BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt BENCH_FILTER=aobench`
 checks the captured-record workload on all four engines. The default reference
 host set has recorded failures; see [reference-host caveats](validation/reference-hosts.md)
@@ -6759,3 +6767,491 @@ validation is not universally claimed. References: pinned benchmark and OCaml
 Stack sources, and the shared Sandmark runtime/measurement bibliography.
 
 [Complete provenance](stack_push_pop/PROVENANCE.md).
+
+## S
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `real/eff/S`.
+
+### History, source and notices
+
+The August 2017 [import commit](https://github.com/ghc/nofib/commit/c7e6c9074511f74f73eaa3b41051afc94aeb653a)
+credits Andras Kovacs and was authored by Matthew Pickering. It identifies
+[the original collection](https://github.com/AndrasKovacs/misc-stuff/blob/master/haskell/Eff/EffBench.hs)
+and associates the benchmarks with [GHC issue 13892](https://gitlab.haskell.org/ghc/ghc/-/issues/13892).
+Original Main, required EffBench module, Makefile, stdout fixture, import history
+and SHA256 identities are retained. Individual program licensing is unspecified
+in these source headers. The encoding names S/CS/CSD/FS/VS/VSD/VSM remain distinct.
+
+The shared State support is translated from the used operations of mtl 2.2.2
+(commit c7d396732bd45e409478bd4df1d0ca95d6f39356) and transformers 0.5.6.2
+(commit 0fe761c9287111373ae64ab39b67fbcde212b3f7), with Identity from GHC base
+4.17.2.0 (GHC 9.4.7 commit 00920f176b0235d5bb52a8e054d89a664f8938fe).
+Original source copyright headers and all three BSD-style notices are retained.
+There are no external datasets.
+
+### Algorithm and variant differences
+
+Strict State binds demand intermediate tuples while modify leaves the new
+state field lazy. The complete program observes tuple WHNF, leaving the
+accumulated increment chain unforced. Shared tuple/state references preserve
+this behavior; the counter is deliberately omitted from benchmark validation.
+
+Retain the increment action, repeated monadic sequencing, relevant handler/bind
+layers and the interpreter where present. The workload uses ordinary pure
+function/constructor encodings of state. Translation specializes the used state
+type to int and results to unit; VS retains two used bind callback instances,
+for int-to-unit and unit-to-unit actions. Newtype wrappers become function types;
+SML records hold the used callback/class operations. Unused general fmap,
+applicative and higher-rank interface cases remain in pristine source. Compiler
+and runtime features are unchanged by these library translations.
+
+### Inputs, demand and validation
+
+The original constant work count is 10,000,000. Smoke selects 100, normal selects
+1,000,000 and large retains the original 10,000,000. The checked work-count
+argument changes this stopping parameter explicitly; increment data, initial
+state zero and action sequence are preserved. All selected numeric values fit
+31 bits, agreeing with the original GHC machine Int values in this range.
+
+Preserve evaluate's demand for the result tuple. S's counter remains unforced;
+the driver consumes its unit result. The six other encodings already force each
+incremented state, so validation additionally reads/checks the final counter
+without evaluating delayed arithmetic. Result formatting and fixed stdout labels
+are replaced by controlled checked results. S's unit result gives limited direct
+output discrimination; its demand/sharing tests, source review and deterministic
+counts document the workload. Compiler elimination/specialization of unused work
+is a diagnostic question. Numeric counter checks add constant post-run work to
+the six strict encodings. Explicit memo cells, callback records and closure
+representation affect allocation and are recorded adaptations.
+
+Original GHC observers agree with the selected unit/strict-counter results.
+A separate S observer confirms throwing counter arithmetic remains deferred at
+tuple/unit observation and fails when the counter is forced. Fourteen tests on
+the shared encodings cover tuple demand, memoization, strict increment fields,
+exact counters, action counts and unforced free-state continuations. Broader
+large SML validation is not universally claimed. References: retained source,
+import history, GHC issue association and the shared nofib/measurement survey.
+Source comments discuss call arity, static-argument transformation and constructor
+specialization; their effects on Rune or other SML hosts remain hypotheses until
+source/IR analysis and measurements establish them.
+
+[Complete provenance](S/PROVENANCE.md).
+
+
+## CS
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `real/eff/CS`.
+
+### History, source and notices
+
+The August 2017 [import commit](https://github.com/ghc/nofib/commit/c7e6c9074511f74f73eaa3b41051afc94aeb653a)
+credits Andras Kovacs and was authored by Matthew Pickering. It identifies
+[the original collection](https://github.com/AndrasKovacs/misc-stuff/blob/master/haskell/Eff/EffBench.hs)
+and associates the benchmarks with [GHC issue 13892](https://gitlab.haskell.org/ghc/ghc/-/issues/13892).
+Original Main, required EffBench module, Makefile, stdout fixture, import history
+and SHA256 identities are retained. Individual program licensing is unspecified
+in these source headers. The encoding names S/CS/CSD/FS/VS/VSD/VSM remain distinct.
+
+The shared State support is translated from the used operations of mtl 2.2.2
+(commit c7d396732bd45e409478bd4df1d0ca95d6f39356) and transformers 0.5.6.2
+(commit 0fe761c9287111373ae64ab39b67fbcde212b3f7), with Identity from GHC base
+4.17.2.0 (GHC 9.4.7 commit 00920f176b0235d5bb52a8e054d89a664f8938fe).
+Original source copyright headers and all three BSD-style notices are retained.
+There are no external datasets.
+
+### Algorithm and variant differences
+
+Church-encoded free state retains its pure/get/put callbacks, bind and
+continuation closures. cmodify's bang forces each new state. The used Church
+result is specialized to the State runner returning (unit,int).
+
+Retain the increment action, repeated monadic sequencing, relevant handler/bind
+layers and the interpreter where present. The workload uses ordinary pure
+function/constructor encodings of state. Translation specializes the used state
+type to int and results to unit; VS retains two used bind callback instances,
+for int-to-unit and unit-to-unit actions. Newtype wrappers become function types;
+SML records hold the used callback/class operations. Unused general fmap,
+applicative and higher-rank interface cases remain in pristine source. Compiler
+and runtime features are unchanged by these library translations.
+
+### Inputs, demand and validation
+
+The original constant work count is 10,000,000. Smoke selects 100, normal selects
+1,000,000 and large retains the original 10,000,000. The checked work-count
+argument changes this stopping parameter explicitly; increment data, initial
+state zero and action sequence are preserved. All selected numeric values fit
+31 bits, agreeing with the original GHC machine Int values in this range.
+
+Preserve evaluate's demand for the result tuple. S's counter remains unforced;
+the driver consumes its unit result. The six other encodings already force each
+incremented state, so validation additionally reads/checks the final counter
+without evaluating delayed arithmetic. Result formatting and fixed stdout labels
+are replaced by controlled checked results. S's unit result gives limited direct
+output discrimination; its demand/sharing tests, source review and deterministic
+counts document the workload. Compiler elimination/specialization of unused work
+is a diagnostic question. Numeric counter checks add constant post-run work to
+the six strict encodings. Explicit memo cells, callback records and closure
+representation affect allocation and are recorded adaptations.
+
+Original GHC observers agree with the selected unit/strict-counter results.
+A separate S observer confirms throwing counter arithmetic remains deferred at
+tuple/unit observation and fails when the counter is forced. Fourteen tests on
+the shared encodings cover tuple demand, memoization, strict increment fields,
+exact counters, action counts and unforced free-state continuations. Broader
+large SML validation is not universally claimed. References: retained source,
+import history, GHC issue association and the shared nofib/measurement survey.
+Source comments discuss call arity, static-argument transformation and constructor
+specialization; their effects on Rune or other SML hosts remain hypotheses until
+source/IR analysis and measurements establish them.
+
+[Complete provenance](CS/PROVENANCE.md).
+
+
+## CSD
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `real/eff/CSD`.
+
+### History, source and notices
+
+The August 2017 [import commit](https://github.com/ghc/nofib/commit/c7e6c9074511f74f73eaa3b41051afc94aeb653a)
+credits Andras Kovacs and was authored by Matthew Pickering. It identifies
+[the original collection](https://github.com/AndrasKovacs/misc-stuff/blob/master/haskell/Eff/EffBench.hs)
+and associates the benchmarks with [GHC issue 13892](https://gitlab.haskell.org/ghc/ghc/-/issues/13892).
+Original Main, required EffBench module, Makefile, stdout fixture, import history
+and SHA256 identities are retained. Individual program licensing is unspecified
+in these source headers. The encoding names S/CS/CSD/FS/VS/VSD/VSM remain distinct.
+
+The shared State support is translated from the used operations of mtl 2.2.2
+(commit c7d396732bd45e409478bd4df1d0ca95d6f39356) and transformers 0.5.6.2
+(commit 0fe761c9287111373ae64ab39b67fbcde212b3f7), with Identity from GHC base
+4.17.2.0 (GHC 9.4.7 commit 00920f176b0235d5bb52a8e054d89a664f8938fe).
+Original source copyright headers and all three BSD-style notices are retained.
+There are no external datasets.
+
+### Algorithm and variant differences
+
+Classy Church state retains the three PureD/GetD/PutD operations in a
+ground State dictionary and the directly recursive cstimes definition. Each
+new counter is forced before the put continuation. This differs from CS's
+explicit encoded action and generic bind layer.
+
+Retain the increment action, repeated monadic sequencing, relevant handler/bind
+layers and the interpreter where present. The workload uses ordinary pure
+function/constructor encodings of state. Translation specializes the used state
+type to int and results to unit; VS retains two used bind callback instances,
+for int-to-unit and unit-to-unit actions. Newtype wrappers become function types;
+SML records hold the used callback/class operations. Unused general fmap,
+applicative and higher-rank interface cases remain in pristine source. Compiler
+and runtime features are unchanged by these library translations.
+
+### Inputs, demand and validation
+
+The original constant work count is 10,000,000. Smoke selects 100, normal selects
+1,000,000 and large retains the original 10,000,000. The checked work-count
+argument changes this stopping parameter explicitly; increment data, initial
+state zero and action sequence are preserved. All selected numeric values fit
+31 bits, agreeing with the original GHC machine Int values in this range.
+
+Preserve evaluate's demand for the result tuple. S's counter remains unforced;
+the driver consumes its unit result. The six other encodings already force each
+incremented state, so validation additionally reads/checks the final counter
+without evaluating delayed arithmetic. Result formatting and fixed stdout labels
+are replaced by controlled checked results. S's unit result gives limited direct
+output discrimination; its demand/sharing tests, source review and deterministic
+counts document the workload. Compiler elimination/specialization of unused work
+is a diagnostic question. Numeric counter checks add constant post-run work to
+the six strict encodings. Explicit memo cells, callback records and closure
+representation affect allocation and are recorded adaptations.
+
+Original GHC observers agree with the selected unit/strict-counter results.
+A separate S observer confirms throwing counter arithmetic remains deferred at
+tuple/unit observation and fails when the counter is forced. Fourteen tests on
+the shared encodings cover tuple demand, memoization, strict increment fields,
+exact counters, action counts and unforced free-state continuations. Broader
+large SML validation is not universally claimed. References: retained source,
+import history, GHC issue association and the shared nofib/measurement survey.
+Source comments discuss call arity, static-argument transformation and constructor
+specialization; their effects on Rune or other SML hosts remain hypotheses until
+source/IR analysis and measurements establish them.
+
+[Complete provenance](CSD/PROVENANCE.md).
+
+
+## FS
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `real/eff/FS`.
+
+### History, source and notices
+
+The August 2017 [import commit](https://github.com/ghc/nofib/commit/c7e6c9074511f74f73eaa3b41051afc94aeb653a)
+credits Andras Kovacs and was authored by Matthew Pickering. It identifies
+[the original collection](https://github.com/AndrasKovacs/misc-stuff/blob/master/haskell/Eff/EffBench.hs)
+and associates the benchmarks with [GHC issue 13892](https://gitlab.haskell.org/ghc/ghc/-/issues/13892).
+Original Main, required EffBench module, Makefile, stdout fixture, import history
+and SHA256 identities are retained. Individual program licensing is unspecified
+in these source headers. The encoding names S/CS/CSD/FS/VS/VSD/VSM remain distinct.
+
+The shared State support is translated from the used operations of mtl 2.2.2
+(commit c7d396732bd45e409478bd4df1d0ca95d6f39356) and transformers 0.5.6.2
+(commit 0fe761c9287111373ae64ab39b67fbcde212b3f7), with Identity from GHC base
+4.17.2.0 (GHC 9.4.7 commit 00920f176b0235d5bb52a8e054d89a664f8938fe).
+Original source copyright headers and all three BSD-style notices are retained.
+There are no external datasets.
+
+### Algorithm and variant differences
+
+Free state retains Pure/Get/Put constructors, monadic bind and its
+recursive state interpreter. Put's numeric field is strict, while the next
+action/continuation remains memoized. Binding preserves these suspended
+continuations and the original constructor traversal.
+
+Retain the increment action, repeated monadic sequencing, relevant handler/bind
+layers and the interpreter where present. The workload uses ordinary pure
+function/constructor encodings of state. Translation specializes the used state
+type to int and results to unit; VS retains two used bind callback instances,
+for int-to-unit and unit-to-unit actions. Newtype wrappers become function types;
+SML records hold the used callback/class operations. Unused general fmap,
+applicative and higher-rank interface cases remain in pristine source. Compiler
+and runtime features are unchanged by these library translations.
+
+### Inputs, demand and validation
+
+The original constant work count is 10,000,000. Smoke selects 100, normal selects
+1,000,000 and large retains the original 10,000,000. The checked work-count
+argument changes this stopping parameter explicitly; increment data, initial
+state zero and action sequence are preserved. All selected numeric values fit
+31 bits, agreeing with the original GHC machine Int values in this range.
+
+Preserve evaluate's demand for the result tuple. S's counter remains unforced;
+the driver consumes its unit result. The six other encodings already force each
+incremented state, so validation additionally reads/checks the final counter
+without evaluating delayed arithmetic. Result formatting and fixed stdout labels
+are replaced by controlled checked results. S's unit result gives limited direct
+output discrimination; its demand/sharing tests, source review and deterministic
+counts document the workload. Compiler elimination/specialization of unused work
+is a diagnostic question. Numeric counter checks add constant post-run work to
+the six strict encodings. Explicit memo cells, callback records and closure
+representation affect allocation and are recorded adaptations.
+
+Original GHC observers agree with the selected unit/strict-counter results.
+A separate S observer confirms throwing counter arithmetic remains deferred at
+tuple/unit observation and fails when the counter is forced. Fourteen tests on
+the shared encodings cover tuple demand, memoization, strict increment fields,
+exact counters, action counts and unforced free-state continuations. Broader
+large SML validation is not universally claimed. References: retained source,
+import history, GHC issue association and the shared nofib/measurement survey.
+Source comments discuss call arity, static-argument transformation and constructor
+specialization; their effects on Rune or other SML hosts remain hypotheses until
+source/IR analysis and measurements establish them.
+
+[Complete provenance](FS/PROVENANCE.md).
+
+
+## VS
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `real/eff/VS`.
+
+### History, source and notices
+
+The August 2017 [import commit](https://github.com/ghc/nofib/commit/c7e6c9074511f74f73eaa3b41051afc94aeb653a)
+credits Andras Kovacs and was authored by Matthew Pickering. It identifies
+[the original collection](https://github.com/AndrasKovacs/misc-stuff/blob/master/haskell/Eff/EffBench.hs)
+and associates the benchmarks with [GHC issue 13892](https://gitlab.haskell.org/ghc/ghc/-/issues/13892).
+Original Main, required EffBench module, Makefile, stdout fixture, import history
+and SHA256 identities are retained. Individual program licensing is unspecified
+in these source headers. The encoding names S/CS/CSD/FS/VS/VSD/VSM remain distinct.
+
+The shared State support is translated from the used operations of mtl 2.2.2
+(commit c7d396732bd45e409478bd4df1d0ca95d6f39356) and transformers 0.5.6.2
+(commit 0fe761c9287111373ae64ab39b67fbcde212b3f7), with Identity from GHC base
+4.17.2.0 (GHC 9.4.7 commit 00920f176b0235d5bb52a8e054d89a664f8938fe).
+Original source copyright headers and all three BSD-style notices are retained.
+There are no external datasets.
+
+### Algorithm and variant differences
+
+The van Laarhoven encoding retains pure/bind/get/put callback layers. Its
+custom S interpreter bangs both value/state fields at each bind. SML's strict
+unit/int tuples preserve the used field demands; the two used bind types get
+separate typed callback fields.
+
+Retain the increment action, repeated monadic sequencing, relevant handler/bind
+layers and the interpreter where present. The workload uses ordinary pure
+function/constructor encodings of state. Translation specializes the used state
+type to int and results to unit; VS retains two used bind callback instances,
+for int-to-unit and unit-to-unit actions. Newtype wrappers become function types;
+SML records hold the used callback/class operations. Unused general fmap,
+applicative and higher-rank interface cases remain in pristine source. Compiler
+and runtime features are unchanged by these library translations.
+
+### Inputs, demand and validation
+
+The original constant work count is 10,000,000. Smoke selects 100, normal selects
+1,000,000 and large retains the original 10,000,000. The checked work-count
+argument changes this stopping parameter explicitly; increment data, initial
+state zero and action sequence are preserved. All selected numeric values fit
+31 bits, agreeing with the original GHC machine Int values in this range.
+
+Preserve evaluate's demand for the result tuple. S's counter remains unforced;
+the driver consumes its unit result. The six other encodings already force each
+incremented state, so validation additionally reads/checks the final counter
+without evaluating delayed arithmetic. Result formatting and fixed stdout labels
+are replaced by controlled checked results. S's unit result gives limited direct
+output discrimination; its demand/sharing tests, source review and deterministic
+counts document the workload. Compiler elimination/specialization of unused work
+is a diagnostic question. Numeric counter checks add constant post-run work to
+the six strict encodings. Explicit memo cells, callback records and closure
+representation affect allocation and are recorded adaptations.
+
+Original GHC observers agree with the selected unit/strict-counter results.
+A separate S observer confirms throwing counter arithmetic remains deferred at
+tuple/unit observation and fails when the counter is forced. Fourteen tests on
+the shared encodings cover tuple demand, memoization, strict increment fields,
+exact counters, action counts and unforced free-state continuations. Broader
+large SML validation is not universally claimed. References: retained source,
+import history, GHC issue association and the shared nofib/measurement survey.
+Source comments discuss call arity, static-argument transformation and constructor
+specialization; their effects on Rune or other SML hosts remain hypotheses until
+source/IR analysis and measurements establish them.
+
+[Complete provenance](VS/PROVENANCE.md).
+
+
+## VSD
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `real/eff/VSD`.
+
+### History, source and notices
+
+The August 2017 [import commit](https://github.com/ghc/nofib/commit/c7e6c9074511f74f73eaa3b41051afc94aeb653a)
+credits Andras Kovacs and was authored by Matthew Pickering. It identifies
+[the original collection](https://github.com/AndrasKovacs/misc-stuff/blob/master/haskell/Eff/EffBench.hs)
+and associates the benchmarks with [GHC issue 13892](https://gitlab.haskell.org/ghc/ghc/-/issues/13892).
+Original Main, required EffBench module, Makefile, stdout fixture, import history
+and SHA256 identities are retained. Individual program licensing is unspecified
+in these source headers. The encoding names S/CS/CSD/FS/VS/VSD/VSM remain distinct.
+
+The shared State support is translated from the used operations of mtl 2.2.2
+(commit c7d396732bd45e409478bd4df1d0ca95d6f39356) and transformers 0.5.6.2
+(commit 0fe761c9287111373ae64ab39b67fbcde212b3f7), with Identity from GHC base
+4.17.2.0 (GHC 9.4.7 commit 00920f176b0235d5bb52a8e054d89a664f8938fe).
+Original source copyright headers and all three BSD-style notices are retained.
+There are no external datasets.
+
+### Algorithm and variant differences
+
+Classy van Laarhoven state retains the get/put class dictionary over
+mtl's strict-tuple State and its bind. vmdmodify explicitly forces the new
+state. Shared State support preserves tuple-versus-field demand, with the
+modified counter already evaluated at every step.
+
+Retain the increment action, repeated monadic sequencing, relevant handler/bind
+layers and the interpreter where present. The workload uses ordinary pure
+function/constructor encodings of state. Translation specializes the used state
+type to int and results to unit; VS retains two used bind callback instances,
+for int-to-unit and unit-to-unit actions. Newtype wrappers become function types;
+SML records hold the used callback/class operations. Unused general fmap,
+applicative and higher-rank interface cases remain in pristine source. Compiler
+and runtime features are unchanged by these library translations.
+
+### Inputs, demand and validation
+
+The original constant work count is 10,000,000. Smoke selects 100, normal selects
+1,000,000 and large retains the original 10,000,000. The checked work-count
+argument changes this stopping parameter explicitly; increment data, initial
+state zero and action sequence are preserved. All selected numeric values fit
+31 bits, agreeing with the original GHC machine Int values in this range.
+
+Preserve evaluate's demand for the result tuple. S's counter remains unforced;
+the driver consumes its unit result. The six other encodings already force each
+incremented state, so validation additionally reads/checks the final counter
+without evaluating delayed arithmetic. Result formatting and fixed stdout labels
+are replaced by controlled checked results. S's unit result gives limited direct
+output discrimination; its demand/sharing tests, source review and deterministic
+counts document the workload. Compiler elimination/specialization of unused work
+is a diagnostic question. Numeric counter checks add constant post-run work to
+the six strict encodings. Explicit memo cells, callback records and closure
+representation affect allocation and are recorded adaptations.
+
+Original GHC observers agree with the selected unit/strict-counter results.
+A separate S observer confirms throwing counter arithmetic remains deferred at
+tuple/unit observation and fails when the counter is forced. Fourteen tests on
+the shared encodings cover tuple demand, memoization, strict increment fields,
+exact counters, action counts and unforced free-state continuations. Broader
+large SML validation is not universally claimed. References: retained source,
+import history, GHC issue association and the shared nofib/measurement survey.
+Source comments discuss call arity, static-argument transformation and constructor
+specialization; their effects on Rune or other SML hosts remain hypotheses until
+source/IR analysis and measurements establish them.
+
+[Complete provenance](VSD/PROVENANCE.md).
+
+
+## VSM
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `real/eff/VSM`.
+
+### History, source and notices
+
+The August 2017 [import commit](https://github.com/ghc/nofib/commit/c7e6c9074511f74f73eaa3b41051afc94aeb653a)
+credits Andras Kovacs and was authored by Matthew Pickering. It identifies
+[the original collection](https://github.com/AndrasKovacs/misc-stuff/blob/master/haskell/Eff/EffBench.hs)
+and associates the benchmarks with [GHC issue 13892](https://gitlab.haskell.org/ghc/ghc/-/issues/13892).
+Original Main, required EffBench module, Makefile, stdout fixture, import history
+and SHA256 identities are retained. Individual program licensing is unspecified
+in these source headers. The encoding names S/CS/CSD/FS/VS/VSD/VSM remain distinct.
+
+The shared State support is translated from the used operations of mtl 2.2.2
+(commit c7d396732bd45e409478bd4df1d0ca95d6f39356) and transformers 0.5.6.2
+(commit 0fe761c9287111373ae64ab39b67fbcde212b3f7), with Identity from GHC base
+4.17.2.0 (GHC 9.4.7 commit 00920f176b0235d5bb52a8e054d89a664f8938fe).
+Original source copyright headers and all three BSD-style notices are retained.
+There are no external datasets.
+
+### Algorithm and variant differences
+
+The van Laarhoven-to-mtl encoding retains its get/put abstraction,
+encoded bind and the shared State bind. vmmodify bangs the new state before
+put. This retains the additional encoded function layers beyond VSD's class
+operations and uses the original current-state threading.
+
+Retain the increment action, repeated monadic sequencing, relevant handler/bind
+layers and the interpreter where present. The workload uses ordinary pure
+function/constructor encodings of state. Translation specializes the used state
+type to int and results to unit; VS retains two used bind callback instances,
+for int-to-unit and unit-to-unit actions. Newtype wrappers become function types;
+SML records hold the used callback/class operations. Unused general fmap,
+applicative and higher-rank interface cases remain in pristine source. Compiler
+and runtime features are unchanged by these library translations.
+
+### Inputs, demand and validation
+
+The original constant work count is 10,000,000. Smoke selects 100, normal selects
+1,000,000 and large retains the original 10,000,000. The checked work-count
+argument changes this stopping parameter explicitly; increment data, initial
+state zero and action sequence are preserved. All selected numeric values fit
+31 bits, agreeing with the original GHC machine Int values in this range.
+
+Preserve evaluate's demand for the result tuple. S's counter remains unforced;
+the driver consumes its unit result. The six other encodings already force each
+incremented state, so validation additionally reads/checks the final counter
+without evaluating delayed arithmetic. Result formatting and fixed stdout labels
+are replaced by controlled checked results. S's unit result gives limited direct
+output discrimination; its demand/sharing tests, source review and deterministic
+counts document the workload. Compiler elimination/specialization of unused work
+is a diagnostic question. Numeric counter checks add constant post-run work to
+the six strict encodings. Explicit memo cells, callback records and closure
+representation affect allocation and are recorded adaptations.
+
+Original GHC observers agree with the selected unit/strict-counter results.
+A separate S observer confirms throwing counter arithmetic remains deferred at
+tuple/unit observation and fails when the counter is forced. Fourteen tests on
+the shared encodings cover tuple demand, memoization, strict increment fields,
+exact counters, action counts and unforced free-state continuations. Broader
+large SML validation is not universally claimed. References: retained source,
+import history, GHC issue association and the shared nofib/measurement survey.
+Source comments discuss call arity, static-argument transformation and constructor
+specialization; their effects on Rune or other SML hosts remain hypotheses until
+source/IR analysis and measurements establish them.
+
+[Complete provenance](VSM/PROVENANCE.md).
