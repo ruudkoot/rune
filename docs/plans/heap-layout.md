@@ -42,8 +42,8 @@ What it rests on:
 | M1 | Measure in the tree | done 2026-09-27, `36ef0a3` |
 | M2 | The simulator and the harness in the tree | done 2026-09-27, `3f17fd2` |
 | M3 | The layout behind an interface | done 2026-09-27, `93cc674` |
-| M4 | Prototypes at full scale; the gate | both prototypes run, pass the suites and are measured (branches `heap-layout-word` and `heap-layout-pairs`; *M4, the first prototype so far* and the two sections after it); *M4, what was measured for the gate* has the heap sizes, the peak memory, 63 bits on MLton's set and the reals' encoding; raw real fields, the 32-bit header and typed slots are not built; the gate is the owner's |
-| M5 | The chosen layout, complete | |
+| M4 | Prototypes at full scale; the gate | done 2026-10-04: both prototypes run, pass the suites and are measured (branches `heap-layout-word` and `heap-layout-pairs`; the four sections *M4, ...* below), and the owner decided the gate that day (*M4, for the gate*). Not built in M4, and no longer wanted before M5: raw typed fields, the 32-bit header and its table, typed slots |
+| M5 | The chosen layout, complete | planned again at the gate: the word of `heap-layout-word`, 63 bits, the rotation, no pairs, one word on every width |
 | M6 | Roots and maps | |
 | M7 | The collector on the new layout, and the hooks for the next | |
 | M8 | Flat arrays, strings and the FFI's objects | |
@@ -51,10 +51,10 @@ What it rests on:
 The owner decided every decision on 2026-09-27 (*Decisions*), D1 to D5
 provisionally on the experiments here and finally at the gate of M4,
 on the prototypes' numbers, with the alternatives they named
-benchmarked there. The JIT roadmap finished the same day (M11
+benchmarked there; the gate was decided on 2026-10-04. The JIT roadmap finished the same day (M11
 `798c002`, M12 `1f7e55b`, merged as PR #21, `d278153`), and the
-milestones run on branch `heap-layout`, one commit each. M5 to M8 are
-sized now and planned again at the gate.
+milestones run on branch `heap-layout`, one commit each. M5 to M8
+were planned again at the gate (*The milestones*).
 
 ### After the rebase
 
@@ -866,11 +866,27 @@ tiering, an idle machine, the least of three runs (of six for the
   two runs of one binary differ by up to 17% on `nucleic` and `ray`
   (a second or less, 80 to 105 collections) and by under 3% on the
   long ones.
+* **The interpreter gains as much.** `real_nbody` with `--jit=off`:
+  2.04G instructions on the 16-byte layout, 3.20G with Koka's
+  encoding (1.57), 2.31G with the rotation (1.13), 5.71G with every
+  real boxed (2.80). On the 32-bit interpreter, where the word's 64
+  bits are two machine words: 2.93G, 5.99G (2.04) and 3.54G (1.21).
 * Not built: the same encoding in `runeopt`'s templates (they are
   made from the macro-assembler, so it is a regeneration), and in the
   pairs' branch, where it applies unchanged.
 
 ### M4, for the gate
+
+**Decided on 2026-10-04.** The owner took every recommendation of
+this section, and two that M5's text turned on: the 8-byte word on
+the 32-bit VMs too (D13 A, where B had been decided and was never
+prototyped), and `runeopt` kept as D11 had it. So M5 is the word of
+prototype 1 with 63-bit integers and words, `Int64` and `Word64` as
+boxed types of their own, the rotation encoding of reals, the 8-byte
+header on every machine, no headerless pairs and no raw typed fields;
+the pairs stay a branch, a pointer's bits 1 and 2 stay unused for
+them and for a lazy front end's code, and what was not prototyped has
+a plan of its own: `real-encoding.md` and `32-bit-vm.md`.
 
 What the two prototypes say to each decision the gate is to confirm,
 on 2026-10-04; the tables are in the four sections above.
@@ -938,7 +954,10 @@ on 2026-10-04; the tables are in the four sections above.
   not built; SplitMix64 is the measure of what A costs a 64-bit word.
 
 Not measured yet: `examples/benchmarks` at its `normal` profile, and
-`runeopt`'s code beside the JIT's.
+`runeopt`'s code beside the JIT's. `make test-lib` (22 programs) and
+`make bench-smoke` pass on prototype 1; `make test-laws` had not run
+on either prototype when the gate was decided (its script had been
+broken by the rename of the VMs' binaries, mended in `b3e6092e`).
 
 ## The request
 
@@ -991,6 +1010,23 @@ header, with D, the layout table, on 32-bit ones (changed on
 the recommendation; D13 B; D14: the JIT roadmap is finished, so nothing
 waits; D15 accepted; D6, D8, D9, D10 and D12 as recommended (not
 choices). Recorded in the *Decisions* table and per decision.
+
+**The owner's decisions at the gate of M4 (2026-10-04)**, on the
+prototypes' numbers, every recommendation of *M4, for the gate* taken:
+D1 B, and M5 without raw typed fields (raw real fields are decided
+after M5, on what the programs of reals still lose; flat real arrays
+stay M8's); D2 B confirmed, with `Int64` and `Word64` as boxed types
+of their own whose tier-2 homes hold the 64 bits, the first thing M5
+builds; D3 C by the rotation encoding in place of Koka's, with a box
+that the VM keeps for each of `+0.0`, `-0.0`, the infinities and NaN
+(`real-encoding.md` has what is left to try); D4 A on every machine:
+the headerless pairs of C are left out of M5 and kept as a branch,
+bits 1 and 2 of a pointer stay unused for them, and the third code
+stays reserved for a lazy front end; D5 A; D11 as it was, `runeopt`
+kept; D13 A for M5, the 8-byte word on every width, where B had been
+decided: the 32-bit VMs' own word, the 4-byte header and the layout
+table (D4 B and D) were not prototyped and are `32-bit-vm.md`'s.
+M5 to M8 are planned again below on these.
 
 | The brief asks | Answered in |
 |---|---|
@@ -3066,11 +3102,32 @@ can cite them. The owner decided all of them on 2026-09-27:
 | D14. Order against the other plans | A: M1 to M3 now, beside jit M11; M4 after M11; jit M12 after M5 | the JIT roadmap is finished (M11 `798c002`, M12 `1f7e55b`, PR #21): nothing waits; M1 starts now |
 | D15. What "better" means, measurably | A: the four targets | accepted |
 
+At the gate of M4, on 2026-10-04, the owner confirmed or changed the
+provisional ones on the prototypes' numbers (*M4, for the gate*):
+
+| Decision | At the gate |
+|---|---|
+| D1 | B confirmed; M5 is built without raw typed fields, and raw real fields are decided after M5 |
+| D2 | B confirmed: 63 bits, 8% faster than 64 on MLton's set; `Int64` and `Word64` their own boxed types, first in M5 |
+| D3 | C, by the rotation encoding in place of Koka's; the VM keeps a box for each of `+0.0`, `-0.0`, the infinities and NaN (`real-encoding.md`) |
+| D4 | A on every machine; C, the headerless pairs, left out of M5 and kept as branch `heap-layout-pairs`; a pointer's bits 1 and 2 kept unused, the third code reserved for a lazy front end; B and D not built (`32-bit-vm.md`) |
+| D5 | A confirmed; B not built |
+| D11 | unchanged: `runeopt` kept, its templates regenerated in M5 |
+| D13 | A for M5: the 8-byte word on every width; B, the machine's word, is `32-bit-vm.md`'s |
+
 ### D1. The word
 
 **Decided: B**, the tagged word with raw typed fields, provisionally
 until M4's gate; and C later, in the whole-program compiler, if
 benchmarks show it better. Recommended: B.
+
+**At the gate (2026-10-04): B confirmed, and M5 built without its
+second half.** The word is 0.59 of the bytes, 0.84 of the bootstrap's
+cycles and half its peak memory. Raw typed fields were not built in
+M4; what they were wanted for, the programs of reals, was the
+encoding's cost and not the fields' (*M4, what was measured for the
+gate*). Raw real fields are decided after M5 on what `nucleic` and
+`raytrace` still lose; flat real arrays stay M8's.
 
 * **A. Keep the 16-byte cell** (L0). Nothing moves; the JIT, the images
   and the budgets stay. What it forgoes is the whole of this roadmap's
@@ -3132,6 +3189,14 @@ benchmarks show it better. Recommended: B.
   the survey chose it. B takes the reals another way.
 
 ### D2. Integers and words
+
+**At the gate (2026-10-04): B confirmed.** On MLton's set 63 bits are
+8% faster than 64 kept in the mean and nothing is slower; a loop of
+ints or words pays 1.25 to 1.32 for keeping 64. `Int64` and `Word64`
+are boxed types of their own whose tier-2 homes hold the 64 bits
+(`RUNE_RAW_HOMES`' mechanism, for their registers alone), built first
+in M5; on 32-bit machines `Int` is the same 63 bits (D13 at the
+gate), not 31.
 
 **Decided: B**, 63-bit `Int` and `Word`, against the recommendation.
 The owner's reason: "int/word are for things like length of lists and
@@ -3219,6 +3284,19 @@ the generator as `lib/random/random.sml` and its tests in `make check`:
 
 ### D3. Reals
 
+**At the gate (2026-10-04): C, by the rotation encoding.** Koka's
+encoding, described below, is what the prototypes ran and what made
+the programs of reals 1.2 to 1.5 times slower than today: fifteen
+instructions and four branches wherever a real leaves a register.
+The encoding M5 builds is the double's bits with 2^61 added and
+rotated left by two, an immediate where the low bit is then set
+(exponents 0x200 to 0x5ff, a real between 2^-511 and 2^513), seven
+instructions and one branch to decode; zero, the subnormals, the
+infinities and NaN are boxes, and the VM keeps one box for each of
+`+0.0`, `-0.0`, the two infinities and NaN. With it and 63-bit
+integers the eight programs run 1.03 of today's cycles. No raw real
+fields in M5 (D1). `real-encoding.md` lists what is left to try.
+
 **Decided: C** (2026-09-27). The first decision was B, "and C
 benchmarked, may change my mind if it helps"; it changed the same day
 when the large set showed `matrix-multiply` at 0.998 of today's bytes
@@ -3278,6 +3356,15 @@ counts are why C won.
   both rejected under D1.
 
 ### D4. Headers and descriptors
+
+**At the gate (2026-10-04): A on every machine.** The headerless
+pairs of C pass every suite and are left out of M5: they buy memory
+(0.83 of the word's bytes, a fifth less kept at a collection) and no
+time, and no resident memory on the compiler while the semispace
+grows by doubling. They stay as branch `heap-layout-pairs`; bits 1
+and 2 of a pointer stay unused for their two codes, and the third
+code stays reserved for a lazy front end. B and D, the 32-bit header
+and its table, were not built and are `32-bit-vm.md`'s.
 
 **Decided: A with C on 64-bit machines, B with D on 32-bit machines**
 (2026-09-27; A everywhere at first, with B "interesting for 32-bit
@@ -3392,6 +3479,11 @@ Noted on 2026-09-28, for a lazy front end (*A lazy front end*):
 ### D5. Roots
 
 **Decided: A**, and B benchmarked at M4. Recommended: A.
+
+**At the gate (2026-10-04): A confirmed.** B was not built. What A
+costs is known: a 64-bit word or a real that crosses a slot is boxed
+or encoded there (SplitMix64; the programs of reals), which D2 B and
+the rotation of D3 reduce to 1.03 of today on the reals.
 
 * **A. The slots stay self-describing.** Every slot of the value stack
   is a tagged word: an immediate or a pointer, told by its bit. A raw
@@ -3564,6 +3656,16 @@ raw field's SML type beyond int, word, real, char. `imm_eq` stays as it
 is.
 
 ### D13. The 32-bit VMs and wasm32
+
+**At the gate (2026-10-04): A for M5.** B was decided and never
+prototyped: both prototypes run the 8-byte word on the 32-bit VMs,
+and pass the portability suite so. M5 keeps that, with `Int` 63 bits
+on every machine, and the machine's own word is `32-bit-vm.md`'s,
+with the experiments that would decide it. On the 32-bit interpreter
+the word prototype with 63-bit integers and the rotation runs the
+bootstrap in 1.03 of the 16-byte layout's instructions and 0.59 of
+its bytes (`real_nbody` 1.22): M5 gives the 32-bit VMs the memory and
+not the time.
 
 **Decided: B.** Recommended: B. The owner's note that Rune is "always 64-bit even
 on 32-bit platforms" describes the architecture as it is; on 2026-09-27
@@ -3850,36 +3952,72 @@ about 2,000 and are planned again at the gate.
 
 ### M5. The chosen layout, complete (XL, about 3,000)
 
-* **What:** the winning prototype finished (the word with headerless
-  pairs on 64-bit, D4 C): every primitive, both
-  loops, every emitter, `runeopt`'s generated templates, the image
-  format bumped once
-  (D10), `rbcVersion` bumped once if the section changed, the 32-bit
-  and PowerPC VMs (D13 B: the machine's word; on 32-bit the 4-byte
-  header with its length escape and the layout table, D4 B and D), Windows, the Basis
-  Library where a representation shows (`Int.precision` 63,
-  `Word.wordSize` 63, `Int64` and `Word64` as their own types, D2 B,
-  and 64 with the aliases under its switch;
-  reals encoded at polymorphic positions and boxed under the switch,
-  D3 C;
-  `runtime_sig.sml`'s sentence; `IntInf`'s limbs if a raw word helps
-  them; `Real32` untouched), every budget re-based
-  in one commit that quotes old and new (those of `tests/perf` and,
-  since the rebase, `examples/benchmarks/count-budgets.tsv`), `tests/basis/runtime.sml`'s
-  40 and 24 replaced by the new sizes, `masm_test.c`, the docs
-  (runtime.md's *Values and objects*, bytecode.md, native.md or its
-  retirement, `ARCHITECTURE.md`, `share/man/runevm.1`, the examples), and
-  the small items D4 notes if cheap (a nullary exception immediate).
-  For a lazy front end (*A lazy front end*): the kinds `K_THUNK` and
-  `K_IND` reserved and asserted, unused by SML; and, if the gate
-  reserved code 11, `val_ptr` masking it and the collector,
-  `values_equal`, the printer and images reading it as a headered
-  pointer, with `tests/lang/rt.every_kind` making such a pointer.
+Planned again at the gate (2026-10-04). The size is the first plan's:
+the pairs and the 32-bit header are gone from it and the 64-bit types
+have come in.
+
+* **What:** prototype 1 finished (branch `heap-layout-word`, its work
+  brought to `heap-layout`) as the gate left it: the tagged 8-byte
+  word on every machine, 63-bit integers and words, reals by the
+  rotation, the 8-byte header, no headerless pairs, no raw typed
+  fields. In this order:
+  1. *`Int64` and `Word64` as types of their own* (D2 B), first
+     because it is the least proven part: the prototype has the
+     mechanism (tier 2's homes holding the 64 bits, `RUNE_RAW_HOMES`)
+     and not the types. A representation of their own in the compiler
+     (`Rep`) and in the bytecode's representations section, so that
+     their registers alone get raw homes; their primitives; a box
+     where one reaches a value; `Int.precision` 63 and `Word.wordSize`
+     63 on every machine, and what `LargeInt`, `LargeWord`, `SysWord`
+     and `Position` are aliases of; the Basis' list of M4 (on the
+     63-bit build seven programs do not load and 34 checks fail);
+     `lib/random`'s SplitMix64 and `make test-lib` as the test, since
+     the 63-bit prototype prints another answer there. D2 A, 64 bits
+     kept with the aliases, stays behind its switch.
+  2. *The reals* (D3 C): the rotation as the one encoding (Koka's
+     stays on the prototype's branch for comparison; D3 B, every real
+     boxed, behind its switch); a box that the VM keeps for each of
+     `+0.0`, `-0.0`, the two infinities and NaN, made at start so
+     that every engine has the same heap, and roots; the interpreter's
+     fast path handed the VM, so that a zero result does not leave
+     it; a real constant decoded as the code is made (built).
+  3. *Every consumer:* every primitive, both loops, every emitter,
+     `runeopt`'s templates regenerated, the image format bumped once
+     (D10), `rbcVersion` bumped once (the representations section
+     changes), Windows, the 32-bit and PowerPC VMs on the same word
+     (D13 A at the gate: bytes, objects and images equal across
+     widths, as the portability suite checks today), the Basis where a
+     representation shows (`runtime_sig.sml`'s sentence; `IntInf`'s
+     limbs if a raw word helps them; `Real32` untouched), every budget
+     re-based in one commit that quotes old and new (those of
+     `tests/perf` and `examples/benchmarks/count-budgets.tsv`),
+     `tests/basis/runtime.sml`'s 40 and 24 replaced by the new sizes,
+     `masm_test.c`, the docs (runtime.md's *Values and objects*,
+     bytecode.md, native.md, `ARCHITECTURE.md`, `share/man/runevm.1`,
+     the examples), and the small items D4 notes if cheap (a nullary
+     exception immediate).
+  4. *What is kept open:* bits 1 and 2 of a pointer are zero and
+     unused, for the pairs' two codes and a lazy front end's
+     "evaluated", asserted where a pointer is made; nothing masks
+     them, since nothing sets them, and the mask comes with whichever
+     uses a code first. The kinds `K_THUNK` and `K_IND` reserved and
+     asserted, unused by SML. The header's byte for a raw-field
+     descriptor kept free (D1's second half, undecided).
+* **Not in M5**, by the gate: headerless pairs (branch
+  `heap-layout-pairs`; to take up again when M7's growth policy can
+  turn the fifth less they keep into resident memory, or with a lazy
+  front end); raw typed fields; the 32-bit VMs' own word, the 4-byte
+  header and the layout table (`32-bit-vm.md`); maps for the
+  interpreter's frames (D5 B).
 * **Done when:** every suite green on every VM at every tier, with
-  `--gc-stress 1` and the sanitiser; `make test-portability` carries an
-  image of the new layout between every pair of VMs; D15's targets 1
-  and 3 met and target 2 measured; the perf tables of *The experiments*
-  re-made with the new layout beside the old.
+  `--gc-stress 1` and the sanitiser, `make test-lib`, `make
+  test-laws` as far as it holds on the 16-byte layout and `make
+  bench-smoke` among them; `make test-portability` carries an image of
+  the new layout between every pair of VMs; D15's targets 1 and 3 met
+  and target 2 measured; the perf tables of *The experiments* re-made
+  with the new layout beside the old, the eight programs of reals and
+  MLton's set among them, and on those the question the gate left
+  open put to the owner: raw real fields or not.
 * **Touches:** everything of *Who depends on the layout*; the
   incremental roadmap (the image and the `.rbc` version), the FFI (the
   convention).
@@ -3890,10 +4028,10 @@ about 2,000 and are planned again at the gate.
   unit written into a dead pointer slot at the safepoints tier 2
   already has (jit M9's unbuilt item), the `RUNE-DEV` deviation of
   `Runtime.collect` retired if that makes the roots exact; the root
-  list in one place (`heap.c` and `heap_relocate` share it); if D5 B
-  was chosen at the gate, the maps per pc from the representations and
-  liveness, computed at load, consumed by the collector and the image;
-  jit M11's maps consumed through the same interface.
+  list in one place (`heap.c` and `heap_relocate` share it), the
+  boxes the VM keeps for the reals among them (M5); jit M11's maps
+  consumed through one interface. The gate confirmed D5 A, so no maps
+  per pc for the interpreter's frames are built here.
 * **Done when:** `rt.*` tests of roots pass at every tier;
   `--gc-stress 1` green.
 
@@ -3910,7 +4048,11 @@ about 2,000 and are planned again at the gate.
   the update of an object in place, a header rewritten with its first
   field (a thunk's update to an indirection, *A lazy front end*), with
   the scan of `K_IND` reading that field alone; the large-object space
-  if D6 chose it; `--stats` and `Runtime.stats` with the fields the
+  if D6 chose it; the semispace's growth measured and chosen, since
+  doubling is what holds the compiler at 128 MB whether a collection
+  keeps 45 MB or 36 (M4's peak memory), and a finer step is what
+  would let a smaller layout show in resident memory; `--stats` and
+  `Runtime.stats` with the fields the
   next collector reports; the census hooks kept working; and the brief
   of the generational roadmap written from the simulator's tables
   (nursery size, survival, remembered set, what a sticky-bit old space
@@ -3927,7 +4069,9 @@ about 2,000 and are planned again at the gate.
 * **What:** `Word8Array`, `CharArray` and `Word8Vector`, `CharVector`
   at one byte per element with C's layout behind the header
   (basis.md's `_primtype "bytearray"`, `array_blit`); `RealArray` and
-  `Real64Array` flat; `WideString` at four bytes per character or as
+  `Real64Array` flat, the elements the double's own bits (and here,
+  if the owner chose them after M5, raw real fields in tuples and
+  records, with the header's descriptor: D1's second half); `WideString` at four bytes per character or as
   today by measure; the pin bit of D9 honoured (an object pinned is not
   moved: in the large-object space if D6 built it, else copied around
   the call); a handle table for values C holds, as a root
@@ -3955,6 +4099,9 @@ about 2,000 and are planned again at the gate.
   change the runtime has had; M7 changes the collector's code without
   changing what it does, so that the next roadmap starts from a
   measured, stable copier on the new layout.
+* **Inside M5, the 64-bit types first** (the gate): they are the one
+  part of the chosen layout that no prototype ran, so they are built
+  while changing course is still cheap.
 * **The FFI's objects last**, because they are the first thing the FFI
   roadmap needs and the last thing this one can measure.
 
@@ -4182,6 +4329,8 @@ output from every build).
 |---|---|
 | performance.md item 19 (8-byte values, "half the heap and half the collector's work") | D1, D2, D3; the numbers of *The experiments* |
 | performance.md item 13 (generational collector) | D7; M7's hooks and brief; the next roadmap |
+| real-encoding.md (2026-10-04: the experiments left on how a real sits in the word) | D3 at the gate; M5's second step; raw real fields, undecided until after M5 |
+| 32-bit-vm.md (2026-10-04: the experiments that would decide a 32-bit VM's own word) | D13 A for M5 at the gate; D13 B, D4 B and D, not prototyped |
 | docs/performance.md, *Why `vm/new` at `opt` is slower than MLton* (2026-10-02): the 16-byte tagged Value written at every result, the 16-byte array cell | D1, D3, M8; D15's targets on the same programs (*After the rebase*) |
 | benchmarks.md (`examples/benchmarks`, 149 programs with result checks; `make bench-smoke` and its count budgets) | a workload set for M4 beside M1's runner; its lazy variants are M4's lazy workloads; its budgets move at M5 |
 | quickcheck.md (`lib/random`, `lib/test/property`; `make test-lib`, `make test-laws`) | D2's note: `Word64` code that every prototype passes and M4 measures |
