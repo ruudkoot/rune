@@ -74,77 +74,46 @@ struct
     (line ("mov " ^ s ^ "(%r13,%rbp), %rdx");
      line ("test $1, %rdx");
      line ("je " ^ l ^ "_a");
-     line ("mov %rdx, %r8");
-     line ("shr $1, %r8");
-     line ("and $1023, %r8");
-     line ("test %r8, %r8");
-     line ("je " ^ l ^ "_b");
-     line ("cmp $1023, %r8");
-     line ("jne " ^ l ^ "_c");
-     line ("mov $2047, %r8");
-     line ("jmp " ^ l ^ "_b");
-     line (l ^ "_c:");
-     line ("add $512, %r8");
-     line (l ^ "_b:");
-     line ("and $-2048, %rdx");
-     line ("or %r8, %rdx");
-     line ("ror $12, %rdx");
+     line ("ror $2, %rdx");
+     line ("movabs $2305843009213693952, %r8");
+     line ("sub %r8, %rdx");
      line ("movq %rdx, %xmm0");
-     line ("jmp " ^ l ^ "_d");
+     line ("jmp " ^ l ^ "_b");
      line (l ^ "_a:");
      line ("test %rdx, %rdx");
      line ("je " ^ unless);
      line ("cmpb $K_REAL, OBJ_KIND(%rdx)");
      line ("jne " ^ unless);
      line ("movsd OBJ_FIELDS(%rdx), %xmm0");
-     line (l ^ "_d:"))
+     line (l ^ "_b:"))
   fun loadReal1 line (s, unless, l) =
     (line ("mov " ^ s ^ "(%r13,%rbp), %rdx");
      line ("test $1, %rdx");
      line ("je " ^ l ^ "_a");
-     line ("mov %rdx, %r8");
-     line ("shr $1, %r8");
-     line ("and $1023, %r8");
-     line ("test %r8, %r8");
-     line ("je " ^ l ^ "_b");
-     line ("cmp $1023, %r8");
-     line ("jne " ^ l ^ "_c");
-     line ("mov $2047, %r8");
-     line ("jmp " ^ l ^ "_b");
-     line (l ^ "_c:");
-     line ("add $512, %r8");
-     line (l ^ "_b:");
-     line ("and $-2048, %rdx");
-     line ("or %r8, %rdx");
-     line ("ror $12, %rdx");
+     line ("ror $2, %rdx");
+     line ("movabs $2305843009213693952, %r8");
+     line ("sub %r8, %rdx");
      line ("movq %rdx, %xmm1");
-     line ("jmp " ^ l ^ "_d");
+     line ("jmp " ^ l ^ "_b");
      line (l ^ "_a:");
      line ("test %rdx, %rdx");
      line ("je " ^ unless);
      line ("cmpb $K_REAL, OBJ_KIND(%rdx)");
      line ("jne " ^ unless);
      line ("movsd OBJ_FIELDS(%rdx), %xmm1");
-     line (l ^ "_d:"))
+     line (l ^ "_b:"))
   fun setReal line (d, slow, l) =
     (line ("movq %xmm0, %rdx");
-     line ("ror $52, %rdx");
-     line ("mov %rdx, %r8");
-     line ("and $2047, %r8");
-     line ("test %r8, %r8");
-     line ("je " ^ l ^ "_a");
-     line ("cmp $2047, %r8");
-     line ("jne " ^ l ^ "_b");
-     line ("mov $1023, %r8");
-     line ("jmp " ^ l ^ "_a");
-     line (l ^ "_b:");
-     line ("sub $513, %r8");
-     line ("cmp $1021, %r8");
-     line ("ja " ^ slow);
-     line ("add $1, %r8");
+     line ("movabs $2305843009213693952, %r8");
+     line ("add %r8, %rdx");
+     line ("ror $62, %rdx");
+     line ("test $1, %rdx");
+     line ("jne " ^ l ^ "_a");
+     line ("shl $2, %r8");
+     line ("cmp %r8, %rdx");
+     line ("jne " ^ slow);
+     line ("mov VM_REAL_ZERO(%r12), %rdx");
      line (l ^ "_a:");
-     line ("and $-2048, %rdx");
-     line ("lea 1(%rdx,%r8,2), %rdx");
      line ("mov %rdx, " ^ d ^ "(%r13,%rbp)"))
   fun testFalse line s =
     (line ("cmpq $1, " ^ s ^ "(%r13,%rbp)"))

@@ -38,7 +38,15 @@ static inline Value fast_order(int lt, int gt) { return mk_con0(1 + gt - lt); }
 #else
 #define FAST_WORD(w) do { r = mk_word((w) & ((UINT64_C(1) << 63) - 1)); } while (0)
 #endif
-#define FAST_REAL(d) do { if (!mk_real_imm((d), &r)) return 0; } while (0)
+/* a real that has no immediate: one of the VM's boxes (zero, the infinities, NaN), or the primitive's to box */
+#define FAST_REAL(d) do { \
+        double d_ = (d); \
+        if (!mk_real_imm(d_, &r)) { \
+            int k_ = real_box_of(real_bits(d_)); \
+            if (k_ < 0 || !vm->real_boxes[k_]) return 0; \
+            r = mk_ptr(vm->real_boxes[k_]); \
+        } \
+    } while (0)
 
 static inline int fast_add(int64_t a, int64_t b, int64_t *r) {
 #if defined(__GNUC__)
@@ -76,7 +84,7 @@ static inline int fast_mul(int64_t a, int64_t b, int64_t *r) {
 #if defined(__GNUC__)
 __attribute__((always_inline))
 #endif
-static inline int prim_fast(int prim, uint32_t n, const Value *base, const uint8_t *L, Value *out) {
+static inline int prim_fast(VM *vm, int prim, uint32_t n, const Value *base, const uint8_t *L, Value *out) {
     const Value *x, *y, *z;
     Value r;
     if (n == 0 || n > 3) return 0;

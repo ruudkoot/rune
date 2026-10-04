@@ -8,7 +8,7 @@
 #include "opcodes.h"
 
 const uint32_t isa_fingerprint = STACK_ISA_FINGERPRINT;
-const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 8 isa " STACK_ISA_FINGERPRINT_HEX;
+const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 9 isa " STACK_ISA_FINGERPRINT_HEX;
 
 /* byte length of an instruction, or 0 for an invalid opcode */
 static inline int instr_length(uint8_t op) {

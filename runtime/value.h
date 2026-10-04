@@ -94,22 +94,18 @@ static inline Value mk_bool(int b) { return mk_imm(b ? 1 : 0); }
 static inline Value mk_word(uint64_t w) { return mk_imm((int64_t)w); }
 static inline Value mk_ptr(Obj *p) { return (Value)(uintptr_t)p; }
 
-/* Koka's encoding of a double in 63 bits (kklib/src/box.c, strategy A1): the
-   sign and the 11-bit exponent rotated to the bottom, the exponent squeezed
-   to 10 bits -- zero and subnormals keep 0, infinity and NaN take 0x3ff, a
-   normal in [2^-510, 2^512) has 0x200 taken off -- then the low bit set. The
-   52 mantissa bits and the sign travel whole, so every encodable double
-   comes back bit for bit; the rest are boxed (K_REAL). */
+/* A real in the word (D3 C, by the rotation the gate of M4 chose:
+   docs/plans/real-encoding.md): the double's bits with 2^61 added, rotated
+   left by two. The sum's bit 62 lands in the word's low bit, and it is set
+   for the exponents 0x200 to 0x5ff, a normal number from 2^-511 up to
+   2^513: those are immediates, and each comes back bit for bit by the
+   rotation and the subtraction. The rest -- zero, the subnormals, the
+   infinities, NaN, the normals outside that range -- are boxes (K_REAL),
+   and the ones met everywhere, +0.0 and -0.0, the two infinities and the
+   quiet NaN of either sign, are each one box that the VM keeps
+   (vm->real_boxes, made as it starts), so that none of them allocates. */
 static inline uint64_t real_bits(double d) { uint64_t b; memcpy(&b, &d, 8); return b; }
 static inline double real_of_bits(uint64_t b) { double d; memcpy(&d, &b, 8); return d; }
-#ifdef RUNE_REAL_ROT
-/* -DRUNE_REAL_ROT, a second encoding for M4's measurements: the double's bits
-   with 2^61 added and rotated left by two, an immediate where that left the
-   low bit set -- which it does for the same exponents but 0x200 and 0x5ff
-   more, 0x200 to 0x5ff, since the sum's bit 62 is the test. Back by the
-   rotation and the subtraction: no case for an exponent of 0 or of all ones,
-   so zero, the subnormals, infinity and NaN are boxes, and +0.0, which is
-   everywhere, has the VM's one box (vm->real_zero; mk_real). */
 #define REAL_ROT_OFF ((uint64_t)1 << 61)
 static inline int real_encode(double d, Value *v) {
     uint64_t u = real_bits(d) + REAL_ROT_OFF;
@@ -119,28 +115,21 @@ static inline int real_encode(double d, Value *v) {
     return 1;
 }
 static inline double real_decode(Value v) { return real_of_bits(((v >> 2) | (v << 62)) - REAL_ROT_OFF); }
-#else
-static inline int real_encode(double d, Value *v) {
-    uint64_t u = real_bits(d);
-    u = (u << 12) | (u >> 52);
-    uint64_t e = u & 0x7ff;
-    u -= e;
-    if (e == 0) { }
-    else if (e == 0x7ff) e = 0x3ff;
-    else if (e > 0x200 && e < 0x5ff) e -= 0x200;
-    else return 0;
-    *v = (u & ~(uint64_t)0x7ff) | (e << 1) | 1u;
-    return 1;
+/* the VM's boxes: which holds the double of these bits, or -1 */
+enum { REAL_BOX_ZERO, REAL_BOX_NEG_ZERO, REAL_BOX_INF, REAL_BOX_NEG_INF, REAL_BOX_NAN, REAL_BOX_NEG_NAN, REAL_BOXES };
+#define REAL_BOX_BITS { UINT64_C(0), UINT64_C(0x8000000000000000), UINT64_C(0x7FF0000000000000), UINT64_C(0xFFF0000000000000), \
+                        UINT64_C(0x7FF8000000000000), UINT64_C(0xFFF8000000000000) }
+static inline int real_box_of(uint64_t bits) {
+    switch (bits) {
+    case UINT64_C(0): return REAL_BOX_ZERO;
+    case UINT64_C(0x8000000000000000): return REAL_BOX_NEG_ZERO;
+    case UINT64_C(0x7FF0000000000000): return REAL_BOX_INF;
+    case UINT64_C(0xFFF0000000000000): return REAL_BOX_NEG_INF;
+    case UINT64_C(0x7FF8000000000000): return REAL_BOX_NAN;
+    case UINT64_C(0xFFF8000000000000): return REAL_BOX_NEG_NAN;   /* what 0.0 / 0.0 is on x86 */
+    default: return -1;
+    }
 }
-static inline double real_decode(Value v) {
-    uint64_t e = (v >> 1) & 0x3ff;
-    if (e == 0) { }
-    else if (e == 0x3ff) e = 0x7ff;
-    else e += 0x200;
-    uint64_t u = (v & ~(uint64_t)0x7ff) | e;
-    return real_of_bits((u >> 12) | (u << 52));
-}
-#endif
 /* a real as a value without allocating: 0 where it needs a box (a fast
    path answers 0 and the primitive boxes) */
 static inline int mk_real_imm(double d, Value *v) {
@@ -281,7 +270,7 @@ static inline size_t obj_alloc_size(size_t payload_bytes) { return sizeof(Obj) +
 
 /* ---- what needs the heap (runtime/heap.c): a real or an int that does not fit the word ---- */
 struct VM;
-Value mk_real(struct VM *vm, double d);          /* encoded, or a K_REAL box */
+Value mk_real(struct VM *vm, double d);          /* encoded, or a K_REAL box: the VM's own for zero, the infinities and NaN */
 Value mk_int_vm(struct VM *vm, int64_t i);       /* an int: an immediate; one that does not fit is a fatal error (the callers keep to 63 bits), or a K_BOX under RUNE_INT64 */
 Value mk_word_vm(struct VM *vm, uint64_t w);     /* a word: its low 63 bits; or all 64, with a K_BOX, under RUNE_INT64 */
 Value mk_int64_vm(struct VM *vm, int64_t i);     /* an Int64.int: an immediate, or a K_BOX */

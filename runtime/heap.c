@@ -34,13 +34,27 @@ static Value alloc_box(VM *vm, int kind, uint64_t bits) {
 Value mk_real(VM *vm, double d) {
     Value v;
     if (mk_real_imm(d, &v)) return v;
-#ifdef RUNE_REAL_ROT
-    if (real_bits(d) == 0) {
-        if (!vm->real_zero) vm->real_zero = val_ptr(alloc_box(vm, K_REAL, 0));
-        return mk_ptr(vm->real_zero);
-    }
-#endif
+    int k = real_box_of(real_bits(d));
+    if (k >= 0 && vm->real_boxes[k]) return mk_ptr(vm->real_boxes[k]);
     return alloc_box(vm, K_REAL, real_bits(d));
+}
+/* the VM's boxes of zero, the infinities and NaN (value.h): made as the VM
+   starts, so that every engine has them at the same place in its heap; with
+   every real boxed (RUNE_REAL_BOXED, the switch that measures boxing) none */
+static void real_boxes_make(VM *vm) {
+#ifdef RUNE_REAL_BOXED
+    (void)vm;
+#else
+    static const uint64_t bits[REAL_BOXES] = REAL_BOX_BITS;
+    /* before the program: no collection is due (--gc-stress counts from its
+       first allocation), and --stats counts the boxes the program makes */
+    size_t stress = vm->gc_stress;
+    vm->gc_stress = 0;
+    for (int k = 0; k < REAL_BOXES; k++) vm->real_boxes[k] = val_ptr(alloc_box(vm, K_REAL, bits[k]));
+    vm->gc_stress = stress;
+    vm->boxes_allocated = 0;
+    vm->box_bytes_allocated = 0;
+#endif
 }
 Value mk_int_vm(VM *vm, int64_t i) {
     if (int_fits(i)) return mk_imm(i);
@@ -87,6 +101,7 @@ void heap_init(VM *vm, size_t semispace_bytes) {
     vm->copied = 0;
     vm->max_live = 0;
     if (!vm->heap_from) { fprintf(stderr, "runevm: cannot allocate heap\n"); exit(2); }
+    real_boxes_make(vm);
 }
 
 Obj *vm_alloc(VM *vm, uint8_t kind, uint16_t contag, uint32_t len, size_t payload_bytes) {
@@ -191,7 +206,8 @@ static void collect_into(VM *vm, size_t new_size) {
             if (vm->frames[i].closure) vm->frames[i].closure = copy_obj(vm->frames[i].closure);
     for (int i = 0; i < NUM_BUILTIN_EXNS; i++)
         if (vm->builtin_exns[i]) vm->builtin_exns[i] = copy_obj(vm->builtin_exns[i]);
-    if (vm->real_zero) vm->real_zero = copy_obj(vm->real_zero);
+    for (int i = 0; i < REAL_BOXES; i++)
+        if (vm->real_boxes[i]) vm->real_boxes[i] = copy_obj(vm->real_boxes[i]);
 
     /* scan */
     size_t scan = 0;
@@ -313,6 +329,7 @@ int heap_relocate(VM *vm, uintptr_t old_base) {
             if (vm->frames[i].closure) vm->frames[i].closure = relocate_obj(vm, vm->frames[i].closure);
     for (int i = 0; i < NUM_BUILTIN_EXNS; i++)
         if (vm->builtin_exns[i]) vm->builtin_exns[i] = relocate_obj(vm, vm->builtin_exns[i]);
-    if (vm->real_zero) vm->real_zero = relocate_obj(vm, vm->real_zero);
+    for (int i = 0; i < REAL_BOXES; i++)
+        if (vm->real_boxes[i]) vm->real_boxes[i] = relocate_obj(vm, vm->real_boxes[i]);
     return reloc_ok;
 }

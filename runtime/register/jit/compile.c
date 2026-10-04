@@ -137,7 +137,7 @@ int jit_h_prim(VM *vm, int prim, int32_t d, const uint8_t *L) {
     if (jit->prim_calls) jit->prim_calls[prim]++;
     Value *base = vm->stack + vm->frames[vm->fp].base;
     uint32_t n = prim_arity[prim];
-    if (prim_fast(prim, n, base, L, &base[d])) return 0;
+    if (prim_fast(vm, prim, n, base, L, &base[d])) return 0;
     for (uint32_t i = 0; i < n; i++) {
         Value v = vm->stack[vm->frames[vm->fp].base + (size_t)read_i32(L + 4 * i)];
         vm_push(vm, v);

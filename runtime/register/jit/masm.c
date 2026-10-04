@@ -9,9 +9,9 @@
 #define SLOT(k) slot(m, k)
 
 /* The layout as the code here writes it (runtime/value.h has it in C; this
-   branch's is the tagged word of docs/plans/heap-layout.md, M4): a Value
+   branch's is the tagged word of docs/plans/heap-layout.md, M5): a Value
    of 8 bytes, whose low bit says an immediate (2n+1: an int, a word, a
-   char, a nullary constructor's tag, unit as 1; or a real in Koka's
+   char, a nullary constructor's tag, unit as 1; or a real in its
    encoding) from a pointer, and an object's header of kind, contag and
    len before its fields. A change of layout is a change to value.h and to
    the operations here, and these say so at compile time. */
@@ -103,15 +103,14 @@ static void want_current(const Masm *m, int32_t s) {
 }
 
 /* R_S2 := the word of the real in xmm where it has an immediate (value.h,
-   real_encode: an exponent of 0, of all ones, or of 0x201 to 0x5fe); else
-   to fail. R_S3 clobbered. */
+   real_encode: 2^61 added and the sum rotated left by two, an immediate
+   where the low bit is then set); +0.0, which becomes 2^63, has the VM's
+   box; else to fail. R_S3 clobbered. */
 static void encode_real(Masm *m, int xmm, AsmLabel *fail) {
 #ifdef RUNE_REAL_BOXED
     (void)xmm;
     as_jmp(&m->a, fail);
-#elif defined(RUNE_REAL_ROT)
-    /* 2^61 added and the sum rotated left by two: an immediate where the low
-       bit is set; +0.0, which became 2^63, has the VM's box once it is made */
+#else
     AsmLabel ok; as_label_init(&ok);
     as_fmov_rf(&m->a, R_S2, xmm);
     as_mov_ri(&m->a, R_S3, (int64_t)REAL_ROT_OFF);
@@ -122,76 +121,28 @@ static void encode_real(Masm *m, int xmm, AsmLabel *fail) {
     as_shl_ri(&m->a, R_S3, 2);
     as_cmp_rr(&m->a, R_S2, R_S3);
     as_jcc(&m->a, CC_NE, fail);
-    as_ld64(&m->a, R_S2, VMR, OFF(real_zero));
-    as_test_rr(&m->a, R_S2, R_S2);
-    as_jcc(&m->a, CC_E, fail);
+    as_ld64(&m->a, R_S2, VMR, OFF(real_boxes) + 8 * REAL_BOX_ZERO);
     as_bind(&m->a, &ok);
     as_label_free(&ok);
-#else
-    AsmLabel ok, mid; as_label_init(&ok); as_label_init(&mid);
-    as_fmov_rf(&m->a, R_S2, xmm);
-    as_ror_ri(&m->a, R_S2, 52);              /* left by 12: the sign and the exponent lowest */
-    as_mov_rr(&m->a, R_S3, R_S2);
-    as_and_ri(&m->a, R_S3, 0x7ff);
-    as_test_rr(&m->a, R_S3, R_S3);
-    as_jcc(&m->a, CC_E, &ok);                /* 0 stays 0 */
-    as_cmp_ri(&m->a, R_S3, 0x7ff);
-    as_jcc(&m->a, CC_NE, &mid);
-    as_mov_ri(&m->a, R_S3, 0x3ff);
-    as_jmp(&m->a, &ok);
-    as_bind(&m->a, &mid);
-    as_sub_ri(&m->a, R_S3, 0x201);           /* 0x201..0x5fe to 0..0x3fd, anything else past it */
-    as_cmp_ri(&m->a, R_S3, 0x3fd);
-    as_jcc(&m->a, CC_A, fail);
-    as_add_ri(&m->a, R_S3, 1);
-    as_bind(&m->a, &ok);
-    as_and_ri(&m->a, R_S2, ~0x7ff);
-    as_lea(&m->a, R_S2, R_S2, R_S3, 2, 1);
-    as_label_free(&ok); as_label_free(&mid);
 #endif
 }
-/* xmm := the real of the word in R_S2: an immediate, decoded (the exponent
-   of ten bits back to eleven: 0 and all ones are zero's and infinity's,
-   the rest is 0x200 short; then the word rotated back), or a box, read.
-   To unless where it is neither; with unless NULL the word is trusted to
-   be a real's (tier 2, a register the section says is one). R_S3
-   clobbered. */
+/* xmm := the real of the word in R_S2: an immediate, decoded (the word
+   rotated back and 2^61 taken off), or a box, read. To unless where it is
+   neither; with unless NULL the word is trusted to be a real's (tier 2, a
+   register the section says is one). R_S3 clobbered. */
 static void decode_real(Masm *m, int xmm, AsmLabel *unless) {
-    AsmLabel box, join, done; as_label_init(&box); as_label_init(&join); as_label_init(&done);
+    AsmLabel box, done; as_label_init(&box); as_label_init(&done);
     as_test_ri(&m->a, R_S2, 1);
     as_jcc(&m->a, CC_E, &box);
 #ifdef RUNE_REAL_BOXED
     /* every real is a box; a register trusted to be a real that is an
-       immediate is one not yet defined, unit, and reads as the encoding
-       would read it: zero */
+       immediate is one not yet defined, unit: zero */
     if (unless) as_jmp(&m->a, unless);
     else { as_fzero(&m->a, xmm); as_jmp(&m->a, &done); }
-#elif defined(RUNE_REAL_ROT)
+#else
     as_ror_ri(&m->a, R_S2, 2);
     as_mov_ri(&m->a, R_S3, (int64_t)REAL_ROT_OFF);
     as_sub_rr(&m->a, R_S2, R_S3);
-    as_fmov_fr(&m->a, xmm, R_S2);
-    as_jmp(&m->a, &done);
-#else
-    {
-        AsmLabel mid; as_label_init(&mid);
-        as_mov_rr(&m->a, R_S3, R_S2);
-        as_shr_ri(&m->a, R_S3, 1);
-        as_and_ri(&m->a, R_S3, 0x3ff);
-        as_test_rr(&m->a, R_S3, R_S3);
-        as_jcc(&m->a, CC_E, &join);
-        as_cmp_ri(&m->a, R_S3, 0x3ff);
-        as_jcc(&m->a, CC_NE, &mid);
-        as_mov_ri(&m->a, R_S3, 0x7ff);
-        as_jmp(&m->a, &join);
-        as_bind(&m->a, &mid);
-        as_add_ri(&m->a, R_S3, 0x200);
-        as_label_free(&mid);
-    }
-    as_bind(&m->a, &join);
-    as_and_ri(&m->a, R_S2, ~0x7ff);
-    as_or_rr(&m->a, R_S2, R_S3);
-    as_ror_ri(&m->a, R_S2, 12);
     as_fmov_fr(&m->a, xmm, R_S2);
     as_jmp(&m->a, &done);
 #endif
@@ -204,7 +155,7 @@ static void decode_real(Masm *m, int xmm, AsmLabel *unless) {
     }
     as_fld(&m->a, xmm, R_S2, (int32_t)sizeof(Obj));
     as_bind(&m->a, &done);
-    as_label_free(&box); as_label_free(&join); as_label_free(&done);
+    as_label_free(&box); as_label_free(&done);
 }
 
 /* A real's home to its slot: encoded, or boxed by the slow path, which
@@ -768,7 +719,7 @@ void ms_set_payload(Masm *m, int32_t d, int tag, int r, AsmLabel *slow) {
 }
 #endif
 
-/* ---- reals: Koka's encoding in the word, or a box (value.h) ---- */
+/* ---- reals: an immediate by the rotation, or a box (value.h) ---- */
 void ms_load_real(Masm *m, int xmm, int32_t s, AsmLabel *unless) {
     const Home *h = ms_home(m, s);
     if (is_xmm(h)) { as_fmov(&m->a, xmm, h->reg); return; }

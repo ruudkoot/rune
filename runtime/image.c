@@ -263,6 +263,7 @@ static void write_image(VM *vm, Stream *s, int kind) {
     for (uint32_t i = 0; i < p->nglobals; i++) put_value(s, vm->globals[i], vm);
     put(s, vm->global_set, p->nglobals);
     for (int i = 0; i < NUM_BUILTIN_EXNS; i++) put_obj(s, vm->builtin_exns[i], vm);
+    for (int i = 0; i < REAL_BOXES; i++) put_obj(s, vm->real_boxes[i], vm);
     put_u64(s, (uint64_t)vm->sp);
     for (size_t i = 0; i < vm->sp; i++) put_value(s, vm->stack[i], vm);
     put_u32(s, (uint32_t)vm->frames_active);
@@ -653,6 +654,7 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     for (uint32_t i = 0; i < p->nglobals; i++) vm->globals[i] = get_value(&s);
     get(&s, vm->global_set, p->nglobals);
     for (int i = 0; i < NUM_BUILTIN_EXNS; i++) vm->builtin_exns[i] = get_obj(&s);
+    for (int i = 0; i < REAL_BOXES; i++) vm->real_boxes[i] = get_obj(&s);
 
     uint64_t sp = get_u64(&s);
     if (!s.ok || !fits(sp, sizeof(Value))) return failed(&s, err, errlen, "the image is cut short");

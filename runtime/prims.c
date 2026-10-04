@@ -18,10 +18,9 @@ static inline int int_fits_lang(int64_t i) {
     return int_fits(i);
 #endif
 }
-/* the word (runtime/value.h, heap-layout M4): a result that does not fit an
-   immediate is boxed (RUNE_INT64) or, for an int, is Overflow, which the
-   overflow checks below raise at the word's range; a real outside Koka's
-   encoding is boxed */
+/* the word (runtime/value.h, heap-layout M5): an int past an immediate's 63
+   bits is Overflow, which the overflow checks below raise at the word's
+   range (or a box under RUNE_INT64); a real that has no immediate is a box */
 #define mk_int(i) mk_int_vm(vm, (i))
 #define mk_word(w) mk_word_vm(vm, (w))
 #define mk_real(d) (mk_real)(vm, (d))
