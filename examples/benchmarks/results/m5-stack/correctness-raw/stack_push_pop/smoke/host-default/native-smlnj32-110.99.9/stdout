@@ -1,0 +1,40 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stack.sml]
+[autoloading]
+[autoloading done]
+structure BenchOcamlStack : sig
+  exception Empty
+  datatype 'a stack = Stack of {contents:'a list ref, length:int ref}
+  val create : unit -> 'a stack
+  val push : 'a -> 'a stack -> unit
+  val pop : 'a stack -> 'a
+  val top : 'a stack -> 'a
+  val length : 'a stack -> int
+  val fold : ('a * 'b -> 'a) -> 'a -> 'b stack -> 'a
+  val integers : int -> int stack
+  val foldRun : int -> IntInf.int
+  val pushPopRun : int -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/stack_push_pop/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 100
+PASS stack_push_pop
+SUMMARY 1 checks, 0 failed

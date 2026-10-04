@@ -1,0 +1,2 @@
+stack_fold	600	4194304	shared/input.sml shared/ocaml-stack.sml stack_fold/benchmark.sml shared/main.sml	2500000	stack_fold/normal.expected	-
+stack_push_pop	600	4194304	shared/input.sml shared/ocaml-stack.sml stack_push_pop/benchmark.sml shared/main.sml	100000000	stack_push_pop/normal.expected	-

@@ -1,0 +1,9 @@
+COUNT unbudgeted stack_fold normal rune
+COUNT unbudgeted stack_fold normal rune:opt
+COUNT unbudgeted stack_fold normal rune:new
+COUNT unbudgeted stack_fold normal rune:jit
+COUNT unbudgeted stack_push_pop normal rune
+COUNT unbudgeted stack_push_pop normal rune:opt
+COUNT unbudgeted stack_push_pop normal rune:new
+COUNT unbudgeted stack_push_pop normal rune:jit
+COUNT comparisons agree

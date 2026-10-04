@@ -1,0 +1,4 @@
+Impossible: LambdaBasics.mk_subst: 0 tyvars, 1 types; reduce2
+[[ERR in sub process:
+  CRASH]]
+Stopping compilation of MLB-file due to error (code 1).

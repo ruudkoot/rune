@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-stack.ob1ahzw4
+PASS stack_fold smoke O0
+PASS stack_fold smoke O2
+PASS stack_fold smoke hosts
+PASS stack_fold normal O0
+PASS stack_fold normal O2
+PASS stack_fold normal hosts
+PASS stack_push_pop smoke O0
+PASS stack_push_pop smoke O2
+PASS stack_push_pop smoke hosts
+PASS stack_push_pop normal O0
+PASS stack_push_pop normal O2
+PASS stack_push_pop normal hosts
