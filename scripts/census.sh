@@ -97,13 +97,13 @@ for w in "$@"; do
   [ -n "$outfile" ] && rm -f "$outfile"
   case "$dir" in /*) cdir=$dir ;; *) cdir=$root/$dir ;; esac
   # shellcheck disable=SC2086
-  (cd "$cwd" && limit "$stock" --jit=off --count --heap-size $heap "$rbc" $args < "$stdin" > "$dir/stock.stdout" 2> "$dir/stock.stderr")
+  (cd "$cwd" && limit "$stock" --jit=off --count --heap-size $heap "$rbc" $args < "$stdin" > "$cdir/stock.stdout" 2> "$cdir/stock.stderr")
   sx=$?
   sline=$(grep '^runevm: count:' "$dir/stock.stderr" | tail -1)
   t0=$(date +%s)
   [ -n "$outfile" ] && rm -f "$outfile"
   # shellcheck disable=SC2086
-  (cd "$cwd" && limit "$census" --jit=off --count --stats --heap-size 1073741824 --heap-fill 50 --census-dir "$cdir" --census-every "$every" $summary "$rbc" $args < "$stdin" > "$dir/census.stdout" 2> "$dir/census.stderr")
+  (cd "$cwd" && limit "$census" --jit=off --count --stats --heap-size 1073741824 --heap-fill 50 --census-dir "$cdir" --census-every "$every" $summary "$rbc" $args < "$stdin" > "$cdir/census.stdout" 2> "$cdir/census.stderr")
   cx=$?
   wall=$(( $(date +%s) - t0 ))
   cline=$(grep '^runevm: count:' "$dir/census.stderr" | tail -1)
