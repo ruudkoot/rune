@@ -43,7 +43,7 @@ What it rests on:
 | M2 | The simulator and the harness in the tree | done 2026-09-27, `3f17fd2` |
 | M3 | The layout behind an interface | done 2026-09-27, `93cc674` |
 | M4 | Prototypes at full scale; the gate | done 2026-10-04: both prototypes run, pass the suites and are measured (branches `heap-layout-word` and `heap-layout-pairs`; the four sections *M4, ...* below), and the owner decided the gate that day (*M4, for the gate*). Not built in M4, and no longer wanted before M5: raw typed fields, the 32-bit header and its table, typed slots |
-| M5 | The chosen layout, complete | planned again at the gate: the word of `heap-layout-word`, 63 bits, the rotation, no pairs, one word on every width |
+| M5 | The chosen layout, complete | in progress on `heap-layout-word`: the first of its four steps, the 64-bit types, is built and passes every suite (*M5, the first step*); the reals' encoding is next |
 | M6 | Roots and maps | |
 | M7 | The collector on the new layout, and the hooks for the next | |
 | M8 | Flat arrays, strings and the FFI's objects | |
@@ -997,6 +997,100 @@ it what it gives on the 16-byte layout, law for law: 1,733 laws at
 their structures, 1,318 passing, 313 failing, 102 stopped (run the
 day of the gate, after it: its script had been broken by the rename
 of the VMs' binaries, mended in `b3e6092e`).
+
+### M5, the first step: the 64-bit types
+
+Built on 2026-10-04 on branch `heap-layout-word` (`31872015` to
+`ae2f8a8d`), which `heap-layout` was merged into first.
+
+**What is there.**
+
+* *The VM.* `int` and `word` are the immediate's 63 bits in the build
+  with no switch: `Overflow` where an int would need a 64th, a word
+  wraps there. 44 primitives `int64_*` and `word64_*` keep 64 bits on
+  every VM: a number is an immediate where it fits 63 bits and a
+  `K_BOX` where it does not, which is prototype 1's representation of
+  D2 A, kept for the two types alone. The interpreter has their fast
+  paths; `real_to_bits` and `real_from_bits` are `Word64`'s. Constant
+  kinds 5 and 6, representations 9 and 10, bytecode version 6. The
+  loader refuses an int or word constant past 63 bits and holds a
+  `CONST` to its register by the constant's kind.
+* *The compiler.* Two built-in type constructors, `Int64.int` and
+  `Word64.word`, which the library names with `_prim "int64"` and
+  `_prim "word64"` in a type (under `--allow-prim` alone). Their
+  literals, in expressions and patterns, and the overloaded operators
+  go to the primitives directly. A literal of `int` or `word` past 63
+  bits is a compile-time error where it was a fatal error at load in
+  the prototype. Folding is at 63 bits; the 64-bit primitives are not
+  folded.
+* *The Basis.* `Int64` (= `FixedInt`) and `Word64` are structures on
+  the primitives; **`LargeWord` is `Word64`**, so `toLarge`,
+  `toLargeX` and `fromLarge` of every word structure convert, and
+  `PackWord`'s words and `PackReal`'s bits are `LargeWord`'s.
+  **`SysWord` stays `Word` and `Position` stays `Int`**: Posix's flags
+  and a file's positions fit 63 bits and stay out of boxes. `LargeInt`
+  is `IntInf` as before.
+* *The JIT.* A register the section says holds a 64-bit type has a
+  raw home at tier 2, the 64 bits themselves (M4's `RUNE_RAW_HOMES`,
+  now for those registers in every build), and 39 of the primitives
+  are in line at both tiers, the conversions between the 64 bits and
+  an int's or a word's 63 among them. aarch64 has them through the
+  same macro-assembler.
+* *D2 A behind its switch:* a VM built with `-DRUNE_INT64`
+  (`bin/runevm-int64`) and a compiler given `--int-bits=64`. The
+  property library's frozen hash of everything its generators draw
+  moved in the default build, and under the switch the old value comes
+  back to the bit: what changed is the width of `int` and `word` and
+  nothing else.
+
+**SplitMix64**, the workload D2's note asked for (`lib/random`'s
+generator: three million words and a tree of 2^18 splits), at the
+default tiering:
+
+| VM | instructions | cycles | boxes |
+|---|---:|---:|---:|
+| 16-byte layout | 1.01G | 0.46G | none |
+| prototype 1, 64 bits kept (M4) | 9.36G | 3.43G | 21.6M |
+| the same with raw homes for every int and word (M4) | 2.11G | 0.82G | 8.3M |
+| M5: 63-bit `int`, `Word64` its own type with raw homes | 2.20G | 0.95G | 11.7M |
+
+The answer is the 16-byte VM's, where the 63-bit prototype of M4
+printed another. What is left of the distance is the boxes: a
+generator is two `Word64.word` in a tuple, passed at every call, and a
+field of a tuple is a word of the VM (raw typed fields, D1's second
+half, are what would hold them unboxed).
+
+**The suites.** `test`, `test-register`, `test-register-jit`
+(`check-jit` over 280 programs), `test-native`, `test-opt`, `test-ir`,
+`test-lib`, `test-stress`, `test-register-asan`, `test-basis`,
+`test-doc`, `check-docs`, `check-isa`, `check-templates`, `check-cross`
+(the seven builds of the compiler, of `runedoc` and of `runeopt`
+agree), `test-all`, `test-portability` (linux32, ppc64, aarch64 with
+its JIT), `test-windows`, `test-census`, `check-heapsim`,
+`check-layouts`, `bench-smoke` and `check-positions` pass. The Basis
+suite is 139,216 checks (five more than before: the tests follow the
+precision), all passing on the stack VM, one explained on the register
+VM as before. The seven programs of `tests/lang` that named 64 bits of
+`int` or `word` are at 63, and four new ones are their twins at the
+64-bit types (`lex.int64_literals`, `rt.int64_overflow`,
+`basis.int64_ops`, `basis.word64_ops`), their expected values checked
+against a computation outside Rune. `perf-check` has two budgets
+over, to move when the budgets are re-based: `compile-sigs` runs 5.4%
+more instructions (a program that names `Word` now compiles
+`word64.sml` too) and `word_bits` makes 25 more objects as it starts.
+
+**Found on the way.** `check-cross` had not been run on prototype 1:
+`runeopt` built by SML/NJ's 32-bit system (31-bit ints) raised
+`Overflow` where a generated template made the word of a payload near
+2^30 in the host's `int`; the generator writes that arithmetic in
+`IntInf` now. `word_to_int_x` was a fatal error in the 63-bit
+interpreter for a word of 2^62 or more, and the reals' rounding to an
+int was fatal between 2^62 and 2^63: both are right at 63 bits.
+
+**Not done in this step.** `runeopt` calls the 64-bit primitives' C
+and does none in line; `word64_asr` and the reals' bits are not in
+line in the JIT either; the middle end folds no 64-bit arithmetic.
+None changes a result.
 
 ## The request
 
