@@ -1060,6 +1060,29 @@ generator is two `Word64.word` in a tuple, passed at every call, and a
 field of a tuple is a word of the VM (raw typed fields, D1's second
 half, are what would hold them unboxed).
 
+**Cycles**, against the 16-byte VM and M4's prototype 1 (64 bits kept,
+Koka's encoding), each program run on the three VMs in turn on a quiet
+machine, the least of three:
+
+| Program | 16-byte | M4, prototype 1 | M5, step 1 |
+|---|---:|---:|---:|
+| bootstrap | 8.14G | 6.70G (0.82) | 6.75G (0.83) |
+| compile-sigs | 0.712G | 0.621G (0.87) | 0.669G (0.94) |
+| runedoc-page | 0.334G | 0.283G (0.85) | 0.281G (0.84) |
+| string_ops | | 268.8M | 263.1M |
+| array_sieve | | 118.4M | 115.1M |
+
+The step costs nothing but on `compile-sigs`, whose 7% is `word64.sml`
+compiled with every program that names `Word`. Two lessons of method:
+a table of one VM after another was 5% to 10% off that afternoon (the
+same binary ran `string_ops` in 263M and 284M cycles half an hour
+apart, another session's job on the machine), so ratios between VMs
+are taken from runs that alternate; and four builds of the same
+sources that differ in the alignment of functions, loops and jumps,
+and one at `-O3`, are within 1.5% of each other on `string_ops` and
+`array_sieve`, so the placement of code is not what moves these
+numbers.
+
 **The suites.** `test`, `test-register`, `test-register-jit`
 (`check-jit` over 280 programs), `test-native`, `test-opt`, `test-ir`,
 `test-lib`, `test-stress`, `test-register-asan`, `test-basis`,
