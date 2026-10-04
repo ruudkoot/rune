@@ -202,6 +202,8 @@ void disassemble(const Program *p, FILE *out) {
         switch (p->const_kinds[i]) {   /* what the bytecode said: the value does not */
         case CONST_INT: fprintf(out, "%lld\n", (long long)val_int(c)); break;
         case CONST_WORD: fprintf(out, "0wx%llX\n", (unsigned long long)val_word(c)); break;
+        case CONST_INT64: fprintf(out, "%lld\n", (long long)val_int64(c)); break;
+        case CONST_WORD64: fprintf(out, "0wx%llX\n", (unsigned long long)val_word64(c)); break;
         case CONST_REAL: fprintf(out, "%g\n", val_real(c)); break;
         case CONST_CHAR: fprintf(out, "#%lld\n", (long long)val_char(c)); break;
         case CONST_STRING: fprintf(out, "\"%.*s\"\n", (int)obj_len(val_ptr(c)), obj_bytes(val_ptr(c))); break;

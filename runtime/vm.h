@@ -49,7 +49,9 @@ typedef struct Function {
 
 /* What a register holds, as the compiler says (Low.rep; the numbers are the
    file's) */
-enum Rep { REP_ANY = 0, REP_INT, REP_WORD, REP_REAL, REP_CHAR, REP_CON0, REP_PTR, REP_CON, REP_UNIT, REP__COUNT };
+enum Rep { REP_ANY = 0, REP_INT, REP_WORD, REP_REAL, REP_CHAR, REP_CON0, REP_PTR, REP_CON, REP_UNIT,
+           REP_INT64, REP_WORD64,   /* Int64.int, Word64.word: an immediate or a K_BOX */
+           REP__COUNT };
 
 /* Where an instruction came from: the file, line and column the compiler
    recorded for the instructions from `pc` up to the next entry's, and the
@@ -77,7 +79,8 @@ typedef struct Inlined {
 } Inlined;
 
 /* the kinds of a constant, as a bytecode file numbers them */
-enum ConstKind { CONST_INT = 0, CONST_WORD = 1, CONST_REAL = 2, CONST_STRING = 3, CONST_CHAR = 4 };
+enum ConstKind { CONST_INT = 0, CONST_WORD = 1, CONST_REAL = 2, CONST_STRING = 3, CONST_CHAR = 4,
+                 CONST_INT64 = 5, CONST_WORD64 = 6, CONST__COUNT };
 
 typedef struct Program {
     uint32_t nconsts;

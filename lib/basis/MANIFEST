@@ -40,19 +40,19 @@ list.sml        | demand | yes  | List                  |
 listpair.sml    | demand | yes  | ListPair              |
 intinf.sml      | demand | yes  | IntInf LargeInt RuneIntInf | List StringCvt
 int.sml         | demand | yes  | Int                   | IntInf StringCvt
-word.sml        | demand | yes  | Word LargeWord SysWord | Int IntInf List StringCvt
+word.sml        | demand | yes  | Word SysWord          | Int IntInf List StringCvt
+word64.sml      | demand | yes  | Word64 LargeWord      | Int IntInf List StringCvt Word
 word_sig.sml    | demand | yes  | WORD                  | LargeInt LargeWord StringCvt Word
 int_sig.sml     | demand | yes  | INTEGER               | Int LargeInt StringCvt
 intn_fn.sml     | demand | yes  | RuneIntNFn            | INTEGER Int StringCvt
 int8.sml        | demand | yes  | Int8                  | RuneIntNFn
 int16.sml       | demand | yes  | Int16                 | RuneIntNFn
 int32.sml       | demand | yes  | Int32                 | RuneIntNFn
-int64.sml       | demand | yes  | FixedInt Int64        | INTEGER Int
+int64.sml       | demand | yes  | FixedInt Int64        | Int IntInf StringCvt
 wordn_fn.sml    | demand | yes  | RuneWordNFn           | Int StringCvt WORD Word
 word8.sml       | demand | yes  | Word8                 | RuneWordNFn
 word16.sml      | demand | yes  | Word16                | RuneWordNFn
 word32.sml      | demand | yes  | Word32                | RuneWordNFn
-word64.sml      | demand | yes  | Word64                | WORD Word
 char.sml        | demand | yes  | RuneEscape Char       | Int StringCvt
 string.sml      | demand | yes  | String                | Char Int List RuneEscape StringCvt -substring
 ieeereal.sml    | demand | yes  | IEEEReal              | StringCvt
@@ -73,8 +73,8 @@ charvectorslice.sml | demand | yes | CharVectorSlice     | CharVector MONO_VECTO
 word8vector.sml | demand | yes  | RuneByteVector Word8Vector Word8VectorSlice RUNE_MONO_VECTOR_SLICE_BYTES | RUNE_MONO_VECTOR_BYTES MONO_VECTOR_SLICE RuneStringVectorFn Substring Word8
 word8array.sml  | demand | yes  | Word8Array            | MONO_ARRAY RuneMonoArrayFn Word8 Word8Vector
 word8arrayslice.sml | demand | yes | Word8ArraySlice     | MONO_ARRAY_SLICE RuneMonoArraySliceFn Word8 Word8Array Word8Vector Word8VectorSlice
-pack_word.sml   | demand | yes  | PackWord16Big PackWord16Little PackWord32Big PackWord32Little PackWord64Big PackWord64Little RunePackWordFn | Int Word Word8 Word8Array Word8Vector
-pack_real.sml   | demand | yes  | PackReal64Big PackReal64Little PackRealBig PackRealLittle RunePackRealFn | Real RunePackWordFn Word8 Word8Array
+pack_word.sml   | demand | yes  | PackWord16Big PackWord16Little PackWord32Big PackWord32Little PackWord64Big PackWord64Little RunePackWordFn | Int LargeWord Word Word8 Word8Array Word8Vector
+pack_real.sml   | demand | yes  | PackReal64Big PackReal64Little PackRealBig PackRealLittle RunePackRealFn | LargeWord Real RunePackWordFn Word8 Word8Array
 chararray.sml   | demand | yes  | CharArray             | CharVector MONO_ARRAY RuneMonoArrayFn
 chararrayslice.sml | demand | yes | CharArraySlice       | CharArray CharVector CharVectorSlice MONO_ARRAY_SLICE RuneMonoArraySliceFn
 sig_array2.sml | demand | yes  | ARRAY2 | Vector
@@ -94,8 +94,8 @@ mono_word16.sml | demand | yes | Word16Array Word16Array2 Word16ArraySlice Word1
 mono_word32.sml | demand | yes | Word32Array Word32Array2 Word32ArraySlice Word32Vector Word32VectorSlice | MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn Word32
 mono_real.sml | demand | yes | RealArray RealArray2 RealArraySlice RealVector RealVectorSlice | MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
 mono_int64.sml | demand | yes | Int64Array Int64Array2 Int64ArraySlice Int64Vector Int64VectorSlice | Int64 MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
-mono_largeword.sml | demand | yes | LargeWordArray LargeWordArray2 LargeWordArraySlice LargeWordVector LargeWordVectorSlice | WordArray WordArray2 WordArraySlice WordVector WordVectorSlice
 mono_word64.sml | demand | yes | Word64Array Word64Array2 Word64ArraySlice Word64Vector Word64VectorSlice | MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn Word64
+mono_largeword.sml | demand | yes | LargeWordArray LargeWordArray2 LargeWordArraySlice LargeWordVector LargeWordVectorSlice | Word64Array Word64Array2 Word64ArraySlice Word64Vector Word64VectorSlice
 mono_largereal.sml | demand | yes | LargeRealArray LargeRealArray2 LargeRealArraySlice LargeRealVector LargeRealVectorSlice | RealArray RealArray2 RealArraySlice RealVector RealVectorSlice
 mono_real64.sml | demand | yes | Real64Array Real64Array2 Real64ArraySlice Real64Vector Real64VectorSlice | RealArray RealArray2 RealArraySlice RealVector RealVectorSlice
 text.sml        | demand | yes  | Text                  | Char CharArray CharArraySlice CharVector CharVectorSlice String Substring
@@ -227,7 +227,7 @@ seal_list.sml           | seal   | yes  | List | LIST
 seal_listpair.sml       | seal   | yes  | ListPair | LIST_PAIR
 seal_intinf.sml         | seal   | yes  | IntInf LargeInt | INTEGER INT_INF
 seal_int.sml            | seal   | yes  | Int | INTEGER
-seal_word.sml           | seal   | yes  | Word LargeWord SysWord | WORD
+seal_word.sml           | seal   | yes  | Word SysWord | WORD
 seal_int8.sml           | seal   | yes  | Int8 | INTEGER
 seal_int16.sml          | seal   | yes  | Int16 | INTEGER
 seal_int32.sml          | seal   | yes  | Int32 | INTEGER
@@ -236,7 +236,7 @@ seal_word8.sml          | seal   | yes  | Word8 | WORD
 seal_word8vector.sml    | seal   | yes  | Word8Vector Word8VectorSlice | MONO_VECTOR MONO_VECTOR_SLICE Word8
 seal_word16.sml         | seal   | yes  | Word16 | WORD
 seal_word32.sml         | seal   | yes  | Word32 | WORD
-seal_word64.sml         | seal   | yes  | Word64 | WORD
+seal_word64.sml         | seal   | yes  | Word64 LargeWord | WORD
 seal_char.sml           | seal   | yes  | Char | CHAR String
 seal_string.sml         | seal   | yes  | String | Char STRING
 seal_ieeereal.sml       | seal   | yes  | IEEEReal | IEEE_REAL

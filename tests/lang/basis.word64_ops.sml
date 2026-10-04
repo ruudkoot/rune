@@ -1,0 +1,23 @@
+val () = print (Word64.toString (Word64.fromInt 4096) ^ " " ^ Int.toString (Word64.toInt 0wxFF) ^ " " ^ Int.toString (Word64.toIntX 0wxFFFFFFFFFFFFFFFF) ^ " " ^ Word64.toString (Word64.fromInt ~1) ^ "\n")
+val () = print (Word64.toString (Word64.andb (0wxF0, 0wx3C)) ^ " " ^ Word64.toString (Word64.orb (0wxF0, 0wx0F)) ^ " " ^ Word64.toString (Word64.xorb (0wxFF, 0wx0F)) ^ " " ^ Word64.toString (Word64.notb 0w0) ^ "\n")
+val () = print (Word64.toString (Word64.<< (0w1, 0w10)) ^ " " ^ Word64.toString (Word64.>> (0wx400, 0w4)) ^ " " ^ Word64.toString (Word64.~>> (0wxFFFFFFFFFFFFFFF0, 0w4)) ^ " " ^ Word64.toString (Word64.~>> (0wxF0, 0w4)) ^ "\n")
+val () = print (Word64.toString (Word64.<< (0w1, 0w63)) ^ " " ^ Word64.toString (Word64.<< (0w1, 0w64)) ^ " " ^ Word64.toString (Word64.>> (0wx8000000000000000, 0w63)) ^ " " ^ Word64.toString (Word64.>> (0wx8000000000000000, 0w64)) ^ " " ^ Word64.toString (Word64.~>> (0wx8000000000000000, 0w63)) ^ " " ^ Word64.toString (Word64.~>> (0wx8000000000000000, 0w200)) ^ " " ^ Word64.toString (Word64.~>> (0wx7000000000000000, 0w200)) ^ "\n")
+val () = print (Word64.toString (Word64.min (0w3, 0w9)) ^ Word64.toString (Word64.max (0w3, 0w9)) ^ (case Word64.compare (0w1, 0wxFFFFFFFFFFFFFFFF) of LESS => "L" | _ => "?") ^ Int.toString Word64.wordSize ^ "\n")
+val () = print (Word64.toString (valOf (Word64.fromString "ff")) ^ Word64.toString (valOf (Word64.fromString "0wx10")) ^ Bool.toString (isSome (Word64.fromString "zz")) ^ " " ^ Word64.toString (valOf (Word64.fromString "FFFFFFFFFFFFFFFF")) ^ " " ^ ((Word64.toString (valOf (Word64.fromString "10000000000000000"))) handle Overflow => "Overflow") ^ "\n")
+val () = print ((Int.toString (Word64.toInt 0wxFFFFFFFFFFFFFFFF)) handle Overflow => "Overflow\n")
+val () = print (Word64.fmt StringCvt.DEC 0wxFFFFFFFFFFFFFFFF ^ " " ^ Word64.fmt StringCvt.BIN 0w5 ^ " " ^ Word64.fmt StringCvt.OCT 0wxFFFFFFFFFFFFFFFF ^ "\n")
+val () = print (IntInf.toString (Word64.toLargeInt 0wxFFFFFFFFFFFFFFFF) ^ " " ^ IntInf.toString (Word64.toLargeIntX 0wxFFFFFFFFFFFFFFFF) ^ " " ^ Word64.toString (Word64.fromLargeInt (IntInf.pow (2, 64) - 1)) ^ " " ^ Word64.toString (Word64.fromLargeInt ~1) ^ " " ^ Word64.toString (Word64.fromLargeInt (IntInf.pow (2, 70) + 5)) ^ "\n")
+(* between Word, which is 63 bits, and LargeWord, which is Word64 *)
+val () = print (Int.toString Word.wordSize ^ " " ^ Int.toString LargeWord.wordSize ^ " " ^ LargeWord.toString (Word.toLarge 0wx7FFFFFFFFFFFFFFF) ^ " " ^ LargeWord.toString (Word.toLargeX 0wx7FFFFFFFFFFFFFFF) ^ " " ^ LargeWord.toString (Word.toLargeX 0wx3FFFFFFFFFFFFFFF) ^ " " ^ Word.toString (Word.fromLarge 0wxFFFFFFFFFFFFFFFF) ^ " " ^ Word.toString (Word.fromLarge 0wx8000000000000001) ^ "\n")
+val () = print (LargeWord.toString (Word8.toLarge 0wxFF) ^ " " ^ LargeWord.toString (Word8.toLargeX 0wxFF) ^ " " ^ Word8.toString (Word8.fromLarge 0wxFFFFFFFFFFFFFF12) ^ " " ^ LargeWord.toString (Word32.toLargeX 0wx80000000) ^ " " ^ Word32.toString (Word32.fromLarge 0wx1234567890) ^ "\n")
+(* the overloaded operators and the literals at Word64.word *)
+val h : Word64.word = 0wxcbf29ce484222325
+fun fnv (h : Word64.word, c) = (Word64.xorb (h, Word64.fromInt (ord c))) * 0wx100000001b3
+val () = print (Word64.toString (CharVector.foldl (fn (c, h) => fnv (h, c)) h "hello") ^ " " ^ Bool.toString (h > 0wx8000000000000000) ^ " " ^ Word64.toString (~ h) ^ " " ^ Word64.toString (h div 0w3 + h mod 0w7) ^ "\n")
+(* packed: the eight bytes of a word and of a real *)
+val bytes = Word8Vector.fromList [0wxFE, 0wxDC, 0wxBA, 0wx98, 0wx76, 0wx54, 0wx32, 0wx10]
+val () = print (LargeWord.toString (PackWord64Big.subVec (bytes, 0)) ^ " " ^ LargeWord.toString (PackWord64Little.subVec (bytes, 0)) ^ " " ^ LargeWord.toString (PackWord32Big.subVecX (bytes, 0)) ^ " " ^ LargeWord.toString (PackWord16Little.subVec (bytes, 3)) ^ "\n")
+val a = Word8Array.array (8, 0w0)
+val () = PackWord64Little.update (a, 0, 0wx8877665544332211)
+val () = print (String.concatWith " " (List.map Word8.toString (Word8Array.foldr (op ::) [] a)) ^ " " ^ LargeWord.toString (PackWord64Big.subArr (a, 0)) ^ "\n")
+val () = print (LargeWord.toString (PackWord64Big.subVec (PackRealBig.toBytes ~2.0, 0)) ^ " " ^ Real.toString (PackRealLittle.fromBytes (PackRealLittle.toBytes 1E300)) ^ "\n")

@@ -25,32 +25,29 @@
 #include <string.h>
 
 
-enum Tag { T_UNIT = 0, T_INT, T_WORD, T_REAL, T_CHAR, T_CON0, T_PTR };
+enum Tag { T_UNIT = 0, T_INT, T_WORD, T_REAL, T_CHAR, T_CON0, T_PTR,
+           T_INT64, T_WORD64 };   /* Int64.int and Word64.word: an immediate, or a K_BOX past 63 bits */
 
 typedef struct Obj Obj;
 
-/* THE TAGGED WORD (heap-layout M4, prototype 1: D1 B, D2 B or A, D3 C or B).
+/* THE TAGGED WORD (heap-layout M5: D1 B, D2 B, D3 C).
    A Value is one 64-bit word. Its low bit says what it is:
-     1  an immediate: an int, a char, a constructor tag or unit as 2n+1
-        (63 bits; unit is 1), or a real in Koka's encoding (below);
+     1  an immediate: an int, a word, a char, a constructor tag or unit as
+        2n+1 (63 bits; unit is 1), or a real in its encoding (below);
      0  a pointer to an object, 8-byte aligned, or NULL (0).
    The type of an immediate is the program's, not the word's: an int and a
    char with the same payload are the same word, which SML's typing keeps
-   apart. What does not fit the word is a small object: a real outside the
-   encoding's range is a K_REAL box, and, under RUNE_INT64 (D2 A: 64-bit
-   integers and words kept), an int or word beyond 63 bits is a K_BOX; the
-   readers test for the box. Without RUNE_INT64 (D2 B, the decision) an int
-   is 63 bits and Overflow is raised where a 64th bit would be, and a word
-   is 63 bits and wraps there. Under RUNE_REAL_BOXED (D3 B) every real that
-   reaches a value is boxed. */
+   apart. int and word are the immediate's 63 bits (D2 B): Overflow is
+   raised where an int would need a 64th, and a word wraps there. What does
+   not fit the word is a small object: a real outside the encoding's range
+   is a K_REAL box, and an Int64.int or a Word64.word, the types that keep
+   64 bits, is an immediate where it fits 63 and a K_BOX where it does not;
+   the readers of those types test for the box. Under RUNE_INT64 (D2 A,
+   behind its switch: a compiler given --int-bits=64) int and word keep 64
+   bits the same way. Under RUNE_REAL_BOXED (D3 B) every real that reaches a
+   value is boxed. */
 typedef uint64_t Value;
 #define RUNE_VALUE_HDR 0
-/* The prototype builds with 64-bit integers kept (D2 A) unless RUNE_INT63
-   is given: the Basis Library still names 64 bits (Int.minInt, Word.wordSize)
-   and the 63-bit build (D2 B) needs it at 63, which is M5's. */
-#if !defined(RUNE_INT63) && !defined(RUNE_INT64)
-#define RUNE_INT64 1
-#endif
 #define VALUE_TAG_BITS 1
 
 enum ObjKind {
@@ -64,7 +61,7 @@ enum ObjKind {
     K_EXNCON,     /* 1 field: name string; identity is the address */
     K_FORWARD,    /* GC forwarding: first payload word is the new address */
     K_REAL,       /* a boxed real: 8 raw bytes, the double */
-    K_BOX         /* a boxed int or word beyond 63 bits (RUNE_INT64): 8 raw bytes */
+    K_BOX         /* an Int64.int or a Word64.word beyond 63 bits (an int or word too, under RUNE_INT64): 8 raw bytes */
 };
 
 struct Obj {
@@ -166,13 +163,16 @@ static inline int val_tag(Value v) {
     int k = obj_kind(val_ptr(v));
     return k == K_REAL ? T_REAL : k == K_BOX ? T_INT : T_PTR;
 }
+/* a number of the 64-bit types: an immediate or its box */
+static inline int val_is_num64(Value v) { return val_is_imm(v) || (v != 0 && obj_kind(val_ptr(v)) == K_BOX); }
 static inline int val_is(Value v, int tag) {
     switch (tag) {
     case T_PTR: return val_tag(v) == T_PTR;   /* a pointer the program sees: not a box */
     case T_REAL: return val_is_imm(v) || (v != 0 && obj_kind(val_ptr(v)) == K_REAL);
+    case T_INT64: case T_WORD64: return val_is_num64(v);
     default:
 #ifdef RUNE_INT64
-        return val_is_imm(v) || (v != 0 && obj_kind(val_ptr(v)) == K_BOX);
+        return val_is_num64(v);
 #else
         return val_is_imm(v);
 #endif
@@ -181,6 +181,9 @@ static inline int val_is(Value v, int tag) {
 static inline int val_is_ptr(Value v) { return !val_is_imm(v) && v != 0; }
 static inline const char *obj_bytes_c(const Obj *o);
 static inline uint64_t box_bits(Value v) { uint64_t b; memcpy(&b, obj_bytes_c(val_ptr(v)), 8); return b; }
+/* an Int64.int and a Word64.word: the immediate's payload, or the box's 64 bits */
+static inline int64_t val_int64(Value v) { return val_is_imm(v) ? (int64_t)v >> 1 : (int64_t)box_bits(v); }
+static inline uint64_t val_word64(Value v) { return val_is_imm(v) ? v >> 1 : box_bits(v); }
 /* an int, a char or a nullary constructor's tag: the signed payload */
 static inline int64_t val_imm(Value v) {
 #ifdef RUNE_INT64
@@ -197,6 +200,14 @@ static inline uint64_t val_word(Value v) {
 #endif
     return v >> 1;
 }
+/* a word read as the int of the same bits (Word.toIntX): the word's top bit is the sign */
+static inline int64_t word_as_int(uint64_t w) {
+#ifdef RUNE_INT64
+    return (int64_t)w;
+#else
+    return (int64_t)(w << 1) >> 1;
+#endif
+}
 static inline double val_real(Value v) { return val_is_imm(v) ? real_decode(v) : real_of_bits(box_bits(v)); }
 /* the word itself: for an image, a hash, the census */
 static inline uint64_t val_bits(Value v) { return v; }
@@ -207,15 +218,13 @@ static inline Value mk_tagged(int tag, uint64_t bits) { (void)tag; return bits; 
    the tags that are not a real or a pointer) */
 static inline int val_same_imm(Value a, Value b) {
     if (a == b) return 1;
-#ifdef RUNE_INT64
-    /* two boxes of one number: an int or a word past 63 bits. An immediate
-       is never the number of a box, so one of each is two numbers -- which
-       their payloads read as signed would not say (a box of 2^64 - 1 and
-       the immediate 2^63 - 1 are both ~1 that way). */
+    /* two boxes of one number: an Int64.int or a Word64.word past 63 bits.
+       An immediate is never the number of a box, so one of each is two
+       numbers -- which their payloads read as signed would not say (a box
+       of 2^64 - 1 and the immediate 2^63 - 1 are both ~1 that way). */
     if (!val_is_imm(a) && !val_is_imm(b) && a != 0 && b != 0
         && obj_kind(val_ptr(a)) == K_BOX && obj_kind(val_ptr(b)) == K_BOX)
         return box_bits(a) == box_bits(b);
-#endif
     return 0;
 }
 /* whether a value's payload is what a pointer is not: needs no scan */
@@ -273,9 +282,11 @@ static inline size_t obj_alloc_size(size_t payload_bytes) { return sizeof(Obj) +
 /* ---- what needs the heap (runtime/heap.c): a real or an int that does not fit the word ---- */
 struct VM;
 Value mk_real(struct VM *vm, double d);          /* encoded, or a K_REAL box */
-Value mk_int_vm(struct VM *vm, int64_t i);       /* an immediate, or under RUNE_INT64 a K_BOX; without it, a fatal error: the callers keep to 63 bits */
-Value mk_word_vm(struct VM *vm, uint64_t w);     /* an immediate, or a K_BOX under RUNE_INT64; without it the word's low 63 bits */
-Value mk_box_vm(struct VM *vm, uint64_t bits);   /* the K_BOX of an int or a word that has no immediate */
+Value mk_int_vm(struct VM *vm, int64_t i);       /* an int: an immediate; one that does not fit is a fatal error (the callers keep to 63 bits), or a K_BOX under RUNE_INT64 */
+Value mk_word_vm(struct VM *vm, uint64_t w);     /* a word: its low 63 bits; or all 64, with a K_BOX, under RUNE_INT64 */
+Value mk_int64_vm(struct VM *vm, int64_t i);     /* an Int64.int: an immediate, or a K_BOX */
+Value mk_word64_vm(struct VM *vm, uint64_t w);   /* a Word64.word: an immediate, or a K_BOX */
+Value mk_box_vm(struct VM *vm, uint64_t bits);   /* the K_BOX of a number that has no immediate */
 
 /* ---- forwarding (runtime/heap.c): a copied object points at its copy ---- */
 static inline int obj_forwarded(const Obj *o) { return o->kind == K_FORWARD; }

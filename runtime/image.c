@@ -202,6 +202,8 @@ static void write_image(VM *vm, Stream *s, int kind) {
         switch (p->const_kinds[i]) {
         case CONST_INT: plain = (uint64_t)val_int(v); break;
         case CONST_WORD: plain = val_word(v); break;
+        case CONST_INT64: plain = (uint64_t)val_int64(v); break;
+        case CONST_WORD64: plain = val_word64(v); break;
         case CONST_REAL: plain = real_bits(val_real(v)); break;
         case CONST_CHAR: plain = (uint64_t)val_char(v); break;
         default: plain = val_ptr(v) ? (uint64_t)((const char *)val_ptr(v) - vm->heap_from) : OFF_NONE; break;
@@ -564,7 +566,7 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
         p->const_kinds[i] = get_u8(&s);
         p->consts[i] = get_value(&s);
         (void)get_u64(&s);   /* the bits as the bytecode has them: for another reader */
-        if (p->const_kinds[i] > CONST_CHAR) return failed(&s, err, errlen, "the image is cut short");
+        if (p->const_kinds[i] >= CONST__COUNT) return failed(&s, err, errlen, "the image is cut short");
     }
     p->nglobals = get_u32(&s);
     p->nfuncs = get_u32(&s);

@@ -18,7 +18,7 @@ fun f (a, b) =
       SOME z => if k > 4 then sq z + #2 p else 0
     | NONE => 1
   end
-fun g () = 9223372036854775807 + 1
+fun g () = 4611686018427387903 + 1
 fun twice t x = t (t x)
 fun inc n = n + 1
 fun k y =

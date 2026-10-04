@@ -124,6 +124,8 @@ struct
     case c of
       CInt i => "i:" ^ IntInf.toString i
     | CWord w => "w:" ^ IntInf.toString w
+    | CInt64 i => "I:" ^ IntInf.toString i
+    | CWord64 w => "W:" ^ IntInf.toString w
     | CReal r => "r:" ^ r
     | CString s => "s:" ^ s
     | CChar c => "c:" ^ Int.toString c

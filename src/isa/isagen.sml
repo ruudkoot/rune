@@ -216,7 +216,7 @@ struct
   fun repOfName (t : string) : int =
     case t of
       "int" => 1 | "word" => 2 | "real" => 3 | "char" => 4 | "bool" => 5 | "order" => 5
-    | "string" => 6 | "exn" => 6 | "unit" => 8
+    | "string" => 6 | "exn" => 6 | "unit" => 8 | "Int64.int" => 9 | "Word64.word" => 10
     | _ => if String.isSuffix " array" t orelse String.isSuffix " vector" t orelse String.isSuffix " ref" t then 6
            else if String.isSuffix " list" t then 7
            else 0

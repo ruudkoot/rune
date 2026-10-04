@@ -59,7 +59,7 @@ struct
              | _ => NONE)
         | NONE => NONE
       fun digits i = if IntInf.< (i, IntInf.fromInt 0) then "~" ^ IntInf.toString (IntInf.~ i) else IntInf.toString i
-      fun const () = Const (sconConst sc, ty)
+      fun const () = Const (constAt (sconConst sc, ty), ty)
     in
       case sc of
         SInt i => (case via (digits i) of SOME e => e | NONE => const ())

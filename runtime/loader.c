@@ -110,8 +110,24 @@ int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t
         uint8_t kind = rd_u8(&r);
         p->const_kinds[i] = kind;
         switch (kind) {
-        case CONST_INT: p->consts[i] = mk_int_vm(vm, rd_i64(&r)); break;
-        case CONST_WORD: p->consts[i] = mk_word_vm(vm, (uint64_t)rd_i64(&r)); break;
+        case CONST_INT: {
+            int64_t n = rd_i64(&r);
+#ifndef RUNE_INT64
+            if (!int_fits(n)) return fail(err, errlen, "an int constant beyond 63 bits (bytecode compiled with --int-bits=64)");
+#endif
+            p->consts[i] = mk_int_vm(vm, n);
+            break;
+        }
+        case CONST_WORD: {
+            uint64_t w = (uint64_t)rd_i64(&r);
+#ifndef RUNE_INT64
+            if (!word_fits(w)) return fail(err, errlen, "a word constant beyond 63 bits (bytecode compiled with --int-bits=64)");
+#endif
+            p->consts[i] = mk_word_vm(vm, w);
+            break;
+        }
+        case CONST_INT64: p->consts[i] = mk_int64_vm(vm, rd_i64(&r)); break;
+        case CONST_WORD64: p->consts[i] = mk_word64_vm(vm, (uint64_t)rd_i64(&r)); break;
         case CONST_REAL: {
             uint32_t n = rd_u32(&r);
             if (!need(&r, n) || n > 64) return fail(err, errlen, "bad real constant");

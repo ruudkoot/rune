@@ -63,7 +63,7 @@ struct
 
   (* the kinds of a constant (enum ConstKind of runtime/vm.h, which are the
      bytecode's) *)
-  val cInt = 0 val cWord = 1 val cReal = 2 val cString = 3 val cChar = 4
+  val cInt = 0 val cWord = 1 val cReal = 2 val cString = 3 val cChar = 4 val cInt64 = 5 val cWord64 = 6
 
   (* the heap's rounding of a payload, from the layout the JIT has (X64Layout,
      generated from runtime/value.h's numbers: M3 of docs/plans/heap-layout.md) *)
@@ -147,6 +147,8 @@ struct
               val c =
                 if kind = cInt then Rbc.CInt (Rbc.signed64 w)
                 else if kind = cWord then Rbc.CWord w
+                else if kind = cInt64 then Rbc.CInt64 (Rbc.signed64 w)
+                else if kind = cWord64 then Rbc.CWord64 w
                 else if kind = cReal then Rbc.CReal (realText w)
                 else if kind = cChar then Rbc.CChar (IntInf.toInt w)
                 else if kind = cString then Rbc.CString (stringAt (IntInf.toInt w))

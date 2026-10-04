@@ -184,6 +184,8 @@ struct
         case oper of
           Const (Lambda.CInt _) => RInt
         | Const (Lambda.CWord _) => RWord
+        | Const (Lambda.CInt64 _) => RInt64
+        | Const (Lambda.CWord64 _) => RWord64
         | Const (Lambda.CReal _) => RReal
         | Const (Lambda.CString _) => RPtr
         | Const (Lambda.CChar _) => RChar

@@ -7,7 +7,7 @@
     (return (prim int_add v4 v3 : (int * int) -> int)))))))
 (funs
   (fn g2 ((v5 : unit)) : int
-    (return (prim int_add 9223372036854775807 1 : (int * int) -> int))))
+    (return (prim int_add 4611686018427387903 1 : (int * int) -> int))))
 (funs
   (fn g3 ['a] ((v6 : 'a -> 'a)) : 'a -> 'a
     (fun

@@ -41,6 +41,8 @@ struct
     \                    library's MANIFEST, and of those of --library, against\n\
     \                    their sources, and exit\n\
     \  --allow-prim      allow the _prim extension in the inputs\n\
+    \  --int-bits=N      the precision of int and word on the VM: 63 (default), or\n\
+    \                    64 for a VM built with -DRUNE_INT64\n\
     \  --typecheck-only  stop after type checking\n\
     \  --type-work=N     type traversal budget per top-level declaration (10000000)\n\
     \  --match-work=N    pattern-analysis budget per match (1000000)\n\
@@ -91,6 +93,8 @@ struct
     | "--basis-deps" :: rest => (basisDeps := true; parse rest)
     | "--basis-check" :: rest => (basisCheck := true; parse rest)
     | "--allow-prim" :: rest => (allowPrim := true; parse rest)
+    | "--int-bits=63" :: rest => (Overload.setIntBits 63; Target.intBits := 63; parse rest)
+    | "--int-bits=64" :: rest => (Overload.setIntBits 64; Target.intBits := 64; parse rest)
     | "--typecheck-only" :: rest => (typecheckOnly := true; parse rest)
     | "--no-warnings" :: rest => (noWarnings := true; parse rest)
     | "--dump-tokens" :: rest => (dumpTokens := true; parse rest)

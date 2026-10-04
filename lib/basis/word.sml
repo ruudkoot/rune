@@ -1,10 +1,10 @@
-(* Word: unsigned words of 64 bits, the type of the top-level `word` and of
-   its literals.
+(* Word: unsigned words of the VM's width less the bit of a value's tag, 63
+   bits, the type of the top-level `word` and of its literals.
 
-   `LargeWord` and `SysWord` are this structure by other names; `Word64` has
-   the same width and operations but a type of its own. The size is found by
-   shifting a bit out, so that this file means the same to a system whose
-   word is narrower.
+   `SysWord` is this structure by another name. `Word64`, which is also
+   `LargeWord`, is the type that has 64 bits whatever the VM (word64.sml).
+   The size is found by shifting a bit out, so that this file means the same
+   to a system whose word is another width.
 
    Implements: WORD *)
 structure Word =
@@ -19,8 +19,10 @@ struct
   val toInt = _prim "word_to_int" : word -> int
   val toIntX = _prim "word_to_int_x" : word -> int
   val fromInt = _prim "word_from_int" : int -> word
-  val toLarge = fn (w : word) => w
-  val fromLarge = fn (w : word) => w
+  (* LargeWord is Word64 (word64.sml), the VM's 64-bit word *)
+  val toLarge = _prim "word64_from_word" : word -> _prim "word64"
+  val toLargeX = _prim "word64_from_word_x" : word -> _prim "word64"
+  val fromLarge = _prim "word64_to_word" : _prim "word64" -> word
   val two64 = IntInf.pow (IntInf.fromInt 2, wordSize)             (* 2^wordSize *)
   val two63 = IntInf.pow (IntInf.fromInt 2, Int.- (wordSize, 1))  (* 2^(wordSize - 1) *)
   fun toLargeInt w = let val i = toIntX w in if Int.< (i, 0) then IntInf.+ (IntInf.fromInt i, two64) else IntInf.fromInt i end
@@ -117,17 +119,10 @@ struct
 
   fun fromString s = StringCvt.scanString (scan StringCvt.HEX) s
 
-  (* LargeWord is Word *)
-  val toLargeX = toLarge
   val toLargeWord = toLarge
   val toLargeWordX = toLargeX
   val fromLargeWord = fromLarge
 end
-
-(* LargeWord: the widest words, which are `Word`.
-
-   Implements: WORD *)
-structure LargeWord = Word
 (* SysWord: the words in which the operating system's flags and modes are
    counted, which are `Word`.
 

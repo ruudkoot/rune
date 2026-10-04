@@ -5,6 +5,8 @@ struct
   val bytesPerElem = bytesPerElem
   val isBigEndian = isBigEndian
   local
+    (* a word of N bits is a LargeWord.word (Word64), in which 64 bits fit;
+       a shift's count is a Word.word *)
     val bits = Word.fromInt (Int.* (8, bytesPerElem))
     (* where the k-th byte (0 the least significant) of element i is *)
     fun place (i, k) =
@@ -18,13 +20,13 @@ struct
       let
         fun go (k, w) =
           if Int.< (k, 0) then w
-          else go (Int.- (k, 1), Word.orb (Word.<< (w, 0w8), Word8.toLarge (sub (seq, place (i, k)))))
+          else go (Int.- (k, 1), LargeWord.orb (LargeWord.<< (w, 0w8), Word8.toLarge (sub (seq, place (i, k)))))
       in go (Int.- (bytesPerElem, 1), 0w0) end
     (* "extends the sign bit (most significant bit)" *)
     fun extend w =
-      if Word.>= (bits, Word.fromInt Word.wordSize) then w
-      else if Word.andb (w, Word.<< (0w1, Word.- (bits, 0w1))) <> 0w0
-      then Word.orb (w, Word.notb (Word.- (Word.<< (0w1, bits), 0w1)))
+      if Word.>= (bits, Word.fromInt LargeWord.wordSize) then w
+      else if LargeWord.andb (w, LargeWord.<< (0w1, Word.- (bits, 0w1))) <> 0w0
+      then LargeWord.orb (w, LargeWord.notb (LargeWord.- (LargeWord.<< (0w1, bits), 0w1)))
       else w
   in
     fun subVec (v, i) = (check (Word8Vector.length v, i); get Word8Vector.sub (v, i))
@@ -36,7 +38,7 @@ struct
       let
         fun go k =
           if Int.>= (k, bytesPerElem) then ()
-          else (Word8Array.update (a, place (i, k), Word8.fromLarge (Word.>> (w, Word.fromInt (Int.* (8, k)))));
+          else (Word8Array.update (a, place (i, k), Word8.fromLarge (LargeWord.>> (w, Word.fromInt (Int.* (8, k)))));
                 go (Int.+ (k, 1)))
       in check (Word8Array.length a, i); go 0 end
   end

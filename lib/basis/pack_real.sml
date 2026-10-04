@@ -7,8 +7,8 @@ struct
   val bytesPerElem = 8
   val isBigEndian = isBigEndian
   local
-    val toBits = _prim "real_to_bits" : real -> word
-    val fromBits = _prim "real_from_bits" : word -> real
+    val toBits = _prim "real_to_bits" : real -> LargeWord.word
+    val fromBits = _prim "real_from_bits" : LargeWord.word -> real
     structure W = RunePackWordFn (val bytesPerElem = 8 val isBigEndian = isBigEndian)
   in
     fun toBytes r =

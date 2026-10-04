@@ -277,6 +277,8 @@ struct
     | Ty.Con (stamp, name, _) =>
         if stamp = #stamp Types.intTycon then L.RInt
         else if stamp = #stamp Types.wordTycon then L.RWord
+        else if stamp = #stamp Types.int64Tycon then L.RInt64
+        else if stamp = #stamp Types.word64Tycon then L.RWord64
         else if stamp = #stamp Types.realTycon then L.RReal
         else if stamp = #stamp Types.charTycon then L.RChar
         else if stamp = #stamp Types.stringTycon then L.RPtr

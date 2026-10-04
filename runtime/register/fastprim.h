@@ -25,10 +25,13 @@ void census_store_fast(Obj *o, uint32_t i, Value v, int32_t reg);
 
 /* LESS, EQUAL or GREATER, the nullary constructors 0, 1 and 2 */
 static inline Value fast_order(int lt, int gt) { return mk_con0(1 + gt - lt); }
-/* the word (heap-layout M4): a fast path never allocates, so a result the
-   word cannot hold -- an int beyond 63 bits, a word with its top bit set
-   (a box under RUNE_INT64), a real outside the encoding -- answers 0 and the
-   primitive does it; without RUNE_INT64 a word wraps at 63 bits */
+/* the word (heap-layout M5): a fast path never allocates, so a result the
+   word cannot hold -- an int beyond 63 bits (Overflow, or a box under
+   RUNE_INT64), an Int64.int or a Word64.word beyond them (a box), a real
+   outside the encoding -- answers 0 and the primitive does it; a word
+   wraps at 63 bits (under RUNE_INT64 one with its top bit set is a box) */
+#define FAST_INT64(v) do { int64_t v_ = (v); if (!int_fits(v_)) return 0; r = mk_imm(v_); } while (0)
+#define FAST_WORD64(w) do { uint64_t w_ = (w); if (!word_fits(w_)) return 0; r = mk_imm((int64_t)w_); } while (0)
 #define FAST_INT(v) do { if (!int_fits(v)) return 0; r = mk_int(v); } while (0)
 #ifdef RUNE_INT64
 #define FAST_WORD(w) do { uint64_t w_ = (w); if (!word_fits(w_)) return 0; r = mk_word(w_); } while (0)
@@ -137,8 +140,64 @@ static inline int prim_fast(int prim, uint32_t n, const Value *base, const uint8
     case PRIM_word_lsl: WORD2; FAST_WORD(val_word(*y) >= 64 ? 0 : val_word(*x) << val_word(*y)); break;
     case PRIM_word_lsr: WORD2; FAST_WORD(val_word(*y) >= 64 ? 0 : val_word(*x) >> val_word(*y)); break;
     case PRIM_word_to_int: if (!val_is(*x, T_WORD) || val_word(*x) > (uint64_t)INT64_MAX) return 0; FAST_INT((int64_t)val_word(*x)); break;
-    case PRIM_word_to_int_x: if (!val_is(*x, T_WORD)) return 0; FAST_INT((int64_t)val_word(*x)); break;
+    case PRIM_word_to_int_x: if (!val_is(*x, T_WORD)) return 0; FAST_INT(word_as_int(val_word(*x))); break;
     case PRIM_word_from_int: if (!val_is(*x, T_INT)) return 0; FAST_WORD((uint64_t)val_imm(*x)); break;
+
+    /* Int64.int and Word64.word: the operands immediates or boxes, the result an immediate or the primitive's */
+#define I64_2 if (!val_is_num64(*x) || !val_is_num64(*y)) return 0
+#define I64_1 if (!val_is_num64(*x)) return 0
+    case PRIM_int64_add: { I64_2; int64_t v; if (!fast_add(val_int64(*x), val_int64(*y), &v)) return 0; FAST_INT64(v); break; }
+    case PRIM_int64_sub: { I64_2; int64_t v; if (!fast_sub(val_int64(*x), val_int64(*y), &v)) return 0; FAST_INT64(v); break; }
+    case PRIM_int64_mul: { I64_2; int64_t v; if (!fast_mul(val_int64(*x), val_int64(*y), &v)) return 0; FAST_INT64(v); break; }
+    case PRIM_int64_div: {
+        I64_2; int64_t a = val_int64(*x), b = val_int64(*y); if (b == 0 || b == -1) return 0;
+        int64_t q = a / b;
+        if ((a % b != 0) && ((a < 0) != (b < 0))) q--;
+        FAST_INT64(q); break;
+    }
+    case PRIM_int64_mod: {
+        I64_2; int64_t a = val_int64(*x), b = val_int64(*y); if (b == 0 || b == -1) return 0;
+        int64_t m = a % b;
+        if (m != 0 && ((m < 0) != (b < 0))) m += b;
+        FAST_INT64(m); break;
+    }
+    case PRIM_int64_quot: I64_2; if (val_int64(*y) == 0 || val_int64(*y) == -1) return 0; FAST_INT64(val_int64(*x) / val_int64(*y)); break;
+    case PRIM_int64_rem: I64_2; if (val_int64(*y) == 0 || val_int64(*y) == -1) return 0; FAST_INT64(val_int64(*x) % val_int64(*y)); break;
+    case PRIM_int64_neg: I64_1; if (val_int64(*x) == INT64_MIN) return 0; FAST_INT64(-val_int64(*x)); break;
+    case PRIM_int64_lt: I64_2; r = mk_bool(val_int64(*x) < val_int64(*y)); break;
+    case PRIM_int64_le: I64_2; r = mk_bool(val_int64(*x) <= val_int64(*y)); break;
+    case PRIM_int64_gt: I64_2; r = mk_bool(val_int64(*x) > val_int64(*y)); break;
+    case PRIM_int64_ge: I64_2; r = mk_bool(val_int64(*x) >= val_int64(*y)); break;
+    case PRIM_int64_order: I64_2; r = fast_order(val_int64(*x) < val_int64(*y), val_int64(*x) > val_int64(*y)); break;
+    case PRIM_int64_to_int: I64_1; FAST_INT(val_int64(*x)); break;
+    case PRIM_int64_from_int: if (!val_is(*x, T_INT)) return 0; FAST_INT64(val_imm(*x)); break;
+
+    case PRIM_word64_add: I64_2; FAST_WORD64(val_word64(*x) + val_word64(*y)); break;
+    case PRIM_word64_sub: I64_2; FAST_WORD64(val_word64(*x) - val_word64(*y)); break;
+    case PRIM_word64_mul: I64_2; FAST_WORD64(val_word64(*x) * val_word64(*y)); break;
+    case PRIM_word64_div: I64_2; if (val_word64(*y) == 0) return 0; FAST_WORD64(val_word64(*x) / val_word64(*y)); break;
+    case PRIM_word64_mod: I64_2; if (val_word64(*y) == 0) return 0; FAST_WORD64(val_word64(*x) % val_word64(*y)); break;
+    case PRIM_word64_lt: I64_2; r = mk_bool(val_word64(*x) < val_word64(*y)); break;
+    case PRIM_word64_le: I64_2; r = mk_bool(val_word64(*x) <= val_word64(*y)); break;
+    case PRIM_word64_gt: I64_2; r = mk_bool(val_word64(*x) > val_word64(*y)); break;
+    case PRIM_word64_ge: I64_2; r = mk_bool(val_word64(*x) >= val_word64(*y)); break;
+    case PRIM_word64_order: I64_2; r = fast_order(val_word64(*x) < val_word64(*y), val_word64(*x) > val_word64(*y)); break;
+    case PRIM_word64_andb: I64_2; FAST_WORD64(val_word64(*x) & val_word64(*y)); break;
+    case PRIM_word64_orb: I64_2; FAST_WORD64(val_word64(*x) | val_word64(*y)); break;
+    case PRIM_word64_xorb: I64_2; FAST_WORD64(val_word64(*x) ^ val_word64(*y)); break;
+    case PRIM_word64_notb: I64_1; FAST_WORD64(~val_word64(*x)); break;
+    case PRIM_word64_lsl: if (!val_is_num64(*x) || !val_is(*y, T_WORD)) return 0; FAST_WORD64(val_word(*y) >= 64 ? 0 : val_word64(*x) << val_word(*y)); break;
+    case PRIM_word64_lsr: if (!val_is_num64(*x) || !val_is(*y, T_WORD)) return 0; FAST_WORD64(val_word(*y) >= 64 ? 0 : val_word64(*x) >> val_word(*y)); break;
+    case PRIM_word64_to_int: I64_1; if (val_word64(*x) > (uint64_t)INT64_MAX) return 0; FAST_INT((int64_t)val_word64(*x)); break;
+    case PRIM_word64_to_int_x: I64_1; FAST_INT((int64_t)val_word64(*x)); break;
+    case PRIM_word64_from_int: if (!val_is(*x, T_INT)) return 0; FAST_WORD64((uint64_t)val_imm(*x)); break;
+    case PRIM_word64_to_word: I64_1; FAST_WORD(val_word64(*x)); break;
+    case PRIM_word64_from_word: if (!val_is(*x, T_WORD)) return 0; FAST_WORD64(val_word(*x)); break;
+    case PRIM_word64_from_word_x: if (!val_is(*x, T_WORD)) return 0; FAST_WORD64((uint64_t)word_as_int(val_word(*x))); break;
+    case PRIM_word64_to_int64: I64_1; FAST_INT64((int64_t)val_word64(*x)); break;
+    case PRIM_word64_from_int64: I64_1; FAST_WORD64((uint64_t)val_int64(*x)); break;
+#undef I64_2
+#undef I64_1
 
     case PRIM_real_add: REAL2; FAST_REAL(val_real(*x) + val_real(*y)); break;
     case PRIM_real_sub: REAL2; FAST_REAL(val_real(*x) - val_real(*y)); break;

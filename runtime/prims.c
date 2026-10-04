@@ -68,26 +68,26 @@ static Value mk_some(VM *vm, Value v) {
     return mk_ptr(c);
 }
 
-/* --- overflow-checked arithmetic --- */
-static int add_ov(int64_t a, int64_t b, int64_t *r) {
+/* --- overflow-checked arithmetic: in 64 bits (Int64.int), and in an int's --- */
+static int add_ov64(int64_t a, int64_t b, int64_t *r) {
 #if defined(__GNUC__)
-    return __builtin_add_overflow(a, b, r) || !int_fits_lang(*r);
+    return __builtin_add_overflow(a, b, r);
 #else
     if ((b > 0 && a > INT64_MAX - b) || (b < 0 && a < INT64_MIN - b)) return 1;
     *r = a + b; return 0;
 #endif
 }
-static int sub_ov(int64_t a, int64_t b, int64_t *r) {
+static int sub_ov64(int64_t a, int64_t b, int64_t *r) {
 #if defined(__GNUC__)
-    return __builtin_sub_overflow(a, b, r) || !int_fits_lang(*r);
+    return __builtin_sub_overflow(a, b, r);
 #else
     if ((b < 0 && a > INT64_MAX + b) || (b > 0 && a < INT64_MIN + b)) return 1;
     *r = a - b; return 0;
 #endif
 }
-static int mul_ov(int64_t a, int64_t b, int64_t *r) {
+static int mul_ov64(int64_t a, int64_t b, int64_t *r) {
 #if defined(__GNUC__)
-    return __builtin_mul_overflow(a, b, r) || !int_fits_lang(*r);
+    return __builtin_mul_overflow(a, b, r);
 #else
     if (a == 0 || b == 0) { *r = 0; return 0; }
     if ((a == -1 && b == INT64_MIN) || (b == -1 && a == INT64_MIN)) return 1;
@@ -96,6 +96,9 @@ static int mul_ov(int64_t a, int64_t b, int64_t *r) {
     *r = p; return 0;
 #endif
 }
+static int add_ov(int64_t a, int64_t b, int64_t *r) { return add_ov64(a, b, r) || !int_fits_lang(*r); }
+static int sub_ov(int64_t a, int64_t b, int64_t *r) { return sub_ov64(a, b, r) || !int_fits_lang(*r); }
+static int mul_ov(int64_t a, int64_t b, int64_t *r) { return mul_ov64(a, b, r) || !int_fits_lang(*r); }
 
 /* ================================================================ poly */
 static int p_poly_eq(VM *vm) { return ret(vm, 2, mk_bool(values_equal(vm, ARG(1), ARG(0)))); }
@@ -221,7 +224,7 @@ static int p_word_neg(VM *vm) { WORD1("word_neg"); return ret(vm, 1, mk_word(0 -
 static int p_word_lsl(VM *vm) { WORD2("word_lsl"); return ret(vm, 2, mk_word(y >= 64 ? 0 : x << y)); }
 static int p_word_lsr(VM *vm) { WORD2("word_lsr"); return ret(vm, 2, mk_word(y >= 64 ? 0 : x >> y)); }
 static int p_word_to_int(VM *vm) { WORD1("word_to_int"); if (x > (uint64_t)INT_MAX_VALUE) return raise_with(vm, 1, EXN_OVERFLOW); return ret(vm, 1, mk_int((int64_t)x)); }
-static int p_word_to_int_x(VM *vm) { WORD1("word_to_int_x"); return ret(vm, 1, mk_int((int64_t)x)); }
+static int p_word_to_int_x(VM *vm) { WORD1("word_to_int_x"); return ret(vm, 1, mk_int(word_as_int(x))); }
 static int p_word_from_int(VM *vm) { INT1("word_from_int"); return ret(vm, 1, mk_word((uint64_t)x)); }
 static int p_word_to_string(VM *vm) {
     WORD1("word_to_string");
@@ -229,6 +232,105 @@ static int p_word_to_string(VM *vm) {
     snprintf(buf, sizeof buf, "%llX", (unsigned long long)x);
     return ret(vm, 1, mk_ptr(vm_string_from(vm, buf, (uint32_t)strlen(buf))));
 }
+
+/* ================================================================ Int64.int */
+/* 64 bits on every VM: an immediate where the number fits 63 bits, a K_BOX
+   where it does not (runtime/value.h) */
+#define mk_int64(i) mk_int64_vm(vm, (i))
+#define mk_word64(w) mk_word64_vm(vm, (w))
+#define I64_2(name) int64_t x = val_int64(ARG(1)), y = val_int64(ARG(0)); check_tag(vm, ARG(1), T_INT64, name); check_tag(vm, ARG(0), T_INT64, name)
+#define I64_1(name) int64_t x = val_int64(ARG(0)); check_tag(vm, ARG(0), T_INT64, name)
+
+static int p_int64_add(VM *vm) { I64_2("int64_add"); int64_t r; if (add_ov64(x, y, &r)) return raise_with(vm, 2, EXN_OVERFLOW); return ret(vm, 2, mk_int64(r)); }
+static int p_int64_sub(VM *vm) { I64_2("int64_sub"); int64_t r; if (sub_ov64(x, y, &r)) return raise_with(vm, 2, EXN_OVERFLOW); return ret(vm, 2, mk_int64(r)); }
+static int p_int64_mul(VM *vm) { I64_2("int64_mul"); int64_t r; if (mul_ov64(x, y, &r)) return raise_with(vm, 2, EXN_OVERFLOW); return ret(vm, 2, mk_int64(r)); }
+static int p_int64_div(VM *vm) {
+    I64_2("int64_div");
+    if (y == 0) return raise_with(vm, 2, EXN_DIV);
+    if (x == INT64_MIN && y == -1) return raise_with(vm, 2, EXN_OVERFLOW);
+    int64_t q = x / y;
+    if ((x % y != 0) && ((x < 0) != (y < 0))) q--;
+    return ret(vm, 2, mk_int64(q));
+}
+static int p_int64_mod(VM *vm) {
+    I64_2("int64_mod");
+    if (y == 0) return raise_with(vm, 2, EXN_DIV);
+    if (y == -1) return ret(vm, 2, mk_int64(0));
+    int64_t r = x % y;
+    if (r != 0 && ((r < 0) != (y < 0))) r += y;
+    return ret(vm, 2, mk_int64(r));
+}
+static int p_int64_quot(VM *vm) {
+    I64_2("int64_quot");
+    if (y == 0) return raise_with(vm, 2, EXN_DIV);
+    if (x == INT64_MIN && y == -1) return raise_with(vm, 2, EXN_OVERFLOW);
+    return ret(vm, 2, mk_int64(x / y));
+}
+static int p_int64_rem(VM *vm) {
+    I64_2("int64_rem");
+    if (y == 0) return raise_with(vm, 2, EXN_DIV);
+    if (y == -1) return ret(vm, 2, mk_int64(0));
+    return ret(vm, 2, mk_int64(x % y));
+}
+static int p_int64_neg(VM *vm) { I64_1("int64_neg"); if (x == INT64_MIN) return raise_with(vm, 1, EXN_OVERFLOW); return ret(vm, 1, mk_int64(-x)); }
+static int p_int64_abs(VM *vm) { I64_1("int64_abs"); if (x == INT64_MIN) return raise_with(vm, 1, EXN_OVERFLOW); return ret(vm, 1, mk_int64(x < 0 ? -x : x)); }
+static int p_int64_lt(VM *vm) { I64_2("int64_lt"); return ret(vm, 2, mk_bool(x < y)); }
+static int p_int64_le(VM *vm) { I64_2("int64_le"); return ret(vm, 2, mk_bool(x <= y)); }
+static int p_int64_gt(VM *vm) { I64_2("int64_gt"); return ret(vm, 2, mk_bool(x > y)); }
+static int p_int64_ge(VM *vm) { I64_2("int64_ge"); return ret(vm, 2, mk_bool(x >= y)); }
+static int p_int64_order(VM *vm) { I64_2("int64_order"); return ret(vm, 2, mk_con0(x < y ? 0 : x == y ? 1 : 2)); }
+static int p_int64_to_string(VM *vm) {
+    I64_1("int64_to_string");
+    char buf[32];
+    if (x < 0) snprintf(buf, sizeof buf, "~%llu", (unsigned long long)(0 - (uint64_t)x));   /* INT64_MIN too */
+    else snprintf(buf, sizeof buf, "%lld", (long long)x);
+    return ret(vm, 1, mk_ptr(vm_string_from(vm, buf, (uint32_t)strlen(buf))));
+}
+static int p_int64_to_int(VM *vm) { I64_1("int64_to_int"); if (!int_fits_lang(x)) return raise_with(vm, 1, EXN_OVERFLOW); return ret(vm, 1, mk_int(x)); }
+static int p_int64_from_int(VM *vm) { INT1("int64_from_int"); return ret(vm, 1, mk_int64(x)); }
+
+/* ================================================================ Word64.word */
+#define W64_2(name) uint64_t x = val_word64(ARG(1)), y = val_word64(ARG(0)); check_tag(vm, ARG(1), T_WORD64, name); check_tag(vm, ARG(0), T_WORD64, name)
+#define W64_1(name) uint64_t x = val_word64(ARG(0)); check_tag(vm, ARG(0), T_WORD64, name)
+/* a shift: the count is a word */
+#define W64_SHIFT(name) uint64_t x = val_word64(ARG(1)), y = val_word(ARG(0)); check_tag(vm, ARG(1), T_WORD64, name); check_tag(vm, ARG(0), T_WORD, name)
+
+static int p_word64_add(VM *vm) { W64_2("word64_add"); return ret(vm, 2, mk_word64(x + y)); }
+static int p_word64_sub(VM *vm) { W64_2("word64_sub"); return ret(vm, 2, mk_word64(x - y)); }
+static int p_word64_mul(VM *vm) { W64_2("word64_mul"); return ret(vm, 2, mk_word64(x * y)); }
+static int p_word64_div(VM *vm) { W64_2("word64_div"); if (y == 0) return raise_with(vm, 2, EXN_DIV); return ret(vm, 2, mk_word64(x / y)); }
+static int p_word64_mod(VM *vm) { W64_2("word64_mod"); if (y == 0) return raise_with(vm, 2, EXN_DIV); return ret(vm, 2, mk_word64(x % y)); }
+static int p_word64_neg(VM *vm) { W64_1("word64_neg"); return ret(vm, 1, mk_word64(0 - x)); }
+static int p_word64_lt(VM *vm) { W64_2("word64_lt"); return ret(vm, 2, mk_bool(x < y)); }
+static int p_word64_le(VM *vm) { W64_2("word64_le"); return ret(vm, 2, mk_bool(x <= y)); }
+static int p_word64_gt(VM *vm) { W64_2("word64_gt"); return ret(vm, 2, mk_bool(x > y)); }
+static int p_word64_ge(VM *vm) { W64_2("word64_ge"); return ret(vm, 2, mk_bool(x >= y)); }
+static int p_word64_order(VM *vm) { W64_2("word64_order"); return ret(vm, 2, mk_con0(x < y ? 0 : x == y ? 1 : 2)); }
+static int p_word64_andb(VM *vm) { W64_2("word64_andb"); return ret(vm, 2, mk_word64(x & y)); }
+static int p_word64_orb(VM *vm) { W64_2("word64_orb"); return ret(vm, 2, mk_word64(x | y)); }
+static int p_word64_xorb(VM *vm) { W64_2("word64_xorb"); return ret(vm, 2, mk_word64(x ^ y)); }
+static int p_word64_notb(VM *vm) { W64_1("word64_notb"); return ret(vm, 1, mk_word64(~x)); }
+static int p_word64_lsl(VM *vm) { W64_SHIFT("word64_lsl"); return ret(vm, 2, mk_word64(y >= 64 ? 0 : x << y)); }
+static int p_word64_lsr(VM *vm) { W64_SHIFT("word64_lsr"); return ret(vm, 2, mk_word64(y >= 64 ? 0 : x >> y)); }
+static int p_word64_asr(VM *vm) {
+    W64_SHIFT("word64_asr");
+    uint64_t sign = (x >> 63) ? ~UINT64_C(0) : 0;
+    return ret(vm, 2, mk_word64(y >= 64 ? sign : y == 0 ? x : (x >> y) | (sign << (64 - y))));
+}
+static int p_word64_to_int(VM *vm) { W64_1("word64_to_int"); if (x > (uint64_t)INT_MAX_VALUE) return raise_with(vm, 1, EXN_OVERFLOW); return ret(vm, 1, mk_int((int64_t)x)); }
+static int p_word64_to_int_x(VM *vm) { W64_1("word64_to_int_x"); if (!int_fits_lang((int64_t)x)) return raise_with(vm, 1, EXN_OVERFLOW); return ret(vm, 1, mk_int((int64_t)x)); }
+static int p_word64_from_int(VM *vm) { INT1("word64_from_int"); return ret(vm, 1, mk_word64((uint64_t)x)); }
+static int p_word64_to_word(VM *vm) { W64_1("word64_to_word"); return ret(vm, 1, mk_word(x)); }
+static int p_word64_from_word(VM *vm) { WORD1("word64_from_word"); return ret(vm, 1, mk_word64(x)); }
+static int p_word64_from_word_x(VM *vm) { WORD1("word64_from_word_x"); return ret(vm, 1, mk_word64((uint64_t)word_as_int(x))); }
+static int p_word64_to_string(VM *vm) {
+    W64_1("word64_to_string");
+    char buf[32];
+    snprintf(buf, sizeof buf, "%llX", (unsigned long long)x);
+    return ret(vm, 1, mk_ptr(vm_string_from(vm, buf, (uint32_t)strlen(buf))));
+}
+static int p_word64_to_int64(VM *vm) { W64_1("word64_to_int64"); return ret(vm, 1, mk_int64((int64_t)x)); }
+static int p_word64_from_int64(VM *vm) { I64_1("word64_from_int64"); return ret(vm, 1, mk_word64((uint64_t)x)); }
 
 /* ================================================================ real */
 #define REAL2(name) double x = val_real(ARG(1)), y = val_real(ARG(0)); check_tag(vm, ARG(1), T_REAL, name); check_tag(vm, ARG(0), T_REAL, name)
@@ -244,10 +346,10 @@ static int p_real_to_bits(VM *vm) {
     REAL1("real_to_bits");
     uint64_t w;
     memcpy(&w, &x, sizeof w);
-    return ret(vm, 1, mk_word(w));
+    return ret(vm, 1, mk_word64(w));
 }
 static int p_real_from_bits(VM *vm) {
-    WORD1("real_from_bits");
+    W64_1("real_from_bits");
     double d;
     memcpy(&d, &x, sizeof d);
     return ret(vm, 1, mk_real(d));
@@ -261,7 +363,8 @@ static int p_real_eq(VM *vm) { REAL2("real_eq"); return ret(vm, 2, mk_bool(x == 
 
 static int real_to_int(VM *vm, double r) {
     if (isnan(r)) return raise_with(vm, 1, EXN_DOMAIN);
-    if (r >= 9223372036854775808.0 || r < -9223372036854775808.0) return raise_with(vm, 1, EXN_OVERFLOW);
+    /* an int's range: INT_MAX_VALUE + 1 and INT_MIN_VALUE are powers of two, exact as doubles */
+    if (r >= -(double)INT_MIN_VALUE || r < (double)INT_MIN_VALUE) return raise_with(vm, 1, EXN_OVERFLOW);
     return ret(vm, 1, mk_int((int64_t)r));
 }
 static int p_real_floor(VM *vm) { REAL1("real_floor"); return real_to_int(vm, floor(x)); }

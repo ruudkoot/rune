@@ -115,11 +115,12 @@ struct
 
   (* ---- constants ---- *)
 
-  val bits = #intBits Target.stack
-  val half = IntInf.pow (IntInf.fromInt 2, bits - 1)
-  val full = IntInf.pow (IntInf.fromInt 2, bits)
-  fun fitsInt i = IntInf.>= (i, IntInf.~ half) andalso IntInf.< (i, half)
-  fun wrapWord w = IntInf.mod (w, full)
+  (* int and word at the target's precision (Target.intBits); the 64-bit
+     types' primitives are not folded *)
+  fun fitsInt i =
+    let val half = IntInf.pow (IntInf.fromInt 2, !Target.intBits - 1)
+    in IntInf.>= (i, IntInf.~ half) andalso IntInf.< (i, half) end
+  fun wrapWord w = IntInf.mod (w, IntInf.pow (IntInf.fromInt 2, !Target.intBits))
 
   fun boolAtom b = Con0 (if b then 1 else 0, Ty.bool)
 

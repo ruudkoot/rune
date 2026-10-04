@@ -197,9 +197,7 @@ struct
     (line ("lea 1(" ^ reg64 r ^ "," ^ reg64 r ^ ",1), " ^ reg64 r);
      line ("mov " ^ reg64 r ^ ", " ^ d ^ "(%r13,%rbp)"))
   fun setPayWord line (d, r, slow) =
-    (line ("test " ^ reg64 r ^ ", " ^ reg64 r);
-     line ("js " ^ slow);
-     line ("lea 1(" ^ reg64 r ^ "," ^ reg64 r ^ ",1), " ^ reg64 r);
+    (line ("lea 1(" ^ reg64 r ^ "," ^ reg64 r ^ ",1), " ^ reg64 r);
      line ("mov " ^ reg64 r ^ ", " ^ d ^ "(%r13,%rbp)"))
   fun intAdd line slow =
     (line ("lea -1(%rax), %rax");
@@ -225,18 +223,15 @@ struct
      line ("ja " ^ slow))
   fun wordAdd line slow =
     (line ("lea -1(%rax), %rax");
-     line ("add %rcx, %rax");
-     line ("jb " ^ slow))
+     line ("add %rcx, %rax"))
   fun wordSub line slow =
     (line ("sub %rcx, %rax");
-     line ("jb " ^ slow);
      line ("lea 1(%rax), %rax"))
   fun wordMul line slow =
-    (line ("shr $1, %rax");
-     line ("shr $1, %rcx");
+    (line ("shr $1, %rcx");
+     line ("lea -1(%rax), %rax");
      line ("imul %rcx, %rax");
-     line ("jo " ^ slow);
-     line ("lea 1(%rax,%rax,1), %rax"))
+     line ("lea 1(%rax), %rax"))
   fun wordAnd line slow =
     (line ("and %rcx, %rax"))
   fun wordOr line slow =
@@ -245,16 +240,14 @@ struct
     (line ("xor %rcx, %rax");
      line ("lea 1(%rax), %rax"))
   fun wordNot line slow =
-    (line ("jmp " ^ slow))
+    (line ("neg %rax"))
   fun wordToInt line slow =
     (line ("test %rax, %rax");
      line ("js " ^ slow))
   fun wordToIntX line slow =
-    (line ("test %rax, %rax");
-     line ("js " ^ slow))
+    ()
   fun intToWord line slow =
-    (line ("test %rax, %rax");
-     line ("js " ^ slow))
+    ()
   fun untagInt line r =
     (line ("sar $1, " ^ reg64 r))
   fun untagWord line r =
