@@ -489,8 +489,14 @@ sizes; a decode is seven instructions and a branch, an encode six:
   (decoded) and written into one from a home (encoded). This is what
   raw real fields would make a move.
 * *Arrays and refs:* `Array.sub`, `Array.update` and their like on
-  elements that are reals. Flat arrays of reals, the heap layout's M8,
-  make these a move.
+  elements that are reals. These are arrays of the polymorphic `Array`
+  at the type `real` (`fft`'s `array (n, 0.0)`), which hold words. The
+  heap layout's M8 makes `RealArray` and `Real64Array` flat, and no
+  program of the eight uses either: M8 as planned does not reach
+  these. A `real array` made flat is a representation chosen by type,
+  with the test of the object's kind at a reader that does not know
+  the element, the question raw fields ask for a tuple; the test is
+  cheaper here, since a read of an array tests its kind already.
 * *Primitives through C:* the homes written back before the call and
   loaded again after it, and the result. `nucleic`'s 1.4 million calls
   of `sin`, `cos` and `atan` are 18 conversions each (experiment 10
@@ -582,8 +588,11 @@ A (homes, experiments 2 and 3) before anything about fields.
 * Raw real fields reach 36% to 70% of the conversions of five
   programs (`ray`, `raytrace`, `nucleic`, `barnes-hut`, `tsp`) and
   nothing of the other three.
-* Flat arrays of reals, which M8 builds in any case, reach 61% of
-  `fft`'s and 24% of `raytrace`'s.
+* Arrays are 61% of `fft`'s and 24% of `raytrace`'s, and they are
+  `real array`s of the polymorphic `Array`, which M8's flat
+  `RealArray` does not change. Reaching them means an `'a array` that
+  is flat where it is made at `real`, with every array primitive
+  taking both kinds: a decision of its own, beside raw fields.
 * Calls and primitives through C are all of `mandelbrot`'s, 92% of
   `simple`'s, 63% of `tsp`'s, 59% of `barnes-hut`'s and 31% of
   `nucleic`'s: the JIT's calling convention (D) and experiment 10.
