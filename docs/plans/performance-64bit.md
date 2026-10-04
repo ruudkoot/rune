@@ -396,9 +396,43 @@ Each is small unless it says otherwise. The programs are at the end.
   homes written back and loaded -- and a call straight to the library
   with the argument in an XMM register has none of them, since such a
   function neither allocates nor raises. That is what is proposed for
-  this kind: the library's code, reached directly. (The library's
-  algorithm copied in line would save the call instruction and its
-  return beyond that, a few cycles of 49; not proposed.)
+  this kind: the library's code, reached directly.
+* **The library's algorithm in line, measured** (the owner's second
+  question). glibc 2.39's own source of the sine
+  (`sysdeps/ieee754/dbl-64/s_sin.c` with its table and its reduction
+  of large arguments), compiled as the library compiles the variant
+  this machine runs (`-O2 -mfma -mavx2 -frounding-math`), and agreeing
+  with the library's result on every one of two million random
+  arguments in each of five ranges. The same loop from C, a call:
+
+  | The sine | cycles, arguments 0.5 to 3000.5 | instructions | cycles, arguments in [0, 3) | instructions |
+  |---|---:|---:|---:|---:|
+  | the library's, as a C program calls it (through the PLT) | 49.1 | 102.5 | 32.3 | 85.7 |
+  | the same source in the program, called directly | 47.6 | 98.5 | 31.3 | 81.7 |
+  | the same source in line in the loop | 41.1 | 84.7 | 26.5 | 67.8 |
+  | in line, without the test of the rounding mode | 37.7 | 71.7 | 24.5 | 56.4 |
+
+  In line saves 6.5 cycles of 47.6 over the direct call, 14%; against
+  the 91 that `Math.sin` costs on M5 today, a direct call would be
+  about 48 and in line about 41. The 41 is a lower bound for code the
+  JIT would emit: the C compiler also keeps the sine's constants in
+  registers across the loop, which a copy emitted at a call site does
+  not get. The library asks for the rounding mode at every call
+  (`stmxcsr` and a test); leaving that out is three or four cycles
+  more and is right only if the VM knows the mode, which
+  `IEEEReal.setRoundingMode` can change. What in line costs: some 85
+  instructions of FMA code at every call site (and the variant
+  without FMA for a machine that lacks it, which the library chooses
+  by itself), the table and the large arguments' reduction still a
+  call, the same again for aarch64, and one obligation that is the
+  real price: the interpreter, the stack VM and `runeopt`'s code call
+  the system's library, so a JIT with its own copy of one version's
+  algorithm gives another answer wherever the system's library is not
+  that version (musl, Windows, another glibc). In line means Rune
+  carries its own sine for every engine, as V8 and the JVM do for
+  that reason. Proposed order: the direct call first (most of the
+  gain, 43 of the 50 cycles, and no new code to keep); in line only
+  with that decision taken.
 * **How.** (1) The ranking for every workload: the bootstrap,
   `tests/perf`, MLton's set, the six programs of this file, with the
   helpers that box counted beside the primitives. (2) What one call
@@ -480,6 +514,17 @@ val () = print (Word64.toString (rep (8, 0w1)) ^ "\n")
 Each is run as `bin/runevm --count --stats FILE.rbc` under `perf stat
 -e instructions:u,cycles:u`, on the 16-byte VM (branch `heap-layout`
 before M5, where `Word64` is `Word`) and on M5's.
+
+Experiment 10's library in line is glibc 2.39's `s_sin.c`,
+`sincostab.c` and `branred.c` unchanged (the last without the FMA
+flags, as the library builds it), with stand-ins of a few lines for
+the private headers they include (`endian.h`, `math_private.h`,
+`fenv_private.h` with the SSE functions of
+`sysdeps/x86/fpu/fenv_private.h`, `math-underflow.h`,
+`libm-alias-double.h`); the source is included once with `SECTION`
+empty in a file of its own (the direct call) and once with `SECTION`
+as `static inline __attribute__ ((always_inline))` in the file of the
+loop.
 
 Experiment 10's loop of `Math.sin`, and the x87 instructions it was
 measured against (gcc, `-O2 -fno-math-errno`; each function summed
