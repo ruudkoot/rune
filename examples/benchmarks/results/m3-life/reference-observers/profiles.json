@@ -1,0 +1,30 @@
+{
+  "life-nofib-lazy": {
+    "smoke": [
+      "15 1 expected/smoke.txt",
+      468
+    ],
+    "normal": [
+      "15 250 expected/normal.txt",
+      117000
+    ],
+    "large": [
+      "27 250 expected/large.txt",
+      372250
+    ]
+  },
+  "life-nofib-strict": {
+    "smoke": [
+      "15 1 expected/smoke.txt",
+      468
+    ],
+    "normal": [
+      "15 250 expected/normal.txt",
+      117000
+    ],
+    "large": [
+      "27 250 expected/large.txt",
+      372250
+    ]
+  }
+}

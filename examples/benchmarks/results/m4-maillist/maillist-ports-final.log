@@ -1,0 +1,7 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/maillist.6h5elu48
+PASS maillist smoke O0
+PASS maillist smoke O2
+PASS maillist smoke hosts
+PASS maillist normal O0
+PASS maillist normal O2
+PASS maillist normal hosts

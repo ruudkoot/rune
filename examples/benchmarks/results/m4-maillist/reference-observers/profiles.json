@@ -1,0 +1,16 @@
+{
+  "maillist": {
+    "smoke": [
+      "DATA/smoke.txt 1 expected/smoke.tex",
+      "630:0"
+    ],
+    "normal": [
+      "DATA/normal.txt 100 expected/normal.tex",
+      "522700:0"
+    ],
+    "large": [
+      "DATA/large.txt 100 expected/large.tex",
+      "1429800:0"
+    ]
+  }
+}

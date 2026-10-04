@@ -1,0 +1,8 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/life-nofib-lazy/
+?? examples/benchmarks/life-nofib-strict/
+?? examples/benchmarks/shared/cell-sequence.sml
+?? examples/benchmarks/shared/nofib-life.sml
+?? tests/benchmarks/check-nofib-life.sh
+?? tests/benchmarks/nofib-life.sml

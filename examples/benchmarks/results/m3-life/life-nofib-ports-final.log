@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/life-nofib.wrchhuaf
+PASS life-nofib-lazy smoke O0
+PASS life-nofib-lazy smoke O2
+PASS life-nofib-lazy smoke hosts
+PASS life-nofib-lazy normal O0
+PASS life-nofib-lazy normal O2
+PASS life-nofib-lazy normal hosts
+PASS life-nofib-strict smoke O0
+PASS life-nofib-strict smoke O2
+PASS life-nofib-strict smoke hosts
+PASS life-nofib-strict normal O0
+PASS life-nofib-strict normal O2
+PASS life-nofib-strict normal hosts

@@ -1,0 +1,30 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/maillist/benchmark.sml]
+[autoloading]
+[autoloading done]
+structure Benchmark : sig
+  val name : string
+  val file : string -> TextIO.vector
+  val lines : string -> string list
+  val blank : string -> bool
+  val paras : string list -> string list list
+  val append : string -> TextIO.vector -> unit
+  val convert : string -> string -> int * int
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 630:0
+PASS maillist
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,139 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 566de7f..4846060 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -206,6 +206,8 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [treejoin-nofib-strict](#treejoin-nofib-strict) | [nofib spectral/treejoin](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/treejoin) | Repeat persistent relation-tree joins over the shuffled spectral datasets. |
+ | [rsa-lazy](#rsa-lazy) | [nofib real/rsa](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/rsa) | Encrypt fixed ASCII blocks with exact modular exponentiation and memoized encodings. |
+ | [rsa-strict](#rsa-strict) | [nofib real/rsa](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/rsa) | Encrypt fixed ASCII blocks with exact modular exponentiation and eager encodings. |
++| [life-nofib-lazy](#life-nofib-lazy) | [nofib life](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/life) | Evolve a memoized list-grid to the first adjacent Life fixpoint. |
++| [life-nofib-strict](#life-nofib-strict) | [nofib life](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/life) | Evolve an eager list-grid to the same adjacent Life fixpoint. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -302,6 +304,7 @@ sh tests/benchmarks/check-ocaml-lazy.sh
+ sh tests/benchmarks/check-sequence-cps.sh
+ sh tests/benchmarks/check-compress.sh
+ sh tests/benchmarks/check-rsa.sh
++sh tests/benchmarks/check-nofib-life.sh
+ python3 tests/benchmarks/test-inventory.py
+ python3 scripts/benchmark-inventory.py --check
+ ```
+@@ -6139,3 +6142,103 @@ encoding thunks, decimal conversion and retention are source hypotheses until
+ measured. References: retained implementation and nofib literature survey.
+ 
+ [Complete provenance](rsa-strict/PROVENANCE.md).
++
++## life-nofib-lazy
++
++Evolve a memoized list-grid to the first adjacent Life fixpoint.
++
++nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `spectral/life/Main.hs`.
++
++John Launchbury is credited in the Game of Life header. The individual
++licence notice is unspecified; original source, Makefile and SHA256 identities
++are retained. This is the finite list-grid and adjacent-generation equality
++variant, separate from the classic array/list Life programs and their inputs.
++
++## Algorithm and variants
++
++Preserve the original initial pattern on row14, square clipping/padding,
++zero border, shift triples, eight-neighbor sum and Conway update rules.
++The adjacent-fixpoint test stops at the first equal pair and returns the older
++board. Its generation index and exact display formatting are preserved.
++No cycle detection or different stopping condition is substituted.
++Both variants share one algorithm and sequence abstraction. Lazy heads/spines,
++row values and neighbor cells are memoized; strict materializes them eagerly.
++The old center cell remains unforced for birth/death and is read only for
++survival with exactly two neighbors, as in the source.
++
++## Translation and runtime questions
++
++SML97 suspension adapters represent the original lazy list grid. Nested row
++indirections and explicit memo cells affect representation/allocation. Input
++generation remains in SML; integer cell values and selected indices fit31 bits.
++The program additionally checks the complete final display, consuming every
++repetition in a sum of actual display lengths. The original prints only length
++of that final display; intermediate generations remain undisplayed. Primitive
++source/shift order, shared neighbor work, early equality exits and grid retention
++are source-derived diagnostic questions until measured.
++
++## Inputs, validation and references
++
++Smoke uses original FAST size15 once, with a nonempty initial pattern. Normal
++retains FAST15 with250 repetitions; large retains NORM27 with250. SLOW29 remains
++recorded. Source fixpoint indices are0/5/49/181 for sizes5/15/27/29, with display
++lengths58/468/1489/1716. Original GHC observers and an independent synchronous
++array-grid oracle agree with the complete final displays. All selected final
++boards are empty, but the nonempty inputs undergo the recorded generations.
++Semantic tests cover a two-step blinker, exact stop indices and center demand.
++Primary smoke/normal cases pass; large SML execution is not universally claimed.
++The paired semantic test triggers ML Kit's CompileDec.TypeFcn not simple crash;
++that compile failure is recorded separately, without a source workaround.
++References: retained Launchbury implementation and the nofib literature survey.
++
++[Complete provenance](life-nofib-lazy/PROVENANCE.md).
++
++## life-nofib-strict
++
++Evolve an eager list-grid to the same adjacent Life fixpoint.
++
++nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `spectral/life/Main.hs`.
++
++John Launchbury is credited in the Game of Life header. The individual
++licence notice is unspecified; original source, Makefile and SHA256 identities
++are retained. This is the finite list-grid and adjacent-generation equality
++variant, separate from the classic array/list Life programs and their inputs.
++
++## Algorithm and variants
++
++Preserve the original initial pattern on row14, square clipping/padding,
++zero border, shift triples, eight-neighbor sum and Conway update rules.
++The adjacent-fixpoint test stops at the first equal pair and returns the older
++board. Its generation index and exact display formatting are preserved.
++No cycle detection or different stopping condition is substituted.
++Both variants share one algorithm and sequence abstraction. Lazy heads/spines,
++row values and neighbor cells are memoized; strict materializes them eagerly.
++The old center cell remains unforced for birth/death and is read only for
++survival with exactly two neighbors, as in the source.
++
++## Translation and runtime questions
++
++SML97 suspension adapters represent the original lazy list grid. Nested row
++indirections and explicit memo cells affect representation/allocation. Input
++generation remains in SML; integer cell values and selected indices fit31 bits.
++The program additionally checks the complete final display, consuming every
++repetition in a sum of actual display lengths. The original prints only length
++of that final display; intermediate generations remain undisplayed. Primitive
++source/shift order, shared neighbor work, early equality exits and grid retention
++are source-derived diagnostic questions until measured.
++
++## Inputs, validation and references
++
++Smoke uses original FAST size15 once, with a nonempty initial pattern. Normal
++retains FAST15 with250 repetitions; large retains NORM27 with250. SLOW29 remains
++recorded. Source fixpoint indices are0/5/49/181 for sizes5/15/27/29, with display
++lengths58/468/1489/1716. Original GHC observers and an independent synchronous
++array-grid oracle agree with the complete final displays. All selected final
++boards are empty, but the nonempty inputs undergo the recorded generations.
++Semantic tests cover a two-step blinker, exact stop indices and center demand.
++Primary smoke/normal cases pass; large SML execution is not universally claimed.
++The paired semantic test triggers ML Kit's CompileDec.TypeFcn not simple crash;
++that compile failure is recorded separately, without a source workaround.
++References: retained Launchbury implementation and the nofib literature survey.
++
++[Complete provenance](life-nofib-strict/PROVENANCE.md).
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 048cdca..81c4841 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -587,3 +587,9 @@ rsa-lazy	large	nofib	real/rsa	DATA/large.txt 150 expected/large.txt	rsa-lazy/lar
+ rsa-strict	smoke	nofib	real/rsa	DATA/smoke.txt 1 expected/smoke.txt	rsa-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-hash.sml,shared/rsa.sml,shared/rsa-driver.sml,rsa-strict/benchmark.sml,shared/main.sml	30	1048576	application,exact-arithmetic,modular-power,strict	DATA/smoke.txt,expected/smoke.txt	exact	implemented
+ rsa-strict	normal	nofib	real/rsa	DATA/normal.txt 10 expected/normal.txt	rsa-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-hash.sml,shared/rsa.sml,shared/rsa-driver.sml,rsa-strict/benchmark.sml,shared/main.sml	600	4194304	application,exact-arithmetic,modular-power,strict	DATA/normal.txt,expected/normal.txt	exact	implemented
+ rsa-strict	large	nofib	real/rsa	DATA/large.txt 150 expected/large.txt	rsa-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-hash.sml,shared/rsa.sml,shared/rsa-driver.sml,rsa-strict/benchmark.sml,shared/main.sml	3600	8388608	application,exact-arithmetic,modular-power,strict	DATA/large.txt,expected/large.txt	exact	implemented
++life-nofib-lazy	smoke	nofib	spectral/life	15 1 expected/smoke.txt	life-nofib-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-life.sml,life-nofib-lazy/benchmark.sml,shared/main.sml	30	1048576	simulation,grids,fixpoint,lazy	expected/smoke.txt	exact	implemented
++life-nofib-lazy	normal	nofib	spectral/life	15 250 expected/normal.txt	life-nofib-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-life.sml,life-nofib-lazy/benchmark.sml,shared/main.sml	600	4194304	simulation,grids,fixpoint,lazy	expected/normal.txt	exact	implemented
++life-nofib-lazy	large	nofib	spectral/life	27 250 expected/large.txt	life-nofib-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-life.sml,life-nofib-lazy/benchmark.sml,shared/main.sml	3600	8388608	simulation,grids,fixpoint,lazy	expected/large.txt	exact	implemented
++life-nofib-strict	smoke	nofib	spectral/life	15 1 expected/smoke.txt	life-nofib-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-life.sml,life-nofib-strict/benchmark.sml,shared/main.sml	30	1048576	simulation,grids,fixpoint,strict	expected/smoke.txt	exact	implemented
++life-nofib-strict	normal	nofib	spectral/life	15 250 expected/normal.txt	life-nofib-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-life.sml,life-nofib-strict/benchmark.sml,shared/main.sml	600	4194304	simulation,grids,fixpoint,strict	expected/normal.txt	exact	implemented
++life-nofib-strict	large	nofib	spectral/life	27 250 expected/large.txt	life-nofib-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-life.sml,life-nofib-strict/benchmark.sml,shared/main.sml	3600	8388608	simulation,grids,fixpoint,strict	expected/large.txt	exact	implemented

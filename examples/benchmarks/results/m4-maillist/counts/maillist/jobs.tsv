@@ -1,0 +1,1 @@
+maillist	600	4194304	shared/input.sml maillist/benchmark.sml shared/main.sml	DATA/normal.txt 100 expected/normal.tex	maillist/normal.expected	DATA/normal.txt expected/normal.tex

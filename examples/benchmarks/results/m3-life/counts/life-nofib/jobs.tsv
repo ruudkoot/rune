@@ -1,0 +1,2 @@
+life-nofib-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-life.sml life-nofib-lazy/benchmark.sml shared/main.sml	15 250 expected/normal.txt	life-nofib-lazy/normal.expected	expected/normal.txt
+life-nofib-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-life.sml life-nofib-strict/benchmark.sml shared/main.sml	15 250 expected/normal.txt	life-nofib-strict/normal.expected	expected/normal.txt

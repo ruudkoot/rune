@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+maillist	normal	rune	O2	compile	0	0	pass	1.61	1.56	0.10	135196	-	-	-	maillist/rune/build/compile
+maillist	normal	rune	O2	correctness	0	0	pass	2.13	1.16	1.15	12148	94250114	377399464	8420455	maillist/rune/correctness.0
+maillist	normal	rune	O2	count	1	1	pass	1.97	1.06	0.92	12232	94250114	377399464	8420455	maillist/rune/fresh.1
+maillist	normal	rune:opt	O2	compile	0	0	pass	1.32	1.21	0.10	135304	-	-	-	maillist/rune-opt/build/compile
+maillist	normal	rune:opt	O2	native-compile	0	0	pass	0.36	0.18	0.03	12424	-	-	-	maillist/rune-opt/build/native-compile
+maillist	normal	rune:opt	O2	correctness	0	0	pass	1.86	0.81	1.08	12748	94250114	377399464	8420455	maillist/rune-opt/correctness.0
+maillist	normal	rune:opt	O2	count	1	1	pass	1.66	0.86	0.93	12732	94250114	377399464	8420455	maillist/rune-opt/fresh.1
+maillist	normal	rune:new	O2	compile	0	0	pass	1.29	1.22	0.10	135232	-	-	-	maillist/rune-new/build/compile
+maillist	normal	rune:new	O2	correctness	0	0	pass	2.69	1.29	1.39	12296	52242146	377399464	8420455	maillist/rune-new/correctness.0
+maillist	normal	rune:new	O2	count	1	1	pass	4.30	2.05	2.34	12432	52242146	377399464	8420455	maillist/rune-new/fresh.1
+maillist	normal	rune:jit	O2	compile	0	0	pass	1.46	1.37	0.11	135224	-	-	-	maillist/rune-jit/build/compile
+maillist	normal	rune:jit	O2	correctness	0	0	pass	1.91	0.82	1.09	13212	52242146	377399464	8420455	maillist/rune-jit/correctness.0
+maillist	normal	rune:jit	O2	count	1	1	pass	1.72	0.78	0.94	13424	52242146	377399464	8420455	maillist/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

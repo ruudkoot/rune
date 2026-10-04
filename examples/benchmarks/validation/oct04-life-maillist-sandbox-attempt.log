@@ -1,0 +1,20 @@
+make[1]: Nothing to be done for 'host-builds'.
+make[1]: Nothing to be done for 'vm'.
+make[1]: Nothing to be done for 'boot'.
+make[1]: Nothing to be done for 'runedoc'.
+make[1]: Nothing to be done for 'runeopt'.
+python3 tests/compiler/run-tests.py --rune bin/rune
+bin/rune-boot -o bin/rune.stage2.rbc build/config.sml src/util/scon.sml src/util/ordmap.sml src/util/inttable.sml src/util/source.sml src/util/error.sml src/util/pass.sml src/frontend/token.sml src/frontend/lexer.sml src/elab/types.sml src/core/ty.sml src/elab/overload.sml src/frontend/ast.sml src/frontend/fixity.sml src/frontend/parser.sml src/elab/unifyexn.sml src/elab/unify.sml src/elab/env.sml src/elab/sigmatch.sml src/elab/exhaust.sml src/backend/opcodes.sml src/backend/prims.sml src/elab/elaborate.sml src/core/lambda.sml src/core/lambdalint.sml src/core/matchcomp.sml src/core/translate.sml src/core/mid.sml src/core/midlint.sml src/core/midtext.sml src/core/tomid.sml src/core/target.sml src/core/shake.sml src/core/lift.sml src/core/simplify.sml src/core/workers.sml src/backend/code.sml src/backend/low.sml src/backend/target.sml src/backend/lowlint.sml src/backend/rep.sml src/backend/lower.sml src/backend/stack.sml src/backend/regcodes.sml src/backend/regs.sml src/backend/emit.sml src/driver/basismanifest.sml src/driver/options.sml src/driver/main.sml src/main/rune-main.sml
+PASS compiler output protection and resource budgets
+python3 tests/vm/run-limits.py --rune bin/rune --vm bin/runevm
+PASS saved resource policies and stricter restore limits
+sh tests/run-tests.sh -j 4 --rune bin/rune --vm bin/runevm
+cmp bin/rune.rbc bin/rune.stage2.rbc
+bootstrap: bin/rune.rbc reproduces itself
+FAIL basis.inetsock_addresses: exit code 1, expected 0: runevm: uncaught exception SysErr <value>
+FAIL basis.socket_loopback: exit code 1, expected 0: runevm: uncaught exception SysErr <value>
+FAIL rt.fork_image: exit code 143, expected 0: Terminated
+passed 328, failed 3
+failed: basis.inetsock_addresses basis.socket_loopback rt.fork_image
+make[1]: *** [Makefile:608: test] Error 1
+make: *** [Makefile:932: check] Error 2

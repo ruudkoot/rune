@@ -675,3 +675,29 @@ The full `make JOBS=4 check` passes, including 564 catalogue profiles,
 bytecode agreement for 498 programs across all seven builds. runedoc and runeopt
 builds also agree. The [acceptance transcript](validation/oct03-sandmark-lazy-acceptance.log)
 records the complete run.
+
+## M3 Life and M4 mailing-label application, 2026-10-04
+
+Two Life variants and Paul Hudak's mailing-label application bring the catalogue
+to 201 programs and 597 profiles. M3 and M4 remain in progress. All
+[48 Life](results/m3-life/correctness.tsv) and
+[24 maillist](results/m4-maillist/correctness.tsv) primary smoke/normal cases
+pass on four Rune engines at both levels and four primary native hosts.
+Complete displays/files agree with original GHC and independent references.
+Life uses a nonempty smoke input and preserves adjacent-fixpoint stopping;
+maillist preserves every append-file call and 100 normal repetitions.
+
+Seven Life semantic checks pass nine configurations at both levels. The
+paired ML Kit [compiler crash](validation/mlkit-life.md) is recorded separately.
+Eight mailing-label boundary checks pass all ten configurations at both levels;
+the initial sandboxed SML/NJ 32-bit SIGSYS and successful permitted rerun are
+retained. Count comparisons agree for all allocations and applicable instruction
+pairs. No headline timing or universal large SML execution is claimed.
+
+The full `make JOBS=4 check` passes outside the syscall sandbox, including all
+597 catalogue profiles, 331 language fixtures per compiler, performance budgets,
+bootstrap and bytecode agreement for 498 programs across seven builds. runedoc
+and runeopt also agree. The [complete acceptance transcript](validation/oct04-life-maillist-acceptance.log)
+records the run. The [sandboxed attempt](validation/oct04-life-maillist-sandbox-attempt.log)
+retains its socket failures and terminated blocked fork-image test; it is not
+passing evidence. All 32 inventory tests pass.

@@ -1,0 +1,25 @@
+benchmark	profile	optimization	configuration	arguments	status	artifact_directory
+maillist	normal	O0	rune	DATA/normal.txt 100 expected/normal.tex	pass	results/m4-maillist/correctness-raw/maillist/normal/O0/rune
+maillist	normal	O0	rune-jit	DATA/normal.txt 100 expected/normal.tex	pass	results/m4-maillist/correctness-raw/maillist/normal/O0/rune-jit
+maillist	normal	O0	rune-new	DATA/normal.txt 100 expected/normal.tex	pass	results/m4-maillist/correctness-raw/maillist/normal/O0/rune-new
+maillist	normal	O0	rune-opt	DATA/normal.txt 100 expected/normal.tex	pass	results/m4-maillist/correctness-raw/maillist/normal/O0/rune-opt
+maillist	normal	O2	rune	DATA/normal.txt 100 expected/normal.tex	pass	results/m4-maillist/correctness-raw/maillist/normal/O2/rune
+maillist	normal	O2	rune-jit	DATA/normal.txt 100 expected/normal.tex	pass	results/m4-maillist/correctness-raw/maillist/normal/O2/rune-jit
+maillist	normal	O2	rune-new	DATA/normal.txt 100 expected/normal.tex	pass	results/m4-maillist/correctness-raw/maillist/normal/O2/rune-new
+maillist	normal	O2	rune-opt	DATA/normal.txt 100 expected/normal.tex	pass	results/m4-maillist/correctness-raw/maillist/normal/O2/rune-opt
+maillist	normal	host-default	native-mlton-20241230	DATA/normal.txt 100 expected/normal.tex	pass	results/m4-maillist/correctness-raw/maillist/normal/host-default/native-mlton-20241230
+maillist	normal	host-default	native-polyml-5.9.2	DATA/normal.txt 100 expected/normal.tex	pass	results/m4-maillist/correctness-raw/maillist/normal/host-default/native-polyml-5.9.2
+maillist	normal	host-default	native-smlnj-dev-2026.2	DATA/normal.txt 100 expected/normal.tex	pass	results/m4-maillist/correctness-raw/maillist/normal/host-default/native-smlnj-dev-2026.2
+maillist	normal	host-default	native-smlnj-legacy-110.99.9	DATA/normal.txt 100 expected/normal.tex	pass	results/m4-maillist/correctness-raw/maillist/normal/host-default/native-smlnj-legacy-110.99.9
+maillist	smoke	O0	rune	DATA/smoke.txt 1 expected/smoke.tex	pass	results/m4-maillist/correctness-raw/maillist/smoke/O0/rune
+maillist	smoke	O0	rune-jit	DATA/smoke.txt 1 expected/smoke.tex	pass	results/m4-maillist/correctness-raw/maillist/smoke/O0/rune-jit
+maillist	smoke	O0	rune-new	DATA/smoke.txt 1 expected/smoke.tex	pass	results/m4-maillist/correctness-raw/maillist/smoke/O0/rune-new
+maillist	smoke	O0	rune-opt	DATA/smoke.txt 1 expected/smoke.tex	pass	results/m4-maillist/correctness-raw/maillist/smoke/O0/rune-opt
+maillist	smoke	O2	rune	DATA/smoke.txt 1 expected/smoke.tex	pass	results/m4-maillist/correctness-raw/maillist/smoke/O2/rune
+maillist	smoke	O2	rune-jit	DATA/smoke.txt 1 expected/smoke.tex	pass	results/m4-maillist/correctness-raw/maillist/smoke/O2/rune-jit
+maillist	smoke	O2	rune-new	DATA/smoke.txt 1 expected/smoke.tex	pass	results/m4-maillist/correctness-raw/maillist/smoke/O2/rune-new
+maillist	smoke	O2	rune-opt	DATA/smoke.txt 1 expected/smoke.tex	pass	results/m4-maillist/correctness-raw/maillist/smoke/O2/rune-opt
+maillist	smoke	host-default	native-mlton-20241230	DATA/smoke.txt 1 expected/smoke.tex	pass	results/m4-maillist/correctness-raw/maillist/smoke/host-default/native-mlton-20241230
+maillist	smoke	host-default	native-polyml-5.9.2	DATA/smoke.txt 1 expected/smoke.tex	pass	results/m4-maillist/correctness-raw/maillist/smoke/host-default/native-polyml-5.9.2
+maillist	smoke	host-default	native-smlnj-dev-2026.2	DATA/smoke.txt 1 expected/smoke.tex	pass	results/m4-maillist/correctness-raw/maillist/smoke/host-default/native-smlnj-dev-2026.2
+maillist	smoke	host-default	native-smlnj-legacy-110.99.9	DATA/smoke.txt 1 expected/smoke.tex	pass	results/m4-maillist/correctness-raw/maillist/smoke/host-default/native-smlnj-legacy-110.99.9
