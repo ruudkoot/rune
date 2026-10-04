@@ -620,7 +620,35 @@ header, by code and by entering, at 0, 1, 10 and 50% thunks;
 `lazy_stream`; `lazy_update_old`), with `L1+PAIRS2`, the build whose
 third code means "a headered object, known to be evaluated", and
 `check.sh` holds them to one checksum under all 22 configurations.
-Their cycles wait for the idle machine with the rest.
+Cycles (`measure.sh`, gcc, an idle machine):
+
+| Kernel | L1+PAIRS2 | L1+PAIRS | L1 |
+|---|---:|---:|---:|
+| lazy_case, no thunks: by the header | 0.99G | 0.93G | 0.89G |
+| by the code | 0.94G | as the header | as the header |
+| by entering | 1.50G | 1.48G | 1.28G |
+| 1% thunks: header, code, entering | 6.98G, 7.02G, 6.88G | 6.84G, -, 6.88G | 6.80G, -, 6.90G |
+| 10% thunks | 2.92G, 2.99G, 2.89G | 2.96G, -, 2.93G | 2.90G, -, 2.81G |
+| 50% thunks | 1.10G, 1.09G, 1.08G | 1.11G, -, 1.07G | 1.08G, -, 1.06G |
+| lazy_stream | 2.05G | 2.03G | 2.08G |
+| lazy_update_old | 1.19G | 1.12G | 1.14G |
+
+* **Entering every scrutinee costs half as much again** where they are
+  values (1.50G against 0.99G), which is what GHC found before it
+  tagged pointers; with thunks among them the three ways are one.
+* **The code is 5% under the header's way** on a `case` over values
+  (0.94G against 0.99G), inside what the harness calls noise: the
+  header is read for the constructor's tag whichever way a thunk is
+  ruled out, so the code spares a compare and not the load. GHC's gain
+  is from the constructor's tag in the pointer, which one code cannot
+  hold.
+* The kernels with thunks spend most of their time choosing which
+  elements to suspend (a remainder per element), which is the same for
+  the three ways and drowns their difference; a kernel that suspends
+  by a cheaper rule would say more.
+* The strict kernels under `L1+PAIRS2` against `L1+PAIRS`, which are
+  what the reserved code costs SML, are measured by the same script
+  and were still waiting for the machine when this was written.
 
 ### M4, for the gate
 
@@ -670,10 +698,9 @@ on 2026-10-04; the tables are in the three sections above.
   the interpreter's shifts do not show outside real arithmetic. B is
   not built; SplitMix64 is the measure of what A costs a 64-bit word.
 
-Not measured yet: the harness's lazy kernels and the strict ones under
-the reserved code (they are built and checked), `examples/benchmarks`
-at its `normal` profile, the heap-size sweep, and `runeopt`'s code
-beside the JIT's.
+Not measured yet: the harness's strict kernels under the reserved code
+(built and checked), `examples/benchmarks` at its `normal` profile, the
+heap-size sweep, and `runeopt`'s code beside the JIT's.
 
 ## The request
 
