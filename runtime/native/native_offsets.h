@@ -32,6 +32,7 @@
     X("VM_BYTES_ALLOCATED", offsetof(VM, bytes_allocated)) \
     X("VM_OBJECTS_ALLOCATED", offsetof(VM, objects_allocated)) \
     X("VM_GC_STRESS", offsetof(VM, gc_stress)) \
+    X("VM_REAL_ZERO", offsetof(VM, real_zero)) \
     X("FRAME_SIZE", sizeof(Frame)) \
     X("FRAME_FUNC", offsetof(Frame, func)) \
     X("FRAME_RET_PC", offsetof(Frame, ret_pc)) \
