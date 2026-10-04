@@ -42,7 +42,7 @@ What it rests on:
 | M1 | Measure in the tree | done 2026-09-27, `36ef0a3` |
 | M2 | The simulator and the harness in the tree | done 2026-09-27, `3f17fd2` |
 | M3 | The layout behind an interface | done 2026-09-27, `93cc674` |
-| M4 | Prototypes at full scale; the gate | begun on branch `heap-layout-word` |
+| M4 | Prototypes at full scale; the gate | both prototypes run, pass the suites and are measured (branches `heap-layout-word` and `heap-layout-pairs`; *M4, the first prototype so far* and the two sections after it); raw real fields, the 32-bit header and typed slots are not built; the gate is the owner's |
 | M5 | The chosen layout, complete | |
 | M6 | Roots and maps | |
 | M7 | The collector on the new layout, and the hooks for the next | |
@@ -193,6 +193,487 @@ keeps the names it was written with; to read it against the tree:
   `test-register`, `test-register-jit` and `test-register-asan`. The
   configuration names of the tables (`rune`, `rune:new`, `rune:jit`,
   `rune:opt`) and the variables that go with them are as they were.
+
+### M4, the first prototype so far
+
+Branch `heap-layout-word`, from 2026-10-03; what follows is the state on
+that day, not the gate's table. The prototype is the tagged word of D1 B
+in every engine, `runeopt` since 2026-10-04: a value is one 8-byte word, an
+immediate `2n+1`, a pointer the address; a real is Koka-encoded in the
+word or a `K_REAL` box (D3 C); an integer or a word past 63 bits is a
+`K_BOX` (D2 A, the default of the prototype, so that every suite runs
+unchanged), with D2 B's 63 bits (`RUNE_INT63`) and D3 B's boxed reals
+(`RUNE_REAL_BOXED`) as compile-time switches, each with a VM of its own
+(`make bin/runevm-int63 bin/runevm-realboxed`). The header is the
+8-byte one of today; fields are tagged words (raw typed fields are the
+next stage). It passes `make test`, `test-register` (the Basis suite's
+139,210 checks), `test-register-jit`, `test-stress` and
+`test-register-asan`, and the bootstrap's fixed point holds; as native
+code, `test-opt`, `test-native` (the Basis suite's 139,211, the counts
+of 264 programs equal to the stack VM's, the compiler as native code
+reproducing itself), `test-native-stress` and `test-native-asan`.
+
+What building it found, that the plan did not have:
+
+* **The payload is rounded to a word, not to 16 bytes.** Rounded as
+  today the bootstrap's bytes were 0.654 of the 16-byte layout's; with
+  `PAYLOAD_ALIGN` 8 (the smallest object 16 bytes) they are 849,752,320
+  against 1,434,024,896: 0.5926, where the census said 0.5925 for L1.
+* **Two numbers are equal by their words, or as two boxes by their
+  bits.** An immediate is never the number of a box, so one of each is
+  two numbers; comparing signed payloads said otherwise (a box of
+  2^64 - 1 and the immediate 2^63 - 1). One function, `val_same_imm`,
+  for `imm_eq`, `values_equal` and the fast paths.
+* **The representation's boxes are counted apart.** A `K_REAL` or
+  `K_BOX` is the layout's, not the program's: `--count` leaves them
+  out, so objects agree between engines and with the 16-byte layout,
+  and `--stats` prints them on a line of their own. Tier 2 would
+  otherwise count a box at each write-back that the interpreter never
+  makes; `Runtime.stats`' live bytes leave them out too.
+* **Tier 2 keeps a real as a double.** An `xmm` home holds the double
+  and its slot may be behind; the word is made (encoded, or boxed by a
+  helper that reuses the slot's box when the bits are the same) where
+  something needs it: a safepoint, a store, a move to a register without
+  such a home. Without this `real_nbody` was 3.4 times slower at tier 2
+  than on the 16-byte layout; with it, level.
+* **An int or a word in a general home is its word**, so writing it
+  back is one store and arithmetic is done tagged (`lea`, `add`, `jo`
+  gives the overflow of 63 bits). Under D2 A each operand needs a test
+  for the box and a word's result a test for the 64th bit, which is
+  what `word_bits` pays below.
+* **Raw typed fields are not sound as planned for a tuple that
+  polymorphic code reads.** A reader at `'a` does not know a field is
+  raw, so either every reader of a real or `'a` field tests the
+  descriptor, or raw fields are confined to where no polymorphic reader
+  can reach: constructor fields of a declared ground type and
+  monomorphic arrays. Only reals (and `Int64`/`Word64` under D2 B) gain
+  anything. For the gate; the next stage builds the confined form.
+
+Cycles, of both prototypes and their switches, measured on an idle
+machine on 2026-10-04 (`scripts/perf-cycles.sh --configs jit-off,new
+--gc`, the least of five runs, a program at a time and only while the
+machine's load was below 1.5; an earlier table, taken beside another
+session's suites, is discarded: its cycles were up to a third too high
+at the same instructions). 16-byte is branch `heap-layout` at M3, the
+same sources; the pairs are prototype 2 (*M4, the second prototype so
+far*); every word column keeps 64-bit integers (D2 A) but the one that
+says 63:
+
+| Program | 16-byte | word | word, reals boxed | word, 63 bits | pairs | pairs, 2 codes |
+|---|---:|---:|---:|---:|---:|---:|
+| *`runevm` as it runs (tiering)* | | | | | | |
+| array_sieve | 151.2M | 118.7M | 115.3M | 115.0M | 116.8M | 114.5M |
+| fib | 269.1M | 233.9M | 232.0M | 241.7M | 244.5M | 232.3M |
+| intinf_fact | 212.7M | 165.3M | 164.5M | 169.2M | 166.2M | 166.6M |
+| list_ops | 159.1M | 117.7M | 118.5M | 116.4M | 114.3M | 113.9M |
+| real_nbody | 175.9M | 179.6M | 179.0M | 179.4M | 179.5M | 179.9M |
+| string_ops | 364.0M | 264.8M | 270.2M | 261.1M | 243.0M | 242.9M |
+| tak | 75.8M | 67.7M | 67.9M | 66.6M | 67.7M | 67.8M |
+| word_bits | 73.0M | 91.3M | 91.3M | 75.0M | 92.1M | 91.9M |
+| compile-sigs | 701.9M | 638.5M | 587.5M | 600.4M | 604.6M | 612.3M |
+| runedoc-page | 337.6M | 286.0M | 288.6M | 279.6M | 284.0M | 294.3M |
+| bootstrap | 7.76G | 6.52G | 6.33G | 6.47G | 6.51G | 6.43G |
+| *the interpreter alone (`--jit=off`)* | | | | | | |
+| array_sieve | 564.5M | 380.4M | 382.2M | 378.2M | 381.6M | 382.1M |
+| fib | 843.7M | 800.8M | 796.4M | 768.2M | 910.9M | 856.0M |
+| intinf_fact | 460.5M | 403.9M | 402.6M | 394.4M | 399.8M | 414.1M |
+| list_ops | 356.8M | 295.1M | 299.3M | 290.0M | 271.2M | 270.1M |
+| real_nbody | 631.3M | 958.2M | 2.20G | 977.8M | 1.02G | 1.00G |
+| string_ops | 682.4M | 567.8M | 584.3M | 560.1M | 542.0M | 556.4M |
+| tak | 226.7M | 207.2M | 207.9M | 199.3M | 220.4M | 218.8M |
+| word_bits | 540.8M | 572.9M | 587.2M | 533.1M | 586.7M | 587.8M |
+| compile-sigs | 1.16G | 996.3M | 970.4M | 970.1M | 950.2M | 961.5M |
+| runedoc-page | 665.8M | 612.6M | 615.6M | 587.4M | 604.1M | 614.7M |
+| bootstrap | 15.50G | 13.50G | 13.07G | 13.17G | 13.09G | 13.12G |
+
+The bootstrap at the defaults: 7.76G cycles on the 16-byte layout and
+6.52G on the word (0.84), 3.49 s of `task-clock` against 2.61 s,
+234,502 page faults against 102,780, a semispace of 268 MB against
+134 MB, 491.7 MB copied against 350.7 MB. The same layout built twice
+(the word in its own worktree, and prototype 2's sources without pairs)
+reads 6.52G and 6.32G on the bootstrap and 638.5M and 603.7M on
+`compile-sigs`: a difference under a twentieth between two columns is
+the build's, not the layout's, and under the interpreter alone a kernel
+moves by more (`fib`, which makes no pair, reads 911M and 856M on the
+pairs with three codes and with two).
+
+What the table says:
+
+* **The word against 16 bytes:** 0.73 to 0.91 of the cycles on every
+  program that allocates or moves values, 0.84 on the bootstrap, and
+  0.67 to 0.95 under the interpreter alone. Two programs lose.
+  `real_nbody` under the interpreter is 1.52 times slower: every real
+  operation decodes and encodes; at tier 2 the homes make it level
+  (1.02). `word_bits` at tier 2 is 1.25 times slower under D2 A, the
+  tests for the box.
+* **D2 B against D2 A** (63 bits against the word): `word_bits` 0.82,
+  level with the 16-byte layout; the rest within the noise at tier 2,
+  and two to four percent under the interpreter (`fib` 768M against
+  801M, the bootstrap 13.17G against 13.50G). Run on the library and
+  the compiler as they are, which believe in 64 bits, 63 bits fail 7 of
+  the language suite's 331 programs (the literals and limits of `Int`
+  and `Word`, `IntInf`'s conversions) and in the Basis suite seven
+  programs that do not load (`word`, `word8`, `word_large`, `real` and
+  three of `intn_word`: 16,163 checks not reached) and 34 checks (32 of
+  `PackReal`, whose bytes go through a 64-bit word and lose the sign
+  bit, and `Int64.precision` twice). The compiler does not notice: its
+  bootstrap on the 63-bit VM writes the bytecode the 64-bit one writes,
+  byte for byte. That is the list M5 would work through under D2 B:
+  the Basis' `Int` and `Word` at 63, `Int64`/`Word64`/`LargeWord` on
+  boxes or two words, `PackReal` and `Real`'s conversions by another
+  path.
+* **D3 B against D3 C** (reals boxed against the word): level at tier
+  2, where a real lives in its home either way; under the interpreter
+  `real_nbody` is 2.3 times slower again (2.20G against 958M). Every
+  suite passes with the switch on.
+* **Pairs against the word:** on the kernels that build lists and
+  strings, 0.92 (`string_ops` 243M against 265M) and 0.97 (`list_ops`),
+  and 0.92 under the interpreter (`list_ops` 271M against 295M); on the
+  compiler, nothing the noise does not cover (the bootstrap 6.51G
+  against 6.52G and 6.32G; `compile-sigs` 605M against 604M on the same
+  sources). The bootstrap's collector does less (8 collections for 10,
+  240.6 MB copied for 350.7 MB, 405 ms for 500 ms on the same sources),
+  which is four percent of its time, and the mutator gives it back: a
+  field of a tuple or a constructor is read through a mask, and a
+  constructor's tag through one more test. The harness's kernels
+  promised more (*The harness*); at full scale the pairs are a saving
+  of memory, 0.83 of the word's bytes, more than of time.
+* **The third code:** two codes against three are level on every row.
+
+`runeopt` on the word (2026-10-04) cost what D11 said it would: the
+text backend of the assembler lost its tag bytes and gained the seven
+new operations, the generator's list became the operations on words
+(`twoImm`, `intAdd`, `setWord`, the reals with the label of their slow
+path), and `src/opt/x64.sml`'s inline primitives were rewritten over
+them, 190 lines; no template is written by hand. One thing the word
+took away had to be given back: **a constant no longer says what it
+is.** A value of one word does not tell an int from a word, a char or
+an encoded real, and two readers need to: `--disasm`, and `runeopt
+--from-image`, which makes a bytecode file of an image's program. The
+program keeps the kind the bytecode gave each constant, and the image
+(version 8) writes it with the constant's 64 bits as the bytecode has
+them, so the reader in SML knows nothing of the encoding.
+
+The other machines (2026-10-04): `make test-portability` and `make
+test-windows` pass on the prototype as it is, with no change for them.
+The language suite, the runtime's tests and the Basis suite pass on the
+32-bit and big-endian builds of both VMs and on aarch64 with its JIT,
+`--count` agrees on every one of them and an image of each is read by
+every other; on Windows the four VMs pass the same, the JIT under the
+Windows convention included. A value is 8 bytes on every width here
+(D13 A): the 32-bit VMs' own word (D13 B) is M5's.
+
+**64-bit words that cross slots** (2026-10-04; the workload D2's note
+of 2026-09-27 asked for). `lib/random`'s SplitMix64 as a program: three
+million words from one generator, and a tree of 2^18 splits, where a
+generator, two `Word64`s in a record, is passed at every node. Half of
+what it computes has its top bit set, which under D2 A has no immediate.
+Instructions at the default tiering (they do not depend on the machine's
+load, as cycles do), with programs of small numbers beside it and
+MLton's `tailfib`, a loop of int additions, and `tyan`, whose ints pass
+63 bits now and then:
+
+| | 16-byte | D2 A: a home holds the word | D2 A, raw homes | D2 B |
+|---|---:|---:|---:|---:|
+| SplitMix64 | 1.01G | 9.36G | 2.11G | another answer |
+| its cycles, on an idle machine | 456M | 3.43G | 816M | |
+| its boxes | none | 21.6M, 346 MB | 8.3M, 133 MB | none |
+| tyan | 1.92G | 4.04G | 2.18G | 1.83G |
+| tailfib | 32.9G | 43.3G | 49.5G | 32.8G |
+| fib | 635M | 687M | 822M | 612M |
+| tak | 184M | 186M | 245M | 177M |
+| word_bits | 251M | 331M | 449M | 251M |
+
+(`bin/runevm`, `bin/runevm-rawhomes` and `bin/runevm-int63` of
+prototype 1.)
+
+* **With a home that holds the word, SplitMix64 is nine times the
+  instructions of today**, and the JIT gains nothing over the
+  interpreter (9.36G against 9.40G): an operand or a result past 63
+  bits sends the operation to the primitive's C, and every such result
+  is a box. The perf programs do not show it; `word_bits` keeps its
+  words to 30 bits.
+* **Raw homes are D5 A as the roadmap states it**, built as a switch
+  (`RUNE_RAW_HOMES`): at tier 2 an int's or a word's home holds its 64
+  bits, arithmetic between homes is the machine's with no test (a
+  word's has none at all), an operand in a slot is unboxed in line, and
+  a result is given its word, or boxed by a helper, only where it goes
+  to a slot. The same mechanism as a real's home, with the same rule
+  for an emitter (`ms_need_word`). SplitMix64 comes to 2.1 times
+  today's instructions.
+* **And they cost the small numbers.** A value that crosses a slot is
+  decoded on the way in and encoded on the way out, and a call crosses
+  slots: `fib` runs 822M instructions against 687M, `tak` 245M against
+  186M, `word_bits` 449M against 331M, `tailfib` 49.5G against 43.3G.
+  In cycles the bootstrap takes 7.68G with them against 6.52G, which
+  is the 16-byte layout's 7.76G again, and `tak` 86M against 68M.
+  That is why they are a switch and not the prototype's default: the
+  two kinds of program want opposite things of a home, and nothing tier
+  2 knows when it compiles says which kind it has.
+* **D2 A costs the small numbers either way.** With a home that holds
+  the word every operand is tested for a box and a word's result for
+  its 64th bit: `tailfib` is 1.32 times the 16-byte layout's
+  instructions (1.28 in cycles), `word_bits` 1.32 (1.25), and `tyan`,
+  whose boxes go to the primitive's C, 2.1. Under D2 B they are 1.00,
+  1.00 and 0.95. What would give D2 A that speed is tier 2 betting on
+  small numbers: code with no test, as D2 B's, that hands the frame
+  back to the interpreter when a box turns up, and a function that
+  does so often compiled again with raw homes. The JIT has the
+  deoptimisation to build it on; it is not built, and the interpreter
+  would pay its two to four percent regardless.
+* **What is left with raw homes is the slots.** x86-64 leaves tier 2
+  three general registers for homes, so most of SplitMix64's
+  intermediates live in slots, and D5 A says a slot holds a word: a
+  64-bit result bound for a slot is boxed, 16 bytes each (26% of the
+  remaining instructions are the boxing helper, which allocating in
+  line would shorten). The record of two `Word64`s boxes its fields as
+  well, which raw typed fields would not: this workload, not the reals,
+  is the case for D1 B's second half. Short of typed slots (D5 B) the
+  price of a 64-bit word that does not fit 63 is a box wherever it
+  rests outside a home.
+* **D2 B does not escape it, and is the cheapest for small numbers.**
+  With `Int` and `Word` at 63 bits nothing tests for a box (`fib` 612M,
+  below today's 635M), and the library's `Word64` is a type of its own,
+  boxed in every slot whatever its value, so SplitMix64 pays at least
+  what raw homes leave. The 63-bit VM as it is runs the program and
+  prints another answer: its words wrap at 63.
+
+Not built yet: raw typed fields and the rest of M4's list. The budgets
+are not moved.
+
+### M4, the second prototype so far
+
+Branch `heap-layout-pairs`, from `heap-layout-word` on 2026-10-04, in a
+worktree of its own so that the two prototypes stand side by side. It is
+prototype 1 with D4 C: a tuple of two fields and a constructor of two
+fields are their two fields alone, 16 bytes, with no header. It passes
+`make test`, `test-register` (the Basis suite's 139,210 checks),
+`test-register-jit`, `test-opt`, `test-native`, `test-stress`,
+`test-register-asan`, `test-native-stress` and `test-native-asan`, and
+the compiler's bootstrap on it writes the bytecode the others write.
+`make test-portability` and `make test-windows` pass with the suites'
+comparisons made per width (below): big-endian PowerPC and aarch64, with
+its JIT, have the pairs, the 32-bit builds do not.
+
+As built:
+
+* **The pointer's code.** Objects are 8-byte aligned, so a pointer has
+  three low bits: bit 0 says immediate, and bits 1 and 2 are a code: 0
+  an object with a header; 1 a tuple of two, or a constructor of tag 0
+  with two fields; 2 a constructor of tag 1 with two (a list's `::`); 3
+  a constructor of tag 2 with two, or nothing where the code is kept for
+  a lazy front end (`RUNE_PAIR_CODES=2`, `bin/runevm-pairs2`). The
+  constructor's tag is the code less one, so a `case` on a list or on
+  any such constructor reads no memory.
+* **A pair's pointer is where its header would be**, eight bytes before
+  its first field, with the code in the low bits. With the code masked
+  off, field *i* is where field *i* of an object with a header is, so
+  one access serves both: tier 2, which trusts the shape, masks and
+  loads, and for a field past the second it does not mask at all. What a
+  pair has no header to say is asked of the value, not of the object
+  (`val_is_kind`, `val_len`, `val_contag` in `value.h`): 21 places in
+  the runtime tested a kind through the object and now ask the value.
+* **The pairs have a region of their own**, at the top of the semispace,
+  growing down as the objects with headers grow up; the heap is full
+  when they meet (`heap_end`). A walk of either region needs nothing of
+  the other, which is what the collector's scan, an image and its
+  relocation want; the allocation in line is the same six instructions
+  with another bound. This is SML/NJ's pair arena and Chez's segments,
+  at the cost of one more word in the VM.
+* **Forwarding without a header.** A copied pair's first field becomes
+  its copy, which is told from a value by being a pair of to-space:
+  nothing in from-space points into to-space until it is copied. No
+  marker pattern is taken from the values, and no side bitmap.
+* **An image** writes the pairs after the objects, a pointer to one as
+  its distance from the top of the heap, so that a heap restored at
+  another size keeps them (version 9).
+
+What building it found:
+
+* **Code 1 does not say whether it is a tuple or a constructor of tag
+  0.** The program's types keep them apart, as they keep an int from a
+  char, and the collector, equality and an image need not know. A VM
+  without pairs does: the 32-bit builds refuse a 64-bit image that has
+  one, and M5 gives them a kind for "a pair, a tuple or tag 0" if such
+  an image is to cross. The harness's assignment (a tuple, tag 0 and
+  tag 1 a code each) says which, and has no code to spare.
+* **That sharing is what makes the lazy code cheap.** With tuples and
+  tag 0 on one code, giving up the third costs the two-field
+  constructors of tag 2 alone: 474,184 bytes of the bootstrap's
+  704,455,544, 0.067% (the census said 0.093%). Had a tuple a code of
+  its own, the code given up would be a list's or a tuple's.
+* **Bytes.** The bootstrap allocates 704,455,544 bytes in 32,274,744
+  objects, against 849,800,368 without pairs on the same sources (0.829)
+  and 1,434,024,896 on the 16-byte layout (0.491; the census's bound for
+  every two-field object was 0.4873, and the simulator's for the three
+  codes built 0.4 points above its bound). It collects 8 times where
+  the word collects 10 and copies 240.6 MB where the word copies
+  350.7 MB.
+* **Bytes are per width now.** A 32-bit VM has no pairs, so `--count`'s
+  bytes agree among the 64-bit VMs and differ on the 32-bit ones, and
+  the tests that name a list cell's size accept 16 or 24. D13 B says as
+  much of the 32-bit word.
+* **`runeopt`** got it from the generated templates again: the shape
+  loads, the allocation of a pair and its code are operations of the
+  macro-assembler, and `src/opt/x64.sml` chooses by the instruction's
+  count and tag which to write.
+
+**MLton's benchmarks** (2026-10-04), the 33 of
+`tests/perf/mlton-bench.txt` that run under 2 GB, on the three layouts
+(`tests/external/run-mlton-bench.sh --vm-opts --stats`). Objects are
+the same number on every one of the 33, which is the oracle holding
+across layouts. Against the 16-byte layout:
+
+| | word | pairs |
+|---|---:|---:|
+| bytes allocated, all 33 | 0.594 | 0.507 |
+| the range over the programs | 0.529 to 0.683 | 0.400 to 0.683 |
+| bytes copied | 0.494 | 0.366 |
+| collections (2,915 on the 16-byte layout) | 1,973 | 1,665 |
+| cycles, default tiering, geometric mean | 0.945 | 0.958 |
+| their range | 0.61 to 1.58 | 0.54 to 1.65 |
+
+* The numeric programs make no box: `fft` 0.571, `nucleic` 0.559,
+  `ray` 0.590, `raytrace` 0.563, `barnes-hut` 0.588 and `zern` 0.579
+  under the word are what the roadmap said raw real fields would give
+  (0.56 to 0.59), because Koka's encoding holds every real they
+  compute. In bytes, raw real fields have nothing left to save. Only
+  `tsp` (4.2 million boxes, 67 MB) and `tyan` (1.2 million, 20 MB) box
+  anything.
+* **In cycles the reals pay.** At the default tiering, on an idle
+  machine, the word runs the 33 programs at a geometric mean of 0.945
+  of the 16-byte layout's cycles: 22 are faster (`tailmerge` 0.61,
+  `merge` 0.71, `imp-for` 0.71, `knuth-bendix` 0.71, `checksum` 0.73,
+  `hamlet` 0.75, `boyer` 0.78), and 11 slower: eight programs of reals
+  (`nucleic` 1.58, `raytrace` 1.55, `tsp` 1.53, `mandelbrot` 1.45,
+  `ray` 1.44, `barnes-hut` 1.35, `fft` 1.20, `simple` 1.12), `tyan`
+  1.43 and `tailfib` 1.28, which are D2 A's (above), and `peek` 1.04.
+  The programs of reals run 1.4 to 2.1 times the
+  instructions: a real read from a tuple, a record or an array is
+  decoded, twelve instructions, and one stored is encoded, fifteen, and
+  `nucleic`'s time is in tier 2's code of functions that take a
+  twelve-real tuple apart and build another. `real_nbody` hid it: its
+  reals stay in their homes. Boxing them instead (D3 B) is worse on
+  every one (`nucleic` 13.4G instructions against 4.0G and the 16-byte
+  layout's 2.2G; `fft` 70.7G against 46.5G and 23.3G).
+* **So raw real fields are worth their cost after all**, for time and
+  not for space: a real field that holds the double, the header saying
+  so (D1 B's second half, D4 A's descriptor), read and written with no
+  encoding where the reader's register is a real's. That is the next
+  thing to build on prototype 1, with flat real arrays (M8) beside it,
+  and until it is built the word's column of this set is D3 C without
+  it. A pair has no header to say it: two reals as a headerless pair
+  stay encoded, unless a pointer's code says "two raw reals", which is
+  one more claim on D4 C's third code.
+* Pairs take the list-heavy programs to 0.40 of the bytes (`merge`,
+  `tailmerge`, `pidigits`, `smith-normal-form`) and leave untouched
+  those that build no two-field object (`peek`, `imp-for`). In cycles
+  they are the word's: 1.01 of it in the geometric mean, from 0.88
+  (`tailmerge`) and 0.90 (`simple`) to 1.10 (`ratio-regions`, `peek`,
+  `fft`, `zern`), which is about what two builds of one layout differ
+  by.
+
+Cycles: in the first prototype's table above, its last two columns.
+
+### M4, for a lazy front end so far
+
+**The lazy workloads** (2026-10-04). `examples/benchmarks` has six lazy
+programs over `shared/lazy.sml`, a suspension as a ref to a pending
+thunk or a value, and four strict twins; each at its `normal` profile,
+censused on the 16-byte layout (`scripts/census.sh --stdin --cwd`, its
+traces under `tests/out/census-lazy`) and simulated (`bin/heapsim`).
+Bytes against the 16-byte layout, and the stores a nursery of 1 MB
+(and of 4 MB) with promotion at the first survival would have to
+remember:
+
+| Program | bytes | word | pairs, 3 codes | 2 codes | updates | old to young, 1 MB | 4 MB | largest remembered set |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| primes-lazy | 100 MB | 0.619 | 0.571 | 0.571 | 585,305 | 0.62% | 0.15% | 100 |
+| queens-lazy | 8.5 MB | 0.600 | 0.533 | 0.533 | 71,083 | 0.06% | 0.02% | 11 |
+| tak-nofib-lazy | 12 MB | 0.625 | 0.625 | 0.625 | 190,835 | 0.08% | 0.02% | 28 |
+| exp3_8-lazy | 1.23 GB | 0.632 | 0.632 | 0.632 | 16,145,867 | 5.60% | 1.52% | 4,146 |
+| digits-of-e1-lazy | 1.06 GB | 0.599 | 0.428 | 0.428 | 1,581,401 | 2.07% | 0.48% | 121 |
+| digits-of-e2-lazy | 3.13 GB | 0.613 | 0.481 | 0.481 | 8,078,615 | 6.70% | 1.94% | 573 |
+| primes-strict | 565 MB | 0.600 | 0.400 | 0.400 | 5 | none | none | 0 |
+| queens-strict | 22 MB | 0.603 | 0.423 | 0.423 | 5 | none | none | 0 |
+| exp3_8-strict | 194 MB | 0.667 | 0.667 | 0.667 | 5 | none | none | 0 |
+
+* **The update is the store.** A strict twin stores into a ref five
+  times in its whole run; its lazy form 71 thousand to 16 million
+  times, one update a thunk.
+* **Most updates are young to young.** With a 1 MB nursery 93.3% to
+  99.9% of the updates need no remembered entry, with 4 MB 98.1% to
+  99.98%: a thunk is mostly forced soon after it is made. The set never
+  holds more than 4,146 entries between two minor collections, and
+  under 600 in every program but `exp3_8-lazy`.
+* **The third code costs these programs nothing**: two codes and three
+  give the same bytes on every row (24 bytes apart on the two
+  `digits-of-e`). A suspension here is a ref and a one-field
+  constructor, neither a pair, so what the pairs save is the lists and
+  tuples the programs build, as in a strict program.
+* A suspension is two objects here where GHC's thunk is one, so the
+  bytes are an upper bound; the update pattern is the measurement, and
+  it goes into M7's brief.
+
+**The harness's lazy kernels** are in `tests/layouts` (`lazy_case` by
+header, by code and by entering, at 0, 1, 10 and 50% thunks;
+`lazy_stream`; `lazy_update_old`), with `L1+PAIRS2`, the build whose
+third code means "a headered object, known to be evaluated", and
+`check.sh` holds them to one checksum under all 22 configurations.
+Their cycles wait for the idle machine with the rest.
+
+### M4, for the gate
+
+What the two prototypes say to each decision the gate is to confirm,
+on 2026-10-04; the tables are in the three sections above.
+
+* **D1, the word: confirmed.** 0.59 of the bytes on the bootstrap and
+  on MLton's set, 0.84 of the bootstrap's cycles, 0.61 to 0.90 on the
+  programs that build structures. Its second half, raw typed fields,
+  is not built and is needed: the programs of reals run 1.2 to 1.6
+  times slower without raw real fields, and a record of 64-bit words
+  boxes them. As planned it is not sound for a tuple that polymorphic
+  code reads; the form to build has the header's descriptor say which
+  fields are raw and a reader test it where its register is a real's
+  or `'a`. **Recommended:** raw real fields and flat real arrays on
+  prototype 1 before M5 is planned, since D1 B without them makes
+  numeric code slower than today.
+* **D2, integers and words: B holds, on new evidence.** At tier 2 the
+  63-bit build is level with today on small numbers; keeping 64 bits
+  costs 1.25 to 1.32 on a loop of ints or words (a test for the box at
+  every operand), and raw homes move that cost to wherever a value
+  crosses a slot. D2 A can have B's speed only if tier 2 bets on small
+  numbers and deoptimises on a box, which is not built. What B needs
+  is the Basis' list (*M4, the first prototype so far*) and `Int64`
+  and `Word64` as boxed types, whose tier-2 homes hold the 64 bits: the
+  mechanism is built (`RUNE_RAW_HOMES`) and brings SplitMix64 from 9.4
+  to 2.1 times today's instructions. Neither choice makes 64-bit words
+  that cross slots free: that takes typed slots (D5 B) or raw fields.
+* **D3, reals: C over B, and not enough alone.** Boxing every real is
+  worse wherever it differs (2.3 times on `real_nbody` under the
+  interpreter, three times the instructions on `nucleic`). The
+  encoding costs what D1's raw real fields are for.
+* **D4, headers: A as built; C is the owner's call.** The pairs pass
+  every suite on every machine and save memory: 0.83 of the word's
+  bytes on the bootstrap, 0.85 on MLton's set, a quarter to a third
+  less copied. They save little time: 0.92 to 0.97 on the kernels of
+  lists and strings and nothing measurable on the compiler or on
+  MLton's set (1.01 of the word's cycles in the mean), against
+  the harness's promise of a quarter to a third. Their price is a
+  second region in the heap, a mask where a tuple's or a constructor's
+  field is read, and bytes and images that are per width. The third code costs
+  nothing to keep back (0.067% of the bootstrap's bytes, nothing on
+  the lazy programs): **recommended reserved**, for a lazy front end
+  or for two raw reals. B and D, the 32-bit header and its table, are
+  not built: the 32-bit VMs run the 8-byte word of D13 A.
+* **D5, roots: A, with its price known.** The slots stay words, and
+  the interpreter's shifts do not show outside real arithmetic. B is
+  not built; SplitMix64 is the measure of what A costs a 64-bit word.
+
+Not measured yet: the harness's lazy kernels and the strict ones under
+the reserved code (they are built and checked), `examples/benchmarks`
+at its `normal` profile, the heap-size sweep, and `runeopt`'s code
+beside the JIT's.
 
 ## The request
 
