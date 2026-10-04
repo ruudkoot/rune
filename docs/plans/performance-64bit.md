@@ -127,6 +127,12 @@ Smallest first. None changes what a program computes.
   encodings at calls, which is all of `mandelbrot`'s loss.
 * **E. Flat arrays** of `Word64.word` and of reals (M8, planned): an
   element is its 8 bytes.
+* **F. Arithmetic and allocation in line.** Compiled code still calls
+  C for primitives that are an instruction or two (`real_abs`,
+  `int_to_real`, `ptr_eq`) and for ones that only allocate (a box, a
+  one-character string, an array). A call into C is for what the
+  operating system or the C library does, not for these (experiment
+  10).
 
 ## The experiments
 
@@ -297,6 +303,61 @@ Each is small unless it says otherwise. The programs are at the end.
 * **How.** `stream`, `tree`, `fnv` and one of the programs of reals as
   workloads of `scripts/perf-cycles.sh`, with count budgets, when M5
   re-bases the budgets.
+
+### 10. Arithmetic and allocation that still call C
+
+* **The question.** The owner's, on 2026-10-04: calling C makes sense
+  for a system call, not for arithmetic or for an allocation. Which
+  primitives does compiled code still reach through C, how often, and
+  what does each call cost beside the work itself?
+* **What a call costs.** Before a helper that may collect or raise the
+  code writes every live home back to its slot and stores the pc and
+  the stack pointer (`ms_sync`), calls through `rax`, and loads the
+  homes again; a helper that touches nothing of the VM
+  (`ms_call_lean`) skips the stores and still loses the homes that C
+  does not preserve. Experiment 1 of this file found a box, which is
+  such a call and sixteen bytes of heap, at about a hundred
+  instructions.
+* **First figures** (`runevm --jit-stats`, the VM of M5, the calls
+  from compiled code alone):
+
+  | Program | calls | the primitives |
+  |---|---:|---|
+  | bootstrap | 959,597 | `string_from_char` 268,106, `string_concat` 209,986, `string_extract` 131,558, `string_implode` 81,721, `int_to_string` 80,267, `array_new` 70,863, `string_concat_list` 56,053, `string_explode` 25,759 |
+  | string_ops | 781,270 | `string_from_char` 311,021, `string_extract` 310,447, `int_to_string` 79,901, `string_concat` 79,901 |
+  | raytrace | 1,134,032 | `real_trunc` 359,703, `real_abs` 342,056, `int_to_real` 240,026, `real_floor` 81,443, `real_pow` 56,052, `real_atan2` 49,608 |
+  | nucleic | 1,445,733 | `real_atan` 482,109, `real_sin` 481,812, `real_cos` 481,812 |
+  | mandelbrot (2048 by 2048) | 4,196,154 | `int_to_real`, once a pixel |
+  | hamlet | 133,823 | `ptr_eq` 133,302 |
+  | stream, tree, fnv, list_ops | none | their boxes are a helper's, which this does not count |
+
+* **What the figures say already.** Three kinds are in there. *An
+  instruction or two:* `real_abs`, `int_to_real`, `ptr_eq`, and
+  `real_trunc`, `real_floor`, `real_ceil` and `real_round` where the
+  result fits an int (a conversion and a range test, the primitive
+  for the rest); `int_abs`, `word_neg`, `word64_asr` and the reals'
+  bits are of this kind too and are not in line either. *Allocation
+  with a little work:* a box, `string_from_char` (the 256 of them
+  could be made once), `array_new`, `string_concat`, `string_extract`,
+  `string_implode`. *The C library's and the system's:* `real_sin`,
+  `real_atan`, `real_pow`, `file_write`, which is where a call
+  belongs.
+* **How.** (1) The ranking for every workload: the bootstrap,
+  `tests/perf`, MLton's set, the six programs of this file, with the
+  helpers that box counted beside the primitives. (2) What one call
+  costs: a loop around each candidate, instructions with it in line
+  against through C. (3) The first two kinds in line, the most called
+  first, each measured in runs that alternate on the program that
+  calls it most and on the bootstrap; an allocation in line bumps the
+  heap as `ms_alloc` does for a tuple and goes to C only when the heap
+  is full. The interpreter's fast path (`prim_fast`) has the same
+  list to go through. `runeopt` gets what the macro-assembler gets,
+  its templates being made from it.
+* **What it changes.** `raytrace` and `mandelbrot` among the programs
+  of reals (their calls are a conversion a pixel or a ray), the
+  compiler's strings, and experiment 4's box, which is one of these.
+* **Size.** The ranking an hour; each primitive of the first kind a
+  few lines of `emit.c`; the allocating ones a day each.
 
 ## What would decide it
 
