@@ -3,7 +3,7 @@
 What each configuration of Rune costs to run a program and to compile one,
 against the SML systems Rune is built with. Why it costs that, and what is
 being done about it, is in [plans/performance.md](plans/performance.md)
-(the VMs and native code), [plans/jit.md](plans/jit.md) (the JIT of `vm/new`)
+(the VMs and native code), [plans/jit.md](plans/jit.md) (the JIT of `runtime/register`)
 and [plans/middle-end.md](plans/middle-end.md) (the compiler's
 optimisations); how native code is made is in [native.md](native.md).
 
@@ -11,17 +11,17 @@ optimisations); how native code is made is in [native.md](native.md).
 
 | Configuration | What runs |
 |---|---|
-| `rune` | the stack bytecode of the self-hosted compiler, on `runevm` ([bytecode.md](bytecode.md)) |
+| `rune` | the stack bytecode of the self-hosted compiler, on `runevm-stack` ([bytecode.md](bytecode.md)) |
 | `rune:opt` | the same bytecode translated into x86-64 code by `runeopt` ([native.md](native.md)) |
-| `rune:new` | the register bytecode on `vm/new` ([bytecode.md](bytecode.md), The register bytecode), at one of the JIT levels below |
+| `rune:new` | the register bytecode on `runtime/register` ([bytecode.md](bytecode.md), The register bytecode), at one of the JIT levels below |
 | `native:HOST` | the program on the host's own Basis Library, compiled by the host |
 | `xc1:HOST` | the program on Rune's Basis Library (`lib/basis`), compiled by the host ([basis-compat.md](basis-compat.md)) |
 
 The hosts are MLton 20241230, SML/NJ 110.99.9 (64 and 32 bits), SML/NJ
 2026.2, Poly/ML 5.9.2 and MLKit 4.7.23 (`make hosts`).
 
-`vm/new` runs its register bytecode at a JIT level
-([vm/new/ARCHITECTURE.md](../vm/new/ARCHITECTURE.md), Tier 1 and Tier 2),
+`runtime/register` runs its register bytecode at a JIT level
+([runtime/register/ARCHITECTURE.md](../runtime/register/ARCHITECTURE.md), Tier 1 and Tier 2),
 chosen by `--jit=MODE` and `--jit-tier=N`, or by `RUNEVM_JIT` and
 `RUNEVM_JIT_TIER` where the VM is started by a runner:
 
@@ -48,7 +48,7 @@ round counts; the SML systems compile it before the timer starts, like the
 others. In parentheses: the time divided by `rune:new opt` for that
 same program, so that column is 1.0.
 
-Rune on `runevm`, as native code, and on `vm/new` at each JIT level:
+Rune on `runevm-stack`, as native code, and on `runtime/register` at each JIT level:
 
 | Program | rune | rune:opt | rune:new off | rune:new baseline | rune:new opt | rune:new all | rune:new all+t2 |
 |---|---:|---:|---:|---:|---:|---:|---:|
@@ -95,16 +95,16 @@ not that of `lib/basis`, which does not load on a 31-bit `int`.
 
 What the tables say:
 
-* **`runevm` runs plain code 7 to 19 times slower than the native code of
+* **`runevm-stack` runs plain code 7 to 19 times slower than the native code of
   MLton, SML/NJ and Poly/ML**: `fib` 6.4 ms against 0.33 to 0.45, `tak`
   1.9 against 0.15 to 0.28. Against MLKit, whose calls are slow, it is 4
   times slower. This is the interpreter; [plans/performance.md](plans/performance.md)
   is about it.
 * **Native code (`rune:opt`) runs these programs 1.9 to 3.6 times faster
-  than `runevm`** (`fib` 2.27 ms, `tak` 0.61, `word_bits` 1.28 against
+  than `runevm-stack`** (`fib` 2.27 ms, `tak` 0.61, `word_bits` 1.28 against
   4.67), and 2 to 11 times slower than MLton, SML/NJ and Poly/ML on `fib`,
   `tak` and `word_bits`.
-* **`vm/new` interpreting alone (`off`) is as fast as `runevm`**, and up to
+* **`runtime/register` interpreting alone (`off`) is as fast as `runevm-stack`**, and up to
   25% faster where reals are involved (`real_nbody` 2.17 ms against 2.91):
   `tak` is 1.89 against 1.88, `fib` 5.49 against 6.42.
 * **Tier 1 (`baseline`) is 1.7 to 3.7 times faster than `off`**, the more so
@@ -115,7 +115,7 @@ What the tables say:
   1.00 to 0.43 ms, `array_sieve` 3.93 to 2.34, `real_nbody` 0.87 to 0.52,
   `fib` 2.28 to 1.66, while `intinf_fact`, `list_ops`, `string_ops` and
   `tak` change by 6% or less. The default is 1.9 to 11 times faster than
-  `runevm` and is faster than `rune:opt` on all but `list_ops` (2.78 ms
+  `runevm-stack` and is faster than `rune:opt` on all but `list_ops` (2.78 ms
   against 2.65) and `string_ops` (5.80 against 5.70), which are about equal.
   On `real_nbody` it is as fast as MLton, SML/NJ and Poly/ML do it (0.52 ms
   against 0.50 to 0.58, 1.28 for Poly/ML); on `fib` and `tak` it is 4
@@ -130,7 +130,7 @@ What the tables say:
   Rune less than it costs the hosts**: `list_ops` is 1.7 times that mean on
   Rune, 3.9 to 7.8 on the hosts but MLKit; `string_ops` 3.1 against 4.6 to
   9.1 on the same. `IntInf` is the exception: 15 times that mean on
-  `runevm`, 0.1 to 1.2 on the hosts, which use GMP (MLton) or native code,
+  `runevm-stack`, 0.1 to 1.2 on the hosts, which use GMP (MLton) or native code,
   and 3.0 on MLKit. Its limbs of 30 bits are an SML datatype, and every
   limb operation is a call.
 * **MLKit is slow at calls and relatively quick in its Basis Library**: its
@@ -345,7 +345,7 @@ and 0.11, and of `all+t2` 0.14, 0.16 and 0.18. Those two ranges sit clear
 of the interpreter samples.
 
 `--jit=all` compiles every function when the program is loaded.
-`vm/new/jit.c` calls `jit_tier_up` across the function table, and that
+`runtime/register/jit.c` calls `jit_tier_up` across the function table, and that
 compile is part of the fresh process the table times. `all` compiles each
 of the 1608 functions at tier 1. `all+t2` compiles each at tier 2, the
 larger compile, and that cell is the slowest. `opt` compiles a function
@@ -384,9 +384,9 @@ in the stack bytecode and in the register bytecode:
 
 A register `TAILCALLK` reads the arguments out of those registers into a
 side buffer, moves them into the callee's frame and fills every remaining
-local with unit (`vm/new/reg_cases.h`). The stack `TAILCALLK` moves the
+local with unit (`runtime/register/reg_cases.h`). The stack `TAILCALLK` moves the
 arguments from the operand stack into a smaller frame and fills what that
-frame still has empty (`vm/interp_cases.h`). A value is 16 bytes in both.
+frame still has empty (`runtime/stack/interp_cases.h`). A value is 16 bytes in both.
 `rune:new off` takes 0.97 s where `rune` takes 0.68 s. The fresh samples
 are 0.90, 1.05, 0.97 and 0.68, 0.64, 0.72. The slower stack sample is
 0.72 s and the faster register sample is 0.90 s.
@@ -609,8 +609,8 @@ fastest of three rounds, a round of `hello` being 20 compiles. The builds
 of the hosts are what `make host-builds` makes (`bin/rune-mlton`,
 `bin/rune-smlnj-legacy`, `bin/rune-smlnj32`, `bin/rune-smlnj-dev`,
 `bin/rune-polyml`, `bin/rune-mlkit`); the others are the self-hosted
-compiler, `bin/rune.stack.rbc`, on `runevm` and translated by `runeopt`, and
-`bin/rune.rbc` on `vm/new` at each JIT level.
+compiler, `bin/rune.stack.rbc`, on `runevm-stack` and translated by `runeopt`, and
+`bin/rune.rbc` on `runtime/register` at each JIT level.
 
 | Build | `hello` | the compiler |
 |---|---:|---:|
@@ -620,24 +620,24 @@ compiler, `bin/rune.stack.rbc`, on `runevm` and translated by `runeopt`, and
 | SML/NJ 110.99.9, 64 bits | 21.8 ms | 2.56 s |
 | SML/NJ 110.99.9, 32 bits | 21.2 ms | 2.34 s |
 | SML/NJ 2026.2 | 24.9 ms | 2.38 s |
-| `runevm` (`bin/rune.stack.rbc`) | 26.2 ms | 6.01 s |
+| `runevm-stack` (`bin/rune.stack.rbc`) | 26.2 ms | 6.01 s |
 | native code (`runeopt` of `bin/rune.stack.rbc`) | 17.0 ms | 3.12 s |
-| `vm/new`, `off` | 22.9 ms | 5.44 s |
-| `vm/new`, `baseline` | 36.1 ms | 3.24 s |
-| `vm/new`, `opt` (the default; `bin/rune`, what is shipped) | 37.8 ms | 3.04 s |
-| `vm/new`, `all` | 157.1 ms | 3.23 s |
-| `vm/new`, `all+t2` | 187.9 ms | 3.18 s |
+| `runtime/register`, `off` | 22.9 ms | 5.44 s |
+| `runtime/register`, `baseline` | 36.1 ms | 3.24 s |
+| `runtime/register`, `opt` (the default; `bin/rune`, what is shipped) | 37.8 ms | 3.04 s |
+| `runtime/register`, `all` | 157.1 ms | 3.23 s |
+| `runtime/register`, `all+t2` | 187.9 ms | 3.18 s |
 
 Not measured: the VMs built for Windows, 32-bit Linux and PowerPC.
 
-* The compiler on `runevm` compiles itself in 6.0 s, 5.4 times as long as
+* The compiler on `runevm-stack` compiles itself in 6.0 s, 5.4 times as long as
   the build MLton makes; translated into native code, in 3.1 s, 2.8 times.
-  The shipped one, on `vm/new`, takes 3.0 s.
-* `vm/new` with its JIT on (`baseline`, `opt`) compiles the compiler in 3.0
-  to 3.2 s, twice as fast as `runevm`, as fast as native code, 1.2 to 1.3
+  The shipped one, on `runtime/register`, takes 3.0 s.
+* `runtime/register` with its JIT on (`baseline`, `opt`) compiles the compiler in 3.0
+  to 3.2 s, twice as fast as `runevm-stack`, as fast as native code, 1.2 to 1.3
   times SML/NJ's builds and 2.7 times MLton's. Tier 2 is no faster than
   tier 1 here, as on `list_ops` and `string_ops`.
-* A small program costs little on any: `hello` is 26 ms on `runevm`, most
+* A small program costs little on any: `hello` is 26 ms on `runevm-stack`, most
   of it reading and elaborating the part of the Basis Library it uses. The
   JIT makes it dearer, 36 to 38 ms against 23 for the interpreter alone,
   and compiling all of the compiler up front (`all`) costs 157 to 188 ms.
@@ -649,12 +649,12 @@ Not measured: the VMs built for Windows, 32-bit Linux and PowerPC.
   bytecode and allocates 1.17 GB in 26.0 million objects; compiling `hello`
   takes 3.10 million instructions, 3.6 MB and 54.1 thousand objects.
 
-## Why `vm/new` at `opt` is slower than MLton
+## Why `runtime/register` at `opt` is slower than MLton
 
 Measured on the same day and machine as the tables above, with `perf stat`
 (user cycles and instructions of the wrapped `tests/perf` programs),
 MLton's generated assembly (`-keep g`), and the tier-2 machine code of the
-hot functions, dumped from a running `runevm-new --jit-perf-map` and
+hot functions, dumped from a running `runevm --jit-perf-map` and
 single-stepped under gdb for 20 to 30 thousand instructions each. The
 traces are samples of the steady state of one function, not of a whole run.
 
@@ -674,7 +674,7 @@ every program but `real_nbody`, `list_ops` and `intinf_fact`, the cost is
 the number of instructions, not stalls.
 
 * **`fib` and `tak`: the cost of a call.** A call of `fib` costs 84.5
-  instructions on `vm/new` and about 17 on MLton. The trace of `fib`
+  instructions on `runtime/register` and about 17 on MLton. The trace of `fib`
   divides the 84.5 into 32 for the call (spilling the live registers as
   16-byte tagged Values, checking the register stack and the frame depth,
   building a 40-byte frame record on a separate frame stack, jumping, and
@@ -702,24 +702,24 @@ the number of instructions, not stalls.
   `strike`.
 * **`real_nbody`: latency.** The loop is a chain of `sqrt` and two
   divisions. A C loop of the same computation at `-O2` takes 80 cycles per
-  iteration on this CPU; `vm/new` takes 88 and MLton 94. `vm/new` executes
+  iteration on this CPU; `runtime/register` takes 88 and MLton 94. `runtime/register` executes
   about 108 instructions per iteration and MLton 27, but the instructions
   are hidden behind the latency.
-* **`string_ops`: lists and the runtime.** `vm/new` allocates 1.8 times as
+* **`string_ops`: lists and the runtime.** `runtime/register` allocates 1.8 times as
   much (136.6 MB against 77.0 MB), spends about 37% of its cycles in the
   runtime's C code (`p_string_*`, `vm_alloc`, `vm_cons`, `vm_string_from`)
   and 10% in the collector, and has 3.5 times the L1 load misses. `String.map`
   and `String.translate` are `implode (List.map f (explode s))`
   (`lib/basis/string.sml`), so each character is a list cell.
 * **`list_ops`: the cache, and MLton's page faults.** In user cycles MLton
-  is 2.8 times faster, in wall-clock time 1.4 times. `vm/new` has 4.3 times
+  is 2.8 times faster, in wall-clock time 1.4 times. `runtime/register` has 4.3 times
   the L1 load misses and spends 12.5% of its cycles in the collector, though
   both allocate the same amount (56.6 MB and 58.0 MB). MLton spends half of
-  its time in the kernel, faulting in 12.1 thousand pages (`vm/new`: 7.2
+  its time in the kernel, faulting in 12.1 thousand pages (`runtime/register`: 7.2
   thousand). A recursion over a list, like `List.filter`, costs about 62
-  instructions per element on `vm/new`, the call and return being most of
+  instructions per element on `runtime/register`, the call and return being most of
   it. What makes the misses 4.3 times as many is not isolated.
-* **`intinf_fact`: algorithms.** `vm/new` allocates 76 MB, MLton (GMP) 0.38
+* **`intinf_fact`: algorithms.** `runtime/register` allocates 76 MB, MLton (GMP) 0.38
   MB. An `IntInf` is a list of 30-bit limbs; `mulMag` does, for each limb
   of its right operand, a `mulSmall`, a `shiftLimbs` that allocates a
   list of zeros, and an `addMag` that copies the accumulator, so a
@@ -741,8 +741,8 @@ measure its share: the figures are instruction counts of the traces.
 ## How to reproduce
 
 ```sh
-make                              # bin/rune, bin/runevm
-make host-builds runeopt bin/runevm-opt bin/rune-new bin/runevm-new
+make                              # bin/rune, bin/runevm, bin/runevm-stack
+make host-builds runeopt bin/runevm-native bin/rune bin/runevm
 make hosts                        # MLton, SML/NJ, Poly/ML and MLKit, once
 make perf PERF_CONFIGS=rune,rune:opt,rune:new,hosts,xc1
                                   # the tables, in tests/out/perf/wall.md
@@ -757,7 +757,7 @@ The compile times: `make bin/rune.stack.rbc`, then `bin/runeopt-mlton
 --options "--heap-size 67108864" bin/rune.stack.rbc -o bin/rune-native` for the
 native compiler, and each build run as `BUILD -o out.rbc examples/hello.sml`
 and `BUILD -o out.rbc $(BOOT_SRCS)`, where `BUILD` is `bin/rune-HOST`, or
-`bin/runevm --heap-size 67108864 bin/rune.stack.rbc --lib lib` (`bin/rune.rbc` on
-`bin/runevm-new`, with the JIT options of the level), or `bin/rune-native
+`bin/runevm-stack --heap-size 67108864 bin/rune.stack.rbc --lib lib` (`bin/rune.rbc` on
+`bin/runevm`, with the JIT options of the level), or `bin/rune-native
 --lib lib`. `scripts/perf-cycles.sh` measures cycles and instructions of the
 same runs, with `jit-off`, `jit-baseline`, `jit-all` and `+t2` for the levels.

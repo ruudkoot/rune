@@ -1,22 +1,22 @@
 #!/bin/sh
-# The language suite and tests/vm on the Windows VMs (`make test-windows`):
+# The language suite and tests/runtime on the Windows VMs (`make test-windows`):
 #   tests/run-windows.sh [--rune BIN] [--vm EXE]... [--native BIN] [--def FILE] [-j N] [FILTER]
 # Every program of tests/lang whose name contains FILTER is compiled once,
 # with the ordinary compiler -- the bytecode is the same for every VM -- and
-# run on each VM named by --vm (bin/runevm.exe and bin/runevm32.exe when none
+# run on each VM named by --vm (bin/runevm-stack.exe and bin/runevm-stack32.exe when none
 # is), N at a time, except the programs tests/windows-skip.txt lists; its
 # header gives the reasons. What a program must print and how it must exit
 # are checked as tests/run-tests.sh checks them, from the same siblings
 # (.args, .vmargs, .stdin, .exitcode, .stderr, .stderr-head, .cwarn, .restore). The results of
-# bin/runevmSUFFIX.exe go to tests/out/windowsSUFFIX. Then tests/vm runs on
-# each VM, and a few programs run with --count on each and on bin/runevm:
+# bin/runevmSUFFIX.exe go to tests/out/windowsSUFFIX. Then tests/runtime runs on
+# each VM, and a few programs run with --count on each and on bin/runevm-stack:
 # the counts of instructions, bytes and objects must be the same, since a
 # value and an object have the same layout on all three. Last, an image of
 # Runtime.save crosses between the two systems both ways, which is the one
-# thing about vm/image.c that only two machines can show. For vm/new
-# (docs/plans/jit.md, M2) the same, with --rune bin/rune-new, --vm
-# bin/runevm-new.exe --vm bin/runevm-new32.exe, --native bin/runevm-new for
-# the VM of this system and --def vm/new/regs.def for tests/vm.
+# thing about runtime/image.c that only two machines can show. For runtime/register
+# (docs/plans/jit.md, M2) the same, with --rune bin/rune, --vm
+# bin/runevm.exe --vm bin/runevm32.exe, --native bin/runevm for
+# the VM of this system and --def runtime/register/regs.def for tests/runtime.
 #
 # The VMs do not run in this tree but in a directory on the Windows side,
 # which tests/windows-dir.sh finds and says why. Each program runs in a
@@ -33,8 +33,8 @@ WSLENV="TZ${WSLENV:+:$WSLENV}"
 export WSLENV
 
 rune=bin/rune-stack
-native=bin/runevm
-def=vm/opcodes.def
+native=bin/runevm-stack
+def=runtime/stack/opcodes.def
 vms=""
 jobs=""
 filter=""
@@ -115,7 +115,7 @@ if [ "$mode" = --run-one ]; then
 fi
 
 # ---------------------------------------------------------------- setup
-[ -n "$vms" ] || vms="bin/runevm.exe bin/runevm32.exe"
+[ -n "$vms" ] || vms="bin/runevm-stack.exe bin/runevm-stack32.exe"
 [ -n "$jobs" ] || jobs=$(sh scripts/ncpus.sh 2> /dev/null || echo 4)
 for vm in $vms; do
   [ -x "$vm" ] || { echo "run-windows: $vm is missing (make windows)" >&2; exit 2; }
@@ -189,8 +189,8 @@ for vm in $vms; do
     status=1
   fi
 
-  # tests/vm, in the directory on the Windows side
-  sh tests/vm/run-vm-tests.sh --vm "$vm" --out "$RUNDIR/vm" --def "$def" > "$OUT/vm.txt" 2>&1 || status=1
+  # tests/runtime, in the directory on the Windows side
+  sh tests/runtime/run-vm-tests.sh --vm "$vm" --out "$RUNDIR/vm" --def "$def" > "$OUT/vm.txt" 2>&1 || status=1
   grep '^FAIL' "$OUT/vm.txt"
 
   # the layout: --count on this VM and on the VM of this system (--native)
@@ -211,9 +211,9 @@ for vm in $vms; do
     done
   fi
   # An image across the two systems, both ways. Runtime.save writes the whole
-  # running program to a file and `runevm --restore` carries it on, and nothing
-  # in that file belongs to a machine or a system (vm/image.c): what this VM
-  # saves, bin/runevm must take up, and the other way about. The program prints
+  # running program to a file and `runevm-stack --restore` carries it on, and nothing
+  # in that file belongs to a machine or a system (runtime/image.c): what this VM
+  # saves, bin/runevm-stack must take up, and the other way about. The program prints
   # its answer before saving and again when restored, so the two are compared
   # with each other and nothing is written down here.
   image="not checked"
@@ -225,7 +225,7 @@ for vm in $vms; do
     mkdir -p "$idir/tests/out"
     cp "$rbcdir/$name.rbc" "$idir/prog.rbc"
     img=tests/out/$name.img
-    # this VM saves, bin/runevm restores
+    # this VM saves, bin/runevm-stack restores
     want=$(cd "$idir" && rm -f "$img" && "$VM" prog.rbc 2>&1 | tr -d '\r')
     got=$(cd "$idir" && "$root/$native" --restore "$img" 2>&1)
     if [ -z "$want" ] || [ "$want" != "$got" ]; then
@@ -233,7 +233,7 @@ for vm in $vms; do
       image=failed
       status=1
     fi
-    # bin/runevm saves, this VM restores
+    # bin/runevm-stack saves, this VM restores
     want=$(cd "$idir" && rm -f "$img" && "$root/$native" prog.rbc 2>&1)
     got=$(cd "$idir" && "$VM" --restore "$img" 2>&1 | tr -d '\r')
     if [ -z "$want" ] || [ "$want" != "$got" ]; then

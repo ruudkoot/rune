@@ -10,7 +10,7 @@
 # why it is checked over every program rather than a few.
 set -u
 rune=bin/rune-stack
-vm=bin/runevm
+vm=bin/runevm-stack
 jobs=
 filter=
 

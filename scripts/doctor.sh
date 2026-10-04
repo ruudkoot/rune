@@ -3,13 +3,13 @@
 # work, and say how to install the ones that are not.
 #   scripts/doctor.sh [--quiet] [--scope SCOPE]...
 # Scopes (default: all):
-#   vm      C99 compiler for bin/runevm
+#   vm      C99 compiler for bin/runevm and bin/runevm-stack
 #   mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit   the SML system behind
 #           bin/rune-<scope>: the release that scripts/fetch-hosts.sh
 #           installed (`make hosts`)
 #   check   the test runners (tests/run-tests.sh, scripts/check-*.sh)
 #   asan    make vm-asan
-#   sys     POSIX headers of the VM's system layer (vm/sys_posix.c)
+#   sys     POSIX headers of the VM's system layer (runtime/sys/sys_posix.c)
 #   matrix  fetching and building the host compilers (scripts/fetch-hosts.sh)
 #   perf    optional profiling tools
 #   native  what a program of runeopt needs (make test-native): cc that
@@ -195,7 +195,7 @@ cc_probe() {
 
 # ---------------------------------------------------------------- vm
 if in_scope vm || in_scope asan || in_scope sys; then
-  section "C compiler (bin/runevm)"
+  section "C compiler (bin/runevm, bin/runevm-stack)"
   cat > "$tmp/c99.c" << 'EOF'
 #include <math.h>
 #include <stdint.h>
@@ -500,7 +500,7 @@ EOF
   else
     bad "${qemu%% *}" "cannot run a powerpc64 program here" qemuppc
   fi
-  # the aarch64 VM, the second target of vm/new's JIT (docs/plans/jit.md,
+  # the aarch64 VM, the second target of runtime/register's JIT (docs/plans/jit.md,
   # M12): the same pattern, clang with the arm64 cross packages, under
   # qemu-aarch64
   a64root=${A64ROOT:-/usr/aarch64-linux-gnu}

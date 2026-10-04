@@ -69,7 +69,7 @@ struct
      read: one line per instruction or primitive, as before the DSL ---- *)
 
   fun opcodesDef (instrs : instruction list, fp : int) : file =
-    {path = "vm/opcodes.def",
+    {path = "runtime/stack/opcodes.def",
      text =
        lines
          (["# The instruction set of the stack bytecode. " ^ generated,
@@ -96,7 +96,7 @@ struct
             (if SOME (#group p) = last then [] else ["", "# --- " ^ #group p ^ " ---"])
             @ entry p :: go (SOME (#group p), rest)
     in
-      {path = "vm/prims.def",
+      {path = "runtime/prims.def",
        text =
          lines
            (["# The primitives of the VMs. " ^ generated,
@@ -108,21 +108,45 @@ struct
 
   (* ---- the tables of the VM ---- *)
 
+  (* What the two instruction sets share, for the runtime both VMs link:
+     the version of the layout of an .rbc, the fingerprint of each set, and
+     the enum their flow tables are written in. *)
+  fun isaH {stack : int, register : int} : file =
+    {path = "runtime/isa.h",
+     text =
+       lines
+         ["/* " ^ generated ^ " */",
+          "#ifndef RUNE_ISA_H",
+          "#define RUNE_ISA_H",
+          "",
+          "/* What the two instruction sets share: the version of the layout of an",
+          "   .rbc, and the fingerprint of each set, which its .rbc and its images",
+          "   carry. */",
+          "#define RBC_VERSION " ^ Int.toString StackIsa.rbcVersion,
+          "#define STACK_ISA_FINGERPRINT 0x" ^ hex8 stack ^ "u",
+          "#define STACK_ISA_FINGERPRINT_HEX \"" ^ hex8 stack ^ "\"",
+          "#define REG_ISA_FINGERPRINT 0x" ^ hex8 register ^ "u",
+          "#define REG_ISA_FINGERPRINT_HEX \"" ^ hex8 register ^ "\"",
+          "",
+          "/* Where control goes after an instruction (src/isa/isa.sml, flow): what",
+          "   each set's table says of its own (op_flow in runtime/stack/opcodes.h,",
+          "   rop_flow in runtime/register/regops.h). */",
+          "enum OpFlow { FLOW_NEXT, FLOW_BRANCH, FLOW_JUMP, FLOW_CALL, FLOW_TAILCALL, FLOW_RETURN, FLOW_RAISE, FLOW_HALT,",
+          "              FLOW_SWITCH };",
+          "",
+          "#endif"]}
+
   fun opcodesH (instrs : instruction list, fp : int) : file =
     let val is = numbered instrs
     in
-      {path = "vm/opcodes.h",
+      {path = "runtime/stack/opcodes.h",
        text =
          lines
            (["/* " ^ generated ^ " */",
              "#ifndef RUNE_OPCODES_H",
              "#define RUNE_OPCODES_H",
              "",
-             "/* The version of the layout of an .rbc, and the fingerprint of the",
-             "   instruction set, which an .rbc and an image carry. */",
-             "#define RBC_VERSION " ^ Int.toString StackIsa.rbcVersion,
-             "#define ISA_FINGERPRINT 0x" ^ hex8 fp ^ "u",
-             "#define ISA_FINGERPRINT_HEX \"" ^ hex8 fp ^ "\"",
+             "#include \"isa.h\"",
              "",
              "enum Opcode {"]
             @ List.map (fn (n, i : instruction) => "  OP_" ^ #name i ^ " = " ^ Int.toString n ^ ",  /* " ^ #doc i ^ " */") is
@@ -155,9 +179,8 @@ struct
             @ List.map (fn (_, i : instruction) => "  " ^ Int.toString (#pushes i) ^ ",") is
             @ ["};",
                "",
-               "/* Where control goes after each (src/isa/isa.sml, flow). */",
-               "enum OpFlow { FLOW_NEXT, FLOW_BRANCH, FLOW_JUMP, FLOW_CALL, FLOW_TAILCALL, FLOW_RETURN, FLOW_RAISE, FLOW_HALT,",
-               "              FLOW_SWITCH };",
+               "/* Where control goes after each (src/isa/isa.sml, flow; the enum is",
+               "   runtime/isa.h's). */",
                "static const unsigned char op_flow[] = {"]
             @ List.map (fn (_, i : instruction) =>
                           "  FLOW_" ^ (case #flow i of
@@ -220,7 +243,7 @@ struct
       val ps = numbered prims
       val n = List.length prims
     in
-      {path = "vm/prims_table.h",
+      {path = "runtime/prims_table.h",
        text =
          lines
            (["/* " ^ generated ^ " */",
@@ -259,19 +282,19 @@ struct
     let val sp = CharVector.tabulate (n, fn _ => #" ")
     in List.map (fn l => if l = "" then l else sp ^ l) ls end
 
-  (* Each case of the loop (vm/interp.c) reads its own operands, moves the
+  (* Each case of the loop (runtime/stack/interp.c) reads its own operands, moves the
      pc past it and counts it, then does its body -- a shared one through
-     its function of vm/ops.h, with the VM given what the loop keeps -- and
+     its function of runtime/stack/ops.h, with the VM given what the loop keeps -- and
      goes on to the next (NEXT). CASE and NEXT are the loop's: labels and a
      computed goto, or the cases of a switch. *)
   fun interpCases (instrs : instruction list) : file =
-    {path = "vm/interp_cases.h",
+    {path = "runtime/stack/interp_cases.h",
      text =
        lines
          (["/* " ^ generated,
-           "   The cases of the interpreter's loop (vm/interp.c), each the body of its",
+           "   The cases of the interpreter's loop (runtime/stack/interp.c), each the body of its",
            "   instruction in src/isa/stack.sml; a shared body is a function of",
-           "   vm/ops.h. */"]
+           "   runtime/stack/ops.h. */"]
           @ List.concat
               (List.map (fn (i : instruction) =>
                            let
@@ -298,22 +321,22 @@ struct
   (* The labels of the cases, in the order of the opcodes, for the computed
      goto of the loop. *)
   fun interpLabels (instrs : instruction list) : file =
-    {path = "vm/interp_labels.h",
+    {path = "runtime/stack/interp_labels.h",
      text =
        lines
          (["/* " ^ generated,
-           "   The labels of the cases of vm/interp_cases.h by opcode, for the",
-           "   dispatch of vm/interp.c by computed goto. */"]
+           "   The labels of the cases of runtime/stack/interp_cases.h by opcode, for the",
+           "   dispatch of runtime/stack/interp.c by computed goto. */"]
           @ List.map (fn (i : instruction) => "&&L_" ^ #name i ^ ",") instrs)}
 
   fun opsH (instrs : instruction list) : file =
-    {path = "vm/ops.h",
+    {path = "runtime/stack/ops.h",
      text =
        lines
          (["/* " ^ generated,
            "   The instructions whose body is shared (src/isa/isa.sml): the",
            "   interpreter's case of each calls it, and so does the code of runeopt,",
-           "   through vm/native.c. */",
+           "   through runtime/native/native.c. */",
            "#ifndef RUNE_OPS_H",
            "#define RUNE_OPS_H",
            ""]

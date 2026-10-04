@@ -1,5 +1,5 @@
 (* The register target (docs/ir.md; docs/plans/middle-end.md, M5): the
-   register bytecode of vm/new (src/isa/regs.sml) from Low.
+   register bytecode of runtime/register (src/isa/regs.sml) from Low.
 
    * Every variable has a register, shared by linear scan as the stack
      target shares locals: every edge of Low goes forward, but the jump back

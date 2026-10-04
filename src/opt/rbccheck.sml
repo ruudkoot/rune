@@ -9,7 +9,7 @@
    (CALLK, TAILCALLK) passes, and one where it is made a closure or is the
    top level -- since its code sets the rest of its locals to unit. The
    compiler's stack target keeps all of it (src/backend/stack.sml); a file
-   that does not is refused, and runevm remains the place where it runs. *)
+   that does not is refused, and runevm-stack remains the place where it runs. *)
 structure RbcCheck =
 struct
   exception Refused of string

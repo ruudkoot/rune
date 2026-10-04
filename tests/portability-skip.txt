@@ -3,7 +3,7 @@
 #
 #   NAME CATEGORY: reason
 #
-# The list is empty: both VMs, bin/runevm32 and bin/runevm-ppc64, run every
+# The list is empty: both VMs, bin/runevm-stack32 and bin/runevm-stack-ppc64, run every
 # program of tests/lang (docs/building.md). A category is added here again only
 # with a program to go under it.
 #

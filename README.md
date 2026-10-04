@@ -29,9 +29,9 @@ that gets hot to machine code as the program runs.
 
 ```
 make hosts    # once: MLton and the other SML systems, under ~/.local/rune-hosts
-make          # the compiler, bin/rune, and the VM, bin/runevm-new
+make          # the compiler, bin/rune, and the VM, bin/runevm
 bin/rune examples/hello.sml -o hello.rbc
-bin/runevm-new hello.rbc
+bin/runevm hello.rbc
 Hello, world!
 ```
 
@@ -52,7 +52,7 @@ slower on `IntInf`. The compiler compiles itself in 3.0 s, MLton's build in
 | Path | Contents |
 |---|---|
 | `src/` | the compiler: frontend, elaboration, intermediate representations, backend, driver; `src/isa/` describes the instruction set and the primitives |
-| `vm/` | the virtual machine in C; `vm/new/` is the register VM and its JIT |
+| `runtime/` | the runtime in C, shared by both VMs; `runtime/register/` is the register VM and its JIT, `runtime/stack/` the stack VM |
 | `lib/` | the Basis Library in `lib/basis/`, and libraries beside it |
 | `tests/` | `lang/` run tests, `errors/` compile-error tests, `basis/` the Basis Library suite, `perf/` benchmarks with budgets |
 | `docs/` | the documentation; `docs/generated/basis/` is generated from `lib/basis` |

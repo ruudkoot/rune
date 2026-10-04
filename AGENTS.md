@@ -62,10 +62,10 @@ keep these invariants:
   each host's own library.
 * **Instruction set / primitives** change only through their descriptions,
   `src/isa/stack.sml` and `src/isa/prims.sml` (then `make isa`, which writes
-  the generated files and `vm/opcodes.def` and `vm/prims.def`; `make
+  the generated files and `runtime/stack/opcodes.def` and `runtime/prims.def`; `make
   check-isa` fails when they are stale), with the corresponding implementation in
-  `vm/` and a description in `docs/bytecode.md`. A primitive that needs the
-  operating system goes behind a new call of `vm/sys.h` that every layer
+  `runtime/` and a description in `docs/bytecode.md`. A primitive that needs the
+  operating system goes behind a new call of `runtime/sys/sys.h` that every layer
   answers -- `sys_posix.c`, `sys_win.c` and `sys_none.c`, with `ENOSYS` where
   there is nothing to do -- and is written on the hosts in
   `tests/basis/host/rune-prim.sml`, which the `xc1` configurations of the
@@ -77,23 +77,28 @@ keep these invariants:
   beside its description and body in `src/isa/stack.sml` (from which the
   interpreter's case and its stack effect are generated), a template in
   `src/opt/x64.sml`, which MLton's build of `runeopt` refuses to go
-  without, and where it calls into C a helper in `vm/native.c`, the shared
-  `op_<NAME>` of `vm/ops.h` where its body is shared; a change to what an
+  without, and where it calls into C a helper in `runtime/native/native.c`, the shared
+  `op_<NAME>` of `runtime/stack/ops.h` where its body is shared; a change to what an
   instruction does changes all of them, and a new one goes into
   `tests/opt/every-opcode.rasm`, which runs every instruction. The `.rbc` format is read by `src/opt/rbc.sml` as well, with
   the loader's messages. A field of the VM that the code touches is named in
-  `vm/native_offsets.c`, never written as a number. `make test-native` runs
-  the suites as native code and wants `--count` to agree with `runevm`. The
-  primitives whose common case the code does itself (`runeopt --inlined`,
-  `fastPrim` in `src/opt/x64.sml`) change with their C code in
-  `vm/prims.c`: `tests/opt/prims.sml` runs each on its edge cases, natively
-  and on `runevm`, and must use every one of them. The templates also copy
-  the push and pop of a frame (`vm_push_frame`, `native_call`, `native_ret`)
-  and the fast path of `vm_alloc` (when it collects, `--gc-stress`, the
-  header, the counts): a change to either changes the templates too. An
-  instruction in the list `reads` of `x64.sml` must never write its top
-  operand in place, since a LOCAL may have left it in its local
-  (`docs/native.md`).
+  the table of `runtime/native/native_offsets.h`, never written as a number. Whatever
+  the templates do to a value or an object -- a tag test, a field, a
+  header, an allocation -- they do through `src/opt/x64_layout.sml`, which
+  is generated from the JIT's macro-assembler (`runtime/register/jit/masm.c`, run
+  against the text backend of its assembler by `bin/runeopt-templates`):
+  never write a layout fact into `x64.sml`; after a change to `masm.c` run
+  `make templates`, since `check-templates` (in `make test-native`) refuses
+  a stale file. `make test-native` runs the suites as native code and wants
+  `--count` to agree with `runevm-stack`. The primitives whose common case the
+  code does itself (`runeopt --inlined`, `fastPrim` in `src/opt/x64.sml`)
+  change with their C code in `runtime/prims.c`: `tests/opt/prims.sml` runs
+  each on its edge cases, natively and on `runevm-stack`, and must use every one
+  of them. The templates also copy the push and pop of a frame
+  (`vm_push_frame`, `native_call`, `native_ret`): a change to it changes
+  them too. An instruction in the list `reads` of `x64.sml` must never
+  write its top operand in place, since a LOCAL may have left it in its
+  local (`docs/native.md`).
 * **A pass of the compiler** (docs/ir.md) runs through `Pass.stage`, with the
   printer and the size of what it makes and the lint of its representation;
   a pass that rewrites asks `Pass.spend` before each rewrite, and one that
@@ -108,49 +113,60 @@ keep these invariants:
   docs/ir.md, *Positions*). A rewrite must leave every lint satisfied at
   any `--fuel`: what it makes of several parts is one rewrite, or each part
   is valid alone.
-* **The stack VM's loop** (`vm/interp.c`, `vm/loop.h`) keeps its state in
+* **The folders of `runtime/`** say what depends on what. The runtime both
+  VMs link is directly under it (`vm.h`, `value.h`, the heap, the loader,
+  the primitives, images, `main.c`, and the generated `isa.h` with what the
+  two instruction sets share); `sys/` is the system layer; `stack/` is
+  `runevm-stack`'s loop and instruction set and `register/` is `runevm`'s,
+  with its JIT in `register/jit/`; `native/` is what a program of `runeopt`
+  links; `census/` is the instrumented build. A file names a header of
+  another folder by its path from `runtime/` (`sys/sys.h`,
+  `register/jit.h`), which the one include path `-Iruntime` finds, so a
+  dependency across folders shows in the include. The shared files include
+  nothing of `stack/`; keep it so.
+* **The stack VM's loop** (`runtime/stack/interp.c`, `runtime/stack/loop.h`) keeps its state in
   its own variables: a body of `src/isa/stack.sml` that is not shared is
   written in the loop's words (`PUSH`, `POP`, `TOP`, `LOCALV`, `JUMP_TO`,
   and `SYNC()` before anything that reads the VM's stack pointer or pc --
   the collector, a raise, a primitive, a frame pushed -- with `RELOAD()`
-  after what may change them); a shared one (vm/ops.h, which runeopt's code
+  after what may change them); a shared one (runtime/stack/ops.h, which runeopt's code
   calls) is written against the VM. A push does not check: the loader works
-  out each function's deepest stack (`vm/isa_stack.c`), so an instruction's
+  out each function's deepest stack (`runtime/stack/isa_stack.c`), so an instruction's
   `pops`/`pushes` must say what it does.
-* **vm/new** (`vm/new/`, `bin/runevm-new`; `vm/new/ARCHITECTURE.md` is the
-  VM as built, and every change to `vm/new` keeps it so) runs the register
+* **runtime/register** (`runtime/register/`, `bin/runevm`; `runtime/register/ARCHITECTURE.md` is the
+  VM as built, and every change to `runtime/register` keeps it so) runs the register
   bytecode (`src/isa/regs.sml`, what `rune` makes unless told `--target=stack`) on the runtime
-  of `runevm`, whose part that is the stack bytecode's is `vm/isa_stack.c`
-  and vm/new's `vm/new/isa_regs.c`. Its loop keeps its state in its own
+  of `runevm-stack`, whose part that is the stack bytecode's is `runtime/stack/isa_stack.c`
+  and runtime/register's `runtime/register/isa_regs.c`. Its loop keeps its state in its own
   variables as the stack VM's does: a body of `src/isa/regs.sml` is written
   in the loop's words (`R`, `PUSH`, `POP`, `ENTER`, `ROOM`, `FATAL`,
   `EXPECT`, and `SYNC()` before anything that reads the VM's stack pointer,
   pc or count, with `RELOAD()` after what may change them or move the
   stack); a push does not check, since the checker works out each
-  function's deepest stack (`vm/new/isa_regs.c`). A primitive done in the
-  loop (`vm/new/fastprim.h`) gives the primitive's result or declines, and
-  changes with its C in `vm/prims.c`; `scripts/check-new.sh` holds
-  `tests/opt/prims.sml` to the same output on both VMs. `make test-new`,
-  part of `make check`, holds vm/new to what `runevm` prints and allocates;
+  function's deepest stack (`runtime/register/isa_regs.c`). A primitive done in the
+  loop (`runtime/register/fastprim.h`) gives the primitive's result or declines, and
+  changes with its C in `runtime/prims.c`; `scripts/check-register.sh` holds
+  `tests/opt/prims.sml` to the same output on both VMs. `make test-register`,
+  part of `make check`, holds runtime/register to what `runevm-stack` prints and allocates;
   a change to the register instruction set is `make isa` and a test, as
-  for the stack one; a change to `vm/new` also runs `make test-new-asan`
+  for the stack one; a change to `runtime/register` also runs `make test-register-asan`
   and `make test-stress`, and the Windows and portability rules below,
   whose VMs it is built for too. `vm_loop` is a driver and no engine calls
-  another (`vm/new/jit.h`): the interpreter hands the VM back, exact,
+  another (`runtime/register/jit.h`): the interpreter hands the VM back, exact,
   where a frame's code is native (`HANDOVER`, `RETURN_NATIVE`, `RAISED`),
   native code hands it back where a frame is interpreted, and a helper
   native code calls never runs bytecode nor compiles any; `make
-  test-new-jit`, part of `make check`, holds the driver to never nesting.
-  `runevm-new` tiers up to tier 2 by default (`--jit=opt`, M10; M6 to
+  test-register-jit`, part of `make check`, holds the driver to never nesting.
+  `runevm` tiers up to tier 2 by default (`--jit=opt`, M10; M6 to
   M9 `--jit=baseline`), so every suite runs that way; the oracle runs
   the other modes. **The JIT**
-  (`vm/new/jit/`, `vm/new/ARCHITECTURE.md`, Tier 1): an instruction of the
-  register set has, beside its body, an emitter in `vm/new/jit/emit.c`
-  (its prototype is generated into `vm/new/jit_emit.h`, so the build fails
+  (`runtime/register/jit/`, `runtime/register/ARCHITECTURE.md`, Tier 1): an instruction of the
+  register set has, beside its body, an emitter in `runtime/register/jit/emit.c`
+  (its prototype is generated into `runtime/register/jit_emit.h`, so the build fails
   without it) that does what the body does in the same frame, written
-  over the macro-assembler (`vm/new/jit/masm.h`) and the portable
-  assembler (`vm/new/jit/asm.h`, M12) -- never an encoder: `make
-  test-new-jit` checks that no `x64_` or `a64_` name occurs in the
+  over the macro-assembler (`runtime/register/jit/masm.h`) and the portable
+  assembler (`runtime/register/jit/asm.h`, M12) -- never an encoder: `make
+  test-register-jit` checks that no `x64_` or `a64_` name occurs in the
   emitters, the macro-assembler or the compiler, and an operation a
   target lacks is added to `asm.h` with both implementations and a
   line in ARCHITECTURE.md's *The targets*. The macro-assembler's rules
@@ -164,12 +180,12 @@ keep these invariants:
   done in line (`prim_inline`) gives exactly what `fastprim.h`'s
   `prim_fast` gives and goes to its slow path wherever that would answer
   0. What the loop does to `--count`, the code
-  does too: `scripts/check-jit.sh` (in `make test-new-jit`) holds every
+  does too: `scripts/check-jit.sh` (in `make test-register-jit`) holds every
   program, and the compiler compiling itself, to the same output and
   counts interpreted, compiled, with every other function compiled
   (`--jit-only=odd`) and under `--jit-stress`, and every instruction to
   occurring in them. A primitive done in line by the loop and by the
-  code changes with its C in `vm/prims.c`. A native address lives in a
+  code changes with its C in `runtime/prims.c`. A native address lives in a
   frame's `native_ret`, a handler's `native` and the driver's `jit->at`
   and nowhere else, so that invalidating a function's code is a walk
   over the frames and handlers (`jit_invalidate`). **The homes** (tier 2,
@@ -195,7 +211,7 @@ keep these invariants:
   leaving after every instruction). **The representations
   section** (`docs/bytecode.md`): a new instruction that writes a register
   of a known representation says so in the register checker's lint
-  (`vm/new/isa_regs.c`), and the compiler's `Lower.repOfRhs` says the same
+  (`runtime/register/isa_regs.c`), and the compiler's `Lower.repOfRhs` says the same
   of the operation.
 * Compile-error behaviour is covered by `tests/errors/` (first error line must
   contain the `.expected` text). Warnings are covered by a `.cwarn` file next
@@ -235,28 +251,36 @@ keep these invariants:
   every test target uses by default; `make test RUNE=bin/rune-mlton` runs the
   same suite with the MLton build and is the faster loop while iterating. For
   VM changes also run the suite with the
-  sanitizer build, `make vm-asan && sh tests/run-tests.sh --vm bin/runevm-asan`,
+  sanitizer build, `make vm-asan && sh tests/run-tests.sh --vm bin/runevm-stack-asan`,
   and with a collection at (nearly) every allocation, `make test-stress`.
 * `make check` also runs in GitHub Actions on every pull request and every
   push to `master` (`.github/workflows/check.yml`), on Ubuntu 24.04 with the
   packages of `cloud/SETUP.md` and the hosts kept in the Actions cache. A
   pull request is not ready until it passes there too.
-* `make check` never compiles `vm/sys_win.c`, so a green `make check` says
-  nothing about Windows. A change to the VM core, to `vm/sys.h` or to the
+* `make check` never compiles `runtime/sys/sys_win.c`, so a green `make check` says
+  nothing about Windows. A change to the VM core, to `runtime/sys/sys.h` or to the
   system layers is done only once `make windows` builds all four VMs and
-  `make test-windows` passes on them (`tests/lang`, `tests/vm` and the Basis
+  `make test-windows` passes on them (`tests/lang`, `tests/runtime` and the Basis
   Library suite, for the stack bytecode and the register one; about 15
   minutes). It needs the mingw-w64 toolchains and a
   Windows to run the `.exe`s, which is what `make doctor` reports.
 * `make check` also builds the VM for one machine only, so it says nothing
   about a machine of another width or another byte order. `make portability`
   builds it for a 32-bit x86 and for a big-endian 64-bit PowerPC, and
-  `make test-portability` runs `tests/lang`, `tests/vm` and the Basis Library
+  `make test-portability` runs `tests/lang`, `tests/runtime` and the Basis Library
   suite on both -- the PowerPC one under qemu -- checks that the counts of
   `--count` agree to the byte on every VM, and carries an image of
   `Runtime.save` between them in every direction. A change to the layout of a
-  value, to the heap, to the bytecode format or to `vm/image.c` is not done
-  until it passes. It needs a 32-bit libc, clang, a powerpc64 sysroot and
+  value, to the heap, to the bytecode format or to `runtime/image.c` is not done
+  until it passes. The layout itself lives in two places and nowhere else:
+  `runtime/value.h` (how a value is represented and an object laid out: every
+  tag test, construction, unboxing, header read and write, field access,
+  size and forwarding is a function there, and the rest of `runtime/` is
+  written over those names) and `runtime/register/jit/masm.c` (the same operations
+  as machine code, its numbers asserted against `value.h` at compile
+  time), from which runeopt's templates are generated. A new `.tag`,
+  `->kind`, `->len` or `OBJ_FIELDS` outside `value.h` is a mistake, and
+  so is an offset or a size in an emitter (heap-layout M3). It needs a 32-bit libc, clang, a powerpc64 sysroot and
   qemu, which `make doctor --scope portability` reports. Two bugs it found
   when it was written: a `Value` of 12 bytes where the 32-bit System V ABI
   aligns an `int64_t` to four, and `realpath` undeclared under an older
@@ -307,7 +331,7 @@ keep these invariants:
   `Error.error (span, msg)` for user errors and `Error.bug` for invariant
   violations. Error messages start lowercase and name the construct.
 * C: C17 (`-std=c17`), with anything beyond C99 behind a test of
-  `__STDC_VERSION__` so that `-std=c99` still builds the VMs (`vm/vm.h`'s
+  `__STDC_VERSION__` so that `-std=c99` still builds the VMs (`runtime/vm.h`'s
   `Value` shows how); no platform-specific code, every primitive validates argument tags
   (`vm_fatal` on bytecode type errors), heap pointers never live in C locals
   across an allocation (see the GC discipline in `docs/architecture.md`).

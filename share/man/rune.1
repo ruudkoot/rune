@@ -9,7 +9,7 @@ rune \- compile Standard ML '97 to Rune bytecode
 .B rune
 compiles one or more Standard ML '97 source files into a single Rune bytecode
 file, which
-.BR runevm\-new (1)
+.BR runevm (1)
 runs. The source files are elaborated as one program in the order given, after
 the basis library named by
 .BR \-\-lib .
@@ -171,11 +171,11 @@ Check that Mid printed with its positions, read and printed again is the same.
 The bytecode to make:
 .B registers
 for
-.BR runevm\-new ,
+.BR runevm ,
 the default, or
 .B stack
 for
-.BR runevm .
+.BR runevm\-stack .
 .TP
 .B \-\-version
 Print the version and exit.
@@ -195,7 +195,7 @@ Compile and run a program:
 .nf
 .RS
 rune hello.sml \-o hello.rbc
-runevm\-new hello.rbc
+runevm hello.rbc
 .RE
 .fi
 .PP
@@ -211,5 +211,5 @@ rune \-\-lib ~/rune/lib hello.sml
 .I <libdir>/basis/MANIFEST
 The ordered list of basis library sources compiled before the inputs.
 .SH SEE ALSO
-.BR runevm\-new (1),
-.BR runevm (1)
+.BR runevm (1),
+.BR runevm\-stack (1)

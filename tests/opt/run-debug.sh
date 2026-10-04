@@ -2,7 +2,7 @@
 # The debug information of programs runeopt made (docs/native.md,
 # Debug information):
 #   tests/opt/run-debug.sh [--runeopt BIN] [-j N] RBC...
-# For each program, translated as bin/runevm-opt translates it (or taken from
+# For each program, translated as bin/runevm-native translates it (or taken from
 # its cache, tests/out/opt-cache):
 #  * the line table of the executable, as llvm-dwarfdump reads it (file, line
 #    and column) and as readelf decodes it (line), is the line table of the
@@ -41,7 +41,7 @@ for d in llvm-dwarfdump $(cd /usr/bin 2> /dev/null && ls llvm-dwarfdump-* 2> /de
   command -v "$d" > /dev/null 2>&1 && { dwarfdump=$d; break; }
 done
 
-# exe RBC: the executable of a program, as bin/runevm-opt keeps it
+# exe RBC: the executable of a program, as bin/runevm-native keeps it
 exe() {
   e=$cache/$(sha256sum < "$1" | cut -c1-32)
   if [ ! -x "$e" ]; then

@@ -4,15 +4,15 @@
 #                   (MLton, SML/NJ 110.99.9 in 64 and 32 bits, SML/NJ 2026.2,
 #                   Poly/ML, MLKit) under ~/.local/rune-hosts; needed once,
 #                   before anything else
-#   make            build bin/rune (the self-hosted compiler), bin/runevm, and
+#   make            build bin/rune (the self-hosted compiler), bin/runevm, bin/runevm-stack, and
 #                   bin/runedoc and bin/runeopt, which the compiler compiles
 #   make mlton|smlnj-legacy|smlnj32|smlnj-dev|polyml|mlkit   build the compiler with one of them
 #   make host-builds  build the compiler with all six
-#   make vm         build bin/runevm, and bin/runevm-new, vm/new's first loop
+#   make vm         build bin/runevm (runtime/register, the register bytecode's VM) and bin/runevm-stack
 #   make boot       bin/rune.rbc (the compiler compiled by bin/rune-$(BOOTHOST)),
-#                   the bin/rune-boot wrapper that runs it on runevm-new, and bin/rune -> it; bin/rune.stack.rbc is the stack bytecode of the same
+#                   the bin/rune-boot wrapper that runs it on runevm, and bin/rune -> it; bin/rune.stack.rbc is the stack bytecode of the same
 #   make test       run the test suite with bin/rune
-#   make install    install rune, runevm, runedoc, runeopt and the basis library under PREFIX
+#   make install    install rune, runevm, runevm-stack, runedoc, runeopt and the basis library under PREFIX
 #                   (/usr/local as root, ~/.local otherwise); as root nothing
 #                   is built, so run `make` as yourself first
 #   make uninstall  remove them again
@@ -45,7 +45,7 @@
 #                   the matrix
 #   make test-native  the suites with every program translated to native code
 #                   by runeopt (docs/native.md); part of make check
-#   make test-new   the suites through vm/new's first loop and the register
+#   make test-register   the suites through runtime/register's first loop and the register
 #                   bytecode (docs/bytecode.md); part of make check
 #
 # bin/rune is the compiler Rune ships: itself, on the VM. The host builds
@@ -75,41 +75,44 @@ MAKEFLAGS += -j$(JOBS)
 endif
 CC      ?= cc
 CFLAGS  ?= -std=c17 -O2 -Wall -Wextra -pedantic
+# Every C file of runtime/ names a header of another folder by its path from
+# runtime/ (sys/sys.h, register/jit.h): the one include path of every build.
+RT_INC  := -Iruntime
 ROOT    := $(CURDIR)
 
 # The compiler and VM the test targets run. Override to test another build:
 # `make test RUNE=bin/rune-mlton`.
 RUNE    ?= bin/rune
-# $(RUNE) pinned to the stack bytecode, which the suites that run bin/runevm
-# need: the compiler makes the register bytecode of bin/runevm-new unless
+# $(RUNE) pinned to the stack bytecode, which the suites that run bin/runevm-stack
+# need: the compiler makes the register bytecode of bin/runevm unless
 # told otherwise. It is written whenever make reads this file.
 RUNE_STACK := bin/rune-stack
 $(shell mkdir -p bin && printf '#!/bin/sh\nexec "%s" --target=stack "$$@"\n' '$(abspath $(RUNE))' > $(RUNE_STACK) && chmod +x $(RUNE_STACK))
-RUNEVM  ?= bin/runevm
+RUNEVM  ?= bin/runevm-stack
 RUNEDOC ?= bin/runedoc
 RUNEOPT ?= bin/runeopt
 
 SOURCES  := $(shell grep -v '^[[:space:]]*\#' sources.txt | grep -v '^[[:space:]]*$$')
 GEN_SML  := src/backend/opcodes.sml src/backend/prims.sml src/backend/regcodes.sml
-GEN_C    := vm/opcodes.h vm/prims_table.h vm/interp_cases.h vm/interp_labels.h vm/ops.h vm/new/regops.h vm/new/reg_cases.h
+GEN_C    := runtime/isa.h runtime/stack/opcodes.h runtime/prims_table.h runtime/stack/interp_cases.h runtime/stack/interp_labels.h runtime/stack/ops.h runtime/register/regops.h runtime/register/reg_cases.h
 SOURCES_DOC := $(shell grep -v '^[[:space:]]*\#' sources-doc.txt | grep -v '^[[:space:]]*$$')
 SOURCES_OPT := $(shell grep -v '^[[:space:]]*\#' sources-opt.txt | grep -v '^[[:space:]]*$$')
 SOURCES_ISA := $(shell grep -v '^[[:space:]]*\#' sources-isa.txt | grep -v '^[[:space:]]*$$')
-BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb build/config.sml vm/version.h
+BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb build/config.sml runtime/version.h
 
-# The core VM is ISO C99; what needs the operating system is in vm/sys.h and
+# The core VM is ISO C99; what needs the operating system is in runtime/sys/sys.h and
 # one of its implementations. `make SYS=none` builds without POSIX, and the
 # library then reports ENOSYS for what it cannot do.
 #
 # A VM is the runtime, RT_SRCS and a system layer, with the dispatch loop and
-# the command line on top (vm/interp.c, vm/main.c). The runtime is also
-# build/librune.a, which bin/runevm links, and so will a program runeopt
+# the command line on top (runtime/stack/interp.c, runtime/main.c). The runtime is also
+# build/librune.a, which bin/runevm-stack links, and so will a program runeopt
 # makes (docs/native.md); the other VMs compile the same list.
 SYS ?= posix
-RT_SRCS := vm/runtime.c vm/heap.c vm/loader.c vm/isa_stack.c vm/prims.c vm/image.c
-VM_SRCS := vm/main.c vm/interp.c $(RT_SRCS) vm/sys_$(SYS).c
-VM_HDRS := vm/vm.h vm/loop.h vm/sys.h vm/version.h $(GEN_C)
-RT_OBJS := $(patsubst vm/%.c,build/librune/%.o,$(RT_SRCS) vm/sys_$(SYS).c)
+RT_SRCS := runtime/runtime.c runtime/heap.c runtime/loader.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
+VM_SRCS := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_$(SYS).c
+VM_HDRS := runtime/vm.h runtime/value.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
+RT_OBJS := $(patsubst runtime/%.c,build/librune/%.o,$(RT_SRCS) runtime/sys/sys_$(SYS).c)
 AR      ?= ar
 
 # The host SML systems (`make hosts`).
@@ -136,7 +139,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: isa check-isa test-ir check-levels test-new test-new-jit test-new-asan mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa test-ir check-levels test-register test-register-jit test-register-asan vm-census test-census heapsim check-heapsim check-layouts templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -174,7 +177,7 @@ $(BUILDGEN) &: sources.txt sources-doc.txt sources-opt.txt sources-isa.txt scrip
 # a change to src/isa, and `make check-isa` (part of make check) fails when
 # one of them is not what the descriptions give, with runeisa built by
 # MLton and by the self-hosted compiler.
-ISA_OUT := vm/opcodes.def vm/prims.def $(GEN_C) $(GEN_SML)
+ISA_OUT := runtime/stack/opcodes.def runtime/prims.def $(GEN_C) $(GEN_SML)
 
 isa: bin/runeisa-mlton
 	bin/runeisa-mlton --root .
@@ -326,7 +329,7 @@ bin/runedoc-mlkit: bin/runedoc-mlkit.bin Makefile
 # reason as runedoc's do.
 runeopt-host-builds: bin/runeopt-mlton bin/runeopt-smlnj-legacy bin/runeopt-smlnj32 bin/runeopt-smlnj-dev bin/runeopt-polyml bin/runeopt-mlkit
 
-# The translations bin/runevm-opt keeps are by the checksum of the bytecode
+# The translations bin/runevm-native keeps are by the checksum of the bytecode
 # alone: a new runeopt or runtime empties them, or the suites would run the
 # programs the old ones made.
 bin/runeopt-mlton.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-mlton-main.sml | build/.doctor-mlton build/librune.a
@@ -374,75 +377,129 @@ bin/runeopt-mlkit: bin/runeopt-mlkit.bin Makefile
 	chmod +x $@
 
 # ---------------------------------------------------------------- VM
-vm: bin/runevm bin/runevm-new
+vm: bin/runevm-stack bin/runevm
 
-build/librune/%.o: vm/%.c $(VM_HDRS) | build/.doctor-vm
-	@mkdir -p build/librune
-	$(CC) $(CFLAGS) -c -o $@ $<
+build/librune/%.o: runtime/%.c $(VM_HDRS) | build/.doctor-vm
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(RT_INC) -c -o $@ $<
 
 # native.o is the main of a program runeopt makes and what its code calls
-# (vm/native.c): it is in the library, but nothing of runevm refers to it,
+# (runtime/native/native.c): it is in the library, but nothing of runevm-stack refers to it,
 # so no VM links it. rune-offsets.s is the layout of the VM for the code.
-build/librune.a: $(RT_OBJS) build/librune/native.o build/rune-offsets.s
+build/librune.a: $(RT_OBJS) build/librune/native/native.o build/rune-offsets.s
 	rm -f $@
-	$(AR) rcs $@ $(RT_OBJS) build/librune/native.o
+	$(AR) rcs $@ $(RT_OBJS) build/librune/native/native.o
 	rm -rf tests/out/opt-cache
 
-build/rune-offsets.s: vm/native_offsets.c $(VM_HDRS) | build/.doctor-vm
+build/rune-offsets.s: runtime/native/native_offsets.c runtime/native/native_offsets.h $(VM_HDRS) | build/.doctor-vm
 	@mkdir -p build/librune
-	$(CC) $(CFLAGS) -o build/librune/native-offsets vm/native_offsets.c
+	$(CC) $(CFLAGS) $(RT_INC) -o build/librune/native-offsets runtime/native/native_offsets.c
 	build/librune/native-offsets > $@
 
-bin/runevm: vm/main.c vm/interp.c build/librune.a $(VM_HDRS) | build/.doctor-vm
+bin/runevm-stack: runtime/main.c runtime/stack/interp.c build/librune.a $(VM_HDRS) | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -o $@ vm/main.c vm/interp.c build/librune.a -lm
+	$(CC) $(CFLAGS) $(RT_INC) -o $@ runtime/main.c runtime/stack/interp.c build/librune.a -lm
 
-# vm/new's first loop (docs/plans/middle-end.md, M5): the register bytecode,
-# on the runtime of runevm. Its own instruction set's part (vm/new/isa_regs.c)
-# is linked before build/librune.a, whose vm/isa_stack.c it takes the place of.
-NEW_HDRS := vm/new/regvm.h vm/new/regops.h vm/new/reg_cases.h vm/new/reg_labels.h vm/new/reg_loop.h vm/new/fastprim.h vm/new/jit.h vm/new/jit/x64.h vm/new/jit/masm.h vm/new/jit/compile.h vm/new/jit_emit.h vm/new/jit_cases.h
+# runtime/register's first loop (docs/plans/middle-end.md, M5): the register bytecode,
+# on the runtime of runevm-stack. Its own instruction set's part (runtime/register/isa_regs.c)
+# is linked before build/librune.a, whose runtime/stack/isa_stack.c it takes the place of.
+NEW_HDRS := runtime/register/regvm.h runtime/register/regops.h runtime/register/reg_cases.h runtime/register/reg_labels.h runtime/register/reg_loop.h runtime/register/fastprim.h runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
 # RUNE_JIT=0 builds it without the JIT (docs/plans/jit.md): the
 # interpreter alone, which refuses --jit.
 RUNE_JIT ?= 1
-JIT_SRCS := vm/new/jit.c vm/new/jit/x64.c vm/new/jit/asm_x64.c vm/new/jit/masm.c vm/new/jit/compile.c vm/new/jit/emit.c
-JIT_HDRS := vm/new/jit.h vm/new/jit/x64.h vm/new/jit/asm.h vm/new/jit/masm.h vm/new/jit/compile.h vm/new/jit_emit.h vm/new/jit_cases.h
-NEW_LOOP := vm/main.c vm/new/interp.c vm/new/isa_regs.c $(JIT_SRCS)
-bin/runevm-new: $(NEW_LOOP) build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+JIT_SRCS := runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c
+JIT_HDRS := runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/asm.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
+NEW_LOOP := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c $(JIT_SRCS)
+bin/runevm: $(NEW_LOOP) build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -Ivm -Ivm/new -o $@ $(NEW_LOOP) build/librune.a -lm
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) $(RT_INC) -o $@ $(NEW_LOOP) build/librune.a -lm
 
-vm-asan: bin/runevm-asan bin/runevm-new-asan
+vm-asan: bin/runevm-stack-asan bin/runevm-asan
 
-# The language suite on vm/new built with the sanitizers (not part of make
-# check; run for every change to vm/new, as the ASan runevm is for the VM).
-test-new-asan: bin/runevm-new-asan bin/rune-new $(RUNE)
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-asan --out tests/out/new-asan
-	RUNEVM_JIT=all sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-asan --out tests/out/new-asan-jit
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new-asan" --jit=all --jit-tier=2 "$$@"\n' > bin/runevm-new-asan-opt
-	chmod +x bin/runevm-new-asan-opt
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-asan-opt --out tests/out/new-asan-opt
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new-asan" --jit=all --jit-tier=2 --deopt-stress=1 "$$@"\n' > bin/runevm-new-asan-deopt
-	chmod +x bin/runevm-new-asan-deopt
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-asan-deopt --out tests/out/new-asan-deopt
+# The language suite on runtime/register built with the sanitizers (not part of make
+# check; run for every change to runtime/register, as the ASan runevm-stack is for the VM).
+test-register-asan: bin/runevm-asan $(RUNE)
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-asan --out tests/out/register-asan
+	RUNEVM_JIT=all sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-asan --out tests/out/register-asan-jit
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-asan" --jit=all --jit-tier=2 "$$@"\n' > bin/runevm-asan-opt
+	chmod +x bin/runevm-asan-opt
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-asan-opt --out tests/out/register-asan-opt
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-asan" --jit=all --jit-tier=2 --deopt-stress=1 "$$@"\n' > bin/runevm-asan-deopt
+	chmod +x bin/runevm-asan-deopt
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-asan-deopt --out tests/out/register-asan-deopt
 
-bin/runevm-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
+bin/runevm-stack-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 	@mkdir -p bin
-	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -o $@ $(VM_SRCS) -lm
+	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer $(RT_INC) -o $@ $(VM_SRCS) -lm
 
-# vm/new with the sanitizers: its loop, its instruction set's part, and the
+# runtime/register with the sanitizers: its loop, its instruction set's part, and the
 # runtime but for the stack bytecode's part
-NEW_SRCS := vm/main.c vm/new/interp.c vm/new/isa_regs.c $(JIT_SRCS) $(filter-out vm/isa_stack.c,$(RT_SRCS)) vm/sys_$(SYS).c
-bin/runevm-new-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-asan
+NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
+bin/runevm-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-asan
 	@mkdir -p bin
-	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -Ivm -Ivm/new -o $@ $(NEW_SRCS) -lm
+	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer $(RT_INC) -o $@ $(NEW_SRCS) -lm
+
+# The census VM (docs/census.md; docs/plans/heap-layout.md, M1): runtime/register's
+# loop on the runtime with -DRUNE_CENSUS, which enables the hooks of
+# runtime/census/census.h. It interprets everything (the JIT allocates in line) and
+# prints the stock VM's --count line, which scripts/check-census.sh checks.
+CENSUS_SRCS := $(NEW_SRCS) runtime/census/census.c runtime/census/census_static.c
+vm-census: bin/runevm-census
+bin/runevm-census: $(CENSUS_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/census/census.h runtime/census/layouts.h | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -DRUNE_JIT=1 -DRUNE_CENSUS $(RT_INC) -o $@ $(CENSUS_SRCS) -lm
+
+# The census VM against the stock one on a small program: the same --count
+# line, every byte and object in census.txt, the summary mode and the static
+# census (scripts/check-census.sh). Part of make check.
+test-census: bin/runevm-census bin/runevm $(RUNE)
+	sh scripts/check-census.sh
+
+# The heap-layout tools (docs/plans/heap-layout.md, M2): the trace-driven
+# simulator bin/heapsim and its synthetic-trace generator bin/heapsim-gen
+# (tools/heapsim), and the layout harness (tests/layouts). check-heapsim
+# runs the simulator's unit tests against the generator and holds its copier
+# model to the stock VM's --stats on two small workloads that collect
+# (their census traces made on the way); check-layouts builds the harness with $(CC) and
+# checks that every kernel's checksum is the same under every layout. Both
+# are part of make check.
+bin/heapsim: tools/heapsim/sim.c runtime/census/layouts.h | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) $(RT_INC) -o $@ tools/heapsim/sim.c -lm
+bin/heapsim-gen: tools/heapsim/gen.c runtime/census/layouts.h | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) $(RT_INC) -o $@ tools/heapsim/gen.c -lm
+heapsim: bin/heapsim bin/heapsim-gen
+check-heapsim: heapsim bin/runevm-census bin/runevm $(RUNE) bin/rune.rbc
+	sh tools/heapsim/test.sh
+	sh tools/heapsim/validate.sh compile-sigs intinf_fact
+check-layouts:
+	$(MAKE) --no-print-directory -C tests/layouts CC=$(CC)
+	sh tests/layouts/check.sh $(notdir $(CC))
+
+# runeopt's templates for the layout of values and objects, generated from
+# the JIT's macro-assembler run against the text backend of its assembler
+# (runtime/register/jit/templates.c, asm_text.c; docs/plans/heap-layout.md D11, M3):
+# `make templates` remakes src/opt/x64_layout.sml after a change to masm.c;
+# check-templates (part of test-native) refuses a stale file.
+TEMPLATES_SRCS := runtime/register/jit/templates.c runtime/register/jit/masm.c runtime/register/jit/asm_text.c
+bin/runeopt-templates: $(TEMPLATES_SRCS) runtime/register/jit/masm.h runtime/register/jit/asm.h runtime/register/jit/asm_text.h runtime/native/native_offsets.h $(VM_HDRS) | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -DRUNE_ASM_TEXT -DRUNE_JIT=1 $(RT_INC) -o $@ $(TEMPLATES_SRCS)
+templates: bin/runeopt-templates
+	bin/runeopt-templates > src/opt/x64_layout.sml
+check-templates: bin/runeopt-templates
+	@bin/runeopt-templates > build/x64_layout.sml.new && \
+	if cmp -s build/x64_layout.sml.new src/opt/x64_layout.sml; then echo "check-templates: src/opt/x64_layout.sml is what masm.c gives"; \
+	else echo "check-templates: src/opt/x64_layout.sml is not what runtime/register/jit/masm.c gives; run make templates"; exit 1; fi
 
 # ---------------------------------------------------------- Windows (apart)
 # `make windows` builds the VM for Windows with mingw-w64, for 64 bits
-# (bin/runevm.exe) and for 32 bits (bin/runevm32.exe), and `make
-# test-windows` runs the language suite, tests/vm and the Basis Library
+# (bin/runevm-stack.exe) and for 32 bits (bin/runevm-stack32.exe), and `make
+# test-windows` runs the language suite, tests/runtime and the Basis Library
 # suite (the rune:windows configurations of tests/basis/run-matrix.sh) on
 # both. Neither is part of any other target, and nothing else in the tree
-# depends on vm/sys_win.c: the toolchain is only on a machine that has it,
+# depends on runtime/sys/sys_win.c: the toolchain is only on a machine that has it,
 # and running the result needs Windows, or WSL, which starts an .exe for
 # you. The library, the compiler and the bytecode are the same as
 # everywhere else -- only the VM differs -- so the suites are compiled with
@@ -455,16 +512,16 @@ bin/runevm-new-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-asan
 # libgcc_s) would not start without it beside it, so the link is refused.
 #
 # What the system layer of Windows does and does not do is in the header of
-# vm/sys_win.c; tests/windows-skip.txt lists the programs that need what it
+# runtime/sys/sys_win.c; tests/windows-skip.txt lists the programs that need what it
 # does not and why, and docs/runtime.md what a program can count on.
 WINCC       ?= x86_64-w64-mingw32-gcc
 WINCC32     ?= i686-w64-mingw32-gcc
 WINCFLAGS   ?= -std=c17 -O2 -Wall -Wextra -D__USE_MINGW_ANSI_STDIO=1
 WINCFLAGS32 ?= -msse2 -mfpmath=sse -Wl,--large-address-aware
-WIN_SRCS    := vm/main.c vm/interp.c $(RT_SRCS) vm/sys_win.c
-# vm/new for Windows: its loop and its instruction set's part in place of
-# the stack bytecode's (vm/isa_stack.c), as bin/runevm-new-asan is built
-WIN_NEW_SRCS := vm/main.c vm/new/interp.c vm/new/isa_regs.c $(JIT_SRCS) $(filter-out vm/isa_stack.c,$(RT_SRCS)) vm/sys_win.c
+WIN_SRCS    := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_win.c
+# runtime/register for Windows: its loop and its instruction set's part in place of
+# the stack bytecode's (runtime/stack/isa_stack.c), as bin/runevm-asan is built
+WIN_NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_win.c
 WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32
 
 # windows_dlls CC: refuse $@ when it imports a DLL whose name starts with lib
@@ -475,40 +532,40 @@ define windows_dlls
 	done
 endef
 
-windows: bin/runevm.exe bin/runevm32.exe bin/runevm-new.exe bin/runevm-new32.exe
+windows: bin/runevm-stack.exe bin/runevm-stack32.exe bin/runevm.exe bin/runevm32.exe
 
-bin/runevm.exe: $(VM_SRCS) $(VM_HDRS) vm/sys_win.c | build/.doctor-windows
+bin/runevm-stack.exe: $(VM_SRCS) $(VM_HDRS) runtime/sys/sys_win.c | build/.doctor-windows
 	@mkdir -p bin
-	$(WINCC) $(WINCFLAGS) -o $@ $(WIN_SRCS) -Ivm $(WIN_LIBS)
+	$(WINCC) $(WINCFLAGS) -o $@ $(WIN_SRCS) $(RT_INC) $(WIN_LIBS)
 	$(call windows_dlls,$(WINCC))
 
-bin/runevm32.exe: $(VM_SRCS) $(VM_HDRS) vm/sys_win.c | build/.doctor-windows
+bin/runevm-stack32.exe: $(VM_SRCS) $(VM_HDRS) runtime/sys/sys_win.c | build/.doctor-windows
 	@mkdir -p bin
-	$(WINCC32) $(WINCFLAGS) $(WINCFLAGS32) -o $@ $(WIN_SRCS) -Ivm $(WIN_LIBS)
+	$(WINCC32) $(WINCFLAGS) $(WINCFLAGS32) -o $@ $(WIN_SRCS) $(RT_INC) $(WIN_LIBS)
 	$(call windows_dlls,$(WINCC32))
 
-bin/runevm-new.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-windows
+bin/runevm.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-windows
 	@mkdir -p bin
-	$(WINCC) $(WINCFLAGS) -o $@ $(WIN_NEW_SRCS) -Ivm -Ivm/new $(WIN_LIBS)
+	$(WINCC) $(WINCFLAGS) -o $@ $(WIN_NEW_SRCS) $(RT_INC) $(WIN_LIBS)
 	$(call windows_dlls,$(WINCC))
 
-bin/runevm-new32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-windows
+bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-windows
 	@mkdir -p bin
-	$(WINCC32) $(WINCFLAGS) $(WINCFLAGS32) -o $@ $(WIN_NEW_SRCS) -Ivm -Ivm/new $(WIN_LIBS)
+	$(WINCC32) $(WINCFLAGS) $(WINCFLAGS32) -o $@ $(WIN_NEW_SRCS) $(RT_INC) $(WIN_LIBS)
 	$(call windows_dlls,$(WINCC32))
 
 # The suites on the Windows VMs of both bytecodes: the stack one compiled
-# by bin/rune, the register one by bin/rune-new, each on its two VMs
+# by bin/rune-stack, the register one by bin/rune, each on its two VMs
 # (tests/run-windows.sh), then the Basis Library suite on all four.
-# The vm/new VMs run with every function given to the JIT (RUNEVM_JIT,
+# The runtime/register VMs run with every function given to the JIT (RUNEVM_JIT,
 # which WSLENV passes to a program of Windows), so that the JIT's Windows
 # convention is what the suites test there.
-test-windows: windows $(RUNE) bin/rune-new
-	sh tests/run-windows.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm.exe --vm bin/runevm32.exe
-	WSLENV=RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all sh tests/run-windows.sh -j $(JOBS) --rune bin/rune-new --native bin/runevm-new --def vm/new/regs.def \
-	  --vm bin/runevm-new.exe --vm bin/runevm-new32.exe
-	WSLENV=RUNEVM_JIT:RUNEVM_JIT_TIER:$$WSLENV RUNEVM_JIT=all RUNEVM_JIT_TIER=2 sh tests/run-windows.sh -j $(JOBS) --rune bin/rune-new --native bin/runevm-new --def vm/new/regs.def \
-	  --vm bin/runevm-new.exe
+test-windows: windows $(RUNE)
+	sh tests/run-windows.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack.exe --vm bin/runevm-stack32.exe
+	WSLENV=RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all sh tests/run-windows.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
+	  --vm bin/runevm.exe --vm bin/runevm32.exe
+	WSLENV=RUNEVM_JIT:RUNEVM_JIT_TIER:$$WSLENV RUNEVM_JIT=all RUNEVM_JIT_TIER=2 sh tests/run-windows.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
+	  --vm bin/runevm.exe
 	WSLENV=RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all RUNE=$(abspath $(RUNE_STACK)) sh tests/basis/run-matrix.sh -j $(JOBS) --configs windows
 
 # ------------------------------------------------------------- portability
@@ -518,7 +575,7 @@ test-windows: windows $(RUNE) bin/rune-new
 # the point is what they do not share with the machine that built them: the
 # width of a pointer, the alignment an ABI gives an int64_t, and the order of
 # the bytes in a word. An image written by one is read by another, which is
-# the strongest thing the format claims (vm/image.c).
+# the strongest thing the format claims (runtime/image.c).
 #
 # The 64-bit PowerPC VM is big-endian and runs under qemu; its compiler is
 # clang, which cross-compiles without a gcc for the target, with the linker
@@ -539,7 +596,7 @@ PPCROOT    ?= /usr/powerpc64-linux-gnu
 PPCFLAGS   ?= --target=powerpc64-linux-gnu -B$(PPCROOT)/bin -L$(PPCROOT)/lib -I$(PPCROOT)/include \
               -Wl,-dynamic-linker,$(PPCROOT)/lib/ld64.so.1 -Wl,-rpath,$(PPCROOT)/lib
 QEMUPPC    ?= qemu-ppc64
-# aarch64 (docs/plans/jit.md, M12): the second target of vm/new's JIT,
+# aarch64 (docs/plans/jit.md, M12): the second target of runtime/register's JIT,
 # built with the same cross toolchain pattern (libc6-dev-arm64-cross,
 # libgcc-13-dev-arm64-cross, binutils-aarch64-linux-gnu) and run by
 # qemu-aarch64, with the JIT on
@@ -548,60 +605,60 @@ A64ROOT    ?= /usr/aarch64-linux-gnu
 A64FLAGS   ?= --target=aarch64-linux-gnu -B$(A64ROOT)/bin -L$(A64ROOT)/lib -I$(A64ROOT)/include \
               -Wl,-dynamic-linker,$(A64ROOT)/lib/ld-linux-aarch64.so.1 -Wl,-rpath,$(A64ROOT)/lib
 QEMUA64    ?= qemu-aarch64
-JIT_SRCS_A64 := vm/new/jit.c vm/new/jit/a64.c vm/new/jit/asm_a64.c vm/new/jit/masm.c vm/new/jit/compile.c vm/new/jit/emit.c
-NEW_SRCS_A64 := vm/main.c vm/new/interp.c vm/new/isa_regs.c $(JIT_SRCS_A64) $(filter-out vm/isa_stack.c,$(RT_SRCS)) vm/sys_$(SYS).c
+JIT_SRCS_A64 := runtime/register/jit.c runtime/register/jit/a64.c runtime/register/jit/asm_a64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c
+NEW_SRCS_A64 := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c $(JIT_SRCS_A64) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
 PORT_TIMEOUT ?= 900
 
-portability: bin/runevm32 bin/runevm-ppc64 bin/runevm-new32 bin/runevm-new-ppc64 bin/runevm-new-aarch64
+portability: bin/runevm-stack32 bin/runevm-stack-ppc64 bin/runevm32 bin/runevm-ppc64 bin/runevm-aarch64
 
-bin/runevm32: $(VM_SRCS) $(VM_HDRS) Makefile | build/.doctor-portability
+bin/runevm-stack32: $(VM_SRCS) $(VM_HDRS) Makefile | build/.doctor-portability
 	@mkdir -p bin
-	$(PORTCC32) $(CFLAGS) $(PORTFLAGS32) -o $@ $(VM_SRCS) -lm
+	$(PORTCC32) $(CFLAGS) $(PORTFLAGS32) $(RT_INC) -o $@ $(VM_SRCS) -lm
 
 # As with the host builds of the compiler, the name is a wrapper and the
-# payload sits beside it: every runner takes --vm bin/runevm-ppc64 and needs
+# payload sits beside it: every runner takes --vm bin/runevm-stack-ppc64 and needs
 # to know nothing of qemu.
-bin/runevm-ppc64.bin: $(VM_SRCS) $(VM_HDRS) Makefile | build/.doctor-portability
+bin/runevm-stack-ppc64.bin: $(VM_SRCS) $(VM_HDRS) Makefile | build/.doctor-portability
 	@mkdir -p bin
-	$(PPCCC) $(CFLAGS) $(PPCFLAGS) -o $@ $(VM_SRCS) -lm
+	$(PPCCC) $(CFLAGS) $(PPCFLAGS) $(RT_INC) -o $@ $(VM_SRCS) -lm
+
+bin/runevm-stack-ppc64: bin/runevm-stack-ppc64.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-stack-ppc64.bin" "$$@"\n' '$(QEMUPPC) -L $(PPCROOT)' > $@
+	chmod +x $@
+
+# runtime/register for the same two machines, from the sources bin/runevm-asan is
+# built from (its instruction set's part in place of the stack bytecode's)
+bin/runevm32: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile | build/.doctor-portability
+	@mkdir -p bin
+	$(PORTCC32) $(CFLAGS) $(PORTFLAGS32) $(RT_INC) -o $@ $(NEW_SRCS) -lm
+
+bin/runevm-ppc64.bin: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile | build/.doctor-portability
+	@mkdir -p bin
+	$(PPCCC) $(CFLAGS) $(PPCFLAGS) $(RT_INC) -o $@ $(NEW_SRCS) -lm
 
 bin/runevm-ppc64: bin/runevm-ppc64.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-ppc64.bin" "$$@"\n' '$(QEMUPPC) -L $(PPCROOT)' > $@
 	chmod +x $@
 
-# vm/new for the same two machines, from the sources bin/runevm-new-asan is
-# built from (its instruction set's part in place of the stack bytecode's)
-bin/runevm-new32: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile | build/.doctor-portability
-	@mkdir -p bin
-	$(PORTCC32) $(CFLAGS) $(PORTFLAGS32) -Ivm -Ivm/new -o $@ $(NEW_SRCS) -lm
-
-bin/runevm-new-ppc64.bin: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile | build/.doctor-portability
-	@mkdir -p bin
-	$(PPCCC) $(CFLAGS) $(PPCFLAGS) -Ivm -Ivm/new -o $@ $(NEW_SRCS) -lm
-
-bin/runevm-new-ppc64: bin/runevm-new-ppc64.bin Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-new-ppc64.bin" "$$@"\n' '$(QEMUPPC) -L $(PPCROOT)' > $@
-	chmod +x $@
-
 # the register VM for aarch64, its JIT included (M12): the encoder a64.c
 # and the portable assembler's aarch64 side in place of x64.c's
-bin/runevm-new-aarch64.bin: $(NEW_SRCS_A64) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) vm/new/jit/a64.h vm/new/jit/asm.h Makefile | build/.doctor-portability
+bin/runevm-aarch64.bin: $(NEW_SRCS_A64) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/register/jit/a64.h runtime/register/jit/asm.h Makefile | build/.doctor-portability
 	@mkdir -p bin
-	$(A64CC) $(CFLAGS) $(A64FLAGS) -DRUNE_JIT=1 -Ivm -Ivm/new -o $@ $(NEW_SRCS_A64) -lm
+	$(A64CC) $(CFLAGS) $(A64FLAGS) -DRUNE_JIT=1 $(RT_INC) -o $@ $(NEW_SRCS_A64) -lm
 
-bin/runevm-new-aarch64: bin/runevm-new-aarch64.bin Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-new-aarch64.bin" "$$@"\n' '$(QEMUA64) -L $(A64ROOT)' > $@
+bin/runevm-aarch64: bin/runevm-aarch64.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-aarch64.bin" "$$@"\n' '$(QEMUA64) -L $(A64ROOT)' > $@
 	chmod +x $@
 
 # The PowerPC VM runs under an emulator and is about ten times slower, so the
 # Basis suite gets longer than the two minutes a program is otherwise given:
 # the largest of the monomorphic tests takes 34 s here and about six minutes
 # there.
-test-portability: portability $(RUNE) vm bin/rune-new
-	sh tests/run-portability.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm32 --vm bin/runevm-ppc64
-	sh tests/run-portability.sh -j $(JOBS) --rune bin/rune-new --native bin/runevm-new --def vm/new/regs.def \
-	  --vm bin/runevm-new32 --vm bin/runevm-new-ppc64 --vm bin/runevm-new-aarch64
-	sh scripts/check-jit.sh -j $(JOBS) --vm bin/runevm-new-aarch64
+test-portability: portability $(RUNE) vm
+	sh tests/run-portability.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack32 --vm bin/runevm-stack-ppc64
+	sh tests/run-portability.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
+	  --vm bin/runevm32 --vm bin/runevm-ppc64 --vm bin/runevm-aarch64
+	sh scripts/check-jit.sh -j $(JOBS) --vm bin/runevm-aarch64
 	RUNE=$(abspath $(RUNE_STACK)) RUNE_MATRIX_TIMEOUT=$(PORT_TIMEOUT) \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs portability
 
@@ -609,9 +666,9 @@ test-portability: portability $(RUNE) vm bin/rune-new
 # Depending on $(RUNE) builds whichever compiler the override names.
 test: $(RUNE) vm | build/.doctor-check
 	python3 tests/compiler/run-tests.py --rune $(RUNE_STACK)
-	python3 tests/vm/run-limits.py --rune $(RUNE_STACK) --vm $(RUNEVM)
+	python3 tests/runtime/run-limits.py --rune $(RUNE_STACK) --vm $(RUNEVM)
 	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm $(RUNEVM)
-	sh tests/vm/run-vm-tests.sh --vm $(RUNEVM)
+	sh tests/runtime/run-vm-tests.sh --vm $(RUNEVM)
 
 test-all: host-builds vm | build/.doctor-check
 	@for c in mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit; do \
@@ -619,7 +676,7 @@ test-all: host-builds vm | build/.doctor-check
 	  printf '#!/bin/sh\nexec "$(ROOT)/bin/rune-%s" --target=stack "$$@"\n' $$c > build/rune-stack-$$c; \
 	  chmod +x build/rune-stack-$$c; \
 	  python3 tests/compiler/run-tests.py --rune build/rune-stack-$$c || exit 1; \
-	  sh tests/run-tests.sh -j $(JOBS) --rune build/rune-stack-$$c --vm bin/runevm || exit 1; \
+	  sh tests/run-tests.sh -j $(JOBS) --rune build/rune-stack-$$c --vm bin/runevm-stack || exit 1; \
 	done
 
 check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/rune.stack.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc | build/.doctor-check
@@ -677,7 +734,7 @@ test-basis: $(RUNE) $(RUNEDOC) vm | build/.doctor-check
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune
 	RUNE=$(RUNE_STACK) RUNEVM=$(RUNEVM) RUNEDOC=$(RUNEDOC) sh tests/basis/run-examples.sh
 
-# Deterministic budgets on what `runevm --count` reports, for benchmark
+# Deterministic budgets on what `runevm-stack --count` reports, for benchmark
 # programs, the hello compile and the bootstrap (tests/perf/run-perf.sh;
 # --update after a deliberate change). About 10 seconds.
 # The tests of the documentation generator (tests/doc), with bin/runedoc;
@@ -718,46 +775,47 @@ perf-check: $(RUNE) bin/runedoc vm bin/rune.rbc bin/runedoc.rbc bin/rune.stack.r
 # (bin/rune names bin/runevm outright), or every compile would be quadratic too.
 GC_STRESS ?= 101
 GC_STRESS_BASIS ?= 1009
-test-stress: $(RUNE) vm bin/rune-new | build/.doctor-check
+test-stress: $(RUNE) vm | build/.doctor-check
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-stack" --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-stack-stress
+	chmod +x bin/runevm-stack-stress
 	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-stress
 	chmod +x bin/runevm-stress
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new" --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-new-stress
-	chmod +x bin/runevm-new-stress
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new" --jit=all --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-new-jit-stress
-	chmod +x bin/runevm-new-jit-stress
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new" --jit=all --jit-tier=2 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-new-opt-stress
-	chmod +x bin/runevm-new-opt-stress
-	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stress
-	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-stress --out tests/out/new-stress
-	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-jit-stress --out tests/out/new-jit-stress
-	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-opt-stress --out tests/out/new-opt-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-jit-stress
+	chmod +x bin/runevm-jit-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --jit-tier=2 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-opt-stress
+	chmod +x bin/runevm-opt-stress
+	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack-stress
+	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-stress --out tests/out/register-stress
+	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-jit-stress --out tests/out/register-jit-stress
+	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-opt-stress --out tests/out/register-opt-stress
 	RUNE_GC_STRESS=$(GC_STRESS_BASIS) RUNE_MATRIX_TIMEOUT=900 \
-	  RUNE=$(abspath $(RUNE_STACK)) RUNEVM="$(ROOT)/bin/runevm-stress" \
+	  RUNE=$(abspath $(RUNE_STACK)) RUNEVM="$(ROOT)/bin/runevm-stack-stress" \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune
 
 # ------------------------------------------------------------- native code
 # The suites with every program translated by runeopt and run as native
-# code (docs/native.md, Tests). bin/runevm-opt takes what runevm takes and
-# does so (scripts/runevm-opt.sh), keeping each translation by the checksum
+# code (docs/native.md, Tests). bin/runevm-native takes what runevm-stack takes and
+# does so (scripts/runevm-native.sh), keeping each translation by the checksum
 # of its bytecode, so every runner takes it as --vm. test-native runs
 # tests/lang (tests/opt-skip.txt lists what native code does not do yet, and
 # why) and the Basis Library suite (the rune:opt configuration) that way,
-# checks that every program of tests/lang counts what runevm counts, that
+# checks that every program of tests/lang counts what runevm-stack counts, that
 # the compiler, translated, compiles itself to bin/rune.stack.rbc, and that the
 # debug information of those programs and the compiler is their line table
 # (tests/opt/run-debug.sh), and gdb and lldb stop where it says. Programs of
 # runeopt are for Linux on x86-64: elsewhere it says so and does nothing.
 NATIVE_HOST := $(shell [ "$$(uname -s) $$(uname -m)" = "Linux x86_64" ] && echo yes)
 
-bin/runevm-opt: scripts/runevm-opt.sh
+bin/runevm-native: scripts/runevm-native.sh
 	@mkdir -p bin
-	cp scripts/runevm-opt.sh $@
+	cp scripts/runevm-native.sh $@
 	chmod +x $@
 
 ifeq ($(NATIVE_HOST),yes)
-test-native: bin/runevm-opt bin/runeopt-mlton build/librune.a $(RUNE) vm bin/rune.stack.rbc | build/.doctor-native
-	python3 tests/vm/run-limits.py --rune $(RUNE_STACK) --vm bin/runevm-opt
-	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-opt --skip tests/opt-skip.txt
+test-native: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm bin/rune.stack.rbc | build/.doctor-native
+	@$(MAKE) --no-print-directory check-templates
+	python3 tests/runtime/run-limits.py --rune $(RUNE_STACK) --vm bin/runevm-native
+	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-native --skip tests/opt-skip.txt
 	sh tests/opt/run-counts.sh -j $(JOBS) $$(for t in tests/lang/*.sml; do echo tests/out/$$(basename $$t .sml).rbc; done)
 	RUNE=$(abspath $(RUNE_STACK)) RUNE_MATRIX_BYTECODE="$(ROOT)/tests/out/matrix/rune" \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:opt
@@ -771,29 +829,29 @@ test-native: bin/runevm-opt bin/runeopt-mlton build/librune.a $(RUNE) vm bin/run
 # is what finds an address of the heap that the code keeps across a call; and
 # with a runtime built with the address and undefined behaviour sanitizers.
 # Neither is part of make check.
-test-native-stress: bin/runevm-opt bin/runeopt-mlton build/librune.a $(RUNE) vm | build/.doctor-native
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-opt" --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-opt-stress
-	chmod +x bin/runevm-opt-stress
-	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-opt-stress --skip tests/opt-skip.txt
+test-native-stress: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm | build/.doctor-native
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-native" --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-native-stress
+	chmod +x bin/runevm-native-stress
+	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-native-stress --skip tests/opt-skip.txt
 	RUNE_GC_STRESS=$(GC_STRESS_BASIS) RUNE_MATRIX_TIMEOUT=900 RUNE=$(abspath $(RUNE_STACK)) \
-	  RUNEVM_OPT="$(ROOT)/bin/runevm-opt-stress" sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:opt
+	  RUNEVM_OPT="$(ROOT)/bin/runevm-native-stress" sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:opt
 
 ASAN_CFLAGS := -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer
 
-build/asan/librune.a: $(RT_SRCS) vm/sys_$(SYS).c vm/native.c build/rune-offsets.s $(VM_HDRS) | build/.doctor-asan
+build/asan/librune.a: $(RT_SRCS) runtime/sys/sys_$(SYS).c runtime/native/native.c build/rune-offsets.s $(VM_HDRS) | build/.doctor-asan
 	@mkdir -p build/asan/obj
-	for f in $(RT_SRCS) vm/sys_$(SYS).c vm/native.c; do \
-	  $(CC) $(ASAN_CFLAGS) -c -o build/asan/obj/$$(basename $$f .c).o $$f || exit 1; done
+	for f in $(RT_SRCS) runtime/sys/sys_$(SYS).c runtime/native/native.c; do \
+	  $(CC) $(ASAN_CFLAGS) $(RT_INC) -c -o build/asan/obj/$$(basename $$f .c).o $$f || exit 1; done
 	cp build/rune-offsets.s build/asan/rune-offsets.s
 	rm -f $@
 	$(AR) rcs $@ build/asan/obj/*.o
 	rm -rf tests/out/opt-cache-asan
 
-test-native-asan: bin/runevm-opt bin/runeopt-mlton build/asan/librune.a $(RUNE) vm | build/.doctor-native
+test-native-asan: bin/runevm-native bin/runeopt-mlton build/asan/librune.a $(RUNE) vm | build/.doctor-native
 	printf '#!/bin/sh\nexec $(CC) -fsanitize=address,undefined "$$@"\n' > build/asan/cc
 	chmod +x build/asan/cc
 	RUNEOPT_RUNTIME="$(ROOT)/build/asan" RUNEOPT_CC="$(ROOT)/build/asan/cc" RUNEOPT_CACHE="$(ROOT)/tests/out/opt-cache-asan" \
-	  sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-opt --skip tests/opt-skip.txt
+	  sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-native --skip tests/opt-skip.txt
 else
 test-native test-native-stress test-native-asan:
 	@echo "$@: runeopt makes programs for Linux on x86-64, and this is not one: nothing to test"
@@ -820,34 +878,30 @@ perf: $(RUNE) vm | $(MATRIX_DOCTOR)
 
 # ---------------------------------------------------------------- bootstrap
 # Stage 1: a host build compiles the compiler to bytecode. bin/rune-boot runs
-# it on runevm-new and is what bin/rune names; `bootstrap` checks that it
+# it on runevm and is what bin/rune names; `bootstrap` checks that it
 # reproduces itself byte for byte. check-cross knows the build as `boot`.
 # All host builds emit the same bytecode, so BOOTHOST (mlton, smlnj-legacy,
 # smlnj32, smlnj-dev, polyml or mlkit) only decides which one builds stage 1,
 # not what comes out.
-bin/rune.rbc: bin/rune-$(BOOTHOST) bin/runevm-new $(BOOT_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
+bin/rune.rbc: bin/rune-$(BOOTHOST) bin/runevm $(BOOT_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
 	bin/rune-$(BOOTHOST) --lint --mid-roundtrip -o $@ $(BOOT_SRCS)
 
-# The same compiler in the stack bytecode, which runevm runs: what the
+# The same compiler in the stack bytecode, which runevm-stack runs: what the
 # suites of the stack VM, runeopt's translations and its budgets are made of.
-bin/rune.stack.rbc: bin/rune-$(BOOTHOST) bin/runevm $(BOOT_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
+bin/rune.stack.rbc: bin/rune-$(BOOTHOST) bin/runevm-stack $(BOOT_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
 	bin/rune-$(BOOTHOST) --target=stack --lint --mid-roundtrip -o $@ $(BOOT_SRCS)
 
-# bin/rune making the register bytecode of vm/new
-bin/rune-new: bin/rune Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/rune" --target=registers "$$@"\n' > $@
-	chmod +x $@
-
-# The suites through vm/new's first loop (docs/plans/middle-end.md, M5): the
-# tests of the language, allocation and the bootstrap against runevm, and
+# bin/rune making the register bytecode of runtime/register
+# The suites through runtime/register's first loop (docs/plans/middle-end.md, M5): the
+# tests of the language, allocation and the bootstrap against runevm-stack, and
 # the Basis Library.
-test-new: bin/rune-new bin/runevm-new $(RUNE) vm bin/rune.stack.rbc
-	python3 tests/vm/run-limits.py --rune bin/rune-new --vm bin/runevm-new
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new --out tests/out/new
-	sh scripts/check-new.sh -j $(JOBS)
-	RUNE_NEW=$(abspath bin/rune-new) RUNEVM_NEW=$(abspath bin/runevm-new) sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:new
+test-register: bin/runevm $(RUNE) vm bin/rune.stack.rbc
+	python3 tests/runtime/run-limits.py --rune bin/rune --vm bin/runevm
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm --out tests/out/register
+	sh scripts/check-register.sh -j $(JOBS)
+	RUNE_NEW=$(abspath bin/rune) RUNEVM_NEW=$(abspath bin/runevm) sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:new
 
-# The suites through vm/new with every function given to the JIT
+# The suites through runtime/register with every function given to the JIT
 # (--jit=all; docs/plans/jit.md, M3, M4): tests/lang on a wrapper that
 # passes the option; every program of tests/lang and tests/perf, and the
 # primitives on their edge cases, printing and counting the same
@@ -856,35 +910,35 @@ test-new: bin/rune-new bin/runevm-new $(RUNE) vm bin/rune.stack.rbc
 # and a recursion 200,000 deep under a machine stack of 1 MB, which holds
 # the driver to never nesting, compiled at load and while tiering up and
 # invalidating (M6).
-test-new-jit: bin/rune-new bin/runevm-new $(RUNE)
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new" --jit=all "$$@"\n' > bin/runevm-new-jit
-	chmod +x bin/runevm-new-jit
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-jit --out tests/out/new-jit
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new" --jit=all --jit-tier=2 "$$@"\n' > bin/runevm-new-opt
-	chmod +x bin/runevm-new-opt
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-opt --out tests/out/new-opt
+test-register-jit: bin/runevm $(RUNE)
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all "$$@"\n' > bin/runevm-jit
+	chmod +x bin/runevm-jit
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-jit --out tests/out/register-jit
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --jit-tier=2 "$$@"\n' > bin/runevm-opt
+	chmod +x bin/runevm-opt
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-opt --out tests/out/register-opt
 	sh scripts/check-jit.sh -j $(JOBS)
-	@! grep -n "\bx64_\|\ba64_\|\bX64\|\bA64" vm/new/jit/emit.c vm/new/jit/masm.c vm/new/jit/masm.h vm/new/jit/compile.c vm/new/jit/compile.h vm/new/jit.c \
-	  || { echo "check-asm: the emitters, the macro-assembler and the compiler name an encoder: they are written over vm/new/jit/asm.h alone (M12)"; false; }
+	@! grep -n "\bx64_\|\ba64_\|\bX64\|\bA64" runtime/register/jit/emit.c runtime/register/jit/masm.c runtime/register/jit/masm.h runtime/register/jit/compile.c runtime/register/jit/compile.h runtime/register/jit.c \
+	  || { echo "check-asm: the emitters, the macro-assembler and the compiler name an encoder: they are written over runtime/register/jit/asm.h alone (M12)"; false; }
 	@echo "check-asm: the emitters name no encoder"
-	RUNE_NEW=$(abspath bin/rune-new) RUNEVM_NEW_JIT=$(abspath bin/runevm-new-opt) sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:jit
-	bin/runevm-new --jit-check
-	@mkdir -p build/new
-	$(CC) $(CFLAGS) -Ivm -Ivm/new -Ivm/new/jit -o build/new/x64_test tests/new/x64_test.c vm/new/jit/x64.c vm/sys_$(SYS).c
-	build/new/x64_test
-	$(CC) $(CFLAGS) -Ivm -Ivm/new -Ivm/new/jit -o build/new/a64_test tests/new/a64_test.c vm/new/jit/a64.c
-	build/new/a64_test
-	$(CC) $(CFLAGS) -Ivm -Ivm/new -Ivm/new/jit -o build/new/masm_test tests/new/masm_test.c vm/new/jit/masm.c vm/new/jit/x64.c vm/new/jit/asm_x64.c vm/sys_$(SYS).c
-	build/new/masm_test
-	@mkdir -p tests/out/new-jit
-	bin/rune-new tests/lang/rt.deeprec_stack.sml -o tests/out/new-jit/deeprec.rbc
-	(ulimit -s 1024 && bin/runevm-new --jit=all tests/out/new-jit/deeprec.rbc > tests/out/new-jit/deeprec.out) && \
-	  cmp tests/out/new-jit/deeprec.out tests/lang/rt.deeprec_stack.expected && echo "test-new-jit: the driver never nests"
-	(ulimit -s 1024 && bin/runevm-new --jit=baseline --jit-calls=1 --jit-work=1 --jit-stress=3 tests/out/new-jit/deeprec.rbc > tests/out/new-jit/deeprec-tiered.out) && \
-	  cmp tests/out/new-jit/deeprec-tiered.out tests/lang/rt.deeprec_stack.expected && echo "test-new-jit: nor while tiering up and invalidating"
+	RUNE_NEW=$(abspath bin/rune) RUNEVM_NEW_JIT=$(abspath bin/runevm-opt) sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:jit
+	bin/runevm --jit-check
+	@mkdir -p build/register
+	$(CC) $(CFLAGS) $(RT_INC) -o build/register/x64_test tests/register/x64_test.c runtime/register/jit/x64.c runtime/sys/sys_$(SYS).c
+	build/register/x64_test
+	$(CC) $(CFLAGS) $(RT_INC) -o build/register/a64_test tests/register/a64_test.c runtime/register/jit/a64.c
+	build/register/a64_test
+	$(CC) $(CFLAGS) $(RT_INC) -o build/register/masm_test tests/register/masm_test.c runtime/register/jit/masm.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/sys/sys_$(SYS).c
+	build/register/masm_test
+	@mkdir -p tests/out/register-jit
+	bin/rune tests/lang/rt.deeprec_stack.sml -o tests/out/register-jit/deeprec.rbc
+	(ulimit -s 1024 && bin/runevm --jit=all tests/out/register-jit/deeprec.rbc > tests/out/register-jit/deeprec.out) && \
+	  cmp tests/out/register-jit/deeprec.out tests/lang/rt.deeprec_stack.expected && echo "test-register-jit: the driver never nests"
+	(ulimit -s 1024 && bin/runevm --jit=baseline --jit-calls=1 --jit-work=1 --jit-stress=3 tests/out/register-jit/deeprec.rbc > tests/out/register-jit/deeprec-tiered.out) && \
+	  cmp tests/out/register-jit/deeprec-tiered.out tests/lang/rt.deeprec_stack.expected && echo "test-register-jit: nor while tiering up and invalidating"
 
 bin/rune-boot: bin/rune.rbc Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm-new" --heap-size $(RUNE_HEAP) "$$d/rune.rbc" --lib "$$d/../lib" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/rune.rbc" --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
 
 bin/rune: bin/rune-boot
@@ -898,13 +952,13 @@ DOC_SRCS := build/config.sml $(SOURCES_DOC) src/main/runedoc-rune-main.sml
 bin/runedoc.rbc: bin/rune bin/rune.rbc $(DOC_SRCS)
 	bin/rune -o $@ $(DOC_SRCS)
 
-# runedoc in the stack bytecode, which the budgets of runevm measure
+# runedoc in the stack bytecode, which the budgets of runevm-stack measure
 # (tests/perf/run-perf.sh) and runeopt translates (tests/opt).
 bin/runedoc.stack.rbc: bin/rune bin/rune.rbc $(DOC_SRCS)
 	bin/rune --target=stack -o $@ $(DOC_SRCS)
 
 bin/runedoc-boot: bin/runedoc.rbc Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm-new" --heap-size $(RUNE_HEAP) "$$d/runedoc.rbc" --lib "$$d/../lib" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/runedoc.rbc" --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
 
 bin/runedoc: bin/runedoc-boot
@@ -924,7 +978,7 @@ bin/runeopt.stack.rbc: bin/rune bin/rune.rbc $(OPT_SRCS)
 	bin/rune --target=stack -o $@ $(OPT_SRCS)
 
 bin/runeopt-boot: bin/runeopt.rbc Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm-new" --heap-size $(RUNE_HEAP) "$$d/runeopt.rbc" --runtime "$$d/../build" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/runeopt.rbc" --runtime "$$d/../build" "$$@"\n' > $@
 	chmod +x $@
 	rm -rf tests/out/opt-cache tests/out/opt-cache-asan
 
@@ -953,8 +1007,11 @@ check:
 	@$(MAKE) --no-print-directory test-opt
 	@$(MAKE) --no-print-directory test-ir check-levels
 	@$(MAKE) --no-print-directory test-native
-	@$(MAKE) --no-print-directory test-new
-	@$(MAKE) --no-print-directory test-new-jit
+	@$(MAKE) --no-print-directory test-register
+	@$(MAKE) --no-print-directory test-register-jit
+	@$(MAKE) --no-print-directory test-census
+	@$(MAKE) --no-print-directory check-heapsim
+	@$(MAKE) --no-print-directory check-layouts
 	@$(MAKE) --no-print-directory perf-check
 	@$(MAKE) --no-print-directory bench-smoke
 	@$(MAKE) --no-print-directory check-positions
@@ -999,19 +1056,19 @@ build/bench-catalog.rbc: examples/benchmarks/shared/catalog.sml examples/benchma
 	$(RUNE_STACK) --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml -o $@
 
 bench-check: build/bench-catalog.rbc vm
-	bin/runevm build/bench-catalog.rbc --check
+	bin/runevm-stack build/bench-catalog.rbc --check
 	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' sh scripts/run-benchmarks.sh
 
 # Bounded correctness/metadata only; wall-clock thresholds stay outside check.
 bench-smoke: build/bench-catalog.rbc vm
-	bin/runevm build/bench-catalog.rbc --check
+	bin/runevm-stack build/bench-catalog.rbc --check
 	sh tests/benchmarks/check-catalog.sh
 	RUNE_BENCH_COMPILE_OPTIONS=-O2 sh scripts/run-benchmarks.sh --routine --configs rune
 
 # Every imported program has a smoke and normal profile. This explicit target
 # covers the complete catalogue; request extra hosts/engines through filters.
 bench-check-all: build/bench-catalog.rbc vm
-	bin/runevm build/bench-catalog.rbc --check
+	bin/runevm-stack build/bench-catalog.rbc --check
 	sh scripts/run-benchmarks.sh --profile smoke --configs '$(BENCH_CONFIGS)' --filter '$(BENCH_FILTER)'
 	sh scripts/run-benchmarks.sh --profile normal --configs '$(BENCH_CONFIGS)' --filter '$(BENCH_FILTER)'
 
@@ -1022,5 +1079,5 @@ build/bench-counts.rbc: examples/benchmarks/shared/catalog.sml examples/benchmar
 	$(RUNE_STACK) --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml -o $@
 
 bench bench-count bench-stats: build/bench-catalog.rbc build/bench-report.rbc build/bench-counts.rbc vm
-	bin/runevm build/bench-catalog.rbc --check
+	bin/runevm-stack build/bench-catalog.rbc --check
 	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' BENCH_LEVEL=$(BENCH_LEVEL) BENCH_MODE=$(BENCH_MODE) BENCH_SAMPLES=$(BENCH_SAMPLES) BENCH_REPETITIONS=$(BENCH_REPETITIONS) sh scripts/measure-benchmarks.sh $(if $(filter bench-count,$@),count,$(if $(filter bench-stats,$@),stats,time))

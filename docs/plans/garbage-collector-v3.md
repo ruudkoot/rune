@@ -1,0 +1,8 @@
+- generational
+  - nursery
+  - large object space
+- bibop
+- concurrent
+- cpu and numa topology aware
+- reserved header bits 
+  - ocaml5: 2 colour bits, per-domain minor heaps, a deletion barrier

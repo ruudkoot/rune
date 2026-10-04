@@ -143,7 +143,7 @@ struct
     (* Posix.FileSys.ST: what `stat` reports about a file, and the functions
        that read it. The kind is posix_stat's: 0 regular file, 1
        directory, 2 symbolic link, 4 FIFO, 5 socket, 6 character device, 7
-       block device, and 3 anything else (vm/sys_posix.c, kind_of). *)
+       block device, and 3 anything else (runtime/sys/sys_posix.c, kind_of). *)
     structure ST =
     struct
       type stat = {kind : int, mode : word, ino : ino, dev : dev, nlink : int,

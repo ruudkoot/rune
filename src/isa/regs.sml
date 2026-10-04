@@ -1,4 +1,4 @@
-(* The register bytecode of vm/new (docs/plans/middle-end.md, M5; its loop
+(* The register bytecode of runtime/register (docs/plans/middle-end.md, M5; its loop
    docs/plans/jit.md, M2), in the language of src/isa/isa.sml and its own
    kinds of operand: a register is a slot of the frame, and a list of
    registers is as long as an operand before it says, or as the arity of
@@ -10,14 +10,14 @@
    longer used still holds a value). Above them the frame pushes only the
    arguments of a primitive, a call's result and the exception a raise
    leaves for CATCH: the checker works out how deep that goes
-   (Function.maxstack, vm/new/isa_regs.c), a call makes room for it, and a
+   (Function.maxstack, runtime/register/isa_regs.c), a call makes room for it, and a
    push does not check. A call leaves its result for the instruction after
    it, RESULT, which the RET of the callee does itself where it can; a
    handler's code begins with CATCH, which takes the exception the raise
-   left there. Both are how the runtime of vm/portable returns and raises,
-   which vm/new shares (build/librune.a).
+   left there. Both are how the runtime of runevm-stack returns and raises,
+   which runtime/register shares (build/librune.a).
 
-   A body is the lines of C of its case in vm/new's loop (vm/new/interp.c),
+   A body is the lines of C of its case in runtime/register's loop (runtime/register/interp.c),
    written in the loop's words, since the loop keeps the frame's registers,
    the stack pointer, the pc and the count in its own variables:
    * `vm`, `p` (the program), `code`, `fr` (the frame), `pc` (already past
@@ -32,7 +32,7 @@
      the stack too;
    * ENTER(slot, fn), the frame's registers at slot and fn's code entered;
      HANDOVER(f), the frame handed to the driver where function f has
-     native code (vm/new/jit.h), RETURN_NATIVE(at), where a return lands
+     native code (runtime/register/jit.h), RETURN_NATIVE(at), where a return lands
      in native code, RAISED(), on after a raise, into the handler's native
      code where it has some, BACKWARD(t), a loop's jump back, counted and
      gone on in the function's code where it has some, RESUME_NATIVE(f, pc),
@@ -81,7 +81,7 @@ struct
   val callee =
     ["Value arg = R(b);",
      "Obj *c = EXPECT(R(a), K_CLOSURE, \"closure in call\");",
-     "int64_t fidx = OBJ_FIELDS(c)[0].u.i;",
+     "int64_t fidx = val_imm(obj_field(c, 0));",
      "if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
      "Function *fn = &p->funcs[fidx];"]
   val enter =
@@ -112,14 +112,15 @@ struct
         "vm->global_set[a] = 1;"],
      rinst ("ENV", [("d", reg), ("e", K EnvSlot)], Next, "Register d := slot e of the current closure's environment.")
        ["Obj *c = fr->closure;",
-        "if (!c || (uint32_t)b + 1 >= c->len) FATAL(\"environment slot %d out of range\", b);",
-        "R(a) = OBJ_FIELDS(c)[b + 1];"],
+        "if (!c || (uint32_t)b + 1 >= obj_len(c)) FATAL(\"environment slot %d out of range\", b);",
+        "R(a) = obj_field(c, b + 1);"],
      rinst ("SELF", [("d", reg)], Next, "Register d := the closure running.")
        ["if (!fr->closure) FATAL(\"SELF outside a closure\");",
         "R(a) = mk_ptr(fr->closure);"],
      rinst ("CALL", [("f", reg), ("x", reg)], Call,
             "Call the closure in register f with register x; RESULT takes what it returns.")
-       (callee
+       (["CENSUS_CALL(0, R(b), CENSUS_REP(p, fr->func, b));"]   (* the census VM's hook: nothing in the stock build *)
+        @ callee
         @ ["size_t top = (size_t)(sp - vm->stack);",
            "ROOM(top, fn);",
            "vm_push_frame(vm, (uint32_t)fidx, c, pc, top);",
@@ -129,7 +130,8 @@ struct
      rinst ("RESULT", [("d", reg)], Next, "Register d := what the call or primitive before it left on the stack.")
        ["R(a) = POP();"],
      rinst ("TAILCALL", [("f", reg), ("x", reg)], TailCall, "Like CALL, but the current frame is replaced.")
-       (callee
+       (["CENSUS_CALL(1, R(b), CENSUS_REP(p, fr->func, b));"]
+        @ callee
         @ ["size_t top = fr->base;",
            "ROOM(top, fn);",
            "fr->func = (uint32_t)fidx;",
@@ -138,6 +140,7 @@ struct
         @ ["HANDOVER((uint32_t)fidx);"]),
      rinst ("RET", [("s", reg)], Return, "Return register s to the caller.")
        ["Value v = R(a);",
+        "CENSUS_CALL(4, v, CENSUS_REP(p, fr->func, a));",
         "uint32_t back = fr->ret_pc;",
         "const void *back_native = fr->native_ret;",
         "uint32_t result = fr->result;   /* the register of the caller's RESULT, if it has one */",
@@ -159,7 +162,7 @@ struct
      rraising
        (rinst ("PRIM", [("p", K Primitive), ("d", reg), ("args", PrimArgs 0)], Next,
                "Register d := primitive p applied to the registers of args.")
-          ["/* the common case of the primitives done in the loop (vm/new/fastprim.h) */",
+          ["/* the common case of the primitives done in the loop (runtime/register/fastprim.h) */",
            "if (prim_fast(a, n, base, L, &R(b))) NEXT;",
            "for (uint32_t i = 0; i < n; i++) PUSH(R(LIST(i)));",
            "SYNC();",
@@ -186,41 +189,41 @@ struct
        ["if (n == 0) { R(a) = mk_unit(); NEXT; }",
         "SYNC();",
         "Obj *t = vm_alloc_fields(vm, K_TUPLE, 0, n);",
-        "Value *f = OBJ_FIELDS(t);",
+        "Value *f = obj_fields(t);",
         "for (uint32_t i = 0; i < n; i++) f[i] = R(LIST(i));",
         "R(a) = mk_ptr(t);"],
      rinst ("CLOSURE", [("d", reg), ("f", K Function), ("n", K Count), ("env", Registers 2)], Next,
             "Register d := a closure of function f capturing the n registers of env.")
        ["SYNC();",
         "Obj *cl = vm_alloc_fields(vm, K_CLOSURE, 0, n + 1);",
-        "Value *f = OBJ_FIELDS(cl);",
+        "Value *f = obj_fields(cl);",
         "f[0] = mk_int(b);",
         "for (uint32_t i = 0; i < n; i++) f[i + 1] = R(LIST(i));",
         "R(a) = mk_ptr(cl);"],
      rinst ("SELECT", [("d", reg), ("i", K Field), ("s", reg)], Next, "Register d := field i of the tuple in register s.")
        ["Obj *t = EXPECT(R(c), K_TUPLE, \"tuple\");",
-        "if ((uint32_t)b >= t->len) FATAL(\"tuple index %d out of range\", b);",
-        "R(a) = OBJ_FIELDS(t)[b];"],
+        "if ((uint32_t)b >= obj_len(t)) FATAL(\"tuple index %d out of range\", b);",
+        "R(a) = obj_field(t, b);"],
      rinst ("CON", [("d", reg), ("t", K Tag), ("s", reg)], Next, "Register d := constructor t applied to register s.")
        ["SYNC();",
         "Obj *o = vm_alloc_fields(vm, K_CON, (uint16_t)b, 1);",
-        "OBJ_FIELDS(o)[0] = R(c);",
+        "obj_fill_field(o, 0, R(c));",
         "R(a) = mk_ptr(o);"],
      rinst ("DECON", [("d", reg), ("s", reg), ("t", K Tag)], Next,
             "Register d := the argument of the constructor value, of tag t, in register s; --checked stops where the tag is another.")
        ["Obj *o = EXPECT(R(b), K_CON, \"constructor with argument\");",
-        "if (vm->checked && o->contag != c) FATAL(\"DECON of a constructor of tag %d where %d is wanted\", (int)o->contag, (int)c);",
-        "R(a) = OBJ_FIELDS(o)[0];"],
+        "if (vm->checked && obj_contag(o) != c) FATAL(\"DECON of a constructor of tag %d where %d is wanted\", (int)obj_contag(o), (int)c);",
+        "R(a) = obj_field(o, 0);"],
      rinst ("CONTAG", [("d", reg), ("s", reg)], Next, "Register d := the tag of the constructor value in register s, as an int.")
        ["Value v = R(b);",
-        "if (v.tag == T_CON0) R(a) = mk_int(v.u.i);",
-        "else if (v.tag == T_PTR && v.u.p->kind == K_CON) R(a) = mk_int(v.u.p->contag);",
+        "if (val_is(v, T_CON0)) R(a) = mk_int(val_imm(v));",
+        "else if (val_is(v, T_PTR) && obj_kind(val_ptr(v)) == K_CON) R(a) = mk_int(obj_contag(val_ptr(v)));",
         "else FATAL(\"CONTAG on non-constructor\");"],
      rinst ("NEWEXN", [("d", reg), ("k", K StringConstant)], Next,
             "Register d := a fresh exception constructor named by string constant k.")
        ["SYNC();",
         "Obj *o = vm_alloc_fields(vm, K_EXNCON, 0, 1);",
-        "OBJ_FIELDS(o)[0] = p->consts[b];",
+        "obj_fill_field(o, 0, p->consts[b]);",
         "R(a) = mk_ptr(o);"],
      rinst ("BUILTINEXN", [("d", reg), ("i", K BuiltinExn)], Next,
             "Register d := built-in exception constructor i (see docs/bytecode.md).")
@@ -230,21 +233,22 @@ struct
        ["SYNC();",
         "Obj *e = vm_alloc_fields(vm, K_EXN, 0, 2);",
         "Value con = R(b);",
-        "if (con.tag != T_PTR || con.u.p->kind != K_EXNCON) FATAL(\"MKEXN on non-constructor\");",
-        "OBJ_FIELDS(e)[0] = con;",
-        "OBJ_FIELDS(e)[1] = R(c);",
+        "if (!val_is(con, T_PTR) || obj_kind(val_ptr(con)) != K_EXNCON) FATAL(\"MKEXN on non-constructor\");",
+        "obj_fill_field(e, 0, con);",
+        "obj_fill_field(e, 1, R(c));",
         "R(a) = mk_ptr(e);"],
      rinst ("EXNCON", [("d", reg), ("s", reg)], Next, "Register d := the constructor of the exception in register s.")
        ["Obj *e = EXPECT(R(b), K_EXN, \"exception\");",
-        "R(a) = OBJ_FIELDS(e)[0];"],
+        "R(a) = obj_field(e, 0);"],
      rinst ("EXNARG", [("d", reg), ("s", reg)], Next, "Register d := the payload of the exception in register s.")
        ["Obj *e = EXPECT(R(b), K_EXN, \"exception\");",
-        "R(a) = OBJ_FIELDS(e)[1];"],
+        "R(a) = obj_field(e, 1);"],
      rinst ("SETENV", [("c", reg), ("e", K EnvSlot), ("v", reg)], Next,
             "Slot e of the environment of the closure in register c := register v.")
        ["Obj *o = EXPECT(R(a), K_CLOSURE, \"closure\");",
-        "if ((uint32_t)b + 1 >= o->len) FATAL(\"environment slot %d out of range\", b);",
-        "OBJ_FIELDS(o)[b + 1] = R(c);"],
+        "if ((uint32_t)b + 1 >= obj_len(o)) FATAL(\"environment slot %d out of range\", b);",
+        "CENSUS_STORE(o, b + 1, R(c), 0, CENSUS_REP(p, fr->func, c));",
+        "obj_set_field(o, b + 1, R(c));"],
      rinst ("JUMP", [("o", K Label)], Jump, "Jump to absolute code offset o.")
        ["/* a jump back is a loop's: counted, and where the function has",
         "   code, gone on in it (M6) */",
@@ -252,18 +256,18 @@ struct
         "pc = (uint32_t)a;"],
      rinst ("JUMPIF", [("s", reg), ("o", K Label)], Branch, "Jump to o if register s holds true.")
        ["Value v = R(a);",
-        "if (v.tag != T_CON0) FATAL(\"JUMPIF on non-bool\");",
-        "if (v.u.i != 0) pc = (uint32_t)b;"],
+        "if (!val_is(v, T_CON0)) FATAL(\"JUMPIF on non-bool\");",
+        "if (val_imm(v) != 0) pc = (uint32_t)b;"],
      rinst ("JUMPIFNOT", [("s", reg), ("o", K Label)], Branch, "Jump to o if register s holds false.")
        ["Value v = R(a);",
-        "if (v.tag != T_CON0) FATAL(\"JUMPIFNOT on non-bool\");",
-        "if (v.u.i == 0) pc = (uint32_t)b;"],
+        "if (!val_is(v, T_CON0)) FATAL(\"JUMPIFNOT on non-bool\");",
+        "if (val_imm(v) == 0) pc = (uint32_t)b;"],
      rinst ("JUMPIFNOTTAG", [("s", reg), ("o", K Label), ("t", K Tag)], Branch,
             "Jump to o unless the constructor value in register s has tag t.")
        ["Value v = R(a);",
         "int64_t tag = 0;",
-        "if (v.tag == T_CON0) tag = v.u.i;",
-        "else if (v.tag == T_PTR && v.u.p->kind == K_CON) tag = v.u.p->contag;",
+        "if (val_is(v, T_CON0)) tag = val_imm(v);",
+        "else if (val_is(v, T_PTR) && obj_kind(val_ptr(v)) == K_CON) tag = obj_contag(val_ptr(v));",
         "else FATAL(\"JUMPIFNOTTAG on non-constructor\");",
         "if (tag != c) pc = (uint32_t)b;"],
      rhandlers Installs
@@ -280,14 +284,15 @@ struct
      rraising
        (rinst ("RAISE", [("s", reg)], Raise, "Raise the exception in register s.")
           ["Value v = R(a);",
-           "if (v.tag != T_PTR || v.u.p->kind != K_EXN) FATAL(\"RAISE of non-exception\");",
+           "if (!val_is(v, T_PTR) || obj_kind(val_ptr(v)) != K_EXN) FATAL(\"RAISE of non-exception\");",
            "SYNC();",
            "vm_raise(vm, v);",
            "RELOAD();",
            "RAISED();"]),
      rinst ("CALLK", [("f", K Function), ("n", K Count), ("args", Registers 1)], Call,
             "Call function f, known, with the n registers of args, which become its registers 0 to n-1; no closure; RESULT takes what it returns.")
-       ["Function *fn = &p->funcs[a];",
+       ["for (uint32_t i = 0; i < n; i++) CENSUS_CALL(2, R(LIST(i)), CENSUS_REP(p, fr->func, LIST(i)));",
+        "Function *fn = &p->funcs[a];",
         "size_t top = (size_t)(sp - vm->stack);",
         "ROOM(top, fn);",
         "/* the arguments read before the frame is pushed, which R would read */",
@@ -300,7 +305,8 @@ struct
         "HANDOVER((uint32_t)a);"],
      rinst ("TAILCALLK", [("f", K Function), ("n", K Count), ("args", Registers 1)], TailCall,
             "Like CALLK, but the current frame is replaced.")
-       ["Function *fn = &p->funcs[a];",
+       ["for (uint32_t i = 0; i < n; i++) CENSUS_CALL(3, R(LIST(i)), CENSUS_REP(p, fr->func, LIST(i)));",
+        "Function *fn = &p->funcs[a];",
         "size_t top = fr->base;",
         "size_t need = (size_t)(sp - vm->stack) + n;",
         "if (top + fn->nlocals + fn->maxstack > need) need = top + fn->nlocals + fn->maxstack;",
@@ -321,8 +327,8 @@ struct
         "   5 bytes, its target after its opcode */",
         "Value v = R(a);",
         "int64_t tag = 0;",
-        "if (v.tag == T_CON0) tag = v.u.i;",
-        "else if (v.tag == T_PTR && v.u.p->kind == K_CON) tag = v.u.p->contag;",
+        "if (val_is(v, T_CON0)) tag = val_imm(v);",
+        "else if (val_is(v, T_PTR) && obj_kind(val_ptr(v)) == K_CON) tag = obj_contag(val_ptr(v));",
         "else FATAL(\"SWITCH on non-constructor\");",
         "if (tag >= 0 && tag < b) pc = (uint32_t)read_i32(code + pc + 5 * (uint32_t)tag + 1);",
         "else pc += 5 * (uint32_t)b;"],
@@ -330,15 +336,15 @@ struct
             "Register d := constructor t made of the n registers of fields: one object of n fields, for a constructor whose argument is a tuple of n (middle-end M11).")
        ["SYNC();",
         "Obj *o = vm_alloc_fields(vm, K_CON, (uint16_t)b, n);",
-        "Value *f = OBJ_FIELDS(o);",
+        "Value *f = obj_fields(o);",
         "for (uint32_t i = 0; i < n; i++) f[i] = R(LIST(i));",
         "R(a) = mk_ptr(o);"],
      rinst ("FIELD", [("d", reg), ("s", reg), ("t", K Tag), ("i", K Field)], Next,
             "Register d := field i of the constructor value that CONN made, of tag t, in register s; --checked stops where the tag is another.")
        ["Obj *o = EXPECT(R(b), K_CON, \"constructor with fields\");",
-        "if (vm->checked && o->contag != c) FATAL(\"FIELD of a constructor of tag %d where %d is wanted\", (int)o->contag, (int)c);",
-        "if ((uint32_t)d >= o->len) FATAL(\"constructor field %d out of range\", d);",
-        "R(a) = OBJ_FIELDS(o)[d];"]]
+        "if (vm->checked && obj_contag(o) != c) FATAL(\"FIELD of a constructor of tag %d where %d is wanted\", (int)obj_contag(o), (int)c);",
+        "if ((uint32_t)d >= obj_len(o)) FATAL(\"constructor field %d out of range\", d);",
+        "R(a) = obj_field(o, d);"]]
 
   (* ---- questions about the description ---- *)
 

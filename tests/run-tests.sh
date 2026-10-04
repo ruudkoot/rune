@@ -4,8 +4,8 @@
 #
 # tests/lang/<id>_<name>.sml : compiled and run; stdout must equal the
 #   matching .expected file. Optional siblings: .args (command line words for
-#   the program), .vmargs (options for runevm), .stdin (fed to the program),
-#   .restore (the standard output of `runevm --restore` on the image the
+#   the program), .vmargs (options for the VM), .stdin (fed to the program),
+#   .restore (the standard output of `runevm-stack --restore` on the image the
 #   program wrote to tests/out/NAME.img with Runtime.save),
 #   .exitcode (expected status, default 0), .stderr (expected stderr, compared
 #   exactly when present), .stderr-head (expected first runtime error line),
@@ -25,7 +25,7 @@ TZ='NST3:30NDT,M3.2.0,M11.1.0'
 export TZ
 
 rune=bin/rune-stack
-vm=bin/runevm
+vm=bin/runevm-stack
 skip=""
 outdir=tests/out
 update=0
@@ -47,7 +47,7 @@ done
 
 cd "$(dirname "$0")/.."
 # where the bytecode and what each run printed go (--out, for a second VM
-# whose runs must not take the place of runevm's); an image goes where the
+# whose runs must not take the place of runevm-stack's); an image goes where the
 # program writes it, tests/out/NAME.img
 out=$outdir
 img=tests/out

@@ -66,7 +66,7 @@ check() {
 # compiled with every file of the basis library (--basis all), `rune` for
 # the compiler itself, `runedoc` for the documentation generator, or `runeopt`
 # for the native code generator; the last three also as `rune-stack`,
-# `runedoc-stack` and `runeopt-stack`, which are made for runevm, the stack
+# `runedoc-stack` and `runeopt-stack`, which are made for runevm-stack, the stack
 # bytecode (--target=stack), where the others are in the default register
 # bytecode.
 result_name() {

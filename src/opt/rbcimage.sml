@@ -1,4 +1,4 @@
-(* The program in an image (vm/image.c), as an .rbc: what runeopt --from-image
+(* The program in an image (runtime/image.c), as an .rbc: what runeopt --from-image
    translates, so that the executable resumes the image (docs/native.md,
    Images). An image carries its program whole --
    constants, functions, code, files, line table and the frames of the
@@ -16,7 +16,7 @@ struct
 
   fun fail msg = raise Bad msg
 
-  (* IMAGE_MAGIC of vm/image.c, with the fingerprint of the instruction set *)
+  (* IMAGE_MAGIC of runtime/image.c, with the fingerprint of the instruction set *)
   val magic = "runevm image 7 isa " ^ Opcodes.fingerprintHex ^ "\000"
   val big = Rbc.big
 
@@ -58,10 +58,15 @@ struct
   (* A value: its tag and its 8 bytes. *)
   fun value r = (u8 r, uN (r, 8))
 
-  val kString = 4                         (* K_STRING of vm/vm.h *)
+  val kString = 4                         (* K_STRING of runtime/vm.h *)
   val tInt = 1 val tWord = 2 val tReal = 3 val tChar = 4 val tPtr = 6
 
-  fun payloadSize bytes = let val s = (bytes + 15) div 16 * 16 in if s < 16 then 16 else s end
+  (* the heap's rounding of a payload, from the layout the JIT has (X64Layout,
+     generated from runtime/value.h's numbers: M3 of docs/plans/heap-layout.md) *)
+  fun payloadSize bytes =
+    let val a = X64Layout.payloadAlign
+        val s = (bytes + a - 1) div a * a
+    in if s < X64Layout.payloadMin then X64Layout.payloadMin else s end
 
   (* The heap: the strings, by their offset from its start. *)
   fun heap (r, used) : string IntMap.map =
@@ -73,12 +78,12 @@ struct
             val kind = u8 r
             val _ = u16 r
             val len = u32 r
-            val () = if len > big div 16 then fail "an object of the image is too large" else ()
+            val () = if len > big div X64Layout.valueSize then fail "an object of the image is too large" else ()
             val (acc, payload) =
               if kind = kString then (IntMap.insert (acc, at, take (r, len)), len)
-              else (ignore (take (r, 9 * len)); (acc, 16 * len))
+              else (ignore (take (r, 9 * len)); (acc, X64Layout.valueSize * len))
           in
-            go (at + 8 + payloadSize payload, acc)
+            go (at + X64Layout.headerSize + payloadSize payload, acc)
           end
     in
       go (0, IntMap.empty)
@@ -108,7 +113,7 @@ struct
     let
       val r = {data = data, pos = ref 0} : reader
       val () = if String.size data >= String.size magic andalso String.substring (data, 0, String.size magic) = magic
-               then #pos r := String.size magic else fail "not an image of this runevm"
+               then #pos r := String.size magic else fail "not an image of this runevm-stack"
       val _ = u32 r                                   (* the kind *)
       val () = List.app (fn _ => ignore (u32 r)) [1, 2, 3, 4, 5, 6]
       val () = List.app (fn _ => ignore (uN (r, 8))) [1, 2, 3, 4, 5, 6, 7, 8, 9]

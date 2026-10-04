@@ -6,7 +6,7 @@
 #     do as well;
 #  2. every tests/lang/<id>_*.sml has a row <id> in docs/language.md, and
 #     every tests/basis/<name>[_*].sml a row basis.<name>;
-#  3. every opcode in vm/opcodes.def and primitive in vm/prims.def is mentioned
+#  3. every opcode in runtime/stack/opcodes.def and primitive in runtime/prims.def is mentioned
 #     in docs/bytecode.md;
 #  4. every top-level structure in lib/basis/*.sml is mentioned in docs/language.md;
 #  5. every basis file listed in lib/basis/MANIFEST exists (and vice versa).
@@ -61,16 +61,16 @@ for f in tests/basis/*.sml; do
 done
 
 # 3. opcodes and primitives are documented
-for op in $(grep -v '^[[:space:]]*#' vm/opcodes.def | awk 'NF { print $1 }'); do
-  grep -q "\`$op[ \`]" docs/bytecode.md || fail "opcode $op (vm/opcodes.def) is not documented in docs/bytecode.md"
+for op in $(grep -v '^[[:space:]]*#' runtime/stack/opcodes.def | awk 'NF { print $1 }'); do
+  grep -q "\`$op[ \`]" docs/bytecode.md || fail "opcode $op (runtime/stack/opcodes.def) is not documented in docs/bytecode.md"
 done
-# the register bytecode of vm/new, in its own section
+# the register bytecode of runtime/register, in its own section
 regs=$(sed -n '/^## The register bytecode/,/^## /p' docs/bytecode.md)
-for op in $(grep -v '^[[:space:]]*#' vm/new/regs.def | awk 'NF { print $1 }'); do
-  printf '%s\n' "$regs" | grep -q "\`$op[ \`]" || fail "register opcode $op (vm/new/regs.def) is not documented in docs/bytecode.md, The register bytecode"
+for op in $(grep -v '^[[:space:]]*#' runtime/register/regs.def | awk 'NF { print $1 }'); do
+  printf '%s\n' "$regs" | grep -q "\`$op[ \`]" || fail "register opcode $op (runtime/register/regs.def) is not documented in docs/bytecode.md, The register bytecode"
 done
-for p in $(grep -v '^[[:space:]]*#' vm/prims.def | awk 'NF { print $1 }'); do
-  grep -qE "(\`| )$p(\`| )" docs/bytecode.md || fail "primitive $p (vm/prims.def) is not documented in docs/bytecode.md"
+for p in $(grep -v '^[[:space:]]*#' runtime/prims.def | awk 'NF { print $1 }'); do
+  grep -qE "(\`| )$p(\`| )" docs/bytecode.md || fail "primitive $p (runtime/prims.def) is not documented in docs/bytecode.md"
 done
 
 # 4. basis structures are documented
@@ -99,7 +99,7 @@ for f in tests/errors/*.sml; do
 done
 
 # 7. the version is one string. scripts/gen-build-files.sh writes it into
-# build/config.sml for the compiler and vm/version.h for the VM; the manual
+# build/config.sml for the compiler and runtime/version.h for the VM; the manual
 # pages are written by hand and once said two different things.
 version=$(sed -n 's/^version=\(.*\)$/\1/p' scripts/gen-build-files.sh)
 [ -n "$version" ] || fail "scripts/gen-build-files.sh does not set a version"
@@ -110,14 +110,14 @@ for page in share/man/rune.1 share/man/runedoc.1 share/man/runeopt.1 share/man/r
 done
 
 # 8. every primitive has a definition for the hosts. tests/basis/host/rune-prim.sml
-# is ascribed to a signature generated from vm/prims.def, so a primitive with no
+# is ascribed to a signature generated from runtime/prims.def, so a primitive with no
 # definition there stops the five xc1 configurations of the Basis Library suite
 # compiling -- which make check does not run, and make matrix-quick finds ten
 # minutes later. poly_eq, imm_eq and ptr_eq are the three gen-host-basis.sh
 # leaves out.
-for p in $(awk '!/^#/ && NF && $1 != "poly_eq" && $1 != "imm_eq" && $1 != "ptr_eq" { print $1 }' vm/prims.def); do
+for p in $(awk '!/^#/ && NF && $1 != "poly_eq" && $1 != "imm_eq" && $1 != "ptr_eq" { print $1 }' runtime/prims.def); do
   grep -qE "^[[:space:]]*(fun|val) $p([[:space:]]|\()" tests/basis/host/rune-prim.sml ||
-    fail "primitive $p (vm/prims.def) has no definition in tests/basis/host/rune-prim.sml, so the xc1 configurations will not compile"
+    fail "primitive $p (runtime/prims.def) has no definition in tests/basis/host/rune-prim.sml, so the xc1 configurations will not compile"
 done
 
 if [ $status = 0 ]; then

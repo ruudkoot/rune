@@ -1,8 +1,8 @@
-(* The stack bytecode of vm/portable (runevm) and of the programs runeopt
+(* The stack bytecode of runevm-stack (runtime/stack) and of the programs runeopt
    makes, in the language of src/isa/isa.sml. An opcode's number is its
    place in this list, from 0. docs/bytecode.md says what each does; the
    loader of the VM checks the operands by their kinds; the body of each is
-   its case of the interpreter's loop (vm/interp_cases.h, which runeisa
+   its case of the interpreter's loop (runtime/stack/interp_cases.h, which runeisa
    writes). *)
 structure StackIsa =
 struct
@@ -14,7 +14,7 @@ struct
   val rbcVersion = 5
 
   (* A body that is not shared is written in the words of the loop
-     (vm/interp.c), which keeps the stack pointer, the frame's base, the pc
+     (runtime/stack/interp.c), which keeps the stack pointer, the frame's base, the pc
      and the count of instructions in its own variables:
      * PUSH(v), POP(), TOP(k) (the k-th from the top, which can be written)
        and LOCALV(l) (local l of the frame, which can be written) use the
@@ -26,7 +26,7 @@ struct
        collector, a raise, a primitive, a frame pushed -- and RELOAD() takes
        it back after what may have changed it;
      * FATAL(...) and EXPECT(v, kind, what) stop the program where it is.
-     A shared body (sharedBody) is a function of vm/ops.h, which runeopt's
+     A shared body (sharedBody) is a function of runtime/stack/ops.h, which runeopt's
      code calls too, and is written against the VM itself (vm_push, vm_pop,
      vm_top); the loop gives it the VM's state first and takes it back
      after. *)
@@ -36,7 +36,7 @@ struct
     ["Value arg = POP();",
      "Value cv = POP();",
      "Obj *c = EXPECT(cv, K_CLOSURE, \"closure in call\");",
-     "int64_t fidx = OBJ_FIELDS(c)[0].u.i;",
+     "int64_t fidx = val_imm(obj_field(c, 0));",
      "if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
      "Function *fn = &p->funcs[fidx];"]
   (* and the callee's frame at `at`: room for its locals and its deepest
@@ -67,8 +67,8 @@ struct
        ["LOCALV(a) = POP();"],
      inst ("ENV", [("e", EnvSlot)], (Fixed 0, 1), Next, "Push slot e of the current closure's environment.")
        ["Obj *c = FRAME->closure;",
-        "if (!c || (uint32_t)a + 1 >= c->len) FATAL(\"environment slot %d out of range\", a);",
-        "PUSH(OBJ_FIELDS(c)[a + 1]);"],
+        "if (!c || (uint32_t)a + 1 >= obj_len(c)) FATAL(\"environment slot %d out of range\", a);",
+        "PUSH(obj_field(c, a + 1));"],
      inst ("SELF", [], (Fixed 0, 1), Next, "Push the currently executing closure.")
        ["if (!FRAME->closure) FATAL(\"SELF outside a closure\");",
         "PUSH(mk_ptr(FRAME->closure));"],
@@ -85,39 +85,39 @@ struct
           ["if (a == 0) { vm_push(vm, mk_unit()); return; }",
            "if ((size_t)a > vm->sp) vm_fatal(vm, \"stack underflow\");",
            "Obj *t = vm_alloc_fields(vm, K_TUPLE, 0, (uint32_t)a);",
-           "Value *f = OBJ_FIELDS(t);",
+           "Value *f = obj_fields(t);",
            "for (int32_t i = 0; i < a; i++) f[i] = vm->stack[vm->sp - (size_t)a + (size_t)i];",
            "vm->sp -= (size_t)a;",
            "vm_push(vm, mk_ptr(t));"]),
      inst ("SELECT", [("i", Field)], (Fixed 1, 1), Next, "Pop a tuple and push its field i.")
        ["Value v = POP();",
         "Obj *t = EXPECT(v, K_TUPLE, \"tuple\");",
-        "if ((uint32_t)a >= t->len) FATAL(\"tuple index %d out of range\", a);",
-        "PUSH(OBJ_FIELDS(t)[a]);"],
+        "if ((uint32_t)a >= obj_len(t)) FATAL(\"tuple index %d out of range\", a);",
+        "PUSH(obj_field(t, a));"],
      sharedBody
        (inst ("CON", [("t", Tag)], (Fixed 1, 1), Next, "Pop a value and push constructor t applied to it.")
           ["Obj *c = vm_alloc_fields(vm, K_CON, (uint16_t)a, 1);",
-           "OBJ_FIELDS(c)[0] = *vm_top(vm, 0);",
+           "obj_fill_field(c, 0, *vm_top(vm, 0));",
            "*vm_top(vm, 0) = mk_ptr(c);"]),
      inst ("DECON", [("t", Tag)], (Fixed 1, 1), Next,
-           "Pop a constructor value, of tag t, and push its argument; runevm --checked stops where the tag is another.")
+           "Pop a constructor value, of tag t, and push its argument; runevm-stack --checked stops where the tag is another.")
        ["Value v = POP();",
         "Obj *c = EXPECT(v, K_CON, \"constructor with argument\");",
         "/* the tag is not tested but --checked (decision D14): a match that",
         "   names every constructor of a datatype leaves the last untested */",
-        "if (vm->checked && c->contag != a) FATAL(\"DECON of a constructor of tag %d where %d is wanted\", (int)c->contag, (int)a);",
-        "PUSH(OBJ_FIELDS(c)[0]);"],
+        "if (vm->checked && obj_contag(c) != a) FATAL(\"DECON of a constructor of tag %d where %d is wanted\", (int)obj_contag(c), (int)a);",
+        "PUSH(obj_field(c, 0));"],
      inst ("CONTAG", [], (Fixed 1, 1), Next, "Pop a constructor value and push its tag as an int.")
        ["Value v = POP();",
-        "if (v.tag == T_CON0) PUSH(mk_int(v.u.i));",
-        "else if (v.tag == T_PTR && v.u.p->kind == K_CON) PUSH(mk_int(v.u.p->contag));",
+        "if (val_is(v, T_CON0)) PUSH(mk_int(val_imm(v)));",
+        "else if (val_is(v, T_PTR) && obj_kind(val_ptr(v)) == K_CON) PUSH(mk_int(obj_contag(val_ptr(v))));",
         "else FATAL(\"CONTAG on non-constructor\");"],
      sharedBody
        (inst ("CLOSURE", [("f", Function), ("n", Count)], (OperandValue 1, 1), Next,
               "Pop n values (first pushed is env slot 0) into a new closure of function f.")
           ["if ((size_t)b > vm->sp) vm_fatal(vm, \"stack underflow\");",
            "Obj *c = vm_alloc_fields(vm, K_CLOSURE, 0, (uint32_t)b + 1);",
-           "Value *f = OBJ_FIELDS(c);",
+           "Value *f = obj_fields(c);",
            "f[0] = mk_int(a);",
            "for (int32_t i = 0; i < b; i++) f[i + 1] = vm->stack[vm->sp - (size_t)b + (size_t)i];",
            "vm->sp -= (size_t)b;",
@@ -127,8 +127,8 @@ struct
           ["Value v = vm_pop(vm);",
            "Value cv = vm_pop(vm);",
            "Obj *c = vm_expect_obj(vm, cv, K_CLOSURE, \"closure\");",
-           "if ((uint32_t)a + 1 >= c->len) vm_fatal(vm, \"environment slot %d out of range\", a);",
-           "OBJ_FIELDS(c)[a + 1] = v;"]),
+           "if ((uint32_t)a + 1 >= obj_len(c)) vm_fatal(vm, \"environment slot %d out of range\", a);",
+           "obj_set_field(c, a + 1, v);"]),
      inst ("CALL", [], (Fixed 2, 1), Call, "Pop argument, pop closure, and call it.")
        (callee
         @ ["size_t at = (size_t)(sp - vm->stack);",
@@ -153,12 +153,12 @@ struct
        ["JUMP_TO(a);"],
      inst ("JUMPIFNOT", [("o", Label)], (Fixed 1, 0), Branch, "Pop a bool; jump to o if it is false.")
        ["Value v = POP();",
-        "if (v.tag != T_CON0) FATAL(\"JUMPIFNOT on non-bool\");",
-        "if (v.u.i == 0) JUMP_TO(a);"],
+        "if (!val_is(v, T_CON0)) FATAL(\"JUMPIFNOT on non-bool\");",
+        "if (val_imm(v) == 0) JUMP_TO(a);"],
      inst ("JUMPIF", [("o", Label)], (Fixed 1, 0), Branch, "Pop a bool; jump to o if it is true.")
        ["Value v = POP();",
-        "if (v.tag != T_CON0) FATAL(\"JUMPIF on non-bool\");",
-        "if (v.u.i != 0) JUMP_TO(a);"],
+        "if (!val_is(v, T_CON0)) FATAL(\"JUMPIF on non-bool\");",
+        "if (val_imm(v) != 0) JUMP_TO(a);"],
      withHandlers Installs
        (inst ("PUSHHANDLER", [("o", HandlerLabel)], (Fixed 0, 0), Next,
               "Install an exception handler whose code starts at o.")
@@ -171,7 +171,7 @@ struct
      raising
        (inst ("RAISE", [], (Fixed 1, 0), Raise, "Pop an exception value and raise it.")
           ["Value v = POP();",
-           "if (v.tag != T_PTR || v.u.p->kind != K_EXN) FATAL(\"RAISE of non-exception\");",
+           "if (!val_is(v, T_PTR) || obj_kind(val_ptr(v)) != K_EXN) FATAL(\"RAISE of non-exception\");",
            "SYNC();",
            "vm_raise(vm, v);",
            "RELOAD();"]),
@@ -179,7 +179,7 @@ struct
        (inst ("NEWEXN", [("k", StringConstant)], (Fixed 0, 1), Next,
               "Create a fresh exception constructor named by string constant k.")
           ["Obj *c = vm_alloc_fields(vm, K_EXNCON, 0, 1);",
-           "OBJ_FIELDS(c)[0] = p->consts[a];",
+           "obj_fill_field(c, 0, p->consts[a]);",
            "vm_push(vm, mk_ptr(c));"]),
      inst ("BUILTINEXN", [("i", BuiltinExn)], (Fixed 0, 1), Next,
            "Push builtin exception constructor i (see docs/bytecode.md).")
@@ -189,19 +189,19 @@ struct
           ["if (vm->sp < 2) vm_fatal(vm, \"stack underflow\");",
            "Obj *e = vm_alloc_fields(vm, K_EXN, 0, 2);",
            "Value con = vm->stack[vm->sp - 2];",
-           "if (con.tag != T_PTR || con.u.p->kind != K_EXNCON) vm_fatal(vm, \"MKEXN on non-constructor\");",
-           "OBJ_FIELDS(e)[0] = con;",
-           "OBJ_FIELDS(e)[1] = vm->stack[vm->sp - 1];",
+           "if (!val_is(con, T_PTR) || obj_kind(val_ptr(con)) != K_EXNCON) vm_fatal(vm, \"MKEXN on non-constructor\");",
+           "obj_fill_field(e, 0, con);",
+           "obj_fill_field(e, 1, vm->stack[vm->sp - 1]);",
            "vm->sp -= 2;",
            "vm_push(vm, mk_ptr(e));"]),
      inst ("EXNCON", [], (Fixed 1, 1), Next, "Pop an exception value and push its constructor.")
        ["Value v = POP();",
         "Obj *e = EXPECT(v, K_EXN, \"exception\");",
-        "PUSH(OBJ_FIELDS(e)[0]);"],
+        "PUSH(obj_field(e, 0));"],
      inst ("EXNARG", [], (Fixed 1, 1), Next, "Pop an exception value and push its payload.")
        ["Value v = POP();",
         "Obj *e = EXPECT(v, K_EXN, \"exception\");",
-        "PUSH(OBJ_FIELDS(e)[1]);"],
+        "PUSH(obj_field(e, 1));"],
      raising
        (inst ("PRIM", [("p", Primitive)], (ArityOf 0, 1), Next,
               "Invoke primitive p; pops its arguments and pushes the result.")
@@ -217,8 +217,8 @@ struct
         "   against a constructor, in one */",
         "Value v = POP();",
         "int64_t tag = 0;",
-        "if (v.tag == T_CON0) tag = v.u.i;",
-        "else if (v.tag == T_PTR && v.u.p->kind == K_CON) tag = v.u.p->contag;",
+        "if (val_is(v, T_CON0)) tag = val_imm(v);",
+        "else if (val_is(v, T_PTR) && obj_kind(val_ptr(v)) == K_CON) tag = obj_contag(val_ptr(v));",
         "else FATAL(\"JUMPIFNOTTAG on non-constructor\");",
         "if (tag != b) JUMP_TO(a);"],
      inst ("TEELOCAL", [("l", Local)], (Fixed 1, 1), Next,
@@ -240,8 +240,8 @@ struct
         "   5 bytes, its target after its opcode */",
         "Value v = POP();",
         "int64_t tag = 0;",
-        "if (v.tag == T_CON0) tag = v.u.i;",
-        "else if (v.tag == T_PTR && v.u.p->kind == K_CON) tag = v.u.p->contag;",
+        "if (val_is(v, T_CON0)) tag = val_imm(v);",
+        "else if (val_is(v, T_PTR) && obj_kind(val_ptr(v)) == K_CON) tag = obj_contag(val_ptr(v));",
         "else FATAL(\"SWITCH on non-constructor\");",
         "if (tag >= 0 && tag < a) JUMP_TO(read_i32(code + PC + 5 * (uint32_t)tag + 1));",
         "else JUMP_TO(PC + 5 * (uint32_t)a);"],
@@ -263,18 +263,18 @@ struct
               "Pop n values (first pushed is field 0) and push constructor t made of them: one object of n fields, for a constructor whose argument is a tuple of n (middle-end M11).")
           ["if ((size_t)b > vm->sp) vm_fatal(vm, \"stack underflow\");",
            "Obj *c = vm_alloc_fields(vm, K_CON, (uint16_t)a, (uint32_t)b);",
-           "Value *f = OBJ_FIELDS(c);",
+           "Value *f = obj_fields(c);",
            "for (int32_t i = 0; i < b; i++) f[i] = vm->stack[vm->sp - (size_t)b + (size_t)i];",
            "vm->sp -= (size_t)b;",
            "vm_push(vm, mk_ptr(c));"]),
      inst ("FIELD", [("t", Tag), ("i", Field)], (Fixed 1, 1), Next,
-           "Pop a constructor value that CONN made, of tag t, and push its field i; runevm --checked stops where the tag is another.")
+           "Pop a constructor value that CONN made, of tag t, and push its field i; runevm-stack --checked stops where the tag is another.")
        ["Value v = POP();",
         "Obj *c = EXPECT(v, K_CON, \"constructor with fields\");",
         "/* the tag is not tested but --checked, as DECON's (decision D14) */",
-        "if (vm->checked && c->contag != a) FATAL(\"FIELD of a constructor of tag %d where %d is wanted\", (int)c->contag, (int)a);",
-        "if ((uint32_t)b >= c->len) FATAL(\"constructor field %d out of range\", b);",
-        "PUSH(OBJ_FIELDS(c)[b]);"]]
+        "if (vm->checked && obj_contag(c) != a) FATAL(\"FIELD of a constructor of tag %d where %d is wanted\", (int)obj_contag(c), (int)a);",
+        "if ((uint32_t)b >= obj_len(c)) FATAL(\"constructor field %d out of range\", b);",
+        "PUSH(obj_field(c, b));"]]
 
   (* The same by opcode number. *)
   val info : instruction vector = Vector.fromList instructions

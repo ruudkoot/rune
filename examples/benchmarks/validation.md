@@ -35,7 +35,7 @@ RUNE_BENCH_COMPILE_OPTIONS='--lint -O2' make JOBS=4 bench-check BENCH_CONFIGS=ru
 sh tests/benchmarks/check-pilots.sh
 bin/rune --lint tests/basis/harness.sml examples/benchmarks/shared/catalog.sml \
   tests/benchmarks/catalog.sml tests/basis/finish.sml -o tests/out/benchmarks/validation/catalog.rbc
-bin/runevm tests/out/benchmarks/validation/catalog.rbc
+bin/runevm-stack tests/out/benchmarks/validation/catalog.rbc
 make JOBS=4 check
 ```
 

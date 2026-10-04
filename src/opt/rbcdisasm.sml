@@ -1,5 +1,5 @@
-(* runeopt --disasm: a program as runevm --disasm prints it (disassemble in
-   vm/loader.c), line for line. A real constant is the one exception: the VM
+(* runeopt --disasm: a program as runevm-stack --disasm prints it (disassemble in
+   runtime/loader.c), line for line. A real constant is the one exception: the VM
    prints the number with C's %g, and this prints the text the file carries,
    since the tool never turns a real into a number (the portability rules of
    docs/building.md); tests/opt compares the two through awk's %g. A string

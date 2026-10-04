@@ -1,0 +1,3 @@
+- best-in-class native code generation
+  - full optimization pipeline as in gcc/llvm
+- profile guided optimization

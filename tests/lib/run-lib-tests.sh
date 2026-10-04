@@ -33,7 +33,7 @@ set -u
 cd "$(dirname "$0")/../.."
 top=$(pwd)
 rune=${RUNE:-bin/rune-stack}
-runevm=${RUNEVM:-bin/runevm}
+runevm=${RUNEVM:-bin/runevm-stack}
 runedoc=${RUNEDOC:-bin/runedoc}
 out=tests/out/lib
 root=$out/root

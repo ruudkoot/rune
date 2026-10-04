@@ -12,7 +12,7 @@ set -u
 cd "$(dirname "$0")/../.."
 runedoc=${RUNEDOC:-bin/runedoc}
 rune=${RUNE:-bin/rune-stack}
-runevm=${RUNEVM:-bin/runevm}
+runevm=${RUNEVM:-bin/runevm-stack}
 out=tests/out/basis-examples
 mkdir -p "$out"
 

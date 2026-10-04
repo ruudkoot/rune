@@ -45,7 +45,7 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
   host, with the VM's primitives written on the host's library
   (`tests/basis/host/rune-prim.sml`). This checks that Rune's library is
   portable Standard ML, that its `_prim` annotations agree with
-  `vm/prims.def`, and that its code is right independently of Rune's compiler
+  `runtime/prims.def`, and that its code is right independently of Rune's compiler
   and VM.
 * `rune:windows` and `rune:windows32`: the suite on Rune, on the VMs of
   Windows (`make windows`, `make test-windows`; [building.md](building.md)).
@@ -502,7 +502,7 @@ reach inside it. The note is
   (Poly/ML 5.9.2 can return early). Where the shim does call the host's
   function, the host's bug shows in the `xc1` configuration too: a host line
   that names `*:HOST` explains both. Writing it showed three primitives whose contract was only in the
-  C code; `vm/prims.def` now states the 100000000-element limit of arrays and
+  C code; `runtime/prims.def` now states the 100000000-element limit of arrays and
   vectors, the newline that `file_read_line` adds to a last line, and what
   the two read primitives do after an end of file.
 * The sockets and the network databases are left out. The hosts keep a

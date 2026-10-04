@@ -1,6 +1,6 @@
 #!/bin/sh
 # The compiler, translated by runeopt, compiles itself to bin/rune.stack.rbc:
-# what make bootstrap is for the compiler on runevm, for native code
+# what make bootstrap is for the compiler on runevm-stack, for native code
 # (docs/native.md, Tests). RUNEOPT chooses the build of runeopt,
 # RUNE_HEAP the heap the compiler starts with, as bin/rune-boot gives it.
 #   tests/opt/run-bootstrap.sh

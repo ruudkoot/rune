@@ -3,6 +3,6 @@ build/
 .cm/
 *.rbc
 tests/out/
-vm/version.h
+runtime/version.h
 MLB/
 __pycache__/

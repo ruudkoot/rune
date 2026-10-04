@@ -31,14 +31,14 @@ translates a bytecode file made by
 .RB ( rune (1))
 into an executable for Linux on x86-64: every instruction becomes the machine
 code that does what
-.BR runevm (1)
+.BR runevm\-stack (1)
 does for it, in the order of the bytecode, and the C compiler assembles the
 code and links it with the runtime of
-.BR runevm .
+.BR runevm\-stack .
 The program keeps the value stack, the frames and the handlers where
-.B runevm
+.B runevm\-stack
 keeps them, so it prints what it prints under
-.BR runevm ,
+.BR runevm\-stack ,
 counts the same instructions, bytes and objects, reports an uncaught
 exception and a trace in the same words, and writes the same images with
 .BR Runtime.save .
@@ -46,7 +46,7 @@ The common case of the arithmetic and comparisons of integers, words, reals
 and characters, of equality on values that are not pointers, of references
 and of the elements of strings, vectors and arrays is done by the code
 itself; everything else calls the primitive
-.B runevm
+.B runevm\-stack
 calls.
 .PP
 The executable carries its bytecode and a line table: a debugger stops at a
@@ -55,7 +55,7 @@ the source and its number,
 .IR name # n .
 .PP
 A file that the loader of
-.B runevm
+.B runevm\-stack
 refuses is refused with its message, and so is one whose code does not keep
 what the translation relies on (the compiler's code always does): the stack
 has the same height on every path into an instruction, no jump leaves its
@@ -75,9 +75,9 @@ and stop.
 .TP
 .BI \-\-options " text"
 Options of
-.B runevm
+.B runevm\-stack
 the program is to run with, written as
-.B runevm
+.B runevm\-stack
 takes them:
 .BR \-\-count ,
 .BR \-\-stats ,
@@ -96,7 +96,7 @@ come after these.
 Translate the program in an image that
 .B Runtime.save
 wrote, whether a native program or
-.B runevm
+.B runevm\-stack
 wrote it, and write its bytecode beside the executable
 .RI ( file .rbc).
 .B RUNEVM_OPTIONS="\-\-restore
@@ -121,7 +121,7 @@ Check each file, and translate nothing.
 .TP
 .B \-\-disasm
 Print the bytecode as
-.B runevm \-\-disasm
+.B runevm\-stack \-\-disasm
 prints it.
 .TP
 .B \-\-lines
@@ -143,12 +143,12 @@ Print a usage summary and exit.
 A program
 .B runeopt
 made takes the options of
-.B runevm
+.B runevm\-stack
 from
 .BR RUNEVM_OPTIONS ,
 after those it was made with, and removes the variable from its environment,
 so that it sees the environment it has under
-.BR runevm .
+.BR runevm\-stack .
 Its
 .B CommandLine.name
 is its own name, or
@@ -159,7 +159,7 @@ where that is set, which the test suites use.
 exits 0 when it wrote what it was asked to, and 1 when a file is refused, when
 the options are wrong, or when the C compiler fails. A program it made exits
 as it would under
-.BR runevm .
+.BR runevm\-stack .
 .SH BUGS
 A native program carries on an image of its own program only:
 .B Runtime.restore
@@ -167,8 +167,8 @@ of an image of another raises
 .B OS.SysErr
 .RB ( ENOEXEC ),
 where
-.B runevm
+.B runevm\-stack
 would become the other world.
 .SH SEE ALSO
 .BR rune (1),
-.BR runevm (1)
+.BR runevm\-stack (1)

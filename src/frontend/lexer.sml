@@ -38,7 +38,7 @@ struct
          takes; Vector.tabulate does not copy an array and is not
          affected.
 
-         What it costs: on runevm, 3,819 instructions more for every
+         What it costs: on runevm-stack, 3,819 instructions more for every
          compile, 0.06% of compiling examples/hello.sml (and 1,544 fewer
          objects); in the host builds, 256 calls in place of one copy, once
          a run. MLton has fixed the bug after 20241230 (its pull request

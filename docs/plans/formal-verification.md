@@ -1,0 +1,5 @@
+- from spec/lexer to native code
+  - formal languague specification from which to generate
+    - human readable documentation
+    - theorems (not proofs)
+    - lexer/parser/typechecker/..

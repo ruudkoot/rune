@@ -1,0 +1,16 @@
+- this is a draft roadmap for v2 of the garbage collector
+- please research the literature and exisiting implementations
+  - implemenations can be found under /home/ruud/reference
+  - let me know if you need further access to literature and implementation and i can provide them locally
+- choices should be supported by emperical evidence: simulations, prototypes and benchmarks
+- the second generation collectors will not support multithreading as the runtime does not support this yet. this will be part of the third generations collector so do bear it in mind
+  - so not parallel collection
+  - concurrent collection on a single thread may be considered as may partial and incremental collection
+- features to be considered for the second generation collector:
+  - generational collection (e.g. nursery, large object space)
+  - mark-and-sweep/compact for memory efficiency
+  - prevention of heap fragmentation
+  - good interaction with the cache hierarchy
+  - short/no pausing so rune has good real-time behaviour
+- 32-bit targets will likely remain on the second generation collector and not move to the third generation collector. so this collector is prefered to be memory efficient (both phyisical and virtual memory as both are limited on 32-bit targets). tricks that can be done with a 64-bit address space will have to be deferred to the third generation collector.
+- rune is a research compiler and you are allowed to make changes to the bytecode, compiler analyses and optimization, and heap layout if this is beneficial for the v2 collector. backwards compatibiblity and implementation effort are not a concern.

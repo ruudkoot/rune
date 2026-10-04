@@ -9,29 +9,29 @@
 # RUNE_MATRIX_MEMORY is KiB of address space (Poly/ML: data plus a heap cap).
 #
 # Configurations (default: rune):
-#   rune                   bin/rune-stack, the self-hosted compiler for the stack bytecode, + bin/runevm
+#   rune                   bin/rune-stack, the self-hosted compiler for the stack bytecode, + bin/runevm-stack
 #                          (override: RUNE=, RUNEVM=; both must be absolute)
 #   rune:windows  rune:windows32  rune:windows-new  rune:windows32-new
 #   rune:linux32  rune:ppc64   the same on a VM of another machine: a 32-bit
 #                          x86, and a big-endian 64-bit PowerPC under qemu
 #                          (make portability; RUNEVM_LINUX32=, RUNEVM_PPC64=)
-#                          bin/rune-stack + bin/runevm.exe or bin/runevm32.exe, the
+#                          bin/rune-stack + bin/runevm-stack.exe or bin/runevm-stack32.exe, the
 #                          VMs of make windows (RUNEVM_WINDOWS=,
 #                          RUNEVM_WINDOWS32=); a program runs in a directory
 #                          on the Windows side (tests/windows-dir.sh), and
 #                          needs Windows, or WSL, which starts an .exe
 #   rune:opt               bin/rune-stack, and every program translated to native
-#                          code by runeopt and run so: bin/runevm-opt
+#                          code by runeopt and run so: bin/runevm-native
 #                          (RUNEVM_OPT=; docs/native.md)
 #   rune:jit               the same, with every function compiled at tier 2
-#                          (bin/runevm-new-opt, RUNEVM_NEW_JIT=; make test-new-jit)
-#   rune:new               bin/rune making the register bytecode of vm/new
-#                          (bin/rune-new, RUNE_NEW=) and vm/new's first loop
-#                          running it (bin/runevm-new, RUNEVM_NEW=;
+#                          (bin/runevm-opt, RUNEVM_NEW_JIT=; make test-register-jit)
+#   rune:new               bin/rune making the register bytecode of runtime/register
+#                          (bin/rune, RUNE_NEW=) and runtime/register's first loop
+#                          running it (bin/runevm, RUNEVM_NEW=;
 #                          docs/plans/middle-end.md, M5)
 #   windows                rune:windows and rune:windows32
 #   portability            rune:linux32 and rune:ppc64, and their -new
-#                          forms with rune:aarch64-new (bin/runevm-new-aarch64
+#                          forms with rune:aarch64-new (bin/runevm-aarch64
 #                          under qemu, its JIT on; docs/plans/jit.md M12)
 #   native:mlton  native:smlnj-legacy  native:smlnj32  native:smlnj-dev
 #   native:polyml  native:mlkit
@@ -68,7 +68,7 @@
 #    program may have RUNE_MATRIX_MEMORY KiB of virtual memory (4 GiB).
 #
 # An xc1 program starts with structure RunePrim, the primitives of
-# vm/prims.def written on the host's Basis Library, and the files of lib/basis
+# runtime/prims.def written on the host's Basis Library, and the files of lib/basis
 # (tests/basis/host/gen-host-basis.sh). A file of lib/basis that the host does
 # not accept is left out, with the files that do not load without it, and the
 # structures it declares remain the host's. A test that `requires` such a
@@ -811,7 +811,7 @@ session_probe() {
 # from the test and the tools, computed once for the run.
 libkey=${RUNE_MATRIX_LIBKEY:-}
 if [ -z "$libkey" ]; then
-  libkey=$(cat lib/basis/MANIFEST lib/basis/*.sml tests/basis/host/* vm/prims.def 2>/dev/null |
+  libkey=$(cat lib/basis/MANIFEST lib/basis/*.sml tests/basis/host/* runtime/prims.def 2>/dev/null |
            cksum | cut -d " " -f 1)
 fi
 export RUNE_MATRIX_LIBKEY=$libkey
@@ -819,7 +819,7 @@ export RUNE_MATRIX_LIBKEY=$libkey
 # host's, whose version is in the name of its output directory already.
 runekey=${RUNE_MATRIX_RUNEKEY:-}
 if [ -z "$runekey" ]; then
-  runekey=$(cat src/*/*.sml vm/*.c vm/*.h 2>/dev/null | cksum | cut -d " " -f 1)
+  runekey=$(cat src/*/*.sml runtime/*.c runtime/*.h 2>/dev/null | cksum | cut -d " " -f 1)
 fi
 export RUNE_MATRIX_RUNEKEY=$runekey
 
@@ -913,7 +913,7 @@ probe_basis() {
   trap 'probe_status=$?; if [ ! -f "$cfgout/basis.done" ]; then printf "probe exited before completion (status %s)\n" "$probe_status" > "$cfgout/basis.done"; fi' 0
   trap 'exit 1' HUP INT TERM
   t_probe=$(now)
-  key=$(cat lib/basis/MANIFEST lib/basis/*.sml tests/basis/host/* vm/prims.def | cksum | cut -d ' ' -f 1)-$(echo "$cmd1" | cksum | cut -d ' ' -f 1)
+  key=$(cat lib/basis/MANIFEST lib/basis/*.sml tests/basis/host/* runtime/prims.def | cksum | cut -d ' ' -f 1)-$(echo "$cmd1" | cksum | cut -d ' ' -f 1)
   if [ -f "$cfgout/basis.key" ] && [ "$(cat "$cfgout/basis.key")" = "$key" ] && [ -f "$cfgout/basis.loaded" ] &&
      [ -d "$cfgout/basis" ]; then
     echo "cached 0 $(since "$t_probe")" > "$cfgout/basis.time"
@@ -1021,14 +1021,14 @@ resolve() {
   case "$kind:$host" in
     rune:)
       cmd1=${RUNE:-$root/bin/rune-stack}
-      cmd2=${RUNEVM:-$root/bin/runevm}
+      cmd2=${RUNEVM:-$root/bin/runevm-stack}
       id=rune
       [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make)" >&2; return 1; }
       ;;
     rune:windows|rune:windows32)
       cmd1=${RUNE:-$root/bin/rune-stack}
-      if [ "$host" = windows ]; then cmd2=${RUNEVM_WINDOWS:-$root/bin/runevm.exe}
-      else cmd2=${RUNEVM_WINDOWS32:-$root/bin/runevm32.exe}
+      if [ "$host" = windows ]; then cmd2=${RUNEVM_WINDOWS:-$root/bin/runevm-stack.exe}
+      else cmd2=${RUNEVM_WINDOWS32:-$root/bin/runevm-stack32.exe}
       fi
       id=rune:$host
       [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make windows)" >&2; return 1; }
@@ -1040,29 +1040,29 @@ resolve() {
       ;;
     rune:opt)
       # The library and the compiler of the `rune` configuration, and every
-      # program run as native code: bin/runevm-opt translates the bytecode
+      # program run as native code: bin/runevm-native translates the bytecode
       # with runeopt and runs the executable (docs/native.md, Tests).
       cmd1=${RUNE:-$root/bin/rune-stack}
-      cmd2=${RUNEVM_OPT:-$root/bin/runevm-opt}
+      cmd2=${RUNEVM_OPT:-$root/bin/runevm-native}
       id=rune:opt
-      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make bin/runevm-opt)" >&2; return 1; }
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make bin/runevm-native)" >&2; return 1; }
       ;;
     rune:new)
       # The library of the `rune` configuration, compiled to the register
-      # bytecode, and every program run by vm/new's first loop.
-      cmd1=${RUNE_NEW:-$root/bin/rune-new}
-      cmd2=${RUNEVM_NEW:-$root/bin/runevm-new}
+      # bytecode, and every program run by runtime/register's first loop.
+      cmd1=${RUNE_NEW:-$root/bin/rune}
+      cmd2=${RUNEVM_NEW:-$root/bin/runevm}
       id=rune:new
-      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make bin/rune-new bin/runevm-new)" >&2; return 1; }
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make bin/rune bin/runevm)" >&2; return 1; }
       ;;
     rune:jit)
       # The register bytecode with every function tier 1 can compile
-      # compiled (docs/plans/jit.md): bin/runevm-new --jit=all, through the
-      # wrapper make test-new-jit writes.
-      cmd1=${RUNE_NEW:-$root/bin/rune-new}
-      cmd2=${RUNEVM_NEW_JIT:-$root/bin/runevm-new-opt}
+      # compiled (docs/plans/jit.md): bin/runevm --jit=all, through the
+      # wrapper make test-register-jit writes.
+      cmd1=${RUNE_NEW:-$root/bin/rune}
+      cmd2=${RUNEVM_NEW_JIT:-$root/bin/runevm-opt}
       id=rune:jit
-      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make test-new-jit)" >&2; return 1; }
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make test-register-jit)" >&2; return 1; }
       ;;
     rune:linux32|rune:ppc64)
       # The library and the compiler of the `rune` configuration on a VM of
@@ -1071,26 +1071,26 @@ resolve() {
       # suite differs -- the bytecode is the same file -- so what is tested is
       # the VM.
       cmd1=${RUNE:-$root/bin/rune-stack}
-      if [ "$host" = linux32 ]; then cmd2=${RUNEVM_LINUX32:-$root/bin/runevm32}
-      else cmd2=${RUNEVM_PPC64:-$root/bin/runevm-ppc64}
+      if [ "$host" = linux32 ]; then cmd2=${RUNEVM_LINUX32:-$root/bin/runevm-stack32}
+      else cmd2=${RUNEVM_PPC64:-$root/bin/runevm-stack-ppc64}
       fi
       id=rune:$host
       [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make portability)" >&2; return 1; }
       "$cmd2" --version > /dev/null 2>&1 || { echo "run-matrix: $cmd2 will not start here" >&2; return 1; }
       ;;
     rune:windows-new|rune:windows32-new|rune:linux32-new|rune:ppc64-new|rune:aarch64-new)
-      # vm/new on the same four machines (docs/plans/jit.md, M2): the
-      # register bytecode of bin/rune-new on bin/runevm-new.exe,
-      # bin/runevm-new32.exe, bin/runevm-new32 and bin/runevm-new-ppc64,
+      # runtime/register on the same four machines (docs/plans/jit.md, M2): the
+      # register bytecode of bin/rune on bin/runevm.exe,
+      # bin/runevm32.exe, bin/runevm32 and bin/runevm-ppc64,
       # named as the stack VM's with -new, so that a deviation of
       # tests/basis/deviations.txt for a machine holds for both VMs.
-      cmd1=${RUNE_NEW:-$root/bin/rune-new}
+      cmd1=${RUNE_NEW:-$root/bin/rune}
       case "$host" in
-        windows-new) cmd2=${RUNEVM_NEW_WINDOWS:-$root/bin/runevm-new.exe} ;;
-        windows32-new) cmd2=${RUNEVM_NEW_WINDOWS32:-$root/bin/runevm-new32.exe} ;;
-        linux32-new) cmd2=${RUNEVM_NEW_LINUX32:-$root/bin/runevm-new32} ;;
-        aarch64-new) cmd2=${RUNEVM_NEW_AARCH64:-$root/bin/runevm-new-aarch64} ;;
-        *) cmd2=${RUNEVM_NEW_PPC64:-$root/bin/runevm-new-ppc64} ;;
+        windows-new) cmd2=${RUNEVM_NEW_WINDOWS:-$root/bin/runevm.exe} ;;
+        windows32-new) cmd2=${RUNEVM_NEW_WINDOWS32:-$root/bin/runevm32.exe} ;;
+        linux32-new) cmd2=${RUNEVM_NEW_LINUX32:-$root/bin/runevm32} ;;
+        aarch64-new) cmd2=${RUNEVM_NEW_AARCH64:-$root/bin/runevm-aarch64} ;;
+        *) cmd2=${RUNEVM_NEW_PPC64:-$root/bin/runevm-ppc64} ;;
       esac
       id=rune:$host
       [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make windows, or make portability)" >&2; return 1; }

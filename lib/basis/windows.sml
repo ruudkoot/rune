@@ -1,6 +1,6 @@
 (* Windows: the registry, the configuration of the machine, DDE, programs
    started with pipes to them, and the codes a process ends with, over the
-   primitives win_* of vm/prims.def. On a system other than Windows every
+   primitives win_* of runtime/prims.def. On a system other than Windows every
    call of the system raises OS.SysErr with ENOSYS; the constants (the flags
    of Key, the codes of Status) are there everywhere.
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-# The counts of --count, natively and on runevm (docs/native.md,
+# The counts of --count, natively and on runevm-stack (docs/native.md,
 # Counting):
 #   tests/opt/run-counts.sh [--vm BIN] [--native BIN] [-j N] RBC...
 # Each program is run by both, with the arguments and the input its test
@@ -9,8 +9,8 @@
 # the same status. The programs of the Basis Library suite are run in the
 # directory of their test, as tests/basis/run-matrix.sh runs them.
 set -u
-vm=bin/runevm
-native=bin/runevm-opt
+vm=bin/runevm-stack
+native=bin/runevm-native
 jobs=""
 one=""
 while [ $# -gt 0 ]; do
@@ -46,7 +46,7 @@ if [ -n "$one" ]; then
   # shellcheck disable=SC2086
   (cd "$dir" && "$native" --count "$root/$rbc" $args < "$stdin" > "$out/$name.opt.out" 2> "$out/$name.opt.err")
   ncode=$?
-  if [ "$vcode" != "$ncode" ]; then echo "FAIL counts $rbc: exit status $ncode natively, $vcode on runevm"
+  if [ "$vcode" != "$ncode" ]; then echo "FAIL counts $rbc: exit status $ncode natively, $vcode on runevm-stack"
   elif ! cmp -s "$out/$name.vm.out" "$out/$name.opt.out"; then echo "FAIL counts $rbc: the output differs (diff $out/$name.vm.out $out/$name.opt.out)"
   elif ! cmp -s "$out/$name.vm.err" "$out/$name.opt.err"; then echo "FAIL counts $rbc: the counts or standard error differ (diff $out/$name.vm.err $out/$name.opt.err)"
   else echo OK
@@ -59,5 +59,5 @@ results=$(printf '%s\n' "$@" | xargs -n 1 -P "$jobs" sh tests/opt/run-counts.sh 
 n=$(printf '%s\n' "$results" | grep -c '^OK$')
 failures=$(printf '%s\n' "$results" | grep -v '^OK$' | grep .)
 [ -z "$failures" ] || printf '%s\n' "$failures"
-echo "counts: $n programs agree with runevm, $(printf '%s\n' "$failures" | grep -c .) differ"
+echo "counts: $n programs agree with runevm-stack, $(printf '%s\n' "$failures" | grep -c .) differ"
 [ -z "$failures" ]

@@ -24,9 +24,9 @@ out=$(mktemp -d "$base/run.XXXXXX")
 printf '%s\n' "$out" > "$base/latest-run"
 echo "BENCH OUTPUT $out"
 if [ "$routine" = 1 ]; then
-  "$root/bin/runevm" "$catalog" --routine "$filter" > "$out/jobs.tsv"
+  "$root/bin/runevm-stack" "$catalog" --routine "$filter" > "$out/jobs.tsv"
 else
-  "$root/bin/runevm" "$catalog" --list "$profile" "$filter" > "$out/jobs.tsv"
+  "$root/bin/runevm-stack" "$catalog" --list "$profile" "$filter" > "$out/jobs.tsv"
 fi
 [ -s "$out/jobs.tsv" ] || { echo "bench-check: no benchmark matches" >&2; exit 2; }
 status=0

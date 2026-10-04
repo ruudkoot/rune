@@ -1,4 +1,4 @@
-(* The stack target (docs/ir.md; docs/plans/middle-end.md, M4): runevm's
+(* The stack target (docs/ir.md; docs/plans/middle-end.md, M4): runevm-stack's
    bytecode from Low, in the instruction lists of Code, which Emit writes.
 
    * Constants, globals, captured values and the running closure are pushed

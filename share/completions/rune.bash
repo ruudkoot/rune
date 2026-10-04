@@ -1,4 +1,4 @@
-# bash completion for rune(1), runevm(1) and runevm-new(1).
+# bash completion for rune(1), runevm(1) and runevm-stack(1).
 
 _rune() {
     local cur prev
@@ -55,4 +55,4 @@ _runevm() {
 
     COMPREPLY=($(compgen -f -X '!*.rbc' -- "$cur") $(compgen -d -- "$cur"))
 }
-complete -F _runevm runevm runevm-new
+complete -F _runevm runevm runevm-stack

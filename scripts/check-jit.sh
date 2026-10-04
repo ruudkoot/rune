@@ -1,5 +1,5 @@
 #!/bin/sh
-# vm/new's JIT against its interpreter (docs/plans/jit.md, M4): every
+# runtime/register's JIT against its interpreter (docs/plans/jit.md, M4): every
 # program of tests/lang and tests/perf, compiled once to the register
 # bytecode, run with --jit=off and with --jit=all, must print the same and
 # report the same counts of --count -- instructions, bytes and objects --
@@ -20,8 +20,8 @@
 #   scripts/check-jit.sh [--rune BIN] [--vm BIN] [-j N]
 set -u
 cd "$(dirname "$0")/.."
-rune=bin/rune-new
-vm=bin/runevm-new
+rune=bin/rune
+vm=bin/runevm
 jobs=$(sh scripts/ncpus.sh)
 one=""
 while [ $# -gt 0 ]; do
@@ -88,11 +88,11 @@ progs=$(ls tests/lang/*.sml tests/perf/*.sml | sed 's/\.sml$//'; echo tests/opt/
 n=$(echo "$progs" | wc -l | tr -d ' ')
 fails=$(echo "$progs" | xargs -P "$jobs" -I{} sh "$0" --rune "$rune" --vm "$vm" --one {})
 
-# the program of every instruction (tests/new/every-opcode.rasm), which the
+# the program of every instruction (tests/register/every-opcode.rasm), which the
 # compiler never writes whole: assembled, run both ways, and its output
 # and counts compared
 mkdir -p "$out/every-opcode"
-printf "$(awk -v opdefs=vm/new/regs.def -v primdefs=vm/prims.def -f tests/opt/rbcasm.awk tests/new/every-opcode.rasm)" > "$out/every-opcode/prog.rbc"
+printf "$(awk -v opdefs=runtime/register/regs.def -v primdefs=runtime/prims.def -f tests/opt/rbcasm.awk tests/register/every-opcode.rasm)" > "$out/every-opcode/prog.rbc"
 "$vm" --disasm "$out/every-opcode/prog.rbc" > "$out/every-opcode/disasm" 2> /dev/null
 for mode in off all odd stress opt deopt; do
   jit="--jit=$mode"
@@ -106,28 +106,28 @@ for mode in off all odd stress opt deopt; do
 done
 if ! cmp -s "$out/every-opcode/stdout.off" "$out/every-opcode/stdout.all" || ! cmp -s "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.all"; then
   fails="$fails${fails:+
-}FAIL jit.every-opcode: tests/new/every-opcode.rasm differs between --jit=off and --jit=all: $(diff "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.all" | head -2 | tail -1)"
+}FAIL jit.every-opcode: tests/register/every-opcode.rasm differs between --jit=off and --jit=all: $(diff "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.all" | head -2 | tail -1)"
 elif ! cmp -s "$out/every-opcode/stdout.off" "$out/every-opcode/stdout.odd" || ! cmp -s "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.odd"; then
   fails="$fails${fails:+
-}FAIL jit.every-opcode: tests/new/every-opcode.rasm differs with every other function compiled: $(diff "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.odd" | head -2 | tail -1)"
+}FAIL jit.every-opcode: tests/register/every-opcode.rasm differs with every other function compiled: $(diff "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.odd" | head -2 | tail -1)"
 elif ! cmp -s "$out/every-opcode/stdout.off" "$out/every-opcode/stdout.stress" || ! cmp -s "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.stress"; then
   fails="$fails${fails:+
-}FAIL jit.every-opcode: tests/new/every-opcode.rasm differs under --jit-stress: $(diff "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.stress" | head -2 | tail -1)"
+}FAIL jit.every-opcode: tests/register/every-opcode.rasm differs under --jit-stress: $(diff "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.stress" | head -2 | tail -1)"
 elif ! cmp -s "$out/every-opcode/stdout.off" "$out/every-opcode/stdout.opt" || ! cmp -s "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.opt"; then
   fails="$fails${fails:+
-}FAIL jit.every-opcode: tests/new/every-opcode.rasm differs at tier 2: $(diff "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.opt" | head -2 | tail -1)"
+}FAIL jit.every-opcode: tests/register/every-opcode.rasm differs at tier 2: $(diff "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.opt" | head -2 | tail -1)"
 elif ! cmp -s "$out/every-opcode/stdout.off" "$out/every-opcode/stdout.deopt" || ! cmp -s "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.deopt"; then
   fails="$fails${fails:+
-}FAIL jit.every-opcode: tests/new/every-opcode.rasm differs under --deopt-stress: $(diff "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.deopt" | head -2 | tail -1)"
+}FAIL jit.every-opcode: tests/register/every-opcode.rasm differs under --deopt-stress: $(diff "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.deopt" | head -2 | tail -1)"
 elif ! grep -q "^exit 0" "$out/every-opcode/stderr.off"; then
   fails="$fails${fails:+
-}FAIL jit.every-opcode: tests/new/every-opcode.rasm fails: $(head -1 "$out/every-opcode/stderr.off")"
+}FAIL jit.every-opcode: tests/register/every-opcode.rasm fails: $(head -1 "$out/every-opcode/stderr.off")"
 fi
 n=$((n + 1))
 # every instruction of the register set occurs in those programs, so
 # that every emitter is run by them
 missing=""
-for op in $(awk '!/^#/ && NF { print $1 }' vm/new/regs.def); do
+for op in $(awk '!/^#/ && NF { print $1 }' runtime/register/regs.def); do
   if ! grep -q -l "^ *[0-9]*  $op\b" "$out"/*/disasm 2> /dev/null; then missing="$missing $op"; fi
 done
 if [ -n "$missing" ]; then

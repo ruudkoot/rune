@@ -1,6 +1,6 @@
 (* The translation of a program into x86-64 assembly, for the GNU assembler
    (docs/native.md). Every instruction becomes the code that does what its
-   case in vm/interp.c does, in the order of the bytecode: nothing is
+   case in runtime/stack/interp.c does, in the order of the bytecode: nothing is
    dropped, merged or moved. The value stack, the frames and the handlers
    are the interpreter's; the code keeps four things in registers:
 
@@ -14,13 +14,14 @@
    The height of the stack before every instruction is known (RbcCheck), so
    a slot is an address in the frame, and vm->sp is written only before a
    call into C. A call and a return push and pop the VM's frame here, and an
-   allocation bumps the heap here, with vm/native.c as the slow path, which
+   allocation bumps the heap here, with runtime/native/native.c as the slow path, which
    answers with the native code to jump to; a raise goes through
-   vm/native.c, and a primitive is a call through prim_table unless its
+   runtime/native/native.c, and a primitive is a call through prim_table unless its
    common case is done here (fastPrim). The offsets and numbers of the VM's
-   layout are names that rune-offsets.s, made from vm/vm.h, defines. *)
+   layout are names that rune-offsets.s, made from runtime/vm.h, defines. *)
 structure X64 =
 struct
+  structure L = X64Layout
   (* A number as the assembler writes it. *)
   fun num (n : int) : string = Rbc.minus (Int.toString n)
 
@@ -38,7 +39,7 @@ struct
   fun endsRun opc = Isa.endsRun (Vector.sub (RbcCheck.info, opc))
 
   (* The numbers the checks of the code give native_fatal, which has the
-     messages of vm/interp.c. *)
+     messages of runtime/stack/interp.c. *)
   val fatalTuple = 0 val fatalCon = 1 val fatalExn = 2 val fatalEnv = 3 val fatalSelf = 4
   val fatalGlobal = 5 val fatalSelect = 6 val fatalContag = 7 val fatalJumpIfNot = 8
   val fatalJumpIf = 9 val fatalPopHandler = 10 val fatalJumpIfNotTag = 11 val fatalSwitch = 12
@@ -53,96 +54,94 @@ struct
      one of them checks the tags (and the kinds, and the bounds) of its
      arguments and does the operation; anything else -- a wrong tag, an
      overflow, a divisor of zero, an index out of bounds, a real or a pointer
-     for poly_eq -- goes to `slow`, where the primitive of vm/prims.c is
+     for poly_eq -- goes to `slow`, where the primitive of runtime/prims.c is
      called as it is for any other, and raises or stops as it does. So a
      program cannot tell the one from the other, and a PRIM still counts as
      one instruction. The arguments are at heights h - arity .. h - 1, the
      last on top, and the result goes where the first was. tests/opt runs
-     every one of them on its edge cases (prims.sml), natively and on runevm,
+     every one of them on its edge cases (prims.sml), natively and on runevm-stack,
      and runeopt --inlined lists them. *)
   fun fastPrim (name : string, h : int, pc : int,
-                {line, put, slot, payload} : {line : string -> unit, put : string -> unit,
-                                              slot : int -> string, payload : int -> string})
+                {line, put, sd} : {line : string -> unit, put : string -> unit, sd : int -> string})
       : (string -> unit) option =
     let
       val x = h - 2
       val y = h - 1
       val l = ".Lp" ^ Int.toString pc
-      fun tags (t, ks) slow = List.app (fn k => (line ("cmpb $" ^ t ^ ", " ^ slot k); line ("jne " ^ slow))) ks
+      (* every touch of a value or an object is a template of X64Layout (M3
+         of docs/plans/heap-layout.md), as the JIT's emitters are written
+         over its macro-assembler: sd k is the displacement text of stack
+         slot k, RAX and RCX the registers the JIT's tier 1 uses *)
+      fun tags (t, ks) slow = List.app (fn k => L.checkTag line (sd k, t, slow)) ks
       fun bool (setcc, k) =
         (line (setcc ^ " %al"); line "movzbl %al, %eax";
-         line ("movb $T_CON0, " ^ slot k); line ("mov %rax, " ^ payload k))
-      fun obj (k, kind) slow =
-        (line ("cmpb $T_PTR, " ^ slot k); line ("jne " ^ slow);
-         line ("mov " ^ payload k ^ ", %rax");
-         line ("cmpb $" ^ kind ^ ", OBJ_KIND(%rax)"); line ("jne " ^ slow))
+         L.setReg line (sd k, "T_CON0", L.RAX))
+      fun obj (k, kind) slow = L.loadObj line (L.RAX, sd k, kind, slow)
       (* the index at k into %rcx, when it is below the length of the object in %rax *)
       fun index k slow =
         (tags ("T_INT", [k]) slow;
-         line ("mov " ^ payload k ^ ", %rcx"); line "mov OBJ_LEN(%rax), %edx";
+         L.loadPayload line (L.RCX, sd k); L.loadLen line (L.RDX, L.RAX);
          line "cmp %rdx, %rcx"; line ("jae " ^ slow))
+      (* the two operands, of one tag, into %rax and %rcx *)
+      fun two t slow =
+        (tags (t, [x, y]) slow; L.loadPayload line (L.RAX, sd x); L.loadPayload line (L.RCX, sd y))
       fun arith (t, ins, overflows) =
         SOME (fn slow =>
-          (tags (t, [x, y]) slow;
-           line ("mov " ^ payload x ^ ", %rax"); line (ins ^ " " ^ payload y ^ ", %rax");
+          (two t slow;
+           line (ins ^ " %rcx, %rax");
            if overflows then line ("jo " ^ slow) else ();
-           line ("mov %rax, " ^ payload x)))
+           L.setReg line (sd x, t, L.RAX)))
       fun compare (t, setcc) =
-        SOME (fn slow =>
-          (tags (t, [x, y]) slow;
-           line ("mov " ^ payload x ^ ", %rax"); line ("cmp " ^ payload y ^ ", %rax");
-           bool (setcc, x)))
+        SOME (fn slow => (two t slow; line "cmp %rcx, %rax"; bool (setcc, x)))
       (* LESS, EQUAL or GREATER, the nullary constructors 0, 1 and 2: the sum
          of x >= y and x > y *)
       fun order (t, ge, gt) =
         SOME (fn slow =>
-          (tags (t, [x, y]) slow;
-           line ("mov " ^ payload x ^ ", %rax"); line ("cmp " ^ payload y ^ ", %rax");
+          (two t slow; line "cmp %rcx, %rax";
            line (ge ^ " %al"); line (gt ^ " %cl"); line "movzbl %al, %eax"; line "movzbl %cl, %ecx";
            line "add %rcx, %rax";
-           line ("movb $T_CON0, " ^ slot x); line ("mov %rax, " ^ payload x)))
+           L.setReg line (sd x, "T_CON0", L.RAX)))
+      (* the two real operands into %xmm0 and %xmm1 *)
+      fun twoReal (first, second) slow =
+        (tags ("T_REAL", [x, y]) slow; L.loadReal line (sd first); L.loadReal1 line (sd second))
       (* ucomisd sets `above` only for an ordered pair, so a NaN compares false *)
       fun realCompare (first, second, setcc) =
-        SOME (fn slow =>
-          (tags ("T_REAL", [x, y]) slow;
-           line ("movsd " ^ payload first ^ ", %xmm0"); line ("ucomisd " ^ payload second ^ ", %xmm0");
-           bool (setcc, x)))
+        SOME (fn slow => (twoReal (first, second) slow; line "ucomisd %xmm1, %xmm0"; bool (setcc, x)))
       fun real ins =
-        SOME (fn slow =>
-          (tags ("T_REAL", [x, y]) slow;
-           line ("movsd " ^ payload x ^ ", %xmm0"); line (ins ^ " " ^ payload y ^ ", %xmm0");
-           line ("movsd %xmm0, " ^ payload x)))
+        SOME (fn slow => (twoReal (x, y) slow; line (ins ^ " %xmm1, %xmm0"); L.setReal line (sd x)))
       (* quotient in %rax and remainder in %rdx of C's truncating division; a
          divisor of 0 or ~1 (where the quotient may overflow) is the primitive's *)
       fun intDivide finish =
         SOME (fn slow =>
           (tags ("T_INT", [x, y]) slow;
-           line ("mov " ^ payload y ^ ", %rcx");
+           L.loadPayload line (L.RCX, sd y);
            line "test %rcx, %rcx"; line ("jz " ^ slow);
            line "cmp $-1, %rcx"; line ("je " ^ slow);
-           line ("mov " ^ payload x ^ ", %rax"); line "cqo"; line "idiv %rcx";
+           L.loadPayload line (L.RAX, sd x); line "cqo"; line "idiv %rcx";
            finish ()))
       fun wordDivide result =
         SOME (fn slow =>
           (tags ("T_WORD", [x, y]) slow;
-           line ("mov " ^ payload y ^ ", %rcx");
+           L.loadPayload line (L.RCX, sd y);
            line "test %rcx, %rcx"; line ("jz " ^ slow);
-           line ("mov " ^ payload x ^ ", %rax"); line "xor %edx, %edx"; line "div %rcx";
-           line ("mov " ^ result ^ ", " ^ payload x)))
+           L.loadPayload line (L.RAX, sd x); line "xor %edx, %edx"; line "div %rcx";
+           L.setReg line (sd x, "T_WORD", result)))
       (* a shift by 64 or more gives 0 *)
       fun shift ins =
         SOME (fn slow =>
           (tags ("T_WORD", [x, y]) slow;
-           line ("mov " ^ payload y ^ ", %rcx"); line ("mov " ^ payload x ^ ", %rax");
+           L.loadPayload line (L.RCX, sd y); L.loadPayload line (L.RAX, sd x);
            line "cmp $64, %rcx"; line ("jb " ^ l ^ "_s");
            line "xor %eax, %eax"; line ("jmp " ^ l ^ "_t");
            put (l ^ "_s:\n"); line (ins ^ " %cl, %rax");
-           put (l ^ "_t:\n"); line ("mov %rax, " ^ payload x)))
+           put (l ^ "_t:\n"); L.setReg line (sd x, "T_WORD", L.RAX)))
       fun length kind =
         SOME (fn slow =>
           (obj (y, kind) slow;
-           line "mov OBJ_LEN(%rax), %eax";
-           line ("movb $T_INT, " ^ slot y); line ("mov %rax, " ^ payload y)))
+           L.loadLen line (L.RAX, L.RAX);
+           L.setReg line (sd y, "T_INT", L.RAX)))
+      (* the value at k with another tag: the payload as it is *)
+      fun retag (k, t) = (L.loadPayload line (L.RAX, sd k); L.setReg line (sd k, t, L.RAX))
     in
       case name of
         "int_add" => arith ("T_INT", "add", true)
@@ -151,24 +150,24 @@ struct
       | "int_neg" =>
           SOME (fn slow =>
             (tags ("T_INT", [y]) slow;
-             line ("mov " ^ payload y ^ ", %rax"); line "neg %rax"; line ("jo " ^ slow);
-             line ("mov %rax, " ^ payload y)))
-      | "int_quot" => intDivide (fn () => line ("mov %rax, " ^ payload x))
-      | "int_rem" => intDivide (fn () => line ("mov %rdx, " ^ payload x))
+             L.loadPayload line (L.RAX, sd y); line "neg %rax"; line ("jo " ^ slow);
+             L.setReg line (sd y, "T_INT", L.RAX)))
+      | "int_quot" => intDivide (fn () => L.setReg line (sd x, "T_INT", L.RAX))
+      | "int_rem" => intDivide (fn () => L.setReg line (sd x, "T_INT", L.RDX))
       | "int_div" =>
           (* floor: one less where there is a remainder and the signs differ *)
           intDivide (fn () =>
             (line "test %rdx, %rdx"; line ("jz " ^ l ^ "_f");
              line "xor %rcx, %rdx"; line ("jns " ^ l ^ "_f");
              line "dec %rax";
-             put (l ^ "_f:\n"); line ("mov %rax, " ^ payload x)))
+             put (l ^ "_f:\n"); L.setReg line (sd x, "T_INT", L.RAX)))
       | "int_mod" =>
           (* the sign of the divisor: the divisor added where they differ *)
           intDivide (fn () =>
             (line "test %rdx, %rdx"; line ("jz " ^ l ^ "_f");
              line "mov %rdx, %r8"; line "xor %rcx, %r8"; line ("jns " ^ l ^ "_f");
              line "add %rcx, %rdx";
-             put (l ^ "_f:\n"); line ("mov %rdx, " ^ payload x)))
+             put (l ^ "_f:\n"); L.setReg line (sd x, "T_INT", L.RDX)))
       | "int_lt" => compare ("T_INT", "setl")
       | "int_le" => compare ("T_INT", "setle")
       | "int_gt" => compare ("T_INT", "setg")
@@ -180,9 +179,10 @@ struct
       | "word_andb" => arith ("T_WORD", "and", false)
       | "word_orb" => arith ("T_WORD", "or", false)
       | "word_xorb" => arith ("T_WORD", "xor", false)
-      | "word_notb" => SOME (fn slow => (tags ("T_WORD", [y]) slow; line ("notq " ^ payload y)))
-      | "word_div" => wordDivide "%rax"
-      | "word_mod" => wordDivide "%rdx"
+      | "word_notb" =>
+          SOME (fn slow => (tags ("T_WORD", [y]) slow; L.loadPayload line (L.RAX, sd y); line "not %rax"; L.setReg line (sd y, "T_WORD", L.RAX)))
+      | "word_div" => wordDivide L.RAX
+      | "word_mod" => wordDivide L.RDX
       | "word_lsl" => shift "shl"
       | "word_lsr" => shift "shr"
       | "word_lt" => compare ("T_WORD", "setb")
@@ -195,93 +195,90 @@ struct
       | "char_gt" => compare ("T_CHAR", "setg")
       | "char_ge" => compare ("T_CHAR", "setge")
       | "char_order" => order ("T_CHAR", "setge", "setg")
-      | "char_ord" => SOME (fn slow => (tags ("T_CHAR", [y]) slow; line ("movb $T_INT, " ^ slot y)))
+      | "char_ord" => SOME (fn slow => (tags ("T_CHAR", [y]) slow; retag (y, "T_INT")))
       | "real_add" => real "addsd"
       | "real_sub" => real "subsd"
       | "real_mul" => real "mulsd"
       | "real_div" => real "divsd"
-      | "real_neg" => SOME (fn slow => (tags ("T_REAL", [y]) slow; line ("btcq $63, " ^ payload y)))
+      | "real_neg" =>
+          SOME (fn slow => (tags ("T_REAL", [y]) slow; L.loadPayload line (L.RAX, sd y); line "btc $63, %rax"; L.setReg line (sd y, "T_REAL", L.RAX)))
       | "real_lt" => realCompare (y, x, "seta")
       | "real_le" => realCompare (y, x, "setae")
       | "real_gt" => realCompare (x, y, "seta")
       | "real_ge" => realCompare (x, y, "setae")
       | "real_eq" =>
           SOME (fn slow =>
-            (tags ("T_REAL", [x, y]) slow;
-             line ("movsd " ^ payload x ^ ", %xmm0"); line ("ucomisd " ^ payload y ^ ", %xmm0");
+            (twoReal (x, y) slow; line "ucomisd %xmm1, %xmm0";
              line "sete %al"; line "setnp %cl"; line "and %cl, %al"; line "movzbl %al, %eax";
-             line ("movb $T_CON0, " ^ slot x); line ("mov %rax, " ^ payload x)))
+             L.setReg line (sd x, "T_CON0", L.RAX)))
       | "poly_eq" =>
           (* values_equal of two immediates: of different tags, false; of the
              same, the payloads (unit is equal to unit); a real or a pointer is
              the primitive's *)
           SOME (fn slow =>
-            (line ("movzbl " ^ slot x ^ ", %eax");
-             line ("cmpb %al, " ^ slot y); line ("jne " ^ l ^ "_ne");
+            (L.loadTag line (L.RAX, sd x); L.loadTag line (L.RCX, sd y);
+             line "cmp %ecx, %eax"; line ("jne " ^ l ^ "_ne");
              line "cmp $T_REAL, %eax"; line ("je " ^ slow);
              line "cmp $T_PTR, %eax"; line ("je " ^ slow);
              line "cmp $T_UNIT, %eax"; line ("je " ^ l ^ "_eq");
-             line ("mov " ^ payload x ^ ", %rax"); line ("cmp " ^ payload y ^ ", %rax");
+             L.loadPayload line (L.RAX, sd x); L.cmpPayload line (L.RAX, sd y);
              line "sete %al"; line "movzbl %al, %eax"; line ("jmp " ^ l ^ "_b");
              put (l ^ "_eq:\n"); line "mov $1, %eax"; line ("jmp " ^ l ^ "_b");
              put (l ^ "_ne:\n"); line "xor %eax, %eax";
-             put (l ^ "_b:\n"); line ("movb $T_CON0, " ^ slot x); line ("mov %rax, " ^ payload x)))
+             put (l ^ "_b:\n"); L.setReg line (sd x, "T_CON0", L.RAX)))
       | "imm_eq" =>
           (* two values the compiler knows are never in the heap, nor unit:
              their tags and bits, with no call *)
           SOME (fn _ =>
-            (line ("movzbl " ^ slot x ^ ", %eax");
-             line ("cmpb %al, " ^ slot y); line "sete %cl";
-             line ("mov " ^ payload x ^ ", %rax"); line ("cmp " ^ payload y ^ ", %rax");
+            (L.loadTag line (L.RAX, sd x); L.loadTag line (L.RCX, sd y);
+             line "cmp %ecx, %eax"; line "sete %cl";
+             L.loadPayload line (L.RAX, sd x); L.cmpPayload line (L.RAX, sd y);
              line "sete %al"; line "and %cl, %al"; line "movzbl %al, %eax";
-             line ("movb $T_CON0, " ^ slot x); line ("mov %rax, " ^ payload x)))
-      | "ref_get" => SOME (fn slow => (obj (y, "K_REF") slow; line "movdqu OBJ_FIELDS(%rax), %xmm0"; line ("movdqu %xmm0, " ^ slot y)))
+             L.setReg line (sd x, "T_CON0", L.RAX)))
+      | "ref_get" => SOME (fn slow => (obj (y, "K_REF") slow; L.loadField line (sd y, L.RAX, 0)))
       | "ref_set" =>
           SOME (fn slow =>
             (obj (x, "K_REF") slow;
-             line ("movdqu " ^ slot y ^ ", %xmm0"); line "movdqu %xmm0, OBJ_FIELDS(%rax)";
-             line ("movb $T_UNIT, " ^ slot x); line ("movq $0, " ^ payload x)))
+             L.storeField line (L.RAX, 0, sd y);
+             L.set line (sd x, "T_UNIT", 0)))
       | "word_to_int" =>
           SOME (fn slow =>
             (tags ("T_WORD", [y]) slow;
-             line ("cmpq $0, " ^ payload y); line ("jl " ^ slow);
-             line ("movb $T_INT, " ^ slot y)))
-      | "word_to_int_x" => SOME (fn slow => (tags ("T_WORD", [y]) slow; line ("movb $T_INT, " ^ slot y)))
-      | "word_from_int" => SOME (fn slow => (tags ("T_INT", [y]) slow; line ("movb $T_WORD, " ^ slot y)))
+             L.loadPayload line (L.RAX, sd y); line "test %rax, %rax"; line ("js " ^ slow);
+             L.setReg line (sd y, "T_INT", L.RAX)))
+      | "word_to_int_x" => SOME (fn slow => (tags ("T_WORD", [y]) slow; retag (y, "T_INT")))
+      | "word_from_int" => SOME (fn slow => (tags ("T_INT", [y]) slow; retag (y, "T_WORD")))
       | "int_to_char" =>
           SOME (fn slow =>
             (tags ("T_INT", [y]) slow;
-             line ("cmpq $255, " ^ payload y); line ("ja " ^ slow);
-             line ("movb $T_CHAR, " ^ slot y)))
+             L.loadPayload line (L.RAX, sd y); line "cmp $255, %rax"; line ("ja " ^ slow);
+             L.setReg line (sd y, "T_CHAR", L.RAX)))
       | "vector_length" => length "K_TUPLE"
       | "vector_sub" =>
           SOME (fn slow =>
             (obj (x, "K_TUPLE") slow; index y slow;
-             line "shl $4, %rcx"; line "movdqu OBJ_FIELDS(%rax,%rcx), %xmm0";
-             line ("movdqu %xmm0, " ^ slot x)))
+             L.element line (); L.loadField line (sd x, L.RAX, 0)))
       | "string_size" => length "K_STRING"
       | "array_length" => length "K_ARRAY"
       | "string_sub" =>
           SOME (fn slow =>
             (obj (x, "K_STRING") slow; index y slow;
-             line "movzbl OBJ_FIELDS(%rax,%rcx), %ecx";
-             line ("movb $T_CHAR, " ^ slot x); line ("mov %rcx, " ^ payload x)))
+             L.stringByte line ();
+             L.setReg line (sd x, "T_CHAR", L.RCX)))
       | "array_sub" =>
           SOME (fn slow =>
             (obj (x, "K_ARRAY") slow; index y slow;
-             line "shl $4, %rcx"; line "movdqu OBJ_FIELDS(%rax,%rcx), %xmm0";
-             line ("movdqu %xmm0, " ^ slot x)))
+             L.element line (); L.loadField line (sd x, L.RAX, 0)))
       | "array_update" =>
           SOME (fn slow =>
             (obj (h - 3, "K_ARRAY") slow; index (h - 2) slow;
-             line "shl $4, %rcx"; line ("movdqu " ^ slot (h - 1) ^ ", %xmm0");
-             line "movdqu %xmm0, OBJ_FIELDS(%rax,%rcx)";
-             line ("movb $T_UNIT, " ^ slot (h - 3)); line ("movq $0, " ^ payload (h - 3))))
+             L.element line (); L.storeField line (L.RAX, 0, sd (h - 1));
+             L.set line (sd (h - 3), "T_UNIT", 0)))
       | _ => NONE
     end
 
   (* The names of the primitives fastPrim does inline, for runeopt --inlined. *)
-  val silent = {line = fn _ : string => (), put = fn _ : string => (), slot = fn _ : int => "", payload = fn _ : int => ""}
+  val silent = {line = fn _ : string => (), put = fn _ : string => (), sd = fn _ : int => ""}
   val inlined : string list = List.filter (fn n => isSome (fastPrim (n, 3, 0, silent))) (Vector.foldr op:: [] primNames)
 
   fun write (put : string -> unit, p : Rbc.program, facts : RbcCheck.facts,
@@ -344,7 +341,7 @@ struct
          line "mov VM_FP(%r12), %rcx";
          line "imul $FRAME_SIZE, %rcx, %rcx";
          line "mov FRAME_BASE(%rax,%rcx), %rbp";
-         line "shl $4, %rbp")
+         line ("shl $" ^ Int.toString L.valueShift ^ ", %rbp"))
       fun closureToRax () =
         (line "mov VM_FRAMES(%r12), %rax";
          line "mov VM_FP(%r12), %rcx";
@@ -360,35 +357,24 @@ struct
           val first = Array.sub (index, offset)
           fun lastOf i = if i + 1 < n andalso #pc (ins (i + 1)) < stop then lastOf (i + 1) else i
           val last = lastOf first
-          fun slot k = num (16 * (nlocals + k)) ^ "(%r13,%rbp)"
-          fun payload k = num (16 * (nlocals + k) + 8) ^ "(%r13,%rbp)"
-          fun localSlot l = num (16 * l) ^ "(%r13,%rbp)"
-          fun copy (from, to) = (line ("movdqu " ^ from ^ ", %xmm0"); line ("movdqu %xmm0, " ^ to))
-          fun put0 (tag, value, k) = (line ("movb $" ^ tag ^ ", " ^ slot k); line ("movq $" ^ value ^ ", " ^ payload k))
-          fun putPtr k = (line ("movb $T_PTR, " ^ slot k); line ("mov %rax, " ^ payload k))
+          (* the displacements of stack slot k and local l, and their operands (M3: X64Layout) *)
+          fun sd k = L.slotDisp (nlocals + k)
+          fun ld l = L.slotDisp l
+          fun slot k = sd k ^ "(%r13,%rbp)"
+          fun localSlot l = ld l ^ "(%r13,%rbp)"
+          fun copy (from, to) = L.copyMem line (from, to)
+          fun put0 (tag, value, k) = L.set line (sd k, tag, value)
+          fun putPtr k = L.setReg line (sd k, "T_PTR", L.RAX)
           (* M11: an object of n > 0 fields, its header written, in rax, by
              bumping heap_used as vm_alloc does, with the same counts; to
              `slow` when it does not fit or --gc-stress is on, which is
              vm_alloc's to decide. The fields are the caller's to write. *)
-          fun alloc (kind, contag, n, slow) =
-            let val size = num (8 + 16 * n)
-            in
-              line "cmpq $0, VM_GC_STRESS(%r12)";
-              line ("jne " ^ slow);
-              line "mov VM_HEAP_USED(%r12), %rax";
-              line "mov VM_HEAP_SIZE(%r12), %rdx";
-              line "sub %rax, %rdx";
-              line ("cmp $" ^ size ^ ", %rdx");
-              line ("jb " ^ slow);
-              line ("lea " ^ size ^ "(%rax), %rdx");
-              line "mov %rdx, VM_HEAP_USED(%r12)";
-              line "add VM_HEAP_FROM(%r12), %rax";
-              line ("addq $" ^ size ^ ", VM_BYTES_ALLOCATED(%r12)");
-              line "incq VM_OBJECTS_ALLOCATED(%r12)";
-              line ("movl $" ^ kind ^ "+" ^ num (65536 * (contag mod 65536)) ^ ", (%rax)");
-              line ("movl $" ^ num n ^ ", OBJ_LEN(%rax)")
-            end
-          fun field k = "OBJ_FIELDS+" ^ num (16 * k) ^ "(%rax)"
+          fun alloc (kind, contag, n, slow) = L.alloc line (kind, contag, n, slow)
+          (* the fields of the object in rax: k from stack slot s, or an immediate *)
+          fun storeField (k, s) = L.storeField line (L.RAX, k, s)
+          fun field k = L.fieldDisp k ^ "(%rax)"
+          (* an index of the stack in units of the frame's base (rbp), from a displacement *)
+          fun shiftIndex r = line ("shr $" ^ Int.toString L.valueShift ^ ", " ^ r)
           fun startsRun i =
             i = first orelse endsRun (#opc (ins (i - 1))) orelse Array.sub (target, i) orelse Array.sub (handler, i)
           fun runLength i =
@@ -433,13 +419,12 @@ struct
                  slot that the slow paths make before they call into C *)
               val fwd = !pending
               val () = pending := NONE
-              fun rslot k = case fwd of SOME (k', l) => if k = k' then localSlot l else slot k | NONE => slot k
-              fun rpayload k =
-                case fwd of SOME (k', l) => if k = k' then num (16 * l + 8) ^ "(%r13,%rbp)" else payload k | NONE => payload k
-              fun unforward () = case fwd of SOME (k, l) => copy (localSlot l, slot k) | NONE => ()
+              fun rsd k = case fwd of SOME (k', l) => if k = k' then ld l else sd k | NONE => sd k
+              fun rslot k = rsd k ^ "(%r13,%rbp)"
+              fun unforward () = case fwd of SOME (k, l) => L.copy line (sd k, ld l) | NONE => ()
               fun flushSp () =
-                (line ("lea " ^ num (16 * (nlocals + h)) ^ "(%rbp), %rax");
-                 line "shr $4, %rax";
+                (line ("lea " ^ sd h ^ "(%rbp), %rax");
+                 shiftIndex "%rax";
                  line "mov %rax, VM_SP(%r12)")
               fun setPc () = line ("movl $" ^ num next ^ ", VM_PC(%r12)")
               fun flushCount () = line "mov %r15, VM_INSTRUCTIONS(%r12)"
@@ -454,12 +439,7 @@ struct
                   slows := (fn () => (put (slow ^ ":\n"); unforward (); flushSp (); setPc (); helper ();
                                       line reloadStack; line ("jmp " ^ done))) :: !slows
                 end
-              fun expectObj (k, kind, what) =
-                (line ("cmpb $T_PTR, " ^ rslot k);
-                 line ("jne " ^ check (pc, next, what, 0));
-                 line ("mov " ^ rpayload k ^ ", %rax");
-                 line ("cmpb $" ^ kind ^ ", OBJ_KIND(%rax)");
-                 line ("jne " ^ check (pc, next, what, 0)))
+              fun expectObj (k, kind, what) = L.loadObj line (L.RAX, rsd k, kind, check (pc, next, what, 0))
               val () = put (lab pc ^ ":\t# " ^ Vector.sub (Opcodes.names, opc)
                             ^ (case Vector.sub (Opcodes.nargs, opc) of 0 => "" | 1 => " " ^ num a | _ => " " ^ num a ^ " " ^ num b)
                             ^ "\n")
@@ -475,14 +455,10 @@ struct
                 let
                   val slow = lab pc ^ "_slow"
                   val tail = opc = Opcodes.TAILCALL
-                  val newBase = num (16 * (nlocals + h - 2))
+                  val newBase = sd (h - 2)
                 in
-                  line ("cmpb $T_PTR, " ^ slot (h - 2));
-                  line ("jne " ^ slow);
-                  line ("mov " ^ payload (h - 2) ^ ", %rax");
-                  line "cmpb $K_CLOSURE, OBJ_KIND(%rax)";
-                  line ("jne " ^ slow);
-                  line "mov OBJ_FIELDS+8(%rax), %rcx";
+                  L.loadObj line (L.RAX, sd (h - 2), "K_CLOSURE", slow);
+                  L.loadFieldPayload line (L.RCX, L.RAX, 0);
                   line ("cmp $" ^ num nfuncs ^ ", %rcx");
                   line ("jae " ^ slow);
                   if tail then
@@ -492,7 +468,7 @@ struct
                      line "add %rsi, %rdx";
                      line "mov %ecx, FRAME_FUNC(%rdx)";
                      line "mov %rax, FRAME_CLOSURE(%rdx)";
-                     copy (rslot (h - 1), "(%r13,%rbp)"))
+                     L.copy line (ld 0, rsd (h - 1)))
                   else
                     (line "mov VM_FP(%r12), %rdx";
                      line "add $1, %rdx";
@@ -504,12 +480,12 @@ struct
                      line "mov %ecx, FRAME_FUNC(%rdx)";
                      line ("movl $" ^ num next ^ ", FRAME_RET_PC(%rdx)");
                      line ("lea " ^ newBase ^ "(%rbp), %rsi");
-                     line "shr $4, %rsi";
+                     shiftIndex "%rsi";
                      line "mov %rsi, FRAME_BASE(%rdx)";
                      line "mov %rax, FRAME_CLOSURE(%rdx)";
                      line ("lea " ^ lab next ^ "(%rip), %rsi");
                      line "mov %rsi, FRAME_NATIVE_RET(%rdx)";
-                     copy (rslot (h - 1), slot (h - 2));
+                     L.copy line (sd (h - 2), rsd (h - 1));
                      line ("lea " ^ newBase ^ "(%rbp), %rbp"));
                   line "lea rune_functions(%rip), %rdx";
                   line "lea (%rcx,%rcx,2), %rcx";
@@ -532,7 +508,7 @@ struct
                 let
                   val tail = opc = Opcodes.TAILCALLK
                   val slow = lab pc ^ "_slow"
-                  val newBase = num (16 * (nlocals + h - b))
+                  val newBase = sd (h - b)
                 in
                   if tail then
                     (line "mov VM_FRAMES(%r12), %rdx";
@@ -541,7 +517,7 @@ struct
                      line "add %rsi, %rdx";
                      line ("movl $" ^ num a ^ ", FRAME_FUNC(%rdx)");
                      line "movq $0, FRAME_CLOSURE(%rdx)";
-                     List.app (fn k => copy (rslot (h - b + k), localSlot k)) (List.tabulate (b, fn k => k)))
+                     List.app (fn k => L.copy line (ld k, rsd (h - b + k))) (List.tabulate (b, fn k => k)))
                   else
                     (line "mov VM_FP(%r12), %rdx";
                      line "add $1, %rdx";
@@ -553,7 +529,7 @@ struct
                      line ("movl $" ^ num a ^ ", FRAME_FUNC(%rdx)");
                      line ("movl $" ^ num next ^ ", FRAME_RET_PC(%rdx)");
                      line ("lea " ^ newBase ^ "(%rbp), %rsi");
-                     line "shr $4, %rsi";
+                     shiftIndex "%rsi";
                      line "mov %rsi, FRAME_BASE(%rdx)";
                      line "movq $0, FRAME_CLOSURE(%rdx)";
                      line ("lea " ^ lab next ^ "(%rip), %rsi");
@@ -567,9 +543,8 @@ struct
                   line ("jmp .Le" ^ Int.toString a)
                 end
               fun jumpIfTemplate () =
-                (line ("cmpb $T_CON0, " ^ rslot (h - 1));
-                 line ("jne " ^ check (pc, next, if opc = Opcodes.JUMPIF then fatalJumpIf else fatalJumpIfNot, 0));
-                 line ("cmpq $0, " ^ rpayload (h - 1));
+                (L.checkTag line (rsd (h - 1), "T_CON0", check (pc, next, if opc = Opcodes.JUMPIF then fatalJumpIf else fatalJumpIfNot, 0));
+                 L.testFalse line (rsd (h - 1));
                  line ((if opc = Opcodes.JUMPIF then "jne " else "je ") ^ lab a))
             in
               if h < 0 then line "ud2"
@@ -581,54 +556,51 @@ struct
                    Opcode.HALT =>
                    (flushCount (); flushSp (); setPc (); callC ("native_halt", []); line "ud2")
                  | Opcode.CONST =>
-                   (line "mov VM_CONSTS(%r12), %rax"; copy (num (16 * a) ^ "(%rax)", slot h))
-                 | Opcode.INT => put0 ("T_INT", num a, h)
-                 | Opcode.UNIT => put0 ("T_UNIT", "0", h)
-                 | Opcode.CON0 => put0 ("T_CON0", num a, h)
+                   (line "mov VM_CONSTS(%r12), %rax"; copy (num (L.valueSize * a) ^ "(%rax)", slot h))
+                 | Opcode.INT => put0 ("T_INT", a, h)
+                 | Opcode.UNIT => put0 ("T_UNIT", 0, h)
+                 | Opcode.CON0 => put0 ("T_CON0", a, h)
                  | Opcode.LOCAL =>
-                   if forwards i then pending := SOME (h, a) else copy (localSlot a, slot h)
-                 | Opcode.SETLOCAL => copy (rslot (h - 1), localSlot a)
-                 | Opcode.TEELOCAL => copy (rslot (h - 1), localSlot a)
+                   if forwards i then pending := SOME (h, a) else L.copy line (sd h, ld a)
+                 | Opcode.SETLOCAL => L.copy line (ld a, rsd (h - 1))
+                 | Opcode.TEELOCAL => L.copy line (ld a, rsd (h - 1))
                  | Opcode.ENV =>
                    (closureToRax ();
                     line "test %rax, %rax";
                     line ("jz " ^ check (pc, next, fatalEnv, a));
-                    line ("cmpl $" ^ num (a + 1) ^ ", OBJ_LEN(%rax)");
-                    line ("jbe " ^ check (pc, next, fatalEnv, a));
-                    copy ("OBJ_FIELDS+" ^ num (16 * (a + 1)) ^ "(%rax)", slot h))
+                    L.needLen line (L.RAX, a + 1, check (pc, next, fatalEnv, a));
+                    L.loadField line (sd h, L.RAX, a + 1))
                  | Opcode.SELF =>
                    (closureToRax ();
                     line "test %rax, %rax";
                     line ("jz " ^ check (pc, next, fatalSelf, 0));
-                    line ("movb $T_PTR, " ^ slot h);
-                    line ("mov %rax, " ^ payload h))
+                    putPtr h)
                  | Opcode.GLOBAL =>
                    (line "mov VM_GLOBAL_SET(%r12), %rax";
                     line ("cmpb $0, " ^ num a ^ "(%rax)");
                     line ("je " ^ check (pc, next, fatalGlobal, a));
                     line "mov VM_GLOBALS(%r12), %rax";
-                    copy (num (16 * a) ^ "(%rax)", slot h))
+                    copy (num (L.valueSize * a) ^ "(%rax)", slot h))
                  | Opcode.SETGLOBAL =>
                    (line "mov VM_GLOBALS(%r12), %rax";
-                    copy (rslot (h - 1), num (16 * a) ^ "(%rax)");
+                    copy (rslot (h - 1), num (L.valueSize * a) ^ "(%rax)");
                     line "mov VM_GLOBAL_SET(%r12), %rax";
                     line ("movb $1, " ^ num a ^ "(%rax)"))
                  | Opcode.POP => ()
                  | Opcode.TUPLE =>
-                   if a = 0 then put0 ("T_UNIT", "0", h)
+                   if a = 0 then put0 ("T_UNIT", 0, h)
                    else
                      inlineAlloc (fn slow =>
-                                    (alloc ("K_TUPLE", 0, a, slow);
-                                     List.app (fn k => copy (rslot (h - a + k), field k)) (List.tabulate (a, fn k => k));
+                                    (alloc (L.K_TUPLE, 0, a, slow);
+                                     List.app (fn k => storeField (k, rsd (h - a + k))) (List.tabulate (a, fn k => k));
                                      putPtr (h - a)),
                                   fn () => callC ("native_tuple", ["mov $" ^ num a ^ ", %esi"]))
                  | Opcode.SELECT =>
                    (expectObj (h - 1, "K_TUPLE", fatalTuple);
-                    line ("cmpl $" ^ num a ^ ", OBJ_LEN(%rax)");
-                    line ("jbe " ^ check (pc, next, fatalSelect, a));
-                    copy ("OBJ_FIELDS+" ^ num (16 * a) ^ "(%rax)", slot (h - 1)))
+                    L.needLen line (L.RAX, a, check (pc, next, fatalSelect, a));
+                    L.loadField line (sd (h - 1), L.RAX, a))
                  | Opcode.CON =>
-                   inlineAlloc (fn slow => (alloc ("K_CON", a, 1, slow); copy (rslot (h - 1), field 0); putPtr (h - 1)),
+                   inlineAlloc (fn slow => (alloc (L.K_CON, a, 1, slow); storeField (0, rsd (h - 1)); putPtr (h - 1)),
                                 fn () => callC ("native_con", ["mov $" ^ num a ^ ", %esi"]))
                  | Opcode.DECON =>
                    (* under --checked, the tag tested too (decision D14),
@@ -639,10 +611,10 @@ struct
                      line "cmpl $0, VM_CHECKED(%r12)";
                      line ("jne " ^ slow);
                      put (done ^ ":\n");
-                     copy ("OBJ_FIELDS(%rax)", slot (h - 1));
+                     L.loadField line (sd (h - 1), L.RAX, 0);
                      slows := (fn () =>
                                  (put (slow ^ ":\n");
-                                  line "movzwl OBJ_CONTAG(%rax), %ecx";
+                                  L.loadContag line (L.RCX, L.RAX);
                                   line ("cmp $" ^ num a ^ ", %ecx");
                                   line ("je " ^ done);
                                   line "shl $16, %ecx";
@@ -656,8 +628,8 @@ struct
                    end
                  | Opcode.CONN =>
                    inlineAlloc (fn slow =>
-                                  (alloc ("K_CON", a, b, slow);
-                                   List.app (fn k => copy (rslot (h - b + k), field k)) (List.tabulate (b, fn k => k));
+                                  (alloc (L.K_CON, a, b, slow);
+                                   List.app (fn k => storeField (k, rsd (h - b + k))) (List.tabulate (b, fn k => k));
                                    putPtr (h - b)),
                                 fn () => callC ("native_conn", ["mov $" ^ num a ^ ", %esi", "mov $" ^ num b ^ ", %edx"]))
                  | Opcode.FIELD =>
@@ -665,15 +637,14 @@ struct
                    let val slow = lab pc ^ "_checked" val done = lab pc ^ "_done"
                    in
                      expectObj (h - 1, "K_CON", fatalFields);
-                     line ("cmpl $" ^ num b ^ ", OBJ_LEN(%rax)");
-                     line ("jbe " ^ check (pc, next, fatalField, b));
+                     L.needLen line (L.RAX, b, check (pc, next, fatalField, b));
                      line "cmpl $0, VM_CHECKED(%r12)";
                      line ("jne " ^ slow);
                      put (done ^ ":\n");
-                     copy ("OBJ_FIELDS+" ^ num (16 * b) ^ "(%rax)", slot (h - 1));
+                     L.loadField line (sd (h - 1), L.RAX, b);
                      slows := (fn () =>
                                  (put (slow ^ ":\n");
-                                  line "movzwl OBJ_CONTAG(%rax), %ecx";
+                                  L.loadContag line (L.RCX, L.RAX);
                                   line ("cmp $" ^ num a ^ ", %ecx");
                                   line ("je " ^ done);
                                   line "shl $16, %ecx";
@@ -686,29 +657,13 @@ struct
                                   line "ud2")) :: !slows
                    end
                  | Opcode.CONTAG =>
-                   let val ptr = lab pc ^ "_ptr" val done = lab pc ^ "_done"
-                   in
-                     line ("cmpb $T_CON0, " ^ slot (h - 1));
-                     line ("jne " ^ ptr);
-                     line ("movb $T_INT, " ^ slot (h - 1));
-                     line ("jmp " ^ done);
-                     put (ptr ^ ":\n");
-                     line ("cmpb $T_PTR, " ^ slot (h - 1));
-                     line ("jne " ^ check (pc, next, fatalContag, 0));
-                     line ("mov " ^ payload (h - 1) ^ ", %rax");
-                     line "cmpb $K_CON, OBJ_KIND(%rax)";
-                     line ("jne " ^ check (pc, next, fatalContag, 0));
-                     line "movzwl OBJ_CONTAG(%rax), %eax";
-                     line ("movb $T_INT, " ^ slot (h - 1));
-                     line ("mov %rax, " ^ payload (h - 1));
-                     put (done ^ ":\n")
-                   end
+                   (L.loadTagOfCon line (L.RAX, sd (h - 1), check (pc, next, fatalContag, 0), lab pc);
+                    L.setReg line (sd (h - 1), "T_INT", L.RAX))
                  | Opcode.CLOSURE =>
                    inlineAlloc (fn slow =>
-                                  (alloc ("K_CLOSURE", 0, b + 1, slow);
-                                   line ("movb $T_INT, " ^ field 0);
-                                   line ("movq $" ^ num a ^ ", OBJ_FIELDS+8(%rax)");
-                                   List.app (fn k => copy (rslot (h - b + k), field (k + 1))) (List.tabulate (b, fn k => k));
+                                  (alloc (L.K_CLOSURE, 0, b + 1, slow);
+                                   L.storeFieldImm line (L.RAX, 0, "T_INT", a);
+                                   List.app (fn k => storeField (k + 1, rsd (h - b + k))) (List.tabulate (b, fn k => k));
                                    putPtr (h - b)),
                                 fn () => callC ("native_closure", ["mov $" ^ num a ^ ", %esi", "mov $" ^ num b ^ ", %edx"]))
                  | Opcode.SETENV =>
@@ -720,21 +675,10 @@ struct
                       of the targets of the JUMPs after it, which are never
                       run; past them where the tag is not below a *)
                    let
-                     val ptr = lab pc ^ "_ptr" val have = lab pc ^ "_tag" val table = lab pc ^ "_table"
+                     val table = lab pc ^ "_table"
                      val past = next + 5 * a
                    in
-                     line ("cmpb $T_CON0, " ^ rslot (h - 1));
-                     line ("jne " ^ ptr);
-                     line ("mov " ^ rpayload (h - 1) ^ ", %rax");
-                     line ("jmp " ^ have);
-                     put (ptr ^ ":\n");
-                     line ("cmpb $T_PTR, " ^ rslot (h - 1));
-                     line ("jne " ^ check (pc, next, fatalSwitch, 0));
-                     line ("mov " ^ rpayload (h - 1) ^ ", %rax");
-                     line "cmpb $K_CON, OBJ_KIND(%rax)";
-                     line ("jne " ^ check (pc, next, fatalSwitch, 0));
-                     line "movzwl OBJ_CONTAG(%rax), %eax";
-                     put (have ^ ":\n");
+                     L.loadTagOfCon line (L.RAX, rsd (h - 1), check (pc, next, fatalSwitch, 0), lab pc);
                      line ("cmp $" ^ num a ^ ", %rax");
                      line ("jae " ^ lab past);
                      line ("lea " ^ table ^ "(%rip), %rcx");
@@ -755,7 +699,7 @@ struct
                      line "mov VM_FP(%r12), %rdx";
                      line "test %rdx, %rdx";
                      line ("jz " ^ slow);
-                     copy (rslot (h - 1), "(%r13,%rbp)");
+                     L.copy line (ld 0, rsd (h - 1));
                      line "imul $FRAME_SIZE, %rdx, %rdx";
                      line "add VM_FRAMES(%r12), %rdx";
                      line "decq VM_FP(%r12)";
@@ -769,23 +713,9 @@ struct
                  | Opcode.JUMPIF => jumpIfTemplate ()
                  | Opcode.JUMPIFNOTTAG =>
                    (* CONTAG's two cases, each compared with b *)
-                   let val ptr = lab pc ^ "_ptr"
-                   in
-                     line ("cmpb $T_CON0, " ^ rslot (h - 1));
-                     line ("jne " ^ ptr);
-                     line ("cmpq $" ^ num b ^ ", " ^ rpayload (h - 1));
-                     line ("jne " ^ lab a);
-                     line ("jmp " ^ lab next);
-                     put (ptr ^ ":\n");
-                     line ("cmpb $T_PTR, " ^ rslot (h - 1));
-                     line ("jne " ^ check (pc, next, fatalJumpIfNotTag, 0));
-                     line ("mov " ^ rpayload (h - 1) ^ ", %rax");
-                     line "cmpb $K_CON, OBJ_KIND(%rax)";
-                     line ("jne " ^ check (pc, next, fatalJumpIfNotTag, 0));
-                     line "movzwl OBJ_CONTAG(%rax), %eax";
-                     line ("cmp $" ^ num b ^ ", %rax");
-                     line ("jne " ^ lab a)
-                   end
+                   (L.loadTagOfCon line (L.RAX, rsd (h - 1), check (pc, next, fatalJumpIfNotTag, 0), lab pc);
+                    line ("cmp $" ^ num b ^ ", %rax");
+                    line ("jne " ^ lab a))
                  | Opcode.PUSHHANDLER =>
                    (flushSp (); callC ("vm_push_handler", ["mov $" ^ num a ^ ", %esi"]))
                  | Opcode.POPHANDLER =>
@@ -796,33 +726,28 @@ struct
                    (flushCount (); flushSp (); setPc (); callC ("native_raise", []); line "jmp *%rax")
                  | Opcode.NEWEXN =>
                    inlineAlloc (fn slow =>
-                                  (alloc ("K_EXNCON", 0, 1, slow);
+                                  (alloc (L.K_EXNCON, 0, 1, slow);
                                    line "mov VM_CONSTS(%r12), %rcx";
-                                   copy (num (16 * a) ^ "(%rcx)", field 0);
+                                   copy (num (L.valueSize * a) ^ "(%rcx)", field 0);
                                    putPtr h),
                                 fn () => callC ("native_newexn", ["mov $" ^ num a ^ ", %esi"]))
                  | Opcode.BUILTINEXN =>
                    (line ("mov VM_BUILTIN_EXNS+" ^ num (8 * a) ^ "(%r12), %rax");
-                    line ("movb $T_PTR, " ^ slot h);
-                    line ("mov %rax, " ^ payload h))
+                    putPtr h)
                  | Opcode.MKEXN =>
                    (* a constructor that is none is the helper's to report,
                       after it has allocated, as the interpreter does *)
                    inlineAlloc (fn slow =>
-                                  (line ("cmpb $T_PTR, " ^ slot (h - 2));
-                                   line ("jne " ^ slow);
-                                   line ("mov " ^ payload (h - 2) ^ ", %rcx");
-                                   line "cmpb $K_EXNCON, OBJ_KIND(%rcx)";
-                                   line ("jne " ^ slow);
-                                   alloc ("K_EXN", 0, 2, slow);
-                                   copy (slot (h - 2), field 0);
-                                   copy (rslot (h - 1), field 1);
+                                  (L.loadObj line (L.RCX, sd (h - 2), "K_EXNCON", slow);
+                                   alloc (L.K_EXN, 0, 2, slow);
+                                   storeField (0, sd (h - 2));
+                                   storeField (1, rsd (h - 1));
                                    putPtr (h - 2)),
                                 fn () => callC ("native_mkexn", []))
                  | Opcode.EXNCON =>
-                   (expectObj (h - 1, "K_EXN", fatalExn); copy ("OBJ_FIELDS(%rax)", slot (h - 1)))
+                   (expectObj (h - 1, "K_EXN", fatalExn); L.loadField line (sd (h - 1), L.RAX, 0))
                  | Opcode.EXNARG =>
-                   (expectObj (h - 1, "K_EXN", fatalExn); copy ("OBJ_FIELDS+16(%rax)", slot (h - 1)))
+                   (expectObj (h - 1, "K_EXN", fatalExn); L.loadField line (sd (h - 1), L.RAX, 1))
                  | Opcode.PRIM =>
                    let
                      fun callPrim () =
@@ -842,8 +767,7 @@ struct
                          end
                        else ()
                    in
-                     case fastPrim (Vector.sub (primNames, a), h, pc,
-                                    {line = line, put = put, slot = rslot, payload = rpayload}) of
+                     case fastPrim (Vector.sub (primNames, a), h, pc, {line = line, put = put, sd = rsd}) of
                        NONE => callPrim ()
                      | SOME fast =>
                          let val slow = lab pc ^ "_slow" val done = lab pc ^ "_done"
@@ -874,13 +798,12 @@ struct
              a CALLK as many as the function is given (RbcCheck). The glue
              enters at .Lr, which takes rbp from the frame first. *)
           put (".Le" ^ Int.toString f ^ ":\n");
-          line ("lea " ^ num (16 * (nlocals + Vector.sub (#maxHeight facts, f))) ^ "(%rbp), %rax");
-          line "shr $4, %rax";
+          line ("lea " ^ sd (Vector.sub (#maxHeight facts, f)) ^ "(%rbp), %rax");
+          shiftIndex "%rax";
           line "cmp VM_STACK_CAP(%r12), %rax";
           line ("ja .Lg" ^ Int.toString f);
           put (".Lh" ^ Int.toString f ^ ":\n");
-          if nlocals > 1 then line "pxor %xmm1, %xmm1" else ();
-          let fun units k = if k >= nlocals then () else (line ("movdqu %xmm1, " ^ localSlot k); units (k + 1))
+          let fun units k = if k >= nlocals then () else (L.set line (ld k, "T_UNIT", 0); units (k + 1))
           in units (Vector.sub (#params facts, f)) end;
           slows := (fn () =>
                       (put (".Lg" ^ Int.toString f ^ ":\n");
@@ -911,7 +834,7 @@ struct
       line ".include \"rune-offsets.s\"";
       Vector.appi (fn (k, file) => line (".file " ^ Int.toString (k + 1) ^ " " ^ quote file)) (#files p);
       line ".text";
-      (* The way in from vm/native.c: the registers C wants kept are kept,
+      (* The way in from runtime/native/native.c: the registers C wants kept are kept,
          once, since the code never returns; the stack is left aligned for
          every call the code makes into C. *)
       line ".globl rune_enter";

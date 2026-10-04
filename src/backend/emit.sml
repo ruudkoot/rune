@@ -1,7 +1,7 @@
 (* Serialization of a compiled program to the .rbc bytecode format.
    See docs/bytecode.md for the layout. All multi-byte values are little-endian.
    The output is assembled from 8-bit strings rather than a list of bytes so
-   that the emitter is cheap when the compiler itself runs on runevm. *)
+   that the emitter is cheap when the compiler itself runs on runevm-stack. *)
 structure Emit =
 struct
   open Lambda Code

@@ -24,7 +24,7 @@ set -u
 cd "$(dirname "$0")/../.."
 top=$(pwd)
 rune=${RUNE:-bin/rune-stack}
-runevm=${RUNEVM:-bin/runevm}
+runevm=${RUNEVM:-bin/runevm-stack}
 runedoc=${RUNEDOC:-bin/runedoc}
 timeout=${LAWS_TIMEOUT:-120}
 memory=${LAWS_MEMORY:-4096}

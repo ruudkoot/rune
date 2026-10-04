@@ -1,26 +1,26 @@
 #!/bin/sh
 # The tests of runeopt, the native code generator (docs/native.md):
 #   tests/opt/run-opt-tests.sh [--runeopt BIN] [--rune BIN] [--vm BIN] [-j N]
-# 1. Files it refuses: a file the loader of runevm refuses is refused with
+# 1. Files it refuses: a file the loader of runevm-stack refuses is refused with
 #    the loader's message, and a file the loader accepts but whose code does
 #    not keep what a translation relies on (docs/native.md, The contract)
 #    with a message of its own;
 #    runeopt exits with status 1 and runs nothing.
 # 2. Every program of the compiler, of runedoc and of the suites that have
 #    been run (tests/out, tests/out/matrix/rune) passes --check, and
-#    --disasm prints what runevm --disasm prints. The VM prints a real
+#    --disasm prints what runevm-stack --disasm prints. The VM prints a real
 #    constant with C's %g and runeopt the text the file carries, so those
 #    lines are compared through awk's printf, which is C's.
 # 3. Programs translated: every-opcode.rasm, which runs every instruction of
-#    vm/opcodes.def and must name each, and the examples and a few programs of
-#    tests/perf, compiled by --rune. Each prints what it prints under runevm,
+#    runtime/stack/opcodes.def and must name each, and the examples and a few programs of
+#    tests/perf, compiled by --rune. Each prints what it prints under runevm-stack,
 #    exits as it does there, and --count says the same.
-# 4. Images: saved by runevm and carried on natively, and the other way round,
+# 4. Images: saved by runevm-stack and carried on natively, and the other way round,
 #    and one of another program, which native code refuses.
 set -u
 opt=bin/runeopt
 rune=bin/rune-stack
-vm=bin/runevm
+vm=bin/runevm-stack
 jobs=""
 one=""
 while [ $# -gt 0 ]; do
@@ -50,7 +50,7 @@ if [ -n "$one" ]; then
   "$opt" --disasm "$one" 2> "$out/$name.err" | awk -f tests/opt/real-g.awk > "$out/$name.opt"
   "$vm" --disasm "$one" > "$out/$name.vm" 2>&1
   if cmp -s "$out/$name.opt" "$out/$name.vm"; then echo OK
-  else echo "FAIL opt.disasm $one: runeopt and runevm differ (diff $out/$name.opt $out/$name.vm)"; fi
+  else echo "FAIL opt.disasm $one: runeopt and runevm-stack differ (diff $out/$name.opt $out/$name.vm)"; fi
   exit 0
 fi
 
@@ -72,15 +72,15 @@ refuse() {
 
 # The numbers of the file are little-endian; an i32 or u32 is four bytes.
 # The header, with the version and the fingerprint of the instruction set,
-# is the generated vm/opcodes.def's.
-header=$(sed -n 's/^# rbc header //p' vm/opcodes.def)
+# is the generated runtime/stack/opcodes.def's.
+header=$(sed -n 's/^# rbc header //p' runtime/stack/opcodes.def)
 zero='\000\000\000\000'
 one='\001\000\000\000'
 two='\002\000\000\000'
 huge='\377\377\377\377'
 nodebug="$zero$zero$zero$zero$zero$zero"
 
-# What the loader refuses (as tests/vm has it for runevm).
+# What the loader refuses (as tests/runtime has it for runevm-stack).
 printf '' > "$out/empty.rbc"
 refuse empty "not a Rune bytecode file" "$out/empty.rbc"
 printf 'RUNE\001\000\000\000' > "$out/version1.rbc"
@@ -149,7 +149,7 @@ if [ -n "$failures" ]; then
 fi
 pass=$((pass + nprog))
 
-# same NAME RBC: the program of RBC translated does what it does under runevm
+# same NAME RBC: the program of RBC translated does what it does under runevm-stack
 same() {
   name=$1 rbc=$2
   if ! "$opt" "$rbc" -o "$out/$name" > "$out/$name.opt" 2>&1; then
@@ -162,10 +162,10 @@ same() {
   RUNEVM_OPTIONS=--count "$out/$name" < /dev/null > "$out/$name.stdout" 2> "$out/$name.stderr"
   ncode=$?
   if [ "$vcode" != "$ncode" ]; then
-    echo "FAIL opt.run.$name: exit status $ncode, runevm's $vcode"
+    echo "FAIL opt.run.$name: exit status $ncode, runevm-stack's $vcode"
     fail=$((fail + 1))
   elif ! cmp -s "$out/$name.stdout" "$out/$name.vm.stdout"; then
-    echo "FAIL opt.run.$name: the output differs from runevm's (diff $out/$name.stdout $out/$name.vm.stdout)"
+    echo "FAIL opt.run.$name: the output differs from runevm-stack's (diff $out/$name.stdout $out/$name.vm.stdout)"
     fail=$((fail + 1))
   elif ! cmp -s "$out/$name.stderr" "$out/$name.vm.stderr"; then
     echo "FAIL opt.run.$name: standard error or the counts differ (diff $out/$name.stderr $out/$name.vm.stderr)"
@@ -176,14 +176,14 @@ same() {
 }
 
 missing=""
-for op in $(awk '!/^#/ && NF { print $1 }' vm/opcodes.def); do
+for op in $(awk '!/^#/ && NF { print $1 }' runtime/stack/opcodes.def); do
   grep -qE "^[[:space:]]*$op([[:space:]]|$)" tests/opt/every-opcode.rasm || missing="$missing $op"
 done
 if [ -n "$missing" ]; then
   echo "FAIL opt.every-opcode: tests/opt/every-opcode.rasm does not run$missing"
   fail=$((fail + 1))
 fi
-printf "$(awk -v opdefs=vm/opcodes.def -v primdefs=vm/prims.def -f tests/opt/rbcasm.awk tests/opt/every-opcode.rasm)" > "$out/every-opcode.rbc"
+printf "$(awk -v opdefs=runtime/stack/opcodes.def -v primdefs=runtime/prims.def -f tests/opt/rbcasm.awk tests/opt/every-opcode.rasm)" > "$out/every-opcode.rbc"
 same every-opcode "$out/every-opcode.rbc"
 # The primitives runeopt inlines on their edge cases: prims.sml must
 # have a PRIM of each, as --disasm shows it.
@@ -191,7 +191,7 @@ if "$rune" tests/opt/prims.sml -o "$out/prims.rbc" 2> "$out/prims.cerr"; then
   missing=""
   used=$("$opt" --disasm "$out/prims.rbc" | awk '$2 == "PRIM" { print $3 }' | sort -u | tr '\n' ' ')
   for name in $("$opt" --inlined); do
-    idx=$(awk -v name="$name" '!/^#/ && NF { if ($1 == name) print n; n++ }' vm/prims.def)
+    idx=$(awk -v name="$name" '!/^#/ && NF { if ($1 == name) print n; n++ }' runtime/prims.def)
     case " $used " in *" $idx "*) ;; *) missing="$missing $name" ;; esac
   done
   if [ -n "$missing" ]; then
@@ -209,7 +209,7 @@ for src in examples/hello.sml examples/fib.sml examples/nqueens.sml tests/perf/f
   else echo "FAIL opt.run.$name: rune failed: $(head -1 "$out/$name.cerr")"; fail=$((fail + 1)); fi
 done
 
-# Images: a program that saves itself, saved by runevm and carried on
+# Images: a program that saves itself, saved by runevm-stack and carried on
 # natively (runeopt --from-image), and the other way round; and an image of
 # another program, which a native program refuses with OS.SysErr.
 # check NAME WANT GOT: the file GOT holds what the file WANT holds

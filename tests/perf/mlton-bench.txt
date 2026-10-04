@@ -1,0 +1,58 @@
+# MLton's benchmark programs (benchmark/tests of github.com/MLton/mlton, read from
+# /home/ruud/reference) as a workload set: tests/external/run-mlton-bench.sh, and
+# scripts/perf-cycles.sh --mlton-bench and scripts/census.sh mlton-NAME through it.
+#   NAME N BYTES OBJECTS  # note
+# N is the argument of Main.doit, chosen so that a program allocates 200 MB to
+# 2 GB where its size can be chosen (MLton's own N where it cannot); BYTES and
+# OBJECTS are what bin/runevm --jit=off --count reports, the same on every
+# engine (docs/testing.md); `-` marks a program that does not run. A program
+# over 2 GB runs only with --all. --update rewrites the numbers after a
+# deliberate change to the compiler or the layout.
+DLXSimulator 1 21532297104 538261086 # 22 GB at n=1: --all runs it
+barnes-hut 128 243659528 5358329
+boyer 24 402314688 10058374
+checksum 1 560004704 10000130
+count-graphs 1 73333820376 1665097687 # 73 GB at n=1: --all runs it
+even-odd 2 576 24 # allocates under 1 MB per iteration: N by time, at most MLton's own
+fft 1 939534536 16777711
+fib 2 504 21 # allocates under 1 MB per iteration: N by time, at most MLton's own
+flat-array - - - # WIDTH: checks a sum that only MLton's 32-bit int overflows into (tests/external/mlton-skip.txt)
+fxp 1 1452982304 26162266 # its input is tests/external/mlton-bench/gen-fxp-input.sh (2 MB, no DOCTYPE); no Main.doit: the program runs at top level
+hamlet 1 1731668656 42429822
+imp-for 6 426667272 13333359
+knuth-bendix 1 224841080 4716285
+lexgen 6 440962304 11271886
+life 1 9122535408 189090682 # 9 GB at n=1: --all runs it
+logic 1 992242632 23244013
+mandelbrot 1 14120 353 # allocates under 1 MB per iteration: N by time, at most MLton's own
+matrix-multiply 1 5046109048 125751533 # 5 GB at n=1: --all runs it
+md5 1 177458239768 2023835595 # 177 GB at n=1: --all runs it
+merge 25 207999504 5199996
+mlyacc 14 409710184 9945961
+model-elimination 1 78845926904 1882040395 # 79 GB at n=1: --all runs it; a deterministic Timer (model-elimination.shim.sml): its search is sliced by CPU time
+mpuz 1 7229334264 158286199 # 7 GB at n=1: --all runs it
+nucleic 12 416272104 6124861
+output1 1 144000017384 4000000429 # 144 GB at n=1: --all runs it
+peek 1 1920002400 80000074
+pidigits 1 250932392 6276811
+psdes-random 1 97200006360 2250000167 # 97 GB at n=1: --all runs it
+ratio-regions 64 647594232 4674241
+ray 1 337761624 7605543
+raytrace 1 1527651960 24034939
+simple 1 371070616 8526477
+smith-normal-form 1 428574520 10702901 # dim 26 for MLton's 35 (smith-normal-form.sed): dim 35 allocates over 2 TB
+string-concat 1 3451149584 60568128 # 3 GB at n=1: --all runs it
+tailfib 21 480 20 # allocates under 1 MB per iteration: N by time, at most MLton's own
+tailmerge 17 279999144 6999987
+tak 1 480 20 # allocates under 1 MB per iteration: N by time, at most MLton's own
+tensor 1 285785680 6612910 # tensor sizes [40] for MLton's [100,200,300,400,500] (tensor.sed): one iteration at MLton's sizes allocates 787 GB
+tsp 1 357971520 6406498
+tyan 1 502741544 13373385
+vector-rev 1 22433728616 400604025 # 22 GB at n=1: --all runs it
+vector32-concat 1 83211840904 1600260035 # 83 GB at n=1: --all runs it
+vector64-concat 1 83211840880 1600260034 # 83 GB at n=1: --all runs it
+vliw 1 237088928 6421944
+wc-input1 3 404181368 10005089
+wc-scanStream 3 407298200 10008009
+zebra 1 10730160488 278037799 # 11 GB at n=1: --all runs it
+zern 6 401909304 7963597

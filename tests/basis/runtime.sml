@@ -191,7 +191,7 @@ struct
   (* ---- save
 
      What `save` does needs a second VM, which the Basis suite cannot start:
-     `tests/lang/rt.save_restore` writes an image and `runevm --restore`
+     `tests/lang/rt.save_restore` writes an image and `runevm-stack --restore`
      carries it on. What is checked here is what one program can see. *)
 
   val () = T.check ("Runtime.save/writes-a-file-and-says-Saved",

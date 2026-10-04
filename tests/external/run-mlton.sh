@@ -12,7 +12,7 @@
 # skip list fails.
 set -u
 rune=bin/rune-stack
-vm=bin/runevm
+vm=bin/runevm-stack
 jobs=$(sh scripts/ncpus.sh 2>/dev/null || echo 4)
 dir=""
 while [ $# -gt 0 ]; do
@@ -48,7 +48,7 @@ run_one() {
   code=$?
   if [ $code = 124 ]; then echo "TIMEOUT $name"; return; fi
   # MLton's harness records an uncaught exception and a nonzero exit in the
-  # expected output; reproduce that format from runevm's stderr and status.
+  # expected output; reproduce that format from runevm-stack's stderr and status.
   if [ $code != 0 ]; then
     sed -n 's/^runevm: uncaught exception \(.*\)$/unhandled exception: \1/p' "$out/$name.stderr" >> "$out/$name.stdout"
     echo "Nonzero exit status." >> "$out/$name.stdout"

@@ -1,5 +1,5 @@
 (* What runeisa writes from the description of the register bytecode
-   (src/isa/regs.sml): the tables, the cases and the labels of vm/new's
+   (src/isa/regs.sml): the tables, the cases and the labels of runtime/register's
    loop, and the opcodes of the compiler's register target. As with the
    stack bytecode, every file is committed. *)
 structure RegGen =
@@ -43,7 +43,7 @@ struct
   fun fingerprint (instrs, prims) : int =
     CharVector.foldl (fn (c, h) => (h * 31 + Char.ord c) mod 16777213) 7 (canonical (instrs, prims))
 
-  (* ---- the tables of vm/new ---- *)
+  (* ---- the tables of runtime/register ---- *)
 
   fun regopsH (instrs : rinstruction list, fp : int) : file =
     let
@@ -54,17 +54,14 @@ struct
         | SOME (_, PrimArgs k) => (Int.toString k, "1")
         | _ => ("-1", "0")
     in
-      {path = "vm/new/regops.h",
+      {path = "runtime/register/regops.h",
        text =
          lines
            (["/* " ^ generated ^ " */",
              "#ifndef RUNE_REGOPS_H",
              "#define RUNE_REGOPS_H",
              "",
-             "/* The fingerprint of the register instruction set, which its .rbc",
-             "   and its images carry. */",
-             "#define REG_ISA_FINGERPRINT 0x" ^ IsaGen.hex8 fp ^ "u",
-             "#define REG_ISA_FINGERPRINT_HEX \"" ^ IsaGen.hex8 fp ^ "\"",
+             "#include \"isa.h\"",
              "",
              "enum RegOpcode {"]
             @ List.map (fn (n, i : rinstruction) => "  ROP_" ^ #name i ^ " = " ^ Int.toString n ^ ",  /* " ^ #doc i ^ " */") is
@@ -109,7 +106,7 @@ struct
                "",
                "/* Where control goes after each, whether it may raise, and what it does",
                "   to the handlers (src/isa/isa.sml), for the JIT's runs and its check",
-               "   of a function (vm/new/jit/compile.c); the enum is vm/opcodes.h's. */",
+               "   of a function (runtime/register/jit/compile.c); the enum is runtime/isa.h's. */",
                "static const unsigned char rop_flow[] = {"]
             @ List.map (fn (_, i : rinstruction) =>
                           "  FLOW_" ^ (case #flow i of
@@ -141,7 +138,7 @@ struct
                "#endif"])}
     end
 
-  (* ---- the emitters of the JIT (vm/new/jit/emit.c): the prototypes, so
+  (* ---- the emitters of the JIT (runtime/register/jit/emit.c): the prototypes, so
      that an instruction without one does not build, and the cases that
      read each instruction's operands and call it ---- *)
 
@@ -158,11 +155,11 @@ struct
     end
 
   fun jitEmitH (instrs : rinstruction list) : file =
-    {path = "vm/new/jit_emit.h",
+    {path = "runtime/register/jit_emit.h",
      text =
        lines
          (["/* " ^ generated,
-           "   The emitters of tier 1 (vm/new/jit/emit.c), one per instruction of",
+           "   The emitters of tier 1 (runtime/register/jit/emit.c), one per instruction of",
            "   src/isa/regs.sml: an instruction without one does not build. */",
            "#ifndef RUNE_JIT_EMIT_H",
            "#define RUNE_JIT_EMIT_H",
@@ -173,11 +170,11 @@ struct
           @ ["", "#endif"])}
 
   fun jitCases (instrs : rinstruction list) : file =
-    {path = "vm/new/jit_cases.h",
+    {path = "runtime/register/jit_cases.h",
      text =
        lines
          (["/* " ^ generated,
-           "   The cases of the JIT's walk over a function (vm/new/jit/compile.c):",
+           "   The cases of the JIT's walk over a function (runtime/register/jit/compile.c):",
            "   each instruction's operands read as the loop reads them, and its",
            "   emitter called. */"]
           @ List.concat
@@ -208,17 +205,17 @@ struct
                            end)
                         instrs))}
 
-  (* Each case of the loop (vm/new/interp.c) reads its own operands -- the
+  (* Each case of the loop (runtime/register/interp.c) reads its own operands -- the
      fixed ones, and for a list where it begins and how long it is -- moves
      the pc past the instruction and counts it, then does its body and goes
      on to the next (NEXT). CASE and NEXT are the loop's: labels and a
      computed goto, or the cases of a switch. *)
   fun regCases (instrs : rinstruction list) : file =
-    {path = "vm/new/reg_cases.h",
+    {path = "runtime/register/reg_cases.h",
      text =
        lines
          (["/* " ^ generated,
-           "   The cases of vm/new's loop (vm/new/interp.c), each the body of its",
+           "   The cases of runtime/register's loop (runtime/register/interp.c), each the body of its",
            "   instruction in src/isa/regs.sml, in the loop's words. */"]
           @ List.concat
               (List.map (fn (i : rinstruction) =>
@@ -242,9 +239,23 @@ struct
                                | _ => ([], "pc += " ^ len ^ ";")
                              val traced =
                                commaList (List.tabulate (3, fn k => if k < nf then List.nth (letters, k) else "0"))
+                             (* the census VM's hook at a site that allocates or runs a
+                                primitive (runtime/census/census.h; nothing in the stock build): the
+                                instruction's own pc, before the prologue moves it *)
+                             val census =
+                               case #name i of
+                                 "TUPLE" => ["CENSUS_SITE(pc, fr->func);"]
+                               | "CLOSURE" => ["CENSUS_SITE(pc, fr->func);"]
+                               | "CON" => ["CENSUS_SITE(pc, fr->func);"]
+                               | "CONN" => ["CENSUS_SITE(pc, fr->func);"]
+                               | "NEWEXN" => ["CENSUS_SITE(pc, fr->func);"]
+                               | "MKEXN" => ["CENSUS_SITE(pc, fr->func);"]
+                               | "PRIM" => ["CENSUS_PRIM(pc, fr->func, a);"]
+                               | "PRIMPUSH" => ["CENSUS_PRIM(pc, fr->func, a);"]
+                               | _ => []
                            in
                              ["CASE(" ^ #name i ^ ") {"]
-                             @ IsaGen.indent 4 (reads @ listReads
+                             @ IsaGen.indent 4 (reads @ listReads @ census
                                                 @ ["TRACE(ROP_" ^ #name i ^ ", " ^ traced ^ ");",
                                                    advance,
                                                    "count++;"]
@@ -257,21 +268,21 @@ struct
   (* The labels of the cases, in the order of the opcodes, for the computed
      goto of the loop. *)
   fun regLabels (instrs : rinstruction list) : file =
-    {path = "vm/new/reg_labels.h",
+    {path = "runtime/register/reg_labels.h",
      text =
        lines
          (["/* " ^ generated,
-           "   The labels of the cases of vm/new/reg_cases.h by opcode, for the",
-           "   dispatch of vm/new/interp.c by computed goto. */"]
+           "   The labels of the cases of runtime/register/reg_cases.h by opcode, for the",
+           "   dispatch of runtime/register/interp.c by computed goto. */"]
           @ List.map (fn (i : rinstruction) => "&&L_" ^ #name i ^ ",") instrs)}
 
   (* ---- the .def file the scripts and the check of the documentation read,
      one line per instruction ---- *)
   fun regsDef (instrs : rinstruction list, fp : int) : file =
-    {path = "vm/new/regs.def",
+    {path = "runtime/register/regs.def",
      text =
        lines
-         (["# The register instruction set of vm/new. " ^ generated,
+         (["# The register instruction set of runtime/register. " ^ generated,
            "# The description is src/isa/regs.sml, in the language of src/isa/isa.sml.",
            "# fingerprint " ^ IsaGen.hex8 fp,
            "# rbc header " ^ IsaGen.headerEscapes (StackIsa.rbcVersion, fp),

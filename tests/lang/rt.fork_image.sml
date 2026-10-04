@@ -1,4 +1,4 @@
-(* fork by a second VM (vm/image.c): what runevm --emulate-fork does here,
+(* fork by a second VM (runtime/image.c): what runevm-stack --emulate-fork does here,
    and what fork is on Windows. The child has to carry on with all of the
    parent's state: a heap with a cycle in it, exceptions told apart by
    identity, a handler pushed before the fork, files half read and half

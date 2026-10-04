@@ -6,7 +6,7 @@
    validators, the stack effects, the documentation. What each instruction
    does is its body, which the VM's interpreter is made from.
 
-   The description of the stack bytecode of vm/portable is StackIsa
+   The description of the stack bytecode of runevm-stack is StackIsa
    (src/isa/stack.sml); the primitives are PrimIsa (src/isa/prims.sml). *)
 structure Isa =
 struct
@@ -66,12 +66,12 @@ struct
   datatype handlers = Keeps | Installs | Removes
 
   (* An instruction's body is what it does, as the lines of C of its case in
-     the interpreter's loop (vm/interp.c), where `vm`, `p` (the program),
+     the interpreter's loop (runtime/stack/interp.c), where `vm`, `p` (the program),
      `code`, `fr` (the frame), `op`, `a` and `b` (the operands) are in scope;
      runeisa ends the case with break, and the body may leave the loop with
-     return. A shared body is instead a function of vm/ops.h,
+     return. A shared body is instead a function of runtime/stack/ops.h,
      `op_<NAME> (vm, a, b)`, which the case calls and so does the code of
-     runeopt (vm/native.c): it has only `vm`, `p`, `a` and `b`, and ends
+     runeopt (runtime/native/native.c): it has only `vm`, `p`, `a` and `b`, and ends
      with return. *)
   type instruction =
     {name : string,
