@@ -13,10 +13,12 @@
    system layer hands on the descriptors themselves before the image.
 
    Nothing is written as it lies in memory. Writing a field at a time looks
-   like the slower way and is not: a `Value` occupies 16 bytes in memory -- a
-   tag, padding, then eight bytes of payload -- and goes into an image as
-   nine, so a heap of list cells is carried in about two thirds of the bytes,
-   and the pipe saves more than the encoding costs. Measured over 40 forks at
+   like the slower way and was not when it was chosen, under the 16-byte
+   value (a tag, padding, then eight bytes of payload, which went into an
+   image as nine, so a heap of list cells was carried in about two thirds of
+   the bytes, and the pipe saved more than the encoding cost; a value is one
+   word in memory since docs/plans/heap-layout.md's M5 and still nine bytes
+   here, which no longer saves any). Measured then, over 40 forks at
    64 MB live, three runs each: writing the structs took 224, 222 and 296 ms
    a fork, and this takes 200, 205 and 210. That only holds because the
    encoder writes into the stream's own buffer; a first version called stdio

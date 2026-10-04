@@ -10,6 +10,7 @@ in [docs/bytecode.md](../../docs/bytecode.md) and `src/isa/regs.sml`.
 ## What it is made of
 
 `bin/runevm` is `runtime/main.c`, `runtime/register/interp.c`, `runtime/register/isa_regs.c`,
+`runtime/register/live.c` (what is live where, for tier 2 and for the collector),
 `runtime/register/jit.c` and the compiler in `runtime/register/jit/` linked against
 `build/librune.a`, the runtime `runevm-stack` is built from
 (`Makefile`, `bin/runevm`): the heap and collector (`runtime/heap.c`),
@@ -42,7 +43,22 @@ the collector is a Cheney two-space copier that runs only inside
 `vm_alloc`, with the value stack below `sp`, the globals, the constants,
 each frame's closure and the built-in exceptions as its roots. There are
 no stack maps and no write barrier: every slot is a word whose low bit
-tells an immediate from a pointer, and the
+tells an immediate from a pointer. Of the stack, the registers of a frame
+that waits for a call are roots as far as they are live there
+(`VM.frame_live`, which `vm_loop` sets to `reg_frame_live` of `live.c`):
+the collector asks with the frame's function and the pc its callee returns
+to, gets the registers live at that instruction joined with what the
+function's handlers need, and writes unit into a dead register that holds
+a pointer, so that the frame, running again with all its registers roots,
+has nothing that points into the space left behind. The answer for a
+function is made from its code when first asked for -- the pcs its calls
+return to and a word of 64 registers for each (`Function.live_pc`,
+`live_at`) -- and goes with the program. The frame that runs keeps every
+register, and so does a register past the 64th. The liveness is the one
+tier 2 writes its homes back by, so an instruction's registers are its
+operands, as the tables say (`reg_uses_defs`): one that read a register
+its operands do not name would lose it at a collection. `-DRUNE_ROOTS_ALL`
+builds a VM with every register a root, to measure against. The
 stores into the heap are `SETENV`, the primitives `ref_set` and
 `array_update` (in `runtime/prims.c`, and in the loop through `HEAP_STORE` of
 `runtime/register/fastprim.h`) and a few more primitives.
@@ -538,8 +554,8 @@ FFI):
    may be anywhere in the address space; Windows puts them far apart),
    the shadow space of the Windows convention reserved around it. The
    machine stack is aligned by the enter stub and holds nothing else.
-4. **What C may do:** allocate and so collect (every register is a root,
-   since every value is in its slot), grow the value stack (which moves
+4. **What C may do:** allocate and so collect (every register of the
+   frame that runs is a root, since every value is in its slot), grow the value stack (which moves
    it), push and pop frames, raise (which pops frames and handlers and
    leaves the handler's frame on top), change the program
    (`Runtime.restore`) or end the process. A helper that does none of

@@ -68,18 +68,12 @@ values, and it survives a collection and a `fork` (below).
 
 ## The heap
 
-The collector is a Cheney two-space copier. Allocation is a bump of a pointer
-in the current semispace; when a request does not fit, the live data is
-copied into the other semispace, which is kept for the next collection
-while the heap stays the same size. The roots are the value
-stack, the globals, the constants of the program, the closure of each frame,
-the built-in exception constructors and the VM's boxes of zero, the
-infinities and NaN; from those the whole live graph is
-copied, so anything unreachable disappears without being visited.
-
-A collection moves every object. Nothing of that is visible to an SML
-program: equality on `ref` and `array` is the identity the collector
-maintains, not the address of the moment.
+Everything a program allocates is in one heap: tuples, constructors,
+closures, strings, refs, arrays, exceptions, and the boxes of the numbers
+that have no immediate (*Values and objects*). Allocation is a bump of a
+pointer in the current semispace, in the VM's C and in line in compiled
+code; nothing is ever freed one object at a time. The value stack, the
+frames, the handlers and the program's code are not in the heap.
 
 * The first semispace is 4 MiB, and `runevm --heap-size N` sets it (at least
   4096 bytes).
@@ -88,16 +82,130 @@ maintains, not the address of the moment.
   *P* percent instead (1 to 100): a quarter makes about half the collections
   for twice the memory. A heap that would have to double past
   what a `size_t` can hold ends the run with `runevm: out of memory`.
+* It never shrinks, and it grows by doubling alone, so the memory a run
+  takes moves in steps: the compiler compiling itself keeps 42 MB at most
+  and runs in semispaces of 134 MB.
+* From the first collection on there are two semispaces while the heap
+  stays the size it is; a collection that grows it frees them and makes one
+  of the new size, and the next collection the other. So the process holds
+  up to twice the semispace `--stats` prints, beside its stack and its
+  code.
+* `runevm --heap-limit N` caps a semispace (at least 4096 bytes; no cap by
+  default). At the cap the heap may be fuller than `--heap-fill` asks; what
+  is live and one more allocation not fitting ends the run with `runevm:
+  heap limit exceeded`, a trace and status 2.
+
+## The garbage collector
+
+The collector is a Cheney two-space copier, one for every engine. When a
+request does not fit, the live data is copied into the other semispace,
+which is kept for the next collection while the heap stays the same size.
+What it is and is not:
+
+* **Precise.** Every slot of the stack and every field of an object is a
+  word whose low bit tells an immediate from a pointer, so nothing is ever
+  taken for a pointer that is not one, and nothing is scanned
+  conservatively.
+* **Stop-the-world, in one piece.** The program does not run during a
+  collection. There are no generations, no increments and no second thread:
+  every collection copies everything that is live, the data that has been
+  live since the program started and a large array as much as a cell made a
+  moment ago. Its cost is in proportion to what is live and to nothing
+  else -- garbage is not visited -- at about 1.3 ns a byte copied on the
+  machine of [performance.md](performance.md): the compiler compiling
+  itself allocates 887 MB, makes 10 collections, and they copy 306 MB in
+  0.4 s.
+* **Moving.** A collection moves every object. Nothing of that is visible
+  to an SML program: equality on `ref` and `array` is the identity the
+  collector maintains, not the address of the moment.
+* **Only at an allocation.** A collection happens when an allocation does
+  not fit, when the program asks (`Runtime.collect ()`), and before every
+  *N*th allocation under `--gc-stress N`. There are no timers and no polls:
+  code that does not allocate is never interrupted. The same program on the
+  same input with the same options collects at the same allocations in
+  every run (*The same run twice*).
+* **No barrier.** A store into a `ref` or an array is the store and nothing
+  else.
+* **No finalisers, no weak references, no pinning.** An object cannot ask to
+  be told when it dies or to stay where it is; a file is closed by the
+  program or when the process ends, not by the collector.
+
+### The roots
+
+The roots are the value stack, the globals, the constants of the program,
+the closure of each frame, the built-in exception constructors and the
+VM's boxes of zero, the infinities and NaN (`runtime/heap.c` lists them
+once, for the collector and for an image whose heap moved). From those the
+whole live graph is copied, so anything unreachable disappears without
+being visited.
+
+On the register VM, at every tier, the stack is a root by what is live
+where that is known. A register of a frame that waits for a call is a root
+only if the frame needs it when the call returns; a dead one that holds a
+pointer is not copied and is made unit. So a list whose last use is before
+a call does not survive the collections the callee makes, however long the
+callee runs. The liveness is the one the JIT keeps its registers by
+(`runtime/register/live.c`), worked out from a function's code the first
+time a collection finds a frame of it waiting; nothing is added to the
+bytecode, to an image, or to the code that runs.
+
+### What is kept that the program no longer needs
+
+Where the collector does not know what is live it keeps what is there,
+which is always safe and sometimes more than a reader of the source
+expects:
+
+* **The frame that runs keeps every register.** What the function on top
+  is doing when a collection comes is not known to the collector, so a
+  value it has let go of is kept until its register is written again, or
+  until the function calls another and waits. `Runtime.collect ()` is a
+  primitive, done in the frame of the function that calls it: it does not
+  drop what that function still has in a dead register (the one explained
+  check of the Basis suite on the register VM,
+  `Runtime.collect/drops-what-is-unreachable`).
+* **Registers past a function's 64th are roots.** The liveness follows 64
+  registers a function. Two of the compiler's 2,263 functions have more;
+  the top level of a program is one function and usually does (the
+  compiler's has 1,081), so a temporary of the top level may be kept until
+  the program ends.
+* **What any handler of a function needs is kept at every call of the
+  function,** in the handler's range or not, since a callee may raise into
+  a handler.
+* **A global is a root for the whole run.** What is bound at the top level
+  and used by a function is a global, whether or not anything will use it
+  again.
+* **The stack bytecode and native programs keep every slot.** On
+  `runevm-stack` and in a program `runeopt` made every slot of the stack
+  is a root. A slot there is reused by the next value of any kind, which
+  drops some of what is dead by accident and none by design.
+* **A value in an object is live while the object is.** A closure keeps
+  what it captured and a record its fields, used again or not.
+
+None of these changes what a program computes or what `--count` reports;
+they change how much a collection copies, how large the heap grows, and
+what `Runtime.stats` says is live.
+
+### Watching it
+
 * `runevm --stats` prints, at exit, the number of collections, the bytes
-  allocated, the size of a semispace, the bytes live, the bytes every
-  collection copied in all, the most a collection kept, and the collector's
-  processor time in microseconds.
-* `runevm --gc-stress N` collects before every *N*th allocation. With `N = 1`
-  every allocation moves everything, which is how `make test-stress` finds a
-  primitive that keeps a heap pointer in a C variable across an allocation.
+  allocated, the size of a semispace, the bytes in use (live data and the
+  garbage since the last collection), the bytes every collection copied in
+  all, the most a collection kept, and the collector's processor time in
+  microseconds; and the boxes the program made, which `--count` leaves out.
+* `Runtime.stats ()` gives the collections, the bytes in use (boxes left
+  out) and the size of a semispace to the program. The bytes in use are an
+  upper bound of what is live, and right after `Runtime.collect ()` they
+  are what the collector kept, with the list above.
 * The processor time of the collector is measured around every collection and
   is what `Timer.checkGCTime` reports, so a program can tell its own time
   from the collector's.
+* `runevm --gc-stress N` collects before every *N*th allocation. With `N = 1`
+  every allocation moves everything, which is how `make test-stress` finds a
+  primitive that keeps a heap pointer in a C variable across an allocation,
+  and a register the liveness wrongly takes for dead.
+* An image (`Runtime.save`) carries the heap as it lies, the garbage since
+  the last collection with it; a `Runtime.collect ()` before it leaves that
+  out.
 
 Since a collection moves everything, C code inside the VM reads its arguments
 from the value stack rather than holding them in variables; the pattern is in
@@ -227,7 +335,7 @@ program opened are opened again by name, where they were left.
 
 Most of this page is visible to a program through `Runtime`, which is Rune's
 own and not in the specification: `Runtime.stats` gives the counters of *The
-same run twice* and of *The heap*, `Runtime.profile` the difference of two of
+same run twice* and of *The garbage collector*, `Runtime.profile` the difference of two of
 them across a call, `Runtime.collect` a collection on demand, `Runtime.trace`
 the frames of *Stacks, calls and exceptions* as data, `Runtime.save` the image
 this page describes under *The system layer*, and `Runtime.same` the identity

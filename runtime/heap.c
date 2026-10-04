@@ -186,6 +186,47 @@ static void copy_value(Value *v) {
     if (val_is_ptr(*v)) *v = mk_ptr(copy_obj(val_ptr(*v)));
 }
 
+/* The roots, listed once, for the collector and for a heap that moved
+   (heap_relocate): the value stack, and these. V takes the address of a
+   value, O of a pointer to an object that is there. */
+#define OTHER_ROOTS(vm, V, O) \
+    do { \
+        for (uint32_t i_ = 0; i_ < (vm)->prog.nglobals; i_++) V(&(vm)->globals[i_]); \
+        for (uint32_t i_ = 0; i_ < (vm)->prog.nconsts; i_++) V(&(vm)->prog.consts[i_]); \
+        if ((vm)->frames_active) \
+            for (size_t i_ = 0; i_ <= (vm)->fp; i_++) \
+                if ((vm)->frames[i_].closure) O(&(vm)->frames[i_].closure); \
+        for (int i_ = 0; i_ < NUM_BUILTIN_EXNS; i_++) \
+            if ((vm)->builtin_exns[i_]) O(&(vm)->builtin_exns[i_]); \
+        for (int i_ = 0; i_ < REAL_BOXES; i_++) \
+            if ((vm)->real_boxes[i_]) O(&(vm)->real_boxes[i_]); \
+    } while (0)
+#define COPY_OBJ(o) (*(o) = copy_obj(*(o)))
+
+/* The value stack as roots. Every slot, where the engine does not say what
+   is live (the stack bytecode; VM.frame_live). Where it does, the registers
+   of a frame that waits for a call are roots as far as they are live there,
+   and a dead one that holds a pointer is made unit: it is not copied, and it
+   must not stay behind pointing into the space that is left, since the frame
+   becomes the one that runs again, whose registers are all roots (what it is
+   doing when a collection comes is not known here). */
+static void stack_roots(VM *vm) {
+    size_t at = 0;
+    if (vm->frame_live && vm->frames_active)
+        for (size_t k = 0; k < vm->fp; k++) {
+            const Frame *f = &vm->frames[k];
+            size_t end = vm->frames[k + 1].base < vm->sp ? vm->frames[k + 1].base : vm->sp;
+            uint32_t n = vm->prog.funcs[f->func].nlocals;
+            uint64_t live = vm->frame_live(vm, f->func, vm->frames[k + 1].ret_pc);
+            for (; at < f->base && at < end; at++) copy_value(&vm->stack[at]);
+            for (uint32_t r = 0; r < n && at < end; r++, at++) {
+                if (r >= 64 || ((live >> r) & 1)) copy_value(&vm->stack[at]);
+                else if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
+            }
+        }
+    for (; at < vm->sp; at++) copy_value(&vm->stack[at]);
+}
+
 /* The heap is two semispaces, both kept: the one collected from is the next
    one collected into, as long as the heap stays the size it is. A new one
    for every collection, as before, cost the kernel's work of giving fresh
@@ -205,17 +246,8 @@ static void collect_into(VM *vm, size_t new_size) {
     census_collect_begin();
 #endif
 
-    /* roots */
-    for (size_t i = 0; i < vm->sp; i++) copy_value(&vm->stack[i]);
-    for (uint32_t i = 0; i < vm->prog.nglobals; i++) copy_value(&vm->globals[i]);
-    for (uint32_t i = 0; i < vm->prog.nconsts; i++) copy_value(&vm->prog.consts[i]);
-    if (vm->frames_active)
-        for (size_t i = 0; i <= vm->fp; i++)
-            if (vm->frames[i].closure) vm->frames[i].closure = copy_obj(vm->frames[i].closure);
-    for (int i = 0; i < NUM_BUILTIN_EXNS; i++)
-        if (vm->builtin_exns[i]) vm->builtin_exns[i] = copy_obj(vm->builtin_exns[i]);
-    for (int i = 0; i < REAL_BOXES; i++)
-        if (vm->real_boxes[i]) vm->real_boxes[i] = copy_obj(vm->real_boxes[i]);
+    stack_roots(vm);
+    OTHER_ROOTS(vm, copy_value, COPY_OBJ);
 
     /* scan */
     size_t scan = 0;
@@ -329,15 +361,12 @@ int heap_relocate(VM *vm, uintptr_t old_base) {
         }
         scan += size;
     }
+    /* every slot of the stack, dead registers too: they are values still */
     for (size_t i = 0; i < vm->sp; i++) relocate_value(vm, &vm->stack[i]);
-    for (uint32_t i = 0; i < vm->prog.nglobals; i++) relocate_value(vm, &vm->globals[i]);
-    for (uint32_t i = 0; i < vm->prog.nconsts; i++) relocate_value(vm, &vm->prog.consts[i]);
-    if (vm->frames_active)
-        for (size_t i = 0; i <= vm->fp; i++)
-            if (vm->frames[i].closure) vm->frames[i].closure = relocate_obj(vm, vm->frames[i].closure);
-    for (int i = 0; i < NUM_BUILTIN_EXNS; i++)
-        if (vm->builtin_exns[i]) vm->builtin_exns[i] = relocate_obj(vm, vm->builtin_exns[i]);
-    for (int i = 0; i < REAL_BOXES; i++)
-        if (vm->real_boxes[i]) vm->real_boxes[i] = relocate_obj(vm, vm->real_boxes[i]);
+#define RELOCATE_VALUE(v) relocate_value(vm, (v))
+#define RELOCATE_OBJ(o) (*(o) = relocate_obj(vm, *(o)))
+    OTHER_ROOTS(vm, RELOCATE_VALUE, RELOCATE_OBJ);
+#undef RELOCATE_VALUE
+#undef RELOCATE_OBJ
     return reloc_ok;
 }

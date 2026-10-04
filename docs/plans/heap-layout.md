@@ -44,7 +44,7 @@ What it rests on:
 | M3 | The layout behind an interface | done 2026-09-27, `93cc674` |
 | M4 | Prototypes at full scale; the gate | done 2026-10-04: both prototypes run, pass the suites and are measured (branches `heap-layout-word` and `heap-layout-pairs`; the four sections *M4, ...* below), and the owner decided the gate that day (*M4, for the gate*). Not built in M4, and no longer wanted before M5: raw typed fields, the 32-bit header and its table, typed slots |
 | M5 | The chosen layout, complete | done 2026-10-04 on `heap-layout-word`, merged into `heap-layout`: the 64-bit types, the reals by the rotation, every consumer and what is kept open (*M5, the first step* to *M5, the third and fourth steps*), measured against the 16-byte layout under every engine (*M5, done*). D15's targets 1 and 3 are met, with what each section says beside them, and target 2 is measured. Raw real fields: the owner decides after experiments 1, 5 and 10 of `performance-64bit.md` |
-| M6 | Roots and maps | |
+| M6 | Roots and maps | done 2026-10-04: the collector asks the engine which registers of a waiting frame are live (`VM.frame_live`, the JIT's liveness in `runtime/register/live.c`) and drops the dead ones, at every tier; the root list written once (*M6, done*). The bootstrap copies 12% fewer bytes. Tier 2's writes of unit, the plan's way, were not needed |
 | M7 | The collector on the new layout, and the hooks for the next | |
 | M8 | Flat arrays, strings and the FFI's objects | |
 
@@ -1391,6 +1391,116 @@ them.
 primitives in line in `runeopt`'s code, `word64_asr` and the reals'
 bits in line in the JIT, the folding of 64-bit arithmetic, a nullary
 exception as an immediate, `IntInf`'s limbs in a raw word.
+
+### M6, done: the roots, by what is live
+
+Built on 2026-10-04 on branch `heap-layout-m6`.
+
+**What was planned, and what was built instead.** The plan had tier 2
+write unit into a dead pointer slot at its safepoints, which would
+have made tier 2's frames precise by liveness and no others. Before
+building it, what precise roots are worth was measured, with a VM that
+asked the JIT's liveness at a collection and dropped the dead
+registers of the frames that wait for a call: the bootstrap copied
+12.4% fewer bytes. The measuring build's way is the cheaper of the two
+and reaches every tier, the interpreter with them: nothing is emitted
+and nothing runs between collections. That is what M6 is.
+
+* **One interface, `VM.frame_live`:** the engine tells the collector
+  which registers of a function are live while a frame of it waits
+  for the call that returns to a pc. `vm_loop` of the register VM sets
+  it; where it is not set (the stack bytecode, a program `runeopt`
+  made) every slot of the stack is a root as before. This is "the
+  roots of a frame are asked from the interface" of *The
+  architecture*, and what jit M11's maps would have come through had
+  M11 needed any (its frames are the interpreter's at every
+  safepoint).
+* **One liveness, `runtime/register/live.c`:** tier 2's analysis
+  moved out of the JIT, so that every register VM has it, with a JIT
+  or without (32-bit, PowerPC, Windows), and tier 2 writes its homes
+  back by the same answer the collector drops registers by. For a
+  function it is made when a collection first finds a frame of it
+  waiting: the pcs its calls return to and a word of 64 registers for
+  each, the registers live at that instruction joined with what the
+  function's handlers need, since a callee may raise into one. Twelve
+  bytes a call: 78 KB if every one of the compiler's 6,492 calls that
+  return were asked about.
+* **A dead register is made unit, not passed over:** the frame becomes
+  the one that runs again, whose registers are all roots, and must
+  have nothing that points into the space left behind.
+* **The root list is written once** (`OTHER_ROOTS`, `runtime/heap.c`):
+  the globals, the constants, the frames' closures, the built-in
+  exceptions and the VM's boxes of M5, for the collector and for
+  `heap_relocate`, which each had a copy. A relocation moves every
+  slot of the stack, dead registers too.
+* **D5 stands at A.** A slot is a tagged word and says itself whether
+  it is a pointer; there is no map in the bytecode, in an image or
+  kept per pc. What is new is which slots are asked.
+
+**What it is worth**, against the same sources built with every
+register a root (`-DRUNE_ROOTS_ALL`), runs that alternate, the least of
+five:
+
+| | every register a root | M6 | |
+|---|---:|---:|---:|
+| bootstrap: bytes copied | 349.1M | 305.7M | 0.876 |
+| the most a collection kept | 48.1M | 42.1M | 0.875 |
+| the collector's time | 454 ms | 389 ms | 0.857 |
+| cycles, default tiering | 6.71G | 6.56G | 0.978 |
+| MLton's 33: bytes copied | 2,066M | 1,833M | 0.887 |
+| collections | 1,969 | 1,954 | |
+
+The output of the bootstrap is the same bytes, and the numbers are the
+same at every tier. By program: `lexgen` copies 0.45 of what it did
+(its cycles 0.90), `fft` 0.61, `nucleic` 0.65, `vliw` and `pidigits`
+0.67, `mlyacc` and `zern` 0.70, `tensor` 0.71; the most a collection
+keeps is 0.60 for `simple` and `lexgen` and 0.67 for `merge` and
+`tailmerge`. Those last two copy 10% and 15% more: a heap that keeps
+less grows less and is collected more often, the growth policy again,
+which is M7's.
+
+**The limits**, which `docs/runtime.md` lists for a user (*The garbage
+collector*, written again with this milestone):
+
+* *The frame that runs keeps every register.* The collector would
+  need the instruction it is in, and compiled code stores the pc by
+  five conventions (the pc its emitter passes to `ms_sync`, a slow
+  path's, the function's entry, two computed), with a box allocated
+  in the write-back before the pc is stored; a pc that is stale by
+  one store drops a live register. Not built: one frame of a stack.
+  So `Runtime.collect/drops-what-is-unreachable` stays the one
+  explained check of the Basis suite on the register VM: its list is
+  in a dead register of the function that calls `Runtime.collect`.
+  The deviation's text says so now.
+* *Registers past the 64th are roots*: two of the compiler's 2,263
+  functions, its top level (1,081 registers) one of them.
+* *A handler's needs are kept at every call of its function,* in its
+  range or not.
+* *The stack VM and native code* are as they were.
+
+**The tests.** `tests/lang/rt.gc_dead-registers` (every engine, a
+collection at every allocation): registers live after a call, dead
+after it, needed by a handler alone, by a handler further out, around
+a loop, in the arms of a case, a boxed number and a boxed real across
+a call, and a function of more than 64 registers; its expected output
+is computed outside Rune. `tests/register/dead-roots.sml`, which
+`scripts/check-register.sh` runs at four tiers: a list whose last use
+is before a call is dropped by the callee's collection, one used after
+it and one a handler needs are kept; on the build with every register
+a root it prints "kept" for all three, so it tells the two apart.
+
+**The suites.** Nineteen targets pass on M6: `test`, `test-register`,
+`test-register-jit`, `test-native`, `test-opt`, `test-lib`,
+`test-stress`, `test-register-asan`, `test-basis`, `test-doc`,
+`test-census`, `check-isa`, `check-templates`, `check-docs`,
+`check-cross`, `test-portability` (linux32, ppc64, aarch64 with its
+JIT), `test-windows`, `bench-smoke` and `perf-check`. `test-stress`
+and the sanitiser's run are the test of the liveness: with a
+collection at every allocation, at every tier, a register wrongly
+taken for dead is unit where the program reads it. No budget moved:
+the counts are the allocations', which a collection does not change.
+The merge of M5 into `heap-layout` (`352ab70f`) passed the same on the
+main tree before this.
 
 ## The request
 
@@ -4467,6 +4577,11 @@ have come in.
   per pc for the interpreter's frames are built here.
 * **Done when:** `rt.*` tests of roots pass at every tier;
   `--gc-stress 1` green.
+* **Done** (2026-10-04), by another way than the one above: the
+  collector asks for the liveness at a collection, which costs the
+  running code nothing and reaches the interpreter and tier 1 too
+  (*M6, done: the roots, by what is live*). The deviation stays, for
+  the frame that runs.
 
 ### M7. The collector on the new layout, and the hooks for the next (L, about 800)
 

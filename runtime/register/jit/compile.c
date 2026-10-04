@@ -3,6 +3,7 @@
 #include "register/fastprim.h"
 #include "sys/sys.h"
 #include "register/jit_emit.h"
+#include "register/live.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -323,102 +324,12 @@ AsmLabel *jit_landing(Jit *j, uint32_t pc) { return j->landings ? &j->landings[p
 #if JIT_TARGET
 /* ---- tier 2: what is live where, and the homes (M9) ---- */
 
-/* The registers an instruction reads and the one it writes, as the tables
-   say; a primitive's arguments as many as its arity. */
-static void uses_defs(const Program *p, uint32_t pc, uint64_t *uses, uint64_t *def) {
-    const uint8_t *code = p->code;
-    uint8_t op = code[pc];
-    *uses = 0; *def = 0;
-    int dest = rop_dest[op];
-    for (int k = 0; k < rop_nfixed[op]; k++)
-        if (rop_kinds[op][k] == RK_REGISTER) {
-            int32_t r = read_i32(code + pc + 1 + 4 * k);
-            if (r >= 0 && r < 64) { if (k == dest) *def |= (uint64_t)1 << r; else *uses |= (uint64_t)1 << r; }
-        }
-    if (rop_list_at[op] >= 0) {
-        uint32_t n;
-        if (rop_list_prim[op]) {
-            int prim = read_i32(code + pc + 1 + 4 * rop_list_at[op]);
-            n = prim >= 0 && prim < PRIM__COUNT ? prim_arity[prim] : 0;
-        } else n = (uint32_t)read_i32(code + pc + 1 + 4 * rop_list_at[op]);
-        const uint8_t *L = code + pc + 1 + 4 * rop_nfixed[op];
-        for (uint32_t i = 0; i < n; i++) {
-            int32_t r = read_i32(L + 4 * i);
-            if (r >= 0 && r < 64) *uses |= (uint64_t)1 << r;
-        }
-    }
-}
-
-/* live_in[at]: the registers live at the entry of the instruction at
-   from + at, by the usual backward walk to a fixed point. An instruction
-   that may raise has every handler of the function among its successors,
-   since a raise anywhere in a handler's region lands there. */
+/* What is live where is runtime/register/live.c's, which the collector asks
+   too: live_in[at] is the registers live at the entry of the instruction at
+   from + at. */
 static int liveness(Jit *j, const Scan *sc) {
-    const Program *p = &j->vm->prog;
-    const uint8_t *code = p->code;
-    uint32_t len = j->to - j->from;
-    uint64_t *live = calloc(len + 1, sizeof *live);
-    if (!live) return 0;
-    /* the handlers' labels */
-    uint64_t handlers_live = 0;
-    int changed = 1;
-    while (changed) {
-        changed = 0;
-        handlers_live = 0;
-        for (uint32_t pc = j->from; pc < j->to; ) {
-            uint8_t op = code[pc];
-            uint32_t l = rop_length(code + pc);   /* before the table of a SWITCH is passed over */
-            if (op == ROP_PUSHHANDLER) {
-                int32_t h = read_i32(code + pc + 1);
-                if (h >= (int32_t)j->from && (uint32_t)h < j->to) handlers_live |= live[h - j->from];
-            }
-            if (op == ROP_SWITCH) l += 5 * (uint32_t)read_i32(code + pc + 5);
-            pc += l;
-        }
-        /* backwards over the instructions */
-        uint32_t *starts = malloc((len + 1) * sizeof *starts);
-        if (!starts) { free(live); return 0; }
-        uint32_t nstarts = 0;
-        for (uint32_t at = 0; at < len; at++) if (sc->start[at]) starts[nstarts++] = at;
-        for (uint32_t k = nstarts; k-- > 0; ) {
-            uint32_t at = starts[k], pc = j->from + at;
-            uint8_t op = code[pc];
-            uint32_t l = rop_length(code + pc);
-            uint64_t out = 0;
-            int flow = rop_flow[op];
-            /* the successors */
-            if (flow == FLOW_NEXT || flow == FLOW_BRANCH || flow == FLOW_CALL) {
-                uint32_t nx = pc + l;
-                if (op == ROP_SWITCH) nx += 5 * (uint32_t)read_i32(code + pc + 5);
-                if (nx < j->to) out |= live[nx - j->from];
-            }
-            for (int q = 0; q < rop_nfixed[op]; q++)
-                if (rop_kinds[op][q] == RK_LABEL || rop_kinds[op][q] == RK_HANDLER_LABEL) {
-                    int32_t t = read_i32(code + pc + 1 + 4 * q);
-                    if (t >= (int32_t)j->from && (uint32_t)t < j->to) out |= live[t - j->from];
-                }
-            if (op == ROP_SWITCH) {
-                uint32_t n = (uint32_t)read_i32(code + pc + 5);
-                for (uint32_t e = 0; e < n; e++) {
-                    int32_t t = read_i32(code + pc + l + 5 * e + 1);
-                    if (t >= (int32_t)j->from && (uint32_t)t < j->to) out |= live[t - j->from];
-                }
-                uint32_t past = pc + l + 5 * n;
-                if (past < j->to) out |= live[past - j->from];
-            }
-            uint64_t uses, def;
-            uses_defs(p, pc, &uses, &def);
-            uint64_t in = uses | (out & ~def);
-            /* a raise, in the instruction or in what it calls, happens
-               before the instruction defines anything: what a handler
-               needs is live at its entry */
-            if (rop_raises[op] || flow == FLOW_CALL || flow == FLOW_TAILCALL) in |= handlers_live;
-            if (in != live[at]) { live[at] = in; changed = 1; }
-        }
-        free(starts);
-    }
-    j->live_in = live;
-    return 1;
+    j->live_in = reg_liveness(&j->vm->prog, j->from, j->to, sc->start, NULL);
+    return j->live_in != NULL;
 }
 
 /* The homes: the registers of a representation a machine register can hold
@@ -453,7 +364,7 @@ static int choose_homes(Jit *j) {
         for (uint32_t k = 0; k < fn->nloops; k++)
             if (pc >= fn->loops[k] && pc <= last[k]) in_loop = 1;
         uint64_t uses, def;
-        uses_defs(p, pc, &uses, &def);
+        reg_uses_defs(p, pc, &uses, &def);
         for (uint32_t r = 0; r < n; r++)
             if (((uses | def) >> r) & 1) weight[r] += in_loop ? 8 : 1;
         if (op == ROP_SWITCH) l += 5 * (uint32_t)read_i32(code + pc + 5);

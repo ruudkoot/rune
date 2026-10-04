@@ -361,8 +361,11 @@ void program_free_meta(Program *p) {
         for (uint32_t b = 0; fn->blocks && b < fn->nblocks; b++) free(fn->blocks[b].params);
         free(fn->blocks);
         free(fn->loops);
+        free(fn->live_pc);
+        free(fn->live_at);
         fn->reps = NULL; fn->blocks = NULL; fn->loops = NULL;
-        fn->nblocks = fn->nloops = 0;
-        fn->has_meta = 0;
+        fn->live_pc = NULL; fn->live_at = NULL;
+        fn->nblocks = fn->nloops = fn->nlive = 0;
+        fn->has_meta = fn->live_made = 0;
     }
 }

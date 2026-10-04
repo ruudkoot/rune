@@ -45,6 +45,14 @@ typedef struct Function {
     MetaBlock *blocks;
     uint32_t nloops;
     uint32_t *loops;     /* the pcs of the loop heads */
+    /* What is live where a frame of the function waits for a call
+       (runtime/register/live.c), made when the collector first asks: the
+       pcs calls return to, in order, and the registers live at each. Not in
+       a file or an image; they go with the program (program_free_meta). */
+    int live_made;
+    uint32_t nlive;
+    uint32_t *live_pc;
+    uint64_t *live_at;
 } Function;
 
 /* What a register holds, as the compiler says (Low.rep; the numbers are the
@@ -227,6 +235,12 @@ typedef struct VM {
     int io_errno;            /* errno of the last failed file_open / file_write */
     Obj *real_boxes[REAL_BOXES];   /* the boxes of the reals that have no immediate and are everywhere
                                       (value.h): made as the VM starts, roots, in an image */
+    /* Which registers of function FUNC are live while a frame of it waits
+       for the call that returns to RET_PC (bit r for register r; those past
+       the 64th are live), for the collector's roots (heap.c). NULL where
+       the engine does not say, and every slot of the stack is a root: the
+       stack bytecode, a program runeopt made. */
+    uint64_t (*frame_live)(struct VM *vm, uint32_t func, uint32_t ret_pc);
 } VM;
 
 /* heap.c */

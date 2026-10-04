@@ -7,8 +7,9 @@
 # register bytecode and run by runtime/register, must make of its own sources the
 # bytecode runevm-stack's makes; and tests/opt/prims.sml, the primitives runtime/register
 # does in its loop on their edge cases (runtime/register/fastprim.h), must print on
-# runtime/register what it prints on runevm-stack. What each prints is tests/run-tests.sh's
-# to check (make test-register).
+# runtime/register what it prints on runevm-stack; and the collector must drop the dead
+# registers of a frame that waits and keep the live ones (tests/register/dead-roots.sml).
+# What each prints is tests/run-tests.sh's to check (make test-register).
 #   scripts/check-register.sh [--rune BIN] [--vm BIN] [--new BIN] [-j N]
 set -u
 cd "$(dirname "$0")/.."
@@ -91,11 +92,25 @@ else
   fi
 fi
 
+# the roots of a frame that waits for a call: a dead register is dropped and
+# a live one kept, at every tier (tests/register/dead-roots.sml)
+if ! "$rune" --target=registers tests/register/dead-roots.sml -o "$out/dead-roots.rbc" 2> "$out/dead-roots.err"; then
+  prims="$prims${prims:+
+}FAIL new.dead-roots: $(head -1 "$out/dead-roots.err")"
+else
+  for mode in off baseline opt all; do
+    "$new" --jit=$mode "$out/dead-roots.rbc" > "$out/dead-roots.$mode.out" 2>&1
+    cmp -s "$out/dead-roots.$mode.out" tests/register/dead-roots.expected ||
+      prims="$prims${prims:+
+}FAIL new.dead-roots: --jit=$mode: $(tr '\n' ' ' < "$out/dead-roots.$mode.out" | cut -c1-120) where tests/register/dead-roots.expected has $(tr '\n' ' ' < tests/register/dead-roots.expected)"
+  done
+fi
+
 if [ -n "$fails$boot$prims" ]; then
   [ -n "$fails" ] && echo "$fails"
   [ -n "$boot" ] && echo "$boot"
   [ -n "$prims" ] && echo "$prims"
-  echo "check-register: $(printf '%s\n%s\n%s\n' "$fails" "$boot" "$prims" | grep -c FAIL) of $n programs, the bootstrap and the primitives fail"
+  echo "check-register: $(printf '%s\n%s\n%s\n' "$fails" "$boot" "$prims" | grep -c FAIL) of $n programs, the bootstrap, the primitives and the roots fail"
   exit 1
 fi
-echo "check-register: $n programs allocate the same on runtime/register and runevm-stack, the compiler on runtime/register makes the bytecode it makes on runevm-stack, and the primitives done in the loop print the same"
+echo "check-register: $n programs allocate the same on runtime/register and runevm-stack, the compiler on runtime/register makes the bytecode it makes on runevm-stack, the primitives done in the loop print the same, and a waiting frame's dead registers are no roots at any tier"

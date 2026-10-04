@@ -403,13 +403,13 @@ bin/runevm-stack: runtime/main.c runtime/stack/interp.c build/librune.a $(VM_HDR
 # runtime/register's first loop (docs/plans/middle-end.md, M5): the register bytecode,
 # on the runtime of runevm-stack. Its own instruction set's part (runtime/register/isa_regs.c)
 # is linked before build/librune.a, whose runtime/stack/isa_stack.c it takes the place of.
-NEW_HDRS := runtime/register/regvm.h runtime/register/regops.h runtime/register/reg_cases.h runtime/register/reg_labels.h runtime/register/reg_loop.h runtime/register/fastprim.h runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
+NEW_HDRS := runtime/register/regvm.h runtime/register/live.h runtime/register/regops.h runtime/register/reg_cases.h runtime/register/reg_labels.h runtime/register/reg_loop.h runtime/register/fastprim.h runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
 # RUNE_JIT=0 builds it without the JIT (docs/plans/jit.md): the
 # interpreter alone, which refuses --jit.
 RUNE_JIT ?= 1
 JIT_SRCS := runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c
 JIT_HDRS := runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/asm.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
-NEW_LOOP := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c $(JIT_SRCS)
+NEW_LOOP := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS)
 bin/runevm: $(NEW_LOOP) build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) $(RT_INC) -o $@ $(NEW_LOOP) build/librune.a -lm
@@ -434,7 +434,7 @@ bin/runevm-stack-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 
 # runtime/register with the sanitizers: its loop, its instruction set's part, and the
 # runtime but for the stack bytecode's part
-NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
+NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
 bin/runevm-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-asan
 	@mkdir -p bin
 	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer $(RT_INC) -o $@ $(NEW_SRCS) -lm
@@ -538,7 +538,7 @@ WINCFLAGS32 ?= -msse2 -mfpmath=sse -Wl,--large-address-aware
 WIN_SRCS    := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_win.c
 # runtime/register for Windows: its loop and its instruction set's part in place of
 # the stack bytecode's (runtime/stack/isa_stack.c), as bin/runevm-asan is built
-WIN_NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_win.c
+WIN_NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_win.c
 WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32
 
 # windows_dlls CC: refuse $@ when it imports a DLL whose name starts with lib
@@ -623,7 +623,7 @@ A64FLAGS   ?= --target=aarch64-linux-gnu -B$(A64ROOT)/bin -L$(A64ROOT)/lib -I$(A
               -Wl,-dynamic-linker,$(A64ROOT)/lib/ld-linux-aarch64.so.1 -Wl,-rpath,$(A64ROOT)/lib
 QEMUA64    ?= qemu-aarch64
 JIT_SRCS_A64 := runtime/register/jit.c runtime/register/jit/a64.c runtime/register/jit/asm_a64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c
-NEW_SRCS_A64 := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c $(JIT_SRCS_A64) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
+NEW_SRCS_A64 := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS_A64) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
 PORT_TIMEOUT ?= 900
 
 portability: bin/runevm-stack32 bin/runevm-stack-ppc64 bin/runevm32 bin/runevm-ppc64 bin/runevm-aarch64
