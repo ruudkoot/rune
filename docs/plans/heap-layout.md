@@ -54,7 +54,13 @@ on the prototypes' numbers, with the alternatives they named
 benchmarked there; the gate was decided on 2026-10-04. The JIT roadmap finished the same day (M11
 `798c002`, M12 `1f7e55b`, merged as PR #21, `d278153`), and the
 milestones run on branch `heap-layout`, one commit each. M5 to M8
-were planned again at the gate (*The milestones*).
+were planned again at the gate (*The milestones*). With M8, on
+2026-10-04, every milestone of this roadmap is done. What it leaves to
+others: raw real fields (deferred by the owner to a future roadmap),
+the next collector (`collector.md`, the brief), a 32-bit VM's own word
+(`32-bit-vm.md`), the real's encoding (`real-encoding.md`), and the
+JIT's work on what a 64-bit value costs, which is next
+(`performance-64bit.md`, *The work after the heap layout, in order*).
 
 ### After the rebase
 
