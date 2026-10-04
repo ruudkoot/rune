@@ -1,0 +1,1 @@
+hamming	600	4194304	shared/input.sml shared/lazy.sml hamming/benchmark.sml shared/main.sml	88000 200 expected/normal.txt	hamming/normal.expected	expected/normal.txt

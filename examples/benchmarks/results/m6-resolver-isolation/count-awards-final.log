@@ -1,0 +1,8 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (612 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='awards-' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.uvpXxH
+BENCH MEASURE awards-lazy normal count
+BENCH MEASURE awards-strict normal count
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.uvpXxH/report.md
+make: *** [Makefile:1010: bench-count] Error 1

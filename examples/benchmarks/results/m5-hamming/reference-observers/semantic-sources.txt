@@ -1,0 +1,6 @@
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hamming-originals/benchmark.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hamming-originals/semantics.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml

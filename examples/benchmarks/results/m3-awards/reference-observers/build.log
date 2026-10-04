@@ -1,0 +1,17 @@
+[1 of 3] Compiling QSort            ( tests/out/benchmarks/awards-originals/QSort.hs, tests/out/benchmarks/awards-originals/build/QSort.o )
+
+tests/out/benchmarks/awards-originals/QSort.hs:31:1: warning: [-Wtabs]
+    Tab character found here, and in three further locations.
+    Suggested fix: Please use spaces instead.
+   |
+31 |         qpart le x ys rlt (y:rge) r
+   | ^^^^^^^^
+[2 of 3] Compiling Main             ( tests/out/benchmarks/awards-originals/Main.hs, tests/out/benchmarks/awards-originals/build/Main.o )
+
+tests/out/benchmarks/awards-originals/Main.hs:42:1: warning: [-Wtabs]
+    Tab character found here, and in 7 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+42 |         award ("Gold",70) ++ award ("Silver",60) ++ award ("Bronze",50)
+   | ^^^^^^^^
+[3 of 3] Linking tests/out/benchmarks/awards-originals/awards

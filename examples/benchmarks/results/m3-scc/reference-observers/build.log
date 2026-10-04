@@ -1,0 +1,10 @@
+[1 of 3] Compiling Digraph          ( tests/out/benchmarks/scc-originals/Digraph.hs, tests/out/benchmarks/scc-originals/build/Digraph.o )
+[2 of 3] Compiling Main             ( tests/out/benchmarks/scc-originals/Main.hs, tests/out/benchmarks/scc-originals/build/Main.o )
+
+tests/out/benchmarks/scc-originals/Main.hs:19:1: warning: [-Wtabs]
+    Tab character found here, and in 8 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+19 |              (c, b),
+   | ^^^^^^^^
+[3 of 3] Linking tests/out/benchmarks/scc-originals/scc

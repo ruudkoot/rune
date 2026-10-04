@@ -1,0 +1,25 @@
+benchmark	profile	optimization	configuration	arguments	status	artifact_directory
+hamming	smoke	O0	rune	100 10 expected/smoke.txt	pass	results/m5-hamming/correctness-raw/hamming/smoke/O0/rune
+hamming	smoke	O0	rune-jit	100 10 expected/smoke.txt	pass	results/m5-hamming/correctness-raw/hamming/smoke/O0/rune-jit
+hamming	smoke	O0	rune-new	100 10 expected/smoke.txt	pass	results/m5-hamming/correctness-raw/hamming/smoke/O0/rune-new
+hamming	smoke	O0	rune-opt	100 10 expected/smoke.txt	pass	results/m5-hamming/correctness-raw/hamming/smoke/O0/rune-opt
+hamming	smoke	O2	rune	100 10 expected/smoke.txt	pass	results/m5-hamming/correctness-raw/hamming/smoke/O2/rune
+hamming	smoke	O2	rune-jit	100 10 expected/smoke.txt	pass	results/m5-hamming/correctness-raw/hamming/smoke/O2/rune-jit
+hamming	smoke	O2	rune-new	100 10 expected/smoke.txt	pass	results/m5-hamming/correctness-raw/hamming/smoke/O2/rune-new
+hamming	smoke	O2	rune-opt	100 10 expected/smoke.txt	pass	results/m5-hamming/correctness-raw/hamming/smoke/O2/rune-opt
+hamming	smoke	host-default	native-mlton-20241230	100 10 expected/smoke.txt	pass	results/m5-hamming/correctness-raw/hamming/smoke/host-default/native-mlton-20241230
+hamming	smoke	host-default	native-polyml-5.9.2	100 10 expected/smoke.txt	pass	results/m5-hamming/correctness-raw/hamming/smoke/host-default/native-polyml-5.9.2
+hamming	smoke	host-default	native-smlnj-dev-2026.2	100 10 expected/smoke.txt	pass	results/m5-hamming/correctness-raw/hamming/smoke/host-default/native-smlnj-dev-2026.2
+hamming	smoke	host-default	native-smlnj-legacy-110.99.9	100 10 expected/smoke.txt	pass	results/m5-hamming/correctness-raw/hamming/smoke/host-default/native-smlnj-legacy-110.99.9
+hamming	normal	O0	rune	88000 200 expected/normal.txt	pass	results/m5-hamming/correctness-raw/hamming/normal/O0/rune
+hamming	normal	O0	rune-jit	88000 200 expected/normal.txt	pass	results/m5-hamming/correctness-raw/hamming/normal/O0/rune-jit
+hamming	normal	O0	rune-new	88000 200 expected/normal.txt	pass	results/m5-hamming/correctness-raw/hamming/normal/O0/rune-new
+hamming	normal	O0	rune-opt	88000 200 expected/normal.txt	pass	results/m5-hamming/correctness-raw/hamming/normal/O0/rune-opt
+hamming	normal	O2	rune	88000 200 expected/normal.txt	pass	results/m5-hamming/correctness-raw/hamming/normal/O2/rune
+hamming	normal	O2	rune-jit	88000 200 expected/normal.txt	pass	results/m5-hamming/correctness-raw/hamming/normal/O2/rune-jit
+hamming	normal	O2	rune-new	88000 200 expected/normal.txt	pass	results/m5-hamming/correctness-raw/hamming/normal/O2/rune-new
+hamming	normal	O2	rune-opt	88000 200 expected/normal.txt	pass	results/m5-hamming/correctness-raw/hamming/normal/O2/rune-opt
+hamming	normal	host-default	native-mlton-20241230	88000 200 expected/normal.txt	pass	results/m5-hamming/correctness-raw/hamming/normal/host-default/native-mlton-20241230
+hamming	normal	host-default	native-polyml-5.9.2	88000 200 expected/normal.txt	pass	results/m5-hamming/correctness-raw/hamming/normal/host-default/native-polyml-5.9.2
+hamming	normal	host-default	native-smlnj-dev-2026.2	88000 200 expected/normal.txt	pass	results/m5-hamming/correctness-raw/hamming/normal/host-default/native-smlnj-dev-2026.2
+hamming	normal	host-default	native-smlnj-legacy-110.99.9	88000 200 expected/normal.txt	pass	results/m5-hamming/correctness-raw/hamming/normal/host-default/native-smlnj-legacy-110.99.9

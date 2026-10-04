@@ -1,0 +1,16 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/routine.tsv
+?? examples/benchmarks/awards-lazy/
+?? examples/benchmarks/awards-strict/
+?? examples/benchmarks/hamming/
+?? examples/benchmarks/scc-lazy/
+?? examples/benchmarks/scc-strict/
+?? examples/benchmarks/shared/nofib-awards.sml
+?? examples/benchmarks/shared/nofib-scc.sml
+?? tests/benchmarks/check-hamming.sh
+?? tests/benchmarks/check-nofib-awards.sh
+?? tests/benchmarks/check-nofib-scc.sh
+?? tests/benchmarks/hamming.sml
+?? tests/benchmarks/nofib-awards.sml
+?? tests/benchmarks/nofib-scc.sml

@@ -11,3 +11,5 @@ smith-normal-form	IntInf arithmetic and algebraic validation.
 nqueens	Sequential OCaml search with mutable sibling counters.
 kahan	Unsigned Word64 generation, compensated real-array updates and exact input sums.
 wheel-sieve2-lazy	Circular prime streams, delayed folds and shared span projections.
+maillist	File creation/appending, paragraph parsing and complete application output checks.
+sequence_cps	OCaml CPS translation, unfolder records, callbacks and exact wide sums.

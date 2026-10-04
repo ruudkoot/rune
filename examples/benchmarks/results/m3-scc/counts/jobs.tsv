@@ -1,0 +1,2 @@
+scc-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-scc.sml scc-lazy/benchmark.sml shared/main.sml	1 expected/components.txt	scc-lazy/normal.expected	expected/components.txt
+scc-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-scc.sml scc-strict/benchmark.sml shared/main.sml	1 expected/components.txt	scc-strict/normal.expected	expected/components.txt

@@ -1,0 +1,53 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/hamming/benchmark.sml]
+[autoloading]
+[autoloading done]
+structure Benchmark : sig
+  structure L : <sig>
+  val name : string
+  type number = IntInf.int * IntInf.int
+  datatype node = Cons of number * node BenchLazy.delay
+  val digit : IntInf.int
+  val modulus : IntInf.int
+  val sign : IntInf.int
+  val signed : IntInf.int -> IntInf.int
+  val multiply :
+      IntInf.int -> IntInf.int * IntInf.int -> IntInf.int * IntInf.int
+  val compare : (IntInf.int * IntInf.int) * (IntInf.int * IntInf.int) -> order
+  val map : (number -> number) -> node BenchLazy.delay -> node BenchLazy.delay
+  val merge :
+      node BenchLazy.delay -> node BenchLazy.delay -> node BenchLazy.delay
+  val stream : unit -> node BenchLazy.state ref
+  val decimal : ?.intinf -> string
+  val render : ?.intinf * ?.intinf -> string
+  val interval : node BenchLazy.delay -> int -> int -> string list
+  val file : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 7182554536972045898437500000000000000
+PASS hamming
+SUMMARY 1 checks, 0 failed

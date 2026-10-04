@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+hamming	normal	rune	O2	compile	0	0	pass	1.47	1.42	0.08	135228	-	-	-	hamming/rune/build/compile
+hamming	normal	rune	O2	correctness	0	0	pass	34.81	33.24	0.61	133104	5161420848	5327153384	133525705	hamming/rune/correctness.0
+hamming	normal	rune	O2	count	1	1	pass	29.82	29.37	0.26	133212	5161420848	5327153384	133525705	hamming/rune/fresh.1
+hamming	normal	rune:opt	O2	compile	0	0	pass	1.36	1.30	0.08	135224	-	-	-	hamming/rune-opt/build/compile
+hamming	normal	rune:opt	O2	native-compile	0	0	pass	0.35	0.16	0.05	12420	-	-	-	hamming/rune-opt/build/native-compile
+hamming	normal	rune:opt	O2	correctness	0	0	pass	11.86	11.57	0.60	133504	5161420848	5327153384	133525705	hamming/rune-opt/correctness.0
+hamming	normal	rune:opt	O2	count	1	1	pass	19.05	18.19	0.26	133696	5161420848	5327153384	133525705	hamming/rune-opt/fresh.1
+hamming	normal	rune:new	O2	compile	0	0	pass	2.43	2.16	0.25	135212	-	-	-	hamming/rune-new/build/compile
+hamming	normal	rune:new	O2	correctness	0	0	pass	26.37	24.97	0.91	526500	2970405110	5327153384	133525705	hamming/rune-new/correctness.0
+hamming	normal	rune:new	O2	count	1	1	pass	23.92	23.00	0.88	526480	2970405110	5327153384	133525705	hamming/rune-new/fresh.1
+hamming	normal	rune:jit	O2	compile	0	0	pass	1.28	1.22	0.07	135324	-	-	-	hamming/rune-jit/build/compile
+hamming	normal	rune:jit	O2	correctness	0	0	pass	7.33	6.86	0.52	527636	2970405110	5327153384	133525705	hamming/rune-jit/correctness.0
+hamming	normal	rune:jit	O2	count	1	1	pass	7.31	6.91	0.51	527628	2970405110	5327153384	133525705	hamming/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

@@ -1,0 +1,1 @@
+The old adapter deletes the inherited worker; the new regression rejects that behavior.

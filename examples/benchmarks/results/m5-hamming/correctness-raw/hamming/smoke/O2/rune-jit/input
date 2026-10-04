@@ -1,0 +1,3 @@
+hamming
+100 10 expected/smoke.txt
+2048

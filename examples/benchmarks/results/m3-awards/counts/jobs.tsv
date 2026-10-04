@@ -1,0 +1,2 @@
+awards-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-awards.sml awards-lazy/benchmark.sml shared/main.sml	2000 expected/cycle.txt	awards-lazy/normal.expected	expected/cycle.txt
+awards-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-awards.sml awards-strict/benchmark.sml shared/main.sml	2000 expected/cycle.txt	awards-strict/normal.expected	expected/cycle.txt

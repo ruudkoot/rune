@@ -1,0 +1,4 @@
+bench-measurement: statistics, execution-model comparisons and budget failures passed on four compilers
+bench-measurement: wrong results supply no repeated timing samples
+bench-measurement: instrumentation rejected from headline timing
+bench-measurement: configuration resolution preserves other matrix workers

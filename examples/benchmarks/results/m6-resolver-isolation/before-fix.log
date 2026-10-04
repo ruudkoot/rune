@@ -1,0 +1,5 @@
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.TjXA4C
+BENCH MEASURE primes-strict smoke count
+COUNT within-budget primes-strict rune
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.TjXA4C/report.md

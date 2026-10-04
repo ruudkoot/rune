@@ -1,0 +1,10 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (612 profiles)
+BENCH_PROFILE=large BENCH_CONFIGS=rune BENCH_FILTER='hamming' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/large/run.7OBPC3
+BENCH hamming large
+PROGRAM LIMIT AS 8388608 KiB
+RESULT -7638936542994118841125000000000000000
+PASS hamming
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
