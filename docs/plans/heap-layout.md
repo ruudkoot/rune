@@ -871,9 +871,46 @@ tiering, an idle machine, the least of three runs (of six for the
   encoding (1.57), 2.31G with the rotation (1.13), 5.71G with every
   real boxed (2.80). On the 32-bit interpreter, where the word's 64
   bits are two machine words: 2.93G, 5.99G (2.04) and 3.54G (1.21).
-* Not built: the same encoding in `runeopt`'s templates (they are
-  made from the macro-assembler, so it is a regeneration), and in the
-  pairs' branch, where it applies unchanged.
+* **On every machine and in every engine** (after the gate, in a copy
+  of prototype 1 with the rotation as every build's encoding): the
+  JIT's suites, `make test-portability` (the 32-bit and big-endian
+  VMs and aarch64 with its JIT: every suite on every VM, the counts
+  agreeing, every image crossing) and `make test-windows` pass.
+  `runeopt`'s templates wanted one line before they would regenerate,
+  a name for the VM's field of the zero box
+  (`runtime/native/native_offsets.h`, `c75f89fc`); with it they are
+  293 lines against Koka's 322, and `make test-opt` and `make
+  test-native` pass (331 programs, the counts of 264, the Basis'
+  139,211 checks through `runeopt`'s code).
+
+**The build M5 starts from** (2026-10-04, after the gate):
+`bin/runevm-int63-realrot`, prototype 1 with 63-bit integers and the
+rotation. It fails what the 63-bit build fails and nothing else: the
+same seven programs of `tests/lang` and the same 41 of the Basis'
+123,048 checks, which are the `Int64` and `Word64` work M5 begins
+with. Cycles against the 16-byte layout, an idle machine, the default
+tiering and the interpreter:
+
+| Program | 16-byte, default tiering | 63 bits and the rotation | 16-byte, interpreter | 63 bits and the rotation |
+|---|---:|---:|---:|---:|
+| bootstrap | 7.76G | 0.84 | 15.50G | 0.87 |
+| compile-sigs | 0.70G | 0.84 | 1.16G | 0.84 |
+| runedoc-page | 0.34G | 0.84 | 0.67G | 0.90 |
+| list_ops | 0.16G | 0.74 | 0.36G | 0.80 |
+| string_ops | 0.36G | 0.73 | 0.68G | 0.82 |
+| array_sieve | 0.15G | 0.75 | 0.57G | 0.68 |
+| intinf_fact | 0.21G | 0.79 | 0.46G | 0.87 |
+| fib | 0.27G | 0.91 | 0.84G | 0.94 |
+| tak | 0.08G | 0.88 | 0.23G | 0.89 |
+| word_bits | 0.07G | 1.03 | 0.54G | 1.08 |
+| real_nbody | 0.18G | 1.01 | 0.63G | 1.14 |
+
+MLton's 33 programs run at a geometric mean of **0.81** of the
+16-byte layout's cycles (the word with 64 bits and Koka's encoding
+0.945, 63 bits with Koka's 0.870), 27 of them faster, in 0.60 of the
+bytes; slower by more than 2% are `raytrace` 1.15, `nucleic` 1.09,
+`tsp` 1.08, `mandelbrot` 1.07, `ray` 1.05 and `peek` 1.03. That is
+the number M5 has to keep.
 
 ### M4, for the gate
 
