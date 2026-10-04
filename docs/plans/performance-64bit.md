@@ -610,6 +610,13 @@ A (homes, experiments 2 and 3) before anything about fields.
   them after experiments 1, 5 and 10 (2026-10-04, at the end of the
   heap layout's M5, whose tables are in `heap-layout.md`, *M5, done*);
   experiments 1 and 5 are run, above.
+* **Decided by the owner on 2026-10-04, on experiments 1 and 5:** raw
+  real fields are deferred to a future roadmap. The heap layout's M8
+  is measured with variants of `fft` and `raytrace` that use
+  `RealArray`. After M8 comes the JIT's work on what the tables above
+  put first for the most programs: calls of SML functions (D) and the
+  primitives that go through C (experiment 10; `sin` and its like
+  stay calls of the C library).
 * D is the JIT roadmap's, and worth its cost only if `mandelbrot` and
   `tsp` matter.
 

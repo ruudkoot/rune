@@ -43,7 +43,7 @@ What it rests on:
 | M2 | The simulator and the harness in the tree | done 2026-09-27, `3f17fd2` |
 | M3 | The layout behind an interface | done 2026-09-27, `93cc674` |
 | M4 | Prototypes at full scale; the gate | done 2026-10-04: both prototypes run, pass the suites and are measured (branches `heap-layout-word` and `heap-layout-pairs`; the four sections *M4, ...* below), and the owner decided the gate that day (*M4, for the gate*). Not built in M4, and no longer wanted before M5: raw typed fields, the 32-bit header and its table, typed slots |
-| M5 | The chosen layout, complete | done 2026-10-04 on `heap-layout-word`, merged into `heap-layout`: the 64-bit types, the reals by the rotation, every consumer and what is kept open (*M5, the first step* to *M5, the third and fourth steps*), measured against the 16-byte layout under every engine (*M5, done*). D15's targets 1 and 3 are met, with what each section says beside them, and target 2 is measured. Raw real fields: the owner decides after experiments 1, 5 and 10 of `performance-64bit.md` |
+| M5 | The chosen layout, complete | done 2026-10-04 on `heap-layout-word`, merged into `heap-layout`: the 64-bit types, the reals by the rotation, every consumer and what is kept open (*M5, the first step* to *M5, the third and fourth steps*), measured against the 16-byte layout under every engine (*M5, done*). D15's targets 1 and 3 are met, with what each section says beside them, and target 2 is measured. Raw real fields: deferred to a future roadmap by the owner on 2026-10-04, on experiments 1 and 5 of `performance-64bit.md` |
 | M6 | Roots and maps | done 2026-10-04: the collector asks the engine which registers of a waiting frame are live (`VM.frame_live`, the JIT's liveness in `runtime/register/live.c`) and drops the dead ones, at every tier; the root list written once (*M6, done*). The bootstrap copies 12% fewer bytes. Tier 2's writes of unit, the plan's way, were not needed |
 | M7 | The collector on the new layout, and the hooks for the next | done 2026-10-04: the collector's state in the VM, the header's four bits named and tested, the barrier as one empty operation with a card mark behind a switch, young by address, the indirection in place, the growth of the heap measured and kept, the longest collection in `--stats`, and `docs/plans/collector.md` (*M7, done*) |
 | M8 | Flat arrays, strings and the FFI's objects | |
@@ -1386,6 +1386,18 @@ step).
 real fields are not decided until experiments 1, 5 and 10 of
 `performance-64bit.md` have been run; nothing of M6 to M8 waits for
 them.
+
+**Decided** (the owner, 2026-10-04, on experiments 1 and 5, which
+`performance-64bit.md` has): **raw real fields are deferred to a
+future roadmap.** They reach 36% to 70% of the conversions of five of
+the eight programs of reals and are estimated to bring `raytrace` from
+1.14 of the 16-byte layout's cycles to about 1.08 and three others by
+one to three points, for a descriptor in the header, a collector that
+reads it and a test at the readers. The header's second byte stays
+free for them. For M8 the owner asked for variants of `fft` and
+`raytrace` that use `RealArray`, to see what the flat arrays do (the
+two use `Array` at `real`, which M8 does not change); after M8 the
+work is the JIT's: calls and the primitives that go through C.
 
 **Not done in M5,** none of which changes a result: the 64-bit
 primitives in line in `runeopt`'s code, `word64_asr` and the reals'
@@ -4737,9 +4749,9 @@ have come in.
 * **What:** `Word8Array`, `CharArray` and `Word8Vector`, `CharVector`
   at one byte per element with C's layout behind the header
   (basis.md's `_primtype "bytearray"`, `array_blit`); `RealArray` and
-  `Real64Array` flat, the elements the double's own bits (and here,
-  if the owner chose them after M5, raw real fields in tuples and
-  records, with the header's descriptor: D1's second half); `WideString` at four bytes per character or as
+  `Real64Array` flat, the elements the double's own bits (raw real
+  fields in tuples and records, D1's second half, are not here: the
+  owner deferred them to a future roadmap on 2026-10-04); `WideString` at four bytes per character or as
   today by measure; the pin bit of D9 honoured (an object pinned is not
   moved: in the large-object space if D6 built it, else copied around
   the call); a handle table for values C holds, as a root
