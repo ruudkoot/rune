@@ -4485,6 +4485,7 @@ output from every build).
 |---|---|
 | performance.md item 19 (8-byte values, "half the heap and half the collector's work") | D1, D2, D3; the numbers of *The experiments* |
 | performance.md item 13 (generational collector) | D7; M7's hooks and brief; the next roadmap |
+| performance-64bit.md (2026-10-04: the programs that lose under the word, 64-bit words and reals, where their cost is and what would recover it) | D2's price as M5 leaves it; raw typed fields and the JIT's homes, after M5 |
 | real-encoding.md (2026-10-04: the experiments left on how a real sits in the word) | D3 at the gate; M5's second step; raw real fields, undecided until after M5 |
 | 32-bit-vm.md (2026-10-04: the experiments that would decide a 32-bit VM's own word) | D13 A for M5 at the gate; D13 B, D4 B and D, not prototyped |
 | docs/performance.md, *Why `vm/new` at `opt` is slower than MLton* (2026-10-02): the 16-byte tagged Value written at every result, the 16-byte array cell | D1, D3, M8; D15's targets on the same programs (*After the rebase*) |
