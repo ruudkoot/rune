@@ -443,7 +443,7 @@ static int get_heap(Stream *s, VM *vm) {
         uint16_t contag = get_u16(s);
         uint32_t len = get_u32(s);
         obj_init(o, kind, contag, len);
-        if (!s->ok || obj_kind(o) < K_TUPLE || obj_kind(o) > K_BOX || obj_kind(o) == K_FORWARD) return 0;
+        if (!s->ok || obj_kind(o) < K_TUPLE || obj_kind(o) > K_LAST || obj_kind(o) == K_FORWARD) return 0;
         size_t size = obj_size(o);
         if (size > vm->heap_used - scan) return 0;
         if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) {
@@ -556,6 +556,8 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     }
     vm->heap_from = malloc(vm->heap_size > 0 ? vm->heap_size : 1);
     if (!vm->heap_from) return failed(&s, err, errlen, "cannot allocate heap");
+    /* 8-aligned, as every heap is: bits 1 and 2 of a pointer stay clear (value.h) */
+    if (((uintptr_t)vm->heap_from & 7) != 0) return failed(&s, err, errlen, "cannot allocate an aligned heap");
     if (!get_heap(&s, vm)) return failed(&s, err, errlen, "the heap of the image is not sound");
 
     p->nconsts = get_u32(&s);

@@ -273,8 +273,8 @@ It found two bugs when it was written. A `Value` was 12 bytes on a 32-bit
 Linux, where the ABI aligns an `int64_t` to four and every other target
 Rune builds for aligns it to eight -- so every object of the heap was a
 different size there, the counts disagreed, and an image would not have
-crossed; the padding is now written out (`runtime/vm.h`, and
-[plans/performance.md](plans/performance.md) for why 16 bytes and not 12). And
+crossed; the padding was written out then, and a `Value` has since become
+one 64-bit word on every target ([runtime.md](runtime.md)). And
 `runtime/sys/sys_posix.c` asked for `_POSIX_C_SOURCE` alone, under which an older
 glibc's headers do not declare `realpath`.
 

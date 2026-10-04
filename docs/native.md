@@ -137,7 +137,7 @@ TUPLE, CON, CLOSURE, NEWEXN and MKEXN allocate in the template when
 `--gc-stress` is off and the object fits in the space left. They do what
 `vm_alloc` does:
 
-* bump `heap_used` by 8 + 16 n bytes;
+* bump `heap_used` by 8 + 8 n bytes;
 * add to `bytes_allocated` and `objects_allocated`, which `--count` prints;
 * write the header in two stores (kind, pad and constructor tag; length);
 * write the fields from their slots.

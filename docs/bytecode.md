@@ -154,9 +154,10 @@ function, local, primitive or builtin-exception operands.
 
 ## Values
 
-Every value is a 16-byte tagged cell: `unit`, `int` (64-bit), `word` (64-bit),
-`real` (double), `char`, a nullary constructor (`CON0` with its tag) or a
-pointer to a heap object. Heap objects:
+Every value is one 64-bit word ([runtime.md](runtime.md), *Values and
+objects*): an immediate -- `unit`, an `int` or a `word` (63 bits), a
+`char`, a nullary constructor (`CON0` with its tag), a `real` whose
+exponent allows it -- or a pointer to a heap object. Heap objects:
 
 | kind | contents | used for |
 |---|---|---|
@@ -168,6 +169,8 @@ pointer to a heap object. Heap objects:
 | ARRAY | n fields | arrays (identity equality) |
 | EXN | constructor, payload | exception values |
 | EXNCON | name string | exception constructors; identity is the address |
+| REAL | 8 raw bytes | a real that has no immediate: zero, a subnormal, an infinity, NaN, or a number outside 2^-511 to 2^513 |
+| BOX | 8 raw bytes | an `Int64.int` or a `Word64.word` that needs its 64th bit |
 
 Booleans are `CON0 0` (`false`) and `CON0 1` (`true`). Records store their
 fields sorted by label (numeric labels first, in numeric order, then

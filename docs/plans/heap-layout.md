@@ -1115,6 +1115,93 @@ and does none in line; `word64_asr` and the reals' bits are not in
 line in the JIT either; the middle end folds no 64-bit arithmetic.
 None changes a result.
 
+### M5, the second step: the reals
+
+Built on 2026-10-04 (`8297067d`).
+
+* **The rotation is the one encoding** (`runtime/value.h`): the
+  double's bits with 2^61 added, rotated left by two, an immediate
+  where the low bit is then set, which is a normal number from 2^-511
+  up to 2^513. Koka's encoding, which both prototypes ran, is gone
+  from the sources; `-DRUNE_REAL_BOXED` still boxes every real.
+* **Six boxes are the VM's**: `+0.0`, `-0.0`, the two infinities and
+  the quiet NaN of either sign (`0.0 / 0.0` is the negative one on
+  x86 and the positive one on aarch64 and PowerPC). `heap_init` makes
+  them, they are roots, and an image carries them (image version 9),
+  so none of them is ever allocated by a program and every engine has
+  them at one place in its heap. `--stats` counts the boxes a program
+  makes, not these.
+* **The interpreter's fast path has the VM** (`prim_fast`), and gives
+  a result of zero its box where it left it to the primitive.
+* **The JIT** decodes in seven instructions and one branch and
+  encodes in six; `+0.0` loads its box in line. `runeopt`'s templates
+  are regenerated: 293 lines where Koka's were 322.
+* `tests/lang/basis.real_stored`: reals of every class -- zero, the
+  subnormals, the infinities, the ends of the immediate range -- come
+  back bit for bit from a list, an array, a ref, a tuple and a closure
+  across collections; the expected bits are computed outside Rune.
+
+**The programs of reals**, cycles and instructions against the 16-byte
+VM, each program on the two VMs in turn on a quiet machine, the least
+of three, the default tiering:
+
+| Program | 16-byte | M5 | instructions |
+|---|---:|---:|---:|
+| barnes-hut | 0.61G | 1.00 | 1.48 |
+| fft | 26.4G | 0.97 | 1.42 |
+| mandelbrot | 119.5G | 1.10 | 1.33 |
+| nucleic | 1.22G | 1.10 | 1.36 |
+| ray | 0.91G | 1.00 | 1.21 |
+| raytrace | 6.04G | 1.09 | 1.32 |
+| simple | 1.17G | 0.75 | 1.19 |
+| tsp | 28.1G | 1.07 | 1.24 |
+| geometric mean | | 1.00 | 1.32 |
+| real_nbody | 0.18G | 1.02 | 1.02 |
+
+With Koka's encoding and 64 bits kept the same eight were at 1.30
+(M4). The four that are still behind lose 7% to 10%, and what they
+lose is in `performance-64bit.md` with the programs of 64-bit words.
+
+**The suites**: the twenty targets of the first step pass
+(`test-portability` and `test-windows` among them: the rotation on
+linux32, ppc64, aarch64 with its JIT, and Windows); `perf-check` has
+the same two budgets over.
+
+### M5, the third and fourth steps
+
+**Every consumer** (the third step) had been reached by prototype 1
+and by the two steps above: both loops, every primitive, every
+emitter, `runeopt`'s templates, the images (version 9), the bytecode
+(version 6), Windows, the 32-bit and PowerPC VMs on the same word.
+What this step added is the documentation of the layout as it is --
+`docs/runtime.md` (*Values and objects*, the heap's roots, *Numbers*),
+`docs/bytecode.md`, `docs/native.md`, `docs/testing.md` (its counts
+measured again: a stream's position closures are 17 objects and 408
+bytes, a compile into a new file 50 objects and 1,600 bytes),
+`runtime/register/ARCHITECTURE.md` (the homes that hold a word and the
+ones that are raw), the `Runtime` signature's sentence on sizes -- and
+the budgets, re-based in one commit that quotes the old and the new.
+Not done, and not needed for a result: a nullary exception as an
+immediate (D4's small item), `IntInf`'s limbs in a raw word, and the
+64-bit primitives in line in `runeopt`.
+
+**What is kept open** (the fourth step), in `runtime/value.h`:
+
+* *A pointer's bits 1 and 2 are zero and unused.* A `_Static_assert`
+  holds an object to 8-byte alignment (the header's size, the
+  payload's rounding), and a semispace is checked to be 8-aligned
+  where one is made (`heap_init`, the collector, an image's heap).
+  Nothing masks the two bits, since nothing sets them: the mask comes
+  with whichever uses a code first, the headerless pairs of
+  `heap-layout-pairs` or a lazy front end's "evaluated".
+* *`K_THUNK` and `K_IND`* are kinds 12 and 13, reserved: no program of
+  SML makes one, and the collector, the images and the loader take a
+  kind past `K_LAST` for a corrupt heap. A kind fits four bits, as D4
+  A's header wants.
+* *The header's second byte* is zero and is the one kept for a
+  descriptor of raw fields, D1 B's second half, which the gate left
+  to be decided after M5.
+
 ## The request
 
 The owner's brief, as written:

@@ -78,10 +78,18 @@ Value mk_word_vm(VM *vm, uint64_t w) {
 #endif
 }
 
+/* A semispace: 8-aligned, as malloc gives it, so that bits 1 and 2 of a
+   pointer into it are clear (value.h, what the layout keeps open). */
+static char *space_new(size_t bytes) {
+    char *p = malloc(bytes);
+    if (p && ((uintptr_t)p & 7) != 0) { fprintf(stderr, "runevm: a heap that is not 8-aligned\n"); exit(2); }
+    return p;
+}
+
 void heap_init(VM *vm, size_t semispace_bytes) {
     if (vm->heap_limit && semispace_bytes > vm->heap_limit) semispace_bytes = vm->heap_limit;
     vm->heap_size = semispace_bytes;
-    vm->heap_from = malloc(REAL_SPACE(semispace_bytes));
+    vm->heap_from = space_new(REAL_SPACE(semispace_bytes));
     vm->heap_to = NULL;
     vm->heap_used = 0;
 #ifdef RUNE_CENSUS
@@ -186,7 +194,7 @@ static void collect_into(VM *vm, size_t new_size) {
     if (vm->heap_to && new_size == vm->heap_size) to_space = vm->heap_to;
     else {
         free(vm->heap_to);
-        to_space = malloc(REAL_SPACE(new_size));
+        to_space = space_new(REAL_SPACE(new_size));
         if (!to_space) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
     }
     vm->heap_to = NULL;
@@ -312,7 +320,7 @@ int heap_relocate(VM *vm, uintptr_t old_base) {
     size_t scan = 0;
     while (reloc_ok && scan < vm->heap_used) {
         Obj *o = (Obj *)(vm->heap_from + scan);
-        if (vm->heap_used - scan < OBJ_HEADER_SIZE || obj_kind(o) < K_TUPLE || obj_kind(o) > K_BOX || obj_kind(o) == K_FORWARD) return 0;
+        if (vm->heap_used - scan < OBJ_HEADER_SIZE || obj_kind(o) < K_TUPLE || obj_kind(o) > K_LAST || obj_kind(o) == K_FORWARD) return 0;
         size_t size = obj_size(o);
         if (size > vm->heap_used - scan) return 0;
         if (obj_has_fields(o)) {

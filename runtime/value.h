@@ -61,12 +61,20 @@ enum ObjKind {
     K_EXNCON,     /* 1 field: name string; identity is the address */
     K_FORWARD,    /* GC forwarding: first payload word is the new address */
     K_REAL,       /* a boxed real: 8 raw bytes, the double */
-    K_BOX         /* an Int64.int or a Word64.word beyond 63 bits (an int or word too, under RUNE_INT64): 8 raw bytes */
+    K_BOX,        /* an Int64.int or a Word64.word beyond 63 bits (an int or word too, under RUNE_INT64): 8 raw bytes */
+    /* Reserved for a lazy front end (docs/plans/heap-layout.md, *A lazy front
+       end*): a suspension, and what it becomes once it has its value. No
+       program of SML makes one, and the collector, the images and the
+       loader take a kind past K_LAST for a corrupt heap. */
+    K_THUNK,
+    K_IND
 };
+#define K_LAST K_BOX   /* the last kind an object has today */
+_Static_assert(K_IND < 16, "a kind fits four bits, which is what the header keeps for it (D4 A)");
 
 struct Obj {
     uint8_t kind;
-    uint8_t pad;
+    uint8_t pad;    /* zero: kept free for a descriptor of raw fields (D1 B's second half, undecided) */
     uint16_t contag;
     uint32_t len;   /* number of fields, or byte length for strings; 1 for a box */
 #ifdef RUNE_CENSUS
@@ -251,6 +259,19 @@ static inline int obj_has_fields(const Obj *o) { return o->kind != K_STRING && o
    image reader has the same numbers through src/opt/x64_layout.sml) */
 #define PAYLOAD_ALIGN 8
 #define PAYLOAD_MIN 8
+/* What the layout keeps open (heap-layout M5). An object is its header and
+   a payload in multiples of 8 in a heap that is 8-aligned, so bits 1 and 2
+   of a pointer are zero. They are not to be used for anything: a later
+   layout gives them a code -- two shapes of object without a header, and a
+   lazy front end's "evaluated" (D4 C) -- and the mask that reads a pointer
+   then comes with whichever uses a code first; nothing masks them today,
+   since nothing sets them. heap_init and the collector check the heap's
+   alignment where they get one. */
+#define PTR_SPARE_BITS ((Value)6)
+_Static_assert(PAYLOAD_ALIGN % 8 == 0 && PAYLOAD_MIN % 8 == 0 && sizeof(struct Obj) % 8 == 0,
+               "an object is 8-aligned: bits 1 and 2 of a pointer are free");
+_Static_assert(offsetof(struct Obj, pad) == 1, "the header's second byte is the one kept free");
+static inline int ptr_spare_clear(Value v) { return (v & PTR_SPARE_BITS) == 0; }
 static inline size_t payload_size(size_t bytes) {
     size_t r = (bytes + PAYLOAD_ALIGN - 1) & ~(size_t)(PAYLOAD_ALIGN - 1);
     return r < PAYLOAD_MIN ? PAYLOAD_MIN : r;
