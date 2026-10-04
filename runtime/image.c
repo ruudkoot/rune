@@ -149,6 +149,12 @@ static void put_heap(Stream *s, VM *vm) {
             /* a box: its 64 bits as a number, whichever end the machine has first */
             uint64_t bits; memcpy(&bits, obj_bytes(o), 8);
             put_u64(s, bits);
+        } else if (obj_kind(o) == K_REALS) {
+            /* reals side by side: each as a box's 64 bits */
+            for (uint32_t i = 0; i < obj_len(o); i++) {
+                uint64_t bits; memcpy(&bits, obj_bytes(o) + 8 * (size_t)i, 8);
+                put_u64(s, bits);
+            }
         } else if (!obj_has_fields(o)) {
             put(s, obj_bytes(o), obj_payload_bytes(obj_kind(o), obj_len(o)));
         } else {
@@ -453,6 +459,11 @@ static int get_heap(Stream *s, VM *vm) {
             uint64_t bits = get_u64(s);
             memcpy(obj_bytes(o), &bits, 8);
             vm->box_bytes_live += size;
+        } else if (obj_kind(o) == K_REALS) {
+            for (uint32_t i = 0; i < obj_len(o); i++) {
+                uint64_t bits = get_u64(s);
+                memcpy(obj_bytes(o) + 8 * (size_t)i, &bits, 8);
+            }
         } else if (!obj_has_fields(o)) {
             get(s, obj_bytes(o), obj_payload_bytes(obj_kind(o), obj_len(o)));
         } else {

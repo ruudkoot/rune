@@ -344,6 +344,18 @@ enum Prim {
   PRIM_word64_to_string = 338,
   PRIM_word64_to_int64 = 339,
   PRIM_word64_from_int64 = 340,
+  PRIM_bytes_new = 341,
+  PRIM_bytes_length = 342,
+  PRIM_bytes_sub = 343,
+  PRIM_bytes_update = 344,
+  PRIM_bytes_blit = 345,
+  PRIM_bytes_blit_string = 346,
+  PRIM_bytes_extract = 347,
+  PRIM_reals_new = 348,
+  PRIM_reals_length = 349,
+  PRIM_reals_sub = 350,
+  PRIM_reals_update = 351,
+  PRIM_reals_blit = 352,
   PRIM__COUNT
 };
 
@@ -689,6 +701,18 @@ static const char *const prim_names[] = {
   "word64_to_string",
   "word64_to_int64",
   "word64_from_int64",
+  "bytes_new",
+  "bytes_length",
+  "bytes_sub",
+  "bytes_update",
+  "bytes_blit",
+  "bytes_blit_string",
+  "bytes_extract",
+  "reals_new",
+  "reals_length",
+  "reals_sub",
+  "reals_update",
+  "reals_blit",
 };
 
 static const unsigned char prim_arity[] = {
@@ -1033,6 +1057,18 @@ static const unsigned char prim_arity[] = {
   1,
   1,
   1,
+  2,
+  1,
+  2,
+  3,
+  5,
+  5,
+  3,
+  2,
+  1,
+  2,
+  3,
+  5,
 };
 
 /* what each primitive's result is (the representations of
@@ -1380,6 +1416,18 @@ static const unsigned char prim_result[] = {
   6,
   9,
   10,
+  6,
+  1,
+  4,
+  8,
+  8,
+  8,
+  6,
+  6,
+  1,
+  3,
+  8,
+  8,
 };
 
 #define RUNE_PRIM_LIST(X) \
@@ -1723,6 +1771,18 @@ static const unsigned char prim_result[] = {
   X(word64_from_word_x) \
   X(word64_to_string) \
   X(word64_to_int64) \
-  X(word64_from_int64)
+  X(word64_from_int64) \
+  X(bytes_new) \
+  X(bytes_length) \
+  X(bytes_sub) \
+  X(bytes_update) \
+  X(bytes_blit) \
+  X(bytes_blit_string) \
+  X(bytes_extract) \
+  X(reals_new) \
+  X(reals_length) \
+  X(reals_sub) \
+  X(reals_update) \
+  X(reals_blit)
 
 #endif

@@ -48,7 +48,12 @@ are zero under today's (*The garbage collector*). The smallest object is
 therefore 16 bytes, and a tuple of *n* fields is 8 + 8*n* bytes. The kinds
 are a tuple (also a record and a vector), a constructor with an argument,
 a closure, a string, a `ref`, an array, an exception, an exception
-constructor and the two boxes.
+constructor, the two boxes, and two arrays whose elements are not values:
+an array of bytes (`Word8Array`, `CharArray`: a byte an element, where an
+array of values takes eight) and an array of reals (`RealArray`,
+`RealVector`: the doubles themselves, read and written without the word a
+real has elsewhere). Both are laid out as C has them, and the collector
+copies them without looking inside.
 
 A constructor whose argument is a tuple is one object of the tuple's
 fields, its tag in the header (`CONN`; `src/backend/rep.sml`); one of any
@@ -248,6 +253,24 @@ brief).
   object goes is the allocating thread's (`AllocState`): no variable of
   the collector is the process's, so two VMs of a process collect each by
   itself, and a thread's own allocation buffer is one struct to change.
+
+### What C can hold
+
+Nothing stays where it is under the copier, so C keeps no pointer into the
+heap across anything that may allocate. What it has instead
+(`runtime/vm.h`; a foreign-function interface is not built, and these are
+what it will stand on):
+
+* **A handle** (`vm_handle_new`, `vm_handle_get`, `vm_handle_free`): a
+  number for a value, in a table that is a root. The value is found again
+  through it after a collection moved the object. An image has no handles.
+* **A copy that stays** (`vm_pin`, `vm_unpin`): the bytes of an array of
+  bytes or of reals copied out for C to keep a pointer to while the program
+  runs on, and copied back into the object, wherever it is by then. There
+  is no pinning in place: that needs a space that does not move.
+* **The arrays C can read as they are:** an array of bytes and an array of
+  reals have C's layout behind the header, so a primitive passes a pointer
+  to their first element for the length of a call that does not allocate.
 
 ## Stacks, calls and exceptions
 

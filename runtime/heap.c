@@ -221,6 +221,7 @@ static void copy_value(VM *vm, Value *v) {
             if ((vm)->builtin_exns[i_]) O(&(vm)->builtin_exns[i_]); \
         for (int i_ = 0; i_ < REAL_BOXES; i_++) \
             if ((vm)->real_boxes[i_]) O(&(vm)->real_boxes[i_]); \
+        for (size_t i_ = 0; i_ < (vm)->nhandles; i_++) V(&(vm)->handles[i_]); \
     } while (0)
 #define COPY_VALUE(v) copy_value(vm, (v))
 #define COPY_OBJ(o) (*(o) = copy_obj(vm, *(o)))
@@ -377,6 +378,54 @@ static Obj *relocate_obj(VM *vm, Obj *o) {
 
 static void relocate_value(VM *vm, Value *v) {
     if (val_is_ptr(*v)) *v = mk_ptr(relocate_obj(vm, val_ptr(*v)));
+}
+
+/* ---- the handles: what C holds across a collection (vm.h) ---- */
+size_t vm_handle_new(VM *vm, Value v) {
+    if (vm->handles_free) {
+        size_t h = vm->handles_free - 1;
+        vm->handles_free = (size_t)val_imm(vm->handles[h]);
+        vm->handles[h] = v;
+        return h;
+    }
+    if (vm->nhandles == vm->handles_cap) {
+        size_t cap = vm->handles_cap ? vm->handles_cap * 2 : 16;
+        Value *t = realloc(vm->handles, cap * sizeof *t);
+        if (!t) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
+        vm->handles = t; vm->handles_cap = cap;
+    }
+    vm->handles[vm->nhandles] = v;
+    return vm->nhandles++;
+}
+Value vm_handle_get(const VM *vm, size_t h) { return h < vm->nhandles ? vm->handles[h] : mk_unit(); }
+void vm_handle_set(VM *vm, size_t h, Value v) { if (h < vm->nhandles) vm->handles[h] = v; }
+void vm_handle_free(VM *vm, size_t h) {
+    if (h >= vm->nhandles) return;
+    vm->handles[h] = mk_imm((int64_t)vm->handles_free);
+    vm->handles_free = h + 1;
+}
+
+/* the array of bytes or of reals a handle names, or NULL */
+static Obj *raw_array(const VM *vm, size_t h) {
+    Value v = vm_handle_get(vm, h);
+    if (!val_is_ptr(v) || !val_ptr(v)) return NULL;
+    Obj *o = val_ptr(v);
+    return obj_kind(o) == K_BYTES || obj_kind(o) == K_REALS ? o : NULL;
+}
+void *vm_pin(VM *vm, size_t h, size_t *bytes) {
+    Obj *o = raw_array(vm, h);
+    if (!o) return NULL;
+    size_t n = obj_payload_bytes(obj_kind(o), obj_len(o));
+    void *copy = malloc(n ? n : 1);
+    if (!copy) return NULL;
+    memcpy(copy, obj_bytes(o), n);
+    if (bytes) *bytes = n;
+    return copy;
+}
+void vm_unpin(VM *vm, size_t h, void *copy) {
+    Obj *o = raw_array(vm, h);
+    if (o && copy) memcpy(obj_bytes(o), copy, obj_payload_bytes(obj_kind(o), obj_len(o)));
+    free(copy);
 }
 
 int heap_relocate(VM *vm, uintptr_t old_base) {

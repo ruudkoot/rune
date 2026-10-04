@@ -2271,6 +2271,102 @@ static int p_rt_version(VM *vm) {
 
 /* ================================================================ table (generated order from prims.def) */
 #define PRIM_ENTRY(name) p_##name,
+/* ================================================================ arrays of bytes and of reals */
+/* K_BYTES: len bytes, laid out as a string's (Word8Array, CharArray).
+   K_REALS: len doubles, raw (RealArray, RealVector). Neither has fields
+   the collector follows, and each is what C has for the same thing, which
+   is what the FFI's objects are (docs/plans/heap-layout.md, M8). */
+#define MAX_REALS 100000000
+/* the run [i, i + n) lies in [0, len) */
+static int run_ok(int64_t i, int64_t n, uint32_t len) { return i >= 0 && n >= 0 && (uint64_t)i + (uint64_t)n <= len; }
+
+static int p_bytes_new(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "bytes_new");
+    check_tag(vm, ARG(0), T_INT, "bytes_new");
+    int64_t n = val_imm(ARG(1));
+    int byte = (int)(val_imm(ARG(0)) & 255);
+    if (n < 0 || n > MAX_STRING) return raise_with(vm, 2, EXN_SIZE);
+    Obj *a = vm_alloc(vm, K_BYTES, 0, (uint32_t)n, (size_t)n);
+    if (n) memset(obj_bytes(a), byte, (size_t)n);
+    return ret(vm, 2, mk_ptr(a));
+}
+static int p_bytes_length(VM *vm) { Obj *a = check_obj(vm, ARG(0), K_BYTES, "bytes_length"); return ret(vm, 1, mk_int(obj_len(a))); }
+static int p_bytes_sub(VM *vm) {
+    Obj *a = check_obj(vm, ARG(1), K_BYTES, "bytes_sub");
+    check_tag(vm, ARG(0), T_INT, "bytes_sub");
+    int64_t i = val_imm(ARG(0));
+    if (i < 0 || (uint64_t)i >= obj_len(a)) return raise_with(vm, 2, EXN_SUBSCRIPT);
+    return ret(vm, 2, mk_char((unsigned char)obj_bytes(a)[i]));
+}
+static int p_bytes_update(VM *vm) {
+    Obj *a = check_obj(vm, ARG(2), K_BYTES, "bytes_update");
+    check_tag(vm, ARG(1), T_INT, "bytes_update");
+    check_tag(vm, ARG(0), T_CHAR, "bytes_update");
+    int64_t i = val_imm(ARG(1));
+    if (i < 0 || (uint64_t)i >= obj_len(a)) return raise_with(vm, 3, EXN_SUBSCRIPT);
+    obj_bytes(a)[i] = (char)(val_imm(ARG(0)) & 255);
+    return ret(vm, 3, mk_unit());
+}
+static int bytes_copy(VM *vm, int from, const char *name) {
+    Obj *src = check_obj(vm, ARG(4), from, name), *dst = check_obj(vm, ARG(2), K_BYTES, name);
+    check_tag(vm, ARG(3), T_INT, name); check_tag(vm, ARG(1), T_INT, name); check_tag(vm, ARG(0), T_INT, name);
+    int64_t si = val_imm(ARG(3)), di = val_imm(ARG(1)), n = val_imm(ARG(0));
+    if (!run_ok(si, n, obj_len(src)) || !run_ok(di, n, obj_len(dst))) return raise_with(vm, 5, EXN_SUBSCRIPT);
+    if (n) memmove(obj_bytes(dst) + di, obj_bytes(src) + si, (size_t)n);
+    return ret(vm, 5, mk_unit());
+}
+static int p_bytes_blit(VM *vm) { return bytes_copy(vm, K_BYTES, "bytes_blit"); }
+static int p_bytes_blit_string(VM *vm) { return bytes_copy(vm, K_STRING, "bytes_blit_string"); }
+static int p_bytes_extract(VM *vm) {
+    Obj *a = check_obj(vm, ARG(2), K_BYTES, "bytes_extract");
+    check_tag(vm, ARG(1), T_INT, "bytes_extract"); check_tag(vm, ARG(0), T_INT, "bytes_extract");
+    int64_t i = val_imm(ARG(1)), n = val_imm(ARG(0));
+    if (!run_ok(i, n, obj_len(a))) return raise_with(vm, 3, EXN_SUBSCRIPT);
+    Obj *r = vm_alloc_string(vm, (uint32_t)n);
+    a = val_ptr(ARG(2));   /* may have moved */
+    if (n) memcpy(obj_bytes(r), obj_bytes(a) + i, (size_t)n);
+    return ret(vm, 3, mk_ptr(r));
+}
+
+static int p_reals_new(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "reals_new");
+    check_tag(vm, ARG(0), T_REAL, "reals_new");
+    int64_t n = val_imm(ARG(1));
+    double x = val_real(ARG(0));   /* read before the allocation, which may move its box */
+    if (n < 0 || n > MAX_REALS) return raise_with(vm, 2, EXN_SIZE);
+    Obj *a = vm_alloc(vm, K_REALS, 0, (uint32_t)n, (size_t)n * 8);
+    double *d = (double *)(void *)obj_bytes(a);
+    for (int64_t i = 0; i < n; i++) d[i] = x;
+    return ret(vm, 2, mk_ptr(a));
+}
+static int p_reals_length(VM *vm) { Obj *a = check_obj(vm, ARG(0), K_REALS, "reals_length"); return ret(vm, 1, mk_int(obj_len(a))); }
+static int p_reals_sub(VM *vm) {
+    Obj *a = check_obj(vm, ARG(1), K_REALS, "reals_sub");
+    check_tag(vm, ARG(0), T_INT, "reals_sub");
+    int64_t i = val_imm(ARG(0));
+    if (i < 0 || (uint64_t)i >= obj_len(a)) return raise_with(vm, 2, EXN_SUBSCRIPT);
+    double x; memcpy(&x, obj_bytes(a) + 8 * (size_t)i, 8);
+    return ret(vm, 2, mk_real(x));
+}
+static int p_reals_update(VM *vm) {
+    Obj *a = check_obj(vm, ARG(2), K_REALS, "reals_update");
+    check_tag(vm, ARG(1), T_INT, "reals_update");
+    check_tag(vm, ARG(0), T_REAL, "reals_update");
+    int64_t i = val_imm(ARG(1));
+    if (i < 0 || (uint64_t)i >= obj_len(a)) return raise_with(vm, 3, EXN_SUBSCRIPT);
+    double x = val_real(ARG(0));
+    memcpy(obj_bytes(a) + 8 * (size_t)i, &x, 8);
+    return ret(vm, 3, mk_unit());
+}
+static int p_reals_blit(VM *vm) {
+    Obj *src = check_obj(vm, ARG(4), K_REALS, "reals_blit"), *dst = check_obj(vm, ARG(2), K_REALS, "reals_blit");
+    check_tag(vm, ARG(3), T_INT, "reals_blit"); check_tag(vm, ARG(1), T_INT, "reals_blit"); check_tag(vm, ARG(0), T_INT, "reals_blit");
+    int64_t si = val_imm(ARG(3)), di = val_imm(ARG(1)), n = val_imm(ARG(0));
+    if (!run_ok(si, n, obj_len(src)) || !run_ok(di, n, obj_len(dst))) return raise_with(vm, 5, EXN_SUBSCRIPT);
+    if (n) memmove(obj_bytes(dst) + 8 * (size_t)di, obj_bytes(src) + 8 * (size_t)si, (size_t)n * 8);
+    return ret(vm, 5, mk_unit());
+}
+
 const PrimFn prim_table[PRIM__COUNT] = {
     RUNE_PRIM_LIST(PRIM_ENTRY)
 };

@@ -20,7 +20,7 @@ struct
   fun fail msg = raise Bad msg
 
   (* IMAGE_MAGIC of runtime/image.c, with the fingerprint of the instruction set *)
-  val magic = "runevm image 9 isa " ^ Opcodes.fingerprintHex ^ "\000"
+  val magic = "runevm image 10 isa " ^ Opcodes.fingerprintHex ^ "\000"
   val big = Rbc.big
 
   type reader = {data : string, pos : int ref}
@@ -88,6 +88,8 @@ struct
             val (acc, payload) =
               if kind = X64Layout.K_STRING then (IntMap.insert (acc, at, take (r, len)), len)
               else if kind = X64Layout.K_REAL orelse kind = X64Layout.K_BOX then (ignore (take (r, 8)); (acc, 8))
+              else if kind = X64Layout.K_BYTES then (ignore (take (r, len)); (acc, len))
+              else if kind = X64Layout.K_REALS then (ignore (take (r, 8 * len)); (acc, 8 * len))
               else (ignore (take (r, 9 * len)); (acc, X64Layout.valueSize * len))
           in
             go (at + X64Layout.headerSize + payloadSize payload, acc)

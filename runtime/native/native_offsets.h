@@ -60,6 +60,8 @@
     X("K_EXN", K_EXN) \
     X("K_EXNCON", K_EXNCON) \
     X("K_REAL", K_REAL) \
-    X("K_BOX", K_BOX)
+    X("K_BOX", K_BOX) \
+    X("K_BYTES", K_BYTES) \
+    X("K_REALS", K_REALS)
 
 #endif

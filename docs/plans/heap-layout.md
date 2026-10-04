@@ -46,7 +46,7 @@ What it rests on:
 | M5 | The chosen layout, complete | done 2026-10-04 on `heap-layout-word`, merged into `heap-layout`: the 64-bit types, the reals by the rotation, every consumer and what is kept open (*M5, the first step* to *M5, the third and fourth steps*), measured against the 16-byte layout under every engine (*M5, done*). D15's targets 1 and 3 are met, with what each section says beside them, and target 2 is measured. Raw real fields: deferred to a future roadmap by the owner on 2026-10-04, on experiments 1 and 5 of `performance-64bit.md` |
 | M6 | Roots and maps | done 2026-10-04: the collector asks the engine which registers of a waiting frame are live (`VM.frame_live`, the JIT's liveness in `runtime/register/live.c`) and drops the dead ones, at every tier; the root list written once (*M6, done*). The bootstrap copies 12% fewer bytes. Tier 2's writes of unit, the plan's way, were not needed |
 | M7 | The collector on the new layout, and the hooks for the next | done 2026-10-04: the collector's state in the VM, the header's four bits named and tested, the barrier as one empty operation with a card mark behind a switch, young by address, the indirection in place, the growth of the heap measured and kept, the longest collection in `--stats`, and `docs/plans/collector.md` (*M7, done*) |
-| M8 | Flat arrays, strings and the FFI's objects | |
+| M8 | Flat arrays, strings and the FFI's objects | done 2026-10-04: `Word8Array` and `CharArray` a byte an element, `RealArray` and `RealVector` the doubles themselves, in line in the interpreter and the JIT; a handle table and a copy that stays for C; images version 10 (*M8, done*). Variants of `fft` and `raytrace` over `RealArray`: 0.94 to 0.83 and 1.14 to 1.06 of the 16-byte layout's cycles |
 
 The owner decided every decision on 2026-09-27 (*Decisions*), D1 to D5
 provisionally on the experiments here and finally at the gate of M4,
@@ -1629,6 +1629,101 @@ C test in its three builds, and `tests/lang` 337 of 337 on the VM
 whose collector sets the header's bits, as it comes and with every
 function compiled and a collection at every allocation, and on the VM
 whose barrier marks a card. No budget moved.
+
+### M8, done: the arrays whose elements are not values, and what C can hold
+
+Built on 2026-10-04 on branch `heap-layout-m8`.
+
+* **Two kinds** (`runtime/value.h`): `K_BYTES`, an array of bytes that
+  can be written, laid out as a string's bytes are; and `K_REALS`,
+  reals side by side, the doubles themselves. Neither has fields the
+  collector follows; both are what C has for the same thing. With
+  `K_THUNK` and `K_IND` after them, every one of the fifteen kinds
+  the header's four bits can say is taken.
+* **Twelve primitives** (`bytes_new`, `bytes_length`, `bytes_sub`,
+  `bytes_update`, `bytes_blit`, `bytes_blit_string`, `bytes_extract`;
+  `reals_new`, `reals_length`, `reals_sub`, `reals_update`,
+  `reals_blit`) and two types the library names with `_prim
+  "bytearray"` and `_prim "realarray"`, as it names the 64-bit types.
+  Length, read and write of each are in the interpreter's loop and in
+  line in the JIT at both tiers: an element of an array of reals goes
+  to a home and comes from one as the double it is.
+* **The Basis.** `Word8Array` and `CharArray` are the array of bytes
+  (`RuneByteArrayFn`): a byte an element where an element took a word,
+  `vector`, `copy` and `copyVec` one primitive each. `RealVector` and
+  `RealArray` (and `Real64*`, `LargeReal*`, which are those) are the
+  array of reals, one representation behind one opaque ascription
+  (`RuneRealSeq`). Their slices and the two-dimensional arrays are
+  the functors they were. An element of `Word8Array` goes through a
+  character, `Word8` being opaque to the library too.
+* **Images** carry the two kinds (the reals as 64-bit numbers, so
+  that an image crosses byte orders) and are version 10. The test
+  that a machine saves and another restores
+  (`rt.save_restore_cross`) answers with an array of bytes and one of
+  reals in it now.
+* **What C can hold** (`runtime/vm.h`, `runtime/heap.c`): a handle
+  table that is a root (`vm_handle_new`, `vm_handle_get`,
+  `vm_handle_free`), and D9's pinning as it was decided for a heap
+  with no space that stays, a copy out and back (`vm_pin`,
+  `vm_unpin`). `tests/runtime/heap_test.c` hands an array of bytes
+  and one of reals to C through handles, across collections, and
+  writes through a pinned copy. No primitive of SML reaches them: the
+  FFI roadmap brings those with its syntax.
+
+**The variants the owner asked for** (2026-10-04), since no program
+of MLton's set uses `RealArray`: `fft-realarray` and
+`raytrace-realarray`, each a sed script over MLton's source and a
+line of `tests/perf/mlton-bench.txt`. Against the 16-byte layout,
+runs that alternate, the least of five:
+
+| Program | cycles | instructions | conversions of reals |
+|---|---:|---:|---:|
+| fft, as it is (`Array` at `real`) | 0.94 | 1.42 | 1,281M |
+| fft-realarray | 0.83 | 1.20 | 503M |
+| raytrace, as it is | 1.14 | 1.33 | 499M |
+| raytrace-realarray (its matrices) | 1.06 | 1.27 | 382M |
+
+The flat array takes away the conversions `performance-64bit.md`
+counted at arrays, 61% of `fft`'s and 24% of `raytrace`'s, and with
+them 12% of `fft`'s cycles and seven points of `raytrace`'s. A
+program has to ask for it: an `Array` at the type `real` is the
+array of words it was.
+
+**Found on the way.**
+
+* *The host builds of the Basis had been broken since M5.* Poly/ML
+  has no `Int64`, which the shim named, so that configuration loaded
+  nothing; SML/NJ's own `Int64` raises `Overflow` for `minInt mod ~1`;
+  MLKit could not load `int64.sml`. The suite on the hosts
+  (`make matrix-quick`) was not among the targets M5 ran. The shim's
+  `Int64` is the host's `IntInf` held to 64 bits now, with a
+  conversion to and from the host's int that goes fifteen bits at a
+  time, since MLKit's `IntInf.toInt` and `fromInt` raise `Overflow`
+  from 2^31 on; the 64-bit tests pass on the five hosts that have
+  them (the 31-bit SML/NJ has none).
+* *The census wrote past its tables.* They had nine entries, one a
+  kind up to `K_EXNCON`, and M5's boxes are kinds 10 and 11. Sixteen
+  now.
+* *`tests/perf/mlton-bench.txt` still had the 16-byte layout's bytes:*
+  M5 re-based the budgets and not that table. Re-based here.
+
+**Not done.** `WideString` stays a vector of words, eight bytes a
+character where it was sixteen: no program here uses one, and a third
+raw kind has no number to stand on. Raw real fields are deferred by
+the owner. An `Array` at `real` made flat by its type, which is what
+would reach `fft` and `raytrace` as they are written, is not M8's and
+is not decided.
+
+**The suites.** The twenty targets of M7 pass on M8, `test-heap`,
+`test-census`, `test-portability` and `test-windows` among them. The
+Basis suite on the hosts' builds of the library (`make matrix-quick`),
+which M5 to M7 did not run: 139,218 checks on Rune, and no check
+failing on any of the six hosts (MLton 139,155 checks, SML/NJ 139,180
+on each of its two 64-bit systems and 81,700 on the 31-bit one,
+Poly/ML 139,130, MLKit 139,059). Two files of MLKit's ran past the
+time limit in one of two runs, sixteen jobs at once, and pass by
+themselves. No budget is over; the bootstrap allocates 1.3% more
+bytes than at M5, the compiler and its library having grown.
 
 ## The request
 

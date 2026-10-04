@@ -343,7 +343,19 @@ struct
     ("word64_from_word_x", 337, 1),
     ("word64_to_string", 338, 1),
     ("word64_to_int64", 339, 1),
-    ("word64_from_int64", 340, 1)
+    ("word64_from_int64", 340, 1),
+    ("bytes_new", 341, 2),
+    ("bytes_length", 342, 1),
+    ("bytes_sub", 343, 2),
+    ("bytes_update", 344, 3),
+    ("bytes_blit", 345, 5),
+    ("bytes_blit_string", 346, 5),
+    ("bytes_extract", 347, 3),
+    ("reals_new", 348, 2),
+    ("reals_length", 349, 1),
+    ("reals_sub", 350, 2),
+    ("reals_update", 351, 3),
+    ("reals_blit", 352, 5)
   ]
   val byName =
     List.foldl (fn ((n, i, a), m) => StringMap.insert (m, n, (i, a))) StringMap.empty table
@@ -473,7 +485,9 @@ struct
     "word64_from_word_x",
     "word64_to_string",
     "word64_to_int64",
-    "word64_from_int64"
+    "word64_from_int64",
+    "bytes_length",
+    "reals_length"
   ])
   fun removable name = StringMap.member (removables, name)
   (* what each primitive takes and gives, from the type of its
@@ -826,7 +840,19 @@ struct
            ("word64_from_word_x", ([2], 10)),
            ("word64_to_string", ([10], 6)),
            ("word64_to_int64", ([10], 9)),
-           ("word64_from_int64", ([9], 10))
+           ("word64_from_int64", ([9], 10)),
+           ("bytes_new", ([1, 1], 6)),
+           ("bytes_length", ([6], 1)),
+           ("bytes_sub", ([6, 1], 4)),
+           ("bytes_update", ([6, 1, 4], 8)),
+           ("bytes_blit", ([6, 1, 6, 1, 1], 8)),
+           ("bytes_blit_string", ([6, 1, 6, 1, 1], 8)),
+           ("bytes_extract", ([6, 1, 1], 6)),
+           ("reals_new", ([1, 3], 6)),
+           ("reals_length", ([6], 1)),
+           ("reals_sub", ([6, 1], 3)),
+           ("reals_update", ([6, 1, 3], 8)),
+           ("reals_blit", ([6, 1, 6, 1, 1], 8))
          ]);
          repsOf name)
 end

@@ -282,6 +282,8 @@ struct
         else if stamp = #stamp Types.realTycon then L.RReal
         else if stamp = #stamp Types.charTycon then L.RChar
         else if stamp = #stamp Types.stringTycon then L.RPtr
+        else if stamp = #stamp Types.bytearrayTycon then L.RPtr
+        else if stamp = #stamp Types.realarrayTycon then L.RPtr
         else if stamp = #stamp Types.exnTycon then L.RPtr
         else
           case Ty.datatypeOf stamp of

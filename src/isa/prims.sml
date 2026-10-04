@@ -712,5 +712,31 @@ struct
          {name = "word64_to_int64", arity = 1, ty = "Word64.word -> Int64.int", effects = [],
           doc = "The same 64 bits as a signed number."},
          {name = "word64_from_int64", arity = 1, ty = "Int64.int -> Word64.word", effects = [],
-          doc = "The same 64 bits as an unsigned number."}]]
+          doc = "The same 64 bits as an unsigned number."}],
+       group "arrays of bytes (a byte an element, C's layout behind the header; heap-layout M8)"
+        [{name = "bytes_new", arity = 2, ty = "int * int -> bytearray", effects = [Raises, Allocates],
+          doc = "An array of the length, every byte the low eight bits of the second argument; raises Size if the length is negative or above a string's largest."},
+         {name = "bytes_length", arity = 1, ty = "bytearray -> int", effects = [],
+          doc = "Length."},
+         {name = "bytes_sub", arity = 2, ty = "bytearray * int -> char", effects = [Raises, ReadsHeap],
+          doc = "The byte at an index, as a character; raises Subscript."},
+         {name = "bytes_update", arity = 3, ty = "bytearray * int * char -> unit", effects = [Raises, WritesHeap],
+          doc = "Store a character; raises Subscript."},
+         {name = "bytes_blit", arity = 5, ty = "bytearray * int * bytearray * int * int -> unit", effects = [Raises, ReadsHeap, WritesHeap],
+          doc = "Copy a run of bytes (source, its start, destination, its start, the count), right where the two overlap; raises Subscript."},
+         {name = "bytes_blit_string", arity = 5, ty = "string * int * bytearray * int * int -> unit", effects = [Raises, WritesHeap],
+          doc = "The same from a string."},
+         {name = "bytes_extract", arity = 3, ty = "bytearray * int * int -> string", effects = [Raises, ReadsHeap, Allocates],
+          doc = "A run of the bytes (start, count) as a new string; raises Subscript."}],
+       group "arrays of reals (the doubles themselves side by side; heap-layout M8)"
+        [{name = "reals_new", arity = 2, ty = "int * real -> realarray", effects = [Raises, Allocates],
+          doc = "An array of the length, every element the real; raises Size if the length is negative or above 100000000."},
+         {name = "reals_length", arity = 1, ty = "realarray -> int", effects = [],
+          doc = "Length."},
+         {name = "reals_sub", arity = 2, ty = "realarray * int -> real", effects = [Raises, ReadsHeap],
+          doc = "The element at an index; raises Subscript."},
+         {name = "reals_update", arity = 3, ty = "realarray * int * real -> unit", effects = [Raises, WritesHeap],
+          doc = "Store an element; raises Subscript."},
+         {name = "reals_blit", arity = 5, ty = "realarray * int * realarray * int * int -> unit", effects = [Raises, ReadsHeap, WritesHeap],
+          doc = "Copy a run of elements (source, its start, destination, its start, the count), right where the two overlap; raises Subscript."}]]
 end

@@ -120,3 +120,23 @@ val () = List.app (fn i => show ("asub " ^ Int.toString i) (fn () => Int.toStrin
 val () = List.app (fn i => show ("aupdate " ^ Int.toString i)
                                 (fn () => (Array.update (arr, i, i * 2); Int.toString (Array.sub (arr, 0)))))
                   [0, 2, 3, ~1, minInt]
+
+(* ---- the arrays of bytes and of reals (heap-layout M8), which the register
+   VM does in its loop and its JIT in line: bytes_length bytes_sub
+   bytes_update reals_length reals_sub reals_update *)
+val ca = CharArray.fromList [#"a", #"b", #"c"]
+val () = show "clength" (fn () => Int.toString (CharArray.length ca) ^ " " ^ Int.toString (CharArray.length (CharArray.fromList [])))
+val () = List.app (fn i => show ("csub " ^ Int.toString i) (fn () => str (CharArray.sub (ca, i)))) [0, 2, 3, ~1, maxInt]
+val () = List.app (fn i => show ("cupdate " ^ Int.toString i)
+                                (fn () => (CharArray.update (ca, i, #"z"); CharArray.vector ca)))
+                  [0, 2, 3, ~1, minInt]
+val wa = Word8Array.fromList [0w0, 0w127, 0w255]
+val () = List.app (fn i => show ("wsub " ^ Int.toString i) (fn () => Word8.toString (Word8Array.sub (wa, i)))) [0, 1, 2, 3]
+val () = show "wupdate" (fn () => (Word8Array.update (wa, 1, 0w128); Word8.toString (Word8Array.sub (wa, 1))))
+val ra = RealArray.fromList [1.5, ~0.0, 4.9E~324, 1.0 / 0.0]
+val () = show "rlength" (fn () => Int.toString (RealArray.length ra) ^ " " ^ Int.toString (RealArray.length (RealArray.fromList [])))
+val () = List.app (fn i => show ("rsub " ^ Int.toString i) (fn () => Real.toString (RealArray.sub (ra, i)))) [0, 1, 2, 3, 4, ~1, maxInt]
+val () = List.app (fn (i, x) => show ("rupdate " ^ Int.toString i)
+                                     (fn () => (RealArray.update (ra, i, x); Real.toString (RealArray.sub (ra, 0) + RealArray.sub (ra, 3)))))
+                  [(0, 0.0), (3, ~2.5), (2, 0.0 / 0.0), (4, 1.0), (~1, 1.0), (minInt, 1.0)]
+val () = show "rsign" (fn () => b (Real.signBit (RealArray.sub (ra, 1))) ^ " " ^ b (Real.isNan (RealArray.sub (ra, 2))))

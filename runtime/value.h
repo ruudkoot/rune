@@ -62,6 +62,9 @@ enum ObjKind {
     K_FORWARD,    /* GC forwarding: first payload word is the new address */
     K_REAL,       /* a boxed real: 8 raw bytes, the double */
     K_BOX,        /* an Int64.int or a Word64.word beyond 63 bits (an int or word too, under RUNE_INT64): 8 raw bytes */
+    K_BYTES,      /* an array of bytes: len bytes, laid out as a string's and as C has them; it can be written, and its
+                     identity is the address (Word8Array, CharArray; heap-layout M8) */
+    K_REALS,      /* reals side by side: len doubles, raw, as C has an array of them (RealArray, RealVector) */
     /* Reserved for a lazy front end (docs/plans/heap-layout.md, *A lazy front
        end*): a suspension, and what it becomes once it has its value. No
        program of SML makes one, and the collector, the images and the
@@ -69,7 +72,7 @@ enum ObjKind {
     K_THUNK,
     K_IND
 };
-#define K_LAST K_BOX   /* the last kind an object has today */
+#define K_LAST K_REALS   /* the last kind an object has today */
 _Static_assert(K_IND < 16, "a kind fits four bits, which is what the header keeps for it (D4 A)");
 
 struct Obj {
@@ -308,7 +311,10 @@ static inline void obj_become_ind(Obj *o, Value v) {
     OBJ_FIELDS(o)[0] = v;
 }
 /* whether the object's payload holds values the collector follows */
-static inline int obj_has_fields(const Obj *o) { int k = obj_kind(o); return k != K_STRING && k != K_REAL && k != K_BOX; }
+static inline int obj_has_fields(const Obj *o) {
+    int k = obj_kind(o);
+    return k != K_STRING && k != K_REAL && k != K_BOX && k != K_BYTES && k != K_REALS;
+}
 /* how many of them it follows: every field, or an indirection's one */
 static inline uint32_t obj_scanned_fields(const Obj *o) { return obj_kind(o) == K_IND ? 1 : o->len; }
 
@@ -339,7 +345,10 @@ static inline size_t payload_size(size_t bytes) {
 }
 /* the payload a new object of kind and len needs, before rounding */
 static inline size_t obj_payload_bytes(int kind, uint32_t len) {
-    return kind == K_STRING ? (size_t)len : (kind == K_REAL || kind == K_BOX) ? 8 : (size_t)len * sizeof(Value);
+    return kind == K_STRING || kind == K_BYTES ? (size_t)len
+         : kind == K_REAL || kind == K_BOX ? 8
+         : kind == K_REALS ? (size_t)len * 8
+         : (size_t)len * sizeof(Value);
 }
 static inline size_t obj_size_of(int kind, uint32_t len) { return sizeof(Obj) + payload_size(obj_payload_bytes(kind, len)); }
 /* what the heap gives an object of that payload: the header and the rounded payload */

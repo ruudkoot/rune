@@ -219,6 +219,8 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_char_ord: case PRIM_char_lt: case PRIM_char_le: case PRIM_char_gt: case PRIM_char_ge: case PRIM_char_order:
     case PRIM_string_size: case PRIM_string_sub: case PRIM_ref_get: case PRIM_ref_set:
     case PRIM_array_length: case PRIM_array_sub: case PRIM_array_update: case PRIM_vector_length: case PRIM_vector_sub:
+    case PRIM_bytes_length: case PRIM_bytes_sub: case PRIM_bytes_update:
+    case PRIM_reals_length: case PRIM_reals_sub: case PRIM_reals_update:
         break;
     default:
         return 0;
@@ -448,6 +450,41 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         element(j);
         ms_store_field(M, R_S0, 0, z);
         ms_barrier(M, R_S0);   /* of the element's address */
+        ms_set(M, d, T_UNIT, 0);
+        break;
+    /* The arrays of bytes and of reals (heap-layout M8): an element is a
+       byte, or the double itself, which goes to a home and comes from one
+       with no word between. */
+    case PRIM_bytes_length: length_of(j, d, x, K_BYTES, slow); break;
+    case PRIM_bytes_sub:
+        ms_load_obj(M, R_S0, x, K_BYTES, slow);
+        index_of(j, y, slow);
+        ms_string_byte(M, R_S1, R_S0, R_S1);
+        ms_set_reg(M, d, T_CHAR, R_S1);
+        break;
+    case PRIM_bytes_update:
+        ms_load_obj(M, R_S0, x, K_BYTES, slow);
+        index_of(j, y, slow);
+        ms_check_tag(M, z, T_CHAR, slow);
+        ms_load_payload(M, R_S2, z);
+        as_add_rr(A, R_S0, R_S1);
+        as_st8(A, R_S0, (int32_t)sizeof(Obj), R_S2);
+        ms_set(M, d, T_UNIT, 0);
+        break;
+    case PRIM_reals_length: length_of(j, d, x, K_REALS, slow); break;
+    case PRIM_reals_sub:
+        ms_load_obj(M, R_S0, x, K_REALS, slow);
+        index_of(j, y, slow);
+        element(j);
+        as_fld(A, F_S0, R_S0, (int32_t)sizeof(Obj));
+        set_real(j, d, slow);
+        break;
+    case PRIM_reals_update:
+        ms_load_real(M, F_S0, z, slow);
+        ms_load_obj(M, R_S0, x, K_REALS, slow);
+        index_of(j, y, slow);
+        element(j);
+        as_fst(A, R_S0, (int32_t)sizeof(Obj), F_S0);
         ms_set(M, d, T_UNIT, 0);
         break;
     case PRIM_vector_length: length_of(j, d, x, K_TUPLE, slow); break;

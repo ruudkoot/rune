@@ -265,6 +265,14 @@ typedef struct VM {
        the engine does not say, and every slot of the stack is a root: the
        stack bytecode, a program runeopt made. */
     uint64_t (*frame_live)(struct VM *vm, uint32_t func, uint32_t ret_pc);
+    /* The values that C holds across a collection (docs/plans/heap-layout.md,
+       D9 and M8): a handle is an index here, the table is a root, and what a
+       handle names is found again after the object moved. The free entries
+       are a list through the table (each holds the next one's number as an
+       immediate; handles_free is the first's, plus one, 0 for none). An
+       image has no handles: they are a process's. */
+    Value *handles;
+    size_t nhandles, handles_cap, handles_free;
 #ifdef RUNE_BARRIER_CARDS
     uint8_t *jit_cards;      /* the measuring barrier's table, where compiled code finds it (value.h, BARRIER) */
 #endif
@@ -287,6 +295,20 @@ Obj *vm_string_from(VM *vm, const char *s, uint32_t len);
 size_t obj_size(const Obj *o);      /* header and payload, rounded as the heap lays it out */
 void vm_gc(VM *vm, size_t needed);
 int heap_relocate(VM *vm, uintptr_t old_base);  /* after an image is read: 0 when it is not sound */
+/* The handles (VM.handles): a value kept for C across collections. */
+size_t vm_handle_new(VM *vm, Value v);            /* a handle for the value */
+Value vm_handle_get(const VM *vm, size_t h);      /* the value, where it is now */
+void vm_handle_set(VM *vm, size_t h, Value v);
+void vm_handle_free(VM *vm, size_t h);
+/* An array of bytes or of reals for C to keep a pointer to across calls
+   that may collect: no object stays where it is under the copier, so C gets
+   a copy that does (D9: copying in and out around the call, until there is
+   a space that does not move), and gives it back. vm_pin copies the
+   object's payload out and returns the copy, NULL where there is no memory
+   or the handle names no such array; vm_unpin copies it back into the
+   object, wherever it is by then, and frees the copy. */
+void *vm_pin(VM *vm, size_t h, size_t *bytes);
+void vm_unpin(VM *vm, size_t h, void *copy);
 #ifdef RUNE_BARRIER_CARDS
 void heap_cards(VM *vm);
 #endif
@@ -382,7 +404,7 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen);
 
 /* What each VM's instruction set gives (runtime/stack/isa_stack.c, runtime/register/isa_regs.c):
    the fingerprint an .rbc must carry, and the first bytes of an image. */
-#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 9 isa 00000000")
+#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 10 isa 00000000")
 extern const uint32_t isa_fingerprint;
 extern const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE];
 const LineEntry *line_at(const Program *p, uint32_t pc);

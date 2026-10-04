@@ -80,10 +80,15 @@ struct
      names a message and the documentation show them. *)
   val int64Tycon = mk ("Int64.int", 12, 0, true)
   val word64Tycon = mk ("Word64.word", 13, 0, true)
+  (* The VM's arrays of bytes and of reals (heap-layout M8): what the library
+     makes Word8Array, CharArray, RealArray and RealVector of. An array's
+     equality is its identity. *)
+  val bytearrayTycon = mk ("bytearray", 14, 0, true)
+  val realarrayTycon = mk ("realarray", 15, 0, true)
 
   val builtinTycons =
     [intTycon, wordTycon, realTycon, charTycon, stringTycon, boolTycon, listTycon, refTycon,
-     exnTycon, arrayTycon, vectorTycon, int64Tycon, word64Tycon]
+     exnTycon, arrayTycon, vectorTycon, int64Tycon, word64Tycon, bytearrayTycon, realarrayTycon]
 
   val intTy = TCon (intTycon, [])
   val wordTy = TCon (wordTycon, [])

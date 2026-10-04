@@ -583,6 +583,29 @@ if they did not have them already; `inline`, `lcg`, `lcg2` and `fnv`
 keep nothing and box all the same. So for these programs the order is
 A (homes, experiments 2 and 3) before anything about fields.
 
+**The flat arrays, measured on variants** (the owner's request of
+2026-10-04, with the heap layout's M8). `fft-realarray` is `fft` with
+`open RealArray Math` for `open Array Math`, and `raytrace-realarray`
+is `raytrace` with its matrices (`float array`, sixteen reals) as
+`RealArray.array`; each is a sed script over MLton's source
+(`tests/external/mlton-bench/NAME.from` and `NAME.sed`), a line of
+`tests/perf/mlton-bench.txt`, and draws or computes what the original
+does. Runs that alternate on a quiet machine, the least of five,
+against the 16-byte layout:
+
+| Program | cycles | instructions | conversions |
+|---|---:|---:|---:|
+| fft, on M8 | 0.94 | 1.42 | 1,281M |
+| fft-realarray | 0.83 | 1.20 | 503M |
+| raytrace, on M8 | 1.14 | 1.33 | 499M |
+| raytrace-realarray | 1.06 | 1.27 | 382M |
+
+The conversions that went are the ones the table above has under
+arrays, to the million: `fft`'s 777M, `raytrace`'s 117M decodes of
+`array_sub`. So a flat array of reals is worth 12% of `fft`'s cycles
+and seven points of `raytrace`'s, where a program asks for one; an
+`Array` at the type `real` does not.
+
 **What it says for the decision.**
 
 * Raw real fields reach 36% to 70% of the conversions of five
@@ -619,6 +642,55 @@ A (homes, experiments 2 and 3) before anything about fields.
   stay calls of the C library).
 * D is the JIT roadmap's, and worth its cost only if `mandelbrot` and
   `tsp` matter.
+
+## The work after the heap layout, in order
+
+The owner's, on 2026-10-04, once the heap layout's M8 is in: the
+JIT's calls and the primitives that go through C, with more general
+homes and the registers laid out again. Each step is measured with the
+VM that counts conversions (`bin/runevm-conv`) and with runs that
+alternate, and committed by itself.
+
+1. **The primitives that are an instruction or two, in line**
+   (experiment 10's first kind): `int_to_real`, `real_abs`, and
+   `real_trunc`, `real_floor`, `real_ceil` and `real_round` where the
+   result fits an int. A few lines of `emit.c` each, and nothing of
+   the register table. `mandelbrot` (a `Real.fromInt` a pixel, 31% of
+   its conversions), `raytrace`, `fft`, `tsp`.
+2. **The registers, laid out again, and more general homes**
+   (experiments 2 and 3). Before the two steps about calls, because
+   both are shaped by which registers are homes: two of today's three
+   general homes, `rsi` and `rdi`, are C's to clobber, so they are
+   saved and loaded around every call into C; homes that a call
+   preserves make step 3 cheaper before it is written, and step 4's
+   convention is designed once. First the audit of every scratch
+   register an emitter names, on both machines; then the table (five
+   or six general homes where there are three, in registers a call
+   preserves where the machine has them, each pinned register asked
+   what it is worth, x86-64's fixed roles kept: `rcx` for a shift,
+   `rax` and `rdx` for a product and a quotient, the arguments of a
+   call into C, which Windows has in other registers); then homes
+   given by live range, if the counts still show boxes after the
+   table (`lcg`'s loop wants a counter, a state, a product and two
+   constants). The six programs of 64-bit words, the bootstrap and
+   the programs of reals. The riskiest of the four: every emitter,
+   both targets, the Windows convention and `runeopt`'s templates.
+3. **A cheaper call for the primitives that stay in C** (`sin`,
+   `cos`, `atan`, `ln`, `pow`: calls of the C library, as decided):
+   the live homes saved as they are instead of written to their slots
+   as words and read back, and the library called directly with the
+   argument in a register. `nucleic` (18 conversions a call), `fft`,
+   `tsp`.
+4. **Reals and 64-bit numbers across calls of SML functions** (D):
+   the largest share for the most programs (`simple` 66%, `mandelbrot`
+   and `barnes-hut` 54%, `tsp` 43%), and the one that needs a design:
+   a frame that waits must have words in its slots for the collector
+   and for the interpreter that may take it over. A design and a
+   prototype that measures the upper bound on `mandelbrot` and
+   `simple` first, and the numbers to the owner before it is built.
+
+Not in this: the C library's functions as Rune's own code, raw real
+fields, an `Array` at `real` made flat (deferred or not decided).
 
 ## The programs
 

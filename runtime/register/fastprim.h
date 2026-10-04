@@ -239,6 +239,27 @@ static inline int prim_fast(VM *vm, int prim, uint32_t n, const Value *base, con
     case PRIM_array_update:
         OBJ(x, K_ARRAY); if (!val_is(*y, T_INT) || val_imm(*y) < 0 || (uint64_t)val_imm(*y) >= obj_len(val_ptr(*x))) return 0;
         HEAP_STORE(val_ptr(*x), val_imm(*y), *z); r = mk_unit(); break;
+    /* the arrays of bytes and of reals (heap-layout M8) */
+    case PRIM_bytes_length: OBJ(x, K_BYTES); FAST_INT(obj_len(val_ptr(*x))); break;
+    case PRIM_bytes_sub:
+        OBJ(x, K_BYTES); if (!val_is(*y, T_INT) || val_imm(*y) < 0 || (uint64_t)val_imm(*y) >= obj_len(val_ptr(*x))) return 0;
+        r = mk_char((unsigned char)obj_bytes(val_ptr(*x))[val_imm(*y)]); break;
+    case PRIM_bytes_update:
+        OBJ(x, K_BYTES); if (!val_is(*y, T_INT) || val_imm(*y) < 0 || (uint64_t)val_imm(*y) >= obj_len(val_ptr(*x))) return 0;
+        if (!val_is(*z, T_CHAR)) return 0;
+        obj_bytes(val_ptr(*x))[val_imm(*y)] = (char)(val_imm(*z) & 255); r = mk_unit(); break;
+    case PRIM_reals_length: OBJ(x, K_REALS); FAST_INT(obj_len(val_ptr(*x))); break;
+    case PRIM_reals_sub: {
+        OBJ(x, K_REALS); if (!val_is(*y, T_INT) || val_imm(*y) < 0 || (uint64_t)val_imm(*y) >= obj_len(val_ptr(*x))) return 0;
+        double e; memcpy(&e, obj_bytes(val_ptr(*x)) + 8 * (size_t)val_imm(*y), 8);
+        FAST_REAL(e); break;
+    }
+    case PRIM_reals_update: {
+        OBJ(x, K_REALS); if (!val_is(*y, T_INT) || val_imm(*y) < 0 || (uint64_t)val_imm(*y) >= obj_len(val_ptr(*x))) return 0;
+        if (!val_is(*z, T_REAL)) return 0;
+        double e = val_real(*z);
+        memcpy(obj_bytes(val_ptr(*x)) + 8 * (size_t)val_imm(*y), &e, 8); r = mk_unit(); break;
+    }
     case PRIM_vector_length: OBJ(x, K_TUPLE); FAST_INT(obj_len(val_ptr(*x))); break;
     case PRIM_vector_sub:
         OBJ(x, K_TUPLE); if (!val_is(*y, T_INT) || val_imm(*y) < 0 || (uint64_t)val_imm(*y) >= obj_len(val_ptr(*x))) return 0;

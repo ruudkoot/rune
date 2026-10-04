@@ -10,7 +10,9 @@
 # there is none) is one program:
 #   tests/out/mlton-bench/NAME.sml = tests/external/mlton-bench/NAME.shim.sml
 #   (when it exists), then DIR/NAME.sml passed through NAME.sed (when it
-#   exists), then `val _ = Main.doit N` unless NAME.nowrap exists; compiled
+#   exists; a variant of a program, as fft-realarray is of fft, has the
+#   program's name in NAME.from and its changes in NAME.sed), then
+#   `val _ = Main.doit N` unless NAME.nowrap exists; compiled
 #   by --rune (bin/rune: the register bytecode) to NAME.rbc, and run in
 #   tests/out/mlton-bench (DIR/DATA copied there, fxp's input generated) by
 #   --vm (bin/runevm) with --count and OPTS, the words of NAME.args as
@@ -68,9 +70,12 @@ line() { grep "^$1 " "$table" | head -1; }
 prepare_one() {
   name=$1; n=$2
   src=$out/$name.sml
+  # a variant: NAME.from names the program of DIR it is made of, by NAME.sed
+  from=$name
+  [ -f "$shims/$name.from" ] && from=$(cat "$shims/$name.from")
   {
     [ -f "$shims/$name.shim.sml" ] && cat "$shims/$name.shim.sml"
-    if [ -f "$shims/$name.sed" ]; then sed -f "$shims/$name.sed" "$dir/$name.sml"; else cat "$dir/$name.sml"; fi
+    if [ -f "$shims/$name.sed" ]; then sed -f "$shims/$name.sed" "$dir/$from.sml"; else cat "$dir/$from.sml"; fi
     [ -f "$shims/$name.nowrap" ] || printf '\nval _ = Main.doit %s\n' "$n"
   } > "$src"
   [ -f "$shims/$name.args" ] && cp "$shims/$name.args" "$out/$name.args"

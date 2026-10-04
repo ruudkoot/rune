@@ -13,7 +13,7 @@
 ## Synopsis
 
 ```sml
-structure RealVector :> MONO_VECTOR where type elem = real
+structure RealVector : MONO_VECTOR where type elem = real
 ```
 
 RealVector: immutable vectors of reals.
@@ -23,6 +23,9 @@ two-dimensional arrays (optional in the specification). The elements do not
 admit equality, which MONO\_VECTOR and MONO\_ARRAY do not ask of them, and so
 neither does a vector. LargeRealVector, Real64Vector and the rest of those
 families are these (mono\_largereal.sml, mono\_real64.sml).
+
+A vector is the reals themselves side by side, eight bytes each, and so
+is an array.
 
 ## Members
 

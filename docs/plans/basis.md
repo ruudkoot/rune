@@ -179,7 +179,9 @@ the `Word8` and `Char` instances of all four, the complete `Byte`, and `Text`.
 `CharVector.vector`. On Rune 38,830 of 38,869 checks pass. Two shortcuts, both
 visible in `docs/language.md`: a `Word8Vector.vector` is a `string` and the
 type is not abstract, and a `Word8Array.array` is an ordinary array with one
-VM value per byte. Still to do in M3: the compact byte-array object kind with
+VM value per byte (until the heap layout's M8, which made `Word8Array` and
+`CharArray` the VM's array of bytes: the compact kind of this paragraph,
+with its block primitives). Still to do in M3: the compact byte-array object kind with
 `_primtype` and the block primitives that were moved here from M1, the
 `PackWord`/`PackReal` structures, and the optional instances for other
 element types (`Bool`, `Int`, `Real`, ...), each one line per functor. The

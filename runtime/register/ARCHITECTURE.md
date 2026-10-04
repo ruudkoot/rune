@@ -262,7 +262,11 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   header's first byte compared whole, as `obj_kind` reads it in C, since
   the four bits it shares with the kind are the collector's and zero;
   both take the kind's bits alone in the VM whose collector sets the
-  others (`bin/runevm-gcbits`, `RUNE_GC_BITS`). Slow paths (a fatal
+  others (`bin/runevm-gcbits`, `RUNE_GC_BITS`). The arrays of bytes and
+  of reals are in line as strings and arrays are (`bytes_length`,
+  `bytes_sub`, `bytes_update`, `reals_length`, `reals_sub`,
+  `reals_update`): an element of an array of reals is loaded into a
+  home and stored from one as the double it is, no word between. Slow paths (a fatal
   error, an allocation the fast path could not make) are emitted after
   the function's code. The stubs: `enter(vm, at)` saves the callee-saved
   registers, loads the VM's into the code's and jumps to `at`; `leave`

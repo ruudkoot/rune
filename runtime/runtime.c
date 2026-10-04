@@ -150,7 +150,7 @@ int values_equal(VM *vm, Value a, Value b) {
             case K_STRING:
                 if (obj_len(x) != obj_len(y) || memcmp(obj_bytes(x), obj_bytes(y), obj_len(x)) != 0) goto done;
                 goto matched;
-            case K_REF: case K_ARRAY: case K_CLOSURE: case K_EXNCON:
+            case K_REF: case K_ARRAY: case K_BYTES: case K_REALS: case K_CLOSURE: case K_EXNCON:
                 goto done;
             case K_CON:
                 if (obj_contag(x) != obj_contag(y)) goto done;
@@ -312,6 +312,7 @@ void vm_release(VM *vm) {
     free(vm->stack);
     free(vm->frames);
     free(vm->handlers);
+    free(vm->handles);
     free(vm->alloc.from);
     free(vm->gc.kept);
     for (size_t i = 3; i < vm->nfiles; i++) if (vm->files[i]) fclose(vm->files[i]);

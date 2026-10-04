@@ -7,7 +7,7 @@
 | Signature | [`RUNTIME`](../sig/RUNTIME.md) |
 | Status | extension |
 | Members | 12 |
-| Tests | 35 checks |
+| Tests | 37 checks |
 | Source | [lib/basis/runtime.sml](../../../../lib/basis/runtime.sml) |
 
 ## Synopsis

@@ -373,3 +373,19 @@ word64_from_word_x 1  word -> Word64.word      The word, its top bit extended as
 word64_to_string 1  Word64.word -> string    Hexadecimal digits, upper case.
 word64_to_int64  1  Word64.word -> Int64.int   The same 64 bits as a signed number.
 word64_from_int64 1  Int64.int -> Word64.word   The same 64 bits as an unsigned number.
+
+# --- arrays of bytes (a byte an element, C's layout behind the header; heap-layout M8) ---
+bytes_new        2  int * int -> bytearray   An array of the length, every byte the low eight bits of the second argument; raises Size if the length is negative or above a string's largest.
+bytes_length     1  bytearray -> int         Length.
+bytes_sub        2  bytearray * int -> char   The byte at an index, as a character; raises Subscript.
+bytes_update     3  bytearray * int * char -> unit   Store a character; raises Subscript.
+bytes_blit       5  bytearray * int * bytearray * int * int -> unit   Copy a run of bytes (source, its start, destination, its start, the count), right where the two overlap; raises Subscript.
+bytes_blit_string 5  string * int * bytearray * int * int -> unit   The same from a string.
+bytes_extract    3  bytearray * int * int -> string   A run of the bytes (start, count) as a new string; raises Subscript.
+
+# --- arrays of reals (the doubles themselves side by side; heap-layout M8) ---
+reals_new        2  int * real -> realarray   An array of the length, every element the real; raises Size if the length is negative or above 100000000.
+reals_length     1  realarray -> int         Length.
+reals_sub        2  realarray * int -> real   The element at an index; raises Subscript.
+reals_update     3  realarray * int * real -> unit   Store an element; raises Subscript.
+reals_blit       5  realarray * int * realarray * int * int -> unit   Copy a run of elements (source, its start, destination, its start, the count), right where the two overlap; raises Subscript.

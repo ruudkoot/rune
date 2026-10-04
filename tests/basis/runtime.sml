@@ -53,6 +53,16 @@ struct
   val () = eqI ("Runtime.stats/objects-count-the-smallest-object", 1,
                 fn () => #objects (allocated (fn () => cell := ref 7)) - #objects (nothing ()))
 
+  (* An array of bytes is a header and a byte an element, rounded up to a
+     word; an array of reals a header and eight bytes an element
+     (docs/plans/heap-layout.md, M8). Each is kept, as the ref is. *)
+  val someBytes = ref (CharArray.array (0, #" "))
+  val () = eqI ("Runtime.stats/bytes-count-an-array-of-bytes", 1008,
+                fn () => #bytes (allocated (fn () => someBytes := CharArray.array (1000, #"a"))) - #bytes (nothing ()))
+  val someReals = ref (RealArray.array (0, 0.0))
+  val () = eqI ("Runtime.stats/bytes-count-an-array-of-reals", 808,
+                fn () => #bytes (allocated (fn () => someReals := RealArray.array (100, 1.5))) - #bytes (nothing ()))
+
   val () = T.check ("Runtime.stats/live-is-within-the-semispace",
                     fn () => let val s = Runtime.stats () in #live s <= #heapSize s end)
   val () = T.check ("Runtime.stats/bytes-cover-what-is-in-use",

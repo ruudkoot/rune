@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's MANIFEST records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 589 requirements between the 147 files become 249 arrows.
+library and not a wall of lines: the 589 requirements between the 147 files become 250 arrows.
 The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -31,7 +31,7 @@ flowchart LR
   a5["The operating system<br>(41)"]
   a6["Input and output<br>(14)"]
   a7["The runtime<br>(2)"]
-  a6 -- 1 --> a2
+  a6 -- 3 --> a2
   a6 -- 5 --> a3
   a6 -- 4 --> a4
   a6 -- 2 --> a1
@@ -46,7 +46,7 @@ flowchart LR
   a1 -- 6 --> a4
   a0 -- 1 --> a6
   a5 -- 14 --> a6
-  a5 -- 1 --> a2
+  a5 -- 2 --> a2
   a5 -- 7 --> a3
   a5 -- 2 --> a4
   a5 -- 4 --> a1
@@ -225,11 +225,9 @@ flowchart TD
   n28 --> n27
   n30 --> n28
   n31 --> n27
-  n32 --> n24
   n32 --> n31
   n33 --> n32
   n36 --> n28
-  n36 --> n24
   n37 --> n36
   n37 --> n30
   n38 --> n23
@@ -379,7 +377,7 @@ flowchart TD
   n139 --> n127
 ```
 
-It also needs Numbers (7), Text and characters (4), Lists and options (1), Input and output (14), Sequences (2).
+It also needs Numbers (7), Text and characters (4), Lists and options (2), Input and output (14), Sequences (2).
 
 ## Input and output
 
@@ -423,7 +421,7 @@ flowchart TD
   n146 --> n73
 ```
 
-It also needs The operating system (3), Numbers (5), Sequences (4), Lists and options (1), Text and characters (2).
+It also needs The operating system (3), Numbers (5), Sequences (4), Lists and options (3), Text and characters (2).
 
 ## The runtime
 

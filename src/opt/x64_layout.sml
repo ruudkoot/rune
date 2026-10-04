@@ -49,6 +49,8 @@ struct
   val K_EXNCON = 8
   val K_REAL = 10
   val K_BOX = 11
+  val K_BYTES = 12
+  val K_REALS = 13
   fun checkImm line (s, unless) =
     (line ("testb $1, " ^ s ^ "(%r13,%rbp)");
      line ("je " ^ unless))

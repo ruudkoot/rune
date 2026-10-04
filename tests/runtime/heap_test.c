@@ -131,6 +131,44 @@ int main(void) {
     vm_gc(vm, 0);
     CHECK("and this one's after it", obj_field(val_ptr(vm->stack[0]), 1) == mk_imm(81) && obj_field(val_ptr(other->stack[0]), 0) == mk_imm(70));
 
+    /* The arrays C can read (M8): an array of bytes and one of reals, each
+       laid out as C has it, handed to a C function through the handle
+       table and found again after a collection moved them; and a copy that
+       stays where it is for C to keep a pointer to (vm_pin), given back. */
+    {
+        Obj *bytes = vm_alloc(vm, K_BYTES, 0, 5, 5);
+        memcpy(obj_bytes(bytes), "hello", 5);
+        size_t hb = vm_handle_new(vm, mk_ptr(bytes));
+        Obj *reals = vm_alloc(vm, K_REALS, 0, 3, 24);
+        double three[3] = { 1.5, -0.0, 1e300 };
+        memcpy(obj_bytes(reals), three, sizeof three);
+        size_t hr = vm_handle_new(vm, mk_ptr(reals));
+        CHECK("an array of bytes takes a byte an element", obj_size(bytes) == sizeof(Obj) + 8 && !obj_has_fields(bytes));
+        CHECK("an array of reals takes a double an element", obj_size(reals) == sizeof(Obj) + 24 && !obj_has_fields(reals));
+        vm->sp = 0;
+        vm_gc(vm, 0);                                   /* nothing but the handles holds them */
+        Obj *b2 = val_ptr(vm_handle_get(vm, hb)), *r2 = val_ptr(vm_handle_get(vm, hr));
+        CHECK("a handle is a root, and names the object where it is", b2 != bytes && r2 != reals && obj_kind(b2) == K_BYTES && obj_kind(r2) == K_REALS);
+        CHECK("the bytes are C's", obj_len(b2) == 5 && memcmp(obj_bytes(b2), "hello", 5) == 0);
+        CHECK("the reals are C's", memcmp(obj_bytes(r2), three, sizeof three) == 0);
+        size_t n = 0;
+        char *held = vm_pin(vm, hb, &n);
+        CHECK("a pinned copy has the bytes", held && n == 5 && memcmp(held, "hello", 5) == 0);
+        vm_gc(vm, 0);                                   /* the object moves; C's copy does not */
+        if (held) memcpy(held, "HELLO", 5);
+        vm_unpin(vm, hb, held);
+        Obj *b3 = val_ptr(vm_handle_get(vm, hb));
+        CHECK("what C wrote is in the object, where it is now", b3 != b2 && memcmp(obj_bytes(b3), "HELLO", 5) == 0);
+        CHECK("a handle that names no such array pins nothing", vm_pin(vm, vm_handle_new(vm, mk_imm(3)), NULL) == NULL);
+        vm_handle_free(vm, hb);
+        size_t again = vm_handle_new(vm, mk_imm(9));
+        CHECK("a freed handle is given again", again == hb && vm_handle_get(vm, again) == mk_imm(9));
+        vm_handle_free(vm, hr); vm_handle_free(vm, again);
+        uint64_t copied = vm->copied;
+        vm_gc(vm, 0);
+        CHECK("a freed handle keeps nothing", vm->copied - copied == (uint64_t)REAL_BOXES * obj_size_of(K_REAL, 1));
+    }
+
 #ifdef RUNE_BARRIER_CARDS
     /* the measuring barrier: a store into an object marks its card, a fill of a fresh one does not */
     memset(rune_cards, 0, CARD_COUNT);
