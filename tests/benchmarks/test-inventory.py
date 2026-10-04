@@ -31,6 +31,30 @@ class InventoryTest(unittest.TestCase):
     def build(self, source):
         return AUDIT.build(source, self.root, {"notices": ""})
 
+    def constraints_pair(self, second_source="main = print 1\n", second_normal="7"):
+        self.nofib_roots()
+        for directory, source, normal in [("gc/constraints", "main = print 1\n", "7"),
+                                           ("spectral/constraints", second_source, second_normal)]:
+            self.file(directory + "/Main.hs", source)
+            self.file(directory + "/Makefile", "FAST_OPTS = 6\nNORM_OPTS = " + normal + "\nSLOW_OPTS = 8\n")
+
+    def test_identical_constraints_share_implementation(self):
+        self.constraints_pair()
+        rows = {row["path"]: row for row in self.build("nofib")}
+        self.assertEqual(rows["gc/constraints"]["disposition"], "import")
+        self.assertEqual(rows["spectral/constraints"]["disposition"], "duplicate")
+        self.assertIn("measurement configurations", rows["spectral/constraints"]["reason"])
+
+    def test_changed_constraints_kernel_remains_distinct(self):
+        self.constraints_pair(second_source="main = print 2\n")
+        rows = {row["path"]: row for row in self.build("nofib")}
+        self.assertEqual(rows["spectral/constraints"]["disposition"], "import")
+
+    def test_changed_constraints_inputs_remain_distinct(self):
+        self.constraints_pair(second_normal="9")
+        rows = {row["path"]: row for row in self.build("nofib")}
+        self.assertEqual(rows["spectral/constraints"]["disposition"], "import")
+
     def test_region_reset_variants_require_their_storage_model(self):
         (self.root / "test_dev").mkdir()
         self.file("test/kitlife35u.sml", "fun run () = resetRegions ()\n")

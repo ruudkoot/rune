@@ -355,6 +355,25 @@ def classify(source, root, item, files, text):
             disposition, milestone, reason = "exclude", "-", "auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation"
         if path in {"gc/fulsom/Main.hs", "real/fulsom/Main.hs", "real/compress/Main.hs", "real/infer/Main.hs"}:
             item["name"] = path.split("/")[-2]
+        if path == "spectral/constraints" and disposition == "import":
+            canonical = root / "gc/constraints"
+            candidate = root / path
+            def profiles(directory):
+                makefile = directory / "Makefile"
+                if not makefile.is_file():
+                    return []
+                return re.findall(r"^(FAST_OPTS|NORM_OPTS|SLOW_OPTS)\s*=\s*(.*?)\s*$",
+                                  makefile.read_text(), re.M)
+            if (canonical / "Main.hs").is_file() and (candidate / "Main.hs").is_file():
+                fixed = profiles(canonical)
+                if (len(fixed) == 3 and {name for name, _ in fixed} == {"FAST_OPTS", "NORM_OPTS", "SLOW_OPTS"}
+                        and fixed == profiles(candidate)
+                        and (canonical / "Main.hs").read_bytes() == (candidate / "Main.hs").read_bytes()):
+                    disposition = "duplicate"
+                    reason = ("complete program, all five CSP algorithms, 240 repetitions and fixed "
+                              "FAST/NORM/SLOW inputs match nofib:gc/constraints byte for byte; "
+                              "GC heap flags are measurement configurations; share one implementation "
+                              "and retain both source, fixture and runtime-setting provenances")
     if source == "sandmark":
         group = path.split("/")[1] if path.startswith("benchmarks/") else "external"
         if group in SANDMARK_PACKAGES or group == "external":
