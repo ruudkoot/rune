@@ -433,9 +433,12 @@ Each is small unless it says otherwise. The programs are at the end.
   algorithm gives another answer wherever the system's library is not
   that version (musl, Windows, another glibc). In line means Rune
   carries its own sine for every engine, as V8 and the JVM do for
-  that reason. Proposed order: the direct call first (most of the
-  gain, 43 of the 50 cycles, and no new code to keep); in line only
-  with that decision taken.
+  that reason.
+* **Decided** (the owner, 2026-10-04): `sin` and its like stay calls
+  to the C library; maths functions of Rune's own, in line or not,
+  are deferred until later. What is left of this kind for the
+  experiment is how the library is reached: the direct call, which is
+  43 of the 50 cycles that were to be had and no new code to keep.
 * **How.** (1) The ranking for every workload: the bootstrap,
   `tests/perf`, MLton's set, the six programs of this file, with the
   helpers that box counted beside the primitives. (2) What one call
