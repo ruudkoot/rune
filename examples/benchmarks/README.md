@@ -214,6 +214,9 @@ inventory entry.
 | [treejoin-nofib-strict](#treejoin-nofib-strict) | [nofib spectral/treejoin](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/treejoin) | Repeat persistent relation-tree joins over the shuffled spectral datasets. |
 | [rsa-lazy](#rsa-lazy) | [nofib real/rsa](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/rsa) | Encrypt fixed ASCII blocks with exact modular exponentiation and memoized encodings. |
 | [rsa-strict](#rsa-strict) | [nofib real/rsa](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/rsa) | Encrypt fixed ASCII blocks with exact modular exponentiation and eager encodings. |
+| [life-nofib-lazy](#life-nofib-lazy) | [nofib life](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/life) | Evolve a memoized list-grid to the first adjacent Life fixpoint. |
+| [life-nofib-strict](#life-nofib-strict) | [nofib life](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/life) | Evolve an eager list-grid to the same adjacent Life fixpoint. |
+| [maillist](#maillist) | [nofib maillist](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/maillist) | Parse address paragraphs and create exact LaTeX mailing-label pages. |
 
 ## Running and interpreting checks
 
@@ -310,6 +313,7 @@ sh tests/benchmarks/check-ocaml-lazy.sh
 sh tests/benchmarks/check-sequence-cps.sh
 sh tests/benchmarks/check-compress.sh
 sh tests/benchmarks/check-rsa.sh
+sh tests/benchmarks/check-nofib-life.sh
 python3 tests/benchmarks/test-inventory.py
 python3 scripts/benchmark-inventory.py --check
 python3 tests/benchmarks/latency-oracle.py --check
@@ -6237,3 +6241,154 @@ encoding thunks, decimal conversion and retention are source hypotheses until
 measured. References: retained implementation and nofib literature survey.
 
 [Complete provenance](rsa-strict/PROVENANCE.md).
+
+## life-nofib-lazy
+
+Evolve a memoized list-grid to the first adjacent Life fixpoint.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `spectral/life/Main.hs`.
+
+John Launchbury is credited in the Game of Life header. The individual
+licence notice is unspecified; original source, Makefile and SHA256 identities
+are retained. This is the finite list-grid and adjacent-generation equality
+variant, separate from the classic array/list Life programs and their inputs.
+
+## Algorithm and variants
+
+Preserve the original initial pattern on row 14, square clipping/padding,
+zero border, shift triples, eight-neighbor sum and Conway update rules.
+The adjacent-fixpoint test stops at the first equal pair and returns the older
+board. Its generation index and exact display formatting are preserved.
+No cycle detection or different stopping condition is substituted.
+Both variants share one algorithm and sequence abstraction. Lazy heads/spines,
+row values and neighbor cells are memoized; strict materializes them eagerly.
+The old center cell remains unforced for birth/death and is read only for
+survival with exactly two neighbors, as in the source.
+
+## Translation and runtime questions
+
+SML97 suspension adapters represent the original lazy list grid. Nested row
+indirections and explicit memo cells affect representation/allocation. Input
+generation remains in SML; integer cell values and selected indices fit 31 bits.
+The program additionally checks the complete final display, consuming every
+repetition in a sum of actual display lengths. The original prints only length
+of that final display; intermediate generations remain undisplayed. Primitive
+source/shift order, shared neighbor work, early equality exits and grid retention
+are source-derived diagnostic questions until measured.
+
+## Inputs, validation and references
+
+Smoke uses original FAST size 15 once, with a nonempty initial pattern. Normal
+retains FAST 15 with 250 repetitions; large retains NORM 27 with 250. SLOW 29 remains
+recorded. Source fixpoint indices are 0/5/49/181 for sizes 5/15/27/29, with display
+lengths 58/468/1489/1716. Original GHC observers and an independent synchronous
+array-grid oracle agree with the complete final displays. All selected final
+boards are empty, but the nonempty inputs undergo the recorded generations.
+Semantic tests cover a two-step blinker, exact stop indices and center demand.
+Primary smoke/normal cases pass; large SML execution is not universally claimed.
+The paired semantic test triggers ML Kit's CompileDec.TypeFcn not simple crash;
+that compile failure is recorded separately, without a source workaround.
+References: retained Launchbury implementation and the nofib literature survey.
+
+[Complete provenance](life-nofib-lazy/PROVENANCE.md).
+
+## life-nofib-strict
+
+Evolve an eager list-grid to the same adjacent Life fixpoint.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `spectral/life/Main.hs`.
+
+John Launchbury is credited in the Game of Life header. The individual
+licence notice is unspecified; original source, Makefile and SHA256 identities
+are retained. This is the finite list-grid and adjacent-generation equality
+variant, separate from the classic array/list Life programs and their inputs.
+
+## Algorithm and variants
+
+Preserve the original initial pattern on row 14, square clipping/padding,
+zero border, shift triples, eight-neighbor sum and Conway update rules.
+The adjacent-fixpoint test stops at the first equal pair and returns the older
+board. Its generation index and exact display formatting are preserved.
+No cycle detection or different stopping condition is substituted.
+Both variants share one algorithm and sequence abstraction. Lazy heads/spines,
+row values and neighbor cells are memoized; strict materializes them eagerly.
+The old center cell remains unforced for birth/death and is read only for
+survival with exactly two neighbors, as in the source.
+
+## Translation and runtime questions
+
+SML97 suspension adapters represent the original lazy list grid. Nested row
+indirections and explicit memo cells affect representation/allocation. Input
+generation remains in SML; integer cell values and selected indices fit 31 bits.
+The program additionally checks the complete final display, consuming every
+repetition in a sum of actual display lengths. The original prints only length
+of that final display; intermediate generations remain undisplayed. Primitive
+source/shift order, shared neighbor work, early equality exits and grid retention
+are source-derived diagnostic questions until measured.
+
+## Inputs, validation and references
+
+Smoke uses original FAST size 15 once, with a nonempty initial pattern. Normal
+retains FAST 15 with 250 repetitions; large retains NORM 27 with 250. SLOW 29 remains
+recorded. Source fixpoint indices are 0/5/49/181 for sizes 5/15/27/29, with display
+lengths 58/468/1489/1716. Original GHC observers and an independent synchronous
+array-grid oracle agree with the complete final displays. All selected final
+boards are empty, but the nonempty inputs undergo the recorded generations.
+Semantic tests cover a two-step blinker, exact stop indices and center demand.
+Primary smoke/normal cases pass; large SML execution is not universally claimed.
+The paired semantic test triggers ML Kit's CompileDec.TypeFcn not simple crash;
+that compile failure is recorded separately, without a source workaround.
+References: retained Launchbury implementation and the nofib literature survey.
+
+[Complete provenance](life-nofib-strict/PROVENANCE.md).
+
+## maillist
+
+Parse address paragraphs and create exact LaTeX mailing-label pages.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `real/maillist/Main.hs`.
+
+## Algorithm and history
+
+Paul Hudak, January1992, is credited in the header. The original source,
+LaTeX style explanation, Makefile, runtime files and stdout fixtures are
+retained with SHA256 identities. Individual program/dataset licence terms
+are unspecified. The pinned inputs contain synthetic Name/Address/City/Country
+labels, rather than a newly acquired mailing list.
+
+Preserve blank-line paragraph splitting, a leading blank paragraph, four-line
+entry padding/truncation,35-character warning threshold,30-label pages, three
+nine-label long blocks and one three-label short block. Preserve exact braces,
+spacing, backslashes, line endings and final document footer. This is the original
+mailing-label layout, not a replacement templating or table algorithm.
+
+## Translation and runtime behavior
+
+Portable SML97 TextIO supplies openOut/openAppend/output/close operations.
+Every original appendFile operation still opens/appends/closes separately;
+no buffered whole-document substitution removes the file-I/O workload. Each
+iteration rereads the input and overwrites a fixed output.tex in the fresh
+program directory. This replaces the original input-name.tex path while
+preserving output identity and repeated creation/appending work.
+
+Command prompts, conversion notices and exceptional interactive filename
+retry are replaced by fixed checked arguments and controlled result streams.
+Long-line/truncated-entry messages are counted and consumed instead of printing
+their contents. Every complete output file is read back and compared with a
+reviewed fixture, adding one read/validation per repetition. Actual byte counts
+and diagnostic counts contribute to the reported result. These adapter/check
+costs are included. Paragraph allocation, append-call overhead, process/runtime
+I/O and output copying are source-derived hypotheses until measured.
+
+## Inputs and validation
+
+Profiles retain original FAST/NORM/SLOW files:30/3626/10043 bytes.
+Smoke runs once; normal/large preserve the original100 iterations. The inputs
+use ASCII and lines of maximum length8. Complete GHC output and an independent
+30-label page formatter agree for all three fixtures:630/5227/14298 output bytes.
+No warnings occur in these original profiles. Boundary checks additionally
+cover leading blanks, entry truncation, padding and long lines. Large SML
+execution is not universally claimed. References: original Hudak description,
+retained LaTeX style and nofib application survey.
+
+[Complete provenance](maillist/PROVENANCE.md).
