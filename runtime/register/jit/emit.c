@@ -156,10 +156,12 @@ static void equal(Jit *j, int32_t d, int32_t x, int32_t y, int poly, AsmLabel *s
         set_bool(j, d, CC_E);
         return;
     }
-    /* two ints or two words by the section, where the VM keeps 64 bits: the
-       bits, which two boxes of one number have and two words of them do not */
+    /* two numbers of 64 bits by the section (an Int64.int, a Word64.word;
+       an int or a word where the VM keeps 64 bits): the bits, which two
+       boxes of one number have and two words of them do not */
     if (ms_number(M, x) && ms_number(M, x) == ms_number(M, y)) {
-        ms_two_imm(M, x, y, ms_number(M, x), slow);   /* each as what it is: an int's payload is signed */
+        int tag = ms_number(M, x);   /* each as what it is: an int's payload is signed */
+        if (tag == T_INT64 || tag == T_WORD64) ms_two_num64(M, x, y, tag, slow); else ms_two_imm(M, x, y, tag, slow);
         as_cmp_rr(A, R_S0, R_S1);
         set_bool(j, d, CC_E);
         return;
@@ -199,6 +201,19 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_word_lt: case PRIM_word_le: case PRIM_word_gt: case PRIM_word_ge: case PRIM_word_order:
     case PRIM_word_andb: case PRIM_word_orb: case PRIM_word_xorb: case PRIM_word_notb:
     case PRIM_word_lsl: case PRIM_word_lsr: case PRIM_word_to_int: case PRIM_word_to_int_x: case PRIM_word_from_int:
+    case PRIM_int64_add: case PRIM_int64_sub: case PRIM_int64_mul: case PRIM_int64_div: case PRIM_int64_mod:
+    case PRIM_int64_quot: case PRIM_int64_rem: case PRIM_int64_neg: case PRIM_int64_lt: case PRIM_int64_le:
+    case PRIM_int64_gt: case PRIM_int64_ge: case PRIM_int64_order:
+    case PRIM_word64_add: case PRIM_word64_sub: case PRIM_word64_mul: case PRIM_word64_div: case PRIM_word64_mod:
+    case PRIM_word64_lt: case PRIM_word64_le: case PRIM_word64_gt: case PRIM_word64_ge: case PRIM_word64_order:
+    case PRIM_word64_andb: case PRIM_word64_orb: case PRIM_word64_xorb: case PRIM_word64_notb:
+    case PRIM_word64_lsl: case PRIM_word64_lsr: case PRIM_word64_to_int64: case PRIM_word64_from_int64:
+#ifndef RUNE_INT64
+    /* between the 64 bits and an int's or a word's 63: where those are 64 too
+       (RUNE_INT64) the primitive's C does them */
+    case PRIM_int64_to_int: case PRIM_int64_from_int: case PRIM_word64_to_int: case PRIM_word64_to_int_x:
+    case PRIM_word64_from_int: case PRIM_word64_to_word: case PRIM_word64_from_word: case PRIM_word64_from_word_x:
+#endif
     case PRIM_real_add: case PRIM_real_sub: case PRIM_real_mul: case PRIM_real_div: case PRIM_real_neg: case PRIM_real_sqrt:
     case PRIM_real_lt: case PRIM_real_le: case PRIM_real_gt: case PRIM_real_ge: case PRIM_real_eq:
     case PRIM_char_ord: case PRIM_char_lt: case PRIM_char_le: case PRIM_char_gt: case PRIM_char_ge: case PRIM_char_order:
@@ -292,6 +307,80 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_word_to_int: ms_one_imm(M, x, T_WORD, slow); ms_word_to_int(M, 0, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
     case PRIM_word_to_int_x: ms_one_imm(M, x, T_WORD, slow); ms_word_to_int(M, 1, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
     case PRIM_word_from_int: ms_one_imm(M, x, T_INT, slow); ms_int_to_word(M, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
+
+    /* Int64.int and Word64.word: the arithmetic on the 64 bits themselves */
+    case PRIM_int64_add: ms_two_num64(M, x, y, T_INT64, slow); ms_int64_arith(M, MS_ADD, slow); ms_set_num64(M, d, T_INT64, R_S0, slow); break;
+    case PRIM_int64_sub: ms_two_num64(M, x, y, T_INT64, slow); ms_int64_arith(M, MS_SUB, slow); ms_set_num64(M, d, T_INT64, R_S0, slow); break;
+    case PRIM_int64_mul: ms_two_num64(M, x, y, T_INT64, slow); ms_int64_arith(M, MS_MUL, slow); ms_set_num64(M, d, T_INT64, R_S0, slow); break;
+    case PRIM_int64_div: case PRIM_int64_mod: case PRIM_int64_quot: case PRIM_int64_rem:
+        ms_two_num64(M, x, y, T_INT64, slow);
+        as_test_rr(A, R_S1, R_S1);
+        as_jcc(A, CC_E, slow);
+        as_cmp_ri(A, R_S1, -1);
+        as_jcc(A, CC_E, slow);
+        as_divmod(A, R_S1);
+        if (p == PRIM_int64_div) floor_div(j, 0);
+        else if (p == PRIM_int64_mod) { floor_div(j, 1); as_mov_rr(A, R_S0, R_S2); }
+        else if (p == PRIM_int64_rem) as_mov_rr(A, R_S0, R_S2);
+        ms_set_num64(M, d, T_INT64, R_S0, slow);
+        break;
+    case PRIM_int64_neg: ms_one_num64(M, x, T_INT64, slow); ms_int64_neg(M, slow); ms_set_num64(M, d, T_INT64, R_S0, slow); break;
+    case PRIM_int64_lt: ms_two_num64(M, x, y, T_INT64, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_L); break;
+    case PRIM_int64_le: ms_two_num64(M, x, y, T_INT64, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_LE); break;
+    case PRIM_int64_gt: ms_two_num64(M, x, y, T_INT64, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_G); break;
+    case PRIM_int64_ge: ms_two_num64(M, x, y, T_INT64, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_GE); break;
+    case PRIM_int64_order: ms_two_num64(M, x, y, T_INT64, slow); as_cmp_rr(A, R_S0, R_S1); set_order(j, d, CC_GE, CC_G); break;
+
+    case PRIM_word64_add: ms_two_num64(M, x, y, T_WORD64, slow); ms_word64_arith(M, MS_ADD); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+    case PRIM_word64_sub: ms_two_num64(M, x, y, T_WORD64, slow); ms_word64_arith(M, MS_SUB); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+    case PRIM_word64_mul: ms_two_num64(M, x, y, T_WORD64, slow); ms_word64_arith(M, MS_MUL); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+    case PRIM_word64_div: case PRIM_word64_mod:
+        ms_two_num64(M, x, y, T_WORD64, slow);
+        as_test_rr(A, R_S1, R_S1);
+        as_jcc(A, CC_E, slow);
+        as_udivmod(A, R_S1);
+        if (p == PRIM_word64_mod) as_mov_rr(A, R_S0, R_S2);
+        ms_set_num64(M, d, T_WORD64, R_S0, slow);
+        break;
+    case PRIM_word64_lt: ms_two_num64(M, x, y, T_WORD64, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_B); break;
+    case PRIM_word64_le: ms_two_num64(M, x, y, T_WORD64, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_BE); break;
+    case PRIM_word64_gt: ms_two_num64(M, x, y, T_WORD64, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_A); break;
+    case PRIM_word64_ge: ms_two_num64(M, x, y, T_WORD64, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_AE); break;
+    case PRIM_word64_order: ms_two_num64(M, x, y, T_WORD64, slow); as_cmp_rr(A, R_S0, R_S1); set_order(j, d, CC_AE, CC_A); break;
+    case PRIM_word64_andb: ms_two_num64(M, x, y, T_WORD64, slow); ms_word64_arith(M, MS_AND); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+    case PRIM_word64_orb: ms_two_num64(M, x, y, T_WORD64, slow); ms_word64_arith(M, MS_OR); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+    case PRIM_word64_xorb: ms_two_num64(M, x, y, T_WORD64, slow); ms_word64_arith(M, MS_XOR); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+    case PRIM_word64_notb: ms_one_num64(M, x, T_WORD64, slow); ms_word64_not(M); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+    case PRIM_word64_lsl: case PRIM_word64_lsr: {
+        /* the count is a word; 64 or more gives 0, where the machine would take it mod 64 */
+        AsmLabel ok, done; as_label_init(&ok); as_label_init(&done);
+        ms_one_num64(M, x, T_WORD64, slow);
+        ms_shift_count(M, y, slow);
+        as_cmp_ri(A, R_S1, 64);
+        as_jcc(A, CC_B, &ok);
+        as_xor_rr(A, R_S0, R_S0);
+        as_jmp(A, &done);
+        as_bind(A, &ok);
+        if (p == PRIM_word64_lsl) as_shl_rr(A, R_S0); else as_shr_rr(A, R_S0);
+        as_bind(A, &done);
+        ms_set_num64(M, d, T_WORD64, R_S0, slow);
+        as_label_free(&ok); as_label_free(&done);
+        break;
+    }
+    /* the same 64 bits, read as the other type */
+    case PRIM_word64_to_int64: ms_one_num64(M, x, T_WORD64, slow); ms_set_num64(M, d, T_INT64, R_S0, slow); break;
+    case PRIM_word64_from_int64: ms_one_num64(M, x, T_INT64, slow); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+#ifndef RUNE_INT64
+    case PRIM_int64_to_int: ms_one_num64(M, x, T_INT64, slow); ms_num64_as_int(M, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
+    case PRIM_int64_from_int: ms_one_imm(M, x, T_INT, slow); ms_untag(M, R_S0, T_INT); ms_set_num64(M, d, T_INT64, R_S0, slow); break;
+    case PRIM_word64_to_int: ms_one_num64(M, x, T_WORD64, slow); ms_word64_as_int(M, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
+    case PRIM_word64_to_int_x: ms_one_num64(M, x, T_WORD64, slow); ms_num64_as_int(M, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
+    case PRIM_word64_from_int: ms_one_imm(M, x, T_INT, slow); ms_untag(M, R_S0, T_INT); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+    case PRIM_word64_to_word: ms_one_num64(M, x, T_WORD64, slow); ms_word64_as_word(M); ms_set_num(M, d, T_WORD, R_S0, slow); break;
+    case PRIM_word64_from_word: ms_one_imm(M, x, T_WORD, slow); ms_untag(M, R_S0, T_WORD); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+    /* the word's top bit, bit 62 of its 63, is bit 63 of its word: an arithmetic shift extends it */
+    case PRIM_word64_from_word_x: ms_one_imm(M, x, T_WORD, slow); ms_untag(M, R_S0, T_INT); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+#endif
 
     case PRIM_real_add: two_real(j, x, y, slow); as_fadd(A, F_S0, F_S1); set_real(j, d, slow); break;
     case PRIM_real_sub: two_real(j, x, y, slow); as_fsub(A, F_S0, F_S1); set_real(j, d, slow); break;

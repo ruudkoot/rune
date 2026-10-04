@@ -283,8 +283,9 @@ void jit_h_box_real(VM *vm, int32_t slot, uint64_t bits) {
     vm->stack[base + (size_t)slot] = v;
 }
 
-/* the same for an int or a word of tier 2 past 63 bits, where the VM keeps
-   64 (RUNE_INT64): its home holds the bits, its slot the box */
+/* the same for a number past 63 bits -- an Int64.int, a Word64.word, or
+   under RUNE_INT64 an int or a word: its home holds the bits, its slot the
+   box */
 void jit_h_box_num(VM *vm, int32_t slot, uint64_t bits) {
     size_t base = vm->frames[vm->fp].base;
     Value old = vm->stack[base + (size_t)slot];
@@ -466,7 +467,8 @@ static int choose_homes(Jit *j) {
         for (uint32_t r = 0; r < n; r++) {
             if (homes[r].kind != HOME_SLOT || weight[r] == 0) continue;
             int rep = fn->reps[r];
-            int gpr = rep == REP_INT || rep == REP_WORD || rep == REP_CHAR || rep == REP_CON0;
+            int gpr = rep == REP_INT || rep == REP_WORD || rep == REP_CHAR || rep == REP_CON0
+                   || rep == REP_INT64 || rep == REP_WORD64;   /* the 64-bit types: the 64 bits, raw (masm.c) */
             int xmm = MS_REAL_HOMES && rep == REP_REAL;   /* a real is a word in its slot until masm.h gives it a home */
             if (!(gpr && ngpr < 3) && !(xmm && nxmm < 14)) continue;
             if (best == UINT32_MAX || weight[r] > weight[best]) best = r;
@@ -476,7 +478,8 @@ static int choose_homes(Jit *j) {
         if (rep == REP_REAL) { homes[best].kind = HOME_XMM; homes[best].reg = (uint8_t)(F_H0 + nxmm++); homes[best].tag = T_REAL; }
         else {
             homes[best].kind = HOME_GPR; homes[best].reg = (uint8_t)gprs[ngpr++];
-            homes[best].tag = (uint8_t)(rep == REP_INT ? T_INT : rep == REP_WORD ? T_WORD : rep == REP_CHAR ? T_CHAR : T_CON0);
+            homes[best].tag = (uint8_t)(rep == REP_INT ? T_INT : rep == REP_WORD ? T_WORD : rep == REP_CHAR ? T_CHAR
+                                        : rep == REP_INT64 ? T_INT64 : rep == REP_WORD64 ? T_WORD64 : T_CON0);
         }
     }
     free(weight);

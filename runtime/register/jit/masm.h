@@ -172,6 +172,22 @@ void ms_word_arith(Masm *m, int op, AsmLabel *slow);               /* R_S0 := R_
 void ms_word_not(Masm *m, AsmLabel *slow);                         /* R_S0 := notb R_S0 */
 void ms_word_to_int(Masm *m, int x, AsmLabel *slow);               /* the word in R_S0 as an int: x for toIntX; to slow where it is none */
 void ms_int_to_word(Masm *m, AsmLabel *slow);                      /* the int in R_S0 as a word */
+/* The 64 bits of a number, for Int64.int and Word64.word (T_INT64, T_WORD64):
+   the operands in R_S0 and R_S1 as their 64 bits, the result from them into
+   its register, a raw home or a slot's word or box (masm.c) */
+void ms_one_num64(Masm *m, int32_t x, int tag, AsmLabel *slow);
+void ms_two_num64(Masm *m, int32_t x, int32_t y, int tag, AsmLabel *slow);
+void ms_int64_arith(Masm *m, int op, AsmLabel *slow);              /* MS_ADD, MS_SUB, MS_MUL; to slow on overflow of 64 bits */
+void ms_int64_neg(Masm *m, AsmLabel *slow);
+void ms_word64_arith(Masm *m, int op);                             /* modulo 2^64 */
+void ms_word64_not(Masm *m);
+void ms_set_num64(Masm *m, int32_t d, int tag, int r, AsmLabel *slow);
+void ms_shift_count(Masm *m, int32_t y, AsmLabel *slow);           /* R_S1 := the count in R(y), a word's payload */
+#ifndef RUNE_INT64
+void ms_num64_as_int(Masm *m, AsmLabel *slow);                     /* R_S0's 64 bits := an int's word; to slow past 63 bits */
+void ms_word64_as_int(Masm *m, AsmLabel *slow);                    /* the same, unsigned: to slow above an int's largest */
+void ms_word64_as_word(Masm *m);                                   /* R_S0's 64 bits := a word's word, the low 63 */
+#endif
 void ms_untag(Masm *m, int r, int tag);                            /* r := the payload of the immediate word in r: unsigned for T_WORD */
 void ms_set_num(Masm *m, int32_t d, int tag, int r, AsmLabel *slow);       /* R(d) := the int, word or char of tag that the arithmetic left in r, in its form; to slow where a slot wants a word it has none for; R_S2 clobbered */
 void ms_set_payload(Masm *m, int32_t d, int tag, int r, AsmLabel *slow);   /* the same for a payload in r (a quotient, a length) */
