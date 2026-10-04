@@ -646,9 +646,20 @@ Cycles (`measure.sh`, gcc, an idle machine):
   elements to suspend (a remainder per element), which is the same for
   the three ways and drowns their difference; a kernel that suspends
   by a cheaper rule would say more.
-* The strict kernels under `L1+PAIRS2` against `L1+PAIRS`, which are
-  what the reserved code costs SML, are measured by the same script
-  and were still waiting for the machine when this was written.
+* **The reserved code costs the strict kernels nothing that shows.**
+  `L1+PAIRS2` against `L1+PAIRS`, on the eight kernels whose five runs
+  agreed within a tenth: `list_ops` 1.00, `word_loop` 1.01, `strings`
+  1.02, `real_regs` 0.99, `real_array` 0.99, `strmap` 0.97,
+  `gc_churn8` and `gc_churn64` 0.95. The machine was not idle for the
+  whole of this run (another session's suites), and `intmap`,
+  `inttable`, `closures`, `int_loop` and `poly_eq_tree` spread by 13%
+  to 56% between runs, so they are left out: a second run on a quiet
+  machine is owed for them.
+* `lazy_update_old` forces 7,995,392 old thunks, every update an old
+  object given a young value, and with the card barrier they dirty
+  1,026 cards of 512 bytes; `lazy_stream` forces 18.2 million thunks
+  for 6,000 primes in ten collections, 40,903 of its updates (0.2%)
+  old to young.
 
 ### M4, for the gate
 
@@ -698,9 +709,9 @@ on 2026-10-04; the tables are in the three sections above.
   the interpreter's shifts do not show outside real arithmetic. B is
   not built; SplitMix64 is the measure of what A costs a 64-bit word.
 
-Not measured yet: the harness's strict kernels under the reserved code
-(built and checked), `examples/benchmarks` at its `normal` profile, the
-heap-size sweep, and `runeopt`'s code beside the JIT's.
+Not measured yet: five of the harness's strict kernels under the
+reserved code on a quiet machine, `examples/benchmarks` at its `normal`
+profile, the heap-size sweep, and `runeopt`'s code beside the JIT's.
 
 ## The request
 
