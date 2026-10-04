@@ -43,7 +43,7 @@ What it rests on:
 | M2 | The simulator and the harness in the tree | done 2026-09-27, `3f17fd2` |
 | M3 | The layout behind an interface | done 2026-09-27, `93cc674` |
 | M4 | Prototypes at full scale; the gate | done 2026-10-04: both prototypes run, pass the suites and are measured (branches `heap-layout-word` and `heap-layout-pairs`; the four sections *M4, ...* below), and the owner decided the gate that day (*M4, for the gate*). Not built in M4, and no longer wanted before M5: raw typed fields, the 32-bit header and its table, typed slots |
-| M5 | The chosen layout, complete | done 2026-10-04 on `heap-layout-word`, merged into `heap-layout`: the 64-bit types, the reals by the rotation, every consumer and what is kept open (*M5, the first step* to *M5, the third and fourth steps*), measured against the 16-byte layout under every engine (*M5, done*). D15's targets 1 and 3 are met, with what each section says beside them, and target 2 is measured. Put to the owner: raw real fields, recommended not now |
+| M5 | The chosen layout, complete | done 2026-10-04 on `heap-layout-word`, merged into `heap-layout`: the 64-bit types, the reals by the rotation, every consumer and what is kept open (*M5, the first step* to *M5, the third and fourth steps*), measured against the 16-byte layout under every engine (*M5, done*). D15's targets 1 and 3 are met, with what each section says beside them, and target 2 is measured. Raw real fields: the owner decides after experiments 1, 5 and 10 of `performance-64bit.md` |
 | M6 | Roots and maps | |
 | M7 | The collector on the new layout, and the hooks for the next | |
 | M8 | Flat arrays, strings and the FFI's objects | |
@@ -1381,6 +1381,11 @@ every allocating site, a milestone of their own, for a part of 5% to
 `performance-64bit.md` say first how much of it is fields at all,
 and cost days. The header's byte stays free for them (the fourth
 step).
+
+**Decided** (the owner, 2026-10-04): after those experiments. Raw
+real fields are not decided until experiments 1, 5 and 10 of
+`performance-64bit.md` have been run; nothing of M6 to M8 waits for
+them.
 
 **Not done in M5,** none of which changes a result: the 64-bit
 primitives in line in `runeopt`'s code, `word64_asr` and the reals'

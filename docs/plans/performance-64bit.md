@@ -464,7 +464,9 @@ Each is small unless it says otherwise. The programs are at the end.
   is the JIT's work, it needs no layout change, and it may bring
   `stream` and `fnv` close to the 16-byte VM by itself.
 * Raw fields (C) are decided on what is left after A: `tree`,
-  `nucleic` and `raytrace` are the programs to read.
+  `nucleic` and `raytrace` are the programs to read. The owner decides
+  them after experiments 1, 5 and 10 (2026-10-04, at the end of the
+  heap layout's M5, whose tables are in `heap-layout.md`, *M5, done*).
 * D is the JIT roadmap's, and worth its cost only if `mandelbrot` and
   `tsp` matter.
 
