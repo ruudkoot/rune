@@ -894,6 +894,8 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
             else {
                 for (uint32_t i = 0; i <= len; i++) as_label_init(&j.landings[i]);
                 j.m.homes = j.homes;
+                for (uint32_t i = 0; i < len; i++)
+                    if (sc.start[i] && p->code[j.from + i] == ROP_PUSHHANDLER) j.m.has_handlers = 1;
                 j.m.box_real = (MsHelper)jit_h_box_real;
                 j.m.live = j.live_in;
                 j.m.from = j.from;

@@ -934,7 +934,8 @@ void emit_CALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uin
     (void)pc; (void)b;
     const Function *fn = &j->vm->prog.funcs[a];
     AsmLabel *after = jit_landing(j, j->next + 5);   /* past the RESULT */
-    ms_writeback(M, pc);   /* the homes to their slots: the callee has the registers, and after loads them again (M9) */
+    ms_writeback_call(M, pc, j->next + 5, result_at(j, j->next));   /* the homes needed after it to their slots: the callee has the registers, and after loads them again (M9) */
+    for (uint32_t i = 0; i < n; i++) ms_need_word(M, read_i32(L + 4 * i));   /* an argument's word, before the frame is reserved (a box's slow path clobbers rax) */
     room(j, j->m.nlocals + fn->nlocals + fn->maxstack);
     frame_room(j);
     make_registers(j, n, L, (uint32_t)a, fn);
@@ -1087,7 +1088,12 @@ static void to_callee_dynamic(Jit *j) {
 }
 void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     AsmLabel *after = jit_landing(j, j->next + 5);   /* past the RESULT */
-    ms_writeback(M, pc);   /* before the restart label: the slots stay right across a restart (M9) */
+    /* before the restart label: the slots stay right across a restart (M9);
+       under --jit-profile, every home live here, which the profile's helper
+       loads again (called) */
+    if (j->jit->profile) ms_writeback(M, pc);
+    else ms_writeback_call(M, pc, j->next + 5, result_at(j, j->next));
+    ms_need_word(M, b);
     int grow = grow_slow(j);
     if (grow < 0) return;
     /* the frames first: their slow path comes back to its check with the
@@ -1124,7 +1130,11 @@ void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     to_callee_dynamic(j);
 }
 void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
-    ms_writeback(M, pc);   /* the profile's helper (called) clobbers the homes; the slots stay right (M9) */
+    /* the frame is replaced: of its homes only the argument is wanted, and
+       under --jit-profile every one, which the profile's helper (called)
+       loads again (M9) */
+    if (j->jit->profile) ms_writeback(M, pc);
+    else ms_need_word(M, b);
     int grow = grow_slow(j);
     if (grow < 0) return;
     closure_function(j, a, R_S2);

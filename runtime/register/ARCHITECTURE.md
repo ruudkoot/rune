@@ -496,9 +496,18 @@ which of them live in a machine register:
   homes -- and the call loads them again. The slow path that grows the
   stack and starts the instruction over keeps its argument in `r11`
   across the write-back for the same reason.
-* **Calls.** A `CALL`, `CALLK` or `TAILCALL` writes the homes back
-  first: the callee has the machine registers, and what is live after
-  the call is loaded again at its *landing*.
+* **Calls.** A `CALL` or `CALLK` writes back first the homes the frame
+  needs after it -- live where it returns, but for the register it
+  returns into -- since the callee has the machine registers; they are
+  loaded again at the call's *landing*. An argument that dies at the
+  call goes from its home into the callee's register and is not written
+  back (where its home is raw, its slot is given its word first,
+  `ms_need_word`). In a function with a handler every home live at the
+  call is written back, what a handler needs being live at every call
+  in its scope, and so at a call through a closure under
+  `--jit-profile`, whose helper loads them again (`ms_writeback_call`,
+  `masm.c`). A `TAILCALL` replaces the
+  frame: only its argument wants a word.
 * **Landings.** Wherever code is entered from outside -- the entry,
   the instruction after a call, a handler, the loop heads and run starts
   the interpreter enters mid-way (`jit_osr`) -- a landing loads the homes

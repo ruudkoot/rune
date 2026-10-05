@@ -104,6 +104,7 @@ typedef struct Masm {
     uint32_t sync_pc;     /* the pc of the last ms_sync, for the reload after */
     uint32_t cur_pc;      /* the pc of the instruction being emitted: what is live at its entry is written back */
     uint64_t cur_def;     /* the register it defines, as a bit (compile.c says, after ms_begin; 0: none): a helper may have written its slot */
+    int has_handlers;     /* the function installs a handler: a call writes back every home live at it (ms_writeback_call) */
 #ifdef RUNE_JIT_CONV
     const uint8_t *conv_code;   /* the program's code: the opcode at a pc, for the count of conversions (masm.c) */
     int conv_ctx;               /* 0 in an instruction's own work, 1 in a write-back, 2 in a reload of the homes */
@@ -209,6 +210,7 @@ void ms_set_word(Masm *m, int32_t d, int r, AsmLabel *slow);       /* R(d) := th
    tags; and loaded again from the slots */
 void ms_writeback(Masm *m, uint32_t pc);
 void ms_reload_homes(Masm *m, uint32_t pc);
+void ms_writeback_call(Masm *m, uint32_t pc, uint32_t after, int32_t result);   /* at a call of an SML function, the homes the frame needs after it (at after; result: the register it returns into, or -1) */
 void ms_reload_clobbered(Masm *m, uint32_t pc);   /* after a call into C that touched no slot: the homes live at pc that C does not keep */
 /* the instruction at pc begins: what the masm remembers of the last is forgotten */
 void ms_begin(Masm *m, uint32_t pc);

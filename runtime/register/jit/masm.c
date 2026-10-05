@@ -824,6 +824,32 @@ static void writeback(Masm *m, uint32_t pc, int pushed) {
 #endif
 }
 void ms_writeback(Masm *m, uint32_t pc) { writeback(m, pc, 0); }
+/* At a call of an SML function: the homes the frame still needs -- live
+   where the call returns, but for the register it returns into, which the
+   return writes -- written back, the callee having the machine's
+   registers. In a function with a handler, every home live at the call:
+   what a handler needs is live at every call in its scope. An argument
+   that dies at the call is not written back; the call stores it into the
+   callee's register from its home, or from its word (ms_need_word) where
+   the home holds a raw number. */
+void ms_writeback_call(Masm *m, uint32_t pc, uint32_t after, int32_t result) {
+    if (!m->homes) return;
+    if (m->has_handlers) { writeback(m, pc, 0); return; }
+#ifdef RUNE_JIT_CONV
+    int ctx = m->conv_ctx;
+    m->conv_ctx = 1;
+#endif
+    for (uint32_t r = 0; r < m->nlocals; r++) {
+        const Home *h = &m->homes[r];
+        if (h->kind == HOME_SLOT || !live_at(m, after, r) || (int32_t)r == result) continue;
+        if (h->kind == HOME_XMM) real_to_slot(m, (int32_t)r, h, 0, pc);
+        else if (is_raw_gpr(h)) num_to_slot(m, (int32_t)r, h, 0, pc);
+        else home_to_slot(m, (int32_t)r, h);
+    }
+#ifdef RUNE_JIT_CONV
+    m->conv_ctx = ctx;
+#endif
+}
 /* where a general home waits in the VM across the helper that boxes; a
    register that is no home (a result on its way to a slot) has the cell
    after them */

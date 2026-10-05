@@ -994,6 +994,109 @@ alternate, and committed by itself.
    measures the bound in cycles is the next thing if the owner wants it
    built.
 
+   *Prototyped, and not built* (2026-10-05; the owner's: a prototype to
+   measure, with splitmix and the laws of `test/property` beside the
+   set, Rune compiling itself, and Rune compiling MLton). The prototype
+   keeps a raw number or real as it is across a call of an SML function:
+
+   * a frame that waits says which of its registers wait raw (a mask
+     in the frame's record, where it had padding), and their bits wait
+     on a stack of their own beside the frames (`VM.raw_stack`);
+   * the code after a call, and a handler's landing, loads them from
+     there; whatever else reads a waiting frame -- the interpreter
+     taking it over, a raise past it, the collector, an image -- first
+     makes its raw registers words in their slots (`vm_frame_unraw`, in
+     C, which may allocate);
+   * a known call of a function compiled at tier 2 passes a raw number
+     or real to a parameter whose home is raw by an entry of its own,
+     past the decoding;
+   * only what is live after the call is saved, and everything live at
+     it in a function with a handler; a function with fewer than two
+     raw homes saves as before.
+
+   It ran the 286 programs of `scripts/check-jit.sh` in every mode, and
+   MLton's 35 alike in three. Instructions against the build of step 3,
+   one run each (the machine was not idle, so that run's cycles say
+   little):
+
+   | Program | instructions |
+   |---|---:|
+   | the bootstrap | 1.0011 |
+   | splitmix (no calls) | 1.0000 |
+   | the laws of `INTEGER`, `WORD`, `LIST`, `REAL` | 1.0051, 1.0038, 1.0027, 1.0023 |
+   | mandelbrot | 0.9696 |
+   | nucleic | 0.9886 |
+   | tak | 0.9892 |
+   | pidigits | 0.9915 |
+   | imp-for | 0.9937 |
+   | simple | 1.0130 |
+   | zern | 1.0171 |
+   | tsp | 1.0179 |
+   | geometric mean of the 41 | 1.0004 |
+
+   The 18% was a bound that took the conversions as free to remove. A
+   conversion is some five instructions, and the protocol has its own:
+   a mask written at every call and tested at every return and every
+   landing, the raw bits stored to a second stack whose room is checked,
+   and an argument that is raw only where the callee was compiled with a
+   raw entry. `mandelbrot`'s call for every pixel gains 3%, `simple`,
+   `tsp` and `zern` lose 1 to 2% where a raw home crosses calls it
+   rarely needs to, and the rest is where it was. Most of what `tak`,
+   `pidigits` and `imp-for` gain is not raw at all: the prototype stopped
+   writing back the arguments that die at the call.
+
+   Rune compiling MLton (`5fe943391`, whose PR #660 made it build with
+   Rune) took 509.7 s user and 10.5 GB with the heap capped at 5 GB,
+   where the PR has 900.96 s and 33.6 GB for Rune at `4652d4a`; MLton
+   built by Rune building MLton did not finish beside the editor's
+   memory (the collector 72% of its time under that cap, half its
+   assembly written after 85 minutes), and the owner left it for a
+   machine with more. The owner's decision on these numbers: step 4 is
+   not built unless MLton's builds give materially different results,
+   and the one part that pays by itself, the arguments that die at a
+   call, is (below). The prototype is kept as a patch against
+   `88342575` in the drafts of the session that made it
+   (`mlton-bench/step4-prototype.patch`, with a README for running the
+   MLton benchmark again), not in the tree.
+
+   **Done instead: the arguments that die at a call** (2026-10-05). A
+   call of an SML function wrote every home live at it back to its
+   slot, the arguments too, which the call then copied into the
+   callee's registers and the caller never read again; and the
+   register the call returns into, which the return writes. Now a
+   `CALL` or `CALLK` writes back what is live where it returns, but
+   for that register (`ms_writeback_call`), and an argument goes from
+   its home to the callee -- an argument whose home is raw still gets
+   its word, which is what the callee is given. In a function with a
+   handler everything live at the call is written back, as before,
+   since a handler may read it; and at a call through a closure under
+   `--jit-profile`, whose helper loads every home again. A `TAILCALL`
+   writes back nothing but its argument's word. Instructions against
+   the build of step 3, the least of three runs that alternate:
+
+   | Program | instructions |
+   |---|---:|
+   | tak | 0.982 |
+   | fib | 0.989 |
+   | pidigits | 0.991 |
+   | imp-for, smith-normal-form | 0.994 |
+   | the laws of `LIST`, `REAL` | 0.996, 0.997 |
+   | the bootstrap | 0.999 |
+   | geometric mean of the 41 | 0.998 |
+
+   No program has more instructions. The cycles of that run were within
+   its noise (a program's runs on the one VM differed by up to 40% on
+   the machine that day; geometric mean 1.000), so the twelve programs
+   whose least cycles were above 1.03 ran again, five rounds, with
+   `tak` and `fib`: `tak` 0.96 (every run below every run of the build
+   before), `fib` 1.00, and ten of the twelve at or below 1.00 by the
+   least or the median. `fxp` and `barnes-hut` stayed some 3% behind at
+   fewer instructions, with no more 4K aliasing, blocked store
+   forwarding, misses of the caches or of the instruction cache; in the
+   runs after, `barnes-hut`'s fastest run was the new build's and
+   `fxp`'s least 1.01. Nothing slower is left that the noise does not
+   explain.
+
 Not in this: the C library's functions as Rune's own code, raw real
 fields, an `Array` at `real` made flat (deferred or not decided).
 
