@@ -116,6 +116,12 @@ void as_fdiv(Asm *a, int fd, int fs) { a64_fdiv(a, fd, fd, fs); }
 void as_fsqrt(Asm *a, int fd, int fs) { a64_fsqrt(a, fd, fs); }
 void as_fcmp(Asm *a, int fa, int fb) { a64_fcmp(a, fa, fb); }
 void as_fzero(Asm *a, int f) { a64_fmov_dz(a, f); }
+void as_cvt_i2f(Asm *a, int f, int r) { a64_scvtf(a, f, r); }
+void as_cvt_f2i(Asm *a, int r, int f, AsmLabel *unless) {
+    a64_fcmp(a, f, f);              /* unordered with itself: a NaN, which fcvtzs makes 0 */
+    a64_bcond(a, A64_VS, unless);
+    a64_fcvtzs(a, r, f);            /* saturates past 64 bits: INT64_MIN or INT64_MAX */
+}
 void as_fmov_rf(Asm *a, int r, int f) { a64_fmov_xd(a, r, f); }
 void as_fmov_fr(Asm *a, int f, int r) { a64_fmov_dx(a, f, r); }
 

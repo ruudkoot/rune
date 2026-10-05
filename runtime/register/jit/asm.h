@@ -175,6 +175,12 @@ void as_fdiv(Asm *a, int fd, int fs);
 void as_fsqrt(Asm *a, int fd, int fs);
 void as_fcmp(Asm *a, int fa, int fb);
 void as_fzero(Asm *a, int f);
+void as_cvt_i2f(Asm *a, int f, int r);                      /* f := the double of the integer in r, rounded as the mode says */
+/* r := the double in f truncated to an integer; to unless where it is a NaN
+   on a machine whose conversion would give 0 for one (aarch64). A NaN on
+   x86-64, and a double that 64 bits do not hold on either, give a number
+   that 63 bits do not hold, which who asks for an int tests. */
+void as_cvt_f2i(Asm *a, int r, int f, AsmLabel *unless);
 void as_fmov_rf(Asm *a, int r, int f);                      /* the bits */
 void as_fmov_fr(Asm *a, int f, int r);
 

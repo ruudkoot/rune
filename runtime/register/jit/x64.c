@@ -248,6 +248,11 @@ void x64_mulsd(X64 *a, int dst, int src) { sse_rr(a, 0xF2, 0x59, dst, src); }
 void x64_divsd(X64 *a, int dst, int src) { sse_rr(a, 0xF2, 0x5E, dst, src); }
 void x64_ucomisd(X64 *a, int a_, int b) { sse_rr(a, 0x66, 0x2E, a_, b); }
 void x64_xorpd(X64 *a, int dst, int src) { sse_rr(a, 0x66, 0x57, dst, src); }
+/* cvtsi2sd xmm, r64 and cvttsd2si r64, xmm: an integer to a double, rounded
+   as the mode says, and a double to an integer, truncated (0x8000000000000000
+   for a NaN and for what 64 bits do not hold) */
+void x64_cvtsi2sd(X64 *a, int xmm, int r) { x64_byte(a, 0xF2); rex(a, 1, xmm, -1, r); x64_byte(a, 0x0F); x64_byte(a, 0x2A); modrm_rr(a, xmm, r); }
+void x64_cvttsd2si(X64 *a, int r, int xmm) { x64_byte(a, 0xF2); rex(a, 1, r, -1, xmm); x64_byte(a, 0x0F); x64_byte(a, 0x2C); modrm_rr(a, r, xmm); }
 void x64_movq_rx(X64 *a, int r, int xmm) { x64_byte(a, 0x66); rex(a, 1, xmm, -1, r); x64_byte(a, 0x0F); x64_byte(a, 0x7E); modrm_rr(a, xmm, r); }
 void x64_movq_xr(X64 *a, int xmm, int r) { x64_byte(a, 0x66); rex(a, 1, xmm, -1, r); x64_byte(a, 0x0F); x64_byte(a, 0x6E); modrm_rr(a, xmm, r); }
 

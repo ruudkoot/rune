@@ -127,6 +127,8 @@ void as_fdiv(Asm *a, int fd, int fs) { x64_divsd(a, fd, fs); }
 void as_fsqrt(Asm *a, int fd, int fs) { x64_sqrtsd(a, fd, fs); }
 void as_fcmp(Asm *a, int fa, int fb) { x64_ucomisd(a, fa, fb); }
 void as_fzero(Asm *a, int f) { x64_xorpd(a, f, f); }
+void as_cvt_i2f(Asm *a, int f, int r) { x64_cvtsi2sd(a, f, r); }
+void as_cvt_f2i(Asm *a, int r, int f, AsmLabel *unless) { (void)unless; x64_cvttsd2si(a, r, f); }
 void as_fmov_rf(Asm *a, int r, int f) { x64_movq_rx(a, r, f); }
 void as_fmov_fr(Asm *a, int f, int r) { x64_movq_xr(a, f, r); }
 

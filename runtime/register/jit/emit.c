@@ -219,6 +219,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_char_ord: case PRIM_char_lt: case PRIM_char_le: case PRIM_char_gt: case PRIM_char_ge: case PRIM_char_order:
     case PRIM_string_size: case PRIM_string_sub: case PRIM_ref_get: case PRIM_ref_set:
     case PRIM_array_length: case PRIM_array_sub: case PRIM_array_update: case PRIM_vector_length: case PRIM_vector_sub:
+    case PRIM_int_to_real: case PRIM_real_abs: case PRIM_real_trunc: case PRIM_real_floor: case PRIM_real_ceil:
     case PRIM_bytes_length: case PRIM_bytes_sub: case PRIM_bytes_update:
     case PRIM_reals_length: case PRIM_reals_sub: case PRIM_reals_update:
         break;
@@ -396,6 +397,47 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         as_fmov_fr(A, F_S0, R_S0);
         set_real(j, d, slow);
         break;
+    case PRIM_real_abs:
+        ms_load_real(M, F_S0, x, slow);
+        as_fmov_rf(A, R_S0, F_S0);
+        as_mov_ri(A, R_S1, INT64_MAX);   /* all but the sign bit */
+        as_and_rr(A, R_S0, R_S1);
+        as_fmov_fr(A, F_S0, R_S0);
+        set_real(j, d, slow);
+        break;
+    /* An int as a real is one conversion, rounded as the mode says, which is
+       what C's cast is (docs/plans/performance-64bit.md, the work after the
+       heap layout, 1). */
+    case PRIM_int_to_real:
+        ms_check_tag(M, x, T_INT, slow);
+        ms_load_payload(M, R_S0, x);
+        as_cvt_i2f(A, F_S0, R_S0);
+        set_real(j, d, slow);
+        break;
+    /* A real as an int, truncated, or its floor or ceiling: the truncation
+       is one conversion, and the floor is one less where the truncation is
+       above the real, the ceiling one more where it is below. What 63 bits
+       do not hold -- a real too large, an infinity, and a NaN, which the
+       conversion makes such a number or which leaves at once -- goes to the
+       primitive, which raises Overflow or Domain. real_round stays there:
+       it rounds a tie to even whatever the rounding mode is. */
+    case PRIM_real_trunc: case PRIM_real_floor: case PRIM_real_ceil: {
+        ms_load_real(M, F_S0, x, slow);
+        as_cvt_f2i(A, R_S0, F_S0, slow);
+        if (p != PRIM_real_trunc) {
+            AsmLabel done; as_label_init(&done);
+            as_cvt_i2f(A, F_S1, R_S0);   /* the truncation, as a real: exact, since a real that large is whole */
+            if (p == PRIM_real_floor) { as_fcmp(A, F_S0, F_S1); as_jcc(A, CC_FAE, &done); as_sub_ri(A, R_S0, 1); }
+            else { as_fcmp(A, F_S1, F_S0); as_jcc(A, CC_FAE, &done); as_add_ri(A, R_S0, 1); }
+            as_bind(A, &done);
+            as_label_free(&done);
+        }
+        as_mov_rr(A, R_S1, R_S0);
+        as_add_rr(A, R_S1, R_S0);        /* twice the number: an overflow where 63 bits do not hold it */
+        as_jcc(A, CC_O, slow);
+        ms_set_payload(M, d, T_INT, R_S0, slow);
+        break;
+    }
     case PRIM_real_sqrt:   /* sqrtsd is what sqrt gives, a NaN for a negative (M10) */
         ms_load_real(M, F_S0, x, slow);
         as_fsqrt(A, F_S0, F_S0);

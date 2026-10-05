@@ -266,7 +266,10 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   of reals are in line as strings and arrays are (`bytes_length`,
   `bytes_sub`, `bytes_update`, `reals_length`, `reals_sub`,
   `reals_update`): an element of an array of reals is loaded into a
-  home and stored from one as the double it is, no word between. Slow paths (a fatal
+  home and stored from one as the double it is, no word between. An
+  int as a real and a real as an int are in line too (`int_to_real`,
+  `real_abs`, `real_trunc`, `real_floor`, `real_ceil`): one conversion,
+  with the primitive for what an int does not hold and for a NaN. Slow paths (a fatal
   error, an allocation the fast path could not make) are emitted after
   the function's code. The stubs: `enter(vm, at)` saves the callee-saved
   registers, loads the VM's into the code's and jumps to `at`; `leave`

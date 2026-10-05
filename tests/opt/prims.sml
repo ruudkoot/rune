@@ -140,3 +140,23 @@ val () = List.app (fn (i, x) => show ("rupdate " ^ Int.toString i)
                                      (fn () => (RealArray.update (ra, i, x); Real.toString (RealArray.sub (ra, 0) + RealArray.sub (ra, 3)))))
                   [(0, 0.0), (3, ~2.5), (2, 0.0 / 0.0), (4, 1.0), (~1, 1.0), (minInt, 1.0)]
 val () = show "rsign" (fn () => b (Real.signBit (RealArray.sub (ra, 1))) ^ " " ^ b (Real.isNan (RealArray.sub (ra, 2))))
+
+(* ---- a real as an int and an int as a real, which the register VM does in
+   its loop and its JIT in line (docs/plans/performance-64bit.md, the work
+   after the heap layout, 1): real_trunc real_floor real_ceil real_abs
+   int_to_real. What an int does not hold, an infinity and a NaN are the
+   primitive's, with Overflow and Domain. *)
+val conv = [0.0, ~0.0, 0.5, ~0.5, 1.5, ~1.5, 2.5, ~2.5, 0.999999999, ~0.999999999, 1E10, ~1E10, 4.9E~324, ~4.9E~324,
+            4611686018427387903.0, 4611686018427387904.0, ~4611686018427387904.0, ~4611686018427388000.0,
+            ~4611686018427389000.0, 9.3E18, ~9.3E18, 1E300, ~1E300, 1.0 / 0.0, ~1.0 / 0.0, 0.0 / 0.0,
+            123456789.75, ~123456789.25]
+fun showc (name : string) (f : unit -> string) =
+  print (name ^ ": " ^ (f () handle Overflow => "Overflow" | Domain => "Domain" | e => "exception " ^ exnName e) ^ "\n")
+val () = List.app (fn r =>
+           (showc ("trunc " ^ Real.toString r) (fn () => Int.toString (Real.trunc r));
+            showc ("floor " ^ Real.toString r) (fn () => Int.toString (Real.floor r));
+            showc ("ceil " ^ Real.toString r) (fn () => Int.toString (Real.ceil r));
+            showc ("abs " ^ Real.toString r) (fn () => Real.toString (Real.abs r) ^ (if Real.signBit (Real.abs r) then " signed" else ""))))
+         conv
+val () = List.app (fn i => showc ("real " ^ Int.toString i) (fn () => Real.fmt (StringCvt.SCI (SOME 17)) (real i)))
+                  [0, 1, ~1, maxInt, minInt, 9007199254740993, ~9007199254740993, 123456789]

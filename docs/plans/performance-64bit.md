@@ -657,6 +657,26 @@ alternate, and committed by itself.
    result fits an int. A few lines of `emit.c` each, and nothing of
    the register table. `mandelbrot` (a `Real.fromInt` a pixel, 31% of
    its conversions), `raytrace`, `fft`, `tsp`.
+
+   **Done** (2026-10-05, branch `jit-inline-prims`): `int_to_real`,
+   `real_abs`, `real_trunc`, `real_floor` and `real_ceil` are in the
+   interpreter's loop and in line in the JIT on both machines (two
+   conversions new to the assembler, `as_cvt_i2f` and `as_cvt_f2i`).
+   A floor is the truncation less one where that is above the real, a
+   ceiling one more where it is below; what an int does not hold, an
+   infinity and a NaN go to the primitive, which raises. `real_round`
+   stays in C: it rounds a tie to even whatever the rounding mode is.
+   Against the build before, runs that alternate, the least of three:
+
+   | Program | conversions | after | cycles | instructions | calls into C left |
+   |---|---:|---:|---:|---:|---|
+   | mandelbrot | 13,959M | 9,664M | 0.72 | 0.76 | none |
+   | fft | 1,281M | 1,180M | 0.96 | 0.95 | `sin`, `cos`: 25.2M |
+   | tsp | 1,883M | 1,853M | 0.96 | 0.99 | `ln`: 2.1M |
+   | raytrace | 499M | 494M | 1.01 | 0.99 | `pow`, `atan2`: 0.1M of 1.1M |
+
+   `mandelbrot` runs in 93G cycles where the 16-byte layout took 115G
+   to 120G in the tables above: the call was a C call there too.
 2. **The registers, laid out again, and more general homes**
    (experiments 2 and 3). Before the two steps about calls, because
    both are shaped by which registers are homes: two of today's three

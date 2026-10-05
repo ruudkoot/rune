@@ -119,6 +119,8 @@ void x64_mulsd(X64 *a, int dst, int src);
 void x64_divsd(X64 *a, int dst, int src);
 void x64_ucomisd(X64 *a, int a_, int b);
 void x64_xorpd(X64 *a, int dst, int src);
+void x64_cvtsi2sd(X64 *a, int xmm, int r);                       /* xmm := (double) r, 64 bits */
+void x64_cvttsd2si(X64 *a, int r, int xmm);                      /* r := the double truncated, 64 bits */
 void x64_movq_rx(X64 *a, int r, int xmm);    /* r := the bits of xmm */
 void x64_movq_xr(X64 *a, int xmm, int r);
 

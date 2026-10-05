@@ -38,6 +38,10 @@ int main(void) {
     x64_init(&a); x64_imul_rri(&a, RCX, R11, 72); fails += expect("imul rcx, r11, 72", &a, "4969cb48000000"); x64_free(&a);
     x64_init(&a); x64_movsd_xx(&a, XMM3, XMM9); fails += expect("movsd xmm3, xmm9", &a, "f2410f10d9"); x64_free(&a);
     x64_init(&a); x64_sqrtsd(&a, XMM0, XMM1); fails += expect("sqrtsd xmm0, xmm1", &a, "f20f51c1"); x64_free(&a);
+    x64_init(&a); x64_cvtsi2sd(&a, XMM0, RAX); fails += expect("cvtsi2sd xmm0, rax", &a, "f2480f2ac0"); x64_free(&a);
+    x64_init(&a); x64_cvtsi2sd(&a, XMM9, R10); fails += expect("cvtsi2sd xmm9, r10", &a, "f24d0f2aca"); x64_free(&a);
+    x64_init(&a); x64_cvttsd2si(&a, RAX, XMM0); fails += expect("cvttsd2si rax, xmm0", &a, "f2480f2cc0"); x64_free(&a);
+    x64_init(&a); x64_cvttsd2si(&a, R10, XMM9); fails += expect("cvttsd2si r10, xmm9", &a, "f24d0f2cd1"); x64_free(&a);
     x64_init(&a); x64_movaps_xx(&a, XMM3, XMM9); fails += expect("movaps xmm3, xmm9", &a, "410f28d9"); x64_free(&a);
     x64_init(&a); x64_movaps_xx(&a, XMM0, XMM2); fails += expect("movaps xmm0, xmm2", &a, "0f28c2"); x64_free(&a);
     x64_init(&a); x64_cmp8_mi(&a, RAX, 0, 6); fails += expect("cmp byte [rax], 6", &a, "803806"); x64_free(&a);

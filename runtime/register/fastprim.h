@@ -213,6 +213,16 @@ static inline int prim_fast(VM *vm, int prim, uint32_t n, const Value *base, con
     case PRIM_real_div: REAL2; FAST_REAL(val_real(*x) / val_real(*y)); break;
     case PRIM_real_neg: if (!val_is(*x, T_REAL)) return 0; FAST_REAL(-val_real(*x)); break;
     case PRIM_real_sqrt: if (!val_is(*x, T_REAL)) return 0; FAST_REAL(sqrt(val_real(*x))); break;
+    case PRIM_real_abs: if (!val_is(*x, T_REAL)) return 0; FAST_REAL(fabs(val_real(*x))); break;
+    case PRIM_int_to_real: if (!val_is(*x, T_INT)) return 0; FAST_REAL((double)val_imm(*x)); break;
+    /* a real as an int: what an int holds here; a NaN and the rest are the primitive's to raise for */
+    case PRIM_real_trunc: case PRIM_real_floor: case PRIM_real_ceil: {
+        if (!val_is(*x, T_REAL)) return 0;
+        double e = val_real(*x);
+        e = prim == PRIM_real_trunc ? trunc(e) : prim == PRIM_real_floor ? floor(e) : ceil(e);
+        if (!(e >= -9223372036854775808.0 && e < 9223372036854775808.0)) return 0;   /* 64 bits hold it; FAST_INT asks for an int's */
+        FAST_INT((int64_t)e); break;
+    }
     case PRIM_real_lt: REAL2; r = mk_bool(val_real(*x) < val_real(*y)); break;
     case PRIM_real_le: REAL2; r = mk_bool(val_real(*x) <= val_real(*y)); break;
     case PRIM_real_gt: REAL2; r = mk_bool(val_real(*x) > val_real(*y)); break;
