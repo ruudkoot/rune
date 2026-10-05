@@ -241,6 +241,7 @@ void ms_call(Masm *m, MsHelper helper);                            /* the VM as 
    registers clobber: the emitter writes them back (ms_writeback) before
    it sets the arguments, and this loads them again after */
 void ms_call_lean(Masm *m, MsHelper helper);
+void ms_call_pure(Masm *m, MsHelper f, uint32_t after, int32_t d);  /* f of the C library on reals in F_S0 (and F_S1), its result in F_S0: the homes live here or at after that C clobbers kept around it raw, d's not */
 void ms_count(Masm *m, uint32_t k);
 void ms_handback(Masm *m, int code);                               /* the VM handed back with that answer */
 /* the code left at the boundary after an instruction, for the interpreter

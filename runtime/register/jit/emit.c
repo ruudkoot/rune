@@ -9,6 +9,8 @@
 #include "compile.h"
 #include "register/jit_emit.h"
 
+#include <math.h>
+
 #define M (&j->m)
 #define A (&j->m.a)
 #define OFF(field) ((int32_t)offsetof(VM, field))
@@ -114,6 +116,26 @@ static void two_real(Jit *j, int32_t x, int32_t y, AsmLabel *slow) {
     ms_load_real(M, F_S1, y, slow);
 }
 static void set_real(Jit *j, int32_t d, AsmLabel *slow) { ms_set_real(M, d, F_S0, slow); }
+/* The primitives that are a function of the C library on reals and
+   nothing else (prims.c: p_real_sin and the like), which the code calls
+   itself, without the VM (ms_call_pure); compile.c gives each a
+   trampoline. NULL: not one. */
+MsHelper jit_libm_of(int32_t p) {
+    switch (p) {
+    case PRIM_real_exp: return (MsHelper)exp;
+    case PRIM_real_ln: return (MsHelper)log;
+    case PRIM_real_sin: return (MsHelper)sin;
+    case PRIM_real_cos: return (MsHelper)cos;
+    case PRIM_real_tan: return (MsHelper)tan;
+    case PRIM_real_atan: return (MsHelper)atan;
+    case PRIM_real_sinh: return (MsHelper)sinh;
+    case PRIM_real_cosh: return (MsHelper)cosh;
+    case PRIM_real_tanh: return (MsHelper)tanh;
+    case PRIM_real_atan2: return (MsHelper)atan2;
+    case PRIM_real_pow: return (MsHelper)pow;
+    default: return NULL;
+    }
+}
 /* rcx := the index in y, checked against the length of the object in rax */
 static void index_of(Jit *j, int32_t y, AsmLabel *slow) {
     ms_check_tag(M, y, T_INT, slow);
@@ -230,6 +252,9 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_int_to_real: case PRIM_real_abs: case PRIM_real_trunc: case PRIM_real_floor: case PRIM_real_ceil:
     case PRIM_bytes_length: case PRIM_bytes_sub: case PRIM_bytes_update:
     case PRIM_reals_length: case PRIM_reals_sub: case PRIM_reals_update:
+    case PRIM_real_exp: case PRIM_real_ln: case PRIM_real_sin: case PRIM_real_cos: case PRIM_real_tan:
+    case PRIM_real_atan: case PRIM_real_sinh: case PRIM_real_cosh: case PRIM_real_tanh:
+    case PRIM_real_atan2: case PRIM_real_pow:
         break;
     default:
         return 0;
@@ -446,6 +471,22 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         ms_set_payload(M, d, T_INT, R_S0, slow);
         break;
     }
+    /* sin and the like: the C library's function, which is all the
+       primitive does, called directly with the double, the live homes it
+       would clobber kept around it as they are (no sync, no reload); a
+       result with no immediate is the primitive's own slow path, which
+       does the same from the slots */
+    case PRIM_real_exp: case PRIM_real_ln: case PRIM_real_sin: case PRIM_real_cos: case PRIM_real_tan:
+    case PRIM_real_atan: case PRIM_real_sinh: case PRIM_real_cosh: case PRIM_real_tanh:
+        ms_load_real(M, F_S0, x, slow);
+        ms_call_pure(M, jit_libm_of(p), j->next, d);
+        set_real(j, d, slow);
+        break;
+    case PRIM_real_atan2: case PRIM_real_pow:
+        two_real(j, x, y, slow);
+        ms_call_pure(M, jit_libm_of(p), j->next, d);
+        set_real(j, d, slow);
+        break;
     case PRIM_real_sqrt:   /* sqrtsd is what sqrt gives, a NaN for a negative (M10) */
         ms_load_real(M, F_S0, x, slow);
         as_fsqrt(A, F_S0, F_S0);

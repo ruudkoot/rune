@@ -160,3 +160,24 @@ val () = List.app (fn r =>
          conv
 val () = List.app (fn i => showc ("real " ^ Int.toString i) (fn () => Real.fmt (StringCvt.SCI (SOME 17)) (real i)))
                   [0, 1, ~1, maxInt, minInt, 9007199254740993, ~9007199254740993, 123456789]
+
+(* ---- the functions of the C library on reals, which the register VM's
+   JIT calls itself, the live homes kept around the call as they are
+   (docs/plans/performance-64bit.md, the work after the heap layout, 3):
+   real_exp real_ln real_sin real_cos real_tan real_atan real_sinh
+   real_cosh real_tanh real_atan2 real_pow. Every digit, and the sign of
+   a zero. *)
+fun r17 (x : real) = Real.fmt (StringCvt.SCI (SOME 17)) x ^ (if Real.signBit x then "-" else "+")
+val args = [0.0, ~0.0, 0.5, ~0.5, 1.0, ~1.0, 2.0, Math.pi, 1E22, ~1E22, 1E300, ~1E300, 2.2E~308, 4.9E~324,
+            709.0, 710.0, ~745.0, 1.0 / 0.0, ~1.0 / 0.0, 0.0 / 0.0]
+val () = List.app (fn x =>
+           print (r17 x ^ ": exp " ^ r17 (Math.exp x) ^ " ln " ^ r17 (Math.ln x) ^ " sin " ^ r17 (Math.sin x)
+                  ^ " cos " ^ r17 (Math.cos x) ^ " tan " ^ r17 (Math.tan x) ^ " atan " ^ r17 (Math.atan x)
+                  ^ " sinh " ^ r17 (Math.sinh x) ^ " cosh " ^ r17 (Math.cosh x) ^ " tanh " ^ r17 (Math.tanh x) ^ "\n"))
+         args
+val pairs = [(0.0, ~1.0), (~0.0, ~1.0), (0.0, 0.0), (~1.0, 1.0 / 0.0), (0.0 / 0.0, 0.0), (1.0, 0.0 / 0.0),
+             (~8.0, 1.0 / 3.0), (2.0, 0.5), (2.0, 1024.0), (2.0, ~1075.0), (~2.0, 3.0), (10.0, ~2.0),
+             (1.0 / 0.0, ~1.0 / 0.0), (~1.0 / 0.0, 1.0 / 0.0), (~0.0, ~0.0), (1E300, 1E~300)]
+val () = List.app (fn (x, y) =>
+           print (r17 x ^ " " ^ r17 y ^ ": pow " ^ r17 (Math.pow (x, y)) ^ " atan2 " ^ r17 (Math.atan2 (x, y)) ^ "\n"))
+         pairs

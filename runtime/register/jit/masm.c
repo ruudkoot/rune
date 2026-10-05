@@ -871,6 +871,31 @@ void ms_emit_box(Masm *m, Slow *sp) {
     else if (!as_keeps_g(m->win, s.b)) as_ld64(&m->a, s.b, VMR, at);
     as_jmp(&m->a, &s.back);
 }
+/* A call of a function of the C library on reals -- sin and the like,
+   which is all their primitives do (prims.c) -- with its arguments in
+   F_S0 and F_S1 and its result in F_S0. It touches nothing of the VM,
+   so nothing is synced or reloaded: the homes C does not keep and that
+   are live at the instruction's start or at after wait in the VM's
+   cells as they are, the double or the 64 bits, and are loaded again
+   (those at the start too: a slow path after the call writes them back
+   for the primitive's C to read). d's does not: the result goes there.
+   The call is through the function's trampoline, whose move of the VM
+   into the first general argument the function never reads. */
+void ms_call_pure(Masm *m, MsHelper f, uint32_t after, int32_t d) {
+    for (uint32_t r = 0; m->homes && r < m->nlocals; r++) {
+        const Home *h = &m->homes[r];
+        if (h->kind == HOME_SLOT || (int32_t)r == d || kept(m, h) || !(live_at(m, m->cur_pc, r) || live_at(m, after, r))) continue;
+        if (h->kind == HOME_GPR) as_st64(&m->a, VMR, gspill(h->reg), h->reg);
+        else as_fst(&m->a, VMR, fspill(h->reg), h->reg);
+    }
+    ms_call(m, f);
+    for (uint32_t r = 0; m->homes && r < m->nlocals; r++) {
+        const Home *h = &m->homes[r];
+        if (h->kind == HOME_SLOT || (int32_t)r == d || kept(m, h) || !(live_at(m, m->cur_pc, r) || live_at(m, after, r))) continue;
+        if (h->kind == HOME_GPR) as_ld64(&m->a, h->reg, VMR, gspill(h->reg));
+        else as_fld(&m->a, h->reg, VMR, fspill(h->reg));
+    }
+}
 void ms_reload_clobbered(Masm *m, uint32_t pc) {
     if (!m->homes) return;
 #ifdef RUNE_JIT_CONV

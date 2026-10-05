@@ -791,13 +791,17 @@ int jit_region_init(VM *vm, JitProgram *jit) {
     ms_emit_leave(&a, JIT_WIN);
     size_t fatal_at = a.n;
     ms_emit_fatal(&a, JIT_WIN, (MsHelper)jit_h_fatal_at);
-    uint32_t nhelpers = (uint32_t)(sizeof helpers / sizeof helpers[0]), n = PRIM__COUNT + nhelpers, size = 16;
+    /* every primitive's C, the helpers, and the C library's functions
+       that primitives on reals are (jit_libm_of) */
+    uint32_t nhelpers = (uint32_t)(sizeof helpers / sizeof helpers[0]), n = 2 * PRIM__COUNT + nhelpers, size = 16;
     while (size < 2 * n) size *= 2;
     uint64_t *from = calloc(size, sizeof *from);
     const void **to = calloc(size, sizeof *to);
     if (!from || !to) a.failed = 1;
     for (uint32_t k = 0; k < n && !a.failed; k++) {
-        MsHelper h = k < PRIM__COUNT ? (MsHelper)prim_table[k] : helpers[k - PRIM__COUNT];
+        MsHelper h = k < PRIM__COUNT ? (MsHelper)prim_table[k]
+                   : k < 2 * PRIM__COUNT ? jit_libm_of((int32_t)(k - PRIM__COUNT))
+                   : helpers[k - 2 * PRIM__COUNT];
         uint64_t at;
         memcpy(&at, &h, sizeof at);
         if (!at) continue;   /* (0 marks a free entry) */

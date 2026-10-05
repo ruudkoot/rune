@@ -78,6 +78,7 @@ Obj *jit_h_alloc(VM *vm, int kind, int contag, uint32_t n);
 int jit_h_ret(VM *vm, int32_t s);
 void jit_h_fatal(VM *vm, int what, int32_t a, int32_t b);
 void jit_h_fatal_at(VM *vm, uint32_t k, int64_t value);
+MsHelper jit_libm_of(int32_t prim);   /* emit.c: the C library's function a primitive on reals is, or NULL */
 void jit_h_grow(VM *vm, size_t need);
 void jit_h_grow_frames(VM *vm);
 const void *jit_h_call(VM *vm, int32_t a, int32_t b, const void *after);

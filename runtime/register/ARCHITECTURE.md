@@ -279,7 +279,15 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   home and stored from one as the double it is, no word between. An
   int as a real and a real as an int are in line too (`int_to_real`,
   `real_abs`, `real_trunc`, `real_floor`, `real_ceil`): one conversion,
-  with the primitive for what an int does not hold and for a NaN. Slow paths (a fatal
+  with the primitive for what an int does not hold and for a NaN. The
+  primitives that are a function of the C library on reals and nothing
+  else (`real_exp`, `real_ln`, `real_sin`, `real_cos`, `real_tan`,
+  `real_atan`, `real_sinh`, `real_cosh`, `real_tanh`, `real_atan2`,
+  `real_pow`: `jit_libm_of`) are that function called by the code
+  itself, the double in `xmm0` (and `xmm1`) and back in `xmm0`, with no
+  sync and no reload: the homes C would clobber that are live at the
+  instruction's start or after it wait in the VM's cells as they are
+  and are loaded again (`ms_call_pure`). Slow paths (a fatal
   error, an allocation the fast path could not make) are emitted after
   the function's code. A fatal error -- the check of something the
   bytecode should guarantee, which a typed program never fails -- is
@@ -663,7 +671,9 @@ FFI):
    leaves the handler's frame on top), change the program
    (`Runtime.restore`) or end the process. A helper that does none of
    these -- compares two strings -- is called with
-   nothing synced or reloaded (M7), and says so where it is declared. What it may not do is run
+   nothing synced or reloaded (M7), and says so where it is declared; a
+   function of the C library on reals (`sin` and the like) is called
+   so too, the VM not its argument (`ms_call_pure`). What it may not do is run
    bytecode: a helper never calls the loop or native code (no nesting;
    *The driver*), and a foreign function that calls back into SML is the
    one thing this sequence does not give (the FFI's decision, before M9).

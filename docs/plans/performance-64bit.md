@@ -936,6 +936,35 @@ alternate, and committed by itself.
    as words and read back, and the library called directly with the
    argument in a register. `nucleic` (18 conversions a call), `fft`,
    `tsp`.
+
+   **Done** (2026-10-05, branch `jit-registers`): `real_exp`,
+   `real_ln`, `real_sin`, `real_cos`, `real_tan`, `real_atan`,
+   `real_sinh`, `real_cosh`, `real_tanh`, `real_atan2` and `real_pow`
+   are each a function of the C library and nothing else (`prims.c`),
+   and compiled code calls that function itself: the double in `xmm0`
+   (and `xmm1`), the result back in `xmm0`, no sync, no reload, and
+   the homes C would clobber that are live at the instruction or after
+   it kept in the VM's cells as they are -- on aarch64 and on Windows
+   the homes of reals C keeps (`v8` to `v15`, `xmm6` to `xmm15`) not
+   even that (`ms_call_pure`, `jit_libm_of`). Each function has a
+   trampoline of the second step's kind, whose move of the VM into the
+   first general argument it never reads. A result with no immediate
+   is the primitive's slow path, which does the same from the slots.
+   `tests/opt/prims.sml` has the eleven on zeros of both signs,
+   subnormals, huge arguments, infinities and a NaN, every digit and
+   the sign, the same on every engine. Against the build before, runs
+   that alternate, the least of three:
+
+   | Program | cycles | instructions | calls into C before |
+   |---|---:|---:|---|
+   | fft | 0.94 | 0.90 | `sin`, `cos`: 25.2M |
+   | fft-realarray | 0.94 | 0.88 | the same |
+   | nucleic | 0.91 | 0.94 | `atan`, `sin`, `cos`: 1.4M |
+   | tsp | 1.00 | 1.00 | `ln`: 2.1M, in 28G cycles |
+   | raytrace | 0.99 | 1.00 | `pow`, `atan2`: 0.1M |
+
+   Some 120 instructions a call went; what is left of a call is the
+   C library's own work, which the owner decided stays C's.
 4. **Reals and 64-bit numbers across calls of SML functions** (D):
    the largest share for the most programs (`simple` 66%, `mandelbrot`
    and `barnes-hut` 54%, `tsp` 43%), and the one that needs a design:
@@ -943,6 +972,27 @@ alternate, and committed by itself.
    and for the interpreter that may take it over. A design and a
    prototype that measures the upper bound on `mandelbrot` and
    `simple` first, and the numbers to the owner before it is built.
+
+   *Sized again after steps 1 to 3* (2026-10-05, `bin/runevm-conv` on
+   the build with all three): the shares above were of conversions
+   before steps 1 to 3 took many of the rest away.
+
+   | Program | conversions | at calls of SML functions | at ~7 instructions each | of the machine instructions |
+   |---|---:|---:|---:|---:|
+   | mandelbrot | 9.6G | 7.5G | 52G | 18% of 282G |
+   | simple | 20.1M | 5.5M | 39M | 2% of 1.98G |
+
+   `mandelbrot`'s are at the call of `loop3` for every pixel: its two
+   real arguments stored as words, one encoded before the call, and four
+   decoded after it -- the callee's two parameters at its entry and the
+   caller's homes at its return. `simple`'s are mostly returns of a real
+   (4.3M); most of its other conversions are primitives reading a real
+   from a register that has no home, a value from a polymorphic array or
+   a field, which is raw fields' (deferred), not this step's. So the step
+   is worth up to a sixth of a program whose inner loop calls a function
+   of reals, and little to the rest of the set; the prototype that
+   measures the bound in cycles is the next thing if the owner wants it
+   built.
 
 Not in this: the C library's functions as Rune's own code, raw real
 fields, an `Array` at `real` made flat (deferred or not decided).
