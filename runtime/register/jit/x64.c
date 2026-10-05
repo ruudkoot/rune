@@ -127,8 +127,13 @@ static void op_rr(X64 *a, int w, int op, int op2, int reg, int rm) {
 
 /* ---- moves ---- */
 void x64_mov_rr(X64 *a, int dst, int src) { op_rr(a, 1, 0x89, -1, src, dst); }
+/* The shortest of three: what 32 bits hold unsigned is a move to the low
+   half, which clears the high one (5 bytes, 6 for r8 on); what they hold
+   signed is the 64-bit move of an immediate (7); the rest is the 64-bit
+   immediate itself (10). None touches the flags. */
 void x64_mov_ri(X64 *a, int dst, int64_t imm) {
-    if (imm >= INT32_MIN && imm <= INT32_MAX) { op_rr(a, 1, 0xC7, -1, 0, dst); x64_u32(a, (uint32_t)(int32_t)imm); }
+    if (imm >= 0 && imm <= (int64_t)UINT32_MAX) { rex(a, 0, 0, -1, dst); x64_byte(a, (uint8_t)(0xB8 + (dst & 7))); x64_u32(a, (uint32_t)imm); }
+    else if (imm >= INT32_MIN && imm <= INT32_MAX) { op_rr(a, 1, 0xC7, -1, 0, dst); x64_u32(a, (uint32_t)(int32_t)imm); }
     else { rex(a, 1, 0, -1, dst); x64_byte(a, (uint8_t)(0xB8 + (dst & 7))); x64_u64(a, (uint64_t)imm); }
 }
 void x64_mov_rm(X64 *a, int dst, int base, int32_t disp) { op_rm(a, 1, 0x8B, -1, dst, base, -1, 1, disp); }
@@ -181,10 +186,27 @@ void x64_sub_ri(X64 *a, int dst, int32_t imm) { alu_ri(a, 5, dst, imm); }
 void x64_and_ri(X64 *a, int dst, int32_t imm) { alu_ri(a, 4, dst, imm); }
 void x64_cmp_ri(X64 *a, int r, int32_t imm) { alu_ri(a, 7, r, imm); }
 void x64_or_ri(X64 *a, int dst, int32_t imm) { alu_ri(a, 1, dst, imm); }
-void x64_test_ri(X64 *a, int r, int32_t imm) { op_rr(a, 1, 0xF7, -1, 0, r); x64_u32(a, (uint32_t)imm); }
+/* A test of bits that the low byte has is a test of that byte, and one of
+   bits the low half has a test of that half: the same flags (the sign is
+   clear either way), in 2 to 4 bytes where the 64-bit test takes 7 -- and
+   a tag's test, of bit 0, is the commonest instruction the code has. rax
+   has forms of its own without the ModRM byte. */
+void x64_test_ri(X64 *a, int r, int32_t imm) {
+    if (imm >= 0 && imm <= 127) {
+        if (r == RAX) { x64_byte(a, 0xA8); x64_byte(a, (uint8_t)imm); return; }
+        rex8(a, 0, 0, -1, r, r);
+        x64_byte(a, 0xF6); modrm_rr(a, 0, r); x64_byte(a, (uint8_t)imm);
+    } else if (imm >= 0) {
+        if (r == RAX) { x64_byte(a, 0xA9); x64_u32(a, (uint32_t)imm); return; }
+        op_rr(a, 0, 0xF7, -1, 0, r); x64_u32(a, (uint32_t)imm);
+    } else { op_rr(a, 1, 0xF7, -1, 0, r); x64_u32(a, (uint32_t)imm); }
+}
 void x64_ror_ri(X64 *a, int r, int imm) { op_rr(a, 1, 0xC1, -1, 1, r); x64_byte(a, (uint8_t)imm); }
 void x64_imul_rr(X64 *a, int dst, int src) { op_rr(a, 1, 0x0F, 0xAF, dst, src); }
-void x64_imul_rri(X64 *a, int dst, int src, int32_t imm) { op_rr(a, 1, 0x69, -1, dst, src); x64_u32(a, (uint32_t)imm); }
+void x64_imul_rri(X64 *a, int dst, int src, int32_t imm) {
+    if (imm >= -128 && imm <= 127) { op_rr(a, 1, 0x6B, -1, dst, src); x64_byte(a, (uint8_t)(int8_t)imm); }
+    else { op_rr(a, 1, 0x69, -1, dst, src); x64_u32(a, (uint32_t)imm); }
+}
 void x64_neg_r(X64 *a, int r) { op_rr(a, 1, 0xF7, -1, 3, r); }
 void x64_not_r(X64 *a, int r) { op_rr(a, 1, 0xF7, -1, 2, r); }
 void x64_shl_ri(X64 *a, int r, int imm) { op_rr(a, 1, 0xC1, -1, 4, r); x64_byte(a, (uint8_t)imm); }

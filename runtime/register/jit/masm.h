@@ -6,14 +6,14 @@
 
    The registers the code keeps, all preserved across a call into C by both
    conventions:
-     r12  the VM
+     r13  the VM (not r12, whose every memory operand is a byte longer)
      rbp  the frame's base, as an index into the stack
      r14  the frame's registers: vm->stack + 8 * rbp
      r15  the count of instructions executed
    Register k of the frame is the word at [r14 + 8 k]. The frame's
    stack pointer is rbp + nlocals, plus what a primitive's arguments push.
-   rax, rcx, rdx, r8, r11 and xmm0, xmm1 are scratch; rbx, r13, rsi, rdi,
-   r9 and r10 are tier 2's homes (asm.h), and scratch where there are
+   rax, rcx, rdx, r8, r11 and xmm0, xmm1 are scratch; rbx, r12, rsi, rdi,
+   r10 and r9 are tier 2's homes (asm.h), and scratch where there are
    none. The machine stack holds only the call into C in progress: the
    enter stub aligns it, and the code never pushes.
 
@@ -96,6 +96,7 @@ typedef struct Masm {
     uint32_t from;
     uint32_t sync_pc;     /* the pc of the last ms_sync, for the reload after */
     uint32_t cur_pc;      /* the pc of the instruction being emitted: what is live at its entry is written back */
+    uint64_t cur_def;     /* the register it defines, as a bit (compile.c says, after ms_begin; 0: none): a helper may have written its slot */
 #ifdef RUNE_JIT_CONV
     const uint8_t *conv_code;   /* the program's code: the opcode at a pc, for the count of conversions (masm.c) */
     int conv_ctx;               /* 0 in an instruction's own work, 1 in a write-back, 2 in a reload of the homes */
@@ -201,6 +202,7 @@ void ms_set_word(Masm *m, int32_t d, int r, AsmLabel *slow);       /* R(d) := th
    tags; and loaded again from the slots */
 void ms_writeback(Masm *m, uint32_t pc);
 void ms_reload_homes(Masm *m, uint32_t pc);
+void ms_reload_clobbered(Masm *m, uint32_t pc);   /* after a call into C that touched no slot: the homes live at pc that C does not keep */
 /* the instruction at pc begins: what the masm remembers of the last is forgotten */
 void ms_begin(Masm *m, uint32_t pc);
 /* R(s)'s word will be stored by this instruction: where s is a real in its

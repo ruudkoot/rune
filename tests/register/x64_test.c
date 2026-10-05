@@ -35,7 +35,8 @@ int main(void) {
     x64_init(&a); x64_movups_xm(&a, XMM0, R13, 16); fails += expect("movups xmm0, [r13+16]", &a, "410f104510"); x64_free(&a);
     x64_init(&a); x64_movups_xmi(&a, XMM1, R13, RBP, 1, 32); fails += expect("movups xmm1, [r13+rbp+32]", &a, "410f104c2d20"); x64_free(&a);
     x64_init(&a); x64_mov_mi(&a, R13, 0, 1); fails += expect("mov qword [r13], 1", &a, "49c7450001000000"); x64_free(&a);
-    x64_init(&a); x64_imul_rri(&a, RCX, R11, 72); fails += expect("imul rcx, r11, 72", &a, "4969cb48000000"); x64_free(&a);
+    x64_init(&a); x64_imul_rri(&a, RCX, R11, 72); fails += expect("imul rcx, r11, 72", &a, "496bcb48"); x64_free(&a);
+    x64_init(&a); x64_imul_rri(&a, RCX, R11, 720); fails += expect("imul rcx, r11, 720", &a, "4969cbd0020000"); x64_free(&a);
     x64_init(&a); x64_movsd_xx(&a, XMM3, XMM9); fails += expect("movsd xmm3, xmm9", &a, "f2410f10d9"); x64_free(&a);
     x64_init(&a); x64_sqrtsd(&a, XMM0, XMM1); fails += expect("sqrtsd xmm0, xmm1", &a, "f20f51c1"); x64_free(&a);
     x64_init(&a); x64_cvtsi2sd(&a, XMM0, RAX); fails += expect("cvtsi2sd xmm0, rax", &a, "f2480f2ac0"); x64_free(&a);
@@ -46,7 +47,18 @@ int main(void) {
     x64_init(&a); x64_movaps_xx(&a, XMM0, XMM2); fails += expect("movaps xmm0, xmm2", &a, "0f28c2"); x64_free(&a);
     x64_init(&a); x64_cmp8_mi(&a, RAX, 0, 6); fails += expect("cmp byte [rax], 6", &a, "803806"); x64_free(&a);
     /* what the tagged word tests, sets and rotates (docs/plans/heap-layout.md, M4) */
-    x64_init(&a); x64_test_ri(&a, R9, 1); fails += expect("test r9, 1", &a, "49f7c101000000"); x64_free(&a);
+    x64_init(&a); x64_test_ri(&a, R9, 1); fails += expect("test r9b, 1", &a, "41f6c101"); x64_free(&a);
+    x64_init(&a); x64_test_ri(&a, RAX, 1); fails += expect("test al, 1", &a, "a801"); x64_free(&a);
+    x64_init(&a); x64_test_ri(&a, RBX, 1); fails += expect("test bl, 1", &a, "f6c301"); x64_free(&a);
+    x64_init(&a); x64_test_ri(&a, RSI, 1); fails += expect("test sil, 1", &a, "40f6c601"); x64_free(&a);
+    x64_init(&a); x64_test_ri(&a, RCX, 0x1000); fails += expect("test ecx, 4096", &a, "f7c100100000"); x64_free(&a);
+    x64_init(&a); x64_test_ri(&a, RAX, 0x1000); fails += expect("test eax, 4096", &a, "a900100000"); x64_free(&a);
+    x64_init(&a); x64_test_ri(&a, R9, -2); fails += expect("test r9, -2", &a, "49f7c1feffffff"); x64_free(&a);
+    x64_init(&a); x64_mov_ri(&a, RAX, 7); fails += expect("mov eax, 7", &a, "b807000000"); x64_free(&a);
+    x64_init(&a); x64_mov_ri(&a, R10, 7); fails += expect("mov r10d, 7", &a, "41ba07000000"); x64_free(&a);
+    x64_init(&a); x64_mov_ri(&a, RBX, 0xFFFFFFFFLL); fails += expect("mov ebx, 0xffffffff", &a, "bbffffffff"); x64_free(&a);
+    x64_init(&a); x64_mov_ri(&a, RAX, -1); fails += expect("mov rax, -1", &a, "48c7c0ffffffff"); x64_free(&a);
+    x64_init(&a); x64_mov_ri(&a, R11, 0x123456789ALL); fails += expect("mov r11, 0x123456789a", &a, "49bb9a78563412000000"); x64_free(&a);
     x64_init(&a); x64_test8_mi(&a, R14, 8, 1); fails += expect("test byte [r14+8], 1", &a, "41f6460801"); x64_free(&a);
     x64_init(&a); x64_or_ri(&a, RAX, 1); fails += expect("or rax, 1", &a, "4883c801"); x64_free(&a);
     x64_init(&a); x64_ror_ri(&a, RDX, 12); fails += expect("ror rdx, 12", &a, "48c1ca0c"); x64_free(&a);

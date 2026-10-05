@@ -240,13 +240,21 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   patched (a rel32 to a label, or a table entry relative to a table's
   start), and the instructions the macro-assembler is written in: moves,
   8-byte copies through an xmm register, arithmetic, SSE2 on doubles,
-  branches, calls. Nothing here knows a Value or a VM.
+  branches, calls. Nothing here knows a Value or a VM. Where the
+  machine has a shorter form for what is asked, the encoder gives it:
+  a move of an immediate that 32 bits hold is the move to the low half,
+  a test of bits the low byte has is a test of that byte (a tag's test
+  is two to four bytes, not seven), a multiplication by a small
+  constant has it in a byte.
 * **`masm.h`, `masm.c`**: the macro-assembler, and the conventions the
-  code keeps. `r12` is the VM, `rbp` the frame's base as an index into
+  code keeps. `r13` is the VM (`r12` would make every memory operand
+  based on it a byte longer), `rbp` the frame's base as an index into
   the value stack, `r14` its registers (the stack plus `8 rbp`), `r15`
   the count of instructions; register k is the 8 bytes at `[r14 + 8 k]`.
   The stack itself has no register: what moves between frames reads it
-  from the VM. The
+  from the VM. The fields of the VM that the code names most are the
+  VM's first 128 bytes (`vm.h`), where an offset is one byte of an
+  instruction and not four. The
   machine stack holds only the call into C in progress, aligned by the
   enter stub; the code never pushes. `SYNC` writes the stack pointer (the
   frame's base plus its registers, plus what a primitive's arguments
@@ -388,11 +396,32 @@ which of them live in a machine register:
 
 * **Which.** A register whose representation a machine register can
   hold -- an int, a word, a char, a nullary constructor, an `Int64.int`
-  or a `Word64.word` in one of six general registers (`rbx`, `r13`,
-  `rsi`, `rdi`, `r10`, `r9`; `AS_HOMES_G`, `asm.h`), a real in `xmm2`
+  or a `Word64.word` in one of six general registers (`rbx`, `r12`,
+  `rsi`, `rdi`, `r10`, `r9`; `as_home_g`, `asm.h`), a real in `xmm2`
   to `xmm15` -- the most used first, a use inside a loop (the section's
   loop heads to the last jump back) counting for eight, and a number
   that is raw in its home for four more (`choose_homes`, `compile.c`).
+  aarch64 has twelve general homes and thirty for reals.
+* **Not for nothing.** A register live across a call of a function is
+  written to its slot before the call and loaded again after it: a
+  store and a load, where each use of the home saved one of the two --
+  and for a raw home an encoding and a decoding. So a register has a
+  home only where its uses outweigh the calls it is live across, twice
+  over for a word and six times for a raw one (`HOME_CALL`,
+  `HOME_CALL_RAW`), a call in a loop weighing eight as a use there
+  does. Measured, not derived: `barnes-hut` ran in 0.83 of the
+  instructions for it, the compiler in 0.998.
+* **What C keeps.** `as_keeps_g` and `as_keeps_f` say which registers
+  a call into C leaves as they were, by the machine and its convention
+  (Linux on x86-64: `rbx`, `rbp`, `r12` to `r15` and no register of
+  reals; Windows: `rsi`, `rdi` and `xmm6` to `xmm15` too; aarch64:
+  `x19` to `x28` and the doubles of `v8` to `v15`). The homes are
+  given out with those first, so the order differs by convention
+  (Windows's reals start at `xmm6`), and a home C keeps is not saved
+  around the helper that boxes a number nor loaded again after a call
+  into C -- unless it is the register the instruction defines, whose
+  slot the helper may have written (`ms_reload`, `ms_reload_clobbered`,
+  `ms_emit_box`).
   The emitters keep the other general registers as scratch and for the
   arguments of calls into C; `r9` and `r10` are scratch too, but only
   in a call's or a return's sequence after it has read its last home
@@ -535,19 +564,24 @@ of it over its encoder: x86-64 in `asm_x64.c` over `x64.c`, aarch64 in
 implementation gives:
 
 * **The registers**, under the portable names: the four the code keeps
-  (`R_VM`, `R_BASEI`, `R_BASER`, `R_COUNT`), the six general homes
-  (`R_H0` to `R_H5`, given out in the order of `AS_HOMES_G`) and
-  fourteen floating ones (`F_H0` on), seven scratch registers (`R_S0`,
-  the return value of a call into C, to `R_S6`) and two floating
-  (`F_S0`, `F_S1`). x86-64 maps them to `r12`, `rbp`, `r14`, `r15`;
-  `rbx`, `rsi`, `rdi`, `r13`, `r9`, `r10`; `xmm2` on; `rax`, `rcx`,
-  `rdx`, `r8` to `r11`; `xmm0`, `xmm1` -- sixteen registers for
-  seventeen names, so `R_S4` and `R_S5` are `R_H4` and `R_H5`, and an
-  emitter names them as scratch only where no home is live any more.
-  aarch64 maps them to `x19`, `x21` to `x23`; `x24` to `x26`, `x20`,
-  `x28`, `x27`; `v8` to `v21`; `x0`, `x9` to `x14`; `v0`, `v1`, with
-  `x16` the encoder's own and `x17` the assembler's: every home there
-  is a register C keeps, and none is a scratch register.
+  (`R_VM`, `R_BASEI`, `R_BASER`, `R_COUNT`), seven scratch registers
+  (`R_S0`, the return value of a call into C, to `R_S6`) and two
+  floating (`F_S0`, `F_S1`); and tier 2's homes, which have no names
+  but a table by the convention of the calls into C: `as_home_g` and
+  `as_home_f` give the kth, `as_keeps_g` and `as_keeps_f` say what a
+  call into C keeps. x86-64 keeps `r13`, `rbp`, `r14`, `r15`; its
+  homes are `rbx`, `r12`, `rsi`, `rdi`, `r10`, `r9` and `xmm2` to
+  `xmm15` (on Windows from `xmm6`); its scratch `rax`, `rcx`, `rdx`,
+  `r8` to `r11`, `xmm0`, `xmm1` -- sixteen registers for seventeen
+  roles, so `R_S4` and `R_S5` are the last two homes, and an emitter
+  names them (and `R_H1`, `R_H2`: `rsi`, `rdi`) as scratch only where
+  no home is live any more. aarch64 keeps `x19`, `x21` to `x23`; its
+  homes are `x24` to `x26`, `x20`, `x28`, `x27`, then `x15` and `x4`
+  to `x8`, and `v8` to `v31`, then `v2` to `v7`; its scratch `x0`,
+  `x9` to `x14`, `v0`, `v1`, with `x16` the encoder's own and `x17`
+  the assembler's. The VM has a cell for each of the machine's
+  registers, by its number, where a home waits across the helper that
+  boxes (`jit_gspill`, `jit_fspill`).
 * **The operations**, with x86-64's meanings where the machines differ:
   `add`, `sub`, `cmp`, `test` and `neg` set the flags a `jcc` or `setcc`
   reads, and nothing else promises to (an emitter that wants the sign

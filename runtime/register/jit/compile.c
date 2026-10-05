@@ -335,9 +335,20 @@ static int liveness(Jit *j, const Scan *sc) {
 /* The homes: the registers of a representation a machine register can hold
    -- an int, a word, a char, a nullary constructor in one of the target's
    general homes (asm.h: registers the emitters never use as scratch while
-   a home is live), a real in xmm2 to xmm15 -- the most used first, a use
-   inside a loop counting for eight, and one that is raw in its home (a
-   number of 64 bits, which a slot holds encoded or boxed) for four more.
+   a home is live), a real in one of its homes for reals -- the most used
+   first, a use inside a loop counting for eight, and one that is raw in
+   its home (a number of 64 bits, which a slot holds encoded or boxed) for
+   four more.
+
+   A home is not free: where its register is live across a call of a
+   function it is written to its slot before and loaded again after, a
+   store and a load where each use saved one or the other -- and for a
+   raw home an encoding and a decoding, some fifteen instructions where a
+   use saved six or seven. So a register has a home only where its uses
+   outweigh the calls it is live across, twice over for a word and six
+   times for a raw one (HOME_CALL, HOME_CALL_RAW, in tenths of a use;
+   measured: docs/plans/performance-64bit.md), a call in a loop counting
+   for eight as a use does.
 
    Two registers have one home where they are never live together: each
    register is given the first home that none of those it interferes with
@@ -349,6 +360,7 @@ static int liveness(Jit *j, const Scan *sc) {
    one before it has read the other, and the homes to load after a call
    into C in the middle of an instruction, those live at its entry and
    the one it defines, are all different (masm.c, ms_reload). */
+enum { HOME_CALL = 20, HOME_CALL_RAW = 60 };
 static int choose_homes(Jit *j) {
     const Program *p = &j->vm->prog;
     const Function *fn = &p->funcs[j->f];
@@ -357,11 +369,12 @@ static int choose_homes(Jit *j) {
     if (fn->has_meta && n > 64) j->jit->homes_too_large++;
     if (!fn->has_meta || n > 64) return 0;
     uint32_t *weight = calloc(n, sizeof *weight);
+    uint32_t *calls = calloc(n, sizeof *calls);   /* the calls each is live across, weighted as the uses are */
     Home *homes = calloc(n, sizeof *homes);
     uint64_t *meets = calloc(n, sizeof *meets);   /* the registers each interferes with */
     /* each loop: from its head to the last jump back to it */
     uint32_t *last = calloc(fn->nloops ? fn->nloops : 1, sizeof *last);
-    if (!weight || !homes || !meets || !last) { free(weight); free(homes); free(meets); free(last); return 0; }
+    if (!weight || !calls || !homes || !meets || !last) { free(weight); free(calls); free(homes); free(meets); free(last); return 0; }
     for (uint32_t k = 0; k < fn->nloops; k++) last[k] = fn->loops[k];
     for (uint32_t q = j->from; q < j->to; ) {
         uint32_t l = rop_length(code + q);
@@ -386,11 +399,15 @@ static int choose_homes(Jit *j) {
             if ((in >> r) & 1) meets[r] |= in | def;
             if ((def >> r) & 1) meets[r] |= in;
         }
+        if (rop_flow[op] == FLOW_CALL && pc + l < j->to) {
+            uint64_t after = j->live_in[pc + l - j->from];   /* at the RESULT the call returns to */
+            for (uint32_t r = 0; r < n; r++)
+                if ((after >> r) & 1) calls[r] += in_loop ? 8 : 1;
+        }
         if (op == ROP_SWITCH) l += 5 * (uint32_t)read_i32(code + pc + 5);
         pc += l;
     }
     free(last);
-    static const int gprs[AS_NHOMES_G] = AS_HOMES_G;
     int given = 0;
     uint64_t seen = 0;   /* the registers decided: a home, or none */
     uint8_t wants[64] = { 0 }, number[64] = { 0 };   /* the kind of home each decided register wants (HOME_SLOT: none), and its number */
@@ -404,6 +421,7 @@ static int choose_homes(Jit *j) {
             int gpr = raw || rep == REP_INT || rep == REP_WORD || rep == REP_CHAR || rep == REP_CON0;
             int xmm = MS_REAL_HOMES && rep == REP_REAL;   /* a real is a word in its slot until masm.h gives it a home */
             if (!gpr && !xmm) { seen |= (uint64_t)1 << r; continue; }
+            if ((uint64_t)weight[r] * 10 <= (uint64_t)calls[r] * (raw || xmm ? HOME_CALL_RAW : HOME_CALL)) { seen |= (uint64_t)1 << r; continue; }
             uint64_t w = (uint64_t)weight[r] * (raw ? 4 : 1);
             if (best == UINT32_MAX || w > best_weight) { best = r; best_weight = w; }
         }
@@ -435,14 +453,14 @@ static int choose_homes(Jit *j) {
     for (uint32_t r = 0; r < n; r++) {
         if (homes[r].kind == HOME_SLOT) continue;
         int rep = fn->reps[r], k = homes[r].tag;
-        if (homes[r].kind == HOME_XMM) { homes[r].reg = (uint8_t)(F_H0 + k); homes[r].tag = T_REAL; }
+        if (homes[r].kind == HOME_XMM) { homes[r].reg = (uint8_t)as_home_f(JIT_WIN, k); homes[r].tag = T_REAL; }
         else {
-            homes[r].reg = (uint8_t)gprs[k];
+            homes[r].reg = (uint8_t)as_home_g(JIT_WIN, k);
             homes[r].tag = (uint8_t)(rep == REP_INT ? T_INT : rep == REP_WORD ? T_WORD : rep == REP_CHAR ? T_CHAR
                                      : rep == REP_INT64 ? T_INT64 : rep == REP_WORD64 ? T_WORD64 : T_CON0);
         }
     }
-    free(weight); free(meets);
+    free(weight); free(calls); free(meets);
     if (!given) { free(homes); return 0; }
     j->homes = homes;
     return 1;
@@ -506,10 +524,16 @@ void jit_unsupported(Jit *j) { j->unsupported = 1; }
 
 /* the slow paths, after the function's code; a copy of the record, since
    a fill may add a slow path of its own and move the array */
+/* an instruction begun: the masm told its pc and the register it defines */
+static void begin(Jit *j, uint32_t pc) {
+    uint64_t uses;
+    ms_begin(&j->m, pc);
+    reg_uses_defs(&j->vm->prog, pc, &uses, &j->m.cur_def);
+}
 static void emit_slow(Masm *m, Slow *sp) {
     Jit *j = (Jit *)m;   /* the Masm is the first member */
     Slow s = *sp;
-    ms_begin(m, s.cur);
+    begin(j, s.cur);
     if (s.kind == SLOW_BOXREAL || s.kind == SLOW_BOXNUM) {
         ms_emit_box(m, sp);
     } else if (s.kind == SLOW_FATAL) {
@@ -684,7 +708,7 @@ static int emit_function(Jit *j, Scan *sc) {
         uint8_t op = code[pc];
         uint32_t l = rop_length(code + pc);
         j->next = pc + l;
-        ms_begin(m, pc);
+        begin(j, pc);
         /* the flags of a comparison hold to the next instruction, unless
            control can arrive there from elsewhere (M7) */
         j->flags_prev = sc->target[at] ? -1 : j->flags_for;

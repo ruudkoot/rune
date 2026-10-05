@@ -945,7 +945,7 @@ static void called(Jit *j, uint32_t pc) {
     as_mov_ri(A, ms_arg(M, 1), (int64_t)(intptr_t)s);
     as_mov_rr(A, ms_arg(M, 2), R_S6);
     ms_call(M, (MsHelper)jit_h_called);
-    ms_reload_homes(M, pc);   /* written back at the instruction's start (M9) */
+    ms_reload_clobbered(M, pc);   /* written back at the instruction's start (M9) */
     as_pop(A, R_S6); as_pop(A, R_S2); as_pop(A, R_S1);
 }
 /* obj := the closure in register a; r11 := the index of its function,
@@ -1200,7 +1200,7 @@ void emit_PUSHHANDLER(Jit *j, uint32_t pc, int32_t a) {
     as_mov_ri(A, ms_arg(M, 1), a);
     as_lea_label(A, ms_arg(M, 2), jit_landing(j, (uint32_t)a));
     ms_call(M, (MsHelper)jit_h_push_handler);
-    ms_reload_homes(M, pc);   /* the stack did not move; the homes the call clobbered (M9) */
+    ms_reload_clobbered(M, pc);   /* the stack did not move; the homes the call clobbered (M9) */
 }
 void emit_POPHANDLER(Jit *j, uint32_t pc) {
     (void)pc;

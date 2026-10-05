@@ -784,17 +784,98 @@ alternate, and committed by itself.
    there are homes across everything that clobbers or reads them
    late.
 
-   **To do, the second part** (the owner's, 2026-10-05: a layout and
-   a number of homes for each machine and each convention, where they
-   differ): the VM out of `r12`, whose every memory operand is a byte
-   longer (in `r13`, and `r12` the home, the bootstrap's code is 4.0%
-   smaller); the short forms of a tag's test and of a small constant,
-   which the encoder does not use; on aarch64 twelve general homes
-   and thirty for reals; what a call into C keeps, by convention
-   (Linux: `rbx`, `rbp`, `r12` to `r15`, no real; Windows: `rsi`,
-   `rdi` and `xmm6` to `xmm15` too; aarch64: `x19` to `x28` and `v8`
-   to `v15`), so that a home C keeps is not loaded again after a call
-   into C, and the homes of reals given out on Windows from `xmm6`.
+   **Done, the second part** (2026-10-05; the owner's: a layout and a
+   number of homes for each machine and each convention, where they
+   differ, and whether x86-64's is the best its unlike registers
+   allow).
+
+   *The homes by machine and convention.* The table is two functions
+   of the target (`as_home_g`, `as_home_f`, `asm.h`) and two more say
+   what a call into C keeps (`as_keeps_g`, `as_keeps_f`):
+
+   | | general homes, in order | homes of reals | C keeps |
+   |---|---|---|---|
+   | x86-64, Linux | `rbx`, `r12`, `rsi`, `rdi`, `r10`, `r9` | `xmm2` to `xmm15` | `rbx`, `rbp`, `r12` to `r15` |
+   | x86-64, Windows | the same | `xmm6` to `xmm15`, then `xmm2` to `xmm5` | those, `rsi`, `rdi`, `xmm6` to `xmm15` |
+   | aarch64 | `x24` to `x26`, `x20`, `x28`, `x27`, `x15`, `x4` to `x8` | `v8` to `v31`, `v2` to `v7` | `x19` to `x28`, `v8` to `v15` |
+
+   A home C keeps is given out first, is not saved around the helper
+   that boxes a number, and is not loaded again after a call into C
+   unless it is the register the instruction defines. One set of
+   general registers serves Linux and Windows, since what Windows
+   keeps is what Linux keeps and two more, already next in the order;
+   the reals' order is the one thing that differs. aarch64 has twelve
+   general homes and thirty of reals: the counts above say eleven
+   hold every general use of every program but `logic`, and `nucleic`
+   wants twenty-eight of reals. x86-64 stays at six and fourteen.
+
+   *What a home costs.* A register live across a call of a function
+   is written back before it and loaded after it, so a home there can
+   cost more than it saves, and with more homes more registers were
+   given one. A register now has a home only where its uses outweigh
+   the calls it is live across, twice over for a word and six times
+   for a raw home (an encoding and a decoding where a use saves one).
+   The two numbers are measured: instructions against none, `barnes-hut`
+   0.83, `tensor` 0.92, `simple` and `tsp` 0.94, `mandelbrot` 0.95,
+   `fft` 0.97, `tak` 0.99, the bootstrap 0.998, and nothing more.
+
+   *x86-64's unlike registers.* Three things were bytes for nothing.
+   The VM was in `r12`, the one register besides `rsp` whose every
+   memory operand is a byte longer: it is in `r13`, and `r12` is the
+   home. The encoder wrote a tag's test, a small constant and a small
+   multiplication in their 7-byte forms: they are 2 to 5 bytes. And
+   the fields of the VM that the code names most were past the reach
+   of a one-byte offset: sixteen of them are the VM's first 128 bytes
+   now (180,830 of the bootstrap's operands had a four-byte offset).
+   The bootstrap's code, in bytes:
+
+   | first part | VM in `r13` | short forms | the VM's fields | the cost of calls |
+   |---:|---:|---:|---:|---:|
+   | 6,368,816 | 6,117,024 | 5,895,232 | 5,277,456 | 5,218,800 |
+
+   18% less, of the same instructions. `rax`, `rcx` and `rdx` stay
+   scratch (a shift, a product and a quotient name them, and `rax` has
+   the shortest forms); the frame's base stays in `rbp` and `r14`, and
+   the count in `r15`. On aarch64 a tag's test is one instruction
+   (`tst` with the mask as an immediate) where it was two, and the
+   bootstrap's code is 5,788,416 bytes where it was 5,916,032, every
+   register that wants a home having one.
+
+   Against the first part, runs that alternate, the least of three:
+   the bootstrap 0.97 of the cycles; MLton's 35 programs 0.986 of the
+   cycles and 0.981 of the instructions (`barnes-hut` 0.88, `nucleic`
+   0.89, `ray` 0.92, `imp-for` and `zern` 0.93, `tensor` 0.94,
+   `mandelbrot` 0.96); the six programs of words where they were.
+   Without the cost of calls the set is where it was (1.002 and
+   1.000) and the bootstrap at 0.98: the bytes saved show in the
+   program that is large.
+
+   *Found: 4K aliasing.* Four programs are slower at the same
+   instructions: `wc-input1` 1.14, `wc-scanStream` 1.07, `tyan` 1.06,
+   `tak` 1.04. The processor takes a load for dependent on an earlier
+   store whose address has the same low 12 bits, and waits; and the
+   VM's fields, the value stack and the frames are three allocations
+   whose places in their pages are chance. Moving the VM's fields
+   moved the chance: `tak` had 683 such waits and has 438 million
+   (two in every hundred cycles; with the VM 512 bytes further on,
+   none, and 9% fewer cycles), `wc-input1` 3 million and
+   21 million, `peek` 19 million and 136 million -- and `knuth-bendix`
+   24 million and 5 million, `tsp` 803 million and 536 million. It was
+   there before and is there in every program that keeps its values in
+   memory; what can be decided is where the stack and the frames lie
+   against the VM, so that a program of little depth has none between
+   them. That is the next thing, by itself.
+
+   *Seen and not done* (bytes of code, not registers). Half of the
+   bootstrap's 5.2 MB of code is slow paths, each with the whole
+   sync in line: 19,559 paths to a fatal error at 52 bytes (a fifth
+   of the code, for errors a typed program cannot make), 4,259 of a
+   primitive's slow case at 121, 3,474 of an allocation at 111, 7,950
+   that grow the stack or the frames at 70. A call into C loads its
+   64-bit address (39,011 places, and four instructions each on
+   aarch64, where a load from a table in the VM would be one); the
+   jump back to the driver does too (11,733); and 26,271 forward jumps
+   would fit the two-byte form.
 3. **A cheaper call for the primitives that stay in C** (`sin`,
    `cos`, `atan`, `ln`, `pow`: calls of the C library, as decided):
    the live homes saved as they are instead of written to their slots

@@ -125,6 +125,7 @@ void a64_ror_ri(A64 *a, int rd, int rn, int shift) { a64_word(a, 0x93C00000 | R(
 void a64_ubfx(A64 *a, int rd, int rn, int lsb, int width) { a64_word(a, 0xD3400000 | (uint32_t)lsb << 16 | (uint32_t)(lsb + width - 1) << 10 | R(rn) << 5 | R(rd)); }
 void a64_sxtw(A64 *a, int rd, int rn) { a64_word(a, 0x93407C00 | R(rn) << 5 | R(rd)); }
 void a64_and_mask(A64 *a, int rd, int rn, int bits) { a64_word(a, 0x92400000 | (uint32_t)(bits - 1) << 10 | R(rn) << 5 | R(rd)); }
+void a64_tst_mask(A64 *a, int rn, int bits) { a64_word(a, 0xF2400000 | (uint32_t)(bits - 1) << 10 | R(rn) << 5 | R(XZR)); }
 
 /* add and sub with an immediate: the forms of imm12 the machine has, else
    the value in x16 and the register form (so rn may not be x16) */

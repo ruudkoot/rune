@@ -302,7 +302,7 @@ static void slot_to_home(Masm *m, int32_t s, const Home *h) {
     }
     as_ld64(&m->a, h->reg, BASER, SLOT(s));
 }
-void ms_begin(Masm *m, uint32_t pc) { m->cur_pc = pc; m->cur_reals = 0; }
+void ms_begin(Masm *m, uint32_t pc) { m->cur_pc = pc; m->cur_reals = 0; m->cur_def = 0; }
 void ms_need_word(Masm *m, int32_t s) {
     const Home *h = ms_home(m, s);
     if (is_xmm(h)) real_to_slot(m, s, h, 0, m->cur_pc);
@@ -806,7 +806,11 @@ static int live_at(const Masm *m, uint32_t pc, uint32_t r) {
 }
 /* a home's machine register as a bit: the general ones, then the reals' */
 static uint64_t home_bit(const Home *h) {
-    return (uint64_t)1 << (h->kind == HOME_XMM ? 32 + (h->reg - F_H0) : h->reg);
+    return (uint64_t)1 << (h->kind == HOME_XMM ? 32 + h->reg : h->reg);
+}
+/* whether a call into C leaves the home as it was (asm.h, by the convention) */
+static int kept(const Masm *m, const Home *h) {
+    return h->kind == HOME_XMM ? as_keeps_f(m->win, h->reg) : as_keeps_g(m->win, h->reg);
 }
 static void writeback(Masm *m, uint32_t pc, int pushed) {
     if (!m->homes) return;
@@ -829,19 +833,16 @@ void ms_writeback(Masm *m, uint32_t pc) { writeback(m, pc, 0); }
 /* where a general home waits in the VM across the helper that boxes; a
    register that is no home (a result on its way to a slot) has the cell
    after them */
-static const int homes_g[AS_NHOMES_G] = AS_HOMES_G;
-_Static_assert(AS_NHOMES_G + 1 <= sizeof ((VM *)0)->jit_gspill / sizeof(uint64_t), "a cell of VM.jit_gspill for every general home, and one more");
-_Static_assert(AS_NHOMES_F <= sizeof ((VM *)0)->jit_fspill / sizeof(uint64_t), "a cell of VM.jit_fspill for every home of a real");
-static int32_t gspill(int reg) {
-    for (int i = 0; i < AS_NHOMES_G; i++) if (homes_g[i] == reg) return OFF(jit_gspill) + 8 * i;
-    return OFF(jit_gspill) + 8 * AS_NHOMES_G;
-}
+_Static_assert(sizeof ((VM *)0)->jit_gspill == 32 * sizeof(uint64_t) && sizeof ((VM *)0)->jit_fspill == 32 * sizeof(uint64_t),
+               "a cell of VM.jit_gspill and of VM.jit_fspill for each of the machine's registers");
+static int32_t gspill(int reg) { return OFF(jit_gspill) + 8 * (reg & 31); }
+static int32_t fspill(int f) { return OFF(jit_fspill) + 8 * (f & 31); }
 /* The slow path of a raw home's write-back: the real, or the int or word
    of 64 bits, has no immediate, and the helper boxes it into the slot. It
-   may collect, so the VM is given its stack pointer; and C keeps none of
-   the homes, so every live one waits in the VM and is loaded again after
-   -- there and not in its slot, where a raw home's bits are no value. A
-   home that waits is an immediate, a number's bits or a double: nothing a
+   may collect, so the VM is given its stack pointer; and every live home
+   that C does not keep waits in the VM and is loaded again after -- there
+   and not in its slot, where a raw home's bits are no value. A home that
+   waits is an immediate, a number's bits or a double: nothing a
    collection moves. */
 void ms_emit_box(Masm *m, Slow *sp) {
     Slow s = *sp;
@@ -850,13 +851,14 @@ void ms_emit_box(Masm *m, Slow *sp) {
 #ifdef RUNE_JIT_CONV
     conv_at(m, real ? CONV_REAL_BOX : CONV_NUM_BOX, s.cur);
 #endif
-    int32_t at = real ? OFF(jit_fspill) + 8 * (s.b - F_H0) : gspill(s.b);
+    int32_t at = real ? fspill(s.b) : gspill(s.b);
     for (uint32_t r = 0; m->homes && r < m->nlocals; r++) {
         const Home *h = &m->homes[r];
-        if (h->kind == HOME_GPR && live_at(m, live, r)) as_st64(&m->a, VMR, gspill(h->reg), h->reg);
-        if (h->kind == HOME_XMM && live_at(m, live, r)) as_fst(&m->a, VMR, OFF(jit_fspill) + 8 * (h->reg - F_H0), h->reg);
+        if (h->kind == HOME_SLOT || !live_at(m, live, r) || kept(m, h)) continue;
+        if (h->kind == HOME_GPR) as_st64(&m->a, VMR, gspill(h->reg), h->reg);
+        else as_fst(&m->a, VMR, fspill(h->reg), h->reg);
     }
-    /* the one to box, live or not */
+    /* the one to box, live or not: the helper takes it from there */
     if (real) as_fst(&m->a, VMR, at, s.b); else as_st64(&m->a, VMR, at, s.b);
     as_st32i(&m->a, VMR, OFF(pc), (int32_t)s.pc);
     as_lea(&m->a, R_S0, BASEI, -1, 1, (int32_t)(m->nlocals + (uint32_t)s.c));
@@ -867,11 +869,25 @@ void ms_emit_box(Masm *m, Slow *sp) {
     ms_call(m, (MsHelper)(real ? m->box_real : m->box_num));
     for (uint32_t r = 0; m->homes && r < m->nlocals; r++) {
         const Home *h = &m->homes[r];
-        if (h->kind == HOME_GPR && live_at(m, live, r)) as_ld64(&m->a, h->reg, VMR, gspill(h->reg));
-        if (h->kind == HOME_XMM && live_at(m, live, r)) as_fld(&m->a, h->reg, VMR, OFF(jit_fspill) + 8 * (h->reg - F_H0));
+        if (h->kind == HOME_SLOT || !live_at(m, live, r) || kept(m, h)) continue;
+        if (h->kind == HOME_GPR) as_ld64(&m->a, h->reg, VMR, gspill(h->reg));
+        else as_fld(&m->a, h->reg, VMR, fspill(h->reg));
     }
-    if (real) as_fld(&m->a, s.b, VMR, at); else as_ld64(&m->a, s.b, VMR, at);
+    if (real) { if (!as_keeps_f(m->win, s.b)) as_fld(&m->a, s.b, VMR, at); }
+    else if (!as_keeps_g(m->win, s.b)) as_ld64(&m->a, s.b, VMR, at);
     as_jmp(&m->a, &s.back);
+}
+void ms_reload_clobbered(Masm *m, uint32_t pc) {
+    if (!m->homes) return;
+#ifdef RUNE_JIT_CONV
+    int ctx = m->conv_ctx;
+    m->conv_ctx = 2;
+#endif
+    for (uint32_t r = 0; r < m->nlocals; r++)
+        if (m->homes[r].kind != HOME_SLOT && live_at(m, pc, r) && !kept(m, &m->homes[r])) slot_to_home(m, (int32_t)r, &m->homes[r]);
+#ifdef RUNE_JIT_CONV
+    m->conv_ctx = ctx;
+#endif
 }
 void ms_reload_homes(Masm *m, uint32_t pc) {
     if (!m->homes) return;
@@ -978,11 +994,15 @@ void ms_reload(Masm *m) {
            (compile.c): the ones live at the entry have theirs, and of the
            others the one the instruction defines has one that none of
            those has; a register live at sync_pc alone that is neither --
-           sync_pc is no successor of a jump -- is not loaded over them. */
+           sync_pc is no successor of a jump -- is not loaded over them.
+           A home that C keeps still holds its register, unless that is
+           the one the instruction defines, whose slot the helper may
+           have written. */
         uint64_t taken = 0;
         for (uint32_t r = 0; r < m->nlocals; r++)
             if (m->homes[r].kind != HOME_SLOT && live_at(m, m->cur_pc, r)) {
                 taken |= home_bit(&m->homes[r]);
+                if (kept(m, &m->homes[r]) && !((m->cur_def >> r) & 1)) continue;
                 slot_to_home(m, (int32_t)r, &m->homes[r]);
             }
         for (uint32_t r = 0; r < m->nlocals; r++)
@@ -995,7 +1015,7 @@ void ms_reload(Masm *m) {
 }
 void ms_call_lean(Masm *m, MsHelper helper) {
     ms_call(m, helper);
-    ms_reload_homes(m, m->cur_pc);
+    ms_reload_clobbered(m, m->cur_pc);
 }
 void ms_call(Masm *m, MsHelper helper) {
     uint64_t at;   /* a function pointer's bits, through memcpy: ISO C has no cast for them */

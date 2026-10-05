@@ -183,26 +183,37 @@ typedef struct GcState {
 } GcState;
 
 typedef struct VM {
-    Program prog;
-
-    Value *stack;
-    size_t sp, stack_cap;
-    size_t stack_limit;      /* the most bytes the value stack, the frames or the handlers may take (--stack-size): a runaway recursion stops here, not at the machine's memory */
-
+    /* First what compiled code reads and writes most, in 128 bytes:
+       runtime/register's JIT (and runeopt's code) names a field by its
+       offset from the VM, and on x86-64 an offset below 128 makes every
+       instruction that names it three bytes shorter -- a tenth of the
+       code the compiler compiles to was those bytes. The order of the
+       rest is nothing's concern. */
+    uint64_t instructions;   /* executed so far */
+    uint32_t pc;
+    int checked;             /* --checked: DECON tests its tag (decision D14), for the test suites */
     Frame *frames;
     size_t fp, frames_cap;   /* fp = index of current frame; frames_cap capacity */
+    Value *stack;
+    size_t sp, stack_cap;
+    AllocState alloc;        /* the heap (Cheney semispace): where the next object goes */
+    uint64_t bytes_allocated;  /* not size_t: --count prints the same where it is 32 bits */
+    uint64_t objects_allocated;
+    size_t gc_stress;        /* --gc-stress N: collect before every Nth allocation; 0 = off */
+    Value *globals;
+    uint8_t *global_set;
+
+    Program prog;
+
+    size_t stack_limit;      /* the most bytes the value stack, the frames or the handlers may take (--stack-size): a runaway recursion stops here, not at the machine's memory */
+
     int frames_active;       /* 1 once the toplevel frame exists */
 
     Handler *handlers;
     size_t hp, handlers_cap;
 
-    Value *globals;
-    uint8_t *global_set;
-
     Obj *builtin_exns[NUM_BUILTIN_EXNS];
 
-    /* heap (Cheney semispace) */
-    AllocState alloc;        /* where the next object goes */
     GcState gc;              /* the collector's own */
 #ifdef RUNE_CENSUS
     size_t census_used_stock;  /* alloc.used as the stock VM would count it (8-byte headers): the collector's trigger */
@@ -213,8 +224,6 @@ typedef struct VM {
     int64_t gc_user_us;      /* processor time spent collecting, in microseconds */
     int64_t gc_sys_us;
     int64_t gc_longest_us;   /* the longest of the collections, both times together (--stats): what the program waited at once */
-    uint64_t bytes_allocated;  /* not size_t: --count prints the same where it is 32 bits */
-    uint64_t objects_allocated;
     /* The boxes of the representation -- a real with no immediate, an int
        or a word past 63 bits under RUNE_INT64 -- are counted apart: they
        are the layout's, not the program's, and where one is made is the
@@ -226,23 +235,19 @@ typedef struct VM {
     size_t box_bytes_live;     /* of alloc.used, what is boxes: Runtime.stats's live leaves them out, as its bytes do */
     uint64_t copied;         /* bytes every collection copied, in all (--stats) */
     size_t max_live;         /* the most a collection kept (--stats) */
-    uint64_t instructions;   /* executed so far */
-    size_t gc_stress;        /* --gc-stress N: collect before every Nth allocation; 0 = off */
     unsigned heap_fill;      /* --heap-fill P: the heap grows until at most P% of it is in use
                                 after a collection; 50 unless the option says otherwise */
     size_t heap_limit;       /* maximum semispace size; 0 = unlimited */
     size_t equality_work;    /* comparison steps; 0 = the default 1000000 */
 
-    uint32_t pc;
     int trace;
     int stats;
     int count;               /* --count: report the deterministic counters at exit */
     int emulate_fork;        /* --emulate-fork: fork as Windows must, by a second VM (runtime/image.c) */
-    int checked;             /* --checked: DECON tests its tag (decision D14), for the test suites */
     int native;              /* a program runeopt made, whose code is not bytecode (runtime/native/native.c) */
     JitOptions jit;          /* the --jit options, runtime/register's (runtime/register/jit.h); all 0 in runevm-stack */
-    uint64_t jit_fspill[14]; /* tier 2's reals in their xmm homes, raw, across the helper that boxes one (jit/masm.c) */
-    uint64_t jit_gspill[16]; /* and its general homes (as many as the target has, jit/asm.h), an int's or a word's 64 bits among them; then the number being boxed where it is in no home */
+    uint64_t jit_fspill[32]; /* tier 2's reals in their homes, raw, across the helper that boxes one: a cell for each of the machine's registers, by its number (jit/masm.c) */
+    uint64_t jit_gspill[32]; /* and its general homes, an int's or a word's 64 bits among them, and the number being boxed where it is in no home */
 
     int argc;
     char **argv;             /* arguments after the bytecode file */

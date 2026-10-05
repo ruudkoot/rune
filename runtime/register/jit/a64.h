@@ -78,6 +78,7 @@ void a64_ror_ri(A64 *a, int rd, int rn, int shift);
 void a64_ubfx(A64 *a, int rd, int rn, int lsb, int width);
 void a64_sxtw(A64 *a, int rd, int rn);
 void a64_and_mask(A64 *a, int rd, int rn, int bits);     /* rd := rn & ((1 << bits) - 1), bits 1 to 63 */
+void a64_tst_mask(A64 *a, int rn, int bits);             /* the flags of rn & ((1 << bits) - 1), bits 1 to 63 */
 /* arithmetic with an immediate: imm12, or imm12 << 12, else through x16 */
 void a64_add_ri(A64 *a, int rd, int rn, int64_t v);
 void a64_sub_ri(A64 *a, int rd, int rn, int64_t v);
