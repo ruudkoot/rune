@@ -26,12 +26,13 @@
     X("VM_BUILTIN_EXNS", offsetof(VM, builtin_exns)) \
     X("VM_INSTRUCTIONS", offsetof(VM, instructions)) \
     X("VM_PC", offsetof(VM, pc)) \
-    X("VM_HEAP_FROM", offsetof(VM, heap_from)) \
-    X("VM_HEAP_SIZE", offsetof(VM, heap_size)) \
-    X("VM_HEAP_USED", offsetof(VM, heap_used)) \
+    X("VM_HEAP_FROM", offsetof(VM, alloc.from)) \
+    X("VM_HEAP_SIZE", offsetof(VM, alloc.size)) \
+    X("VM_HEAP_USED", offsetof(VM, alloc.used)) \
     X("VM_BYTES_ALLOCATED", offsetof(VM, bytes_allocated)) \
     X("VM_OBJECTS_ALLOCATED", offsetof(VM, objects_allocated)) \
     X("VM_GC_STRESS", offsetof(VM, gc_stress)) \
+    X("VM_REAL_ZERO", offsetof(VM, real_boxes)) \
     X("FRAME_SIZE", sizeof(Frame)) \
     X("FRAME_FUNC", offsetof(Frame, func)) \
     X("FRAME_RET_PC", offsetof(Frame, ret_pc)) \
@@ -43,8 +44,6 @@
     X("OBJ_LEN", offsetof(Obj, len)) \
     X("OBJ_FIELDS", sizeof(Obj)) \
     X("VALUE_SIZE", sizeof(Value)) \
-    X("VALUE_TAG", offsetof(Value, tag)) \
-    X("VALUE_PAYLOAD", offsetof(Value, u)) \
     X("T_UNIT", T_UNIT) \
     X("T_INT", T_INT) \
     X("T_WORD", T_WORD) \
@@ -59,6 +58,10 @@
     X("K_REF", K_REF) \
     X("K_ARRAY", K_ARRAY) \
     X("K_EXN", K_EXN) \
-    X("K_EXNCON", K_EXNCON)
+    X("K_EXNCON", K_EXNCON) \
+    X("K_REAL", K_REAL) \
+    X("K_BOX", K_BOX) \
+    X("K_BYTES", K_BYTES) \
+    X("K_REALS", K_REALS)
 
 #endif

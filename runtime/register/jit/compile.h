@@ -77,6 +77,8 @@ int jit_h_prim(VM *vm, int prim, int32_t d, const uint8_t *L);
 Obj *jit_h_alloc(VM *vm, int kind, int contag, uint32_t n);
 int jit_h_ret(VM *vm, int32_t s);
 void jit_h_fatal(VM *vm, int what, int32_t a, int32_t b);
+void jit_h_fatal_at(VM *vm, uint32_t k, int64_t value);
+MsHelper jit_libm_of(int32_t prim);   /* emit.c: the C library's function a primitive on reals is, or NULL */
 void jit_h_grow(VM *vm, size_t need);
 void jit_h_grow_frames(VM *vm);
 const void *jit_h_call(VM *vm, int32_t a, int32_t b, const void *after);
@@ -90,6 +92,8 @@ int jit_h_primpush(VM *vm, int prim, const uint8_t *L);
 int64_t jit_h_string_order(VM *vm, const Obj *a, const Obj *b);
 /* Needs the exact VM: comparison can end the process at its work limit. */
 int64_t jit_h_values_equal(VM *vm, const Value *x, const Value *y);
+void jit_h_box_real(VM *vm, int32_t slot, uint64_t bits);
+void jit_h_box_num(VM *vm, int32_t slot, uint64_t bits);
 
 /* the compiler: 1 when function f now has an entry, 0 when it stays interpreted */
 int jit_compile(VM *vm, JitProgram *jit, uint32_t f);

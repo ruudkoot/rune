@@ -17,7 +17,7 @@ fun ord3 LESS = "LESS" | ord3 EQUAL = "EQUAL" | ord3 GREATER = "GREATER"
 (* ---- int: int_add int_sub int_mul int_neg int_div int_mod int_quot int_rem int_lt int_le int_gt int_ge int_order *)
 val maxInt = valOf Int.maxInt
 val minInt = valOf Int.minInt
-val ints = [0, 1, ~1, 2, ~2, 7, ~7, 3, maxInt, minInt, maxInt - 1, minInt + 1, 4611686018427387904]
+val ints = [0, 1, ~1, 2, ~2, 7, ~7, 3, maxInt, minInt, maxInt - 1, minInt + 1, 2305843009213693952]
 fun int2 (x, y) =
   let val p = Int.toString x ^ " " ^ Int.toString y
   in
@@ -35,7 +35,7 @@ val () = List.app (fn x => List.app (fn y => int2 (x, y)) ints) ints
 val () = List.app (fn x => show ("~ " ^ Int.toString x) (fn () => Int.toString (~ x))) ints
 
 (* ---- word: word_add word_sub word_mul word_div word_mod word_lt word_le word_gt word_ge word_order word_andb word_orb word_xorb word_notb word_lsl word_lsr *)
-val words = [0w0, 0w1, 0w2, 0w3, 0w7, 0w63, 0w64, 0w65, Word.fromInt ~1, Word.fromInt minInt, 0wx8000000000000001]
+val words = [0w0, 0w1, 0w2, 0w3, 0w7, 0w63, 0w64, 0w65, Word.fromInt ~1, Word.fromInt minInt, 0wx4000000000000001]
 fun word2 (x, y) =
   let val p = Word.toString x ^ " " ^ Word.toString y
   in
@@ -120,3 +120,64 @@ val () = List.app (fn i => show ("asub " ^ Int.toString i) (fn () => Int.toStrin
 val () = List.app (fn i => show ("aupdate " ^ Int.toString i)
                                 (fn () => (Array.update (arr, i, i * 2); Int.toString (Array.sub (arr, 0)))))
                   [0, 2, 3, ~1, minInt]
+
+(* ---- the arrays of bytes and of reals (heap-layout M8), which the register
+   VM does in its loop and its JIT in line: bytes_length bytes_sub
+   bytes_update reals_length reals_sub reals_update *)
+val ca = CharArray.fromList [#"a", #"b", #"c"]
+val () = show "clength" (fn () => Int.toString (CharArray.length ca) ^ " " ^ Int.toString (CharArray.length (CharArray.fromList [])))
+val () = List.app (fn i => show ("csub " ^ Int.toString i) (fn () => str (CharArray.sub (ca, i)))) [0, 2, 3, ~1, maxInt]
+val () = List.app (fn i => show ("cupdate " ^ Int.toString i)
+                                (fn () => (CharArray.update (ca, i, #"z"); CharArray.vector ca)))
+                  [0, 2, 3, ~1, minInt]
+val wa = Word8Array.fromList [0w0, 0w127, 0w255]
+val () = List.app (fn i => show ("wsub " ^ Int.toString i) (fn () => Word8.toString (Word8Array.sub (wa, i)))) [0, 1, 2, 3]
+val () = show "wupdate" (fn () => (Word8Array.update (wa, 1, 0w128); Word8.toString (Word8Array.sub (wa, 1))))
+val ra = RealArray.fromList [1.5, ~0.0, 4.9E~324, 1.0 / 0.0]
+val () = show "rlength" (fn () => Int.toString (RealArray.length ra) ^ " " ^ Int.toString (RealArray.length (RealArray.fromList [])))
+val () = List.app (fn i => show ("rsub " ^ Int.toString i) (fn () => Real.toString (RealArray.sub (ra, i)))) [0, 1, 2, 3, 4, ~1, maxInt]
+val () = List.app (fn (i, x) => show ("rupdate " ^ Int.toString i)
+                                     (fn () => (RealArray.update (ra, i, x); Real.toString (RealArray.sub (ra, 0) + RealArray.sub (ra, 3)))))
+                  [(0, 0.0), (3, ~2.5), (2, 0.0 / 0.0), (4, 1.0), (~1, 1.0), (minInt, 1.0)]
+val () = show "rsign" (fn () => b (Real.signBit (RealArray.sub (ra, 1))) ^ " " ^ b (Real.isNan (RealArray.sub (ra, 2))))
+
+(* ---- a real as an int and an int as a real, which the register VM does in
+   its loop and its JIT in line (docs/plans/performance-64bit.md, the work
+   after the heap layout, 1): real_trunc real_floor real_ceil real_abs
+   int_to_real. What an int does not hold, an infinity and a NaN are the
+   primitive's, with Overflow and Domain. *)
+val conv = [0.0, ~0.0, 0.5, ~0.5, 1.5, ~1.5, 2.5, ~2.5, 0.999999999, ~0.999999999, 1E10, ~1E10, 4.9E~324, ~4.9E~324,
+            4611686018427387903.0, 4611686018427387904.0, ~4611686018427387904.0, ~4611686018427388000.0,
+            ~4611686018427389000.0, 9.3E18, ~9.3E18, 1E300, ~1E300, 1.0 / 0.0, ~1.0 / 0.0, 0.0 / 0.0,
+            123456789.75, ~123456789.25]
+fun showc (name : string) (f : unit -> string) =
+  print (name ^ ": " ^ (f () handle Overflow => "Overflow" | Domain => "Domain" | e => "exception " ^ exnName e) ^ "\n")
+val () = List.app (fn r =>
+           (showc ("trunc " ^ Real.toString r) (fn () => Int.toString (Real.trunc r));
+            showc ("floor " ^ Real.toString r) (fn () => Int.toString (Real.floor r));
+            showc ("ceil " ^ Real.toString r) (fn () => Int.toString (Real.ceil r));
+            showc ("abs " ^ Real.toString r) (fn () => Real.toString (Real.abs r) ^ (if Real.signBit (Real.abs r) then " signed" else ""))))
+         conv
+val () = List.app (fn i => showc ("real " ^ Int.toString i) (fn () => Real.fmt (StringCvt.SCI (SOME 17)) (real i)))
+                  [0, 1, ~1, maxInt, minInt, 9007199254740993, ~9007199254740993, 123456789]
+
+(* ---- the functions of the C library on reals, which the register VM's
+   JIT calls itself, the live homes kept around the call as they are
+   (docs/plans/performance-64bit.md, the work after the heap layout, 3):
+   real_exp real_ln real_sin real_cos real_tan real_atan real_sinh
+   real_cosh real_tanh real_atan2 real_pow. Every digit, and the sign of
+   a zero. *)
+fun r17 (x : real) = Real.fmt (StringCvt.SCI (SOME 17)) x ^ (if Real.signBit x then "-" else "+")
+val args = [0.0, ~0.0, 0.5, ~0.5, 1.0, ~1.0, 2.0, Math.pi, 1E22, ~1E22, 1E300, ~1E300, 2.2E~308, 4.9E~324,
+            709.0, 710.0, ~745.0, 1.0 / 0.0, ~1.0 / 0.0, 0.0 / 0.0]
+val () = List.app (fn x =>
+           print (r17 x ^ ": exp " ^ r17 (Math.exp x) ^ " ln " ^ r17 (Math.ln x) ^ " sin " ^ r17 (Math.sin x)
+                  ^ " cos " ^ r17 (Math.cos x) ^ " tan " ^ r17 (Math.tan x) ^ " atan " ^ r17 (Math.atan x)
+                  ^ " sinh " ^ r17 (Math.sinh x) ^ " cosh " ^ r17 (Math.cosh x) ^ " tanh " ^ r17 (Math.tanh x) ^ "\n"))
+         args
+val pairs = [(0.0, ~1.0), (~0.0, ~1.0), (0.0, 0.0), (~1.0, 1.0 / 0.0), (0.0 / 0.0, 0.0), (1.0, 0.0 / 0.0),
+             (~8.0, 1.0 / 3.0), (2.0, 0.5), (2.0, 1024.0), (2.0, ~1075.0), (~2.0, 3.0), (10.0, ~2.0),
+             (1.0 / 0.0, ~1.0 / 0.0), (~1.0 / 0.0, 1.0 / 0.0), (~0.0, ~0.0), (1E300, 1E~300)]
+val () = List.app (fn (x, y) =>
+           print (r17 x ^ " " ^ r17 y ^ ": pow " ^ r17 (Math.pow (x, y)) ^ " atan2 " ^ r17 (Math.atan2 (x, y)) ^ "\n"))
+         pairs

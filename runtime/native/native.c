@@ -177,10 +177,13 @@ static int same_program(const VM *world) {
             && a->funcs[i].nlocals == b->funcs[i].nlocals && strcmp(a->funcs[i].name, b->funcs[i].name) == 0;
     for (uint32_t i = 0; same && i < a->nconsts; i++) {
         Value x = a->consts[i], y = b->consts[i];
-        if (val_tag(x) != val_tag(y)) same = 0;
+        if (a->const_kinds[i] != b->const_kinds[i] || val_tag(x) != val_tag(y)) same = 0;
         else if (val_is(x, T_PTR))
             same = obj_kind(val_ptr(x)) == K_STRING && obj_kind(val_ptr(y)) == K_STRING && obj_len(val_ptr(x)) == obj_len(val_ptr(y))
                 && memcmp(obj_bytes(val_ptr(x)), obj_bytes(val_ptr(y)), obj_len(val_ptr(x))) == 0;
+        /* a number by what it is, not by its word: a box is another address in each VM */
+        else if (a->const_kinds[i] == CONST_REAL) same = real_bits(val_real(x)) == real_bits(val_real(y));
+        else if (a->const_kinds[i] == CONST_INT64 || a->const_kinds[i] == CONST_WORD64) same = val_word64(x) == val_word64(y);
         else same = val_word(x) == val_word(y);
     }
     vm_destroy(mine);

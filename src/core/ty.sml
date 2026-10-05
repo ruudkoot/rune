@@ -200,6 +200,8 @@ struct
   (* ---- the types the translation makes ---- *)
 
   val int = Con (#stamp Types.intTycon, "int", [])
+  val int64 = Con (#stamp Types.int64Tycon, #name Types.int64Tycon, [])
+  val word64 = Con (#stamp Types.word64Tycon, #name Types.word64Tycon, [])
   val bool = Con (#stamp Types.boolTycon, "bool", [])
   val string = Con (#stamp Types.stringTycon, "string", [])
   val exn = Con (#stamp Types.exnTycon, "exn", [])

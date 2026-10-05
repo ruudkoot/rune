@@ -18,7 +18,9 @@ structure Word8Array :> MONO_ARRAY where type vector = Word8Vector.vector where 
 
 Word8Array: mutable arrays of bytes, a type of their own with identity
 equality, whose vectors are those of [`Word8Vector`](../str/Word8Vector.md): the buffers of binary
-input and output.
+input and output. An array takes a byte an element and is laid out as C
+has an array of bytes; [`vector`](../sig/MONO_ARRAY.md#val-vector), [`copy`](../sig/MONO_ARRAY.md#val-copy) and [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) move the bytes in
+one step.
 
 ## Members
 

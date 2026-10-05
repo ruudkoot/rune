@@ -7,21 +7,23 @@
 | Signature | [`WORD`](../sig/WORD.md) |
 | Status | optional |
 | Members | 38 |
-| Tests | 248 checks |
+| Tests | 250 checks |
 | Source | [lib/basis/word64.sml](../../../../lib/basis/word64.sml) |
 
 ## Synopsis
 
 ```sml
-structure Word64 :> WORD
+structure Word64 : WORD
 ```
 
-Word64: the 64-bit words.
+Word64: the 64-bit words, and LargeWord, the widest ones, which is the same
+structure.
 
-The implementation is [`Word`](../str/Word.md), whose width the VM decides, but the type is
-sealed away from [`Word.word`](../sig/WORD.md#type-word) so that no program can take the two for one,
-which leaves the VM free to choose the width of [`Word`](../str/Word.md). Every operation is
-[`Word`](../str/Word.md)'s, so the seal costs nothing.
+The type is the VM's own 64-bit word and not [`Word.word`](../sig/WORD.md#type-word), whose width the
+VM decides (63 bits: a word of the VM with a bit taken for its tag). A
+number here is kept in such a word where it fits and in a small object
+where it needs the 64th bit. This is the type for hashes, checksums,
+random number generators and whatever else is written for 64 bits.
 
 ## Members
 
@@ -29,7 +31,7 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`word`](../sig/WORD.md#type-word) | *a type of its own* |
+| type | [`word`](../sig/WORD.md#type-word) | `Word64.word` |
 | val | [`*`](../sig/WORD.md#val-op-star) | `Word64.word * Word64.word -> Word64.word` |
 | val | [`+`](../sig/WORD.md#val-op-plus) | `Word64.word * Word64.word -> Word64.word` |
 | val | [`-`](../sig/WORD.md#val-op-minus) | `Word64.word * Word64.word -> Word64.word` |
@@ -44,9 +46,9 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 | val | [`div`](../sig/WORD.md#val-div) | `Word64.word * Word64.word -> Word64.word` |
 | val | [`fmt`](../sig/WORD.md#val-fmt) | `StringCvt.radix -> Word64.word -> string` |
 | val | [`fromInt`](../sig/WORD.md#val-fromint) | `int -> Word64.word` |
-| val | [`fromLarge`](../sig/WORD.md#val-fromlarge) | `word -> Word64.word` |
+| val | [`fromLarge`](../sig/WORD.md#val-fromlarge) | `Word64.word -> Word64.word` |
 | val | [`fromLargeInt`](../sig/WORD.md#val-fromlargeint) | `IntInf.int -> Word64.word` |
-| val | [`fromLargeWord`](../sig/WORD.md#val-fromlargeword) | `word -> Word64.word` |
+| val | [`fromLargeWord`](../sig/WORD.md#val-fromlargeword) | `Word64.word -> Word64.word` |
 | val | [`fromString`](../sig/WORD.md#val-fromstring) | `string -> Word64.word option` |
 | val | [`max`](../sig/WORD.md#val-max) | `Word64.word * Word64.word -> Word64.word` |
 | val | [`min`](../sig/WORD.md#val-min) | `Word64.word * Word64.word -> Word64.word` |
@@ -56,12 +58,12 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 | val | [`scan`](../sig/WORD.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (Word64.word * 'a) option` |
 | val | [`toInt`](../sig/WORD.md#val-toint) | `Word64.word -> int` |
 | val | [`toIntX`](../sig/WORD.md#val-tointx) | `Word64.word -> int` |
-| val | [`toLarge`](../sig/WORD.md#val-tolarge) | `Word64.word -> word` |
+| val | [`toLarge`](../sig/WORD.md#val-tolarge) | `Word64.word -> Word64.word` |
 | val | [`toLargeInt`](../sig/WORD.md#val-tolargeint) | `Word64.word -> IntInf.int` |
 | val | [`toLargeIntX`](../sig/WORD.md#val-tolargeintx) | `Word64.word -> IntInf.int` |
-| val | [`toLargeWord`](../sig/WORD.md#val-tolargeword) | `Word64.word -> word` |
-| val | [`toLargeWordX`](../sig/WORD.md#val-tolargewordx) | `Word64.word -> word` |
-| val | [`toLargeX`](../sig/WORD.md#val-tolargex) | `Word64.word -> word` |
+| val | [`toLargeWord`](../sig/WORD.md#val-tolargeword) | `Word64.word -> Word64.word` |
+| val | [`toLargeWordX`](../sig/WORD.md#val-tolargewordx) | `Word64.word -> Word64.word` |
+| val | [`toLargeX`](../sig/WORD.md#val-tolargex) | `Word64.word -> Word64.word` |
 | val | [`toString`](../sig/WORD.md#val-tostring) | `Word64.word -> string` |
 | val | [`wordSize`](../sig/WORD.md#val-wordsize) | `int` |
 | val | [`xorb`](../sig/WORD.md#val-xorb) | `Word64.word * Word64.word -> Word64.word` |

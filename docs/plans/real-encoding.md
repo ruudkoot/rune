@@ -63,8 +63,11 @@ Not experiments; listed so that the experiments below are read against
 them. The rotation as the one encoding; a box the VM keeps for each of
 `+0.0`, `-0.0`, the two infinities and NaN, made at start; the
 interpreter's fast path handed the VM, so that a zero result does not
-fall to the primitive; `runeopt`'s templates regenerated; the 32-bit
-and big-endian builds through `make test-portability`. Koka's encoding
+fall to the primitive; `runeopt`'s templates regenerated. Checked
+already, in a copy with the rotation as every build's encoding: the
+templates regenerate (293 lines against 322) and `make test-opt`,
+`make test-native`, `make test-portability` and `make test-windows`
+pass. Koka's encoding
 stays on the prototype's branch for comparison, and every real boxed
 (`-DRUNE_REAL_BOXED`) stays a switch.
 

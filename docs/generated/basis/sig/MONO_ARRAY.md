@@ -26,7 +26,7 @@ structure LargeRealArray : MONO_ARRAY where type vector = LargeRealVector.vector
 structure LargeWordArray : MONO_ARRAY where type vector = LargeWordVector.vector where type elem = LargeWord.word  (* optional *)
 structure Real32Array :> MONO_ARRAY where type vector = Real32Vector.vector where type elem = Real32.real  (* optional *)
 structure Real64Array : MONO_ARRAY where type vector = Real64Vector.vector where type elem = Real64.real  (* optional *)
-structure RealArray :> MONO_ARRAY where type vector = RealVector.vector where type elem = real  (* optional *)
+structure RealArray : MONO_ARRAY where type vector = RealVector.vector where type elem = real  (* optional *)
 structure WideCharArray :> MONO_ARRAY where type vector = WideCharVector.vector where type elem = WideChar.char  (* optional *)
 structure Word16Array :> MONO_ARRAY where type vector = Word16Vector.vector where type elem = Word16.word  (* optional *)
 structure Word32Array :> MONO_ARRAY where type vector = Word32Vector.vector where type elem = Word32.word  (* optional *)
@@ -38,7 +38,7 @@ structure WordArray :> MONO_ARRAY where type vector = WordVector.vector where ty
 | Implementation |  | Source |
 | --- | --- | --- |
 | [`BoolArray`](../str/BoolArray.md) | BoolArray: mutable arrays of booleans, a type of their own with identity equality, whose vectors are those of [`BoolVector`](../str/BoolVector.md). | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
-| [`CharArray`](../str/CharArray.md) | CharArray: mutable arrays of characters, a type of their own with identity equality. Their vectors are strings: [`vector`](#val-vector) gives a `string`, and [`copyVec`](#val-copyvec) copies one in. | [lib/basis/chararray.sml](../../../../lib/basis/chararray.sml) |
+| [`CharArray`](../str/CharArray.md) | CharArray: mutable arrays of characters, a type of their own with identity equality. Their vectors are strings: [`vector`](#val-vector) gives a `string`, and [`copyVec`](#val-copyvec) copies one in. An array takes a byte a character. | [lib/basis/chararray.sml](../../../../lib/basis/chararray.sml) |
 | [`Int16Array`](../str/Int16Array.md) | Int16Array: mutable arrays of 16-bit integers, a type of their own with identity equality, whose vectors are those of [`Int16Vector`](../str/Int16Vector.md). | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
 | [`Int32Array`](../str/Int32Array.md) | Int32Array: mutable arrays of 32-bit integers, a type of their own with identity equality, whose vectors are those of [`Int32Vector`](../str/Int32Vector.md). | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
 | [`Int64Array`](../str/Int64Array.md) | Int64Array: mutable arrays of 64-bit integers, a type of their own with identity equality, whose vectors are those of [`Int64Vector`](../str/Int64Vector.md). | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
@@ -46,7 +46,7 @@ structure WordArray :> MONO_ARRAY where type vector = WordVector.vector where ty
 | [`IntArray`](../str/IntArray.md) | IntArray: mutable arrays of integers of the default `int`, a type of their own with identity equality, whose vectors are those of [`IntVector`](../str/IntVector.md). | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
 | [`LargeIntArray`](../str/LargeIntArray.md) | LargeIntArray: mutable arrays of integers of any size, a type of their own with identity equality, whose vectors are those of [`LargeIntVector`](../str/LargeIntVector.md). | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
 | [`LargeRealArray`](../str/RealArray.md) |  | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
-| [`LargeWordArray`](../str/WordArray.md) |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
+| [`LargeWordArray`](../str/Word64Array.md) |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
 | [`Real32Array`](../str/Real32Array.md) | Real32Array: mutable arrays of binary32 reals, a type of their own with identity equality, whose vectors are those of [`Real32Vector`](../str/Real32Vector.md). | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
 | [`Real64Array`](../str/RealArray.md) |  | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
 | [`RealArray`](../str/RealArray.md) | RealArray: mutable arrays of reals, a type of their own with identity equality, whose vectors are those of [`RealVector`](../str/RealVector.md). | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
@@ -54,7 +54,7 @@ structure WordArray :> MONO_ARRAY where type vector = WordVector.vector where ty
 | [`Word16Array`](../str/Word16Array.md) | Word16Array: mutable arrays of 16-bit words, a type of their own with identity equality, whose vectors are those of [`Word16Vector`](../str/Word16Vector.md). | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
 | [`Word32Array`](../str/Word32Array.md) | Word32Array: mutable arrays of 32-bit words, a type of their own with identity equality, whose vectors are those of [`Word32Vector`](../str/Word32Vector.md). | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
 | [`Word64Array`](../str/Word64Array.md) | Word64Array: mutable arrays of 64-bit words, a type of their own with identity equality, whose vectors are those of [`Word64Vector`](../str/Word64Vector.md). | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
-| [`Word8Array`](../str/Word8Array.md) | Word8Array: mutable arrays of bytes, a type of their own with identity equality, whose vectors are those of [`Word8Vector`](../str/Word8Vector.md): the buffers of binary input and output. | [lib/basis/word8array.sml](../../../../lib/basis/word8array.sml) |
+| [`Word8Array`](../str/Word8Array.md) | Word8Array: mutable arrays of bytes, a type of their own with identity equality, whose vectors are those of [`Word8Vector`](../str/Word8Vector.md): the buffers of binary input and output. An array takes a byte an element and is laid out as C has an array of bytes; [`vector`](#val-vector), [`copy`](#val-copy) and [`copyVec`](#val-copyvec) move the bytes in one step. | [lib/basis/word8array.sml](../../../../lib/basis/word8array.sml) |
 | [`WordArray`](../str/WordArray.md) | WordArray: mutable arrays of words, a type of their own with identity equality, whose vectors are those of [`WordVector`](../str/WordVector.md). | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 Mutable sequences of one element type.
@@ -124,7 +124,7 @@ The type of the elements: [`Word8.word`](../sig/WORD.md#type-word) for [`Word8Ar
 
 For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararray.sml): `is-char`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `eight-distinct-samples`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `eight-distinct-samples`
 
 </details>
 
@@ -153,7 +153,7 @@ The greatest length such an array may have.
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `covers-created-arrays`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `covers-created-arrays`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `covers-created-arrays`
 
 </details>
 
@@ -177,7 +177,7 @@ For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararra
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `zero` &middot; `Size-negative` (raises Size) &middot; `elements-are-separate` &middot; `same-array-is-equal` &middot; `same-elements-not-equal`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `BoolArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `basic` &middot; `zero` &middot; `one` &middot; `length` &middot; `Size-negative` (raises Size) &middot; `elements-are-separate` &middot; `same-array-is-equal` &middot; `alias-is-equal` &middot; `equal-after-update` &middot; `same-elements-not-equal` &middot; `unequal` &middot; `zero-length-same` &middot; `zero-length-not-equal` &middot; `model*` &middot; `identity*` &middot; `long` &middot; `Size-above-maxLen` (raises Size)
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `BoolArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `basic` &middot; `zero` &middot; `one` &middot; `length` &middot; `Size-negative` (raises Size) &middot; `elements-are-separate` &middot; `same-array-is-equal` &middot; `alias-is-equal` &middot; `equal-after-update` &middot; `same-elements-not-equal` &middot; `unequal` &middot; `zero-length-same` &middot; `zero-length-not-equal` &middot; `model*` &middot; `identity*` &middot; `long` &middot; `Size-above-maxLen` (raises Size)
 
 </details>
 
@@ -199,7 +199,7 @@ val fromList : elem list -> array
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `nil`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `basic` &middot; `nil` &middot; `singleton` &middot; `every-sample` &middot; `length` &middot; `same-elements-not-equal` &middot; `zero-length-not-equal` &middot; `round-trip*` &middot; `long`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `basic` &middot; `nil` &middot; `singleton` &middot; `every-sample` &middot; `length` &middot; `same-elements-not-equal` &middot; `zero-length-not-equal` &middot; `round-trip*` &middot; `long`
 
 </details>
 
@@ -231,7 +231,7 @@ For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararra
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `order` &middot; `Size-negative` (raises Size) &middot; `Size-before-f`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `BoolArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `basic` &middot; `zero` &middot; `one` &middot; `order` &middot; `Size-negative` (raises Size) &middot; `Size-before-f` &middot; `same-elements-not-equal` &middot; `zero-length-not-equal` &middot; `model*` &middot; `Size-above-maxLen` (raises Size)
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `BoolArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `basic` &middot; `zero` &middot; `one` &middot; `order` &middot; `Size-negative` (raises Size) &middot; `Size-before-f` &middot; `same-elements-not-equal` &middot; `zero-length-not-equal` &middot; `model*` &middot; `Size-above-maxLen` (raises Size)
 
 </details>
 
@@ -251,7 +251,7 @@ val length : array -> int
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `empty`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `empty` &middot; `five` &middot; `tabulate` &middot; `model*` &middot; `long`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `empty` &middot; `five` &middot; `tabulate` &middot; `model*` &middot; `long`
 
 </details>
 
@@ -273,7 +273,7 @@ For `Word8Array`, in [tests/basis/word8array.sml](../../../../tests/basis/word8a
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `each` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-negative` (raises Subscript)
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `first` &middot; `middle` &middot; `last` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `first` &middot; `middle` &middot; `last` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long`
 
 </details>
 
@@ -299,7 +299,7 @@ For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararra
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `twice` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-changes-nothing`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `first` &middot; `middle` &middot; `last` &middot; `twice-same-index` &middot; `seen-through-alias` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `model*` &middot; `model*` (raises Subscript)
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `first` &middot; `middle` &middot; `last` &middot; `twice-same-index` &middot; `seen-through-alias` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `model*` &middot; `model*` (raises Subscript)
 
 </details>
 
@@ -333,8 +333,6 @@ For `LargeIntArray`, in [tests/basis/mono.largeint.sml](../../../../tests/basis/
 
 For `WordArray`, in [tests/basis/mono.word.sml](../../../../tests/basis/mono.word.sml): `extremes`
 
-For `WordArray`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `extremes`
-
 For `Word16Array`, in [tests/basis/mono.word16.sml](../../../../tests/basis/mono.word16.sml): `extremes`
 
 For `Word32Array`, in [tests/basis/mono.word32.sml](../../../../tests/basis/mono.word32.sml): `extremes`
@@ -347,9 +345,11 @@ For `RealArray`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono.r
 
 For `Int64Array`, in [tests/basis/mono.int64.sml](../../../../tests/basis/mono.int64.sml): `extremes`
 
-For `LargeWordArray`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `extremes`
-
 For `Word64Array`, in [tests/basis/mono.word64.sml](../../../../tests/basis/mono.word64.sml): `extremes`
+
+For `Word64Array`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `extremes`
+
+For `LargeWordArray`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `extremes`
 
 For `LargeRealArray`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `specials`
 
@@ -357,7 +357,7 @@ For `Real64Array`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono
 
 For `Real32Array`, in [tests/basis/mono.real32.sml](../../../../tests/basis/mono.real32.sml): `specials`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `basic` &middot; `empty` &middot; `after-update` &middot; `is-a-snapshot` &middot; `model*` &middot; `long`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `basic` &middot; `empty` &middot; `after-update` &middot; `is-a-snapshot` &middot; `model*` &middot; `long`
 
 </details>
 
@@ -393,7 +393,7 @@ For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararra
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `middle` &middot; `to-the-end` &middot; `empty-at-length` &middot; `onto-itself` &middot; `Subscript-onto-itself-shifted` (raises Subscript) &middot; `Subscript-too-long` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-changes-nothing`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `start` &middot; `middle` &middot; `end` &middot; `whole` &middot; `src-unchanged` &middot; `empty-src` &middot; `empty-src-at-length` &middot; `empty-to-empty` &middot; `copies-elements-not-the-array` &middot; `Subscript-too-far` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-src-longer` (raises Subscript) &middot; `Subscript-to-empty` (raises Subscript) &middot; `Subscript-empty-src-beyond` (raises Subscript) &middot; `Subscript-empty-src-negative` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `onto-itself` &middot; `Subscript-onto-itself-shifted` (raises Subscript) &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `start` &middot; `middle` &middot; `end` &middot; `whole` &middot; `src-unchanged` &middot; `empty-src` &middot; `empty-src-at-length` &middot; `empty-to-empty` &middot; `copies-elements-not-the-array` &middot; `Subscript-too-far` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-src-longer` (raises Subscript) &middot; `Subscript-to-empty` (raises Subscript) &middot; `Subscript-empty-src-beyond` (raises Subscript) &middot; `Subscript-empty-src-negative` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `onto-itself` &middot; `Subscript-onto-itself-shifted` (raises Subscript) &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long`
 
 </details>
 
@@ -424,7 +424,7 @@ For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararra
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `middle` &middot; `whole` &middot; `Subscript-too-long` (raises Subscript) &middot; `Subscript-negative` (raises Subscript)
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `start` &middot; `middle` &middot; `end` &middot; `whole` &middot; `src-unchanged` &middot; `empty-src` &middot; `empty-src-at-length` &middot; `empty-to-empty` &middot; `from-vector-of-array` &middot; `Subscript-too-far` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-src-longer` (raises Subscript) &middot; `Subscript-to-empty` (raises Subscript) &middot; `Subscript-empty-src-beyond` (raises Subscript) &middot; `Subscript-empty-src-negative` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `start` &middot; `middle` &middot; `end` &middot; `whole` &middot; `src-unchanged` &middot; `empty-src` &middot; `empty-src-at-length` &middot; `empty-to-empty` &middot; `from-vector-of-array` &middot; `Subscript-too-far` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-src-longer` (raises Subscript) &middot; `Subscript-to-empty` (raises Subscript) &middot; `Subscript-empty-src-beyond` (raises Subscript) &middot; `Subscript-empty-src-negative` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long`
 
 </details>
 
@@ -442,7 +442,7 @@ val appi : (int * elem -> unit) -> array -> unit
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `order`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `order` &middot; `empty` &middot; `model*`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `order` &middot; `empty` &middot; `model*`
 
 </details>
 
@@ -462,7 +462,7 @@ val app : (elem -> unit) -> array -> unit
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `order`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `order` &middot; `empty` &middot; `array-unchanged` &middot; `model*`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `order` &middot; `empty` &middot; `array-unchanged` &middot; `model*`
 
 </details>
 
@@ -482,7 +482,7 @@ For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararra
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `order`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `basic` &middot; `index-only` &middot; `empty` &middot; `order` &middot; `model*` &middot; `long`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `basic` &middot; `index-only` &middot; `empty` &middot; `order` &middot; `model*` &middot; `long`
 
 </details>
 
@@ -518,8 +518,6 @@ For `LargeIntArray`, in [tests/basis/mono.largeint.sml](../../../../tests/basis/
 
 For `WordArray`, in [tests/basis/mono.word.sml](../../../../tests/basis/mono.word.sml): `Word-arithmetic`
 
-For `WordArray`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `LargeWord-arithmetic`
-
 For `Word16Array`, in [tests/basis/mono.word16.sml](../../../../tests/basis/mono.word16.sml): `Word16-arithmetic`
 
 For `Word32Array`, in [tests/basis/mono.word32.sml](../../../../tests/basis/mono.word32.sml): `Word32-arithmetic`
@@ -532,9 +530,11 @@ For `RealArray`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono.r
 
 For `Int64Array`, in [tests/basis/mono.int64.sml](../../../../tests/basis/mono.int64.sml): `Int64-arithmetic`
 
-For `LargeWordArray`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `LargeWord-arithmetic`
-
 For `Word64Array`, in [tests/basis/mono.word64.sml](../../../../tests/basis/mono.word64.sml): `Word64-arithmetic`
+
+For `Word64Array`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `LargeWord-arithmetic`
+
+For `LargeWordArray`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `LargeWord-arithmetic`
 
 For `LargeRealArray`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `LargeReal-arithmetic`
 
@@ -542,7 +542,7 @@ For `Real64Array`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono
 
 For `Real32Array`, in [tests/basis/mono.real32.sml](../../../../tests/basis/mono.real32.sml): `Real32-arithmetic`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `basic` &middot; `wraps` &middot; `empty` &middot; `order` &middot; `twice` &middot; `is-modifyi-of-second` &middot; `model*` &middot; `long`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `basic` &middot; `wraps` &middot; `empty` &middot; `order` &middot; `twice` &middot; `is-modifyi-of-second` &middot; `model*` &middot; `long`
 
 </details>
 
@@ -560,7 +560,7 @@ val foldli : (int * elem * 'b -> 'b) -> 'b -> array -> 'b
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model*`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model*`
 
 </details>
 
@@ -578,7 +578,7 @@ val foldri : (int * elem * 'b -> 'b) -> 'b -> array -> 'b
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `conses-in-order` &middot; `nonassociative` &middot; `empty` &middot; `model*`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `conses-in-order` &middot; `nonassociative` &middot; `empty` &middot; `model*`
 
 </details>
 
@@ -600,7 +600,7 @@ For `Word8Array`, in [tests/basis/word8array.sml](../../../../tests/basis/word8a
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative` &middot; `empty`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model*` &middot; `long`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model*` &middot; `long`
 
 </details>
 
@@ -622,7 +622,7 @@ For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararra
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `conses-in-order` &middot; `nonassociative` &middot; `empty` &middot; `model*` &middot; `long`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `conses-in-order` &middot; `nonassociative` &middot; `empty` &middot; `model*` &middot; `long`
 
 </details>
 
@@ -643,7 +643,7 @@ satisfies it.
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `first-true` &middot; `none` &middot; `stops`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `first-match` &middot; `by-index` &middot; `index-zero` &middot; `none` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `first-match` &middot; `by-index` &middot; `index-zero` &middot; `none` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*`
 
 </details>
 
@@ -665,7 +665,7 @@ For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararra
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `false` &middot; `none` &middot; `stops`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `first-match` &middot; `last-element` &middot; `none` &middot; `empty` &middot; `stops` &middot; `model*`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `first-match` &middot; `last-element` &middot; `none` &middot; `empty` &middot; `stops` &middot; `model*`
 
 </details>
 
@@ -685,7 +685,7 @@ val exists : (elem -> bool) -> array -> bool
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `true` &middot; `false` &middot; `stops`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `true` &middot; `false` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `true` &middot; `false` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*`
 
 </details>
 
@@ -705,7 +705,7 @@ val all : (elem -> bool) -> array -> bool
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `true` &middot; `false` &middot; `empty` &middot; `stops`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `true` &middot; `false` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*` &middot; `de-morgan*` &middot; `long`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `true` &middot; `false` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*` &middot; `de-morgan*` &middot; `long`
 
 </details>
 
@@ -732,7 +732,7 @@ For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararra
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `equal` &middot; `first-difference` &middot; `prefix-less` &middot; `empty-less`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `equal` &middot; `same-array` &middot; `empty-empty` &middot; `empty-less` &middot; `empty-greater` &middot; `prefix-less` &middot; `prefix-greater` &middot; `first-difference` &middot; `not-by-length` &middot; `given-ordering` &middot; `argument-order` &middot; `model*` &middot; `reflexive*` &middot; `long`
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `Word64Array`, `LargeWordArray`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `equal` &middot; `same-array` &middot; `empty-empty` &middot; `empty-less` &middot; `empty-greater` &middot; `prefix-less` &middot; `prefix-greater` &middot; `first-difference` &middot; `not-by-length` &middot; `given-ordering` &middot; `argument-order` &middot; `model*` &middot; `reflexive*` &middot; `long`
 
 </details>
 

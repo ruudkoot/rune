@@ -253,6 +253,15 @@ keep these invariants:
   VM changes also run the suite with the
   sanitizer build, `make vm-asan && sh tests/run-tests.sh --vm bin/runevm-stack-asan`,
   and with a collection at (nearly) every allocation, `make test-stress`.
+  A read of an object's kind is `obj_kind` in C and `kind_is` in the
+  macro-assembler, and a store into an object that exists is `obj_set_field`
+  in C and is followed by `ms_barrier` in compiled code (a fill of a fresh
+  object is `obj_fill_field` and `ms_store_field`): the header's first byte
+  holds four bits of the collector's beside the kind, zero in every build
+  but the one that tests them, and the barrier is where a collector to come
+  writes its body. `make test-heap` holds both,
+  on a VM whose collector sets the bits; run it for a change to the heap,
+  to the header or to an emitter that reads or writes an object.
 * `make check` also runs in GitHub Actions on every pull request and every
   push to `master` (`.github/workflows/check.yml`), on Ubuntu 24.04 with the
   packages of `cloud/SETUP.md` and the hosts kept in the Actions cache. A

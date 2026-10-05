@@ -93,6 +93,8 @@ struct
         case c of
           CInt i => u8 0 ^ i64 i
         | CWord w => u8 1 ^ i64 w
+        | CInt64 i => u8 5 ^ i64 i
+        | CWord64 w => u8 6 ^ i64 w
         | CReal r => u8 2 ^ str (realText r)
         | CString s => u8 3 ^ str s
         | CChar c => u8 4 ^ u8 c

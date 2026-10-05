@@ -9,6 +9,8 @@
 #include "compile.h"
 #include "register/jit_emit.h"
 
+#include <math.h>
+
 #define M (&j->m)
 #define A (&j->m.a)
 #define OFF(field) ((int32_t)offsetof(VM, field))
@@ -18,10 +20,25 @@ void emit_HALT(Jit *j, uint32_t pc) {
     ms_sync(M, j->next, 0);
     ms_handback(M, RUN_HALT);
 }
-void emit_MOVE(Jit *j, uint32_t pc, int32_t a, int32_t b) { (void)pc; ms_copy(M, a, b); }
+void emit_MOVE(Jit *j, uint32_t pc, int32_t a, int32_t b) { (void)pc; ms_move(M, a, b); }
 void emit_INT(Jit *j, uint32_t pc, int32_t a, int32_t b) { (void)pc; ms_set(M, a, T_INT, b); }
 void emit_CONST(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     (void)pc;
+#if !RUNE_VALUE_HDR
+    /* a real constant into a home that holds the double: decoded here, once */
+    if (ms_real_home(M, a) && j->vm && (uint32_t)b < j->vm->prog.nconsts) {
+        ms_set_real_known(M, a, real_bits(val_real(j->vm->prog.consts[b])));
+        return;
+    }
+    /* and a number of 64 bits into a home that holds its bits: a constant
+       past 63 bits is a box, whose bits no collection changes */
+    if (ms_num_home(M, a) && j->vm && (uint32_t)b < j->vm->prog.nconsts && val_is_num64(j->vm->prog.consts[b])) {
+        int tag = ms_number(M, a);
+        Value v = j->vm->prog.consts[b];
+        ms_set(M, a, tag, tag == T_WORD || tag == T_WORD64 ? (int64_t)val_word64(v) : val_int64(v));
+        return;
+    }
+#endif
     as_ld64(A, R_S0, VMR, OFF(prog.consts));
     ms_load_nth(M, a, R_S0, (uint32_t)b);
 }
@@ -37,6 +54,7 @@ void emit_GLOBAL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
 }
 void emit_SETGLOBAL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     (void)pc;
+    ms_need_word(M, b);
     as_ld64(A, R_S0, VMR, OFF(globals));
     ms_store_nth(M, R_S0, (uint32_t)a, b);
     as_ld64(A, R_S0, VMR, OFF(global_set));
@@ -74,7 +92,7 @@ void emit_SELF(Jit *j, uint32_t pc, int32_t a) {
 static void set_bool(Jit *j, int32_t d, int cc) {
     as_setcc(A, R_S0, cc);
     ms_set_reg(M, d, T_CON0, R_S0);
-    as_test_rr(A, R_S0, R_S0);   /* and back into the flags (ZF: false), for a branch fused onto it */
+    ms_bool_flags(M, R_S0);   /* and back into the flags (ZF: false), for a branch fused onto it */
 }
 /* LESS, EQUAL or GREATER (0, 1, 2) of the flags into d: ge + g */
 static void set_order(Jit *j, int32_t d, int cc_ge, int cc_g) {
@@ -83,21 +101,41 @@ static void set_order(Jit *j, int32_t d, int cc_ge, int cc_g) {
     as_add_rr(A, R_S0, R_S1);
     ms_set_reg(M, d, T_CON0, R_S0);
 }
-/* the two arguments, of one tag, into rax and rcx */
-static void two(Jit *j, int32_t x, int32_t y, int tag, AsmLabel *slow) {
-    ms_check_tag(M, x, tag, slow);
-    ms_check_tag(M, y, tag, slow);
-    ms_load_payload(M, R_S0, x);
-    ms_load_payload(M, R_S1, y);
+/* the two arguments, immediates of one tag, as their words in rax and rcx:
+   what a comparison compares, and what the arithmetic of masm.h takes */
+static void two(Jit *j, int32_t x, int32_t y, int tag, AsmLabel *slow) { ms_two_imm(M, x, y, tag, slow); }
+/* the same as their payloads: what a division divides */
+static void two_payloads(Jit *j, int32_t x, int32_t y, int tag, AsmLabel *slow) {
+    ms_two_imm(M, x, y, tag, slow);
+    ms_untag(M, R_S0, tag);
+    ms_untag(M, R_S1, tag);
 }
 /* the two real arguments into xmm0 and xmm1 (or the other way round) */
 static void two_real(Jit *j, int32_t x, int32_t y, AsmLabel *slow) {
-    ms_check_tag(M, x, T_REAL, slow);
-    ms_check_tag(M, y, T_REAL, slow);
-    ms_load_real(M, F_S0, x);
-    ms_load_real(M, F_S1, y);
+    ms_load_real(M, F_S0, x, slow);
+    ms_load_real(M, F_S1, y, slow);
 }
-static void set_real(Jit *j, int32_t d) { ms_set_real(M, d, F_S0); }
+static void set_real(Jit *j, int32_t d, AsmLabel *slow) { ms_set_real(M, d, F_S0, slow); }
+/* The primitives that are a function of the C library on reals and
+   nothing else (prims.c: p_real_sin and the like), which the code calls
+   itself, without the VM (ms_call_pure); compile.c gives each a
+   trampoline. NULL: not one. */
+MsHelper jit_libm_of(int32_t p) {
+    switch (p) {
+    case PRIM_real_exp: return (MsHelper)exp;
+    case PRIM_real_ln: return (MsHelper)log;
+    case PRIM_real_sin: return (MsHelper)sin;
+    case PRIM_real_cos: return (MsHelper)cos;
+    case PRIM_real_tan: return (MsHelper)tan;
+    case PRIM_real_atan: return (MsHelper)atan;
+    case PRIM_real_sinh: return (MsHelper)sinh;
+    case PRIM_real_cosh: return (MsHelper)cosh;
+    case PRIM_real_tanh: return (MsHelper)tanh;
+    case PRIM_real_atan2: return (MsHelper)atan2;
+    case PRIM_real_pow: return (MsHelper)pow;
+    default: return NULL;
+    }
+}
 /* rcx := the index in y, checked against the length of the object in rax */
 static void index_of(Jit *j, int32_t y, AsmLabel *slow) {
     ms_check_tag(M, y, T_INT, slow);
@@ -110,7 +148,7 @@ static void index_of(Jit *j, int32_t y, AsmLabel *slow) {
 static void length_of(Jit *j, int32_t d, int32_t x, int k, AsmLabel *slow) {
     ms_load_obj(M, R_S0, x, k, slow);
     ms_load_len(M, R_S1, R_S0);
-    ms_set_reg(M, d, T_INT, R_S1);
+    ms_set_payload(M, d, T_INT, R_S1, slow);
 }
 /* rax := the address of element rcx of the object in rax (16 bytes each) */
 static void element(Jit *j) {
@@ -131,39 +169,39 @@ static void floor_div(Jit *j, int mod) {
     as_bind(A, &done);
     as_label_free(&done);
 }
-/* `=` on two values that are neither pointers nor (for poly_eq) reals:
-   the tags the same and the payloads the same */
+/* `=` on two immediates: their words the same. A value in the heap is the
+   helper's for poly_eq, which walks it, and the primitive's own C for
+   imm_eq, which the compiler gives only what is never there (under
+   RUNE_INT64 the box of an int past 63 bits). */
 static void equal(Jit *j, int32_t d, int32_t x, int32_t y, int poly, AsmLabel *slow) {
+    if (!(ms_number(M, x) && ms_number(M, x) == ms_number(M, y))) {
+        ms_need_word(M, x);
+        ms_need_word(M, y);
+    }
     /* two values of one representation that is an immediate (tier 2,
-       M10): the same tags, so the payloads alone */
+       M10): the words alone */
     if (ms_immediate(M, x) && ms_immediate(M, y)) {
-        ms_load_payload(M, R_S0, x);
-        ms_cmp_payload(M, R_S0, y);
+        ms_load_bits(M, R_S0, x);
+        ms_cmp_bits(M, R_S0, y);
         set_bool(j, d, CC_E);
         return;
     }
-    AsmLabel no, done, heap; as_label_init(&no); as_label_init(&done); as_label_init(&heap);
+    /* two numbers of 64 bits by the section (an Int64.int, a Word64.word;
+       an int or a word where the VM keeps 64 bits): the bits, which two
+       boxes of one number have and two words of them do not */
+    if (ms_number(M, x) && ms_number(M, x) == ms_number(M, y)) {
+        int tag = ms_number(M, x);   /* each as what it is: an int's payload is signed */
+        if (tag == T_INT64 || tag == T_WORD64) ms_two_num64(M, x, y, tag, slow); else ms_two_imm(M, x, y, tag, slow);
+        as_cmp_rr(A, R_S0, R_S1);
+        set_bool(j, d, CC_E);
+        return;
+    }
+    AsmLabel done, heap; as_label_init(&done); as_label_init(&heap);
     /* Structural comparison may stop at its work limit, so its helper
        needs the exact VM for the fatal error and its trace. */
-    AsmLabel *deep = poly ? &heap : slow;
-    ms_load_tag(M, R_S0, x);
-    as_cmp_ri(A, R_S0, T_PTR);
-    as_jcc(A, CC_E, deep);
-    if (poly) { as_cmp_ri(A, R_S0, T_REAL); as_jcc(A, CC_E, deep); }
-    ms_load_tag(M, R_S1, y);
-    as_cmp_ri(A, R_S1, T_PTR);
-    as_jcc(A, CC_E, deep);
-    if (poly) { as_cmp_ri(A, R_S1, T_REAL); as_jcc(A, CC_E, deep); }
+    ms_two_words(M, x, y, poly ? &heap : slow);
     as_cmp_rr(A, R_S0, R_S1);
-    as_jcc(A, CC_NE, &no);
-    ms_load_payload(M, R_S0, x);
-    ms_cmp_payload(M, R_S0, y);
     set_bool(j, d, CC_E);
-    as_jmp(A, &done);
-    as_bind(A, &no);
-    ms_set(M, d, T_CON0, 0);
-    as_xor_rr(A, R_S0, R_S0);
-    as_test_rr(A, R_S0, R_S0);   /* false, in the flags too */
     if (poly) {
         as_jmp(A, &done);
         as_bind(A, &heap);
@@ -173,10 +211,10 @@ static void equal(Jit *j, int32_t d, int32_t x, int32_t y, int poly, AsmLabel *s
         ms_call(M, (MsHelper)jit_h_values_equal);
         ms_reload(M);
         ms_set_reg(M, d, T_CON0, R_S0);
-        as_test_rr(A, R_S0, R_S0);
+        ms_bool_flags(M, R_S0);
     }
     as_bind(A, &done);
-    as_label_free(&no); as_label_free(&done); as_label_free(&heap);
+    as_label_free(&done); as_label_free(&heap);
 }
 
 static void alloc(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d, int32_t a, int32_t b, const uint8_t *L);
@@ -193,11 +231,30 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_word_lt: case PRIM_word_le: case PRIM_word_gt: case PRIM_word_ge: case PRIM_word_order:
     case PRIM_word_andb: case PRIM_word_orb: case PRIM_word_xorb: case PRIM_word_notb:
     case PRIM_word_lsl: case PRIM_word_lsr: case PRIM_word_to_int: case PRIM_word_to_int_x: case PRIM_word_from_int:
+    case PRIM_int64_add: case PRIM_int64_sub: case PRIM_int64_mul: case PRIM_int64_div: case PRIM_int64_mod:
+    case PRIM_int64_quot: case PRIM_int64_rem: case PRIM_int64_neg: case PRIM_int64_lt: case PRIM_int64_le:
+    case PRIM_int64_gt: case PRIM_int64_ge: case PRIM_int64_order:
+    case PRIM_word64_add: case PRIM_word64_sub: case PRIM_word64_mul: case PRIM_word64_div: case PRIM_word64_mod:
+    case PRIM_word64_lt: case PRIM_word64_le: case PRIM_word64_gt: case PRIM_word64_ge: case PRIM_word64_order:
+    case PRIM_word64_andb: case PRIM_word64_orb: case PRIM_word64_xorb: case PRIM_word64_notb:
+    case PRIM_word64_lsl: case PRIM_word64_lsr: case PRIM_word64_to_int64: case PRIM_word64_from_int64:
+#ifndef RUNE_INT64
+    /* between the 64 bits and an int's or a word's 63: where those are 64 too
+       (RUNE_INT64) the primitive's C does them */
+    case PRIM_int64_to_int: case PRIM_int64_from_int: case PRIM_word64_to_int: case PRIM_word64_to_int_x:
+    case PRIM_word64_from_int: case PRIM_word64_to_word: case PRIM_word64_from_word: case PRIM_word64_from_word_x:
+#endif
     case PRIM_real_add: case PRIM_real_sub: case PRIM_real_mul: case PRIM_real_div: case PRIM_real_neg: case PRIM_real_sqrt:
     case PRIM_real_lt: case PRIM_real_le: case PRIM_real_gt: case PRIM_real_ge: case PRIM_real_eq:
     case PRIM_char_ord: case PRIM_char_lt: case PRIM_char_le: case PRIM_char_gt: case PRIM_char_ge: case PRIM_char_order:
     case PRIM_string_size: case PRIM_string_sub: case PRIM_ref_get: case PRIM_ref_set:
     case PRIM_array_length: case PRIM_array_sub: case PRIM_array_update: case PRIM_vector_length: case PRIM_vector_sub:
+    case PRIM_int_to_real: case PRIM_real_abs: case PRIM_real_trunc: case PRIM_real_floor: case PRIM_real_ceil:
+    case PRIM_bytes_length: case PRIM_bytes_sub: case PRIM_bytes_update:
+    case PRIM_reals_length: case PRIM_reals_sub: case PRIM_reals_update:
+    case PRIM_real_exp: case PRIM_real_ln: case PRIM_real_sin: case PRIM_real_cos: case PRIM_real_tan:
+    case PRIM_real_atan: case PRIM_real_sinh: case PRIM_real_cosh: case PRIM_real_tanh:
+    case PRIM_real_atan2: case PRIM_real_pow:
         break;
     default:
         return 0;
@@ -207,7 +264,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     if (!s) return 1;
     s->a = p; s->b = d; s->L = L;
     int which = M->nslow - 1;
-    AsmLabel *slow = &M->slow[which].here;
+    AsmLabel *slow = &M->slow[which]->here;
     switch (p) {
     case PRIM_poly_eq: equal(j, d, x, y, 1, slow); break;
     case PRIM_imm_eq: equal(j, d, x, y, 0, slow); break;
@@ -224,71 +281,54 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         alloc(j, K_REF, 0, 1, FILL_ONE, d, x, 0, NULL);
         break;
 
-    case PRIM_int_add: two(j, x, y, T_INT, slow); as_add_rr(A, R_S0, R_S1); as_jcc(A, CC_O, slow); ms_set_reg(M, d, T_INT, R_S0); break;
-    case PRIM_int_sub: two(j, x, y, T_INT, slow); as_sub_rr(A, R_S0, R_S1); as_jcc(A, CC_O, slow); ms_set_reg(M, d, T_INT, R_S0); break;
-    case PRIM_int_mul: two(j, x, y, T_INT, slow); as_mul_jo(A, R_S0, R_S1, slow); ms_set_reg(M, d, T_INT, R_S0); break;
+    case PRIM_int_add: two(j, x, y, T_INT, slow); ms_int_arith(M, MS_ADD, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
+    case PRIM_int_sub: two(j, x, y, T_INT, slow); ms_int_arith(M, MS_SUB, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
+    case PRIM_int_mul: two(j, x, y, T_INT, slow); ms_int_arith(M, MS_MUL, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
     case PRIM_int_div: case PRIM_int_mod: case PRIM_int_quot: case PRIM_int_rem:
-        two(j, x, y, T_INT, slow);
+        two_payloads(j, x, y, T_INT, slow);
         as_test_rr(A, R_S1, R_S1);
         as_jcc(A, CC_E, slow);
         as_cmp_ri(A, R_S1, -1);
         as_jcc(A, CC_E, slow);
         as_divmod(A, R_S1);
-        if (p == PRIM_int_div) { floor_div(j, 0); ms_set_reg(M, d, T_INT, R_S0); }
-        else if (p == PRIM_int_mod) { floor_div(j, 1); ms_set_reg(M, d, T_INT, R_S2); }
-        else if (p == PRIM_int_quot) ms_set_reg(M, d, T_INT, R_S0);
-        else ms_set_reg(M, d, T_INT, R_S2);
+        /* the remainder out of R_S2, which giving a slot its word uses */
+        if (p == PRIM_int_div) { floor_div(j, 0); ms_set_payload(M, d, T_INT, R_S0, slow); }
+        else if (p == PRIM_int_mod) { floor_div(j, 1); as_mov_rr(A, R_S0, R_S2); ms_set_payload(M, d, T_INT, R_S0, slow); }
+        else if (p == PRIM_int_quot) ms_set_payload(M, d, T_INT, R_S0, slow);
+        else { as_mov_rr(A, R_S0, R_S2); ms_set_payload(M, d, T_INT, R_S0, slow); }
         break;
-    case PRIM_int_neg:
-        ms_check_tag(M, x, T_INT, slow);
-        ms_load_payload(M, R_S0, x);
-        as_mov_ri(A, R_S1, INT64_MIN);
-        as_cmp_rr(A, R_S0, R_S1);
-        as_jcc(A, CC_E, slow);
-        as_neg(A, R_S0);
-        ms_set_reg(M, d, T_INT, R_S0);
-        break;
+    case PRIM_int_neg: ms_one_imm(M, x, T_INT, slow); ms_int_neg(M, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
     case PRIM_int_lt: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_L); break;
     case PRIM_int_le: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_LE); break;
     case PRIM_int_gt: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_G); break;
     case PRIM_int_ge: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_GE); break;
     case PRIM_int_order: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_order(j, d, CC_GE, CC_G); break;
-    case PRIM_int_to_char:
-        ms_check_tag(M, x, T_INT, slow);
-        ms_load_payload(M, R_S0, x);
-        as_cmp_ri(A, R_S0, 255);
-        as_jcc(A, CC_A, slow);   /* unsigned: negative is out too */
-        ms_set_reg(M, d, T_CHAR, R_S0);
-        break;
+    case PRIM_int_to_char: ms_one_imm(M, x, T_INT, slow); ms_int_to_char(M, slow); ms_set_num(M, d, T_CHAR, R_S0, slow); break;
 
-    case PRIM_word_add: two(j, x, y, T_WORD, slow); as_add_rr(A, R_S0, R_S1); ms_set_reg(M, d, T_WORD, R_S0); break;
-    case PRIM_word_sub: two(j, x, y, T_WORD, slow); as_sub_rr(A, R_S0, R_S1); ms_set_reg(M, d, T_WORD, R_S0); break;
-    case PRIM_word_mul: two(j, x, y, T_WORD, slow); as_mul_rr(A, R_S0, R_S1); ms_set_reg(M, d, T_WORD, R_S0); break;
+    case PRIM_word_add: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_ADD, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
+    case PRIM_word_sub: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_SUB, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
+    case PRIM_word_mul: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_MUL, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
     case PRIM_word_div: case PRIM_word_mod:
-        two(j, x, y, T_WORD, slow);
+        two_payloads(j, x, y, T_WORD, slow);
         as_test_rr(A, R_S1, R_S1);
         as_jcc(A, CC_E, slow);
         as_udivmod(A, R_S1);
-        ms_set_reg(M, d, T_WORD, p == PRIM_word_div ? R_S0 : R_S2);
+        if (p == PRIM_word_mod) as_mov_rr(A, R_S0, R_S2);
+        ms_set_payload(M, d, T_WORD, R_S0, slow);
         break;
     case PRIM_word_lt: two(j, x, y, T_WORD, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_B); break;
     case PRIM_word_le: two(j, x, y, T_WORD, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_BE); break;
     case PRIM_word_gt: two(j, x, y, T_WORD, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_A); break;
     case PRIM_word_ge: two(j, x, y, T_WORD, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_AE); break;
     case PRIM_word_order: two(j, x, y, T_WORD, slow); as_cmp_rr(A, R_S0, R_S1); set_order(j, d, CC_AE, CC_A); break;
-    case PRIM_word_andb: two(j, x, y, T_WORD, slow); as_and_rr(A, R_S0, R_S1); ms_set_reg(M, d, T_WORD, R_S0); break;
-    case PRIM_word_orb: two(j, x, y, T_WORD, slow); as_or_rr(A, R_S0, R_S1); ms_set_reg(M, d, T_WORD, R_S0); break;
-    case PRIM_word_xorb: two(j, x, y, T_WORD, slow); as_xor_rr(A, R_S0, R_S1); ms_set_reg(M, d, T_WORD, R_S0); break;
-    case PRIM_word_notb:
-        ms_check_tag(M, x, T_WORD, slow);
-        ms_load_payload(M, R_S0, x);
-        as_not(A, R_S0);
-        ms_set_reg(M, d, T_WORD, R_S0);
-        break;
+    case PRIM_word_andb: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_AND, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
+    case PRIM_word_orb: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_OR, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
+    case PRIM_word_xorb: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_XOR, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
+    case PRIM_word_notb: ms_one_imm(M, x, T_WORD, slow); ms_word_not(M, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
     case PRIM_word_lsl: case PRIM_word_lsr: {
         /* a count of 64 or more gives 0, where the machine would take it mod 64 */
         AsmLabel ok, done; as_label_init(&ok); as_label_init(&done);
-        two(j, x, y, T_WORD, slow);
+        two_payloads(j, x, y, T_WORD, slow);
         as_cmp_ri(A, R_S1, 64);
         as_jcc(A, CC_B, &ok);
         as_xor_rr(A, R_S0, R_S0);
@@ -296,36 +336,161 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         as_bind(A, &ok);
         if (p == PRIM_word_lsl) as_shl_rr(A, R_S0); else as_shr_rr(A, R_S0);
         as_bind(A, &done);
-        ms_set_reg(M, d, T_WORD, R_S0);
+        ms_set_payload(M, d, T_WORD, R_S0, slow);   /* a word of the word size, or the primitive's to box */
         as_label_free(&ok); as_label_free(&done);
         break;
     }
-    case PRIM_word_to_int:
-        ms_check_tag(M, x, T_WORD, slow);
-        ms_load_payload(M, R_S0, x);
-        as_test_rr(A, R_S0, R_S0);
-        as_jcc(A, CC_S, slow);   /* above INT64_MAX */
-        ms_set_reg(M, d, T_INT, R_S0);
-        break;
-    case PRIM_word_to_int_x: ms_check_tag(M, x, T_WORD, slow); ms_load_payload(M, R_S0, x); ms_set_reg(M, d, T_INT, R_S0); break;
-    case PRIM_word_from_int: ms_check_tag(M, x, T_INT, slow); ms_load_payload(M, R_S0, x); ms_set_reg(M, d, T_WORD, R_S0); break;
+    case PRIM_word_to_int: ms_one_imm(M, x, T_WORD, slow); ms_word_to_int(M, 0, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
+    case PRIM_word_to_int_x: ms_one_imm(M, x, T_WORD, slow); ms_word_to_int(M, 1, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
+    case PRIM_word_from_int: ms_one_imm(M, x, T_INT, slow); ms_int_to_word(M, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
 
-    case PRIM_real_add: two_real(j, x, y, slow); as_fadd(A, F_S0, F_S1); set_real(j, d); break;
-    case PRIM_real_sub: two_real(j, x, y, slow); as_fsub(A, F_S0, F_S1); set_real(j, d); break;
-    case PRIM_real_mul: two_real(j, x, y, slow); as_fmul(A, F_S0, F_S1); set_real(j, d); break;
-    case PRIM_real_div: two_real(j, x, y, slow); as_fdiv(A, F_S0, F_S1); set_real(j, d); break;
+    /* Int64.int and Word64.word: the arithmetic on the 64 bits themselves */
+    case PRIM_int64_add: ms_two_num64(M, x, y, T_INT64, slow); ms_int64_arith(M, MS_ADD, slow); ms_set_num64(M, d, T_INT64, R_S0, slow); break;
+    case PRIM_int64_sub: ms_two_num64(M, x, y, T_INT64, slow); ms_int64_arith(M, MS_SUB, slow); ms_set_num64(M, d, T_INT64, R_S0, slow); break;
+    case PRIM_int64_mul: ms_two_num64(M, x, y, T_INT64, slow); ms_int64_arith(M, MS_MUL, slow); ms_set_num64(M, d, T_INT64, R_S0, slow); break;
+    case PRIM_int64_div: case PRIM_int64_mod: case PRIM_int64_quot: case PRIM_int64_rem:
+        ms_two_num64(M, x, y, T_INT64, slow);
+        as_test_rr(A, R_S1, R_S1);
+        as_jcc(A, CC_E, slow);
+        as_cmp_ri(A, R_S1, -1);
+        as_jcc(A, CC_E, slow);
+        as_divmod(A, R_S1);
+        if (p == PRIM_int64_div) floor_div(j, 0);
+        else if (p == PRIM_int64_mod) { floor_div(j, 1); as_mov_rr(A, R_S0, R_S2); }
+        else if (p == PRIM_int64_rem) as_mov_rr(A, R_S0, R_S2);
+        ms_set_num64(M, d, T_INT64, R_S0, slow);
+        break;
+    case PRIM_int64_neg: ms_one_num64(M, x, T_INT64, slow); ms_int64_neg(M, slow); ms_set_num64(M, d, T_INT64, R_S0, slow); break;
+    case PRIM_int64_lt: ms_two_num64(M, x, y, T_INT64, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_L); break;
+    case PRIM_int64_le: ms_two_num64(M, x, y, T_INT64, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_LE); break;
+    case PRIM_int64_gt: ms_two_num64(M, x, y, T_INT64, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_G); break;
+    case PRIM_int64_ge: ms_two_num64(M, x, y, T_INT64, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_GE); break;
+    case PRIM_int64_order: ms_two_num64(M, x, y, T_INT64, slow); as_cmp_rr(A, R_S0, R_S1); set_order(j, d, CC_GE, CC_G); break;
+
+    case PRIM_word64_add: ms_two_num64(M, x, y, T_WORD64, slow); ms_word64_arith(M, MS_ADD); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+    case PRIM_word64_sub: ms_two_num64(M, x, y, T_WORD64, slow); ms_word64_arith(M, MS_SUB); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+    case PRIM_word64_mul: ms_two_num64(M, x, y, T_WORD64, slow); ms_word64_arith(M, MS_MUL); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+    case PRIM_word64_div: case PRIM_word64_mod:
+        ms_two_num64(M, x, y, T_WORD64, slow);
+        as_test_rr(A, R_S1, R_S1);
+        as_jcc(A, CC_E, slow);
+        as_udivmod(A, R_S1);
+        if (p == PRIM_word64_mod) as_mov_rr(A, R_S0, R_S2);
+        ms_set_num64(M, d, T_WORD64, R_S0, slow);
+        break;
+    case PRIM_word64_lt: ms_two_num64(M, x, y, T_WORD64, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_B); break;
+    case PRIM_word64_le: ms_two_num64(M, x, y, T_WORD64, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_BE); break;
+    case PRIM_word64_gt: ms_two_num64(M, x, y, T_WORD64, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_A); break;
+    case PRIM_word64_ge: ms_two_num64(M, x, y, T_WORD64, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_AE); break;
+    case PRIM_word64_order: ms_two_num64(M, x, y, T_WORD64, slow); as_cmp_rr(A, R_S0, R_S1); set_order(j, d, CC_AE, CC_A); break;
+    case PRIM_word64_andb: ms_two_num64(M, x, y, T_WORD64, slow); ms_word64_arith(M, MS_AND); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+    case PRIM_word64_orb: ms_two_num64(M, x, y, T_WORD64, slow); ms_word64_arith(M, MS_OR); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+    case PRIM_word64_xorb: ms_two_num64(M, x, y, T_WORD64, slow); ms_word64_arith(M, MS_XOR); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+    case PRIM_word64_notb: ms_one_num64(M, x, T_WORD64, slow); ms_word64_not(M); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+    case PRIM_word64_lsl: case PRIM_word64_lsr: {
+        /* the count is a word; 64 or more gives 0, where the machine would take it mod 64 */
+        AsmLabel ok, done; as_label_init(&ok); as_label_init(&done);
+        ms_one_num64(M, x, T_WORD64, slow);
+        ms_shift_count(M, y, slow);
+        as_cmp_ri(A, R_S1, 64);
+        as_jcc(A, CC_B, &ok);
+        as_xor_rr(A, R_S0, R_S0);
+        as_jmp(A, &done);
+        as_bind(A, &ok);
+        if (p == PRIM_word64_lsl) as_shl_rr(A, R_S0); else as_shr_rr(A, R_S0);
+        as_bind(A, &done);
+        ms_set_num64(M, d, T_WORD64, R_S0, slow);
+        as_label_free(&ok); as_label_free(&done);
+        break;
+    }
+    /* the same 64 bits, read as the other type */
+    case PRIM_word64_to_int64: ms_one_num64(M, x, T_WORD64, slow); ms_set_num64(M, d, T_INT64, R_S0, slow); break;
+    case PRIM_word64_from_int64: ms_one_num64(M, x, T_INT64, slow); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+#ifndef RUNE_INT64
+    case PRIM_int64_to_int: ms_one_num64(M, x, T_INT64, slow); ms_num64_as_int(M, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
+    case PRIM_int64_from_int: ms_one_imm(M, x, T_INT, slow); ms_untag(M, R_S0, T_INT); ms_set_num64(M, d, T_INT64, R_S0, slow); break;
+    case PRIM_word64_to_int: ms_one_num64(M, x, T_WORD64, slow); ms_word64_as_int(M, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
+    case PRIM_word64_to_int_x: ms_one_num64(M, x, T_WORD64, slow); ms_num64_as_int(M, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
+    case PRIM_word64_from_int: ms_one_imm(M, x, T_INT, slow); ms_untag(M, R_S0, T_INT); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+    case PRIM_word64_to_word: ms_one_num64(M, x, T_WORD64, slow); ms_word64_as_word(M); ms_set_num(M, d, T_WORD, R_S0, slow); break;
+    case PRIM_word64_from_word: ms_one_imm(M, x, T_WORD, slow); ms_untag(M, R_S0, T_WORD); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+    /* the word's top bit, bit 62 of its 63, is bit 63 of its word: an arithmetic shift extends it */
+    case PRIM_word64_from_word_x: ms_one_imm(M, x, T_WORD, slow); ms_untag(M, R_S0, T_INT); ms_set_num64(M, d, T_WORD64, R_S0, slow); break;
+#endif
+
+    case PRIM_real_add: two_real(j, x, y, slow); as_fadd(A, F_S0, F_S1); set_real(j, d, slow); break;
+    case PRIM_real_sub: two_real(j, x, y, slow); as_fsub(A, F_S0, F_S1); set_real(j, d, slow); break;
+    case PRIM_real_mul: two_real(j, x, y, slow); as_fmul(A, F_S0, F_S1); set_real(j, d, slow); break;
+    case PRIM_real_div: two_real(j, x, y, slow); as_fdiv(A, F_S0, F_S1); set_real(j, d, slow); break;
     case PRIM_real_neg:
-        ms_check_tag(M, x, T_REAL, slow);
-        ms_load_payload(M, R_S0, x);
+        ms_load_real(M, F_S0, x, slow);
+        as_fmov_rf(A, R_S0, F_S0);
         as_mov_ri(A, R_S1, INT64_MIN);   /* the sign bit */
         as_xor_rr(A, R_S0, R_S1);
-        ms_set_reg(M, d, T_REAL, R_S0);
+        as_fmov_fr(A, F_S0, R_S0);
+        set_real(j, d, slow);
+        break;
+    case PRIM_real_abs:
+        ms_load_real(M, F_S0, x, slow);
+        as_fmov_rf(A, R_S0, F_S0);
+        as_mov_ri(A, R_S1, INT64_MAX);   /* all but the sign bit */
+        as_and_rr(A, R_S0, R_S1);
+        as_fmov_fr(A, F_S0, R_S0);
+        set_real(j, d, slow);
+        break;
+    /* An int as a real is one conversion, rounded as the mode says, which is
+       what C's cast is (docs/plans/performance-64bit.md, the work after the
+       heap layout, 1). */
+    case PRIM_int_to_real:
+        ms_check_tag(M, x, T_INT, slow);
+        ms_load_payload(M, R_S0, x);
+        as_cvt_i2f(A, F_S0, R_S0);
+        set_real(j, d, slow);
+        break;
+    /* A real as an int, truncated, or its floor or ceiling: the truncation
+       is one conversion, and the floor is one less where the truncation is
+       above the real, the ceiling one more where it is below. What 63 bits
+       do not hold -- a real too large, an infinity, and a NaN, which the
+       conversion makes such a number or which leaves at once -- goes to the
+       primitive, which raises Overflow or Domain. real_round stays there:
+       it rounds a tie to even whatever the rounding mode is. */
+    case PRIM_real_trunc: case PRIM_real_floor: case PRIM_real_ceil: {
+        ms_load_real(M, F_S0, x, slow);
+        as_cvt_f2i(A, R_S0, F_S0, slow);
+        if (p != PRIM_real_trunc) {
+            AsmLabel done; as_label_init(&done);
+            as_cvt_i2f(A, F_S1, R_S0);   /* the truncation, as a real: exact, since a real that large is whole */
+            if (p == PRIM_real_floor) { as_fcmp(A, F_S0, F_S1); as_jcc(A, CC_FAE, &done); as_sub_ri(A, R_S0, 1); }
+            else { as_fcmp(A, F_S1, F_S0); as_jcc(A, CC_FAE, &done); as_add_ri(A, R_S0, 1); }
+            as_bind(A, &done);
+            as_label_free(&done);
+        }
+        as_mov_rr(A, R_S1, R_S0);
+        as_add_rr(A, R_S1, R_S0);        /* twice the number: an overflow where 63 bits do not hold it */
+        as_jcc(A, CC_O, slow);
+        ms_set_payload(M, d, T_INT, R_S0, slow);
+        break;
+    }
+    /* sin and the like: the C library's function, which is all the
+       primitive does, called directly with the double, the live homes it
+       would clobber kept around it as they are (no sync, no reload); a
+       result with no immediate is the primitive's own slow path, which
+       does the same from the slots */
+    case PRIM_real_exp: case PRIM_real_ln: case PRIM_real_sin: case PRIM_real_cos: case PRIM_real_tan:
+    case PRIM_real_atan: case PRIM_real_sinh: case PRIM_real_cosh: case PRIM_real_tanh:
+        ms_load_real(M, F_S0, x, slow);
+        ms_call_pure(M, jit_libm_of(p), j->next, d);
+        set_real(j, d, slow);
+        break;
+    case PRIM_real_atan2: case PRIM_real_pow:
+        two_real(j, x, y, slow);
+        ms_call_pure(M, jit_libm_of(p), j->next, d);
+        set_real(j, d, slow);
         break;
     case PRIM_real_sqrt:   /* sqrtsd is what sqrt gives, a NaN for a negative (M10) */
-        ms_check_tag(M, x, T_REAL, slow);
-        ms_load_real(M, F_S0, x);
+        ms_load_real(M, F_S0, x, slow);
         as_fsqrt(A, F_S0, F_S0);
-        set_real(j, d);
+        set_real(j, d, slow);
         break;
     /* a comparison with a NaN is false: CC_FA and CC_FAE are the target's
        conditions that read an unordered pair as false (asm.h); x < y is
@@ -337,12 +502,10 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_real_eq:
         two_real(j, x, y, slow);
         as_fcmp(A, F_S0, F_S1);
-        as_setcc(A, R_S0, CC_FE);   /* equal and ordered */
-        as_test_rr(A, R_S0, R_S0);  /* the flags: false, for a branch fused onto it */
-        ms_set_reg(M, d, T_CON0, R_S0);
+        set_bool(j, d, CC_FE);   /* equal and ordered */
         break;
 
-    case PRIM_char_ord: ms_check_tag(M, x, T_CHAR, slow); ms_load_payload(M, R_S0, x); ms_set_reg(M, d, T_INT, R_S0); break;
+    case PRIM_char_ord: ms_one_imm(M, x, T_CHAR, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
     case PRIM_char_lt: two(j, x, y, T_CHAR, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_L); break;
     case PRIM_char_le: two(j, x, y, T_CHAR, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_LE); break;
     case PRIM_char_gt: two(j, x, y, T_CHAR, slow); as_cmp_rr(A, R_S0, R_S1); set_bool(j, d, CC_G); break;
@@ -358,8 +521,10 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         break;
     case PRIM_ref_get: ms_load_obj(M, R_S0, x, K_REF, slow); ms_load_field(M, d, R_S0, 0); break;
     case PRIM_ref_set:
+        ms_need_word(M, y);
         ms_load_obj(M, R_S0, x, K_REF, slow);
         ms_store_field(M, R_S0, 0, y);
+        ms_barrier(M, R_S0);
         ms_set(M, d, T_UNIT, 0);
         break;
     case PRIM_array_length: length_of(j, d, x, K_ARRAY, slow); break;
@@ -370,10 +535,47 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         ms_load_field(M, d, R_S0, 0);
         break;
     case PRIM_array_update:
+        ms_need_word(M, z);
         ms_load_obj(M, R_S0, x, K_ARRAY, slow);
         index_of(j, y, slow);
         element(j);
-        ms_store_field(M, R_S0, 0, z);   /* where a barrier goes, for an element */
+        ms_store_field(M, R_S0, 0, z);
+        ms_barrier(M, R_S0);   /* of the element's address */
+        ms_set(M, d, T_UNIT, 0);
+        break;
+    /* The arrays of bytes and of reals (heap-layout M8): an element is a
+       byte, or the double itself, which goes to a home and comes from one
+       with no word between. */
+    case PRIM_bytes_length: length_of(j, d, x, K_BYTES, slow); break;
+    case PRIM_bytes_sub:
+        ms_load_obj(M, R_S0, x, K_BYTES, slow);
+        index_of(j, y, slow);
+        ms_string_byte(M, R_S1, R_S0, R_S1);
+        ms_set_reg(M, d, T_CHAR, R_S1);
+        break;
+    case PRIM_bytes_update:
+        ms_load_obj(M, R_S0, x, K_BYTES, slow);
+        index_of(j, y, slow);
+        ms_check_tag(M, z, T_CHAR, slow);
+        ms_load_payload(M, R_S2, z);
+        as_add_rr(A, R_S0, R_S1);
+        as_st8(A, R_S0, (int32_t)sizeof(Obj), R_S2);
+        ms_set(M, d, T_UNIT, 0);
+        break;
+    case PRIM_reals_length: length_of(j, d, x, K_REALS, slow); break;
+    case PRIM_reals_sub:
+        ms_load_obj(M, R_S0, x, K_REALS, slow);
+        index_of(j, y, slow);
+        element(j);
+        as_fld(A, F_S0, R_S0, (int32_t)sizeof(Obj));
+        set_real(j, d, slow);
+        break;
+    case PRIM_reals_update:
+        ms_load_real(M, F_S0, z, slow);
+        ms_load_obj(M, R_S0, x, K_REALS, slow);
+        index_of(j, y, slow);
+        element(j);
+        as_fst(A, R_S0, (int32_t)sizeof(Obj), F_S0);
         ms_set(M, d, T_UNIT, 0);
         break;
     case PRIM_vector_length: length_of(j, d, x, K_TUPLE, slow); break;
@@ -384,7 +586,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         ms_load_field(M, d, R_S0, 0);
         break;
     }
-    as_bind(A, &M->slow[which].back);
+    as_bind(A, &M->slow[which]->back);
     /* a comparison leaves its bool in the flags, for the branch after
        (M7): said to the walk, and to its slow path */
     switch (p) {
@@ -394,7 +596,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_real_lt: case PRIM_real_le: case PRIM_real_gt: case PRIM_real_ge: case PRIM_real_eq:
     case PRIM_char_lt: case PRIM_char_le: case PRIM_char_gt: case PRIM_char_ge:
         j->flags_for = d;
-        M->slow[which].c = 1;
+        M->slow[which]->c = 1;
         break;
     default: break;
     }
@@ -414,6 +616,7 @@ void emit_PRIM(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint
         as_mov_ri(A, R_S0, (int64_t)(intptr_t)&j->jit->prim_calls[a]);
         as_add_mi(A, R_S0, 0, 1);
     }
+    for (uint32_t i = 0; i < n; i++) ms_need_word(M, read_i32(L + 4 * i));   /* before anything is pushed */
     for (uint32_t i = 0; i < n; i++) ms_copy(M, (int32_t)(j->m.nlocals + i), read_i32(L + 4 * i));
     ms_sync(M, j->next, (int)n);
     ms_call(M, (MsHelper)prim_table[a]);
@@ -442,6 +645,15 @@ void emit_PRIM(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint
 /* an object of n fields, fast in line or through the helper, then filled
    and stored into d */
 static void alloc(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d, int32_t a, int32_t b, const uint8_t *L) {
+    /* the words the fill stores, asked for before the object is there: a
+       real that must be boxed is boxed by a helper that may collect */
+    switch (fill) {
+    case FILL_LIST: for (uint32_t i = 0; i < n; i++) ms_need_word(M, read_i32(L + 4 * i)); break;
+    case FILL_ONE: ms_need_word(M, a); break;
+    case FILL_CLOSURE: for (uint32_t i = 0; i + 1 < n; i++) ms_need_word(M, read_i32(L + 4 * i)); break;
+    case FILL_MKEXN: ms_need_word(M, a); ms_need_word(M, b); break;
+    default: break;
+    }
     AsmLabel *slow = jit_alloc_slow(j, kind, contag, n, fill, d, a, b, L);
     if (!slow) return;
     /* the slow path's index, not its address: the fill may add a slow path
@@ -449,7 +661,7 @@ static void alloc(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d,
     int which = j->m.nslow - 1;
     ms_alloc(M, kind, contag, n, slow);
     jit_fill(j, kind, fill, n, d, a, b, L);
-    as_bind(A, &j->m.slow[which].back);
+    as_bind(A, &j->m.slow[which]->back);
 }
 void emit_TUPLE(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint32_t n) {
     (void)pc; (void)b;
@@ -520,9 +732,11 @@ void emit_EXNARG(Jit *j, uint32_t pc, int32_t a, int32_t b) {
 }
 void emit_SETENV(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     (void)pc;
+    ms_need_word(M, c);
     ms_load_obj(M, R_S0, a, K_CLOSURE, jit_fatal(j, FATAL_EXPECT_CLOSURE, 0, 0, 0));
     ms_need_len(M, R_S0, (uint32_t)b + 1, jit_fatal(j, FATAL_ENV_RANGE, b, 0, 0));
     ms_store_field(M, R_S0, (uint32_t)b + 1, c);
+    ms_barrier(M, R_S0);
 }
 /* --jit-profile (M8): the count at s's field; add clobbers the flags, so
    after any branch on them */
@@ -546,11 +760,11 @@ static void branch(Jit *j, uint32_t pc, int32_t a, int32_t b, int cc, int what) 
         st->L = (const uint8_t *)s;
         st->a = b;
         int which = M->nslow - 1;
-        if (j->flags_prev == a) as_jcc(A, cc, &M->slow[which].here);
+        if (j->flags_prev == a) as_jcc(A, cc, &M->slow[which]->here);
         else {
             ms_check_tag(M, a, T_CON0, jit_fatal(j, what, 0, 0, 0));
             ms_test_false(M, a);
-            as_jcc(A, cc, &M->slow[which].here);
+            as_jcc(A, cc, &M->slow[which]->here);
         }
         count_site(j, s, (int)offsetof(Site, n1));
         return;
@@ -703,13 +917,16 @@ static void push_frame(Jit *j, uint32_t f, int32_t ret_pc, AsmLabel *after) {
 static void fill_unit(Jit *j, int base_reg, uint32_t fill_from, uint32_t nlocals) {
     ms_fill_units(M, base_reg, fill_from, nlocals);
 }
-/* the registers of a callee at r9: its n arguments from the list, the
-   rest unit where the callee's code will not do it */
+/* the registers of a callee, above this frame's: its n arguments from the
+   list, the rest unit where the callee's code will not do it. They are
+   addressed from this frame's base, and no register holds where they
+   are: an argument may be in any home (asm.h) */
 static void make_registers(Jit *j, uint32_t n, const uint8_t *L, uint32_t f, const Function *fn) {
-    for (uint32_t i = 0; i < n; i++) ms_store_nth(M, R_S4, i, read_i32(L + 4 * i));
+    uint32_t above = j->m.nlocals;
+    for (uint32_t i = 0; i < n; i++) ms_store_nth(M, BASER, above + i, read_i32(L + 4 * i));
     if (!fn->has_meta) {
         uint32_t fill_from = jit_fill_from(j->vm, j->jit, f);
-        fill_unit(j, R_S4, fill_from < n ? n : fill_from, fn->nlocals);
+        fill_unit(j, BASER, above + (fill_from < n ? n : fill_from), above + fn->nlocals);
     }
 }
 
@@ -717,15 +934,15 @@ void emit_CALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uin
     (void)pc; (void)b;
     const Function *fn = &j->vm->prog.funcs[a];
     AsmLabel *after = jit_landing(j, j->next + 5);   /* past the RESULT */
-    ms_writeback(M, pc);   /* the homes to their slots: the callee has the registers, and after loads them again (M9) */
+    ms_writeback_call(M, pc, j->next + 5, result_at(j, j->next));   /* the homes needed after it to their slots: the callee has the registers, and after loads them again (M9) */
+    for (uint32_t i = 0; i < n; i++) ms_need_word(M, read_i32(L + 4 * i));   /* an argument's word, before the frame is reserved (a box's slow path clobbers rax) */
     room(j, j->m.nlocals + fn->nlocals + fn->maxstack);
     frame_room(j);
-    ms_slot_addr(M, R_S4, (int32_t)j->m.nlocals);
     make_registers(j, n, L, (uint32_t)a, fn);
     as_lea(A, R_S2, BASEI, -1, 1, (int32_t)j->m.nlocals);
     push_frame(j, (uint32_t)a, (int32_t)j->next, after);
     as_mov_rr(A, BASEI, R_S2);
-    as_mov_rr(A, BASER, R_S4);
+    ms_slot_addr(M, BASER, (int32_t)j->m.nlocals);
     to_callee(j, (uint32_t)a, fn);
 }
 void emit_TAILCALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint32_t n) {
@@ -733,11 +950,11 @@ void emit_TAILCALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L,
     const Function *fn = &j->vm->prog.funcs[a];
     uint32_t need = j->m.nlocals + n;
     if (fn->nlocals + fn->maxstack > need) need = fn->nlocals + fn->maxstack;
+    for (uint32_t i = 0; i < n; i++) ms_need_word(M, read_i32(L + 4 * i));
     room(j, need);
     /* the arguments above the frame first, since they are its registers */
-    ms_slot_addr(M, R_S4, (int32_t)j->m.nlocals);
-    for (uint32_t i = 0; i < n; i++) ms_store_nth(M, R_S4, i, read_i32(L + 4 * i));
-    for (uint32_t i = 0; i < n; i++) ms_slot_from_nth_raw(M, (int32_t)i, R_S4, i);   /* the slots: the callee's registers, not this function's homes */
+    for (uint32_t i = 0; i < n; i++) ms_store_nth(M, BASER, j->m.nlocals + i, read_i32(L + 4 * i));
+    for (uint32_t i = 0; i < n; i++) ms_slot_from_nth_raw(M, (int32_t)i, BASER, j->m.nlocals + i);   /* the slots: the callee's registers, not this function's homes */
     if (!fn->has_meta) {
         uint32_t from = jit_fill_from(j->vm, j->jit, (uint32_t)a);
         fill_unit(j, BASER, from < n ? n : from, fn->nlocals);
@@ -763,16 +980,15 @@ void emit_TAILCALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L,
 static void called(Jit *j, uint32_t pc) {
     Site *s = jit_site(j, SITE_CALL, pc);
     if (!s) return;
-    /* what closure_function found (rcx, r10, r11) kept across the call:
-       three pushes and eight bytes keep the machine stack aligned */
-    as_push(A, R_S1); as_push(A, R_S5); as_push(A, R_S6);
-    as_sub_ri(A, R_SP, 8);
+    /* what closure_function found (rcx, rdx, r11) kept across the call
+       and across the homes' loading, which decodes through rdx: a push
+       keeps the machine stack aligned (asm.h) */
+    as_push(A, R_S1); as_push(A, R_S2); as_push(A, R_S6);
     as_mov_ri(A, ms_arg(M, 1), (int64_t)(intptr_t)s);
     as_mov_rr(A, ms_arg(M, 2), R_S6);
     ms_call(M, (MsHelper)jit_h_called);
-    as_add_ri(A, R_SP, 8);
-    as_pop(A, R_S6); as_pop(A, R_S5); as_pop(A, R_S1);
-    ms_reload_homes(M, pc);   /* written back at the instruction's start (M9) */
+    ms_reload_clobbered(M, pc);   /* written back at the instruction's start (M9) */
+    as_pop(A, R_S6); as_pop(A, R_S2); as_pop(A, R_S1);
 }
 /* obj := the closure in register a; r11 := the index of its function,
    checked; rcx := that Function */
@@ -794,25 +1010,25 @@ static int grow_slow(Jit *j) {
     Slow *s = ms_slow(M, SLOW_GROW_RAX, j->next);
     if (!s) return -1;
     int which = M->nslow - 1;
-    as_bind(A, &M->slow[which].back);
+    as_bind(A, &M->slow[which]->back);
     return which;
 }
-/* the room a frame of the Function in rcx needs at base (an index in
-   base_reg), or the slow path (which) that grows the stack, the need in rax */
-static void room_dynamic(Jit *j, int which, int base_reg) {
+/* the room a frame of the Function in rcx needs at its base, which is
+   above values over this frame's, or the slow path (which) that grows the
+   stack, the need in rax */
+static void room_dynamic(Jit *j, int which, uint32_t above) {
     as_ld32(A, R_S0, R_S1, (int32_t)offsetof(Function, nlocals));
     as_ld32(A, R_S3, R_S1, (int32_t)offsetof(Function, maxstack));
     as_add_rr(A, R_S0, R_S3);
-    as_add_rr(A, R_S0, base_reg);
+    as_lea(A, R_S0, R_S0, BASEI, 1, (int32_t)above);
     as_cmp_rm(A, R_S0, VMR, OFF(stack_cap));
-    as_jcc(A, CC_A, &M->slow[which].here);
+    as_jcc(A, CC_A, &M->slow[which]->here);
 }
 /* unit into the callee's registers at r9 (its nlocals in r8, its index in
    r11) from the first it does not write before anything could see it
    (jit_fill_from, M7), and at least the second */
 static void fill_unit_dynamic(Jit *j) {
     AsmLabel loop, done; as_label_init(&loop); as_label_init(&done);
-    as_fzero(A, F_S1);
     /* from the first register the callee does not write before anything
        could see it (jit_fill_from, M7), and at least the second */
     AsmLabel ok; as_label_init(&ok);
@@ -832,19 +1048,16 @@ static void fill_unit_dynamic(Jit *j) {
     as_bind(A, &loop);
     as_cmp_rr(A, R_S0, R_H2);
     as_jcc(A, CC_AE, &done);
-    as_st128(A, R_S0, 0, F_S1);
-    as_add_ri(A, R_S0, 16);
+    ms_unit_to(M, R_S0, 0);
+    ms_next_value(M, R_S0);
     as_jmp(A, &loop);
     as_bind(A, &done);
     as_label_free(&loop); as_label_free(&done);
 }
-/* the callee's registers at r9: register 0 from register arg, the rest
-   unit where the callee's code will not do it (every function of the
-   program has its arity in the section: jit->all_meta) */
-static void make_registers_dynamic(Jit *j, int32_t arg) {
-    ms_value_to(M, R_S4, 0, arg);
-    if (!j->jit->all_meta) fill_unit_dynamic(j);
-}
+/* A call through a closure reads a home last where it stores the
+   argument, and until then keeps what it found in rax, rcx, rdx, r8 and
+   r11 alone: every other general register may be a home (asm.h), and a
+   slow path writes the homes back. After it they are free. */
 /* into the callee whose Function is in rcx and whose index is in r11, the
    frame's rbp and r14 already its own (r9 too): its code where it has
    some, else the interpreter, the VM made exact for it */
@@ -875,20 +1088,29 @@ static void to_callee_dynamic(Jit *j) {
 }
 void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     AsmLabel *after = jit_landing(j, j->next + 5);   /* past the RESULT */
-    ms_writeback(M, pc);   /* before the restart label: the slots stay right across a restart (M9) */
+    /* before the restart label: the slots stay right across a restart (M9);
+       under --jit-profile, every home live here, which the profile's helper
+       loads again (called) */
+    if (j->jit->profile) ms_writeback(M, pc);
+    else ms_writeback_call(M, pc, j->next + 5, result_at(j, j->next));
+    ms_need_word(M, b);
     int grow = grow_slow(j);
     if (grow < 0) return;
     /* the frames first: their slow path comes back to its check with the
        registers clobbered, so nothing may be live across it */
     frame_room(j);
-    closure_function(j, a, R_S5);
+    closure_function(j, a, R_S2);
     called(j, pc);
+    room_dynamic(j, grow, j->m.nlocals);
+    /* the callee's registers above the frame: register 0 from register b,
+       the rest unit where the callee's code will not do it (every
+       function of the program has its arity in the section: all_meta) */
+    ms_store_nth(M, BASER, j->m.nlocals, b);
+    as_mov_rr(A, R_S5, R_S2);                                 /* the closure */
     as_lea(A, R_S2, BASEI, -1, 1, (int32_t)j->m.nlocals);   /* the callee's base */
-    room_dynamic(j, grow, R_S2);
-    /* the callee's registers above the frame */
     as_ld32(A, R_S3, R_S1, (int32_t)offsetof(Function, nlocals));
     ms_slot_addr(M, R_S4, (int32_t)j->m.nlocals);
-    make_registers_dynamic(j, b);
+    if (!j->jit->all_meta) fill_unit_dynamic(j);
     /* the frame: function r11, closure r10, base rdx, returning to after */
     as_ld64(A, R_S0, VMR, OFF(fp));
     as_add_ri(A, R_S0, 1);
@@ -908,20 +1130,25 @@ void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     to_callee_dynamic(j);
 }
 void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
-    ms_writeback(M, pc);   /* the profile's helper (called) clobbers the homes; the slots stay right (M9) */
+    /* the frame is replaced: of its homes only the argument is wanted, and
+       under --jit-profile every one, which the profile's helper (called)
+       loads again (M9) */
+    if (j->jit->profile) ms_writeback(M, pc);
+    else ms_need_word(M, b);
     int grow = grow_slow(j);
     if (grow < 0) return;
-    closure_function(j, a, R_S5);
+    closure_function(j, a, R_S2);
     called(j, pc);
-    room_dynamic(j, grow, BASEI);
+    room_dynamic(j, grow, 0);
+    /* the frame replaced: its function and closure; its return kept */
+    ms_frame(M, R_S0);
+    as_st32(A, R_S0, (int32_t)offsetof(Frame, func), R_S6);
+    as_st64(A, R_S0, (int32_t)offsetof(Frame, closure), R_S2);
     /* the callee's registers are this frame's, from its base */
+    ms_store_nth(M, BASER, 0, b);
     as_ld32(A, R_S3, R_S1, (int32_t)offsetof(Function, nlocals));
     as_mov_rr(A, R_S4, BASER);
-    make_registers_dynamic(j, b);
-    /* the frame replaced: its function and closure; its return kept */
-    ms_frame(M, R_H1);
-    as_st32(A, R_H1, (int32_t)offsetof(Frame, func), R_S6);
-    as_st64(A, R_H1, (int32_t)offsetof(Frame, closure), R_S5);
+    if (!j->jit->all_meta) fill_unit_dynamic(j);
     to_callee_dynamic(j);
 }
 /* after a CALL or CALLK a RESULT is the callee's RET's to do, and is passed
@@ -937,6 +1164,7 @@ void emit_RESULT(Jit *j, uint32_t pc, int32_t a) {
 void emit_RET(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;
     AsmLabel no_result, go, interp; as_label_init(&no_result); as_label_init(&go); as_label_init(&interp);
+    ms_need_word(M, a);
     Slow *s = ms_slow(M, SLOW_RET, j->next);
     if (!s) return;
     s->a = a;
@@ -951,46 +1179,54 @@ void emit_RET(Jit *j, uint32_t pc, int32_t a) {
        (tier 2), which the popping leaves alone and which is stored whole
        where it goes, rather than through its slot (a 16-byte load of two
        8-byte stores stalls) */
-    const Home *h = ms_home(M, a);
+    /* (a real's home holds the double, not the word: its word is taken
+       from its slot, brought up to date above, before the frame goes) */
+    /* (so does an int's or a word's that holds its 64 bits: ms_word_home) */
+    /* (the value's home may be any of them, asm.h: nothing here but rax,
+       rcx, rdx, r8 and r11) */
+    const Home *h = ms_word_home(M, a);
     if (!h) ms_load_xmm(M, F_S0, a);
-    as_ld64(A, R_S4, R_S1, FR(native_ret));
     as_ld32s(A, R_S3, R_S1, FR(result));
-    as_ld64(A, R_S5, R_S1, FR(base));
     as_sub_ri(A, R_S2, 1);
     as_st64(A, VMR, OFF(fp), R_S2);   /* the frame popped */
     as_sub_ri(A, R_S1, FRAME_SIZE);      /* the caller's frame: its registers are the code's now */
     as_ld64(A, BASEI, R_S1, FR(base));
     as_mov_rr(A, BASER, BASEI);
     ms_scale_index(M, BASER);
-    as_add_rr(A, BASER, STACKR);
-    as_test_rr(A, R_S4, R_S4);
+    as_add_rm(A, BASER, VMR, OFF(stack));
+    as_ld64(A, R_S2, R_S1, FRAME_SIZE + FR(native_ret));
+    as_test_rr(A, R_S2, R_S2);
     as_jcc(A, CC_E, &interp);
     /* into the caller's code, which has a RESULT (its phantom): the value
        into its register, and on past it */
     ms_scale_index(M, R_S3);
-    if (h) { as_lea(A, R_S6, BASER, R_S3, 1, 0); ms_value_to(M, R_S6, 0, a); }
-    else as_st128x(A, BASER, R_S3, F_S0);
-    as_jmp_r(A, R_S4);
+    as_lea(A, R_S6, BASER, R_S3, 1, 0);
+    if (h) ms_value_to(M, R_S6, 0, a); else ms_xmm_to(M, R_S6, 0, F_S0);
+    as_jmp_r(A, R_S2);
     as_bind(A, &interp);
     /* the interpreter goes on: at the RESULT's register and past it, or
-       with the value on the stack, as an image resumed at RESULT takes it */
+       with the value on the stack, as an image resumed at RESULT takes it;
+       its stack's top is the callee's base, and the value where it is
+       pushed */
     as_ld32(A, R_S0, R_S1, FRAME_SIZE + FR(ret_pc));
+    as_ld64(A, R_S2, R_S1, FRAME_SIZE + FR(base));
     as_cmp_ri(A, R_S3, -1);
     as_jcc(A, CC_E, &no_result);
     ms_scale_index(M, R_S3);
-    if (h) { as_lea(A, R_S6, BASER, R_S3, 1, 0); ms_value_to(M, R_S6, 0, a); }
-    else as_st128x(A, BASER, R_S3, F_S0);
+    as_lea(A, R_S6, BASER, R_S3, 1, 0);
+    if (h) ms_value_to(M, R_S6, 0, a); else ms_xmm_to(M, R_S6, 0, F_S0);
     as_add_ri(A, R_S0, 5);
     as_jmp(A, &go);
     as_bind(A, &no_result);
-    as_mov_rr(A, R_S2, R_S5);
-    ms_scale_index(M, R_S2);
-    if (h) { as_lea(A, R_S6, STACKR, R_S2, 1, 0); ms_value_to(M, R_S6, 0, a); }
-    else as_st128x(A, STACKR, R_S2, F_S0);
-    as_add_ri(A, R_S5, 1);
+    as_mov_rr(A, R_S3, R_S2);
+    ms_scale_index(M, R_S3);
+    as_ld64(A, R_S6, VMR, OFF(stack));
+    as_add_rr(A, R_S6, R_S3);
+    if (h) ms_value_to(M, R_S6, 0, a); else ms_xmm_to(M, R_S6, 0, F_S0);
+    as_add_ri(A, R_S2, 1);
     as_bind(A, &go);
     as_st32(A, VMR, OFF(pc), R_S0);
-    as_st64(A, VMR, OFF(sp), R_S5);
+    as_st64(A, VMR, OFF(sp), R_S2);
     as_st64(A, VMR, OFF(instructions), COUNTR);
     ms_handback(M, RUN_INTERP);
     as_label_free(&no_result); as_label_free(&go); as_label_free(&interp);
@@ -1015,7 +1251,7 @@ void emit_PUSHHANDLER(Jit *j, uint32_t pc, int32_t a) {
     as_mov_ri(A, ms_arg(M, 1), a);
     as_lea_label(A, ms_arg(M, 2), jit_landing(j, (uint32_t)a));
     ms_call(M, (MsHelper)jit_h_push_handler);
-    ms_reload_homes(M, pc);   /* the stack did not move; the homes the call clobbered (M9) */
+    ms_reload_clobbered(M, pc);   /* the stack did not move; the homes the call clobbered (M9) */
 }
 void emit_POPHANDLER(Jit *j, uint32_t pc) {
     (void)pc;

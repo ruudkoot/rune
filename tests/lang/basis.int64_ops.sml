@@ -1,0 +1,18 @@
+val () = print (Int64.toString (Int64.min (3, 5)) ^ Int64.toString (Int64.max (3, 5)) ^ Int64.toString (Int64.abs ~4) ^ Int.toString (Int64.sign ~9) ^ Int.toString (Int64.sign 0) ^ Bool.toString (Int64.sameSign (1, 2)) ^ "\n")
+val () = print ((case Int64.compare (1, 2) of LESS => "L" | EQUAL => "E" | GREATER => "G") ^ (case Int64.compare (2, 2) of LESS => "L" | EQUAL => "E" | GREATER => "G") ^ (case Int64.compare (9223372036854775807, ~9223372036854775808) of LESS => "L" | EQUAL => "E" | GREATER => "G") ^ "\n")
+val () = print (Int64.toString (valOf (Int64.fromString "123")) ^ Int64.toString (valOf (Int64.fromString "~45")) ^ Int64.toString (valOf (Int64.fromString "  7xyz")) ^ Bool.toString (isSome (Int64.fromString "abc")) ^ Bool.toString (isSome (Int64.fromString "")) ^ "\n")
+val () = print (Int.toString (valOf Int64.precision) ^ " " ^ Int64.toString (valOf Int64.maxInt) ^ " " ^ Int64.toString (valOf Int64.minInt) ^ "\n")
+val () = print (Int64.toString (Int64.quot (~7, 2)) ^ Int64.toString (Int64.rem (~7, 2)) ^ Int64.toString (Int64.div (~7, 2)) ^ Int64.toString (Int64.mod (~7, 2)) ^ Int.toString (Int64.toInt 5) ^ Int64.toString (Int64.fromInt 6) ^ "\n")
+val () = print ((Int64.toString (valOf (Int64.fromString "99999999999999999999"))) handle Overflow => "Overflow\n")
+val () = print (Int64.toString (valOf (Int64.fromString "9223372036854775807")) ^ " " ^ Int64.toString (valOf (Int64.fromString "~9223372036854775808")) ^ " " ^ ((Int64.toString (valOf (Int64.fromString "9223372036854775808"))) handle Overflow => "Overflow") ^ "\n")
+val () = print (Int64.fmt StringCvt.HEX 9223372036854775807 ^ " " ^ Int64.fmt StringCvt.HEX ~9223372036854775808 ^ " " ^ Int64.fmt StringCvt.BIN 5 ^ " " ^ Int64.fmt StringCvt.OCT ~8 ^ "\n")
+val () = print (IntInf.toString (Int64.toLarge 9223372036854775807) ^ " " ^ IntInf.toString (Int64.toLarge ~9223372036854775808) ^ " " ^ Int64.toString (Int64.fromLarge (IntInf.toLarge (IntInf.pow (2, 62)))) ^ " " ^ ((Int64.toString (Int64.fromLarge (IntInf.pow (2, 63)))) handle Overflow => "Overflow") ^ " " ^ Int64.toString (Int64.fromLarge (IntInf.~ (IntInf.pow (2, 63)))) ^ "\n")
+(* the overloaded operators and the literals at Int64.int; FixedInt is the same type *)
+val a : Int64.int = 4611686018427387904
+val b = a - 1 + a
+val () = print (Int64.toString b ^ " " ^ Bool.toString (a < b) ^ " " ^ Bool.toString (b >= a) ^ " " ^ Int64.toString (~ a) ^ " " ^ Int64.toString (abs (~ a)) ^ " " ^ Int64.toString (b div 3) ^ " " ^ Int64.toString (b mod 1000) ^ " " ^ FixedInt.toString (b : FixedInt.int) ^ "\n")
+(* in a data structure, through polymorphic code, across a collection *)
+val xs = List.tabulate (2000, fn i => Int64.* (Int64.fromInt i, 4611686018427387))
+val () = print (Int64.toString (List.foldl Int64.max 0 xs) ^ " " ^ Int.toString (List.length (List.filter (fn x => Int64.> (x, 4611686018427387903)) xs)) ^ " " ^ Int64.toString (List.nth (List.rev xs, 0)) ^ "\n")
+val v = Int64Vector.tabulate (10, fn i => Int64.- (9223372036854775807, Int64.fromInt i))
+val () = print (Int64.toString (Int64Vector.sub (v, 9)) ^ " " ^ Int64.toString (Int64Vector.foldl Int64.min 9223372036854775807 v) ^ "\n")

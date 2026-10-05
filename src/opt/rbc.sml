@@ -16,6 +16,8 @@ struct
   datatype const =
       CInt of IntInf.int
     | CWord of IntInf.int            (* 0 .. 2^64 - 1 *)
+    | CInt64 of IntInf.int           (* an Int64.int *)
+    | CWord64 of IntInf.int          (* a Word64.word *)
     | CReal of string                (* the text, in C strtod syntax *)
     | CString of string
     | CChar of int
@@ -329,6 +331,8 @@ struct
         | 3 => let val n = rdU32 r
                in if not (need (r, n)) then fail "bad string constant" else CString (take (r, n)) end
         | 4 => CChar (rdU8 r)
+        | 5 => CInt64 (signed64 (rdU64 r))
+        | 6 => CWord64 (rdU64 r)
         | _ => fail "bad constant kind"
       fun consts (i, acc) =
         if i = nconsts then Vector.fromList (List.rev acc)
@@ -480,6 +484,8 @@ struct
         | CReal t => "\002" ^ le32 (String.size t) ^ t
         | CString t => "\003" ^ le32 (String.size t) ^ t
         | CChar c => "\004" ^ String.str (Char.chr c)
+        | CInt64 i => "\005" ^ leInf (i, 8)
+        | CWord64 w => "\006" ^ leInf (w, 8)
       fun func (offset, nlocals, name) = le32 offset ^ le32 nlocals ^ le32 (String.size name) ^ name
       fun table ([], _) = []
         | table ((pc, file, line, col, inl) :: rest, (pc0, file0, line0, col0, inl0)) =

@@ -45,6 +45,10 @@ struct
     case c of
       Lambda.CInt _ => Ty.int
     | Lambda.CWord _ => Ty.Con (#stamp Types.wordTycon, "word", [])
+    (* never the default: a 64-bit constant is written with its type, which
+       is what tells it from the int or word of the same digits *)
+    | Lambda.CInt64 _ => Ty.int
+    | Lambda.CWord64 _ => Ty.Con (#stamp Types.wordTycon, "word", [])
     | Lambda.CReal _ => Ty.Con (#stamp Types.realTycon, "real", [])
     | Lambda.CString _ => Ty.string
     | Lambda.CChar _ => Ty.Con (#stamp Types.charTycon, "char", [])
@@ -499,7 +503,7 @@ struct
                            | _ => fail "a constant"
                    val () = eat COLON
                    val t = ty ()
-                 in eat RP; Const (c, t) end)
+                 in eat RP; Const (Lambda.constAt (c, t), t) end)
         | _ => fail "an atom"
       fun atomsUntil stop =
         let fun more acc = if peek () = SOME stop then List.rev acc else more (atom () :: acc)

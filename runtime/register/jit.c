@@ -3,6 +3,9 @@
    M4. Under --jit=all every function tier 1 can compile is compiled when
    the program is first seen; the rest stay interpreted. */
 #include "jit.h"
+#ifdef RUNE_JIT_CONV
+#include "regvm.h"
+#endif
 #include "sys/sys.h"
 
 #include <stdio.h>
@@ -231,10 +234,51 @@ int jit_run(VM *vm, JitProgram *jit, const void *at) {
 void jit_print_stats(void) {
     JitProgram *jit = the_program;
     if (!jit) return;
+#ifdef RUNE_JIT_CONV
+    {   /* the conversions compiled code made, by the instruction that made them (masm.c) */
+        extern uint64_t jit_conv[3][256][13];
+        static const char *const ctx[3] = { "own", "writeback", "reload" };
+        fprintf(stderr, "runevm: conv: context instruction real-decode real-encode real-box num-decode num-encode num-box "
+                "load-real-slot load-any load-other load-tier1 store-real-home store-real-slot store-num\n");
+        for (int c = 0; c < 3; c++)
+            for (int op = 0; op < 256; op++) {
+                const uint64_t *n = jit_conv[c][op];
+                uint64_t any = 0;
+                for (int k = 0; k < 13; k++) any |= n[k];
+                if (!any) continue;
+                fprintf(stderr, "runevm: conv: %s %s", ctx[c], op < ROP__COUNT ? rop_names[op] : "?");
+                for (int k = 0; k < 13; k++) fprintf(stderr, " %llu", (unsigned long long)n[k]);
+                fprintf(stderr, "\n");
+            }
+        extern uint64_t jit_conv_prim[PRIM__COUNT][2];
+        for (int p = 0; p < PRIM__COUNT; p++)
+            if (jit_conv_prim[p][0] | jit_conv_prim[p][1])
+                fprintf(stderr, "runevm: convprim: %s %llu %llu\n", prim_names[p],
+                        (unsigned long long)jit_conv_prim[p][0], (unsigned long long)jit_conv_prim[p][1]);
+    }
+#endif
     fprintf(stderr, "runevm: jit: %llu of %u functions compiled (%llu at tier 2) in %.3f s, %llu bytes of code (%llu dead); handed to native code %llu times, back %llu; entered mid-way %llu times, left mid-way %llu; %llu invalidated\n",
             (unsigned long long)jit->compiled, jit->nfuncs, (unsigned long long)jit->compiled_opt, jit->compile_seconds, (unsigned long long)jit->code_used,
             (unsigned long long)jit->dead_bytes, (unsigned long long)jit->handed_native, (unsigned long long)jit->handed_interp,
             (unsigned long long)jit->osr_entries, (unsigned long long)jit->deopts, (unsigned long long)jit->invalidated);
+    if (jit->homes_wanted[0] | jit->homes_wanted[1] | jit->homes_too_large) {
+        static const char *const kinds[2] = { "general", "real" };
+        for (int k = 0; k < 2; k++)
+            if (jit->homes_wanted[k]) {
+                /* what 1, 2, ... homes would hold, by use, to the first number that holds all */
+                uint64_t all = 0, sum = 0;
+                for (int i = 0; i < 32; i++) all += jit->homes_weight[k][i];
+                fprintf(stderr, "runevm: jit: tier 2's homes, %s: %llu of %llu registers have one; by use,", kinds[k],
+                        (unsigned long long)jit->homes_given[k], (unsigned long long)jit->homes_wanted[k]);
+                for (int i = 0; i < 32 && sum < all; i++) {
+                    sum += jit->homes_weight[k][i];
+                    fprintf(stderr, " %d: %.1f%%", i + 1, 100.0 * (double)sum / (double)all);
+                }
+                fprintf(stderr, "\n");
+            }
+        if (jit->homes_too_large)
+            fprintf(stderr, "runevm: jit: tier 2's homes: %llu functions of more than 64 registers have none\n", (unsigned long long)jit->homes_too_large);
+    }
     if (jit->profile) print_profile(jit);
     /* the primitives called from code, most called first: what is not in
        line yet, or in line and out of its fast case */

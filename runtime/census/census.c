@@ -162,11 +162,11 @@ static void htab_grow(HTab *t) {
 #define NAGE 5           /* <256K, <1M, <4M, <32M, >=32M */
 #define NOP 5            /* CALL, TAILCALL, CALLK, TAILCALLK, RET */
 
-static uint64_t kind_objs[9], kind_bytes[9];
+static uint64_t kind_objs[16], kind_bytes[16];   /* by kind: a kind fits four bits (value.h) */
 static uint64_t func_objs_cap; static uint64_t *func_objs, *func_bytes;   /* nfuncs + 1 (the runtime last) */
 static uint64_t prim_hist[PRIM__COUNT][NTAG][NBITS];
 static uint64_t call_hist[NOP][NTAG][NBITS][NREP];
-static uint64_t field_total, field_tag[NTAG], field_bc[NTAG][NBC], field_rep[NTAG][NREP], field_ptr_kind[9];
+static uint64_t field_total, field_tag[NTAG], field_bc[NTAG][NBC], field_rep[NTAG][NREP], field_ptr_kind[16];
 static uint64_t field_real_zero;
 static uint64_t store_hist[3][NTAG][NAGE][NAGE + 1];
 static uint64_t store_total, store_old_young, store_ptr_new, store_ptr_old, store_field_clamped;
@@ -249,7 +249,8 @@ static inline uint64_t est_age(uint32_t k) {
     return census_clock - (lo + hi) / 2;
 }
 static const char *const tag_names[NTAG] = { "UNIT", "INT", "WORD", "REAL", "CHAR", "CON0", "PTR" };
-static const char *const kind_names[9] = { "?", "TUPLE", "CON", "CLOSURE", "STRING", "REF", "ARRAY", "EXN", "EXNCON" };
+static const char *const kind_names[16] = { "?", "TUPLE", "CON", "CLOSURE", "STRING", "REF", "ARRAY", "EXN", "EXNCON",
+                                            "FORWARD", "REAL", "BOX", "BYTES", "REALS", "THUNK", "IND" };
 static const char *const rep_names[NREP] = { "ANY", "INT", "WORD", "REAL", "CHAR", "CON0", "PTR", "CON", "UNIT", "unknown" };
 static const char *const callop_names[NOP] = { "CALL", "TAILCALL", "CALLK", "TAILCALLK", "RET" };
 static const char *const age_names[NAGE + 1] = { "<256K", "<1M", "<4M", "<32M", ">=32M", "none" };
@@ -648,7 +649,7 @@ static void write_census_txt(VM *vm) {
 
     /* --- by kind */
     fprintf(f, "## alloc by kind: kind objects bytes share\n");
-    for (int k = 1; k <= 8; k++) if (kind_objs[k])
+    for (int k = 1; k <= K_LAST; k++) if (kind_objs[k])
         fprintf(f, "%s\t%" PRIu64 "\t%" PRIu64 "\t%.2f%%\n", kind_names[k], kind_objs[k], kind_bytes[k], pct(kind_bytes[k], census_clock));
     fprintf(f, "\n");
 
@@ -745,7 +746,7 @@ static void write_census_txt(VM *vm) {
     for (int t = 0; t < NTAG; t++) for (int r = 0; r < NREP; r++) if (field_rep[t][r])
         fprintf(f, "%s\t%s\t%" PRIu64 "\n", tag_names[t], rep_names[r], field_rep[t][r]);
     fprintf(f, "## pointer fields by pointee kind: kind count\n");
-    for (int k = 0; k <= 8; k++) if (field_ptr_kind[k]) fprintf(f, "%s\t%" PRIu64 "\n", kind_names[k], field_ptr_kind[k]);
+    for (int k = 0; k <= K_LAST; k++) if (field_ptr_kind[k]) fprintf(f, "%s\t%" PRIu64 "\n", kind_names[k], field_ptr_kind[k]);
     fprintf(f, "## tuples of the TUPLE instruction by homogeneity: homogeneous elemtag objects bytes\n");
     for (int h = 0; h < 2; h++) for (int t = 0; t < NTAG; t++) if (tuple_homog_objs[h][t])
         fprintf(f, "%d\t%s\t%" PRIu64 "\t%" PRIu64 "\n", h, tag_names[t], tuple_homog_objs[h][t], tuple_homog_bytes[h][t]);

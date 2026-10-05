@@ -85,6 +85,15 @@ void jit_h_called(VM *vm, Site *s, uint32_t f);
 
 /* The code objects of the program a VM runs, made when the driver first
    sees it, and again when the program changes (Runtime.restore). */
+/* a fatal error of compiled code (compile.c, jit_fatal): what its message
+   says, the pc it is told at, and whether the message's first number is
+   the value the code has in rcx */
+typedef struct JitFatalSite {
+    uint32_t pc;
+    int32_t what, a, b;
+    int value;
+} JitFatalSite;
+
 typedef struct JitProgram {
     const uint8_t *code;    /* the program these belong to */
     uint32_t nfuncs;
@@ -95,6 +104,12 @@ typedef struct JitProgram {
     uint8_t *code_mem;
     size_t code_cap, code_used;
     const void *enter_at, *leave_at;
+    const void *fatal_at;       /* the stub of the fatal errors, beside them */
+    JitFatalSite *fatals;           /* the fatal errors of the code, by the number it gives the stub; the process's */
+    uint32_t nfatals, fatals_cap;
+    uint64_t *tramp_from;       /* the trampolines of the calls into C, beside the stubs: helper to trampoline (masm.h) */
+    const void **tramp_to;
+    uint32_t tramp_mask;
     /* the policy (M6): --jit=baseline compiles a function at its
        calls_threshold-th call, or when its work -- the iterations of its
        loops and the calls it makes, so that a function called once that
@@ -115,6 +130,14 @@ typedef struct JitProgram {
     uint64_t dead_bytes;        /* their code, left in the region */
     double compile_seconds;     /* CPU time compiling (clock) */
     uint64_t *prim_calls;       /* per primitive: calls of jit_h_prim from code (--jit-stats, M7) */
+    /* tier 2's homes, general ([0]) and of reals ([1]): the registers a
+       home could hold and those given one; their weights by the number of
+       the home each has, or would have were there that many ([k]: the
+       k+1st; the last for all beyond), so that the sum to k says what k
+       homes hold (compile.c, choose_homes); and the functions too large to
+       have any */
+    uint64_t homes_wanted[2], homes_given[2], homes_weight[2][32];
+    uint64_t homes_too_large;
     int profile;                /* --jit-profile (M8): the sites counted, and the functions' names kept
                                    (the program is gone when the statistics print at exit) */
     char **names;

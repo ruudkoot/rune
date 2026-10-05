@@ -13,6 +13,8 @@ struct
     | Rbc.CReal t => t
     | Rbc.CString s => "\"" ^ Substring.string (#1 (Substring.splitl (fn c => c <> #"\000") (Substring.full s))) ^ "\""
     | Rbc.CChar c => "#" ^ Int.toString c
+    | Rbc.CInt64 i => Rbc.minus (IntInf.toString i)
+    | Rbc.CWord64 w => "0wx" ^ String.map Char.toUpper (IntInf.fmt StringCvt.HEX w)
 
   fun print (out : TextIO.outstream, p : Rbc.program) : unit =
     let

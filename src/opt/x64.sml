@@ -6,8 +6,9 @@
 
      r12  the VM
      r13  vm->stack, reloaded after every call into C
-     rbp  16 times the base of the current frame, reloaded where the frame
-          changes (a function's entry, a return, a handler)
+     rbp  the base of the current frame in bytes (the size of a value times
+          its index), reloaded where the frame changes (a function's entry,
+          a return, a handler)
      r15  the count of instructions executed, written to the VM before
           anything that can read it (docs/native.md, Counting)
 
@@ -51,10 +52,10 @@ struct
 
   (* The primitives whose common case the code does itself (docs/native.md,
      Primitives done inline). A PRIM of
-     one of them checks the tags (and the kinds, and the bounds) of its
-     arguments and does the operation; anything else -- a wrong tag, an
-     overflow, a divisor of zero, an index out of bounds, a real or a pointer
-     for poly_eq -- goes to `slow`, where the primitive of runtime/prims.c is
+     one of them checks that its arguments are immediates (or objects of
+     the kind, in bounds) and does the operation; anything else -- a value
+     of another shape, a box, an overflow, a divisor of zero, an index out of
+     bounds, a pointer for poly_eq -- goes to `slow`, where the primitive of runtime/prims.c is
      called as it is for any other, and raises or stops as it does. So a
      program cannot tell the one from the other, and a PRIM still counts as
      one instruction. The arguments are at heights h - arity .. h - 1, the
@@ -71,137 +72,157 @@ struct
       (* every touch of a value or an object is a template of X64Layout (M3
          of docs/plans/heap-layout.md), as the JIT's emitters are written
          over its macro-assembler: sd k is the displacement text of stack
-         slot k, RAX and RCX the registers the JIT's tier 1 uses *)
-      fun tags (t, ks) slow = List.app (fn k => L.checkTag line (sd k, t, slow)) ks
+         slot k, RAX and RCX the registers the JIT's tier 1 uses. A value is
+         one word (M4). The operands of an int's, a word's or a char's
+         arithmetic come into %rax and %rcx in the form the arithmetic is
+         done in (twoInt, oneWord ...: their words where an int is 63 bits,
+         their 64 bits where the VM keeps 64, a box read in line), the
+         arithmetic templates work in that form, and the result goes from
+         it to its slot (setInt, setWord, setChar), or from a payload
+         (setPayInt, setPayWord: a quotient, a shifted word); `slow` is
+         where the form has no word for a slot, or an operand is neither an
+         immediate nor a box. The templates clobber %rdx, and the reals'
+         %r8. *)
+      fun imm ks slow = List.app (fn k => L.checkImm line (sd k, slow)) ks
       fun bool (setcc, k) =
         (line (setcc ^ " %al"); line "movzbl %al, %eax";
-         L.setReg line (sd k, "T_CON0", L.RAX))
+         L.setImm line (sd k, L.RAX))
       fun obj (k, kind) slow = L.loadObj line (L.RAX, sd k, kind, slow)
       (* the index at k into %rcx, when it is below the length of the object in %rax *)
       fun index k slow =
-        (tags ("T_INT", [k]) slow;
+        (imm [k] slow;
          L.loadPayload line (L.RCX, sd k); L.loadLen line (L.RDX, L.RAX);
          line "cmp %rdx, %rcx"; line ("jae " ^ slow))
-      (* the two operands, of one tag, into %rax and %rcx *)
-      fun two t slow =
-        (tags (t, [x, y]) slow; L.loadPayload line (L.RAX, sd x); L.loadPayload line (L.RCX, sd y))
-      fun arith (t, ins, overflows) =
-        SOME (fn slow =>
-          (two t slow;
-           line (ins ^ " %rcx, %rax");
-           if overflows then line ("jo " ^ slow) else ();
-           L.setReg line (sd x, t, L.RAX)))
-      fun compare (t, setcc) =
-        SOME (fn slow => (two t slow; line "cmp %rcx, %rax"; bool (setcc, x)))
+      (* the two operands of an int's, a word's or a char's arithmetic into
+         %rax and %rcx, and the one; and the result's way to its slot *)
+      datatype num = INT | WORD | CHAR
+      fun two num slow =
+        (case num of INT => L.twoInt | WORD => L.twoWord | CHAR => L.twoChar) line (sd x, sd y, slow, l ^ "_x")
+      fun one num slow =
+        (case num of INT => L.oneInt | WORD => L.oneWord | CHAR => L.oneChar) line (sd y, slow, l ^ "_x")
+      fun set num (k, r) slow =
+        (case num of INT => L.setInt | WORD => L.setWord | CHAR => L.setChar) line (sd k, r, slow)
+      fun arith (num, template) =
+        SOME (fn slow => (two num slow; template line slow; set num (x, L.RAX) slow))
+      fun unary (from, template, to) =
+        SOME (fn slow => (one from slow; template line slow; set to (y, L.RAX) slow))
+      (* the form compares as the numbers do: signed for an int and a char,
+         unsigned for a word *)
+      fun compare (num, setcc) =
+        SOME (fn slow => (two num slow; line "cmp %rcx, %rax"; bool (setcc, x)))
       (* LESS, EQUAL or GREATER, the nullary constructors 0, 1 and 2: the sum
          of x >= y and x > y *)
-      fun order (t, ge, gt) =
+      fun order (num, ge, gt) =
         SOME (fn slow =>
-          (two t slow; line "cmp %rcx, %rax";
+          (two num slow; line "cmp %rcx, %rax";
            line (ge ^ " %al"); line (gt ^ " %cl"); line "movzbl %al, %eax"; line "movzbl %cl, %ecx";
            line "add %rcx, %rax";
-           L.setReg line (sd x, "T_CON0", L.RAX)))
-      (* the two real operands into %xmm0 and %xmm1 *)
+           L.setImm line (sd x, L.RAX)))
+      (* the two real operands into %xmm0 and %xmm1: an immediate decoded,
+         a box read *)
       fun twoReal (first, second) slow =
-        (tags ("T_REAL", [x, y]) slow; L.loadReal line (sd first); L.loadReal1 line (sd second))
+        (L.loadReal line (sd first, slow, l ^ "_x"); L.loadReal1 line (sd second, slow, l ^ "_y"))
       (* ucomisd sets `above` only for an ordered pair, so a NaN compares false *)
       fun realCompare (first, second, setcc) =
         SOME (fn slow => (twoReal (first, second) slow; line "ucomisd %xmm1, %xmm0"; bool (setcc, x)))
+      (* a result with no immediate is a box, which the primitive makes *)
       fun real ins =
-        SOME (fn slow => (twoReal (x, y) slow; line (ins ^ " %xmm1, %xmm0"); L.setReal line (sd x)))
+        SOME (fn slow => (twoReal (x, y) slow; line (ins ^ " %xmm1, %xmm0"); L.setReal line (sd x, slow, l ^ "_z")))
       (* quotient in %rax and remainder in %rdx of C's truncating division; a
-         divisor of 0 or ~1 (where the quotient may overflow) is the primitive's *)
+         divisor of 0 or ~1 (where the quotient may overflow) is the
+         primitive's. Neither is past the dividend, so both have immediates. *)
       fun intDivide finish =
         SOME (fn slow =>
-          (tags ("T_INT", [x, y]) slow;
-           L.loadPayload line (L.RCX, sd y);
+          (two INT slow;
+           L.untagInt line L.RCX;
            line "test %rcx, %rcx"; line ("jz " ^ slow);
            line "cmp $-1, %rcx"; line ("je " ^ slow);
-           L.loadPayload line (L.RAX, sd x); line "cqo"; line "idiv %rcx";
-           finish ()))
-      fun wordDivide result =
+           L.untagInt line L.RAX; line "cqo"; line "idiv %rcx";
+           finish slow))
+      (* the quotient in %rax; the remainder moved there from %rdx, which
+         giving a slot its word uses *)
+      fun wordDivide remainder =
         SOME (fn slow =>
-          (tags ("T_WORD", [x, y]) slow;
-           L.loadPayload line (L.RCX, sd y);
+          (two WORD slow;
+           L.untagWord line L.RCX;
            line "test %rcx, %rcx"; line ("jz " ^ slow);
-           L.loadPayload line (L.RAX, sd x); line "xor %edx, %edx"; line "div %rcx";
-           L.setReg line (sd x, "T_WORD", result)))
-      (* a shift by 64 or more gives 0 *)
+           L.untagWord line L.RAX; line "xor %edx, %edx"; line "div %rcx";
+           if remainder then line "mov %rdx, %rax" else ();
+           L.setPayWord line (sd x, L.RAX, slow)))
+      (* a shift by 64 or more gives 0; a result past what a word's
+         immediate holds is the primitive's *)
       fun shift ins =
         SOME (fn slow =>
-          (tags ("T_WORD", [x, y]) slow;
-           L.loadPayload line (L.RCX, sd y); L.loadPayload line (L.RAX, sd x);
+          (two WORD slow;
+           L.untagWord line L.RCX; L.untagWord line L.RAX;
            line "cmp $64, %rcx"; line ("jb " ^ l ^ "_s");
            line "xor %eax, %eax"; line ("jmp " ^ l ^ "_t");
            put (l ^ "_s:\n"); line (ins ^ " %cl, %rax");
-           put (l ^ "_t:\n"); L.setReg line (sd x, "T_WORD", L.RAX)))
+           put (l ^ "_t:\n"); L.setPayWord line (sd x, L.RAX, slow)))
       fun length kind =
         SOME (fn slow =>
           (obj (y, kind) slow;
            L.loadLen line (L.RAX, L.RAX);
-           L.setReg line (sd y, "T_INT", L.RAX)))
-      (* the value at k with another tag: the payload as it is *)
-      fun retag (k, t) = (L.loadPayload line (L.RAX, sd k); L.setReg line (sd k, t, L.RAX))
+           L.setImm line (sd y, L.RAX)))
     in
       case name of
-        "int_add" => arith ("T_INT", "add", true)
-      | "int_sub" => arith ("T_INT", "sub", true)
-      | "int_mul" => arith ("T_INT", "imul", true)
-      | "int_neg" =>
-          SOME (fn slow =>
-            (tags ("T_INT", [y]) slow;
-             L.loadPayload line (L.RAX, sd y); line "neg %rax"; line ("jo " ^ slow);
-             L.setReg line (sd y, "T_INT", L.RAX)))
-      | "int_quot" => intDivide (fn () => L.setReg line (sd x, "T_INT", L.RAX))
-      | "int_rem" => intDivide (fn () => L.setReg line (sd x, "T_INT", L.RDX))
+        "int_add" => arith (INT, L.intAdd)
+      | "int_sub" => arith (INT, L.intSub)
+      | "int_mul" => arith (INT, L.intMul)
+      | "int_neg" => unary (INT, L.intNeg, INT)
+      | "int_quot" => intDivide (fn slow => L.setPayInt line (sd x, L.RAX, slow))
+      | "int_rem" => intDivide (fn slow => (line "mov %rdx, %rax"; L.setPayInt line (sd x, L.RAX, slow)))
       | "int_div" =>
           (* floor: one less where there is a remainder and the signs differ *)
-          intDivide (fn () =>
+          intDivide (fn slow =>
             (line "test %rdx, %rdx"; line ("jz " ^ l ^ "_f");
              line "xor %rcx, %rdx"; line ("jns " ^ l ^ "_f");
              line "dec %rax";
-             put (l ^ "_f:\n"); L.setReg line (sd x, "T_INT", L.RAX)))
+             put (l ^ "_f:\n"); L.setPayInt line (sd x, L.RAX, slow)))
       | "int_mod" =>
           (* the sign of the divisor: the divisor added where they differ *)
-          intDivide (fn () =>
+          intDivide (fn slow =>
             (line "test %rdx, %rdx"; line ("jz " ^ l ^ "_f");
              line "mov %rdx, %r8"; line "xor %rcx, %r8"; line ("jns " ^ l ^ "_f");
              line "add %rcx, %rdx";
-             put (l ^ "_f:\n"); L.setReg line (sd x, "T_INT", L.RDX)))
-      | "int_lt" => compare ("T_INT", "setl")
-      | "int_le" => compare ("T_INT", "setle")
-      | "int_gt" => compare ("T_INT", "setg")
-      | "int_ge" => compare ("T_INT", "setge")
-      | "int_order" => order ("T_INT", "setge", "setg")
-      | "word_add" => arith ("T_WORD", "add", false)
-      | "word_sub" => arith ("T_WORD", "sub", false)
-      | "word_mul" => arith ("T_WORD", "imul", false)
-      | "word_andb" => arith ("T_WORD", "and", false)
-      | "word_orb" => arith ("T_WORD", "or", false)
-      | "word_xorb" => arith ("T_WORD", "xor", false)
-      | "word_notb" =>
-          SOME (fn slow => (tags ("T_WORD", [y]) slow; L.loadPayload line (L.RAX, sd y); line "not %rax"; L.setReg line (sd y, "T_WORD", L.RAX)))
-      | "word_div" => wordDivide L.RAX
-      | "word_mod" => wordDivide L.RDX
+             put (l ^ "_f:\n"); line "mov %rdx, %rax"; L.setPayInt line (sd x, L.RAX, slow)))
+      | "int_lt" => compare (INT, "setl")
+      | "int_le" => compare (INT, "setle")
+      | "int_gt" => compare (INT, "setg")
+      | "int_ge" => compare (INT, "setge")
+      | "int_order" => order (INT, "setge", "setg")
+      | "word_add" => arith (WORD, L.wordAdd)
+      | "word_sub" => arith (WORD, L.wordSub)
+      | "word_mul" => arith (WORD, L.wordMul)
+      | "word_andb" => arith (WORD, L.wordAnd)
+      | "word_orb" => arith (WORD, L.wordOr)
+      | "word_xorb" => arith (WORD, L.wordXor)
+      | "word_notb" => unary (WORD, L.wordNot, WORD)
+      | "word_div" => wordDivide false
+      | "word_mod" => wordDivide true
       | "word_lsl" => shift "shl"
       | "word_lsr" => shift "shr"
-      | "word_lt" => compare ("T_WORD", "setb")
-      | "word_le" => compare ("T_WORD", "setbe")
-      | "word_gt" => compare ("T_WORD", "seta")
-      | "word_ge" => compare ("T_WORD", "setae")
-      | "word_order" => order ("T_WORD", "setae", "seta")
-      | "char_lt" => compare ("T_CHAR", "setl")
-      | "char_le" => compare ("T_CHAR", "setle")
-      | "char_gt" => compare ("T_CHAR", "setg")
-      | "char_ge" => compare ("T_CHAR", "setge")
-      | "char_order" => order ("T_CHAR", "setge", "setg")
-      | "char_ord" => SOME (fn slow => (tags ("T_CHAR", [y]) slow; retag (y, "T_INT")))
+      | "word_lt" => compare (WORD, "setb")
+      | "word_le" => compare (WORD, "setbe")
+      | "word_gt" => compare (WORD, "seta")
+      | "word_ge" => compare (WORD, "setae")
+      | "word_order" => order (WORD, "setae", "seta")
+      | "char_lt" => compare (CHAR, "setl")
+      | "char_le" => compare (CHAR, "setle")
+      | "char_gt" => compare (CHAR, "setg")
+      | "char_ge" => compare (CHAR, "setge")
+      | "char_order" => order (CHAR, "setge", "setg")
+        (* a char's code as an int *)
+      | "char_ord" => SOME (fn slow => (one CHAR slow; set INT (y, L.RAX) slow))
       | "real_add" => real "addsd"
       | "real_sub" => real "subsd"
       | "real_mul" => real "mulsd"
       | "real_div" => real "divsd"
       | "real_neg" =>
-          SOME (fn slow => (tags ("T_REAL", [y]) slow; L.loadPayload line (L.RAX, sd y); line "btc $63, %rax"; L.setReg line (sd y, "T_REAL", L.RAX)))
+          SOME (fn slow =>
+            (L.loadReal line (sd y, slow, l ^ "_x");
+             line "movq %xmm0, %rax"; line "btc $63, %rax"; line "movq %rax, %xmm0";
+             L.setReal line (sd y, slow, l ^ "_z")))
       | "real_lt" => realCompare (y, x, "seta")
       | "real_le" => realCompare (y, x, "setae")
       | "real_gt" => realCompare (x, y, "seta")
@@ -210,49 +231,26 @@ struct
           SOME (fn slow =>
             (twoReal (x, y) slow; line "ucomisd %xmm1, %xmm0";
              line "sete %al"; line "setnp %cl"; line "and %cl, %al"; line "movzbl %al, %eax";
-             L.setReg line (sd x, "T_CON0", L.RAX)))
+             L.setImm line (sd x, L.RAX)))
       | "poly_eq" =>
-          (* values_equal of two immediates: of different tags, false; of the
-             same, the payloads (unit is equal to unit); a real or a pointer is
-             the primitive's *)
-          SOME (fn slow =>
-            (L.loadTag line (L.RAX, sd x); L.loadTag line (L.RCX, sd y);
-             line "cmp %ecx, %eax"; line ("jne " ^ l ^ "_ne");
-             line "cmp $T_REAL, %eax"; line ("je " ^ slow);
-             line "cmp $T_PTR, %eax"; line ("je " ^ slow);
-             line "cmp $T_UNIT, %eax"; line ("je " ^ l ^ "_eq");
-             L.loadPayload line (L.RAX, sd x); L.cmpPayload line (L.RAX, sd y);
-             line "sete %al"; line "movzbl %al, %eax"; line ("jmp " ^ l ^ "_b");
-             put (l ^ "_eq:\n"); line "mov $1, %eax"; line ("jmp " ^ l ^ "_b");
-             put (l ^ "_ne:\n"); line "xor %eax, %eax";
-             put (l ^ "_b:\n"); L.setReg line (sd x, "T_CON0", L.RAX)))
+          (* values_equal of two immediates: their words; anything in the
+             heap -- an object, a box -- is the primitive's *)
+          SOME (fn slow => (L.twoWords line (sd x, sd y, slow); line "cmp %rcx, %rax"; bool ("sete", x)))
       | "imm_eq" =>
-          (* two values the compiler knows are never in the heap, nor unit:
-             their tags and bits, with no call *)
-          SOME (fn _ =>
-            (L.loadTag line (L.RAX, sd x); L.loadTag line (L.RCX, sd y);
-             line "cmp %ecx, %eax"; line "sete %cl";
-             L.loadPayload line (L.RAX, sd x); L.cmpPayload line (L.RAX, sd y);
-             line "sete %al"; line "and %cl, %al"; line "movzbl %al, %eax";
-             L.setReg line (sd x, "T_CON0", L.RAX)))
+          (* two values the compiler knows are never objects: their words,
+             but where one is a box (an int or a word past 63 bits), which
+             is the primitive's *)
+          SOME (fn slow => (L.twoWords line (sd x, sd y, slow); line "cmp %rcx, %rax"; bool ("sete", x)))
       | "ref_get" => SOME (fn slow => (obj (y, "K_REF") slow; L.loadField line (sd y, L.RAX, 0)))
       | "ref_set" =>
           SOME (fn slow =>
             (obj (x, "K_REF") slow;
              L.storeField line (L.RAX, 0, sd y);
-             L.set line (sd x, "T_UNIT", 0)))
-      | "word_to_int" =>
-          SOME (fn slow =>
-            (tags ("T_WORD", [y]) slow;
-             L.loadPayload line (L.RAX, sd y); line "test %rax, %rax"; line ("js " ^ slow);
-             L.setReg line (sd y, "T_INT", L.RAX)))
-      | "word_to_int_x" => SOME (fn slow => (tags ("T_WORD", [y]) slow; retag (y, "T_INT")))
-      | "word_from_int" => SOME (fn slow => (tags ("T_INT", [y]) slow; retag (y, "T_WORD")))
-      | "int_to_char" =>
-          SOME (fn slow =>
-            (tags ("T_INT", [y]) slow;
-             L.loadPayload line (L.RAX, sd y); line "cmp $255, %rax"; line ("ja " ^ slow);
-             L.setReg line (sd y, "T_CHAR", L.RAX)))
+             L.set line (sd x, 0)))
+      | "word_to_int" => unary (WORD, L.wordToInt, INT)
+      | "word_to_int_x" => unary (WORD, L.wordToIntX, INT)
+      | "word_from_int" => unary (INT, L.intToWord, WORD)
+      | "int_to_char" => unary (INT, L.intToChar, CHAR)
       | "vector_length" => length "K_TUPLE"
       | "vector_sub" =>
           SOME (fn slow =>
@@ -264,7 +262,7 @@ struct
           SOME (fn slow =>
             (obj (x, "K_STRING") slow; index y slow;
              L.stringByte line ();
-             L.setReg line (sd x, "T_CHAR", L.RCX)))
+             L.setImm line (sd x, L.RCX)))
       | "array_sub" =>
           SOME (fn slow =>
             (obj (x, "K_ARRAY") slow; index y slow;
@@ -273,7 +271,7 @@ struct
           SOME (fn slow =>
             (obj (h - 3, "K_ARRAY") slow; index (h - 2) slow;
              L.element line (); L.storeField line (L.RAX, 0, sd (h - 1));
-             L.set line (sd (h - 3), "T_UNIT", 0)))
+             L.set line (sd (h - 3), 0)))
       | _ => NONE
     end
 
@@ -363,8 +361,12 @@ struct
           fun slot k = sd k ^ "(%r13,%rbp)"
           fun localSlot l = ld l ^ "(%r13,%rbp)"
           fun copy (from, to) = L.copyMem line (from, to)
-          fun put0 (tag, value, k) = L.set line (sd k, tag, value)
-          fun putPtr k = L.setReg line (sd k, "T_PTR", L.RAX)
+          (* an immediate of payload value, and unit, which is one *)
+          fun put0 (value, k) =
+            if value >= L.setMin andalso value <= L.setMax then L.set line (sd k, value)
+            else L.setWide line (sd k, value)
+          fun putUnit k = L.set line (sd k, 0)
+          fun putPtr k = L.setBits line (sd k, L.RAX)
           (* M11: an object of n > 0 fields, its header written, in rax, by
              bumping heap_used as vm_alloc does, with the same counts; to
              `slow` when it does not fit or --gc-stress is on, which is
@@ -543,7 +545,7 @@ struct
                   line ("jmp .Le" ^ Int.toString a)
                 end
               fun jumpIfTemplate () =
-                (L.checkTag line (rsd (h - 1), "T_CON0", check (pc, next, if opc = Opcodes.JUMPIF then fatalJumpIf else fatalJumpIfNot, 0));
+                (L.checkImm line (rsd (h - 1), check (pc, next, if opc = Opcodes.JUMPIF then fatalJumpIf else fatalJumpIfNot, 0));
                  L.testFalse line (rsd (h - 1));
                  line ((if opc = Opcodes.JUMPIF then "jne " else "je ") ^ lab a))
             in
@@ -557,9 +559,9 @@ struct
                    (flushCount (); flushSp (); setPc (); callC ("native_halt", []); line "ud2")
                  | Opcode.CONST =>
                    (line "mov VM_CONSTS(%r12), %rax"; copy (num (L.valueSize * a) ^ "(%rax)", slot h))
-                 | Opcode.INT => put0 ("T_INT", a, h)
-                 | Opcode.UNIT => put0 ("T_UNIT", 0, h)
-                 | Opcode.CON0 => put0 ("T_CON0", a, h)
+                 | Opcode.INT => put0 (a, h)
+                 | Opcode.UNIT => putUnit h
+                 | Opcode.CON0 => put0 (a, h)
                  | Opcode.LOCAL =>
                    if forwards i then pending := SOME (h, a) else L.copy line (sd h, ld a)
                  | Opcode.SETLOCAL => L.copy line (ld a, rsd (h - 1))
@@ -588,7 +590,7 @@ struct
                     line ("movb $1, " ^ num a ^ "(%rax)"))
                  | Opcode.POP => ()
                  | Opcode.TUPLE =>
-                   if a = 0 then put0 ("T_UNIT", 0, h)
+                   if a = 0 then putUnit h
                    else
                      inlineAlloc (fn slow =>
                                     (alloc (L.K_TUPLE, 0, a, slow);
@@ -658,11 +660,11 @@ struct
                    end
                  | Opcode.CONTAG =>
                    (L.loadTagOfCon line (L.RAX, sd (h - 1), check (pc, next, fatalContag, 0), lab pc);
-                    L.setReg line (sd (h - 1), "T_INT", L.RAX))
+                    L.setImm line (sd (h - 1), L.RAX))
                  | Opcode.CLOSURE =>
                    inlineAlloc (fn slow =>
                                   (alloc (L.K_CLOSURE, 0, b + 1, slow);
-                                   L.storeFieldImm line (L.RAX, 0, "T_INT", a);
+                                   L.storeFieldImm line (L.RAX, 0, a);
                                    List.app (fn k => storeField (k + 1, rsd (h - b + k))) (List.tabulate (b, fn k => k));
                                    putPtr (h - b)),
                                 fn () => callC ("native_closure", ["mov $" ^ num a ^ ", %esi", "mov $" ^ num b ^ ", %edx"]))
@@ -803,7 +805,7 @@ struct
           line "cmp VM_STACK_CAP(%r12), %rax";
           line ("ja .Lg" ^ Int.toString f);
           put (".Lh" ^ Int.toString f ^ ":\n");
-          let fun units k = if k >= nlocals then () else (L.set line (ld k, "T_UNIT", 0); units (k + 1))
+          let fun units k = if k >= nlocals then () else (L.set line (ld k, 0); units (k + 1))
           in units (Vector.sub (#params facts, f)) end;
           slows := (fn () =>
                       (put (".Lg" ^ Int.toString f ^ ":\n");

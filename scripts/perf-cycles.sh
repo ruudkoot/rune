@@ -2,8 +2,8 @@
 # Cycles and instructions of every configuration, on the programs of
 # tests/perf and on the compiler compiling itself (docs/plans/jit.md, M1):
 #   scripts/perf-cycles.sh [--runs N] [--configs C1,C2,...] [--events LIST] [--vm-opts OPTS]
-#                          [--gc] [--profile CONFIG[:PROGRAM]] [--mlton-bench DIR NFILE]
-#                          [--sweep] [FILTER]
+#                          [--vm BIN] [--gc] [--profile CONFIG[:PROGRAM]]
+#                          [--mlton-bench DIR NFILE] [--sweep] [FILTER]
 # The configurations are rune (bin/runevm-stack), new (bin/runevm as it
 # runs by default: tiering up, since M6), opt (runeopt's native code) and
 # mlton (MLton's build); all four unless --configs says otherwise. jit is
@@ -23,7 +23,9 @@
 # instructions:u must be in it, and cycles:uD pins them where LIST would
 # multiplex), and the run with the least cycles counts, every counter from
 # that run. --vm-opts OPTS gives every VM OPTS after the script's own
-# options (a native program takes them from RUNEVM_OPTIONS), and --gc adds
+# options (a native program takes them from RUNEVM_OPTIONS), --vm BIN runs
+# the register bytecode on BIN instead of bin/runevm (a VM of another
+# layout: docs/plans/heap-layout.md, M4), and --gc adds
 # --stats and prints a second table of what the collector did: collections,
 # bytes copied, its processor time and the semispace at exit.
 # --profile CONFIG[:PROGRAM] runs the bootstrap (or PROGRAM) once more under
@@ -45,12 +47,13 @@ configs="rune,new,opt,mlton"
 profile=""
 events="cycles:u,instructions:u"
 vmopts=""
+regvm=bin/runevm
 gc=0
 bench_dir=""
 bench_file=""
 filter=""
 sweep=0
-usage="usage: scripts/perf-cycles.sh [--runs N] [--configs C1,C2,...] [--events LIST] [--vm-opts OPTS] [--gc] [--profile CONFIG[:PROGRAM]] [--mlton-bench DIR NFILE] [--sweep] [FILTER]"
+usage="usage: scripts/perf-cycles.sh [--runs N] [--configs C1,C2,...] [--events LIST] [--vm-opts OPTS] [--vm BIN] [--gc] [--profile CONFIG[:PROGRAM]] [--mlton-bench DIR NFILE] [--sweep] [FILTER]"
 while [ $# -gt 0 ]; do
   case "$1" in
     --runs) runs=$2; shift 2 ;;
@@ -58,6 +61,7 @@ while [ $# -gt 0 ]; do
     --profile) profile=$2; shift 2 ;;
     --events) events=$2; shift 2 ;;
     --vm-opts) vmopts="$vmopts $2"; shift 2 ;;
+    --vm) regvm=$2; shift 2 ;;
     --gc) gc=1; shift ;;
     --sweep) sweep=1; gc=1; events="cycles:uD,instructions:uD,task-clock,page-faults"; shift ;;
     --mlton-bench) [ $# -ge 3 ] || { echo "$usage" >&2; exit 2; }; bench_dir=$2; bench_file=$3; shift 3 ;;
@@ -139,10 +143,10 @@ build() {
       echo "bin/runevm-stack $out/$2.rbc" ;;
     new)
       "$rune" --target=registers "$3" -o "$out/$2.new.rbc" 2> "$out/$2.new.err" || return 1
-      echo "bin/runevm $out/$2.new.rbc" ;;
+      echo "$regvm $out/$2.new.rbc" ;;
     jit|jit-*)
       "$rune" --target=registers "$3" -o "$out/$2.new.rbc" 2> "$out/$2.new.err" || return 1
-      echo "bin/runevm $(jit_mode "$1") $out/$2.new.rbc" ;;
+      echo "$regvm $(jit_mode "$1") $out/$2.new.rbc" ;;
     opt)
       "$rune" --target=stack "$3" -o "$out/$2.rbc" 2> "$out/$2.rune.err" || return 1
       bin/runeopt-mlton "$out/$2.rbc" -o "$out/$2.native" 2> "$out/$2.opt.err" || return 1
@@ -161,9 +165,9 @@ bootstrap() {
   case "$1" in
     rune) echo "bin/runevm-stack --heap-size 67108864 bin/rune.stack.rbc --lib lib --target=stack -o $out/boot.$1.rbc $srcs" ;;
     new) [ -f bin/rune.rbc ] || return 1
-         echo "bin/runevm --heap-size 67108864 bin/rune.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
+         echo "$regvm --heap-size 67108864 bin/rune.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
     jit|jit-*) [ -f bin/rune.rbc ] || return 1
-         echo "bin/runevm $(jit_mode "$1") --heap-size 67108864 bin/rune.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
+         echo "$regvm $(jit_mode "$1") --heap-size 67108864 bin/rune.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
     opt) bin/runeopt-mlton --options "--heap-size 67108864" bin/rune.stack.rbc -o "$out/rune.native" 2> "$out/rune.native.err" || return 1
          echo "$out/rune.native --lib lib --target=stack -o $out/boot.$1.rbc $srcs" ;;
     mlton) [ -x bin/rune-mlton ] || return 1
@@ -204,7 +208,7 @@ counters() {
 # gc_stats LABEL: the --stats line of the run that counts (--gc), as
 # "collections copied gc-us semispace"; nothing where there is none
 gc_stats() {
-  sed -n 's/^runevm: \([0-9]*\) collections, [0-9]* bytes allocated, semispace \([0-9]*\) bytes, [0-9]* live, copied \([0-9]*\), max live [0-9]*, gc \([0-9]*\) us$/\1 \3 \4 \2/p' "$out/$1.best.stderr" | tail -1
+  sed -n 's/^runevm: \([0-9]*\) collections, [0-9]* bytes allocated, semispace \([0-9]*\) bytes, [0-9]* live, copied \([0-9]*\), max live [0-9]*, gc \([0-9]*\) us, longest [0-9]* us$/\1 \3 \4 \2/p' "$out/$1.best.stderr" | tail -1
 }
 
 # human N: N in millions, or in thousands of millions from 1G, one decimal
@@ -240,9 +244,9 @@ compile_program() {
     rune) [ -f "bin/$prog.stack.rbc" ] || return 1
           echo "bin/runevm-stack --heap-size 67108864 bin/$prog.stack.rbc$target $args" ;;
     new) [ -f "bin/$prog.rbc" ] || return 1
-         echo "bin/runevm --heap-size 67108864 bin/$prog.rbc $args" ;;
+         echo "$regvm --heap-size 67108864 bin/$prog.rbc $args" ;;
     jit|jit-*) [ -f "bin/$prog.rbc" ] || return 1
-         echo "bin/runevm $(jit_mode "$1") --heap-size 67108864 bin/$prog.rbc $args" ;;
+         echo "$regvm $(jit_mode "$1") --heap-size 67108864 bin/$prog.rbc $args" ;;
     opt) [ -f "bin/$prog.stack.rbc" ] || return 1
          bin/runeopt-mlton --options "--heap-size 67108864" "bin/$prog.stack.rbc" -o "$out/$prog.native" 2> "$out/$prog.native.err" || return 1
          echo "$out/$prog.native$target $args" ;;
@@ -338,7 +342,7 @@ if [ -n "$profile" ]; then
   case "$profile" in *:*) pprog=${profile#*:} ;; esac
   cmd=$(command_of "$pconfig" "$pprog") || { echo "perf-cycles: cannot build $pprog in $pconfig" >&2; exit 1; }
   # the JIT's functions named in the report (--jit-perf-map, M7)
-  case "$pconfig" in new|jit*) cmd=$(echo "$cmd" | sed 's|^bin/runevm |bin/runevm --jit-perf-map |') ;; esac
+  case "$pconfig" in new|jit*) cmd=$(echo "$cmd" | sed 's|^\([^ ]*\) |\1 --jit-perf-map |') ;; esac
   graph=""
   frame_pointers "${cmd%% *}" && graph="--call-graph fp"
   # shellcheck disable=SC2086
@@ -367,7 +371,7 @@ if [ $sweep = 1 ]; then
   echo "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|"
   # sweep_stats LABEL: "collections semispace live copied max_live gc_us" of the run that counts
   sweep_stats() {
-    sed -n 's/^runevm: \([0-9]*\) collections, [0-9]* bytes allocated, semispace \([0-9]*\) bytes, \([0-9]*\) live, copied \([0-9]*\), max live \([0-9]*\), gc \([0-9]*\) us$/\1 \2 \3 \4 \5 \6/p' "$out/$1.best.stderr" | tail -1
+    sed -n 's/^runevm: \([0-9]*\) collections, [0-9]* bytes allocated, semispace \([0-9]*\) bytes, \([0-9]*\) live, copied \([0-9]*\), max live \([0-9]*\), gc \([0-9]*\) us, longest [0-9]* us$/\1 \2 \3 \4 \5 \6/p' "$out/$1.best.stderr" | tail -1
   }
   # sweep_counter LABEL EVENT: that counter of the run that counts
   sweep_counter() { sed -n "s/^\([0-9]*\),[^,]*,$2,.*/\1/p" "$out/$1.best.perf" | head -1; }

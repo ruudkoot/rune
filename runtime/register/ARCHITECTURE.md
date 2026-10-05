@@ -10,6 +10,7 @@ in [docs/bytecode.md](../../docs/bytecode.md) and `src/isa/regs.sml`.
 ## What it is made of
 
 `bin/runevm` is `runtime/main.c`, `runtime/register/interp.c`, `runtime/register/isa_regs.c`,
+`runtime/register/live.c` (what is live where, for tier 2 and for the collector),
 `runtime/register/jit.c` and the compiler in `runtime/register/jit/` linked against
 `build/librune.a`, the runtime `runevm-stack` is built from
 (`Makefile`, `bin/runevm`): the heap and collector (`runtime/heap.c`),
@@ -31,18 +32,40 @@ stale) and committed, so that the VM builds with a C compiler alone.
 
 ## Values, objects and the heap
 
-As `runevm-stack`'s ([docs/runtime.md](../../docs/runtime.md)): a `Value` is 16
-bytes, a tag byte and a payload of 8 (`runtime/value.h`), with the tag and its
-padding also one 64-bit word, the header, so that a value is made in two
-registers and stored in two stores (a byte store read back as 16 bytes
-stalls); objects have an 8-byte header and a payload in multiples of 16;
+As `runevm-stack`'s ([docs/runtime.md](../../docs/runtime.md)): a `Value` is
+one 64-bit word (`runtime/value.h`), an immediate where its low bit is set
+-- an int, a word, a char or a tag as 2n + 1, or a real in its encoding --
+and a pointer where it is clear, so that a value is made in one register
+and stored in one store; a real outside the encoding and an `Int64.int` or
+`Word64.word` past 63 bits are boxes of 8 raw bytes; objects have an 8-byte
+header and a payload in multiples of 8;
 the collector is a Cheney two-space copier that runs only inside
 `vm_alloc`, with the value stack below `sp`, the globals, the constants,
 each frame's closure and the built-in exceptions as its roots. There are
-no stack maps and no write barrier: every slot carries its tag, and the
+no stack maps and no write barrier: every slot is a word whose low bit
+tells an immediate from a pointer. Of the stack, the registers of a frame
+that waits for a call are roots as far as they are live there
+(`VM.frame_live`, which `vm_loop` sets to `reg_frame_live` of `live.c`):
+the collector asks with the frame's function and the pc its callee returns
+to, gets the registers live at that instruction joined with what the
+function's handlers need, and writes unit into a dead register that holds
+a pointer, so that the frame, running again with all its registers roots,
+has nothing that points into the space left behind. The answer for a
+function is made from its code when first asked for -- the pcs its calls
+return to and a word of 64 registers for each (`Function.live_pc`,
+`live_at`) -- and goes with the program. The frame that runs keeps every
+register, and so does a register past the 64th. The liveness is the one
+tier 2 writes its homes back by, so an instruction's registers are its
+operands, as the tables say (`reg_uses_defs`): one that read a register
+its operands do not name would lose it at a collection. `-DRUNE_ROOTS_ALL`
+builds a VM with every register a root, to measure against. The
 stores into the heap are `SETENV`, the primitives `ref_set` and
 `array_update` (in `runtime/prims.c`, and in the loop through `HEAP_STORE` of
-`runtime/register/fastprim.h`) and a few more primitives.
+`runtime/register/fastprim.h`) and a few more primitives; each is
+`obj_set_field` (`runtime/value.h`), whose barrier is empty, and
+`ms_barrier` in compiled code. The collector's state and the allocation
+state are structs of the VM (`GcState`, `AllocState`, `runtime/vm.h`): the
+fast path bumps `alloc.used` against `alloc.size`.
 
 ## Frames, registers and the stack
 
@@ -216,12 +239,22 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
 * **`x64.h`, `x64.c`**: the encoder. A buffer of bytes, labels bound and
   patched (a rel32 to a label, or a table entry relative to a table's
   start), and the instructions the macro-assembler is written in: moves,
-  16-byte copies through an xmm register, arithmetic, SSE2 on doubles,
-  branches, calls. Nothing here knows a Value or a VM.
+  8-byte copies through an xmm register, arithmetic, SSE2 on doubles,
+  branches, calls. Nothing here knows a Value or a VM. Where the
+  machine has a shorter form for what is asked, the encoder gives it:
+  a move of an immediate that 32 bits hold is the move to the low half,
+  a test of bits the low byte has is a test of that byte (a tag's test
+  is two to four bytes, not seven), a multiplication by a small
+  constant has it in a byte.
 * **`masm.h`, `masm.c`**: the macro-assembler, and the conventions the
-  code keeps. `r12` is the VM, `r13` the value stack, `rbp` the frame's
-  base as an index, `r14` its registers (`r13 + 16 rbp`), `r15` the count
-  of instructions; register k is the 16 bytes at `[r14 + 16 k]`. The
+  code keeps. `r13` is the VM (`r12` would make every memory operand
+  based on it a byte longer), `rbp` the frame's base as an index into
+  the value stack, `r14` its registers (the stack plus `8 rbp`), `r15`
+  the count of instructions; register k is the 8 bytes at `[r14 + 8 k]`.
+  The stack itself has no register: what moves between frames reads it
+  from the VM. The fields of the VM that the code names most are the
+  VM's first 128 bytes (`vm.h`), where an offset is one byte of an
+  instruction and not four. The
   machine stack holds only the call into C in progress, aligned by the
   enter stub; the code never pushes. `SYNC` writes the stack pointer (the
   frame's base plus its registers, plus what a primitive's arguments
@@ -231,10 +264,39 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   call into C takes the System V or the Windows convention (`ms_call`;
   the VM is argument 0). The allocation fast path is `vm_alloc`'s in
   line -- `--gc-stress` to the slow path, the room, the bump, the counts,
-  the header -- and every store into an object goes through
-  `ms_store_field`, where a collector's barrier goes. Slow paths (a fatal
+  the header -- and a store into an object that exists (`ref_set`,
+  `array_update`, `SETENV`) is followed by `ms_barrier`, the barrier's
+  place in compiled code, which emits nothing today and a card mark in
+  the VM built to measure one (`bin/runevm-cards`); a fill of a fresh
+  object is `ms_store_field` alone. A kind is tested by `kind_is`: the
+  header's first byte compared whole, as `obj_kind` reads it in C, since
+  the four bits it shares with the kind are the collector's and zero;
+  both take the kind's bits alone in the VM whose collector sets the
+  others (`bin/runevm-gcbits`, `RUNE_GC_BITS`). The arrays of bytes and
+  of reals are in line as strings and arrays are (`bytes_length`,
+  `bytes_sub`, `bytes_update`, `reals_length`, `reals_sub`,
+  `reals_update`): an element of an array of reals is loaded into a
+  home and stored from one as the double it is, no word between. An
+  int as a real and a real as an int are in line too (`int_to_real`,
+  `real_abs`, `real_trunc`, `real_floor`, `real_ceil`): one conversion,
+  with the primitive for what an int does not hold and for a NaN. The
+  primitives that are a function of the C library on reals and nothing
+  else (`real_exp`, `real_ln`, `real_sin`, `real_cos`, `real_tan`,
+  `real_atan`, `real_sinh`, `real_cosh`, `real_tanh`, `real_atan2`,
+  `real_pow`: `jit_libm_of`) are that function called by the code
+  itself, the double in `xmm0` (and `xmm1`) and back in `xmm0`, with no
+  sync and no reload: the homes C would clobber that are live at the
+  instruction's start or after it wait in the VM's cells as they are
+  and are loaded again (`ms_call_pure`). Slow paths (a fatal
   error, an allocation the fast path could not make) are emitted after
-  the function's code. The stubs: `enter(vm, at)` saves the callee-saved
+  the function's code. A fatal error -- the check of something the
+  bytecode should guarantee, which a typed program never fails -- is
+  ten bytes there: the number of a record of what its message says in
+  `rax`, and a jump to the stub of fatal errors at the region's start
+  (`ms_emit_fatal`), which tells `jit_h_fatal_at`. The message and the
+  trace read the pc, which the record has, and the frames, which are
+  exact; nothing is written back (each was a sync and a call of its
+  own, a fifth of the compiler's code). The stubs: `enter(vm, at)` saves the callee-saved
   registers, loads the VM's into the code's and jumps to `at`; `leave`
   restores them and returns what `rax` says. An emitter that names a
   register the frame has not, or a field the object just allocated has
@@ -251,13 +313,18 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   it a target). Then each instruction's emitter, with a run's length
   added to the count where the run begins (docs/native.md, *Counting*),
   the slow paths, and the code copied into the region, which is one
-  64 MB mapping, executable, made writable to add a function's code; the
-  enter and leave stubs are at its start. A code object's entry is
+  64 MB mapping, executable, made writable to add a function's code. At
+  its start (`jit_region_init`) are the enter and leave stubs, the stub
+  of fatal errors and a trampoline for every call into C the code makes
+  -- every primitive and every helper -- where a function anywhere in
+  the region reaches them by a direct jump or call (`ms_call`,
+  `ms_handback`; `placed` in the masm says the code knows where it will
+  run). A code object's entry is
   written last. The helpers native code calls: `jit_h_prim` (the
   primitive from the registers, `fastprim.h`'s way, or pushed and
   called), `jit_h_alloc`, `jit_h_ret` (the frame of the top level's
-  `RET`, answering what the driver is to do next), `jit_h_fatal` (the
-  loop's message), `jit_h_call` and `jit_h_tailcall` (a call through a
+  `RET`, answering what the driver is to do next), `jit_h_fatal_at` (the
+  loop's message, from the stub), `jit_h_call` and `jit_h_tailcall` (a call through a
   closure), `jit_h_push_handler`, `jit_h_raise`, `jit_h_primpush`, and
   `jit_h_grow` and `jit_h_grow_frames` (the stack and the frames grown
   where a call finds no room).
@@ -348,29 +415,79 @@ So tier 2 takes the registers as they are and chooses, per function,
 which of them live in a machine register:
 
 * **Which.** A register whose representation a machine register can
-  hold -- an int, a word, a char or a nullary constructor in `rbx`,
-  `rsi` or `rdi`, a real in `xmm2` to `xmm15` -- the most used first, a
-  use inside a loop (the section's loop heads to the last jump back)
-  counting for eight (`choose_homes`, `compile.c`). Three general
-  registers, since the emitters use the others as scratch and for the
-  arguments of calls into C. A pointer never has a home: the collector's
-  roots are the slots, as at tier 1, and a home holds a payload alone,
-  the tag being the representation's (`Home`, `masm.h`).
+  hold -- an int, a word, a char, a nullary constructor, an `Int64.int`
+  or a `Word64.word` in one of six general registers (`rbx`, `r12`,
+  `rsi`, `rdi`, `r10`, `r9`; `as_home_g`, `asm.h`), a real in `xmm2`
+  to `xmm15` -- the most used first, a use inside a loop (the section's
+  loop heads to the last jump back) counting for eight, and a number
+  that is raw in its home for four more (`choose_homes`, `compile.c`).
+  aarch64 has twelve general homes and thirty for reals.
+* **Not for nothing.** A register live across a call of a function is
+  written to its slot before the call and loaded again after it: a
+  store and a load, where each use of the home saved one of the two --
+  and for a raw home an encoding and a decoding. So a register has a
+  home only where its uses outweigh the calls it is live across, twice
+  over for a word and six times for a raw one (`HOME_CALL`,
+  `HOME_CALL_RAW`), a call in a loop weighing eight as a use there
+  does. Measured, not derived: `barnes-hut` ran in 0.83 of the
+  instructions for it, the compiler in 0.998.
+* **What C keeps.** `as_keeps_g` and `as_keeps_f` say which registers
+  a call into C leaves as they were, by the machine and its convention
+  (Linux on x86-64: `rbx`, `rbp`, `r12` to `r15` and no register of
+  reals; Windows: `rsi`, `rdi` and `xmm6` to `xmm15` too; aarch64:
+  `x19` to `x28` and the doubles of `v8` to `v15`). The homes are
+  given out with those first, so the order differs by convention
+  (Windows's reals start at `xmm6`), and a home C keeps is not saved
+  around the helper that boxes a number nor loaded again after a call
+  into C -- unless it is the register the instruction defines, whose
+  slot the helper may have written (`ms_reload`, `ms_reload_clobbered`,
+  `ms_emit_box`).
+  The emitters keep the other general registers as scratch and for the
+  arguments of calls into C; `r9` and `r10` are scratch too, but only
+  in a call's or a return's sequence after it has read its last home
+  (`emit.c`). A pointer never has a home: the collector's roots are
+  the slots, as at tier 1.
+* **Shared.** Two registers have one home where they are never live
+  together. They interfere where both are live at the entry of an
+  instruction, and where an instruction defines one while the other is
+  live at its entry; each register, in the order above, takes the
+  first home that no register it interferes with has. The register an
+  instruction defines so never has the home of one it reads, and an
+  emitter may write it before it has read them all. What is in a home
+  is then its register's only while that register is live: the
+  write-back and the loading go by what is live at a pc, as before,
+  and the loading after a call into C in the middle of an instruction
+  takes the registers live at its entry first and then the one it
+  defines (`ms_reload`, `masm.c`). `--jit-stats` says how many of the
+  registers that could have a home have one, and what share of their
+  uses one home, two, three and so on would hold: a register that gets
+  none is numbered on past the homes there are, so the line answers
+  what another home would be worth before it is found a register.
+* **Constants.** A real's constant goes to its home as the double, and
+  an `Int64.int`'s or a `Word64.word`'s as its 64 bits, made when the
+  function is compiled: a constant past 63 bits is a box, and nothing
+  reads it while the code runs (`emit_CONST`).
+  The home of an int, a word, a char or a tag holds its word, as the
+  slot does. The home of a real, of an `Int64.int` and of a
+  `Word64.word` is *raw*: the double, or the 64 bits themselves, which
+  for a number past 63 bits no word has -- its slot gets the word, or
+  a box, where the value leaves the register (`Home`, `masm.h`;
+  `is_raw`, `masm.c`).
 * **The accessors know.** Every operation of the macro-assembler that
   reads or writes a register (`ms_copy`, `ms_set`, `ms_load_payload`,
   `ms_check_tag`, `ms_store_field`, `ms_value_to`, ...) consults the
   homes, so the emitters are tier 1's, unchanged: a tag test of a homed
   register is decided when the code is made (the tag is the
-  representation's), and the slot is made whole where 16 bytes are
-  copied (`ms_load_xmm`, a `RET`).
+  representation's), and the slot of a raw home is given its word where
+  the word is wanted (`ms_need_word`, a `RET`).
 * **Liveness.** The registers live at the entry of each instruction are
   computed backwards over the function (`liveness`), the handlers of the
   function being successors of every instruction that may raise or call
   -- at the instruction's entry, since a raise happens before it defines
   anything.
 * **Safepoints.** `ms_sync` writes the homes live at the instruction's
-  entry back to their slots, with their tags, before the VM is made
-  exact; `ms_reload` loads again, after the call into C, the homes live
+  entry back to their slots -- a raw one encoded, or boxed by a helper
+  where it has no immediate -- before the VM is made exact; `ms_reload` loads again, after the call into C, the homes live
   at the entry and at the end of the instruction (C may have written the
   slot of the register the instruction defines, and clobbered `rsi`,
   `rdi` and the xmm registers). A helper that touches nothing of the VM
@@ -379,9 +496,18 @@ which of them live in a machine register:
   homes -- and the call loads them again. The slow path that grows the
   stack and starts the instruction over keeps its argument in `r11`
   across the write-back for the same reason.
-* **Calls.** A `CALL`, `CALLK` or `TAILCALL` writes the homes back
-  first: the callee has the machine registers, and what is live after
-  the call is loaded again at its *landing*.
+* **Calls.** A `CALL` or `CALLK` writes back first the homes the frame
+  needs after it -- live where it returns, but for the register it
+  returns into -- since the callee has the machine registers; they are
+  loaded again at the call's *landing*. An argument that dies at the
+  call goes from its home into the callee's register and is not written
+  back (where its home is raw, its slot is given its word first,
+  `ms_need_word`). In a function with a handler every home live at the
+  call is written back, what a handler needs being live at every call
+  in its scope, and so at a call through a closure under
+  `--jit-profile`, whose helper loads them again (`ms_writeback_call`,
+  `masm.c`). A `TAILCALL` replaces the
+  frame: only its argument wants a word.
 * **Landings.** Wherever code is entered from outside -- the entry,
   the instruction after a call, a handler, the loop heads and run starts
   the interpreter enters mid-way (`jit_osr`) -- a landing loads the homes
@@ -428,8 +554,8 @@ run counting with it.
 The roadmap planned maps from machine registers to the interpreter's
 at every safepoint, and inline frames made VM frames again. The design
 as built needs neither: tier 2 has no inlining, and at every safepoint
-the frame is the interpreter's -- the slots hold every value with its
-tag (the homes written back), the VM its stack pointer, pc and count.
+the frame is the interpreter's -- the slots hold every value as its
+word (the homes written back), the VM its stack pointer, pc and count.
 So leaving the code for the interpreter -- an *OSR exit*, the
 deoptimisation this JIT has -- is a jump to the leave stub with
 `RUN_INTERP` and the pc to go on at, which the code did for a callee
@@ -466,15 +592,25 @@ of it over its encoder: x86-64 in `asm_x64.c` over `x64.c`, aarch64 in
 `llvm-mc` gives, `tests/register/x64_test.c` and `a64_test.c`). What the
 implementation gives:
 
-* **The registers**, under the portable names: the five the code keeps
-  (`R_VM`, `R_STACK`, `R_BASEI`, `R_BASER`, `R_COUNT`), the three
-  general homes (`R_H0` to `R_H2`) and fourteen floating ones (`F_H0`
-  on), seven scratch registers (`R_S0`, the return value of a call into
-  C, to `R_S6`) and two floating (`F_S0`, `F_S1`); x86-64 maps them as
-  before (`r12` to `r15` and `rbp`; `rbx`, `rsi`, `rdi`; `xmm2` on;
-  `rax`, `rcx`, `rdx`, `r8` to `r11`; `xmm0`, `xmm1`), aarch64 to
-  `x19` to `x23`; `x24` to `x26`; `v8` to `v21`; `x0`, `x9` to `x14`;
-  `v0`, `v1`, with `x16` the encoder's own and `x17` the assembler's.
+* **The registers**, under the portable names: the four the code keeps
+  (`R_VM`, `R_BASEI`, `R_BASER`, `R_COUNT`), seven scratch registers
+  (`R_S0`, the return value of a call into C, to `R_S6`) and two
+  floating (`F_S0`, `F_S1`); and tier 2's homes, which have no names
+  but a table by the convention of the calls into C: `as_home_g` and
+  `as_home_f` give the kth, `as_keeps_g` and `as_keeps_f` say what a
+  call into C keeps. x86-64 keeps `r13`, `rbp`, `r14`, `r15`; its
+  homes are `rbx`, `r12`, `rsi`, `rdi`, `r10`, `r9` and `xmm2` to
+  `xmm15` (on Windows from `xmm6`); its scratch `rax`, `rcx`, `rdx`,
+  `r8` to `r11`, `xmm0`, `xmm1` -- sixteen registers for seventeen
+  roles, so `R_S4` and `R_S5` are the last two homes, and an emitter
+  names them (and `R_H1`, `R_H2`: `rsi`, `rdi`) as scratch only where
+  no home is live any more. aarch64 keeps `x19`, `x21` to `x23`; its
+  homes are `x24` to `x26`, `x20`, `x28`, `x27`, then `x15` and `x4`
+  to `x8`, and `v8` to `v31`, then `v2` to `v7`; its scratch `x0`,
+  `x9` to `x14`, `v0`, `v1`, with `x16` the encoder's own and `x17`
+  the assembler's. The VM has a cell for each of the machine's
+  registers, by its number, where a home waits across the helper that
+  boxes (`jit_gspill`, `jit_fspill`).
 * **The operations**, with x86-64's meanings where the machines differ:
   `add`, `sub`, `cmp`, `test` and `neg` set the flags a `jcc` or `setcc`
   reads, and nothing else promises to (an emitter that wants the sign
@@ -495,10 +631,15 @@ implementation gives:
   taking of the VM and the address to go to (`as_stub_enter`), the
   leave stub (`as_stub_leave`), the register of the i-th argument of
   a call into C (`as_arg`) and the call (`as_call_c`: through `rax`
-  with the Windows shadow space, or `blr x16`). On aarch64 the homes
-  are callee-saved registers, so a call into C keeps them; the code
-  writes them back and loads them again all the same, since the
-  macro-assembler does not know.
+  with the Windows shadow space, or `blr x16`); the trampoline
+  (`as_trampoline`: the VM moved into argument 0, then a jump through
+  the helper's address beside it, or on Windows the shadow space made
+  and the call), which compiled code calls directly (`as_call_to`: a
+  `call rel32`, five bytes, or a `bl`), where the long way was fifteen
+  bytes, twenty-three on Windows, and five or six instructions on
+  aarch64. On aarch64 every general home is a callee-saved register,
+  so a call into C keeps it: the code writes it back where a sync
+  wants the slot exact, and does not load it again (`as_keeps_g`).
 * **The system**: executable memory and the instruction-cache flush
   (`sys_code_flush`, `__builtin___clear_cache`, which x86-64 needs not).
 
@@ -526,17 +667,22 @@ FFI):
    registers (`ms_arg`); a `Value` never crosses the ABI by value, only
    by its register number or a pointer, since the two conventions pass a
    16-byte struct differently.
-3. **The call:** an absolute address in `rax` (the code and the runtime
-   may be anywhere in the address space; Windows puts them far apart),
-   the shadow space of the Windows convention reserved around it. The
-   machine stack is aligned by the enter stub and holds nothing else.
-4. **What C may do:** allocate and so collect (every register is a root,
-   since every value is in its slot), grow the value stack (which moves
+3. **The call:** a direct call of the helper's trampoline at the start
+   of the region, which puts the VM in argument 0 and goes on through
+   the helper's absolute address (the code and the runtime may be
+   anywhere in the address space; Windows puts them far apart), the
+   shadow space of the Windows convention reserved around the call; a
+   helper without one, the same in line (`as_call_c`). The machine
+   stack is aligned by the enter stub and holds nothing else.
+4. **What C may do:** allocate and so collect (every register of the
+   frame that runs is a root, since every value is in its slot), grow the value stack (which moves
    it), push and pop frames, raise (which pops frames and handlers and
    leaves the handler's frame on top), change the program
    (`Runtime.restore`) or end the process. A helper that does none of
    these -- compares two strings -- is called with
-   nothing synced or reloaded (M7), and says so where it is declared. What it may not do is run
+   nothing synced or reloaded (M7), and says so where it is declared; a
+   function of the C library on reals (`sin` and the like) is called
+   so too, the VM not its argument (`ms_call_pure`). What it may not do is run
    bytecode: a helper never calls the loop or native code (no nesting;
    *The driver*), and a foreign function that calls back into SML is the
    one thing this sequence does not give (the FFI's decision, before M9).

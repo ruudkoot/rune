@@ -71,7 +71,7 @@ target starts a run.
 |---|---|
 | `r12` | the VM |
 | `r13` | `vm->stack`, reloaded after every call into C |
-| `rbp` | 16 times the base of the current frame, reloaded where the frame changes: at a return, at a handler, at an entry from C |
+| `rbp` | the base of the current frame in bytes (its index times the size of a value), reloaded where the frame changes: at a return, at a handler, at an entry from C |
 | `r15` | the count of instructions executed |
 
 A slot at height `k` is `16 * (nlocals + k)(%r13,%rbp)`. `rbx` and `r14` are
@@ -137,7 +137,7 @@ TUPLE, CON, CLOSURE, NEWEXN and MKEXN allocate in the template when
 `--gc-stress` is off and the object fits in the space left. They do what
 `vm_alloc` does:
 
-* bump `heap_used` by 8 + 16 n bytes;
+* bump `alloc.used` by 8 + 8 n bytes;
 * add to `bytes_allocated` and `objects_allocated`, which `--count` prints;
 * write the header in two stores (kind, pad and constructor tag; length);
 * write the fields from their slots.

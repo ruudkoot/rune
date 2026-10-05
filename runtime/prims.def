@@ -7,7 +7,7 @@
 poly_eq          2  'a * 'a -> bool          Structural equality (refs/arrays by identity).
 ptr_eq           2  'a * 'a -> bool          Identity comparison of heap values.
 
-# --- int (64-bit, Overflow checked) ---
+# --- int (the VM's immediate, 63 bits; Overflow checked) ---
 int_add          2  int * int -> int         Addition; raises Overflow.
 int_sub          2  int * int -> int         Subtraction; raises Overflow.
 int_mul          2  int * int -> int         Multiplication; raises Overflow.
@@ -26,7 +26,7 @@ int_from_string  1  string -> int option     Parse an SML integer literal (decim
 int_to_char      1  int -> char              Raises Chr if out of range 0..255.
 int_to_real      1  int -> real              Conversion.
 
-# --- word (64-bit unsigned) ---
+# --- word (the VM's immediate, 63 bits, unsigned) ---
 word_add         2  word * word -> word      Wrapping addition.
 word_sub         2  word * word -> word      Wrapping subtraction.
 word_mul         2  word * word -> word      Wrapping multiplication.
@@ -279,8 +279,8 @@ file_seek        2  int * int -> int         Move a file to a position in bytes 
 posix_tcgetattr  1  int -> int list          The settings of a terminal: iflag, oflag, cflag, lflag, input speed, output speed, then the NCCS control characters; [] on failure.
 posix_tcsetattr  3  int * int * int list -> int   Set them with an action (TCSANOW, TCSADRAIN, TCSAFLUSH); ~1 on failure.
 posix_tcop       3  int * int * int -> int   On a terminal: 0 tcdrain, 1 tcflush (the queue), 2 tcflow (the action), 3 tcsendbreak (the duration), 4 tcgetpgrp (gives the group), 5 tcsetpgrp (the group); ~1 on failure.
-real_to_bits     1  real -> word             The 64 bits of a real, IEEE 754 binary64.
-real_from_bits   1  word -> real             The real of 64 bits.
+real_to_bits     1  real -> Word64.word      The 64 bits of a real, IEEE 754 binary64.
+real_from_bits   1  Word64.word -> real      The real of 64 bits.
 socket_linger    3  int * int * int -> int list   SO_LINGER of a socket: set it to the seconds (~1 turns it off) when the second argument is 1; [the seconds afterwards, ~1 when off], [] on failure.
 socket_query     2  int * int -> int         0: the bytes a socket can read at once (FIONREAD); 1: whether it is at the out-of-band mark; ~1 on failure.
 real_to_single   1  real -> real             The IEEE 754 binary32 value nearest the argument in the current rounding mode (an infinity beyond the range), as a real.
@@ -325,3 +325,67 @@ string_order     2  string * string -> order   The same for strings, lexicograph
 
 # --- equality by type (middle-end M11) ---
 imm_eq           2  'a * 'a -> bool          Equality of two values that are never in the heap -- ints, words, chars, units and the nullary constructors of a datatype that has no other: `=` where the compiler knows the type is one of those.
+
+# --- Int64.int (64 bits on every VM: an immediate, or a box past 63 bits; heap-layout M5) ---
+int64_add        2  Int64.int * Int64.int -> Int64.int   Addition of 64-bit integers; raises Overflow.
+int64_sub        2  Int64.int * Int64.int -> Int64.int   Subtraction; raises Overflow.
+int64_mul        2  Int64.int * Int64.int -> Int64.int   Multiplication; raises Overflow.
+int64_div        2  Int64.int * Int64.int -> Int64.int   Floor division; raises Div, Overflow.
+int64_mod        2  Int64.int * Int64.int -> Int64.int   Floor modulus; raises Div.
+int64_quot       2  Int64.int * Int64.int -> Int64.int   Truncating division; raises Div, Overflow.
+int64_rem        2  Int64.int * Int64.int -> Int64.int   Truncating remainder; raises Div.
+int64_neg        1  Int64.int -> Int64.int   Negation; raises Overflow.
+int64_abs        1  Int64.int -> Int64.int   Absolute value; raises Overflow.
+int64_lt         2  Int64.int * Int64.int -> bool   Less than.
+int64_le         2  Int64.int * Int64.int -> bool   Less than or equal.
+int64_gt         2  Int64.int * Int64.int -> bool   Greater than.
+int64_ge         2  Int64.int * Int64.int -> bool   Greater than or equal.
+int64_order      2  Int64.int * Int64.int -> order   LESS, EQUAL or GREATER: how the first compares with the second.
+int64_to_string  1  Int64.int -> string      Decimal digits, ~ for a negative number.
+int64_to_int     1  Int64.int -> int         The same number as an int; raises Overflow where int has not the bits.
+int64_from_int   1  int -> Int64.int         The same number in 64 bits.
+
+# --- Word64.word (64 bits on every VM, modulo 2^64) ---
+word64_add       2  Word64.word * Word64.word -> Word64.word   Addition modulo 2^64.
+word64_sub       2  Word64.word * Word64.word -> Word64.word   Subtraction modulo 2^64.
+word64_mul       2  Word64.word * Word64.word -> Word64.word   Multiplication modulo 2^64.
+word64_div       2  Word64.word * Word64.word -> Word64.word   Unsigned division; raises Div.
+word64_mod       2  Word64.word * Word64.word -> Word64.word   Unsigned modulus; raises Div.
+word64_neg       1  Word64.word -> Word64.word   Negation modulo 2^64.
+word64_lt        2  Word64.word * Word64.word -> bool   Unsigned less than.
+word64_le        2  Word64.word * Word64.word -> bool   Unsigned less than or equal.
+word64_gt        2  Word64.word * Word64.word -> bool   Unsigned greater than.
+word64_ge        2  Word64.word * Word64.word -> bool   Unsigned greater than or equal.
+word64_order     2  Word64.word * Word64.word -> order   LESS, EQUAL or GREATER, unsigned.
+word64_andb      2  Word64.word * Word64.word -> Word64.word   Bitwise and.
+word64_orb       2  Word64.word * Word64.word -> Word64.word   Bitwise or.
+word64_xorb      2  Word64.word * Word64.word -> Word64.word   Bitwise exclusive or.
+word64_notb      1  Word64.word -> Word64.word   Bitwise complement.
+word64_lsl       2  Word64.word * word -> Word64.word   Shift left; 0 for a shift of 64 or more.
+word64_lsr       2  Word64.word * word -> Word64.word   Logical shift right; 0 for a shift of 64 or more.
+word64_asr       2  Word64.word * word -> Word64.word   Arithmetic shift right: the sign bit fills.
+word64_to_int    1  Word64.word -> int       The number as an int; raises Overflow above maxInt.
+word64_to_int_x  1  Word64.word -> int       The 64 bits read as a signed number, as an int; raises Overflow where int has not the bits.
+word64_from_int  1  int -> Word64.word       The int in two's complement, sign-extended to 64 bits.
+word64_to_word   1  Word64.word -> word      The low bits that a word holds.
+word64_from_word 1  word -> Word64.word      The word, zero-extended.
+word64_from_word_x 1  word -> Word64.word      The word, its top bit extended as a sign.
+word64_to_string 1  Word64.word -> string    Hexadecimal digits, upper case.
+word64_to_int64  1  Word64.word -> Int64.int   The same 64 bits as a signed number.
+word64_from_int64 1  Int64.int -> Word64.word   The same 64 bits as an unsigned number.
+
+# --- arrays of bytes (a byte an element, C's layout behind the header; heap-layout M8) ---
+bytes_new        2  int * int -> bytearray   An array of the length, every byte the low eight bits of the second argument; raises Size if the length is negative or above a string's largest.
+bytes_length     1  bytearray -> int         Length.
+bytes_sub        2  bytearray * int -> char   The byte at an index, as a character; raises Subscript.
+bytes_update     3  bytearray * int * char -> unit   Store a character; raises Subscript.
+bytes_blit       5  bytearray * int * bytearray * int * int -> unit   Copy a run of bytes (source, its start, destination, its start, the count), right where the two overlap; raises Subscript.
+bytes_blit_string 5  string * int * bytearray * int * int -> unit   The same from a string.
+bytes_extract    3  bytearray * int * int -> string   A run of the bytes (start, count) as a new string; raises Subscript.
+
+# --- arrays of reals (the doubles themselves side by side; heap-layout M8) ---
+reals_new        2  int * real -> realarray   An array of the length, every element the real; raises Size if the length is negative or above 100000000.
+reals_length     1  realarray -> int         Length.
+reals_sub        2  realarray * int -> real   The element at an index; raises Subscript.
+reals_update     3  realarray * int * real -> unit   Store an element; raises Subscript.
+reals_blit       5  realarray * int * realarray * int * int -> unit   Copy a run of elements (source, its start, destination, its start, the count), right where the two overlap; raises Subscript.

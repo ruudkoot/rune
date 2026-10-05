@@ -43,8 +43,8 @@ static const char *mem(Asm *a, int base, int32_t disp) {
     char *b = membuf[memn++ & 3];
     if (base == R_BASER) {
         for (int i = 0; i < a->nslots; i++) {
-            int32_t at = 16 * a->slots[i].index;
-            if (disp >= at && disp < at + 16) {
+            int32_t at = (int32_t)sizeof(Value) * a->slots[i].index;
+            if (disp >= at && disp < at + (int32_t)sizeof(Value)) {
                 if (a->slots[i].name[0] == '*') {   /* the whole operand is the hole */
                     if (disp != at) fail(a, "a part of an operand that is a whole hole");
                     snprintf(b, 96, "%s", a->slots[i].name + 1);
@@ -75,28 +75,16 @@ static const char *mem(Asm *a, int base, int32_t disp) {
     else snprintf(b, 96, "%d(%s)", (int)disp, r64(a, base));
     return b;
 }
-/* an immediate in a tag context (a slot's first byte) or a kind context (an object's first byte) */
+/* an immediate in a kind context (an object's first byte). A value is one
+   word (docs/plans/heap-layout.md, M4), so a slot has no tag byte and what
+   is written to one is a number. */
 static char immbuf[4][40];
 static int immn;
-static const char *imm_tag(Asm *a, int v) {
-    char *b = immbuf[immn++ & 3];
-    for (int i = 0; i < a->ntags; i++) if (a->tags[i].value == v) { snprintf(b, 40, "$%s", a->tags[i].name); return b; }
-    snprintf(b, 40, "$%d", v);
-    return b;
-}
 static const char *imm_kind(Asm *a, int v) {
     char *b = immbuf[immn++ & 3];
     for (int i = 0; i < a->nkinds; i++) if (a->kinds[i].value == v) { snprintf(b, 40, "$%s", a->kinds[i].name); return b; }
     snprintf(b, 40, "$%d", v);
     return b;
-}
-/* whether [base + disp] is the first word of a Value: a frame slot's, or a
-   field's of an object (a tag context for an immediate written there) */
-static int slot_start(const Asm *a, int base, int32_t disp) {
-    if (base == R_VM) return 0;
-    if (base != R_BASER) return disp >= (int32_t)sizeof(Obj) && (disp - (int32_t)sizeof(Obj)) % (int32_t)sizeof(Value) == 0;
-    for (int i = 0; i < a->nslots; i++) if (disp == 16 * a->slots[i].index) return 1;
-    return 0;
 }
 static const char *label(Asm *a, AsmTextLabel *l) {
     if (l->name) return l->name;
@@ -127,7 +115,6 @@ static void emit(Asm *a, const char *fmt, ...) {
 
 void tx_slot(Asm *a, int32_t index, const char *name) { if (a->nslots < 8) { a->slots[a->nslots].index = index; a->slots[a->nslots++].name = name; } }
 void tx_reg(Asm *a, int reg, const char *name) { if (a->nregs < 8) { a->regs[a->nregs].reg = reg; a->regs[a->nregs++].name = name; } }
-void tx_tag_name(Asm *a, int value, const char *name) { if (a->ntags < 16) { a->tags[a->ntags].value = value; a->tags[a->ntags++].name = name; } }
 void tx_kind_name(Asm *a, int value, const char *name) { if (a->nkinds < 16) { a->kinds[a->nkinds].value = value; a->kinds[a->nkinds++].name = name; } }
 void tx_clear(Asm *a) { for (int i = 0; i < a->n; i++) free(a->lines[i]); a->n = 0; a->failed = 0; a->nlabels = 0; }
 void tx_label_name(AsmTextLabel *l, const char *name) { l->name = name; }
@@ -159,15 +146,9 @@ void as_ld8(Asm *a, int rd, int base, int32_t disp) { emit(a, "movzbl %s, %s", m
 void as_st64(Asm *a, int base, int32_t disp, int rs) { emit(a, "mov %s, %s", r64(a, rs), mem(a, base, disp)); }
 void as_st32(Asm *a, int base, int32_t disp, int rs) { emit(a, "mov %s, %s", r32(a, rs), mem(a, base, disp)); }
 void as_st8(Asm *a, int base, int32_t disp, int rs) { (void)rs; fail(a, "an 8-bit store of a register"); (void)base; (void)disp; }
-void as_st64i(Asm *a, int base, int32_t disp, int32_t v) {
-    if (slot_start(a, base, disp)) emit(a, "movq %s, %s", imm_tag(a, v), mem(a, base, disp));
-    else emit(a, "movq $%d, %s", (int)v, mem(a, base, disp));
-}
+void as_st64i(Asm *a, int base, int32_t disp, int32_t v) { emit(a, "movq $%d, %s", (int)v, mem(a, base, disp)); }
 void as_st32i(Asm *a, int base, int32_t disp, int32_t v) { emit(a, "movl $%d, %s", (int)v, mem(a, base, disp)); }
-void as_st8i(Asm *a, int base, int32_t disp, int v) {
-    if (slot_start(a, base, disp)) emit(a, "movb %s, %s", imm_tag(a, v), mem(a, base, disp));
-    else emit(a, "movb $%d, %s", v, mem(a, base, disp));
-}
+void as_st8i(Asm *a, int base, int32_t disp, int v) { emit(a, "movb $%d, %s", v, mem(a, base, disp)); }
 void as_lea(Asm *a, int rd, int base, int index, int scale, int32_t disp) {
     if (index < 0) emit(a, "lea %d(%s), %s", (int)disp, r64(a, base), r64(a, rd));
     else emit(a, "lea %d(%s,%s,%d), %s", (int)disp, r64(a, base), r64(a, index), scale, r64(a, rd));
@@ -188,6 +169,13 @@ void as_test_rr(Asm *a, int ra, int rb) { emit(a, "test %s, %s", r64(a, rb), r64
 void as_add_ri(Asm *a, int rd, int32_t v) { emit(a, "add $%d, %s", (int)v, r64(a, rd)); }
 void as_sub_ri(Asm *a, int rd, int32_t v) { emit(a, "sub $%d, %s", (int)v, r64(a, rd)); }
 void as_cmp_ri(Asm *a, int r, int32_t v) { emit(a, "cmp $%d, %s", (int)v, r64(a, r)); }
+void as_and_ri(Asm *a, int rd, int32_t v) { emit(a, "and $%d, %s", (int)v, r64(a, rd)); }
+void as_or_ri(Asm *a, int rd, int32_t v) { emit(a, "or $%d, %s", (int)v, r64(a, rd)); }
+void as_test_ri(Asm *a, int r, int32_t v) { emit(a, "test $%d, %s", (int)v, r64(a, r)); }
+void as_test8_mi(Asm *a, int base, int32_t disp, int v) { emit(a, "testb $%d, %s", v, mem(a, base, disp)); }
+void as_ror_ri(Asm *a, int r, int n) { emit(a, "ror $%d, %s", n, r64(a, r)); }
+void as_add_jc(Asm *a, int rd, int rs, AsmLabel *carry) { as_add_rr(a, rd, rs); as_jcc(a, CC_B, carry); }
+void as_sub_jb(Asm *a, int rd, int rs, AsmLabel *borrow) { as_sub_rr(a, rd, rs); as_jcc(a, CC_B, borrow); }
 void as_mul_rr(Asm *a, int rd, int rs) { emit(a, "imul %s, %s", r64(a, rs), r64(a, rd)); }
 void as_mul_ri(Asm *a, int rd, int rs, int32_t v) { emit(a, "imul $%d, %s, %s", (int)v, r64(a, rs), r64(a, rd)); }
 void as_mul_jo(Asm *a, int rd, int rs, AsmLabel *overflow) { as_mul_rr(a, rd, rs); as_jcc(a, CC_O, overflow); }
@@ -205,8 +193,7 @@ void as_add_rm(Asm *a, int rd, int base, int32_t disp) { emit(a, "add %s, %s", m
 void as_cmp_rm(Asm *a, int r, int base, int32_t disp) { emit(a, "cmp %s, %s", mem(a, base, disp), r64(a, r)); }
 void as_cmp_mi(Asm *a, int base, int32_t disp, int32_t v) { emit(a, "cmpq $%d, %s", (int)v, mem(a, base, disp)); }
 void as_cmp8_mi(Asm *a, int base, int32_t disp, int v) {
-    if (slot_start(a, base, disp)) emit(a, "cmpb %s, %s", imm_tag(a, v), mem(a, base, disp));
-    else if (base != R_BASER && base != R_VM && disp == (int32_t)offsetof(Obj, kind)) emit(a, "cmpb %s, OBJ_KIND(%s)", imm_kind(a, v), r64(a, base));
+    if (base != R_BASER && base != R_VM && disp == (int32_t)offsetof(Obj, kind)) emit(a, "cmpb %s, OBJ_KIND(%s)", imm_kind(a, v), r64(a, base));
     else emit(a, "cmpb $%d, %s", v, mem(a, base, disp));
 }
 void as_cmp32_mi(Asm *a, int base, int32_t disp, int32_t v) { emit(a, "cmpl $%d, %s", (int)v, mem(a, base, disp)); }
@@ -218,6 +205,8 @@ void as_jcc(Asm *a, int cc, AsmLabel *l) {
 }
 void as_jmp_r(Asm *a, int r) { emit(a, "jmp *%s", r64(a, r)); }
 void as_jmp_to(Asm *a, const void *at) { (void)at; fail(a, "a jump to an address"); }
+void as_call_to(Asm *a, const void *at) { (void)at; fail(a, "a call of an address"); }
+size_t as_trampoline(Asm *a, int win, uint64_t addr) { (void)win; (void)addr; fail(a, "a trampoline"); return 0; }
 void as_call_r(Asm *a, int r) { emit(a, "call *%s", r64(a, r)); }
 void as_ret(Asm *a) { emit(a, "ret"); }
 void as_trap(Asm *a) { emit(a, "ud2"); }

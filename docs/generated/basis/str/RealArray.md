@@ -13,7 +13,7 @@
 ## Synopsis
 
 ```sml
-structure RealArray :> MONO_ARRAY where type vector = RealVector.vector where type elem = real
+structure RealArray : MONO_ARRAY where type vector = RealVector.vector where type elem = real
 ```
 
 RealArray: mutable arrays of reals, a type of their own with identity

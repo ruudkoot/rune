@@ -142,7 +142,7 @@ LargeRealArray2	structure	MONO_ARRAY2	where type vector = LargeRealVector.vector
 LargeRealArraySlice	structure	MONO_ARRAY_SLICE	where type vector = LargeRealVector.vector where type vector_slice = LargeRealVectorSlice.slice where type array = LargeRealArray.array where type elem = LargeReal.real	optional	claimed	lib/basis/mono_largereal.sml
 LargeRealVector	structure	MONO_VECTOR	where type elem = LargeReal.real	optional	claimed	lib/basis/mono_largereal.sml
 LargeRealVectorSlice	structure	MONO_VECTOR_SLICE	where type vector = LargeRealVector.vector where type elem = LargeReal.real	optional	claimed	lib/basis/mono_largereal.sml
-LargeWord	structure	WORD		required	claimed	lib/basis/word.sml
+LargeWord	structure	WORD		required	claimed	lib/basis/word64.sml
 LargeWordArray	structure	MONO_ARRAY	where type vector = LargeWordVector.vector where type elem = LargeWord.word	optional	claimed	lib/basis/mono_largeword.sml
 LargeWordArray2	structure	MONO_ARRAY2	where type vector = LargeWordVector.vector where type elem = LargeWord.word	optional	claimed	lib/basis/mono_largeword.sml
 LargeWordArraySlice	structure	MONO_ARRAY_SLICE	where type vector = LargeWordVector.vector where type vector_slice = LargeWordVectorSlice.slice where type array = LargeWordArray.array where type elem = LargeWord.word	optional	claimed	lib/basis/mono_largeword.sml

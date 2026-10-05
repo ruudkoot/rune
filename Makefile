@@ -403,13 +403,13 @@ bin/runevm-stack: runtime/main.c runtime/stack/interp.c build/librune.a $(VM_HDR
 # runtime/register's first loop (docs/plans/middle-end.md, M5): the register bytecode,
 # on the runtime of runevm-stack. Its own instruction set's part (runtime/register/isa_regs.c)
 # is linked before build/librune.a, whose runtime/stack/isa_stack.c it takes the place of.
-NEW_HDRS := runtime/register/regvm.h runtime/register/regops.h runtime/register/reg_cases.h runtime/register/reg_labels.h runtime/register/reg_loop.h runtime/register/fastprim.h runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
+NEW_HDRS := runtime/register/regvm.h runtime/register/live.h runtime/register/regops.h runtime/register/reg_cases.h runtime/register/reg_labels.h runtime/register/reg_loop.h runtime/register/fastprim.h runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
 # RUNE_JIT=0 builds it without the JIT (docs/plans/jit.md): the
 # interpreter alone, which refuses --jit.
 RUNE_JIT ?= 1
 JIT_SRCS := runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c
 JIT_HDRS := runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/asm.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
-NEW_LOOP := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c $(JIT_SRCS)
+NEW_LOOP := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS)
 bin/runevm: $(NEW_LOOP) build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) $(RT_INC) -o $@ $(NEW_LOOP) build/librune.a -lm
@@ -434,10 +434,44 @@ bin/runevm-stack-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 
 # runtime/register with the sanitizers: its loop, its instruction set's part, and the
 # runtime but for the stack bytecode's part
-NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
+NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
 bin/runevm-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-asan
 	@mkdir -p bin
 	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer $(RT_INC) -o $@ $(NEW_SRCS) -lm
+
+# The word's switches (docs/plans/heap-layout.md, D2 and D3), each a VM of its
+# own for measurements: ints and words that keep 64 bits (D2 A; a compiler
+# given --int-bits=64 makes its bytecode), and every real in a box (D3 B).
+# Not part of make check.
+bin/runevm-int64: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 $(RT_INC) -o $@ $(NEW_SRCS) -lm
+bin/runevm-realboxed: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_REAL_BOXED $(RT_INC) -o $@ $(NEW_SRCS) -lm
+# D2 A with tier 2's homes of ints and words holding the 64 bits (D5 A as the
+# roadmap states it): faster where words pass 63 bits, slower where a small
+# int crosses a slot at every call.
+bin/runevm-rawhomes: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 -DRUNE_RAW_HOMES $(RT_INC) -o $@ $(NEW_SRCS) -lm
+# The hooks for the collector to come (docs/plans/heap-layout.md, M7), each a
+# VM of its own to test or to measure with: the collector sets the header's
+# four bits on every object it copies and every reader of a kind masks them;
+# and the barrier marks a card at every store into an object that exists.
+bin/runevm-gcbits: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_GC_BITS $(RT_INC) -o $@ $(NEW_SRCS) -lm
+bin/runevm-cards: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_BARRIER_CARDS $(RT_INC) -o $@ $(NEW_SRCS) -lm
+# The instrument of docs/plans/performance-64bit.md's experiments 1 and 5
+# (x86-64): compiled code counts every conversion between a raw number in a
+# home and its word, by the instruction that makes it; runevm-conv
+# --jit-stats prints the table.
+bin/runevm-conv: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_JIT_CONV $(RT_INC) -o $@ $(NEW_SRCS) -lm
 
 # The census VM (docs/census.md; docs/plans/heap-layout.md, M1): runtime/register's
 # loop on the runtime with -DRUNE_CENSUS, which enables the hooks of
@@ -452,8 +486,8 @@ bin/runevm-census: $(CENSUS_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/cen
 # The census VM against the stock one on a small program: the same --count
 # line, every byte and object in census.txt, the summary mode and the static
 # census (scripts/check-census.sh). Part of make check.
-test-census: bin/runevm-census bin/runevm $(RUNE)
-	sh scripts/check-census.sh
+test-census:
+	@echo "test-census: the census VM measures the 16-byte layout; not built on the word prototype (heap-layout M4)"
 
 # The heap-layout tools (docs/plans/heap-layout.md, M2): the trace-driven
 # simulator bin/heapsim and its synthetic-trace generator bin/heapsim-gen
@@ -470,9 +504,9 @@ bin/heapsim-gen: tools/heapsim/gen.c runtime/census/layouts.h | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) $(RT_INC) -o $@ tools/heapsim/gen.c -lm
 heapsim: bin/heapsim bin/heapsim-gen
-check-heapsim: heapsim bin/runevm-census bin/runevm $(RUNE) bin/rune.rbc
+check-heapsim: heapsim
 	sh tools/heapsim/test.sh
-	sh tools/heapsim/validate.sh compile-sigs intinf_fact
+	@echo "check-heapsim: the validation needs the census VM; not run on the word prototype (heap-layout M4)"
 check-layouts:
 	$(MAKE) --no-print-directory -C tests/layouts CC=$(CC)
 	sh tests/layouts/check.sh $(notdir $(CC))
@@ -521,7 +555,7 @@ WINCFLAGS32 ?= -msse2 -mfpmath=sse -Wl,--large-address-aware
 WIN_SRCS    := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_win.c
 # runtime/register for Windows: its loop and its instruction set's part in place of
 # the stack bytecode's (runtime/stack/isa_stack.c), as bin/runevm-asan is built
-WIN_NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_win.c
+WIN_NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_win.c
 WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32
 
 # windows_dlls CC: refuse $@ when it imports a DLL whose name starts with lib
@@ -606,7 +640,7 @@ A64FLAGS   ?= --target=aarch64-linux-gnu -B$(A64ROOT)/bin -L$(A64ROOT)/lib -I$(A
               -Wl,-dynamic-linker,$(A64ROOT)/lib/ld-linux-aarch64.so.1 -Wl,-rpath,$(A64ROOT)/lib
 QEMUA64    ?= qemu-aarch64
 JIT_SRCS_A64 := runtime/register/jit.c runtime/register/jit/a64.c runtime/register/jit/asm_a64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c
-NEW_SRCS_A64 := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c $(JIT_SRCS_A64) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
+NEW_SRCS_A64 := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS_A64) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
 PORT_TIMEOUT ?= 900
 
 portability: bin/runevm-stack32 bin/runevm-stack-ppc64 bin/runevm32 bin/runevm-ppc64 bin/runevm-aarch64
@@ -669,6 +703,31 @@ test: $(RUNE) vm | build/.doctor-check
 	python3 tests/runtime/run-limits.py --rune $(RUNE_STACK) --vm $(RUNEVM)
 	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm $(RUNEVM)
 	sh tests/runtime/run-vm-tests.sh --vm $(RUNEVM)
+	@mkdir -p build
+	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
+	build/heap_test
+
+# The hooks for the collector to come (docs/plans/heap-layout.md, M7). The C
+# test of them (tests/runtime/heap_test.c) on the runtime as built and as
+# built with each switch: the header's four bits set by the collector on
+# every object it copies (RUNE_GC_BITS), and the barrier as a card mark
+# (RUNE_BARRIER_CARDS). Then tests/lang on the VM of the first, as it comes
+# and with every function compiled and a collection at every allocation, so
+# that a reader of a kind that does not mask the bits fails, and on the VM
+# of the second.
+test-heap: bin/runevm-gcbits bin/runevm-cards $(RUNE) vm | build/.doctor-check
+	@mkdir -p build
+	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
+	build/heap_test
+	$(CC) $(CFLAGS) -DRUNE_GC_BITS $(RT_INC) -o build/heap_test-gcbits tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
+	build/heap_test-gcbits
+	$(CC) $(CFLAGS) -DRUNE_BARRIER_CARDS $(RT_INC) -o build/heap_test-cards tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
+	build/heap_test-cards
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-gcbits" --jit=all --gc-stress 1 "$$@"\n' > bin/runevm-gcbits-stress
+	chmod +x bin/runevm-gcbits-stress
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gcbits --out tests/out/register-gcbits
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gcbits-stress --out tests/out/register-gcbits-stress
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-cards --out tests/out/register-cards
 
 test-all: host-builds vm | build/.doctor-check
 	@for c in mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit; do \

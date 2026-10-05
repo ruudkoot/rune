@@ -35,7 +35,7 @@ int main(void) {
     vm.stack = stack; vm.sp = 7; vm.stack_cap = 64;
     vm.frames = frames; vm.fp = 1; vm.frames_active = 1;
     frames[1].base = 3;
-    vm.heap_from = heap; vm.heap_size = sizeof heap; vm.heap_used = 32;
+    vm.alloc.from = heap; vm.alloc.size = sizeof heap; vm.alloc.used = 32;
     vm.instructions = 100;
     stack[3] = mk_int(7);
     stack[4] = mk_ptr(NULL);
@@ -61,19 +61,21 @@ int main(void) {
     void *code = place(&m.a);
     int r = as_enter(stubs)(&vm, code);
     if (r != 2) { printf("FAIL answer %d\n", r); fails++; }
-    if (stack[4].tag != T_INT || stack[4].u.i != 7) { printf("FAIL copy\n"); fails++; }
-    if (stack[5].tag != T_CON0 || stack[5].u.i != 3) { printf("FAIL set\n"); fails++; }
-    if (stack[6].tag != T_INT || stack[6].u.i != 42) { printf("FAIL set_reg\n"); fails++; }
-    if (stack[3].tag != T_PTR) { printf("FAIL alloc tag\n"); fails++; }
+    /* through runtime/value.h, so that the test is of the operations and
+       not of one layout */
+    if (!val_is(stack[4], T_INT) || val_imm(stack[4]) != 7) { printf("FAIL copy\n"); fails++; }
+    if (!val_is(stack[5], T_CON0) || val_con0(stack[5]) != 3) { printf("FAIL set\n"); fails++; }
+    if (!val_is(stack[6], T_INT) || val_imm(stack[6]) != 42) { printf("FAIL set_reg\n"); fails++; }
+    if (!val_is_ptr(stack[3])) { printf("FAIL alloc tag\n"); fails++; }
     else {
-        Obj *t = stack[3].u.p;
-        if ((char *)t != heap + 32 || t->kind != K_TUPLE || t->len != 2 || t->contag != 0) { printf("FAIL header\n"); fails++; }
-        if (OBJ_FIELDS(t)[0].u.i != 7 || OBJ_FIELDS(t)[1].u.i != 42) { printf("FAIL fields\n"); fails++; }
+        Obj *t = val_ptr(stack[3]);
+        if ((char *)t != heap + 32 || obj_kind(t) != K_TUPLE || obj_len(t) != 2 || obj_contag(t) != 0) { printf("FAIL header\n"); fails++; }
+        if (val_imm(obj_field(t, 0)) != 7 || val_imm(obj_field(t, 1)) != 42) { printf("FAIL fields\n"); fails++; }
     }
-    if (vm.heap_used != 32 + 8 + 32 || vm.bytes_allocated != 40 || vm.objects_allocated != 1) { printf("FAIL counts %zu %llu\n", vm.heap_used, (unsigned long long)vm.bytes_allocated); fails++; }
+    if (vm.alloc.used != 32 + OBJ_SIZE_FIELDS(2) || vm.bytes_allocated != OBJ_SIZE_FIELDS(2) || vm.objects_allocated != 1) { printf("FAIL counts %zu %llu\n", vm.alloc.used, (unsigned long long)vm.bytes_allocated); fails++; }
     if (vm.pc != 77 || vm.sp != 7 || vm.instructions != 105) { printf("FAIL sync pc %u sp %zu count %llu\n", vm.pc, vm.sp, (unsigned long long)vm.instructions); fails++; }
     /* the slow path: no room */
-    vm.heap_used = sizeof heap - 8;
+    vm.alloc.used = sizeof heap - 8;
     r = as_enter(stubs)(&vm, code);
     if (r != 9) { printf("FAIL slow %d\n", r); fails++; }
     printf(fails ? "masm: %d failures\n" : "masm: ok\n", fails);

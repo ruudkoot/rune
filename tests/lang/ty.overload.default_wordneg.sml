@@ -1,4 +1,4 @@
-(* ~ at type word: two's complement negation, 0 - w modulo 2^64 *)
+(* ~ at type word: two's complement negation, 0 - w modulo 2^63, a word's width *)
 val () = print (Word.toString (~ 0w5) ^ "\n")
 val () = print (Word.toString (~ 0w0) ^ "\n")
 val () = print (Word.toString (Word.~ 0w1) ^ "\n")

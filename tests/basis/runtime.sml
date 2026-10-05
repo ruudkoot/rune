@@ -37,20 +37,31 @@ struct
                       in a < #instructions (Runtime.stats ()) end)
 
   (* A list cell is one object, :: made of its two fields, head and tail,
-     and 40 bytes (docs/runtime.md). *)
-  val () = eqI ("Runtime.stats/bytes-count-a-list-cell", 40,
+     and 24 bytes under the word (docs/plans/heap-layout.md, M4: a header
+     and two words; 40 under the 16-byte layout). *)
+  val () = eqI ("Runtime.stats/bytes-count-a-list-cell", 24,
                 fn () => #bytes (allocated (fn () => keep := 1 :: !keep)) - #bytes (nothing ()))
   val () = eqI ("Runtime.stats/objects-count-a-list-cell", 1,
                 fn () => #objects (allocated (fn () => keep := 1 :: !keep)) - #objects (nothing ()))
 
-  (* A ref is the smallest object there is: an 8-byte header and a payload
-     rounded up to 16. It is kept, since one nothing uses is no allocation
-     at all once optimised. *)
+  (* A ref is the smallest object there is: an 8-byte header and one word.
+     It is kept, since one nothing uses is no allocation at all once
+     optimised. *)
   val cell = ref (ref 0)
-  val () = eqI ("Runtime.stats/bytes-count-the-smallest-object", 24,
+  val () = eqI ("Runtime.stats/bytes-count-the-smallest-object", 16,
                 fn () => #bytes (allocated (fn () => cell := ref 7)) - #bytes (nothing ()))
   val () = eqI ("Runtime.stats/objects-count-the-smallest-object", 1,
                 fn () => #objects (allocated (fn () => cell := ref 7)) - #objects (nothing ()))
+
+  (* An array of bytes is a header and a byte an element, rounded up to a
+     word; an array of reals a header and eight bytes an element
+     (docs/plans/heap-layout.md, M8). Each is kept, as the ref is. *)
+  val someBytes = ref (CharArray.array (0, #" "))
+  val () = eqI ("Runtime.stats/bytes-count-an-array-of-bytes", 1008,
+                fn () => #bytes (allocated (fn () => someBytes := CharArray.array (1000, #"a"))) - #bytes (nothing ()))
+  val someReals = ref (RealArray.array (0, 0.0))
+  val () = eqI ("Runtime.stats/bytes-count-an-array-of-reals", 808,
+                fn () => #bytes (allocated (fn () => someReals := RealArray.array (100, 1.5))) - #bytes (nothing ()))
 
   val () = T.check ("Runtime.stats/live-is-within-the-semispace",
                     fn () => let val s = Runtime.stats () in #live s <= #heapSize s end)
@@ -67,7 +78,7 @@ struct
 
   (* Measuring costs one `stats` record and nothing else, so profiling one
      list cell costs exactly a list cell more than profiling nothing. *)
-  val () = eqI ("Runtime.profile/reports-what-was-allocated", 40,
+  val () = eqI ("Runtime.profile/reports-what-was-allocated", 24,
                 fn () => #bytes (#2 (Runtime.profile (fn () => keep := 1 :: !keep)))
                          - #bytes (#2 (Runtime.profile (fn () => ()))))
   val () = eqI ("Runtime.profile/reports-the-objects-allocated", 1,
@@ -116,7 +127,7 @@ struct
                         val () = Runtime.collect ()
                         val freed = #live (Runtime.stats ())
                       in
-                        held - freed >= 1000 * 40
+                        held - freed >= 1000 * 24
                       end)
 
   val () = T.check ("Runtime.collect/identity-survives-it",

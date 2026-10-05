@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md) |
 | Status | optional |
 | Members | 30 |
-| Tests | 241 checks |
+| Tests | 240 checks |
 | Source | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 ## Synopsis

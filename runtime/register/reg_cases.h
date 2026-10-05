@@ -184,7 +184,7 @@ CASE(PRIM) {
     pc += 9 + 4 * n;
     count++;
     /* the common case of the primitives done in the loop (runtime/register/fastprim.h) */
-    if (prim_fast(a, n, base, L, &R(b))) NEXT;
+    if (prim_fast(vm, a, n, base, L, &R(b))) NEXT;
     for (uint32_t i = 0; i < n; i++) PUSH(R(LIST(i)));
     SYNC();
     int r = prim_table[a](vm);

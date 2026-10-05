@@ -52,6 +52,21 @@ void as_test_rr(Asm *a, int ra, int rb) { a64_tst_rr(a, ra, rb); }
 void as_add_ri(Asm *a, int rd, int32_t v) { a64_adds_ri(a, rd, rd, v); }
 void as_sub_ri(Asm *a, int rd, int32_t v) { a64_subs_ri(a, rd, rd, v); }
 void as_cmp_ri(Asm *a, int r, int32_t v) { a64_cmp_ri(a, r, v); }
+void as_and_ri(Asm *a, int rd, int32_t v) { a64_mov_ri(a, R_T, v); a64_and_rr(a, rd, rd, R_T); }
+void as_or_ri(Asm *a, int rd, int32_t v) { a64_mov_ri(a, R_T, v); a64_orr_rr(a, rd, rd, R_T); }
+/* a test of the low bits -- a tag's, of bit 0, is the commonest
+   instruction the code has -- is one instruction: the mask is an
+   immediate the machine has */
+void as_test_ri(Asm *a, int r, int32_t v) {
+    for (int bits = 1; bits < 32; bits++)
+        if (v == (int32_t)(((uint32_t)1 << bits) - 1)) { a64_tst_mask(a, r, bits); return; }
+    a64_mov_ri(a, R_T, v); a64_tst_rr(a, r, R_T);
+}
+void as_test8_mi(Asm *a, int base, int32_t disp, int v) { a64_ldrb(a, R_T, base, disp); a64_mov_ri(a, X16, v); a64_tst_rr(a, R_T, X16); }
+void as_ror_ri(Asm *a, int r, int n) { a64_ror_ri(a, r, r, n); }
+/* after adds the carry is set where the sum went past 64 bits; after subs it is clear where it borrowed */
+void as_add_jc(Asm *a, int rd, int rs, AsmLabel *carry) { a64_adds_rr(a, rd, rd, rs); a64_bcond(a, A64_HS, carry); }
+void as_sub_jb(Asm *a, int rd, int rs, AsmLabel *borrow) { a64_subs_rr(a, rd, rd, rs); a64_bcond(a, A64_LO, borrow); }
 void as_mul_rr(Asm *a, int rd, int rs) { a64_mul(a, rd, rd, rs); }
 void as_mul_ri(Asm *a, int rd, int rs, int32_t v) { a64_mov_ri(a, R_T, v); a64_mul(a, rd, rs, R_T); }
 void as_mul_jo(Asm *a, int rd, int rs, AsmLabel *overflow) {
@@ -91,6 +106,7 @@ void as_jmp(Asm *a, AsmLabel *l) { a64_b(a, l); }
 void as_jcc(Asm *a, int cc, AsmLabel *l) { a64_bcond(a, cond(cc), l); }
 void as_jmp_r(Asm *a, int r) { a64_br(a, r); }
 void as_jmp_to(Asm *a, const void *at) { a64_b_to(a, at); }
+void as_call_to(Asm *a, const void *at) { a64_bl_to(a, at); }
 void as_call_r(Asm *a, int r) { a64_blr(a, r); }
 void as_ret(Asm *a) { a64_ret(a); }
 void as_trap(Asm *a) { a64_brk(a); }
@@ -108,6 +124,12 @@ void as_fdiv(Asm *a, int fd, int fs) { a64_fdiv(a, fd, fd, fs); }
 void as_fsqrt(Asm *a, int fd, int fs) { a64_fsqrt(a, fd, fs); }
 void as_fcmp(Asm *a, int fa, int fb) { a64_fcmp(a, fa, fb); }
 void as_fzero(Asm *a, int f) { a64_fmov_dz(a, f); }
+void as_cvt_i2f(Asm *a, int f, int r) { a64_scvtf(a, f, r); }
+void as_cvt_f2i(Asm *a, int r, int f, AsmLabel *unless) {
+    a64_fcmp(a, f, f);              /* unordered with itself: a NaN, which fcvtzs makes 0 */
+    a64_bcond(a, A64_VS, unless);
+    a64_fcvtzs(a, r, f);            /* saturates past 64 bits: INT64_MIN or INT64_MAX */
+}
 void as_fmov_rf(Asm *a, int r, int f) { a64_fmov_xd(a, r, f); }
 void as_fmov_fr(Asm *a, int f, int r) { a64_fmov_dx(a, f, r); }
 
@@ -144,6 +166,22 @@ void as_stub_leave(Asm *a, int win) {
     a64_ldp(a, X19, X20, XSP, 16);
     a64_ldp_post(a, X29, X30, XSP, 112);
     a64_ret(a);
+}
+/* a trampoline: a call of C from the region is the VM moved to x0, a
+   64-bit address made in x16, up to four instructions, and a blr; a call
+   of the trampoline is a bl, and it moves the VM, loads the address
+   beside it and goes on, C returning to the caller (x16 is the veneer's
+   register by the convention) */
+size_t as_trampoline(Asm *a, int win, uint64_t addr) {
+    (void)win;
+    while (a->n % 16) a64_brk(a);
+    size_t at = a->n;
+    a64_mov_rr(a, X0, R_VM);
+    a64_ldr_lit(a, X16, 12);   /* the address at 16 */
+    a64_br(a, X16);
+    a64_brk(a);
+    a64_u64(a, addr);
+    return at;
 }
 int as_arg(int win, int i) { (void)win; return X0 + i; }
 void as_call_c(Asm *a, int win, uint64_t addr) {

@@ -46,12 +46,29 @@
 typedef A64 Asm;
 typedef A64Label AsmLabel;
 enum AsmReg {
-    R_VM = X19, R_STACK = X20, R_BASEI = X21, R_BASER = X22, R_COUNT = X23,
-    R_H0 = X24, R_H1 = X25, R_H2 = X26,
+    R_VM = X19, R_BASEI = X21, R_BASER = X22, R_COUNT = X23,
+    R_H1 = X25, R_H2 = X26,   /* two homes that emit.c's calls name as scratch, once no home is live */
     R_S0 = X0, R_S1 = X9, R_S2 = X10, R_S3 = X11, R_S4 = X12, R_S5 = X13, R_S6 = X14,
     R_T = X17, R_SP = XSP, R_GO = X27   /* R_GO: where the enter stub is to jump, kept across its reload */
 };
-enum AsmFReg { F_S0 = V0, F_S1 = V1, F_H0 = V8 };   /* the homes: V8 to V21 */
+enum AsmFReg { F_S0 = V0, F_S1 = V1 };
+/* Tier 2's homes, in the order they are given out: the registers C keeps
+   first. General: x24 to x26, x20, x28 and x27 (R_GO, which the enter
+   stub alone uses, before any home is loaded), then six that a call into
+   C clobbers, x15 and x4 to x8 -- no emitter names them, and C's
+   arguments here are x0 to x3. Reals: v8 to v15, whose doubles C keeps,
+   then v16 to v31 and v2 to v7. */
+#define AS_NHOMES_G 12
+#define AS_NHOMES_F 30
+static inline int as_home_g(int win, int k) {
+    static const uint8_t homes[AS_NHOMES_G] = { X24, X25, X26, X20, X28, X27, X15, X4, X5, X6, X7, X8 };
+    (void)win;
+    return homes[k];
+}
+static inline int as_home_f(int win, int k) { (void)win; return k < 24 ? V8 + k : V2 + (k - 24); }
+/* what a call into C keeps (AAPCS64): x19 to x28, and the low halves of v8 to v15 */
+static inline int as_keeps_g(int win, int r) { (void)win; return r >= X19 && r <= X28; }
+static inline int as_keeps_f(int win, int f) { (void)win; return f >= V8 && f <= V15; }
 enum AsmCond {
     CC_E = A64_EQ, CC_NE = A64_NE, CC_L = A64_LT, CC_LE = A64_LE, CC_G = A64_GT, CC_GE = A64_GE,
     CC_B = A64_LO, CC_BE = A64_LS, CC_A = A64_HI, CC_AE = A64_HS, CC_O = A64_VS, CC_NO = A64_VC,
@@ -71,16 +88,52 @@ typedef AsmTextLabel AsmLabel;
 typedef X64 Asm;
 typedef X64Label AsmLabel;
 #endif
+/* The VM is in r13 and not in r12: a memory operand whose base is r12
+   (or rsp) is a byte longer, and nearly everything the code reads of the
+   VM is one; r13 as a base costs a displacement, which a field of the VM
+   has anyway. (runeopt's code keeps its VM in r12 and its stack in r13,
+   src/opt/x64.sml, and the text backend writes its templates so.) */
 enum AsmReg {
-    R_VM = R12, R_STACK = R13, R_BASEI = RBP, R_BASER = R14, R_COUNT = R15,
-    R_H0 = RBX, R_H1 = RSI, R_H2 = RDI,
-    R_S0 = RAX, R_S1 = RCX, R_S2 = RDX, R_S3 = R8, R_S4 = R9, R_S5 = R10, R_S6 = R11,
+#ifdef RUNE_ASM_TEXT
+    R_VM = R12,
+#else
+    R_VM = R13,
+#endif
+    R_BASEI = RBP, R_BASER = R14, R_COUNT = R15,
+    R_H1 = RSI, R_H2 = RDI,   /* two homes that emit.c's calls name as scratch, once no home is live */
+    R_S0 = RAX, R_S1 = RCX, R_S2 = RDX, R_S3 = R8, R_S4 = R9, R_S5 = R10, R_S6 = R11,   /* R_S4 and R_S5 are homes too */
     R_T = R11, R_SP = RSP, R_GO = R11
 };
-enum AsmFReg { F_S0 = XMM0, F_S1 = XMM1, F_H0 = XMM2 };   /* the homes: XMM2 to XMM15 */
+enum AsmFReg { F_S0 = XMM0, F_S1 = XMM1 };
 enum AsmCondMore { CC_FA = CC_A, CC_FAE = CC_AE, CC_FE = 16 };
-#endif
+/* Tier 2's homes, in the order they are given out, by the convention of
+   the calls into C (win: Windows's). General: rbx and r12, which C keeps
+   everywhere; rsi and rdi, which Windows's C keeps and Linux's takes its
+   first two arguments in; r10; and r9, Windows's fourth argument. Reals:
+   Linux's C keeps none, and xmm2 to xmm7 are a byte shorter to name than
+   xmm8 to xmm15; Windows's keeps xmm6 to xmm15, so those first there. */
+#define AS_NHOMES_G 6
 #define AS_NHOMES_F 14
+static inline int as_home_g(int win, int k) {
+    static const uint8_t homes[AS_NHOMES_G] = { RBX, R12, RSI, RDI, R10, R9 };
+    (void)win;
+    return homes[k];
+}
+static inline int as_home_f(int win, int k) { return !win ? XMM2 + k : k < 10 ? XMM6 + k : XMM2 + (k - 10); }
+/* what a call into C keeps: rbx, rbp and r12 to r15, and on Windows rsi,
+   rdi and xmm6 to xmm15 too */
+static inline int as_keeps_g(int win, int r) { return r == RBX || r == RBP || (r >= R12 && r <= R15) || (win && (r == RSI || r == RDI)); }
+static inline int as_keeps_f(int win, int f) { return win && f >= XMM6; }
+#endif
+/* The homes of tier 2 (compile.c gives them out, masm.c saves them) are
+   the target's, above: as_home_g and as_home_f say which register the
+   kth is, and as_keeps_g and as_keeps_f which registers a call into C
+   leaves as they were -- a home in one is not loaded again after such a
+   call. A general home is a register no emitter uses as scratch while a
+   home is live: R_S0 to R_S3 and R_S6 are scratch anywhere, and R_S4,
+   R_S5, R_H1 and R_H2 only where an instruction has read its last home
+   and no slow path of it is still to come (emit.c's calls, after the
+   argument is stored). */
 
 void as_init(Asm *a);
 void as_free(Asm *a);
@@ -125,6 +178,13 @@ void as_test_rr(Asm *a, int ra, int rb);
 void as_add_ri(Asm *a, int rd, int32_t v);
 void as_sub_ri(Asm *a, int rd, int32_t v);
 void as_cmp_ri(Asm *a, int r, int32_t v);
+void as_and_ri(Asm *a, int rd, int32_t v);                  /* flags undefined, as and */
+void as_or_ri(Asm *a, int rd, int32_t v);
+void as_test_ri(Asm *a, int r, int32_t v);                  /* the flags of r & v, for CC_E and CC_NE */
+void as_test8_mi(Asm *a, int base, int32_t disp, int v);    /* the flags of the byte at [base + disp] & v */
+void as_ror_ri(Asm *a, int r, int n);                       /* rotate right by n, 1 to 63 */
+void as_add_jc(Asm *a, int rd, int rs, AsmLabel *carry);    /* rd += rs; to carry where the sum, unsigned, is past 64 bits */
+void as_sub_jb(Asm *a, int rd, int rs, AsmLabel *borrow);   /* rd -= rs; to borrow where rd, unsigned, was below rs */
 void as_mul_rr(Asm *a, int rd, int rs);
 void as_mul_ri(Asm *a, int rd, int rs, int32_t v);
 void as_mul_jo(Asm *a, int rd, int rs, AsmLabel *overflow);
@@ -148,10 +208,15 @@ void as_jmp(Asm *a, AsmLabel *l);
 void as_jcc(Asm *a, int cc, AsmLabel *l);
 void as_jmp_r(Asm *a, int r);
 void as_jmp_to(Asm *a, const void *at);
+void as_call_to(Asm *a, const void *at);                    /* a call of code at an address the code reaches: its region's */
+size_t as_trampoline(Asm *a, int win, uint64_t addr);       /* here, aligned: code that a call of it makes a call of C's addr with R_VM its first argument, by the convention; its offset */
 void as_call_r(Asm *a, int r);
 void as_ret(Asm *a);
 void as_trap(Asm *a);
 void as_setcc(Asm *a, int rd, int cc);
+#ifdef RUNE_JIT_CONV
+void as_count(Asm *a, uint64_t *counter);   /* *counter += 1; every register and the flags kept (a measuring build's; x86-64) */
+#endif
 void as_push(Asm *a, int r);
 void as_pop(Asm *a, int r);
 
@@ -165,6 +230,12 @@ void as_fdiv(Asm *a, int fd, int fs);
 void as_fsqrt(Asm *a, int fd, int fs);
 void as_fcmp(Asm *a, int fa, int fb);
 void as_fzero(Asm *a, int f);
+void as_cvt_i2f(Asm *a, int f, int r);                      /* f := the double of the integer in r, rounded as the mode says */
+/* r := the double in f truncated to an integer; to unless where it is a NaN
+   on a machine whose conversion would give 0 for one (aarch64). A NaN on
+   x86-64, and a double that 64 bits do not hold on either, give a number
+   that 63 bits do not hold, which who asks for an int tests. */
+void as_cvt_f2i(Asm *a, int r, int f, AsmLabel *unless);
 void as_fmov_rf(Asm *a, int r, int f);                      /* the bits */
 void as_fmov_fr(Asm *a, int f, int r);
 

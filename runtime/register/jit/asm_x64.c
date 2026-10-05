@@ -49,6 +49,13 @@ void as_test_rr(Asm *a, int ra, int rb) { x64_test_rr(a, ra, rb); }
 void as_add_ri(Asm *a, int rd, int32_t v) { x64_add_ri(a, rd, v); }
 void as_sub_ri(Asm *a, int rd, int32_t v) { x64_sub_ri(a, rd, v); }
 void as_cmp_ri(Asm *a, int r, int32_t v) { x64_cmp_ri(a, r, v); }
+void as_and_ri(Asm *a, int rd, int32_t v) { x64_and_ri(a, rd, v); }
+void as_or_ri(Asm *a, int rd, int32_t v) { x64_or_ri(a, rd, v); }
+void as_test_ri(Asm *a, int r, int32_t v) { x64_test_ri(a, r, v); }
+void as_test8_mi(Asm *a, int base, int32_t disp, int v) { x64_test8_mi(a, base, disp, v); }
+void as_ror_ri(Asm *a, int r, int n) { x64_ror_ri(a, r, n); }
+void as_add_jc(Asm *a, int rd, int rs, AsmLabel *carry) { x64_add_rr(a, rd, rs); x64_jcc(a, CC_B, carry); }
+void as_sub_jb(Asm *a, int rd, int rs, AsmLabel *borrow) { x64_sub_rr(a, rd, rs); x64_jcc(a, CC_B, borrow); }
 void as_mul_rr(Asm *a, int rd, int rs) { x64_imul_rr(a, rd, rs); }
 void as_mul_ri(Asm *a, int rd, int rs, int32_t v) { x64_imul_rri(a, rd, rs, v); }
 void as_mul_jo(Asm *a, int rd, int rs, AsmLabel *overflow) { x64_imul_rr(a, rd, rs); x64_jcc(a, CC_O, overflow); }
@@ -82,6 +89,7 @@ void as_jcc(Asm *a, int cc, AsmLabel *l) {
 }
 void as_jmp_r(Asm *a, int r) { x64_jmp_r(a, r); }
 void as_jmp_to(Asm *a, const void *at) { x64_jmp_to(a, at); }
+void as_call_to(Asm *a, const void *at) { x64_call_to(a, at); }
 void as_call_r(Asm *a, int r) { x64_call_r(a, r); }
 void as_ret(Asm *a) { x64_ret(a); }
 void as_trap(Asm *a) { x64_int3(a); }
@@ -97,6 +105,16 @@ void as_setcc(Asm *a, int rd, int cc) {
     x64_setcc_r8(a, cc, rd);
     x64_movzx8_rr(a, rd, rd);
 }
+#ifdef RUNE_JIT_CONV
+void as_count(Asm *a, uint64_t *counter) {
+    x64_push_r(a, RAX); x64_push_r(a, RCX);
+    x64_mov_ri(a, RAX, (int64_t)(intptr_t)counter);
+    x64_mov_rm(a, RCX, RAX, 0);
+    x64_lea(a, RCX, RCX, -1, 1, 1);
+    x64_mov_mr(a, RAX, 0, RCX);
+    x64_pop_r(a, RCX); x64_pop_r(a, RAX);
+}
+#endif
 void as_push(Asm *a, int r) { x64_push_r(a, r); x64_sub_ri(a, RSP, 8); }
 void as_pop(Asm *a, int r) { x64_add_ri(a, RSP, 8); x64_pop_r(a, r); }
 
@@ -110,6 +128,8 @@ void as_fdiv(Asm *a, int fd, int fs) { x64_divsd(a, fd, fs); }
 void as_fsqrt(Asm *a, int fd, int fs) { x64_sqrtsd(a, fd, fs); }
 void as_fcmp(Asm *a, int fa, int fb) { x64_ucomisd(a, fa, fb); }
 void as_fzero(Asm *a, int f) { x64_xorpd(a, f, f); }
+void as_cvt_i2f(Asm *a, int f, int r) { x64_cvtsi2sd(a, f, r); }
+void as_cvt_f2i(Asm *a, int r, int f, AsmLabel *unless) { (void)unless; x64_cvttsd2si(a, r, f); }
 void as_fmov_rf(Asm *a, int r, int f) { x64_movq_rx(a, r, f); }
 void as_fmov_fr(Asm *a, int f, int r) { x64_movq_xr(a, f, r); }
 
@@ -141,6 +161,30 @@ int as_arg(int win, int i) {
     static const int sysv[4] = { RDI, RSI, RDX, RCX };
     static const int winr[4] = { RCX, RDX, R8, R9 };
     return win ? winr[i] : sysv[i];
+}
+/* A trampoline: the code's region is far from C's, out of reach of a
+   rel32, so a call of C there is the VM moved to the first argument, a
+   64-bit address in a register and an indirect call, fifteen bytes, and
+   on Windows eight more for the space its convention gives the callee.
+   A call of the trampoline is five: it moves the VM, and on Linux jumps
+   on through the address beside it, C returning to the caller; on
+   Windows it makes the space and the call itself. */
+size_t as_trampoline(Asm *a, int win, uint64_t addr) {
+    while (a->n % 16) x64_byte(a, 0xCC);
+    size_t at = a->n;
+    x64_mov_rr(a, as_arg(win, 0), R_VM);                        /* 3 bytes */
+    if (!win) {
+        x64_byte(a, 0xFF); x64_byte(a, 0x25); x64_u32(a, 0);   /* jmp [rip + 0]: the address that follows, at 9 */
+        x64_u64(a, addr);
+    } else {
+        x64_sub_ri(a, RSP, 40);                                 /* 32 for the callee, 8 to align: a call pushed 8 */
+        x64_byte(a, 0xFF); x64_byte(a, 0x15); x64_u32(a, 11);  /* call [rip + 11]: from 13, the address at 24 */
+        x64_add_ri(a, RSP, 40);
+        x64_ret(a);
+        while (a->n - at < 24) x64_byte(a, 0xCC);
+        x64_u64(a, addr);
+    }
+    return at;
 }
 void as_call_c(Asm *a, int win, uint64_t addr) {
     x64_mov_ri(a, RAX, (int64_t)addr);

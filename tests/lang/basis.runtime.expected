@@ -1,5 +1,5 @@
-a list cell: 40 bytes, 1 object
-a ref: 24 bytes, 1 object
+a list cell: 24 bytes, 1 object
+a ref: 16 bytes, 1 object
 instructions grow: true
 live within the semispace: true
 allocated covers what is in use: true

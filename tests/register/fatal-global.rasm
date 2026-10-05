@@ -1,0 +1,18 @@
+# A fatal error of compiled code (scripts/check-jit.sh): a global read
+# before it is set, in a function the JIT compiles.
+const start string "start\n"
+globals 2
+
+function main 6
+  CONST 1 %start
+  PRIM print 2 1
+  INT 1 5
+  CALLK &peek 1 1
+  RESULT 3
+  HALT
+
+function peek 4
+  INT 1 7
+  PRIM int_add 2 0 1
+  GLOBAL 3 1
+  RET 3

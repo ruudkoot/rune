@@ -80,6 +80,10 @@ void x64_add_ri(X64 *a, int dst, int32_t imm);
 void x64_sub_ri(X64 *a, int dst, int32_t imm);
 void x64_and_ri(X64 *a, int dst, int32_t imm);
 void x64_cmp_ri(X64 *a, int r, int32_t imm);
+void x64_or_ri(X64 *a, int dst, int32_t imm);
+void x64_test_ri(X64 *a, int r, int32_t imm);                  /* the flags of r & imm */
+void x64_ror_ri(X64 *a, int r, int imm);
+void x64_test8_mi(X64 *a, int base, int32_t disp, int imm8);    /* the flags of byte [base + disp] & imm8 */
 void x64_imul_rr(X64 *a, int dst, int src);
 void x64_imul_rri(X64 *a, int dst, int src, int32_t imm);   /* dst := src * imm */
 void x64_neg_r(X64 *a, int r);
@@ -115,6 +119,8 @@ void x64_mulsd(X64 *a, int dst, int src);
 void x64_divsd(X64 *a, int dst, int src);
 void x64_ucomisd(X64 *a, int a_, int b);
 void x64_xorpd(X64 *a, int dst, int src);
+void x64_cvtsi2sd(X64 *a, int xmm, int r);                       /* xmm := (double) r, 64 bits */
+void x64_cvttsd2si(X64 *a, int r, int xmm);                      /* r := the double truncated, 64 bits */
 void x64_movq_rx(X64 *a, int r, int xmm);    /* r := the bits of xmm */
 void x64_movq_xr(X64 *a, int xmm, int r);
 
@@ -123,6 +129,7 @@ void x64_jmp(X64 *a, X64Label *l);
 void x64_jcc(X64 *a, int cc, X64Label *l);
 void x64_jmp_r(X64 *a, int r);
 void x64_jmp_to(X64 *a, const void *target);   /* jmp rel32 to an address, from base + here; fails when out of reach */
+void x64_call_to(X64 *a, const void *target);  /* call rel32 to an address, the same */
 void x64_jmp_m(X64 *a, int base, int index, int scale, int32_t disp);   /* jmp [base + index*scale + disp] */
 void x64_call_r(X64 *a, int r);
 void x64_ret(X64 *a);

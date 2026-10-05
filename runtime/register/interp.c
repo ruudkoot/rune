@@ -19,6 +19,7 @@
    the loop prints every instruction (--trace), so that the first need not
    ask. */
 #include "regvm.h"
+#include "live.h"
 #include "fastprim.h"
 #include "jit.h"
 
@@ -170,6 +171,12 @@ int vm_run(VM *vm) {
    exceptions and frames being those of the image. */
 int vm_loop(VM *vm) {
     make_room(vm);
+#ifndef RUNE_ROOTS_ALL   /* the switch: every register a root, as before heap-layout M6 */
+    vm->frame_live = reg_frame_live;
+#endif
+#ifdef RUNE_BARRIER_CARDS
+    heap_cards(vm);
+#endif
     int r = RUN_INTERP;
     for (;;) {
         /* the program may have become another (Runtime.restore) */

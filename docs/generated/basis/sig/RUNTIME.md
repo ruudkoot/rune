@@ -7,7 +7,7 @@
 | Status | extension |
 | Implementations | 1 |
 | Documentation | 12 of 12 entries documented |
-| Tests | 35 checks of 9 entries |
+| Tests | 37 checks of 9 entries |
 | Source | [lib/basis/runtime\_sig.sml](../../../../lib/basis/runtime_sig.sml) |
 
 ## Synopsis
@@ -87,9 +87,9 @@ machine, the pointer width, the heap size or when the collector ran --
 so two runs of one program report the same. The last two depend on the
 heap size and so on `runevm --heap-size`.
 
-A value is 16 bytes and an object costs an 8-byte header and a payload
-rounded up to 16, so the smallest object is 24 bytes and a list cell,
-one object of two fields, is 40.
+A value is 8 bytes and an object costs an 8-byte header and a payload
+of 8-byte fields, so the smallest object is 16 bytes and a list cell,
+one object of two fields, is 24.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -114,9 +114,9 @@ though, so the other five agree.
 
 **Example** `#live (stats ()) <= #heapSize (stats ()) = true`
 
-<details><summary>Tests (8)</summary>
+<details><summary>Tests (10)</summary>
 
-For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `instructions-grow` &middot; `bytes-count-a-list-cell` &middot; `objects-count-a-list-cell` &middot; `bytes-count-the-smallest-object` &middot; `objects-count-the-smallest-object` &middot; `live-is-within-the-semispace` &middot; `bytes-cover-what-is-in-use` &middot; `collections-and-objects-are-not-negative`
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `instructions-grow` &middot; `bytes-count-a-list-cell` &middot; `objects-count-a-list-cell` &middot; `bytes-count-the-smallest-object` &middot; `objects-count-the-smallest-object` &middot; `bytes-count-an-array-of-bytes` &middot; `bytes-count-an-array-of-reals` &middot; `live-is-within-the-semispace` &middot; `bytes-cover-what-is-in-use` &middot; `collections-and-objects-are-not-negative`
 
 </details>
 

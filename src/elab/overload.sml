@@ -53,13 +53,20 @@ struct
     List.map (fn (name, suffix) => (name, Prim (prefix ^ "_" ^ suffix))) names
   val cmp = [("<", "lt"), ("<=", "le"), (">", "gt"), (">=", "ge")]
 
+  (* int and word are the VM's immediates, of 63 bits (docs/plans/heap-layout.md,
+     D2 B); a VM built to keep 64 (D2 A, -DRUNE_INT64) is compiled for with
+     --int-bits=64, which calls setIntBits. Int64.int and Word64.word are 64
+     bits on every VM. *)
+  val intOps = [("+", "add"), ("-", "sub"), ("*", "mul"), ("div", "div"), ("mod", "mod"), ("~", "neg"), ("abs", "abs")] @ cmp
+  val wordOps = [("+", "add"), ("-", "sub"), ("*", "mul"), ("div", "div"), ("mod", "mod"), ("~", "neg")] @ cmp
+  fun setIntBits (n : int) =
+    (register (Types.intTycon, "int", prims ("int", intOps), Bits n);
+     register (Types.wordTycon, "word", prims ("word", wordOps), Bits n))
+
   val () =
-    (register (Types.intTycon, "int",
-               prims ("int", [("+", "add"), ("-", "sub"), ("*", "mul"), ("div", "div"), ("mod", "mod"),
-                              ("~", "neg"), ("abs", "abs")] @ cmp), Bits 64);
-     register (Types.wordTycon, "word",
-               prims ("word", [("+", "add"), ("-", "sub"), ("*", "mul"), ("div", "div"), ("mod", "mod"),
-                               ("~", "neg")] @ cmp), Bits 64);
+    (setIntBits 63;
+     register (Types.int64Tycon, "int", prims ("int64", intOps), Bits 64);
+     register (Types.word64Tycon, "word", prims ("word64", wordOps), Bits 64);
      register (Types.realTycon, "real",
                prims ("real", [("+", "add"), ("-", "sub"), ("*", "mul"), ("/", "div"), ("~", "neg"),
                                ("abs", "abs")] @ cmp), Bits 64);

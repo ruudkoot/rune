@@ -74,9 +74,11 @@ void a64_asrv(A64 *a, int rd, int rn, int rm);
 void a64_lsl_ri(A64 *a, int rd, int rn, int shift);      /* 0 to 63 */
 void a64_lsr_ri(A64 *a, int rd, int rn, int shift);
 void a64_asr_ri(A64 *a, int rd, int rn, int shift);
+void a64_ror_ri(A64 *a, int rd, int rn, int shift);
 void a64_ubfx(A64 *a, int rd, int rn, int lsb, int width);
 void a64_sxtw(A64 *a, int rd, int rn);
 void a64_and_mask(A64 *a, int rd, int rn, int bits);     /* rd := rn & ((1 << bits) - 1), bits 1 to 63 */
+void a64_tst_mask(A64 *a, int rn, int bits);             /* the flags of rn & ((1 << bits) - 1), bits 1 to 63 */
 /* arithmetic with an immediate: imm12, or imm12 << 12, else through x16 */
 void a64_add_ri(A64 *a, int rd, int rn, int64_t v);
 void a64_sub_ri(A64 *a, int rd, int rn, int64_t v);
@@ -124,6 +126,8 @@ void a64_br(A64 *a, int rn);
 void a64_blr(A64 *a, int rn);
 void a64_ret(A64 *a);
 void a64_b_to(A64 *a, const void *at);                   /* to an address: b where it is in range of base, else through x16 */
+void a64_bl_to(A64 *a, const void *at);                  /* a call of an address: bl where it is in range of base, else through x16 */
+void a64_ldr_lit(A64 *a, int rt, int32_t off);           /* rt := the 64 bits at here + off (a multiple of 4) */
 void a64_adr(A64 *a, int rd, A64Label *l);               /* rd := the address of l */
 void a64_cset(A64 *a, int rd, int cond);
 void a64_csel(A64 *a, int rd, int rn, int rm, int cond);

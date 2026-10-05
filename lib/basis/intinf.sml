@@ -1,5 +1,5 @@
 (* IntInf: arbitrary precision integers implemented in SML on top of the
-   64-bit int. A value is a sign and a little-endian list of base-2^30 limbs
+   VM's int (63 bits). A value is a sign and a little-endian list of base-2^30 limbs
    without high zero limbs; zero is never negative. The representation is
    therefore canonical and structural equality is value equality.
 

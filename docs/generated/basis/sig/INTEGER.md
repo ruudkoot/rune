@@ -18,7 +18,7 @@ structure FixedInt : INTEGER where type int = Int64.int  (* optional *)
 structure Int : INTEGER
 structure Int16 : INTEGER  (* optional *)
 structure Int32 : INTEGER  (* optional *)
-structure Int64 :> INTEGER  (* optional *)
+structure Int64 : INTEGER  (* optional *)
 structure Int8 : INTEGER  (* optional *)
 structure IntInf : INTEGER  (* optional *)
 structure LargeInt : INTEGER where type int = IntInf.int
@@ -27,13 +27,13 @@ structure Position : INTEGER
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`FixedInt`](../str/Int64.md) | The largest fixed-precision integer: [`Int`](../str/Int.md) is of no fixed precision here, so it is the 64-bit one. | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
-| [`Int`](../str/Int.md) | Int: fixed precision integers with Overflow checking: 64 bits on the VM. The bounds are found with the arithmetic itself (2n + 1 until it overflows), so that this file means the same to a system whose int is narrower; see tests/basis/README.md on the xc1 configurations. | [lib/basis/int.sml](../../../../lib/basis/int.sml) |
+| [`FixedInt`](../str/Int64.md) | The largest fixed-precision integer: [`Int`](../str/Int.md) is the VM's word less a bit, so it is the 64-bit one. | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
+| [`Int`](../str/Int.md) | Int: fixed precision integers with Overflow checking: 63 bits on the VM. The bounds are found with the arithmetic itself (2n + 1 until it overflows), so that this file means the same to a system whose int is narrower; see tests/basis/README.md on the xc1 configurations. | [lib/basis/int.sml](../../../../lib/basis/int.sml) |
 | [`Int16`](../str/Int16.md) | Int16: integers of 16 bits. | [lib/basis/int16.sml](../../../../lib/basis/int16.sml) |
 | [`Int32`](../str/Int32.md) | Int32: integers of 32 bits. | [lib/basis/int32.sml](../../../../lib/basis/int32.sml) |
 | [`Int64`](../str/Int64.md) | Int64: the 64-bit integers, and FixedInt, the largest of the fixed-precision ones, which is the same structure. | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
 | [`Int8`](../str/Int8.md) | Int8: integers of 8 bits. | [lib/basis/int8.sml](../../../../lib/basis/int8.sml) |
-| [`IntInf`](../str/IntInf.md) | IntInf: arbitrary precision integers implemented in SML on top of the 64-bit int. A value is a sign and a little-endian list of base-2^30 limbs without high zero limbs; zero is never negative. The representation is therefore canonical and structural equality is value equality. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
+| [`IntInf`](../str/IntInf.md) | IntInf: arbitrary precision integers implemented in SML on top of the VM's int (63 bits). A value is a sign and a little-endian list of base-2^30 limbs without high zero limbs; zero is never negative. The representation is therefore canonical and structural equality is value equality. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
 | [`LargeInt`](../str/IntInf.md) | The largest integers are the arbitrary precision ones: "If an implementation provides the IntInf structure, then LargeInt must be the same structure as IntInf (viewed through a thinning INTEGER signature)", which is why the seal file shows a program only what INTEGER names, as MLton, SML/NJ and Poly/ML do. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
 | [`Position`](../str/Int.md) | Position: the positions in a file. On the VM it is Int. | [lib/basis/position.sml](../../../../lib/basis/position.sml) |
 
@@ -114,13 +114,15 @@ eqtype int
 
 The type of integers of this structure.
 
-> **Implementation** `Int.int/64-bits`. [`Int.int`](#type-int) is the top-level [`int`](#type-int),
-> whose width is the VM's: 64 bits on this one, so that [`Int.precision`](#val-precision) is
-> `SOME 64`. [`Position`](../str/Int.md) is [`Int`](../str/Int.md). [`Int64`](../str/Int64.md) and [`FixedInt`](../str/Int64.md) are of 64 bits as
-> well, but sealed away from [`Int.int`](#type-int), so that no program can take the one
-> for the other and the VM stays free to choose the width of [`Int`](../str/Int.md); [`Int8`](../str/Int8.md),
-> [`Int16`](../str/Int16.md) and [`Int32`](../str/Int32.md) keep a value of their own width, and [`LargeInt`](../str/IntInf.md) is
-> [`IntInf`](../str/IntInf.md), which has no width. Constants of each are checked against its
+> **Implementation** `Int.int/63-bits`. [`Int.int`](#type-int) is the top-level [`int`](#type-int),
+> whose width is the VM's: 63 bits on this one, a word of the machine less
+> the bit that tells a number from a pointer, so that [`Int.precision`](#val-precision) is
+> `SOME 63`. [`Position`](../str/Int.md) is [`Int`](../str/Int.md). [`Int64`](../str/Int64.md) and [`FixedInt`](../str/Int64.md) are of 64 bits, a
+> type of their own: a number of theirs is kept in a word where it fits 63
+> bits and in a small object where it needs the 64th, so that code written
+> for 64 bits has them on every machine; [`Int8`](../str/Int8.md), [`Int16`](../str/Int16.md) and [`Int32`](../str/Int32.md) keep
+> a value of their own width, and [`LargeInt`](../str/IntInf.md) is [`IntInf`](../str/IntInf.md), which has no
+> width. Constants of each are checked against its
 > range where they are written.
 
 <details><summary>Tests (4)</summary>
@@ -257,7 +259,9 @@ val precision : Int.int option
 
 [`precision`](#val-precision) is the number of bits of an integer of this structure, sign included, or `NONE` when there is no bound.
 
-**Example** `precision = SOME 64`
+**Example** `Int.precision = SOME 63`
+
+**Example** `Int64.precision = SOME 64`
 
 **Example** `IntInf.precision = NONE`
 
@@ -289,7 +293,9 @@ val minInt : int option
 
 **Law** `case precision of SOME p => minInt = SOME (fromLarge (IntInf.~ (IntInf.pow (2, Int.- (p, 1))))) | NONE => true`
 
-**Example** `minInt = SOME ~9223372036854775808`
+**Example** `Int.minInt = SOME ~4611686018427387904`
+
+**Example** `Int64.minInt = SOME ~9223372036854775808`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -318,7 +324,9 @@ too.
 
 **Law** `case precision of SOME p => maxInt = SOME (fromLarge (IntInf.- (IntInf.pow (2, Int.- (p, 1)), 1))) | NONE => true`
 
-**Example** `Int.maxInt = SOME 9223372036854775807`
+**Example** `Int.maxInt = SOME 4611686018427387903`
+
+**Example** `Int64.maxInt = SOME 9223372036854775807`
 
 <details><summary>Other implementations (1)</summary>
 

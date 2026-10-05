@@ -45,11 +45,21 @@ typedef struct Function {
     MetaBlock *blocks;
     uint32_t nloops;
     uint32_t *loops;     /* the pcs of the loop heads */
+    /* What is live where a frame of the function waits for a call
+       (runtime/register/live.c), made when the collector first asks: the
+       pcs calls return to, in order, and the registers live at each. Not in
+       a file or an image; they go with the program (program_free_meta). */
+    int live_made;
+    uint32_t nlive;
+    uint32_t *live_pc;
+    uint64_t *live_at;
 } Function;
 
 /* What a register holds, as the compiler says (Low.rep; the numbers are the
    file's) */
-enum Rep { REP_ANY = 0, REP_INT, REP_WORD, REP_REAL, REP_CHAR, REP_CON0, REP_PTR, REP_CON, REP_UNIT, REP__COUNT };
+enum Rep { REP_ANY = 0, REP_INT, REP_WORD, REP_REAL, REP_CHAR, REP_CON0, REP_PTR, REP_CON, REP_UNIT,
+           REP_INT64, REP_WORD64,   /* Int64.int, Word64.word: an immediate or a K_BOX */
+           REP__COUNT };
 
 /* Where an instruction came from: the file, line and column the compiler
    recorded for the instructions from `pc` up to the next entry's, and the
@@ -76,9 +86,14 @@ typedef struct Inlined {
     uint32_t parent;
 } Inlined;
 
+/* the kinds of a constant, as a bytecode file numbers them */
+enum ConstKind { CONST_INT = 0, CONST_WORD = 1, CONST_REAL = 2, CONST_STRING = 3, CONST_CHAR = 4,
+                 CONST_INT64 = 5, CONST_WORD64 = 6, CONST__COUNT };
+
 typedef struct Program {
     uint32_t nconsts;
     Value *consts;
+    uint8_t *const_kinds;   /* what the bytecode said each is (CONST_INT ...): a value does not say, and an image must */
     uint32_t nglobals;
     uint32_t nfuncs;
     Function *funcs;
@@ -143,56 +158,96 @@ typedef struct JitOptions {
 
 #define NUM_BUILTIN_EXNS 8
 
+/* Where the next object goes: the state of the thread that allocates. There
+   is one thread, and one of these, in the VM; a nursery of a thread's own or
+   a buffer it bumps in is this struct and the fast path of vm_alloc, of the
+   JIT's ms_alloc and of runeopt's template, changed together
+   (docs/plans/heap-layout.md, M7; D6, D8). */
+typedef struct AllocState {
+    char *from;      /* the semispace objects go into */
+    size_t size;     /* the size of one semispace */
+    size_t used;     /* how much of it is taken */
+} AllocState;
+
+/* The collector's own (runtime/heap.c): nothing of it is a variable of the
+   file, so every VM of a process collects by itself. */
+typedef struct GcState {
+    char *kept;          /* the other semispace, kept while the heap stays the size it is;
+                            NULL before the first collection and after one that grew the heap */
+    char *to;            /* during a collection: the space copied into */
+    size_t to_used;      /* and how much of it is taken */
+    size_t to_boxes;     /* of to_used, the boxes (box_bytes_live) */
+    size_t to_used_stock;   /* the census VM's count of to_used by the stock sizes */
+    uintptr_t reloc_old; /* heap_relocate: where the heap was */
+    int reloc_ok;
+} GcState;
+
 typedef struct VM {
-    Program prog;
-
-    Value *stack;
-    size_t sp, stack_cap;
-    size_t stack_limit;      /* the most bytes the value stack, the frames or the handlers may take (--stack-size): a runaway recursion stops here, not at the machine's memory */
-
+    /* First what compiled code reads and writes most, in 128 bytes:
+       runtime/register's JIT (and runeopt's code) names a field by its
+       offset from the VM, and on x86-64 an offset below 128 makes every
+       instruction that names it three bytes shorter -- a tenth of the
+       code the compiler compiles to was those bytes. The order of the
+       rest is nothing's concern. */
+    uint64_t instructions;   /* executed so far */
+    uint32_t pc;
+    int checked;             /* --checked: DECON tests its tag (decision D14), for the test suites */
     Frame *frames;
     size_t fp, frames_cap;   /* fp = index of current frame; frames_cap capacity */
+    Value *stack;
+    size_t sp, stack_cap;
+    AllocState alloc;        /* the heap (Cheney semispace): where the next object goes */
+    uint64_t bytes_allocated;  /* not size_t: --count prints the same where it is 32 bits */
+    uint64_t objects_allocated;
+    size_t gc_stress;        /* --gc-stress N: collect before every Nth allocation; 0 = off */
+    Value *globals;
+    uint8_t *global_set;
+
+    Program prog;
+
+    size_t stack_limit;      /* the most bytes the value stack, the frames or the handlers may take (--stack-size): a runaway recursion stops here, not at the machine's memory */
+
     int frames_active;       /* 1 once the toplevel frame exists */
 
     Handler *handlers;
     size_t hp, handlers_cap;
 
-    Value *globals;
-    uint8_t *global_set;
-
     Obj *builtin_exns[NUM_BUILTIN_EXNS];
 
-    /* heap (Cheney semispace) */
-    char *heap_from, *heap_to;
-    size_t heap_size;        /* size of one semispace */
-    size_t heap_used;
+    GcState gc;              /* the collector's own */
 #ifdef RUNE_CENSUS
-    size_t census_used_stock;  /* heap_used as the stock VM would count it (8-byte headers): the collector's trigger */
+    size_t census_used_stock;  /* alloc.used as the stock VM would count it (8-byte headers): the collector's trigger */
 #endif
     size_t gc_count;
     size_t live_last;        /* bytes the last collection kept, and the one before it: */
     size_t live_before;      /* vm_gc guesses from them whether the heap must grow */
     int64_t gc_user_us;      /* processor time spent collecting, in microseconds */
     int64_t gc_sys_us;
-    uint64_t bytes_allocated;  /* not size_t: --count prints the same where it is 32 bits */
-    uint64_t objects_allocated;
+    int64_t gc_longest_us;   /* the longest of the collections, both times together (--stats): what the program waited at once */
+    /* The boxes of the representation -- a real with no immediate, an int
+       or a word past 63 bits under RUNE_INT64 -- are counted apart: they
+       are the layout's, not the program's, and where one is made is the
+       engine's (tier 2 boxes a real when a safepoint wants its word, the
+       loop when it is produced), so --count leaves them out and stays the
+       same on every engine and under every layout; --stats reports them. */
+    uint64_t boxes_allocated;
+    uint64_t box_bytes_allocated;
+    size_t box_bytes_live;     /* of alloc.used, what is boxes: Runtime.stats's live leaves them out, as its bytes do */
     uint64_t copied;         /* bytes every collection copied, in all (--stats) */
     size_t max_live;         /* the most a collection kept (--stats) */
-    uint64_t instructions;   /* executed so far */
-    size_t gc_stress;        /* --gc-stress N: collect before every Nth allocation; 0 = off */
     unsigned heap_fill;      /* --heap-fill P: the heap grows until at most P% of it is in use
                                 after a collection; 50 unless the option says otherwise */
     size_t heap_limit;       /* maximum semispace size; 0 = unlimited */
     size_t equality_work;    /* comparison steps; 0 = the default 1000000 */
 
-    uint32_t pc;
     int trace;
     int stats;
     int count;               /* --count: report the deterministic counters at exit */
     int emulate_fork;        /* --emulate-fork: fork as Windows must, by a second VM (runtime/image.c) */
-    int checked;             /* --checked: DECON tests its tag (decision D14), for the test suites */
     int native;              /* a program runeopt made, whose code is not bytecode (runtime/native/native.c) */
     JitOptions jit;          /* the --jit options, runtime/register's (runtime/register/jit.h); all 0 in runevm-stack */
+    uint64_t jit_fspill[32]; /* tier 2's reals in their homes, raw, across the helper that boxes one: a cell for each of the machine's registers, by its number (jit/masm.c) */
+    uint64_t jit_gspill[32]; /* and its general homes, an int's or a word's 64 bits among them, and the number being boxed where it is in no home */
 
     int argc;
     char **argv;             /* arguments after the bytecode file */
@@ -207,7 +262,34 @@ typedef struct VM {
                                 inherit descriptors from (Runtime.save); NULL for the standard streams */
     size_t nfiles, files_cap;
     int io_errno;            /* errno of the last failed file_open / file_write */
+    Obj *real_boxes[REAL_BOXES];   /* the boxes of the reals that have no immediate and are everywhere
+                                      (value.h): made as the VM starts, roots, in an image */
+    /* Which registers of function FUNC are live while a frame of it waits
+       for the call that returns to RET_PC (bit r for register r; those past
+       the 64th are live), for the collector's roots (heap.c). NULL where
+       the engine does not say, and every slot of the stack is a root: the
+       stack bytecode, a program runeopt made. */
+    uint64_t (*frame_live)(struct VM *vm, uint32_t func, uint32_t ret_pc);
+    /* The values that C holds across a collection (docs/plans/heap-layout.md,
+       D9 and M8): a handle is an index here, the table is a root, and what a
+       handle names is found again after the object moved. The free entries
+       are a list through the table (each holds the next one's number as an
+       immediate; handles_free is the first's, plus one, 0 for none). An
+       image has no handles: they are a process's. */
+    Value *handles;
+    size_t nhandles, handles_cap, handles_free;
+#ifdef RUNE_BARRIER_CARDS
+    uint8_t *jit_cards;      /* the measuring barrier's table, where compiled code finds it (value.h, BARRIER) */
+#endif
 } VM;
+
+/* Whether p points into the space objects are made in. Young and old are
+   told apart by address, not by a bit of the header (docs/plans/heap-layout.md,
+   D7): this is the test a nursery will make, of its own range. Today every
+   object is there. */
+static inline int heap_is_young(const VM *vm, const void *p) {
+    return (uintptr_t)((const char *)p - vm->alloc.from) < (uintptr_t)vm->alloc.size;
+}
 
 /* heap.c */
 void heap_init(VM *vm, size_t semispace_bytes);
@@ -218,6 +300,23 @@ Obj *vm_string_from(VM *vm, const char *s, uint32_t len);
 size_t obj_size(const Obj *o);      /* header and payload, rounded as the heap lays it out */
 void vm_gc(VM *vm, size_t needed);
 int heap_relocate(VM *vm, uintptr_t old_base);  /* after an image is read: 0 when it is not sound */
+/* The handles (VM.handles): a value kept for C across collections. */
+size_t vm_handle_new(VM *vm, Value v);            /* a handle for the value */
+Value vm_handle_get(const VM *vm, size_t h);      /* the value, where it is now */
+void vm_handle_set(VM *vm, size_t h, Value v);
+void vm_handle_free(VM *vm, size_t h);
+/* An array of bytes or of reals for C to keep a pointer to across calls
+   that may collect: no object stays where it is under the copier, so C gets
+   a copy that does (D9: copying in and out around the call, until there is
+   a space that does not move), and gives it back. vm_pin copies the
+   object's payload out and returns the copy, NULL where there is no memory
+   or the handle names no such array; vm_unpin copies it back into the
+   object, wherever it is by then, and frees the copy. */
+void *vm_pin(VM *vm, size_t h, size_t *bytes);
+void vm_unpin(VM *vm, size_t h, void *copy);
+#ifdef RUNE_BARRIER_CARDS
+void heap_cards(VM *vm);
+#endif
 
 /* runtime.c: all of a VM but its dispatch loop and its command line. What
    the loop does at every instruction is inline here, where it can be made
@@ -249,8 +348,8 @@ static inline Value *vm_top(VM *vm, size_t depth) {    /* pointer to stack[sp-1-
 /* The object v points to, which must be of that kind; the instructions stop
    the program with "expected <what>" where it is not. */
 static inline Obj *vm_expect_obj(VM *vm, Value v, int kind, const char *what) {
-    if (v.tag != T_PTR || v.u.p->kind != kind) vm_fatal(vm, "expected %s", what);
-    return v.u.p;
+    if (!val_is(v, T_PTR) || !val_ptr(v) || obj_kind(val_ptr(v)) != kind) vm_fatal(vm, "expected %s", what);
+    return val_ptr(v);
 }
 static inline void vm_push_frame(VM *vm, uint32_t func, Obj *closure, uint32_t ret_pc, size_t base) {
     size_t idx = vm->frames_active ? vm->fp + 1 : 0;
@@ -310,7 +409,7 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen);
 
 /* What each VM's instruction set gives (runtime/stack/isa_stack.c, runtime/register/isa_regs.c):
    the fingerprint an .rbc must carry, and the first bytes of an image. */
-#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 7 isa 00000000")
+#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 10 isa 00000000")
 extern const uint32_t isa_fingerprint;
 extern const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE];
 const LineEntry *line_at(const Program *p, uint32_t pc);

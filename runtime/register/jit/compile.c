@@ -3,6 +3,7 @@
 #include "register/fastprim.h"
 #include "sys/sys.h"
 #include "register/jit_emit.h"
+#include "register/live.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +30,27 @@ static const char *const fatal_text[] = {
 
 void jit_h_fatal(VM *vm, int what, int32_t a, int32_t b) {
     vm_fatal(vm, fatal_text[what], (int)a, (int)b);
+}
+/* the fatal error numbered k (jit_fatal), from the stub, with the value
+   rcx held: its message and its trace read the pc and the frames, and
+   the frames are always exact */
+void jit_h_fatal_at(VM *vm, uint32_t k, int64_t value) {
+    const JitFatalSite *f = &jit_program(vm)->fatals[k];
+    vm->pc = f->pc;
+    vm_fatal(vm, fatal_text[f->what], f->value ? (int)value : (int)f->a, (int)f->b);
+}
+/* a fatal error's record, its number; UINT32_MAX where there is no memory */
+static uint32_t fatal_record(JitProgram *jit, uint32_t pc, int32_t what, int32_t a, int32_t b, int value) {
+    if (jit->nfatals == jit->fatals_cap) {
+        uint32_t cap = jit->fatals_cap ? jit->fatals_cap * 2 : 1024;
+        JitFatalSite *all = realloc(jit->fatals, (size_t)cap * sizeof *all);
+        if (!all) return UINT32_MAX;
+        jit->fatals = all;
+        jit->fatals_cap = cap;
+    }
+    JitFatalSite *f = &jit->fatals[jit->nfatals];
+    f->pc = pc; f->what = what; f->a = a; f->b = b; f->value = value;
+    return jit->nfatals++;
 }
 
 /* PRIM p d args: the common case in the loop's way (fastprim.h), or the
@@ -137,7 +159,7 @@ int jit_h_prim(VM *vm, int prim, int32_t d, const uint8_t *L) {
     if (jit->prim_calls) jit->prim_calls[prim]++;
     Value *base = vm->stack + vm->frames[vm->fp].base;
     uint32_t n = prim_arity[prim];
-    if (prim_fast(prim, n, base, L, &base[d])) return 0;
+    if (prim_fast(vm, prim, n, base, L, &base[d])) return 0;
     for (uint32_t i = 0; i < n; i++) {
         Value v = vm->stack[vm->frames[vm->fp].base + (size_t)read_i32(L + 4 * i)];
         vm_push(vm, v);
@@ -268,6 +290,31 @@ int64_t jit_h_string_order(VM *vm, const Obj *a, const Obj *b) {
     return obj_len(a) < obj_len(b) ? 0 : 2;
 }
 int64_t jit_h_values_equal(VM *vm, const Value *x, const Value *y) { return values_equal(vm, *x, *y); }
+/* a real of tier 2 that has no immediate, boxed into its register's slot
+   (masm.c, ms_emit_box_real): the allocation may collect, and the VM's
+   stack pointer says what of the frame is there */
+void jit_h_box_real(VM *vm, int32_t slot, uint64_t bits) {
+    double d;
+    memcpy(&d, &bits, sizeof d);
+    size_t base = vm->frames[vm->fp].base;
+    /* the box of the last write-back, where the register has not changed:
+       a real that stays in its home across many safepoints is boxed once */
+    Value old = vm->stack[base + (size_t)slot];
+    if (val_is_ptr(old) && obj_kind(val_ptr(old)) == K_REAL && box_bits(old) == bits) return;
+    Value v = mk_real(vm, d);
+    vm->stack[base + (size_t)slot] = v;
+}
+
+/* the same for a number past 63 bits -- an Int64.int, a Word64.word, or
+   under RUNE_INT64 an int or a word: its home holds the bits, its slot the
+   box */
+void jit_h_box_num(VM *vm, int32_t slot, uint64_t bits) {
+    size_t base = vm->frames[vm->fp].base;
+    Value old = vm->stack[base + (size_t)slot];
+    if (val_is_ptr(old) && obj_kind(val_ptr(old)) == K_BOX && box_bits(old) == bits) return;
+    Value v = mk_box_vm(vm, bits);
+    vm->stack[base + (size_t)slot] = v;
+}
 
 int jit_h_primpush(VM *vm, int prim, const uint8_t *L) {
     uint32_t n = prim_arity[prim];
@@ -298,120 +345,57 @@ AsmLabel *jit_landing(Jit *j, uint32_t pc) { return j->landings ? &j->landings[p
 #if JIT_TARGET
 /* ---- tier 2: what is live where, and the homes (M9) ---- */
 
-/* The registers an instruction reads and the one it writes, as the tables
-   say; a primitive's arguments as many as its arity. */
-static void uses_defs(const Program *p, uint32_t pc, uint64_t *uses, uint64_t *def) {
-    const uint8_t *code = p->code;
-    uint8_t op = code[pc];
-    *uses = 0; *def = 0;
-    int dest = rop_dest[op];
-    for (int k = 0; k < rop_nfixed[op]; k++)
-        if (rop_kinds[op][k] == RK_REGISTER) {
-            int32_t r = read_i32(code + pc + 1 + 4 * k);
-            if (r >= 0 && r < 64) { if (k == dest) *def |= (uint64_t)1 << r; else *uses |= (uint64_t)1 << r; }
-        }
-    if (rop_list_at[op] >= 0) {
-        uint32_t n;
-        if (rop_list_prim[op]) {
-            int prim = read_i32(code + pc + 1 + 4 * rop_list_at[op]);
-            n = prim >= 0 && prim < PRIM__COUNT ? prim_arity[prim] : 0;
-        } else n = (uint32_t)read_i32(code + pc + 1 + 4 * rop_list_at[op]);
-        const uint8_t *L = code + pc + 1 + 4 * rop_nfixed[op];
-        for (uint32_t i = 0; i < n; i++) {
-            int32_t r = read_i32(L + 4 * i);
-            if (r >= 0 && r < 64) *uses |= (uint64_t)1 << r;
-        }
-    }
-}
-
-/* live_in[at]: the registers live at the entry of the instruction at
-   from + at, by the usual backward walk to a fixed point. An instruction
-   that may raise has every handler of the function among its successors,
-   since a raise anywhere in a handler's region lands there. */
+/* What is live where is runtime/register/live.c's, which the collector asks
+   too: live_in[at] is the registers live at the entry of the instruction at
+   from + at. */
 static int liveness(Jit *j, const Scan *sc) {
-    const Program *p = &j->vm->prog;
-    const uint8_t *code = p->code;
-    uint32_t len = j->to - j->from;
-    uint64_t *live = calloc(len + 1, sizeof *live);
-    if (!live) return 0;
-    /* the handlers' labels */
-    uint64_t handlers_live = 0;
-    int changed = 1;
-    while (changed) {
-        changed = 0;
-        handlers_live = 0;
-        for (uint32_t pc = j->from; pc < j->to; ) {
-            uint8_t op = code[pc];
-            uint32_t l = rop_length(code + pc);   /* before the table of a SWITCH is passed over */
-            if (op == ROP_PUSHHANDLER) {
-                int32_t h = read_i32(code + pc + 1);
-                if (h >= (int32_t)j->from && (uint32_t)h < j->to) handlers_live |= live[h - j->from];
-            }
-            if (op == ROP_SWITCH) l += 5 * (uint32_t)read_i32(code + pc + 5);
-            pc += l;
-        }
-        /* backwards over the instructions */
-        uint32_t *starts = malloc((len + 1) * sizeof *starts);
-        if (!starts) { free(live); return 0; }
-        uint32_t nstarts = 0;
-        for (uint32_t at = 0; at < len; at++) if (sc->start[at]) starts[nstarts++] = at;
-        for (uint32_t k = nstarts; k-- > 0; ) {
-            uint32_t at = starts[k], pc = j->from + at;
-            uint8_t op = code[pc];
-            uint32_t l = rop_length(code + pc);
-            uint64_t out = 0;
-            int flow = rop_flow[op];
-            /* the successors */
-            if (flow == FLOW_NEXT || flow == FLOW_BRANCH || flow == FLOW_CALL) {
-                uint32_t nx = pc + l;
-                if (op == ROP_SWITCH) nx += 5 * (uint32_t)read_i32(code + pc + 5);
-                if (nx < j->to) out |= live[nx - j->from];
-            }
-            for (int q = 0; q < rop_nfixed[op]; q++)
-                if (rop_kinds[op][q] == RK_LABEL || rop_kinds[op][q] == RK_HANDLER_LABEL) {
-                    int32_t t = read_i32(code + pc + 1 + 4 * q);
-                    if (t >= (int32_t)j->from && (uint32_t)t < j->to) out |= live[t - j->from];
-                }
-            if (op == ROP_SWITCH) {
-                uint32_t n = (uint32_t)read_i32(code + pc + 5);
-                for (uint32_t e = 0; e < n; e++) {
-                    int32_t t = read_i32(code + pc + l + 5 * e + 1);
-                    if (t >= (int32_t)j->from && (uint32_t)t < j->to) out |= live[t - j->from];
-                }
-                uint32_t past = pc + l + 5 * n;
-                if (past < j->to) out |= live[past - j->from];
-            }
-            uint64_t uses, def;
-            uses_defs(p, pc, &uses, &def);
-            uint64_t in = uses | (out & ~def);
-            /* a raise, in the instruction or in what it calls, happens
-               before the instruction defines anything: what a handler
-               needs is live at its entry */
-            if (rop_raises[op] || flow == FLOW_CALL || flow == FLOW_TAILCALL) in |= handlers_live;
-            if (in != live[at]) { live[at] = in; changed = 1; }
-        }
-        free(starts);
-    }
-    j->live_in = live;
-    return 1;
+    j->live_in = reg_liveness(&j->vm->prog, j->from, j->to, sc->start, NULL);
+    return j->live_in != NULL;
 }
 
 /* The homes: the registers of a representation a machine register can hold
-   -- an int, a word, a char, a nullary constructor in rbx, rsi or rdi (the
-   general registers the emitters never use as scratch), a real in xmm2 to
-   xmm15 -- the most used first, a use inside a loop counting for eight. */
+   -- an int, a word, a char, a nullary constructor in one of the target's
+   general homes (asm.h: registers the emitters never use as scratch while
+   a home is live), a real in one of its homes for reals -- the most used
+   first, a use inside a loop counting for eight, and one that is raw in
+   its home (a number of 64 bits, which a slot holds encoded or boxed) for
+   four more.
+
+   A home is not free: where its register is live across a call of a
+   function it is written to its slot before and loaded again after, a
+   store and a load where each use saved one or the other -- and for a
+   raw home an encoding and a decoding, some fifteen instructions where a
+   use saved six or seven. So a register has a home only where its uses
+   outweigh the calls it is live across, twice over for a word and six
+   times for a raw one (HOME_CALL, HOME_CALL_RAW, in tenths of a use;
+   measured: docs/plans/performance-64bit.md), a call in a loop counting
+   for eight as a use does.
+
+   Two registers have one home where they are never live together: each
+   register is given the first home that none of those it interferes with
+   has. They interfere where both are live at the entry of an instruction,
+   and where one is defined by an instruction at whose entry the other is
+   live (what is live at its exit and not at its entry is what it
+   defines). So the register an instruction defines never has the home of
+   one it reads, though that one may die there: an emitter may write the
+   one before it has read the other, and the homes to load after a call
+   into C in the middle of an instruction, those live at its entry and
+   the one it defines, are all different (masm.c, ms_reload). */
+enum { HOME_CALL = 20, HOME_CALL_RAW = 60 };
 static int choose_homes(Jit *j) {
     const Program *p = &j->vm->prog;
     const Function *fn = &p->funcs[j->f];
     const uint8_t *code = p->code;
     uint32_t n = fn->nlocals;
+    if (fn->has_meta && n > 64) j->jit->homes_too_large++;
     if (!fn->has_meta || n > 64) return 0;
     uint32_t *weight = calloc(n, sizeof *weight);
+    uint32_t *calls = calloc(n, sizeof *calls);   /* the calls each is live across, weighted as the uses are */
     Home *homes = calloc(n, sizeof *homes);
-    if (!weight || !homes) { free(weight); free(homes); return 0; }
+    uint64_t *meets = calloc(n, sizeof *meets);   /* the registers each interferes with */
     /* each loop: from its head to the last jump back to it */
     uint32_t *last = calloc(fn->nloops ? fn->nloops : 1, sizeof *last);
-    if (!last) { free(weight); free(homes); return 0; }
+    if (!weight || !calls || !homes || !meets || !last) { free(weight); free(calls); free(homes); free(meets); free(last); return 0; }
     for (uint32_t k = 0; k < fn->nloops; k++) last[k] = fn->loops[k];
     for (uint32_t q = j->from; q < j->to; ) {
         uint32_t l = rop_length(code + q);
@@ -428,35 +412,77 @@ static int choose_homes(Jit *j) {
         for (uint32_t k = 0; k < fn->nloops; k++)
             if (pc >= fn->loops[k] && pc <= last[k]) in_loop = 1;
         uint64_t uses, def;
-        uses_defs(p, pc, &uses, &def);
+        reg_uses_defs(p, pc, &uses, &def);
         for (uint32_t r = 0; r < n; r++)
             if (((uses | def) >> r) & 1) weight[r] += in_loop ? 8 : 1;
+        uint64_t in = j->live_in[pc - j->from];
+        for (uint32_t r = 0; r < n; r++) {
+            if ((in >> r) & 1) meets[r] |= in | def;
+            if ((def >> r) & 1) meets[r] |= in;
+        }
+        if (rop_flow[op] == FLOW_CALL && pc + l < j->to) {
+            uint64_t after = j->live_in[pc + l - j->from];   /* at the RESULT the call returns to */
+            for (uint32_t r = 0; r < n; r++)
+                if ((after >> r) & 1) calls[r] += in_loop ? 8 : 1;
+        }
         if (op == ROP_SWITCH) l += 5 * (uint32_t)read_i32(code + pc + 5);
         pc += l;
     }
     free(last);
-    static const int gprs[3] = { R_H0, R_H1, R_H2 };
-    int ngpr = 0, nxmm = 0;
+    int given = 0;
+    uint64_t seen = 0;   /* the registers decided: a home, or none */
+    uint8_t wants[64] = { 0 }, number[64] = { 0 };   /* the kind of home each decided register wants (HOME_SLOT: none), and its number */
     for (;;) {
         uint32_t best = UINT32_MAX;
+        uint64_t best_weight = 0;
         for (uint32_t r = 0; r < n; r++) {
-            if (homes[r].kind != HOME_SLOT || weight[r] == 0) continue;
+            if (((seen >> r) & 1) || weight[r] == 0) continue;
             int rep = fn->reps[r];
-            int gpr = rep == REP_INT || rep == REP_WORD || rep == REP_CHAR || rep == REP_CON0;
-            int xmm = rep == REP_REAL;
-            if (!(gpr && ngpr < 3) && !(xmm && nxmm < 14)) continue;
-            if (best == UINT32_MAX || weight[r] > weight[best]) best = r;
+            int raw = rep == REP_INT64 || rep == REP_WORD64;   /* the 64-bit types: the 64 bits, raw (masm.c) */
+            int gpr = raw || rep == REP_INT || rep == REP_WORD || rep == REP_CHAR || rep == REP_CON0;
+            int xmm = MS_REAL_HOMES && rep == REP_REAL;   /* a real is a word in its slot until masm.h gives it a home */
+            if (!gpr && !xmm) { seen |= (uint64_t)1 << r; continue; }
+            if ((uint64_t)weight[r] * 10 <= (uint64_t)calls[r] * (raw || xmm ? HOME_CALL_RAW : HOME_CALL)) { seen |= (uint64_t)1 << r; continue; }
+            uint64_t w = (uint64_t)weight[r] * (raw ? 4 : 1);
+            if (best == UINT32_MAX || w > best_weight) { best = r; best_weight = w; }
         }
         if (best == UINT32_MAX) break;
+        seen |= (uint64_t)1 << best;
         int rep = fn->reps[best];
-        if (rep == REP_REAL) { homes[best].kind = HOME_XMM; homes[best].reg = (uint8_t)(F_H0 + nxmm++); homes[best].tag = T_REAL; }
+        int kind = rep == REP_REAL ? HOME_XMM : HOME_GPR;
+        int nhomes = kind == HOME_XMM ? AS_NHOMES_F : AS_NHOMES_G;
+        /* The numbers of the homes of its kind that those it interferes
+           with have. A register that gets none is numbered on all the
+           same, past the homes there are (wants): the numbers below are
+           given as they would be without it, and --jit-stats can say
+           what any number of homes would hold. */
+        uint64_t taken = 0;
+        for (uint32_t r = 0; r < n; r++)
+            if (r != best && ((meets[best] >> r) & 1) && wants[r] == kind) taken |= (uint64_t)1 << number[r];
+        int k = 0;
+        while (k < 63 && ((taken >> k) & 1)) k++;
+        wants[best] = (uint8_t)kind;
+        number[best] = (uint8_t)k;
+        j->jit->homes_wanted[kind == HOME_XMM]++;
+        j->jit->homes_weight[kind == HOME_XMM][k < 31 ? k : 31] += weight[best];
+        if (k >= nhomes) continue;   /* none left where it is live: its slot */
+        j->jit->homes_given[kind == HOME_XMM]++;
+        homes[best].kind = (uint8_t)kind;
+        homes[best].tag = (uint8_t)k;   /* the home's number, until every register has its own */
+        given++;
+    }
+    for (uint32_t r = 0; r < n; r++) {
+        if (homes[r].kind == HOME_SLOT) continue;
+        int rep = fn->reps[r], k = homes[r].tag;
+        if (homes[r].kind == HOME_XMM) { homes[r].reg = (uint8_t)as_home_f(JIT_WIN, k); homes[r].tag = T_REAL; }
         else {
-            homes[best].kind = HOME_GPR; homes[best].reg = (uint8_t)gprs[ngpr++];
-            homes[best].tag = (uint8_t)(rep == REP_INT ? T_INT : rep == REP_WORD ? T_WORD : rep == REP_CHAR ? T_CHAR : T_CON0);
+            homes[r].reg = (uint8_t)as_home_g(JIT_WIN, k);
+            homes[r].tag = (uint8_t)(rep == REP_INT ? T_INT : rep == REP_WORD ? T_WORD : rep == REP_CHAR ? T_CHAR
+                                     : rep == REP_INT64 ? T_INT64 : rep == REP_WORD64 ? T_WORD64 : T_CON0);
         }
     }
-    free(weight);
-    if (ngpr == 0 && nxmm == 0) { free(homes); return 0; }
+    free(weight); free(calls); free(meets);
+    if (!given) { free(homes); return 0; }
     j->homes = homes;
     return 1;
 }
@@ -519,19 +545,31 @@ void jit_unsupported(Jit *j) { j->unsupported = 1; }
 
 /* the slow paths, after the function's code; a copy of the record, since
    a fill may add a slow path of its own and move the array */
+/* an instruction begun: the masm told its pc and the register it defines */
+static void begin(Jit *j, uint32_t pc) {
+    uint64_t uses;
+    ms_begin(&j->m, pc);
+    reg_uses_defs(&j->vm->prog, pc, &uses, &j->m.cur_def);
+}
 static void emit_slow(Masm *m, Slow *sp) {
     Jit *j = (Jit *)m;   /* the Masm is the first member */
     Slow s = *sp;
-    m->cur_pc = s.cur;
-    if (s.kind == SLOW_FATAL) {
-        /* rcx, a value the message wants, before anything uses it */
-        if (s.d) as_mov_rr(&m->a, ms_arg(m, 2), R_S1);
-        ms_sync(m, s.pc, 0);
-        as_mov_ri(&m->a, ms_arg(m, 1), s.a);
-        if (!s.d) as_mov_ri(&m->a, ms_arg(m, 2), s.b);
-        as_mov_ri(&m->a, ms_arg(m, 3), s.c);
-        ms_call(m, (MsHelper)jit_h_fatal);
-        as_trap(&m->a);   /* it never returns */
+    begin(j, s.cur);
+    if (s.kind == SLOW_BOXREAL || s.kind == SLOW_BOXNUM) {
+        ms_emit_box(m, sp);
+    } else if (s.kind == SLOW_FATAL) {
+        /* An error a typed program cannot make, in ten bytes: the number
+           of its record in rax, and on to the stub of the region, which
+           tells jit_h_fatal_at. Its message and trace read the pc, which
+           the record has, and the frames, which are exact: nothing is
+           written back. (Each wrote every live home back and called
+           C itself: a fifth of the compiler's code compiled, measured in
+           docs/plans/performance-64bit.md.) rcx, a value the message may
+           want, is where the check left it. */
+        uint32_t k = fatal_record(j->jit, s.pc, s.a, s.b, s.c, s.d);
+        if (k == UINT32_MAX) { m->a.failed = 1; return; }
+        as_mov_ri(&m->a, R_S0, k);
+        as_jmp_to(&m->a, j->jit->fatal_at);
     } else if (s.kind == SLOW_ALLOC) {
         ms_sync(m, s.pc, 0);
         as_mov_ri(&m->a, ms_arg(m, 1), s.a);
@@ -692,7 +730,7 @@ static int emit_function(Jit *j, Scan *sc) {
         uint8_t op = code[pc];
         uint32_t l = rop_length(code + pc);
         j->next = pc + l;
-        m->cur_pc = pc;
+        begin(j, pc);
         /* the flags of a comparison hold to the next instruction, unless
            control can arrive there from elsewhere (M7) */
         j->flags_prev = sc->target[at] ? -1 : j->flags_for;
@@ -727,6 +765,18 @@ static int emit_function(Jit *j, Scan *sc) {
 }
 #endif
 
+/* The helpers compiled code calls besides the primitives: each has a
+   trampoline (jit_region_init). One that is not here is called the long
+   way (ms_call). */
+static const MsHelper helpers[] = {
+    (MsHelper)jit_h_prim, (MsHelper)jit_h_alloc, (MsHelper)jit_h_ret, (MsHelper)jit_h_grow, (MsHelper)jit_h_grow_frames,
+    (MsHelper)jit_h_push_handler, (MsHelper)jit_h_raise, (MsHelper)jit_h_string_order, (MsHelper)jit_h_values_equal,
+    (MsHelper)jit_h_box_real, (MsHelper)jit_h_box_num, (MsHelper)jit_h_primpush, (MsHelper)jit_h_called
+};
+/* The region: the stubs that enter and leave compiled code, the stub of
+   its fatal errors, and a trampoline for every call into C it makes
+   (as_trampoline), all at its start, where a function anywhere in its
+   64 MB reaches them by a direct jump or call; then the functions. */
 int jit_region_init(VM *vm, JitProgram *jit) {
 #if JIT_TARGET
     (void)vm;
@@ -739,13 +789,39 @@ int jit_region_init(VM *vm, JitProgram *jit) {
     ms_emit_enter(&a, JIT_WIN);
     size_t leave_at = a.n;
     ms_emit_leave(&a, JIT_WIN);
-    if (a.failed) { as_free(&a); return 0; }
+    size_t fatal_at = a.n;
+    ms_emit_fatal(&a, JIT_WIN, (MsHelper)jit_h_fatal_at);
+    /* every primitive's C, the helpers, and the C library's functions
+       that primitives on reals are (jit_libm_of) */
+    uint32_t nhelpers = (uint32_t)(sizeof helpers / sizeof helpers[0]), n = 2 * PRIM__COUNT + nhelpers, size = 16;
+    while (size < 2 * n) size *= 2;
+    uint64_t *from = calloc(size, sizeof *from);
+    const void **to = calloc(size, sizeof *to);
+    if (!from || !to) a.failed = 1;
+    for (uint32_t k = 0; k < n && !a.failed; k++) {
+        MsHelper h = k < PRIM__COUNT ? (MsHelper)prim_table[k]
+                   : k < 2 * PRIM__COUNT ? jit_libm_of((int32_t)(k - PRIM__COUNT))
+                   : helpers[k - 2 * PRIM__COUNT];
+        uint64_t at;
+        memcpy(&at, &h, sizeof at);
+        if (!at) continue;   /* (0 marks a free entry) */
+        uint32_t i = ms_tramp_slot(at, size - 1);
+        while (from[i] && from[i] != at) i = (i + 1) & (size - 1);
+        if (from[i]) continue;   /* one function for two primitives */
+        from[i] = at;
+        to[i] = mem + as_trampoline(&a, JIT_WIN, at);
+    }
+    if (a.failed || a.n > cap) { as_free(&a); free(from); free(to); return 0; }
     memcpy(mem, a.buf, a.n);
     jit->code_mem = mem;
     jit->code_cap = cap;
     jit->code_used = (a.n + 15) & ~(size_t)15;
     jit->enter_at = mem + enter_at;
     jit->leave_at = mem + leave_at;
+    jit->fatal_at = mem + fatal_at;
+    jit->tramp_from = from;
+    jit->tramp_to = to;
+    jit->tramp_mask = size - 1;
     as_free(&a);
     if (!sys_code_protect(mem, cap, 1)) return 0;
     return 1;
@@ -765,12 +841,21 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     Jit j;
     memset(&j, 0, sizeof j);
     ms_init(&j.m, fn->nlocals, fn->maxstack, JIT_WIN, jit->leave_at);
+#ifdef RUNE_JIT_CONV
+    j.m.conv_code = vm->prog.code;
+    j.m.conv_prim_op = ROP_PRIM;
+#endif
+    j.m.box_num = (MsHelper)jit_h_box_num;   /* at either tier: a result past 63 bits on its way to a slot */
     j.vm = vm; j.jit = jit; j.f = f;
     j.flags_for = j.flags_prev = -1;
     j.tier = tier;
     /* where the code will be placed: a known call jumps to its callee's
        code by a rel32 from there */
     j.m.a.base = (uintptr_t)(jit->code_mem + jit->code_used);
+    j.m.placed = 1;
+    j.m.tramp_from = jit->tramp_from;
+    j.m.tramp_to = jit->tramp_to;
+    j.m.tramp_mask = jit->tramp_mask;
     j.from = fn->code_offset; j.to = fn->code_end;
     uint32_t len = j.to - j.from;
     j.labels = malloc(((size_t)len + 1) * sizeof(AsmLabel));
@@ -789,7 +874,12 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     as_bind(&j.m.a, &j.entry);
     if (ok && fn->has_meta) {
         uint32_t from = jit_fill_from(vm, jit, f);
-        if (from < fn->arity) from = fn->arity;
+        /* (tier 2: a register that is written before anything could see it
+           may be written to its home alone, and its slot is a root of the
+           frame that runs all the same: every slot from the arity up has
+           a value. It is so already wherever the function reads an
+           argument first, which makes the answer 0.) */
+        if (from < fn->arity || tier == 2) from = fn->arity;
         ms_fill_units(&j.m, BASER, from, fn->nlocals);
     }
     /* tier 2: the representations trusted for the shapes of values (M10),
@@ -804,6 +894,9 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
             else {
                 for (uint32_t i = 0; i <= len; i++) as_label_init(&j.landings[i]);
                 j.m.homes = j.homes;
+                for (uint32_t i = 0; i < len; i++)
+                    if (sc.start[i] && p->code[j.from + i] == ROP_PUSHHANDLER) j.m.has_handlers = 1;
+                j.m.box_real = (MsHelper)jit_h_box_real;
                 j.m.live = j.live_in;
                 j.m.from = j.from;
                 /* the entry: the parameters' homes loaded */
@@ -823,7 +916,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
         for (uint32_t i = 1; i < len; i++)
             if (sc.target[i] && j.labels[i].at >= 0) {
                 as_bind(&j.m.a, &j.landings[i]);
-                j.m.cur_pc = j.from + i;
+                ms_begin(&j.m, j.from + i);
                 land(&j, j.from + i);
                 as_jmp(&j.m.a, &j.labels[i]);
             }

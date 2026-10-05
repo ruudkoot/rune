@@ -56,6 +56,79 @@ struct
   val word_to_string = Word.toString
   val word_neg = Word.~
 
+  (* ---- Int64.int and Word64.word: the host's, which `_prim "int64"` and
+     `_prim "word64"` in a type are here (gen-host-basis.sh) ---- *)
+  (* Int64.int is not the host's: Poly/ML 5.9 has none (its FixedInt is 63
+     bits), and SML/NJ's raises Overflow for minInt mod ~1, which is 0. It
+     is the host's IntInf held to 64 bits, Overflow where a result leaves
+     them; the bounds are computed, since a host need not read a literal
+     that large. *)
+  type int64 = IntInf.int
+  type word64 = Word64.word
+  local
+    val two15 = IntInf.fromInt 32768   (* small enough for a host whose int is 31 bits *)
+    val two30 = IntInf.* (two15, two15)
+    val two63 = IntInf.* (IntInf.* (two30, two30), IntInf.fromInt 8)
+    val lo = IntInf.~ two63
+    val hi = IntInf.- (two63, IntInf.fromInt 1)
+    fun held (i : IntInf.int) = if IntInf.< (i, lo) orelse IntInf.> (i, hi) then raise Overflow else i
+  in
+    fun int64_add (a, b) = held (IntInf.+ (a, b))
+    fun int64_sub (a, b) = held (IntInf.- (a, b))
+    fun int64_mul (a, b) = held (IntInf.* (a, b))
+    fun int64_div (a, b) = held (IntInf.div (a, b))
+    fun int64_mod (a, b) = held (IntInf.mod (a, b))
+    fun int64_quot (a, b) = held (IntInf.quot (a, b))
+    fun int64_rem (a, b) = held (IntInf.rem (a, b))
+    fun int64_neg a = held (IntInf.~ a)
+    fun int64_abs a = held (IntInf.abs a)
+    (* to and from the host's int by fifteen bits at a time: MLKit 4.7's
+       IntInf.toInt and IntInf.fromInt raise Overflow from 2^31 on, where
+       its int has 63 bits. Overflow is the host's own, where its int does
+       not hold the number. *)
+    fun int64_to_int (i : IntInf.int) : int =
+      if IntInf.< (IntInf.abs i, two15) then IntInf.toInt i
+      else let val (q, r) = IntInf.quotRem (i, two15) in int64_to_int q * 32768 + IntInf.toInt r end
+    fun int64_from_int (i : int) : IntInf.int =
+      if i > ~32768 andalso i < 32768 then IntInf.fromInt i
+      else IntInf.+ (IntInf.* (int64_from_int (Int.quot (i, 32768)), two15), IntInf.fromInt (Int.rem (i, 32768)))
+  end
+  val int64_lt = IntInf.<
+  val int64_le = IntInf.<=
+  val int64_gt = IntInf.>
+  val int64_ge = IntInf.>=
+  val int64_order = IntInf.compare
+  val int64_to_string = IntInf.toString
+  val word64_add = Word64.+
+  val word64_sub = Word64.-
+  val word64_mul = Word64.*
+  val word64_div = Word64.div
+  val word64_mod = Word64.mod
+  val word64_neg = Word64.~
+  val word64_lt = Word64.<
+  val word64_le = Word64.<=
+  val word64_gt = Word64.>
+  val word64_ge = Word64.>=
+  val word64_order = Word64.compare
+  val word64_andb = Word64.andb
+  val word64_orb = Word64.orb
+  val word64_xorb = Word64.xorb
+  val word64_notb = Word64.notb
+  val word64_lsl = Word64.<<
+  val word64_lsr = Word64.>>
+  (* the count held to 63, past which every bit is the sign's: Poly/ML 5.9's
+     Word64.~>> leaves the word as it is for a count of 64 or more *)
+  fun word64_asr (w, n) = Word64.~>> (w, if Word.>= (n, 0w63) then 0w63 else n)
+  val word64_to_int = Word64.toInt
+  val word64_to_int_x = Word64.toIntX
+  val word64_from_int = Word64.fromInt
+  fun word64_to_word w = Word.fromLarge (Word64.toLarge w)
+  fun word64_from_word w = Word64.fromLarge (Word.toLarge w)
+  fun word64_from_word_x w = Word64.fromLarge (Word.toLargeX w)
+  val word64_to_string = Word64.toString
+  fun word64_to_int64 w = IntInf.fromLarge (Word64.toLargeIntX w)
+  fun word64_from_int64 i = Word64.fromLargeInt (IntInf.toLarge i)
+
   (* ---- real ---- *)
   val real_add = Real.+
   val real_sub = Real.-
@@ -165,10 +238,10 @@ struct
                           Real.toLargeInt IEEEReal.TO_NEAREST (Real.fromManExp {man = 2.0 * man - 1.0, exp = 52}))
               else Real.toLargeInt IEEEReal.TO_NEAREST (Real.fromManExp {man = a, exp = 1074})
             end
-      in Word.fromLargeInt (IntInf.+ (sign, body)) end
+      in Word64.fromLargeInt (IntInf.+ (sign, body)) end
     fun real_from_bits w =
       let
-        val i = Word.toLargeInt w
+        val i = Word64.toLargeInt w
         val negative = IntInf.>= (i, two63)
         val m = if negative then IntInf.- (i, two63) else i
         val e = IntInf.toInt (IntInf.div (m, two52))
@@ -361,6 +434,40 @@ struct
   val array_sub = Array.sub
   val array_update = Array.update
   fun array_from_list l = if longer (l, maxLen) then raise Size else Array.fromList l
+
+  (* ---- arrays of bytes and of reals: the host's Word8Array and an array of
+     reals, which `_prim "bytearray"` and `_prim "realarray"` in a type are
+     here (gen-host-basis.sh). The limits are the VM's; a host with a smaller
+     one raises Size itself. ---- *)
+  type bytearray = Word8Array.array
+  type realarray = real Array.array
+  (* the run [i, i + n) lies in [0, len) *)
+  fun runOk (i, n, len) = i >= 0 andalso n >= 0 andalso n <= len andalso i <= len - n
+  fun bytes_new (n, b) =
+    if n < 0 orelse n > 1073741823 then raise Size else Word8Array.array (n, Word8.fromInt b)
+  val bytes_length = Word8Array.length
+  fun bytes_sub (a, i) = Char.chr (Word8.toInt (Word8Array.sub (a, i)))
+  fun bytes_update (a, i, c) = Word8Array.update (a, i, Word8.fromInt (Char.ord c))
+  fun bytes_blit (src, si, dst, di, n) =
+    if not (runOk (si, n, Word8Array.length src)) orelse not (runOk (di, n, Word8Array.length dst)) then raise Subscript
+    else Word8ArraySlice.copy {src = Word8ArraySlice.slice (src, si, SOME n), dst = dst, di = di}
+  fun bytes_blit_string (s, si, dst, di, n) =
+    if not (runOk (si, n, String.size s)) orelse not (runOk (di, n, Word8Array.length dst)) then raise Subscript
+    else
+      let fun go k =
+            if k >= n then ()
+            else (Word8Array.update (dst, di + k, Word8.fromInt (Char.ord (String.sub (s, si + k)))); go (k + 1))
+      in go 0 end
+  fun bytes_extract (a, i, n) =
+    if not (runOk (i, n, Word8Array.length a)) then raise Subscript
+    else CharVector.tabulate (n, fn k => Char.chr (Word8.toInt (Word8Array.sub (a, i + k))))
+  fun reals_new (n, x : real) : realarray = if n < 0 orelse n > maxLen then raise Size else Array.array (n, x)
+  val reals_length : realarray -> int = Array.length
+  val reals_sub : realarray * int -> real = Array.sub
+  val reals_update : realarray * int * real -> unit = Array.update
+  fun reals_blit (src : realarray, si, dst : realarray, di, n) =
+    if not (runOk (si, n, Array.length src)) orelse not (runOk (di, n, Array.length dst)) then raise Subscript
+    else ArraySlice.copy {src = ArraySlice.slice (src, si, SOME n), dst = dst, di = di}
   fun vector_from_list l = if longer (l, maxLen) then raise Size else Vector.fromList l
   val vector_length = Vector.length
   val vector_sub = Vector.sub

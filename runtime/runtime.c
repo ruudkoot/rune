@@ -134,7 +134,7 @@ int values_equal(VM *vm, Value a, Value b) {
         switch (val_tag(a)) {
         case T_UNIT: goto matched;
         case T_INT: case T_CHAR: case T_CON0:
-            if (val_imm(a) != val_imm(b)) goto done;
+            if (!val_same_imm(a, b)) goto done;
             goto matched;
         case T_WORD:
             if (val_word(a) != val_word(b)) goto done;
@@ -150,7 +150,7 @@ int values_equal(VM *vm, Value a, Value b) {
             case K_STRING:
                 if (obj_len(x) != obj_len(y) || memcmp(obj_bytes(x), obj_bytes(y), obj_len(x)) != 0) goto done;
                 goto matched;
-            case K_REF: case K_ARRAY: case K_CLOSURE: case K_EXNCON:
+            case K_REF: case K_ARRAY: case K_BYTES: case K_REALS: case K_CLOSURE: case K_EXNCON:
                 goto done;
             case K_CON:
                 if (obj_contag(x) != obj_contag(y)) goto done;
@@ -200,6 +200,7 @@ done:
 
 /* --- exceptions --- */
 static void print_exn_payload(FILE *out, Value v) {
+    if (val_same_imm(v, mk_unit())) return;   /* under the word, unit and 0 are one immediate */
     switch (val_tag(v)) {
     case T_UNIT: break;
     case T_INT: fprintf(out, " %lld", (long long)val_imm(v)); break;
@@ -299,6 +300,7 @@ void vm_release(VM *vm) {
     for (uint32_t i = 0; vm->prog.funcs && i < vm->prog.nfuncs; i++) free(vm->prog.funcs[i].name);
     free(vm->prog.funcs);
     free(vm->prog.consts);
+    free(vm->prog.const_kinds);
     free(vm->prog.code);
     for (uint32_t i = 0; vm->prog.files && i < vm->prog.nfiles; i++) free(vm->prog.files[i]);
     free(vm->prog.files);
@@ -310,8 +312,9 @@ void vm_release(VM *vm) {
     free(vm->stack);
     free(vm->frames);
     free(vm->handlers);
-    free(vm->heap_from);
-    free(vm->heap_to);
+    free(vm->handles);
+    free(vm->alloc.from);
+    free(vm->gc.kept);
     for (size_t i = 3; i < vm->nfiles; i++) if (vm->files[i]) fclose(vm->files[i]);
     for (size_t i = 0; vm->file_paths && i < vm->nfiles; i++) free(vm->file_paths[i]);
     free(vm->files);
@@ -338,9 +341,13 @@ void vm_exit(VM *vm, int status) {
                 (unsigned long long)vm->objects_allocated);
     if (vm->stats)
         fprintf(stderr, "runevm: %zu collections, %llu bytes allocated, semispace %zu bytes, %zu live, "
-                "copied %llu, max live %zu, gc %lld us\n",
-                vm->gc_count, (unsigned long long)vm->bytes_allocated, vm->heap_size, vm->heap_used,
-                (unsigned long long)vm->copied, vm->max_live, (long long)(vm->gc_user_us + vm->gc_sys_us));
+                "copied %llu, max live %zu, gc %lld us, longest %lld us\n",
+                vm->gc_count, (unsigned long long)vm->bytes_allocated, vm->alloc.size, vm->alloc.used,
+                (unsigned long long)vm->copied, vm->max_live, (long long)(vm->gc_user_us + vm->gc_sys_us),
+                (long long)vm->gc_longest_us);
+    if (vm->stats && vm->boxes_allocated)   /* the representation's own, which --count leaves out (vm.h) */
+        fprintf(stderr, "runevm: %llu boxes, %llu bytes\n",
+                (unsigned long long)vm->boxes_allocated, (unsigned long long)vm->box_bytes_allocated);
     fflush(stderr);
     vm_destroy(vm);
     exit(status);

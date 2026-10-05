@@ -1,4 +1,4 @@
 compile tests/perf/compile-sigs.sml
-instructions 88681749
-bytes 102330122
-objects 2192100
+instructions 102806422
+bytes 65781056
+objects 2388402

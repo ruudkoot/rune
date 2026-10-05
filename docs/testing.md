@@ -57,8 +57,8 @@ program, `runevm --jit=off --count`, one thing changed at a time):
 
 1. **The program's name and arguments.** `CommandLine.name` and
    `CommandLine.arguments` are strings on the heap, and a string's payload
-   is rounded up to 16 bytes ([runtime.md](runtime.md)): the same program
-   reached through a longer path allocates 16 bytes more for every 16
+   is rounded up to 8 bytes ([runtime.md](runtime.md)): the same program
+   reached through a longer path allocates 8 bytes more for every 8
    characters of the path, with the same instructions and objects. The
    harnesses therefore run every program from a directory of its own under
    a fixed name (`scripts/check-jit.sh:65`: `cd "$out/$name"`, then
@@ -68,7 +68,7 @@ program, `runevm --jit=off --count`, one thing changed at a time):
    `scripts/check-register.sh` ran its two VMs from directories named
    `stack` and `new`, two characters apart, and every program agreed until
    the directory above them got a name five characters longer and one
-   program's name crossed a 16-byte boundary on one side alone. The current directory's name is the
+   program's name crossed a boundary of that rounding (16 bytes then) on one side alone. The current directory's name is the
    same kind of input for a program that asks for it: MLton's `lexgen`,
    `mlyacc` and `vliw` build the names of their inputs from
    `OS.FileSys.getDir ()`, and `vliw` walks that name a character at a
@@ -81,8 +81,8 @@ program, `runevm --jit=off --count`, one thing changed at a time):
    first use; a pipe, a socket or a terminal has none
    (`lib/basis/runefile.sml:35-56`, `RuneFile.positions`, which asks
    `fileTell` once). Measured: a pipe on standard input instead of
-   `/dev/null` is 17 objects, 680 bytes and 18 instructions fewer; a pipe
-   on standard error instead of a file, 17 objects, 680 bytes and 12
+   `/dev/null` is 17 objects, 408 bytes and 18 instructions fewer; a pipe
+   on standard error instead of a file, 17 objects, 408 bytes and 12
    instructions fewer; standard output to a file instead of `/dev/null`,
    18 instructions fewer with the same bytes and objects. So a program run
    from a terminal, or with its output through `tee`, does not count the
@@ -119,9 +119,9 @@ program, `runevm --jit=off --count`, one thing changed at a time):
    output that is one of its sources, and asks by comparing the output's
    `OS.FileSys.fileId` with every source's (`src/driver/main.sml`): where
    the output is not there yet each comparison raises and is handled, one
-   object, 24 bytes and four instructions more than where it is. The
+   object, 32 bytes and four instructions more than where it is. The
    compiler compiling its own 50 files into a new file therefore counts 50
-   objects, 1,200 bytes and 200 instructions more than into the file its
+   objects, 1,600 bytes and 200 instructions more than into the file its
    last run left. A harness that compares two runs of the compiler removes
    the output before each (`scripts/census.sh`, `tools/heapsim/validate.sh`).
 
@@ -141,8 +141,8 @@ JIT tier (the premise of `check-jit.sh`).
 * Compare the count line as text after stripping the prefix
   (`sed -n 's/^runevm: count: //p'`, `scripts/check-jit.sh:67`) and print
   both lines on a failure, as `check-jit.sh:79` does; a reader can then
-  see at once whether the difference is 17 objects and 680 bytes (the
-  streams), a multiple of 16 bytes with nothing else (a string's length)
+  see at once whether the difference is 17 objects and 408 bytes (the
+  streams), a multiple of 8 bytes with nothing else (a string's length)
   or something new.
 * Run an experimental VM under `timeout` and `ulimit -v`; a runaway
   semispace has taken the machine down before.
@@ -172,8 +172,8 @@ change*).
 ## When a count differs
 
 1. Rerun both sides with the same streams, directory and name. A
-   difference of exactly 17 objects and 680 bytes per stream is the
-   streams; a multiple of 16 bytes with equal objects and instructions is a
+   difference of exactly 17 objects and 408 bytes per stream is the
+   streams; a multiple of 8 bytes with equal objects and instructions is a
    string's length, usually the program's path.
 2. If the program reads the clock, take the clock out (above) before
    reading anything else into the numbers.

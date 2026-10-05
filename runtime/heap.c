@@ -1,8 +1,9 @@
 /* Cheney semispace copying collector. Objects are 8-byte aligned; the payload
-   is rounded up to a multiple of 16 bytes and is at least 16 bytes so that a
-   forwarding pointer always fits. */
+   is rounded up to what runtime/value.h says (a word under this layout) and
+   is at least that, so that a forwarding pointer always fits. */
 #include "vm.h"
 #include "sys/sys.h"
+#include <string.h>
 
 /* The census VM (runtime/census/census.h) carries an id word in every header, 8 bytes
    more per object: the sizes the stock VM counts and collects by are kept
@@ -18,18 +19,90 @@
 #else
 #define STOCK(size) (size)
 #define REAL_SPACE(n) (n)
-#define USED_STOCK(vm) ((vm)->heap_used)
+#define USED_STOCK(vm) ((vm)->alloc.used)
 #define ADD_STOCK(vm, size) ((void)0)
 #endif
 
 size_t obj_size(const Obj *o) { return obj_size_of(obj_kind(o), obj_len(o)); }
 
+/* what the word cannot hold, as a small raw object (runtime/value.h) */
+static Value alloc_box(VM *vm, int kind, uint64_t bits) {
+    Obj *o = vm_alloc(vm, (uint8_t)kind, 0, 1, 8);
+    memcpy(obj_bytes(o), &bits, 8);
+    return mk_ptr(o);
+}
+Value mk_real(VM *vm, double d) {
+    Value v;
+    if (mk_real_imm(d, &v)) return v;
+    int k = real_box_of(real_bits(d));
+    if (k >= 0 && vm->real_boxes[k]) return mk_ptr(vm->real_boxes[k]);
+    return alloc_box(vm, K_REAL, real_bits(d));
+}
+/* the VM's boxes of zero, the infinities and NaN (value.h): made as the VM
+   starts, so that every engine has them at the same place in its heap; with
+   every real boxed (RUNE_REAL_BOXED, the switch that measures boxing) none */
+static void real_boxes_make(VM *vm) {
+#ifdef RUNE_REAL_BOXED
+    (void)vm;
+#else
+    static const uint64_t bits[REAL_BOXES] = REAL_BOX_BITS;
+    /* before the program: no collection is due (--gc-stress counts from its
+       first allocation), and --stats counts the boxes the program makes */
+    size_t stress = vm->gc_stress;
+    vm->gc_stress = 0;
+    for (int k = 0; k < REAL_BOXES; k++) vm->real_boxes[k] = val_ptr(alloc_box(vm, K_REAL, bits[k]));
+    vm->gc_stress = stress;
+    vm->boxes_allocated = 0;
+    vm->box_bytes_allocated = 0;
+#endif
+}
+Value mk_int_vm(VM *vm, int64_t i) {
+    if (int_fits(i)) return mk_imm(i);
+#ifdef RUNE_INT64
+    return alloc_box(vm, K_BOX, (uint64_t)i);
+#else
+    vm_fatal(vm, "an int beyond 63 bits: %lld", (long long)i);
+    return mk_unit();
+#endif
+}
+Value mk_box_vm(VM *vm, uint64_t bits) { return alloc_box(vm, K_BOX, bits); }
+Value mk_int64_vm(VM *vm, int64_t i) { return int_fits(i) ? mk_imm(i) : alloc_box(vm, K_BOX, (uint64_t)i); }
+Value mk_word64_vm(VM *vm, uint64_t w) { return word_fits(w) ? mk_imm((int64_t)w) : alloc_box(vm, K_BOX, w); }
+Value mk_word_vm(VM *vm, uint64_t w) {
+    if (word_fits(w)) return mk_imm((int64_t)w);
+#ifdef RUNE_INT64
+    return alloc_box(vm, K_BOX, w);
+#else
+    (void)vm;
+    return mk_imm((int64_t)(w & ((UINT64_C(1) << 63) - 1)));
+#endif
+}
+
+#ifdef RUNE_BARRIER_CARDS
+uint8_t *rune_cards;   /* the measuring barrier's table (value.h): written, never read */
+/* the table, made once for the process, and where compiled code of this VM
+   finds it: a VM that an image became has not been through heap_init */
+void heap_cards(VM *vm) {
+    if (!rune_cards) rune_cards = calloc(CARD_COUNT, 1);
+    if (!rune_cards) { fprintf(stderr, "runevm: cannot allocate the cards\n"); exit(2); }
+    vm->jit_cards = rune_cards;
+}
+#endif
+
+/* A semispace: 8-aligned, as malloc gives it, so that bits 1 and 2 of a
+   pointer into it are clear (value.h, what the layout keeps open). */
+static char *space_new(size_t bytes) {
+    char *p = malloc(bytes);
+    if (p && ((uintptr_t)p & 7) != 0) { fprintf(stderr, "runevm: a heap that is not 8-aligned\n"); exit(2); }
+    return p;
+}
+
 void heap_init(VM *vm, size_t semispace_bytes) {
     if (vm->heap_limit && semispace_bytes > vm->heap_limit) semispace_bytes = vm->heap_limit;
-    vm->heap_size = semispace_bytes;
-    vm->heap_from = malloc(REAL_SPACE(semispace_bytes));
-    vm->heap_to = NULL;
-    vm->heap_used = 0;
+    vm->alloc.size = semispace_bytes;
+    vm->alloc.from = space_new(REAL_SPACE(semispace_bytes));
+    vm->gc.kept = NULL;
+    vm->alloc.used = 0;
 #ifdef RUNE_CENSUS
     vm->census_used_stock = 0;
 #endif
@@ -39,26 +112,34 @@ void heap_init(VM *vm, size_t semispace_bytes) {
     vm->live_before = 0;
     vm->gc_user_us = 0;
     vm->gc_sys_us = 0;
+    vm->gc_longest_us = 0;
     vm->bytes_allocated = 0;
     vm->objects_allocated = 0;
+    vm->boxes_allocated = 0;
+    vm->box_bytes_allocated = 0;
+    vm->box_bytes_live = 0;
     vm->copied = 0;
     vm->max_live = 0;
-    if (!vm->heap_from) { fprintf(stderr, "runevm: cannot allocate heap\n"); exit(2); }
+    if (!vm->alloc.from) { fprintf(stderr, "runevm: cannot allocate heap\n"); exit(2); }
+#ifdef RUNE_BARRIER_CARDS
+    heap_cards(vm);
+#endif
+    real_boxes_make(vm);
 }
 
 Obj *vm_alloc(VM *vm, uint8_t kind, uint16_t contag, uint32_t len, size_t payload_bytes) {
     size_t size = obj_alloc_size(payload_bytes);
     CENSUS_FLUSH();
-    if (STOCK(size) > vm->heap_size - USED_STOCK(vm) ||
-        (vm->gc_stress && vm->objects_allocated % vm->gc_stress == 0) ||
+    if (STOCK(size) > vm->alloc.size - USED_STOCK(vm) ||
+        (vm->gc_stress && (vm->objects_allocated + vm->boxes_allocated) % vm->gc_stress == 0) ||
         CENSUS_FORCED()) {
         vm_gc(vm, STOCK(size));
     }
-    Obj *o = (Obj *)(vm->heap_from + vm->heap_used);
-    vm->heap_used += size;
+    Obj *o = (Obj *)(vm->alloc.from + vm->alloc.used);
+    vm->alloc.used += size;
     ADD_STOCK(vm, size);
-    vm->bytes_allocated += STOCK(size);
-    vm->objects_allocated++;
+    if (kind == K_REAL || kind == K_BOX) { vm->box_bytes_allocated += STOCK(size); vm->boxes_allocated++; vm->box_bytes_live += size; }
+    else { vm->bytes_allocated += STOCK(size); vm->objects_allocated++; }
     obj_init(o, kind, contag, len);
     CENSUS_ALLOC(vm, o, size);
     return o;
@@ -83,16 +164,13 @@ Obj *vm_string_from(VM *vm, const char *s, uint32_t len) {
 
 /* --- collection --- */
 
-static char *to_space;
-static size_t to_used;
-#ifdef RUNE_CENSUS
-static size_t to_used_stock;
-#endif
-
-static Obj *copy_obj(Obj *o) {
+/* What a collection in progress has is the VM's (GcState, vm.h): the space
+   copied into, how much of it is taken, and how much of that is boxes. */
+static Obj *copy_obj(VM *vm, Obj *o) {
     if (obj_forwarded(o)) return obj_forwarding(o);
     size_t size = obj_size(o);
-    Obj *n = (Obj *)(to_space + to_used);
+    if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) vm->gc.to_boxes += size;
+    Obj *n = (Obj *)(vm->gc.to + vm->gc.to_used);
     /* Most objects have one to three fields: a copy of a size the compiler
        knows is a few moves, where one of any size is a call of memcpy, which
        was 4.5% of the time of the compiler compiling itself natively. */
@@ -100,19 +178,76 @@ static Obj *copy_obj(Obj *o) {
     case OBJ_SIZE_FIELDS(1): memcpy(n, o, OBJ_SIZE_FIELDS(1)); break;
     case OBJ_SIZE_FIELDS(2): memcpy(n, o, OBJ_SIZE_FIELDS(2)); break;
     case OBJ_SIZE_FIELDS(3): memcpy(n, o, OBJ_SIZE_FIELDS(3)); break;
+    case OBJ_SIZE_FIELDS(4): memcpy(n, o, OBJ_SIZE_FIELDS(4)); break;
+    case OBJ_SIZE_FIELDS(5): memcpy(n, o, OBJ_SIZE_FIELDS(5)); break;
+    case OBJ_SIZE_FIELDS(6): memcpy(n, o, OBJ_SIZE_FIELDS(6)); break;
     default: memcpy(n, o, size); break;
     }
-    to_used += size;
+#ifdef RUNE_GC_BITS
+    /* The stress of the header's bits (value.h): every copy is a collection
+       older, to three, and has the other two bits by what is at hand, so
+       that a reader of a kind that does not mask them, in C or in compiled
+       code, fails a suite. */
+    {
+        int age = obj_gc_bits(n) & OBJ_GC_AGE;
+        if (age != OBJ_GC_AGE) age += OBJ_GC_AGE_ONE;
+        obj_set_gc_bits(n, age | ((size & 8) ? OBJ_GC_REMEMBERED : 0) | ((vm->gc_count & 1) ? OBJ_GC_PINNED : 0));
+    }
+#endif
+    vm->gc.to_used += size;
 #ifdef RUNE_CENSUS
-    to_used_stock += STOCK(size);
+    vm->gc.to_used_stock += STOCK(size);
 #endif
     CENSUS_SURVIVE(n, size);
     obj_forward(o, n);
     return n;
 }
 
-static void copy_value(Value *v) {
-    if (val_is(*v, T_PTR) && val_ptr(*v)) *v = mk_ptr(copy_obj(val_ptr(*v)));
+static void copy_value(VM *vm, Value *v) {
+    if (val_is_ptr(*v)) *v = mk_ptr(copy_obj(vm, val_ptr(*v)));
+}
+
+/* The roots, listed once, for the collector and for a heap that moved
+   (heap_relocate): the value stack, and these. V takes the address of a
+   value, O of a pointer to an object that is there. */
+#define OTHER_ROOTS(vm, V, O) \
+    do { \
+        for (uint32_t i_ = 0; i_ < (vm)->prog.nglobals; i_++) V(&(vm)->globals[i_]); \
+        for (uint32_t i_ = 0; i_ < (vm)->prog.nconsts; i_++) V(&(vm)->prog.consts[i_]); \
+        if ((vm)->frames_active) \
+            for (size_t i_ = 0; i_ <= (vm)->fp; i_++) \
+                if ((vm)->frames[i_].closure) O(&(vm)->frames[i_].closure); \
+        for (int i_ = 0; i_ < NUM_BUILTIN_EXNS; i_++) \
+            if ((vm)->builtin_exns[i_]) O(&(vm)->builtin_exns[i_]); \
+        for (int i_ = 0; i_ < REAL_BOXES; i_++) \
+            if ((vm)->real_boxes[i_]) O(&(vm)->real_boxes[i_]); \
+        for (size_t i_ = 0; i_ < (vm)->nhandles; i_++) V(&(vm)->handles[i_]); \
+    } while (0)
+#define COPY_VALUE(v) copy_value(vm, (v))
+#define COPY_OBJ(o) (*(o) = copy_obj(vm, *(o)))
+
+/* The value stack as roots. Every slot, where the engine does not say what
+   is live (the stack bytecode; VM.frame_live). Where it does, the registers
+   of a frame that waits for a call are roots as far as they are live there,
+   and a dead one that holds a pointer is made unit: it is not copied, and it
+   must not stay behind pointing into the space that is left, since the frame
+   becomes the one that runs again, whose registers are all roots (what it is
+   doing when a collection comes is not known here). */
+static void stack_roots(VM *vm) {
+    size_t at = 0;
+    if (vm->frame_live && vm->frames_active)
+        for (size_t k = 0; k < vm->fp; k++) {
+            const Frame *f = &vm->frames[k];
+            size_t end = vm->frames[k + 1].base < vm->sp ? vm->frames[k + 1].base : vm->sp;
+            uint32_t n = vm->prog.funcs[f->func].nlocals;
+            uint64_t live = vm->frame_live(vm, f->func, vm->frames[k + 1].ret_pc);
+            for (; at < f->base && at < end; at++) copy_value(vm, &vm->stack[at]);
+            for (uint32_t r = 0; r < n && at < end; r++, at++) {
+                if (r >= 64 || ((live >> r) & 1)) copy_value(vm, &vm->stack[at]);
+                else if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
+            }
+        }
+    for (; at < vm->sp; at++) copy_value(vm, &vm->stack[at]);
 }
 
 /* The heap is two semispaces, both kept: the one collected from is the next
@@ -120,53 +255,49 @@ static void copy_value(Value *v) {
    for every collection, as before, cost the kernel's work of giving fresh
    pages every time. */
 static void collect_into(VM *vm, size_t new_size) {
-    if (vm->heap_to && new_size == vm->heap_size) to_space = vm->heap_to;
+    if (vm->gc.kept && new_size == vm->alloc.size) vm->gc.to = vm->gc.kept;
     else {
-        free(vm->heap_to);
-        to_space = malloc(REAL_SPACE(new_size));
-        if (!to_space) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
+        free(vm->gc.kept);
+        vm->gc.to = space_new(REAL_SPACE(new_size));
+        if (!vm->gc.to) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
     }
-    vm->heap_to = NULL;
-    to_used = 0;
+    vm->gc.kept = NULL;
+    vm->gc.to_used = 0;
+    vm->gc.to_boxes = 0;
 #ifdef RUNE_CENSUS
-    to_used_stock = 0;
+    vm->gc.to_used_stock = 0;
     census_collect_begin();
 #endif
 
-    /* roots */
-    for (size_t i = 0; i < vm->sp; i++) copy_value(&vm->stack[i]);
-    for (uint32_t i = 0; i < vm->prog.nglobals; i++) copy_value(&vm->globals[i]);
-    for (uint32_t i = 0; i < vm->prog.nconsts; i++) copy_value(&vm->prog.consts[i]);
-    if (vm->frames_active)
-        for (size_t i = 0; i <= vm->fp; i++)
-            if (vm->frames[i].closure) vm->frames[i].closure = copy_obj(vm->frames[i].closure);
-    for (int i = 0; i < NUM_BUILTIN_EXNS; i++)
-        if (vm->builtin_exns[i]) vm->builtin_exns[i] = copy_obj(vm->builtin_exns[i]);
+    stack_roots(vm);
+    OTHER_ROOTS(vm, COPY_VALUE, COPY_OBJ);
 
     /* scan */
     size_t scan = 0;
-    while (scan < to_used) {
-        Obj *o = (Obj *)(to_space + scan);
+    while (scan < vm->gc.to_used) {
+        Obj *o = (Obj *)(vm->gc.to + scan);
         size_t size = obj_size(o);
-        if (obj_kind(o) != K_STRING) {
+        if (obj_has_fields(o)) {
             Value *f = obj_fields(o);
-            for (uint32_t i = 0; i < obj_len(o); i++) copy_value(&f[i]);
+            uint32_t n = obj_scanned_fields(o);   /* every field; of an indirection, the first */
+            for (uint32_t i = 0; i < n; i++) copy_value(vm, &f[i]);
         }
         scan += size;
     }
 
-    if (new_size == vm->heap_size) vm->heap_to = vm->heap_from;
-    else free(vm->heap_from);
-    vm->heap_from = to_space;
-    vm->heap_used = to_used;
+    if (new_size == vm->alloc.size) vm->gc.kept = vm->alloc.from;
+    else free(vm->alloc.from);
+    vm->alloc.from = vm->gc.to;
+    vm->alloc.used = vm->gc.to_used;
+    vm->box_bytes_live = vm->gc.to_boxes;
 #ifdef RUNE_CENSUS
-    USED_STOCK(vm) = to_used_stock;
+    USED_STOCK(vm) = vm->gc.to_used_stock;
 #endif
-    vm->heap_size = new_size;
+    vm->alloc.size = new_size;
     vm->gc_count++;
-    vm->copied += to_used;
-    if (to_used > vm->max_live) vm->max_live = to_used;
-    to_space = NULL;
+    vm->copied += vm->gc.to_used;
+    if (vm->gc.to_used > vm->max_live) vm->max_live = vm->gc.to_used;
+    vm->gc.to = NULL;
 }
 
 /* heap_fill% of n bytes, rounded down, which for 50 is n / 2 */
@@ -182,9 +313,19 @@ static size_t grown(const VM *vm, size_t size, size_t used, size_t needed) {
     size_t want = size;
     while (used > fill_of(vm, want) || needed > fill_of(vm, want) - used) {
         if (vm->heap_limit && want >= vm->heap_limit) return vm->heap_limit;
+#ifdef RUNE_HEAP_GROW
+        /* The experiment of docs/plans/heap-layout.md, M7: by RUNE_HEAP_GROW
+           percent a step, to a multiple of 1 MiB, where the heap doubles. */
+        size_t step = want / 100 * RUNE_HEAP_GROW;
+        step = (step + 1048575) / 1048576 * 1048576;
+        if (step > SIZE_MAX - want) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
+        if (vm->heap_limit && want + step > vm->heap_limit) return vm->heap_limit;
+        want += step;
+#else
         if (vm->heap_limit && want > vm->heap_limit / 2) return vm->heap_limit;
         if (want > SIZE_MAX / 2) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
         want *= 2;
+#endif
     }
     return want;
 }
@@ -207,17 +348,19 @@ void vm_gc(VM *vm, size_t needed) {
         guess += vm->live_last - vm->live_before;
         /* no more than can survive: it would wrap, or grow the heap more
            than once on a guess */
-        if (guess < vm->live_last || guess > vm->heap_size) guess = vm->heap_size;
+        if (guess < vm->live_last || guess > vm->alloc.size) guess = vm->alloc.size;
     }
-    collect_into(vm, grown(vm, vm->heap_size, guess, needed));
-    size_t want = grown(vm, vm->heap_size, USED_STOCK(vm), needed);
-    if (want != vm->heap_size) collect_into(vm, want);
-    if (needed > vm->heap_size - vm->heap_used) vm_limit(vm, "heap limit exceeded");
+    collect_into(vm, grown(vm, vm->alloc.size, guess, needed));
+    size_t want = grown(vm, vm->alloc.size, USED_STOCK(vm), needed);
+    if (want != vm->alloc.size) collect_into(vm, want);
+    if (needed > vm->alloc.size - vm->alloc.used) vm_limit(vm, "heap limit exceeded");
     vm->live_before = vm->live_last;
     vm->live_last = USED_STOCK(vm);
     CENSUS_GC_END(vm);
-    vm->gc_user_us += sys_time_user() - user0;
-    vm->gc_sys_us += sys_time_sys() - sys0;
+    int64_t user = sys_time_user() - user0, sys = sys_time_sys() - sys0;
+    vm->gc_user_us += user;
+    vm->gc_sys_us += sys;
+    if (user + sys > vm->gc_longest_us) vm->gc_longest_us = user + sys;
 }
 
 /* --- relocation, for an image of the VM (runtime/image.c) --- */
@@ -226,41 +369,86 @@ void vm_gc(VM *vm, size_t needed) {
    in them: each pointer moves by the distance between the two heaps. A
    pointer that is not into the heap's used part, or an object that is not
    one, makes the image unsound (0). */
-static uintptr_t reloc_old;
-static int reloc_ok;
 
 static Obj *relocate_obj(VM *vm, Obj *o) {
     uintptr_t at = (uintptr_t)o;
-    if (at < reloc_old || at - reloc_old >= vm->heap_used) { reloc_ok = 0; return NULL; }
-    return (Obj *)(vm->heap_from + (at - reloc_old));
+    if (at < vm->gc.reloc_old || at - vm->gc.reloc_old >= vm->alloc.used) { vm->gc.reloc_ok = 0; return NULL; }
+    return (Obj *)(vm->alloc.from + (at - vm->gc.reloc_old));
 }
 
 static void relocate_value(VM *vm, Value *v) {
-    if (val_is(*v, T_PTR) && val_ptr(*v)) *v = mk_ptr(relocate_obj(vm, val_ptr(*v)));
+    if (val_is_ptr(*v)) *v = mk_ptr(relocate_obj(vm, val_ptr(*v)));
+}
+
+/* ---- the handles: what C holds across a collection (vm.h) ---- */
+size_t vm_handle_new(VM *vm, Value v) {
+    if (vm->handles_free) {
+        size_t h = vm->handles_free - 1;
+        vm->handles_free = (size_t)val_imm(vm->handles[h]);
+        vm->handles[h] = v;
+        return h;
+    }
+    if (vm->nhandles == vm->handles_cap) {
+        size_t cap = vm->handles_cap ? vm->handles_cap * 2 : 16;
+        Value *t = realloc(vm->handles, cap * sizeof *t);
+        if (!t) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
+        vm->handles = t; vm->handles_cap = cap;
+    }
+    vm->handles[vm->nhandles] = v;
+    return vm->nhandles++;
+}
+Value vm_handle_get(const VM *vm, size_t h) { return h < vm->nhandles ? vm->handles[h] : mk_unit(); }
+void vm_handle_set(VM *vm, size_t h, Value v) { if (h < vm->nhandles) vm->handles[h] = v; }
+void vm_handle_free(VM *vm, size_t h) {
+    if (h >= vm->nhandles) return;
+    vm->handles[h] = mk_imm((int64_t)vm->handles_free);
+    vm->handles_free = h + 1;
+}
+
+/* the array of bytes or of reals a handle names, or NULL */
+static Obj *raw_array(const VM *vm, size_t h) {
+    Value v = vm_handle_get(vm, h);
+    if (!val_is_ptr(v) || !val_ptr(v)) return NULL;
+    Obj *o = val_ptr(v);
+    return obj_kind(o) == K_BYTES || obj_kind(o) == K_REALS ? o : NULL;
+}
+void *vm_pin(VM *vm, size_t h, size_t *bytes) {
+    Obj *o = raw_array(vm, h);
+    if (!o) return NULL;
+    size_t n = obj_payload_bytes(obj_kind(o), obj_len(o));
+    void *copy = malloc(n ? n : 1);
+    if (!copy) return NULL;
+    memcpy(copy, obj_bytes(o), n);
+    if (bytes) *bytes = n;
+    return copy;
+}
+void vm_unpin(VM *vm, size_t h, void *copy) {
+    Obj *o = raw_array(vm, h);
+    if (o && copy) memcpy(obj_bytes(o), copy, obj_payload_bytes(obj_kind(o), obj_len(o)));
+    free(copy);
 }
 
 int heap_relocate(VM *vm, uintptr_t old_base) {
-    reloc_old = old_base;
-    reloc_ok = 1;
+    vm->gc.reloc_old = old_base;
+    vm->gc.reloc_ok = 1;
     size_t scan = 0;
-    while (reloc_ok && scan < vm->heap_used) {
-        Obj *o = (Obj *)(vm->heap_from + scan);
-        if (vm->heap_used - scan < OBJ_HEADER_SIZE || obj_kind(o) < K_TUPLE || obj_kind(o) > K_EXNCON) return 0;
+    while (vm->gc.reloc_ok && scan < vm->alloc.used) {
+        Obj *o = (Obj *)(vm->alloc.from + scan);
+        if (vm->alloc.used - scan < OBJ_HEADER_SIZE || obj_kind(o) < K_TUPLE || obj_kind(o) > K_LAST || obj_kind(o) == K_FORWARD) return 0;
         size_t size = obj_size(o);
-        if (size > vm->heap_used - scan) return 0;
-        if (obj_kind(o) != K_STRING) {
+        if (size > vm->alloc.used - scan) return 0;
+        if (obj_has_fields(o)) {
             Value *f = obj_fields(o);
             for (uint32_t i = 0; i < obj_len(o); i++) relocate_value(vm, &f[i]);
         }
         scan += size;
     }
+    /* every slot of the stack, dead registers too: they are values still */
     for (size_t i = 0; i < vm->sp; i++) relocate_value(vm, &vm->stack[i]);
-    for (uint32_t i = 0; i < vm->prog.nglobals; i++) relocate_value(vm, &vm->globals[i]);
-    for (uint32_t i = 0; i < vm->prog.nconsts; i++) relocate_value(vm, &vm->prog.consts[i]);
-    if (vm->frames_active)
-        for (size_t i = 0; i <= vm->fp; i++)
-            if (vm->frames[i].closure) vm->frames[i].closure = relocate_obj(vm, vm->frames[i].closure);
-    for (int i = 0; i < NUM_BUILTIN_EXNS; i++)
-        if (vm->builtin_exns[i]) vm->builtin_exns[i] = relocate_obj(vm, vm->builtin_exns[i]);
-    return reloc_ok;
+#define RELOCATE_VALUE(v) relocate_value(vm, (v))
+#define RELOCATE_OBJ(o) (*(o) = relocate_obj(vm, *(o)))
+    OTHER_ROOTS(vm, RELOCATE_VALUE, RELOCATE_OBJ);
+#undef RELOCATE_VALUE
+#undef RELOCATE_OBJ
+    return vm->gc.reloc_ok;
 }

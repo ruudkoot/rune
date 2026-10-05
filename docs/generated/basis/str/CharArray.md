@@ -18,7 +18,7 @@ structure CharArray :> MONO_ARRAY where type vector = CharVector.vector where ty
 
 CharArray: mutable arrays of characters, a type of their own with
 identity equality. Their vectors are strings: [`vector`](../sig/MONO_ARRAY.md#val-vector) gives a `string`,
-and [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) copies one in.
+and [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) copies one in. An array takes a byte a character.
 
 ## Members
 

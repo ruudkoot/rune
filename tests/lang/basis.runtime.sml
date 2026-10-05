@@ -43,7 +43,7 @@ val () = print ("two equal refs are two: " ^ Bool.toString (not (Runtime.same (r
 val (answer, cost) = Runtime.profile (fn () => keep := 1 :: !keep)
 val (_, nothing') = Runtime.profile (fn () => ())
 val () = print ("profile sees the cell and nothing else: "
-                ^ Bool.toString (#bytes cost - #bytes nothing' = 40
+                ^ Bool.toString (#bytes cost - #bytes nothing' = 24
                                  andalso #objects cost - #objects nothing' = 1) ^ "\n")
 val () = print ("profile returns the value: " ^ Bool.toString (answer = ()) ^ "\n")
 val () = print ("version is three numbers: "

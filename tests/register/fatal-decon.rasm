@@ -1,0 +1,21 @@
+# A fatal error of compiled code (scripts/check-jit.sh): a constructor of
+# tag 3 taken apart as tag 2, which --checked catches, in a function the
+# JIT compiles. The message names the tag found, which the code has in a
+# register, and the tag wanted, which the error's record has.
+const start string "start\n"
+globals 1
+
+function main 6
+  CONST 1 %start
+  PRIM print 2 1
+  INT 1 5
+  CON 2 3 1
+  CALLK &take 1 2
+  RESULT 3
+  HALT
+
+function take 4
+  INT 1 7
+  PRIM int_add 2 1 1
+  DECON 3 0 2
+  RET 3
