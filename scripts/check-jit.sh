@@ -17,6 +17,9 @@
 # values in machine registers, a sixth every other one at tier 2, and a
 # seventh leaves the code for the interpreter after every instruction
 # (--deopt-stress=1, M11), so that the frame is exact at every boundary.
+# An eighth counts what tier 2's code calls and branches on (--jit-profile),
+# whose helper is called in the middle of a call through a closure, with
+# what the call found and the homes kept around it.
 #   scripts/check-jit.sh [--rune BIN] [--vm BIN] [-j N]
 set -u
 cd "$(dirname "$0")/.."
@@ -54,25 +57,27 @@ if [ -n "$one" ]; then
     echo "FAIL jit.$name: $(grep -m1 . "$out/$name/cerr")"; exit 0
   fi
   "$vm" --disasm "$out/$name/prog.rbc" > "$out/$name/disasm" 2> /dev/null
-  for mode in off all odd stress opt optodd deopt; do
+  for mode in off all odd stress opt optodd deopt profile; do
     jit="--jit=$mode"
     [ "$mode" = odd ] && jit="--jit=all --jit-only=odd"
     [ "$mode" = stress ] && jit="--jit=baseline --jit-calls=1 --jit-work=1 --jit-stress=5"
     [ "$mode" = opt ] && jit="--jit=all --jit-tier=2"
     [ "$mode" = optodd ] && jit="--jit=all --jit-only=odd --jit-tier=2"
     [ "$mode" = deopt ] && jit="--jit=all --jit-tier=2 --deopt-stress=1"
+    [ "$mode" = profile ] && jit="--jit=all --jit-tier=2 --jit-profile"
     # shellcheck disable=SC2086
     (cd "$out/$name" && $limit "$root/$vm" --count $jit $vmargs prog.rbc $args < "$stdin" > "stdout.$mode" 2> "stderr.$mode")
     echo "exit $?" >> "$out/$name/stderr.$mode"
     sed -n 's/^runevm: count: //p' "$out/$name/stderr.$mode" > "$out/$name/count.$mode"
   done
-  for mode in all odd stress opt optodd deopt; do
+  for mode in all odd stress opt optodd deopt profile; do
     what="--jit=all"
     [ "$mode" = odd ] && what="every other function compiled"
     [ "$mode" = stress ] && what="tiering up and invalidating (--jit-stress)"
     [ "$mode" = opt ] && what="every function at tier 2 (--jit-tier=2)"
     [ "$mode" = optodd ] && what="every other function at tier 2"
     [ "$mode" = deopt ] && what="leaving for the interpreter after every instruction (--deopt-stress=1)"
+    [ "$mode" = profile ] && what="tier 2 counting its calls and branches (--jit-profile)"
     if ! cmp -s "$out/$name/stdout.off" "$out/$name/stdout.$mode"; then
       echo "FAIL jit.$name: prints differently with $what: $(diff "$out/$name/stdout.off" "$out/$name/stdout.$mode" | head -2 | tail -1)"
     elif ! cmp -s "$out/$name/count.off" "$out/$name/count.$mode"; then

@@ -261,6 +261,24 @@ void jit_print_stats(void) {
             (unsigned long long)jit->compiled, jit->nfuncs, (unsigned long long)jit->compiled_opt, jit->compile_seconds, (unsigned long long)jit->code_used,
             (unsigned long long)jit->dead_bytes, (unsigned long long)jit->handed_native, (unsigned long long)jit->handed_interp,
             (unsigned long long)jit->osr_entries, (unsigned long long)jit->deopts, (unsigned long long)jit->invalidated);
+    if (jit->homes_wanted[0] | jit->homes_wanted[1] | jit->homes_too_large) {
+        static const char *const kinds[2] = { "general", "real" };
+        for (int k = 0; k < 2; k++)
+            if (jit->homes_wanted[k]) {
+                /* what 1, 2, ... homes would hold, by use, to the first number that holds all */
+                uint64_t all = 0, sum = 0;
+                for (int i = 0; i < 32; i++) all += jit->homes_weight[k][i];
+                fprintf(stderr, "runevm: jit: tier 2's homes, %s: %llu of %llu registers have one; by use,", kinds[k],
+                        (unsigned long long)jit->homes_given[k], (unsigned long long)jit->homes_wanted[k]);
+                for (int i = 0; i < 32 && sum < all; i++) {
+                    sum += jit->homes_weight[k][i];
+                    fprintf(stderr, " %d: %.1f%%", i + 1, 100.0 * (double)sum / (double)all);
+                }
+                fprintf(stderr, "\n");
+            }
+        if (jit->homes_too_large)
+            fprintf(stderr, "runevm: jit: tier 2's homes: %llu functions of more than 64 registers have none\n", (unsigned long long)jit->homes_too_large);
+    }
     if (jit->profile) print_profile(jit);
     /* the primitives called from code, most called first: what is not in
        line yet, or in line and out of its fast case */

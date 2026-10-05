@@ -333,21 +333,35 @@ static int liveness(Jit *j, const Scan *sc) {
 }
 
 /* The homes: the registers of a representation a machine register can hold
-   -- an int, a word, a char, a nullary constructor in rbx, rsi or rdi (the
-   general registers the emitters never use as scratch), a real in xmm2 to
-   xmm15 -- the most used first, a use inside a loop counting for eight. */
+   -- an int, a word, a char, a nullary constructor in one of the target's
+   general homes (asm.h: registers the emitters never use as scratch while
+   a home is live), a real in xmm2 to xmm15 -- the most used first, a use
+   inside a loop counting for eight, and one that is raw in its home (a
+   number of 64 bits, which a slot holds encoded or boxed) for four more.
+
+   Two registers have one home where they are never live together: each
+   register is given the first home that none of those it interferes with
+   has. They interfere where both are live at the entry of an instruction,
+   and where one is defined by an instruction at whose entry the other is
+   live (what is live at its exit and not at its entry is what it
+   defines). So the register an instruction defines never has the home of
+   one it reads, though that one may die there: an emitter may write the
+   one before it has read the other, and the homes to load after a call
+   into C in the middle of an instruction, those live at its entry and
+   the one it defines, are all different (masm.c, ms_reload). */
 static int choose_homes(Jit *j) {
     const Program *p = &j->vm->prog;
     const Function *fn = &p->funcs[j->f];
     const uint8_t *code = p->code;
     uint32_t n = fn->nlocals;
+    if (fn->has_meta && n > 64) j->jit->homes_too_large++;
     if (!fn->has_meta || n > 64) return 0;
     uint32_t *weight = calloc(n, sizeof *weight);
     Home *homes = calloc(n, sizeof *homes);
-    if (!weight || !homes) { free(weight); free(homes); return 0; }
+    uint64_t *meets = calloc(n, sizeof *meets);   /* the registers each interferes with */
     /* each loop: from its head to the last jump back to it */
     uint32_t *last = calloc(fn->nloops ? fn->nloops : 1, sizeof *last);
-    if (!last) { free(weight); free(homes); return 0; }
+    if (!weight || !homes || !meets || !last) { free(weight); free(homes); free(meets); free(last); return 0; }
     for (uint32_t k = 0; k < fn->nloops; k++) last[k] = fn->loops[k];
     for (uint32_t q = j->from; q < j->to; ) {
         uint32_t l = rop_length(code + q);
@@ -367,34 +381,69 @@ static int choose_homes(Jit *j) {
         reg_uses_defs(p, pc, &uses, &def);
         for (uint32_t r = 0; r < n; r++)
             if (((uses | def) >> r) & 1) weight[r] += in_loop ? 8 : 1;
+        uint64_t in = j->live_in[pc - j->from];
+        for (uint32_t r = 0; r < n; r++) {
+            if ((in >> r) & 1) meets[r] |= in | def;
+            if ((def >> r) & 1) meets[r] |= in;
+        }
         if (op == ROP_SWITCH) l += 5 * (uint32_t)read_i32(code + pc + 5);
         pc += l;
     }
     free(last);
-    static const int gprs[3] = { R_H0, R_H1, R_H2 };
-    int ngpr = 0, nxmm = 0;
+    static const int gprs[AS_NHOMES_G] = AS_HOMES_G;
+    int given = 0;
+    uint64_t seen = 0;   /* the registers decided: a home, or none */
+    uint8_t wants[64] = { 0 }, number[64] = { 0 };   /* the kind of home each decided register wants (HOME_SLOT: none), and its number */
     for (;;) {
         uint32_t best = UINT32_MAX;
+        uint64_t best_weight = 0;
         for (uint32_t r = 0; r < n; r++) {
-            if (homes[r].kind != HOME_SLOT || weight[r] == 0) continue;
+            if (((seen >> r) & 1) || weight[r] == 0) continue;
             int rep = fn->reps[r];
-            int gpr = rep == REP_INT || rep == REP_WORD || rep == REP_CHAR || rep == REP_CON0
-                   || rep == REP_INT64 || rep == REP_WORD64;   /* the 64-bit types: the 64 bits, raw (masm.c) */
+            int raw = rep == REP_INT64 || rep == REP_WORD64;   /* the 64-bit types: the 64 bits, raw (masm.c) */
+            int gpr = raw || rep == REP_INT || rep == REP_WORD || rep == REP_CHAR || rep == REP_CON0;
             int xmm = MS_REAL_HOMES && rep == REP_REAL;   /* a real is a word in its slot until masm.h gives it a home */
-            if (!(gpr && ngpr < 3) && !(xmm && nxmm < 14)) continue;
-            if (best == UINT32_MAX || weight[r] > weight[best]) best = r;
+            if (!gpr && !xmm) { seen |= (uint64_t)1 << r; continue; }
+            uint64_t w = (uint64_t)weight[r] * (raw ? 4 : 1);
+            if (best == UINT32_MAX || w > best_weight) { best = r; best_weight = w; }
         }
         if (best == UINT32_MAX) break;
+        seen |= (uint64_t)1 << best;
         int rep = fn->reps[best];
-        if (rep == REP_REAL) { homes[best].kind = HOME_XMM; homes[best].reg = (uint8_t)(F_H0 + nxmm++); homes[best].tag = T_REAL; }
+        int kind = rep == REP_REAL ? HOME_XMM : HOME_GPR;
+        int nhomes = kind == HOME_XMM ? AS_NHOMES_F : AS_NHOMES_G;
+        /* The numbers of the homes of its kind that those it interferes
+           with have. A register that gets none is numbered on all the
+           same, past the homes there are (wants): the numbers below are
+           given as they would be without it, and --jit-stats can say
+           what any number of homes would hold. */
+        uint64_t taken = 0;
+        for (uint32_t r = 0; r < n; r++)
+            if (r != best && ((meets[best] >> r) & 1) && wants[r] == kind) taken |= (uint64_t)1 << number[r];
+        int k = 0;
+        while (k < 63 && ((taken >> k) & 1)) k++;
+        wants[best] = (uint8_t)kind;
+        number[best] = (uint8_t)k;
+        j->jit->homes_wanted[kind == HOME_XMM]++;
+        j->jit->homes_weight[kind == HOME_XMM][k < 31 ? k : 31] += weight[best];
+        if (k >= nhomes) continue;   /* none left where it is live: its slot */
+        j->jit->homes_given[kind == HOME_XMM]++;
+        homes[best].kind = (uint8_t)kind;
+        homes[best].tag = (uint8_t)k;   /* the home's number, until every register has its own */
+        given++;
+    }
+    for (uint32_t r = 0; r < n; r++) {
+        if (homes[r].kind == HOME_SLOT) continue;
+        int rep = fn->reps[r], k = homes[r].tag;
+        if (homes[r].kind == HOME_XMM) { homes[r].reg = (uint8_t)(F_H0 + k); homes[r].tag = T_REAL; }
         else {
-            homes[best].kind = HOME_GPR; homes[best].reg = (uint8_t)gprs[ngpr++];
-            homes[best].tag = (uint8_t)(rep == REP_INT ? T_INT : rep == REP_WORD ? T_WORD : rep == REP_CHAR ? T_CHAR
-                                        : rep == REP_INT64 ? T_INT64 : rep == REP_WORD64 ? T_WORD64 : T_CON0);
+            homes[r].reg = (uint8_t)gprs[k];
+            homes[r].tag = (uint8_t)(rep == REP_INT ? T_INT : rep == REP_WORD ? T_WORD : rep == REP_CHAR ? T_CHAR
+                                     : rep == REP_INT64 ? T_INT64 : rep == REP_WORD64 ? T_WORD64 : T_CON0);
         }
     }
-    free(weight);
-    if (ngpr == 0 && nxmm == 0) { free(homes); return 0; }
+    free(weight); free(meets);
+    if (!given) { free(homes); return 0; }
     j->homes = homes;
     return 1;
 }
@@ -737,7 +786,12 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     as_bind(&j.m.a, &j.entry);
     if (ok && fn->has_meta) {
         uint32_t from = jit_fill_from(vm, jit, f);
-        if (from < fn->arity) from = fn->arity;
+        /* (tier 2: a register that is written before anything could see it
+           may be written to its home alone, and its slot is a root of the
+           frame that runs all the same: every slot from the arity up has
+           a value. It is so already wherever the function reads an
+           argument first, which makes the answer 0.) */
+        if (from < fn->arity || tier == 2) from = fn->arity;
         ms_fill_units(&j.m, BASER, from, fn->nlocals);
     }
     /* tier 2: the representations trusted for the shapes of values (M10),

@@ -242,9 +242,11 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   8-byte copies through an xmm register, arithmetic, SSE2 on doubles,
   branches, calls. Nothing here knows a Value or a VM.
 * **`masm.h`, `masm.c`**: the macro-assembler, and the conventions the
-  code keeps. `r12` is the VM, `r13` the value stack, `rbp` the frame's
-  base as an index, `r14` its registers (`r13 + 16 rbp`), `r15` the count
-  of instructions; register k is the 16 bytes at `[r14 + 16 k]`. The
+  code keeps. `r12` is the VM, `rbp` the frame's base as an index into
+  the value stack, `r14` its registers (the stack plus `8 rbp`), `r15`
+  the count of instructions; register k is the 8 bytes at `[r14 + 8 k]`.
+  The stack itself has no register: what moves between frames reads it
+  from the VM. The
   machine stack holds only the call into C in progress, aligned by the
   enter stub; the code never pushes. `SYNC` writes the stack pointer (the
   frame's base plus its registers, plus what a primitive's arguments
@@ -386,12 +388,36 @@ which of them live in a machine register:
 
 * **Which.** A register whose representation a machine register can
   hold -- an int, a word, a char, a nullary constructor, an `Int64.int`
-  or a `Word64.word` in `rbx`, `rsi` or `rdi`, a real in `xmm2` to
-  `xmm15` -- the most used first, a use inside a loop (the section's
-  loop heads to the last jump back) counting for eight (`choose_homes`,
-  `compile.c`). Three general registers, since the emitters use the
-  others as scratch and for the arguments of calls into C. A pointer
-  never has a home: the collector's roots are the slots, as at tier 1.
+  or a `Word64.word` in one of six general registers (`rbx`, `r13`,
+  `rsi`, `rdi`, `r10`, `r9`; `AS_HOMES_G`, `asm.h`), a real in `xmm2`
+  to `xmm15` -- the most used first, a use inside a loop (the section's
+  loop heads to the last jump back) counting for eight, and a number
+  that is raw in its home for four more (`choose_homes`, `compile.c`).
+  The emitters keep the other general registers as scratch and for the
+  arguments of calls into C; `r9` and `r10` are scratch too, but only
+  in a call's or a return's sequence after it has read its last home
+  (`emit.c`). A pointer never has a home: the collector's roots are
+  the slots, as at tier 1.
+* **Shared.** Two registers have one home where they are never live
+  together. They interfere where both are live at the entry of an
+  instruction, and where an instruction defines one while the other is
+  live at its entry; each register, in the order above, takes the
+  first home that no register it interferes with has. The register an
+  instruction defines so never has the home of one it reads, and an
+  emitter may write it before it has read them all. What is in a home
+  is then its register's only while that register is live: the
+  write-back and the loading go by what is live at a pc, as before,
+  and the loading after a call into C in the middle of an instruction
+  takes the registers live at its entry first and then the one it
+  defines (`ms_reload`, `masm.c`). `--jit-stats` says how many of the
+  registers that could have a home have one, and what share of their
+  uses one home, two, three and so on would hold: a register that gets
+  none is numbered on past the homes there are, so the line answers
+  what another home would be worth before it is found a register.
+* **Constants.** A real's constant goes to its home as the double, and
+  an `Int64.int`'s or a `Word64.word`'s as its 64 bits, made when the
+  function is compiled: a constant past 63 bits is a box, and nothing
+  reads it while the code runs (`emit_CONST`).
   The home of an int, a word, a char or a tag holds its word, as the
   slot does. The home of a real, of an `Int64.int` and of a
   `Word64.word` is *raw*: the double, or the 64 bits themselves, which
@@ -508,15 +534,20 @@ of it over its encoder: x86-64 in `asm_x64.c` over `x64.c`, aarch64 in
 `llvm-mc` gives, `tests/register/x64_test.c` and `a64_test.c`). What the
 implementation gives:
 
-* **The registers**, under the portable names: the five the code keeps
-  (`R_VM`, `R_STACK`, `R_BASEI`, `R_BASER`, `R_COUNT`), the three
-  general homes (`R_H0` to `R_H2`) and fourteen floating ones (`F_H0`
-  on), seven scratch registers (`R_S0`, the return value of a call into
-  C, to `R_S6`) and two floating (`F_S0`, `F_S1`); x86-64 maps them as
-  before (`r12` to `r15` and `rbp`; `rbx`, `rsi`, `rdi`; `xmm2` on;
-  `rax`, `rcx`, `rdx`, `r8` to `r11`; `xmm0`, `xmm1`), aarch64 to
-  `x19` to `x23`; `x24` to `x26`; `v8` to `v21`; `x0`, `x9` to `x14`;
-  `v0`, `v1`, with `x16` the encoder's own and `x17` the assembler's.
+* **The registers**, under the portable names: the four the code keeps
+  (`R_VM`, `R_BASEI`, `R_BASER`, `R_COUNT`), the six general homes
+  (`R_H0` to `R_H5`, given out in the order of `AS_HOMES_G`) and
+  fourteen floating ones (`F_H0` on), seven scratch registers (`R_S0`,
+  the return value of a call into C, to `R_S6`) and two floating
+  (`F_S0`, `F_S1`). x86-64 maps them to `r12`, `rbp`, `r14`, `r15`;
+  `rbx`, `rsi`, `rdi`, `r13`, `r9`, `r10`; `xmm2` on; `rax`, `rcx`,
+  `rdx`, `r8` to `r11`; `xmm0`, `xmm1` -- sixteen registers for
+  seventeen names, so `R_S4` and `R_S5` are `R_H4` and `R_H5`, and an
+  emitter names them as scratch only where no home is live any more.
+  aarch64 maps them to `x19`, `x21` to `x23`; `x24` to `x26`, `x20`,
+  `x28`, `x27`; `v8` to `v21`; `x0`, `x9` to `x14`; `v0`, `v1`, with
+  `x16` the encoder's own and `x17` the assembler's: every home there
+  is a register C keeps, and none is a scratch register.
 * **The operations**, with x86-64's meanings where the machines differ:
   `add`, `sub`, `cmp`, `test` and `neg` set the flags a `jcc` or `setcc`
   reads, and nothing else promises to (an emitter that wants the sign

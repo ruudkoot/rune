@@ -242,7 +242,7 @@ typedef struct VM {
     int native;              /* a program runeopt made, whose code is not bytecode (runtime/native/native.c) */
     JitOptions jit;          /* the --jit options, runtime/register's (runtime/register/jit.h); all 0 in runevm-stack */
     uint64_t jit_fspill[14]; /* tier 2's reals in their xmm homes, raw, across the helper that boxes one (jit/masm.c) */
-    uint64_t jit_gspill[4];  /* and its general homes, an int's or a word's 64 bits among them; then the number being boxed where it is in no home */
+    uint64_t jit_gspill[16]; /* and its general homes (as many as the target has, jit/asm.h), an int's or a word's 64 bits among them; then the number being boxed where it is in no home */
 
     int argc;
     char **argv;             /* arguments after the bytecode file */

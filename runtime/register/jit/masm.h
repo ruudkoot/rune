@@ -7,14 +7,14 @@
    The registers the code keeps, all preserved across a call into C by both
    conventions:
      r12  the VM
-     r13  vm->stack, the value stack
      rbp  the frame's base, as an index into the stack
-     r14  the frame's registers: r13 + 16 * rbp
+     r14  the frame's registers: vm->stack + 8 * rbp
      r15  the count of instructions executed
    Register k of the frame is the word at [r14 + 8 k]. The frame's
    stack pointer is rbp + nlocals, plus what a primitive's arguments push.
-   rax, rcx, rdx, rsi, rdi, r8 to r11 and xmm0, xmm1 are scratch; rbx is
-   free. The machine stack holds only the call into C in progress: the
+   rax, rcx, rdx, r8, r11 and xmm0, xmm1 are scratch; rbx, r13, rsi, rdi,
+   r9 and r10 are tier 2's homes (asm.h), and scratch where there are
+   none. The machine stack holds only the call into C in progress: the
    enter stub aligns it, and the code never pushes.
 
    "The VM is exact where C can look" (docs/native.md): SYNC writes the
@@ -28,7 +28,7 @@
 #include "vm.h"
 #include "register/jit.h"
 
-enum { VMR = R_VM, STACKR = R_STACK, BASEI = R_BASEI, BASER = R_BASER, COUNTR = R_COUNT };
+enum { VMR = R_VM, BASEI = R_BASEI, BASER = R_BASER, COUNTR = R_COUNT };
 
 /* A slow path, emitted after the function's code: where it begins, where
    it goes back to, and what it is. */
@@ -257,6 +257,7 @@ void ms_string_byte(Masm *m, int r, int obj, int index);            /* r := byte
    a frame's registers at an address */
 void ms_load_nth(Masm *m, int32_t d, int base, uint32_t i);         /* R(d) := the i-th value at base */
 int ms_real_home(const Masm *m, int32_t d);                         /* R(d)'s home holds a real's double */
+int ms_num_home(const Masm *m, int32_t d);                          /* R(d)'s home holds the 64 bits of an int or a word (ms_set gives them) */
 void ms_set_real_known(Masm *m, int32_t d, uint64_t bits);          /* R(d) := the double of these bits (ms_real_home) */
 void ms_store_nth(Masm *m, int base, uint32_t i, int32_t s);        /* the i-th value at base := R(s) */
 void ms_slot_addr(Masm *m, int r, int32_t s);                       /* r := the address of R(s) */

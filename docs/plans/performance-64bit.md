@@ -695,6 +695,106 @@ alternate, and committed by itself.
    constants). The six programs of 64-bit words, the bootstrap and
    the programs of reals. The riskiest of the four: every emitter,
    both targets, the Windows convention and `runeopt`'s templates.
+   **Done, the first part** (2026-10-05, branch `jit-registers`): the
+   homes shared, six general homes where there were three, and a
+   number's constant made when the function is compiled.
+
+   *Shared.* A home was a register's for the whole function, and the
+   three most used had them. Now two registers have one home where
+   they are never live together (`choose_homes`, `compile.c`): they
+   interfere where both are live at the entry of an instruction, or
+   where an instruction defines one while the other is live at its
+   entry, and each register, the most used first (a use in a loop for
+   eight, a number that is raw in its home for four more), takes the
+   first home that none it interferes with has. This is experiment 3
+   too: a temporary lives in a home between its definition and its
+   use and never becomes a word. `lcg`'s loop has seven registers a
+   home can hold and never more than four at once.
+
+   *Six.* The audit found two registers to free. `r13` held the value
+   stack's base, which five places read: it is read from the VM there
+   now (after a call into C, and in a return), and `r13` is a home
+   that C keeps. `r9` and `r10` were scratch that only the sequences
+   of a call and of a return named: those keep what they find in
+   `rax`, `rcx`, `rdx`, `r8` and `r11` until they have read their last
+   home (a known call stores its arguments from the frame's base and
+   needs no register for where; a call through a closure stores its
+   argument before it uses the two), and after that every home is
+   free, as `rsi` and `rdi` were already. On x86-64 the homes are
+   `rbx`, `r13`, `rsi`, `rdi`, `r10`, `r9`, in the order they are
+   given out (the two Linux's C keeps first; `r9`, Windows's fourth
+   argument, last); on aarch64 `x24` to `x26`, `x20`, `x28`, `x27`,
+   all kept by C. The table is one place (`AS_HOMES_G`, `asm.h`).
+
+   *Constants.* `CONST` of a 64-bit number into a raw home is a move
+   of the 64 bits: `lcg` decoded two boxes an iteration.
+
+   Against the build before (step 1), runs that alternate, the least
+   of three; cycles, with three, four and six shared homes, and with
+   the constants; then the boxes made:
+
+   | Program | 3 shared | 4 | 6 | 6 and constants | instructions | boxes before | after |
+   |---|---:|---:|---:|---:|---:|---:|---:|
+   | lcg | 0.29 | 0.29 | 0.29 | 0.22 | 0.38 | 1,499,076 | 95 |
+   | lcg2 | 0.95 | 0.52 | 0.28 | 0.25 | 0.32 | 3,002,164 | 146 |
+   | inline | 0.54 | 0.38 | 0.19 | 0.20 | 0.31 | 5,999,720 | 350 |
+   | fnv | 0.70 | 0.68 | 0.72 | 0.72 | 0.81 | 4,193,967 | 77 |
+   | stream | 0.56 | 0.51 | 0.43 | 0.43 | 0.66 | 5,999,720 | 1,500,310 |
+   | tree | 0.69 | 0.69 | 0.63 | 0.54 | 0.55 | 5,693,791 | 922,921 |
+
+   `stream` and `tree` keep the boxes they owe: a generator's state is
+   a field of a tuple (raw fields, deferred). On MLton's 35 programs
+   the six shared homes run in 0.974 of the cycles and 0.980 of the
+   instructions (geometric means; `even-odd` 0.78, `checksum` 0.83,
+   `fxp` 0.92, `tailmerge` 0.92, `simple` 0.93; none above the noise
+   of a run, which was 3% that night: `merge` 1.07 and `lexgen` 1.04
+   with 0.99 and 1.00 of the instructions). The bootstrap is where it
+   was in cycles and at 0.988 of the instructions.
+
+   *What more homes would hold.* `--jit-stats` now says, of the
+   registers a home could hold, what share of their uses (weighted as
+   the choice weighs them) one home, two, three and so on would hold:
+
+   | | 3 | 4 | 6 | 7 | 8 | 11 | all with |
+   |---|---:|---:|---:|---:|---:|---:|---:|
+   | bootstrap, general | 87.0% | 94.7% | 99.4% | 99.8% | 99.9% | 100% | 11 |
+   | `logic` | 77.7% | 81.2% | 86.5% | 89.2% | 91.9% | 98.1% | 13 |
+   | `fxp` | 71.7% | 81.9% | 93.0% | 95.7% | 97.5% | 100% | 11 |
+   | `tak` | 55.7% | 70.3% | 94.1% | 100% | | | 7 |
+   | `barnes-hut` | 84.3% | 88.9% | 96.1% | 97.7% | 99.2% | 100% | 9 |
+   | `checksum` | 66.3% | 87.4% | 97.7% | 100% | | | 7 |
+
+   Of the 35 programs, 20 have everything in six general homes, and
+   all but `logic` in eleven. Reals: fourteen homes hold every use of
+   every program but `nucleic`, where they hold 89.1% (sixteen 93.1%,
+   twenty-four 98.7%, all with twenty-eight). So on x86-64 a seventh
+   general home is worth a few percent of the uses of four programs,
+   and the registers left to give it are the frame's base as an index
+   (`rbp`: an instruction and a load more at every call, and three at
+   every sync) and scratch registers every emitter names: not taken.
+   aarch64 has the registers for both, and takes them in the next
+   part.
+
+   Found on the way: the helper that `--jit-profile` calls in the
+   middle of a call through a closure was called with the machine
+   stack 8 bytes off its alignment (three pushes of 16 and 8 more,
+   from before a push was 16), and nothing ran tier 2 with the
+   profile: `scripts/check-jit.sh` has it as an eighth mode now.
+   `tests/lang/rt.int64_homes.sml` keeps more numbers live than
+   there are homes across everything that clobbers or reads them
+   late.
+
+   **To do, the second part** (the owner's, 2026-10-05: a layout and
+   a number of homes for each machine and each convention, where they
+   differ): the VM out of `r12`, whose every memory operand is a byte
+   longer (in `r13`, and `r12` the home, the bootstrap's code is 4.0%
+   smaller); the short forms of a tag's test and of a small constant,
+   which the encoder does not use; on aarch64 twelve general homes
+   and thirty for reals; what a call into C keeps, by convention
+   (Linux: `rbx`, `rbp`, `r12` to `r15`, no real; Windows: `rsi`,
+   `rdi` and `xmm6` to `xmm15` too; aarch64: `x19` to `x28` and `v8`
+   to `v15`), so that a home C keeps is not loaded again after a call
+   into C, and the homes of reals given out on Windows from `xmm6`.
 3. **A cheaper call for the primitives that stay in C** (`sin`,
    `cos`, `atan`, `ln`, `pow`: calls of the C library, as decided):
    the live homes saved as they are instead of written to their slots

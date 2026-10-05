@@ -804,6 +804,10 @@ static int live_at(const Masm *m, uint32_t pc, uint32_t r) {
     if (!m->live) return 1;
     return (m->live[pc - m->from] >> r) & 1;
 }
+/* a home's machine register as a bit: the general ones, then the reals' */
+static uint64_t home_bit(const Home *h) {
+    return (uint64_t)1 << (h->kind == HOME_XMM ? 32 + (h->reg - F_H0) : h->reg);
+}
 static void writeback(Masm *m, uint32_t pc, int pushed) {
     if (!m->homes) return;
 #ifdef RUNE_JIT_CONV
@@ -825,10 +829,12 @@ void ms_writeback(Masm *m, uint32_t pc) { writeback(m, pc, 0); }
 /* where a general home waits in the VM across the helper that boxes; a
    register that is no home (a result on its way to a slot) has the cell
    after them */
+static const int homes_g[AS_NHOMES_G] = AS_HOMES_G;
+_Static_assert(AS_NHOMES_G + 1 <= sizeof ((VM *)0)->jit_gspill / sizeof(uint64_t), "a cell of VM.jit_gspill for every general home, and one more");
+_Static_assert(AS_NHOMES_F <= sizeof ((VM *)0)->jit_fspill / sizeof(uint64_t), "a cell of VM.jit_fspill for every home of a real");
 static int32_t gspill(int reg) {
-    static const int gprs[3] = { R_H0, R_H1, R_H2 };
-    for (int i = 0; i < 3; i++) if (gprs[i] == reg) return OFF(jit_gspill) + 8 * i;
-    return OFF(jit_gspill) + 8 * 3;
+    for (int i = 0; i < AS_NHOMES_G; i++) if (homes_g[i] == reg) return OFF(jit_gspill) + 8 * i;
+    return OFF(jit_gspill) + 8 * AS_NHOMES_G;
 }
 /* The slow path of a raw home's write-back: the real, or the int or word
    of 64 bits, has no immediate, and the helper boxes it into the slot. It
@@ -959,19 +965,33 @@ void ms_frame(Masm *m, int r) {
 }
 void ms_reload(Masm *m) {
     m->nfields = UINT32_MAX;
-    as_ld64(&m->a, STACKR, VMR, OFF(stack));
     ms_frame(m, R_S1);
     as_ld64(&m->a, BASEI, R_S1, (int32_t)offsetof(Frame, base));
     as_mov_rr(&m->a, BASER, BASEI);
     as_shl_ri(&m->a, BASER, VALUE_SHIFT);
-    as_add_rr(&m->a, BASER, STACKR);
+    as_add_rm(&m->a, BASER, VMR, OFF(stack));   /* the stack itself has no register: only this and a RET want it */
     /* the homes live at the instruction's entry (the call clobbered them)
        and at its end (the helper may have written the slot of the one it
        defines) */
-    if (m->homes)
+    if (m->homes) {
+        /* Two registers that are never live together may have one home
+           (compile.c): the ones live at the entry have theirs, and of the
+           others the one the instruction defines has one that none of
+           those has; a register live at sync_pc alone that is neither --
+           sync_pc is no successor of a jump -- is not loaded over them. */
+        uint64_t taken = 0;
         for (uint32_t r = 0; r < m->nlocals; r++)
-            if (m->homes[r].kind != HOME_SLOT && (live_at(m, m->cur_pc, r) || live_at(m, m->sync_pc, r)))
+            if (m->homes[r].kind != HOME_SLOT && live_at(m, m->cur_pc, r)) {
+                taken |= home_bit(&m->homes[r]);
                 slot_to_home(m, (int32_t)r, &m->homes[r]);
+            }
+        for (uint32_t r = 0; r < m->nlocals; r++)
+            if (m->homes[r].kind != HOME_SLOT && !live_at(m, m->cur_pc, r) && live_at(m, m->sync_pc, r)
+                && !(taken & home_bit(&m->homes[r]))) {
+                taken |= home_bit(&m->homes[r]);
+                slot_to_home(m, (int32_t)r, &m->homes[r]);
+            }
+    }
 }
 void ms_call_lean(Masm *m, MsHelper helper) {
     ms_call(m, helper);
@@ -1074,6 +1094,7 @@ void ms_load_nth(Masm *m, int32_t d, int base, uint32_t i) { ms_load_value(m, d,
    holds a real's double: the double's bits, not its word decoded each time
    the code runs. ms_real_home says whether d has such a home. */
 int ms_real_home(const Masm *m, int32_t d) { return is_xmm(ms_home(m, d)); }
+int ms_num_home(const Masm *m, int32_t d) { return is_raw_gpr(ms_home(m, d)); }
 void ms_set_real_known(Masm *m, int32_t d, uint64_t bits) {
     const Home *h = ms_home(m, d);
     if (bits == 0) as_fzero(&m->a, h->reg);

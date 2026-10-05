@@ -46,12 +46,14 @@
 typedef A64 Asm;
 typedef A64Label AsmLabel;
 enum AsmReg {
-    R_VM = X19, R_STACK = X20, R_BASEI = X21, R_BASER = X22, R_COUNT = X23,
-    R_H0 = X24, R_H1 = X25, R_H2 = X26,
+    R_VM = X19, R_BASEI = X21, R_BASER = X22, R_COUNT = X23,
+    R_H0 = X24, R_H1 = X25, R_H2 = X26, R_H3 = X20, R_H4 = X28, R_H5 = X27,
     R_S0 = X0, R_S1 = X9, R_S2 = X10, R_S3 = X11, R_S4 = X12, R_S5 = X13, R_S6 = X14,
     R_T = X17, R_SP = XSP, R_GO = X27   /* R_GO: where the enter stub is to jump, kept across its reload */
 };
 enum AsmFReg { F_S0 = V0, F_S1 = V1, F_H0 = V8 };   /* the homes: V8 to V21 */
+#define AS_HOMES_G { R_H0, R_H1, R_H2, R_H3, R_H4, R_H5 }   /* all of them C keeps; R_H5 is R_GO, which only the enter stub uses */
+#define AS_NHOMES_G 6
 enum AsmCond {
     CC_E = A64_EQ, CC_NE = A64_NE, CC_L = A64_LT, CC_LE = A64_LE, CC_G = A64_GT, CC_GE = A64_GE,
     CC_B = A64_LO, CC_BE = A64_LS, CC_A = A64_HI, CC_AE = A64_HS, CC_O = A64_VS, CC_NO = A64_VC,
@@ -72,14 +74,23 @@ typedef X64 Asm;
 typedef X64Label AsmLabel;
 #endif
 enum AsmReg {
-    R_VM = R12, R_STACK = R13, R_BASEI = RBP, R_BASER = R14, R_COUNT = R15,
-    R_H0 = RBX, R_H1 = RSI, R_H2 = RDI,
+    R_VM = R12, R_BASEI = RBP, R_BASER = R14, R_COUNT = R15,
+    R_H0 = RBX, R_H1 = RSI, R_H2 = RDI, R_H3 = R13, R_H4 = R9, R_H5 = R10,   /* R_H4 and R_H5 are R_S4 and R_S5 */
     R_S0 = RAX, R_S1 = RCX, R_S2 = RDX, R_S3 = R8, R_S4 = R9, R_S5 = R10, R_S6 = R11,
     R_T = R11, R_SP = RSP, R_GO = R11
 };
 enum AsmFReg { F_S0 = XMM0, F_S1 = XMM1, F_H0 = XMM2 };   /* the homes: XMM2 to XMM15 */
+#define AS_HOMES_G { R_H0, R_H3, R_H1, R_H2, R_H5, R_H4 }   /* the two C keeps first (Windows keeps rsi and rdi too); r9, Windows's fourth argument, last */
+#define AS_NHOMES_G 6
 enum AsmCondMore { CC_FA = CC_A, CC_FAE = CC_AE, CC_FE = 16 };
 #endif
+/* The homes of tier 2 (compile.c gives them out, masm.c saves them): the
+   general ones are the target's list, AS_HOMES_G, in the order they are
+   given out; the reals' are the AS_NHOMES_F registers from F_H0. A general
+   home is a register no emitter uses as scratch while a home is live:
+   R_S0 to R_S3 and R_S6 are scratch anywhere, and R_S4, R_S5, R_H1 and
+   R_H2 only where an instruction has read its last home and no slow path
+   of it is still to come (emit.c's calls, after the argument is stored). */
 #define AS_NHOMES_F 14
 
 void as_init(Asm *a);

@@ -115,6 +115,14 @@ typedef struct JitProgram {
     uint64_t dead_bytes;        /* their code, left in the region */
     double compile_seconds;     /* CPU time compiling (clock) */
     uint64_t *prim_calls;       /* per primitive: calls of jit_h_prim from code (--jit-stats, M7) */
+    /* tier 2's homes, general ([0]) and of reals ([1]): the registers a
+       home could hold and those given one; their weights by the number of
+       the home each has, or would have were there that many ([k]: the
+       k+1st; the last for all beyond), so that the sum to k says what k
+       homes hold (compile.c, choose_homes); and the functions too large to
+       have any */
+    uint64_t homes_wanted[2], homes_given[2], homes_weight[2][32];
+    uint64_t homes_too_large;
     int profile;                /* --jit-profile (M8): the sites counted, and the functions' names kept
                                    (the program is gone when the statistics print at exit) */
     char **names;
