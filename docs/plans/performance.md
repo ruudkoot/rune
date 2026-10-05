@@ -636,3 +636,173 @@ What was established about the 16-byte `Value`, and holds meanwhile:
     instructions.
   * **D3's native `call`/`ret`** (codegen M14): at most 0.6% of the
     bootstrap.
+
+## The gap to MLton, as it looked on 2026-10-05
+
+Written on branch `jit-registers` after `88342575`, with the heap
+layout's M5 to M8 and steps 1 to 3 of
+[performance-64bit.md](performance-64bit.md) in, to be revisited. The
+tables at the top of this plan are the 16-byte layout's and
+`runeopt`'s; this is where the distance seemed to be after that work,
+with the evidence beside it and what would rank it. Item 1 is
+measured; the order of 2 and 3 is judgment.
+
+1. **What is allocated, and a collector that copies all that lives.**
+   * Rune compiling MLton's sources (MLton `5fe943391`, which MLton's
+     PR #660 made build with Rune), the heap held to 5 GB
+     (`--heap-limit 5368709120`): 509.7 s user, 158 s of it (31%) in
+     the collector; 219 GB allocated, 180 GB copied in 106
+     collections, never more than 3.3 GB live after one. The copier
+     copies everything live at every collection, and a compiler keeps
+     gigabytes live for long.
+   * MLton built by Rune, building MLton under the same limit: 72% of
+     a 30-second profile in the collector (`copy_obj` 58%,
+     `collect_into` 15%), 25% in compiled code, under 0.1% in the
+     interpreter. It did not finish beside the editor's memory.
+   * MLton built by MLton, building MLton: 82 of 466 s in its
+     collector (18%), which is generational
+     (`runtime/gc/generational.h`).
+   * Item 13 takes the copying of what lives long; how much of the
+     219 GB dies young is to be measured. Allocating less is item 3
+     below.
+2. **Compiled code keeps pointers in memory.** Tier 2's homes hold
+   ints, words, chars, tags and reals; a pointer never has one, so
+   that the collector finds its roots in the slots. Every value of a
+   list, a tuple, a closure or a string is loaded from and stored to
+   its frame's slot, and a compiler's values are mostly pointers.
+   Frames are on the VM's own stack; a call writes back what is live
+   and loads it again after; each bytecode instruction is compiled by
+   itself, with its tag tests; polymorphic equality and comparison are
+   calls into C that walk the objects. On the workload of item 1, the
+   time outside the collector is about 352 s, against 121.8 s for all
+   of MLton's build of Rune in the PR: about 3x, but across two
+   machines and with MLton's collector inside its figure, so an
+   indication only. What would recover it: stack maps, so that a
+   pointer can have a home (jit M11's), and in the end frames on the
+   machine stack.
+3. **What MLton does to the whole program.** It monomorphises every
+   polymorphic function (middle-end M12 is not built), specialises
+   equality by type, flattens tuples into what holds them, unboxes,
+   and puts constructor tags in pointers; Rune boxes every tuple and
+   constructor behind a header. The PR's table shows how much that
+   depends on how a program is written: in user time, Rune running
+   Rune was 7.4x behind MLton running Rune, and Rune running MLton
+   36.8x behind MLton running MLton. MLton's sources are functors,
+   polymorphism and closures written for an optimiser that removes
+   them. Part of both ratios was the interpreter: the PR measured the
+   stack VM at `4652d4a`.
+4. **Smaller:** `IntInf` in SML with small limbs where MLton has GMP
+   (`pidigits`); the tests of 63-bit tagged integers; warm-up (the
+   interpreter was under 0.1% of the profile in item 1).
+
+What would put numbers on 2 and 3:
+
+* a profile of a compiler's workload (the bootstrap, Rune compiling
+  MLton) by the collector, tier-1 code, tier-2 code, calls into C and
+  the interpreter;
+* the bytes each program allocates against MLton's for the same
+  program (`@MLton gc-summary --`): the bootstrap and MLton's set;
+* the cycles of each program of MLton's set against the installed
+  MLton (20210117), as *Where we are* has them for `tests/perf`;
+* MLton built by Rune building MLton again, on a machine with the
+  memory for it (the setup, the PR's numbers and a README are in
+  `~/.cache/claude-rune-drafts/heap-layout/mlton-bench`).
+
+## Tier 2's registers, as they were left on 2026-10-05
+
+Also to be revisited: whether the table of homes
+([performance-64bit.md](performance-64bit.md), step 2) is as good as it
+gets. Not optimal in a strict sense, but near where tuning it stops
+paying, for the model it serves; what would gain more is changing the
+model.
+
+**Near the limit of the model, by the counts and the runs.**
+
+* *x86-64:* six general homes hold every use of 20 of MLton's 35
+  programs. A seventh would hold under 6% more of the uses of four,
+  and the one register left to give it is `rbp`, at an instruction and
+  a load more at every call: not taken. Fourteen homes of reals hold
+  every use of every program but `nucleic` (89%).
+* *aarch64:* every register that wants a home has one, but in `logic`,
+  which wants thirteen of twelve.
+* *What each part gave,* MLton's set against the build before: the
+  first part 0.974 of the cycles, the second 0.986, the code a third
+  smaller 1.003.
+
+**Heuristic, not optimal.**
+
+* The homes are given greedily by priority. The weights (a use in a
+  loop for eight, a raw value four more) and the charge for a call a
+  register is live across (`HOME_CALL` 20, `HOME_CALL_RAW` 60, in
+  tenths of a use) rest on a few measurements.
+* A register has a home for the whole function or none: nothing keeps
+  a value in a register in a loop and in its slot around a call.
+* aarch64's and Windows's tables were chosen by counts and code size,
+  not cycles: aarch64 runs under `qemu-aarch64` here, and every number
+  of time is this one Haswell's.
+
+**What would gain more than the table, in order.**
+
+1. *Pointers in registers.* A pointer never has a home, since the
+   collector's roots are the slots, and a compiler's values are mostly
+   pointers: the largest lever left in the JIT (item 2 of *The gap to
+   MLton*). It needs stack maps (jit M11), and it reopens the table:
+   six general homes would be too few, and the registers with fixed
+   roles would be asked again (the VM in `r13`, the frame's base in
+   `rbp` and `r14`, the count in `r15`).
+2. *A value moved between its home and its slot within a function,* so
+   that being live across a call is not all or nothing.
+3. *SML callees that keep the homes they use.* Step 4's prototype
+   suggests that the bookkeeping across calls eats most of what such a
+   convention would save: likely not worth it.
+
+## How good the JIT was on 2026-10-05
+
+An assessment, to be revisited with the measurements *The gap to
+MLton* lists. In short: a good JIT of a modest kind, correct, portable
+and compact, but not an optimising compiler. On large programs the
+collector and the representation held Rune back more than its code
+did, and on code that is mostly pointers the JIT has a clear ceiling.
+
+**What it does well.**
+
+* *Correctness:* `scripts/check-jit.sh`'s 286 programs pass in every
+  mode (the tiers, OSR, the profile); the Basis suite's 139,218 checks
+  pass under the JIT; the counts of instructions and of allocation are
+  the same on every engine, so a divergence shows.
+* *Portability:* x86-64 under Linux's and Windows's conventions, and
+  aarch64, each with its own table of homes.
+* *Compact code:* the bootstrap's is 4.1 MB, from 6.4 MB after the
+  first part of `performance-64bit.md`'s step 2.
+* *Numeric loops* are now decent: the six programs of 64-bit words at
+  0.20 to 0.72 of their cycles after step 2's first part, `mandelbrot`
+  at 0.72 after step 1.
+
+**What kind it is.** Between a baseline JIT and a C1-class compiler.
+More than a template JIT: liveness, homes shared by interference, a
+table of registers for each machine. Less than C1: each bytecode
+instruction compiled by itself, with no IR of its own, no inlining of
+its own (the middle end's only), no loop optimisations, and above all
+no pointer in a register. No allocation is sunk, by decision (jit D5),
+so that the counts stay exact.
+
+**Against what.**
+
+* *Rune's own native code:* at heap-layout M5, on the eleven programs
+  of `scripts/perf-cycles.sh`, the default tiering ran in 0.85 of the
+  16-byte layout's cycles and `runeopt`'s code in 0.73. The JIT has
+  gained a few percent since, so it probably still trails; part of
+  that is warm-up on the short programs.
+* *MLton,* by inference, not measured side by side: Rune compiling
+  MLton took about 4x the time of MLton's build of Rune (on two
+  machines, and a third of Rune's time in its collector); the
+  bootstrap is roughly 6x to 8x (its cycles now against MLton's 0.30 s
+  of 2026-09-24, for a compiler that has grown since). Each program of
+  MLton's set against MLton is not measured.
+
+**What would move it up a class.** Pointers in registers, with stack
+maps (*Tier 2's registers*, item 1); then inlining or specialising
+known calls in the JIT. Below that, gains come a few percent at a
+time, as the last steps' did. For the large programs that matter most
+(the compiler, MLton), item 13's generational collector likely matters
+more than either.
