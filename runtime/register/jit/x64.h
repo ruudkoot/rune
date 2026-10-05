@@ -129,6 +129,7 @@ void x64_jmp(X64 *a, X64Label *l);
 void x64_jcc(X64 *a, int cc, X64Label *l);
 void x64_jmp_r(X64 *a, int r);
 void x64_jmp_to(X64 *a, const void *target);   /* jmp rel32 to an address, from base + here; fails when out of reach */
+void x64_call_to(X64 *a, const void *target);  /* call rel32 to an address, the same */
 void x64_jmp_m(X64 *a, int base, int index, int scale, int32_t disp);   /* jmp [base + index*scale + disp] */
 void x64_call_r(X64 *a, int r);
 void x64_ret(X64 *a);

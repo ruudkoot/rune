@@ -194,6 +194,13 @@ void a64_b_to(A64 *a, const void *at) {
     a64_mov_ri(a, SCRATCH, (int64_t)(intptr_t)at);
     a64_br(a, SCRATCH);
 }
+void a64_bl_to(A64 *a, const void *at) {
+    int64_t rel = (int64_t)((int64_t)(uintptr_t)at - (int64_t)(a->base + a->n));
+    if (a->base && rel >= -(1 << 27) && rel < (1 << 27) && !(rel & 3)) { a64_word(a, 0x94000000 | ((uint32_t)(rel >> 2) & 0x3FFFFFF)); return; }
+    a64_mov_ri(a, SCRATCH, (int64_t)(intptr_t)at);
+    a64_blr(a, SCRATCH);
+}
+void a64_ldr_lit(A64 *a, int rt, int32_t off) { a64_word(a, 0x58000000 | ((uint32_t)(off >> 2) & 0x7FFFF) << 5 | R(rt)); }
 void a64_adr(A64 *a, int rd, A64Label *l) { size_t at = a->n; a64_word(a, 0x10000000 | R(rd)); if (!a->failed) refer(a, l, at, FIX_ADR, 0); }
 void a64_cset(A64 *a, int rd, int cond) { a64_word(a, 0x9A9F07E0 | (uint32_t)((cond ^ 1) & 15) << 12 | R(rd)); }
 void a64_csel(A64 *a, int rd, int rn, int rm, int cond) { a64_word(a, 0x9A800000 | R(rm) << 16 | (uint32_t)(cond & 15) << 12 | R(rn) << 5 | R(rd)); }

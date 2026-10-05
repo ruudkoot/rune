@@ -281,7 +281,14 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   `real_abs`, `real_trunc`, `real_floor`, `real_ceil`): one conversion,
   with the primitive for what an int does not hold and for a NaN. Slow paths (a fatal
   error, an allocation the fast path could not make) are emitted after
-  the function's code. The stubs: `enter(vm, at)` saves the callee-saved
+  the function's code. A fatal error -- the check of something the
+  bytecode should guarantee, which a typed program never fails -- is
+  ten bytes there: the number of a record of what its message says in
+  `rax`, and a jump to the stub of fatal errors at the region's start
+  (`ms_emit_fatal`), which tells `jit_h_fatal_at`. The message and the
+  trace read the pc, which the record has, and the frames, which are
+  exact; nothing is written back (each was a sync and a call of its
+  own, a fifth of the compiler's code). The stubs: `enter(vm, at)` saves the callee-saved
   registers, loads the VM's into the code's and jumps to `at`; `leave`
   restores them and returns what `rax` says. An emitter that names a
   register the frame has not, or a field the object just allocated has
@@ -298,13 +305,18 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   it a target). Then each instruction's emitter, with a run's length
   added to the count where the run begins (docs/native.md, *Counting*),
   the slow paths, and the code copied into the region, which is one
-  64 MB mapping, executable, made writable to add a function's code; the
-  enter and leave stubs are at its start. A code object's entry is
+  64 MB mapping, executable, made writable to add a function's code. At
+  its start (`jit_region_init`) are the enter and leave stubs, the stub
+  of fatal errors and a trampoline for every call into C the code makes
+  -- every primitive and every helper -- where a function anywhere in
+  the region reaches them by a direct jump or call (`ms_call`,
+  `ms_handback`; `placed` in the masm says the code knows where it will
+  run). A code object's entry is
   written last. The helpers native code calls: `jit_h_prim` (the
   primitive from the registers, `fastprim.h`'s way, or pushed and
   called), `jit_h_alloc`, `jit_h_ret` (the frame of the top level's
-  `RET`, answering what the driver is to do next), `jit_h_fatal` (the
-  loop's message), `jit_h_call` and `jit_h_tailcall` (a call through a
+  `RET`, answering what the driver is to do next), `jit_h_fatal_at` (the
+  loop's message, from the stub), `jit_h_call` and `jit_h_tailcall` (a call through a
   closure), `jit_h_push_handler`, `jit_h_raise`, `jit_h_primpush`, and
   `jit_h_grow` and `jit_h_grow_frames` (the stack and the frames grown
   where a call finds no room).
@@ -602,10 +614,15 @@ implementation gives:
   taking of the VM and the address to go to (`as_stub_enter`), the
   leave stub (`as_stub_leave`), the register of the i-th argument of
   a call into C (`as_arg`) and the call (`as_call_c`: through `rax`
-  with the Windows shadow space, or `blr x16`). On aarch64 the homes
-  are callee-saved registers, so a call into C keeps them; the code
-  writes them back and loads them again all the same, since the
-  macro-assembler does not know.
+  with the Windows shadow space, or `blr x16`); the trampoline
+  (`as_trampoline`: the VM moved into argument 0, then a jump through
+  the helper's address beside it, or on Windows the shadow space made
+  and the call), which compiled code calls directly (`as_call_to`: a
+  `call rel32`, five bytes, or a `bl`), where the long way was fifteen
+  bytes, twenty-three on Windows, and five or six instructions on
+  aarch64. On aarch64 every general home is a callee-saved register,
+  so a call into C keeps it: the code writes it back where a sync
+  wants the slot exact, and does not load it again (`as_keeps_g`).
 * **The system**: executable memory and the instruction-cache flush
   (`sys_code_flush`, `__builtin___clear_cache`, which x86-64 needs not).
 
@@ -633,10 +650,13 @@ FFI):
    registers (`ms_arg`); a `Value` never crosses the ABI by value, only
    by its register number or a pointer, since the two conventions pass a
    16-byte struct differently.
-3. **The call:** an absolute address in `rax` (the code and the runtime
-   may be anywhere in the address space; Windows puts them far apart),
-   the shadow space of the Windows convention reserved around it. The
-   machine stack is aligned by the enter stub and holds nothing else.
+3. **The call:** a direct call of the helper's trampoline at the start
+   of the region, which puts the VM in argument 0 and goes on through
+   the helper's absolute address (the code and the runtime may be
+   anywhere in the address space; Windows puts them far apart), the
+   shadow space of the Windows convention reserved around the call; a
+   helper without one, the same in line (`as_call_c`). The machine
+   stack is aligned by the enter stub and holds nothing else.
 4. **What C may do:** allocate and so collect (every register of the
    frame that runs is a root, since every value is in its slot), grow the value stack (which moves
    it), push and pop frames, raise (which pops frames and handlers and

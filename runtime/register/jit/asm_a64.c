@@ -106,6 +106,7 @@ void as_jmp(Asm *a, AsmLabel *l) { a64_b(a, l); }
 void as_jcc(Asm *a, int cc, AsmLabel *l) { a64_bcond(a, cond(cc), l); }
 void as_jmp_r(Asm *a, int r) { a64_br(a, r); }
 void as_jmp_to(Asm *a, const void *at) { a64_b_to(a, at); }
+void as_call_to(Asm *a, const void *at) { a64_bl_to(a, at); }
 void as_call_r(Asm *a, int r) { a64_blr(a, r); }
 void as_ret(Asm *a) { a64_ret(a); }
 void as_trap(Asm *a) { a64_brk(a); }
@@ -165,6 +166,22 @@ void as_stub_leave(Asm *a, int win) {
     a64_ldp(a, X19, X20, XSP, 16);
     a64_ldp_post(a, X29, X30, XSP, 112);
     a64_ret(a);
+}
+/* a trampoline: a call of C from the region is the VM moved to x0, a
+   64-bit address made in x16, up to four instructions, and a blr; a call
+   of the trampoline is a bl, and it moves the VM, loads the address
+   beside it and goes on, C returning to the caller (x16 is the veneer's
+   register by the convention) */
+size_t as_trampoline(Asm *a, int win, uint64_t addr) {
+    (void)win;
+    while (a->n % 16) a64_brk(a);
+    size_t at = a->n;
+    a64_mov_rr(a, X0, R_VM);
+    a64_ldr_lit(a, X16, 12);   /* the address at 16 */
+    a64_br(a, X16);
+    a64_brk(a);
+    a64_u64(a, addr);
+    return at;
 }
 int as_arg(int win, int i) { (void)win; return X0 + i; }
 void as_call_c(Asm *a, int win, uint64_t addr) {

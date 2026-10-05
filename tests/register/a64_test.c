@@ -44,6 +44,9 @@ int main(void) {
     T("and x0, x1, #0xff", "201c4092", a64_and_mask(&a, X0, X1, 8));
     T("and x0, x1, #0xffff", "203c4092", a64_and_mask(&a, X0, X1, 16));
     T("tst x10, #1", "5f0140f2", a64_tst_mask(&a, X10, 1));
+    T("bl #8", "02000094", a.base = 0x10000; a64_bl_to(&a, (const void *)(uintptr_t)0x10008));
+    T("bl #-8", "feffff97", a.base = 0x10008; a64_bl_to(&a, (const void *)(uintptr_t)0x10000));
+    T("ldr x16, #8", "50000058", a64_ldr_lit(&a, X16, 8));
     T("tst x24, #0xff", "1f1f40f2", a64_tst_mask(&a, X24, 8));
     T("lsl x0, x1, #4", "20ec7cd3", a64_lsl_ri(&a, X0, X1, 4));
     T("lsr x0, x1, #4", "20fc44d3", a64_lsr_ri(&a, X0, X1, 4));

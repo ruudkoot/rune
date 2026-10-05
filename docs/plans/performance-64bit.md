@@ -864,18 +864,72 @@ alternate, and committed by itself.
    there before and is there in every program that keeps its values in
    memory; what can be decided is where the stack and the frames lie
    against the VM, so that a program of little depth has none between
-   them. That is the next thing, by itself.
+   them.
 
-   *Seen and not done* (bytes of code, not registers). Half of the
-   bootstrap's 5.2 MB of code is slow paths, each with the whole
-   sync in line: 19,559 paths to a fatal error at 52 bytes (a fifth
-   of the code, for errors a typed program cannot make), 4,259 of a
-   primitive's slow case at 121, 3,474 of an allocation at 111, 7,950
-   that grow the stack or the frames at 70. A call into C loads its
-   64-bit address (39,011 places, and four instructions each on
-   aarch64, where a load from a table in the VM would be one); the
-   jump back to the driver does too (11,733); and 26,271 forward jumps
-   would fit the two-byte form.
+   *Tried, and not taken: the stack and the frames placed.* Both were
+   made to begin a fixed distance past where the VM's record begins in
+   its page (a block 4 KB larger than asked, and the array at the right
+   offset in it), so that the values and the frames of a program of
+   little depth alias nothing of the VM's first 128 bytes. It did what
+   it was meant to: `tak` went from 438 million waits to none and ran
+   in 0.93 of the cycles, `checksum`, `lexgen` and `vliw` 0.93. But
+   `fnv` ran in 1.32, `wc-scanStream` 1.18, `knuth-bendix` 1.11, with
+   fewer such waits than before, and MLton's 35 programs in 1.000 of
+   the cycles (runs that alternate, the least of three). Five other
+   placements were as slow on `fnv` and `wc-scanStream`, and so was the
+   one with the VM's new fields at its end. Where an array lies against
+   the others is a lottery each program plays, not one placement wins.
+   The change is kept in the scratch copy of the session that made it,
+   not in the tree.
+
+   **Done, the third part: the code, a third smaller** (2026-10-05;
+   the owner's, after the second: the bytes of code that are not the
+   registers'). Half of the bootstrap's 5.2 MB of code was slow paths,
+   each with a whole sync in line. Three things went, the same on both
+   machines:
+
+   * *The fatal errors.* 19,559 paths of 52 bytes, a fifth of the code,
+     for errors a typed program cannot make (a call of what is no
+     closure, a global read before it is set, a constructor's field it
+     has not), each writing every live home back and calling C. The
+     message and the trace read the pc and the frames, and the frames
+     are always exact, so a path is now the number of a record of the
+     error in `rax` and a jump to one stub at the region's start, ten
+     bytes (`jit_fatal`, `jit_h_fatal_at`, `ms_emit_fatal`).
+     `tests/register/fatal-*.rasm` reach three kinds of them in
+     compiled code, one whose message names a value the code holds in a
+     register; `scripts/check-jit.sh` wants the interpreter's message,
+     trace and status at both tiers. No suite reached one before.
+   * *The calls into C.* Each was the VM moved to the first argument,
+     the helper's 64-bit address in `rax` and an indirect call: fifteen
+     bytes, twenty-three on Windows, five or six instructions on
+     aarch64. The code's region is 64 MB, and every function in it
+     reaches its start with a direct call, so a trampoline for every
+     primitive and every helper is there (`as_trampoline`: the VM
+     moved, then a jump through the address beside it, or on Windows the
+     shadow space and the call), and a call is `call rel32` or `bl` to
+     it: five bytes, one instruction.
+   * *The jump back to the driver.* 11,733 places loaded the leave
+     stub's address to jump through it; it is at the region's start,
+     and the jump is direct.
+
+   The bootstrap's code, in bytes:
+
+   | | the second part | now |
+   |---|---:|---:|
+   | x86-64 | 5,218,800 | 4,113,760 |
+   | aarch64 | 5,788,416 | 4,292,816 |
+
+   With the second part, the x86-64 code is 0.65 of what it was after
+   the first. Cycles are where they were: against the same build, runs
+   that alternate, the least of three, the bootstrap 0.99 and MLton's 35
+   programs 1.003, none of which has code that does not fit the caches.
+   Still in line, and the next bytes if they are wanted: the slow case
+   of a primitive (4,259 paths of 121 bytes), an allocation's (3,474 of
+   111), the stack's and the frames' growth (7,950 of 70) -- each a
+   sync and a call that a shared tail could serve -- and 26,271 forward
+   jumps that would fit the two-byte form, which wants the assembler to
+   choose a jump's length after the label is bound.
 3. **A cheaper call for the primitives that stay in C** (`sin`,
    `cos`, `atan`, `ln`, `pow`: calls of the C library, as decided):
    the live homes saved as they are instead of written to their slots

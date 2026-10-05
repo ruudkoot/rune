@@ -31,6 +31,27 @@ static const char *const fatal_text[] = {
 void jit_h_fatal(VM *vm, int what, int32_t a, int32_t b) {
     vm_fatal(vm, fatal_text[what], (int)a, (int)b);
 }
+/* the fatal error numbered k (jit_fatal), from the stub, with the value
+   rcx held: its message and its trace read the pc and the frames, and
+   the frames are always exact */
+void jit_h_fatal_at(VM *vm, uint32_t k, int64_t value) {
+    const JitFatalSite *f = &jit_program(vm)->fatals[k];
+    vm->pc = f->pc;
+    vm_fatal(vm, fatal_text[f->what], f->value ? (int)value : (int)f->a, (int)f->b);
+}
+/* a fatal error's record, its number; UINT32_MAX where there is no memory */
+static uint32_t fatal_record(JitProgram *jit, uint32_t pc, int32_t what, int32_t a, int32_t b, int value) {
+    if (jit->nfatals == jit->fatals_cap) {
+        uint32_t cap = jit->fatals_cap ? jit->fatals_cap * 2 : 1024;
+        JitFatalSite *all = realloc(jit->fatals, (size_t)cap * sizeof *all);
+        if (!all) return UINT32_MAX;
+        jit->fatals = all;
+        jit->fatals_cap = cap;
+    }
+    JitFatalSite *f = &jit->fatals[jit->nfatals];
+    f->pc = pc; f->what = what; f->a = a; f->b = b; f->value = value;
+    return jit->nfatals++;
+}
 
 /* PRIM p d args: the common case in the loop's way (fastprim.h), or the
    primitive itself with its arguments pushed. 0 when done; else what the
@@ -537,17 +558,18 @@ static void emit_slow(Masm *m, Slow *sp) {
     if (s.kind == SLOW_BOXREAL || s.kind == SLOW_BOXNUM) {
         ms_emit_box(m, sp);
     } else if (s.kind == SLOW_FATAL) {
-        /* rcx, a value the message wants, kept where the write-back of
-           the sync leaves it (a real's word is made in the registers the
-           arguments go in) */
-        if (s.d) as_mov_rr(&m->a, R_S6, R_S1);
-        ms_sync(m, s.pc, 0);
-        as_mov_ri(&m->a, ms_arg(m, 1), s.a);
-        if (s.d) as_mov_rr(&m->a, ms_arg(m, 2), R_S6);
-        if (!s.d) as_mov_ri(&m->a, ms_arg(m, 2), s.b);
-        as_mov_ri(&m->a, ms_arg(m, 3), s.c);
-        ms_call(m, (MsHelper)jit_h_fatal);
-        as_trap(&m->a);   /* it never returns */
+        /* An error a typed program cannot make, in ten bytes: the number
+           of its record in rax, and on to the stub of the region, which
+           tells jit_h_fatal_at. Its message and trace read the pc, which
+           the record has, and the frames, which are exact: nothing is
+           written back. (Each wrote every live home back and called
+           C itself: a fifth of the compiler's code compiled, measured in
+           docs/plans/performance-64bit.md.) rcx, a value the message may
+           want, is where the check left it. */
+        uint32_t k = fatal_record(j->jit, s.pc, s.a, s.b, s.c, s.d);
+        if (k == UINT32_MAX) { m->a.failed = 1; return; }
+        as_mov_ri(&m->a, R_S0, k);
+        as_jmp_to(&m->a, j->jit->fatal_at);
     } else if (s.kind == SLOW_ALLOC) {
         ms_sync(m, s.pc, 0);
         as_mov_ri(&m->a, ms_arg(m, 1), s.a);
@@ -743,6 +765,18 @@ static int emit_function(Jit *j, Scan *sc) {
 }
 #endif
 
+/* The helpers compiled code calls besides the primitives: each has a
+   trampoline (jit_region_init). One that is not here is called the long
+   way (ms_call). */
+static const MsHelper helpers[] = {
+    (MsHelper)jit_h_prim, (MsHelper)jit_h_alloc, (MsHelper)jit_h_ret, (MsHelper)jit_h_grow, (MsHelper)jit_h_grow_frames,
+    (MsHelper)jit_h_push_handler, (MsHelper)jit_h_raise, (MsHelper)jit_h_string_order, (MsHelper)jit_h_values_equal,
+    (MsHelper)jit_h_box_real, (MsHelper)jit_h_box_num, (MsHelper)jit_h_primpush, (MsHelper)jit_h_called
+};
+/* The region: the stubs that enter and leave compiled code, the stub of
+   its fatal errors, and a trampoline for every call into C it makes
+   (as_trampoline), all at its start, where a function anywhere in its
+   64 MB reaches them by a direct jump or call; then the functions. */
 int jit_region_init(VM *vm, JitProgram *jit) {
 #if JIT_TARGET
     (void)vm;
@@ -755,13 +789,35 @@ int jit_region_init(VM *vm, JitProgram *jit) {
     ms_emit_enter(&a, JIT_WIN);
     size_t leave_at = a.n;
     ms_emit_leave(&a, JIT_WIN);
-    if (a.failed) { as_free(&a); return 0; }
+    size_t fatal_at = a.n;
+    ms_emit_fatal(&a, JIT_WIN, (MsHelper)jit_h_fatal_at);
+    uint32_t nhelpers = (uint32_t)(sizeof helpers / sizeof helpers[0]), n = PRIM__COUNT + nhelpers, size = 16;
+    while (size < 2 * n) size *= 2;
+    uint64_t *from = calloc(size, sizeof *from);
+    const void **to = calloc(size, sizeof *to);
+    if (!from || !to) a.failed = 1;
+    for (uint32_t k = 0; k < n && !a.failed; k++) {
+        MsHelper h = k < PRIM__COUNT ? (MsHelper)prim_table[k] : helpers[k - PRIM__COUNT];
+        uint64_t at;
+        memcpy(&at, &h, sizeof at);
+        if (!at) continue;   /* (0 marks a free entry) */
+        uint32_t i = ms_tramp_slot(at, size - 1);
+        while (from[i] && from[i] != at) i = (i + 1) & (size - 1);
+        if (from[i]) continue;   /* one function for two primitives */
+        from[i] = at;
+        to[i] = mem + as_trampoline(&a, JIT_WIN, at);
+    }
+    if (a.failed || a.n > cap) { as_free(&a); free(from); free(to); return 0; }
     memcpy(mem, a.buf, a.n);
     jit->code_mem = mem;
     jit->code_cap = cap;
     jit->code_used = (a.n + 15) & ~(size_t)15;
     jit->enter_at = mem + enter_at;
     jit->leave_at = mem + leave_at;
+    jit->fatal_at = mem + fatal_at;
+    jit->tramp_from = from;
+    jit->tramp_to = to;
+    jit->tramp_mask = size - 1;
     as_free(&a);
     if (!sys_code_protect(mem, cap, 1)) return 0;
     return 1;
@@ -792,6 +848,10 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     /* where the code will be placed: a known call jumps to its callee's
        code by a rel32 from there */
     j.m.a.base = (uintptr_t)(jit->code_mem + jit->code_used);
+    j.m.placed = 1;
+    j.m.tramp_from = jit->tramp_from;
+    j.m.tramp_to = jit->tramp_to;
+    j.m.tramp_mask = jit->tramp_mask;
     j.from = fn->code_offset; j.to = fn->code_end;
     uint32_t len = j.to - j.from;
     j.labels = malloc(((size_t)len + 1) * sizeof(AsmLabel));

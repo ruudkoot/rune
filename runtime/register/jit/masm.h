@@ -85,6 +85,13 @@ typedef struct Masm {
     uint32_t nslots;      /* the registers and what a primitive's arguments push: the frame's slots */
     uint32_t nfields;     /* the fields of the object ms_alloc last made, or UINT32_MAX where the object in hand is another's */
     const void *leave;    /* the leave stub: where the code hands the VM back */
+    int placed;           /* where the code will run is known (the Asm's base): the region's stubs and trampolines are in reach of a direct jump or call */
+    /* the trampolines of the calls into C (compile.c, jit_region_init):
+       the helper's address to its trampoline's, by open addressing
+       (ms_tramp_slot); NULL where there are none */
+    const uint64_t *tramp_from;
+    const void *const *tramp_to;
+    uint32_t tramp_mask;
     Slow **slow;          /* the slow paths, each a record of its own: a label of one stays where it is as others are added */
     int nslow, slow_cap;
     /* tier 2: the homes, one per register (NULL: every value in its slot),
@@ -226,6 +233,8 @@ void ms_reload(Masm *m);
 void ms_frame(Masm *m, int r);                                     /* r := &vm->frames[vm->fp] */
 /* a helper the code calls into: any function, cast to this type */
 typedef void (*MsHelper)(void);
+/* where a helper's address is looked for first in a table of trampolines of mask + 1 entries */
+static inline uint32_t ms_tramp_slot(uint64_t at, uint32_t mask) { return (uint32_t)(((at >> 4) * 0x9E3779B97F4A7C15u) >> 40) & mask; }
 void ms_call(Masm *m, MsHelper helper);                            /* the VM as argument 0, the others set already */
 /* a call into C that touches nothing of the VM, with nothing synced or
    reloaded (M7) -- but the homes (tier 2), which C and the arguments'
@@ -276,5 +285,6 @@ void ms_emit_slow_paths(Masm *m, void (*emit)(Masm *m, Slow *s));
    leave, which returns what rax says */
 void ms_emit_enter(Asm *a, int win);
 void ms_emit_leave(Asm *a, int win);
+void ms_emit_fatal(Asm *a, int win, MsHelper helper);              /* the stub of the fatal errors: helper(vm, rax, rcx), which never returns (compile.c, jit_fatal) */
 
 #endif

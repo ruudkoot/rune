@@ -126,6 +126,8 @@ void a64_br(A64 *a, int rn);
 void a64_blr(A64 *a, int rn);
 void a64_ret(A64 *a);
 void a64_b_to(A64 *a, const void *at);                   /* to an address: b where it is in range of base, else through x16 */
+void a64_bl_to(A64 *a, const void *at);                  /* a call of an address: bl where it is in range of base, else through x16 */
+void a64_ldr_lit(A64 *a, int rt, int32_t off);           /* rt := the 64 bits at here + off (a multiple of 4) */
 void a64_adr(A64 *a, int rd, A64Label *l);               /* rd := the address of l */
 void a64_cset(A64 *a, int rd, int cond);
 void a64_csel(A64 *a, int rd, int rn, int rm, int cond);

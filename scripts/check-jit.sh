@@ -129,6 +129,34 @@ elif ! grep -q "^exit 0" "$out/every-opcode/stderr.off"; then
 }FAIL jit.every-opcode: tests/register/every-opcode.rasm fails: $(head -1 "$out/every-opcode/stderr.off")"
 fi
 n=$((n + 1))
+# the fatal errors of compiled code, which a typed program never reaches
+# and the suites above never do: programs that do (tests/register/fatal-*.rasm),
+# each in a function the JIT compiles, run with --checked, must stop with
+# the interpreter's message, trace and status at both tiers -- the code
+# goes to one stub of the region with the number of a record (compile.c,
+# jit_fatal), and the record has what the message says
+for f in tests/register/fatal-*.rasm; do
+  b=$(basename "$f" .rasm)
+  mkdir -p "$out/$b"
+  printf "$(awk -v opdefs=runtime/register/regs.def -v primdefs=runtime/prims.def -f tests/opt/rbcasm.awk "$f")" > "$out/$b/prog.rbc"
+  for mode in off all opt; do
+    jit="--jit=$mode"; [ "$mode" = opt ] && jit="--jit=all --jit-tier=2"
+    # shellcheck disable=SC2086
+    "$vm" --checked $jit "$out/$b/prog.rbc" > "$out/$b/stdout.$mode" 2> "$out/$b/stderr.$mode"
+    echo "exit $?" >> "$out/$b/stderr.$mode"
+  done
+  if ! grep -q "fatal error at pc" "$out/$b/stderr.off"; then
+    fails="$fails${fails:+
+}FAIL jit.$b: $f does not reach its fatal error: $(head -1 "$out/$b/stderr.off")"
+  fi
+  for mode in all opt; do
+    if ! cmp -s "$out/$b/stdout.off" "$out/$b/stdout.$mode" || ! cmp -s "$out/$b/stderr.off" "$out/$b/stderr.$mode"; then
+      fails="$fails${fails:+
+}FAIL jit.$b: $f stops differently with --jit=$mode: $(diff "$out/$b/stderr.off" "$out/$b/stderr.$mode" | head -2 | tail -1)"
+    fi
+  done
+  n=$((n + 1))
+done
 # every instruction of the register set occurs in those programs, so
 # that every emitter is run by them
 missing=""

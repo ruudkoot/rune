@@ -15,6 +15,12 @@ void x64_jmp_to(X64 *a, const void *target) {
     x64_byte(a, 0xE9);
     x64_u32(a, (uint32_t)(int32_t)rel);
 }
+void x64_call_to(X64 *a, const void *target) {
+    int64_t rel = (int64_t)((uintptr_t)target - (a->base + a->n + 5));
+    if (!a->base || rel < INT32_MIN || rel > INT32_MAX) { a->failed = 1; return; }
+    x64_byte(a, 0xE8);
+    x64_u32(a, (uint32_t)(int32_t)rel);
+}
 void x64_free(X64 *a) { free(a->buf); a->buf = NULL; a->n = a->cap = 0; }
 size_t x64_size(const X64 *a) { return a->n; }
 

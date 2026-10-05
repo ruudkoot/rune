@@ -36,6 +36,8 @@ int main(void) {
     x64_init(&a); x64_movups_xmi(&a, XMM1, R13, RBP, 1, 32); fails += expect("movups xmm1, [r13+rbp+32]", &a, "410f104c2d20"); x64_free(&a);
     x64_init(&a); x64_mov_mi(&a, R13, 0, 1); fails += expect("mov qword [r13], 1", &a, "49c7450001000000"); x64_free(&a);
     x64_init(&a); x64_imul_rri(&a, RCX, R11, 72); fails += expect("imul rcx, r11, 72", &a, "496bcb48"); x64_free(&a);
+    x64_init(&a); a.base = 0x10000; x64_call_to(&a, (const void *)(uintptr_t)0x10100); fails += expect("call rel32 (+0xfb)", &a, "e8fb000000"); x64_free(&a);
+    x64_init(&a); a.base = 0x10100; x64_call_to(&a, (const void *)(uintptr_t)0x10000); fails += expect("call rel32 (-0x105)", &a, "e8fbfeffff"); x64_free(&a);
     x64_init(&a); x64_imul_rri(&a, RCX, R11, 720); fails += expect("imul rcx, r11, 720", &a, "4969cbd0020000"); x64_free(&a);
     x64_init(&a); x64_movsd_xx(&a, XMM3, XMM9); fails += expect("movsd xmm3, xmm9", &a, "f2410f10d9"); x64_free(&a);
     x64_init(&a); x64_sqrtsd(&a, XMM0, XMM1); fails += expect("sqrtsd xmm0, xmm1", &a, "f20f51c1"); x64_free(&a);

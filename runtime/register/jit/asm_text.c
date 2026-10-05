@@ -205,6 +205,8 @@ void as_jcc(Asm *a, int cc, AsmLabel *l) {
 }
 void as_jmp_r(Asm *a, int r) { emit(a, "jmp *%s", r64(a, r)); }
 void as_jmp_to(Asm *a, const void *at) { (void)at; fail(a, "a jump to an address"); }
+void as_call_to(Asm *a, const void *at) { (void)at; fail(a, "a call of an address"); }
+size_t as_trampoline(Asm *a, int win, uint64_t addr) { (void)win; (void)addr; fail(a, "a trampoline"); return 0; }
 void as_call_r(Asm *a, int r) { emit(a, "call *%s", r64(a, r)); }
 void as_ret(Asm *a) { emit(a, "ret"); }
 void as_trap(Asm *a) { emit(a, "ud2"); }

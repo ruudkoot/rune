@@ -85,6 +85,15 @@ void jit_h_called(VM *vm, Site *s, uint32_t f);
 
 /* The code objects of the program a VM runs, made when the driver first
    sees it, and again when the program changes (Runtime.restore). */
+/* a fatal error of compiled code (compile.c, jit_fatal): what its message
+   says, the pc it is told at, and whether the message's first number is
+   the value the code has in rcx */
+typedef struct JitFatalSite {
+    uint32_t pc;
+    int32_t what, a, b;
+    int value;
+} JitFatalSite;
+
 typedef struct JitProgram {
     const uint8_t *code;    /* the program these belong to */
     uint32_t nfuncs;
@@ -95,6 +104,12 @@ typedef struct JitProgram {
     uint8_t *code_mem;
     size_t code_cap, code_used;
     const void *enter_at, *leave_at;
+    const void *fatal_at;       /* the stub of the fatal errors, beside them */
+    JitFatalSite *fatals;           /* the fatal errors of the code, by the number it gives the stub; the process's */
+    uint32_t nfatals, fatals_cap;
+    uint64_t *tramp_from;       /* the trampolines of the calls into C, beside the stubs: helper to trampoline (masm.h) */
+    const void **tramp_to;
+    uint32_t tramp_mask;
     /* the policy (M6): --jit=baseline compiles a function at its
        calls_threshold-th call, or when its work -- the iterations of its
        loops and the calls it makes, so that a function called once that

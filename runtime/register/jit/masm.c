@@ -95,23 +95,17 @@ static int32_t slot(const Masm *m, int32_t k) {
     return VALUE_SIZE * k;
 }
 
+/* every field nothing, but those given: the record of a caller that sets
+   no more (tests/register/masm_test.c) makes code that knows nothing of
+   the region (placed 0, no trampolines), homes or representations */
 void ms_init(Masm *m, uint32_t nlocals, uint32_t maxstack, int win, const void *leave) {
+    memset(m, 0, sizeof *m);
     as_init(&m->a);
     m->win = win;
     m->nlocals = nlocals;
     m->nslots = nlocals + maxstack;
     m->nfields = UINT32_MAX;
     m->leave = leave;
-    m->homes = NULL;
-    m->live = NULL;
-    m->from = 0;
-    m->sync_pc = 0;
-    m->cur_pc = 0;
-    m->reps = NULL;
-    m->cur_reals = 0;
-    m->box_real = NULL;
-    m->slow = NULL;
-    m->nslow = m->slow_cap = 0;
 }
 void ms_free(Masm *m) {
     for (int i = 0; i < m->nslow; i++) { as_label_free(&m->slow[i]->here); as_label_free(&m->slow[i]->back); free(m->slow[i]); }
@@ -1017,9 +1011,22 @@ void ms_call_lean(Masm *m, MsHelper helper) {
     ms_call(m, helper);
     ms_reload_clobbered(m, m->cur_pc);
 }
+/* the helper's trampoline, where it has one and the code can reach it */
+static const void *trampoline(const Masm *m, uint64_t at) {
+    if (!m->placed || !m->tramp_from) return NULL;
+    for (uint32_t i = ms_tramp_slot(at, m->tramp_mask); m->tramp_from[i]; i = (i + 1) & m->tramp_mask)
+        if (m->tramp_from[i] == at) return m->tramp_to[i];
+    return NULL;
+}
+/* A call into C, the VM its first argument: through the helper's
+   trampoline in the code's region, which moves the VM, a direct call of
+   five bytes (or one bl), where it has one; else the move, the address
+   in a register and an indirect call (as_call_c) */
 void ms_call(Masm *m, MsHelper helper) {
     uint64_t at;   /* a function pointer's bits, through memcpy: ISO C has no cast for them */
     memcpy(&at, &helper, sizeof at);
+    const void *t = trampoline(m, at);
+    if (t) { as_call_to(&m->a, t); return; }
     as_mov_rr(&m->a, ms_arg(m, 0), VMR);
     as_call_c(&m->a, m->win, at);
 }
@@ -1040,6 +1047,7 @@ void ms_handback(Masm *m, int code) {
     ms_handback_rax(m);
 }
 void ms_handback_rax(Masm *m) {
+    if (m->placed) { as_jmp_to(&m->a, m->leave); return; }   /* the leave stub is at the region's start, in reach */
     as_mov_ri(&m->a, R_S6, (int64_t)(intptr_t)m->leave);
     as_jmp_r(&m->a, R_S6);
 }
@@ -1175,6 +1183,19 @@ void ms_emit_enter(Asm *a, int win) {
     ms_reload(&m);
     as_ld64(&m.a, COUNTR, VMR, OFF(instructions));
     as_jmp_r(&m.a, R_GO);
+    *a = m.a;
+}
+/* the stub of the fatal errors (compile.c, jit_fatal): rax the number of
+   the error's record, rcx the value its message may want, the machine
+   stack as the code keeps it; the helper never returns */
+void ms_emit_fatal(Asm *a, int win, MsHelper helper) {
+    Masm m;
+    memset(&m, 0, sizeof m);
+    m.a = *a; m.win = win; m.nfields = UINT32_MAX;
+    as_mov_rr(&m.a, ms_arg(&m, 2), R_S1);   /* first: rcx is the first argument on Windows */
+    as_mov_rr(&m.a, ms_arg(&m, 1), R_S0);
+    ms_call(&m, helper);
+    as_trap(&m.a);
     *a = m.a;
 }
 void ms_emit_leave(Asm *a, int win) {

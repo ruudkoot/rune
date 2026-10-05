@@ -208,6 +208,8 @@ void as_jmp(Asm *a, AsmLabel *l);
 void as_jcc(Asm *a, int cc, AsmLabel *l);
 void as_jmp_r(Asm *a, int r);
 void as_jmp_to(Asm *a, const void *at);
+void as_call_to(Asm *a, const void *at);                    /* a call of code at an address the code reaches: its region's */
+size_t as_trampoline(Asm *a, int win, uint64_t addr);       /* here, aligned: code that a call of it makes a call of C's addr with R_VM its first argument, by the convention; its offset */
 void as_call_r(Asm *a, int r);
 void as_ret(Asm *a);
 void as_trap(Asm *a);

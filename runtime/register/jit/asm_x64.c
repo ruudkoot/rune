@@ -89,6 +89,7 @@ void as_jcc(Asm *a, int cc, AsmLabel *l) {
 }
 void as_jmp_r(Asm *a, int r) { x64_jmp_r(a, r); }
 void as_jmp_to(Asm *a, const void *at) { x64_jmp_to(a, at); }
+void as_call_to(Asm *a, const void *at) { x64_call_to(a, at); }
 void as_call_r(Asm *a, int r) { x64_call_r(a, r); }
 void as_ret(Asm *a) { x64_ret(a); }
 void as_trap(Asm *a) { x64_int3(a); }
@@ -160,6 +161,30 @@ int as_arg(int win, int i) {
     static const int sysv[4] = { RDI, RSI, RDX, RCX };
     static const int winr[4] = { RCX, RDX, R8, R9 };
     return win ? winr[i] : sysv[i];
+}
+/* A trampoline: the code's region is far from C's, out of reach of a
+   rel32, so a call of C there is the VM moved to the first argument, a
+   64-bit address in a register and an indirect call, fifteen bytes, and
+   on Windows eight more for the space its convention gives the callee.
+   A call of the trampoline is five: it moves the VM, and on Linux jumps
+   on through the address beside it, C returning to the caller; on
+   Windows it makes the space and the call itself. */
+size_t as_trampoline(Asm *a, int win, uint64_t addr) {
+    while (a->n % 16) x64_byte(a, 0xCC);
+    size_t at = a->n;
+    x64_mov_rr(a, as_arg(win, 0), R_VM);                        /* 3 bytes */
+    if (!win) {
+        x64_byte(a, 0xFF); x64_byte(a, 0x25); x64_u32(a, 0);   /* jmp [rip + 0]: the address that follows, at 9 */
+        x64_u64(a, addr);
+    } else {
+        x64_sub_ri(a, RSP, 40);                                 /* 32 for the callee, 8 to align: a call pushed 8 */
+        x64_byte(a, 0xFF); x64_byte(a, 0x15); x64_u32(a, 11);  /* call [rip + 11]: from 13, the address at 24 */
+        x64_add_ri(a, RSP, 40);
+        x64_ret(a);
+        while (a->n - at < 24) x64_byte(a, 0xCC);
+        x64_u64(a, addr);
+    }
+    return at;
 }
 void as_call_c(Asm *a, int win, uint64_t addr) {
     x64_mov_ri(a, RAX, (int64_t)addr);
