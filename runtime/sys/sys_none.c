@@ -22,6 +22,11 @@ int64_t sys_time_now(void) { return (int64_t)time(NULL) * 1000000; }
 int64_t sys_time_user(void) { return (int64_t)clock() * 1000000 / CLOCKS_PER_SEC; }
 int64_t sys_time_sys(void) { return 0; }
 void sys_time_sleep(int64_t microseconds) { (void)microseconds; }
+int64_t sys_clock_ns(void) { return (int64_t)((double)clock() * 1e9 / CLOCKS_PER_SEC); }
+int64_t sys_thread_time_ns(void) { return sys_clock_ns(); }
+void sys_mem_usage(uint64_t *resident, uint64_t *peak_resident, uint64_t *peak_virtual) {
+    *resident = *peak_resident = *peak_virtual = 0;
+}
 
 int sys_date_parts(int64_t seconds, int local, int32_t parts[9]) {
     time_t t = (time_t)seconds;

@@ -25,6 +25,15 @@ int64_t sys_time_now(void);
 int64_t sys_time_user(void);
 int64_t sys_time_sys(void);
 void sys_time_sleep(int64_t microseconds);
+/* Clocks for measuring the runtime itself (runevm --gc-log): a monotonic
+   clock and the calling thread's processor time, in nanoseconds; 0 where
+   the system has none. */
+int64_t sys_clock_ns(void);
+int64_t sys_thread_time_ns(void);
+/* The process's memory in bytes: what is resident now, the most that has
+   been resident, and the most address space it has held (Linux's VmPeak,
+   Windows's peak commit); 0 for what the system does not say. */
+void sys_mem_usage(uint64_t *resident, uint64_t *peak_resident, uint64_t *peak_virtual);
 
 /* Broken-down time. parts[] is
    [second, minute, hour, day of month, month (0-11), year - 1900,

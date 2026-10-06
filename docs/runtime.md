@@ -215,10 +215,57 @@ what `Runtime.stats` says is live.
 * An image (`Runtime.save`) carries the heap as it lies, the garbage since
   the last collection with it; a `Runtime.collect ()` before it leaves that
   out.
+* `runevm --gc-log FILE` writes a line about every collection into FILE
+  (*The collector's log* below), and `RUNE_MEMSTAT=1` beside `--stats` adds
+  a line to what it prints: `runevm: memstat: VmPeak N kB, VmHWM N kB, gc N
+  ns, longest N ns` -- the most address space and the most resident memory
+  the process had (on Windows its peak commit and peak working set), and
+  the collector's time on the monotonic clock, in all and the longest
+  collection.
 
 Since a collection moves everything, C code inside the VM reads its arguments
 from the value stack rather than holding them in variables; the pattern is in
 [architecture.md](architecture.md).
+
+### The collector's log
+
+`runevm --gc-log FILE` (a native program's `RUNEVM_OPTIONS` too) writes a
+line into FILE for every pass of the collector -- a collection that grows
+the heap is two passes, one into a space of the same size and one into a
+larger -- and some lines at exit. The run is the same with it, `--count`
+included (`tests/runtime/run-gc-log.py`). The first line names the format
+and the heap's settings (`# rune-gc-log 1 nursery=0 heap=H fill=P limit=L`)
+and the second the columns, by which a script reads them:
+
+| Column | What |
+|---|---|
+| `seq` | the pass, from 1 |
+| `kind` | `full` |
+| `vmgc` | the collection the pass is part of: two passes of one collection have the same |
+| `bytes`, `objects`, `instrs` | what the program had allocated and executed when the pass began, as `--count` counts it: the same in every run with the same options |
+| `boxes`, `box_bytes` | the representation's boxes so far (`--stats`) |
+| `used_before` | the bytes in the space collected when the pass began |
+| `copied`, `copied_objs` | the bytes and the objects it copied |
+| `promoted` | 0 |
+| `slots`, `live_slots` | the slots of the value stack it looked at, and of them those that were roots (the others were dead registers of frames waiting for a call) |
+| `frames` | the waiting frames whose live registers it asked for |
+| `other_roots` | the globals, constants, frames' closures, built-in exceptions, boxed reals and handles it visited |
+| `cards_dirty`, `cards_scanned`, `remembered` | 0 |
+| `live_after`, `heap_size` | the bytes in use after it and the size of the semispace |
+| `pause_ns`, `cpu_ns` | its time on the monotonic clock and on the thread's processor time |
+| `rss_bytes` | the resident memory right after it (Linux and Windows; 0 elsewhere) |
+| `t_ns` | when it began, on the monotonic clock from the log's opening |
+| `cards_young`, `fields_scanned` | 0 |
+
+The columns that are 0 are a nursery's and its remembered set's
+([plans/garbage-collector-v2.md](plans/garbage-collector-v2.md)), there so
+that the format stays one when it comes. At exit, `# end bytes B objects O
+instrs I boxes X box_bytes Y collections C gc_ns T vmpeak_kb P vmhwm_kb W`
+gives `--count`'s numbers, the passes and their time in all, and the
+process's peaks of address space and resident memory, and `# wall_ns N` the
+time from the log's opening to its closing. A program that ends by a fatal
+error leaves the log without them. The child of a fork does not write to its
+parent's log.
 
 ### What is in place for a collector to come
 
@@ -414,8 +461,9 @@ of another bytecode version is refused as well. There is no dynamic loading
 afterwards: a program is one file, the basis library included.
 
 The whole command line -- `--disasm`, `--trace`, `--stats`, `--count`,
-`--gc-stress`, `--checked`, `--heap-size`, `--heap-fill`, `--emulate-fork`,
-`--restore`, `--version` -- is described in [bytecode.md](bytecode.md).
+`--gc-stress`, `--checked`, `--heap-size`, `--heap-fill`, `--gc-log`,
+`--emulate-fork`, `--restore`, `--version` -- is described in
+[bytecode.md](bytecode.md).
 
 ## A native program
 
@@ -434,7 +482,7 @@ that the one writes what the other reads.
 What differs:
 
 * The options of `runevm` (`--count`, `--stats`, `--heap-size`,
-  `--heap-fill`, `--gc-stress`, `--checked`) come from the environment
+  `--heap-fill`, `--gc-stress`, `--gc-log`, `--checked`) come from the environment
   variable `RUNEVM_OPTIONS`, after
   those the program was made with (`runeopt --options`), and the program takes
   the variable out of its environment.

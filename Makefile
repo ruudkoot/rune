@@ -556,7 +556,7 @@ WIN_SRCS    := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_
 # runtime/register for Windows: its loop and its instruction set's part in place of
 # the stack bytecode's (runtime/stack/isa_stack.c), as bin/runevm-asan is built
 WIN_NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_win.c
-WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32
+WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32 -lpsapi
 
 # windows_dlls CC: refuse $@ when it imports a DLL whose name starts with lib
 define windows_dlls
@@ -701,6 +701,7 @@ test-portability: portability $(RUNE) vm
 test: $(RUNE) vm | build/.doctor-check
 	python3 tests/compiler/run-tests.py --rune $(RUNE_STACK)
 	python3 tests/runtime/run-limits.py --rune $(RUNE_STACK) --vm $(RUNEVM)
+	python3 tests/runtime/run-gc-log.py --rune $(RUNE_STACK) --vm $(RUNEVM)
 	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm $(RUNEVM)
 	sh tests/runtime/run-vm-tests.sh --vm $(RUNEVM)
 	@mkdir -p build
@@ -874,6 +875,7 @@ ifeq ($(NATIVE_HOST),yes)
 test-native: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm bin/rune.stack.rbc | build/.doctor-native
 	@$(MAKE) --no-print-directory check-templates
 	python3 tests/runtime/run-limits.py --rune $(RUNE_STACK) --vm bin/runevm-native
+	python3 tests/runtime/run-gc-log.py --rune $(RUNE_STACK) --vm bin/runevm-native
 	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-native --skip tests/opt-skip.txt
 	sh tests/opt/run-counts.sh -j $(JOBS) $$(for t in tests/lang/*.sml; do echo tests/out/$$(basename $$t .sml).rbc; done)
 	RUNE=$(abspath $(RUNE_STACK)) RUNE_MATRIX_BYTECODE="$(ROOT)/tests/out/matrix/rune" \
@@ -956,6 +958,7 @@ bin/rune.stack.rbc: bin/rune-$(BOOTHOST) bin/runevm-stack $(BOOT_SRCS) lib/basis
 # the Basis Library.
 test-register: bin/runevm $(RUNE) vm bin/rune.stack.rbc
 	python3 tests/runtime/run-limits.py --rune bin/rune --vm bin/runevm
+	python3 tests/runtime/run-gc-log.py --rune bin/rune --vm bin/runevm
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm --out tests/out/register
 	sh scripts/check-register.sh -j $(JOBS)
 	RUNE_NEW=$(abspath bin/rune) RUNEVM_NEW=$(abspath bin/runevm) sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:new

@@ -407,6 +407,10 @@ raised as noted.
   machine's memory gone (`tests/lang/rt.stack_limit`);
 * `runevm-stack --heap-fill P file.rbc` grows the heap after a collection until at
   most P percent of it is in use (1 to 100, 50 by default);
+* `runevm-stack --gc-log FILE file.rbc` writes a line about every collection
+  into FILE: what the program had allocated when it came, what it looked at
+  and copied, and how long it took ([runtime.md](runtime.md), *The
+  collector's log*);
 * `runevm-stack --emulate-fork file.rbc` makes `posix_fork` what it is on Windows,
   which has no fork: a second `runevm-stack` is started as `runevm-stack --resume` and
   handed the whole state of this one (`runtime/image.c`), and it carries on with

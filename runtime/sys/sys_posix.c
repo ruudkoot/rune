@@ -99,6 +99,49 @@ int64_t sys_time_sys(void) {
     return microseconds(&ru.ru_stime);
 }
 
+static int64_t nanoseconds(const struct timespec *t) {
+    return (int64_t)t->tv_sec * 1000000000 + t->tv_nsec;
+}
+
+int64_t sys_clock_ns(void) {
+    struct timespec t;
+    return clock_gettime(CLOCK_MONOTONIC, &t) == 0 ? nanoseconds(&t) : 0;
+}
+
+int64_t sys_thread_time_ns(void) {
+#ifdef CLOCK_THREAD_CPUTIME_ID
+    struct timespec t;
+    if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t) == 0) return nanoseconds(&t);
+#endif
+    return (sys_time_user() + sys_time_sys()) * 1000;
+}
+
+/* Linux says it in /proc: the resident pages in statm, the peaks in status
+   (in kB); elsewhere getrusage has the peak resident set alone. */
+void sys_mem_usage(uint64_t *resident, uint64_t *peak_resident, uint64_t *peak_virtual) {
+    *resident = *peak_resident = *peak_virtual = 0;
+    FILE *f = fopen("/proc/self/statm", "r");
+    if (f) {
+        unsigned long long size, pages;
+        long page = sysconf(_SC_PAGESIZE);
+        if (fscanf(f, "%llu %llu", &size, &pages) == 2 && page > 0) *resident = (uint64_t)pages * (uint64_t)page;
+        fclose(f);
+    }
+    f = fopen("/proc/self/status", "r");
+    if (f) {
+        char line[256];
+        unsigned long long kb;
+        while (fgets(line, sizeof line, f)) {
+            if (sscanf(line, "VmHWM: %llu", &kb) == 1) *peak_resident = (uint64_t)kb * 1024;
+            else if (sscanf(line, "VmPeak: %llu", &kb) == 1) *peak_virtual = (uint64_t)kb * 1024;
+        }
+        fclose(f);
+        return;
+    }
+    struct rusage ru;
+    if (getrusage(RUSAGE_SELF, &ru) == 0) *peak_resident = (uint64_t)ru.ru_maxrss * 1024;
+}
+
 void sys_time_sleep(int64_t microseconds) {
     if (microseconds <= 0) return;
     struct timespec ts;

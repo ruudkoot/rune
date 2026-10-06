@@ -24,6 +24,7 @@ static void usage(void) {
         "                  and the primitives' handling of heap pointers)\n"
         "  --heap-fill P   grow the heap until at most P percent of it is in use after\n"
         "                  a collection, 1 to 100 (default 50)\n"
+        "  --gc-log FILE   write a line about every collection into FILE (docs/runtime.md)\n"
         "  --checked       DECON tests the tag it is given, which a match that names\n"
         "                  every constructor leaves untested (for testing the compiler)\n"
         "  --emulate-fork  fork as on Windows, which has none: by a second runevm that\n"
@@ -69,7 +70,7 @@ int main(int argc, char **argv) {
     int jit_check = 0, jit_given = 0;
     JitOptions jit;
     memset(&jit, 0, sizeof jit);
-    const char *resume = NULL, *restore = NULL;
+    const char *resume = NULL, *restore = NULL, *gc_log = NULL;
 #ifdef RUNE_CENSUS
     const char *census_dir = NULL;
     size_t census_every_arg = 262144, census_fields = 1, census_ids = 0;
@@ -94,6 +95,7 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--checked") == 0) checked = 1;
         else if (strcmp(argv[i], "--resume") == 0 && i + 1 < argc) resume = argv[++i];
         else if (strcmp(argv[i], "--restore") == 0 && i + 1 < argc) restore = argv[++i];
+        else if (strcmp(argv[i], "--gc-log") == 0 && i + 1 < argc) gc_log = argv[++i];
         else if (strcmp(argv[i], "--gc-stress") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &gc_stress) || gc_stress == 0) { usage(); return 2; }
         }
@@ -148,6 +150,7 @@ int main(int argc, char **argv) {
         }
         vm->checked = checked;
         vm->jit = jit;
+        if (gc_log) heap_log_open(vm, gc_log);
         vm_exit(vm, vm_loop(vm));   /* does not return */
     }
     if (resume) {
@@ -183,6 +186,7 @@ int main(int argc, char **argv) {
     vm->equality_work = equality_work;
     vm_init(vm, heap);
     vm->heap_fill = (unsigned)heap_fill;
+    if (gc_log) heap_log_open(vm, gc_log);
 #ifdef RUNE_CENSUS
     /* the census VM interprets everything: the JIT allocates in line
        (runtime/register/jit/masm.c) with its own idea of the header */

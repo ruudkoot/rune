@@ -36,6 +36,7 @@
 #endif
 #include <windows.h>
 #include <shellapi.h>
+#include <psapi.h>
 #include <ddeml.h>
 
 static int last = 0;
@@ -256,6 +257,25 @@ int64_t sys_time_sys(void) {
 void sys_time_sleep(int64_t microseconds) {
     if (microseconds <= 0) return;
     Sleep((DWORD)((microseconds + 999) / 1000));
+}
+int64_t sys_clock_ns(void) {
+    LARGE_INTEGER now, freq;
+    if (!QueryPerformanceFrequency(&freq) || freq.QuadPart <= 0 || !QueryPerformanceCounter(&now)) return 0;
+    /* in two parts, so that nothing overflows for a fast counter */
+    return now.QuadPart / freq.QuadPart * 1000000000 + now.QuadPart % freq.QuadPart * 1000000000 / freq.QuadPart;
+}
+int64_t sys_thread_time_ns(void) {
+    FILETIME creation, exited, kernel, user;
+    if (!GetThreadTimes(GetCurrentThread(), &creation, &exited, &kernel, &user)) return 0;
+    return (of_filetime(kernel) + of_filetime(user)) * 1000;
+}
+void sys_mem_usage(uint64_t *resident, uint64_t *peak_resident, uint64_t *peak_virtual) {
+    PROCESS_MEMORY_COUNTERS m;
+    *resident = *peak_resident = *peak_virtual = 0;
+    if (!GetProcessMemoryInfo(GetCurrentProcess(), &m, sizeof m)) return;
+    *resident = m.WorkingSetSize;
+    *peak_resident = m.PeakWorkingSetSize;
+    *peak_virtual = m.PeakPagefileUsage;
 }
 
 /* The calendar goes through the functions of msvcrt that are 64 bits wide

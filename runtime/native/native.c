@@ -270,7 +270,7 @@ void native_fatal(VM *vm, int what, int32_t a) {
 typedef struct Options {
     size_t heap, gc_stress, heap_fill, heap_limit, equality_work;
     int stats, count, emulate_fork, checked;
-    char *restore;
+    char *restore, *gc_log;
 } Options;
 
 /* A size in bytes or a count, as runevm-stack takes it (runtime/main.c). */
@@ -310,15 +310,16 @@ static void options(const char *text, const char *where, Options *o) {
         else if (strcmp(w, "--heap-fill") == 0 && i + 1 < n && size_arg(words[i + 1], &o->heap_fill)
                  && o->heap_fill >= 1 && o->heap_fill <= 100)
             i++;
-        else if (strcmp(w, "--restore") == 0 && i + 1 < n) {
-            free(o->restore);
-            o->restore = malloc(strlen(words[i + 1]) + 1);
-            if (!o->restore) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
-            strcpy(o->restore, words[++i]);
+        else if ((strcmp(w, "--restore") == 0 || strcmp(w, "--gc-log") == 0) && i + 1 < n) {
+            char **to = strcmp(w, "--restore") == 0 ? &o->restore : &o->gc_log;
+            free(*to);
+            *to = malloc(strlen(words[i + 1]) + 1);
+            if (!*to) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
+            strcpy(*to, words[++i]);
         } else {
             fprintf(stderr, "runevm: %s: %s is not an option of a native program "
                     "(--count, --stats, --heap-size N, --heap-limit N, --equality-work N, --heap-fill P, --gc-stress N, --checked, --emulate-fork, "
-                    "--restore FILE)\n", where, w);
+                    "--restore FILE, --gc-log FILE)\n", where, w);
             exit(2);
         }
     }
@@ -357,6 +358,7 @@ int main(int argc, char **argv) {
             return 2;
         }
         free(o.restore);
+        if (o.gc_log && !child) heap_log_open(vm, o.gc_log);
         rune_enter(vm, code);
     }
 
@@ -379,6 +381,7 @@ int main(int argc, char **argv) {
     vm->equality_work = o.equality_work;
     vm_init(vm, o.heap);
     vm->heap_fill = (unsigned)o.heap_fill;
+    if (o.gc_log) heap_log_open(vm, o.gc_log);
 
     char err[256];
     if (!load_program_mem(vm, rune_rbc, rune_rbc_size, err, sizeof err)) {

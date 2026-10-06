@@ -113,6 +113,9 @@ void heap_init(VM *vm, size_t semispace_bytes) {
     vm->gc_user_us = 0;
     vm->gc_sys_us = 0;
     vm->gc_longest_us = 0;
+    vm->gc_calls = 0;
+    vm->gc_ns = 0;
+    vm->gc_longest_ns = 0;
     vm->bytes_allocated = 0;
     vm->objects_allocated = 0;
     vm->boxes_allocated = 0;
@@ -168,6 +171,7 @@ Obj *vm_string_from(VM *vm, const char *s, uint32_t len) {
    copied into, how much of it is taken, and how much of that is boxes. */
 static Obj *copy_obj(VM *vm, Obj *o) {
     if (obj_forwarded(o)) return obj_forwarding(o);
+    vm->gc_counts.objects++;
     size_t size = obj_size(o);
     if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) vm->gc.to_boxes += size;
     Obj *n = (Obj *)(vm->gc.to + vm->gc.to_used);
@@ -234,7 +238,7 @@ static void copy_value(VM *vm, Value *v) {
    becomes the one that runs again, whose registers are all roots (what it is
    doing when a collection comes is not known here). */
 static void stack_roots(VM *vm) {
-    size_t at = 0;
+    size_t at = 0, dead = 0;
     if (vm->frame_live && vm->frames_active)
         for (size_t k = 0; k < vm->fp; k++) {
             const Frame *f = &vm->frames[k];
@@ -244,10 +248,16 @@ static void stack_roots(VM *vm) {
             for (; at < f->base && at < end; at++) copy_value(vm, &vm->stack[at]);
             for (uint32_t r = 0; r < n && at < end; r++, at++) {
                 if (r >= 64 || ((live >> r) & 1)) copy_value(vm, &vm->stack[at]);
-                else if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
+                else {
+                    dead++;
+                    if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
+                }
             }
+            vm->gc_counts.frames++;
         }
     for (; at < vm->sp; at++) copy_value(vm, &vm->stack[at]);
+    vm->gc_counts.slots += vm->sp;
+    vm->gc_counts.live_slots += vm->sp - dead;
 }
 
 /* The heap is two semispaces, both kept: the one collected from is the next
@@ -270,7 +280,11 @@ static void collect_into(VM *vm, size_t new_size) {
 #endif
 
     stack_roots(vm);
-    OTHER_ROOTS(vm, COPY_VALUE, COPY_OBJ);
+#define COPY_ROOT_VALUE(v) (vm->gc_counts.other_roots++, COPY_VALUE(v))
+#define COPY_ROOT_OBJ(o) (vm->gc_counts.other_roots++, COPY_OBJ(o))
+    OTHER_ROOTS(vm, COPY_ROOT_VALUE, COPY_ROOT_OBJ);
+#undef COPY_ROOT_VALUE
+#undef COPY_ROOT_OBJ
 
     /* scan */
     size_t scan = 0;
@@ -298,6 +312,67 @@ static void collect_into(VM *vm, size_t new_size) {
     vm->copied += vm->gc.to_used;
     if (vm->gc.to_used > vm->max_live) vm->max_live = vm->gc.to_used;
     vm->gc.to = NULL;
+}
+
+/* A pass of the copier, as --gc-log sees it: timed on the monotonic clock
+   (and on the thread's processor time where it is written), with what it
+   counted, one line of the log each (the columns are docs/runtime.md's).
+   A collection that grows the heap is two passes, two lines with the same
+   call number. The clocks are read where there is no log too: their sum
+   and the longest collection are RUNE_MEMSTAT's (runtime.c, vm_exit). */
+static void collect_pass(VM *vm, size_t new_size) {
+    uint64_t bytes = vm->bytes_allocated, objects = vm->objects_allocated, instrs = vm->instructions;
+    uint64_t boxes = vm->boxes_allocated, box_bytes = vm->box_bytes_allocated;
+    size_t used_before = USED_STOCK(vm);
+    memset(&vm->gc_counts, 0, sizeof vm->gc_counts);
+    int64_t cpu0 = vm->gc_log ? sys_thread_time_ns() : 0;
+    int64_t t0 = sys_clock_ns();
+    collect_into(vm, new_size);
+    int64_t pause = sys_clock_ns() - t0;
+    vm->gc_ns += pause;
+    if (!vm->gc_log) return;
+    int64_t cpu = sys_thread_time_ns() - cpu0;
+    uint64_t resident, peak_resident, peak_virtual;
+    sys_mem_usage(&resident, &peak_resident, &peak_virtual);
+    /* seq kind vmgc bytes objects instrs boxes box_bytes used_before copied
+       copied_objs promoted slots live_slots frames other_roots cards_dirty
+       cards_scanned remembered live_after heap_size pause_ns cpu_ns
+       rss_bytes t_ns cards_young fields_scanned */
+    fprintf(vm->gc_log, "%llu full %llu %llu %llu %llu %llu %llu %llu %llu %llu 0 %llu %llu %llu %llu 0 0 0 %llu %llu %lld %lld %llu %lld 0 0\n",
+            (unsigned long long)vm->gc_count, (unsigned long long)vm->gc_calls,
+            (unsigned long long)bytes, (unsigned long long)objects, (unsigned long long)instrs,
+            (unsigned long long)boxes, (unsigned long long)box_bytes, (unsigned long long)used_before,
+            (unsigned long long)USED_STOCK(vm), (unsigned long long)vm->gc_counts.objects,
+            (unsigned long long)vm->gc_counts.slots, (unsigned long long)vm->gc_counts.live_slots,
+            (unsigned long long)vm->gc_counts.frames, (unsigned long long)vm->gc_counts.other_roots,
+            (unsigned long long)USED_STOCK(vm), (unsigned long long)vm->alloc.size,
+            (long long)pause, (long long)cpu, (unsigned long long)resident, (long long)(t0 - vm->gc_log_t0));
+}
+
+void heap_log_open(VM *vm, const char *path) {
+    vm->gc_log = fopen(path, "w");
+    if (!vm->gc_log) { fprintf(stderr, "runevm: --gc-log %s: cannot open\n", path); exit(2); }
+    fprintf(vm->gc_log, "# rune-gc-log 1 nursery=0 heap=%zu fill=%u limit=%zu\n", vm->alloc.size, vm->heap_fill, vm->heap_limit);
+    fprintf(vm->gc_log, "# seq kind vmgc bytes objects instrs boxes box_bytes used_before copied copied_objs promoted "
+            "slots live_slots frames other_roots cards_dirty cards_scanned remembered live_after heap_size "
+            "pause_ns cpu_ns rss_bytes t_ns cards_young fields_scanned\n");
+    vm->gc_log_t0 = sys_clock_ns();
+}
+
+void heap_log_close(VM *vm) {
+    if (!vm->gc_log) return;
+    uint64_t resident, peak_resident, peak_virtual;
+    sys_mem_usage(&resident, &peak_resident, &peak_virtual);
+    fprintf(vm->gc_log, "# end bytes %llu objects %llu instrs %llu boxes %llu box_bytes %llu collections %llu gc_ns %llu "
+            "vmpeak_kb %llu vmhwm_kb %llu\n",
+            (unsigned long long)vm->bytes_allocated, (unsigned long long)vm->objects_allocated,
+            (unsigned long long)vm->instructions, (unsigned long long)vm->boxes_allocated,
+            (unsigned long long)vm->box_bytes_allocated, (unsigned long long)vm->gc_count,
+            (unsigned long long)vm->gc_ns, (unsigned long long)(peak_virtual / 1024),
+            (unsigned long long)(peak_resident / 1024));
+    fprintf(vm->gc_log, "# wall_ns %lld\n", (long long)(sys_clock_ns() - vm->gc_log_t0));
+    fclose(vm->gc_log);
+    vm->gc_log = NULL;
 }
 
 /* heap_fill% of n bytes, rounded down, which for 50 is n / 2 */
@@ -335,6 +410,8 @@ void vm_gc(VM *vm, size_t needed) {
        checkGCTime: read once around the whole of it, so that growing the
        heap counts as one collection and not two. */
     int64_t user0 = sys_time_user(), sys0 = sys_time_sys();
+    int64_t ns0 = vm->gc_ns;
+    vm->gc_calls++;
     CENSUS_GC_BEGIN(vm);
     /* Where the heap must grow, collecting into a space of the same size
        and then again into a larger one made the largest collections of a
@@ -350,9 +427,9 @@ void vm_gc(VM *vm, size_t needed) {
            than once on a guess */
         if (guess < vm->live_last || guess > vm->alloc.size) guess = vm->alloc.size;
     }
-    collect_into(vm, grown(vm, vm->alloc.size, guess, needed));
+    collect_pass(vm, grown(vm, vm->alloc.size, guess, needed));
     size_t want = grown(vm, vm->alloc.size, USED_STOCK(vm), needed);
-    if (want != vm->alloc.size) collect_into(vm, want);
+    if (want != vm->alloc.size) collect_pass(vm, want);
     if (needed > vm->alloc.size - vm->alloc.used) vm_limit(vm, "heap limit exceeded");
     vm->live_before = vm->live_last;
     vm->live_last = USED_STOCK(vm);
@@ -361,6 +438,7 @@ void vm_gc(VM *vm, size_t needed) {
     vm->gc_user_us += user;
     vm->gc_sys_us += sys;
     if (user + sys > vm->gc_longest_us) vm->gc_longest_us = user + sys;
+    if ((int64_t)(vm->gc_ns - ns0) > vm->gc_longest_ns) vm->gc_longest_ns = (int64_t)(vm->gc_ns - ns0);
 }
 
 /* --- relocation, for an image of the VM (runtime/image.c) --- */

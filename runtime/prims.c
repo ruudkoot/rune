@@ -1972,9 +1972,11 @@ static void free_array(char **a) {
 static int p_posix_fork(VM *vm) {
     fflush(stdout);
     fflush(stderr);
+    if (vm->gc_log) fflush(vm->gc_log);
     if (vm->emulate_fork || !sys_has_fork()) return ret(vm, 1, mk_int(vm_fork(vm)));
     int64_t pid = sys_fork();
     if (pid == 0) CENSUS_FORK_CHILD();   /* the child traces nothing: the parent's files are its */
+    if (pid == 0) vm->gc_log = NULL;     /* nor does it log: the parent's log is the parent's */
     return ret(vm, 1, mk_int(pid));
 }
 

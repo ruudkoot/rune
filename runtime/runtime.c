@@ -4,6 +4,7 @@
    of it, heap.c, loader.c, prims.c, image.c and a system layer, and so is a
    program that runeopt made (docs/native.md). */
 #include "vm.h"
+#include "sys/sys.h"
 #include <stdarg.h>
 
 /* Where a frame is stopped: the instruction being executed in the innermost
@@ -348,6 +349,17 @@ void vm_exit(VM *vm, int status) {
     if (vm->stats && vm->boxes_allocated)   /* the representation's own, which --count leaves out (vm.h) */
         fprintf(stderr, "runevm: %llu boxes, %llu bytes\n",
                 (unsigned long long)vm->boxes_allocated, (unsigned long long)vm->box_bytes_allocated);
+    /* for measuring the collector: the process's peaks, and the
+       collector's time on the monotonic clock (docs/runtime.md) */
+    const char *memstat = getenv("RUNE_MEMSTAT");
+    if (vm->stats && memstat && strcmp(memstat, "1") == 0) {
+        uint64_t resident, peak_resident, peak_virtual;
+        sys_mem_usage(&resident, &peak_resident, &peak_virtual);
+        fprintf(stderr, "runevm: memstat: VmPeak %llu kB, VmHWM %llu kB, gc %lld ns, longest %lld ns\n",
+                (unsigned long long)(peak_virtual / 1024), (unsigned long long)(peak_resident / 1024),
+                (long long)vm->gc_ns, (long long)vm->gc_longest_ns);
+    }
+    heap_log_close(vm);
     fflush(stderr);
     vm_destroy(vm);
     exit(status);

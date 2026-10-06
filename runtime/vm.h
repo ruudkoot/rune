@@ -224,6 +224,21 @@ typedef struct VM {
     int64_t gc_user_us;      /* processor time spent collecting, in microseconds */
     int64_t gc_sys_us;
     int64_t gc_longest_us;   /* the longest of the collections, both times together (--stats): what the program waited at once */
+    /* What --gc-log and RUNE_MEMSTAT report (runtime/heap.c; docs/runtime.md):
+       the log, the calls of vm_gc, the monotonic time of every collection in
+       all and of the longest, and what the pass in progress has counted */
+    FILE *gc_log;
+    int64_t gc_log_t0;       /* sys_clock_ns when the log was opened */
+    uint64_t gc_calls;
+    int64_t gc_ns;
+    int64_t gc_longest_ns;
+    struct {
+        uint64_t objects;    /* objects copied */
+        uint64_t slots;      /* slots of the value stack looked at */
+        uint64_t live_slots; /* of them, the ones that were roots (the rest were dead registers) */
+        uint64_t frames;     /* waiting frames whose live registers were asked for */
+        uint64_t other_roots;
+    } gc_counts;
     /* The boxes of the representation -- a real with no immediate, an int
        or a word past 63 bits under RUNE_INT64 -- are counted apart: they
        are the layout's, not the program's, and where one is made is the
@@ -300,6 +315,10 @@ Obj *vm_string_from(VM *vm, const char *s, uint32_t len);
 size_t obj_size(const Obj *o);      /* header and payload, rounded as the heap lays it out */
 void vm_gc(VM *vm, size_t needed);
 int heap_relocate(VM *vm, uintptr_t old_base);  /* after an image is read: 0 when it is not sound */
+/* --gc-log FILE: one line per pass of the collector into FILE, and its last
+   lines when the VM exits (docs/runtime.md, *Watching it*) */
+void heap_log_open(VM *vm, const char *path);
+void heap_log_close(VM *vm);
 /* The handles (VM.handles): a value kept for C across collections. */
 size_t vm_handle_new(VM *vm, Value v);            /* a handle for the value */
 Value vm_handle_get(const VM *vm, size_t h);      /* the value, where it is now */
