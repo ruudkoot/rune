@@ -1,0 +1,98 @@
+[
+  {
+    "name": "small-add",
+    "group": "small",
+    "op": "add",
+    "bits": 18,
+    "other_bits": 12,
+    "iterations": 1500000
+  },
+  {
+    "name": "small-mul",
+    "group": "small",
+    "op": "mul",
+    "bits": 18,
+    "other_bits": 12,
+    "iterations": 1000000
+  },
+  {
+    "name": "mul-512",
+    "group": "muldiv",
+    "op": "mul",
+    "bits": 512,
+    "other_bits": 512,
+    "iterations": 7500
+  },
+  {
+    "name": "mul-4096",
+    "group": "muldiv",
+    "op": "mul",
+    "bits": 4096,
+    "other_bits": 4096,
+    "iterations": 320
+  },
+  {
+    "name": "mul-unbalanced",
+    "group": "muldiv",
+    "op": "mul",
+    "bits": 4096,
+    "other_bits": 128,
+    "iterations": 6000
+  },
+  {
+    "name": "div-1024",
+    "group": "muldiv",
+    "op": "div",
+    "bits": 1024,
+    "other_bits": 512,
+    "iterations": 400
+  },
+  {
+    "name": "div-4096",
+    "group": "muldiv",
+    "op": "div",
+    "bits": 4096,
+    "other_bits": 2048,
+    "iterations": 40
+  },
+  {
+    "name": "div-unbalanced",
+    "group": "muldiv",
+    "op": "div",
+    "bits": 4096,
+    "other_bits": 128,
+    "iterations": 400
+  },
+  {
+    "name": "bits-4096",
+    "group": "large",
+    "op": "bits",
+    "bits": 4096,
+    "other_bits": 4096,
+    "iterations": 10000
+  },
+  {
+    "name": "convert-4096",
+    "group": "large",
+    "op": "convert",
+    "bits": 4096,
+    "other_bits": 1,
+    "iterations": 100
+  },
+  {
+    "name": "power-1024",
+    "group": "large",
+    "op": "pow",
+    "bits": 3,
+    "other_bits": 1,
+    "iterations": 300
+  },
+  {
+    "name": "factorial-300",
+    "group": "large",
+    "op": "factorial",
+    "bits": 1,
+    "other_bits": 1,
+    "iterations": 300
+  }
+]

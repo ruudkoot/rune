@@ -1421,6 +1421,10 @@ clean:
 	rm -rf bin build tests/out
 	find . -type d \( -name .cm -o -name MLB \) -prune -exec rm -rf {} +
 
+.PHONY: test-intinf
+test-intinf: $(RUNE) bin/runevm
+	python3 tests/intinf/run.py --rune $(RUNE)
+
 # ---------------------------------------------------------------- install
 # PREFIX defaults to /usr/local for root and ~/.local for anyone else;
 # DESTDIR stages the tree elsewhere. `make install HOST=mlton` installs that

@@ -17,7 +17,7 @@ replacement arithmetic, or performance measurement is claimed here.
 | Milestone | Depends on | State |
 |---|---|---|
 | M0: record the design | the original brief and owner's decisions | done 2026-10-06; delivery evidence below |
-| M1: establish correctness and performance baselines | M0 | planned |
+| M1: establish correctness and performance baselines | M0 | done 2026-10-06; fixed corpus and baseline below |
 | M2: replace the SML representation and kernels | M1 | planned |
 | M3: add GMP behind the shared interface | M2 | planned |
 | M4: harden runtime integration and tune dispatch | M3 | planned |
@@ -467,3 +467,70 @@ Lean postmortem were read on 2026-10-06. This milestone edits only this file.
 
 These checks validate M0 against the existing implementation. No new GMP or
 replacement-SML implementation or performance gate has been run.
+
+
+## M1: fixed corpus and baseline
+
+Implementation started on branch `gmp` in `.worktrees/gmp` from M0's
+`531e144b`. The runtime and Basis arithmetic remain those of `ca87fa07`.
+`tests/intinf/oracle.sml` preserves the original list implementation with
+only its structure name and primitive bindings adapted for a test program.
+`tests/intinf/checks.sml` checks it and the current implementation against
+independent integer fixtures: 1,154 checks on each, including 230 signed
+operand pairs, 13 exact answers per pair, identities, and exceptional cases.
+The new `make test-intinf` is part of `make check`.
+
+The manifest and generator in `tests/intinf` freeze twelve workloads. Initial
+calibration increased short workloads' iteration counts before freezing
+M1. Two complete sequential timing runs varied substantially (up to 55% on
+one workload), so the final runner also alternates current and saved-oracle
+executions within each pair. The final baseline has seven measured pairs
+after one warmup pair. Its calibration is not a GMP performance result.
+
+`tests/intinf/baseline.json` records every sample, compiler timings, source
+and tool hashes, machine identity, load, exact expected answers, and a
+separate instrumented transcript for each workload. Complete local commands,
+streams, statuses, input programs, source snapshots, and usage records are
+under `tests/out/intinf/m1-paired`. Reproduce with:
+
+```
+python3 tests/intinf/run.py --bench --paired-oracle --compiler-workloads --samples 7 --out tests/out/intinf/m1-paired
+```
+
+Headline arithmetic times use `Time.now` around the loop, at microsecond
+resolution. Process wall/CPU time and peak RSS are separate. Each subprocess
+has a 180-second timeout and a 4 GiB address-space cap; timeout and
+interruption kill the process group, not just its timing wrapper. VM mode
+and GC environment overrides are removed unless supplied as explicit VM
+options. These runs use the register VM's default optimizing JIT.
+
+| Workload | Iterations | Median seconds | Sample range | Paired oracle/current ratio |
+|---|---:|---:|---|---:|
+| small-add | 1500000 | 0.283309 | 0.276094-0.313348 | 1.045 |
+| small-mul | 1000000 | 0.284096 | 0.253099-0.317028 | 0.931 |
+| mul-512 | 7500 | 0.273868 | 0.253631-0.280873 | 0.967 |
+| mul-4096 | 320 | 0.680979 | 0.612439-1.975697 | 0.984 |
+| mul-unbalanced | 6000 | 0.367812 | 0.325790-0.378109 | 1.023 |
+| div-1024 | 400 | 0.507801 | 0.491890-0.526708 | 0.967 |
+| div-4096 | 40 | 0.675502 | 0.651255-0.688535 | 0.995 |
+| div-unbalanced | 400 | 0.689981 | 0.642282-0.713807 | 1.017 |
+| bits-4096 | 10000 | 0.404504 | 0.351922-0.432386 | 0.910 |
+| convert-4096 | 100 | 0.700974 | 0.649210-0.725966 | 0.997 |
+| power-1024 | 300 | 0.596322 | 0.557167-0.608536 | 1.050 |
+| factorial-300 | 300 | 0.279311 | 0.259225-0.308251 | 0.973 |
+
+The paired calibration ranges from 0.910 to 1.050; a small difference
+inside this variation is not evidence for or against a 5% regression gate.
+M2 compares the new arithmetic to the preserved implementation in pairs,
+and reports the raw samples and uncertainty with the speedup. Compiler
+workloads retain their separate end-to-end comparisons.
+
+Compiler medians: `compile-hello` 0.035818 s, `compile-sigs` 0.267001 s, `bootstrap` 2.366197 s.
+
+M1 acceptance: `make check JOBS=8` passed outside the syscall sandbox,
+including the new oracle test, all host builds, both bootstrap bytecodes,
+native and register/JIT suites, the Basis suite, and generated documentation.
+508 programs produced identical bytecode across the seven compiler builds.
+The local transcript is `tests/out/intinf/m1-check.log`. `git diff --check`
+also passed. The isolated M2 prototype under `tests/out/intinf` is not part
+of this milestone or the arithmetic used by this acceptance run.
