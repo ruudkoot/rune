@@ -1879,7 +1879,7 @@ the first-touch fault), which a measurement on bare metal and on a real
   green; a change to `runtime/` also passes `make test-stress`, the
   sanitiser builds, `make test-windows` and `make test-portability`; the
   documents that describe the collector change with it
-  (`docs/runtime.md`, `runtime/register/ARCHITECTURE.md`,
+  (`docs/runtime.md`, `runtime/register/README.md`,
   `docs/native.md`).
 * **The lasting record is `docs/`, not this file.** What is built goes
   into `docs/runtime.md` as it lands, and this roadmap is retired when

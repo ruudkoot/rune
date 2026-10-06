@@ -249,7 +249,7 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 
 ## The register bytecode (runtime/register)
 
-`runtime/register`'s loop (`bin/runevm`, `runtime/register/interp.c`; `runtime/register/ARCHITECTURE.md`
+`runtime/register`'s loop (`bin/runevm`, `runtime/register/interp.c`; `runtime/register/README.md`
 is the VM as built) runs a second instruction set, of 41 registers
 instructions (`src/isa/regs.sml`; decision D4 of
 [plans/middle-end.md](plans/middle-end.md)). `rune` makes it unless told
@@ -286,7 +286,7 @@ refuses the other's file and image.
 * **A primitive that saves or restores an image** (`rt_save`, `rt_restore`,
   `posix_fork`) is `PRIMPUSH` and `RESULT`, so that a program resumed from
   an image finds its result where `RESULT` takes it.
-* **The JIT** (`docs/plans/jit.md`; `runtime/register/ARCHITECTURE.md`, The driver
+* **The JIT** (`docs/plans/jit.md`; `runtime/register/README.md`, The driver
   and Tier 1): `--jit=off|baseline|opt|all` says which functions get
   native code (`RUNEVM_JIT=MODE` in the environment where no `--jit=` is
   given, which `runevm-stack` ignores, since the compiler runs on it), `--jit-stats`
@@ -308,12 +308,12 @@ refuses the other's file and image.
   invalidates the callee's code at every Nth call into it, for testing
   that frames return to the interpreter from code that is gone.
   `--deopt-stress=N` makes compiled code leave for the interpreter at
-  every Nth instruction boundary (plans/jit.md M11; ARCHITECTURE.md,
+  every Nth instruction boundary (plans/jit.md M11; runtime/register/README.md,
   Deoptimisation), a test that the frame is exact everywhere, which the
   oracle runs at N = 1. `--jit-perf-map` writes `/tmp/perf-PID.map`, so that `perf record`
   names compiled functions (`jit1:NAME`, `jit2:NAME` by tier). Under
   `--jit=opt` a function is compiled by the same counters at tier 2
-  (plans/jit.md M9; ARCHITECTURE.md, Tier 2), whose code keeps ints,
+  (plans/jit.md M9; runtime/register/README.md, Tier 2), whose code keeps ints,
   words, chars, nullary constructors and reals of the function's
   registers in machine registers and writes them back to their slots at
   every safepoint; `--jit-tier=N` (1 or 2) fixes the tier under any

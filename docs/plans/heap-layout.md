@@ -1184,7 +1184,7 @@ What this step added is the documentation of the layout as it is --
 `docs/bytecode.md`, `docs/native.md`, `docs/testing.md` (its counts
 measured again: a stream's position closures are 17 objects and 408
 bytes, a compile into a new file 50 objects and 1,600 bytes),
-`runtime/register/ARCHITECTURE.md` (the homes that hold a word and the
+`runtime/register/README.md` (the homes that hold a word and the
 ones that are raw), the `Runtime` signature's sentence on sizes -- and
 the budgets, re-based in one commit that quotes the old and the new.
 Not done, and not needed for a result: a nullary exception as an

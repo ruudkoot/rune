@@ -169,7 +169,7 @@ the payload beside it. The bytecode therefore contains no path, and
 | `runtime/register/live.c`, `runtime/register/live.h` | What is live where in a function of the register bytecode: the registers an instruction reads and writes, the backward walk over a function, and what a frame that waits for a call still needs, which the collector asks for (`VM.frame_live`). One analysis for tier 2's homes and for the roots. |
 | `runtime/register/fastprim.h` | The common case of the primitives `runeopt` does in line, done in the loop from the registers. |
 | `runtime/register/jit.h`, `runtime/register/jit.c` | The JIT's view of a program (a code object per function) and the protocol between the driver, `vm_loop`, and the engines that run a frame ([plans/jit.md](plans/jit.md)); the compiler itself comes with M4. |
-| `runtime/register/ARCHITECTURE.md` | `runtime/register` as built, kept current by every change to it ([plans/jit.md](plans/jit.md)). |
+| `runtime/register/README.md` | `runtime/register` as built, kept current by every change to it ([plans/jit.md](plans/jit.md)). |
 
 The folders say what depends on what. The runtime both VMs link is directly
 under `runtime/`, with the system layer in `runtime/sys/`; `runtime/stack/`

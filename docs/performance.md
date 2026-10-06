@@ -21,7 +21,7 @@ The hosts are MLton 20241230, SML/NJ 110.99.9 (64 and 32 bits), SML/NJ
 2026.2, Poly/ML 5.9.2 and MLKit 4.7.23 (`make hosts`).
 
 `runtime/register` runs its register bytecode at a JIT level
-([runtime/register/ARCHITECTURE.md](../runtime/register/ARCHITECTURE.md), Tier 1 and Tier 2),
+([runtime/register/README.md](../runtime/register/README.md), Tier 1 and Tier 2),
 chosen by `--jit=MODE` and `--jit-tier=N`, or by `RUNEVM_JIT` and
 `RUNEVM_JIT_TIER` where the VM is started by a runner:
 

@@ -133,7 +133,7 @@ keep these invariants:
   calls) is written against the VM. A push does not check: the loader works
   out each function's deepest stack (`runtime/stack/isa_stack.c`), so an instruction's
   `pops`/`pushes` must say what it does.
-* **runtime/register** (`runtime/register/`, `bin/runevm`; `runtime/register/ARCHITECTURE.md` is the
+* **runtime/register** (`runtime/register/`, `bin/runevm`; `runtime/register/README.md` is the
   VM as built, and every change to `runtime/register` keeps it so) runs the register
   bytecode (`src/isa/regs.sml`, what `rune` makes unless told `--target=stack`) on the runtime
   of `runevm-stack`, whose part that is the stack bytecode's is `runtime/stack/isa_stack.c`
@@ -160,7 +160,7 @@ keep these invariants:
   `runevm` tiers up to tier 2 by default (`--jit=opt`, M10; M6 to
   M9 `--jit=baseline`), so every suite runs that way; the oracle runs
   the other modes. **The JIT**
-  (`runtime/register/jit/`, `runtime/register/ARCHITECTURE.md`, Tier 1): an instruction of the
+  (`runtime/register/jit/`, `runtime/register/README.md`, Tier 1): an instruction of the
   register set has, beside its body, an emitter in `runtime/register/jit/emit.c`
   (its prototype is generated into `runtime/register/jit_emit.h`, so the build fails
   without it) that does what the body does in the same frame, written
@@ -169,7 +169,7 @@ keep these invariants:
   test-register-jit` checks that no `x64_` or `a64_` name occurs in the
   emitters, the macro-assembler or the compiler, and an operation a
   target lacks is added to `asm.h` with both implementations and a
-  line in ARCHITECTURE.md's *The targets*. The macro-assembler's rules
+  line in README.md's *The targets*. The macro-assembler's rules
   the emitter keeps:
   the VM exact (`ms_sync`) before any call into C and reloaded
   (`ms_reload`) after -- unless the C is a helper declared as touching
@@ -189,7 +189,7 @@ keep these invariants:
   frame's `native_ret`, a handler's `native` and the driver's `jit->at`
   and nowhere else, so that invalidating a function's code is a walk
   over the frames and handlers (`jit_invalidate`). **The homes** (tier 2,
-  ARCHITECTURE.md): an emitter reads and writes a register through the
+  README.md): an emitter reads and writes a register through the
   macro-assembler's accessors only, never `[r14 + 16 k]`; `rbx`, `rsi`,
   `rdi` and `xmm2` to `xmm15` are homes, so an emitter that uses one as
   scratch, or sets a call's arguments, writes the homes back first
