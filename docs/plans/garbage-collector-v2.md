@@ -59,8 +59,8 @@ What it rests on:
 | M7 | The cache, and the compiler's help | |
 | M8 | What the second generation leaves | |
 
-The owner decides D1 to D19 (*Decisions*); D2 to D5, D7 and D8 are
-recommended provisionally here and decided at the gate of M4, on the
+The owner took every recommendation on 2026-10-06 (*Decisions*); D2 to
+D5, D7 and D8 provisionally, to be decided again at the gate of M4 on the
 prototypes' numbers, as heap-layout's D1 to D5 were. The milestones
 after the gate are planned again with those numbers.
 
@@ -1969,34 +1969,35 @@ its place.
 
 Each gives the options, what favours each, the evidence of *The
 experiments* and the literature it turns on, and the recommendation it
-was written with. The owner decides all of them. D2 to D5, D7 and D8 are
-recommended provisionally here and decided again at the gate of M4, on
-the two old spaces measured in the real VM, as heap-layout's D1 to D5
-were at its M4. Some decisions are less choices than consequences of the
-others (D12, D14, D16 to D18); they are written out so that the plans
-around this one can cite them.
+was written with. D2 to D5, D7 and D8 are recommended provisionally here
+and decided again at the gate of M4, on the two old spaces measured in
+the real VM, as heap-layout's D1 to D5 were at its M4. Some decisions are
+less choices than consequences of the others (D12, D14, D16 to D18); they
+are written out so that the plans around this one can cite them. The
+owner took every recommendation on 2026-10-06, the six of the gate
+provisionally:
 
-| Decision | Recommended |
-|---|---|
-| D1. What the second generation is for | A: four measurable targets -- memory, pauses, throughput, and the rest unchanged |
-| D2. The nursery | A: a fixed nursery of 1 MiB; promotion at the first survival |
-| D3. The old space | A: mark-region (Immix) with 64-byte lines and 32 KiB blocks; segregated fits the gate's second prototype |
-| D4. Fragmentation | A: opportunistic evacuation of sparse blocks, bounded; a stop-the-world sliding compaction only when the limit is reached |
-| D5. Large objects | A: from 8 KiB, straight into runs of the space's own 4 KiB units (not the operating system's pages), never moved, carded within; not from 4 KiB |
-| D6. The barrier and the remembered set | B: a card mark only for a young value, cards in each chunk's header, a dirty byte per block; one barrier with the snapshot log |
-| D7. Pauses | B: incremental snapshot marking paced by allocation, lazy sweeping, bounded evacuation |
-| D8. The collector's metadata | C: side tables per block; the header's GC bits stay unused |
-| D9. Roots and the stack | B: a watermark in the frames; the liveness lookup by a hash |
-| D10. Sizing and the operating system | A: aligned chunks of 2 MiB committed as used, free blocks returned lazily; old space sized by what lives |
-| D11. The cache and the TLB | A: the nursery within the TLB's reach; prefetched marking; lazy sweeping; promotion order measured; huge pages, if any, for the old space, measured in M7 |
-| D12. Determinism, `--count` and the statistics | as recommended: work clocked by allocation; deterministic counters only in `Runtime.stats` |
-| D13. 32-bit | A: the same collector; the 4-byte word not a prerequisite |
-| D14. Every engine | as recommended: one barrier signature everywhere, `runeopt`'s two stores included; images over chunks |
-| D15. Help from the compiler and the bytecode | B: pretenuring by site from the compiler's own build, measured in M7; elision where a value is known immediate |
-| D16. Threads and the third generation | as recommended: what is fixed now and what is left |
-| D17. The FFI and pinning | as recommended: large objects pinned in place |
-| D18. A lazy front end | as recommended: indirections shortcut at copy and at mark; updates through the barrier |
-| D19. Order against the other plans | A: M1 now; nothing waits for this, and the resident compiler wants M3 |
+| Decision | Recommended | Chosen |
+|---|---|---|
+| D1. What the second generation is for | A: four measurable targets -- memory, pauses, throughput, and the rest unchanged | A |
+| D2. The nursery | A: a fixed nursery of 1 MiB; promotion at the first survival | A, until the gate of M4 |
+| D3. The old space | A: mark-region (Immix) with 64-byte lines and 32 KiB blocks; segregated fits the gate's second prototype | A, until the gate of M4 |
+| D4. Fragmentation | A: opportunistic evacuation of sparse blocks, bounded; a stop-the-world sliding compaction only when the limit is reached | A, until the gate of M4 |
+| D5. Large objects | A: from 8 KiB, straight into runs of the space's own 4 KiB units (not the operating system's pages), never moved, carded within; not from 4 KiB | A, until the gate of M4 |
+| D6. The barrier and the remembered set | B: a card mark only for a young value, cards in each chunk's header, a dirty byte per block; one barrier with the snapshot log | B |
+| D7. Pauses | B: incremental snapshot marking paced by allocation, lazy sweeping, bounded evacuation | B, until the gate of M4 |
+| D8. The collector's metadata | C: side tables per block; the header's GC bits stay unused | C, until the gate of M4 |
+| D9. Roots and the stack | B: a watermark in the frames; the liveness lookup by a hash | B |
+| D10. Sizing and the operating system | A: aligned chunks of 2 MiB committed as used, free blocks returned lazily; old space sized by what lives | A |
+| D11. The cache and the TLB | A: the nursery within the TLB's reach; prefetched marking; lazy sweeping; promotion order measured; huge pages, if any, for the old space, measured in M7 | A |
+| D12. Determinism, `--count` and the statistics | as recommended: work clocked by allocation; deterministic counters only in `Runtime.stats` | as recommended |
+| D13. 32-bit | A: the same collector; the 4-byte word not a prerequisite | A |
+| D14. Every engine | as recommended: one barrier signature everywhere, `runeopt`'s two stores included; images over chunks | as recommended |
+| D15. Help from the compiler and the bytecode | B: pretenuring by site from the compiler's own build, measured in M7; elision where a value is known immediate | B |
+| D16. Threads and the third generation | as recommended: what is fixed now and what is left | as recommended |
+| D17. The FFI and pinning | as recommended: large objects pinned in place | as recommended |
+| D18. A lazy front end | as recommended: indirections shortcut at copy and at mark; updates through the barrier | as recommended |
+| D19. Order against the other plans | A: M1 now; nothing waits for this, and the resident compiler wants M3 | A |
 
 ### D1. What the second generation is for
 
@@ -2678,8 +2679,8 @@ with its numbers.
   experiments settle*).
 * **Done when:** both pass M3's chain, and the tables of D1's targets
   are written for both against the copier and against M3. **The gate:**
-  the owner decides D2 to D5, D7 and D8 on them, and M5 to M8 are planned
-  again.
+  the owner decides D2 to D5, D7 and D8 again on them, and M5 to M8 are
+  planned again.
 * **Touches:** `runtime/gc/` (a file per old space), the census VM (the
   new allocation paths), `tools/heapsim` (the models recalibrated on the
   real ones).
