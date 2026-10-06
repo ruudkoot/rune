@@ -40,3 +40,12 @@ What it leaves: promotion by many threads into a shared old space;
 marking and sweeping in parallel; a safepoint protocol for many mutators;
 NUMA placement; and whether the old space stays one or becomes one per
 thread.
+
+## To consider
+- Rune compiling MLton 1.10 against 0.8. The cause is programs that promote data which then dies soon after; a survivor space, which was never measured, would be the next lever.
+- Measured and dropped: prefetched marking, huge pages, smaller nursery maximums, and keeping the nursery outside the heap's size.
+- Not built: pretenuring by site, worth about 1%.
+- Low-pause, longest pause at large heaps: 37.6 ms on the 0.9 GB map, from first-touch page faults while the heap grows under WSL2, and 22.7 ms with 2.7 GB live, against 20 ms at a gigabyte. Low-pause pauses: longest 3 ms on the bootstrap and 1.5 ms at 100 MB live (target 10 ms); p99 under 2 ms everywhere.
+
+## Interesting references
+- https://go.dev/blog/greenteagc
