@@ -2394,10 +2394,26 @@ on the return address is 1.3-1.6 times faster than today's binary search
   so a 1 MiB chunk keeps 30 of its 32 blocks (93.8%) and a 2 MiB one 61
   of 64 (95.3%); a chunk aligned to 2 MiB can be backed by one huge page
   on x86-64 and on aarch64 with 4 KiB pages, a 1 MiB one only by luck
-  (D11); and there are half as many chunks. What it costs: an aligned
-  mapping needs a 4 MiB hole before it is trimmed, a little more address
-  space a 32-bit process cannot use, and a chunk is less often wholly
-  empty, so memory goes back by the block (below). The nursery is one
+  (D11); and there are half as many chunks. What it costs: a chunk is
+  less often wholly empty, so memory goes back by the block (below); and
+  the alignment. `mmap` and `VirtualAlloc` take none, and the sure way --
+  map 4 MiB, unmap the unaligned head and tail -- needs a 4 MiB hole for
+  that moment, which a 32-bit process near its limit may not have where
+  a 2 MiB one would still serve. So a chunk is first asked for at its
+  exact size with the address just past the last chunk as a hint, which
+  the kernel honours when that range is free, and then it is aligned;
+  only when it comes back elsewhere is it over-mapped (GHC's megablocks,
+  `ghc/rts/posix/OSMem.c:287-357`). Near the limit it is asked for at
+  an aligned address inside a hole read from `/proc/self/maps`, with
+  `MAP_FIXED_NOREPLACE` so that nothing mapped is replaced (Linux 4.17
+  and later; an older kernel takes it as a hint, and the address is
+  checked); on Windows `VirtualQuery` finds the holes, and `VirtualAlloc`
+  at an address fails rather than replacing. Windows cannot trim a
+  reservation: there the over-reservation
+  is released and the aligned range reserved again, retried if something
+  took it meanwhile (Go's `sysReserveAligned`,
+  `golang/go/src/runtime/mem.go:185-220`), or the alignment is asked of
+  `VirtualAlloc2` (Windows 10 version 1803 and later). The nursery is one
   region of its own size (D2), not a chunk. An address's chunk
   is its address masked, so `heap_is_young` stays a range test and a
   card is a mask and an index.
