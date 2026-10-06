@@ -16,7 +16,10 @@ and what the compiler and the bytecode can do to help; the decisions
 with their evidence; and the milestones that build it behind an
 interface, with a gate where two old spaces are prototyped at full
 scale before one is chosen. It was written on 2026-10-05 against
-`ca87fa07`, on branch `gc2`.
+`ca87fa07`, on branch `gc2`, and amended on 2026-10-06 after the owner
+asked whether the nursery and the chunks should be 2 MiB and large
+objects start at 4 KiB, the sizes of a huge page and of a page (D2, D5,
+D10, D11).
 
 What it rests on:
 * a reading of the runtime as the heap-layout roadmap left it
@@ -1582,8 +1585,10 @@ compactors do not.
 bootstrap: a peak of 79.5 MB with 64-byte lines, 83.6 MB with 128, 87.3
 MB with 256; exact line marking is worth the same as 64-byte lines;
 evacuating the blocks with the most holes takes 7 MB off the peak for 4
-MB moved; block size (16-64 KiB) and the large-object threshold (2-32
-KiB) barely matter. The harness's replay agrees on the order: peak
+MB moved; block size (16-64 KiB) barely matters, nor does the
+large-object threshold (2-32 KiB) while it decides only where promoted
+objects go (allocating them straight into their space is another matter,
+below). The harness's replay agrees on the order: peak
 footprint over peak occupancy 1.00 compacted, 1.02 best and first fit,
 1.24 Immix with exact lines, 1.26 with 64-byte lines, 1.34 segregated
 fits, 1.38 Immix with 128-byte lines, 1.55 next fit
@@ -1615,6 +1620,27 @@ across its phases.
 **An image or boot space** (`results/sim-image.md`): of the bytes Immix
 marks over the bootstrap, 11.7% were born in the first 1% of its
 allocation, 27.6% in the first 5%, 45.0% in the first 10%.
+
+**Large objects and the page** (`results/lead-los-threshold.md`, made on
+2026-10-06 by `results/lead/los/run.sh` and `run2.sh`), over the 38
+traces that allocate 16 MB or more, Immix behind a 1 MiB nursery, large
+objects in runs of 4 KiB units. Allocating every object of 8 KiB or
+more straight into the space, as D5 recommends, against allocating it in
+the nursery and moving it there when promoted: the peak 2.5% higher at
+the geometric mean, 3-8% less promoted on the compiler's traces, and one
+outlier, `mlton-tensor` at 2.6 times (4.5 MB against 1.7), whose objects
+of about 13 KiB die young; straight in only from 32 KiB removes the
+outlier and is level on average, and costs the bootstrap 7%. From 4 KiB
+instead of 8 the peak is 4% higher at the geometric mean, 8% on the
+bootstrap with one major more, 2.2 times on `fxp`, 19-30% on
+`wc-input1`, `wc-scanStream` and `runedoc-page`, and 3% lower nowhere.
+Rounding to the operating system's pages instead of the space's units
+costs the 8 KiB threshold 0.7% at 16 KiB pages and 7.5% at 64 KiB
+(`mlton-tensor` 3.3 times), and the 4 KiB one 8% and 28% over the 8 KiB
+one in units (the bootstrap 69%, `wc-scanStream` 4.2 times, `fxp` 15
+times). A 2 MiB nursery puts the bootstrap's peak at 72 MB against 80,
+and the peak of the 13 traces with 2 MB or more live 6.6% higher at the
+geometric mean.
 
 **32-bit** (`results/sim-footprint.md`): with 4-byte words and headers
 the spaces of small objects roughly halve (Immix 83.6 to 43.5 MB,
@@ -1710,6 +1736,11 @@ configurations, and the same collections in every run.
 | 99th-percentile pause ms | 61.6 | 0.32 | 0.39 | 1.17 | 3.48 | 6.63 | 49.9 |
 | longest pause ms | 61.6 | 89 | 56 | 60 | 64 | 54 | 50 |
 
+The 99th percentile is the minor collections' own: taken alone it is
+1.08, 2.74 and 4.98 ms at 1, 2 and 4 MiB, set mostly by the minor
+collections in which much of the nursery survives
+(`results/lead-minor-pauses.md`; D2).
+
 So the nursery buys the memory (0.39-0.44 of the copier's peak) and the
 typical pause (from 62 ms to 0.3-6.6 ms at the 99th percentile, from 128
 KiB to 4 MiB), and a little time (7-10% at 1-4 MiB); the longest pause is still a full collection of
@@ -1804,6 +1835,14 @@ the first-touch fault), which a measurement on bare metal and on a real
   free. Everything here works in the 2 to 4 GB a 32-bit process has,
   next to the C library's own allocations, and does not need its spaces
   to be contiguous (D10, D13).
+* **Pages are the machine's.** The page is 4 KiB on x86 and x86-64 but
+  16 or 64 KiB on some aarch64 systems and on ppc64, and a huge page
+  is 2 MiB on x86-64, 4 MiB on 32-bit x86 without PAE, and on aarch64
+  2 MiB with 4 KiB pages but 32 or 512 MiB with 16 or 64 KiB pages
+  (where 2 MiB is reached only through the contiguous hint). The
+  collector reads the page at run time, as `sys_code_page` does
+  (`runtime/sys/sys_posix.c:1215-1218`), and ties none of its own sizes
+  to it (D5, D10, D11).
 * **Nothing that rules out the third generation's threads**
   (`garbage-collector-v3.md`): allocation state a thread can own
   (`AllocState`), no collector state that is the process's (`GcState`),
@@ -1860,7 +1899,7 @@ its place.
       runeopt's template)                           |  survivors, roots = stack above the
                                                     |  watermark + other roots + dirty cards
    slow path: nursery full -------------------------+
-              object >= 8 KiB --------------------> large-object space (pages in chunks,
+              object >= 8 KiB --------------------> large-object space (4 KiB units,
                                                        never moved, carded within, pinnable)
    store into an object that exists                 |
      BARRIER(obj, field, new [, old]) ---------+    v
@@ -1868,7 +1907,7 @@ its place.
        marking? log the old value              +--> + dirty byte of its block
                                                +--> snapshot log (while a cycle runs)
 
-                                               old space: chunks of 1 MiB, blocks of 32 KiB,
+                                               old space: chunks of 2 MiB, blocks of 32 KiB,
                                                lines of 64 B (D3: Immix; at the gate also
                                                segregated fits behind the same interface)
                                                  - promotion bumps into free lines
@@ -1885,7 +1924,7 @@ its place.
 * **The spaces.** The nursery is one region of N bytes and is
   `AllocState` (heap-layout M7's struct): the fast paths of C, the JIT
   and `runeopt` do not change, and young is a range test. The old space
-  and the large objects live in chunks of 1 MiB aligned to 1 MiB, mapped
+  and the large objects live in chunks of 2 MiB aligned to 2 MiB, mapped
   as needed from the `sys` layer (`sys_mem_reserve`, `sys_mem_commit`,
   `sys_mem_release`, new in M2 beside the JIT's executable memory), whose
   first part holds the chunk's side tables. A chunk is found from any
@@ -1943,13 +1982,13 @@ around this one can cite them.
 | D2. The nursery | A: a fixed nursery of 1 MiB; promotion at the first survival |
 | D3. The old space | A: mark-region (Immix) with 64-byte lines and 32 KiB blocks; segregated fits the gate's second prototype |
 | D4. Fragmentation | A: opportunistic evacuation of sparse blocks, bounded; a stop-the-world sliding compaction only when the limit is reached |
-| D5. Large objects | A: from 8 KiB, in pages of their own, never moved, carded within |
+| D5. Large objects | A: from 8 KiB, straight into runs of the space's own 4 KiB units (not the operating system's pages), never moved, carded within; not from 4 KiB |
 | D6. The barrier and the remembered set | B: a card mark only for a young value, cards in each chunk's header, a dirty byte per block; one barrier with the snapshot log |
 | D7. Pauses | B: incremental snapshot marking paced by allocation, lazy sweeping, bounded evacuation |
 | D8. The collector's metadata | C: side tables per block; the header's GC bits stay unused |
 | D9. Roots and the stack | B: a watermark in the frames; the liveness lookup by a hash |
-| D10. Sizing and the operating system | A: aligned chunks of 1 MiB committed as used, returned lazily; old space sized by what lives |
-| D11. The cache and the TLB | A: the nursery within the TLB's reach; prefetched marking; lazy sweeping; promotion order measured |
+| D10. Sizing and the operating system | A: aligned chunks of 2 MiB committed as used, free blocks returned lazily; old space sized by what lives |
+| D11. The cache and the TLB | A: the nursery within the TLB's reach; prefetched marking; lazy sweeping; promotion order measured; huge pages, if any, for the old space, measured in M7 |
 | D12. Determinism, `--count` and the statistics | as recommended: work clocked by allocation; deterministic counters only in `Runtime.stats` |
 | D13. 32-bit | A: the same collector; the 4-byte word not a prerequisite |
 | D14. Every engine | as recommended: one barrier signature everywhere, `runeopt`'s two stores included; images over chunks |
@@ -2014,14 +2053,36 @@ the first survival, `--nursery N` to set it.
   tiering, 1, 2 and 4 MiB were within 3.5% of one another in time (2,015,
   2,045, 1,976 ms) and their 99th-percentile pauses were 1.17, 3.48 and
   6.63 ms (all collections); on the evaluation set 1 MiB scored T 1.03, M
-  0.69 and 4 MiB T 0.98, M 0.75. 1 MiB is the size that meets D1's 2 ms
-  99th percentile, holds the least memory across the set (though not on
+  0.69 and 4 MiB T 0.98, M 0.75. The tail is the minor collections',
+  not the two full ones': taken alone, their 99th percentile is 1.08,
+  2.74 and 4.98 ms and their longest 1.45, 3.89 and 6.63 ms (1.08-1.39,
+  1.92-2.74 and 4.45-5.72 ms at the 99th percentile over both engines
+  and both first heaps; `results/lead-minor-pauses.md`). The longest
+  are mostly those in which much of the nursery survives (52-96% for
+  the longest four at 1 and 2 MiB on the 64 MiB heap) -- the compiler
+  building what it keeps -- and a minor collection's worst case is the
+  nursery copied whole, so the tail grows with the nursery, at 1.2-3 ms
+  a MiB copied on the reference machine; neither the watermark (D9) nor
+  the card summary (D6) shortens it. 1 MiB is the size that meets
+  D1's 2 ms 99th percentile, holds the least memory across the set (though not on
   the bootstrap alone: 120 MB against 107 at 4 MiB), and costs 2-5% of
   time against 4 MiB -- a cost that falls with the two things that made
   small nurseries lose in the prototype: the whole stack scanned at every
   minor collection (D9) and the whole card table swept (D6).
-* **B. 2 MiB:** between the two (the bootstrap's 99th percentile 3.5 ms,
-  peak 110 MB), above D1's pause target.
+* **B. 2 MiB**, a huge page on x86-64 and on aarch64 with 4 KiB pages.
+  Its minor collections' 99th percentile, 2.7 ms (1.9-2.7), is at or
+  above D1's target; otherwise it is level with A or a little ahead:
+  time within noise, 4.5% fewer bytes promoted (168.6 against 176.5
+  MB), the bootstrap's peak 110 MB against 120 (the simulator: 72
+  against 80 MB on Immix), though over the 13 traces with 2 MB or more
+  live the simulator's peak is 6.6% higher at the geometric mean
+  (`results/lead-los-threshold.md`). Huge pages do not help a nursery:
+  the harness's minor collection cost 516 cycles a KiB at 1 MiB with and
+  without them (H1), allocation walks the nursery's pages in order, and
+  1-2 MiB is within the TLB's reach of every core at hand; where huge
+  pages can pay is the old space, which marking and the mutator walk at
+  random (D10, D11). With D1's 99th percentile relaxed to 3-4 ms, B
+  would be a fair default.
 * **C. 4 MiB:** the least time of the three (the bootstrap at 0.90 of the
   copier's task-clock; 16 MiB was faster still, at a 50 ms 99th
   percentile), a 6.6 ms 99th percentile.
@@ -2041,7 +2102,9 @@ keeps what it keeps for long. Aging by an address watermark (Dart, GHC)
 needs no header bit if a program ever needs it. The size is a target
 property, chosen at start from the machine (the cache, and the TLB's
 reach where it can be read) in M7, with A's value as the default and 2 and 4 MiB measured again at the gate
-(M4), once the watermark and the remembered set are in.
+(M4), once the watermark and the remembered set are in. The nursery is
+a region of its own, so its size and the chunks' (D10) are chosen
+apart.
 
 ### D3. The old space
 
@@ -2120,19 +2183,63 @@ over A (no copying nursery) stays possible for a future roadmap.
 
 ### D5. Large objects
 
-**Recommended: A.** Objects from 8 KiB (Immix's medium limit; the
-simulator found Immix's threshold between 2 and 8 KiB makes little
-difference) are allocated straight into a large-object space of whole
-pages from the chunks (D10), never in the nursery and never moved;
-marked by a bit in their page descriptor; freed by the page at the
-sweep; returned with the chunk when it empties. Raw objects (strings,
-byte and real arrays) there are never scanned. A large array of values
+**Recommended: A.** Objects from 8 KiB are allocated straight into a
+large-object space, never in the nursery and never moved. The space
+hands out runs of 4 KiB units from the chunks (D10): its own unit, not
+the operating system's page, which is 4 KiB on x86 but 16 or 64 KiB on
+some aarch64 systems and on ppc64 (*Constraints*); pages matter only
+when memory is given back. An object is marked by a bit in its run's
+descriptor and freed by the run at the sweep, and the run's pages go
+back when they are free. Raw objects (strings, byte and real arrays)
+there are never scanned. A large array of values
 carries its own card bytes, one per 512 B, so that a store dirties one
 card and a minor collection scans one card, not the array (MLton marks
 the array's first card and rescans it all). This is also what pinning
 needs (D17). The prototype's worst case, `vector-rev` at 2.8 times the
 copier, came from large vectors made in old space that forced full
 collections; in A they are old from birth and collected only at majors.
+
+The evidence is the simulator's over the 38 traces that allocate 16 MB
+or more, Immix behind a 1 MiB nursery (`results/lead-los-threshold.md`;
+the earlier sweep of `results/sim-fragmentation.md` varied the threshold
+only for where promoted objects go):
+
+* **A. Straight into the space from 8 KiB**, Immix's limit for medium
+  objects: a quarter of a block, which bounds what a medium object can
+  waste at a block's end. Against B its peak is 2.5% higher at the
+  geometric mean, and it promotes 3-8% less on the compiler's traces;
+  the one outlier is `mlton-tensor` (4.5 MB against 1.7), whose objects
+  of about 13 KiB die young and in A wait for a major. If the gate finds
+  such programs common, the remedy is V8's young large-object space or
+  G1's eager reclaim: a large object born young is freed at the next
+  minor collection if nothing reached it and promoted in place if
+  something did (`javascript/v8/src/heap/large-spaces.h`,
+  `NewLargeObjectSpace`; `java/jdk/src/hotspot/share/gc/g1/g1YoungCollector.cpp`),
+  at the price of a barrier that can tell such an object young -- a flag
+  in its chunk's header beside the nursery's range test.
+* **B. In the nursery, moved into the space when promoted** (straight in
+  only above a quarter of the nursery, as in the prototype). The
+  simulator's best on average, but every surviving large object is
+  copied once -- a 256 KiB one in about 0.2 ms of a minor collection --
+  and fills the nursery while it waits. Allocating straight in only from
+  32 KiB, and moving objects of 8-32 KiB at promotion, is level with B
+  on average and removes `mlton-tensor`'s outlier, but costs the
+  bootstrap 7%. The gate measures it against A in the real VM.
+* **C. From 4 KiB, the page's size.** Not recommended: a page-sized
+  payload with its 8-byte header is just over a page. Rune's Basis reads
+  in chunks of 4,096 bytes (`chunkSize`, `lib/basis/posix_io.sml:157`,
+  `:178`), the bootstrap makes 424 strings of exactly that length, and
+  a 512-element array is the same 4,104 bytes; from 4 KiB each takes two
+  units, half empty, and waits for a major. The peak grows 4% at the
+  geometric mean, 8% on the bootstrap (one major more; 1,557 large
+  objects against 293), 2.2 times on `fxp`, 19-30% on `wc-input1`,
+  `wc-scanStream` and `runedoc-page`, and is 3% lower nowhere.
+* **D. Rounded to the operating system's pages.** Simplest where pages
+  are 4 KiB, and costly where they are not: at 64 KiB pages A's peak
+  grows 7.5% at the geometric mean (`mlton-tensor` 3.3 times) and C's
+  28% over A's (the bootstrap 69%, `wc-scanStream` 4.2 times, `fxp` 15
+  times). With the space's own unit, a large page costs only a coarser
+  return of memory.
 
 ### D6. The barrier and the remembered set
 
@@ -2151,7 +2258,7 @@ while incremental marking runs.
   is a pointer into the nursery: one subtraction and one unsigned compare
   against the nursery's range, which an immediate always fails (H6: no
   instruction for `:=` of an int; 14-20 for an old-to-young store). The
-  cards are bytes in the header of the 1 MiB chunk the field is in, found
+  cards are bytes in the header of the 2 MiB chunk the field is in, found
   by masking the address -- no global table, no folding, no contiguous
   reservation -- and the card's block gets a dirty byte, so a minor
   collection visits only dirty blocks and only their dirty cards (D's
@@ -2277,13 +2384,21 @@ on the return address is 1.3-1.6 times faster than today's binary search
 
 **Recommended: A.**
 
-* **Chunks.** The old space and the large objects are made of chunks of 1
-  MiB aligned to 1 MiB (mapped with room to spare and trimmed; no
+* **Chunks.** The old space and the large objects are made of chunks of 2
+  MiB aligned to 2 MiB (mapped with room to spare and trimmed; no
   reservation beyond what is used, no contiguity between chunks), each its
-  side tables (block descriptors, line bytes, mark bits, cards: about 34
-  KB, so two blocks' worth) and 30 blocks of 32 KiB, or a run of
-  large-object pages; a larger object gets a chunk
-  of its own. The nursery is one region of its size. An address's chunk
+  side tables (block descriptors, line bytes, mark bits, cards: about 1.1
+  KB a block, 67 KB in all, so three blocks' worth) and 61 blocks of 32
+  KiB, or runs of large-object units; a larger object gets a chunk
+  of its own. 2 MiB rather than 1: the tables round up to whole blocks,
+  so a 1 MiB chunk keeps 30 of its 32 blocks (93.8%) and a 2 MiB one 61
+  of 64 (95.3%); a chunk aligned to 2 MiB can be backed by one huge page
+  on x86-64 and on aarch64 with 4 KiB pages, a 1 MiB one only by luck
+  (D11); and there are half as many chunks. What it costs: an aligned
+  mapping needs a 4 MiB hole before it is trimmed, a little more address
+  space a 32-bit process cannot use, and a chunk is less often wholly
+  empty, so memory goes back by the block (below). The nursery is one
+  region of its own size (D2), not a chunk. An address's chunk
   is its address masked, so `heap_is_young` stays a range test and a
   card is a mask and an index.
 * **Growth by what lives.** A major cycle starts when the old space has
@@ -2291,10 +2406,13 @@ on the return address is 1.3-1.6 times faster than today's binary search
   old space's target occupancy) 66% by default on 64-bit and 80% on
   32-bit; growth is by chunks, so the steps are fine -- what the copier
   could not afford (heap-layout M7).
-* **Memory back.** Empty chunks are given back with `MADV_FREE` (30-50 ns
-  a page, nothing to fault back; H9) when the free chunks exceed the
-  chunks in use (Chez's reserve ratio of 1), and unmapped beyond a cap;
-  on Windows the same with `VirtualFree` decommit and `DiscardVirtualMemory`.
+* **Memory back.** Free blocks and free runs of the large-object space
+  are given back with `MADV_FREE`, a call for each run of them (about
+  3.8 µs for a lone 32 KiB block, 30-50 ns a page for runs of 256 KiB
+  and more; nothing to fault back; H9), in whole pages of the machine's
+  size, when the free memory exceeds what is in use (Chez's reserve
+  ratio of 1); empty chunks are unmapped beyond a cap; on Windows the
+  same with `VirtualFree` decommit and `DiscardVirtualMemory`.
 * **The flags.** `--heap-size`: the old space's first trigger.
   `--heap-limit`: a cap on all committed heap memory -- the nursery, the
   chunks, the tables -- past which a full collection, then D4's
@@ -2312,8 +2430,15 @@ the L3 (D2's 1 MiB is both, on every machine at hand); marking from an
 edge queue with a prefetching FIFO (H2: half a miss hidden where the
 graph has breadth; Garner et al.); lazy sweeping (H3, Boehm); allocation
 order for promotion, which the simulator found as good as any for the
-footprint. Huge pages off by default: under WSL2 the host's small pages
-defeat them, and on bare metal they are a measurement for M7. One thing
+footprint. Huge pages are not for the nursery, which gains nothing from
+them (H1: a minor collection 516 cycles a KiB at 1 MiB with and without)
+because it is walked in order and fits the TLB's reach; they may be for
+the old space, which marking and the mutator walk at random and which
+D10's 2 MiB chunks leave eligible. They are off by default: a huge page
+is committed whole at its first touch, against D10's committing
+memory as it is used, and giving one block of it back splits it; under WSL2 the host's
+small pages defeat them (the TLB's reach goes from 4 to about 7 MiB,
+H10); on bare metal they are a measurement for M7. One thing
 to try in M7: promoting in an approximately depth-first order (Moon;
 Wilson, Lam and Moher 1991), since Cheney's breadth-first order was the
 worst layout for the mutator's lookups in the harness (3,093 cycles
@@ -2467,8 +2592,8 @@ with its numbers.
 ### M2. The collector behind an interface (L, about 1,500)
 
 * **What:**
-  - `runtime/heap.c` split into `runtime/gc/`: the chunk allocator over
-    new `sys` calls (reserve, commit, release, on POSIX and Windows); the
+  - `runtime/heap.c` split into `runtime/gc/`: the allocator of D10's
+    2 MiB chunks over new `sys` calls (reserve, commit, release, on POSIX and Windows); the
     nursery as `AllocState`; the old-space interface (*The
     architecture*), with today's copier as its implementation; the root
     scan.
@@ -2501,7 +2626,7 @@ with its numbers.
   - D6's filtered barrier with cards in the chunks' headers and dirty
     bytes per block.
   - D9's watermark and the hashed liveness lookup.
-  - D5's large-object space.
+  - D5's large-object space, in runs of its own 4 KiB units.
   - The stack VM and `runeopt` supported.
 * **Why now:** it is most of the memory and of the typical pause
   (*The experiments*), shippable on its own, and the base the old spaces
@@ -2548,7 +2673,8 @@ with its numbers.
 * **What:**
   - The winner made the default.
   - D4's fall-back compaction.
-  - D10's growth, `--heap-fill`, `--heap-limit` and return of memory.
+  - D10's growth, `--heap-fill`, `--heap-limit` and return of memory
+    by free blocks.
   - Pinning in place (D17).
   - Images over chunks.
   - Windows, the 32-bit and big-endian VMs.
@@ -2584,6 +2710,7 @@ with its numbers.
     of D2 D, measured.
   - Prefetched marking (D11) and approximately depth-first promotion,
     measured.
+  - Huge pages for the old space's chunks, measured on bare metal (D11).
   - Pretenuring by site from the compiler's build (D15 B), and the
     barrier elided where the JIT knows a value is immediate.
 
