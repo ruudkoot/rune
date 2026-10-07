@@ -34,7 +34,9 @@ extern uint32_t census_sample_no;
 /* summary: no trace files and no per-object arrays, every table of
    census.txt (docs/census.md); ids_hint presizes the per-object
    arrays of the full mode (0: grown by doubling) */
-void census_init(VM *vm, const char *dir, uint64_t every, int fields, int summary, uint64_t ids_hint);
+/* graph: also graph.bin, the pointee ids of every field at allocation
+   (--census-graph; docs/census.md) */
+void census_init(VM *vm, const char *dir, uint64_t every, int fields, int summary, uint64_t ids_hint, int graph);
 void census_alloc(VM *vm, Obj *o, size_t size);
 void census_flush(void);
 void census_gc_begin(VM *vm);
@@ -46,6 +48,10 @@ void census_prim_result(int prim, Value v);
 void census_call(int op, Value v, int rep);
 void census_exit(VM *vm);
 void census_fork_child(void);
+/* the frame depth fell (an exception unwound to a handler's frame): the
+   lowest depth since the last sample, which samples.bin records; a return
+   is seen by census_call's RET */
+void census_unwind(VM *vm);
 /* the static census of a loaded program (runtime/census/census_static.c): TSV on out */
 void census_static(const Program *p, const char *path, FILE *out);
 
@@ -67,6 +73,7 @@ void census_static(const Program *p, const char *path, FILE *out);
 #define CENSUS_RUNTIME_BEGIN() (census_runtime++)
 #define CENSUS_RUNTIME_END() (census_runtime--)
 #define CENSUS_FORK_CHILD() census_fork_child()
+#define CENSUS_UNWIND(vm) do { if (census_on) census_unwind(vm); } while (0)
 
 #else
 
@@ -87,6 +94,7 @@ void census_static(const Program *p, const char *path, FILE *out);
 #define CENSUS_RUNTIME_BEGIN() ((void)0)
 #define CENSUS_RUNTIME_END() ((void)0)
 #define CENSUS_FORK_CHILD() ((void)0)
+#define CENSUS_UNWIND(vm) ((void)0)
 
 #endif
 #endif

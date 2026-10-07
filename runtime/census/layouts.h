@@ -8,10 +8,17 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/* vm.h's kinds and tags, repeated so this header stands alone */
-enum { LK_TUPLE = 1, LK_CON, LK_CLOSURE, LK_STRING, LK_REF, LK_ARRAY, LK_EXN, LK_EXNCON };
+/* vm.h's kinds and tags, repeated so this header stands alone (value.h
+   ObjKind: the word layout's raw kinds REAL, BOX, BYTES and REALS after
+   FORWARD, which no trace holds) */
+enum { LK_TUPLE = 1, LK_CON, LK_CLOSURE, LK_STRING, LK_REF, LK_ARRAY, LK_EXN, LK_EXNCON,
+       LK_FORWARD, LK_REAL, LK_BOX, LK_BYTES, LK_REALS };
+/* a kind whose payload is raw bytes, not fields the collector follows (value.h obj_has_fields) */
+static inline int layout_raw_kind(uint8_t kind) {
+    return kind == LK_STRING || kind == LK_REAL || kind == LK_BOX || kind == LK_BYTES || kind == LK_REALS;
+}
 enum { LT_UNIT = 0, LT_INT, LT_WORD, LT_REAL, LT_CHAR, LT_CON0, LT_PTR };
-/* bits classes of FORMAT.md */
+/* bits classes of docs/census.md */
 enum { BC_8 = 0, BC_31, BC_48, BC_51, BC_62, BC_63, BC_64, BC_REAL_BOXED = 7 };
 
 /* The layouts. L5 is a variant flag (LV_PAIRS) on L1 or L4. L1r = L1 | LV_REALIMM. */
@@ -61,9 +68,28 @@ static inline LayoutParams layout_params(enum Layout L, unsigned v) {
 
 static inline size_t layout_roundup(size_t x, size_t a) { return (x + a - 1) & ~(a - 1); }
 
-/* L0's exact rule (runtime/heap.c:7-15): 8 + round16(max(16, payload)) */
+/* W8, today's layout, the stock VM's exact rule (runtime/value.h
+   obj_size_of): an 8-byte header and a payload rounded up to 8 and at
+   least 8 -- bytes for STRING and BYTES, one double for REAL and BOX, a
+   double each for REALS, a word each for the others. The census VM checks
+   it against the VM at every allocation; the sizes of a trace of format 2
+   (docs/census.md) are these. */
+static inline size_t w8_obj_size(uint8_t kind, uint32_t len) {
+    size_t pay = (kind == LK_STRING || kind == LK_BYTES) ? (size_t)len
+               : (kind == LK_REAL || kind == LK_BOX) ? 8
+               : (size_t)len * 8;
+    pay = (pay + 7) & ~(size_t)7;
+    if (pay < 8) pay = 8;
+    return 8 + pay;
+}
+
+/* L0's exact rule (the 16-byte cells before heap-layout M5): 8 +
+   round16(max(16, payload)); the word layout's kinds as L0 would have had
+   them (a raw array of bytes as a string, of reals as 16-byte cells; a box
+   has no L0 counterpart, its value being a cell) */
 static inline size_t l0_obj_size(uint8_t kind, uint32_t len) {
-    size_t payload = (kind == LK_STRING) ? (size_t)len : (size_t)len * 16;
+    size_t payload = (kind == LK_STRING || kind == LK_BYTES) ? (size_t)len
+                   : (kind == LK_REAL || kind == LK_BOX) ? 16 : (size_t)len * 16;
     size_t s = (payload + 15) & ~(size_t)15;
     if (s < 16) s = 16;
     return 8 + s;
@@ -99,7 +125,9 @@ static inline size_t layout_obj_size(enum Layout L, unsigned v, uint8_t kind, ui
     if ((v & LV_PAIRS) && L != L0 && (kind == LK_CON || kind == LK_TUPLE) && len == 2)
         return 2 * p.width;             /* headerless pair: two words, the kind in the pointer's tag */
     size_t payload;
-    if (kind == LK_STRING) payload = len;
+    if (kind == LK_STRING || kind == LK_BYTES) payload = len;
+    else if (kind == LK_REAL || kind == LK_BOX) payload = 8;
+    else if (kind == LK_REALS) payload = (size_t)len * 8;
     else if (elem_bytes) payload = (size_t)len * elem_bytes;
     else payload = (size_t)len * p.width;
     if (payload < p.minpay) payload = p.minpay;

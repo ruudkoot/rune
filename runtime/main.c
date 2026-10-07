@@ -44,11 +44,12 @@ static void usage(void) {
         "  --version       print the version and exit\n"
 #ifdef RUNE_CENSUS
         "  --census-dir DIR     census VM: write the allocation traces of docs/census.md into DIR\n"
-        "  --census-every N     census VM: a forced collection every N bytes allocated (default 262144; 0 = none)\n"
+        "  --census-every N     census VM: a forced collection every N bytes allocated (default 32768; 0 = none)\n"
         "  --census-fields 0|1  census VM: write fields.bin (default 1)\n"
         "  --census-summary     census VM: no trace files (but pcs.bin) and no per-object arrays: census.txt alone\n"
         "  --census-ids N       census VM: the objects expected, so that the per-object arrays are allocated once\n"
         "  --census-static      census VM: print the static census of the program (docs/census.md) and exit\n"
+        "  --census-graph       census VM: also graph.bin, the id each field points to at allocation\n"
 #endif
         );
 }
@@ -74,8 +75,8 @@ int main(int argc, char **argv) {
     const char *resume = NULL, *restore = NULL, *gc_log = NULL;
 #ifdef RUNE_CENSUS
     const char *census_dir = NULL;
-    size_t census_every_arg = 262144, census_fields = 1, census_ids = 0;
-    int census_summary = 0, census_static_mode = 0;
+    size_t census_every_arg = 32768, census_fields = 1, census_ids = 0;
+    int census_summary = 0, census_static_mode = 0, census_graph = 0;
 #endif
     int i = 1;
     for (; i < argc; i++) {
@@ -118,6 +119,7 @@ int main(int argc, char **argv) {
         }
         else if (strcmp(argv[i], "--census-summary") == 0) census_summary = 1;
         else if (strcmp(argv[i], "--census-static") == 0) census_static_mode = 1;
+        else if (strcmp(argv[i], "--census-graph") == 0) census_graph = 1;
         else if (strcmp(argv[i], "--census-ids") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &census_ids)) { usage(); return 2; }
         }
@@ -196,7 +198,7 @@ int main(int argc, char **argv) {
        (runtime/register/jit/masm.c) with its own idea of the header */
     if (jit.mode != JIT_OFF) fprintf(stderr, "runevm-census: --jit ignored: the interpreter alone runs\n");
     vm->jit.mode = JIT_OFF;
-    if (census_dir) census_init(vm, census_dir, (uint64_t)census_every_arg, (int)census_fields, census_summary, (uint64_t)census_ids);
+    if (census_dir) census_init(vm, census_dir, (uint64_t)census_every_arg, (int)census_fields, census_summary, (uint64_t)census_ids, census_graph);
 #endif
 
     char err[256];

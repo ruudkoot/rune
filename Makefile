@@ -139,7 +139,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: isa check-isa test-ir check-levels test-register test-register-jit test-register-asan vm-census test-census heapsim check-heapsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa test-ir check-levels test-register test-register-jit test-register-asan vm-census test-census heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -473,10 +473,11 @@ bin/runevm-conv: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_JIT_CONV $(RT_INC) -o $@ $(NEW_SRCS) -lm
 
-# The census VM (docs/census.md; docs/plans/heap-layout.md, M1): runtime/register's
-# loop on the runtime with -DRUNE_CENSUS, which enables the hooks of
-# runtime/census/census.h. It interprets everything (the JIT allocates in line) and
-# prints the stock VM's --count line, which scripts/check-census.sh checks.
+# The census VM (docs/census.md; docs/plans/heap-layout.md, M1, and
+# docs/plans/garbage-collector-v2.md, M1): runtime/register's loop on the runtime
+# with -DRUNE_CENSUS, which enables the hooks of runtime/census/census.h. It
+# interprets everything (the JIT allocates in line) and prints the stock VM's
+# --count line, which scripts/check-census.sh checks.
 CENSUS_SRCS := $(NEW_SRCS) runtime/census/census.c runtime/census/census_static.c
 vm-census: bin/runevm-census
 bin/runevm-census: $(CENSUS_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/census/census.h runtime/census/layouts.h | build/.doctor-vm
@@ -484,10 +485,11 @@ bin/runevm-census: $(CENSUS_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/cen
 	$(CC) $(CFLAGS) -DRUNE_JIT=1 -DRUNE_CENSUS $(RT_INC) -o $@ $(CENSUS_SRCS) -lm
 
 # The census VM against the stock one on a small program: the same --count
-# line, every byte and object in census.txt, the summary mode and the static
-# census (scripts/check-census.sh). Part of make check.
-test-census:
-	@echo "test-census: the census VM measures the 16-byte layout; not built on the word prototype (heap-layout M4)"
+# line, every byte and object in census.txt, the trace's own consistency
+# (tools/heapsim/checktrace.py, where python3 has numpy), the summary mode and
+# the static census (scripts/check-census.sh). Part of make check.
+test-census: bin/runevm-census bin/runevm $(RUNE)
+	sh scripts/check-census.sh
 
 # The heap-layout tools (docs/plans/heap-layout.md, M2): the trace-driven
 # simulator bin/heapsim and its synthetic-trace generator bin/heapsim-gen
@@ -495,18 +497,26 @@ test-census:
 # runs the simulator's unit tests against the generator and holds its copier
 # model to the stock VM's --stats on two small workloads that collect
 # (their census traces made on the way); check-layouts builds the harness with $(CC) and
-# checks that every kernel's checksum is the same under every layout. Both
-# are part of make check.
+# checks that every kernel's checksum is the same under every layout. The
+# second generation's simulator bin/gcsim (docs/plans/garbage-collector-v2.md,
+# *The simulator*; tools/heapsim/README.md): check-gcsim holds its models to
+# traces whose answers are known in closed form, and to bin/heapsim's
+# copier, nursery and sticky models. All three are part of make check.
 bin/heapsim: tools/heapsim/sim.c runtime/census/layouts.h | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) $(RT_INC) -o $@ tools/heapsim/sim.c -lm
 bin/heapsim-gen: tools/heapsim/gen.c runtime/census/layouts.h | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) $(RT_INC) -o $@ tools/heapsim/gen.c -lm
-heapsim: bin/heapsim bin/heapsim-gen
-check-heapsim: heapsim
+bin/gcsim: tools/heapsim/gcsim.c runtime/census/layouts.h | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) $(RT_INC) -o $@ tools/heapsim/gcsim.c -lm
+heapsim: bin/heapsim bin/heapsim-gen bin/gcsim
+check-heapsim: heapsim bin/runevm-census bin/runevm $(RUNE) bin/rune.rbc
 	sh tools/heapsim/test.sh
-	@echo "check-heapsim: the validation needs the census VM; not run on the word prototype (heap-layout M4)"
+	sh tools/heapsim/validate.sh compile-sigs intinf_fact
+check-gcsim: heapsim
+	sh tools/heapsim/test2.sh
 check-layouts:
 	$(MAKE) --no-print-directory -C tests/layouts CC=$(CC)
 	sh tests/layouts/check.sh $(notdir $(CC))
@@ -1091,6 +1101,7 @@ check:
 	@$(MAKE) --no-print-directory test-heap
 	@$(MAKE) --no-print-directory test-census
 	@$(MAKE) --no-print-directory check-heapsim
+	@$(MAKE) --no-print-directory check-gcsim
 	@$(MAKE) --no-print-directory check-layouts
 	@$(MAKE) --no-print-directory check-gcbench
 	@$(MAKE) --no-print-directory perf-check

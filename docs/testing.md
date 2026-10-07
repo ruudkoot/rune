@@ -186,7 +186,11 @@ bytes, the number of records equals the objects). On 47 MLton benchmark
 programs, the compiler and the perf programs it did, and the mismatches
 that turned up on the large programs were all input: a pipe where the
 stock run had `/dev/null`, and the two programs that read the clock. None
-was the VM. The same discipline applies to a VM with a new layout: the
+was the VM. Ported to the word layout for the second-generation
+collector's roadmap, where the sum leaves the word's boxes out as `--count`
+does, it did the same on 54 traces, and `make test-census` holds it to the
+stock VM in every `make check` ([census.md](census.md)). The same
+discipline applies to a VM with a new layout: the
 objects and instructions of `--count` stay identical across the change,
 the bytes move once, and the budgets are re-based in the commit that moves
 them ([plans/heap-layout.md](plans/heap-layout.md), *Testing a layout

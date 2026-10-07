@@ -2,9 +2,17 @@
    under a candidate layout (layouts.h) and a collector model, printing one
    tab-separated line.
 
-   sim --trace DIR --layout L0..L4 [--variant F,F,...] --collector copier|nursery|sticky|los|mutseg
+   sim --trace DIR [--layout W8|L0..L4] [--variant F,F,...] --collector copier|nursery|sticky|los|mutseg
        [--heap-size N] [--heap-fill P] [--nursery N] [--promote 1|2] [--los T]
        --band lo|hi [--real-level store|call|result] [--workload NAME] [--header] [--check]
+
+   The trace is of format 2 (the word layout's): the objects lie on the
+   clock by their own sizes (layouts.h w8_obj_size), and the samples and
+   the stores are placed by it whatever the layout. --layout W8, the
+   default, sizes the objects so too: today's VM. L0 to L4 are the
+   heap-layout study's size models over the same trace, under which the
+   word's boxes (REAL and BOX objects) take no room of their own: a field
+   that holds one is boxed, or not, by the layout's rule.
 
    Liveness comes from death.bin at the census's forced samples; between two
    samples an object's state is known only as a band: --band lo counts an
@@ -26,12 +34,16 @@
 #include "census/layouts.h"
 
 typedef struct { uint8_t kind, site_kind; uint16_t contag; uint32_t len, site, func; } AllocRec;
-typedef struct { uint32_t clock16, src, dst; uint16_t field; uint8_t site, flags; } StoreRec;
-typedef struct { uint64_t clock, live_bytes, live_objs; } SampleRec;
+/* docs/census.md, format 2: 24-byte stores with the old value's id,
+   64-byte samples with the stack and the instruction count */
+typedef struct { uint32_t clock8, src, dst, old, field; uint8_t site, flags, rep, kind; } StoreRec;
+typedef struct { uint64_t clock, live_bytes, live_objs, instructions, last_id; uint32_t sp, fp, fp_low, base_low, sp_ptrs, flags; } SampleRec;
+_Static_assert(sizeof(StoreRec) == 24 && sizeof(SampleRec) == 64, "the records of docs/census.md, format 2");
 #define DEATH_INF 0xFFFFFFFFu
 enum { NCLS = 4 };
 static const size_t cls_threshold[NCLS] = { 0, 2048, 8192, 32768 };
-enum { REP_ANY = 0, REP_UNKNOWN = 15 };
+enum { REP_ANY = 0, REP_INT, REP_WORD, REP_REAL, REP_CHAR, REP_CON0, REP_PTR, REP_CON, REP_UNIT, REP_INT64, REP_WORD64, REP_UNKNOWN = 15 };
+static int is_box(uint8_t kind) { return kind == LK_REAL || kind == LK_BOX; }
 
 static void die(const char *m) { fprintf(stderr, "sim: %s\n", m); exit(2); }
 static void *xcalloc(size_t n, size_t s) { void *p = calloc(n ? n : 1, s); if (!p) die("out of memory"); return p; }
@@ -39,6 +51,7 @@ static void *xcalloc(size_t n, size_t s) { void *p = calloc(n ? n : 1, s); if (!
 /* ---- options ---- */
 static const char *trace_dir, *workload;
 static enum Layout L = L0; static unsigned V = 0; static char variant_str[128] = "-";
+static int w8 = 1;                 /* --layout W8 (L is L0 then, for the box rules: none) */
 static enum { C_COPIER, C_NURSERY, C_STICKY, C_LOS, C_MUTSEG } collector = C_COPIER;
 static const char *collector_name = "copier";
 static size_t heap_size0 = 4u << 20, nursery = 1u << 20, los_t = 0;
@@ -52,7 +65,6 @@ static uint8_t *fields; static size_t fields_bytes;
 static uint32_t *death;
 static SampleRec *samples; static uint32_t nsamples;
 static uint32_t *sample_id;        /* [k] = first id born after sample k; [0] = 1; [nsamples+1] = N+1 */
-static int samples_zero_based;
 static uint64_t *sample_clockL;    /* L bytes allocated (boxes included) when sample k ran */
 static uint32_t *size_L, *box_bytes, *clock16_L;
 static uint8_t *homog;             /* bit 7 homogeneous, bits 0-2 elem tag, bits 3-5 elem bc */
@@ -137,13 +149,42 @@ static void add_sbox(uint32_t id, uint32_t j, uint32_t d) {
     sboxes[nsboxes++] = (SBox){ id, (uint32_t)box_size, j, d };
 }
 
+/* What a value is, as the census VM's tables have it (runtime/census/census.c,
+   classify): an immediate's type is its source rep's, a pointer to a REAL
+   box a real that is not value-encodable, to a BOX an int or a word of 64
+   bits, any other pointer and null a PTR. */
+static uint8_t imm_tag(unsigned rep) {
+    switch (rep) {
+    case REP_WORD: case REP_WORD64: return LT_WORD;
+    case REP_REAL: return LT_REAL;
+    case REP_CHAR: return LT_CHAR;
+    case REP_CON0: case REP_CON: return LT_CON0;
+    case REP_UNIT: return LT_UNIT;
+    default: return LT_INT;
+    }
+}
+/* a field of fields.bin: byte 0 the word and the pointee's kind, byte 1 the rep and an immediate's bits class */
+static void field_class(const uint8_t *f, uint8_t *tag, uint8_t *bc, uint8_t *rep) {
+    unsigned w = f[0] & 3, pk = (f[0] >> 2) & 15;
+    *rep = f[1] & 15;
+    if (w == 0) { *tag = imm_tag(*rep); *bc = *tag == LT_REAL ? 0 : (f[1] >> 4) & 7; }
+    else if (w == 1 && pk == LK_REAL) { *tag = LT_REAL; *bc = BC_REAL_BOXED; }
+    else if (w == 1 && pk == LK_BOX) { *tag = *rep == REP_WORD || *rep == REP_WORD64 ? LT_WORD : LT_INT; *bc = BC_64; }
+    else { *tag = LT_PTR; *bc = 0; }
+}
+
 /* ---- pass 1: alloc + fields + stores, in one merged walk of the clock ---- */
 static HMap pending;   /* (src<<16|field) -> index+1 of the open store box */
 static void process_store(const StoreRec *s, uint32_t k, uint32_t id) {
     unsigned site = s->site < 3 ? s->site : 2;
     stores_by_site[site]++;
     if (s->src == 0 || s->src > N) return;
-    uint8_t tag = (s->flags >> 1) & 7, rep = s->flags >> 4;
+    /* the new value: an immediate typed by its rep, a box (flags bit 2) a
+       real unless the rep says an int or a word, else a pointer */
+    uint8_t rep = s->rep, tag;
+    if (!(s->flags & 2)) tag = imm_tag(rep);
+    else if (s->flags & 4) tag = rep == REP_INT || rep == REP_INT64 ? LT_INT : rep == REP_WORD || rep == REP_WORD64 ? LT_WORD : LT_REAL;
+    else tag = LT_PTR;
     uint8_t kind = alloc_rec[s->src].kind;
     if ((homog[s->src] & 0x80) && (homog[s->src] & 7) != tag) homog[s->src] &= 0x7f;
     if (L == L0) return;
@@ -151,11 +192,12 @@ static void process_store(const StoreRec *s, uint32_t k, uint32_t id) {
     uint32_t *slot = hm_find(&pending, key, 0);
     if (slot && *slot) { SBox *b = &sboxes[*slot - 1]; if (b->d > k) b->d = k; *slot = 0; }
     if (tag != LT_INT && tag != LT_WORD && tag != LT_REAL) return;
-    /* stores.bin carries no bits class: an array's elements keep the class of
-       their fill, other stored ints/words are taken as small, reals as
-       value-encodable (approximation, see the report) */
-    uint8_t bc = (tag == LT_REAL) ? 0 : BC_31;
-    if (kind == LK_ARRAY && (homog[s->src] & 0x80) && (homog[s->src] & 7) == tag) bc = (homog[s->src] >> 3) & 7;
+    /* stores.bin carries no bits class: a box is a real that is not
+       value-encodable or an int or word of 64 bits; an array's elements
+       keep the class of their fill; other stored ints and words are taken
+       as small, reals as value-encodable (an approximation) */
+    uint8_t bc = (s->flags & 4) ? (tag == LT_REAL ? BC_REAL_BOXED : BC_64) : (tag == LT_REAL) ? 0 : BC_31;
+    if (!(s->flags & 4) && kind == LK_ARRAY && (homog[s->src] & 0x80) && (homog[s->src] & 7) == tag) bc = (homog[s->src] >> 3) & 7;
     int r = needs_box(kind, tag, bc, rep, 0);
     if (r == 2) { unrepresentable++; return; }
     if (r == 1) {
@@ -173,15 +215,16 @@ static void pass1(void) {
     if (L != L0) hm_init(&pending, 1 << 16);
     for (uint32_t id = 1; id <= N; id++) {
         while (k < nsamples && samples[k + 1].clock <= clock0) { k++; sample_id[k] = id; }
-        while (have && (uint64_t)st.clock16 <= clock0 / 16) { process_store(&st, k, id); have = sr_next(&sr, &st); }
+        while (have && (uint64_t)st.clock8 <= clock0 / 8) { process_store(&st, k, id); have = sr_next(&sr, &st); }
         const AllocRec *a = &alloc_rec[id];
-        if (a->kind != LK_STRING) {
+        if (!layout_raw_kind(a->kind)) {
             if (foff + (size_t)a->len * 2 > fields_bytes) die("fields.bin too short");
             const uint8_t *f = fields + foff;
             int anypoly = 0, hom = (a->kind == LK_ARRAY || (a->kind == LK_TUPLE && a->site_kind == 1)) && a->len > 0;
             uint8_t et = 0, ebc = 0;
             for (uint32_t i = 0; i < a->len; i++) {
-                uint8_t tag = f[2 * i] & 7, bc = f[2 * i + 1] & 7, rep = f[2 * i + 1] >> 3;
+                uint8_t tag, bc, rep;
+                field_class(f + 2 * i, &tag, &bc, &rep);
                 if (i == 0) { et = tag; ebc = bc; }
                 else if (tag != et) hom = 0;
                 else if (bc > ebc) ebc = bc;
@@ -191,7 +234,8 @@ static void pass1(void) {
             if (L != L0) {
                 uint32_t nb = 0;
                 for (uint32_t i = 0; i < a->len; i++) {
-                    uint8_t tag = f[2 * i] & 7, bc = f[2 * i + 1] & 7, rep = f[2 * i + 1] >> 3;
+                    uint8_t tag, bc, rep;
+                    field_class(f + 2 * i, &tag, &bc, &rep);
                     if (a->kind == LK_CLOSURE && i == 0) continue;   /* the function index */
                     int r = needs_box(a->kind, tag, bc, rep, anypoly);
                     if (r == 2) unrepresentable++;
@@ -201,13 +245,16 @@ static void pass1(void) {
             }
             foff += (size_t)a->len * 2;
         }
-        clock0 += l0_obj_size(a->kind, a->len);
+        size_t size = w8_obj_size(a->kind, a->len);
+        clock0 += size;
+        if (!is_box(a->kind)) bytes_L0 += w8 ? size : l0_obj_size(a->kind, a->len);
     }
     while (have) { process_store(&st, k, N + 1); have = sr_next(&sr, &st); }
     sr_close(&sr);
     while (k < nsamples) { k++; sample_id[k] = N + 1; }
     sample_id[nsamples + 1] = N + 1;
-    bytes_L0 = clock0;
+    for (k = 1; k <= nsamples; k++)
+        if (samples[k].last_id + 1 != sample_id[k]) { fprintf(stderr, "sim: sample %u: last_id %" PRIu64 ", the clock says %u\n", k, samples[k].last_id, sample_id[k] - 1); exit(2); }
     if (foff != fields_bytes) fprintf(stderr, "sim: warning: fields.bin has %zu bytes, %zu expected from alloc.bin\n", fields_bytes, foff);
 }
 
@@ -229,7 +276,7 @@ static void pass2(void) {
         unsigned elem = layout_compact_elem(V, a->kind, homog[id] >> 7, homog[id] & 7, (homog[id] >> 3) & 7);
         /* a pair by the codes built (PAIRS3, PAIRS2) is sized as LV_PAIRS sizes one */
         int coded_pair = L != L0 && (V & (LV_PAIRS3 | LV_PAIRS2)) && layout_is_pair(V, a->kind, a->contag, a->len);
-        size_t s = layout_obj_size(L, coded_pair ? (V | LV_PAIRS) : V, a->kind, a->len, elem);
+        size_t s = w8 ? w8_obj_size(a->kind, a->len) : is_box(a->kind) ? 0 : layout_obj_size(L, coded_pair ? (V | LV_PAIRS) : V, a->kind, a->len, elem);
         if (elem) {   /* a compact array's elements are unboxed by definition: withdraw their boxes */
             compact_objs++;
             if (box_bytes[id]) {
@@ -450,7 +497,7 @@ static void run(void) {
                 if (sample_clockL[R.k] - last_minor_clockL >= nursery) { minor_at(R.k, id); last_minor_clockL = sample_clockL[R.k]; }
             }
         }
-        if (nurserylike) while (have && (uint64_t)st.clock16 <= clock0 / 16) { nursery_store(&st); have = sr_next(&sr, &st); }
+        if (nurserylike) while (have && (uint64_t)st.clock8 <= clock0 / 8) { nursery_store(&st); have = sr_next(&sr, &st); }
         cur_clock0 = clock0;
         while (bx < nsboxes && sboxes[bx].id == id) {
             if (nurserylike) R.nursery_alloc += sboxes[bx].size; else copier_alloc(sboxes[bx].size, sboxes[bx].d);
@@ -461,7 +508,7 @@ static void run(void) {
             else for (uint32_t b = 0; b < box_bytes[id] / box_size; b++) copier_alloc(box_size, death[id]);
         }
         if (nurserylike) R.nursery_alloc += size_L[id]; else copier_alloc(size_L[id], death[id]);
-        clock0 += l0_obj_size(alloc_rec[id].kind, alloc_rec[id].len);
+        clock0 += w8_obj_size(alloc_rec[id].kind, alloc_rec[id].len);
     }
     if (nurserylike) { while (have) { nursery_store(&st); have = sr_next(&sr, &st); } sr_close(&sr); }
 }
@@ -581,7 +628,7 @@ static const char *cols =
     "samples\tband_width_pct\tcompact_objects\tpair_objects\treal_level\tmax_live\tstores_mode";
 
 static void usage(void) {
-    fprintf(stderr, "usage: sim --trace DIR --layout L0..L4 [--variant F,F] --collector copier|nursery|sticky|los|mutseg\n"
+    fprintf(stderr, "usage: sim --trace DIR [--layout W8|L0..L4] [--variant F,F] --collector copier|nursery|sticky|los|mutseg\n"
                     "           [--heap-size N] [--heap-fill P] [--nursery N] [--promote 1|2] [--los T] --band lo|hi\n"
                     "           [--real-level store|call|result] [--workload NAME] [--header] [--check]\n");
     exit(2);
@@ -616,7 +663,7 @@ int main(int argc, char **argv) {
         else if (i + 1 >= argc) usage();
         else if (!strcmp(a, "--trace")) trace_dir = argv[++i];
         else if (!strcmp(a, "--workload")) workload = argv[++i];
-        else if (!strcmp(a, "--layout")) { const char *l = argv[++i]; if (l[0] != 'L' || l[1] < '0' || l[1] > '4' || l[2]) usage(); L = (enum Layout)(l[1] - '0'); }
+        else if (!strcmp(a, "--layout")) { const char *l = argv[++i]; if (!strcmp(l, "W8")) { w8 = 1; L = L0; } else { if (l[0] != 'L' || l[1] < '0' || l[1] > '4' || l[2]) usage(); w8 = 0; L = (enum Layout)(l[1] - '0'); } }
         else if (!strcmp(a, "--variant")) parse_variant(argv[++i]);
         else if (!strcmp(a, "--collector")) {
             const char *c = argv[++i]; collector_name = c;
@@ -637,24 +684,25 @@ int main(int argc, char **argv) {
     if (!trace_dir) usage();
     if (collector == C_LOS) { if (!los_t) los_t = 8192; if (los_t != 2048 && los_t != 8192 && los_t != 32768) die("--los must be 2K, 8K or 32K"); }
     if (!workload) { const char *s = strrchr(trace_dir, '/'); workload = s && s[1] ? s + 1 : trace_dir; }
-    if (L == L0 && V) die("variants apply to L1-L4 only (L0 is exact today's layout)");
+    if (L == L0 && V) die("variants apply to L1-L4 only (W8 is today's layout, L0 the 16-byte cells)");
+    if (do_check && !w8) die("--check holds death.bin to the census's own live bytes: the trace's sizes, --layout W8");
     box_size = layout_box_size(L, V);
 
     size_t len;
+    {   /* format 2 alone: meta.txt says so (the census VM's, and heapsim-gen's) */
+        char p[4096]; snprintf(p, sizeof p, "%s/meta.txt", trace_dir);
+        FILE *f = fopen(p, "r"); char line[256]; int v2 = 0;
+        if (f) { while (fgets(line, sizeof line, f)) if (!strcmp(line, "format 2\n")) v2 = 1; fclose(f); }
+        if (!v2) { fprintf(stderr, "sim: %s: not a trace of format 2 (no 'format 2' in meta.txt; docs/census.md)\n", trace_dir); exit(2); }
+    }
     alloc_rec = map_file("alloc.bin", &len); if (len % 16 || len < 32) die("alloc.bin: bad size"); N = (uint32_t)(len / 16 - 1);
     fields = map_file("fields.bin", &fields_bytes);
     death = map_file("death.bin", &len); if (len < ((size_t)N + 1) * 4) die("death.bin too short");
-    {   /* docs/census.md: sample k = record k (record 0 a placeholder). The census
-           VM writes record k-1 for sample k (no placeholder; death.bin's k
-           means "alive at record k-1", verified against live_bytes of every
-           record). A record 0 that is all zero means the former. */
-        SampleRec *recs = map_file("samples.bin", &len); if (len % 24) die("samples.bin: bad size");
-        uint32_t nrec = (uint32_t)(len / 24);
-        int zero_based = nrec > 0 && !(recs[0].clock == 0 && recs[0].live_bytes == 0 && recs[0].live_objs == 0);
-        nsamples = zero_based ? nrec : (nrec ? nrec - 1 : 0);
+    {   /* sample k is record k - 1 (docs/census.md, samples.bin) */
+        SampleRec *recs = map_file("samples.bin", &len); if (len % sizeof(SampleRec)) die("samples.bin: bad size");
+        nsamples = (uint32_t)(len / sizeof(SampleRec));
         samples = xcalloc(nsamples + 2, sizeof *samples);
-        for (uint32_t k = 1; k <= nsamples; k++) samples[k] = recs[zero_based ? k - 1 : k];
-        samples_zero_based = zero_based;
+        for (uint32_t k = 1; k <= nsamples; k++) samples[k] = recs[k - 1];
     }
     if (alloc_rec[0].kind != 0) fprintf(stderr, "sim: warning: alloc.bin record 0 is not empty (kind %u)\n", alloc_rec[0].kind);
     for (uint32_t k = 2; k <= nsamples; k++) if (samples[k].clock < samples[k - 1].clock) die("samples.bin not monotone");
@@ -668,7 +716,7 @@ int main(int argc, char **argv) {
     if (no_stores) census_stores();
 
     if (do_check) {
-        /* the reading of death.bin/samples.bin against the census's own survivor counts (L0, no boxes) */
+        /* the reading of death.bin/samples.bin against the census's own survivor counts (W8, boxes included) */
         uint64_t bad = 0, maxdiff = 0;
         for (uint32_t k = 1; k <= nsamples; k++) {
             uint64_t s = Sge[0][k]; uint64_t d = s > samples[k].live_bytes ? s - samples[k].live_bytes : samples[k].live_bytes - s;
@@ -716,7 +764,7 @@ int main(int argc, char **argv) {
            "%.4f\t%.4f\t%" PRIu64 "\t%" PRIu64 "\t"
            "%" PRIu64 "\t%" PRIu64 "\t%zu\t%" PRIu64 "\t%" PRIu64 "\t%" PRIu64 "\t"
            "%u\t%.3f\t%" PRIu64 "\t%" PRIu64 "\t%s\t%zu\t%s\n",
-           workload, layout_name(L), variant_str, collector_name, params, band_hi ? "hi" : "lo", objects_total, bytes_L0, bytes_alloc + hist_box_bytes, extra_boxes, extra_box_bytes,
+           workload, w8 ? "W8" : layout_name(L), variant_str, collector_name, params, band_hi ? "hi" : "lo", objects_total, bytes_L0, bytes_alloc + hist_box_bytes, extra_boxes, extra_box_bytes,
            boxes_by_tag[LT_INT], boxes_by_tag[LT_WORD], boxes_by_tag[LT_REAL], box_bytes_by_tag[LT_INT], box_bytes_by_tag[LT_WORD], box_bytes_by_tag[LT_REAL], unrepresentable, hist_boxes,
            cminor + cmajor, cminor, cmajor, R.marked_minor, R.marked_major, R.sweep_bytes,
            coll_minor, coll_major, max_heap, R.heap.max_size, final_semi, final_live,

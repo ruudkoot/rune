@@ -26,7 +26,12 @@ _Static_assert((1 << VALUE_SHIFT) == sizeof(Value), "masm.c scales an index by 8
 #define RUNE_RAW_NUMS 1
 #endif
 
+/* the header as compiled code reads it, in every VM but the census VM,
+   whose header carries an id word (runtime/value.h, RUNE_CENSUS) and which
+   runs no compiled code (runtime/main.c forces --jit=off; docs/census.md) */
+#ifndef RUNE_CENSUS
 _Static_assert(offsetof(Obj, kind) == 0 && offsetof(Obj, contag) == 2 && offsetof(Obj, len) == 4 && sizeof(Obj) == 8, "masm.c reads the header as kind, contag, len, then the fields");
+#endif
 
 /* A measuring build (docs/plans/performance-64bit.md, experiments 1 and
    5): every conversion between a raw number and its word that compiled

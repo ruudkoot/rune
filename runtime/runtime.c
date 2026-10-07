@@ -237,6 +237,7 @@ int vm_raise(VM *vm, Value exn) {
     }
     Handler h = vm->handlers[--vm->hp];
     vm->fp = h.fp;
+    CENSUS_UNWIND(vm);
     vm->sp = h.sp;
     vm_push(vm, exn);
     vm->pc = h.pc;

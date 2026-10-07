@@ -1,15 +1,17 @@
 #!/bin/sh
 # The census of a workload (docs/census.md):
-#   scripts/census.sh [--out DIR] [--every BYTES] [--summary] [--timeout S] [--stdin FILE] [--cwd DIR] WORKLOAD...
+#   scripts/census.sh [--out DIR] [--every BYTES] [--summary] [--graph] [--heap BYTES] [--timeout S] [--stdin FILE] [--cwd DIR] [--name NAME] WORKLOAD...
 # Each workload runs on the stock VM (bin/runevm --jit=off --count) and
 # on the census VM (bin/runevm-census, `make vm-census`) with its traces in
 # DIR/WORKLOAD (DIR defaults to tests/out/census); the two --count lines and
 # the two outputs must agree, and DIR/WORKLOAD/DONE then records the count,
 # the census's --stats line and the wall time. The census VM runs with a
 # 1 GiB semispace and --heap-fill 50, so that only its forced collections,
-# every BYTES bytes allocated (default 262144), sample the heap. --summary
+# every BYTES bytes allocated (default 32768), sample the heap. --summary
 # keeps census.txt alone (no trace files, no per-object memory: the mode
-# for a program that allocates tens of gigabytes).
+# for a program that allocates tens of gigabytes). --graph adds graph.bin
+# (the id each field points to at allocation). The traces are of format 2,
+# the word layout's (docs/census.md).
 # Workloads: bootstrap (the compiler compiling its sources), compile-sigs,
 # compile-hello, runedoc-ir, runedoc-page (the compiler and runedoc on the
 # inputs of their tests/perf budgets, as register bytecode: bin/rune.rbc,
@@ -20,11 +22,18 @@
 # bytecode. --stdin FILE gives each run FILE as its standard input (a program
 # of examples/benchmarks reads its name and arguments there), and --cwd DIR
 # runs a FILE.rbc in DIR (where it finds its data). Exits 1 if a workload
-# fails.
+# fails. --heap BYTES is the census VM's semispace (default 1 GiB; it
+# reserves half again as much, twice): any size whose half holds the live
+# data and the interval gives the same samples, a smaller one less memory.
+# --name NAME names the traces' directory (DIR/NAME) where a
+# workload is censused more than once (one workload then).
 set -u
 out=tests/out/census
-every=262144
+every=32768
 summary=""
+graph=""
+dname=""
+cheap=1073741824
 tmo=3600
 stdin=/dev/null
 rundir=""
@@ -33,10 +42,13 @@ while [ $# -gt 0 ]; do
     --out) out=$2; shift 2 ;;
     --every) every=$2; shift 2 ;;
     --summary) summary="--census-summary"; shift ;;
+    --graph) graph="--census-graph"; shift ;;
+    --name) dname=$2; shift 2 ;;
+    --heap) cheap=$2; shift 2 ;;
     --timeout) tmo=$2; shift 2 ;;
     --stdin) stdin=$2; shift 2 ;;
     --cwd) rundir=$2; shift 2 ;;
-    -*) echo "usage: scripts/census.sh [--out DIR] [--every BYTES] [--summary] [--timeout S] [--stdin FILE] [--cwd DIR] WORKLOAD..." >&2; exit 2 ;;
+    -*) echo "usage: scripts/census.sh [--out DIR] [--every BYTES] [--summary] [--graph] [--heap BYTES] [--timeout S] [--stdin FILE] [--cwd DIR] [--name NAME] WORKLOAD..." >&2; exit 2 ;;
     *) break ;;
   esac
 done
@@ -64,6 +76,7 @@ budget_args() { sed -n 's/^args //p' "tests/perf/$1.budget"; }
 status=0
 for w in "$@"; do
   name=$(basename "$w" .rbc)
+  [ -n "$dname" ] && name=$dname
   dir=$out/$name
   mkdir -p "$dir"
   rm -f "$dir/DONE"
@@ -80,7 +93,11 @@ for w in "$@"; do
       rbc=bin/runedoc.rbc; args="--lib lib $(eval echo "$(sed -n 's/^runedoc //p' "tests/perf/$w.budget")")" ;;
     mlton-*)
       cwd=$root/tests/out/mlton-bench
-      sh tests/external/run-mlton-bench.sh --prepare --rune "$rune" "${w#mlton-}" > "$dir/prepare.out" 2>&1 || { echo "FAIL $w: $(tail -1 "$dir/prepare.out")"; status=1; continue; }
+      # CENSUS_NO_PREPARE=1: the bytecode is there already (run-mlton-bench.sh
+      # --prepare --all, once), so that censuses run side by side do not
+      # compile one another's programs again (its filters match substrings)
+      if [ "${CENSUS_NO_PREPARE:-0}" = 1 ] && [ -f "$cwd/${w#mlton-}.rbc" ]; then echo "prepared before" > "$dir/prepare.out"
+      else sh tests/external/run-mlton-bench.sh --prepare --rune "$rune" "${w#mlton-}" > "$dir/prepare.out" 2>&1 || { echo "FAIL $w: $(tail -1 "$dir/prepare.out")"; status=1; continue; }; fi
       rbc=$cwd/${w#mlton-}.rbc
       [ -f "$cwd/${w#mlton-}.args" ] && args=$(cat "$cwd/${w#mlton-}.args") ;;
     *.rbc)
@@ -103,7 +120,7 @@ for w in "$@"; do
   t0=$(date +%s)
   [ -n "$outfile" ] && rm -f "$outfile"
   # shellcheck disable=SC2086
-  (cd "$cwd" && limit "$census" --jit=off --count --stats --heap-size 1073741824 --heap-fill 50 --census-dir "$cdir" --census-every "$every" $summary "$rbc" $args < "$stdin" > "$cdir/census.stdout" 2> "$cdir/census.stderr")
+  (cd "$cwd" && limit "$census" --jit=off --count --stats --heap-size "$cheap" --heap-fill 50 --census-dir "$cdir" --census-every "$every" $summary $graph "$rbc" $args < "$stdin" > "$cdir/census.stdout" 2> "$cdir/census.stderr")
   cx=$?
   wall=$(( $(date +%s) - t0 ))
   cline=$(grep '^runevm: count:' "$dir/census.stderr" | tail -1)
@@ -113,7 +130,7 @@ for w in "$@"; do
   if ! cmp -s "$dir/stock.stdout" "$dir/census.stdout"; then echo "FAIL $w: the outputs differ"; status=1; continue; fi
   "$census" --census-static "$rbc" > "$dir/static.tsv" 2> /dev/null
   # cwd, cmd and out: how the stock VM was run, and the file it wrote, for tools/heapsim/validate.sh to run it again at other heap settings
-  { echo "count $sline"; echo "wall $wall s"; echo "every $every"; [ -n "$summary" ] && echo "mode summary"; echo "cwd $cwd"; echo "cmd $rbc $args"; [ -n "$outfile" ] && echo "out $root/$outfile"; grep '^runevm: [0-9]* collections' "$dir/census.stderr"; } > "$dir/DONE"
+  { echo "count $sline"; echo "wall $wall s"; echo "every $every"; echo "layout W8"; echo "version 2"; echo "census-heap $cheap"; echo "flags --census-every $every $summary $graph"; [ -n "$summary" ] && echo "mode summary"; echo "cwd $cwd"; echo "cmd $rbc $args"; [ -n "$outfile" ] && case "$outfile" in /*) echo "out $outfile" ;; *) echo "out $root/$outfile" ;; esac; grep '^runevm: [0-9]* collections' "$dir/census.stderr"; } > "$dir/DONE"
   echo "ok   $w: $wall s; $cline"
 done
 exit $status
