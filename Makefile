@@ -736,7 +736,9 @@ test: $(RUNE) vm | build/.doctor-check
 # built with each switch: the header's four bits set by the collector on
 # every object it copies (RUNE_GC_BITS), and the barrier as a card mark
 # (RUNE_BARRIER_CARDS). Then tests/lang on the VM of the first, as it comes
-# and with every function compiled and a collection at every allocation, so
+# and with every function compiled and a collection at every GC_STRESS-th
+# allocation, as make test-stress has it (101 by default; GC_STRESS=1 at
+# every one, which takes a quarter of an hour), so
 # that a reader of a kind that does not mask the bits fails, and on the VM
 # of the second; and on bin/runevm with the heap checked before and after
 # every collection of a heap of 64 KiB (--gc-verify). Part of make check.
@@ -748,7 +750,7 @@ test-heap: bin/runevm-gcbits bin/runevm-cards $(RUNE) vm | build/.doctor-check
 	build/heap_test-gcbits
 	$(CC) $(CFLAGS) -DRUNE_BARRIER_CARDS $(RT_INC) -o build/heap_test-cards tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
 	build/heap_test-cards
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-gcbits" --jit=all --gc-stress 1 "$$@"\n' > bin/runevm-gcbits-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-gcbits" --jit=all --gc-stress $(GC_STRESS) "$$@"\n' > bin/runevm-gcbits-stress
 	chmod +x bin/runevm-gcbits-stress
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gcbits --out tests/out/register-gcbits
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gcbits-stress --out tests/out/register-gcbits-stress
