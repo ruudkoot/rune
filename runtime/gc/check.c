@@ -2,7 +2,8 @@
    collector, so that one that breaks it is caught at the collection that
    did (make test-heap runs tests/lang so). What holds of the heap: each
    chunk of the old space parses, object by object, to exactly the bytes it
-   holds, and so do the nursery and the large-object space; every header
+   holds -- a non-moving one by its bits -- and so do the nursery and the
+   large-object space; every header
    names a kind of today and none is a forwarding one; the boxes in it are
    the bytes box_bytes_live counts; the chunks hold what the heap says it
    holds; every pointer in a field, on the stack or among the other roots
@@ -60,6 +61,10 @@ static void check_ptr(Check *c, const void *p, const char *what) {
     Chunk *k = chunk_in(c, p);
     uintptr_t in = k ? (uintptr_t)((const char *)p - chunk_payload(k)) : 0;
     if (!k || (const char *)p < chunk_payload(k) || in % 8 != 0) { check_fail(c, what, p); return; }
+    if (k->kind == CHUNK_MARK) {
+        if (in >= k->top || !chunk_bit(k, k->payload + in)) check_fail(c, what, p);
+        return;
+    }
     if (k->kind == CHUNK_LOS) {
         size_t u = in >> GC_UNIT_SHIFT;
         if (in % ((size_t)1 << GC_UNIT_SHIFT) != 0 || u >= chunk_room(k) >> GC_UNIT_SHIFT || chunk_units(k)[u] != u)
@@ -108,6 +113,26 @@ static size_t check_parse(Check *c, char *from, size_t used, uint8_t *bits, uint
     return boxes;
 }
 
+/* a non-moving chunk's objects, where its bits say: each a header of a
+   kind, within the chunk's top and before the next object; what they hold
+   is what the chunk says it holds */
+static size_t check_marked(Check *c, Chunk *k) {
+    size_t boxes = 0, held = 0;
+    for (size_t at = chunk_bits_next(k, 0); at != CHUNK_END && !c->failed; ) {
+        Obj *o = (Obj *)(chunk_payload(k) + at);
+        size_t size, next;
+        if (obj_kind(o) < K_TUPLE || obj_kind(o) > K_LAST || obj_kind(o) == K_FORWARD) { check_fail(c, "a header of no kind", o); break; }
+        size = obj_size(o);
+        next = chunk_bits_next(k, at + 8);
+        if (size < OBJ_HEADER_SIZE || at + size > k->top || (next != CHUNK_END && at + size > next)) { check_fail(c, "an object past the next one's start", o); break; }
+        if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) boxes += size;
+        held += size;
+        at = next;
+    }
+    if (!c->failed && held != k->used) check_fail(c, "a chunk holds other than it counts", k);
+    return boxes;
+}
+
 static int is_born(const VM *vm, const Obj *o) {
     for (size_t i = 0; i < vm->gc.nborn; i++) if (vm->gc.born[i] == o) return 1;
     return 0;
@@ -138,7 +163,8 @@ const char *heap_check(VM *vm, const void **at) {
     if (vm->alloc.used > vm->alloc.size) check_fail(&c, "alloc holds more than its room", vm->alloc.from);
 
     size_t boxes = 0;
-    for (Chunk *k = heap_first(vm); k && !c.failed; k = k->next) boxes += check_parse(&c, chunk_payload(k), chunk_used(vm, k), c.starts, k->base);
+    for (Chunk *k = heap_first(vm); k && !c.failed; k = k->next)
+        boxes += k->kind == CHUNK_MARK ? check_marked(&c, k) : check_parse(&c, chunk_payload(k), chunk_used(vm, k), c.starts, k->base);
     for (Obj *o = los_first(vm); o && !c.failed; o = los_next(vm, o)) {
         if (obj_kind(o) < K_TUPLE || obj_kind(o) > K_LAST || obj_kind(o) == K_FORWARD) check_fail(&c, "a large object of no kind", o);
         else los += obj_size(o);
@@ -147,18 +173,16 @@ const char *heap_check(VM *vm, const void **at) {
     if (vm->gc.nursery && !c.failed) boxes += check_parse(&c, vm->alloc.from, vm->alloc.used, c.young, 0);
     if (!c.failed && boxes != vm->box_bytes_live) check_fail(&c, "boxes not as box_bytes_live counts them", NULL);
 
-    for (Chunk *k = heap_first(vm); k && !c.failed; k = k->next) {
-        size_t used = chunk_used(vm, k);
-        for (size_t a = 0; a < used && !c.failed; ) {
+    for (Chunk *k = heap_first(vm); k && !c.failed; k = k->next)
+        for (size_t a = chunk_object(vm, k, 0); a != CHUNK_END && !c.failed; ) {
             Obj *o = (Obj *)(chunk_payload(k) + a);
             if (vm->gc.nursery) check_old(&c, o, 0);
             else if (obj_has_fields(o)) {
                 const Value *f = obj_fields(o);
                 for (uint32_t i = 0; i < obj_scanned_fields(o); i++) check_value(&c, &f[i], "a field that is no object's");
             }
-            a += obj_size(o);
+            a = chunk_object(vm, k, a + obj_size(o));
         }
-    }
     for (Obj *o = los_first(vm); o && !c.failed; o = los_next(vm, o)) check_old(&c, o, is_born(vm, o));
     if (vm->gc.nursery)
         for (size_t a = 0; a < vm->alloc.used && !c.failed; ) {

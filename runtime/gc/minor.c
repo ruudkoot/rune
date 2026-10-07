@@ -54,12 +54,15 @@ void nursery_start(VM *vm, size_t bytes) {
         if (bytes) {
             vm->gc.closed += vm->alloc.used;
             vm->gc.old_boxes = vm->box_bytes_live;
-            for (Chunk *k = vm->gc.first; k; k = k->next)
-                for (size_t at = 0; at < k->used; at += obj_size((Obj *)(chunk_payload(k) + at)))
-                    chunk_note(k, at, obj_size((Obj *)(chunk_payload(k) + at)));
+            if (vm->gc.old_kind != OLD_COPY) mark_adopt(vm);
+            else
+                for (Chunk *k = vm->gc.first; k; k = k->next)
+                    for (size_t at = 0; at < k->used; at += obj_size((Obj *)(chunk_payload(k) + at)))
+                        chunk_note(k, at, obj_size((Obj *)(chunk_payload(k) + at)));
         }
     }
     vm->gc.nursery_size = bytes;
+    if (!bytes) vm->gc.old_kind = OLD_COPY;   /* a non-moving old space is behind a nursery alone */
     vm->gc.los_min = bytes / 4 < 8192 ? bytes / 4 : 8192;
     if (bytes) {
         Chunk *c = chunk_take(vm, bytes > CHUNK_ROOM ? bytes : 0, CHUNK_NURSERY);
@@ -84,6 +87,11 @@ static Obj *promote(VM *vm, Obj *o) {
         n = los_alloc(vm, size);
         memcpy(n, o, size);
         gc_queue(vm, n);
+    } else if (vm->gc.old_kind != OLD_COPY) {
+        /* placed where the old space has room, and scanned from the queue */
+        n = old_place(vm, size);
+        memcpy(n, o, size);
+        if (obj_has_fields(n)) gc_queue(vm, n);
     } else {
         Chunk *to = vm->gc.last;
         if (size > chunk_room(to) - to->used) {
@@ -183,6 +191,13 @@ static void scan_card(VM *vm, Chunk *c, size_t k) {
         size_t u = (lo - c->payload) >> GC_UNIT_SHIFT;
         uint16_t start = chunk_units(c)[u];
         if (start != LOS_FREE) young = scan_range(vm, (Obj *)(chunk_payload(c) + ((size_t)start << GC_UNIT_SHIFT)), base + lo, base + hi);
+    } else if (c->kind == CHUNK_MARK) {
+        /* the objects of the card from the bits: the one that covers its
+           first byte, and those that begin in it */
+        size_t at = chunk_object_covering(c, lo - c->payload);
+        if (at == CHUNK_END) at = chunk_bits_next(c, lo - c->payload);
+        for (; at != CHUNK_END && c->payload + at < hi; at = chunk_bits_next(c, at + obj_size((Obj *)(chunk_payload(c) + at))))
+            young |= scan_range(vm, (Obj *)(chunk_payload(c) + at), base + lo, base + hi);
     } else {
         size_t end = c->payload + c->used;
         size_t at = lo - ((size_t)chunk_cross(c)[k] << 3);
@@ -241,8 +256,8 @@ static void minor_into(VM *vm) {
     vm->gc.nborn = 0;
     /* Cheney's scan of what was promoted: the old space from where it ended,
        and the large objects that were made of young ones, until neither has
-       more */
-    Chunk *c = start;
+       more; a non-moving old space's promoted objects are all queued */
+    Chunk *c = vm->gc.old_kind == OLD_COPY ? start : NULL;
     size_t at = start_at;
     for (;;) {
         while (c) {

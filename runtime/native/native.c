@@ -269,6 +269,7 @@ void native_fatal(VM *vm, int what, int32_t a) {
 
 typedef struct Options {
     size_t heap, gc_stress, heap_fill, heap_limit, equality_work, nursery;
+    int old_kind;
     int stats, count, emulate_fork, checked, gc_verify;
     char *restore, *gc_log;
 } Options;
@@ -310,6 +311,8 @@ static void options(const char *text, const char *where, Options *o) {
             i++;
         else if (strcmp(w, "--nursery") == 0 && i + 1 < n && size_arg(words[i + 1], &o->nursery))
             i++;
+        else if (strcmp(w, "--old-space") == 0 && i + 1 < n && (strcmp(words[i + 1], "copy") == 0 || strcmp(words[i + 1], "mark") == 0))
+            o->old_kind = strcmp(words[++i], "mark") == 0 ? OLD_MARK : OLD_COPY;
         else if (strcmp(w, "--heap-fill") == 0 && i + 1 < n && size_arg(words[i + 1], &o->heap_fill)
                  && o->heap_fill >= 1 && o->heap_fill <= 100)
             i++;
@@ -321,7 +324,7 @@ static void options(const char *text, const char *where, Options *o) {
             strcpy(*to, words[++i]);
         } else {
             fprintf(stderr, "runevm: %s: %s is not an option of a native program "
-                    "(--count, --stats, --heap-size N, --heap-limit N, --equality-work N, --heap-fill P, --gc-stress N, --nursery N, --gc-verify, --checked, --emulate-fork, "
+                    "(--count, --stats, --heap-size N, --heap-limit N, --equality-work N, --heap-fill P, --gc-stress N, --nursery N, --old-space S, --gc-verify, --checked, --emulate-fork, "
                     "--restore FILE, --gc-log FILE)\n", where, w);
             exit(2);
         }
@@ -353,6 +356,7 @@ int main(int argc, char **argv) {
         vm->heap_limit = o.heap_limit;
         vm->equality_work = o.equality_work;
         vm->gc.nursery_size = o.nursery;
+        vm->gc.old_kind = o.old_kind;
         int ok = child ? vm_resume(vm, argv[2], err, sizeof err) : vm_restore(vm, o.restore, err, sizeof err);
         if (ok && !same_program(vm)) { ok = 0; snprintf(err, sizeof err, "the image is of another program"); }
         const void *code = ok ? prepare_resume(vm, err, sizeof err) : NULL;
@@ -387,6 +391,7 @@ int main(int argc, char **argv) {
     vm->equality_work = o.equality_work;
     vm_init(vm, o.heap);
     vm->heap_fill = (unsigned)o.heap_fill;
+    vm->gc.old_kind = o.old_kind;
     heap_nursery(vm, o.nursery);
     if (o.gc_log) heap_log_open(vm, o.gc_log);
 

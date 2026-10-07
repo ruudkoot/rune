@@ -19,6 +19,7 @@ static void chunk_layout(Chunk *c, size_t size) {
     c->cross_at = (uint32_t)(c->dirty_at + (size >> GC_BLOCK_SHIFT));
     c->units_at = (uint32_t)(c->cross_at + 2 * (size >> GC_CARD_SHIFT));
     c->marks_at = (uint32_t)(c->units_at + 2 * (size >> GC_UNIT_SHIFT));
+    c->bits_at = (uint32_t)((c->marks_at + (size >> GC_UNIT_SHIFT) + 7) & ~(size_t)7);
     c->payload = (uint32_t)CHUNK_PAYLOAD(size);
 }
 
@@ -29,8 +30,9 @@ Chunk *chunk_take(VM *vm, size_t bytes, int kind) {
         vm->gc.pool = c->next;
         vm->gc.pooled--;
         /* the tables of its last use cleared: the cards, the dirty bytes,
-           the crossing map, the units and their marks */
-        memset((char *)c + GC_CARDS, 0, c->payload - GC_CARDS);
+           the crossing map, the units and their marks (the bits are their
+           user's, mark.c) */
+        memset((char *)c + GC_CARDS, 0, c->bits_at - GC_CARDS);
     } else {
         size_t size = CHUNK_SIZE;
         if (bytes > CHUNK_ROOM) {
@@ -56,6 +58,8 @@ Chunk *chunk_take(VM *vm, size_t bytes, int kind) {
    one more: what the semispace kept between collections held. A run of
    chunks goes back to the system, being of a size the next may not want. */
 void chunk_give(VM *vm, Chunk *c) {
+    free(c->lines);
+    c->lines = NULL;
     if (c->size == CHUNK_SIZE && vm->gc.pooled <= vm->gc.size / CHUNK_SIZE) {
         c->next = vm->gc.pool;
         vm->gc.pool = c;
@@ -70,7 +74,7 @@ void chunk_append(VM *vm, Chunk *c) {
 }
 
 void heap_chunks_release(VM *vm) {
-    for (Chunk *c = vm->gc.first, *n; c; c = n) { n = c->next; sys_mem_release(c, c->size); }
+    for (Chunk *c = vm->gc.first, *n; c; c = n) { n = c->next; free(c->lines); sys_mem_release(c, c->size); }
     for (Chunk *c = vm->gc.pool, *n; c; c = n) { n = c->next; sys_mem_release(c, c->size); }
     los_release(vm);
     if (vm->gc.nursery) sys_mem_release(vm->gc.nursery, vm->gc.nursery->size);
@@ -137,11 +141,28 @@ Obj *alloc_next(VM *vm, size_t size) {
 /* The run of objects an image holds: the old space's chunks in their order,
    then the large objects, then the nursery's; a chunk's base is its first
    object's offset, a large object's chunk's its first object's. */
+/* a non-moving chunk's lines: for each 64 bytes, the offset from the
+   chunk's base of the first object that begins there or after, so that
+   heap_offset_of walks the bits of one line */
+static void number_lines(Chunk *c) {
+    size_t nlines = c->size >> 6, next = 0;
+    if (!c->lines && !(c->lines = malloc(nlines * sizeof *c->lines))) out_of_memory();
+    uint32_t off = 0;
+    for (size_t at = chunk_bits_next(c, 0); at != CHUNK_END; ) {
+        size_t size = obj_size((Obj *)(chunk_payload(c) + at));
+        for (size_t line = (c->payload + at) >> 6; next <= line; next++) c->lines[next] = off;
+        off += (uint32_t)size;
+        at = chunk_bits_next(c, at + size);
+    }
+    for (; next < nlines; next++) c->lines[next] = off;
+}
+
 void heap_number(VM *vm) {
     uint64_t base = 0;
     for (Chunk *c = heap_first(vm); c; c = c->next) {
         c->base = base;
         base += chunk_used(vm, c);
+        if (c->kind == CHUNK_MARK) number_lines(c);
     }
     Chunk *last_los = NULL;
     for (Obj *o = los_first(vm); o; o = los_next(vm, o)) {
@@ -154,6 +175,17 @@ void heap_number(VM *vm) {
 uint64_t heap_offset_of(VM *vm, const void *p) {
     if (gc_in_nursery(vm, p)) return vm->gc.nursery->base + (uint64_t)((const char *)p - vm->alloc.from);
     Chunk *c = chunk_of(p);
+    if (c->kind == CHUNK_MARK) {
+        /* its line's first object's offset, and the objects of the line before it */
+        size_t off = (size_t)((const char *)p - (const char *)c);
+        uint64_t at = c->base + c->lines[off >> 6];
+        for (size_t o = chunk_bits_next(c, (off & ~(size_t)63) - c->payload); o != CHUNK_END && c->payload + o < off; ) {
+            size_t size = obj_size((Obj *)(chunk_payload(c) + o));
+            at += size;
+            o = chunk_bits_next(c, o + size);
+        }
+        return at;
+    }
     if (c->kind != CHUNK_LOS) return c->base + (uint64_t)((const char *)p - chunk_payload(c));
     /* a large object: its chunk's base and the objects that begin before it in the chunk */
     uint64_t at = c->base;
@@ -205,6 +237,9 @@ Obj *heap_read_take(VM *vm, size_t bytes) {
     if (vm->gc.nursery && bytes >= vm->gc.los_min) {
         o = los_alloc(vm, bytes);
         read_segment(vm, base, (char *)o);
+    } else if (vm->gc.old_kind != OLD_COPY) {
+        o = old_place(vm, bytes);
+        if (!s || s->at + s->len != (char *)o) read_segment(vm, base, (char *)o);
     } else {
         Chunk *c = vm->gc.last;
         if (bytes > chunk_room(c) - c->used) {

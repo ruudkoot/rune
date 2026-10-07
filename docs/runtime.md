@@ -103,7 +103,8 @@ the program's code are not in the heap.
   quarter of its size and more to the large-object space. `--nursery 0`
   makes none: every object is made in the old space's last chunk, the next
   chunk is taken where it is full, and every collection is a full one --
-  the collector as it was before the nursery.
+  the collector as it was before the nursery. `--old-space` chooses the old
+  space (below).
 * After a full collection the heap grows -- doubling -- until the live data is at
   most half of it and the request fits. `runevm --heap-fill P` makes that
   *P* percent instead (1 to 100): a quarter makes about half the collections
@@ -139,6 +140,20 @@ The collector is generational, one for every engine (`runtime/gc/`):
   from the pool, as the Cheney copier before it did, gives the chunks it
   was in to the pool, and frees the large objects it did not reach
   (`copy.c`, `los.c`).
+
+`runevm --old-space mark` (a nursery being there) makes the old space one
+whose objects stay where they are placed, the frame the old spaces of
+[plans/garbage-collector-v2.md](plans/garbage-collector-v2.md)'s M4 are
+built on (`mark.c`). Each chunk of it has a bit for every 8 bytes, set
+where an object is placed -- promoted, or read from an image -- so that the
+bits are at once the objects' starts, what a walk of the space visits, and
+a full collection's marks: it clears them, sets them again for every object
+it reaches from the roots, promoting the young ones as it goes, and gives
+back a chunk where it set none. Its own placement bumps through a chunk
+and takes a chunk again only when nothing in it was reached, so that it
+reuses little; it is there to test the frame, and the measured old spaces
+place into the holes of their chunks. A card of the space is scanned from
+its bits; an image is written and read over them.
 
 What it is and is not:
 
@@ -539,7 +554,7 @@ afterwards: a program is one file, the basis library included.
 
 The whole command line -- `--disasm`, `--trace`, `--stats`, `--count`,
 `--gc-stress`, `--gc-verify`, `--checked`, `--heap-size`, `--heap-limit`,
-`--heap-fill`, `--nursery`, `--stack-size`, `--equality-work`, `--gc-log`,
+`--heap-fill`, `--nursery`, `--old-space`, `--stack-size`, `--equality-work`, `--gc-log`,
 `--emulate-fork`, `--restore`, `--version` -- is described in
 [bytecode.md](bytecode.md).
 
@@ -560,7 +575,7 @@ that the one writes what the other reads.
 What differs:
 
 * The options of `runevm` (`--count`, `--stats`, `--heap-size`,
-  `--heap-limit`, `--heap-fill`, `--nursery`, `--equality-work`, `--gc-stress`,
+  `--heap-limit`, `--heap-fill`, `--nursery`, `--old-space`, `--equality-work`, `--gc-stress`,
   `--gc-verify`, `--gc-log`, `--checked`) come from the environment
   variable `RUNEVM_OPTIONS`, after
   those the program was made with (`runeopt --options`), and the program takes

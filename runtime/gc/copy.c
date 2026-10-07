@@ -86,7 +86,7 @@ static void copy_value(VM *vm, Value *v) {
    must not stay behind pointing into the space that is left, since the frame
    becomes the one that runs again, whose registers are all roots (what it is
    doing when a collection comes is not known here). */
-static void stack_roots(VM *vm) {
+void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *)) {
     size_t at = 0, dead = 0;
     if (vm->frame_live && vm->frames_active)
         for (size_t k = 0; k < vm->fp; k++) {
@@ -94,9 +94,9 @@ static void stack_roots(VM *vm) {
             size_t end = vm->frames[k + 1].base < vm->sp ? vm->frames[k + 1].base : vm->sp;
             uint32_t n = vm->prog.funcs[f->func].nlocals;
             uint64_t live = vm->frame_live(vm, f->func, vm->frames[k + 1].ret_pc);
-            for (; at < f->base && at < end; at++) copy_value(vm, &vm->stack[at]);
+            for (; at < f->base && at < end; at++) visit(vm, &vm->stack[at]);
             for (uint32_t r = 0; r < n && at < end; r++, at++) {
-                if (r >= 64 || ((live >> r) & 1)) copy_value(vm, &vm->stack[at]);
+                if (r >= 64 || ((live >> r) & 1)) visit(vm, &vm->stack[at]);
                 else {
                     dead++;
                     if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
@@ -104,7 +104,7 @@ static void stack_roots(VM *vm) {
             }
             vm->gc_counts.frames++;
         }
-    for (; at < vm->sp; at++) copy_value(vm, &vm->stack[at]);
+    for (; at < vm->sp; at++) visit(vm, &vm->stack[at]);
     vm->gc_counts.slots += vm->sp;
     vm->gc_counts.live_slots += vm->sp - dead;
 }
@@ -128,7 +128,7 @@ static void collect_into(VM *vm, size_t new_size) {
     census_collect_begin();
 #endif
 
-    stack_roots(vm);
+    gc_stack_roots(vm, copy_value);
 #define COPY_ROOT_VALUE(v) (vm->gc_counts.other_roots++, COPY_VALUE(v))
 #define COPY_ROOT_OBJ(o) (vm->gc_counts.other_roots++, COPY_OBJ(o))
     OTHER_ROOTS(vm, COPY_ROOT_VALUE, COPY_ROOT_OBJ);
@@ -196,7 +196,10 @@ void collect_pass(VM *vm, size_t new_size) {
     PassMark m;
     log_pass_begin(vm, &m);
     memset(&vm->gc_counts, 0, sizeof vm->gc_counts);
-    collect_into(vm, new_size);
+    if (vm->gc.old_kind != OLD_COPY) {
+        mark_full(vm);
+        vm->gc.size = new_size;
+    } else collect_into(vm, new_size);
     int64_t pause = sys_clock_ns() - m.t0;
     vm->gc_ns += pause;
     log_pass_end(vm, &m, "full", pause);
@@ -248,16 +251,22 @@ void vm_gc(VM *vm, size_t needed) {
        the heap one collection early; one too low collects again below, as
        before. A heap of the current size or larger always holds what
        survives. */
-    size_t guess = vm->live_last;
-    if (vm->live_last > vm->live_before) {
-        guess += vm->live_last - vm->live_before;
-        /* no more than can survive: it would wrap, or grow the heap more
-           than once on a guess */
-        if (guess < vm->live_last || guess > vm->gc.size) guess = vm->gc.size;
+    if (vm->gc.old_kind != OLD_COPY) {
+        /* a non-moving old space grows without a collection into it */
+        collect_pass(vm, vm->gc.size);
+        vm->gc.size = grown(vm, vm->gc.size, USED_STOCK(vm), needed);
+    } else {
+        size_t guess = vm->live_last;
+        if (vm->live_last > vm->live_before) {
+            guess += vm->live_last - vm->live_before;
+            /* no more than can survive: it would wrap, or grow the heap more
+               than once on a guess */
+            if (guess < vm->live_last || guess > vm->gc.size) guess = vm->gc.size;
+        }
+        collect_pass(vm, grown(vm, vm->gc.size, guess, needed));
+        size_t want = grown(vm, vm->gc.size, USED_STOCK(vm), needed);
+        if (want != vm->gc.size) collect_pass(vm, want);
     }
-    collect_pass(vm, grown(vm, vm->gc.size, guess, needed));
-    size_t want = grown(vm, vm->gc.size, USED_STOCK(vm), needed);
-    if (want != vm->gc.size) collect_pass(vm, want);
     if (USED_STOCK(vm) > vm->gc.size || needed > vm->gc.size - USED_STOCK(vm)) vm_limit(vm, "heap limit exceeded");
     vm->live_before = vm->live_last;
     vm->live_last = USED_STOCK(vm);

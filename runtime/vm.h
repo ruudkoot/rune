@@ -177,6 +177,7 @@ typedef struct AllocState {
 typedef struct Chunk Chunk;   /* runtime/gc/gc.h */
 /* where a run of an image's objects was read to (runtime/gc/chunk.c, heap_read_take) */
 typedef struct HeapSeg { uint64_t base; char *at; size_t len; } HeapSeg;
+enum { OLD_COPY, OLD_MARK };   /* the old spaces (runtime/gc/gc.h) */
 
 /* The collector's own (runtime/gc/): nothing of it is a variable of the
    file, so every VM of a process collects by itself. The heap is a list of
@@ -199,6 +200,7 @@ typedef struct GcState {
        makes alloc the room of the heap's last chunk */
     Chunk *nursery;
     size_t nursery_size;
+    int old_kind;        /* the old space's (runtime/gc/gc.h, --old-space): OLD_COPY, or OLD_MARK where there is a nursery */
     /* The large-object space (runtime/gc/los.c): objects of los_min bytes
        or more, in its chunks; its bytes count with the old space's; those
        with fields made since the last minor collection, and a full

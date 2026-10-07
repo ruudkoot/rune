@@ -164,8 +164,8 @@ static void put_object(Stream *s, Obj *o, VM *vm) {
    nursery's, as heap_number counts them */
 static void put_heap(Stream *s, VM *vm) {
     for (Chunk *c = heap_first(vm); c && s->ok; c = c->next)
-        for (size_t scan = 0; s->ok && scan < chunk_used(vm, c); scan += obj_size((Obj *)(chunk_payload(c) + scan)))
-            put_object(s, (Obj *)(chunk_payload(c) + scan), vm);
+        for (size_t at = chunk_object(vm, c, 0); s->ok && at != CHUNK_END; at = chunk_object(vm, c, at + obj_size((Obj *)(chunk_payload(c) + at))))
+            put_object(s, (Obj *)(chunk_payload(c) + at), vm);
     for (Obj *o = los_first(vm); o && s->ok; o = los_next(vm, o)) put_object(s, o, vm);
     if (vm->gc.nursery)
         for (size_t scan = 0; s->ok && scan < vm->alloc.used; scan += obj_size((Obj *)(vm->alloc.from + scan)))
@@ -820,6 +820,7 @@ int vm_become(VM *vm, const char *path) {
     next->heap_limit = vm->heap_limit;
     next->equality_work = vm->equality_work;
     next->gc.nursery_size = vm->gc.nursery_size;
+    next->gc.old_kind = vm->gc.old_kind;
     fflush(NULL);
     if (!read_image(next, sys_fopen(path, "rb"), IMAGE_SAVE, err, sizeof err)) {
         vm_release(next);

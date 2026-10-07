@@ -274,6 +274,54 @@ int main(void) {
         CHECK("and the slot is scanned again", !heap_is_young(nv, val_ptr(nv->stack[1])) && obj_field(val_ptr(nv->stack[1]), 0) == mk_imm(150));
     }
 
+    /* A non-moving old space (runtime/gc/mark.c; --old-space mark): what a
+       minor collection promotes is placed and given its bit; a full
+       collection leaves an old object where it is, takes the bit of one it
+       does not reach and gives back a chunk it found nothing in; a card is
+       scanned through the bits; and heap_check finds a field whose object
+       has no bit. */
+    {
+        VM *mv = new_vm(1 << 20);
+        mv->gc.old_kind = OLD_MARK;
+        heap_nursery(mv, 1 << 14);
+        CHECK("the heap's first objects are adopted", mv->gc.first->kind == CHUNK_MARK && heap_check(mv, NULL) == NULL);
+        vm_push(mv, tuple(mv, 2, 200));
+        vm_push(mv, tuple(mv, 2, 210));
+        collect_minor(mv);
+        Obj *keep = val_ptr(mv->stack[0]), *drop = val_ptr(mv->stack[1]);
+        Chunk *c = chunk_of(keep);
+        size_t koff = (size_t)((char *)keep - (char *)c), doff = (size_t)((char *)drop - (char *)c);
+        CHECK("a promoted object has its bit", c->kind == CHUNK_MARK && chunk_bit(c, koff) && chunk_bit(c, doff));
+        mv->sp = 1;
+        size_t closed = mv->gc.closed;
+        vm_gc(mv, 0);
+        CHECK("a full collection leaves what it reaches where it is", val_ptr(mv->stack[0]) == keep && obj_field(keep, 1) == mk_imm(201));
+        CHECK("and takes the bit of what it does not", chunk_bit(c, koff) && !chunk_bit(c, doff) && mv->gc.closed < closed);
+        Obj *y = val_ptr(tuple(mv, 1, 220));
+        obj_set_field(mv, keep, 0, mk_ptr(y));
+        collect_minor(mv);
+        Obj *y2 = val_ptr(obj_field(keep, 0));
+        CHECK("a card of a non-moving chunk is scanned through the bits", y2 != y && !heap_is_young(mv, y2) && obj_field(y2, 0) == mk_imm(220));
+        CHECK("and the heap passes heap_check", heap_check(mv, NULL) == NULL);
+        Chunk *k = chunk_of(y2);
+        size_t yoff = (size_t)((char *)y2 - (char *)k);
+        chunk_bits(k)[yoff >> 9] &= ~((uint64_t)1 << (yoff >> 3 & 63));
+        k->used -= obj_size(y2); mv->gc.closed -= obj_size(y2);   /* as if it had never been placed */
+        const void *where = NULL;
+        CHECK("a field whose object has no bit is found", heap_check(mv, &where) != NULL && where == y2);
+        chunk_bit_set(k, yoff);
+        k->used += obj_size(y2); mv->gc.closed += obj_size(y2);
+        CHECK("and with its bit again passes", heap_check(mv, NULL) == NULL);
+        size_t chunks = 0, after = 0;
+        for (Chunk *x = mv->gc.first; x; x = x->next) chunks++;
+        for (int i = 0; i < 20000; i++) vm_push(mv, tuple(mv, 4, i)), mv->sp--;   /* garbage to fill chunks */
+        mv->sp = 1;
+        collect_minor(mv);
+        vm_gc(mv, 0);
+        for (Chunk *x = mv->gc.first; x; x = x->next) after++;
+        CHECK("a chunk with nothing reached is given back", after <= chunks + 1 && obj_field(val_ptr(obj_field(keep, 0)), 0) == mk_imm(220));
+    }
+
 #ifdef RUNE_BARRIER_CARDS
     /* the measuring barrier: a store into an object marks the card of its field, a fill of a fresh one does not */
     memset(rune_cards, 0, CARD_COUNT);

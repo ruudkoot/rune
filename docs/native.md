@@ -285,7 +285,7 @@ Its limits:
 ## The command line and the environment
 
 * **The options of `runevm-stack`** (`--count`, `--stats`, `--heap-size`,
-  `--heap-fill`, `--nursery`, `--gc-stress`, `--gc-verify`, `--gc-log`, `--checked`, `--emulate-fork`,
+  `--heap-fill`, `--nursery`, `--old-space`, `--gc-stress`, `--gc-verify`, `--gc-log`, `--checked`, `--emulate-fork`,
   `--restore`)
   come from `runeopt --options` and then the environment variable
   `RUNEVM_OPTIONS`.
