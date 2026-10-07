@@ -20,6 +20,7 @@ static void chunk_layout(Chunk *c, size_t size) {
     c->units_at = (uint32_t)(c->cross_at + 2 * (size >> GC_CARD_SHIFT));
     c->marks_at = (uint32_t)(c->units_at + 2 * (size >> GC_UNIT_SHIFT));
     c->bits_at = (uint32_t)((c->marks_at + (size >> GC_UNIT_SHIFT) + 7) & ~(size_t)7);
+    c->blocks_at = (uint32_t)(c->bits_at + (size >> 6));
     c->payload = (uint32_t)CHUNK_PAYLOAD(size);
 }
 
@@ -86,6 +87,19 @@ void heap_chunks_release(VM *vm) {
     vm->gc.born = vm->gc.queue = NULL;
     vm->gc.segs = NULL;
     vm->gc.nborn = vm->gc.born_cap = vm->gc.nqueue = vm->gc.queue_cap = vm->gc.nsegs = vm->gc.segs_cap = 0;
+    /* the segregated space's lists of blocks and its classes (segfit.c) */
+    for (int k = 0; k < SF_CLASSES; k++) {
+        free(vm->gc.sf[k].list);
+        vm->gc.sf[k].list = NULL;
+        vm->gc.sf[k].block = NULL;
+        vm->gc.sf[k].n = vm->gc.sf[k].cap = vm->gc.sf[k].at = 0;
+    }
+    free(vm->gc.sf_free);
+    free(vm->gc.sf_class_of);
+    vm->gc.sf_free = NULL;
+    vm->gc.sf_class_of = NULL;
+    vm->gc.sf_nfree = vm->gc.sf_free_cap = 0;
+    vm->gc.sf_bump = vm->gc.sf_bump_limit = NULL;
     vm->alloc.from = NULL;
     vm->alloc.size = vm->alloc.used = 0;
 }
@@ -238,7 +252,7 @@ Obj *heap_read_take(VM *vm, size_t bytes) {
         o = los_alloc(vm, bytes);
         read_segment(vm, base, (char *)o);
     } else if (vm->gc.old_kind != OLD_COPY) {
-        o = old_place(vm, bytes);
+        o = vm->gc.old_kind == OLD_SEGFIT ? segfit_bump(vm, bytes) : old_place(vm, bytes);
         if (!s || s->at + s->len != (char *)o) read_segment(vm, base, (char *)o);
     } else {
         Chunk *c = vm->gc.last;

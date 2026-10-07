@@ -76,6 +76,7 @@ Obj *mark_place(VM *vm, size_t size) {
    placement (the frame's, mark_place, or a measured one's) */
 Obj *old_place(VM *vm, size_t size) {
     switch (vm->gc.old_kind) {
+    case OLD_SEGFIT: return segfit_place(vm, size);
     default: return mark_place(vm, size);
     }
 }
@@ -92,6 +93,7 @@ void mark_adopt(VM *vm) {
         for (size_t at = 0; at < c->used; at += obj_size((Obj *)(chunk_payload(c) + at)))
             chunk_bit_set(c, c->payload + at);
     }
+    if (vm->gc.old_kind == OLD_SEGFIT) segfit_adopted(vm);
 }
 
 /* ---- the full collection ---- */
@@ -166,6 +168,7 @@ void mark_full(VM *vm) {
     vm->gc.to_used = 0;
     vm->gc.to_boxes = 0;
     vm->gc.nqueue = 0;
+    if (vm->gc.old_kind == OLD_SEGFIT) segfit_full_begin(vm);
     for (Chunk *c = vm->gc.first; c; c = c->next) {
         bits_clear(c);
         c->used = 0;
@@ -180,6 +183,7 @@ void mark_full(VM *vm) {
     }
 
     switch (vm->gc.old_kind) {
+    case OLD_SEGFIT: segfit_sweep(vm); break;
     default: mark_sweep(vm); break;
     }
     for (Chunk *c = vm->gc.first; c; c = c->next) {

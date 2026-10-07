@@ -311,8 +311,11 @@ static void options(const char *text, const char *where, Options *o) {
             i++;
         else if (strcmp(w, "--nursery") == 0 && i + 1 < n && size_arg(words[i + 1], &o->nursery))
             i++;
-        else if (strcmp(w, "--old-space") == 0 && i + 1 < n && (strcmp(words[i + 1], "copy") == 0 || strcmp(words[i + 1], "mark") == 0))
-            o->old_kind = strcmp(words[++i], "mark") == 0 ? OLD_MARK : OLD_COPY;
+        else if (strcmp(w, "--old-space") == 0 && i + 1 < n && (strcmp(words[i + 1], "copy") == 0 || strcmp(words[i + 1], "mark") == 0
+                                                               || strcmp(words[i + 1], "segfit") == 0)) {
+            i++;
+            o->old_kind = strcmp(words[i], "mark") == 0 ? OLD_MARK : strcmp(words[i], "segfit") == 0 ? OLD_SEGFIT : OLD_COPY;
+        }
         else if (strcmp(w, "--heap-fill") == 0 && i + 1 < n && size_arg(words[i + 1], &o->heap_fill)
                  && o->heap_fill >= 1 && o->heap_fill <= 100)
             i++;
@@ -336,7 +339,7 @@ static void options(const char *text, const char *where, Options *o) {
 static char *program_name;
 
 int main(int argc, char **argv) {
-    Options o = { .heap = 4u << 20, .heap_fill = 50, .nursery = (size_t)1 << 20 };
+    Options o = { .heap = 4u << 20, .heap_fill = 50, .nursery = (size_t)1 << 20, .old_kind = OLD_SEGFIT };
     vm_same_program = same_program;
     options(rune_options, "runeopt --options", &o);
     /* The options are the runtime's, as runevm-stack's are, and not part of what

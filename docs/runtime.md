@@ -155,6 +155,15 @@ reuses little; it is there to test the frame, and the measured old spaces
 place into the holes of their chunks. A card of the space is scanned from
 its bits; an image is written and read over them.
 
+On the frame, `runevm --old-space `segfit`, M4's prototype B and this branch's default: a segregated old
+space of blocks of 32 KiB, each of the cells of one size class -- the
+multiples of 8 bytes to 128, then each an eighth larger -- a cell free where
+its bit is clear, found by promotion as it walks a block; a full collection
+gives an empty block back to any class (`segfit.c`).
+
+With `--nursery 0` the old space is the copier's, whatever `--old-space`
+says.
+
 What it is and is not:
 
 * **Precise.** Every slot of the stack and every field of an object is a

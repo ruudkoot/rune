@@ -322,6 +322,39 @@ int main(void) {
         CHECK("a chunk with nothing reached is given back", after <= chunks + 1 && obj_field(val_ptr(obj_field(keep, 0)), 0) == mk_imm(220));
     }
 
+    /* The segregated old space (runtime/gc/segfit.c; --old-space segfit):
+       objects of each size in blocks of their class, the cells a full
+       collection does not mark taken again by promotion before a new chunk */
+    {
+        VM *sv = new_vm(1 << 20);
+        sv->gc.old_kind = OLD_SEGFIT;
+        heap_nursery(sv, 1 << 14);
+        enum { N = 4000 };
+        Obj *arr = vm_alloc_fields(sv, K_ARRAY, 0, N);
+        vm_push(sv, mk_ptr(arr));
+        for (int i = 0; i < N; i++) { Value t = tuple(sv, (uint32_t)(1 + i % 5), 10 * i); obj_set_field(sv, arr, (uint32_t)i, t); }
+        vm_gc(sv, 0);
+        Obj *t2 = val_ptr(obj_field(arr, 2)), *t3 = val_ptr(obj_field(arr, 3));
+        CHECK("objects of two sizes are in blocks of two classes",
+              chunk_sfblocks(chunk_of(t2))[((char *)t2 - (char *)chunk_of(t2)) >> SF_BLOCK_SHIFT].cls
+              != chunk_sfblocks(chunk_of(t3))[((char *)t3 - (char *)chunk_of(t3)) >> SF_BLOCK_SHIFT].cls);
+        CHECK("and the heap passes heap_check", heap_check(sv, NULL) == NULL);
+        size_t chunks = 0, now = 0;
+        for (Chunk *x = sv->gc.first; x; x = x->next) chunks++;
+        for (int i = 0; i < N; i += 2) obj_set_field(sv, arr, (uint32_t)i, mk_unit());
+        vm_gc(sv, 0);
+        for (int i = 0; i < N; i += 2) { Value t = tuple(sv, (uint32_t)(1 + i % 5), 7 * i); obj_set_field(sv, arr, (uint32_t)i, t); }
+        collect_minor(sv);
+        for (Chunk *x = sv->gc.first; x; x = x->next) now++;
+        int whole = 1;
+        for (int i = 0; i < N; i++) {
+            Obj *t = val_ptr(obj_field(arr, (uint32_t)i));
+            int64_t first = i % 2 ? 10 * i : 7 * i;
+            whole &= obj_len(t) == (uint32_t)(1 + i % 5) && obj_field(t, 0) == mk_imm(first);
+        }
+        CHECK("freed cells are taken again before a new chunk", now == chunks && whole && heap_check(sv, NULL) == NULL);
+    }
+
 #ifdef RUNE_BARRIER_CARDS
     /* the measuring barrier: a store into an object marks the card of its field, a fill of a fresh one does not */
     memset(rune_cards, 0, CARD_COUNT);

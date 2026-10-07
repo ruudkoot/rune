@@ -418,8 +418,8 @@ raised as noted.
   by default); `--nursery 0` makes none, and every collection a full one
   ([runtime.md](runtime.md), *The heap*);
 * `runevm-stack --old-space S file.rbc` chooses the old space behind the
-  nursery: `copy` (the default), which a full collection copies, or
-  `mark`, whose objects stay where they are ([runtime.md](runtime.md), *The
+  nursery: `copy`, which a full collection copies, `mark`, whose objects
+  stay where they are, or `segfit` (this branch's default, M4's prototype B) ([runtime.md](runtime.md), *The
   garbage collector*);
 * `runevm-stack --gc-log FILE file.rbc` writes a line about every collection
   into FILE: what the program had allocated when it came, what it looked at
