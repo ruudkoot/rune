@@ -49,7 +49,8 @@ the census's live bytes at every sample.
   the traces of gcsim's closed-form tests. Part of `make check-heapsim`
   (7 seconds).
 * `validate.sh [--out DIR] WORKLOAD...` holds the copier model to the stock
-  VM: the workload runs on `bin/runevm --jit=off --stats` at five heap
+  VM with no nursery: the workload runs on `bin/runevm --jit=off --nursery 0
+  --stats` at five heap
   settings, exactly as `scripts/census.sh` ran it, and the lower band's
   collections and semispace must equal the stock's, with the stock's bytes
   copied (with half the band's width as slack) and live data inside the
@@ -188,7 +189,7 @@ Its tests and the tools that made the roadmap's tables:
   the model's.
 * `validate2.sh [--vm VM] [--out DIR] [--settings "H:F ..."] TRACE...`:
   `validate.sh` for gcsim's copier, with the clock of every collection:
-  the stock VM (`bin/runevm`, its `--gc-log`) runs the trace's own command
+  the stock VM (`bin/runevm --nursery 0`, its `--gc-log`) runs the trace's own command
   at five heap settings; ok when the lower band's collections and
   semispace are the stock's and the copied bytes lie in the band (half its
   width as slack), band when the stock lies between the bands.

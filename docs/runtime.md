@@ -152,9 +152,16 @@ What it is and is not:
   that is live, the data that has been live since the program started with
   it. The cost of either is in proportion to what it copies and to nothing
   else -- garbage is not visited -- at about 1.3 ns a byte copied on the
-  machine of [performance.md](performance.md). With `--nursery 0` the
-  compiler compiling itself from the 64 MiB `bin/rune` gives it allocates
-  887 MB, makes 10 collections, and they copy 306 MB in 0.4 s.
+  machine of [performance.md](performance.md). The compiler compiling
+  itself from the 64 MiB `bin/rune` gives it allocates 887 MB and makes
+  847 minor and 2 full collections, which promote 171 MB and copy 228 MB
+  in all; the longest pause, a full collection, is 51 ms, and 99 in 100
+  are under 1.1 ms. With `--nursery 0` it makes 10 collections, which copy
+  306 MB in 0.4 s and the longest of which is 67 ms. A program whose
+  short-lived data is as large as the nursery promotes most of it, and the
+  full collections copy it again: such programs run slower than with
+  `--nursery 0`, up to twice as slow
+  ([plans/garbage-collector-v2.md](plans/garbage-collector-v2.md), M3).
 * **Moving.** A collection moves every object but a large one. Nothing of
   that is visible to an SML program: equality on `ref` and `array` is the
   identity the collector maintains, not the address of the moment.
@@ -370,8 +377,8 @@ is a change to the collector and not to everything that touches the heap.
 
 ### What C can hold
 
-Nothing stays where it is under the copier, so C keeps no pointer into the
-heap across anything that may allocate. What it has instead
+Nothing but a large object stays where it is under the collector, so C
+keeps no pointer into the heap across anything that may allocate. What it has instead
 (`runtime/vm.h`; a foreign-function interface is not built, and these are
 what it will stand on):
 
@@ -459,11 +466,11 @@ The Basis Library suite records such a difference as a `WIDTH` line of
 | Live data, 32-bit VM | about 512 MiB | `bin/runevm32.exe` is linked large-address-aware, which gives it 4 GiB of address space; without that it would be about half (an estimate: no test comes near) |
 
 The ceiling of a 32-bit VM is lower than its address space because a
-collection holds the heap's chunks and the chunks it copies into at the
-same time. The figure is the one measured when the heap was two semispaces
-of one block each; chunks need no block larger than 2 MiB, and
+full collection holds the heap's chunks and the chunks it copies into at
+the same time. The figure is the one measured when the heap was two
+semispaces of one block each; chunks need no block larger than 2 MiB, and
 [plans/garbage-collector-v2.md](plans/garbage-collector-v2.md) measures it
-again (M5). Running out is a clean `runevm: out of memory`, not a hang.
+again with an old space that is not copied (M4, M5). Running out is a clean `runevm: out of memory`, not a hang.
 
 ## The same run twice
 

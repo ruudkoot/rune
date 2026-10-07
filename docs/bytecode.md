@@ -177,9 +177,11 @@ fields sorted by label (numeric labels first, in numeric order, then
 alphabetic), so a tuple `(a, b)` and the record `{1 = a, 2 = b}` are the same
 object. Options are `CON0 0` (`NONE`) and `CON 1 x` (`SOME x`).
 
-The heap is managed by a Cheney copying collector over chunks of 2 MiB
+The heap is managed by a generational copying collector over chunks of 2
+MiB -- a nursery of 1 MiB (`runevm-stack --nursery N`) that a minor
+collection empties into the old space, which a full collection copies
 ([runtime.md](runtime.md), *The heap*); the heap's size doubles whenever it
-is more than half full after a collection, or the share `runevm-stack
+is more than half full after a full collection, or the share `runevm-stack
 --heap-fill P` gives, P percent.
 
 ## Machine state
