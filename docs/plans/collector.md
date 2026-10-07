@@ -209,4 +209,6 @@ large objects), *M4, for a lazy front end so far*, *M5, done*, *M6,
 done*, *M7, done* (the growth steps, the barrier's and the mask's
 cost). `tools/heapsim` and `scripts/census.sh` make the simulator's
 tables again; the traces of the bootstrap and of six of MLton's
-programs are kept under `~/.cache/claude-rune-drafts/heap-layout`.
+programs were archived to `/mnt/h/HEAPSIM/heap-layout/traces`, all of
+the 16-byte layout; those of the word layout are
+garbage-collector-v2.md's (docs/census.md, format 2).

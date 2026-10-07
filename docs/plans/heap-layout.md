@@ -2489,8 +2489,10 @@ full the number is not quoted.
   three processors and found "the average overhead for a reasonable
   generational write barrier was less than 2% on average, and less than
   6% in the worst case", a read barrier of one unconditional mask 0.85%
-  on the PowerPC and 8.05% on the AMD, and the read barriers' averages
-  5.1%, 4.8% and 1.8% by processor -- so that barrier overhead should
+  on the PowerPC and 8.05% on the AMD, and a zone write barrier's averages
+  5.1%, 4.8% and 1.8% by processor (their conditional read barrier
+  averaged 21.24%, 15.91% and 6.49%; garbage-collector-v2.md corrected the
+  attribution) -- so that barrier overhead should
   not be "a primary motivator" of designs that avoid them (the paper,
   sections 1 and 5); Yang, Blackburn, Frampton and Hosking (2012)
   again with newer hardware and barriers and found average overheads
@@ -4344,7 +4346,9 @@ state is per thread; the collector has no global state; the header has
 the two bits a concurrent marker needs and one for a remembered object;
 mutable objects are known by kind (`K_REF`, `K_ARRAY`, a closure written
 by `SETENV` -- M5 gives such closures their own kind or bit, so that
-"immutable" is a property of the kind); an immutable object may be
+"immutable" is a property of the kind; not done: there is only
+`K_CLOSURE`, and every kind the header's four bits can name is taken,
+garbage-collector-v2.md, D8); an immutable object may be
 copied freely between heaps; young and old are told by address, so that
 a per-thread nursery is a range. What it does not do: no lock word, no
 identity hash, nothing atomic in the fast paths.
@@ -5159,8 +5163,10 @@ output from every build).
    instruments that find what else does, in M4 before anything is
    committed.
 5. **The JIT's emitters drift from the C.** M3's `_Static_assert`s,
-   the `--count` oracle at every tier, `--gc-stress 1` and the
-   sanitiser under `make check`, and the rule in `AGENTS.md` that a
+   the `--count` oracle at every tier, `--gc-stress` and the
+   sanitiser (`make test-stress` and `make test-register-asan`, which
+   the rules require of a change to the VM; neither is in `make check`),
+   and the rule in `AGENTS.md` that a
    layout fact lives in two named files.
 6. **`runeopt` kept** (D11): a third engine to move. Its templates are
    generated from the macro-assembler's operations as M3's first item,
@@ -5389,7 +5395,9 @@ written on 2026-09-26; on 2026-09-27 the owner put their PDFs under
 `/home/ruud/reference/papers/`, and all seven were read in full and their
 findings put into *What the literature says* and *What the numbers say*:
 Blackburn and Hosking 2004 (`1029873.1029891.pdf`), Wilson, Lam and
-Moher 1992 (`141478.141500.pdf`), Appel 1989 (`appel1989.pdf`), Gudeman
+Moher 1992 (`141478.141500.pdf`), Appel 1989 ("Runtime tags aren't
+necessary", `appel1989.pdf`; not the paper on generational collection of
+the same year), Gudeman
 1993 (`10.1.1.39.4394.pdf`; `TR93-27.pdf` is the same report as a scan
 without a text layer), Dybvig, Eby and Bruggeman 1994 (`TR400.pdf`,
 read as rendered pages, its text layer being garbled) and Reppy 1993

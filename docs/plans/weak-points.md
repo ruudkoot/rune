@@ -127,8 +127,10 @@ the others are from [performance.md](performance.md).
 * No way to call C: the VM has a fixed set of primitives (`vm/prims.def`).
 * No signals: Ctrl-C ends the program, so `SML90.Interrupt` is never raised
   ([limitations-review.md](limitations-review.md)).
-* A simple two-space (Cheney) collector, and every value takes 16 bytes
-  ([performance.md](performance.md), items 13 and 19).
+* A simple copying (Cheney) collector, every live object copied at every
+  collection ([garbage-collector-v2.md](garbage-collector-v2.md)); a value
+  takes 8 bytes since heap-layout's M5 ([performance.md](performance.md),
+  items 13 and 19).
 
 ## 7. Every change to the VM costs a lot
 

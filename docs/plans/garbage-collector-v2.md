@@ -50,8 +50,8 @@ What it rests on:
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done |
-| M1 | Measure in the tree | |
-| M2 | The collector behind an interface | |
+| M1 | Measure in the tree | done 2026-10-07: `--gc-log` and `RUNE_MEMSTAT` in the copier (`01bba940`); `tests/gcbench` and `check-gcbench` (`bb1b1152`); the latency workloads, `tools/mmu.py`, `scripts/gc-eval.sh` with the evaluation set, and the 32-bit probe (`4d88489a`); the census VM on the word layout and the simulators on its traces, `test-census`, the validation of `check-heapsim` and `check-gcsim` in `make check` (`5dad8248`). The traces of the bootstrap and of compile-sigs made in the tree pass `checktrace` and the validation against `runevm --stats`; `gc-eval.sh` gives the copier against itself T 1.01, M 1.00, P 0.99 and its bootstrap as *Where we are* has it. The harness's H5 numbers below were made with a nursery 8 times too small and are to be measured again (`tests/gcbench/README.md`) |
+| M2 | The collector behind an interface | done 2026-10-07: the barrier with the object, the field and the value in every engine, `runeopt`'s `:=` and `Array.update` included, through `ms_set_field` and its template (`4cc8ae69`); `--gc-verify` and `make test-heap` in `make check` (`8fb0fc18`, `1065a541`); the heap of 2 MiB chunks over `sys_mem_reserve`, images and `heap_relocate` over them, the copier, the log and the check in `runtime/gc/` (`04cd4345`); the corrections of *Where the documents are wrong*. Output, `--count` and every collection as before on all 271 programs of `tests/lang` on both VMs, and every portability VM and image direction; the evaluation set T 1.011, M 0.841, P 1.030 against the copier of `1065a541`, the short programs' worst T within the noise on five rounds. The old-space interface's operations come with their first users: promotion with M3's nursery, marking and sweeping with M4's old spaces |
 | M3 | The nursery, its remembered set, the watermark, large objects | |
 | M4 | Two old spaces at full scale; the gate | |
 | M5 | The chosen old space, complete | |

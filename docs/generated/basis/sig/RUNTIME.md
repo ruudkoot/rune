@@ -82,10 +82,13 @@ live data, and is exactly the live data just after a collection.
 `heapSize` is the heap's size, the bytes of objects it holds before it
 is collected, which grows as the collector needs it to.
 
-The first four depend on the program and its input alone -- not on the
-machine, the pointer width, the heap size or when the collector ran --
-so two runs of one program report the same. The last two depend on the
-heap size and so on `runevm --heap-size`.
+The first three depend on the program and its input alone -- not on the
+machine, the pointer width, the heap's size or when the collector ran --
+so two runs of one program report the same. The other three depend on
+the heap's size too, and so on `runevm --heap-size` and `--heap-fill`:
+two runs with the same options make the same collections. `bytes` and
+`live` leave out the boxes the representation makes for a real that
+has no immediate, as `--count` does.
 
 A value is 8 bytes and an object costs an 8-byte header and a payload
 of 8-byte fields, so the smallest object is 16 bytes and a list cell,

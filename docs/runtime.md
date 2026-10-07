@@ -97,7 +97,9 @@ heap.
   what a `size_t` can hold ends the run with `runevm: out of memory`.
 * It never shrinks, and it grows by doubling alone, so the memory a run
   takes moves in steps: the compiler compiling itself keeps 42 MB at most
-  and runs in a heap of 134 MB.
+  and runs in a heap of 134 MB, from the 64 MiB `bin/rune` starts it with
+  (`RUNE_HEAP` in the Makefile; from the default 4 MiB it makes 18
+  collections and copies 383 MB).
 * A collection copies what is live into chunks of its own and gives the
   heap's old ones to a pool, as many as the heap's size takes and one more,
   which the next collection takes from first, so that their pages are not
@@ -127,8 +129,8 @@ chunks it was in go to the pool. What it is and is not:
   moment ago. Its cost is in proportion to what is live and to nothing
   else -- garbage is not visited -- at about 1.3 ns a byte copied on the
   machine of [performance.md](performance.md): the compiler compiling
-  itself allocates 887 MB, makes 10 collections, and they copy 306 MB in
-  0.4 s.
+  itself from the 64 MiB `bin/rune` gives it allocates 887 MB, makes 10
+  collections, and they copy 306 MB in 0.4 s.
 * **Moving.** A collection moves every object. Nothing of that is visible
   to an SML program: equality on `ref` and `array` is the identity the
   collector maintains, not the address of the moment.
@@ -212,9 +214,10 @@ what `Runtime.stats` says is live.
   out) and the heap's size to the program. The bytes in use are an
   upper bound of what is live, and right after `Runtime.collect ()` they
   are what the collector kept, with the list above.
-* The processor time of the collector is measured around every collection and
-  is what `Timer.checkGCTime` reports, so a program can tell its own time
-  from the collector's.
+* The processor time of the collector is measured around every collection,
+  user and system apart, so a program can tell its own time from the
+  collector's: `Timer.checkCPUTimes` gives both, `Timer.checkGCTime` the
+  user part as the Basis says, and `--stats` the two together.
 * `runevm --gc-stress N` collects before every *N*th allocation. With `N = 1`
   every allocation moves everything, which is how `make test-stress` finds a
   primitive that keeps a heap pointer in a C variable across an allocation,
@@ -479,7 +482,8 @@ of another bytecode version is refused as well. There is no dynamic loading
 afterwards: a program is one file, the basis library included.
 
 The whole command line -- `--disasm`, `--trace`, `--stats`, `--count`,
-`--gc-stress`, `--gc-verify`, `--checked`, `--heap-size`, `--heap-fill`, `--gc-log`,
+`--gc-stress`, `--gc-verify`, `--checked`, `--heap-size`, `--heap-limit`,
+`--heap-fill`, `--stack-size`, `--equality-work`, `--gc-log`,
 `--emulate-fork`, `--restore`, `--version` -- is described in
 [bytecode.md](bytecode.md).
 
@@ -500,7 +504,8 @@ that the one writes what the other reads.
 What differs:
 
 * The options of `runevm` (`--count`, `--stats`, `--heap-size`,
-  `--heap-fill`, `--gc-stress`, `--gc-verify`, `--gc-log`, `--checked`) come from the environment
+  `--heap-limit`, `--heap-fill`, `--equality-work`, `--gc-stress`,
+  `--gc-verify`, `--gc-log`, `--checked`) come from the environment
   variable `RUNEVM_OPTIONS`, after
   those the program was made with (`runeopt --options`), and the program takes
   the variable out of its environment.

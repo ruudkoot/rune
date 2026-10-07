@@ -244,11 +244,13 @@ keep these invariants:
   deterministic iteration, and sources that stay inside the language
   described in `docs/language.md`: explicit `IntInf` operations, Rune's
   Basis subset).
-* Before finishing any change run `make check` (= `test`, `test-all`,
-  `test-basis`, `test-doc`, `test-lib`, `test-opt`, `test-native`, `test-heap`, `perf-check`, `check-positions`,
-  `check-cross`, `check-docs`, `check-isa`, `test-ir`, `check-levels`,
-  `bootstrap`; runs on all CPUs,
-  about 3 minutes on 16). `bin/rune` is the self-hosted compiler, so it is what
+* Before finishing any change run `make check` (= `test`, `bootstrap`,
+  `test-doc`, `test-lib`, `test-all`, `test-basis`, `test-opt`, `test-ir`,
+  `check-levels`, `test-native`, `test-register`, `test-register-jit`,
+  `test-heap`, `test-census`, `check-heapsim`, `check-gcsim`,
+  `check-layouts`, `check-gcbench`, `perf-check`, `bench-smoke`,
+  `check-positions`, `check-cross`, `check-docs`, `check-isa`; runs on all
+  CPUs, about a quarter of an hour on 16 with nothing else running). `bin/rune` is the self-hosted compiler, so it is what
   every test target uses by default; `make test RUNE=bin/rune-mlton` runs the
   same suite with the MLton build and is the faster loop while iterating. For
   VM changes also run the suite with the
