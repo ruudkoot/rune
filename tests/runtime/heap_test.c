@@ -5,7 +5,8 @@
    indirection in place is followed through its first field alone; young is
    told by address; two VMs of a process collect independently; the roots
    listed in heap.c are all there; with RUNE_BARRIER_CARDS a store into an
-   object marks the card of its field. Built by make test, and by make test-heap with
+   object marks the card of its field; heap_check finds a heap that is not
+   sound. Built by make test, and by make test-heap with
    each switch. */
 #include "vm.h"
 
@@ -167,6 +168,25 @@ int main(void) {
         uint64_t copied = vm->copied;
         vm_gc(vm, 0);
         CHECK("a freed handle keeps nothing", vm->copied - copied == (uint64_t)REAL_BOXES * obj_size_of(K_REAL, 1));
+    }
+
+    /* --gc-verify (heap_check): a sound heap passes, and a pointer that is
+       to no object's start, in a field or on the stack, is found */
+    {
+        vm_push(vm, tuple(vm, 2, 90));
+        vm_push(vm, tuple(vm, 2, 92));
+        const void *at = NULL;
+        CHECK("a sound heap passes heap_check", heap_check(vm, &at) == NULL);
+        Obj *a = val_ptr(vm->stack[vm->sp - 2]), *b = val_ptr(vm->stack[vm->sp - 1]);
+        Obj *inside = (Obj *)(void *)((char *)b + 8);
+        obj_fill_field(a, 0, mk_ptr(inside));
+        CHECK("a field into the middle of an object is found", heap_check(vm, &at) != NULL && at == inside);
+        obj_fill_field(a, 0, mk_imm(90));
+        vm->stack[vm->sp - 1] = mk_ptr(inside);
+        CHECK("a slot of the stack into the middle of an object is found", heap_check(vm, &at) != NULL && at == inside);
+        vm->stack[vm->sp - 1] = mk_ptr(b);
+        CHECK("and the heap mended passes again", heap_check(vm, NULL) == NULL);
+        vm->sp -= 2;
     }
 
 #ifdef RUNE_BARRIER_CARDS

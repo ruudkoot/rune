@@ -320,15 +320,19 @@ static void collect_into(VM *vm, size_t new_size) {
    A collection that grows the heap is two passes, two lines with the same
    call number. The clocks are read where there is no log too: their sum
    and the longest collection are RUNE_MEMSTAT's (runtime.c, vm_exit). */
+static void heap_verify(VM *vm, const char *when);
+
 static void collect_pass(VM *vm, size_t new_size) {
     uint64_t bytes = vm->bytes_allocated, objects = vm->objects_allocated, instrs = vm->instructions;
     uint64_t boxes = vm->boxes_allocated, box_bytes = vm->box_bytes_allocated;
     size_t used_before = USED_STOCK(vm);
     memset(&vm->gc_counts, 0, sizeof vm->gc_counts);
+    if (vm->gc_verify) heap_verify(vm, "before");
     int64_t cpu0 = vm->gc_log ? sys_thread_time_ns() : 0;
     int64_t t0 = sys_clock_ns();
     collect_into(vm, new_size);
     int64_t pause = sys_clock_ns() - t0;
+    if (vm->gc_verify) heap_verify(vm, "after");
     vm->gc_ns += pause;
     if (!vm->gc_log) return;
     int64_t cpu = sys_thread_time_ns() - cpu0;
@@ -373,6 +377,78 @@ void heap_log_close(VM *vm) {
     fprintf(vm->gc_log, "# wall_ns %lld\n", (long long)(sys_clock_ns() - vm->gc_log_t0));
     fclose(vm->gc_log);
     vm->gc_log = NULL;
+}
+
+/* --gc-verify: the heap checked before and after every pass of the
+   collector, so that one that breaks it is caught at the collection that
+   did (make test-heap runs tests/lang so). What holds of the copier's
+   space: it parses, object by object, to exactly alloc.used; every header
+   names a kind of today and none is a forwarding one; the boxes in it are
+   the bytes box_bytes_live counts; and every pointer in a field, on the
+   stack or among the other roots is to the start of an object in it.
+   heap_check says what does not hold, or NULL (tests/runtime/heap_test.c
+   breaks a heap to see it); a collection under --gc-verify stops on it. */
+typedef struct Check {
+    const VM *vm;
+    uint8_t *starts;     /* a bit for every 8 bytes of the space: an object begins there */
+    const char *failed;  /* the first thing found not to hold */
+    const void *at;
+} Check;
+
+static void check_fail(Check *c, const char *what, const void *at) {
+    if (!c->failed) { c->failed = what; c->at = at; }
+}
+
+static void check_ptr(Check *c, const void *p, const char *what) {
+    if (!p) return;
+    uintptr_t at = (uintptr_t)((const char *)p - c->vm->alloc.from);
+    if (at >= c->vm->alloc.used || at % 8 != 0 || !(c->starts[at / 64] >> (at / 8 % 8) & 1)) check_fail(c, what, p);
+}
+
+static void check_value(Check *c, const Value *v, const char *what) {
+    if (val_is_ptr(*v)) check_ptr(c, val_ptr(*v), what);
+}
+
+const char *heap_check(VM *vm, const void **at) {
+    Check c = { vm, calloc(vm->alloc.used / 64 + 1, 1), NULL, NULL };
+    if (!c.starts) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
+    size_t scan = 0, boxes = 0;
+    while (scan < vm->alloc.used && !c.failed) {
+        Obj *o = (Obj *)(vm->alloc.from + scan);
+        size_t size = 0;
+        if (vm->alloc.used - scan < OBJ_HEADER_SIZE) check_fail(&c, "a header cut off at the end of the space", o);
+        else if (obj_kind(o) < K_TUPLE || obj_kind(o) > K_LAST || obj_kind(o) == K_FORWARD) check_fail(&c, "a header of no kind", o);
+        else if ((size = obj_size(o)) < OBJ_HEADER_SIZE || size > vm->alloc.used - scan) check_fail(&c, "an object past the end of the space", o);
+        else {
+            if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) boxes += size;
+            c.starts[scan / 64] |= (uint8_t)(1u << (scan / 8 % 8));
+            scan += size;
+        }
+    }
+    if (!c.failed && boxes != vm->box_bytes_live) check_fail(&c, "boxes not as box_bytes_live counts them", NULL);
+    for (scan = 0; scan < vm->alloc.used && !c.failed; scan += obj_size((Obj *)(vm->alloc.from + scan))) {
+        Obj *o = (Obj *)(vm->alloc.from + scan);
+        if (!obj_has_fields(o)) continue;
+        const Value *f = obj_fields(o);
+        for (uint32_t i = 0; i < obj_scanned_fields(o); i++) check_value(&c, &f[i], "a field that is no object's");
+    }
+    for (size_t i = 0; i < vm->sp && !c.failed; i++) check_value(&c, &vm->stack[i], "a slot of the stack that is no object's");
+#define CHECK_VALUE(v) check_value(&c, (v), "a root that is no object's")
+#define CHECK_OBJ(o) check_ptr(&c, *(o), "a root that is no object")
+    if (!c.failed) OTHER_ROOTS(vm, CHECK_VALUE, CHECK_OBJ);
+#undef CHECK_VALUE
+#undef CHECK_OBJ
+    free(c.starts);
+    if (at) *at = c.at;
+    return c.failed;
+}
+
+static void heap_verify(VM *vm, const char *when) {
+    const void *at;
+    const char *failed = heap_check(vm, &at);
+    if (!failed) return;
+    fprintf(stderr, "runevm: --gc-verify: %s collection %zu: %s (%p)\n", when, vm->gc_count + 1, failed, at);
+    exit(2);
 }
 
 /* heap_fill% of n bytes, rounded down, which for 50 is n / 2 */

@@ -269,7 +269,7 @@ void native_fatal(VM *vm, int what, int32_t a) {
 
 typedef struct Options {
     size_t heap, gc_stress, heap_fill, heap_limit, equality_work;
-    int stats, count, emulate_fork, checked;
+    int stats, count, emulate_fork, checked, gc_verify;
     char *restore, *gc_log;
 } Options;
 
@@ -298,6 +298,7 @@ static void options(const char *text, const char *where, Options *o) {
         else if (strcmp(w, "--stats") == 0) o->stats = 1;
         else if (strcmp(w, "--emulate-fork") == 0) o->emulate_fork = 1;
         else if (strcmp(w, "--checked") == 0) o->checked = 1;
+        else if (strcmp(w, "--gc-verify") == 0) o->gc_verify = 1;
         else if (strcmp(w, "--heap-size") == 0 && i + 1 < n && size_arg(words[i + 1], &o->heap)) {
             if (o->heap < 4096) o->heap = 4096;
             i++;
@@ -318,7 +319,7 @@ static void options(const char *text, const char *where, Options *o) {
             strcpy(*to, words[++i]);
         } else {
             fprintf(stderr, "runevm: %s: %s is not an option of a native program "
-                    "(--count, --stats, --heap-size N, --heap-limit N, --equality-work N, --heap-fill P, --gc-stress N, --checked, --emulate-fork, "
+                    "(--count, --stats, --heap-size N, --heap-limit N, --equality-work N, --heap-fill P, --gc-stress N, --gc-verify, --checked, --emulate-fork, "
                     "--restore FILE, --gc-log FILE)\n", where, w);
             exit(2);
         }
@@ -358,6 +359,7 @@ int main(int argc, char **argv) {
             return 2;
         }
         free(o.restore);
+        vm->gc_verify = o.gc_verify;
         if (o.gc_log && !child) heap_log_open(vm, o.gc_log);
         rune_enter(vm, code);
     }
@@ -368,6 +370,7 @@ int main(int argc, char **argv) {
     vm->stats = o.stats;
     vm->count = o.count;
     vm->gc_stress = o.gc_stress;
+    vm->gc_verify = o.gc_verify;
     vm->emulate_fork = o.emulate_fork;
     vm->checked = o.checked;
     /* the name the program has under runevm-stack, where bin/runevm-native runs it

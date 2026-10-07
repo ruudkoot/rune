@@ -728,7 +728,8 @@ test: $(RUNE) vm | build/.doctor-check
 # (RUNE_BARRIER_CARDS). Then tests/lang on the VM of the first, as it comes
 # and with every function compiled and a collection at every allocation, so
 # that a reader of a kind that does not mask the bits fails, and on the VM
-# of the second.
+# of the second; and on bin/runevm with the heap checked before and after
+# every collection of a heap of 64 KiB (--gc-verify). Part of make check.
 test-heap: bin/runevm-gcbits bin/runevm-cards $(RUNE) vm | build/.doctor-check
 	@mkdir -p build
 	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
@@ -742,6 +743,9 @@ test-heap: bin/runevm-gcbits bin/runevm-cards $(RUNE) vm | build/.doctor-check
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gcbits --out tests/out/register-gcbits
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gcbits-stress --out tests/out/register-gcbits-stress
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-cards --out tests/out/register-cards
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc-verify --heap-size 65536 "$$@"\n' > bin/runevm-verify
+	chmod +x bin/runevm-verify
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-verify --out tests/out/register-verify
 
 test-all: host-builds vm | build/.doctor-check
 	@for c in mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit; do \
@@ -1084,6 +1088,7 @@ check:
 	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory test-register
 	@$(MAKE) --no-print-directory test-register-jit
+	@$(MAKE) --no-print-directory test-heap
 	@$(MAKE) --no-print-directory test-census
 	@$(MAKE) --no-print-directory check-heapsim
 	@$(MAKE) --no-print-directory check-layouts

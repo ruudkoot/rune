@@ -244,7 +244,7 @@ keep these invariants:
   described in `docs/language.md`: explicit `IntInf` operations, Rune's
   Basis subset).
 * Before finishing any change run `make check` (= `test`, `test-all`,
-  `test-basis`, `test-doc`, `test-lib`, `test-opt`, `test-native`, `perf-check`, `check-positions`,
+  `test-basis`, `test-doc`, `test-lib`, `test-opt`, `test-native`, `test-heap`, `perf-check`, `check-positions`,
   `check-cross`, `check-docs`, `check-isa`, `test-ir`, `check-levels`,
   `bootstrap`; runs on all CPUs,
   about 3 minutes on 16). `bin/rune` is the self-hosted compiler, so it is what
@@ -260,9 +260,11 @@ keep these invariants:
   object is `obj_fill_field` and `ms_store_field`): the header's first byte
   holds four bits of the collector's beside the kind, zero in every build
   but the one that tests them, and the barrier is where a collector to come
-  writes its body. `make test-heap` holds both,
-  on a VM whose collector sets the bits; run it for a change to the heap,
-  to the header or to an emitter that reads or writes an object.
+  writes its body. `make test-heap`, part of `make check`, holds both,
+  on a VM whose collector sets the bits, and runs the language's tests
+  with the heap checked before and after every collection (`runevm
+  --gc-verify`); run it for a change to the heap, to the header or to an
+  emitter that reads or writes an object.
 * `make check` also runs in GitHub Actions on every pull request and every
   push to `master` (`.github/workflows/check.yml`), on Ubuntu 24.04 with the
   packages of `cloud/SETUP.md` and the hosts kept in the Actions cache. A

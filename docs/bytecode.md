@@ -395,6 +395,9 @@ raised as noted.
   N = 1 every allocation moves every live object, which exposes a primitive
   that keeps a heap pointer in a C variable across an allocation
   (`make test-stress`);
+* `runevm-stack --gc-verify file.rbc` checks the heap before and after every
+  collection and stops with status 2 where it is not sound ([runtime.md](runtime.md),
+  *Watching it*; `make test-heap`);
 * `runevm-stack --checked file.rbc` makes `DECON` test the tag it is given and
   stop the program where the value has another. A match that names every
   constructor of a datatype leaves the last untested (decision D14 of

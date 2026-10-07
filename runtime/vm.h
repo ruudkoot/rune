@@ -200,6 +200,7 @@ typedef struct VM {
     uint64_t bytes_allocated;  /* not size_t: --count prints the same where it is 32 bits */
     uint64_t objects_allocated;
     size_t gc_stress;        /* --gc-stress N: collect before every Nth allocation; 0 = off */
+    int gc_verify;           /* --gc-verify: the heap checked before and after every collection (runtime/heap.c) */
     Value *globals;
     uint8_t *global_set;
 
@@ -319,6 +320,8 @@ int heap_relocate(VM *vm, uintptr_t old_base);  /* after an image is read: 0 whe
    lines when the VM exits (docs/runtime.md, *Watching it*) */
 void heap_log_open(VM *vm, const char *path);
 void heap_log_close(VM *vm);
+/* --gc-verify: what of the heap does not hold, and where, or NULL (docs/runtime.md, *Watching it*) */
+const char *heap_check(VM *vm, const void **at);
 /* The handles (VM.handles): a value kept for C across collections. */
 size_t vm_handle_new(VM *vm, Value v);            /* a handle for the value */
 Value vm_handle_get(const VM *vm, size_t h);      /* the value, where it is now */

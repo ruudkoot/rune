@@ -212,6 +212,12 @@ what `Runtime.stats` says is live.
   every allocation moves everything, which is how `make test-stress` finds a
   primitive that keeps a heap pointer in a C variable across an allocation,
   and a register the liveness wrongly takes for dead.
+* `runevm --gc-verify` checks the heap before and after every collection:
+  that it parses, object by object, to the bytes in use, that every header
+  names a kind, and that every pointer in an object, on the stack or among
+  the other roots is to the start of an object in it; a failure is a
+  message naming the collection and status 2. `make test-heap` runs the
+  language's tests so, with a heap of 64 KiB.
 * An image (`Runtime.save`) carries the heap as it lies, the garbage since
   the last collection with it; a `Runtime.collect ()` before it leaves that
   out.
@@ -462,7 +468,7 @@ of another bytecode version is refused as well. There is no dynamic loading
 afterwards: a program is one file, the basis library included.
 
 The whole command line -- `--disasm`, `--trace`, `--stats`, `--count`,
-`--gc-stress`, `--checked`, `--heap-size`, `--heap-fill`, `--gc-log`,
+`--gc-stress`, `--gc-verify`, `--checked`, `--heap-size`, `--heap-fill`, `--gc-log`,
 `--emulate-fork`, `--restore`, `--version` -- is described in
 [bytecode.md](bytecode.md).
 
@@ -483,7 +489,7 @@ that the one writes what the other reads.
 What differs:
 
 * The options of `runevm` (`--count`, `--stats`, `--heap-size`,
-  `--heap-fill`, `--gc-stress`, `--gc-log`, `--checked`) come from the environment
+  `--heap-fill`, `--gc-stress`, `--gc-verify`, `--gc-log`, `--checked`) come from the environment
   variable `RUNEVM_OPTIONS`, after
   those the program was made with (`runeopt --options`), and the program takes
   the variable out of its environment.
