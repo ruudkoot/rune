@@ -178,6 +178,7 @@ void heap_read_begin(VM *vm, size_t size) {
     vm->gc.size = size;
     vm->gc.closed = 0;
     vm->gc.los_bytes = 0;
+    vm->fp_low = 0;   /* the frames read after it are scanned whole by the first minor collection */
     chunk_append(vm, chunk_take(vm, 0, CHUNK_OLD));
     nursery_start(vm, nursery);
     vm->alloc.used = 0;

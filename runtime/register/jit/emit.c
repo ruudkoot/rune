@@ -1184,7 +1184,13 @@ void emit_RET(Jit *j, uint32_t pc, int32_t a) {
     if (!h) ms_load_xmm(M, F_S0, a);
     as_ld32s(A, R_S3, R_S1, FR(result));
     as_sub_ri(A, R_S2, 1);
-    as_st64(A, VMR, OFF(fp), R_S2);   /* the frame popped */
+    as_st64(A, VMR, OFF(fp), R_S2);   /* the frame popped, and the watermark lowered to it (vm.h, vm_frame_pop) */
+    AsmLabel above; as_label_init(&above);
+    as_cmp_rm(A, R_S2, VMR, OFF(fp_low));
+    as_jcc(A, CC_AE, &above);
+    as_st64(A, VMR, OFF(fp_low), R_S2);
+    as_bind(A, &above);
+    as_label_free(&above);
     as_sub_ri(A, R_S1, FRAME_SIZE);      /* the caller's frame: its registers are the code's now */
     as_ld64(A, BASEI, R_S1, FR(base));
     as_mov_rr(A, BASER, BASEI);

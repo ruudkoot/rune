@@ -97,7 +97,9 @@ Calls: `CALL f x` and `CALLK f n a...` push a frame whose base is the
 caller's stack pointer, make the callee's registers there (the argument,
 or the `n` arguments, then `unit`) and enter its code; `TAILCALL` and
 `TAILCALLK` replace the frame, the arguments copied above the frame first
-and moved down. `RET s` pops the frame and, since the caller goes on at a
+and moved down. `RET s` pops the frame (`vm_frame_pop`, which lowers the
+stack's watermark, below which a minor collection does not scan, to the
+frame that runs again) and, since the caller goes on at a
 `RESULT d`, writes the value into the caller's register `d` and passes
 over the `RESULT` (one instruction fewer per call in `--count`); where the
 instruction at `ret_pc` is not a `RESULT` -- a program resumed from an
@@ -365,7 +367,8 @@ the callers are recorded at the jump, and `jit_invalidate` walks them),
 rather than its code being patched. `RET` writes the value into the
 register of the caller's `RESULT` -- which the frame records when it is
 pushed (`Frame.result`), as the loop's `RET` reads it too -- pops the
-frame, and jumps straight into the caller's code where the frame kept a
+frame, lowering the watermark as `vm_frame_pop` does, and jumps straight
+into the caller's code where the frame kept a
 `native_ret`, else hands back to the interpreter; the frame of the top
 level returns through `jit_h_ret`.
 So a `RESULT` after a `CALL` or `CALLK` is passed over by every engine

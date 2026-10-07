@@ -168,13 +168,16 @@ void log_pass_end(VM *vm, const PassMark *m, const char *kind, int64_t pause);
 
 /* The roots, listed once, for the collector, the check and a heap that
    moved (heap_relocate): the value stack, and these. V takes the address of
-   a value, O of a pointer to an object that is there. */
-#define OTHER_ROOTS(vm, V, O) \
+   a value, O of a pointer to an object that is there. A minor collection
+   takes the frames' closures from the stack's watermark up (OTHER_ROOTS_FROM):
+   those below it have not changed since the last. */
+#define OTHER_ROOTS(vm, V, O) OTHER_ROOTS_FROM(vm, V, O, 0)
+#define OTHER_ROOTS_FROM(vm, V, O, frame0) \
     do { \
         for (uint32_t i_ = 0; i_ < (vm)->prog.nglobals; i_++) V(&(vm)->globals[i_]); \
         for (uint32_t i_ = 0; i_ < (vm)->prog.nconsts; i_++) V(&(vm)->prog.consts[i_]); \
         if ((vm)->frames_active) \
-            for (size_t i_ = 0; i_ <= (vm)->fp; i_++) \
+            for (size_t i_ = (frame0); i_ <= (vm)->fp; i_++) \
                 if ((vm)->frames[i_].closure) O(&(vm)->frames[i_].closure); \
         for (int i_ = 0; i_ < NUM_BUILTIN_EXNS; i_++) \
             if ((vm)->builtin_exns[i_]) O(&(vm)->builtin_exns[i_]); \

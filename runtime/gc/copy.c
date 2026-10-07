@@ -172,6 +172,7 @@ static void collect_into(VM *vm, size_t new_size) {
         vm->gc.nborn = 0;
         los_sweep(vm);
         vm->gc.old_boxes = vm->gc.to_boxes;
+        vm->fp_low = vm->fp;   /* nothing young is left on the stack */
         vm->gc.fulls++;
     } else vm->gc.closed = vm->gc.to_used - vm->gc.last->used;
     alloc_view(vm);

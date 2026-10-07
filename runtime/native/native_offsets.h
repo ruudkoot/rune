@@ -19,6 +19,7 @@
     X("VM_FRAMES", offsetof(VM, frames)) \
     X("VM_FP", offsetof(VM, fp)) \
     X("VM_FRAMES_CAP", offsetof(VM, frames_cap)) \
+    X("VM_FP_LOW", offsetof(VM, fp_low)) \
     X("VM_HP", offsetof(VM, hp)) \
     X("VM_CONSTS", offsetof(VM, prog.consts)) \
     X("VM_GLOBALS", offsetof(VM, globals)) \

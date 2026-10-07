@@ -47,8 +47,9 @@ typedef struct Function {
     uint32_t *loops;     /* the pcs of the loop heads */
     /* What is live where a frame of the function waits for a call
        (runtime/register/live.c), made when the collector first asks: the
-       pcs calls return to, in order, and the registers live at each. Not in
-       a file or an image; they go with the program (program_free_meta). */
+       pcs calls return to, in a table of nlive slots by a hash of the pc,
+       and the registers live at each. Not in a file or an image; they go
+       with the program (program_free_meta). */
     int live_made;
     uint32_t nlive;
     uint32_t *live_pc;
@@ -232,9 +233,14 @@ typedef struct VM {
     uint64_t bytes_allocated;  /* not size_t: --count prints the same where it is 32 bits */
     uint64_t objects_allocated;
     size_t gc_stress;        /* --gc-stress N: collect before every Nth allocation; 0 = off */
-    int gc_verify;           /* --gc-verify: the heap checked before and after every collection (runtime/heap.c) */
+    /* the stack's watermark (runtime/gc/minor.c; docs/plans/garbage-collector-v2.md,
+       D9): no frame below it has run since the last minor collection, so
+       its slots hold no young pointer; every pop of a frame lowers it to
+       the frame it returns to (vm_frame_pop) */
+    size_t fp_low;
     Value *globals;
     uint8_t *global_set;
+    int gc_verify;           /* --gc-verify: the heap checked before and after every collection (runtime/gc/check.c) */
 
     Program prog;
 
@@ -441,6 +447,12 @@ static inline void vm_push_frame(VM *vm, uint32_t func, Obj *closure, uint32_t r
     vm->frames[idx].result = UINT32_MAX; /* runtime/register's loop and code set it */
     vm->fp = idx;
     vm->frames_active = 1;
+}
+/* The frame on top popped, in every engine (and the frames down to a
+   handler's, vm_raise): the watermark follows the frame that runs again */
+static inline void vm_frame_pop(VM *vm) {
+    vm->fp--;
+    if (vm->fp < vm->fp_low) vm->fp_low = vm->fp;
 }
 /* Every normal end of a run (halt, the exit primitive, an uncaught exception)
    goes through vm_exit, which flushes and prints what --count and --stats ask for. */

@@ -113,13 +113,28 @@ uint64_t *reg_liveness(const Program *p, uint32_t from, uint32_t to, const uint8
     return live;
 }
 
+/* The slot of a function's table of return points (Function.live_pc,
+   live_at) for RET_PC: from a hash of it, the next until the slot holds it
+   or is empty (LIVE_EMPTY). A table has a power of two of slots, at least
+   twice its points, so the walk is short; it is 1.3 to 1.6 times faster
+   than a binary search over them (docs/plans/garbage-collector-v2.md, D9,
+   H8), at every waiting frame a collection asks about. */
+#define LIVE_EMPTY UINT32_MAX
+static uint32_t live_slot(const uint32_t *pcs, uint32_t mask, uint32_t ret_pc) {
+    uint32_t h = ret_pc * 2654435761u;
+    uint32_t i = (h ^ h >> 16) & mask;
+    while (pcs[i] != ret_pc && pcs[i] != LIVE_EMPTY) i = (i + 1) & mask;
+    return i;
+}
+
 /* The registers of FUNC that are live while a frame of it waits for the
    call that returns to RET_PC: what is live at the instruction the call
    returns to, and what any handler of the function needs, since the callee
    may raise into one. The function's return points and their answers are
    made the first time one of its frames is asked about (Function.live_pc,
-   live_at) and go with the program. Every register where the answer is not
-   known: a pc that is no return point of the function, no memory. */
+   live_at, a table by RET_PC's hash) and go with the program. Every
+   register where the answer is not known: a pc that is no return point of
+   the function, no memory. */
 uint64_t reg_frame_live(VM *vm, uint32_t func, uint32_t ret_pc) {
     Program *p = &vm->prog;
     if (func >= p->nfuncs) return ~(uint64_t)0;
@@ -131,23 +146,26 @@ uint64_t reg_frame_live(VM *vm, uint32_t func, uint32_t ret_pc) {
             if (rop_flow[p->code[pc]] == FLOW_CALL) n++;
         uint64_t handlers = 0;
         uint64_t *live = n ? reg_liveness(p, from, to, NULL, &handlers) : NULL;
-        uint32_t *pcs = n ? malloc(n * sizeof *pcs) : NULL;
-        uint64_t *at = n ? malloc(n * sizeof *at) : NULL;
+        uint32_t size = 2;
+        while (size < 2 * n) size *= 2;
+        uint32_t *pcs = n ? malloc(size * sizeof *pcs) : NULL;
+        uint64_t *at = n ? malloc(size * sizeof *at) : NULL;
         if (live && pcs && at) {
-            uint32_t k = 0;
+            for (uint32_t i = 0; i < size; i++) pcs[i] = LIVE_EMPTY;
             for (uint32_t pc = from; pc < to; ) {
                 uint32_t nx = pc + length_at(p->code, pc);
-                if (rop_flow[p->code[pc]] == FLOW_CALL && nx < to) { pcs[k] = nx; at[k] = live[nx - from] | handlers; k++; }
+                if (rop_flow[p->code[pc]] == FLOW_CALL && nx < to) {
+                    uint32_t i = live_slot(pcs, size - 1, nx);
+                    pcs[i] = nx;
+                    at[i] = live[nx - from] | handlers;
+                }
                 pc = nx;
             }
-            fn->nlive = k; fn->live_pc = pcs; fn->live_at = at;
+            fn->nlive = size; fn->live_pc = pcs; fn->live_at = at;
         } else { free(pcs); free(at); }
         free(live);
     }
-    uint32_t lo = 0, hi = fn->nlive;   /* the return points are in the order of the code */
-    while (lo < hi) {
-        uint32_t mid = lo + (hi - lo) / 2;
-        if (fn->live_pc[mid] < ret_pc) lo = mid + 1; else hi = mid;
-    }
-    return lo < fn->nlive && fn->live_pc[lo] == ret_pc ? fn->live_at[lo] : ~(uint64_t)0;
+    if (!fn->nlive) return ~(uint64_t)0;
+    uint32_t i = live_slot(fn->live_pc, fn->nlive - 1, ret_pc);
+    return fn->live_pc[i] == ret_pc ? fn->live_at[i] : ~(uint64_t)0;
 }

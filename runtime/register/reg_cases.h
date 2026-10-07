@@ -159,7 +159,7 @@ CASE(RET) {
     uint32_t result = fr->result;   /* the register of the caller's RESULT, if it has one */
     size_t top = fr->base;   /* the caller's stack pointer, where the callee's registers began */
     if (vm->fp == 0) { vm->sp = top; vm->pc = back; vm->instructions = count; vm_push(vm, v); return 0; }
-    vm->fp--;
+    vm_frame_pop(vm);
     fr = &vm->frames[vm->fp];
     base = vm->stack + fr->base;
     sp = vm->stack + top;

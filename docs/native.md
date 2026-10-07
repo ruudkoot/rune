@@ -349,8 +349,9 @@ Its limits:
   its edge cases.
 * **Frames:** the templates of CALL, TAILCALL, CALLK, TAILCALLK, RET and
   the entry for calls do what `vm_push_frame`, `native_call`,
-  `native_callk` and `native_ret` do. A change to
-  `Frame` or to how a frame is pushed changes them too.
+  `native_callk` and `native_ret` do; RET lowers the stack's watermark to
+  the frame it returns to, as `vm_frame_pop` does. A change to
+  `Frame` or to how a frame is pushed or popped changes them too.
 * **Allocation:** the five allocating templates are the macro-assembler's
   `ms_alloc` (the fast path of `vm_alloc`: when it collects, `--gc-stress`,
   the size, the header, the counts), through `X64Layout.alloc`. A change to

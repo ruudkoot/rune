@@ -187,7 +187,7 @@ int jit_h_ret(VM *vm, int32_t s) {
     const void *back_native = fr->native_ret;
     size_t top = fr->base;
     if (vm->fp == 0) { vm->sp = top; vm->pc = back; vm_push(vm, v); return RUN_HALT; }
-    vm->fp--;
+    vm_frame_pop(vm);
     fr = &vm->frames[vm->fp];
     vm->sp = top;
     const uint8_t *code = vm->prog.code;

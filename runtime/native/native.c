@@ -110,7 +110,7 @@ const void *native_ret(VM *vm) {
     vm->pc = fr->ret_pc;
     if (vm->fp == 0) { vm_push(vm, v); vm_exit(vm, 0); }
     const void *back = fr->native_ret;
-    vm->fp--;
+    vm_frame_pop(vm);
     vm_push(vm, v);
     return back;
 }

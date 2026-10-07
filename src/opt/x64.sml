@@ -705,6 +705,12 @@ struct
                      line "imul $FRAME_SIZE, %rdx, %rdx";
                      line "add VM_FRAMES(%r12), %rdx";
                      line "decq VM_FP(%r12)";
+                     (* the watermark lowered to the frame that runs (vm_frame_pop) *)
+                     line "mov VM_FP(%r12), %rcx";
+                     line "cmp VM_FP_LOW(%r12), %rcx";
+                     line ("jae " ^ lab pc ^ "_low");
+                     line "mov %rcx, VM_FP_LOW(%r12)";
+                     put (lab pc ^ "_low:\n");
                      line "jmp *FRAME_NATIVE_RET(%rdx)";
                      slows := (fn () =>
                                  (put (slow ^ ":\n"); unforward (); flushCount (); flushSp (); setPc ();

@@ -145,7 +145,7 @@ struct
         "size_t at = FRAME->base;",
         "uint32_t back = FRAME->ret_pc;",
         "if (vm->fp == 0) { sp = vm->stack + at; PUSH(v); JUMP_TO(back); SYNC(); return 0; }",
-        "vm->fp--;",
+        "vm_frame_pop(vm);",
         "sp = vm->stack + at;",
         "PUSH(v);",
         "RETURN_TO(back);"],

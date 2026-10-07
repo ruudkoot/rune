@@ -237,6 +237,7 @@ int vm_raise(VM *vm, Value exn) {
     }
     Handler h = vm->handlers[--vm->hp];
     vm->fp = h.fp;
+    if (vm->fp < vm->fp_low) vm->fp_low = vm->fp;
     CENSUS_UNWIND(vm);
     vm->sp = h.sp;
     vm_push(vm, exn);

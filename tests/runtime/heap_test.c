@@ -6,9 +6,10 @@
    told by address; two VMs of a process collect independently; the roots
    listed in heap.c are all there; with RUNE_BARRIER_CARDS a store into an
    object marks the card of its field; heap_check finds a heap that is not
-   sound; and with a nursery, the minor collection, the barrier's cards and
-   the large-object space (docs/plans/garbage-collector-v2.md, M3). Built
-   by make test, and by make test-heap with each switch. */
+   sound; and with a nursery, the minor collection, the barrier's cards,
+   the large-object space and the stack's watermark
+   (docs/plans/garbage-collector-v2.md, M3). Built by make test, and by
+   make test-heap with each switch. */
 #include "vm.h"
 #include "gc/gc.h"
 
@@ -247,6 +248,24 @@ int main(void) {
         vm_gc(nv, 0);
         CHECK("one that nothing reaches is freed by the next", nv->gc.los_bytes == los0 && nv->gc.fulls == 2);
         CHECK("and what is reached is still there", obj_field(val_ptr(obj_field(val_ptr(nv->stack[0]), 0)), 0) == mk_imm(110));
+
+        /* the stack's watermark (D9): a minor collection leaves it at the
+           frame that runs and does not scan below it, so a young pointer
+           put there by a frame that ran unseen is found by heap_check; a
+           pop lowers it */
+        vm_push_frame(nv, 0, NULL, 0, 0);
+        vm_push(nv, mk_unit());                              /* frame 0's slot 1 */
+        vm_push_frame(nv, 0, NULL, 0, nv->sp);
+        vm_push(nv, tuple(nv, 1, 140));                      /* frame 1's slot */
+        collect_minor(nv);
+        CHECK("a minor collection leaves the watermark at the frame that runs", nv->fp_low == 1 && !heap_is_young(nv, val_ptr(nv->stack[2])));
+        nv->stack[1] = tuple(nv, 1, 150);
+        where = NULL;
+        CHECK("a young pointer below the watermark is found", heap_check(nv, &where) != NULL && where == &nv->stack[1]);
+        vm_frame_pop(nv);
+        CHECK("a pop lowers the watermark", nv->fp == 0 && nv->fp_low == 0 && heap_check(nv, NULL) == NULL);
+        collect_minor(nv);
+        CHECK("and the slot is scanned again", !heap_is_young(nv, val_ptr(nv->stack[1])) && obj_field(val_ptr(nv->stack[1]), 0) == mk_imm(150));
     }
 
 #ifdef RUNE_BARRIER_CARDS

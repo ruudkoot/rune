@@ -186,8 +186,13 @@ VM's boxes of zero, the infinities and NaN (`runtime/gc/gc.h` lists them
 once, for the collector and for an image whose heap moved). From those the
 whole live graph is copied, so anything unreachable disappears without
 being visited. A minor collection's roots are those, the fields of the
-cards the barrier marked and the large objects made since the last one;
-it looks at every slot of the stack, as a full one does.
+cards the barrier marked and the large objects made since the last one,
+and of the stack only what is above its watermark: the lowest frame that
+has run since the last minor collection, which every return and every
+raise lowers to the frame it goes on in (`vm_frame_pop`). The frames below
+it have not run since that collection left nothing young in them, so a
+deep recursion is not scanned again at every minor collection; a full
+collection scans the whole stack.
 
 On the register VM, at every tier, the stack is a root by what is live
 where that is known. A register of a frame that waits for a call is a root
@@ -265,7 +270,8 @@ what `Runtime.stats` says is live.
   that every header names a kind, that every pointer in an object, on the
   stack or among the other roots is to the start of an object in it, and
   that every field of an old object that holds a pointer into the nursery
-  is in a card the barrier marked; a failure is a message naming the
+  is in a card the barrier marked, and that no slot of the stack below its
+  watermark holds one; a failure is a message naming the
   collection and status 2. `make test-heap` runs the language's tests so,
   with a heap of 64 KiB and a nursery of 8 KiB.
 * An image (`Runtime.save`) carries the heap as it lies, the garbage since
@@ -304,7 +310,7 @@ and the second the columns, by which a script reads them (`tools/mmu.py`,
 | `used_before` | the bytes in use when the pass began |
 | `copied`, `copied_objs` | the bytes and the objects it copied |
 | `promoted` | a minor pass's copy, the bytes it moved out of the nursery; 0 for a full one |
-| `slots`, `live_slots` | the slots of the value stack it looked at, and of them those that were roots (the others were dead registers of frames waiting for a call) |
+| `slots`, `live_slots` | the slots of the value stack it looked at (a minor pass: above the watermark), and of them those that were roots (the others were dead registers of frames waiting for a call) |
 | `frames` | the waiting frames whose live registers it asked for |
 | `other_roots` | the globals, constants, frames' closures, built-in exceptions, boxed reals and handles it visited |
 | `cards_dirty`, `cards_scanned`, `remembered` | a minor pass's: the cards it found marked, the cards of the blocks marked dirty, and the large objects made since the last that it scanned whole |

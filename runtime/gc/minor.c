@@ -120,11 +120,13 @@ static void promote_obj(VM *vm, Obj **o) {
 
 /* The stack, as the full collection takes it (copy.c, stack_roots): the
    registers of a waiting frame as far as they are live, a dead one that
-   holds a pointer made unit. */
-static void minor_stack(VM *vm) {
-    size_t at = 0, dead = 0;
+   holds a pointer made unit -- from the frame of the watermark up (D9):
+   the frames below it have not run since the last minor collection, which
+   left nothing young in them. */
+static void minor_stack(VM *vm, size_t low) {
+    size_t at = vm->frames_active && low ? vm->frames[low].base : 0, dead = 0, from = at;
     if (vm->frame_live && vm->frames_active)
-        for (size_t k = 0; k < vm->fp; k++) {
+        for (size_t k = low; k < vm->fp; k++) {
             const Frame *f = &vm->frames[k];
             size_t end = vm->frames[k + 1].base < vm->sp ? vm->frames[k + 1].base : vm->sp;
             uint32_t n = vm->prog.funcs[f->func].nlocals;
@@ -140,8 +142,8 @@ static void minor_stack(VM *vm) {
             vm->gc_counts.frames++;
         }
     for (; at < vm->sp; at++) promote_value(vm, &vm->stack[at]);
-    vm->gc_counts.slots += vm->sp;
-    vm->gc_counts.live_slots += vm->sp - dead;
+    vm->gc_counts.slots += vm->sp - from;
+    vm->gc_counts.live_slots += vm->sp - from - dead;
 }
 
 /* The fields of o that lie in [lo, hi), promoted */
@@ -212,10 +214,11 @@ static void minor_into(VM *vm) {
     Chunk *start = vm->gc.last;
     size_t start_at = start->used;
     vm->gc.nqueue = 0;
-    minor_stack(vm);
+    size_t low = vm->fp_low < vm->fp ? vm->fp_low : vm->fp;
+    minor_stack(vm, low);
 #define PROMOTE_ROOT_VALUE(v) (vm->gc_counts.other_roots++, promote_value(vm, (v)))
 #define PROMOTE_ROOT_OBJ(o) (vm->gc_counts.other_roots++, promote_obj(vm, (o)))
-    OTHER_ROOTS(vm, PROMOTE_ROOT_VALUE, PROMOTE_ROOT_OBJ);
+    OTHER_ROOTS_FROM(vm, PROMOTE_ROOT_VALUE, PROMOTE_ROOT_OBJ, low);
 #undef PROMOTE_ROOT_VALUE
 #undef PROMOTE_ROOT_OBJ
     for (Chunk *c = vm->gc.first; c; c = c->next) scan_dirty(vm, c);
@@ -246,6 +249,7 @@ static void minor_into(VM *vm) {
         scan_object(vm, vm->gc.queue[--vm->gc.nqueue]);
     }
     vm->alloc.used = 0;
+    vm->fp_low = vm->fp;
     vm->box_bytes_live = vm->gc.old_boxes;
     vm->gc_count++;
     vm->gc.minors++;

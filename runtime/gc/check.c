@@ -9,7 +9,8 @@
    is to the start of an object of the heap; and every field of an old
    object that holds a pointer into the nursery is in a card the barrier
    marked, in a block marked dirty, or in a large object made since the
-   last minor collection (D6). heap_check says what does not hold, or NULL
+   last minor collection (D6); and no slot or frame below the stack's
+   watermark holds a young pointer (D9). heap_check says what does not hold, or NULL
    (tests/runtime/heap_test.c breaks a heap to see it); a collection under
    --gc-verify stops on it. */
 #include "gc/gc.h"
@@ -169,6 +170,18 @@ const char *heap_check(VM *vm, const void **at) {
             a += obj_size(o);
         }
     for (size_t i = 0; i < vm->sp && !c.failed; i++) check_value(&c, &vm->stack[i], "a slot of the stack that is no object's");
+    /* below the stack's watermark (minor.c), nothing young: a pop of a frame
+       that did not lower it would leave a frame unscanned */
+    if (vm->gc.nursery && vm->frames_active && !c.failed) {
+        if (vm->fp_low > vm->fp) check_fail(&c, "the stack's watermark above the frame that runs", NULL);
+        size_t below = vm->fp_low && vm->fp_low <= vm->fp ? vm->frames[vm->fp_low].base : 0;
+        for (size_t i = 0; i < below && i < vm->sp && !c.failed; i++)
+            if (val_is_ptr(vm->stack[i]) && gc_in_nursery(vm, val_ptr(vm->stack[i])))
+                check_fail(&c, "a slot below the stack's watermark that holds a young pointer", &vm->stack[i]);
+        for (size_t k = 0; k < vm->fp_low && k <= vm->fp && !c.failed; k++)
+            if (vm->frames[k].closure && gc_in_nursery(vm, vm->frames[k].closure))
+                check_fail(&c, "a frame below the stack's watermark whose closure is young", &vm->frames[k]);
+    }
 #define CHECK_VALUE(v) check_value(&c, (v), "a root that is no object's")
 #define CHECK_OBJ(o) check_ptr(&c, *(o), "a root that is no object")
     if (!c.failed) OTHER_ROOTS(vm, CHECK_VALUE, CHECK_OBJ);
