@@ -63,7 +63,7 @@ stores into the heap are `SETENV`, the primitives `ref_set` and
 `array_update` (in `runtime/prims.c`, and in the loop through `HEAP_STORE` of
 `runtime/register/fastprim.h`) and a few more primitives; each is
 `obj_set_field` (`runtime/value.h`), whose barrier is empty, and
-`ms_barrier` in compiled code. The collector's state and the allocation
+`ms_set_field` in compiled code. The collector's state and the allocation
 state are structs of the VM (`GcState`, `AllocState`, `runtime/vm.h`): the
 fast path bumps `alloc.used` against `alloc.size`.
 
@@ -265,10 +265,11 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   the VM is argument 0). The allocation fast path is `vm_alloc`'s in
   line -- `--gc-stress` to the slow path, the room, the bump, the counts,
   the header -- and a store into an object that exists (`ref_set`,
-  `array_update`, `SETENV`) is followed by `ms_barrier`, the barrier's
-  place in compiled code, which emits nothing today and a card mark in
-  the VM built to measure one (`bin/runevm-cards`); a fill of a fresh
-  object is `ms_store_field` alone. A kind is tested by `kind_is`: the
+  `array_update`, `SETENV`) is `ms_set_field`, the store and the barrier
+  in one operation, which sees the object, the field and the value as C's
+  `BARRIER` does and emits the store alone today, and a card mark after
+  it in the VM built to measure one (`bin/runevm-cards`); a fill of a
+  fresh object is `ms_store_field` alone. A kind is tested by `kind_is`: the
   header's first byte compared whole, as `obj_kind` reads it in C, since
   the four bits it shares with the kind are the collector's and zero;
   both take the kind's bits alone in the VM whose collector sets the

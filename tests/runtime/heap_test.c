@@ -5,7 +5,7 @@
    indirection in place is followed through its first field alone; young is
    told by address; two VMs of a process collect independently; the roots
    listed in heap.c are all there; with RUNE_BARRIER_CARDS a store into an
-   object marks its card. Built by make test, and by make test-heap with
+   object marks the card of its field. Built by make test, and by make test-heap with
    each switch. */
 #include "vm.h"
 
@@ -170,14 +170,14 @@ int main(void) {
     }
 
 #ifdef RUNE_BARRIER_CARDS
-    /* the measuring barrier: a store into an object marks its card, a fill of a fresh one does not */
+    /* the measuring barrier: a store into an object marks the card of its field, a fill of a fresh one does not */
     memset(rune_cards, 0, CARD_COUNT);
     Obj *r = val_ptr(vm->stack[0]);
-    size_t card = ((uintptr_t)r >> CARD_SHIFT) & (CARD_COUNT - 1);
+    size_t card = ((uintptr_t)&obj_fields(r)[0] >> CARD_SHIFT) & (CARD_COUNT - 1);
     obj_fill_field(r, 0, mk_imm(1));
     CHECK("a fill marks nothing", rune_cards[card] == 0);
     obj_set_field(r, 0, mk_imm(2));
-    CHECK("a store marks the card of its object", rune_cards[card] == 1);
+    CHECK("a store marks the card of its field", rune_cards[card] == 1);
 #endif
 
     if (fails) { printf("heap_test: %d failed\n", fails); return 1; }

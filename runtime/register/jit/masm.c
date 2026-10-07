@@ -1138,19 +1138,22 @@ void ms_need_len(Masm *m, int obj, uint32_t n, AsmLabel *unless) {
     as_cmp32_mi(&m->a, obj, (int32_t)offsetof(Obj, len), (int32_t)n);
     as_jcc(&m->a, CC_BE, unless);
 }
-/* THE BARRIER, in compiled code: what a store into an object that exists
-   does beside the store (value.h, BARRIER). Nothing today. It comes after
-   the store and may use the register that held the object, or the address
-   stored at, which no emitter needs again: under RUNE_BARRIER_CARDS it
-   marks the card of that address, as C's does. */
-void ms_barrier(Masm *m, int obj) {
+/* THE BARRIER, in compiled code: a store into an object that exists is
+   this one operation, the store and what it does beside it (value.h,
+   BARRIER), so that the barrier has what C's has -- the object, the field
+   and the value -- and may come before the store. Today it is the store
+   alone; under RUNE_BARRIER_CARDS it then marks the card of the field's
+   address, as C's does, with the register that held the object, which no
+   emitter needs again. runeopt's `:=` and `Array.update` are its template
+   (setField). */
+void ms_set_field(Masm *m, int obj, uint32_t i, int32_t s) {
+    ms_store_field(m, obj, i, s);
 #ifdef RUNE_BARRIER_CARDS
+    as_add_ri(&m->a, obj, FIELD_OFF(i));
     as_shr_ri(&m->a, obj, CARD_SHIFT);
     as_and_ri(&m->a, obj, (int32_t)(CARD_COUNT - 1));
     as_add_rm(&m->a, obj, VMR, OFF(jit_cards));
     as_st8i(&m->a, obj, 0, 1);
-#else
-    (void)m; (void)obj;
 #endif
 }
 void ms_store_field_imm(Masm *m, int obj, uint32_t i, int tag, int32_t payload) {

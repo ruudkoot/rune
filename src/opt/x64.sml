@@ -245,7 +245,7 @@ struct
       | "ref_set" =>
           SOME (fn slow =>
             (obj (x, "K_REF") slow;
-             L.storeField line (L.RAX, 0, sd y);
+             L.setField line (L.RAX, 0, sd y);
              L.set line (sd x, 0)))
       | "word_to_int" => unary (WORD, L.wordToInt, INT)
       | "word_to_int_x" => unary (WORD, L.wordToIntX, INT)
@@ -270,7 +270,7 @@ struct
       | "array_update" =>
           SOME (fn slow =>
             (obj (h - 3, "K_ARRAY") slow; index (h - 2) slow;
-             L.element line (); L.storeField line (L.RAX, 0, sd (h - 1));
+             L.element line (); L.setField line (L.RAX, 0, sd (h - 1));
              L.set line (sd (h - 3), 0)))
       | _ => NONE
     end

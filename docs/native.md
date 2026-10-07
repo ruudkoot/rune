@@ -356,7 +356,8 @@ Its limits:
   the size, the header, the counts), through `X64Layout.alloc`. A change to
   the allocator, a generational collector for one, changes `ms_alloc`, and
   the templates follow with `make templates`; so does a write barrier, in
-  `ms_store_field`.
+  `ms_set_field`: `:=` and `Array.update` store through its template
+  (`X64Layout.setField`), a fill of a fresh object through `storeField`.
 * **`reads`:** an instruction in it never writes its top operand in place.
 * **Resuming:** every place a frame returns to must be in `rune_resume`.
 

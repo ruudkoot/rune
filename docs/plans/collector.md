@@ -139,7 +139,10 @@ What is not there, and is this roadmap's to take up:
   second survival, a remembered bit only for a list of remembered
   objects, a pin only with a space that does not move.
 * `runeopt`'s templates are made from the macro-assembler and take the
-  barrier when it has a body; nothing of them was measured with one.
+  barrier when it has a body (since garbage-collector-v2's M2: until then
+  `:=` and `Array.update` stored through `storeField`, which has none, and
+  now through `setField`, made from `ms_set_field`); nothing of them was
+  measured with one.
 * The frame that runs keeps every register as a root
   (`docs/runtime.md`); a collector with a nursery scans that frame at
   every minor.
