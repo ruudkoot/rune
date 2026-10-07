@@ -3122,3 +3122,25 @@ int sys_code_protect(void *code, size_t size, int executable) {
 }
 void sys_code_flush(void *code, size_t size) { FlushInstructionCache(GetCurrentProcess(), code, size); }
 void sys_code_free(void *code, size_t size) { (void)size; VirtualFree(code, 0, MEM_RELEASE); }
+
+/* The heap's memory. A reservation cannot be trimmed here: where the
+   bytes at the hint are taken, the room for the alignment is reserved,
+   given back and the aligned part of it reserved again, which something
+   else may take meanwhile, so it is tried again (Go's sysReserveAligned). */
+void *sys_mem_reserve(size_t size, size_t align, void *hint) {
+    char *p = VirtualAlloc(hint, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    if (p && ((uintptr_t)p & (align - 1)) == 0) return p;
+    if (p) VirtualFree(p, 0, MEM_RELEASE);
+    if (size + align < size) return NULL;
+    for (int tries = 0; tries < 100; tries++) {
+        char *room = VirtualAlloc(NULL, size + align, MEM_RESERVE, PAGE_NOACCESS);
+        if (!room) return NULL;
+        char *at = (char *)(((uintptr_t)room + align - 1) & ~(uintptr_t)(align - 1));
+        VirtualFree(room, 0, MEM_RELEASE);
+        p = VirtualAlloc(at, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+        if (p == at) return p;
+        if (p) VirtualFree(p, 0, MEM_RELEASE);
+    }
+    return NULL;
+}
+void sys_mem_release(void *p, size_t size) { (void)size; VirtualFree(p, 0, MEM_RELEASE); }

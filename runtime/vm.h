@@ -162,24 +162,35 @@ typedef struct JitOptions {
    is one thread, and one of these, in the VM; a nursery of a thread's own or
    a buffer it bumps in is this struct and the fast path of vm_alloc, of the
    JIT's ms_alloc and of runeopt's template, changed together
-   (docs/plans/heap-layout.md, M7; D6, D8). */
+   (docs/plans/heap-layout.md, M7; D6, D8). It is the room the fast paths
+   bump into, from..from+size, of which used is taken: the chunk of the heap
+   being filled (runtime/gc/), as far as the heap's size allows, so that an
+   allocation leaves the fast path where the chunk is full or a collection
+   is due (runtime/heap.c, vm_alloc). */
 typedef struct AllocState {
-    char *from;      /* the semispace objects go into */
-    size_t size;     /* the size of one semispace */
+    char *from;      /* the payload of the chunk objects go into */
+    size_t size;     /* how far into it they may go */
     size_t used;     /* how much of it is taken */
 } AllocState;
 
-/* The collector's own (runtime/heap.c): nothing of it is a variable of the
-   file, so every VM of a process collects by itself. */
+typedef struct Chunk Chunk;   /* runtime/gc/gc.h */
+
+/* The collector's own (runtime/gc/): nothing of it is a variable of the
+   file, so every VM of a process collects by itself. The heap is a list of
+   chunks of 2 MiB, the one alloc fills last; its size is what a semispace
+   was, the bytes of objects it may hold before it is collected, and
+   collected into a list of its own (runtime/gc/copy.c). */
 typedef struct GcState {
-    char *kept;          /* the other semispace, kept while the heap stays the size it is;
-                            NULL before the first collection and after one that grew the heap */
-    char *to;            /* during a collection: the space copied into */
-    size_t to_used;      /* and how much of it is taken */
-    size_t to_boxes;     /* of to_used, the boxes (box_bytes_live) */
+    Chunk *first, *last; /* the heap's chunks, in the order they were filled; last is alloc's */
+    size_t closed;       /* the bytes of objects in every chunk but last */
+    size_t size;         /* the heap's size: collected when its objects would pass it */
+    Chunk *pool;         /* chunks given back by a collection, for the next to take */
+    size_t pooled;
+    void *hint;          /* where the next chunk is asked for (sys_mem_reserve) */
+    size_t to_used;      /* during a collection: the bytes copied */
+    size_t to_boxes;     /* of them, the boxes (box_bytes_live) */
     size_t to_used_stock;   /* the census VM's count of to_used by the stock sizes */
-    uintptr_t reloc_old; /* heap_relocate: where the heap was */
-    int reloc_ok;
+    int reloc_ok;        /* heap_relocate */
 } GcState;
 
 typedef struct VM {
@@ -196,7 +207,7 @@ typedef struct VM {
     size_t fp, frames_cap;   /* fp = index of current frame; frames_cap capacity */
     Value *stack;
     size_t sp, stack_cap;
-    AllocState alloc;        /* the heap (Cheney semispace): where the next object goes */
+    AllocState alloc;        /* where the next object goes (runtime/gc/) */
     uint64_t bytes_allocated;  /* not size_t: --count prints the same where it is 32 bits */
     uint64_t objects_allocated;
     size_t gc_stress;        /* --gc-stress N: collect before every Nth allocation; 0 = off */
@@ -299,16 +310,19 @@ typedef struct VM {
 #endif
 } VM;
 
-/* Whether p points into the space objects are made in. Young and old are
-   told apart by address, not by a bit of the header (docs/plans/heap-layout.md,
-   D7): this is the test a nursery will make, of its own range. Today every
-   object is there. */
+/* Whether p points into the room objects are made in (alloc). Young and
+   old are told apart by address, not by a bit of the header
+   (docs/plans/heap-layout.md, D7): this is the test a nursery will make, of
+   its own range, when alloc is the nursery (docs/plans/garbage-collector-v2.md,
+   M3). Nothing asks it yet. */
 static inline int heap_is_young(const VM *vm, const void *p) {
     return (uintptr_t)((const char *)p - vm->alloc.from) < (uintptr_t)vm->alloc.size;
 }
+/* The bytes of objects in the heap (boxes too), as the collector counts them */
+static inline size_t heap_used(const VM *vm) { return vm->gc.closed + vm->alloc.used; }
 
 /* heap.c */
-void heap_init(VM *vm, size_t semispace_bytes);
+void heap_init(VM *vm, size_t size);   /* a heap of that size (runtime/gc/) */
 Obj *vm_alloc(VM *vm, uint8_t kind, uint16_t contag, uint32_t len, size_t payload_bytes);
 Obj *vm_alloc_fields(VM *vm, uint8_t kind, uint16_t contag, uint32_t nfields);
 Obj *vm_alloc_string(VM *vm, uint32_t len);

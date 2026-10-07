@@ -77,13 +77,19 @@ values, and it survives a collection and a `fork` (below).
 
 Everything a program allocates is in one heap: tuples, constructors,
 closures, strings, refs, arrays, exceptions, and the boxes of the numbers
-that have no immediate (*Values and objects*). Allocation is a bump of a
-pointer in the current semispace, in the VM's C and in line in compiled
-code; nothing is ever freed one object at a time. The value stack, the
-frames, the handlers and the program's code are not in the heap.
+that have no immediate (*Values and objects*). It is made of chunks of 2
+MiB, each aligned to its size, with the objects side by side after a
+header of 64 bytes; an object too large for one has a run of chunks to
+itself (`runtime/gc/`). Allocation is a bump of a pointer in the chunk
+being filled, in the VM's C and in line in compiled code, and the next
+chunk is taken where it is full; nothing is ever freed one object at a
+time. The heap's size is the bytes of objects it holds before it is
+collected, what one semispace held when the heap was two. The value
+stack, the frames, the handlers and the program's code are not in the
+heap.
 
-* The first semispace is 4 MiB, and `runevm --heap-size N` sets it (at least
-  4096 bytes).
+* The heap's first size is 4 MiB, and `runevm --heap-size N` sets it (at
+  least 4096 bytes).
 * After a collection the heap grows -- doubling -- until the live data is at
   most half of it and the request fits. `runevm --heap-fill P` makes that
   *P* percent instead (1 to 100): a quarter makes about half the collections
@@ -91,23 +97,24 @@ frames, the handlers and the program's code are not in the heap.
   what a `size_t` can hold ends the run with `runevm: out of memory`.
 * It never shrinks, and it grows by doubling alone, so the memory a run
   takes moves in steps: the compiler compiling itself keeps 42 MB at most
-  and runs in semispaces of 134 MB.
-* From the first collection on there are two semispaces while the heap
-  stays the size it is; a collection that grows it frees them and makes one
-  of the new size, and the next collection the other. So the process holds
-  up to twice the semispace `--stats` prints, beside its stack and its
-  code.
-* `runevm --heap-limit N` caps a semispace (at least 4096 bytes; no cap by
-  default). At the cap the heap may be fuller than `--heap-fill` asks; what
+  and runs in a heap of 134 MB.
+* A collection copies what is live into chunks of its own and gives the
+  heap's old ones to a pool, as many as the heap's size takes and one more,
+  which the next collection takes from first, so that their pages are not
+  made again; a run of chunks goes back to the system. So the process holds
+  up to twice the heap's size `--stats` prints, as it held two semispaces,
+  beside its stack and its code.
+* `runevm --heap-limit N` caps the heap's size (at least 4096 bytes; no cap
+  by default). At the cap the heap may be fuller than `--heap-fill` asks; what
   is live and one more allocation not fitting ends the run with `runevm:
   heap limit exceeded`, a trace and status 2.
 
 ## The garbage collector
 
-The collector is a Cheney two-space copier, one for every engine. When a
-request does not fit, the live data is copied into the other semispace,
-which is kept for the next collection while the heap stays the same size.
-What it is and is not:
+The collector is a Cheney copier, one for every engine (`runtime/gc/copy.c`).
+When a request would pass the heap's size, the live data is copied into
+chunks taken from the pool, in the order Cheney's scan reaches it, and the
+chunks it was in go to the pool. What it is and is not:
 
 * **Precise.** Every slot of the stack and every field of an object is a
   word whose low bit tells an immediate from a pointer, so nothing is ever
@@ -195,14 +202,14 @@ what `Runtime.stats` says is live.
 ### Watching it
 
 * `runevm --stats` prints, at exit, the number of collections, the bytes
-  allocated, the size of a semispace, the bytes in use (live data and the
+  allocated, the heap's size, the bytes in use (live data and the
   garbage since the last collection), the bytes every collection copied in
   all, the most a collection kept, the collector's processor time in
   microseconds and the longest single collection, which is the longest the
   program stood still; and the boxes the program made, which `--count`
   leaves out.
 * `Runtime.stats ()` gives the collections, the bytes in use (boxes left
-  out) and the size of a semispace to the program. The bytes in use are an
+  out) and the heap's size to the program. The bytes in use are an
   upper bound of what is live, and right after `Runtime.collect ()` they
   are what the collector kept, with the list above.
 * The processor time of the collector is measured around every collection and
@@ -258,7 +265,7 @@ and the second the columns, by which a script reads them (`tools/mmu.py`,
 | `frames` | the waiting frames whose live registers it asked for |
 | `other_roots` | the globals, constants, frames' closures, built-in exceptions, boxed reals and handles it visited |
 | `cards_dirty`, `cards_scanned`, `remembered` | 0 |
-| `live_after`, `heap_size` | the bytes in use after it and the size of the semispace |
+| `live_after`, `heap_size` | the bytes in use after it and the heap's size |
 | `pause_ns`, `cpu_ns` | its time on the monotonic clock and on the thread's processor time |
 | `rss_bytes` | the resident memory right after it (Linux and Windows; 0 elsewhere) |
 | `t_ns` | when it began, on the monotonic clock from the log's opening |
@@ -396,12 +403,15 @@ The Basis Library suite records such a difference as a `WIDTH` line of
 | A string | 1,073,741,823 bytes | `String.maxSize`; longer raises `Size` |
 | An array or a vector | 100,000,000 elements | `Array.maxLen`, `Vector.maxLen` |
 | A file position | 64 bits | on every platform, including 32-bit Windows |
-| Live data, 64-bit VM | the machine's memory | the heap holds both semispaces at once |
+| Live data, 64-bit VM | the machine's memory | a collection holds the heap's chunks and its own at once |
 | Live data, 32-bit VM | about 512 MiB | `bin/runevm32.exe` is linked large-address-aware, which gives it 4 GiB of address space; without that it would be about half (an estimate: no test comes near) |
 
-The ceiling of a 32-bit VM is lower than its address space because the
-heap holds both semispaces at the same time. Running
-out is a clean `runevm: out of memory`, not a hang.
+The ceiling of a 32-bit VM is lower than its address space because a
+collection holds the heap's chunks and the chunks it copies into at the
+same time. The figure is the one measured when the heap was two semispaces
+of one block each; chunks need no block larger than 2 MiB, and
+[plans/garbage-collector-v2.md](plans/garbage-collector-v2.md) measures it
+again (M5). Running out is a clean `runevm: out of memory`, not a hang.
 
 ## The same run twice
 

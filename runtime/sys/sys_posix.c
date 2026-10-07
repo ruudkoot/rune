@@ -1270,3 +1270,24 @@ void sys_code_flush(void *code, size_t size) {
 #endif
 }
 void sys_code_free(void *code, size_t size) { munmap(code, size); }
+
+/* ---------------------------------------------------------- the heap's memory */
+#ifndef MAP_NORESERVE
+#define MAP_NORESERVE 0
+#endif
+static void *map_rw(void *at, size_t size) {
+    void *p = mmap(at, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
+    return p == MAP_FAILED ? NULL : p;
+}
+void *sys_mem_reserve(size_t size, size_t align, void *hint) {
+    char *p = map_rw(hint, size);
+    if (p && ((uintptr_t)p & (align - 1)) == 0) return p;
+    if (p) munmap(p, size);
+    /* the sure way: room for the alignment, and the ends that are left over given back */
+    if (size + align < size || !(p = map_rw(NULL, size + align))) return NULL;
+    char *at = (char *)(((uintptr_t)p + align - 1) & ~(uintptr_t)(align - 1));
+    if (at > p) munmap(p, (size_t)(at - p));
+    if (at + size < p + size + align) munmap(at + size, (size_t)(p + size + align - (at + size)));
+    return at;
+}
+void sys_mem_release(void *p, size_t size) { munmap(p, size); }

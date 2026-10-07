@@ -281,4 +281,15 @@ int sys_code_protect(void *code, size_t size, int executable);
 void sys_code_flush(void *code, size_t size);
 void sys_code_free(void *code, size_t size);
 
+/* Memory for the heap (runtime/gc/chunk.c): sys_mem_reserve gives size
+   bytes at an address aligned to align (a power of two, a multiple of the
+   page), readable and writable, or NULL; size is a multiple of align. It
+   asks for the bytes at hint first, where they are aligned when hint is
+   (the end of the last block: a heap's blocks come out side by side, as
+   GHC's do), and makes room for the alignment only when they come back
+   elsewhere (docs/plans/garbage-collector-v2.md, D10). sys_mem_release
+   gives them back. */
+void *sys_mem_reserve(size_t size, size_t align, void *hint);
+void sys_mem_release(void *p, size_t size);
+
 #endif

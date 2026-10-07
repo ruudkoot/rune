@@ -177,9 +177,10 @@ fields sorted by label (numeric labels first, in numeric order, then
 alphabetic), so a tuple `(a, b)` and the record `{1 = a, 2 = b}` are the same
 object. Options are `CON0 0` (`NONE`) and `CON 1 x` (`SOME x`).
 
-The heap is managed by a Cheney semispace copying collector; the semispace
-doubles whenever it is more than half full after a collection, or the share
-`runevm-stack --heap-fill P` gives, P percent.
+The heap is managed by a Cheney copying collector over chunks of 2 MiB
+([runtime.md](runtime.md), *The heap*); the heap's size doubles whenever it
+is more than half full after a collection, or the share `runevm-stack
+--heap-fill P` gives, P percent.
 
 ## Machine state
 
@@ -365,7 +366,7 @@ raised as noted.
 | Polymorphic | `poly_eq` (structural equality; refs/arrays/closures by identity), `ptr_eq` (identity), `exn_name` (the constructor name of an exception value), `imm_eq` (the equality of two values never in the heap -- ints, words, chars, nullary constructors of a type that has no other -- by tag and bits, which the compiler makes of `poly_eq` where it knows the type is one of those) |
 | System (`runtime/sys/sys.h`, ISO C99 core plus `runtime/sys/sys_posix.c`, `runtime/sys/sys_win.c` or `runtime/sys/sys_none.c`) | `sys_errno sys_error_msg sys_error_name sys_error_of_name` (the last failure, its text and its POSIX name), `time_now time_user time_sys time_sleep` (microseconds), `time_gc_user time_gc_sys` (the processor time the collector has taken, which the VM adds up around every collection, for `Timer.checkCPUTimes` and `checkGCTime`), `date_parts date_seconds date_offset date_format` (broken-down time as a nine-element `int list`: second, minute, hour, day, month 0–11, year − 1900, weekday, day of the year, daylight saving; `date_format` is `strftime` in the C locale, written in the core so that it is the same everywhere, which asks the system only for the name of the local zone), `os_system os_getenv`, the file system (`os_mkdir os_rmdir os_chdir os_getcwd os_remove os_rename os_access os_file_kind os_link_kind os_file_size os_mod_time os_set_time os_read_link os_real_path os_tmp_name os_file_id`), directories (`os_open_dir os_read_dir os_rewind_dir os_close_dir`) and descriptors (`os_desc_kind os_poll`). POSIX itself: `posix_const` gives the value of a named constant (an errno, a signal, a flag of `open`, a bit of a file mode), and the rest are the calls behind `Posix` (`posix_fork posix_exec posix_exece posix_waitpid posix_kill posix_alarm posix_pause posix_exit`, the last ending the process with nothing flushed; where the system has no fork, `posix_fork` starts a second VM and hands it this one's state (`runtime/image.c`); `posix_spawn` starts a program with three descriptors as its standard streams, as fork, dup2 and exec would, without the fork (`Unix.execute`); `posix_lock` is `fcntl` with a `struct flock` (the locks of `Posix.IO`), `posix_pathconf` is `pathconf`/`fpathconf` with the limit named without its `_PC_` prefix, and `posix_utime` sets both times of a file; `posix_tcgetattr`, `posix_tcsetattr` and `posix_tcop` are the calls on a terminal (`Posix.TTY`), the process and user numbers (`posix_getpid posix_getppid posix_getuid posix_geteuid posix_getgid posix_getegid posix_setuid posix_setgid posix_getgroups posix_getlogin posix_getpgrp posix_setsid posix_setpgid`), `posix_uname posix_times posix_environ posix_ctermid posix_ttyname posix_isatty posix_sysconf`, `posix_openf posix_close posix_dup posix_dup2 posix_pipe posix_read posix_write posix_lseek posix_fsync posix_fcntl posix_ftruncate posix_stat posix_chmod posix_chown posix_link posix_symlink posix_mkfifo posix_umask posix_getpw posix_getgr`). Sockets: `socket_create socket_pair socket_bind socket_connect socket_listen socket_accept socket_send socket_sendto socket_recv socket_recvfrom socket_shutdown socket_name socket_peer socket_getopt socket_setopt`, the addresses (`socket_inet_addr socket_unix_addr socket_addr_family socket_inet_parts socket_unix_path`, which keep an address as the bytes of a `sockaddr`, with `socket_inet6_addr` and `socket_inet6_parts` for the `sockaddr_in6` of IPv6 (`INet6Sock`)), the options that are no `int` (`socket_linger`, a `struct linger`; `socket_query`, `FIONREAD` and `sockatmark`) and the databases (`netdb_host_byname netdb_host_byaddr netdb_hostname netdb_proto_byname netdb_proto_bynumber netdb_serv_byname netdb_serv_byport`). A call that fails gives `~1`, or `""` or `[]`, and leaves the reason in `sys_errno` |
 | Windows (`lib/basis/windows.sml`; `runtime/sys/sys_win.c`, `ENOSYS` on every other system) | The registry (`win_reg_open win_reg_close win_reg_delete win_reg_enum win_reg_query win_reg_set`, a key being a number of the system layer, the seven at the roots 0 to 6), the machine (`win_config win_version win_volume`), the shell (`win_find_executable win_shell_execute`), programs started with one command line (`win_spawn`) and waited for with the whole code they end with (`win_wait`), and dynamic data exchange (`win_dde_start win_dde_execute win_dde_stop`) |
-| Runtime (`lib/basis/runtime.sml`) | The counters the VM keeps for the program it runs, each reading one field and allocating nothing: `rt_instructions` (what `--count` prints), `rt_bytes` and `rt_objects` (allocated since the start, collected or not), `rt_collections`, `rt_live` (the bytes of the current semispace in use) and `rt_heap_size` (one semispace); `rt_collect`, which collects the heap on demand; and `rt_version`, the version the VM was built as, which `--version` prints and `scripts/gen-build-files.sh` writes into `runtime/version.h` and `build/config.sml` alike; `rt_trace` gives the frames of the call stack, innermost first, leaving out the innermost n of them, each as its function's name and the position it is stopped at (the line table above); `rt_save` writes the whole VM to a file for `runevm-stack --restore`, and `rt_restore` makes this VM become the world in such a file, bytecode and all, so that it does not come back (`runtime/image.c`) |
+| Runtime (`lib/basis/runtime.sml`) | The counters the VM keeps for the program it runs, each reading one field and allocating nothing: `rt_instructions` (what `--count` prints), `rt_bytes` and `rt_objects` (allocated since the start, collected or not), `rt_collections`, `rt_live` (the bytes of objects in the heap) and `rt_heap_size` (the heap's size); `rt_collect`, which collects the heap on demand; and `rt_version`, the version the VM was built as, which `--version` prints and `scripts/gen-build-files.sh` writes into `runtime/version.h` and `build/config.sml` alike; `rt_trace` gives the frames of the call stack, innermost first, leaving out the innermost n of them, each as its function's name and the position it is stopped at (the line table above); `rt_save` writes the whole VM to a file for `runevm-stack --restore`, and `rt_restore` makes this VM become the world in such a file, bytecode and all, so that it does not come back (`runtime/image.c`) |
 | Real, from the C library (ISO C99) | `real_floor_r real_ceil_r real_trunc_r real_round_r` (integral reals; `real_round_r` rounds ties to even in every rounding mode), `real_sign_bit`, `real_copy_sign`, `real_to_bits real_from_bits` (the 64 bits of IEEE 754 binary64 as a `Word64.word`, for `PackReal`), `real_to_single real_single_from_string` (rounding to IEEE 754 binary32 and C `strtof`, for `Real32`), `real_frexp_man real_frexp_exp real_ldexp` (`frexp`, `ldexp`), `real_next_after`, `real_rem` (`fmod`), `real_fmt_e real_fmt_f` (`printf` `%.*e` and `%.*f` of a finite real; `Size` for a precision that is negative or above 100000), `real_shortest` (the `%.*e` text with the fewest digits that reads back as the same real), `real_set_round real_get_round` (0 nearest, 1 downward, 2 upward, 3 toward zero), `real_sinh real_cosh real_tanh` |
 | Int (63 bits, the VM's immediate; `Overflow` checked) | `int_add int_sub int_mul int_div int_mod int_quot int_rem int_neg int_abs int_lt int_le int_gt int_ge int_order int_to_string int_from_string int_to_char int_to_real` — `int_div/int_mod` floor, `int_quot/int_rem` truncate, both raise `Div` on zero; `int_to_char` raises `Chr`; `int_order` gives `LESS`, `EQUAL` or `GREATER`, and so do `word_order`, `char_order` and `string_order`, which `compare` of each structure is bound to |
 | Word (63 bits, wrapping) | `word_add word_sub word_mul word_div word_mod word_lt word_le word_gt word_ge word_order word_neg word_andb word_orb word_xorb word_notb word_lsl word_lsr word_to_int word_to_int_x word_from_int word_to_string` — `word_div/word_mod` raise `Div`; `word_to_int` raises `Overflow`; `word_to_string` is uppercase hex |
@@ -385,7 +386,7 @@ raised as noted.
 * `runevm-stack --disasm file.rbc` prints constants, globals and code;
 * `runevm-stack --trace file.rbc` traces every instruction to stderr;
 * `runevm-stack --stats file.rbc` prints heap statistics at exit (collections,
-  bytes allocated, semispace, live, copied, the largest live size, the
+  bytes allocated, the heap's size, live, copied, the largest live size, the
   collector's time);
 * `runevm-stack --count file.rbc` prints the instructions executed and the bytes and
   objects allocated at exit (also after the `exit` primitive and an uncaught
@@ -403,7 +404,7 @@ raised as noted.
   constructor of a datatype leaves the last untested (decision D14 of
   plans/middle-end.md), so a wrong tag would otherwise go unseen; the test
   suites run so (`tests/run-tests.sh`, `make check-levels`);
-* `runevm-stack --heap-size N file.rbc` sets the initial semispace size in bytes;
+* `runevm-stack --heap-size N file.rbc` sets the heap's first size in bytes;
 * `runevm-stack --stack-size N file.rbc` sets the most bytes the stack (its
   values, frames or handlers) may grow to, 1 GiB by default: a recursion
   without end ends with `stack overflow` and status 2, not with the
@@ -436,12 +437,13 @@ raised as noted.
 
 ### Resource limits and images
 
-`--heap-limit N` caps the size of one semispace, in bytes (at least 4096).
+`--heap-limit N` caps the heap's size, in bytes (at least 4096).
 The initial size is reduced to the cap if needed. The collector reclaims dead
 objects before reporting `heap limit exceeded`; the fill target can be exceeded
-at the cap when the live objects and requested allocation still fit. Both
-semispaces can consume memory, and stacks, code, host allocation overhead and the
-comparison worklist are outside this cap. Native programs take the same option
+at the cap when the live objects and requested allocation still fit. The
+heap and the chunks a collection keeps for the next can both consume memory,
+and stacks, code, host allocation overhead and the comparison worklist are
+outside this cap. Native programs take the same option
 from `RUNEVM_OPTIONS` or `runeopt --options`.
 
 `--equality-work N` bounds a structural comparison to N visited value pairs
@@ -454,7 +456,7 @@ its error trace is current.
 Image version 7 records both limits. Emulated fork inherits them; restore uses
 the stricter of saved and explicitly requested process limits. A restore that
 cannot fit the saved live heap is refused before allocating that heap. A saved
-semispace larger than the limit can be reduced when its live data fits.
+heap larger than the limit can be reduced when its live data fits.
 `Runtime.restore` keeps these restrictions when replacing the running world.
 Version 6 images must be recreated with this VM; the `.rbc` format is unchanged.
 

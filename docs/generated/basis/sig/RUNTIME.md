@@ -76,11 +76,11 @@ The counters of the VM, all of them since the program started.
 `objects` what has been allocated in the heap -- including everything
 since collected -- and `collections` the number of collections made.
 
-`live` is the bytes of the current semispace that are in use: what the
-last collection kept, plus what has been allocated since. It is an upper
-bound on the live data, and is exactly the live data just after a
-collection. `heapSize` is the size of one semispace, which grows as the
-collector needs it to.
+`live` is the bytes of objects in the heap: what the last collection
+kept, plus what has been allocated since. It is an upper bound on the
+live data, and is exactly the live data just after a collection.
+`heapSize` is the heap's size, the bytes of objects it holds before it
+is collected, which grows as the collector needs it to.
 
 The first four depend on the program and its input alone -- not on the
 machine, the pointer width, the heap size or when the collector ran --

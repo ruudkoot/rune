@@ -4,6 +4,7 @@
 
 #include <errno.h>
 #include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
@@ -240,3 +241,22 @@ size_t sys_code_page(void) { return 4096; }
 int sys_code_protect(void *code, size_t size, int executable) { (void)code; (void)size; (void)executable; fail(); return 0; }
 void sys_code_flush(void *code, size_t size) { (void)code; (void)size; }
 void sys_code_free(void *code, size_t size) { (void)code; (void)size; }
+
+/* the heap's memory from malloc, aligned by hand: the block malloc gave is
+   kept in the word before the aligned one, for sys_mem_release */
+void *sys_mem_reserve(size_t size, size_t align, void *hint) {
+    (void)hint;
+    if (size + align + sizeof(void *) < size) return NULL;
+    char *p = malloc(size + align + sizeof(void *));
+    if (!p) return NULL;
+    char *at = (char *)(((uintptr_t)(p + sizeof(void *)) + align - 1) & ~(uintptr_t)(align - 1));
+    memcpy(at - sizeof(void *), &p, sizeof p);
+    return at;
+}
+void sys_mem_release(void *p, size_t size) {
+    (void)size;
+    if (!p) return;
+    void *block;
+    memcpy(&block, (char *)p - sizeof(void *), sizeof block);
+    free(block);
+}

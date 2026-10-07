@@ -3,7 +3,7 @@
    program begins and how a run ends. runevm-stack is interp.c and main.c on top
    of it, heap.c, loader.c, prims.c, image.c and a system layer, and so is a
    program that runeopt made (docs/native.md). */
-#include "vm.h"
+#include "gc/gc.h"
 #include "sys/sys.h"
 #include <stdarg.h>
 
@@ -315,8 +315,7 @@ void vm_release(VM *vm) {
     free(vm->frames);
     free(vm->handlers);
     free(vm->handles);
-    free(vm->alloc.from);
-    free(vm->gc.kept);
+    heap_chunks_release(vm);
     for (size_t i = 3; i < vm->nfiles; i++) if (vm->files[i]) fclose(vm->files[i]);
     for (size_t i = 0; vm->file_paths && i < vm->nfiles; i++) free(vm->file_paths[i]);
     free(vm->files);
@@ -344,7 +343,7 @@ void vm_exit(VM *vm, int status) {
     if (vm->stats)
         fprintf(stderr, "runevm: %zu collections, %llu bytes allocated, semispace %zu bytes, %zu live, "
                 "copied %llu, max live %zu, gc %lld us, longest %lld us\n",
-                vm->gc_count, (unsigned long long)vm->bytes_allocated, vm->alloc.size, vm->alloc.used,
+                vm->gc_count, (unsigned long long)vm->bytes_allocated, vm->gc.size, heap_used(vm),
                 (unsigned long long)vm->copied, vm->max_live, (long long)(vm->gc_user_us + vm->gc_sys_us),
                 (long long)vm->gc_longest_us);
     if (vm->stats && vm->boxes_allocated)   /* the representation's own, which --count leaves out (vm.h) */

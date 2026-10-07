@@ -116,7 +116,8 @@ keep these invariants:
 * **The folders of `runtime/`** say what depends on what. The runtime both
   VMs link is directly under it (`vm.h`, `value.h`, the heap, the loader,
   the primitives, images, `main.c`, and the generated `isa.h` with what the
-  two instruction sets share); `sys/` is the system layer; `stack/` is
+  two instruction sets share), with the collector in `gc/`; `sys/` is the
+  system layer; `stack/` is
   `runevm-stack`'s loop and instruction set and `register/` is `runevm`'s,
   with its JIT in `register/jit/`; `native/` is what a program of `runeopt`
   links; `census/` is the instrumented build. A file names a header of
