@@ -40,7 +40,7 @@ int main(void) {
     vm_push(vm, tuple(vm, 3, 10));
     vm_push(vm, tuple(vm, 1, 20));
     Obj *a = val_ptr(vm->stack[0]), *b = val_ptr(vm->stack[1]);
-    obj_set_field(a, 2, mk_ptr(b));
+    obj_set_field(vm, a, 2, mk_ptr(b));
 #ifdef RUNE_GC_BITS
     obj_set_gc_bits(a, 2 * OBJ_GC_AGE_ONE | OBJ_GC_PINNED);
     obj_set_gc_bits(b, OBJ_GC_REMEMBERED);
@@ -78,7 +78,7 @@ int main(void) {
 #ifdef RUNE_GC_BITS
     obj_set_gc_bits(th, OBJ_GC_AGE_ONE);
 #endif
-    obj_become_ind(th, vm->stack[1]);
+    obj_become_ind(vm, th, vm->stack[1]);
     CHECK("it is an indirection", obj_kind(th) == K_IND);
 #ifdef RUNE_GC_BITS
     CHECK("with the bits it had", (obj_gc_bits(th) & OBJ_GC_AGE) == OBJ_GC_AGE_ONE);
@@ -196,7 +196,7 @@ int main(void) {
     size_t card = ((uintptr_t)&obj_fields(r)[0] >> CARD_SHIFT) & (CARD_COUNT - 1);
     obj_fill_field(r, 0, mk_imm(1));
     CHECK("a fill marks nothing", rune_cards[card] == 0);
-    obj_set_field(r, 0, mk_imm(2));
+    obj_set_field(vm, r, 0, mk_imm(2));
     CHECK("a store marks the card of its field", rune_cards[card] == 1);
 #endif
 

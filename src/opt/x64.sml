@@ -270,7 +270,7 @@ struct
       | "array_update" =>
           SOME (fn slow =>
             (obj (h - 3, "K_ARRAY") slow; index (h - 2) slow;
-             L.element line (); L.setField line (L.RAX, 0, sd (h - 1));
+             L.setElement line (sd (h - 1));
              L.set line (sd (h - 3), 0)))
       | _ => NONE
     end

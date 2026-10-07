@@ -248,7 +248,7 @@ struct
        ["Obj *o = EXPECT(R(a), K_CLOSURE, \"closure\");",
         "if ((uint32_t)b + 1 >= obj_len(o)) FATAL(\"environment slot %d out of range\", b);",
         "CENSUS_STORE(o, b + 1, R(c), 0, CENSUS_REP(p, fr->func, c));",
-        "obj_set_field(o, b + 1, R(c));"],
+        "obj_set_field(vm, o, b + 1, R(c));"],
      rinst ("JUMP", [("o", K Label)], Jump, "Jump to absolute code offset o.")
        ["/* a jump back is a loop's: counted, and where the function has",
         "   code, gone on in it (M6) */",

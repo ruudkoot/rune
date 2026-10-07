@@ -302,9 +302,10 @@ brief).
   `make test-heap` runs the language's tests on it: what a collector that
   uses them would turn on. An image does not hold them.
 * **A store into an object that exists goes through one operation,**
-  `obj_set_field` in C and `ms_set_field` in compiled code (and `runeopt`'s
-  `setField`, made from it), whose barrier is empty. It sees the object,
-  the field's address and the value, before the store. The stores are `:=`, `Array.update` and their
+  `obj_set_field` in C and `ms_set_field` (`ms_set_element` for an
+  array's element) in compiled code (and `runeopt`'s `setField` and
+  `setElement`, made from them), whose barrier is empty. It sees the VM,
+  the object, the field's address and the value, before the store. The stores are `:=`, `Array.update` and their
   like, and the closing of a recursive closure (`SETENV`). `bin/runevm-cards`
   is a VM whose barrier marks a card, to measure a barrier before there is
   a collector that reads one: on a loop of `:=` it runs 4.7% more

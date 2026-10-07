@@ -1705,7 +1705,7 @@ static int p_ref_new(VM *vm) {
     return ret(vm, 1, mk_ptr(r));
 }
 static int p_ref_get(VM *vm) { Obj *r = check_obj(vm, ARG(0), K_REF, "ref_get"); return ret(vm, 1, obj_field(r, 0)); }
-static int p_ref_set(VM *vm) { Obj *r = check_obj(vm, ARG(1), K_REF, "ref_set"); CENSUS_STORE(r, 0, ARG(0), 1, 15); obj_set_field(r, 0, ARG(0)); return ret(vm, 2, mk_unit()); }
+static int p_ref_set(VM *vm) { Obj *r = check_obj(vm, ARG(1), K_REF, "ref_set"); CENSUS_STORE(r, 0, ARG(0), 1, 15); obj_set_field(vm, r, 0, ARG(0)); return ret(vm, 2, mk_unit()); }
 
 static int p_array_new(VM *vm) {
     check_tag(vm, ARG(1), T_INT, "array_new");
@@ -1730,7 +1730,7 @@ static int p_array_update(VM *vm) {
     int64_t i = val_imm(ARG(1));
     if (i < 0 || (uint64_t)i >= obj_len(a)) return raise_with(vm, 3, EXN_SUBSCRIPT);
     CENSUS_STORE(a, i, ARG(0), 2, 15);
-    obj_set_field(a, i, ARG(0));
+    obj_set_field(vm, a, i, ARG(0));
     return ret(vm, 3, mk_unit());
 }
 static int from_list(VM *vm, int kind, const char *name) {

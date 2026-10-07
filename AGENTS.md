@@ -176,7 +176,8 @@ keep these invariants:
   (`ms_reload`) after -- unless the C is a helper declared as touching
   nothing of the VM (`compile.h`) -- no heap pointer in a machine register
   across one, every store into an object through `ms_store_field`, or
-  `ms_set_field` where the object exists, a field of the VM by `offsetof`, never a number, and the size of a
+  `ms_set_field` (`ms_set_element` for an array's element) where the
+  object exists, a field of the VM by `offsetof`, never a number, and the size of a
   `Frame` computed, never written as a shift (`ms_frame`). A primitive
   done in line (`prim_inline`) gives exactly what `fastprim.h`'s
   `prim_fast` gives and goes to its slow path wherever that would answer
@@ -258,8 +259,9 @@ keep these invariants:
   and with a collection at (nearly) every allocation, `make test-stress`.
   A read of an object's kind is `obj_kind` in C and `kind_is` in the
   macro-assembler, and a store into an object that exists is `obj_set_field`
-  in C and `ms_set_field` in compiled code, the store and the barrier
-  together, which `runeopt`'s template is made from (a fill of a fresh
+  (which takes the VM) in C and `ms_set_field` or `ms_set_element` in
+  compiled code, the store and the barrier together, which `runeopt`'s
+  templates are made from (a fill of a fresh
   object is `obj_fill_field` and `ms_store_field`): the header's first byte
   holds four bits of the collector's beside the kind, zero in every build
   but the one that tests them, and the barrier is where a collector to come

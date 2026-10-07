@@ -17,10 +17,10 @@
 
 #ifdef RUNE_CENSUS
 /* the value stored is always the last argument, register L[n-1] */
-#define HEAP_STORE(obj, i, v) (census_store_fast((obj), (uint32_t)(i), (v), read_i32(L + 4 * (size_t)(n - 1))), obj_set_field((obj), (uint32_t)(i), (v)))
+#define HEAP_STORE(obj, i, v) (census_store_fast((obj), (uint32_t)(i), (v), read_i32(L + 4 * (size_t)(n - 1))), obj_set_field(vm, (obj), (uint32_t)(i), (v)))
 void census_store_fast(Obj *o, uint32_t i, Value v, int32_t reg);
 #else
-#define HEAP_STORE(obj, i, v) obj_set_field((obj), (uint32_t)(i), (v))
+#define HEAP_STORE(obj, i, v) obj_set_field(vm, (obj), (uint32_t)(i), (v))
 #endif
 
 /* LESS, EQUAL or GREATER, the nullary constructors 0, 1 and 2 */

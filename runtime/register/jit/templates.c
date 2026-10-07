@@ -251,6 +251,7 @@ static void op_load_tag_of_con(const int64_t *p) { (void)p; ms_load_tag_of_con(&
 static void op_alloc(const int64_t *p) { ms_alloc(&M, (int)p[0], (int)p[1], (uint32_t)p[2], &slow_label); }
 static void op_store_field(const int64_t *p) { ms_store_field(&M, REG_B, (uint32_t)p[0], SLOT_S); }
 static void op_set_field(const int64_t *p) { ms_set_field(&M, REG_B, (uint32_t)p[0], SLOT_S); }
+static void op_set_element(const int64_t *p) { (void)p; ms_set_element(&M, R_S0, R_S1, SLOT_S); }
 static void op_load_field(const int64_t *p) { ms_load_field(&M, SLOT_D, REG_B, (uint32_t)p[0]); }
 static void op_load_len(const int64_t *p) { (void)p; ms_load_len(&M, REG_R, REG_B); }
 static void op_check_len(const int64_t *p) { ms_check_len(&M, REG_B, (uint32_t)p[0], &unless_label); }
@@ -312,6 +313,7 @@ static const Op ops[] = {
     { "alloc line (kind, contag, n, slow)", op_alloc, {{"kind", 1}, {"contag", 3}, {"n", 2}}, 3, 1 },
     { "storeField line (b, i, s)", op_store_field, {{"i", 2}}, 1, 0 },
     { "setField line (b, i, s)", op_set_field, {{"i", 2}}, 1, 0 },
+    { "setElement line s", op_set_element, {{0,0}}, 0, 1 },
     { "loadField line (d, b, i)", op_load_field, {{"i", 2}}, 1, 0 },
     { "loadLen line (r, b)", op_load_len, {{0,0}}, 0, 0 },
     { "checkLen line (b, n, unless)", op_check_len, {{"n", 3}}, 1, 0 },

@@ -1149,17 +1149,33 @@ void ms_need_len(Masm *m, int obj, uint32_t n, AsmLabel *unless) {
    and the value -- and may come before the store. Today it is the store
    alone; under RUNE_BARRIER_CARDS it then marks the card of the field's
    address, as C's does, with the register that held the object, which no
-   emitter needs again. runeopt's `:=` and `Array.update` are its template
-   (setField). */
+   emitter needs again. runeopt's `:=` is its template (setField). */
+static void barrier(Masm *m, int obj, int at, int32_t off) {
+#ifdef RUNE_BARRIER_CARDS
+    (void)obj;
+    as_add_ri(&m->a, at, off);
+    as_shr_ri(&m->a, at, CARD_SHIFT);
+    as_and_ri(&m->a, at, (int32_t)(CARD_COUNT - 1));
+    as_add_rm(&m->a, at, VMR, OFF(jit_cards));
+    as_st8i(&m->a, at, 0, 1);
+#else
+    (void)m; (void)obj; (void)at; (void)off;
+#endif
+}
 void ms_set_field(Masm *m, int obj, uint32_t i, int32_t s) {
     ms_store_field(m, obj, i, s);
-#ifdef RUNE_BARRIER_CARDS
-    as_add_ri(&m->a, obj, FIELD_OFF(i));
-    as_shr_ri(&m->a, obj, CARD_SHIFT);
-    as_and_ri(&m->a, obj, (int32_t)(CARD_COUNT - 1));
-    as_add_rm(&m->a, obj, VMR, OFF(jit_cards));
-    as_st8i(&m->a, obj, 0, 1);
-#endif
+    barrier(m, obj, obj, FIELD_OFF(i));
+}
+/* The same for an element of an array: its address, from the index and the
+   array, in index's register, the array kept in obj, since the barrier finds
+   what it marks from the object and not from the field (an element of a
+   large array may lie past the first chunk of its run). runeopt's
+   `Array.update` is its template (setElement). */
+void ms_set_element(Masm *m, int obj, int index, int32_t s) {
+    ms_scale_index(m, index);
+    as_add_rr(&m->a, index, obj);
+    ms_store_value(m, index, FIELD_OFF(0), s);
+    barrier(m, obj, index, FIELD_OFF(0));
 }
 void ms_store_field_imm(Masm *m, int obj, uint32_t i, int tag, int32_t payload) {
     as_st64i(&m->a, obj, FIELD_OFF(i), (int32_t)word_of(tag, payload));

@@ -321,6 +321,17 @@ static inline int heap_is_young(const VM *vm, const void *p) {
 /* The bytes of objects in the heap (boxes too), as the collector counts them */
 static inline size_t heap_used(const VM *vm) { return vm->gc.closed + vm->alloc.used; }
 
+/* THE BARRIER's body (runtime/value.h, obj_set_field): nothing, or the
+   measuring card mark */
+static inline void gc_barrier(VM *vm, Obj *o, Value *f, Value v) {
+    (void)vm; (void)o; (void)v;
+#ifdef RUNE_BARRIER_CARDS
+    rune_cards[((uintptr_t)f >> CARD_SHIFT) & (CARD_COUNT - 1)] = 1;
+#else
+    (void)f;
+#endif
+}
+
 /* heap.c */
 void heap_init(VM *vm, size_t size);   /* a heap of that size (runtime/gc/) */
 Obj *vm_alloc(VM *vm, uint8_t kind, uint16_t contag, uint32_t len, size_t payload_bytes);

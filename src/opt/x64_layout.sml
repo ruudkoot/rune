@@ -260,6 +260,11 @@ struct
   fun setField line (b, i, s) =
     (line ("movsd " ^ s ^ "(%r13,%rbp), %xmm0");
      line ("movsd %xmm0, OBJ_FIELDS+" ^ num (IntInf.* (IntInf.fromInt 8, IntInf.fromInt i)) ^ "(" ^ reg64 b ^ ")"))
+  fun setElement line s =
+    (line ("shl $3, %rcx");
+     line ("add %rax, %rcx");
+     line ("movsd " ^ s ^ "(%r13,%rbp), %xmm0");
+     line ("movsd %xmm0, OBJ_FIELDS(%rcx)"))
   fun loadField line (d, b, i) =
     (line ("movsd OBJ_FIELDS+" ^ num (IntInf.* (IntInf.fromInt 8, IntInf.fromInt i)) ^ "(" ^ reg64 b ^ "), %xmm0");
      line ("movsd %xmm0, " ^ d ^ "(%r13,%rbp)"))

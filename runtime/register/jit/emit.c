@@ -537,8 +537,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         ms_need_word(M, z);
         ms_load_obj(M, R_S0, x, K_ARRAY, slow);
         index_of(j, y, slow);
-        element(j);
-        ms_set_field(M, R_S0, 0, z);   /* field 0 of the element's address */
+        ms_set_element(M, R_S0, R_S1, z);
         ms_set(M, d, T_UNIT, 0);
         break;
     /* The arrays of bytes and of reals (heap-layout M8): an element is a

@@ -281,30 +281,31 @@ static inline Value obj_field(const Obj *o, uint32_t i) { return obj_fields_c(o)
 static inline void obj_fill_field(Obj *o, uint32_t i, Value v) { OBJ_FIELDS(o)[i] = v; }
 /* THE BARRIER: what a store into an object that exists does beside the
    store. Nothing today: the copier needs none. It is one operation, here
-   for C and ms_set_field for compiled code (runtime/register/jit/masm.c,
-   and runeopt's template made from it), so that a collector that needs one
-   writes its body in two places and finds every store already going
-   through it. It sees what any barrier needs (docs/plans/garbage-collector-v2.md,
-   D6): the object o, the field's address f and the value v stored, and it
-   comes before the store, so that *f is still the value overwritten, which
-   a snapshot barrier logs. RUNE_BARRIER_CARDS makes it a card mark, to
-   measure what a barrier of that kind costs before there is a collector
-   that reads the cards (docs/plans/heap-layout.md, M7): the card of the
-   field's address, one byte for every 512 bytes of address, in a table the
-   address is folded into. */
+   for C and ms_set_field and ms_set_element for compiled code
+   (runtime/register/jit/masm.c, and runeopt's templates made from them),
+   so that a collector that needs one writes its body in two places and
+   finds every store already going through it. It sees what any barrier
+   needs (docs/plans/garbage-collector-v2.md, D6): the VM whose heap it is
+   (a nursery's range is the VM's), the object o, the field's address f and
+   the value v stored, and it comes before the store, so that *f is still
+   the value overwritten, which a snapshot barrier logs. Its body is
+   gc_barrier, in runtime/vm.h, where the VM is known. RUNE_BARRIER_CARDS
+   makes it a card mark, to measure what a barrier of that kind costs before
+   there is a collector that reads the cards (docs/plans/heap-layout.md,
+   M7): the card of the field's address, one byte for every 512 bytes of
+   address, in a table the address is folded into. */
 #ifdef RUNE_BARRIER_CARDS
 #define CARD_SHIFT 9
 #define CARD_COUNT ((uintptr_t)1 << 20)
 extern uint8_t *rune_cards;   /* CARD_COUNT bytes (runtime/heap.c) */
-#define BARRIER(o, f, v) ((void)(o), (void)(v), rune_cards[((uintptr_t)(f) >> CARD_SHIFT) & (CARD_COUNT - 1)] = 1)
-#else
-#define BARRIER(o, f, v) ((void)(o), (void)(f), (void)(v))
 #endif
+struct VM;
+static inline void gc_barrier(struct VM *vm, Obj *o, Value *f, Value v);
 /* a store into an object that exists (ref_set, array_update, SETENV),
    through the barrier */
-static inline void obj_set_field(Obj *o, uint32_t i, Value v) {
+static inline void obj_set_field(struct VM *vm, Obj *o, uint32_t i, Value v) {
     Value *f = &OBJ_FIELDS(o)[i];
-    BARRIER(o, f, v);
+    gc_barrier(vm, o, f, v);
     *f = v;
 }
 /* An object becomes an indirection to a value, in place: the header's kind
@@ -314,8 +315,8 @@ static inline void obj_set_field(Obj *o, uint32_t i, Value v) {
    object existing and the value being newer. The length stays, so the
    object keeps its size; the collector follows the first field alone
    (runtime/heap.c), the others being dead from here on. */
-static inline void obj_become_ind(Obj *o, Value v) {
-    BARRIER(o, &OBJ_FIELDS(o)[0], v);
+static inline void obj_become_ind(struct VM *vm, Obj *o, Value v) {
+    gc_barrier(vm, o, &OBJ_FIELDS(o)[0], v);
     o->kind = (uint8_t)((o->kind & OBJ_GC_BITS) | K_IND);
     OBJ_FIELDS(o)[0] = v;
 }
