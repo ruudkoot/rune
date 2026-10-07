@@ -10,7 +10,7 @@
 /* The heap's last chunk during a collection is the one copied into; one an
    object does not fit is followed by another, or by a run of its own. */
 static Chunk *copy_next(VM *vm, size_t size) {
-    Chunk *c = chunk_take(vm, size > CHUNK_ROOM ? size : 0);
+    Chunk *c = chunk_take(vm, size > CHUNK_ROOM ? size : 0, CHUNK_OLD);
     chunk_append(vm, c);
     return c;
 }
@@ -19,9 +19,23 @@ static Chunk *copy_next(VM *vm, size_t size) {
    copied into, how much is in them, and how much of that is boxes. */
 static Obj *copy_obj(VM *vm, Obj *o) {
     if (obj_forwarded(o)) return obj_forwarding(o);
+    /* with a nursery, a large object stays where it is, marked (los.c) */
+    if (vm->gc.nursery && !gc_in_nursery(vm, o) && chunk_of(o)->kind == CHUNK_LOS) {
+        los_mark(vm, o);
+        return o;
+    }
     vm->gc_counts.objects++;
     size_t size = obj_size(o);
     if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) vm->gc.to_boxes += size;
+    if (vm->gc.nursery && size >= vm->gc.los_min) {
+        /* a large one of the nursery (compiled code made it) goes there now */
+        Obj *n = los_alloc(vm, size);
+        memcpy(n, o, size);
+        los_mark(vm, n);
+        vm->copied += size;
+        obj_forward(o, n);
+        return n;
+    }
     Chunk *to = vm->gc.last;
     if (size > chunk_room(to) - to->used) to = copy_next(vm, size);
     Obj *n = (Obj *)(chunk_payload(to) + to->used);
@@ -48,6 +62,7 @@ static Obj *copy_obj(VM *vm, Obj *o) {
         obj_set_gc_bits(n, age | ((size & 8) ? OBJ_GC_REMEMBERED : 0) | ((vm->gc_count & 1) ? OBJ_GC_PINNED : 0));
     }
 #endif
+    if (vm->gc.nursery) chunk_note(to, to->used, size);
     to->used += size;
     vm->gc.to_used += size;
 #ifdef RUNE_CENSUS
@@ -101,12 +116,13 @@ static void stack_roots(VM *vm) {
    fill is alloc_view's. */
 static void collect_into(VM *vm, size_t new_size) {
     Chunk *from = vm->gc.first;
-    vm->gc.last->used = vm->alloc.used;
+    if (!vm->gc.nursery) vm->gc.last->used = vm->alloc.used;
     vm->gc.first = vm->gc.last = NULL;
     vm->gc.closed = 0;
     vm->gc.to_used = 0;
     vm->gc.to_boxes = 0;
-    chunk_append(vm, chunk_take(vm, 0));
+    vm->gc.nqueue = 0;
+    chunk_append(vm, chunk_take(vm, 0, CHUNK_OLD));
 #ifdef RUNE_CENSUS
     vm->gc.to_used_stock = 0;
     census_collect_begin();
@@ -119,22 +135,45 @@ static void collect_into(VM *vm, size_t new_size) {
 #undef COPY_ROOT_VALUE
 #undef COPY_ROOT_OBJ
 
-    /* scan, chunk by chunk in the order they were filled: the last grows,
-       and others are added after it, while it is scanned */
-    for (Chunk *c = vm->gc.first; c; c = c->next)
-        for (size_t at = 0; at < c->used; ) {
-            Obj *o = (Obj *)(chunk_payload(c) + at);
-            if (obj_has_fields(o)) {
-                Value *f = obj_fields(o);
-                uint32_t n = obj_scanned_fields(o);   /* every field; of an indirection, the first */
-                for (uint32_t i = 0; i < n; i++) copy_value(vm, &f[i]);
+    /* scan, chunk by chunk in the order they were filled (the last grows,
+       and others are added after it, while it is scanned), and the large
+       objects marked, until neither has more */
+    Chunk *c = vm->gc.first;
+    size_t at = 0;
+    for (;;) {
+        while (c) {
+            while (at < c->used) {
+                Obj *o = (Obj *)(chunk_payload(c) + at);
+                if (obj_has_fields(o)) {
+                    Value *f = obj_fields(o);
+                    uint32_t n = obj_scanned_fields(o);   /* every field; of an indirection, the first */
+                    for (uint32_t i = 0; i < n; i++) copy_value(vm, &f[i]);
+                }
+                at += obj_size(o);
             }
-            at += obj_size(o);
+            if (!c->next) break;
+            c = c->next;
+            at = 0;
         }
+        if (!vm->gc.nqueue) break;
+        Obj *o = vm->gc.queue[--vm->gc.nqueue];
+        Value *f = obj_fields(o);
+        uint32_t n = obj_scanned_fields(o);
+        for (uint32_t i = 0; i < n; i++) copy_value(vm, &f[i]);
+    }
 
     vm->gc.size = new_size;
-    for (Chunk *c = from, *n; c; c = n) { n = c->next; chunk_give(vm, c); }
-    vm->gc.closed = vm->gc.to_used - vm->gc.last->used;
+    for (Chunk *k = from, *n; k; k = n) { n = k->next; chunk_give(vm, k); }
+    if (vm->gc.nursery) {
+        /* the nursery is empty, the old space all that was copied, and no
+           large object is new any more */
+        vm->gc.closed = vm->gc.to_used;
+        vm->alloc.used = 0;
+        vm->gc.nborn = 0;
+        los_sweep(vm);
+        vm->gc.old_boxes = vm->gc.to_boxes;
+        vm->gc.fulls++;
+    } else vm->gc.closed = vm->gc.to_used - vm->gc.last->used;
     alloc_view(vm);
     vm->box_bytes_live = vm->gc.to_boxes;
 #ifdef RUNE_CENSUS
@@ -142,7 +181,7 @@ static void collect_into(VM *vm, size_t new_size) {
 #endif
     vm->gc_count++;
     vm->copied += vm->gc.to_used;
-    if (vm->gc.to_used > vm->max_live) vm->max_live = vm->gc.to_used;
+    if (heap_used(vm) > vm->max_live) vm->max_live = heap_used(vm);
 }
 
 /* A pass of the copier, as --gc-log sees it: timed on the monotonic clock,
@@ -159,7 +198,7 @@ void collect_pass(VM *vm, size_t new_size) {
     collect_into(vm, new_size);
     int64_t pause = sys_clock_ns() - m.t0;
     vm->gc_ns += pause;
-    log_pass_end(vm, &m, pause);
+    log_pass_end(vm, &m, "full", pause);
     if (vm->gc_verify) heap_verify(vm, "after");
 }
 
@@ -218,7 +257,7 @@ void vm_gc(VM *vm, size_t needed) {
     collect_pass(vm, grown(vm, vm->gc.size, guess, needed));
     size_t want = grown(vm, vm->gc.size, USED_STOCK(vm), needed);
     if (want != vm->gc.size) collect_pass(vm, want);
-    if (needed > vm->gc.size - USED_STOCK(vm)) vm_limit(vm, "heap limit exceeded");
+    if (USED_STOCK(vm) > vm->gc.size || needed > vm->gc.size - USED_STOCK(vm)) vm_limit(vm, "heap limit exceeded");
     vm->live_before = vm->live_last;
     vm->live_last = USED_STOCK(vm);
     CENSUS_GC_END(vm);

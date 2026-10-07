@@ -174,6 +174,8 @@ typedef struct AllocState {
 } AllocState;
 
 typedef struct Chunk Chunk;   /* runtime/gc/gc.h */
+/* where a run of an image's objects was read to (runtime/gc/chunk.c, heap_read_take) */
+typedef struct HeapSeg { uint64_t base; char *at; size_t len; } HeapSeg;
 
 /* The collector's own (runtime/gc/): nothing of it is a variable of the
    file, so every VM of a process collects by itself. The heap is a list of
@@ -191,6 +193,25 @@ typedef struct GcState {
     size_t to_boxes;     /* of them, the boxes (box_bytes_live) */
     size_t to_used_stock;   /* the census VM's count of to_used by the stock sizes */
     int reloc_ok;        /* heap_relocate */
+    /* The nursery (runtime/gc/minor.c; docs/plans/garbage-collector-v2.md,
+       M3): its chunk, and the bytes it holds, alloc's room; none (NULL, 0)
+       makes alloc the room of the heap's last chunk */
+    Chunk *nursery;
+    size_t nursery_size;
+    /* The large-object space (runtime/gc/los.c): objects of los_min bytes
+       or more, in its chunks; its bytes count with the old space's; those
+       with fields made since the last minor collection, and a full
+       collection's to scan */
+    Chunk *los;
+    size_t los_min, los_bytes;
+    Obj **born;
+    size_t nborn, born_cap;
+    Obj **queue;
+    size_t nqueue, queue_cap;
+    uint64_t minors, fulls, promoted, large_objects, large_bytes;
+    size_t old_boxes;    /* of box_bytes_live, the old space's (the nursery's die with it) */
+    HeapSeg *segs;       /* an image read back, until heap_relocate */
+    size_t nsegs, segs_cap;
 } GcState;
 
 typedef struct VM {
@@ -250,6 +271,12 @@ typedef struct VM {
         uint64_t live_slots; /* of them, the ones that were roots (the rest were dead registers) */
         uint64_t frames;     /* waiting frames whose live registers were asked for */
         uint64_t other_roots;
+        uint64_t promoted;   /* bytes copied out of the nursery */
+        uint64_t cards_dirty;    /* a minor's dirty cards, */
+        uint64_t cards_scanned;  /* and the cards of the dirty blocks it looked at */
+        uint64_t remembered;     /* large objects scanned whole */
+        uint64_t cards_young;    /* dirty cards that held a pointer into the nursery */
+        uint64_t fields;         /* fields scanned in dirty cards and remembered objects */
     } gc_counts;
     /* The boxes of the representation -- a real with no immediate, an int
        or a word past 63 bits under RUNE_INT64 -- are counted apart: they
@@ -318,22 +345,27 @@ typedef struct VM {
 static inline int heap_is_young(const VM *vm, const void *p) {
     return (uintptr_t)((const char *)p - vm->alloc.from) < (uintptr_t)vm->alloc.size;
 }
-/* The bytes of objects in the heap (boxes too), as the collector counts them */
-static inline size_t heap_used(const VM *vm) { return vm->gc.closed + vm->alloc.used; }
+/* The bytes of objects in the heap (boxes too), as the collector counts them:
+   the old space's chunks, the large objects and alloc's room */
+static inline size_t heap_used(const VM *vm) { return vm->gc.closed + vm->gc.los_bytes + vm->alloc.used; }
 
-/* THE BARRIER's body (runtime/value.h, obj_set_field): nothing, or the
-   measuring card mark */
+/* THE BARRIER's body (runtime/value.h, obj_set_field;
+   docs/plans/garbage-collector-v2.md, D6): where there is a nursery, a
+   pointer into it stored into an object that is not in it marks the card
+   of the field (runtime/gc/minor.c, gc_write), so that the next minor
+   collection finds it; every other store is the store alone. And the
+   measuring card mark, in the build that measures one. */
+void gc_write(Obj *o, Value *f);
 static inline void gc_barrier(VM *vm, Obj *o, Value *f, Value v) {
-    (void)vm; (void)o; (void)v;
 #ifdef RUNE_BARRIER_CARDS
     rune_cards[((uintptr_t)f >> CARD_SHIFT) & (CARD_COUNT - 1)] = 1;
-#else
-    (void)f;
 #endif
+    if (vm->gc.nursery && val_is_ptr(v) && heap_is_young(vm, val_ptr(v)) && !heap_is_young(vm, o)) gc_write(o, f);
 }
 
 /* heap.c */
 void heap_init(VM *vm, size_t size);   /* a heap of that size (runtime/gc/) */
+void heap_nursery(VM *vm, size_t bytes);   /* --nursery: a nursery of bytes before the heap (0: none) */
 Obj *vm_alloc(VM *vm, uint8_t kind, uint16_t contag, uint32_t len, size_t payload_bytes);
 Obj *vm_alloc_fields(VM *vm, uint8_t kind, uint16_t contag, uint32_t nfields);
 Obj *vm_alloc_string(VM *vm, uint32_t len);

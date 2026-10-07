@@ -39,11 +39,13 @@ and a pointer where it is clear, so that a value is made in one register
 and stored in one store; a real outside the encoding and an `Int64.int` or
 `Word64.word` past 63 bits are boxes of 8 raw bytes; objects have an 8-byte
 header and a payload in multiples of 8;
-the collector is a Cheney two-space copier that runs only inside
-`vm_alloc`, with the value stack below `sp`, the globals, the constants,
-each frame's closure and the built-in exceptions as its roots. There are
-no stack maps and no write barrier: every slot is a word whose low bit
-tells an immediate from a pointer. Of the stack, the registers of a frame
+the collector is generational, a nursery that a minor collection copies
+out of and an old space that a full one copies (`runtime/gc/`), and runs
+only inside `vm_alloc`, with the value stack below `sp`, the globals, the
+constants, each frame's closure and the built-in exceptions as its roots,
+and for a minor collection the cards the barrier marked. There are no
+stack maps: every slot is a word whose low bit tells an immediate from a
+pointer. Of the stack, the registers of a frame
 that waits for a call are roots as far as they are live there
 (`VM.frame_live`, which `vm_loop` sets to `reg_frame_live` of `live.c`):
 the collector asks with the frame's function and the pc its callee returns
@@ -63,8 +65,9 @@ stores into the heap are `SETENV`, the primitives `ref_set` and
 `array_update` (in `runtime/prims.c`, and in the loop through `HEAP_STORE` of
 `runtime/register/fastprim.h`) and a few more primitives; each is
 `obj_set_field` (`runtime/value.h`), whose barrier (`gc_barrier`,
-`runtime/vm.h`) is empty, and `ms_set_field` or `ms_set_element` in
-compiled code. The collector's state and the allocation
+`runtime/vm.h`) marks the card of an old object's field given a pointer
+into the nursery, and `ms_set_field` or `ms_set_element` in compiled
+code. The collector's state and the allocation
 state are structs of the VM (`GcState`, `AllocState`, `runtime/vm.h`): the
 fast path bumps `alloc.used` against `alloc.size`.
 
@@ -270,8 +273,10 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   array's element, the store and the barrier in one operation, which sees
   the object, the field and the value as C's `gc_barrier` does (the array
   kept beside its element's address, since a barrier finds what it marks
-  from the object) and emits the store alone today, and a card mark after
-  it in the VM built to measure one (`bin/runevm-cards`); a fill of a
+  from the object), and emits the store, then the barrier: where the value
+  stored is a pointer into alloc's room and the object is not in it, and
+  there is a nursery, the card of the field in the object's chunk and the
+  card's block are marked (R_S2, R_S3 and R_S6 clobbered); a fill of a
   fresh object is `ms_store_field` alone. A kind is tested by `kind_is`: the
   header's first byte compared whole, as `obj_kind` reads it in C, since
   the four bits it shares with the kind are the collector's and zero;

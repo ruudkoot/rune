@@ -23,7 +23,8 @@
 #   make test-basis run the Basis Library suite (tests/basis) with bin/rune
 #   make perf-check verify the instruction and allocation budgets (tests/perf)
 #   make test-stress  both suites with a collection before every GC_STRESS-th
-#                   (101; Basis Library suite: GC_STRESS_BASIS-th, 1009) allocation
+#                   (101; Basis Library suite: GC_STRESS_BASIS-th, 1009) allocation:
+#                   the interpreters with no nursery, the JIT with one of 4 KiB
 #   make bootstrap  verify that the self-hosted compiler reproduces bin/rune.rbc
 #   make check      everything above
 #   make doctor     check that the tools all targets need are installed
@@ -109,7 +110,7 @@ BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit
 # build/librune.a, which bin/runevm-stack links, and so will a program runeopt
 # makes (docs/native.md); the other VMs compile the same list.
 SYS ?= posix
-RT_SRCS := runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/check.c runtime/gc/log.c runtime/loader.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
+RT_SRCS := runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/check.c runtime/gc/log.c runtime/loader.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
 VM_SRCS := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_$(SYS).c
 VM_HDRS := runtime/vm.h runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
 RT_OBJS := $(patsubst runtime/%.c,build/librune/%.o,$(RT_SRCS) runtime/sys/sys_$(SYS).c)
@@ -731,7 +732,8 @@ test: $(RUNE) vm | build/.doctor-check
 	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
 	build/heap_test
 
-# The hooks for the collector to come (docs/plans/heap-layout.md, M7). The C
+# The collector and its hooks (docs/plans/heap-layout.md, M7;
+# docs/plans/garbage-collector-v2.md, M2 and M3). The C
 # test of them (tests/runtime/heap_test.c) on the runtime as built and as
 # built with each switch: the header's four bits set by the collector on
 # every object it copies (RUNE_GC_BITS), and the barrier as a card mark
@@ -741,7 +743,8 @@ test: $(RUNE) vm | build/.doctor-check
 # every one, which takes a quarter of an hour), so
 # that a reader of a kind that does not mask the bits fails, and on the VM
 # of the second; and on bin/runevm with the heap checked before and after
-# every collection of a heap of 64 KiB (--gc-verify). Part of make check.
+# every collection of a heap of 64 KiB and a nursery of 8 KiB (--gc-verify),
+# the barrier's cards with it. Part of make check.
 test-heap: bin/runevm-gcbits bin/runevm-cards $(RUNE) vm | build/.doctor-check
 	@mkdir -p build
 	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
@@ -755,7 +758,7 @@ test-heap: bin/runevm-gcbits bin/runevm-cards $(RUNE) vm | build/.doctor-check
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gcbits --out tests/out/register-gcbits
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gcbits-stress --out tests/out/register-gcbits-stress
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-cards --out tests/out/register-cards
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc-verify --heap-size 65536 "$$@"\n' > bin/runevm-verify
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc-verify --heap-size 65536 --nursery 8192 "$$@"\n' > bin/runevm-verify
 	chmod +x bin/runevm-verify
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-verify --out tests/out/register-verify
 
@@ -865,13 +868,13 @@ perf-check: $(RUNE) bin/runedoc vm bin/rune.rbc bin/runedoc.rbc bin/rune.stack.r
 GC_STRESS ?= 101
 GC_STRESS_BASIS ?= 1009
 test-stress: $(RUNE) vm | build/.doctor-check
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-stack" --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-stack-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-stack" --nursery 0 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-stack-stress
 	chmod +x bin/runevm-stack-stress
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --nursery 0 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-stress
 	chmod +x bin/runevm-stress
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-jit-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --nursery 4096 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-jit-stress
 	chmod +x bin/runevm-jit-stress
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --jit-tier=2 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-opt-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --jit-tier=2 --nursery 4096 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-opt-stress
 	chmod +x bin/runevm-opt-stress
 	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack-stress
 	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-stress --out tests/out/register-stress

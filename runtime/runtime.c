@@ -346,6 +346,12 @@ void vm_exit(VM *vm, int status) {
                 vm->gc_count, (unsigned long long)vm->bytes_allocated, vm->gc.size, heap_used(vm),
                 (unsigned long long)vm->copied, vm->max_live, (long long)(vm->gc_user_us + vm->gc_sys_us),
                 (long long)vm->gc_longest_us);
+    if (vm->stats && vm->gc.nursery)   /* the nursery's (runtime/gc/minor.c) */
+        fprintf(stderr, "runevm: nursery %zu bytes: %llu minor and %llu full collections, promoted %llu, "
+                "large objects %llu (%llu bytes), %zu bytes of them live\n",
+                vm->gc.nursery_size, (unsigned long long)vm->gc.minors, (unsigned long long)vm->gc.fulls,
+                (unsigned long long)vm->gc.promoted, (unsigned long long)vm->gc.large_objects,
+                (unsigned long long)vm->gc.large_bytes, vm->gc.los_bytes);
     if (vm->stats && vm->boxes_allocated)   /* the representation's own, which --count leaves out (vm.h) */
         fprintf(stderr, "runevm: %llu boxes, %llu bytes\n",
                 (unsigned long long)vm->boxes_allocated, (unsigned long long)vm->box_bytes_allocated);

@@ -115,16 +115,14 @@ static void put_u64(Stream *s, uint64_t v) {
 /* where a heap object is in the heap's run of objects (heap_number); NONE for none */
 #define OFF_NONE UINT64_MAX
 
-static void put_obj(Stream *s, const Obj *o, const VM *vm) {
-    (void)vm;
-    put_u64(s, o ? heap_offset_of(o) : OFF_NONE);
+static void put_obj(Stream *s, const Obj *o, VM *vm) {
+    put_u64(s, o ? heap_offset_of(vm, o) : OFF_NONE);
 }
 
-static void put_value(Stream *s, Value v, const VM *vm) {
+static void put_value(Stream *s, Value v, VM *vm) {
     /* an immediate as its bits; anything in the heap, a box too, as its offset */
     int ptr = !val_is_imm(v);
-    (void)vm;
-    uint64_t w = ptr ? (val_ptr(v) ? heap_offset_of(val_ptr(v)) : OFF_NONE) : val_bits(v);
+    uint64_t w = ptr ? (val_ptr(v) ? heap_offset_of(vm, val_ptr(v)) : OFF_NONE) : val_bits(v);
     uint8_t *b = room(s, 9);
     if (!b) return;
     b[0] = ptr ? T_PTR : T_INT;
@@ -137,14 +135,10 @@ static void put_string(Stream *s, const char *text) {
     put(s, text, (size_t)n);
 }
 
-/* The heap, object by object, the chunks one after the other in the
-   order they were filled, as one run of objects whose offsets the pointers
-   are (heap_number): a header of its own width, then the fields, or the
-   bytes of a string. */
-static void put_heap(Stream *s, VM *vm) {
-    for (Chunk *c = heap_first(vm); c && s->ok; c = c->next)
-    for (size_t scan = 0; s->ok && scan < chunk_used(vm, c); ) {
-        Obj *o = (Obj *)(chunk_payload(c) + scan);
+/* An object of the heap's run (heap_number), whose offsets the pointers
+   are: a header of its own width, then the fields, or the bytes of a
+   string. */
+static void put_object(Stream *s, Obj *o, VM *vm) {
         put_u8(s, obj_kind(o));
         put_u16(s, obj_contag(o));
         put_u32(s, obj_len(o));
@@ -164,8 +158,18 @@ static void put_heap(Stream *s, VM *vm) {
             Value *f = obj_fields(o);
             for (uint32_t i = 0; i < obj_len(o); i++) put_value(s, f[i], vm);
         }
-        scan += obj_size(o);
-    }
+}
+
+/* the old space's chunks in their order, then the large objects, then the
+   nursery's, as heap_number counts them */
+static void put_heap(Stream *s, VM *vm) {
+    for (Chunk *c = heap_first(vm); c && s->ok; c = c->next)
+        for (size_t scan = 0; s->ok && scan < chunk_used(vm, c); scan += obj_size((Obj *)(chunk_payload(c) + scan)))
+            put_object(s, (Obj *)(chunk_payload(c) + scan), vm);
+    for (Obj *o = los_first(vm); o && s->ok; o = los_next(vm, o)) put_object(s, o, vm);
+    if (vm->gc.nursery)
+        for (size_t scan = 0; s->ok && scan < vm->alloc.used; scan += obj_size((Obj *)(vm->alloc.from + scan)))
+            put_object(s, (Obj *)(vm->alloc.from + scan), vm);
 }
 
 static void write_image(VM *vm, Stream *s, int kind) {
@@ -218,7 +222,7 @@ static void write_image(VM *vm, Stream *s, int kind) {
         case CONST_WORD64: plain = val_word64(v); break;
         case CONST_REAL: plain = real_bits(val_real(v)); break;
         case CONST_CHAR: plain = (uint64_t)val_char(v); break;
-        default: plain = val_ptr(v) ? heap_offset_of(val_ptr(v)) : OFF_NONE; break;
+        default: plain = val_ptr(v) ? heap_offset_of(vm, val_ptr(v)) : OFF_NONE; break;
         }
         put_u8(s, p->const_kinds[i]);
         put_value(s, v, vm);
@@ -478,6 +482,7 @@ static int get_heap(Stream *s, VM *vm, size_t used) {
         }
         scan += size;
     }
+    vm->gc.old_boxes = vm->box_bytes_live;   /* every object read is old */
     alloc_view(vm);
     return s->ok;
 }
@@ -567,9 +572,12 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     /* the heap, before what points into it */
     uint64_t heap_size = get_u64(&s);
     uint64_t heap_used = get_u64(&s);
-    if (!s.ok || heap_used > heap_size || heap_size > SIZE_MAX)
+    if (!s.ok || heap_used > SIZE_MAX || heap_size > SIZE_MAX)
         return failed(&s, err, errlen, "the image is cut short");
     size_t size = (size_t)heap_size, used = (size_t)heap_used;
+    /* what a nursery held may take the bytes in use past the heap's size
+       (runtime/gc/minor.c): the heap read holds them all */
+    if (used > size) size = used;
     if (vm->heap_limit) {
         if (used > vm->heap_limit) return failed(&s, err, errlen, "heap limit exceeded");
         if (size > vm->heap_limit) size = vm->heap_limit;
@@ -811,6 +819,7 @@ int vm_become(VM *vm, const char *path) {
     if (!next) { vm->io_errno = ENOMEM; return 0; }
     next->heap_limit = vm->heap_limit;
     next->equality_work = vm->equality_work;
+    next->gc.nursery_size = vm->gc.nursery_size;
     fflush(NULL);
     if (!read_image(next, sys_fopen(path, "rb"), IMAGE_SAVE, err, sizeof err)) {
         vm_release(next);

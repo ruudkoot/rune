@@ -78,19 +78,33 @@ values, and it survives a collection and a `fork` (below).
 Everything a program allocates is in one heap: tuples, constructors,
 closures, strings, refs, arrays, exceptions, and the boxes of the numbers
 that have no immediate (*Values and objects*). It is made of chunks of 2
-MiB, each aligned to its size, with the objects side by side after a
-header of 64 bytes; an object too large for one has a run of chunks to
-itself (`runtime/gc/`). Allocation is a bump of a pointer in the chunk
-being filled, in the VM's C and in line in compiled code, and the next
-chunk is taken where it is full; nothing is ever freed one object at a
-time. The heap's size is the bytes of objects it holds before it is
-collected, what one semispace held when the heap was two. The value
-stack, the frames, the handlers and the program's code are not in the
-heap.
+MiB, each aligned to its size, with the objects side by side after the
+chunk's header and tables (the barrier's cards, below); an object too
+large for one has a run of chunks to itself (`runtime/gc/`). It has three
+spaces:
+
+* **The nursery,** 1 MiB, where every object but a large one is made.
+  Allocation is a bump of a pointer in it, in the VM's C and in line in
+  compiled code.
+* **The old space,** the chunks that what survives the nursery is copied
+  into, one after another.
+* **The large-object space,** where an object of 8 KiB or more is made,
+  in pages of 4 KiB of its chunks, and stays where it is.
+
+Nothing is ever freed one object at a time. The heap's size is the bytes
+of objects the three hold before a full collection, what one semispace
+held when the heap was two. The value stack, the frames, the handlers and
+the program's code are not in the heap.
 
 * The heap's first size is 4 MiB, and `runevm --heap-size N` sets it (at
   least 4096 bytes).
-* After a collection the heap grows -- doubling -- until the live data is at
+* `runevm --nursery N` sets the nursery's size (at least 4096 bytes, 1
+  MiB by default); a nursery smaller than 32 KiB takes objects of a
+  quarter of its size and more to the large-object space. `--nursery 0`
+  makes none: every object is made in the old space's last chunk, the next
+  chunk is taken where it is full, and every collection is a full one --
+  the collector as it was before the nursery.
+* After a full collection the heap grows -- doubling -- until the live data is at
   most half of it and the request fits. `runevm --heap-fill P` makes that
   *P* percent instead (1 to 100): a quarter makes about half the collections
   for twice the memory. A heap that would have to double past
@@ -99,13 +113,14 @@ heap.
   takes moves in steps: the compiler compiling itself keeps 42 MB at most
   and runs in a heap of 134 MB, from the 64 MiB `bin/rune` starts it with
   (`RUNE_HEAP` in the Makefile; from the default 4 MiB it makes 18
-  collections and copies 383 MB).
-* A collection copies what is live into chunks of its own and gives the
+  collections and copies 383 MB; both with `--nursery 0`).
+* A full collection copies what is live into chunks of its own and gives the
   heap's old ones to a pool, as many as the heap's size takes and one more,
   which the next collection takes from first, so that their pages are not
-  made again; a run of chunks goes back to the system. So the process holds
-  up to twice the heap's size `--stats` prints, as it held two semispaces,
-  beside its stack and its code.
+  made again; a run of chunks goes back to the system, and so does a chunk
+  of the large-object space left empty. So the process holds up to twice
+  the heap's size `--stats` prints, as it held two semispaces, and the
+  nursery, beside its stack and its code.
 * `runevm --heap-limit N` caps the heap's size (at least 4096 bytes; no cap
   by default). At the cap the heap may be fuller than `--heap-fill` asks; what
   is live and one more allocation not fitting ends the run with `runevm:
@@ -113,35 +128,52 @@ heap.
 
 ## The garbage collector
 
-The collector is a Cheney copier, one for every engine (`runtime/gc/copy.c`).
-When a request would pass the heap's size, the live data is copied into
-chunks taken from the pool, in the order Cheney's scan reaches it, and the
-chunks it was in go to the pool. What it is and is not:
+The collector is generational, one for every engine (`runtime/gc/`):
+
+* **A minor collection,** when the nursery is full, copies what of it is
+  reached into the old space, after the objects there, in the order
+  Cheney's scan reaches it, and empties it (`minor.c`). Promotion is at the
+  first survival: an object a minor collection reaches is old from then on.
+* **A full collection,** when what the heap holds would pass its size,
+  copies what is live of the old space and the nursery into chunks taken
+  from the pool, as the Cheney copier before it did, gives the chunks it
+  was in to the pool, and frees the large objects it did not reach
+  (`copy.c`, `los.c`).
+
+What it is and is not:
 
 * **Precise.** Every slot of the stack and every field of an object is a
   word whose low bit tells an immediate from a pointer, so nothing is ever
   taken for a pointer that is not one, and nothing is scanned
   conservatively.
 * **Stop-the-world, in one piece.** The program does not run during a
-  collection. There are no generations, no increments and no second thread:
-  every collection copies everything that is live, the data that has been
-  live since the program started and a large array as much as a cell made a
-  moment ago. Its cost is in proportion to what is live and to nothing
+  collection. There are no increments and no second thread: a minor
+  collection copies what of the nursery is live, and a full one everything
+  that is live, the data that has been live since the program started with
+  it. The cost of either is in proportion to what it copies and to nothing
   else -- garbage is not visited -- at about 1.3 ns a byte copied on the
-  machine of [performance.md](performance.md): the compiler compiling
-  itself from the 64 MiB `bin/rune` gives it allocates 887 MB, makes 10
-  collections, and they copy 306 MB in 0.4 s.
-* **Moving.** A collection moves every object. Nothing of that is visible
-  to an SML program: equality on `ref` and `array` is the identity the
-  collector maintains, not the address of the moment.
+  machine of [performance.md](performance.md). With `--nursery 0` the
+  compiler compiling itself from the 64 MiB `bin/rune` gives it allocates
+  887 MB, makes 10 collections, and they copy 306 MB in 0.4 s.
+* **Moving.** A collection moves every object but a large one. Nothing of
+  that is visible to an SML program: equality on `ref` and `array` is the
+  identity the collector maintains, not the address of the moment.
 * **Only at an allocation.** A collection happens when an allocation does
   not fit, when the program asks (`Runtime.collect ()`), and before every
   *N*th allocation under `--gc-stress N`. There are no timers and no polls:
   code that does not allocate is never interrupted. The same program on the
   same input with the same options collects at the same allocations in
   every run (*The same run twice*).
-* **No barrier.** A store into a `ref` or an array is the store and nothing
-  else.
+* **A barrier on every store into an object that exists** -- `:=`,
+  `Array.update` and their like, and the closing of a recursive closure
+  (`SETENV`) -- in C and in compiled code. Where the value is a pointer
+  into the nursery and the object is not in it, the barrier marks the card
+  the field is in, 512 bytes of the object's chunk, and the card's block of
+  32 KiB, in the chunk's tables; a minor collection takes the fields of the
+  marked cards as roots and clears them, visiting the blocks marked alone,
+  and finds the objects of a card by a crossing map of each old chunk. A
+  large object is filled without the barrier, so one made since the last
+  minor collection is a root of the next one whole.
 * **No finalisers, no weak references, no pinning.** An object cannot ask to
   be told when it dies or to stay where it is; a file is closed by the
   program or when the process ends, not by the collector.
@@ -150,10 +182,12 @@ chunks it was in go to the pool. What it is and is not:
 
 The roots are the value stack, the globals, the constants of the program,
 the closure of each frame, the built-in exception constructors and the
-VM's boxes of zero, the infinities and NaN (`runtime/heap.c` lists them
+VM's boxes of zero, the infinities and NaN (`runtime/gc/gc.h` lists them
 once, for the collector and for an image whose heap moved). From those the
 whole live graph is copied, so anything unreachable disappears without
-being visited.
+being visited. A minor collection's roots are those, the fields of the
+cards the barrier marked and the large objects made since the last one;
+it looks at every slot of the stack, as a full one does.
 
 On the register VM, at every tier, the stack is a root by what is live
 where that is known. A register of a frame that waits for a call is a root
@@ -208,8 +242,10 @@ what `Runtime.stats` says is live.
   garbage since the last collection), the bytes every collection copied in
   all, the most a collection kept, the collector's processor time in
   microseconds and the longest single collection, which is the longest the
-  program stood still; and the boxes the program made, which `--count`
-  leaves out.
+  program stood still; with a nursery, its size, the minor and the full
+  collections, the bytes promoted, and the large objects made, their bytes
+  and the bytes of those still live; and the boxes the program made, which
+  `--count` leaves out.
 * `Runtime.stats ()` gives the collections, the bytes in use (boxes left
   out) and the heap's size to the program. The bytes in use are an
   upper bound of what is live, and right after `Runtime.collect ()` they
@@ -218,16 +254,20 @@ what `Runtime.stats` says is live.
   user and system apart, so a program can tell its own time from the
   collector's: `Timer.checkCPUTimes` gives both, `Timer.checkGCTime` the
   user part as the Basis says, and `--stats` the two together.
-* `runevm --gc-stress N` collects before every *N*th allocation. With `N = 1`
-  every allocation moves everything, which is how `make test-stress` finds a
-  primitive that keeps a heap pointer in a C variable across an allocation,
-  and a register the liveness wrongly takes for dead.
+* `runevm --gc-stress N` collects before every *N*th allocation, a minor
+  collection where there is a nursery. With `--nursery 0` every such
+  allocation moves everything, which is how `make test-stress` (every 101st
+  allocation: the interpreters with `--nursery 0`, the JIT with a nursery
+  of 4 KiB) finds a primitive that keeps a heap pointer in a C variable
+  across an allocation, and a register the liveness wrongly takes for dead.
 * `runevm --gc-verify` checks the heap before and after every collection:
-  that it parses, object by object, to the bytes in use, that every header
-  names a kind, and that every pointer in an object, on the stack or among
-  the other roots is to the start of an object in it; a failure is a
-  message naming the collection and status 2. `make test-heap` runs the
-  language's tests so, with a heap of 64 KiB.
+  that each of its spaces parses, object by object, to the bytes in use,
+  that every header names a kind, that every pointer in an object, on the
+  stack or among the other roots is to the start of an object in it, and
+  that every field of an old object that holds a pointer into the nursery
+  is in a card the barrier marked; a failure is a message naming the
+  collection and status 2. `make test-heap` runs the language's tests so,
+  with a heap of 64 KiB and a nursery of 8 KiB.
 * An image (`Runtime.save`) carries the heap as it lies, the garbage since
   the last collection with it; a `Runtime.collect ()` before it leaves that
   out.
@@ -246,37 +286,36 @@ from the value stack rather than holding them in variables; the pattern is in
 ### The collector's log
 
 `runevm --gc-log FILE` (a native program's `RUNEVM_OPTIONS` too) writes a
-line into FILE for every pass of the collector -- a collection that grows
-the heap is two passes, one into a space of the same size and one into a
-larger -- and some lines at exit. The run is the same with it, `--count`
+line into FILE for every pass of the collector -- a minor collection is
+one, and a full collection that grows the heap two, one into a space of
+the same size and one into a larger -- and some lines at exit. The run is the same with it, `--count`
 included (`tests/runtime/run-gc-log.py`). The first line names the format
-and the heap's settings (`# rune-gc-log 1 nursery=0 heap=H fill=P limit=L`)
+and the heap's settings (`# rune-gc-log 1 nursery=N heap=H fill=P limit=L`)
 and the second the columns, by which a script reads them (`tools/mmu.py`,
 `scripts/gc-eval.sh`; [testing.md](testing.md), *Measuring a collector*):
 
 | Column | What |
 |---|---|
 | `seq` | the pass, from 1 |
-| `kind` | `full` |
+| `kind` | `minor` or `full` |
 | `vmgc` | the collection the pass is part of: two passes of one collection have the same |
 | `bytes`, `objects`, `instrs` | what the program had allocated and executed when the pass began, as `--count` counts it: the same in every run with the same options |
 | `boxes`, `box_bytes` | the representation's boxes so far (`--stats`) |
-| `used_before` | the bytes in the space collected when the pass began |
+| `used_before` | the bytes in use when the pass began |
 | `copied`, `copied_objs` | the bytes and the objects it copied |
-| `promoted` | 0 |
+| `promoted` | a minor pass's copy, the bytes it moved out of the nursery; 0 for a full one |
 | `slots`, `live_slots` | the slots of the value stack it looked at, and of them those that were roots (the others were dead registers of frames waiting for a call) |
 | `frames` | the waiting frames whose live registers it asked for |
 | `other_roots` | the globals, constants, frames' closures, built-in exceptions, boxed reals and handles it visited |
-| `cards_dirty`, `cards_scanned`, `remembered` | 0 |
+| `cards_dirty`, `cards_scanned`, `remembered` | a minor pass's: the cards it found marked, the cards of the blocks marked dirty, and the large objects made since the last that it scanned whole |
 | `live_after`, `heap_size` | the bytes in use after it and the heap's size |
 | `pause_ns`, `cpu_ns` | its time on the monotonic clock and on the thread's processor time |
 | `rss_bytes` | the resident memory right after it (Linux and Windows; 0 elsewhere) |
 | `t_ns` | when it began, on the monotonic clock from the log's opening |
-| `cards_young`, `fields_scanned` | 0 |
+| `cards_young`, `fields_scanned` | a minor pass's: the marked cards that held a pointer into the nursery, and the fields of old objects it looked at |
 
-The columns that are 0 are a nursery's and its remembered set's
-([plans/garbage-collector-v2.md](plans/garbage-collector-v2.md)), there so
-that the format stays one when it comes. At exit, `# end bytes B objects O
+The columns of the remembered set are 0 for a full pass and without a
+nursery. At exit, `# end bytes B objects O
 instrs I boxes X box_bytes Y collections C gc_ns T vmpeak_kb P vmhwm_kb W`
 gives `--count`'s numbers, the passes and their time in all, and the
 process's peaks of address space and resident memory, and `# wall_ns N` the
@@ -284,12 +323,12 @@ time from the log's opening to its closing. A program that ends by a fatal
 error leaves the log without them. The child of a fork does not write to its
 parent's log.
 
-### What is in place for a collector to come
+### What is in place for the collector
 
-The copier needs none of these; they are there, and tested, so that a
-generational collector is a change to the collector and not to everything
-that touches the heap ([plans/collector.md](plans/collector.md) is its
-brief).
+These are there, and tested, so that a change of the collector -- the
+old space and the short pauses of
+[plans/garbage-collector-v2.md](plans/garbage-collector-v2.md) to come --
+is a change to the collector and not to everything that touches the heap.
 
 * **Four bits of the header are the collector's:** two for an age or a
   colour, one for "in the remembered set", one for "not to be moved"
@@ -304,14 +343,17 @@ brief).
 * **A store into an object that exists goes through one operation,**
   `obj_set_field` in C and `ms_set_field` (`ms_set_element` for an
   array's element) in compiled code (and `runeopt`'s `setField` and
-  `setElement`, made from them), whose barrier is empty. It sees the VM,
-  the object, the field's address and the value, before the store. The stores are `:=`, `Array.update` and their
-  like, and the closing of a recursive closure (`SETENV`). `bin/runevm-cards`
-  is a VM whose barrier marks a card, to measure a barrier before there is
-  a collector that reads one: on a loop of `:=` it runs 4.7% more
-  instructions, on the compiler compiling itself 0.3%.
-* **Young and old are told apart by address** (`heap_is_young`): the test
-  a nursery will make of its own range. Today every object is young.
+  `setElement`, made from them), whose barrier is the nursery's (`gc_barrier`
+  in `runtime/vm.h`, `barrier` in `runtime/register/jit/masm.c`). It sees the
+  VM, the object, the field's address and the value. The stores are `:=`,
+  `Array.update` and their like, and the closing of a recursive closure
+  (`SETENV`); a fill of a fresh object (`obj_fill_field`, `ms_store_field`)
+  has none. `bin/runevm-cards` is a VM whose barrier also marks a card of a
+  table of the process's, to measure a barrier by itself: on a loop of
+  `:=` it ran 4.7% more instructions, on the compiler compiling itself 0.3%.
+* **Young and old are told apart by address** (`heap_is_young`): alloc's
+  room, the nursery's range. With `--nursery 0` it is the old space's last
+  chunk.
 * **An object can become an indirection in place** (`obj_become_ind`), its
   first field the value, and the collector follows that field alone: a
   lazy language's update of a suspension. No program of SML does it.
@@ -484,7 +526,7 @@ afterwards: a program is one file, the basis library included.
 
 The whole command line -- `--disasm`, `--trace`, `--stats`, `--count`,
 `--gc-stress`, `--gc-verify`, `--checked`, `--heap-size`, `--heap-limit`,
-`--heap-fill`, `--stack-size`, `--equality-work`, `--gc-log`,
+`--heap-fill`, `--nursery`, `--stack-size`, `--equality-work`, `--gc-log`,
 `--emulate-fork`, `--restore`, `--version` -- is described in
 [bytecode.md](bytecode.md).
 
@@ -505,7 +547,7 @@ that the one writes what the other reads.
 What differs:
 
 * The options of `runevm` (`--count`, `--stats`, `--heap-size`,
-  `--heap-limit`, `--heap-fill`, `--equality-work`, `--gc-stress`,
+  `--heap-limit`, `--heap-fill`, `--nursery`, `--equality-work`, `--gc-stress`,
   `--gc-verify`, `--gc-log`, `--checked`) come from the environment
   variable `RUNEVM_OPTIONS`, after
   those the program was made with (`runeopt --options`), and the program takes

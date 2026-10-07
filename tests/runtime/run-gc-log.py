@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """runevm --gc-log FILE (docs/runtime.md, *Watching it*): a line for every
 pass of the collector, in the columns its header names, and lines at exit
-that agree with --count and --stats; and the run itself unchanged by it."""
+that agree with --count and --stats; and the run itself unchanged by it.
+With no nursery every pass is a full one; with one, minor passes promote
+and full ones copy the old space."""
 import argparse
 import re
 import subprocess
@@ -49,8 +51,8 @@ val () = print (Int.toString (List.foldl op+ 0 kept) ^ "\\n")
                               capture_output=True, timeout=60)
     assert compiled.returncode == 0, compiled.stderr
 
-    plain = run('--count', '--heap-size', 65536, bytecode)
-    logged = run('--count', '--stats', '--heap-size', 65536, '--gc-log', log, bytecode)
+    plain = run('--count', '--nursery', 0, '--heap-size', 65536, bytecode)
+    logged = run('--count', '--stats', '--nursery', 0, '--heap-size', 65536, '--gc-log', log, bytecode)
     assert plain.returncode == 0 and logged.returncode == 0, logged.stderr
     assert logged.stdout == plain.stdout, 'the log changed the output'
     count = count_of(plain.stderr)
@@ -84,6 +86,30 @@ val () = print (Int.toString (List.foldl op+ 0 kept) ^ "\\n")
     assert (int(end.group(3)), int(end.group(1)), int(end.group(2))) == count, lines[-2]
     assert int(end.group(4)) == collections, lines[-2]
     assert re.fullmatch(r'# wall_ns \d+', lines[-1]), lines[-1]
+
+    # with a nursery: minor passes, whose copy is what they promote, and full
+    # ones where the old space would pass the heap's size
+    log = directory / 'gclog-nursery.log'
+    logged = run('--count', '--stats', '--nursery', 16384, '--heap-size', 65536, '--gc-log', log, bytecode)
+    assert logged.returncode == 0, logged.stderr
+    assert logged.stdout == plain.stdout, 'the nursery changed the output'
+    assert count_of(logged.stderr) == count, 'the nursery changed --count'
+    collections = int(re.search(rb'runevm: (\d+) collections', logged.stderr).group(1))
+    minors, fulls, promoted = map(int, re.search(
+        rb'runevm: nursery 16384 bytes: (\d+) minor and (\d+) full collections, promoted (\d+)', logged.stderr).groups())
+    lines = log.read_text().splitlines()
+    assert re.fullmatch(r'# rune-gc-log 1 nursery=16384 heap=65536 fill=50 limit=0', lines[0]), lines[0]
+    rows = [dict(zip(COLUMNS, line.split())) for line in lines[2:] if not line.startswith('#')]
+    assert len(rows) == collections == minors + fulls and minors > 1 and fulls > 1, (len(rows), minors, fulls)
+    assert sum(int(r['promoted']) for r in rows) == promoted > 0
+    for seq, r in enumerate(rows, 1):
+        v = {k: int(x) for k, x in r.items() if k != 'kind'}
+        assert v['seq'] == seq, r
+        if r['kind'] == 'minor':
+            assert v['copied'] == v['promoted'] <= v['used_before'], r
+            assert v['cards_dirty'] <= v['cards_scanned'] and v['cards_young'] <= v['cards_dirty'], r
+        else:
+            assert r['kind'] == 'full' and v['promoted'] == 0 and v['copied'] <= v['live_after'], r
 
     # a file that cannot be written is refused before the program runs
     refused = run('--gc-log', directory, bytecode)

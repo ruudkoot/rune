@@ -1,5 +1,6 @@
 /* The macro-assembler of runtime/register's JIT (masm.h). */
 #include "masm.h"
+#include "gc/gc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +22,7 @@
 #define IMM(n) ((int64_t)(((uint64_t)(int64_t)(n) << 1) | 1u))   /* the word of the immediate n */
 _Static_assert(sizeof(Value) == 8, "masm.c writes 8-byte values");
 _Static_assert((1 << VALUE_SHIFT) == sizeof(Value), "masm.c scales an index by 8");
+_Static_assert(offsetof(Chunk, dirty_at) == 0, "the barrier reads a chunk's dirty_at as its first word");
 /* raw homes for ints and words: only where they are 64 bits, and asked for */
 #if defined(RUNE_INT64) && defined(RUNE_RAW_HOMES)
 #define RUNE_RAW_NUMS 1
@@ -1146,21 +1148,52 @@ void ms_need_len(Masm *m, int obj, uint32_t n, AsmLabel *unless) {
 /* THE BARRIER, in compiled code: a store into an object that exists is
    this one operation, the store and what it does beside it (value.h,
    BARRIER), so that the barrier has what C's has -- the object, the field
-   and the value -- and may come before the store. Today it is the store
-   alone; under RUNE_BARRIER_CARDS it then marks the card of the field's
-   address, as C's does, with the register that held the object, which no
-   emitter needs again. runeopt's `:=` is its template (setField). */
+   and the value. After the store, as vm.h's gc_barrier: where the value is
+   a pointer into the nursery (alloc's room) and the object is not in it,
+   the field's card in the object's chunk is marked, and the card's block
+   dirty (runtime/gc/gc.h, gc_remember). The chunk is the object's address
+   masked; its cards are at GC_CARDS from it, and its dirty bytes at the
+   offset its first word holds. Under RUNE_BARRIER_CARDS the measuring
+   table's card is marked too. R_S2, R_S3 and R_S6 are clobbered. runeopt's
+   `:=` is its template (setField). */
 static void barrier(Masm *m, int obj, int at, int32_t off) {
+    enum { S = R_S2, T = R_S3, U = R_S6 };
+    AsmLabel done; as_label_init(&done);
 #ifdef RUNE_BARRIER_CARDS
-    (void)obj;
-    as_add_ri(&m->a, at, off);
-    as_shr_ri(&m->a, at, CARD_SHIFT);
-    as_and_ri(&m->a, at, (int32_t)(CARD_COUNT - 1));
-    as_add_rm(&m->a, at, VMR, OFF(jit_cards));
-    as_st8i(&m->a, at, 0, 1);
-#else
-    (void)m; (void)obj; (void)at; (void)off;
+    as_lea(&m->a, S, at, -1, 1, off);
+    as_shr_ri(&m->a, S, CARD_SHIFT);
+    as_and_ri(&m->a, S, (int32_t)(CARD_COUNT - 1));
+    as_add_rm(&m->a, S, VMR, OFF(jit_cards));
+    as_st8i(&m->a, S, 0, 1);
 #endif
+    as_ld64(&m->a, S, at, off);
+    as_test_ri(&m->a, S, 1);
+    as_jcc(&m->a, CC_NE, &done);                 /* an immediate */
+    as_ld64(&m->a, U, VMR, OFF(alloc.from));
+    as_sub_rr(&m->a, S, U);
+    as_cmp_rm(&m->a, S, VMR, OFF(alloc.size));
+    as_jcc(&m->a, CC_AE, &done);                 /* no young object */
+    as_mov_rr(&m->a, T, obj);
+    as_sub_rr(&m->a, T, U);
+    as_cmp_rm(&m->a, T, VMR, OFF(alloc.size));
+    as_jcc(&m->a, CC_B, &done);                  /* into a young object */
+    as_cmp_mi(&m->a, VMR, OFF(gc.nursery), 0);
+    as_jcc(&m->a, CC_E, &done);                  /* no nursery: alloc is the heap's last chunk */
+    as_mov_rr(&m->a, T, obj);
+    as_and_ri(&m->a, T, -(int32_t)CHUNK_SIZE);
+    as_lea(&m->a, S, at, -1, 1, off);
+    as_sub_rr(&m->a, S, T);                      /* the field's offset in the chunk */
+    as_mov_rr(&m->a, U, S);
+    as_shr_ri(&m->a, U, GC_CARD_SHIFT);
+    as_lea(&m->a, U, T, U, 1, (int32_t)GC_CARDS);
+    as_st8i(&m->a, U, 0, 1);
+    as_shr_ri(&m->a, S, GC_BLOCK_SHIFT);
+    as_ld32(&m->a, U, T, (int32_t)offsetof(Chunk, dirty_at));
+    as_add_rr(&m->a, U, T);
+    as_add_rr(&m->a, U, S);
+    as_st8i(&m->a, U, 0, 1);
+    as_bind(&m->a, &done);
+    as_label_free(&done);
 }
 void ms_set_field(Masm *m, int obj, uint32_t i, int32_t s) {
     ms_store_field(m, obj, i, s);

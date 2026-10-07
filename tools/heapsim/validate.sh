@@ -4,7 +4,7 @@
 # *The experiments*): for each workload, whose census trace
 # tests/out/census/WORKLOAD scripts/census.sh makes when it is missing or
 # older than the bytecode or either VM, the stock VM (bin/runevm --jit=off
-# --stats) runs the census's own command (the DONE file's cwd and cmd lines)
+# --nursery 0 --stats: the copier, which the model is) runs the census's own command (the DONE file's cwd and cmd lines)
 # at five settings -- an initial semispace of 4 MiB, 64 MiB and 256 MiB at
 # --heap-fill 50, and 64 MiB at fills 25 and 80 -- and bin/heapsim replays
 # the trace on its own sizes (W8) under the copier model in both bands. One
@@ -60,7 +60,7 @@ for name in "$@"; do
     # the file the compiler writes not there yet (docs/testing.md)
     [ -n "$outf" ] && rm -f "$outf"
     # shellcheck disable=SC2086
-    (cd "$cwd" && $limit "$stock" --jit=off --stats --heap-size "$heap" --heap-fill "$fill" $cmd < /dev/null > "$root/$out/$name.stdout" 2> "$root/$out/$name.stderr")
+    (cd "$cwd" && $limit "$stock" --jit=off --nursery 0 --stats --heap-size "$heap" --heap-fill "$fill" $cmd < /dev/null > "$root/$out/$name.stdout" 2> "$root/$out/$name.stderr")
     line=$(grep '^runevm: [0-9]* collections' "$out/$name.stderr" | tail -1)
     [ -n "$line" ] || { echo "FAIL $name $heap $fill: no stats line: $(head -1 "$out/$name.stderr")"; status=1; continue; }
     # runevm: C collections, B bytes allocated, semispace S bytes, L live, copied X, max live M, gc U us

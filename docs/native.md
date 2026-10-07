@@ -285,7 +285,7 @@ Its limits:
 ## The command line and the environment
 
 * **The options of `runevm-stack`** (`--count`, `--stats`, `--heap-size`,
-  `--heap-fill`, `--gc-stress`, `--gc-verify`, `--gc-log`, `--checked`, `--emulate-fork`,
+  `--heap-fill`, `--nursery`, `--gc-stress`, `--gc-verify`, `--gc-log`, `--checked`, `--emulate-fork`,
   `--restore`)
   come from `runeopt --options` and then the environment variable
   `RUNEVM_OPTIONS`.
@@ -354,11 +354,12 @@ Its limits:
 * **Allocation:** the five allocating templates are the macro-assembler's
   `ms_alloc` (the fast path of `vm_alloc`: when it collects, `--gc-stress`,
   the size, the header, the counts), through `X64Layout.alloc`. A change to
-  the allocator, a generational collector for one, changes `ms_alloc`, and
-  the templates follow with `make templates`; so does a write barrier, in
-  `ms_set_field` and `ms_set_element`: `:=` and `Array.update` store
-  through their templates (`X64Layout.setField`, `setElement`), a fill of
-  a fresh object through `storeField`.
+  the allocator changes `ms_alloc`, and the templates follow with `make
+  templates`; so does the write barrier, in `ms_set_field` and
+  `ms_set_element`: `:=` and `Array.update` store through their templates
+  (`X64Layout.setField`, `setElement`, which read the nursery's range and
+  mark a card in the object's chunk, [runtime.md](runtime.md), *The garbage
+  collector*), a fill of a fresh object through `storeField`.
 * **`reads`:** an instruction in it never writes its top operand in place.
 * **Resuming:** every place a frame returns to must be in `rune_resume`.
 

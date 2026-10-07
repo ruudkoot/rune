@@ -33,8 +33,10 @@ sig
      since collected -- and `collections` the number of collections made.
 
      `live` is the bytes of objects in the heap: what the last collection
-     kept, plus what has been allocated since. It is an upper bound on the
-     live data, and is exactly the live data just after a collection.
+     kept -- a minor one keeps every old object, dead or not -- plus what has
+     been allocated since. It is an upper bound on the live data, and is
+     exactly the live data just after a full collection, which `collect`
+     makes.
      `heapSize` is the heap's size, the bytes of objects it holds before it
      is collected, which grows as the collector needs it to.
 
@@ -78,9 +80,9 @@ sig
 
   (* `collect ()` collects the heap now.
 
-     Every unreachable object is freed and every surviving one moves, which
-     costs time proportional to the live data and to nothing else: a copying
-     collector never visits what it does not keep. After it, the `live` of a
+     Every unreachable object is freed and every surviving one but a large
+     one moves, which costs time proportional to the live data and to
+     nothing else: a copying collector never visits what it does not keep. After it, the `live` of a
      `stats` is exactly the live data, where otherwise it is an upper bound.
 
      Nothing an SML program can see changes. Equality on a `ref` or an

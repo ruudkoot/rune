@@ -77,7 +77,7 @@ void heap_init(VM *vm, size_t size) {
     vm->gc.pooled = 0;
     vm->gc.closed = 0;
     vm->gc.size = size;
-    chunk_append(vm, chunk_take(vm, 0));
+    chunk_append(vm, chunk_take(vm, 0, CHUNK_OLD));
     alloc_view(vm);
 #ifdef RUNE_CENSUS
     vm->census_used_stock = 0;
@@ -111,26 +111,53 @@ void heap_init(VM *vm, size_t size) {
    one semispace of that size, or where --gc-stress or the census asks;
    then the object in the room of the last chunk, or, where the chunk is
    full, in the next (runtime/gc/chunk.c, alloc_next). */
+/* With a nursery: a large object straight into the large-object space,
+   after a full collection where the heap's size would be passed; any other
+   in the nursery, after a minor collection where it is full -- or a full
+   one, where what the nursery holds could take the old space past its
+   size -- and wherever --gc-stress asks for one. */
+static Obj *alloc_young(VM *vm, size_t size, int stress, int *large) {
+    if (size >= vm->gc.los_min) {
+        if (stress || USED_STOCK(vm) > vm->gc.size || STOCK(size) > vm->gc.size - USED_STOCK(vm)) vm_gc(vm, STOCK(size));
+        *large = 1;
+        return los_alloc(vm, size);
+    }
+    if (stress || size > vm->alloc.size - vm->alloc.used) {
+        if (USED_STOCK(vm) > vm->gc.size) vm_gc(vm, 0);
+        else collect_minor(vm);
+    }
+    Obj *o = (Obj *)(vm->alloc.from + vm->alloc.used);
+    vm->alloc.used += size;
+    return o;
+}
+
 Obj *vm_alloc(VM *vm, uint8_t kind, uint16_t contag, uint32_t len, size_t payload_bytes) {
     size_t size = obj_alloc_size(payload_bytes);
     CENSUS_FLUSH();
-    if (STOCK(size) > vm->gc.size - USED_STOCK(vm) ||
-        (vm->gc_stress && (vm->objects_allocated + vm->boxes_allocated) % vm->gc_stress == 0) ||
-        CENSUS_FORCED()) {
-        vm_gc(vm, STOCK(size));
-    }
+    int stress = vm->gc_stress && (vm->objects_allocated + vm->boxes_allocated) % vm->gc_stress == 0, large = 0;
     Obj *o;
-    if (size <= vm->alloc.size - vm->alloc.used) {
-        o = (Obj *)(vm->alloc.from + vm->alloc.used);
-        vm->alloc.used += size;
-    } else o = alloc_next(vm, size);
+    if (vm->gc.nursery) o = alloc_young(vm, size, stress, &large);
+    else {
+        if (STOCK(size) > vm->gc.size - USED_STOCK(vm) || stress || CENSUS_FORCED()) vm_gc(vm, STOCK(size));
+        if (size <= vm->alloc.size - vm->alloc.used) {
+            o = (Obj *)(vm->alloc.from + vm->alloc.used);
+            vm->alloc.used += size;
+        } else o = alloc_next(vm, size);
+    }
     ADD_STOCK(vm, size);
     if (kind == K_REAL || kind == K_BOX) { vm->box_bytes_allocated += STOCK(size); vm->boxes_allocated++; vm->box_bytes_live += size; }
     else { vm->bytes_allocated += STOCK(size); vm->objects_allocated++; }
     obj_init(o, kind, contag, len);
+    if (large) {
+        vm->gc.large_objects++;
+        vm->gc.large_bytes += size;
+        if (obj_has_fields(o)) gc_born(vm, o);
+    }
     CENSUS_ALLOC(vm, o, size);
     return o;
 }
+
+void heap_nursery(VM *vm, size_t bytes) { nursery_start(vm, bytes); }
 
 Obj *vm_alloc_fields(VM *vm, uint8_t kind, uint16_t contag, uint32_t nfields) {
     Obj *o = vm_alloc(vm, kind, contag, nfields, obj_payload_bytes(kind, nfields));

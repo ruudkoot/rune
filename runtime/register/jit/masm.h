@@ -257,8 +257,8 @@ void ms_handback_rax(Masm *m);                                     /* with the a
    fit or --gc-stress asks; the header written, the counts kept */
 void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow);
 void ms_store_field(Masm *m, int obj, uint32_t i, int32_t s);       /* field i of the object in obj := R(s) */
-void ms_set_field(Masm *m, int obj, uint32_t i, int32_t s);         /* a store into an object that exists, through the barrier: field i of the object in obj := R(s); obj is not kept */
-void ms_set_element(Masm *m, int obj, int index, int32_t s);        /* the same for element index (a register, its payload) of the array in obj := R(s); neither is kept */
+void ms_set_field(Masm *m, int obj, uint32_t i, int32_t s);         /* a store into an object that exists, through the barrier: field i of the object in obj := R(s); obj is not kept; R_S2, R_S3 and R_S6 clobbered */
+void ms_set_element(Masm *m, int obj, int index, int32_t s);        /* the same for element index (a register, its payload) of the array in obj := R(s); neither is kept; R_S2, R_S3 and R_S6 clobbered */
 void ms_load_field(Masm *m, int32_t d, int obj, uint32_t i);        /* R(d) := field i of the object in obj (a program's object: its length tested by the caller) */
 void ms_load_len(Masm *m, int r, int obj);                          /* r := the length of the object in obj (fields, or bytes of a string) */
 void ms_check_len(Masm *m, int obj, uint32_t n, AsmLabel *unless);  /* to unless where the object in obj has not exactly n fields */

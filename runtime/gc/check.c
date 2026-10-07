@@ -1,21 +1,26 @@
 /* --gc-verify: the heap checked before and after every pass of the
    collector, so that one that breaks it is caught at the collection that
    did (make test-heap runs tests/lang so). What holds of the heap: each
-   chunk parses, object by object, to exactly the bytes it holds; every
-   header names a kind of today and none is a forwarding one; the boxes in
-   it are the bytes box_bytes_live counts; the chunks hold what the heap
-   says it holds; and every pointer in a field, on the stack or among the
-   other roots is to the start of an object in one of its chunks. heap_check
-   says what does not hold, or NULL (tests/runtime/heap_test.c breaks a
-   heap to see it); a collection under --gc-verify stops on it. */
+   chunk of the old space parses, object by object, to exactly the bytes it
+   holds, and so do the nursery and the large-object space; every header
+   names a kind of today and none is a forwarding one; the boxes in it are
+   the bytes box_bytes_live counts; the chunks hold what the heap says it
+   holds; every pointer in a field, on the stack or among the other roots
+   is to the start of an object of the heap; and every field of an old
+   object that holds a pointer into the nursery is in a card the barrier
+   marked, in a block marked dirty, or in a large object made since the
+   last minor collection (D6). heap_check says what does not hold, or NULL
+   (tests/runtime/heap_test.c breaks a heap to see it); a collection under
+   --gc-verify stops on it. */
 #include "gc/gc.h"
 #include <string.h>
 
 typedef struct Check {
     VM *vm;
-    Chunk **chunks;      /* the heap's, by address, to find a pointer's among */
+    Chunk **chunks;      /* the old space's and the large objects', by address, to find a pointer's among */
     size_t n;
-    uint8_t *starts;     /* a bit for every 8 bytes of the heap's run (heap_number): an object begins there */
+    uint8_t *starts;     /* a bit for every 8 bytes of the old space's run (heap_number): an object begins there */
+    uint8_t *young;      /* the same for the nursery */
     const char *failed;  /* the first thing found not to hold */
     const void *at;
 } Check;
@@ -40,67 +45,129 @@ static Chunk *chunk_in(const Check *c, const void *p) {
     return lo < c->n && c->chunks[lo] == want ? want : NULL;
 }
 
+static void set_bit(uint8_t *bits, uint64_t at) { bits[at / 64] |= (uint8_t)(1u << (at / 8 % 8)); }
+static int bit(const uint8_t *bits, uint64_t at) { return bits[at / 64] >> (at / 8 % 8) & 1; }
+
 static void check_ptr(Check *c, const void *p, const char *what) {
     if (!p || c->failed) return;
+    VM *vm = c->vm;
+    if (gc_in_nursery(vm, p)) {
+        uintptr_t at = (uintptr_t)((const char *)p - vm->alloc.from);
+        if (at >= vm->alloc.used || at % 8 != 0 || !bit(c->young, at)) check_fail(c, what, p);
+        return;
+    }
     Chunk *k = chunk_in(c, p);
     uintptr_t in = k ? (uintptr_t)((const char *)p - chunk_payload(k)) : 0;
-    if (!k || (const char *)p < chunk_payload(k) || in >= chunk_used(c->vm, k) || in % 8 != 0) { check_fail(c, what, p); return; }
-    uint64_t at = k->base + in;
-    if (!(c->starts[at / 64] >> (at / 8 % 8) & 1)) check_fail(c, what, p);
+    if (!k || (const char *)p < chunk_payload(k) || in % 8 != 0) { check_fail(c, what, p); return; }
+    if (k->kind == CHUNK_LOS) {
+        size_t u = in >> GC_UNIT_SHIFT;
+        if (in % ((size_t)1 << GC_UNIT_SHIFT) != 0 || u >= chunk_room(k) >> GC_UNIT_SHIFT || chunk_units(k)[u] != u)
+            check_fail(c, what, p);
+        return;
+    }
+    if (in >= chunk_used(vm, k) || !bit(c->starts, k->base + in)) check_fail(c, what, p);
 }
 
 static void check_value(Check *c, const Value *v, const char *what) {
     if (val_is_ptr(*v)) check_ptr(c, val_ptr(*v), what);
 }
 
+/* an old object's fields: each a pointer to an object, and one into the
+   nursery remembered (born: the object is a large one made since the last
+   minor collection) */
+static void check_old(Check *c, Obj *o, int born) {
+    if (!obj_has_fields(o)) return;
+    Value *f = obj_fields(o);
+    Chunk *k = chunk_of(o);
+    for (uint32_t i = 0; i < obj_scanned_fields(o) && !c->failed; i++) {
+        check_value(c, &f[i], "a field that is no object's");
+        if (!born && val_is_ptr(f[i]) && gc_in_nursery(c->vm, val_ptr(f[i]))) {
+            uintptr_t at = (uintptr_t)((char *)&f[i] - (char *)k);
+            if (!chunk_cards(k)[at >> GC_CARD_SHIFT] || !chunk_dirty(k)[at >> GC_BLOCK_SHIFT])
+                check_fail(c, "an old object's field that holds a young pointer, not remembered", &f[i]);
+        }
+    }
+}
+
+/* the objects of [from, from + used), each a header of a kind, in the bits */
+static size_t check_parse(Check *c, char *from, size_t used, uint8_t *bits, uint64_t base) {
+    size_t boxes = 0;
+    for (size_t at = 0; at < used && !c->failed; ) {
+        Obj *o = (Obj *)(from + at);
+        size_t size = 0;
+        if (used - at < OBJ_HEADER_SIZE) check_fail(c, "a header cut off at the end of a chunk", o);
+        else if (obj_kind(o) < K_TUPLE || obj_kind(o) > K_LAST || obj_kind(o) == K_FORWARD) check_fail(c, "a header of no kind", o);
+        else if ((size = obj_size(o)) < OBJ_HEADER_SIZE || size > used - at) check_fail(c, "an object past the end of its chunk", o);
+        else {
+            if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) boxes += size;
+            set_bit(bits, base + at);
+            at += size;
+        }
+    }
+    return boxes;
+}
+
+static int is_born(const VM *vm, const Obj *o) {
+    for (size_t i = 0; i < vm->gc.nborn; i++) if (vm->gc.born[i] == o) return 1;
+    return 0;
+}
+
 const char *heap_check(VM *vm, const void **at) {
-    Check c = { vm, NULL, 0, NULL, NULL, NULL };
+    Check c = { vm, NULL, 0, NULL, NULL, NULL, NULL };
     heap_number(vm);
-    uint64_t total = 0, closed = 0;
+    uint64_t total = 0, closed = 0, los = 0;
     for (Chunk *k = heap_first(vm); k; k = k->next) {
         c.n++;
         total += chunk_used(vm, k);
-        if (k != vm->gc.last) closed += k->used;
+        if (k != vm->gc.last || vm->gc.nursery) closed += k->used;
     }
+    for (Chunk *k = vm->gc.los; k; k = k->next) c.n++;
     c.chunks = malloc((c.n ? c.n : 1) * sizeof *c.chunks);
     c.starts = calloc(total / 64 + 1, 1);
-    if (!c.chunks || !c.starts) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
+    c.young = calloc((vm->gc.nursery ? vm->alloc.used : 0) / 64 + 1, 1);
+    if (!c.chunks || !c.starts || !c.young) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
     c.n = 0;
     for (Chunk *k = heap_first(vm); k; k = k->next) c.chunks[c.n++] = k;
+    for (Chunk *k = vm->gc.los; k; k = k->next) c.chunks[c.n++] = k;
     qsort(c.chunks, c.n, sizeof *c.chunks, by_address);
     if (closed != vm->gc.closed) check_fail(&c, "the chunks hold other than the heap counts", NULL);
-    if (vm->alloc.from != chunk_payload(vm->gc.last) || vm->alloc.used > vm->alloc.size || vm->alloc.size > chunk_room(vm->gc.last))
-        check_fail(&c, "alloc is not the room of the last chunk", vm->alloc.from);
+    if (vm->gc.nursery ? vm->alloc.from != chunk_payload(vm->gc.nursery) || vm->alloc.size != vm->gc.nursery_size
+                       : vm->alloc.from != chunk_payload(vm->gc.last) || vm->alloc.size > chunk_room(vm->gc.last))
+        check_fail(&c, "alloc is not the room it should be", vm->alloc.from);
+    if (vm->alloc.used > vm->alloc.size) check_fail(&c, "alloc holds more than its room", vm->alloc.from);
 
     size_t boxes = 0;
+    for (Chunk *k = heap_first(vm); k && !c.failed; k = k->next) boxes += check_parse(&c, chunk_payload(k), chunk_used(vm, k), c.starts, k->base);
+    for (Obj *o = los_first(vm); o && !c.failed; o = los_next(vm, o)) {
+        if (obj_kind(o) < K_TUPLE || obj_kind(o) > K_LAST || obj_kind(o) == K_FORWARD) check_fail(&c, "a large object of no kind", o);
+        else los += obj_size(o);
+    }
+    if (!c.failed && los != vm->gc.los_bytes) check_fail(&c, "large objects other than the space counts", NULL);
+    if (vm->gc.nursery && !c.failed) boxes += check_parse(&c, vm->alloc.from, vm->alloc.used, c.young, 0);
+    if (!c.failed && boxes != vm->box_bytes_live) check_fail(&c, "boxes not as box_bytes_live counts them", NULL);
+
     for (Chunk *k = heap_first(vm); k && !c.failed; k = k->next) {
         size_t used = chunk_used(vm, k);
-        for (size_t at = 0; at < used && !c.failed; ) {
-            Obj *o = (Obj *)(chunk_payload(k) + at);
-            size_t size = 0;
-            if (used - at < OBJ_HEADER_SIZE) check_fail(&c, "a header cut off at the end of a chunk", o);
-            else if (obj_kind(o) < K_TUPLE || obj_kind(o) > K_LAST || obj_kind(o) == K_FORWARD) check_fail(&c, "a header of no kind", o);
-            else if ((size = obj_size(o)) < OBJ_HEADER_SIZE || size > used - at) check_fail(&c, "an object past the end of its chunk", o);
-            else {
-                if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) boxes += size;
-                uint64_t start = k->base + at;
-                c.starts[start / 64] |= (uint8_t)(1u << (start / 8 % 8));
-                at += size;
+        for (size_t a = 0; a < used && !c.failed; ) {
+            Obj *o = (Obj *)(chunk_payload(k) + a);
+            if (vm->gc.nursery) check_old(&c, o, 0);
+            else if (obj_has_fields(o)) {
+                const Value *f = obj_fields(o);
+                for (uint32_t i = 0; i < obj_scanned_fields(o); i++) check_value(&c, &f[i], "a field that is no object's");
             }
+            a += obj_size(o);
         }
     }
-    if (!c.failed && boxes != vm->box_bytes_live) check_fail(&c, "boxes not as box_bytes_live counts them", NULL);
-    for (Chunk *k = heap_first(vm); k && !c.failed; k = k->next) {
-        size_t used = chunk_used(vm, k);
-        for (size_t at = 0; at < used && !c.failed; ) {
-            Obj *o = (Obj *)(chunk_payload(k) + at);
+    for (Obj *o = los_first(vm); o && !c.failed; o = los_next(vm, o)) check_old(&c, o, is_born(vm, o));
+    if (vm->gc.nursery)
+        for (size_t a = 0; a < vm->alloc.used && !c.failed; ) {
+            Obj *o = (Obj *)(vm->alloc.from + a);
             if (obj_has_fields(o)) {
                 const Value *f = obj_fields(o);
                 for (uint32_t i = 0; i < obj_scanned_fields(o); i++) check_value(&c, &f[i], "a field that is no object's");
             }
-            at += obj_size(o);
+            a += obj_size(o);
         }
-    }
     for (size_t i = 0; i < vm->sp && !c.failed; i++) check_value(&c, &vm->stack[i], "a slot of the stack that is no object's");
 #define CHECK_VALUE(v) check_value(&c, (v), "a root that is no object's")
 #define CHECK_OBJ(o) check_ptr(&c, *(o), "a root that is no object")
@@ -109,6 +176,7 @@ const char *heap_check(VM *vm, const void **at) {
 #undef CHECK_OBJ
     free(c.chunks);
     free(c.starts);
+    free(c.young);
     if (at) *at = c.at;
     return c.failed;
 }

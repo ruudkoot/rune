@@ -257,14 +257,68 @@ struct
   fun storeField line (b, i, s) =
     (line ("movsd " ^ s ^ "(%r13,%rbp), %xmm0");
      line ("movsd %xmm0, OBJ_FIELDS+" ^ num (IntInf.* (IntInf.fromInt 8, IntInf.fromInt i)) ^ "(" ^ reg64 b ^ ")"))
-  fun setField line (b, i, s) =
+  fun setField line (i, s, l) =
     (line ("movsd " ^ s ^ "(%r13,%rbp), %xmm0");
-     line ("movsd %xmm0, OBJ_FIELDS+" ^ num (IntInf.* (IntInf.fromInt 8, IntInf.fromInt i)) ^ "(" ^ reg64 b ^ ")"))
-  fun setElement line s =
+     line ("movsd %xmm0, OBJ_FIELDS+" ^ num (IntInf.* (IntInf.fromInt 8, IntInf.fromInt i)) ^ "(%rax)");
+     line ("mov OBJ_FIELDS+" ^ num (IntInf.* (IntInf.fromInt 8, IntInf.fromInt i)) ^ "(%rax), %rdx");
+     line ("test $1, %rdx");
+     line ("jne " ^ l ^ "_a");
+     line ("mov VM_HEAP_FROM(%r12), %r11");
+     line ("sub %r11, %rdx");
+     line ("cmp VM_HEAP_SIZE(%r12), %rdx");
+     line ("jae " ^ l ^ "_a");
+     line ("mov %rax, %r8");
+     line ("sub %r11, %r8");
+     line ("cmp VM_HEAP_SIZE(%r12), %r8");
+     line ("jb " ^ l ^ "_a");
+     line ("cmpq $0, VM_GC_NURSERY(%r12)");
+     line ("je " ^ l ^ "_a");
+     line ("mov %rax, %r8");
+     line ("and $-2097152, %r8");
+     line ("lea " ^ num (IntInf.+ (IntInf.fromInt 8, IntInf.* (IntInf.fromInt 8, IntInf.fromInt i))) ^ "(%rax), %rdx");
+     line ("sub %r8, %rdx");
+     line ("mov %rdx, %r11");
+     line ("shr $9, %r11");
+     line ("lea 128(%r8,%r11,1), %r11");
+     line ("movb $1, (%r11)");
+     line ("shr $15, %rdx");
+     line ("mov (%r8), %r11d");
+     line ("add %r8, %r11");
+     line ("add %rdx, %r11");
+     line ("movb $1, (%r11)");
+     line (l ^ "_a:"))
+  fun setElement line (s, l) =
     (line ("shl $3, %rcx");
      line ("add %rax, %rcx");
      line ("movsd " ^ s ^ "(%r13,%rbp), %xmm0");
-     line ("movsd %xmm0, OBJ_FIELDS(%rcx)"))
+     line ("movsd %xmm0, OBJ_FIELDS(%rcx)");
+     line ("mov OBJ_FIELDS(%rcx), %rdx");
+     line ("test $1, %rdx");
+     line ("jne " ^ l ^ "_a");
+     line ("mov VM_HEAP_FROM(%r12), %r11");
+     line ("sub %r11, %rdx");
+     line ("cmp VM_HEAP_SIZE(%r12), %rdx");
+     line ("jae " ^ l ^ "_a");
+     line ("mov %rax, %r8");
+     line ("sub %r11, %r8");
+     line ("cmp VM_HEAP_SIZE(%r12), %r8");
+     line ("jb " ^ l ^ "_a");
+     line ("cmpq $0, VM_GC_NURSERY(%r12)");
+     line ("je " ^ l ^ "_a");
+     line ("mov %rax, %r8");
+     line ("and $-2097152, %r8");
+     line ("lea 8(%rcx), %rdx");
+     line ("sub %r8, %rdx");
+     line ("mov %rdx, %r11");
+     line ("shr $9, %r11");
+     line ("lea 128(%r8,%r11,1), %r11");
+     line ("movb $1, (%r11)");
+     line ("shr $15, %rdx");
+     line ("mov (%r8), %r11d");
+     line ("add %r8, %r11");
+     line ("add %rdx, %r11");
+     line ("movb $1, (%r11)");
+     line (l ^ "_a:"))
   fun loadField line (d, b, i) =
     (line ("movsd OBJ_FIELDS+" ^ num (IntInf.* (IntInf.fromInt 8, IntInf.fromInt i)) ^ "(" ^ reg64 b ^ "), %xmm0");
      line ("movsd %xmm0, " ^ d ^ "(%r13,%rbp)"))

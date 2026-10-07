@@ -6,9 +6,11 @@
    told by address; two VMs of a process collect independently; the roots
    listed in heap.c are all there; with RUNE_BARRIER_CARDS a store into an
    object marks the card of its field; heap_check finds a heap that is not
-   sound. Built by make test, and by make test-heap with
-   each switch. */
+   sound; and with a nursery, the minor collection, the barrier's cards and
+   the large-object space (docs/plans/garbage-collector-v2.md, M3). Built
+   by make test, and by make test-heap with each switch. */
 #include "vm.h"
+#include "gc/gc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -187,6 +189,64 @@ int main(void) {
         vm->stack[vm->sp - 1] = mk_ptr(b);
         CHECK("and the heap mended passes again", heap_check(vm, NULL) == NULL);
         vm->sp -= 2;
+    }
+
+    /* The nursery (runtime/gc/minor.c; docs/plans/garbage-collector-v2.md,
+       M3): an object is made in it, and a minor collection promotes what is
+       reached into the old space; a store of a young pointer into an old
+       object marks its card, which is a root of the next minor collection,
+       and one that the barrier did not see is found by heap_check; an
+       object of los_min bytes or more is made in the large-object space,
+       remembered whole until the next minor collection, never moved, and
+       freed by the full collection that does not reach it. */
+    {
+        VM *nv = new_vm(1 << 20);
+        heap_nursery(nv, 1 << 14);
+        vm_push(nv, tuple(nv, 2, 100));
+        Obj *young = val_ptr(nv->stack[0]);
+        CHECK("an object is made in the nursery", heap_is_young(nv, young) && nv->gc.nursery);
+        collect_minor(nv);
+        Obj *old = val_ptr(nv->stack[0]);
+        CHECK("a minor collection promotes it, whole", old != young && !heap_is_young(nv, old) && obj_field(old, 1) == mk_imm(101));
+        CHECK("and counts it", nv->gc.minors == 1 && nv->gc.promoted == obj_size(old) && nv->alloc.used == 0);
+
+        Obj *y = val_ptr(tuple(nv, 1, 110));
+        obj_set_field(nv, old, 0, mk_ptr(y));
+        Chunk *c = chunk_of(old);
+        uintptr_t at = (uintptr_t)((char *)&obj_fields(old)[0] - (char *)c);
+        CHECK("a store of a young pointer into an old object marks its card and block",
+              chunk_cards(c)[at >> GC_CARD_SHIFT] == 1 && chunk_dirty(c)[at >> GC_BLOCK_SHIFT] == 1);
+        CHECK("the heap with it remembered passes heap_check", heap_check(nv, NULL) == NULL);
+        collect_minor(nv);
+        Obj *y2 = val_ptr(obj_field(old, 0));
+        CHECK("the card is a root: what it holds is promoted", y2 != y && !heap_is_young(nv, y2) && obj_field(y2, 0) == mk_imm(110));
+        CHECK("and the card is cleared", chunk_cards(c)[at >> GC_CARD_SHIFT] == 0 && chunk_dirty(c)[at >> GC_BLOCK_SHIFT] == 0);
+        obj_set_field(nv, old, 1, mk_imm(7));
+        CHECK("an immediate stored marks nothing", chunk_cards(c)[(at + 8) >> GC_CARD_SHIFT] == 0);
+
+        Value z = tuple(nv, 1, 120);
+        obj_fill_field(old, 1, z);
+        const void *where = NULL;
+        CHECK("a young pointer in an old object that no card has is found",
+              heap_check(nv, &where) != NULL && where == &obj_fields(old)[1]);
+        obj_set_field(nv, old, 1, z);
+        CHECK("and once stored through the barrier passes", heap_check(nv, NULL) == NULL);
+
+        size_t los0 = nv->gc.los_bytes;
+        Obj *big = vm_alloc_fields(nv, K_ARRAY, 0, 1024);
+        CHECK("a large object is not made in the nursery", !heap_is_young(nv, big) && nv->gc.los_bytes == los0 + obj_size(big));
+        obj_fill_field(big, 5, tuple(nv, 1, 130));
+        vm_push(nv, mk_ptr(big));
+        collect_minor(nv);
+        Obj *t = val_ptr(obj_field(big, 5));
+        CHECK("a large object made since the last minor collection is scanned whole", !heap_is_young(nv, t) && obj_field(t, 0) == mk_imm(130));
+        vm_gc(nv, 0);
+        CHECK("a full collection does not move it", val_ptr(nv->stack[1]) == big && obj_field(val_ptr(obj_field(big, 5)), 0) == mk_imm(130));
+        CHECK("and the heap after it passes heap_check", heap_check(nv, NULL) == NULL);
+        nv->sp = 1;
+        vm_gc(nv, 0);
+        CHECK("one that nothing reaches is freed by the next", nv->gc.los_bytes == los0 && nv->gc.fulls == 2);
+        CHECK("and what is reached is still there", obj_field(val_ptr(obj_field(val_ptr(nv->stack[0]), 0)), 0) == mk_imm(110));
     }
 
 #ifdef RUNE_BARRIER_CARDS

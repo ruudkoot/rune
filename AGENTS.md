@@ -264,12 +264,14 @@ keep these invariants:
   templates are made from (a fill of a fresh
   object is `obj_fill_field` and `ms_store_field`): the header's first byte
   holds four bits of the collector's beside the kind, zero in every build
-  but the one that tests them, and the barrier is where a collector to come
-  writes its body. `make test-heap`, part of `make check`, holds both,
-  on a VM whose collector sets the bits, and runs the language's tests
-  with the heap checked before and after every collection (`runevm
-  --gc-verify`); run it for a change to the heap, to the header or to an
-  emitter that reads or writes an object.
+  but the one that tests them, and the barrier marks the card of an old
+  object's field that is given a pointer into the nursery, so that a store
+  around it loses an object at the next minor collection. `make test-heap`,
+  part of `make check`, holds both, on a VM whose collector sets the bits,
+  and runs the language's tests with the heap checked before and after
+  every collection of a small heap and nursery (`runevm --gc-verify`),
+  which finds a store the barrier did not see; run it for a change to the
+  heap, to the header or to an emitter that reads or writes an object.
 * `make check` also runs in GitHub Actions on every pull request and every
   push to `master` (`.github/workflows/check.yml`), on Ubuntu 24.04 with the
   packages of `cloud/SETUP.md` and the hosts kept in the Actions cache. A

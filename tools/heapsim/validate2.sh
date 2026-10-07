@@ -5,7 +5,7 @@
 # gcsim, with the clock of every collection. For each trace directory, the
 # stock VM (default bin/runevm, whose --gc-log is docs/runtime.md's) runs the
 # trace's own command (its DONE file's cwd and cmd lines, --jit=off as the
-# census ran; the file the compiler writes deleted before each run) at five
+# census ran, --nursery 0 as the model has it; the file the compiler writes deleted before each run) at five
 # settings: an initial semispace of 4, 64 and 256 MiB at --heap-fill 50, and
 # 64 MiB at fills 25 and 80. gcsim replays the trace with the same settings
 # in both bands. Logs and events go to DIR (default tests/out/gcsim/validate).
@@ -53,7 +53,7 @@ for tr in "$@"; do
     # the compiler looks at its output file before writing it (docs/testing.md): every run starts without it
     [ -n "${newf:-}" ] && rm -f "$newf"
     # shellcheck disable=SC2086
-    (cd "$cwd" && ulimit -v 4194304 && timeout 1200 "$vm" --jit=off --stats --gc-log "$log" --heap-size "$heap" --heap-fill "$fill" $cmd < "$stdin" > "$out/$name.stdout" 2> "$out/$name.stderr")
+    (cd "$cwd" && ulimit -v 4194304 && timeout 1200 "$vm" --jit=off --nursery 0 --stats --gc-log "$log" --heap-size "$heap" --heap-fill "$fill" $cmd < "$stdin" > "$out/$name.stdout" 2> "$out/$name.stderr")
     [ -s "$log" ] || { echo "FAIL $name $heap $fill: no gc log ($(head -c 200 "$out/$name.stderr"))"; status=1; continue; }
     # stock: collections, final semispace, copied, and the clock of each pass (bytes + box_bytes)
     st=$(awk -v h0="$heap" '!/^#/ {n++; c+=$10; h=$21} END {print n+0, (n ? h : h0), c+0}' "$log")
