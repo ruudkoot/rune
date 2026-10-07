@@ -91,7 +91,16 @@ static Obj *promote(VM *vm, Obj *o) {
             chunk_append(vm, to);
         }
         n = (Obj *)(chunk_payload(to) + to->used);
-        memcpy(n, o, size);
+        /* the common sizes as moves the compiler knows, as copy.c's copy_obj */
+        switch (size) {
+        case OBJ_SIZE_FIELDS(1): memcpy(n, o, OBJ_SIZE_FIELDS(1)); break;
+        case OBJ_SIZE_FIELDS(2): memcpy(n, o, OBJ_SIZE_FIELDS(2)); break;
+        case OBJ_SIZE_FIELDS(3): memcpy(n, o, OBJ_SIZE_FIELDS(3)); break;
+        case OBJ_SIZE_FIELDS(4): memcpy(n, o, OBJ_SIZE_FIELDS(4)); break;
+        case OBJ_SIZE_FIELDS(5): memcpy(n, o, OBJ_SIZE_FIELDS(5)); break;
+        case OBJ_SIZE_FIELDS(6): memcpy(n, o, OBJ_SIZE_FIELDS(6)); break;
+        default: memcpy(n, o, size); break;
+        }
         chunk_note(to, to->used, size);
         to->used += size;
         vm->gc.closed += size;
@@ -146,15 +155,16 @@ static void minor_stack(VM *vm, size_t low) {
     vm->gc_counts.live_slots += vm->sp - from - dead;
 }
 
-/* The fields of o that lie in [lo, hi), promoted */
+/* The fields of o that lie in [lo, hi), promoted: from the first in the
+   card, not from the object's first (a large array has many cards) */
 static int scan_range(VM *vm, Obj *o, const char *lo, const char *hi) {
     if (!obj_has_fields(o)) return 0;
     Value *f = obj_fields(o);
-    uint32_t n = obj_scanned_fields(o);
+    size_t n = obj_scanned_fields(o);
+    size_t first = (const char *)f < lo ? (size_t)(lo - (const char *)f) / sizeof(Value) : 0;
+    size_t end = (const char *)(f + n) > hi ? (size_t)(hi - (const char *)f) / sizeof(Value) : n;
     int young = 0;
-    for (uint32_t i = 0; i < n; i++) {
-        if ((const char *)&f[i] < lo) continue;
-        if ((const char *)&f[i] >= hi) break;
+    for (size_t i = first; i < end; i++) {
         vm->gc_counts.fields++;
         young |= promote_value(vm, &f[i]);
     }
@@ -260,6 +270,7 @@ static void minor_into(VM *vm) {
 
 /* A minor collection, as --gc-log and --gc-verify see it (copy.c, collect_pass) */
 void collect_minor(VM *vm) {
+    vm->gc_calls++;   /* a collection of its own (log.c's vmgc) */
     if (vm->gc_verify) heap_verify(vm, "before");
     PassMark m;
     log_pass_begin(vm, &m);

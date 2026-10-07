@@ -5,7 +5,6 @@
 #include "sys/sys.h"
 #include <string.h>
 
-size_t obj_size(const Obj *o) { return obj_size_of(obj_kind(o), obj_len(o)); }
 
 /* what the word cannot hold, as a small raw object (runtime/value.h) */
 static Value alloc_box(VM *vm, int kind, uint64_t bits) {

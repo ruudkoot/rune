@@ -131,12 +131,6 @@ Obj *alloc_next(VM *vm, size_t size) {
     return o;
 }
 
-void chunk_note(Chunk *c, size_t at, size_t size) {
-    size_t start = c->payload + at, end = start + size;
-    size_t k = (start + ((size_t)1 << GC_CARD_SHIFT) - 1) >> GC_CARD_SHIFT;
-    uint16_t *cross = chunk_cross(c);
-    for (; (k << GC_CARD_SHIFT) < end; k++) cross[k] = (uint16_t)(((k << GC_CARD_SHIFT) - start) >> 3);
-}
 
 /* ---- images (runtime/image.c) ---- */
 

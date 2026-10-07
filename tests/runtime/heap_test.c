@@ -241,6 +241,12 @@ int main(void) {
         collect_minor(nv);
         Obj *t = val_ptr(obj_field(big, 5));
         CHECK("a large object made since the last minor collection is scanned whole", !heap_is_young(nv, t) && obj_field(t, 0) == mk_imm(130));
+        obj_set_field(nv, big, 1000, tuple(nv, 1, 135));
+        nv->gc_counts.fields = 0;
+        collect_minor(nv);
+        Obj *t2 = val_ptr(obj_field(big, 1000));
+        CHECK("a store into a large object far from its start is scanned by its card alone",
+              !heap_is_young(nv, t2) && obj_field(t2, 0) == mk_imm(135) && nv->gc_counts.fields <= 512 / sizeof(Value));
         vm_gc(nv, 0);
         CHECK("a full collection does not move it", val_ptr(nv->stack[1]) == big && obj_field(val_ptr(obj_field(big, 5)), 0) == mk_imm(130));
         CHECK("and the heap after it passes heap_check", heap_check(nv, NULL) == NULL);

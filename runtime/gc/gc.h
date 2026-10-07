@@ -93,8 +93,13 @@ void alloc_view(VM *vm);
    own for an object larger than a chunk; the object's place */
 Obj *alloc_next(VM *vm, size_t size);
 /* an object of size bytes placed at offset at of an old chunk: its cards'
-   entries in the crossing map */
-void chunk_note(Chunk *c, size_t at, size_t size);
+   entries in the crossing map (inline: every object a collection copies) */
+static inline void chunk_note(Chunk *c, size_t at, size_t size) {
+    size_t start = c->payload + at, end = start + size;
+    size_t k = (start + ((size_t)1 << GC_CARD_SHIFT) - 1) >> GC_CARD_SHIFT;
+    uint16_t *cross = (uint16_t *)(void *)((char *)c + c->cross_at);
+    for (; (k << GC_CARD_SHIFT) < end; k++) cross[k] = (uint16_t)(((k << GC_CARD_SHIFT) - start) >> 3);
+}
 
 /* Walking the old space, object by object, chunk by chunk in the list's order:
    for (Chunk *c = heap_first(vm); c; c = c->next)
