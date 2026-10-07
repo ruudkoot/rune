@@ -5,6 +5,11 @@ Portable SML97 benchmark programs, being implemented from the
 SML collection, with fixed profiles and result checks. The larger source
 [inventory](inventory.tsv) schedules future imports; it is not a list of
 passing programs. See the [source audit](audit.md) and [literature map](literature.md).
+Three programs are Rune's own, the latency workloads of the collector's
+evaluation set ([latency-ring](#latency-ring), [latency-map](#latency-map),
+[latency-static-map](#latency-static-map)): their manifest rows name `rune`
+as the upstream and the program's own file as its source, and they have no
+inventory entry.
 
 | Name | Source | Description |
 |---|---|---|
@@ -157,6 +162,9 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
 | [exp3_8-strict](#exp3_8-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/exp3_8) | Compute 3^n by strict Peano addition and multiplication, then force the complete unary result. |
 | [digits-of-e1-lazy](#digits-of-e1-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/digits-of-e1) | Produce e digits with memoized continued-fraction transformations. |
 | [digits-of-e2-lazy](#digits-of-e2-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/imaginary/digits-of-e2) | Produce e digits with memoized factorial-base carry propagation. |
+| [latency-ring](#latency-ring) | [Rune](latency-ring/PROVENANCE.md) | Keep a window of 1 KiB messages in a ring array, storing a young message into the old array at every step. |
+| [latency-map](#latency-map) | [Rune](latency-map/PROVENANCE.md) | Keep the same window of messages in a persistent AVL tree, copying a path at every step. |
+| [latency-static-map](#latency-static-map) | [Rune](latency-static-map/PROVENANCE.md) | Serve requests that allocate from a large map built once and never changed. |
 
 ## Running and interpreting checks
 
@@ -242,6 +250,7 @@ sh tests/benchmarks/check-pilots.sh
 sh tests/benchmarks/check-classic.sh
 python3 tests/benchmarks/test-inventory.py
 python3 scripts/benchmark-inventory.py --check
+python3 tests/benchmarks/latency-oracle.py --check
 ```
 
 The source audit can additionally be reproduced with all five pinned trees:
@@ -4119,3 +4128,93 @@ sharing and demand are source hypotheses; see [nofib literature](../literature.m
 | smoke | `90 1 expected/smoke.txt` | `90` |
 | normal | `90 100 expected/normal.txt` | `9000` |
 | large | `300 100 expected/large.txt` | `30000` |
+
+## latency-ring
+
+Keep a window of 1 KiB messages in a ring array, storing a young message into the old array at every step. See [provenance](latency-ring/PROVENANCE.md).
+
+Rune, written for the second-generation collector's evaluation set
+([garbage-collector-v2.md](../../docs/plans/garbage-collector-v2.md), *The
+workloads*), after Fisher's Pusher benchmark and Scherer's
+gc-latency-experiment. The window is what makes a copier's pauses grow with
+the live data and what a generational collector's barrier sees at every
+step. Shared code is [shared/latency.sml](shared/latency.sml).
+
+Arguments `N STEPS SIZE TIME`: N + STEPS messages of SIZE bytes are made,
+message i at step i into slot i mod N, where it replaces message i - N. So
+about N times SIZE bytes are live, every message lives N steps, and every
+step stores a young object into an old array. TIME 1 times every step with
+`Time.now` (read through `Time.toReal`, which allocates nothing on Rune) and
+writes to standard error the histograms of every step and of the steady
+state once the window is full: samples, mean, p50 to p99.99 and maximum in
+milliseconds (exact below 2 ms, buckets of 100 us below 2 s, recorded
+without allocating), the steps over 1, 10 and 100 ms, and the loop's time.
+TIME 0 reads no clock, so `--count` is exact; the profiles use it. With
+TIME 1 the bytes and objects allocated are still those of every other run,
+since the report writes its numbers in fixed widths; only the instructions
+follow the clock. The
+result is N, STEPS, SIZE and a digest of every message in the order made,
+modulo the prime 16777213 so that a 31-bit int never overflows. It depends
+on N + STEPS and SIZE alone, and [latency-map](#latency-map) gives the same.
+`tests/benchmarks/latency-oracle.py` works the expected results out from the
+messages' definition without running the program (`--check` compares them).
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `1000 20000 1024 0` | `1000 20000 1024 1025487` |
+| normal | `10000 1000000 1024 0` | `10000 1000000 1024 14533307` |
+| large | `100000 3000000 1024 0` | `100000 3000000 1024 9991721` |
+
+The evaluation set (`scripts/gc-eval.sh`, [docs/testing.md](../../docs/testing.md))
+runs N = 10,000, 100,000 and 900,000 (about 10 MB, 100 MB and 0.93 GB live)
+for 3,000,000 steps with TIME 1, and `scripts/gc-probe32.sh` runs N = 50,000
+for 1,000,000 steps on the 32-bit VM. Today's copier pauses about 1.5 ms for
+every MB live here, and holds five to ten times the live data.
+
+## latency-map
+
+Keep the same window of messages in a persistent AVL tree, copying a path at every step. See [provenance](latency-map/PROVENANCE.md).
+
+Rune, the companion of [latency-ring](#latency-ring) with no mutation at
+all: the window is an AVL tree keyed by message number, and a step inserts
+the newest message and removes the oldest, copying the paths it changes. So
+every step allocates O(log N) nodes, and old paths die in the middle of
+what is old: copied by a copier, left as holes by a collector that does not
+move. Arguments, timing, digest and expected results are latency-ring's,
+and so are the evaluation set's sizes.
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `1000 20000 1024 0` | `1000 20000 1024 1025487` |
+| normal | `10000 1000000 1024 0` | `10000 1000000 1024 14533307` |
+| large | `100000 3000000 1024 0` | `100000 3000000 1024 9991721` |
+
+## latency-static-map
+
+Serve requests that allocate from a large map built once and never changed. See [provenance](latency-static-map/PROVENANCE.md).
+
+Rune, the pause against the live data when nothing that is old changes. A
+balanced tree of ENTRIES keys, each with a string of VLEN bytes, is built
+once without garbage (about 155 bytes an entry at VLEN 100). Each of
+REQUESTS requests draws LOOKUPS keys from Park and Miller's multiplier by
+Schrage's method (modulo the prime 1073741789, so that every intermediate
+fits in a 31-bit int), concatenates their strings and folds a list of
+GARBAGE triples made from the response: about 2.4 KB of garbage at 8
+lookups and 25 triples, none of which outlives its request. A copier copies
+the whole map at every collection; a nursery need not touch it.
+
+Arguments `ENTRIES VLEN REQUESTS LOOKUPS GARBAGE TIME`. TIME 1 writes the
+requests' histogram (as latency-ring's) and the build's time to standard
+error. The result is the size of the map, counted after the last request so
+that the map stays live, REQUESTS, and the digest of every response;
+`tests/benchmarks/latency-oracle.py` works it out independently.
+
+| Profile | Arguments | Expected result |
+|---|---|---|
+| smoke | `1000 100 2000 8 25 0` | `1000 2000 4471862` |
+| normal | `130000 100 100000 8 25 0` | `130000 100000 6754234` |
+| large | `1300000 100 1000000 8 25 0` | `1300000 1000000 13178327` |
+
+The evaluation set runs 1,300,000 entries (about 200 MB live) and 1,000,000
+requests with TIME 1, and as extras 130,000 and 5,200,000 entries (about 20
+and 800 MB) for the pause against the live data.

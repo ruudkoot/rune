@@ -241,7 +241,8 @@ the heap is two passes, one into a space of the same size and one into a
 larger -- and some lines at exit. The run is the same with it, `--count`
 included (`tests/runtime/run-gc-log.py`). The first line names the format
 and the heap's settings (`# rune-gc-log 1 nursery=0 heap=H fill=P limit=L`)
-and the second the columns, by which a script reads them:
+and the second the columns, by which a script reads them (`tools/mmu.py`,
+`scripts/gc-eval.sh`; [testing.md](testing.md), *Measuring a collector*):
 
 | Column | What |
 |---|---|

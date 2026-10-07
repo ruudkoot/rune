@@ -30,6 +30,10 @@ cp "$suite/manifest.tsv" "$out/original.tsv"
 tail -1 "$out/original.tsv" >> "$suite/manifest.tsv"
 reject duplicate-profile
 cp "$out/original.tsv" "$suite/manifest.tsv"
+# Rune's own program names its file as its source; one that is not there is rejected
+awk -F '\t' -v OFS='\t' 'NR > 1 { $3 = "rune"; $4 = "tak/missing.sml" } { print }' "$out/original.tsv" > "$suite/manifest.tsv"
+reject missing-rune-source
+cp "$out/original.tsv" "$suite/manifest.tsv"
 rm "$suite/tak/normal.expected"
 reject missing-fixture
-echo 'bench-catalog: unknown/duplicate routine entries, missing reason, duplicate profiles and missing fixtures rejected'
+echo 'bench-catalog: unknown/duplicate routine entries, missing reason, duplicate profiles, missing sources of Rune programs and missing fixtures rejected'
