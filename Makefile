@@ -139,7 +139,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: isa check-isa test-ir check-levels test-register test-register-jit test-register-asan vm-census test-census heapsim check-heapsim check-layouts templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa test-ir check-levels test-register test-register-jit test-register-asan vm-census test-census heapsim check-heapsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -510,6 +510,19 @@ check-heapsim: heapsim
 check-layouts:
 	$(MAKE) --no-print-directory -C tests/layouts CC=$(CC)
 	sh tests/layouts/check.sh $(notdir $(CC))
+
+# The collector harness (docs/plans/garbage-collector-v2.md, *The harness*;
+# tests/gcbench/README.md): `make gcbench` builds tests/out/gcbench/gcbench
+# with $(CC). check-gcbench runs every experiment at tiny sizes with its
+# self-checks on (tests/gcbench/check.sh: a second or two, nothing timed,
+# no perf needed). The harness is for Linux on x86-64: elsewhere
+# check-gcbench says so and does nothing. Part of make check.
+gcbench:
+	$(MAKE) --no-print-directory -C tests/gcbench CC=$(CC)
+check-gcbench:
+	@if [ "$$(uname -s) $$(uname -m)" = "Linux x86_64" ]; then \
+	  $(MAKE) --no-print-directory gcbench && sh tests/gcbench/check.sh; \
+	else echo "check-gcbench: the harness is for Linux on x86-64; nothing done"; fi
 
 # runeopt's templates for the layout of values and objects, generated from
 # the JIT's macro-assembler run against the text backend of its assembler
@@ -1074,6 +1087,7 @@ check:
 	@$(MAKE) --no-print-directory test-census
 	@$(MAKE) --no-print-directory check-heapsim
 	@$(MAKE) --no-print-directory check-layouts
+	@$(MAKE) --no-print-directory check-gcbench
 	@$(MAKE) --no-print-directory perf-check
 	@$(MAKE) --no-print-directory bench-smoke
 	@$(MAKE) --no-print-directory check-positions

@@ -151,6 +151,27 @@ JIT tier (the premise of `check-jit.sh`).
 * A program whose count depends on the clock is not a test and not a count
   workload until its clock is shimmed.
 
+## Harnesses that measure
+
+Two C harnesses measure what a design costs on the machine rather than
+what a program prints: `tests/layouts`, the heap-layout roadmap's layouts
+(`make check-layouts`), and `tests/gcbench`, the collector roadmap's unit
+costs (`make check-gcbench`; [plans/garbage-collector-v2.md](plans/garbage-collector-v2.md),
+*The harness*). `make check` runs both but times neither: it holds them to
+oracles that do not depend on the machine's speed. Every kernel of the
+layout harness must give the same checksum under every layout and heap
+size (`tests/layouts/check.sh`); every experiment of gcbench runs at tiny
+sizes with its own checks on (`tests/gcbench/check.sh`, a second or two):
+the copies and marks reach every object, the barriers' remembered sets
+find every old-to-young pointer, the sweeps free the dead bytes, the stack
+scans agree, and the replay allocators keep every object whole and apart,
+against their closed forms and a shadow heap. gcbench reads its counters
+in the process with `perf_event_open` and goes on with the TSC where it
+may not, so the check needs neither `perf` nor the permission to count.
+Their timed runs are each directory's `measure.sh`, alone on an idle
+machine and pinned to one core ([performance.md](performance.md); the
+READMEs of the two directories).
+
 ## An instrumented VM
 
 A build that changes what the VM does per object, for an experiment, keeps
