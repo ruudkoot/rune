@@ -53,7 +53,7 @@ What it rests on:
 | M1 | Measure in the tree | done 2026-10-07: `--gc-log` and `RUNE_MEMSTAT` in the copier (`01bba940`); `tests/gcbench` and `check-gcbench` (`bb1b1152`); the latency workloads, `tools/mmu.py`, `scripts/gc-eval.sh` with the evaluation set, and the 32-bit probe (`4d88489a`); the census VM on the word layout and the simulators on its traces, `test-census`, the validation of `check-heapsim` and `check-gcsim` in `make check` (`5dad8248`). The traces of the bootstrap and of compile-sigs made in the tree pass `checktrace` and the validation against `runevm --stats`; `gc-eval.sh` gives the copier against itself T 1.01, M 1.00, P 0.99 and its bootstrap as *Where we are* has it. The harness's H5 numbers below were made with a nursery 8 times too small and are to be measured again (`tests/gcbench/README.md`) |
 | M2 | The collector behind an interface | done 2026-10-07: the barrier with the object, the field and the value in every engine, `runeopt`'s `:=` and `Array.update` included, through `ms_set_field` and its template (`4cc8ae69`); `--gc-verify` and `make test-heap` in `make check` (`8fb0fc18`, `1065a541`); the heap of 2 MiB chunks over `sys_mem_reserve`, images and `heap_relocate` over them, the copier, the log and the check in `runtime/gc/` (`04cd4345`); the corrections of *Where the documents are wrong*. Output, `--count` and every collection as before on all 271 programs of `tests/lang` on both VMs, and every portability VM and image direction; the evaluation set T 1.011, M 0.841, P 1.030 against the copier of `1065a541`, the short programs' worst T within the noise on five rounds. The old-space interface's operations come with their first users: promotion with M3's nursery, marking and sweeping with M4's old spaces |
 | M3 | The nursery, its remembered set, the watermark, large objects | done 2026-10-07, its targets not met: the barrier with the VM, the field and the value in every engine (`233a8e6b`); the nursery of 1 MiB (`--nursery N`; 0 the copier as before) with promotion at the first survival, the cards and dirty bytes in the chunks' tables with a crossing map, the large-object space from 8 KiB with the large objects made since the last minor collection scanned whole, and `--gc-verify` of the remembered set (`d34ff907`); the watermark and the liveness by a hash of the return pc (`bdf2ed77`) -- the watermark an index of the lowest frame that ran since the last minor collection, which every pop lowers, rather than D9's bit in each frame record: the same frames scanned, a comparison a return, `Frame` unchanged; and what the evaluation found: a dirty card of a large array scanned from its first field, each minor collection logged as its own, the collector's calls per object made inline (`b1c9a930`). Correct: the whole chain, `--gc-verify` at 4 KiB, 64 KiB and 1 MiB on both interpreters, the JIT at both tiers and `runeopt`'s code, and `--nursery 0` as M2 in output, `--count` and every collection on all 271 programs of both VMs. Against M2's copier (`results/m3-eval.md`): T 1.011, M 0.685, P 1.010; the bootstrap 0.833 of the task-clock (target 0.85) and 0.648 of the peak (target 0.5), its 99th-percentile pause 1.1 ms against 67; `merge` 2.05 (target 1.0); Rune compiling MLton 1.33 (target 1.0). What misses is promotion at the first survival into a copying old space: where a program's short-lived data is as large as the nursery most of it is promoted, and the full collections copy it again (DLXSimulator promotes 81% of each nursery, Rune compiling MLton 52%). No nursery from 128 KiB to 16 MiB meets the targets (the sweep there: 16 MiB mends `merge` and DLXSimulator at M 0.94 and P 1.63); the gate decides D2 -- the size, and promotion at the second survival -- and D3, an old space that is marked, on M4's prototypes |
-| M4 | Two old spaces at full scale; the gate | |
+| M4 | Two old spaces at full scale; the gate | the prototypes built and measured 2026-10-08, the gate open: the frame of a non-moving old space (`d4015db0`), mark-region on `gc2-m4a` and segregated fits on `gc2-m4b`, each passing M3's chain; the numbers and what they recommend in *Decisions*, *The gate of M4*. The owner decides D2 to D5, D7 and D8, and M5 to M8 are planned again |
 | M5 | The chosen old space, complete | |
 | M6 | Short pauses | |
 | M7 | The cache, and the compiler's help | |
@@ -1998,6 +1998,98 @@ provisionally:
 | D17. The FFI and pinning | as recommended: large objects pinned in place | as recommended |
 | D18. A lazy front end | as recommended: indirections shortcut at copy and at mark; updates through the barrier | as recommended |
 | D19. Order against the other plans | A: M1 now; nothing waits for this, and the resident compiler wants M3 | A |
+
+### The gate of M4: what the two old spaces measured
+
+M4 built the frame of a non-moving old space (`d4015db0`: a mark bit for
+every 8 bytes of a chunk, set where an object is placed, so that the bits
+are its marks, its objects' starts and what a walk of it visits) and the
+two prototypes on it, each a branch with its old space the default: A,
+mark-region (`gc2-m4a`, `4cb0a4e8`: lines of 64 bytes in blocks of 32 KiB,
+exact line marks, holes filled by promotion, an overflow block, evacuation
+of the sparsest blocks up to the nursery's size a full collection), and B,
+segregated fits (`gc2-m4b`, `1b98f09f`: classes by eights to 128 bytes then
+an eighth apart, blocks of one class, cells found free by their bits,
+lazily). Both pass M3's whole chain and its `--gc-verify` matrix with
+their old space the default. Measured on the evaluation set against the
+copier (`scripts/gc-eval.sh`, three rounds; `results/m4-gate.md`, which
+has every number here and more):
+
+| | M3 | A: mark-region | B: segregated fits |
+|---|---:|---:|---:|
+| T | 1.011 | 1.064 | 1.078 |
+| M | 0.685 | 0.571 | 0.572 |
+| P | 1.010 | 0.799 | 0.799 |
+| the bootstrap: T, peak (MiB) | 0.833, 121 | 0.926, 102 | 0.930, 104 |
+| latency at 100 MB live: longest pause, peak | 68-118 ms, 620 MiB | 14-20 ms, 272-279 MiB | 10-14 ms, 290-293 MiB |
+| latency at 0.9 GB live: longest pause | 1.6-5.0 s | 103-170 ms | 65-114 ms |
+| Rune compiling MLton: T, peak over most live | 1.33, 2.61 | 1.35, 1.82 | 1.46, 1.71 |
+| 32-bit under 2 GiB: most live (copier 512 MiB) | 257 MiB | 1025 MiB | 1025 MiB |
+| runs above 1.10 in T | 22 | 17 | 19 |
+
+Of D1's targets the two meet the score M (at most 0.6), the 99th
+percentile of 2 ms on the bootstrap and at 100 MB live, and the 32-bit
+768 MiB under 2 GiB; neither meets the throughput (T 0.95, the bootstrap
+0.85, which M3 meets, Rune compiling MLton 0.8), the bootstrap's peak of
+twice its live data and 16 MB (94 MiB), the 10 ms longest pause, which
+is now a whole marking, nor 1.5 GiB on 32-bit, which `grown` stops at 1
+GiB (it will not double a size past half of what a `size_t` holds). What
+the non-moving spaces bring is memory and the full collection's pause,
+which no longer copies; what they cost is the promotion path -- a minor
+collection's placement into holes or cells, each object given its bit and
+queued, is 1.3 to 1.6 times M3's bump a byte promoted, so that the
+programs that promote most (DLXSimulator, merge, vector-rev, the lazy
+exp3_8) are 2.1 to 2.5 times the copier, against M3's 1.6 to 2.1.
+
+What it says for each decision of the gate:
+
+* **D2, the nursery.** A fixed 1 MiB nursery promotes most of what a
+  program holds briefly wherever that is as large as the nursery
+  (DLXSimulator 81% of it, Rune compiling MLton 52%): no fixed size from
+  128 KiB to 16 MiB meets the targets (`results/m3-eval.md`), a larger one
+  trading memory and pauses for time. An adaptive nursery -- after each full
+  collection half of the room the heap has, within 1 MiB and a most --
+  takes most of a large one's gain at less memory: on the sweep's twelve
+  runs T 1.084, M 0.862 within 1 and 8 MiB, and 1.042, 0.831 within 1 and
+  16 MiB, the same within the noise (1 MiB fixed: 1.287, 0.792; 8 MiB
+  fixed: 1.100, 0.938), merge 1.15 where 1 MiB gave 1.98. *Recommended at
+  the gate:* the adaptive nursery, within 1 and 8 MiB; promotion at the
+  first survival kept (a survivor space copies what is live in the nursery
+  all the same; not measured here).
+* **D3, the old space.** A and B are within 1.5% in T and M over the set.
+  A is ahead on the long compilation (T 1.35 against 1.46) and on a program
+  of many sizes (DLXSimulator's peak, 0.68 against B's 1.31, where cells of
+  a class lie empty); B on the latency workloads (T 0.94 against 0.99) and
+  the longest pauses, its sweep being a count of bits. *Recommended at the
+  gate:* A, mark-region, as provisionally: it bounds fragmentation by
+  evacuation where B cannot, and the longest pause is M6's to shorten in
+  either.
+* **D4, fragmentation.** The peak over the most live data on Rune
+  compiling MLton falls from 2.61 (M3) to 1.82 (A) and 1.71 (B), and A's
+  evacuation keeps DLXSimulator at 0.68 of the copier. *Recommended:* A +
+  B, as provisionally; the compaction at the limit is still to build (M5).
+* **D5, large objects.** As recommended, with a correction found on
+  32-bit: an object of more than half a chunk (the probe's arrays of 1 MiB,
+  257 units of a chunk's 491) leaves the rest of its chunk unused, so that
+  the bytes probe stops at a quarter of the address space. *Recommended:*
+  from 8 KiB, and an object of more than half a chunk given a run of its
+  own (M5).
+* **D7, pauses.** The longest pause is now a full collection's marking:
+  48-50 ms on the bootstrap, 65-170 ms at 0.9 GB; the 99th percentile is a
+  minor collection's, 1 to 2.4 ms. *Recommended:* B, incremental marking
+  paced by allocation, as provisionally (M6).
+* **D8, the metadata.** Side tables carried both: the mark bitmap, which
+  is the objects' starts too, and A's line bytes, 3.9% of a chunk in all
+  with the cards and the crossing map. *Recommended:* C, as provisionally.
+
+| Decision | Recommended at the gate | Chosen |
+|---|---|---|
+| D2. The nursery | adaptive: half the heap's room after a full collection, within 1 and 8 MiB; promotion at the first survival | the owner's |
+| D3. The old space | A: mark-region (`gc2-m4a`) | the owner's |
+| D4. Fragmentation | A + B: evacuation; compaction at the limit | the owner's |
+| D5. Large objects | from 8 KiB; an object of more than half a chunk in a run of its own | the owner's |
+| D7. Pauses | B: incremental marking paced by allocation | the owner's |
+| D8. The collector's metadata | C: side tables | the owner's |
 
 ### D1. What the second generation is for
 
