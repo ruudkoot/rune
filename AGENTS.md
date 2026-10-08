@@ -248,7 +248,7 @@ keep these invariants:
 * Before finishing any change run `make check` (= `test`, `bootstrap`,
   `test-doc`, `test-lib`, `test-all`, `test-basis`, `test-opt`, `test-ir`,
   `check-levels`, `test-native`, `test-register`, `test-register-jit`,
-  `test-heap`, `test-census`, `check-heapsim`, `check-gcsim`,
+  `test-heap`, `test-gc`, `test-census`, `check-heapsim`, `check-gcsim`,
   `check-layouts`, `check-gcbench`, `perf-check`, `bench-smoke`,
   `check-positions`, `check-cross`, `check-docs`, `check-isa`; runs on all
   CPUs, about a quarter of an hour on 16 with nothing else running). `bin/rune` is the self-hosted compiler, so it is what

@@ -177,7 +177,17 @@ typedef struct AllocState {
 typedef struct Chunk Chunk;   /* runtime/gc/gc.h */
 /* where a run of an image's objects was read to (runtime/gc/chunk.c, heap_read_take) */
 typedef struct HeapSeg { uint64_t base; char *at; size_t len; } HeapSeg;
-enum { OLD_COPY, OLD_MARK };   /* the old spaces (runtime/gc/gc.h) */
+enum { OLD_COPY, OLD_MARK, OLD_IMMIX, OLD_SEGFIT };   /* the old spaces (runtime/gc/gc.h) */
+/* a size class of the segregated old space (runtime/gc/segfit.c): the block
+   placement takes cells from and the next of them to look at; its other
+   blocks with free cells, from the last sweep */
+typedef struct SfClass {
+    char *block;
+    uint32_t next, cells;
+    char **list;
+    size_t n, cap, at;
+} SfClass;
+#define SF_CLASSES 64
 
 /* The collector's own (runtime/gc/): nothing of it is a variable of the
    file, so every VM of a process collects by itself. The heap is a list of
@@ -201,6 +211,25 @@ typedef struct GcState {
     Chunk *nursery;
     size_t nursery_size;
     int old_kind;        /* the old space's (runtime/gc/gc.h, --old-space): OLD_COPY, or OLD_MARK where there is a nursery */
+    /* the mark-region old space's (runtime/gc/immix.c): the hole placement
+       bumps into, in its block; the overflow block's, for an object of more
+       than a line that the hole does not take; the blocks with free lines
+       and those with none used, from the last sweep */
+    char *ix_cursor, *ix_limit, *ix_block, *ix_ocursor, *ix_olimit;
+    char **ix_recycle, **ix_free;
+    size_t ix_nrecycle, ix_recycle_cap, ix_recycle_at, ix_nfree, ix_free_cap;
+    int ix_in_full;      /* a full collection is marking: whole free blocks alone */
+    uint64_t ix_evacuated;
+    /* the segregated old space's (runtime/gc/segfit.c): the classes, their
+       sizes, the class of each size by eights, and the free blocks */
+    SfClass sf[SF_CLASSES];
+    uint32_t sf_size[SF_CLASSES];
+    int sf_nclasses;
+    uint8_t *sf_class_of;
+    char **sf_free;
+    size_t sf_nfree, sf_free_cap;
+    char *sf_bump, *sf_bump_limit;   /* the block of no class an image's objects are read into */
+    int sf_in_full;
     /* The large-object space (runtime/gc/los.c): objects of los_min bytes
        or more, in its chunks; its bytes count with the old space's; those
        with fields made since the last minor collection, and a full

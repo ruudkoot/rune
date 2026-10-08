@@ -28,8 +28,13 @@ static void usage(void) {
         "  --gc-verify     check the heap before and after every collection (testing the collector)\n"
         "  --nursery N     a nursery of N bytes, at least 4096, before the old space (default 1048576;\n"
         "                  0: none, every object made in the old space as the copier had it)\n"
-        "  --old-space S   copy (default): an old space that a full collection copies; mark: one\n"
-        "                  whose objects stay where they are (docs/plans/garbage-collector-v2.md, M4)\n"
+        "  --gc G          the collector: throughput (the default: the least memory and time, its\n"
+        "                  full collections stopping the program) or low-pause (docs/runtime.md)\n"
+        "  --old-space S   the old space beneath --gc, for testing it: copy, which a full\n"
+        "                  collection copies (as with --nursery 0); mark: one\n"
+        "                  whose objects stay where they are (docs/plans/garbage-collector-v2.md, M4);\n"
+        "                  immix: a mark-region one (--gc throughput, the default); segfit: one\n"
+        "                  of segregated size classes (--gc low-pause)\n"
         "  --checked       DECON tests the tag it is given, which a match that names\n"
         "                  every constructor leaves untested (for testing the compiler)\n"
         "  --emulate-fork  fork as on Windows, which has none: by a second runevm that\n"
@@ -72,7 +77,7 @@ static int size_arg(const char *text, size_t *out) {
 int main(int argc, char **argv) {
     size_t heap = 4u << 20, gc_stress = 0, heap_fill = 50, stack = (size_t)1 << 30;
     size_t heap_limit = 0, equality_work = 0, nursery = (size_t)1 << 20;
-    int old_kind = OLD_COPY;
+    int old_kind = OLD_IMMIX;   /* --gc throughput, the default (docs/plans/garbage-collector-v2.md, D3) */
     int disasm = 0, trace = 0, stats = 0, count = 0, emulate_fork = 0, checked = 0, gc_verify = 0;
     int jit_check = 0, jit_given = 0;
     JitOptions jit;
@@ -107,10 +112,18 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--nursery") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &nursery)) { usage(); return 2; }
         }
+        else if (strcmp(argv[i], "--gc") == 0 && i + 1 < argc) {
+            i++;
+            if (strcmp(argv[i], "throughput") == 0) old_kind = OLD_IMMIX;
+            else if (strcmp(argv[i], "low-pause") == 0) old_kind = OLD_SEGFIT;
+            else { usage(); return 2; }
+        }
         else if (strcmp(argv[i], "--old-space") == 0 && i + 1 < argc) {
             i++;
             if (strcmp(argv[i], "copy") == 0) old_kind = OLD_COPY;
             else if (strcmp(argv[i], "mark") == 0) old_kind = OLD_MARK;
+            else if (strcmp(argv[i], "immix") == 0) old_kind = OLD_IMMIX;
+            else if (strcmp(argv[i], "segfit") == 0) old_kind = OLD_SEGFIT;
             else { usage(); return 2; }
         }
         else if (strcmp(argv[i], "--gc-stress") == 0 && i + 1 < argc) {

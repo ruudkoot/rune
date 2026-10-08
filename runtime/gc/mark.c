@@ -76,6 +76,8 @@ Obj *mark_place(VM *vm, size_t size) {
    placement (the frame's, mark_place, or a measured one's) */
 Obj *old_place(VM *vm, size_t size) {
     switch (vm->gc.old_kind) {
+    case OLD_IMMIX: return immix_place(vm, size);
+    case OLD_SEGFIT: return segfit_place(vm, size);
     default: return mark_place(vm, size);
     }
 }
@@ -92,6 +94,8 @@ void mark_adopt(VM *vm) {
         for (size_t at = 0; at < c->used; at += obj_size((Obj *)(chunk_payload(c) + at)))
             chunk_bit_set(c, c->payload + at);
     }
+    if (vm->gc.old_kind == OLD_IMMIX) immix_adopted(vm);
+    if (vm->gc.old_kind == OLD_SEGFIT) segfit_adopted(vm);
 }
 
 /* ---- the full collection ---- */
@@ -121,8 +125,20 @@ static Obj *mark_obj(VM *vm, Obj *o) {
     if (c->kind == CHUNK_LOS) { los_mark(vm, o); return o; }
     size_t off = (size_t)((char *)o - (char *)c);
     if (!chunk_bit(c, off)) {
-        chunk_bit_set(c, off);
+        if (obj_forwarded(o)) return obj_forwarding(o);   /* evacuated already (immix.c) */
         size_t size = obj_size(o);
+        if (vm->gc.old_kind == OLD_IMMIX) {
+            Obj *n = immix_marked(vm, c, o, size);
+            if (n != o) {
+                /* evacuated: placed, its bit set, to be scanned there */
+                if (obj_kind(n) == K_REAL || obj_kind(n) == K_BOX) vm->gc.to_boxes += size;
+                vm->gc_counts.objects++;
+                vm->gc.to_used += size;
+                if (obj_has_fields(n)) gc_queue(vm, n);
+                return n;
+            }
+        }
+        chunk_bit_set(c, off);
         c->used += size;
         vm->gc.closed += size;
         if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) vm->gc.to_boxes += size;
@@ -166,6 +182,8 @@ void mark_full(VM *vm) {
     vm->gc.to_used = 0;
     vm->gc.to_boxes = 0;
     vm->gc.nqueue = 0;
+    if (vm->gc.old_kind == OLD_IMMIX) immix_full_begin(vm);
+    if (vm->gc.old_kind == OLD_SEGFIT) segfit_full_begin(vm);
     for (Chunk *c = vm->gc.first; c; c = c->next) {
         bits_clear(c);
         c->used = 0;
@@ -180,6 +198,8 @@ void mark_full(VM *vm) {
     }
 
     switch (vm->gc.old_kind) {
+    case OLD_IMMIX: immix_sweep(vm); break;
+    case OLD_SEGFIT: segfit_sweep(vm); break;
     default: mark_sweep(vm); break;
     }
     for (Chunk *c = vm->gc.first; c; c = c->next) {
