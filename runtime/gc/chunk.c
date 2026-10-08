@@ -20,6 +20,8 @@ static void chunk_layout(Chunk *c, size_t size) {
     c->units_at = (uint32_t)(c->cross_at + 2 * (size >> GC_CARD_SHIFT));
     c->marks_at = (uint32_t)(c->units_at + 2 * (size >> GC_UNIT_SHIFT));
     c->bits_at = (uint32_t)((c->marks_at + (size >> GC_UNIT_SHIFT) + 7) & ~(size_t)7);
+    c->lines_at = (uint32_t)(c->bits_at + (size >> 6));
+    c->blocks_at = (uint32_t)(c->lines_at + (size >> IX_LINE_SHIFT));
     c->payload = (uint32_t)CHUNK_PAYLOAD(size);
 }
 
@@ -86,6 +88,12 @@ void heap_chunks_release(VM *vm) {
     vm->gc.born = vm->gc.queue = NULL;
     vm->gc.segs = NULL;
     vm->gc.nborn = vm->gc.born_cap = vm->gc.nqueue = vm->gc.queue_cap = vm->gc.nsegs = vm->gc.segs_cap = 0;
+    /* the mark-region space's lists of blocks (immix.c) */
+    free(vm->gc.ix_recycle);
+    free(vm->gc.ix_free);
+    vm->gc.ix_recycle = vm->gc.ix_free = NULL;
+    vm->gc.ix_nrecycle = vm->gc.ix_recycle_cap = vm->gc.ix_recycle_at = vm->gc.ix_nfree = vm->gc.ix_free_cap = 0;
+    vm->gc.ix_cursor = vm->gc.ix_limit = vm->gc.ix_block = vm->gc.ix_ocursor = vm->gc.ix_olimit = NULL;
     vm->alloc.from = NULL;
     vm->alloc.size = vm->alloc.used = 0;
 }

@@ -322,6 +322,43 @@ int main(void) {
         CHECK("a chunk with nothing reached is given back", after <= chunks + 1 && obj_field(val_ptr(obj_field(keep, 0)), 0) == mk_imm(220));
     }
 
+    /* The mark-region old space (runtime/gc/immix.c; --old-space immix): the
+       lines a full collection does not mark are holes that promotion bumps
+       into, and a block with free lines is evacuated by the next full
+       collection, its objects whole where they went */
+    {
+        VM *iv = new_vm(1 << 20);
+        iv->gc.old_kind = OLD_IMMIX;
+        heap_nursery(iv, 1 << 14);
+        enum { N = 4000 };
+        Obj *arr = vm_alloc_fields(iv, K_ARRAY, 0, N);   /* a large object: it stays, and roots the tuples */
+        vm_push(iv, mk_ptr(arr));
+        for (int i = 0; i < N; i++) { Value t = tuple(iv, 3, 10 * i); obj_set_field(iv, arr, (uint32_t)i, t); }
+        vm_gc(iv, 0);
+        CHECK("every tuple promoted and kept", heap_check(iv, NULL) == NULL && obj_field(val_ptr(obj_field(arr, 3999)), 2) == mk_imm(39992));
+        size_t chunks = 0;
+        for (Chunk *x = iv->gc.first; x; x = x->next) chunks++;
+        for (int i = 1000; i < 3000; i++) obj_set_field(iv, arr, (uint32_t)i, mk_unit());
+        vm_gc(iv, 0);
+        CHECK("the lines of what died are free", iv->gc.ix_nrecycle + iv->gc.ix_nfree > 0 && heap_check(iv, NULL) == NULL);
+        for (int i = 1000; i < 3000; i++) { Value t = tuple(iv, 3, 7 * i); obj_set_field(iv, arr, (uint32_t)i, t); }
+        collect_minor(iv);
+        size_t now = 0;
+        for (Chunk *x = iv->gc.first; x; x = x->next) now++;
+        CHECK("promotion fills the holes before a new chunk", now == chunks && obj_field(val_ptr(obj_field(arr, 2999)), 1) == mk_imm(7 * 2999 + 1));
+        for (int i = 0; i < N; i += 2) obj_set_field(iv, arr, (uint32_t)i, mk_unit());
+        vm_gc(iv, 0);                                    /* half of every line free: sparse blocks */
+        vm_gc(iv, 0);                                    /* which this one evacuates */
+        int whole = 1;
+        for (int i = 1; i < N; i += 2) {
+            Obj *t = val_ptr(obj_field(arr, (uint32_t)i));
+            int64_t first = i >= 1000 && i < 3000 ? 7 * i : 10 * i;
+            whole &= obj_len(t) == 3 && obj_field(t, 0) == mk_imm(first) && obj_field(t, 2) == mk_imm(first + 2);
+        }
+        CHECK("a full collection evacuates blocks with free lines", iv->gc.ix_evacuated > 0);
+        CHECK("and what it moved is whole where it went", whole && heap_check(iv, NULL) == NULL);
+    }
+
 #ifdef RUNE_BARRIER_CARDS
     /* the measuring barrier: a store into an object marks the card of its field, a fill of a fresh one does not */
     memset(rune_cards, 0, CARD_COUNT);

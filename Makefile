@@ -110,7 +110,7 @@ BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit
 # build/librune.a, which bin/runevm-stack links, and so will a program runeopt
 # makes (docs/native.md); the other VMs compile the same list.
 SYS ?= posix
-RT_SRCS := runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/check.c runtime/gc/log.c runtime/loader.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
+RT_SRCS := runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/check.c runtime/gc/log.c runtime/loader.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
 VM_SRCS := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_$(SYS).c
 VM_HDRS := runtime/vm.h runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
 RT_OBJS := $(patsubst runtime/%.c,build/librune/%.o,$(RT_SRCS) runtime/sys/sys_$(SYS).c)

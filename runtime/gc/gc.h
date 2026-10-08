@@ -55,6 +55,10 @@
 #define GC_BLOCK_SHIFT 15
 #define GC_UNIT_SHIFT 12
 #define GC_CARDS ((size_t)128)
+/* the mark-region old space (immix.c): lines of 64 bytes in blocks of 32 KiB */
+#define IX_LINE_SHIFT 6
+#define IX_BLOCK_SHIFT 15
+#define IX_LINE ((size_t)1 << IX_LINE_SHIFT)
 enum { CHUNK_OLD, CHUNK_LOS, CHUNK_NURSERY, CHUNK_MARK };
 struct Chunk {
     uint32_t dirty_at;   /* the dirty bytes' offset from the chunk: first, for compiled code's barrier (masm.c) */
@@ -64,6 +68,7 @@ struct Chunk {
     size_t used;     /* the bytes of objects in it (the last chunk's is alloc.used while alloc fills it) */
     uint64_t base;   /* an image's: the offset of its first object (runtime/image.c) */
     uint32_t cross_at, units_at, marks_at, bits_at;
+    uint32_t lines_at, blocks_at;   /* the mark-region space's (immix.c): a byte a line, a descriptor a block */
     uint32_t kind;
     size_t units_free;   /* a large-object chunk's free units */
     size_t top;          /* a non-moving chunk's: where the next object goes, from the payload (used is what it holds) */
@@ -75,7 +80,8 @@ typedef char chunk_header_fits[sizeof(Chunk) <= GC_CARDS ? 1 : -1];
    payload from the next 4 KiB, so that the units of the large-object space
    are pages */
 #define CHUNK_TABLES(size) (GC_CARDS + ((size) >> GC_CARD_SHIFT) + ((size) >> GC_BLOCK_SHIFT) \
-                            + 2 * ((size) >> GC_CARD_SHIFT) + 3 * ((size) >> GC_UNIT_SHIFT) + 8 + ((size) >> 6))
+                            + 2 * ((size) >> GC_CARD_SHIFT) + 3 * ((size) >> GC_UNIT_SHIFT) + 8 + ((size) >> 6) \
+                            + ((size) >> IX_LINE_SHIFT) + 8 * ((size) >> IX_BLOCK_SHIFT))
 #define CHUNK_PAYLOAD(size) ((CHUNK_TABLES(size) + 4095) & ~(size_t)4095)
 /* the largest object a chunk holds; one larger gets a run of its own */
 #define CHUNK_ROOM (CHUNK_SIZE - CHUNK_PAYLOAD(CHUNK_SIZE))
@@ -197,6 +203,16 @@ Obj *mark_place(VM *vm, size_t size);         /* the frame's own placement */
 void mark_full(VM *vm);                       /* the full collection of a non-moving old space, the nursery and the large objects */
 size_t chunk_object_covering(Chunk *c, size_t at);   /* the object whose bytes hold payload offset at, from the bits, or CHUNK_END */
 void mark_adopt(VM *vm);                      /* the heap's chunks made non-moving, their objects given their bits */
+
+/* immix.c: the mark-region old space (--old-space immix; M4 A) */
+typedef struct IxBlock { uint16_t free, live; uint8_t candidate, pad[3]; } IxBlock;   /* its free and live lines at the last count; to be evacuated */
+static inline uint8_t *chunk_lines(Chunk *c) { return (uint8_t *)c + c->lines_at; }
+static inline IxBlock *chunk_blocks(Chunk *c) { return (IxBlock *)(void *)((char *)c + c->blocks_at); }
+Obj *immix_place(VM *vm, size_t size);
+void immix_adopted(VM *vm);                   /* after mark_adopt: lines, and the blocks free */
+void immix_full_begin(VM *vm);                /* before a full collection marks: the candidates, the lines cleared */
+Obj *immix_marked(VM *vm, Chunk *c, Obj *o, size_t size);   /* an object the marker reached: its lines, or its copy where its block is evacuated */
+void immix_sweep(VM *vm);
 
 /* check.c: --gc-verify */
 void heap_verify(VM *vm, const char *when);

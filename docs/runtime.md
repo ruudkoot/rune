@@ -155,6 +155,16 @@ reuses little; it is there to test the frame, and the measured old spaces
 place into the holes of their chunks. A card of the space is scanned from
 its bits; an image is written and read over them.
 
+On the frame, `runevm --old-space `immix`, M4's prototype A and this branch's default: a mark-region old
+space of blocks of 32 KiB and lines of 64 bytes, whose free lines promotion
+fills, an object of more than a line that its hole does not take going to
+an overflow block; a full collection marks the lines its objects cover and
+evacuates, into free blocks, the blocks with the most free lines, as many
+as hold live data up to the nursery's size (`immix.c`).
+
+With `--nursery 0` the old space is the copier's, whatever `--old-space`
+says.
+
 What it is and is not:
 
 * **Precise.** Every slot of the stack and every field of an object is a
