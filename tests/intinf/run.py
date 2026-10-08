@@ -168,8 +168,13 @@ def main():
               'machine':platform.uname()._asdict(),
               'clock':'Time.now microseconds for kernel; perf_counter_ns for process wall time',
               'warmups':1, 'samples':args.samples, 'workloads':{}, 'compiler_workloads':{}}
-    report['source_hashes'] = {str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest()
-                               for p in [HERE/'run.py',HERE/'checks.sml',HERE/'oracle.sml',HERE/'workloads.json',ROOT/'lib/basis/intinf.sml']}
+    sources = [HERE/'run.py',HERE/'checks.sml',HERE/'oracle.sml',HERE/'workloads.json',
+               ROOT/'lib/basis/intinf.sml',ROOT/'lib/basis/MANIFEST',ROOT/'Makefile',
+               ROOT/'runtime/prims.c',ROOT/'runtime/value.h',ROOT/'runtime/vm.h',
+               ROOT/'runtime/image.c',ROOT/'src/isa/prims.sml',ROOT/'tests/basis/host/rune-prim.sml']
+    if (ROOT/'runtime/intinf.c').exists():
+        sources.extend([ROOT/'runtime/intinf.c'])
+    report['source_hashes'] = {str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
     report['tool_hashes'] = {p:hashlib.sha256(Path(p).read_bytes()).hexdigest()
                             for p in (compiler,vm[0],str(ROOT/'bin/rune.rbc'))}
     report['loadavg'] = list(os.getloadavg())
@@ -179,6 +184,9 @@ def main():
                           if line.startswith('model name')), 'unknown')
     report['source_status'] = subprocess.check_output(['git','status','--porcelain'],text=True)
     report['c_compiler'] = subprocess.check_output(['cc','--version'],text=True).splitlines()[0]
+    report['libc'] = platform.libc_ver()
+    report['python_version'] = platform.python_version()
+    (out/'worktree.patch').write_bytes(subprocess.check_output(['git','diff','--binary','HEAD']))
     for name in report['source_hashes']:
         copy = out/'sources'/name
         copy.parent.mkdir(parents=True,exist_ok=True)

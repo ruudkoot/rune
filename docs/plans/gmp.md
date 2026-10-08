@@ -18,7 +18,7 @@ replacement arithmetic, or performance measurement is claimed here.
 |---|---|---|
 | M0: record the design | the original brief and owner's decisions | done 2026-10-06; delivery evidence below |
 | M1: establish correctness and performance baselines | M0 | done 2026-10-06; fixed corpus and baseline below |
-| M2: replace the SML representation and kernels | M1 | planned |
+| M2: replace the SML representation and kernels | M1 | done 2026-10-08; implementation and acceptance evidence below |
 | M3: add GMP behind the shared interface | M2 | planned |
 | M4: harden runtime integration and tune dispatch | M3 | planned |
 | M5: complete portability and release validation | M4 | planned |
@@ -534,3 +534,126 @@ native and register/JIT suites, the Basis suite, and generated documentation.
 The local transcript is `tests/out/intinf/m1-check.log`. `git diff --check`
 also passed. The isolated M2 prototype under `tests/out/intinf` is not part
 of this milestone or the arithmetic used by this acceptance run.
+
+
+## M2: packed values and indexed SML arithmetic
+
+The implementation uses canonical `S`/`B` values, immutable little-endian
+magnitude bytes, 30-bit scratch digits on Rune, and 15-bit digits on narrow
+hosts. Multiplication is schoolbook; division estimates and corrects quotient
+digits in indexed scratch arrays. Karatsuba has not been added: the measured
+basic kernels already exceed the multiplication/division target in exploratory
+runs, and the remaining costs came from representation conversion.
+
+**Refinement of the initial storage plan:** the first prototype implemented
+packing with the existing scalar byte operations. Its division improved,
+but factorial and bit operations regressed. Removing repeated power-of-two
+calculations helped, but packing still dominated several workloads. Two
+private storage primitives, `intinf_unpack` and `intinf_pack`, now convert
+between bytes and scratch digits. They perform no integer arithmetic beyond
+encoding the representation. Signs, normalization, addition, multiplication,
+division, parsing, and bit operations remain SML. Their independently written
+SML host adapters support both widths without wide intermediates on a 31-bit
+host. This extends the primitive interface permitted by the design; the
+canonical value format and backend independence are unchanged.
+
+The new storage ABI has 150 boundary and malformed-argument checks, also
+passed with a collection at every allocation. The language regression covers
+small/large transitions, the negative machine boundary, bounded conversion,
+canonical zero, shifts, and exact cases requiring quotient correction and
+add-back. The old oracle and independent fixtures still pass 1,154 checks
+each. Generated documentation and its checks pass.
+
+The targeted `xc1` IntInf matrix passes all 5,418 checks on each of MLton,
+SML/NJ legacy 64-bit and 32-bit, SML/NJ development, Poly/ML, and MLKit. This
+runs Rune's implementation on the hosts, including the narrow 15-bit kernel;
+the former SML/NJ32 signature-width deviation is removed. Local evidence is
+`tests/out/intinf/m2-hosts.log` and `tests/out/matrix/report-intinf.md`.
+The complete matrix also exposed host limitations that the old implementation
+could not reach on SML/NJ32. Their minimized probes, exact check names, and
+M1 comparison are recorded in [host-coverage.md](../../tests/intinf/host-coverage.md).
+The final ledger was applied to the retained full-matrix results with the
+unchanged official report generator: zero unexplained failures, with hashes
+of those results and the reporter in `tests/out/intinf/m2-host-recheck`.
+This was a report regeneration, not another execution of the full matrix.
+The final mixed-comparison optimization receives another targeted IntInf
+matrix and full `make check` below.
+
+### M2 measured performance
+
+[The measurement record](../../tests/intinf/sml-results.json) retains all
+samples, machine identity, source/tool hashes, allocation counts, and peak
+RSS. It uses M1's unchanged workloads, seven alternating pairs after one
+warmup pair, default register JIT, and the same bounded runner:
+
+```
+python3 tests/intinf/run.py --bench --paired-oracle --compiler-workloads --samples 7 --out tests/out/intinf/m2-final4
+```
+
+| Workload | Median seconds | Sample range | Paired old/new speedup |
+|---|---:|---|---:|
+| small-add | 0.112883 | 0.096636-0.152245 | 2.768 |
+| small-mul | 0.077865 | 0.063826-0.092494 | 3.570 |
+| mul-512 | 0.108794 | 0.096108-0.122324 | 2.508 |
+| mul-4096 | 0.226690 | 0.218127-0.236448 | 2.825 |
+| mul-unbalanced | 0.219624 | 0.212173-0.236069 | 1.715 |
+| div-1024 | 0.009810 | 0.009043-0.012413 | 51.466 |
+| div-4096 | 0.011544 | 0.009762-0.014295 | 61.658 |
+| div-unbalanced | 0.023256 | 0.022622-0.026578 | 29.968 |
+| bits-4096 | 0.508458 | 0.486735-0.526929 | 0.727 |
+| convert-4096 | 0.327949 | 0.304026-0.354119 | 2.212 |
+| power-1024 | 0.056195 | 0.053983-0.071809 | 10.898 |
+| factorial-300 | 0.254392 | 0.211759-0.258211 | 1.129 |
+
+The multiplication/division geometric mean is **10.244x**, above the proposed
+2x gate. Both small workloads improve. The 4096-bit bit-operation workload
+regresses (0.727x): it is outside the stated small/compiler regression gate,
+but is a recorded weakness for M4 tuning, not hidden by the aggregate.
+No Karatsuba crossover is claimed.
+
+An initial paired compiler run found a reproducible signature-workload
+regression above 5%. Profiling found extra compilation work and unnecessary
+packing during mixed small/large comparisons. Canonical values now make
+those comparisons from the large operand's sign alone. The fixed corpus,
+threshold, compiler flags, and sample order were not changed.
+[The paired compiler record](../../tests/intinf/sml-compiler-results.json)
+uses 25 measured pairs after two warmup pairs, with hash-verified M1 compiler
+artifacts and each revision's own Basis. Every output matches its reference;
+the full bootstrap and cross-host checks additionally validate reproduction.
+
+| Compiler workload | M1 median seconds | M2 median seconds | Median paired M2/M1 |
+|---|---:|---:|---:|
+| compile-hello | 0.033179 | 0.033993 | 1.0021 |
+| compile-sigs | 0.265039 | 0.268425 | 1.0102 |
+| bootstrap | 2.447420 | 2.522527 | 1.0325 |
+
+All three paired ratios are below 1.05. The exploratory 25-pair signature
+rerun was 1.0252; the final run is 1.0102. Timings remain measurements on the
+recorded machine, not guarantees on every host. The sequential M1 and M2
+compiler measurements are retained in their respective records too.
+
+### M2 acceptance
+
+* `make check JOBS=8` passed outside the syscall sandbox after the final
+  comparison change (`tests/out/intinf/m2-check4.log`): 339 language tests,
+  139,218 Basis checks, native and register/JIT checks, documentation and ISA
+  checks, both bootstrap bytecodes, and cross-host equality for 509 programs.
+  Existing explained host/engine deviations remain visible in the reports.
+* Full `make matrix-quick JOBS=8` ran with the new representation and kernels.
+  Its host coverage and final report regeneration are described above. The
+  final comparison change also passed all 5,418 IntInf checks on Rune and
+  each of the six host configurations (`m2-hosts4.log`).
+* Stack and register ASan/UBSan suites, `make test-stress JOBS=8`,
+  `make test-heap JOBS=8`, `make test-windows JOBS=2`, and
+  `make test-portability JOBS=8` passed. The runtime was unchanged after
+  these runs; the final SML comparison change was rechecked as above.
+  `tests/out/intinf/m2-runtime-acceptance.log` indexes their `m2-*-3` logs.
+  The storage ABI also passed its 150 checks under collection stress and
+  ASan/UBSan. Windows, Linux32, big-endian PowerPC, and AArch64 tests ran;
+  these were not inferred from the native Linux result.
+* `make docs`, `make check-docs`, local-link checks, and `git diff --check`
+  passed. Existing arithmetic allocation budgets were preserved.
+
+Raw commands, streams, source snapshots, and reports are local under
+`tests/out/intinf`; the portable performance records above are committed.
+The main checkout and its unrelated collector draft remain untouched.

@@ -1422,8 +1422,9 @@ clean:
 	find . -type d \( -name .cm -o -name MLB \) -prune -exec rm -rf {} +
 
 .PHONY: test-intinf
-test-intinf: $(RUNE) bin/runevm
+test-intinf: $(RUNE) bin/runevm bin/runevm-stack
 	python3 tests/intinf/run.py --rune $(RUNE)
+	python3 tests/intinf/storage.py
 
 # ---------------------------------------------------------------- install
 # PREFIX defaults to /usr/local for root and ~/.local for anyone else;

@@ -821,5 +821,10 @@ struct
          {name = "proc_wait", arity = 2, ty = "int * int -> int list", effects = anything,
           doc = "Wait for a child (~1: any), not at all when bit 0 of the flags is set: [process (0 when none has ended), 0 exited or 1 signalled or 2 stopped, status or signal, user microseconds, system microseconds, peak resident kilobytes]; [] on failure."},
          {name = "proc_kill", arity = 2, ty = "int * int -> int", effects = anything,
-          doc = "Send a signal to a child's process group, or end its job on Windows; 0, or ~1."}]]
+          doc = "Send a signal to a child's process group, or end its job on Windows; 0, or ~1."}],
+       group "packed integer storage (arithmetic remains in SML)"
+        [{name = "intinf_unpack", arity = 2, ty = "string * int -> int array", effects = [Raises, Allocates],
+          doc = "Decode little-endian magnitude bytes into 15- or 30-bit digits; raises Size above Array.maxLen. Invalid digit width is a bytecode error."},
+         {name = "intinf_pack", arity = 3, ty = "int array * int * int -> string", effects = [Raises, ReadsHeap, Allocates],
+          doc = "Encode the first n 15- or 30-bit digits as canonical little-endian magnitude bytes; raises Size above String.maxSize. Invalid width, count or digit is a bytecode error."}]]
 end

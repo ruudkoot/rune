@@ -465,6 +465,52 @@ struct
   val vector_length = Vector.length
   val vector_sub = Vector.sub
 
+  (* Packed storage, independently of the runtime's C implementation. A
+     narrow host's IntInf kernel requests 15-bit digits, a wide one 30. *)
+  fun intinf_width bits = if bits = 15 orelse bits = 30 then () else raise Fail "invalid limb width"
+  fun intinf_power k = if k = 0 then 1 else 2 * intinf_power (k-1)
+  fun intinf_unpack (s,bits) =
+    let val () = intinf_width bits
+        val n = String.size s
+        val count = (n div bits)*8 + ((n mod bits)*8+bits-1) div bits
+        val a = array_new(count,0)
+        fun loop(i,j,v,k) =
+          if i = n then (if k = 0 then () else Array.update(a,j,v))
+          else let val c = Char.ord(String.sub(s,i))
+                   val remaining = bits-k
+               in if remaining <= 8 then
+                    let val split = intinf_power remaining
+                    in Array.update(a,j,v+(c mod split)*intinf_power k);
+                       loop(i+1,j+1,c div split,8-remaining) end
+                  else loop(i+1,j,v+c*intinf_power k,k+8)
+               end
+        val () = loop(0,0,0,0)
+    in a end
+  fun intinf_pack (a,n,bits) =
+    let val () = intinf_width bits
+        val () = if n < 0 orelse n > Array.length a then raise Fail "invalid limb count" else ()
+        val half = intinf_power (bits-1)
+        fun checked i = if i = n then () else
+          if Array.sub(a,i) < 0 orelse Array.sub(a,i) div half >= 2 then raise Fail "invalid limb"
+          else checked(i+1)
+        val () = checked 0
+        fun trim n = if n > 0 andalso Array.sub(a,n-1) = 0 then trim(n-1) else n
+        val n = trim n
+        val size = (n div 8)*bits + ((n mod 8)*bits+7) div 8
+        val out = bytes_new(size,0)
+        fun loop(i,j,v,k,d,left) =
+          if k = 8 then (Word8Array.update(out,j,Word8.fromInt v); loop(i,j+1,0,0,d,left))
+          else if left > 0 then
+            let val take = Int.min(8-k,left)
+                val split = intinf_power take
+            in loop(i,j,v+(d mod split)*intinf_power k,k+take,d div split,left-take) end
+          else if i = n then
+            if v = 0 then j else (Word8Array.update(out,j,Word8.fromInt v); j+1)
+          else loop(i+1,j,v,k,Array.sub(a,i),bits)
+        val used = loop(0,0,0,0,0,0)
+        fun top j = if j > 0 andalso Word8Array.sub(out,j-1) = 0w0 then top(j-1) else j
+    in bytes_extract(out,0,top used) end
+
   (* ---- what the host's Posix may lack ----
      MLKit 4.7.25 leaves out of its Posix FileSys.utime, the times of
      FileSys.ST, IO.fsync and the locks of IO. Each is defined here, and the

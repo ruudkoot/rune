@@ -395,6 +395,8 @@ enum Prim {
   PRIM_proc_spawn = 389,
   PRIM_proc_wait = 390,
   PRIM_proc_kill = 391,
+  PRIM_intinf_unpack = 392,
+  PRIM_intinf_pack = 393,
   PRIM__COUNT
 };
 
@@ -791,6 +793,8 @@ static const char *const prim_names[] = {
   "proc_spawn",
   "proc_wait",
   "proc_kill",
+  "intinf_unpack",
+  "intinf_pack",
 };
 
 static const unsigned char prim_arity[] = {
@@ -1186,6 +1190,8 @@ static const unsigned char prim_arity[] = {
   7,
   2,
   2,
+  2,
+  3,
 };
 
 /* what each primitive's result is (the representations of
@@ -1584,6 +1590,8 @@ static const unsigned char prim_result[] = {
   1,
   7,
   1,
+  6,
+  6,
 };
 
 #define RUNE_PRIM_LIST(X) \
@@ -1978,6 +1986,8 @@ static const unsigned char prim_result[] = {
   X(rt_processors) \
   X(proc_spawn) \
   X(proc_wait) \
-  X(proc_kill)
+  X(proc_kill) \
+  X(intinf_unpack) \
+  X(intinf_pack)
 
 #endif

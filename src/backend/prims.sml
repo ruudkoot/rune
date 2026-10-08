@@ -394,7 +394,9 @@ struct
     ("rt_processors", 388, 1),
     ("proc_spawn", 389, 7),
     ("proc_wait", 390, 2),
-    ("proc_kill", 391, 2)
+    ("proc_kill", 391, 2),
+    ("intinf_unpack", 392, 2),
+    ("intinf_pack", 393, 3)
   ]
   val byName =
     List.foldl (fn ((n, i, a), m) => StringMap.insert (m, n, (i, a))) StringMap.empty table
@@ -933,7 +935,9 @@ struct
            ("rt_processors", ([8], 1)),
            ("proc_spawn", ([6, 7, 7, 1, 7, 6, 7], 1)),
            ("proc_wait", ([1, 1], 7)),
-           ("proc_kill", ([1, 1], 1))
+           ("proc_kill", ([1, 1], 1)),
+           ("intinf_unpack", ([6, 1], 6)),
+           ("intinf_pack", ([6, 1, 1], 6))
          ]);
          repsOf name)
 end

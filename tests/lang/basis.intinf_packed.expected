@@ -1,0 +1,12 @@
+small and large: true
+negative boundary: true
+bounded conversion: true
+canonical sign: true
+mixed comparisons: true
+minimum quotient: true
+carry product: true
+division correction: true
+zero normalization: true
+arithmetic shift: true
+packed round trip: true
+quotient estimates: true

@@ -33,6 +33,19 @@ as an arithmetic improvement. M1 calibrates this with the original code on
 both sides; M2 compares the replacement to the saved implementation. Compiler
 workloads keep their separate end-to-end timing records.
 
+`compare-compilers.py --baseline-root DIR --samples 25` alternates complete
+compiler processes. DIR contains M1's sources, Basis, configuration, and the
+`bin/runevm` and `bin/rune.rbc` artifacts whose hashes `baseline.json`
+records. Each revision compiles its own Basis and the fixed hello,
+signature, and bootstrap inputs. The old output hashes must match M1; the
+current outputs must match the host-compiled Rune compiler (or the hashes
+of a supplied `--current-record` from `run.py`). The normal bootstrap check
+also verifies self-reproduction. Library path spellings affect debug paths
+in the output, so all paired invocations explicitly use `--lib lib`.
+
+The comparison records each pair and its ratio, with two warmup pairs.
+`--workload NAME` limits exploratory runs; acceptance uses all workloads.
+
 The benchmark result is printed and checked after every run. Operands vary
 through a fixed 17-value cycle and every result is stored, so arithmetic
 cannot disappear as an unused expression. The final iteration and therefore

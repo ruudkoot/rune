@@ -2890,6 +2890,85 @@ static int p_proc_kill(VM *vm) {
     return ret(vm, 2, mk_int(sys_kill_group(val_imm(ARG(1)), (int)val_imm(ARG(0)))));
 }
 
+/* Packed storage for the SML IntInf kernels. These functions only change
+   the digit encoding; signs and all arithmetic stay in the library. The
+   width is explicit so the host adapter can use 15-bit digits on a narrow
+   int. No native limb width or byte order is part of the representation. */
+static unsigned intinf_width(VM *vm, Value v, const char *name) {
+    check_tag(vm, v, T_INT, name);
+    int64_t width = val_int(v);
+    if (width != 15 && width != 30) vm_fatal(vm, "primitive %s: invalid limb width", name);
+    return (unsigned)width;
+}
+static int p_intinf_unpack(VM *vm) {
+    Obj *s = check_obj(vm, ARG(1), K_STRING, "intinf_unpack");
+    unsigned width = intinf_width(vm, ARG(0), "intinf_unpack");
+    uint32_t len = obj_len(s);
+    uint64_t count = ((uint64_t)len * 8 + width - 1) / width;
+    if (count > 100000000) return raise_with(vm, 2, EXN_SIZE);
+    Obj *a = vm_alloc_fields(vm, K_ARRAY, 0, (uint32_t)count);
+    s = val_ptr(ARG(1)); /* allocation may have moved the input */
+    const unsigned char *p = (const unsigned char *)obj_bytes(s);
+    uint64_t acc = 0, mask = (UINT64_C(1) << width) - 1;
+    unsigned bits = 0;
+    uint32_t at = 0;
+    for (uint32_t i = 0; i < len; i++) {
+        acc |= (uint64_t)p[i] << bits;
+        bits += 8;
+        if (bits >= width) {
+            /* Digits fit an immediate even under RUNE_INT64: no allocation. */
+            obj_fill_field(a, at++, mk_int((int64_t)(acc & mask)));
+            acc >>= width;
+            bits -= width;
+        }
+    }
+    if (bits) obj_fill_field(a, at++, mk_int((int64_t)acc));
+    if (at != count) vm_fatal(vm, "primitive intinf_unpack: internal length mismatch");
+    return ret(vm, 2, mk_ptr(a));
+}
+static int p_intinf_pack(VM *vm) {
+    Obj *a = check_obj(vm, ARG(2), K_ARRAY, "intinf_pack");
+    check_tag(vm, ARG(1), T_INT, "intinf_pack");
+    unsigned width = intinf_width(vm, ARG(0), "intinf_pack");
+    int64_t requested = val_int(ARG(1));
+    if (requested < 0 || (uint64_t)requested > obj_len(a))
+        vm_fatal(vm, "primitive intinf_pack: invalid limb count");
+    uint32_t n = (uint32_t)requested;
+    uint64_t base = UINT64_C(1) << width;
+    for (uint32_t i = 0; i < n; i++) {
+        Value d = obj_field(a, i);
+        check_tag(vm, d, T_INT, "intinf_pack");
+        if (val_int(d) < 0 || (uint64_t)val_int(d) >= base)
+            vm_fatal(vm, "primitive intinf_pack: invalid limb");
+    }
+    while (n && val_int(obj_field(a, n - 1)) == 0) n--;
+    unsigned top_bits = 0;
+    if (n) {
+        uint64_t top = (uint64_t)val_int(obj_field(a, n - 1));
+        while (top) { top_bits++; top >>= 1; }
+    }
+    uint64_t length = n ? (((uint64_t)n - 1) * width + top_bits + 7) / 8 : 0;
+    if (length > MAX_STRING) return raise_with(vm, 3, EXN_SIZE);
+    Obj *s = vm_alloc_string(vm, (uint32_t)length);
+    a = val_ptr(ARG(2)); /* allocation may have moved the input */
+    unsigned char *p = (unsigned char *)obj_bytes(s);
+    uint64_t acc = 0;
+    unsigned bits = 0;
+    uint32_t at = 0;
+    for (uint32_t i = 0; i < n; i++) {
+        acc |= (uint64_t)val_int(obj_field(a, i)) << bits;
+        bits += width;
+        while (bits >= 8) {
+            if (at < length) p[at++] = (unsigned char)acc;
+            acc >>= 8;
+            bits -= 8;
+        }
+    }
+    if (at < length) p[at++] = (unsigned char)acc;
+    if (at != length) vm_fatal(vm, "primitive intinf_pack: internal length mismatch");
+    return ret(vm, 3, mk_ptr(s));
+}
+
 const PrimFn prim_table[PRIM__COUNT] = {
     RUNE_PRIM_LIST(PRIM_ENTRY)
 };

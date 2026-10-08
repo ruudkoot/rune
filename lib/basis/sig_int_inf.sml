@@ -13,9 +13,11 @@
 
    See also: `INTEGER`, `WORD`
 
-   Implementation: `IntInf.int/limbs`. A sign and a list of digits in base
-   2^30, written in SML on top of `int`; equal numbers are equal
-   values, so `=` compares them. `LargeInt` is `IntInf`.
+   Implementation: `IntInf.int/limbs`. A small machine integer or a sign
+   and immutable little-endian magnitude bytes. Arithmetic is written in
+   SML with indexed 30-bit scratch digits (15-bit on narrow hosts); storage
+   primitives pack and unpack the bytes. Normalization gives equal numbers
+   equal values, so `=` compares them. `LargeInt` is `IntInf`.
 
    Implementation: `INT_INF/constants`. An integer constant may have the type
    `IntInf.int`, and then be of any size, and the overloaded operators work

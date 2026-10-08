@@ -1,12 +1,6 @@
-(* IntInf: arbitrary precision integers implemented in SML on top of the
-   VM's int (63 bits). A value is a sign and a little-endian list of base-2^30 limbs
-   without high zero limbs; zero is never negative. The representation is
-   therefore canonical and structural equality is value equality.
-
-   This file is compiled before int.sml (Int.toLarge/fromLarge use it), so it
-   relies on the builtin overloaded operators and VM primitives only. Every
-   helper that uses int arithmetic is defined before the IntInf operators
-   shadow + - * div mod ~ < <= > >= inside the structure.
+(* IntInf: canonical small integers or signed immutable packed magnitudes.
+   The bytes are little endian, independent of the arithmetic workspace's
+   limb width. Arrays below are private scratch and never escape in a value.
 
    Implements: INT_INF
 
@@ -15,257 +9,305 @@
    Status: optional *)
 structure IntInf =
 struct
-  type limb = int                       (* below, `int` means IntInf.int *)
-  datatype int = I of bool * limb list  (* negative?, limbs *)
-
-  val base : limb = 1073741824          (* 2^30: limb products stay below 2^60 *)
+  type limb = int
+  datatype int = S of limb | B of bool * string
 
   val intQuot = _prim "int_quot" : limb * limb -> limb
   val intRem = _prim "int_rem" : limb * limb -> limb
   val intToString = _prim "int_to_string" : limb -> string
   val strSize = _prim "string_size" : string -> limb
-  val strConcat = _prim "string_concat_list" : string list -> string
-  val explode = _prim "string_explode" : string -> char list
-  val ord = _prim "char_ord" : char -> limb
+  val strSub = _prim "string_sub" : string * limb -> char
+  val strExtract = _prim "string_extract" : string * limb * limb -> string
+  val anew = _prim "array_new" : limb * limb -> limb array
+  val alen = _prim "array_length" : limb array -> limb
+  val at = _prim "array_sub" : limb array * limb -> limb
+  val put = _prim "array_update" : limb array * limb * limb -> unit
+  val intAdd = _prim "int_add" : limb * limb -> limb
+  fun width (n, k) = width (intAdd (intAdd (n,n),1), k+1)
+                      handle Overflow => k+1
+  val machineBits = width (0,0)
+  val smallBytes = (machineBits + 7) div 8
+  val limbBits = if machineBits >= 61 then 30 else 15
+  val shiftWord = _prim "word_lsl" : word * word -> word
+  val toWord = _prim "word_from_int" : limb -> word
+  val fromWord = _prim "word_to_int" : word -> limb
+  fun pow2 k = fromWord(shiftWord(0w1,toWord k))
+  val base = pow2 limbBits
+  val mask = base - 1
+  val zero = S 0
+  val one = S 1
 
-  (* ---- magnitudes: little-endian limb lists without high zeros ---- *)
+  fun byte (s,i) = ord (strSub (s,i))
+  fun bput (a,i,n) = RuneBytes.update (a,i,chr n)
+  fun trimBytes s =
+    let fun top n = if n > 0 andalso byte (s,n-1) = 0 then top (n-1) else n
+        val n = top (strSize s)
+    in if n = strSize s then s else strExtract (s,0,n) end
+  fun make (neg,s) =
+    let val s = trimBytes s
+        val n = strSize s
+        fun small (i,acc) =
+          if i < 0 then S acc
+          else small (i-1, if neg then acc*256-byte(s,i) else acc*256+byte(s,i))
+    in if n = 0 then zero
+       else if n > smallBytes then B (neg,s)
+       else small (n-1,0) handle Overflow => B (neg,s)
+    end
+  fun smallMag n =
+    let val out = RuneBytes.new (smallBytes,0)
+        fun loop (x,i) = if x = 0 then RuneBytes.extract (out,0,i)
+          else let val r = intRem (x,256)
+               in bput (out,i,if r < 0 then ~r else r); loop (intQuot(x,256),i+1) end
+    in loop (n,0) end
+  fun magnitude (S n) = smallMag n | magnitude (B (_,s)) = s
+  fun negative (S n) = n < 0 | negative (B (n,_)) = n
+  fun isZero (S 0) = true | isZero _ = false
+  fun fromInt n = S n
+  fun toInt (S n) = n | toInt _ = raise Overflow
 
-  fun norm ds =
-    let fun drop (0 :: r) = drop r | drop r = r
-    in List.rev (drop (List.rev ds)) end
-
-  fun cmpMag (a, b) =
-    let
-      val la = List.length a and lb = List.length b
-      fun go ([], []) = EQUAL
-        | go (x :: xs, y :: ys) = if x < y then LESS else if x > y then GREATER else go (xs, ys)
-        | go _ = EQUAL
-    in if la < lb then LESS else if la > lb then GREATER else go (List.rev a, List.rev b) end
-
-  fun addMag (a, b) =
-    let
-      fun go ([], [], 0) = []
-        | go ([], [], c) = [c]
-        | go (x :: xs, [], c) = let val s = x + c in (s mod base) :: go (xs, [], s div base) end
-        | go ([], ys, c) = go (ys, [], c)
-        | go (x :: xs, y :: ys, c) = let val s = x + y + c in (s mod base) :: go (xs, ys, s div base) end
-    in go (a, b, 0) end
-
-  (* requires a >= b *)
-  fun subMag (a, b) =
-    let
-      fun go ([], [], _) = []
-        | go (x :: xs, [], bw) = let val d = x - bw in if d < 0 then (d + base) :: go (xs, [], 1) else d :: go (xs, [], 0) end
-        | go (x :: xs, y :: ys, bw) = let val d = x - y - bw in if d < 0 then (d + base) :: go (xs, ys, 1) else d :: go (xs, ys, 0) end
-        | go ([], _, _) = raise Fail "IntInf.subMag"
-    in norm (go (a, b, 0)) end
-
-  (* 0 <= d < base *)
-  fun mulSmall (a, d) =
-    let
-      fun go ([], 0) = []
-        | go ([], c) = [c]
-        | go (x :: xs, c) = let val p = x * d + c in (p mod base) :: go (xs, p div base) end
-    in if d = 0 then [] else go (a, 0) end
-
-  fun addSmall (a, d) = if d = 0 then a else addMag (a, [d])
-
-  fun shiftLimbs (0, ds) = ds
-    | shiftLimbs (n, ds) = 0 :: shiftLimbs (n - 1, ds)
-
-  (* The product of a zero (no limbs) and b must have no limbs either: a
-     shifted empty partial product is a list of zero limbs. *)
-  fun mulMag ([], _) = []
-    | mulMag (a, b) =
-    let
-      fun go ([], _, acc) = acc
-        | go (y :: ys, shift, acc) =
-          let val part = if y = 0 then [] else shiftLimbs (shift, mulSmall (a, y))
-          in go (ys, shift + 1, addMag (acc, part)) end
-    in go (b, 0, []) end
-
-  (* 0 < d < base; returns (quotient, remainder) *)
-  fun divModSmall (a, d) =
-    let
-      fun go ([], r, acc) = (norm acc, r)
-        | go (x :: xs, r, acc) = let val cur = r * base + x in go (xs, cur mod d, (cur div d) :: acc) end
-    in go (List.rev a, 0, []) end
-
-  (* b nonempty; base-2^30 long division, each quotient limb found by binary search *)
-  fun divModMag (a, b) =
-    case cmpMag (a, b) of
-      LESS => ([], a)
-    | _ =>
-      (case b of
-         [d] => let val (q, r) = divModSmall (a, d) in (q, if r = 0 then [] else [r]) end
-       | _ =>
-         let
-           fun go ([], r, acc) = (norm acc, r)
-             | go (x :: xs, r, acc) =
-               let
-                 val r' = norm (x :: r)
-                 fun search (lo, hi) =
-                   if hi - lo <= 1 then lo
-                   else
-                     let val mid = (lo + hi) div 2
-                     in case cmpMag (mulSmall (b, mid), r') of GREATER => search (lo, mid) | _ => search (mid, hi) end
-                 val q = search (0, base)
-               in go (xs, subMag (r', mulSmall (b, q)), q :: acc) end
-         in go (List.rev a, [], []) end)
-
-  (* ---- signed values ---- *)
-
-  fun make (neg, mag) = case mag of [] => I (false, []) | _ => I (neg, mag)
-  val zero = I (false, [])
-  val one = I (false, [1])
-  fun isZero (I (_, mag)) = List.null mag
-
-  fun fromInt (n : limb) =
-    if n = 0 then zero
-    else if n > 0 then
-      let fun go 0 = [] | go m = intRem (m, base) :: go (intQuot (m, base)) in I (false, go n) end
+  (* The workspace is a little-endian array plus its significant length. *)
+  fun trim (a,n) = if n > 0 andalso at(a,n-1) = 0 then trim(a,n-1) else (a,n)
+  val unpackBytes = _prim "intinf_unpack" : string * limb -> limb array
+  val packBytes = _prim "intinf_pack" : limb array * limb * limb -> string
+  fun unpack s = let val a = unpackBytes(s,limbBits) in trim(a,alen a) end
+  fun pack (a,n) = packBytes(a,n,limbBits)
+  fun cmpMag (a,b) =
+    let val na = strSize a and nb = strSize b
+        fun loop i = if i < 0 then EQUAL
+          else let val x = byte(a,i) and y = byte(b,i)
+               in if x < y then LESS else if x > y then GREATER else loop(i-1) end
+    in if na < nb then LESS else if na > nb then GREATER else loop(na-1) end
+  fun addMag (sa,sb) =
+    let val (a,na) = unpack sa and (b,nb) = unpack sb
+        val n = if na > nb then na else nb
+        val r = anew(n+1,0)
+        fun loop(i,c) = if i = n then put(r,n,c)
+          else let val v = (if i < na then at(a,i) else 0) + (if i < nb then at(b,i) else 0) + c
+               in put(r,i,v mod base); loop(i+1,v div base) end
+        val () = loop(0,0)
+    in pack(r,n+1) end
+  fun subMag (sa,sb) =
+    let val (a,na) = unpack sa and (b,nb) = unpack sb
+        val r = anew(na,0)
+        fun loop(i,c) = if i = na then ()
+          else let val v = at(a,i) - (if i < nb then at(b,i) else 0) - c
+               in put(r,i,if v < 0 then v+base else v); loop(i+1,if v < 0 then 1 else 0) end
+        val () = loop(0,0)
+    in pack(r,na) end
+  fun mulMag (sa,sb) =
+    let val (a,na) = unpack sa and (b,nb) = unpack sb
+        val r = anew(na+nb,0)
+        fun row(i,j,c) = if j = nb then put(r,i+nb,c)
+          else let val v = at(a,i)*at(b,j)+at(r,i+j)+c
+               in put(r,i+j,v mod base); row(i,j+1,v div base) end
+        fun loop i = if i = na then () else (row(i,0,0); loop(i+1))
+        val () = if na = 0 orelse nb = 0 then () else loop 0
+    in pack(r,na+nb) end
+  fun scale ((a,n),d) =
+    let val r = anew(n+1,0)
+        fun loop(i,c) = if i = n then put(r,n,c)
+          else let val v = at(a,i)*d+c
+               in put(r,i,v mod base); loop(i+1,v div base) end
+        val () = loop(0,0)
+    in (r,n) end
+  fun divideSmall ((a,n),d) =
+    let val q = anew(n,0)
+        fun loop(i,r) = if i < 0 then (trim(q,n),r)
+          else let val v = r*base+at(a,i)
+               in put(q,i,v div d); loop(i-1,v mod d) end
+    in loop(n-1,0) end
+  fun divModMag (sa,sb) =
+    if cmpMag(sa,sb) = LESS then ("",sa)
     else
-      let fun go 0 = [] | go m = (0 - intRem (m, base)) :: go (intQuot (m, base)) in I (true, go n) end
-
-  (* raises Overflow through the checked int arithmetic *)
-  fun toInt (I (neg, mag)) : limb =
-    let fun go ([], acc) = acc
-          | go (d :: ds, acc) = go (ds, if neg then acc * base - d else acc * base + d)
-    in go (List.rev mag, 0) end
-
-  fun negI (I (neg, mag)) = make (not neg, mag)
-  fun absI (I (_, mag)) = I (false, mag)
-
-  fun addI (I (na, ma), I (nb, mb)) =
-    if na = nb then make (na, addMag (ma, mb))
-    else
-      case cmpMag (ma, mb) of
-        LESS => make (nb, subMag (mb, ma))
-      | _ => make (na, subMag (ma, mb))
-  fun subI (a, b) = addI (a, negI b)
-  fun mulI (I (na, ma), I (nb, mb)) = make (na <> nb, mulMag (ma, mb))
-
-  (* truncating division: the remainder has the sign of the dividend *)
-  fun quotRemI (I (na, ma), I (nb, mb)) =
-    case mb of
-      [] => raise Div
-    | _ => let val (q, r) = divModMag (ma, mb) in (make (na <> nb, q), make (na, r)) end
-
-  (* floor division *)
-  fun divModI (a as I (na, _), b as I (nb, _)) =
-    let val (q, r) = quotRemI (a, b)
-    in if isZero r orelse na = nb then (q, r) else (subI (q, one), addI (r, b)) end
-
-  fun compare (I (na, ma), I (nb, mb)) =
-    if na <> nb then (if na then LESS else GREATER)
-    else if na then cmpMag (mb, ma)
-    else cmpMag (ma, mb)
-
-  fun sign (I (neg, mag)) : limb = if List.null mag then 0 else if neg then 0 - 1 else 1
-
-  fun toString (I (neg, mag)) =
-    case mag of
-      [] => "0"
-    | _ =>
-      let
-        val chunk = 1000000000
-        fun chunks (m, acc) = if List.null m then acc else let val (q, r) = divModSmall (m, chunk) in chunks (q, r :: acc) end
-        fun zerosThen (k, acc) = if k <= 0 then acc else zerosThen (k - 1, "0" :: acc)
-        fun render (_, []) = []
-          | render (first, c :: cs) =
-            let val s = intToString c
-                val piece = if first then s else strConcat (zerosThen (9 - strSize s, [s]))
-            in piece :: render (false, cs) end
-        val pieces = render (true, chunks (mag, []))
-      in strConcat (if neg then "~" :: pieces else pieces) end
-
-  fun pow (x as I (neg, mag), n : limb) =
-    if n < 0 then
-      (case mag of
-         [] => raise Div
-       | [1] => if neg andalso intRem (n, 2) <> 0 then x else one
-       | _ => zero)
-    else
-      let fun go (b, e, acc) = if e = 0 then acc else go (mulI (b, b), e div 2, if e mod 2 = 1 then mulI (acc, b) else acc)
-      in go (x, n, one) end
-
-  (* ---- fmt and scan ---- *)
-  fun radixBase StringCvt.BIN = 2
-    | radixBase StringCvt.OCT = 8
-    | radixBase StringCvt.DEC = 10
-    | radixBase StringCvt.HEX = 16
-
-  fun fmt StringCvt.DEC x = toString x
-    | fmt radix (I (neg, mag)) =
-      let
-        val r = radixBase radix
-        fun digit d = chr (if d < 10 then 48 + d else 55 + d)
-        fun go (m, acc) =
-          if List.null m then acc
-          else let val (q, d) = divModSmall (m, r) in go (q, digit d :: acc) end
+      let val (a,m) = unpack sa and (b,n) = unpack sb
       in
-        case mag of
-          [] => "0"
-        | _ => implode (if neg then #"~" :: go (mag, []) else go (mag, []))
+        if n = 1 then
+          let val (q,r) = divideSmall((a,m),at(b,0))
+          in (pack q,smallMag r) end
+        else
+          let
+            val d = base div (at(b,n-1)+1)
+            val (u,_) = scale((a,m),d)
+            val (v,_) = scale((b,n),d)
+            val q = anew(m-n+1,0)
+            val top = at(v,n-1)
+            fun correct(qh,rh,j) =
+              if rh < base andalso qh*at(v,n-2) > rh*base+at(u,j+n-2)
+              then correct(qh-1,rh+top,j) else qh
+            fun subtract(j,qh,i,c,bw) =
+              if i = n then
+                let val t = at(u,j+n)-c-bw
+                in put(u,j+n,if t < 0 then t+base else t); t < 0 end
+              else let val p = qh*at(v,i)+c
+                       val t = at(u,j+i)-(p mod base)-bw
+                   in put(u,j+i,if t < 0 then t+base else t);
+                      subtract(j,qh,i+1,p div base,if t < 0 then 1 else 0) end
+            fun addBack(j,i,c) =
+              if i = n then put(u,j+n,(at(u,j+n)+c) mod base)
+              else let val t = at(u,j+i)+at(v,i)+c
+                   in put(u,j+i,t mod base); addBack(j,i+1,t div base) end
+            fun loop j = if j < 0 then ()
+              else let val num = at(u,j+n)*base+at(u,j+n-1)
+                       val estimate = if at(u,j+n) = top then base-1 else num div top
+                       val qh = correct(estimate,num-estimate*top,j)
+                       val borrowed = subtract(j,qh,0,0,0)
+                       val () = if borrowed then addBack(j,0,0) else ()
+                   in put(q,j,if borrowed then qh-1 else qh); loop(j-1) end
+            val () = loop(m-n)
+            val (r,_) = divideSmall((u,n),d)
+          in (pack(q,m-n+1),pack r) end
       end
 
-  (* [+~-]?digits; in radix HEX an optional 0x or 0X, which counts only when
-     a digit follows it. *)
-  fun scan radix (getc : (char, 'a) StringCvt.reader) src =
+  fun negI (S n) = (S (~n) handle Overflow => B(false,smallMag n))
+    | negI (B (neg,s)) = make(not neg,s)
+  fun absI x = if negative x then negI x else x
+  fun addBig (a,b) =
+    let val na = negative a and nb = negative b
+        val ma = magnitude a and mb = magnitude b
+    in if na = nb then make(na,addMag(ma,mb))
+       else if cmpMag(ma,mb) = LESS then make(nb,subMag(mb,ma))
+       else make(na,subMag(ma,mb)) end
+  fun addI (S a,S b) = (S(a+b) handle Overflow => addBig(S a,S b))
+    | addI (a,S 0) = a | addI (S 0,b) = b | addI p = addBig p
+  fun subI (S a,S b) = (S(a-b) handle Overflow => addBig(S a,negI(S b)))
+    | subI (a,b) = addI(a,negI b)
+  fun mulBig (a,b) = make(negative a <> negative b,mulMag(magnitude a,magnitude b))
+  fun mulI (S a,S b) = (S(a*b) handle Overflow => mulBig(S a,S b))
+    | mulI (S 0,_) = zero | mulI (_,S 0) = zero
+    | mulI (S 1,b) = b | mulI (a,S 1) = a | mulI p = mulBig p
+  fun quotBig (a,b) =
+    if isZero b then raise Div
+    else let val (q,r) = divModMag(magnitude a,magnitude b)
+         in (make(negative a <> negative b,q),make(negative a,r)) end
+  fun quotRemI (S a,S b) = ((S(intQuot(a,b)),S(intRem(a,b)))
+                           handle Overflow => quotBig(S a,S b))
+    | quotRemI p = quotBig p
+  fun divModI (a,b) =
+    let val (q,r) = quotRemI(a,b)
+    in if isZero r orelse negative a = negative b then (q,r)
+       else (subI(q,one),addI(r,b)) end
+  fun compare (S a,S b) = if a < b then LESS else if a > b then GREATER else EQUAL
+    (* Canonical large values lie outside the machine range. Mixed
+       comparisons therefore need neither conversion nor allocation. *)
+    | compare (S _,B (neg,_)) = if neg then GREATER else LESS
+    | compare (B (neg,_),S _) = if neg then LESS else GREATER
+    | compare (B (na,a),B (nb,b)) =
+        if na <> nb then (if na then LESS else GREATER)
+        else if na then cmpMag(b,a) else cmpMag(a,b)
+  fun sign (S n) = if n = 0 then 0 else if n < 0 then ~1 else 1
+    | sign (B (neg,_)) = if neg then ~1 else 1
+  fun pow (x,n) =
+    if n < 0 then if isZero x then raise Div
+      else if x = one then one
+      else if x = S (~1) then (if intRem(n,2) = 0 then one else x)
+      else zero
+    else let fun loop(b,e,acc) =
+               if e = 0 then acc
+               else let val acc = if e mod 2 = 0 then acc else mulI(acc,b)
+                    in if e = 1 then acc else loop(mulI(b,b),e div 2,acc) end
+         in loop(x,n,one) end
+
+  val decimalChunk = if limbBits = 30 then 1000000000 else 10000
+  val decimalDigits = if limbBits = 30 then 9 else 4
+  fun toString (S n) = intToString n
+    | toString (B (neg,s)) =
+      let
+        fun chunks (m as (_,n),acc) = if n = 0 then acc
+          else let val (q,r) = divideSmall(m,decimalChunk) in chunks(q,r::acc) end
+        fun zeros(n,ss) = if n <= 0 then ss else zeros(n-1,"0"::ss)
+        fun render(_,[]) = []
+          | render(first,c::cs) =
+              let val t = intToString c
+                  val t = if first then t else concat(zeros(decimalDigits-strSize t,[t]))
+              in t::render(false,cs) end
+        val texts = render(true,chunks(unpack s,[]))
+      in concat(if neg then "~"::texts else texts) end
+  fun magBits s =
+    let fun bits(0,n) = n | bits(v,n) = bits(v div 2,n+1)
+        val n = strSize s
+    in if n = 0 then 0 else (n-1)*8+bits(byte(s,n-1),0) end
+  fun log2 x = if sign x <= 0 then raise Domain else magBits(magnitude x)-1
+  fun radixBase StringCvt.BIN = 2 | radixBase StringCvt.OCT = 8
+    | radixBase StringCvt.DEC = 10 | radixBase StringCvt.HEX = 16
+  fun fmt StringCvt.DEC x = toString x
+    | fmt radix x =
+      if isZero x then "0"
+      else let val s = magnitude x
+               val r = radixBase radix
+               val bits = if r = 2 then 1 else if r = 8 then 3 else 4
+               val digits = (magBits s+bits-1) div bits
+               val prefix = if negative x then 1 else 0
+               val out = RuneBytes.new(digits+prefix,0)
+               val () = if prefix = 1 then bput(out,0,126) else ()
+               fun loop i = if i = digits then ()
+                 else let val bit = (digits-i-1)*bits
+                          val pos = bit div 8 and shift = bit mod 8
+                          val v = byte(s,pos) + (if pos+1 < strSize s then byte(s,pos+1)*256 else 0)
+                          val d = (v div pow2 shift) mod r
+                      in bput(out,i+prefix,if d < 10 then 48+d else 55+d); loop(i+1) end
+               val () = loop 0
+           in RuneBytes.extract(out,0,digits+prefix) end
+
+  fun scan radix (getc : (char,'a) StringCvt.reader) src =
     let
       val r = radixBase radix
       fun digitValue c =
-        let
-          val n = ord c
-          val v = if 48 <= n andalso n <= 57 then n - 48
-                  else if 97 <= n andalso n <= 102 then n - 87
-                  else if 65 <= n andalso n <= 70 then n - 55
-                  else 99
+        let val n = ord c
+            val v = if 48 <= n andalso n <= 57 then n-48
+              else if 97 <= n andalso n <= 102 then n-87
+              else if 65 <= n andalso n <= 70 then n-55 else 99
         in if v < r then SOME v else NONE end
-      fun isDigitNext src =
-        case getc src of SOME (c, _) => (case digitValue c of SOME _ => true | NONE => false) | NONE => false
+      fun digitNext src = case getc src of
+        SOME(c,_) => (case digitValue c of SOME _ => true | NONE => false) | NONE => false
       val src = StringCvt.skipWS getc src
-      val (negative, src) =
+      val (neg,src) = case getc src of
+        SOME(#"~",rest) => (true,rest) | SOME(#"-",rest) => (true,rest)
+      | SOME(#"+",rest) => (false,rest) | _ => (false,src)
+      val src = if r <> 16 then src else
+        case getc src of SOME(#"0",rest) =>
+          (case getc rest of SOME(c,rest') =>
+             if (c = #"x" orelse c = #"X") andalso digitNext rest' then rest' else src
+           | NONE => src) | _ => src
+      fun big (src,a,n) =
+        let
+          fun grow () =
+            let val b = anew(alen a*2+1,0)
+                fun copy i = if i = n then () else (put(b,i,at(a,i)); copy(i+1))
+                val () = copy 0
+            in b end
+          fun more(d,rest) =
+            let val a = if n = alen a then grow() else a
+                fun mul(i,c) = if i = n then
+                    if c = 0 then n else (put(a,n,c); n+1)
+                  else let val v = at(a,i)*r+c
+                       in put(a,i,v mod base); mul(i+1,v div base) end
+            in big(rest,a,mul(0,d)) end
+        in case getc src of
+             SOME(c,rest) => (case digitValue c of SOME d => more(d,rest)
+                              | NONE => (make(neg,pack(a,n)),src))
+           | NONE => (make(neg,pack(a,n)),src)
+        end
+      fun small(src,v) =
         case getc src of
-          SOME (#"~", rest) => (true, rest)
-        | SOME (#"-", rest) => (true, rest)
-        | SOME (#"+", rest) => (false, rest)
-        | _ => (false, src)
-      val src =
-        if r <> 16 then src
-        else
-          case getc src of
-            SOME (#"0", rest) =>
-              (case getc rest of
-                 SOME (c, rest') => if (c = #"x" orelse c = #"X") andalso isDigitNext rest' then rest' else src
-               | NONE => src)
-          | _ => src
-      fun digits (src, mag) =
-        case getc src of
-          SOME (c, rest) =>
+          SOME(c,rest) =>
             (case digitValue c of
-               SOME d => digits (rest, addSmall (mulSmall (mag, r), d))
-             | NONE => (mag, src))
-        | NONE => (mag, src)
-    in
-      if isDigitNext src then
-        let val (mag, rest) = digits (src, [])
-        in SOME (make (negative, mag), rest) end
-      else NONE
-    end
-
+               SOME d =>
+                 let val next = SOME(v*r+d) handle Overflow => NONE
+                 in case next of SOME w => small(rest,w)
+                    | NONE =>
+                        let val (a,n) = unpack(smallMag v)
+                            val (a,_) = scale((a,n),r)
+                            fun add(i,c) = if c = 0 then ()
+                              else let val t = at(a,i)+c
+                                   in put(a,i,t mod base); add(i+1,t div base) end
+                            val () = add(0,d)
+                            val (_,n) = trim(a,n+1)
+                        in big(rest,a,n) end
+                 end
+             | NONE => (S(if neg then ~v else v),src))
+        | NONE => (S(if neg then ~v else v),src)
+    in if digitNext src then SOME(small(src,0)) else NONE end
   fun fromString s = StringCvt.scanString (scan StringCvt.DEC) s
-
-  (* ---- log2, bit operations and shifts ----
-     The bit operations see a number in two's complement with an infinite
-     sign extension: the limbs of a negative number are the complement of
-     those of |x| - 1. *)
-  fun log2 (I (neg, mag)) : limb =
-    if neg orelse List.null mag then raise Domain
-    else
-      let fun bits (0, n) = n
-            | bits (t, n) = bits (t div 2, n + 1)
-      in 30 * (List.length mag - 1) + bits (List.last mag, 0) - 1 end
 
   val wordAnd = _prim "word_andb" : word * word -> word
   val wordOr = _prim "word_orb" : word * word -> word
@@ -273,63 +315,65 @@ struct
   val wordFromInt = _prim "word_from_int" : limb -> word
   val wordToInt = _prim "word_to_int" : word -> limb
   val wordToIntX = _prim "word_to_int_x" : word -> limb
-  val mask = base - 1
-
-  fun twos (I (neg, mag), n) =
-    let
-      fun pad ([], 0) = []
-        | pad ([], k) = 0 :: pad ([], k - 1)
-        | pad (d :: ds, k) = d :: pad (ds, k - 1)
-      val limbs = pad (if neg then subMag (mag, [1]) else mag, n)
-    in if neg then List.map (fn d => mask - d) limbs else limbs end
-
-  fun fromTwos (neg, limbs) =
-    if neg then make (true, addMag (norm (List.map (fn d => mask - d) limbs), [1]))
-    else make (false, norm limbs)
-
-  fun bitwise (f : word * word -> word, signOf : bool * bool -> bool) (a as I (na, ma), b as I (nb, mb)) =
-    let
-      val la = List.length ma and lb = List.length mb
-      val n = (if la > lb then la else lb) + 1
-      fun zip (x :: xs, y :: ys) = wordToInt (f (wordFromInt x, wordFromInt y)) :: zip (xs, ys)
-        | zip _ = []
-    in fromTwos (signOf (na, nb), zip (twos (a, n), twos (b, n))) end
-
-  val andb = bitwise (wordAnd, fn (x, y) => x andalso y)
-  val orb = bitwise (wordOr, fn (x, y) => x orelse y)
-  val xorb = bitwise (wordXor, fn (x, y) => x <> y)
-  fun notb x = subI (negI x, one)
-
-  fun pow2 0 = 1
-    | pow2 k = 2 * pow2 (k - 1)
-
-  (* i * 2^w *)
-  fun << (I (neg, mag), w : word) =
-    if List.null mag then zero
-    else
-      let val k = wordToInt w
-      in make (neg, shiftLimbs (k div 30, mulSmall (mag, pow2 (k mod 30)))) end
-
-  (* floor (i / 2^w); for a negative number that is -(((|i| - 1) div 2^w) + 1) *)
-  fun ~>> (x as I (neg, mag), w : word) =
-    let
-      val k = wordToIntX w
-      fun shiftRight m =
-        if k < 0 orelse k div 30 >= List.length m then []
-        else #1 (divModSmall (List.drop (m, k div 30), pow2 (k mod 30)))
-    in
-      if neg then make (true, addMag (shiftRight (subMag (mag, [1])), [1]))
-      else make (false, shiftRight mag)
-    end
-
-  (* ---- the public operators (shadowing the int ones from here on) ---- *)
+  fun bitwise (f,signOf) (S a,S b) = S(wordToIntX(f(wordFromInt a,wordFromInt b)))
+    | bitwise (f,signOf) (a,b) =
+    let val na = negative a and nb = negative b
+        val (ma,la) = unpack(magnitude (if na then subI(absI a,one) else a))
+        val (mb,lb) = unpack(magnitude (if nb then subI(absI b,one) else b))
+        val n = (if la > lb then la else lb)+1
+        val neg = signOf(na,nb)
+        val out = anew(n,0)
+        fun get(s,len,negative,i) =
+          let val b = if i < len then at(s,i) else 0
+          in if negative then mask-b else b end
+        fun loop(i,c) = if i = n then ()
+          else let val v = wordToInt(f(wordFromInt(get(ma,la,na,i)),wordFromInt(get(mb,lb,nb,i))))
+                   val v = (if neg then mask-v else v)+c
+               in put(out,i,v mod base); loop(i+1,v div base) end
+        val () = loop(0,if neg then 1 else 0)
+    in make(neg,pack(out,n)) end
+  val andb = bitwise(wordAnd,fn(a,b)=>a andalso b)
+  val orb = bitwise(wordOr,fn(a,b)=>a orelse b)
+  val xorb = bitwise(wordXor,fn(a,b)=>a <> b)
+  fun notb x = subI(negI x,one)
+  fun << (x,w) =
+    if w = 0w0 then x
+    else if isZero x then zero
+    else let val k = wordToInt w
+             val s = magnitude x
+             val n = strSize s
+             val whole = k div 8 and bits = k mod 8
+             val factor = pow2 bits
+             val out = RuneBytes.new(n+whole+1,0)
+             fun loop(i,c) = if i = n then bput(out,i+whole,c)
+               else let val v = byte(s,i)*factor+c
+                    in bput(out,i+whole,v mod 256); loop(i+1,v div 256) end
+             val () = loop(0,0)
+         in make(negative x,RuneBytes.extract(out,0,n+whole+1)) end
+  fun ~>> (x,w) =
+    if w = 0w0 then x
+    else let val k = wordToIntX w
+        val neg = negative x
+        val m = magnitude(if neg then subI(absI x,one) else x)
+        val n = strSize m
+        fun shifted () =
+          if k < 0 orelse k div 8 >= n then zero
+          else let val whole = k div 8 and bits = k mod 8
+                   val factor = pow2 bits
+                   val out = RuneBytes.new(n-whole,0)
+                   fun loop i = if i = n-whole then ()
+                     else let val v = byte(m,i+whole) + (if i+whole+1 < n then byte(m,i+whole+1)*256 else 0)
+                          in bput(out,i,(v div factor) mod 256); loop(i+1) end
+                   val () = loop 0
+               in make(false,RuneBytes.extract(out,0,n-whole)) end
+        val v = shifted()
+    in if neg then negI(addI(v,one)) else v end
 
   val precision : limb option = NONE
   val minInt : int option = NONE
   val maxInt : int option = NONE
   val toLarge = fn (x : int) => x
   val fromLarge = fn (x : int) => x
-
   val op + = addI
   val op - = subI
   val op * = mulI
@@ -337,30 +381,25 @@ struct
   val abs = absI
   val quotRem = quotRemI
   val divMod = divModI
-  val quot = fn (a, b) => #1 (quotRemI (a, b))
-  val rem = fn (a, b) => #2 (quotRemI (a, b))
-  val op div = fn (a, b) => #1 (divModI (a, b))
-  val op mod = fn (a, b) => #2 (divModI (a, b))
-  val op < = fn (a, b) => compare (a, b) = LESS
-  val op <= = fn (a, b) => compare (a, b) <> GREATER
-  val op > = fn (a, b) => compare (a, b) = GREATER
-  val op >= = fn (a, b) => compare (a, b) <> LESS
-  fun min (a, b) = if compare (a, b) = GREATER then b else a
-  fun max (a, b) = if compare (a, b) = LESS then b else a
-  fun sameSign (a, b) = sign a = sign b
+  val quot = fn (a,b) => #1(quotRemI(a,b))
+  val rem = fn (a,b) => #2(quotRemI(a,b))
+  val op div = fn (a,b) => #1(divModI(a,b))
+  val op mod = fn (a,b) => #2(divModI(a,b))
+  val op < = fn (a,b) => compare(a,b) = LESS
+  val op <= = fn (a,b) => compare(a,b) <> GREATER
+  val op > = fn (a,b) => compare(a,b) = GREATER
+  val op >= = fn (a,b) => compare(a,b) <> LESS
+  fun min (a,b) = if compare(a,b) = GREATER then b else a
+  fun max (a,b) = if compare(a,b) = LESS then b else a
+  fun sameSign (a,b) = sign a = sign b
 end
 
-(* The largest integers are the arbitrary precision ones: "If an
-   implementation provides the IntInf structure, then LargeInt must be the
-   same structure as IntInf (viewed through a thinning INTEGER signature)",
-   which is why the seal file shows a program only what INTEGER names, as
-   MLton, SML/NJ and Poly/ML do.
+(* The largest integers are the arbitrary precision ones.
 
    Implements: INTEGER where type int = IntInf.int *)
 structure LargeInt = IntInf
 
-(* Integer constants and the overloaded operators at IntInf.int. A constant
-   is converted from its digits where it is evaluated. *)
+(* Integer constants and overloaded operators at IntInf.int. *)
 structure RuneIntInf =
 struct
   fun fromLit (digits : string) : IntInf.int =

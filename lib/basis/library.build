@@ -39,6 +39,7 @@ annotate "demand" in
   option.sml
   list.sml
   listpair.sml
+  runebytes.sml
   intinf.sml
   int.sml
   word.sml
@@ -73,7 +74,6 @@ annotate "demand" in
   substring.sml
   charvectorslice.sml
   word8vector.sml
-  runebytes.sml
   byte_array_fn.sml
   word8array.sml
   word8arrayslice.sml

@@ -434,3 +434,7 @@ rt_processors    1  unit -> int              The processors this process may run
 proc_spawn       7  string * string list * string list * int * int list * string * int list -> int   Start a program as posix_spawn does (path, arguments, environment, flags, descriptors), in a directory ("": this process's), with flags bit 2 a process group of its own (a job on Windows) and bit 3 the signals at their default actions, and limits [address space bytes, processor seconds, file bytes, core bytes], ~1 leaving one as it is; its process, or ~1.
 proc_wait        2  int * int -> int list    Wait for a child (~1: any), not at all when bit 0 of the flags is set: [process (0 when none has ended), 0 exited or 1 signalled or 2 stopped, status or signal, user microseconds, system microseconds, peak resident kilobytes]; [] on failure.
 proc_kill        2  int * int -> int         Send a signal to a child's process group, or end its job on Windows; 0, or ~1.
+
+# --- packed integer storage (arithmetic remains in SML) ---
+intinf_unpack    2  string * int -> int array   Decode little-endian magnitude bytes into 15- or 30-bit digits; raises Size above Array.maxLen. Invalid digit width is a bytecode error.
+intinf_pack      3  int array * int * int -> string   Encode the first n 15- or 30-bit digits as canonical little-endian magnitude bytes; raises Size above String.maxSize. Invalid width, count or digit is a bytecode error.
