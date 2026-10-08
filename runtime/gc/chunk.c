@@ -27,7 +27,7 @@ static void chunk_layout(Chunk *c, size_t size) {
 
 Chunk *chunk_take(VM *vm, size_t bytes, int kind) {
     Chunk *c;
-    if (bytes <= CHUNK_ROOM && vm->gc.pool) {
+    if (bytes <= CHUNK_ROOM / 2 && vm->gc.pool) {
         c = vm->gc.pool;
         vm->gc.pool = c->next;
         vm->gc.pooled--;
@@ -37,11 +37,16 @@ Chunk *chunk_take(VM *vm, size_t bytes, int kind) {
         memset((char *)c + GC_CARDS, 0, c->bits_at - GC_CARDS);
     } else {
         size_t size = CHUNK_SIZE;
-        if (bytes > CHUNK_ROOM) {
-            /* a run of chunks, rounded up to whole ones, whose tables cover it */
+        if (bytes > CHUNK_ROOM / 2) {
+            /* one object's own: as large as it and its tables need, by 64 KiB
+               (Windows' granule), aligned as a chunk is so that its pointer
+               masks to it -- an object of more than half a chunk would leave
+               the rest of a whole one unused (D5) */
+            const size_t grain = (size_t)64 << 10;
             if (bytes > SIZE_MAX / 2) out_of_memory();
-            for (size = 2 * CHUNK_SIZE; size - CHUNK_PAYLOAD(size) < bytes; size += CHUNK_SIZE)
-                if (size > SIZE_MAX - CHUNK_SIZE) out_of_memory();
+            size = (bytes + CHUNK_PAYLOAD(CHUNK_SIZE) + grain - 1) & ~(grain - 1);
+            while (size - CHUNK_PAYLOAD(size) < bytes)
+                if ((size += grain) > SIZE_MAX - grain) out_of_memory();
         }
         c = sys_mem_reserve(size, CHUNK_SIZE, vm->gc.hint);
         if (!c) out_of_memory();
@@ -62,7 +67,10 @@ Chunk *chunk_take(VM *vm, size_t bytes, int kind) {
 void chunk_give(VM *vm, Chunk *c) {
     free(c->lines);
     c->lines = NULL;
-    if (c->size == CHUNK_SIZE && vm->gc.pooled <= vm->gc.size / CHUNK_SIZE) {
+    /* a copying old space keeps a heap's worth for its next copy; a
+       non-moving one, which never copies the heap, a few (D10) */
+    size_t keep = vm->gc.old_kind == OLD_COPY || !vm->gc.nursery ? vm->gc.size / CHUNK_SIZE : 4;
+    if (c->size == CHUNK_SIZE && vm->gc.pooled <= keep) {
         c->next = vm->gc.pool;
         vm->gc.pool = c;
         vm->gc.pooled++;
@@ -91,6 +99,9 @@ void heap_chunks_release(VM *vm) {
     /* the mark-region space's lists of blocks (immix.c) */
     free(vm->gc.ix_recycle);
     free(vm->gc.ix_free);
+    free(vm->gc.ix_ranges);
+    vm->gc.ix_ranges = NULL;
+    vm->gc.ix_nranges = vm->gc.ix_ranges_cap = 0;
     vm->gc.ix_recycle = vm->gc.ix_free = NULL;
     vm->gc.ix_nrecycle = vm->gc.ix_recycle_cap = vm->gc.ix_recycle_at = vm->gc.ix_nfree = vm->gc.ix_free_cap = 0;
     vm->gc.ix_cursor = vm->gc.ix_limit = vm->gc.ix_block = vm->gc.ix_ocursor = vm->gc.ix_olimit = NULL;

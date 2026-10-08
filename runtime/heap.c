@@ -156,7 +156,7 @@ Obj *vm_alloc(VM *vm, uint8_t kind, uint16_t contag, uint32_t len, size_t payloa
     return o;
 }
 
-void heap_nursery(VM *vm, size_t bytes) { nursery_start(vm, bytes); }
+void heap_nursery(VM *vm, size_t bytes) { vm->gc.nursery_min = bytes; nursery_start(vm, bytes); }
 
 Obj *vm_alloc_fields(VM *vm, uint8_t kind, uint16_t contag, uint32_t nfields) {
     Obj *o = vm_alloc(vm, kind, contag, nfields, obj_payload_bytes(kind, nfields));
@@ -207,10 +207,19 @@ static Obj *raw_array(const VM *vm, size_t h) {
     Obj *o = val_ptr(v);
     return obj_kind(o) == K_BYTES || obj_kind(o) == K_REALS ? o : NULL;
 }
+/* whether o is in the large-object space, where nothing moves */
+static int in_place(const VM *vm, const Obj *o) {
+    return vm->gc.nursery && !gc_in_nursery(vm, o) && chunk_of(o)->kind == CHUNK_LOS;
+}
 void *vm_pin(VM *vm, size_t h, size_t *bytes) {
     Obj *o = raw_array(vm, h);
     if (!o) return NULL;
     size_t n = obj_payload_bytes(obj_kind(o), obj_len(o));
+    if (in_place(vm, o)) {
+        /* a large object never moves: C has the object itself (D17) */
+        if (bytes) *bytes = n;
+        return obj_bytes(o);
+    }
     void *copy = malloc(n ? n : 1);
     if (!copy) return NULL;
     memcpy(copy, obj_bytes(o), n);
@@ -219,6 +228,7 @@ void *vm_pin(VM *vm, size_t h, size_t *bytes) {
 }
 void vm_unpin(VM *vm, size_t h, void *copy) {
     Obj *o = raw_array(vm, h);
+    if (o && copy == (void *)obj_bytes(o) && in_place(vm, o)) return;   /* pinned in place */
     if (o && copy) memcpy(obj_bytes(o), copy, obj_payload_bytes(obj_kind(o), obj_len(o)));
     free(copy);
 }

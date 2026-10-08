@@ -110,7 +110,7 @@ BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit
 # build/librune.a, which bin/runevm-stack links, and so will a program runeopt
 # makes (docs/native.md); the other VMs compile the same list.
 SYS ?= posix
-RT_SRCS := runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/check.c runtime/gc/log.c runtime/loader.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
+RT_SRCS := runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/check.c runtime/gc/log.c runtime/loader.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
 VM_SRCS := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_$(SYS).c
 VM_HDRS := runtime/vm.h runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
 RT_OBJS := $(patsubst runtime/%.c,build/librune/%.o,$(RT_SRCS) runtime/sys/sys_$(SYS).c)
@@ -758,7 +758,7 @@ test-heap: bin/runevm-gcbits bin/runevm-cards $(RUNE) vm | build/.doctor-check
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gcbits --out tests/out/register-gcbits
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gcbits-stress --out tests/out/register-gcbits-stress
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-cards --out tests/out/register-cards
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc-verify --heap-size 65536 --nursery 8192 "$$@"\n' > bin/runevm-verify
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc-verify --heap-size 65536 --nursery 8192 --nursery-max 0 "$$@"\n' > bin/runevm-verify
 	chmod +x bin/runevm-verify
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-verify --out tests/out/register-verify
 
@@ -767,21 +767,28 @@ test-heap: bin/runevm-gcbits bin/runevm-cards $(RUNE) vm | build/.doctor-check
 # VMs, with the heap checked before and after every collection of a heap of
 # 64 KiB and a nursery of 8 KiB, and the low-pause one with every function
 # compiled and a collection at every GC_STRESS-th allocation (make
-# test-stress runs the default, throughput). Part of make check.
+# test-stress runs the default, throughput); and each with the old space
+# compacted at every full collection (--gc-compact, D4). Part of make check.
 test-gc: $(RUNE) vm | build/.doctor-check
 	@mkdir -p bin
 	@for g in throughput low-pause; do \
-	  printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc %s --gc-verify --heap-size 65536 --nursery 8192 "$$@"\n' $$g > bin/runevm-gc-$$g; \
-	  printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-stack" --gc %s --gc-verify --heap-size 65536 --nursery 8192 "$$@"\n' $$g > bin/runevm-stack-gc-$$g; \
+	  printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc %s --gc-verify --heap-size 65536 --nursery 8192 --nursery-max 0 "$$@"\n' $$g > bin/runevm-gc-$$g; \
+	  printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-stack" --gc %s --gc-verify --heap-size 65536 --nursery 8192 --nursery-max 0 "$$@"\n' $$g > bin/runevm-stack-gc-$$g; \
 	  chmod +x bin/runevm-gc-$$g bin/runevm-stack-gc-$$g; \
 	done
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc low-pause --jit=all --nursery 4096 --gc-stress $(GC_STRESS) "$$@"\n' > bin/runevm-gc-low-pause-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc low-pause --jit=all --nursery 4096 --nursery-max 0 --gc-stress $(GC_STRESS) "$$@"\n' > bin/runevm-gc-low-pause-stress
 	chmod +x bin/runevm-gc-low-pause-stress
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-throughput --out tests/out/register-gc-throughput
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-low-pause --out tests/out/register-gc-low-pause
 	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack-gc-throughput --out tests/out/gc-throughput
 	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack-gc-low-pause --out tests/out/gc-low-pause
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-low-pause-stress --out tests/out/register-gc-low-pause-stress
+	@for g in throughput low-pause; do \
+	  printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc %s --gc-compact --gc-verify --heap-size 65536 --nursery 8192 --nursery-max 0 "$$@"\n' $$g > bin/runevm-gc-$$g-compact; \
+	  chmod +x bin/runevm-gc-$$g-compact; \
+	done
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-throughput-compact --out tests/out/register-gc-throughput-compact
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-low-pause-compact --out tests/out/register-gc-low-pause-compact
 
 test-all: host-builds vm | build/.doctor-check
 	@for c in mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit; do \
@@ -893,9 +900,9 @@ test-stress: $(RUNE) vm | build/.doctor-check
 	chmod +x bin/runevm-stack-stress
 	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --nursery 0 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-stress
 	chmod +x bin/runevm-stress
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --nursery 4096 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-jit-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --nursery 4096 --nursery-max 0 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-jit-stress
 	chmod +x bin/runevm-jit-stress
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --jit-tier=2 --nursery 4096 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-opt-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --jit-tier=2 --nursery 4096 --nursery-max 0 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-opt-stress
 	chmod +x bin/runevm-opt-stress
 	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack-stress
 	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-stress --out tests/out/register-stress

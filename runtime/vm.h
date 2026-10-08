@@ -177,13 +177,13 @@ typedef struct AllocState {
 typedef struct Chunk Chunk;   /* runtime/gc/gc.h */
 /* where a run of an image's objects was read to (runtime/gc/chunk.c, heap_read_take) */
 typedef struct HeapSeg { uint64_t base; char *at; size_t len; } HeapSeg;
-enum { OLD_COPY, OLD_MARK, OLD_IMMIX, OLD_SEGFIT };   /* the old spaces (runtime/gc/gc.h) */
+enum { OLD_COPY, OLD_MARK, OLD_IMMIX, OLD_SEGFIT, OLD_COMPACT };   /* the old spaces (runtime/gc/gc.h) */
 /* a size class of the segregated old space (runtime/gc/segfit.c): the block
    placement takes cells from and the next of them to look at; its other
    blocks with free cells, from the last sweep */
 typedef struct SfClass {
-    char *block;
-    uint32_t next, cells;
+    char *block, *first;   /* the block, and its first cell */
+    uint32_t next, cells, size;
     char **list;
     size_t n, cap, at;
 } SfClass;
@@ -211,6 +211,7 @@ typedef struct GcState {
     Chunk *nursery;
     size_t nursery_size;
     int old_kind;        /* the old space's (runtime/gc/gc.h, --old-space): OLD_COPY, or OLD_MARK where there is a nursery */
+    int compact_always;  /* --gc-compact: every full collection of a non-moving old space compacts it (testing D4) */
     /* the mark-region old space's (runtime/gc/immix.c): the hole placement
        bumps into, in its block; the overflow block's, for an object of more
        than a line that the hole does not take; the blocks with free lines
@@ -219,6 +220,13 @@ typedef struct GcState {
     char **ix_recycle, **ix_free;
     size_t ix_nrecycle, ix_recycle_cap, ix_recycle_at, ix_nfree, ix_free_cap;
     int ix_in_full;      /* a full collection is marking: whole free blocks alone */
+    /* during a minor collection, what it promoted into holes, scanned in
+       place (minor.c): how far the current hole is scanned, and the ranges
+       of the holes left with objects not yet scanned */
+    int ix_track;
+    char *ix_scan;
+    char **ix_ranges;
+    size_t ix_nranges, ix_ranges_cap;
     uint64_t ix_evacuated;
     /* the segregated old space's (runtime/gc/segfit.c): the classes, their
        sizes, the class of each size by eights, and the free blocks */
@@ -230,6 +238,7 @@ typedef struct GcState {
     size_t sf_nfree, sf_free_cap;
     char *sf_bump, *sf_bump_limit;   /* the block of no class an image's objects are read into */
     int sf_in_full;
+    size_t nursery_min, nursery_max;   /* the nursery's bounds (D2): after a full collection it is half the heap's room, within these; nursery_max 0: fixed */
     /* The large-object space (runtime/gc/los.c): objects of los_min bytes
        or more, in its chunks; its bytes count with the old space's; those
        with fields made since the last minor collection, and a full
@@ -424,12 +433,13 @@ Value vm_handle_get(const VM *vm, size_t h);      /* the value, where it is now 
 void vm_handle_set(VM *vm, size_t h, Value v);
 void vm_handle_free(VM *vm, size_t h);
 /* An array of bytes or of reals for C to keep a pointer to across calls
-   that may collect: no object stays where it is under the copier, so C gets
-   a copy that does (D9: copying in and out around the call, until there is
-   a space that does not move), and gives it back. vm_pin copies the
-   object's payload out and returns the copy, NULL where there is no memory
-   or the handle names no such array; vm_unpin copies it back into the
-   object, wherever it is by then, and frees the copy. */
+   that may collect, and give back. One in the large-object space (8 KiB or
+   more, with a nursery) never moves, so vm_pin returns the object's own
+   payload and vm_unpin does nothing (docs/plans/garbage-collector-v2.md,
+   D17); any other may move, so vm_pin copies its payload out and returns
+   the copy, NULL where there is no memory or the handle names no such
+   array, and vm_unpin copies it back into the object, wherever it is by
+   then, and frees the copy. */
 void *vm_pin(VM *vm, size_t h, size_t *bytes);
 void vm_unpin(VM *vm, size_t h, void *copy);
 #ifdef RUNE_BARRIER_CARDS

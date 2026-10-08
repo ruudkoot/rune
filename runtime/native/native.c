@@ -268,7 +268,7 @@ void native_fatal(VM *vm, int what, int32_t a) {
 /* ---------------------------------------------------------------- main */
 
 typedef struct Options {
-    size_t heap, gc_stress, heap_fill, heap_limit, equality_work, nursery;
+    size_t heap, gc_stress, heap_fill, heap_limit, equality_work, nursery, nursery_max;
     int old_kind;
     int stats, count, emulate_fork, checked, gc_verify;
     char *restore, *gc_log;
@@ -311,15 +311,18 @@ static void options(const char *text, const char *where, Options *o) {
             i++;
         else if (strcmp(w, "--nursery") == 0 && i + 1 < n && size_arg(words[i + 1], &o->nursery))
             i++;
+        else if (strcmp(w, "--nursery-max") == 0 && i + 1 < n && size_arg(words[i + 1], &o->nursery_max))
+            i++;
         else if (strcmp(w, "--gc") == 0 && i + 1 < n && (strcmp(words[i + 1], "throughput") == 0 || strcmp(words[i + 1], "low-pause") == 0)) {
             i++;
             o->old_kind = strcmp(words[i], "throughput") == 0 ? OLD_IMMIX : OLD_SEGFIT;
         }
         else if (strcmp(w, "--old-space") == 0 && i + 1 < n && (strcmp(words[i + 1], "copy") == 0 || strcmp(words[i + 1], "mark") == 0
-                                                               || strcmp(words[i + 1], "immix") == 0 || strcmp(words[i + 1], "segfit") == 0)) {
+                                                               || strcmp(words[i + 1], "immix") == 0 || strcmp(words[i + 1], "segfit") == 0
+                                                               || strcmp(words[i + 1], "compact") == 0)) {
             i++;
             o->old_kind = strcmp(words[i], "mark") == 0 ? OLD_MARK : strcmp(words[i], "immix") == 0 ? OLD_IMMIX
-                        : strcmp(words[i], "segfit") == 0 ? OLD_SEGFIT : OLD_COPY;
+                        : strcmp(words[i], "segfit") == 0 ? OLD_SEGFIT : strcmp(words[i], "compact") == 0 ? OLD_COMPACT : OLD_COPY;
         }
         else if (strcmp(w, "--heap-fill") == 0 && i + 1 < n && size_arg(words[i + 1], &o->heap_fill)
                  && o->heap_fill >= 1 && o->heap_fill <= 100)
@@ -332,7 +335,7 @@ static void options(const char *text, const char *where, Options *o) {
             strcpy(*to, words[++i]);
         } else {
             fprintf(stderr, "runevm: %s: %s is not an option of a native program "
-                    "(--count, --stats, --heap-size N, --heap-limit N, --equality-work N, --heap-fill P, --gc-stress N, --nursery N, --gc G, --old-space S, --gc-verify, --checked, --emulate-fork, "
+                    "(--count, --stats, --heap-size N, --heap-limit N, --equality-work N, --heap-fill P, --gc-stress N, --nursery N, --nursery-max N, --gc G, --old-space S, --gc-verify, --checked, --emulate-fork, "
                     "--restore FILE, --gc-log FILE)\n", where, w);
             exit(2);
         }
@@ -344,7 +347,7 @@ static void options(const char *text, const char *where, Options *o) {
 static char *program_name;
 
 int main(int argc, char **argv) {
-    Options o = { .heap = 4u << 20, .heap_fill = 50, .nursery = (size_t)1 << 20, .old_kind = OLD_IMMIX };
+    Options o = { .heap = 4u << 20, .heap_fill = 50, .nursery = (size_t)1 << 20, .nursery_max = (size_t)8 << 20, .old_kind = OLD_IMMIX };
     vm_same_program = same_program;
     options(rune_options, "runeopt --options", &o);
     /* The options are the runtime's, as runevm-stack's are, and not part of what
@@ -363,7 +366,8 @@ int main(int argc, char **argv) {
         if (!vm) { fprintf(stderr, "runevm: out of memory\n"); return 2; }
         vm->heap_limit = o.heap_limit;
         vm->equality_work = o.equality_work;
-        vm->gc.nursery_size = o.nursery;
+        vm->gc.nursery_size = vm->gc.nursery_min = o.nursery;
+        vm->gc.nursery_max = o.nursery_max;
         vm->gc.old_kind = o.old_kind;
         int ok = child ? vm_resume(vm, argv[2], err, sizeof err) : vm_restore(vm, o.restore, err, sizeof err);
         if (ok && !same_program(vm)) { ok = 0; snprintf(err, sizeof err, "the image is of another program"); }
@@ -400,6 +404,7 @@ int main(int argc, char **argv) {
     vm_init(vm, o.heap);
     vm->heap_fill = (unsigned)o.heap_fill;
     vm->gc.old_kind = o.old_kind;
+    vm->gc.nursery_max = o.nursery_max;
     heap_nursery(vm, o.nursery);
     if (o.gc_log) heap_log_open(vm, o.gc_log);
 

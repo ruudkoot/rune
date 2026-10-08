@@ -820,6 +820,8 @@ int vm_become(VM *vm, const char *path) {
     next->heap_limit = vm->heap_limit;
     next->equality_work = vm->equality_work;
     next->gc.nursery_size = vm->gc.nursery_size;
+    next->gc.nursery_min = vm->gc.nursery_min;
+    next->gc.nursery_max = vm->gc.nursery_max;
     next->gc.old_kind = vm->gc.old_kind;
     fflush(NULL);
     if (!read_image(next, sys_fopen(path, "rb"), IMAGE_SAVE, err, sizeof err)) {

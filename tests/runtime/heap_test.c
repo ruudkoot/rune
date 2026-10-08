@@ -254,6 +254,17 @@ int main(void) {
         vm_gc(nv, 0);
         CHECK("one that nothing reaches is freed by the next", nv->gc.los_bytes == los0 && nv->gc.fulls == 2);
         CHECK("and what is reached is still there", obj_field(val_ptr(obj_field(val_ptr(nv->stack[0]), 0)), 0) == mk_imm(110));
+        {
+            /* a large array of bytes pins in place: C has the object itself (D17) */
+            Obj *lb = vm_alloc(nv, K_BYTES, 0, 16384, 16384);
+            memset(obj_bytes(lb), 7, 16384);
+            size_t hb = vm_handle_new(nv, mk_ptr(lb)), n = 0;
+            char *held = vm_pin(nv, hb, &n);
+            vm_gc(nv, 0);
+            CHECK("a large array pins in place", held == (char *)obj_bytes(lb) && n == 16384 && val_ptr(vm_handle_get(nv, hb)) == lb);
+            vm_unpin(nv, hb, held);
+            vm_handle_free(nv, hb);
+        }
 
         /* the stack's watermark (D9): a minor collection leaves it at the
            frame that runs and does not scan below it, so a young pointer
@@ -390,6 +401,50 @@ int main(void) {
             whole &= obj_len(t) == (uint32_t)(1 + i % 5) && obj_field(t, 0) == mk_imm(first);
         }
         CHECK("freed cells are taken again before a new chunk", now == chunks && whole && heap_check(sv, NULL) == NULL);
+    }
+
+    /* The mark-compact old space (runtime/gc/compact.c; --old-space compact):
+       a full collection slides what it reaches down to the first chunk's
+       payload, in order, every pointer made the object's new place, and
+       gives back the chunks left empty */
+    {
+        VM *cv = new_vm(1 << 20);
+        cv->gc.old_kind = OLD_COMPACT;
+        heap_nursery(cv, 1 << 14);
+        enum { N = 4000 };
+        Obj *arr = vm_alloc_fields(cv, K_ARRAY, 0, N);
+        vm_push(cv, mk_ptr(arr));
+        for (int i = 0; i < N; i++) { Value t = tuple(cv, (uint32_t)(1 + i % 5), 10 * i); obj_set_field(cv, arr, (uint32_t)i, t); }
+        vm_gc(cv, 0);
+        Obj *first = val_ptr(obj_field(arr, 1));
+        size_t chunks = 0, now = 0;
+        for (Chunk *x = cv->gc.first; x; x = x->next) chunks++;
+        for (int i = 0; i < N; i += 2) obj_set_field(cv, arr, (uint32_t)i, mk_unit());
+        vm_gc(cv, 0);
+        for (Chunk *x = cv->gc.first; x; x = x->next) now++;
+        int whole = 1;
+        for (int i = 1; i < N; i += 2) {
+            Obj *t = val_ptr(obj_field(arr, (uint32_t)i));
+            whole &= obj_len(t) == (uint32_t)(1 + i % 5) && obj_field(t, 0) == mk_imm(10 * i);
+        }
+        CHECK("a full collection slides what lives down, whole", whole && val_ptr(obj_field(arr, 1)) <= first && heap_check(cv, NULL) == NULL);
+        CHECK("and the old space then holds no more than what lives",
+              cv->gc.closed == cv->gc.first->used + (cv->gc.first->next ? cv->gc.first->next->used : 0) && now <= chunks);
+    }
+
+    /* The adaptive nursery (docs/plans/garbage-collector-v2.md, D2): after a
+       full collection, half of the heap's room, within its least and most */
+    {
+        VM *av = new_vm(16 << 20);
+        av->gc.nursery_max = 8 << 20;
+        heap_nursery(av, 1 << 20);
+        vm_gc(av, 0);
+        CHECK("a full collection makes the nursery half the heap's room, at most the most",
+              av->gc.nursery_size > (size_t)7 << 20 && av->gc.nursery_size <= (size_t)8 << 20 && av->alloc.size == av->gc.nursery_size);
+        av->gc.nursery_max = 0;
+        heap_nursery(av, 1 << 20);
+        vm_gc(av, 0);
+        CHECK("and with no most it stays", av->gc.nursery_size == (size_t)1 << 20 && heap_check(av, NULL) == NULL);
     }
 
 #ifdef RUNE_BARRIER_CARDS

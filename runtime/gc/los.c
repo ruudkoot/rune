@@ -15,7 +15,7 @@ static size_t units_of(size_t bytes) { return (bytes + ((size_t)1 << GC_UNIT_SHI
 
 /* a chunk of the space, its units all free */
 static Chunk *los_chunk(VM *vm, size_t bytes) {
-    Chunk *c = chunk_take(vm, bytes > CHUNK_ROOM ? bytes : 0, CHUNK_LOS);
+    Chunk *c = chunk_take(vm, bytes > CHUNK_ROOM / 2 ? bytes : 0, CHUNK_LOS);
     size_t n = chunk_room(c) >> GC_UNIT_SHIFT;
     memset(chunk_units(c), 0xFF, n * sizeof(uint16_t));
     c->units_free = n;
@@ -42,14 +42,15 @@ static long take_run(Chunk *c, size_t want) {
 Obj *los_alloc(VM *vm, size_t size) {
     size_t want = units_of(size);
     vm->gc.los_bytes += size;
-    if (size > CHUNK_ROOM) {
+    if (size > CHUNK_ROOM / 2) {
+        /* more than half a chunk: a chunk of its own, of its size (D5) */
         Chunk *c = los_chunk(vm, size);
         long first = take_run(c, want);
         (void)first;
         return (Obj *)chunk_payload(c);
     }
     for (Chunk *c = vm->gc.los; c; c = c->next) {
-        if (c->size != CHUNK_SIZE || c->units_free < want) continue;
+        if (c->size != CHUNK_SIZE || c->units_free < want) continue;   /* not one object's own */
         long first = take_run(c, want);
         if (first >= 0) return (Obj *)(chunk_payload(c) + ((size_t)first << GC_UNIT_SHIFT));
     }

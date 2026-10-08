@@ -414,17 +414,20 @@ raised as noted.
 * `runevm-stack --heap-fill P file.rbc` grows the heap after a collection until at
   most P percent of it is in use (1 to 100, 50 by default);
 * `runevm-stack --nursery N file.rbc` makes the nursery, where objects are
-  made and which a minor collection empties, N bytes (at least 4096, 1 MiB
-  by default); `--nursery 0` makes none, and every collection a full one
+  made and which a minor collection empties, N bytes at first and at least
+  (at least 4096, 1 MiB by default), and `--nursery-max N` at most (8 MiB;
+  0 keeps it at N): after a full collection it is half the heap's room; `--nursery 0` makes none, and every collection a full one
   ([runtime.md](runtime.md), *The heap*);
 * `runevm-stack --gc G file.rbc` chooses the collector: `throughput`, the
   default, for the least memory and time, or `low-pause`, for short
   pauses ([runtime.md](runtime.md), *The garbage collector*);
 * `runevm-stack --old-space S file.rbc` chooses the old space behind the
   nursery: `copy`, which a full collection copies, `mark`, whose objects
-  stay where they are, or `immix` or `segfit`, the old spaces of `--gc
-  throughput` and `--gc low-pause` ([runtime.md](runtime.md), *The garbage
-  collector*);
+  stay where they are, `immix` or `segfit`, the old spaces of `--gc
+  throughput` and `--gc low-pause`, or `compact`, which every full
+  collection slides down ([runtime.md](runtime.md), *The garbage
+  collector*); `--gc-compact` compacts the old space at every full
+  collection, to test it;
 * `runevm-stack --gc-log FILE file.rbc` writes a line about every collection
   into FILE: what the program had allocated when it came, what it looked at
   and copied, and how long it took ([runtime.md](runtime.md), *The

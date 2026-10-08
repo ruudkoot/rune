@@ -79,11 +79,13 @@ Everything a program allocates is in one heap: tuples, constructors,
 closures, strings, refs, arrays, exceptions, and the boxes of the numbers
 that have no immediate (*Values and objects*). It is made of chunks of 2
 MiB, each aligned to its size, with the objects side by side after the
-chunk's header and tables (the barrier's cards, below); an object too
-large for one has a run of chunks to itself (`runtime/gc/`). It has three
+chunk's header and tables (the barrier's cards, below); a large object of
+more than half a chunk has a mapping of its own, as large as it needs, so
+that the rest of a chunk is not left unused (`runtime/gc/`). It has three
 spaces:
 
-* **The nursery,** 1 MiB, where every object but a large one is made.
+* **The nursery,** 1 to 8 MiB as the heap's room allows, where every
+  object but a large one is made.
   Allocation is a bump of a pointer in it, in the VM's C and in line in
   compiled code.
 * **The old space,** the chunks that what survives the nursery is copied
@@ -98,31 +100,40 @@ the program's code are not in the heap.
 
 * The heap's first size is 4 MiB, and `runevm --heap-size N` sets it (at
   least 4096 bytes).
-* `runevm --nursery N` sets the nursery's size (at least 4096 bytes, 1
-  MiB by default); a nursery smaller than 32 KiB takes objects of a
-  quarter of its size and more to the large-object space. `--nursery 0`
+* `runevm --nursery N` sets the nursery's first size and its least (at
+  least 4096 bytes, 1 MiB by default), and `--nursery-max N` its most (8
+  MiB by default): after every full collection the nursery is half of the
+  room the heap has left, within the two, so that a program whose
+  short-lived data is large has a nursery large enough not to promote it
+  (`--nursery-max 0` keeps it at its first size). Its size follows the
+  heap's, so the same run makes the same nurseries. A nursery smaller than
+  32 KiB takes objects of a quarter of its size and more to the
+  large-object space. `--nursery 0`
   makes none: every object is made in the old space's last chunk, the next
   chunk is taken where it is full, and every collection is a full one --
   the copier as it was before the nursery. `--gc` chooses the collector
   (below).
-* After a full collection the heap grows -- doubling -- until the live data is at
-  most half of it and the request fits. `runevm --heap-fill P` makes that
-  *P* percent instead (1 to 100): a quarter makes about half the collections
-  for twice the memory. A heap that would have to double past
-  what a `size_t` can hold ends the run with `runevm: out of memory`.
-* It never shrinks, and it grows by doubling alone, so the memory a run
-  takes moves in steps: the compiler compiling itself keeps 42 MB at most
-  and runs in a heap of 134 MB, from the 64 MiB `bin/rune` starts it with
+* After a full collection the heap grows until the live data and the
+  request are at most half of it. `runevm --heap-fill P` makes that *P*
+  percent instead (1 to 100): a quarter makes about half the collections
+  for twice the memory. The two collectors, which collect the old space
+  where it lies, grow it to that size by steps of 1 MiB; the copier
+  (`--old-space copy`, `--nursery 0`), which copies the heap into a new
+  one, grows it by doubling. A heap stops growing at three quarters of
+  what a `size_t` counts, and where the system will give no more chunks a
+  run ends with `runevm: out of memory`.
+* It never shrinks. With the copier the memory a run takes moves in
+  doubling steps: the compiler compiling itself keeps 42 MB at most and
+  runs in a heap of 134 MB, from the 64 MiB `bin/rune` starts it with
   (`RUNE_HEAP` in the Makefile; from the default 4 MiB it makes 18
   collections and copies 383 MB; both with `--nursery 0`).
-* A chunk a full collection leaves empty goes to a pool, as many as the
-  heap's size takes and one more, which the next takes from first, so that
-  their pages are not made again; a run of chunks goes back to the system,
-  and so does a chunk of the large-object space left empty. The copier
-  (`--old-space copy`) copies what is live into chunks of its own, so that
-  the process holds up to twice the heap's size `--stats` prints, as it
-  held two semispaces; the two collectors of `--gc` collect the old space
-  where it lies, and hold it once.
+* A chunk a full collection leaves empty goes to a pool, which the next
+  chunk is taken from first, so that its pages are not made again: as
+  many chunks as the heap's size takes for the copier, which copies what
+  is live into chunks of its own (so that the process holds up to twice
+  the heap's size `--stats` prints, as it held two semispaces), and four
+  for the two collectors, which hold the old space once; the rest goes
+  back to the system, as does a large object's mapping when it dies.
 * `runevm --heap-limit N` caps the heap's size (at least 4096 bytes; no cap
   by default). At the cap the heap may be fuller than `--heap-fill` asks; what
   is live and one more allocation not fitting ends the run with `runevm:
@@ -180,9 +191,20 @@ class -- the multiples of 8 bytes to 128, then each an eighth larger -- a
 cell free where its bit is clear, found by promotion as it walks a block;
 a full collection gives an empty block back to any class (`segfit.c`).
 
-`--old-space copy` is the copier's old space, which a full collection
-copies, as M3's did; with `--nursery 0` the old space is the copier's,
-whatever `--gc` or `--old-space` says, which is what the census VM runs.
+`--old-space compact` is a mark-compact old space (`compact.c`), measured
+beside the two collectors: promotion bumps at its end, and every full
+collection, after marking, slides what is live down in the chunks' order,
+every pointer made the new place of its object from a table of the places
+of the first object in every 128 bytes, and gives back the chunks left
+empty. The same slide is the two collectors' compaction at the limit:
+where `--heap-limit` is set and the old space's chunks pass it, a full
+collection compacts the old space, the throughput collector's lines and
+blocks made again after it, and the low-pause collector's objects left in
+blocks of no class, which empty as their objects die (`runevm --gc-compact`
+compacts at every full collection, to test it). `--old-space copy` is the
+copier's old space, which a full collection copies, as M3's did; with
+`--nursery 0` the old space is the copier's, whatever `--gc` or
+`--old-space` says, which is what the census VM runs.
 
 What it is and is not:
 
@@ -431,9 +453,10 @@ what it will stand on):
   number for a value, in a table that is a root. The value is found again
   through it after a collection moved the object. An image has no handles.
 * **A copy that stays** (`vm_pin`, `vm_unpin`): the bytes of an array of
-  bytes or of reals copied out for C to keep a pointer to while the program
-  runs on, and copied back into the object, wherever it is by then. There
-  is no pinning in place: that needs a space that does not move.
+  bytes or of reals for C to keep a pointer to while the program runs on.
+  One in the large-object space (8 KiB or more) never moves, so C is given
+  the object's own bytes; any other is copied out, and copied back into
+  the object, wherever it is by then.
 * **The arrays C can read as they are:** an array of bytes and an array of
   reals have C's layout behind the header, so a primitive passes a pointer
   to their first element for the length of a call that does not allocate.
@@ -508,14 +531,14 @@ The Basis Library suite records such a difference as a `WIDTH` line of
 | An array or a vector | 100,000,000 elements | `Array.maxLen`, `Vector.maxLen` |
 | A file position | 64 bits | on every platform, including 32-bit Windows |
 | Live data, 64-bit VM | the machine's memory | a collection holds the heap's chunks and its own at once |
-| Live data, 32-bit VM | about 512 MiB | `bin/runevm32.exe` is linked large-address-aware, which gives it 4 GiB of address space; without that it would be about half (an estimate: no test comes near) |
+| Live data, 32-bit VM | about 3 GiB; 1 to 1.25 GiB under a 2 GiB limit | `bin/runevm32.exe` is linked large-address-aware, which gives it 4 GiB of address space; without that it would be about half. Measured by `scripts/gc-probe32.sh` on Linux: under either collector the most live data a full collection completed with was 3079 MiB of small objects with the whole address space, and 1023 MiB of small objects and 1278 MiB of arrays of 1 MiB under a 2 GiB limit |
 
-The ceiling of a 32-bit VM is lower than its address space because a
-full collection holds the heap's chunks and the chunks it copies into at
-the same time. The figure is the one measured when the heap was two
-semispaces of one block each; chunks need no block larger than 2 MiB, and
-[plans/garbage-collector-v2.md](plans/garbage-collector-v2.md) measures it
-again with an old space that is not copied (M4, M5). Running out is a clean `runevm: out of memory`, not a hang.
+The two collectors hold the old space once and need no block larger than
+2 MiB, so a 32-bit VM's live data reaches most of its address space; the
+copier (`--nursery 0`) holds the heap's chunks and the chunks it copies
+into at once, and stops at about 512 MiB, as the semispaces did
+([plans/garbage-collector-v2.md](plans/garbage-collector-v2.md), M5).
+Running out is a clean `runevm: out of memory`, not a hang.
 
 ## The same run twice
 

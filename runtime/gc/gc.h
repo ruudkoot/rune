@@ -215,6 +215,27 @@ void immix_adopted(VM *vm);                   /* after mark_adopt: lines, and th
 void immix_full_begin(VM *vm);                /* before a full collection marks: the candidates, the lines cleared */
 Obj *immix_marked(VM *vm, Chunk *c, Obj *o, size_t size);   /* an object the marker reached: its lines, or its copy where its block is evacuated */
 void immix_sweep(VM *vm);
+/* an object's lines marked: its first and its last, and any between */
+static inline void ix_lines_mark(Chunk *c, size_t off, size_t size) {
+    uint8_t *lines = chunk_lines(c);
+    size_t l = off >> IX_LINE_SHIFT, last = (off + size - 1) >> IX_LINE_SHIFT;
+    lines[l] = 1;
+    lines[last] = 1;
+    for (l++; l < last; l++) lines[l] = 1;
+}
+/* immix_place's fast path, in line: a bump in the hole it fills */
+static inline Obj *immix_place_fast(VM *vm, size_t size) {
+    char *p = vm->gc.ix_cursor;
+    if (!p || size > (size_t)(vm->gc.ix_limit - p)) return immix_place(vm, size);
+    vm->gc.ix_cursor = p + size;
+    Chunk *c = chunk_of(p);
+    size_t off = (size_t)(p - (char *)c);
+    chunk_bit_set(c, off);
+    ix_lines_mark(c, off, size);
+    c->used += size;
+    vm->gc.closed += size;
+    return (Obj *)p;
+}
 /* segfit.c: the segregated old space (--old-space segfit; M4 B) */
 typedef struct SfBlock { uint8_t cls, pad; uint16_t free; } SfBlock;   /* its class (0: free, or not the space's), its free cells at the last sweep */
 static inline SfBlock *chunk_sfblocks(Chunk *c) { return (SfBlock *)(void *)((char *)c + c->blocks_at); }
@@ -223,6 +244,26 @@ Obj *segfit_bump(VM *vm, size_t size);        /* an object read from an image, i
 void segfit_adopted(VM *vm);
 void segfit_full_begin(VM *vm);
 void segfit_sweep(VM *vm);
+/* compact.c: the mark-compact old space (--old-space compact), placed by
+   mark_place and slid down by every full collection after its marking */
+void compact_old(VM *vm);
+/* segfit_place's fast path, in line: the next cell of the class's block, where it is free */
+static inline Obj *segfit_place_fast(VM *vm, size_t size) {
+    SfClass *cl = &vm->gc.sf[vm->gc.sf_class_of[size >> 3]];
+    if (cl->block && cl->next < cl->cells) {
+        char *cell = cl->first + (size_t)cl->next * cl->size;
+        Chunk *c = chunk_of(cell);
+        size_t off = (size_t)(cell - (char *)c);
+        if (!chunk_bit(c, off)) {
+            cl->next++;
+            chunk_bit_set(c, off);
+            c->used += size;
+            vm->gc.closed += size;
+            return (Obj *)cell;
+        }
+    }
+    return segfit_place(vm, size);
+}
 
 /* check.c: --gc-verify */
 void heap_verify(VM *vm, const char *when);

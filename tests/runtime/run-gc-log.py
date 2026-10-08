@@ -90,7 +90,7 @@ val () = print (Int.toString (List.foldl op+ 0 kept) ^ "\\n")
     # with a nursery: minor passes, whose copy is what they promote, and full
     # ones where the old space would pass the heap's size
     log = directory / 'gclog-nursery.log'
-    logged = run('--count', '--stats', '--nursery', 16384, '--heap-size', 65536, '--gc-log', log, bytecode)
+    logged = run('--count', '--stats', '--nursery', 16384, '--nursery-max', 0, '--heap-size', 65536, '--gc-log', log, bytecode)
     assert logged.returncode == 0, logged.stderr
     assert logged.stdout == plain.stdout, 'the nursery changed the output'
     assert count_of(logged.stderr) == count, 'the nursery changed --count'

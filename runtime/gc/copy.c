@@ -215,8 +215,26 @@ static size_t fill_of(const VM *vm, size_t n) {
    holds used bytes and must take needed more is at most heap_fill% full,
    half unless --heap-fill says otherwise, to avoid thrashing; written so
    that nothing wraps where a size_t is 32 bits. */
+/* the largest size a heap is given: what a size_t counts less a quarter --
+   on a 32-bit VM 3 GiB, so that the address space, not the arithmetic of
+   doubling, is where a heap stops (a chunk the system will not give) */
+#define HEAP_MOST (SIZE_MAX - SIZE_MAX / 4)
+
 static size_t grown(const VM *vm, size_t size, size_t used, size_t needed) {
     size_t want = size;
+    if (vm->gc.old_kind != OLD_COPY && vm->gc.nursery) {
+        /* a non-moving old space is not copied into a heap of a new size, so
+           it need not double: the size that holds what lives and what is
+           asked at heap_fill%, by steps of 1 MiB, never less than it was
+           (D10) */
+        size_t fill = vm->heap_fill ? vm->heap_fill : 50, total = used + needed;
+        if (total < used) total = SIZE_MAX;
+        size_t need = total / fill > HEAP_MOST / 100 ? HEAP_MOST : total / fill * 100 + total % fill * 100 / fill;
+        need = need > HEAP_MOST - ((size_t)1 << 20) ? HEAP_MOST : (need + ((size_t)1 << 20) - 1) & ~(((size_t)1 << 20) - 1);
+        if (need > want) want = need;
+        if (vm->heap_limit && want > vm->heap_limit) want = vm->heap_limit;
+        return want;
+    }
     while (used > fill_of(vm, want) || needed > fill_of(vm, want) - used) {
         if (vm->heap_limit && want >= vm->heap_limit) return vm->heap_limit;
 #ifdef RUNE_HEAP_GROW
@@ -229,7 +247,7 @@ static size_t grown(const VM *vm, size_t size, size_t used, size_t needed) {
         want += step;
 #else
         if (vm->heap_limit && want > vm->heap_limit / 2) return vm->heap_limit;
-        if (want > SIZE_MAX / 2) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
+        if (want > HEAP_MOST / 2) return want < HEAP_MOST ? HEAP_MOST : want;
         want *= 2;
 #endif
     }
@@ -270,6 +288,14 @@ void vm_gc(VM *vm, size_t needed) {
     if (USED_STOCK(vm) > vm->gc.size || needed > vm->gc.size - USED_STOCK(vm)) vm_limit(vm, "heap limit exceeded");
     vm->live_before = vm->live_last;
     vm->live_last = USED_STOCK(vm);
+    /* the adaptive nursery (docs/plans/garbage-collector-v2.md, D2): half
+       of what the heap has room for, within --nursery and --nursery-max */
+    if (vm->gc.nursery && vm->gc.nursery_max && vm->alloc.used == 0) {
+        size_t room = vm->gc.size > USED_STOCK(vm) ? (vm->gc.size - USED_STOCK(vm)) / 2 : 0;
+        size_t want = room < vm->gc.nursery_min ? vm->gc.nursery_min : room > vm->gc.nursery_max ? vm->gc.nursery_max : room;
+        want &= ~(size_t)65535;
+        if (want >= 4096 && want != vm->gc.nursery_size) nursery_start(vm, want);
+    }
     CENSUS_GC_END(vm);
     int64_t user = sys_time_user() - user0, sys = sys_time_sys() - sys0;
     vm->gc_user_us += user;

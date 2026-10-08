@@ -110,6 +110,8 @@ Obj *segfit_place(VM *vm, size_t size) {
             descriptor(block)->cls = (uint8_t)(k + 1);
         }
         cl->block = block;
+        cl->first = block_first(block);
+        cl->size = cs;
         cl->next = 0;
         cl->cells = cells_of(block, cs);
     }

@@ -74,6 +74,20 @@ void nursery_start(VM *vm, size_t bytes) {
 
 /* ---- the minor collection ---- */
 
+/* An object copied: the common sizes as moves the compiler knows, as
+   copy.c's copy_obj */
+static inline void copy_small(Obj *n, const Obj *o, size_t size) {
+    switch (size) {
+    case OBJ_SIZE_FIELDS(1): memcpy(n, o, OBJ_SIZE_FIELDS(1)); break;
+    case OBJ_SIZE_FIELDS(2): memcpy(n, o, OBJ_SIZE_FIELDS(2)); break;
+    case OBJ_SIZE_FIELDS(3): memcpy(n, o, OBJ_SIZE_FIELDS(3)); break;
+    case OBJ_SIZE_FIELDS(4): memcpy(n, o, OBJ_SIZE_FIELDS(4)); break;
+    case OBJ_SIZE_FIELDS(5): memcpy(n, o, OBJ_SIZE_FIELDS(5)); break;
+    case OBJ_SIZE_FIELDS(6): memcpy(n, o, OBJ_SIZE_FIELDS(6)); break;
+    default: memcpy(n, o, size); break;
+    }
+}
+
 /* A young object reached: its copy in the old space, made once */
 static Obj *promote(VM *vm, Obj *o) {
     if (obj_forwarded(o)) return obj_forwarding(o);
@@ -87,6 +101,15 @@ static Obj *promote(VM *vm, Obj *o) {
         n = los_alloc(vm, size);
         memcpy(n, o, size);
         gc_queue(vm, n);
+    } else if (vm->gc.old_kind == OLD_IMMIX) {
+        /* bumped into a hole of the old space, and scanned there (minor_into) */
+        n = immix_place_fast(vm, size);
+        copy_small(n, o, size);
+    } else if (vm->gc.old_kind == OLD_SEGFIT) {
+        /* a cell of its class, scanned from the queue */
+        n = segfit_place_fast(vm, size);
+        copy_small(n, o, size);
+        if (obj_has_fields(n)) gc_queue(vm, n);
     } else if (vm->gc.old_kind != OLD_COPY) {
         /* placed where the old space has room, and scanned from the queue */
         n = old_place(vm, size);
@@ -99,16 +122,7 @@ static Obj *promote(VM *vm, Obj *o) {
             chunk_append(vm, to);
         }
         n = (Obj *)(chunk_payload(to) + to->used);
-        /* the common sizes as moves the compiler knows, as copy.c's copy_obj */
-        switch (size) {
-        case OBJ_SIZE_FIELDS(1): memcpy(n, o, OBJ_SIZE_FIELDS(1)); break;
-        case OBJ_SIZE_FIELDS(2): memcpy(n, o, OBJ_SIZE_FIELDS(2)); break;
-        case OBJ_SIZE_FIELDS(3): memcpy(n, o, OBJ_SIZE_FIELDS(3)); break;
-        case OBJ_SIZE_FIELDS(4): memcpy(n, o, OBJ_SIZE_FIELDS(4)); break;
-        case OBJ_SIZE_FIELDS(5): memcpy(n, o, OBJ_SIZE_FIELDS(5)); break;
-        case OBJ_SIZE_FIELDS(6): memcpy(n, o, OBJ_SIZE_FIELDS(6)); break;
-        default: memcpy(n, o, size); break;
-        }
+        copy_small(n, o, size);
         chunk_note(to, to->used, size);
         to->used += size;
         vm->gc.closed += size;
@@ -239,6 +253,12 @@ static void minor_into(VM *vm) {
     Chunk *start = vm->gc.last;
     size_t start_at = start->used;
     vm->gc.nqueue = 0;
+    if (vm->gc.old_kind == OLD_IMMIX) {
+        /* what is promoted into a hole is scanned where it lies, from here */
+        vm->gc.ix_track = 1;
+        vm->gc.ix_scan = vm->gc.ix_cursor;
+        vm->gc.ix_nranges = 0;
+    }
     size_t low = vm->fp_low < vm->fp ? vm->fp_low : vm->fp;
     minor_stack(vm, low);
 #define PROMOTE_ROOT_VALUE(v) (vm->gc_counts.other_roots++, promote_value(vm, (v)))
@@ -256,7 +276,32 @@ static void minor_into(VM *vm) {
     vm->gc.nborn = 0;
     /* Cheney's scan of what was promoted: the old space from where it ended,
        and the large objects that were made of young ones, until neither has
-       more; a non-moving old space's promoted objects are all queued */
+       more; the mark-region space's in the holes it filled, the ranges of
+       those it left and the current one's (immix.c, next), and every other
+       non-moving space's from the queue */
+    if (vm->gc.old_kind == OLD_IMMIX) {
+        for (;;) {
+            if (vm->gc.ix_nranges) {
+                char *hi = vm->gc.ix_ranges[--vm->gc.ix_nranges], *lo = vm->gc.ix_ranges[--vm->gc.ix_nranges];
+                while (lo < hi) {
+                    Obj *o = (Obj *)lo;
+                    lo += obj_size(o);
+                    scan_object(vm, o);
+                }
+                continue;
+            }
+            if (vm->gc.ix_scan && vm->gc.ix_scan < vm->gc.ix_cursor) {
+                /* past it first: scanning it may leave the hole, and hand on what follows it */
+                Obj *o = (Obj *)vm->gc.ix_scan;
+                vm->gc.ix_scan += obj_size(o);
+                scan_object(vm, o);
+                continue;
+            }
+            if (!vm->gc.nqueue) break;
+            scan_object(vm, vm->gc.queue[--vm->gc.nqueue]);
+        }
+        vm->gc.ix_track = 0;
+    }
     Chunk *c = vm->gc.old_kind == OLD_COPY ? start : NULL;
     size_t at = start_at;
     for (;;) {

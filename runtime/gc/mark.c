@@ -154,6 +154,18 @@ static void mark_value(VM *vm, Value *v) {
 #define MARK_VALUE(v) (vm->gc_counts.other_roots++, mark_value(vm, (v)))
 #define MARK_OBJ(o) (vm->gc_counts.other_roots++, *(o) = mark_obj(vm, *(o)))
 
+/* Whether a full collection compacts the old space: where --heap-limit is
+   set and the old space's chunks pass it -- the space being fuller of holes
+   than the limit leaves room for -- or at every full collection under
+   --gc-compact, to test it (D4) */
+static int at_limit(const VM *vm) {
+    if (vm->gc.compact_always) return 1;
+    if (!vm->heap_limit) return 0;
+    size_t footprint = 0;
+    for (const Chunk *c = vm->gc.first; c; c = c->next) footprint += c->size;
+    return footprint > vm->heap_limit;
+}
+
 /* The frame's sweep: a chunk with nothing marked in it given back (but
    the one it places into, which starts again from its payload) */
 static void mark_sweep(VM *vm) {
@@ -198,8 +210,24 @@ void mark_full(VM *vm) {
     }
 
     switch (vm->gc.old_kind) {
-    case OLD_IMMIX: immix_sweep(vm); break;
-    case OLD_SEGFIT: segfit_sweep(vm); break;
+    case OLD_IMMIX:
+        if (at_limit(vm)) {
+            /* at the limit: slid down, its lines and blocks made again (D4) */
+            compact_old(vm);
+            vm->gc.ix_in_full = 0;
+            immix_adopted(vm);
+        } else immix_sweep(vm);
+        break;
+    case OLD_SEGFIT:
+        if (at_limit(vm)) {
+            /* at the limit: slid down into blocks of no class, which empty
+               as their objects die (D4) */
+            compact_old(vm);
+            vm->gc.sf_in_full = 0;
+            segfit_adopted(vm);
+        } else segfit_sweep(vm);
+        break;
+    case OLD_COMPACT: compact_old(vm); break;
     default: mark_sweep(vm); break;
     }
     for (Chunk *c = vm->gc.first; c; c = c->next) {
