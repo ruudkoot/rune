@@ -225,7 +225,7 @@ void mark_full(VM *vm) {
             compact_old(vm);
             vm->gc.sf_in_full = 0;
             segfit_adopted(vm);
-        } else segfit_sweep(vm);
+        } else segfit_sweep(vm, 0);
         break;
     case OLD_COMPACT: compact_old(vm); break;
     default: mark_sweep(vm); break;

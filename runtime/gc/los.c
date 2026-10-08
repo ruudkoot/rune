@@ -12,6 +12,7 @@
 #include <string.h>
 
 static size_t units_of(size_t bytes) { return (bytes + ((size_t)1 << GC_UNIT_SHIFT) - 1) >> GC_UNIT_SHIFT; }
+static size_t unit_of(Chunk *c, const Obj *o) { return (size_t)((const char *)o - chunk_payload(c)) >> GC_UNIT_SHIFT; }
 
 /* a chunk of the space, its units all free */
 static Chunk *los_chunk(VM *vm, size_t bytes) {
@@ -39,9 +40,10 @@ static long take_run(Chunk *c, size_t want) {
     return -1;
 }
 
-Obj *los_alloc(VM *vm, size_t size) {
+/* the place of an object of size bytes: the first run of units that holds
+   it, in a chunk of the space or a new one */
+static Obj *los_place(VM *vm, size_t size) {
     size_t want = units_of(size);
-    vm->gc.los_bytes += size;
     if (size > CHUNK_ROOM / 2) {
         /* more than half a chunk: a chunk of its own, of its size (D5) */
         Chunk *c = los_chunk(vm, size);
@@ -59,7 +61,17 @@ Obj *los_alloc(VM *vm, size_t size) {
     return (Obj *)(chunk_payload(c) + ((size_t)first << GC_UNIT_SHIFT));
 }
 
-static size_t unit_of(Chunk *c, const Obj *o) { return (size_t)((const char *)o - chunk_payload(c)) >> GC_UNIT_SHIFT; }
+/* ... marked where the low-pause collector's cycle marks: newer than its
+   snapshot (cycle.c) */
+Obj *los_alloc(VM *vm, size_t size) {
+    vm->gc.los_bytes += size;
+    Obj *o = los_place(vm, size);
+    if (vm->gc.marking) {
+        Chunk *c = chunk_of(o);
+        chunk_marks(c)[unit_of(c, o)] = 1;
+    }
+    return o;
+}
 
 void los_mark(VM *vm, Obj *o) {
     Chunk *c = chunk_of(o);

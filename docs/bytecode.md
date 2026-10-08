@@ -397,7 +397,10 @@ raised as noted.
 * `runevm-stack --gc-stress N file.rbc` collects before every Nth allocation. With
   N = 1 every allocation moves every live object, which exposes a primitive
   that keeps a heap pointer in a C variable across an allocation
-  (`make test-stress`);
+  (`make test-stress`); with `--gc low-pause --gc-stress-cycles` too, each
+  such collection is a minor one that begins a cycle of incremental
+  marking where none marks, and every slice marks a few hundred bytes, so
+  that the program's stores run while a cycle marks;
 * `runevm-stack --gc-verify file.rbc` checks the heap before and after every
   collection and stops with status 2 where it is not sound ([runtime.md](runtime.md),
   *Watching it*; `make test-heap`);

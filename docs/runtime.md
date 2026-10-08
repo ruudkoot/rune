@@ -105,7 +105,9 @@ the program's code are not in the heap.
   MiB by default): after every full collection the nursery is half of the
   room the heap has left, within the two, so that a program whose
   short-lived data is large has a nursery large enough not to promote it
-  (`--nursery-max 0` keeps it at its first size). Its size follows the
+  (`--nursery-max 0` keeps it at its first size, as `--gc low-pause` does
+  unless `--nursery-max` is given: a minor collection's pause is in
+  proportion to the nursery). Its size follows the
   heap's, so the same run makes the same nurseries. A nursery smaller than
   32 KiB takes objects of a quarter of its size and more to the
   large-object space. `--nursery 0`
@@ -149,10 +151,9 @@ a run chooses between two (`runevm --gc G`;
   full collections stop the program while they mark the whole old space.
   Its old space is mark-region (`immix.c`).
 * **`--gc low-pause`,** for short pauses: its old space is segregated fits
-  (`segfit.c`), whose objects never move once old, which its marking is to
-  be made incremental for (the roadmap's M6; today its full collection
-  stops the program too, and is the cheaper of the two by a quarter to two
-  fifths a megabyte live).
+  (`segfit.c`), whose objects never move once old, and it marks it
+  incrementally, a slice at a time between the program's allocations
+  (below), so that no pause marks the whole of it.
 
 Both have the same nursery, barrier and large-object space, and:
 
@@ -166,6 +167,26 @@ Both have the same nursery, barrier and large-object space, and:
   nothing marked, and the large objects it did not reach (`mark.c`,
   `los.c`). The throughput collector also moves the objects of its
   sparsest blocks into free ones, as many as the nursery holds (below).
+
+The low-pause collector makes a full collection only where it must. Where
+the old space has filled half of the room the last collection left, a
+minor collection begins a *cycle* of incremental marking (`cycle.c`): it
+marks what the roots -- the whole stack, the globals and the rest --
+reach at that moment, and from then on, every 128 KiB the program
+allocates, a *slice*, a pause of its own, marks a little more, as many
+bytes as keep the marking ahead of what promotion fills of the heap's
+room (more often, where a slice cannot do its bytes in the work it is
+allowed). What was reachable when the cycle began is reached: while it
+marks, a store into an old object first marks the value it overwrites
+(the barrier, below), and what is promoted or made as a large object is
+marked where it is placed. When nothing is left to mark, a minor
+collection ends the cycle: what was not marked is free, the blocks are
+sorted by what they hold, and the chunks left empty go back to the system
+a few at each pause after. Where the heap reaches its size before a cycle
+ends, the collection that comes ends it at once, and is a full one only
+where that leaves too little room; `Runtime.collect ()` ends a cycle and
+then makes a full collection. Slices fall where the bytes allocated put
+them, so the same run makes the same slices.
 
 Each chunk of the old space has a bit for every 8 bytes
 (`mark.c`), set
@@ -212,11 +233,15 @@ What it is and is not:
   word whose low bit tells an immediate from a pointer, so nothing is ever
   taken for a pointer that is not one, and nothing is scanned
   conservatively.
-* **Stop-the-world, in one piece.** The program does not run during a
-  collection. There are no increments and no second thread: a minor
-  collection copies what of the nursery is live, and a full one marks all
-  that is live, the data that has been live since the program started with
-  it. The compiler compiling itself from the 64 MiB `bin/rune` gives it
+* **Stop-the-world, in pieces.** The program does not run during a
+  collection, and there is no second thread. A minor collection copies
+  what of the nursery is live; the throughput collector's full collection
+  marks all that is live, the data that has been live since the program
+  started with it, in one pause; the low-pause collector's marking is cut
+  into slices, so that its pauses are a minor collection, a slice, and a
+  cycle's beginning (the stack) and end, each of them short
+  ([plans/garbage-collector-v2.md](plans/garbage-collector-v2.md), M6, has
+  the figures). The compiler compiling itself from the 64 MiB `bin/rune` gives it
   allocates 887 MB; with the copying old space of M3 (`--old-space copy`)
   it makes 847 minor and 2 full collections, which promote 171 MB and copy
   228 MB in all, the longest pause, a full collection, 51 ms and 99 in 100
@@ -229,12 +254,14 @@ What it is and is not:
 * **Moving.** A minor collection moves what it promotes, the throughput
   collector's full collection the objects of the blocks it evacuates, and
   the copier's every object but a large one; the low-pause collector's
-  full collection moves nothing. Nothing of that is visible to an SML
+  cycles and full collections move nothing. Nothing of that is visible to an SML
   program: equality on `ref` and `array` is the identity the collector
   maintains, not the address of the moment.
 * **Only at an allocation.** A collection happens when an allocation does
   not fit, when the program asks (`Runtime.collect ()`), and before every
-  *N*th allocation under `--gc-stress N`. There are no timers and no polls:
+  *N*th allocation under `--gc-stress N`; the low-pause collector's slices
+  at the allocation that passes the next 128 KiB of the nursery while a
+  cycle marks. There are no timers and no polls:
   code that does not allocate is never interrupted. The same program on the
   same input with the same options collects at the same allocations in
   every run (*The same run twice*).
@@ -245,7 +272,11 @@ What it is and is not:
   the field is in, 512 bytes of the object's chunk, and the card's block of
   32 KiB, in the chunk's tables; a minor collection takes the fields of the
   marked cards as roots and clears them, visiting the blocks marked alone,
-  and finds the objects of a card by a crossing map of each old chunk. A
+  and finds the objects of a card by a crossing map of each old chunk.
+  While the low-pause collector's cycle marks, the barrier marks the value
+  the store overwrites, where the object is old, before the store (the
+  snapshot's barrier, D7): C tests a flag of the VM, and compiled code the
+  same flag before its store, taking the store to C while it is set. A
   large object is filled without the barrier, so one made since the last
   minor collection is a root of the next one whole.
 * **No finalisers, no weak references, no pinning.** An object cannot ask to
@@ -334,7 +365,11 @@ what `Runtime.stats` says is live.
   collector's: `Timer.checkCPUTimes` gives both, `Timer.checkGCTime` the
   user part as the Basis says, and `--stats` the two together.
 * `runevm --gc-stress N` collects before every *N*th allocation, a minor
-  collection where there is a nursery. With `--nursery 0` every such
+  collection where there is a nursery; with `--gc-stress-cycles` too, under
+  the low-pause collector, every such collection begins a cycle where none
+  marks, and every slice marks a few hundred bytes, a slice coming every 64
+  bytes allocated, so that `make test-gc` and `make test-stress` run every
+  store of the suites while a cycle marks. With `--nursery 0` every such
   allocation moves everything, which is how `make test-stress` (every 101st
   allocation: the interpreters with `--nursery 0`, the JIT with a nursery
   of 4 KiB) finds a primitive that keeps a heap pointer in a C variable
@@ -377,12 +412,12 @@ and the second the columns, by which a script reads them (`tools/mmu.py`,
 | Column | What |
 |---|---|
 | `seq` | the pass, from 1 |
-| `kind` | `minor` or `full` |
+| `kind` | `minor` or `full`; the low-pause collector's cycle's: `mark-begin` (its roots marked, in a minor collection's pause), `mark` (a slice), `mark-end` (its end, in a minor collection's) and `mark-all` (the end of one the heap's size reached first) |
 | `vmgc` | the collection the pass is part of: two passes of one collection have the same |
 | `bytes`, `objects`, `instrs` | what the program had allocated and executed when the pass began, as `--count` counts it: the same in every run with the same options |
 | `boxes`, `box_bytes` | the representation's boxes so far (`--stats`) |
 | `used_before` | the bytes in use when the pass began |
-| `copied`, `copied_objs` | the bytes and the objects it copied |
+| `copied`, `copied_objs` | the bytes and the objects it copied (a pass of a cycle: that it marked) |
 | `promoted` | a minor pass's copy, the bytes it moved out of the nursery; 0 for a full one |
 | `slots`, `live_slots` | the slots of the value stack it looked at (a minor pass: above the watermark), and of them those that were roots (the others were dead registers of frames waiting for a call) |
 | `frames` | the waiting frames whose live registers it asked for |
@@ -606,7 +641,7 @@ of another bytecode version is refused as well. There is no dynamic loading
 afterwards: a program is one file, the basis library included.
 
 The whole command line -- `--disasm`, `--trace`, `--stats`, `--count`,
-`--gc-stress`, `--gc-verify`, `--checked`, `--heap-size`, `--heap-limit`,
+`--gc-stress`, `--gc-stress-cycles`, `--gc-verify`, `--checked`, `--heap-size`, `--heap-limit`,
 `--heap-fill`, `--nursery`, `--gc`, `--old-space`, `--stack-size`, `--equality-work`, `--gc-log`,
 `--emulate-fork`, `--restore`, `--version` -- is described in
 [bytecode.md](bytecode.md).
@@ -628,7 +663,7 @@ that the one writes what the other reads.
 What differs:
 
 * The options of `runevm` (`--count`, `--stats`, `--heap-size`,
-  `--heap-limit`, `--heap-fill`, `--nursery`, `--gc`, `--old-space`, `--equality-work`, `--gc-stress`,
+  `--heap-limit`, `--heap-fill`, `--nursery`, `--gc`, `--old-space`, `--equality-work`, `--gc-stress`, `--gc-stress-cycles`,
   `--gc-verify`, `--gc-log`, `--checked`) come from the environment
   variable `RUNEVM_OPTIONS`, after
   those the program was made with (`runeopt --options`), and the program takes

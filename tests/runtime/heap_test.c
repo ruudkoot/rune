@@ -432,6 +432,38 @@ int main(void) {
               cv->gc.closed == cv->gc.first->used + (cv->gc.first->next ? cv->gc.first->next->used : 0) && now <= chunks);
     }
 
+    /* The low-pause collector's cycle (runtime/gc/cycle.c; D7, M6): what
+       the snapshot reaches by a field alone that is overwritten while the
+       cycle marks is kept (the barrier marked it), what is made during the
+       cycle is kept, and what the snapshot did not reach is freed at its end */
+    {
+        VM *lv = new_vm(1 << 20);
+        lv->gc.old_kind = OLD_SEGFIT;
+        heap_nursery(lv, 1 << 14);
+        Obj *r = vm_alloc_fields(lv, K_REF, 0, 1);
+        vm_push(lv, mk_ptr(r));                          /* slot 0: a ref */
+        obj_set_field(lv, r, 0, tuple(lv, 2, 50));       /* the one pointer to a tuple */
+        vm_push(lv, tuple(lv, 3, 60));                   /* slot 1 */
+        collect_minor(lv);                               /* all of it old */
+        r = val_ptr(lv->stack[0]);
+        Obj *g = val_ptr(lv->stack[1]);
+        lv->sp = 1;                                      /* slot 1's tuple garbage */
+        lv->gc_stress = 1;
+        lv->gc.stress_cycles = 1;                        /* a minor collection begins a cycle */
+        collect_minor(lv);
+        CHECK("a cycle begins after a minor collection, its roots marked", lv->gc.marking == 1 && lv->gc.ngray >= 1);
+        vm_push(lv, obj_field(r, 0));                    /* slot 1: the tuple, as a register holds it */
+        obj_set_field(lv, r, 0, mk_unit());              /* the ref lets go of it before the cycle scans the ref */
+        vm_push(lv, tuple(lv, 1, 70));                   /* slot 2: made during the cycle (a minor collection, a slice) */
+        for (int i = 0; i < 100 && lv->gc.marking; i++) collect_minor(lv);
+        Obj *t = val_ptr(lv->stack[1]), *y = val_ptr(lv->stack[2]);
+        Chunk *gk = chunk_of(g);
+        CHECK("what the snapshot reached by an overwritten field is kept",
+              !lv->gc.marking && lv->gc.cycles == 1 && obj_len(t) == 2 && obj_field(t, 0) == mk_imm(50) && heap_check(lv, NULL) == NULL);
+        CHECK("what was made during the cycle is kept", obj_len(y) == 1 && obj_field(y, 0) == mk_imm(70));
+        CHECK("and what the snapshot did not reach is freed", !chunk_bit(gk, (size_t)((char *)g - (char *)gk)));
+    }
+
     /* The adaptive nursery (docs/plans/garbage-collector-v2.md, D2): after a
        full collection, half of the heap's room, within its least and most */
     {

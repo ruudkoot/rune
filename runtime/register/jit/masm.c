@@ -1195,6 +1195,16 @@ static void barrier(Masm *m, int obj, int at, int32_t off) {
     as_bind(&m->a, &done);
     as_label_free(&done);
 }
+/* THE BARRIER's flag (vm.h, gc_barrier): to slow, where the store is the
+   primitive's in C, through the barrier, while the low-pause collector's
+   cycle marks -- before the store, the value it overwrites being what the
+   snapshot's barrier marks (runtime/gc/cycle.c). Nothing allocates between
+   the test and the store, so no cycle begins between them. runeopt's
+   `:=` and `Array.update` test it too (needUnmarked). */
+void ms_need_unmarked(Masm *m, AsmLabel *slow) {
+    as_cmp_mi(&m->a, VMR, OFF(gc.marking), 0);
+    as_jcc(&m->a, CC_NE, slow);
+}
 void ms_set_field(Masm *m, int obj, uint32_t i, int32_t s) {
     ms_store_field(m, obj, i, s);
     barrier(m, obj, obj, FIELD_OFF(i));

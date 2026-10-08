@@ -3,6 +3,7 @@
    exit that agree with --count and --stats. */
 #include "gc/gc.h"
 #include "sys/sys.h"
+#include <string.h>
 
 /* What a pass began with: the allocation clock (deterministic: bytes and
    objects the program allocated, instructions executed, the boxes apart),
@@ -28,11 +29,13 @@ void log_pass_end(VM *vm, const PassMark *m, const char *kind, int64_t pause) {
        copied_objs promoted slots live_slots frames other_roots cards_dirty
        cards_scanned remembered live_after heap_size pause_ns cpu_ns
        rss_bytes t_ns cards_young fields_scanned */
-    /* copied: a minor's promotion, a full's whole copy */
+    /* copied: a minor's promotion, a full's whole copy (or what it marked
+       in place), a pass of the low-pause collector's cycle what it marked */
+    int minor = strcmp(kind, "minor") == 0;
 #ifdef RUNE_CENSUS
-    uint64_t copied = kind[0] == 'm' ? vm->gc_counts.promoted : (uint64_t)vm->gc.to_used_stock;
+    uint64_t copied = minor ? vm->gc_counts.promoted : (uint64_t)vm->gc.to_used_stock;
 #else
-    uint64_t copied = kind[0] == 'm' ? vm->gc_counts.promoted : (uint64_t)vm->gc.to_used;
+    uint64_t copied = minor ? vm->gc_counts.promoted : (uint64_t)vm->gc.to_used;
 #endif
     fprintf(vm->gc_log, "%llu %s %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %lld %lld %llu %lld %llu %llu\n",
             (unsigned long long)vm->gc_count, kind, (unsigned long long)vm->gc_calls,

@@ -257,6 +257,9 @@ struct
   fun storeField line (b, i, s) =
     (line ("movsd " ^ s ^ "(%r13,%rbp), %xmm0");
      line ("movsd %xmm0, OBJ_FIELDS+" ^ num (IntInf.* (IntInf.fromInt 8, IntInf.fromInt i)) ^ "(" ^ reg64 b ^ ")"))
+  fun needUnmarked line slow =
+    (line ("cmpq $0, VM_GC_MARKING(%r12)");
+     line ("jne " ^ slow))
   fun setField line (i, s, l) =
     (line ("movsd " ^ s ^ "(%r13,%rbp), %xmm0");
      line ("movsd %xmm0, OBJ_FIELDS+" ^ num (IntInf.* (IntInf.fromInt 8, IntInf.fromInt i)) ^ "(%rax)");

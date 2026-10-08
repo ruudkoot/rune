@@ -316,6 +316,9 @@ static inline void obj_set_field(struct VM *vm, Obj *o, uint32_t i, Value v) {
    object keeps its size; the collector follows the first field alone
    (runtime/heap.c), the others being dead from here on. */
 static inline void obj_become_ind(struct VM *vm, Obj *o, Value v) {
+    /* the fields after the first are let go as if overwritten: what a
+       snapshot reaches by them is kept (the low-pause collector's cycle) */
+    for (uint32_t i = 1; i < o->len; i++) gc_barrier(vm, o, &OBJ_FIELDS(o)[i], mk_unit());
     gc_barrier(vm, o, &OBJ_FIELDS(o)[0], v);
     o->kind = (uint8_t)((o->kind & OBJ_GC_BITS) | K_IND);
     OBJ_FIELDS(o)[0] = v;

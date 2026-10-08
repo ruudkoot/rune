@@ -75,6 +75,7 @@ struct Chunk {
     size_t units_free;   /* a large-object chunk's free units */
     size_t top;          /* a non-moving chunk's: where the next object goes, from the payload (used is what it holds) */
     uint32_t *lines;     /* a non-moving chunk's, while an image is written: the offset from base of the first object at or after each 64 bytes (heap_number) */
+    size_t marked;       /* while a cycle of the low-pause collector marks: the bytes of its objects marked (cycle.c) */
 };
 typedef char chunk_header_fits[sizeof(Chunk) <= GC_CARDS ? 1 : -1];
 
@@ -104,6 +105,8 @@ static inline void chunk_bit_set(Chunk *c, size_t at) { chunk_bits(c)[at >> 9] |
 /* chunk.c: chunks from the system and back; the heap's list */
 Chunk *chunk_take(VM *vm, size_t bytes, int kind);   /* a chunk whose payload holds bytes, empty, its tables clear */
 void chunk_give(VM *vm, Chunk *c);          /* to the pool, or back to the system */
+void chunk_give_later(VM *vm, Chunk *c);    /* to the pool, to go back to the system in pool_trim */
+void pool_trim(VM *vm, size_t most);        /* at most that many chunks the pool holds past what it keeps given back */
 void chunk_append(VM *vm, Chunk *c);        /* last in the heap's list */
 void heap_chunks_release(VM *vm);           /* every chunk the VM has, at its end */
 /* alloc made again the room the fast paths bump into (vm.h, AllocState):
@@ -237,16 +240,36 @@ static inline Obj *immix_place_fast(VM *vm, size_t size) {
     return (Obj *)p;
 }
 /* segfit.c: the segregated old space (--old-space segfit; M4 B) */
-typedef struct SfBlock { uint8_t cls, pad; uint16_t free; } SfBlock;   /* its class (0: free, or not the space's), its free cells at the last sweep */
+typedef struct SfBlock { uint8_t cls, pad; uint16_t free, marked; } SfBlock;   /* its class (0: free, or not the space's), its free cells at the last sweep, its objects a cycle marked (cycle.c) */
 static inline SfBlock *chunk_sfblocks(Chunk *c) { return (SfBlock *)(void *)((char *)c + c->blocks_at); }
 Obj *segfit_place(VM *vm, size_t size);
 Obj *segfit_bump(VM *vm, size_t size);        /* an object read from an image, in blocks of no class */
 void segfit_adopted(VM *vm);
 void segfit_full_begin(VM *vm);
-void segfit_sweep(VM *vm);
+void segfit_sweep(VM *vm, int counted);   /* counted: each block's objects are its count of a cycle's marks, not its bits counted */
 /* compact.c: the mark-compact old space (--old-space compact), placed by
    mark_place and slid down by every full collection after its marking */
 void compact_old(VM *vm);
+/* cycle.c: the low-pause collector's incremental cycle (D7, M6). A chunk's
+   marks of the cycle, a bit for every 8 bytes as its bits, are in the room
+   of the line bytes, which the segregated space does not use and which
+   take as many bytes (size / 64); at the cycle's end the two are swapped. */
+static inline uint64_t *chunk_cmarks(Chunk *c) { return (uint64_t *)(void *)((char *)c + c->lines_at); }
+/* an object placed while a cycle marks: marked (allocated black) */
+static inline void cycle_black(VM *vm, Obj *o, size_t size) {
+    Chunk *c = chunk_of(o);
+    size_t off = (size_t)((char *)o - (char *)c);
+    chunk_cmarks(c)[off >> 9] |= (uint64_t)1 << (off >> 3 & 63);
+    chunk_sfblocks(c)[off >> SF_BLOCK_SHIFT].marked++;
+    c->marked += size;
+    if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) vm->gc.cycle_boxes += size;
+}
+void cycle_step(VM *vm);         /* after a minor collection: a cycle begun or ended, its pace made again */
+void cycle_slice(VM *vm);        /* at a slice point, alloc's room ending before the nursery's (heap.c) */
+int cycle_complete(VM *vm);      /* the cycle marked to its end and finished, the nursery promoted first; 1 where one was marking */
+void minor_pass(VM *vm);         /* minor.c: a minor collection, logged, in a vm_gc call of its own or another's */
+void gc_after_cycle(VM *vm);     /* copy.c: after a cycle's end, the heap's size and the nursery's, as after a full collection */
+
 /* segfit_place's fast path, in line: the next cell of the class's block, where it is free */
 static inline Obj *segfit_place_fast(VM *vm, size_t size) {
     SfClass *cl = &vm->gc.sf[vm->gc.sf_class_of[size >> 3]];

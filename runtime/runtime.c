@@ -353,6 +353,9 @@ void vm_exit(VM *vm, int status) {
                 vm->gc.nursery_size, (unsigned long long)vm->gc.minors, (unsigned long long)vm->gc.fulls,
                 (unsigned long long)vm->gc.promoted, (unsigned long long)vm->gc.large_objects,
                 (unsigned long long)vm->gc.large_bytes, vm->gc.los_bytes);
+    if (vm->stats && vm->gc.cycles + vm->gc.slices)   /* the low-pause collector's (runtime/gc/cycle.c) */
+        fprintf(stderr, "runevm: %llu cycles of incremental marking, in %llu slices\n",
+                (unsigned long long)vm->gc.cycles, (unsigned long long)vm->gc.slices);
     if (vm->stats && vm->boxes_allocated)   /* the representation's own, which --count leaves out (vm.h) */
         fprintf(stderr, "runevm: %llu boxes, %llu bytes\n",
                 (unsigned long long)vm->boxes_allocated, (unsigned long long)vm->box_bytes_allocated);

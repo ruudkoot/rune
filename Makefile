@@ -110,7 +110,7 @@ BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit
 # build/librune.a, which bin/runevm-stack links, and so will a program runeopt
 # makes (docs/native.md); the other VMs compile the same list.
 SYS ?= posix
-RT_SRCS := runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/check.c runtime/gc/log.c runtime/loader.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
+RT_SRCS := runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/loader.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
 VM_SRCS := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_$(SYS).c
 VM_HDRS := runtime/vm.h runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
 RT_OBJS := $(patsubst runtime/%.c,build/librune/%.o,$(RT_SRCS) runtime/sys/sys_$(SYS).c)
@@ -719,6 +719,13 @@ test-portability: portability $(RUNE) vm
 	sh scripts/check-jit.sh -j $(JOBS) --vm bin/runevm-aarch64
 	RUNE=$(abspath $(RUNE_STACK)) RUNE_MATRIX_TIMEOUT=$(PORT_TIMEOUT) \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs portability
+	@for v in runevm-stack32 runevm-stack-ppc64 runevm32 runevm-ppc64; do \
+	  printf '#!/bin/sh\nexec "$(ROOT)/bin/%s" --gc low-pause --gc-stress $(GC_STRESS) --gc-stress-cycles "$$@"\n' $$v > bin/$$v-cycles; \
+	  chmod +x bin/$$v-cycles; \
+	done
+	sh tests/run-portability.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack32-cycles --vm bin/runevm-stack-ppc64-cycles
+	sh tests/run-portability.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
+	  --vm bin/runevm32-cycles --vm bin/runevm-ppc64-cycles
 
 # ---------------------------------------------------------------- tests
 # Depending on $(RUNE) builds whichever compiler the override names.
@@ -783,6 +790,11 @@ test-gc: $(RUNE) vm | build/.doctor-check
 	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack-gc-throughput --out tests/out/gc-throughput
 	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack-gc-low-pause --out tests/out/gc-low-pause
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-low-pause-stress --out tests/out/register-gc-low-pause-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc low-pause --gc-verify --nursery 65536 --gc-stress $(GC_STRESS) --gc-stress-cycles "$$@"\n' > bin/runevm-gc-low-pause-cycles
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-stack" --gc low-pause --gc-verify --nursery 65536 --gc-stress $(GC_STRESS) --gc-stress-cycles "$$@"\n' > bin/runevm-stack-gc-low-pause-cycles
+	chmod +x bin/runevm-gc-low-pause-cycles bin/runevm-stack-gc-low-pause-cycles
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-low-pause-cycles --out tests/out/register-gc-low-pause-cycles
+	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack-gc-low-pause-cycles --out tests/out/gc-low-pause-cycles
 	@for g in throughput low-pause; do \
 	  printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc %s --gc-compact --gc-verify --heap-size 65536 --nursery 8192 --nursery-max 0 "$$@"\n' $$g > bin/runevm-gc-$$g-compact; \
 	  chmod +x bin/runevm-gc-$$g-compact; \
@@ -908,6 +920,11 @@ test-stress: $(RUNE) vm | build/.doctor-check
 	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-stress --out tests/out/register-stress
 	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-jit-stress --out tests/out/register-jit-stress
 	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-opt-stress --out tests/out/register-opt-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc low-pause --jit=all --nursery 4096 --gc-stress "$${RUNE_GC_STRESS:-1}" --gc-stress-cycles "$$@"\n' > bin/runevm-jit-cycles
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc low-pause --jit=all --jit-tier=2 --nursery 4096 --gc-stress "$${RUNE_GC_STRESS:-1}" --gc-stress-cycles "$$@"\n' > bin/runevm-opt-cycles
+	chmod +x bin/runevm-jit-cycles bin/runevm-opt-cycles
+	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-jit-cycles --out tests/out/register-jit-cycles
+	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-opt-cycles --out tests/out/register-opt-cycles
 	RUNE_GC_STRESS=$(GC_STRESS_BASIS) RUNE_MATRIX_TIMEOUT=900 \
 	  RUNE=$(abspath $(RUNE_STACK)) RUNEVM="$(ROOT)/bin/runevm-stack-stress" \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune
@@ -937,6 +954,9 @@ test-native: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm bin/
 	python3 tests/runtime/run-limits.py --rune $(RUNE_STACK) --vm bin/runevm-native
 	python3 tests/runtime/run-gc-log.py --rune $(RUNE_STACK) --vm bin/runevm-native
 	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-native --skip tests/opt-skip.txt
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-native" --gc low-pause --nursery 4096 --gc-stress $(GC_STRESS) --gc-stress-cycles "$$@"\n' > bin/runevm-native-cycles
+	chmod +x bin/runevm-native-cycles
+	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-native-cycles --skip tests/opt-skip.txt --out tests/out/native-cycles
 	sh tests/opt/run-counts.sh -j $(JOBS) $$(for t in tests/lang/*.sml; do echo tests/out/$$(basename $$t .sml).rbc; done)
 	RUNE=$(abspath $(RUNE_STACK)) RUNE_MATRIX_BYTECODE="$(ROOT)/tests/out/matrix/rune" \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:opt

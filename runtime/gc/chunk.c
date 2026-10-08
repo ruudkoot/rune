@@ -64,17 +64,47 @@ Chunk *chunk_take(VM *vm, size_t bytes, int kind) {
 /* A pool of one heap's worth, as many chunks as the heap's size takes, and
    one more: what the semispace kept between collections held. A run of
    chunks goes back to the system, being of a size the next may not want. */
+/* a copying old space keeps a heap's worth for its next copy; a
+   non-moving one, which never copies the heap, a few (D10) -- the low-pause
+   collector as many as promotion may fill before the heap's size is
+   reached, whose pages a minor collection would otherwise make again in
+   its pause (cycle.c) */
+static size_t pool_keep(const VM *vm) {
+    if (vm->gc.old_kind == OLD_COPY || !vm->gc.nursery) return vm->gc.size / CHUNK_SIZE;
+    if (vm->gc.old_kind == OLD_SEGFIT && vm->gc.size > heap_used(vm) + 4 * CHUNK_SIZE) return (vm->gc.size - heap_used(vm)) / CHUNK_SIZE;
+    return 4;
+}
+
 void chunk_give(VM *vm, Chunk *c) {
     free(c->lines);
     c->lines = NULL;
-    /* a copying old space keeps a heap's worth for its next copy; a
-       non-moving one, which never copies the heap, a few (D10) */
-    size_t keep = vm->gc.old_kind == OLD_COPY || !vm->gc.nursery ? vm->gc.size / CHUNK_SIZE : 4;
-    if (c->size == CHUNK_SIZE && vm->gc.pooled <= keep) {
+    if (c->size == CHUNK_SIZE && vm->gc.pooled <= pool_keep(vm)) {
         c->next = vm->gc.pool;
         vm->gc.pool = c;
         vm->gc.pooled++;
     } else sys_mem_release(c, c->size);
+}
+
+/* The same into the pool whatever it holds, to go back to the system a few
+   at a time (pool_trim): the low-pause collector's cycle ends with many
+   chunks empty, and giving each back is a call to the system that would
+   lengthen that pause by hundreds of them (cycle.c) */
+void chunk_give_later(VM *vm, Chunk *c) {
+    if (c->size != CHUNK_SIZE) { chunk_give(vm, c); return; }
+    free(c->lines);
+    c->lines = NULL;
+    c->next = vm->gc.pool;
+    vm->gc.pool = c;
+    vm->gc.pooled++;
+}
+void pool_trim(VM *vm, size_t most) {
+    size_t keep = pool_keep(vm);
+    for (; most && vm->gc.pooled > keep + 1; most--) {
+        Chunk *c = vm->gc.pool;
+        vm->gc.pool = c->next;
+        vm->gc.pooled--;
+        sys_mem_release(c, c->size);
+    }
 }
 
 void chunk_append(VM *vm, Chunk *c) {
@@ -92,6 +122,11 @@ void heap_chunks_release(VM *vm) {
     vm->gc.pooled = 0;
     free(vm->gc.born);
     free(vm->gc.queue);
+    free(vm->gc.gray);   /* the low-pause collector's cycle's (cycle.c) */
+    vm->gc.gray = NULL;
+    vm->gc.gray_part = NULL;
+    vm->gc.ngray = vm->gc.gray_cap = 0;
+    vm->gc.marking = 0;
     free(vm->gc.segs);
     vm->gc.born = vm->gc.queue = NULL;
     vm->gc.segs = NULL;

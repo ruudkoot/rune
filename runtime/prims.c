@@ -2183,7 +2183,7 @@ static int p_rt_heap_size(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->gc.siz
 /* A collection on demand. It moves every object, so nothing of the heap may
    be held in a C variable across it; the argument on the stack is unit, and
    the collector walks the stack itself. */
-static int p_rt_collect(VM *vm) { vm_gc(vm, 0); return ret(vm, 1, mk_unit()); }
+static int p_rt_collect(VM *vm) { vm_collect(vm); return ret(vm, 1, mk_unit()); }
 
 /* One frame as (name, file, line, column), built on the VM stack: every
    allocation here can collect, and the strings must survive the next one. */

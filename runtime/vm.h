@@ -238,6 +238,25 @@ typedef struct GcState {
     size_t sf_nfree, sf_free_cap;
     char *sf_bump, *sf_bump_limit;   /* the block of no class an image's objects are read into */
     int sf_in_full;
+    /* The low-pause collector's cycle (runtime/gc/cycle.c; D7): marking, the
+       flag the barrier tests in every engine, compiled code too (masm.c,
+       runeopt's templates), 1 from the cycle's start to its end; the
+       objects marked whose fields are still to be marked; the bytes it has
+       marked, the most it may mark (the heap's at its start), and of what
+       it marked the boxes (box_bytes_live) */
+    uint64_t marking;
+    Obj **gray;
+    size_t ngray, gray_cap;
+    size_t cycle_marked, cycle_work, cycle_boxes;
+    double cycle_rate;     /* the bytes a slice marks for every byte allocated since the last (cycle.c) */
+    size_t slice_from;     /* alloc.used at the last slice point or minor collection */
+    size_t slice_every;    /* the bytes allocated between two slices, less where they fall behind */
+    uint64_t cycle_alloc;  /* the bytes the program had allocated at the last minor collection */
+    Obj *gray_part;        /* an object of many fields scanned in part, from field gray_at */
+    uint32_t gray_at;
+    uint64_t cycles, slices;
+    int stress_cycles;     /* --gc-stress-cycles: --gc-stress's collection a minor one, which begins a cycle where none marks, each slice marking little */
+    int full_wanted;       /* vm_collect's: a full collection, not a cycle's end alone */
     size_t nursery_min, nursery_max;   /* the nursery's bounds (D2): after a full collection it is half the heap's room, within these; nursery_max 0: fixed */
     /* The large-object space (runtime/gc/los.c): objects of los_min bytes
        or more, in its chunks; its bytes count with the old space's; those
@@ -396,16 +415,23 @@ static inline int heap_is_young(const VM *vm, const void *p) {
 static inline size_t heap_used(const VM *vm) { return vm->gc.closed + vm->gc.los_bytes + vm->alloc.used; }
 
 /* THE BARRIER's body (runtime/value.h, obj_set_field;
-   docs/plans/garbage-collector-v2.md, D6): where there is a nursery, a
+   docs/plans/garbage-collector-v2.md, D6, D7): where there is a nursery, a
    pointer into it stored into an object that is not in it marks the card
    of the field (runtime/gc/minor.c, gc_write), so that the next minor
-   collection finds it; every other store is the store alone. And the
-   measuring card mark, in the build that measures one. */
+   collection finds it; while a cycle of the low-pause collector marks, the
+   value overwritten is marked (the snapshot's barrier); every other store
+   is the store alone. And the measuring card mark, in the build that
+   measures one. Before the store: *f is the value overwritten. */
 void gc_write(Obj *o, Value *f);
+void gc_shade_old(VM *vm, Obj *o, Value old);
 static inline void gc_barrier(VM *vm, Obj *o, Value *f, Value v) {
 #ifdef RUNE_BARRIER_CARDS
     rune_cards[((uintptr_t)f >> CARD_SHIFT) & (CARD_COUNT - 1)] = 1;
 #endif
+    /* while the low-pause collector's cycle marks: the value overwritten,
+       which the snapshot it marks may reach by this field alone, marked
+       (runtime/gc/cycle.c) */
+    if (vm->gc.marking) gc_shade_old(vm, o, *f);
     if (vm->gc.nursery && val_is_ptr(v) && heap_is_young(vm, val_ptr(v)) && !heap_is_young(vm, o)) gc_write(o, f);
 }
 
@@ -420,6 +446,7 @@ Obj *vm_string_from(VM *vm, const char *s, uint32_t len);
    of every object every collection visits */
 static inline size_t obj_size(const Obj *o) { return obj_size_of(obj_kind(o), obj_len(o)); }
 void vm_gc(VM *vm, size_t needed);
+void vm_collect(VM *vm);   /* Runtime.collect: a full collection, the low-pause collector's cycle ended first */
 int heap_relocate(VM *vm, uintptr_t old_base);  /* after an image is read: 0 when it is not sound */
 /* --gc-log FILE: one line per pass of the collector into FILE, and its last
    lines when the VM exits (docs/runtime.md, *Watching it*) */

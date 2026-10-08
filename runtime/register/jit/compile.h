@@ -75,6 +75,7 @@ Site *jit_site(Jit *j, int kind, uint32_t pc);
 /* the helpers native code calls */
 int jit_h_prim(VM *vm, int prim, int32_t d, const uint8_t *L);
 Obj *jit_h_alloc(VM *vm, int kind, int contag, uint32_t n);
+void jit_h_setenv(VM *vm, int32_t c, int32_t e, int32_t v);
 int jit_h_ret(VM *vm, int32_t s);
 void jit_h_fatal(VM *vm, int what, int32_t a, int32_t b);
 void jit_h_fatal_at(VM *vm, uint32_t k, int64_t value);

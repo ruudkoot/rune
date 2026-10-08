@@ -157,7 +157,8 @@ const char *heap_check(VM *vm, const void **at) {
     for (Chunk *k = vm->gc.los; k; k = k->next) c.chunks[c.n++] = k;
     qsort(c.chunks, c.n, sizeof *c.chunks, by_address);
     if (closed != vm->gc.closed) check_fail(&c, "the chunks hold other than the heap counts", NULL);
-    if (vm->gc.nursery ? vm->alloc.from != chunk_payload(vm->gc.nursery) || vm->alloc.size != vm->gc.nursery_size
+    if (vm->gc.nursery ? vm->alloc.from != chunk_payload(vm->gc.nursery) || vm->alloc.size > vm->gc.nursery_size
+                         || (vm->alloc.size != vm->gc.nursery_size && !vm->gc.marking)
                        : vm->alloc.from != chunk_payload(vm->gc.last) || vm->alloc.size > chunk_room(vm->gc.last))
         check_fail(&c, "alloc is not the room it should be", vm->alloc.from);
     if (vm->alloc.used > vm->alloc.size) check_fail(&c, "alloc holds more than its room", vm->alloc.from);

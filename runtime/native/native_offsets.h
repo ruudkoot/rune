@@ -31,6 +31,7 @@
     X("VM_HEAP_SIZE", offsetof(VM, alloc.size)) \
     X("VM_HEAP_USED", offsetof(VM, alloc.used)) \
     X("VM_GC_NURSERY", offsetof(VM, gc.nursery)) \
+    X("VM_GC_MARKING", offsetof(VM, gc.marking)) \
     X("VM_BYTES_ALLOCATED", offsetof(VM, bytes_allocated)) \
     X("VM_OBJECTS_ALLOCATED", offsetof(VM, objects_allocated)) \
     X("VM_GC_STRESS", offsetof(VM, gc_stress)) \

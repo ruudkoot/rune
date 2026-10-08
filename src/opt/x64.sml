@@ -245,6 +245,7 @@ struct
       | "ref_set" =>
           SOME (fn slow =>
             (obj (x, "K_REF") slow;
+             L.needUnmarked line slow;
              L.setField line (0, sd y, l ^ "_w");
              L.set line (sd x, 0)))
       | "word_to_int" => unary (WORD, L.wordToInt, INT)
@@ -270,6 +271,7 @@ struct
       | "array_update" =>
           SOME (fn slow =>
             (obj (h - 3, "K_ARRAY") slow; index (h - 2) slow;
+             L.needUnmarked line slow;
              L.setElement line (sd (h - 1), l ^ "_w");
              L.set line (sd (h - 3), 0)))
       | _ => NONE

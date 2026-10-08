@@ -270,7 +270,7 @@ void native_fatal(VM *vm, int what, int32_t a) {
 typedef struct Options {
     size_t heap, gc_stress, heap_fill, heap_limit, equality_work, nursery, nursery_max;
     int old_kind;
-    int stats, count, emulate_fork, checked, gc_verify;
+    int stats, count, emulate_fork, checked, gc_verify, gc_compact, gc_stress_cycles, low_pause, nursery_max_set;
     char *restore, *gc_log;
 } Options;
 
@@ -300,6 +300,8 @@ static void options(const char *text, const char *where, Options *o) {
         else if (strcmp(w, "--emulate-fork") == 0) o->emulate_fork = 1;
         else if (strcmp(w, "--checked") == 0) o->checked = 1;
         else if (strcmp(w, "--gc-verify") == 0) o->gc_verify = 1;
+        else if (strcmp(w, "--gc-compact") == 0) o->gc_compact = 1;
+        else if (strcmp(w, "--gc-stress-cycles") == 0) o->gc_stress_cycles = 1;
         else if (strcmp(w, "--heap-size") == 0 && i + 1 < n && size_arg(words[i + 1], &o->heap)) {
             if (o->heap < 4096) o->heap = 4096;
             i++;
@@ -312,10 +314,11 @@ static void options(const char *text, const char *where, Options *o) {
         else if (strcmp(w, "--nursery") == 0 && i + 1 < n && size_arg(words[i + 1], &o->nursery))
             i++;
         else if (strcmp(w, "--nursery-max") == 0 && i + 1 < n && size_arg(words[i + 1], &o->nursery_max))
-            i++;
+            i++, o->nursery_max_set = 1;
         else if (strcmp(w, "--gc") == 0 && i + 1 < n && (strcmp(words[i + 1], "throughput") == 0 || strcmp(words[i + 1], "low-pause") == 0)) {
             i++;
             o->old_kind = strcmp(words[i], "throughput") == 0 ? OLD_IMMIX : OLD_SEGFIT;
+            o->low_pause = o->old_kind == OLD_SEGFIT;
         }
         else if (strcmp(w, "--old-space") == 0 && i + 1 < n && (strcmp(words[i + 1], "copy") == 0 || strcmp(words[i + 1], "mark") == 0
                                                                || strcmp(words[i + 1], "immix") == 0 || strcmp(words[i + 1], "segfit") == 0
@@ -335,7 +338,7 @@ static void options(const char *text, const char *where, Options *o) {
             strcpy(*to, words[++i]);
         } else {
             fprintf(stderr, "runevm: %s: %s is not an option of a native program "
-                    "(--count, --stats, --heap-size N, --heap-limit N, --equality-work N, --heap-fill P, --gc-stress N, --nursery N, --nursery-max N, --gc G, --old-space S, --gc-verify, --checked, --emulate-fork, "
+                    "(--count, --stats, --heap-size N, --heap-limit N, --equality-work N, --heap-fill P, --gc-stress N, --nursery N, --nursery-max N, --gc G, --old-space S, --gc-verify, --gc-compact, --gc-stress-cycles, --checked, --emulate-fork, "
                     "--restore FILE, --gc-log FILE)\n", where, w);
             exit(2);
         }
@@ -354,6 +357,7 @@ int main(int argc, char **argv) {
        the program sees of its environment, nor of what its children get. */
     const char *env = getenv("RUNEVM_OPTIONS");
     if (env) { options(env, "RUNEVM_OPTIONS", &o); unsetenv("RUNEVM_OPTIONS"); }
+    if (o.low_pause && !o.nursery_max_set) o.nursery_max = 0;   /* the low-pause collector's nursery stays --nursery N */
 
     /* A world to carry on: an image Runtime.save wrote (--restore FILE), or
        the child of a fork emulated by a second process (runtime/image.c), which is
@@ -369,6 +373,8 @@ int main(int argc, char **argv) {
         vm->gc.nursery_size = vm->gc.nursery_min = o.nursery;
         vm->gc.nursery_max = o.nursery_max;
         vm->gc.old_kind = o.old_kind;
+        vm->gc.compact_always = o.gc_compact;
+        vm->gc.stress_cycles = o.gc_stress_cycles;
         int ok = child ? vm_resume(vm, argv[2], err, sizeof err) : vm_restore(vm, o.restore, err, sizeof err);
         if (ok && !same_program(vm)) { ok = 0; snprintf(err, sizeof err, "the image is of another program"); }
         const void *code = ok ? prepare_resume(vm, err, sizeof err) : NULL;
@@ -405,6 +411,8 @@ int main(int argc, char **argv) {
     vm->heap_fill = (unsigned)o.heap_fill;
     vm->gc.old_kind = o.old_kind;
     vm->gc.nursery_max = o.nursery_max;
+    vm->gc.compact_always = o.gc_compact;
+    vm->gc.stress_cycles = o.gc_stress_cycles;
     heap_nursery(vm, o.nursery);
     if (o.gc_log) heap_log_open(vm, o.gc_log);
 

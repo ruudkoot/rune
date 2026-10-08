@@ -109,6 +109,7 @@ static Obj *promote(VM *vm, Obj *o) {
         /* a cell of its class, scanned from the queue */
         n = segfit_place_fast(vm, size);
         copy_small(n, o, size);
+        if (vm->gc.marking) cycle_black(vm, n, size);   /* newer than the cycle's snapshot (cycle.c) */
         if (obj_has_fields(n)) gc_queue(vm, n);
     } else if (vm->gc.old_kind != OLD_COPY) {
         /* placed where the old space has room, and scanned from the queue */
@@ -230,6 +231,13 @@ static void scan_dirty(VM *vm, Chunk *c) {
     uint8_t *dirty = chunk_dirty(c), *cards = chunk_cards(c);
     size_t blocks = c->size >> GC_BLOCK_SHIFT, per = (size_t)1 << (GC_BLOCK_SHIFT - GC_CARD_SHIFT);
     for (size_t b = 0; b < blocks; b++) {
+        /* eight dirty bytes at a time where they are clear: a minor
+           collection visits every chunk's, and most are */
+        if (!(b & 7) && blocks - b >= 8) {
+            uint64_t eight;
+            memcpy(&eight, dirty + b, 8);
+            if (!eight) { b += 7; continue; }
+        }
         if (!dirty[b]) continue;
         dirty[b] = 0;
         vm->gc_counts.cards_scanned += per;
@@ -329,8 +337,7 @@ static void minor_into(VM *vm) {
 }
 
 /* A minor collection, as --gc-log and --gc-verify see it (copy.c, collect_pass) */
-void collect_minor(VM *vm) {
-    vm->gc_calls++;   /* a collection of its own (log.c's vmgc) */
+void minor_pass(VM *vm) {
     if (vm->gc_verify) heap_verify(vm, "before");
     PassMark m;
     log_pass_begin(vm, &m);
@@ -340,4 +347,12 @@ void collect_minor(VM *vm) {
     vm->gc_ns += pause;
     log_pass_end(vm, &m, "minor", pause);
     if (vm->gc_verify) heap_verify(vm, "after");
+}
+
+/* A minor collection, a vm_gc call of its own (log.c's vmgc), and the low-
+   pause collector's cycle begun or marked a slice of in the same pause */
+void collect_minor(VM *vm) {
+    vm->gc_calls++;
+    minor_pass(vm);
+    cycle_step(vm);
 }

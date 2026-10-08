@@ -27,6 +27,8 @@ static void usage(void) {
         "  --gc-log FILE   write a line about every collection into FILE (docs/runtime.md)\n"
         "  --gc-verify     check the heap before and after every collection (testing the collector)\n"
         "  --gc-compact    compact the old space at every full collection (testing the collector)\n"
+        "  --gc-stress-cycles  make --gc-stress's collection a minor one, which begins the low-pause\n"
+        "                  collector's cycle or marks a little of it (testing the collector)\n"
         "  --nursery N     a nursery of N bytes, at least 4096, before the old space (default 1048576;\n"
         "                  0: none, every object made in the old space as the copier had it); after a\n"
         "                  full collection the nursery is half the room the heap has, from N to\n"
@@ -81,7 +83,7 @@ static int size_arg(const char *text, size_t *out) {
 int main(int argc, char **argv) {
     size_t heap = 4u << 20, gc_stress = 0, heap_fill = 50, stack = (size_t)1 << 30;
     size_t heap_limit = 0, equality_work = 0, nursery = (size_t)1 << 20, nursery_max = (size_t)8 << 20;
-    int old_kind = OLD_IMMIX, gc_compact = 0;   /* --gc throughput, the default (docs/plans/garbage-collector-v2.md, D3) */
+    int old_kind = OLD_IMMIX, gc_compact = 0, gc_stress_cycles = 0, low_pause = 0, nursery_max_set = 0;   /* --gc throughput, the default (docs/plans/garbage-collector-v2.md, D3) */
     int disasm = 0, trace = 0, stats = 0, count = 0, emulate_fork = 0, checked = 0, gc_verify = 0;
     int jit_check = 0, jit_given = 0;
     JitOptions jit;
@@ -114,13 +116,14 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--gc-log") == 0 && i + 1 < argc) gc_log = argv[++i];
         else if (strcmp(argv[i], "--gc-verify") == 0) gc_verify = 1;
         else if (strcmp(argv[i], "--gc-compact") == 0) gc_compact = 1;
+        else if (strcmp(argv[i], "--gc-stress-cycles") == 0) gc_stress_cycles = 1;
         else if (strcmp(argv[i], "--nursery") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &nursery)) { usage(); return 2; }
         }
         else if (strcmp(argv[i], "--gc") == 0 && i + 1 < argc) {
             i++;
-            if (strcmp(argv[i], "throughput") == 0) old_kind = OLD_IMMIX;
-            else if (strcmp(argv[i], "low-pause") == 0) old_kind = OLD_SEGFIT;
+            if (strcmp(argv[i], "throughput") == 0) old_kind = OLD_IMMIX, low_pause = 0;
+            else if (strcmp(argv[i], "low-pause") == 0) old_kind = OLD_SEGFIT, low_pause = 1;
             else { usage(); return 2; }
         }
         else if (strcmp(argv[i], "--old-space") == 0 && i + 1 < argc) {
@@ -134,6 +137,7 @@ int main(int argc, char **argv) {
         }
         else if (strcmp(argv[i], "--nursery-max") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &nursery_max)) { usage(); return 2; }
+            nursery_max_set = 1;
         }
         else if (strcmp(argv[i], "--gc-stress") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &gc_stress) || gc_stress == 0) { usage(); return 2; }
@@ -176,13 +180,16 @@ int main(int argc, char **argv) {
         else { fprintf(stderr, "runevm: RUNEVM_JIT_TIER=%s: 1 or 2\n", t); return 2; }
     }
     if (jit_check) return vm_jit_check();
+    /* the low-pause collector's nursery stays --nursery N: a minor
+       collection's pause is in proportion to it (docs/runtime.md) */
+    if (low_pause && !nursery_max_set) nursery_max = 0;
     if (restore) {
         /* a world Runtime.save wrote: it carries on from that call, which
            gives it `Restored` */
         VM *vm = calloc(1, sizeof(VM));
         char err[256];
         if (vm) vm->stack_limit = stack;   /* before the image's stack is made */
-        if (vm) { vm->heap_limit = heap_limit; vm->equality_work = equality_work; vm->gc.nursery_size = vm->gc.nursery_min = nursery; vm->gc.nursery_max = nursery_max; vm->gc.old_kind = old_kind; }
+        if (vm) { vm->heap_limit = heap_limit; vm->equality_work = equality_work; vm->gc.nursery_size = vm->gc.nursery_min = nursery; vm->gc.nursery_max = nursery_max; vm->gc.old_kind = old_kind; vm->gc.compact_always = gc_compact; vm->gc.stress_cycles = gc_stress_cycles; }
         if (!vm || !vm_restore(vm, restore, err, sizeof err)) {
             fprintf(stderr, "runevm: --restore: %s\n", vm ? err : "out of memory");
             if (vm) vm_destroy(vm);
@@ -200,7 +207,7 @@ int main(int argc, char **argv) {
         VM *vm = calloc(1, sizeof(VM));
         char err[256];
         if (vm) vm->stack_limit = stack;
-        if (vm) { vm->heap_limit = heap_limit; vm->equality_work = equality_work; vm->gc.nursery_size = vm->gc.nursery_min = nursery; vm->gc.nursery_max = nursery_max; vm->gc.old_kind = old_kind; }
+        if (vm) { vm->heap_limit = heap_limit; vm->equality_work = equality_work; vm->gc.nursery_size = vm->gc.nursery_min = nursery; vm->gc.nursery_max = nursery_max; vm->gc.old_kind = old_kind; vm->gc.compact_always = gc_compact; vm->gc.stress_cycles = gc_stress_cycles; }
         if (!vm || !vm_resume(vm, resume, err, sizeof err)) {
             fprintf(stderr, "runevm: --resume: %s\n", vm ? err : "out of memory");
             if (vm) vm_destroy(vm);
@@ -234,6 +241,7 @@ int main(int argc, char **argv) {
     vm->gc.old_kind = old_kind;
     vm->gc.nursery_max = nursery_max;
     vm->gc.compact_always = gc_compact;
+    vm->gc.stress_cycles = gc_stress_cycles;
     heap_nursery(vm, nursery);
     if (gc_log) heap_log_open(vm, gc_log);
 #ifdef RUNE_CENSUS

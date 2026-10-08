@@ -250,6 +250,7 @@ static void op_load_obj(const int64_t *p) { (void)p; ms_load_obj(&M, REG_R, SLOT
 static void op_load_tag_of_con(const int64_t *p) { (void)p; ms_load_tag_of_con(&M, REG_R, SLOT_S, &unless_label); }
 static void op_alloc(const int64_t *p) { ms_alloc(&M, (int)p[0], (int)p[1], (uint32_t)p[2], &slow_label); }
 static void op_store_field(const int64_t *p) { ms_store_field(&M, REG_B, (uint32_t)p[0], SLOT_S); }
+static void op_need_unmarked(const int64_t *p) { (void)p; ms_need_unmarked(&M, &slow_label); }
 static void op_set_field(const int64_t *p) { ms_set_field(&M, R_S0, (uint32_t)p[0], SLOT_S); }
 static void op_set_element(const int64_t *p) { (void)p; ms_set_element(&M, R_S0, R_S1, SLOT_S); }
 static void op_load_field(const int64_t *p) { ms_load_field(&M, SLOT_D, REG_B, (uint32_t)p[0]); }
@@ -312,6 +313,7 @@ static const Op ops[] = {
     { "loadTagOfCon line (r, s, unless, l)", op_load_tag_of_con, {{0,0}}, 0, 0 },
     { "alloc line (kind, contag, n, slow)", op_alloc, {{"kind", 1}, {"contag", 3}, {"n", 2}}, 3, 1 },
     { "storeField line (b, i, s)", op_store_field, {{"i", 2}}, 1, 0 },
+    { "needUnmarked line slow", op_need_unmarked, {{0,0}}, 0, 0 },
     { "setField line (i, s, l)", op_set_field, {{"i", 2}}, 1, 1 },
     { "setElement line (s, l)", op_set_element, {{0,0}}, 0, 1 },
     { "loadField line (d, b, i)", op_load_field, {{"i", 2}}, 1, 0 },

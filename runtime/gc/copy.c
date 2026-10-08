@@ -254,6 +254,34 @@ static size_t grown(const VM *vm, size_t size, size_t used, size_t needed) {
     return want;
 }
 
+/* the adaptive nursery (docs/plans/garbage-collector-v2.md, D2): half of
+   what the heap has room for, within --nursery and --nursery-max */
+static void nursery_adapt(VM *vm) {
+    if (vm->gc.nursery && vm->gc.nursery_max && vm->alloc.used == 0) {
+        size_t room = vm->gc.size > USED_STOCK(vm) ? (vm->gc.size - USED_STOCK(vm)) / 2 : 0;
+        size_t want = room < vm->gc.nursery_min ? vm->gc.nursery_min : room > vm->gc.nursery_max ? vm->gc.nursery_max : room;
+        want &= ~(size_t)65535;
+        if (want >= 4096 && want != vm->gc.nursery_size) nursery_start(vm, want);
+    }
+}
+
+/* After the low-pause collector's cycle ended in a minor collection's
+   pause (cycle.c): the heap's size and the nursery's made again from what
+   it left, as after a full collection */
+void gc_after_cycle(VM *vm) {
+    vm->gc.size = grown(vm, vm->gc.size, USED_STOCK(vm), 0);
+    vm->live_before = vm->live_last;
+    vm->live_last = USED_STOCK(vm);
+    nursery_adapt(vm);
+}
+
+/* Runtime.collect: a full collection, a cycle that marks ended first */
+void vm_collect(VM *vm) {
+    vm->gc.full_wanted = 1;
+    vm_gc(vm, 0);
+    vm->gc.full_wanted = 0;
+}
+
 void vm_gc(VM *vm, size_t needed) {
     /* The processor time of a collection, for Timer.checkCPUTimes and
        checkGCTime: read once around the whole of it, so that growing the
@@ -270,8 +298,17 @@ void vm_gc(VM *vm, size_t needed) {
        before. A heap of the current size or larger always holds what
        survives. */
     if (vm->gc.old_kind != OLD_COPY) {
-        /* a non-moving old space grows without a collection into it */
-        collect_pass(vm, vm->gc.size);
+        /* a non-moving old space grows without a collection into it; where
+           the low-pause collector's cycle marks, it is ended first, and is
+           the collection where that leaves room (cycle.c) */
+        size_t count = vm->gc_count;
+        int marking = cycle_complete(vm);
+        int ended = marking && !vm->gc.full_wanted
+                    && USED_STOCK(vm) <= vm->gc.size && needed <= vm->gc.size - USED_STOCK(vm);
+        /* one call one collection, as Runtime.stats counts them: the
+           cycle's end, or the full collection after it */
+        if (marking) vm->gc_count = count + (size_t)ended;
+        if (!ended) collect_pass(vm, vm->gc.size);
         vm->gc.size = grown(vm, vm->gc.size, USED_STOCK(vm), needed);
     } else {
         size_t guess = vm->live_last;
@@ -288,14 +325,7 @@ void vm_gc(VM *vm, size_t needed) {
     if (USED_STOCK(vm) > vm->gc.size || needed > vm->gc.size - USED_STOCK(vm)) vm_limit(vm, "heap limit exceeded");
     vm->live_before = vm->live_last;
     vm->live_last = USED_STOCK(vm);
-    /* the adaptive nursery (docs/plans/garbage-collector-v2.md, D2): half
-       of what the heap has room for, within --nursery and --nursery-max */
-    if (vm->gc.nursery && vm->gc.nursery_max && vm->alloc.used == 0) {
-        size_t room = vm->gc.size > USED_STOCK(vm) ? (vm->gc.size - USED_STOCK(vm)) / 2 : 0;
-        size_t want = room < vm->gc.nursery_min ? vm->gc.nursery_min : room > vm->gc.nursery_max ? vm->gc.nursery_max : room;
-        want &= ~(size_t)65535;
-        if (want >= 4096 && want != vm->gc.nursery_size) nursery_start(vm, want);
-    }
+    nursery_adapt(vm);
     CENSUS_GC_END(vm);
     int64_t user = sys_time_user() - user0, sys = sys_time_sys() - sys0;
     vm->gc_user_us += user;

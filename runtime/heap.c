@@ -116,14 +116,24 @@ void heap_init(VM *vm, size_t size) {
    one, where what the nursery holds could take the old space past its
    size -- and wherever --gc-stress asks for one. */
 static Obj *alloc_young(VM *vm, size_t size, int stress, int *large) {
+    /* --gc-stress-cycles: the collection --gc-stress makes a minor one,
+       which begins the low-pause collector's cycle or marks a slice of it */
+    int minor = stress && vm->gc.stress_cycles;
+    if (minor) stress = 0;
     if (size >= vm->gc.los_min) {
+        if (minor) collect_minor(vm);
         if (stress || USED_STOCK(vm) > vm->gc.size || STOCK(size) > vm->gc.size - USED_STOCK(vm)) vm_gc(vm, STOCK(size));
         *large = 1;
         return los_alloc(vm, size);
     }
-    if (stress || size > vm->alloc.size - vm->alloc.used) {
-        if (USED_STOCK(vm) > vm->gc.size) vm_gc(vm, 0);
+    if (minor || stress || size > vm->alloc.size - vm->alloc.used) {
+        /* a slice point of the low-pause collector's cycle, where the object
+           fits the nursery: a slice of the cycle's marking (cycle.c) */
+        if (!minor && !stress && vm->alloc.size < vm->gc.nursery_size && size <= vm->gc.nursery_size - vm->alloc.used) cycle_slice(vm);
+        else if (USED_STOCK(vm) > vm->gc.size) vm_gc(vm, 0);
         else collect_minor(vm);
+        /* the next slice point nearer than the object's end: moved past it */
+        if (size > vm->alloc.size - vm->alloc.used) vm->alloc.size = vm->alloc.used + size;
     }
     Obj *o = (Obj *)(vm->alloc.from + vm->alloc.used);
     vm->alloc.used += size;

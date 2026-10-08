@@ -76,6 +76,8 @@ static SfBlock *descriptor(char *block) {
 static void new_chunk(VM *vm) {
     Chunk *c = chunk_take(vm, 0, CHUNK_MARK);
     memset(chunk_bits(c), 0, c->size >> 6);
+    memset(chunk_cmarks(c), 0, c->size >> 6);   /* a cycle's marks (cycle.c), clear but while one marks */
+    c->marked = 0;
     memset(chunk_sfblocks(c), 0, (c->size >> SF_BLOCK_SHIFT) * sizeof(SfBlock));
     c->top = chunk_room(c);
     chunk_append(vm, c);
@@ -155,6 +157,8 @@ void segfit_adopted(VM *vm) {
     for (Chunk *c = vm->gc.first; c; c = c->next) {
         SfBlock *blocks = chunk_sfblocks(c);
         memset(blocks, 0, (c->size >> SF_BLOCK_SHIFT) * sizeof(SfBlock));
+        memset(chunk_cmarks(c), 0, c->size >> 6);
+        c->marked = 0;
         size_t end = c->payload + c->top;
         for (size_t b = c->size >> SF_BLOCK_SHIFT; b-- > (c->payload >> SF_BLOCK_SHIFT); ) {
             if ((b << SF_BLOCK_SHIFT) < end) blocks[b].cls = SF_MIXED;
@@ -182,7 +186,7 @@ static size_t marked(Chunk *c, size_t b) {
 /* After a full collection marked: each block's bits counted -- none, and it
    is free; free cells, and it goes on its class's list -- and a chunk with
    every block free given back */
-void segfit_sweep(VM *vm) {
+void segfit_sweep(VM *vm, int counted) {
     forget_blocks(vm);
     vm->gc.sf_nfree = 0;
     Chunk **at = &vm->gc.first, *last = NULL;
@@ -192,7 +196,8 @@ void segfit_sweep(VM *vm) {
         size_t free0 = vm->gc.sf_nfree, used = 0;
         for (size_t b = c->size >> SF_BLOCK_SHIFT; b-- > (c->payload >> SF_BLOCK_SHIFT); ) {
             char *block = (char *)c + (b << SF_BLOCK_SHIFT);
-            size_t m = blocks[b].cls ? marked(c, b) : 0;
+            size_t m = !blocks[b].cls ? 0 : counted ? blocks[b].marked : marked(c, b);
+            blocks[b].marked = 0;
             if (!m) {
                 blocks[b].cls = 0;
                 push(&vm->gc.sf_free, &vm->gc.sf_nfree, &vm->gc.sf_free_cap, block);
@@ -208,7 +213,8 @@ void segfit_sweep(VM *vm) {
         if (!used && c->next) {
             vm->gc.sf_nfree = free0;
             *at = c->next;
-            chunk_give(vm, c);
+            if (counted) chunk_give_later(vm, c);   /* a cycle's end: given back in later pauses (cycle.c) */
+            else chunk_give(vm, c);
             continue;
         }
         last = c;

@@ -28,7 +28,7 @@ cache=${RUNEOPT_CACHE:-$root/tests/out/opt-cache}
 options=""
 while [ $# -gt 0 ]; do
   case $1 in
-    --count|--stats|--emulate-fork|--checked|--gc-verify) options="$options $1"; shift ;;
+    --count|--stats|--emulate-fork|--checked|--gc-verify|--gc-compact|--gc-stress-cycles) options="$options $1"; shift ;;
     --heap-size|--heap-limit|--equality-work|--heap-fill|--gc-stress|--gc-log|--nursery|--nursery-max|--gc|--old-space) options="$options $1 ${2:-}"; shift 2 ;;
     --restore)
       image=${2:-}
