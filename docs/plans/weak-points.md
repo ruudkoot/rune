@@ -118,7 +118,7 @@ the others are from [performance.md](performance.md).
     machine under WSL, and `make test-windows` and `make test-portability`
     are outside `make check`.
 * **First step:** build one large outside codebase and fix what breaks;
-  xc2 ([fourth-quadrant.md](fourth-quadrant.md): the Basis libraries of
+  xc2 ([tests/basis/xc2/README.md](../../tests/basis/xc2/README.md): the Basis libraries of
   MLton, MLKit, SML/NJ and Poly/ML compiled by Rune) is a start. Separately, a CI job that runs
   `make check` on every push.
 

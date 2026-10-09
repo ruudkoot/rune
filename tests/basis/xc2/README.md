@@ -26,6 +26,85 @@ test programs use it. There are four:
 * `xc2:polyml`: Poly/ML's (`basis` of its source release), some 20,000
   lines in 84 files.
 
+## What it checks, and what it does not
+
+`xc1` shows that Rune's *library* does not depend on accidents of Rune's
+compiler, and `native` that the *tests* are not a misreading of the
+specification. Neither puts Rune's *compiler* in front of a large body of
+SML written by other people to another compiler's habits: that is what
+`xc2` is for, and why it is worth having although nobody will run MLton's
+Basis Library on Rune's machine. The four libraries are some 108,000 lines.
+
+What the runs have shown (2026-10-09):
+
+* **Rune's compiler.** No failure in the four configurations is Rune's.
+  Each is explained by a line about the host's library (a `native:HOST` or
+  `*:HOST` line, which holds for `xc2:HOST` too) or by one of six lines of
+  `xc2`'s own, all bugs of the host's library that only `xc2` reaches
+  (`docs/basis-compat.md`, *Where the hosts depart from the specification*,
+  and `docs/bugreport`). One suspected difference, the scope of an explicit
+  type variable in MLKit's `TableSlice`, turned out to be MLKit's: Rune,
+  MLton and Poly/ML reject that code.
+* **Rune's machine.** The JIT's tier 2 of `bin/runevm-int64`, the build
+  that `xc2:mlton` runs on, goes wrong on MLton's library (*xc2:mlton*
+  below). The other three run on `bin/runevm`, the JIT included.
+* **Rune's limits.** The signature `BASIS_EXTRA` of MLton's library, one
+  declaration, needs some 21 million steps of type inference, which is
+  why the default of `--type-work` became 50 million.
+* **The host's compiler, not its library.** A check that fails natively
+  and passes here fails because of the host's compiler or runtime: SML/NJ's
+  match of an exception value under another name of the exception
+  (`General.*/as-value`) and MLKit's x86-64 code generator (a word constant
+  pushed as an immediate, a `NULL` from C never seen) are told apart from
+  the libraries' bugs this way.
+
+What it does not check:
+
+* **The host's library on its own terms.** The shim makes the library run
+  on Rune's primitives, so what is tested is Rune's compiler on the host's
+  SML: a difference in, say, `Real.fmt` is the host's algorithm over Rune's
+  arithmetic. Where the shim makes a C function from what it is for
+  (MLton's runtime), a bug of the host's C code does not show; where the
+  library is written against its runtime's behaviour (MLKit, SML/NJ,
+  Poly/ML), the shim copies that behaviour, bugs included, and they show as
+  they do natively.
+* **What the shims do not make:** threads (Poly/ML's library gets one),
+  signal handlers, continuations, `MLton.World`, profiling and the controls
+  of the collector. No check of the suite fails for want of them: there is
+  no `XC2-NA` line.
+* **Strict Standard ML '97.** The libraries are not all written in it:
+  SML/NJ's uses or-patterns, which Rune compiles with `--or-patterns`;
+  MLKit's scopes an explicit type variable at an enclosing `fun` in one
+  place, which the patch annotates otherwise; MLton's relies on the scoping
+  of its `.mlb` files, which the generator flattens into one program.
+* **Rune's own `int` and `word` with MLton.** MLton's library can be built
+  for 32- or 64-bit `int` and `word` but not for 63, Rune's, so
+  `xc2:mlton` runs on the build of Rune's machine that keeps 64 bits. The
+  `int` and `word` of the other three hosts have 63 bits, as Rune's do, and
+  their libraries are built as they are natively.
+
+## Running it
+
+```
+make hosts                    # the hosts, with the sources of their libraries
+make bin/runevm-int64         # the machine xc2:mlton runs on
+sh tests/basis/run-matrix.sh -j 12 --configs xc2              # all four
+sh tests/basis/run-matrix.sh -j 12 --configs xc2:polyml real  # one, tests named *real*
+```
+
+`scripts/fetch-hosts.sh` keeps what the generators read: MLton's and
+MLKit's libraries are in their installations, SML/NJ's `system.tgz` is
+unpacked into its installation's `system`, and Poly/ML's `basis` is kept
+from its source release. A run of the four on 12 job slots took 18
+minutes on 2026-10-09, two thirds of it `xc2:mlton`, whose programs each
+compile MLton's whole library; most of the rest is the halving of tests
+whose sections do not all load. The results are in
+`tests/out/matrix/report.md`, one directory per configuration beside it.
+`xc2` is not part of `make check`, nor of `make matrix` (`--configs all`): run it
+after a change to the compiler's back end, the JIT, the collector or the
+primitives of the machine, and before a change to the primitives' names or
+to how a value is represented, which the shims depend on.
+
 ## How a program is made
 
 `HOST/gen.sh OUTDIR LIB` writes what a program compiles before its own files
@@ -36,8 +115,13 @@ test programs use it. There are four:
    library. `mlb-flatten.awk` and `flatten.sh` flatten its `basis.mlb` into
    the SML files it loads, in order. The scoping of `local A in B end` is
    kept by saving the structures `A` rebinds before `A` and restoring them
-   after `B` (`toplevel.awk` finds the names). SML/NJ's library is described
-   for CM instead, whose order the host's `sml` gives (below).
+   after `B` (`toplevel.awk` finds the names). The fixity the `.mlb` files
+   give is kept too: MLton compiles parts of its library with `<` and `>`
+   not infix (`fun > (a, b) = < (b, a)` in `util/real-comparisons.sml`), so
+   its sources start where nothing is infix (the end of `stubs.sml`) and
+   `top-level/infixes.sml` brings the infixes back. SML/NJ's library is
+   described for CM instead, whose order the host's `sml` gives (below), and
+   Poly/ML's by its `build.sml`.
 2. **The host's extensions.** `HOST/rewrite.awk` replaces the host's way of
    naming a primitive or a C function by a name of the shim, keeping the
    line breaks.
@@ -283,3 +367,37 @@ what differs: `XC2-NA` for what the shim does not make, a bug of the host's
 library that shows only in xc2 (MLKit cannot load the test, SML/NJ does not
 get through it), and otherwise a
 defect of the shim or of Rune's compiler.
+
+## Maintaining it
+
+* **What it depends on.** The shims are written on Rune's lowest layer:
+  the names and types of the primitives (`runtime/prims.def`), the
+  representation of `int`, `word`, `Int64.int`, `Word64.word` and
+  `LargeWord.word`, the names of the structures of `lib/basis` that
+  `trim-lib.sh` keeps, and the compiler's options. A change there can break
+  all four: making `int` and `word` 63 bits, with `Int64.int`, `Word64.word`
+  and `LargeWord.word` types of their own (heap-layout M5), took some 250
+  changed lines across the shims and patches. A change to Rune's Basis
+  Library or to the specification does not reach them.
+* **The hosts' versions.** Each patch is of one release: MLton 20241230,
+  MLKit 4.7.23, SML/NJ 110.99.9 and Poly/ML 5.9.2. A new release means
+  applying the patch again and fixing what does not apply. SML/NJ 2026.2,
+  the host `smlnj-dev`, has no `xc2` configuration: against 110.99.9, 25 of
+  the files of `system/Basis` differ and 5 are new (`WORD` gains
+  `rotateL`, `countOnes`, `ceilLog2` and others), and 5 of `smlnj/init`,
+  which the shim stands in for, differ.
+* **Working on a patch.** Each `gen.sh` takes a directory with the patch
+  already applied instead of applying it (`XC2_MLTON_BASIS`,
+  `XC2_SMLNJ_BASIS`, `XC2_POLYML_BASIS`): keep the release's sources in
+  `a/` and a patched copy in `b/`, edit `b/`, and write the patch again
+  with `diff -ruN a b`, dropping the dates of the `---` and `+++` lines.
+* **Its size.** Some 5,600 lines of generators and shims, and patches that
+  change some 3,000 lines of 112 files of the hosts' libraries.
+* **Before it was built.** `tests/external/probe-host-basis.sh` gives every
+  file of a host's library to the compiler alone and counts how far each
+  gets. On 2026-09-21, before `xc2` existed, 201 of MLton's 206 files
+  already got past Rune's parser, and the 5 that did not were the ones a
+  shim replaces: the measurement that showed the work was the shim and not
+  the frontend. `tests/external/run-mlton.sh`, MLton's regression programs
+  compiled by Rune, is the other way the suite puts Rune's compiler in
+  front of SML written for another compiler.

@@ -48,16 +48,10 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
   `runtime/prims.def`, and that its code is right independently of Rune's compiler
   and VM.
 * `xc2:mlton`, `xc2:mlkit`, `xc2:smlnj-legacy` and `xc2:polyml`: the suite
-  on MLton's, MLKit's, SML/NJ's or Poly/ML's library (its sources:
-  `lib/mlton/sml/basis` or `lib/mlkit/basis` of the host, `system/Basis` of
-  SML/NJ's release, `basis` of Poly/ML's) compiled by Rune, with the host's
-  primitives and C functions or runtime made of Rune's (`tests/basis/xc2`).
-  This checks Rune's compiler and VM on another implementation's 37,000
-  (MLton), 25,000 (MLKit), 26,000 (SML/NJ) or 20,000 (Poly/ML) lines of
-  library, as the tests use them: where it fails a check that `native:HOST`
-  passes, or passes one that it fails, the compilers or the shim differ
-  ([tests/basis/xc2/README.md](../tests/basis/xc2/README.md); what it has
-  shown is under *What XC2 shows, and what it cannot check* below).
+  on the host's own library compiled by Rune, with the host's primitives
+  and runtime made of Rune's. How, what it checks and what it has shown are
+  in [tests/basis/xc2/README.md](../tests/basis/xc2/README.md); here it
+  adds the bugs of the hosts' libraries that only it reaches (below).
 * `rune:windows` and `rune:windows32`: the suite on Rune, on the VMs of
   Windows (`make windows`, `make test-windows`; [building.md](building.md)).
   Their lines of `deviations.txt` are `WINDOWS`: what Windows does not
@@ -308,9 +302,7 @@ summary above also include the `WIDTH` and `SPEC-AMBIGUOUS` lines of the
 hosts. What follows names the themes, not every line; the library's
 documentation has every line under the member it is about, in a block
 "Other implementations" (`tests/basis/gen-annotations.sh` makes
-`tests/basis/annotations.txt` from `deviations.txt` for it). The bugs of a
-host's library that only the `xc2` configurations reach are under *What XC2
-shows, and what it cannot check* below.
+`tests/basis/annotations.txt` from `deviations.txt` for it).
 
 * **MLton 20241230** (72 lines). `Bool.scan` and `fromString` are
   case-sensitive and skip no whitespace. `Real.rem (0.0, 0.0)` is 0.0, and
@@ -411,6 +403,36 @@ shows, and what it cannot check* below.
   that raises an exception with an argument (worked around in
   `src/elab/unifyexn.sml`), gives a datatype holding `t ref` no equality,
   and gives a large literal the wrong default type.
+* **Only in `xc2`.** Where the host's compiler cannot load a test, or its
+  runtime ends the run first, the library's own code runs to the end in the
+  `xc2` configuration, which compiles it with Rune
+  ([tests/basis/xc2/README.md](../tests/basis/xc2/README.md)); these bugs of
+  the libraries show only there:
+  * MLKit 4.7.23: `Posix.ProcEnv.time` is always 1,000,000,000 seconds
+    (until 2033): the runtime splits the seconds into a quotient and a
+    remainder of 10^9, and the library adds a status field to the quotient
+    where it means the remainder (`posix_procenv`, which MLKit's compiler
+    does not load;
+    [bugreport/mlkit/Posix.ProcEnv.time](bugreport/mlkit/Posix.ProcEnv.time/one-billion-seconds/BUGREPORT.md)).
+  * SML/NJ 110.99.9: the check of `String.extract (s, i, SOME j)` adds `i`
+    and `j` without checking for `Overflow`, so near `Int.maxInt` the sum
+    wraps round, the region passes and a string of `j` characters is asked
+    for (natively the system fails to allocate it;
+    [bugreport/smlnj/String.extract](bugreport/smlnj/String.extract/overflow-near-maxInt/BUGREPORT.md)).
+    `Array2.array (r, c, x)` with `r` or `c` zero has the dimensions (0, 0),
+    and a traversal of a region without rows or columns applies its
+    function to one anyway
+    ([bugreport/smlnj/Array2](bugreport/smlnj/Array2/no-rows-or-columns/BUGREPORT.md)).
+  * Poly/ML 5.9.2: `OS.Process.exit` passes C's `exit` the status that
+    `OS.Process.system` returned, the raw status of `waitpid` (768 for
+    `exit 3`, whose low byte is 0), so the program ends with another
+    status (natively the child that calls it never ends;
+    [bugreport/polyml/OS.Process.exit](bugreport/polyml/OS.Process.exit/status-of-system/BUGREPORT.md)).
+  * MLton 20241230, built for a 64-bit `int` as `xc2:mlton` builds it: the
+    region checks of `Array2` add the start and the length with `+!`, which
+    does not check for `Overflow`, so a length of `Int.maxInt` wraps round
+    and passes
+    ([bugreport/mlton/Array2](bugreport/mlton/Array2/region-check-wraps-with-int64/BUGREPORT.md)).
 * **MLton, SML/NJ and Poly/ML.** `fromCString` converts an unescaped
   double quote; `Char.fromCString` raises `Overflow` for a `\x` escape
   beyond `Int.maxInt`; `Char.scan` leaves a trailing escaped formatting
@@ -550,71 +572,6 @@ reach inside it. The note is
   (`imm_eq` where it knows the values are never in the heap) and of
   exception matching. No library source names them and they are not part of
   `RUNE_PRIM`.
-
-## What XC2 shows, and what it cannot check
-
-An `xc2` configuration compiles the host's own library with Rune. A check
-that fails there and not in `native:HOST`, or the other way round, is a
-difference between Rune's compiler and the host's, a defect of the shim, or
-code of the host's library that the host itself never got to run. On the
-four hosts no failure is Rune's: each is explained by a line about the
-host's library (a `native:HOST` or `*:HOST` line, which holds for
-`xc2:HOST` too) or by one of six lines of `xc2`'s own, all bugs of the
-host's library.
-
-* **Bugs of a host's library that only xc2 reaches.** Where the host's
-  compiler cannot load a test, or its runtime ends the run first, the
-  library's own code runs to the end here:
-  * MLKit 4.7.23: `Posix.ProcEnv.time` is always 1,000,000,000 seconds
-    (until 2033): the runtime splits the seconds into a quotient and a
-    remainder of 10^9, and the library adds a status field to the quotient
-    where it means the remainder (`posix_procenv`, which MLKit's compiler
-    does not load;
-    [bugreport/mlkit/Posix.ProcEnv.time](bugreport/mlkit/Posix.ProcEnv.time/one-billion-seconds/BUGREPORT.md)).
-  * SML/NJ 110.99.9: the check of `String.extract (s, i, SOME j)` adds `i`
-    and `j` without checking for `Overflow`, so near `Int.maxInt` the sum
-    wraps round, the region passes and a string of `j` characters is asked
-    for (natively the system fails to allocate it;
-    [bugreport/smlnj/String.extract](bugreport/smlnj/String.extract/overflow-near-maxInt/BUGREPORT.md)).
-    `Array2.array (r, c, x)` with `r` or `c` zero has the dimensions (0, 0),
-    and a traversal of a region without rows or columns applies its
-    function to one anyway
-    ([bugreport/smlnj/Array2](bugreport/smlnj/Array2/no-rows-or-columns/BUGREPORT.md)).
-  * Poly/ML 5.9.2: `OS.Process.exit` passes C's `exit` the status that
-    `OS.Process.system` returned, the raw status of `waitpid` (768 for
-    `exit 3`, whose low byte is 0), so the program ends with another
-    status (natively the child that calls it never ends;
-    [bugreport/polyml/OS.Process.exit](bugreport/polyml/OS.Process.exit/status-of-system/BUGREPORT.md)).
-  * MLton 20241230, built for a 64-bit `int` as `xc2:mlton` builds it: the
-    region checks of `Array2` add the start and the length with `+!`, which
-    does not check for `Overflow`, so a length of `Int.maxInt` wraps round
-    and passes
-    ([bugreport/mlton/Array2](bugreport/mlton/Array2/region-check-wraps-with-int64/BUGREPORT.md)).
-* **Bugs xc2 does not reach.** A bug of the host's compiler does not show:
-  SML/NJ's match of an exception value under another name of the exception
-  (`General.*/as-value`) and MLKit's x86-64 code generator (a word constant
-  pushed as an immediate, a `NULL` from C never seen) fail natively and pass
-  here, which is what tells them apart from the library's bugs. Where the
-  shim makes a C function from what it is for (MLton's runtime), a bug of
-  the host's C code does not show either; where the library is written
-  against its runtime's behaviour (MLKit, SML/NJ, Poly/ML), the shim copies
-  that behaviour, bugs included, and they show as they do natively.
-* **What the shims do not make.** Threads (Poly/ML's library gets one),
-  signal handlers, continuations, `MLton.World`, profiling and the
-  controls of the collector. No check of the suite fails for want of them:
-  there is no `XC2-NA` line.
-* **Where the libraries are not Standard ML '97.** SML/NJ's uses
-  or-patterns, which Rune compiles with `--or-patterns`. MLKit's scopes an
-  explicit type variable at an enclosing `fun` in one place (`TableSlice`),
-  which Rune, MLton and Poly/ML reject; the patch annotates it otherwise.
-  MLton's relies on the scoping of its `.mlb` files, which the generator
-  flattens into one program.
-* **`int` and `word`.** MLton's library can be built for 32- or 64-bit
-  `int` and `word` but not for 63, Rune's: `xc2:mlton` builds it for 64,
-  compiles with `--int-bits=64` and runs on `bin/runevm-int64`, the build of
-  Rune's VM that keeps 64 bits. The `int` and `word` of the other three
-  hosts have 63 bits, as Rune's do, and their libraries are built as they
-  are natively.
 
 ## Performance
 
