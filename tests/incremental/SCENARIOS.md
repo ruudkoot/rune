@@ -1,0 +1,178 @@
+# The cache's scenarios
+
+What `tests/incremental` will hold the cache to (incremental roadmap, M1
+wrote the list and M6 makes it run; `docs/plans/incremental-compilation.md`,
+D14 and *Testing*). Each scenario starts from a scratch project, does
+something to it, builds again, and asserts two things: which units were
+compiled again (`--explain-rebuild`, with the reason it names) and that the
+output equals that of a build with `--no-cache`, byte for byte where the
+program is the same and in what it prints, exits with and traces where the
+build mode differs. A scenario's id is what the runner and a failure name.
+
+Unless a scenario says otherwise, the project is five files in order: `a.sml`
+declares a structure, a signature, a datatype and an exception; `b.sml` uses
+`a.sml`; `c.sml` declares a functor; `d.sml` applies it to `b.sml`'s
+structure; `main.sml` uses all of them and prints. "Recompiles X" means
+exactly the units X and nothing else.
+
+## Hits and misses
+
+* **S1, cold then warm.** Build twice. The second build compiles nothing, and
+  the two outputs are the same bytes.
+* **S2, a body.** Change the body of a function in `a.sml`, not its type.
+  Recompiles `a.sml` only: no export entry that another unit used changed
+  (the cut-off).
+* **S3, a used type.** Change the type of a value of `a.sml` that `b.sml`
+  uses. Recompiles `a.sml` and `b.sml`, then whatever used what `b.sml`
+  exports, if that changed.
+* **S4, an unused entry.** Add a value to `a.sml`, and change the type of
+  one no unit uses. Recompiles `a.sml` only: usages are per entry, not per
+  unit.
+* **S5, revert.** Make S3's change, build, undo it, build. The second build
+  finds the first entries and compiles nothing: entries are kept by
+  content, not replaced.
+* **S6, touch.** Change a file's time and nothing else. Compiles nothing:
+  nothing in the cache is a time.
+* **S7, the same text twice.** Two files with the same contents at
+  different paths, or one file in two projects with the same units before
+  it. One entry serves both, and each program's traces name its own path
+  (S29).
+
+## What a unit depends on that is not a value
+
+* **S8, a functor body.** Change the body of `c.sml`'s functor without
+  changing its signature. Recompiles `c.sml` and `d.sml`, which applies it:
+  under static interpretation a functor's clients depend on its body
+  (D1).
+* **S9, constructor order.** Reorder `a.sml`'s datatype's constructors.
+  Recompiles every unit that builds or matches them, since tags and layouts
+  change; their output is unchanged.
+* **S10, a constructor's argument.** Change a constructor's argument from a
+  tuple to a record of the same fields, or from one field to a tuple.
+  Recompiles its users: the layout (`Rep`) is part of what they used.
+* **S11, behind opaque ascription.** Change the representation of a type
+  that `a.sml` hides with `:>`, keeping the signature. The IRs see through
+  the realisation (`Ty.bindRealization`), so the realisation is a usage:
+  every unit that compiled code against it recompiles. A unit that only
+  names the type and never compiles code on its representation must not
+  (to measure: if this cannot be told apart, recompiling them is the
+  correct fallback).
+* **S12, a signature.** Change a signature in `a.sml` that `b.sml`
+  ascribes. Recompiles `b.sml`; one that only mentions the signature's
+  name in a comment does not.
+* **S13, fixity.** Add `infix 5 ++` to `a.sml` where `b.sml` uses `++` as
+  an ordinary identifier. Recompiles `b.sml`, which now parses differently
+  (and fails, reported once).
+* **S14, overloading and defaults.** Change a value of `a.sml` from `int` to
+  `word` where `b.sml` applies `+` to it. Recompiles `b.sml`, whose
+  overloading resolved differently.
+* **S15, an exception.** Change an exception's argument type. Recompiles
+  its raisers and handlers; the exception stays generative: a unit
+  linked twice declares two exceptions (D7).
+* **S16, `open`.** `b.sml` opens `A`; add to `A` a name `b.sml` also binds
+  later. Recompiles `b.sml`, though it names nothing new: what `open`
+  brought in is a usage of the whole structure.
+
+## Order, files and names
+
+* **S17, reorder.** Swap two independent files in the build's order.
+  Recompiles nothing whose basis did not change, and the output follows
+  the new order (top-level effects run in the order given).
+* **S18, insert.** Add a file between `b.sml` and `c.sml` that declares
+  nothing the later units use. Recompiles only the new file.
+* **S19, shadow.** Insert a file that redeclares a structure a later unit
+  uses. Recompiles that unit, which now sees the new one.
+* **S20, remove.** Remove a file nothing uses, then one something uses: the
+  first compiles nothing, the second reports the unbound name.
+* **S21, rename.** Rename a file without changing it. Compiles nothing but
+  writes no entry under the old name that a later build could confuse: the
+  key is content, and the name is only where it is shown.
+* **S22, symlinks.** A source reached through a symbolic link, and a
+  project directory that is one. Same entries as through the real path.
+* **S23, case.** On a case-insensitive file system (Windows, `make
+  test-windows`), `A.sml` and `a.sml` are one file; on Linux two. The cache
+  key is the content, so neither collides.
+
+## Configuration and identity
+
+* **S24, flags.** Build at `-O1`, then at `-O0`, then at `-O1`. The second
+  build misses everything (another configuration hash), the third hits
+  everything: both configurations live side by side.
+* **S25, target.** `--target=stack` against the default: another
+  configuration, as S24.
+* **S26, `--int-bits=64`.** Another configuration: the width changes what
+  constants and overloading become.
+* **S27, the compiler.** Rebuild the compiler to the same bytes: everything
+  hits. Change a compiler source so that its bytecode changes: everything
+  misses.
+* **S28, the Basis Library.** Change a file of `lib/basis`. Units that used
+  an entry it changed recompile, others do not; the frozen library is made
+  again.
+* **S29, relocation.** Move the project to another directory, and give the
+  cache with it (`--cache-dir`). Everything hits, and the program's traces
+  and error messages name the new paths: no absolute path is in a key, and
+  the positions an object carries are patched at link, or relative.
+* **S30, debug and release.** Two configurations in one `.rune/`; neither
+  evicts the other.
+
+## Failure and concurrency
+
+* **S31, a compile error.** Break `b.sml`. The build fails, writes no entry
+  for `b.sml` and keeps `a.sml`'s; fixing it recompiles `b.sml` and its
+  dependents only.
+* **S32, warnings.** A unit that warns, served from the cache, warns again
+  the same way (warnings are stored with the entry and replayed), or the
+  roadmap says why not.
+* **S33, corruption.** Truncate an entry, flip a byte of one, write an entry
+  of an older format version. Each is a miss and is rebuilt; nothing
+  crashes and nothing wrong is linked.
+* **S34, two compilers.** Two builds of the same project at once on one
+  cache. Both finish, both outputs are right, and no entry is torn
+  (entries are written by atomic rename).
+* **S35, interrupted.** Kill a build while it stores an entry. The next
+  build finds no partial entry.
+* **S36, a read-only cache.** The installed frozen Basis library, read-only.
+  Builds read it and write their own entries elsewhere.
+* **S37, a full disk.** A store that fails. The build succeeds and the next
+  one compiles the unit again.
+
+## The REPL and `use`
+
+* **S38, `use` an unchanged file.** In the REPL, `use` a file twice: the
+  second links the cached object, and its top level runs again with fresh
+  globals and fresh exceptions.
+* **S39, `use` a changed file.** Edit the file between the two `use`s: the
+  second compiles it again.
+* **S40, a session's basis.** `use` a file in two sessions whose earlier
+  declarations differ: two entries, each found by its own usages.
+
+## The whole program and identity
+
+* **S41, cold equals warm.** In `make check`: a cold and a warm `--units`
+  build of every program of `tests/lang` and `tests/perf` are the same
+  bytes.
+* **S42, Mid from the cache.** The whole-program build from cached Mid
+  equals the build from source, byte for byte, the compiler's own
+  included (M7).
+* **S43, five builds.** `check-cross` with the cache on: the five builds of
+  the compiler still write the same bytes.
+
+## A large project: MLton
+
+MLton at `5fe943391` (MLton PR #660), the first commit that Rune can build
+(606 files, about 198,000 lines in the order of its `mlton-rune.txt`), is
+the scenarios' large case. It is functorised throughout, so it shows what
+static interpretation costs the cut-off (the roadmap's risk 3):
+
+* **S44, cold and warm.** Build MLton's compiler cold, then warm: the time
+  of each, and the warm one compiles nothing.
+* **S45, a leaf.** Change the body of a function in a file nothing else
+  uses (one of `main/`): one unit recompiles.
+* **S46, a root.** Change the body of a function in `control/control.sml`,
+  which almost every file uses: one unit recompiles (a body, S2).
+* **S47, a used interface.** Add a value to the signature and structure of
+  `control/control-flags.sml`: only the units that `open` it or use a
+  changed entry recompile.
+* **S48, a functor body.** Change the body of a functor applied in many
+  places (one of `ssa/`): every applying unit recompiles. The count and
+  the time are the measurement of risk 3.

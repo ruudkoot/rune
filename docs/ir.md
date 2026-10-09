@@ -43,7 +43,7 @@ what `simplify` does besides shrinking, each of which may be left out.
 | `--dump-before=P`, `--dump-after=P` | print what the pass `P` is given or makes (`all`: every pass); `--dump-lambda` and `--dump-code` are `--dump-after=translate` and `--dump-after=registers` (`stack` with `--target=stack`) |
 | `--lint` | check what every pass makes, and stop with `Error.Bug`, which names the pass, at the first breach |
 | `--fuel=N` | make no more than `N` rewrites: a pass that rewrites asks `Pass.spend` before each |
-| `--pass-stats` | the size of what every pass makes and its time, on standard error |
+| `--pass-stats` | the size of what every pass makes and its time, on standard error; `parse` and `elaborate` too, whose size is the top-level declarations |
 | `--read-mid FILE` | read a Mid program in the text a dump prints, and make and check it as the pass `mid` would (there is no bytecode from Mid yet) |
 | `--mid-roundtrip` | check that Mid printed with its positions, read and printed again is the same |
 

@@ -37,7 +37,7 @@ What it rests on:
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done |
-| M1 | Measure | |
+| M1 | Measure | done 2026-10-09: `scripts/perf-units.sh`, the table in *What a compile costs* (*Measured again*), HOL4 on Poly/ML in *HOL4 today*, `tests/incremental/SCENARIOS.md`; D6 settled (Mid binary), D9 measured (4%), the globals given a barrier in M3 |
 | M2 | Units in memory: the basis as a value, the front end resumable, a back end per unit | |
 | M3 | Unit bytecode, the static linker, and the VM loads units | |
 | M4 | The resident compiler, `use` and the REPL | |
@@ -398,6 +398,117 @@ of three rounds) and [weak-points.md](weak-points.md) (2026-09-24):
   sources and `vm/prims.def` (`tests/basis/run-matrix.sh:730-784`). Both
   key on content plus tool identity, never on time.
 
+#### Measured again: M1, 2026-10-09
+
+`scripts/perf-units.sh` on `incremental` at M0 (master `b9506382`: the
+JIT, the word layout and the second collector all in), on an idle
+machine, the least wall time of five runs (one for MLton). The compiler
+runs on `bin/runevm` tiering up to tier 2 (*tier2*), interpreted
+(`--jit=off`), at tier 1 (`--jit=baseline`), as stack bytecode on
+`bin/runevm-stack`, and as MLton's build. The phases are the processor
+time `--pass-stats` gives each, in seconds; `parse` and `elaborate` are
+new stages of it (M1), and both shakes are added together. The lines are
+those of every file the compile reads, the Basis Library's included.
+
+| Compiler | Program | wall | parse | elaborate | translate | mid | shake | lift | workers | simplify | lower | registers | lines read | lines/s, front end |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| tier2 | hello | 0.037 | 0.006 | 0.007 | 0.003 | 0.002 | 0.001 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 108 | 8,308 |
+| interp | hello | 0.023 | 0.001 | 0.003 | 0.001 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 108 | 27,000 |
+| baseline | hello | 0.033 | 0.004 | 0.006 | 0.002 | 0.002 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 108 | 10,800 |
+| stack | hello | 0.022 | 0.002 | 0.002 | 0.001 | 0.001 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 108 | 27,000 |
+| mlton | hello | 0.008 | 0.001 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 108 | 108,000 |
+| tier2 | two lines | 0.291 | 0.050 | 0.092 | 0.030 | 0.017 | 0.009 | 0.005 | 0.006 | 0.025 | 0.013 | 0.012 | 7,419 | 52,246 |
+| interp | two lines | 0.412 | 0.085 | 0.140 | 0.043 | 0.024 | 0.012 | 0.004 | 0.005 | 0.030 | 0.009 | 0.018 | 7,419 | 32,973 |
+| baseline | two lines | 0.270 | 0.043 | 0.086 | 0.028 | 0.016 | 0.007 | 0.005 | 0.007 | 0.029 | 0.009 | 0.011 | 7,419 | 57,512 |
+| stack | two lines | 0.449 | 0.101 | 0.157 | 0.043 | 0.028 | 0.012 | 0.004 | 0.005 | 0.034 | 0.011 | 0.016 | 7,419 | 28,756 |
+| mlton | two lines | 0.100 | 0.016 | 0.041 | 0.008 | 0.005 | 0.003 | 0.001 | 0.001 | 0.007 | 0.003 | 0.003 | 7,419 | 130,158 |
+| tier2 | the Basis whole | 0.784 | 0.096 | 0.284 | 0.095 | 0.071 | 0.028 | 0.007 | 0.009 | 0.046 | 0.036 | 0.076 | 23,616 | 62,147 |
+| interp | the Basis whole | 1.612 | 0.247 | 0.606 | 0.176 | 0.130 | 0.065 | 0.007 | 0.010 | 0.067 | 0.054 | 0.202 | 23,616 | 27,686 |
+| baseline | the Basis whole | 0.849 | 0.104 | 0.295 | 0.111 | 0.078 | 0.031 | 0.007 | 0.011 | 0.044 | 0.045 | 0.085 | 23,616 | 59,188 |
+| stack | the Basis whole | 1.895 | 0.327 | 0.687 | 0.247 | 0.154 | 0.062 | 0.008 | 0.012 | 0.081 | 0.054 | 0.212 | 23,616 | 23,290 |
+| mlton | the Basis whole | 0.387 | 0.054 | 0.170 | 0.043 | 0.034 | 0.017 | 0.002 | 0.002 | 0.017 | 0.006 | 0.014 | 23,616 | 105,429 |
+| tier2 | the compiler | 2.011 | 0.100 | 0.277 | 0.121 | 0.118 | 0.051 | 0.077 | 0.113 | 0.337 | 0.276 | 0.325 | 25,267 | 67,021 |
+| interp | the compiler | 4.231 | 0.240 | 0.567 | 0.275 | 0.207 | 0.090 | 0.160 | 0.162 | 0.633 | 0.592 | 0.811 | 25,267 | 31,310 |
+| baseline | the compiler | 2.136 | 0.113 | 0.277 | 0.139 | 0.129 | 0.056 | 0.087 | 0.107 | 0.311 | 0.300 | 0.367 | 25,267 | 64,787 |
+| stack | the compiler | 4.990 | 0.276 | 0.707 | 0.278 | 0.262 | 0.117 | 0.182 | 0.194 | 0.777 | 0.707 | 0.877 | 25,267 | 25,704 |
+| mlton | the compiler | 1.131 | 0.067 | 0.097 | 0.162 | 0.042 | 0.032 | 0.036 | 0.030 | 0.214 | 0.108 | 0.150 | 25,267 | 154,067 |
+| tier2 | the corpus harness | 0.846 | 0.067 | 0.145 | 0.054 | 0.032 | 0.020 | 0.031 | 0.020 | 0.153 | 0.055 | 0.154 | 16,544 | 78,038 |
+| interp | the corpus harness | 1.761 | 0.156 | 0.279 | 0.091 | 0.058 | 0.037 | 0.051 | 0.039 | 0.261 | 0.111 | 0.504 | 16,544 | 38,032 |
+| baseline | the corpus harness | 0.921 | 0.079 | 0.156 | 0.056 | 0.034 | 0.021 | 0.022 | 0.031 | 0.151 | 0.068 | 0.193 | 16,544 | 70,400 |
+| stack | the corpus harness | 2.084 | 0.192 | 0.338 | 0.102 | 0.074 | 0.046 | 0.038 | 0.046 | 0.347 | 0.131 | 0.526 | 16,544 | 31,215 |
+| mlton | the corpus harness | 0.393 | 0.025 | 0.069 | 0.050 | 0.017 | 0.016 | 0.007 | 0.006 | 0.084 | 0.022 | 0.054 | 16,544 | 176,000 |
+| tier2 | MLton's compiler | 624.670 | 0.495 | 611.250 | 1.261 | 0.548 | 0.475 | 0.511 | 0.451 | 2.517 | 1.542 | 3.232 | about 205,000 | 335 |
+| mlton | MLton's compiler | 142.486 | 0.138 | 135.504 | 0.658 | 0.352 | 0.199 | 0.409 | 0.324 | 0.845 | 0.871 | 1.392 | about 205,000 | 1,511 |
+
+MLton's compiler is MLton at `5fe943391` (MLton PR #660, the first
+commit Rune builds: 606 files, 198,458 lines, in the order of its
+`mlton-rune.txt`), compiled under `ulimit -v 12582912` with `--heap-limit
+5368709120`, as `scripts/gc-eval.sh` compiles it.
+
+What the numbers say:
+
+* **Compiles are 3 to 6 times faster than when this was written**: the two
+  lines 0.29 s at tier 2 (1.8 s on 2026-09-24), the compiler 2.0 s (5.03
+  s). The JIT's tier 2, the word layout and the generational collector did
+  it; the stack VM, which has none of the JIT, is where the old numbers
+  were.
+* **The Basis is the two-line program's compile.** Of its 7,419 lines two
+  are the program's; the front end is half of its 0.29 s and the back end,
+  translating the same Basis files, the rest. A compile against a Basis
+  compiled once (D8, M6) would cost what `hello` costs, 0.04 s.
+* **The front end reads 50,000 to 80,000 lines a second at tier 2** on
+  ordinary code, about half of what MLton's build of the compiler reads:
+  HOL4's `use` of a file of 5,000 lines is about 0.1 s of front end.
+* **But not on MLton's sources: 335 lines a second, and 98% of the
+  compile is elaboration** (611 s of 625 s; 135 s of 142 s on MLton's
+  build of Rune, so it is the elaborator and not the VM). Elaborating each
+  file as a unit (`--units --typecheck-only --pass-stats`, M2, MLton's
+  build) puts 82 s of 130 s in the 282 signature files, 40 s in the 223
+  files of functors and 9 s in the rest. The worst are signatures that
+  share structures of a large signature five times over (`sharing amd64
+  = amd64MLton.amd64` in `amd64-generate-transfers.sig`, 10 s each), then
+  the files that apply the functors (`main.sml`, `main.fun`,
+  `compile.fun`, 8 s each), whose bodies static interpretation
+  elaborates again at every application. This is a cost of the
+  elaborator, not of incremental compilation, and it is found here
+  because MLton is the first large functorised program Rune compiles: the
+  cache (M6) avoids paying it for files that did not change, but a change
+  to a signature or a functor that much of MLton depends on pays it
+  again. Profiling and fixing signature instantiation and sharing is
+  worth a plan of its own; it is listed in *Ready for, not built*.
+* **D6: Mid is stored binary.** The compiler's own Mid, printed (5.2 MB)
+  and read back with `--read-mid`, takes longer to read than to make
+  from the sources: 1.02 s against 0.72 s at tier 2, 0.43 s against 0.36
+  s on MLton's build, and so at every configuration. D6's condition was
+  "if text is not several times faster, Mid is stored binary"; M7
+  stores it binary.
+* **D9: the resident basis costs 4%.** The compiler with its front
+  end's environment and syntax kept reachable through the back end (a
+  scratch build, `keptEnv`), compiling itself, best of three: 32 MB more
+  live (66 MB to 98 MB), 12% to 15% more time in the collector (427 to
+  479 ms under `--gc throughput`, 457 to 490 ms under `--gc low-pause`),
+  4% more wall time (1.95 to 2.02 s) and 35% more peak memory, the same
+  output. The generational collector promotes the basis once; the
+  collector's place in the plans does not move.
+* **The globals cost every minor collection** (*Since this was
+  written*): a program of N top-level values, at `-O0` so that all are
+  kept, that then allocates 384 MB of short-lived lists:
+
+  | globals | minor collections | their processor time | per minor collection | roots besides the stack |
+  |---:|---:|---:|---:|---:|
+  | 0 | 691 | 11.1 ms | 16.1 µs | 230 |
+  | 1,000 | 691 | 13.6 ms | 19.7 µs | 1,231 |
+  | 10,000 | 700 | 36.8 ms | 52.5 µs | 10,230 |
+  | 50,000 | 770 | 159.7 ms | 207.4 µs | 50,230 |
+  | 100,000 | 940 | 369.8 ms | 393.4 µs | 100,230 |
+
+  About 3.8 ns a global at every minor collection. With 100,000 globals the
+  program, whose run without them takes 0.2 s, spends 0.37 s more in the
+  collector. A REPL session, and HOL4's above all, holds that many, so
+  M3 gives the globals a barrier: a card per block of globals, marked by
+  `SETGLOBAL` when the value is young, and only the marked cards scanned
+  at a minor collection, as the old objects' fields are.
+
 ### The VM today: one program, absolute everywhere
 
 * **One `Program` per VM**, embedded in the `VM` (`vm/vm.h:146-162,185`):
@@ -647,6 +758,29 @@ futures at once. The owner has said the heaps need not be catered to
 (`~/notes/virtual-machine.md:19`); images give them almost free (D13).
 What Rune has of this today: images, `SML90.Interrupt` as an
 exception that nothing raises, and nothing else.
+
+**Measured on Poly/ML (M1, 2026-10-09)**, the baseline M5 is held to: a
+fresh clone of the built copy (`bdc6917`), configured with Poly/ML 5.9.2
+(`tools/smart-configure.sml`), built through `src/boss` and `bin/hol` --
+the sequence files `kernel` and `core-theories` up to that line, as
+`bin/build --seq=FILE --nograph -j 16` -- on an otherwise idle machine:
+
+| | Poly/ML 5.9.2 |
+|---|---:|
+| `build` through `src/boss`, wall | 5 min 19 s |
+| its processor time, user and system | 370 s and 40 s |
+| its peak resident memory | 748 MB |
+| theories built (`sigobj/*Theory.uo`) and objects (`sigobj/*.uo`) | 47 and 489 |
+| `.sml` and `.sig` lines in the directories built | 245,533 |
+| `bin/hol.state` and `bin/hol.state0` | 13.2 MB and 16.7 MB |
+| `hol` started and ended, best of five | 0.43 s |
+| `hol` with a declaration, a proof (`DECIDE`) or `load "pred_setTheory"` | 0.43 s each |
+
+The heap's loading is the whole latency: a declaration or a small proof
+adds nothing measurable to it. At the front end's 50,000 to 80,000 lines
+a second (*What a compile costs*), compiling the 245,533 lines once would
+take Rune about four seconds at tier 2; what HOL4's build spends is in
+running proofs, which is the VM's speed and not this roadmap's.
 
 **HOL4's sources obey Moscow ML's discipline** (*What the literature
 says*): `X.sig` holds `signature X` and `X.sml` holds `structure X`
@@ -2529,6 +2663,12 @@ Listed so that the next roadmap, or the owner, finds them here:
 * **Native units**: the code kind of the header, a second loader, the
   ABI implemented by a calling convention.
 * **Hot reload in production**, if M12's decision is yes.
+* **The elaborator at the scale of MLton** (M1): signatures that share
+  structures of a large signature take seconds each, and functor bodies
+  are elaborated again at every application; 98% of compiling MLton's
+  compiler is elaboration. A profile and a plan of its own, with
+  `type-checker.md`; the cache only hides it for files that do not
+  change.
 * **Printing without the compiler** (D10's review): type descriptions
   and a run-time model of `Rep` for a debugger or the IDE's hover on a
   live value; jit M8's representations section is its start.

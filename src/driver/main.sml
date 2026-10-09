@@ -179,27 +179,39 @@ struct
   and frontEnd (basis : entry list, final : entry list, userToks, _ : string list) : Lambda.lexp option =
     let
       fun parseEntries es = List.concat (List.map (fn e : entry => parseTokens (loadTokens (BasisManifest.path e))) es)
+      (* The front end's two stages, for --pass-stats; their size is the
+         number of top-level declarations. *)
+      fun frontStage name f =
+        Pass.stage {name = name, showIn = NONE, show = fn _ => "", check = fn _ => (),
+                    size = fn (b, l, u, fin) => List.length b + List.length l + List.length u + List.length fin}
+                   f
       (* the basis library may use _prim; the libraries beside it may not *)
-      val basisProg = parseEntries (List.filter inBasis basis)
-      val libraryProg = parseEntries (List.filter (not o inBasis) basis)
+      val (basisProg, libraryProg, userProg, finalProg) =
+        frontStage "parse"
+                   (fn () => let
+                               val b = parseEntries (List.filter inBasis basis)
+                               val l = parseEntries (List.filter (not o inBasis) basis)
+                             in (b, l, List.concat (List.map parseTokens userToks), parseEntries final) end)
+                   ()
       val preludeProg = basisProg @ libraryProg
-      val userProg = List.concat (List.map parseTokens userToks)
-      val finalProg = parseEntries final
       val () = if !Options.dumpAst then List.app (fn d => println (Ast.decToString d)) (userProg @ finalProg) else ()
       val env = ref Env.initial
-      val () = Elaborate.allowPrim := true
-      val () = Elaborate.elabTop (env, basisProg)
-      val () = Elaborate.allowPrim := false
-      val () = Elaborate.elabTop (env, libraryProg)
-      val () = Elaborate.allowPrim := !Options.allowPrim
-      (* --default-type holds for the input files, not for the libraries *)
-      val () = Elaborate.intDefault := (if !Options.defaultInt64 then Types.int64Ty else Types.intTy)
-      val () = Elaborate.wordDefault := (if !Options.defaultWord64 then Types.word64Ty else Types.wordTy)
-      val () = Elaborate.elabTop (env, userProg)
-      val () = Elaborate.intDefault := Types.intTy
-      val () = Elaborate.wordDefault := Types.wordTy
-      val () = Elaborate.elabTop (env, finalProg)
-      val () = Elaborate.finish ()
+      fun elaborate (progs as (b, l, u, fin)) =
+        (Elaborate.allowPrim := true;
+         Elaborate.elabTop (env, b);
+         Elaborate.allowPrim := false;
+         Elaborate.elabTop (env, l);
+         Elaborate.allowPrim := !Options.allowPrim;
+         (* --default-type holds for the input files, not for the libraries *)
+         Elaborate.intDefault := (if !Options.defaultInt64 then Types.int64Ty else Types.intTy);
+         Elaborate.wordDefault := (if !Options.defaultWord64 then Types.word64Ty else Types.wordTy);
+         Elaborate.elabTop (env, u);
+         Elaborate.intDefault := Types.intTy;
+         Elaborate.wordDefault := Types.wordTy;
+         Elaborate.elabTop (env, fin);
+         Elaborate.finish ();
+         progs)
+      val _ = frontStage "elaborate" elaborate (basisProg, libraryProg, userProg, finalProg)
       val () = if !Options.noWarnings then Error.warnings := [] else Error.flushWarnings ()
     in
       if !Options.typecheckOnly then NONE
