@@ -234,7 +234,10 @@ sig
 
      Law: `mkAbsolute {path = mkRelative {path = p, relativeTo = q}, relativeTo
      = q} = p` for `isCanonical p andalso isAbsolute p andalso isCanonical q
-     andalso isAbsolute q`; a path that is not canonical comes back canonical *)
+     andalso isAbsolute q`, and it is run for `p` from
+     `BasisDataArb.canonicalAbsolutePath` and `q` from
+     `BasisDataArb.canonicalAbsolutePath`; a path that is not canonical comes
+     back canonical *)
   val mkRelative : {path : string, relativeTo : string} -> string
 
   (* `isAbsolute p` is `true` when `p` starts from a root.

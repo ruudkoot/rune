@@ -267,7 +267,9 @@ val fromAddr : sock_addr -> in6_addr * int
 
 `fromAddr addr` is the host and the port of `addr`.
 
-**Law** `fromAddr (toAddr (a, p)) = (a, p)` (for every `a : INet6Sock.in6_addr`, `p : int`)
+**Law** `fromAddr (toAddr (a, p)) = (a, p)` for `0 <= p andalso p <= 65535` (for every `a : INet6Sock.in6_addr`, `p : int`)
+
+**Counterexample** `#2 (fromAddr (toAddr (valOf (fromString "::1"), ~1))) = ~1`, for a port is kept in sixteen bits.
 
 <details><summary>Tests (1)</summary>
 

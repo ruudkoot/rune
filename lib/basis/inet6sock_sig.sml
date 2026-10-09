@@ -92,7 +92,10 @@ sig
 
   (* `fromAddr addr` is the host and the port of `addr`.
 
-     Law: `fromAddr (toAddr (a, p)) = (a, p)` *)
+     Law: `fromAddr (toAddr (a, p)) = (a, p)` for `0 <= p andalso p <= 65535`
+
+     Counterexample: `#2 (fromAddr (toAddr (valOf (fromString "::1"), ~1))) =
+     ~1`, for a port is kept in sixteen bits. *)
   val fromAddr : sock_addr -> in6_addr * int
 
   (* Datagram sockets of this family. *)

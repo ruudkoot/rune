@@ -115,9 +115,12 @@ val sub : 'a slice * int -> 'a
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length sl`.
 
-**Law** `sub (slice (arr, i, NONE), k) = Array.sub (arr, i + k)` for `0 <= k andalso k < Array.length arr - i` (for every `arr : 'a array`, `i : int`, `k : int`)
+**Law** `sub (slice (arr, i, NONE), k) = Array.sub (arr, i + k)` for `0 <= i andalso i < Array.length arr andalso 0 <= k andalso k < Array.length arr - i` (for every `arr : 'a array`, `i : int`, `k : int`)
 
 **Example** `sub (slice (Array.fromList [1, 2, 3, 4], 1, NONE), 0) = 2`
+
+**Counterexample** `sub (slice (Array.fromList [1, 2], ~1, NONE), 1) = 1`,
+for a slice cannot start before its array.
 
 <details><summary>Tests (13)</summary>
 
@@ -175,7 +178,7 @@ val slice : 'a Array.array * int * int option -> 'a slice
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i > Array.length arr`, or, with `SOME n`, if `n < 0` or `i + n > Array.length arr`.
 
-**Law** `base (slice (arr, i, SOME n)) = (arr, i, n)` when `(ignore (slice (arr, i, SOME n)); true)` (for every `arr : 'a array`, `i : int`, `n : int`)
+**Law** `base (slice (arr, i, SOME n)) = (arr, i, n)` for `0 <= i andalso i <= Array.length arr andalso 0 <= n andalso n <= Array.length arr - i` (for every `arr : 'a array`, `i : int`, `n : int`)
 
 **Example** `vector (slice (Array.fromList [1, 2, 3, 4], 1, SOME 2)) = Vector.fromList [2, 3]`
 
@@ -209,9 +212,11 @@ The bounds are those of `sl`, not of the array it is a slice of.
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i > length sl`, or, with `SOME n`, if
 `n < 0` or `i + n > length sl`.
 
-**Law** `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= k andalso k < length sl - i` (for every `sl : 'a ArraySlice.slice`, `i : int`, `k : int`)
+**Law** `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= i andalso i < length sl andalso 0 <= k andalso k < length sl - i` (for every `sl : 'a ArraySlice.slice`, `i : int`, `k : int`)
 
 **Example** `vector (subslice (slice (Array.fromList [1, 2, 3, 4], 1, NONE), 1, SOME 1)) = Vector.fromList [3]`
+
+**Counterexample** `sub (subslice (full (Array.fromList [1, 2]), ~1, NONE), 1) = 1`, for a subslice cannot start before its slice.
 
 <details><summary>Other implementations (1)</summary>
 

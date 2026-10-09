@@ -57,9 +57,14 @@ sig
      Raises: `Size` if `r < 0`, `c < 0`, or the array would be too large.
 
      Law: `sub (array (r, c, x), i, j) = x` for `0 <= i andalso i < r andalso 0
-     <= j andalso j < c`
+     <= j andalso j < c andalso r <= Array.maxLen div c`, and it is run for `r`
+     from `Arb.intRange (0, 1024)` and `c` from `Arb.intRange (0, 1024)`, as
+     the tester cannot hold a larger one
 
-     Example: `dimensions (array (2, 3, 0)) = (2, 3)` *)
+     Example: `dimensions (array (2, 3, 0)) = (2, 3)`
+
+     Counterexample: `sub (array (Array.maxLen, 2, 0), 0, 0) = 0`, for there is
+     no array so large. *)
   val array : int * int * elem -> array
 
   (* `fromList rows` is a new array of the lists of `rows`, one row each.
@@ -86,9 +91,16 @@ sig
      Pinned by: `*Array2.tabulate/Size-before-f`
 
      Law: `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i andalso i
-     < r andalso 0 <= j andalso j < c`, when `f` has no effects
+     < r andalso 0 <= j andalso j < c andalso r <= Array.maxLen div c`, when
+     `f` has no effects, and it is run for `r` from `Arb.intRange (0, 256)` and
+     `c` from `Arb.intRange (0, 256)`, as a larger one takes the tester too
+     long
 
-     Example: `IntVector.foldr (op ::) [] (row (tabulate RowMajor (2, 3, fn (i, j) => 10 * i + j), 1)) = [10, 11, 12]` *)
+     Example: `IntVector.foldr (op ::) [] (row (tabulate RowMajor (2, 3, fn (i,
+     j) => 10 * i + j), 1)) = [10, 11, 12]`
+
+     Counterexample: `sub (tabulate RowMajor (Array.maxLen, 2, fn _ => 0), 0,
+     0) = 0`, for there is no array so large. *)
   val tabulate : traversal -> int * int * (int * int -> elem) -> array
 
   (* ---- Elements ---- *)

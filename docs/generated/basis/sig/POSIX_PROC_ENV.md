@@ -140,9 +140,12 @@ val wordToUid : SysWord.word -> uid
 
 `wordToUid w` is the user numbered `w`, whether or not there is such a user.
 
-**Law** `uidToWord (wordToUid w) = w` (for every `w : word`)
+**Law** `uidToWord (wordToUid w) = w` for `SysWord.<= (w, SysWord.fromInt (valOf Int.maxInt))` (for every `w : word`)
 
 **Example** `uidToWord (wordToUid 0w0) = 0w0`
+
+**Counterexample** `let val w = SysWord.+ (SysWord.fromInt (valOf Int.maxInt), 0w1) in uidToWord (wordToUid w) = w end`, for the number of a
+user is an int.
 
 <details><summary>Tests (1)</summary>
 
@@ -172,7 +175,10 @@ val wordToGid : SysWord.word -> gid
 
 `wordToGid w` is the group numbered `w`.
 
-**Law** `gidToWord (wordToGid w) = w` (for every `w : word`)
+**Law** `gidToWord (wordToGid w) = w` for `SysWord.<= (w, SysWord.fromInt (valOf Int.maxInt))` (for every `w : word`)
+
+**Counterexample** `let val w = SysWord.+ (SysWord.fromInt (valOf Int.maxInt), 0w1) in gidToWord (wordToGid w) = w end`, for the number of a
+group is an int.
 
 <details><summary>Tests (1)</summary>
 

@@ -211,7 +211,10 @@ val wordToFD : SysWord.word -> file_desc
 
 `wordToFD w` is the descriptor numbered `w`, whether or not it is open.
 
-**Law** `fdToWord (wordToFD w) = w` (for every `w : word`)
+**Law** `fdToWord (wordToFD w) = w` for `SysWord.<= (w, SysWord.fromInt (valOf Int.maxInt))` (for every `w : word`)
+
+**Counterexample** `let val w = SysWord.+ (SysWord.fromInt (valOf Int.maxInt), 0w1) in fdToWord (wordToFD w) = w end`, for the number of a
+descriptor is an int.
 
 <details><summary>Other implementations (1)</summary>
 
@@ -1172,7 +1175,10 @@ val devToWord : dev -> SysWord.word
 
 `devToWord d` is the number of the device `d`.
 
-**Law** `devToWord (wordToDev w) = w` (for every `w : word`)
+**Law** `devToWord (wordToDev w) = w` for `SysWord.<= (w, SysWord.fromInt (valOf Int.maxInt))` (for every `w : word`)
+
+**Counterexample** `let val w = SysWord.+ (SysWord.fromInt (valOf Int.maxInt), 0w1) in devToWord (wordToDev w) = w end`, for the number of a
+device is an int.
 
 <details><summary>Tests (2)</summary>
 
@@ -1210,7 +1216,10 @@ val inoToWord : ino -> SysWord.word
 
 `inoToWord i` is the number of the file `i`.
 
-**Law** `inoToWord (wordToIno w) = w` (for every `w : word`)
+**Law** `inoToWord (wordToIno w) = w` for `SysWord.<= (w, SysWord.fromInt (valOf Int.maxInt))` (for every `w : word`)
+
+**Counterexample** `let val w = SysWord.+ (SysWord.fromInt (valOf Int.maxInt), 0w1) in inoToWord (wordToIno w) = w end`, for the number of a
+file is an int.
 
 <details><summary>Tests (2)</summary>
 

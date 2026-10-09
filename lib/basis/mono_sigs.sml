@@ -93,10 +93,14 @@ sig
 
      Pinned by: `*Vector.tabulate/Size-before-f`
 
-     Law: `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n`, when `f`
-     has no effects
+     Law: `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n andalso n
+     <= maxLen`, when `f` has no effects, and it is run for `n` from
+     `Arb.intRange (0, 65536)`, as a longer one takes the tester too long
 
-     Example: `tabulate (3, fn i => Char.chr (97 + i)) = "abc"` *)
+     Example: `tabulate (3, fn i => Char.chr (97 + i)) = "abc"`
+
+     Counterexample: `sub (tabulate (maxLen + 1, fn _ => #"x"), 0) = #"x"`, for
+     there is no vector so long. *)
   val tabulate : int * (int -> elem) -> vector
 
   (* `length x` is the number of elements.
@@ -119,12 +123,15 @@ sig
 
      Raises: `Subscript` if `i < 0` or `i >= length v`.
 
-     Law: `sub (update (v, i, x), i) = x`
+     Law: `sub (update (v, i, x), i) = x` for `0 <= i andalso i < length v`
 
-     Law: `sub (update (v, i, x), j) = sub (v, j)` for `j <> i andalso 0 <= j
-     andalso j < length v`
+     Law: `sub (update (v, i, x), j) = sub (v, j)` for `0 <= i andalso i <
+     length v andalso 0 <= j andalso j < length v andalso j <> i`
 
-     Example: `update ("abc", 1, #"x") = "axc"` *)
+     Example: `update ("abc", 1, #"x") = "axc"`
+
+     Counterexample: `sub (update ("abc", 3, #"x"), 3) = #"x"`, for there is no
+     position 3 to update. *)
   val update : vector * int * elem -> vector
 
   (* `concat l` is the vectors of `l` one after another.
@@ -263,9 +270,14 @@ sig
 
      Raises: `Size` if `n < 0` or `n > maxLen`.
 
-     Law: `sub (array (n, x), i) = x` for `0 <= i andalso i < n`
+     Law: `sub (array (n, x), i) = x` for `0 <= i andalso i < n andalso n <=
+     maxLen`, and it is run for `n` from `Arb.intRange (0, 1048576)`, as the
+     tester cannot hold a longer one
 
-     Example: `vector (array (3, #"x")) = "xxx"` *)
+     Example: `vector (array (3, #"x")) = "xxx"`
+
+     Counterexample: `sub (array (maxLen + 1, #"x"), 0) = #"x"`, for there is
+     no array so long. *)
   val array : int * elem -> array
 
   (* `fromList l` is a new array of the elements of `l`, in order.
@@ -289,10 +301,14 @@ sig
 
      Pinned by: `*Array.tabulate/Size-before-f`
 
-     Law: `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n`, when `f`
-     has no effects
+     Law: `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n andalso n
+     <= maxLen`, when `f` has no effects, and it is run for `n` from
+     `Arb.intRange (0, 65536)`, as a longer one takes the tester too long
 
-     Example: `vector (tabulate (3, fn i => Char.chr (97 + i))) = "abc"` *)
+     Example: `vector (tabulate (3, fn i => Char.chr (97 + i))) = "abc"`
+
+     Counterexample: `sub (tabulate (maxLen + 1, fn _ => #"x"), 0) = #"x"`, for
+     there is no array so long. *)
   val tabulate : int * (int -> elem) -> array
 
   (* `length x` is the number of elements.
@@ -336,10 +352,15 @@ sig
      then nothing has been copied.
 
      Law: `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub
-     (src, i)` for `0 <= i andalso i < length src andalso src <> dst`
+     (src, i)` for `0 <= di andalso di <= length dst - length src andalso 0 <=
+     i andalso i < length src andalso src <> dst`
 
      Example: `let val b = array (4, #".") in copy {src = fromList [#"a", #"b",
-     #"c"], dst = b, di = 1}; vector b end = ".abc"` *)
+     #"c"], dst = b, di = 1}; vector b end = ".abc"`
+
+     Counterexample: `let val b = array (1, #".") in copy {src = fromList
+     [#"a", #"b"], dst = b, di = 0}; sub (b, 0) end = #"a"`, for the source
+     does not fit. *)
   val copy : {src : array, dst : array, di : int} -> unit
 
   (* `copyVec {src, dst, di}` copies the vector `src` into `dst` from position `di` on.
@@ -583,8 +604,8 @@ sig
 
   (* `length x` is the number of elements.
 
-     Law: `length (slice (v, i, SOME n)) = n` when `(ignore (slice (v, i, SOME
-     n)); true)`
+     Law: `length (slice (v, i, SOME n)) = n` for `0 <= i andalso i <= length
+     (full v) andalso 0 <= n andalso n <= length (full v) - i`
 
      Example: `length (slice ("abc", 1, NONE)) = 2` *)
   val length : slice -> int
@@ -618,10 +639,13 @@ sig
      Raises: `Subscript` if `i < 0` or `i > length sl`, or, with `SOME n`, if
      `n < 0` or `i + n > length sl`.
 
-     Law: `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= k
-     andalso k < length sl - i`
+     Law: `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= i
+     andalso i < length sl andalso 0 <= k andalso k < length sl - i`
 
-     Example: `vector (subslice (slice ("abcd", 1, NONE), 1, SOME 1)) = "c"` *)
+     Example: `vector (subslice (slice ("abcd", 1, NONE), 1, SOME 1)) = "c"`
+
+     Counterexample: `sub (subslice (full "ab", ~1, NONE), 1) = sub (full "ab",
+     0)`, for a subslice cannot start before its slice. *)
   val subslice : slice * int * int option -> slice
 
   (* `base sl` is the vector `sl` is a stretch of, where it starts and how long it is.
@@ -827,11 +851,14 @@ sig
      Raises: `Subscript` if `i < 0` or `i > length sl`, or, with `SOME n`, if
      `n < 0` or `i + n > length sl`.
 
-     Law: `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= k
-     andalso k < length sl - i`
+     Law: `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= i
+     andalso i < length sl andalso 0 <= k andalso k < length sl - i`
 
      Example: `vector (subslice (slice (CharArray.fromList [#"a", #"b", #"c",
-     #"d"], 1, NONE), 1, SOME 1)) = "c"` *)
+     #"d"], 1, NONE), 1, SOME 1)) = "c"`
+
+     Counterexample: `sub (subslice (full (CharArray.fromList [#"a", #"b"]),
+     ~1, NONE), 1) = #"a"`, for a subslice cannot start before its slice. *)
   val subslice : slice * int * int option -> slice
 
   (* `base sl` is the array `sl` is a stretch of, where it starts and how long it is.

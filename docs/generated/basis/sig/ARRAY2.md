@@ -189,9 +189,14 @@ val array : int * int * 'a -> 'a array
 > fixed: an array is too large when the number of its elements is no
 > `int`, or when it exceeds what an array can hold.
 
-**Law** `sub (array (r, c, x), i, j) = x` for `0 <= i andalso i < r andalso 0 <= j andalso j < c` (for every `r : int`, `c : int`, `x : 'a`, `i : int`, `j : int`)
+**Law** `sub (array (r, c, x), i, j) = x` for `0 <= i andalso i < r andalso 0 <= j andalso j < c andalso r <= Array.maxLen div c`, and it is run for `r`
+from `Arb.intRange (0, 1024)` and `c` from `Arb.intRange (0, 1024)`, as
+the tester cannot hold a larger one (for every `r : int`, `c : int`, `x : 'a`, `i : int`, `j : int`)
 
 **Example** `dimensions (array (2, 3, 0)) = (2, 3)`
+
+**Counterexample** `sub (array (Array.maxLen, 2, 0), 0, 0) = 0`, for there is
+no array so large.
 
 <details><summary>Other implementations (4)</summary>
 
@@ -259,9 +264,14 @@ val tabulate : traversal -> int * int * (int * int -> 'a) -> 'a array
 > asked for, and its result fills the array before the rest is
 > computed.
 
-**Law** `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i andalso i < r andalso 0 <= j andalso j < c`, when `f` has no effects (for every `trv : Array2.traversal`, `r : int`, `c : int`, `f : int * int -> 'a`, `i : int`, `j : int`)
+**Law** `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i andalso i < r andalso 0 <= j andalso j < c andalso r <= Array.maxLen div c`, when
+`f` has no effects, and it is run for `r` from `Arb.intRange (0, 256)` and
+`c` from `Arb.intRange (0, 256)`, as a larger one takes the tester too
+long (for every `trv : Array2.traversal`, `r : int`, `c : int`, `f : int * int -> 'a`, `i : int`, `j : int`)
 
 **Example** `row (tabulate RowMajor (2, 3, fn (i, j) => 10 * i + j), 1) = Vector.fromList [10, 11, 12]`
+
+**Counterexample** `sub (tabulate RowMajor (Array.maxLen, 2, fn _ => 0), 0, 0) = 0`, for there is no array so large.
 
 <details><summary>Other implementations (2)</summary>
 

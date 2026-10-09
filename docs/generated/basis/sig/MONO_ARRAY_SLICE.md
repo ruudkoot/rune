@@ -286,9 +286,11 @@ The bounds are those of `sl`, not of what it is a slice of.
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i > length sl`, or, with `SOME n`, if
 `n < 0` or `i + n > length sl`.
 
-**Law** `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= k andalso k < length sl - i` (for every `sl : CharArraySlice.slice`, `i : int`, `k : int`)
+**Law** `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= i andalso i < length sl andalso 0 <= k andalso k < length sl - i` (for every `sl : CharArraySlice.slice`, `i : int`, `k : int`)
 
 **Example** `vector (subslice (slice (CharArray.fromList [#"a", #"b", #"c", #"d"], 1, NONE), 1, SOME 1)) = "c"`
+
+**Counterexample** `sub (subslice (full (CharArray.fromList [#"a", #"b"]), ~1, NONE), 1) = #"a"`, for a subslice cannot start before its slice.
 
 <details><summary>Other implementations (1)</summary>
 

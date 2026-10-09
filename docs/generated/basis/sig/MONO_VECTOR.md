@@ -274,10 +274,13 @@ val tabulate : int * (int -> elem) -> vector
 > say whether the length is checked before `f` is applied. It is: a length
 > out of range raises [`Size`](../sig/GENERAL.md#exn-size) without applying `f` at all.
 
-**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n`, when `f`
-has no effects (for every `n : int`, `f : int -> char`, `i : int`)
+**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n andalso n <= maxLen`, when `f` has no effects, and it is run for `n` from
+`Arb.intRange (0, 65536)`, as a longer one takes the tester too long (for every `n : int`, `f : int -> char`, `i : int`)
 
 **Example** `tabulate (3, fn i => Char.chr (97 + i)) = "abc"`
+
+**Counterexample** `sub (tabulate (maxLen + 1, fn _ => #"x"), 0) = #"x"`, for
+there is no vector so long.
 
 <details><summary>Tests (15)</summary>
 
@@ -349,11 +352,14 @@ val update : vector * int * elem -> vector
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length v`.
 
-**Law** `sub (update (v, i, x), i) = x` (for every `v : string`, `i : int`, `x : char`)
+**Law** `sub (update (v, i, x), i) = x` for `0 <= i andalso i < length v` (for every `v : string`, `i : int`, `x : char`)
 
-**Law** `sub (update (v, i, x), j) = sub (v, j)` for `j <> i andalso 0 <= j andalso j < length v` (for every `v : string`, `i : int`, `x : char`, `j : int`)
+**Law** `sub (update (v, i, x), j) = sub (v, j)` for `0 <= i andalso i < length v andalso 0 <= j andalso j < length v andalso j <> i` (for every `v : string`, `i : int`, `x : char`, `j : int`)
 
 **Example** `update ("abc", 1, #"x") = "axc"`
+
+**Counterexample** `sub (update ("abc", 3, #"x"), 3) = #"x"`, for there is no
+position 3 to update.
 
 <details><summary>Other implementations (1)</summary>
 

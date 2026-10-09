@@ -126,9 +126,13 @@ val array : int * 'a -> 'a array
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0` or `n > maxLen`.
 
-**Law** `sub (array (n, x), i) = x` for `0 <= i andalso i < n` (for every `n : int`, `x : 'a`, `i : int`)
+**Law** `sub (array (n, x), i) = x` for `0 <= i andalso i < n andalso n <= maxLen`, and it is run for `n` from `Arb.intRange (0, 1048576)`, as the
+tester cannot hold a longer one (for every `n : int`, `x : 'a`, `i : int`)
 
 **Example** `vector (array (3, #"x")) = Vector.fromList [#"x", #"x", #"x"]`
+
+**Counterexample** `sub (array (maxLen + 1, 0), 0) = 0`, for there is no
+array so long.
 
 <details><summary>Tests (23)</summary>
 
@@ -173,10 +177,13 @@ val tabulate : int * (int -> 'a) -> 'a array
 > of range raises [`Size`](../sig/GENERAL.md#exn-size) without applying `f` at all, so no effect of `f`
 > happens for an array that is never made.
 
-**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n`, when `f`
-has no effects (for every `n : int`, `f : int -> 'a`, `i : int`)
+**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n andalso n <= maxLen`, when `f` has no effects, and it is run for `n` from
+`Arb.intRange (0, 65536)`, as a longer one takes the tester too long (for every `n : int`, `f : int -> 'a`, `i : int`)
 
 **Example** `vector (tabulate (4, fn i => i * i)) = Vector.fromList [0, 1, 4, 9]`
+
+**Counterexample** `sub (tabulate (maxLen + 1, fn i => i), 0) = 0`, for there
+is no array so long.
 
 <details><summary>Other implementations (1)</summary>
 
@@ -286,9 +293,11 @@ that overlap are what [`ArraySlice.copy`](../sig/ARRAY_SLICE.md#val-copy) is for
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `di < 0` or `di + length src > length dst`, and
 then nothing has been copied.
 
-**Law** `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)` for `0 <= i andalso i < length src andalso src <> dst` (for every `src : 'a array`, `dst : 'a array`, `di : int`, `i : int`)
+**Law** `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)` for `0 <= di andalso di <= length dst - length src andalso 0 <= i andalso i < length src andalso src <> dst` (for every `src : 'a array`, `dst : 'a array`, `di : int`, `i : int`)
 
 **Example** `let val a = fromList [1, 2, 3, 4] in copy {src = a, dst = a, di = 0}; vector a end = Vector.fromList [1, 2, 3, 4]`
+
+**Counterexample** `let val b = array (1, 0) in copy {src = fromList [1, 2], dst = b, di = 0}; sub (b, 0) end = 1`, for the source does not fit.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -313,9 +322,12 @@ val copyVec : {src : 'a vector, dst : 'a array, di : int} -> unit
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `di < 0` or `di + Vector.length src > length dst`,
 and then nothing has been copied.
 
-**Law** `(copyVec {src = v, dst = dst, di = di}; sub (dst, di + i)) = Vector.sub (v, i)` for `0 <= i andalso i < Vector.length v` (for every `v : 'a vector`, `dst : 'a array`, `di : int`, `i : int`)
+**Law** `(copyVec {src = v, dst = dst, di = di}; sub (dst, di + i)) = Vector.sub (v, i)` for `0 <= di andalso di <= length dst - Vector.length v andalso 0 <= i andalso i < Vector.length v` (for every `v : 'a vector`, `dst : 'a array`, `di : int`, `i : int`)
 
 **Example** `let val a = array (4, 0) in copyVec {src = Vector.fromList [1, 2], dst = a, di = 1}; vector a end = Vector.fromList [0, 1, 2, 0]`
+
+**Counterexample** `let val b = array (1, 0) in copyVec {src = Vector.fromList [1, 2], dst = b, di = 0}; sub (b, 0) end = 1`, for the
+source does not fit.
 
 | Field | Type | Description |
 | --- | --- | --- |

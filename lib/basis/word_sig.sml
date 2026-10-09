@@ -227,9 +227,12 @@ sig
 
      Raises: `Div` if `b` is zero.
 
-     Law: `(a div b) * b + (a mod b) = a`
+     Law: `(a div b) * b + (a mod b) = a` for `b <> 0w0`
 
-     Example: `0w7 mod 0w2 = 0w1` *)
+     Example: `0w7 mod 0w2 = 0w1`
+
+     Counterexample: `(0w1 div 0w0) * 0w0 + (0w1 mod 0w0) = 0w1`, for there is
+     no dividing by zero. *)
   val mod : word * word -> word
 
   (* ---- Comparing ---- *)

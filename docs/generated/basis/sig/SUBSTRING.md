@@ -184,9 +184,12 @@ val base : substring -> string * int * int
 
 `base ss` is the triple of the string that `ss` is a stretch of, where it starts in that string, and how long it is.
 
-**Law** `base (substring (s, i, n)) = (s, i, n)` (for every `s : string`, `i : int`, `n : int`)
+**Law** `base (substring (s, i, n)) = (s, i, n)` for `0 <= i andalso i <= size (full s) andalso 0 <= n andalso n <= size (full s) - i` (for every `s : string`, `i : int`, `n : int`)
 
 **Example** `base (substring ("hello", 1, 3)) = ("hello", 1, 3)`
+
+**Counterexample** `base (substring ("", 0, ~1)) = ("", 0, ~1)`, for no
+substring has a negative size.
 
 <details><summary>Tests (5)</summary>
 
@@ -583,6 +586,8 @@ hold.
 
 **Law** `compare (ss, tt) = String.compare (string ss, string tt)` (for every `ss : Substring.substring`, `tt : Substring.substring`)
 
+> **Not tested in Rune** at `WideSubstring`: it names [`String.compare`](../sig/STRING.md#val-compare), and the strings of [`WideSubstring`](../str/WideSubstring.md) are [`WideString.string`](../sig/STRING.md#type-string).
+
 **Example** `compare (full "ab", full "abc") = LESS`
 
 <details><summary>Tests (19)</summary>
@@ -621,9 +626,11 @@ val splitl : (char -> bool) -> substring -> substring * substring
 
 `splitl p ss` is the pair of the longest prefix of `ss` whose characters satisfy `p` and the rest.
 
-**Law** `splitl p ss = (takel p ss, dropl p ss)` (for every `p : char -> bool`, `ss : Substring.substring`)
+**Law** `splitl p ss = (takel p ss, dropl p ss)` when `p` has no effects (for every `p : char -> bool`, `ss : Substring.substring`)
 
 **Example** `(fn (a, b) => (string a, string b)) (splitl Char.isAlpha (full "ab12")) = ("ab", "12")`
+
+**Counterexample** `let val n = ref 0 fun p _ = (n := !n + 1; false) in ignore (splitl p (full "a")); !n end = let val n = ref 0 fun p _ = (n := !n + 1; false) in ignore (takel p (full "a"), dropl p (full "a")); !n end`, for the pair looks at the character twice.
 
 <details><summary>Tests (14)</summary>
 

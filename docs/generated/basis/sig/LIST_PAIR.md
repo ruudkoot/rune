@@ -123,6 +123,10 @@ val unzip : ('a * 'b) list -> 'a list * 'b list
 
 **Law** `unzip (zip (l, m)) = (l, m)` when `length l = length m` (for every `l : 'a list`, `m : 'b list`)
 
+> **Not tested in Rune** at `ListPair`: the tester seldom draws two lists of one length, and gives up; `zip (unzip l) = l`, the law turned round, is tested.
+
+**Law** `zip (unzip l) = l` (for every `l : ('a * 'b) list`)
+
 **Example** `unzip [(1, "a"), (2, "b")] = ([1, 2], ["a", "b"])`
 
 <details><summary>Tests (9)</summary>
