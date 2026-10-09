@@ -29,8 +29,8 @@ Poly/ML has none; see the end.
 ## How a program is made
 
 `HOST/gen.sh OUTDIR LIB` writes what a program compiles before its own files
-(`OUTDIR/prefix`), and the options of Rune's it needs besides `--allow-prim`
-(`OUTDIR/flags`):
+(`OUTDIR/prefix`), the options of Rune's compiler it needs besides
+`--allow-prim` (`OUTDIR/flags`), and those of the machine (`OUTDIR/vmflags`):
 
 1. **The sources.** The host's `basis.patch` is applied to a copy of its
    library. `mlb-flatten.awk` and `flatten.sh` flatten its `basis.mlb` into
@@ -55,14 +55,25 @@ Poly/ML has none; see the end.
 ## xc2:mlton
 
 `mlton/gen.sh OUTDIR [MLTON_LIB]` builds MLton's `basis.mlb` with MLton's
-configuration for 64-bit `int` and `word`. `mlton/rewrite.awk` replaces
+configuration for 64-bit `int` and `word`. MLton's library has no
+configuration for Rune's `int` and `word`, of 63 bits, and the test
+programs' constants are of Rune's `int`: so a program is compiled with
+`--int-bits=64` (`OUTDIR/flags`) and run by `bin/runevm-int64`, the build
+of Rune's machine whose `int` and `word` keep 64 bits (`make
+bin/runevm-int64`), with the JIT's tier 1 alone (`--jit=baseline`,
+`OUTDIR/vmflags`): on that build, tier 2 goes wrong on MLton's library.
+Compiling only the closure `fn f => fn x => ...` of `make` in
+`integer/embed-int.sml` at tier 2 makes the program of `mono.real` hang,
+and with all of tier 2 it stops in a primitive that finds a value of the
+wrong type (`word64_from_word`); the interpreter, tier 1 and `--jit=all`
+run it. `mlton/rewrite.awk` replaces
 `_prim "N": T;` by `(XC2Prim.N : T)`, `_import` by `XC2FFI.N`, `_symbol` by
 `XC2Symbol.N`, and `_const`/`_build_const` by the value of the constant (from
 MLton's `targets/self/constants`). A primitive used at more than one type
 (`Word8_add` adds `Int8.int`s and `Word8.word`s) gets its type in its name
 (`Word8_add__int_x_int_to_int`). `mlton/prologue.sml` gives MLton's
-primitive types as Rune's (`int8` is `Int8.int`, ..., `real32` is
-`Real32.real`, `char8` is `char`, `intInf` is `IntInf.int`).
+primitive types as Rune's (`int8` is `Int8.int`, ..., `int64` is `int`,
+`real32` is `Real32.real`, `char8` is `char`, `intInf` is `IntInf.int`).
 `mlton/shim.sml` implements the primitives: `mlton/prims.awk` generates the
 families (`WordS16_extdToWord32`, `Real32_rndToWordU8`, ...) from the table
 of step 2, on functors that work on the bits of a value; the rest, and
@@ -110,9 +121,10 @@ do the names of `mlkit/typed.txt`. `_export` and MLKit's constructor
 `_IntInf` are renamed, and the constants of `IntInf.int`, which MLKit's
 compiler reads itself, are overloaded on `IntInf.fromString` (a generated
 file after `IntInf.sml`). `mlkit/prologue.sml` gives MLKit's primitive types
-as Rune's: `int`, `int63` and `int64` are Rune's `int`, `int31` and `word31`
-types of 31 bits (MLKit's `IntInf` counts on an `int31` that overflows where
-an `Int32.int` does not), `chararray` and `'a array` arrays of `XC2`.
+as Rune's: `int` and `int63` are Rune's `int`, of 63 bits as MLKit's, `int64`
+Rune's `Int64.int` (and the words alike), `int31` and `word31` types of 31
+bits (MLKit's `IntInf` counts on an `int31` that overflows where an
+`Int32.int` does not), `chararray` and `'a array` arrays of `XC2`.
 
 Here the shim does what MLKit's C runtime does, its bugs included, since the
 library is written against it: `chmod` sets the flags of `open` as the mode,
@@ -152,24 +164,26 @@ What differs from MLKit, and why:
 
 ## xc2:smlnj-legacy
 
-`smlnj/gen.sh OUTDIR SMLNJ` takes SML/NJ's installation: its `sml` gives
+`smlnj-legacy/gen.sh OUTDIR SMLNJ` takes SML/NJ's installation: its `sml` gives
 the order of the library's files, and `SMLNJ/system` their sources, which
 `scripts/fetch-hosts.sh` unpacks from the release's `system.tgz` (the
-installer does not fetch it). `smlnj/order.sml` asks CM for the portable
+installer does not fetch it). `smlnj-legacy/order.sml` asks CM for the portable
 dependency graph of `Basis/basis-common.cm` (`CM.Graph.graph`), whose
 definitions are in the order CM compiles them; the generator puts the files
 of the group `TypesOnly` first, then `Implementation`, then `Exports`, which
 rebinds names (`Socket`, `Posix`) that `Implementation`'s files mean as they
 were in their own group. Before them come the files of the init library
 (`smlnj/init`, in the order of `init.cmi`), except those that are the
-compiler's primitives: `smlnj/rts.sml` is the runtime's `Assembly`,
-`smlnj/core.sml` `Core` and `CoreIntInf`, and `smlnj/inline.sml` `InlineT`
-(`InLine`'s primitives with their types) and `MathInlineT`, all made of
-Rune's. `smlnj/prologue.sml` gives `PrimTypes` as Rune's types (`int` and
-`word` are Rune's, `word8vector` is Rune's `string`, `word8array` an array
-of `Word8.word`, ...), and `smlnj/rewrite.awk` replaces the vector
-constants `#[...]` and `CInterface.c_function "LIB" "NAME"`, a C function of
-the runtime, by `XC2NC.LIB_NAME`: `smlnj/cfuns.sml` makes those the test
+compiler's primitives: `smlnj-legacy/rts.sml` is the runtime's `Assembly`,
+`smlnj-legacy/core.sml` `Core` and `CoreIntInf`, and
+`smlnj-legacy/inline.sml` `InlineT` (`InLine`'s primitives with their
+types) and `MathInlineT`, all made of Rune's. `smlnj-legacy/prologue.sml`
+gives `PrimTypes` as Rune's types (`int` and `word` are Rune's, of 63 bits
+as SML/NJ's, `int64` and `word64` Rune's `Int64.int` and `Word64.word`,
+`word8vector` is Rune's `string`, `word8array` an array of `Word8.word`,
+...), and `smlnj-legacy/rewrite.awk` replaces the vector constants `#[...]`
+and `CInterface.c_function "LIB" "NAME"`, a C function of the runtime, by
+`XC2NC.LIB_NAME`: `smlnj-legacy/cfuns.sml` makes those the test
 programs reach, and the generated stubs raise for the rest. The library
 uses or-patterns, an extension of SML/NJ's: Rune compiles it with
 `--or-patterns` (`OUTDIR/flags`).
@@ -184,10 +198,6 @@ fails for a descriptor that is not open and for a negative time.
 
 What differs from SML/NJ, and why:
 
-* **`int` and `word`.** They are Rune's, of 64 bits, where SML/NJ's have 63
-  (its `Int63` and `Word63`); the patch makes `Int.precision`, `minInt`,
-  `maxInt` and `Word.wordSize` say so, as MLton's is built for 64-bit
-  `int` and `word`. The unchecked arithmetic of `InlineT` wraps at 64 bits.
 * **Strings and byte vectors.** SML/NJ allocates a string or a
   `Word8Vector` (`Assembly.A.create_s`) and fills it in place, and casts
   between `CharVector` and `Word8Vector` (`InlineT.cast`). Rune's strings

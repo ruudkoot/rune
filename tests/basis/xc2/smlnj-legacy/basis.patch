@@ -390,48 +390,6 @@ diff -ruN a/Basis/Implementation/Sockets/unix-sock.sig b/Basis/Implementation/So
    end
 -end
  
-diff -ruN a/Basis/Implementation/Target64Bit/int.sml b/Basis/Implementation/Target64Bit/int.sml
---- a/Basis/Implementation/Target64Bit/int.sml
-+++ b/Basis/Implementation/Target64Bit/int.sml
-@@ -15,10 +15,11 @@
- 
-     type int = int
- 
--    val precision = SOME 63
--    val minIntVal = ~4611686018427387904
-+    (* xc2: Rune's int, of 64 bits *)
-+    val precision = SOME 64
-+    val minIntVal = ~9223372036854775808
-     val minInt = SOME minIntVal
--    val maxInt = SOME 4611686018427387903
-+    val maxInt = SOME 9223372036854775807
- 
-     val toLarge : int -> LargeInt.int = Int.toLarge
-     val fromLarge : LargeInt.int -> int = Int.fromLarge
-diff -ruN a/Basis/Implementation/Target64Bit/word.sml b/Basis/Implementation/Target64Bit/word.sml
---- a/Basis/Implementation/Target64Bit/word.sml
-+++ b/Basis/Implementation/Target64Bit/word.sml
-@@ -12,7 +12,8 @@
- 
-     type word = word
- 
--    val wordSize = 63
-+    (* xc2: Rune's word, of 64 bits *)
-+    val wordSize = 64
- 
-     val toLarge   : word -> LargeWord.word = Word.toLarge
-     val toLargeX  : word -> LargeWord.word = Word.toLargeX
-@@ -66,9 +67,7 @@
- 	  val scanLarge = NumScan64.scanWord radix
- 	  fun scan getc cs = (case (scanLarge getc cs)
- 		 of NONE => NONE
--		  | (SOME(w, cs')) => if InlineT.Word64.>(w, 0wx7FFFFFFFFFFFFFFF)
--		      then raise Overflow
--		      else SOME(Word.fromLarge w, cs')
-+		  | (SOME(w, cs')) => SOME(Word.fromLarge w, cs')
- 		(* end case *))
- 	  in
- 	    scan
 diff -ruN a/Basis/Implementation/Unsafe/unsafe.sml b/Basis/Implementation/Unsafe/unsafe.sml
 --- a/Basis/Implementation/Unsafe/unsafe.sml
 +++ b/Basis/Implementation/Unsafe/unsafe.sml

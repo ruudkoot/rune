@@ -26,7 +26,7 @@ function inst(k, n,   s, rune) {
   if (!(s in EXTRA)) {
     rune = n < 8 ? 8 : n < 16 ? 16 : n < 32 ? 32 : 64
     if (k == "I") EXTRA[s] = "XC2FixedInt (type int = " (rune == 64 ? "Int" : "Int" rune) ".int val width = " n " val toInt = " (rune == 64 ? "fn x => x" : "Int" rune ".toInt") " val fromInt = " (rune == 64 ? "fn x => x" : "Int" rune ".fromInt") ")"
-    else EXTRA[s] = "XC2FixedWord (type word = " (rune == 64 ? "Word" : "Word" rune) ".word val width = " n " val toLarge = " (rune == 64 ? "fn x => x" : "Word" rune ".toLarge") " val fromLarge = " (rune == 64 ? "fn x => x" : "Word" rune ".fromLarge") ")"
+    else EXTRA[s] = "XC2FixedWord (type word = " (rune == 64 ? "Word" : "Word" rune) ".word val width = " n " val toLarge = " (rune == 64 ? "XC2Large.fromWord" : "Word" rune ".toLarge") " val fromLarge = " (rune == 64 ? "XC2Large.toWord" : "Word" rune ".fromLarge") ")"
   }
   return use(s)
 }
@@ -103,9 +103,9 @@ $1 == "prim" {
     n = name; sub(/.*Word/, "", n); b = n / 8; w = res((name ~ /update/ ? A[3] : result), n)
     get = (name ~ /Array/ ? "XC2.Array.sub" : "Vector.sub")
     if (name ~ /update/)
-      emit(id, "fn (a, i, x) => let val v = " w ".bits x fun loop k = if k >= " b " then () else (XC2.Array.update (a, " b " * i + k, Word8.fromLarge (Word.>> (v, Word.fromInt (8 * k)))); loop (k + 1)) in loop 0 end")
+      emit(id, "fn (a, i, x) => let val v = " w ".bits x fun loop k = if k >= " b " then () else (XC2.Array.update (a, " b " * i + k, Word8.fromLarge (XC2Large.fromWord (Word.>> (v, Word.fromInt (8 * k))))); loop (k + 1)) in loop 0 end")
     else
-      emit(id, "fn (a, i) => let fun loop (k, v) = if k < 0 then v else loop (k - 1, Word.orb (Word.<< (v, 0w8), Word8.toLarge (" get " (a, " b " * i + k)))) in " w ".fromBits (loop (" (b - 1) ", 0w0)) end")
+      emit(id, "fn (a, i) => let fun loop (k, v) = if k < 0 then v else loop (k - 1, Word.orb (Word.<< (v, 0w8), XC2Large.toWord (Word8.toLarge (" get " (a, " b " * i + k))))) in " w ".fromBits (loop (" (b - 1) ", 0w0)) end")
   }
 }
 END {

@@ -68,6 +68,14 @@ struct
       end
 end
 
+(* LargeWord.word, Word64.word, is a type apart from word, which has the
+   same 64 bits here (--int-bits=64, gen.sh) *)
+structure XC2Large =
+struct
+  val toWord = _prim "word64_to_word" : Word64.word -> word
+  val fromWord = _prim "word64_from_word" : word -> Word64.word
+end
+
 (* an IntK of Rune's, holding the values of WIDTH <= K bits *)
 functor XC2FixedInt (type int
                      val width : Int.int
@@ -84,14 +92,14 @@ end
 (* a WordK of Rune's, holding the values of WIDTH <= K bits *)
 functor XC2FixedWord (type word
                       val width : Int.int
-                      val toLarge : word -> Word.word
-                      val fromLarge : Word.word -> word) : XC2_FIXED =
+                      val toLarge : word -> LargeWord.word
+                      val fromLarge : LargeWord.word -> word) : XC2_FIXED =
 struct
   type t = word
   val width = width
-  fun bits x = toLarge x
-  fun sbits x = XC2Bits.sext (width, toLarge x)
-  fun fromBits w = fromLarge (XC2Bits.low (width, w))
+  fun bits x = XC2Large.toWord (toLarge x)
+  fun sbits x = XC2Bits.sext (width, bits x)
+  fun fromBits w = fromLarge (XC2Large.fromWord (XC2Bits.low (width, w)))
 end
 
 (* WideChar.char, holding the values of WIDTH bits (MLton's char16 and char32) *)
@@ -113,7 +121,7 @@ struct
   structure W8 = XC2FixedWord (type word = Word8.word val width = 8 val toLarge = Word8.toLarge val fromLarge = Word8.fromLarge)
   structure W16 = XC2FixedWord (type word = Word16.word val width = 16 val toLarge = Word16.toLarge val fromLarge = Word16.fromLarge)
   structure W32 = XC2FixedWord (type word = Word32.word val width = 32 val toLarge = Word32.toLarge val fromLarge = Word32.fromLarge)
-  structure W64 = XC2FixedWord (type word = Word.word val width = 64 val toLarge = fn x => x val fromLarge = fn x => x)
+  structure W64 = XC2FixedWord (type word = Word.word val width = 64 val toLarge = XC2Large.fromWord val fromLarge = XC2Large.toWord)
   structure C8 : XC2_FIXED =
   struct
     type t = char
@@ -228,8 +236,10 @@ structure XC2Real64 =
 struct
   structure O = XC2RealOps (open Real open Math)
   open O
-  val castToWord64 = _prim "real_to_bits" : real -> word
-  val castFromWord64 = _prim "real_from_bits" : word -> real
+  val realToBits = _prim "real_to_bits" : real -> Word64.word
+  val realFromBits = _prim "real_from_bits" : Word64.word -> real
+  fun castToWord64 r = XC2Large.toWord (realToBits r)
+  fun castFromWord64 w = realFromBits (XC2Large.fromWord w)
   fun rndToReal32 r = Real32.fromLarge (IEEEReal.getRoundingMode ()) r
   fun rndToReal64 (r : real) = r
 end

@@ -92,11 +92,11 @@ needs.
 | `xc1:polyml@5.9.2` | 139,125 | 138,750 | 364 | 11 | 2 | 0 |
 | `xc1:mlkit@4.7.23` | 139,054 | 138,524 | 519 | 11 | 2 | 0 |
 | `xc2:mlton@20241230` | 138,668 | 138,072 | 596 | 0 | 9 | 0 |
-| `xc2:mlkit@4.7.23` | 116,563 | 115,596 | 967 | 0 | 44 | 0 |
-| `xc2:smlnj-legacy@110.99.9` | 62,007 | 61,316 | 691 | 0 | 63 | 0 |
+| `xc2:mlkit@4.7.23` | 116,568 | 115,602 | 966 | 0 | 44 | 0 |
+| `xc2:smlnj-legacy@110.99.9` | 62,012 | 61,321 | 691 | 0 | 63 | 0 |
 
 The `xc2` rows are of a run of those three configurations alone, on
-2026-09-28 (under WSL2). `xc2:mlkit` runs more checks than
+2026-10-09 (under WSL2). `xc2:mlkit` runs more checks than
 `native:mlkit`: MLKit's compiler cannot load `posix_procenv` and
 `posix_sysdb`, which Rune compiles; `xc2:smlnj-legacy` runs more than
 `native:smlnj-legacy`, whose runtime ends in the sections of `array2` and

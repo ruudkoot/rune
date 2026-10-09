@@ -143,16 +143,15 @@ struct
   fun set m = IEEEReal.setRoundingMode (case m of 1 => IEEEReal.TO_NEGINF | 2 => IEEEReal.TO_POSINF | 3 => IEEEReal.TO_ZERO | _ => IEEEReal.TO_NEAREST)
 end
 
-(* the words and ints of 63 bits, in Rune's of 64 (those of 31 bits have
-   types of their own: prologue.sml) *)
+(* the words of 32 and 64 bits and Rune's word, by way of LargeWord (Rune's
+   word and int are MLKit's of 63 bits; those of 31 bits have types of their
+   own: prologue.sml) *)
 structure XC2KBits =
 struct
-  fun mask63 (w : word) = Word.andb (w, 0wx7FFFFFFFFFFFFFFF)
-  (* w of 63 bits, sign-extended *)
-  fun sext63 (w : word) = if Word.andb (w, 0wx4000000000000000) = 0w0 then w else Word.orb (w, 0wx8000000000000000)
-  fun check63 (i : int) = if i < ~4611686018427387904 orelse i > 4611686018427387903 then raise Overflow else i
-  fun w32 (w : word) = Word32.fromLarge w
-  fun wLarge (w : Word32.word) = Word32.toLarge w
+  fun w32 (w : word) = Word32.fromLarge (Word.toLarge w)
+  fun wLarge (w : Word32.word) = Word.fromLarge (Word32.toLarge w)
+  fun w64 (w : word) = Word.toLarge w
+  fun w64X (w : word) = Word.toLargeX w
 end
 
 structure XC2KPrimImpl =
@@ -182,13 +181,14 @@ struct
   fun P__get_ctx () = 0w0 : word
 
   (* ---- ints and words ---- *)
-  fun P__precision () = 64
+  val word64ToInt64 = _prim "word64_to_int64" : Word64.word -> Int64.int
+  fun P__precision () = 63
   fun P__maxInt () = valOf Int.maxInt
   fun P__minInt () = valOf Int.minInt
   fun P__maxInt63 () = 4611686018427387903
   fun P__minInt63 () = ~4611686018427387904
-  fun P__maxInt64 () = valOf Int.maxInt
-  fun P__minInt64 () = valOf Int.minInt
+  fun P__maxInt64 () = valOf Int64.maxInt
+  fun P__minInt64 () = valOf Int64.minInt
   fun P__quot_int (a : int, b) = Int.quot (a, b)
   fun P__rem_int (a : int, b) = Int.rem (a, b)
   fun P__quot_int31 (a : int31, b) = XC2Int31.quot (a, b)
@@ -197,94 +197,94 @@ struct
   fun P__rem_int32 (a : Int32.int, b) = Int32.rem (a, b)
   fun P__quot_int63 (a : int, b) = Int.quot (a, b)
   fun P__rem_int63 (a : int, b) = Int.rem (a, b)
-  fun P__quot_int64 (a : int, b) = Int.quot (a, b)
-  fun P__rem_int64 (a : int, b) = Int.rem (a, b)
+  fun P__quot_int64 (a : Int64.int, b) = Int64.quot (a, b)
+  fun P__rem_int64 (a : Int64.int, b) = Int64.rem (a, b)
   fun P__andb_word (a : word, b) = Word.andb (a, b)
   fun P__andb_word31 (a : word31, b) = XC2Word31.andb (a, b)
   fun P__andb_word32 (a : Word32.word, b) = Word32.andb (a, b)
   fun P__andb_word63 (a : word, b) = Word.andb (a, b)
-  fun P__andb_word64 (a : word, b) = Word.andb (a, b)
+  fun P__andb_word64 (a : Word64.word, b) = Word64.andb (a, b)
   fun P__orb_word (a : word, b) = Word.orb (a, b)
   fun P__orb_word31 (a : word31, b) = XC2Word31.orb (a, b)
   fun P__orb_word32 (a : Word32.word, b) = Word32.orb (a, b)
   fun P__orb_word63 (a : word, b) = Word.orb (a, b)
-  fun P__orb_word64 (a : word, b) = Word.orb (a, b)
+  fun P__orb_word64 (a : Word64.word, b) = Word64.orb (a, b)
   fun P__xorb_word (a : word, b) = Word.xorb (a, b)
   fun P__xorb_word31 (a : word31, b) = XC2Word31.xorb (a, b)
   fun P__xorb_word32 (a : Word32.word, b) = Word32.xorb (a, b)
   fun P__xorb_word63 (a : word, b) = Word.xorb (a, b)
-  fun P__xorb_word64 (a : word, b) = Word.xorb (a, b)
+  fun P__xorb_word64 (a : Word64.word, b) = Word64.xorb (a, b)
   (* the shifts: MLKit's library gives amounts below the width *)
   fun P__shift_left_word (w : word, k : word) = Word.<< (w, k)
   fun P__shift_left_word31 (w : word31, k : word) = XC2Word31.<< (w, k)
   fun P__shift_left_word32 (w : Word32.word, k : word) = Word32.<< (w, k)
-  fun P__shift_left_word63 (w : word, k : word) = mask63 (Word.<< (w, k))
-  fun P__shift_left_word64 (w : word, k : word) = Word.<< (w, k)
+  fun P__shift_left_word63 (w : word, k : word) = Word.<< (w, k)
+  fun P__shift_left_word64 (w : Word64.word, k : word) = Word64.<< (w, k)
   fun P__shift_right_signed_word (w : word, k : word) = Word.~>> (w, k)
   fun P__shift_right_signed_word31 (w : word31, k : word) = XC2Word31.~>> (w, k)
   fun P__shift_right_signed_word32 (w : Word32.word, k : word) = Word32.~>> (w, k)
-  fun P__shift_right_signed_word63 (w : word, k : word) = mask63 (Word.~>> (sext63 w, k))
-  fun P__shift_right_signed_word64 (w : word, k : word) = Word.~>> (w, k)
+  fun P__shift_right_signed_word63 (w : word, k : word) = Word.~>> (w, k)
+  fun P__shift_right_signed_word64 (w : Word64.word, k : word) = Word64.~>> (w, k)
   fun P__shift_right_unsigned_word (w : word, k : word) = Word.>> (w, k)
   fun P__shift_right_unsigned_word31 (w : word31, k : word) = XC2Word31.>> (w, k)
   fun P__shift_right_unsigned_word32 (w : Word32.word, k : word) = Word32.>> (w, k)
   fun P__shift_right_unsigned_word63 (w : word, k : word) = Word.>> (w, k)
-  fun P__shift_right_unsigned_word64 (w : word, k : word) = Word.>> (w, k)
+  fun P__shift_right_unsigned_word64 (w : Word64.word, k : word) = Word64.>> (w, k)
   (* conversions: X extends the sign; the others raise Overflow for a value
      the result cannot hold *)
   fun P__int31_to_int (i : int31) = XC2Int31.toInt i
   fun P__int31_to_int32 (i : int31) = Int32.fromInt (XC2Int31.toInt i)
   fun P__int32_to_int (i : Int32.int) = Int32.toInt i
   fun P__int32_to_int31 (i : Int32.int) = XC2Int31.fromInt (Int32.toInt i)
-  fun P__int32_to_int64 (i : Int32.int) = Int32.toInt i
+  fun P__int32_to_int64 (i : Int32.int) = Int64.fromInt (Int32.toInt i)
   fun P__int32_to_word32 (i : Int32.int) = Word32.fromInt (Int32.toInt i)
   fun P__int63_to_int (i : int) = i
-  fun P__int63_to_int64 (i : int) = i
-  fun P__int64_to_int (i : int) = i
-  val P__int64_to_int63 = check63
-  fun P__int64_to_word64 (i : int) = Word.fromInt i
+  fun P__int63_to_int64 (i : int) = Int64.fromInt i
+  fun P__int64_to_int (i : Int64.int) = Int64.toInt i
+  fun P__int64_to_int63 (i : Int64.int) = Int64.toInt i
+  val P__int64_to_word64 = _prim "word64_from_int64" : Int64.int -> Word64.word
   fun P__int_to_int31 (i : int) = XC2Int31.fromInt i
   fun P__int_to_int32 (i : int) = Int32.fromInt i
-  val P__int_to_int63 = check63
-  fun P__int_to_int64__int__int64 (i : int) = i
-  fun P__int_to_int64__int__word64 (i : int) = Word.fromInt i
-  fun P__word31_to_word (w : word31) = XC2Word31.toLarge w
+  fun P__int_to_int63 (i : int) = i
+  fun P__int_to_int64__int__int64 (i : int) = Int64.fromInt i
+  fun P__int_to_int64__int__word64 (i : int) = Word64.fromInt i
+  fun P__word31_to_word (w : word31) = Word.fromLarge (XC2Word31.toLarge w)
   fun P__word31_to_word32 (w : word31) = Word32.fromLarge (XC2Word31.toLarge w)
   fun P__word31_to_word32_X (w : word31) = Word32.fromLarge (XC2Word31.toLargeX w)
   fun P__word31_to_word64 (w : word31) = XC2Word31.toLarge w
   fun P__word31_to_word64_X (w : word31) = XC2Word31.toLargeX w
-  fun P__word31_to_word_X (w : word31) = XC2Word31.toLargeX w
+  fun P__word31_to_word_X (w : word31) = Word.fromLarge (XC2Word31.toLargeX w)
   fun P__word32_to_int (w : Word32.word) = Word32.toInt w
   fun P__word32_to_int32 (w : Word32.word) = Int32.fromInt (Word32.toInt w)
   fun P__word32_to_int32_X (w : Word32.word) = Int32.fromInt (Word32.toIntX w)
   fun P__word32_to_int_X (w : Word32.word) = Word32.toIntX w
   fun P__word32_to_word (w : Word32.word) = wLarge w
   fun P__word32_to_word31 (w : Word32.word) = XC2Word31.fromLarge (Word32.toLarge w)
-  fun P__word32_to_word64 (w : Word32.word) = wLarge w
+  fun P__word32_to_word64 (w : Word32.word) = Word32.toLarge w
   fun P__word32_to_word64_X (w : Word32.word) = Word32.toLargeX w
   fun P__word63_to_word (w : word) = w
-  fun P__word63_to_word64 (w : word) = w
-  fun P__word63_to_word64_X (w : word) = sext63 w
-  fun P__word63_to_word_X (w : word) = sext63 w
-  fun P__word64_to_int (w : word) = Word.toInt w
-  fun P__word64_to_int64 (w : word) = Word.toInt w
-  fun P__word64_to_int64_X (w : word) = Word.toIntX w
-  fun P__word64_to_int_X (w : word) = Word.toIntX w
-  fun P__word64_to_word (w : word) = w
-  fun P__word64_to_word31 (w : word) = XC2Word31.fromLarge w
-  fun P__word64_to_word32 (w : word) = w32 w
-  fun P__word64_to_word63 (w : word) = mask63 w
-  fun P__word_to_word31 (w : word) = XC2Word31.fromLarge w
+  val P__word63_to_word64 = w64
+  val P__word63_to_word64_X = w64X
+  fun P__word63_to_word_X (w : word) = w
+  fun P__word64_to_int (w : Word64.word) = Word64.toInt w
+  fun P__word64_to_int64 (w : Word64.word) = if Word64.>= (w, 0wx8000000000000000) then raise Overflow else word64ToInt64 w
+  val P__word64_to_int64_X = word64ToInt64
+  fun P__word64_to_int_X (w : Word64.word) = Word64.toIntX w
+  fun P__word64_to_word (w : Word64.word) = Word.fromLarge w
+  fun P__word64_to_word31 (w : Word64.word) = XC2Word31.fromLarge w
+  fun P__word64_to_word32 (w : Word64.word) = Word32.fromLarge w
+  fun P__word64_to_word63 (w : Word64.word) = Word.fromLarge w
+  fun P__word_to_word31 (w : word) = XC2Word31.fromLarge (Word.toLarge w)
   fun P__word_to_word32 (w : word) = w32 w
   fun P__word_to_word32_X (w : word) = w32 w
-  fun P__word_to_word63 (w : word) = mask63 w
-  fun P__word_to_word64 (w : word) = w
-  fun P__word_to_word64_X (w : word) = w
+  fun P__word_to_word63 (w : word) = w
+  val P__word_to_word64 = w64
+  val P__word_to_word64_X = w64X
   (* the casts of prim ("id", x), by their types (rewrite.awk) *)
   fun id__Char_char__Word8_word c = Word8.fromInt (Char.ord c)
   fun id__Word8_word__Char_char w = Char.chr (Word8.toInt w)
   fun id__int31__word31 (i : int31) = XC2Word31.fromInt (XC2Int31.toInt i)
-  fun id__int63__word63 (i : int) = mask63 (Word.fromInt i)
+  fun id__int63__word63 (i : int) = Word.fromInt i
   fun id__word31__int31 (w : word31) = XC2Int31.fromInt (XC2Word31.toIntX w)
   fun id__int__char i = Char.chr i
   (* an error number of the system: MLKit's syserror is its int *)
@@ -294,8 +294,8 @@ struct
   fun id__int__word i = Word.fromInt i
   fun id__word__int w = Word.toIntX w
   fun id__word8__int w = Word8.toInt w
-  fun id__word8__word w = Word8.toLarge w
-  fun id__word__word8 w = Word8.fromLarge w
+  fun id__word8__word w = Word.fromLarge (Word8.toLarge w)
+  fun id__word__word8 w = Word8.fromLarge (Word.toLarge w)
 
   (* ---- reals ---- *)
   fun posInfFloat () = Real.posInf
@@ -337,13 +337,13 @@ struct
   val floatSetRoundingMode = XC2KRound.set
   (* the 8 bytes of a real, the least significant first (not by PackRealLittle,
      whose file brings PackWord16Big and the rest, which MLKit lacks) *)
-  val toBits = _prim "real_to_bits" : real -> word
-  val fromBits = _prim "real_from_bits" : word -> real
+  val toBits = _prim "real_to_bits" : real -> Word64.word
+  val fromBits = _prim "real_from_bits" : Word64.word -> real
   fun sml_real_to_bytes x =
     let val w = toBits x
-    in CharVector.tabulate (8, fn i => Char.chr (Word.toInt (Word.andb (Word.>> (w, Word.fromInt (8 * i)), 0w255)))) end
+    in CharVector.tabulate (8, fn i => Char.chr (Word64.toInt (Word64.andb (Word64.>> (w, Word.fromInt (8 * i)), 0w255)))) end
   fun sml_bytes_to_real s =
-    fromBits (CharVector.foldr (fn (c, w) => Word.orb (Word.<< (w, 0w8), Word.fromInt (Char.ord c))) 0w0 s)
+    fromBits (CharVector.foldr (fn (c, w) => Word64.orb (Word64.<< (w, 0w8), Word64.fromInt (Char.ord c))) 0w0 s)
 
   (* ---- the process: C's errno is kept here, set by the calls that fail ---- *)
   val errno = ref 0

@@ -3,9 +3,9 @@
    compiled after tests/basis/xc2/xc2.sml and before the shim and MLKit's
    sources.
 
-   MLKit's int, int63 and int64 are Rune's int; int32 Int32.int, word32
-   Word32.word and word8 Word8.word; word, word63 and word64 Rune's word (the
-   shim checks the ranges of the 63-bit ones); int31 and word31 have 31 bits,
+   MLKit's int and int63 are Rune's int, of 63 bits as MLKit's; int64
+   Int64.int, int32 Int32.int, word64 Word64.word, word32 Word32.word and
+   word8 Word8.word; word and word63 Rune's word; int31 and word31 have 31 bits,
    by the functors of Rune's library (MLKit's IntInf counts on an int31
    overflowing where Int32.int does not). A chararray is a Rune array of
    chars, and MLKit's 'a array and 'a vector are XC2's array, whose cells
@@ -17,12 +17,12 @@ _overload word XC2Word31 31
 type int31 = XC2Int31.int
 type int32 = Int32.int
 type int63 = int
-type int64 = int
+type int64 = Int64.int
 type word8 = Word8.word
 type word31 = XC2Word31.word
 type word32 = Word32.word
 type word63 = word
-type word64 = word
+type word64 = Word64.word
 type chararray = char XC2.array
 type foreignptr = word
 type 'a array = 'a XC2.array

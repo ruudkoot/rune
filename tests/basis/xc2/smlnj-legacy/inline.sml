@@ -62,10 +62,8 @@ struct
     val from_int : int -> real = Real.fromInt
     val floor : real -> int = Real.floor
     val signBit : real -> bool = Real.signBit
-    val realToBits = _prim "real_to_bits" : real -> word
-    val realFromBits = _prim "real_from_bits" : word -> real
-    fun toBits (x : real) : PrimTypes.word64 = Word64.fromLarge (Word.toLarge (realToBits x))
-    fun fromBits (w : PrimTypes.word64) : real = realFromBits (Word.fromLarge (Word64.toLarge w))
+    val toBits = _prim "real_to_bits" : real -> PrimTypes.word64
+    val fromBits = _prim "real_from_bits" : PrimTypes.word64 -> real
   end
 
   structure Int =

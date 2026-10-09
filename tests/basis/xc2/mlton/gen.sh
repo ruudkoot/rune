@@ -18,6 +18,9 @@
 #   stubs.sml       XC2Prim, XC2FFI and XC2Symbol: a value for every
 #                   primitive, which raises unless the shim implements it
 #   lib             the part of Rune's library the shim needs (../trim-lib.sh)
+#   flags           the options of the compiler: --int-bits=64 and a
+#                   larger --type-work
+#   vmflags         the options of the machine: --jit=baseline
 set -eu
 
 [ $# -ge 1 ] || { echo "usage: tests/basis/xc2/mlton/gen.sh OUTDIR [MLTON_LIB]" >&2; exit 2; }
@@ -136,6 +139,17 @@ cp "$xc2/xc2.sml" "$here/prologue.sml" "$here/shim.sml" "$out/"
   echo "$out/stubs.sml"
   cat "$out/files"
 } > "$out/prefix"
+
+# MLton's library is built for a 64-bit int and word (above), and Rune's are
+# of 63 bits: the programs are compiled for the VM whose int and word keep
+# 64 (bin/runevm-int64, run-matrix.sh). The signature BASIS_EXTRA, one
+# declaration, takes some 25 million steps of type inference, more than
+# the compiler allows one by default.
+echo --int-bits=64 --type-work=100000000 > "$out/flags"
+# The JIT's tier 2 on that machine goes wrong on MLton's library (a program
+# of mono.real hangs, or fails a primitive's test of its argument, where the
+# interpreter, tier 1 alone and --jit=all run it), so tier 1 alone
+echo --jit=baseline > "$out/vmflags"
 
 # The part of Rune's library the shim needs
 # shellcheck disable=SC2046

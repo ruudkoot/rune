@@ -3,9 +3,9 @@
    of its primitive environment), made of Rune's. It is compiled after
    tests/basis/xc2/xc2.sml and before the shim and SML/NJ's sources.
 
-   SML/NJ's int and word are Rune's, of 64 bits (SML/NJ's have 63), as are
-   its int64 and word64; int32, word8 and word32 are Rune's Int32.int,
-   Word8.word and Word32.word, intinf Rune's IntInf.int. A string is Rune's
+   SML/NJ's int and word are Rune's, of 63 bits on both, its int64 and
+   word64 Rune's Int64.int and Word64.word; int32, word8 and word32 are
+   Rune's Int32.int, Word8.word and Word32.word, intinf Rune's IntInf.int. A string is Rune's
    string, and so is a word8vector (SML/NJ's library casts between the two,
    which share a representation there too); arrays and vectors are Rune's.
    Continuations are not made. *)
