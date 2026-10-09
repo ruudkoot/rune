@@ -19,6 +19,8 @@ struct
     val trace' = _prim "rt_trace" : int -> (string * string * int * int) list
     val save' = _prim "rt_save" : string -> int
     val restore' = _prim "rt_restore" : string -> int
+    val link' = _prim "rt_link" : string -> (unit -> unit) option
+    val linkError' = _prim "rt_link_error" : unit -> string
   in
     type stats = { instructions : int, bytes : int, objects : int,
                    collections : int, live : int, heapSize : int,
@@ -105,11 +107,21 @@ struct
        success the world it made is running instead, and nothing here is
        reached again. *)
     fun restore file = (ignore (restore' file); raise RuneError.lastError ())
+
+    fun link bytes =
+      case link' (Byte.bytesToString bytes) of
+        SOME run => run
+      | NONE => raise Fail ("Runtime.link: " ^ linkError' ())
+
+    fun load file =
+      let val ins = BinIO.openIn file
+      in link (BinIO.inputAll ins before BinIO.closeIn ins) end
   end
 end
 
 (* Runtime: the VM's view of the running program -- its counters, its call
-   stack, the identity of objects, and saving and restoring the whole of it.
+   stack, the identity of objects, saving and restoring the whole of it, and
+   units appended to it.
    It is Rune's own and not of the specification.
 
    Implements: RUNTIME

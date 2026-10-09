@@ -664,8 +664,41 @@ the collector maintains. The page of the signature is
 index is checked before anything runs, and a file that does not pass is
 refused with a message and status 2; `tests/runtime`, part of `make test`, is a
 suite of crafted files and command lines that must all be refused so. A file
-of another bytecode version is refused as well. There is no dynamic loading
-afterwards: a program is one file, the basis library included.
+of another bytecode version is refused as well.
+
+A running program may grow: `Runtime.link` (the primitive `rt_link`)
+appends a *unit* -- the file of one file of a program compiled a file at a
+time, `.rbu` ([bytecode.md](bytecode.md), *Units*; [units.md](units.md)) --
+and `Runtime.load` the unit a file holds. The unit is untrusted input as a
+`.rbc` is (`load_unit_mem`, `runtime/loader.c`):
+
+* it is read whole first, and what it names of other units -- a function or
+  a global, by the compile it came from and the stamp it had there -- is
+  found among what the units loaded before it exported, or the load fails
+  with the program unchanged;
+* its functions, constants, globals, code, files, positions and
+  representations go after the program's, and every operand of its code
+  that names one of them is renumbered by the kind its instruction set
+  gives it (`relocate_code`, in `runtime/stack/isa_stack.c` and
+  `runtime/register/isa_regs.c`); its constants are made last, once the
+  table the collector reads them from has room for them;
+* its code is checked as a file's is, from its first function on
+  (`validate_program_from`); code that fails takes the unit out again;
+* what it exports joins the table later units are found in, and a unit
+  loaded twice is two units, whose second is the one found;
+* its top level, which in a program linked whole goes on to the next unit's,
+  goes to a function that returns, made once.
+
+`Runtime.link` gives the closure of the unit's top level, which the program
+calls: the loop runs it as any other call, so no engine calls another. The
+program has grown under the JIT, whose tables name functions by number, so
+the primitive says so (`PRIM_NEW_WORLD`, which `PRIMPUSH` and compiled code
+already answer for `Runtime.restore`), and the JIT's view of the program is
+made again: every compiled function is invalidated first, so that the frames
+below the load return into the interpreter rather than into code that names
+the tables just remade. An image carries the units loaded -- they are part of
+the program -- and the table of their exports, so that a session saved after
+loading goes on loading. A program of native code (`runeopt`) loads no units.
 
 The whole command line -- `--disasm`, `--trace`, `--stats`, `--count`,
 `--gc-stress`, `--gc-stress-cycles`, `--gc-verify`, `--checked`, `--heap-size`, `--heap-limit`,

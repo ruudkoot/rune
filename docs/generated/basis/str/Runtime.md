@@ -6,8 +6,8 @@
 | --- | --- |
 | Signature | [`RUNTIME`](../sig/RUNTIME.md) |
 | Status | extension |
-| Members | 12 |
-| Tests | 39 checks |
+| Members | 14 |
+| Tests | 41 checks |
 | Source | [lib/basis/runtime.sml](../../../../lib/basis/runtime.sml) |
 
 ## Synopsis
@@ -17,7 +17,8 @@ structure Runtime : RUNTIME
 ```
 
 Runtime: the VM's view of the running program -- its counters, its call
-stack, the identity of objects, and saving and restoring the whole of it.
+stack, the identity of objects, saving and restoring the whole of it, and
+units appended to it.
 It is Rune's own and not of the specification.
 
 ## Members
@@ -30,6 +31,8 @@ What each means is on [`RUNTIME`](../sig/RUNTIME.md); the types are this structu
 | type | [`stats`](../sig/RUNTIME.md#type-stats) | `{bytes : int, collections : int, heapSize : int, instructions : int, live : int, majorCollections : int, minorCollections : int, objects : int, promoted : int}` |
 | datatype | [`world`](../sig/RUNTIME.md#type-world) | `Saved` &#124; `Restored` |
 | val | [`collect`](../sig/RUNTIME.md#val-collect) | `unit -> unit` |
+| val | [`link`](../sig/RUNTIME.md#val-link) | `Word8Vector.vector -> unit -> unit` |
+| val | [`load`](../sig/RUNTIME.md#val-load) | `string -> unit -> unit` |
 | val | [`printTrace`](../sig/RUNTIME.md#val-printtrace) | `TextIO.outstream -> unit` |
 | val | [`profile`](../sig/RUNTIME.md#val-profile) | `(unit -> 'a) -> 'a * stats` |
 | val | [`restore`](../sig/RUNTIME.md#val-restore) | `string -> 'a` |

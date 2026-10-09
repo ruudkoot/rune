@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's MANIFEST records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 589 requirements between the 147 files become 250 arrows.
+library and not a wall of lines: the 592 requirements between the 147 files become 253 arrows.
 The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -50,7 +50,9 @@ flowchart LR
   a5 -- 7 --> a3
   a5 -- 2 --> a4
   a5 -- 4 --> a1
-  a7 -- 2 --> a6
+  a7 -- 3 --> a6
+  a7 -- 1 --> a4
+  a7 -- 1 --> a1
 ```
 
 ## The language
@@ -431,7 +433,7 @@ flowchart TD
   n86["Runtime"]
 ```
 
-It also needs Input and output (2).
+It also needs Input and output (3), Sequences (1), Text and characters (1).
 
 ---
 

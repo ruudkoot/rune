@@ -6,8 +6,8 @@
 | --- | --- |
 | Status | extension |
 | Implementations | 1 |
-| Documentation | 12 of 12 entries documented |
-| Tests | 39 checks of 9 entries |
+| Documentation | 14 of 14 entries documented |
+| Tests | 41 checks of 11 entries |
 | Source | [lib/basis/runtime\_sig.sml](../../../../lib/basis/runtime_sig.sml) |
 
 ## Synopsis
@@ -19,7 +19,7 @@ structure Runtime : RUNTIME  (* extension *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`Runtime`](../str/Runtime.md) | Runtime: the VM's view of the running program -- its counters, its call stack, the identity of objects, and saving and restoring the whole of it. It is Rune's own and not of the specification. | [lib/basis/runtime.sml](../../../../lib/basis/runtime.sml) |
+| [`Runtime`](../str/Runtime.md) | Runtime: the VM's view of the running program -- its counters, its call stack, the identity of objects, saving and restoring the whole of it, and units appended to it. It is Rune's own and not of the specification. | [lib/basis/runtime.sml](../../../../lib/basis/runtime.sml) |
 
 What a program can ask about the machine it is running on: how much work it
 has done, and how much memory that took.
@@ -60,6 +60,8 @@ sig
   datatype <a href="#type-world">world</a> = <a href="#con-saved">Saved</a> | <a href="#con-restored">Restored</a>
   val <a href="#val-save">save</a> : string -&gt; world
   val <a href="#val-restore">restore</a> : string -&gt; 'a
+  val <a href="#val-link">link</a> : Word8Vector.vector -&gt; unit -&gt; unit
+  val <a href="#val-load">load</a> : string -&gt; unit -&gt; unit
   val <a href="#val-version">version</a> : string
 end
 </pre>
@@ -355,6 +357,56 @@ Nothing written after the call is reached.
 <details><summary>Tests (3)</summary>
 
 For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `a-file-that-is-not-an-image` (raises) &middot; `a-file-that-is-not-there` (raises) &middot; `leaves-this-world-running`
+
+</details>
+
+### <a name="val-link"></a>`link`
+
+```sml
+val link : Word8Vector.vector -> unit -> unit
+```
+
+`link bytes` appends to the running program the unit that `bytes` is
+the file of, and is the function that runs the unit's top-level
+declarations.
+
+A unit is a file of a program compiled a file at a time
+(`rune --units --emit-units DIR`, docs/units.md): its code, and what it
+names of the units compiled before it. Those must have been linked
+first; what the unit names is found among what they declared, and its
+code is checked as the VM checks a program's file. Nothing runs until
+the function is called, and calling it again runs the declarations
+again. A unit linked twice is two units, each with globals of its own;
+the units linked after it see the second.
+
+> **Implementation** `RUNTIME.link/the-last-unit-returns`. The top level of
+> a unit compiled with others ends by calling the next one's; linked
+> here, it returns to the caller instead.
+
+**Raises** [`Fail`](../sig/GENERAL.md#exn-fail) if `bytes` is not a unit's file, is of another
+instruction set, or names what no unit linked before it declared;
+the message says which.
+
+<details><summary>Tests (1)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `bytes-that-are-no-unit` (raises)
+
+</details>
+
+### <a name="val-load"></a>`load`
+
+```sml
+val load : string -> unit -> unit
+```
+
+`load file` is [`link`](#val-link) of what `file` holds.
+
+**Raises** [`IO.Io`](../sig/IO.md#exn-io) if the file cannot be read, and [`Fail`](../sig/GENERAL.md#exn-fail) as [`link`](#val-link)
+does.
+
+<details><summary>Tests (1)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `a-file-that-is-not-there` (raises)
 
 </details>
 

@@ -1411,6 +1411,9 @@ struct
   fun rt_trace (_ : int) : (string * string * int * int) list = unsupported []
   fun rt_save (_ : string) = unsupported ~1
   fun rt_restore (_ : string) = unsupported ~1
+  (* a host has no program of Rune's to append a unit to *)
+  fun rt_link (_ : string) : (unit -> unit) option = unsupported NONE
+  fun rt_link_error () = "a host of another compiler links no units of Rune's"
 
   fun posix_getgr (name, gid) =
     let

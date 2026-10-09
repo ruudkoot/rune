@@ -90,6 +90,13 @@ static VM *the_vm;
 
 static void jit_make(VM *vm, JitProgram *jit) {
     Program *p = &vm->prog;
+    /* the code made for the program before goes first: its frames return
+       into the interpreter (jit_invalidate), since that code names the
+       tables made again here. After Runtime.restore no frame returns into
+       it; after a unit is loaded (Runtime.link, runtime/loader.c) the frames
+       below the load do. */
+    if (jit->codes)
+        for (uint32_t f = 0; f < jit->nfuncs; f++) jit_invalidate(vm, jit, f);
     free_tables(jit);
     free(jit->codes);
     jit->codes = calloc(p->nfuncs ? p->nfuncs : 1, sizeof(CodeObject));

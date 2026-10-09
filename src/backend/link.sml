@@ -34,14 +34,16 @@ struct
   (* the stamp a unit's top level names the next unit's by *)
   val next = Lower.nextUnit
 
-  (* The globals a unit's code sets, by stamp: its own. *)
+  (* The globals a unit's code sets, by stamp, each once: its own. *)
   fun defines (p : Low.program) : int list =
-    List.foldl (fn ({blocks, ...} : Low.func, acc) =>
-                  List.foldl (fn ({instrs, ...} : Low.block, acc) =>
-                                List.foldl (fn (Low.Def (_, Low.SetGlobal (g, _)), acc) => g :: acc | (_, acc) => acc)
-                                           acc instrs)
-                             acc blocks)
-               [] p
+    IntMap.listKeys
+      (List.foldl (fn ({blocks, ...} : Low.func, acc) =>
+                     List.foldl (fn ({instrs, ...} : Low.block, acc) =>
+                                   List.foldl (fn (Low.Def (_, Low.SetGlobal (g, _)), acc) => IntMap.insert (acc, g, ())
+                                                | (_, acc) => acc)
+                                              acc instrs)
+                                acc blocks)
+                  IntMap.empty p)
 
   fun bug msg = Error.bug ("link: " ^ msg)
 

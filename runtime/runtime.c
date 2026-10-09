@@ -294,6 +294,7 @@ void vm_init(VM *vm, size_t heap) {
     vm->file_modes[1] = vm->file_modes[2] = 1;
     vm->nfiles = 3;
     if (!vm->stack_limit) vm->stack_limit = STACK_LIMIT_DEFAULT;
+    vm->unit_return = UINT32_MAX;
     heap_init(vm, heap);
 }
 
@@ -312,6 +313,10 @@ void vm_release(VM *vm) {
     free(vm->prog.inlines);
     free(vm->globals);
     free(vm->global_set);
+    for (uint32_t i = 0; i < vm->nunit_sessions; i++) free(vm->unit_sessions[i]);
+    free(vm->unit_sessions);
+    free(vm->unit_exports);
+    free(vm->unit_table);
     free(vm->stack);
     free(vm->frames);
     free(vm->handlers);

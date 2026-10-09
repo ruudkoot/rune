@@ -146,6 +146,13 @@ struct
     let
       val inputs = !Options.inputs
       val () = if List.null inputs then raise Options.Usage "no input files" else ()
+    in
+      if List.all (fn f => String.isSuffix ".rbu" f) inputs then linkUnitFiles inputs
+      else compileSources inputs
+    end
+
+  and compileSources (inputs : string list) : OS.Process.status =
+    let
       val userToks = List.map loadTokens inputs
       val () = if !Options.noPrelude andalso not (List.null (!Options.libraries))
                then raise Options.Usage "--library needs the basis library (not --no-prelude)" else ()
@@ -239,10 +246,62 @@ struct
         end
       val units = List.rev (List.foldl unit [] sources)
       val () = failIfReported ()
+      val fingerprint = if registers then RegCodes.fingerprint else Opcodes.fingerprint
+      val () =
+        case !Options.emitUnits of
+          NONE => ()
+        | SOME dir => if !Options.typecheckOnly then () else emitUnitFiles (dir, fingerprint, List.map #1 sources, units)
     in
       if !Options.typecheckOnly then OS.Process.success
-      else if registers then emitProgramAs (RegCodes.fingerprint, inputs, Link.program (Regs.program, RegCodes.linked, units))
-      else emitProgram (inputs, Link.program (Stack.program, Opcodes.linked, units))
+      else linkUnits (fingerprint, inputs, units)
+    end
+
+  (* The units linked into the program, by the target of the fingerprint *)
+  and linkUnits (fingerprint : int, inputs : string list, units : Link.unitCode list) : OS.Process.status =
+    if fingerprint = RegCodes.fingerprint then
+      (Code.opcodeNames := RegCodes.names;
+       emitProgramAs (fingerprint, inputs, Link.program (Regs.program, RegCodes.linked, units)))
+    else emitProgram (inputs, Link.program (Stack.program, Opcodes.linked, units))
+
+  (* --emit-units DIR: each unit's file, its number and its source's name,
+     and DIR/units, their names in order. The units of one compile share a
+     session, a hash of the names and texts of all of them, since the
+     stamps they name each other by mean something only beside each other
+     (UnitFile). *)
+  and emitUnitFiles (dir : string, fingerprint : int, names : string list, units : Link.unitCode list) : unit =
+    let
+      fun hash (m, k) s (h : int) = CharVector.foldl (fn (c, h) => (h * k + Char.ord c) mod m) h s
+      fun text name = case Source.findFile name of SOME f => #text f | NONE => ""
+      val (h1, h2) =
+        List.foldl (fn (n, (a, b)) =>
+                      let val s = n ^ "\000" ^ text n ^ "\000"
+                      in (hash (16777213, 31) s a, hash (16777199, 37) s b) end) (7, 11) names
+      fun hex6 n = StringCvt.padLeft #"0" 6 (Int.fmt StringCvt.HEX n)
+      val session = hex6 h1 ^ hex6 h2
+      val () = (OS.FileSys.mkDir dir handle OS.SysErr _ => ())
+      fun base n = OS.Path.base (OS.Path.file n)
+      val files =
+        ListPair.map (fn ((n, u), i) =>
+                        let val f = OS.Path.joinDirFile {dir = dir, file = StringCvt.padLeft #"0" 4 (Int.toString i) ^ "-" ^ base n ^ ".rbu"}
+                        in UnitFile.write (f, fingerprint, session, u); f end)
+                     (ListPair.zip (names, units), List.tabulate (List.length units, fn i => i))
+      val out = TextIO.openOut (OS.Path.joinDirFile {dir = dir, file = "units"})
+    in
+      List.app (fn f => TextIO.output (out, f ^ "\n")) files;
+      TextIO.closeOut out
+    end
+
+  (* rune -o P.rbc A.rbu B.rbu ...: unit files of one compile, linked *)
+  and linkUnitFiles (inputs : string list) : OS.Process.status =
+    let
+      val read = List.map (fn f => UnitFile.readFile f handle UnitFile.Bad why => raise Options.Usage why
+                                                        | IO.Io _ => raise Options.Usage ("cannot read " ^ f)) inputs
+      val (fingerprint, session, _) = List.hd read
+      val () =
+        if List.all (fn (fp, s, _) => fp = fingerprint andalso s = session) read then ()
+        else raise Options.Usage "the units were not compiled together: their instruction sets or sessions differ"
+    in
+      linkUnits (fingerprint, inputs, List.map #3 read)
     end
 
   and frontEnd (basis : entry list, final : entry list, userToks, _ : string list) : Lambda.lexp option =

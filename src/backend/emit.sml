@@ -60,6 +60,12 @@ struct
 
   (* The file as chunks in order: the header, then one chunk per function. *)
   fun serialize (fingerprint : int, p : program) : string list =
+    String.concat [magic, u32 Opcodes.rbcVersion, u32 fingerprint] :: sections p
+
+  (* What follows a file's version and fingerprint, from its constants to
+     its representations: a program's (serialize), and a unit's, after its
+     own header (UnitFile). *)
+  and sections (p : program) : string list =
     let
       (* layout: function start offsets and label offsets, the latter in an
          array since labels are numbered densely from 0 *)
@@ -122,8 +128,7 @@ struct
         end
       val header =
         String.concat
-          [magic, u32 Opcodes.rbcVersion, u32 fingerprint,
-           u32 (List.length (#consts p)), String.concat (List.map constBytes (#consts p)),
+          [u32 (List.length (#consts p)), String.concat (List.map constBytes (#consts p)),
            u32 (#nglobals p),
            u32 (List.length (#funcs p)), String.concat (ListPair.map funcEntry (#funcs p, starts)),
            u32 codeLen]

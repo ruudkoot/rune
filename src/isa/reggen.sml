@@ -334,6 +334,24 @@ struct
                "  (* each opcode's operands that name a function (0), a global (1) or",
                "     a constant (2), by position: what a linker renumbers *)",
                "  val linked : (int * int) list vector = Vector.fromList [" ^ commaList (List.map linkedOperands instrs) ^ "]",
+               "  (* each opcode's operands before its list, by kind (the loader's RK_",
+               "     numbers: a label " ^ Int.toString (kindNumber (K Label)) ^ ", a handler's label "
+               ^ Int.toString (kindNumber (K HandlerLabel)) ^ "); the operand that",
+               "     says how long its list is, ~1 for none; and whether that operand",
+               "     names a primitive, whose arity it is: what reading the code back",
+               "     needs (UnitFile) *)",
+               "  val kindLabel = " ^ Int.toString (kindNumber (K Label)),
+               "  val kindHandlerLabel = " ^ Int.toString (kindNumber (K HandlerLabel)),
+               "  val operandKinds : int list vector = Vector.fromList ["
+               ^ commaList (List.map (fn i => "[" ^ commaList (List.map (fn (_, k) => Int.toString (kindNumber k)) (fixed i)) ^ "]") instrs)
+               ^ "]",
+               "  val listAt : int vector = Vector.fromList ["
+               ^ commaList (List.map (fn i => case list i of
+                                                SOME (_, Registers k) => Int.toString k
+                                              | SOME (_, PrimArgs k) => Int.toString k
+                                              | _ => "~1") instrs) ^ "]",
+               "  val listPrim : bool vector = Vector.fromList ["
+               ^ commaList (List.map (fn i => case list i of SOME (_, PrimArgs _) => "true" | _ => "false") instrs) ^ "]",
                "end"])}
     end
 

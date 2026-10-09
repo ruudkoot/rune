@@ -385,6 +385,12 @@ struct
                "  (* each opcode's operands that name a function (0), a global (1) or",
                "     a constant (2), by position: what a linker renumbers *)",
                "  val linked : (int * int) list vector = Vector.fromList [" ^ commaList (List.map linkedOperands instrs) ^ "]",
+               "  (* each opcode's operands by kind (the loader's numbers, as",
+               "     RegCodes.operandKinds): what reading the code back needs (UnitFile) *)",
+               "  val operandKinds : int list vector = Vector.fromList ["
+               ^ commaList (List.map (fn i : instruction =>
+                                        "[" ^ commaList (List.map (fn (_, k) => Int.toString (#1 (valOf (List.find (fn (_, k') => k' = k) (numbered Isa.kinds))))) (#operands i)) ^ "]") instrs)
+               ^ "]",
                "end",
                "",
                "(* The opcodes as a datatype, for code that says what it does with each",

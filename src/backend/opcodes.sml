@@ -4,8 +4,8 @@ struct
   (* the version of the layout of an .rbc, and the fingerprint of the
      instruction set, which an .rbc and an image carry *)
   val rbcVersion = 6
-  val fingerprint = 12331841
-  val fingerprintHex = "00bc2b41"
+  val fingerprint = 10632227
+  val fingerprintHex = "00a23c23"
   val HALT = 0
   val CONST = 1
   val INT = 2
@@ -53,6 +53,9 @@ struct
   (* each opcode's operands that name a function (0), a global (1) or
      a constant (2), by position: what a linker renumbers *)
   val linked : (int * int) list vector = Vector.fromList [[], [(0, 2)], [], [], [], [], [], [], [], [(0, 1)], [(0, 1)], [], [], [], [], [], [], [(0, 0)], [], [], [], [], [], [], [], [], [], [], [(0, 2)], [], [], [], [], [], [], [], [(0, 0)], [], [(0, 0)], [], []]
+  (* each opcode's operands by kind (the loader's numbers, as
+     RegCodes.operandKinds): what reading the code back needs (UnitFile) *)
+  val operandKinds : int list vector = Vector.fromList [[], [0], [2], [], [3], [4], [4], [5], [], [6], [6], [], [11], [12], [3], [3], [], [7, 11], [5], [], [], [], [8], [8], [8], [9], [], [], [1], [13], [], [], [], [10], [8, 3], [4], [7, 11], [11], [7, 11], [3, 11], [3, 12]]
 end
 
 (* The opcodes as a datatype, for code that says what it does with each

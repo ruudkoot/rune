@@ -73,6 +73,60 @@ one of them is ever on the stack: the trace of an uncaught exception shows
 one `<toplevel>` frame, at the declaration that raised it, as the program
 compiled whole does.
 
+## Unit files
+
+`rune --units --emit-units DIR FILE...` writes each unit's file into
+`DIR` -- `0000-initial.rbu`, ... in the order of the units, the Basis
+Library's first -- and `DIR/units`, their names in order, beside the
+program. A unit's file is its code as the target made it, numbered from 0,
+and the linker's record of it ([bytecode.md](bytecode.md), *Units*).
+`rune -o P.rbc $(cat DIR/units)` reads them back (`UnitFile.read`: every
+instruction decoded by the layout `make isa` writes into `RegCodes` and
+`Opcodes`, its labels and positions made again) and links them as above:
+the program is the same bytes as the one `rune --units` wrote.
+
+The units of one compile name each other by the compiler's stamps, which
+are not the same from one compile to the next, so a unit's file says which
+compile it came from, and the linker refuses to link units of two. Until
+the cache (incremental roadmap, M6) gives them names that do not depend
+on the compile, unit files are linked with the other units of their
+compile only.
+
+## Loading
+
+A running program may take units in: `Runtime.load file` reads a unit's
+file and `Runtime.link bytes` takes its bytes; each appends the unit to the
+program and gives the function that runs its top level
+([runtime.md](runtime.md), *Loading a program*, says what the VM does).
+`tests/units/load.sml` is the whole of a loader:
+
+```sml
+val () = List.app (fn file => Runtime.load file ()) (CommandLine.arguments ())
+```
+
+`runevm load.rbc $(cat DIR/units)` loads the units of a program one by one
+and runs each as it comes, and prints and exits as the program linked by
+the compiler does (`make check-units`); its traces have the loader's frames
+below the program's. What a loaded unit names of the units before it is
+found among what those exported, by the compile they came from and their
+stamps, so they must be loaded first and come from the same compile. A
+unit's top level, which in a program linked by the compiler goes on to the
+next unit's, here returns to the caller.
+
+A unit loaded twice is two units: the second has globals of its own, and
+the units loaded after it name the second's. So loading `a.rbu`, then
+`b.rbu` twice, runs `b` twice against one `a`; loading `a`, `b`, `a`, `b`
+runs each `b` against the `a` before it (`tests/units/twice`). An image of
+the program carries the units loaded and what they export, so that a world
+saved after loading some units goes on loading the rest when it is
+restored (`tests/units/loadsave.sml`).
+
+Each load makes the JIT forget the code it compiled, since its tables name
+functions by number and a load renumbers nothing but grows them; the
+functions that are hot are compiled again. That is cheap for a few loads
+and will not be for a REPL that loads a unit per declaration, which the
+incremental roadmap's M4 answers.
+
 ## Errors
 
 A top-level declaration that fails to elaborate is reported at once and

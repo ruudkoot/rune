@@ -2272,6 +2272,32 @@ static int p_rt_restore(VM *vm) {
     return ret(vm, 1, mk_int(-1));
 }
 
+/* Runtime.link: the bytes of a unit's file appended to the program
+   (load_unit_mem; docs/units.md, Loading), SOME of the closure of its top
+   level, which the caller runs, or NONE and why for rt_link_error. The bytes
+   are copied first, since making the unit's constants may move the string.
+   The program grew: PRIM_NEW_WORLD, after the result is pushed, makes the
+   JIT's view of it again (runtime/register/jit.c, jit_make). */
+static int p_rt_link(VM *vm) {
+    Obj *s = check_obj(vm, ARG(0), K_STRING, "rt_link");
+    size_t n = obj_len(s);
+    uint8_t *data = malloc(n ? n : 1);
+    if (!data) vm_fatal(vm, "out of memory");
+    memcpy(data, obj_bytes(s), n);
+    int64_t top = load_unit_mem(vm, data, n, vm->unit_error, sizeof vm->unit_error);
+    free(data);
+    if (top < 0) return ret(vm, 1, mk_int(0));   /* NONE, tag 0 */
+    Obj *c = vm_alloc_fields(vm, K_CLOSURE, 0, 1);
+    obj_fill_field(c, 0, mk_int(top));
+    Value r = mk_some(vm, mk_ptr(c));
+    ret(vm, 1, r);
+    return PRIM_NEW_WORLD;
+}
+
+static int p_rt_link_error(VM *vm) {
+    return ret(vm, 1, mk_ptr(vm_string_from(vm, vm->unit_error, (uint32_t)strlen(vm->unit_error))));
+}
+
 static int p_rt_version(VM *vm) {
     return ret(vm, 1, mk_ptr(vm_string_from(vm, RUNE_VERSION, (uint32_t)strlen(RUNE_VERSION))));
 }

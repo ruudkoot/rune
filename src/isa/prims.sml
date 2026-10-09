@@ -610,7 +610,11 @@ struct
          {name = "rt_save", arity = 1, ty = "string -> int", effects = SavesImage :: anything,
           doc = "Write the whole VM to a file, to be carried on by `runevm --restore`: 0 here, 1 in the world that starts again from it, ~1 if it could not be written."},
          {name = "rt_restore", arity = 1, ty = "string -> int", effects = NewWorld :: anything,
-          doc = "Become the world in a file that Runtime.save wrote, bytecode and all; it does not come back, and gives ~1 only when the image cannot be read."}],
+          doc = "Become the world in a file that Runtime.save wrote, bytecode and all; it does not come back, and gives ~1 only when the image cannot be read."},
+         {name = "rt_link", arity = 1, ty = "string -> (unit -> unit) option", effects = NewWorld :: anything,
+          doc = "Append the unit whose file's bytes are given to the program (docs/units.md, Loading): its imports found among what the units loaded before export, its code checked as a file's is; SOME of the closure of its top level, which the caller runs, or NONE, rt_link_error saying why."},
+         {name = "rt_link_error", arity = 1, ty = "unit -> string", effects = [Allocates, ReadsHeap],
+          doc = "Why the last rt_link gave NONE."}],
        group "comparisons that answer an order (LESS = tag 0, EQUAL = 1, GREATER = 2, as lib/basis/initial.sml declares it), for Int, Word, Char and String.compare"
         [{name = "int_order", arity = 2, ty = "int * int -> order", effects = [],
           doc = "LESS, EQUAL or GREATER: how the first int compares with the second."},

@@ -1,4 +1,4 @@
-(* requires: Runtime Array Char List OS String TextIO *)
+(* requires: Runtime Array Byte Char IO List OS String TextIO *)
 (* Runtime (signature RUNTIME, Rune's own): the counters the VM keeps for the
    program it is running. No other SML system counts any of this, and
    lib/basis/runtime.sml is `host = no` in the MANIFEST, so this file runs on
@@ -247,6 +247,20 @@ struct
                       let val n = #instructions (Runtime.stats ())
                           val () = (ignore (Runtime.restore "no-such-world-here.img")) handle OS.SysErr _ => ()
                       in #instructions (Runtime.stats ()) > n end)
+
+  (* ---- link and load
+
+     Only the failing paths can be checked here: a unit to link comes from a
+     compile of its own (rune --units --emit-units), and the units linked
+     must be those it names. tests/units runs programs whose units are
+     loaded by Runtime.load, one after another. *)
+
+  val () = T.raises ("Runtime.link/bytes-that-are-no-unit",
+                     fn Fail _ => true | _ => false,
+                     fn () => Runtime.link (Byte.stringToBytes "not a unit of Rune bytecode"))
+  val () = T.raises ("Runtime.load/a-file-that-is-not-there",
+                     fn IO.Io _ => true | _ => false,
+                     fn () => Runtime.load "no-such-unit-here.rbu")
 
   (* ---- version *)
 

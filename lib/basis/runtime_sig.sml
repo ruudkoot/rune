@@ -193,6 +193,34 @@ sig
      Raises: `OS.SysErr` if the image cannot be read. *)
   val restore : string -> 'a
 
+  (* `link bytes` appends to the running program the unit that `bytes` is
+     the file of, and is the function that runs the unit's top-level
+     declarations.
+
+     A unit is a file of a program compiled a file at a time
+     (`rune --units --emit-units DIR`, docs/units.md): its code, and what it
+     names of the units compiled before it. Those must have been linked
+     first; what the unit names is found among what they declared, and its
+     code is checked as the VM checks a program's file. Nothing runs until
+     the function is called, and calling it again runs the declarations
+     again. A unit linked twice is two units, each with globals of its own;
+     the units linked after it see the second.
+
+     Implementation: `RUNTIME.link/the-last-unit-returns`. The top level of
+     a unit compiled with others ends by calling the next one's; linked
+     here, it returns to the caller instead.
+
+     Raises: `Fail` if `bytes` is not a unit's file, is of another
+     instruction set, or names what no unit linked before it declared;
+     the message says which. *)
+  val link : Word8Vector.vector -> unit -> unit
+
+  (* `load file` is `link` of what `file` holds.
+
+     Raises: `IO.Io` if the file cannot be read, and `Fail` as `link`
+     does. *)
+  val load : string -> unit -> unit
+
   (* The version of Rune that this program is running on, as
      `runevm --version` prints it.
 

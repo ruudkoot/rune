@@ -39,7 +39,7 @@ What it rests on:
 | M0 | This roadmap | done |
 | M1 | Measure | done 2026-10-09, `0bc5bd38`: `scripts/perf-units.sh`, the table in *What a compile costs* (*Measured again*), HOL4 on Poly/ML in *HOL4 today*, `tests/incremental/SCENARIOS.md`; D6 settled (Mid binary), D9 measured (4%), the globals given a barrier in M3 |
 | M2 | Units in memory: the basis as a value, the front end resumable, a back end per unit | done 2026-10-09: `rune --units`, the linker, `Pass.whole`, errors recovered per declaration, `make check-units` (*M2, as built*); one question for the owner (flexible records) |
-| M3 | Unit bytecode, the static linker, and the VM loads units | |
+| M3 | Unit bytecode, the static linker, and the VM loads units | done 2026-10-09: `.rbu`, `--emit-units`, linking unit files, `rt_link`/`Runtime.link`/`Runtime.load`, the dynamic path in `check-units` (*M3, as built*); the globals' barrier moved to M4 |
 | M4 | The resident compiler, `use` and the REPL | |
 | M5 | HOL4 on Rune | |
 | M6 | The cache, with cut-off | |
@@ -2277,6 +2277,67 @@ What was built, and where it differs from the plan above:
   machines.
 * **Touches:** the JIT (code objects grown; `--jit=all` on arrival);
   images; `docs/runtime.md` (loading); `vm/new/ARCHITECTURE.md`.
+
+#### M3, as built (2026-10-09)
+
+* **The unit file** (`.rbu`, `docs/bytecode.md`, *Units*): a short header
+  (version, the instruction set's fingerprint, a code kind, the compile's
+  session), then the sections of a `.rbc` of the unit's own code, then the
+  linker's tables: the stamp of each global it names, the globals it sets,
+  the functions it names past its own (the next unit's top level being
+  stamp -1) and those it exports. `rune --units --emit-units DIR` writes
+  one per unit and `DIR/units`; `rune -o P.rbc` given unit files links
+  them. The **static linker** reads a unit file back into the code the
+  target made (`UnitFile.read`: every instruction decoded by the layout
+  `make isa` now writes into `RegCodes` and `Opcodes`, its labels and
+  positions made again) and links it with M2's linker, so a program linked
+  from files is the same bytes as `--units` makes (`check-units`, every
+  program). One relocation in SML (`Link`), one in C (`relocate_code`),
+  held to each other by the dynamic path below.
+* **Names across compiles.** Until M6 numbers them canonically, a unit
+  names other units by the compiler's stamps, which mean nothing outside
+  the compile; a unit carries its compile's *session* (a hash of the names
+  and texts of all its units) and the linkers refuse units of two. The
+  import table of the plan (unit identity, export name, fingerprint) is
+  M6's.
+* **`rt_load` is `rt_link`**, a primitive taking the unit's bytes, with
+  `Runtime.link : Word8Vector.vector -> unit -> unit` and `Runtime.load :
+  string -> unit -> unit` over it; `rt_link_error` gives why one failed,
+  which `Runtime.link` raises as `Fail`. The VM's side (`load_unit_mem`,
+  `runtime/loader.c`) reads the unit whole with the `.rbc` reader's own
+  code, finds its imports in a table of what the units loaded export (by
+  session, stamp and kind; saved in images, version 11), renumbers its
+  operands (`relocate_code`, per instruction set), appends everything,
+  makes its constants once the table that roots them has room, and checks
+  its code from its first function (`validate_program_from`), taking the
+  unit out again if it fails. A unit's top level returns where the static
+  linker would chain it to the next. A unit loaded twice is two units, and
+  the later units find the second. Native programs load nothing.
+* **The JIT** was the one surprise: compiled code embeds the address of
+  the table of code objects, so the table cannot be grown under it.
+  `rt_link` is a `PRIMPUSH` that says `PRIM_NEW_WORLD`, as
+  `Runtime.restore` does, and `jit_make` now invalidates every compiled
+  function before it frees the tables, so that frames below the load
+  return into the interpreter. Correct, and it costs the JIT all its code
+  at every load; M4, where the REPL loads a unit per declaration, needs
+  tables reserved to a capacity that does not move (the code objects, the
+  fill table, the functions), or code that reads the table's address from
+  the VM.
+* **Tests.** `check-units` runs the dynamic path for every program of
+  `tests/lang` and `tests/perf` (`tests/units/load.sml` loading each unit
+  file and running it; same output and status, both instruction sets),
+  leaving out programs that print their own call stack, take arguments or
+  limit the heap; `tests/units` adds a unit loaded twice, one shadowed,
+  files that are no unit or are cut short, imports not loaded or of
+  another compile or instruction set, and a world saved after loading and
+  restored to load the rest; `tests/basis/runtime.sml` the failing paths
+  of `link` and `load`. `--count` of a program linked statically is not
+  compared with its units loaded, as the plan said: the loader is a
+  program of its own, whose instructions the count includes.
+* **Left for later in M3's place:** the barrier for the globals that M1
+  asked for (`SETGLOBAL` in every engine, the minor collection scanning
+  only the cards of the globals written since, and the constants scanned
+  once). A REPL is where it is needed, so it is M4's first step.
 
 ### M4. The resident compiler, `use` and the REPL (L, about 1,500 SML)
 

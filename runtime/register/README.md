@@ -166,7 +166,7 @@ be switched (green threads), copied (continuations) and rebuilt
 
 The JIT's view of the program (`JitProgram`, made by `jit_program` when
 the driver first sees a program and again when it becomes another,
-`Runtime.restore`) is a code object per function: its entry, NULL while
+`Runtime.restore`, or grows, `Runtime.link`) is a code object per function: its entry, NULL while
 it is interpreted; its tier; the counters tier 0 keeps for the tiering
 policy; and its code's table of pc to address. An entry is published
 last, with one store. `--jit=off` runs the interpreter alone, `--jit=all`
@@ -209,7 +209,20 @@ the whole of it, because the frames are the VM's (D4) and because no
 native code is on the machine stack while the interpreter runs (the
 driver's protocol): invalidation is only ever called from tier 0. The
 code's bytes stay in the region (dead bytes, counted by `--jit-stats`;
-reclaiming them is a later concern). `--jit-stress=N` invalidates the
+reclaiming them is a later concern).
+
+**A program that grows.** `Runtime.link` appends a unit's functions to the
+program (`runtime/loader.c`, `load_unit_mem`; docs/units.md), which the
+JIT's tables, indexed by function, are too short for; and compiled code
+names those tables by their address (`entry_of`, `to_callee_dynamic`), so
+they cannot be grown under it. The primitive is a `PRIMPUSH` that says
+`PRIM_NEW_WORLD` once its result is pushed, which the loop and compiled
+code answer as they do for `Runtime.restore`: the VM is handed to the
+driver, and `jit_program` makes the view again. `jit_make` first
+invalidates every function that has code, so that the frames below the
+load, which `Runtime.restore` never leaves, return into the interpreter
+rather than into code that names the tables it frees. The hot functions
+are compiled again from their counters. `--jit-stress=N` invalidates the
 callee's code at every Nth call into compiled code, so that
 `scripts/check-jit.sh` holds every program to the interpreter's output
 and counts while functions are compiled, entered mid-way, invalidated

@@ -48,6 +48,7 @@ src/backend/regcodes.sml
 src/backend/regs.sml
 src/backend/emit.sml
 src/backend/link.sml
+src/backend/unitfile.sml
 src/driver/basismanifest.sml
 src/driver/options.sml
 src/driver/main.sml

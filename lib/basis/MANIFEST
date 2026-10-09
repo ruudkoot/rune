@@ -150,8 +150,8 @@ unix.sml        | demand | yes  | Unix                  | BinIO IO OS Posix Rune
 windows.sml     | demand | yes  | Windows               | BinIO Byte Char IO Int List OS Posix RuneError RuneExit RuneStatus String SysWord TextIO Time Word Word8Vector
 commandline.sml | demand | yes  | CommandLine           |
 sml90.sml       | demand | yes  | SML90                 | Char IO List Math Real String TextIO
-runtime_sig.sml | demand | no   | RUNTIME               | TextIO
-runtime.sml     | demand | no   | Runtime RuneRuntime   | Int List RuneError TextIO
+runtime_sig.sml | demand | no   | RUNTIME               | TextIO Word8Vector
+runtime.sml     | demand | no   | Runtime RuneRuntime   | Int List RuneError TextIO Byte BinIO
 # ---- the signatures of the specification (scripts/gen-basis-sigs.sh)
 sig_array.sml | demand | yes  | ARRAY | Vector
 sig_array_slice.sml | demand | yes  | ARRAY_SLICE | Array Vector VectorSlice

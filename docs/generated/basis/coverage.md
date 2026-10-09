@@ -56,7 +56,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`POSIX_TTY`](sig/POSIX_TTY.md) | 110 | 110 | 100% | 25 | 25 |
 | [`PRIM_IO`](sig/PRIM_IO.md) | 14 | 14 | 100% | 6 | 6 |
 | [`REAL`](sig/REAL.md) | 64 | 64 | 100% | 55 | 55 |
-| [`RUNTIME`](sig/RUNTIME.md) | 12 | 12 | 100% | 8 | 8 |
+| [`RUNTIME`](sig/RUNTIME.md) | 14 | 14 | 100% | 10 | 10 |
 | [`SML90`](sig/SML90.md) | 36 | 36 | 100% | 18 | 18 |
 | [`SOCKET`](sig/SOCKET.md) | 93 | 93 | 100% | 76 | 76 |
 | [`STREAM_IO`](sig/STREAM_IO.md) | 29 | 29 | 100% | 21 | 21 |
@@ -74,7 +74,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
 | [`WINDOWS`](sig/WINDOWS.md) | 88 | 88 | 100% | 30 | 30 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1658 | 1658 | 100% | 1127 | 1127 |
+| **all** | 1660 | 1660 | 100% | 1129 | 1129 |
 
 ## Members a signature describes
 
@@ -83,7 +83,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-197 structures have a page, with 4303 members, of which 4219 (98%) are described by a signature.
+197 structures have a page, with 4305 members, of which 4221 (98%) are described by a signature.
 
 | Structure | Members | Described |  |
 | --- | --- | --- | --- |
