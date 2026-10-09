@@ -183,15 +183,22 @@ struct
       val basisProg = parseEntries (List.filter inBasis basis)
       val libraryProg = parseEntries (List.filter (not o inBasis) basis)
       val preludeProg = basisProg @ libraryProg
-      val userProg = List.concat (List.map parseTokens userToks) @ parseEntries final
-      val () = if !Options.dumpAst then List.app (fn d => println (Ast.decToString d)) userProg else ()
+      val userProg = List.concat (List.map parseTokens userToks)
+      val finalProg = parseEntries final
+      val () = if !Options.dumpAst then List.app (fn d => println (Ast.decToString d)) (userProg @ finalProg) else ()
       val env = ref Env.initial
       val () = Elaborate.allowPrim := true
       val () = Elaborate.elabTop (env, basisProg)
       val () = Elaborate.allowPrim := false
       val () = Elaborate.elabTop (env, libraryProg)
       val () = Elaborate.allowPrim := !Options.allowPrim
+      (* --default-type holds for the input files, not for the libraries *)
+      val () = Elaborate.intDefault := (if !Options.defaultInt64 then Types.int64Ty else Types.intTy)
+      val () = Elaborate.wordDefault := (if !Options.defaultWord64 then Types.word64Ty else Types.wordTy)
       val () = Elaborate.elabTop (env, userProg)
+      val () = Elaborate.intDefault := Types.intTy
+      val () = Elaborate.wordDefault := Types.wordTy
+      val () = Elaborate.elabTop (env, finalProg)
       val () = Elaborate.finish ()
       val () = if !Options.noWarnings then Error.warnings := [] else Error.flushWarnings ()
     in
@@ -199,7 +206,7 @@ struct
       else
         SOME (Pass.stage {name = "translate", showIn = NONE, show = Lambda.show, check = LambdaLint.check,
                           size = Lambda.size}
-                         Translate.transProgram (preludeProg @ userProg))
+                         Translate.transProgram (preludeProg @ userProg @ finalProg))
     end
 
   (* -O0 is the same stages with no optional pass *)
@@ -256,6 +263,7 @@ struct
 
   fun main (_ : string, args : string list) : OS.Process.status =
     (Options.parse args;
+     Parser.orPatterns := !Options.orPatterns;
      if !Options.showHelp then (print Options.usage; OS.Process.success)
      else if !Options.showVersion then (println ("rune " ^ Config.version); OS.Process.success)
      else if !Options.basisCheck then checkManifest ()

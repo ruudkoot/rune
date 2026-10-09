@@ -1,0 +1,13 @@
+diff -u a/basis-library/arrays-and-vectors/array2.sml b/basis-library/arrays-and-vectors/array2.sml
+--- a/basis-library/arrays-and-vectors/array2.sml
++++ b/basis-library/arrays-and-vectors/array2.sml
+@@ -66,7 +66,8 @@
+                                          handle Overflow => raise Subscript
+                                    in
+                                       if (start < 0 orelse num < 0
+-                                          orelse start +! num > max)
++                                          orelse start > max
++                                          orelse num > max -! start)
+                                          then raise Subscript
+                                          else (start, start +! num)
+                                    end

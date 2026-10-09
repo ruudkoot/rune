@@ -14,7 +14,7 @@ The hosts are the releases `make hosts` installs under
 
 | System | Version | `int` | `word` |
 |---|---|---|---|
-| Rune | | 64 bits | 64 bits |
+| Rune | | 63 bits | 63 bits |
 | MLton | 20241230 | 32 bits (64 with `-default-type int64`) | 32 bits (64 with `-default-type word64`) |
 | SML/NJ | 110.99.9, 64-bit build (`smlnj-legacy`) | 63 bits | 63 bits |
 | SML/NJ | 110.99.9, 32-bit build (`smlnj32`) | 31 bits | 31 bits |
@@ -47,6 +47,12 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
   portable Standard ML, that its `_prim` annotations agree with
   `runtime/prims.def`, and that its code is right independently of Rune's compiler
   and VM.
+* `xc2:mlton`, `xc2:mlkit`, `xc2:smlnj-legacy`, `xc2:smlnj-dev` and
+  `xc2:polyml`: the suite
+  on the host's own library compiled by Rune, with the host's primitives
+  and runtime made of Rune's. How, what it checks and what it has shown are
+  in [tests/basis/xc2/README.md](../tests/basis/xc2/README.md); here it
+  adds the bugs of the hosts' libraries that only it reaches (below).
 * `rune:windows` and `rune:windows32`: the suite on Rune, on the VMs of
   Windows (`make windows`, `make test-windows`; [building.md](building.md)).
   Their lines of `deviations.txt` are `WINDOWS`: what Windows does not
@@ -81,6 +87,20 @@ needs.
 | `xc1:smlnj-dev@2026.2` | 139,175 | 138,752 | 412 | 11 | 2 | 0 |
 | `xc1:polyml@5.9.2` | 139,125 | 138,750 | 364 | 11 | 2 | 0 |
 | `xc1:mlkit@4.7.23` | 139,054 | 138,524 | 519 | 11 | 2 | 0 |
+| `xc2:mlton@20241230` | 138,668 | 138,072 | 596 | 0 | 9 | 0 |
+| `xc2:mlkit@4.7.23` | 116,568 | 115,602 | 966 | 0 | 44 | 0 |
+| `xc2:smlnj-legacy@110.99.9` | 62,012 | 61,321 | 691 | 0 | 63 | 0 |
+| `xc2:smlnj-dev@2026.2` | 62,012 | 61,321 | 691 | 0 | 63 | 0 |
+| `xc2:polyml@5.9.2` | 68,572 | 67,901 | 671 | 0 | 53 | 0 |
+
+The `xc2` rows are of a run of those configurations alone, on
+2026-10-09 (under WSL2), `xc2:smlnj-dev` on its own. `xc2:mlkit` runs more checks than
+`native:mlkit`: MLKit's compiler cannot load `posix_procenv` and
+`posix_sysdb`, which Rune compiles; `xc2:smlnj-legacy` and `xc2:smlnj-dev`
+run more than their `native` configurations, whose runtime ends in the
+sections of `array2` and `string` that the library's bugs with regions
+near `Int.maxInt` or without elements lead to. The two SML/NJ libraries
+fail the same checks on Rune.
 
 On Rune every check passes. The `xc1` configurations skip the 11 checks of
 `INet6Sock` that open a socket, which the shim declines, and fail the checks
@@ -386,6 +406,37 @@ documentation has every line under the member it is about, in a block
   that raises an exception with an argument (worked around in
   `src/elab/unifyexn.sml`), gives a datatype holding `t ref` no equality,
   and gives a large literal the wrong default type.
+* **Only in `xc2`.** Where the host's compiler cannot load a test, or its
+  runtime ends the run first, the library's own code runs to the end in the
+  `xc2` configuration, which compiles it with Rune
+  ([tests/basis/xc2/README.md](../tests/basis/xc2/README.md)); these bugs of
+  the libraries show only there:
+  * MLKit 4.7.23: `Posix.ProcEnv.time` is always 1,000,000,000 seconds
+    (until 2033): the runtime splits the seconds into a quotient and a
+    remainder of 10^9, and the library adds a status field to the quotient
+    where it means the remainder (`posix_procenv`, which MLKit's compiler
+    does not load;
+    [bugreport/mlkit/Posix.ProcEnv.time](bugreport/mlkit/Posix.ProcEnv.time/one-billion-seconds/BUGREPORT.md)).
+  * SML/NJ 110.99.9 and 2026.2: the check of
+    `String.extract (s, i, SOME j)` adds `i` and `j` without checking for
+    `Overflow`, so near `Int.maxInt` the sum wraps round, the region passes
+    and a string of `j` characters is asked for (natively the system fails
+    to allocate it;
+    [bugreport/smlnj/String.extract](bugreport/smlnj/String.extract/overflow-near-maxInt/BUGREPORT.md)).
+    `Array2.array (r, c, x)` with `r` or `c` zero has the dimensions (0, 0),
+    and a traversal of a region without rows or columns applies its
+    function to one anyway
+    ([bugreport/smlnj/Array2](bugreport/smlnj/Array2/no-rows-or-columns/BUGREPORT.md)).
+  * Poly/ML 5.9.2: `OS.Process.exit` passes C's `exit` the status that
+    `OS.Process.system` returned, the raw status of `waitpid` (768 for
+    `exit 3`, whose low byte is 0), so the program ends with another
+    status (natively the child that calls it never ends;
+    [bugreport/polyml/OS.Process.exit](bugreport/polyml/OS.Process.exit/status-of-system/BUGREPORT.md)).
+  * MLton 20241230, built for a 64-bit `int` as `xc2:mlton` builds it: the
+    region checks of `Array2` add the start and the length with `+!`, which
+    does not check for `Overflow`, so a length of `Int.maxInt` wraps round
+    and passes
+    ([bugreport/mlton/Array2](bugreport/mlton/Array2/region-check-wraps-with-int64/BUGREPORT.md)).
 * **MLton, SML/NJ and Poly/ML.** `fromCString` converts an unescaped
   double quote; `Char.fromCString` raises `Overflow` for a `\x` escape
   beyond `Int.maxInt`; `Char.scan` leaves a trailing escaped formatting

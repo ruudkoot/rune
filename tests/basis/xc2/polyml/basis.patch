@@ -1,0 +1,3369 @@
+diff -ruN a/basis/Array.sml b/basis/Array.sml
+--- a/basis/Array.sml
++++ b/basis/Array.sml
+@@ -20,15 +20,15 @@
+ local
+     type 'a array = 'a array (* Predeclared in the basis with special equality props. *)
+ 
+-    val arrayAsWord: 'a array -> word = RunCall.unsafeCast
++    (* xc2: an array is Rune's; arrayAsWord, RunCall.unsafeCast, is left out *)
+     val intAsWord: int -> word = RunCall.unsafeCast
+ 
+     (* Unsafe subscript and update functions used internally for cases
+        where we've already checked the range. *)
+-    fun unsafeSub(v: 'a array, i: int): 'a = RunCall.loadWord(arrayAsWord v, intAsWord i)
++    fun unsafeSub(v: 'a array, i: int): 'a = XC2P.asub(v, i) (* xc2: RunCall.loadWord *)
+ 
+     and unsafeUpdate(v: 'a array, i: int, new: 'a): unit =
+-        RunCall.storeWord (arrayAsWord v, intAsWord i, RunCall.unsafeCast new);
++        XC2P.aupdate (v, i, new); (* xc2: RunCall.storeWord *)
+ 
+     val intAsWord: int -> word = RunCall.unsafeCast
+     and wordAsInt: word -> int = RunCall.unsafeCast
+@@ -38,53 +38,45 @@
+        into an immutable object and changes the equality function from pointer
+        equality to value equality. *)
+     fun makeVector(v: 'a array, start, length): 'a vector =
+-        if length = 0 then RunCall.unsafeCast LibrarySupport.emptyVector (* Special case for zero *)
++        if length = 0 then XC2P.vempty () (* Special case for zero *) (* xc2: RunCall.unsafeCast LibrarySupport.emptyVector *)
+         else (* The size must have already been checked. *)
+-        let
+-            (* Make a vector initialised to zero. *)
+-            val new_vec = RunCall.allocateWordMemory(Word.fromInt length, 0wx40, 0w0)
+-        in
+-            RunCall.moveWords(RunCall.unsafeCast v, new_vec, Word.fromInt start, 0w0, Word.fromInt length);
+-            RunCall.clearMutableBit new_vec;
+-            RunCall.unsafeCast new_vec
+-        end
++            XC2P.avector (v, start, length) (* xc2: RunCall.allocateWordMemory, moveWords, clearMutableBit *)
+ in
+ structure Array: ARRAY =
+ struct
+     type 'a array = 'a array
+     type 'a vector = 'a Vector.vector
+     
+-    val maxLen = RunCall.unsafeCast LibrarySupport.maxAllocation
++    val maxLen = XC2P.amaxLen (* xc2: RunCall.unsafeCast LibrarySupport.maxAllocation *)
+     
+     (* Internal function: Construct an array initialised to zero. *)
++    (* xc2: an array of XC2's, which XC2P.afreeze makes Rune's once it is filled *)
+     fun alloc len =
+         let
+             val () = if len >= maxLen then raise General.Size else ()
+-            val vec = RunCall.allocateWordMemory(Word.fromInt len, 0wx40, 0w0)
+         in
+-            RunCall.unsafeCast vec
++            XC2P.valloc len (* xc2: RunCall.allocateWordMemory(Word.fromInt len, 0wx40, 0w0) *)
+         end
+      
+     fun array(len, a) =
+         let
+             val () = if len < 0 orelse len >= maxLen then raise General.Size else ()
+-            val vec = RunCall.allocateWordMemory(Word.fromInt len, 0wx40, RunCall.unsafeCast a)
+         in
+-            RunCall.unsafeCast vec
++            XC2P.aarray (len, a) (* xc2: RunCall.allocateWordMemory(Word.fromInt len, 0wx40, RunCall.unsafeCast a) *)
+         end
+ 
+     val listLength = length; (* Pick this up from the prelude. *)
+-    fun length (vec: 'a array): int = wordAsInt(RunCall.memoryCellLength(arrayAsWord vec))
++    fun length (vec: 'a array): int = XC2P.alength vec (* xc2: RunCall.memoryCellLength *)
+     
+     fun op sub (vec: 'a array, i: int): 'a =
+-        if not (LibrarySupport.isShortInt i) orelse intAsWord i >= RunCall.memoryCellLength vec
++        if not (LibrarySupport.isShortInt i) orelse intAsWord i >= intAsWord (length vec) (* xc2: RunCall.memoryCellLength *)
+         then raise General.Subscript
+         else unsafeSub(vec, i)
+  
+     fun update (vec: 'a array, i: int, new: 'a) : unit =
+-        if not (LibrarySupport.isShortInt i) orelse intAsWord i >= RunCall.memoryCellLength vec
++        if not (LibrarySupport.isShortInt i) orelse intAsWord i >= intAsWord (length vec) (* xc2: RunCall.memoryCellLength *)
+         then raise General.Subscript
+-        else RunCall.storeWord (arrayAsWord vec, intAsWord i, RunCall.unsafeCast new);
++        else XC2P.aupdate (vec, i, new); (* xc2: RunCall.storeWord *)
+ 
+     (* Create an array from a list. *)
+     fun fromList (l : 'a list) : 'a array =
+@@ -97,14 +89,14 @@
+         (* Copy the list elements into the array. *)
+         fun init (v, i, a :: l) =
+              (
+-             unsafeUpdate(v, i, a);
++             XC2P.vset(v, i, a); (* xc2: unsafeUpdate, into the array being made *)
+              init(v, i + 1, l)
+              )
+         |  init (_, _, []) = ();
+         
+     in
+         init(vec, 0, l);
+-        vec
++        XC2P.afreeze vec (* xc2: vec *)
+     end
+         
+     fun tabulate (length: int , f : int->'a): 'a array =
+@@ -115,10 +107,10 @@
+         (* Initialise it to the function values. *)
+         fun init i = 
+             if length <= i then ()
+-            else (unsafeUpdate(vec, i, f i); init(i+1))
++            else (XC2P.vset(vec, i, f i); init(i+1)) (* xc2: unsafeUpdate, into the array being made *)
+     in
+         init 0;
+-        vec
++        XC2P.afreeze vec (* xc2: vec *)
+     end
+     
+     (* "vector" creates a vector from an array so the representation of a
+@@ -136,7 +128,7 @@
+         in
+             if di < 0 orelse di+len > length dst
+             then raise General.Subscript
+-            else RunCall.moveWords(s, d, 0w0, Word.fromInt di, Word.fromInt len)
++            else XC2P.amove(s, d, 0, di, len) (* xc2: RunCall.moveWords *)
+         end
+ 
+     (* Copy a vector into an array. *)
+@@ -146,7 +138,7 @@
+         in
+             if di < 0 orelse di+len > length dst
+             then raise General.Subscript
+-            else RunCall.moveWords(src, RunCall.unsafeCast d, 0w0, Word.fromInt di, Word.fromInt len)
++            else XC2P.amoveVec(src, d, 0, di, len) (* xc2: RunCall.moveWords *)
+         end
+         
+ 
+@@ -274,7 +266,7 @@
+         in
+             if di < 0 orelse di+len > Array.length dst
+             then raise General.Subscript
+-            else RunCall.moveWords(v, RunCall.unsafeCast d, Word.fromInt i, Word.fromInt di, Word.fromInt len)
++            else XC2P.amoveVec(v, d, i, di, len) (* xc2: RunCall.moveWords *)
+         end
+ 
+     fun isEmpty(Slice{length, ...}) = length = 0
+diff -ruN a/basis/Array2.sml b/basis/Array2.sml
+--- a/basis/Array2.sml
++++ b/basis/Array2.sml
+@@ -30,8 +30,9 @@
+        purpose. *)
+     type 'a array = 'a Bootstrap.array
+     type 'a implementation = 'a Array.array Vector.vector
+-    fun toArray(impl: 'a implementation): 'a array = RunCall.unsafeCast impl
+-    fun fromArray(a: 'a array): 'a implementation = RunCall.unsafeCast a
++    (* xc2: RunCall.unsafeCast impl and a, the rows in a ref *)
++    fun toArray(impl: 'a implementation): 'a array = ref impl
++    fun fromArray(a: 'a array): 'a implementation = !a
+ 
+     type 'a region =
+     {
+diff -ruN a/basis/BoolArray.sml b/basis/BoolArray.sml
+--- a/basis/BoolArray.sml
++++ b/basis/BoolArray.sml
+@@ -46,12 +46,12 @@
+                 if bits < 0 orelse bits > maxLen
+                 then raise General.Size
+                 else (Word.fromInt bits + (bitsPerWord - 0w1)) div bitsPerWord
+-            val vec = RunCall.allocateByteMemory(words, F_mutable_bytes)
++            val vec = XC2P.allocBytes (words * wordSize) (* xc2: RunCall.allocateByteMemory(words, F_mutable_bytes) *)
+             val bytes = words * wordSize
+             fun fill n =
+                 if n = bytes
+                 then ()
+-                else (RunCall.storeByte(vec, n, 0w0); fill(n+0w1))
++                else (XC2P.storeByteW(vec, n, 0w0); fill(n+0w1))
+             (* We will only set the bits that we actually use.  Unused bytes will be uninitialised.
+                The equality function we're using tests all the bytes so we need to initialise them. *)
+         in
+@@ -80,7 +80,7 @@
+             (* Accumulate the list elements into bytes and store
+                them in the vector. *)
+             fun init (byteno, acc, bit, []) =
+-                if bit = 0w1 then () else RunCall.storeByte(vec, byteno, acc)
++                if bit = 0w1 then () else XC2P.storeByteW(vec, byteno, acc)
+               | init (byteno, acc, bit, a :: b) =
+                 let
+                     val byte = if a then bit orb acc else acc
+@@ -88,7 +88,7 @@
+                     if bit = 0wx80
+                     then
+                     (
+-                        RunCall.storeByte(vec, byteno, byte);
++                        XC2P.storeByteW(vec, byteno, byte);
+                         init(byteno+0w1, 0w0, 0w1, b)
+                     )
+                     else init(byteno, byte, bit << 0w1, b)
+@@ -111,13 +111,13 @@
+             val byte = if f i then bit orb acc else acc
+         in
+             if bit = 0wx80
+-            then ( RunCall.storeByte(vec, byteNo, byte) ; init (i+1) (byteNo+0w1) 0w1 0w0 )
++            then ( XC2P.storeByteW(vec, byteNo, byte) ; init (i+1) (byteNo+0w1) 0w1 0w0 )
+             else init (i+1) byteNo (bit << 0w1) byte
+         end
+         else if acc = 0w0
+         then ()
+         else (* Put in the last byte. *)
+-            RunCall.storeByte(vec, byteNo, acc)
++            XC2P.storeByteW(vec, byteNo, acc)
+     in
+         init 0 0w0 0w1 0w0;
+         (length, vec)
+@@ -128,7 +128,7 @@
+     fun uncheckedSub (v, i: int): bool =
+         let
+             val iW = Word.fromInt i
+-            val byte = RunCall.loadByte(v, iW >> 0w3)
++            val byte = XC2P.loadByteW(v, iW >> 0w3)
+             val mask = 0w1 << (iW andb 0w7)
+         in
+             byte andb mask <> 0w0
+@@ -151,10 +151,10 @@
+             if len >= 8
+             then let
+                 (* Get the next byte and shift it up *)
+-                val newbyte = last orb (RunCall.loadByteFromImmutable(src, byte) << dest_bit)
++                val newbyte = last orb (XC2P.loadByteW(src, byte) << dest_bit)
+             in
+                 (* Store the low-order 8 bits into the destination. *)
+-                RunCall.storeByte(dest, dest_byte+byte, newbyte);
++                XC2P.storeByteW(dest, dest_byte+byte, newbyte);
+                 (* Shift the accumulator down by 8 bits and get ready for
+                    the next byte. *)
+                 do_move (newbyte >> 0w8) (byte+0w1) (len-8)
+@@ -164,7 +164,7 @@
+             else (* 0 < len < 8 *)
+             let
+                 (* Get the next byte and shift it up *)
+-                val nextsrc = RunCall.loadByteFromImmutable(src, byte);
++                val nextsrc = XC2P.loadByteW(src, byte);
+                 val newbyte: word = last orb (nextsrc << dest_bit)
+                 (* This assumes that any extra bits of the source are
+                    zero. *)
+@@ -173,7 +173,7 @@
+                 then
+                     (
+                     (* Store the low-order 8 bits into the destination. *)
+-                    RunCall.storeByte(dest, dest_byte+byte, newbyte);
++                    XC2P.storeByteW(dest, dest_byte+byte, newbyte);
+                     (* Shift the accumulator down by 8 bits and get ready for
+                        the next byte. *)
+                     do_move (newbyte >> 0w8) (byte+0w1) (len-8)
+@@ -205,16 +205,14 @@
+         let
+             val (length, vec) = fromList' l
+         in
+-            RunCall.clearMutableBit vec;
+-            Vector(length, vec)
++            Vector(length, XC2P.freezeBytes vec) (* xc2: RunCall.clearMutableBit *)
+         end
+     
+         fun tabulate (length: int, f : int->elem): vector =
+         let
+             val (length, vec) = tabulate' (length, f)
+         in
+-            RunCall.clearMutableBit vec;
+-            Vector(length, vec)
++            Vector(length, XC2P.freezeBytes vec) (* xc2: RunCall.clearMutableBit *)
+         end
+             
+ (*      fun map f (Vector(len, vec)) =
+@@ -235,13 +233,12 @@
+                             if l >= 8 then mapbyte byte 0w1 0w0 0wx100
+                             else mapbyte byte 0w1 0w0 (0w1 << Word.fromInt l)
+                     in
+-                        RunCall.storeByte(new_vec, b, res);
++                        XC2P.storeByteW(new_vec, b, res);
+                         copy (b+0w1) (l-8)
+                     end
+             in
+                 copy 0w0 len;
+-                RunCall.clearMutableBit new_vec;
+-                Vector(len, new_vec)
++                Vector(len, XC2P.freezeBytes new_vec) (* xc2: RunCall.clearMutableBit *)
+             end*)
+ 
+         fun mapi f (Vector(len, vec)) =
+@@ -255,20 +252,19 @@
+                 fun copy b l =
+                     if l <= 0 then ()
+                     else let
+-                        val byte = RunCall.loadByteFromImmutable(vec, b)
++                        val byte = XC2P.loadByteW(vec, b)
+                         val res =
+                             (* Map each byte to get the result.  Must not
+                                apply the function beyond the last bit. *)
+                             if l >= 8 then mapbyte byte 0w1 0w0 0wx100 l
+                             else mapbyte byte 0w1 0w0 (0w1 << Word.fromInt l) l
+                     in
+-                        RunCall.storeByte(new_vec, b, res);
++                        XC2P.storeByteW(new_vec, b, res);
+                         copy (b+0w1) (l-8)
+                     end
+             in
+                 copy 0w0 len;
+-                RunCall.clearMutableBit new_vec;
+-                Vector(len, new_vec)
++                Vector(len, XC2P.freezeBytes new_vec) (* xc2: RunCall.clearMutableBit *)
+             end
+ 
+         (* To save duplicating almost the same code just define map in terms of mapi. *)
+@@ -301,11 +297,10 @@
+                  |  copy_list [] dest_off bits =
+                     (* At the end of the lists store any extra in the last byte. *)
+                     if bits = 0w0 then ()
+-                    else RunCall.storeByte(new_vec, intAsWord dest_off div 0w8, bits)
++                    else XC2P.storeByteW(new_vec, intAsWord dest_off div 0w8, bits)
+             in
+                 copy_list l 0 0w0;
+-                RunCall.clearMutableBit new_vec;
+-                Vector(total_len, new_vec)
++                Vector(total_len, XC2P.freezeBytes new_vec) (* xc2: RunCall.clearMutableBit *)
+             end
+         end
+ 
+@@ -365,13 +360,13 @@
+         let
+             val iW = Word.fromInt i
+             val byteOffsetW = iW >> 0w3
+-            val byte = RunCall.loadByte(v, byteOffsetW);
++            val byte = XC2P.loadByteW(v, byteOffsetW);
+             val mask = 0w1 << (iW andb 0w7)
+             val newByte =
+                 if new then byte orb mask
+                 else byte andb (notb mask)
+         in
+-            RunCall.storeByte(v, byteOffsetW, newByte)
++            XC2P.storeByteW(v, byteOffsetW, newByte)
+         end
+ 
+         fun array (len, ini) =
+@@ -385,7 +380,7 @@
+             (* TODO: This should be set by a built-in. *)
+             fun setBytes b =
+                 if b >= bytes then ()
+-                else (RunCall.storeByte(vec, b, initByte); setBytes (b+0w1))
++                else (XC2P.storeByteW(vec, b, initByte); setBytes (b+0w1))
+             val () = setBytes 0w0
+         in
+             Array(len, vec)
+diff -ruN a/basis/Byte.sml b/basis/Byte.sml
+--- a/basis/Byte.sml
++++ b/basis/Byte.sml
+@@ -33,8 +33,8 @@
+     struct
+         (* Chars and Word8.word values are both tagged integers in the
+            range 0..255. *)
+-        fun byteToChar (w: Word8.word): char = RunCall.unsafeCast w
+-        fun charToByte (c: char) : Word8.word = RunCall.unsafeCast c
++        fun byteToChar (w: Word8.word): char = XC2P.wordToChar (Word.fromLargeWord (Word8.toLargeWord w)) (* xc2: RunCall.unsafeCast *)
++        fun charToByte (c: char) : Word8.word = Word8.fromLargeWord (Word.toLargeWord (XC2P.charToWord c)) (* xc2: RunCall.unsafeCast *)
+ 
+         (* Conversion between Word8Vector.vector and string is just a cast. *)
+         val bytesToString = LibrarySupport.w8vectorToString
+diff -ruN a/basis/General.sml b/basis/General.sml
+--- a/basis/General.sml
++++ b/basis/General.sml
+@@ -59,10 +59,10 @@
+ 
+     (* Exception packets.  The first word is the code, a unique id; the second is
+        the exception name and the third is the exception argument. *)
+-    fun exnName (ex: exn): string = RunCall.loadWordFromImmutable(ex, 0w1)
++    fun exnName (ex: exn): string = XC2P.exnName ex (* xc2: RunCall.loadWordFromImmutable(ex, 0w1) *)
+     
+     (* Since exception packets carry a printer function this is just PolyML.makestring. *)
+-    fun exnMessage (ex: exn) = PolyML.makestring ex
++    fun exnMessage (ex: exn) = XC2P.exnMessage ex (* xc2: PolyML.makestring ex *)
+     
+     datatype order = LESS | EQUAL | GREATER
+     
+diff -ruN a/basis/INet6Sock.sml b/basis/INet6Sock.sml
+--- a/basis/INet6Sock.sml
++++ b/basis/INet6Sock.sml
+@@ -84,8 +84,8 @@
+            version are complicated when there are zeros. *)
+         and toString: in_addr -> string = RunCall.rtsCallFull1 "PolyNetworkIP6AddressToString"
+ 
+-        val toAddr: in_addr * int -> sock_addr = RunCall.rtsCallFull2 "PolyNetworkCreateIP6Address"
+-        and fromAddr: sock_addr -> in_addr * int = RunCall.rtsCallFull1 "PolyNetworkGetAddressAndPortFromIP6"
++        val toAddr: in_addr * int -> sock_addr = LibraryIOSupport.SOCKADDR o RunCall.rtsCallFull2 "PolyNetworkCreateIP6Address" (* xc2: the address, whose representation is the constructor *)
++        and fromAddr: sock_addr -> in_addr * int = (fn LibraryIOSupport.SOCKADDR a => RunCall.rtsCallFull1 "PolyNetworkGetAddressAndPortFromIP6" a) (* xc2: the address, whose representation is the constructor *)
+ 
+         local
+             val getAddrAny: unit -> in_addr = RunCall.rtsCallFull0 "PolyNetworkReturnIP6AddressAny"
+@@ -120,7 +120,9 @@
+         local
+             type addrInfo = int * Socket.AF.addr_family * int * int * sock_addr * string
+             val getAddrInfo: string * addr_family -> addrInfo list =
+-                RunCall.rtsCallFull2 "PolyNetworkGetAddrInfo"
++                (* xc2: the addresses, whose representation is the constructor *)
++                fn x => List.map (fn (a, b, c, d, e, f) => (a, b, c, d, LibraryIOSupport.SOCKADDR e, f))
++                                 (RunCall.rtsCallFull2 "PolyNetworkGetAddrInfo" x)
+         in
+             fun getByName s =
+             (
+@@ -133,7 +135,7 @@
+ 
+         local
+             (* This does a reverse lookup of the address to return the name. *)
+-            val doCall: sock_addr -> string = RunCall.rtsCallFull1 "PolyNetworkGetNameInfo"
++            val doCall: sock_addr -> string = (fn LibraryIOSupport.SOCKADDR a => RunCall.rtsCallFull1 "PolyNetworkGetNameInfo" a) (* xc2: the address, whose representation is the constructor *)
+         in
+             fun getByAddr n =
+             (
+diff -ruN a/basis/INetSock.sml b/basis/INetSock.sml
+--- a/basis/INetSock.sml
++++ b/basis/INetSock.sml
+@@ -168,8 +168,8 @@
+             pr n 3 (* Always generate 4 numbers. *)
+         end
+ 
+-        val toAddr: in_addr * int -> sock_addr = RunCall.rtsCallFull2 "PolyNetworkCreateIP4Address"
+-        and fromAddr: sock_addr -> in_addr * int = RunCall.rtsCallFull1 "PolyNetworkGetAddressAndPortFromIP4"
++        val toAddr: in_addr * int -> sock_addr = LibraryIOSupport.SOCKADDR o RunCall.rtsCallFull2 "PolyNetworkCreateIP4Address" (* xc2: the address, whose representation is the constructor *)
++        and fromAddr: sock_addr -> in_addr * int = (fn LibraryIOSupport.SOCKADDR a => RunCall.rtsCallFull1 "PolyNetworkGetAddressAndPortFromIP4" a) (* xc2: the address, whose representation is the constructor *)
+ 
+         local
+             val getAddrAny: unit -> in_addr = RunCall.rtsCallFull0 "PolyNetworkReturnIP4AddressAny"
+@@ -204,7 +204,9 @@
+         local
+             type addrInfo = int * Socket.AF.addr_family * int * int * sock_addr * string
+             val getAddrInfo: string * addr_family -> addrInfo list =
+-                RunCall.rtsCallFull2 "PolyNetworkGetAddrInfo"
++                (* xc2: the addresses, whose representation is the constructor *)
++                fn x => List.map (fn (a, b, c, d, e, f) => (a, b, c, d, LibraryIOSupport.SOCKADDR e, f))
++                                 (RunCall.rtsCallFull2 "PolyNetworkGetAddrInfo" x)
+         in
+             fun getByName s =
+             (
+@@ -217,7 +219,7 @@
+ 
+         local
+             (* This does a reverse lookup of the address to return the name. *)
+-            val doCall: sock_addr -> string = RunCall.rtsCallFull1 "PolyNetworkGetNameInfo"
++            val doCall: sock_addr -> string = (fn LibraryIOSupport.SOCKADDR a => RunCall.rtsCallFull1 "PolyNetworkGetNameInfo" a) (* xc2: the address, whose representation is the constructor *)
+         in
+             fun getByAddr n =
+             (
+diff -ruN a/basis/InitialBasis.ML b/basis/InitialBasis.ML
+--- a/basis/InitialBasis.ML
++++ b/basis/InitialBasis.ML
+@@ -104,7 +104,7 @@
+          |  power2' n i = power2' (2*n) (i-1)
+         val power2 = power2' 1
+         val wordSize : word = RunCall.bytesPerWord
+-        val bitsInWord: int = (RunCall.unsafeCast wordSize) * 8
++        val bitsInWord: int = XC2P.wordToInt wordSize * 8 (* xc2: RunCall.unsafeCast *)
+         val wordSize = bitsInWord - 1 (* 31 or 63 bits *)
+     in
+         val maxIntP1 = power2(wordSize-1)
+@@ -117,7 +117,7 @@
+         local
+             val fquot: FixedInt.int * FixedInt.int -> FixedInt.int = quot
+             val frem: FixedInt.int * FixedInt.int -> FixedInt.int = rem
+-            val smallestInt = RunCall.unsafeCast(LargeInt.~ maxIntP1)
++            val smallestInt = XC2P.largeToFixed(LargeInt.~ maxIntP1) (* xc2: RunCall.unsafeCast *)
+             infix 7 quot rem
+             exception Overflow  = RunCall.Overflow
+             and Div = RunCall.Div
+@@ -165,9 +165,9 @@
+         open LargeInt
+     
+         local
+-            val isShort: LargeInt.int -> bool = RunCall.isShort
+-            val toShort: LargeInt.int -> FixedInt.int = RunCall.unsafeCast
+-            and fromShort: FixedInt.int -> LargeInt.int = RunCall.unsafeCast
++            val isShort: LargeInt.int -> bool = XC2P.largeIsShort (* xc2: RunCall.isShort *)
++            val toShort: LargeInt.int -> FixedInt.int = XC2P.largeToFixed (* xc2: RunCall.unsafeCast *)
++            and fromShort: FixedInt.int -> LargeInt.int = XC2P.fixedToLarge (* xc2: RunCall.unsafeCast *)
+ 
+             val callDiv: LargeInt.int * LargeInt.int -> LargeInt.int = RunCall.rtsCallFull2 "PolyDivideArbitrary"
+             and callRem: LargeInt.int * LargeInt.int -> LargeInt.int = RunCall.rtsCallFull2 "PolyRemainderArbitrary"
+@@ -289,7 +289,7 @@
+         (* As with Word.word shifts we have to check that the shift does not exceed the
+            word length.  N.B.  The shift amount is always a Word.word value. *)
+         (* This is the same as wordSize in native 32-bit and 64-bit but different in 32-in-64. *)
+-        val sysWordSize = Word.*(RunCall.memoryCellLength zero, RunCall.bytesPerWord)
++        val sysWordSize = 0w8 (* xc2: Word.*(RunCall.memoryCellLength zero, RunCall.bytesPerWord), for a Word64.word *)
+         val maxBits = Word.*(sysWordSize, 0w8) (* 32 or 64-bits. *)
+     in
+         val wordSize = maxBits
+@@ -344,25 +344,7 @@
+ 
+ (* It seems this is sometimes required to ensure that a structure defined in
+    Initialise is properly built.  It doesn't do any harm.  *)
+-structure Foreign =
+-struct
+-    open Foreign
+-end;
+-
+-structure ForeignMemory =
+-struct
+-    open ForeignMemory
+-    
+-    (* Add wrappers to these functions so that they raise exceptions if they are called. *)
+-    val get64 =
+-        fn (s, i) =>
+-            if LargeWord.wordSize < 0w64
+-            then raise Foreign.Foreign "64-bit operations not available" else get64(s, i)
+-    and set64 =
+-        fn (s, i, v) =>
+-            if LargeWord.wordSize < 0w64
+-            then raise Foreign.Foreign "64-bit operations not available" else set64(s, i, v)
+-end;
++(* xc2: Foreign and ForeignMemory, the foreign-function interface, are left out. *)
+ 
+ (* This needs to be defined for StringSignatures but must not be defined in
+    that file because that conflicts with building the IntAsIntInf module. *)
+@@ -375,7 +357,7 @@
+ (* A few useful functions which are in the top-level environment.
+    Others are added later. *)
+ 
+-fun (var: 'a ref) := (v: 'a) : unit = RunCall.storeWord (var, 0w0, v)
++val op := : 'a ref * 'a -> unit = op := (* xc2: RunCall.storeWord (var, 0w0, v) *)
+ 
+ (* The following version of "o" currently gets optimised better. *)
+ fun (f o g) = fn x => f (g x); (* functional composition *)
+@@ -391,22 +373,8 @@
+     len l 0
+     end
+ 
+-(* This is needed for the 5.8.2 bootstrap only because a
+-   conversion function for char is not installed in Initialise. *)
+-local
+-    (* Temporary conversion function for characters. This is replaced in
+-       the Char structure. *)
+-    fun convChar (s: string) : char =
+-    let
+-        val convS = Bootstrap.convString s
+-    in
+-        if true (*String.lengthWordAsWord convS = 0w1*)
+-        then RunCall.loadByte(convS, RunCall.bytesPerWord)
+-        else raise RunCall.Conversion "Bad character"
+-    end
+-in
+-    val it = RunCall.addOverload convChar "convChar";
+-end;
++(* xc2: the conversion of character constants (convChar), which Rune's
++   compiler does itself, is left out. *)
+ 
+ (* Print functions.  Some of these are replaced by functions in the Basis library and
+    are installed here merely so that we can get useful output if we get a failure while
+@@ -420,7 +388,7 @@
+     fun print_string _ _ (s: string) = PrettyString s (* Not escaped at the moment. *)
+ 
+     fun print_char _ _ (c: char) =
+-        PrettyBlock (0, false, [], [PrettyString "#", PrettyString(RunCall.unsafeCast c)])
++        PrettyBlock (0, false, [], [PrettyString "#", PrettyString(XC2P.charToString c) (* xc2: RunCall.unsafeCast *)])
+ 
+       fun nil @ y = y (* This is redefined later. *)
+       |  (a::b) @ y = a :: (b @ y)
+@@ -451,8 +419,8 @@
+     let
+         fun pr (i: int) =
+            if i < 0 then PrettyString "~" :: pr (~ i)
+-           else if i < 10 then [PrettyString(RunCall.unsafeCast(i + RunCall.unsafeCast #"0"))]
+-           else pr(i div 10) @ [PrettyString(RunCall.unsafeCast(i mod 10 + 48))]
++           else if i < 10 then [PrettyString(XC2P.charToString(XC2P.intToChar(i + XC2P.charToInt #"0")))] (* xc2: RunCall.unsafeCast *)
++           else pr(i div 10) @ [PrettyString(XC2P.charToString(XC2P.intToChar(i mod 10 + 48)))]
+     in
+         PrettyBlock(1, false, [], pr i)
+     end
+diff -ruN a/basis/Int.sml b/basis/Int.sml
+--- a/basis/Int.sml
++++ b/basis/Int.sml
+@@ -65,12 +65,12 @@
+     fun toLarge i = i and fromLarge i = i
+     
+     (* Whether int is short or long we can just cast it here. *)
+-    val fromInt: Int.int -> int = RunCall.unsafeCast (* Just a cast. *)
++    val fromInt: Int.int -> int = XC2P.fixedToLarge (* Just a cast. *) (* xc2: RunCall.unsafeCast *)
+  
+     (* If int is fixed precision we have to check that the value will fit.  *)
+     fun toInt(i: int): Int.int =
+         if Bootstrap.intIsArbitraryPrecision orelse LibrarySupport.largeIntIsSmall i
+-        then RunCall.unsafeCast i
++        then XC2P.largeToFixed i (* xc2: RunCall.unsafeCast *)
+         else raise Overflow
+ 
+     val precision = NONE (* Arbitrary precision. *)
+@@ -96,7 +96,7 @@
+         else (* i > 0 *) j > zero
+ 
+     local
+-        val fixedIntAsWord: FixedInt.int -> word = RunCall.unsafeCast
++        val fixedIntAsWord: FixedInt.int -> word = XC2P.intToWord (* xc2: RunCall.unsafeCast *)
+ 
+         (* To reduce the need for arbitrary precision arithmetic we can try to
+            process values in groups. *)
+@@ -149,7 +149,7 @@
+                     let
+                         val res = allocString(chars+0w1)
+                     in
+-                        RunCall.storeByteInitialise(res, wordSize, #"~");
++                        XC2P.storeByte(res, wordSize, #"~");
+                         (res, wordSize+0w1)
+                     end
+                     else (* Positive *) (allocString chars, wordSize)
+@@ -159,7 +159,7 @@
+                     val (result, pos) = toCharGroup(continuation, chars + pad)
+                     fun addZeros n =
+                         if n = pad then ()
+-                        else (RunCall.storeByteInitialise(result, pos+n, #"0"); addZeros(n+0w1))
++                        else (XC2P.storeByte(result, pos+n, #"0"); addZeros(n+0w1))
+                 in
+                     addZeros 0w0;
+                     (result, pos+pad)
+@@ -175,7 +175,7 @@
+                     val (result, pos) =
+                         toChars(i div base, chars+0w1, continuation, pad-0w1)
+                 in
+-                    RunCall.storeByteInitialise(result, pos, ch);
++                    XC2P.storeByte(result, pos, ch);
+                     (result, pos+0w1)
+                 end
+ 
+@@ -197,8 +197,7 @@
+             let
+                 val (result, _) = toCharGroup(abs i, 0w0)
+             in
+-                RunCall.clearMutableBit result;
+-                result
++                freezeString result (* xc2: RunCall.clearMutableBit result; result *)
+             end
+         end
+     end
+@@ -334,28 +333,28 @@
+     type int = FixedInt.int (* Defined in the basis *)
+ 
+     (* Whether int is fixed or arbitrary precision we can just cast it here. *)
+-    val toInt: int -> Int.int = RunCall.unsafeCast (* Just a cast. *)
++    val toInt: int -> Int.int = fn i => i (* Just a cast. *) (* xc2: RunCall.unsafeCast *)
+ 
+     (* If int is arbitrary precision we have to check that the value will fit. *)
+     fun fromInt(i: Int.int): int =
+         if LibrarySupport.isShortInt i
+-        then RunCall.unsafeCast i
++        then i (* xc2: RunCall.unsafeCast *)
+         else raise Overflow
+ 
+     (* Conversion from fixed int to large is just a cast.  It will always fit. *)
+-    val toLarge: int -> LargeInt.int = RunCall.unsafeCast
++    val toLarge: int -> LargeInt.int = XC2P.fixedToLarge (* xc2: RunCall.unsafeCast *)
+ 
+     (* When converting from arbitrary precision we have to check. *)
+     fun fromLarge(i: LargeInt.int): int =
+         if LibrarySupport.largeIntIsSmall i
+-        then RunCall.unsafeCast i
++        then XC2P.largeToFixed i (* xc2: RunCall.unsafeCast *)
+         else raise Overflow
+ 
+     local
+         fun power2' n 0 : LargeInt.int = n
+          |  power2' n i = power2' (2*n) (i-1)
+         val power2 = power2' 1
+-        val bitsInWord: int = (RunCall.unsafeCast LibrarySupport.wordSize) * 8
++        val bitsInWord: int = XC2P.wordToInt LibrarySupport.wordSize * 8 (* xc2: RunCall.unsafeCast *)
+         val wordSize = bitsInWord - 1 (* 31 or 63 bits *)
+         val maxIntP1 = power2(wordSize-1)
+     in
+diff -ruN a/basis/Int32.sml b/basis/Int32.sml
+--- a/basis/Int32.sml
++++ b/basis/Int32.sml
+@@ -89,3 +89,9 @@
+ val () = RunCall.addOverload Int32.<= "<=";
+ val () = RunCall.addOverload Int32.>= ">=";
+ val () = RunCall.addOverload Int32.abs "abs";
++
++(* xc2: the overloading of Int32's operators (RunCall.addOverload) and constants
++   (convInt), made by Rune's; an Int32.int is a LargeInt.int, whose constant
++   is converted from its digits *)
++structure XC2PInt32Lit = struct fun fromLit s = Int32.fromLarge (RuneIntInf.fromLit s) end
++_overload int Int32 via XC2PInt32Lit.fromLit
+diff -ruN a/basis/IntInf.sml b/basis/IntInf.sml
+--- a/basis/IntInf.sml
++++ b/basis/IntInf.sml
+@@ -34,7 +34,7 @@
+ struct
+     type int = LargeInt.int
+     
+-    val largeIntToWord: int -> word = RunCall.unsafeCast (* Masked out by signature *)
++    val largeIntToWord: int -> word = fn i => XC2P.intToWord (XC2P.largeToFixed i) (* Masked out by signature *) (* xc2: RunCall.unsafeCast *)
+ 
+     val quotRem = LibrarySupport.quotRem
+ 
+diff -ruN a/basis/LargeWord.sml b/basis/LargeWord.sml
+--- a/basis/LargeWord.sml
++++ b/basis/LargeWord.sml
+@@ -130,16 +130,16 @@
+     local
+         val getLowOrderWord: LargeInt.int -> LargeWord.word =
+             RunCall.rtsCallFull1 "PolyGetLowOrderAsLargeWord"
+-        val isShortInt: LargeInt.int -> bool = RunCall.isShort
++        val isShortInt: LargeInt.int -> bool = XC2P.largeIsShort (* xc2: RunCall.isShort *)
+     in
+         fun wordFromLargeInt (i: LargeInt.int): word =
+             if isShortInt i
+-            then RunCall.unsafeCast i
++            then XC2P.intToWord (XC2P.largeToFixed i) (* xc2: RunCall.unsafeCast *)
+             else Word.fromLargeWord(getLowOrderWord i)
+             
+         and largeWordFromLargeInt (i: LargeInt.int): LargeWord.word =
+             if isShortInt i
+-            then Word.toLargeX(RunCall.unsafeCast i)
++            then Word.toLargeX(XC2P.intToWord (XC2P.largeToFixed i)) (* xc2: RunCall.unsafeCast *)
+             else getLowOrderWord i
+     end
+ 
+@@ -148,7 +148,7 @@
+     fun wordFromInt(i: int): word =
+         if Bootstrap.intIsArbitraryPrecision
+         then wordFromLargeInt(LargeInt.fromInt i)
+-        else RunCall.unsafeCast i
++        else XC2P.intToWord i (* xc2: RunCall.unsafeCast *)
+ 
+     (* The maximum word is the largest tagged value.  The maximum large-word is
+        the largest value that will fit in a machine word. *)
+@@ -156,8 +156,8 @@
+         fun power2' n 0 : LargeInt.int = n
+          |  power2' n i = power2' (2*n) (i-1)
+         val power2 = power2' 1
+-        val bitsInWord: int = (RunCall.unsafeCast LibrarySupport.wordSize) * 8
+-        val bitsInLargeWord: int = (RunCall.unsafeCast LibrarySupport.sysWordSize) * 8
++        val bitsInWord: int = XC2P.wordToInt LibrarySupport.wordSize * 8 (* xc2: RunCall.unsafeCast *)
++        val bitsInLargeWord: int = XC2P.wordToInt LibrarySupport.sysWordSize * 8
+     in
+         val wordSize = bitsInWord - 1 (* 31 or 63 bits *)
+         val maxWordP1: LargeInt.int = power2 wordSize (* One more than the maximum word *)
+@@ -180,7 +180,7 @@
+         and fromLargeInt = wordFromLargeInt
+ 
+         (* Conversion to signed integer is simple. *)
+-	val toLargeIntX: word -> LargeInt.int = RunCall.unsafeCast
++	val toLargeIntX: word -> LargeInt.int = XC2P.fixedToLarge o XC2P.wordToInt (* xc2: RunCall.unsafeCast *)
+         val toIntX = Int.fromLarge o toLargeIntX
+         
+         (* Conversion to unsigned integer has to treat values with the sign bit
+@@ -241,7 +241,7 @@
+         val fromLargeInt = largeWordFromLargeInt
+ 
+         local
+-            val shortToWord: LargeInt.int -> largeword = Word.toLargeWordX o RunCall.unsafeCast
++            val shortToWord: LargeInt.int -> largeword = Word.toLargeWordX o XC2P.intToWord o XC2P.largeToFixed (* xc2: RunCall.unsafeCast *)
+             val zero: largeword = shortToWord 0
+ 
+             infix << >> orb andb
+diff -ruN a/basis/LibraryIOSupport.sml b/basis/LibraryIOSupport.sml
+--- a/basis/LibraryIOSupport.sml
++++ b/basis/LibraryIOSupport.sml
+@@ -131,7 +131,7 @@
+         val doIo = RunCall.rtsCallFull3 "PolyBasicIOGeneral"
+     in
+         fun readBinVector (strm: fileDescr, len: int): Word8Vector.vector =
+-            doIo(26, strm, len)
++            LibrarySupport.w8vectorFromString (doIo(26, strm, len)) (* xc2: the string of the bytes *)
+     end
+ 
+ 
+diff -ruN a/basis/LibrarySupport.sml b/basis/LibrarySupport.sml
+--- a/basis/LibrarySupport.sml
++++ b/basis/LibrarySupport.sml
+@@ -29,12 +29,12 @@
+     val wordSize : word = RunCall.bytesPerWord
+     
+     (* This is the same as wordSize in native 32-bit and 64-bit but different in 32-in-64. *)
+-    val sysWordSize: word = RunCall.memoryCellLength(Word.toLargeWord 0w0) * wordSize
++    val sysWordSize: word = 0w8 (* xc2: RunCall.memoryCellLength(Word.toLargeWord 0w0) * wordSize *)
+ end;
+ 
+ structure LibrarySupport :>
+ sig
+-    eqtype address (* eqtype so we can compare vectors. *)
++    type address = XC2P.address (* xc2: eqtype address; the shim's operations of RunCall take it *)
+     structure CharArray:
+         sig
+         datatype array = Array of word*address
+@@ -42,14 +42,17 @@
+     structure Word8Array:
+         sig
+         datatype array = Array of word*address
+-        eqtype vector
++        type vector = string (* xc2: eqtype vector, whose representation, a string, the shim's runtime makes and reads *)
+         val wVecLength: vector -> word
+         end
+     val w8vectorToString: Word8Array.vector -> string
+     and w8vectorFromString: string -> Word8Array.vector
+     val wordSize: word and sysWordSize: word
+     val bigEndian: bool
+-    val allocString: word -> string (* Create a mutable string. *)
++    val allocString: word -> address (* Create a mutable string. *)
++    (* xc2: allocString makes a string that is being made, as an address (the
++       offsets of a string's bytes), which freezeString makes a string *)
++    val freezeString: address -> string
+     val allocBytes: word -> address
+     val isShortInt      : int -> bool
+     val largeIntIsSmall: LargeInt.int -> bool
+@@ -93,7 +96,7 @@
+     end
+ 
+     (* This is always a short non-negative integer so can be cast as word or int. *)
+-    fun sizeAsWord(s: string): word = RunCall.loadUntagged(s, 0w0)
++    fun sizeAsWord(s: string): word = XC2P.sizeAsWord s (* xc2: RunCall.loadUntagged(s, 0w0) *)
+ 
+     (* Provide the implementation of CharArray.array, Word8Array.array
+        and Word8Array.vector (= Word8Vector.vector) here so that they
+@@ -121,7 +124,7 @@
+ 
+     (* There are circumstances when we want to pass the address of a string where
+        we expect an address. *)
+-    val stringAsAddress : string -> address = RunCall.unsafeCast
++    val stringAsAddress : string -> address = XC2P.str (* xc2: RunCall.unsafeCast *)
+     val w8vectorAsAddress = stringAsAddress o w8vectorToString
+ 
+     open MachineConstants;
+@@ -129,7 +132,6 @@
+     local
+         val F_mutable_bytes : word = 0wx41
+         (* This is put in by Initialise and filtered out later. *)
+-        val setLengthWord: string * word -> unit = fn (s, n) => RunCall.storeUntagged(s, 0w0, n)
+ 
+         val callGetAllocationSize = RunCall.rtsCallFast0 "PolyGetMaxAllocationSize"
+         val callGetMaxStringSize = RunCall.rtsCallFast0 "PolyGetMaxStringSize"
+@@ -143,19 +145,19 @@
+            int is arbitrary precision.  If int is fixed precision it will
+            always be true. *)
+         fun isShortInt(i: int): bool =
+-            not Bootstrap.intIsArbitraryPrecision orelse RunCall.isShort i
++            not Bootstrap.intIsArbitraryPrecision (* xc2: orelse RunCall.isShort i *)
+ 
+         (* Test whether a large int will fit in the short format. *)
+-        val largeIntIsSmall: LargeInt.int -> bool = RunCall.isShort
++        val largeIntIsSmall: LargeInt.int -> bool = XC2P.largeIsShort (* xc2: RunCall.isShort *)
+ 
+         fun unsignedShortOrRaiseSize (i: int): word =
+             if isShortInt i andalso i >= 0
+-            then RunCall.unsafeCast i
++            then XC2P.intToWord i (* xc2: RunCall.unsafeCast *)
+             else raise Size
+ 
+         fun unsignedShortOrRaiseSubscript (i: int): word =
+             if isShortInt i andalso i >= 0
+-            then RunCall.unsafeCast i
++            then XC2P.intToWord i (* xc2: RunCall.unsafeCast *)
+             else raise Subscript
+ 
+         fun allocBytes bytes : address =
+@@ -167,12 +169,8 @@
+                    maximum array size because strings have a length word.
+                    It seems best to use the same maximum size for CharArray/Word8Array. *) 
+                 else (bytes + wordSize - 0w1) div wordSize
+-            val mem = RunCall.allocateByteMemory(words, F_mutable_bytes)
+-            (* Zero the last word. *)
+-            val () =
+-                if words = 0w0 then () else RunCall.storeUntagged(RunCall.unsafeCast mem, words-0w1, 0w0)
+         in
+-            mem
++            XC2P.allocBytes bytes (* xc2: the bytes, zero: RunCall.allocateByteMemory(words, F_mutable_bytes) *)
+         end
+ 
+         (* Allocate store for the string and set the first word to contain
+@@ -183,34 +181,27 @@
+                    plus rounding. *)
+                 val words : word = (charsW + 0w2 * wordSize - 0w1) div wordSize
+                 val _ = words <= maxAllocation orelse raise Size
+-                val vec = RunCall.allocateByteMemory(words, F_mutable_bytes)
+-                (* Zero any extra bytes we've needed for rounding to a number of words.
+-                   This isn't essential but ensures that RTS sharing passes will
+-                   merge strings that are otherwise the same. *)
+-                val () = RunCall.storeUntagged(vec, words-0w1, 0w0)
+             in
+-                (* Set the length word.  Since this is untagged we can't simply
+-                   use assign_word.*)
+-                setLengthWord(vec, charsW);
+-                vec
++                XC2P.allocString charsW (* xc2: RunCall.allocateByteMemory, and the length word set *)
+             end
++        val freezeString = XC2P.freeze (* xc2: RunCall.clearMutableBit *)
+ 
+         (* Volatile refs.  They are cleared to 0/nil/NONE in an exported or saved state
+            and their current value is not written to a child state, unlike normal refs.
+            They are used for things like mutexes, condition variables and the list of
+            currently open streams which should always be reset. *)
+         local
+-            fun volatileRef() : 'a ref = RunCall.allocateWordMemory(0w1, 0wx48, 0w0)
+         in
+-            val volatileListRef = volatileRef
+-            and volatileWordRef = volatileRef
+-            and volatileOptionRef = volatileRef
++            (* xc2: RunCall.allocateWordMemory(0w1, 0wx48, 0w0), the value 0 as each type *)
++            fun volatileListRef () = ref []
++            and volatileWordRef () = ref 0w0
++            and volatileOptionRef () = ref NONE
+         end
+     end
+ 
+     (* Create an empty vector.  This is used wherever we want an empty vector.
+        It can't be 'a vector which is what we want because of the value restriction. *)
+-    val emptyVector: word = RunCall.allocateWordMemory(0w0, 0w0, 0w0)
++    val emptyVector: word = 0w0 (* xc2: RunCall.allocateWordMemory(0w0, 0w0, 0w0); Vector and Array make their own *)
+     
+     val quotRem = LargeInt.quotRem
+     
+diff -ruN a/basis/NetProtDB.sml b/basis/NetProtDB.sml
+--- a/basis/NetProtDB.sml
++++ b/basis/NetProtDB.sml
+@@ -32,7 +32,8 @@
+     type entry = string * string list * int
+     
+     (* The RTS calls return either zero or the address of the entry. *)
+-    datatype result = AResult of entry | NoResult
++    (* xc2: an option, as the shim's runtime gives it (AResult of entry | NoResult) *)
++    type result = entry option
+ 
+     val name: entry -> string = #1
+     val aliases : entry -> string list = #2
+@@ -42,14 +43,14 @@
+         val doCall: string -> result = RunCall.rtsCallFull1 "PolyNetworkGetProtByName"
+     in
+         fun getByName s =
+-            case doCall s of AResult r => SOME r | NoResult => NONE
++            case doCall s of SOME r => SOME r | NONE => NONE
+     end
+ 
+     local
+         val doCall: int -> result = RunCall.rtsCallFull1 "PolyNetworkGetProtByNo"
+     in
+         fun getByNumber n =
+-            case doCall n of AResult r => SOME r | NoResult => NONE
++            case doCall n of SOME r => SOME r | NONE => NONE
+     end
+ 
+ end;
+diff -ruN a/basis/NetServDB.sml b/basis/NetServDB.sml
+--- a/basis/NetServDB.sml
++++ b/basis/NetServDB.sml
+@@ -33,7 +33,8 @@
+     type entry = string * string list * int * string
+     
+     (* The RTS calls return either zero or the address of the entry. *)
+-    datatype result = AResult of entry | NoResult
++    (* xc2: an option, as the shim's runtime gives it (AResult of entry | NoResult) *)
++    type result = entry option
+ 
+     val name: entry -> string = #1
+     val aliases : entry -> string list = #2
+@@ -47,10 +48,10 @@
+              = RunCall.rtsCallFull2 "PolyNetworkGetServByNameAndProtocol"
+     in
+         fun getByName(s, NONE) =
+-            (case doCall1 s of AResult r => SOME r | NoResult => NONE)
++            (case doCall1 s of SOME r => SOME r | NONE => NONE)
+ 
+          |  getByName(s, SOME p) =
+-            (case doCall2(s, p) of AResult r => SOME r | NoResult => NONE)
++            (case doCall2(s, p) of SOME r => SOME r | NONE => NONE)
+     end
+ 
+     local
+@@ -60,9 +61,9 @@
+              = RunCall.rtsCallFull2 "PolyNetworkGetServByPortAndProtocol"
+     in
+         fun getByPort(n, NONE) =
+-            (case doCall1 n of AResult r => SOME r | NoResult => NONE)
++            (case doCall1 n of SOME r => SOME r | NONE => NONE)
+          |  getByPort(n, SOME p) =
+-            (case doCall2(n, p) of AResult r => SOME r | NoResult => NONE)
++            (case doCall2(n, p) of SOME r => SOME r | NONE => NONE)
+     end
+ 
+ end;
+diff -ruN a/basis/OS.sml b/basis/OS.sml
+--- a/basis/OS.sml
++++ b/basis/OS.sml
+@@ -107,7 +107,7 @@
+ 
+ signature OS_IO =
+   sig
+-    eqtype iodesc
++    type iodesc = XC2P.iodesc (* xc2: eqtype iodesc, which the shim's runtime makes *)
+     val hash : iodesc -> word
+     val compare : (iodesc * iodesc) -> General.order
+     
+@@ -161,7 +161,8 @@
+   end (* OS *);
+ 
+ 
+-structure OS:> OS where type syserror = LibrarySupport.syserror (* Don't make it abstract a second time *) =
++structure OS:> OS where type syserror = LibrarySupport.syserror (* Don't make it abstract a second time *)
++    where type Process.status = int (* xc2: the status of waitpid, which Posix and Unix take from the runtime *) =
+ struct
+     type syserror = LibrarySupport.syserror (* Implemented as a SysWord.word value. *)
+ 
+@@ -175,11 +176,13 @@
+        SOME e = syserror(errorName e) nor is this defined to
+        be the same as the Posix.Error functions.  Those are
+        defined to return e.g. "etoobig".  Here we return "E2BIG". *)
+-    val errorName: syserror -> string = RunCall.rtsCallFull1 "PolyProcessEnvErrorName"
+-    and errorMsg: syserror -> string = RunCall.rtsCallFull1 "PolyProcessEnvErrorMessage"
++    (* xc2: the runtime's error codes are words: LibrarySupport.syserrorToWord and
++       syserrorFromWord convert *)
++    val errorName: syserror -> string = RunCall.rtsCallFull1 "PolyProcessEnvErrorName" o LibrarySupport.syserrorToWord
++    and errorMsg: syserror -> string = RunCall.rtsCallFull1 "PolyProcessEnvErrorMessage" o LibrarySupport.syserrorToWord
+ 
+     local
+-        val doCall: string -> syserror = RunCall.rtsCallFull1 "PolyProcessEnvErrorFromString"
++        val doCall: string -> syserror = LibrarySupport.syserrorFromWord o RunCall.rtsCallFull1 "PolyProcessEnvErrorFromString"
+     in
+         (* Convert a string to an error message if possible. *)
+         fun syserror (s: string) : syserror option =
+@@ -816,7 +819,7 @@
+                  = RunCall.rtsCallFull3 "PolyBasicIOGeneral"
+         in
+             (* Get file modification time. *)
+-            fun modTime s = doIo(61, (), s)
++            fun modTime s = Time.fromMicroseconds(doIo(61, (), s)) (* xc2: the microseconds, which are the time in Poly/ML *)
+         end
+ 
+         local
+@@ -832,8 +835,9 @@
+                  = RunCall.rtsCallFull3 "PolyBasicIOGeneral"
+         in
+             (* Get file size. *)
+-            fun setTime(s, NONE) = doIo(63, s, Time.now())
+-             | setTime(s, SOME t) = doIo(63, s, t)
++            (* xc2: the time as its microseconds *)
++            fun setTime(s, NONE) = doIo(63, s, Time.toMicroseconds(Time.now()))
++             | setTime(s, SOME t) = doIo(63, s, Time.toMicroseconds t)
+         end
+ 
+         local
+@@ -915,8 +919,7 @@
+ 
+     structure IO :> OS_IO =
+     struct
+-        datatype iodesc = 
+-            IODESC of word ref (* This is currently a volatile ref.  We MUST use pointer equality. *)
++        datatype iodesc = datatype XC2P.iodesc (* xc2: IODESC of word ref, as the shim's runtime makes it *)
+         local
+             val doIo: int*iodesc*unit -> int
+                  = RunCall.rtsCallFull3 "PolyBasicIOGeneral"
+@@ -1056,7 +1059,7 @@
+                 and ioVector: iodesc Vector.vector = Vector.fromList ioDescs
+             end
+             (* Do the actual polling.  Returns a vector with bits set for the results. *)
+-            val finishTime = case t of NONE => NONE | SOME t => SOME(t + Time.now())
++            val finishTime = case t of NONE => NONE | SOME t => SOME(Time.+(t, Time.now())) (* xc2: t + Time.now(), which Rune does not overload *)
+             
+             val pollMillSeconds = 1000 (* 1 second *)
+             fun doPoll() =
+@@ -1064,7 +1067,7 @@
+                 val timeToGo =
+                     case finishTime of
+                         NONE => pollMillSeconds
+-                    |   SOME finish => LargeInt.toInt(LargeInt.min(LargeInt.max(0, Time.toMilliseconds(finish-Time.now())), LargeInt.fromInt pollMillSeconds))
++                    |   SOME finish => LargeInt.toInt(LargeInt.min(LargeInt.max(0, Time.toMilliseconds(Time.-(finish, Time.now())) (* xc2: finish-Time.now() *)), LargeInt.fromInt pollMillSeconds))
+                 
+                 (* Poll the descriptors.  Returns after the timeout whether or not they are ready. *)
+                 val resV = sysPoll(ioVector, bitVector, timeToGo)
+@@ -1103,7 +1106,7 @@
+ 
+     end (* IO *)
+ 
+-    structure Process:> OS_PROCESS =
++    structure Process:> OS_PROCESS where type status = int (* xc2: the status of waitpid, which Posix and Unix take from the runtime *) =
+     struct
+ 
+         type status = int
+diff -ruN a/basis/PackReal.sml b/basis/PackReal.sml
+--- a/basis/PackReal.sml
++++ b/basis/PackReal.sml
+@@ -36,7 +36,10 @@
+     type realType
+     val isBigEndian: bool
+     val realSize: word
+-    
++    (* xc2: the bytes of a real, which Poly/ML takes as a pointer to them
++       (RunCall.unsafeCast), and back *)
++    val realToAddr: realType -> LibrarySupport.address
++    val addrToReal: LibrarySupport.address -> realType
+ ) : PACK_REAL where type real = realType =
+ 
+ struct
+@@ -50,7 +53,7 @@
+     val isBigEndian = isBigEndian
+ 
+     local
+-        val System_move_bytes: address*address*word*word*word->unit = RunCall.moveBytes
++        val System_move_bytes: address*address*word*word*word->unit = XC2P.moveBytes (* xc2: RunCall.moveBytes *)
+ 
+         (* Move bytes, reversing the order. *)
+         fun swapOrder(src: address, srcOff: word,
+@@ -59,7 +62,7 @@
+             if length = 0w0 then ()
+             else
+             (
+-                RunCall.storeByte(dest, destOff+length-0w1, RunCall.loadByte(src, srcOff));
++                XC2P.storeByte(dest, destOff+length-0w1, XC2P.loadByte(src, srcOff)); (* xc2: RunCall.storeByte, RunCall.loadByte *)
+                 swapOrder(src, srcOff+0w1, dest, destOff, length-0w1)
+             )
+     in
+@@ -75,11 +78,10 @@
+     let
+         val v = allocString realSize
+         (* r is actually represented by a pointer to a vector. *)
+-        val addr: address = RunCall.unsafeCast r
++        val addr: address = realToAddr r (* xc2: RunCall.unsafeCast *)
+     in
+-        doMove(addr, 0w0, stringAsAddress v, wordSize, isBigEndian);
+-        RunCall.clearMutableBit v;
+-        w8vectorFromString v
++        doMove(addr, 0w0, v (* xc2: stringAsAddress v *), wordSize, isBigEndian);
++        w8vectorFromString (freezeString v) (* xc2: RunCall.clearMutableBit v; v *)
+     end
+ 
+     fun fromBytes v =
+@@ -92,8 +94,7 @@
+             val r = allocBytes realSize
+         in
+             doMove(w8vectorAsAddress v, wordSize, r, 0w0, isBigEndian);
+-            RunCall.clearMutableBit r;
+-            (RunCall.unsafeCast r): real
++            addrToReal r (* xc2: RunCall.clearMutableBit r; RunCall.unsafeCast *)
+         end
+ 
+     fun subVec(v, i) =
+@@ -107,8 +108,7 @@
+             val r = allocBytes realSize
+         in
+             doMove(w8vectorAsAddress v, wordSize + iW, r, 0w0, isBigEndian);
+-            RunCall.clearMutableBit r;
+-            (RunCall.unsafeCast r): real
++            addrToReal r (* xc2: RunCall.clearMutableBit r; RunCall.unsafeCast *)
+         end
+     end
+ 
+@@ -123,8 +123,7 @@
+             val r = allocBytes realSize
+         in
+             doMove(v, iW, r, 0w0, isBigEndian);
+-            RunCall.clearMutableBit r;
+-            (RunCall.unsafeCast r): real
++            addrToReal r (* xc2: RunCall.clearMutableBit r; RunCall.unsafeCast *)
+         end
+     end
+ 
+@@ -137,7 +136,7 @@
+         else
+         let
+             (* r is actually represented by a pointer to a vector. *)
+-            val addr: address = RunCall.unsafeCast r
++            val addr: address = realToAddr r (* xc2: RunCall.unsafeCast *)
+         in
+             doMove(addr, 0w0, v, iW, isBigEndian)
+         end
+@@ -145,6 +144,8 @@
+ end;
+ 
+ structure PackRealBig: PACK_REAL =
+-    PackRealBoxed(type realType = real val isBigEndian = true val realSize = 0w8)
++    PackRealBoxed(type realType = real val isBigEndian = true val realSize = 0w8
++                  val realToAddr = XC2P.realToAddr val addrToReal = XC2P.addrToReal)
+ and PackRealLittle: PACK_REAL =
+-    PackRealBoxed(type realType = real val isBigEndian = false val realSize = 0w8);
++    PackRealBoxed(type realType = real val isBigEndian = false val realSize = 0w8
++                  val realToAddr = XC2P.realToAddr val addrToReal = XC2P.addrToReal);
+diff -ruN a/basis/PackReal32Tagged.sml b/basis/PackReal32Tagged.sml
+--- a/basis/PackReal32Tagged.sml
++++ b/basis/PackReal32Tagged.sml
+@@ -21,8 +21,11 @@
+    with the floating point value in the high-order 32-bits. *)
+ 
+ local
+-    val r32AsWord: Real32.real -> word = RunCall.unsafeCast
+-    and wordAsR32: word -> Real32.real = RunCall.unsafeCast
++    (* xc2: a Real32.real as a word with its bits in the high-order 32 bits
++       of the machine's word, bits 31 to 62 of the word of 63, as Poly/ML
++       represents it (RunCall.unsafeCast), and back *)
++    val r32AsWord: Real32.real -> word = fn r => Word.<< (XC2P.floatToBits r, 0w31)
++    and wordAsR32: word -> Real32.real = fn w => XC2P.floatFromBits (Word.>> (w, 0w31))
+     
+     infix << >>
+     infix orb
+diff -ruN a/basis/PolyMLException.sml b/basis/PolyMLException.sml
+--- a/basis/PolyMLException.sml
++++ b/basis/PolyMLException.sml
+@@ -24,59 +24,16 @@
+ struct
+     open PolyML
+ 
+-    local
+-        (* This datatype is used in VALUE_OPS and FinalPolyML to define the format of a
+-           location in an exception packet.  It includes the possibility that the location
+-                   information may be missing. *)
+-        datatype RuntimeLocation =
+-            NoLocation
+-        |   SomeLocation of
+-                (* file: *) string * 
+-                (*startLine:*) FixedInt.int *  (*startPosition:*) FixedInt.int *
+-                (*endLine:*) FixedInt.int * (*endPosition:*) FixedInt.int
+-    in
+-        structure Exception =
+-        struct
+-            (* Backwards compatibility. *)
+-            fun traceException(f: unit->'a, _: string list * exn -> 'a): 'a = f()
+-
+-            fun exceptionLocation(exn: exn): location option =
+-                case RunCall.loadWordFromImmutable(exn, 0w3) of
+-                    NoLocation => NONE
+-                |   SomeLocation(file, startLine, startPosition, endLine, endPosition) =>
+-                        SOME { file=file, startLine=startLine, startPosition=startPosition,
+-                               endLine=endLine, endPosition=endPosition }
+-
+-            local
+-                (* If we use ML "raise" to raise an exception the location will be the
+-                   location of the raise.  If we have a handler that reraises an exception
+-                   it is often better to preserve the original location.  We need to add
+-                   a function that raises an exception without adding its own location. *)
+-                open PolyML.CodeTree
+-                val functionCode = mkFunction (mkRaise(mkLoadArgument 0), 1, "raiseFn", [], 0)
+-                (* N.B. genCode is redefined in FinalPolyML without the options argument. *)
+-                val compiledCode = genCode(functionCode, [], 0) ()
+-                val raiseFn = case evalue compiledCode of SOME c => c | NONE => raise Bind
+-            in
+-                (* Raise an exception using a given location rather than the value in the packet. *)
+-                fun raiseWithLocation(ex: exn, {file, startLine, startPosition, endLine, endPosition}: location) =
+-                let
+-                    open RunCall
+-                    fun getEntry n = RunCall.loadWordFromImmutable(ex, n)
+-                    val packet =
+-                        (getEntry 0w0, getEntry 0w1, getEntry 0w2,
+-                            SomeLocation(file, startLine, startPosition, endLine, endPosition))
+-                in
+-                    RunCall.unsafeCast raiseFn packet
+-                end
+-            end
+-
+-            (* Re-raise an exception that has been handled preserving the location. *)
+-            fun reraise exn =
+-                case exceptionLocation exn of
+-                    NONE => raise exn
+-                |   SOME location => raiseWithLocation (exn, location)
+-        end
++    (* xc2: an exception packet has no location here (the compiler puts it in
++       Poly/ML's, which RunCall.loadWordFromImmutable reads), and an exception
++       is raised again as it is *)
++    structure Exception =
++    struct
++        (* Backwards compatibility. *)
++        fun traceException(f: unit->'a, _: string list * exn -> 'a): 'a = f()
++        fun exceptionLocation(_: exn): location option = NONE
++        fun raiseWithLocation(ex: exn, _: location) = raise ex
++        fun reraise exn = raise exn
+     end
+ 
+     (* For backwards compatibility include these in the PolyML structure. *)
+diff -ruN a/basis/Posix.sml b/basis/Posix.sml
+--- a/basis/Posix.sml
++++ b/basis/Posix.sml
+@@ -588,12 +588,18 @@
+        signals this is the best we can do. *)
+     where type Signal.signal = int
+     where type FileSys.dirstream = OS.FileSys.dirstream
++    (* xc2: a descriptor and a process as the runtime makes them, which Unix
++       takes from it *)
++    where type ProcEnv.file_desc = OS.IO.iodesc
++    where type Process.pid = int
+     =
+ struct
+     local
+         val osSpecificGeneralCall = RunCall.rtsCallFull2 "PolyOSSpecificGeneral"
+     in
+-        fun osSpecificGeneral(code: int, arg:'a):'b = RunCall.unsafeCast(osSpecificGeneralCall(RunCall.unsafeCast(code, arg)))
++        (* xc2: the calls with a constant code become the shim's functions, of the
++           types of their arguments (rewrite.awk): RunCall.unsafeCast *)
++        val osSpecificGeneral = osSpecificGeneralCall
+     end
+ 
+     fun getConst i : SysWord.word = osSpecificGeneral (4, i)
+@@ -843,7 +849,8 @@
+ 
+         (* This is supposed to call C "exit" function so we must use PolyFinish here. *)
+         local
+-            val doExit: Word8.word -> unit = RunCall.rtsCallFull1 "PolyFinish"
++            (* xc2: the code as an int, which the shim's PolyFinish takes *)
++            val doExit: Word8.word -> unit = fn w => RunCall.rtsCallFull1 "PolyFinish" (Word8.toInt w)
+         in
+             fun exit w =
+             (
+@@ -856,7 +863,7 @@
+             val doCall = osSpecificGeneral
+         in
+             (* This previously used absolute times.  Now uses relative. *)
+-            fun alarm t = doCall(20, t)
++            fun alarm t = Time.fromMicroseconds(doCall(20, Time.toMicroseconds t)) (* xc2: the microseconds, which are the time in Poly/ML *)
+         end
+ 
+         local
+@@ -868,21 +875,22 @@
+             (* Sleep for a period.  Returns the unused wait time. *)
+             fun sleep sleepTime =
+             let
+-                val endTime = sleepTime + Time.now()
++                (* xc2: the operators of Time, which Rune does not overload *)
++                val endTime = Time.+(sleepTime, Time.now())
+                 val maxWait = 1000 (* Wait for up to a second *)
+                 val initialCount = doCall (0, 0)
+                 fun doWait () =
+                 let
+                     val timeToGo =
+-                        LargeInt.min(Time.toMilliseconds(endTime-Time.now()), LargeInt.fromInt maxWait)
++                        LargeInt.min(Time.toMilliseconds(Time.-(endTime, Time.now())), LargeInt.fromInt maxWait)
+                 in
+                     if timeToGo <= 0 orelse doCall(LargeInt.toInt timeToGo, initialCount) <> initialCount
+                     then (* Time has expired or we were interrupted. *)
+                     let
+                         val now = Time.now()
+                     in
+-                        if endTime > now
+-                        then endTime-now
++                        if Time.>(endTime, now)
++                        then Time.-(endTime, now)
+                         else Time.fromSeconds 0
+                     end
+                     else doWait() (* Resume the wait *)
+@@ -964,11 +972,11 @@
+ 
+         local
+             (* Apart from the child times all these could be obtained by calling the Timer functions. *)
+-            val getUserTime: unit -> Time.time = RunCall.rtsCallFull0 "PolyTimingGetUser"
+-            and getSysTime: unit -> Time.time = RunCall.rtsCallFull0 "PolyTimingGetSystem"
+-            and getRealTime: unit -> Time.time = RunCall.rtsCallFull0 "PolyTimingGetReal"
+-            and getChildUserTime: unit -> Time.time = RunCall.rtsCallFull0 "PolyTimingGetChildUser"
+-            and getChildSysTime: unit -> Time.time = RunCall.rtsCallFull0 "PolyTimingGetChildSystem"
++            val getUserTime: unit -> Time.time = fn () => Time.fromMicroseconds (RunCall.rtsCallFull0 "PolyTimingGetUser" ()) (* xc2: a Time.time, which the runtime makes of the microseconds *)
++            and getSysTime: unit -> Time.time = fn () => Time.fromMicroseconds (RunCall.rtsCallFull0 "PolyTimingGetSystem" ()) (* xc2: a Time.time, which the runtime makes of the microseconds *)
++            and getRealTime: unit -> Time.time = fn () => Time.fromMicroseconds (RunCall.rtsCallFull0 "PolyTimingGetReal" ()) (* xc2: a Time.time, which the runtime makes of the microseconds *)
++            and getChildUserTime: unit -> Time.time = fn () => Time.fromMicroseconds (RunCall.rtsCallFull0 "PolyTimingGetChildUser" ()) (* xc2: a Time.time, which the runtime makes of the microseconds *)
++            and getChildSysTime: unit -> Time.time = fn () => Time.fromMicroseconds (RunCall.rtsCallFull0 "PolyTimingGetChildSystem" ()) (* xc2: a Time.time, which the runtime makes of the microseconds *)
+         in
+             fun times() =
+                 { elapsed=getRealTime(), utime=getUserTime(), stime=getSysTime(),
+@@ -1159,7 +1167,9 @@
+                      atime, mtime, ctime) =
+                 { mode = SysWord.fromInt mode, kind = kind, ino = ino,
+                   dev = dev, nlink = nlink, uid = uid, gid = gid,
+-                  size = size, atime = atime, mtime = mtime, ctime = ctime }
++                  (* xc2: the times from their microseconds, which are the time in Poly/ML *)
++                  size = size, atime = Time.fromMicroseconds atime, mtime = Time.fromMicroseconds mtime,
++                  ctime = Time.fromMicroseconds ctime }
+         in
+             fun stat name = convStat(doCall1(55, name))
+             and lstat name = convStat(doCall1(56, name))
+@@ -1205,7 +1215,7 @@
+         in
+             fun utime (name, NONE) = doCall1(64, name)
+              |  utime (name, SOME{actime, modtime}) =
+-                doCall2(63, (name, actime, modtime))
++                doCall2(63, (name, Time.toMicroseconds actime, Time.toMicroseconds modtime)) (* xc2: the microseconds *)
+         end
+         local
+             val doCall = osSpecificGeneral
+@@ -1264,7 +1274,7 @@
+             val doIo = RunCall.rtsCallFull3 "PolyBasicIOGeneral"
+         in
+             fun readVec (strm: file_desc, len: int): Word8Vector.vector =
+-                doIo(26, strm, len)
++                LibrarySupport.w8vectorFromString (doIo(26, strm, len)) (* xc2: the string of the bytes *)
+         end
+ 
+         local
+diff -ruN a/basis/RealNumbersAsBits.ML b/basis/RealNumbersAsBits.ML
+--- a/basis/RealNumbersAsBits.ML
++++ b/basis/RealNumbersAsBits.ML
+@@ -47,14 +47,16 @@
+            ML.
+            In native 32-bit and 32-in-64 a float is implemented as a boxed value. *)
+         open LibrarySupport
+-        val floatIsTagged = wordSize = 0w8
+-        val floatAsWord: Real32.real->word = RunCall.unsafeCast
+-        val floatAsInt: Real32.real->int = RunCall.unsafeCast
+-        val wordAsFloat: word->Real32.real = RunCall.unsafeCast
++        (* xc2: a Real32.real is no tagged value here, and its bits come from the
++           shim: wordSize = 0w8, and the casts of RunCall.unsafeCast, which the
++           tagged case alone uses *)
++        val floatIsTagged = false
++        val floatAsWord: Real32.real->word = XC2P.floatToBits
++        val floatAsInt: Real32.real->int = XC2P.wordToInt o XC2P.floatToBits
++        val wordAsFloat: word->Real32.real = XC2P.floatFromBits
++        (* xc2: byte b, the most significant first: RunCall.loadByteFromImmutable *)
+         fun byte(r: Real32.real, b: word): Word8.word =
+-            RunCall.loadByteFromImmutable(r, if bigEndian then b else 0w3-b)
+-        and setByte(r: Real32.real, b: word, v: Word8.word) =
+-            RunCall.storeByte(r, if bigEndian then b else 0w3-b, v)
++            Word8.fromLargeWord (Word.toLargeWord (Word.andb (Word.>> (XC2P.floatToBits r, 0w8 * (0w3 - b)), 0wxff)))
+     in
+         fun floatSignBit (r: Real32.real): bool =
+             if floatIsTagged then floatAsInt r < 0 else byte(r, 0w0) >= 0w128
+@@ -85,18 +87,12 @@
+         end
+         else
+         let
+-            val r: Real32.real = RunCall.allocateByteMemory(0w1, 0wx41)
+-            val b0 = Word8.orb(if sign then 0wx80 else 0w0, Word8.fromInt(Int.toInt(Int.quot(exp, 2))))
+-            val () = setByte(r, 0w0, b0)
+-            (* The low order 24 bits will always fit in a word. *)
+-            val b = Word.orb(Word.<<(Word.fromInt exp, 0w23), Word.fromInt mantissa)
+-            fun w8fromW x = Word8.fromLarge(Word.toLarge x)
+-            val () = setByte(r, 0w1, w8fromW(Word.>>(b, 0w16)))
+-            val () = setByte(r, 0w2, w8fromW(Word.>>(b, 0w8)))
+-            val () = setByte(r, 0w3, w8fromW b)
+-            val () = RunCall.clearMutableBit r
++            (* xc2: the bits, of which the shim makes the float: the bytes of a
++               Real32.real allocated with RunCall.allocateByteMemory and set *)
++            val b = Word.orb(if sign then 0wx80000000 else 0w0,
++                             Word.orb(Word.<<(Word.fromInt exp, 0w23), Word.fromInt mantissa))
+         in
+-            r
++            XC2P.floatFromBits b
+         end
+     end
+ 
+@@ -106,13 +102,12 @@
+         open LibrarySupport
+         (* In native 64-bit and 32-in-64 Real.real and LargeWord.word are both boxed
+            64-bit quantities. *)
+-        val realAsWord64: real -> LargeWord.word = RunCall.unsafeCast
+-        and word64AsReal: LargeWord.word -> real = RunCall.unsafeCast
++        val realAsWord64: real -> LargeWord.word = XC2P.realToBits (* xc2: RunCall.unsafeCast *)
++        and word64AsReal: LargeWord.word -> real = XC2P.bitsToReal (* xc2: RunCall.unsafeCast *)
+         val realIsWord64 = sysWordSize = 0w8
++        (* xc2: byte b, the most significant first: RunCall.loadByteFromImmutable *)
+         fun byte(r: real, b: word): Word8.word =
+-            RunCall.loadByteFromImmutable(r, if bigEndian then b else 0w7-b)
+-        and setByte(r: real, b: word, v: Word8.word) =
+-            RunCall.storeByte(r, if bigEndian then b else 0w7-b, v)
++            Word8.fromLargeWord (LargeWord.andb (LargeWord.>> (XC2P.realToBits r, 0w8 * (0w7 - b)), 0wxff))
+         (* We use this mask when LargeWord.word is 64-bits.  We don't write out
+            the constant directly because it would cause an overflow when compiled in
+            32-bit mode even though it's not used. *)
+@@ -150,23 +145,10 @@
+         end
+         else
+         let
+-            val r: real = RunCall.allocateByteMemory(0w8 div wordSize, 0wx41)
+-            val b0 = Word8.orb(if sign then 0wx80 else 0w0, Word8.fromInt(Int.toInt(Int.quot(exp, 16))))
+-            val () = setByte(r, 0w0, b0)
+-            val b1 =
+-                Word8.orb(
+-                    Word8.<<(Word8.fromInt(Int.rem(exp, 16)), 0w4),
+-                        Word8.andb(Word8.fromLargeInt(IntInf.~>>(mantissa, 0w48)), 0wxf))
+-            val () = setByte(r, 0w1, b1)
+-            val () = setByte(r, 0w2, Word8.fromLargeInt(IntInf.~>>(mantissa, 0w40)))
+-            val () = setByte(r, 0w3, Word8.fromLargeInt(IntInf.~>>(mantissa, 0w32)))
+-            val () = setByte(r, 0w4, Word8.fromLargeInt(IntInf.~>>(mantissa, 0w24)))
+-            val () = setByte(r, 0w5, Word8.fromLargeInt(IntInf.~>>(mantissa, 0w16)))
+-            val () = setByte(r, 0w6, Word8.fromLargeInt(IntInf.~>>(mantissa, 0w8)))
+-            val () = setByte(r, 0w7, Word8.fromLargeInt mantissa)
+-            val () = RunCall.clearMutableBit r
++            (* xc2: a real is a word of 64 bits (realIsWord64): the bytes of a real
++               allocated with RunCall.allocateByteMemory are left out *)
+         in
+-            r
++            raise Fail "xc2: a real of other than 64 bits"
+         end
+     end
+ 
+diff -ruN a/basis/Socket.sml b/basis/Socket.sml
+--- a/basis/Socket.sml
++++ b/basis/Socket.sml
+@@ -168,7 +168,11 @@
+ end;
+ 
+ structure Socket :> SOCKET
+-    where type ('af,'sock_type) sock = ('af,'sock_type) LibraryIOSupport.sock (* So we can use it elsewhere *) =
++    where type ('af,'sock_type) sock = ('af,'sock_type) LibraryIOSupport.sock (* So we can use it elsewhere *)
++    (* xc2: the family and the kind of socket as the runtime takes them *)
++    where type AF.addr_family = int
++    where type SOCK.sock_type = XC2P.sockType
++    where type 'af sock_addr = 'af LibraryIOSupport.sock_addr =
+ struct
+     (* We don't really need an implementation for these.  *)
+     datatype sock = datatype LibraryIOSupport.sock
+@@ -207,9 +211,10 @@
+ 
+     structure SOCK =
+     struct
+-        datatype sock_type = SOCKTYPE of int
++        datatype sock_type = datatype XC2P.sockType (* xc2: SOCKTYPE of int *)
+ 
+-        val list:unit -> (string * sock_type) list = RunCall.rtsCallFull0 "PolyNetworkGetSockTypeList"
++        (* xc2: the runtime gives the numbers, of which Poly/ML's representation is the constructor's *)
++        val list:unit -> (string * sock_type) list = fn () => List.map (fn (s, i) => (s, SOCKTYPE i)) (RunCall.rtsCallFull0 "PolyNetworkGetSockTypeList" ())
+ 
+         fun toString (sk: sock_type) =
+         let
+@@ -370,7 +375,7 @@
+ 
+         (* As with OS.FileSys.poll we call the RTS to check the sockets for up to a second
+            and repeat until the time expires. *)
+-        val finishTime = case timeout of NONE => NONE | SOME t => SOME(t + Time.now())
++        val finishTime = case timeout of NONE => NONE | SOME t => SOME(Time.+(t, Time.now())) (* xc2: t + Time.now(), which Rune does not overload *)
+             
+         val maxMilliSeconds = 1000 (* 1 second *)
+ 
+@@ -379,7 +384,7 @@
+             val timeToGo =
+                 case finishTime of
+                     NONE => maxMilliSeconds
+-                |   SOME finish => LargeInt.toInt(LargeInt.min(LargeInt.max(0, Time.toMilliseconds(finish-Time.now())),
++                |   SOME finish => LargeInt.toInt(LargeInt.min(LargeInt.max(0, Time.toMilliseconds(Time.-(finish, Time.now())) (* xc2: finish-Time.now() *)),
+                         LargeInt.fromInt maxMilliSeconds))
+ 
+             val results as (rdResult, wrResult, exResult) =
+@@ -497,7 +502,7 @@
+         (* This implementation is copied from the implementation of
+            Word8Array.array and Word8Vector.vector. *)
+         type address = LibrarySupport.address
+-        datatype vector = datatype LibrarySupport.Word8Array.vector
++        type vector = LibrarySupport.Word8Array.vector (* xc2: datatype vector = datatype ..., a string here *)
+         datatype array = datatype LibrarySupport.Word8Array.array
+         val wordSize = LibrarySupport.wordSize
+ 
+diff -ruN a/basis/String.sml b/basis/String.sml
+--- a/basis/String.sml
++++ b/basis/String.sml
+@@ -28,7 +28,7 @@
+ 
+     (* Redefine these as functions on the abstract type. *)
+     val System_move_bytesA:
+-        address*address*word*word*word->unit = RunCall.moveBytes
++        address*address*word*word*word->unit = XC2P.moveBytes (* xc2: RunCall.moveBytes *)
+ 
+     val wordSize : word = LibrarySupport.wordSize
+ 
+@@ -36,30 +36,30 @@
+         fun singleCharString(c: word): string =
+         let
+             val v = allocString 0w1
+-            val () = RunCall.storeByteInitialise(v, wordSize, c)
+-            val () = RunCall.clearMutableBit v
++            val () = XC2P.storeByteW(v, wordSize, c) (* xc2: RunCall.storeByteInitialise *)
+         in
+-            v
++            freezeString v (* xc2: RunCall.clearMutableBit v; v *)
+         end
+         (* We haven't defined Vector at this stage. *)
+-        val charMap = RunCall.allocateWordMemory(0w256, 0wx40, 0w0)
+-        val intAsWord: int -> word = RunCall.unsafeCast
++        (* xc2: an array of Rune's for the table, RunCall.allocateWordMemory(0w256, 0wx40, 0w0) *)
++        val charMap = Array.array(256, "")
++        val intAsWord: int -> word = XC2P.intToWord
+         fun setEntries i =
+             if i < 256
+-            then (RunCall.storeWordInitialise(charMap, intAsWord i, singleCharString(intAsWord i)); setEntries(i+1))
++            then (Array.update(charMap, i, singleCharString(intAsWord i)); setEntries(i+1)) (* xc2: RunCall.storeWordInitialise *)
+             else ();
+         val () = setEntries 0
+-        val () = RunCall.clearMutableBit charMap
+     in
+         (* Since we've covered the full range from 0 to 255 we don't need a bounds check. *)
+-        fun charAsString (ch: char): string = RunCall.loadWordFromImmutable(charMap, RunCall.unsafeCast ch)
++        fun charAsString (ch: char): string = Array.sub(charMap, XC2P.charToInt ch) (* xc2: RunCall.loadWordFromImmutable, RunCall.unsafeCast *)
+     end
+ 
+-    val bcopy: string*string*word*word*word -> unit = RunCall.moveBytes
++    (* xc2: from a string to one being made: RunCall.moveBytes *)
++    val bcopy: string*address*word*word*word -> unit = fn (s, d, so, dof, n) => XC2P.moveBytes(XC2P.str s, d, so, dof, n)
+ 
+     (* This can be used where we have already checked the range. *)
+     fun unsafeStringSub(s: string, i: word): char =
+-        RunCall.loadByteFromImmutable(s, i + wordSize)
++        XC2P.sload(s, i + wordSize) (* xc2: RunCall.loadByteFromImmutable *)
+ 
+     fun unsafeSubstring(s: string, i: word, l: word) : string =
+     let
+@@ -71,14 +71,10 @@
+         (* Single character string - use pre-built strings. *)
+         then charAsString(unsafeStringSub(s, i))
+         else
+-        let
+             (* Multiple character string. *)
+-            val vec = allocString l
+-        in
+-            RunCall.moveBytes(s, vec, wordSize+i, wordSize, l);
+-            RunCall.clearMutableBit vec;
+-            vec
+-        end
++            (* xc2: made whole, by the shim's substring, where Poly/ML copies the bytes
++               into a new string (allocString, RunCall.moveBytes, RunCall.clearMutableBit) *)
++            XC2P.substring(s, i, l)
+     end
+ 
+     (* Casts between int and word. *)
+@@ -103,15 +99,16 @@
+             in
+                 bcopy(a, vec, wordSize, wordSize, a_length);
+                 bcopy(b, vec, wordSize, wordSize+a_length, b_length);
+-                RunCall.clearMutableBit vec;
+-                vec
++                freezeString vec (* xc2: RunCall.clearMutableBit vec; vec *)
+             end
+         end (* op ^ *)
+ 
+     (* String comparison function used in isPrefix and isSuffix.
+        N.B.  The caller must make sure that neither string is a single character. *)
+     local
+-        val byteVecEq: string * string * word * word * word -> bool = RunCall.byteVectorEqual
++        (* xc2: RunCall.byteVectorEqual *)
++        val byteVecEq: string * string * word * word * word -> bool =
++            fn (a, b, ao, bo, n) => XC2P.byteVectorEqual(XC2P.str a, XC2P.str b, ao, bo, n)
+     in
+         fun byteMatch s1 s2 i j l =
+             byteVecEq(s1, s2, i+wordSize, j+wordSize, l)
+@@ -123,7 +120,7 @@
+         fun exp_str (num, res) =
+             if num = 0w0
+             then res
+-            else exp_str (num - 0w1, RunCall.loadByteFromImmutable(s, num+i-0w1+wordSize) :: res)
++            else exp_str (num - 0w1, XC2P.sload(s, num+i-0w1+wordSize) :: res) (* xc2: RunCall.loadByteFromImmutable *)
+     in
+         exp_str (l, [])
+     end
+@@ -141,7 +138,7 @@
+            to check the argument and then convert it. *) 
+         fun chr i : char =
+             if i < 0 orelse i > maxOrd
+-            then raise General.Chr else RunCall.unsafeCast i
++            then raise General.Chr else XC2P.intToChar i (* xc2: RunCall.unsafeCast *)
+             
+         val ord: char -> int = RunCall.unsafeCast
+     
+@@ -193,8 +190,8 @@
+         and char = char
+ 
+         (* We don't have Word.toInt yet so we have to use casts in these next two. *)
+-        val size : string -> int = RunCall.unsafeCast o LibrarySupport.sizeAsWord
+-        val maxSize: int = RunCall.unsafeCast LibrarySupport.maxString
++        val size : string -> int = XC2P.wordToInt o LibrarySupport.sizeAsWord (* xc2: RunCall.unsafeCast *)
++        val maxSize: int = XC2P.wordToInt LibrarySupport.maxString (* xc2: RunCall.unsafeCast *)
+    
+         val str: char ->string = charAsString
+ 
+@@ -229,8 +226,8 @@
+                         end
+                 in
+                 copy (wordSize, L);
+-                RunCall.clearMutableBit vec;
+-                vec
++                freezeString vec (* xc2: RunCall.clearMutableBit vec; vec *)
++                
+                 end
+             end (* concat *)
+ 
+@@ -264,13 +261,13 @@
+                     fun copy (_, []:char list) = ()
+                       | copy (i, H :: T) =
+                         (
+-                        RunCall.storeByteInitialise (dest, i, H);
++                        XC2P.storeByte (dest, i, H);
+                         copy (i + 0w1, T)
+                         )
+                 in
+                     copy (wordSize, L);
+-                    RunCall.clearMutableBit dest; (* reset mutable flag *)
+-                    dest
++                    freezeString dest (* xc2: RunCall.clearMutableBit dest; dest *)
++                    
+                 end
+             end
+ 
+@@ -282,7 +279,7 @@
+         fun sub (s: string, i: int): char =
+             if i < 0 orelse i >= size s
+             then raise General.Subscript
+-            else RunCall.loadByteFromImmutable(s, intAsWord i + wordSize);
++            else XC2P.sload(s, intAsWord i + wordSize);
+     
+         (* Explode a string into a list of characters. *)
+         fun explode (s : string) : char list = stringExplode(s, 0w0, sizeAsWord s)
+@@ -300,7 +297,7 @@
+                 (* Accumulate the characters into a list. *)
+                 fun mapChars i l =
+                     if i = len then l
+-                    else mapChars (i+0w1) (f(RunCall.loadByteFromImmutable(s, i+wordSize)) :: l)
++                    else mapChars (i+0w1) (f(XC2P.sload(s, i+wordSize)) :: l)
+                 
+                 (* Reverse has not yet been defined. *)
+                 fun revAppend([], a) = a
+@@ -412,11 +409,11 @@
+             (* Initialise it to the function values. *)
+             fun init i = 
+                 if len <= i then ()
+-                else (RunCall.storeByteInitialise(vec, i+wordSize, f(wordAsInt i)); init(i+0w1))
++                else (XC2P.storeByte(vec, i+wordSize, f(wordAsInt i)); init(i+0w1))
+         in
+             init 0w0;
+-            RunCall.clearMutableBit vec;
+-            vec
++            freezeString vec (* xc2: RunCall.clearMutableBit vec; vec *)
++            
+         end
+ 
+         (* Create the other functions. *)
+@@ -425,7 +422,7 @@
+                 struct
+                     type vector = vector and elem = elem
+                     val length = sizeAsWord
+-                    fun unsafeSub(s, i) = RunCall.loadByteFromImmutable(s, i + wordSize);
++                    fun unsafeSub(s, i) = XC2P.sload(s, i + wordSize);
+                     fun unsafeSet(_, _, _) = raise Fail "Should not be called"
+                 end);
+     
+@@ -444,11 +441,11 @@
+                     
+                 fun domap i =
+                     if i >= byte_limit then ()
+-                    else (RunCall.storeByteInitialise(new_vec, i, f(RunCall.loadByteFromImmutable(vec, i))); domap(i+0w1))
++                    else (XC2P.storeByte(new_vec, i, f(XC2P.sload(vec, i))); domap(i+0w1))
+             in
+                 domap wordSize;
+-                RunCall.clearMutableBit new_vec;
+-                new_vec
++                freezeString new_vec (* xc2: RunCall.clearMutableBit new_vec; new_vec *)
++                
+             end
+         end
+             
+@@ -457,10 +454,10 @@
+             fun compareString(s1, s2) =
+             let
+                 val s1l = sizeAsWord s1 and s2l = sizeAsWord s2
+-                val test = RunCall.byteVectorCompare(s1, s2, wordSize, wordSize, if s1l < s2l then s1l else s2l)
++                val test = XC2P.byteVectorCompare(XC2P.str s1, XC2P.str s2, wordSize, wordSize, if s1l < s2l then s1l else s2l)
+             in
+                 if test = 0 (* If the strings are the same up to the shorter length ... *)
+-                then RunCall.unsafeCast(s1l - s2l) (* The result depends on the lengths. *)
++                then XC2P.wordToInt(s1l - s2l) (* The result depends on the lengths. *) (* xc2: RunCall.unsafeCast *)
+                 else test
+             end
+         in
+@@ -481,7 +478,7 @@
+             fn (s1: string, s2: string) =>
+                 let
+                     val s1l = sizeAsWord s1 and s2l = sizeAsWord s2
+-                    val test = RunCall.byteVectorCompare(s1, s2, wordSize, wordSize, if s1l < s2l then s1l else s2l)
++                    val test = XC2P.byteVectorCompare(XC2P.str s1, XC2P.str s2, wordSize, wordSize, if s1l < s2l then s1l else s2l)
+                 in
+                     if test = 0
+                     then s1l >= s2l
+@@ -492,7 +489,7 @@
+             fn (s1: string, s2: string) =>
+                 let
+                     val s1l = sizeAsWord s1 and s2l = sizeAsWord s2
+-                    val test = RunCall.byteVectorCompare(s1, s2, wordSize, wordSize, if s1l < s2l then s1l else s2l)
++                    val test = XC2P.byteVectorCompare(XC2P.str s1, XC2P.str s2, wordSize, wordSize, if s1l < s2l then s1l else s2l)
+                 in
+                     if test = 0
+                     then s1l <= s2l
+@@ -503,7 +500,7 @@
+             fn (s1: string, s2: string) =>
+                 let
+                     val s1l = sizeAsWord s1 and s2l = sizeAsWord s2
+-                    val test = RunCall.byteVectorCompare(s1, s2, wordSize, wordSize, if s1l < s2l then s1l else s2l)
++                    val test = XC2P.byteVectorCompare(XC2P.str s1, XC2P.str s2, wordSize, wordSize, if s1l < s2l then s1l else s2l)
+                 in
+                     if test = 0
+                     then s1l > s2l
+@@ -514,7 +511,7 @@
+             fn (s1: string, s2: string) =>
+                 let
+                     val s1l = sizeAsWord s1 and s2l = sizeAsWord s2
+-                    val test = RunCall.byteVectorCompare(s1, s2, wordSize, wordSize, if s1l < s2l then s1l else s2l)
++                    val test = XC2P.byteVectorCompare(XC2P.str s1, XC2P.str s2, wordSize, wordSize, if s1l < s2l then s1l else s2l)
+                 in
+                     if test = 0
+                     then s1l < s2l
+@@ -528,7 +525,8 @@
+ 
+     structure StringCvt =
+     struct
+-        val mem_move: string*string*word*word*word -> unit = RunCall.moveBytes
++        (* xc2: from a string to one being made: RunCall.moveBytes *)
++        val mem_move: string*address*word*word*word -> unit = fn (s, d, so, dof, n) => XC2P.moveBytes(XC2P.str s, d, so, dof, n)
+ 
+         datatype radix = BIN | OCT | DEC | HEX
+ 
+@@ -556,13 +554,13 @@
+                 fun setCh n =
+                     if n = extra then ()
+                     (* Set the character part of the string. *)
+-                    else ( RunCall.storeByteInitialise(str, n+wordSize, c); setCh(n+0w1) )
++                    else ( XC2P.storeByte(str, n+wordSize, c); setCh(n+0w1) )
+             in
+                 setCh 0w0;
+                 (* Copy the character part of the string over. *)
+                 mem_move(s, str, wordSize, extra + wordSize, len);
+-                RunCall.clearMutableBit str;
+-                str
++                freezeString str (* xc2: RunCall.clearMutableBit str; str *)
++                
+             end
+         end
+ 
+@@ -581,13 +579,13 @@
+                 fun setCh n =
+                     if n = iW then ()
+                     (* Set the character part of the string. *)
+-                    else ( RunCall.storeByteInitialise(str, n+wordSize, c); setCh(n+0w1) )
++                    else ( XC2P.storeByte(str, n+wordSize, c); setCh(n+0w1) )
+             in
+                 (* Copy the character part of the string over. *)
+                 mem_move(s, str, wordSize, wordSize, len);
+                 setCh len;
+-                RunCall.clearMutableBit str;
+-                str
++                freezeString str (* xc2: RunCall.clearMutableBit str; str *)
++                
+             end
+         end
+ 
+@@ -835,13 +833,13 @@
+                 
+                 fun domap j =
+                     if j >= len then ()
+-                    else (RunCall.storeByteInitialise(new_vec, j+wordSize,
+-                            f(wordAsInt(j), RunCall.loadByteFromImmutable(vec, j+wordSize)));
++                    else (XC2P.storeByte(new_vec, j+wordSize,
++                            f(wordAsInt(j), XC2P.sload(vec, j+wordSize)));
+                           domap(j+0w1))
+             in
+                 domap 0w0;
+-                RunCall.clearMutableBit new_vec;
+-                new_vec
++                freezeString new_vec (* xc2: RunCall.clearMutableBit new_vec; new_vec *)
++                
+             end
+         end
+ 
+@@ -986,7 +984,7 @@
+                 fun getSize i n =
+                     if i = len then n
+                     else getSize (i+0w1)
+-                            (n + size(convert(RunCall.loadByteFromImmutable(s, i+wordSize))))
++                            (n + size(convert(XC2P.sload(s, i+wordSize))))
+                 (* The result could possibly be long so we add the lengths
+                    as integers and convert and check when we've finished. *)
+                 val newSize = unsignedShortOrRaiseSize (getSize 0w0 0)
+@@ -1004,7 +1002,7 @@
+                     if i = len then ()
+                     else
+                     let
+-                        val conv = convert(RunCall.loadByteFromImmutable(s, i+wordSize))
++                        val conv = convert(XC2P.sload(s, i+wordSize))
+                         val convSize = sizeAsWord conv
+                     in
+                         bcopy(conv, newVec, wordSize, j, convSize);
+@@ -1012,8 +1010,8 @@
+                     end
+                 in
+                     copyToOut 0w0 wordSize;
+-                    RunCall.clearMutableBit newVec;
+-                    newVec
++                    freezeString newVec (* xc2: RunCall.clearMutableBit newVec; newVec *)
++                    
+                 end
+             end
+         in
+@@ -1122,7 +1120,7 @@
+             val vec = LibrarySupport.allocBytes len
+             fun init i = 
+                 if len <= i then ()
+-                else (RunCall.storeByteInitialise(vec, i, ini); init(i+0w1))
++                else (XC2P.storeByte(vec, i, ini); init(i+0w1))
+         in
+             init 0w0;
+             Array(len, vec)
+@@ -1137,7 +1135,7 @@
+         in
+             (* Negative values will always be >= l when compared unsigned. *)
+             if iW >= l then raise General.Subscript
+-            else RunCall.loadByte (v, iW)
++            else XC2P.loadByte (v, iW)
+         end
+     
+         fun update (Array (l, v), i: int, new) : unit =
+@@ -1149,7 +1147,7 @@
+         in
+             if iW >= l
+             then raise General.Subscript
+-            else RunCall.storeByte (v, iW, new)
++            else XC2P.storeByte (v, iW, new)
+         end;
+     
+         (* Create an array from a list. *)
+@@ -1166,7 +1164,7 @@
+                 val vec = LibrarySupport.allocBytes length
+                 
+                 (* Copy the list elements into the array. *)
+-                fun init (v, i, a :: l) = (RunCall.storeByteInitialise(v, i, a); init(v, i + 0w1, l))
++                fun init (v, i, a :: l) = (XC2P.storeByte(v, i, a); init(v, i + 0w1, l))
+                 |  init (_, _, []) = ()
+                 
+             in
+@@ -1184,7 +1182,7 @@
+             (* Initialise it to the function values. *)
+             fun init i = 
+                 if len <= i then ()
+-                else (RunCall.storeByteInitialise(vec, i, f(wordAsInt i)); init(i+0w1))
++                else (XC2P.storeByte(vec, i, f(wordAsInt i)); init(i+0w1))
+         in
+             init 0w0;
+             Array(len, vec)
+@@ -1194,15 +1192,15 @@
+             if len = 0w0 then ""
+             else if len = 0w1
+             then (* Single character string. *)
+-                charAsString (RunCall.loadByte (vec, 0w0))
++                charAsString (XC2P.loadByte (vec, 0w0))
+             else
+             let
+                 (* Make an array initialised to zero. *)
+                 val new_vec = LibrarySupport.allocString len
+             in
+-                System_move_bytesA(vec, RunCall.unsafeCast new_vec, 0w0, wordSize, len);
+-                RunCall.clearMutableBit new_vec;
+-                new_vec
++                System_move_bytesA(vec, new_vec (* xc2: RunCall.unsafeCast new_vec *), 0w0, wordSize, len);
++                freezeString new_vec (* xc2: RunCall.clearMutableBit new_vec; new_vec *)
++                
+             end
+     
+         (* Copy an array into another.  It's possible for the arrays to be
+@@ -1226,7 +1224,7 @@
+             in
+                 if diW + len > dlen
+                 then raise General.Subscript
+-                else System_move_bytesA(RunCall.unsafeCast src, d, wordSize, diW, len)
++                else System_move_bytesA(XC2P.str src (* xc2: RunCall.unsafeCast *), d, wordSize, diW, len)
+             end
+             
+         (* Create the other functions. *)
+@@ -1235,8 +1233,8 @@
+                 struct
+                     type vector = array and elem = elem
+                     fun length(Array(len, _)) = len
+-                    fun unsafeSub(Array(_, v), i) = RunCall.loadByte(v, i)
+-                    and unsafeSet(Array(_, v), i, c) = RunCall.storeByte(v, i, c)
++                    fun unsafeSub(Array(_, v), i) = XC2P.loadByte(v, i)
++                    and unsafeSet(Array(_, v), i, c) = XC2P.storeByte(v, i, c)
+                 end);
+     
+         open ArrayOps;
+@@ -1330,7 +1328,7 @@
+                 struct
+                     type vector = vector and elem = char
+                     val vecLength = sizeAsWord
+-                    fun unsafeVecSub(s, i: word) = RunCall.loadByteFromImmutable(s, i + wordSize)
++                    fun unsafeVecSub(s, i: word) = XC2P.sload(s, i + wordSize)
+                     fun unsafeVecUpdate _ = raise Fail "Should not be called" (* Not applicable *)
+                 end);
+     
+@@ -1492,7 +1490,7 @@
+         fun span (Slice{vector=s, start=i, length=_}, Slice{vector=s', start=i', length=n'}) =
+             (* First check with pointer equality and only if that fails do we use the
+                string equality function. *)
+-            if (RunCall.pointerEq(s, s') orelse s = s') andalso i'+n' >= i
++            if (s = s' (* xc2: RunCall.pointerEq(s, s') orelse s = s' *)) andalso i'+n' >= i
+             then Slice{vector=s, start=i, length=i'+n'-i}
+             else raise General.Span 
+            
+@@ -1601,8 +1599,8 @@
+             VectorSliceOperations(
+                 struct
+                     type vector = array and elem = char
+-                    fun unsafeVecSub(Array(_, s: LibrarySupport.address), i) = RunCall.loadByte(s, i)
+-                    and unsafeVecUpdate(Array(_, s), i, x) = RunCall.storeByte (s, i, x)
++                    fun unsafeVecSub(Array(_, s: LibrarySupport.address), i) = XC2P.loadByte(s, i)
++                    and unsafeVecUpdate(Array(_, s), i, x) = XC2P.storeByte (s, i, x)
+                     and vecLength(Array(l, _)) = l
+                 end);
+     
+@@ -1616,16 +1614,16 @@
+                 if length = 0 then ""
+                 else if length = 1
+                 then (* Optimise single character strings. *)
+-                    charAsString(RunCall.loadByte (vec, intAsWord start))
++                    charAsString(XC2P.loadByte (vec, intAsWord start))
+                 else
+                 let
+                     val len = intAsWord length
+                     (* Make an array initialised to zero. *)
+                     val new_vec = LibrarySupport.allocString len
+                 in
+-                    System_move_bytesA(vec, RunCall.unsafeCast new_vec, intAsWord start, wordSize, len);
+-                    RunCall.clearMutableBit new_vec;
+-                    new_vec
++                    System_move_bytesA(vec, new_vec (* xc2: RunCall.unsafeCast new_vec *), intAsWord start, wordSize, len);
++                    freezeString new_vec (* xc2: RunCall.clearMutableBit new_vec; new_vec *)
++                    
+                 end
+             end
+ 
+@@ -1662,7 +1660,7 @@
+                 if diW + len > dlen
+                 then raise General.Subscript
+                     (* The source is represented by a string whose first word is the length. *)
+-                else System_move_bytesA(RunCall.unsafeCast source, d, offset + wordSize, diW, len)
++                else System_move_bytesA(XC2P.str source (* xc2: RunCall.unsafeCast *), d, offset + wordSize, diW, len)
+             end
+         
+     end (* CharArraySlice *);
+diff -ruN a/basis/Thread.sml b/basis/Thread.sml
+--- a/basis/Thread.sml
++++ b/basis/Thread.sml
+@@ -17,713 +17,77 @@
+     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ *)
+ 
+-(* This signature and structure are not part of the standard basis library
+-   but are included here because they depend on the Time structure and are
+-   in turn dependencies of the BasicIO structure. *)
+-
+-(*!Earlier versions of Poly/ML have provided a form of concurrent execution through 
+-  the Process structure. Version 5.1 introduces 
+-  new thread primitives in the Thread structure. This structure is modelled on 
+-  the Posix thread (pthread) package but simplified and modified for ML. The aim 
+-  is to provide an efficient implementation of parallelism particularly to enable 
+-  ML programs to make use of multi-core processors while minimising the changes 
+-  needed to existing code. The Process structure will continue to be available 
+-  as a library written on top of these primitives but new programs should use 
+-  the Thread structure directly.
+-  
+-The thread package differs from pthreads in a number of ways. 
+-There is no join function to wait for the completion of a thread. 
+-This can be written using mutexes and condition variables. 
+-Cancellation and signal handling are combined into the interrupt
+-functions. (The Poly/ML Signal structure handles signals for all the
+-threads together).  The effect of explicit cancellation is achieved
+-using the interrupt function.  This causes an interrupt to be
+-generated in a specific thread.  Alternatively an interrupt can be
+-broadcast to all threads.  This is most likely to be used
+-interactively to kill threads that appear to have gone out of
+-control.  The normal top-level handler for a console interrupt will
+-generate this.  Threads can choose how or whether they respond to
+-these interrupts.  A thread that is doing processor-intensive work
+-probably needs to be able to be interrupted asynchronously whereas if
+-it is communicating with other threads the presence of asynchronous
+-interrupts makes correct programming difficult.
+-*)
+-
+-signature THREAD =
+-sig
+-    (*!The Thread exception can be raised by various of the functions in the
+-       structure if they detect an error.*)
+-    exception Thread of string (* Raised if an operation fails. *)
+-    
+-    structure Thread:
+-    sig
+-        (*!The type of a thread identifier.*)
+-        eqtype thread
+-        
+-        (* Thread attributes - This may be extended. *)
+-        (*!The type of a thread attribute. Thread attributes are
+-            properties of the thread that are set initially when the thread is
+-            created but can subsequently be modified by the thread itself.  The
+-            thread attribute type may be extended in the future to include things
+-            like scheduling priority. The current thread attributes control the
+-            way interrupt exceptions are delivered to the thread.
+-            
+-            `EnableBroadcastInterrupt` controls whether the thread will receive an interrupt sent using
+-            `broadcastInterrupt` or as a result of pressing the console interrupt
+-            key. If this is false the thread will not receive them.  The default
+-            for a new thread if this is not specified is false.
+-            
+-            `InterruptState` controls when and whether interrupts are delivered to the 
+-            thread. This includes broadcast interrupts and also interrupts directed at 
+-            a specific thread with the interrupt call.
+-            `InterruptDefer` means the thread 
+-            will not receive any interrupts. However, if the thread has previously been 
+-            interrupted the interrupt may be delivered when the thread calls setAttributes 
+-            to change its interrupt state. `InterruptSynch`
+-            means interrupts are delivered 
+-            synchronously. An interrupt will be delayed until an interruption point. An 
+-            interruption point is one of: `testInterrupt`,
+-            `ConditionVar.wait`, `ConditionVar.waitUntil`
+-            and various library calls that may block, such as IO calls, pause etc. N.B. 
+-            `Mutex.lock` is not an interruption point even though it can result in a thread 
+-            blocking for an indefinite period. `InterruptAsynch` means interrupts are delivered 
+-            asynchronously i.e. at a suitable point soon after they are triggered.
+-            `InterruptAsynchOnce`
+-            means that only a single interrupt is delivered asynchronously after which 
+-            the interrupt state is changed to `InterruptSynch`. It allows a thread to tidy 
+-            up and if necessary indicate that it has been interrupted without the risk 
+-            of a second asynchronous interrupt occurring in the handler for the first 
+-            interrupt. If this attribute is not specified when a thread is created the 
+-            default is `InterruptSynch`.
+-            
+-            `MaximumMLStack` was added in version 5.5.3. It controls the maximum size the 
+-            ML stack may grow to. It is an option type where NONE allows the stack to 
+-            grow to the limit of the available memory whereas SOME n limits the stack 
+-            to n words. This is approximate since there is some rounding involved. When 
+-            the limit is reached the thread is sent an Interrupt exception.*)
+-        datatype threadAttribute =
+-            (* Does this thread accept a broadcast interrupt?  The default is not to
+-               accept broadcast interrupts. *)
+-            EnableBroadcastInterrupt of bool
+-            (* How to handle interrupts.  The default is to handle interrupts synchronously.  *)
+-        |   InterruptState of interruptState
+-            (* Maximum size of the ML stack in words. NONE means unlimited *)
+-        |   MaximumMLStack of int option
+-        
+-        and interruptState =
+-            InterruptDefer (* Defer any interrupts. *)
+-        |   InterruptSynch  (* Interrupts are delivered synchronously. An interrupt
+-               will be delayed until an interruption point.  An interruption point
+-               is one of: testInterrupt, ConditionVar.wait, ConditionVar.waitUntil
+-               and various library calls that may block, such as IO calls, pause etc.
+-               N.B.  Mutex.lock is not an interruption point even though it can result
+-               in a thread blocking for an indefinite period.  *)
+-        |   InterruptAsynch (* Interrupts are delivered asynchronously i.e. at a suitable
+-               point soon after they are triggered. *)
+-        |   InterruptAsynchOnce (* As InterruptAsynch except that only a single interrupt
+-               is delivered asynchronously after which the interrupt state is changed to
+-               InterruptSynch.  It allows a thread to tidy up and if necessary indicate
+-               that it has been interrupted without the risk of a second asynchronous
+-               interrupt occurring in the handler for the first interrupt. *)
+-        
+-        (*!Fork a thread. Starts a new thread running 
+-          the function argument. The attribute list gives initial values for thread attributes 
+-          which can be modified by the thread itself. Any unspecified attributes take 
+-          default values. The thread is terminated when the thread function returns, if 
+-          it raises an uncaught exception or if it calls `exit`;*)
+-        val fork: (unit->unit) * threadAttribute list -> thread
+-
+-        (*!Terminate this thread. *)
+-        val exit: unit -> unit
+-        (*!Test if a thread is still running or has terminated.  This function should be
+-          used with care.  The thread may be on the point of terminating and still appear
+-          to be active.*)
+-        val isActive: thread -> bool
+-        
+-        (*!Test whether thread ids are the same.  This is provided for backwards compatibility
+-          since `thread` is an eqtype. *)
+-        val equal: thread * thread -> bool
+-        (*!Return the thread identifier for the current thread. *)
+-        val self: unit -> thread
+-        
+-        exception Interrupt (* = SML90.Interrupt *)
+-        (*!Send an Interrupt exception to a specific thread.  When and indeed whether
+-           the exception is actually delivered will depend on the interrupt state
+-           of the target thread.  Raises Thread if the thread is no longer running,
+-           so an exception handler should be used unless the thread is known to
+-           be blocked. *)
+-        val interrupt: thread -> unit
+-        (*!Send an interrupt exception to every thread which is set to accept it. *)
+-        val broadcastInterrupt: unit -> unit
+-        (*!If this thread is handling interrupts synchronously, test to see 
+-           if it has been interrupted.  If so it raises the
+-           `Interrupt` exception. *)
+-        val testInterrupt: unit -> unit
+-        (*!Terminate a thread. This should be used as a last resort.  Normally
+-           a thread should be allowed to clean up and terminate by using the
+-           interrupt call.  Raises Thread if the thread is no longer running,
+-           so an exception handler should be used unless the thread is known to
+-           be blocked. *)
+-        val kill: thread -> unit
+-        
+-        (*!Get and set thread-local store for the calling thread. The store is a
+-           tagged associative memory which is initially empty for a new thread.
+-           A thread can call setLocal to add or replace items in its store and
+-           call getLocal to return values if they exist.  The Universal structure
+-           contains functions to make new tags as well as injection, projection and
+-           test functions. *)
+-        val getLocal: 'a Universal.tag -> 'a option
+-        and setLocal: 'a Universal.tag * 'a -> unit
+-        
+-        (*!Change the specified attribute(s) for the calling thread.  Unspecified
+-           attributes remain unchanged. *)
+-        val setAttributes: threadAttribute list -> unit
+-        (*!Get the values of attributes. *)
+-        val getAttributes: unit -> threadAttribute list
+-
+-        (*!Return the number of processors that will be used to run threads
+-           and the number of physical processors if that is available. *)
+-        val numProcessors: unit -> int
+-        and numPhysicalProcessors: unit -> int option
+-    end
+-        
+-    structure Mutex:
+-    sig
+-        (*!A mutex provides simple mutual exclusion.  A thread can lock
+-           a mutex and until it unlocks it no other thread will be able to lock it.
+-           Locking and unlocking are intended to be fast in the situation when
+-           there is no other process attempting to lock the mutex.
+-           These functions may not work correctly if an asynchronous interrupt
+-           is delivered during the calls.  A thread should use synchronous interrupt
+-           when using these calls. *)
+-        type mutex
+-        (*!Make a new mutex *)
+-        val mutex: unit -> mutex
+-        (*!Lock a mutex.  If the mutex is currently locked the thread is
+-           blocked until it is unlocked.  If a thread tries to lock a mutex that
+-           it has previously locked the thread will deadlock.
+-           N.B.  `thread` is not an interruption point
+-           (a point where synchronous
+-           interrupts are delivered) even though a thread can be blocked indefinitely. *)
+-        val lock: mutex -> unit
+-        (*!Unlock a mutex and allow any waiting threads to run.  The behaviour
+-           if the mutex was not previously locked by the calling thread is undefined.  *)
+-        val unlock: mutex -> unit
+-        (*!Attempt to lock the mutex.  Returns true if the mutex was not
+-           previously locked and has now been locked by the calling thread.  Returns
+-           false if the mutex was previously locked, including by the calling thread. *)
+-        val trylock: mutex -> bool
+-    end
+-    
+-    structure ConditionVar:
+-    sig
+-        (*!Condition variables are used to provide communication
+-           between threads.  A condition variable is used in conjunction with a mutex
+-           and usually a reference to establish and test changes in state.  The normal
+-           use is for one thread to lock a mutex, test the reference and then wait on
+-           the condition variable, releasing the lock on the mutex while it does so.
+-           Another thread may then lock the mutex, update the reference, unlock the
+-           mutex, and signal the condition variable.  This wakes up the first thread
+-           and reacquires the lock allowing the thread to test the updated reference
+-           with the lock held.
+-           More complex communication mechanisms, such as blocking channels, can
+-           be written in terms of condition variables. *)
+-        type conditionVar
+-        (*!Make a new condition variable. *)
+-        val conditionVar: unit -> conditionVar
+-        (*!Release the mutex and block until the condition variable is signalled. When 
+-            wait returns the mutex will have been re-acquired.
+-            
+-            If the thread is handling interrupts synchronously this function can be interrupted 
+-            using the `Thread.interrupt` function or, if the thread is set to 
+-            accept broadcast interrupts, `Thread.broadcastInterrupt`. The thread 
+-            will re-acquire the mutex before the exception is delivered. An exception 
+-            will only be delivered in this case if the interrupt is sent before the condition 
+-            variable is signalled. If the interrupt is sent after the condition variable 
+-            is signalled the function will return normally even if it has not yet re-acquired 
+-            the mutex. The interrupt state will be delivered on the next call to &quot;wait&quot;, 
+-            `Thread.testInterrupt` or other blocking call.
+-            
+-            A thread should never call this function if it may receive an asynchronous 
+-            interrupt. It should always set its interrupt state to either
+-            `InterruptSynch` 
+-            or `InterruptDefer` beforehand.
+-            An asynchronous interrupt may leave the condition 
+-            variable and the mutex in an indeterminate state and could lead to deadlock.
+-            
+-            A condition variable should only be associated with one mutex at a time. 
+-            All the threads waiting on a condition variable should pass the same mutex 
+-            as argument.*)
+-        val wait: conditionVar * Mutex.mutex -> unit
+-        (*!As wait except that it blocks until either the condition
+-           variable is signalled or the time (absolute) is reached.
+-           Returns true if condition variable was signalled and false if
+-           the time-out was reached.  Either way the mutex is reacquired so
+-           there may be a further delay if it is held by another thread. *)
+-        val waitUntil: conditionVar * Mutex.mutex * Time.time -> bool
+-        (*!Wake up one thread if any are waiting on the condition variable. 
+-          If there are several threads waiting for the condition variable one will be 
+-          selected to run and will run as soon as it has re-acquired the lock. *)
+-        val signal: conditionVar -> unit
+-        (*!Wake up all threads waiting on the condition variable. *)
+-        val broadcast: conditionVar -> unit
+-    end
+-
+-end;
+-
+-structure Thread :> THREAD =
++(* xc2: Poly/ML's threads, which Rune's machine does not have, are left out:
++   there is one thread, a mutex is never held by another, and forking a
++   thread raises Thread. This is what the Basis Library of Poly/ML uses of
++   Thread (Mutex, self, the attributes and exit), as the rest of this file
++   declared it; its implementation read and wrote the thread's state in the
++   runtime (RunCall.loadWord, RunCall.storeWord) and called it. *)
++local
++    structure BuiltinThread = Thread
++in
++structure Thread =
+ struct
+     exception Thread = RunCall.Thread
+ 
+     structure Thread =
+     struct
+-        open Thread (* Created in INITIALISE with thread type and self function. *)
+-
+-        (* Equality is pointer equality. *)
+-        val equal : thread*thread->bool = op =
+-
++        type thread = BuiltinThread.thread
+         datatype threadAttribute =
+             EnableBroadcastInterrupt of bool
+         |   InterruptState of interruptState
+         |   MaximumMLStack of int option
+-        
+         and interruptState =
+             InterruptDefer
+         |   InterruptSynch
+         |   InterruptAsynch
+-        |   InterruptAsynchOnce 
+-
+-        (* Convert attributes to bits and a mask. *)
+-        fun attrsToWord (at: threadAttribute list): Word.word * Word.word =
+-        let
+-            (* Check that a particular attribute appears only once.
+-               As well as accumulating the actual bits in the result we
+-               also accumulate the mask of bits.  If any of these
+-               reappear we raise an exception. *)
+-            fun checkRepeat(r, acc, set, mask) =
+-                if Word.andb(set, mask) <> 0w0
+-                then raise Thread "The same attribute appears more than once in the list"
+-                else convert(r, acc,  Word.orb(set, mask))
+-
+-            and convert([], acc, set) = (acc, set)
+-              | convert(EnableBroadcastInterrupt true :: r, acc, set) =
+-                    checkRepeat(r, Word.orb(acc, 0w1), set, 0w1)
+-              | convert(EnableBroadcastInterrupt false :: r, acc, set) =
+-                    checkRepeat(r, acc (* No bit *), set, 0w1)
+-              | convert(InterruptState s :: r, acc, set) =
+-                    checkRepeat(r, Word.orb(setIstateBits s, acc), set, 0w6)
+-              | convert(MaximumMLStack _ :: r, acc, set) =
+-                    convert(r, acc, set)
+-        in
+-            convert(at, 0w0, 0w0)
+-        end
+-        
+-        and setIstateBits InterruptDefer = 0w0
+-          | setIstateBits InterruptSynch = 0w2
+-          | setIstateBits InterruptAsynch = 0w4
+-          | setIstateBits InterruptAsynchOnce = 0w6
+-
+-        fun getIstateBits(w: Word.word): interruptState =
+-        let
+-            val ibits = Word.andb(w, 0w6)
+-        in
+-            if ibits = 0w0
+-            then InterruptDefer
+-            else if ibits = 0w2
+-            then InterruptSynch
+-            else if ibits = 0w4
+-            then InterruptAsynch
+-            else InterruptAsynchOnce
+-        end
++        |   InterruptAsynchOnce
+ 
+-        fun wordToAttrs w =
+-        let
+-            (* Enable broadcast - true if bottom bit is set. *)
+-            val bcast = EnableBroadcastInterrupt(Word.andb(w, 0w1) = 0w1)
+-        in
+-            [bcast, InterruptState(getIstateBits w)]
+-        end
+-        
++        val self = BuiltinThread.self
++        fun equal (t, u) = t = u
+         exception Interrupt = RunCall.Interrupt
+-
+-        (* The thread id is opaque outside this structure but is actually a six
+-           word mutable object.
+-           Word 0: Index into thread table (used inside the RTS only)
+-           Word 1: Flags: initialised by the RTS and set by this code
+-           Word 2: Thread local store: read and set by this code.
+-           Word 3: IntRequest: Set by the RTS if there is an interrupt pending
+-           Word 4: Maximum ML stack size.  Unlimited is stored here as zero
+-           *)
+-        val threadIdFlags       = 0w1
+-        and threadIdThreadLocal = 0w2
+-        and threadIdIntRequest  = 0w3
+-        and threadIdStackSize   = 0w4
+-
+-        fun getLocal (t: 'a Universal.tag) : 'a option =
+-        let
+-            val root: Universal.universal ref list =
+-                RunCall.loadWord(self(), threadIdThreadLocal)
+-
+-            fun doFind [] = NONE
+-              | doFind ((ref v)::r) =
+-                    if Universal.tagIs t v
+-                    then SOME(Universal.tagProject t v)
+-                    else doFind r
+-        in
+-            doFind root
+-        end
+-        
+-        fun setLocal (t: 'a Universal.tag, newVal: 'a) : unit =
+-        let
+-            (* See if we already have this in the list. *)
+-            val root: Universal.universal ref list =
+-                RunCall.loadWord(self(), threadIdThreadLocal)
+-
+-            fun doFind [] =
+-                    (* Not in the list - Add it. *)
+-                    RunCall.storeWord
+-                        (self(), threadIdThreadLocal,
+-                         ref (Universal.tagInject t newVal) :: root)
+-              | doFind (v::r) =
+-                    if Universal.tagIs t (!v)
+-                        (* If it's in the list update it. *)
+-                    then v := Universal.tagInject t newVal
+-                    else doFind r
+-
+-        in
+-            doFind root
+-        end
+-        
+-        local
+-            val threadTestInterrupt: unit -> unit = RunCall.rtsCallFull0 "PolyThreadTestInterrupt"
+-        in
+-            fun testInterrupt() =
+-                (* If there is a pending request the word in the thread object
+-                   will be non-zero. *)
+-                if RunCall.loadWord(self(), threadIdIntRequest) <> 0
+-                then threadTestInterrupt()
+-                else ()
+-        end
+-
+-        val exit: unit -> unit = RunCall.rtsCallFull0 "PolyThreadKillSelf"
+-        and isActive: thread -> bool = RunCall.rtsCallFast1 "PolyThreadIsActive"
+-        and broadcastInterrupt: unit -> unit = RunCall.rtsCallFull0 "PolyThreadBroadcastInterrupt"
+-
+-        local
+-            fun getAttrWord (me: thread) : Word.word =
+-                RunCall.loadWord(me, threadIdFlags)
+-
+-            fun getStackSizeAsInt (me: thread) : int =
+-                RunCall.loadWord(me, threadIdStackSize)
+-
+-            and getStackSize me : int option =
+-                case getStackSizeAsInt me of
+-                    0 => NONE
+-                |   s => SOME s
+-
+-            fun newStackSize ([], default) = default
+-            |   newStackSize (MaximumMLStack NONE :: _, _) = 0
+-            |   newStackSize (MaximumMLStack (SOME n) :: _, _) =
+-                    if n <= 0 then raise Thread "The stack size must be greater than zero" else n
+-            |   newStackSize (_ :: l, default) = newStackSize (l, default)
+-            
+-            val threadMaxStackSize: int -> unit = RunCall.rtsCallFull1 "PolyThreadMaxStackSize"
+-        in
+-            (* Set attributes.  Only changes the values that are specified.  The
+-               others remain the same. *)
+-            fun setAttributes (attrs: threadAttribute list) : unit =
+-            let
+-                val me = self()
+-                val oldValues: Word.word = getAttrWord me
+-                val (newValue, mask) = attrsToWord attrs
+-                val stack = newStackSize(attrs, getStackSizeAsInt me)
+-            in
+-                RunCall.storeWord (self(), threadIdFlags,
+-                    Word.orb(newValue, Word.andb(Word.notb mask, oldValues)));
+-                if stack = getStackSizeAsInt me
+-                then () else threadMaxStackSize stack;
+-                (* If we are now handling interrupts asynchronously check whether
+-                   we have a pending interrupt now.  This will only be effective
+-                   if we were previously handling them synchronously or blocking
+-                   them. *)
+-                if Word.andb(newValue, 0w4) = 0w4
+-                then testInterrupt()
+-                else ()
+-            end
+-                
+-            fun getAttributes() : threadAttribute list =
+-            let
+-                val me = self()
+-            in
+-                MaximumMLStack (getStackSize me) :: wordToAttrs(getAttrWord me)
+-            end
+-
+-            (* These are used in the ConditionVar structure.  They affect only the
+-               interrupt handling bits. *)
+-            fun getInterruptState(): interruptState = getIstateBits(getAttrWord(self()))
+-            and setInterruptState(s: interruptState): unit =
+-                RunCall.storeWord (self(), threadIdFlags,
+-                    Word.orb(setIstateBits s, Word.andb(Word.notb 0w6, getAttrWord(self()))))
+-
+-            local
+-                (* The default for a new thread is to ignore broadcasts and handle explicit
+-                   interrupts synchronously. *)
+-                val (defaultAttrs, _) =
+-                    attrsToWord[EnableBroadcastInterrupt false, InterruptState InterruptSynch]
+-                val threadForkFunction:
+-                    (unit->unit) * word * int -> thread = RunCall.rtsCallFull3 "PolyThreadForkThread"
+-            in
+-                fun fork(f:unit->unit, attrs: threadAttribute list): thread =
+-                let
+-                    (* Any attributes specified explicitly override the defaults. *)
+-                    val (attrWord, mask) = attrsToWord attrs
+-                    val attrValue = Word.orb(attrWord, Word.andb(Word.notb mask, defaultAttrs))
+-                    val stack = newStackSize(attrs, 0 (* Default is unlimited *))
+-                    (* Run the function and exit whether it returns normally or raises an exception. *)
+-                    fun threadFunction () = (f() handle _ => ()) before exit()
+-                in
+-                    threadForkFunction(threadFunction, attrValue, stack)
+-                end
+-            end
+-        end
+-
+-        local
+-            (* Send an interrupt to a thread.  If it returns false
+-               the thread did not exist and this should raise an exception. *)
+-            val threadSendInterrupt: thread -> bool = RunCall.rtsCallFast1 "PolyThreadInterruptThread"
+-        in
+-            fun interrupt(t: thread) =
+-                if threadSendInterrupt t
+-                then ()
+-                else raise Thread "Thread does not exist"
+-        end
+-
+-        local
+-            val threadKillThread: thread -> bool = RunCall.rtsCallFast1 "PolyThreadKillThread"
+-        in
+-            fun kill(t: thread) =
+-                if threadKillThread t
+-                then ()
+-                else raise Thread "Thread does not exist"
+-        end
+-
+-        val numProcessors: unit -> int = RunCall.rtsCallFast0 "PolyThreadNumProcessors"
+-
+-        local
+-            val numberOfPhysical: unit -> int =
+-                RunCall.rtsCallFast0 "PolyThreadNumPhysicalProcessors"
+-        in
+-            fun numPhysicalProcessors(): int option =
+-                (* It is not always possible to get this information *)
+-                case numberOfPhysical() of 0 => NONE | n => SOME n
+-        end
++        fun testInterrupt () = ()
++        fun exit () = raise Thread "xc2: the only thread cannot exit"
++        fun isActive _ = true
++        fun broadcastInterrupt () = ()
++        local
++            val attributes = ref [EnableBroadcastInterrupt false, InterruptState InterruptSynch, MaximumMLStack NONE]
++        in
++            fun getAttributes () = !attributes
++            fun setAttributes l =
++                attributes :=
++                    List.foldl (fn (a, l) =>
++                        a :: List.filter (fn b =>
++                            case (a, b) of
++                                (EnableBroadcastInterrupt _, EnableBroadcastInterrupt _) => false
++                            |   (InterruptState _, InterruptState _) => false
++                            |   (MaximumMLStack _, MaximumMLStack _) => false
++                            |   _ => true) l) (!attributes) l
++        end
++        fun fork (_ : (unit -> unit) * threadAttribute list) : thread = raise Thread "xc2: no threads"
++        fun interrupt _ = ()
++        fun kill _ = ()
++        fun numProcessors () = 1
++        fun numPhysicalProcessors () = SOME 1
+     end
+-    
++
+     structure Mutex =
+     struct
+-        type mutex = Word.word ref (* This is a ref of some sort but may be a volatile byte or word ref. *)
+-        open Thread  (* createMutex, lockMutex, tryLockMutex and unlockMutex are set up by Initialise. *)
+-        
+-        val mutex = createMutex
+-        
+-        (* lockMutex, tryLockMutex and unlockMutex are now architecture-specific code. *)
+-        
+-        val threadMutexBlock: mutex -> unit = RunCall.rtsCallFull1 "PolyThreadMutexBlock"
+-        val threadMutexUnlock: mutex -> unit = RunCall.rtsCallFull1 "PolyThreadMutexUnlock"
+-
+-        fun lock (m: mutex): unit =
+-        let
+-            (* If the lock is taken we will have to call into the RTS to suspend ourselves.
+-               In addition the thread that currently has the mutex will have to call into
+-               the RTS to release waiting threads.  We want to avoid those costs so
+-               we first attempt to treat is as a spin-lock. *)
+-            fun keepTrying n =
+-                if tryLockMutex m then () (* Success *)
+-                else if n <> 0w0
+-                then (cpuPause(); keepTrying(n-0w1))
+-                else if lockMutex m
+-                then ()
+-                else (* It's locked.  We return some time after the lock is released. *)
+-                (
+-                    threadMutexBlock m;
+-                    lock m (* Try again. *)
+-                )
+-        in
+-            keepTrying 0w1000
+-        end
+-
+-        fun unlock (m: mutex): unit =
+-            if unlockMutex m
+-            then () (* No contention. *)
+-            else (* Another thread has blocked and we have to release it. *)
+-               threadMutexUnlock m
+-
+-        val trylock = tryLockMutex
++        type mutex = word ref
++        fun mutex () = BuiltinThread.createMutex ()
++        fun lock m = ignore (BuiltinThread.lockMutex m)
++        fun unlock m = ignore (BuiltinThread.unlockMutex m)
++        fun trylock m = BuiltinThread.tryLockMutex m
+     end
+ 
+     structure ConditionVar =
+     struct
+-        open Thread
+-
+-        (* A condition variable contains a lock and a list of suspended threads. *)
+-        type conditionVar = { lock: Mutex.mutex, threads: thread list ref }
+-        fun conditionVar(): conditionVar =
+-            { lock = Mutex.mutex(), threads = LibrarySupport.volatileListRef() }
+-
+-        local
+-            val threadCondVarWait: Mutex.mutex -> unit = RunCall.rtsCallFull1 "PolyThreadCondVarWait"
+-            and threadCondVarWaitUntil: Mutex.mutex * Time.time -> unit = RunCall.rtsCallFull2 "PolyThreadCondVarWaitUntil"
+-        in
+-            fun innerWait({lock, threads}: conditionVar, m: Mutex.mutex, t: Time.time option) : bool =
+-            let
+-                val me = self() (* My thread id. *)
+-                
+-                fun waitAgain() =
+-                let
+-                    fun doFind [] = false | doFind(h::t) = equal(h, me) orelse doFind t
+-                    
+-                    fun removeThis [] = raise Fail "Thread missing in list"
+-                     |  removeThis (h::t) = if equal(h, me) then t else h :: removeThis t
+-                     
+-                    val () =
+-                        case t of
+-                            SOME time => threadCondVarWaitUntil(lock, time)
+-                        |   NONE => threadCondVarWait lock
+-
+-                    val () = Mutex.lock lock (* Get the lock again.  *)
+-                    
+-                    (* Are we still on the list?  If so we haven't been explicitly woken
+-                       up.  We've either timed out, been interrupted or simply returned
+-                       because the RTS needed to process some asynchronous results.  *)
+-                    val stillThere = doFind(!threads)
+-                    open Time (* For >= *)
+-                in
+-                    if not stillThere
+-                    then (* We're done. *)
+-                    (
+-                        Mutex.unlock lock;
+-                        true
+-                    )
+-                    else if (case t of NONE => false | SOME t => Time.now() >= t)
+-                    then (* We've timed out. *)
+-                    (
+-                        threads := removeThis(! threads);
+-                        Mutex.unlock lock;
+-                        false
+-                    )
+-                    else
+-                    (
+-                        (* See if we've been interrupted.  If so remove ourselves
+-                           and exit. *)
+-                        testInterrupt()
+-                            handle exn => (threads := removeThis(! threads); Mutex.unlock lock; raise exn);
+-                        (* Otherwise just keep waiting. *)
+-                        waitAgain()
+-                    )
+-                end  
+-            in
+-                Mutex.lock lock; (* Lock the internal mutex. *)
+-                Mutex.unlock m; (* Unlock the external mutex *)
+-                threads := me :: !threads; (* Add ourselves to the list. *)
+-                waitAgain() (* Wait and return the result when we're done. *)
+-            end
+-
+-            fun doWait(c: conditionVar, m: Mutex.mutex, t: Time.time option) : bool =
+-            let
+-                val originalIntstate = getInterruptState()
+-                (* Set this to handle interrupts synchronously unless we're already
+-                   ignoring them. *)
+-                val () =
+-                    if originalIntstate = InterruptDefer
+-                    then ()
+-                    else setInterruptState InterruptSynch;
+-                    
+-                (* Wait for the condition.  If it raises an exception we still
+-                   need to reacquire the lock unless we were handling interrupts
+-                   asynchronously. *)
+-                val result =
+-                    innerWait(c, m, t) handle exn =>
+-                        (
+-                            (* We had an exception.  If we were handling exceptions synchronously
+-                               we reacquire the lock.  If it was set to InterruptAsynchOnce this
+-                               counts as a single asynchronous exception and we restore the
+-                               state as InterruptSynch. *)
+-                            case originalIntstate of
+-                                InterruptDefer => (* Shouldn't happen?  *) Mutex.lock m
+-                            |   InterruptSynch => Mutex.lock m
+-                            |   InterruptAsynch => setInterruptState InterruptAsynch
+-                            |   InterruptAsynchOnce => setInterruptState InterruptSynch;
+-
+-                            raise exn (* Reraise the exception*)
+-                        )
+-            in
+-                (* Restore the original interrupt state first. *)
+-                setInterruptState originalIntstate;
+-                (* Normal return.  Reacquire the lock before returning. *)
+-                Mutex.lock m;
+-                result
+-            end
+-
+-            fun wait(c: conditionVar, m: Mutex.mutex) : unit =
+-                (doWait(c, m, NONE); ())
+-            and waitUntil(c: conditionVar, m: Mutex.mutex, t: Time.time) : bool =
+-                doWait(c, m, SOME t)
+-        end
+-        
+-        local
+-            (* This call wakes up the specified thread.  If the thread has already been
+-               interrupted and is not ignoring interrupts it returns false.  Otherwise
+-               it wakes up the thread and returns true.  We have to use this because
+-               we define that if a thread is interrupted before it is signalled then
+-               it raises Interrupt. *)
+-            val threadCondVarWake: thread -> bool = RunCall.rtsCallFast1 "PolyThreadCondVarWake"
+-            
+-            (* Wake a single thread if we can (signal). *)
+-            fun wakeOne [] = []
+-            |   wakeOne (thread::rest) =
+-                    if threadCondVarWake thread
+-                    then rest
+-                    else thread :: wakeOne rest
+-            (* Wake all threads (broadcast). *)
+-            fun wakeAll [] = [] (* Always returns the empty list. *)
+-            |   wakeAll (thread::rest) = (threadCondVarWake thread; wakeAll rest)
+-            
+-            fun signalOrBroadcast({lock, threads}: conditionVar, wakeThreads) : unit =
+-            let
+-                val originalState = getInterruptState()
+-            in
+-                (* Set this to handle interrupts synchronously unless we're already
+-                   ignoring them.  We need to do this to avoid an asynchronous
+-                   interrupt which could leave the internal lock in an inconsistent state. *)
+-                if originalState = InterruptDefer
+-                then ()
+-                else setInterruptState InterruptSynch;
+-                (* Get the condition var lock. *)
+-                Mutex.lock lock;
+-                threads := wakeThreads(! threads);
+-                Mutex.unlock lock;
+-                setInterruptState originalState; (* Restore original state. *)
+-                (* Test if we were interrupted while we were handling
+-                   interrupts synchronously. *)
+-                if originalState = InterruptAsynch orelse originalState = InterruptAsynchOnce
+-                then testInterrupt()
+-                else ()
+-            end
+-        in
+-            fun signal cv = signalOrBroadcast(cv, wakeOne)
+-            and broadcast cv = signalOrBroadcast(cv, wakeAll)
+-        end
++        type conditionVar = unit ref
++        fun conditionVar () = ref ()
++        fun wait (_ : conditionVar, _ : Mutex.mutex) = raise Thread "xc2: a wait for no other thread"
++        fun waitUntil (_ : conditionVar, _ : Mutex.mutex, _ : Time.time) = false
++        fun signal (_ : conditionVar) = ()
++        fun broadcast (_ : conditionVar) = ()
+     end
++end
+ end;
+-
+-local
+-    fun prettyMutex _ _ (_: Thread.Mutex.mutex) = PolyML.PrettyString "?"
+-    and prettyThread _ _ (_: Thread.Thread.thread) = PolyML.PrettyString "?"
+-    and prettyCondVar _ _ (_: Thread.ConditionVar.conditionVar) = PolyML.PrettyString "?"
+-in
+-    val () = PolyML.addPrettyPrinter prettyMutex
+-    and () = PolyML.addPrettyPrinter prettyThread
+-    and () = PolyML.addPrettyPrinter prettyCondVar
+-end;
+-
+-
+diff -ruN a/basis/ThreadLib.sml b/basis/ThreadLib.sml
+--- a/basis/ThreadLib.sml
++++ b/basis/ThreadLib.sml
+@@ -28,36 +28,21 @@
+        getAttributes appeared as a major allocation hot-spot when building the
+        compiler because "protect" is called round every access to the global
+        name-space. *)
++    (* xc2: with one thread there are no attributes to set: RunCall.loadWord
++       and RunCall.storeWord of the thread's state are left out *)
+     fun protect m f a =
+     let
+-        open Thread.Thread Thread.Mutex
+-        open Word
+-        (* Set this to handle interrupts synchronously except if we are blocking
+-           them.  We don't want to get an asynchronous interrupt while we are
+-           actually locking or unlocking the mutex but if we have to block to do
+-           IO then we should allow an interrupt at that point. *)
+-        val oldAttrs: Word.word = RunCall.loadWord(self(), 0w1)
+-        val () =
+-            if andb(oldAttrs, 0w6) = 0w0 (* Already deferred? *)
+-            then ()
+-            else RunCall.storeWord (self(), 0w1,
+-                    orb(andb(notb 0w6, oldAttrs), 0w2))
+-        fun restoreAttrs() =
+-        (
+-            RunCall.storeWord (self(), 0w1, oldAttrs);
+-            if andb(oldAttrs, 0w4) = 0w4 then testInterrupt() else ()
+-        )
++        open Thread.Mutex
+         val () = lock m
+         val result = f a
+             handle exn =>
+             (
+-                unlock m; restoreAttrs();
++                unlock m;
+                 (* Reraise the exception preserving the location information. *)
+                 PolyML.Exception.reraise exn
+             )
+     in
+         unlock m;
+-        restoreAttrs();
+         result
+     end
+ end;
+diff -ruN a/basis/Timer.sml b/basis/Timer.sml
+--- a/basis/Timer.sml
++++ b/basis/Timer.sml
+@@ -45,10 +45,10 @@
+ 
+     local
+         open Time
+-        val getUserTime: unit -> Time.time = RunCall.rtsCallFull0 "PolyTimingGetUser"
+-        and getSysTime: unit -> Time.time = RunCall.rtsCallFull0 "PolyTimingGetSystem"
+-        and getGCUTime: unit -> Time.time = RunCall.rtsCallFull0 "PolyTimingGetGCUser"
+-        and getGCSTime: unit -> Time.time = RunCall.rtsCallFull0 "PolyTimingGetGCSystem"
++        val getUserTime: unit -> Time.time = fn () => Time.fromMicroseconds (RunCall.rtsCallFull0 "PolyTimingGetUser" ()) (* xc2: a Time.time, which the runtime makes of the microseconds *)
++        and getSysTime: unit -> Time.time = fn () => Time.fromMicroseconds (RunCall.rtsCallFull0 "PolyTimingGetSystem" ()) (* xc2: a Time.time, which the runtime makes of the microseconds *)
++        and getGCUTime: unit -> Time.time = fn () => Time.fromMicroseconds (RunCall.rtsCallFull0 "PolyTimingGetGCUser" ()) (* xc2: a Time.time, which the runtime makes of the microseconds *)
++        and getGCSTime: unit -> Time.time = fn () => Time.fromMicroseconds (RunCall.rtsCallFull0 "PolyTimingGetGCSystem" ()) (* xc2: a Time.time, which the runtime makes of the microseconds *)
+     in
+         fun startCPUTimer () =
+             {userTime=getUserTime(),
+@@ -70,7 +70,7 @@
+                   nongc = { usr = usr-gc_usr, sys = sys-gc_sys } }
+             end
+         
+-        val startRealTimer: unit -> Time.time = RunCall.rtsCallFull0 "PolyTimingGetReal"
++        val startRealTimer: unit -> Time.time = fn () => Time.fromMicroseconds (RunCall.rtsCallFull0 "PolyTimingGetReal" ()) (* xc2: a Time.time, which the runtime makes of the microseconds *)
+ 
+         fun totalRealTimer() = Time.zeroTime
+         and checkRealTimer t = startRealTimer() - t
+diff -ruN a/basis/UnixSock.sml b/basis/UnixSock.sml
+--- a/basis/UnixSock.sml
++++ b/basis/UnixSock.sml
+@@ -52,8 +52,8 @@
+             NONE => raise OS.SysErr("Missing address family", NONE)
+         |   SOME s => s
+ 
+-    val toAddr: string -> sock_addr = RunCall.rtsCallFull1 "PolyNetworkUnixPathToSockAddr"
+-    and fromAddr: sock_addr -> string = RunCall.rtsCallFull1 "PolyNetworkUnixSockAddrToPath"
++    val toAddr: string -> sock_addr = LibraryIOSupport.SOCKADDR o RunCall.rtsCallFull1 "PolyNetworkUnixPathToSockAddr" (* xc2: the address, whose representation is the constructor *)
++    and fromAddr: sock_addr -> string = (fn LibraryIOSupport.SOCKADDR a => RunCall.rtsCallFull1 "PolyNetworkUnixSockAddrToPath" a) (* xc2: the address, whose representation is the constructor *)
+ 
+     structure Strm =
+     struct
+diff -ruN a/basis/Vector.sml b/basis/Vector.sml
+--- a/basis/Vector.sml
++++ b/basis/Vector.sml
+@@ -25,17 +25,15 @@
+        to or from 'a vector but that gives error messages about free
+        type variables. *)
+ 
+-    val vecAsWord: 'a vector -> word = RunCall.unsafeCast
+-    and wordAsVec: word -> 'a vector = RunCall.unsafeCast
++    (* xc2: a vector is Rune's, one being made an array of XC2's (XC2P.valloc):
++       vecAsWord and wordAsVec, RunCall.unsafeCast, are left out *)
+     val intAsWord: int -> word = RunCall.unsafeCast
+     and wordAsInt: word -> int = RunCall.unsafeCast
+ 
+     (* All the arrays are initially created containing zeros and then initialised. *)
+-    fun alloc len = RunCall.allocateWordMemory(Word.fromInt len, 0wx40, 0w0)
++    fun alloc len = XC2P.valloc len (* xc2: RunCall.allocateWordMemory(Word.fromInt len, 0wx40, 0w0) *)
+     
+-    fun unsafeSub(v: 'a vector, i: int): 'a = RunCall.loadWordFromImmutable (vecAsWord v, intAsWord i)
+-    and unsafeUpdate(v: 'a vector, i: int, new: 'a): unit =
+-        RunCall.storeWordInitialise (vecAsWord v, intAsWord i, RunCall.unsafeCast new)
++    fun unsafeSub(v: 'a vector, i: int): 'a = XC2P.vsub (v, i) (* xc2: RunCall.loadWordFromImmutable *)
+ in
+ 
+ structure Vector: VECTOR =
+@@ -47,7 +45,7 @@
+ 
+     (* The maximum size of a vector is the maximum object size we can allocate.
+        This is one more than the maximum size of an array. *)
+-    val maxLen = RunCall.unsafeCast LibrarySupport.maxAllocation
++    val maxLen = XC2P.vmaxLen (* xc2: RunCall.unsafeCast LibrarySupport.maxAllocation *)
+ 
+     infix 9 sub (* For what it's worth *)
+   
+@@ -58,20 +56,19 @@
+        not pointer equality. *)
+     val listLength = length; (* Pick this up from the prelude. *)
+  
+-    fun length v = wordAsInt(RunCall.memoryCellLength(vecAsWord v));
++    fun length v = XC2P.vlength v; (* xc2: wordAsInt(RunCall.memoryCellLength(vecAsWord v)) *)
+ 
+     fun op sub (vec:'a vector, i: int): 'a =
+     let
+-        val v = vecAsWord vec
+     in
+-        if not (LibrarySupport.isShortInt i) orelse intAsWord i >= RunCall.memoryCellLength v
++        if not (LibrarySupport.isShortInt i) orelse intAsWord i >= intAsWord (length vec) (* xc2: RunCall.memoryCellLength *)
+         then raise General.Subscript
+         else unsafeSub(vec, i)
+     end
+  
+     (* Create a vector from a list.  We have to treat an empty list specially
+        because we don't allow zero sized heap objects. *)
+-    fun fromList [] : 'a vector = wordAsVec LibrarySupport.emptyVector (* Must not try to lock it. *)
++    fun fromList [] : 'a vector = XC2P.vempty () (* xc2: wordAsVec LibrarySupport.emptyVector *) (* Must not try to lock it. *)
+       | fromList (l : 'a list) : 'a vector =
+         let
+         val length = listLength l;
+@@ -83,18 +80,17 @@
+         (* Copy the list elements into the vector. *)
+         fun init (v, i, a :: l) =
+             (
+-            RunCall.storeWordInitialise(v, intAsWord i, RunCall.unsafeCast a);
++            XC2P.vset(v, i, a); (* xc2: RunCall.storeWordInitialise, RunCall.unsafeCast *)
+             init(v, i + 1, l)
+             )
+         |  init (_, _, []) = ();
+         
+     in
+         init(vec, 0, l);
+-        RunCall.clearMutableBit vec;
+-        wordAsVec vec
++        XC2P.vfreeze vec (* xc2: RunCall.clearMutableBit; wordAsVec *)
+     end
+         
+-    fun tabulate (0, _) : 'a vector = wordAsVec LibrarySupport.emptyVector (* Must not try to lock it. *)
++    fun tabulate (0, _) : 'a vector = XC2P.vempty () (* xc2: wordAsVec LibrarySupport.emptyVector *) (* Must not try to lock it. *)
+      |  tabulate (length: int , f : int->'a): 'a vector =
+     let
+         val vec =
+@@ -102,15 +98,14 @@
+         (* Initialise it to the function values. *)
+         fun init i = 
+             if length <= i then ()
+-            else (RunCall.storeWordInitialise(vec, intAsWord i, RunCall.unsafeCast(f i)); init(i+1))
++            else (XC2P.vset(vec, i, f i); init(i+1)) (* xc2: RunCall.storeWordInitialise, RunCall.unsafeCast *)
+     in
+         init 0;
+-        RunCall.clearMutableBit vec;
+-        wordAsVec vec
++        XC2P.vfreeze vec (* xc2: RunCall.clearMutableBit; wordAsVec *)
+     end
+     
+ 
+-    fun concat [] = wordAsVec LibrarySupport.emptyVector
++    fun concat [] = XC2P.vempty () (* xc2: wordAsVec LibrarySupport.emptyVector *)
+      |  concat [v] = v (* Handle special cases to reduce copying. *)
+      |  concat l =
+     let
+@@ -120,7 +115,7 @@
+     
+         val total_len = total l 0
+     in
+-        if total_len = 0 then wordAsVec LibrarySupport.emptyVector
++        if total_len = 0 then XC2P.vempty () (* xc2: wordAsVec LibrarySupport.emptyVector *)
+         else if total_len >= maxLen then raise General.Size
+         else
+         let
+@@ -130,16 +125,14 @@
+             fun copy_list [] _ = ()
+               | copy_list (h::t) j =
+                 let
+-                    val v = vecAsWord h
+                     val src_len = length h
+                 in
+-                    RunCall.moveWords(v, new_vec, 0w0, Word.fromInt j, Word.fromInt src_len);
++                    XC2P.vcopy(h, new_vec, 0, j, src_len); (* xc2: RunCall.moveWords *)
+                     copy_list t (j+src_len)
+                 end
+         in
+             copy_list l 0;
+-            RunCall.clearMutableBit new_vec;
+-            wordAsVec new_vec
++            XC2P.vfreeze new_vec (* xc2: RunCall.clearMutableBit; wordAsVec *)
+         end
+     end
+     
+@@ -148,20 +141,19 @@
+     let
+         val len = length vec
+     in
+-        if len = 0 then wordAsVec LibrarySupport.emptyVector
++        if len = 0 then XC2P.vempty () (* xc2: wordAsVec LibrarySupport.emptyVector *)
+         else
+         let
+             (* Allocate a new vector. *)
+             val new_vec = alloc len
+-            val newResult = wordAsVec new_vec
++            (* xc2: newResult, wordAsVec new_vec, is made at the end *)
+                 
+             fun domap i =
+                 if i >= len then ()
+-                else (unsafeUpdate(newResult, i, f(unsafeSub(vec, i))); domap(i+1))
++                else (XC2P.vset(new_vec, i, f(unsafeSub(vec, i))); domap(i+1)) (* xc2: unsafeUpdate(newResult, ...) *)
+         in
+             domap 0;
+-            RunCall.clearMutableBit new_vec;
+-            newResult
++            XC2P.vfreeze new_vec (* xc2: RunCall.clearMutableBit new_vec; newResult *)
+         end
+     end
+ 
+@@ -169,20 +161,19 @@
+     let
+         val len = length vec
+     in
+-        if len = 0 then wordAsVec LibrarySupport.emptyVector
++        if len = 0 then XC2P.vempty () (* xc2: wordAsVec LibrarySupport.emptyVector *)
+         else
+         let
+             (* Allocate a new vector. *)
+             val new_vec = alloc len
+-            val newResult = wordAsVec new_vec
++            (* xc2: newResult, wordAsVec new_vec, is made at the end *)
+                 
+             fun domap i =
+                 if i >= len then ()
+-                else (unsafeUpdate(newResult, i, f(i, unsafeSub(vec, i))); domap(i+1))
++                else (XC2P.vset(new_vec, i, f(i, unsafeSub(vec, i))); domap(i+1)) (* xc2: unsafeUpdate(newResult, ...) *)
+         in
+             domap 0;
+-            RunCall.clearMutableBit new_vec;
+-            newResult
++            XC2P.vfreeze new_vec (* xc2: RunCall.clearMutableBit new_vec; newResult *)
+         end
+     end
+     
+@@ -197,7 +188,7 @@
+         PolyVectorOperations(
+             struct
+                 type 'a vector = 'a vector
+-                fun length v = RunCall.memoryCellLength(vecAsWord v)
++                fun length v = intAsWord (XC2P.vlength v) (* xc2: RunCall.memoryCellLength(vecAsWord v) *)
+                 local val u = unsafeSub in fun unsafeSub (v: 'a vector, i: word) = u(v, wordAsInt i) end
+                 fun unsafeSet _ = raise Fail "Should not be called"
+             end);
+@@ -279,15 +270,14 @@
+         else raise General.Subscript
+     
+     fun vector(Slice{vector, start, length}) =
+-        if length = 0 then wordAsVec LibrarySupport.emptyVector (* Special case for zero *)
++        if length = 0 then XC2P.vempty () (* xc2: wordAsVec LibrarySupport.emptyVector *) (* Special case for zero *)
+         else
+         let
+             (* Make a vector initialised to zero. *)
+             val new_vec = alloc length
+         in
+-            RunCall.moveWords(vecAsWord vector, new_vec, Word.fromInt start, 0w0, Word.fromInt length);
+-            RunCall.clearMutableBit new_vec;
+-            wordAsVec new_vec
++            XC2P.vcopy(vector, new_vec, start, 0, length); (* xc2: RunCall.moveWords *)
++            XC2P.vfreeze new_vec (* xc2: RunCall.clearMutableBit; wordAsVec *)
+         end
+ 
+     fun base(Slice{vector, start, length}) = (vector, start, length)
+@@ -300,7 +290,7 @@
+             SOME(unsafeSub(vector, start), Slice{vector=vector, start=start+1, length=length-1})
+             
+ 
+-    fun concat [] = wordAsVec LibrarySupport.emptyVector
++    fun concat [] = XC2P.vempty () (* xc2: wordAsVec LibrarySupport.emptyVector *)
+      |  concat l =
+     let
+         (* Calculate the total length *)
+@@ -309,7 +299,7 @@
+     
+         val total_len = total l 0
+     in
+-        if total_len = 0 then wordAsVec LibrarySupport.emptyVector
++        if total_len = 0 then XC2P.vempty () (* xc2: wordAsVec LibrarySupport.emptyVector *)
+         else
+         let
+             (* Allocate a new vector. *)
+@@ -318,48 +308,45 @@
+             fun copy_list [] _ = ()
+               | copy_list (Slice{vector, start, length}::t) j =
+                 (
+-                    RunCall.moveWords(vecAsWord vector, new_vec, Word.fromInt start, Word.fromInt j, Word.fromInt length);
++                    XC2P.vcopy(vector, new_vec, start, j, length); (* xc2: RunCall.moveWords *)
+                     copy_list t (j+length)
+                 )
+         in
+             copy_list l 0;
+-            RunCall.clearMutableBit new_vec;
+-            wordAsVec new_vec
++            XC2P.vfreeze new_vec (* xc2: RunCall.clearMutableBit; wordAsVec *)
+         end
+     end
+     
+     fun map (f: 'a->'b) (Slice{vector:'a Vector.vector, start, length}): 'b Vector.vector =
+-        if length = 0 then wordAsVec LibrarySupport.emptyVector
++        if length = 0 then XC2P.vempty () (* xc2: wordAsVec LibrarySupport.emptyVector *)
+         else
+         let
+             (* Allocate a new vector. *)
+             val new_vec = alloc length
+-            val newResult = wordAsVec new_vec
++            (* xc2: newResult, wordAsVec new_vec, is made at the end *)
+                 
+             fun domap i =
+                 if i >= length then ()
+-                else (unsafeUpdate(newResult, i, f(unsafeSub(vector, i+start))); domap(i+1))
++                else (XC2P.vset(new_vec, i, f(unsafeSub(vector, i+start))); domap(i+1)) (* xc2: unsafeUpdate(newResult, ...) *)
+         in
+             domap 0;
+-            RunCall.clearMutableBit new_vec;
+-            newResult
++            XC2P.vfreeze new_vec (* xc2: RunCall.clearMutableBit new_vec; newResult *)
+         end
+ 
+     fun mapi (f: int*'a->'b) (Slice{vector:'a Vector.vector, start, length}): 'b Vector.vector =
+-        if length = 0 then wordAsVec LibrarySupport.emptyVector
++        if length = 0 then XC2P.vempty () (* xc2: wordAsVec LibrarySupport.emptyVector *)
+         else
+         let
+             (* Allocate a new vector. *)
+             val new_vec = alloc length
+-            val newResult = wordAsVec new_vec
++            (* xc2: newResult, wordAsVec new_vec, is made at the end *)
+                 
+             fun domap i =
+                 if i >= length then ()
+-                else (unsafeUpdate(newResult, i, f(i, unsafeSub(vector, i+start))); domap(i+1))
++                else (XC2P.vset(new_vec, i, f(i, unsafeSub(vector, i+start))); domap(i+1)) (* xc2: unsafeUpdate(newResult, ...) *)
+         in
+             domap 0;
+-            RunCall.clearMutableBit new_vec;
+-            newResult
++            XC2P.vfreeze new_vec (* xc2: RunCall.clearMutableBit new_vec; newResult *)
+         end
+ 
+ 
+diff -ruN a/basis/Word16.sml b/basis/Word16.sml
+--- a/basis/Word16.sml
++++ b/basis/Word16.sml
+@@ -30,7 +30,7 @@
+        are implemented using tagged integers. *)
+     val wordSize = 16
+     val maxWord = 65535
+-    val maxWordAsWord: word = RunCall.unsafeCast maxWord
++    val maxWordAsWord: word = XC2P.intToWord maxWord (* xc2: RunCall.unsafeCast *)
+ 
+     infix 8 << >> ~>>
+ 
+@@ -132,3 +132,7 @@
+ val () = RunCall.addOverload Word16.> ">";
+ val () = RunCall.addOverload Word16.<= "<=";
+ val () = RunCall.addOverload Word16.>= ">=";
++
++(* xc2: the overloading of Word16's operators (RunCall.addOverload) and constants
++   (convWord), made by Rune's *)
++_overload word Word16 16
+diff -ruN a/basis/Word32In64.sml b/basis/Word32In64.sml
+--- a/basis/Word32In64.sml
++++ b/basis/Word32In64.sml
+@@ -146,3 +146,7 @@
+ val () = RunCall.addOverload Word32.> ">";
+ val () = RunCall.addOverload Word32.<= "<=";
+ val () = RunCall.addOverload Word32.>= ">=";
++
++(* xc2: the overloading of Word32's operators (RunCall.addOverload) and constants
++   (convWord), made by Rune's *)
++_overload word Word32 32
+diff -ruN a/basis/Word8.sml b/basis/Word8.sml
+--- a/basis/Word8.sml
++++ b/basis/Word8.sml
+@@ -41,7 +41,7 @@
+ 
+     val wordSize = 8
+     val maxWord = 255
+-    val maxWordAsWord: word = RunCall.unsafeCast maxWord
++    val maxWordAsWord: word = XC2P.intToWord maxWord (* xc2: RunCall.unsafeCast *)
+     
+     infix 8 << >> ~>>
+ 
+@@ -162,3 +162,7 @@
+ val () = RunCall.addOverload Word8.> ">";
+ val () = RunCall.addOverload Word8.<= "<=";
+ val () = RunCall.addOverload Word8.>= ">=";
++
++(* xc2: the overloading of Word8's operators (RunCall.addOverload) and constants
++   (convWord), made by Rune's *)
++_overload word Word8 8
+diff -ruN a/basis/Word8Array.sml b/basis/Word8Array.sml
+--- a/basis/Word8Array.sml
++++ b/basis/Word8Array.sml
+@@ -31,10 +31,18 @@
+     type vector = LibrarySupport.Word8Array.vector
+     datatype array = datatype LibrarySupport.Word8Array.array
+ 
+-    val System_move_bytes: address*address*word*word*word->unit = RunCall.moveBytes
++    val System_move_bytes: address*address*word*word*word->unit = XC2P.moveBytes (* xc2: RunCall.moveBytes *)
+ 
+     fun System_move_str(src: vector, dst: address, srcOffset: word, dstOffset: word, length: word): unit =
+-        RunCall.moveBytes(src, RunCall.unsafeCast dst, srcOffset, dstOffset, length)
++        XC2P.moveBytes(XC2P.str (w8vectorToString src), dst, srcOffset, dstOffset, length) (* xc2: RunCall.moveBytes, RunCall.unsafeCast *)
++
++    (* xc2: a byte, which the shim reads and writes as a word, as a Word8.word
++       and back, and as a char and back (Poly/ML's representations are the
++       same, and RunCall.unsafeCast turns one into the other) *)
++    fun w8 (w: word) : Word8.word = Word8.fromLargeWord (Word.toLargeWord w)
++    fun unw8 (b: Word8.word) : word = Word.fromLargeWord (Word8.toLargeWord b)
++    fun charToW8 c = w8 (XC2P.charToWord c)
++    fun w8ToChar b = XC2P.wordToChar (unw8 b)
+ 
+     val emptyVec: vector = w8vectorFromString "" (* This is represented by a null string not a null vector. *)
+ 
+@@ -64,7 +72,7 @@
+     
+         fun op sub (v, i: int): elem =
+             if i < 0 orelse i >= length v then raise General.Subscript
+-            else RunCall.loadByteFromImmutable (v, intAsWord i + wordSize)
++            else w8 (XC2P.sloadW (w8vectorToString v, intAsWord i + wordSize)) (* xc2: RunCall.loadByteFromImmutable *)
+      
+         (* Because Word8Vector.vector is implemented as a string and Word8.word
+            as a byte all these functions have the same implementation in
+@@ -73,17 +81,19 @@
+            conversion of Word8.word from char to an opaque type at the same
+            time as converting Word8Vector.elem to preserve the sharing. *)
+         (* Can't that be achieved by Word8Vector :> MONO_VECTOR where type elem = Word8.word ? *)
++        (* xc2: CharVector's, with the elements converted: RunCall.unsafeCast *)
+         val fromList: Word8.word list -> vector =
+-            RunCall.unsafeCast CharVector.fromList
++            fn l => w8vectorFromString (CharVector.fromList (List.map w8ToChar l))
+         and tabulate: int * (int->Word8.word) -> vector =
+-            RunCall.unsafeCast CharVector.tabulate
+-        and concat: vector list -> vector = RunCall.unsafeCast CharVector.concat
++            fn (n, f) => w8vectorFromString (CharVector.tabulate (n, w8ToChar o f))
++        and concat: vector list -> vector =
++            fn l => w8vectorFromString (CharVector.concat (List.map w8vectorToString l))
+         and map: (elem -> elem) -> vector -> vector =
+-            RunCall.unsafeCast CharVector.map
++            fn f => fn v => w8vectorFromString (CharVector.map (w8ToChar o f o charToW8) (w8vectorToString v))
+         and mapi: ((int * elem) -> elem) -> vector -> vector =
+-            RunCall.unsafeCast CharVector.mapi
++            fn f => fn v => w8vectorFromString (CharVector.mapi (fn (i, c) => w8ToChar (f (i, charToW8 c))) (w8vectorToString v))
+         and update: vector * int * elem -> vector =
+-            RunCall.unsafeCast CharVector.update
++            fn (v, i, e) => w8vectorFromString (CharVector.update (w8vectorToString v, i, w8ToChar e))
+             
+         (* Create the other functions. *)
+         structure VectorOps =
+@@ -91,7 +101,7 @@
+                 struct
+                     type vector = vector and elem = elem
+                     val length = wVecLength
+-                    fun unsafeSub (s, i) = RunCall.loadByteFromImmutable(s, i + wordSize)
++                    fun unsafeSub (s, i) = w8 (XC2P.sloadW (w8vectorToString s, i + wordSize)) (* xc2: RunCall.loadByteFromImmutable *)
+                     fun unsafeSet _ = raise Fail "Should not be called"
+                 end);
+     
+@@ -145,7 +155,7 @@
+             (* LibrarySupport.allocBytes does not initialise anything except the overflow bytes *)
+             fun init i = 
+                 if len <= i then ()
+-                else (RunCall.storeByte(vec, i, ini); init(i+0w1))
++                else (XC2P.storeByteW(vec, i, unw8 ini) (* xc2: RunCall.storeByte *); init(i+0w1))
+         in
+             init 0w0;
+             Array(len, vec)
+@@ -153,12 +163,12 @@
+     
+         fun op sub (Array(l, v), i: int): elem =
+             if i < 0 orelse i >= wordAsInt l then raise General.Subscript
+-            else RunCall.loadByte (v, intAsWord i)
++            else w8 (XC2P.loadByteW (v, intAsWord i)) (* xc2: RunCall.loadByte *)
+     
+         fun update (Array (l, v), i: int, new) : unit =
+             if i < 0 orelse i >= wordAsInt l
+             then raise General.Subscript
+-            else RunCall.storeByte (v, intAsWord i, new);
++            else XC2P.storeByteW (v, intAsWord i, unw8 new) (* xc2: RunCall.storeByte *);
+     
+         (* Create an array from a list. *)
+         fun fromList (l : elem list) : array =
+@@ -169,7 +179,7 @@
+             val vec = LibrarySupport.allocBytes length;
+             
+             (* Copy the list elements into the array. *)
+-            fun init (v, i, a :: l) = (RunCall.storeByteInitialise(v, i, a); init(v, i + 0w1, l))
++            fun init (v, i, a :: l) = (XC2P.storeByteW(v, i, unw8 a) (* xc2: RunCall.storeByteInitialise *); init(v, i + 0w1, l))
+             |  init (_, _, []) = ();
+             
+         in
+@@ -184,7 +194,7 @@
+             (* Initialise it to the function values. *)
+             fun init i = 
+                 if len <= i then ()
+-                else (RunCall.storeByteInitialise(vec, i, f(wordAsInt i)); init(i+0w1))
++                else (XC2P.storeByteW(vec, i, unw8 (f(wordAsInt i))) (* xc2: RunCall.storeByteInitialise *); init(i+0w1))
+         in
+             init 0w0;
+             Array(len, vec)
+@@ -198,9 +208,8 @@
+                 (* Make an array initialised to zero. *)
+                 val new_vec = allocString len
+             in
+-                System_move_bytes(vec, RunCall.unsafeCast new_vec, 0w0, wordSize, len);
+-                RunCall.clearMutableBit new_vec;
+-                w8vectorFromString new_vec
++                System_move_bytes(vec, new_vec, 0w0, wordSize, len); (* xc2: RunCall.unsafeCast new_vec *)
++                w8vectorFromString (freezeString new_vec) (* xc2: RunCall.clearMutableBit new_vec *)
+             end
+     
+         (* Copy an array into another.  It's possible for the arrays to be the
+@@ -232,8 +241,8 @@
+                 struct
+                     type vector = array and elem = elem
+                     fun length(Array(len, _)) = len
+-                    fun unsafeSub(Array(_, v), i) = RunCall.loadByte(v, i)
+-                    and unsafeSet(Array(_, v), i, c) = RunCall.storeByte(v, i, c)
++                    fun unsafeSub(Array(_, v), i) = w8 (XC2P.loadByteW(v, i)) (* xc2: RunCall.loadByte *)
++                    and unsafeSet(Array(_, v), i, c) = XC2P.storeByteW(v, i, unw8 c) (* xc2: RunCall.storeByte *)
+                 end);
+     
+         open ArrayOps;
+@@ -278,7 +287,7 @@
+                 struct
+                     type vector = vector and elem = Word8.word
+                     val vecLength = wVecLength
+-                    fun unsafeVecSub(s, i: word) = RunCall.loadByteFromImmutable(s, i + wordSize)
++                    fun unsafeVecSub(s, i: word) = w8 (XC2P.sloadW (w8vectorToString s, i + wordSize)) (* xc2: RunCall.loadByteFromImmutable *)
+                     fun unsafeVecUpdate _ = raise Fail "Should not be called" (* Not applicable *)
+                 end);
+     
+@@ -337,8 +346,8 @@
+             VectorSliceOperations(
+                 struct
+                     type vector = array and elem = Word8.word
+-                    fun unsafeVecSub(Array(_, s), i) = RunCall.loadByte(s, i)
+-                    and unsafeVecUpdate(Array(_, s), i, x) = RunCall.storeByte (s, i, x)
++                    fun unsafeVecSub(Array(_, s), i) = w8 (XC2P.loadByteW(s, i)) (* xc2: RunCall.loadByte *)
++                    and unsafeVecUpdate(Array(_, s), i, x) = XC2P.storeByteW (s, i, unw8 x) (* xc2: RunCall.storeByte *)
+                     and vecLength(Array(l, _)) = l
+                 end);
+     
+@@ -361,9 +370,8 @@
+                     (* Make an array initialised to zero. *)
+                     val new_vec = allocString len
+                 in
+-                    System_move_bytes(vec, RunCall.unsafeCast new_vec, intAsWord start, wordSize, len);
+-                    RunCall.clearMutableBit new_vec;
+-                    w8vectorFromString new_vec
++                    System_move_bytes(vec, new_vec, intAsWord start, wordSize, len); (* xc2: RunCall.unsafeCast new_vec *)
++                    w8vectorFromString (freezeString new_vec) (* xc2: RunCall.clearMutableBit new_vec *)
+                 end
+             end
+ 

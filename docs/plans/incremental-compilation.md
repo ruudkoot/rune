@@ -2220,7 +2220,7 @@ them:
 | performance.md item 13, a generational collector | the cost of the resident basis (D9, M1) |
 | weak-points.md, items 1, 3, 4, 6, 9 | M6 and M8 (1), M2 and M4 (3), M4 (4), M4 (6), M10 and M12 (9) |
 | sml97.md, *Out of scope*: "An interactive top level" | M4, and `docs/language.md`'s row |
-| fourth-quadrant.md, *`.mlb` semantics* | M10's build language reads what xc2 would need |
+| tests/basis/xc2/README.md, *How a program is made* (the `.mlb` files of MLton's and MLKit's libraries, flattened) | M10's build language reads what xc2 reads |
 | docs/plans/ide.md | M12's service; spans kept from M2 |
 | the corpus (`rune-corpus-sml97`) | its `sources.txt` and `corpus.mlb` become a build file (M10); its harness gains `--units` builds to compare (M2) |
 
@@ -2457,7 +2457,7 @@ says*, D2 to D6, D14):
 **In this repository:** [jit.md](jit.md), [middle-end.md](middle-end.md),
 [codegen.md](codegen.md), [weak-points.md](weak-points.md),
 [performance.md](performance.md) and [../performance.md](../performance.md),
-[fourth-quadrant.md](fourth-quadrant.md), [ide.md](ide.md);
+[../../tests/basis/xc2/README.md](../../tests/basis/xc2/README.md), [ide.md](ide.md);
 [../architecture.md](../architecture.md), [../ir.md](../ir.md),
 [../bytecode.md](../bytecode.md), [../runtime.md](../runtime.md),
 [../building.md](../building.md), [../language.md](../language.md);

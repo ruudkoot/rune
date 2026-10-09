@@ -1,0 +1,1 @@
+or-patterns (p1 | p2) are not Standard ML; --or-patterns allows them

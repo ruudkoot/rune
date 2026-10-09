@@ -3,8 +3,9 @@
 #   tests/run-tests.sh [--rune BIN] [--vm BIN] [--out DIR] [--skip FILE] [--update] [-j N] [FILTER]
 #
 # tests/lang/<id>_<name>.sml : compiled and run; stdout must equal the
-#   matching .expected file. Optional siblings: .args (command line words for
-#   the program), .vmargs (options for the VM), .stdin (fed to the program),
+#   matching .expected file. Optional siblings: .cargs (options for the
+#   compiler, such as --or-patterns), .args (command line words for the
+#   program), .vmargs (options for the VM), .stdin (fed to the program),
 #   .restore (the standard output of `runevm-stack --restore` on the image the
 #   program wrote to tests/out/NAME.img with Runtime.save),
 #   .exitcode (expected status, default 0), .stderr (expected stderr, compared
@@ -12,7 +13,8 @@
 #   .cwarn (expected compiler stderr, i.e. warnings,
 #   compared exactly when present; otherwise the compiler must print nothing).
 # tests/errors/<id>_<name>.sml : must fail to compile; the first line of the
-#   compiler's stderr must contain the text in the .expected file.
+#   compiler's stderr must contain the text in the .expected file (.cargs as
+#   above).
 #
 # The VM runs --checked: a DECON of another constructor than the one it names
 # stops the program (decision D14 of docs/plans/middle-end.md).
@@ -59,7 +61,10 @@ run_lang() {
   name=$1
   base=tests/lang/$name
   rbc=$out/$name.rbc
-  if ! "$rune" "$base.sml" -o "$rbc" 2> "$out/$name.cerr"; then
+  cargs=""
+  [ -f "$base.cargs" ] && cargs=$(cat "$base.cargs")
+  # shellcheck disable=SC2086
+  if ! "$rune" $cargs "$base.sml" -o "$rbc" 2> "$out/$name.cerr"; then
     echo "FAIL $name: compile error: $(head -1 "$out/$name.cerr")"
     return
   fi
@@ -137,7 +142,10 @@ run_lang() {
 run_error() {
   name=$1
   base=tests/errors/$name
-  if "$rune" "$base.sml" -o "$out/$name.rbc" 2> "$out/$name.cerr"; then
+  cargs=""
+  [ -f "$base.cargs" ] && cargs=$(cat "$base.cargs")
+  # shellcheck disable=SC2086
+  if "$rune" $cargs "$base.sml" -o "$out/$name.rbc" 2> "$out/$name.cerr"; then
     echo "FAIL $name: expected a compile error but compilation succeeded"
     return
   fi

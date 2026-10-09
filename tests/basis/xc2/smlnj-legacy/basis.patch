@@ -1,0 +1,1550 @@
+diff -ruN a/Basis/Implementation/IO/bin-io-fn.sml b/Basis/Implementation/IO/bin-io-fn.sml
+--- a/Basis/Implementation/IO/bin-io-fn.sml
++++ b/Basis/Implementation/IO/bin-io-fn.sml
+@@ -7,16 +7,23 @@
+  * closed?
+  *)
+ 
+-local
+-  structure Int = IntImp
+-  structure Position = PositionImp
+-in
+ functor BinIOFn (
+ 
+     structure OSPrimIO : OS_PRIM_IO
+-      where PrimIO = BinPrimIO
++      (* xc2: where PrimIO = BinPrimIO, which SML does not have *)
++      where type PrimIO.elem = BinPrimIO.elem
++      where type PrimIO.vector = BinPrimIO.vector
++      where type PrimIO.vector_slice = BinPrimIO.vector_slice
++      where type PrimIO.array = BinPrimIO.array
++      where type PrimIO.array_slice = BinPrimIO.array_slice
++      where type PrimIO.pos = BinPrimIO.pos
++      where type PrimIO.reader = BinPrimIO.reader
++      where type PrimIO.writer = BinPrimIO.writer
+ 
+   ) : BIN_IO = struct
++    (* xc2: from local ... in functor ... end, which SML does not allow *)
++    structure Int = IntImp
++    structure Position = PositionImp
+ 
+     structure PIO = OSPrimIO.PrimIO
+     structure A = Word8Array
+@@ -632,5 +639,4 @@
+ 	    handle ex => raise IO.Io{function="openAppend", name=fname, cause=ex}
+ 
+   end (* BinIOFn *)
+-end
+ 
+diff -ruN a/Basis/Implementation/IO/bin-io.sig b/Basis/Implementation/IO/bin-io.sig
+--- a/Basis/Implementation/IO/bin-io.sig
++++ b/Basis/Implementation/IO/bin-io.sig
+@@ -12,7 +12,8 @@
+     val openOut    : string -> outstream
+     val openAppend : string -> outstream
+   end
+-  where type vector = Word8Vector.vector
+-  and type StreamIO.vector = Word8Vector.vector
++  (* xc2: where type vector = Word8Vector.vector and type ..., the vector of
++     IMPERATIVE_IO being StreamIO.vector and no flexible type *)
++  where type StreamIO.vector = Word8Vector.vector
+   and type StreamIO.elem = Word8.word
+   and type StreamIO.pos = Position.int;
+diff -ruN a/Basis/Implementation/IO/text-io-fn.sml b/Basis/Implementation/IO/text-io-fn.sml
+--- a/Basis/Implementation/IO/text-io-fn.sml
++++ b/Basis/Implementation/IO/text-io-fn.sml
+@@ -7,11 +7,6 @@
+  * closed?
+  *)
+ 
+-local
+-  structure Int = IntImp
+-  structure Position = PositionImp
+-  structure OS = OSImp
+-in
+ functor TextIOFn (
+ 
+     structure OSPrimIO : sig
+@@ -21,9 +16,21 @@
+ 	val stdErr  : unit -> PrimIO.writer
+ 	val strReader : string -> PrimIO.reader
+       end
+-      where PrimIO = TextPrimIO
++      (* xc2: where PrimIO = TextPrimIO, which SML does not have *)
++      where type PrimIO.elem = TextPrimIO.elem
++      where type PrimIO.vector = TextPrimIO.vector
++      where type PrimIO.vector_slice = TextPrimIO.vector_slice
++      where type PrimIO.array = TextPrimIO.array
++      where type PrimIO.array_slice = TextPrimIO.array_slice
++      where type PrimIO.pos = TextPrimIO.pos
++      where type PrimIO.reader = TextPrimIO.reader
++      where type PrimIO.writer = TextPrimIO.writer
+ 
+   ) : TEXT_IO = struct
++    (* xc2: from local ... in functor ... end, which SML does not allow *)
++    structure Int = IntImp
++    structure Position = PositionImp
++    structure OS = OSImp
+ 
+     structure PIO = OSPrimIO.PrimIO
+     structure A = CharArray
+@@ -876,4 +883,3 @@
+ 	  end
+ 
+   end (* TextIOFn *)
+-end
+diff -ruN a/Basis/Implementation/NJ/prof-control.sml b/Basis/Implementation/NJ/prof-control.sml
+--- a/Basis/Implementation/NJ/prof-control.sml
++++ b/Basis/Implementation/NJ/prof-control.sml
+@@ -119,7 +119,7 @@
+     val spaceProfiling = ref false
+     val spaceProfRegister :
+ 	  (Unsafe.Object.object * string -> Unsafe.Object.object) ref =
+-	    Unsafe.cast Core.profile_sregister
++	    ref (fn (x, _) => x) (* xc2: Unsafe.cast Core.profile_sregister *)
+ 
+   end
+ 
+diff -ruN a/Basis/Implementation/NJ/smlnj.sml b/Basis/Implementation/NJ/smlnj.sml
+--- a/Basis/Implementation/NJ/smlnj.sml
++++ b/Basis/Implementation/NJ/smlnj.sml
+@@ -26,7 +26,6 @@
+ *)
+     datatype frag = datatype PrimTypes.frag
+ 
+-    val exnHistory : exn -> string list =
+-	   InlineT.cast(fn (_,_,hist: string list) => hist)
++    val exnHistory : exn -> string list = fn _ => [] (* xc2: InlineT.cast(fn (_,_,hist: string list) => hist); Rune keeps no history *)
+ 
+   end;
+diff -ruN a/Basis/Implementation/OS/os-path-fn.sml b/Basis/Implementation/OS/os-path-fn.sml
+--- a/Basis/Implementation/OS/os-path-fn.sml
++++ b/Basis/Implementation/OS/os-path-fn.sml
+@@ -11,9 +11,6 @@
+  *
+  *)
+ 
+-local
+-    structure String = StringImp
+-in
+ functor OS_PathFn (OSPathBase : sig
+ 
+     exception Path
+@@ -41,6 +38,8 @@
+     val sameVol : string * string -> bool
+ 
+   end) : OS_PATH = struct
++    (* xc2: from local ... in functor ... end, which SML does not allow *)
++    structure String = StringImp
+ 
+     structure P = OSPathBase
+     structure SS = Substring
+@@ -271,5 +270,4 @@
+     end (* local *)
+ 
+   end
+-end
+ 
+diff -ruN a/Basis/Implementation/Posix/posix-filesys.sig b/Basis/Implementation/Posix/posix-filesys.sig
+--- a/Basis/Implementation/Posix/posix-filesys.sig
++++ b/Basis/Implementation/Posix/posix-filesys.sig
+@@ -34,7 +34,7 @@
+     val stderr : file_desc
+ 
+     structure S : sig
+-	type mode
++	eqtype mode (* xc2: type mode, which the eqtype flags of BIT_FLAGS may not be made *)
+         include BIT_FLAGS where type flags = mode
+ 
+         val irwxu : mode
+diff -ruN a/Basis/Implementation/Posix/posix-io.sml b/Basis/Implementation/Posix/posix-io.sml
+--- a/Basis/Implementation/Posix/posix-io.sml
++++ b/Basis/Implementation/Posix/posix-io.sml
+@@ -59,7 +59,9 @@
+           if cnt < 0 then raise Size else read'(FS.intOf fd, cnt)
+ 
+     val writevec' : (int * Word8Vector.vector * int * int) -> int = cfun "writebuf"
+-    val writearr' : (int * Word8Array.array * int * int) -> int = cfun "writebuf"
++    (* xc2: the C function of writevec', which takes an array as well there *)
++    fun writearr' (fd, a : Word8Array.array, n, i) =
++	  writevec' (fd, Word8ArraySlice.vector (Word8ArraySlice.slice (a, i, SOME n)), n, 0)
+     fun writeArr (fd, asl) = let
+ 	val (buf, i, len) = Word8ArraySlice.base asl
+     in
+@@ -243,7 +245,7 @@
+ 		  cvtVec v
+ 		end
+ 	  fun r_readArr arg = let
+-		val k = announce "readBuf" readArr(fd, cvtArrSlice arg)
++		val k = announce "readBuf" cvtArrSlice (fd, arg) (* xc2: readArr(fd, cvtArrSlice arg) *)
+ 		in
+ 		  incPos k; k
+ 		end
+@@ -344,25 +346,31 @@
+ 	      Word8VectorSlice.slice (wv, s, SOME l)
+ 	    end
+ 
+-      (* hack!!!  This only works because CharArray.array and
+-       *          Word8Array.array are really the same internally. *)
+-      val c2w_a : CharArray.array -> Word8Array.array = InlineT.cast
+-
++      (* xc2: a CharArray.array and a Word8Array.array are two types here,
++         not one cast to the other (c2w_a, "hack!!!"): a text writer writes a
++         copy of the slice, and a reader reads bytes and copies them in *)
+       fun c2w_as cas = let
+ 	    val (ca, s, l) = CharArraySlice.base cas
+-	    val wa = c2w_a ca
+ 	    in
+-	      Word8ArraySlice.slice (wa, s, SOME l)
++	      Word8ArraySlice.full (Word8Array.tabulate (l, fn i => Byte.charToByte (CharArray.sub (ca, s + i))))
++	    end
++      fun readTextArr (fd, cas) = let
++	    val (ca, s, l) = CharArraySlice.base cas
++	    val wa = Word8Array.array (l, 0w0)
++	    val k = readArr (fd, Word8ArraySlice.full wa)
++	    fun copy i = if i < k then (CharArray.update (ca, s + i, Byte.byteToChar (Word8Array.sub (wa, i))); copy (i + 1)) else ()
++	    in
++	      copy 0; k
+ 	    end
+     in
+ 
+     val mkBinReader = mkReader { mkRD = BinPrimIO.RD,
+ 				 cvtVec = fn v => v,
+-				 cvtArrSlice = fn s => s }
++				 cvtArrSlice = readArr (* xc2: fn s => s *) }
+ 
+     val mkTextReader = mkReader { mkRD = TextPrimIO.RD,
+ 				  cvtVec = Byte.bytesToString,
+-				  cvtArrSlice =	c2w_as }
++				  cvtArrSlice =	readTextArr (* xc2: c2w_as *) }
+ 
+     val mkBinWriter = mkWriter { mkWR = BinPrimIO.WR,
+ 				 cvtVecSlice = fn s => s,
+diff -ruN a/Basis/Implementation/Posix/posix.sig b/Basis/Implementation/Posix/posix.sig
+--- a/Basis/Implementation/Posix/posix.sig
++++ b/Basis/Implementation/Posix/posix.sig
+@@ -18,12 +18,13 @@
+     structure SysDB   : POSIX_SYS_DB
+     structure TTY     : POSIX_TTY_2004
+ 
++    (* xc2: sharing type ... and type ..., which SML does not have, as a sharing type each *)
+     sharing type Process.pid = ProcEnv.pid = TTY.pid
+-        and type Process.signal = Signal.signal
+-        and type ProcEnv.file_desc = FileSys.file_desc = TTY.file_desc
+-        and type FileSys.open_mode = IO.open_mode
+-        and type ProcEnv.uid = FileSys.uid = SysDB.uid
+-        and type ProcEnv.gid = FileSys.gid = SysDB.gid
++    sharing type Process.signal = Signal.signal
++    sharing type ProcEnv.file_desc = FileSys.file_desc = TTY.file_desc
++    sharing type FileSys.open_mode = IO.open_mode
++    sharing type ProcEnv.uid = FileSys.uid = SysDB.uid
++    sharing type ProcEnv.gid = FileSys.gid = SysDB.gid
+ 
+   end (* signature POSIX *)
+ 
+@@ -39,12 +40,13 @@
+     structure SysDB   : POSIX_SYS_DB
+     structure TTY     : POSIX_TTY_2021
+ 
++    (* xc2: sharing type ... and type ..., which SML does not have, as a sharing type each *)
+     sharing type Process.pid = ProcEnv.pid = TTY.pid
+-        and type Process.signal = Signal.signal
+-        and type ProcEnv.file_desc = FileSys.file_desc = TTY.file_desc
+-        and type FileSys.open_mode = IO.open_mode
+-        and type ProcEnv.uid = FileSys.uid = SysDB.uid
+-        and type ProcEnv.gid = FileSys.gid = SysDB.gid
++    sharing type Process.signal = Signal.signal
++    sharing type ProcEnv.file_desc = FileSys.file_desc = TTY.file_desc
++    sharing type FileSys.open_mode = IO.open_mode
++    sharing type ProcEnv.uid = FileSys.uid = SysDB.uid
++    sharing type ProcEnv.gid = FileSys.gid = SysDB.gid
+ 
+   end (* signature POSIX *)
+ 
+diff -ruN a/Basis/Implementation/Sockets/generic-sock.sig b/Basis/Implementation/Sockets/generic-sock.sig
+--- a/Basis/Implementation/Sockets/generic-sock.sig
++++ b/Basis/Implementation/Sockets/generic-sock.sig
+@@ -1,25 +1,22 @@
++(* xc2: SocketImp. for Socket. (local structure Socket = SocketImp in ... end, which SML does not allow around a signature) *)
+ (* generic-sock.sig
+  *
+  * COPYRIGHT (c) 1995 AT&T Bell Laboratories.
+  *
+  *)
+ 
+-local
+-    structure Socket = SocketImp
+-in
+ signature GENERIC_SOCK = sig
+ 
+     (* create sockets using default protocol *)
+-    val socket : Socket.AF.addr_family * Socket.SOCK.sock_type
+-		 -> ('a, 'b) Socket.sock
+-    val socketPair : Socket.AF.addr_family * Socket.SOCK.sock_type
+-		     -> ('a, 'b) Socket.sock * ('a, 'b) Socket.sock
++    val socket : SocketImp.AF.addr_family * SocketImp.SOCK.sock_type
++		 -> ('a, 'b) SocketImp.sock
++    val socketPair : SocketImp.AF.addr_family * SocketImp.SOCK.sock_type
++		     -> ('a, 'b) SocketImp.sock * ('a, 'b) SocketImp.sock
+ 
+     (* create sockets using the specified protocol *)
+-    val socket' : Socket.AF.addr_family * Socket.SOCK.sock_type * int
+-		  -> ('a, 'b) Socket.sock
+-    val socketPair' : Socket.AF.addr_family * Socket.SOCK.sock_type * int
+-		      -> ('a, 'b) Socket.sock * ('a, 'b) Socket.sock
++    val socket' : SocketImp.AF.addr_family * SocketImp.SOCK.sock_type * int
++		  -> ('a, 'b) SocketImp.sock
++    val socketPair' : SocketImp.AF.addr_family * SocketImp.SOCK.sock_type * int
++		      -> ('a, 'b) SocketImp.sock * ('a, 'b) SocketImp.sock
+ 
+ end
+-end
+diff -ruN a/Basis/Implementation/Sockets/socket.sig b/Basis/Implementation/Sockets/socket.sig
+--- a/Basis/Implementation/Sockets/socket.sig
++++ b/Basis/Implementation/Sockets/socket.sig
+@@ -1,12 +1,10 @@
++(* xc2: OSImp. for OS. (local structure OS = OSImp in ... end, which SML does not allow around a signature) *)
+ (* socket.sig
+  *
+  * COPYRIGHT (c) 2006 The Fellowship of SML/NJ (http://smlnj.org)
+  * All rights reserved.
+  *)
+ 
+-local
+-    structure OS = OSImp
+-in
+ 
+ (* We start with a version of this signature that does not contain
+  * any of the non-blocking operations: *)
+@@ -108,7 +106,7 @@
+ 	    exs : sock_desc list
+ 	  }
+ 
+-    val ioDesc : ('af, 'sock_type) sock -> OS.IO.iodesc
++    val ioDesc : ('af, 'sock_type) sock -> OSImp.IO.iodesc
+ 
+   (* Sock I/O option types *)
+     type out_flags = {don't_route : bool, oob : bool}
+@@ -198,4 +196,3 @@
+     val recvArrFromNB':('a, dgram) sock * Word8ArraySlice.slice * in_flags
+ 			-> (int * 'a sock_addr) option
+   end
+-end
+diff -ruN a/Basis/Implementation/Sockets/socket.sml b/Basis/Implementation/Sockets/socket.sml
+--- a/Basis/Implementation/Sockets/socket.sml
++++ b/Basis/Implementation/Sockets/socket.sml
+@@ -269,7 +269,7 @@
+       val sendV : (int * w8vector * int * int * bool * bool) -> int
+ 	    = sockFn "sendBuf"
+       val sendA : (int * w8array * int * int * bool * bool) -> int
+-	    = sockFn "sendBuf"
++	    = sockFn "sendBufArr" (* xc2: "sendBuf", of which the shim makes one form for each type *)
+     in
+ 
+     fun sendVec0 getfd (s, buffer) = let
+@@ -314,7 +314,7 @@
+       val sendToV : (int * w8vector * int * int * bool * bool * addr) -> int
+ 	    = sockFn "sendBufTo"
+       val sendToA : (int * w8array * int * int * bool * bool * addr) -> int
+-	    = sockFn "sendBufTo"
++	    = sockFn "sendBufToArr" (* xc2: "sendBufTo" *)
+     in
+     fun sendVecTo0 getfd (sock, ADDR addr, buffer) = let
+ 	val fd = getfd sock
+diff -ruN a/Basis/Implementation/Sockets/unix-sock.sig b/Basis/Implementation/Sockets/unix-sock.sig
+--- a/Basis/Implementation/Sockets/unix-sock.sig
++++ b/Basis/Implementation/Sockets/unix-sock.sig
+@@ -1,23 +1,21 @@
++(* xc2: SocketImp. for Socket. (local structure Socket = SocketImp in ... end, which SML does not allow around a signature) *)
+ (* unix-sock.sig
+  *
+  * COPYRIGHT (c) 1995 AT&T Bell Laboratories.
+  *
+  *)
+ 
+-local
+-    structure Socket = SocketImp
+-in
+ signature UNIX_SOCK =
+   sig
+     type unix
+ 
+-    type 'a sock = (unix, 'a) Socket.sock
+-    type 'a stream_sock = 'a Socket.stream sock
+-    type dgram_sock = Socket.dgram sock
++    type 'a sock = (unix, 'a) SocketImp.sock
++    type 'a stream_sock = 'a SocketImp.stream sock
++    type dgram_sock = SocketImp.dgram sock
+ 
+-    type sock_addr = unix Socket.sock_addr
++    type sock_addr = unix SocketImp.sock_addr
+ 
+-    val unixAF : Socket.AF.addr_family   (* 4.3BSD internal protocols *)
++    val unixAF : SocketImp.AF.addr_family   (* 4.3BSD internal protocols *)
+ 
+     val toAddr   : string -> sock_addr
+     val fromAddr : sock_addr -> string
+@@ -31,5 +29,4 @@
+ 	val socketPair : unit -> (dgram_sock * dgram_sock)
+       end
+   end
+-end
+ 
+diff -ruN a/Basis/Implementation/Unsafe/unsafe.sml b/Basis/Implementation/Unsafe/unsafe.sml
+--- a/Basis/Implementation/Unsafe/unsafe.sml
++++ b/Basis/Implementation/Unsafe/unsafe.sml
+@@ -54,7 +54,7 @@
+ 	type elem = CharArray.elem
+ 	val sub = InlineT.CharArray.sub
+ 	val update = InlineT.CharArray.update
+-	val create : int -> array = InlineT.cast Core.Assembly.A.create_b
++	val create : int -> array = InlineT.CharArray.create (* xc2: InlineT.cast Core.Assembly.A.create_b *)
+       end
+ 
+     structure Word8Vector =
+@@ -63,7 +63,7 @@
+ 	type elem = Word8Vector.elem
+ 	val sub = InlineT.Word8Vector.sub
+ 	val update = InlineT.Word8Vector.update
+-	val create : int -> vector = InlineT.cast Core.Assembly.A.create_s
++	val create : int -> vector = Core.Assembly.A.create_s (* xc2: InlineT.cast Core.Assembly.A.create_s *)
+       end
+     structure Word8Array =
+       struct
+@@ -138,9 +138,9 @@
+       = NILrde
+       | CONSrde of Word8Vector.vector * Object.object * runDynEnv
+ 
+-    val pStruct : runDynEnv ref = InlineT.cast Assembly.pstruct
++    val pStruct : runDynEnv ref = ref NILrde (* xc2: InlineT.cast Assembly.pstruct, the runtime's *)
+ 
+-    val topLevelCont = ref(InlineT.isolate (fn () => ()))
++    val topLevelCont = ref (PrimTypes.XC2NCont (fn () => ())) (* xc2: ref(InlineT.isolate (fn () => ())); continuations are not made *)
+ 
+     val sigHandler = Assembly.sighandler
+ 
+diff -ruN a/Basis/Implementation/array-slice.sml b/Basis/Implementation/array-slice.sml
+--- a/Basis/Implementation/array-slice.sml
++++ b/Basis/Implementation/array-slice.sml
+@@ -27,7 +27,8 @@
+     val vlength = InlineT.PolyVector.length
+ 
+   (* empty vector *)
+-    val vector0 : 'a vector = Assembly.vector0
++    (* xc2: val vector0 : 'a vector = Assembly.vector0, which is no value here *)
++    fun vector0 () : 'a vector = Assembly.vector0
+ 
+   (* create a vector of the given lenght initialized to the given list of elements *)
+     val create = Assembly.A.create_v
+@@ -91,7 +92,7 @@
+ 	    mk (start ++ len -- 1, [])
+ 	  end
+ (***** A better implementation once we have the correct Real64Vector representation
+-    fun vector (SL(_, _, 0)) = vector0
++    fun vector (SL(_, _, 0)) = vector0 ()
+       | vector (SL(base, start, len)) = let
+ 	  val s = create len
+ 	  fun fill (i, j) = if i >= len
+@@ -312,7 +313,7 @@
+ 	  end
+ 
+   (* FIXME: this is inefficient (going through intermediate list) *)
+-    fun getVec (slice, 0) = SOME(vector0, slice)
++    fun getVec (slice, 0) = SOME(vector0 (), slice)
+       | getVec (SL(base, start, len), n) = if (n < 0)
+ 	    then raise Subscript
+ 	  else if (len < n)
+@@ -328,7 +329,7 @@
+ 	      end
+ 
+ (***** A better implementation once we have the correct Real64Vector representation
+-    fun getVec (slice, 0) = SOME(vector0, slice)
++    fun getVec (slice, 0) = SOME(vector0 (), slice)
+       | getVec (SL(base, start, len), n) = if (n < 0)
+ 	    then raise Subscript
+ 	  else if (len < n)
+diff -ruN a/Basis/Implementation/byte.sml b/Basis/Implementation/byte.sml
+--- a/Basis/Implementation/byte.sml
++++ b/Basis/Implementation/byte.sml
+@@ -6,11 +6,13 @@
+ 
+ structure Byte : BYTE = struct
+ 
+-    val byteToChar : Word8.word -> char = InlineT.cast
+-    val charToByte : char -> Word8.word = InlineT.cast
++    (* xc2: InlineT.cast, of what are Rune's char and Word8.word, and a
++       vector and a string that are one type here *)
++    val byteToChar : Word8.word -> char = XC2N.w2c
++    val charToByte : char -> Word8.word = XC2N.c2w
+ 
+-    val bytesToString : Word8Vector.vector -> string = InlineT.cast
+-    val stringToBytes : string -> Word8Vector.vector = InlineT.cast
++    fun bytesToString (v : Word8Vector.vector) : string = v
++    fun stringToBytes (s : string) : Word8Vector.vector = s
+ 
+     val unpackStringVec = bytesToString o Word8VectorSlice.vector
+     val unpackString = bytesToString o Word8ArraySlice.vector
+@@ -20,7 +22,7 @@
+      * to get around this problem.
+      *)
+       datatype substring' = SS of (string * int * int)
+-      val toSS : Substring.substring -> substring' = InlineT.cast
++      val toSS : Substring.substring -> substring' = SS o Substring.base (* xc2: InlineT.cast *)
+       structure A = InlineT.Word8Array
+       structure V = InlineT.CharVector
+     in
+@@ -29,7 +31,7 @@
+ 	  val dstLen = A.length arr
+ 	  fun cpy (_, _, 0) = ()
+ 	    | cpy (srcIndx, dstIndx, n) = (
+-		A.update (arr, dstIndx, InlineT.cast(V.sub(src, srcIndx)));
++		A.update (arr, dstIndx, charToByte (V.sub(src, srcIndx))); (* xc2: InlineT.cast *)
+ 		cpy (srcIndx+1, dstIndx+1, n-1))
+ 	  in
+ 	    if (i < 0) orelse (i > dstLen-srcLen) then raise Subscript else ();
+diff -ruN a/Basis/Implementation/char-array-slice.sml b/Basis/Implementation/char-array-slice.sml
+--- a/Basis/Implementation/char-array-slice.sml
++++ b/Basis/Implementation/char-array-slice.sml
+@@ -30,7 +30,7 @@
+     val usub = InlineT.CharArray.sub
+     val uupd = InlineT.CharArray.update
+     val vusub = InlineT.CharVector.sub
+-    val vuupd = InlineT.CharVector.update
++    val vuupd = XC2N.bupd
+     val alength = InlineT.CharArray.length
+     val vlength = InlineT.CharVector.length
+ 
+@@ -86,9 +86,9 @@
+ 
+     fun vector (SL(_, _, 0)) = ""
+       | vector (SL(base, start, len)) = let
+-	  val s = Assembly.A.create_s len
++	  val s = XC2N.buf (len) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 	  fun fill (i, j) = if i >= len
+-		then s
++		then XC2N.bstr s
+ 		else (
+ 		  vuupd (s, i, usub (base, j));
+ 		  fill (i ++ 1, j ++ 1))
+@@ -303,7 +303,7 @@
+ 	  else if (len < n)
+ 	    then NONE
+ 	    else let
+-	      val vec = Assembly.A.create_s n
++	      val vec = XC2N.buf (n) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 	      fun copy i = if (i < n)
+ 		    then (
+ 		      vuupd(vec, i, usub(base, start ++ i));
+@@ -311,7 +311,7 @@
+ 		    else ()
+ 	      in
+ 		copy 0;
+-		SOME(vec, SL(base, start ++ n, len -- n))
++		SOME(XC2N.bstr vec, SL(base, start ++ n, len -- n))
+ 	      end
+ 
+   end (* CharArraySlice *)
+diff -ruN a/Basis/Implementation/char-array.sml b/Basis/Implementation/char-array.sml
+--- a/Basis/Implementation/char-array.sml
++++ b/Basis/Implementation/char-array.sml
+@@ -17,7 +17,7 @@
+   (* unchecked access operations *)
+     val uupd = A.update
+     val usub = A.sub
+-    val vuupd = InlineT.CharVector.update
++    val vuupd = XC2N.bupd
+     val vusub = InlineT.CharVector.sub
+     val vlength = InlineT.CharVector.length
+ 
+@@ -73,13 +73,13 @@
+ 	case length a of
+ 	    0 => ""
+ 	  | len =>  let
+-		val s = Assembly.A.create_s len
++		val s = XC2N.buf (len) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 		fun fill i =
+ 		    if i >= len then ()
+ 		    else (vuupd (s, i, usub (a, i)); fill (i ++ 1))
+ 	    in
+ 		fill 0;
+-		s
++		XC2N.bstr s
+ 	    end
+ 
+     fun copy { src, dst, di } = let
+diff -ruN a/Basis/Implementation/char-buffer.sml b/Basis/Implementation/char-buffer.sml
+--- a/Basis/Implementation/char-buffer.sml
++++ b/Basis/Implementation/char-buffer.sml
+@@ -61,13 +61,13 @@
+ 
+     fun contents (BUF{len = ref 0, ...}) = emptyV
+       | contents (BUF{content=ref arr, len=ref n, ...}) = let
+-	  val v = Assembly.A.create_s n
++	  val v = XC2N.buf (n) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 	  fun cpy i = if (i < n)
+-		then (V.update(v, i, A.sub(arr, i)); cpy (i ++ 1))
++		then (XC2N.bupd(v, i, A.sub(arr, i)); cpy (i ++ 1))
+ 		else ()
+ 	  in
+ 	    cpy 0;
+-	    v
++	    XC2N.bstr v
+ 	  end
+ 
+     fun copy {src=BUF{content=ref src, len=ref n, ...}, dst, di} =
+diff -ruN a/Basis/Implementation/char-vector-slice.sml b/Basis/Implementation/char-vector-slice.sml
+--- a/Basis/Implementation/char-vector-slice.sml
++++ b/Basis/Implementation/char-vector-slice.sml
+@@ -23,7 +23,7 @@
+ 
+   (* unchecked vector access functions *)
+     val usub = InlineT.CharVector.sub
+-    val vuupd = InlineT.CharVector.update
++    val vuupd = XC2N.bupd
+     val vlength = InlineT.CharVector.length
+ 
+   (* inherit operations from Substring *)
+@@ -72,12 +72,12 @@
+     fun map f sl = (case SS.base sl
+ 	   of (_, _, 0) => ""
+ 	    | (base, start, len) => let
+-		val v = Assembly.A.create_s len
++		val v = XC2N.buf (len) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 		fun mapf i = if (i < len)
+ 		      then (
+ 			vuupd(v, i, f(usub(base, start ++ i)));
+ 			mapf (i ++ 1))
+-		      else v
++		      else XC2N.bstr v
+ 		in
+ 		  mapf 0
+ 		end
+@@ -86,12 +86,12 @@
+     fun mapi f sl = (case SS.base sl
+ 	   of (_, _, 0) => ""
+ 	    | (base, start, len) => let
+-		val v = Assembly.A.create_s len
++		val v = XC2N.buf (len) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 		fun mapf i = if (i < len)
+ 		      then (
+ 			vuupd(v, i, f(i, usub(base, start ++ i)));
+ 			mapf (i ++ 1))
+-		      else v
++		      else XC2N.bstr v
+ 		in
+ 		  mapf 0
+ 		end
+@@ -153,12 +153,12 @@
+ 	    val (base, start, len) = SS.base slice
+ 	    val start' = start ++ n
+ 	    fun mkVec () = let
+-		  val vec = Assembly.A.create_s n
++		  val vec = XC2N.buf (n) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 		  fun copy i = if (i < n)
+ 			then (
+ 			  vuupd(vec, i, usub(base, start ++ i));
+ 			  copy (i ++ 1))
+-			else vec
++			else XC2N.bstr vec
+ 		  in
+ 		    copy 0
+ 		  end
+diff -ruN a/Basis/Implementation/char-vector.sml b/Basis/Implementation/char-vector.sml
+--- a/Basis/Implementation/char-vector.sml
++++ b/Basis/Implementation/char-vector.sml
+@@ -17,7 +17,7 @@
+     fun x ++ y = InlineT.Int.fast_add(x, y)
+ 
+     val usub = InlineT.CharVector.sub
+-    val uupd = InlineT.CharVector.update
++    val uupd = XC2N.bupd
+ 
+     type elem = char
+     type vector = string
+@@ -32,12 +32,12 @@
+     fun tabulate (0, _) = ""
+       | tabulate (n, f) = let
+ 	  val _ = checkLen n
+-	  val ss = Assembly.A.create_s n
++	  val ss = XC2N.buf (n) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 	  fun fill i =
+ 	      if i < n then (uupd (ss, i, f i); fill (i ++ 1))
+ 	      else ()
+ 	  in
+-	    fill 0; ss
++	    fill 0; XC2N.bstr ss
+ 	  end
+ 
+     val length   = InlineT.CharVector.length
+@@ -169,26 +169,26 @@
+ 	  val n = length vec
+ 	  val n' = n ++ 1
+ 	  val _ = checkLen n'
+-	  val ss = Assembly.A.create_s n'
++	  val ss = XC2N.buf (n') (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 	  fun fill i = if i < n
+ 		then (uupd (ss, i, usub(vec, i)); fill (i ++ 1))
+ 	        else ()
+ 	  in
+ 	    fill 0; uupd (ss, n, x);
+-	    ss
++	    XC2N.bstr ss
+ 	  end
+ 
+     fun prepend (x, vec) = let
+ 	  val n = length vec
+ 	  val n' = n ++ 1
+ 	  val _ = checkLen n'
+-	  val ss = Assembly.A.create_s n'
++	  val ss = XC2N.buf (n') (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 	  fun fill i = if i < n
+ 		then (uupd (ss, i ++ 1, usub(vec, i)); fill (i ++ 1))
+ 	        else ()
+ 	  in
+ 	    uupd (ss, 0, x); fill 0;
+-	    ss
++	    XC2N.bstr ss
+ 	  end
+ 
+     end (* local *)
+diff -ruN a/Basis/Implementation/char.sml b/Basis/Implementation/char.sml
+--- a/Basis/Implementation/char.sml
++++ b/Basis/Implementation/char.sml
+@@ -19,8 +19,8 @@
+     val op - = InlineT.Int.-
+     val op * = InlineT.Int.*
+ 
+-    val itoc : int -> char = InlineT.cast
+-    val ctoi : char -> int = InlineT.cast
++    val itoc : int -> char = InlineT.Char.chr (* xc2: InlineT.cast *)
++    val ctoi : char -> int = InlineT.Char.ord (* xc2: InlineT.cast *)
+ 
+     type char = char
+     type string = string
+@@ -56,18 +56,18 @@
+   (* testing character membership *)
+     local
+       fun mkArray (s, sLen) = let
+-	    val cv = Assembly.A.create_s(maxOrd+1)
++	    val cv = XC2N.buf (maxOrd+1) (* xc2: a buffer, of which the string is taken at the end *)
+ 	    fun init i = if InlineT.Int.<= (i, maxOrd)
+-		  then (InlineT.CharVector.update(cv, i, #"\000"); init(i+1))
++		  then (XC2N.bupd(cv, i, #"\000"); init(i+1))
+ 		  else ()
+ 	    fun ins i = if InlineT.Int.< (i, sLen)
+ 		  then (
+-		    InlineT.CharVector.update (
++		    XC2N.bupd (
+ 		      cv, ord(InlineT.CharVector.sub(s, i)), #"\001");
+ 		    ins(i+1))
+ 		  else ()
+ 	    in
+-	      init 0; ins 0; cv
++	      init 0; ins 0; XC2N.bstr cv
+ 	    end
+     in
+     fun contains "" = (fn c => false)
+diff -ruN a/Basis/Implementation/pack-real64-big.sml b/Basis/Implementation/pack-real64-big.sml
+--- a/Basis/Implementation/pack-real64-big.sml
++++ b/Basis/Implementation/pack-real64-big.sml
+@@ -19,15 +19,12 @@
+ 
+ (* TODO: this function should be defined in InlineT *)
+     (* bitcast a Word64.word to a Real64.real *)
+-    fun fromBits (b : Word64.word) : real = let
+-          val r : real ref = InlineT.cast(ref b)
+-          in
+-            !r
+-          end
++    fun fromBits (b : Word64.word) : real = InlineT.Real64.fromBits b (* xc2: !(InlineT.cast(ref b) : real ref) *)
+     val toBits = InlineT.Real64.toBits
+ 
+     (* create an uninitialized Word8Vector *)
+-    val createW8Vec : int -> BV.vector = InlineT.cast Assembly.A.create_s
++    (* xc2: a buffer, of which the vector is taken at the end: InlineT.cast Assembly.A.create_s *)
++    val createW8Vec = XC2N.buf
+ 
+     val bytesPerElem : int = 8
+ 
+@@ -36,7 +33,7 @@
+     fun toBytes r = let
+           val w = toBits r
+           val bv = createW8Vec bytesPerElem
+-          fun update (i, w) = BV.update (bv, i, InlineT.Word8.fromLarge w)
++          fun update (i, w) = XC2N.bupdw (bv, i, InlineT.Word8.fromLarge w)
+           in
+             if InlineT.isBigEndian()
+               then (
+@@ -59,7 +56,7 @@
+                 update (2, W64.rshiftl(w, 0w16));
+                 update (1, W64.rshiftl(w, 0w8));
+                 update (0, w));
+-            bv
++            XC2N.bstr bv
+           end
+ 
+     fun fromBytes bv = if BV.length bv < bytesPerElem
+diff -ruN a/Basis/Implementation/pack-real64-little.sml b/Basis/Implementation/pack-real64-little.sml
+--- a/Basis/Implementation/pack-real64-little.sml
++++ b/Basis/Implementation/pack-real64-little.sml
+@@ -19,15 +19,12 @@
+ 
+ (* TODO: this function should be defined in InlineT *)
+     (* bitcast a Word64.word to a Real64.real *)
+-    fun fromBits (b : Word64.word) : real = let
+-          val r : real ref = InlineT.cast(ref b)
+-          in
+-            !r
+-          end
++    fun fromBits (b : Word64.word) : real = InlineT.Real64.fromBits b (* xc2: !(InlineT.cast(ref b) : real ref) *)
+     val toBits = InlineT.Real64.toBits
+ 
+     (* create an uninitialized Word8Vector *)
+-    val createW8Vec : int -> BV.vector = InlineT.cast Assembly.A.create_s
++    (* xc2: a buffer, of which the vector is taken at the end: InlineT.cast Assembly.A.create_s *)
++    val createW8Vec = XC2N.buf
+ 
+     val bytesPerElem : int = 8
+ 
+@@ -36,7 +33,7 @@
+     fun toBytes r = let
+           val w = toBits r
+           val bv = createW8Vec bytesPerElem
+-          fun update (i, w) = BV.update (bv, i, InlineT.Word8.fromLarge w)
++          fun update (i, w) = XC2N.bupdw (bv, i, InlineT.Word8.fromLarge w)
+           in
+             if InlineT.isBigEndian()
+               then (
+@@ -59,7 +56,7 @@
+                 update (5, W64.rshiftl(w, 0w16));
+                 update (6, W64.rshiftl(w, 0w8));
+                 update (7, w));
+-            bv
++            XC2N.bstr bv
+           end
+ 
+     fun fromBytes bv = if BV.length bv < bytesPerElem
+diff -ruN a/Basis/Implementation/string-cvt.sml b/Basis/Implementation/string-cvt.sml
+--- a/Basis/Implementation/string-cvt.sml
++++ b/Basis/Implementation/string-cvt.sml
+@@ -21,10 +21,11 @@
+     val op > = InlineT.Int.>
+ 
+     local
++      (* xc2: the result is written into a buffer, of which the string is made *)
+       fun fillStr (c, s, i, n) = let
+ 	    val stop = i+n
+ 	    fun fill j = if (j < stop)
+-		  then (InlineT.CharVector.update(s, j, c); fill(j+1))
++		  then (XC2N.bupd(s, j, c); fill(j+1))
+ 		  else ()
+ 	    in
+ 	      fill i
+@@ -32,7 +33,7 @@
+       fun cpyStr (src, srcLen, dst, start) = let
+ 	    fun cpy (i, j) = if (i < srcLen)
+ 		  then (
+-		    InlineT.CharVector.update(dst, j, InlineT.CharVector.sub(src, i));
++		    XC2N.bupd(dst, j, InlineT.CharVector.sub(src, i));
+ 		    cpy (i+1, j+1))
+ 		  else ()
+ 	    in
+@@ -45,11 +46,11 @@
+ 	  in
+ 	    if (pad > 0)
+ 	      then let
+-		val s' = PreString.create wid
++		val s' = (PreString.checkSize wid; XC2N.buf wid)
+ 		in
+ 		  fillStr (padChr, s', 0, pad);
+ 		  cpyStr (s, len, s', pad);
+-		  s'
++		  XC2N.bstr s'
+ 		end
+ 	      else s
+ 	  end
+@@ -59,11 +60,11 @@
+ 	  in
+ 	    if (pad > 0)
+ 	      then let
+-		val s' = PreString.create wid
++		val s' = (PreString.checkSize wid; XC2N.buf wid)
+ 		in
+ 		  fillStr (padChr, s', len, pad);
+ 		  cpyStr (s, len, s', 0);
+-		  s'
++		  XC2N.bstr s'
+ 		end
+ 	      else s
+ 	  end
+diff -ruN a/Basis/Implementation/string.sml b/Basis/Implementation/string.sml
+--- a/Basis/Implementation/string.sml
++++ b/Basis/Implementation/string.sml
+@@ -18,7 +18,7 @@
+     val op >= = InlineT.Int.>=
+ (*    val op = = InlineT.= *)
+     val unsafeSub = InlineT.CharVector.sub
+-    val unsafeUpdate = InlineT.CharVector.update
++    val unsafeUpdate = XC2N.bupd
+   (* list reverse *)
+     fun listRev ([], l) = l
+       | listRev (x::r, l) = listRev (r, x::l)
+@@ -54,8 +54,8 @@
+ 		  loop (0, l)
+ 		end
+ 	  val n = length l
+-	  val s = create n
+-	  fun fill ([], _) = s
++	  val s = XC2N.buf (n) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
++	  fun fill ([], _) = XC2N.bstr s
+ 	    | fill (c::cs, i) = (
+ 		unsafeUpdate(s, i, c);
+ 		fill (cs, i -- 1))
+@@ -66,7 +66,7 @@
+ 
+   (* convert a character into a single character string *)
+     fun str (c : Char.char) : string =
+-	  InlineT.PolyVector.sub(PreString.chars, InlineT.cast c)
++	  InlineT.PolyVector.sub(PreString.chars, InlineT.Char.ord c) (* xc2: InlineT.cast c *)
+ 
+   (* get a character from a string *)
+     val sub : (string * int) -> char = InlineT.CharVector.chkSub
+@@ -74,12 +74,12 @@
+     fun extract (v, base, optLen) = let
+ 	  val len = size v
+ 	  fun newVec n = let
+-		val newV = Assembly.A.create_s n
++		val newV = XC2N.buf (n) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 		fun fill i = if (i < n)
+ 		      then (unsafeUpdate(newV, i, unsafeSub(v, base ++ i)); fill(i ++ 1))
+ 		      else ()
+ 		in
+-		  fill 0; newV
++		  fill 0; XC2N.bstr newV
+ 		end
+ 	  in
+ 	    case (base, optLen)
+@@ -112,12 +112,12 @@
+     fun map f vec = (case (size vec)
+ 	   of 0 => ""
+ 	    | len => let
+-		val newVec = Assembly.A.create_s len
++		val newVec = XC2N.buf (len) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 		fun mapf i = if (i < len)
+ 		      then (unsafeUpdate(newVec, i, f(unsafeSub(vec, i))); mapf(i+1))
+ 		      else ()
+ 		in
+-		  mapf 0; newVec
++		  mapf 0; XC2N.bstr newVec
+ 		end
+ 	  (* end case *))
+ 
+@@ -262,12 +262,12 @@
+ 	    if (n < 2)
+ 	      then s
+ 	      else let
+-		val s' = unsafeCreate n
++		val s' = XC2N.buf n (* xc2: a buffer, of which the string is taken at the end *)
+ 		fun fill i = if (i < n)
+ 		      then (unsafeUpdate(s', i, unsafeSub(s, n--i--1)); fill(i++1))
+ 		      else ()
+ 		in
+-		  fill 0; s'
++		  fill 0; XC2N.bstr s'
+ 		end
+ 	  end
+ 
+@@ -277,8 +277,8 @@
+ 	    | concat' (x::xs) = let
+ 		val sepLen = size sep
+ 		fun cvt ([], strs, len) = let
+-		      val s' = unsafeCreate len
+-		      fun fill ([], _) = s'
++		      val s' = XC2N.buf len (* xc2: a buffer, of which the string is taken at the end *)
++		      fun fill ([], _) = XC2N.bstr s'
+ 			| fill (s::ss, i) = let
+ 			    val n = size s
+ 			    val i = i -- n
+diff -ruN a/Basis/Implementation/vector-slice.sml b/Basis/Implementation/vector-slice.sml
+--- a/Basis/Implementation/vector-slice.sml
++++ b/Basis/Implementation/vector-slice.sml
+@@ -24,7 +24,8 @@
+     val vlength = InlineT.PolyVector.length
+ 
+   (* empty vector *)
+-    val vector0 : 'a vector = Assembly.vector0
++    (* xc2: val vector0 : 'a vector = Assembly.vector0, which is no value here *)
++    fun vector0 () : 'a vector = Assembly.vector0
+ 
+     fun length (SL(_, _, len)) = len
+ 
+@@ -215,7 +216,7 @@
+ 	    (SL(base, start, i), SL(base, start ++ i, len -- i))
+ 	  end
+ 
+-    fun getVec (slice, 0) = SOME(vector0, slice)
++    fun getVec (slice, 0) = SOME(vector0 (), slice)
+       | getVec (SL(base, start, len), n) = if (n < 0)
+ 	    then raise Subscript
+ 	  else if (len < n)
+diff -ruN a/Basis/Implementation/word8-array-slice.sml b/Basis/Implementation/word8-array-slice.sml
+--- a/Basis/Implementation/word8-array-slice.sml
++++ b/Basis/Implementation/word8-array-slice.sml
+@@ -30,15 +30,15 @@
+     val usub = InlineT.Word8Array.sub
+     val uupd = InlineT.Word8Array.update
+     val vusub = InlineT.Word8Vector.sub
+-    val vuupd = InlineT.Word8Vector.update
++    val vuupd = XC2N.bupdw
+     val alength = InlineT.Word8Array.length
+     val vlength = InlineT.Word8Vector.length
+ 
+   (* empty vector *)
+-    val vector0 : vector = InlineT.cast ""
++    val vector0 : vector = "" (* xc2: InlineT.cast "" *)
+ 
+   (* create an uninitialized vector of known length *)
+-    val create : int -> vector = InlineT.cast Assembly.A.create_s
++    val create : int -> vector = Assembly.A.create_s (* xc2: InlineT.cast Assembly.A.create_s; the vectors are made of buffers *)
+ 
+     fun length (SL(_, _, len)) = len
+ 
+@@ -92,9 +92,9 @@
+ 
+     fun vector (SL(_, _, 0)) = vector0
+       | vector (SL(base, start, len)) = let
+-	  val s = create len
++	  val s = XC2N.buf (len) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 	  fun fill (i, j) = if i >= len
+-		then s
++		then XC2N.bstr s
+ 		else (
+ 		  vuupd (s, i, usub (base, j));
+ 		  fill (i ++ 1, j ++ 1))
+@@ -309,7 +309,7 @@
+ 	  else if (len < n)
+ 	    then NONE
+ 	    else let
+-	      val vec = create n
++	      val vec = XC2N.buf (n) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 	      fun copy i = if (i < n)
+ 		    then (
+ 		      vuupd(vec, i, usub(base, start ++ i));
+@@ -317,7 +317,7 @@
+ 		    else ()
+ 	      in
+ 		copy 0;
+-		SOME(vec, SL(base, start ++ n, len -- n))
++		SOME(XC2N.bstr vec, SL(base, start ++ n, len -- n))
+ 	      end
+ 
+   end (* structure Word8ArraySlice *)
+diff -ruN a/Basis/Implementation/word8-array.sml b/Basis/Implementation/word8-array.sml
+--- a/Basis/Implementation/word8-array.sml
++++ b/Basis/Implementation/word8-array.sml
+@@ -18,7 +18,7 @@
+   (* unchecked access operations *)
+     val uupd = A.update
+     val usub = A.sub
+-    val vuupd = V.update
++    val vuupd = XC2N.bupdw (* xc2: V.update, of a vector written in place *)
+     val vusub = V.sub
+     val vlength = V.length
+ 
+@@ -26,7 +26,7 @@
+     type elem = Word8.word
+     type vector = Word8Vector.vector
+ 
+-    val emptyV : vector = InlineT.cast ""
++    val emptyV : vector = "" (* xc2: InlineT.cast "" *)
+ 
+     val maxLen = Core.max_length
+ 
+@@ -74,13 +74,12 @@
+     fun vector a =
+ 	case length a of
+ 	    0 => emptyV
+-	  | len => let val v : Word8Vector.vector =
+-			   InlineT.cast (Assembly.A.create_s len)
++	  | len => let val v = XC2N.buf len (* xc2: a buffer, of which the vector is taken at the end *)
+ 		       fun fill i =
+ 			   if i >= len then ()
+ 			   else (vuupd (v, i, usub (a, i)); fill (i ++ 1))
+ 		   in
+-		       fill 0; v
++		       fill 0; XC2N.bstr v : Word8Vector.vector
+ 		   end
+ 
+     fun copy { src, dst, di } = let
+diff -ruN a/Basis/Implementation/word8-buffer.sml b/Basis/Implementation/word8-buffer.sml
+--- a/Basis/Implementation/word8-buffer.sml
++++ b/Basis/Implementation/word8-buffer.sml
+@@ -29,7 +29,7 @@
+     type array = A.array
+     type array_slice = Word8ArraySlice.slice
+ 
+-    val emptyV : vector = InlineT.cast ""
++    val emptyV : vector = "" (* xc2: InlineT.cast "" *)
+ 
+     datatype buf = BUF of {
+         content : array ref,    (* array for holding content *)
+@@ -61,13 +61,13 @@
+ 
+     fun contents (BUF{len = ref 0, ...}) = emptyV
+       | contents (BUF{content=ref arr, len=ref n, ...}) = let
+-	  val v = InlineT.cast (Assembly.A.create_s n)
++	  val v = XC2N.buf (n) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 	  fun cpy i = if (i < n)
+-		then (V.update(v, i, A.sub(arr, i)); cpy (i ++ 1))
++		then (XC2N.bupdw(v, i, A.sub(arr, i)); cpy (i ++ 1))
+ 		else ()
+ 	  in
+ 	    cpy 0;
+-	    v
++	    XC2N.bstr v
+ 	  end
+ 
+     fun copy {src=BUF{content=ref src, len=ref n, ...}, dst, di} =
+diff -ruN a/Basis/Implementation/word8-vector-slice.sml b/Basis/Implementation/word8-vector-slice.sml
+--- a/Basis/Implementation/word8-vector-slice.sml
++++ b/Basis/Implementation/word8-vector-slice.sml
+@@ -24,14 +24,14 @@
+ 
+   (* unchecked vector access functions *)
+     val usub = InlineT.Word8Vector.sub
+-    val vuupd = InlineT.Word8Vector.update
++    val vuupd = XC2N.bupdw
+     val vlength = InlineT.Word8Vector.length
+ 
+   (* empty vector *)
+-    val vector0 : vector = InlineT.cast ""
++    val vector0 : vector = "" (* xc2: InlineT.cast "" *)
+ 
+   (* create an uninitialized vector of known length *)
+-    val create : int -> vector = InlineT.cast Assembly.A.create_s
++    val create : int -> vector = Assembly.A.create_s (* xc2: InlineT.cast Assembly.A.create_s; the vectors are made of buffers *)
+ 
+     fun length (SL(_, _, len)) = len
+ 
+@@ -80,9 +80,9 @@
+ 
+     fun vector (SL(_, _, 0)) = vector0
+       | vector (SL(base, start, len)) = let
+-	  val s = create len
++	  val s = XC2N.buf (len) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 	  fun fill (i, j) = if i >= len
+-		then s
++		then XC2N.bstr s
+ 		else (
+ 		  vuupd (s, i, usub (base, j));
+ 		  fill (i ++ 1, j ++ 1))
+@@ -113,24 +113,24 @@
+ 
+     fun mapi _ (SL(_, _, 0)) = vector0
+       | mapi f (SL(base, start, len)) = let
+-	  val vec = create len
++	  val vec = XC2N.buf (len) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 	  fun mapf i = if (i < len)
+ 		then (
+ 		  vuupd (vec, i, f (i, usub (base, start ++ i)));
+ 		  mapf (i ++ 1))
+-		else vec
++		else XC2N.bstr vec
+ 	  in
+ 	    mapf 0
+ 	  end
+ 
+     fun map _ (SL(_, _, 0)) = vector0
+       | map f (SL(base, start, len)) = let
+-	  val vec = create len
++	  val vec = XC2N.buf (len) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 	  fun mapf i = if (i < len)
+ 		then (
+ 		  vuupd (vec, i, f (usub (base, start ++ i)));
+ 		  mapf (i ++ 1))
+-		else vec
++		else XC2N.bstr vec
+ 	  in
+ 	    mapf 0
+ 	  end
+@@ -211,8 +211,8 @@
+ 	  val totalLen = (List.foldl (fn (SL(_, _, len), n) => n + len) 0 sll)
+ 		handle Overflow => raise Size
+ 	  val _ = if (totalLen > Word8Vector.maxLen) then raise Size else ()
+-	  val vec = create totalLen
+-	  fun copy ([], _) = vec
++	  val vec = XC2N.buf (totalLen) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
++	  fun copy ([], _) = XC2N.bstr vec
+ 	    | copy (SL(base, start, len)::slr, ix) = let
+ 	      (* copy the slice into the destination vector *)
+ 		fun cpy i = if (i < len)
+@@ -272,7 +272,7 @@
+ 	  else if (len < n)
+ 	    then NONE
+ 	    else let
+-	      val vec = create n
++	      val vec = XC2N.buf (n) (* xc2: a buffer, of which the string is taken at the end: SML/NJ writes the string in place *)
+ 	      fun copy i = if (i < n)
+ 		    then (
+ 		      vuupd(vec, i, usub(base, start ++ i));
+@@ -280,7 +280,7 @@
+ 		    else ()
+ 	      in
+ 		copy 0;
+-		SOME(vec, SL(base, start ++ n, len -- n))
++		SOME(XC2N.bstr vec, SL(base, start ++ n, len -- n))
+ 	      end
+ 
+   end
+diff -ruN a/Basis/Implementation/word8-vector.sml b/Basis/Implementation/word8-vector.sml
+--- a/Basis/Implementation/word8-vector.sml
++++ b/Basis/Implementation/word8-vector.sml
+@@ -21,34 +21,29 @@
+     type vector = V.vector
+     type elem = Word8.word
+ 
+-    val vector0 : vector = InlineT.cast ""
+-    val createVec : int -> vector = InlineT.cast Assembly.A.create_s
++    (* xc2: a vector is a string, and CharVector's operations are not cast
++       to Word8Vector's, but made of them with the codes of the characters *)
++    val c2w = XC2N.c2w
++    val w2c = XC2N.w2c
++    val vector0 : vector = ""
+ 
+     val maxLen = Core.max_length
+ 
+-    val fromList : elem list -> vector
+-	  = InlineT.cast CharVector.fromList
+-    val tabulate : (int * (int -> elem)) -> vector
+-	  = InlineT.cast CharVector.tabulate
++    fun fromList (l : elem list) : vector = CharVector.fromList (map w2c l)
++    fun tabulate (n, f : int -> elem) : vector = CharVector.tabulate (n, w2c o f)
+ 
+     val length   = V.length
+     val sub      = V.chkSub
+-    val concat : vector list -> vector
+-          = InlineT.cast CharVector.concat
+-    val appi : (int * elem -> unit) -> vector -> unit
+-          = InlineT.cast CharVector.appi
+-    val app : (elem -> unit) -> vector -> unit
+-          = InlineT.cast CharVector.app
+-
+-    val update : (vector * int * elem -> vector)
+-          = InlineT.cast CharVector.update
+-
+-    val mapi : (int * elem -> elem) -> vector -> vector
+-          = InlineT.cast CharVector.mapi
+-    val map : (elem -> elem) -> vector -> vector
+-          = InlineT.cast CharVector.map
++    val concat : vector list -> vector = CharVector.concat
++    fun appi (f : int * elem -> unit) = CharVector.appi (fn (i, c) => f (i, c2w c))
++    fun app (f : elem -> unit) = CharVector.app (f o c2w)
+ 
+-    val v2cv : vector -> CharVector.vector = InlineT.cast
++    fun update (v : vector, i, x : elem) : vector = CharVector.update (v, i, w2c x)
++
++    fun mapi (f : int * elem -> elem) = CharVector.mapi (fn (i, c) => w2c (f (i, c2w c)))
++    fun map (f : elem -> elem) = CharVector.map (w2c o f o c2w)
++
++    fun v2cv (v : vector) : CharVector.vector = v
+ 
+     fun foldli f init vec = let
+ 	val len = length vec
+@@ -80,20 +75,17 @@
+ 	fold (length vec -- 1, init)
+     end
+ 
+-    val findi : (int * elem -> bool) -> vector -> (int * elem) option
+-          = InlineT.cast CharVector.findi
+-    val find : (elem -> bool) -> vector -> elem option
+-          = InlineT.cast CharVector.find
+-    val exists : (elem -> bool) -> vector -> bool
+-          = InlineT.cast CharVector.exists
+-    val all : (elem -> bool) -> vector -> bool
+-          = InlineT.cast CharVector.all
+-    val collate : (elem * elem -> order) -> vector * vector -> order
+-          = InlineT.cast CharVector.collate
++    fun findi (p : int * elem -> bool) v =
++	  case CharVector.findi (fn (i, c) => p (i, c2w c)) v of SOME (i, c) => SOME (i, c2w c) | NONE => NONE
++    fun find (p : elem -> bool) v =
++	  case CharVector.find (p o c2w) v of SOME c => SOME (c2w c) | NONE => NONE
++    fun exists (p : elem -> bool) = CharVector.exists (p o c2w)
++    fun all (p : elem -> bool) = CharVector.all (p o c2w)
++    fun collate (cmp : elem * elem -> order) = CharVector.collate (fn (a, b) => cmp (c2w a, c2w b))
+ 
+   (* added for Basis Library proposal 2015-003 *)
+-    val toList : vector -> elem list = InlineT.cast CharVector.toList
+-    val append : vector * elem -> vector = InlineT.cast CharVector.append
+-    val prepend : elem * vector -> vector = InlineT.cast CharVector.prepend
++    fun toList (v : vector) : elem list = List.map c2w (CharVector.toList v)
++    fun append (v : vector, x : elem) : vector = CharVector.append (v, w2c x)
++    fun prepend (x : elem, v : vector) : vector = CharVector.prepend (w2c x, v)
+ 
+   end
+diff -ruN a/smlnj/init/exn-info-hook.sml b/smlnj/init/exn-info-hook.sml
+--- a/smlnj/init/exn-info-hook.sml
++++ b/smlnj/init/exn-info-hook.sml
+@@ -15,8 +15,7 @@
+    *	TRACE	-- is a string list representing the traceback of the
+    *		   exception.
+    *)
+-    val exnName : PrimTypes.exn -> PrimTypes.string =
+-	  InlineT.cast (fn (PrimTypes.ref s, _, _) => s)
++    val exnName : PrimTypes.exn -> PrimTypes.string = XC2N.exnName (* xc2: the name that the exception's representation holds, by a cast *)
+ 
+     local
+       fun dummy (e: PrimTypes.exn) =
+diff -ruN a/smlnj/init/order.sml b/smlnj/init/order.sml
+--- a/smlnj/init/order.sml
++++ b/smlnj/init/order.sml
+@@ -7,6 +7,6 @@
+ structure Order =
+   struct
+ 
+-    datatype order = LESS | EQUAL | GREATER
++    datatype order = datatype order (* xc2: LESS | EQUAL | GREATER, as Rune's library's *)
+ 
+   end
+diff -ruN a/smlnj/init/pervasive.sml b/smlnj/init/pervasive.sml
+--- a/smlnj/init/pervasive.sml
++++ b/smlnj/init/pervasive.sml
+@@ -60,59 +60,9 @@
+     fun stringgt (a, b) = stringlt (b, a)
+     fun stringge (a, b) = stringle (b, a)
+ in
+-overload ~ :   ('a -> 'a)
+-   as  Int.~ and I32.~ and I64.~ and CII.~
+-   and Word.~ and W8.~ and W32.~ and W64.~
+-   and R64.~
+-overload + :   ('a * 'a -> 'a)
+-  as  Int.+ and I32.+ and I64.+ and CII.+
+-  and Word.+ and W8.+ and W32.+ and W64.+
+-  and R64.+
+-overload - :   ('a * 'a -> 'a)
+-  as  Int.- and I32.- and I64.- and CII.-
+-  and Word.- and W8.- and W32.- and W64.-
+-  and R64.-
+-overload * :   ('a * 'a -> 'a)
+-  as  Int.* and I32.* and I64.* and CII.*
+-  and Word.* and W8.* and W32.* and W64.*
+-  and R64.*
+-(*
+-overload / : ('a * 'a -> 'a)
+-  as R64./
+-*)
++(* xc2: the overload declarations of ~ + - * div mod < <= > >= abs are left
++   out: Rune's compiler overloads the operators at the same types *)
+ val op / = R64./		(* temporary hack around overloading bug *)
+-overload div : ('a * 'a -> 'a)
+-  as  Int.div and I32.div and I64.div and CII.div
+-  and Word.div and W8.div and W32.div and W64.div
+-overload mod : ('a * 'a -> 'a)
+-  as  Int.mod and I32.mod and I64.mod and CII.mod
+-  and Word.mod and W8.mod and W32.mod and W64.mod
+-overload < :   ('a * 'a -> bool)
+-  as  Int.< and I32.< and I64.< and CII.<
+-  and Word.< and W8.< and W32.< and W64.<
+-  and R64.<
+-  and InlineT.Char.<
+-  and stringlt
+-overload <= :   ('a * 'a -> bool)
+-  as  Int.<= and I32.<= and I64.<= and CII.<=
+-  and Word.<= and W8.<= and W32.<= and W64.<=
+-  and R64.<=
+-  and InlineT.Char.<=
+-  and stringle
+-overload > :   ('a * 'a -> bool)
+-  as  Int.> and I32.> and I64.> and CII.>
+-  and Word.> and W8.> and W32.> and W64.>
+-  and R64.>
+-  and InlineT.Char.>
+-  and stringgt
+-overload >= :   ('a * 'a -> bool)
+-  as  Int.>= and I32.>= and I64.>= and CII.>=
+-  and Word.>= and W8.>= and W32.>= and W64.>=
+-  and R64.>=
+-  and InlineT.Char.>=
+-  and stringge
+-overload abs : ('a -> 'a)
+-  as Int.abs and I32.abs and I64.abs and CII.abs and R64.abs
+ 
+ type unit = PrimTypes.unit
+ type exn = PrimTypes.exn
+@@ -251,9 +201,10 @@
+ (* String *)
+ local
+     (* allocate an uninitialized string of given length *)
++    (* xc2: create n, the size check of creating a string, which is made whole *)
+     fun create n =
+ 	if (Int.ltu (Core.max_length, n)) then raise Size
+-	else Assembly.A.create_s n
++	else ()
+ 
+     val unsafeSub = CV.sub
+     val unsafeUpdate = CV.update
+@@ -261,7 +212,7 @@
+ 
+ val size = CV.length : string -> int
+ 
+-fun str (c: char) : string = PV.sub (PreString.chars, InlineT.cast c)
++fun str (c: char) : string = PV.sub (PreString.chars, InlineT.Char.ord c) (* xc2: InlineT.cast c *)
+ 
+ (* concatenate a list of strings together *)
+ fun concat [] = ""
+@@ -280,23 +231,7 @@
+ 	      in
+ 		find sl
+ 	      end
+-	  | totLen => let
+-	      val ss = create totLen
+-	      fun copy ([], _) = ()
+-		| copy (s::r, i) = let
+-		    val len = size s
+-		    fun copy' j =
+-			if (j = len) then ()
+-			else (unsafeUpdate(ss, i+j, unsafeSub(s, j));
+-			      copy'(j+1))
+-		    in
+-		      copy' 0;
+-		      copy (r, i+len)
+-		    end
+-	      in
+-		copy (sl, 0);
+-		ss
+-	      end
++	  | totLen => (ignore (create totLen); XC2N.concat sl) (* xc2: its size checked, not written in place *)
+ 	(* end case *)
+       end (* concat *)
+ 
+diff -ruN a/smlnj/init/pre-string.sml b/smlnj/init/pre-string.sml
+--- a/smlnj/init/pre-string.sml
++++ b/smlnj/init/pre-string.sml
+@@ -47,14 +47,13 @@
+ 	  then raise Core.Size
+ 	  else unsafeCreate n
+ 
++  (* xc2: the size check of create, for a string made whole *)
++    fun checkSize n = if (InlineT.Int.ltu(maxSize, n)) then raise Core.Size else ()
++
+   (* a vector of single character strings *)
+     val chars = let
+ 	  fun next i = if (i <= C.maxOrd)
+-	        then let
+-		  val s = unsafeCreate 1
+-		  in
+-		    unsafeUpdate(s, 0, C.chr i);  s :: next(i+1)
+-		  end
++	        then XC2N.str (C.chr i) :: next(i+1) (* xc2: a string made whole, not written in place *)
+ 	        else []
+           in
+ 	    Assembly.A.create_v(C.maxOrd+1, next 0)
+@@ -62,30 +61,11 @@
+ 
+     fun unsafeSubstring (_, _, 0) = ""
+       | unsafeSubstring (s, i, 1) =
+-	  InlineT.PolyVector.sub (chars, InlineT.cast (unsafeSub (s, i)))
+-      | unsafeSubstring (s, i, n) = let
+-	  val ss = unsafeCreate n
+-	  fun copy j = if (j = n)
+-		then ()
+-		else (unsafeUpdate(ss, j, unsafeSub(s, i+j)); copy(j+1))
+-	  in
+-	    copy 0; ss
+-	  end
++	  InlineT.PolyVector.sub (chars, InlineT.Char.ord (unsafeSub (s, i))) (* xc2: InlineT.cast *)
++      | unsafeSubstring (s, i, n) = XC2N.substring (s, i, n) (* xc2: not written in place *)
+ 
+   (* concatenate a pair of non-empty strings *)
+-    fun concat2 (x, y) = let
+-	  val xl = size x and yl = size y
+-	  val ss = create(xl+yl)
+-	  fun copyx n = if (n = xl)
+-		then ()
+-		else (unsafeUpdate(ss, n, unsafeSub(x, n)); copyx(n+1))
+-	  fun copyy n = if (n = yl)
+-		then ()
+-		else (unsafeUpdate(ss, xl+n, unsafeSub(y,n)); copyy(n+1))
+-	  in
+-	    copyx 0; copyy 0;
+-	    ss
+-	  end
++    fun concat2 (x, y) = (checkSize (size x + size y); XC2N.concat2 (x, y)) (* xc2: its size checked, not written in place *)
+ 
+   (* given a reverse order list of strings and a total length, return
+    * the concatenation of the list.
+@@ -99,22 +79,10 @@
+ 	    find lst
+ 	  end
+       | revConcat (totLen, lst) = let
+-	  val ss = create totLen
+-	  fun copy ([], _) = ()
+-	    | copy (s::r, i) = let
+-		val len = size s
+-		val i = i - len
+-		fun copy' j = if (j = len)
+-		      then ()
+-		      else (
+-			unsafeUpdate(ss, i+j, unsafeSub(s, j));
+-			copy'(j+1))
+-		in
+-		  copy' 0;
+-		  copy (r, i)
+-		end
++	  fun rev ([], l) = l
++	    | rev (x :: r, l) = rev (r, x :: l)
+ 	  in
+-	    copy (lst, totLen);  ss
++	    checkSize totLen; XC2N.concat (rev (lst, [])) (* xc2: its size checked, not written in place *)
+ 	  end
+ 
+   (* map a translation function across the characters of a substring *)
+@@ -133,23 +101,16 @@
+   (* implode a non-empty list of characters into a string where both the
+    * length and list are given as arguments.
+    *)
+-    fun implode (len, cl) = let
+-	  val ss = create len
+-	  fun copy ([], _) = ()
+-	    | copy (c::r, i) = (InlineT.CharVector.update(ss, i, c); copy(r, i+1))
+-	  in
+-	    copy (cl, 0); ss
+-	  end
++    fun implode (len, cl) = (checkSize len; XC2N.implode cl) (* xc2: its size checked, not written in place *)
+ 
+   (* implode a reversed non-empty list of characters into a string where both the
+    * length and list are given as arguments.
+    *)
+     fun revImplode (len, cl) = let
+-	  val ss = create len
+-	  fun copy ([], _) = ()
+-	    | copy (c::r, i) = (InlineT.CharVector.update(ss, i, c); copy(r, i-1))
++	  fun rev ([], l) = l
++	    | rev (x :: r, l) = rev (r, x :: l)
+ 	  in
+-	    copy (cl, len-1); ss
++	    checkSize len; XC2N.implode (rev (cl, [])) (* xc2: its size checked, not written in place *)
+ 	  end
+ 
+     fun isPrefix (s1, s2, i2, n2) = let
+diff -ruN a/smlnj/init/substring.sig b/smlnj/init/substring.sig
+--- a/smlnj/init/substring.sig
++++ b/smlnj/init/substring.sig
+@@ -1,12 +1,9 @@
++(* xc2: without local open PrimTypes open PrePervasive in ... end, a signature being declared at top level only in SML; the types it names are those of the top level here *)
+ (* substring.sig
+  *
+  * COPYRIGHT (c) 1995 AT&T Bell Laboratories.
+  *
+  *)
+-local
+-    open PrimTypes
+-    open PrePervasive
+-in
+ 
+ signature SUBSTRING =
+   sig
+@@ -64,4 +61,3 @@
+     val foldr : ((char * 'a) -> 'a) -> 'a -> substring -> 'a
+ 
+   end
+-end (* local *)

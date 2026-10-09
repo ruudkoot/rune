@@ -39,8 +39,16 @@
 #   xc1:mlton  xc1:smlnj-legacy  xc1:smlnj32  xc1:smlnj-dev  xc1:polyml  xc1:mlkit
 #                          the suite against Rune's Basis Library (lib/basis)
 #                          compiled by the host; see below
+#   xc2:mlton  xc2:mlkit  xc2:smlnj-legacy  xc2:smlnj-dev  xc2:polyml
+#                          the suite against the Basis Library of MLton, MLKit,
+#                          SML/NJ (110.99.9 or 2026.2) or Poly/ML compiled by
+#                          bin/rune and run by bin/runevm: the library's
+#                          sources, its primitives and C functions made of
+#                          Rune's (tests/basis/xc2/README.md)
 #   hosts                  native:HOST for the six hosts
 #   xc1                    xc1:HOST for the six hosts
+#   xc2                    xc2:mlton, xc2:mlkit, xc2:smlnj-legacy,
+#                          xc2:smlnj-dev and xc2:polyml
 #   all                    rune, hosts and xc1 (not windows)
 # The hosts are the releases scripts/fetch-hosts.sh installed under
 # ${RUNE_HOSTS:-$HOME/.local/rune-hosts} (`make hosts`): MLton, SML/NJ 110.99.9
@@ -336,6 +344,20 @@ load() {
         *) (cd "$loaddir" && timeout "$limit" "$cmd2" prog.rbc > stdout 2>> log < "$program_input") ;;
       esac
       ;;
+    xc2:*)
+      # as rune: the configuration's prefix (the host's library) comes
+      # first, and Rune's library is the part of it the shim needs; the
+      # generator may ask for more of Rune's extensions (xc2/flags)
+      xflags=$(cat "$cfgout/xc2/flags" 2> /dev/null || true)
+      if [ "$mode" = check ]; then
+        # shellcheck disable=SC2086
+        "$cmd1" --lib "$cfgout/xc2/lib" --allow-prim $xflags --typecheck-only "$@" > "$loaddir/log" 2>&1
+        return
+      fi
+      # shellcheck disable=SC2086
+      "$cmd1" --lib "$cfgout/xc2/lib" --allow-prim $xflags "$@" -o "$loaddir/prog.rbc" > "$loaddir/log" 2>&1 || return 1
+      (cd "$loaddir" && timeout "$limit" "$cmd2" prog.rbc > stdout 2>> log < "$program_input")
+      ;;
     *:mlton)
       write_mlb "$loaddir/prog.mlb" "$@"
       flags=""
@@ -435,6 +457,7 @@ load() {
 # test of List compiles 49 files of the 241 instead of all of them. $needed
 # holds them when it could be worked out, and is cleared to fall back.
 prefix() {
+  if [ "$kind" = xc2 ]; then cat "$cfgout/xc2/prefix"; return 0; fi
   [ "$kind" = xc1 ] || return 0
   cat "$cfgout/basis/prelude"
   if [ -n "${needed:-}" ]; then printf '%s\n' "$needed"; else cat "$cfgout/basis.loaded"; fi
@@ -524,7 +547,7 @@ run_one_body() {
   uses=$(sed -n 's/^(\* uses: \(.*\) \*)$/\1/p' "$src")
   requires=$(sed -n 's/^(\* requires: \(.*\) \*)$/\1/p' "$src")
 
-  if [ "$kind" = xc1 ]; then
+  if [ "$kind" = xc1 ] || [ "$kind" = xc2 ]; then
     # the probe of the configuration's library runs as a job of its own
     t_w=$(now)
     while [ ! -f "$cfgout/basis.done" ]; do sleep 1; done
@@ -534,9 +557,9 @@ run_one_body() {
       echo "FAIL @load/$test -- $(cat "$cfgout/basis.done")" > "$result"
       return
     fi
-    # A required structure that is not Rune's here: one that lib/basis lacks
+    # A required structure that is not Rune's here (xc1): one that lib/basis lacks
     # is ABSENT as it is for rune, one whose file the host left out is N/A.
-    for m in $requires; do
+    [ "$kind" = xc1 ] && for m in $requires; do
       grep -q -x "$m" "$cfgout/basis.provides" && continue
       if cut -f 2 "$cfgout/basis/files" | tr ' ' '\n' | grep -q -x "$m"; then echo "NA $m"; else echo "ABSENT $m"; fi >> "$result.tmp"
     done
@@ -551,7 +574,7 @@ run_one_body() {
   # test, so it is kept: looking again costs a compilation of the library per
   # group, which is most of what a run spends on a host.
   toolkey=$libkey
-  [ "$kind" = rune ] && toolkey="$libkey.$runekey"
+  case $kind in rune) toolkey="$libkey.$runekey" ;; xc2) toolkey="$libkey.$runekey.$xc2key" ;; esac
   seckey="$toolkey-$(cksum < "$src" | cut -d " " -f 1)-$(echo "$cmd1 $cmd2 $limit" | cksum | cut -d " " -f 1)"
   kept=$cfgout/$test.sections
   if [ "$refresh" = 0 ] && [ -f "$kept" ] && [ "$(head -1 "$kept")" = "$seckey" ]; then
@@ -822,6 +845,13 @@ if [ -z "$runekey" ]; then
   runekey=$(cat src/*/*.sml runtime/*.c runtime/*.h 2>/dev/null | cksum | cut -d " " -f 1)
 fi
 export RUNE_MATRIX_RUNEKEY=$runekey
+# The generators, shims and patches of the xc2 configurations decide their
+# sections as well.
+xc2key=${RUNE_MATRIX_XC2KEY:-}
+if [ -z "$xc2key" ]; then
+  xc2key=$(find tests/basis/xc2 -type f | LC_ALL=C sort | xargs cat | cksum | cut -d " " -f 1)
+fi
+export RUNE_MATRIX_XC2KEY=$xc2key
 
 # discard_image: remove a saved host session and the marker that makes load
 # use it. The image is valid only while basis.key matches the current library.
@@ -987,9 +1017,52 @@ probe_basis() {
   echo ok > "$cfgout/basis.done"
 }
 
+
+# probe_xc2 ID: generate the library of xc2 configuration ID in $cfgout/xc2
+# (tests/basis/xc2/HOST/gen.sh: the host's sources, the shim, and the part
+# of lib/basis the shim needs) and check that a program of the harness alone
+# loads with it; write basis.done as probe_basis does. The library is kept
+# while its key, a checksum of what decides it, stays the same.
+probe_xc2() {
+  kind=xc2
+  host=$(config_field "$1" 3)
+  cmd1=$(config_field "$1" 4)
+  cmd2=$(config_field "$1" 5)
+  cfgout=$out/$(dirname_of "$1")
+  mkdir -p "$cfgout"
+  probe_status=0
+  trap 'probe_status=$?; if [ ! -f "$cfgout/basis.done" ]; then printf "probe exited before completion (status %s)\n" "$probe_status" > "$cfgout/basis.done"; fi' 0
+  trap 'exit 1' HUP INT TERM
+  t_probe=$(now)
+  mlib=$(config_field "$1" 6)
+  [ -d "$mlib" ] || { echo "no library of $host in '$mlib'" > "$cfgout/basis.done"; return; }
+  key=$(find tests/basis/xc2 -type f | sort | xargs cat lib/basis/MANIFEST lib/basis/*.sml | cksum | cut -d ' ' -f 1)-$(echo "$cmd1 $mlib" | cksum | cut -d ' ' -f 1)
+  if [ -f "$cfgout/basis.key" ] && [ "$(cat "$cfgout/basis.key")" = "$key" ] && [ -f "$cfgout/xc2/prefix" ]; then
+    echo "cached 0 $(since "$t_probe")" > "$cfgout/basis.time"
+    echo ok > "$cfgout/basis.done"
+    return
+  fi
+  rm -f "$cfgout/basis.key" "$cfgout/basis.time"
+  rm -rf "$cfgout/xc2"
+  if ! RUNE=$cmd1 sh "tests/basis/xc2/$host/gen.sh" "$cfgout/xc2" "$mlib" > "$cfgout/xc2.log" 2>&1; then
+    echo "tests/basis/xc2/$host/gen.sh failed: $(tail -1 "$cfgout/xc2.log")" > "$cfgout/basis.done"
+    return
+  fi
+  # shellcheck disable=SC2046
+  if ! load "$cfgout/basis.work" run $(prefix) "$suite/harness.sml" "$suite/finish.sml"; then
+    echo "the library of $host does not load: $(first_error "$cfgout/basis.work/log" "$cfgout/basis.work/stdout")" > "$cfgout/basis.done"
+    echo "run-matrix: $1: $(cat "$cfgout/basis.done")" >&2
+    return
+  fi
+  echo "probed 1 $(since "$t_probe")" > "$cfgout/basis.time"
+  echo "$key" > "$cfgout/basis.key"
+  echo ok > "$cfgout/basis.done"
+}
+
 if [ -n "$one_config" ]; then
   if [ "$perf" = 1 ]; then perf_one "$one_config" "$one_test"
-  elif [ "$one_test" = @probe ]; then probe_basis "$one_config"
+  elif [ "$one_test" = @probe ]; then
+    case "$one_config" in xc2:*) probe_xc2 "$one_config" ;; *) probe_basis "$one_config" ;; esac
   else run_one "$one_config" "$one_test"
   fi
   exit 0
@@ -1003,6 +1076,7 @@ expand() {
     case "$c" in
       hosts) echo native:mlton native:smlnj-legacy native:smlnj32 native:smlnj-dev native:polyml native:mlkit ;;
       xc1) echo xc1:mlton xc1:smlnj-legacy xc1:smlnj32 xc1:smlnj-dev xc1:polyml xc1:mlkit ;;
+      xc2) echo xc2:mlton xc2:mlkit xc2:smlnj-legacy xc2:smlnj-dev xc2:polyml ;;
       all) echo rune; expand hosts,xc1 ;;
       windows) echo rune:windows rune:windows32 rune:windows-new rune:windows32-new ;;
       portability) echo rune:linux32 rune:ppc64 rune:linux32-new rune:ppc64-new rune:aarch64-new ;;
@@ -1018,6 +1092,7 @@ resolve() {
   host=""
   [ "$kind" = "$spec" ] || host=${spec#*:}
   cmd2=""
+  extra=""
   case "$kind:$host" in
     rune:)
       cmd1=${RUNE:-$root/bin/rune-stack}
@@ -1104,6 +1179,61 @@ resolve() {
       esac
       "$cmd2" --version > /dev/null 2>&1 || { echo "run-matrix: $cmd2 will not start here" >&2; return 1; }
       ;;
+    xc2:mlton)
+      # Rune's compiler and machine with MLton's library: the mlton of the hosts
+      # gives its sources (lib/mlton/sml/basis) and its version
+      cmd1=${RUNE:-$root/bin/rune}
+      cmd2=${RUNEVM:-$root/bin/runevm}
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make)" >&2; return 1; }
+      mlton=${MLTON:-$hosts_prefix/mlton/bin/mlton}
+      version=$("$mlton" 2> /dev/null | sed -n '1s/^MLton \([0-9][0-9.]*\).*/\1/p')
+      # the sixth field of the configuration: MLton's library directory
+      extra=$(cd "$(dirname "$mlton")/../lib/mlton" 2> /dev/null && pwd)
+      ;;
+    xc2:mlkit)
+      # Rune's compiler and machine with MLKit's library (lib/mlkit/basis)
+      cmd1=${RUNE:-$root/bin/rune}
+      cmd2=${RUNEVM:-$root/bin/runevm}
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make)" >&2; return 1; }
+      mlkit=${MLKIT:-$hosts_prefix/mlkit/bin/mlkit}
+      version=$("$mlkit" --version 2> /dev/null | sed -n '1s/^MLKit v\([0-9][0-9.]*\).*/\1/p')
+      # the sixth field of the configuration: MLKit's library directory
+      extra=${MLKIT_LIB:-$(cd "$(dirname "$mlkit")/../lib/mlkit" 2> /dev/null && pwd)}
+      ;;
+    xc2:smlnj-legacy)
+      # Rune's compiler and machine with SML/NJ 110.99.9's library: the sml
+      # of the hosts gives its version and the order of the library's files,
+      # and the sources beside it (system, which scripts/fetch-hosts.sh unpacks)
+      cmd1=${RUNE:-$root/bin/rune}
+      cmd2=${RUNEVM:-$root/bin/runevm}
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make)" >&2; return 1; }
+      smlnj=${SMLNJ:-$hosts_prefix/smlnj-legacy/bin/sml}
+      version=$("$smlnj" @SMLversion 2> /dev/null | sed -n '1s/^sml \([0-9][0-9.]*\).*/\1/p')
+      # the sixth field of the configuration: SML/NJ's installation
+      extra=$(cd "$(dirname "$smlnj")/.." 2> /dev/null && pwd)
+      ;;
+    xc2:smlnj-dev)
+      # The same with SML/NJ 2026.2's library: the sml of the hosts' smlnj-dev,
+      # and the sources beside it
+      cmd1=${RUNE:-$root/bin/rune}
+      cmd2=${RUNEVM:-$root/bin/runevm}
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make)" >&2; return 1; }
+      smlnj=${SMLNJ_DEV:-$hosts_prefix/smlnj-dev/bin/sml}
+      version=$("$smlnj" @SMLversion 2> /dev/null | sed -n '1{s/^sml //;s/^\([0-9][0-9.]*\).*/\1/p;}')
+      extra=$(cd "$(dirname "$smlnj")/.." 2> /dev/null && pwd)
+      ;;
+    xc2:polyml)
+      # Rune's compiler and machine with Poly/ML's library: the poly of the
+      # hosts gives its version, and the sources beside it (basis, which
+      # scripts/fetch-hosts.sh keeps)
+      cmd1=${RUNE:-$root/bin/rune}
+      cmd2=${RUNEVM:-$root/bin/runevm}
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make)" >&2; return 1; }
+      poly=${POLY:-$hosts_prefix/polyml/bin/poly}
+      version=$("$poly" -v 2> /dev/null | sed -n '1s/^Poly\/ML \([0-9][0-9.]*\).*/\1/p')
+      # the sixth field of the configuration: Poly/ML's installation
+      extra=$(cd "$(dirname "$poly")/.." 2> /dev/null && pwd)
+      ;;
     native:mlton|xc1:mlton)
       cmd1=${MLTON:-$hosts_prefix/mlton/bin/mlton}
       version=$("$cmd1" 2> /dev/null | sed -n '1s/^MLton \([0-9][0-9.]*\).*/\1/p')
@@ -1139,7 +1269,7 @@ resolve() {
     fi
     id=$kind:$host@$version
   fi
-  printf '%s\t%s\t%s\t%s\t%s\n' "$id" "$kind" "$host" "$cmd1" "$cmd2" >> "$run/configs"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$id" "$kind" "$host" "$cmd1" "$cmd2" "$extra" >> "$run/configs"
 }
 
 mkdir -p "$run"
@@ -1224,7 +1354,7 @@ for id in $ids; do
   for t in $tests; do rm -f "$d/$t.result"; done
   # What a host has does not change between runs; what Rune's library has does.
   case "$id" in
-    rune|rune:*|xc1:*) rm -rf "$d/probe" ;;
+    rune|rune:*|xc1:*|xc2:*) rm -rf "$d/probe" ;;
     *) [ -n "$filter" ] || rm -rf "$d/probe" ;;
   esac
 done
@@ -1233,17 +1363,17 @@ done
 # otherwise they are jobs of the run itself.
 t_run=$(now)
 for id in $ids; do
-  case "$id" in xc1:*) rm -f "$out/$(dirname_of "$id")/basis.done" ;; esac
+  case "$id" in xc1:*|xc2:*) rm -f "$out/$(dirname_of "$id")/basis.done" ;; esac
 done
 if [ "$perf" = 1 ]; then
   pids=""
   for id in $ids; do
-    case "$id" in xc1:*) probe_basis "$id" & pids="$pids $!" ;; esac
+    case "$id" in xc1:*) probe_basis "$id" & pids="$pids $!" ;; xc2:*) probe_xc2 "$id" & pids="$pids $!" ;; esac
   done
   for pid in $pids; do wait "$pid"; done
   for id in $ids; do
     case "$id" in
-      xc1:*) [ "$(cat "$out/$(dirname_of "$id")/basis.done")" = ok ] || { echo "run-matrix: $id: $(cat "$out/$(dirname_of "$id")/basis.done")" >&2; exit 2; } ;;
+      xc1:*|xc2:*) [ "$(cat "$out/$(dirname_of "$id")/basis.done")" = ok ] || { echo "run-matrix: $id: $(cat "$out/$(dirname_of "$id")/basis.done")" >&2; exit 2; } ;;
     esac
   done
 fi
@@ -1304,7 +1434,7 @@ fi
 timings=$out/timings.tsv
 tab=$(printf '\t')
 {
-  for id in $ids; do case "$id" in xc1:*) printf '%s\t@probe\t1e12\n' "$id" ;; esac; done
+  for id in $ids; do case "$id" in xc1:*|xc2:*) printf '%s\t@probe\t1e12\n' "$id" ;; esac; done
   for id in $ids; do for t in $tests; do printf '%s\t%s\n' "$id" "$t"; done; done |
     awk -F '\t' -v tf="$timings" '
       BEGIN { while ((getline l < tf) > 0) { split(l, f, "\t"); d[f[1] "\t" f[2]] = f[3] } }
@@ -1354,20 +1484,26 @@ function trim(x) { sub(/^[ \t]+/, "", x); sub(/[ \t]+$/, "", x); return x }
 function readlines(file, arr,   n, l) { n = 0; while ((getline l < file) > 0) arr[++n] = l; close(file); return n }
 # explain ID LABEL: "LINE|CATEGORY|reason" of the first line that explains
 # the failure, "" if none; LINE is 0 for a line of rune that an xc1
-# configuration inherits (not counted as used)
+# configuration inherits, or of native:HOST that xc2:HOST inherits (not
+# counted as used), and for a line that xc2:HOST matches without naming xc2
+# (*:HOST, a failure of the compiler or the runtime of the host, which xc2
+# may not share)
 function explain(id, label,   k, i, ln) {
   for (k = 1; k <= ncand[id]; k++) {
     i = cand[id, k]
-    ln = (id ~ cre[i]) ? dline[i] : 0
+    ln = (id ~ cre[i] && !xc2only(id, i)) ? dline[i] : 0
     if (label ~ lre[i]) return ln "|" cat[i] "|" why[i]
   }
   return ""
 }
+# a line that ID, a configuration of xc2, matches without naming xc2
+function xc2only(id, i) { return id ~ /^xc2:/ && cglob[i] !~ /^xc2/ }
 # the lines that can explain a failure of ID, in order
 function candidates(id,   i) {
   for (i = 1; i <= ndev; i++)
     if (id ~ cre[i] ||
-        (id ~ /^(xc1|rune):/ && cglob[i] == "rune" && (cat[i] == "RUNE-DEV" || cat[i] == "SPEC-AMBIGUOUS")))
+        (id ~ /^(xc1|rune):/ && cglob[i] == "rune" && (cat[i] == "RUNE-DEV" || cat[i] == "SPEC-AMBIGUOUS")) ||
+        (id ~ /^xc2:/ && ("native:" substr(id, 5)) ~ cre[i]))
       cand[id, ++ncand[id]] = i
 }
 function secs(x) { return sprintf("%.1f", x) }
@@ -1463,9 +1599,10 @@ BEGIN {
   for (k = 1; k <= nun; k++) print unexplained[k] > unexplainedfile
   # Stale deviations: a line must match a failure in every configuration of
   # this run that its configuration glob names (not a HOST-FLAKY line: that
-  # failure comes and goes). The checks of a test that timed out in a
-  # configuration, as the rune configuration reports them, may not have run:
-  # a line that matches one of them is not stale there.
+  # failure comes and goes; nor, for xc2:HOST, a line that does not name
+  # xc2). The checks of a test that timed out in a configuration, as the
+  # rune configuration reports them, may not have run: a line that matches
+  # one of them is not stale there.
   if (filter == "") {
     for (key in timedout) {
       split(key, kk, SUBSEP); r = dir["rune"] "/" kk[2] ".result"
@@ -1476,7 +1613,7 @@ BEGIN {
       if (cat[i] == "HOST-FLAKY") continue
       for (a = 1; a <= nids; a++) {
         id = ids[a]
-        if (id !~ cre[i] || ((dline[i], id) in used)) continue
+        if (id !~ cre[i] || xc2only(id, i) || ((dline[i], id) in used)) continue
         skip = 0
         for (k = 1; k <= nunrun[id]; k++) if (unrun[id, k] ~ lre[i]) { skip = 1; break }
         if (skip) continue
@@ -1499,7 +1636,7 @@ BEGIN {
   ntime = 0; busy = 0
   for (a = 1; a <= nids; a++) {
     id = ids[a]; d = dir[id]; h = id; sub(/@.*/, "", h); sub(/^[a-z0-9]*:/, "", h)
-    if (id ~ /^xc1:/ && (getline l < (d "/basis.time")) > 0) {
+    if (id ~ /^xc[12]:/ && (getline l < (d "/basis.time")) > 0) {
       split(l, f, " "); probe[id] = f[3]; probemode[id] = f[1] (f[1] == "probed" ? " " f[2] " loads" : "")
       busy += f[3]; newt[id "\t@probe"] = f[3]; close(d "/basis.time")
     }

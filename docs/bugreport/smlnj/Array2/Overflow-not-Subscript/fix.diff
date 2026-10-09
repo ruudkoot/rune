@@ -1,0 +1,52 @@
+diff --git a/base/system/Basis/Implementation/array2.sml b/base/system/Basis/Implementation/array2.sml
+--- a/base/system/Basis/Implementation/array2.sml
++++ b/base/system/Basis/Implementation/array2.sml
+@@ -107,17 +107,18 @@
+     fun dimensions {data, nrows, ncols} = (nrows, ncols)
+     fun nCols (arr : 'a array) = #ncols arr
+     fun nRows (arr : 'a array) = #nrows arr
+-    fun row ({data, nrows, ncols}, i) = let
+-	  val stop = i*ncols
+-	  fun mkVec (j, l) =
+-		if (j < stop)
+-		  then Vector.fromList l
+-		  else mkVec(j-1, A.sub(data, j)::l)
+-	  in
+-	    if ltu(i, nrows) (* 0 <= i < nrows *)
+-	      then mkVec (stop+ncols-1, [])
+-	      else raise General.Subscript
+-	  end
++    fun row ({data, nrows, ncols}, i) =
++	  if ltu(i, nrows) (* 0 <= i < nrows *)
++	    then let
++	      val stop = i*ncols
++	      fun mkVec (j, l) =
++		    if (j < stop)
++		      then Vector.fromList l
++		      else mkVec(j-1, A.sub(data, j)::l)
++	      in
++		mkVec (stop+ncols-1, [])
++	      end
++	    else raise General.Subscript
+     fun column ({data, nrows, ncols}, j) = let
+ 	  fun mkVec (i, l) =
+ 		if (i < 0)
+@@ -137,7 +138,7 @@
+ 		  then raise General.Subscript
+ 		  else n-start
+ 	    | chk (start, n, SOME len) =
+-		if ((start < 0) orelse (len < 0) orelse (n < start+len))
++		if ((start < 0) orelse (len < 0) orelse (n < start) orelse (n-start < len))
+ 		  then raise General.Subscript
+ 		  else len
+ 	  val nr = chk (row, nrows, nr)
+@@ -168,7 +169,8 @@
+ 			       dst = ddata, di = d };
+ 		     up (i-1, d - dncols, s - bncols))
+ 		else ()
+-	in if src_nrows + dst_row > dnrows orelse src_ncols + dst_col > dncols
++	in if dst_row < 0 orelse dst_col < 0
++	      orelse dnrows - src_nrows < dst_row orelse dncols - src_ncols < dst_col
+ 	   then raise General.Subscript
+ 	   else if dst_row <= srow then
+ 	       dn (src_nrows,

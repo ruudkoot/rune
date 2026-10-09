@@ -53,7 +53,9 @@ if [ -n "$one" ]; then
   mkdir -p "$out/$name"
   root=$(pwd)
   case $stdin in /*) ;; *) stdin=$root/$stdin ;; esac
-  if ! "$rune" "$one.sml" -o "$out/$name/prog.rbc" 2> "$out/$name/cerr"; then
+  cargs=""; [ -f "$one.cargs" ] && cargs=$(cat "$one.cargs")
+  # shellcheck disable=SC2086
+  if ! "$rune" $cargs "$one.sml" -o "$out/$name/prog.rbc" 2> "$out/$name/cerr"; then
     echo "FAIL jit.$name: $(grep -m1 . "$out/$name/cerr")"; exit 0
   fi
   "$vm" --disasm "$out/$name/prog.rbc" > "$out/$name/disasm" 2> /dev/null

@@ -12,6 +12,10 @@ struct
      decs only). *)
   datatype ctx = Top | Str | Let
 
+  (* The extension of or-patterns, (p1 | ... | pn): off (Standard ML '97)
+     unless the driver sets it (--or-patterns). *)
+  val orPatterns = ref false
+
   (* Parse a file starting from the given fixity environment; returns the
      program and the fixity environment in effect at the end (so that infix
      declarations carry over to later files of the same program). *)
@@ -328,6 +332,12 @@ struct
                       let fun loop acc = if peek () = COMMA then (advance (); loop (parsePat () :: acc)) else List.rev acc
                           val ps = loop [p]
                       in expect RPAREN; PTuple (ps, spanFrom start) end
+                    else if peek () = BAR then
+                      if not (!orPatterns) then err "or-patterns (p1 | p2) are not Standard ML; --or-patterns allows them"
+                      else
+                        let fun loop acc = if peek () = BAR then (advance (); loop (parsePat () :: acc)) else List.rev acc
+                            val ps = loop [p]
+                        in expect RPAREN; POr (ps, spanFrom start) end
                     else (expect RPAREN;
                           (case p of PVar (_, _, sp) => IntTable.insert (groupedPatHeads, #start sp, true) | _ => ()); p)
                   end

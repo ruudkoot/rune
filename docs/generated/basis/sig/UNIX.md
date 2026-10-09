@@ -108,9 +108,9 @@ How a process ended, or why it stopped; the [`exit_status`](#type-exit_status) o
 
 <details><summary>Other implementations (3)</summary>
 
-- **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (exit 3 is W\_SIGNALED; a process that term ended is W\_SIGNALED of signal 1)
+- **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (exit 3 is W\_SIGNALED; a process that term ended is W\_SIGNALED of signal 1) (docs/bugreport/mlton/OS.Process.status/two-representations)
 - **MLKit** &mdash; the status of a process that did not succeed is W\_EXITSTATUS 0w255 whatever its exit status or signal: reap reduces every failure to OS.Process.failure (an int, \~1), which fromStatus maps to W\_EXITSTATUS 0wxFF
-- **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (exit 5 is W\_SIGNALED)
+- **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (exit 5 is W\_SIGNALED) (docs/bugreport/mlton/OS.Process.status/two-representations)
 
 </details>
 
@@ -124,9 +124,10 @@ val fromStatus : OS.Process.status -> exit_status
 
 **Example** `fromStatus (OS.Process.system "exit 3") = W_EXITSTATUS 0w3`
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
-- **MLton, Poly/ML** &mdash; fromStatus OS.Process.failure is W\_SIGNALED, not W\_EXITSTATUS of a non-zero value
+- **MLton** &mdash; fromStatus OS.Process.failure is W\_SIGNALED, not W\_EXITSTATUS of a non-zero value (docs/bugreport/mlton/OS.Process.status/two-representations)
+- **Poly/ML** &mdash; fromStatus OS.Process.failure is W\_SIGNALED, not W\_EXITSTATUS of a non-zero value
 - **MLKit** &mdash; the status of a process that did not succeed is W\_EXITSTATUS 0w255 whatever its exit status or signal: OS.Process.system and Unix.reap reduce every failure to OS.Process.failure (an int, \~1), which fromStatus maps to W\_EXITSTATUS 0wxFF
 
 </details>
@@ -288,7 +289,7 @@ val reap : ('a, 'b) proc -> OS.Process.status
 
 <details><summary>Other implementations (2)</summary>
 
-- **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (exit 3 is W\_SIGNALED; a process that term ended is W\_SIGNALED of signal 1)
+- **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (exit 3 is W\_SIGNALED; a process that term ended is W\_SIGNALED of signal 1) (docs/bugreport/mlton/OS.Process.status/two-representations)
 - **MLKit** &mdash; the status of a process that did not succeed is W\_EXITSTATUS 0w255 whatever its exit status or signal: reap reduces every failure to OS.Process.failure (an int, \~1), which fromStatus maps to W\_EXITSTATUS 0wxFF
 
 </details>
@@ -311,7 +312,7 @@ val kill : ('a, 'b) proc * signal -> unit
 
 <details><summary>Other implementations (2)</summary>
 
-- **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (a process that term or kill ended is W\_SIGNALED of signal 1)
+- **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (a process that term or kill ended is W\_SIGNALED of signal 1) (docs/bugreport/mlton/OS.Process.status/two-representations)
 - **MLKit** &mdash; the status of a process that a signal ended is W\_EXITSTATUS 0w255, not W\_SIGNALED: reap reduces every failure to OS.Process.failure (an int, \~1), which fromStatus maps to W\_EXITSTATUS 0wxFF
 
 </details>

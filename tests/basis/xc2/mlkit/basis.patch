@@ -1,0 +1,1300 @@
+diff -ruN a/Array.sml b/Array.sml
+--- a/Array.sml
++++ b/Array.sml
+@@ -1,2 +1,2 @@
+ structure Array : ARRAY =
+-  PolyTable (type 'a table = 'a array)
++  PolyTable (type 'a table = 'a array open XC2KArrayTable) (* xc2 *)
+diff -ruN a/Array2.sml b/Array2.sml
+--- a/Array2.sml
++++ b/Array2.sml
+@@ -2,7 +2,9 @@
+ 
+ structure Array2 :> ARRAY2 = struct
+ 
+-type 'a array = 'a array
++(* xc2: an array is its dimensions and an array of XC2's of its elements,
++   not a table with the dimensions in its first two slots *)
++datatype 'a array = XC2Array2 of int * int * 'a XC2.array
+ 
+ (* quite a few bits are available for the length in the tag field! *)
+ val maxLen = Initial.wordtable_maxlen
+@@ -15,17 +17,15 @@
+ 
+ datatype traversal = RowMajor | ColMajor
+ 
+-fun nRows (a : 'a array) : int = prim ("word_sub0", (a, 0))
+-fun nCols (a : 'a array) : int = prim ("word_sub0", (a, 1))
++fun nRows (XC2Array2 (r, _, _) : 'a array) : int = r
++fun nCols (XC2Array2 (_, c, _) : 'a array) : int = c
+ fun dimensions (a: 'a array) : int * int = (nRows a, nCols a)
+-fun set_rows (a : 'a array,r:int) : unit = prim ("word_update0", (a, 0, r))
+-fun set_cols (a : 'a array,c:int) : unit = prim ("word_update0", (a, 1, c))
+ 
+-fun sub2 (a : 'a array, cols:int, r:int, c:int) : 'a =
+-    prim ("word_sub0", (a, r*cols+c+2))
++fun sub2 (XC2Array2 (_, _, t) : 'a array, cols:int, r:int, c:int) : 'a =
++    XC2.Array.sub (t, r*cols+c)
+ 
+-fun update2 (a : 'a array, cols:int, r:int, c:int, v:'a) : unit =
+-    prim ("word_update0", (a, r*cols+c+2, v))
++fun update2 (XC2Array2 (_, _, t) : 'a array, cols:int, r:int, c:int, v:'a) : unit =
++    XC2.Array.update (t, r*cols+c, v)
+ 
+ (* The primitive word_table2d0 is in OptLambda compiled into calls to
+    word_table0 and consecutive updates to store the sizes of each
+@@ -39,10 +39,10 @@
+    tagged when gc is enabled.
+ *)
+ 
+-fun table2d0 (n:int,r:int,c:int) : 'a array = prim ("word_table2d0", (n,r,c))
+-fun table2d0_init (n:int,v:'a,r:int,c:int) : 'a array = prim ("word_table2d0_init", (n,v,r,c))
++fun table2d0 (n:int,r:int,c:int) : 'a array = XC2Array2 (r, c, XC2.Array.alloc (n - 2))
++fun table2d0_init (n:int,v:'a,r:int,c:int) : 'a array = XC2Array2 (r, c, XC2KArrayTable.array (n - 2, v))
+ 
+-fun update0 (a : 'a array, i : int, x : 'a) : unit = prim ("word_update0", (a, i, x))
++fun update0 (XC2Array2 (_, _, t) : 'a array, i : int, x : 'a) : unit = XC2.Array.update (t, i - 2, x)
+ 
+ fun check (nr,nc) : int =
+     if nr < 0 orelse nc < 0 then raise Size
+diff -ruN a/ArraySlice.sml b/ArraySlice.sml
+--- a/ArraySlice.sml
++++ b/ArraySlice.sml
+@@ -1,5 +1,5 @@
+ structure ArraySlice :> ARRAY_SLICE =
+-    TableSlice(type 'a table = 'a array
++    TableSlice(type 'a table = 'a array open XC2KArrayTable (* xc2 *)
+ 	       val maxLen = Array.maxLen
+ 	       type 'a vector_slice = 'a VectorSlice.slice
+ 	       val vector_slice_base = VectorSlice.base)
+diff -ruN a/ByteSlice.sml b/ByteSlice.sml
+--- a/ByteSlice.sml
++++ b/ByteSlice.sml
+@@ -4,21 +4,22 @@
+ 		   type elem
+ 		   type vector
+ 		   type array
+-		   val maxLen : int) =
++		   val maxLen : int
++		   (* xc2: the operations of the table and of the vector, and a
++		      table or vector is made by filling an array of XC2's *)
++		   val sub_unsafe : table * int -> elem
++		   val update_unsafe : table * int * elem -> unit
++		   val length0 : table -> int
++		   val fromArray : elem XC2.array -> table
++		   val sub_vector_unsafe : vector * int -> elem
++		   val length_vector : vector -> int
++		   val vectorFromArray : elem XC2.array -> vector) =
+ struct
+ 
+     type vector = vector
+     type elem = elem
+     type array = array
+-    fun sub_unsafe (t:table,i:int) : elem = prim ("__bytetable_sub", (t,i))
+-    fun sub_vector_unsafe (v:vector,i:int) : elem = prim ("__bytetable_sub", (v,i))
+-    fun alloc_table_unsafe (i:int) : table = prim("allocStringML", i)
+-    fun alloc_vector_unsafe (i:int) : vector = prim("allocStringML", i)
+-    fun update_unsafe(t:table,i:int,c:elem) : unit = prim("__bytetable_update", (t, i, c))
+-    fun update_vector_unsafe(v:vector,i:int,c:elem) : unit = prim("__bytetable_update", (v, i, c))
+-    fun length0 (t:table): int = prim ("__bytetable_size", t)
+-    fun length_vector (v:vector): int = prim ("__bytetable_size", v)
+-    fun null() : elem = prim("id",0:int)
++    fun alloc_table_unsafe (i:int) : elem XC2.array = XC2.Array.alloc i
+ 
+     type slice = table * int * int
+     type vector_slice = vector * int * int
+@@ -55,13 +56,13 @@
+     fun base sli = sli
+ 
+     fun vector (a : table, i, n) : vector =
+-      let val newvec = alloc_vector_unsafe n : vector
++      let val newvec = alloc_table_unsafe n
+ 	  fun copy j =
+ 	    if j<n then
+-		(update_vector_unsafe(newvec,j,sub_unsafe(a,i+j)); copy (j+1))
++		(XC2.Array.update(newvec,j,sub_unsafe(a,i+j)); copy (j+1))
+ 	    else
+-		update_vector_unsafe(newvec,j,null())
+-      in copy 0; newvec
++		()
++      in copy 0; vectorFromArray newvec
+       end
+ 
+     fun copy {src=(a1,i1,n) : slice, dst=a2: table, di=i2} =
+@@ -100,20 +101,19 @@
+ 	    | acc ((_, _, len1)::vr) len = acc vr (len1 + len)
+ 	  val len = acc slis 0
+ 	  val newvec = if len > maxLen then raise Size
+-		       else alloc_vector_unsafe len : vector
++		       else alloc_table_unsafe len
+ 	  fun copyall to []                   = () (* Now: to = len *)
+ 	    | copyall to ((v1, i1, n1)::slir) =
+ 	    let fun copyv1 j =
+ 		if j<n1 then
+-		    (update_vector_unsafe(newvec,to+j,sub_unsafe(v1,i1+j)); copyv1 (j+1))
++		    (XC2.Array.update(newvec,to+j,sub_unsafe(v1,i1+j)); copyv1 (j+1))
+ 		else
+ 		    ()
+ 	    in
+ 		(copyv1 0; copyall (to+n1) slir)
+ 	    end
+       in copyall 0 slis;
+-	  update_vector_unsafe(newvec,len,null());
+-	  newvec
++	  vectorFromArray newvec
+       end
+ 
+     fun getItem (a, i, 0) = NONE
+@@ -148,14 +148,14 @@
+       end
+ 
+     fun map (f : elem -> elem) (a : table, i, n) : table =
+-      let val newvec = alloc_table_unsafe n : table
++      let val newvec = alloc_table_unsafe n
+ 	  val stop = i+n
+ 	  fun lr j =
+ 	    if j < stop then
+-		(update_unsafe(newvec,j-i,f(sub_unsafe(a,j))); lr (j+1))
++		(XC2.Array.update(newvec,j-i,f(sub_unsafe(a,j))); lr (j+1))
+ 	    else
+-		update_unsafe(newvec,j-i,null())
+-      in lr i; newvec
++		()
++      in lr i; fromArray newvec
+       end
+ 
+     fun foldl f e (a, i, n) =
+@@ -197,14 +197,14 @@
+       end
+ 
+     fun mapi (f : int * elem -> elem) (a : table, i, n) : table =
+-      let val newvec = alloc_table_unsafe n : table
++      let val newvec = alloc_table_unsafe n
+ 	  val stop = i+n
+ 	  fun lr j =
+ 	      if j < stop then
+-		  (update_unsafe(newvec,j-i,f(j-i, sub_unsafe(a,j))); lr (j+1))
++		  (XC2.Array.update(newvec,j-i,f(j-i, sub_unsafe(a,j))); lr (j+1))
+ 	      else
+-		  update_unsafe(newvec,j-i,null())
+-      in lr i; newvec
++		  ()
++      in lr i; fromArray newvec
+       end
+ 
+     fun foldli f e (a, i, n) =
+@@ -250,7 +250,8 @@
+ 	      type array  = CharArray.array
+ 	      type vector = CharVector.vector
+ 	      type elem   = char
+-	      val maxLen  = CharVector.maxLen)
++	      val maxLen  = CharVector.maxLen
++	      open XC2KCharString (* xc2 *))
+ 
+ (** SigDoc *)
+ structure Word8VectorSlice : MONO_VECTOR_SLICE =
+@@ -258,7 +259,8 @@
+ 	      type array  = Word8Array.array
+ 	      type vector = Word8Vector.vector
+ 	      type elem   = word8
+-	      val maxLen  = Word8Vector.maxLen)
++	      val maxLen  = Word8Vector.maxLen
++	      open XC2KWord8String (* xc2 *))
+ 
+ (** SigDoc *)
+ structure CharArraySlice : MONO_ARRAY_SLICE =
+@@ -266,7 +268,8 @@
+ 	      type array  = CharArray.array
+ 	      type vector = CharVector.vector
+ 	      type elem   = char
+-	      val maxLen  = CharArray.maxLen)
++	      val maxLen  = CharArray.maxLen
++	      open XC2KCharArray (* xc2 *))
+ 
+ (** SigDoc *)
+ structure Word8ArraySlice : MONO_ARRAY_SLICE =
+@@ -274,4 +277,5 @@
+ 	      type array  = Word8Array.array
+ 	      type vector = Word8Vector.vector
+ 	      type elem   = word8
+-	      val maxLen  = Word8Array.maxLen)
++	      val maxLen  = Word8Array.maxLen
++	      open XC2KWord8Array (* xc2 *))
+diff -ruN a/ByteTable.sml b/ByteTable.sml
+--- a/ByteTable.sml
++++ b/ByteTable.sml
+@@ -1,6 +1,17 @@
+ 
++(* xc2: the operations of the table and of the vector (a string) are
++   given, and a table is made by filling an array of XC2's and then
++   fromArray (vectorFromArray for a vector), with no NUL after it: Rune's
++   strings are made whole *)
+ functor ByteTable(eqtype table
+-		  eqtype elem) =
++		  eqtype elem
++		  val sub_unsafe : table * int -> elem
++		  val update_unsafe : table * int * elem -> unit
++		  val length : table -> int
++		  val fromArray : elem XC2.array -> table
++		  val sub_vector_unsafe : string * int -> elem
++		  val length_vector : string -> int
++		  val vectorFromArray : elem XC2.array -> string) =
+ 
+   (* The ByteTable functor should be applied four times:
+    *
+@@ -26,17 +37,17 @@
+     type array = chararray
+     type elem = elem
+ 
+-    fun sub_unsafe (t:table,i:int) : elem = prim ("__bytetable_sub", (t,i))
+-    fun sub_vector_unsafe (v:vector,i:int) : elem = prim ("__bytetable_sub", (v,i))
+-    fun alloc_table_unsafe (i:int) : table = prim("allocStringML", i)
+-    fun alloc_vector_unsafe (i:int) : vector = prim("allocStringML", i)
+-    fun update_unsafe (t:table,i:int,c:elem) : unit = prim("__bytetable_update", (t, i, c))
+-    fun update_vector_unsafe (v:vector,i:int,c:elem) : unit = prim("__bytetable_update", (v, i, c))
+-    fun fromList (es : elem list) : table = prim ("implodeCharsML", es)
+-    fun concat (vs : table list) : table = prim ("implodeStringML", vs)
+-    fun length (t:table): int = prim ("__bytetable_size", t)
+-    fun length_vector (v:vector): int = prim ("__bytetable_size", v)
+-    fun null () : elem = prim("id",0:int)
++    val length = length
++    fun alloc_table_unsafe (i:int) : elem XC2.array = XC2.Array.alloc i
++    fun fromList (es : elem list) : table =
++      let val t = alloc_table_unsafe (List.length es)
++      in ignore (List.foldl (fn (e, i) => (XC2.Array.update (t, i, e); i + 1)) 0 es); fromArray t end
++    fun concat (vs : table list) : table =
++      let val t = alloc_table_unsafe (List.foldl (fn (v, n) => n + length v) 0 vs)
++          fun copy (v, k) = let val n = length v
++                                fun loop j = if j < n then (XC2.Array.update (t, k + j, sub_unsafe (v, j)); loop (j + 1)) else ()
++                            in loop 0; k + n end
++      in ignore (List.foldl copy 0 vs); fromArray t end
+ 
+     (* Body *)
+     fun explode (t:table) : elem list  =
+@@ -59,9 +70,9 @@
+       if i < 0 orelse i > maxLen then raise Size
+       else
+ 	let val t = alloc_table_unsafe i
+-	    fun loop j = if j < i then (update_unsafe(t,j,f j); loop (j+1))
+-			 else update_unsafe(t, j, null())
+-	in loop 0; t
++	    fun loop j = if j < i then (XC2.Array.update(t,j,f j); loop (j+1))
++			 else ()
++	in loop 0; fromArray t
+ 	end
+ 
+     fun updatev (t : table, i, e : elem) : table =
+@@ -72,9 +83,9 @@
+       if n < 0 orelse n > maxLen then raise Size
+       else
+ 	let val t = alloc_table_unsafe n
+-	    fun loop j = if j < n then (update_unsafe(t,j,e); loop (j+1))
+-			 else update_unsafe(t, j, null())
+-	in loop 0; t
++	    fun loop j = if j < n then (XC2.Array.update(t,j,e); loop (j+1))
++			 else ()
++	in loop 0; fromArray t
+ 	end
+ 
+     fun foldl f e a =
+@@ -100,10 +111,10 @@
+     fun map (f : elem -> elem) (a : table) : table =
+       let val stop = length a
+ 	  val newtab = alloc_table_unsafe stop
+-	  fun lr j = if j < stop then (update_unsafe(newtab, j, f(sub_unsafe(a,j)));
++	  fun lr j = if j < stop then (XC2.Array.update(newtab, j, f(sub_unsafe(a,j)));
+ 				       lr (j+1))
+-		     else update_unsafe(newtab, j, null())
+-      in lr 0; newtab
++		     else ()
++      in lr 0; fromArray newtab
+       end
+ 
+     fun sliceend (a, i, NONE) = if i < 0 orelse i > length a then raise Subscript
+@@ -148,12 +159,12 @@
+ 	  fun loop stop =
+ 	    let	fun lr j =
+ 		    if j < stop then
+-			(update_unsafe (newtab, j-i, f(j, sub_unsafe(a,j)));
++			(XC2.Array.update (newtab, j-i, f(j, sub_unsafe(a,j)));
+ 			 lr (j+1))
+-		    else update_unsafe (newtab, j-i, null())
++		    else ()
+ 	    in lr i
+ 	    end
+-      in loop stop; newtab
++      in loop stop; fromArray newtab
+       end
+ 
+     fun modifyi f a =
+@@ -174,9 +185,9 @@
+ 
+     local
+ 	fun tabulatev (n, f : int -> elem) : vector =
+-	    let fun init (t, f, i) = if i >= n then (update_vector_unsafe(t,n,null());t)
+-				     else (update_vector_unsafe (t, i, f i); init (t, f, i+1))
+-	    in init (alloc_vector_unsafe n, f, 0)
++	    let fun init (t, f, i) = if i >= n then t
++				     else (XC2.Array.update (t, i, f i); init (t, f, i+1))
++	    in vectorFromArray (init (alloc_table_unsafe n, f, 0))
+ 	    end
+     in
+ 	fun vector a = tabulatev (length a, fn i => sub_unsafe(a,i))
+@@ -252,10 +263,10 @@
+ 	  val newvec = alloc_table_unsafe stop
+ 	  fun lr j =
+ 	    if j < stop then
+-		(update_unsafe(newvec,j,f(j, sub_unsafe(a,j)));
++		(XC2.Array.update(newvec,j,f(j, sub_unsafe(a,j)));
+ 		 lr (j+1))
+-	    else update_unsafe(newvec,j,null())
+-      in lr 0; newvec
++	    else ()
++      in lr 0; fromArray newvec
+       end
+ 
+     fun find (p : elem -> bool) (a : table) : elem option =
+@@ -308,7 +319,7 @@
+ structure CharVector :> MONO_VECTOR
+   where type elem = char
+     and type vector = string
+-  = let structure V = ByteTable(type elem = char  type table = string)
++  = let structure V = ByteTable(type elem = char  type table = string open XC2KCharString) (* xc2 *)
+     in struct open V
+ 	      val update = updatev
+        end
+@@ -319,18 +330,18 @@
+   where type vector = CharVector.vector
+   where type elem = char
+   where type array = chararray
+-  = ByteTable(type elem = char  type table = chararray)
++  = ByteTable(type elem = char  type table = chararray open XC2KCharArray) (* xc2 *)
+ 
+ local
+     structure Word8Vector =
+-	let structure V = ByteTable(type elem = word8  type table = string)
++	let structure V = ByteTable(type elem = word8  type table = string open XC2KWord8String) (* xc2 *)
+ 	in struct open V
+ 	          val update = updatev
+ 	   end
+ 	end
+ 
+     structure Word8Array =
+-	ByteTable(type elem = word8 type table = chararray)
++	ByteTable(type elem = word8 type table = chararray open XC2KWord8Array) (* xc2 *)
+ 
+     structure Tmp =
+ 	struct
+diff -ruN a/Char.sml b/Char.sml
+--- a/Char.sml
++++ b/Char.sml
+@@ -10,7 +10,7 @@
+   fun unsafe_chr (i:int):char = prim ("id", i)
+ 
+   fun chr (i:int) : char =
+-    if i>=0 andalso i<256 then prim ("id", i)
++    if i>=0 andalso i<256 then unsafe_chr i (* xc2: prim ("id", i), a cast of no types *)
+     else raise Chr
+ 
+   (* Body *)
+diff -ruN a/Initial.sml b/Initial.sml
+--- a/Initial.sml
++++ b/Initial.sml
+@@ -108,7 +108,7 @@
+        struct
+          fun getN s =  prim("@sml_syserror", s : string) : int
+          fun getNS s =  prim("@sml_findsignal", s : string) : int
+-         fun getT i =   prim("@sml_getTty", i : int) : word
++         fun getT i =   Word.fromInt (prim("@sml_getTty", i : int) : int) (* xc2: the int of Rune's primitive, as a word *)
+          fun getTi i = prim("@sml_getTty", i : int) : int
+          structure Tty =
+            struct
+diff -ruN a/Posix.sml b/Posix.sml
+--- a/Posix.sml
++++ b/Posix.sml
+@@ -444,7 +444,8 @@
+ 			 raiseSys "Posix.ProcEnv.times" NONE ""
+ 
+           val {elapsed_sec : int,
+-               elapsed_usec : int} = prim("sml_getrealtime", ())
++               elapsed_usec : int} = (* xc2: the labels of the pair *)
++              let val {sec, usec} = prim ("sml_getrealtime", ()) in {elapsed_sec = sec, elapsed_usec = usec} end
+ 
+           (*	  val cps = SysWord.toInt(sysconf "CLK_TCK")
+ 	  fun split t = (t div cps, Real.floor(1000000.0 * Real.fromInt(t mod cps)) div cps)
+@@ -553,7 +554,8 @@
+ 
+     fun setuid g =
+         let
+-          val r = prim("@setuid", ()) : int
++          val r = prim("@setuid", g : int) : int (* xc2: prim("@setuid", ()), which gives C's setuid whatever
++                                                    a register holds (docs/bugreport/mlkit/Posix.ProcEnv.setuid/argument-ignored) *)
+         in
+           if r = ~1 then raiseSys "Posix.ProcEnv.setuid" NONE "" else ()
+         end
+@@ -913,7 +915,7 @@
+           val (b,s,l) = CharArraySlice.base arrs
+           val _ = if (l< 0) then raise OS.SysErr("sml_writeArrChar with negative length", NONE)
+                   else ()
+-          val r = prim("@sml_writeVec", (fd : int, b : CharArray.array, s : int, l: int)) : int
++          val r = prim ("@sml_writeVec", (fd : int, CharArraySlice.vector arrs, 0, l: int)) : int (* xc2: a string, not the array *)
+         in if r = ~1 then raiseSys "sml_writeArr" NONE "" else r
+         end
+ 
+@@ -922,7 +924,7 @@
+           val (b,s,l) = Word8ArraySlice.base arrs
+           val _ = if (l< 0) then raise OS.SysErr("sml_writeArrWord8 with negative length", NONE)
+                   else ()
+-          val r = prim("@sml_writeVec", (fd : int, b : Word8Array.array, s : int, l: int)) : int
++          val r = prim ("@sml_writeVec", (fd : int, Word8ArraySlice.vector arrs, 0, l: int)) : int (* xc2: a string, not the array *)
+         in if r = ~1 then raiseSys "sml_writeArr" NONE "" else r
+         end
+ 
+@@ -1079,7 +1081,7 @@
+       type pid = Process.pid
+       type file_desc = ProcEnv.file_desc
+ 
+-      fun getT i = prim("@sml_getTty", i : int) : word
++      fun getT i = Word.fromInt (prim("@sml_getTty", i : int) : int) (* xc2: the int of Rune's primitive, as a word *)
+       fun getTi i = prim("@sml_getTty", i : int) : int
+ 
+       structure V =
+diff -ruN a/Socket.sml b/Socket.sml
+--- a/Socket.sml
++++ b/Socket.sml
+@@ -114,7 +114,7 @@
+           end
+ 
+       fun setSockOptBool (opt:int) (str:string) (s:('af, 'st) sock, b:bool) : unit =
+-          let val ret = prim("sml_sock_setsockopt", (#fd s,opt,b))
++          let val ret = prim("sml_sock_setsockopt", (#fd s,opt,if b then 1 else 0)) (* xc2: b, a bool where the other passes an int *)
+           in maybe_failure str ret
+           end
+ 
+@@ -203,7 +203,7 @@
+         end
+ 
+     fun ioDesc (s: ('af, 'st) sock) : OS.IO.iodesc =
+-        prim("id", #fd s)
++        OS.fdToIOD (#fd s) (* xc2: prim ("id", #fd s), a cast of no types *)
+ 
+     type out_flags = {don't_route : bool, oob : bool}
+     type in_flags = {peek : bool, oob : bool}
+@@ -219,7 +219,8 @@
+     (* Word8ArraySlices are represented the same as Word8VectorSlices *)
+     fun sendArr ({fd,...} : ('af, active stream) sock,
+                  slc : Word8ArraySlice.slice) : int =
+-        let val (v,i,n) = Word8ArraySlice.base slc
++        let val v = Word8ArraySlice.vector slc (* xc2: Word8ArraySlice.base slc, an array where sendVec has a vector *)
++            val (i,n) = (0, Word8Vector.length v)
+             val ret = prim("sml_sock_sendvec", (fd,v,i,n))
+         in maybe_failure "sendArr" ret
+          ; ret
+@@ -234,7 +235,7 @@
+         end
+ 
+     fun close ({fd,...} : ('af, 'st) sock) : unit =
+-        prim("@close", fd)
++        ignore (prim ("@close", fd) : int) (* xc2: the result of close, as Posix takes it *)
+ 
+     datatype shutdown_mode = NO_RECVS
+                            | NO_SENDS
+diff -ruN a/StrBase.sml b/StrBase.sml
+--- a/StrBase.sml
++++ b/StrBase.sml
+@@ -9,7 +9,7 @@
+   fun concat (ss:string list) : string = prim("implodeStringML", ss)
+ 
+   fun chr (i:int) : char =
+-    if i>=0 andalso i<256 then prim ("id", i)
++    if i>=0 andalso i<256 then XC2KPrim.id__int__char i (* xc2: prim ("id", i), a cast of no types *)
+     else raise Chr
+ 
+   fun ord (c : char) : int = prim ("ord", c)
+diff -ruN a/String.sml b/String.sml
+--- a/String.sml
++++ b/String.sml
+@@ -27,14 +27,8 @@
+ 	  val newvec =
+ 	    if i < 0 orelse n < 0 orelse n > maxSize
+ 	      orelse i > size tab orelse i+n > size tab then raise Subscript
+-	    else alloc_unsafe n
+-	  fun blit (i1, i2) =
+-	    if i2 >= n then update_unsafe(newvec, n, null())
+-	    else let val e : char = sub_unsafe(tab:string, i1:int)
+-		 in update_unsafe(newvec, i2, e);
+-		    blit (i1+1, i2+1)
+-		 end
+-      in blit(i,0); newvec
++	    else ()
++      in CharVector.tabulate (n, fn k => sub_unsafe (tab, i + k)) (* xc2: not filled in place *)
+       end
+ 
+     fun substring (s, i, j) = extract(s, i, SOME j)
+diff -ruN a/Substring.sml b/Substring.sml
+--- a/Substring.sml
++++ b/Substring.sml
+@@ -24,11 +24,7 @@
+     fun base arg = arg
+ 
+     fun string (s, i, n) =
+-      let val newstr = alloc_unsafe n
+-      in blit_unsafe(s, i, newstr, 0, n);
+-	  update_unsafe(newstr,n,null());
+-	  newstr
+-      end
++      CharVector.tabulate (n, fn k => sub_unsafe (s, i + k)) (* xc2: not filled in place *)
+ 
+     fun extract (s, i, NONE) =
+       if 0 <= i andalso i <= size0 s then (s, i, size0 s - i)
+@@ -86,14 +82,8 @@
+       let fun acc [] len                 = len
+ 	    | acc ((_, _, len1)::vr) len = acc vr (len1 + len)
+ 	  val len = acc strs 0
+-	  val newstr = if len > String.maxSize then raise Size
+-		       else alloc_unsafe len
+-	  fun copyall to []                   = () (* Now: to = len *)
+-	    | copyall to ((s1, i1, len1)::vr) =
+-	      (blit_unsafe(s1, i1, newstr, to, len1); copyall (to+len1) vr)
+-      in copyall 0 strs;
+-	  update_unsafe(newstr,len,null());
+-	  newstr
++	  val () = if len > String.maxSize then raise Size else ()
++      in String.concat (List.map string strs) (* xc2: not filled in place *)
+       end
+ 
+     fun concatWith sep []       = ""
+@@ -102,18 +92,9 @@
+ 	   fun acc []       len = len
+ 	     | acc (v1::vr) len = acc vr (size v1 + seplen + len)
+ 	   val len = acc sr s1len
+-	   val newstr = if len > String.maxSize then raise Size
+-			else alloc_unsafe len
+-	   fun copyall to []       = ()
+-	     | copyall to ((v1, i1, len1)::vr) =
+-	       (blit_unsafe(sep, 0, newstr, to, seplen);
+-		blit_unsafe(v1, i1, newstr, to+seplen, len1);
+-		copyall (to+seplen+len1) vr)
++	   val () = if len > String.maxSize then raise Size else ()
+        in
+-	   blit_unsafe(s1s, s1i, newstr, 0, s1len);
+-	   copyall s1len sr;
+-	   update_unsafe(newstr,len,null());
+-	   newstr
++	   String.concatWith sep (List.map string ((s1s, s1i, s1len) :: sr)) (* xc2 *)
+        end
+ 
+     fun compare ((s1, i1, n1), (s2, i2, n2)) =
+diff -ruN a/TableSlice.sml b/TableSlice.sml
+--- a/TableSlice.sml
++++ b/TableSlice.sml
+@@ -1,6 +1,12 @@
+ (* VectorSlice and ArraySlice -- ported from Moscow ML, 2005-11-25 *)
+ 
++(* xc2: the operations of the table are given, and a table is made by
++   filling an array of XC2's and then fromArray, as in PolyTable *)
+ functor TableSlice (type 'a table
++		    val sub0 : 'a table * int -> 'a
++		    val update0 : 'a table * int * 'a -> unit
++		    val length0 : 'a table -> int
++		    val fromArray : 'a XC2.array -> 'a table
+ 		    val maxLen : int
+ 		    type 'a vector_slice
+ 		    val vector_slice_base: 'a vector_slice -> 'a vector * int * int) =
+@@ -8,23 +14,18 @@
+   type 'a vector = 'a vector
+   type 'a array = 'a array
+ 
+-  fun sub0 (a : 'a table, i : int) : 'a = prim ("word_sub0", (a, i))
+ 
+-  fun sub_vector0 (a : 'a vector, i : int) : 'a = prim ("word_sub0", (a, i))
++  fun sub_vector0 (a : 'a vector, i : int) : 'a = XC2KVectorTable.sub0 (a, i)
+ 
+-  fun update0 (a : 'a table, i : int, x : 'a) : unit = prim ("word_update0", (a, i, x))
+ 
+-  fun update_vector0 (a : 'a vector, i : int, x : 'a) : unit = prim ("word_update0", (a, i, x))
+ 
+-  fun table0 (n : int) : 'a table = prim ("word_table0", n)
++  fun table0 (n : int) : 'a XC2.array = XC2.Array.alloc n
+ 
+-  fun vector0 (n : int) : 'a vector = prim ("word_table0", n)
+ 
+-  fun length0 (t : 'a table) : int = prim ("table_size", t)
+ 
+-  fun length_vector (t : 'a vector) : int = prim ("table_size", t)
++  fun length_vector (t : 'a vector) : int = XC2KVectorTable.length t
+ 
+-  fun array0 (n : int, x:'a) : 'a array = prim ("word_table_init", (n, x))
++  fun array0 (n : int, x:'a) : 'a array = XC2KArrayTable.array (n, x)
+ 
+   type 'a slice = 'a table * int * int
+   type 'a vector_slice = 'a vector_slice
+@@ -61,13 +62,13 @@
+   fun base sli = sli
+ 
+   fun vector (a : 'a table, i, n) =
+-    let val newvec = vector0 n : 'a vector
++    let val newvec = table0 n
+ 	fun copy (a,j) =
+ 	    if j<n then
+-		(update_vector0(newvec, j, sub0(a,i+j)); copy (a,j+1))
++		(XC2.Array.update (newvec, j, sub0(a,i+j)); copy (a,j+1))
+ 	    else
+ 		()
+-    in copy (a,0); newvec
++    in copy (a,0); XC2KVectorTable.fromArray newvec
+     end
+ 
+   fun copy {src=(a1,i1,n) : 'a slice, dst=a2: 'a table, di=i2} =
+@@ -106,18 +107,18 @@
+           | acc ((_, _, len1)::vr) len = acc vr (len1 + len)
+         val len = acc slis 0
+         val newvec = if len > maxLen then raise Size
+-		     else table0 len : 'a table
++		     else table0 len (* xc2: : 'a table, which MLKit alone scopes at the fun *)
+         fun copyall to []                   = () (* Now: to = len *)
+           | copyall to ((v1, i1, n1)::slir) =
+ 	    let fun copyv1 (newvec,j) =
+ 		if j<n1 then
+-		    (update0(newvec,to+j, sub0(v1,i1+j)); copyv1 (newvec,j+1))
++		    (XC2.Array.update (newvec,to+j, sub0(v1,i1+j)); copyv1 (newvec,j+1))
+ 		else
+ 		    ()
+ 	    in
+ 		(copyv1 (newvec,0); copyall (to+n1) slir)
+ 	    end
+-    in copyall 0 slis; newvec
++    in copyall 0 slis; fromArray newvec
+     end
+ 
+   fun getItem (a, i, 0) = NONE
+@@ -152,14 +153,14 @@
+     end
+ 
+   fun map (f : 'a -> 'b) (a : 'a table, i, n) =
+-    let val newvec = table0 n : 'b table
++    let val newvec = table0 n
+ 	val stop = i+n
+ 	fun lr (a,newvec,j) =
+ 	    if j < stop then
+-	      (update0(newvec,j-i,f(sub0(a,j))); lr (a,newvec,j+1))
++	      (XC2.Array.update (newvec,j-i,f(sub0(a,j))); lr (a,newvec,j+1))
+ 	    else
+ 	      ()
+-    in lr (a,newvec,i); newvec
++    in lr (a,newvec,i); fromArray newvec
+     end
+ 
+   fun foldl f e (a, i, n) =
+@@ -201,14 +202,14 @@
+     end
+ 
+   fun mapi (f : int * 'a -> 'b) (a : 'a table, i, n) =
+-    let val newvec = table0 n : 'b table
++    let val newvec = table0 n
+ 	val stop = i+n
+ 	fun lr (a,newvec,j) =
+ 	    if j < stop then
+-		(update0(newvec,j-i,f(j-i, sub0(a,j))); lr (a,newvec,j+1))
++		(XC2.Array.update (newvec,j-i,f(j-i, sub0(a,j))); lr (a,newvec,j+1))
+ 	    else
+ 		()
+-    in lr (a,newvec,i); newvec
++    in lr (a,newvec,i); fromArray newvec
+     end
+ 
+   fun foldli f e (a, i, n) =
+diff -ruN a/TextIO.sml b/TextIO.sml
+--- a/TextIO.sml
++++ b/TextIO.sml
+@@ -93,17 +93,17 @@
+     val failscan = Initial.failscan
+     fun scanStream0 (scan, is as {ic, name} : instream) =
+       let
+-        val buf  = alloc_string_ 512	(* characters recently read     *)
++        val buf  = XC2.Array.alloc 512	(* characters recently read     *) (* xc2: an array, not a string written in place *)
+ 	val read = ref 0		(* number of characters read    *)
+ 	fun getc charno =
+ 	    if charno < !read then		(* already read         *)
+ 		if charno >= !read - 512 then	(* still in buffer      *)
+-		    SOME(sub_ (buf, charno mod 512), charno+1)
++		    SOME(XC2.Array.sub (buf, charno mod 512), charno+1)
+ 		else				(* no longer in buffer  *)
+ 		    raise failscan
+ 	    else	        (* charno = !read; read a new character *)
+ 	      case input1 is
+-		of SOME c => (update_ (buf, charno mod 512, c);
++		of SOME c => (XC2.Array.update (buf, charno mod 512, c);
+ 			      read := !read + 1;
+ 			      SOME(c, charno+1))
+ 		 | NONE => NONE
+diff -ruN a/Vector.sml b/Vector.sml
+--- a/Vector.sml
++++ b/Vector.sml
+@@ -1,5 +1,5 @@
+ structure Vector : VECTOR =
+-    let structure T = PolyTable (type 'a table = 'a vector)
++    let structure T = PolyTable (type 'a table = 'a vector open XC2KVectorTable) (* xc2 *)
+     in struct
+ 	   open T
+ 	   val update = updatev
+diff -ruN a/VectorSlice.sml b/VectorSlice.sml
+--- a/VectorSlice.sml
++++ b/VectorSlice.sml
+@@ -1,6 +1,6 @@
+ (* Opaque matching done in ArraySlice.sml *)
+ structure VectorSlice :> VECTOR_SLICE =
+-    TableSlice(type 'a table = 'a vector
++    TableSlice(type 'a table = 'a vector open XC2KVectorTable (* xc2 *)
+ 	       val maxLen = Vector.maxLen
+ 	       type 'a vector_slice = 'a vector * int * int
+ 	       val vector_slice_base = fn x => x)
+diff -ruN a/inttables.sml b/inttables.sml
+--- a/inttables.sml
++++ b/inttables.sml
+@@ -10,8 +10,8 @@
+ 
+ local
+   structure T =
+-    BuildTables(structure ArgV = TableArgInt8(type table = string)
+-                structure ArgA = TableArgInt8(type table = chararray))
++    BuildTables(structure ArgV = XC2TableArg(type elem = Int8.int) (* xc2: TableArgInt8(type table = string) *)
++                structure ArgA = XC2TableArg(type elem = Int8.int) (* xc2: TableArgInt8(type table = chararray) *))
+ in
+   (** SigDoc *)
+   structure Int8Vector : MONO_VECTOR = T.V
+@@ -31,8 +31,8 @@
+ 
+ local
+   structure T =
+-    BuildTables(structure ArgV = TableArgInt16(type table = string)
+-                structure ArgA = TableArgInt16(type table = chararray))
++    BuildTables(structure ArgV = XC2TableArg(type elem = Int16.int) (* xc2: TableArgInt16(type table = string) *)
++                structure ArgA = XC2TableArg(type elem = Int16.int) (* xc2: TableArgInt16(type table = chararray) *))
+ in
+   (** SigDoc *)
+   structure Int16Vector : MONO_VECTOR = T.V
+@@ -52,8 +52,8 @@
+ 
+ local
+   structure T =
+-    BuildTables(structure ArgV = TableArgInt31(type table = string)
+-                structure ArgA = TableArgInt31(type table = chararray))
++    BuildTables(structure ArgV = XC2TableArg(type elem = int31) (* xc2: TableArgInt31(type table = string) *)
++                structure ArgA = XC2TableArg(type elem = int31) (* xc2: TableArgInt31(type table = chararray) *))
+ in
+   (** SigDoc *)
+   structure Int31Vector : MONO_VECTOR = T.V
+@@ -73,8 +73,8 @@
+ 
+ local
+   structure T =
+-    BuildTables(structure ArgV = TableArgInt32(type table = string)
+-                structure ArgA = TableArgInt32(type table = chararray))
++    BuildTables(structure ArgV = XC2TableArg(type elem = int32) (* xc2: TableArgInt32(type table = string) *)
++                structure ArgA = XC2TableArg(type elem = int32) (* xc2: TableArgInt32(type table = chararray) *))
+ in
+   (** SigDoc *)
+   structure Int32Vector : MONO_VECTOR = T.V
+@@ -94,8 +94,8 @@
+ 
+ local
+   structure T =
+-    BuildTables(structure ArgV = TableArgInt63(type table = string)
+-                structure ArgA = TableArgInt63(type table = chararray))
++    BuildTables(structure ArgV = XC2TableArg(type elem = int63) (* xc2: TableArgInt63(type table = string) *)
++                structure ArgA = XC2TableArg(type elem = int63) (* xc2: TableArgInt63(type table = chararray) *))
+ in
+   (** SigDoc *)
+   structure Int63Vector : MONO_VECTOR = T.V
+@@ -115,8 +115,8 @@
+ 
+ local
+   structure T =
+-    BuildTables(structure ArgV = TableArgInt64(type table = string)
+-                structure ArgA = TableArgInt64(type table = chararray))
++    BuildTables(structure ArgV = XC2TableArg(type elem = Int64.int) (* xc2: TableArgInt64(type table = string) *)
++                structure ArgA = XC2TableArg(type elem = Int64.int) (* xc2: TableArgInt64(type table = chararray) *))
+ in
+   (** SigDoc *)
+   structure Int64Vector : MONO_VECTOR = T.V
+@@ -146,8 +146,8 @@
+ 
+ local
+   structure T =
+-    BuildTables(structure ArgV = TableArgInt(type table = string)
+-                structure ArgA = TableArgInt(type table = chararray))
++    BuildTables(structure ArgV = XC2TableArg(type elem = int) (* xc2: TableArgInt(type table = string) *)
++                structure ArgA = XC2TableArg(type elem = int) (* xc2: TableArgInt(type table = chararray) *))
+ in
+   (** SigDoc *)
+   structure IntVector : MONO_VECTOR = T.V
+diff -ruN a/polytable.sml b/polytable.sml
+--- a/polytable.sml
++++ b/polytable.sml
+@@ -11,28 +11,33 @@
+    in Moscow ML.
+  *)
+ 
+-functor PolyTable (eqtype 'a table) =
++(* xc2: the operations of the table are given, and a table is made by
++   filling an array of XC2's (tests/basis/xc2/xc2.sml) and then fromArray,
++   the array itself for an array and a copy for a vector, which Rune makes
++   whole *)
++functor PolyTable (eqtype 'a table
++                   val sub0 : 'a table * int -> 'a
++                   val update0 : 'a table * int * 'a -> unit
++                   val length : 'a table -> int
++                   val fromArray : 'a XC2.array -> 'a table) =
+ struct
+   type 'a array  = 'a array
+   type 'a vector = 'a vector
+ 
+-  fun sub0 (a : 'a table, i : int) : 'a = prim ("word_sub0", (a, i))
+ 
+-  fun sub_vector0 (a : 'a vector, i : int) : 'a = prim ("word_sub0", (a, i))
++  fun sub_vector0 (a : 'a vector, i : int) : 'a = XC2KVectorTable.sub0 (a, i)
+ 
+-  fun update0 (a : 'a table, i : int, x : 'a) : unit = prim ("word_update0", (a, i, x))
+ 
+-  fun update_vector0 (a : 'a vector, i : int, x : 'a) : unit = prim ("word_update0", (a, i, x))
+ 
+-  fun table0 (n : int) : 'a table = prim ("word_table0", n)
++  fun table0 (n : int) : 'a XC2.array = XC2.Array.alloc n
+ 
+-  fun vector0 (n : int) : 'a vector = prim ("word_table0", n)
++  val length = length
+ 
+-  fun length (t : 'a table) : int = prim ("table_size", t)
+ 
+-  fun length_vector (t : 'a vector) : int = prim ("table_size", t)
+ 
+-  fun array0 (n : int, x:'a) : 'a array = prim ("word_table_init", (n, x))
++  fun length_vector (t : 'a vector) : int = XC2KVectorTable.length t
++
++  fun array0 (n : int, x:'a) : 'a array = XC2KArrayTable.array (n, x)
+ 
+   (* quite a few bits are available for the length in the tag field! *)
+   val maxLen = Initial.wordtable_maxlen
+@@ -57,7 +62,7 @@
+ 
+   (* vector n returns an uninitialised vector with n elements.
+    * Raise Size if n > maxLen. *)
+-  fun vectorv n = (check_size n; vector0 n)
++  fun vectorv n = (check_size n; table0 n)
+ 
+   (* array n gives an initialised array with n elements. *)
+   (* Raise Size if n > maxLen.                           *)
+@@ -67,25 +72,25 @@
+   fun fromList (xs : 'a list) =
+     let
+       fun init (t, [], i) = t
+-	| init (t, x::xs, i) = (update0 (t, i, x); init (t, xs, i+1))
++	| init (t, x::xs, i) = (XC2.Array.update (t, i, x); init (t, xs, i+1))
+       val n = List.length xs
+     in
+-      init (table n, xs, 0)
++      fromArray (init (table n, xs, 0))
+     end
+ 
+   (* tabulate creates a table of n elements *)
+   fun tabulate (n, f : int -> 'a) =
+       let fun init f (t, i) = if i >= n then ()
+-			      else (update0 (t, i, f i); init f (t, i+1))
++			      else (XC2.Array.update (t, i, f i); init f (t, i+1))
+           val t = table n
+       in init f (t, 0)
+-       ; t
++       ; fromArray t
+       end
+ 
+   fun tabulatev (n, f : int -> 'a) =
+     let fun init (t, f, i) = if i >= n then t
+-			     else (update_vector0 (t, i, f i); init (t, f, i+1))
+-    in init (vector0 n, f, 0)
++			     else (XC2.Array.update (t, i, f i); init (t, f, i+1))
++    in XC2KVectorTable.fromArray (init (table0 n, f, 0))
+     end
+ 
+   fun vector a = tabulatev (length a, fn i => sub0(a,i))
+@@ -159,10 +164,10 @@
+ 	val newvec = table0 stop
+ 	fun lr j =
+ 	    if j < stop then
+-		(update0(newvec, j, f(j, sub0(a,j)));
++		(XC2.Array.update (newvec, j, f(j, sub0(a,j)));
+ 		 lr (j+1))
+ 	    else a
+-    in lr 0; newvec
++    in lr 0; fromArray newvec
+     end
+ 
+   fun foldl f e a =
+@@ -200,11 +205,11 @@
+   (* The following are only for the Vector structure: *)
+   fun map (f : 'a -> 'b) (a : 'a table) : 'b table =
+     let val n = length a
+-        val b : 'b table = table n
++        val b = table n
+ 	fun lr j =
+-	  if j < n then (update0 (b, j, f (sub0 (a, j))); lr (j+1))
++	  if j < n then (XC2.Array.update (b, j, f (sub0 (a, j))); lr (j+1))
+ 	  else (a,b)
+-    in lr 0; b
++    in lr 0; fromArray b
+     end
+ 
+   fun mapi (f : int * 'a -> 'b) (a : 'a table) : 'b table =
+@@ -212,10 +217,10 @@
+ 	val newvec = table0 stop
+ 	fun lr j =
+ 	    if j < stop then
+-		(update0(newvec, j, f(j, sub0(a,j)));
++		(XC2.Array.update (newvec, j, f(j, sub0(a,j)));
+ 		 lr (j+1))
+ 	    else (a,newvec)
+-    in lr 0; newvec
++    in lr 0; fromArray newvec
+     end
+ 
+   fun concat (vecs : 'a table list) =
+@@ -223,16 +228,16 @@
+       fun total_length ([], n) = n
+ 	| total_length (v::vs, n) = total_length (vs, length v + n);
+       val n = total_length (vecs, 0)
+-      val v : 'a table = table n
++      val v = table n
+       fun copyall (to, []) = v
+ 	| copyall (to, x :: xs) =
+ 	let val x_n = length x
+ 	    fun copy j =
+-	      if j < x_n then (update0 (v, to+j, sub0 (x, j)); copy (j+1))
++	      if j < x_n then (XC2.Array.update (v, to+j, sub0 (x, j)); copy (j+1))
+ 	      else v
+ 	in copy 0; copyall (to+x_n, xs)
+ 	end
+-    in copyall (0, vecs)
++    in fromArray (copyall (0, vecs))
+     end
+ 
+   fun findi (p : int * 'a -> bool) (a : 'a table) : (int * 'a) option =
+diff -ruN a/wordtable-functors.sml b/wordtable-functors.sml
+--- a/wordtable-functors.sml
++++ b/wordtable-functors.sml
+@@ -29,9 +29,9 @@
+ 
+ signature WORD_TABLE_ARG = sig
+   type elem
+-  type table
+-  type vector = string
+-  type array = chararray
++  eqtype table (* xc2: as a chararray is *)
++  type vector
++  type array
+   val wordSizeBytes : int
+   val tsub          : table * int -> elem
+   val tupd          : table * int * elem -> unit
+@@ -46,6 +46,28 @@
+   val aalloc        : int -> array
+ end
+ 
++(* xc2: the table, the vector and the array of the argument of WordTable are
++   arrays of XC2's, for Rune's strings are made whole (the tables of MLKit
++   are strings and chararrays of the bytes of the elements) *)
++functor XC2TableArg (type elem) : WORD_TABLE_ARG = struct
++  type elem = elem
++  type table = elem XC2.array
++  type vector = elem XC2.array
++  type array = elem XC2.array
++  val wordSizeBytes = 8
++  fun tsub (t : table, i) = XC2.Array.sub (t, i)
++  fun tupd (t : table, i, e) = XC2.Array.update (t, i, e)
++  fun vsub (t : vector, i) = XC2.Array.sub (t, i)
++  fun vupd (t : vector, i, e) = XC2.Array.update (t, i, e)
++  fun asub (t : array, i) = XC2.Array.sub (t, i)
++  fun aupd (t : array, i, e) = XC2.Array.update (t, i, e)
++  fun tlen (t : table) = XC2.Array.length t
++  fun vlen (t : vector) = XC2.Array.length t
++  fun talloc n : table = XC2.Array.alloc n
++  fun valloc n : vector = XC2.Array.alloc n
++  fun aalloc n : array = XC2.Array.alloc n
++end
++
+ (* ---------------------------------------------------------------
+    WordTable functor implementing monomorphic WordNVector and
+    WordNArray structures.
+@@ -545,7 +567,7 @@
+    WordArray2 functor implementing monomorphic 2-dimensional arrays.
+    --------------------------------------------------------------- *)
+ 
+-functor WordArray2 (Arg: WORD_TABLE_ARG where type table = chararray)
++functor WordArray2 (Arg: WORD_TABLE_ARG (* xc2: where type table = chararray *))
+         : MONO_ARRAY2 where type elem = Arg.elem =
+ struct
+ 
+@@ -775,9 +797,12 @@
+    proper type abstractions in place.
+    --------------------------------------------------------------- *)
+ 
+-functor BuildTables(structure ArgV : WORD_TABLE_ARG where type table = string
+-                    structure ArgA : WORD_TABLE_ARG where type table = chararray
+-                    sharing type ArgV.elem = ArgA.elem)
++functor BuildTables(structure ArgV : WORD_TABLE_ARG (* xc2: where type table = string *)
++                    structure ArgA : WORD_TABLE_ARG (* xc2: where type table = chararray *)
++                    sharing type ArgV.elem = ArgA.elem
++                    (* xc2: as the where clauses above made them *)
++                    sharing type ArgV.table = ArgV.vector = ArgA.vector
++                    sharing type ArgA.table = ArgA.array)
+         :> TABLES where type V.elem = ArgV.elem =
+ struct
+   structure V : MONO_VECTOR = struct
+@@ -790,6 +815,9 @@
+   structure A2 : MONO_ARRAY2 = WordArray2(ArgA)
+ end
+ 
++(* xc2: the functors below, of MLKit's byte tables, are left out:
++   wordtables.sml applies BuildTables to XC2TableArg instead
++
+ (* ---------------------------------------------------------------
+    Here comes the basic functors for building the argument structures
+    to the BuildTables functor. There is one functor for each
+@@ -797,7 +825,7 @@
+    applied in the file wordtables.sml.
+    --------------------------------------------------------------- *)
+ 
+-functor TableArgBool(type table) : WORD_TABLE_ARG = struct
++functor TableArgBool(eqtype table) : WORD_TABLE_ARG = struct
+   type elem = bool
+   fun w2b (w:Word8.word) : bool = (w = 0w1)
+   fun b2w (b:bool) : Word8.word = if b then 0w1 else 0w0
+@@ -818,7 +846,7 @@
+   fun aalloc (n:int) : array = prim("allocStringML", n)
+ end
+ 
+-functor TableArgWord8(type table) : WORD_TABLE_ARG = struct
++functor TableArgWord8(eqtype table) : WORD_TABLE_ARG = struct
+   type elem = Word8.word
+   type array = chararray
+   type vector = string
+@@ -837,7 +865,7 @@
+   fun aalloc (n:int) : array = prim("allocStringML", n)
+ end
+ 
+-functor TableArgWord16(type table) : WORD_TABLE_ARG = struct
++functor TableArgWord16(eqtype table) : WORD_TABLE_ARG = struct
+   type elem = Word16.word
+   type array = chararray
+   type vector = string
+@@ -858,7 +886,7 @@
+   fun aalloc (n:int) : array = prim("allocStringML", toBytes n)
+ end
+ 
+-functor TableArgWord31(type table) : WORD_TABLE_ARG = struct
++functor TableArgWord31(eqtype table) : WORD_TABLE_ARG = struct
+   type elem = Word31.word
+   type array = chararray
+   type vector = string
+@@ -879,7 +907,7 @@
+   fun aalloc (n:int) : array = prim("allocStringML", toBytes n)
+ end
+ 
+-functor TableArgWord32(type table) : WORD_TABLE_ARG = struct
++functor TableArgWord32(eqtype table) : WORD_TABLE_ARG = struct
+   type elem = Word32.word
+   type array = chararray
+   type vector = string
+@@ -900,7 +928,7 @@
+   fun aalloc (n:int) : array = prim("allocStringML", toBytes n)
+ end
+ 
+-functor TableArgWord63(type table) : WORD_TABLE_ARG = struct
++functor TableArgWord63(eqtype table) : WORD_TABLE_ARG = struct
+   type elem = Word63.word
+   type array = chararray
+   type vector = string
+@@ -921,7 +949,7 @@
+   fun aalloc (n:int) : array = prim("allocStringML", toBytes n)
+ end
+ 
+-functor TableArgWord64(type table) = struct
++functor TableArgWord64(eqtype table) = struct
+   type elem = Word64.word
+   type array = chararray
+   type vector = string
+@@ -942,7 +970,7 @@
+   fun aalloc (n:int) : array = prim("allocStringML", toBytes n)
+ end
+ 
+-functor TableArgWord(type table) : WORD_TABLE_ARG = struct
++functor TableArgWord(eqtype table) : WORD_TABLE_ARG = struct
+   type elem = Word.word
+   type array = chararray
+   type vector = string
+@@ -963,7 +991,7 @@
+   fun aalloc (n:int) : array = prim("allocStringML", toBytes n)
+ end
+ 
+-functor TableArgReal(type table) : WORD_TABLE_ARG = struct
++functor TableArgReal(eqtype table) : WORD_TABLE_ARG = struct
+   type elem = real
+   type array = chararray
+   type vector = string
+@@ -983,7 +1011,7 @@
+   fun aalloc (n:int) : array = prim("allocStringML", toBytes n)
+ end
+ 
+-functor TableArgInt8(type table) : WORD_TABLE_ARG = struct
++functor TableArgInt8(eqtype table) : WORD_TABLE_ARG = struct
+   type elem = Int8.int
+   type array = chararray
+   type vector = string
+@@ -1002,7 +1030,7 @@
+   fun aalloc (n:int) : array = prim("allocStringML", n)
+ end
+ 
+-functor TableArgInt16(type table) : WORD_TABLE_ARG = struct
++functor TableArgInt16(eqtype table) : WORD_TABLE_ARG = struct
+   type elem = Int16.int
+   type array = chararray
+   type vector = string
+@@ -1023,7 +1051,7 @@
+   fun aalloc (n:int) : array = prim("allocStringML", toBytes n)
+ end
+ 
+-functor TableArgInt31(type table) : WORD_TABLE_ARG = struct
++functor TableArgInt31(eqtype table) : WORD_TABLE_ARG = struct
+   type elem = int31
+   type array = chararray
+   type vector = string
+@@ -1044,7 +1072,7 @@
+   fun aalloc (n:int) : array = prim("allocStringML", toBytes n)
+ end
+ 
+-functor TableArgInt32(type table) : WORD_TABLE_ARG = struct
++functor TableArgInt32(eqtype table) : WORD_TABLE_ARG = struct
+   type elem = int32
+   type array = chararray
+   type vector = string
+@@ -1065,7 +1093,7 @@
+   fun aalloc (n:int) : array = prim("allocStringML", toBytes n)
+ end
+ 
+-functor TableArgInt63(type table) : WORD_TABLE_ARG = struct
++functor TableArgInt63(eqtype table) : WORD_TABLE_ARG = struct
+   type elem = int63
+   type array = chararray
+   type vector = string
+@@ -1086,7 +1114,7 @@
+   fun aalloc (n:int) : array = prim("allocStringML", toBytes n)
+ end
+ 
+-functor TableArgInt64(type table) = struct
++functor TableArgInt64(eqtype table) = struct
+   type elem = int64
+   type array = chararray
+   type vector = string
+@@ -1107,7 +1135,7 @@
+   fun aalloc (n:int) : array = prim("allocStringML", toBytes n)
+ end
+ 
+-functor TableArgInt(type table) : WORD_TABLE_ARG = struct
++functor TableArgInt(eqtype table) : WORD_TABLE_ARG = struct
+   type elem = int
+   type array = chararray
+   type vector = string
+@@ -1127,3 +1155,4 @@
+   fun valloc (n:int) : vector = prim("allocStringML", toBytes n)
+   fun aalloc (n:int) : array = prim("allocStringML", toBytes n)
+ end
++*)
+diff -ruN a/wordtables.sml b/wordtables.sml
+--- a/wordtables.sml
++++ b/wordtables.sml
+@@ -11,8 +11,8 @@
+ 
+ local
+   structure T =
+-    BuildTables(structure ArgV = TableArgBool(type table = string)
+-                structure ArgA = TableArgBool(type table = chararray))
++    BuildTables(structure ArgV = XC2TableArg(type elem = bool) (* xc2: TableArgBool(type table = string) *)
++                structure ArgA = XC2TableArg(type elem = bool) (* xc2: TableArgBool(type table = chararray) *))
+ in
+   (** SigDoc *)
+   structure BoolVector : MONO_VECTOR = T.V
+@@ -33,8 +33,8 @@
+ 
+ local
+   structure T =
+-    BuildTables(structure ArgV = TableArgWord16(type table = string)
+-                structure ArgA = TableArgWord16(type table = chararray))
++    BuildTables(structure ArgV = XC2TableArg(type elem = Word16.word) (* xc2: TableArgWord16(type table = string) *)
++                structure ArgA = XC2TableArg(type elem = Word16.word) (* xc2: TableArgWord16(type table = chararray) *))
+ in
+   (** SigDoc *)
+   structure Word16Vector : MONO_VECTOR = T.V
+@@ -54,8 +54,8 @@
+ 
+ local
+   structure T =
+-    BuildTables(structure ArgV = TableArgWord31(type table = string)
+-                structure ArgA = TableArgWord31(type table = chararray))
++    BuildTables(structure ArgV = XC2TableArg(type elem = Word31.word) (* xc2: TableArgWord31(type table = string) *)
++                structure ArgA = XC2TableArg(type elem = Word31.word) (* xc2: TableArgWord31(type table = chararray) *))
+ in
+   (** SigDoc *)
+   structure Word31Vector : MONO_VECTOR = T.V
+@@ -75,8 +75,8 @@
+ 
+ local
+   structure T =
+-    BuildTables(structure ArgV = TableArgWord32(type table = string)
+-                structure ArgA = TableArgWord32(type table = chararray))
++    BuildTables(structure ArgV = XC2TableArg(type elem = Word32.word) (* xc2: TableArgWord32(type table = string) *)
++                structure ArgA = XC2TableArg(type elem = Word32.word) (* xc2: TableArgWord32(type table = chararray) *))
+ in
+   (** SigDoc *)
+   structure Word32Vector : MONO_VECTOR = T.V
+@@ -96,8 +96,8 @@
+ 
+ local
+   structure T =
+-    BuildTables(structure ArgV = TableArgWord63(type table = string)
+-                structure ArgA = TableArgWord63(type table = chararray))
++    BuildTables(structure ArgV = XC2TableArg(type elem = Word63.word) (* xc2: TableArgWord63(type table = string) *)
++                structure ArgA = XC2TableArg(type elem = Word63.word) (* xc2: TableArgWord63(type table = chararray) *))
+ in
+   (** SigDoc *)
+   structure Word63Vector : MONO_VECTOR = T.V
+@@ -117,8 +117,8 @@
+ 
+ local
+   structure T =
+-    BuildTables(structure ArgV = TableArgWord64(type table = string)
+-                structure ArgA = TableArgWord64(type table = chararray))
++    BuildTables(structure ArgV = XC2TableArg(type elem = Word64.word) (* xc2: TableArgWord64(type table = string) *)
++                structure ArgA = XC2TableArg(type elem = Word64.word) (* xc2: TableArgWord64(type table = chararray) *))
+ in
+   (** SigDoc *)
+   structure Word64Vector : MONO_VECTOR = T.V
+@@ -148,8 +148,8 @@
+ 
+ local
+   structure T =
+-    BuildTables(structure ArgV = TableArgWord(type table = string)
+-                structure ArgA = TableArgWord(type table = chararray))
++    BuildTables(structure ArgV = XC2TableArg(type elem = Word.word) (* xc2: TableArgWord(type table = string) *)
++                structure ArgA = XC2TableArg(type elem = Word.word) (* xc2: TableArgWord(type table = chararray) *))
+ in
+   (** SigDoc *)
+   structure WordVector : MONO_VECTOR = T.V
+@@ -169,8 +169,8 @@
+ 
+ local
+   structure T =
+-    BuildTables(structure ArgV = TableArgReal(type table = string)
+-                structure ArgA = TableArgReal(type table = chararray))
++    BuildTables(structure ArgV = XC2TableArg(type elem = real) (* xc2: TableArgReal(type table = string) *)
++                structure ArgA = XC2TableArg(type elem = real) (* xc2: TableArgReal(type table = chararray) *))
+ in
+   (** SigDoc *)
+   structure RealVector : MONO_VECTOR = T.V

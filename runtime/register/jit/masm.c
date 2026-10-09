@@ -813,6 +813,21 @@ static uint64_t home_bit(const Home *h) {
 static int kept(const Masm *m, const Home *h) {
     return h->kind == HOME_XMM ? as_keeps_f(m->win, h->reg) : as_keeps_g(m->win, h->reg);
 }
+/* whether a home may hold the address of what a collection moves: under
+   RUNE_INT64 without raw homes an int's or a word's home holds its word,
+   which past 63 bits is its box's address (value.h). After a call that
+   may collect it is loaded again from its slot, which the collector
+   brings up to date, though C keeps its register; and across the helper
+   that boxes it waits in that slot, not in the VM's cell, which the
+   collector does not see. */
+static int may_move(const Home *h) {
+#if defined(RUNE_INT64) && !defined(RUNE_RAW_NUMS)
+    return h->kind == HOME_GPR && (h->tag == T_INT || h->tag == T_WORD);
+#else
+    (void)h;
+    return 0;
+#endif
+}
 static void writeback(Masm *m, uint32_t pc, int pushed) {
     if (!m->homes) return;
 #ifdef RUNE_JIT_CONV
@@ -870,7 +885,9 @@ static int32_t fspill(int f) { return OFF(jit_fspill) + 8 * (f & 31); }
    that C does not keep waits in the VM and is loaded again after -- there
    and not in its slot, where a raw home's bits are no value. A home that
    waits is an immediate, a number's bits or a double: nothing a
-   collection moves. */
+   collection moves. One that may hold a box (may_move) waits in its slot,
+   which holds its word, and is loaded again from there, C keeping its
+   register or not. */
 void ms_emit_box(Masm *m, Slow *sp) {
     Slow s = *sp;
     uint32_t live = s.n;
@@ -881,8 +898,10 @@ void ms_emit_box(Masm *m, Slow *sp) {
     int32_t at = real ? fspill(s.b) : gspill(s.b);
     for (uint32_t r = 0; m->homes && r < m->nlocals; r++) {
         const Home *h = &m->homes[r];
-        if (h->kind == HOME_SLOT || !live_at(m, live, r) || kept(m, h)) continue;
-        if (h->kind == HOME_GPR) as_st64(&m->a, VMR, gspill(h->reg), h->reg);
+        if (h->kind == HOME_SLOT || !live_at(m, live, r)) continue;
+        if (may_move(h)) as_st64(&m->a, BASER, SLOT(r), h->reg);
+        else if (kept(m, h)) continue;
+        else if (h->kind == HOME_GPR) as_st64(&m->a, VMR, gspill(h->reg), h->reg);
         else as_fst(&m->a, VMR, fspill(h->reg), h->reg);
     }
     /* the one to box, live or not: the helper takes it from there */
@@ -896,8 +915,10 @@ void ms_emit_box(Masm *m, Slow *sp) {
     ms_call(m, (MsHelper)(real ? m->box_real : m->box_num));
     for (uint32_t r = 0; m->homes && r < m->nlocals; r++) {
         const Home *h = &m->homes[r];
-        if (h->kind == HOME_SLOT || !live_at(m, live, r) || kept(m, h)) continue;
-        if (h->kind == HOME_GPR) as_ld64(&m->a, h->reg, VMR, gspill(h->reg));
+        if (h->kind == HOME_SLOT || !live_at(m, live, r)) continue;
+        if (may_move(h)) as_ld64(&m->a, h->reg, BASER, SLOT(r));
+        else if (kept(m, h)) continue;
+        else if (h->kind == HOME_GPR) as_ld64(&m->a, h->reg, VMR, gspill(h->reg));
         else as_fld(&m->a, h->reg, VMR, fspill(h->reg));
     }
     if (real) { if (!as_keeps_f(m->win, s.b)) as_fld(&m->a, s.b, VMR, at); }
@@ -1049,12 +1070,13 @@ void ms_reload(Masm *m) {
            sync_pc is no successor of a jump -- is not loaded over them.
            A home that C keeps still holds its register, unless that is
            the one the instruction defines, whose slot the helper may
-           have written. */
+           have written, or a box the collection may have moved
+           (may_move). */
         uint64_t taken = 0;
         for (uint32_t r = 0; r < m->nlocals; r++)
             if (m->homes[r].kind != HOME_SLOT && live_at(m, m->cur_pc, r)) {
                 taken |= home_bit(&m->homes[r]);
-                if (kept(m, &m->homes[r]) && !((m->cur_def >> r) & 1)) continue;
+                if (kept(m, &m->homes[r]) && !may_move(&m->homes[r]) && !((m->cur_def >> r) & 1)) continue;
                 slot_to_home(m, (int32_t)r, &m->homes[r]);
             }
         for (uint32_t r = 0; r < m->nlocals; r++)

@@ -160,11 +160,11 @@ Word8.~>>/*-by-all-ones | Poly/ML | Word8.~>> by a shift of all ones does not gi
 *Slice.*slice/SOME-Subscript-not-Overflow-sum-* | Poly/ML | slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
 *ArraySlice.copy*/Subscript-not-Overflow* | MLKit | copy and copyVec raise Overflow instead of Subscript when di + |src| overflows: they check di + |src| > |dst| (TableSlice.sml, ByteSlice.sml, wordtable-functors.sml)
 Array2.copy/overlap-[lr]* | MLton | copy within one array to the left or the right in the same rows copies elements that it has already overwritten
-Array2.*/no-[rc]* | SML/NJ | Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
-Array2.row/Subscript-no-rows | SML/NJ | row (a, 0) of an array without rows is an empty vector instead of Subscript
-Array2.*/nothing-* | SML/NJ | a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
-Array2.*/Subscript-not-Overflow-* | SML/NJ | the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row and dst_col)
-Array2.row/Subscript-not-Overflow | SML/NJ | row (a, Int.maxInt) raises Overflow instead of Subscript
+Array2.*/no-[rc]* | SML/NJ | Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0) (docs/bugreport/smlnj/Array2/no-rows-or-columns)
+Array2.row/Subscript-no-rows | SML/NJ | row (a, 0) of an array without rows is an empty vector instead of Subscript (docs/bugreport/smlnj/Array2/no-rows-or-columns)
+Array2.*/nothing-* | SML/NJ | a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array (docs/bugreport/smlnj/Array2/no-rows-or-columns)
+Array2.*/Subscript-not-Overflow-* | SML/NJ | the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row and dst_col) (docs/bugreport/smlnj/Array2/Overflow-not-Subscript)
+Array2.row/Subscript-not-Overflow | SML/NJ | row (a, Int.maxInt) raises Overflow instead of Subscript (docs/bugreport/smlnj/Array2/Overflow-not-Subscript)
 Array2.*/Subscript-not-Overflow-* | Poly/ML | the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row + nrows)
 Array2.*/no-rows* | Poly/ML | an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList [] and tabulate tr (0, c, f)
 Array2.*/*model-empty-* | Poly/ML | an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
@@ -272,7 +272,7 @@ Posix.Error.spipe/lseek-on-pipe | SML/NJ | Posix.IO.lseek on a pipe raises anoth
 Posix.Signal.pipe/ends-shell | Poly/ML | the runtime ignores SIGPIPE, and the programs it executes inherit that
 Posix.Process.W.untraced/in-all | MLton | W.allSet (fl1, fl2) tests whether fl2 is in fl1: the arguments are swapped
 Posix.Process.W.allSet/inclusion | MLton | W.allSet (fl1, fl2) tests whether fl2 is in fl1: the arguments are swapped
-Posix.Process.fromStatus/failure | MLton | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
+Posix.Process.fromStatus/failure | MLton | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value (docs/bugreport/mlton/OS.Process.status/two-representations)
 Posix.Process.fromStatus/failure | Poly/ML | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
 Posix.Process.W.toWord/of-fromWord | Poly/ML | W.fromWord keeps the bits that are not in W.all
 Posix.Process.pause/until-* | Poly/ML | a forked child that pauses is not ended by the signal (alrm, usr1) that ends the same pause in the main process
@@ -283,13 +283,13 @@ Posix.ProcEnv.times/not-negative | SML/NJ 110.99.9 (64-bit) | the elapsed time o
 Posix.ProcEnv.times/not-negative | SML/NJ development 2026.2 | the elapsed time of times is negative
 Posix.TTY.getlflag/sample | MLton | getlflag returns the output flags (those of getoflag)
 Posix.TTY.TC.getpgrp/not-a-terminal | SML/NJ | TC.getpgrp of a descriptor that is not a terminal raises no exception
-Unix.reap/status | MLton | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
-Unix.reap/twice | MLton | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
-Unix.W_EXITSTATUS/reap | MLton | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
-Unix.W_SIGNALED/reap | MLton | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
-Unix.W_STOPPED/reap-waits-for-the-end | MLton | Unix.fromStatus misreads the statuses that reap returns (exit 5 is W_SIGNALED)
-Unix.kill/* | MLton | Unix.fromStatus misreads the statuses that reap returns (a process that term or kill ended is W_SIGNALED of signal 1)
-Unix.fromStatus/failure | MLton | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
+Unix.reap/status | MLton | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1) (docs/bugreport/mlton/OS.Process.status/two-representations)
+Unix.reap/twice | MLton | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1) (docs/bugreport/mlton/OS.Process.status/two-representations)
+Unix.W_EXITSTATUS/reap | MLton | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1) (docs/bugreport/mlton/OS.Process.status/two-representations)
+Unix.W_SIGNALED/reap | MLton | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1) (docs/bugreport/mlton/OS.Process.status/two-representations)
+Unix.W_STOPPED/reap-waits-for-the-end | MLton | Unix.fromStatus misreads the statuses that reap returns (exit 5 is W_SIGNALED) (docs/bugreport/mlton/OS.Process.status/two-representations)
+Unix.kill/* | MLton | Unix.fromStatus misreads the statuses that reap returns (a process that term or kill ended is W_SIGNALED of signal 1) (docs/bugreport/mlton/OS.Process.status/two-representations)
+Unix.fromStatus/failure | MLton | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value (docs/bugreport/mlton/OS.Process.status/two-representations)
 Unix.fromStatus/failure | Poly/ML | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
 Unix.execute*/no-such-program | SML/NJ | a child that cannot execute the command exits with 1 (after reporting an uncaught SysErr), not 126
 Unix.exit/flushes | SML/NJ | Unix.exit does not flush the output streams that are open
@@ -336,7 +336,7 @@ Posix.IO.FLock.* | SML/NJ development 2026.2 | FLock.start returns garbage (a la
 *StreamIO.closeOut/terminated-closes-the-writer | MLton | closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
 *IO.StreamIO.filePosIn/Io-truncated | MLton | filePosIn of a truncated stream raises nothing
 *StreamIO.output1/Io-when-the-writer-fails | MLton | output1 lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
-OS.Process.exit/[ks]* | MLton | exit of the status of a command raises (the exit code must be below 256), where the specification's implementation note asks that the command's exit code be passed on, and failure for a command that a signal ended
+OS.Process.exit/[ks]* | MLton | exit of the status of a command raises (the exit code must be below 256), where the specification's implementation note asks that the command's exit code be passed on, and failure for a command that a signal ended (docs/bugreport/mlton/OS.Process.status/two-representations)
 *IO.[gs]etOutstream/flushes* | SML/NJ | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
 *IO.StreamIO.canInput/* | SML/NJ | canInput on a stream whose reader would block answers SOME 0 (end-of-stream), not NONE, and the elements it reads ahead are lost to the stream
 *IO.StreamIO.getReader/Io-* | SML/NJ | getReader of a closed or truncated stream raises nothing
@@ -366,7 +366,7 @@ TextIO.StreamIO.getBufferMode/openAppend-is-BLOCK_BUF | SML/NJ | openAppend make
 *StreamIO.inputAll/is-input-to-end-of-stream | Poly/ML | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it as the definition by input does
 *StreamIO.inputN/allAndN-random-* | Poly/ML | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it, so that inputN and inputAll disagree (allAndN)
 *StreamIO.inputN/exactly-n-before-end-of-stream | Poly/ML | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it
-OS.Process.exit/keeps-the-exit-code-of-a-command | Poly/ML | a child that calls exit with the status of a command has not ended after 5 seconds, when the check kills it
+OS.Process.exit/keeps-the-exit-code-of-a-command | Poly/ML | a child that calls exit with the status of a command has not ended after 5 seconds, when the check kills it (docs/bugreport/polyml/OS.Process.exit/status-of-system)
 Real32.Math.* | Poly/ML | where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos ~2.0, ln ~1.0, log10 ~1.0, pow (nan, 1.0)
 TextIO.StreamIO.outputSubstr/LINE_BUF | Poly/ML | outputSubstr does not flush a line-buffered stream at a newline, which output does ("equivalent to: output (strm, Substring.string ss)")
 *IO.inputAll/file-grows-after-end-of-stream | MLKit | inputAll on a stream that openIn made leaves it at the end-of-stream where it stops, not "immediately past" it: after the file has grown, the next inputAll returns the empty vector and only the one after it the new elements

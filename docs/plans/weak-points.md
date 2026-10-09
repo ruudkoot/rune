@@ -110,15 +110,17 @@ the others are from [performance.md](performance.md).
     (`tests/external/run-mlton.sh`, 93 of them skipped, 62 of those for
     MLton's extensions) and the harness of `rune-corpus-sml97`, about 1,800
     lines, which is at its first milestone.
-  * No large codebase written by others (smlnj-lib, cmlib, MLton's own
-    sources, HOL4) has been built with Rune. How Rune behaves at that size,
-    in its bugs and in its speed, is not known.
+  * Apart from the Basis libraries of MLton, MLKit, SML/NJ and Poly/ML
+    (xc2, some 108,000 lines, and SML/NJ 2026.2's, mostly 110.99.9's
+    again), no large codebase written by others (smlnj-lib, cmlib,
+    MLton's own sources, HOL4) has been built with Rune. How Rune behaves
+    at that size, in its bugs and in its speed, is not known.
   * There is no `.github/` directory. Every check runs by hand on one
     machine under WSL, and `make test-windows` and `make test-portability`
     are outside `make check`.
 * **First step:** build one large outside codebase and fix what breaks;
-  xc2 ([fourth-quadrant.md](fourth-quadrant.md), MLton's Basis compiled by
-  Rune) is one, already measured. Separately, a CI job that runs
+  xc2 ([tests/basis/xc2/README.md](../../tests/basis/xc2/README.md): the Basis libraries of
+  MLton, MLKit, SML/NJ and Poly/ML compiled by Rune) is a start. Separately, a CI job that runs
   `make check` on every push.
 
 ## 6. Missing runtime features

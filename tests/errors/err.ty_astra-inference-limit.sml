@@ -1,3 +1,5 @@
+(* the budget is set (.cargs): with the default, 50000000, it runs out only
+   after minutes on the slower builds of the compiler *)
 val x0 = (1,1)
 val x1 = (x0,x0)
 val x2 = (x1,x1)

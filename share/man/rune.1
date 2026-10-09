@@ -100,6 +100,35 @@ Allow the
 extension in the inputs. It names a VM primitive directly and is how the basis
 library is written; it is unchecked and not part of the language.
 .TP
+.B \-\-or\-patterns
+Allow or-patterns, an extension of Successor ML and SML/NJ: a parenthesized
+pattern
+.RI ( p1 " | " p2 " | ...)"
+matches what any of its alternatives matches. Every alternative binds the
+same variables at the same types. Without the option the compiler takes
+Standard ML '97 only.
+.TP
+.BI \-\-default\-type= T
+In the input files, not the libraries, make an integer or word constant, or an
+overloaded operator of integers or words, that its declaration leaves open
+default to
+.B Int64.int
+.RI ( T " = " int64 )
+or
+.B Word64.word
+.RI ( T " = " word64 )
+instead of
+.B int
+and
+.BR word ,
+as MLton's
+.B \-default\-type
+does;
+.I int
+and
+.I word
+set the default back. The option may be given once for each.
+.TP
 .B \-\-typecheck\-only
 Stop after type checking; write no bytecode.
 .TP

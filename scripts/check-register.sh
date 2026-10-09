@@ -39,6 +39,7 @@ mkdir -p "$out"
 # names and not for others (docs/testing.md).
 if [ -n "$one" ]; then
   name=$(echo "$one" | tr '/' '_')
+  cargs=""; [ -f "$one.cargs" ] && cargs=$(cat "$one.cargs")
   args=""; [ -f "$one.args" ] && args=$(cat "$one.args")
   vmargs=""; [ -f "$one.vmargs" ] && vmargs=$(cat "$one.vmargs")
   stdin=/dev/null; [ -f "$one.stdin" ] && stdin=$one.stdin
@@ -46,7 +47,7 @@ if [ -n "$one" ]; then
     mkdir -p "$out/$side"
     if [ $side = regvm ]; then flags=--target=registers; run=$new; else flags=--target=stack; run=$vm; fi
     # shellcheck disable=SC2086
-    if ! "$rune" $flags "$one.sml" -o "$out/$side/$name.rbc" 2> "$out/$side/$name.cerr"; then
+    if ! "$rune" $flags $cargs "$one.sml" -o "$out/$side/$name.rbc" 2> "$out/$side/$name.cerr"; then
       echo "FAIL new.$name: $side: $(grep -m1 . "$out/$side/$name.cerr")"; exit 0
     fi
     # shellcheck disable=SC2086

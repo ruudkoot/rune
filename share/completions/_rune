@@ -8,6 +8,8 @@ _arguments -s \
   '--basis-deps[print the basis library files the inputs load and exit]' \
   '--basis-check[check the MANIFEST of the basis library and exit]' \
   '--allow-prim[allow the _prim extension in the inputs]' \
+  '--or-patterns[allow or-patterns (p1 | p2), which are not Standard ML]' \
+  '*--default-type=[the type an open int or word constant defaults to in the inputs]:type:(int int64 word word64)' \
   '--typecheck-only[stop after type checking]' \
   '--no-warnings[do not print match warnings]' \
   '--dump-tokens[print the token stream]' \

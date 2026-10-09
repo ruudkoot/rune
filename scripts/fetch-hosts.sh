@@ -15,8 +15,9 @@
 #    in SML and needs an MLton to build; links against the system's GMP).
 #  * SML/NJ 110.99.9: config/install.sh, 64-bit (smlnj-legacy) and 32-bit
 #    (smlnj32: 31-bit int and word, which has found many portability bugs;
-#    needs gcc -m32). A checkout that still looks up <prefix>/smlnj keeps
-#    working: that name stays a symlink to the same 64-bit install.
+#    needs gcc -m32), and beside the 64-bit one the sources of its library.
+#    A checkout that still looks up <prefix>/smlnj keeps working: that name
+#    stays a symlink to the same 64-bit install.
 #  * SML/NJ 2026.2 (smlnj-dev): the development line, 64-bit only (amd64 and
 #    arm64). The arch tarball from smlnj.org carries the sources and the boot
 #    files; build.sh compiles the bundled LLVM and needs CMake 3.23, a C++17
@@ -24,8 +25,11 @@
 #    110.99.9, and the value is fixed when the heap is made, so the Rune
 #    build of this host compiles through a tree of symlinks
 #    (scripts/smlnj-dev-root.sh) and does not share those directories.
+#    The sources of its library (system/Basis and system/smlnj/init) are
+#    kept in its installation, for the xc2:smlnj-dev configuration.
 #  * Poly/ML: built from the source release with ./configure && make (from a
-#    clone of the release's tag where the archive cannot be downloaded).
+#    clone of the release's tag where the archive cannot be downloaded), and
+#    beside it the sources of its library.
 #  * MLKit: the binary release from github.com/melsman/mlkit on Linux x86-64
 #    (built by MLKit itself, needing no GMP), checked against its SHA-256;
 #    elsewhere, or with MLKIT_FROM_SOURCE=1, built from a clone of the
@@ -144,25 +148,43 @@ install_smlnj_legacy() {
     ln -sfn "smlnj-$v" "$prefix/smlnj-legacy"
     ln -sfn "smlnj-$v" "$prefix/smlnj"
     echo "smlnj-legacy $v is already installed"
-    return
+  else
+    install_smlnj_bits smlnj-legacy 64 || return 1
+    # Other checkouts still resolve <prefix>/smlnj.
+    if [ -d "$prefix/smlnj-legacy-$v" ]; then
+      ln -sfn "smlnj-legacy-$v" "$prefix/smlnj"
+    fi
   fi
-  install_smlnj_bits smlnj-legacy 64
-  # Other checkouts still resolve <prefix>/smlnj.
-  if [ -d "$prefix/smlnj-legacy-$v" ]; then
-    ln -sfn "smlnj-legacy-$v" "$prefix/smlnj"
-  fi
+  smlnj_system
+}
+# smlnj_system: the sources of SML/NJ's library (system.tgz of the release,
+# which install.sh does not fetch) in the system directory of the
+# smlnj-legacy installation, for the xc2:smlnj-legacy configuration of the
+# Basis matrix (tests/basis/xc2).
+smlnj_system() {
+  v=$SMLNJ_VERSION
+  d=$(cd "$prefix/smlnj-legacy" && pwd -P) || return 1
+  [ -f "$d/system/Basis/basis.cm" ] && return 0
+  [ -f "$d/system.tgz" ] ||
+    fetch "https://smlnj.cs.uchicago.edu/dist/working/$v/system.tgz" "$d/system.tgz" || return 1
+  tar -xzf "$d/system.tgz" -C "$d"
 }
 install_smlnj32() { install_smlnj_bits smlnj32 32; }
 
+# smlnj_dev_arch: the name of SML/NJ's architecture of this machine
+smlnj_dev_arch() {
+  case "$(uname -m)" in
+    x86_64) echo amd64 ;;
+    aarch64|arm64) echo arm64 ;;
+    *) return 1 ;;
+  esac
+}
 # install_smlnj_dev: SML/NJ SMLNJ_DEV_VERSION, the development line.
 install_smlnj_dev() {
   v=$SMLNJ_DEV_VERSION
-  if installed smlnj-dev "$v"; then echo "smlnj-dev $v is already installed"; return; fi
-  case "$(uname -m)" in
-    x86_64) arch=amd64 ;;
-    aarch64|arm64) arch=arm64 ;;
-    *) echo "fetch-hosts: SML/NJ $v has no Unix build for $(uname -m) (amd64 and arm64 only)" >&2; return 1 ;;
-  esac
+  if installed smlnj-dev "$v"; then echo "smlnj-dev $v is already installed"; smlnj_dev_system; return; fi
+  arch=$(smlnj_dev_arch) ||
+    { echo "fetch-hosts: SML/NJ $v has no Unix build for $(uname -m) (amd64 and arm64 only)" >&2; return 1; }
   name=smlnj-$arch-unix-$v
   fetch "https://smlnj.org/dist/working/$v/$name.tgz" "$prefix/src/$name.tgz" || return 1
   rm -rf "$prefix/smlnj-dev-$v" "$prefix/src/smlnj-dev-$v"
@@ -175,9 +197,29 @@ install_smlnj_dev() {
     { echo "fetch-hosts: building SML/NJ $v failed; see $prefix/src/smlnj-dev-$v.log" >&2; return 1; }
   rm -rf "$prefix/src/smlnj-dev-$v"
   activate smlnj-dev "$v"
+  smlnj_dev_system
+}
+# smlnj_dev_system: the sources of the library of SML/NJ SMLNJ_DEV_VERSION
+# (system/Basis and system/smlnj/init of the tarball, which the build
+# leaves out of the installation) in its system directory, for the
+# xc2:smlnj-dev configuration of the Basis matrix (tests/basis/xc2).
+smlnj_dev_system() {
+  v=$SMLNJ_DEV_VERSION
+  d=$prefix/smlnj-dev-$v
+  [ -f "$d/system/Basis/basis.cm" ] && return 0
+  arch=$(smlnj_dev_arch) || return 1
+  name=smlnj-$arch-unix-$v
+  [ -f "$prefix/src/$name.tgz" ] || fetch "https://smlnj.org/dist/working/$v/$name.tgz" "$prefix/src/$name.tgz" || return 1
+  rm -rf "$prefix/src/smlnj-dev-$v-system"
+  mkdir -p "$prefix/src/smlnj-dev-$v-system"
+  tar -xzf "$prefix/src/$name.tgz" -C "$prefix/src/smlnj-dev-$v-system" smlnj/system/Basis smlnj/system/smlnj/init || return 1
+  mkdir -p "$d/system/smlnj"
+  cp -R "$prefix/src/smlnj-dev-$v-system/smlnj/system/Basis" "$d/system/Basis" &&
+    cp -R "$prefix/src/smlnj-dev-$v-system/smlnj/system/smlnj/init" "$d/system/smlnj/init" &&
+    rm -rf "$prefix/src/smlnj-dev-$v-system"
 }
 
-install_polyml() {
+install_polyml_build() {
   v=$POLYML_VERSION
   if installed polyml "$v"; then echo "polyml $v is already installed"; return; fi
   rm -rf "$prefix/polyml-$v" "$prefix/src/polyml-$v"
@@ -197,9 +239,24 @@ install_polyml() {
      ./configure --prefix="$prefix/polyml-$v" &&
      make -j "$jobs" && make compiler && make install) > "$prefix/src/polyml-$v.log" 2>&1 ||
     { echo "fetch-hosts: building Poly/ML failed; see $prefix/src/polyml-$v.log" >&2; return 1; }
+  cp -R "$prefix/src/polyml-$v/basis" "$prefix/polyml-$v/basis"
   rm -rf "$prefix/src/polyml-$v"
   activate polyml "$v"
 }
+# polyml_basis: the sources of Poly/ML's library (basis of the release) in
+# <prefix>/polyml-<version>/basis, for the xc2:polyml configuration of the
+# Basis matrix (tests/basis/xc2); an installation made before keeps none.
+polyml_basis() {
+  v=$POLYML_VERSION
+  [ -f "$prefix/polyml-$v/basis/build.sml" ] && return 0
+  if [ ! -d "$prefix/src/polyml-$v/basis" ]; then
+    [ -f "$prefix/src/polyml-$v.tar.gz" ] ||
+      fetch "https://github.com/polyml/polyml/archive/refs/tags/v$v.tar.gz" "$prefix/src/polyml-$v.tar.gz" || return 1
+    tar -xzf "$prefix/src/polyml-$v.tar.gz" -C "$prefix/src" "polyml-$v/basis" || return 1
+  fi
+  cp -R "$prefix/src/polyml-$v/basis" "$prefix/polyml-$v/basis" && rm -rf "$prefix/src/polyml-$v"
+}
+install_polyml() { install_polyml_build && polyml_basis; }
 
 # MLKit: the binary release where there is one, else (or with
 # MLKIT_FROM_SOURCE=1) its tag built with the MLton of the prefix, which then

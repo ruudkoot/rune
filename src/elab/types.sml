@@ -41,7 +41,7 @@ struct
      and while it is translated (Translate), whose conversion of the types
      unshares them (docs/plans/type-checker.md). Outside these the backend
      may read types without spending work. *)
-  val workLimit = ref 10000000
+  val workLimit = ref 50000000
   val workLeft = ref 1000000000
   val working = ref false
   val workSpan = ref Source.noSpan
@@ -92,6 +92,8 @@ struct
 
   val intTy = TCon (intTycon, [])
   val wordTy = TCon (wordTycon, [])
+  val int64Ty = TCon (int64Tycon, [])
+  val word64Ty = TCon (word64Tycon, [])
   val realTy = TCon (realTycon, [])
   val charTy = TCon (charTycon, [])
   val stringTy = TCon (stringTycon, [])
