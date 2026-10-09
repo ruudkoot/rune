@@ -2215,6 +2215,10 @@ static int p_rt_promoted(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->gc.prom
    the collector walks the stack itself. */
 static int p_rt_collect(VM *vm) { vm_collect(vm); return ret(vm, 1, mk_unit()); }
 static int p_rt_share(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm_share(vm))); }
+/* Compiler.addPrettyPrinter where no REPL rewrote it (Translate): nothing */
+static int p_repl_printer_add(VM *vm) { return ret(vm, 1, mk_unit()); }
+/* the library's own cast: the value, whatever its type (RuneShow) */
+static int p_unsafe_cast(VM *vm) { return ret(vm, 1, ARG(0)); }
 
 /* One frame as (name, file, line, column), built on the VM stack: every
    allocation here can collect, and the strings must survive the next one. */

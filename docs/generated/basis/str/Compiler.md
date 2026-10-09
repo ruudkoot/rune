@@ -6,8 +6,8 @@
 | --- | --- |
 | Signature | [`COMPILER`](../sig/COMPILER.md) |
 | Status | extension |
-| Members | 5 |
-| Tests | 5 checks |
+| Members | 11 |
+| Tests | 13 checks |
 | Source | [lib/basis/compiler.sml](../../../../lib/basis/compiler.sml) |
 
 ## Synopsis
@@ -24,7 +24,13 @@ What each means is on [`COMPILER`](../sig/COMPILER.md); the types are this struc
 
 |  | Member | Is |
 | --- | --- | --- |
+| datatype | [`context`](../sig/COMPILER.md#type-context) | `ContextLocation` &#124; `ContextProperty` |
+| type | [`location`](../sig/COMPILER.md#type-location) | `{endLine : int, endPosition : int, file : string, startLine : int, startPosition : int}` |
+| datatype | [`pretty`](../sig/COMPILER.md#type-pretty) | `PrettyBlock` &#124; `PrettyBreak` &#124; `PrettyLineBreak` &#124; `PrettyString` &#124; `PrettyStringWithWidth` |
+| val | [`addPrettyPrinter`](../sig/COMPILER.md#val-addprettyprinter) | `(int -> 'a -> 'b -> pretty) -> unit` |
 | val | [`compile`](../sig/COMPILER.md#val-compile) | `{file : string, line : int, read : unit -> char option} -> unit -> unit` |
+| val | [`lineLength`](../sig/COMPILER.md#val-linelength) | `int ref` |
+| val | [`prettyPrint`](../sig/COMPILER.md#val-prettyprint) | `(string -> unit) * int -> pretty -> unit` |
 | val | [`printDepth`](../sig/COMPILER.md#val-printdepth) | `int ref` |
 | val | [`prompt1`](../sig/COMPILER.md#val-prompt1) | `string ref` |
 | val | [`prompt2`](../sig/COMPILER.md#val-prompt2) | `string ref` |

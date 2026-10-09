@@ -251,11 +251,6 @@ In the order of what they would gain:
 * **The REPL's bookkeeping**, what is left of the 74 MB: the session's
   environment and the types of the names it binds, which the session
   needs, and the tables of `Elaborate`.
-* **Printers.** HOL installs printers for its types with
-  `PolyML.addPrettyPrinter`. The roadmap has the registry they need
-  (D10, decided A, item 6: keyed by the stamp of the type at the call,
-  as Poly/ML does from the static type too); M4 did not build it. Until
-  it is, a term shows as `?`.
 * **What HOL has and Rune has not:** threads (`--mt`, `Future` in
   parallel), the language server (`--lsp`), executables made of a heap
   (`--exe`), and the directories only Poly/ML builds (`tactictoe`,

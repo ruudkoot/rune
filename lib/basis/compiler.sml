@@ -16,6 +16,62 @@ struct
   val printDepth = ref 20
   val prompt1 = ref "- "
   val prompt2 = ref "= "
+
+  type location = {file : string, startLine : int, startPosition : int, endLine : int, endPosition : int}
+  datatype context = ContextLocation of location | ContextProperty of string * string
+  datatype pretty =
+      PrettyBlock of int * bool * context list * pretty list
+    | PrettyBreak of int * int
+    | PrettyLineBreak
+    | PrettyString of string
+    | PrettyStringWithWidth of string * int
+
+  fun prettySize (p : pretty) : int =
+    case p of
+      PrettyString s => String.size s
+    | PrettyStringWithWidth (_, w) => w
+    | PrettyBreak (b, _) => b
+    | PrettyLineBreak => 0
+    | PrettyBlock (_, _, _, ps) => List.foldl (fn (q, n) => n + prettySize q) 0 ps
+
+  (* A block on one line where it fits; where not, consistent breaks all
+     of its breaks, and inconsistent each whose next stretch -- up to the
+     block's next break -- would not fit on the line *)
+  fun prettyPrint (out : string -> unit, width : int) (p : pretty) : unit =
+    let
+      val col = ref 0
+      fun spaces n = if n <= 0 then "" else CharVector.tabulate (n, fn _ => #" ")
+      fun text (s, w) = (out s; col := !col + w)
+      fun newline n = (out ("\n" ^ spaces n); col := Int.max (n, 0))
+      fun stretch [] = 0
+        | stretch (PrettyBreak _ :: _) = 0
+        | stretch (PrettyLineBreak :: _) = 0
+        | stretch (q :: rest) = prettySize q + stretch rest
+      fun lay (q, outer) =
+        case q of
+          PrettyString s => text (s, String.size s)
+        | PrettyStringWithWidth (s, w) => text (s, w)
+        | PrettyBreak (b, _) => text (spaces b, b)
+        | PrettyLineBreak => newline outer
+        | PrettyBlock (ind, consistent, _, items) =>
+            let
+              val start = !col
+              val fits = start + prettySize q <= width
+              fun go [] = ()
+                | go (PrettyBreak (b, off) :: rest) =
+                    ((if fits orelse (not consistent andalso !col + b + stretch rest <= width)
+                      then text (spaces b, b) else newline (start + ind + off));
+                     go rest)
+                | go (PrettyLineBreak :: rest) = (newline (start + ind); go rest)
+                | go (r :: rest) = (lay (r, start + ind); go rest)
+            in go items end
+    in lay (p, 0) end
+
+  val lineLength = ref 80
+
+  (* the REPL's printers: an application of it is, where the REPL compiles,
+     a call of RuneShow.addPrinterAt with the name of the type (Translate) *)
+  val addPrettyPrinter = _prim "repl_printer_add" : (int -> 'a -> 'b -> pretty) -> unit
 end
 
 (* RuneShow: the pieces of the printers the REPL makes for each value it
@@ -56,6 +112,29 @@ struct
     cut (d, fn () => "#[" ^ String.concatWith ", " (Vector.foldr (fn (x, l) => f (d - 1) x :: l) [] v) ^ "]")
   (* a value bound by a declaration, as the REPL echoes it *)
   fun echo (name : string, shown : string, ty : string) = print ("val " ^ name ^ " = " ^ shown ^ " : " ^ ty ^ "\n")
+
+  (* The printers of Compiler.addPrettyPrinter, by the name of their type
+     (UnitBasis.stableName), each kept at a type of its own and taken out at
+     the one it was put in at: the REPL asks for one by the type it is
+     making a printer for. *)
+  val cast = _prim "unsafe_cast" : 'a -> 'b
+  val printers : (string * (int -> unit -> unit -> RuneCompiler.pretty)) list ref = ref []
+  fun addPrinterAt (key : string, f : int -> 'a -> 'b -> RuneCompiler.pretty) : unit =
+    printers := (key, cast f) :: List.filter (fn (k, _) => k <> key) (!printers)
+  fun hasPrinter (key : string) : bool = List.exists (fn (k, _) => k = key) (!printers)
+  fun render (p : RuneCompiler.pretty) : string =
+    let val parts = ref []
+    in RuneCompiler.prettyPrint (fn s => parts := s :: !parts, !RuneCompiler.lineLength) p;
+       String.concat (List.rev (!parts))
+    end
+  (* the printer of the type key names, given how to show its arguments *)
+  fun installed (key : string, args : 'a) (d : int) (v : 'b) : string =
+    case List.find (fn (k, _) => k = key) (!printers) of
+      SOME (_, p) => render ((cast p : int -> 'a -> 'b -> RuneCompiler.pretty) d args v)
+    | NONE => "?"
+  (* an argument of the type, as a printer of the type is given it *)
+  fun argument (f : int -> 'a -> string) : 'a * int -> RuneCompiler.pretty =
+    fn (v, d) => RuneCompiler.PrettyString (f d v)
 end
 
 (* Compiler: what a program can ask of the compiler it runs beside.

@@ -1408,6 +1408,8 @@ struct
   fun rt_promoted () = unsupported ~1
   fun rt_collect () = unsupported ()
   fun rt_share () = unsupported ~1
+  fun repl_printer_add (_ : int -> 'a -> 'b -> 'c) = ()
+  fun unsafe_cast (_ : 'a) : 'b = raise Fail "unsafe_cast: Rune's alone"
   fun rt_version () = unsupported ""
   fun rt_trace (_ : int) : (string * string * int * int) list = unsupported []
   fun rt_save (_ : string) = unsupported ~1

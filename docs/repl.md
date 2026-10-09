@@ -105,6 +105,32 @@ of its type ([runtime.md](runtime.md), *Values and objects*):
 `Compiler.printDepth` (20) is how many levels of a value are shown, from the
 outside in, before the rest prints as `...`.
 
+### Printers of one's own
+
+`Compiler.addPrettyPrinter f` installs `f` as the printer of a type, as
+Poly/ML's `PolyML.addPrettyPrinter` does, so that HOL4's printers port
+([plans/hol4.md](plans/hol4.md)); it takes the place of the printer the
+REPL would make, an abstract type's `?` included. `f depth args v` gives a
+`Compiler.pretty` -- blocks, breaks and strings in Poly/ML's shape, laid out
+by `Compiler.prettyPrint` in `Compiler.lineLength` (80) columns -- and
+`args` shows the type's arguments: `()` for none, for one a function of a
+value and a depth, a tuple of them for more.
+
+The type is the one `f`'s third argument has where `addPrettyPrinter` is
+applied, which only the compiler sees, so the application is special (the
+incremental roadmap's D10, item 6): `Translate` makes it, where the REPL
+compiles, a call of `RuneShow.addPrinterAt` with the name of the type, and
+the printer of a later declaration asks `RuneShow` for a printer by the
+name of the type it shows. Another name for `addPrettyPrinter` -- HOL's
+`PolyML.addPrettyPrinter` is one -- is the same special, since
+`addPrettyPrinter` is bound to a primitive and the compiler follows the
+names of primitives. The name of a type is not its stamp, which is the
+session's: it is the identity of the unit that declared the type and its
+place among the unit's own (`UnitBasis.stableName`), the same in another
+session and for a unit taken from the cache. Where the type is a type
+variable or one the same top-level declaration declares, nothing is
+installed; a program compiled by `rune` installs nothing either.
+
 ## How it is built
 
 The REPL is one program with what it compiles, and they share one Basis
@@ -168,5 +194,7 @@ what the session that saved it had read ahead.
 ## Not yet
 
 An exception's argument is not printed; a type is printed without the structure it is in; there is no
-history or editing of lines. The incremental roadmap's M4 lists what comes
+history or editing of lines. `Compiler.prettyPrint` ignores a block's
+context (`ContextLocation`, `ContextProperty`), which Poly/ML's IDE support
+reads. The incremental roadmap's M4 lists what comes
 next.

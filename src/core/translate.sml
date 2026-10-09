@@ -52,6 +52,30 @@ struct
      variable still gets its closure, for the uses that are not applications. *)
   val primAliases : string IntMap.map ref = ref IntMap.empty
 
+  (* Compiler.addPrettyPrinter (docs/repl.md, Printers of one's own): where
+     the REPL compiles, the global of RuneShow.addPrinterAt, which an
+     application of it becomes, given the name of the type its printer
+     prints; and that name of a type name's stamp, the same from session to
+     session (UnitBasis.stableName). Elsewhere it does nothing. *)
+  val printerTarget : int option ref = ref NONE
+  val printerKey : (int -> string option) ref = ref (fn _ => NONE)
+
+  (* the stamp of the type a printer of addPrettyPrinter's type prints *)
+  fun printedTycon (t : Types.ty) : int option =
+    let
+      fun arrow t = case Types.prune t of Types.TArrow (a, b) => SOME (a, b) | _ => NONE
+    in
+      case arrow t of
+        SOME (pp, _) =>
+          (case Option.mapPartial (arrow o #2) (arrow pp) of
+             SOME (_, rest) =>
+               (case arrow rest of
+                  SOME (b, _) => (case Types.prune b of Types.TCon (c, _) => SOME (#stamp c) | _ => NONE)
+                | NONE => NONE)
+           | NONE => NONE)
+      | NONE => NONE
+    end
+
   (* The name a function was given in the source, by the stamp of its
      parameter, which belongs to that function alone. The code generator puts
      it in the bytecode, where it is what a disassembly and a stack trace show
@@ -301,6 +325,28 @@ struct
   and stripTyped (ETyped (e, _, _)) = stripTyped e
     | stripTyped e = e
 
+  (* an application of a variable: of a primitive it names, or of a function *)
+  and varApp (f, t : Types.ty, a) =
+    case primAliasOf f of
+      SOME ("repl_printer_add", _) => printerAdd (t, a)
+    | SOME (prim, pt) => applyPrim (prim, pt, a)
+    | NONE => App (transExp f, transExp a)
+
+  (* Compiler.addPrettyPrinter, of type t here, applied to a: where the REPL
+     compiles and the type printed is known and named, RuneShow.addPrinterAt
+     (name, a); otherwise a, for its effects, and nothing installed *)
+  and printerAdd (t : Types.ty, a) =
+    case (!printerTarget, Option.mapPartial (fn s => !printerKey s) (printedTycon t)) of
+      (SOME g, SOME key) =>
+        let
+          val pp = case Types.prune t of Types.TArrow (pp, _) => pp | _ => Error.bug "addPrettyPrinter's type"
+          val targetTy = Types.TArrow (Types.TRecord [("1", Types.stringTy), ("2", pp)], Types.unitTy)
+        in
+          App (useOf (Global g, g, targetTy),
+               Tuple [Const (CString key, Ty.fromTypes Types.stringTy), transExp a])
+        end
+    | _ => Seq (transExp a, Unit)
+
   and transApp (f, a, sp) =
     case stripTyped f of
       EVar (_, slot, vsp) =>
@@ -320,10 +366,10 @@ struct
                     val prim = builtinPrim (name, ty)
                     val call = applyPrim (prim, Ty.fromTypes ty, a)
                   in if name = "<>" then notExp call else call end)
-         | _ =>
-             (case primAliasOf f of
-                SOME (prim, t) => applyPrim (prim, t, a)
-              | NONE => App (transExp f, transExp a)))
+         | VGlobal (_, t) => varApp (f, t, a)
+         | VLocal (_, t) => varApp (f, t, a))
+    | EPrim ("repl_printer_add", _, slot, psp) =>
+        (case !slot of SOME t => printerAdd (t, a) | NONE => bug (psp, "expression without a type"))
     | EPrim (name, _, slot, psp) => applyPrim (name, ty (slot, psp), a)
     | ESelect (lab, slot, ssp) => Select (recordIndex (slot, lab, ssp), transExp a)
     | _ => App (transExp f, transExp a)

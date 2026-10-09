@@ -75,6 +75,19 @@ struct
      the unit; a name not here is the initial basis's *)
   val binders : string StringMap.map ref = ref StringMap.empty
 
+  (* The name of a stamp of kind k that is the same from session to
+     session, and in a unit taken from the cache: built in, or the unit's
+     identity and its place among the unit's own; NONE for one of the unit
+     being compiled, whose identity is not known yet *)
+  fun stableName (k : int, n : int) : string option =
+    if n < Vector.sub (!builtin, k) then SOME ("b" ^ Int.toString n)
+    else
+      case List.find (fn ({base, count, ...} : loaded) =>
+                        n >= Vector.sub (base, k) andalso n < Vector.sub (base, k) + Vector.sub (count, k)) (!units) of
+        SOME {identity, base, ...} => SOME (identity ^ "#" ^ Int.toString (n - Vector.sub (base, k)))
+      | NONE => NONE
+  val () = Translate.printerKey := (fn s => stableName (kTycon, s))
+
   (* A session begins: what exists now is built in. *)
   fun startSession () =
     (units := []; byIdentity := StringMap.empty; builtin := counters ();

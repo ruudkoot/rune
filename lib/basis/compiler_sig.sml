@@ -68,4 +68,60 @@ sig
 
   (* What the REPL writes before each line that continues a declaration. *)
   val prompt2 : string ref
+
+  (* ---- Printers of one's own ---- *)
+
+  (* Where in a source what a printer shows came from: the file, and the
+     line and position it begins and ends at. *)
+  type location = {file : string, startLine : int, startPosition : int, endLine : int, endPosition : int}
+
+  (* What a block of a printer's output says beside its text: where it came
+     from, or a property by name. Rune's REPL lays out the text alone. *)
+  datatype context = ContextLocation of location | ContextProperty of string * string
+
+  (* A document for `prettyPrint` to lay out, in Poly/ML's shape: text,
+     places where a line may break, and blocks of them.
+
+     `PrettyBlock (indent, consistent, context, items)` lays its items
+     on one line where they fit; where they do not, a break of the block
+     starts a new line `indent` further in than the block began, every
+     break of the block where `consistent` and only those it needs where
+     not. `PrettyBreak (blanks, offset)` is `blanks` spaces where the line
+     does not break there, and where it does, the new line is `offset`
+     further in. `PrettyLineBreak` always breaks the line,
+     `PrettyString s` is `s`, and `PrettyStringWithWidth (s, w)` is `s`
+     laid out as if it were `w` characters wide. *)
+  datatype pretty =
+      PrettyBlock of int * bool * context list * pretty list
+    | PrettyBreak of int * int
+    | PrettyLineBreak
+    | PrettyString of string
+    | PrettyStringWithWidth of string * int
+
+  (* `prettyPrint (out, width) p` lays `p` out in lines of `width`
+     characters where it can, and gives `out` the text, piece by piece.
+
+     Example: `let val b = ref "" in prettyPrint (fn s => b := !b ^ s, 3) (PrettyBlock (2, false, [], [PrettyString "ab", PrettyBreak (1, 0), PrettyString "cd"])); !b end = "ab\n  cd"` *)
+  val prettyPrint : (string -> unit) * int -> pretty -> unit
+
+  (* How wide the REPL lays out what the printers of `addPrettyPrinter`
+     make. *)
+  val lineLength : int ref
+
+  (* `addPrettyPrinter f` makes `f` the REPL's printer of the values of a
+     type, as Poly/ML's PolyML.addPrettyPrinter does.
+
+     The type is the one `f`'s third argument has where `addPrettyPrinter`
+     is applied, which the compiler sees there: a datatype or an abstract
+     type, at any arguments. `f depth args v` is what `v` shows as,
+     `depth` the levels the REPL still shows, and `args` how to show the
+     type's arguments: `()` for a type of none, for one a function of a
+     value and a depth, and for more a tuple of them. A later printer of
+     the same type takes the place of an earlier one.
+
+     Where the type is not known where it is applied -- a type variable,
+     in a function that installs printers -- or is declared by the same
+     top-level declaration, nothing is installed; nor is anything in a
+     program that has no compiler beside it, where nothing prints. *)
+  val addPrettyPrinter : (int -> 'a -> 'b -> pretty) -> unit
 end

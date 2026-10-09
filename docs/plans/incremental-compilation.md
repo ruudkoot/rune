@@ -2425,8 +2425,9 @@ What was built, and where it differs from the plan above:
   exception constructor), a type is printed without its structure's path,
   and the registry of user printers (D10's item 6,
   `Compiler.addPrettyPrinter` and a `Pretty` datatype in Poly/ML's shape)
-  was not built, so HOL4's printers are not installed
-  ([hol4.md](hol4.md)).
+  was not built in M4; it was built for M5, keyed by a name of the type
+  that the cache keeps rather than by its stamp ([hol4.md](hol4.md);
+  `docs/repl.md`, *Printers of one's own*).
 * **Tests:** `tests/repl` (`make test-repl`, in `make check`): transcripts
   of values, Chapter 8, datatypes, `use`, on every mode of the JIT;
   `tests/lang/basis.compiler`, `tests/basis/compiler*.sml`.

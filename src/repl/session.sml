@@ -66,7 +66,11 @@ struct
               end
         | load [] = ()
     in
-      load (ListPair.zip (units, sources))
+      load (ListPair.zip (units, sources));
+      (* where Compiler.addPrettyPrinter puts the printers (Translate) *)
+      case Env.findVal (!env, (["RuneShow"], "addPrinterAt")) of
+        SOME (Env.Val {stamp, ...}) => Translate.printerTarget := SOME stamp
+      | _ => raise Failed "the library has no RuneShow.addPrinterAt"
     end
 
   (* The values a declaration bound, in the order of their names, with

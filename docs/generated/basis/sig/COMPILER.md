@@ -6,8 +6,8 @@
 | --- | --- |
 | Status | extension |
 | Implementations | 1 |
-| Documentation | 5 of 5 entries documented |
-| Tests | 5 checks of 5 entries |
+| Documentation | 11 of 11 entries documented |
+| Tests | 13 checks of 8 entries |
 | Source | [lib/basis/compiler\_sig.sml](../../../../lib/basis/compiler_sig.sml) |
 
 ## Synopsis
@@ -37,6 +37,10 @@ structure PolyML.Compiler, and SML/NJ in Compiler.Control.
 > nothing of how one is fed to the compiler, so the REPL's controls are
 > every implementation's own.
 
+## Contents
+
+[Printers of one's own](#printers-of-ones-own)
+
 ## Interface
 
 <pre>
@@ -47,6 +51,17 @@ sig
   val <a href="#val-printdepth">printDepth</a> : int ref
   val <a href="#val-prompt1">prompt1</a> : string ref
   val <a href="#val-prompt2">prompt2</a> : string ref
+  type <a href="#type-location">location</a> = {<a href="#fld-location.file">file</a> : string, <a href="#fld-location.startline">startLine</a> : int, <a href="#fld-location.startposition">startPosition</a> : int, <a href="#fld-location.endline">endLine</a> : int, <a href="#fld-location.endposition">endPosition</a> : int}
+  datatype <a href="#type-context">context</a> = <a href="#con-contextlocation">ContextLocation</a> of location | <a href="#con-contextproperty">ContextProperty</a> of string * string
+  datatype <a href="#type-pretty">pretty</a> =
+      <a href="#con-prettyblock">PrettyBlock</a> of int * bool * context list * pretty list
+    | <a href="#con-prettybreak">PrettyBreak</a> of int * int
+    | <a href="#con-prettylinebreak">PrettyLineBreak</a>
+    | <a href="#con-prettystring">PrettyString</a> of string
+    | <a href="#con-prettystringwithwidth">PrettyStringWithWidth</a> of string * int
+  val <a href="#val-prettyprint">prettyPrint</a> : (string -&gt; unit) * int -&gt; pretty -&gt; unit
+  val <a href="#val-linelength">lineLength</a> : int ref
+  val <a href="#val-addprettyprinter">addPrettyPrinter</a> : (int -&gt; 'a -&gt; 'b -&gt; pretty) -&gt; unit
 end
 </pre>
 
@@ -156,6 +171,131 @@ What the REPL writes before each line that continues a declaration.
 <details><summary>Tests (1)</summary>
 
 For `Compiler`, in [tests/basis/compiler.sml](../../../../tests/basis/compiler.sml): `is-an-equals-sign`
+
+</details>
+
+## Printers of one's own
+
+### <a name="type-location"></a>`location`
+
+```sml
+type location = {file : string, startLine : int, startPosition : int, endLine : int, endPosition : int}
+```
+
+Where in a source what a printer shows came from: the file, and the
+line and position it begins and ends at.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-location.file"></a>`file` | `string` |  |
+| <a name="fld-location.startline"></a>`startLine` | `int` |  |
+| <a name="fld-location.startposition"></a>`startPosition` | `int` |  |
+| <a name="fld-location.endline"></a>`endLine` | `int` |  |
+| <a name="fld-location.endposition"></a>`endPosition` | `int` |  |
+
+### <a name="type-context"></a>`context`
+
+```sml
+datatype context = ContextLocation of location | ContextProperty of string * string
+```
+
+What a block of a printer's output says beside its text: where it came
+from, or a property by name. Rune's REPL lays out the text alone.
+
+| Constructor | Argument | Description |
+| --- | --- | --- |
+| <a name="con-contextlocation"></a>`ContextLocation` | `location` |  |
+| <a name="con-contextproperty"></a>`ContextProperty` | `string * string` |  |
+
+### <a name="type-pretty"></a>`pretty`
+
+```sml
+datatype pretty =
+    PrettyBlock of int * bool * context list * pretty list
+  | PrettyBreak of int * int
+  | PrettyLineBreak
+  | PrettyString of string
+  | PrettyStringWithWidth of string * int
+```
+
+A document for [`prettyPrint`](#val-prettyprint) to lay out, in Poly/ML's shape: text,
+places where a line may break, and blocks of them.
+
+`PrettyBlock (indent, consistent, context, items)` lays its items
+on one line where they fit; where they do not, a break of the block
+starts a new line `indent` further in than the block began, every
+break of the block where `consistent` and only those it needs where
+not. `PrettyBreak (blanks, offset)` is `blanks` spaces where the line
+does not break there, and where it does, the new line is `offset`
+further in. [`PrettyLineBreak`](#con-prettylinebreak) always breaks the line,
+`PrettyString s` is `s`, and `PrettyStringWithWidth (s, w)` is `s`
+laid out as if it were `w` characters wide.
+
+| Constructor | Argument | Description |
+| --- | --- | --- |
+| <a name="con-prettyblock"></a>`PrettyBlock` | `int * bool * context list * pretty list` |  |
+| <a name="con-prettybreak"></a>`PrettyBreak` | `int * int` |  |
+| <a name="con-prettylinebreak"></a>`PrettyLineBreak` |  |  |
+| <a name="con-prettystring"></a>`PrettyString` | `string` |  |
+| <a name="con-prettystringwithwidth"></a>`PrettyStringWithWidth` | `string * int` |  |
+
+### <a name="val-prettyprint"></a>`prettyPrint`
+
+```sml
+val prettyPrint : (string -> unit) * int -> pretty -> unit
+```
+
+`prettyPrint (out, width) p` lays `p` out in lines of `width`
+characters where it can, and gives `out` the text, piece by piece.
+
+**Example** `let val b = ref "" in prettyPrint (fn s => b := !b ^ s, 3) (PrettyBlock (2, false, [], [PrettyString "ab", PrettyBreak (1, 0), PrettyString "cd"])); !b end = "ab\n  cd"`
+
+<details><summary>Tests (6)</summary>
+
+For `Compiler`, in [tests/basis/compiler.sml](../../../../tests/basis/compiler.sml): `a-block-that-fits-is-one-line` &middot; `consistent-breaks-every-break` &middot; `inconsistent-breaks-where-it-must` &middot; `a-break-adds-its-offset` &middot; `a-line-break-always-breaks` &middot; `a-string-with-a-width-counts-that`
+
+</details>
+
+### <a name="val-linelength"></a>`lineLength`
+
+```sml
+val lineLength : int ref
+```
+
+How wide the REPL lays out what the printers of [`addPrettyPrinter`](#val-addprettyprinter)
+make.
+
+<details><summary>Tests (1)</summary>
+
+For `Compiler`, in [tests/basis/compiler.sml](../../../../tests/basis/compiler.sml): `is-eighty`
+
+</details>
+
+### <a name="val-addprettyprinter"></a>`addPrettyPrinter`
+
+```sml
+val addPrettyPrinter : (int -> 'a -> 'b -> pretty) -> unit
+```
+
+`addPrettyPrinter f` makes `f` the REPL's printer of the values of a
+type, as Poly/ML's PolyML.addPrettyPrinter does.
+
+The type is the one `f`'s third argument has where [`addPrettyPrinter`](#val-addprettyprinter)
+is applied, which the compiler sees there: a datatype or an abstract
+type, at any arguments. `f depth args v` is what `v` shows as,
+`depth` the levels the REPL still shows, and `args` how to show the
+type's arguments: `()` for a type of none, for one a function of a
+value and a depth, and for more a tuple of them. A later printer of
+the same type takes the place of an earlier one.
+
+Where the type is not known where it is applied -- a type variable,
+in a function that installs printers -- or is declared by the same
+top-level declaration, nothing is installed; nor is anything in a
+program that has no compiler beside it, where nothing prints.
+
+<details><summary>Tests (1)</summary>
+
+For `Compiler`, in [tests/basis/compiler.sml](../../../../tests/basis/compiler.sml): `no-compiler-beside-the-program`
 
 </details>
 

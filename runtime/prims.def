@@ -313,6 +313,8 @@ rt_live          1  unit -> int              Bytes of objects in the heap: what 
 rt_heap_size     1  unit -> int              The heap's size, in bytes: what it holds before it is collected.
 rt_collect       1  unit -> unit             Collect the heap now, a full collection: free every unreachable object.
 rt_share         1  unit -> int              Make the heap's equal immutable objects one, as Poly/ML's shareCommonData does (runtime/gc/share.c): the bytes of the copies it freed.
+repl_printer_add 1  (int -> 'a -> 'b -> 'c) -> unit   Compiler.addPrettyPrinter: nothing, here. Where the REPL compiles a program, Translate makes an application of it a call of RuneShow.addPrinterAt with the name of the type the printer prints, which the elaborator gave the application (docs/repl.md, Printers).
+unsafe_cast      1  'a -> 'b                 Its argument, at any type: for the library alone (RuneShow keeps the printers of every type in one table, each taken out at the type it was put in at). A value is a word whatever its type, so nothing moves.
 rt_version       1  unit -> string           The version of Rune this VM was built as, which `runevm --version` prints.
 rt_trace         1  int -> (string * string * int * int) list   The frames, innermost first, leaving out the innermost n: the name of each function, the file it is in, and the line and column it is stopped at; the file is "" and both numbers 0 where the program carries no position.
 rt_save          1  string -> int            Write the whole VM to a file, to be carried on by `runevm --restore`: 0 here, 1 in the world that starts again from it, ~1 if it could not be written.

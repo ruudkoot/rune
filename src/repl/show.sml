@@ -74,6 +74,10 @@ struct
     | TCon (c, args) =>
         let val s = #stamp c
         in
+          case Option.mapPartial (fn k => if RuneShow.hasPrinter k then SOME k else NONE)
+                                 (UnitBasis.stableName (UnitBasis.kTycon, s)) of
+            SOME key => installed (g, key, args)
+          | NONE =>
           if s = #stamp intTycon then "RuneShow.int"
           else if s = #stamp wordTycon then "RuneShow.word"
           else if s = #stamp realTycon then "RuneShow.real"
@@ -92,6 +96,19 @@ struct
                   SOME cons => datatypeAt (g, c, cons, args)
                 | NONE => "RuneShow.hidden"
         end
+
+  (* the printer Compiler.addPrettyPrinter installed for the type key
+     names, given how to show the type's arguments: () for none, a function
+     for one, a tuple of them for more *)
+  and installed (g : gen, key : string, args : ty list) : string =
+    let
+      fun one a = "RuneShow.argument " ^ printer (g, a)
+      val shown =
+        case args of
+          [] => "()"
+        | [a] => one a
+        | _ => "(" ^ String.concatWith ", " (List.map one args) ^ ")"
+    in "(RuneShow.installed (" ^ quote key ^ ", " ^ shown ^ "))" end
 
   (* the function that shows the datatype c at args, made once *)
   and datatypeAt (g : gen, c : tycon, cons : (string * Env.valstatus) list, args : ty list) : string =
