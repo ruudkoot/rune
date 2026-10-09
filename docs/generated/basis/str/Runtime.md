@@ -6,8 +6,8 @@
 | --- | --- |
 | Signature | [`RUNTIME`](../sig/RUNTIME.md) |
 | Status | extension |
-| Members | 14 |
-| Tests | 41 checks |
+| Members | 16 |
+| Tests | 44 checks |
 | Source | [lib/basis/runtime.sml](../../../../lib/basis/runtime.sml) |
 
 ## Synopsis
@@ -17,8 +17,8 @@ structure Runtime : RUNTIME
 ```
 
 Runtime: the VM's view of the running program -- its counters, its call
-stack, the identity of objects, saving and restoring the whole of it, and
-units appended to it.
+stack, the identity of objects, saving and restoring the whole of it,
+units appended to it, and the user's interrupt.
 It is Rune's own and not of the specification.
 
 ## Members
@@ -30,9 +30,11 @@ What each means is on [`RUNTIME`](../sig/RUNTIME.md); the types are this structu
 | type | [`frame`](../sig/RUNTIME.md#type-frame) | `{column : int, file : string, function : string, line : int}` |
 | type | [`stats`](../sig/RUNTIME.md#type-stats) | `{bytes : int, collections : int, heapSize : int, instructions : int, live : int, majorCollections : int, minorCollections : int, objects : int, promoted : int}` |
 | datatype | [`world`](../sig/RUNTIME.md#type-world) | `Saved` &#124; `Restored` |
+| val | [`catchInterrupt`](../sig/RUNTIME.md#val-catchinterrupt) | `unit -> bool` |
 | val | [`collect`](../sig/RUNTIME.md#val-collect) | `unit -> unit` |
 | val | [`link`](../sig/RUNTIME.md#val-link) | `Word8Vector.vector -> unit -> unit` |
 | val | [`load`](../sig/RUNTIME.md#val-load) | `string -> unit -> unit` |
+| val | [`maskInterrupt`](../sig/RUNTIME.md#val-maskinterrupt) | `bool -> bool` |
 | val | [`printTrace`](../sig/RUNTIME.md#val-printtrace) | `TextIO.outstream -> unit` |
 | val | [`profile`](../sig/RUNTIME.md#val-profile) | `(unit -> 'a) -> 'a * stats` |
 | val | [`restore`](../sig/RUNTIME.md#val-restore) | `string -> 'a` |

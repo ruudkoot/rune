@@ -419,6 +419,29 @@ typedef struct VM {
     uint32_t unit_slots;
     uint32_t unit_return;
     char unit_error[256];
+    /* The constants a minor collection has taken as roots, from 0: they
+       never change, so those below it point into the old space and are not
+       taken again (runtime/gc/gc.h, MINOR_ROOTS); a unit loaded adds above
+       it. The globals' own mark is global_set: 1 written since the last
+       minor collection, which every engine's SETGLOBAL stores, 2 taken since,
+       0 never written. */
+    uint32_t consts_minor;
+    /* Which program this is: a new number each time one is read, from a
+       .rbc or from an image (program_epoch), and the same while units are
+       appended to it -- what tells the JIT a program that grew from one
+       that became another (runtime/register/jit.c, jit_grow) */
+    uint64_t prog_epoch;
+    /* The user's interrupt (docs/runtime.md, Interrupts; the incremental
+       roadmap's D11): interrupt is 1 from when the handler that
+       rt_interrupt_catch installed ran (sys_interrupt_catch) until a poll
+       takes it -- a jump back or a call, in either loop and in compiled
+       code -- and raises interrupt_exn there (vm_interrupt); while
+       interrupt_mask is not 0, the polls leave it waiting. An image keeps
+       the exception and the mask, and its world catches the interrupt
+       again. */
+    volatile int interrupt;
+    int interrupt_mask;
+    Obj *interrupt_exn;
 } VM;
 
 /* Whether p points into the room objects are made in (alloc). Young and
@@ -548,6 +571,9 @@ static inline void vm_frame_pop(VM *vm) {
 VM_NORETURN void vm_exit(VM *vm, int status);
 int vm_raise(VM *vm, Value exn);            /* unwinds; returns 1 (never returns on uncaught) */
 int vm_raise_builtin(VM *vm, int k);
+int vm_interrupt(VM *vm);                   /* the interrupt waiting raised, the VM exact (VM.interrupt) */
+/* whether a poll raises the interrupt: one waits, and the mask lets it */
+static inline int vm_interrupted(const VM *vm) { return vm->interrupt && !vm->interrupt_mask; }
 void vm_push_handler(VM *vm, uint32_t pc);
 void vm_start(VM *vm);                       /* the builtin exceptions, and function 0 called with () */
 void vm_cons(VM *vm);                        /* stack: ..., hd, tl  ->  ..., hd :: tl */
@@ -595,6 +621,8 @@ uint8_t *validate_program_from(Program *p, uint32_t first, char *err, size_t err
 int64_t load_unit_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t errlen);
 /* the exports of the units loaded, found again after an image was read */
 int unit_exports_rehash(VM *vm);
+/* the program is another (VM.prog_epoch) */
+void program_epoch(VM *vm);
 
 /* What each instruction set gives the loading of a unit (runtime/stack/isa_stack.c,
    runtime/register/isa_regs.c): its code's operands renumbered from the
@@ -617,7 +645,7 @@ uint32_t return_function_code(uint8_t *out, uint32_t *nlocals);
 
 /* What each VM's instruction set gives (runtime/stack/isa_stack.c, runtime/register/isa_regs.c):
    the fingerprint an .rbc must carry, and the first bytes of an image. */
-#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 11 isa 00000000")
+#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 12 isa 00000000")
 extern const uint32_t isa_fingerprint;
 extern const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE];
 const LineEntry *line_at(const Program *p, uint32_t pc);

@@ -154,7 +154,8 @@ Site *jit_site(Jit *j, int kind, uint32_t pc) {
     return s;
 }
 
-int jit_h_prim(VM *vm, int prim, int32_t d, const uint8_t *L) {
+int jit_h_prim(VM *vm, int prim, int32_t d, uint32_t at) {
+    const uint8_t *L = vm->prog.code + at;
     JitProgram *jit = jit_program(vm);
     if (jit->prim_calls) jit->prim_calls[prim]++;
     Value *base = vm->stack + vm->frames[vm->fp].base;
@@ -284,6 +285,13 @@ const void *jit_h_raise(VM *vm, int32_t s) {
     vm_raise(vm, v);
     return native;
 }
+/* the user's interrupt, which a poll found waiting and the mask lets
+   (SLOW_INTERRUPT), raised as jit_h_raise raises */
+const void *jit_h_interrupt(VM *vm) {
+    const void *native = handler_native(vm);
+    vm_interrupt(vm);
+    return native;
+}
 /* PRIMPUSH p args: the result left on the stack for RESULT; 0 when done,
    else what the driver is to do -- after a raise, or where the primitive
    has made the program another (Runtime.restore), which the interpreter
@@ -323,7 +331,8 @@ void jit_h_box_num(VM *vm, int32_t slot, uint64_t bits) {
     vm->stack[base + (size_t)slot] = v;
 }
 
-int jit_h_primpush(VM *vm, int prim, const uint8_t *L) {
+int jit_h_primpush(VM *vm, int prim, uint32_t at) {
+    const uint8_t *L = vm->prog.code + at;
     uint32_t n = prim_arity[prim];
     for (uint32_t i = 0; i < n; i++) {
         Value v = vm->stack[vm->frames[vm->fp].base + (size_t)read_i32(L + 4 * i)];
@@ -627,6 +636,23 @@ static void emit_slow(Masm *m, Slow *sp) {
         ms_call(m, (MsHelper)jit_h_grow_frames);
         ms_reload(m);
         as_jmp(&m->a, &s.back);
+    } else if (s.kind == SLOW_INTERRUPT) {
+        /* the user's interrupt waiting at a poll: back where the code
+           goes on while the mask holds it; else raised from the
+           instruction, the VM exact, as RAISE raises it, and on in the
+           handler's code where it has some, else in the interpreter */
+        as_cmp32_mi(&m->a, VMR, (int32_t)offsetof(VM, interrupt_mask), 0);
+        as_jcc(&m->a, CC_NE, &s.back);
+        ms_sync(m, s.pc, 0);
+        ms_call(m, (MsHelper)jit_h_interrupt);
+        ms_reload(m);
+        AsmLabel hand; as_label_init(&hand);
+        as_test_rr(&m->a, R_S0, R_S0);
+        as_jcc(&m->a, CC_E, &hand);
+        as_jmp_r(&m->a, R_S0);
+        as_bind(&m->a, &hand);
+        as_label_free(&hand);
+        ms_handback(m, RUN_INTERP);
     } else if (s.kind == SLOW_DEOPT) {
         /* --deopt-stress: the Nth boundary reached (r11 is the counter's
            address): the count begun again, the exit counted, and out
@@ -642,7 +668,7 @@ static void emit_slow(Masm *m, Slow *sp) {
         ms_sync(m, s.pc, 0);
         as_mov_ri(&m->a, ms_arg(m, 1), s.a);
         as_mov_ri(&m->a, ms_arg(m, 2), s.b);
-        as_mov_ri(&m->a, ms_arg(m, 3), (int64_t)(intptr_t)s.L);
+        as_mov_ri(&m->a, ms_arg(m, 3), (int64_t)((const uint8_t *)s.L - j->vm->prog.code));
         ms_call(m, (MsHelper)jit_h_prim);
         ms_reload(m);
         as_test_rr(&m->a, R_S0, R_S0);
@@ -751,6 +777,19 @@ static int emit_function(Jit *j, Scan *sc) {
            control can arrive there from elsewhere (M7) */
         j->flags_prev = sc->target[at] ? -1 : j->flags_for;
         j->flags_for = -1;
+        /* a poll (D11), as the interpreter's POLL: at a jump back and at a
+           call, before either does anything, a test of the user's
+           interrupt, which a slow path raises (SLOW_INTERRUPT); no branch
+           here takes the flags of a comparison */
+        if (op == ROP_CALL || op == ROP_CALLK || op == ROP_TAILCALL || op == ROP_TAILCALLK
+            || (op == ROP_JUMP && (uint32_t)read_i32(code + pc + 1) <= pc)) {
+            Slow *s = ms_slow(m, SLOW_INTERRUPT, j->next);
+            if (s) {
+                as_cmp32_mi(&m->a, VMR, (int32_t)offsetof(VM, interrupt), 0);
+                as_jcc(&m->a, CC_NE, &s->here);
+                as_bind(&m->a, &s->back);
+            }
+        }
         switch (op) {
 #include "register/jit_cases.h"
         default: j->unsupported = 1;

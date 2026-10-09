@@ -21,6 +21,8 @@ struct
     val restore' = _prim "rt_restore" : string -> int
     val link' = _prim "rt_link" : string -> (unit -> unit) option
     val linkError' = _prim "rt_link_error" : unit -> string
+    val catchInterrupt' = _prim "rt_interrupt_catch" : exn -> bool
+    val maskInterrupt' = _prim "rt_interrupt_mask" : bool -> bool
   in
     type stats = { instructions : int, bytes : int, objects : int,
                    collections : int, live : int, heapSize : int,
@@ -97,10 +99,18 @@ struct
 
     datatype world = Saved | Restored
 
+    (* The world restored is another process, whose standard input is its
+       own: what this one read ahead of its own and did not take is dropped,
+       the reader kept. A stream already closed has nothing to drop. *)
+    fun freshStdIn () =
+      let val (rd, _) = TextIO.StreamIO.getReader (TextIO.getInstream TextIO.stdIn)
+      in TextIO.setInstream (TextIO.stdIn, TextIO.StreamIO.mkInstream (rd, "")) end
+      handle IO.Io _ => ()
+
     fun save file =
       case save' file of
         0 => Saved
-      | 1 => Restored
+      | 1 => (freshStdIn (); Restored)
       | _ => raise RuneError.lastError ()
 
     (* The primitive comes back only when it could not read the image: on
@@ -116,12 +126,16 @@ struct
     fun load file =
       let val ins = BinIO.openIn file
       in link (BinIO.inputAll ins before BinIO.closeIn ins) end
+
+    fun catchInterrupt () = catchInterrupt' SML90.Interrupt
+
+    fun maskInterrupt b = maskInterrupt' b
   end
 end
 
 (* Runtime: the VM's view of the running program -- its counters, its call
-   stack, the identity of objects, saving and restoring the whole of it, and
-   units appended to it.
+   stack, the identity of objects, saving and restoring the whole of it,
+   units appended to it, and the user's interrupt.
    It is Rune's own and not of the specification.
 
    Implements: RUNTIME

@@ -38,9 +38,9 @@ What it rests on:
 |---|---|---|
 | M0 | This roadmap | done |
 | M1 | Measure | done 2026-10-09, `0bc5bd38`: `scripts/perf-units.sh`, the table in *What a compile costs* (*Measured again*), HOL4 on Poly/ML in *HOL4 today*, `tests/incremental/SCENARIOS.md`; D6 settled (Mid binary), D9 measured (4%), the globals given a barrier in M3 |
-| M2 | Units in memory: the basis as a value, the front end resumable, a back end per unit | done 2026-10-09: `rune --units`, the linker, `Pass.whole`, errors recovered per declaration, `make check-units` (*M2, as built*); one question for the owner (flexible records) |
-| M3 | Unit bytecode, the static linker, and the VM loads units | done 2026-10-09: `.rbu`, `--emit-units`, linking unit files, `rt_link`/`Runtime.link`/`Runtime.load`, the dynamic path in `check-units` (*M3, as built*); the globals' barrier moved to M4 |
-| M4 | The resident compiler, `use` and the REPL | |
+| M2 | Units in memory: the basis as a value, the front end resumable, a back end per unit | done 2026-10-09, `79e0598b`: `rune --units`, the linker, `Pass.whole`, errors recovered per declaration, `make check-units` (*M2, as built*); one question for the owner (flexible records) |
+| M3 | Unit bytecode, the static linker, and the VM loads units | done 2026-10-09, `9d97b311`: `.rbu`, `--emit-units`, linking unit files, `rt_link`/`Runtime.link`/`Runtime.load`, the dynamic path in `check-units` (*M3, as built*); the globals' barrier moved to M4 |
+| M4 | The resident compiler, `use` and the REPL | done 2026-10-09: `bin/rune-repl` and `rune -i`, Chapter 8, `use`, printing, the globals' barrier, the JIT across loads, the boot image, interrupts, a session saved and restored (*M4, as built*) |
 | M5 | HOL4 on Rune | |
 | M6 | The cache, with cut-off | |
 | M7 | Mid per unit: whole-program builds from the cache | |
@@ -2379,6 +2379,89 @@ What was built, and where it differs from the plan above:
   session continues; a saved session restores with its bindings.
 * **Touches:** HOL4 (M5); the language server (the service of M12 is
   this compiler behind a protocol).
+
+#### M4, as built (2026-10-09)
+
+* **The globals' barrier** (M1's finding, moved here from M3): every
+  engine's `SETGLOBAL` already stored 1 in the global's byte of
+  `global_set`, so a minor collection takes only globals marked 1 and marks
+  them 2, and only the constants made since the last (`MINOR_ROOTS`,
+  `runtime/gc/gc.h`) -- no engine changed. 100,000 globals: 14 roots besides
+  the stack where there were 100,230.
+* **The JIT across loads.** Compiled code read the tables of code objects,
+  of fills and of functions, and the number of functions, as constants;
+  they are read from the JitProgram and the VM now (`entry_of`,
+  `closure_function`, `fill_unit_dynamic`, `to_callee_dynamic`), and the
+  primitives' helpers are given where their operands are rather than a
+  pointer into code a load may move. So a load grows the JIT's tables
+  (`jit_grow`, by `VM.prog_epoch`) and keeps what it compiled. `use` of a
+  file of 5,000 lines went from 7.4 s to 1.2 s (1.9 s with the JIT off).
+* **The REPL** (`docs/repl.md`, the lasting record): `bin/rune-repl` is the
+  compiler and the REPL compiled a unit per file and loaded unit by unit,
+  so that they and what they compile share one Basis (D8 A). At start the
+  resident compiler compiles the Basis's files again to have their
+  environment, the compiler being deterministic, and holds each unit it
+  makes to the unit file it was loaded from, byte for byte; the session's
+  stamps start above the REPL's own. A declaration is a unit, linked with
+  `Runtime.link`; Chapter 8 per declaration (D12): an error leaves the
+  session as it was (`Elaborate.snapshot`), an uncaught exception keeps
+  the effects and binds nothing, a declaration's bindings join the
+  session once it has run, so that what a nested `use` compiled stays.
+  `use`, `Compiler.printDepth`, `prompt1`, `prompt2`, in a new Basis
+  structure `Compiler` (Rune's own; in a batch program `use` raises
+  `Fail`). The new pipeline code is `src/driver/pipeline.sml`, shared by
+  `Main` and the REPL.
+* **Printing (D10 A as reviewed, ahead of the owner's confirmation):** a
+  printer of SML text per declaration, made from the types it bound
+  (`src/repl/show.sml`), compiled with it, from `RuneShow`'s pieces;
+  datatypes matched by names of their own bound to the constructors the
+  elaborator registers (`Elaborate.dataCons`), so that hidden ones print;
+  `?` for abstract types and type variables; a print depth. Not yet:
+  exceptions print by name only (D10's condition 4, the printer in the
+  exception constructor), a type is printed without its structure's path.
+* **Tests:** `tests/repl` (`make test-repl`, in `make check`): transcripts
+  of values, Chapter 8, datatypes, `use`, on every mode of the JIT;
+  `tests/lang/basis.compiler`, `tests/basis/compiler*.sml`.
+* **The boot image:** `bin/rune-repl.img`, the REPL saved after its
+  start (`--make-image`), restored by `bin/rune-repl` with `runevm --restore
+  IMAGE -- FILE...`, whose arguments after `--` now replace the saved
+  ones; a start and a declaration take 0.6 s rather than 3.
+* **Interrupts (D11 A):** `sys_interrupt_catch` behind `sys.h` (SIGINT;
+  Ctrl-C and Ctrl-Break at a Windows console; ENOSYS in `sys_none`) sets
+  `VM.interrupt`; both loops poll it at a jump back and at a call
+  (`POLL`), and the JIT's code with a compare and a slow path
+  (`SLOW_INTERRUPT`), raising it as `RAISE` does, with what a handler needs
+  live at a jump back as at a call (`live.c`). It is `SML90.Interrupt`,
+  caught when a program asks (`Runtime.catchInterrupt`, `rt_interrupt_catch`)
+  rather than as a built-in exception, so that a program that does not ask
+  still ends at Ctrl-C; `Runtime.maskInterrupt` defers it, and raises it
+  as the mask goes. A terminal's read is ended by it (through `poll`, which
+  no signal restarts); streams pass it on rather than wrapping it in
+  `IO.Io` (`rt_interrupt_is`); an image keeps it caught (images version 12).
+  The REPL masks its own work and runs a declaration, and waits for a
+  line, unmasked. Found on the way: `TextIO.stdIn` read a pipe or a
+  terminal with `fread` of 4,096 bytes, which waits for all of them, so a
+  REPL behind a pipe kept open never saw a line; such a handle is now read
+  by one `read` of its descriptor. Tests: `rt.interrupt_self` and
+  `rt.save_interrupt` (`tests/lang`, the program interrupting itself);
+  `tests/repl/interrupt.in`, `SIGINT` sent to the REPL by
+  `tests/repl/drive.py` while a declaration loops; checked by hand at a
+  terminal: Ctrl-C at the prompt drops the line typed. What the polls
+  cost, against M3's VM, three runs each: nothing measurable in the
+  interpreter (a loop of 2*10^8 and `fib 32`: 14.1 s against 14.5 s);
+  5% in compiled code that does nothing but jump back and call (the same:
+  4.12 s against 3.91 s); within the noise for the compiler compiling
+  itself (3.46 s against 3.41 s).
+* **`rune -i`:** every `rune` wrapper -- the build's and the installed
+  ones -- starts the `rune-repl` beside it for `-i`, which the compiler
+  never sees; `make install` builds and installs the REPL, its image in
+  `lib/rune`.
+* **A session saved and restored:** `Runtime.save` from a declaration
+  saves the whole session, and the world restored from it has its
+  bindings. Found on the way: what the saving world had read ahead of its
+  standard input was in `TextIO.stdIn`'s buffer, part of the heap, and the
+  restored world read it again; `Runtime.save` now drops it in the world
+  restored (`tests/repl/session.in`, `session.then`).
 
 ### M5. HOL4 on Rune (XL; in a fork of HOL4 the owner names)
 

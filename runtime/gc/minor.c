@@ -155,6 +155,12 @@ static int promote_value(VM *vm, Value *v) {
     *v = mk_ptr(promote(vm, val_ptr(*v)));
     return 1;
 }
+/* a global written since the last minor collection (gc.h, MINOR_ROOTS) */
+static void promote_global(VM *vm, Value *v) {
+    vm->gc_counts.other_roots++;
+    (void)promote_value(vm, v);
+}
+
 static void promote_obj(VM *vm, Obj **o) {
     if (*o && gc_in_nursery(vm, *o)) *o = promote(vm, *o);
 }
@@ -274,7 +280,7 @@ static void minor_into(VM *vm) {
     minor_stack(vm, low);
 #define PROMOTE_ROOT_VALUE(v) (vm->gc_counts.other_roots++, promote_value(vm, (v)))
 #define PROMOTE_ROOT_OBJ(o) (vm->gc_counts.other_roots++, promote_obj(vm, (o)))
-    OTHER_ROOTS_FROM(vm, PROMOTE_ROOT_VALUE, PROMOTE_ROOT_OBJ, low);
+    MINOR_ROOTS(vm, PROMOTE_ROOT_VALUE, PROMOTE_ROOT_OBJ, promote_global, low);
 #undef PROMOTE_ROOT_VALUE
 #undef PROMOTE_ROOT_OBJ
     for (Chunk *c = vm->gc.first; c; c = c->next) scan_dirty(vm, c);

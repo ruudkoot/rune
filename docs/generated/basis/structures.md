@@ -35,6 +35,7 @@ signature names and no others, unless the structure is listed at the end of this
 | [`CharVector`](str/CharVector.md) | : [`MONO_VECTOR`](sig/MONO_VECTOR.md) | `where type vector = String.string where type elem = char` | required | an application of `RuneStringVectorFn` | [lib/basis/charvector.sml](../../../lib/basis/charvector.sml) |
 | [`CharVectorSlice`](str/CharVectorSlice.md) | : [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) | `where type slice = Substring.substring where type vector = String.string where type elem = char` | required |  | [lib/basis/charvectorslice.sml](../../../lib/basis/charvectorslice.sml) |
 | [`CommandLine`](str/CommandLine.md) | : [`COMMAND_LINE`](sig/COMMAND_LINE.md) |  | required |  | [lib/basis/commandline.sml](../../../lib/basis/commandline.sml) |
+| [`Compiler`](str/Compiler.md) | : [`COMPILER`](sig/COMPILER.md) |  | extension | is `RuneCompiler` | [lib/basis/compiler.sml](../../../lib/basis/compiler.sml) |
 | [`Date`](str/Date.md) | : [`DATE`](sig/DATE.md) |  | required |  | [lib/basis/date.sml](../../../lib/basis/date.sml) |
 | [`FixedInt`](str/Int64.md) | : [`INTEGER`](sig/INTEGER.md) | `where type int = Int64.int` | optional | is [`Int64`](str/Int64.md) | [lib/basis/int64.sml](../../../lib/basis/int64.sml) |
 | [`General`](str/General.md) | : [`GENERAL`](sig/GENERAL.md) |  | required |  | [lib/basis/general.sml](../../../lib/basis/general.sml) |

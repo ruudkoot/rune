@@ -1397,9 +1397,15 @@ int sys_pipe(int out[2]) {
     set_flags(out[1], 0, 0, 0);
     return 0;
 }
+/* The flag the user's interrupt sets, where the program catches it
+   (sys_interrupt_catch) */
+static volatile int *interrupt_flag;
+
 /* the end of a file is 0 bytes with the error cleared, as on POSIX */
 /* A pipe that does not block and has nothing in it says EAGAIN; one whose
-   writer has gone says the end. */
+   writer has gone says the end. A console's read that Ctrl-C ended, where
+   the interrupt is caught, says EINTR, so that the VM raises it there and
+   does not take it for the end (docs/runtime.md, Interrupts). */
 int64_t sys_read_fd(int fd, char *buf, int64_t n) {
     last = 0;
     if (sock_of(fd)) return sys_recv(fd, buf, n, 0);
@@ -1417,6 +1423,12 @@ int64_t sys_read_fd(int fd, char *buf, int64_t n) {
         }
     }
     int r = _read(fd, buf, (unsigned)(n > 0x7fffffff ? 0x7fffffff : n));
+    if (r <= 0 && interrupt_flag && sys_isatty(fd)) {
+        /* the handler runs on a thread of its own, which may come after
+           the read it ended */
+        for (int i = 0; i < 20 && !*interrupt_flag; i++) Sleep(5);
+        if (*interrupt_flag) { last = EINTR; return -1; }
+    }
     return r < 0 ? failed() : r;
 }
 /* O_APPEND: every write goes to the end; O_SYNC: every write is on the
@@ -2558,6 +2570,7 @@ int sys_kill(int64_t pid, int signal) {
     int running = GetExitCodeProcess(h, &code) && code == STILL_ACTIVE;
     int r = 0;
     if (!running && !own && h != GetCurrentProcess()) { last = ESRCH; r = -1; }
+    else if (signal == 2 && h == GetCurrentProcess() && interrupt_flag) *interrupt_flag = 1;   /* SIGINT to itself, caught: as Ctrl-C */
     else if (running && signal != 0 && signal != 17 && signal != 18) {
         /* nothing is flushed, as nothing is when a signal ends a process */
         if (!TerminateProcess(h, SIGNALLED_BY | (DWORD)signal)) r = win_failed(NULL);
@@ -3124,6 +3137,20 @@ int sys_code_protect(void *code, size_t size, int executable) {
 }
 void sys_code_flush(void *code, size_t size) { FlushInstructionCache(GetCurrentProcess(), code, size); }
 void sys_code_free(void *code, size_t size) { (void)size; VirtualFree(code, 0, MEM_RELEASE); }
+
+/* ---------------------------------------------------------- interrupts:
+   Ctrl-C and Ctrl-Break at the console, by a handler that Windows runs on a
+   thread of its own; the flag is all it touches. NULL takes the handler
+   away, and the console ends the process again. */
+static BOOL WINAPI on_interrupt(DWORD event) {
+    if ((event == CTRL_C_EVENT || event == CTRL_BREAK_EVENT) && interrupt_flag) { *interrupt_flag = 1; return TRUE; }
+    return FALSE;
+}
+int sys_interrupt_catch(volatile int *flag) {
+    interrupt_flag = flag;
+    if (!SetConsoleCtrlHandler(on_interrupt, flag != NULL)) { errno = EINVAL; return failed(); }
+    return 0;
+}
 
 /* The heap's memory. A reservation cannot be trimmed here: where the
    bytes at the hint are taken, the room for the alignment is reserved,

@@ -124,13 +124,6 @@ struct
       else OS.Process.failure
     end
 
-  (* The stage that makes Mid, from Lambda or from its text. *)
-  fun midStage (showIn : ('a -> string) option) (f : 'a -> Mid.program) : 'a -> Mid.program =
-    Pass.stage {name = "mid", showIn = showIn, show = MidText.show,
-                check = fn p => (MidLint.check p; if !Options.midRoundTrip then MidText.roundTrip p else ()),
-                size = Mid.size}
-               f
-
   (* --read-mid: a Mid program from its text, made and checked as the pass
      mid makes and checks one; there is no bytecode from Mid yet. *)
   fun readMid (file : string) : OS.Process.status =
@@ -138,7 +131,7 @@ struct
       val text = #text (Source.readFile file) handle IO.Io _ => raise Options.Usage ("cannot read " ^ file)
       fun parse t = MidText.parse t handle MidText.Syntax msg => raise Options.Usage (file ^ ": " ^ msg)
     in
-      ignore (midStage NONE parse text);
+      ignore (Pipeline.midStage NONE parse text);
       OS.Process.success
     end
 
@@ -227,26 +220,11 @@ struct
           val () = if failed then () else if !Options.noWarnings then Error.warnings := [] else Error.flushWarnings ()
         in
           if !Options.typecheckOnly orelse failed then acc
-          else
-            let
-              val lam = Pass.stage {name = "translate", showIn = NONE, show = Lambda.show, check = LambdaLint.check,
-                                    size = Lambda.size}
-                                   Translate.transProgram decs
-              val low = lowOf lam
-              val code = targetStage low
-              val u : Link.unitCode =
-                {code = code, globals = IntMap.listItemsi (!Code.globals), defines = Link.defines low,
-                 imports = List.map (fn (s, i) => (i, s)) (IntMap.listItemsi (!Lower.imported)),
-                 exports = IntMap.listItemsi (!Lower.globalFids)}
-            in
-              Lower.knownBefore := IntMap.foldli (fn (s, _, m) => IntMap.insert (m, s, ())) (!Lower.knownBefore)
-                                                 (!Lower.globalFids);
-              u :: acc
-            end
+          else Pipeline.unitOf decs :: acc
         end
       val units = List.rev (List.foldl unit [] sources)
       val () = failIfReported ()
-      val fingerprint = if registers then RegCodes.fingerprint else Opcodes.fingerprint
+      val fingerprint = Pipeline.fingerprint ()
       val () =
         case !Options.emitUnits of
           NONE => ()
@@ -285,10 +263,13 @@ struct
                         let val f = OS.Path.joinDirFile {dir = dir, file = StringCvt.padLeft #"0" 4 (Int.toString i) ^ "-" ^ base n ^ ".rbu"}
                         in UnitFile.write (f, fingerprint, session, u); f end)
                      (ListPair.zip (names, units), List.tabulate (List.length units, fn i => i))
-      val out = TextIO.openOut (OS.Path.joinDirFile {dir = dir, file = "units"})
+      fun write (file, lines) =
+        let val out = TextIO.openOut (OS.Path.joinDirFile {dir = dir, file = file})
+        in List.app (fn l => TextIO.output (out, l ^ "\n")) lines; TextIO.closeOut out end
     in
-      List.app (fn f => TextIO.output (out, f ^ "\n")) files;
-      TextIO.closeOut out
+      (* the units' files in order, and the source of each, as named here *)
+      write ("units", files);
+      write ("sources", names)
     end
 
   (* rune -o P.rbc A.rbu B.rbu ...: unit files of one compile, linked *)
@@ -354,48 +335,13 @@ struct
   (* -O0 is the same stages with no optional pass *)
   and backEnd (_, NONE) = OS.Process.success
     | backEnd (inputs, SOME lam) =
-        let val low = lowOf lam
+        let val low = Pipeline.lowOf lam
         in
           if !Options.target = "registers" then
             (Code.opcodeNames := RegCodes.names;
-             emitProgramAs (RegCodes.fingerprint, inputs, targetStage low))
-          else emitProgram (inputs, targetStage low)
+             emitProgramAs (RegCodes.fingerprint, inputs, Pipeline.targetStage low))
+          else emitProgram (inputs, Pipeline.targetStage low)
         end
-
-  (* Lambda to Low: Mid, the optional passes on it, and Lower. Shake runs
-     on a whole program only (Pass.whole). *)
-  and lowOf (lam : Lambda.lexp) : Low.program =
-        let
-          val mid = midStage (SOME Lambda.show) ToMid.program lam
-          (* the optional passes on Mid (docs/ir.md) *)
-          fun optional (name, f) m =
-            if Pass.enabled (name, 1) andalso (name <> "shake" orelse !Pass.whole) then
-              Pass.stage {name = name, showIn = SOME MidText.show, show = MidText.show, check = MidLint.check,
-                          size = Mid.size}
-                         f m
-            else m
-          val mid = optional ("shake", Shake.program) mid
-          val mid = optional ("lift", Lift.program) mid
-          val mid = optional ("workers", Workers.program) mid
-          val mid = optional ("simplify", Simplify.program) mid
-          (* what the inliner left of the functions it put in place goes *)
-          val mid =
-            if Pass.enabled ("simplify", 1) andalso Pass.enabled ("inline", 1) then optional ("shake", Shake.program) mid
-            else mid
-        in
-          Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = LowLint.check,
-                      size = Low.size}
-                     (fn m => Lower.program (m, !Translate.funNames)) mid
-        end
-
-  (* Low to the code of the target --target names *)
-  and targetStage (low : Low.program) : Code.program =
-    if !Options.target = "registers" then
-      Pass.stage {name = "registers", showIn = SOME Low.show, show = Code.dump, check = fn _ => (), size = Code.size}
-                 Regs.program low
-    else
-      Pass.stage {name = "stack", showIn = SOME Low.show, show = Code.dump, check = fn _ => (), size = Code.size}
-                 Stack.program low
 
   and emitProgram (inputs : string list, prog : Code.program) : OS.Process.status =
     emitProgramAs (Opcodes.fingerprint, inputs, prog)

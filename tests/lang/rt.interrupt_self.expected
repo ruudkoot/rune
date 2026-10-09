@@ -1,0 +1,10 @@
+caught: true
+interrupted
+the handler's value: 43
+the mask was: false
+ran on while masked: 0
+raised as the mask went
+then nothing waits: 0
+the mask is: false
+raised after the section
+the section's steps: 1

@@ -104,6 +104,13 @@ the system answer on Windows only.
 | [`SUBSTRING`](sig/SUBSTRING.md) | A stretch of a string, without a copy of it: a base string and a start and a length inside it. | required | 39 of 39 |
 | [`TEXT`](sig/TEXT.md) | The structures of one kind of text, gathered so that their types can be named as one: characters, strings, substrings and the vectors and arrays of characters, with the constraints that tie them together. | required | 7 of 7 |
 
+## The runtime
+
+| Signature |  | Status | Documented |
+| --- | --- | --- | --- |
+| [`COMPILER`](sig/COMPILER.md) | What a program can ask of the compiler it runs beside: in the REPL (`rune-repl`, docs/repl.md) the compiler is in the same program as the code it compiled, and a program compiles more of itself with `use`. | extension | 4 of 4 |
+| [`RUNTIME`](sig/RUNTIME.md) | What a program can ask about the machine it is running on: how much work it has done, and how much memory that took. | extension | 16 of 16 |
+
 ## The language
 
 | Signature |  | Status | Documented |
@@ -131,12 +138,6 @@ the system answer on Windows only.
 | [`LIST`](sig/LIST.md) | Polymorphic, immutable, singly linked lists. | required | 27 of 27 |
 | [`LIST_PAIR`](sig/LIST_PAIR.md) | Two lists walked side by side: pairing, and the traversals that take a function of an element of each. | required | 15 of 15 |
 | [`OPTION`](sig/OPTION.md) | Optional values: a value that may be missing, and what a partial function returns instead of raising an exception. | required | 12 of 12 |
-
-## The runtime
-
-| Signature |  | Status | Documented |
-| --- | --- | --- | --- |
-| [`RUNTIME`](sig/RUNTIME.md) | What a program can ask about the machine it is running on: how much work it has done, and how much memory that took. | extension | 14 of 14 |
 
 ## Functors
 

@@ -13,6 +13,7 @@
 - `C.cstopb` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-c.cstopb)
 - `canceled` (val): [POSIX_ERROR](../sig/POSIX_ERROR.md#val-canceled)
 - `canInput` (val): [IMPERATIVE_IO](../sig/IMPERATIVE_IO.md#val-caninput), [STREAM_IO](../sig/STREAM_IO.md#val-caninput), [TEXT_IO](../sig/TEXT_IO.md#val-caninput)
+- `catchInterrupt` (val): [RUNTIME](../sig/RUNTIME.md#val-catchinterrupt)
 - `ceil` (val): [REAL](../sig/REAL.md#val-ceil)
 - `CF` (str): [POSIX_TTY](../sig/POSIX_TTY.md#str-cf)
 - `Char` (str): [TEXT](../sig/TEXT.md#str-char)

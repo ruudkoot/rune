@@ -25,6 +25,8 @@ struct
      * SYNC() gives the VM what the loop keeps, before what reads it -- the
        collector, a raise, a primitive, a frame pushed -- and RELOAD() takes
        it back after what may have changed it;
+     * POLL() raises the user's interrupt where one waits (VM.interrupt),
+       at a jump back and a call, before either does anything;
      * FATAL(...) and EXPECT(v, kind, what) stop the program where it is.
      A shared body (sharedBody) is a function of runtime/stack/ops.h, which runeopt's
      code calls too, and is written against the VM itself (vm_push, vm_pop,
@@ -33,7 +35,8 @@ struct
 
   (* What CALL and TAILCALL share: the closure and its function checked. *)
   val callee =
-    ["Value arg = POP();",
+    ["POLL();",
+     "Value arg = POP();",
      "Value cv = POP();",
      "Obj *c = EXPECT(cv, K_CLOSURE, \"closure in call\");",
      "int64_t fidx = val_imm(obj_field(c, 0));",
@@ -150,7 +153,8 @@ struct
         "PUSH(v);",
         "RETURN_TO(back);"],
      inst ("JUMP", [("o", Label)], (Fixed 0, 0), Jump, "Jump to absolute code offset o.")
-       ["JUMP_TO(a);"],
+       ["if ((uint32_t)a < PC) { POLL(); }   /* a jump back is a loop's */",
+        "JUMP_TO(a);"],
      inst ("JUMPIFNOT", [("o", Label)], (Fixed 1, 0), Branch, "Pop a bool; jump to o if it is false.")
        ["Value v = POP();",
         "if (!val_is(v, T_CON0)) FATAL(\"JUMPIFNOT on non-bool\");",
@@ -226,7 +230,8 @@ struct
        ["LOCALV(a) = TOP(0);"],
      inst ("CALLK", [("f", Function), ("n", Count)], (OperandValue 1, 1), Call,
            "Call function f, known, with the n values on top of the stack, which become its locals 0 to n-1; no closure.")
-       ["Function *fn = &p->funcs[a];",
+       ["POLL();",
+        "Function *fn = &p->funcs[a];",
         "size_t at = (size_t)(sp - vm->stack) - (size_t)b;",
         "vm_push_frame(vm, (uint32_t)a, NULL, PC, at);",
         "size_t need = at + fn->nlocals + fn->maxstack;",
@@ -247,7 +252,8 @@ struct
         "else JUMP_TO(PC + 5 * (uint32_t)a);"],
      inst ("TAILCALLK", [("f", Function), ("n", Count)], (OperandValue 1, 0), TailCall,
            "Like CALLK, but the current frame is replaced.")
-       ["Function *fn = &p->funcs[a];",
+       ["POLL();",
+        "Function *fn = &p->funcs[a];",
         "size_t at = FRAME->base;",
         "size_t from = (size_t)(sp - vm->stack) - (size_t)b;",
         "FRAME->func = (uint32_t)a;",

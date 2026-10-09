@@ -241,6 +241,7 @@ size_t sys_code_page(void) { return 4096; }
 int sys_code_protect(void *code, size_t size, int executable) { (void)code; (void)size; (void)executable; fail(); return 0; }
 void sys_code_flush(void *code, size_t size) { (void)code; (void)size; }
 void sys_code_free(void *code, size_t size) { (void)code; (void)size; }
+int sys_interrupt_catch(volatile int *flag) { if (!flag) return 0; last = ENOSYS; return -1; }
 
 /* the heap's memory from malloc, aligned by hand: the block malloc gave is
    kept in the word before the aligned one, for sys_mem_release */

@@ -46,7 +46,10 @@ static void usage(void) {
         "  --emulate-fork  fork as on Windows, which has none: by a second runevm that\n"
         "                  is handed this one's state (testing that path)\n"
         "  --resume TOKEN  carry on as the child of such a fork; runevm gives this itself\n"
-        "  --restore FILE  carry on the world Runtime.save wrote to FILE\n"
+        "  --restore FILE  carry on the world Runtime.save wrote to FILE, with the\n"
+        "                  arguments after it, if any or after --, as its\n"
+        "                  CommandLine.arguments\n"
+        "  --              the end of the options\n"
         "  --jit=MODE      register VM: off, baseline, opt or all (docs/plans/jit.md)\n"
         "  --jit-stats     register VM: what the JIT did, to stderr at exit\n"
         "  --jit-only=SPEC register VM: give code to functions LO-HI, or the odd or even ones, alone\n"
@@ -95,6 +98,7 @@ int main(int argc, char **argv) {
     int census_summary = 0, census_static_mode = 0, census_graph = 0;
 #endif
     int i = 1;
+    int args_given = 0;   /* `--` ended the options: what follows is the program's, even nothing */
     for (; i < argc; i++) {
         if (strcmp(argv[i], "--heap-size") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &heap)) { usage(); return 2; }
@@ -166,6 +170,7 @@ int main(int argc, char **argv) {
 #endif
         else if (strcmp(argv[i], "--version") == 0) { printf("runevm %s\n", RUNE_VERSION); return 0; }
         else if (strcmp(argv[i], "--help") == 0) { usage(); return 0; }
+        else if (strcmp(argv[i], "--") == 0) { i++; args_given = 1; break; }
         else if (argv[i][0] == '-' && argv[i][1] != 0) { usage(); return 2; }
         else break;
     }
@@ -199,6 +204,27 @@ int main(int argc, char **argv) {
         vm->jit = jit;
         vm->gc_verify = gc_verify;
         if (gc_log) heap_log_open(vm, gc_log);
+        /* arguments after the file take the place of those the world was
+           saved with (CommandLine.arguments), and after `--` even none: a
+           REPL's boot image is started with the files it is to use
+           (docs/repl.md) */
+        if (i < argc || args_given) {
+            char **args = calloc((size_t)(argc - i) + 1, sizeof(char *));
+            if (!args) { fprintf(stderr, "runevm: out of memory\n"); return 2; }
+            for (int k = i; k < argc; k++) {
+                size_t n = strlen(argv[k]);
+                args[k - i] = malloc(n + 1);
+                if (!args[k - i]) { fprintf(stderr, "runevm: out of memory\n"); return 2; }
+                memcpy(args[k - i], argv[k], n + 1);
+            }
+            if (vm->owns_args) {
+                for (int k = 0; vm->argv && k < vm->argc; k++) free(vm->argv[k]);
+                free(vm->argv);
+            }
+            vm->argv = args;
+            vm->argc = argc - i;
+            vm->owns_args = 1;
+        }
         vm_exit(vm, vm_loop(vm));   /* does not return */
     }
     if (resume) {

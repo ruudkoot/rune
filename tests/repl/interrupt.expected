@@ -1,0 +1,12 @@
+- = = = val r = ref 0 : int ref
+- val spin = fn : unit -> 'a
+- val announce = fn : string -> unit
+- spinning
+Interrupt
+- stdIn:1:1: error: unbound variable or constructor: stuck
+- val it = true : bool
+- = = = = = = val guarded = fn : int -> int
+- looping
+val it = 43 : int
+- val after = "the session goes on" : string
+- 

@@ -92,6 +92,12 @@
             } \
         } \
     } while (0)
+/* the user's interrupt, where one waits and the mask lets it, raised at
+   this instruction as RAISE raises (VM.interrupt; D11): at a jump back and
+   at a call, before either does anything. Not a do-while: NEXT is
+   `continue` in the switch's loop. */
+#define POLL() \
+    if (vm_interrupted(vm)) { SYNC(); vm_interrupt(vm); RELOAD(); RAISED(); NEXT; } else (void)0
 /* on at pc in the code of function f, where it has some and a run begins
    there (M6): a return into a frame that kept no native address, a raise
    into a handler that kept none */

@@ -18,6 +18,11 @@ struct
                   defSigs : SigMatch.sigma StringMap.map, defFuns : funinfo StringMap.map}
   val funs : funinfo StringMap.map ref = ref StringMap.empty
 
+  (* The constructors of every datatype declared so far, with their schemes,
+     by the stamp of its type name, in or out of scope: what the REPL's
+     printers match a value of the datatype with (src/repl/show.sml). *)
+  val dataCons : (string * valstatus) list IntMap.map ref = ref IntMap.empty
+
   (* overloaded operator variables and flexible records awaiting resolution *)
   val pendingOverloads : tvar ref list ref = ref []
   val pendingFlex : (tvar ref * span) list ref = ref []
@@ -771,6 +776,7 @@ struct
               val args = #3 cons
               val cons = List.rev (#1 cons)
               val () = Ty.bindDatatype (#stamp tc, {params = List.map #1 params, cons = List.rev (!conArgs)})
+              val () = dataCons := IntMap.insert (!dataCons, #stamp tc, cons)
               val delta = bindTy (delta, #name db, TyStr {fcn = TName tc, cons = cons})
             in (List.foldl (fn ((n, v), d) => bindVal (d, n, v)) delta cons, (tc, args) :: groups) end
           val (delta, groups) = List.foldl elabDatbind (Env.empty, []) tycons
@@ -1074,12 +1080,14 @@ struct
      what a failed declaration put in them names nothing after it. *)
   type snapshot = {sigs : SigMatch.sigma StringMap.map, funs : funinfo StringMap.map,
                    datatypes : Ty.datatypeInfo IntMap.map, overloads : Overload.entry IntMap.map,
+                   dataCons : (string * valstatus) list IntMap.map,
                    pendingFlex : (tvar ref * span) list, pendingChecks : (unit -> unit) list}
   fun snapshot () : snapshot =
-    {sigs = !sigs, funs = !funs, datatypes = !Ty.datatypes, overloads = !Overload.table,
+    {sigs = !sigs, funs = !funs, datatypes = !Ty.datatypes, overloads = !Overload.table, dataCons = !dataCons,
      pendingFlex = !pendingFlex, pendingChecks = !pendingChecks}
-  fun restore ({sigs = s, funs = f, datatypes = d, overloads = ov, pendingFlex = pf, pendingChecks = pc} : snapshot) =
-    (sigs := s; funs := f; Ty.datatypes := d; Ty.extras := Ty.Unknown; Overload.table := ov;
+  fun restore ({sigs = s, funs = f, datatypes = d, overloads = ov, dataCons = dc, pendingFlex = pf, pendingChecks = pc}
+               : snapshot) =
+    (sigs := s; funs := f; Ty.datatypes := d; Ty.extras := Ty.Unknown; Overload.table := ov; dataCons := dc;
      pendingOverloads := []; pendingLiterals := []; pendingFlex := pf; pendingChecks := pc)
 
   (* Whether a top-level declaration that fails to elaborate is reported
@@ -1088,8 +1096,13 @@ struct
      driver turns it on for the program, and the REPL will. *)
   val recover = ref false
 
+  (* What the last elabTop added to the environment, its declarations' in
+     one: what the REPL echoes of a declaration (src/repl/session.sml). *)
+  val lastDelta : env ref = ref Env.empty
+
   fun elabTop (env : env ref, decs : dec list) : unit =
-    List.app (fn d =>
+    (lastDelta := Env.empty;
+     List.app (fn d =>
                 let
                   val saved = if !recover then SOME (snapshot ()) else NONE
                   fun go () =
@@ -1098,12 +1111,12 @@ struct
                       val () = Unify.flexHook := (fn r => pendingFlex := (r, spanOfDec d) :: !pendingFlex)
                       val delta = elabDec (!env, 0, true, ref StringMap.empty, d)
                     in resolvePending (); checkClosed (delta, spanOfDec d); env := plus (!env, delta);
-                       Types.stopWork () end
+                       lastDelta := plus (!lastDelta, delta); Types.stopWork () end
                 in
                   case saved of
                     NONE => go ()
                   | SOME s => go () handle Error.CompileError e => (Types.stopWork (); restore s; Error.report e)
-                end) decs
+                end) decs)
 
   fun elabProgram (decs : dec list) : env =
     let val env = ref Env.initial

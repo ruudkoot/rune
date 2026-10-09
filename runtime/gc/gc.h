@@ -312,6 +312,45 @@ void log_pass_end(VM *vm, const PassMark *m, const char *kind, int64_t pause);
    takes the frames' closures from the stack's watermark up (OTHER_ROOTS_FROM):
    those below it have not changed since the last. */
 #define OTHER_ROOTS(vm, V, O) OTHER_ROOTS_FROM(vm, V, O, 0)
+
+/* The roots a minor collection takes (minor.c): the stack's from its
+   watermark, as OTHER_ROOTS_FROM; and of the globals only those written
+   since the last minor collection, and of the constants only those made
+   since. A global SETGLOBAL wrote is marked 1 in global_set, in every
+   engine (the interpreters, the JIT, runeopt's code); this takes it and
+   marks it 2, its value being old once the collection is over, as long as
+   nothing writes it again; and a constant is never written. So a program
+   of many globals -- a session of the REPL -- does not pay for all of them
+   at every minor collection (docs/runtime.md, The roots). The marks are
+   looked at eight at a time: 1 is the one with its low bit set. */
+static inline void minor_globals(VM *vm, void (*take)(VM *, Value *)) {
+    uint8_t *set = vm->global_set;
+    uint32_t n = vm->prog.nglobals, i = 0;
+    for (; i + 8 <= n; i += 8) {
+        uint64_t w;
+        memcpy(&w, set + i, 8);
+        if (!(w & 0x0101010101010101ull)) continue;
+        for (uint32_t k = i; k < i + 8; k++)
+            if (set[k] == 1) { take(vm, &vm->globals[k]); set[k] = 2; }
+    }
+    for (; i < n; i++)
+        if (set[i] == 1) { take(vm, &vm->globals[i]); set[i] = 2; }
+}
+#define MINOR_ROOTS(vm, V, O, take_global, frame0) \
+    do { \
+        minor_globals((vm), (take_global)); \
+        for (uint32_t i_ = (vm)->consts_minor; i_ < (vm)->prog.nconsts; i_++) V(&(vm)->prog.consts[i_]); \
+        (vm)->consts_minor = (vm)->prog.nconsts; \
+        if ((vm)->frames_active) \
+            for (size_t i_ = (frame0); i_ <= (vm)->fp; i_++) \
+                if ((vm)->frames[i_].closure) O(&(vm)->frames[i_].closure); \
+        for (int i_ = 0; i_ < NUM_BUILTIN_EXNS; i_++) \
+            if ((vm)->builtin_exns[i_]) O(&(vm)->builtin_exns[i_]); \
+        for (int i_ = 0; i_ < REAL_BOXES; i_++) \
+            if ((vm)->real_boxes[i_]) O(&(vm)->real_boxes[i_]); \
+        if ((vm)->interrupt_exn) O(&(vm)->interrupt_exn); \
+        for (size_t i_ = 0; i_ < (vm)->nhandles; i_++) V(&(vm)->handles[i_]); \
+    } while (0)
 #define OTHER_ROOTS_FROM(vm, V, O, frame0) \
     do { \
         for (uint32_t i_ = 0; i_ < (vm)->prog.nglobals; i_++) V(&(vm)->globals[i_]); \
@@ -323,6 +362,7 @@ void log_pass_end(VM *vm, const PassMark *m, const char *kind, int64_t pause);
             if ((vm)->builtin_exns[i_]) O(&(vm)->builtin_exns[i_]); \
         for (int i_ = 0; i_ < REAL_BOXES; i_++) \
             if ((vm)->real_boxes[i_]) O(&(vm)->real_boxes[i_]); \
+        if ((vm)->interrupt_exn) O(&(vm)->interrupt_exn); \
         for (size_t i_ = 0; i_ < (vm)->nhandles; i_++) V(&(vm)->handles[i_]); \
     } while (0)
 

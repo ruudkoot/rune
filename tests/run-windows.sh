@@ -7,7 +7,7 @@
 # is), N at a time, except the programs tests/windows-skip.txt lists; its
 # header gives the reasons. What a program must print and how it must exit
 # are checked as tests/run-tests.sh checks them, from the same siblings
-# (.cargs, .args, .vmargs, .stdin, .exitcode, .stderr, .stderr-head, .cwarn, .restore). The results of
+# (.cargs, .args, .vmargs, .stdin, .exitcode, .stderr, .stderr-head, .cwarn, .restore, .restoreargs). The results of
 # bin/runevmSUFFIX.exe go to tests/out/windowsSUFFIX. Then tests/runtime runs on
 # each VM, and a few programs run with --count on each and on bin/runevm-stack:
 # the counts of instructions, bytes and objects must be the same, since a
@@ -101,7 +101,13 @@ if [ "$mode" = --run-one ]; then
   elif [ -f "$base.stderr-head" ] && [ "$(head -1 "$out/$name.stderr")" != "$(cat "$base.stderr-head")" ]; then
     echo "FAIL $name: runtime error differs (first line of $out/$name.stderr)"
   elif [ -f "$base.restore" ]; then
-    (cd "$dir" && "$VM" --restore "tests/out/$name.img" > "$out/$name.restored" 2> "$out/$name.restored.err")
+    # .restoreargs: the restored world's own arguments, after --
+    if [ -f "$base.restoreargs" ]; then
+      # shellcheck disable=SC2046
+      (cd "$dir" && "$VM" --restore "tests/out/$name.img" -- $(cat "$base.restoreargs") > "$out/$name.restored" 2> "$out/$name.restored.err")
+    else
+      (cd "$dir" && "$VM" --restore "tests/out/$name.img" > "$out/$name.restored" 2> "$out/$name.restored.err")
+    fi
     restored=$?
     if [ "$restored" != 0 ]; then
       echo "FAIL $name: restore exited $restored: $(head -1 "$out/$name.restored.err")"

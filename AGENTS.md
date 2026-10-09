@@ -252,7 +252,7 @@ keep these invariants:
   Basis subset).
 * Before finishing any change run `make check` (= `test`, `bootstrap`,
   `test-doc`, `test-lib`, `test-all`, `test-basis`, `test-opt`, `test-ir`,
-  `check-levels`, `check-units`, `test-native`, `test-register`, `test-register-jit`,
+  `check-levels`, `check-units`, `test-repl`, `test-native`, `test-register`, `test-register-jit`,
   `test-heap`, `test-gc`, `test-census`, `check-heapsim`, `check-gcsim`,
   `check-layouts`, `check-gcbench`, `perf-check`, `bench-smoke`,
   `check-positions`, `check-cross`, `check-docs`, `check-isa`; runs on all

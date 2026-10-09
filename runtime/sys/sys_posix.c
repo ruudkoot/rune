@@ -774,10 +774,23 @@ int sys_dup(int fd) { return dup(fd); }
 int sys_dup2(int fd, int to) { return dup2(fd, to); }
 int sys_pipe(int out[2]) { return pipe(out); }
 
+/* The flag the user's interrupt sets, where the program catches it
+   (sys_interrupt_catch) */
+static volatile int *interrupt_flag;
+
 /* errno is cleared first, as for sys_recv: nothing read is the end of the
-   file when it is still 0 afterwards. */
+   file when it is still 0 afterwards. Where the interrupt is caught, a
+   terminal's read waits in poll first, which a signal ends whatever
+   SA_RESTART says, so that the user's interrupt ends the wait, EINTR, and
+   the VM raises it there (the REPL's prompt; docs/runtime.md, Interrupts) */
 int64_t sys_read_fd(int fd, char *buf, int64_t n) {
     ssize_t k;
+    if (interrupt_flag && isatty(fd)) {
+        struct pollfd q;
+        q.fd = fd; q.events = POLLIN; q.revents = 0;
+        while (poll(&q, 1, -1) < 0 && errno == EINTR)
+            if (*interrupt_flag) return -1;
+    }
     do { errno = 0; k = read(fd, buf, (size_t)n); } while (k < 0 && errno == EINTR);
     return (int64_t)k;
 }
@@ -1270,6 +1283,33 @@ void sys_code_flush(void *code, size_t size) {
 #endif
 }
 void sys_code_free(void *code, size_t size) { munmap(code, size); }
+
+/* ---------------------------------------------------------- interrupts:
+   SIGINT, restarting what it interrupts but a terminal's read
+   (sys_read_fd), caught even where the process was started with it
+   ignored, since the program asked; NULL puts back what there was
+   before. */
+static struct sigaction interrupt_before;
+static int interrupt_caught;
+static void on_interrupt(int sig) { (void)sig; if (interrupt_flag) *interrupt_flag = 1; }
+int sys_interrupt_catch(volatile int *flag) {
+    if (!flag) {
+        interrupt_flag = NULL;
+        if (!interrupt_caught) return 0;
+        interrupt_caught = 0;
+        return sigaction(SIGINT, &interrupt_before, NULL);   /* errno is sigaction's */
+    }
+    if (!interrupt_caught && sigaction(SIGINT, NULL, &interrupt_before) != 0) return -1;
+    struct sigaction sa;
+    memset(&sa, 0, sizeof sa);
+    sa.sa_handler = on_interrupt;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    interrupt_flag = flag;
+    if (sigaction(SIGINT, &sa, NULL) != 0) { interrupt_flag = NULL; return -1; }
+    interrupt_caught = 1;
+    return 0;
+}
 
 /* ---------------------------------------------------------- the heap's memory */
 #ifndef MAP_NORESERVE

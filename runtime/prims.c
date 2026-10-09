@@ -1022,6 +1022,18 @@ static int p_posix_pipe(VM *vm) {
     return push_int_list(vm, out, ok == 0 ? 2 : 0, 1);
 }
 
+/* A read of descriptor fd, of at most n bytes, as sys_read_fd's; where
+   the user's interrupt ended it (a terminal's, sys_read_fd), *raised says
+   so: the interrupt raised, the caller's arity arguments popped, where the
+   mask lets it, else the read again (docs/runtime.md, Interrupts) */
+static int64_t read_fd(VM *vm, int fd, char *buf, int64_t n, int arity, int *raised) {
+    int64_t got;
+    *raised = 0;
+    while ((got = sys_read_fd(fd, buf, n)) < 0 && sys_errno() == EINTR && vm->interrupt)
+        if (!vm->interrupt_mask) { vm->sp -= (size_t)arity; *raised = 1; return vm_interrupt(vm); }
+    return got;
+}
+
 static int p_posix_read(VM *vm) {
     check_tag(vm, ARG(1), T_INT, "posix_read");
     check_tag(vm, ARG(0), T_INT, "posix_read");
@@ -1029,7 +1041,9 @@ static int p_posix_read(VM *vm) {
     if (n < 0 || n > MAX_STRING) return raise_with(vm, 2, EXN_SIZE);
     char *buf = malloc((size_t)n ? (size_t)n : 1);
     if (!buf) vm_fatal(vm, "out of memory");
-    int64_t got = sys_read_fd((int)val_imm(ARG(1)), buf, n);
+    int raised;
+    int64_t got = read_fd(vm, (int)val_imm(ARG(1)), buf, n, 2, &raised);
+    if (raised) { free(buf); return 1; }
     Obj *s = vm_string_from(vm, buf, got < 0 ? 0 : (uint32_t)got);
     free(buf);
     return ret(vm, 2, mk_ptr(s));
@@ -1882,7 +1896,18 @@ static int p_file_read_vec(VM *vm) {
     if (!f) return ret(vm, 2, mk_ptr(vm_string_from(vm, "", 0)));
     char *buf = malloc((size_t)n ? (size_t)n : 1);
     if (!buf) vm_fatal(vm, "out of memory");
-    size_t got = fread(buf, 1, (size_t)n, f);
+    /* at most n bytes, waiting for one (PrimIO's readVec): a file's from
+       its buffer; a pipe's or a terminal's -- no position -- by one read of
+       its descriptor, which gives what has come, a line typed, where fread
+       would wait for all n. Nothing reads such a handle through its FILE
+       (the library reads with this alone), whose buffer stays empty. */
+    size_t got;
+    if (n > 0 && sys_ftell(f) < 0) {
+        int raised;
+        int64_t k = read_fd(vm, sys_fileno(f), buf, n, 2, &raised);
+        if (raised) { free(buf); return 1; }
+        got = k < 0 ? 0 : (size_t)k;
+    } else got = fread(buf, 1, (size_t)n, f);
     Obj *s = vm_string_from(vm, buf, (uint32_t)got);
     free(buf);
     return ret(vm, 2, mk_ptr(s));
@@ -2296,6 +2321,34 @@ static int p_rt_link(VM *vm) {
 
 static int p_rt_link_error(VM *vm) {
     return ret(vm, 1, mk_ptr(vm_string_from(vm, vm->unit_error, (uint32_t)strlen(vm->unit_error))));
+}
+
+/* rt_interrupt_catch e: from now on the user's interrupt raises e where
+   the program next polls (VM.interrupt; docs/runtime.md, Interrupts), the
+   exception kept before the handler is installed; false where the system
+   has no interrupt to catch */
+static int p_rt_interrupt_catch(VM *vm) {
+    Obj *e = check_obj(vm, ARG(0), K_EXN, "rt_interrupt_catch");
+    vm->interrupt_exn = e;
+    return ret(vm, 1, mk_bool(sys_interrupt_catch(&vm->interrupt) == 0));
+}
+
+/* rt_interrupt_mask b: the mask set, what it was given back; an interrupt
+   that waited for the mask raised here, as the mask goes */
+static int p_rt_interrupt_mask(VM *vm) {
+    check_tag(vm, ARG(0), T_CON0, "rt_interrupt_mask");
+    int was = vm->interrupt_mask;
+    vm->interrupt_mask = val_imm(ARG(0)) != 0;
+    if (vm_interrupted(vm)) { vm->sp -= 1; return vm_interrupt(vm); }
+    return ret(vm, 1, mk_bool(was));
+}
+
+/* rt_interrupt_is e: whether e is of the constructor of the exception
+   the user's interrupt raises */
+static int p_rt_interrupt_is(VM *vm) {
+    Obj *e = check_obj(vm, ARG(0), K_EXN, "rt_interrupt_is");
+    int is = vm->interrupt_exn && val_bits(obj_field(e, 0)) == val_bits(obj_field(vm->interrupt_exn, 0));
+    return ret(vm, 1, mk_bool(is));
 }
 
 static int p_rt_version(VM *vm) {

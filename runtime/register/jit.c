@@ -216,6 +216,42 @@ void jit_invalidate(VM *vm, JitProgram *jit, uint32_t f) {
     free(callers);
 }
 
+/* The program grew: a unit was loaded (runtime/loader.c, load_unit_mem),
+   whose functions come after the ones the tables have. The tables grow,
+   and what is compiled stays: compiled code reads the tables' places from
+   the JitProgram and the VM when it runs (emit.c, entry_of,
+   closure_function), so the tables may move. */
+static void jit_grow(VM *vm, JitProgram *jit) {
+    Program *p = &vm->prog;
+    uint32_t old = jit->nfuncs, n = p->nfuncs;
+    CodeObject *codes = realloc(jit->codes, n * sizeof(CodeObject));
+    if (!codes) { fprintf(stderr, "runevm: out of memory (code objects)\n"); exit(2); }
+    jit->codes = codes;
+    memset(codes + old, 0, (n - old) * sizeof(CodeObject));
+    if (jit->fill_from) {
+        uint32_t *fill = realloc(jit->fill_from, n * sizeof *fill);
+        if (!fill) { fprintf(stderr, "runevm: out of memory (code objects)\n"); exit(2); }
+        jit->fill_from = fill;
+        for (uint32_t i = old; i < n; i++) fill[i] = UINT32_MAX;
+    }
+    if (jit->names) {
+        char **names = realloc(jit->names, n * sizeof *names);
+        if (!names) { fprintf(stderr, "runevm: out of memory (code objects)\n"); exit(2); }
+        jit->names = names;
+        for (uint32_t i = old; i < n; i++) {
+            size_t len = strlen(p->funcs[i].name);
+            names[i] = malloc(len + 1);
+            if (names[i]) memcpy(names[i], p->funcs[i].name, len + 1);
+        }
+    }
+    jit->code = p->code;
+    jit->nfuncs = n;
+    if (jit->fill_from) for (uint32_t i = old; i < n; i++) jit_fill_from(vm, jit, i);
+    for (uint32_t i = old; i < n; i++) if (!p->funcs[i].has_meta) jit->all_meta = 0;
+    if (vm->jit.mode == JIT_ALL && !vm->jit.only)
+        for (uint32_t i = old; i < n; i++) jit_tier_up(vm, jit, i);
+}
+
 JitProgram *jit_program(VM *vm) {
     if (vm->jit.mode == JIT_DEFAULT) vm->jit.mode = JIT_DEFAULT_MODE;
     if (vm->jit.mode == JIT_OFF) return NULL;
@@ -226,7 +262,12 @@ JitProgram *jit_program(VM *vm) {
         the_vm = vm;
         if (vm->jit.stats) atexit(jit_print_stats);
     }
-    if (the_program->code != vm->prog.code || the_program->nfuncs != vm->prog.nfuncs) jit_make(vm, the_program);
+    if (the_program->epoch == vm->prog_epoch && the_program->nfuncs < vm->prog.nfuncs) jit_grow(vm, the_program);
+    else if (the_program->epoch != vm->prog_epoch || the_program->code != vm->prog.code
+             || the_program->nfuncs != vm->prog.nfuncs) {
+        jit_make(vm, the_program);
+        the_program->epoch = vm->prog_epoch;
+    }
     return the_program;
 }
 

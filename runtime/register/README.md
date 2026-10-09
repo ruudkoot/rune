@@ -213,16 +213,20 @@ reclaiming them is a later concern).
 
 **A program that grows.** `Runtime.link` appends a unit's functions to the
 program (`runtime/loader.c`, `load_unit_mem`; docs/units.md), which the
-JIT's tables, indexed by function, are too short for; and compiled code
-names those tables by their address (`entry_of`, `to_callee_dynamic`), so
-they cannot be grown under it. The primitive is a `PRIMPUSH` that says
-`PRIM_NEW_WORLD` once its result is pushed, which the loop and compiled
-code answer as they do for `Runtime.restore`: the VM is handed to the
-driver, and `jit_program` makes the view again. `jit_make` first
-invalidates every function that has code, so that the frames below the
-load, which `Runtime.restore` never leaves, return into the interpreter
-rather than into code that names the tables it frees. The hot functions
-are compiled again from their counters. `--jit-stress=N` invalidates the
+JIT's tables, indexed by function, are too short for. The primitive is a
+`PRIMPUSH` that says `PRIM_NEW_WORLD` once its result is pushed, which the
+loop and compiled code answer as they do for `Runtime.restore`: the VM is
+handed to the driver, which asks `jit_program` for the view again. Where
+the program is the same one grown (`VM.prog_epoch`, a new number for each
+program read, the same while units are loaded), `jit_grow` extends the
+code objects, the fills and the names and keeps all the code: compiled
+code never holds the address of a table that grows -- `entry_of`,
+`to_callee_dynamic` and `fill_unit_dynamic` load the table's address from
+the JitProgram, `closure_function` the functions' table and their number
+from the VM -- and the primitives' helpers (`jit_h_prim`,
+`jit_h_primpush`) are given where their operands are in the code, which a
+load may move. Where it became another, `jit_make` invalidates every
+function that has code and makes the view again. `--jit-stress=N` invalidates the
 callee's code at every Nth call into compiled code, so that
 `scripts/check-jit.sh` holds every program to the interpreter's output
 and counts while functions are compiled, entered mid-way, invalidated
@@ -349,8 +353,9 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   called), `jit_h_alloc`, `jit_h_ret` (the frame of the top level's
   `RET`, answering what the driver is to do next), `jit_h_fatal_at` (the
   loop's message, from the stub), `jit_h_call` and `jit_h_tailcall` (a call through a
-  closure), `jit_h_push_handler`, `jit_h_raise`, `jit_h_primpush`, and
-  `jit_h_grow` and `jit_h_grow_frames` (the stack and the frames grown
+  closure), `jit_h_push_handler`, `jit_h_raise`, `jit_h_interrupt` (the
+  user's interrupt raised from a poll, `SLOW_INTERRUPT`), `jit_h_primpush`,
+  and `jit_h_grow` and `jit_h_grow_frames` (the stack and the frames grown
   where a call finds no room).
 * **`emit.c`**: the emitters, one per instruction, over the
   macro-assembler. `runeisa` writes `runtime/register/jit_emit.h`, their
@@ -392,7 +397,12 @@ handler's code (`Handler.native`, `runtime/vm.h`; NULL from the loop's and from
 an image), so that a raise -- `RAISE` through `jit_h_raise`, a primitive's
 through `jit_h_prim` -- lands in the handler's native code where it has
 some, from the interpreter too (`RAISED` in the loop's words). `--trace`
-runs the interpreter alone.
+runs the interpreter alone. The user's interrupt is polled where the loop
+polls it (`POLL`), at a jump back and at a call: a compare of
+`VM.interrupt` and a branch, before the instruction does anything, to a
+slow path that goes back while the mask holds it and else raises it
+through `jit_h_interrupt`, as `RAISE` raises
+([docs/runtime.md](../../docs/runtime.md), *Interrupts*).
 
 Made fast (M7): **the primitives of `fastprim.h` are in line**
 (`prim_inline` in `emit.c`), each exactly what `prim_fast` gives and to

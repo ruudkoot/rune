@@ -832,10 +832,13 @@ void emit_FIELD(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c, int32_t d)
 
 static void fill_unit(Jit *j, int base_reg, uint32_t fill_from, uint32_t nlocals);
 /* rax := the entry of function f, read from its code object when the call
-   is made, since a function is compiled once and not before every caller */
+   is made, since a function is compiled once and not before every caller;
+   the table read from the JitProgram too, since a unit loaded grows it
+   (jit.c, jit_grow) */
 static void entry_of(Jit *j, uint32_t f) {
-    as_mov_ri(A, R_S0, (int64_t)(intptr_t)&j->jit->codes[f].entry);
+    as_mov_ri(A, R_S0, (int64_t)(intptr_t)&j->jit->codes);
     as_ld64(A, R_S0, R_S0, 0);
+    as_ld64(A, R_S0, R_S0, (int32_t)((size_t)f * sizeof(CodeObject) + offsetof(CodeObject, entry)));
 }
 /* into the callee whose frame is on top and whose registers rbp and r14
    now name: its code where it has some, else the interpreter, the VM made
@@ -996,13 +999,15 @@ static void called(Jit *j, uint32_t pc) {
 /* obj := the closure in register a; r11 := the index of its function,
    checked; rcx := that Function */
 static void closure_function(Jit *j, int32_t a, int obj) {
-    const Program *p = &j->vm->prog;
     ms_load_obj(M, obj, a, K_CLOSURE, jit_fatal(j, FATAL_CALL, 0, 0, 0));
     ms_load_field_payload(M, R_S6, obj, 0);   /* field 0: the index */
-    as_cmp_ri(A, R_S6, (int32_t)p->nfuncs);
+    /* the number of functions and their table read from the VM: a unit
+       loaded adds to them, and may move the table (runtime/loader.c) */
+    as_ld32(A, R_S3, VMR, OFF(prog.nfuncs));
+    as_cmp_rr(A, R_S6, R_S3);
     as_jcc(A, CC_AE, jit_fatal(j, FATAL_FUNCTION, 0, 0, 0));   /* unsigned: negative too */
     as_mul_ri(A, R_S1, R_S6, (int32_t)sizeof(Function));
-    as_mov_ri(A, R_S3, (int64_t)(intptr_t)p->funcs);
+    as_ld64(A, R_S3, VMR, OFF(prog.funcs));
     as_add_rr(A, R_S1, R_S3);
 }
 /* the slow path that grows the stack and starts the instruction over,
@@ -1035,7 +1040,8 @@ static void fill_unit_dynamic(Jit *j) {
     /* from the first register the callee does not write before anything
        could see it (jit_fill_from, M7), and at least the second */
     AsmLabel ok; as_label_init(&ok);
-    as_mov_ri(A, R_S0, (int64_t)(intptr_t)j->jit->fill_from);
+    as_mov_ri(A, R_S0, (int64_t)(intptr_t)&j->jit->fill_from);   /* the table, which a load grows */
+    as_ld64(A, R_S0, R_S0, 0);
     as_lea(A, R_S0, R_S0, R_S6, 4, 0);
     as_ld32(A, R_S0, R_S0, 0);
     as_cmp_ri(A, R_S0, 1);
@@ -1067,7 +1073,8 @@ static void fill_unit_dynamic(Jit *j) {
 static void to_callee_dynamic(Jit *j) {
     AsmLabel interp; as_label_init(&interp);
     as_mul_ri(A, R_S0, R_S6, (int32_t)sizeof(CodeObject));
-    as_mov_ri(A, R_S3, (int64_t)(intptr_t)j->jit->codes);
+    as_mov_ri(A, R_S3, (int64_t)(intptr_t)&j->jit->codes);   /* the table, which a load grows */
+    as_ld64(A, R_S3, R_S3, 0);
     as_add_rr(A, R_S0, R_S3);
     as_ld64(A, R_S0, R_S0, (int32_t)offsetof(CodeObject, entry));
     as_test_rr(A, R_S0, R_S0);
@@ -1245,7 +1252,7 @@ void emit_PRIMPUSH(Jit *j, uint32_t pc, int32_t a, const uint8_t *L, uint32_t n)
     AsmLabel done; as_label_init(&done);
     ms_sync(M, j->next, 0);
     as_mov_ri(A, ms_arg(M, 1), a);
-    as_mov_ri(A, ms_arg(M, 2), (int64_t)(intptr_t)L);
+    as_mov_ri(A, ms_arg(M, 2), (int64_t)(L - j->vm->prog.code));
     ms_call(M, (MsHelper)jit_h_primpush);
     ms_reload(M);
     as_test_rr(A, R_S0, R_S0);

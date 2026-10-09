@@ -8,6 +8,7 @@ BOOL	signature			required	declared	lib/basis/sig_bool.sml
 BYTE	signature			required	declared	lib/basis/sig_byte.sml
 CHAR	signature			required	declared	lib/basis/sig_char.sml
 COMMAND_LINE	signature			required	declared	lib/basis/sig_command_line.sml
+COMPILER	signature			extension	declared	lib/basis/compiler_sig.sml
 DATE	signature			required	declared	lib/basis/sig_date.sml
 GENERAL	signature			required	declared	lib/basis/sig_general.sml
 GENERIC_SOCK	signature			optional	declared	lib/basis/sig_generic_sock.sml
@@ -88,6 +89,7 @@ CharArraySlice	structure	MONO_ARRAY_SLICE	where type vector = CharVector.vector 
 CharVector	structure	MONO_VECTOR	where type vector = String.string where type elem = char	required	claimed	lib/basis/charvector.sml
 CharVectorSlice	structure	MONO_VECTOR_SLICE	where type slice = Substring.substring where type vector = String.string where type elem = char	required	claimed	lib/basis/charvectorslice.sml
 CommandLine	structure	COMMAND_LINE		required	claimed	lib/basis/commandline.sml
+Compiler	structure	COMPILER		extension	claimed	lib/basis/compiler.sml
 Date	structure	DATE		required	claimed	lib/basis/date.sml
 FixedInt	structure	INTEGER	where type int = Int64.int	optional	claimed	lib/basis/int64.sml
 General	structure	GENERAL		required	claimed	lib/basis/general.sml

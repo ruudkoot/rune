@@ -51,4 +51,5 @@ src/backend/link.sml
 src/backend/unitfile.sml
 src/driver/basismanifest.sml
 src/driver/options.sml
+src/driver/pipeline.sml
 src/driver/main.sml

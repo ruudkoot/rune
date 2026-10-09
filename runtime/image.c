@@ -293,6 +293,10 @@ static void write_image(VM *vm, Stream *s, int kind) {
     put(s, vm->global_set, p->nglobals);
     for (int i = 0; i < NUM_BUILTIN_EXNS; i++) put_obj(s, vm->builtin_exns[i], vm);
     for (int i = 0; i < REAL_BOXES; i++) put_obj(s, vm->real_boxes[i], vm);
+    /* the interrupt's exception and its mask (VM.interrupt): the world that
+       starts again catches it again (interrupt_again) */
+    put_u32(s, (uint32_t)vm->interrupt_mask);
+    put_obj(s, vm->interrupt_exn, vm);
     put_u64(s, (uint64_t)vm->sp);
     for (size_t i = 0; i < vm->sp; i++) put_value(s, vm->stack[i], vm);
     put_u32(s, (uint32_t)vm->frames_active);
@@ -712,6 +716,7 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
             return failed(&s, err, errlen, "a bad table of the units' exports");
         if (s.ok && !unit_exports_rehash(vm)) return failed(&s, err, errlen, "out of memory");
     }
+    program_epoch(vm);
     for (uint32_t i = 0; i < p->nlines && s.ok; i++)
         if (p->lines[i].inl > p->ninlines) return failed(&s, err, errlen, "a bad line table");
 
@@ -721,8 +726,14 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     if (!vm->globals || !vm->global_set) return failed(&s, err, errlen, "out of memory");
     for (uint32_t i = 0; i < p->nglobals; i++) vm->globals[i] = get_value(&s);
     get(&s, vm->global_set, p->nglobals);
+    /* every global set is taken at the next minor collection, wherever the
+       heap's objects were put (runtime/gc/gc.h, MINOR_ROOTS) */
+    for (uint32_t i = 0; i < p->nglobals; i++) if (vm->global_set[i]) vm->global_set[i] = 1;
+    vm->consts_minor = 0;
     for (int i = 0; i < NUM_BUILTIN_EXNS; i++) vm->builtin_exns[i] = get_obj(&s);
     for (int i = 0; i < REAL_BOXES; i++) vm->real_boxes[i] = get_obj(&s);
+    vm->interrupt_mask = (int)get_u32(&s);
+    vm->interrupt_exn = get_obj(&s);
 
     uint64_t sp = get_u64(&s);
     if (!s.ok || !fits(sp, sizeof(Value))) return failed(&s, err, errlen, "the image is cut short");
@@ -840,12 +851,25 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     return 1;
 }
 
+/* The world of an image in its place: the user's interrupt caught again
+   where it caught it, at the flag of the VM that runs it now (an image
+   read into a world of its own is moved, vm_become), with none waiting;
+   and given back to the system where it did not */
+static void interrupt_again(VM *vm) {
+    vm->interrupt = 0;
+    sys_interrupt_catch(vm->interrupt_exn ? &vm->interrupt : NULL);
+}
+
 int vm_resume(VM *vm, const char *token, char *err, size_t errlen) {
-    return read_image(vm, sys_resume(token), IMAGE_FORK, err, errlen);
+    if (!read_image(vm, sys_resume(token), IMAGE_FORK, err, errlen)) return 0;
+    interrupt_again(vm);
+    return 1;
 }
 
 int vm_restore(VM *vm, const char *path, char *err, size_t errlen) {
-    return read_image(vm, sys_fopen(path, "rb"), IMAGE_SAVE, err, errlen);
+    if (!read_image(vm, sys_fopen(path, "rb"), IMAGE_SAVE, err, errlen)) return 0;
+    interrupt_again(vm);
+    return 1;
 }
 
 /* Runtime.restore: this world becomes the one in the file, bytecode and all,
@@ -895,5 +919,6 @@ int vm_become(VM *vm, const char *path) {
     vm_release(vm);
     *vm = *next;
     free(next);
+    interrupt_again(vm);
     return 1;
 }

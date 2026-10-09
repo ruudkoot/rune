@@ -1,7 +1,8 @@
 #!/bin/sh
 # Install (or remove) Rune: the rune wrapper, runevm (the VM of the register
 # bytecode, with its JIT) and runevm-stack, the compiler it runs, the
-# basis library, the man pages and the shell completions; and runedoc, the
+# basis library, the man pages and the shell completions; rune-repl, the
+# REPL, when it is built (bin/rune-repl.img), which `rune -i` starts; and runedoc, the
 # documentation generator, and runeopt, the native code generator, when they
 # are built (bin/runedoc.rbc, or bin/runedoc-NAME with --host, and the same of
 # runeopt), runeopt with the runtime it links a program with (lib/rune/runtime).
@@ -35,6 +36,8 @@ sml_for_host() {
   esac
 }
 heap=${RUNE_HEAP:-67108864}
+# what every rune wrapper does first: `rune -i ARGS` is the REPL beside it
+rune_i='[ "$1" = -i ] && shift && exec "$d/rune-repl" "$@"\n'
 uninstall=0
 
 usage="usage: install.sh [--prefix DIR] [--destdir DIR] [--host NAME] [--uninstall]"
@@ -74,7 +77,8 @@ if [ "$uninstall" = 1 ]; then
         "$bindir/runedoc" "$bindir/runedoc-mlton" "$bindir/runedoc-smlnj-legacy" \
         "$bindir/runedoc-smlnj-dev" "$bindir/runedoc-polyml" "$bindir/runedoc-mlkit" \
         "$bindir/runeopt" "$bindir/runeopt-mlton" "$bindir/runeopt-smlnj-legacy" \
-        "$bindir/runeopt-smlnj-dev" "$bindir/runeopt-polyml" "$bindir/runeopt-mlkit"
+        "$bindir/runeopt-smlnj-dev" "$bindir/runeopt-polyml" "$bindir/runeopt-mlkit" \
+        "$bindir/rune-repl"
   rm -rf "$libdir"
   rm -f "$mandir/rune.1" "$mandir/runevm-stack.1" "$mandir/runevm.1" "$mandir/runedoc.1" "$mandir/runeopt.1"
   rm -f "$bashdir/rune" "$bashdir/runedoc" "$bashdir/runeopt"
@@ -131,7 +135,7 @@ copy "$root/bin/runevm" "$bindir/runevm" 755
 # The wrapper finds the library beside itself, so the tree can be moved.
 if [ -z "$host" ]; then
   copy "$root/bin/rune.rbc" "$libdir/rune.rbc" 644
-  printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" --heap-size %s "$d/../lib/rune/rune.rbc" --lib "$d/../lib/rune" "$@"\n' \
+  printf '#!/bin/sh\nd=$(dirname "$0")\n'"$rune_i"'exec "$d/runevm" --heap-size %s "$d/../lib/rune/rune.rbc" --lib "$d/../lib/rune" "$@"\n' \
     "$heap" > "$bindir/rune"
   chmod 755 "$bindir/rune"
   installed=rune
@@ -141,18 +145,29 @@ else
       for h in "$root"/bin/rune-"$host".heap.*; do
         copy "$h" "$libdir/${h##*/}" 644
       done
-      printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/../lib/rune/rune-%s.heap" --lib "$d/../lib/rune" "$@"\n' \
+      printf '#!/bin/sh\nd=$(dirname "$0")\n'"$rune_i"'exec "%s" @SMLload="$d/../lib/rune/rune-%s.heap" --lib "$d/../lib/rune" "$@"\n' \
         "$(sml_for_host "$host")" "$host" > "$bindir/rune-$host"
       ;;
     *)
       copy "$root/bin/rune-$host.bin" "$libdir/rune-$host.bin" 755
-      printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/../lib/rune/rune-%s.bin" --lib "$d/../lib/rune" "$@"\n' \
+      printf '#!/bin/sh\nd=$(dirname "$0")\n'"$rune_i"'exec "$d/../lib/rune/rune-%s.bin" --lib "$d/../lib/rune" "$@"\n' \
         "$host" > "$bindir/rune-$host"
       ;;
   esac
   chmod 755 "$bindir/rune-$host"
   ln -sfn "rune-$host" "$bindir/rune"
   installed="rune-$host"
+fi
+
+# the REPL, when it is built (make repl): its image, restored by runevm;
+# `rune -i` starts it
+repl=""
+if [ -e "$root/bin/rune-repl.img" ]; then
+  copy "$root/bin/rune-repl.img" "$libdir/rune-repl.img" 644
+  printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" --heap-size %s --restore "$d/../lib/rune/rune-repl.img" -- "$@"\n' \
+    "$heap" > "$bindir/rune-repl"
+  chmod 755 "$bindir/rune-repl"
+  repl=rune-repl
 fi
 
 # runedoc, when it is built: the same kind of build as rune.
@@ -260,7 +275,7 @@ if [ -n "$opt" ]; then
   copy "$root/share/completions/_runeopt" "$zshdir/_runeopt" 644
 fi
 
-echo "installed $installed${doc:+, runedoc}${opt:+, runeopt}, runevm and runevm-stack in $prefix/bin, the basis library in $prefix/lib/rune"
+echo "installed $installed${doc:+, runedoc}${opt:+, runeopt}${repl:+, rune-repl}, runevm and runevm-stack in $prefix/bin, the basis library in $prefix/lib/rune"
 if sml=$(sml_for_host "$host"); then
   echo "note: rune-$host runs with $sml"
 fi

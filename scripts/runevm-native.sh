@@ -42,7 +42,10 @@ while [ $# -gt 0 ]; do
         exit 2
       fi
       rm -f "$exe.log"
-      RUNEVM_OPTIONS="${RUNEVM_OPTIONS:-}$options --restore $image" exec "$exe" ;;
+      # the restored world's own arguments, after the image or after --,
+      # which goes along to say that none may be meant (runtime/main.c)
+      shift 2
+      RUNEVM_OPTIONS="${RUNEVM_OPTIONS:-}$options --restore $image" exec "$exe" "$@" ;;
     --disasm|--trace|--resume|--version|--help) exec "$vm" "$@" ;;
     -*) exec "$vm" "$@" ;;
     *) break ;;

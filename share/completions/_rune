@@ -2,6 +2,7 @@
 
 _arguments -s \
   '-o[write bytecode to FILE]:output file:_files' \
+  '-i[start the REPL, rune-repl, with the files that follow]' \
   '--lib[directory holding the basis library in DIR/basis]:library directory:_files -/' \
   '--no-prelude[do not compile the basis library before the inputs]' \
   '--basis[which files of the basis library to compile]:mode:(demand all)' \

@@ -5,6 +5,9 @@ rune \- compile Standard ML '97 to Rune bytecode
 .B rune
 .RI [ options ]
 .IR file.sml " ..."
+.br
+.B rune \-i
+.RI [ file.sml " ...]"
 .SH DESCRIPTION
 .B rune
 compiles one or more Standard ML '97 source files into a single Rune bytecode
@@ -24,6 +27,13 @@ for the installed basis library; a
 .B \-\-lib
 on the command line comes later and therefore wins.
 .SH OPTIONS
+.TP
+.B \-i
+As the first argument: start the REPL,
+.BR rune\-repl ,
+beside the wrapper, instead of compiling, with the arguments that follow;
+it uses those files and then reads declarations from the standard input.
+The wrapper does this, and the compiler never sees the option.
 .TP
 .BI \-o " FILE"
 Write the bytecode to

@@ -103,8 +103,11 @@ uint64_t *reg_liveness(const Program *p, uint32_t from, uint32_t to, const uint8
             uint64_t in = uses | (out & ~def);
             /* a raise, in the instruction or in what it calls, happens
                before the instruction defines anything: what a handler
-               needs is live at its entry */
-            if (rop_raises[op] || flow == FLOW_CALL || flow == FLOW_TAILCALL) in |= handlers_live;
+               needs is live at its entry -- at a jump back too, where the
+               user's interrupt is raised (POLL) */
+            if (rop_raises[op] || flow == FLOW_CALL || flow == FLOW_TAILCALL
+                || (op == ROP_JUMP && (uint32_t)read_i32(code + pc + 1) < pc + l))
+                in |= handlers_live;
             if (in != live[at]) { live[at] = in; changed = 1; }
         }
     }

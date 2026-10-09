@@ -1,0 +1,20 @@
+(* values of every kind of type, as the REPL echoes them *)
+val i = ~3 + 1;
+val w = 0wxff;
+val r = 2.5 * 2.0;
+val c = #"q";
+val s = "tab\there \"quoted\"";
+val u = ();
+val t = (1, "two", 3.0);
+val rc = {name = "rune", age = 3};
+val l = [1, 2, 3];
+val e = [];
+val opt = SOME [NONE, SOME true];
+val rf = ref (ref 5);
+val a = Array.fromList [1, 2];
+val v = Vector.fromList ["x"];
+val f = fn x => x + 1;
+val id = fn x => x;
+val ex = Fail "boom";
+1 + 1;
+it * 10;

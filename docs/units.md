@@ -121,11 +121,11 @@ the program carries the units loaded and what they export, so that a world
 saved after loading some units goes on loading the rest when it is
 restored (`tests/units/loadsave.sml`).
 
-Each load makes the JIT forget the code it compiled, since its tables name
-functions by number and a load renumbers nothing but grows them; the
-functions that are hot are compiled again. That is cheap for a few loads
-and will not be for a REPL that loads a unit per declaration, which the
-incremental roadmap's M4 answers.
+A load grows the JIT's tables and keeps the code it compiled: compiled
+code reads where the tables are when it runs, so they may move
+([runtime.md](runtime.md), *Loading a program*). A REPL that loads a unit
+per declaration pays for its compiler and not for the JIT again
+([repl.md](repl.md)).
 
 ## Errors
 

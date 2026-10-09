@@ -319,6 +319,20 @@ it have not run since that collection left nothing young in them, so a
 deep recursion is not scanned again at every minor collection; a full
 collection scans the whole stack.
 
+Of the globals, a minor collection takes only those written since the last
+one, and of the constants only those made since (`MINOR_ROOTS`): every
+engine's `SETGLOBAL` stores 1 in the global's byte of `global_set`, which
+`GLOBAL` holds non-zero to say the global is set, and the collection marks
+2 each one it takes, whose value is old once it is over; a constant is never
+written, so a mark of how many the last minor collection took is enough,
+each constant being counted in as it is made. A program -- a session of the
+REPL above all -- may have a hundred thousand globals and constants, and a
+minor collection does not look at the values of those it took before: with
+100,000 globals it takes 14 roots besides the stack where it took 100,230,
+and costs a quarter of the time (incremental roadmap, M1 and M4). An image
+read back marks every global that is set as written, so the first minor
+collection after it takes them all.
+
 On the register VM, at every tier, the stack is a root by what is live
 where that is known. A register of a frame that waits for a call is a root
 only if the frame needs it when the call returns; a dead one that holds a
@@ -557,6 +571,59 @@ underflow, a bad opcode, an argument of the wrong kind -- prints
 what the source called the function, qualified by the structures it is in.
 It means the bytecode or the VM is wrong, never the program's input.
 
+## Interrupts
+
+The user's interrupt -- Ctrl-C at a terminal, `SIGINT`, Ctrl-C or
+Ctrl-Break at a Windows console -- ends a program, as the system does with
+any process, until the program calls `Runtime.catchInterrupt ()`. From then
+on it raises `SML90.Interrupt` in the program (the incremental roadmap's
+D11):
+
+* the system layer's handler (`sys_interrupt_catch`, behind
+  `runtime/sys/sys.h`) sets a flag of the VM, `VM.interrupt`, and does
+  nothing else; on Windows it runs on a thread of its own;
+* the VM looks at the flag -- *polls* -- at a jump back, the end of a
+  loop's body, and at a call, before either does anything: in the register
+  loop and the stack loop (`POLL`, in the bodies of `src/isa/regs.sml` and
+  `src/isa/stack.sml`), and in the code the JIT makes, a compare and a
+  branch to a slow path (`SLOW_INTERRUPT`, `runtime/register/jit/compile.c`).
+  Every run that does not end does one or the other without end, so every
+  one is interrupted;
+* a poll that finds the flag set clears it and raises the exception at that
+  instruction, as `RAISE` raises one (`vm_interrupt`): the handlers, the
+  frames and `Runtime.trace` are what they would be, and the code of a
+  handler finds what it needs where `RAISE` leaves it -- a jump back is a
+  point where every handler of its function may be entered, as a call is
+  (`runtime/register/live.c`);
+* a read from a terminal that the interrupt cuts short -- the REPL's
+  prompt -- raises it too, in the primitive: a terminal is read through
+  `poll` first, which a signal ends whatever `SA_RESTART` says, and the
+  read is begun again where the interrupt is masked. Every other call into
+  the system is begun again, as before, and the interrupt waits for the
+  next poll; a primitive that is running finishes first;
+* `Runtime.maskInterrupt true` defers it: the flag stays set and the polls
+  leave it, until `Runtime.maskInterrupt false`, which raises it as it
+  returns. A section that an interrupt must not cut in two -- what HOL4's
+  `Thread_Attributes.uninterruptible` asks for -- masks it;
+* `TextIO`, `BinIO` and the other streams pass it on as it is, not as the
+  cause of `IO.Io` as they do what a reader raises, since it is the
+  program's and not the reader's (`rt_interrupt_is`,
+  `lib/basis/streamio_fn.sml`);
+* an image keeps the exception and the mask, and the world started from it
+  catches the interrupt again, at the flag of the VM that runs it.
+
+Uncaught, it ends the program as any exception does:
+`runevm: uncaught exception Interrupt`, status 1. A process started with
+the interrupt ignored, as a shell without job control starts one in the
+background, catches it all the same, since the program asked. The code of
+`runeopt` does not poll, and an interrupt never comes to it.
+
+The REPL catches it ([repl.md](repl.md), *Interrupts*). `tests/lang`'s
+`rt.interrupt_self` and `rt.save_interrupt` interrupt themselves with
+`Posix.Process.kill`, which on Windows sets the flag where the program
+catches the interrupt, as Ctrl-C does; `tests/repl/interrupt.in` sends the
+REPL `SIGINT` while a declaration loops.
+
 ## Numbers
 
 `Int` and `Word` are 63 bits on every VM, whatever the pointer width -- a
@@ -653,8 +720,9 @@ own and not in the specification: `Runtime.stats` gives the counters of *The
 same run twice* and of *The garbage collector*, `Runtime.profile` the difference of two of
 them across a call, `Runtime.collect` a collection on demand, `Runtime.trace`
 the frames of *Stacks, calls and exceptions* as data, `Runtime.save` the image
-this page describes under *The system layer*, and `Runtime.same` the identity
-the collector maintains. The page of the signature is
+this page describes under *The system layer*, `Runtime.same` the identity
+the collector maintains, and `Runtime.catchInterrupt` and
+`Runtime.maskInterrupt` the interrupt of *Interrupts*. The page of the signature is
 [generated/basis/sig/RUNTIME.md](generated/basis/sig/RUNTIME.md), and
 [../examples/runtime](../examples/runtime) has a program for each part of it.
 
@@ -691,12 +759,17 @@ and `Runtime.load` the unit a file holds. The unit is untrusted input as a
 
 `Runtime.link` gives the closure of the unit's top level, which the program
 calls: the loop runs it as any other call, so no engine calls another. The
-program has grown under the JIT, whose tables name functions by number, so
+program has grown under the JIT, whose tables are indexed by function, so
 the primitive says so (`PRIM_NEW_WORLD`, which `PRIMPUSH` and compiled code
-already answer for `Runtime.restore`), and the JIT's view of the program is
-made again: every compiled function is invalidated first, so that the frames
-below the load return into the interpreter rather than into code that names
-the tables just remade. An image carries the units loaded -- they are part of
+already answer for `Runtime.restore`) and the driver asks the JIT for its
+view of the program again. The program being the same one grown (its
+`prog_epoch`), the JIT grows its tables and keeps everything it compiled
+(`jit_grow`): compiled code reads where the tables of functions, code
+objects and fills are, and how many functions there are, when it runs,
+and hands a primitive's helper where its operands are in the code rather
+than their address, so the tables and the code may move. A program that
+became another (`Runtime.restore`) has its view made again, every function
+compiled for the one before invalidated first. An image carries the units loaded -- they are part of
 the program -- and the table of their exports, so that a session saved after
 loading goes on loading. A program of native code (`runeopt`) loads no units.
 

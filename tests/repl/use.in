@@ -1,0 +1,8 @@
+(* use: a library of several files, one using another, and files that fail *)
+use "tests/repl/lib/main.sml";
+total;
+use "tests/repl/lib/broken.sml";
+fromBroken;
+use "tests/repl/lib/raises.sml";
+beforeRaise;
+use "tests/repl/lib/missing.sml";

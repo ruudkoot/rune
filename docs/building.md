@@ -122,7 +122,7 @@ name the tools to check.
 | `make matrix-quick` | the Basis Library suite on Rune and on Rune's library compiled by each host (the `xc1` configurations); not part of `make check` |
 | `make matrix` | `matrix-quick` and the suite on each host's own library |
 | `make perf` | the wall-clock times of the programs of `tests/perf` in the configurations of the matrix (`PERF_CONFIGS` selects others), one at a time, in `tests/out/perf/wall.md`; not part of `make check` |
-| `make install` | install `rune`, `runevm`, `runevm-stack`, `runedoc`, the basis library, the man pages and the shell completions under `PREFIX` |
+| `make install` | install `rune`, `runevm`, `runevm-stack`, `runedoc`, `runeopt`, `rune-repl`, the basis library, the man pages and the shell completions under `PREFIX` |
 | `make uninstall` | remove them again |
 | `make clean` | remove `bin/`, `build/`, generated files and test output |
 
@@ -295,11 +295,13 @@ this system in the same way.
 $PREFIX/bin/rune                     wrapper: runevm + rune.rbc + --lib
 $PREFIX/bin/runedoc                  wrapper: runevm + runedoc.rbc + --lib
 $PREFIX/bin/runeopt                  wrapper: runevm + runeopt.rbc + --runtime
+$PREFIX/bin/rune-repl                wrapper: runevm --restore rune-repl.img; `rune -i` too
 $PREFIX/bin/runevm                   the VM: the register bytecode, with its JIT
 $PREFIX/bin/runevm-stack             the VM of the stack bytecode
 $PREFIX/lib/rune/rune.rbc            the compiler
 $PREFIX/lib/rune/runedoc.rbc         the documentation generator
 $PREFIX/lib/rune/runeopt.rbc         the native code generator
+$PREFIX/lib/rune/rune-repl.img        the REPL, saved once started (docs/repl.md)
 $PREFIX/lib/rune/runtime/            librune.a and rune-offsets.s, what
                                      runeopt links a program with
 $PREFIX/lib/rune/basis/              MANIFEST and the basis library sources,
@@ -317,7 +319,8 @@ on top of the installed Basis Library (`man runedoc`), and `runedoc --library
 basis --out DIR` writes the pages of the Basis Library, without the test
 inventory, which needs the suite of the sources. `runeopt` is installed the
 same way, with the runtime it links a program with; it needs a C compiler
-where it runs (`man runeopt`).
+where it runs (`man runeopt`). So is the REPL, `rune-repl`, which `rune -i`
+starts ([repl.md](repl.md)).
 
 * As a normal user `make install` builds whatever is missing first.
 * As root it builds **nothing** — it installs `bin/` as it stands and fails if

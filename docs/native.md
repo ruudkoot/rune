@@ -254,6 +254,16 @@ FILE"`, `Runtime.restore`, and the child of `--emulate-fork`.
 Images cross between native programs and every VM, of every width and byte
 order.
 
+## Interrupts
+
+Native code does not look at the user's interrupt: a program that asked
+for it with `Runtime.catchInterrupt` (docs/runtime.md, *Interrupts*) gets
+it where it masks and unmasks it, and in a read from a terminal, which are
+the runtime's own, and not at a jump back or a call, which the VM's
+engines poll at and native code does not. A program that loops without
+end in native code ends at Ctrl-C only as the system ends it, where it did
+not ask. `rt.interrupt_self` is left out of `make test-native` for it.
+
 ## Debug information
 
 A `.file` for each file of the `.rbc`, a `.loc` where each entry of its line
@@ -311,7 +321,8 @@ Its limits:
   * `tests/lang` and the Basis Library suite run through `bin/runevm-native`,
     a wrapper that translates each `.rbc` once, keeping it by its checksum
     (the Makefile empties that cache whenever it builds `runeopt` or the
-    runtime again), with `tests/opt-skip.txt`, which is empty;
+    runtime again), with `tests/opt-skip.txt`, which leaves out the one
+    program that wants an interrupt where native code does not poll;
   * `--count` against `runevm-stack`;
   * the native compiler compiling itself to `bin/rune.stack.rbc` byte for byte;
   * the debug information.

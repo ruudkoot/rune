@@ -1,0 +1,20 @@
+(* the user's interrupt (D11): it ends the declaration running, which binds
+   nothing and keeps what it did, and the session goes on; a handler of the
+   declaration's own takes it as any exception *)
+val r = ref 0;
+fun spin () = (r := !r + 1; spin ());
+fun announce s = (print (s ^ "\n"); TextIO.flushOut TextIO.stdOut);
+val stuck : int = (announce "spinning"; spin ());
+#!interrupt after spinning
+stuck;
+!r > 0;
+fun guarded x =
+  let
+    val y = x * 3
+    fun loop n = loop (n + 1)
+  in
+    (announce "looping"; loop 0) handle SML90.Interrupt => y + 1
+  end;
+guarded 14;
+#!interrupt after looping
+val after = "the session goes on";

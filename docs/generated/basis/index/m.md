@@ -8,6 +8,7 @@
 - `mapi` (val): [MONO_VECTOR](../sig/MONO_VECTOR.md#val-mapi), [MONO_VECTOR_EQ](../sig/MONO_VECTOR_EQ.md#val-mapi), [MONO_VECTOR_SLICE](../sig/MONO_VECTOR_SLICE.md#val-mapi), [VECTOR](../sig/VECTOR.md#val-mapi), [VECTOR_SLICE](../sig/VECTOR_SLICE.md#val-mapi)
 - `mapPartial` (val): [LIST](../sig/LIST.md#val-mappartial), [OPTION](../sig/OPTION.md#val-mappartial)
 - `Mar` (con): [DATE](../sig/DATE.md#con-mar)
+- `maskInterrupt` (val): [RUNTIME](../sig/RUNTIME.md#val-maskinterrupt)
 - `Match` (exn): [GENERAL](../sig/GENERAL.md#exn-match)
 - `Math` (str): [REAL](../sig/REAL.md#str-math)
 - `max` (val): [INTEGER](../sig/INTEGER.md#val-max), [REAL](../sig/REAL.md#val-max), [WORD](../sig/WORD.md#val-max)

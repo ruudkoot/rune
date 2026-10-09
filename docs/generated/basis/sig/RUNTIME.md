@@ -6,8 +6,8 @@
 | --- | --- |
 | Status | extension |
 | Implementations | 1 |
-| Documentation | 14 of 14 entries documented |
-| Tests | 41 checks of 11 entries |
+| Documentation | 16 of 16 entries documented |
+| Tests | 44 checks of 13 entries |
 | Source | [lib/basis/runtime\_sig.sml](../../../../lib/basis/runtime_sig.sml) |
 
 ## Synopsis
@@ -19,7 +19,7 @@ structure Runtime : RUNTIME  (* extension *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`Runtime`](../str/Runtime.md) | Runtime: the VM's view of the running program -- its counters, its call stack, the identity of objects, saving and restoring the whole of it, and units appended to it. It is Rune's own and not of the specification. | [lib/basis/runtime.sml](../../../../lib/basis/runtime.sml) |
+| [`Runtime`](../str/Runtime.md) | Runtime: the VM's view of the running program -- its counters, its call stack, the identity of objects, saving and restoring the whole of it, units appended to it, and the user's interrupt. It is Rune's own and not of the specification. | [lib/basis/runtime.sml](../../../../lib/basis/runtime.sml) |
 
 What a program can ask about the machine it is running on: how much work it
 has done, and how much memory that took.
@@ -62,6 +62,8 @@ sig
   val <a href="#val-restore">restore</a> : string -&gt; 'a
   val <a href="#val-link">link</a> : Word8Vector.vector -&gt; unit -&gt; unit
   val <a href="#val-load">load</a> : string -&gt; unit -&gt; unit
+  val <a href="#val-catchinterrupt">catchInterrupt</a> : unit -&gt; bool
+  val <a href="#val-maskinterrupt">maskInterrupt</a> : bool -&gt; bool
   val <a href="#val-version">version</a> : string
 end
 </pre>
@@ -313,7 +315,10 @@ What is written is everything the program is made of -- the heap, the
 stacks, the counters, and the files it has open, which are opened again
 by name and put back where they were left. What belongs to the process
 rather than to the program is not: a socket, a directory stream and a
-pipe are the system's, and a restored world does not have them.
+pipe are the system's, and a restored world does not have them. Nor is
+what the program read ahead of its standard input and has not taken:
+[`TextIO.stdIn`](../sig/TEXT_IO.md#val-stdin) in the restored world reads that world's standard input
+from where it begins.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the image cannot be written.
 
@@ -407,6 +412,70 @@ does.
 <details><summary>Tests (1)</summary>
 
 For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `a-file-that-is-not-there` (raises)
+
+</details>
+
+### <a name="val-catchinterrupt"></a>`catchInterrupt`
+
+```sml
+val catchInterrupt : unit -> bool
+```
+
+`catchInterrupt ()` makes Ctrl-C, the user's interrupt, raise
+[`SML90.Interrupt`](../sig/SML90.md#exn-interrupt) in the program from now on rather than end it.
+
+It is true; it is false where the system has no interrupt to catch,
+and the program goes on as before. The exception is raised where the
+program next jumps back, as a loop does, or calls a function, or in a
+read from a terminal that the interrupt cuts short, as a `raise` there
+would raise it: the handlers, the frames and [`trace`](#val-trace) are what they
+would be. A primitive that is running finishes first. The interrupt is
+caught even where the program was started with it ignored, as a shell
+starts one in the background, and a world started from an image that
+[`save`](#val-save) wrote catches it as the program that saved it did.
+
+> **Implementation** `RUNTIME.catchInterrupt/polled`. The VM looks at the
+> interrupt at a jump back and at a call, in the interpreters and in the
+> code the JIT makes; the code of `runeopt` does not, and an interrupt
+> never comes to it.
+
+<details><summary>Tests (1)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `caught-where-the-system-has-one`
+
+</details>
+
+### <a name="val-maskinterrupt"></a>`maskInterrupt`
+
+```sml
+val maskInterrupt : bool -> bool
+```
+
+`maskInterrupt b` says whether an interrupt waits rather than being
+raised, and is what it said before.
+
+From `maskInterrupt true` on, one waits until `maskInterrupt false`,
+which raises it, if one came, as it returns. A section that an
+interrupt must not cut in two is
+
+```sml
+let val was = maskInterrupt true
+in (f () before ignore (maskInterrupt was))
+   handle e => (ignore (maskInterrupt was); raise e)
+end
+```
+
+The mask is off when a program starts, and a world started from an
+image has the mask its program had.
+
+**Raises** [`SML90.Interrupt`](../sig/SML90.md#exn-interrupt), from `maskInterrupt false`, where one
+waited.
+
+**Example** `maskInterrupt (maskInterrupt true) = true`
+
+<details><summary>Tests (2)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `gives-back-what-it-was` &middot; `with-nothing-waiting-raises-nothing`
 
 </details>
 

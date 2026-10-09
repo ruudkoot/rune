@@ -267,12 +267,16 @@ int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t
        something else by its opcodes and primitives */
     if (rd_u32(&r) != isa_fingerprint) return fail(err, errlen, "bytecode of another instruction set");
 
-    /* constants */
-    p->nconsts = rd_u32(&r);
-    if (r.error || p->nconsts > 10000000) return fail(err, errlen, "bad constant table");
-    p->consts = calloc(p->nconsts ? p->nconsts : 1, sizeof(Value));
-    p->const_kinds = calloc(p->nconsts ? p->nconsts : 1, 1);
-    for (uint32_t i = 0; i < p->nconsts; i++) {
+    /* constants, counted in as each is made: a minor collection takes those
+       above what it took before, so none is counted before it is there
+       (runtime/gc/gc.h, MINOR_ROOTS) */
+    uint32_t nconsts = rd_u32(&r);
+    if (r.error || nconsts > 10000000) return fail(err, errlen, "bad constant table");
+    p->consts = calloc(nconsts ? nconsts : 1, sizeof(Value));
+    p->const_kinds = calloc(nconsts ? nconsts : 1, 1);
+    p->nconsts = 0;
+    vm->consts_minor = 0;
+    for (uint32_t i = 0; i < nconsts; i++, p->nconsts = i) {
         uint8_t kind = rd_u8(&r);
         p->const_kinds[i] = kind;
         switch (kind) {
@@ -323,6 +327,7 @@ int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t
     for (uint32_t i = 0; i < p->nglobals; i++) vm->globals[i] = mk_unit();
 
     if (!read_code_and_tables(&r, p, data, err, errlen)) return 0;
+    program_epoch(vm);
 
     uint8_t *starts = validate_program(p, err, errlen);
     if (!starts) return 0;
@@ -410,6 +415,11 @@ static void unit_put(VM *vm, uint32_t e) {
     vm->unit_table[i] = e + 1;
 }
 
+void program_epoch(VM *vm) {
+    static uint64_t epochs;
+    vm->prog_epoch = ++epochs;
+}
+
 int unit_exports_rehash(VM *vm) {
     uint32_t slots = 64;
     while (slots < 2 * (uint64_t)vm->nunit_exports + 2) slots *= 2;
@@ -484,6 +494,9 @@ static void undo(VM *vm, Mark m) {
     for (uint32_t i = m.nfiles; i < p->nfiles; i++) free(p->files[i]);
     for (uint32_t i = m.ninlines; i < p->ninlines; i++) free(p->inlines[i].name);
     p->nfuncs = m.nfuncs; p->code_len = m.code_len; p->nconsts = m.nconsts; p->nglobals = m.nglobals;
+    /* constants a minor collection took while the unit's were made go too:
+       the next unit's, in their places, are new (runtime/gc/gc.h, MINOR_ROOTS) */
+    if (vm->consts_minor > p->nconsts) vm->consts_minor = p->nconsts;
     p->nfiles = m.nfiles; p->nlines = m.nlines; p->ninlines = m.ninlines;
     if (p->nfuncs) p->funcs[p->nfuncs - 1].code_end = p->code_len;
 }
@@ -719,10 +732,10 @@ int64_t load_unit_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_
     u.ninlines = 0;
     for (uint32_t i = 0; i < nown; i++) { vm->globals[p->nglobals + i] = mk_unit(); vm->global_set[p->nglobals + i] = 0; }
     p->nglobals += nown;
-    /* the constants: counted first, each made where the collector finds it */
+    /* the constants, each counted in once it is made, where the collector
+       finds it: a minor collection takes those above what it took before
+       (runtime/gc/gc.h, MINOR_ROOTS), so none is counted before it is there */
     uint32_t const_base = p->nconsts;
-    for (uint32_t i = 0; i < nconsts; i++) { p->consts[const_base + i] = mk_unit(); p->const_kinds[const_base + i] = CONST_INT; }
-    p->nconsts += nconsts;
     for (uint32_t i = 0; i < nconsts; i++) {
         Reader c = { data, size, const_at[i], 0 };
         uint8_t kind = rd_u8(&c);
@@ -744,6 +757,7 @@ int64_t load_unit_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_
         }
         p->consts[const_base + i] = v;
         p->const_kinds[const_base + i] = kind;
+        p->nconsts = const_base + i + 1;
     }
     if (func_base > 0) p->funcs[func_base - 1].code_end = code_base;
 

@@ -141,8 +141,11 @@ export MLTON SMLNJ SMLNJ32 SMLNJ_DEV POLYC MLKIT MLKIT_LIB
 BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
+# what every rune wrapper does first: `rune -i ARGS` is the REPL beside it,
+# bin/rune-repl (docs/repl.md), with ARGS
+RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: isa check-isa test-ir check-levels check-units test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
+.PHONY: isa check-isa test-ir check-levels check-units repl test-repl test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
 
 all: vm boot runedoc runeopt
 
@@ -232,13 +235,13 @@ bin/rune-mlton.bin: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/mlton-main.sml | 
 	$(MLTON) -output $@ build/rune.mlb
 
 bin/rune-mlton: bin/rune-mlton.bin Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/rune-mlton.bin" --lib "$$d/../lib" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "$$d/rune-mlton.bin" --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
 
 bin/rune-smlnj-legacy: $(BUILDGEN) $(SOURCES) $(GEN_SML) Makefile | build/.doctor-smlnj-legacy
 	@mkdir -p bin
 	$(MLBUILD) build/rune.cm Main.main bin/rune-smlnj-legacy.heap
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/rune-smlnj-legacy.heap" --lib "$$d/../lib" "$$@"\n' "$(SMLNJ)" > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "%s" @SMLload="$$d/rune-smlnj-legacy.heap" --lib "$$d/../lib" "$$@"\n' "$(SMLNJ)" > $@
 	chmod +x $@
 
 # The 32-bit SML/NJ (31-bit int and word) catches code that depends on the
@@ -247,7 +250,7 @@ bin/rune-smlnj-legacy: $(BUILDGEN) $(SOURCES) $(GEN_SML) Makefile | build/.docto
 bin/rune-smlnj32: $(BUILDGEN) $(SOURCES) $(GEN_SML) Makefile | build/.doctor-smlnj32 bin/rune-smlnj-legacy
 	@mkdir -p bin
 	$(MLBUILD32) build/rune.cm Main.main bin/rune-smlnj32.heap
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/rune-smlnj32.heap" --lib "$$d/../lib" "$$@"\n' "$(SMLNJ32)" > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "%s" @SMLload="$$d/rune-smlnj32.heap" --lib "$$d/../lib" "$$@"\n' "$(SMLNJ32)" > $@
 	chmod +x $@
 
 # 2026.2 writes CM metadata in .cm, as 110.99.9 does, and that name is fixed
@@ -258,7 +261,7 @@ bin/rune-smlnj-dev: $(BUILDGEN) $(SOURCES) $(GEN_SML) Makefile | build/.doctor-s
 	@mkdir -p bin
 	cm=$$(sh scripts/smlnj-dev-root.sh build/rune.cm); \
 	  $(MLBUILD_DEV) "$$cm" Main.main bin/rune-smlnj-dev.heap
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/rune-smlnj-dev.heap" --lib "$$d/../lib" "$$@"\n' "$(SMLNJ_DEV)" > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "%s" @SMLload="$$d/rune-smlnj-dev.heap" --lib "$$d/../lib" "$$@"\n' "$(SMLNJ_DEV)" > $@
 	chmod +x $@
 
 bin/rune-polyml.bin: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/polyml-main.sml | build/.doctor-polyml
@@ -266,7 +269,7 @@ bin/rune-polyml.bin: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/polyml-main.sml 
 	$(POLYC) -o $@ build/polyml-build.sml
 
 bin/rune-polyml: bin/rune-polyml.bin Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/rune-polyml.bin" --lib "$$d/../lib" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "$$d/rune-polyml.bin" --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
 
 # MLKit finds its library through SML_LIB and keeps its object files in MLB/
@@ -279,7 +282,7 @@ bin/rune-mlkit.bin: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/mlkit-main.sml | 
 	$(MLKIT_BUILD) -o $@ build/rune-mlkit.mlb
 
 bin/rune-mlkit: bin/rune-mlkit.bin Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/rune-mlkit.bin" --lib "$$d/../lib" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "$$d/rune-mlkit.bin" --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
 
 # ---------------------------------------------------------------- runedoc
@@ -861,6 +864,32 @@ check-units: $(RUNE) bin/rune-boot bin/runevm bin/runevm-stack
 	cmp bin/rune.rbc bin/rune.stage2.units.rbc
 	@echo "check-units: the compiler compiled in units compiles itself to bin/rune.rbc"
 
+# rune-repl (docs/repl.md): the compiler and the REPL, compiled a unit per
+# file into bin/rune-repl.units (their units in order, and the sources they
+# came from), and loaded unit by unit by bin/rune-repl.load.rbc, so that the
+# REPL and what it compiles share one Basis Library (incremental roadmap, M4)
+REPL_SRCS := build/config.sml $(SOURCES) src/repl/show.sml src/repl/session.sml src/repl/repl.sml src/main/repl-main.sml
+bin/rune-repl.units/units: bin/rune-boot $(REPL_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
+	rm -rf bin/rune-repl.units
+	bin/rune-boot --units --emit-units bin/rune-repl.units -o bin/rune-repl.rbc $(REPL_SRCS)
+bin/rune-repl.load.rbc: bin/rune-boot src/repl/load.sml lib/basis/MANIFEST
+	bin/rune-boot -o $@ src/repl/load.sml
+# the REPL started once and saved once it has compiled its library again
+# (docs/repl.md): what bin/rune-repl restores, its arguments the files to use
+bin/rune-repl.img: bin/rune-repl.units/units bin/rune-repl.load.rbc bin/runevm
+	bin/runevm --heap-size 67108864 bin/rune-repl.load.rbc bin/rune-repl.units/units --make-image $@ < /dev/null
+bin/rune-repl: bin/rune-repl.img
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size 67108864 --restore "$$d/rune-repl.img" -- "$$@"\n' > $@
+	chmod +x $@
+repl: bin/rune-repl
+
+# The REPL's transcripts, on every mode of the JIT (docs/repl.md)
+test-repl: bin/rune-repl bin/runevm
+	sh tests/repl/run.sh
+	sh tests/repl/run.sh --vm-opts --jit=off --out tests/out/repl-off
+	sh tests/repl/run.sh --vm-opts --jit=all --out tests/out/repl-all
+	sh tests/repl/run.sh --vm-opts "--jit=all --jit-tier=2" --out tests/out/repl-tier2
+
 check-positions: $(RUNE) $(RUNEVM)
 	sh scripts/check-positions.sh -j $(JOBS) --rune $(RUNE_STACK) --vm $(RUNEVM)
 
@@ -994,7 +1023,7 @@ test-native: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm bin/
 	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-native" --gc low-pause --nursery 4096 --gc-stress $(GC_STRESS) --gc-stress-cycles "$$@"\n' > bin/runevm-native-cycles
 	chmod +x bin/runevm-native-cycles
 	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-native-cycles --skip tests/opt-skip.txt --out tests/out/native-cycles
-	sh tests/opt/run-counts.sh -j $(JOBS) $$(for t in tests/lang/*.sml; do echo tests/out/$$(basename $$t .sml).rbc; done)
+	sh tests/opt/run-counts.sh -j $(JOBS) $$(for t in tests/lang/*.sml; do n=$$(basename $$t .sml); grep -q "^$$n " tests/opt-skip.txt || echo tests/out/$$n.rbc; done)
 	RUNE=$(abspath $(RUNE_STACK)) RUNE_MATRIX_BYTECODE="$(ROOT)/tests/out/matrix/rune" \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:opt
 	RUNE_HEAP=$(RUNE_HEAP) sh tests/opt/run-bootstrap.sh
@@ -1117,7 +1146,7 @@ test-register-jit: bin/runevm $(RUNE)
 	  cmp tests/out/register-jit/deeprec-tiered.out tests/lang/rt.deeprec_stack.expected && echo "test-register-jit: nor while tiering up and invalidating"
 
 bin/rune-boot: bin/rune.rbc Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/rune.rbc" --lib "$$d/../lib" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/rune.rbc" --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
 
 bin/rune: bin/rune-boot
@@ -1186,6 +1215,7 @@ check:
 	@$(MAKE) --no-print-directory test-opt
 	@$(MAKE) --no-print-directory test-ir check-levels
 	@$(MAKE) --no-print-directory check-units
+	@$(MAKE) --no-print-directory test-repl
 	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory test-register
 	@$(MAKE) --no-print-directory test-register-jit
@@ -1220,7 +1250,7 @@ install:
 	@if [ "$$(id -u)" -eq 0 ]; then \
 	  echo "install: running as root, installing what is in bin/ as it stands"; \
 	else \
-	  $(MAKE) --no-print-directory $(if $(HOST),vm $(HOST) $(if $(filter smlnj-legacy,$(HOST)),bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy,bin/runedoc-$(HOST) bin/runeopt-$(HOST)) build/librune.a,all); \
+	  $(MAKE) --no-print-directory $(if $(HOST),vm $(HOST) $(if $(filter smlnj-legacy,$(HOST)),bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy,bin/runedoc-$(HOST) bin/runeopt-$(HOST)) build/librune.a,all repl); \
 	fi
 	RUNE_HEAP=$(RUNE_HEAP) SMLNJ=$(SMLNJ) sh scripts/install.sh $(INSTALL_FLAGS)
 

@@ -73,7 +73,9 @@ AsmLabel *jit_landing(Jit *j, uint32_t pc);
 Site *jit_site(Jit *j, int kind, uint32_t pc);
 
 /* the helpers native code calls */
-int jit_h_prim(VM *vm, int prim, int32_t d, const uint8_t *L);
+/* the primitives' helpers are given where in the code their operands are,
+   not their address: a unit loaded may move the code (jit.c, jit_grow) */
+int jit_h_prim(VM *vm, int prim, int32_t d, uint32_t at);
 Obj *jit_h_alloc(VM *vm, int kind, int contag, uint32_t n);
 void jit_h_setenv(VM *vm, int32_t c, int32_t e, int32_t v);
 int jit_h_ret(VM *vm, int32_t s);
@@ -86,7 +88,8 @@ const void *jit_h_call(VM *vm, int32_t a, int32_t b, const void *after);
 const void *jit_h_tailcall(VM *vm, int32_t a, int32_t b);
 void jit_h_push_handler(VM *vm, int32_t pc, const void *native);
 const void *jit_h_raise(VM *vm, int32_t s);
-int jit_h_primpush(VM *vm, int prim, const uint8_t *L);
+const void *jit_h_interrupt(VM *vm);
+int jit_h_primpush(VM *vm, int prim, uint32_t at);
 /* helpers that touch no state of the VM (no allocation, no raise, nothing
    moved), so that the code calls them with nothing synced or reloaded
    (M7): the VM is their first argument all the same, unused */

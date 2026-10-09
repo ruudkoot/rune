@@ -162,7 +162,10 @@ sig
      stacks, the counters, and the files it has open, which are opened again
      by name and put back where they were left. What belongs to the process
      rather than to the program is not: a socket, a directory stream and a
-     pipe are the system's, and a restored world does not have them.
+     pipe are the system's, and a restored world does not have them. Nor is
+     what the program read ahead of its standard input and has not taken:
+     `TextIO.stdIn` in the restored world reads that world's standard input
+     from where it begins.
 
      Raises: `OS.SysErr` if the image cannot be written. *)
   val save : string -> world
@@ -220,6 +223,46 @@ sig
      Raises: `IO.Io` if the file cannot be read, and `Fail` as `link`
      does. *)
   val load : string -> unit -> unit
+
+  (* `catchInterrupt ()` makes Ctrl-C, the user's interrupt, raise
+     `SML90.Interrupt` in the program from now on rather than end it.
+
+     It is true; it is false where the system has no interrupt to catch,
+     and the program goes on as before. The exception is raised where the
+     program next jumps back, as a loop does, or calls a function, or in a
+     read from a terminal that the interrupt cuts short, as a `raise` there
+     would raise it: the handlers, the frames and `trace` are what they
+     would be. A primitive that is running finishes first. The interrupt is
+     caught even where the program was started with it ignored, as a shell
+     starts one in the background, and a world started from an image that
+     `save` wrote catches it as the program that saved it did.
+
+     Implementation: `RUNTIME.catchInterrupt/polled`. The VM looks at the
+     interrupt at a jump back and at a call, in the interpreters and in the
+     code the JIT makes; the code of `runeopt` does not, and an interrupt
+     never comes to it. *)
+  val catchInterrupt : unit -> bool
+
+  (* `maskInterrupt b` says whether an interrupt waits rather than being
+     raised, and is what it said before.
+
+     From `maskInterrupt true` on, one waits until `maskInterrupt false`,
+     which raises it, if one came, as it returns. A section that an
+     interrupt must not cut in two is
+
+         let val was = maskInterrupt true
+         in (f () before ignore (maskInterrupt was))
+            handle e => (ignore (maskInterrupt was); raise e)
+         end
+
+     The mask is off when a program starts, and a world started from an
+     image has the mask its program had.
+
+     Raises: `SML90.Interrupt`, from `maskInterrupt false`, where one
+     waited.
+
+     Example: `maskInterrupt (maskInterrupt true) = true` *)
+  val maskInterrupt : bool -> bool
 
   (* The version of Rune that this program is running on, as
      `runevm --version` prints it.

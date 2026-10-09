@@ -262,6 +262,23 @@ struct
                      fn IO.Io _ => true | _ => false,
                      fn () => Runtime.load "no-such-unit-here.rbu")
 
+  (* ---- the interrupt
+
+     Only what needs no interrupt to come: one is the system's to send, and
+     tests/lang/rt.interrupt_self sends itself one, and tests/repl one to
+     the REPL. With nothing waiting, the mask goes on and off and says what
+     it was. *)
+
+  val () = T.check ("Runtime.catchInterrupt/caught-where-the-system-has-one",
+                    fn () => Runtime.catchInterrupt ())
+  val () = T.check ("Runtime.maskInterrupt/gives-back-what-it-was",
+                    fn () =>
+                      let val a = Runtime.maskInterrupt true
+                          val b = Runtime.maskInterrupt a
+                      in b andalso not a end)
+  val () = T.check ("Runtime.maskInterrupt/with-nothing-waiting-raises-nothing",
+                    fn () => (ignore (Runtime.maskInterrupt true); Runtime.maskInterrupt false))
+
   (* ---- version *)
 
   val () = T.check ("Runtime.version/is-a-word",

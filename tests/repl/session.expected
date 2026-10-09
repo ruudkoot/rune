@@ -1,0 +1,7 @@
+- = = = val x = 42 : int
+- datatype t = A | B of int
+- val f = fn : int -> t
+- val r = ref [1, 2] : int list ref
+- val w = Saved : world
+- val y = "after the save" : string
+- 

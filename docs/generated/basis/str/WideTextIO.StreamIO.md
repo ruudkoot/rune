@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: it matches no signature of the library |
 | Status | required |
-| Members | 47 |
+| Members | 48 |
 | Tests | 114 checks |
 | Source | [lib/basis/widetextio.sml](../../../../lib/basis/widetextio.sml) |
 
@@ -55,6 +55,7 @@ The types are this structure's own.
 | val | `inputLine` | `instream -> (WideCharVector.vector * instream) option` |
 | val | `inputN` | `instream * int -> WideCharVector.vector * instream` |
 | val | `ioError` | `string * string * exn -> 'a` |
+| val | `isInterrupt` | `exn -> bool` |
 | val | `mkInstream` | `WideTextPrimIO.reader * WideCharVector.vector -> instream` |
 | val | `mkOutstream` | `WideTextPrimIO.writer * IO.buffer_mode -> outstream` |
 | val | `mkOutstreamOver` | `WideTextPrimIO.writer * IO.buffer_mode * {flush : unit -> unit, write : WideCharVector.vector -> unit} -> outstream` |
