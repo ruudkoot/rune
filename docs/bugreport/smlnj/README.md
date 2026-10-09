@@ -252,3 +252,11 @@ checks compute before they compare.
 | Report | 110.99.9 and 2026.2 | with the fix | Upstream |
 |---|---|---|---|
 | [Array2/Overflow-not-Subscript](Array2/Overflow-not-Subscript/BUGREPORT.md): `Overflow` instead of `Subscript` for an index or a region near `Int.maxInt` | 6 of 6 | 0 | not reported; the same in smlnj/smlnj `main` |
+
+And one of 2026.2's compiler, found while porting its library
+(`xc2:smlnj-dev`): its new rotations, outside the Basis specification,
+checked against native 2026.2.
+
+| Report | 2026.2 | Upstream |
+|---|---|---|
+| [Word8.rotateL/tagged-words](Word8.rotateL/tagged-words/BUGREPORT.md): `rotateL` and `rotateR` of `Word8`, `Word32` and `Word` fill the bits rotated in with the top bit | 6 of 7 | fixed by smlnj/smlnj `d6f6888` (2026-09-23), for 2026.3; nothing to send |
