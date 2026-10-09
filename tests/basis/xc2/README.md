@@ -47,12 +47,13 @@ What the runs have shown (2026-10-09):
   MLton and Poly/ML reject that code.
 * **Rune's machine.** All four run on `bin/runevm`, the JIT included. Before
   `--default-type`, `xc2:mlton` ran on `bin/runevm-int64`, the build of the
-  machine whose `int` and `word` keep 64 bits, and its JIT's tier 2 went
-  wrong on MLton's library there: compiling only the closure
-  `fn f => fn x => ...` of `make` in `integer/embed-int.sml` at tier 2
-  made the program of `mono.real` hang, and with all of tier 2 it stopped
-  in `word64_from_word` on a value of the wrong type, where the
-  interpreter, tier 1 and `--jit=all` ran it (2026-10-09, not fixed).
+  machine whose `int` and `word` keep 64 bits, and found a bug of its JIT's
+  tier 2 there: a home that holds a word past 63 bits holds its box's
+  address, and where C keeps the home's register the code after a
+  collection read the box where it had been. MLton's `toBits`
+  (`real/real.sml`) on a negative real stopped in `word64_from_word` on a
+  value of the wrong type. Fixed in `runtime/register/jit/masm.c`
+  (`may_move`), with the test of `make test-int64`.
 * **Rune's limits.** The signature `BASIS_EXTRA` of MLton's library, one
   declaration, needs some 21 million steps of type inference, which is
   why the default of `--type-work` became 50 million.
