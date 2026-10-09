@@ -15,7 +15,7 @@ where `native:HOST` fails a check because of the host's library, `xc2:HOST`
 fails it too, and a check that fails in one and not in the other is a
 difference between the compilers (or a defect of the shim below). So the
 configuration tests Rune's compiler on another implementation's SML, as the
-test programs use it. There are four:
+test programs use it. There are five:
 
 * `xc2:mlton`: MLton's library (`lib/mlton/sml/basis` of the host), some
   37,000 lines in 387 files.
@@ -23,6 +23,8 @@ test programs use it. There are four:
 * `xc2:smlnj-legacy`: SML/NJ 110.99.9's (`system/Basis` of the release, and
   the part of `system/smlnj/init` that is not the compiler's primitives),
   some 26,000 lines in 265 files.
+* `xc2:smlnj-dev`: SML/NJ 2026.2's, made as 110.99.9's is, some 26,000
+  lines in 263 files.
 * `xc2:polyml`: Poly/ML's (`basis` of its source release), some 20,000
   lines in 84 files.
 
@@ -33,11 +35,12 @@ compiler, and `native` that the *tests* are not a misreading of the
 specification. Neither puts Rune's *compiler* in front of a large body of
 SML written by other people to another compiler's habits: that is what
 `xc2` is for, and why it is worth having although nobody will run MLton's
-Basis Library on Rune's machine. The four libraries are some 108,000 lines.
+Basis Library on Rune's machine. The five libraries are some 134,000 lines,
+most of SML/NJ's two the same.
 
 What the runs have shown (2026-10-09):
 
-* **Rune's compiler.** No failure in the four configurations is Rune's.
+* **Rune's compiler.** No failure in the five configurations is Rune's.
   Each is explained by a line about the host's library (a `native:HOST` or
   `*:HOST` line, which holds for `xc2:HOST` too) or by one of six lines of
   `xc2`'s own, all bugs of the host's library that only `xc2` reaches
@@ -45,7 +48,7 @@ What the runs have shown (2026-10-09):
   and `docs/bugreport`). One suspected difference, the scope of an explicit
   type variable in MLKit's `TableSlice`, turned out to be MLKit's: Rune,
   MLton and Poly/ML reject that code.
-* **Rune's machine.** All four run on `bin/runevm`, the JIT included. Before
+* **Rune's machine.** All five run on `bin/runevm`, the JIT included. Before
   `--default-type`, `xc2:mlton` ran on `bin/runevm-int64`, the build of the
   machine whose `int` and `word` keep 64 bits, and found a bug of its JIT's
   tier 2 there: a home that holds a word past 63 bits holds its box's
@@ -94,17 +97,20 @@ What it does not check:
 
 ```
 make hosts                    # the hosts, with the sources of their libraries
-sh tests/basis/run-matrix.sh -j 12 --configs xc2              # all four
+sh tests/basis/run-matrix.sh -j 12 --configs xc2              # all five
 sh tests/basis/run-matrix.sh -j 12 --configs xc2:polyml real  # one, tests named *real*
 ```
 
 `scripts/fetch-hosts.sh` keeps what the generators read: MLton's and
-MLKit's libraries are in their installations, SML/NJ's `system.tgz` is
-unpacked into its installation's `system`, and Poly/ML's `basis` is kept
-from its source release. A run of the four on 12 job slots took 18
-minutes on 2026-10-09, two thirds of it `xc2:mlton`, whose programs each
-compile MLton's whole library; most of the rest is the halving of tests
-whose sections do not all load. The results are in
+MLKit's libraries are in their installations, SML/NJ 110.99.9's
+`system.tgz` is unpacked into its installation's `system`, 2026.2's
+`system/Basis` and `system/smlnj/init` are kept there from the source
+tarball it is built from, and Poly/ML's `basis` is kept from its source
+release. A run of the four other than `xc2:smlnj-dev` on 12 job slots
+took 18 minutes on 2026-10-09, two thirds of it `xc2:mlton`, whose
+programs each compile MLton's whole library; most of the rest is the
+halving of tests whose sections do not all load. `xc2:smlnj-dev` alone
+is some 1,000 s of work, as `xc2:smlnj-legacy` is. The results are in
 `tests/out/matrix/report.md`, one directory per configuration beside it.
 `xc2` is not part of `make check`, nor of `make matrix` (`--configs all`): run it
 after a change to the compiler's back end, the JIT, the collector or the
@@ -305,6 +311,34 @@ What differs from SML/NJ, and why:
   the size of a terminal's window (`Posix.TTY.getWindowSz` gives `NONE`):
   their C functions raise, or answer as a system without them would.
 
+## xc2:smlnj-dev
+
+SML/NJ 2026.2's library is made as 110.99.9's: `smlnj-dev/gen.sh` runs
+`smlnj-legacy/gen.sh` with `XC2_SMLNJ_PORT=smlnj-dev`, which takes the
+installation of 2026.2, its `sml` for the order of CM and its `system`
+for the sources, and uses the patch of `smlnj-dev` and the rest of
+`smlnj-legacy`. 25 of the files of `system/Basis` differ from 110.99.9's,
+5 are new, and 5 of `smlnj/init` differ, but none of that reaches the
+shim except `InlineT`:
+
+* **`smlnj-dev/basis.patch`** is 110.99.9's applied to 2026.2's sources.
+  All of it applied but one hunk of `char.sml`, which 2026.2 had changed
+  around it; it was made again by hand.
+* **`smlnj-dev/more-inline.sml`** extends `smlnj-legacy/inline.sml` with
+  what 2026.2's `InlineT` adds: `ptrEq`, `ptrNeq`, `Int63`, and for
+  `Word`, `Word8`, `Word32` and `Word64` the operations by which the
+  library makes those of its `WORD_2026` (`rotateL`, `countOnes`,
+  `ceilLog2`, ...), outside the Basis specification and so untested by the
+  suite. They are made of a word's bits in a `Word64.word`, with the
+  results SML/NJ's compiler gives them (`ceilLog2 0w0` is 63, or 64 for a
+  `Word64.word`). Checked against native 2026.2 on a few values, they
+  showed a bug of its compiler: the rotations of the words it keeps
+  tagged fill the bits rotated in with the top bit
+  (`docs/bugreport/smlnj/Word8.rotateL/tagged-words`, fixed for 2026.3).
+
+It fails the same 691 checks as `xc2:smlnj-legacy`, explained by the
+same lines.
+
 ## xc2:polyml
 
 `polyml/gen.sh OUTDIR POLYML` takes Poly/ML's installation, whose `basis`
@@ -331,8 +365,8 @@ generated stubs raise for the rest.
 Poly/ML's library is written against its compiler's representations more
 than the others are: 63 of its files call `RunCall`, it casts with
 `RunCall.unsafeCast` some 150 times, and it builds strings, vectors and
-`IntInf`s in raw memory. So the patch (33 files) is the largest of the
-four:
+`IntInf`s in raw memory. So the patch (33 files, some 1,600 changed lines)
+is the largest:
 
 * **Casts.** Each `RunCall.unsafeCast` is replaced by the conversion its
   types call for (`XC2P.wordToInt`, `XC2P.largeToFixed`, ...), which
@@ -380,24 +414,24 @@ defect of the shim or of Rune's compiler.
   representation of `int`, `word`, `Int64.int`, `Word64.word` and
   `LargeWord.word`, the names of the structures of `lib/basis` that
   `trim-lib.sh` keeps, and the compiler's options. A change there can break
-  all four: making `int` and `word` 63 bits, with `Int64.int`, `Word64.word`
+  all five: making `int` and `word` 63 bits, with `Int64.int`, `Word64.word`
   and `LargeWord.word` types of their own (heap-layout M5), took some 250
   changed lines across the shims and patches. A change to Rune's Basis
   Library or to the specification does not reach them.
 * **The hosts' versions.** Each patch is of one release: MLton 20241230,
-  MLKit 4.7.23, SML/NJ 110.99.9 and Poly/ML 5.9.2. A new release means
-  applying the patch again and fixing what does not apply. SML/NJ 2026.2,
-  the host `smlnj-dev`, has no `xc2` configuration: against 110.99.9, 25 of
-  the files of `system/Basis` differ and 5 are new (`WORD` gains
-  `rotateL`, `countOnes`, `ceilLog2` and others), and 5 of `smlnj/init`,
-  which the shim stands in for, differ.
+  MLKit 4.7.23, SML/NJ 110.99.9 and 2026.2, and Poly/ML 5.9.2. A new
+  release means applying the patch again and fixing what does not apply.
+  For SML/NJ 2026.2 that was one hunk, and a file for what its `InlineT`
+  adds (`xc2:smlnj-dev`, above).
 * **Working on a patch.** Each `gen.sh` takes a directory with the patch
   already applied instead of applying it (`XC2_MLTON_BASIS`,
   `XC2_SMLNJ_BASIS`, `XC2_POLYML_BASIS`): keep the release's sources in
   `a/` and a patched copy in `b/`, edit `b/`, and write the patch again
   with `diff -ruN a b`, dropping the dates of the `---` and `+++` lines.
-* **Its size.** Some 5,600 lines of generators and shims, and patches that
-  change some 3,000 lines of 112 files of the hosts' libraries.
+* **Its size.** Some 5,700 lines of generators and shims, and patches that
+  change some 3,500 lines of 149 files of the hosts' libraries, of which
+  2026.2's, 580 lines of 37 files, is 110.99.9's again: a change to one
+  of SML/NJ's two patches is usually wanted in the other.
 * **Before it was built.** `tests/external/probe-host-basis.sh` gives every
   file of a host's library to the compiler alone and counts how far each
   gets. On 2026-09-21, before `xc2` existed, 201 of MLton's 206 files

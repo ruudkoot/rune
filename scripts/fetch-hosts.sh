@@ -25,6 +25,8 @@
 #    110.99.9, and the value is fixed when the heap is made, so the Rune
 #    build of this host compiles through a tree of symlinks
 #    (scripts/smlnj-dev-root.sh) and does not share those directories.
+#    The sources of its library (system/Basis and system/smlnj/init) are
+#    kept in its installation, for the xc2:smlnj-dev configuration.
 #  * Poly/ML: built from the source release with ./configure && make (from a
 #    clone of the release's tag where the archive cannot be downloaded), and
 #    beside it the sources of its library.
@@ -169,15 +171,20 @@ smlnj_system() {
 }
 install_smlnj32() { install_smlnj_bits smlnj32 32; }
 
+# smlnj_dev_arch: the name of SML/NJ's architecture of this machine
+smlnj_dev_arch() {
+  case "$(uname -m)" in
+    x86_64) echo amd64 ;;
+    aarch64|arm64) echo arm64 ;;
+    *) return 1 ;;
+  esac
+}
 # install_smlnj_dev: SML/NJ SMLNJ_DEV_VERSION, the development line.
 install_smlnj_dev() {
   v=$SMLNJ_DEV_VERSION
-  if installed smlnj-dev "$v"; then echo "smlnj-dev $v is already installed"; return; fi
-  case "$(uname -m)" in
-    x86_64) arch=amd64 ;;
-    aarch64|arm64) arch=arm64 ;;
-    *) echo "fetch-hosts: SML/NJ $v has no Unix build for $(uname -m) (amd64 and arm64 only)" >&2; return 1 ;;
-  esac
+  if installed smlnj-dev "$v"; then echo "smlnj-dev $v is already installed"; smlnj_dev_system; return; fi
+  arch=$(smlnj_dev_arch) ||
+    { echo "fetch-hosts: SML/NJ $v has no Unix build for $(uname -m) (amd64 and arm64 only)" >&2; return 1; }
   name=smlnj-$arch-unix-$v
   fetch "https://smlnj.org/dist/working/$v/$name.tgz" "$prefix/src/$name.tgz" || return 1
   rm -rf "$prefix/smlnj-dev-$v" "$prefix/src/smlnj-dev-$v"
@@ -190,6 +197,26 @@ install_smlnj_dev() {
     { echo "fetch-hosts: building SML/NJ $v failed; see $prefix/src/smlnj-dev-$v.log" >&2; return 1; }
   rm -rf "$prefix/src/smlnj-dev-$v"
   activate smlnj-dev "$v"
+  smlnj_dev_system
+}
+# smlnj_dev_system: the sources of the library of SML/NJ SMLNJ_DEV_VERSION
+# (system/Basis and system/smlnj/init of the tarball, which the build
+# leaves out of the installation) in its system directory, for the
+# xc2:smlnj-dev configuration of the Basis matrix (tests/basis/xc2).
+smlnj_dev_system() {
+  v=$SMLNJ_DEV_VERSION
+  d=$prefix/smlnj-dev-$v
+  [ -f "$d/system/Basis/basis.cm" ] && return 0
+  arch=$(smlnj_dev_arch) || return 1
+  name=smlnj-$arch-unix-$v
+  [ -f "$prefix/src/$name.tgz" ] || fetch "https://smlnj.org/dist/working/$v/$name.tgz" "$prefix/src/$name.tgz" || return 1
+  rm -rf "$prefix/src/smlnj-dev-$v-system"
+  mkdir -p "$prefix/src/smlnj-dev-$v-system"
+  tar -xzf "$prefix/src/$name.tgz" -C "$prefix/src/smlnj-dev-$v-system" smlnj/system/Basis smlnj/system/smlnj/init || return 1
+  mkdir -p "$d/system/smlnj"
+  cp -R "$prefix/src/smlnj-dev-$v-system/smlnj/system/Basis" "$d/system/Basis" &&
+    cp -R "$prefix/src/smlnj-dev-$v-system/smlnj/system/smlnj/init" "$d/system/smlnj/init" &&
+    rm -rf "$prefix/src/smlnj-dev-$v-system"
 }
 
 install_polyml_build() {

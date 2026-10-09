@@ -111,7 +111,8 @@ the others are from [performance.md](performance.md).
     MLton's extensions) and the harness of `rune-corpus-sml97`, about 1,800
     lines, which is at its first milestone.
   * Apart from the Basis libraries of MLton, MLKit, SML/NJ and Poly/ML
-    (xc2, some 108,000 lines), no large codebase written by others (smlnj-lib, cmlib,
+    (xc2, some 108,000 lines, and SML/NJ 2026.2's, mostly 110.99.9's
+    again), no large codebase written by others (smlnj-lib, cmlib,
     MLton's own sources, HOL4) has been built with Rune. How Rune behaves
     at that size, in its bugs and in its speed, is not known.
   * There is no `.github/` directory. Every check runs by hand on one

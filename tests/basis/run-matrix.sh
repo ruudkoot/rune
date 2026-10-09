@@ -39,15 +39,16 @@
 #   xc1:mlton  xc1:smlnj-legacy  xc1:smlnj32  xc1:smlnj-dev  xc1:polyml  xc1:mlkit
 #                          the suite against Rune's Basis Library (lib/basis)
 #                          compiled by the host; see below
-#   xc2:mlton  xc2:mlkit  xc2:smlnj-legacy  xc2:polyml
+#   xc2:mlton  xc2:mlkit  xc2:smlnj-legacy  xc2:smlnj-dev  xc2:polyml
 #                          the suite against the Basis Library of MLton, MLKit,
-#                          SML/NJ or Poly/ML compiled by bin/rune and run by
-#                          bin/runevm: the library's sources, its primitives
-#                          and C functions made of Rune's
-#                          (tests/basis/xc2/README.md)
+#                          SML/NJ (110.99.9 or 2026.2) or Poly/ML compiled by
+#                          bin/rune and run by bin/runevm: the library's
+#                          sources, its primitives and C functions made of
+#                          Rune's (tests/basis/xc2/README.md)
 #   hosts                  native:HOST for the six hosts
 #   xc1                    xc1:HOST for the six hosts
-#   xc2                    xc2:mlton, xc2:mlkit, xc2:smlnj-legacy and xc2:polyml
+#   xc2                    xc2:mlton, xc2:mlkit, xc2:smlnj-legacy,
+#                          xc2:smlnj-dev and xc2:polyml
 #   all                    rune, hosts and xc1 (not windows)
 # The hosts are the releases scripts/fetch-hosts.sh installed under
 # ${RUNE_HOSTS:-$HOME/.local/rune-hosts} (`make hosts`): MLton, SML/NJ 110.99.9
@@ -1075,7 +1076,7 @@ expand() {
     case "$c" in
       hosts) echo native:mlton native:smlnj-legacy native:smlnj32 native:smlnj-dev native:polyml native:mlkit ;;
       xc1) echo xc1:mlton xc1:smlnj-legacy xc1:smlnj32 xc1:smlnj-dev xc1:polyml xc1:mlkit ;;
-      xc2) echo xc2:mlton xc2:mlkit xc2:smlnj-legacy xc2:polyml ;;
+      xc2) echo xc2:mlton xc2:mlkit xc2:smlnj-legacy xc2:smlnj-dev xc2:polyml ;;
       all) echo rune; expand hosts,xc1 ;;
       windows) echo rune:windows rune:windows32 rune:windows-new rune:windows32-new ;;
       portability) echo rune:linux32 rune:ppc64 rune:linux32-new rune:ppc64-new rune:aarch64-new ;;
@@ -1209,6 +1210,16 @@ resolve() {
       smlnj=${SMLNJ:-$hosts_prefix/smlnj-legacy/bin/sml}
       version=$("$smlnj" @SMLversion 2> /dev/null | sed -n '1s/^sml \([0-9][0-9.]*\).*/\1/p')
       # the sixth field of the configuration: SML/NJ's installation
+      extra=$(cd "$(dirname "$smlnj")/.." 2> /dev/null && pwd)
+      ;;
+    xc2:smlnj-dev)
+      # The same with SML/NJ 2026.2's library: the sml of the hosts' smlnj-dev,
+      # and the sources beside it
+      cmd1=${RUNE:-$root/bin/rune}
+      cmd2=${RUNEVM:-$root/bin/runevm}
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make)" >&2; return 1; }
+      smlnj=${SMLNJ_DEV:-$hosts_prefix/smlnj-dev/bin/sml}
+      version=$("$smlnj" @SMLversion 2> /dev/null | sed -n '1{s/^sml //;s/^\([0-9][0-9.]*\).*/\1/p;}')
       extra=$(cd "$(dirname "$smlnj")/.." 2> /dev/null && pwd)
       ;;
     xc2:polyml)

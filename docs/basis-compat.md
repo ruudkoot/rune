@@ -47,7 +47,8 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
   portable Standard ML, that its `_prim` annotations agree with
   `runtime/prims.def`, and that its code is right independently of Rune's compiler
   and VM.
-* `xc2:mlton`, `xc2:mlkit`, `xc2:smlnj-legacy` and `xc2:polyml`: the suite
+* `xc2:mlton`, `xc2:mlkit`, `xc2:smlnj-legacy`, `xc2:smlnj-dev` and
+  `xc2:polyml`: the suite
   on the host's own library compiled by Rune, with the host's primitives
   and runtime made of Rune's. How, what it checks and what it has shown are
   in [tests/basis/xc2/README.md](../tests/basis/xc2/README.md); here it
@@ -89,15 +90,17 @@ needs.
 | `xc2:mlton@20241230` | 138,668 | 138,072 | 596 | 0 | 9 | 0 |
 | `xc2:mlkit@4.7.23` | 116,568 | 115,602 | 966 | 0 | 44 | 0 |
 | `xc2:smlnj-legacy@110.99.9` | 62,012 | 61,321 | 691 | 0 | 63 | 0 |
+| `xc2:smlnj-dev@2026.2` | 62,012 | 61,321 | 691 | 0 | 63 | 0 |
 | `xc2:polyml@5.9.2` | 68,572 | 67,901 | 671 | 0 | 53 | 0 |
 
-The `xc2` rows are of a run of those four configurations alone, on
-2026-10-09 (under WSL2). `xc2:mlkit` runs more checks than
+The `xc2` rows are of a run of those configurations alone, on
+2026-10-09 (under WSL2), `xc2:smlnj-dev` on its own. `xc2:mlkit` runs more checks than
 `native:mlkit`: MLKit's compiler cannot load `posix_procenv` and
-`posix_sysdb`, which Rune compiles; `xc2:smlnj-legacy` runs more than
-`native:smlnj-legacy`, whose runtime ends in the sections of `array2` and
-`string` that its library's bugs with regions near `Int.maxInt` or
-without elements lead to.
+`posix_sysdb`, which Rune compiles; `xc2:smlnj-legacy` and `xc2:smlnj-dev`
+run more than their `native` configurations, whose runtime ends in the
+sections of `array2` and `string` that the library's bugs with regions
+near `Int.maxInt` or without elements lead to. The two SML/NJ libraries
+fail the same checks on Rune.
 
 On Rune every check passes. The `xc1` configurations skip the 11 checks of
 `INet6Sock` that open a socket, which the shim declines, and fail the checks
@@ -414,10 +417,11 @@ documentation has every line under the member it is about, in a block
     where it means the remainder (`posix_procenv`, which MLKit's compiler
     does not load;
     [bugreport/mlkit/Posix.ProcEnv.time](bugreport/mlkit/Posix.ProcEnv.time/one-billion-seconds/BUGREPORT.md)).
-  * SML/NJ 110.99.9: the check of `String.extract (s, i, SOME j)` adds `i`
-    and `j` without checking for `Overflow`, so near `Int.maxInt` the sum
-    wraps round, the region passes and a string of `j` characters is asked
-    for (natively the system fails to allocate it;
+  * SML/NJ 110.99.9 and 2026.2: the check of
+    `String.extract (s, i, SOME j)` adds `i` and `j` without checking for
+    `Overflow`, so near `Int.maxInt` the sum wraps round, the region passes
+    and a string of `j` characters is asked for (natively the system fails
+    to allocate it;
     [bugreport/smlnj/String.extract](bugreport/smlnj/String.extract/overflow-near-maxInt/BUGREPORT.md)).
     `Array2.array (r, c, x)` with `r` or `c` zero has the dimensions (0, 0),
     and a traversal of a region without rows or columns applies its
