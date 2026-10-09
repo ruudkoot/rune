@@ -2,10 +2,11 @@
    MLton's compiler gives MLton's Basis Library, made of Rune's. It is
    compiled after Rune's library and before the shim and MLton's sources.
 
-   MLton's primitive types are Rune's: int8 to int64 are Int8.int to
-   Int64.int (Int64.int is int), word8 to word64 likewise, real32 and real64
-   Real32.real and real; a type of another width is kept in the next of
-   these. char8 is char and char16 and char32 WideChar.char. MLton's string
+   MLton's primitive types are Rune's: int8, int16, int32 and int64 are
+   Int8.int to Int64.int, word8 to word64 likewise, real32 and real64
+   Real32.real and real; a type of another width up to 32 is kept in the
+   next of these, and one from 33 to 63 in Rune's int or word, of 63 bits.
+   A C pointer is a Word64.word, as C_Pointer.t is. char8 is char and char16 and char32 WideChar.char. MLton's string
    is a vector of char8, Rune's is not: String8.string is Rune's string and
    tests/basis/xc2/mlton/basis.patch makes MLton's text structures build it
    so. *)
@@ -32,7 +33,7 @@ type int45 = int type int46 = int type int47 = int type int48 = int
 type int49 = int type int50 = int type int51 = int type int52 = int
 type int53 = int type int54 = int type int55 = int type int56 = int
 type int57 = int type int58 = int type int59 = int type int60 = int
-type int61 = int type int62 = int type int63 = int type int64 = int
+type int61 = int type int62 = int type int63 = int type int64 = Int64.int
 type word1 = Word8.word type word2 = Word8.word type word3 = Word8.word
 type word4 = Word8.word type word5 = Word8.word type word6 = Word8.word
 type word7 = Word8.word type word8 = Word8.word
@@ -52,11 +53,11 @@ type word45 = word type word46 = word type word47 = word type word48 = word
 type word49 = word type word50 = word type word51 = word type word52 = word
 type word53 = word type word54 = word type word55 = word type word56 = word
 type word57 = word type word58 = word type word59 = word type word60 = word
-type word61 = word type word62 = word type word63 = word type word64 = word
+type word61 = word type word62 = word type word63 = word type word64 = Word64.word
 type intInf = IntInf.int
 type real32 = Real32.real
 type real64 = real
-type cpointer = word
+type cpointer = Word64.word
 type thread = unit ref
 type 'a weak = 'a option ref
 type 'a array = 'a XC2.array

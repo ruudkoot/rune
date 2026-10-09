@@ -10,6 +10,15 @@
    such a name its type (Word8_add__int_x_int_to_int), and prims.sml makes it
    of the structures below, one for each of MLton's integer types. *)
 
+(* An index or a size of MLton's (SeqIndex.int, C_Ptrdiff.t, ...), an
+   Int64.int, as Rune's int: one that Rune's int cannot hold is out of
+   range, as an array of Rune's says. *)
+structure XC2Index =
+struct
+  fun index (i : Int64.int) = Int64.toInt i handle Overflow => raise Subscript
+  fun size (n : Int64.int) = Int64.toInt n handle Overflow => raise Size
+end
+
 (* ---- MLton's string types, Rune's string and WideString.string, which
    MLton's library takes for vectors of their characters ---- *)
 functor XC2StringOps (type char
@@ -18,8 +27,9 @@ functor XC2StringOps (type char
                       val sub : string * int -> char
                       val tabulate : int * (int -> char) -> string) =
 struct
-  val length = size
-  val subUnsafe = sub
+  (* an index, MLton's SeqIndex.int, is an Int64.int *)
+  fun length s = Int64.fromInt (size s)
+  fun subUnsafe (s, i) = sub (s, XC2Index.index i)
   fun fromVector (v : char vector) : string =
     tabulate (Vector.length v, fn i => Vector.sub (v, i))
   fun toVector (s : string) : char vector =
@@ -28,7 +38,8 @@ struct
     tabulate (XC2.Array.length a, fn i => XC2.Array.sub (a, i))
   (* copyUnsafe (dst, di, src, si, len): src[si, si + len) to dst[di, ...) *)
   fun copyUnsafe (dst : char XC2.array, di, src : string, si, len) =
-    let fun loop k = if k >= len then () else (XC2.Array.update (dst, di + k, sub (src, si + k)); loop (k + 1))
+    let val (di, si, len) = (XC2Index.index di, XC2Index.index si, XC2Index.index len)
+        fun loop k = if k >= len then () else (XC2.Array.update (dst, di + k, sub (src, si + k)); loop (k + 1))
     in loop 0 end
 end
 structure XC2String8 = XC2StringOps (type char = char type string = string
@@ -38,68 +49,67 @@ structure XC2String32 = XC2StringOps (type char = WideChar.char type string = Wi
                                       val size = WideString.size val sub = WideString.sub
                                       val tabulate = WideCharVector.tabulate)
 
-(* ---- MLton's integer types: their bits ---- *)
+(* ---- MLton's integer types: their bits ----
+   The library is built for a 64-bit int and word (gen.sh), and the
+   programs are compiled with --default-type=int64 and word64: MLton's
+   int64 and word64 are Rune's Int64.int and Word64.word, and the bits of
+   any of its integer types are kept in a Word64.word. *)
 
 (* One of MLton's integer or character types of WIDTH bits, kept in a type
-   of Rune's: the operations on it are those on its bits, in a word. *)
+   of Rune's: the operations on it are those on its bits. *)
 signature XC2_FIXED =
 sig
   type t
   val width : int
   (* the WIDTH bits of x, zero-extended *)
-  val bits : t -> word
+  val bits : t -> Word64.word
   (* the WIDTH bits of x, sign-extended *)
-  val sbits : t -> word
+  val sbits : t -> Word64.word
   (* the value of the low WIDTH bits of w *)
-  val fromBits : word -> t
+  val fromBits : Word64.word -> t
 end
 
 structure XC2Bits =
 struct
-  fun mask width = if width >= 64 then Word.notb 0w0 else Word.<< (0w1, Word.fromInt width) - 0w1
-  fun low (width, w) = Word.andb (w, mask width)
+  val toInt64 = _prim "word64_to_int64" : Word64.word -> Int64.int
+  val fromInt64 = _prim "word64_from_int64" : Int64.int -> Word64.word
+  fun mask width : Word64.word =
+    if width >= 64 then Word64.notb 0w0 else Word64.<< (0w1, Word.fromInt width) - 0w1
+  fun low (width, w) = Word64.andb (w, mask width)
   (* w, its low WIDTH bits, sign-extended *)
   fun sext (width, w) =
     if width >= 64 then w
     else
       let val w = low (width, w)
-      in if Word.andb (w, Word.<< (0w1, Word.fromInt (width - 1))) = 0w0 then w
-         else Word.orb (w, Word.notb (mask width))
+      in if Word64.andb (w, Word64.<< (0w1, Word.fromInt (width - 1))) = 0w0 then w
+         else Word64.orb (w, Word64.notb (mask width))
       end
-end
-
-(* LargeWord.word, Word64.word, is a type apart from word, which has the
-   same 64 bits here (--int-bits=64, gen.sh) *)
-structure XC2Large =
-struct
-  val toWord = _prim "word64_to_word" : Word64.word -> word
-  val fromWord = _prim "word64_from_word" : word -> Word64.word
 end
 
 (* an IntK of Rune's, holding the values of WIDTH <= K bits *)
 functor XC2FixedInt (type int
                      val width : Int.int
-                     val toInt : int -> Int.int
-                     val fromInt : Int.int -> int) : XC2_FIXED =
+                     val toInt64 : int -> Int64.int
+                     val fromInt64 : Int64.int -> int) : XC2_FIXED =
 struct
   type t = int
   val width = width
-  fun sbits x = Word.fromInt (toInt x)
+  fun sbits x = XC2Bits.fromInt64 (toInt64 x)
   fun bits x = XC2Bits.low (width, sbits x)
-  fun fromBits w = fromInt (Word.toIntX (XC2Bits.sext (width, w)))
+  fun fromBits w = fromInt64 (XC2Bits.toInt64 (XC2Bits.sext (width, w)))
 end
 
 (* a WordK of Rune's, holding the values of WIDTH <= K bits *)
 functor XC2FixedWord (type word
                       val width : Int.int
-                      val toLarge : word -> LargeWord.word
-                      val fromLarge : LargeWord.word -> word) : XC2_FIXED =
+                      val toLarge : word -> Word64.word
+                      val fromLarge : Word64.word -> word) : XC2_FIXED =
 struct
   type t = word
   val width = width
-  fun bits x = XC2Large.toWord (toLarge x)
+  fun bits x = toLarge x
   fun sbits x = XC2Bits.sext (width, bits x)
-  fun fromBits w = fromLarge (XC2Large.fromWord (XC2Bits.low (width, w)))
+  fun fromBits w = fromLarge (XC2Bits.low (width, w))
 end
 
 (* WideChar.char, holding the values of WIDTH bits (MLton's char16 and char32) *)
@@ -107,28 +117,31 @@ functor XC2FixedWide (val width : int) : XC2_FIXED =
 struct
   type t = WideChar.char
   val width = width
-  fun bits c = Word.fromInt (WideChar.ord c)
+  fun bits c = Word64.fromInt (WideChar.ord c)
   fun sbits c = XC2Bits.sext (width, bits c)
-  fun fromBits w = WideChar.chr (Word.toInt (XC2Bits.low (width, w)))
+  fun fromBits w = WideChar.chr (Word64.toInt (XC2Bits.low (width, w)))
 end
 
 structure XC2Fixed =
 struct
-  structure I8 = XC2FixedInt (type int = Int8.int val width = 8 val toInt = Int8.toInt val fromInt = Int8.fromInt)
-  structure I16 = XC2FixedInt (type int = Int16.int val width = 16 val toInt = Int16.toInt val fromInt = Int16.fromInt)
-  structure I32 = XC2FixedInt (type int = Int32.int val width = 32 val toInt = Int32.toInt val fromInt = Int32.fromInt)
-  structure I64 = XC2FixedInt (type int = Int.int val width = 64 val toInt = fn x => x val fromInt = fn x => x)
+  structure I8 = XC2FixedInt (type int = Int8.int val width = 8
+                              val toInt64 = Int64.fromInt o Int8.toInt val fromInt64 = Int8.fromInt o Int64.toInt)
+  structure I16 = XC2FixedInt (type int = Int16.int val width = 16
+                               val toInt64 = Int64.fromInt o Int16.toInt val fromInt64 = Int16.fromInt o Int64.toInt)
+  structure I32 = XC2FixedInt (type int = Int32.int val width = 32
+                               val toInt64 = Int64.fromInt o Int32.toInt val fromInt64 = Int32.fromInt o Int64.toInt)
+  structure I64 = XC2FixedInt (type int = Int64.int val width = 64 val toInt64 = fn x => x val fromInt64 = fn x => x)
   structure W8 = XC2FixedWord (type word = Word8.word val width = 8 val toLarge = Word8.toLarge val fromLarge = Word8.fromLarge)
   structure W16 = XC2FixedWord (type word = Word16.word val width = 16 val toLarge = Word16.toLarge val fromLarge = Word16.fromLarge)
   structure W32 = XC2FixedWord (type word = Word32.word val width = 32 val toLarge = Word32.toLarge val fromLarge = Word32.fromLarge)
-  structure W64 = XC2FixedWord (type word = Word.word val width = 64 val toLarge = XC2Large.fromWord val fromLarge = XC2Large.toWord)
+  structure W64 = XC2FixedWord (type word = Word64.word val width = 64 val toLarge = fn x => x val fromLarge = fn x => x)
   structure C8 : XC2_FIXED =
   struct
     type t = char
     val width = 8
-    fun bits c = Word.fromInt (Char.ord c)
+    fun bits c = Word64.fromInt (Char.ord c)
     fun sbits c = XC2Bits.sext (8, bits c)
-    fun fromBits w = Char.chr (Word.toInt (XC2Bits.low (8, w)))
+    fun fromBits w = Char.chr (Word64.toInt (XC2Bits.low (8, w)))
   end
   structure C16 = XC2FixedWide (val width = 16)
   structure C32 = XC2FixedWide (val width = 32)
@@ -140,47 +153,47 @@ functor XC2FixedOps (X : XC2_FIXED) =
 struct
   open X
   (* the signed value of x *)
-  fun sval x = Word.toIntX (sbits x)
+  fun sval x = XC2Bits.toInt64 (sbits x)
   (* whether the integer r fits in WIDTH bits, signed *)
-  fun fits r = XC2Bits.sext (width, Word.fromInt r) = Word.fromInt r
+  fun fits r = XC2Bits.sext (width, XC2Bits.fromInt64 r) = XC2Bits.fromInt64 r
   fun shift (n : Word32.word) = Word.fromLarge (Word32.toLarge n)
 
   fun add (a, b) = fromBits (bits a + bits b)
   fun sub (a, b) = fromBits (bits a - bits b)
   fun neg a = fromBits (0w0 - bits a)
   fun mul (a, b) = fromBits (bits a * bits b)
-  fun andb (a, b) = fromBits (Word.andb (bits a, bits b))
-  fun orb (a, b) = fromBits (Word.orb (bits a, bits b))
-  fun xorb (a, b) = fromBits (Word.xorb (bits a, bits b))
-  fun notb a = fromBits (Word.notb (bits a))
-  fun lshift (a, n) = fromBits (Word.<< (bits a, shift n))
-  fun rshiftU (a, n) = fromBits (Word.>> (bits a, shift n))
-  fun rshiftS (a, n) = fromBits (Word.~>> (sbits a, shift n))
+  fun andb (a, b) = fromBits (Word64.andb (bits a, bits b))
+  fun orb (a, b) = fromBits (Word64.orb (bits a, bits b))
+  fun xorb (a, b) = fromBits (Word64.xorb (bits a, bits b))
+  fun notb a = fromBits (Word64.notb (bits a))
+  fun lshift (a, n) = fromBits (Word64.<< (bits a, shift n))
+  fun rshiftU (a, n) = fromBits (Word64.>> (bits a, shift n))
+  fun rshiftS (a, n) = fromBits (Word64.~>> (sbits a, shift n))
   fun rotl (a, k) =
     if k = 0 then a
-    else fromBits (Word.orb (Word.<< (bits a, Word.fromInt k),
-                             Word.>> (bits a, Word.fromInt (width - k))))
+    else fromBits (Word64.orb (Word64.<< (bits a, Word.fromInt k),
+                               Word64.>> (bits a, Word.fromInt (width - k))))
   fun rol (a, n) = rotl (a, Word.toInt (shift n) mod width)
   fun ror (a, n) = rotl (a, (width - Word.toInt (shift n) mod width) mod width)
-  fun ltS (a, b) = sval a < sval b
-  fun ltU (a, b) = bits a < bits b
-  fun quotS (a, b) = fromBits (Word.fromInt (Int.quot (sval a, sval b)))
-  fun remS (a, b) = fromBits (Word.fromInt (Int.rem (sval a, sval b)))
-  fun quotU (a, b) = fromBits (bits a div bits b)
-  fun remU (a, b) = fromBits (bits a mod bits b)
-  (* whether the signed operation overflows *)
-  fun addCheckP (a, b) = not (fits (sval a + sval b)) handle Overflow => true
-  fun subCheckP (a, b) = not (fits (sval a - sval b)) handle Overflow => true
-  fun mulCheckP (a, b) = not (fits (sval a * sval b)) handle Overflow => true
-  fun negCheckP a = not (fits (~ (sval a))) handle Overflow => true
+  fun ltS (a, b) = Int64.< (sval a, sval b)
+  fun ltU (a, b) = Word64.< (bits a, bits b)
+  fun quotS (a, b) = fromBits (XC2Bits.fromInt64 (Int64.quot (sval a, sval b)))
+  fun remS (a, b) = fromBits (XC2Bits.fromInt64 (Int64.rem (sval a, sval b)))
+  fun quotU (a, b) = fromBits (Word64.div (bits a, bits b))
+  fun remU (a, b) = fromBits (Word64.mod (bits a, bits b))
+  (* whether the signed operation overflows: in 64 bits it raises Overflow *)
+  fun addCheckP (a, b) = not (fits (Int64.+ (sval a, sval b))) handle Overflow => true
+  fun subCheckP (a, b) = not (fits (Int64.- (sval a, sval b))) handle Overflow => true
+  fun mulCheckP (a, b) = not (fits (Int64.* (sval a, sval b))) handle Overflow => true
+  fun negCheckP a = not (fits (Int64.~ (sval a))) handle Overflow => true
   (* conversions to and from the reals: a real to an integer truncates, as
      C's conversion does (MLton rounds it before, in the mode it wants) *)
-  fun toReal64S x = Real.fromInt (sval x)
-  fun toReal64U x = Real.fromLargeInt (Word.toLargeInt (bits x))
-  fun toReal32S x = Real32.fromLargeInt (Int.toLarge (sval x))
-  fun toReal32U x = Real32.fromLargeInt (Word.toLargeInt (bits x))
-  fun fromReal64 r = fromBits (Word.fromLargeInt (Real.toLargeInt IEEEReal.TO_ZERO r))
-  fun fromReal32 r = fromBits (Word.fromLargeInt (Real32.toLargeInt IEEEReal.TO_ZERO r))
+  fun toReal64S x = Real.fromLargeInt (Int64.toLarge (sval x))
+  fun toReal64U x = Real.fromLargeInt (Word64.toLargeInt (bits x))
+  fun toReal32S x = Real32.fromLargeInt (Int64.toLarge (sval x))
+  fun toReal32U x = Real32.fromLargeInt (Word64.toLargeInt (bits x))
+  fun fromReal64 r = fromBits (Word64.fromLargeInt (Real.toLargeInt IEEEReal.TO_ZERO r))
+  fun fromReal32 r = fromBits (Word64.fromLargeInt (Real32.toLargeInt IEEEReal.TO_ZERO r))
 end
 
 (* ---- MLton's real primitives ---- *)
@@ -238,8 +251,8 @@ struct
   open O
   val realToBits = _prim "real_to_bits" : real -> Word64.word
   val realFromBits = _prim "real_from_bits" : Word64.word -> real
-  fun castToWord64 r = XC2Large.toWord (realToBits r)
-  fun castFromWord64 w = realFromBits (XC2Large.fromWord w)
+  val castToWord64 = realToBits
+  val castFromWord64 = realFromBits
   fun rndToReal32 r = Real32.fromLarge (IEEEReal.getRoundingMode ()) r
   fun rndToReal64 (r : real) = r
 end
@@ -265,33 +278,33 @@ end
 (* ---- C's memory ----
    What MLton's library reads through a C pointer: the strings and the
    arrays of strings that C functions return (CommandLine, the entries of
-   the system databases, ...). A pointer is a block of bytes (its number,
-   from 1, in the high 32 bits) and an offset in it (the low 32); NULL is
-   0w0. The shim's C functions make the blocks. *)
+   the system databases, ...). A pointer, a Word64.word, is a block of bytes
+   (its number, from 1, in the high 32 bits) and an offset in it (the low
+   32); NULL is 0w0. The shim's C functions make the blocks. *)
 structure XC2Mem =
 struct
   val blocks : Word8Array.array list ref = ref []
   val count = ref 0
   (* the blocks, the newest first; block k is at position count - k *)
   fun block k = List.nth (!blocks, !count - k)
-  fun alloc n =
+  fun alloc n : Word64.word =
     let val a = Word8Array.array (n, 0w0)
     in blocks := a :: !blocks; count := !count + 1;
-       Word.<< (Word.fromInt (!count), 0w32)
+       Word64.<< (Word64.fromInt (!count), 0w32)
     end
-  fun locate (p : word, byteOffset : int) =
-    (block (Word.toInt (Word.>> (p, 0w32))),
-     Word.toInt (Word.andb (p, 0wxFFFFFFFF)) + byteOffset)
+  fun locate (p : Word64.word, byteOffset : int) =
+    (block (Word64.toInt (Word64.>> (p, 0w32))),
+     Word64.toInt (Word64.andb (p, 0wxFFFFFFFF)) + byteOffset)
   fun getByte (p, i) = let val (a, j) = locate (p, i) in Word8Array.sub (a, j) end
   fun setByte (p, i, b) = let val (a, j) = locate (p, i) in Word8Array.update (a, j, b) end
-  (* the n bytes at p + i, little-endian, as a word *)
-  fun get (p, i, n) =
+  (* the n bytes at p + i, little-endian, as a Word64.word *)
+  fun get (p, i, n) : Word64.word =
     let fun loop (k, w) = if k < 0 then w
-                          else loop (k - 1, Word.orb (Word.<< (w, 0w8), Word.fromLarge (Word8.toLarge (getByte (p, i + k)))))
+                          else loop (k - 1, Word64.orb (Word64.<< (w, 0w8), Word8.toLarge (getByte (p, i + k))))
     in loop (n - 1, 0w0) end
-  fun set (p, i, n, w) =
+  fun set (p, i, n, w : Word64.word) =
     let fun loop k = if k >= n then ()
-                     else (setByte (p, i + k, Word8.fromLarge (Word.toLarge (Word.>> (w, Word.fromInt (8 * k))))); loop (k + 1))
+                     else (setByte (p, i + k, Word8.fromLarge (Word64.>> (w, Word.fromInt (8 * k)))); loop (k + 1))
     in loop 0 end
   (* a C string: the bytes of s and a NUL *)
   fun string s =
@@ -317,19 +330,19 @@ struct
   val smallMin = IntInf.~ (IntInf.pow (2, 62))
   val smallMax = IntInf.- (IntInf.pow (2, 62), 1)
   fun isSmall i = IntInf.>= (i, smallMin) andalso IntInf.<= (i, smallMax)
-  fun toWord i =
-    if isSmall i then Word.orb (Word.<< (Word.fromLargeInt i, 0w1), 0w1) else 0w0
-  fun fromWord w = Word.toLargeIntX (Word.~>> (w, 0w1))
+  fun toWord i : Word64.word =
+    if isSmall i then Word64.orb (Word64.<< (Word64.fromLargeInt i, 0w1), 0w1) else 0w0
+  fun fromWord (w : Word64.word) = Word64.toLargeIntX (Word64.~>> (w, 0w1))
   val base = IntInf.pow (2, 64)
   val mask = IntInf.- (base, 1)
   (* the number of limbs of the magnitude, and the sign, without the vector *)
-  fun numLimbs i = if i = 0 then 1 else IntInf.log2 (IntInf.abs i) div 64 + 1
+  fun numLimbs i : Int64.int = Int64.fromInt (if i = 0 then 1 else IntInf.log2 (IntInf.abs i) div 64 + 1)
   fun isNeg i = IntInf.< (i, 0)
   fun toVector i =
-    let fun limbs m = if m = 0 then [] else Word.fromLargeInt (IntInf.andb (m, mask)) :: limbs (IntInf.~>> (m, 0w64))
+    let fun limbs m = if m = 0 then [] else Word64.fromLargeInt (IntInf.andb (m, mask)) :: limbs (IntInf.~>> (m, 0w64))
     in Vector.fromList ((if IntInf.< (i, 0) then 0w1 else 0w0) :: limbs (IntInf.abs i)) end
-  fun fromVector (v : word vector) =
-    let val m = Vector.foldri (fn (k, l, m) => if k = 0 then m else IntInf.orb (IntInf.<< (m, 0w64), Word.toLargeInt l)) 0 v
+  fun fromVector (v : Word64.word vector) =
+    let val m = Vector.foldri (fn (k, l, m) => if k = 0 then m else IntInf.orb (IntInf.<< (m, 0w64), Word64.toLargeInt l)) 0 v
     in if Vector.sub (v, 0) = 0w0 then m else IntInf.~ m end
   fun toString (i, base : Int32.int) =
     IntInf.fmt (case Int32.toInt base of 2 => StringCvt.BIN | 8 => StringCvt.OCT
@@ -340,27 +353,34 @@ end
 structure XC2PrimImpl =
 struct
   structure A = XC2.Array
-  val Array_alloc = A.alloc
-  val Array_allocRaw = A.alloc
+  (* an index, MLton's SeqIndex.int, Int64.int *)
+  val ix = XC2Index.index
+  val xi = Int64.fromInt
+  fun Array_alloc n = A.alloc (XC2Index.size n)
+  val Array_allocRaw = Array_alloc
   fun Array_toArray a = a
-  val Array_length = A.length
-  val Array_sub = A.sub
-  val Array_update = A.update
+  fun Array_length a = xi (A.length a)
+  fun Array_sub (a, i) = A.sub (a, ix i)
+  fun Array_update (a, i, x) = A.update (a, ix i, x)
   val Array_toVector = A.toVector
   fun Array_uninit _ = ()
   fun Array_uninitIsNop _ = true
   (* as memmove *)
   fun Array_copyArray (dst, di, src, si, len) =
-    if dst = src andalso di > si
-      then let fun loop k = if k < 0 then () else (A.update (dst, di + k, A.sub (src, si + k)); loop (k - 1))
-           in loop (len - 1) end
-    else let fun loop k = if k >= len then () else (A.update (dst, di + k, A.sub (src, si + k)); loop (k + 1))
-         in loop 0 end
+    let val (di, si, len) = (ix di, ix si, ix len)
+    in
+      if dst = src andalso di > si
+        then let fun loop k = if k < 0 then () else (A.update (dst, di + k, A.sub (src, si + k)); loop (k - 1))
+             in loop (len - 1) end
+      else let fun loop k = if k >= len then () else (A.update (dst, di + k, A.sub (src, si + k)); loop (k + 1))
+           in loop 0 end
+    end
   fun Array_copyVector (dst, di, src, si, len) =
-    let fun loop k = if k >= len then () else (A.update (dst, di + k, Vector.sub (src, si + k)); loop (k + 1))
+    let val (di, si, len) = (ix di, ix si, ix len)
+        fun loop k = if k >= len then () else (A.update (dst, di + k, Vector.sub (src, si + k)); loop (k + 1))
     in loop 0 end
-  val Vector_length = Vector.length
-  val Vector_sub = Vector.sub
+  fun Vector_length v = xi (Vector.length v)
+  fun Vector_sub (v, i) = Vector.sub (v, ix i)
   fun Vector_vector () = Vector.fromList []
   val Ref_assign = op :=
   val Ref_deref = op !
@@ -369,25 +389,26 @@ struct
   val Exn_name = exnName
   fun Exn_setExtendExtra _ = ()
   fun GC_collect () = ()
-  fun GC_state () = 0w0 : word
-  fun IntInf_add (a, b, _ : word) = IntInf.+ (a, b)
-  fun IntInf_sub (a, b, _ : word) = IntInf.- (a, b)
-  fun IntInf_mul (a, b, _ : word) = IntInf.* (a, b)
-  fun IntInf_quot (a, b, _ : word) = IntInf.quot (a, b)
-  fun IntInf_rem (a, b, _ : word) = IntInf.rem (a, b)
-  fun IntInf_neg (a, _ : word) = IntInf.~ a
-  fun IntInf_andb (a, b, _ : word) = IntInf.andb (a, b)
-  fun IntInf_orb (a, b, _ : word) = IntInf.orb (a, b)
-  fun IntInf_xorb (a, b, _ : word) = IntInf.xorb (a, b)
-  fun IntInf_notb (a, _ : word) = IntInf.notb a
-  fun IntInf_gcd (a, b, _ : word) =
+  fun GC_state () = 0w0 : Word64.word
+  (* the last argument of IntInf's, the size of the result, a C_Size.t *)
+  fun IntInf_add (a, b, _ : Word64.word) = IntInf.+ (a, b)
+  fun IntInf_sub (a, b, _ : Word64.word) = IntInf.- (a, b)
+  fun IntInf_mul (a, b, _ : Word64.word) = IntInf.* (a, b)
+  fun IntInf_quot (a, b, _ : Word64.word) = IntInf.quot (a, b)
+  fun IntInf_rem (a, b, _ : Word64.word) = IntInf.rem (a, b)
+  fun IntInf_neg (a, _ : Word64.word) = IntInf.~ a
+  fun IntInf_andb (a, b, _ : Word64.word) = IntInf.andb (a, b)
+  fun IntInf_orb (a, b, _ : Word64.word) = IntInf.orb (a, b)
+  fun IntInf_xorb (a, b, _ : Word64.word) = IntInf.xorb (a, b)
+  fun IntInf_notb (a, _ : Word64.word) = IntInf.notb a
+  fun IntInf_gcd (a, b, _ : Word64.word) =
     let fun gcd (a, b) = if b = 0 then a else gcd (b, IntInf.rem (a, b))
     in gcd (IntInf.abs a, IntInf.abs b) end
-  fun IntInf_lshift (a, n : Word32.word, _ : word) = IntInf.<< (a, Word.fromLarge (Word32.toLarge n))
-  fun IntInf_arshift (a, n : Word32.word, _ : word) = IntInf.~>> (a, Word.fromLarge (Word32.toLarge n))
+  fun IntInf_lshift (a, n : Word32.word, _ : Word64.word) = IntInf.<< (a, Word.fromLarge (Word32.toLarge n))
+  fun IntInf_arshift (a, n : Word32.word, _ : Word64.word) = IntInf.~>> (a, Word.fromLarge (Word32.toLarge n))
   fun IntInf_compare (a, b) : Int32.int =
     case IntInf.compare (a, b) of LESS => ~1 | EQUAL => 0 | GREATER => 1
-  fun IntInf_toString (i, base, _ : word) = XC2IntInf.toString (i, base)
+  fun IntInf_toString (i, base, _ : Word64.word) = XC2IntInf.toString (i, base)
   val IntInf_toVector = XC2IntInf.toVector
   val IntInf_toWord = XC2IntInf.toWord
   val WordVector_toIntInf = XC2IntInf.fromVector
@@ -402,7 +423,7 @@ struct
   fun MLton_installSignalHandler () = ()
   fun MLton_share _ = ()
   fun MLton_touch _ = ()
-  fun MLton_size _ = 0w0 : word
+  fun MLton_size _ = 0w0 : Word64.word
   (* MLton's atomic sections nest: a count, which atomicEnd checks *)
   val atomic = ref 0w0 : Word32.word ref
   fun Thread_atomicBegin () = atomic := !atomic + 0w1
@@ -424,14 +445,15 @@ struct
   fun Weak_get (ref (SOME x)) = x
     | Weak_get (ref NONE) = raise Fail "xc2: Weak.get"
   fun Weak_canGet (ref x) = Option.isSome x
-  fun CPointer_add (p : word, d : int) = Word.+ (p, Word.fromInt d)
-  fun CPointer_sub (p : word, d : int) = Word.- (p, Word.fromInt d)
-  fun CPointer_diff (p : word, q : word) = Word.toIntX (Word.- (p, q))
-  fun CPointer_fromWord (w : word) = w
-  fun CPointer_toWord (p : word) = p
-  fun CPointer_lt (p : word, q : word) = Word.< (p, q)
-  fun CPointer_getCPointer (p, i) = XC2Mem.get (p, 8 * i, 8)
-  fun CPointer_setCPointer (p, i, q) = XC2Mem.set (p, 8 * i, 8, q)
+  (* a pointer, MLton's cpointer and C_Pointer.t, is a Word64.word *)
+  fun CPointer_add (p : Word64.word, d : Int64.int) = Word64.+ (p, XC2Bits.fromInt64 d)
+  fun CPointer_sub (p : Word64.word, d : Int64.int) = Word64.- (p, XC2Bits.fromInt64 d)
+  fun CPointer_diff (p : Word64.word, q : Word64.word) = XC2Bits.toInt64 (Word64.- (p, q))
+  fun CPointer_fromWord (w : Word64.word) = w
+  fun CPointer_toWord (p : Word64.word) = p
+  fun CPointer_lt (p : Word64.word, q : Word64.word) = Word64.< (p, q)
+  fun CPointer_getCPointer (p, i : Int64.int) = XC2Mem.get (p, 8 * XC2Index.index i, 8)
+  fun CPointer_setCPointer (p, i : Int64.int, q) = XC2Mem.set (p, 8 * XC2Index.index i, 8, q)
 end
 
 (* ---- MLton's C functions (_import) and variables (_symbol) ----
@@ -468,6 +490,8 @@ struct
        else (put s; size s)
     end handle Size => failWith (XC2Sys.posixConst "EINVAL")
   fun write (fd, s) : int = check (XC2Sys.write (fd, s))
+  (* a C_SSize.t, an Int64.int *)
+  val ssize = Int64.fromInt
   (* the value of a constant of MLton's constants file *)
   fun const name =
     case List.find (fn (n, _) => n = name) XC2Consts.table of
@@ -485,9 +509,9 @@ struct
   open XC2C
 
   (* ---- the process ---- *)
-  fun Time_getTimeOfDay (sec : int ref, usec : int ref) : Int32.int =
+  fun Time_getTimeOfDay (sec : Int64.int ref, usec : Int64.int ref) : Int32.int =
     let val t = XC2Sys.timeNow ()
-    in sec := t div 1000000; usec := t mod 1000000; 0 end
+    in sec := Int64.fromInt (t div 1000000); usec := Int64.fromInt (t mod 1000000); 0 end
   fun Stdio_print s = ignore (XC2Sys.write (2, s))
   fun Stdio_printStderr s = ignore (XC2Sys.write (2, s))
   fun Stdio_printStdout s = ignore (XC2Sys.write (1, s))
@@ -496,32 +520,32 @@ struct
   fun Posix_Error_strError (e : Int32.int) = XC2Mem.string (XC2Sys.errorMsg (i32 e))
   fun Posix_Process_exit (status : Int32.int) : unit = XC2Sys.exit (i32 status)
   fun MLton_bug msg = raise Fail ("MLton bug: " ^ msg)
-  fun GC_getSavedThread__GCState_t_to_preThread (_ : word) = ref ()
-  fun GC_getSavedThread__GCState_t_to_thread (_ : word) = ref ()
+  fun GC_getSavedThread__GCState_t_to_preThread (_ : Word64.word) = ref ()
+  fun GC_getSavedThread__GCState_t_to_thread (_ : Word64.word) = ref ()
   (* MLton's collector: its controls do nothing, its statistics are 0 *)
-  fun GC_setAmOriginal (_ : word, _ : bool) = ()
-  fun GC_getAmOriginal (_ : word) = true
-  fun GC_setControlsMessages (_ : word, _ : bool) = ()
-  fun GC_setControlsRusageMeasureGC (_ : word, _ : bool) = ()
-  fun GC_setControlsSummary (_ : word, _ : bool) = ()
-  fun GC_setHashConsDuringGC (_ : word, _ : bool) = ()
-  fun GC_getCumulativeStatisticsBytesAllocated (_ : word) = 0w0 : word
-  fun GC_getCumulativeStatisticsMaxBytesLive (_ : word) = 0w0 : word
-  fun GC_getCumulativeStatisticsNumCopyingGCs (_ : word) = 0w0 : word
-  fun GC_getCumulativeStatisticsNumMarkCompactGCs (_ : word) = 0w0 : word
-  fun GC_getCumulativeStatisticsNumMinorGCs (_ : word) = 0w0 : word
-  fun GC_getLastMajorStatisticsBytesLive (_ : word) = 0w0 : word
-  fun GC_sizeAll (_ : word) = 0w0 : word
-  fun GC_pack (_ : word) = ()
-  fun GC_unpack (_ : word) = ()
-  fun GC_getCurrentThread (_ : word) = ref ()
-  fun GC_setSavedThread (_ : word, _ : unit ref) = ()
-  fun GC_setSignalHandlerThread (_ : word, _ : unit ref) = ()
-  fun GC_setCallFromCHandlerThread (_ : word, _ : unit ref) = ()
-  fun GC_finishSignalHandler (_ : word) = ()
-  fun GC_startSignalHandler (_ : word) = ()
-  fun GC_numStackFrames (_ : word) = 0w0 : Word32.word
-  fun GC_callStack (_ : word, _ : Word32.word XC2.array) = ()
+  fun GC_setAmOriginal (_ : Word64.word, _ : bool) = ()
+  fun GC_getAmOriginal (_ : Word64.word) = true
+  fun GC_setControlsMessages (_ : Word64.word, _ : bool) = ()
+  fun GC_setControlsRusageMeasureGC (_ : Word64.word, _ : bool) = ()
+  fun GC_setControlsSummary (_ : Word64.word, _ : bool) = ()
+  fun GC_setHashConsDuringGC (_ : Word64.word, _ : bool) = ()
+  fun GC_getCumulativeStatisticsBytesAllocated (_ : Word64.word) = 0w0 : Word64.word
+  fun GC_getCumulativeStatisticsMaxBytesLive (_ : Word64.word) = 0w0 : Word64.word
+  fun GC_getCumulativeStatisticsNumCopyingGCs (_ : Word64.word) = 0w0 : Word64.word
+  fun GC_getCumulativeStatisticsNumMarkCompactGCs (_ : Word64.word) = 0w0 : Word64.word
+  fun GC_getCumulativeStatisticsNumMinorGCs (_ : Word64.word) = 0w0 : Word64.word
+  fun GC_getLastMajorStatisticsBytesLive (_ : Word64.word) = 0w0 : Word64.word
+  fun GC_sizeAll (_ : Word64.word) = 0w0 : Word64.word
+  fun GC_pack (_ : Word64.word) = ()
+  fun GC_unpack (_ : Word64.word) = ()
+  fun GC_getCurrentThread (_ : Word64.word) = ref ()
+  fun GC_setSavedThread (_ : Word64.word, _ : unit ref) = ()
+  fun GC_setSignalHandlerThread (_ : Word64.word, _ : unit ref) = ()
+  fun GC_setCallFromCHandlerThread (_ : Word64.word, _ : unit ref) = ()
+  fun GC_finishSignalHandler (_ : Word64.word) = ()
+  fun GC_startSignalHandler (_ : Word64.word) = ()
+  fun GC_numStackFrames (_ : Word64.word) = 0w0 : Word32.word
+  fun GC_callStack (_ : Word64.word, _ : Word32.word XC2.array) = ()
 
   (* ---- the rounding mode: MLton's numbers are C's FE_ constants ---- *)
   fun IEEEReal_getRoundingMode () : Int32.int =
@@ -547,19 +571,20 @@ struct
   fun Posix_IO_fcntl2 (fd, cmd) = ci (XC2Sys.fcntl (i32 fd, i32 cmd, 0))
   fun Posix_IO_fcntl3 (fd, cmd, arg) = ci (XC2Sys.fcntl (i32 fd, i32 cmd, i32 arg))
   fun Posix_IO_fsync fd = ci (XC2Sys.fsync (i32 fd))
-  fun Posix_IO_lseek (fd, off : int, whence) : int = check (XC2Sys.lseek (i32 fd, off, i32 whence))
+  fun Posix_IO_lseek (fd, off : Int64.int, whence) : Int64.int =
+    Int64.fromInt (check (XC2Sys.lseek (i32 fd, Int64.toInt off, i32 whence)))
   fun Posix_IO_pipe (a : Int32.int XC2.array) : Int32.int =
     case XC2Sys.pipe () of
       [r, w] => (XC2.Array.update (a, 0, Int32.fromInt r); XC2.Array.update (a, 1, Int32.fromInt w); 0)
     | _ => Int32.fromInt (fail ())
-  fun Posix_IO_readChar8 (fd, a, i, n : word) : int =
-    read (i32 fd, Word.toInt n, fn s => toArr (a, i32 i, s))
-  fun Posix_IO_readWord8 (fd, a, i, n : word) : int =
-    read (i32 fd, Word.toInt n, fn s => toBytes (a, i32 i, s))
-  fun Posix_IO_writeChar8Arr (fd, a, i, n : word) = write (i32 fd, arrString (a, i32 i, Word.toInt n))
-  fun Posix_IO_writeChar8Vec (fd, v, i, n : word) = write (i32 fd, vecString (v, i32 i, Word.toInt n))
-  fun Posix_IO_writeWord8Arr (fd, a, i, n : word) = write (i32 fd, arrBytes (a, i32 i, Word.toInt n))
-  fun Posix_IO_writeWord8Vec (fd, v, i, n : word) = write (i32 fd, vecBytes (v, i32 i, Word.toInt n))
+  fun Posix_IO_readChar8 (fd, a, i, n : Word64.word) : Int64.int =
+    ssize (read (i32 fd, Word64.toInt n, fn s => toArr (a, i32 i, s)))
+  fun Posix_IO_readWord8 (fd, a, i, n : Word64.word) : Int64.int =
+    ssize (read (i32 fd, Word64.toInt n, fn s => toBytes (a, i32 i, s)))
+  fun Posix_IO_writeChar8Arr (fd, a, i, n : Word64.word) = ssize (write (i32 fd, arrString (a, i32 i, Word64.toInt n)))
+  fun Posix_IO_writeChar8Vec (fd, v, i, n : Word64.word) = ssize (write (i32 fd, vecString (v, i32 i, Word64.toInt n)))
+  fun Posix_IO_writeWord8Arr (fd, a, i, n : Word64.word) = ssize (write (i32 fd, arrBytes (a, i32 i, Word64.toInt n)))
+  fun Posix_IO_writeWord8Vec (fd, v, i, n : Word64.word) = ssize (write (i32 fd, vecBytes (v, i32 i, Word64.toInt n)))
   fun Posix_IO_setbin (_ : Int32.int) = ()
   fun Posix_IO_settext (_ : Int32.int) = ()
   local
@@ -574,13 +599,13 @@ struct
       | l => (flock := l; 0)
     fun Posix_IO_FLock_getType () = Int16.fromInt (get 0)
     fun Posix_IO_FLock_getWhence () = Int16.fromInt (get 1)
-    fun Posix_IO_FLock_getStart () = get 2
-    fun Posix_IO_FLock_getLen () = get 3
+    fun Posix_IO_FLock_getStart () = Int64.fromInt (get 2)
+    fun Posix_IO_FLock_getLen () = Int64.fromInt (get 3)
     fun Posix_IO_FLock_getPId () = Int32.fromInt (get 4)
     fun Posix_IO_FLock_setType (t : Int16.int) = set (0, Int16.toInt t)
     fun Posix_IO_FLock_setWhence (w : Int16.int) = set (1, Int16.toInt w)
-    fun Posix_IO_FLock_setStart (s : int) = set (2, s)
-    fun Posix_IO_FLock_setLen (l : int) = set (3, l)
+    fun Posix_IO_FLock_setStart (s : Int64.int) = set (2, Int64.toInt s)
+    fun Posix_IO_FLock_setLen (l : Int64.int) = set (3, Int64.toInt l)
     fun Posix_IO_FLock_setPId (p : Int32.int) = set (4, Int32.toInt p)
   end
 
@@ -621,9 +646,9 @@ struct
     (* the clock of times is CLK_TCK a second; the machine gives microseconds *)
     val tms = ref [0, 0, 0, 0, 0]
     fun ticks us = us * XC2Sys.sysconf "CLK_TCK" div 1000000
-    fun field k () = ticks (List.nth (!tms, k))
+    fun field k () = Int64.fromInt (ticks (List.nth (!tms, k)))
   in
-    fun Posix_ProcEnv_times () : int = (tms := XC2Sys.times (); ticks (hd (!tms)))
+    fun Posix_ProcEnv_times () : Int64.int = (tms := XC2Sys.times (); Int64.fromInt (ticks (hd (!tms))))
     val Posix_ProcEnv_Times_getUTime = field 1
     val Posix_ProcEnv_Times_getSTime = field 2
     val Posix_ProcEnv_Times_getCUTime = field 3
@@ -636,10 +661,10 @@ struct
   fun Posix_ProcEnv_ttyname fd =
     case XC2Sys.ttyname (i32 fd) of "" => (ignore (fail ()); 0w0) | s => XC2Mem.string s
   fun Posix_ProcEnv_isatty fd = Int32.fromInt (XC2Sys.isatty (i32 fd))
-  fun Posix_ProcEnv_sysconf (n : Int32.int) : int =
-    case constName ("Posix_ProcEnv_SC_", i32 n) of
-      SOME name => (case XC2Sys.sysconf name of ~1 => failWith (XC2Sys.posixConst "EINVAL") | v => v)
-    | NONE => failWith (XC2Sys.posixConst "EINVAL")
+  fun Posix_ProcEnv_sysconf (n : Int32.int) : Int64.int =
+    Int64.fromInt (case constName ("Posix_ProcEnv_SC_", i32 n) of
+                     SOME name => (case XC2Sys.sysconf name of ~1 => failWith (XC2Sys.posixConst "EINVAL") | v => v)
+                   | NONE => failWith (XC2Sys.posixConst "EINVAL"))
 
   (* ---- Posix.FileSys ---- *)
   (* C's R_OK, W_OK and X_OK (4, 2, 1) are the machine's 1, 2 and 4 *)
@@ -658,16 +683,16 @@ struct
   fun Posix_FileSys_fchmod (fd, m) = ci (XC2Sys.chmod ("", i32 fd, w32 m))
   fun Posix_FileSys_chown (p, u, g) = ci (XC2Sys.chown (cstr p, ~1, w32 u, w32 g))
   fun Posix_FileSys_fchown (fd, u, g) = ci (XC2Sys.chown ("", i32 fd, w32 u, w32 g))
-  fun Posix_FileSys_ftruncate (fd, n : int) = ci (XC2Sys.ftruncate (i32 fd, n))
-  fun Posix_FileSys_truncate (p, n : int) =
+  fun Posix_FileSys_ftruncate (fd, n : Int64.int) = ci (XC2Sys.ftruncate (i32 fd, Int64.toInt n))
+  fun Posix_FileSys_truncate (p, n : Int64.int) =
     let val fd = XC2Sys.openf (cstr p, XC2Sys.posixConst "O_WRONLY", 0)
     in if fd = ~1 then Int32.fromInt (fail ())
-       else let val r = check (XC2Sys.ftruncate (fd, n)) in ignore (XC2Sys.close fd); Int32.fromInt r end
+       else let val r = check (XC2Sys.ftruncate (fd, Int64.toInt n)) in ignore (XC2Sys.close fd); Int32.fromInt r end
     end
-  fun Posix_FileSys_getcwd (a : char XC2.array, n : word) =
+  fun Posix_FileSys_getcwd (a : char XC2.array, n : Word64.word) =
     case XC2Sys.osGetcwd () of
       "" => (ignore (fail ()); 0w0)
-    | s => if size s + 1 > Word.toInt n then (errno := XC2Sys.posixConst "ERANGE"; 0w0)
+    | s => if size s + 1 > Word64.toInt n then (errno := XC2Sys.posixConst "ERANGE"; 0w0)
            else (toArr (a, 0, s ^ "\000"); 0w1)
   fun Posix_FileSys_link (a, b) = ci (XC2Sys.link (cstr a, cstr b))
   fun Posix_FileSys_symlink (a, b) = ci (XC2Sys.symlink (cstr a, cstr b))
@@ -682,17 +707,17 @@ struct
   fun Posix_FileSys_mkfifo (p, m) = ci (XC2Sys.mkfifo (cstr p, w32 m))
   fun Posix_FileSys_open2 (p, f) = ci (XC2Sys.openf (cstr p, i32 f, 0))
   fun Posix_FileSys_open3 (p, f, m) = ci (XC2Sys.openf (cstr p, i32 f, w32 m))
-  fun pathconf (p, fd, n) : int =
-    case constName ("Posix_FileSys_PC_", i32 n) of
-      SOME name => (case XC2Sys.pathconf (p, fd, name) of [v] => (if v = ~1 then errno := 0 else (); v) | _ => fail ())
-    | NONE => failWith (XC2Sys.posixConst "EINVAL")
+  fun pathconf (p, fd, n) : Int64.int =
+    Int64.fromInt (case constName ("Posix_FileSys_PC_", i32 n) of
+                     SOME name => (case XC2Sys.pathconf (p, fd, name) of [v] => (if v = ~1 then errno := 0 else (); v) | _ => fail ())
+                   | NONE => failWith (XC2Sys.posixConst "EINVAL"))
   fun Posix_FileSys_pathconf (p, n) = pathconf (cstr p, ~1, n)
   fun Posix_FileSys_fpathconf (fd, n) = pathconf ("", i32 fd, n)
-  fun Posix_FileSys_readlink (p, a : char XC2.array, n : word) : int =
+  fun Posix_FileSys_readlink (p, a : char XC2.array, n : Word64.word) : Int64.int =
     case XC2Sys.osReadLink (cstr p) of
-      "" => fail ()
-    | s => let val s = if size s > Word.toInt n then String.substring (s, 0, Word.toInt n) else s
-           in toArr (a, 0, s); size s end
+      "" => ssize (fail ())
+    | s => let val s = if size s > Word64.toInt n then String.substring (s, 0, Word64.toInt n) else s
+           in toArr (a, 0, s); ssize (size s) end
   fun Posix_FileSys_rename (a, b) = ci (XC2Sys.osRename (cstr a, cstr b))
   fun Posix_FileSys_rmdir p = ci (XC2Sys.osRmdir (cstr p))
   fun Posix_FileSys_unlink p = ci (XC2Sys.osRemove (cstr p))
@@ -721,31 +746,31 @@ struct
     fun Posix_FileSys_Stat_fstat fd = stat (XC2Sys.stat ("", 0, i32 fd))
     fun Posix_FileSys_Stat_getMode () =
       Word32.orb (Word32.andb (Word32.fromInt (field 1), 0wxFFF), ifmt (field 0))
-    fun Posix_FileSys_Stat_getINo () = Word.fromInt (field 2)
-    fun Posix_FileSys_Stat_getDev () = Word.fromInt (field 3)
-    fun Posix_FileSys_Stat_getRDev () = 0w0 : word
-    fun Posix_FileSys_Stat_getNLink () = Word.fromInt (field 4)
+    fun Posix_FileSys_Stat_getINo () = Word64.fromInt (field 2)
+    fun Posix_FileSys_Stat_getDev () = Word64.fromInt (field 3)
+    fun Posix_FileSys_Stat_getRDev () = 0w0 : Word64.word
+    fun Posix_FileSys_Stat_getNLink () = Word64.fromInt (field 4)
     fun Posix_FileSys_Stat_getUId () = Word32.fromInt (field 5)
     fun Posix_FileSys_Stat_getGId () = Word32.fromInt (field 6)
-    fun Posix_FileSys_Stat_getSize () = field 7
-    fun Posix_FileSys_Stat_getATime () = field 8
-    fun Posix_FileSys_Stat_getMTime () = field 9
-    fun Posix_FileSys_Stat_getCTime () = field 10
+    fun Posix_FileSys_Stat_getSize () = Int64.fromInt (field 7)
+    fun Posix_FileSys_Stat_getATime () = Int64.fromInt (field 8)
+    fun Posix_FileSys_Stat_getMTime () = Int64.fromInt (field 9)
+    fun Posix_FileSys_Stat_getCTime () = Int64.fromInt (field 10)
   end
   local
     val times = ref (0, 0)
   in
-    fun Posix_FileSys_Utimbuf_setAcTime (t : int) = times := (t, #2 (!times))
-    fun Posix_FileSys_Utimbuf_setModTime (t : int) = times := (#1 (!times), t)
+    fun Posix_FileSys_Utimbuf_setAcTime (t : Int64.int) = times := (Int64.toInt t, #2 (!times))
+    fun Posix_FileSys_Utimbuf_setModTime (t : Int64.int) = times := (#1 (!times), Int64.toInt t)
     fun Posix_FileSys_Utimbuf_utime p = ci (XC2Sys.utime (cstr p, #1 (!times), #2 (!times)))
   end
   (* a directory stream: the number of the machine's, plus one (0 is NULL) *)
   fun Posix_FileSys_Dirstream_openDir p =
-    case XC2Sys.osOpenDir (cstr p) of ~1 => (ignore (fail ()); 0w0) | d => Word.fromInt (d + 1)
-  fun Posix_FileSys_Dirstream_readDir (d : word) =
-    case XC2Sys.osReadDir (Word.toInt d - 1) of SOME n => XC2Mem.string n | NONE => 0w0
-  fun Posix_FileSys_Dirstream_rewindDir (d : word) = ignore (XC2Sys.osRewindDir (Word.toInt d - 1))
-  fun Posix_FileSys_Dirstream_closeDir (d : word) = ci (XC2Sys.osCloseDir (Word.toInt d - 1))
+    case XC2Sys.osOpenDir (cstr p) of ~1 => (ignore (fail ()); 0w0) | d => Word64.fromInt (d + 1)
+  fun Posix_FileSys_Dirstream_readDir (d : Word64.word) =
+    case XC2Sys.osReadDir (Word64.toInt d - 1) of SOME n => XC2Mem.string n | NONE => 0w0
+  fun Posix_FileSys_Dirstream_rewindDir (d : Word64.word) = ignore (XC2Sys.osRewindDir (Word64.toInt d - 1))
+  fun Posix_FileSys_Dirstream_closeDir (d : Word64.word) = ci (XC2Sys.osCloseDir (Word64.toInt d - 1))
 
   (* ---- Posix.Process ---- *)
   fun Posix_Process_fork () = ci (XC2Sys.fork ())
@@ -756,8 +781,8 @@ struct
   fun Posix_Process_pause () = ci (XC2Sys.pause ())
   fun Posix_Process_sleep (s : Word32.word) : Word32.word =
     ((_prim "time_sleep" : int -> unit) (w32 s * 1000000); 0w0)
-  fun Posix_Process_nanosleep (sec : int ref, nsec : int ref) : Int32.int =
-    ((_prim "time_sleep" : int -> unit) (!sec * 1000000 + !nsec div 1000); sec := 0; nsec := 0; 0)
+  fun Posix_Process_nanosleep (sec : Int64.int ref, nsec : Int64.int ref) : Int32.int =
+    ((_prim "time_sleep" : int -> unit) (Int64.toInt (!sec) * 1000000 + Int64.toInt (!nsec) div 1000); sec := 0; nsec := 0; 0)
   (* what the machine reports (the exit status, or 256 plus the signal) as
      C's status of wait *)
   fun Posix_Process_system cmd : Int32.int =
@@ -798,10 +823,10 @@ struct
     val Date_Tm_setSec = set 0 val Date_Tm_setMin = set 1 val Date_Tm_setHour = set 2
     val Date_Tm_setMDay = set 3 val Date_Tm_setMon = set 4 val Date_Tm_setYear = set 5
     val Date_Tm_setWDay = set 6 val Date_Tm_setYDay = set 7 val Date_Tm_setIsDst = set 8
-    fun Date_gmTime (t : int ref) = conv (!t, 0)
-    fun Date_localTime (t : int ref) = conv (!t, 1)
-    fun Date_mkTime () : int =
-      case XC2Sys.dateSeconds (!tmIn, 1) of s :: parts => (tmIn := parts; s) | [] => fail ()
+    fun Date_gmTime (t : Int64.int ref) = conv (Int64.toInt (!t), 0)
+    fun Date_localTime (t : Int64.int ref) = conv (Int64.toInt (!t), 1)
+    fun Date_mkTime () : Int64.int =
+      Int64.fromInt (case XC2Sys.dateSeconds (!tmIn, 1) of s :: parts => (tmIn := parts; s) | [] => fail ())
     (* mktime (gmtime (now)) - now: the broken-down time of UTC, taken for
        local time with no daylight saving *)
     fun Date_localOffset () : real =
@@ -810,9 +835,9 @@ struct
            t :: _ => Real.fromInt (t - now)
          | [] => 0.0
       end
-    fun Date_strfTime (a : char XC2.array, n : word, fmt) : word =
+    fun Date_strfTime (a : char XC2.array, n : Word64.word, fmt) : Word64.word =
       let val s = XC2Sys.dateFormat (cstr fmt, !tmIn, 1)
-      in if size s + 1 > Word.toInt n then 0w0 else (toArr (a, 0, s ^ "\000"); Word.fromInt (size s)) end
+      in if size s + 1 > Word64.toInt n then 0w0 else (toArr (a, 0, s ^ "\000"); Word64.fromInt (size s)) end
   end
 
   (* ---- the system databases ---- *)
@@ -874,14 +899,14 @@ struct
     else case XC2Sys.osPoll (fds, evs, t) of [] => NONE | l => SOME l
 
   (* ---- OS.IO.poll: C's POLL bits are the machine's 1 read, 2 write, 4 urgent ---- *)
-  fun OS_IO_poll (fds : Int32.int vector, evs : Int16.int vector, n : word, timeout : Int32.int,
+  fun OS_IO_poll (fds : Int32.int vector, evs : Int16.int vector, n : Word64.word, timeout : Int32.int,
                   revs : Int16.int XC2.array) : Int32.int =
     let
       val cin = const "OS_IO_POLLIN" val cout = const "OS_IO_POLLOUT" val cpri = const "OS_IO_POLLPRI"
       fun has (x, b) = Int.rem (x div b, 2) = 1
       fun toRune e = (if has (e, cin) then 1 else 0) + (if has (e, cout) then 2 else 0) + (if has (e, cpri) then 4 else 0)
       fun fromRune e = (if has (e, 1) then cin else 0) + (if has (e, 2) then cout else 0) + (if has (e, 4) then cpri else 0)
-      val k = Word.toInt n
+      val k = Word64.toInt n
       val t = i32 timeout
     in
       case poll (List.tabulate (k, fn i => i32 (Vector.sub (fds, i))),
@@ -910,13 +935,13 @@ struct
   fun Posix_Signal_sigsuspend (_ : Word8.word vector) = ()
   fun Posix_Signal_isDefault (_ : Int32.int, r : Int32.int ref) : Int32.int = (r := 1; 0)
   fun Posix_Signal_isIgnore (_ : Int32.int, r : Int32.int ref) : Int32.int = (r := 0; 0)
-  fun Posix_Signal_default (_ : word, _ : Int32.int) : Int32.int = 0
-  fun Posix_Signal_ignore (_ : word, _ : Int32.int) : Int32.int = 0
-  fun Posix_Signal_handlee (_ : word, _ : Int32.int) : Int32.int = Int32.fromInt (failWith (XC2Sys.posixConst "ENOSYS"))
-  fun Posix_Signal_handleGC (_ : word) = ()
-  fun Posix_Signal_isPending (_ : word, _ : Int32.int) : Int32.int = 0
-  fun Posix_Signal_isPendingGC (_ : word) : Int32.int = 0
-  fun Posix_Signal_resetPending (_ : word) = ()
+  fun Posix_Signal_default (_ : Word64.word, _ : Int32.int) : Int32.int = 0
+  fun Posix_Signal_ignore (_ : Word64.word, _ : Int32.int) : Int32.int = 0
+  fun Posix_Signal_handlee (_ : Word64.word, _ : Int32.int) : Int32.int = Int32.fromInt (failWith (XC2Sys.posixConst "ENOSYS"))
+  fun Posix_Signal_handleGC (_ : Word64.word) = ()
+  fun Posix_Signal_isPending (_ : Word64.word, _ : Int32.int) : Int32.int = 0
+  fun Posix_Signal_isPendingGC (_ : Word64.word) : Int32.int = 0
+  fun Posix_Signal_resetPending (_ : Word64.word) = ()
 
   (* ---- sockets: an address of the machine's is the bytes of C's sockaddr,
      as MLton's library makes and reads them ---- *)
@@ -969,20 +994,20 @@ struct
       ~1 => Int32.fromInt (fail ())
     | fd => (ignore (putAddr (a, len, Sock.peer fd)); Int32.fromInt fd)
   fun Socket_familyOfAddr v = Int32.fromInt (Sock.family (bytesVec v))
-  fun sent r : int = check r
-  fun Socket_sendArr (s, a, i, n : word, f) = sent (Sock.send (i32 s, arrBytes (a, i32 i, Word.toInt n), i32 f))
-  fun Socket_sendVec (s, v, i, n : word, f) = sent (Sock.send (i32 s, vecBytes (v, i32 i, Word.toInt n), i32 f))
-  fun Socket_sendArrTo (s, a, i, n : word, f, to, tn : Word32.word) =
-    sent (Sock.sendto (i32 s, arrBytes (a, i32 i, Word.toInt n), i32 f, bytesVecN (to, w32 tn)))
-  fun Socket_sendVecTo (s, v, i, n : word, f, to, tn : Word32.word) =
-    sent (Sock.sendto (i32 s, vecBytes (v, i32 i, Word.toInt n), i32 f, bytesVecN (to, w32 tn)))
-  fun Socket_recv (s, a, i, n : word, f) : int =
-    let val r = Sock.recv (i32 s, Word.toInt n, i32 f)
-    in if r = "" andalso XC2Sys.sysErrno () <> 0 then fail () else (toBytes (a, i32 i, r); size r) end
-  fun Socket_recvFrom (s, a, i, n : word, f, from, len) : int =
-    case Sock.recvfrom (i32 s, Word.toInt n, i32 f) of
-      [r, addr] => (toBytes (a, i32 i, r); ignore (putAddr (from, len, addr)); size r)
-    | _ => fail ()
+  fun sent r : Int64.int = ssize (check r)
+  fun Socket_sendArr (s, a, i, n : Word64.word, f) = sent (Sock.send (i32 s, arrBytes (a, i32 i, Word64.toInt n), i32 f))
+  fun Socket_sendVec (s, v, i, n : Word64.word, f) = sent (Sock.send (i32 s, vecBytes (v, i32 i, Word64.toInt n), i32 f))
+  fun Socket_sendArrTo (s, a, i, n : Word64.word, f, to, tn : Word32.word) =
+    sent (Sock.sendto (i32 s, arrBytes (a, i32 i, Word64.toInt n), i32 f, bytesVecN (to, w32 tn)))
+  fun Socket_sendVecTo (s, v, i, n : Word64.word, f, to, tn : Word32.word) =
+    sent (Sock.sendto (i32 s, vecBytes (v, i32 i, Word64.toInt n), i32 f, bytesVecN (to, w32 tn)))
+  fun Socket_recv (s, a, i, n : Word64.word, f) : Int64.int =
+    let val r = Sock.recv (i32 s, Word64.toInt n, i32 f)
+    in ssize (if r = "" andalso XC2Sys.sysErrno () <> 0 then fail () else (toBytes (a, i32 i, r); size r)) end
+  fun Socket_recvFrom (s, a, i, n : Word64.word, f, from, len) : Int64.int =
+    ssize (case Sock.recvfrom (i32 s, Word64.toInt n, i32 f) of
+             [r, addr] => (toBytes (a, i32 i, r); ignore (putAddr (from, len, addr)); size r)
+           | _ => fail ())
   fun Socket_Ctl_getSockName (s, a, len) =
     case Sock.name (i32 s) of "" => Int32.fromInt (fail ()) | addr => putAddr (a, len, addr)
   fun Socket_Ctl_getPeerName (s, a, len) =
@@ -1019,27 +1044,28 @@ struct
   end
   (* sockaddr_un: family (2 bytes) and the path, 108 bytes *)
   val unixPathMax = 108
-  fun Socket_UnixSock_toAddr (path, n : word, a, len) =
-    let val p = String.substring (cstr path ^ "\000", 0, Int.min (Word.toInt n, unixPathMax))
+  fun Socket_UnixSock_toAddr (path, n : Word64.word, a, len) =
+    let val p = String.substring (cstr path ^ "\000", 0, Int.min (Word64.toInt n, unixPathMax))
         val fam = const "Socket_AF_UNIX"
         val s = CharVector.tabulate (2 + unixPathMax, fn k =>
                   if k = 0 then Char.chr (fam mod 256) else if k = 1 then Char.chr (fam div 256)
                   else if k - 2 < size p then String.sub (p, k - 2) else #"\000")
     in ignore (putAddr (a, len, s)) end
-  fun Socket_UnixSock_pathLen (v : Word8.word vector) : word =
+  fun Socket_UnixSock_pathLen (v : Word8.word vector) : Word64.word =
     let val n = Vector.length v
         fun loop i = if i >= unixPathMax orelse 2 + i >= n orelse Vector.sub (v, 2 + i) = 0w0 then i else loop (i + 1)
-    in Word.fromInt (if n > 2 andalso Vector.sub (v, 2) = 0w0 then unixPathMax else loop 0) end
-  fun Socket_UnixSock_fromAddr (v : Word8.word vector, a : char XC2.array, n : word) =
+    in Word64.fromInt (if n > 2 andalso Vector.sub (v, 2) = 0w0 then unixPathMax else loop 0) end
+  fun Socket_UnixSock_fromAddr (v : Word8.word vector, a : char XC2.array, n : Word64.word) =
     List.app (fn k => XC2.Array.update (a, k, if 2 + k < Vector.length v then Char.chr (w8 (Vector.sub (v, 2 + k))) else #"\000"))
-      (List.tabulate (Word.toInt n, fn k => k))
+      (List.tabulate (Word64.toInt n, fn k => k))
   local
     val timeout : (int * int) option ref = ref NONE
   in
-    fun Socket_setTimeout (s : int, us : int) = timeout := SOME (s, us)
+    (* C_Time.t and C_SUSeconds.t, Int64.int *)
+    fun Socket_setTimeout (s : Int64.int, us : Int64.int) = timeout := SOME (Int64.toInt s, Int64.toInt us)
     fun Socket_setTimeoutNull () = timeout := NONE
-    fun Socket_getTimeout_sec () = case !timeout of SOME (s, _) => s | NONE => 0
-    fun Socket_getTimeout_usec () = case !timeout of SOME (_, us) => us | NONE => 0
+    fun Socket_getTimeout_sec () = Int64.fromInt (case !timeout of SOME (s, _) => s | NONE => 0)
+    fun Socket_getTimeout_usec () = Int64.fromInt (case !timeout of SOME (_, us) => us | NONE => 0)
     (* select, as a poll of every descriptor for what it is asked for *)
     fun Socket_select (rv : Int32.int vector, wv : Int32.int vector, ev : Int32.int vector,
                        ra : Int32.int XC2.array, wa : Int32.int XC2.array, ea : Int32.int XC2.array) : Int32.int =
@@ -1095,8 +1121,8 @@ struct
     fun NetHostDB_getEntryAddrsN (i : Int32.int, a : Word8.word XC2.array) = ignore (
       List.foldl (fn (f, k) => (XC2.Array.update (a, k, Word8.fromInt (num f)); k + 1)) 0
         (String.fields (fn c => c = #".") (List.nth (addrs (), i32 i))))
-    fun NetHostDB_getHostName (a : char XC2.array, n : word) : Int32.int =
-      let val h = Sock.hostname () in toArr (a, 0, String.substring (h ^ "\000", 0, Int.min (size h + 1, Word.toInt n))); 0 end
+    fun NetHostDB_getHostName (a : char XC2.array, n : Word64.word) : Int32.int =
+      let val h = Sock.hostname () in toArr (a, 0, String.substring (h ^ "\000", 0, Int.min (size h + 1, Word64.toInt n))); 0 end
     fun NetProtDB_getByName n = found (proto, Sock.protoByName (cstr n))
     fun NetProtDB_getByNumber p = found (proto, Sock.protoByNumber (i32 p))
     fun NetProtDB_getEntryName () = XC2Mem.string (hd (!proto))
@@ -1123,10 +1149,11 @@ struct
           (cstr p, cstrs args, [], 1, [~1, ~1, ~1]))
   local
     val ru = ref [0, 0, 0, 0, 0, 0]
-    fun sec k () = List.nth (!ru, k) div 1000000
-    fun usec k () = List.nth (!ru, k) mod 1000000
+    (* C_Time.t and C_SUSeconds.t, Int64.int *)
+    fun sec k () = Int64.fromInt (List.nth (!ru, k) div 1000000)
+    fun usec k () = Int64.fromInt (List.nth (!ru, k) mod 1000000)
   in
-    fun MLton_Rusage_getrusage (_ : word) =
+    fun MLton_Rusage_getrusage (_ : Word64.word) =
       let val t = XC2Sys.times ()
       in ru := [(_prim "time_user" : unit -> int) (), (_prim "time_sys" : unit -> int) (),
                 List.nth (t, 3), List.nth (t, 4),
@@ -1267,9 +1294,9 @@ struct
     fun getArgv () = case !argv of SOME p => p | NONE => let val p = XC2Mem.strings (args ()) in argv := SOME p; p end
   in
     val CommandLine_argc = (fn () => Int32.fromInt (length (args ())), fn (_ : Int32.int) => ())
-    val CommandLine_argv = (getArgv, fn (_ : word) => ())
-    val CommandLine_commandName = (fn () => XC2Mem.string (CommandLine.name ()), fn (_ : word) => ())
-    val Posix_ProcEnv_environ = (fn () => XC2Mem.strings (XC2Sys.environ ()), fn (_ : word) => ())
+    val CommandLine_argv = (getArgv, fn (_ : Word64.word) => ())
+    val CommandLine_commandName = (fn () => XC2Mem.string (CommandLine.name ()), fn (_ : Word64.word) => ())
+    val Posix_ProcEnv_environ = (fn () => XC2Mem.strings (XC2Sys.environ ()), fn (_ : Word64.word) => ())
     val MLton_Platform_CygwinUseMmap = (fn () => false, fn (_ : bool) => ())
   end
 end

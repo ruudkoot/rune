@@ -45,9 +45,14 @@ What the runs have shown (2026-10-09):
   and `docs/bugreport`). One suspected difference, the scope of an explicit
   type variable in MLKit's `TableSlice`, turned out to be MLKit's: Rune,
   MLton and Poly/ML reject that code.
-* **Rune's machine.** The JIT's tier 2 of `bin/runevm-int64`, the build
-  that `xc2:mlton` runs on, goes wrong on MLton's library (*xc2:mlton*
-  below). The other three run on `bin/runevm`, the JIT included.
+* **Rune's machine.** All four run on `bin/runevm`, the JIT included. Before
+  `--default-type`, `xc2:mlton` ran on `bin/runevm-int64`, the build of the
+  machine whose `int` and `word` keep 64 bits, and its JIT's tier 2 went
+  wrong on MLton's library there: compiling only the closure
+  `fn f => fn x => ...` of `make` in `integer/embed-int.sml` at tier 2
+  made the program of `mono.real` hang, and with all of tier 2 it stopped
+  in `word64_from_word` on a value of the wrong type, where the
+  interpreter, tier 1 and `--jit=all` ran it (2026-10-09, not fixed).
 * **Rune's limits.** The signature `BASIS_EXTRA` of MLton's library, one
   declaration, needs some 21 million steps of type inference, which is
   why the default of `--type-work` became 50 million.
@@ -78,16 +83,16 @@ What it does not check:
   place, which the patch annotates otherwise; MLton's relies on the scoping
   of its `.mlb` files, which the generator flattens into one program.
 * **Rune's own `int` and `word` with MLton.** MLton's library can be built
-  for 32- or 64-bit `int` and `word` but not for 63, Rune's, so
-  `xc2:mlton` runs on the build of Rune's machine that keeps 64 bits. The
-  `int` and `word` of the other three hosts have 63 bits, as Rune's do, and
-  their libraries are built as they are natively.
+  for 32- or 64-bit `int` and `word` but not for 63, Rune's, so in
+  `xc2:mlton` the `int` and `word` of the library and of the test programs
+  are `Int64.int` and `Word64.word` (*xc2:mlton* below). The `int` and
+  `word` of the other three hosts have 63 bits, as Rune's do, and their
+  libraries are built as they are natively.
 
 ## Running it
 
 ```
 make hosts                    # the hosts, with the sources of their libraries
-make bin/runevm-int64         # the machine xc2:mlton runs on
 sh tests/basis/run-matrix.sh -j 12 --configs xc2              # all four
 sh tests/basis/run-matrix.sh -j 12 --configs xc2:polyml real  # one, tests named *real*
 ```
@@ -108,8 +113,8 @@ to how a value is represented, which the shims depend on.
 ## How a program is made
 
 `HOST/gen.sh OUTDIR LIB` writes what a program compiles before its own files
-(`OUTDIR/prefix`), the options of Rune's compiler it needs besides
-`--allow-prim` (`OUTDIR/flags`), and those of the machine (`OUTDIR/vmflags`):
+(`OUTDIR/prefix`), and the options of Rune's compiler it needs besides
+`--allow-prim` (`OUTDIR/flags`):
 
 1. **The sources.** The host's `basis.patch` is applied to a copy of its
    library. `mlb-flatten.awk` and `flatten.sh` flatten its `basis.mlb` into
@@ -140,29 +145,28 @@ to how a value is represented, which the shims depend on.
 
 `mlton/gen.sh OUTDIR [MLTON_LIB]` builds MLton's `basis.mlb` with MLton's
 configuration for 64-bit `int` and `word`. MLton's library has no
-configuration for Rune's `int` and `word`, of 63 bits, and the test
-programs' constants are of Rune's `int`: so a program is compiled with
-`--int-bits=64` (`OUTDIR/flags`) and run by `bin/runevm-int64`, the build
-of Rune's machine whose `int` and `word` keep 64 bits (`make
-bin/runevm-int64`), with the JIT's tier 1 alone (`--jit=baseline`,
-`OUTDIR/vmflags`): on that build, tier 2 goes wrong on MLton's library.
-Compiling only the closure `fn f => fn x => ...` of `make` in
-`integer/embed-int.sml` at tier 2 makes the program of `mono.real` hang,
-and with all of tier 2 it stops in a primitive that finds a value of the
-wrong type (`word64_from_word`); the interpreter, tier 1 and `--jit=all`
-run it. `mlton/rewrite.awk` replaces
+configuration for Rune's `int` and `word`, of 63 bits: its `int64` and
+`word64` are Rune's `Int64.int` and `Word64.word`, its `Int` and `Word`
+are of them, and a program is compiled with `--default-type=int64
+--default-type=word64` (`OUTDIR/flags`), as MLton compiles one with
+`-default-type int64`, so that the constants and the arithmetic that a
+declaration leaves open are of MLton's `int` and `word` there too (they
+would be Rune's otherwise, and not meet the library's). `mlton/rewrite.awk` replaces
 `_prim "N": T;` by `(XC2Prim.N : T)`, `_import` by `XC2FFI.N`, `_symbol` by
 `XC2Symbol.N`, and `_const`/`_build_const` by the value of the constant (from
 MLton's `targets/self/constants`). A primitive used at more than one type
 (`Word8_add` adds `Int8.int`s and `Word8.word`s) gets its type in its name
 (`Word8_add__int_x_int_to_int`). `mlton/prologue.sml` gives MLton's
-primitive types as Rune's (`int8` is `Int8.int`, ..., `int64` is `int`,
-`real32` is `Real32.real`, `char8` is `char`, `intInf` is `IntInf.int`).
-`mlton/shim.sml` implements the primitives: `mlton/prims.awk` generates the
-families (`WordS16_extdToWord32`, `Real32_rndToWordU8`, ...) from the table
-of step 2, on functors that work on the bits of a value; the rest, and
-MLton's C functions, are written out, mostly on the primitives of Rune's
-machine, which are C's functions with Rune's types.
+primitive types as Rune's (`int8` is `Int8.int`, ..., `int64` is
+`Int64.int`, a width from 33 to 63 is Rune's `int`, `real32` is
+`Real32.real`, `char8` is `char`, `intInf` is `IntInf.int`, a C pointer is
+a `Word64.word`). `mlton/shim.sml` implements the primitives:
+`mlton/prims.awk` generates the families (`WordS16_extdToWord32`,
+`Real32_rndToWordU8`, ...) from the table of step 2, on functors that work
+on the bits of a value, kept in a `Word64.word`; the rest, and MLton's C
+functions, are written out, mostly on the primitives of Rune's machine,
+which are C's functions with Rune's types (the shim converts the 64-bit
+ones, `SeqIndex.int`, `C_Size.t`, `C_Off.t`, ..., to Rune's `int`).
 
 What differs from MLton, and why:
 

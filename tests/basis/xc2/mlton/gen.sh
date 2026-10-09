@@ -18,8 +18,8 @@
 #   stubs.sml       XC2Prim, XC2FFI and XC2Symbol: a value for every
 #                   primitive, which raises unless the shim implements it
 #   lib             the part of Rune's library the shim needs (../trim-lib.sh)
-#   flags           the options of the compiler: --int-bits=64
-#   vmflags         the options of the machine: --jit=baseline
+#   flags           the options of the compiler: --default-type=int64 and
+#                   word64
 set -eu
 
 [ $# -ge 1 ] || { echo "usage: tests/basis/xc2/mlton/gen.sh OUTDIR [MLTON_LIB]" >&2; exit 2; }
@@ -139,14 +139,12 @@ cp "$xc2/xc2.sml" "$here/prologue.sml" "$here/shim.sml" "$out/"
   cat "$out/files"
 } > "$out/prefix"
 
-# MLton's library is built for a 64-bit int and word (above), and Rune's are
-# of 63 bits: the programs are compiled for the VM whose int and word keep
-# 64 (bin/runevm-int64, run-matrix.sh)
-echo --int-bits=64 > "$out/flags"
-# The JIT's tier 2 on that machine goes wrong on MLton's library (a program
-# of mono.real hangs, or fails a primitive's test of its argument, where the
-# interpreter, tier 1 alone and --jit=all run it), so tier 1 alone
-echo --jit=baseline > "$out/vmflags"
+# MLton's library is built for a 64-bit int and word (above), which are
+# Rune's Int64.int and Word64.word; Rune's int and word have 63 bits. As
+# MLton's -default-type int64 does, --default-type makes them the types of
+# the constants and the arithmetic that a declaration leaves open, in the
+# library and in the test programs.
+echo --default-type=int64 --default-type=word64 > "$out/flags"
 
 # The part of Rune's library the shim needs
 # shellcheck disable=SC2046

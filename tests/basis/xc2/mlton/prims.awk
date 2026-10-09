@@ -24,9 +24,10 @@ function inst(k, n,   s, rune) {
   s = k n
   if (n == 8 || n == 16 || n == 32 || n == 64) { EXTRA[s] = "XC2Fixed." s; return use(s) }
   if (!(s in EXTRA)) {
-    rune = n < 8 ? 8 : n < 16 ? 16 : n < 32 ? 32 : 64
-    if (k == "I") EXTRA[s] = "XC2FixedInt (type int = " (rune == 64 ? "Int" : "Int" rune) ".int val width = " n " val toInt = " (rune == 64 ? "fn x => x" : "Int" rune ".toInt") " val fromInt = " (rune == 64 ? "fn x => x" : "Int" rune ".fromInt") ")"
-    else EXTRA[s] = "XC2FixedWord (type word = " (rune == 64 ? "Word" : "Word" rune) ".word val width = " n " val toLarge = " (rune == 64 ? "XC2Large.fromWord" : "Word" rune ".toLarge") " val fromLarge = " (rune == 64 ? "XC2Large.toWord" : "Word" rune ".fromLarge") ")"
+    # a width from 33 to 63 is kept in Rune's int or word, of 63 bits
+    rune = n < 8 ? "8" : n < 16 ? "16" : n < 32 ? "32" : ""
+    if (k == "I") EXTRA[s] = "XC2FixedInt (type int = Int" rune ".int val width = " n " val toInt64 = " (rune == "" ? "Int64.fromInt" : "Int64.fromInt o Int" rune ".toInt") " val fromInt64 = " (rune == "" ? "Int64.toInt" : "Int" rune ".fromInt o Int64.toInt") ")"
+    else EXTRA[s] = "XC2FixedWord (type word = Word" rune ".word val width = " n " val toLarge = Word" rune ".toLarge val fromLarge = Word" rune ".fromLarge)"
   }
   return use(s)
 }
@@ -93,19 +94,19 @@ $1 == "prim" {
     emit(id, "XC2Real" a "." op)
   } else if (match(name, /^CPointer_(get|set)Word[0-9]+$/)) {
     n = name; sub(/.*Word/, "", n); b = n / 8
-    if (name ~ /get/) emit(id, "fn (p, i) => " res(result, n) ".fromBits (XC2Mem.get (p, " b " * i, " b "))")
-    else emit(id, "fn (p, i, x) => XC2Mem.set (p, " b " * i, " b ", " res(A[3], n) ".bits x)")
+    if (name ~ /get/) emit(id, "fn (p, i) => " res(result, n) ".fromBits (XC2Mem.get (p, " b " * XC2Index.index i, " b "))")
+    else emit(id, "fn (p, i, x) => XC2Mem.set (p, " b " * XC2Index.index i, " b ", " res(A[3], n) ".bits x)")
   } else if (match(name, /^CPointer_(get|set)Real[0-9]+$/)) {
     n = name; sub(/.*Real/, "", n); b = n / 8
-    if (name ~ /get/) emit(id, "fn (p, i) => XC2Real" n ".castFromWord" n " (" inst("W", n) ".fromBits (XC2Mem.get (p, " b " * i, " b ")))")
-    else emit(id, "fn (p, i, x) => XC2Mem.set (p, " b " * i, " b ", " inst("W", n) ".bits (XC2Real" n ".castToWord" n " x))")
+    if (name ~ /get/) emit(id, "fn (p, i) => XC2Real" n ".castFromWord" n " (" inst("W", n) ".fromBits (XC2Mem.get (p, " b " * XC2Index.index i, " b ")))")
+    else emit(id, "fn (p, i, x) => XC2Mem.set (p, " b " * XC2Index.index i, " b ", " inst("W", n) ".bits (XC2Real" n ".castToWord" n " x))")
   } else if (match(name, /^Word8(Array|Vector)_(sub|update)Word[0-9]+$/)) {
     n = name; sub(/.*Word/, "", n); b = n / 8; w = res((name ~ /update/ ? A[3] : result), n)
     get = (name ~ /Array/ ? "XC2.Array.sub" : "Vector.sub")
     if (name ~ /update/)
-      emit(id, "fn (a, i, x) => let val v = " w ".bits x fun loop k = if k >= " b " then () else (XC2.Array.update (a, " b " * i + k, Word8.fromLarge (XC2Large.fromWord (Word.>> (v, Word.fromInt (8 * k))))); loop (k + 1)) in loop 0 end")
+      emit(id, "fn (a, i, x) => let val v = " w ".bits x fun loop k = if k >= " b " then () else (XC2.Array.update (a, " b " * XC2Index.index i + k, Word8.fromLarge (Word64.>> (v, Word.fromInt (8 * k)))); loop (k + 1)) in loop 0 end")
     else
-      emit(id, "fn (a, i) => let fun loop (k, v) = if k < 0 then v else loop (k - 1, Word.orb (Word.<< (v, 0w8), XC2Large.toWord (Word8.toLarge (" get " (a, " b " * i + k))))) in " w ".fromBits (loop (" (b - 1) ", 0w0)) end")
+      emit(id, "fn (a, i) => let fun loop (k, v) = if k < 0 then v else loop (k - 1, Word64.orb (Word64.<< (v, 0w8), Word8.toLarge (" get " (a, " b " * XC2Index.index i + k)))) in " w ".fromBits (loop (" (b - 1) ", 0w0)) end")
   }
 }
 END {

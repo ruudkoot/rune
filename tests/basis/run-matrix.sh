@@ -42,9 +42,8 @@
 #   xc2:mlton  xc2:mlkit  xc2:smlnj-legacy  xc2:polyml
 #                          the suite against the Basis Library of MLton, MLKit,
 #                          SML/NJ or Poly/ML compiled by bin/rune and run by
-#                          bin/runevm (MLton's, built for a 64-bit int, by
-#                          bin/runevm-int64): the library's sources, its
-#                          primitives and C functions made of Rune's
+#                          bin/runevm: the library's sources, its primitives
+#                          and C functions made of Rune's
 #                          (tests/basis/xc2/README.md)
 #   hosts                  native:HOST for the six hosts
 #   xc1                    xc1:HOST for the six hosts
@@ -347,10 +346,8 @@ load() {
     xc2:*)
       # as rune: the configuration's prefix (the host's library) comes
       # first, and Rune's library is the part of it the shim needs; the
-      # generator may ask for more of Rune's extensions (xc2/flags), and
-      # give the machine options (xc2/vmflags)
+      # generator may ask for more of Rune's extensions (xc2/flags)
       xflags=$(cat "$cfgout/xc2/flags" 2> /dev/null || true)
-      vmflags=$(cat "$cfgout/xc2/vmflags" 2> /dev/null || true)
       if [ "$mode" = check ]; then
         # shellcheck disable=SC2086
         "$cmd1" --lib "$cfgout/xc2/lib" --allow-prim $xflags --typecheck-only "$@" > "$loaddir/log" 2>&1
@@ -358,8 +355,7 @@ load() {
       fi
       # shellcheck disable=SC2086
       "$cmd1" --lib "$cfgout/xc2/lib" --allow-prim $xflags "$@" -o "$loaddir/prog.rbc" > "$loaddir/log" 2>&1 || return 1
-      # shellcheck disable=SC2086
-      (cd "$loaddir" && timeout "$limit" "$cmd2" $vmflags prog.rbc > stdout 2>> log < "$program_input")
+      (cd "$loaddir" && timeout "$limit" "$cmd2" prog.rbc > stdout 2>> log < "$program_input")
       ;;
     *:mlton)
       write_mlb "$loaddir/prog.mlb" "$@"
@@ -1184,12 +1180,10 @@ resolve() {
       ;;
     xc2:mlton)
       # Rune's compiler and machine with MLton's library: the mlton of the hosts
-      # gives its sources (lib/mlton/sml/basis) and its version. The library
-      # is built for a 64-bit int and word, so the machine is the one whose
-      # int and word keep 64 bits (tests/basis/xc2/mlton/gen.sh)
+      # gives its sources (lib/mlton/sml/basis) and its version
       cmd1=${RUNE:-$root/bin/rune}
-      cmd2=${RUNEVM_INT64:-$root/bin/runevm-int64}
-      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make and make bin/runevm-int64)" >&2; return 1; }
+      cmd2=${RUNEVM:-$root/bin/runevm}
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make)" >&2; return 1; }
       mlton=${MLTON:-$hosts_prefix/mlton/bin/mlton}
       version=$("$mlton" 2> /dev/null | sed -n '1s/^MLton \([0-9][0-9.]*\).*/\1/p')
       # the sixth field of the configuration: MLton's library directory
