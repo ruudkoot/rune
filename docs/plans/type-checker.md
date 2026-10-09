@@ -70,19 +70,25 @@ doubled with each application -- 0.5 GB and 1.6 s at 22, more than 26 GB at
 | Poly/ML 5.9.2 | does not finish in 120 s; time ×4 every two applications (1.9 s at 24), memory flat |
 | MLKit 4.7.23 | out of memory at 8 GB after 34 s |
 | Rune before the budget | more than 26 GB, killed |
-| Rune with the budget | refused at the declaration in 0.25 s, 120 MB |
+| Rune with the budget of 10000000 | refused at the declaration in 0.25 s, 120 MB |
 
-**The budget.** `--type-work=N` (default 10000000 steps per top-level
-declaration) limited type inference only. It now also limits the
+**The budget.** `--type-work=N` (default 50000000 steps per top-level
+declaration; 10000000 until 2026-10-09) limited type inference only. It now also limits the
 translation of each top-level declaration's types (`Types.startWorkOn`,
 around each declaration in `Translate.transTopDecs`): `Types.prune`,
 which the conversion calls on every node, spends a step, and running out is
 the compile error `type translation exceeds N steps` at the declaration.
 The compiler's own sources need at most about 58000 steps for a
-declaration's inference, and no more for its translation, so the default
-leaves a margin of some 170 times. An exponential program compiles up to 20 applications
-(0.25 s, 140 MB) and is refused from 21. `tests/compiler/run-tests.py`
-tests both, and `tests/external/mlton-skip.txt` skips `exponential` as
+declaration's inference, and no more for its translation. The largest
+declaration met so far is the signature `BASIS_EXTRA` of MLton's Basis
+Library, which `xc2:mlton` compiles (`tests/basis/xc2`): some 21 million
+steps of inference. The default of 50000000 leaves it a margin of about 2.4
+times, which is why the default was raised from 10000000. An exponential
+program then compiles up to 22 applications (5 s, 350 MB) and is refused
+from 23 (in about 9 s, at 690 MB); with 10000000 it was refused from 21
+(measured on 2026-10-09 on a loaded machine: 2 to 3 s, 150 MB).
+`tests/compiler/run-tests.py` tests both with budgets of its own, and
+`tests/external/mlton-skip.txt` skips `exponential` (32 applications) as
 `LIMIT`.
 
 ## What a fix needs

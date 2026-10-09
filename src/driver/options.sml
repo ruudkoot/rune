@@ -46,7 +46,7 @@ struct
     \                    64 for a VM built with -DRUNE_INT64\n\
     \  --or-patterns     allow or-patterns (p1 | p2), which are not Standard ML\n\
     \  --typecheck-only  stop after type checking\n\
-    \  --type-work=N     type traversal budget per top-level declaration (10000000)\n\
+    \  --type-work=N     type traversal budget per top-level declaration (50000000)\n\
     \  --match-work=N    pattern-analysis budget per match (1000000)\n\
     \  --no-warnings     do not print warnings (nonexhaustive or redundant matches)\n\
     \  --dump-tokens     print the tokens of the input files and stop\n\

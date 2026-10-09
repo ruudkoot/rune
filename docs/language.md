@@ -292,7 +292,7 @@ because VM primitives construct these values directly.
 
 ## Compiler resource budgets
 
-Type traversal during elaboration is limited to 10000000 steps per top-level
+Type traversal during elaboration is limited to 50000000 steps per top-level
 declaration (`--type-work=N`), and so, apart, is the translation of each
 top-level declaration's types, which the elaborator keeps shared and the
 intermediate representations do not (`type translation exceeds`; a type of
