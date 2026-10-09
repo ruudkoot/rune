@@ -61,13 +61,10 @@ Chunk *chunk_take(VM *vm, size_t bytes, int kind) {
     return c;
 }
 
-/* A pool of one heap's worth, as many chunks as the heap's size takes, and
-   one more: what the semispace kept between collections held. A run of
-   chunks goes back to the system, being of a size the next may not want. */
-/* a copying old space keeps a heap's worth for its next copy; a
-   non-moving one, which never copies the heap, a few (D10) -- the low-pause
-   collector as many as promotion may fill before the heap's size is
-   reached, whose pages a minor collection would otherwise make again in
+/* What the pool keeps: a copying old space a heap's worth for its next
+   copy; a non-moving one, which never copies the heap, a few (D10) -- the
+   low-pause collector as many as promotion may fill before the heap's size
+   is reached, whose pages a minor collection would otherwise make again in
    its pause (cycle.c) */
 static size_t pool_keep(const VM *vm) {
     if (vm->gc.old_kind == OLD_COPY || !vm->gc.nursery) return vm->gc.size / CHUNK_SIZE;
@@ -75,6 +72,9 @@ static size_t pool_keep(const VM *vm) {
     return 4;
 }
 
+/* A pool of chunks, as many as pool_keep says and one more: what the
+   semispace kept between collections held. A run of chunks goes back to
+   the system, being of a size the next may not want. */
 void chunk_give(VM *vm, Chunk *c) {
     free(c->lines);
     c->lines = NULL;
@@ -134,9 +134,6 @@ void heap_chunks_release(VM *vm) {
     /* the mark-region space's lists of blocks (immix.c) */
     free(vm->gc.ix_recycle);
     free(vm->gc.ix_free);
-    free(vm->gc.ix_ranges);
-    vm->gc.ix_ranges = NULL;
-    vm->gc.ix_nranges = vm->gc.ix_ranges_cap = 0;
     vm->gc.ix_recycle = vm->gc.ix_free = NULL;
     vm->gc.ix_nrecycle = vm->gc.ix_recycle_cap = vm->gc.ix_recycle_at = vm->gc.ix_nfree = vm->gc.ix_free_cap = 0;
     vm->gc.ix_cursor = vm->gc.ix_limit = vm->gc.ix_block = vm->gc.ix_ocursor = vm->gc.ix_olimit = NULL;

@@ -115,22 +115,6 @@ static int next_hole(VM *vm, char *block, char *from) {
 /* the next hole: the rest of the block, the next block with free lines, a
    free block (while a full collection marks, a free block alone) */
 static void next(VM *vm) {
-    if (vm->gc.ix_track) {
-        /* a minor collection scans what it promotes where it lies: the part
-           of the hole it leaves not yet scanned is kept for it */
-        if (vm->gc.ix_scan && vm->gc.ix_scan < vm->gc.ix_cursor) {
-            if (vm->gc.ix_nranges + 2 > vm->gc.ix_ranges_cap) {
-                size_t cap = vm->gc.ix_ranges_cap ? 2 * vm->gc.ix_ranges_cap : 64;
-                char **r = realloc(vm->gc.ix_ranges, cap * sizeof *r);
-                if (!r) out_of_memory();
-                vm->gc.ix_ranges = r;
-                vm->gc.ix_ranges_cap = cap;
-            }
-            vm->gc.ix_ranges[vm->gc.ix_nranges++] = vm->gc.ix_scan;
-            vm->gc.ix_ranges[vm->gc.ix_nranges++] = vm->gc.ix_cursor;
-        }
-        vm->gc.ix_scan = NULL;
-    }
     if (!vm->gc.ix_in_full) {
         if (vm->gc.ix_block && next_hole(vm, vm->gc.ix_block, vm->gc.ix_limit)) return;
         while (vm->gc.ix_recycle_at < vm->gc.ix_nrecycle) {
@@ -145,12 +129,6 @@ static void next(VM *vm) {
     vm->gc.ix_limit = limit;
 }
 
-/* the hole next() chose, whose objects a minor collection scans from its start */
-static void next_hole_scanned(VM *vm) {
-    next(vm);
-    if (vm->gc.ix_track) vm->gc.ix_scan = vm->gc.ix_cursor;
-}
-
 #define lines_mark ix_lines_mark
 
 Obj *immix_place(VM *vm, size_t size) {
@@ -161,12 +139,9 @@ Obj *immix_place(VM *vm, size_t size) {
             p = vm->gc.ix_ocursor;
             if (!p || size > (size_t)(vm->gc.ix_olimit - p)) p = vm->gc.ix_ocursor = free_block(vm, &vm->gc.ix_olimit);
             vm->gc.ix_ocursor = p + size;
-            /* not in a hole: a minor collection scans it from its queue (it
-               is filled before the queue is read) */
-            if (vm->gc.ix_track) gc_queue(vm, (Obj *)p);
             goto placed;
         }
-        do next_hole_scanned(vm); while (size > (size_t)(vm->gc.ix_limit - vm->gc.ix_cursor));
+        do next(vm); while (size > (size_t)(vm->gc.ix_limit - vm->gc.ix_cursor));
         p = vm->gc.ix_cursor;
     }
     vm->gc.ix_cursor = p + size;

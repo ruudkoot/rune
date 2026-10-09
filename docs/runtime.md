@@ -239,18 +239,19 @@ What it is and is not:
   marks all that is live, the data that has been live since the program
   started with it, in one pause; the low-pause collector's marking is cut
   into slices, so that its pauses are a minor collection, a slice, and a
-  cycle's beginning (the stack) and end, each of them short
-  ([plans/garbage-collector-v2.md](plans/garbage-collector-v2.md), M6, has
-  the figures). The compiler compiling itself from the 64 MiB `bin/rune` gives it
-  allocates 887 MB; with the copying old space of M3 (`--old-space copy`)
-  it makes 847 minor and 2 full collections, which promote 171 MB and copy
-  228 MB in all, the longest pause, a full collection, 51 ms and 99 in 100
-  under 1.1 ms; with `--nursery 0`, 10 collections, which copy 306 MB in
-  0.4 s and the longest of which is 67 ms. The two collectors' figures are
-  [plans/garbage-collector-v2.md](plans/garbage-collector-v2.md)'s, *The
-  gate of M4*. A program whose short-lived data is as large as the nursery
+  cycle's beginning (the stack) and end, each of them short. The compiler
+  compiling itself from the 64 MiB `bin/rune` gives it allocates 887 MB:
+  the throughput collector makes 318 minor and 4 full collections, its
+  longest pause a full collection's 42 ms and 99 in 100 under 25 ms; the
+  low-pause collector 849 minor collections and 5 cycles of marking in
+  1,972 slices, its longest pause 3 ms and 99 in 100 under 1.4 ms; with
+  `--nursery 0`, 10 collections, which copy 306 MB in 0.4 s and the
+  longest of which is 57-67 ms
+  ([plans/garbage-collector-v2.md](plans/garbage-collector-v2.md), *M5 to
+  M7*, has these and the rest of the evaluation set). A program whose
+  short-lived data lives past a minor collection and dies soon after
   promotes most of it: such programs run slower than with `--nursery 0`,
-  up to twice as slow (M3 there).
+  up to twice as slow.
 * **Moving.** A minor collection moves what it promotes, the throughput
   collector's full collection the objects of the blocks it evacuates, and
   the copier's every object but a large one; the low-pause collector's

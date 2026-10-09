@@ -220,13 +220,6 @@ typedef struct GcState {
     char **ix_recycle, **ix_free;
     size_t ix_nrecycle, ix_recycle_cap, ix_recycle_at, ix_nfree, ix_free_cap;
     int ix_in_full;      /* a full collection is marking: whole free blocks alone */
-    /* during a minor collection, what it promoted into holes, scanned in
-       place (minor.c): how far the current hole is scanned, and the ranges
-       of the holes left with objects not yet scanned */
-    int ix_track;
-    char *ix_scan;
-    char **ix_ranges;
-    size_t ix_nranges, ix_ranges_cap;
     uint64_t ix_evacuated;
     /* the segregated old space's (runtime/gc/segfit.c): the classes, their
        sizes, the class of each size by eights, and the free blocks */

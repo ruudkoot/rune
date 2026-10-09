@@ -1205,9 +1205,23 @@ void ms_need_unmarked(Masm *m, AsmLabel *slow) {
     as_cmp_mi(&m->a, VMR, OFF(gc.marking), 0);
     as_jcc(&m->a, CC_NE, slow);
 }
+/* whether the word stored from R(s) is an immediate whatever R(s) holds,
+   so that the barrier has nothing to remember (D15 B, M7): a home's int or
+   word of 63 bits, char or constant constructor; not a slot's, which may
+   hold anything, nor a real's or a number's of 64 bits, whose word may be a
+   box. The snapshot's flag is tested all the same (ms_need_unmarked): what
+   the store overwrites may be a pointer. */
+static int word_immediate(const Masm *m, int32_t s) {
+    const Home *h = ms_home(m, s);
+    if (!h || is_xmm(h)) return 0;
+#ifdef RUNE_INT64
+    if (h->tag == T_INT || h->tag == T_WORD) return 0;
+#endif
+    return h->tag == T_INT || h->tag == T_WORD || h->tag == T_CHAR || h->tag == T_CON0;
+}
 void ms_set_field(Masm *m, int obj, uint32_t i, int32_t s) {
     ms_store_field(m, obj, i, s);
-    barrier(m, obj, obj, FIELD_OFF(i));
+    if (!word_immediate(m, s)) barrier(m, obj, obj, FIELD_OFF(i));
 }
 /* The same for an element of an array: its address, from the index and the
    array, in index's register, the array kept in obj, since the barrier finds
@@ -1218,7 +1232,7 @@ void ms_set_element(Masm *m, int obj, int index, int32_t s) {
     ms_scale_index(m, index);
     as_add_rr(&m->a, index, obj);
     ms_store_value(m, index, FIELD_OFF(0), s);
-    barrier(m, obj, index, FIELD_OFF(0));
+    if (!word_immediate(m, s)) barrier(m, obj, index, FIELD_OFF(0));
 }
 void ms_store_field_imm(Masm *m, int obj, uint32_t i, int tag, int32_t payload) {
     as_st64i(&m->a, obj, FIELD_OFF(i), (int32_t)word_of(tag, payload));

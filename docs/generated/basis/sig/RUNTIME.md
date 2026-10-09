@@ -157,12 +157,17 @@ For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml)
 val collect : unit -> unit
 ```
 
-`collect ()` collects the heap now.
+`collect ()` collects the heap now: a full collection.
 
-Every unreachable object is freed and every surviving one but a large
-one moves, which costs time proportional to the live data and to
-nothing else: a copying collector never visits what it does not keep. After it, the `live` of a
-[`stats`](#val-stats) is exactly the live data, where otherwise it is an upper bound.
+Every unreachable object is freed. Under the collectors `runevm --gc`
+chooses, what lives is marked where it lies -- the throughput
+collector, the default, moves the objects of its sparsest blocks, and
+the low-pause collector moves nothing -- which costs time proportional
+to the live data and a little for every block of the heap; the copier
+of `runevm --nursery 0` moves every surviving object but a large one,
+which costs time proportional to the live data and to nothing else.
+After it, the `live` of a [`stats`](#val-stats) is exactly the live data, where
+otherwise it is an upper bound.
 
 Nothing an SML program can see changes. Equality on a `ref` or an
 `array` is the identity the collector maintains, not an address of the

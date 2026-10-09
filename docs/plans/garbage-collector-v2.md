@@ -54,9 +54,9 @@ What it rests on:
 | M2 | The collector behind an interface | done 2026-10-07: the barrier with the object, the field and the value in every engine, `runeopt`'s `:=` and `Array.update` included, through `ms_set_field` and its template (`4cc8ae69`); `--gc-verify` and `make test-heap` in `make check` (`8fb0fc18`, `1065a541`); the heap of 2 MiB chunks over `sys_mem_reserve`, images and `heap_relocate` over them, the copier, the log and the check in `runtime/gc/` (`04cd4345`); the corrections of *Where the documents are wrong*. Output, `--count` and every collection as before on all 271 programs of `tests/lang` on both VMs, and every portability VM and image direction; the evaluation set T 1.011, M 0.841, P 1.030 against the copier of `1065a541`, the short programs' worst T within the noise on five rounds. The old-space interface's operations come with their first users: promotion with M3's nursery, marking and sweeping with M4's old spaces |
 | M3 | The nursery, its remembered set, the watermark, large objects | done 2026-10-07, its targets not met: the barrier with the VM, the field and the value in every engine (`233a8e6b`); the nursery of 1 MiB (`--nursery N`; 0 the copier as before) with promotion at the first survival, the cards and dirty bytes in the chunks' tables with a crossing map, the large-object space from 8 KiB with the large objects made since the last minor collection scanned whole, and `--gc-verify` of the remembered set (`d34ff907`); the watermark and the liveness by a hash of the return pc (`bdf2ed77`) -- the watermark an index of the lowest frame that ran since the last minor collection, which every pop lowers, rather than D9's bit in each frame record: the same frames scanned, a comparison a return, `Frame` unchanged; and what the evaluation found: a dirty card of a large array scanned from its first field, each minor collection logged as its own, the collector's calls per object made inline (`b1c9a930`). Correct: the whole chain, `--gc-verify` at 4 KiB, 64 KiB and 1 MiB on both interpreters, the JIT at both tiers and `runeopt`'s code, and `--nursery 0` as M2 in output, `--count` and every collection on all 271 programs of both VMs. Against M2's copier (`results/m3-eval.md`): T 1.011, M 0.685, P 1.010; the bootstrap 0.833 of the task-clock (target 0.85) and 0.648 of the peak (target 0.5), its 99th-percentile pause 1.1 ms against 67; `merge` 2.05 (target 1.0); Rune compiling MLton 1.33 (target 1.0). What misses is promotion at the first survival into a copying old space: where a program's short-lived data is as large as the nursery most of it is promoted, and the full collections copy it again (DLXSimulator promotes 81% of each nursery, Rune compiling MLton 52%). No nursery from 128 KiB to 16 MiB meets the targets (the sweep there: 16 MiB mends `merge` and DLXSimulator at M 0.94 and P 1.63); the gate decides D2 -- the size, and promotion at the second survival -- and D3, an old space that is marked, on M4's prototypes |
 | M4 | Two old spaces at full scale; the gate | done 2026-10-08: the frame of a non-moving old space (`d4015db0`), mark-region on `gc2-m4a` (`4cb0a4e8`) and segregated fits on `gc2-m4b` (`1b98f09f`), each passing M3's chain with its old space the default; the numbers in *Decisions*, *The gate of M4* (`652d7a09`). At the gate the owner kept both, as two collectors chosen on the command line -- mark-region the throughput collector and the default, segregated fits the low-pause collector -- and took the gate's other recommendations; M5 to M8 planned again |
-| M5 | Both old spaces, complete | |
-| M6 | Short pauses in the low-pause collector | |
-| M7 | The cache, and the compiler's help | |
+| M5 | Both old spaces, complete | done 2026-10-08: the two old spaces merged behind `--gc throughput\|low-pause` (`20321d46`); the adaptive nursery, the promotion path in line, mark-compact (`--old-space compact`) and the compaction at the limit made of it, large objects of more than half a chunk in mappings of their own, sizing by steps of 1 MiB to three quarters of a `size_t`, the pool, pinning in place for large objects, and `make test-gc` in `make check` (`dd2a1e61`). Against M2's copier: T 1.070, M 0.575, P 0.971; mark-compact beside it T 1.199, M 0.544, P 1.427. A byte promoted costs 0.93-1.07 times M3's (target 1.1); 32-bit, 3079 MiB live with the whole address space and 1278 MiB under 2 GiB (targets 1.5 GiB and 768 MiB). T missed M3's 1.011 -- the heaviest promoters gained (`merge` 2.31 to 1.57 of the copier) and the bootstrap, the latency workloads and Rune compiling MLton lost, the last to the compaction at the limit -- until M7. As built, D4 differs for the low-pause collector and D17 is for large objects alone (*M5 to M7*) |
+| M6 | Short pauses in the low-pause collector | done 2026-10-08 (`504bea1e`): incremental snapshot marking for the low-pause collector -- a cycle begun at half the room, its slices brought by allocation every 128 KiB and paced by promotion, what is placed while it marks marked, the barrier marking what a store overwrites in every engine, the end in a minor collection's pause; `--gc-stress-cycles` in `make test-gc`, `test-stress`, `test-native` and `test-portability`, and the Windows VMs by hand. As M7 leaves it, against the copier: T 1.066 (the throughput collector 1.003), M 0.541, P 0.608; the longest pause 3.0 ms on the bootstrap and 1.5 ms at 100 MB live (target 10), 4.9-37.6 ms at 0.9 GB and 22.7 ms with 2.7 GB (target 20 at 1 GB), the 99th percentile at most 1.9 ms (target 2); MMU at 10 ms 0.17 on the bootstrap and 0.28-0.58 at 100 MB (targets 0.3 and 0.5), missed. The barrier's flag cost the throughput collector 0.2% of its instructions (*M5 to M7*) |
+| M7 | The cache, and the compiler's help | done 2026-10-09: each candidate measured against the step before it; kept: promotion depth first (T 0.980, P 0.905), the barrier elided where the JIT knows the value immediate, the compaction at the limit only past a quarter over it (Rune compiling MLton T 0.886); not kept: marking through a prefetching FIFO, huge pages (more memory, and longer pauses for the low-pause collector), a nursery of at most 2 or 4 MiB, the nursery apart from the heap's size (D10's open question: 1.4% less time for 8.1% more memory), pretenuring by site (at most 1% of the bootstrap). The throughput collector then T 1.003, M 0.567, P 0.924 against the copier -- M3's T met, D1's memory met but for the bootstrap's peak, D1's throughput missed (*M5 to M7*) |
 | M8 | What the second generation leaves | |
 
 The owner took every recommendation on 2026-10-06 (*Decisions*); D2 to
@@ -67,7 +67,9 @@ chooses between -- `--gc throughput` (mark-region, the default: low
 memory, higher throughput) and `--gc low-pause` (segregated fits, to be
 made incremental) -- and took the gate's recommendations for D2, D5, D7
 and D8 (*The gate of M4*, *The owner's choice*). M5 to M8 are planned
-again on that.
+again on that. M5 to M7 were built and measured on 2026-10-08 and 09: what
+they built, what each measured and D1 target by target are *M5 to M7*
+below *The owner's choice*.
 
 ## The request
 
@@ -1993,22 +1995,22 @@ of M4*), keeping both old spaces as two collectors:
 | Decision | Recommended | Chosen |
 |---|---|---|
 | D1. What the second generation is for | A: four measurable targets -- memory, pauses, throughput, and the rest unchanged | A; at the gate, each collector's: memory and throughput the throughput collector's, pauses the low-pause collector's |
-| D2. The nursery | A: a fixed nursery of 1 MiB; promotion at the first survival | at the gate: adaptive, half the heap's room after a full collection, within 1 and 8 MiB; promotion at the first survival |
+| D2. The nursery | A: a fixed nursery of 1 MiB; promotion at the first survival | at the gate: adaptive, half the heap's room after a full collection, within 1 and 8 MiB; promotion at the first survival; as built, the low-pause collector's fixed at `--nursery`, and the nursery inside the heap's size (measured in M7) |
 | D3. The old space | A: mark-region (Immix) with 64-byte lines and 32 KiB blocks; segregated fits the gate's second prototype | at the gate: both, as two collectors -- A for `--gc throughput` (the default), B for `--gc low-pause` |
-| D4. Fragmentation | A: opportunistic evacuation of sparse blocks, bounded; a stop-the-world sliding compaction only when the limit is reached | at the gate: A for the throughput collector; the low-pause collector's blocks reused, its cells compacted by class at the limit |
+| D4. Fragmentation | A: opportunistic evacuation of sparse blocks, bounded; a stop-the-world sliding compaction only when the limit is reached | at the gate: A for the throughput collector; as built (M5, M7), one sliding compaction for both where the old space passes `--heap-limit` by a quarter, the low-pause collector's objects slid into blocks of no class |
 | D5. Large objects | A: from 8 KiB, straight into runs of the space's own 4 KiB units (not the operating system's pages), never moved, carded within; not from 4 KiB | A, and at the gate: an object of more than half a chunk in a run of its own |
 | D6. The barrier and the remembered set | B: a card mark only for a young value, cards in each chunk's header, a dirty byte per block; one barrier with the snapshot log | B; the snapshot log only while the low-pause collector marks |
 | D7. Pauses | B: incremental snapshot marking paced by allocation, lazy sweeping, bounded evacuation | at the gate: B for the low-pause collector (which never evacuates); the throughput collector stop-the-world |
 | D8. The collector's metadata | C: side tables per block; the header's GC bits stay unused | C, at the gate |
 | D9. Roots and the stack | B: a watermark in the frames; the liveness lookup by a hash | B |
-| D10. Sizing and the operating system | A: aligned chunks of 2 MiB committed as used, free blocks returned lazily; old space sized by what lives | A |
-| D11. The cache and the TLB | A: the nursery within the TLB's reach; prefetched marking; lazy sweeping; promotion order measured; huge pages, if any, for the old space, measured in M7 | A |
+| D10. Sizing and the operating system | A: aligned chunks of 2 MiB committed as used, free blocks returned lazily; old space sized by what lives | A; as built, the two collectors grow by 1 MiB to three quarters of a `size_t`, four chunks pooled (the low-pause collector what promotion may yet fill), the nursery counted in the heap's size |
+| D11. The cache and the TLB | A: the nursery within the TLB's reach; prefetched marking; lazy sweeping; promotion order measured; huge pages, if any, for the old space, measured in M7 | A; as measured in M7, promotion depth first kept, the prefetching FIFO and huge pages not |
 | D12. Determinism, `--count` and the statistics | as recommended: work clocked by allocation; deterministic counters only in `Runtime.stats` | as recommended |
 | D13. 32-bit | A: the same collector; the 4-byte word not a prerequisite | A |
 | D14. Every engine | as recommended: one barrier signature everywhere, `runeopt`'s two stores included; images over chunks | as recommended |
-| D15. Help from the compiler and the bytecode | B: pretenuring by site from the compiler's own build, measured in M7; elision where a value is known immediate | B |
+| D15. Help from the compiler and the bytecode | B: pretenuring by site from the compiler's own build, measured in M7; elision where a value is known immediate | B measured in M7: the barrier elided where the JIT knows the value immediate, kept; pretenuring by site not built (at most 1% of the bootstrap) |
 | D16. Threads and the third generation | as recommended: what is fixed now and what is left | as recommended |
-| D17. The FFI and pinning | as recommended: large objects pinned in place | as recommended |
+| D17. The FFI and pinning | as recommended: large objects pinned in place | as recommended, for large objects (8 KiB or more) alone |
 | D18. A lazy front end | as recommended: indirections shortcut at copy and at mark; updates through the barrier | as recommended |
 | D19. Order against the other plans | A: M1 now; nothing waits for this, and the resident compiler wants M3 | A |
 
@@ -2134,6 +2136,203 @@ each old space adds 300 to 400 lines. The cost is a second collector to
 test: `make test-gc` (M5) runs the language's tests under both with
 `--gc-verify` in `make check`, and a change to one collector's own old
 space passes the whole chain with that collector the default.
+
+### M5 to M7: the two collectors as built, and what they measured
+
+**M5** (`20321d46`, `dd2a1e61`) merged the two prototypes behind `--gc
+throughput|low-pause` and completed them:
+
+* **The adaptive nursery** (D2): after a full collection, half the room
+  the heap has, within `--nursery` (1 MiB) and `--nursery-max` (8 MiB);
+  `--nursery-max 0` keeps it fixed.
+* **The promotion path in line:** the throughput collector bumps into
+  the hole it fills, its objects scanned where they lie (the holes it
+  leaves behind kept as ranges, the overflow block's objects queued); the
+  low-pause collector takes the next cell of its class's block in line.
+  Measured like for like with M3 -- the same fixed nursery of 1 MiB -- a
+  byte promoted costs 0.93 to 1.07 times M3's on the programs that promote
+  most (the bootstrap 0.93, DLXSimulator 1.01, `merge` 1.07, `vector-rev`
+  1.05, the lazy `exp3_8` 0.99), where the gate's prototypes cost 1.2 to
+  1.7 times.
+* **Mark-compact** (`--old-space compact`, `compact.c`; the owner's
+  request, to have the real design's numbers beside the two): promotion
+  bumps at the end of the old space, and every full collection, after
+  marking, slides what is live down in the chunks' order, every pointer
+  given the new place of its object from a table of the place of the first
+  object in each 128 bytes, and gives back the chunks left empty. The same
+  slide is both collectors' compaction at the limit (D4): where
+  `--heap-limit` is set and the old space's chunks pass it, a full
+  collection compacts. Measured on the set against the copier it
+  is T 1.199, M 0.544, P 1.427: the least memory of the three, for 12%
+  more time than the throughput collector, and pauses of a whole slide --
+  210 ms on the bootstrap, where the throughput collector's longest is
+  68 ms -- and 2.1 times the copier's time on Rune compiling MLton. It stays
+  an old space to measure and the compaction at the limit, not a collector.
+* **D4 as built differs for the low-pause collector:** the slide puts its
+  objects into blocks of no class (as an image's are), which become free
+  as their objects die, rather than compacting each class into its fewest
+  blocks; one compaction for both collectors, and the low-pause
+  collector's cells are as before once the blocks of no class empty.
+* **D5:** an object of more than half a chunk gets a mapping of its own,
+  as large as it needs, by 64 KiB.
+* **D10:** a heap stops growing at three quarters of what a `size_t`
+  counts (on a 32-bit VM 3 GiB, so that the address space, not the
+  arithmetic, is where it stops); the two collectors grow it by steps of 1
+  MiB to `--heap-fill`, the copier by doubling; a full collection keeps
+  four empty chunks in the pool and gives the rest back. The nursery's
+  bytes count in the heap's size, as they did in M3: a heap of little live
+  data and a large nursery collects fully more often than it would were
+  the nursery apart (M7 measured the other way, the
+  nursery apart: 1.4% less time for 8.1% more memory on thirty runs of the
+  set, the low-pause collector 3.1% less time for 4.0% more memory and
+  pauses 1.29 times as long, and the throughput collector past D1's memory
+  target, so the nursery stays inside).
+* **D17 as built:** pinning in place for an object of the large-object
+  space alone (8 KiB or more), whose bytes C is given; a smaller array of
+  bytes or reals is copied out and back as before. The low-pause
+  collector's old space never moves either, but its cells are small and
+  `vm_pin` does not know which collector a caller runs under.
+* `make test-gc` in `make check`: the language's tests under both
+  collectors on both VMs with `--gc-verify`, under the low-pause collector
+  with every function compiled and a collection at every 101st
+  allocation, and under each with the old space compacted at every full
+  collection. `runtime_sig.sml`'s `collect` says what each collector does.
+
+**M6** (`504bea1e`) made the low-pause collector incremental, D7 B as
+recommended, with these differences from the plan:
+
+* **Slices of their own, not in the minor collection's pause.** A cycle
+  begins in a minor collection's pause where the old space has filled half
+  of the room the last collection left (the plan: three quarters of the
+  trigger); its roots, the whole stack among them, are marked then. Its
+  marking is then cut into slices that the program's allocation brings, one
+  every 128 KiB of the nursery (alloc's room ends at the next slice point,
+  so that the allocation that reaches it takes the slow path): a slice
+  marks as many bytes as keep the marking ahead of what promotion, at the
+  last minor collection's survival, fills of the heap's room, 1.5 times
+  that, its work capped (8 a field scanned, 64 an object marked, a
+  mebibyte in all), and a slice that runs out of work before its bytes
+  brings the next one sooner, to 8 KiB. Marking in the minor collection's
+  pause made pauses of the minor collection and the slice together: on the
+  bootstrap the heaviest pause's work fell from 5.8 MB to 1.2 MB, the 99th
+  percentile's from 4.8 to 0.7 MB, when slices became pauses of their own.
+* **The cycle's marks beside the bits.** The bits stay what placement
+  reads while the cycle marks into a second bitmap in the room of the line
+  bytes (which the segregated space does not use, and which is as large);
+  at the end the two are swapped and the old one cleared. Each block counts
+  the objects the cycle marks in it, so that its end sorts the blocks by
+  their counts rather than counting bits (on a heap of 2 GB the count of
+  bits was most of a 50-150 ms pause).
+* **The end of a cycle frees chunks later.** Giving a chunk back to the
+  system is a call that took 100-170 µs a chunk under WSL2: the end of a
+  cycle of the latency workload at 0.9 GB gave back 355 chunks, 37-61 ms.
+  The chunks it leaves empty go to the pool, and each pause after gives
+  back two; the low-pause collector's pool keeps what promotion may yet
+  fill before the heap's size, whose pages a minor collection would
+  otherwise make again in its pause.
+* **The barrier in compiled code goes to C while a cycle marks.** The JIT
+  and `runeopt`'s code test the VM's flag before `:=` and `Array.update`
+  and take the primitive's slow path in C while it is set; the JIT's
+  `SETENV` has a slow path of its own. Outside a cycle the flag costs a
+  compare and a branch (the throughput collector's instructions over the set 1.002 times
+  M5's, `imp-for`'s 1.023, which M7's elision of the barrier for an
+  immediate takes back).
+* **No final rescan.** Every object promoted or made large while a cycle
+  marks is marked when placed, and a cycle ends in a minor collection's
+  pause with the nursery empty, so its end rescans neither the stack nor
+  the cards.
+* **The low-pause collector's nursery stays at `--nursery` (1 MiB):** a
+  minor collection's pause is in proportion to what it promotes, and the
+  adaptive nursery's 8 MiB promoted 3-7 MB in a pause on the bootstrap.
+* `--gc-stress-cycles` makes `--gc-stress`'s collection a minor one that
+  begins a cycle where none marks, with a slice every 64 bytes, so that
+  every store of the suites runs while a cycle marks: `make test-gc` (both
+  VMs, `--gc-verify`), `make test-stress` (the JIT at both tiers), `make
+  test-native` (`runeopt`'s code), `make test-portability` (the 32-bit and
+  ppc64 VMs), and the Windows VMs by hand. `--gc-log` has the kinds
+  `mark-begin`, `mark`, `mark-end` and `mark-all`; `--stats` the cycles
+  and slices; `Runtime.stats` counts a cycle as a collection. The schedule
+  is the same in every run (two runs of the bootstrap: 2,831 passes the
+  same in every deterministic column).
+
+**M7** measured each of its candidates against the step before it, on
+thirty runs of the set (three rounds, a run scored by its round of the
+least task-clock; a run's T varies by 5% on this machine, so that a score
+within 2% is no difference; `results/m5-m7.md`):
+
+| Change | T | M | P | Kept |
+|---|---:|---:|---:|---|
+| the barrier elided where the JIT knows the value stored is an immediate | 1.019 | 1.002 | 1.012 | yes: `imp-for`'s instructions 0.967, the snapshot flag's cost taken back |
+| marking through a prefetching FIFO of 16 edges (D11) | 1.019 | 1.000 | 0.950 | no |
+| promotion depth first: the throughput collector's minor collection scans what it promoted from its queue, the last first, not the holes in place (D11) | **0.980** | 0.991 | **0.905** | yes: the bootstrap 0.91, the latency workloads 0.94 |
+| huge pages for the old space's chunks, the throughput collector | 1.015 | 1.078 | 0.934 | no |
+| the same, the low-pause collector | 0.966 | 1.092 | 1.591 | no: its first touch of a huge page is a long pause (the bootstrap's longest 2.3 to 14.8 ms) |
+| a nursery of at most 2 MiB, not 8 (D2) | 1.039 | 1.013 | 0.816 | no: the bootstrap and the latency workloads 0.95-0.99, the heaviest promoters 1.20-1.26 |
+| a nursery of at most 4 MiB | 1.011 | 1.007 | 0.934 | no |
+| the nursery apart from the heap's size (D10) | 0.986 | 1.081 | 1.033 | no: D1's memory target |
+| the same, the low-pause collector | 0.969 | 1.040 | 1.288 | no |
+| compaction at the limit only past a quarter over it (D4; Rune compiling MLton) | **0.886** | 0.980 | 0.909 | yes: its longest pause 19.6 s to 5.0 s |
+
+Pretenuring by site (D15 B) was measured from what is there rather than
+built: a minor collection costs 1.9 ns a byte promoted on the bootstrap,
+so the 24.1 MB of copying that the sites learned on `compile-sigs` would
+save is 46 ms of its 2.0 s, of which allocation through C rather than in
+line and the scan of what was pretenured at the next minor collection
+take back about half -- about 1%, within the noise, for a bit in the
+representations section and a profiling build. Not built. The adaptive
+nursery's bounds stay 1 and 8 MiB on every machine: a lower most trades
+the heaviest promoters for the programs bound by the cache, and this was
+the one machine at hand to choose by.
+
+The two collectors as M7 leaves them, against M2's copier (three rounds,
+with Rune compiling MLton; `results/m5-m7.md`):
+
+| | `--gc throughput` (the default) | `--gc low-pause` |
+|---|---:|---:|
+| T | 1.003 | 1.066 |
+| M | 0.567 | 0.541 |
+| P | 0.924 | 0.608 |
+| the bootstrap: T, peak | 0.888, 102 MiB | 0.968, 100 MiB |
+| the bootstrap: longest pause, 99th percentile, MMU at 10 ms | 42.5 ms, 24.5 ms, 0 | 3.0 ms, 1.3 ms, 0.17 |
+| latency at 100 MB live: longest pause, MMU at 10 ms | 28-29 ms, 0 | 1.2-1.5 ms, 0.28-0.58 |
+| latency at 0.9 GB live: longest pause | 143-174 ms | 4.9-37.6 ms |
+| Rune compiling MLton: T, longest pause | 1.10, 2.9 s | 1.23, 23 ms |
+| 32-bit (M5b's): most live with the whole address space, under 2 GiB | 3079 MiB, 1278-1951 MiB | -- |
+| runs above 1.10 in T (of 73) | 14 | 20 |
+
+D1, target by target:
+
+* **Memory** (the throughput collector's): the score M 0.567, met (at
+  most 0.6); 32-bit 3079 MiB live with the whole address space and 1278
+  MiB of arrays under 2 GiB, met (1.5 GiB and 768 MiB); the bootstrap's
+  peak, 102 MiB against twice its 42 MB live and 16 MB (96 MiB), just
+  missed.
+* **Pauses** (the low-pause collector's): the longest pause at most 10 ms
+  on the bootstrap (3.0 ms) and at 100 MB (1.5 ms), met; at most 20 ms
+  with a gigabyte live, met on the ring at 0.9 GB (4.9 ms), missed on the
+  map at 0.9 GB (37.6 ms, a minor collection's first touch of new pages
+  while the heap grows) and on Rune compiling MLton at 2.7 GB (22.7 ms);
+  the 99th percentile at most 2 ms, met everywhere (1.9 ms and below); the
+  MMU at 10 ms, missed (0.17 on the bootstrap, 0.28 and 0.58 at 100 MB,
+  against 0.3 and 0.5): the pauses are short, but where nearly everything
+  is promoted the marking that keeps pace with promotion comes often --
+  on the bootstrap a pause every 0.8 ms of the program. Its T within 10%
+  of the throughput collector's: 1.066 against 1.003, met.
+* **Throughput** (the throughput collector's): T at most 0.95, missed
+  (1.003); the bootstrap at most 0.85, missed (0.888); Rune compiling
+  MLton at most 0.8, missed (1.10, where M3 was 1.33 and the gate 1.35);
+  no run past 1.10, missed: the programs that promote most of what then
+  dies soon (DLXSimulator 1.83, `merge` 1.65, the ring at 100 MB 1.69) pay
+  a promotion that the copier, whose whole heap is a nursery, never makes
+  -- for a third to two thirds less memory.
+* **What holds**, met: every suite, engine, portability VM and the Windows
+  VMs under both collectors; `--count` and the schedule of collections
+  the same in every run.
+
+What misses is promotion at the first survival where data lives past a
+minor collection and dies soon after: a nursery of 8 MiB does not hold it,
+and a survivor space (D2's B, not measured here) or the third generation
+is where it would go.
 
 ### D1. What the second generation is for
 

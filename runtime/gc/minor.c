@@ -102,9 +102,13 @@ static Obj *promote(VM *vm, Obj *o) {
         memcpy(n, o, size);
         gc_queue(vm, n);
     } else if (vm->gc.old_kind == OLD_IMMIX) {
-        /* bumped into a hole of the old space, and scanned there (minor_into) */
+        /* bumped into a hole of the old space, and scanned from the queue,
+           the last promoted first: approximately depth first, so that an
+           object's fields are promoted near it (D11, M7: the bootstrap's
+           task-clock 0.91 of the breadth-first order of a scan in place) */
         n = immix_place_fast(vm, size);
         copy_small(n, o, size);
+        if (obj_has_fields(n)) gc_queue(vm, n);
     } else if (vm->gc.old_kind == OLD_SEGFIT) {
         /* a cell of its class, scanned from the queue */
         n = segfit_place_fast(vm, size);
@@ -261,12 +265,6 @@ static void minor_into(VM *vm) {
     Chunk *start = vm->gc.last;
     size_t start_at = start->used;
     vm->gc.nqueue = 0;
-    if (vm->gc.old_kind == OLD_IMMIX) {
-        /* what is promoted into a hole is scanned where it lies, from here */
-        vm->gc.ix_track = 1;
-        vm->gc.ix_scan = vm->gc.ix_cursor;
-        vm->gc.ix_nranges = 0;
-    }
     size_t low = vm->fp_low < vm->fp ? vm->fp_low : vm->fp;
     minor_stack(vm, low);
 #define PROMOTE_ROOT_VALUE(v) (vm->gc_counts.other_roots++, promote_value(vm, (v)))
@@ -282,34 +280,9 @@ static void minor_into(VM *vm) {
         scan_object(vm, vm->gc.born[i]);
     }
     vm->gc.nborn = 0;
-    /* Cheney's scan of what was promoted: the old space from where it ended,
-       and the large objects that were made of young ones, until neither has
-       more; the mark-region space's in the holes it filled, the ranges of
-       those it left and the current one's (immix.c, next), and every other
-       non-moving space's from the queue */
-    if (vm->gc.old_kind == OLD_IMMIX) {
-        for (;;) {
-            if (vm->gc.ix_nranges) {
-                char *hi = vm->gc.ix_ranges[--vm->gc.ix_nranges], *lo = vm->gc.ix_ranges[--vm->gc.ix_nranges];
-                while (lo < hi) {
-                    Obj *o = (Obj *)lo;
-                    lo += obj_size(o);
-                    scan_object(vm, o);
-                }
-                continue;
-            }
-            if (vm->gc.ix_scan && vm->gc.ix_scan < vm->gc.ix_cursor) {
-                /* past it first: scanning it may leave the hole, and hand on what follows it */
-                Obj *o = (Obj *)vm->gc.ix_scan;
-                vm->gc.ix_scan += obj_size(o);
-                scan_object(vm, o);
-                continue;
-            }
-            if (!vm->gc.nqueue) break;
-            scan_object(vm, vm->gc.queue[--vm->gc.nqueue]);
-        }
-        vm->gc.ix_track = 0;
-    }
+    /* Cheney's scan of what was promoted: the copying old space from where
+       it ended, and the large objects that were made of young ones, until
+       neither has more; a non-moving space's from the queue, last first */
     Chunk *c = vm->gc.old_kind == OLD_COPY ? start : NULL;
     size_t at = start_at;
     for (;;) {

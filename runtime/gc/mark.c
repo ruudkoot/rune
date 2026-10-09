@@ -155,15 +155,19 @@ static void mark_value(VM *vm, Value *v) {
 #define MARK_OBJ(o) (vm->gc_counts.other_roots++, *(o) = mark_obj(vm, *(o)))
 
 /* Whether a full collection compacts the old space: where --heap-limit is
-   set and the old space's chunks pass it -- the space being fuller of holes
-   than the limit leaves room for -- or at every full collection under
-   --gc-compact, to test it (D4) */
+   set and the old space's chunks pass it by a quarter -- what lives in it
+   spread over a quarter more than the limit -- or at every full collection
+   under --gc-compact, to test it (D4). Not where they pass it by less: a
+   heap at its limit holds that much, holes or no, and its holes are
+   promotion's to fill, where a slide of a heap of gigabytes is a pause of
+   seconds (Rune compiling MLton under a limit of 5 GiB compacted at every
+   full collection near it, 18 s each; M7). */
 static int at_limit(const VM *vm) {
     if (vm->gc.compact_always) return 1;
     if (!vm->heap_limit) return 0;
     size_t footprint = 0;
     for (const Chunk *c = vm->gc.first; c; c = c->next) footprint += c->size;
-    return footprint > vm->heap_limit;
+    return footprint - footprint / 5 > vm->heap_limit;   /* footprint > limit * 5/4, wrapping nowhere */
 }
 
 /* The frame's sweep: a chunk with nothing marked in it given back (but
