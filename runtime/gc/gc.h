@@ -1,0 +1,329 @@
+/* runtime/gc: the collector, over a heap of chunks (docs/runtime.md, *The
+   heap*; docs/plans/garbage-collector-v2.md, M2 and M3). What the files of
+   this folder share with each other, with the heap's allocation
+   (runtime/heap.c) and with images (runtime/image.c); the rest of the
+   runtime knows the heap by vm.h alone. */
+#ifndef RUNE_GC_H
+#define RUNE_GC_H
+
+#include "vm.h"
+
+/* The census VM (runtime/census/census.h) carries an id word in every header, 8 bytes
+   more per object: the sizes the stock VM counts and collects by are kept
+   apart (STOCK, USED_STOCK), so that --count prints the stock numbers and
+   a collection happens where the stock VM's would. */
+#ifdef RUNE_CENSUS
+#define STOCK(size) ((size) - 8)
+#define USED_STOCK(vm) ((vm)->census_used_stock)
+#define ADD_STOCK(vm, size) ((vm)->census_used_stock += STOCK(size))
+#else
+#define STOCK(size) (size)
+#define USED_STOCK(vm) heap_used(vm)
+#define ADD_STOCK(vm, size) ((void)0)
+#endif
+
+/* A chunk: CHUNK_SIZE bytes aligned to CHUNK_SIZE, its header and tables
+   first and its objects after them, from its payload; or a run of whole
+   chunks, for a nursery or for an object too large for one. An object
+   begins in the first CHUNK_SIZE bytes of its chunk (but in a nursery's),
+   so the chunk of any pointer to an object is the pointer masked
+   (chunk_of), with no table. A chunk aligned to 2 MiB is one that a huge
+   page can back (D10, D11).
+
+   The tables, at offsets from the chunk that its size gives:
+   - the cards (D6), a byte for every 512 bytes of the chunk, by the
+     offset from the chunk, at GC_CARDS: 1 where a field there was given a
+     pointer into the nursery since the last minor collection;
+   - the dirty bytes, one for every 32 KiB, at dirty_at: 1 where one of
+     its cards is, so that a minor collection visits only those;
+   - the crossing map, for an old chunk, an entry for every card: the
+     words back from the card's first byte to the start of the object that
+     covers it (objects of an old chunk are smaller than los_min, so an
+     entry of 16 bits holds it);
+   - the units of the large-object space (los.c), one for every 4 KiB: the
+     unit its object begins at, or LOS_FREE; and a mark for every unit;
+   - the bits of a chunk of a non-moving old space (mark.c), one for every
+     8 bytes: 1 where an object begins that may be live -- set where one is
+     placed, cleared by a full collection, which sets them again for what it
+     reaches -- so that they are its marks, its objects' starts and what a
+     walk of it visits.
+   Every chunk has them all, so that one goes from the pool to any use; the
+   bits are cleared by their user alone, so that a chunk of another use
+   never touches their pages. */
+#define CHUNK_SIZE ((size_t)2 << 20)
+#define GC_CARD_SHIFT 9
+#define GC_BLOCK_SHIFT 15
+#define GC_UNIT_SHIFT 12
+#define GC_CARDS ((size_t)128)
+/* the mark-region old space (immix.c): lines of 64 bytes in blocks of 32 KiB */
+#define IX_LINE_SHIFT 6
+#define IX_BLOCK_SHIFT 15
+#define IX_LINE ((size_t)1 << IX_LINE_SHIFT)
+/* the segregated old space (segfit.c): blocks of 32 KiB, each of cells of one size */
+#define SF_BLOCK_SHIFT 15
+enum { CHUNK_OLD, CHUNK_LOS, CHUNK_NURSERY, CHUNK_MARK };
+struct Chunk {
+    uint32_t dirty_at;   /* the dirty bytes' offset from the chunk: first, for compiled code's barrier (masm.c) */
+    uint32_t payload;    /* the payload's */
+    Chunk *next;     /* in the heap's list, the large-object space's, or the pool */
+    size_t size;     /* the bytes of the mapping: CHUNK_SIZE, or a multiple of it */
+    size_t used;     /* the bytes of objects in it (the last chunk's is alloc.used while alloc fills it) */
+    uint64_t base;   /* an image's: the offset of its first object (runtime/image.c) */
+    uint32_t cross_at, units_at, marks_at, bits_at;
+    uint32_t lines_at, blocks_at;   /* the non-moving spaces': a byte a line (immix.c), a descriptor a block (immix.c, segfit.c) */
+    uint32_t kind;
+    size_t units_free;   /* a large-object chunk's free units */
+    size_t top;          /* a non-moving chunk's: where the next object goes, from the payload (used is what it holds) */
+    uint32_t *lines;     /* a non-moving chunk's, while an image is written: the offset from base of the first object at or after each 64 bytes (heap_number) */
+    size_t marked;       /* while a cycle of the low-pause collector marks: the bytes of its objects marked (cycle.c) */
+};
+typedef char chunk_header_fits[sizeof(Chunk) <= GC_CARDS ? 1 : -1];
+
+/* the layout of a chunk of size bytes: the tables after the header, and the
+   payload from the next 4 KiB, so that the units of the large-object space
+   are pages */
+#define CHUNK_TABLES(size) (GC_CARDS + ((size) >> GC_CARD_SHIFT) + ((size) >> GC_BLOCK_SHIFT) \
+                            + 2 * ((size) >> GC_CARD_SHIFT) + 3 * ((size) >> GC_UNIT_SHIFT) + 8 + ((size) >> 6) \
+                            + ((size) >> IX_LINE_SHIFT) + 8 * ((size) >> IX_BLOCK_SHIFT))
+#define CHUNK_PAYLOAD(size) ((CHUNK_TABLES(size) + 4095) & ~(size_t)4095)
+/* the largest object a chunk holds; one larger gets a run of its own */
+#define CHUNK_ROOM (CHUNK_SIZE - CHUNK_PAYLOAD(CHUNK_SIZE))
+
+static inline Chunk *chunk_of(const void *p) { return (Chunk *)((uintptr_t)p & ~(uintptr_t)(CHUNK_SIZE - 1)); }
+static inline char *chunk_payload(Chunk *c) { return (char *)c + c->payload; }
+static inline size_t chunk_room(const Chunk *c) { return c->size - c->payload; }
+static inline uint8_t *chunk_cards(Chunk *c) { return (uint8_t *)c + GC_CARDS; }
+static inline uint8_t *chunk_dirty(Chunk *c) { return (uint8_t *)c + c->dirty_at; }
+static inline uint16_t *chunk_cross(Chunk *c) { return (uint16_t *)(void *)((char *)c + c->cross_at); }
+static inline uint16_t *chunk_units(Chunk *c) { return (uint16_t *)(void *)((char *)c + c->units_at); }
+static inline uint8_t *chunk_marks(Chunk *c) { return (uint8_t *)c + c->marks_at; }
+static inline uint64_t *chunk_bits(Chunk *c) { return (uint64_t *)(void *)((char *)c + c->bits_at); }
+/* the bit of the object at offset at from c (not from its payload) */
+static inline int chunk_bit(Chunk *c, size_t at) { return (int)(chunk_bits(c)[at >> 9] >> (at >> 3 & 63) & 1); }
+static inline void chunk_bit_set(Chunk *c, size_t at) { chunk_bits(c)[at >> 9] |= (uint64_t)1 << (at >> 3 & 63); }
+
+/* chunk.c: chunks from the system and back; the heap's list */
+Chunk *chunk_take(VM *vm, size_t bytes, int kind);   /* a chunk whose payload holds bytes, empty, its tables clear */
+void chunk_give(VM *vm, Chunk *c);          /* to the pool, or back to the system */
+void chunk_give_later(VM *vm, Chunk *c);    /* to the pool, to go back to the system in pool_trim */
+void pool_trim(VM *vm, size_t most);        /* at most that many chunks the pool holds past what it keeps given back */
+void chunk_append(VM *vm, Chunk *c);        /* last in the heap's list */
+void heap_chunks_release(VM *vm);           /* every chunk the VM has, at its end */
+/* alloc made again the room the fast paths bump into (vm.h, AllocState):
+   the nursery's, or, with none, the heap's last chunk's, as far as the
+   heap's size allows */
+void alloc_view(VM *vm);
+/* with no nursery: the heap's last chunk is full; the next, or a run of its
+   own for an object larger than a chunk; the object's place */
+Obj *alloc_next(VM *vm, size_t size);
+/* an object of size bytes placed at offset at of an old chunk: its cards'
+   entries in the crossing map (inline: every object a collection copies) */
+static inline void chunk_note(Chunk *c, size_t at, size_t size) {
+    size_t start = c->payload + at, end = start + size;
+    size_t k = (start + ((size_t)1 << GC_CARD_SHIFT) - 1) >> GC_CARD_SHIFT;
+    uint16_t *cross = (uint16_t *)(void *)((char *)c + c->cross_at);
+    for (; (k << GC_CARD_SHIFT) < end; k++) cross[k] = (uint16_t)(((k << GC_CARD_SHIFT) - start) >> 3);
+}
+
+/* Walking the old space, object by object, chunk by chunk in the list's order:
+   for (Chunk *c = heap_first(vm); c; c = c->next)
+       for (size_t at = chunk_object(vm, c, 0); at != CHUNK_END; at = chunk_object(vm, c, at + obj_size(o))) ...
+   where at is from the chunk's payload: a copied chunk's objects lie side by
+   side, a non-moving one's where its bits say. */
+static inline Chunk *heap_first(const VM *vm) { return vm->gc.first; }
+static inline size_t chunk_used(const VM *vm, const Chunk *c) {
+    return c == vm->gc.last && !vm->gc.nursery ? vm->alloc.used : c->used;
+}
+#define CHUNK_END SIZE_MAX
+size_t chunk_bits_next(Chunk *c, size_t at);   /* mark.c: the first bit at or after payload offset at, or CHUNK_END */
+static inline size_t chunk_object(const VM *vm, Chunk *c, size_t at) {
+    if (c->kind == CHUNK_MARK) return chunk_bits_next(c, at);
+    return at < chunk_used(vm, c) ? at : CHUNK_END;
+}
+/* the extent of a chunk's objects, from its payload: what a copied one
+   holds, a non-moving one's top */
+static inline size_t chunk_extent(const VM *vm, const Chunk *c) { return c->kind == CHUNK_MARK ? c->top : chunk_used(vm, c); }
+
+/* The nursery (minor.c; D2): one region of nursery_size bytes, which alloc
+   is the room of; its objects are copied into the old space by a minor
+   collection, every one that is reached (promotion at the first survival).
+   The old space is the heap's chunks, which a full collection copies
+   (copy.c), and the large-object space (los.c), which it marks. */
+void nursery_start(VM *vm, size_t bytes);   /* the nursery made, of bytes; 0: none */
+void collect_minor(VM *vm);
+void gc_queue(VM *vm, Obj *o);              /* an old object whose fields a collection is to scan */
+/* an indirection (K_IND) is shortcut where a minor collection copies it or
+   a full one marks it -- the field that pointed to it given what it holds
+   -- along a chain of at most IND_HOPS of them (D18); the copier of
+   --nursery 0 copies it as it is, and the low-pause collector's cycle marks
+   it as it is */
+#define IND_HOPS 16
+void gc_born(VM *vm, Obj *o);               /* a large object with fields, made: scanned whole by the next minor */
+static inline int gc_in_nursery(const VM *vm, const void *p) {
+    return vm->gc.nursery && (uintptr_t)((const char *)p - vm->alloc.from) < (uintptr_t)vm->alloc.size;
+}
+/* the card of field f of the old object o, and its block's dirty byte (D6) */
+static inline void gc_remember(Obj *o, Value *f) {
+    Chunk *c = chunk_of(o);
+    uintptr_t at = (uintptr_t)((char *)f - (char *)c);
+    chunk_cards(c)[at >> GC_CARD_SHIFT] = 1;
+    chunk_dirty(c)[at >> GC_BLOCK_SHIFT] = 1;
+}
+
+/* los.c: the large-object space (D5): objects of los_min bytes or more, in
+   runs of 4 KiB units of its chunks (a chunk run of their own when larger
+   than a chunk holds), never moved; marked by a full collection, which
+   frees the runs it did not mark. One with fields made since the last
+   minor collection is remembered whole, its fill having no barrier. */
+#define LOS_FREE 0xFFFFu
+Obj *los_alloc(VM *vm, size_t size);        /* the place of an object of size bytes */
+void los_mark(VM *vm, Obj *o);              /* a full collection reached it: marked, its fields to scan */
+void los_sweep(VM *vm);                     /* after a full collection: the runs not marked freed */
+void los_release(VM *vm);
+/* walking the large objects: los_first gives the first, los_next the one
+   after o, NULL at the end */
+Obj *los_first(VM *vm);
+Obj *los_next(VM *vm, Obj *o);
+
+/* Images (runtime/image.c): the heap is written as one run of objects in
+   the old space's order, then the large objects, then the nursery's, a
+   pointer as the offset of its object in that run; heap_number gives each
+   chunk and large object its base, heap_offset_of is a pointer's offset.
+   Read back, heap_read_take gives the place for the next object of the
+   run (all of them old), and heap_relocate turns offsets into pointers. */
+void heap_number(VM *vm);
+uint64_t heap_offset_of(VM *vm, const void *p);
+void heap_read_begin(VM *vm, size_t size);
+Obj *heap_read_take(VM *vm, size_t bytes);
+
+/* copy.c: the copier: with no nursery the collector; with one, the full
+   collection of the old space and the nursery */
+void collect_pass(VM *vm, size_t new_size);
+/* the value stack as roots, each slot that is one visited: a waiting
+   frame's registers as far as they are live, a dead one that holds a
+   pointer made unit (copy.c) */
+void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *));
+
+/* The old space (vm->gc.old_kind; docs/plans/garbage-collector-v2.md, M4):
+   OLD_COPY, chunks that a full collection copies (copy.c), or OLD_MARK,
+   chunks whose objects stay where they are placed and which a full
+   collection marks (mark.c): the frame of the non-moving old spaces, whose
+   own placement here bumps and reuses a chunk only when it is empty. */
+Obj *old_place(VM *vm, size_t size);          /* a promoted object's place in a non-moving old space, its bit set */
+Obj *mark_place(VM *vm, size_t size);         /* the frame's own placement */
+void mark_full(VM *vm);                       /* the full collection of a non-moving old space, the nursery and the large objects */
+size_t chunk_object_covering(Chunk *c, size_t at);   /* the object whose bytes hold payload offset at, from the bits, or CHUNK_END */
+void mark_adopt(VM *vm);                      /* the heap's chunks made non-moving, their objects given their bits */
+
+/* immix.c: the mark-region old space (--old-space immix; M4 A) */
+typedef struct IxBlock { uint16_t free, live; uint8_t candidate, pad[3]; } IxBlock;   /* its free and live lines at the last count; to be evacuated */
+static inline uint8_t *chunk_lines(Chunk *c) { return (uint8_t *)c + c->lines_at; }
+static inline IxBlock *chunk_blocks(Chunk *c) { return (IxBlock *)(void *)((char *)c + c->blocks_at); }
+Obj *immix_place(VM *vm, size_t size);
+void immix_adopted(VM *vm);                   /* after mark_adopt: lines, and the blocks free */
+void immix_full_begin(VM *vm);                /* before a full collection marks: the candidates, the lines cleared */
+Obj *immix_marked(VM *vm, Chunk *c, Obj *o, size_t size);   /* an object the marker reached: its lines, or its copy where its block is evacuated */
+void immix_sweep(VM *vm);
+/* an object's lines marked: its first and its last, and any between */
+static inline void ix_lines_mark(Chunk *c, size_t off, size_t size) {
+    uint8_t *lines = chunk_lines(c);
+    size_t l = off >> IX_LINE_SHIFT, last = (off + size - 1) >> IX_LINE_SHIFT;
+    lines[l] = 1;
+    lines[last] = 1;
+    for (l++; l < last; l++) lines[l] = 1;
+}
+/* immix_place's fast path, in line: a bump in the hole it fills */
+static inline Obj *immix_place_fast(VM *vm, size_t size) {
+    char *p = vm->gc.ix_cursor;
+    if (!p || size > (size_t)(vm->gc.ix_limit - p)) return immix_place(vm, size);
+    vm->gc.ix_cursor = p + size;
+    Chunk *c = chunk_of(p);
+    size_t off = (size_t)(p - (char *)c);
+    chunk_bit_set(c, off);
+    ix_lines_mark(c, off, size);
+    c->used += size;
+    vm->gc.closed += size;
+    return (Obj *)p;
+}
+/* segfit.c: the segregated old space (--old-space segfit; M4 B) */
+typedef struct SfBlock { uint8_t cls, pad; uint16_t free, marked; } SfBlock;   /* its class (0: free, or not the space's), its free cells at the last sweep, its objects a cycle marked (cycle.c) */
+static inline SfBlock *chunk_sfblocks(Chunk *c) { return (SfBlock *)(void *)((char *)c + c->blocks_at); }
+Obj *segfit_place(VM *vm, size_t size);
+Obj *segfit_bump(VM *vm, size_t size);        /* an object read from an image, in blocks of no class */
+void segfit_adopted(VM *vm);
+void segfit_full_begin(VM *vm);
+void segfit_sweep(VM *vm, int counted);   /* counted: each block's objects are its count of a cycle's marks, not its bits counted */
+/* compact.c: the mark-compact old space (--old-space compact), placed by
+   mark_place and slid down by every full collection after its marking */
+void compact_old(VM *vm);
+/* cycle.c: the low-pause collector's incremental cycle (D7, M6). A chunk's
+   marks of the cycle, a bit for every 8 bytes as its bits, are in the room
+   of the line bytes, which the segregated space does not use and which
+   take as many bytes (size / 64); at the cycle's end the two are swapped. */
+static inline uint64_t *chunk_cmarks(Chunk *c) { return (uint64_t *)(void *)((char *)c + c->lines_at); }
+/* an object placed while a cycle marks: marked (allocated black) */
+static inline void cycle_black(VM *vm, Obj *o, size_t size) {
+    Chunk *c = chunk_of(o);
+    size_t off = (size_t)((char *)o - (char *)c);
+    chunk_cmarks(c)[off >> 9] |= (uint64_t)1 << (off >> 3 & 63);
+    chunk_sfblocks(c)[off >> SF_BLOCK_SHIFT].marked++;
+    c->marked += size;
+    if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) vm->gc.cycle_boxes += size;
+}
+void cycle_step(VM *vm);         /* after a minor collection: a cycle begun or ended, its pace made again */
+void cycle_slice(VM *vm);        /* at a slice point, alloc's room ending before the nursery's (heap.c) */
+int cycle_complete(VM *vm);      /* the cycle marked to its end and finished, the nursery promoted first; 1 where one was marking */
+void minor_pass(VM *vm);         /* minor.c: a minor collection, logged, in a vm_gc call of its own or another's */
+void gc_after_cycle(VM *vm);     /* copy.c: after a cycle's end, the heap's size and the nursery's, as after a full collection */
+
+/* segfit_place's fast path, in line: the next cell of the class's block, where it is free */
+static inline Obj *segfit_place_fast(VM *vm, size_t size) {
+    SfClass *cl = &vm->gc.sf[vm->gc.sf_class_of[size >> 3]];
+    if (cl->block && cl->next < cl->cells) {
+        char *cell = cl->first + (size_t)cl->next * cl->size;
+        Chunk *c = chunk_of(cell);
+        size_t off = (size_t)(cell - (char *)c);
+        if (!chunk_bit(c, off)) {
+            cl->next++;
+            chunk_bit_set(c, off);
+            c->used += size;
+            vm->gc.closed += size;
+            return (Obj *)cell;
+        }
+    }
+    return segfit_place(vm, size);
+}
+
+/* check.c: --gc-verify */
+void heap_verify(VM *vm, const char *when);
+
+/* log.c: --gc-log, one line for a pass */
+typedef struct PassMark {
+    uint64_t bytes, objects, instrs, boxes, box_bytes;
+    size_t used_before;
+    int64_t t0, cpu0;
+} PassMark;
+void log_pass_begin(VM *vm, PassMark *m);
+void log_pass_end(VM *vm, const PassMark *m, const char *kind, int64_t pause);
+
+/* The roots, listed once, for the collector, the check and a heap that
+   moved (heap_relocate): the value stack, and these. V takes the address of
+   a value, O of a pointer to an object that is there. A minor collection
+   takes the frames' closures from the stack's watermark up (OTHER_ROOTS_FROM):
+   those below it have not changed since the last. */
+#define OTHER_ROOTS(vm, V, O) OTHER_ROOTS_FROM(vm, V, O, 0)
+#define OTHER_ROOTS_FROM(vm, V, O, frame0) \
+    do { \
+        for (uint32_t i_ = 0; i_ < (vm)->prog.nglobals; i_++) V(&(vm)->globals[i_]); \
+        for (uint32_t i_ = 0; i_ < (vm)->prog.nconsts; i_++) V(&(vm)->prog.consts[i_]); \
+        if ((vm)->frames_active) \
+            for (size_t i_ = (frame0); i_ <= (vm)->fp; i_++) \
+                if ((vm)->frames[i_].closure) O(&(vm)->frames[i_].closure); \
+        for (int i_ = 0; i_ < NUM_BUILTIN_EXNS; i_++) \
+            if ((vm)->builtin_exns[i_]) O(&(vm)->builtin_exns[i_]); \
+        for (int i_ = 0; i_ < REAL_BOXES; i_++) \
+            if ((vm)->real_boxes[i_]) O(&(vm)->real_boxes[i_]); \
+        for (size_t i_ = 0; i_ < (vm)->nhandles; i_++) V(&(vm)->handles[i_]); \
+    } while (0)
+
+#endif

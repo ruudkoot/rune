@@ -25,6 +25,15 @@ int64_t sys_time_now(void);
 int64_t sys_time_user(void);
 int64_t sys_time_sys(void);
 void sys_time_sleep(int64_t microseconds);
+/* Clocks for measuring the runtime itself (runevm --gc-log): a monotonic
+   clock and the calling thread's processor time, in nanoseconds; 0 where
+   the system has none. */
+int64_t sys_clock_ns(void);
+int64_t sys_thread_time_ns(void);
+/* The process's memory in bytes: what is resident now, the most that has
+   been resident, and the most address space it has held (Linux's VmPeak,
+   Windows's peak commit); 0 for what the system does not say. */
+void sys_mem_usage(uint64_t *resident, uint64_t *peak_resident, uint64_t *peak_virtual);
 
 /* Broken-down time. parts[] is
    [second, minute, hour, day of month, month (0-11), year - 1900,
@@ -271,5 +280,16 @@ size_t sys_code_page(void);
 int sys_code_protect(void *code, size_t size, int executable);
 void sys_code_flush(void *code, size_t size);
 void sys_code_free(void *code, size_t size);
+
+/* Memory for the heap (runtime/gc/chunk.c): sys_mem_reserve gives size
+   bytes at an address aligned to align (a power of two, a multiple of the
+   page), readable and writable, or NULL; size is a multiple of align. It
+   asks for the bytes at hint first, where they are aligned when hint is
+   (the end of the last block: a heap's blocks come out side by side, as
+   GHC's do), and makes room for the alignment only when they come back
+   elsewhere (docs/plans/garbage-collector-v2.md, D10). sys_mem_release
+   gives them back. */
+void *sys_mem_reserve(size_t size, size_t align, void *hint);
+void sys_mem_release(void *p, size_t size);
 
 #endif

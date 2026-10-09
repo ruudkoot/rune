@@ -4,7 +4,7 @@
    The VM keeps these counters whether or not a program asks for them --
    `runevm --count` and `runevm --stats` print them when it ends -- so reading
    one costs a call and nothing else. None of them allocates, which is what
-   makes the six numbers of a `stats` one consistent set: nothing but an
+   makes the nine numbers of a `stats` one consistent set: nothing but an
    allocation moves the numbers of the heap, so they cannot drift apart while
    they are being read.
 
@@ -30,24 +30,36 @@ sig
 
      `instructions` is the bytecode instructions executed, `bytes` and
      `objects` what has been allocated in the heap -- including everything
-     since collected -- and `collections` the number of collections made.
+     since collected -- and `collections` the number of collections made:
+     `minorCollections` of them minor ones, which copy what of the nursery
+     is reached into the old space, `promoted` the bytes they copied, and
+     `majorCollections` of the whole heap -- full collections, and the
+     cycles of incremental marking of `runevm --gc low-pause`.
 
-     `live` is the bytes of the current semispace that are in use: what the
-     last collection kept, plus what has been allocated since. It is an upper
-     bound on the live data, and is exactly the live data just after a
-     collection. `heapSize` is the size of one semispace, which grows as the
-     collector needs it to.
+     `live` is the bytes of objects in the heap: what the last collection
+     kept -- a minor one keeps every old object, dead or not -- plus what has
+     been allocated since. It is an upper bound on the live data, and is
+     exactly the live data just after a full collection, which `collect`
+     makes.
+     `heapSize` is the heap's size, the bytes of objects it holds before it
+     is collected, which grows as the collector needs it to.
 
-     The first four depend on the program and its input alone -- not on the
-     machine, the pointer width, the heap size or when the collector ran --
-     so two runs of one program report the same. The last two depend on the
-     heap size and so on `runevm --heap-size`.
+     The first three depend on the program and its input alone -- not on the
+     machine, the pointer width, the heap's size or when the collector ran --
+     so two runs of one program report the same. The other six depend on
+     the heap's size too, and so on `runevm --heap-size`, `--heap-fill`,
+     `--nursery` and `--gc`: two runs with the same options make the same
+     collections. None is a time: the collector's time is `Timer`'s
+     (`checkGCTime`) and `runevm --stats`'. `bytes` and
+     `live` leave out the boxes the representation makes for a real that
+     has no immediate, as `--count` does.
 
      A value is 8 bytes and an object costs an 8-byte header and a payload
      of 8-byte fields, so the smallest object is 16 bytes and a list cell,
      one object of two fields, is 24. *)
   type stats = { instructions : int, bytes : int, objects : int,
-                 collections : int, live : int, heapSize : int }
+                 collections : int, live : int, heapSize : int,
+                 minorCollections : int, majorCollections : int, promoted : int }
 
   (* `stats ()` is the counters as they stand.
 
@@ -73,12 +85,17 @@ sig
      Example: `#objects (#2 (profile (fn () => ()))) <= 1` *)
   val profile : (unit -> 'a) -> 'a * stats
 
-  (* `collect ()` collects the heap now.
+  (* `collect ()` collects the heap now: a full collection.
 
-     Every unreachable object is freed and every surviving one moves, which
-     costs time proportional to the live data and to nothing else: a copying
-     collector never visits what it does not keep. After it, the `live` of a
-     `stats` is exactly the live data, where otherwise it is an upper bound.
+     Every unreachable object is freed. Under the collectors `runevm --gc`
+     chooses, what lives is marked where it lies -- the throughput
+     collector, the default, moves the objects of its sparsest blocks, and
+     the low-pause collector moves nothing -- which costs time proportional
+     to the live data and a little for every block of the heap; the copier
+     of `runevm --nursery 0` moves every surviving object but a large one,
+     which costs time proportional to the live data and to nothing else.
+     After it, the `live` of a `stats` is exactly the live data, where
+     otherwise it is an upper bound.
 
      Nothing an SML program can see changes. Equality on a `ref` or an
      `array` is the identity the collector maintains, not an address of the

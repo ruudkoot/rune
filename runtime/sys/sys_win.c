@@ -36,6 +36,7 @@
 #endif
 #include <windows.h>
 #include <shellapi.h>
+#include <psapi.h>
 #include <ddeml.h>
 
 static int last = 0;
@@ -256,6 +257,25 @@ int64_t sys_time_sys(void) {
 void sys_time_sleep(int64_t microseconds) {
     if (microseconds <= 0) return;
     Sleep((DWORD)((microseconds + 999) / 1000));
+}
+int64_t sys_clock_ns(void) {
+    LARGE_INTEGER now, freq;
+    if (!QueryPerformanceFrequency(&freq) || freq.QuadPart <= 0 || !QueryPerformanceCounter(&now)) return 0;
+    /* in two parts, so that nothing overflows for a fast counter */
+    return now.QuadPart / freq.QuadPart * 1000000000 + now.QuadPart % freq.QuadPart * 1000000000 / freq.QuadPart;
+}
+int64_t sys_thread_time_ns(void) {
+    FILETIME creation, exited, kernel, user;
+    if (!GetThreadTimes(GetCurrentThread(), &creation, &exited, &kernel, &user)) return 0;
+    return (of_filetime(kernel) + of_filetime(user)) * 1000;
+}
+void sys_mem_usage(uint64_t *resident, uint64_t *peak_resident, uint64_t *peak_virtual) {
+    PROCESS_MEMORY_COUNTERS m;
+    *resident = *peak_resident = *peak_virtual = 0;
+    if (!GetProcessMemoryInfo(GetCurrentProcess(), &m, sizeof m)) return;
+    *resident = m.WorkingSetSize;
+    *peak_resident = m.PeakWorkingSetSize;
+    *peak_virtual = m.PeakPagefileUsage;
 }
 
 /* The calendar goes through the functions of msvcrt that are 64 bits wide
@@ -3102,3 +3122,25 @@ int sys_code_protect(void *code, size_t size, int executable) {
 }
 void sys_code_flush(void *code, size_t size) { FlushInstructionCache(GetCurrentProcess(), code, size); }
 void sys_code_free(void *code, size_t size) { (void)size; VirtualFree(code, 0, MEM_RELEASE); }
+
+/* The heap's memory. A reservation cannot be trimmed here: where the
+   bytes at the hint are taken, the room for the alignment is reserved,
+   given back and the aligned part of it reserved again, which something
+   else may take meanwhile, so it is tried again (Go's sysReserveAligned). */
+void *sys_mem_reserve(size_t size, size_t align, void *hint) {
+    char *p = VirtualAlloc(hint, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    if (p && ((uintptr_t)p & (align - 1)) == 0) return p;
+    if (p) VirtualFree(p, 0, MEM_RELEASE);
+    if (size + align < size) return NULL;
+    for (int tries = 0; tries < 100; tries++) {
+        char *room = VirtualAlloc(NULL, size + align, MEM_RESERVE, PAGE_NOACCESS);
+        if (!room) return NULL;
+        char *at = (char *)(((uintptr_t)room + align - 1) & ~(uintptr_t)(align - 1));
+        VirtualFree(room, 0, MEM_RELEASE);
+        p = VirtualAlloc(at, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+        if (p == at) return p;
+        if (p) VirtualFree(p, 0, MEM_RELEASE);
+    }
+    return NULL;
+}
+void sys_mem_release(void *p, size_t size) { (void)size; VirtualFree(p, 0, MEM_RELEASE); }

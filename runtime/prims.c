@@ -1705,7 +1705,7 @@ static int p_ref_new(VM *vm) {
     return ret(vm, 1, mk_ptr(r));
 }
 static int p_ref_get(VM *vm) { Obj *r = check_obj(vm, ARG(0), K_REF, "ref_get"); return ret(vm, 1, obj_field(r, 0)); }
-static int p_ref_set(VM *vm) { Obj *r = check_obj(vm, ARG(1), K_REF, "ref_set"); CENSUS_STORE(r, 0, ARG(0), 1, 15); obj_set_field(r, 0, ARG(0)); return ret(vm, 2, mk_unit()); }
+static int p_ref_set(VM *vm) { Obj *r = check_obj(vm, ARG(1), K_REF, "ref_set"); CENSUS_STORE(r, 0, ARG(0), 1, 15); obj_set_field(vm, r, 0, ARG(0)); return ret(vm, 2, mk_unit()); }
 
 static int p_array_new(VM *vm) {
     check_tag(vm, ARG(1), T_INT, "array_new");
@@ -1730,7 +1730,7 @@ static int p_array_update(VM *vm) {
     int64_t i = val_imm(ARG(1));
     if (i < 0 || (uint64_t)i >= obj_len(a)) return raise_with(vm, 3, EXN_SUBSCRIPT);
     CENSUS_STORE(a, i, ARG(0), 2, 15);
-    obj_set_field(a, i, ARG(0));
+    obj_set_field(vm, a, i, ARG(0));
     return ret(vm, 3, mk_unit());
 }
 static int from_list(VM *vm, int kind, const char *name) {
@@ -1972,9 +1972,11 @@ static void free_array(char **a) {
 static int p_posix_fork(VM *vm) {
     fflush(stdout);
     fflush(stderr);
+    if (vm->gc_log) fflush(vm->gc_log);
     if (vm->emulate_fork || !sys_has_fork()) return ret(vm, 1, mk_int(vm_fork(vm)));
     int64_t pid = sys_fork();
     if (pid == 0) CENSUS_FORK_CHILD();   /* the child traces nothing: the parent's files are its */
+    if (pid == 0) vm->gc_log = NULL;     /* nor does it log: the parent's log is the parent's */
     return ret(vm, 1, mk_int(pid));
 }
 
@@ -2175,13 +2177,18 @@ static int p_rt_instructions(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->ins
 static int p_rt_bytes(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->bytes_allocated)); }
 static int p_rt_objects(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->objects_allocated)); }
 static int p_rt_collections(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->gc_count)); }
-static int p_rt_live(VM *vm) { return ret(vm, 1, mk_int((int64_t)(vm->alloc.used - vm->box_bytes_live))); }
-static int p_rt_heap_size(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->alloc.size)); }
+static int p_rt_live(VM *vm) { return ret(vm, 1, mk_int((int64_t)(heap_used(vm) - vm->box_bytes_live))); }
+static int p_rt_heap_size(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->gc.size)); }
+/* the collector's counters (Runtime.stats; docs/plans/garbage-collector-v2.md,
+   D12): every collection not a minor one is of the whole heap */
+static int p_rt_minor_collections(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->gc.minors)); }
+static int p_rt_major_collections(VM *vm) { return ret(vm, 1, mk_int((int64_t)(vm->gc_count - vm->gc.minors))); }
+static int p_rt_promoted(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->gc.promoted)); }
 
 /* A collection on demand. It moves every object, so nothing of the heap may
    be held in a C variable across it; the argument on the stack is unit, and
    the collector walks the stack itself. */
-static int p_rt_collect(VM *vm) { vm_gc(vm, 0); return ret(vm, 1, mk_unit()); }
+static int p_rt_collect(VM *vm) { vm_collect(vm); return ret(vm, 1, mk_unit()); }
 
 /* One frame as (name, file, line, column), built on the VM stack: every
    allocation here can collect, and the strings must survive the next one. */

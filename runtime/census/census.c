@@ -4,7 +4,13 @@
    values primitives give and calls carry, and the tables of census.txt.
    Built into bin/runevm-census by `make vm-census` (-DRUNE_CENSUS); the
    hooks are runtime/census/census.h's. Throwaway: an experiment's tool, not part of
-   the VM. */
+   the VM.
+
+   Format 2 (the word layout, W8): the sizes are the stock VM's
+   (layouts.h w8_obj_size), the boxes of the word (K_REAL, K_BOX) are
+   objects on the clock that --count leaves out, and a sample records the
+   stack, the frames and the instruction count; the files are described in
+   docs/census.md. */
 #include "vm.h"
 #include "register/regvm.h"
 #include "layouts.h"
@@ -26,11 +32,15 @@ uint32_t census_sample_no;
 
 static VM *the_vm;
 static int write_fields;
+static int write_graph;             /* --census-graph: graph.bin */
+static int pretrace;                /* census_init records the objects the VM made before it */
+static uint64_t alloc_records;      /* records of alloc.bin after id 0's: the next id must be this + 1 */
 static int summary;                 /* --census-summary: no trace files, no per-object arrays */
 static char dir[4096];
 static int final_collection;        /* the one at exit: survivors are alive at exit */
 static uint64_t live_objs_pass;     /* survivors of the pass of collect_into running */
 static uint64_t samples_written;
+static uint64_t census_every_given;  /* census_every, which a fork's child clears */
 /* the objects of the id word: its low CENSUS_ID_BITS the id, above them the birth sample */
 #define OBJ_ID(o) ((o)->id & CENSUS_ID_MASK)
 #define OBJ_SAMPLE(o) ((uint32_t)((o)->id >> CENSUS_ID_BITS))
@@ -38,7 +48,7 @@ static uint64_t samples_written;
 /* ---------------------------------------------------------------- writers */
 
 typedef struct Out { FILE *f; unsigned char *buf; size_t n, cap; } Out;
-static Out out_alloc, out_fields, out_stores, out_samples;
+static Out out_alloc, out_fields, out_stores, out_samples, out_graph;
 
 static void die(const char *what) {
     fprintf(stderr, "runevm-census: %s: %s\n", what, strerror(errno));
@@ -175,6 +185,13 @@ static uint64_t prim_real, prim_real_enc, prim_real_zero;
 static uint64_t call_real, call_real_enc, call_real_zero;
 static uint64_t field_real, field_real_enc;
 static uint64_t alloc_fields_bytes;       /* bytes of fields.bin */
+/* the boxes of the word (K_REAL, K_BOX), which --count leaves out, and the
+   objects made before the trace (the VM's own boxes: heap_init) */
+static uint64_t box_objs, box_bytes, pretrace_objs, pretrace_bytes;
+/* the frames and the stack for samples.bin: the lowest frame index since
+   the last sample, and the record of the collection running */
+static size_t fp_low;
+static unsigned char sample_rec[64];
 /* tuples made by the TUPLE instruction, by homogeneity and element tag */
 static uint64_t tuple_homog_objs[2][NTAG], tuple_homog_bytes[2][NTAG];
 /* arrays and vectors at allocation: [ARRAY/TUPLE][site kind][homogeneous][tag][bc] */
@@ -182,7 +199,9 @@ static uint64_t arr_alloc_objs[2][3][2][NTAG][NBC], arr_alloc_bytes[2][3][2][NTA
 
 /* the first-order size table */
 typedef struct Var { enum Layout L; unsigned v; const char *name; } Var;
+#define LW8 L_COUNT   /* not a layout of layouts.h's enum: today's, w8_obj_size */
 static const Var variants[] = {
+    { LW8, 0, "W8" },
     { L0, 0, "L0" },
     { L1, 0, "L1" },
     { L1, LV_HDR4, "L1+hdr4" },
@@ -213,29 +232,64 @@ static uint64_t var_obj_bytes[NVAR], var_boxes[NVAR], var_box_bytes[NVAR], var_u
 
 static inline unsigned clz64(uint64_t x) { return x ? (unsigned)__builtin_clzll(x) : 64; }
 
-/* docs/census.md's bits: INT/CHAR/CON0 the two's-complement bits (1..64), WORD
-   64 - clz (0..64), REAL 0 where value-encodable else 7, others 0 */
-static inline unsigned bits_of(Value v) {
-    switch (val_tag(v)) {
-    case T_INT: case T_CHAR: case T_CON0: {
-        uint64_t x = (uint64_t)(val_imm(v) ^ (val_imm(v) >> 63));
-        return x ? 65 - clz64(x) : 1;
+/* What a value is under the word layout, where the word has no type
+   (value.h): the tag is the source register's rep where it is known, else
+   what the word shows -- an immediate an INT, a REAL box a REAL, a BOX an
+   INT of 64 bits, any other pointer and null a PTR. bits are docs/census.md's:
+   INT/CHAR/CON0 the two's-complement bits (1..64), WORD 64 - clz (0..64),
+   REAL 0 where value-encodable (Koka's range) else 7, others 0. what is
+   fields.bin's: 0 an immediate, 1 a pointer to an object, 2 null; pk the
+   pointee's kind. */
+typedef struct VC { uint8_t tag, bits, what, pk; } VC;
+static inline unsigned sbits(int64_t i) { uint64_t x = (uint64_t)(i ^ (i >> 63)); return x ? 65 - clz64(x) : 1; }
+static inline unsigned real_class(double d) {
+    uint64_t b = real_bits(d);
+    unsigned e = (unsigned)((b >> 52) & 0x7ff);
+    return (e >= 0x3ff - 0x1ff && e < 0x3ff + 0x200) ? 0 : 7;
+}
+static inline VC classify(Value v, int rep) {
+    VC c = { T_INT, 0, 0, 0 };
+    if (val_is_imm(v)) {
+        switch (rep) {
+        case REP_INT: c.tag = T_INT; break;
+        case REP_WORD: c.tag = T_WORD; break;
+        case REP_REAL: c.tag = T_REAL; break;
+        case REP_CHAR: c.tag = T_CHAR; break;
+        case REP_CON0: case REP_CON: c.tag = T_CON0; break;
+        case REP_UNIT: c.tag = T_UNIT; break;
+        default: c.tag = T_INT; break;
+        }
+        switch (c.tag) {
+        case T_WORD: c.bits = (uint8_t)(64 - clz64(val_word(v))); break;
+        case T_REAL: c.bits = (uint8_t)real_class(real_decode(v)); break;
+        case T_UNIT: c.bits = 0; break;
+        default: c.bits = (uint8_t)sbits((int64_t)v >> 1); break;
+        }
+        return c;
     }
-    case T_WORD: return 64 - clz64(val_word(v));
-    case T_REAL: {
-        uint64_t b = val_bits(v);
-        unsigned e = (unsigned)((b >> 52) & 0x7ff);
-        return (e >= 0x3ff - 0x1ff && e < 0x3ff + 0x200) ? 0 : 7;
-    }
-    default: return 0;
-    }
+    if (v == 0) { c.tag = T_PTR; c.what = 2; return c; }
+    c.what = 1;
+    c.pk = (uint8_t)obj_kind(val_ptr(v));
+    if (c.pk == K_REAL) { c.tag = T_REAL; c.bits = (uint8_t)real_class(real_of_bits(box_bits(v))); }
+    else if (c.pk == K_BOX) {
+        if (rep == REP_WORD) { c.tag = T_WORD; c.bits = (uint8_t)(64 - clz64(box_bits(v))); }
+        else { c.tag = T_INT; c.bits = (uint8_t)sbits((int64_t)box_bits(v)); }
+    } else c.tag = T_PTR;
+    return c;
+}
+/* fields.bin's bits class of an immediate's signed 63-bit payload, 7 for a non-immediate */
+static inline uint8_t imm_class(Value v) {
+    if (!val_is_imm(v)) return 7;
+    unsigned b = sbits((int64_t)v >> 1);
+    return (uint8_t)(b <= 8 ? 0 : b <= 31 ? 1 : b <= 48 ? 2 : b <= 51 ? 3 : b <= 62 ? 4 : 5);
 }
 static inline unsigned bc_of(uint8_t tag, unsigned b) {
     if (tag == T_REAL) return b;
     if (tag == T_UNIT || tag == T_PTR) return 0;
     return b <= 8 ? 0 : b <= 31 ? 1 : b <= 48 ? 2 : b <= 51 ? 3 : b <= 62 ? 4 : b <= 63 ? 5 : 6;
 }
-static inline int is_zero_real(Value v) { return val_is(v, T_REAL) && val_real(v) == 0.0; }
+/* a real 0.0 of a value classified REAL (an immediate is never zero: zero is the VM's box) */
+static inline int is_zero_real(Value v) { return val_real(v) == 0.0; }
 static inline unsigned rep_idx(int rep) { return rep >= 0 && rep < REP__COUNT ? (unsigned)rep : NREP - 1; }
 static inline unsigned age_class(uint64_t age) {
     return age < (256u << 10) ? 0 : age < (1u << 20) ? 1 : age < (4u << 20) ? 2 : age < (32u << 20) ? 3 : 4;
@@ -249,6 +303,7 @@ static inline uint64_t est_age(uint32_t k) {
     return census_clock - (lo + hi) / 2;
 }
 static const char *const tag_names[NTAG] = { "UNIT", "INT", "WORD", "REAL", "CHAR", "CON0", "PTR" };
+_Static_assert(K_LAST == 13 && K_REALS == 13 && K_REAL == 10, "the kinds of docs/census.md, format 2");
 static const char *const kind_names[16] = { "?", "TUPLE", "CON", "CLOSURE", "STRING", "REF", "ARRAY", "EXN", "EXNCON",
                                             "FORWARD", "REAL", "BOX", "BYTES", "REALS", "THUNK", "IND" };
 static const char *const rep_names[NREP] = { "ANY", "INT", "WORD", "REAL", "CHAR", "CON0", "PTR", "CON", "UNIT", "unknown" };
@@ -258,17 +313,20 @@ static const char *const site_names[3] = { "SETENV", "ref_set", "array_update" }
 
 /* ---------------------------------------------------------------- init */
 
-void census_init(VM *vm, const char *d, uint64_t every, int fields, int summ, uint64_t hint) {
+void census_init(VM *vm, const char *d, uint64_t every, int fields, int summ, uint64_t hint, int graph) {
     the_vm = vm;
     snprintf(dir, sizeof dir, "%s", d);
     sys_mkdir(dir);   /* made if missing; an existing one is reused */
     summary = summ;
     write_fields = fields && !summary;
+    write_graph = graph && !summary;
     ids_hint = hint;
     census_every = every;
+    census_every_given = every;
     if (!summary) {
         out_open(&out_alloc, "alloc.bin");
         if (write_fields) out_open(&out_fields, "fields.bin");
+        if (write_graph) out_open(&out_graph, "graph.bin");
         out_open(&out_stores, "stores.bin");
         out_open(&out_samples, "samples.bin");
         unsigned char zero[16] = { 0 };
@@ -280,6 +338,20 @@ void census_init(VM *vm, const char *d, uint64_t every, int fields, int summ, ui
     sample_clock = calloc(sample_cap, sizeof *sample_clock);
     if (!sample_clock) die("out of memory (samples)");
     census_on = 1;
+    /* The objects the VM made before the trace (heap_init: its boxes of
+       zero, the infinities and NaN), which have ids already: recorded in
+       the order they lie in, which is theirs, as site kind 3, on the clock
+       from 0. No collection has run, so the heap is all of them. */
+    pretrace = 1;
+    for (size_t at = 0; at < vm->alloc.used; ) {
+        Obj *o = (Obj *)(vm->alloc.from + at);
+        size_t size = obj_size(o);
+        census_alloc(vm, o, size);
+        census_flush();
+        pretrace_objs++; pretrace_bytes += size - 8;
+        at += size;
+    }
+    pretrace = 0;
 }
 
 /* the program is loaded after census_init: the pc counts and the function table wait for it */
@@ -308,16 +380,22 @@ void census_alloc(VM *vm, Obj *o, size_t size) {
     if (!summary && id >= ids_cap) grow_ids(id);
     ensure_program();
     uint8_t site_kind; uint32_t site, func;
-    if (census_runtime || census_site == UINT32_MAX) { site_kind = 2; site = UINT32_MAX; func = UINT32_MAX; }
+    if (pretrace) { site_kind = 3; site = UINT32_MAX; func = UINT32_MAX; }
+    else if (census_runtime || census_site == UINT32_MAX) { site_kind = 2; site = UINT32_MAX; func = UINT32_MAX; }
     else { site_kind = census_prim >= 0 ? 1 : 0; site = census_site; func = census_func; }
-    size_t l0 = l0_obj_size(obj_kind(o), obj_len(o));
-    if (l0 != size - 8) { fprintf(stderr, "runevm-census: size %zu of kind %u len %u is not l0 %zu + 8\n", size, obj_kind(o), obj_len(o), l0); exit(2); }
+    /* the stock VM's size (W8): what vm_alloc took, less the id word */
+    size_t l0 = w8_obj_size(obj_kind(o), obj_len(o));
+    if (l0 != size - 8) { fprintf(stderr, "runevm-census: size %zu of kind %u len %u is not w8 %zu + 8\n", size, obj_kind(o), obj_len(o), l0); exit(2); }
+    if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) { box_objs++; box_bytes += l0; }
     if (!summary) {
+        if (id != alloc_records + 1) { fprintf(stderr, "runevm-census: id %" PRIu64 " where alloc.bin's next record is %" PRIu64 "\n", id, alloc_records + 1); exit(2); }
+        if (id > UINT32_MAX - 1) { fprintf(stderr, "runevm-census: more than 2^32 - 2 objects: the ids of a trace are u32 (use --census-summary)\n"); exit(2); }
+        alloc_records++;
         unsigned char rec[16];
         put_u8(rec, obj_kind(o)); put_u8(rec + 1, site_kind); put_u16(rec + 2, obj_contag(o)); put_u32(rec + 4, obj_len(o));
         put_u32(rec + 8, site); put_u32(rec + 12, func);
         out_put(&out_alloc, rec, 16);
-        if ((census_clock >> 3) > UINT32_MAX) { fprintf(stderr, "runevm-census: the trace passes 32 GB: birth8 overflows (use --census-summary)\n"); exit(2); }
+        if ((census_clock >> 3) > UINT32_MAX) { fprintf(stderr, "runevm-census: the trace passes 32 GiB: birth8 overflows (use --census-summary)\n"); exit(2); }
         birth8[id] = (uint32_t)(census_clock >> 3);
         death[id] = 0;
         homog[id] = 0;
@@ -394,33 +472,40 @@ void census_flush(void) {
     if (!o || !census_on) return;
     uint32_t len = obj_len(o);
     uint8_t kind = obj_kind(o);
-    size_t l0 = l0_obj_size(kind, len);
+    size_t l0 = w8_obj_size(kind, len);
     static uint8_t *reps; static size_t reps_cap;
     static Cell *cells;
     int homogeneous = 1; uint8_t elem_tag = 0, elem_bc = 0; int any_poly = 0;
     size_t ncells = 0;
-    if (kind != K_STRING && len) {
+    /* the fields the collector follows: none in a raw object (a string, a
+       box, an array of bytes or of reals) */
+    if (obj_has_fields(o) && len) {
         if (len > reps_cap) { reps_cap = len * 2; reps = realloc(reps, reps_cap); cells = realloc(cells, reps_cap * sizeof(Cell)); if (!reps || !cells) die("out of memory"); }
         source_reps(o, reps, len);
         Value *f = obj_fields(o);
-        unsigned char *fb = NULL;
+        unsigned char *fb = NULL, *gb = NULL;
         if (write_fields) {
             if (out_fields.n + (size_t)len * 2 > out_fields.cap) out_drain(&out_fields);
             fb = (size_t)len * 2 <= out_fields.cap ? out_fields.buf + out_fields.n : malloc((size_t)len * 2);
             if (!fb) die("out of memory");
         }
+        if (write_graph) {
+            if (out_graph.n + (size_t)len * 4 > out_graph.cap) out_drain(&out_graph);
+            gb = (size_t)len * 4 <= out_graph.cap ? out_graph.buf + out_graph.n : malloc((size_t)len * 4);
+            if (!gb) die("out of memory");
+        }
         for (uint32_t i = 0; i < len; i++) {
-            uint8_t tag = val_tag(f[i]) <= T_PTR ? val_tag(f[i]) : T_UNIT;
-            unsigned b = bits_of(f[i]);
-            uint8_t bc = (uint8_t)bc_of(tag, b);
-            uint8_t pk = (tag == T_PTR && val_ptr(f[i])) ? obj_kind(val_ptr(f[i])) : 0;
-            if (pk > K_EXNCON) pk = 0;
             uint8_t rep = reps[i];
+            VC vc = classify(f[i], rep);
+            uint8_t tag = vc.tag;
+            uint8_t bc = (uint8_t)bc_of(tag, vc.bits);
+            uint8_t pk = vc.pk;
             uint8_t poly = (rep == REP_ANY || rep == 15);
-            if (fb) { fb[2 * i] = (uint8_t)(tag | (pk << 3)); fb[2 * i + 1] = (uint8_t)(bc | ((rep & 15) << 3)); }
+            if (fb) { fb[2 * i] = (uint8_t)(vc.what | (pk << 2)); fb[2 * i + 1] = (uint8_t)((rep & 15) | (imm_class(f[i]) << 4)); }
+            if (gb) put_u32(gb + 4 * (size_t)i, vc.what == 1 ? (uint32_t)OBJ_ID(val_ptr(f[i])) : 0);
             field_total++; field_tag[tag]++; field_bc[tag][bc]++; field_rep[tag][rep_idx(rep == 15 ? NREP - 1 : rep)]++;
-            if (tag == T_PTR) field_ptr_kind[pk]++;
-            if (tag == T_REAL) { field_real++; if (bc == 0) field_real_enc++; if (val_real(f[i]) == 0.0) field_real_zero++; }
+            if (vc.what == 1) field_ptr_kind[pk & 15]++;
+            if (tag == T_REAL) { field_real++; if (bc == 0) field_real_enc++; if (is_zero_real(f[i])) field_real_zero++; }
             if (i == 0) { elem_tag = tag; elem_bc = bc; }
             else { if (tag != elem_tag) homogeneous = 0; if (bc > elem_bc) elem_bc = bc; }
             if (poly) any_poly = 1;
@@ -434,6 +519,10 @@ void census_flush(void) {
             if (fb == out_fields.buf + out_fields.n) out_fields.n += (size_t)len * 2;
             else { out_put(&out_fields, fb, (size_t)len * 2); free(fb); }
             alloc_fields_bytes += (size_t)len * 2;
+        }
+        if (gb) {
+            if (gb == out_graph.buf + out_graph.n) out_graph.n += (size_t)len * 4;
+            else { out_put(&out_graph, gb, (size_t)len * 4); free(gb); }
         }
     }
     /* arrays and vectors: their elements' tag and class, for the stores to keep up */
@@ -451,6 +540,11 @@ void census_flush(void) {
     int vector = (kind == K_ARRAY || (kind == K_TUPLE && pend_site_kind == 1)) && len > 0;
     for (int vi = 0; vi < NVAR; vi++) {
         enum Layout L = variants[vi].L; unsigned v = variants[vi].v;
+        /* W8 is the trace itself; the study's layouts have no boxes of
+           their own (a box of the word is a field's value there, counted
+           by layout_needs_box) */
+        if ((int)L == LW8) { var_obj_bytes[vi] += l0; continue; }
+        if (kind == K_REAL || kind == K_BOX) continue;
         unsigned eb = layout_compact_elem(v, kind, vector && homogeneous, elem_tag, elem_bc);
         var_obj_bytes[vi] += layout_obj_size(L, v, kind, len, eb);
         if (eb) var_compact_objs[vi]++;
@@ -470,8 +564,28 @@ void census_flush(void) {
 
 /* ---------------------------------------------------------------- collections */
 
+static size_t gc_begin_size;
 void census_gc_begin(VM *vm) {
-    (void)vm;
+    /* samples.bin's record, as the collection begins (docs/census.md): the
+       clock, the instruction count, the ids so far, the stack and the
+       frames; the survivors are added at the end */
+    memset(sample_rec, 0, sizeof sample_rec);
+    put_u64(sample_rec, census_clock);
+    put_u64(sample_rec + 24, (uint64_t)vm->instructions);
+    put_u64(sample_rec + 32, census_next_id);
+    size_t sp = vm->sp, fp = vm->fp, ptrs = 0;
+    if (fp_low > fp) fp_low = fp;
+    size_t base_low = vm->frames_active && vm->frames ? vm->frames[fp_low].base : 0;
+    for (size_t i = 0; i < sp; i++) if (val_is_ptr(vm->stack[i])) ptrs++;
+    uint32_t flags = (census_every && census_clock - census_last_sample_clock >= census_every ? 1u : 0u) | (final_collection ? 2u : 0u);
+    put_u32(sample_rec + 40, (uint32_t)sp);
+    put_u32(sample_rec + 44, (uint32_t)fp);
+    put_u32(sample_rec + 48, (uint32_t)fp_low);
+    put_u32(sample_rec + 52, (uint32_t)base_low);
+    put_u32(sample_rec + 56, (uint32_t)ptrs);
+    put_u32(sample_rec + 60, flags);
+    fp_low = fp;     /* the next sample's watermark starts here */
+    gc_begin_size = vm->alloc.size;
     census_sample_no++;
     if (census_sample_no >= (1u << (64 - CENSUS_ID_BITS))) { fprintf(stderr, "runevm-census: more than 2^%d samples\n", 64 - CENSUS_ID_BITS); exit(2); }
     if ((size_t)census_sample_no + 1 >= sample_cap) {
@@ -499,11 +613,10 @@ void census_survive(Obj *n, size_t size) {
 }
 void census_gc_end(VM *vm) {
     if (!summary) {
-        unsigned char rec[24];
-        put_u64(rec, census_clock);
-        put_u64(rec + 8, vm->census_used_stock);
-        put_u64(rec + 16, live_objs_pass);
-        out_put(&out_samples, rec, 24);
+        put_u64(sample_rec + 8, vm->census_used_stock);
+        put_u64(sample_rec + 16, live_objs_pass);
+        if (vm->alloc.size != gc_begin_size) sample_rec[60] |= 4;   /* the heap grew */
+        out_put(&out_samples, sample_rec, 64);
     }
     samples_written++;
     last_live_bytes = vm->census_used_stock; last_live_objs = live_objs_pass;
@@ -524,21 +637,31 @@ void census_store(Obj *o, uint32_t field, Value v, int site, int rep) {
     if (!o || field >= obj_len(o)) return;
     Value old = obj_field(o, field);
     uint64_t src = OBJ_ID(o);
-    uint64_t dst = (val_is(v, T_PTR) && val_ptr(v)) ? OBJ_ID(val_ptr(v)) : 0;
-    uint8_t tag = val_tag(v) <= T_PTR ? val_tag(v) : T_UNIT;
+    /* a pointer to an object, a box of the word included: what a barrier sees */
+    int new_ptr = val_is_ptr(v), old_ptr = val_is_ptr(old);
+    int new_box = new_ptr && (obj_kind(val_ptr(v)) == K_REAL || obj_kind(val_ptr(v)) == K_BOX);
+    int old_box = old_ptr && (obj_kind(val_ptr(old)) == K_REAL || obj_kind(val_ptr(old)) == K_BOX);
+    uint64_t dst = new_ptr ? OBJ_ID(val_ptr(v)) : 0;
+    uint64_t oid = old_ptr ? OBJ_ID(val_ptr(old)) : 0;
+    VC vc = classify(v, rep);
+    uint8_t tag = vc.tag;
     if (field > 0xffff) store_field_clamped++;
     if (!summary) {
-        unsigned char rec[16];
-        put_u32(rec, (uint32_t)(census_clock / 16));
+        unsigned char rec[24];
+        if ((census_clock >> 3) > UINT32_MAX) { fprintf(stderr, "runevm-census: the trace passes 32 GiB: a store's clock8 overflows (use --census-summary)\n"); exit(2); }
+        put_u32(rec, (uint32_t)(census_clock >> 3));
         put_u32(rec + 4, (uint32_t)src);
         put_u32(rec + 8, (uint32_t)dst);
-        put_u16(rec + 12, field > 0xffff ? 0xffff : (uint16_t)field);
-        put_u8(rec + 14, (uint8_t)site);
-        put_u8(rec + 15, (uint8_t)((val_is(old, T_PTR) ? 1 : 0) | (tag << 1) | ((rep & 15) << 4)));
-        out_put(&out_stores, rec, 16);
+        put_u32(rec + 12, (uint32_t)oid);
+        put_u32(rec + 16, field);
+        put_u8(rec + 20, (uint8_t)site);
+        put_u8(rec + 21, (uint8_t)((old_ptr ? 1 : 0) | (new_ptr ? 2 : 0) | (new_box ? 4 : 0) | (old_box ? 8 : 0)));
+        put_u8(rec + 22, (uint8_t)(rep & 15));
+        put_u8(rec + 23, (uint8_t)obj_kind(o));
+        out_put(&out_stores, rec, 24);
     }
     store_total++;
-    if (val_is(old, T_PTR)) store_ptr_old++;
+    if (old_ptr) store_ptr_old++;
     /* the ages: exact from birth8 in the full mode, from the birth samples in summary mode */
     unsigned cs = summary ? age_class(est_age(OBJ_SAMPLE(o))) : src < ids_cap ? age_class(census_clock - ((uint64_t)birth8[src] << 3)) : NAGE - 1;
     unsigned cd = NAGE;
@@ -549,11 +672,11 @@ void census_store(Obj *o, uint32_t field, Value v, int site, int rep) {
         if (dst > src) store_old_young++;     /* ids are in allocation order: the value is the younger */
     }
     if (site >= 0 && site < 3) store_hist[site][tag][cs][cd]++;
-    if (tag == T_REAL) { store_real++; if (bits_of(v) == 0) store_real_enc++; if (val_real(v) == 0.0) store_real_zero++; }
+    if (tag == T_REAL) { store_real++; if (vc.bits == 0) store_real_enc++; if (is_zero_real(v)) store_real_zero++; }
     if (!summary && obj_kind(o) == K_ARRAY && src < ids_cap) {
         uint8_t h = homog[src];
         if (!(h & 0x80)) {
-            uint8_t bc = (uint8_t)bc_of(tag, bits_of(v));
+            uint8_t bc = (uint8_t)bc_of(tag, vc.bits);
             if (tag != (h & 7)) homog[src] = (uint8_t)(h | 0x80);
             else if (bc > ((h >> 3) & 7)) homog[src] = (uint8_t)((h & 0x87) | (bc << 3));
         }
@@ -571,18 +694,26 @@ void census_store_fast(Obj *o, uint32_t i, Value v, int32_t reg) {
 
 void census_prim_result(int prim, Value v) {
     if (prim < 0 || prim >= PRIM__COUNT) return;
-    uint8_t tag = val_tag(v) <= T_PTR ? val_tag(v) : T_UNIT;
-    unsigned b = bits_of(v);
+    VC vc = classify(v, 15);   /* a primitive's result has no rep here: an immediate is an INT */
+    uint8_t tag = vc.tag;
+    unsigned b = vc.bits;
     prim_hist[prim][tag][b]++;
-    if (tag == T_REAL) { prim_real++; if (b == 0) prim_real_enc++; if (val_real(v) == 0.0) prim_real_zero++; }
+    if (tag == T_REAL) { prim_real++; if (b == 0) prim_real_enc++; if (is_zero_real(v)) prim_real_zero++; }
 }
 
 void census_call(int op, Value v, int rep) {
     if (op < 0 || op >= NOP) return;
-    uint8_t tag = val_tag(v) <= T_PTR ? val_tag(v) : T_UNIT;
-    unsigned b = bits_of(v);
+    /* a RET: the frame below the running one goes on (the loop leaves at frame 0) */
+    if (op == 4 && the_vm->fp > 0 && the_vm->fp - 1 < fp_low) fp_low = the_vm->fp - 1;
+    VC vc = classify(v, rep);
+    uint8_t tag = vc.tag;
+    unsigned b = vc.bits;
     call_hist[op][tag][b][rep_idx(rep == 15 ? NREP - 1 : rep)]++;
-    if (tag == T_REAL) { call_real++; if (b == 0) call_real_enc++; if (val_real(v) == 0.0) call_real_zero++; }
+    if (tag == T_REAL) { call_real++; if (b == 0) call_real_enc++; if (is_zero_real(v)) call_real_zero++; }
+}
+
+void census_unwind(VM *vm) {
+    if (vm->fp < fp_low) fp_low = vm->fp;
 }
 
 /* ---------------------------------------------------------------- the fork's child */
@@ -594,7 +725,7 @@ void census_fork_child(void) {
     census_every = 0;
     census_pending = NULL;
     census_pcs = NULL;
-    out_alloc.n = out_fields.n = out_stores.n = out_samples.n = 0;
+    out_alloc.n = out_fields.n = out_stores.n = out_samples.n = out_graph.n = 0;
 }
 
 /* ---------------------------------------------------------------- census.txt */
@@ -636,8 +767,11 @@ static void write_census_txt(VM *vm) {
     const Program *p = &vm->prog;
     uint64_t objects = census_next_id;
     fprintf(f, "# census.txt -- %s\n", vm->progname ? vm->progname : "?");
-    fprintf(f, "# objects %" PRIu64 " (ids 1..%" PRIu64 "; alloc.bin has a record for id 0 too)\n", objects, objects);
-    fprintf(f, "# bytes_l0 %" PRIu64 " (the sum of l0size; == --count's bytes)\n", census_clock);
+    fprintf(f, "# format 2, layout W8 (the stock VM's sizes, layouts.h w8_obj_size; docs/census.md)\n");
+    fprintf(f, "# objects %" PRIu64 " (ids 1..%" PRIu64 "; alloc.bin has a record for id 0 too; boxes and the %" PRIu64 " made before the trace included)\n", objects, objects, pretrace_objs);
+    fprintf(f, "# bytes %" PRIu64 " (the sum of w8_obj_size over every object: the allocation clock)\n", census_clock);
+    fprintf(f, "# count_objects %" PRIu64 " count_bytes %" PRIu64 " (the objects that are not boxes of the word: == --count's)\n", objects - box_objs, census_clock - box_bytes);
+    fprintf(f, "# boxes %" PRIu64 " box_bytes %" PRIu64 " (K_REAL, K_BOX; --stats' boxes line plus the %" PRIu64 " made before the trace)\n", box_objs, box_bytes, pretrace_objs);
     fprintf(f, "# instructions %" PRIu64 "\n", (uint64_t)vm->instructions);
     fprintf(f, "# samples %" PRIu64 " (forced collections every %" PRIu64 " bytes, plus every other collection, the last being the one at exit; sample k is record k, from 1)\n", samples_written, census_every);
     fprintf(f, "# collections %zu, live at exit (stock bytes) %zu\n", vm->gc_count, vm->census_used_stock);
@@ -664,13 +798,13 @@ static void write_census_txt(VM *vm) {
     free(v);
     fprintf(f, "\n## alloc by (kind, len) for len 0..8 and >8: kind len objects bytes\n");
     {
-        uint64_t o2[9][10] = {{0}}, b2[9][10] = {{0}};
+        uint64_t o2[16][10] = {{0}}, b2[16][10] = {{0}};
         for (size_t i = 0; i < shapes.cap; i++) if (shapes.e[i].objects) {
             uint64_t key = shapes.e[i].key; unsigned k = (key >> 48) & 15, len = (unsigned)(key & 0xffffffffu);
             unsigned li = len > 8 ? 9 : len;
             o2[k][li] += shapes.e[i].objects; b2[k][li] += shapes.e[i].bytes;
         }
-        for (int k = 1; k <= 8; k++) for (int li = 0; li < 10; li++) if (o2[k][li])
+        for (int k = 1; k <= K_LAST; k++) for (int li = 0; li < 10; li++) if (o2[k][li])
             fprintf(f, "%s\t%s%d\t%" PRIu64 "\t%" PRIu64 "\n", kind_names[k], li == 9 ? ">" : "", li == 9 ? 8 : li, o2[k][li], b2[k][li]);
     }
     fprintf(f, "\n");
@@ -734,7 +868,7 @@ static void write_census_txt(VM *vm) {
     }
 
     /* --- fields */
-    fprintf(f, "\n## fields at allocation: %" PRIu64 " fields (non-string objects)\n", field_total);
+    fprintf(f, "\n## fields at allocation: %" PRIu64 " fields (objects with fields: not STRING, REAL, BOX, BYTES, REALS); the tag is the source rep's where known, else the word's (an immediate INT, a REAL box REAL, a BOX INT, a pointer PTR)\n", field_total);
     fprintf(f, "## by tag: tag count share | bits classes <=8 <=31 <=48 <=51 <=62 <=63 64 (REAL: enc / boxed)\n");
     for (int t = 0; t < NTAG; t++) if (field_tag[t]) {
         fprintf(f, "%s\t%" PRIu64 "\t%.2f%%", tag_names[t], field_tag[t], pct(field_tag[t], field_total));
@@ -745,7 +879,7 @@ static void write_census_txt(VM *vm) {
     fprintf(f, "## by tag x source rep: tag rep count\n");
     for (int t = 0; t < NTAG; t++) for (int r = 0; r < NREP; r++) if (field_rep[t][r])
         fprintf(f, "%s\t%s\t%" PRIu64 "\n", tag_names[t], rep_names[r], field_rep[t][r]);
-    fprintf(f, "## pointer fields by pointee kind: kind count\n");
+    fprintf(f, "## pointer fields by pointee kind (boxes included): kind count\n");
     for (int k = 0; k <= K_LAST; k++) if (field_ptr_kind[k]) fprintf(f, "%s\t%" PRIu64 "\n", kind_names[k], field_ptr_kind[k]);
     fprintf(f, "## tuples of the TUPLE instruction by homogeneity: homogeneous elemtag objects bytes\n");
     for (int h = 0; h < 2; h++) for (int t = 0; t < NTAG; t++) if (tuple_homog_objs[h][t])
@@ -813,7 +947,7 @@ static void write_census_txt(VM *vm) {
             uint8_t h = homog[arr_ids[i]]; int hom = !(h & 0x80); unsigned t = h & 7, bc = (h >> 3) & 7;
             int ki = arr_kind[i] == K_ARRAY ? 0 : 1; unsigned sk = arr_site[i] < 3 ? arr_site[i] : 2;
             if (!hom) { t = 0; bc = 0; }
-            ao[ki][sk][hom][t][bc]++; ab[ki][sk][hom][t][bc] += l0_obj_size(arr_kind[i], arr_len[i]);
+            ao[ki][sk][hom][t][bc]++; ab[ki][sk][hom][t][bc] += w8_obj_size(arr_kind[i], arr_len[i]);
         }
         static const char *const skn[3] = { "instruction", "primitive", "runtime" };
         for (int ki = 0; ki < 2; ki++) for (int sk = 0; sk < 3; sk++) for (int hom = 1; hom >= 0; hom--) for (int t = 0; t < NTAG; t++) for (int bc = 0; bc < NBC; bc++) if (ao[ki][sk][hom][t][bc])
@@ -821,7 +955,7 @@ static void write_census_txt(VM *vm) {
     }
 
     /* --- first-order sizes */
-    fprintf(f, "\n## first-order sizes (layouts.h): variant obj_bytes boxes box_bytes total ratio_to_L0 unrepresentable compact_objs  [compact: ARRAYs and primitive-made TUPLEs homogeneous at allocation; L4-uniform: every INT/WORD/REAL field of CON/REF/ARRAY and of tuples with a polymorphic source boxed; L4-mono: fields from ANY/unknown sources]\n");
+    fprintf(f, "\n## first-order sizes (layouts.h): variant obj_bytes boxes box_bytes total ratio_to_W8 unrepresentable compact_objs  [W8: the trace itself, its boxes objects; the others the heap-layout study's, legacy: the word's boxes not objects but counted as their fields need them]  [compact: ARRAYs and primitive-made TUPLEs homogeneous at allocation; L4-uniform: every INT/WORD/REAL field of CON/REF/ARRAY and of tuples with a polymorphic source boxed; L4-mono: fields from ANY/unknown sources]\n");
     for (int vi = 0; vi < NVAR; vi++) {
         uint64_t total = var_obj_bytes[vi] + var_box_bytes[vi];
         fprintf(f, "%s\t%" PRIu64 "\t%" PRIu64 "\t%" PRIu64 "\t%" PRIu64 "\t%.4f\t%" PRIu64 "\t%" PRIu64 "\n", variants[vi].name, var_obj_bytes[vi], var_boxes[vi], var_box_bytes[vi], total,
@@ -868,6 +1002,7 @@ void census_exit(VM *vm) {
     if (!summary) {
         out_close(&out_alloc);
         out_close(&out_fields);
+        out_close(&out_graph);
         out_close(&out_stores);
         out_close(&out_samples);
         snprintf(path, sizeof path, "%s/death.bin", dir);
@@ -884,4 +1019,14 @@ void census_exit(VM *vm) {
     if (census_pcs && vm->prog.code_len && fwrite(census_pcs, sizeof(uint64_t), vm->prog.code_len, f) != vm->prog.code_len) die("write pcs.bin");
     fclose(f);
     write_census_txt(vm);
+    /* meta.txt: what a reader of the trace needs first (docs/census.md) */
+    snprintf(path, sizeof path, "%s/meta.txt", dir);
+    f = fopen(path, "w");
+    if (!f) die(path);
+    fprintf(f, "format 2\nlayout W8\nevery %" PRIu64 "\nfields %d\ngraph %d\nsummary %d\n", census_every_given, write_fields, write_graph, summary);
+    fprintf(f, "objects %" PRIu64 "\nbytes %" PRIu64 "\ncount_objects %" PRIu64 "\ncount_bytes %" PRIu64 "\n", census_next_id, census_clock, census_next_id - box_objs, census_clock - box_bytes);
+    fprintf(f, "boxes %" PRIu64 "\nbox_bytes %" PRIu64 "\npretrace_objects %" PRIu64 "\npretrace_bytes %" PRIu64 "\n", box_objs, box_bytes, pretrace_objs, pretrace_bytes);
+    fprintf(f, "samples %" PRIu64 "\nstores %" PRIu64 "\ninstructions %" PRIu64 "\n", samples_written, store_total, (uint64_t)vm->instructions);
+    fprintf(f, "nglobals %u\nnconsts %u\nfields_bytes %" PRIu64 "\n", vm->prog.nglobals, vm->prog.nconsts, alloc_fields_bytes);
+    fclose(f);
 }

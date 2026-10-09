@@ -309,9 +309,9 @@ rt_instructions  1  unit -> int              Bytecode instructions this program 
 rt_bytes         1  unit -> int              Bytes it has allocated in the heap, including what has since been collected.
 rt_objects       1  unit -> int              Objects it has allocated, likewise.
 rt_collections   1  unit -> int              Collections the collector has made.
-rt_live          1  unit -> int              Bytes of the current semispace that are in use: what the last collection kept plus what has been allocated since.
-rt_heap_size     1  unit -> int              The size of one semispace, in bytes.
-rt_collect       1  unit -> unit             Collect the heap now: free every unreachable object and move every surviving one.
+rt_live          1  unit -> int              Bytes of objects in the heap: what the last collection kept plus what has been allocated since.
+rt_heap_size     1  unit -> int              The heap's size, in bytes: what it holds before it is collected.
+rt_collect       1  unit -> unit             Collect the heap now, a full collection: free every unreachable object.
 rt_version       1  unit -> string           The version of Rune this VM was built as, which `runevm --version` prints.
 rt_trace         1  int -> (string * string * int * int) list   The frames, innermost first, leaving out the innermost n: the name of each function, the file it is in, and the line and column it is stopped at; the file is "" and both numbers 0 where the program carries no position.
 rt_save          1  string -> int            Write the whole VM to a file, to be carried on by `runevm --restore`: 0 here, 1 in the world that starts again from it, ~1 if it could not be written.
@@ -389,3 +389,8 @@ reals_length     1  realarray -> int         Length.
 reals_sub        2  realarray * int -> real   The element at an index; raises Subscript.
 reals_update     3  realarray * int * real -> unit   Store an element; raises Subscript.
 reals_blit       5  realarray * int * realarray * int * int -> unit   Copy a run of elements (source, its start, destination, its start, the count), right where the two overlap; raises Subscript.
+
+# --- the collector's counters (Runtime.stats; garbage-collector-v2 D12, M8) ---
+rt_minor_collections 1  unit -> int              Minor collections the collector has made.
+rt_major_collections 1  unit -> int              Collections of the whole heap the collector has made: full collections and the low-pause collector's cycles.
+rt_promoted      1  unit -> int              Bytes minor collections have promoted into the old space.

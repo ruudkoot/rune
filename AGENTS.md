@@ -116,7 +116,8 @@ keep these invariants:
 * **The folders of `runtime/`** say what depends on what. The runtime both
   VMs link is directly under it (`vm.h`, `value.h`, the heap, the loader,
   the primitives, images, `main.c`, and the generated `isa.h` with what the
-  two instruction sets share); `sys/` is the system layer; `stack/` is
+  two instruction sets share), with the collector in `gc/`; `sys/` is the
+  system layer; `stack/` is
   `runevm-stack`'s loop and instruction set and `register/` is `runevm`'s,
   with its JIT in `register/jit/`; `native/` is what a program of `runeopt`
   links; `census/` is the instrumented build. A file names a header of
@@ -133,7 +134,7 @@ keep these invariants:
   calls) is written against the VM. A push does not check: the loader works
   out each function's deepest stack (`runtime/stack/isa_stack.c`), so an instruction's
   `pops`/`pushes` must say what it does.
-* **runtime/register** (`runtime/register/`, `bin/runevm`; `runtime/register/ARCHITECTURE.md` is the
+* **runtime/register** (`runtime/register/`, `bin/runevm`; `runtime/register/README.md` is the
   VM as built, and every change to `runtime/register` keeps it so) runs the register
   bytecode (`src/isa/regs.sml`, what `rune` makes unless told `--target=stack`) on the runtime
   of `runevm-stack`, whose part that is the stack bytecode's is `runtime/stack/isa_stack.c`
@@ -160,7 +161,7 @@ keep these invariants:
   `runevm` tiers up to tier 2 by default (`--jit=opt`, M10; M6 to
   M9 `--jit=baseline`), so every suite runs that way; the oracle runs
   the other modes. **The JIT**
-  (`runtime/register/jit/`, `runtime/register/ARCHITECTURE.md`, Tier 1): an instruction of the
+  (`runtime/register/jit/`, `runtime/register/README.md`, Tier 1): an instruction of the
   register set has, beside its body, an emitter in `runtime/register/jit/emit.c`
   (its prototype is generated into `runtime/register/jit_emit.h`, so the build fails
   without it) that does what the body does in the same frame, written
@@ -169,13 +170,14 @@ keep these invariants:
   test-register-jit` checks that no `x64_` or `a64_` name occurs in the
   emitters, the macro-assembler or the compiler, and an operation a
   target lacks is added to `asm.h` with both implementations and a
-  line in ARCHITECTURE.md's *The targets*. The macro-assembler's rules
+  line in README.md's *The targets*. The macro-assembler's rules
   the emitter keeps:
   the VM exact (`ms_sync`) before any call into C and reloaded
   (`ms_reload`) after -- unless the C is a helper declared as touching
   nothing of the VM (`compile.h`) -- no heap pointer in a machine register
-  across one, every store into an object through `ms_store_field`, a
-  field of the VM by `offsetof`, never a number, and the size of a
+  across one, every store into an object through `ms_store_field`, or
+  `ms_set_field` (`ms_set_element` for an array's element) where the
+  object exists, a field of the VM by `offsetof`, never a number, and the size of a
   `Frame` computed, never written as a shift (`ms_frame`). A primitive
   done in line (`prim_inline`) gives exactly what `fastprim.h`'s
   `prim_fast` gives and goes to its slow path wherever that would answer
@@ -189,7 +191,7 @@ keep these invariants:
   frame's `native_ret`, a handler's `native` and the driver's `jit->at`
   and nowhere else, so that invalidating a function's code is a walk
   over the frames and handlers (`jit_invalidate`). **The homes** (tier 2,
-  ARCHITECTURE.md): an emitter reads and writes a register through the
+  README.md): an emitter reads and writes a register through the
   macro-assembler's accessors only, never `[r14 + 16 k]`; `rbx`, `rsi`,
   `rdi` and `xmm2` to `xmm15` are homes, so an emitter that uses one as
   scratch, or sets a call's arguments, writes the homes back first
@@ -243,11 +245,13 @@ keep these invariants:
   deterministic iteration, and sources that stay inside the language
   described in `docs/language.md`: explicit `IntInf` operations, Rune's
   Basis subset).
-* Before finishing any change run `make check` (= `test`, `test-all`,
-  `test-basis`, `test-doc`, `test-lib`, `test-opt`, `test-native`, `perf-check`, `check-positions`,
-  `check-cross`, `check-docs`, `check-isa`, `test-ir`, `check-levels`,
-  `bootstrap`; runs on all CPUs,
-  about 3 minutes on 16). `bin/rune` is the self-hosted compiler, so it is what
+* Before finishing any change run `make check` (= `test`, `bootstrap`,
+  `test-doc`, `test-lib`, `test-all`, `test-basis`, `test-opt`, `test-ir`,
+  `check-levels`, `test-native`, `test-register`, `test-register-jit`,
+  `test-heap`, `test-gc`, `test-census`, `check-heapsim`, `check-gcsim`,
+  `check-layouts`, `check-gcbench`, `perf-check`, `bench-smoke`,
+  `check-positions`, `check-cross`, `check-docs`, `check-isa`; runs on all
+  CPUs, about a quarter of an hour on 16 with nothing else running). `bin/rune` is the self-hosted compiler, so it is what
   every test target uses by default; `make test RUNE=bin/rune-mlton` runs the
   same suite with the MLton build and is the faster loop while iterating. For
   VM changes also run the suite with the
@@ -255,13 +259,19 @@ keep these invariants:
   and with a collection at (nearly) every allocation, `make test-stress`.
   A read of an object's kind is `obj_kind` in C and `kind_is` in the
   macro-assembler, and a store into an object that exists is `obj_set_field`
-  in C and is followed by `ms_barrier` in compiled code (a fill of a fresh
+  (which takes the VM) in C and `ms_set_field` or `ms_set_element` in
+  compiled code, the store and the barrier together, which `runeopt`'s
+  templates are made from (a fill of a fresh
   object is `obj_fill_field` and `ms_store_field`): the header's first byte
   holds four bits of the collector's beside the kind, zero in every build
-  but the one that tests them, and the barrier is where a collector to come
-  writes its body. `make test-heap` holds both,
-  on a VM whose collector sets the bits; run it for a change to the heap,
-  to the header or to an emitter that reads or writes an object.
+  but the one that tests them, and the barrier marks the card of an old
+  object's field that is given a pointer into the nursery, so that a store
+  around it loses an object at the next minor collection. `make test-heap`,
+  part of `make check`, holds both, on a VM whose collector sets the bits,
+  and runs the language's tests with the heap checked before and after
+  every collection of a small heap and nursery (`runevm --gc-verify`),
+  which finds a store the barrier did not see; run it for a change to the
+  heap, to the header or to an emitter that reads or writes an object.
 * `make check` also runs in GitHub Actions on every pull request and every
   push to `master` (`.github/workflows/check.yml`), on Ubuntu 24.04 with the
   packages of `cloud/SETUP.md` and the hosts kept in the Actions cache. A

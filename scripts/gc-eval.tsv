@@ -1,0 +1,110 @@
+# The evaluation set of the second-generation collector, as scripts/gc-eval.sh
+# runs it (docs/plans/garbage-collector-v2.md, The workloads; fixed with its
+# weights on 2026-10-05, before any result, and not to be changed). One run per
+# line, tab-separated:
+#   group      the scores' group: a group's workloads are reduced to their
+#              geometric mean, and the groups to the weighted geometric mean
+#   T M P      the group's weights (the same on each of its lines); the M and
+#              P columns sum to 95, a slip found after the set was fixed: the
+#              scores divide by the weight present. A group weighted 0 0 0 is
+#              an extra, run only with --extras
+#   workload   the run's name
+#   kind       compiler: the VM on ARGUMENTS from the tree's root
+#              mlton: MLton's benchmark ARGUMENTS as run-mlton-bench.sh
+#                prepared it, run in tests/out/mlton-bench with its .args
+#              bench: examples/benchmarks' program, ARGUMENTS its name and
+#                either @normal (the manifest's normal profile) or its
+#                arguments, with EXPECTED its result (shared/main.sml's input)
+#              mlton-compile: the VM on ARGUMENTS in $MLTON_SOURCES (only with
+#                --mlton-compile)
+#   arguments  @root is the tree's root, @out a file for the program's output,
+#              @boot the compiler's own sources, @mlton the files of
+#              $MLTON_SOURCES/mlton-rune.txt
+#   expected   the result a bench program must print, or -
+#   rounds     - for every round, or the most rounds the run gets
+#   memory_kib its ulimit -v
+#   timeout    seconds
+#group	T	M	P	workload	kind	arguments	expected	rounds	memory_kib	timeout
+bootstrap	20	15	15	boot-default	compiler	--heap-size 67108864 bin/rune.rbc --lib lib -o @out @boot	-	-	6291456	900
+bootstrap --jit=off	5	5	0	boot-jitoff	compiler	--jit=off --heap-size 67108864 bin/rune.rbc --lib lib -o @out @boot	-	-	6291456	900
+compile-sigs	5	5	5	sigs-default	compiler	--heap-size 67108864 bin/rune.rbc --lib lib -o @out tests/perf/compile-sigs.sml	-	-	6291456	900
+runedoc-page	5	5	5	runedoc-default	compiler	--heap-size 67108864 bin/runedoc.rbc --lib lib --page tests/basis/spec-sigs/*.sml	-	-	6291456	900
+MLton normal tier	25	15	10	mlton-barnes-hut	mlton	barnes-hut	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-boyer	mlton	boyer	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-checksum	mlton	checksum	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-even-odd	mlton	even-odd	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-fft	mlton	fft	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-fft-realarray	mlton	fft-realarray	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-fib	mlton	fib	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-fxp	mlton	fxp	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-hamlet	mlton	hamlet	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-imp-for	mlton	imp-for	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-knuth-bendix	mlton	knuth-bendix	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-lexgen	mlton	lexgen	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-logic	mlton	logic	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-mandelbrot	mlton	mandelbrot	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-merge	mlton	merge	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-mlyacc	mlton	mlyacc	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-nucleic	mlton	nucleic	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-peek	mlton	peek	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-pidigits	mlton	pidigits	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-ratio-regions	mlton	ratio-regions	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-ray	mlton	ray	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-raytrace	mlton	raytrace	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-raytrace-realarray	mlton	raytrace-realarray	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-simple	mlton	simple	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-smith-normal-form	mlton	smith-normal-form	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-tailfib	mlton	tailfib	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-tailmerge	mlton	tailmerge	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-tak	mlton	tak	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-tensor	mlton	tensor	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-tsp	mlton	tsp	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-tyan	mlton	tyan	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-vliw	mlton	vliw	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-wc-input1	mlton	wc-input1	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-wc-scanStream	mlton	wc-scanStream	-	-	6291456	1800
+MLton normal tier	25	15	10	mlton-zern	mlton	zern	-	-	6291456	1800
+MLton GC-stress tier	10	5	5	mlton-DLXSimulator	mlton	DLXSimulator	-	1	6291456	1800
+MLton GC-stress tier	10	5	5	mlton-count-graphs	mlton	count-graphs	-	1	6291456	1800
+MLton GC-stress tier	10	5	5	mlton-life	mlton	life	-	1	6291456	1800
+MLton GC-stress tier	10	5	5	mlton-matrix-multiply	mlton	matrix-multiply	-	1	6291456	1800
+MLton GC-stress tier	10	5	5	mlton-md5	mlton	md5	-	1	6291456	1800
+MLton GC-stress tier	10	5	5	mlton-model-elimination	mlton	model-elimination	-	1	6291456	1800
+MLton GC-stress tier	10	5	5	mlton-mpuz	mlton	mpuz	-	1	6291456	1800
+MLton GC-stress tier	10	5	5	mlton-output1	mlton	output1	-	1	6291456	1800
+MLton GC-stress tier	10	5	5	mlton-psdes-random	mlton	psdes-random	-	1	6291456	1800
+MLton GC-stress tier	10	5	5	mlton-string-concat	mlton	string-concat	-	1	6291456	1800
+MLton GC-stress tier	10	5	5	mlton-vector-rev	mlton	vector-rev	-	1	6291456	1800
+MLton GC-stress tier	10	5	5	mlton-vector32-concat	mlton	vector32-concat	-	1	6291456	1800
+MLton GC-stress tier	10	5	5	mlton-vector64-concat	mlton	vector64-concat	-	1	6291456	1800
+MLton GC-stress tier	10	5	5	mlton-zebra	mlton	zebra	-	1	6291456	1800
+lazy programs	5	5	5	bench-primes-lazy	bench	primes-lazy @normal	-	-	6291456	900
+lazy programs	5	5	5	bench-queens-lazy	bench	queens-lazy @normal	-	-	6291456	900
+lazy programs	5	5	5	bench-tak-nofib-lazy	bench	tak-nofib-lazy @normal	-	-	6291456	900
+lazy programs	5	5	5	bench-exp3_8-lazy	bench	exp3_8-lazy @normal	-	-	6291456	900
+lazy programs	5	5	5	bench-digits-of-e1-lazy	bench	digits-of-e1-lazy @normal	-	-	6291456	900
+lazy programs	5	5	5	bench-digits-of-e2-lazy	bench	digits-of-e2-lazy @normal	-	-	6291456	900
+named programs	10	10	5	bench-binary-trees	bench	binary-trees 18	1048575 66759344 524287	-	6291456	900
+named programs	10	10	5	bench-many_refs	bench	many_refs @normal	-	-	6291456	900
+named programs	10	10	5	bench-safe-for-space	bench	safe-for-space @normal	-	-	6291456	900
+named programs	10	10	5	bench-hamlet	bench	hamlet @normal	-	-	6291456	900
+named programs	10	10	5	bench-string-concat	bench	string-concat @normal	-	-	6291456	900
+named programs	10	10	5	bench-vector-rev	bench	vector-rev @normal	-	-	6291456	900
+latency	0	10	40	lat-ring-10000	bench	latency-ring 10000 3000000 1024 1	10000 3000000 1024 9574787	-	6291456	900
+latency	0	10	40	lat-map-10000	bench	latency-map 10000 3000000 1024 1	10000 3000000 1024 9574787	-	6291456	900
+latency	0	10	40	lat-ring-100000	bench	latency-ring 100000 3000000 1024 1	100000 3000000 1024 9991721	-	6291456	900
+latency	0	10	40	lat-map-100000	bench	latency-map 100000 3000000 1024 1	100000 3000000 1024 9991721	-	6291456	900
+latency	0	10	40	lat-ring-900000	bench	latency-ring 900000 3000000 1024 1	900000 3000000 1024 5146371	1	12582912	900
+latency	0	10	40	lat-map-900000	bench	latency-map 900000 3000000 1024 1	900000 3000000 1024 5146371	1	12582912	900
+latency	0	10	40	static-1300000	bench	latency-static-map 1300000 100 1000000 8 25 1	1300000 1000000 13178327	-	6291456	900
+Rune compiling MLton	15	20	5	mlton-compile	mlton-compile	--heap-size 67108864 --heap-limit 5368709120 @root/bin/rune.rbc --lib @root/lib --type-work=1000000000 --pass-stats -o @out @mlton	-	1	12582912	1500
+extra: the compiler from 4 MiB	0	0	0	boot4m-default	compiler	bin/rune.rbc --lib lib -o @out @boot	-	-	6291456	900
+extra: the compiler from 4 MiB	0	0	0	sigs4m-default	compiler	bin/rune.rbc --lib lib -o @out tests/perf/compile-sigs.sml	-	-	6291456	900
+extra: the compiler from 4 MiB	0	0	0	runedoc4m-default	compiler	bin/runedoc.rbc --lib lib --page tests/basis/spec-sigs/*.sml	-	-	6291456	900
+extra: compile-sigs --jit=off	0	0	0	sigs-jitoff	compiler	--jit=off --heap-size 67108864 bin/rune.rbc --lib lib -o @out tests/perf/compile-sigs.sml	-	-	6291456	900
+extra: the strict twins	0	0	0	bench-primes-strict	bench	primes-strict @normal	-	-	6291456	900
+extra: the strict twins	0	0	0	bench-queens-strict	bench	queens-strict @normal	-	-	6291456	900
+extra: the strict twins	0	0	0	bench-tak-nofib-strict	bench	tak-nofib-strict @normal	-	-	6291456	900
+extra: the strict twins	0	0	0	bench-exp3_8-strict	bench	exp3_8-strict @normal	-	-	6291456	900
+extra: the static map at 20 and 800 MB	0	0	0	static-130000	bench	latency-static-map 130000 100 1000000 8 25 1	130000 1000000 13178327	1	6291456	900
+extra: the static map at 20 and 800 MB	0	0	0	static-5200000	bench	latency-static-map 5200000 100 1000000 8 25 1	5200000 1000000 13178327	1	12582912	900

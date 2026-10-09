@@ -3,7 +3,8 @@
    program begins and how a run ends. runevm-stack is interp.c and main.c on top
    of it, heap.c, loader.c, prims.c, image.c and a system layer, and so is a
    program that runeopt made (docs/native.md). */
-#include "vm.h"
+#include "gc/gc.h"
+#include "sys/sys.h"
 #include <stdarg.h>
 
 /* Where a frame is stopped: the instruction being executed in the innermost
@@ -236,6 +237,8 @@ int vm_raise(VM *vm, Value exn) {
     }
     Handler h = vm->handlers[--vm->hp];
     vm->fp = h.fp;
+    if (vm->fp < vm->fp_low) vm->fp_low = vm->fp;
+    CENSUS_UNWIND(vm);
     vm->sp = h.sp;
     vm_push(vm, exn);
     vm->pc = h.pc;
@@ -313,8 +316,7 @@ void vm_release(VM *vm) {
     free(vm->frames);
     free(vm->handlers);
     free(vm->handles);
-    free(vm->alloc.from);
-    free(vm->gc.kept);
+    heap_chunks_release(vm);
     for (size_t i = 3; i < vm->nfiles; i++) if (vm->files[i]) fclose(vm->files[i]);
     for (size_t i = 0; vm->file_paths && i < vm->nfiles; i++) free(vm->file_paths[i]);
     free(vm->files);
@@ -342,12 +344,32 @@ void vm_exit(VM *vm, int status) {
     if (vm->stats)
         fprintf(stderr, "runevm: %zu collections, %llu bytes allocated, semispace %zu bytes, %zu live, "
                 "copied %llu, max live %zu, gc %lld us, longest %lld us\n",
-                vm->gc_count, (unsigned long long)vm->bytes_allocated, vm->alloc.size, vm->alloc.used,
+                vm->gc_count, (unsigned long long)vm->bytes_allocated, vm->gc.size, heap_used(vm),
                 (unsigned long long)vm->copied, vm->max_live, (long long)(vm->gc_user_us + vm->gc_sys_us),
                 (long long)vm->gc_longest_us);
+    if (vm->stats && vm->gc.nursery)   /* the nursery's (runtime/gc/minor.c) */
+        fprintf(stderr, "runevm: nursery %zu bytes: %llu minor and %llu full collections, promoted %llu, "
+                "large objects %llu (%llu bytes), %zu bytes of them live\n",
+                vm->gc.nursery_size, (unsigned long long)vm->gc.minors, (unsigned long long)vm->gc.fulls,
+                (unsigned long long)vm->gc.promoted, (unsigned long long)vm->gc.large_objects,
+                (unsigned long long)vm->gc.large_bytes, vm->gc.los_bytes);
+    if (vm->stats && vm->gc.cycles + vm->gc.slices)   /* the low-pause collector's (runtime/gc/cycle.c) */
+        fprintf(stderr, "runevm: %llu cycles of incremental marking, in %llu slices\n",
+                (unsigned long long)vm->gc.cycles, (unsigned long long)vm->gc.slices);
     if (vm->stats && vm->boxes_allocated)   /* the representation's own, which --count leaves out (vm.h) */
         fprintf(stderr, "runevm: %llu boxes, %llu bytes\n",
                 (unsigned long long)vm->boxes_allocated, (unsigned long long)vm->box_bytes_allocated);
+    /* for measuring the collector: the process's peaks, and the
+       collector's time on the monotonic clock (docs/runtime.md) */
+    const char *memstat = getenv("RUNE_MEMSTAT");
+    if (vm->stats && memstat && strcmp(memstat, "1") == 0) {
+        uint64_t resident, peak_resident, peak_virtual;
+        sys_mem_usage(&resident, &peak_resident, &peak_virtual);
+        fprintf(stderr, "runevm: memstat: VmPeak %llu kB, VmHWM %llu kB, gc %lld ns, longest %lld ns\n",
+                (unsigned long long)(peak_virtual / 1024), (unsigned long long)(peak_resident / 1024),
+                (long long)vm->gc_ns, (long long)vm->gc_longest_ns);
+    }
+    heap_log_close(vm);
     fflush(stderr);
     vm_destroy(vm);
     exit(status);

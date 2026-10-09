@@ -7,7 +7,7 @@
 | Status | extension |
 | Implementations | 1 |
 | Documentation | 12 of 12 entries documented |
-| Tests | 37 checks of 9 entries |
+| Tests | 39 checks of 9 entries |
 | Source | [lib/basis/runtime\_sig.sml](../../../../lib/basis/runtime_sig.sml) |
 
 ## Synopsis
@@ -27,7 +27,7 @@ has done, and how much memory that took.
 The VM keeps these counters whether or not a program asks for them --
 `runevm --count` and `runevm --stats` print them when it ends -- so reading
 one costs a call and nothing else. None of them allocates, which is what
-makes the six numbers of a [`stats`](#val-stats) one consistent set: nothing but an
+makes the nine numbers of a [`stats`](#val-stats) one consistent set: nothing but an
 allocation moves the numbers of the heap, so they cannot drift apart while
 they are being read.
 
@@ -48,7 +48,8 @@ only wants the time a computation took should use [`Timer`](../str/Timer.md), wh
 signature RUNTIME =
 sig
   type <a href="#type-stats">stats</a> = { <a href="#fld-stats.instructions">instructions</a> : int, <a href="#fld-stats.bytes">bytes</a> : int, <a href="#fld-stats.objects">objects</a> : int,
-                 <a href="#fld-stats.collections">collections</a> : int, <a href="#fld-stats.live">live</a> : int, <a href="#fld-stats.heapsize">heapSize</a> : int }
+                 <a href="#fld-stats.collections">collections</a> : int, <a href="#fld-stats.live">live</a> : int, <a href="#fld-stats.heapsize">heapSize</a> : int,
+                 <a href="#fld-stats.minorcollections">minorCollections</a> : int, <a href="#fld-stats.majorcollections">majorCollections</a> : int, <a href="#fld-stats.promoted">promoted</a> : int }
   val <a href="#val-stats">stats</a> : unit -&gt; stats
   val <a href="#val-profile">profile</a> : (unit -&gt; 'a) -&gt; 'a * stats
   val <a href="#val-collect">collect</a> : unit -&gt; unit
@@ -67,25 +68,37 @@ end
 
 ```sml
 type stats = { instructions : int, bytes : int, objects : int,
-               collections : int, live : int, heapSize : int }
+               collections : int, live : int, heapSize : int,
+               minorCollections : int, majorCollections : int, promoted : int }
 ```
 
 The counters of the VM, all of them since the program started.
 
 `instructions` is the bytecode instructions executed, `bytes` and
 `objects` what has been allocated in the heap -- including everything
-since collected -- and `collections` the number of collections made.
+since collected -- and `collections` the number of collections made:
+`minorCollections` of them minor ones, which copy what of the nursery
+is reached into the old space, `promoted` the bytes they copied, and
+`majorCollections` of the whole heap -- full collections, and the
+cycles of incremental marking of `runevm --gc low-pause`.
 
-`live` is the bytes of the current semispace that are in use: what the
-last collection kept, plus what has been allocated since. It is an upper
-bound on the live data, and is exactly the live data just after a
-collection. `heapSize` is the size of one semispace, which grows as the
-collector needs it to.
+`live` is the bytes of objects in the heap: what the last collection
+kept -- a minor one keeps every old object, dead or not -- plus what has
+been allocated since. It is an upper bound on the live data, and is
+exactly the live data just after a full collection, which [`collect`](#val-collect)
+makes.
+`heapSize` is the heap's size, the bytes of objects it holds before it
+is collected, which grows as the collector needs it to.
 
-The first four depend on the program and its input alone -- not on the
-machine, the pointer width, the heap size or when the collector ran --
-so two runs of one program report the same. The last two depend on the
-heap size and so on `runevm --heap-size`.
+The first three depend on the program and its input alone -- not on the
+machine, the pointer width, the heap's size or when the collector ran --
+so two runs of one program report the same. The other six depend on
+the heap's size too, and so on `runevm --heap-size`, `--heap-fill`,
+`--nursery` and `--gc`: two runs with the same options make the same
+collections. None is a time: the collector's time is [`Timer`](../str/Timer.md)'s
+(`checkGCTime`) and `runevm --stats`'. `bytes` and
+`live` leave out the boxes the representation makes for a real that
+has no immediate, as `--count` does.
 
 A value is 8 bytes and an object costs an 8-byte header and a payload
 of 8-byte fields, so the smallest object is 16 bytes and a list cell,
@@ -99,6 +112,9 @@ one object of two fields, is 24.
 | <a name="fld-stats.collections"></a>`collections` | `int` |  |
 | <a name="fld-stats.live"></a>`live` | `int` |  |
 | <a name="fld-stats.heapsize"></a>`heapSize` | `int` |  |
+| <a name="fld-stats.minorcollections"></a>`minorCollections` | `int` |  |
+| <a name="fld-stats.majorcollections"></a>`majorCollections` | `int` |  |
+| <a name="fld-stats.promoted"></a>`promoted` | `int` |  |
 
 ### <a name="val-stats"></a>`stats`
 
@@ -114,9 +130,9 @@ though, so the other five agree.
 
 **Example** `#live (stats ()) <= #heapSize (stats ()) = true`
 
-<details><summary>Tests (10)</summary>
+<details><summary>Tests (12)</summary>
 
-For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `instructions-grow` &middot; `bytes-count-a-list-cell` &middot; `objects-count-a-list-cell` &middot; `bytes-count-the-smallest-object` &middot; `objects-count-the-smallest-object` &middot; `bytes-count-an-array-of-bytes` &middot; `bytes-count-an-array-of-reals` &middot; `live-is-within-the-semispace` &middot; `bytes-cover-what-is-in-use` &middot; `collections-and-objects-are-not-negative`
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `instructions-grow` &middot; `bytes-count-a-list-cell` &middot; `objects-count-a-list-cell` &middot; `bytes-count-the-smallest-object` &middot; `objects-count-the-smallest-object` &middot; `bytes-count-an-array-of-bytes` &middot; `bytes-count-an-array-of-reals` &middot; `live-is-within-the-semispace` &middot; `bytes-cover-what-is-in-use` &middot; `collections-and-objects-are-not-negative` &middot; `collections-are-minor-or-major` &middot; `collect-is-a-major-collection`
 
 </details>
 
@@ -152,12 +168,17 @@ For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml)
 val collect : unit -> unit
 ```
 
-`collect ()` collects the heap now.
+`collect ()` collects the heap now: a full collection.
 
-Every unreachable object is freed and every surviving one moves, which
-costs time proportional to the live data and to nothing else: a copying
-collector never visits what it does not keep. After it, the `live` of a
-[`stats`](#val-stats) is exactly the live data, where otherwise it is an upper bound.
+Every unreachable object is freed. Under the collectors `runevm --gc`
+chooses, what lives is marked where it lies -- the throughput
+collector, the default, moves the objects of its sparsest blocks, and
+the low-pause collector moves nothing -- which costs time proportional
+to the live data and a little for every block of the heap; the copier
+of `runevm --nursery 0` moves every surviving object but a large one,
+which costs time proportional to the live data and to nothing else.
+After it, the `live` of a [`stats`](#val-stats) is exactly the live data, where
+otherwise it is an upper bound.
 
 Nothing an SML program can see changes. Equality on a `ref` or an
 `array` is the identity the collector maintains, not an address of the

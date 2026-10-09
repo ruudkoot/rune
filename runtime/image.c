@@ -39,7 +39,7 @@
    so the heap is rebuilt object by object at the same offsets, and the
    distances stay true; heap_relocate then turns each of them into a pointer
    and refuses an image whose heap is not sound. */
-#include "vm.h"
+#include "gc/gc.h"
 #include "sys/sys.h"
 #include <fenv.h>
 #include <errno.h>
@@ -112,18 +112,17 @@ static void put_u64(Stream *s, uint64_t v) {
     if (b) for (int i = 0; i < 8; i++) b[i] = (uint8_t)(v >> (8 * i));
 }
 
-/* the distance of a heap object from the start of the heap; NONE for none */
+/* where a heap object is in the heap's run of objects (heap_number); NONE for none */
 #define OFF_NONE UINT64_MAX
 
-static void put_obj(Stream *s, const Obj *o, const VM *vm) {
-    put_u64(s, o ? (uint64_t)((const char *)o - vm->alloc.from) : OFF_NONE);
+static void put_obj(Stream *s, const Obj *o, VM *vm) {
+    put_u64(s, o ? heap_offset_of(vm, o) : OFF_NONE);
 }
 
-static void put_value(Stream *s, Value v, const VM *vm) {
+static void put_value(Stream *s, Value v, VM *vm) {
     /* an immediate as its bits; anything in the heap, a box too, as its offset */
     int ptr = !val_is_imm(v);
-    uint64_t w = ptr ? (val_ptr(v) ? (uint64_t)((const char *)val_ptr(v) - vm->alloc.from) : OFF_NONE)
-                     : val_bits(v);
+    uint64_t w = ptr ? (val_ptr(v) ? heap_offset_of(vm, val_ptr(v)) : OFF_NONE) : val_bits(v);
     uint8_t *b = room(s, 9);
     if (!b) return;
     b[0] = ptr ? T_PTR : T_INT;
@@ -136,12 +135,10 @@ static void put_string(Stream *s, const char *text) {
     put(s, text, (size_t)n);
 }
 
-/* The heap, object by object at the offsets it has: a header of its own
-   width, then the fields, or the bytes of a string. */
-static void put_heap(Stream *s, VM *vm) {
-    size_t scan = 0;
-    while (s->ok && scan < vm->alloc.used) {
-        Obj *o = (Obj *)(vm->alloc.from + scan);
+/* An object of the heap's run (heap_number), whose offsets the pointers
+   are: a header of its own width, then the fields, or the bytes of a
+   string. */
+static void put_object(Stream *s, Obj *o, VM *vm) {
         put_u8(s, obj_kind(o));
         put_u16(s, obj_contag(o));
         put_u32(s, obj_len(o));
@@ -161,8 +158,18 @@ static void put_heap(Stream *s, VM *vm) {
             Value *f = obj_fields(o);
             for (uint32_t i = 0; i < obj_len(o); i++) put_value(s, f[i], vm);
         }
-        scan += obj_size(o);
-    }
+}
+
+/* the old space's chunks in their order, then the large objects, then the
+   nursery's, as heap_number counts them */
+static void put_heap(Stream *s, VM *vm) {
+    for (Chunk *c = heap_first(vm); c && s->ok; c = c->next)
+        for (size_t at = chunk_object(vm, c, 0); s->ok && at != CHUNK_END; at = chunk_object(vm, c, at + obj_size((Obj *)(chunk_payload(c) + at))))
+            put_object(s, (Obj *)(chunk_payload(c) + at), vm);
+    for (Obj *o = los_first(vm); o && s->ok; o = los_next(vm, o)) put_object(s, o, vm);
+    if (vm->gc.nursery)
+        for (size_t scan = 0; s->ok && scan < vm->alloc.used; scan += obj_size((Obj *)(vm->alloc.from + scan)))
+            put_object(s, (Obj *)(vm->alloc.from + scan), vm);
 }
 
 static void write_image(VM *vm, Stream *s, int kind) {
@@ -194,8 +201,9 @@ static void write_image(VM *vm, Stream *s, int kind) {
     for (int i = 0; i < vm->argc; i++) put_string(s, vm->argv[i]);
 
     /* the heap first, so that what follows can be written as offsets into it */
-    put_u64(s, (uint64_t)vm->alloc.size);
-    put_u64(s, (uint64_t)vm->alloc.used);
+    heap_number(vm);
+    put_u64(s, (uint64_t)vm->gc.size);
+    put_u64(s, (uint64_t)heap_used(vm));
     put_heap(s, vm);
 
     /* a constant: what the bytecode said it is, the value as this VM has
@@ -214,7 +222,7 @@ static void write_image(VM *vm, Stream *s, int kind) {
         case CONST_WORD64: plain = val_word64(v); break;
         case CONST_REAL: plain = real_bits(val_real(v)); break;
         case CONST_CHAR: plain = (uint64_t)val_char(v); break;
-        default: plain = val_ptr(v) ? (uint64_t)((const char *)val_ptr(v) - vm->alloc.from) : OFF_NONE; break;
+        default: plain = val_ptr(v) ? heap_offset_of(vm, val_ptr(v)) : OFF_NONE; break;
         }
         put_u8(s, p->const_kinds[i]);
         put_value(s, v, vm);
@@ -439,22 +447,24 @@ static Value get_value(Stream *s) {
     return mk_tagged(tag, w);
 }
 
-/* The heap, rebuilt at the offsets it was written from, so that the
-   distances the rest of the image holds stay true. */
-static int get_heap(Stream *s, VM *vm) {
+/* The heap, rebuilt into chunks of this VM's as the run of objects it was
+   written as (runtime/gc/chunk.c, heap_read_take), so that the offsets the
+   rest of the image holds stay true: heap_relocate turns them into
+   pointers. */
+static int get_heap(Stream *s, VM *vm, size_t used) {
     size_t scan = 0;
     vm->box_bytes_live = 0;
-    while (scan < vm->alloc.used) {
-        if (vm->alloc.used - scan < OBJ_HEADER_SIZE) return 0;
-        Obj *o = (Obj *)(vm->alloc.from + scan);
+    while (scan < used) {
+        if (used - scan < OBJ_HEADER_SIZE) return 0;
         int kind = get_u8(s);
         uint16_t contag = get_u16(s);
         uint32_t len = get_u32(s);
         /* the byte is a kind and nothing else: an image has none of the collector's bits */
         if (!s->ok || kind < K_TUPLE || kind > K_LAST || kind == K_FORWARD) return 0;
+        size_t size = obj_size_of(kind, len);
+        if (size < OBJ_HEADER_SIZE || size > used - scan) return 0;
+        Obj *o = heap_read_take(vm, size);
         obj_init(o, kind, contag, len);
-        size_t size = obj_size(o);
-        if (size > vm->alloc.used - scan) return 0;
         if (obj_kind(o) == K_REAL || obj_kind(o) == K_BOX) {
             uint64_t bits = get_u64(s);
             memcpy(obj_bytes(o), &bits, 8);
@@ -472,6 +482,8 @@ static int get_heap(Stream *s, VM *vm) {
         }
         scan += size;
     }
+    vm->gc.old_boxes = vm->box_bytes_live;   /* every object read is old */
+    alloc_view(vm);
     return s->ok;
 }
 
@@ -560,19 +572,18 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     /* the heap, before what points into it */
     uint64_t heap_size = get_u64(&s);
     uint64_t heap_used = get_u64(&s);
-    if (!s.ok || heap_used > heap_size || heap_size > SIZE_MAX)
+    if (!s.ok || heap_used > SIZE_MAX || heap_size > SIZE_MAX)
         return failed(&s, err, errlen, "the image is cut short");
-    vm->alloc.size = (size_t)heap_size;
-    vm->alloc.used = (size_t)heap_used;
+    size_t size = (size_t)heap_size, used = (size_t)heap_used;
+    /* what a nursery held may take the bytes in use past the heap's size
+       (runtime/gc/minor.c): the heap read holds them all */
+    if (used > size) size = used;
     if (vm->heap_limit) {
-        if (vm->alloc.used > vm->heap_limit) return failed(&s, err, errlen, "heap limit exceeded");
-        if (vm->alloc.size > vm->heap_limit) vm->alloc.size = vm->heap_limit;
+        if (used > vm->heap_limit) return failed(&s, err, errlen, "heap limit exceeded");
+        if (size > vm->heap_limit) size = vm->heap_limit;
     }
-    vm->alloc.from = malloc(vm->alloc.size > 0 ? vm->alloc.size : 1);
-    if (!vm->alloc.from) return failed(&s, err, errlen, "cannot allocate heap");
-    /* 8-aligned, as every heap is: bits 1 and 2 of a pointer stay clear (value.h) */
-    if (((uintptr_t)vm->alloc.from & 7) != 0) return failed(&s, err, errlen, "cannot allocate an aligned heap");
-    if (!get_heap(&s, vm)) return failed(&s, err, errlen, "the heap of the image is not sound");
+    heap_read_begin(vm, size);
+    if (!get_heap(&s, vm, used)) return failed(&s, err, errlen, "the heap of the image is not sound");
 
     p->nconsts = get_u32(&s);
     if (!s.ok || !fits(p->nconsts, sizeof(Value))) return failed(&s, err, errlen, "the image is cut short");
@@ -808,6 +819,12 @@ int vm_become(VM *vm, const char *path) {
     if (!next) { vm->io_errno = ENOMEM; return 0; }
     next->heap_limit = vm->heap_limit;
     next->equality_work = vm->equality_work;
+    next->gc.nursery_size = vm->gc.nursery_size;
+    next->gc.nursery_min = vm->gc.nursery_min;
+    next->gc.nursery_max = vm->gc.nursery_max;
+    next->gc.old_kind = vm->gc.old_kind;
+    next->gc.compact_always = vm->gc.compact_always;
+    next->gc.stress_cycles = vm->gc.stress_cycles;
     fflush(NULL);
     if (!read_image(next, sys_fopen(path, "rb"), IMAGE_SAVE, err, sizeof err)) {
         vm_release(next);
@@ -826,8 +843,12 @@ int vm_become(VM *vm, const char *path) {
         }
         next->native = 1;
     }
-    /* the JIT's options are this process's, not the image's (runtime/register) */
+    /* the JIT's options are this process's, not the image's (runtime/register),
+       and so are the collector's log and its check (runtime/gc/) */
     next->jit = vm->jit;
+    next->gc_log = vm->gc_log;
+    next->gc_log_t0 = vm->gc_log_t0;
+    next->gc_verify = vm->gc_verify;
     /* Nothing of this world is read again, so it goes before the other takes
        its place; the path was copied out of the heap by the caller. */
     vm_release(vm);

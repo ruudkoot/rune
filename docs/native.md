@@ -285,7 +285,8 @@ Its limits:
 ## The command line and the environment
 
 * **The options of `runevm-stack`** (`--count`, `--stats`, `--heap-size`,
-  `--heap-fill`, `--gc-stress`, `--checked`, `--emulate-fork`, `--restore`)
+  `--heap-fill`, `--nursery`, `--nursery-max`, `--gc`, `--old-space`, `--gc-stress`, `--gc-stress-cycles`, `--gc-verify`, `--gc-compact`, `--gc-log`, `--checked`, `--emulate-fork`,
+  `--restore`)
   come from `runeopt --options` and then the environment variable
   `RUNEVM_OPTIONS`.
 * **`RUNEVM_NAME`** is the name `CommandLine.name ()` gives. The suites'
@@ -348,14 +349,18 @@ Its limits:
   its edge cases.
 * **Frames:** the templates of CALL, TAILCALL, CALLK, TAILCALLK, RET and
   the entry for calls do what `vm_push_frame`, `native_call`,
-  `native_callk` and `native_ret` do. A change to
-  `Frame` or to how a frame is pushed changes them too.
+  `native_callk` and `native_ret` do; RET lowers the stack's watermark to
+  the frame it returns to, as `vm_frame_pop` does. A change to
+  `Frame` or to how a frame is pushed or popped changes them too.
 * **Allocation:** the five allocating templates are the macro-assembler's
   `ms_alloc` (the fast path of `vm_alloc`: when it collects, `--gc-stress`,
   the size, the header, the counts), through `X64Layout.alloc`. A change to
-  the allocator, a generational collector for one, changes `ms_alloc`, and
-  the templates follow with `make templates`; so does a write barrier, in
-  `ms_store_field`.
+  the allocator changes `ms_alloc`, and the templates follow with `make
+  templates`; so does the write barrier, in `ms_set_field` and
+  `ms_set_element`: `:=` and `Array.update` store through their templates
+  (`X64Layout.setField`, `setElement`, which read the nursery's range and
+  mark a card in the object's chunk, [runtime.md](runtime.md), *The garbage
+  collector*), a fill of a fresh object through `storeField`.
 * **`reads`:** an instruction in it never writes its top operand in place.
 * **Resuming:** every place a frame returns to must be in `rune_resume`.
 

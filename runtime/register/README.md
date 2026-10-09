@@ -39,11 +39,13 @@ and a pointer where it is clear, so that a value is made in one register
 and stored in one store; a real outside the encoding and an `Int64.int` or
 `Word64.word` past 63 bits are boxes of 8 raw bytes; objects have an 8-byte
 header and a payload in multiples of 8;
-the collector is a Cheney two-space copier that runs only inside
-`vm_alloc`, with the value stack below `sp`, the globals, the constants,
-each frame's closure and the built-in exceptions as its roots. There are
-no stack maps and no write barrier: every slot is a word whose low bit
-tells an immediate from a pointer. Of the stack, the registers of a frame
+the collector is generational, a nursery that a minor collection copies
+out of and an old space that a full one copies (`runtime/gc/`), and runs
+only inside `vm_alloc`, with the value stack below `sp`, the globals, the
+constants, each frame's closure and the built-in exceptions as its roots,
+and for a minor collection the cards the barrier marked. There are no
+stack maps: every slot is a word whose low bit tells an immediate from a
+pointer. Of the stack, the registers of a frame
 that waits for a call are roots as far as they are live there
 (`VM.frame_live`, which `vm_loop` sets to `reg_frame_live` of `live.c`):
 the collector asks with the frame's function and the pc its callee returns
@@ -62,8 +64,10 @@ builds a VM with every register a root, to measure against. The
 stores into the heap are `SETENV`, the primitives `ref_set` and
 `array_update` (in `runtime/prims.c`, and in the loop through `HEAP_STORE` of
 `runtime/register/fastprim.h`) and a few more primitives; each is
-`obj_set_field` (`runtime/value.h`), whose barrier is empty, and
-`ms_barrier` in compiled code. The collector's state and the allocation
+`obj_set_field` (`runtime/value.h`), whose barrier (`gc_barrier`,
+`runtime/vm.h`) marks the card of an old object's field given a pointer
+into the nursery, and `ms_set_field` or `ms_set_element` in compiled
+code. The collector's state and the allocation
 state are structs of the VM (`GcState`, `AllocState`, `runtime/vm.h`): the
 fast path bumps `alloc.used` against `alloc.size`.
 
@@ -93,7 +97,9 @@ Calls: `CALL f x` and `CALLK f n a...` push a frame whose base is the
 caller's stack pointer, make the callee's registers there (the argument,
 or the `n` arguments, then `unit`) and enter its code; `TAILCALL` and
 `TAILCALLK` replace the frame, the arguments copied above the frame first
-and moved down. `RET s` pops the frame and, since the caller goes on at a
+and moved down. `RET s` pops the frame (`vm_frame_pop`, which lowers the
+stack's watermark, below which a minor collection does not scan, to the
+frame that runs again) and, since the caller goes on at a
 `RESULT d`, writes the value into the caller's register `d` and passes
 over the `RESULT` (one instruction fewer per call in `--count`); where the
 instruction at `ret_pc` is not a `RESULT` -- a program resumed from an
@@ -265,10 +271,15 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   the VM is argument 0). The allocation fast path is `vm_alloc`'s in
   line -- `--gc-stress` to the slow path, the room, the bump, the counts,
   the header -- and a store into an object that exists (`ref_set`,
-  `array_update`, `SETENV`) is followed by `ms_barrier`, the barrier's
-  place in compiled code, which emits nothing today and a card mark in
-  the VM built to measure one (`bin/runevm-cards`); a fill of a fresh
-  object is `ms_store_field` alone. A kind is tested by `kind_is`: the
+  `array_update`, `SETENV`) is `ms_set_field`, or `ms_set_element` for an
+  array's element, the store and the barrier in one operation, which sees
+  the object, the field and the value as C's `gc_barrier` does (the array
+  kept beside its element's address, since a barrier finds what it marks
+  from the object), and emits the store, then the barrier: where the value
+  stored is a pointer into alloc's room and the object is not in it, and
+  there is a nursery, the card of the field in the object's chunk and the
+  card's block are marked (R_S2, R_S3 and R_S6 clobbered); a fill of a
+  fresh object is `ms_store_field` alone. A kind is tested by `kind_is`: the
   header's first byte compared whole, as `obj_kind` reads it in C, since
   the four bits it shares with the kind are the collector's and zero;
   both take the kind's bits alone in the VM whose collector sets the
@@ -356,7 +367,8 @@ the callers are recorded at the jump, and `jit_invalidate` walks them),
 rather than its code being patched. `RET` writes the value into the
 register of the caller's `RESULT` -- which the frame records when it is
 pushed (`Frame.result`), as the loop's `RET` reads it too -- pops the
-frame, and jumps straight into the caller's code where the frame kept a
+frame, lowering the watermark as `vm_frame_pop` does, and jumps straight
+into the caller's code where the frame kept a
 `native_ret`, else hands back to the interpreter; the frame of the top
 level returns through `jit_h_ret`.
 So a `RESULT` after a `CALL` or `CALLK` is passed over by every engine

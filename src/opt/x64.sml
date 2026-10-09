@@ -245,7 +245,8 @@ struct
       | "ref_set" =>
           SOME (fn slow =>
             (obj (x, "K_REF") slow;
-             L.storeField line (L.RAX, 0, sd y);
+             L.needUnmarked line slow;
+             L.setField line (0, sd y, l ^ "_w");
              L.set line (sd x, 0)))
       | "word_to_int" => unary (WORD, L.wordToInt, INT)
       | "word_to_int_x" => unary (WORD, L.wordToIntX, INT)
@@ -270,7 +271,8 @@ struct
       | "array_update" =>
           SOME (fn slow =>
             (obj (h - 3, "K_ARRAY") slow; index (h - 2) slow;
-             L.element line (); L.storeField line (L.RAX, 0, sd (h - 1));
+             L.needUnmarked line slow;
+             L.setElement line (sd (h - 1), l ^ "_w");
              L.set line (sd (h - 3), 0)))
       | _ => NONE
     end
@@ -705,6 +707,12 @@ struct
                      line "imul $FRAME_SIZE, %rdx, %rdx";
                      line "add VM_FRAMES(%r12), %rdx";
                      line "decq VM_FP(%r12)";
+                     (* the watermark lowered to the frame that runs (vm_frame_pop) *)
+                     line "mov VM_FP(%r12), %rcx";
+                     line "cmp VM_FP_LOW(%r12), %rcx";
+                     line ("jae " ^ lab pc ^ "_low");
+                     line "mov %rcx, VM_FP_LOW(%r12)";
+                     put (lab pc ^ "_low:\n");
                      line "jmp *FRAME_NATIVE_RET(%rdx)";
                      slows := (fn () =>
                                  (put (slow ^ ":\n"); unforward (); flushCount (); flushSp (); setPc ();

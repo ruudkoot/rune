@@ -19,6 +19,7 @@
     X("VM_FRAMES", offsetof(VM, frames)) \
     X("VM_FP", offsetof(VM, fp)) \
     X("VM_FRAMES_CAP", offsetof(VM, frames_cap)) \
+    X("VM_FP_LOW", offsetof(VM, fp_low)) \
     X("VM_HP", offsetof(VM, hp)) \
     X("VM_CONSTS", offsetof(VM, prog.consts)) \
     X("VM_GLOBALS", offsetof(VM, globals)) \
@@ -29,6 +30,8 @@
     X("VM_HEAP_FROM", offsetof(VM, alloc.from)) \
     X("VM_HEAP_SIZE", offsetof(VM, alloc.size)) \
     X("VM_HEAP_USED", offsetof(VM, alloc.used)) \
+    X("VM_GC_NURSERY", offsetof(VM, gc.nursery)) \
+    X("VM_GC_MARKING", offsetof(VM, gc.marking)) \
     X("VM_BYTES_ALLOCATED", offsetof(VM, bytes_allocated)) \
     X("VM_OBJECTS_ALLOCATED", offsetof(VM, objects_allocated)) \
     X("VM_GC_STRESS", offsetof(VM, gc_stress)) \

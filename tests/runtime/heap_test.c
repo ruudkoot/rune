@@ -5,9 +5,13 @@
    indirection in place is followed through its first field alone; young is
    told by address; two VMs of a process collect independently; the roots
    listed in heap.c are all there; with RUNE_BARRIER_CARDS a store into an
-   object marks its card. Built by make test, and by make test-heap with
-   each switch. */
+   object marks the card of its field; heap_check finds a heap that is not
+   sound; and with a nursery, the minor collection, the barrier's cards,
+   the large-object space and the stack's watermark
+   (docs/plans/garbage-collector-v2.md, M3). Built by make test, and by
+   make test-heap with each switch. */
 #include "vm.h"
+#include "gc/gc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,7 +43,7 @@ int main(void) {
     vm_push(vm, tuple(vm, 3, 10));
     vm_push(vm, tuple(vm, 1, 20));
     Obj *a = val_ptr(vm->stack[0]), *b = val_ptr(vm->stack[1]);
-    obj_set_field(a, 2, mk_ptr(b));
+    obj_set_field(vm, a, 2, mk_ptr(b));
 #ifdef RUNE_GC_BITS
     obj_set_gc_bits(a, 2 * OBJ_GC_AGE_ONE | OBJ_GC_PINNED);
     obj_set_gc_bits(b, OBJ_GC_REMEMBERED);
@@ -77,7 +81,7 @@ int main(void) {
 #ifdef RUNE_GC_BITS
     obj_set_gc_bits(th, OBJ_GC_AGE_ONE);
 #endif
-    obj_become_ind(th, vm->stack[1]);
+    obj_become_ind(vm, th, vm->stack[1]);
     CHECK("it is an indirection", obj_kind(th) == K_IND);
 #ifdef RUNE_GC_BITS
     CHECK("with the bits it had", (obj_gc_bits(th) & OBJ_GC_AGE) == OBJ_GC_AGE_ONE);
@@ -169,15 +173,347 @@ int main(void) {
         CHECK("a freed handle keeps nothing", vm->copied - copied == (uint64_t)REAL_BOXES * obj_size_of(K_REAL, 1));
     }
 
+    /* --gc-verify (heap_check): a sound heap passes, and a pointer that is
+       to no object's start, in a field or on the stack, is found */
+    {
+        vm_push(vm, tuple(vm, 2, 90));
+        vm_push(vm, tuple(vm, 2, 92));
+        const void *at = NULL;
+        CHECK("a sound heap passes heap_check", heap_check(vm, &at) == NULL);
+        Obj *a = val_ptr(vm->stack[vm->sp - 2]), *b = val_ptr(vm->stack[vm->sp - 1]);
+        Obj *inside = (Obj *)(void *)((char *)b + 8);
+        obj_fill_field(a, 0, mk_ptr(inside));
+        CHECK("a field into the middle of an object is found", heap_check(vm, &at) != NULL && at == inside);
+        obj_fill_field(a, 0, mk_imm(90));
+        vm->stack[vm->sp - 1] = mk_ptr(inside);
+        CHECK("a slot of the stack into the middle of an object is found", heap_check(vm, &at) != NULL && at == inside);
+        vm->stack[vm->sp - 1] = mk_ptr(b);
+        CHECK("and the heap mended passes again", heap_check(vm, NULL) == NULL);
+        vm->sp -= 2;
+    }
+
+    /* The nursery (runtime/gc/minor.c; docs/plans/garbage-collector-v2.md,
+       M3): an object is made in it, and a minor collection promotes what is
+       reached into the old space; a store of a young pointer into an old
+       object marks its card, which is a root of the next minor collection,
+       and one that the barrier did not see is found by heap_check; an
+       object of los_min bytes or more is made in the large-object space,
+       remembered whole until the next minor collection, never moved, and
+       freed by the full collection that does not reach it. */
+    {
+        VM *nv = new_vm(1 << 20);
+        heap_nursery(nv, 1 << 14);
+        vm_push(nv, tuple(nv, 2, 100));
+        Obj *young = val_ptr(nv->stack[0]);
+        CHECK("an object is made in the nursery", heap_is_young(nv, young) && nv->gc.nursery);
+        collect_minor(nv);
+        Obj *old = val_ptr(nv->stack[0]);
+        CHECK("a minor collection promotes it, whole", old != young && !heap_is_young(nv, old) && obj_field(old, 1) == mk_imm(101));
+        CHECK("and counts it", nv->gc.minors == 1 && nv->gc.promoted == obj_size(old) && nv->alloc.used == 0);
+
+        Obj *y = val_ptr(tuple(nv, 1, 110));
+        obj_set_field(nv, old, 0, mk_ptr(y));
+        Chunk *c = chunk_of(old);
+        uintptr_t at = (uintptr_t)((char *)&obj_fields(old)[0] - (char *)c);
+        CHECK("a store of a young pointer into an old object marks its card and block",
+              chunk_cards(c)[at >> GC_CARD_SHIFT] == 1 && chunk_dirty(c)[at >> GC_BLOCK_SHIFT] == 1);
+        CHECK("the heap with it remembered passes heap_check", heap_check(nv, NULL) == NULL);
+        collect_minor(nv);
+        Obj *y2 = val_ptr(obj_field(old, 0));
+        CHECK("the card is a root: what it holds is promoted", y2 != y && !heap_is_young(nv, y2) && obj_field(y2, 0) == mk_imm(110));
+        CHECK("and the card is cleared", chunk_cards(c)[at >> GC_CARD_SHIFT] == 0 && chunk_dirty(c)[at >> GC_BLOCK_SHIFT] == 0);
+        obj_set_field(nv, old, 1, mk_imm(7));
+        CHECK("an immediate stored marks nothing", chunk_cards(c)[(at + 8) >> GC_CARD_SHIFT] == 0);
+
+        Value z = tuple(nv, 1, 120);
+        obj_fill_field(old, 1, z);
+        const void *where = NULL;
+        CHECK("a young pointer in an old object that no card has is found",
+              heap_check(nv, &where) != NULL && where == &obj_fields(old)[1]);
+        obj_set_field(nv, old, 1, z);
+        CHECK("and once stored through the barrier passes", heap_check(nv, NULL) == NULL);
+
+        size_t los0 = nv->gc.los_bytes;
+        Obj *big = vm_alloc_fields(nv, K_ARRAY, 0, 1024);
+        CHECK("a large object is not made in the nursery", !heap_is_young(nv, big) && nv->gc.los_bytes == los0 + obj_size(big));
+        obj_fill_field(big, 5, tuple(nv, 1, 130));
+        vm_push(nv, mk_ptr(big));
+        collect_minor(nv);
+        Obj *t = val_ptr(obj_field(big, 5));
+        CHECK("a large object made since the last minor collection is scanned whole", !heap_is_young(nv, t) && obj_field(t, 0) == mk_imm(130));
+        obj_set_field(nv, big, 1000, tuple(nv, 1, 135));
+        nv->gc_counts.fields = 0;
+        collect_minor(nv);
+        Obj *t2 = val_ptr(obj_field(big, 1000));
+        CHECK("a store into a large object far from its start is scanned by its card alone",
+              !heap_is_young(nv, t2) && obj_field(t2, 0) == mk_imm(135) && nv->gc_counts.fields <= 512 / sizeof(Value));
+        vm_gc(nv, 0);
+        CHECK("a full collection does not move it", val_ptr(nv->stack[1]) == big && obj_field(val_ptr(obj_field(big, 5)), 0) == mk_imm(130));
+        CHECK("and the heap after it passes heap_check", heap_check(nv, NULL) == NULL);
+        nv->sp = 1;
+        vm_gc(nv, 0);
+        CHECK("one that nothing reaches is freed by the next", nv->gc.los_bytes == los0 && nv->gc.fulls == 2);
+        CHECK("and what is reached is still there", obj_field(val_ptr(obj_field(val_ptr(nv->stack[0]), 0)), 0) == mk_imm(110));
+        {
+            /* a large array of bytes pins in place: C has the object itself (D17) */
+            Obj *lb = vm_alloc(nv, K_BYTES, 0, 16384, 16384);
+            memset(obj_bytes(lb), 7, 16384);
+            size_t hb = vm_handle_new(nv, mk_ptr(lb)), n = 0;
+            char *held = vm_pin(nv, hb, &n);
+            vm_gc(nv, 0);
+            CHECK("a large array pins in place", held == (char *)obj_bytes(lb) && n == 16384 && val_ptr(vm_handle_get(nv, hb)) == lb);
+            vm_unpin(nv, hb, held);
+            vm_handle_free(nv, hb);
+        }
+
+        /* the stack's watermark (D9): a minor collection leaves it at the
+           frame that runs and does not scan below it, so a young pointer
+           put there by a frame that ran unseen is found by heap_check; a
+           pop lowers it */
+        vm_push_frame(nv, 0, NULL, 0, 0);
+        vm_push(nv, mk_unit());                              /* frame 0's slot 1 */
+        vm_push_frame(nv, 0, NULL, 0, nv->sp);
+        vm_push(nv, tuple(nv, 1, 140));                      /* frame 1's slot */
+        collect_minor(nv);
+        CHECK("a minor collection leaves the watermark at the frame that runs", nv->fp_low == 1 && !heap_is_young(nv, val_ptr(nv->stack[2])));
+        nv->stack[1] = tuple(nv, 1, 150);
+        where = NULL;
+        CHECK("a young pointer below the watermark is found", heap_check(nv, &where) != NULL && where == &nv->stack[1]);
+        vm_frame_pop(nv);
+        CHECK("a pop lowers the watermark", nv->fp == 0 && nv->fp_low == 0 && heap_check(nv, NULL) == NULL);
+        collect_minor(nv);
+        CHECK("and the slot is scanned again", !heap_is_young(nv, val_ptr(nv->stack[1])) && obj_field(val_ptr(nv->stack[1]), 0) == mk_imm(150));
+    }
+
+    /* A non-moving old space (runtime/gc/mark.c; --old-space mark): what a
+       minor collection promotes is placed and given its bit; a full
+       collection leaves an old object where it is, takes the bit of one it
+       does not reach and gives back a chunk it found nothing in; a card is
+       scanned through the bits; and heap_check finds a field whose object
+       has no bit. */
+    {
+        VM *mv = new_vm(1 << 20);
+        mv->gc.old_kind = OLD_MARK;
+        heap_nursery(mv, 1 << 14);
+        CHECK("the heap's first objects are adopted", mv->gc.first->kind == CHUNK_MARK && heap_check(mv, NULL) == NULL);
+        vm_push(mv, tuple(mv, 2, 200));
+        vm_push(mv, tuple(mv, 2, 210));
+        collect_minor(mv);
+        Obj *keep = val_ptr(mv->stack[0]), *drop = val_ptr(mv->stack[1]);
+        Chunk *c = chunk_of(keep);
+        size_t koff = (size_t)((char *)keep - (char *)c), doff = (size_t)((char *)drop - (char *)c);
+        CHECK("a promoted object has its bit", c->kind == CHUNK_MARK && chunk_bit(c, koff) && chunk_bit(c, doff));
+        mv->sp = 1;
+        size_t closed = mv->gc.closed;
+        vm_gc(mv, 0);
+        CHECK("a full collection leaves what it reaches where it is", val_ptr(mv->stack[0]) == keep && obj_field(keep, 1) == mk_imm(201));
+        CHECK("and takes the bit of what it does not", chunk_bit(c, koff) && !chunk_bit(c, doff) && mv->gc.closed < closed);
+        Obj *y = val_ptr(tuple(mv, 1, 220));
+        obj_set_field(mv, keep, 0, mk_ptr(y));
+        collect_minor(mv);
+        Obj *y2 = val_ptr(obj_field(keep, 0));
+        CHECK("a card of a non-moving chunk is scanned through the bits", y2 != y && !heap_is_young(mv, y2) && obj_field(y2, 0) == mk_imm(220));
+        CHECK("and the heap passes heap_check", heap_check(mv, NULL) == NULL);
+        Chunk *k = chunk_of(y2);
+        size_t yoff = (size_t)((char *)y2 - (char *)k);
+        chunk_bits(k)[yoff >> 9] &= ~((uint64_t)1 << (yoff >> 3 & 63));
+        k->used -= obj_size(y2); mv->gc.closed -= obj_size(y2);   /* as if it had never been placed */
+        const void *where = NULL;
+        CHECK("a field whose object has no bit is found", heap_check(mv, &where) != NULL && where == y2);
+        chunk_bit_set(k, yoff);
+        k->used += obj_size(y2); mv->gc.closed += obj_size(y2);
+        CHECK("and with its bit again passes", heap_check(mv, NULL) == NULL);
+        size_t chunks = 0, after = 0;
+        for (Chunk *x = mv->gc.first; x; x = x->next) chunks++;
+        for (int i = 0; i < 20000; i++) vm_push(mv, tuple(mv, 4, i)), mv->sp--;   /* garbage to fill chunks */
+        mv->sp = 1;
+        collect_minor(mv);
+        vm_gc(mv, 0);
+        for (Chunk *x = mv->gc.first; x; x = x->next) after++;
+        CHECK("a chunk with nothing reached is given back", after <= chunks + 1 && obj_field(val_ptr(obj_field(keep, 0)), 0) == mk_imm(220));
+    }
+
+    /* The mark-region old space (runtime/gc/immix.c; --old-space immix): the
+       lines a full collection does not mark are holes that promotion bumps
+       into, and a block with free lines is evacuated by the next full
+       collection, its objects whole where they went */
+    {
+        VM *iv = new_vm(1 << 20);
+        iv->gc.old_kind = OLD_IMMIX;
+        heap_nursery(iv, 1 << 14);
+        enum { N = 4000 };
+        Obj *arr = vm_alloc_fields(iv, K_ARRAY, 0, N);   /* a large object: it stays, and roots the tuples */
+        vm_push(iv, mk_ptr(arr));
+        for (int i = 0; i < N; i++) { Value t = tuple(iv, 3, 10 * i); obj_set_field(iv, arr, (uint32_t)i, t); }
+        vm_gc(iv, 0);
+        CHECK("every tuple promoted and kept", heap_check(iv, NULL) == NULL && obj_field(val_ptr(obj_field(arr, 3999)), 2) == mk_imm(39992));
+        size_t chunks = 0;
+        for (Chunk *x = iv->gc.first; x; x = x->next) chunks++;
+        for (int i = 1000; i < 3000; i++) obj_set_field(iv, arr, (uint32_t)i, mk_unit());
+        vm_gc(iv, 0);
+        CHECK("the lines of what died are free", iv->gc.ix_nrecycle + iv->gc.ix_nfree > 0 && heap_check(iv, NULL) == NULL);
+        for (int i = 1000; i < 3000; i++) { Value t = tuple(iv, 3, 7 * i); obj_set_field(iv, arr, (uint32_t)i, t); }
+        collect_minor(iv);
+        size_t now = 0;
+        for (Chunk *x = iv->gc.first; x; x = x->next) now++;
+        CHECK("promotion fills the holes before a new chunk", now == chunks && obj_field(val_ptr(obj_field(arr, 2999)), 1) == mk_imm(7 * 2999 + 1));
+        for (int i = 0; i < N; i += 2) obj_set_field(iv, arr, (uint32_t)i, mk_unit());
+        vm_gc(iv, 0);                                    /* half of every line free: sparse blocks */
+        vm_gc(iv, 0);                                    /* which this one evacuates */
+        int whole = 1;
+        for (int i = 1; i < N; i += 2) {
+            Obj *t = val_ptr(obj_field(arr, (uint32_t)i));
+            int64_t first = i >= 1000 && i < 3000 ? 7 * i : 10 * i;
+            whole &= obj_len(t) == 3 && obj_field(t, 0) == mk_imm(first) && obj_field(t, 2) == mk_imm(first + 2);
+        }
+        CHECK("a full collection evacuates blocks with free lines", iv->gc.ix_evacuated > 0);
+        CHECK("and what it moved is whole where it went", whole && heap_check(iv, NULL) == NULL);
+    }
+
+    /* The segregated old space (runtime/gc/segfit.c; --old-space segfit):
+       objects of each size in blocks of their class, the cells a full
+       collection does not mark taken again by promotion before a new chunk */
+    {
+        VM *sv = new_vm(1 << 20);
+        sv->gc.old_kind = OLD_SEGFIT;
+        heap_nursery(sv, 1 << 14);
+        enum { N = 4000 };
+        Obj *arr = vm_alloc_fields(sv, K_ARRAY, 0, N);
+        vm_push(sv, mk_ptr(arr));
+        for (int i = 0; i < N; i++) { Value t = tuple(sv, (uint32_t)(1 + i % 5), 10 * i); obj_set_field(sv, arr, (uint32_t)i, t); }
+        vm_gc(sv, 0);
+        Obj *t2 = val_ptr(obj_field(arr, 2)), *t3 = val_ptr(obj_field(arr, 3));
+        CHECK("objects of two sizes are in blocks of two classes",
+              chunk_sfblocks(chunk_of(t2))[((char *)t2 - (char *)chunk_of(t2)) >> SF_BLOCK_SHIFT].cls
+              != chunk_sfblocks(chunk_of(t3))[((char *)t3 - (char *)chunk_of(t3)) >> SF_BLOCK_SHIFT].cls);
+        CHECK("and the heap passes heap_check", heap_check(sv, NULL) == NULL);
+        size_t chunks = 0, now = 0;
+        for (Chunk *x = sv->gc.first; x; x = x->next) chunks++;
+        for (int i = 0; i < N; i += 2) obj_set_field(sv, arr, (uint32_t)i, mk_unit());
+        vm_gc(sv, 0);
+        for (int i = 0; i < N; i += 2) { Value t = tuple(sv, (uint32_t)(1 + i % 5), 7 * i); obj_set_field(sv, arr, (uint32_t)i, t); }
+        collect_minor(sv);
+        for (Chunk *x = sv->gc.first; x; x = x->next) now++;
+        int whole = 1;
+        for (int i = 0; i < N; i++) {
+            Obj *t = val_ptr(obj_field(arr, (uint32_t)i));
+            int64_t first = i % 2 ? 10 * i : 7 * i;
+            whole &= obj_len(t) == (uint32_t)(1 + i % 5) && obj_field(t, 0) == mk_imm(first);
+        }
+        CHECK("freed cells are taken again before a new chunk", now == chunks && whole && heap_check(sv, NULL) == NULL);
+    }
+
+    /* The mark-compact old space (runtime/gc/compact.c; --old-space compact):
+       a full collection slides what it reaches down to the first chunk's
+       payload, in order, every pointer made the object's new place, and
+       gives back the chunks left empty */
+    {
+        VM *cv = new_vm(1 << 20);
+        cv->gc.old_kind = OLD_COMPACT;
+        heap_nursery(cv, 1 << 14);
+        enum { N = 4000 };
+        Obj *arr = vm_alloc_fields(cv, K_ARRAY, 0, N);
+        vm_push(cv, mk_ptr(arr));
+        for (int i = 0; i < N; i++) { Value t = tuple(cv, (uint32_t)(1 + i % 5), 10 * i); obj_set_field(cv, arr, (uint32_t)i, t); }
+        vm_gc(cv, 0);
+        Obj *first = val_ptr(obj_field(arr, 1));
+        size_t chunks = 0, now = 0;
+        for (Chunk *x = cv->gc.first; x; x = x->next) chunks++;
+        for (int i = 0; i < N; i += 2) obj_set_field(cv, arr, (uint32_t)i, mk_unit());
+        vm_gc(cv, 0);
+        for (Chunk *x = cv->gc.first; x; x = x->next) now++;
+        int whole = 1;
+        for (int i = 1; i < N; i += 2) {
+            Obj *t = val_ptr(obj_field(arr, (uint32_t)i));
+            whole &= obj_len(t) == (uint32_t)(1 + i % 5) && obj_field(t, 0) == mk_imm(10 * i);
+        }
+        CHECK("a full collection slides what lives down, whole", whole && val_ptr(obj_field(arr, 1)) <= first && heap_check(cv, NULL) == NULL);
+        CHECK("and the old space then holds no more than what lives",
+              cv->gc.closed == cv->gc.first->used + (cv->gc.first->next ? cv->gc.first->next->used : 0) && now <= chunks);
+    }
+
+    /* The low-pause collector's cycle (runtime/gc/cycle.c; D7, M6): what
+       the snapshot reaches by a field alone that is overwritten while the
+       cycle marks is kept (the barrier marked it), what is made during the
+       cycle is kept, and what the snapshot did not reach is freed at its end */
+    {
+        VM *lv = new_vm(1 << 20);
+        lv->gc.old_kind = OLD_SEGFIT;
+        heap_nursery(lv, 1 << 14);
+        Obj *r = vm_alloc_fields(lv, K_REF, 0, 1);
+        vm_push(lv, mk_ptr(r));                          /* slot 0: a ref */
+        obj_set_field(lv, r, 0, tuple(lv, 2, 50));       /* the one pointer to a tuple */
+        vm_push(lv, tuple(lv, 3, 60));                   /* slot 1 */
+        collect_minor(lv);                               /* all of it old */
+        r = val_ptr(lv->stack[0]);
+        Obj *g = val_ptr(lv->stack[1]);
+        lv->sp = 1;                                      /* slot 1's tuple garbage */
+        lv->gc_stress = 1;
+        lv->gc.stress_cycles = 1;                        /* a minor collection begins a cycle */
+        collect_minor(lv);
+        CHECK("a cycle begins after a minor collection, its roots marked", lv->gc.marking == 1 && lv->gc.ngray >= 1);
+        vm_push(lv, obj_field(r, 0));                    /* slot 1: the tuple, as a register holds it */
+        obj_set_field(lv, r, 0, mk_unit());              /* the ref lets go of it before the cycle scans the ref */
+        vm_push(lv, tuple(lv, 1, 70));                   /* slot 2: made during the cycle (a minor collection, a slice) */
+        for (int i = 0; i < 100 && lv->gc.marking; i++) collect_minor(lv);
+        Obj *t = val_ptr(lv->stack[1]), *y = val_ptr(lv->stack[2]);
+        Chunk *gk = chunk_of(g);
+        CHECK("what the snapshot reached by an overwritten field is kept",
+              !lv->gc.marking && lv->gc.cycles == 1 && obj_len(t) == 2 && obj_field(t, 0) == mk_imm(50) && heap_check(lv, NULL) == NULL);
+        CHECK("what was made during the cycle is kept", obj_len(y) == 1 && obj_field(y, 0) == mk_imm(70));
+        CHECK("and what the snapshot did not reach is freed", !chunk_bit(gk, (size_t)((char *)g - (char *)gk)));
+    }
+
+    /* An indirection shortcut (D18): a minor collection gives the field that
+       pointed to a young one what it holds, and copies the indirection not;
+       a full collection does the same for an old one */
+    {
+        VM *iv = new_vm(1 << 20);
+        iv->gc.old_kind = OLD_IMMIX;
+        heap_nursery(iv, 1 << 14);
+        vm_push(iv, mk_unit());                          /* slot 0: the suspension */
+        vm_push(iv, tuple(iv, 2, 80));                   /* slot 1: its value */
+        Obj *th = vm_alloc_fields(iv, K_THUNK, 0, 2);
+        obj_fill_field(th, 0, mk_imm(0));
+        obj_fill_field(th, 1, mk_imm(0));
+        iv->stack[0] = mk_ptr(th);
+        obj_become_ind(iv, th, iv->stack[1]);
+        collect_minor(iv);
+        CHECK("a minor collection shortcuts a young indirection", iv->stack[0] == iv->stack[1] && obj_field(val_ptr(iv->stack[0]), 0) == mk_imm(80));
+        Obj *old = vm_alloc_fields(iv, K_THUNK, 0, 1);   /* an old one: promoted while it is a suspension */
+        obj_fill_field(old, 0, mk_imm(0));
+        iv->stack[0] = mk_ptr(old);
+        collect_minor(iv);
+        old = val_ptr(iv->stack[0]);
+        obj_become_ind(iv, old, iv->stack[1]);
+        vm_gc(iv, 0);
+        CHECK("and a full one an old one", iv->stack[0] == iv->stack[1] && heap_check(iv, NULL) == NULL);
+    }
+
+    /* The adaptive nursery (docs/plans/garbage-collector-v2.md, D2): after a
+       full collection, half of the heap's room, within its least and most */
+    {
+        VM *av = new_vm(16 << 20);
+        av->gc.nursery_max = 8 << 20;
+        heap_nursery(av, 1 << 20);
+        vm_gc(av, 0);
+        CHECK("a full collection makes the nursery half the heap's room, at most the most",
+              av->gc.nursery_size > (size_t)7 << 20 && av->gc.nursery_size <= (size_t)8 << 20 && av->alloc.size == av->gc.nursery_size);
+        av->gc.nursery_max = 0;
+        heap_nursery(av, 1 << 20);
+        vm_gc(av, 0);
+        CHECK("and with no most it stays", av->gc.nursery_size == (size_t)1 << 20 && heap_check(av, NULL) == NULL);
+    }
+
 #ifdef RUNE_BARRIER_CARDS
-    /* the measuring barrier: a store into an object marks its card, a fill of a fresh one does not */
+    /* the measuring barrier: a store into an object marks the card of its field, a fill of a fresh one does not */
     memset(rune_cards, 0, CARD_COUNT);
     Obj *r = val_ptr(vm->stack[0]);
-    size_t card = ((uintptr_t)r >> CARD_SHIFT) & (CARD_COUNT - 1);
+    size_t card = ((uintptr_t)&obj_fields(r)[0] >> CARD_SHIFT) & (CARD_COUNT - 1);
     obj_fill_field(r, 0, mk_imm(1));
     CHECK("a fill marks nothing", rune_cards[card] == 0);
-    obj_set_field(r, 0, mk_imm(2));
-    CHECK("a store marks the card of its object", rune_cards[card] == 1);
+    obj_set_field(vm, r, 0, mk_imm(2));
+    CHECK("a store marks the card of its field", rune_cards[card] == 1);
 #endif
 
     if (fails) { printf("heap_test: %d failed\n", fails); return 1; }

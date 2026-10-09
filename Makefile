@@ -23,7 +23,8 @@
 #   make test-basis run the Basis Library suite (tests/basis) with bin/rune
 #   make perf-check verify the instruction and allocation budgets (tests/perf)
 #   make test-stress  both suites with a collection before every GC_STRESS-th
-#                   (101; Basis Library suite: GC_STRESS_BASIS-th, 1009) allocation
+#                   (101; Basis Library suite: GC_STRESS_BASIS-th, 1009) allocation:
+#                   the interpreters with no nursery, the JIT with one of 4 KiB
 #   make bootstrap  verify that the self-hosted compiler reproduces bin/rune.rbc
 #   make check      everything above
 #   make doctor     check that the tools all targets need are installed
@@ -109,9 +110,9 @@ BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit
 # build/librune.a, which bin/runevm-stack links, and so will a program runeopt
 # makes (docs/native.md); the other VMs compile the same list.
 SYS ?= posix
-RT_SRCS := runtime/runtime.c runtime/heap.c runtime/loader.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
+RT_SRCS := runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/loader.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
 VM_SRCS := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_$(SYS).c
-VM_HDRS := runtime/vm.h runtime/value.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
+VM_HDRS := runtime/vm.h runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
 RT_OBJS := $(patsubst runtime/%.c,build/librune/%.o,$(RT_SRCS) runtime/sys/sys_$(SYS).c)
 AR      ?= ar
 
@@ -139,7 +140,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: isa check-isa test-ir check-levels test-register test-register-jit test-register-asan vm-census test-census heapsim check-heapsim check-layouts templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa test-ir check-levels test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -473,10 +474,11 @@ bin/runevm-conv: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_JIT_CONV $(RT_INC) -o $@ $(NEW_SRCS) -lm
 
-# The census VM (docs/census.md; docs/plans/heap-layout.md, M1): runtime/register's
-# loop on the runtime with -DRUNE_CENSUS, which enables the hooks of
-# runtime/census/census.h. It interprets everything (the JIT allocates in line) and
-# prints the stock VM's --count line, which scripts/check-census.sh checks.
+# The census VM (docs/census.md; docs/plans/heap-layout.md, M1, and
+# docs/plans/garbage-collector-v2.md, M1): runtime/register's loop on the runtime
+# with -DRUNE_CENSUS, which enables the hooks of runtime/census/census.h. It
+# interprets everything (the JIT allocates in line) and prints the stock VM's
+# --count line, which scripts/check-census.sh checks.
 CENSUS_SRCS := $(NEW_SRCS) runtime/census/census.c runtime/census/census_static.c
 vm-census: bin/runevm-census
 bin/runevm-census: $(CENSUS_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/census/census.h runtime/census/layouts.h | build/.doctor-vm
@@ -484,10 +486,11 @@ bin/runevm-census: $(CENSUS_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/cen
 	$(CC) $(CFLAGS) -DRUNE_JIT=1 -DRUNE_CENSUS $(RT_INC) -o $@ $(CENSUS_SRCS) -lm
 
 # The census VM against the stock one on a small program: the same --count
-# line, every byte and object in census.txt, the summary mode and the static
-# census (scripts/check-census.sh). Part of make check.
-test-census:
-	@echo "test-census: the census VM measures the 16-byte layout; not built on the word prototype (heap-layout M4)"
+# line, every byte and object in census.txt, the trace's own consistency
+# (tools/heapsim/checktrace.py, where python3 has numpy), the summary mode and
+# the static census (scripts/check-census.sh). Part of make check.
+test-census: bin/runevm-census bin/runevm $(RUNE)
+	sh scripts/check-census.sh
 
 # The heap-layout tools (docs/plans/heap-layout.md, M2): the trace-driven
 # simulator bin/heapsim and its synthetic-trace generator bin/heapsim-gen
@@ -495,21 +498,42 @@ test-census:
 # runs the simulator's unit tests against the generator and holds its copier
 # model to the stock VM's --stats on two small workloads that collect
 # (their census traces made on the way); check-layouts builds the harness with $(CC) and
-# checks that every kernel's checksum is the same under every layout. Both
-# are part of make check.
+# checks that every kernel's checksum is the same under every layout. The
+# second generation's simulator bin/gcsim (docs/plans/garbage-collector-v2.md,
+# *The simulator*; tools/heapsim/README.md): check-gcsim holds its models to
+# traces whose answers are known in closed form, and to bin/heapsim's
+# copier, nursery and sticky models. All three are part of make check.
 bin/heapsim: tools/heapsim/sim.c runtime/census/layouts.h | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) $(RT_INC) -o $@ tools/heapsim/sim.c -lm
 bin/heapsim-gen: tools/heapsim/gen.c runtime/census/layouts.h | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) $(RT_INC) -o $@ tools/heapsim/gen.c -lm
-heapsim: bin/heapsim bin/heapsim-gen
-check-heapsim: heapsim
+bin/gcsim: tools/heapsim/gcsim.c runtime/census/layouts.h | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) $(RT_INC) -o $@ tools/heapsim/gcsim.c -lm
+heapsim: bin/heapsim bin/heapsim-gen bin/gcsim
+check-heapsim: heapsim bin/runevm-census bin/runevm $(RUNE) bin/rune.rbc
 	sh tools/heapsim/test.sh
-	@echo "check-heapsim: the validation needs the census VM; not run on the word prototype (heap-layout M4)"
+	sh tools/heapsim/validate.sh compile-sigs intinf_fact
+check-gcsim: heapsim
+	sh tools/heapsim/test2.sh
 check-layouts:
 	$(MAKE) --no-print-directory -C tests/layouts CC=$(CC)
 	sh tests/layouts/check.sh $(notdir $(CC))
+
+# The collector harness (docs/plans/garbage-collector-v2.md, *The harness*;
+# tests/gcbench/README.md): `make gcbench` builds tests/out/gcbench/gcbench
+# with $(CC). check-gcbench runs every experiment at tiny sizes with its
+# self-checks on (tests/gcbench/check.sh: a second or two, nothing timed,
+# no perf needed). The harness is for Linux on x86-64: elsewhere
+# check-gcbench says so and does nothing. Part of make check.
+gcbench:
+	$(MAKE) --no-print-directory -C tests/gcbench CC=$(CC)
+check-gcbench:
+	@if [ "$$(uname -s) $$(uname -m)" = "Linux x86_64" ]; then \
+	  $(MAKE) --no-print-directory gcbench && sh tests/gcbench/check.sh; \
+	else echo "check-gcbench: the harness is for Linux on x86-64; nothing done"; fi
 
 # runeopt's templates for the layout of values and objects, generated from
 # the JIT's macro-assembler run against the text backend of its assembler
@@ -556,7 +580,7 @@ WIN_SRCS    := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_
 # runtime/register for Windows: its loop and its instruction set's part in place of
 # the stack bytecode's (runtime/stack/isa_stack.c), as bin/runevm-asan is built
 WIN_NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_win.c
-WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32
+WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32 -lpsapi
 
 # windows_dlls CC: refuse $@ when it imports a DLL whose name starts with lib
 define windows_dlls
@@ -695,26 +719,39 @@ test-portability: portability $(RUNE) vm
 	sh scripts/check-jit.sh -j $(JOBS) --vm bin/runevm-aarch64
 	RUNE=$(abspath $(RUNE_STACK)) RUNE_MATRIX_TIMEOUT=$(PORT_TIMEOUT) \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs portability
+	@for v in runevm-stack32 runevm-stack-ppc64 runevm32 runevm-ppc64; do \
+	  printf '#!/bin/sh\nexec "$(ROOT)/bin/%s" --gc low-pause --gc-stress $(GC_STRESS) --gc-stress-cycles "$$@"\n' $$v > bin/$$v-cycles; \
+	  chmod +x bin/$$v-cycles; \
+	done
+	sh tests/run-portability.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack32-cycles --vm bin/runevm-stack-ppc64-cycles
+	sh tests/run-portability.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
+	  --vm bin/runevm32-cycles --vm bin/runevm-ppc64-cycles
 
 # ---------------------------------------------------------------- tests
 # Depending on $(RUNE) builds whichever compiler the override names.
 test: $(RUNE) vm | build/.doctor-check
 	python3 tests/compiler/run-tests.py --rune $(RUNE_STACK)
 	python3 tests/runtime/run-limits.py --rune $(RUNE_STACK) --vm $(RUNEVM)
+	python3 tests/runtime/run-gc-log.py --rune $(RUNE_STACK) --vm $(RUNEVM)
 	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm $(RUNEVM)
 	sh tests/runtime/run-vm-tests.sh --vm $(RUNEVM)
 	@mkdir -p build
 	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
 	build/heap_test
 
-# The hooks for the collector to come (docs/plans/heap-layout.md, M7). The C
+# The collector and its hooks (docs/plans/heap-layout.md, M7;
+# docs/plans/garbage-collector-v2.md, M2 and M3). The C
 # test of them (tests/runtime/heap_test.c) on the runtime as built and as
 # built with each switch: the header's four bits set by the collector on
 # every object it copies (RUNE_GC_BITS), and the barrier as a card mark
 # (RUNE_BARRIER_CARDS). Then tests/lang on the VM of the first, as it comes
-# and with every function compiled and a collection at every allocation, so
+# and with every function compiled and a collection at every GC_STRESS-th
+# allocation, as make test-stress has it (101 by default; GC_STRESS=1 at
+# every one, which takes a quarter of an hour), so
 # that a reader of a kind that does not mask the bits fails, and on the VM
-# of the second.
+# of the second; and on bin/runevm with the heap checked before and after
+# every collection of a heap of 64 KiB and a nursery of 8 KiB (--gc-verify),
+# the barrier's cards with it. Part of make check.
 test-heap: bin/runevm-gcbits bin/runevm-cards $(RUNE) vm | build/.doctor-check
 	@mkdir -p build
 	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
@@ -723,11 +760,47 @@ test-heap: bin/runevm-gcbits bin/runevm-cards $(RUNE) vm | build/.doctor-check
 	build/heap_test-gcbits
 	$(CC) $(CFLAGS) -DRUNE_BARRIER_CARDS $(RT_INC) -o build/heap_test-cards tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
 	build/heap_test-cards
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-gcbits" --jit=all --gc-stress 1 "$$@"\n' > bin/runevm-gcbits-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-gcbits" --jit=all --gc-stress $(GC_STRESS) "$$@"\n' > bin/runevm-gcbits-stress
 	chmod +x bin/runevm-gcbits-stress
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gcbits --out tests/out/register-gcbits
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gcbits-stress --out tests/out/register-gcbits-stress
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-cards --out tests/out/register-cards
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc-verify --heap-size 65536 --nursery 8192 --nursery-max 0 "$$@"\n' > bin/runevm-verify
+	chmod +x bin/runevm-verify
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-verify --out tests/out/register-verify
+
+# The two collectors (docs/runtime.md, *The garbage collector*;
+# docs/plans/garbage-collector-v2.md, D3): tests/lang under each, on both
+# VMs, with the heap checked before and after every collection of a heap of
+# 64 KiB and a nursery of 8 KiB, and the low-pause one with every function
+# compiled and a collection at every GC_STRESS-th allocation (make
+# test-stress runs the default, throughput); and each with the old space
+# compacted at every full collection (--gc-compact, D4). Part of make check.
+test-gc: $(RUNE) vm | build/.doctor-check
+	@mkdir -p bin
+	@for g in throughput low-pause; do \
+	  printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc %s --gc-verify --heap-size 65536 --nursery 8192 --nursery-max 0 "$$@"\n' $$g > bin/runevm-gc-$$g; \
+	  printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-stack" --gc %s --gc-verify --heap-size 65536 --nursery 8192 --nursery-max 0 "$$@"\n' $$g > bin/runevm-stack-gc-$$g; \
+	  chmod +x bin/runevm-gc-$$g bin/runevm-stack-gc-$$g; \
+	done
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc low-pause --jit=all --nursery 4096 --nursery-max 0 --gc-stress $(GC_STRESS) "$$@"\n' > bin/runevm-gc-low-pause-stress
+	chmod +x bin/runevm-gc-low-pause-stress
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-throughput --out tests/out/register-gc-throughput
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-low-pause --out tests/out/register-gc-low-pause
+	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack-gc-throughput --out tests/out/gc-throughput
+	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack-gc-low-pause --out tests/out/gc-low-pause
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-low-pause-stress --out tests/out/register-gc-low-pause-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc low-pause --gc-verify --nursery 65536 --gc-stress $(GC_STRESS) --gc-stress-cycles "$$@"\n' > bin/runevm-gc-low-pause-cycles
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-stack" --gc low-pause --gc-verify --nursery 65536 --gc-stress $(GC_STRESS) --gc-stress-cycles "$$@"\n' > bin/runevm-stack-gc-low-pause-cycles
+	chmod +x bin/runevm-gc-low-pause-cycles bin/runevm-stack-gc-low-pause-cycles
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-low-pause-cycles --out tests/out/register-gc-low-pause-cycles
+	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack-gc-low-pause-cycles --out tests/out/gc-low-pause-cycles
+	@for g in throughput low-pause; do \
+	  printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc %s --gc-compact --gc-verify --heap-size 65536 --nursery 8192 --nursery-max 0 "$$@"\n' $$g > bin/runevm-gc-$$g-compact; \
+	  chmod +x bin/runevm-gc-$$g-compact; \
+	done
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-throughput-compact --out tests/out/register-gc-throughput-compact
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-low-pause-compact --out tests/out/register-gc-low-pause-compact
 
 test-all: host-builds vm | build/.doctor-check
 	@for c in mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit; do \
@@ -835,18 +908,23 @@ perf-check: $(RUNE) bin/runedoc vm bin/rune.rbc bin/runedoc.rbc bin/rune.stack.r
 GC_STRESS ?= 101
 GC_STRESS_BASIS ?= 1009
 test-stress: $(RUNE) vm | build/.doctor-check
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-stack" --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-stack-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-stack" --nursery 0 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-stack-stress
 	chmod +x bin/runevm-stack-stress
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --nursery 0 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-stress
 	chmod +x bin/runevm-stress
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-jit-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --nursery 4096 --nursery-max 0 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-jit-stress
 	chmod +x bin/runevm-jit-stress
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --jit-tier=2 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-opt-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --jit-tier=2 --nursery 4096 --nursery-max 0 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-opt-stress
 	chmod +x bin/runevm-opt-stress
 	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack-stress
 	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-stress --out tests/out/register-stress
 	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-jit-stress --out tests/out/register-jit-stress
 	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-opt-stress --out tests/out/register-opt-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc low-pause --jit=all --nursery 4096 --gc-stress "$${RUNE_GC_STRESS:-1}" --gc-stress-cycles "$$@"\n' > bin/runevm-jit-cycles
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc low-pause --jit=all --jit-tier=2 --nursery 4096 --gc-stress "$${RUNE_GC_STRESS:-1}" --gc-stress-cycles "$$@"\n' > bin/runevm-opt-cycles
+	chmod +x bin/runevm-jit-cycles bin/runevm-opt-cycles
+	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-jit-cycles --out tests/out/register-jit-cycles
+	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-opt-cycles --out tests/out/register-opt-cycles
 	RUNE_GC_STRESS=$(GC_STRESS_BASIS) RUNE_MATRIX_TIMEOUT=900 \
 	  RUNE=$(abspath $(RUNE_STACK)) RUNEVM="$(ROOT)/bin/runevm-stack-stress" \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune
@@ -874,7 +952,11 @@ ifeq ($(NATIVE_HOST),yes)
 test-native: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm bin/rune.stack.rbc | build/.doctor-native
 	@$(MAKE) --no-print-directory check-templates
 	python3 tests/runtime/run-limits.py --rune $(RUNE_STACK) --vm bin/runevm-native
+	python3 tests/runtime/run-gc-log.py --rune $(RUNE_STACK) --vm bin/runevm-native
 	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-native --skip tests/opt-skip.txt
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-native" --gc low-pause --nursery 4096 --gc-stress $(GC_STRESS) --gc-stress-cycles "$$@"\n' > bin/runevm-native-cycles
+	chmod +x bin/runevm-native-cycles
+	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-native-cycles --skip tests/opt-skip.txt --out tests/out/native-cycles
 	sh tests/opt/run-counts.sh -j $(JOBS) $$(for t in tests/lang/*.sml; do echo tests/out/$$(basename $$t .sml).rbc; done)
 	RUNE=$(abspath $(RUNE_STACK)) RUNE_MATRIX_BYTECODE="$(ROOT)/tests/out/matrix/rune" \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:opt
@@ -956,6 +1038,7 @@ bin/rune.stack.rbc: bin/rune-$(BOOTHOST) bin/runevm-stack $(BOOT_SRCS) lib/basis
 # the Basis Library.
 test-register: bin/runevm $(RUNE) vm bin/rune.stack.rbc
 	python3 tests/runtime/run-limits.py --rune bin/rune --vm bin/runevm
+	python3 tests/runtime/run-gc-log.py --rune bin/rune --vm bin/runevm
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm --out tests/out/register
 	sh scripts/check-register.sh -j $(JOBS)
 	RUNE_NEW=$(abspath bin/rune) RUNEVM_NEW=$(abspath bin/runevm) sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:new
@@ -1068,9 +1151,13 @@ check:
 	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory test-register
 	@$(MAKE) --no-print-directory test-register-jit
+	@$(MAKE) --no-print-directory test-heap
+	@$(MAKE) --no-print-directory test-gc
 	@$(MAKE) --no-print-directory test-census
 	@$(MAKE) --no-print-directory check-heapsim
+	@$(MAKE) --no-print-directory check-gcsim
 	@$(MAKE) --no-print-directory check-layouts
+	@$(MAKE) --no-print-directory check-gcbench
 	@$(MAKE) --no-print-directory perf-check
 	@$(MAKE) --no-print-directory bench-smoke
 	@$(MAKE) --no-print-directory check-positions

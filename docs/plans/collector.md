@@ -1,5 +1,11 @@
 # Brief: the collector after the copier
 
+*Retired (2026-10-09): answered by
+[garbage-collector-v2.md](garbage-collector-v2.md), whose ten questions'
+answers are its *The request*; what was built is
+[../runtime.md](../runtime.md)'s *The garbage collector*. Kept as it was
+written.*
+
 A brief, not a roadmap: what the roadmap of the next collector is asked,
 what is known, and what is in place. Written on 2026-10-04 as the last
 piece of the heap layout's M7 (`heap-layout.md`), from that roadmap's
@@ -139,7 +145,11 @@ What is not there, and is this roadmap's to take up:
   second survival, a remembered bit only for a list of remembered
   objects, a pin only with a space that does not move.
 * `runeopt`'s templates are made from the macro-assembler and take the
-  barrier when it has a body; nothing of them was measured with one.
+  barrier when it has a body (since garbage-collector-v2's M2: until then
+  `:=` and `Array.update` stored through `storeField`, which has none, and
+  now through `setField` and `setElement`, made from `ms_set_field` and
+  `ms_set_element`); nothing of them was
+  measured with one.
 * The frame that runs keeps every register as a root
   (`docs/runtime.md`); a collector with a nursery scans that frame at
   every minor.
@@ -206,4 +216,6 @@ large objects), *M4, for a lazy front end so far*, *M5, done*, *M6,
 done*, *M7, done* (the growth steps, the barrier's and the mask's
 cost). `tools/heapsim` and `scripts/census.sh` make the simulator's
 tables again; the traces of the bootstrap and of six of MLton's
-programs are kept under `~/.cache/claude-rune-drafts/heap-layout`.
+programs were archived to `/mnt/h/HEAPSIM/heap-layout/traces`, all of
+the 16-byte layout; those of the word layout are
+garbage-collector-v2.md's (docs/census.md, format 2).

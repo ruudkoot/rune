@@ -47,8 +47,9 @@ typedef struct Function {
     uint32_t *loops;     /* the pcs of the loop heads */
     /* What is live where a frame of the function waits for a call
        (runtime/register/live.c), made when the collector first asks: the
-       pcs calls return to, in order, and the registers live at each. Not in
-       a file or an image; they go with the program (program_free_meta). */
+       pcs calls return to, in a table of nlive slots by a hash of the pc,
+       and the registers live at each. Not in a file or an image; they go
+       with the program (program_free_meta). */
     int live_made;
     uint32_t nlive;
     uint32_t *live_pc;
@@ -162,24 +163,108 @@ typedef struct JitOptions {
    is one thread, and one of these, in the VM; a nursery of a thread's own or
    a buffer it bumps in is this struct and the fast path of vm_alloc, of the
    JIT's ms_alloc and of runeopt's template, changed together
-   (docs/plans/heap-layout.md, M7; D6, D8). */
+   (docs/plans/heap-layout.md, M7; D6, D8). It is the room the fast paths
+   bump into, from..from+size, of which used is taken: the chunk of the heap
+   being filled (runtime/gc/), as far as the heap's size allows, so that an
+   allocation leaves the fast path where the chunk is full or a collection
+   is due (runtime/heap.c, vm_alloc). */
 typedef struct AllocState {
-    char *from;      /* the semispace objects go into */
-    size_t size;     /* the size of one semispace */
+    char *from;      /* the payload of the chunk objects go into */
+    size_t size;     /* how far into it they may go */
     size_t used;     /* how much of it is taken */
 } AllocState;
 
-/* The collector's own (runtime/heap.c): nothing of it is a variable of the
-   file, so every VM of a process collects by itself. */
+typedef struct Chunk Chunk;   /* runtime/gc/gc.h */
+/* where a run of an image's objects was read to (runtime/gc/chunk.c, heap_read_take) */
+typedef struct HeapSeg { uint64_t base; char *at; size_t len; } HeapSeg;
+enum { OLD_COPY, OLD_MARK, OLD_IMMIX, OLD_SEGFIT, OLD_COMPACT };   /* the old spaces (runtime/gc/gc.h) */
+/* a size class of the segregated old space (runtime/gc/segfit.c): the block
+   placement takes cells from and the next of them to look at; its other
+   blocks with free cells, from the last sweep */
+typedef struct SfClass {
+    char *block, *first;   /* the block, and its first cell */
+    uint32_t next, cells, size;
+    char **list;
+    size_t n, cap, at;
+} SfClass;
+#define SF_CLASSES 64
+
+/* The collector's own (runtime/gc/): nothing of it is a variable of the
+   file, so every VM of a process collects by itself. The heap is a list of
+   chunks of 2 MiB, the one alloc fills last; its size is what a semispace
+   was, the bytes of objects it may hold before it is collected, and
+   collected into a list of its own (runtime/gc/copy.c). */
 typedef struct GcState {
-    char *kept;          /* the other semispace, kept while the heap stays the size it is;
-                            NULL before the first collection and after one that grew the heap */
-    char *to;            /* during a collection: the space copied into */
-    size_t to_used;      /* and how much of it is taken */
-    size_t to_boxes;     /* of to_used, the boxes (box_bytes_live) */
+    Chunk *first, *last; /* the heap's chunks, in the order they were filled; last is alloc's */
+    size_t closed;       /* the bytes of objects in every chunk but last */
+    size_t size;         /* the heap's size: collected when its objects would pass it */
+    Chunk *pool;         /* chunks given back by a collection, for the next to take */
+    size_t pooled;
+    void *hint;          /* where the next chunk is asked for (sys_mem_reserve) */
+    size_t to_used;      /* during a collection: the bytes copied */
+    size_t to_boxes;     /* of them, the boxes (box_bytes_live) */
     size_t to_used_stock;   /* the census VM's count of to_used by the stock sizes */
-    uintptr_t reloc_old; /* heap_relocate: where the heap was */
-    int reloc_ok;
+    int reloc_ok;        /* heap_relocate */
+    /* The nursery (runtime/gc/minor.c; docs/plans/garbage-collector-v2.md,
+       M3): its chunk, and the bytes it holds, alloc's room; none (NULL, 0)
+       makes alloc the room of the heap's last chunk */
+    Chunk *nursery;
+    size_t nursery_size;
+    int old_kind;        /* the old space's (runtime/gc/gc.h, --old-space): OLD_COPY, or OLD_MARK where there is a nursery */
+    int compact_always;  /* --gc-compact: every full collection of a non-moving old space compacts it (testing D4) */
+    /* the mark-region old space's (runtime/gc/immix.c): the hole placement
+       bumps into, in its block; the overflow block's, for an object of more
+       than a line that the hole does not take; the blocks with free lines
+       and those with none used, from the last sweep */
+    char *ix_cursor, *ix_limit, *ix_block, *ix_ocursor, *ix_olimit;
+    char **ix_recycle, **ix_free;
+    size_t ix_nrecycle, ix_recycle_cap, ix_recycle_at, ix_nfree, ix_free_cap;
+    int ix_in_full;      /* a full collection is marking: whole free blocks alone */
+    uint64_t ix_evacuated;
+    /* the segregated old space's (runtime/gc/segfit.c): the classes, their
+       sizes, the class of each size by eights, and the free blocks */
+    SfClass sf[SF_CLASSES];
+    uint32_t sf_size[SF_CLASSES];
+    int sf_nclasses;
+    uint8_t *sf_class_of;
+    char **sf_free;
+    size_t sf_nfree, sf_free_cap;
+    char *sf_bump, *sf_bump_limit;   /* the block of no class an image's objects are read into */
+    int sf_in_full;
+    /* The low-pause collector's cycle (runtime/gc/cycle.c; D7): marking, the
+       flag the barrier tests in every engine, compiled code too (masm.c,
+       runeopt's templates), 1 from the cycle's start to its end; the
+       objects marked whose fields are still to be marked; the bytes it has
+       marked, the most it may mark (the heap's at its start), and of what
+       it marked the boxes (box_bytes_live) */
+    uint64_t marking;
+    Obj **gray;
+    size_t ngray, gray_cap;
+    size_t cycle_marked, cycle_work, cycle_boxes;
+    double cycle_rate;     /* the bytes a slice marks for every byte allocated since the last (cycle.c) */
+    size_t slice_from;     /* alloc.used at the last slice point or minor collection */
+    size_t slice_every;    /* the bytes allocated between two slices, less where they fall behind */
+    uint64_t cycle_alloc;  /* the bytes the program had allocated at the last minor collection */
+    Obj *gray_part;        /* an object of many fields scanned in part, from field gray_at */
+    uint32_t gray_at;
+    uint64_t cycles, slices;
+    int stress_cycles;     /* --gc-stress-cycles: --gc-stress's collection a minor one, which begins a cycle where none marks, each slice marking little */
+    int full_wanted;       /* vm_collect's: a full collection, not a cycle's end alone */
+    size_t nursery_min, nursery_max;   /* the nursery's bounds (D2): after a full collection it is half the heap's room, within these; nursery_max 0: fixed */
+    /* The large-object space (runtime/gc/los.c): objects of los_min bytes
+       or more, in its chunks; its bytes count with the old space's; those
+       with fields made since the last minor collection, and a full
+       collection's to scan */
+    Chunk *los;
+    size_t los_min, los_bytes;
+    Obj **born;
+    size_t nborn, born_cap;
+    Obj **queue;
+    size_t nqueue, queue_cap;
+    uint64_t minors, fulls, promoted, large_objects, large_bytes;
+    size_t old_boxes;    /* of box_bytes_live, the old space's (the nursery's die with it) */
+    HeapSeg *segs;       /* an image read back, until heap_relocate */
+    size_t nsegs, segs_cap;
 } GcState;
 
 typedef struct VM {
@@ -196,12 +281,18 @@ typedef struct VM {
     size_t fp, frames_cap;   /* fp = index of current frame; frames_cap capacity */
     Value *stack;
     size_t sp, stack_cap;
-    AllocState alloc;        /* the heap (Cheney semispace): where the next object goes */
+    AllocState alloc;        /* where the next object goes (runtime/gc/) */
     uint64_t bytes_allocated;  /* not size_t: --count prints the same where it is 32 bits */
     uint64_t objects_allocated;
     size_t gc_stress;        /* --gc-stress N: collect before every Nth allocation; 0 = off */
+    /* the stack's watermark (runtime/gc/minor.c; docs/plans/garbage-collector-v2.md,
+       D9): no frame below it has run since the last minor collection, so
+       its slots hold no young pointer; every pop of a frame lowers it to
+       the frame it returns to (vm_frame_pop) */
+    size_t fp_low;
     Value *globals;
     uint8_t *global_set;
+    int gc_verify;           /* --gc-verify: the heap checked before and after every collection (runtime/gc/check.c) */
 
     Program prog;
 
@@ -224,6 +315,27 @@ typedef struct VM {
     int64_t gc_user_us;      /* processor time spent collecting, in microseconds */
     int64_t gc_sys_us;
     int64_t gc_longest_us;   /* the longest of the collections, both times together (--stats): what the program waited at once */
+    /* What --gc-log and RUNE_MEMSTAT report (runtime/heap.c; docs/runtime.md):
+       the log, the calls of vm_gc, the monotonic time of every collection in
+       all and of the longest, and what the pass in progress has counted */
+    FILE *gc_log;
+    int64_t gc_log_t0;       /* sys_clock_ns when the log was opened */
+    uint64_t gc_calls;
+    int64_t gc_ns;
+    int64_t gc_longest_ns;
+    struct {
+        uint64_t objects;    /* objects copied */
+        uint64_t slots;      /* slots of the value stack looked at */
+        uint64_t live_slots; /* of them, the ones that were roots (the rest were dead registers) */
+        uint64_t frames;     /* waiting frames whose live registers were asked for */
+        uint64_t other_roots;
+        uint64_t promoted;   /* bytes copied out of the nursery */
+        uint64_t cards_dirty;    /* a minor's dirty cards, */
+        uint64_t cards_scanned;  /* and the cards of the dirty blocks it looked at */
+        uint64_t remembered;     /* large objects scanned whole */
+        uint64_t cards_young;    /* dirty cards that held a pointer into the nursery */
+        uint64_t fields;         /* fields scanned in dirty cards and remembered objects */
+    } gc_counts;
     /* The boxes of the representation -- a real with no immediate, an int
        or a word past 63 bits under RUNE_INT64 -- are counted apart: they
        are the layout's, not the program's, and where one is made is the
@@ -283,35 +395,71 @@ typedef struct VM {
 #endif
 } VM;
 
-/* Whether p points into the space objects are made in. Young and old are
-   told apart by address, not by a bit of the header (docs/plans/heap-layout.md,
-   D7): this is the test a nursery will make, of its own range. Today every
-   object is there. */
+/* Whether p points into the room objects are made in (alloc). Young and
+   old are told apart by address, not by a bit of the header
+   (docs/plans/heap-layout.md, D7): this is the test a nursery will make, of
+   its own range, when alloc is the nursery (docs/plans/garbage-collector-v2.md,
+   M3). Nothing asks it yet. */
 static inline int heap_is_young(const VM *vm, const void *p) {
     return (uintptr_t)((const char *)p - vm->alloc.from) < (uintptr_t)vm->alloc.size;
 }
+/* The bytes of objects in the heap (boxes too), as the collector counts them:
+   the old space's chunks, the large objects and alloc's room */
+static inline size_t heap_used(const VM *vm) { return vm->gc.closed + vm->gc.los_bytes + vm->alloc.used; }
+
+/* THE BARRIER's body (runtime/value.h, obj_set_field;
+   docs/plans/garbage-collector-v2.md, D6, D7): where there is a nursery, a
+   pointer into it stored into an object that is not in it marks the card
+   of the field (runtime/gc/minor.c, gc_write), so that the next minor
+   collection finds it; while a cycle of the low-pause collector marks, the
+   value overwritten is marked (the snapshot's barrier); every other store
+   is the store alone. And the measuring card mark, in the build that
+   measures one. Before the store: *f is the value overwritten. */
+void gc_write(Obj *o, Value *f);
+void gc_shade_old(VM *vm, Obj *o, Value old);
+static inline void gc_barrier(VM *vm, Obj *o, Value *f, Value v) {
+#ifdef RUNE_BARRIER_CARDS
+    rune_cards[((uintptr_t)f >> CARD_SHIFT) & (CARD_COUNT - 1)] = 1;
+#endif
+    /* while the low-pause collector's cycle marks: the value overwritten,
+       which the snapshot it marks may reach by this field alone, marked
+       (runtime/gc/cycle.c) */
+    if (vm->gc.marking) gc_shade_old(vm, o, *f);
+    if (vm->gc.nursery && val_is_ptr(v) && heap_is_young(vm, val_ptr(v)) && !heap_is_young(vm, o)) gc_write(o, f);
+}
 
 /* heap.c */
-void heap_init(VM *vm, size_t semispace_bytes);
+void heap_init(VM *vm, size_t size);   /* a heap of that size (runtime/gc/) */
+void heap_nursery(VM *vm, size_t bytes);   /* --nursery: a nursery of bytes before the heap (0: none) */
 Obj *vm_alloc(VM *vm, uint8_t kind, uint16_t contag, uint32_t len, size_t payload_bytes);
 Obj *vm_alloc_fields(VM *vm, uint8_t kind, uint16_t contag, uint32_t nfields);
 Obj *vm_alloc_string(VM *vm, uint32_t len);
 Obj *vm_string_from(VM *vm, const char *s, uint32_t len);
-size_t obj_size(const Obj *o);      /* header and payload, rounded as the heap lays it out */
+/* header and payload, rounded as the heap lays it out: inline, being asked
+   of every object every collection visits */
+static inline size_t obj_size(const Obj *o) { return obj_size_of(obj_kind(o), obj_len(o)); }
 void vm_gc(VM *vm, size_t needed);
+void vm_collect(VM *vm);   /* Runtime.collect: a full collection, the low-pause collector's cycle ended first */
 int heap_relocate(VM *vm, uintptr_t old_base);  /* after an image is read: 0 when it is not sound */
+/* --gc-log FILE: one line per pass of the collector into FILE, and its last
+   lines when the VM exits (docs/runtime.md, *Watching it*) */
+void heap_log_open(VM *vm, const char *path);
+void heap_log_close(VM *vm);
+/* --gc-verify: what of the heap does not hold, and where, or NULL (docs/runtime.md, *Watching it*) */
+const char *heap_check(VM *vm, const void **at);
 /* The handles (VM.handles): a value kept for C across collections. */
 size_t vm_handle_new(VM *vm, Value v);            /* a handle for the value */
 Value vm_handle_get(const VM *vm, size_t h);      /* the value, where it is now */
 void vm_handle_set(VM *vm, size_t h, Value v);
 void vm_handle_free(VM *vm, size_t h);
 /* An array of bytes or of reals for C to keep a pointer to across calls
-   that may collect: no object stays where it is under the copier, so C gets
-   a copy that does (D9: copying in and out around the call, until there is
-   a space that does not move), and gives it back. vm_pin copies the
-   object's payload out and returns the copy, NULL where there is no memory
-   or the handle names no such array; vm_unpin copies it back into the
-   object, wherever it is by then, and frees the copy. */
+   that may collect, and give back. One in the large-object space (8 KiB or
+   more, with a nursery) never moves, so vm_pin returns the object's own
+   payload and vm_unpin does nothing (docs/plans/garbage-collector-v2.md,
+   D17); any other may move, so vm_pin copies its payload out and returns
+   the copy, NULL where there is no memory or the handle names no such
+   array, and vm_unpin copies it back into the object, wherever it is by
+   then, and frees the copy. */
 void *vm_pin(VM *vm, size_t h, size_t *bytes);
 void vm_unpin(VM *vm, size_t h, void *copy);
 #ifdef RUNE_BARRIER_CARDS
@@ -362,6 +510,12 @@ static inline void vm_push_frame(VM *vm, uint32_t func, Obj *closure, uint32_t r
     vm->frames[idx].result = UINT32_MAX; /* runtime/register's loop and code set it */
     vm->fp = idx;
     vm->frames_active = 1;
+}
+/* The frame on top popped, in every engine (and the frames down to a
+   handler's, vm_raise): the watermark follows the frame that runs again */
+static inline void vm_frame_pop(VM *vm) {
+    vm->fp--;
+    if (vm->fp < vm->fp_low) vm->fp_low = vm->fp;
 }
 /* Every normal end of a run (halt, the exit primitive, an uncaught exception)
    goes through vm_exit, which flushes and prints what --count and --stats ask for. */

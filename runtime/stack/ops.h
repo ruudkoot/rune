@@ -44,7 +44,7 @@ static inline void op_SETENV(VM *vm, int32_t a, int32_t b) {
     Value cv = vm_pop(vm);
     Obj *c = vm_expect_obj(vm, cv, K_CLOSURE, "closure");
     if ((uint32_t)a + 1 >= obj_len(c)) vm_fatal(vm, "environment slot %d out of range", a);
-    obj_set_field(c, a + 1, v);
+    obj_set_field(vm, c, a + 1, v);
 }
 
 static inline void op_NEWEXN(VM *vm, int32_t a, int32_t b) {

@@ -1,5 +1,6 @@
 /* The macro-assembler of runtime/register's JIT (masm.h). */
 #include "masm.h"
+#include "gc/gc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,12 +22,18 @@
 #define IMM(n) ((int64_t)(((uint64_t)(int64_t)(n) << 1) | 1u))   /* the word of the immediate n */
 _Static_assert(sizeof(Value) == 8, "masm.c writes 8-byte values");
 _Static_assert((1 << VALUE_SHIFT) == sizeof(Value), "masm.c scales an index by 8");
+_Static_assert(offsetof(Chunk, dirty_at) == 0, "the barrier reads a chunk's dirty_at as its first word");
 /* raw homes for ints and words: only where they are 64 bits, and asked for */
 #if defined(RUNE_INT64) && defined(RUNE_RAW_HOMES)
 #define RUNE_RAW_NUMS 1
 #endif
 
+/* the header as compiled code reads it, in every VM but the census VM,
+   whose header carries an id word (runtime/value.h, RUNE_CENSUS) and which
+   runs no compiled code (runtime/main.c forces --jit=off; docs/census.md) */
+#ifndef RUNE_CENSUS
 _Static_assert(offsetof(Obj, kind) == 0 && offsetof(Obj, contag) == 2 && offsetof(Obj, len) == 4 && sizeof(Obj) == 8, "masm.c reads the header as kind, contag, len, then the fields");
+#endif
 
 /* A measuring build (docs/plans/performance-64bit.md, experiments 1 and
    5): every conversion between a raw number and its word that compiled
@@ -1138,20 +1145,94 @@ void ms_need_len(Masm *m, int obj, uint32_t n, AsmLabel *unless) {
     as_cmp32_mi(&m->a, obj, (int32_t)offsetof(Obj, len), (int32_t)n);
     as_jcc(&m->a, CC_BE, unless);
 }
-/* THE BARRIER, in compiled code: what a store into an object that exists
-   does beside the store (value.h, BARRIER). Nothing today. It comes after
-   the store and may use the register that held the object, or the address
-   stored at, which no emitter needs again: under RUNE_BARRIER_CARDS it
-   marks the card of that address, as C's does. */
-void ms_barrier(Masm *m, int obj) {
+/* THE BARRIER, in compiled code: a store into an object that exists is
+   this one operation, the store and what it does beside it (value.h,
+   BARRIER), so that the barrier has what C's has -- the object, the field
+   and the value. After the store, as vm.h's gc_barrier: where the value is
+   a pointer into the nursery (alloc's room) and the object is not in it,
+   the field's card in the object's chunk is marked, and the card's block
+   dirty (runtime/gc/gc.h, gc_remember). The chunk is the object's address
+   masked; its cards are at GC_CARDS from it, and its dirty bytes at the
+   offset its first word holds. Under RUNE_BARRIER_CARDS the measuring
+   table's card is marked too. R_S2, R_S3 and R_S6 are clobbered. runeopt's
+   `:=` is its template (setField). */
+static void barrier(Masm *m, int obj, int at, int32_t off) {
+    enum { S = R_S2, T = R_S3, U = R_S6 };
+    AsmLabel done; as_label_init(&done);
 #ifdef RUNE_BARRIER_CARDS
-    as_shr_ri(&m->a, obj, CARD_SHIFT);
-    as_and_ri(&m->a, obj, (int32_t)(CARD_COUNT - 1));
-    as_add_rm(&m->a, obj, VMR, OFF(jit_cards));
-    as_st8i(&m->a, obj, 0, 1);
-#else
-    (void)m; (void)obj;
+    as_lea(&m->a, S, at, -1, 1, off);
+    as_shr_ri(&m->a, S, CARD_SHIFT);
+    as_and_ri(&m->a, S, (int32_t)(CARD_COUNT - 1));
+    as_add_rm(&m->a, S, VMR, OFF(jit_cards));
+    as_st8i(&m->a, S, 0, 1);
 #endif
+    as_ld64(&m->a, S, at, off);
+    as_test_ri(&m->a, S, 1);
+    as_jcc(&m->a, CC_NE, &done);                 /* an immediate */
+    as_ld64(&m->a, U, VMR, OFF(alloc.from));
+    as_sub_rr(&m->a, S, U);
+    as_cmp_rm(&m->a, S, VMR, OFF(alloc.size));
+    as_jcc(&m->a, CC_AE, &done);                 /* no young object */
+    as_mov_rr(&m->a, T, obj);
+    as_sub_rr(&m->a, T, U);
+    as_cmp_rm(&m->a, T, VMR, OFF(alloc.size));
+    as_jcc(&m->a, CC_B, &done);                  /* into a young object */
+    as_cmp_mi(&m->a, VMR, OFF(gc.nursery), 0);
+    as_jcc(&m->a, CC_E, &done);                  /* no nursery: alloc is the heap's last chunk */
+    as_mov_rr(&m->a, T, obj);
+    as_and_ri(&m->a, T, -(int32_t)CHUNK_SIZE);
+    as_lea(&m->a, S, at, -1, 1, off);
+    as_sub_rr(&m->a, S, T);                      /* the field's offset in the chunk */
+    as_mov_rr(&m->a, U, S);
+    as_shr_ri(&m->a, U, GC_CARD_SHIFT);
+    as_lea(&m->a, U, T, U, 1, (int32_t)GC_CARDS);
+    as_st8i(&m->a, U, 0, 1);
+    as_shr_ri(&m->a, S, GC_BLOCK_SHIFT);
+    as_ld32(&m->a, U, T, (int32_t)offsetof(Chunk, dirty_at));
+    as_add_rr(&m->a, U, T);
+    as_add_rr(&m->a, U, S);
+    as_st8i(&m->a, U, 0, 1);
+    as_bind(&m->a, &done);
+    as_label_free(&done);
+}
+/* THE BARRIER's flag (vm.h, gc_barrier): to slow, where the store is the
+   primitive's in C, through the barrier, while the low-pause collector's
+   cycle marks -- before the store, the value it overwrites being what the
+   snapshot's barrier marks (runtime/gc/cycle.c). Nothing allocates between
+   the test and the store, so no cycle begins between them. runeopt's
+   `:=` and `Array.update` test it too (needUnmarked). */
+void ms_need_unmarked(Masm *m, AsmLabel *slow) {
+    as_cmp_mi(&m->a, VMR, OFF(gc.marking), 0);
+    as_jcc(&m->a, CC_NE, slow);
+}
+/* whether the word stored from R(s) is an immediate whatever R(s) holds,
+   so that the barrier has nothing to remember (D15 B, M7): a home's int or
+   word of 63 bits, char or constant constructor; not a slot's, which may
+   hold anything, nor a real's or a number's of 64 bits, whose word may be a
+   box. The snapshot's flag is tested all the same (ms_need_unmarked): what
+   the store overwrites may be a pointer. */
+static int word_immediate(const Masm *m, int32_t s) {
+    const Home *h = ms_home(m, s);
+    if (!h || is_xmm(h)) return 0;
+#ifdef RUNE_INT64
+    if (h->tag == T_INT || h->tag == T_WORD) return 0;
+#endif
+    return h->tag == T_INT || h->tag == T_WORD || h->tag == T_CHAR || h->tag == T_CON0;
+}
+void ms_set_field(Masm *m, int obj, uint32_t i, int32_t s) {
+    ms_store_field(m, obj, i, s);
+    if (!word_immediate(m, s)) barrier(m, obj, obj, FIELD_OFF(i));
+}
+/* The same for an element of an array: its address, from the index and the
+   array, in index's register, the array kept in obj, since the barrier finds
+   what it marks from the object and not from the field (an element of a
+   large array may lie past the first chunk of its run). runeopt's
+   `Array.update` is its template (setElement). */
+void ms_set_element(Masm *m, int obj, int index, int32_t s) {
+    ms_scale_index(m, index);
+    as_add_rr(&m->a, index, obj);
+    ms_store_value(m, index, FIELD_OFF(0), s);
+    if (!word_immediate(m, s)) barrier(m, obj, index, FIELD_OFF(0));
 }
 void ms_store_field_imm(Masm *m, int obj, uint32_t i, int tag, int32_t payload) {
     as_st64i(&m->a, obj, FIELD_OFF(i), (int32_t)word_of(tag, payload));

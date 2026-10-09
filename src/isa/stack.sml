@@ -128,7 +128,7 @@ struct
            "Value cv = vm_pop(vm);",
            "Obj *c = vm_expect_obj(vm, cv, K_CLOSURE, \"closure\");",
            "if ((uint32_t)a + 1 >= obj_len(c)) vm_fatal(vm, \"environment slot %d out of range\", a);",
-           "obj_set_field(c, a + 1, v);"]),
+           "obj_set_field(vm, c, a + 1, v);"]),
      inst ("CALL", [], (Fixed 2, 1), Call, "Pop argument, pop closure, and call it.")
        (callee
         @ ["size_t at = (size_t)(sp - vm->stack);",
@@ -145,7 +145,7 @@ struct
         "size_t at = FRAME->base;",
         "uint32_t back = FRAME->ret_pc;",
         "if (vm->fp == 0) { sp = vm->stack + at; PUSH(v); JUMP_TO(back); SYNC(); return 0; }",
-        "vm->fp--;",
+        "vm_frame_pop(vm);",
         "sp = vm->stack + at;",
         "PUSH(v);",
         "RETURN_TO(back);"],

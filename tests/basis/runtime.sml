@@ -70,6 +70,15 @@ struct
   val () = T.check ("Runtime.stats/collections-and-objects-are-not-negative",
                     fn () => let val s = Runtime.stats ()
                              in #collections s >= 0 andalso #objects s > 0 end)
+  val () = T.check ("Runtime.stats/collections-are-minor-or-major",
+                    fn () => let val s = Runtime.stats ()
+                             in #minorCollections s + #majorCollections s = #collections s
+                                andalso #minorCollections s >= 0 andalso #majorCollections s >= 0
+                                andalso #promoted s >= 0 end)
+  val () = T.check ("Runtime.stats/collect-is-a-major-collection",
+                    fn () => let val a = #majorCollections (Runtime.stats ())
+                                 val () = Runtime.collect ()
+                             in #majorCollections (Runtime.stats ()) = a + 1 end)
 
   (* ---- profile *)
 

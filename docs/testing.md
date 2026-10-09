@@ -13,7 +13,9 @@ Neighbouring pages: [building.md](building.md) lists the suites and the
 twice*, states what `--count` promises; [performance.md](performance.md)
 is the budgets and the timing method; the roadmap
 [plans/heap-layout.md](plans/heap-layout.md), *Testing a layout change*,
-is what a change to the layout of values or objects has to pass.
+is what a change to the layout of values or objects has to pass;
+*Measuring a collector* below is how a new collector is scored against
+today's.
 
 ## The three oracles
 
@@ -151,6 +153,27 @@ JIT tier (the premise of `check-jit.sh`).
 * A program whose count depends on the clock is not a test and not a count
   workload until its clock is shimmed.
 
+## Harnesses that measure
+
+Two C harnesses measure what a design costs on the machine rather than
+what a program prints: `tests/layouts`, the heap-layout roadmap's layouts
+(`make check-layouts`), and `tests/gcbench`, the collector roadmap's unit
+costs (`make check-gcbench`; [plans/garbage-collector-v2.md](plans/garbage-collector-v2.md),
+*The harness*). `make check` runs both but times neither: it holds them to
+oracles that do not depend on the machine's speed. Every kernel of the
+layout harness must give the same checksum under every layout and heap
+size (`tests/layouts/check.sh`); every experiment of gcbench runs at tiny
+sizes with its own checks on (`tests/gcbench/check.sh`, a second or two):
+the copies and marks reach every object, the barriers' remembered sets
+find every old-to-young pointer, the sweeps free the dead bytes, the stack
+scans agree, and the replay allocators keep every object whole and apart,
+against their closed forms and a shadow heap. gcbench reads its counters
+in the process with `perf_event_open` and goes on with the TSC where it
+may not, so the check needs neither `perf` nor the permission to count.
+Their timed runs are each directory's `measure.sh`, alone on an idle
+machine and pinned to one core ([performance.md](performance.md); the
+READMEs of the two directories).
+
 ## An instrumented VM
 
 A build that changes what the VM does per object, for an experiment, keeps
@@ -163,7 +186,11 @@ bytes, the number of records equals the objects). On 47 MLton benchmark
 programs, the compiler and the perf programs it did, and the mismatches
 that turned up on the large programs were all input: a pipe where the
 stock run had `/dev/null`, and the two programs that read the clock. None
-was the VM. The same discipline applies to a VM with a new layout: the
+was the VM. Ported to the word layout for the second-generation
+collector's roadmap, where the sum leaves the word's boxes out as `--count`
+does, it did the same on 54 traces, and `make test-census` holds it to the
+stock VM in every `make check` ([census.md](census.md)). The same
+discipline applies to a VM with a new layout: the
 objects and instructions of `--count` stay identical across the change,
 the bytes move once, and the budgets are re-based in the commit that moves
 them ([plans/heap-layout.md](plans/heap-layout.md), *Testing a layout
@@ -184,3 +211,89 @@ change*).
    which VM disagrees with this machine's.
 5. Two compilers: `check-register.sh` diffs the counts of their bytecodes, and
    `--disasm` shows where the code differs.
+
+## Measuring a collector
+
+A collector is judged by what it costs in time, memory and pauses, which
+no count says, so the second-generation collector
+([plans/garbage-collector-v2.md](plans/garbage-collector-v2.md), D1) is
+measured against today's copier on a fixed set of workloads, with the
+counts and the outputs as the oracle that it changed nothing else.
+
+**The evaluation set** is `scripts/gc-eval.tsv`: the runs, their groups
+and the groups' weights, fixed before any result was in (the roadmap's
+*The workloads*). The bootstrap (with and without the JIT), `compile-sigs`
+and `runedoc-page`; MLton's benchmarks, the 35 of the normal tier and the
+14 of the GC-stress tier over 2 GB (`tests/perf/mlton-bench.txt`); the
+lazy programs and the collector's named programs of
+[examples/benchmarks](../examples/benchmarks/README.md), `binary-trees` at
+depth 18; the latency workloads (`latency-ring` and `latency-map` with 10
+MB, 100 MB and 0.93 GB live, `latency-static-map` with 200 MB); and Rune
+compiling MLton. Groups weighted 0 0 0 are extras: the compiler from the
+default 4 MiB heap, `compile-sigs --jit=off`, the strict twins of the lazy
+programs, the static map at 20 and 800 MB.
+
+`scripts/gc-eval.sh CANDIDATE BASELINE` runs the set on both VMs, which
+must take `--gc-log` ([runtime.md](runtime.md), *The collector's log*):
+round by round, each run on one VM and then on the other, in an order that
+alternates with the round, each under `ulimit -v` and `timeout`, `perf
+stat` and `/usr/bin/time`, from its own directory with its standard input
+fixed and the compiler's output file removed before it (the rules above).
+Each run is scored by its round with the least task-clock, as candidate /
+baseline: **T** the task-clock, **M** the peak resident memory, **P** the
+mean of the ratios of the longest pause, the 99th-percentile pause (a
+pause under 1 ms counts as 1 ms) and 1 - MMU at 10 ms (at least 0.01). A
+group is the geometric mean of its runs, and each score the geometric mean
+of the groups weighted by the set; the M and P columns sum to 95, a slip
+found after the set was fixed, so the scores divide by the weight present,
+and the report says so. `scripts/gc-eval-score.py` prints the runs, the
+worst cases (the five highest ratios of each score, and every run more than
+1.10 in T or M, which D1 forbids) and the scores, and lists as problems
+every run that did not exit 0, a program of the catalogue that did not
+print PASS, any standard output or compiler output that is not the
+baseline's, and any run whose bytes and objects allocated (the log's end
+line) differ from the others': a collector does not change what a program
+allocates.
+
+```sh
+scripts/gc-eval.sh bin/runevm-new bin/runevm                 # the set, 3 rounds
+scripts/gc-eval.sh --only boot-default,latency --rounds 1 NEW OLD
+scripts/gc-eval.sh --candidate-opts '--heap-fill 75' bin/runevm bin/runevm
+GC_EVAL_LOCK='flock /tmp/rune-timed' scripts/gc-eval.sh NEW OLD
+scripts/gc-eval.sh --score --out tests/out/gc-eval           # score again
+```
+
+The set takes about 30 minutes at three rounds on the reference machine
+(15 a VM, half of it the GC-stress tier and the 1 GB runs, which are run
+once), and the preparation a few more: the catalogue's programs compiled by
+`bin/rune -O2 --lint` into the output directory (`tests/out/gc-eval`),
+MLton's by `tests/external/run-mlton-bench.sh --prepare` from `MLTON_BENCH`
+(their runs are left out where it is missing). `--extras` adds about three
+minutes. Rune compiling MLton is part of the set but runs only with
+`--mlton-compile`: about 10 minutes a VM, 12 GiB of address space (the heap
+capped at 5 GiB), so 20 GB of free memory, from MLton's sources at
+`5fe943391` in `MLTON_SOURCES` with the order of its files in
+`mlton-rune.txt`. Times need the machine to themselves: `GC_EVAL_LOCK` is a
+command prefix under which each round is made, let go for a minute between
+rounds so that others waiting for it have it, and a run waits until its
+ulimit and 8 GB more are free (`GC_EVAL_MARGIN`). After an interruption,
+`--resume` with the same options makes only the runs that are missing.
+
+**Pauses** come from the log by `tools/mmu.py LOG`: the pauses (a collection
+that grows the heap is two passes, one pause), their longest, mean and
+percentiles and a histogram, the collector's share, the heap and the peaks,
+and the minimum mutator utilisation (the least share of any window left to
+the program; Cheng and Blelloch, PLDI 2001) at windows of 1 to 200 ms, on
+two clocks: the monotonic wall clock of the log's `t_ns` (never the
+program's `Time.now`, which a virtual machine may step), and the
+instruction clock, where each collection falls at its instruction count
+and only the pauses are timed, which removes the mutator's own noise.
+`--json` and `--row` are for scripts; `--self-test` checks the MMU against
+closed forms and a brute-force scan.
+
+**The 32-bit address space**: `scripts/gc-probe32.sh` grows a program's live
+data on `bin/runevm32` until the heap cannot grow, under a 2 GiB limit and
+without one, and reports the most live data a collection completed with
+(the copier: 255 and 512 MiB, where D1 asks for 768 MiB and 1.5 GiB);
+`--latency` adds the latency window at its 32-bit size, 50,000 messages.
+About half a minute.

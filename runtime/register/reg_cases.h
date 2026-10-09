@@ -159,7 +159,7 @@ CASE(RET) {
     uint32_t result = fr->result;   /* the register of the caller's RESULT, if it has one */
     size_t top = fr->base;   /* the caller's stack pointer, where the callee's registers began */
     if (vm->fp == 0) { vm->sp = top; vm->pc = back; vm->instructions = count; vm_push(vm, v); return 0; }
-    vm->fp--;
+    vm_frame_pop(vm);
     fr = &vm->frames[vm->fp];
     base = vm->stack + fr->base;
     sp = vm->stack + top;
@@ -368,7 +368,7 @@ CASE(SETENV) {
     Obj *o = EXPECT(R(a), K_CLOSURE, "closure");
     if ((uint32_t)b + 1 >= obj_len(o)) FATAL("environment slot %d out of range", b);
     CENSUS_STORE(o, b + 1, R(c), 0, CENSUS_REP(p, fr->func, c));
-    obj_set_field(o, b + 1, R(c));
+    obj_set_field(vm, o, b + 1, R(c));
     NEXT;
 }
 CASE(JUMP) {

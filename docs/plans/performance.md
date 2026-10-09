@@ -427,20 +427,26 @@ Each is S or S-M and changes no output:
 
 ### 13. A generational collector
 
+Planned in full, with its evidence, by
+[garbage-collector-v2.md](garbage-collector-v2.md).
+
 * **Why:** the collector is 27% of native code and 10% of `runevm`, and
   most of what it copies is data it copied before.
 * **Design:**
-  * a nursery reached through `heap_from`, `heap_used` and `heap_size`, so
-    that allocation in the templates (codegen M11) does not change;
+  * a nursery reached through `AllocState` (`vm->alloc`: `from`, `size`,
+    `used`; heap-layout M7), so that allocation in the templates (codegen
+    M11) does not change;
   * survivors promoted into today's two spaces, collected as now when full;
   * large objects straight into the old space.
 * **The write barrier** goes into `ref_set` and `array_update`
   (`prims.c`), SETENV (`interp.c`, `native_setenv`) and the two templates
-  that do `:=` and `Array.update` inline; the spare `pad` byte of an object
-  can hold a "remembered" bit.
+  that do `:=` and `Array.update` inline (their template is `setField`
+  since garbage-collector-v2's M2); a remembered object can be the
+  header's `OBJ_GC_REMEMBERED` bit, or a side table (the `pad` byte is
+  kept for a descriptor of raw fields).
 * **Unchanged:**
-  * images, since the heap is collected into one space before it is
-    written;
+  * images, which write the heap as it lies, as one run of objects
+    (`docs/runtime.md`), not collected first;
   * `--count`, which counts what is allocated.
 * **Needs:** `--gc-stress` then exercises the barrier too; `--stats` and
   `Runtime.stats` learn two kinds of collection.

@@ -159,7 +159,8 @@ the payload beside it. The bytecode therefore contains no path, and
 | `runtime/loader.c` | Reads and validates `.rbc` (see `docs/bytecode.md`), from a file or from memory; disassembler. |
 | `runtime/runtime.c` | What a VM does besides dispatching: stacks, frames, handlers, exception raising and the trace of a failure, structural equality, `vm_start` (how a program begins) and `vm_exit` (how a run ends). |
 | `runtime/stack/interp.c` | The dispatch loop: `vm_run` is `vm_start`, then `vm_loop`. Its cases are the bodies of `src/isa/stack.sml`, which `runeisa` writes into `runtime/stack/interp_cases.h`, and into `runtime/stack/ops.h` those that `runtime/native/native.c` shares. |
-| `runtime/heap.c` | Allocation and the Cheney semispace collector. Roots: value stack, globals, constants, frame closures, builtin exception constructors. |
+| `runtime/heap.c` | Allocation and its slow path, the representation's boxes, and the handles C holds across a collection. |
+| `runtime/gc/` | The collector: the heap's chunks of 2 MiB and their tables (`gc.h`, `chunk.c`), the nursery and the minor collection (`minor.c`; the barrier's cards and the crossing map), the full collection, a Cheney copier (`copy.c`; roots: value stack, globals, constants, frame closures, builtin exception constructors, boxes, handles), the large-object space (`los.c`), `--gc-verify` (`check.c`) and `--gc-log` (`log.c`). |
 | `runtime/image.c` | `fork` where the system has none (Windows) or `runevm --emulate-fork` asks: the VM's whole state is written to a second VM, started as `runevm --resume`, which moves the heap's pointers to its own heap and carries on in the dispatch loop with `fork` returning 0. |
 | `runtime/prims.c` | One function per primitive; the dispatch table is generated from `src/isa/prims.sml`. |
 | `runtime/sys/sys.h`, `runtime/sys/sys_posix.c`, `runtime/sys/sys_win.c`, `runtime/sys/sys_none.c` | The system layer: what the primitives of time, files, processes, `Posix` and sockets need from the operating system. `sys_posix.c` is the one for POSIX systems and `sys_win.c` the one of `make windows` (see `docs/building.md`); `make SYS=none` links `sys_none.c` instead, which fails every call with `ENOSYS`, so the rest of the VM stays ISO C. |
@@ -169,7 +170,7 @@ the payload beside it. The bytecode therefore contains no path, and
 | `runtime/register/live.c`, `runtime/register/live.h` | What is live where in a function of the register bytecode: the registers an instruction reads and writes, the backward walk over a function, and what a frame that waits for a call still needs, which the collector asks for (`VM.frame_live`). One analysis for tier 2's homes and for the roots. |
 | `runtime/register/fastprim.h` | The common case of the primitives `runeopt` does in line, done in the loop from the registers. |
 | `runtime/register/jit.h`, `runtime/register/jit.c` | The JIT's view of a program (a code object per function) and the protocol between the driver, `vm_loop`, and the engines that run a frame ([plans/jit.md](plans/jit.md)); the compiler itself comes with M4. |
-| `runtime/register/ARCHITECTURE.md` | `runtime/register` as built, kept current by every change to it ([plans/jit.md](plans/jit.md)). |
+| `runtime/register/README.md` | `runtime/register` as built, kept current by every change to it ([plans/jit.md](plans/jit.md)). |
 
 The folders say what depends on what. The runtime both VMs link is directly
 under `runtime/`, with the system layer in `runtime/sys/`; `runtime/stack/`

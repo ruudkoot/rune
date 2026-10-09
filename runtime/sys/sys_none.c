@@ -4,6 +4,7 @@
 
 #include <errno.h>
 #include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
@@ -22,6 +23,11 @@ int64_t sys_time_now(void) { return (int64_t)time(NULL) * 1000000; }
 int64_t sys_time_user(void) { return (int64_t)clock() * 1000000 / CLOCKS_PER_SEC; }
 int64_t sys_time_sys(void) { return 0; }
 void sys_time_sleep(int64_t microseconds) { (void)microseconds; }
+int64_t sys_clock_ns(void) { return (int64_t)((double)clock() * 1e9 / CLOCKS_PER_SEC); }
+int64_t sys_thread_time_ns(void) { return sys_clock_ns(); }
+void sys_mem_usage(uint64_t *resident, uint64_t *peak_resident, uint64_t *peak_virtual) {
+    *resident = *peak_resident = *peak_virtual = 0;
+}
 
 int sys_date_parts(int64_t seconds, int local, int32_t parts[9]) {
     time_t t = (time_t)seconds;
@@ -235,3 +241,22 @@ size_t sys_code_page(void) { return 4096; }
 int sys_code_protect(void *code, size_t size, int executable) { (void)code; (void)size; (void)executable; fail(); return 0; }
 void sys_code_flush(void *code, size_t size) { (void)code; (void)size; }
 void sys_code_free(void *code, size_t size) { (void)code; (void)size; }
+
+/* the heap's memory from malloc, aligned by hand: the block malloc gave is
+   kept in the word before the aligned one, for sys_mem_release */
+void *sys_mem_reserve(size_t size, size_t align, void *hint) {
+    (void)hint;
+    if (size + align + sizeof(void *) < size) return NULL;
+    char *p = malloc(size + align + sizeof(void *));
+    if (!p) return NULL;
+    char *at = (char *)(((uintptr_t)(p + sizeof(void *)) + align - 1) & ~(uintptr_t)(align - 1));
+    memcpy(at - sizeof(void *), &p, sizeof p);
+    return at;
+}
+void sys_mem_release(void *p, size_t size) {
+    (void)size;
+    if (!p) return;
+    void *block;
+    memcpy(&block, (char *)p - sizeof(void *), sizeof block);
+    free(block);
+}

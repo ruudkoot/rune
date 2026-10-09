@@ -1,7 +1,7 @@
 (* Runtime: what the VM counts, for the program it is running (Rune's own, not
    of the specification). Each counter is a primitive that reads a field of
-   the VM and allocates nothing, so the six are read without disturbing five
-   of them. *)
+   the VM and allocates nothing, so the nine are read without disturbing
+   eight of them. *)
 structure RuneRuntime =
 struct
   local
@@ -11,6 +11,9 @@ struct
     val collections' = _prim "rt_collections" : unit -> int
     val live' = _prim "rt_live" : unit -> int
     val heapSize' = _prim "rt_heap_size" : unit -> int
+    val minors' = _prim "rt_minor_collections" : unit -> int
+    val majors' = _prim "rt_major_collections" : unit -> int
+    val promoted' = _prim "rt_promoted" : unit -> int
     val collect' = _prim "rt_collect" : unit -> unit
     val version' = _prim "rt_version" : unit -> string
     val trace' = _prim "rt_trace" : int -> (string * string * int * int) list
@@ -18,10 +21,11 @@ struct
     val restore' = _prim "rt_restore" : string -> int
   in
     type stats = { instructions : int, bytes : int, objects : int,
-                   collections : int, live : int, heapSize : int }
+                   collections : int, live : int, heapSize : int,
+                   minorCollections : int, majorCollections : int, promoted : int }
 
-    (* The heap's five are read first and the instruction count last, so that
-       it counts as much of this call as it can. *)
+    (* The heap's eight are read first and the instruction count last, so
+       that it counts as much of this call as it can. *)
     fun stats () : stats =
       let
         val b = bytes' ()
@@ -29,9 +33,13 @@ struct
         val c = collections' ()
         val l = live' ()
         val h = heapSize' ()
+        val mi = minors' ()
+        val ma = majors' ()
+        val p = promoted' ()
       in
         {instructions = instructions' (), bytes = b, objects = ob,
-         collections = c, live = l, heapSize = h}
+         collections = c, live = l, heapSize = h,
+         minorCollections = mi, majorCollections = ma, promoted = p}
       end
 
     fun collect () = collect' ()
@@ -72,7 +80,10 @@ struct
              objects = #objects b - #objects a,
              collections = #collections b - #collections a,
              live = #live b - #live a,
-             heapSize = #heapSize b - #heapSize a})
+             heapSize = #heapSize b - #heapSize a,
+             minorCollections = #minorCollections b - #minorCollections a,
+             majorCollections = #majorCollections b - #majorCollections a,
+             promoted = #promoted b - #promoted a})
       end
 
     (* The identity of a heap value, which the compiler uses for the

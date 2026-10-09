@@ -24,6 +24,23 @@ static void usage(void) {
         "                  and the primitives' handling of heap pointers)\n"
         "  --heap-fill P   grow the heap until at most P percent of it is in use after\n"
         "                  a collection, 1 to 100 (default 50)\n"
+        "  --gc-log FILE   write a line about every collection into FILE (docs/runtime.md)\n"
+        "  --gc-verify     check the heap before and after every collection (testing the collector)\n"
+        "  --gc-compact    compact the old space at every full collection (testing the collector)\n"
+        "  --gc-stress-cycles  make --gc-stress's collection a minor one, which begins the low-pause\n"
+        "                  collector's cycle or marks a little of it (testing the collector)\n"
+        "  --nursery N     a nursery of N bytes, at least 4096, before the old space (default 1048576;\n"
+        "                  0: none, every object made in the old space as the copier had it); after a\n"
+        "                  full collection the nursery is half the room the heap has, from N to\n"
+        "  --nursery-max N the most (default 8388608; 0: the nursery stays N)\n"
+        "  --gc G          the collector: throughput (the default: the least memory and time, its\n"
+        "                  full collections stopping the program) or low-pause (docs/runtime.md)\n"
+        "  --old-space S   the old space beneath --gc, for testing it: copy, which a full\n"
+        "                  collection copies (as with --nursery 0); mark: one\n"
+        "                  whose objects stay where they are (docs/plans/garbage-collector-v2.md, M4);\n"
+        "                  immix: a mark-region one (--gc throughput, the default); segfit: one\n"
+        "                  of segregated size classes (--gc low-pause); compact: one that every full\n"
+        "                  collection slides down (measured beside them)\n"
         "  --checked       DECON tests the tag it is given, which a match that names\n"
         "                  every constructor leaves untested (for testing the compiler)\n"
         "  --emulate-fork  fork as on Windows, which has none: by a second runevm that\n"
@@ -42,11 +59,12 @@ static void usage(void) {
         "  --version       print the version and exit\n"
 #ifdef RUNE_CENSUS
         "  --census-dir DIR     census VM: write the allocation traces of docs/census.md into DIR\n"
-        "  --census-every N     census VM: a forced collection every N bytes allocated (default 262144; 0 = none)\n"
+        "  --census-every N     census VM: a forced collection every N bytes allocated (default 32768; 0 = none)\n"
         "  --census-fields 0|1  census VM: write fields.bin (default 1)\n"
         "  --census-summary     census VM: no trace files (but pcs.bin) and no per-object arrays: census.txt alone\n"
         "  --census-ids N       census VM: the objects expected, so that the per-object arrays are allocated once\n"
         "  --census-static      census VM: print the static census of the program (docs/census.md) and exit\n"
+        "  --census-graph       census VM: also graph.bin, the id each field points to at allocation\n"
 #endif
         );
 }
@@ -64,16 +82,17 @@ static int size_arg(const char *text, size_t *out) {
 
 int main(int argc, char **argv) {
     size_t heap = 4u << 20, gc_stress = 0, heap_fill = 50, stack = (size_t)1 << 30;
-    size_t heap_limit = 0, equality_work = 0;
-    int disasm = 0, trace = 0, stats = 0, count = 0, emulate_fork = 0, checked = 0;
+    size_t heap_limit = 0, equality_work = 0, nursery = (size_t)1 << 20, nursery_max = (size_t)8 << 20;
+    int old_kind = OLD_IMMIX, gc_compact = 0, gc_stress_cycles = 0, low_pause = 0, nursery_max_set = 0;   /* --gc throughput, the default (docs/plans/garbage-collector-v2.md, D3) */
+    int disasm = 0, trace = 0, stats = 0, count = 0, emulate_fork = 0, checked = 0, gc_verify = 0;
     int jit_check = 0, jit_given = 0;
     JitOptions jit;
     memset(&jit, 0, sizeof jit);
-    const char *resume = NULL, *restore = NULL;
+    const char *resume = NULL, *restore = NULL, *gc_log = NULL;
 #ifdef RUNE_CENSUS
     const char *census_dir = NULL;
-    size_t census_every_arg = 262144, census_fields = 1, census_ids = 0;
-    int census_summary = 0, census_static_mode = 0;
+    size_t census_every_arg = 32768, census_fields = 1, census_ids = 0;
+    int census_summary = 0, census_static_mode = 0, census_graph = 0;
 #endif
     int i = 1;
     for (; i < argc; i++) {
@@ -94,6 +113,32 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--checked") == 0) checked = 1;
         else if (strcmp(argv[i], "--resume") == 0 && i + 1 < argc) resume = argv[++i];
         else if (strcmp(argv[i], "--restore") == 0 && i + 1 < argc) restore = argv[++i];
+        else if (strcmp(argv[i], "--gc-log") == 0 && i + 1 < argc) gc_log = argv[++i];
+        else if (strcmp(argv[i], "--gc-verify") == 0) gc_verify = 1;
+        else if (strcmp(argv[i], "--gc-compact") == 0) gc_compact = 1;
+        else if (strcmp(argv[i], "--gc-stress-cycles") == 0) gc_stress_cycles = 1;
+        else if (strcmp(argv[i], "--nursery") == 0 && i + 1 < argc) {
+            if (!size_arg(argv[++i], &nursery)) { usage(); return 2; }
+        }
+        else if (strcmp(argv[i], "--gc") == 0 && i + 1 < argc) {
+            i++;
+            if (strcmp(argv[i], "throughput") == 0) old_kind = OLD_IMMIX, low_pause = 0;
+            else if (strcmp(argv[i], "low-pause") == 0) old_kind = OLD_SEGFIT, low_pause = 1;
+            else { usage(); return 2; }
+        }
+        else if (strcmp(argv[i], "--old-space") == 0 && i + 1 < argc) {
+            i++;
+            if (strcmp(argv[i], "copy") == 0) old_kind = OLD_COPY;
+            else if (strcmp(argv[i], "mark") == 0) old_kind = OLD_MARK;
+            else if (strcmp(argv[i], "immix") == 0) old_kind = OLD_IMMIX;
+            else if (strcmp(argv[i], "segfit") == 0) old_kind = OLD_SEGFIT;
+            else if (strcmp(argv[i], "compact") == 0) old_kind = OLD_COMPACT;
+            else { usage(); return 2; }
+        }
+        else if (strcmp(argv[i], "--nursery-max") == 0 && i + 1 < argc) {
+            if (!size_arg(argv[++i], &nursery_max)) { usage(); return 2; }
+            nursery_max_set = 1;
+        }
         else if (strcmp(argv[i], "--gc-stress") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &gc_stress) || gc_stress == 0) { usage(); return 2; }
         }
@@ -114,6 +159,7 @@ int main(int argc, char **argv) {
         }
         else if (strcmp(argv[i], "--census-summary") == 0) census_summary = 1;
         else if (strcmp(argv[i], "--census-static") == 0) census_static_mode = 1;
+        else if (strcmp(argv[i], "--census-graph") == 0) census_graph = 1;
         else if (strcmp(argv[i], "--census-ids") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &census_ids)) { usage(); return 2; }
         }
@@ -134,13 +180,16 @@ int main(int argc, char **argv) {
         else { fprintf(stderr, "runevm: RUNEVM_JIT_TIER=%s: 1 or 2\n", t); return 2; }
     }
     if (jit_check) return vm_jit_check();
+    /* the low-pause collector's nursery stays --nursery N: a minor
+       collection's pause is in proportion to it (docs/runtime.md) */
+    if (low_pause && !nursery_max_set) nursery_max = 0;
     if (restore) {
         /* a world Runtime.save wrote: it carries on from that call, which
            gives it `Restored` */
         VM *vm = calloc(1, sizeof(VM));
         char err[256];
         if (vm) vm->stack_limit = stack;   /* before the image's stack is made */
-        if (vm) { vm->heap_limit = heap_limit; vm->equality_work = equality_work; }
+        if (vm) { vm->heap_limit = heap_limit; vm->equality_work = equality_work; vm->gc.nursery_size = vm->gc.nursery_min = nursery; vm->gc.nursery_max = nursery_max; vm->gc.old_kind = old_kind; vm->gc.compact_always = gc_compact; vm->gc.stress_cycles = gc_stress_cycles; }
         if (!vm || !vm_restore(vm, restore, err, sizeof err)) {
             fprintf(stderr, "runevm: --restore: %s\n", vm ? err : "out of memory");
             if (vm) vm_destroy(vm);
@@ -148,6 +197,8 @@ int main(int argc, char **argv) {
         }
         vm->checked = checked;
         vm->jit = jit;
+        vm->gc_verify = gc_verify;
+        if (gc_log) heap_log_open(vm, gc_log);
         vm_exit(vm, vm_loop(vm));   /* does not return */
     }
     if (resume) {
@@ -156,7 +207,7 @@ int main(int argc, char **argv) {
         VM *vm = calloc(1, sizeof(VM));
         char err[256];
         if (vm) vm->stack_limit = stack;
-        if (vm) { vm->heap_limit = heap_limit; vm->equality_work = equality_work; }
+        if (vm) { vm->heap_limit = heap_limit; vm->equality_work = equality_work; vm->gc.nursery_size = vm->gc.nursery_min = nursery; vm->gc.nursery_max = nursery_max; vm->gc.old_kind = old_kind; vm->gc.compact_always = gc_compact; vm->gc.stress_cycles = gc_stress_cycles; }
         if (!vm || !vm_resume(vm, resume, err, sizeof err)) {
             fprintf(stderr, "runevm: --resume: %s\n", vm ? err : "out of memory");
             if (vm) vm_destroy(vm);
@@ -172,6 +223,7 @@ int main(int argc, char **argv) {
     vm->stats = stats;
     vm->count = count;
     vm->gc_stress = gc_stress;
+    vm->gc_verify = gc_verify;
     vm->emulate_fork = emulate_fork;
     vm->checked = checked;
     vm->jit = jit;
@@ -184,11 +236,20 @@ int main(int argc, char **argv) {
     vm_init(vm, heap);
     vm->heap_fill = (unsigned)heap_fill;
 #ifdef RUNE_CENSUS
+    nursery = 0;   /* the census VM traces the heap as the copier makes it */
+#endif
+    vm->gc.old_kind = old_kind;
+    vm->gc.nursery_max = nursery_max;
+    vm->gc.compact_always = gc_compact;
+    vm->gc.stress_cycles = gc_stress_cycles;
+    heap_nursery(vm, nursery);
+    if (gc_log) heap_log_open(vm, gc_log);
+#ifdef RUNE_CENSUS
     /* the census VM interprets everything: the JIT allocates in line
        (runtime/register/jit/masm.c) with its own idea of the header */
     if (jit.mode != JIT_OFF) fprintf(stderr, "runevm-census: --jit ignored: the interpreter alone runs\n");
     vm->jit.mode = JIT_OFF;
-    if (census_dir) census_init(vm, census_dir, (uint64_t)census_every_arg, (int)census_fields, census_summary, (uint64_t)census_ids);
+    if (census_dir) census_init(vm, census_dir, (uint64_t)census_every_arg, (int)census_fields, census_summary, (uint64_t)census_ids, census_graph);
 #endif
 
     char err[256];

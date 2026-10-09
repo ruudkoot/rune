@@ -110,7 +110,7 @@ const void *native_ret(VM *vm) {
     vm->pc = fr->ret_pc;
     if (vm->fp == 0) { vm_push(vm, v); vm_exit(vm, 0); }
     const void *back = fr->native_ret;
-    vm->fp--;
+    vm_frame_pop(vm);
     vm_push(vm, v);
     return back;
 }
@@ -268,9 +268,10 @@ void native_fatal(VM *vm, int what, int32_t a) {
 /* ---------------------------------------------------------------- main */
 
 typedef struct Options {
-    size_t heap, gc_stress, heap_fill, heap_limit, equality_work;
-    int stats, count, emulate_fork, checked;
-    char *restore;
+    size_t heap, gc_stress, heap_fill, heap_limit, equality_work, nursery, nursery_max;
+    int old_kind;
+    int stats, count, emulate_fork, checked, gc_verify, gc_compact, gc_stress_cycles, low_pause, nursery_max_set;
+    char *restore, *gc_log;
 } Options;
 
 /* A size in bytes or a count, as runevm-stack takes it (runtime/main.c). */
@@ -298,6 +299,9 @@ static void options(const char *text, const char *where, Options *o) {
         else if (strcmp(w, "--stats") == 0) o->stats = 1;
         else if (strcmp(w, "--emulate-fork") == 0) o->emulate_fork = 1;
         else if (strcmp(w, "--checked") == 0) o->checked = 1;
+        else if (strcmp(w, "--gc-verify") == 0) o->gc_verify = 1;
+        else if (strcmp(w, "--gc-compact") == 0) o->gc_compact = 1;
+        else if (strcmp(w, "--gc-stress-cycles") == 0) o->gc_stress_cycles = 1;
         else if (strcmp(w, "--heap-size") == 0 && i + 1 < n && size_arg(words[i + 1], &o->heap)) {
             if (o->heap < 4096) o->heap = 4096;
             i++;
@@ -307,18 +311,35 @@ static void options(const char *text, const char *where, Options *o) {
             i++;
         else if (strcmp(w, "--gc-stress") == 0 && i + 1 < n && size_arg(words[i + 1], &o->gc_stress) && o->gc_stress > 0)
             i++;
+        else if (strcmp(w, "--nursery") == 0 && i + 1 < n && size_arg(words[i + 1], &o->nursery))
+            i++;
+        else if (strcmp(w, "--nursery-max") == 0 && i + 1 < n && size_arg(words[i + 1], &o->nursery_max))
+            i++, o->nursery_max_set = 1;
+        else if (strcmp(w, "--gc") == 0 && i + 1 < n && (strcmp(words[i + 1], "throughput") == 0 || strcmp(words[i + 1], "low-pause") == 0)) {
+            i++;
+            o->old_kind = strcmp(words[i], "throughput") == 0 ? OLD_IMMIX : OLD_SEGFIT;
+            o->low_pause = o->old_kind == OLD_SEGFIT;
+        }
+        else if (strcmp(w, "--old-space") == 0 && i + 1 < n && (strcmp(words[i + 1], "copy") == 0 || strcmp(words[i + 1], "mark") == 0
+                                                               || strcmp(words[i + 1], "immix") == 0 || strcmp(words[i + 1], "segfit") == 0
+                                                               || strcmp(words[i + 1], "compact") == 0)) {
+            i++;
+            o->old_kind = strcmp(words[i], "mark") == 0 ? OLD_MARK : strcmp(words[i], "immix") == 0 ? OLD_IMMIX
+                        : strcmp(words[i], "segfit") == 0 ? OLD_SEGFIT : strcmp(words[i], "compact") == 0 ? OLD_COMPACT : OLD_COPY;
+        }
         else if (strcmp(w, "--heap-fill") == 0 && i + 1 < n && size_arg(words[i + 1], &o->heap_fill)
                  && o->heap_fill >= 1 && o->heap_fill <= 100)
             i++;
-        else if (strcmp(w, "--restore") == 0 && i + 1 < n) {
-            free(o->restore);
-            o->restore = malloc(strlen(words[i + 1]) + 1);
-            if (!o->restore) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
-            strcpy(o->restore, words[++i]);
+        else if ((strcmp(w, "--restore") == 0 || strcmp(w, "--gc-log") == 0) && i + 1 < n) {
+            char **to = strcmp(w, "--restore") == 0 ? &o->restore : &o->gc_log;
+            free(*to);
+            *to = malloc(strlen(words[i + 1]) + 1);
+            if (!*to) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
+            strcpy(*to, words[++i]);
         } else {
             fprintf(stderr, "runevm: %s: %s is not an option of a native program "
-                    "(--count, --stats, --heap-size N, --heap-limit N, --equality-work N, --heap-fill P, --gc-stress N, --checked, --emulate-fork, "
-                    "--restore FILE)\n", where, w);
+                    "(--count, --stats, --heap-size N, --heap-limit N, --equality-work N, --heap-fill P, --gc-stress N, --nursery N, --nursery-max N, --gc G, --old-space S, --gc-verify, --gc-compact, --gc-stress-cycles, --checked, --emulate-fork, "
+                    "--restore FILE, --gc-log FILE)\n", where, w);
             exit(2);
         }
     }
@@ -329,13 +350,14 @@ static void options(const char *text, const char *where, Options *o) {
 static char *program_name;
 
 int main(int argc, char **argv) {
-    Options o = { .heap = 4u << 20, .heap_fill = 50 };
+    Options o = { .heap = 4u << 20, .heap_fill = 50, .nursery = (size_t)1 << 20, .nursery_max = (size_t)8 << 20, .old_kind = OLD_IMMIX };
     vm_same_program = same_program;
     options(rune_options, "runeopt --options", &o);
     /* The options are the runtime's, as runevm-stack's are, and not part of what
        the program sees of its environment, nor of what its children get. */
     const char *env = getenv("RUNEVM_OPTIONS");
     if (env) { options(env, "RUNEVM_OPTIONS", &o); unsetenv("RUNEVM_OPTIONS"); }
+    if (o.low_pause && !o.nursery_max_set) o.nursery_max = 0;   /* the low-pause collector's nursery stays --nursery N */
 
     /* A world to carry on: an image Runtime.save wrote (--restore FILE), or
        the child of a fork emulated by a second process (runtime/image.c), which is
@@ -348,6 +370,11 @@ int main(int argc, char **argv) {
         if (!vm) { fprintf(stderr, "runevm: out of memory\n"); return 2; }
         vm->heap_limit = o.heap_limit;
         vm->equality_work = o.equality_work;
+        vm->gc.nursery_size = vm->gc.nursery_min = o.nursery;
+        vm->gc.nursery_max = o.nursery_max;
+        vm->gc.old_kind = o.old_kind;
+        vm->gc.compact_always = o.gc_compact;
+        vm->gc.stress_cycles = o.gc_stress_cycles;
         int ok = child ? vm_resume(vm, argv[2], err, sizeof err) : vm_restore(vm, o.restore, err, sizeof err);
         if (ok && !same_program(vm)) { ok = 0; snprintf(err, sizeof err, "the image is of another program"); }
         const void *code = ok ? prepare_resume(vm, err, sizeof err) : NULL;
@@ -357,6 +384,8 @@ int main(int argc, char **argv) {
             return 2;
         }
         free(o.restore);
+        vm->gc_verify = o.gc_verify;
+        if (o.gc_log && !child) heap_log_open(vm, o.gc_log);
         rune_enter(vm, code);
     }
 
@@ -366,6 +395,7 @@ int main(int argc, char **argv) {
     vm->stats = o.stats;
     vm->count = o.count;
     vm->gc_stress = o.gc_stress;
+    vm->gc_verify = o.gc_verify;
     vm->emulate_fork = o.emulate_fork;
     vm->checked = o.checked;
     /* the name the program has under runevm-stack, where bin/runevm-native runs it
@@ -379,6 +409,12 @@ int main(int argc, char **argv) {
     vm->equality_work = o.equality_work;
     vm_init(vm, o.heap);
     vm->heap_fill = (unsigned)o.heap_fill;
+    vm->gc.old_kind = o.old_kind;
+    vm->gc.nursery_max = o.nursery_max;
+    vm->gc.compact_always = o.gc_compact;
+    vm->gc.stress_cycles = o.gc_stress_cycles;
+    heap_nursery(vm, o.nursery);
+    if (o.gc_log) heap_log_open(vm, o.gc_log);
 
     char err[256];
     if (!load_program_mem(vm, rune_rbc, rune_rbc_size, err, sizeof err)) {

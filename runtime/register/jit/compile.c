@@ -173,6 +173,13 @@ int jit_h_prim(VM *vm, int prim, int32_t d, const uint8_t *L) {
     return 0;
 }
 
+/* SETENV c e v while the low-pause collector's cycle marks: the store,
+   through the barrier (emit.c, emit_SETENV) */
+void jit_h_setenv(VM *vm, int32_t c, int32_t e, int32_t v) {
+    Value *base = vm->stack + vm->frames[vm->fp].base;
+    obj_set_field(vm, val_ptr(base[c]), (uint32_t)e + 1, base[v]);
+}
+
 Obj *jit_h_alloc(VM *vm, int kind, int contag, uint32_t n) {
     return vm_alloc_fields(vm, (uint8_t)kind, (uint16_t)contag, n);
 }
@@ -187,7 +194,7 @@ int jit_h_ret(VM *vm, int32_t s) {
     const void *back_native = fr->native_ret;
     size_t top = fr->base;
     if (vm->fp == 0) { vm->sp = top; vm->pc = back; vm_push(vm, v); return RUN_HALT; }
-    vm->fp--;
+    vm_frame_pop(vm);
     fr = &vm->frames[vm->fp];
     vm->sp = top;
     const uint8_t *code = vm->prog.code;
@@ -606,6 +613,15 @@ static void emit_slow(Masm *m, Slow *sp) {
         as_mov_ri(&m->a, R_S6, (int64_t)(intptr_t)((const char *)s.L + offsetof(Site, n0)));
         as_add_mi(&m->a, R_S6, 0, 1);
         as_jmp(&m->a, jit_label(j, (uint32_t)s.a));
+    } else if (s.kind == SLOW_SETENV) {
+        /* the store in C, through the barrier, while a cycle marks; then on */
+        ms_sync(m, s.pc, 0);
+        as_mov_ri(&m->a, ms_arg(m, 1), s.a);
+        as_mov_ri(&m->a, ms_arg(m, 2), s.b);
+        as_mov_ri(&m->a, ms_arg(m, 3), s.c);
+        ms_call(m, (MsHelper)jit_h_setenv);
+        ms_reload(m);
+        as_jmp(&m->a, &s.back);
     } else if (s.kind == SLOW_FRAMES) {
         ms_sync(m, s.pc, 0);
         ms_call(m, (MsHelper)jit_h_grow_frames);

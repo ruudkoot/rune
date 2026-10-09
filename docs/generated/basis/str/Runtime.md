@@ -7,7 +7,7 @@
 | Signature | [`RUNTIME`](../sig/RUNTIME.md) |
 | Status | extension |
 | Members | 12 |
-| Tests | 37 checks |
+| Tests | 39 checks |
 | Source | [lib/basis/runtime.sml](../../../../lib/basis/runtime.sml) |
 
 ## Synopsis
@@ -27,7 +27,7 @@ What each means is on [`RUNTIME`](../sig/RUNTIME.md); the types are this structu
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`frame`](../sig/RUNTIME.md#type-frame) | `{column : int, file : string, function : string, line : int}` |
-| type | [`stats`](../sig/RUNTIME.md#type-stats) | `{bytes : int, collections : int, heapSize : int, instructions : int, live : int, objects : int}` |
+| type | [`stats`](../sig/RUNTIME.md#type-stats) | `{bytes : int, collections : int, heapSize : int, instructions : int, live : int, majorCollections : int, minorCollections : int, objects : int, promoted : int}` |
 | datatype | [`world`](../sig/RUNTIME.md#type-world) | `Saved` &#124; `Restored` |
 | val | [`collect`](../sig/RUNTIME.md#val-collect) | `unit -> unit` |
 | val | [`printTrace`](../sig/RUNTIME.md#val-printtrace) | `TextIO.outstream -> unit` |

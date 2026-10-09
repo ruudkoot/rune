@@ -67,7 +67,11 @@ struct
           val {name, profile, upstream, sourcePath, args, expected, sources, seconds, memory, tags, inputFiles, resultCheck, status} = entry
           val _ = if relative name andalso not (String.isSubstring "/" name) then () else raise Fail "invalid benchmark name"
           val _ = if List.exists (fn p => p = profile) ["smoke", "normal", "large"] then () else raise Fail "invalid benchmark profile"
-          val _ = if List.exists (fn key => key = (upstream, sourcePath)) inventory then () else raise Fail "unknown benchmark source"
+          (* Rune's own programs have no upstream tree to inventory: their
+             source path is the program's file in the catalogue *)
+          val _ = if upstream = "rune" then localFile sourcePath
+                  else if List.exists (fn key => key = (upstream, sourcePath)) inventory then ()
+                  else raise Fail "unknown benchmark source"
           val _ = if List.null args orelse List.null sources orelse List.null tags then raise Fail "incomplete benchmark entry" else ()
           val _ = if List.exists (fn c => c = resultCheck) ["exact", "checked-numerical"] then () else raise Fail "invalid result check"
           val _ = if status = "implemented" then () else raise Fail "benchmark is not implemented"

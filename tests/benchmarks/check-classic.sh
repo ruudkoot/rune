@@ -5,6 +5,7 @@ cd "$(dirname "$0")/../.."
 root=$(pwd)
 python3 tests/benchmarks/smith-oracle.py
 python3 tests/benchmarks/kb-oracle.py
+python3 tests/benchmarks/latency-oracle.py --check
 out=$root/tests/out/benchmarks/classic-validation
 mkdir -p "$out"
 for suite in checksum md5 numerical render ppm vliw; do

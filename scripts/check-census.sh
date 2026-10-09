@@ -27,21 +27,29 @@ stock=$(count "$out/stock.stderr")
 [ -n "$stock" ] || { echo "FAIL census.stock: no count line: $(head -1 "$out/stock.stderr")"; exit 1; }
 # the full trace, with a forced collection every 64 KiB so that a small
 # program still has samples
-"$census" --jit=off --count --census-dir "$out/trace" --census-every 65536 "$out/prog.rbc" < /dev/null > "$out/census.stdout" 2> "$out/census.stderr"
+"$census" --jit=off --count --census-dir "$out/trace" --census-every 65536 --census-graph "$out/prog.rbc" < /dev/null > "$out/census.stdout" 2> "$out/census.stderr"
 traced=$(count "$out/census.stderr")
 if [ "$traced" = "$stock" ]; then echo "ok   census.count: $stock"; else fail "count: stock [$stock] census [$traced]"; fi
 if cmp -s "$out/stock.stdout" "$out/census.stdout"; then echo "ok   census.output"; else fail "output: the census VM's stdout differs"; fi
 bytes=$(echo "$stock" | sed -n 's/.* instructions, \([0-9]*\) bytes, .*/\1/p')
 objects=$(echo "$stock" | sed -n 's/.* bytes, \([0-9]*\) objects$/\1/p')
-tbytes=$(sed -n 's/^# bytes_l0 \([0-9]*\).*/\1/p' "$out/trace/census.txt" | head -1)
-tobjects=$(sed -n 's/^# objects \([0-9]*\).*/\1/p' "$out/trace/census.txt" | head -1)
+# --count leaves the boxes of the word out (K_REAL, K_BOX): census.txt's count_ totals do too
+tbytes=$(sed -n 's/^# count_objects [0-9]* count_bytes \([0-9]*\).*/\1/p' "$out/trace/census.txt" | head -1)
+tobjects=$(sed -n 's/^# count_objects \([0-9]*\).*/\1/p' "$out/trace/census.txt" | head -1)
 if [ "$tbytes" = "$bytes" ] && [ "$tobjects" = "$objects" ]; then echo "ok   census.tables: $tobjects objects, $tbytes bytes"; else fail "tables: census.txt says $tobjects objects, $tbytes bytes"; fi
-for f in alloc.bin fields.bin death.bin samples.bin pcs.bin; do
+for f in alloc.bin fields.bin graph.bin death.bin samples.bin pcs.bin meta.txt; do
   [ -s "$out/trace/$f" ] || fail "trace: $f missing or empty"
 done
 [ -e "$out/trace/stores.bin" ] || fail "trace: stores.bin missing"   # empty for a program without refs or arrays
 samples=$(sed -n 's/^# samples \([0-9]*\).*/\1/p' "$out/trace/census.txt" | head -1)
 [ -n "$samples" ] && [ "$samples" -gt 0 ] && echo "ok   census.samples: $samples forced collections" || fail "samples: none recorded"
+# the trace's own consistency (format 2): sizes, the clock, every sample's
+# live data against death.bin, graph.bin against fields.bin, the stores
+if python3 -c 'import numpy' 2> /dev/null; then
+  if python3 tools/heapsim/checktrace.py "$out/trace" > "$out/checktrace.out" 2>&1; then echo "ok   census.consistent: $(tail -1 "$out/checktrace.out")"; else fail "consistent: $(grep FAIL "$out/checktrace.out" | head -1)"; fi
+else
+  echo "skip census.consistent: no python3 with numpy"
+fi
 # the summary mode: the same count, census.txt alone
 "$census" --jit=off --count --census-dir "$out/summary" --census-every 65536 --census-summary "$out/prog.rbc" < /dev/null > /dev/null 2> "$out/summary.stderr"
 summary=$(count "$out/summary.stderr")

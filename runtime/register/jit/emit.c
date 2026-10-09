@@ -523,8 +523,8 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_ref_set:
         ms_need_word(M, y);
         ms_load_obj(M, R_S0, x, K_REF, slow);
-        ms_store_field(M, R_S0, 0, y);
-        ms_barrier(M, R_S0);
+        ms_need_unmarked(M, slow);
+        ms_set_field(M, R_S0, 0, y);
         ms_set(M, d, T_UNIT, 0);
         break;
     case PRIM_array_length: length_of(j, d, x, K_ARRAY, slow); break;
@@ -538,9 +538,8 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         ms_need_word(M, z);
         ms_load_obj(M, R_S0, x, K_ARRAY, slow);
         index_of(j, y, slow);
-        element(j);
-        ms_store_field(M, R_S0, 0, z);
-        ms_barrier(M, R_S0);   /* of the element's address */
+        ms_need_unmarked(M, slow);
+        ms_set_element(M, R_S0, R_S1, z);
         ms_set(M, d, T_UNIT, 0);
         break;
     /* The arrays of bytes and of reals (heap-layout M8): an element is a
@@ -735,8 +734,12 @@ void emit_SETENV(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     ms_need_word(M, c);
     ms_load_obj(M, R_S0, a, K_CLOSURE, jit_fatal(j, FATAL_EXPECT_CLOSURE, 0, 0, 0));
     ms_need_len(M, R_S0, (uint32_t)b + 1, jit_fatal(j, FATAL_ENV_RANGE, b, 0, 0));
-    ms_store_field(M, R_S0, (uint32_t)b + 1, c);
-    ms_barrier(M, R_S0);
+    /* while the low-pause collector's cycle marks, the store in C, through
+       the barrier (compile.c, SLOW_SETENV) */
+    Slow *s = ms_slow(M, SLOW_SETENV, j->next);
+    if (s) { s->a = a; s->b = b; s->c = c; ms_need_unmarked(M, &s->here); }
+    ms_set_field(M, R_S0, (uint32_t)b + 1, c);
+    if (s) as_bind(A, &s->back);
 }
 /* --jit-profile (M8): the count at s's field; add clobbers the flags, so
    after any branch on them */
@@ -1188,7 +1191,13 @@ void emit_RET(Jit *j, uint32_t pc, int32_t a) {
     if (!h) ms_load_xmm(M, F_S0, a);
     as_ld32s(A, R_S3, R_S1, FR(result));
     as_sub_ri(A, R_S2, 1);
-    as_st64(A, VMR, OFF(fp), R_S2);   /* the frame popped */
+    as_st64(A, VMR, OFF(fp), R_S2);   /* the frame popped, and the watermark lowered to it (vm.h, vm_frame_pop) */
+    AsmLabel above; as_label_init(&above);
+    as_cmp_rm(A, R_S2, VMR, OFF(fp_low));
+    as_jcc(A, CC_AE, &above);
+    as_st64(A, VMR, OFF(fp_low), R_S2);
+    as_bind(A, &above);
+    as_label_free(&above);
     as_sub_ri(A, R_S1, FRAME_SIZE);      /* the caller's frame: its registers are the code's now */
     as_ld64(A, BASEI, R_S1, FR(base));
     as_mov_rr(A, BASER, BASEI);

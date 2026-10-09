@@ -41,15 +41,16 @@ is
 .I file.rbc
 as spelled on the command line.
 .PP
-The VM is a copying collector over two semispaces. The heap grows on demand, so
+The VM's collector copies what is live at every collection, in a heap made of
+chunks of 2 MiB. The heap grows on demand, so
 .B \-\-heap\-size
-only sets how much is mapped up front.
+only sets its first size.
 .SH OPTIONS
 .TP
 .BI \-\-heap\-size " N"
 Map
 .I N
-bytes per semispace initially (default 4194304, minimum 4096).
+bytes as the heap's first size (default 4194304, minimum 4096).
 .TP
 .B \-\-disasm
 Print the bytecode of the program and exit without running it.
@@ -58,7 +59,7 @@ Print the bytecode of the program and exit without running it.
 Trace every instruction executed to standard error.
 .TP
 .B \-\-stats
-Print the number of collections, bytes allocated, semispace size, live bytes,
+Print the number of collections, bytes allocated, the heap's size, live bytes,
 bytes copied by all collections, the most a collection kept and the
 collector's processor time to standard error at exit.
 .TP
