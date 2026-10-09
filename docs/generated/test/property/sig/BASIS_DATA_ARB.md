@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 5 of 5 entries documented |
+| Documentation | 6 of 6 entries documented |
 | Tests | not listed |
 | Source | [lib/test/property/data\_sig.sml](../../../../../lib/test/property/data_sig.sml) |
 
@@ -32,6 +32,7 @@ sig
   val <a href="#val-radix">radix</a> : StringCvt.radix Arb.arb
   val <a href="#val-traversal">traversal</a> : Array2.traversal Arb.arb
   val <a href="#val-canonicalabsolutepath">canonicalAbsolutePath</a> : string Arb.arb
+  val <a href="#val-path">path</a> : string Arb.arb
   val <a href="#val-reader">reader</a> : (char, int) StringCvt.reader Arb.arb
 end
 </pre>
@@ -70,6 +71,19 @@ val canonicalAbsolutePath : string Arb.arb
 The arbitrary of canonical absolute paths: `/` and names of letters and digits between slashes, as many as a list's length.
 
 A domain for the laws of [`OS.Path`](../../../basis/str/OS.Path.md) about such paths (D7).
+
+### <a name="val-path"></a>`path`
+
+```sml
+val path : string Arb.arb
+```
+
+The arbitrary of paths built from arcs: empty, `.`, `..`, names, names with an extension and any string, between slashes.
+
+A domain for the laws of [`OS.Path`](../../../basis/str/OS.Path.md) (D7). A string drawn a character at
+a time seldom has two separators together, which is where a path has an
+empty arc, or an arc `..`. A path is absolute or relative, and the
+simplest is the empty one.
 
 ### <a name="val-reader"></a>`reader`
 

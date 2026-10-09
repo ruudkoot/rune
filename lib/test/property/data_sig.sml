@@ -76,6 +76,14 @@ sig
      A domain for the laws of `OS.Path` about such paths (D7). *)
   val canonicalAbsolutePath : string Arb.arb
 
+  (* The arbitrary of paths built from arcs: empty, `.`, `..`, names, names with an extension and any string, between slashes.
+
+     A domain for the laws of `OS.Path` (D7). A string drawn a character at
+     a time seldom has two separators together, which is where a path has an
+     empty arc, or an arc `..`. A path is absolute or relative, and the
+     simplest is the empty one. *)
+  val path : string Arb.arb
+
   (* The arbitrary of readers of characters over a drawn string, whose stream is a position in it.
 
      The string is drawn as `Arb.string` draws one. From `i`, the reader gives

@@ -300,7 +300,9 @@ struct
 
   val letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
   val spaces = " \t\n\r\011\012\000\127"
-  val syntax = "~-+\\\"'.eEx0w#()[],;:_^"
+  (* the characters that SML's syntax gives a meaning to, and the separator
+     of paths, which OS.Path does *)
+  val syntax = "~-+\\\"'.eEx0w#()[],;:_^/"
   fun pick (text : string) (r : Word64.word) : Word64.word =
     Word64.fromInt (Char.ord (String.sub (text, Word64.toInt (uniformBelow (Word64.fromInt (String.size text)) r))))
 

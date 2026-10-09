@@ -307,3 +307,18 @@ length arcs - 1)) end`
 
 It passes 100 cases at the settings of `make check` and 10,000 in the deep
 mode.
+
+**Why the regular runs missed it, and what changed** (the owner took both
+changes, 2026-10-09, while the deep run went on). A character was `/` once
+in 512 draws (P5), so two together almost never; SmallCheck's characters,
+the first letters, would have missed it too, and so did the small scope
+(P13), whose characters are the three simplest codes. Now:
+- `/` is among P5's characters with a meaning, beside those of SML's syntax;
+- the laws of `OS.Path` draw from `BasisDataArb.path`, paths built from arcs: empty, `.`, `..`, names, names with an extension and any string.
+
+With the domain, the old law fails at case 32 of a regular run, in the
+small scope, already shrunk to `"//"`. The six laws of `OS.Path` pass, at
+the regular settings and in the deep mode. The generators' hashes are
+renewed: the fingerprint `CFA1F44CE9D34AAC`, the frozen `AC19EEA9CFFFB60D`.
+The deep run's programs were compiled before the change, so the laws that
+draw characters are run again after it.

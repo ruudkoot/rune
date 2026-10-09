@@ -151,7 +151,7 @@ sig
 
      The other half it is a letter or digit, a space or control, or a
      character that the syntax of numbers, characters and strings gives a
-     meaning to. *)
+     meaning to, or the separator of paths, `/`. *)
   val char : char gen
 
   (* `real` draws a real: a special one, a small one, or any, a third of the time each.

@@ -7,6 +7,7 @@
 - `Pass` (con): [PROP](../sig/PROP.md#con-pass)
 - `Passed` (con): [CHECK](../sig/CHECK.md#con-passed)
 - `passed` (val): [CHECK](../sig/CHECK.md#val-passed)
+- `path` (val): [BASIS_DATA_ARB](../sig/BASIS_DATA_ARB.md#val-path)
 - `pid` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-pid)
 - `pollDesc` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-polldesc)
 - `primitive` (val): [GEN](../sig/GEN.md#val-primitive)

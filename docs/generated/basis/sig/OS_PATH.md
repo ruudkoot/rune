@@ -307,8 +307,8 @@ val splitDirFile : string -> {dir : string, file : string}
 
 **Example** `splitDirFile "a/b/" = {dir = "a/b", file = ""}`
 
-**Law** `joinDirFile (splitDirFile p) = p` for `p <> ""` when `let val arcs = #arcs (fromString p) in List.all (fn a => a <> "") (List.take (arcs, length arcs - 1)) end`: an empty arc before the last, as in `"a//b"`, is
-lost (for every `p : string`)
+**Law** `joinDirFile (splitDirFile p) = p` for `p <> ""` when `let val arcs = #arcs (fromString p) in List.all (fn a => a <> "") (List.take (arcs, length arcs - 1)) end`, and it is run for `p` from `BasisDataArb.path`: an
+empty arc before the last, as in `"a//b"`, is lost (for every `p : string`)
 
 **Counterexample** `joinDirFile (splitDirFile "//") = "//"`, for an empty arc
 before the last is lost.
@@ -359,7 +359,8 @@ val dir : string -> string
 
 `dir p` is the [`dir`](#val-dir) part of `splitDirFile p`.
 
-**Law** `dir p = #dir (splitDirFile p)` (for every `p : string`)
+**Law** `dir p = #dir (splitDirFile p)`, and it is run for `p` from
+`BasisDataArb.path` (for every `p : string`)
 
 **Example** `dir "a/b/c" = "a/b"`
 
@@ -405,7 +406,8 @@ otherwise there is none.
 
 **Example** `splitBaseExt ".profile" = {base = ".profile", ext = NONE}`
 
-**Law** `joinBaseExt (splitBaseExt p) = p` (for every `p : string`)
+**Law** `joinBaseExt (splitBaseExt p) = p`, and it is run for `p` from
+`BasisDataArb.path` (for every `p : string`)
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -526,7 +528,8 @@ val isCanonical : string -> bool
 
 `isCanonical p` is `true` when `p` is what [`mkCanonical`](#val-mkcanonical) would give.
 
-**Law** `isCanonical p = (mkCanonical p = p)` (for every `p : string`)
+**Law** `isCanonical p = (mkCanonical p = p)`, and it is run for `p` from
+`BasisDataArb.path` (for every `p : string`)
 
 **Example** `isCanonical "a/../b" = false`
 
@@ -632,7 +635,8 @@ val isRelative : string -> bool
 
 `isRelative p` is `true` when `p` does not start from a root.
 
-**Law** `isRelative p = not (isAbsolute p)` (for every `p : string`)
+**Law** `isRelative p = not (isAbsolute p)`, and it is run for `p` from
+`BasisDataArb.path` (for every `p : string`)
 
 **Example** `isRelative "a/b" = true`
 

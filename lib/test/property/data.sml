@@ -151,6 +151,21 @@ struct
   val canonicalAbsolutePath : string Arb.arb =
     {gen = Gen.map (fn ns => "/" ^ String.concatWith "/" ns) (Gen.list name), show = Show.string,
      co = Co.string, eq = SOME (op =)}
+  (* an arc of a path, simplest first: the empty arc, which puts two
+     separators together, the current and the parent directory, a name, a
+     name with an extension, and any string *)
+  val arc : string Gen.gen =
+    Gen.bind (Gen.intRange (0, 5))
+             (fn 0 => Gen.return ""
+               | 1 => Gen.return "."
+               | 2 => Gen.return ".."
+               | 3 => name
+               | 4 => Gen.map2 (fn (n, e) => n ^ "." ^ e) (name, name)
+               | _ => Gen.string)
+  val path : string Arb.arb =
+    {gen = Gen.map2 (fn (absolute, arcs) => (if absolute then "/" else "") ^ String.concatWith "/" arcs)
+                    (Gen.bool, Gen.list arc),
+     show = Show.string, co = Co.string, eq = SOME (op =)}
 
   val reader : (char, int) StringCvt.reader Arb.arb =
     {gen = Gen.map readerOf Gen.string,

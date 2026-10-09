@@ -354,7 +354,7 @@ val char : char gen
 
 The other half it is a letter or digit, a space or control, or a
 character that the syntax of numbers, characters and strings gives a
-meaning to.
+meaning to, or the separator of paths, `/`.
 
 ### <a name="val-real"></a>`real`
 

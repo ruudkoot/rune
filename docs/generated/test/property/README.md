@@ -8,7 +8,7 @@
 | --- | --- | --- | --- |
 | [`ARB`](sig/ARB.md) | Arbitraries: the generator, the printer, the observer and the equality of a type, as one record -- what QuickCheck finds by a type class and a program here passes by name (docs/plans/quickcheck.md, D4). | required | 28 of 28 |
 | [`ARB_OF`](sig/ARB_OF.md) | The arbitrary of one type of a structure: what the functors of the library make of a structure of the Basis Library, and what the structures [`Int8Arb`](str/Int8Arb.md), [`Word8Arb`](str/Word8Arb.md), [`CharArraySliceArb`](str/CharArraySliceArb.md) and the rest are. | required | 2 of 2 |
-| [`BASIS_DATA_ARB`](sig/BASIS_DATA_ARB.md) | The arbitraries of the small datatypes and readers of the Basis Library. | required | 5 of 5 |
+| [`BASIS_DATA_ARB`](sig/BASIS_DATA_ARB.md) | The arbitraries of the small datatypes and readers of the Basis Library. | required | 6 of 6 |
 | [`CHECK`](sig/CHECK.md) | Running properties: many cases, each from its own seed at a size that grows over the run, and a report. | required | 9 of 9 |
 | [`CO`](sig/CO.md) | Observers: what a generated function sees of its argument (QuickCheck's CoArbitrary, reduced to a hash). Two arguments with the same observation get the same result from a generated function. | required | 14 of 14 |
 | [`DATE_ARB`](sig/DATE_ARB.md) | The arbitraries of `Date.date`, of its months, weekdays and record of fields, by the generator principle P12 (docs/plans/quickcheck.md). | required | 6 of 6 |

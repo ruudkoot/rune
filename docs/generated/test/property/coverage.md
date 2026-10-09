@@ -8,7 +8,7 @@ documented when a comment describes it, alone or together with the entry before 
 | --- | --- | --- | --- | --- | --- |
 | [`ARB`](sig/ARB.md) | 28 | 28 | 100% | 16 | 16 |
 | [`ARB_OF`](sig/ARB_OF.md) | 2 | 2 | 100% | 0 | 0 |
-| [`BASIS_DATA_ARB`](sig/BASIS_DATA_ARB.md) | 5 | 5 | 100% | 0 | 0 |
+| [`BASIS_DATA_ARB`](sig/BASIS_DATA_ARB.md) | 6 | 6 | 100% | 0 | 0 |
 | [`CHECK`](sig/CHECK.md) | 9 | 9 | 100% | 6 | 6 |
 | [`CO`](sig/CO.md) | 14 | 14 | 100% | 4 | 4 |
 | [`DATE_ARB`](sig/DATE_ARB.md) | 6 | 6 | 100% | 0 | 0 |
@@ -19,7 +19,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`SHOW`](sig/SHOW.md) | 17 | 17 | 100% | 7 | 7 |
 | [`SML90_ARB`](sig/SML90_ARB.md) | 1 | 1 | 100% | 0 | 0 |
 | [`SYSTEM_ARB`](sig/SYSTEM_ARB.md) | 33 | 33 | 100% | 1 | 1 |
-| **all** | 179 | 179 | 100% | 78 | 78 |
+| **all** | 180 | 180 | 100% | 78 | 78 |
 
 ## Members a signature describes
 
@@ -28,7 +28,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-140 structures have a page, with 468 members, of which 423 (90%) are described by a signature.
+140 structures have a page, with 469 members, of which 424 (90%) are described by a signature.
 
 | Structure | Members | Described |  |
 | --- | --- | --- | --- |
