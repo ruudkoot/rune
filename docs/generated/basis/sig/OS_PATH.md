@@ -307,7 +307,11 @@ val splitDirFile : string -> {dir : string, file : string}
 
 **Example** `splitDirFile "a/b/" = {dir = "a/b", file = ""}`
 
-**Law** `joinDirFile (splitDirFile p) = p` for `p <> ""` (for every `p : string`)
+**Law** `joinDirFile (splitDirFile p) = p` for `p <> ""` when `let val arcs = #arcs (fromString p) in List.all (fn a => a <> "") (List.take (arcs, length arcs - 1)) end`: an empty arc before the last, as in `"a//b"`, is
+lost (for every `p : string`)
+
+**Counterexample** `joinDirFile (splitDirFile "//") = "//"`, for an empty arc
+before the last is lost.
 
 | Field | Type | Description |
 | --- | --- | --- |

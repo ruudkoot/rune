@@ -121,7 +121,13 @@ sig
 
      Example: `splitDirFile "a/b/" = {dir = "a/b", file = ""}`
 
-     Law: `joinDirFile (splitDirFile p) = p` for `p <> ""` *)
+     Law: `joinDirFile (splitDirFile p) = p` for `p <> ""` when `let val arcs =
+     #arcs (fromString p) in List.all (fn a => a <> "") (List.take (arcs,
+     length arcs - 1)) end`: an empty arc before the last, as in `"a//b"`, is
+     lost
+
+     Counterexample: `joinDirFile (splitDirFile "//") = "//"`, for an empty arc
+     before the last is lost. *)
   val splitDirFile : string -> {dir : string, file : string}
 
   (* `joinDirFile {dir, file}` is the path of `file` inside `dir`.

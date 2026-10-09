@@ -279,3 +279,31 @@ three differ only by four cases of `tabulate`, at `LargeIntArray`,
 `Int64Vector` and `LargeIntVector`, that ran past the watchdog's minute on
 the stack VM and were skipped, which the register VM finished. The two VMs
 agree on every law, every case drawn and every counterexample.
+
+## The deep run (2026-10-09)
+
+Seed 1, 10,000 cases for each law at each structure (`RUNE_PROPERTY_DEEP=1
+RUNE_PROPERTY_SEEDS=1`; P11 as the owner chose), on the register VM with
+its JIT, at eight jobs.
+
+**Found: the law of `OS.Path.splitDirFile`.** `joinDirFile (splitDirFile
+p) = p` for `p <> ""` failed at case 10,359, shrunk to `p = "//"`:
+`splitDirFile "//"` is `{dir = "/", file = ""}`, which joins to `"/"`. A
+path loses every empty arc before its last: `"a//b"` comes back as `"a/b"`,
+and `"///"` as `"//"`. The root with one empty arc reads as the root alone.
+The law is wrong and the implementation right: MLton, SML/NJ 110.99.9,
+Poly/ML 5.9.2 and MLKit 4.7.23 all give what Rune gives (D10, for this
+case). The regular runs missed it, because a random string seldom has two
+separators together.
+
+The owner took the restatement proposed: the law holds for paths with no
+empty arc before the last, and `"//"` is its `Counterexample:`:
+
+```
+Law: `joinDirFile (splitDirFile p) = p` for `p <> ""` when `let val arcs =
+#arcs (fromString p) in List.all (fn a => a <> "") (List.take (arcs,
+length arcs - 1)) end`
+```
+
+It passes 100 cases at the settings of `make check` and 10,000 in the deep
+mode.
