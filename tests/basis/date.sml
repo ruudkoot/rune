@@ -198,6 +198,15 @@ struct
   (* a year that no implementation's time may hold: the date, or Date *)
   val () = eqB ("Date.date/Date-or-a-year-far-away", true,
                 fn () => (Date.year (utc (100000000, Date.Jan, 1, 0, 0, 0)) = 100000000) handle Date.Date => true)
+  (* a local date is given to the C library, whose int has 32 bits: a year
+     that is no int of C less 1900 gives that year or Date, and not another
+     year (where the int is wider, the year 2^31 + 1900) *)
+  val () = eqB ("Date.date/local-Date-or-the-year-past-an-int-of-C", true,
+                fn () => case Int.precision of
+                           SOME p => p < 34 orelse
+                                     let val y = 65536 * 32768 + 1900
+                                     in (Date.year (at (y, Date.Jan, 1, 0, 0, 0, NONE)) = y) handle Date.Date => true end
+                         | NONE => true)
 
   (* ---- the offset: "A value of NONE represents the local time zone. A value
      of SOME(t) corresponds to time t west of UTC. ... Negative offsets denote
