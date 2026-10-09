@@ -17,6 +17,13 @@ struct
   val stats = ref false
   val fuel : int option ref = ref NONE
 
+  (* Whether the passes see the whole program (docs/plans/incremental-
+     compilation.md, M2). With --units they see one unit at a time, after
+     the units before it, and every top-level binding may be named by a unit
+     after it: Shake does not run, and neither Workers nor Simplify drops a
+     function of the top level it no longer names. *)
+  val whole = ref true
+
   (* Whether an optional pass runs at the level given: --passes names the
      ones to run, whatever the level; otherwise a pass runs from its level
      up. *)

@@ -7,6 +7,11 @@ struct
 
   fun format (sp, msg) = Source.describe sp ^ ": error: " ^ msg
 
+  (* The errors a compile that goes on after an error has reported so far
+     (Elaborate.recover): each is printed when it is found. *)
+  val errors = ref 0
+  fun report (sp, msg) = (TextIO.output (TextIO.stdErr, format (sp, msg) ^ "\n"); errors := !errors + 1)
+
   val warnings : string list ref = ref []
 
   fun warn (sp, msg) =

@@ -17,6 +17,7 @@ struct
   val dumpTokens = ref false
   val dumpAst = ref false
   val typecheckOnly = ref false
+  val units = ref false                        (* --units: a unit per file, linked (docs/units.md) *)
   val noWarnings = ref false
   val showVersion = ref false
   val showHelp = ref false
@@ -50,6 +51,9 @@ struct
     \  --default-type=T  in the input files, the type of an int or word constant or\n\
     \                    operator that its declaration leaves open: int (default)\n\
     \                    or int64, word (default) or word64\n\
+    \  --units           compile every file, of the basis library too, as a unit\n\
+    \                    of its own after the files before it, and link them\n\
+    \                    (docs/units.md)\n\
     \  --typecheck-only  stop after type checking\n\
     \  --type-work=N     type traversal budget per top-level declaration (50000000)\n\
     \  --match-work=N    pattern-analysis budget per match (1000000)\n\
@@ -107,6 +111,7 @@ struct
     | "--default-type=int64" :: rest => (defaultInt64 := true; parse rest)
     | "--default-type=word" :: rest => (defaultWord64 := false; parse rest)
     | "--default-type=word64" :: rest => (defaultWord64 := true; parse rest)
+    | "--units" :: rest => (units := true; parse rest)
     | "--typecheck-only" :: rest => (typecheckOnly := true; parse rest)
     | "--no-warnings" :: rest => (noWarnings := true; parse rest)
     | "--dump-tokens" :: rest => (dumpTokens := true; parse rest)

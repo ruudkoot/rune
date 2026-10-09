@@ -112,7 +112,12 @@ keep these invariants:
   moves code into another function keeps its frames for traces (`Mid.pos`,
   docs/ir.md, *Positions*). A rewrite must leave every lint satisfied at
   any `--fuel`: what it makes of several parts is one rewrite, or each part
-  is valid alone.
+  is valid alone. A pass that deletes a binding of the top level, or
+  assumes it sees every use of one, asks `Pass.whole` first: with
+  `rune --units` it sees one unit, and a unit after it may name the
+  binding (docs/units.md). `make check-units` holds every program of
+  `tests/lang` and `tests/perf` compiled so to its output compiled whole,
+  and the compiler compiled in units to compiling itself byte for byte.
 * **The folders of `runtime/`** say what depends on what. The runtime both
   VMs link is directly under it (`vm.h`, `value.h`, the heap, the loader,
   the primitives, images, `main.c`, and the generated `isa.h` with what the
@@ -247,7 +252,7 @@ keep these invariants:
   Basis subset).
 * Before finishing any change run `make check` (= `test`, `bootstrap`,
   `test-doc`, `test-lib`, `test-all`, `test-basis`, `test-opt`, `test-ir`,
-  `check-levels`, `test-native`, `test-register`, `test-register-jit`,
+  `check-levels`, `check-units`, `test-native`, `test-register`, `test-register-jit`,
   `test-heap`, `test-gc`, `test-census`, `check-heapsim`, `check-gcsim`,
   `check-layouts`, `check-gcbench`, `perf-check`, `bench-smoke`,
   `check-positions`, `check-cross`, `check-docs`, `check-isa`; runs on all

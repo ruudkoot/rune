@@ -37,8 +37,8 @@ What it rests on:
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done |
-| M1 | Measure | done 2026-10-09: `scripts/perf-units.sh`, the table in *What a compile costs* (*Measured again*), HOL4 on Poly/ML in *HOL4 today*, `tests/incremental/SCENARIOS.md`; D6 settled (Mid binary), D9 measured (4%), the globals given a barrier in M3 |
-| M2 | Units in memory: the basis as a value, the front end resumable, a back end per unit | |
+| M1 | Measure | done 2026-10-09, `0bc5bd38`: `scripts/perf-units.sh`, the table in *What a compile costs* (*Measured again*), HOL4 on Poly/ML in *HOL4 today*, `tests/incremental/SCENARIOS.md`; D6 settled (Mid binary), D9 measured (4%), the globals given a barrier in M3 |
+| M2 | Units in memory: the basis as a value, the front end resumable, a back end per unit | done 2026-10-09: `rune --units`, the linker, `Pass.whole`, errors recovered per declaration, `make check-units` (*M2, as built*); one question for the owner (flexible records) |
 | M3 | Unit bytecode, the static linker, and the VM loads units | |
 | M4 | The resident compiler, `use` and the REPL | |
 | M5 | HOL4 on Rune | |
@@ -2175,6 +2175,72 @@ M7.
   per unit.
 * **Touches:** every later milestone; the language server (an
   elaborator that resumes per declaration).
+
+#### M2, as built (2026-10-09)
+
+`rune --units` compiles every file -- of the Basis Library, of a library
+beside it, of the program -- as a unit after the ones before it, and
+links them (`docs/units.md`, the lasting record; `src/backend/link.sml`).
+What was built, and where it differs from the plan above:
+
+* **The passes per unit.** `Pass.whole`: false under `--units`, where
+  `Shake` does not run, `Workers` keeps every wrapper and `Simplify` does
+  not put in place a function called once; `Lower` knows the functions of
+  the units before (`knownBefore`) and gives each it calls an id after the
+  unit's own (`imported`); the lints of Mid and Low accept a global or a
+  function of a unit before. Everything else ran per unit unchanged:
+  `Translate`, `ToMid`, `Lift`, specialisation and both targets keep their
+  tables between units, which the stamps being unique in a session
+  allows.
+* **The linker** works on `Code.program`s, not on bytes: each unit's
+  functions, constants, labels, files and inlined frames get a base, its
+  globals are numbered by stamp through the unit that sets them, and
+  every operand that names a function, global or constant is renumbered
+  by the kind the instruction set gives it, which `make isa` now writes
+  into `RegCodes.linked` and `Opcodes.linked` (the fingerprint does not
+  change). The export and import tables are the linker's record of a
+  unit (`Link.unitCode`) rather than fields of `Code.program`; M3 writes
+  them into the `.rbu`.
+* **No function calls the units' top levels.** Each unit's top level ends
+  in a tail call of the next one's, so function 0 is the first unit's top
+  level and only one is ever on the stack: a trace shows the same frames
+  as the program compiled whole, which `check-units` holds it to.
+* **Numbering stays first use**, per unit: deterministic, which is all
+  the five builds need; definition order is left to M6, where a unit's
+  numbering must not depend on what came before.
+* **Errors per declaration.** A top-level declaration that fails to
+  elaborate is reported, undone (`Elaborate.snapshot`, `restore`) and
+  skipped, whole or in units, and the compile fails at the end of the
+  front end having reported every independent error; a syntax error still
+  ends it. The state to put back is small because the elaborator's maps
+  are functional and the tables keyed by stamps only grow. No error
+  datatype was needed: `Error.report` prints and counts. `docs/language.md`
+  says so in its *Programs* row.
+* **Flexible records are settled at the end of each unit, not of each
+  top-level declaration.** Settling them per declaration rejected
+  `tests/lang/ty.record.flex_program`, which `docs/language.md` keeps on
+  purpose (a generalised flexible record resolved by a later
+  declaration; SML/NJ, MLton and Poly/ML all reject it). So the program
+  compiled whole is unchanged, and with `--units` a flexible record must
+  be determined in its own file. **For the owner:** keep the extension,
+  or settle every flexible record at the end of its top-level declaration,
+  as the other compilers do and as the REPL will have to (M4, where a
+  declaration is a unit)?
+* **The basis as a value** is, after M2, the environment (`Env.env`,
+  threaded), the fixity (functional), the elaborator's snapshot and the
+  tables that only grow. A record of all of it with a delta, which M6
+  must serialise, is built in M6, where what it must hold is known; M2 did
+  not need it.
+* **Checked by** `make check-units` (in `make check`): every program of
+  `tests/lang` and `tests/perf` the same whole and in units at `-O0`,
+  `-O1` and `-O2` with the lint on, for both bytecodes (280 programs);
+  `tests/units`, programs of several files; and the compiler compiled in
+  units compiling its own sources whole to `bin/rune.rbc`, byte for byte.
+  The whole-program path is unchanged: every program of `tests/lang` and
+  `tests/perf` compiles to the same bytes as before M2, for both targets.
+* **Cost**: a unit build of a small program is about ten times the size
+  of its whole build, since nothing is shaken out of the Basis Library's
+  files (`rt.trace_inlined`: 348 KB against 38 KB).
 
 ### M3. Unit bytecode, the static linker, and the VM loads units (L, about 600 C and 500 SML)
 

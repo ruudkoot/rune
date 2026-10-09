@@ -301,6 +301,20 @@ struct
 
   (* ---- the opcodes of the compiler's register target ---- *)
 
+  (* The operands of an instruction that name an entry of a table of the
+     program, by their position among its operands: 0 a function, 1 a
+     global, 2 a constant (a string constant too). A linker renumbers them
+     (Link, docs/plans/incremental-compilation.md, M2); labels are left
+     out, since the compiler's code names them symbolically. *)
+  fun linkedOperands (i : rinstruction) : string =
+    let
+      fun kindOf k = case k of K Function => SOME 0 | K Global => SOME 1 | K Constant => SOME 2
+                             | K StringConstant => SOME 2 | _ => NONE
+      val ops = List.mapPartial (fn (n, (_, k)) => Option.map (fn c => "(" ^ Int.toString n ^ ", " ^ Int.toString c ^ ")")
+                                                              (kindOf k))
+                                (numbered (#operands i))
+    in "[" ^ commaList ops ^ "]" end
+
   fun regcodesSml (instrs : rinstruction list, fp : int) : file =
     let val is = numbered instrs
     in
@@ -317,6 +331,9 @@ struct
             @ List.map (fn (n, i : rinstruction) => "  val " ^ #name i ^ " = " ^ Int.toString n) is
             @ ["  val count = " ^ Int.toString (List.length instrs),
                "  val names = Vector.fromList [" ^ commaList (List.map (fn i : rinstruction => "\"" ^ #name i ^ "\"") instrs) ^ "]",
+               "  (* each opcode's operands that name a function (0), a global (1) or",
+               "     a constant (2), by position: what a linker renumbers *)",
+               "  val linked : (int * int) list vector = Vector.fromList [" ^ commaList (List.map linkedOperands instrs) ^ "]",
                "end"])}
     end
 

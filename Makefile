@@ -142,7 +142,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: isa check-isa test-ir check-levels test-register test-register-jit test-register-asan test-int64 vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa test-ir check-levels check-units test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
 
 all: vm boot runedoc runeopt
 
@@ -847,6 +847,20 @@ test-ir: $(RUNE)
 check-levels: $(RUNE) $(RUNEVM)
 	sh scripts/check-levels.sh --rune $(RUNE_STACK) --vm $(RUNEVM) -j $(JOBS)
 
+# Every program of tests/lang and tests/perf compiled a unit per file (--units)
+# prints, traces and exits as the program compiled whole, at -O0 to -O2, on
+# both bytecodes; the programs of several files of tests/units do what they
+# expect; and the compiler compiled in units compiles itself to bin/rune.rbc
+# (docs/units.md; docs/plans/incremental-compilation.md, M2).
+check-units: $(RUNE) bin/rune-boot bin/runevm bin/runevm-stack
+	sh scripts/check-units.sh --rune $(RUNE) --vm bin/runevm -j $(JOBS)
+	sh scripts/check-units.sh --rune $(RUNE_STACK) --vm bin/runevm-stack --out tests/out/units-stack -j $(JOBS)
+	sh tests/units/run.sh --rune $(RUNE)
+	bin/rune-boot --units -o bin/rune.units.rbc $(BOOT_SRCS)
+	bin/runevm --heap-size $(RUNE_HEAP) bin/rune.units.rbc --lib bin/../lib -o bin/rune.stage2.units.rbc $(BOOT_SRCS)
+	cmp bin/rune.rbc bin/rune.stage2.units.rbc
+	@echo "check-units: the compiler compiled in units compiles itself to bin/rune.rbc"
+
 check-positions: $(RUNE) $(RUNEVM)
 	sh scripts/check-positions.sh -j $(JOBS) --rune $(RUNE_STACK) --vm $(RUNEVM)
 
@@ -1171,6 +1185,7 @@ check:
 	@$(MAKE) --no-print-directory test-basis
 	@$(MAKE) --no-print-directory test-opt
 	@$(MAKE) --no-print-directory test-ir check-levels
+	@$(MAKE) --no-print-directory check-units
 	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory test-register
 	@$(MAKE) --no-print-directory test-register-jit

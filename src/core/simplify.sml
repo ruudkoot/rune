@@ -1190,8 +1190,10 @@ struct
                                         andalso not (raises (#body f))
                                      then IntTable.insert (!inlinable, #name f, f) else ()) fs
                      | _ => ()) p
+      (* called once in the program; in a unit, a unit after it may call it
+         too (Pass.whole) *)
       val () =
-        if not inline then ()
+        if not inline orelse not (!Pass.whole) then ()
         else
           List.app (fn Funs [f] =>
                          if calledOnce (#name f) andalso not (names (#name f, #body f))

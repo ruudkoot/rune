@@ -35,6 +35,11 @@ struct
 
   val fixity : Fixity.env ref = ref Fixity.initial
 
+  (* A compile that reported its errors as it found them (Error.report),
+     and so fails once the front end is done *)
+  exception Reported
+  fun failIfReported () = if !Error.errors > 0 then raise Reported else ()
+
   fun loadTokens (path : string) : Lexer.item vector =
     let
       val file = Source.load path
@@ -174,7 +179,71 @@ struct
      copied by every collection, while the second runs: compileWith
      calls frontEnd and then hands its result on in a tail call. *)
   and compileWith (args : entry list * entry list * Lexer.item vector list * string list) : OS.Process.status =
-    backEnd (#4 args, frontEnd args)
+    if !Options.units then compileUnits args
+    else backEnd (#4 args, frontEnd args)
+
+  (* --units: every file a unit of its own -- the basis library's, those of
+     the libraries beside it, the program's -- compiled after the ones before
+     it, and the units linked (docs/units.md; Link). The environment, the
+     fixity and the compiler's tables go on from unit to unit; the passes see
+     one unit at a time (Pass.whole). *)
+  and compileUnits (basis : entry list, final : entry list, userToks, inputs : string list) : OS.Process.status =
+    let
+      val () = Pass.whole := false
+      val () = Elaborate.recover := true
+      val () = MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE)
+      val registers = !Options.target = "registers"
+      val () = if registers then Code.opcodeNames := RegCodes.names else ()
+      val env = ref Env.initial
+      (* each unit's name, its tokens when wanted, and whether it may use
+         _prim: the basis library may, the libraries beside it may not *)
+      fun file (e : entry, allow) = (BasisManifest.path e, fn () => loadTokens (BasisManifest.path e), allow)
+      val sources =
+        List.map (fn e => file (e, inBasis e)) basis
+        @ ListPair.map (fn (toks, name) => (name, fn () => toks, !Options.allowPrim)) (userToks, inputs)
+        @ List.map (fn e => file (e, !Options.allowPrim)) final
+      (* the front end's stages, for --pass-stats; their size is the number of
+         top-level declarations *)
+      fun frontStage name f =
+        Pass.stage {name = name, showIn = NONE, show = fn _ => "", check = fn _ => (), size = List.length} f
+      fun unit ((name, load, allow), acc) =
+        let
+          val () = if !Pass.stats then TextIO.output (TextIO.stdErr, "unit " ^ name ^ "\n") else ()
+          val decs = frontStage "parse" (fn () => parseTokens (load ())) ()
+          (* a unit's flexible records are settled at its end, and its
+             matches reported (docs/units.md) *)
+          val _ = frontStage "elaborate"
+                             (fn () => (Elaborate.allowPrim := allow; Elaborate.elabTop (env, decs); Elaborate.finish (); decs))
+                             ()
+          (* after an error, the units are only elaborated, for their errors *)
+          val failed = !Error.errors > 0
+          val () = if failed then () else if !Options.noWarnings then Error.warnings := [] else Error.flushWarnings ()
+        in
+          if !Options.typecheckOnly orelse failed then acc
+          else
+            let
+              val lam = Pass.stage {name = "translate", showIn = NONE, show = Lambda.show, check = LambdaLint.check,
+                                    size = Lambda.size}
+                                   Translate.transProgram decs
+              val low = lowOf lam
+              val code = targetStage low
+              val u : Link.unitCode =
+                {code = code, globals = IntMap.listItemsi (!Code.globals), defines = Link.defines low,
+                 imports = List.map (fn (s, i) => (i, s)) (IntMap.listItemsi (!Lower.imported)),
+                 exports = IntMap.listItemsi (!Lower.globalFids)}
+            in
+              Lower.knownBefore := IntMap.foldli (fn (s, _, m) => IntMap.insert (m, s, ())) (!Lower.knownBefore)
+                                                 (!Lower.globalFids);
+              u :: acc
+            end
+        end
+      val units = List.rev (List.foldl unit [] sources)
+      val () = failIfReported ()
+    in
+      if !Options.typecheckOnly then OS.Process.success
+      else if registers then emitProgramAs (RegCodes.fingerprint, inputs, Link.program (Regs.program, RegCodes.linked, units))
+      else emitProgram (inputs, Link.program (Stack.program, Opcodes.linked, units))
+    end
 
   and frontEnd (basis : entry list, final : entry list, userToks, _ : string list) : Lambda.lexp option =
     let
@@ -211,7 +280,9 @@ struct
          Elaborate.elabTop (env, fin);
          Elaborate.finish ();
          progs)
+      val () = Elaborate.recover := true
       val _ = frontStage "elaborate" elaborate (basisProg, libraryProg, userProg, finalProg)
+      val () = failIfReported ()
       val () = if !Options.noWarnings then Error.warnings := [] else Error.flushWarnings ()
     in
       if !Options.typecheckOnly then NONE
@@ -224,11 +295,22 @@ struct
   (* -O0 is the same stages with no optional pass *)
   and backEnd (_, NONE) = OS.Process.success
     | backEnd (inputs, SOME lam) =
+        let val low = lowOf lam
+        in
+          if !Options.target = "registers" then
+            (Code.opcodeNames := RegCodes.names;
+             emitProgramAs (RegCodes.fingerprint, inputs, targetStage low))
+          else emitProgram (inputs, targetStage low)
+        end
+
+  (* Lambda to Low: Mid, the optional passes on it, and Lower. Shake runs
+     on a whole program only (Pass.whole). *)
+  and lowOf (lam : Lambda.lexp) : Low.program =
         let
           val mid = midStage (SOME Lambda.show) ToMid.program lam
           (* the optional passes on Mid (docs/ir.md) *)
           fun optional (name, f) m =
-            if Pass.enabled (name, 1) then
+            if Pass.enabled (name, 1) andalso (name <> "shake" orelse !Pass.whole) then
               Pass.stage {name = name, showIn = SOME MidText.show, show = MidText.show, check = MidLint.check,
                           size = Mid.size}
                          f m
@@ -241,22 +323,20 @@ struct
           val mid =
             if Pass.enabled ("simplify", 1) andalso Pass.enabled ("inline", 1) then optional ("shake", Shake.program) mid
             else mid
-          val low = Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = LowLint.check,
-                                size = Low.size}
-                               (fn m => Lower.program (m, !Translate.funNames)) mid
         in
-          if !Options.target = "registers" then
-            (Code.opcodeNames := RegCodes.names;
-             emitProgramAs (RegCodes.fingerprint, inputs,
-                            Pass.stage {name = "registers", showIn = SOME Low.show, show = Code.dump,
-                                        check = fn _ => (), size = Code.size}
-                                       Regs.program low))
-          else
-            emitProgram (inputs,
-                         Pass.stage {name = "stack", showIn = SOME Low.show, show = Code.dump,
-                                     check = fn _ => (), size = Code.size}
-                                    Stack.program low)
+          Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = LowLint.check,
+                      size = Low.size}
+                     (fn m => Lower.program (m, !Translate.funNames)) mid
         end
+
+  (* Low to the code of the target --target names *)
+  and targetStage (low : Low.program) : Code.program =
+    if !Options.target = "registers" then
+      Pass.stage {name = "registers", showIn = SOME Low.show, show = Code.dump, check = fn _ => (), size = Code.size}
+                 Regs.program low
+    else
+      Pass.stage {name = "stack", showIn = SOME Low.show, show = Code.dump, check = fn _ => (), size = Code.size}
+                 Stack.program low
 
   and emitProgram (inputs : string list, prog : Code.program) : OS.Process.status =
     emitProgramAs (Opcodes.fingerprint, inputs, prog)
@@ -285,6 +365,7 @@ struct
     handle BasisManifest.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
          | Options.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
          | Error.CompileError (sp, msg) => (eprintln (Error.format (sp, msg)); OS.Process.failure)
+         | Reported => OS.Process.failure
          | Error.Bug msg => (eprintln ("rune: " ^ msg); OS.Process.failure)
          | IO.Io {name, ...} => (eprintln ("rune: I/O error on " ^ name); OS.Process.failure)
 end

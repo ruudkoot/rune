@@ -48,4 +48,7 @@ struct
   val FIELD = 40
   val count = 41
   val names = Vector.fromList ["HALT", "MOVE", "INT", "CONST", "UNIT", "CON0", "GLOBAL", "SETGLOBAL", "ENV", "SELF", "CALL", "RESULT", "TAILCALL", "RET", "PRIM", "PRIMPUSH", "TUPLE", "CLOSURE", "SELECT", "CON", "DECON", "CONTAG", "NEWEXN", "BUILTINEXN", "MKEXN", "EXNCON", "EXNARG", "SETENV", "JUMP", "JUMPIF", "JUMPIFNOT", "JUMPIFNOTTAG", "PUSHHANDLER", "POPHANDLER", "CATCH", "RAISE", "CALLK", "TAILCALLK", "SWITCH", "CONN", "FIELD"]
+  (* each opcode's operands that name a function (0), a global (1) or
+     a constant (2), by position: what a linker renumbers *)
+  val linked : (int * int) list vector = Vector.fromList [[], [], [], [(1, 2)], [], [], [(1, 1)], [(0, 1)], [], [], [], [], [], [], [], [], [], [(1, 0)], [], [], [], [], [(1, 2)], [], [], [], [], [], [], [], [], [], [], [], [], [], [(0, 0)], [(0, 0)], [], [], []]
 end

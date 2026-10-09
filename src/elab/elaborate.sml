@@ -107,7 +107,9 @@ struct
 
   (* Section 4.11: the program context must determine every flexible record.
      Checked once the whole program is elaborated, together with the deferred
-     match reports (which need the records' labels). *)
+     match reports (which need the records' labels); with --units, at the
+     end of each unit, which is then settled before the next is compiled
+     (docs/units.md). *)
   fun finish () =
     (List.app (fn (r, sp) =>
                  case !r of
@@ -1063,14 +1065,45 @@ struct
                         end) (vals delta);
      StringMap.app (fn e => checkClosed (e, sp)) (strs delta))
 
+  (* What a top-level declaration may change of the elaborator's state
+     besides the environment it extends, which elabTop changes only once
+     the declaration has elaborated: put back after a declaration that
+     fails, so that the next is elaborated as if it had not been there
+     (recover; docs/units.md, Errors). The tables that are keyed by stamps
+     (Ty.binders and the like) only grow, and no stamp is made twice, so
+     what a failed declaration put in them names nothing after it. *)
+  type snapshot = {sigs : SigMatch.sigma StringMap.map, funs : funinfo StringMap.map,
+                   datatypes : Ty.datatypeInfo IntMap.map, overloads : Overload.entry IntMap.map,
+                   pendingFlex : (tvar ref * span) list, pendingChecks : (unit -> unit) list}
+  fun snapshot () : snapshot =
+    {sigs = !sigs, funs = !funs, datatypes = !Ty.datatypes, overloads = !Overload.table,
+     pendingFlex = !pendingFlex, pendingChecks = !pendingChecks}
+  fun restore ({sigs = s, funs = f, datatypes = d, overloads = ov, pendingFlex = pf, pendingChecks = pc} : snapshot) =
+    (sigs := s; funs := f; Ty.datatypes := d; Ty.extras := Ty.Unknown; Overload.table := ov;
+     pendingOverloads := []; pendingLiterals := []; pendingFlex := pf; pendingChecks := pc)
+
+  (* Whether a top-level declaration that fails to elaborate is reported
+     (Error.report), undone and skipped, and the next one elaborated, so
+     that a compile reports every independent error before it fails; the
+     driver turns it on for the program, and the REPL will. *)
+  val recover = ref false
+
   fun elabTop (env : env ref, decs : dec list) : unit =
     List.app (fn d =>
                 let
-                  val () = Types.startWork (spanOfDec d)
-                  val () = Unify.flexHook := (fn r => pendingFlex := (r, spanOfDec d) :: !pendingFlex)
-                  val delta = elabDec (!env, 0, true, ref StringMap.empty, d)
-                in resolvePending (); checkClosed (delta, spanOfDec d); env := plus (!env, delta);
-                   Types.stopWork () end) decs
+                  val saved = if !recover then SOME (snapshot ()) else NONE
+                  fun go () =
+                    let
+                      val () = Types.startWork (spanOfDec d)
+                      val () = Unify.flexHook := (fn r => pendingFlex := (r, spanOfDec d) :: !pendingFlex)
+                      val delta = elabDec (!env, 0, true, ref StringMap.empty, d)
+                    in resolvePending (); checkClosed (delta, spanOfDec d); env := plus (!env, delta);
+                       Types.stopWork () end
+                in
+                  case saved of
+                    NONE => go ()
+                  | SOME s => go () handle Error.CompileError e => (Types.stopWork (); restore s; Error.report e)
+                end) decs
 
   fun elabProgram (decs : dec list) : env =
     let val env = ref Env.initial

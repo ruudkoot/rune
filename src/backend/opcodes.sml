@@ -50,6 +50,9 @@ struct
   val count = 41
   val names = Vector.fromList ["HALT", "CONST", "INT", "UNIT", "CON0", "LOCAL", "SETLOCAL", "ENV", "SELF", "GLOBAL", "SETGLOBAL", "POP", "TUPLE", "SELECT", "CON", "DECON", "CONTAG", "CLOSURE", "SETENV", "CALL", "TAILCALL", "RET", "JUMP", "JUMPIFNOT", "JUMPIF", "PUSHHANDLER", "POPHANDLER", "RAISE", "NEWEXN", "BUILTINEXN", "MKEXN", "EXNCON", "EXNARG", "PRIM", "JUMPIFNOTTAG", "TEELOCAL", "CALLK", "SWITCH", "TAILCALLK", "CONN", "FIELD"]
   val nargs = Vector.fromList [0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 2, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 2, 1, 2, 1, 2, 2, 2]
+  (* each opcode's operands that name a function (0), a global (1) or
+     a constant (2), by position: what a linker renumbers *)
+  val linked : (int * int) list vector = Vector.fromList [[], [(0, 2)], [], [], [], [], [], [], [], [(0, 1)], [(0, 1)], [], [], [], [], [], [], [(0, 0)], [], [], [], [], [], [], [], [], [], [], [(0, 2)], [], [], [], [], [], [], [], [(0, 0)], [], [(0, 0)], [], []]
 end
 
 (* The opcodes as a datatype, for code that says what it does with each

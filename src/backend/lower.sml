@@ -255,6 +255,16 @@ struct
   val globalFids : int IntMap.map ref = ref IntMap.empty
   fun isKnown g = IntMap.member (!knownFuns, g)
 
+  (* A unit (not Pass.whole; docs/plans/incremental-compilation.md, M2):
+     the functions of the top level of the units before it, which a known
+     call may call too, by their globals; and those this unit calls, each
+     by the id it is given here, after the unit's own functions, which the
+     linker replaces (Link). A unit's top level ends in a tail call of the
+     next unit's, by the stamp nextUnit. *)
+  val knownBefore : unit IntMap.map ref = ref IntMap.empty
+  val imported : int IntMap.map ref = ref IntMap.empty
+  val nextUnit = ~1
+
   (* A function being made: its id, its blocks so far, the block being
      filled, and how it reads the variables it captures. *)
   type builder = {fid : int, blocks : L.block list ref, label : L.label ref, params : L.var list ref, instrs : L.instr list ref,
@@ -672,7 +682,17 @@ struct
   (* The ids of the functions known calls call, now that each has one. *)
   fun resolve (f : L.func) : L.func =
     let
-      fun fid g = case IntMap.find (!globalFids, g) of SOME i => i | NONE => bug "a known call of no function"
+      fun fid g =
+        case IntMap.find (!globalFids, g) of
+          SOME i => i
+        | NONE =>
+            if !Pass.whole then bug "a known call of no function"
+            else
+              case IntMap.find (!imported, g) of
+                SOME i => i
+              | NONE =>
+                  let val i = !nextFuncId + IntMap.numItems (!imported)
+                  in imported := IntMap.insert (!imported, g, i); i end
       fun instr (L.Def (x, L.CallK (g, vs))) = L.Def (x, L.CallK (fid g, vs))
         | instr i = i
       fun block ({label, params, instrs, transfer} : L.block) : L.block =
@@ -688,9 +708,10 @@ struct
     let
       val () = (useCounts := IntTable.table 4096; captures := IntMap.empty; selfRefs := IntMap.empty; funcs := [];
                 selectUses := IntTable.table 1024; binderFn := IntTable.table 4096; nextFn := 0; virtuals := IntTable.table 1024;
-                nextFuncId := 0; funNames := names; globalFids := IntMap.empty;
+                nextFuncId := 0; funNames := names; globalFids := IntMap.empty; imported := IntMap.empty;
                 knownFuns := List.foldl (fn (M.Funs fs, m) => List.foldl (fn (f, m) => IntMap.insert (m, #name f, ())) m fs
-                                          | (_, m) => m) IntMap.empty p)
+                                          | (_, m) => m)
+                                        (if !Pass.whole then IntMap.empty else !knownBefore) p)
       val () = List.app (fn M.Val (_, _, e) => countExp e
                           | M.Funs fs => List.app (countExp o #body) fs
                           | M.Do (_, e) => countExp e) p
@@ -735,7 +756,7 @@ struct
         | M.Do (_, e) => defining (e, fn _ => ())
       val () = List.app definition p
       val u = def (b, L.Unit)
-      val () = finish (b, L.Return u)
+      val () = finish (b, if !Pass.whole then L.Return u else L.TailCallK (nextUnit, [u]))
       val () = ignore top
       val topFunc : L.func = {id = id, name = "<toplevel>", params = [param], ncaptured = 0, nvars = !(#nvars b),
                               blocks = List.rev (!(#blocks b)), pos = NONE,
