@@ -79,7 +79,7 @@ native:mlkit@* | Char.fromString/unescaped-double-quote | SPEC-AMBIGUOUS | conve
 # ---- String
 native:mlton@* | String.fromString/unescaped-double-quote* | SPEC-AMBIGUOUS | stops at an unescaped double quote; the test takes the reading of SML/NJ and Poly/ML (it converts to itself)
 native:mlton@* | String.fromCString/NONE-* | HOST-BUG | SOME "" instead of NONE when no character can be converted
-native:smlnj*@* | @section/string/extract-overflow | HOST-BUG | String.extract (s, i, SOME j) with i or j near Int.maxInt: no Subscript but a crash (a segmentation fault on 110.79, a failed allocation on 110.99.9)
+native:smlnj*@* | @section/string/extract-overflow | HOST-BUG | String.extract (s, i, SOME j) with i or j near Int.maxInt: no Subscript but a crash (a segmentation fault on 110.79, a failed allocation on 110.99.9) (docs/bugreport/smlnj/String.extract/overflow-near-maxInt)
 xc2:smlnj-legacy@* | String.extract/SOME-Subscript-not-Overflow-* | HOST-BUG | the check of extract (s, i, SOME j) adds i and j without the check of Overflow (fast_add): the sum wraps round, the region passes, and a string of j characters is made, which raises Size where native SML/NJ fails to allocate it (@section/string/extract-overflow) (docs/bugreport/smlnj/String.extract/overflow-near-maxInt)
 native:smlnj*@* | String.isSubstring/empty-empty | HOST-BUG | isSubstring "" "" is false
 native:smlnj*@* | String.isSubstring/law-39 | HOST-BUG | isSubstring "" "" is false (the law draws two empty strings)
@@ -263,13 +263,13 @@ native:mlkit@* | *ArraySlice.copy*/Subscript-not-Overflow* | HOST-BUG | copy and
 # ---- Array2
 native:mlton@* | Array2.copy/overlap-[lr]* | HOST-BUG | copy within one array to the left or the right in the same rows copies elements that it has already overwritten
 xc2:mlton@* | *Array2.*/Subscript-not-Overflow-sum-* | HOST-BUG | with an int of 64 bits (xc2 builds the library so; native MLton's int has 32) the check of a region adds its start and its length with +!, which does not check for Overflow: for a length of Int.maxInt the sum wraps round and the region passes (appi, foldi and modifyi raise no Subscript); MLton -default-type int64 does the same (docs/bugreport/mlton/Array2/region-check-wraps-with-int64)
-native:smlnj*@* | Array2.*/no-[rc]* | HOST-BUG | Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
-native:smlnj*@* | Array2.row/Subscript-no-rows | HOST-BUG | row (a, 0) of an array without rows is an empty vector instead of Subscript
-native:smlnj*@* | Array2.*/nothing-* | HOST-BUG | a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
-native:smlnj*@* | @section/array2/no-elements-writes | HOST-BUG | modifyi and copy on a valid region without rows or columns write one row or column, even beyond the end of the array: segmentation fault
+native:smlnj*@* | Array2.*/no-[rc]* | HOST-BUG | Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0) (docs/bugreport/smlnj/Array2/no-rows-or-columns)
+native:smlnj*@* | Array2.row/Subscript-no-rows | HOST-BUG | row (a, 0) of an array without rows is an empty vector instead of Subscript (docs/bugreport/smlnj/Array2/no-rows-or-columns)
+native:smlnj*@* | Array2.*/nothing-* | HOST-BUG | a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array (docs/bugreport/smlnj/Array2/no-rows-or-columns)
+native:smlnj*@* | @section/array2/no-elements-writes | HOST-BUG | modifyi and copy on a valid region without rows or columns write one row or column, even beyond the end of the array: segmentation fault (docs/bugreport/smlnj/Array2/no-rows-or-columns)
 xc2:smlnj-legacy@* | Array2.*/model-empty-* | HOST-BUG | the laws of the section no-elements-writes, which native SML/NJ does not get through, fail as no-[rc]* and nothing-* do: array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0), and a traversal of a region without rows (RowMajor) or columns (ColMajor) applies f to one row or column, even beyond the end of the array (Subscript) (docs/bugreport/smlnj/Array2/no-rows-or-columns)
-native:smlnj*@* | Array2.*/Subscript-not-Overflow-* | HOST-BUG | the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row and dst_col)
-native:smlnj*@* | Array2.row/Subscript-not-Overflow | HOST-BUG | row (a, Int.maxInt) raises Overflow instead of Subscript
+native:smlnj*@* | Array2.*/Subscript-not-Overflow-* | HOST-BUG | the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row and dst_col) (docs/bugreport/smlnj/Array2/Overflow-not-Subscript)
+native:smlnj*@* | Array2.row/Subscript-not-Overflow | HOST-BUG | row (a, Int.maxInt) raises Overflow instead of Subscript (docs/bugreport/smlnj/Array2/Overflow-not-Subscript)
 native:polyml@* | Array2.*/Subscript-not-Overflow-* | HOST-BUG | the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row + nrows)
 native:polyml@* | Array2.*/no-rows* | HOST-BUG | an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList [] and tabulate tr (0, c, f)
 native:polyml@* | Array2.*/*model-empty-* | HOST-BUG | an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
@@ -419,7 +419,7 @@ native:mlkit@* | Date.scan/24-characters | HOST-BUG | scan reads a year of five 
 *:polyml@* | Posix.Signal.pipe/ends-shell | HOST-BUG | the runtime ignores SIGPIPE, and the programs it executes inherit that
 native:mlton@* | Posix.Process.W.untraced/in-all | HOST-BUG | W.allSet (fl1, fl2) tests whether fl2 is in fl1: the arguments are swapped
 native:mlton@* | Posix.Process.W.allSet/inclusion | HOST-BUG | W.allSet (fl1, fl2) tests whether fl2 is in fl1: the arguments are swapped
-native:mlton@* | Posix.Process.fromStatus/failure | HOST-BUG | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
+native:mlton@* | Posix.Process.fromStatus/failure | HOST-BUG | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value (docs/bugreport/mlton/OS.Process.status/two-representations)
 native:polyml@* | Posix.Process.fromStatus/failure | HOST-BUG | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
 native:polyml@* | Posix.Process.W.toWord/of-fromWord | HOST-BUG | W.fromWord keeps the bits that are not in W.all
 xc1:* | Posix.Process.exit/no-flush | XC1-NA | the file handles of tests/basis/host/rune-prim.sml write through (file_write), where the VM's keep the block that TextIO leaves them to buffer: what the child wrote before Posix.Process.exit is in the file already (and on SML/NJ 110.79 the check raises Overflow first, at the Time.now of C.waitBounded: microseconds since 1970 in a 31-bit int; on Poly/ML the child's exit fails too, as in Posix.Process.exit/status)
@@ -450,13 +450,13 @@ native:polyml@* | @section/posix_tty/pgrp | HOST-ABSENT | Posix.TTY.TC lacks get
 native:polyml@* | @section/posix_tty_sig/whole | HOST-ABSENT | Posix.TTY.TC lacks getpgrp and setpgrp
 native:mlton@* | Posix.TTY.getlflag/sample | HOST-BUG | getlflag returns the output flags (those of getoflag)
 native:smlnj*@* | Posix.TTY.TC.getpgrp/not-a-terminal | HOST-BUG | TC.getpgrp of a descriptor that is not a terminal raises no exception
-native:mlton@* | Unix.reap/status | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
-native:mlton@* | Unix.reap/twice | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
-native:mlton@* | Unix.W_EXITSTATUS/reap | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
-native:mlton@* | Unix.W_SIGNALED/reap | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
-native:mlton@* | Unix.W_STOPPED/reap-waits-for-the-end | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 5 is W_SIGNALED)
-native:mlton@* | Unix.kill/* | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (a process that term or kill ended is W_SIGNALED of signal 1)
-native:mlton@* | Unix.fromStatus/failure | HOST-BUG | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
+native:mlton@* | Unix.reap/status | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1) (docs/bugreport/mlton/OS.Process.status/two-representations)
+native:mlton@* | Unix.reap/twice | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1) (docs/bugreport/mlton/OS.Process.status/two-representations)
+native:mlton@* | Unix.W_EXITSTATUS/reap | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1) (docs/bugreport/mlton/OS.Process.status/two-representations)
+native:mlton@* | Unix.W_SIGNALED/reap | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1) (docs/bugreport/mlton/OS.Process.status/two-representations)
+native:mlton@* | Unix.W_STOPPED/reap-waits-for-the-end | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 5 is W_SIGNALED) (docs/bugreport/mlton/OS.Process.status/two-representations)
+native:mlton@* | Unix.kill/* | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (a process that term or kill ended is W_SIGNALED of signal 1) (docs/bugreport/mlton/OS.Process.status/two-representations)
+native:mlton@* | Unix.fromStatus/failure | HOST-BUG | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value (docs/bugreport/mlton/OS.Process.status/two-representations)
 native:polyml@* | Unix.fromStatus/failure | HOST-BUG | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
 native:smlnj*@* | Unix.execute*/no-such-program | HOST-BUG | a child that cannot execute the command exits with 1 (after reporting an uncaught SysErr), not 126
 native:smlnj*@* | Unix.exit/flushes | HOST-BUG | Unix.exit does not flush the output streams that are open
@@ -609,7 +609,7 @@ native:mlton@* | *StreamIO.closeOut/terminated-closes-the-writer | HOST-BUG | cl
 native:mlton@* | *IO.StreamIO.filePosIn/Io-truncated | HOST-BUG | filePosIn of a truncated stream raises nothing
 native:mlton@* | *StreamIO.output1/Io-when-the-writer-fails | HOST-BUG | output1 lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
 native:mlton@* | ImperativeIO.input1/passes-an-end-of-stream | HOST-BUG | the input1 of a stream of the functor ImperativeIO does not move past an end-of-stream: after NONE the next input1 gives NONE again, not what follows ("the input stream should be positioned after the end-of-stream")
-native:mlton@* | OS.Process.exit/[ks]* | HOST-BUG | exit of the status of a command raises (the exit code must be below 256), where the specification's implementation note asks that the command's exit code be passed on, and failure for a command that a signal ended
+native:mlton@* | OS.Process.exit/[ks]* | HOST-BUG | exit of the status of a command raises (the exit code must be below 256), where the specification's implementation note asks that the command's exit code be passed on, and failure for a command that a signal ended (docs/bugreport/mlton/OS.Process.status/two-representations)
 # SML/NJ
 native:smlnj*@* | @load/io_primio* | HOST-BUG | the avail field of TextPrimIO.RD and BinPrimIO.RD has the type unit -> Position.int option, not unit -> int option, so that neither structure matches PRIM_IO
 native:smlnj*@* | *IO.[gs]etOutstream/flushes* | HOST-BUG | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
@@ -645,7 +645,7 @@ native:polyml@* | *StreamIO.inputN/exactly-n-before-end-of-stream | HOST-BUG | i
 native:polyml@* | StreamIO.input/Io-* | HOST-BUG | the stream of the functor StreamIO lets the exception of its reader through, instead of raising Io with it as the cause
 xc2:polyml@* | OS.Process.exit/keeps-the-exit-code-of-a-command | HOST-BUG | exit passes C's exit the status that OS.Process.system gives, the status of waitpid (768 for `exit 3`, whose low byte is 0), so that the child ends with 0; native Poly/ML's child does not end (the line below) (docs/bugreport/polyml/OS.Process.exit/status-of-system)
 xc2:polyml@* | OS.Process.exit/signal-status-is-failure | HOST-BUG | exit passes C's exit the status of waitpid, the signal (15) for a command that SIGTERM ends, which is not failure (1); native Poly/ML passes the check only because neither child ends (docs/bugreport/polyml/OS.Process.exit/status-of-system)
-native:polyml@* | OS.Process.exit/keeps-the-exit-code-of-a-command | HOST-BUG | a child that calls exit with the status of a command has not ended after 5 seconds, when the check kills it
+native:polyml@* | OS.Process.exit/keeps-the-exit-code-of-a-command | HOST-BUG | a child that calls exit with the status of a command has not ended after 5 seconds, when the check kills it (docs/bugreport/polyml/OS.Process.exit/status-of-system)
 native:polyml@* | Real32.Math.* | HOST-BUG | where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos ~2.0, ln ~1.0, log10 ~1.0, pow (nan, 1.0)
 native:polyml@* | TextIO.StreamIO.outputSubstr/LINE_BUF | HOST-BUG | outputSubstr does not flush a line-buffered stream at a newline, which output does ("equivalent to: output (strm, Substring.string ss)")
 native:mlkit@* | *IO.inputAll/file-grows-after-end-of-stream | HOST-BUG | inputAll on a stream that openIn made leaves it at the end-of-stream where it stops, not "immediately past" it: after the file has grown, the next inputAll returns the empty vector and only the one after it the new elements

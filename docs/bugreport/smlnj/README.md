@@ -245,3 +245,10 @@ stand-ins for the compiler's primitives, not by rebuilding the Basis.
 |---|---|---|---|
 | [String.extract/overflow-near-maxInt](String.extract/overflow-near-maxInt/BUGREPORT.md): the region check wraps round, and the system dies | 3 of 3 (crash) | 0 | not reported; the same in smlnj/smlnj `main` |
 | [Array2/no-rows-or-columns](Array2/no-rows-or-columns/BUGREPORT.md): an array or region without rows or columns is traversed anyway, past the end of the array | 10 of 10 | 0 | smlnj/smlnj `204968a` fixes 8 of 10 for 2026.3; legacy not fixed; not reported |
+
+One more of `Array2`, which the native runs record: its index and region
+checks compute before they compare.
+
+| Report | 110.99.9 and 2026.2 | with the fix | Upstream |
+|---|---|---|---|
+| [Array2/Overflow-not-Subscript](Array2/Overflow-not-Subscript/BUGREPORT.md): `Overflow` instead of `Subscript` for an index or a region near `Int.maxInt` | 6 of 6 | 0 | not reported; the same in smlnj/smlnj `main` |

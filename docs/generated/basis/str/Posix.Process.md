@@ -92,11 +92,12 @@ What each means is on [`POSIX_PROCESS`](../sig/POSIX_PROCESS.md); the types are 
 > result is; it is POSIX's "time left", which is zero when the wait ran
 > out and the rest when a signal cut it short.
 
-<details><summary>Other implementations (7)</summary>
+<details><summary>Other implementations (8)</summary>
 
 - **MLKit** &mdash; exece (and so Unix.executeInEnv) with the environment \[\] passes on the environment of the process: the runtime installs the list only when it is not empty
 - **Poly/ML 5.9.2** &mdash; a forked child that calls Posix.Process.exit (or OS.Process.exit) never ends
-- **MLton, Poly/ML** &mdash; fromStatus OS.Process.failure is W\_SIGNALED, not W\_EXITSTATUS of a non-zero value
+- **MLton** &mdash; fromStatus OS.Process.failure is W\_SIGNALED, not W\_EXITSTATUS of a non-zero value (docs/bugreport/mlton/OS.Process.status/two-representations)
+- **Poly/ML** &mdash; fromStatus OS.Process.failure is W\_SIGNALED, not W\_EXITSTATUS of a non-zero value
 - **SML/NJ** &mdash; OS.Process.system returns failure (W\_EXITSTATUS 1) for a command that a signal ended
 - **MLKit** &mdash; the status of a process that did not succeed is W\_EXITSTATUS 0w255 whatever its exit status or signal: OS.Process.system and Unix.reap reduce every failure to OS.Process.failure (an int, \~1), which fromStatus maps to W\_EXITSTATUS 0wxFF
 - **Poly/ML** &mdash; a forked child that pauses is not ended by the signal (alrm, usr1) that ends the same pause in the main process

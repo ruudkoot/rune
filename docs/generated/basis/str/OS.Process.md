@@ -87,8 +87,8 @@ What each means is on [`OS_PROCESS`](../sig/OS_PROCESS.md); the types are this s
 <details><summary>Other implementations (3)</summary>
 
 - **MLKit** &mdash; the status that OS.Process.system gives is success or failure (\~1) and nothing else, so exit ends the child with 255 whatever the command ended with (docs/bugreport/mlkit/Unix.reap/status-lost)
-- **MLton** &mdash; exit of the status of a command raises (the exit code must be below 256), where the specification's implementation note asks that the command's exit code be passed on, and failure for a command that a signal ended
-- **Poly/ML** &mdash; a child that calls exit with the status of a command has not ended after 5 seconds, when the check kills it
+- **MLton** &mdash; exit of the status of a command raises (the exit code must be below 256), where the specification's implementation note asks that the command's exit code be passed on, and failure for a command that a signal ended (docs/bugreport/mlton/OS.Process.status/two-representations)
+- **Poly/ML** &mdash; a child that calls exit with the status of a command has not ended after 5 seconds, when the check kills it (docs/bugreport/polyml/OS.Process.exit/status-of-system)
 
 </details>
 

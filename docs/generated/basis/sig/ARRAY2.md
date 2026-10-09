@@ -118,7 +118,7 @@ Two are equal when they are the same array, as for [`Array.array`](../sig/ARRAY.
 
 <details><summary>Other implementations (4)</summary>
 
-- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
+- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0) (docs/bugreport/smlnj/Array2/no-rows-or-columns)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
 - **Poly/ML** &mdash; array (0, \~1, x) does not raise Size
 - **Poly/ML** &mdash; two arrays without rows are equal
@@ -195,7 +195,7 @@ val array : int * int * 'a -> 'a array
 
 <details><summary>Other implementations (4)</summary>
 
-- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
+- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0) (docs/bugreport/smlnj/Array2/no-rows-or-columns)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
 - **Poly/ML** &mdash; array (0, \~1, x) does not raise Size
 - **Poly/ML** &mdash; two arrays without rows are equal
@@ -225,7 +225,7 @@ would be too large.
 
 <details><summary>Other implementations (3)</summary>
 
-- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
+- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0) (docs/bugreport/smlnj/Array2/no-rows-or-columns)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
 - **Poly/ML** &mdash; two arrays without rows are equal
 
@@ -265,7 +265,7 @@ val tabulate : traversal -> int * int * (int * int -> 'a) -> 'a array
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
+- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0) (docs/bugreport/smlnj/Array2/no-rows-or-columns)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
 
 </details>
@@ -292,7 +292,7 @@ val sub : 'a array * int * int -> 'a
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col)
+- **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col) (docs/bugreport/smlnj/Array2/Overflow-not-Subscript)
 - **Poly/ML** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
 
 </details>
@@ -319,7 +319,7 @@ val update : 'a array * int * int * 'a -> unit
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col)
+- **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col) (docs/bugreport/smlnj/Array2/Overflow-not-Subscript)
 - **Poly/ML** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
 
 </details>
@@ -362,7 +362,7 @@ val nCols : 'a array -> int
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
+- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0) (docs/bugreport/smlnj/Array2/no-rows-or-columns)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
 
 </details>
@@ -387,7 +387,7 @@ val nRows : 'a array -> int
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
+- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0) (docs/bugreport/smlnj/Array2/no-rows-or-columns)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
 
 </details>
@@ -415,9 +415,9 @@ for `0 <= i andalso i < nRows arr` (for every `arr : 'a Array2.array`, `i : int`
 
 <details><summary>Other implementations (3)</summary>
 
-- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
-- **SML/NJ** &mdash; row (a, 0) of an array without rows is an empty vector instead of Subscript
-- **SML/NJ** &mdash; row (a, Int.maxInt) raises Overflow instead of Subscript
+- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0) (docs/bugreport/smlnj/Array2/no-rows-or-columns)
+- **SML/NJ** &mdash; row (a, 0) of an array without rows is an empty vector instead of Subscript (docs/bugreport/smlnj/Array2/no-rows-or-columns)
+- **SML/NJ** &mdash; row (a, Int.maxInt) raises Overflow instead of Subscript (docs/bugreport/smlnj/Array2/Overflow-not-Subscript)
 
 </details>
 
@@ -443,7 +443,7 @@ val column : 'a array * int -> 'a Vector.vector
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
+- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0) (docs/bugreport/smlnj/Array2/no-rows-or-columns)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
 
 </details>
@@ -486,8 +486,8 @@ fit into `dst` at that corner.
 <details><summary>Other implementations (7)</summary>
 
 - **MLton** &mdash; copy within one array to the left or the right in the same rows copies elements that it has already overwritten
-- **SML/NJ** &mdash; a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
-- **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col)
+- **SML/NJ** &mdash; a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array (docs/bugreport/smlnj/Array2/no-rows-or-columns)
+- **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col) (docs/bugreport/smlnj/Array2/Overflow-not-Subscript)
 - **Poly/ML** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
 - **MLKit** &mdash; copy, of Array2 and of the MONO\_ARRAY2 structures, accepts a source region whose row is beyond nRows with nrows = NONE or whose nrows is negative (and the same for columns), and then raises Size, and raises Overflow when row + nrows or col + ncols overflows, instead of raising Subscript
@@ -521,8 +521,8 @@ val appi : traversal -> (int * int * 'a -> unit) -> 'a region -> unit
 
 <details><summary>Other implementations (5)</summary>
 
-- **SML/NJ** &mdash; a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
-- **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col)
+- **SML/NJ** &mdash; a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array (docs/bugreport/smlnj/Array2/no-rows-or-columns)
+- **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col) (docs/bugreport/smlnj/Array2/Overflow-not-Subscript)
 - **Poly/ML** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
 - **MLKit** &mdash; appi, foldi and modifyi accept a region whose row is beyond nRows with nrows = NONE or whose nrows is negative (and the same for columns), and traverse nothing, and raise Overflow when row + nrows or col + ncols overflows, instead of raising Subscript
@@ -549,7 +549,7 @@ val app : traversal -> ('a -> unit) -> 'a array -> unit
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
+- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0) (docs/bugreport/smlnj/Array2/no-rows-or-columns)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
 
 </details>
@@ -577,8 +577,8 @@ The elements are combined in the order `trv` gives, the first with
 
 <details><summary>Other implementations (5)</summary>
 
-- **SML/NJ** &mdash; a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
-- **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col)
+- **SML/NJ** &mdash; a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array (docs/bugreport/smlnj/Array2/no-rows-or-columns)
+- **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col) (docs/bugreport/smlnj/Array2/Overflow-not-Subscript)
 - **Poly/ML** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
 - **MLKit** &mdash; appi, foldi and modifyi accept a region whose row is beyond nRows with nrows = NONE or whose nrows is negative (and the same for columns), and traverse nothing, and raise Overflow when row + nrows or col + ncols overflows, instead of raising Subscript
@@ -607,7 +607,7 @@ val fold : traversal -> ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
+- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0) (docs/bugreport/smlnj/Array2/no-rows-or-columns)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
 
 </details>
@@ -634,8 +634,8 @@ The array is changed in place, in the order `trv` gives.
 
 <details><summary>Other implementations (5)</summary>
 
-- **SML/NJ** &mdash; a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
-- **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col)
+- **SML/NJ** &mdash; a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array (docs/bugreport/smlnj/Array2/no-rows-or-columns)
+- **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col) (docs/bugreport/smlnj/Array2/Overflow-not-Subscript)
 - **Poly/ML** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
 - **MLKit** &mdash; appi, foldi and modifyi accept a region whose row is beyond nRows with nrows = NONE or whose nrows is negative (and the same for columns), and traverse nothing, and raise Overflow when row + nrows or col + ncols overflows, instead of raising Subscript
@@ -662,7 +662,7 @@ val modify : traversal -> ('a -> 'a) -> 'a array -> unit
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
+- **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0) (docs/bugreport/smlnj/Array2/no-rows-or-columns)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
 
 </details>

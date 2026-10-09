@@ -278,9 +278,10 @@ val fromStatus : OS.Process.status -> exit_status
 
 **Example** `fromStatus (OS.Process.system "exit 3") = W_EXITSTATUS 0w3`
 
-<details><summary>Other implementations (3)</summary>
+<details><summary>Other implementations (4)</summary>
 
-- **MLton, Poly/ML** &mdash; fromStatus OS.Process.failure is W\_SIGNALED, not W\_EXITSTATUS of a non-zero value
+- **MLton** &mdash; fromStatus OS.Process.failure is W\_SIGNALED, not W\_EXITSTATUS of a non-zero value (docs/bugreport/mlton/OS.Process.status/two-representations)
+- **Poly/ML** &mdash; fromStatus OS.Process.failure is W\_SIGNALED, not W\_EXITSTATUS of a non-zero value
 - **SML/NJ** &mdash; OS.Process.system returns failure (W\_EXITSTATUS 1) for a command that a signal ended
 - **MLKit** &mdash; the status of a process that did not succeed is W\_EXITSTATUS 0w255 whatever its exit status or signal: OS.Process.system and Unix.reap reduce every failure to OS.Process.failure (an int, \~1), which fromStatus maps to W\_EXITSTATUS 0wxFF
 
