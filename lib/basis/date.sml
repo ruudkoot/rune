@@ -100,6 +100,11 @@ struct
          yday = days - daysFromCivil (y', 1, 1), isDst = SOME false} : date
       end
 
+    (* The largest int of C, which has 32 bits, worked out, for a system whose
+       own int is smaller cannot read it as a constant; there every int fits. *)
+    val cIntMax = SOME (65536 * 32768 - 1) handle Overflow => NONE
+    fun fitsC k = case cIntMax of SOME most => k <= most andalso k >= ~most - 1 | NONE => true
+
     (* The date in the zone of offset, with the day of the week and of the
        year worked out and the fields normalised. "Offsets are taken modulo
        24 hours. That is, we express t, in hours, as sgn(t)(24*d + r) ... The
@@ -117,6 +122,9 @@ struct
                     Time.ofMicros (sign * (magnitude mod microsPerDay)))
            end
        | NONE =>
+           (* the C library is given the fields as ints of C: one that does not
+              fit would be read as another number, and the date as another *)
+           if not (List.all fitsC [s, mi, h, d, y - 1900]) then raise Date else
            case seconds' ([s, mi, h, d, monthNumber m, y - 1900, 0, 0, ~1], 1) of
              _ :: sec :: min :: hr :: mday :: mon :: yr :: wday :: yday :: dst :: _ =>
                {second = sec, minute = min, hour = hr, day = mday, month = monthOf mon,
@@ -182,12 +190,9 @@ struct
     fun zoneName (d : date) =
       Option.map (fn t => if Time.micros t = 0 then "UTC" else "") (#offset d)
 
-    (* strftime is given the year less 1900 as an int of C, which has 32
-       bits, and adds the 1900 again in one: a year that either does not fit
-       would be printed as another year. The largest int of C is worked out,
-       for a system whose own int is smaller cannot read it as a constant;
-       there every year fits. *)
-    val cIntMax = SOME (65536 * 32768 - 1) handle Overflow => NONE
+    (* strftime is given the year less 1900 as an int of C, and adds the
+       1900 again in one: a year that either does not fit would be printed as
+       another year. *)
     fun yearFitsC (d : date) =
       case cIntMax of
         SOME most => #year d <= most andalso #year d - 1900 >= ~most - 1

@@ -7,7 +7,7 @@
 | Signature | [`DATE`](../sig/DATE.md) |
 | Status | required |
 | Members | 24 |
-| Tests | 225 checks |
+| Tests | 226 checks |
 | Source | [lib/basis/date.sml](../../../../lib/basis/date.sml) |
 
 ## Synopsis
@@ -67,11 +67,15 @@ What each means is on [`DATE`](../sig/DATE.md); the types are this structure's o
 > instead.
 
 > **Implementation** `Date.date/any-year`. The calendar of a date at an offset
-> is computed and not looked up, so any year that is an `int` has its dates,
-> the year \~5 and the year 100000 too. The specification asks for the years
-> from about 1900 to 2200 only, and the suite takes a date or [`Date`](../sig/DATE.md#exn-date) beyond
-> the range of a 32-bit `time_t`. [`toTime`](../sig/DATE.md#val-totime) raises [`Date`](../sig/DATE.md#exn-date) from about the year
-> 292000 on, where the microseconds no longer fit, and [`fmt`](../sig/DATE.md#val-fmt) for a year that
+> is computed and not looked up, so a year has its dates as long as the
+> count of its days from 1970 is an `int`: the year \~5 and the year 100000
+> too, and with the 63-bit `int` every year up to about 12.6 \* 10^15 either
+> way. Beyond, [`date`](../sig/DATE.md#val-date) raises [`Date`](../sig/DATE.md#exn-date). A local date is made by the C library,
+> whose fields are C `int`s: a field, or the year less 1900, that one cannot
+> hold raises [`Date`](../sig/DATE.md#exn-date). The specification asks for the years from about 1900
+> to 2200 only, and the suite takes a date or [`Date`](../sig/DATE.md#exn-date) beyond the range of a
+> 32-bit `time_t`. [`toTime`](../sig/DATE.md#val-totime) raises [`Date`](../sig/DATE.md#exn-date) from about the year 148000 on,
+> where the microseconds no longer fit an `int`, and [`fmt`](../sig/DATE.md#val-fmt) for a year that
 > C's `int` of 32 bits cannot hold.
 
 ### fmt

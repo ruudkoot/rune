@@ -71,11 +71,15 @@ sig
      Time.zeroTime}) = (Feb, 2, 1)`
 
      Implementation: `Date.date/any-year`. The calendar of a date at an offset
-     is computed and not looked up, so any year that is an `int` has its dates,
-     the year ~5 and the year 100000 too. The specification asks for the years
-     from about 1900 to 2200 only, and the suite takes a date or `Date` beyond
-     the range of a 32-bit `time_t`. `toTime` raises `Date` from about the year
-     292000 on, where the microseconds no longer fit, and `fmt` for a year that
+     is computed and not looked up, so a year has its dates as long as the
+     count of its days from 1970 is an `int`: the year ~5 and the year 100000
+     too, and with the 63-bit `int` every year up to about 12.6 * 10^15 either
+     way. Beyond, `date` raises `Date`. A local date is made by the C library,
+     whose fields are C `int`s: a field, or the year less 1900, that one cannot
+     hold raises `Date`. The specification asks for the years from about 1900
+     to 2200 only, and the suite takes a date or `Date` beyond the range of a
+     32-bit `time_t`. `toTime` raises `Date` from about the year 148000 on,
+     where the microseconds no longer fit an `int`, and `fmt` for a year that
      C's `int` of 32 bits cannot hold. *)
   val date : {year : int,
               month : month,

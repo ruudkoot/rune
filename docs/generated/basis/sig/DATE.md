@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 24 of 24 entries documented |
-| Tests | 205 checks of 21 entries |
+| Tests | 206 checks of 21 entries |
 | Source | [lib/basis/sig\_date.sml](../../../../lib/basis/sig_date.sml) |
 
 ## Synopsis
@@ -204,11 +204,15 @@ val date : {year : int,
 **Example** `(fn d => (month d, day d, hour d)) (date {year = 2001, month = Jan, day = 32, hour = 25, minute = 0, second = 0, offset = SOME Time.zeroTime}) = (Feb, 2, 1)`
 
 > **Implementation** `Date.date/any-year`. The calendar of a date at an offset
-> is computed and not looked up, so any year that is an `int` has its dates,
-> the year \~5 and the year 100000 too. The specification asks for the years
-> from about 1900 to 2200 only, and the suite takes a date or [`Date`](#exn-date) beyond
-> the range of a 32-bit `time_t`. [`toTime`](#val-totime) raises [`Date`](#exn-date) from about the year
-> 292000 on, where the microseconds no longer fit, and [`fmt`](#val-fmt) for a year that
+> is computed and not looked up, so a year has its dates as long as the
+> count of its days from 1970 is an `int`: the year \~5 and the year 100000
+> too, and with the 63-bit `int` every year up to about 12.6 \* 10^15 either
+> way. Beyond, [`date`](#val-date) raises [`Date`](#exn-date). A local date is made by the C library,
+> whose fields are C `int`s: a field, or the year less 1900, that one cannot
+> hold raises [`Date`](#exn-date). The specification asks for the years from about 1900
+> to 2200 only, and the suite takes a date or [`Date`](#exn-date) beyond the range of a
+> 32-bit `time_t`. [`toTime`](#val-totime) raises [`Date`](#exn-date) from about the year 148000 on,
+> where the microseconds no longer fit an `int`, and [`fmt`](#val-fmt) for a year that
 > C's `int` of 32 bits cannot hold.
 
 | Field | Type | Description |
@@ -228,9 +232,9 @@ val date : {year : int,
 
 </details>
 
-<details><summary>Tests (26)</summary>
+<details><summary>Tests (27)</summary>
 
-For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `canonical-is-kept` &middot; `spec-example-negative-seconds` &middot; `second-60` &middot; `minutes-to-hours` &middot; `hour-24` &middot; `negative-hour` &middot; `days-to-months` &middot; `day-0` &middot; `negative-day` &middot; `months-to-years` &middot; `seconds-carry-to-the-year` &middot; `seconds-borrow-from-the-year` &middot; `a-year-of-seconds` &middot; `366-days-of-2000` &middot; `leap-2000` &middot; `leap-2004` &middot; `not-leap-2001` &middot; `not-leap-1900` &middot; `not-leap-2100` &middot; `weekDay-of-normalised` &middot; `yearDay-of-normalised` &middot; `is-canonical` &middot; `Date-or-a-year-far-away` &middot; `calendar-1900-2199` &middot; `offset-of-the-local-zone` &middot; `local-normalises`
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `canonical-is-kept` &middot; `spec-example-negative-seconds` &middot; `second-60` &middot; `minutes-to-hours` &middot; `hour-24` &middot; `negative-hour` &middot; `days-to-months` &middot; `day-0` &middot; `negative-day` &middot; `months-to-years` &middot; `seconds-carry-to-the-year` &middot; `seconds-borrow-from-the-year` &middot; `a-year-of-seconds` &middot; `366-days-of-2000` &middot; `leap-2000` &middot; `leap-2004` &middot; `not-leap-2001` &middot; `not-leap-1900` &middot; `not-leap-2100` &middot; `weekDay-of-normalised` &middot; `yearDay-of-normalised` &middot; `is-canonical` &middot; `Date-or-a-year-far-away` &middot; `local-Date-or-the-year-past-an-int-of-C` &middot; `calendar-1900-2199` &middot; `offset-of-the-local-zone` &middot; `local-normalises`
 
 </details>
 
