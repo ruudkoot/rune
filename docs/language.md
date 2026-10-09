@@ -30,6 +30,7 @@ SML rejects, or reject some that SML accepts.
 | `_prim "name" : ty` | Extension used by the basis library to access VM primitives. Only allowed with `--allow-prim`. |
 | `_overload kind Strid [bits \| via f]` | Extension used by the basis library: a declaration that makes the type `Strid.kind` (`kind` is `int`, `word`, `real`, `char` or `string`) an overloading type. The overloaded operators at that type are the values `Strid.+`, `Strid.<`, ...; its constants are those of the builtin type restricted to `bits` bits (default 64), or `f digits` for a function `f : string -> Strid.kind`. Only allowed with `--allow-prim`. |
 | Or-patterns | `(p1 \| ... \| pn)` (row `pat.or`), an extension of Successor ML and SML/NJ. Only allowed with `--or-patterns`: without it Rune takes Standard ML '97 alone and rejects one. |
+| Default types | `--default-type=int64` and `--default-type=word64` make an integer or word constant, or an operator of the classes Int or Word, that its declaration leaves open default to `Int64.int` or `Word64.word` instead of `int` or `word`, in the input files and not in the libraries (row `ty.overload.default`), as MLton's `-default-type` does. Without them Rune defaults as Appendix E says. |
 | I/O | The imperative streams of `TextIO` and `BinIO` are datatypes rather than abstract types, so an `instream` (a reference) admits equality; an `outstream` does not. `CharVector.vector` is `string` (the specification requires it) and `Word8Vector.vector` is one underneath but abstract; a `Word8Array.array` and a `CharArray.array` are the VM's array of bytes, a byte an element. |
 
 ## Lexical structure
@@ -115,7 +116,7 @@ SML rejects, or reject some that SML accepts.
 |---|---|---|---|
 | ty.infer.letpoly | Hindley–Milner inference with let-polymorphism | Supported | |
 | ty.infer.valuerestriction | Value restriction (only non-expansive bindings generalize); a top-level declaration may not leave a type variable undetermined (rules 87–89, e.g. `val r = ref nil` is an error) | Supported | |
-| ty.overload.default | Overloaded `+ - * div mod / ~ abs < <= > >=` at `int`, `word`, `real`, `char`, `string`; default `int` | Supported | `~` on `int`/`word`/`real`; `abs` on `int`/`real`; `div`/`mod` on `int`/`word`; `/` on `real`. |
+| ty.overload.default | Overloaded `+ - * div mod / ~ abs < <= > >=` at `int`, `word`, `real`, `char`, `string`; default `int` | Supported | `~` on `int`/`word`/`real`; `abs` on `int`/`real`; `div`/`mod` on `int`/`word`; `/` on `real`. With `--default-type=int64` or `word64` the default of the input files is `Int64.int` or `Word64.word`. |
 | ty.overload.literal | Overloaded integer and word constants (in expressions and patterns) and operators at the types registered by the basis library: `IntInf.int`; real constants and operators at `Real32.real`; character and string constants at `WideChar.char` and `WideString.string` | Supported | Default `int`/`word`; out-of-range constants are compile-time errors (`tests/errors/err.literal_*`). |
 | ty.record.flex | Flexible record types from `#lab` and `{..., ...}` | Supported | |
 | ty.annot | Type annotations on expressions and patterns | Supported | |

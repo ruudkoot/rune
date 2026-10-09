@@ -9,6 +9,8 @@ struct
   val basisCheck = ref false       (* --basis-check: verify lib/basis/MANIFEST *)
   val allowPrim = ref false
   val orPatterns = ref false
+  val defaultInt64 = ref false     (* --default-type=int64 *)
+  val defaultWord64 = ref false    (* --default-type=word64 *)
   (* No default: every bin/rune* is a wrapper that passes --lib. *)
   val libDir : string option ref = ref NONE
   val libraries : string list ref = ref []     (* --library NAME: libraries besides the basis *)
@@ -45,6 +47,9 @@ struct
     \  --int-bits=N      the precision of int and word on the VM: 63 (default), or\n\
     \                    64 for a VM built with -DRUNE_INT64\n\
     \  --or-patterns     allow or-patterns (p1 | p2), which are not Standard ML\n\
+    \  --default-type=T  in the input files, the type of an int or word constant or\n\
+    \                    operator that its declaration leaves open: int (default)\n\
+    \                    or int64, word (default) or word64\n\
     \  --typecheck-only  stop after type checking\n\
     \  --type-work=N     type traversal budget per top-level declaration (50000000)\n\
     \  --match-work=N    pattern-analysis budget per match (1000000)\n\
@@ -98,6 +103,10 @@ struct
     | "--int-bits=63" :: rest => (Overload.setIntBits 63; Target.intBits := 63; parse rest)
     | "--int-bits=64" :: rest => (Overload.setIntBits 64; Target.intBits := 64; parse rest)
     | "--or-patterns" :: rest => (orPatterns := true; parse rest)
+    | "--default-type=int" :: rest => (defaultInt64 := false; parse rest)
+    | "--default-type=int64" :: rest => (defaultInt64 := true; parse rest)
+    | "--default-type=word" :: rest => (defaultWord64 := false; parse rest)
+    | "--default-type=word64" :: rest => (defaultWord64 := true; parse rest)
     | "--typecheck-only" :: rest => (typecheckOnly := true; parse rest)
     | "--no-warnings" :: rest => (noWarnings := true; parse rest)
     | "--dump-tokens" :: rest => (dumpTokens := true; parse rest)

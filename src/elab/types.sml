@@ -92,6 +92,8 @@ struct
 
   val intTy = TCon (intTycon, [])
   val wordTy = TCon (wordTycon, [])
+  val int64Ty = TCon (int64Tycon, [])
+  val word64Ty = TCon (word64Tycon, [])
   val realTy = TCon (realTycon, [])
   val charTy = TCon (charTycon, [])
   val stringTy = TCon (stringTycon, [])

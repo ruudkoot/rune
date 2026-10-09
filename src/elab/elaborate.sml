@@ -80,15 +80,22 @@ struct
     | TRecord fields => List.app (fn (_, a) => registerOverloads a) fields
     | TArrow (a, b) => (registerOverloads a; registerOverloads b)
 
+  (* The types that an int or a word constant, or an operator of the
+     classes Int and Word, defaults to when its declaration leaves it open:
+     int and word (Appendix E), or Int64.int and Word64.word in the
+     program's own files under --default-type (main.sml). *)
+  val intDefault = ref intTy
+  val wordDefault = ref wordTy
+
   fun resolvePending () =
     (List.app (fn r =>
                  case !r of
                    Unbound {kind = KOverload names, ...} =>
                      let
                        val default =
-                         if List.exists (fn n => n = "int") names then intTy
+                         if List.exists (fn n => n = "int") names then !intDefault
                          else if List.exists (fn n => n = "real") names then realTy
-                         else if List.exists (fn n => n = "word") names then wordTy
+                         else if List.exists (fn n => n = "word") names then !wordDefault
                          else if List.exists (fn n => n = "char") names then charTy
                          else if List.exists (fn n => n = "string") names then stringTy
                          else Error.bug "resolvePending: empty overload class"
