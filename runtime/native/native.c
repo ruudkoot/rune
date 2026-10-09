@@ -403,6 +403,15 @@ int main(int argc, char **argv) {
             vm->argc = argc - i;
             vm->owns_args = 1;
         }
+        /* and RUNEVM_NAME (runevm --name) the name it was saved with */
+        const char *rename = child ? NULL : getenv("RUNEVM_NAME");
+        if (rename) {
+            char *n = strdup(rename);
+            if (!n) { fprintf(stderr, "runevm: out of memory\n"); return 2; }
+            unsetenv("RUNEVM_NAME");
+            free((char *)vm->progname);   /* the image's: vm->owns_args */
+            vm->progname = n;
+        }
         vm->gc_verify = o.gc_verify;
         if (o.gc_log && !child) heap_log_open(vm, o.gc_log);
         rune_enter(vm, code);

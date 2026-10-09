@@ -10,9 +10,15 @@
 # the trace on its own sizes (W8) under the copier model in both bands. One
 # row per setting:
 #   workload heap fill | stock: collections semispace copied live gc-us | lo: ... | hi: ... | band width | verdict
-# ok when the lower band's collections and semispace equal the stock's (the
-# upper band, which counts everything born since the last sample as live,
-# may trigger a collection or a growth the stock did not), the model's
+# ok when the stock's collections lie between the two bands' (the upper
+# band, which counts everything born since the last sample as live, may
+# trigger a growth the stock did not and so a collection fewer; and the
+# heap grows on a guess of what will survive against a threshold, which a
+# difference of a few hundred bytes of live data -- the dead registers
+# below -- may put on the other side, so the lower band too may collect
+# once more or less than the stock: compile-sigs at 4 MiB, whose seventh
+# guess was 696 bytes apart, the stock's above half the heap and the
+# model's below), the lower band's semispace equals the stock's, the model's
 # bytes are the stock's, and the stock's copied bytes and live data lie
 # inside the band, the copied bytes with half the band's width as slack
 # (the two bands' collections drift apart by up to its width, and the
@@ -71,7 +77,8 @@ for name in "$@"; do
     set -- $lo; lb=$1; lx=$2; lc=$3; ls_=$4; ll=$5
     set -- $hi; hx=$2; hc=$3; hs=$4; hl=$5
     verdict=ok
-    [ "$lc" = "$sc" ] || verdict=COLLECTIONS
+    cmin=$lc; cmax=$hc; [ "$hc" -lt "$lc" ] && { cmin=$hc; cmax=$lc; }
+    [ "$cmin" -le "$sc" ] && [ "$cmax" -ge "$sc" ] || verdict=COLLECTIONS
     [ "$ls_" = "$ss" ] || verdict=$verdict/SEMISPACE
     [ "$lb" = "$sb" ] || verdict=$verdict/BYTES
     mn=$lx; mx=$hx; [ "$hx" -lt "$lx" ] && { mn=$hx; mx=$lx; }

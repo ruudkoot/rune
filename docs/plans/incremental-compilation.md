@@ -40,9 +40,9 @@ What it rests on:
 | M1 | Measure | done 2026-10-09, `0bc5bd38`: `scripts/perf-units.sh`, the table in *What a compile costs* (*Measured again*), HOL4 on Poly/ML in *HOL4 today*, `tests/incremental/SCENARIOS.md`; D6 settled (Mid binary), D9 measured (4%), the globals given a barrier in M3 |
 | M2 | Units in memory: the basis as a value, the front end resumable, a back end per unit | done 2026-10-09, `79e0598b`: `rune --units`, the linker, `Pass.whole`, errors recovered per declaration, `make check-units` (*M2, as built*); one question for the owner (flexible records) |
 | M3 | Unit bytecode, the static linker, and the VM loads units | done 2026-10-09, `9d97b311`: `.rbu`, `--emit-units`, linking unit files, `rt_link`/`Runtime.link`/`Runtime.load`, the dynamic path in `check-units` (*M3, as built*); the globals' barrier moved to M4 |
-| M4 | The resident compiler, `use` and the REPL | done 2026-10-09: `bin/rune-repl` and `rune -i`, Chapter 8, `use`, printing, the globals' barrier, the JIT across loads, the boot image, interrupts, a session saved and restored (*M4, as built*) |
-| M5 | HOL4 on Rune | |
-| M6 | The cache, with cut-off | in progress 2026-10-09: the export basis, names that do not depend on what came before, every unit through its basis, unit files by keys, the cache with usages by binder, the frozen Basis, `use` through it, `tests/incremental` (*M6, ... as built*); fingerprints per entry and the warm-build time to come |
+| M4 | The resident compiler, `use` and the REPL | done 2026-10-09, `71f1916e`: `bin/rune-repl` and `rune -i`, Chapter 8, `use`, printing, the globals' barrier, the JIT across loads, the boot image, interrupts, a session saved and restored (*M4, as built*) |
+| M5 | HOL4 on Rune | in progress 2026-10-09: `bin/build` through `src/boss` and `hol` proving, on a local branch of HOL4; what it costs against Poly/ML and why, and `Runtime.share`, `Compiler.compile` through the cache and a leaner REPL that came of it, in [hol4.md](hol4.md) |
+| M6 | The cache, with cut-off | the first two parts done 2026-10-09, `40e2b23a`: the export basis, names that do not depend on what came before, every unit through its basis, unit files by keys, the cache with usages by binder, the frozen Basis, `use` through it, `tests/incremental` (*M6, ... as built*); fingerprints per entry and the warm-build time to come |
 | M7 | Mid per unit: whole-program builds from the cache | |
 | M8 | The dependency graph, and a program from an entry point | |
 | M9 | Compiling against a signature alone, and dynamic modules | |
@@ -52,8 +52,9 @@ What it rests on:
 
 The owner decided D1 to D9 and D11 to D19 on 2026-10-09, all as
 recommended (*Decisions*), and asked for D10 to be reviewed against the
-heap layout and the collector built since this was written; the review
-is in D10 and the decision waits for it. The work runs on branch
+heap layout and the collector built since this was written; after the
+review, which is in D10, the owner decided D10 as A on 2026-10-09. The
+work runs on branch
 `incremental`, one commit per milestone, from M1 in order; *Since this
 was written* says what changed under the plan between 2026-09-25 and
 2026-10-09. M1 to M7 are one part: at the end of M4
@@ -1441,7 +1442,7 @@ waits for the owner:
 | D7. Linking | A: a static linker in the compiler and `rt_load` in the VM, one relocation, cross-checked; `rt_load` returns a closure | A |
 | D8. The Basis and the compiler as units | A: the compiler is the first client of unit builds; the Basis ships as one frozen library | A |
 | D9. The resident compiler | A: in-process, Poly/ML's model; a two-process front end later if wanted | A |
-| D10. Printing at the top level | A: printers generated per declaration from the static type, plus a registry by type name | reviewed on 2026-10-09 (below): A still holds, B is not required; A's reason rewritten; the owner's to confirm |
+| D10. Printing at the top level | A: printers generated per declaration from the static type, plus a registry by type name | reviewed on 2026-10-09 (below): A still holds, B is not required; A's reason rewritten; decided A by the owner on 2026-10-09 |
 | D11. Interrupts | A: a flag set by a handler behind `sys.h`, polled at the JIT's poll points, raised as `Interrupt`, maskable | A |
 | D12. The REPL's semantics | A: Chapter 8: skip a failed declaration, keep effects of one that raised; errors recoverable per declaration | A |
 | D13. HOL4 | A: a port layer in a HOL4 fork; images as heaps; single-threaded shims; the owner may stop before it | A |
@@ -1685,7 +1686,8 @@ waits for the owner:
 
 ### D10. Printing at the top level
 
-**Recommended: A, as rewritten by the review of 2026-10-09 below.**
+**Decided: A, as rewritten by the review of 2026-10-09 below (the
+owner, 2026-10-09).**
 The owner asked whether A is still possible under the heap layout built
 since this was written, and the optimisations it keeps open, or
 whether B is now required. A is still possible and B is not required.
@@ -2220,7 +2222,9 @@ What was built, and where it differs from the plan above:
   top-level declaration.** Settling them per declaration rejected
   `tests/lang/ty.record.flex_program`, which `docs/language.md` keeps on
   purpose (a generalised flexible record resolved by a later
-  declaration; SML/NJ, MLton and Poly/ML all reject it). So the program
+  declaration; SML/NJ, MLKit, Moscow ML and Hamlet reject it, MLton and
+  Poly/ML accept it as one top-level declaration -- measured 2026-10-09,
+  correcting what this said before). So the program
   compiled whole is unchanged, and with `--units` a flexible record must
   be determined in its own file. **For the owner:** keep the extension,
   or settle every flexible record at the end of its top-level declaration,
@@ -2411,14 +2415,18 @@ What was built, and where it differs from the plan above:
   structure `Compiler` (Rune's own; in a batch program `use` raises
   `Fail`). The new pipeline code is `src/driver/pipeline.sml`, shared by
   `Main` and the REPL.
-* **Printing (D10 A as reviewed, ahead of the owner's confirmation):** a
+* **Printing (D10 A, which the owner decided after the review):** a
   printer of SML text per declaration, made from the types it bound
   (`src/repl/show.sml`), compiled with it, from `RuneShow`'s pieces;
   datatypes matched by names of their own bound to the constructors the
   elaborator registers (`Elaborate.dataCons`), so that hidden ones print;
   `?` for abstract types and type variables; a print depth. Not yet:
   exceptions print by name only (D10's condition 4, the printer in the
-  exception constructor), a type is printed without its structure's path.
+  exception constructor), a type is printed without its structure's path,
+  and the registry of user printers (D10's item 6,
+  `Compiler.addPrettyPrinter` and a `Pretty` datatype in Poly/ML's shape)
+  was not built, so HOL4's printers are not installed
+  ([hol4.md](hol4.md)).
 * **Tests:** `tests/repl` (`make test-repl`, in `make check`): transcripts
   of values, Chapter 8, datatypes, `use`, on every mode of the JIT;
   `tests/lang/basis.compiler`, `tests/basis/compiler*.sml`.

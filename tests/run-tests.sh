@@ -7,6 +7,7 @@
 #   compiler, such as --or-patterns), .args (command line words for the
 #   program), .vmargs (options for the VM), .stdin (fed to the program),
 #   .restoreargs (the words given the restored world after `--restore FILE --`),
+#   .restorevmargs (options for the VM that restores it),
 #   .restore (the standard output of `runevm-stack --restore` on the image the
 #   program wrote to tests/out/NAME.img with Runtime.save),
 #   .exitcode (expected status, default 0), .stderr (expected stderr, compared
@@ -128,11 +129,13 @@ run_lang() {
     fi
     # .restoreargs: the restored world's own arguments, after --
     rargs=""; [ -f "$base.restoreargs" ] && rargs=$(cat "$base.restoreargs")
+    # .restorevmargs: the options of the VM that restores it
+    rvmargs=""; [ -f "$base.restorevmargs" ] && rvmargs=$(cat "$base.restorevmargs")
     # shellcheck disable=SC2086
     if [ -f "$base.restoreargs" ]; then
-      "$vm" --restore "$img/$name.img" -- $rargs < /dev/null > "$out/$name.restored" 2> "$out/$name.restored.err"
+      "$vm" $rvmargs --restore "$img/$name.img" -- $rargs < /dev/null > "$out/$name.restored" 2> "$out/$name.restored.err"
     else
-      "$vm" --restore "$img/$name.img" < /dev/null > "$out/$name.restored" 2> "$out/$name.restored.err"
+      "$vm" $rvmargs --restore "$img/$name.img" < /dev/null > "$out/$name.restored" 2> "$out/$name.restored.err"
     fi
     rcode=$?
     if [ "$rcode" != 0 ]; then

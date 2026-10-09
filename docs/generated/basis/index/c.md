@@ -53,6 +53,7 @@
 - `compare` (val): [CHAR](../sig/CHAR.md#val-compare), [DATE](../sig/DATE.md#val-compare), [INTEGER](../sig/INTEGER.md#val-compare), [OS_FILE_SYS](../sig/OS_FILE_SYS.md#val-compare), [OS_IO](../sig/OS_IO.md#val-compare), [PRIM_IO](../sig/PRIM_IO.md#val-compare), [REAL](../sig/REAL.md#val-compare), [STRING](../sig/STRING.md#val-compare), [SUBSTRING](../sig/SUBSTRING.md#val-compare), [TIME](../sig/TIME.md#val-compare), [WORD](../sig/WORD.md#val-compare)
 - `compareReal` (val): [REAL](../sig/REAL.md#val-comparereal)
 - `compareSpeed` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-comparespeed)
+- `compile` (val): [COMPILER](../sig/COMPILER.md#val-compile)
 - `compose` (val): [OPTION](../sig/OPTION.md#val-compose)
 - `composePartial` (val): [OPTION](../sig/OPTION.md#val-composepartial)
 - `concat` (val): [LIST](../sig/LIST.md#val-concat), [MONO_VECTOR](../sig/MONO_VECTOR.md#val-concat), [MONO_VECTOR_EQ](../sig/MONO_VECTOR_EQ.md#val-concat), [MONO_VECTOR_SLICE](../sig/MONO_VECTOR_SLICE.md#val-concat), [OS_PATH](../sig/OS_PATH.md#val-concat), [STRING](../sig/STRING.md#val-concat), [SUBSTRING](../sig/SUBSTRING.md#val-concat), [VECTOR](../sig/VECTOR.md#val-concat), [VECTOR_SLICE](../sig/VECTOR_SLICE.md#val-concat)

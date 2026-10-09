@@ -489,6 +489,7 @@ Obj *vm_string_from(VM *vm, const char *s, uint32_t len);
 static inline size_t obj_size(const Obj *o) { return obj_size_of(obj_kind(o), obj_len(o)); }
 void vm_gc(VM *vm, size_t needed);
 void vm_collect(VM *vm);   /* Runtime.collect: a full collection, the low-pause collector's cycle ended first */
+uint64_t vm_share(VM *vm);   /* Runtime.share: equal immutable objects made one (runtime/gc/share.c); the bytes freed */
 int heap_relocate(VM *vm, uintptr_t old_base);  /* after an image is read: 0 when it is not sound */
 /* --gc-log FILE: one line per pass of the collector into FILE, and its last
    lines when the VM exits (docs/runtime.md, *Watching it*) */

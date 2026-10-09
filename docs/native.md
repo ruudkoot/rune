@@ -299,8 +299,9 @@ Its limits:
   `--restore`)
   come from `runeopt --options` and then the environment variable
   `RUNEVM_OPTIONS`.
-* **`RUNEVM_NAME`** is the name `CommandLine.name ()` gives. The suites'
-  wrapper sets it to the `.rbc`.
+* **`RUNEVM_NAME`** is the name `CommandLine.name ()` gives, a restored
+  world's too (`runevm --name`). The suites' wrapper sets it to the `.rbc`,
+  or to the name its `--name` gives.
 * **Both variables** are taken out of the environment, so the program and
   its children see the environment they would see under `runevm-stack`.
 * **Messages** begin `runevm:`, as the runtime's always have.

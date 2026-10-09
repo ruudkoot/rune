@@ -537,6 +537,31 @@ what it will stand on):
   reals have C's layout behind the header, so a primitive passes a pointer
   to their first element for the length of a call that does not allocate.
 
+### Sharing
+
+`Runtime.share ()` (`runtime/gc/share.c`) makes the equal immutable objects
+of the heap one, as Poly/ML's `PolyML.shareCommonData` does before it saves
+a heap. After a full collection every object is given a number bottom-up,
+the same number where the kind, the tag, the length and the fields are the
+same -- a field that points by the number of what it points at -- so that
+two lists of equal elements built apart, and every equal part of them, get
+one; every field and root is then pointed at the first object of its
+number, and a second collection frees the rest. Tuples, records, vectors,
+constructed values, strings, boxed reals and words and exception values are
+shared; a `ref`, an `array`, the arrays of bytes and of reals, a closure
+and an exception constructor keep their identity. Nothing writes into an
+object of the first kinds after it is made -- a closure's environment is
+the one thing filled in afterwards -- so an object the stack points at is
+shared as any other. What the nursery still holds is left as it is, since
+an old object pointed at it would want the write barrier.
+
+It is for a program about to save itself (`Runtime.save`): HOL's heaps
+(`docs/plans/hol4.md`), whose terms and types repeat, and the REPL's boot
+image, which it makes 8.5 MB rather than 13.4. It needs a table of every
+object, about 24 bytes each, beside the heap, and does nothing where it
+cannot have one. `same` may afterwards answer true of two equal values that
+were built apart.
+
 ## Stacks, calls and exceptions
 
 The value stack, the frames and the handlers are three arrays that start at
@@ -718,7 +743,8 @@ program opened are opened again by name, where they were left.
 Most of this page is visible to a program through `Runtime`, which is Rune's
 own and not in the specification: `Runtime.stats` gives the counters of *The
 same run twice* and of *The garbage collector*, `Runtime.profile` the difference of two of
-them across a call, `Runtime.collect` a collection on demand, `Runtime.trace`
+them across a call, `Runtime.collect` a collection on demand, `Runtime.share`
+the sharing of *Sharing*, `Runtime.trace`
 the frames of *Stacks, calls and exceptions* as data, `Runtime.save` the image
 this page describes under *The system layer*, `Runtime.same` the identity
 the collector maintains, and `Runtime.catchInterrupt` and
@@ -776,7 +802,7 @@ loading goes on loading. A program of native code (`runeopt`) loads no units.
 The whole command line -- `--disasm`, `--trace`, `--stats`, `--count`,
 `--gc-stress`, `--gc-stress-cycles`, `--gc-verify`, `--checked`, `--heap-size`, `--heap-limit`,
 `--heap-fill`, `--nursery`, `--gc`, `--old-space`, `--stack-size`, `--equality-work`, `--gc-log`,
-`--emulate-fork`, `--restore`, `--version` -- is described in
+`--emulate-fork`, `--restore`, `--name`, `--version` -- is described in
 [bytecode.md](bytecode.md).
 
 ## A native program

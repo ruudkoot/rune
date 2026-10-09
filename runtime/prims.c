@@ -2214,6 +2214,7 @@ static int p_rt_promoted(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->gc.prom
    be held in a C variable across it; the argument on the stack is unit, and
    the collector walks the stack itself. */
 static int p_rt_collect(VM *vm) { vm_collect(vm); return ret(vm, 1, mk_unit()); }
+static int p_rt_share(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm_share(vm))); }
 
 /* One frame as (name, file, line, column), built on the VM stack: every
    allocation here can collect, and the strings must survive the next one. */

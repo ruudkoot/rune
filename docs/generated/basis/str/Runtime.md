@@ -6,8 +6,8 @@
 | --- | --- |
 | Signature | [`RUNTIME`](../sig/RUNTIME.md) |
 | Status | extension |
-| Members | 16 |
-| Tests | 44 checks |
+| Members | 17 |
+| Tests | 47 checks |
 | Source | [lib/basis/runtime.sml](../../../../lib/basis/runtime.sml) |
 
 ## Synopsis
@@ -40,6 +40,7 @@ What each means is on [`RUNTIME`](../sig/RUNTIME.md); the types are this structu
 | val | [`restore`](../sig/RUNTIME.md#val-restore) | `string -> 'a` |
 | val | [`same`](../sig/RUNTIME.md#val-same) | `'a * 'a -> bool` |
 | val | [`save`](../sig/RUNTIME.md#val-save) | `string -> world` |
+| val | [`share`](../sig/RUNTIME.md#val-share) | `unit -> int` |
 | val | [`stats`](../sig/RUNTIME.md#val-stats) | `unit -> stats` |
 | val | [`trace`](../sig/RUNTIME.md#val-trace) | `unit -> frame list` |
 | val | [`version`](../sig/RUNTIME.md#val-version) | `string` |

@@ -1,0 +1,31 @@
+(* Compiler.compile through the cache: a part of a file that is there is
+   compiled as of its line, its units named by the file and that line and
+   keyed by its text, so that the same part compiled again comes from the
+   cache -- no entry is written again, which would give it another file id
+   -- and its top level runs again *)
+fun entries () =
+  let
+    fun walk (d, acc) =
+      let
+        val s = OS.FileSys.openDir d
+        fun go acc =
+          case OS.FileSys.readDir s of
+            NONE => acc
+          | SOME f =>
+              let val p = OS.Path.joinDirFile {dir = d, file = f}
+              in go (if OS.FileSys.isDir p then walk (p, acc) else (p, OS.FileSys.fileId p) :: acc) end
+      in go acc before OS.FileSys.closeDir s end
+  in walk (valOf (OS.Process.getEnv "RUNE_CACHE"), []) end;
+fun same (a, b) =
+  length a = length b andalso
+  List.all (fn (p, i) => List.exists (fn (q, j) => p = q andalso OS.FileSys.compare (i, j) = EQUAL) b) a;
+fun part file = let val ins = TextIO.openIn file in fn () => TextIO.input1 ins end;
+val c1 = Compiler.compile {read = part "tests/repl/lib/counter.sml", file = "tests/repl/lib/counter.sml", line = 1};
+c1 ();
+val first = Counter.n;
+local val e = entries () in val count = length e fun unchanged () = same (e, entries ()) end;
+val c2 = Compiler.compile {read = part "tests/repl/lib/counter.sml", file = "tests/repl/lib/counter.sml", line = 1};
+c2 ();
+unchanged ();
+first := 10;
+!Counter.n;

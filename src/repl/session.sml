@@ -128,18 +128,19 @@ struct
      elaborate leaves the session as it was and raises
      Error.CompileError, as the batch compiler does.
 
-     cached is SOME (n, names) for the n-th declaration of a file `use`d,
-     which parsing it looked up names of: the unit is the file's n-th, and is
+     cached is SOME (stem, n, names) for the n-th declaration of a file
+     `use`d, or of a part of one (Repl.compileReader), which stem names, and
+     which parsing it looked up names of: the unit is the text's n-th, and is
      taken from the cache where an entry's usages hold (docs/units.md, The
      cache), and kept there where it is compiled. *)
-  fun compile (decs : Ast.dec list, file : string, text : string, cached : (int * string list) option)
+  fun compile (decs : Ast.dec list, file : string, text : string, cached : (string * int * string list) option)
       : {run : unit -> unit, delta : Env.env, declared : string list, bind : unit -> unit} =
     let
       val start = UnitBasis.begin (!env, !fixity)
       val here = ref (!env)
       val () = count := !count + 1
       val k = !count
-      val name = case cached of SOME (n, _) => file ^ "#" ^ Int.toString n | NONE => file ^ "#" ^ Int.toString k
+      val name = case cached of SOME (stem, n, _) => stem ^ "#" ^ Int.toString n | NONE => file ^ "#" ^ Int.toString k
       val cache =
         case cached of
           NONE => NONE
@@ -170,6 +171,8 @@ struct
                        | Fail _ => (UnitBasis.setCounters at; NONE)
                 end
       val warnings : string list ref = ref []
+      (* the source of the printer, which nothing names once it is compiled *)
+      val echoName = "<echo " ^ Int.toString k ^ ">"
     in
       case hit of
         SOME r => r
@@ -186,11 +189,11 @@ struct
                   val () = warnings := List.rev (!Error.warnings)
                   val () = Error.flushWarnings ()
                   val pdecs =
-                    case if !quiet then NONE else ReplShow.echoes (bound delta) of
+                    case if !quiet orelse !RuneCompiler.printDepth <= 0 then NONE else ReplShow.echoes (bound delta) of
                       NONE => []
                     | SOME (text, synth) =>
                         let
-                          val file = Source.fromString ("<echo " ^ Int.toString k ^ ">", text)
+                          val file = Source.fromString (echoName, text)
                           val () = Source.register file
                           (* the standard fixity, whatever the declarations made of the
                              names the printer uses *)
@@ -201,7 +204,7 @@ struct
                           val () = Error.warnings := []
                         in pd end
                 in (delta, pdecs) end)
-         val usages = UnitBasis.usagesOf (names @ (case cached of SOME (_, ns) => ns | NONE => []))
+         val usages = UnitBasis.usagesOf (names @ (case cached of SOME (_, _, ns) => ns | NONE => []))
          (* compiled, and loaded again from its basis: what it declared,
             the session's after it has run, is what the basis says *)
          val {code, loaded, exported} =
@@ -214,7 +217,7 @@ struct
                UnitCache.store (d, c, key, {usages = usages, warnings = !warnings, file = file, pickle = #pickle exported,
                                             code = bytes})
            | NONE => ()
-       in result (loaded, Runtime.link (Byte.stringToBytes bytes)) end)
-      handle e => (UnitBasis.undo start; raise e)
+       in Source.unregister echoName; result (loaded, Runtime.link (Byte.stringToBytes bytes)) end)
+      handle e => (UnitBasis.undo start; Source.unregister echoName; raise e)
     end
 end

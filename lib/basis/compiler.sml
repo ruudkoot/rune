@@ -2,14 +2,17 @@
    the printers it makes call. Rune's own, not of the specification.
 
    The REPL is one program with the code it compiles, and they share this
-   library: the REPL puts its `use` into `useHook` when it starts, and the
-   code it compiles calls `Compiler.use`, which is the same structure. A
-   program compiled by `rune` has nothing in the hook. *)
+   library: the REPL puts its `use` and its `compile` into the hooks when
+   it starts, and the code it compiles calls `Compiler.use`, which is the
+   same structure. A program compiled by `rune` has nothing in the hooks. *)
 structure RuneCompiler =
 struct
   val useHook : (string -> unit) ref =
     ref (fn _ => raise Fail "Compiler.use: this program has no compiler beside it (rune-repl has)")
   fun use file = !useHook file
+  val compileHook : ({read : unit -> char option, file : string, line : int} -> unit -> unit) ref =
+    ref (fn _ => raise Fail "Compiler.compile: this program has no compiler beside it (rune-repl has)")
+  fun compile r = !compileHook r
   val printDepth = ref 20
   val prompt1 = ref "- "
   val prompt2 = ref "= "

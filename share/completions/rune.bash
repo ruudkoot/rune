@@ -38,7 +38,7 @@ _runevm() {
     prev=${COMP_WORDS[COMP_CWORD-1]}
 
     case $prev in
-        --heap-size|--heap-fill|--gc-stress)
+        --heap-size|--heap-fill|--gc-stress|--name)
             return
             ;;
         --restore)
@@ -49,7 +49,7 @@ _runevm() {
 
     if [[ $cur == -* ]]; then
         COMPREPLY=($(compgen -W '--heap-size --heap-fill --disasm --trace --stats --count
-            --gc-stress --emulate-fork --restore --jit=off --jit=baseline --jit=opt --jit=all
+            --gc-stress --emulate-fork --restore --name --jit=off --jit=baseline --jit=opt --jit=all
             --version --help' -- "$cur"))
         return
     fi

@@ -1,0 +1,18 @@
+- = = = = = = = = = = = = = = = = = val entries = fn : unit -> (string * file_id) list
+- = = val same = fn : (''a * file_id) list * (''a * file_id) list -> bool
+- val part = fn : string -> unit -> char option
+- val c1 = fn : unit -> unit
+- structure Counter
+counted 1
+val it = () : unit
+- val first = ref 1 : int ref
+- val count = 3 : int
+val unchanged = fn : unit -> bool
+- val c2 = fn : unit -> unit
+- structure Counter
+counted 1
+val it = () : unit
+- val it = true : bool
+- val it = () : unit
+- val it = 1 : int
+- 

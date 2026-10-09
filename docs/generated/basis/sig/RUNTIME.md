@@ -6,8 +6,8 @@
 | --- | --- |
 | Status | extension |
 | Implementations | 1 |
-| Documentation | 16 of 16 entries documented |
-| Tests | 44 checks of 13 entries |
+| Documentation | 17 of 17 entries documented |
+| Tests | 47 checks of 14 entries |
 | Source | [lib/basis/runtime\_sig.sml](../../../../lib/basis/runtime_sig.sml) |
 
 ## Synopsis
@@ -53,6 +53,7 @@ sig
   val <a href="#val-stats">stats</a> : unit -&gt; stats
   val <a href="#val-profile">profile</a> : (unit -&gt; 'a) -&gt; 'a * stats
   val <a href="#val-collect">collect</a> : unit -&gt; unit
+  val <a href="#val-share">share</a> : unit -&gt; int
   type <a href="#type-frame">frame</a> = { <a href="#fld-frame.function">function</a> : string, <a href="#fld-frame.file">file</a> : string, <a href="#fld-frame.line">line</a> : int, <a href="#fld-frame.column">column</a> : int }
   val <a href="#val-trace">trace</a> : unit -&gt; frame list
   val <a href="#val-printtrace">printTrace</a> : TextIO.outstream -&gt; unit
@@ -197,6 +198,40 @@ For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml)
 
 </details>
 
+### <a name="val-share"></a>`share`
+
+```sml
+val share : unit -> int
+```
+
+`share ()` makes the equal immutable values of the heap one object
+each, and is the bytes it freed.
+
+It is what Poly/ML's PolyML.shareCommonData does before a heap is
+saved.
+
+Equal is as `=` has it, at any type: tuples, records, vectors and
+values of a datatype whose fields are equal, strings of the same
+characters, reals of the same bits, exception values of the same
+constructor and argument. A `ref`, an `array`, a function and an
+exception constructor keep their identity. A program that builds the
+same values again and again --
+terms, types, environments -- keeps one of each, the more so in an
+image [`save`](#val-save) writes after it.
+
+It collects first and after, and it needs memory of its own about the
+number of objects times 24 bytes; where it cannot have it, it shares
+nothing and is 0. Nothing an SML program can see changes but [`same`](#val-same),
+which may now say of two equal values that they are one.
+
+**Example** `share () >= 0 = true`
+
+<details><summary>Tests (3)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `equal-values-become-one` &middot; `a-ref-keeps-its-identity` &middot; `while-a-vector-is-made`
+
+</details>
+
 ### <a name="type-frame"></a>`frame`
 
 ```sml
@@ -274,7 +309,7 @@ the comparison is of the values themselves, so `same (1, 1)` is true and
 `same (0.0, ~0.0)` is false because the two are different reals. Of the
 rest, whether two equal values are one object is whatever the compiler
 shared: two equal string constants are one, and two lists written
-separately are two.
+separately are two, until [`share`](#val-share) makes them one.
 
 **Example** `let val r = ref 0 in same (r, r) end = true`
 
@@ -311,8 +346,9 @@ call, where it is [`Restored`](#con-restored): one call and two worlds, as
 [`Posix.Process.fork`](../sig/POSIX_PROCESS.md#val-fork) gives a pid to one process and 0 to another. The
 file is not used up by being restored.
 
-What is written is everything the program is made of -- the heap, the
-stacks, the counters, and the files it has open, which are opened again
+What is written is everything the program is made of -- the heap,
+collected first ([`collect`](#val-collect)) so that it is the live data and no more,
+the stacks, the counters, and the files it has open, which are opened again
 by name and put back where they were left. What belongs to the process
 rather than to the program is not: a socket, a directory stream and a
 pipe are the system's, and a restored world does not have them. Nor is

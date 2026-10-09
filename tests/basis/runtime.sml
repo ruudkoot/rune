@@ -1,4 +1,4 @@
-(* requires: Runtime Array Byte Char IO List OS String TextIO *)
+(* requires: Runtime Array Byte Char IO List OS String TextIO Vector *)
 (* Runtime (signature RUNTIME, Rune's own): the counters the VM keeps for the
    program it is running. No other SML system counts any of this, and
    lib/basis/runtime.sml is `host = no` in the MANIFEST, so this file runs on
@@ -145,6 +145,42 @@ struct
                           val s = r
                           val () = Runtime.collect ()
                       in Runtime.same (r, s) andalso !r = 5 end)
+
+  (* ---- share *)
+
+  (* two equal lists built apart, held where no running function holds
+     them: fill has returned when share runs *)
+  val held1 : (string * int list) list ref = ref []
+  val held2 : (string * int list) list ref = ref []
+  fun build () = List.tabulate (100, fn i => (Int.toString i, [i, i + 1]))
+  fun fill () = (held1 := build (); held2 := build ())
+  fun apartNow () = not (Runtime.same (!held1, !held2))
+  val () = T.check ("Runtime.share/equal-values-become-one",
+                    fn () =>
+                      let
+                        val () = fill ()
+                        val apart = apartNow ()
+                        val freed = Runtime.share ()
+                      in
+                        apart andalso freed >= 100 * 24 andalso Runtime.same (!held1, !held2)
+                        andalso !held1 = build ()
+                      end)
+  val refs : int ref list ref = ref []
+  fun fillRefs () = refs := [ref 7, ref 7]
+  val () = T.check ("Runtime.share/a-ref-keeps-its-identity",
+                    fn () =>
+                      let
+                        val () = fillRefs ()
+                        val _ = Runtime.share ()
+                      in
+                        case !refs of
+                          [a, b] => not (Runtime.same (a, b)) andalso (a := 8; !b = 7)
+                        | _ => false
+                      end)
+  val () = T.check ("Runtime.share/while-a-vector-is-made",
+                    fn () =>
+                      let val v = Vector.tabulate (64, fn i => (if i = 32 then ignore (Runtime.share ()) else (); i))
+                      in Vector.foldli (fn (i, x, ok) => ok andalso i = x) true v end)
 
   (* ---- same *)
 

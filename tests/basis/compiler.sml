@@ -9,6 +9,9 @@ struct
   val () = T.raises ("Compiler.use/no-compiler-beside-the-program",
                      fn Fail _ => true | _ => false,
                      fn () => Compiler.use "no-such-file.sml")
+  val () = T.raises ("Compiler.compile/no-compiler-beside-the-program",
+                     fn Fail _ => true | _ => false,
+                     fn () => Compiler.compile {read = fn () => NONE, file = "none", line = 1})
   val () = T.check ("Compiler.printDepth/is-twenty", fn () => !Compiler.printDepth = 20)
   val () = T.check ("Compiler.prompt1/is-a-dash", fn () => !Compiler.prompt1 = "- ")
   val () = T.check ("Compiler.prompt2/is-an-equals-sign", fn () => !Compiler.prompt2 = "= ")

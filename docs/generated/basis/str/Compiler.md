@@ -6,8 +6,8 @@
 | --- | --- |
 | Signature | [`COMPILER`](../sig/COMPILER.md) |
 | Status | extension |
-| Members | 4 |
-| Tests | 4 checks |
+| Members | 5 |
+| Tests | 5 checks |
 | Source | [lib/basis/compiler.sml](../../../../lib/basis/compiler.sml) |
 
 ## Synopsis
@@ -24,6 +24,7 @@ What each means is on [`COMPILER`](../sig/COMPILER.md); the types are this struc
 
 |  | Member | Is |
 | --- | --- | --- |
+| val | [`compile`](../sig/COMPILER.md#val-compile) | `{file : string, line : int, read : unit -> char option} -> unit -> unit` |
 | val | [`printDepth`](../sig/COMPILER.md#val-printdepth) | `int ref` |
 | val | [`prompt1`](../sig/COMPILER.md#val-prompt1) | `string ref` |
 | val | [`prompt2`](../sig/COMPILER.md#val-prompt2) | `string ref` |

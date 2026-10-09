@@ -105,6 +105,29 @@ sig
      Example: `(collect (); #collections (stats ()) >= 1) = true` *)
   val collect : unit -> unit
 
+  (* `share ()` makes the equal immutable values of the heap one object
+     each, and is the bytes it freed.
+
+     It is what Poly/ML's PolyML.shareCommonData does before a heap is
+     saved.
+
+     Equal is as `=` has it, at any type: tuples, records, vectors and
+     values of a datatype whose fields are equal, strings of the same
+     characters, reals of the same bits, exception values of the same
+     constructor and argument. A `ref`, an `array`, a function and an
+     exception constructor keep their identity. A program that builds the
+     same values again and again --
+     terms, types, environments -- keeps one of each, the more so in an
+     image `save` writes after it.
+
+     It collects first and after, and it needs memory of its own about the
+     number of objects times 24 bytes; where it cannot have it, it shares
+     nothing and is 0. Nothing an SML program can see changes but `same`,
+     which may now say of two equal values that they are one.
+
+     Example: `share () >= 0 = true` *)
+  val share : unit -> int
+
   (* One function on the call stack, and where in the source it has got to.
 
      `function` is the name the compiler recorded, qualified by the structures
@@ -142,7 +165,7 @@ sig
      `same (0.0, ~0.0)` is false because the two are different reals. Of the
      rest, whether two equal values are one object is whatever the compiler
      shared: two equal string constants are one, and two lists written
-     separately are two.
+     separately are two, until `share` makes them one.
 
      Example: `let val r = ref 0 in same (r, r) end = true` *)
   val same : 'a * 'a -> bool
@@ -158,8 +181,9 @@ sig
      `Posix.Process.fork` gives a pid to one process and 0 to another. The
      file is not used up by being restored.
 
-     What is written is everything the program is made of -- the heap, the
-     stacks, the counters, and the files it has open, which are opened again
+     What is written is everything the program is made of -- the heap,
+     collected first (`collect`) so that it is the live data and no more,
+     the stacks, the counters, and the files it has open, which are opened again
      by name and put back where they were left. What belongs to the process
      rather than to the program is not: a socket, a directory stream and a
      pipe are the system's, and a restored world does not have them. Nor is

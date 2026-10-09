@@ -48,6 +48,14 @@ to the caller of `use`. A file may `use` another, and a declaration of the
 session may call `use`: what it compiles is the session's at once, and the
 declaration's own bindings join it once it has run.
 
+`Compiler.compile {read, file, line}` is the same for the characters a
+reader gives, up to a `;` that ends a declaration or to the reader's end:
+the function it returns runs them, and raises `Fail` where one does not
+compile. It is what a program that reads its source itself -- HOL4 puts
+its quotations through a filter of its own -- compiles with, as Poly/ML's
+`PolyML.compiler` is. At a `Compiler.printDepth` of 0 the REPL says
+nothing of what a declaration declared.
+
 A file's declarations are units named by the file and their place in it,
 kept in the cache of units -- `$RUNE_CACHE`, else `.rune` beside the file
 ([units.md](units.md), *The cache*) -- and a declaration whose usages hold,
@@ -110,8 +118,11 @@ the REPL's own `use`, put into `RuneCompiler.useHook` when it starts.
   unit's code (`.rbu`) and basis (`.rbi`), and `units` and `sources`, their
   files and their sources in order.
 * `bin/rune-repl` runs `bin/rune-repl.load.rbc` (`src/repl/load.sml`), which
-  loads those units one by one with `Runtime.load` and runs each, the last
-  being the REPL's main (`src/main/repl-main.sml`). So what the REPL program
+  reads every one of those units and then links them one by one with
+  `Runtime.link` and runs each, the REPL's main (`src/main/repl-main.sml`)
+  the last but the Basis's final units. Reading them all first puts the
+  units after the main into the image too, so the REPL runs from any
+  directory. So what the REPL program
   exports is in the VM's table of the units loaded, by each unit's
   identity, which the units it makes name too ([units.md](units.md),
   *Names*).

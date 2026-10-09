@@ -130,9 +130,24 @@ struct
      {counters = counters (), env = env, fixity = fixity, snapshot = Elaborate.snapshot (),
       primAliases = !Translate.primAliases, knownBefore = !Lower.knownBefore})
 
-  (* the tables back as the unit found them, before its basis is loaded *)
+  (* the tables back as the unit found them, before its basis is loaded. The
+     tables by stamp only grow, and its compile filled them under the
+     stamps it made, which no unit names again: its names are loaded after
+     them (load, base) -- so what it bound there is taken out, which in a
+     session that compiles declaration after declaration (the REPL) would
+     otherwise be the type of every variable it ever compiled. *)
   fun undo (s : start) =
-    (Elaborate.restore (#snapshot s); Translate.primAliases := #primAliases s; Lower.knownBefore := #knownBefore s)
+    let
+      val now = counters ()
+      fun range k = (Vector.sub (#counters s, k), Vector.sub (now, k))
+      val (s0, s1) = range kStamp
+      val (t0, t1) = range kTycon
+    in
+      Elaborate.restore (#snapshot s); Translate.primAliases := #primAliases s; Lower.knownBefore := #knownBefore s;
+      IntTable.removeRange (Ty.binders, s0, s1);
+      IntTable.removeRange (Ty.exnArgs, s0, s1);
+      IntTable.removeRange (Ty.realizations, t0, t1)
+    end
 
   (* ---- writing ---- *)
 

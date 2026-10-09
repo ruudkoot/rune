@@ -15,6 +15,7 @@ struct
     val majors' = _prim "rt_major_collections" : unit -> int
     val promoted' = _prim "rt_promoted" : unit -> int
     val collect' = _prim "rt_collect" : unit -> unit
+    val share' = _prim "rt_share" : unit -> int
     val version' = _prim "rt_version" : unit -> string
     val trace' = _prim "rt_trace" : int -> (string * string * int * int) list
     val save' = _prim "rt_save" : string -> int
@@ -47,6 +48,8 @@ struct
       end
 
     fun collect () = collect' ()
+
+    fun share () = share' ()
 
     type frame = { function : string, file : string, line : int, column : int }
 
@@ -107,8 +110,9 @@ struct
       in TextIO.setInstream (TextIO.stdIn, TextIO.StreamIO.mkInstream (rd, "")) end
       handle IO.Io _ => ()
 
+    (* collected first, so that the image holds what is live and no more *)
     fun save file =
-      case save' file of
+      case (collect' (); save' file) of
         0 => Saved
       | 1 => (freshStdIn (); Restored)
       | _ => raise RuneError.lastError ()

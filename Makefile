@@ -112,7 +112,7 @@ BUILDGEN := $(BUILDFILES) $(VERSIONGEN)
 # build/librune.a, which bin/runevm-stack links, and so will a program runeopt
 # makes (docs/native.md); the other VMs compile the same list.
 SYS ?= posix
-RT_SRCS := runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/loader.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
+RT_SRCS := runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
 VM_SRCS := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_$(SYS).c
 VM_HDRS := runtime/vm.h runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
 RT_OBJS := $(patsubst runtime/%.c,build/librune/%.o,$(RT_SRCS) runtime/sys/sys_$(SYS).c)
@@ -882,7 +882,7 @@ check-units: $(RUNE) bin/rune-boot bin/runevm bin/runevm-stack
 REPL_SRCS := build/config.sml $(SOURCES) src/repl/show.sml src/repl/session.sml src/repl/repl.sml src/main/repl-main.sml
 bin/rune-repl.units/units: bin/rune-boot $(REPL_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
 	rm -rf bin/rune-repl.units
-	bin/rune-boot --units --emit-units bin/rune-repl.units -o bin/rune-repl.rbc $(REPL_SRCS)
+	bin/rune-boot --units --basis all --emit-units bin/rune-repl.units -o bin/rune-repl.rbc $(REPL_SRCS)
 bin/rune-repl.load.rbc: bin/rune-boot src/repl/load.sml lib/basis/MANIFEST
 	bin/rune-boot -o $@ src/repl/load.sml
 # the REPL started once and saved once it has compiled its library again

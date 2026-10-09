@@ -603,6 +603,8 @@ struct
           doc = "The heap's size, in bytes: what it holds before it is collected."},
          {name = "rt_collect", arity = 1, ty = "unit -> unit", effects = anything,
           doc = "Collect the heap now, a full collection: free every unreachable object."},
+         {name = "rt_share", arity = 1, ty = "unit -> int", effects = anything,
+          doc = "Make the heap's equal immutable objects one, as Poly/ML's shareCommonData does (runtime/gc/share.c): the bytes of the copies it freed."},
          {name = "rt_version", arity = 1, ty = "unit -> string", effects = anything,
           doc = "The version of Rune this VM was built as, which `runevm --version` prints."},
          {name = "rt_trace", arity = 1, ty = "int -> (string * string * int * int) list", effects = anything,

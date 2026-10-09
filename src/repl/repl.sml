@@ -44,10 +44,11 @@ struct
   (* What a text is to the parser: declarations, more to read, or an error *)
   datatype parsed = Decs of Ast.dec list * Fixity.env | More | Wrong of string
 
-  (* The declarations of a text, if it ends with a `;` that ends one. *)
-  fun parse (name : string, text : string) : parsed =
+  (* The declarations of a text, if it ends with a `;` that ends one; the
+     text is the source name's from its line `line` on. *)
+  fun parseAt (name : string, text : string, line : int) : parsed =
     let
-      val file = Source.fromString (name, text)
+      val file = Source.fromStringAt (name, text, line)
       val () = Source.register file
     in
       (let
@@ -66,15 +67,17 @@ struct
         (* a string or a comment the text has not finished yet *)
         if String.isSubstring "unterminated" msg then More else Wrong (Error.format (sp, msg))
     end
+  fun parse (name : string, text : string) : parsed = parseAt (name, text, 1)
 
   (* run (decs, name, text, cached, stopping): each declaration of the text
      of source name compiled and run in turn; false at the first that fails,
-     where stopping says so. cached is SOME (n, names) where the text is a
-     file's, n the place of the first declaration in it and names what
-     parsing it looked up: its units are then the file's, through the cache
+     where stopping says so. cached is SOME (stem, n, names) where the text
+     is a file's, or a part of one (compileReader): stem names the text, n
+     is the place of the first declaration in it and names what parsing it
+     looked up; its units are then the text's, through the cache
      (ReplSession.compile). Masked but for the running, which may be inside
      another declaration's (a nested use). *)
-  fun run (decs : Ast.dec list, name : string, text : string, cached : (int * string list) option,
+  fun run (decs : Ast.dec list, name : string, text : string, cached : (string * int * string list) option,
            stopping : bool) : bool =
     case decs of
       [] => true
@@ -96,14 +99,14 @@ struct
                   ((unmasked run;
                     ReplSession.env := Env.plus (!ReplSession.env, delta);
                     bind ();
-                    List.app (fn s => print (s ^ "\n")) declared;
+                    if !RuneCompiler.printDepth > 0 then List.app (fn s => print (s ^ "\n")) declared else ();
                     true)
                    handle e => if stopping then raise e else (uncaught e; false))
             end
           val ok = masked one
         in
           if ok orelse not stopping
-          then run (rest, name, text, Option.map (fn (n, ns) => (n + 1, ns)) cached, stopping)
+          then run (rest, name, text, Option.map (fn (s, n, ns) => (s, n + 1, ns)) cached, stopping)
           else false
         end
 
@@ -112,16 +115,123 @@ struct
   fun use (file : string) : unit =
     let
       val text = #text (Source.readFile file) handle IO.Io _ => raise Fail ("use: cannot read " ^ file)
+      (* compiled, the file's lines are what the session keeps of it *)
+      fun done () = Source.keepLines file
     in
       (* parsed, what the parse looked up recorded: each declaration's
          usages have it (ReplSession.compile) *)
-      case Usage.record (fn () => parse (file, text ^ "\n;")) of
-        (Decs (decs, fx), names) =>
-          (ReplSession.fixity := fx;
-           if run (decs, file, text ^ "\n;", SOME (0, names), true) then () else raise Fail ("use: " ^ file ^ " has errors"))
-      | (More, _) => raise Fail ("use: " ^ file ^ " ends in the middle of a declaration")
-      | (Wrong msg, _) => (err (msg ^ "\n"); raise Fail ("use: " ^ file ^ " has errors"))
+      (case Usage.record (fn () => parse (file, text ^ "\n;")) of
+         (Decs (decs, fx), names) =>
+           (ReplSession.fixity := fx;
+            if run (decs, file, text ^ "\n;", SOME (file, 0, names), true) then ()
+            else raise Fail ("use: " ^ file ^ " has errors"))
+       | (More, _) => raise Fail ("use: " ^ file ^ " ends in the middle of a declaration")
+       | (Wrong msg, _) => (err (msg ^ "\n"); raise Fail ("use: " ^ file ^ " has errors")))
+      handle e => (done (); raise e);
+      done ()
     end
+
+  (* Compiler.compile {read, file, line}: the characters read up to a `;`
+     that ends a declaration at the top level, or to the end of read, parsed
+     as the text of file from line on; the function that runs its
+     declarations as use does, raising Fail where one does not compile. A
+     syntax error is reported, and raises Fail, at once.
+
+     A part of a file that is there goes through the cache as use's
+     declarations do, its units named by the file and the line it begins
+     at, and keyed by its text (ReplSession.compile). Once its declarations
+     are compiled, the session keeps the file's lines and not the text. *)
+  fun compileReader {read : unit -> char option, file : string, line : int} : unit -> unit =
+    let
+      fun static msg = (err (msg ^ "\n"); raise Fail ("Static errors in " ^ file))
+      val isFile = (OS.FileSys.access (file, [OS.FileSys.A_READ]) andalso not (OS.FileSys.isDir file))
+                   handle OS.SysErr _ => false
+      fun run' (decs, fx, text, names) =
+        (ReplSession.fixity := fx;
+         fn () =>
+           let
+             val cached = if isFile then SOME (file ^ ":" ^ Int.toString line, 0, names) else NONE
+             val ok = run (decs, file, text, cached, true) handle e => (Source.keepLines file; raise e)
+           in
+             Source.keepLines file;
+             if ok then () else raise Fail ("Static errors in " ^ file)
+           end)
+      fun parsed text = Usage.record (fn () => parseAt (file, text, line))
+      (* How deep what has been read is in brackets and in let, local,
+         struct, sig and abstype ... end, outside strings and comments. A
+         `;` at depth 0 may end a declaration at the top level, and only
+         there is the text parsed: a structure has a `;` after most of its
+         declarations, and parsing the text at each of them made reading
+         one quadratic. Where the count is wrong the text is parsed at a
+         `;` too many or too few; the parse decides. *)
+      val depth = ref 0
+      val comment = ref 0
+      val inString = ref false
+      val escaped = ref false
+      val prev = ref #" "
+      val word = ref ([] : char list)
+      fun endWord () =
+        (case String.implode (List.rev (!word)) of
+           "let" => depth := !depth + 1
+         | "local" => depth := !depth + 1
+         | "struct" => depth := !depth + 1
+         | "sig" => depth := !depth + 1
+         | "abstype" => depth := !depth + 1
+         | "end" => depth := !depth - 1
+         | _ => ();
+         word := [])
+      fun scan (c : char) =
+        if !comment > 0 then
+          if !prev = #"(" andalso c = #"*" then (comment := !comment + 1; prev := #" ")
+          else if !prev = #"*" andalso c = #")" then (comment := !comment - 1; prev := #" ")
+          else prev := c
+        else if !inString then
+          if !escaped then escaped := false
+          else if c = #"\\" then escaped := true
+          else if c = #"\"" then inString := false
+          else ()
+        else if Char.isAlphaNum c orelse c = #"_" orelse c = #"'" then word := c :: !word
+        else
+          (if null (!word) then () else endWord ();
+           case c of
+             #"*" => if !prev = #"(" then (depth := !depth - 1; comment := 1; prev := #" ") else prev := c
+           | #"(" => (depth := !depth + 1; prev := c)
+           | #"[" => (depth := !depth + 1; prev := c)
+           | #"{" => (depth := !depth + 1; prev := c)
+           | #")" => (depth := !depth - 1; prev := c)
+           | #"]" => (depth := !depth - 1; prev := c)
+           | #"}" => (depth := !depth - 1; prev := c)
+           | #"\"" => (inString := true; prev := c)
+           | _ => prev := c)
+      fun gather (acc : char list) =
+        case read () of
+          NONE =>
+            let val text = String.implode (List.rev acc)
+            in
+              if CharVector.all Char.isSpace text then (fn () => ())
+              else
+                case parsed (text ^ "\n;") of
+                  (Decs (decs, fx), names) => run' (decs, fx, text ^ "\n;", names)
+                | (More, _) => static (file ^ ": the text ends in the middle of a declaration")
+                | (Wrong msg, _) => static msg
+            end
+        | SOME #";" =>
+            let
+              val () = scan #";"
+              val acc = #";" :: acc
+            in
+              if !depth > 0 orelse !comment > 0 orelse !inString then gather acc
+              else
+                let val text = String.implode (List.rev acc)
+                in
+                  case parsed text of
+                    (Decs (decs, fx), names) => run' (decs, fx, text, names)
+                  | (More, _) => gather acc
+                  | (Wrong msg, _) => static msg
+                end
+            end
+        | SOME c => (scan c; gather (c :: acc))
+    in gather [] end
 
   (* The loop: a prompt, lines until a declaration ends, the declarations
      run; on to the end of the input *)
@@ -175,6 +285,7 @@ struct
       ignore (Runtime.maskInterrupt true);
       ReplSession.start {units = units, sources = sources, lib = lib};
       RuneCompiler.useHook := use;
+      RuneCompiler.compileHook := compileReader;
       (* the top level's own: use *)
       ReplSession.quiet := true;
       (case parse ("<repl>", "val use = Compiler.use;") of
@@ -187,7 +298,8 @@ struct
          (docs/repl.md, How it is built) *)
       case rest of
         ["--make-image", image] =>
-          (case Runtime.save image of
+          (ignore (Runtime.share ());
+           case Runtime.save image of
              Runtime.Saved => ()
            | Runtime.Restored => session (CommandLine.arguments ()))
       | files => session files

@@ -6,8 +6,8 @@
 | --- | --- |
 | Status | extension |
 | Implementations | 1 |
-| Documentation | 4 of 4 entries documented |
-| Tests | 4 checks of 4 entries |
+| Documentation | 5 of 5 entries documented |
+| Tests | 5 checks of 5 entries |
 | Source | [lib/basis/compiler\_sig.sml](../../../../lib/basis/compiler_sig.sml) |
 
 ## Synopsis
@@ -43,6 +43,7 @@ structure PolyML.Compiler, and SML/NJ in Compiler.Control.
 signature COMPILER =
 sig
   val <a href="#val-use">use</a> : string -&gt; unit
+  val <a href="#val-compile">compile</a> : {<a href="#fld-compile.read">read</a> : unit -&gt; char option, <a href="#fld-compile.file">file</a> : string, <a href="#fld-compile.line">line</a> : int} -&gt; unit -&gt; unit
   val <a href="#val-printdepth">printDepth</a> : int ref
   val <a href="#val-prompt1">prompt1</a> : string ref
   val <a href="#val-prompt2">prompt2</a> : string ref
@@ -75,6 +76,42 @@ For `Compiler`, in [tests/basis/compiler.sml](../../../../tests/basis/compiler.s
 
 </details>
 
+### <a name="val-compile"></a>`compile`
+
+```sml
+val compile : {read : unit -> char option, file : string, line : int} -> unit -> unit
+```
+
+`compile {read, file, line}` reads top-level declarations from `read`
+and is the function that runs them, as if they had been typed at the
+REPL.
+
+It reads up to a `;` that ends a declaration at the top level, or to
+the end of what `read` gives (`NONE`); a caller that wants all of a
+reader compiles from it until it is at its end. `file` and `line` say
+where the characters are from, for the positions of errors and
+traces. The declarations are compiled and run one after another when
+the function is called, each extending those before it, as with
+[`use`](#val-use): a declaration that does not compile stops them, its error
+reported, and one that raises stops them, the exception going on to
+the caller. Poly/ML's PolyML.compiler is the same, a reader and its
+parameters in, a function that runs what it read out.
+
+**Raises** [`Fail`](../sig/GENERAL.md#exn-fail) in a program that has no compiler beside it; the
+function raises [`Fail`](../sig/GENERAL.md#exn-fail) where a declaration does not compile.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-compile.read"></a>`read` | `unit -> char option` |  |
+| <a name="fld-compile.file"></a>`file` | `string` |  |
+| <a name="fld-compile.line"></a>`line` | `int` |  |
+
+<details><summary>Tests (1)</summary>
+
+For `Compiler`, in [tests/basis/compiler.sml](../../../../tests/basis/compiler.sml): `no-compiler-beside-the-program` (raises)
+
+</details>
+
 ### <a name="val-printdepth"></a>`printDepth`
 
 ```sml
@@ -85,7 +122,8 @@ How deep the REPL prints a value, from the outside in.
 
 The levels it counts are those of a list, a tuple, a record, a
 constructor's argument and a `ref`'s content; past them it writes
-`...` for the rest.
+`...` for the rest. At 0 or below the REPL says nothing of what a
+declaration declared.
 
 <details><summary>Tests (1)</summary>
 

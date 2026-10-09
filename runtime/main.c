@@ -49,7 +49,11 @@ static void usage(void) {
         "  --restore FILE  carry on the world Runtime.save wrote to FILE, with the\n"
         "                  arguments after it, if any or after --, as its\n"
         "                  CommandLine.arguments\n"
-        "  --              the end of the options\n"
+        "  --name NAME     the name the program has (CommandLine.name), the file's\n"
+        "                  else: for a script that runs a .rbc as a command of its own\n"
+        "  --              the end of the options\n");
+    /* in two, each within the length C99 asks a compiler to take */
+    fprintf(stderr,
         "  --jit=MODE      register VM: off, baseline, opt or all (docs/plans/jit.md)\n"
         "  --jit-stats     register VM: what the JIT did, to stderr at exit\n"
         "  --jit-only=SPEC register VM: give code to functions LO-HI, or the odd or even ones, alone\n"
@@ -91,7 +95,7 @@ int main(int argc, char **argv) {
     int jit_check = 0, jit_given = 0;
     JitOptions jit;
     memset(&jit, 0, sizeof jit);
-    const char *resume = NULL, *restore = NULL, *gc_log = NULL;
+    const char *resume = NULL, *restore = NULL, *gc_log = NULL, *name = NULL;
 #ifdef RUNE_CENSUS
     const char *census_dir = NULL;
     size_t census_every_arg = 32768, census_fields = 1, census_ids = 0;
@@ -117,6 +121,7 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--checked") == 0) checked = 1;
         else if (strcmp(argv[i], "--resume") == 0 && i + 1 < argc) resume = argv[++i];
         else if (strcmp(argv[i], "--restore") == 0 && i + 1 < argc) restore = argv[++i];
+        else if (strcmp(argv[i], "--name") == 0 && i + 1 < argc) name = argv[++i];
         else if (strcmp(argv[i], "--gc-log") == 0 && i + 1 < argc) gc_log = argv[++i];
         else if (strcmp(argv[i], "--gc-verify") == 0) gc_verify = 1;
         else if (strcmp(argv[i], "--gc-compact") == 0) gc_compact = 1;
@@ -225,6 +230,15 @@ int main(int argc, char **argv) {
             vm->argc = argc - i;
             vm->owns_args = 1;
         }
+        /* and --name the name it was saved with */
+        if (name) {
+            size_t len = strlen(name);
+            char *n = malloc(len + 1);
+            if (!n) { fprintf(stderr, "runevm: out of memory\n"); return 2; }
+            memcpy(n, name, len + 1);
+            free((char *)vm->progname);   /* the image's: vm->owns_args */
+            vm->progname = n;
+        }
         vm_exit(vm, vm_loop(vm));   /* does not return */
     }
     if (resume) {
@@ -253,7 +267,7 @@ int main(int argc, char **argv) {
     vm->emulate_fork = emulate_fork;
     vm->checked = checked;
     vm->jit = jit;
-    vm->progname = argv[i];
+    vm->progname = name ? name : argv[i];
     vm->argc = argc - i - 1;
     vm->argv = argv + i + 1;
     vm->stack_limit = stack;

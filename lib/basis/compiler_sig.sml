@@ -36,11 +36,31 @@ sig
      be read. *)
   val use : string -> unit
 
+  (* `compile {read, file, line}` reads top-level declarations from `read`
+     and is the function that runs them, as if they had been typed at the
+     REPL.
+
+     It reads up to a `;` that ends a declaration at the top level, or to
+     the end of what `read` gives (`NONE`); a caller that wants all of a
+     reader compiles from it until it is at its end. `file` and `line` say
+     where the characters are from, for the positions of errors and
+     traces. The declarations are compiled and run one after another when
+     the function is called, each extending those before it, as with
+     `use`: a declaration that does not compile stops them, its error
+     reported, and one that raises stops them, the exception going on to
+     the caller. Poly/ML's PolyML.compiler is the same, a reader and its
+     parameters in, a function that runs what it read out.
+
+     Raises: `Fail` in a program that has no compiler beside it; the
+     function raises `Fail` where a declaration does not compile. *)
+  val compile : {read : unit -> char option, file : string, line : int} -> unit -> unit
+
   (* How deep the REPL prints a value, from the outside in.
 
      The levels it counts are those of a list, a tuple, a record, a
      constructor's argument and a `ref`'s content; past them it writes
-     `...` for the rest. *)
+     `...` for the rest. At 0 or below the REPL says nothing of what a
+     declaration declared. *)
   val printDepth : int ref
 
   (* What the REPL writes before it reads a declaration. *)
