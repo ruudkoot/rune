@@ -586,9 +586,13 @@ struct
 
   fun say (s : string) : unit = (TextIO.output (TextIO.stdOut, s); TextIO.flushOut TextIO.stdOut)
 
-  (* the deep mode (P11): 10000 cases for each seed from 1 to 1000, until one fails *)
+  (* the deep mode (P11): 10000 cases for each seed from 1 to 1000, or to
+     RUNE_PROPERTY_SEEDS, until one fails *)
   fun deep (name : string) (p : Prop.prop) : result =
     let
+      val seeds = case Option.mapPartial Int.fromString (OS.Process.getEnv "RUNE_PROPERTY_SEEDS") of
+                    SOME n => Int.max (n, 1)
+                  | NONE => 1000
       fun go k =
         let
           val r = check {seed = SOME (Word64.fromInt k), tests = 10000, maxSize = 100, maxDiscards = 100000,
@@ -597,7 +601,7 @@ struct
         in
           case r of
             Passed {exhaustive = true, ...} => r
-          | Passed _ => if k >= 1000 then r else go (k + 1)
+          | Passed _ => if k >= seeds then r else go (k + 1)
           | _ => r
         end
     in

@@ -1029,6 +1029,7 @@ numbers it gave are reported as they came out.
 - **P9. Exhaustive search.** It is used when every variable has a finite domain and the product is at most 2^16 cases in `make check`, or 2^20 in the deep mode. `bool`, `order`, `char`, `Int8`, `Word8` and their pairs qualify.
 - **P10. Instances.** A law is tested at every implementation of its signature, and a type variable at `int` (D8).
 - **P11. Counts.** In `make check`: 100 cases per law per implementation, or exhaustively, with a fixed seed. In the deep mode: 10,000 cases per seed for seeds 1 to 1,000, fixed in advance.
+  - **The hunt's deep run** (the owner, 2026-10-09): seed 1 only (`RUNE_PROPERTY_SEEDS=1`), at eight jobs. The thousand seeds would be 10 million cases for each law at each structure, about 100,000 times a run at the settings of `make check`, which takes 50 minutes of CPU: some ten years. The number was fixed in advance without being costed.
 - **P12. Values built from parts** (added at M6, before any law ran).
   - *An abstract value* (`Date.date`, `Time.time`, terminal settings) is made by its structure's own constructor from parts within the range the Basis documents. So a draw never raises: a `Date.date` has a year from 1900 to 2200, which the specification asks for, and fields in range.
   - *A range the specification leaves to the implementation* is read from the structure, as P1 reads `maxInt`. `Time.time`'s range is found by doubling a time until `Time` is raised.
