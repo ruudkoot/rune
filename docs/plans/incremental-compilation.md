@@ -50,8 +50,13 @@ What it rests on:
 | M11 | Parallel and reproducible builds | |
 | M12 | Hot reload, the compiler as a service, packages: research and prototypes | |
 
-The owner decides D1 to D19 after reading this (*Decisions*); what
-starts first is theirs too. M1 to M7 are one part: at the end of M4
+The owner decided D1 to D9 and D11 to D19 on 2026-10-09, all as
+recommended (*Decisions*), and asked for D10 to be reviewed against the
+heap layout and the collector built since this was written; the review
+is in D10 and the decision waits for it. The work runs on branch
+`incremental`, one commit per milestone, from M1 in order; *Since this
+was written* says what changed under the plan between 2026-09-25 and
+2026-10-09. M1 to M7 are one part: at the end of M4
 Rune has a REPL, at the end of M5 it hosts HOL4, at the end of M7 a
 compile costs what changed, and the owner may stop at any of the three.
 M8 to M12 are sized now and planned again after M7, with its numbers
@@ -127,8 +132,16 @@ system"; "whole-program vs incremental"; "language server protocol"),
 and the brief of a future IDE (`docs/plans/ide.md`), which will be the
 first consumer of the compiler as a service (M12) and does no work here.
 
-**The owner's decisions after reading this roadmap:** none yet. D1 to
-D19 are written with a recommendation each (*Decisions*).
+**The owner's decisions after reading this roadmap (2026-10-09):**
+every recommendation taken, with three notes: D1 and D2 are A "for now
+to keep strict SML'97 semantics", and B of each may be considered for
+Rune 2.0; D18 is A, and C (first-class packages) may be considered for
+Rune 2.0. D10 asked for a review: "is A still possible with the new
+heap layout that has been introduced (and possible future optimization
+planned) or is B now required?" The answer is in D10: A is still
+possible and B is not required, but A's justification was wrong under
+the new layout and is rewritten there with the conditions that keep it
+true.
 
 | The brief asks | Answered in |
 |---|---|
@@ -158,6 +171,80 @@ D19 are written with a recommendation each (*Decisions*).
 | document and test behaviour beyond the Definition; the plan file is ephemeral | *Constraints* (the lasting documents: `docs/units.md`, `docs/repl.md`, `docs/build.md`, rows of `docs/language.md`); *Testing* |
 | what is missing | *Disagreements and additions* |
 | the prior research listed | each item in *What the literature says*; Elsman's "1997" is his 1999 paper and his 2008 report, and his 2026 REPL paper is the closest precedent of all |
+
+## Since this was written
+
+Between 2026-09-25 and the owner's decisions of 2026-10-09, master
+moved under this plan. What moved, and what it changes here; *Where we
+are* below is the tree of 2026-09-25 and is left as it was read.
+
+* **The JIT roadmap finished** (M1 to M12, merged as PR #21): code
+  objects and the driver, tiering and invalidation with its poll points
+  (M6), the representations section per function (M8), deoptimisation
+  (M11) and aarch64 (M12) all exist, so every prerequisite of
+  *Prerequisites and flags* holds as built, and none of the "without
+  M6/M8/M11" fallbacks is needed. `runevm` tiers to tier 2 by default.
+* **The tree was renamed** (2026-10-03): `vm/` is `runtime/`. The
+  runtime both VMs link is directly under it (`vm.h`, `value.h`,
+  `loader.c`, `image.c`, `prims.c`, `runtime.c`), the collector is in
+  `runtime/gc/`, the system layer in `runtime/sys/` (`sys.h`), the stack
+  VM in `runtime/stack/` (`bin/runevm-stack`, which was `runevm`), the
+  register VM in `runtime/register/` (`bin/runevm`, which was
+  `vm/new` and `runevm-new`) with its JIT in `runtime/register/jit/`;
+  `rune` makes register bytecode unless told `--target=stack`. Every
+  `vm/...` path below is the old tree's. The names they cite were all
+  found again on 2026-10-09 at the new paths (`load_program_mem`,
+  `validate_program`, `rop_kinds`, `op_kinds`, `JitProgram`,
+  `CodeObject`, `jit_entry`, `PRIM_NEW_WORLD`, `heap_relocate`,
+  `vm_become`); line numbers are not to be trusted.
+* **The heap layout** ([heap-layout.md](heap-layout.md), merged as PR
+  #33; `docs/runtime.md`, *Values and objects*). A value is one 64-bit
+  word on every machine, and its low bit says only "immediate" or
+  "pointer". `int` and `word` are 63 bits; `Int64` and `Word64` are
+  boxed past 63 bits; a real is an immediate by the rotation encoding
+  where its exponent allows, boxed otherwise; an object has an 8-byte
+  header of kind, constructor tag and length; a constructor whose
+  argument is a tuple is one object of the tuple's fields (`CONN`);
+  `Word8Array`, `CharArray`, `RealArray` and `RealVector` hold raw
+  bytes and doubles. **An immediate no longer says what it is**: an
+  `int`, a `word`, a `char`, `unit`, a nullary constructor and a real
+  in range are all odd words, and `val_tag` answers `T_INT` for every
+  one of them ("the program knows which", `runtime/value.h`). This is
+  what D10 had to be reviewed for. It changes nothing in D3 to D7: a
+  datatype's representation is still a function of its declaration
+  (`Rep.ofDatatype`), which is what lets a later unit match an earlier
+  unit's constructors. Kept open by that roadmap and not built: raw
+  real fields (deferred by the owner to a roadmap of their own),
+  headerless pairs (branch `heap-layout-pairs`; its D1 C "later, in the
+  whole-program compiler"), a 32-bit machine's own word
+  (`32-bit-vm.md`), and a pointer code kept for a lazy front end.
+* **The collector** (`garbage-collector-v2.md`, merged as PR #34;
+  `docs/runtime.md`, *The heap* and *The garbage collector*): a nursery,
+  an old space that is not copied (mark-region with opportunistic
+  evacuation under `--gc throughput`, the default, and incremental
+  marking from a snapshot under `--gc low-pause`), a large-object space,
+  a heap of 2 MiB chunks rather than one block, and a barrier on every
+  store into an object. What it changes here:
+  * D9's cost and risk 4 shrink. The resident basis -- the Basis
+    Library's and HOL4's static environment, kept live in the heap -- is
+    promoted once and afterwards marked at each major collection, not
+    copied at every collection. M1 still measures it, under both
+    collectors.
+  * A new cost to measure: the globals are roots of **every** minor
+    collection and are scanned whole (`docs/runtime.md`, *The roots*),
+    since `SETGLOBAL` has no barrier. A REPL session grows its globals
+    with every declaration (HOL4's heap has tens of thousands of
+    top-level values), so each minor collection pays for all of them.
+    M1 measures the cost per global; if it matters, M3 gives the
+    globals a dirty bit per slot (cards for the globals table), which
+    `rt_load` sizes as it grows the table.
+  * Nothing in M3 assumed one contiguous heap. An image after loads
+    is still the whole program, its magic still the instruction set's
+    fingerprint (which `rt_load`, a new primitive, changes), and a
+    loaded unit's code makes its stores through the barrier as any
+    bytecode does.
+* **Numbers.** *What a compile costs* predates all three; M1 measures it
+  again, on today's tree.
 
 ## Where we are
 
@@ -1205,33 +1292,35 @@ compiler as a service (M12). No work on it here.
 ## Decisions
 
 Each gives the options, what favours each, and the recommendation it
-was written with. The owner decides.
+was written with. The owner decided all but D10 on 2026-10-09, as
+recommended; D10 was reviewed that day against the word layout and
+waits for the owner:
 
-| Decision | Recommended |
-|---|---|
-| D1. What a unit is | A: a source file; a REPL declaration; functor bodies compiled at each application |
-| D2. Incremental or separate compilation | A: IC against the actual bases before it, in explicit order; SC only against a signature, for virtual and dynamic modules |
-| D3. Names across units | A: stamps stay `int`, local per unit; canonical renumbering at export, a base added at import and link |
-| D4. The compilation basis | A: one record with deltas, holding what every phase needs; spans kept |
-| D5. Memory before disk | A: the front end and back end made resumable and per-unit first (M2); serialisation after (M6) |
-| D6. What a unit object holds | A: export basis, self-contained Mid, unit bytecode; whole-program builds from the Mid |
-| D7. Linking | A: a static linker in the compiler and `rt_load` in the VM, one relocation, cross-checked; `rt_load` returns a closure |
-| D8. The Basis and the compiler as units | A: the compiler is the first client of unit builds; the Basis ships as one frozen library |
-| D9. The resident compiler | A: in-process, Poly/ML's model; a two-process front end later if wanted |
-| D10. Printing at the top level | A: printers generated per declaration from the static type, plus a registry by type name |
-| D11. Interrupts | A: a flag set by a handler behind `sys.h`, polled at the JIT's poll points, raised as `Interrupt`, maskable |
-| D12. The REPL's semantics | A: Chapter 8: skip a failed declaration, keep effects of one that raised; errors recoverable per declaration |
-| D13. HOL4 | A: a port layer in a HOL4 fork; images as heaps; single-threaded shims; the owner may stop before it |
-| D14. The cache | A: `.rune/` per source directory by default, relocatable; content-addressed under a configuration hash; cut-off by usages; no timestamps |
-| D15. The dependency graph and the file discipline | A: analysis for files with module-only top levels, checked; an explicit list as the escape hatch; nothing restricts `rune` |
-| D16. The build language | A: a language of Rune's own with MLB's semantics, groups, virtual modules, packages, annotations; host build files generated from it |
-| D17. Compiling against a signature alone | A: an ABI fixed by the signature: slots, tags and layouts in signature order, calls through wrappers, no functors |
-| D18. Dynamic modules | A: `structure X = _dynamic "path" : SIG`, checked by interface fingerprint at load; plus an untyped `Dynamic.load` |
-| D19. The second part | as recommended: whole-program from the cache, parallel and reproducible builds; reload, service and packages as research with a decision each |
+| Decision | Recommended | Chosen |
+|---|---|---|
+| D1. What a unit is | A: a source file; a REPL declaration; functor bodies compiled at each application | A, "for now to keep strict SML'97 semantics"; B may be considered for Rune 2.0 |
+| D2. Incremental or separate compilation | A: IC against the actual bases before it, in explicit order; SC only against a signature, for virtual and dynamic modules | A, "for now to keep strict SML'97 semantics"; B may be considered for Rune 2.0 |
+| D3. Names across units | A: stamps stay `int`, local per unit; canonical renumbering at export, a base added at import and link | A |
+| D4. The compilation basis | A: one record with deltas, holding what every phase needs; spans kept | A |
+| D5. Memory before disk | A: the front end and back end made resumable and per-unit first (M2); serialisation after (M6) | A |
+| D6. What a unit object holds | A: export basis, self-contained Mid, unit bytecode; whole-program builds from the Mid | A |
+| D7. Linking | A: a static linker in the compiler and `rt_load` in the VM, one relocation, cross-checked; `rt_load` returns a closure | A |
+| D8. The Basis and the compiler as units | A: the compiler is the first client of unit builds; the Basis ships as one frozen library | A |
+| D9. The resident compiler | A: in-process, Poly/ML's model; a two-process front end later if wanted | A |
+| D10. Printing at the top level | A: printers generated per declaration from the static type, plus a registry by type name | reviewed on 2026-10-09 (below): A still holds, B is not required; A's reason rewritten; the owner's to confirm |
+| D11. Interrupts | A: a flag set by a handler behind `sys.h`, polled at the JIT's poll points, raised as `Interrupt`, maskable | A |
+| D12. The REPL's semantics | A: Chapter 8: skip a failed declaration, keep effects of one that raised; errors recoverable per declaration | A |
+| D13. HOL4 | A: a port layer in a HOL4 fork; images as heaps; single-threaded shims; the owner may stop before it | A |
+| D14. The cache | A: `.rune/` per source directory by default, relocatable; content-addressed under a configuration hash; cut-off by usages; no timestamps | A |
+| D15. The dependency graph and the file discipline | A: analysis for files with module-only top levels, checked; an explicit list as the escape hatch; nothing restricts `rune` | A |
+| D16. The build language | A: a language of Rune's own with MLB's semantics, groups, virtual modules, packages, annotations; host build files generated from it | A |
+| D17. Compiling against a signature alone | A: an ABI fixed by the signature: slots, tags and layouts in signature order, calls through wrappers, no functors | A |
+| D18. Dynamic modules | A: `structure X = _dynamic "path" : SIG`, checked by interface fingerprint at load; plus an untyped `Dynamic.load` | A; C may be considered for Rune 2.0 |
+| D19. The second part | as recommended: whole-program from the cache, parallel and reproducible builds; reload, service and packages as research with a decision each | as recommended |
 
 ### D1. What a unit is
 
-**Recommended: A**, a source file.
+**Decided: A**, a source file (2026-10-09), as recommended. "For now to keep strict SML'97 semantics": B may be considered for Rune 2.0.
 
 * **A. A file of top-level declarations; a REPL declaration; a functor
   body compiled at each application in the applying unit.** The unit
@@ -1252,7 +1341,7 @@ was written with. The owner decides.
 
 ### D2. Incremental or separate compilation
 
-**Recommended: A**, incremental by default.
+**Decided: A**, incremental by default (2026-10-09), as recommended. "For now to keep strict SML'97 semantics": B may be considered for Rune 2.0.
 
 * **A. IC: each unit compiled against the actual export bases of the
   units before it, in an order the build says; SC only against a
@@ -1273,7 +1362,7 @@ was written with. The owner decides.
 
 ### D3. Names across units
 
-**Recommended: A**, integers, local per unit, rebased.
+**Decided: A**, integers, local per unit, rebased (2026-10-09), as recommended.
 
 * **A. Stamps stay `int`; every unit numbers from 0 (type names from
   100, since 0 to 99 are the builtins, and type variables from 0); in
@@ -1305,7 +1394,7 @@ was written with. The owner decides.
 
 ### D4. The compilation basis as a value
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. One record, `Basis.t`, with a delta type, holding what every
   phase needs of the units before:** the elaborator's environment,
@@ -1333,7 +1422,7 @@ was written with. The owner decides.
 
 ### D5. Memory before disk
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. Make the compiler resumable in memory first** (M2): `elabTop`
   takes a basis and returns a delta; `Elaborate.finish` and the
@@ -1351,7 +1440,7 @@ was written with. The owner decides.
 
 ### D6. What a unit object holds
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. Three parts: the export basis (`.rbi`); the unit's Mid after
   the unit-local passes, made self-contained by writing each
@@ -1381,7 +1470,7 @@ was written with. The owner decides.
 
 ### D7. Linking
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. A static linker in the compiler and `rt_load` in the VM, with
   one relocation.** The static linker makes a `.rbc` from units, so
@@ -1408,7 +1497,7 @@ was written with. The owner decides.
 
 ### D8. The Basis and the compiler as units
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. The compiler is the first client of unit builds, and the Basis
   Library ships as one frozen library.** `bin/rune` is built in unit
@@ -1428,7 +1517,7 @@ was written with. The owner decides.
 
 ### D9. The resident compiler
 
-**Recommended: A**, in-process.
+**Decided: A**, in-process (2026-10-09), as recommended.
 
 * **A. In-process, Poly/ML's model.** The compiler is a library of
   units loaded into the same VM; `Compiler.compile {read, file, line,
@@ -1462,26 +1551,120 @@ was written with. The owner decides.
 
 ### D10. Printing at the top level
 
-**Recommended: A.**
+**Recommended: A, as rewritten by the review of 2026-10-09 below.**
+The owner asked whether A is still possible under the heap layout built
+since this was written, and the optimisations it keeps open, or
+whether B is now required. A is still possible and B is not required.
+But the reason this section first gave for A -- "every value carries
+its tag" -- is false under the word layout, and was never what A rests
+on.
 
-* **A. Printers generated per declaration from the static type**, as
-  Poly/ML does: the compiler, knowing `val it : int * string list`,
-  emits the code that prints one, honouring a print depth, a line
-  length and a registry of user printers keyed by type name that the
-  generated code consults (`Compiler.addPrettyPrinter`, which HOL4
-  calls 39 times). Abstract types print by their name; functions as
-  `fn`; exceptions by their constructor. No run-time type information
-  is needed, because every value carries its tag and the compiler knows
-  every top-level type.
+* **A. Printers generated from the static type, as typed code, before
+  representations are chosen.** The compiler, knowing `val it : int *
+  string list`, makes Standard ML code -- in the elaborated program
+  that `Translate` reads, not in Mid, `Lower` or C -- that prints such
+  a value: a `case` over a datatype's constructors, a selection of a
+  tuple's fields, `Int.toString`, `Real.toString`, `!`, `Array.sub`.
+  That code is compiled by the same passes as the value it prints, so
+  `Rep`, the real encoding, the boxes and the flat arrays reach it the
+  way they reach every other piece of code, and it never inspects a
+  value's bits. It honours a print depth, a line length and a registry
+  of user printers keyed by type name (`Compiler.addPrettyPrinter`,
+  which HOL4 calls 39 times). It prints as Poly/ML 5.9.2 does, as
+  checked on 2026-10-09: `val x = B 3: t` for a datatype whose
+  constructors are out of scope, `?` for an abstract type, `fn` for a
+  function, `E 3` for an exception value.
 * **B. A type-indexed interpreter over type descriptions** (Elsman
-  2026). Needed where representations lose the type -- untagged
-  records, unboxed constructors -- and Rune's values are tagged.
-* **C. The compiler's `Ty` printer over a reflected value.** The
-  VM has no reflection and D5's basis is not the value's type.
+  2026): one printer, written once, that walks a value at run time by a
+  description of its type. Under the word layout the interpreter would
+  have to know every representation that `Rep` and the runtime choose
+  -- that an immediate is an `int`, a `char`, a nullary constructor's
+  tag or a rotated real, which constructors are flattened, which reals
+  and 64-bit numbers are boxed, which arrays are raw -- and would have
+  to be kept in step with every later change. This is a second
+  implementation of `Rep`. B is not required, and the new layout makes
+  it dearer, not cheaper.
+* **C. The compiler's `Ty` printer over a reflected value.** Now
+  impossible, not only absent: the bits of an immediate do not say
+  which type it has.
+
+**The review (2026-10-09).** Under the word layout (*Since this was
+written*), a value's low bit says "immediate" or "pointer" and nothing
+more. `0`, `#"\^@"`, `false`, `()`, `nil` and `NONE` are one word. A
+real in range is an odd word as well. An object's header gives a kind,
+a constructor tag and a length, and a flattened constructor or a raw
+array does not say what its fields are. The runtime's own
+uncaught-exception message is the one printer in the tree that reads
+bits without a type (`print_exn_payload`, `runtime/runtime.c`), and on
+today's tree it prints wrong:
+
+| `raise E v` with | prints | should print |
+|---|---|---|
+| `exception E of char`, `#"a"` | `E 97` | `E #"a"` |
+| `exception E of bool`, `true` | `E 1` | `E true` |
+| `exception E of real`, `1.5` | `E 4607182418800017408` | `E 1.5` |
+| `exception E of int`, `0` | `E` | `E 0` |
+| `datatype t = A \| B \| C`, `C` | `E 2` | `E C` |
+
+The decided D12 of [heap-layout.md](heap-layout.md) said that the REPL's
+printer "stays tag-directed" and needs types only for raw fields. That
+was written before its gate chose the word on every machine with
+untyped immediates, and the gate superseded it. Any printer that reads
+bits is wrong now. A printer generated from types is unaffected: it
+asks the static type, which the compiler has for every top-level
+binding, and lets the back end deal with representation.
+
+A stays true, against today's layout and the ones kept open, under six
+conditions. M4 builds to them:
+
+1. **Printers are made before `ToMid`**, as ordinary code from the
+   elaborated types, and never by a walker in C or in `Lower`. Then raw
+   real fields, headerless pairs, a 32-bit machine's word, or a pointer
+   code for thunks change the printer exactly as they change the rest
+   of the program, with no work here.
+2. **A datatype's printer is made once**, from its constructors and
+   the printers of its parameters, and kept in the basis beside its
+   layout (D4). A declaration then only composes printers. A datatype
+   whose constructors are out of scope (`local`, or a structure that
+   hides them) still prints by its constructors, since the basis keeps
+   them whether or not they are in scope. An abstract type (opaque
+   ascription, or a slot of an SC import, D17) prints `?`. The basis
+   carries no other description of a type.
+3. **A type variable prints `?`**, and nothing under it is looked at.
+4. **`exn` is the one open type**: the argument's type is unknown where
+   the value is printed. An exception constructor keeps a printer for
+   its argument, made where it is declared, in a second field of its
+   `K_EXNCON` object beside the name (a layout change of
+   `runtime/value.h`; images and `make test-portability` with it). A
+   unit compiled without printers stores a default that prints the
+   name alone. `exnMessage` and the uncaught-exception message can then
+   print the argument correctly instead of guessing.
+5. **A unit build keeps each datatype's representation a function of
+   its declaration.** D3 to D6 need this anyway. The whole-program-only
+   choices kept open (headerless pairs "in the whole-program compiler",
+   heap-layout D1 C) stay out of unit builds and of the REPL, or are
+   made per declaration. If they were made per program, a loaded unit
+   could not match an earlier unit's constructors, before any printing
+   happens.
+6. **`addPrettyPrinter` is keyed at compile time.** The registry's key
+   is the type name's stamp, taken from the static type of the
+   printer's argument where the call is elaborated (a special the
+   elaborator knows; Poly/ML's values carry no types either, so its
+   `addPrettyPrinter` has to work from the static type too), never from
+   a value. Generated
+   code passes a registered printer the printers of the type's
+   arguments, Poly/ML's `int -> 'a -> 'b -> pretty`.
+
+**When B would be needed:** to print where no compiler made the code,
+for a type known only as data at run time. A debugger reading a stopped
+program's frames, or the IDE's hover on a live value, would need type
+descriptions and a run-time model of `Rep`; jit M8's representations
+section is a start on that model. None of this is in this roadmap. It
+goes in *Ready for, not built*.
 
 ### D11. Interrupts
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. A flag in the VM set by a signal handler behind `vm/sys.h`**
   (`SIGINT` on POSIX; `SetConsoleCtrlHandler` on Windows; `ENOSYS` in
@@ -1500,7 +1683,7 @@ was written with. The owner decides.
 
 ### D12. The REPL's semantics
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. Chapter 8 of the Definition.** A declaration that fails to
   elaborate is reported and skipped, the session's basis unchanged; one
@@ -1520,7 +1703,7 @@ was written with. The owner decides.
 
 ### D13. HOL4
 
-**Recommended: A**, with the owner's stop before it kept open.
+**Decided: A**, with the owner's stop before it kept open (2026-10-09), as recommended.
 
 * **A. A port layer for Rune inside a fork of HOL4** -- `tools-rune/`
   and `src/portableML/rune/`, beside `poly` and `mosml` -- written to
@@ -1548,7 +1731,7 @@ was written with. The owner decides.
 
 ### D14. The cache
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. `.rune/` beside the sources by default, and anywhere the owner
   says** (`--cache-dir DIR`, `RUNE_CACHE`, and from M10 the build
@@ -1607,7 +1790,7 @@ The owner asked for a serious discussion. The facts first.
   code: HOL4's libraries are the clean case, and its scripts are
   interactive input, which no analysis is asked to order.
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. Analysis for the files that obey the rules, checked, and an
   explicit order for everything else.** `rune --deps FILE...` parses
@@ -1633,7 +1816,7 @@ The owner asked for a serious discussion. The facts first.
 
 ### D16. The build language
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. A language of Rune's own, with MLB's semantics inside.** The
   owner dislikes CM, MLB, `sources.txt` and MANIFEST, so the syntax is
@@ -1659,7 +1842,7 @@ The owner asked for a serious discussion. The facts first.
 
 ### D17. Compiling against a signature alone
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. An ABI fixed by the signature**, and nothing else. A client
   compiled against `SIG` alone, for a virtual module (M10) or a dynamic
@@ -1693,7 +1876,7 @@ The owner asked for a serious discussion. The facts first.
 
 ### D18. Dynamic modules
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended. C, first-class packages, may be considered for Rune 2.0.
 
 * **A. `structure X = _dynamic "path" : SIG`**, an extension in the
   family of `_prim` and `_overload` that the compiler already has: the
@@ -1717,7 +1900,7 @@ The owner asked for a serious discussion. The facts first.
 
 ### D19. The second part
 
-**As recommended**, and planned again after M7:
+**Decided: as recommended** (2026-10-09), and planned again after M7:
 
 * whole-program builds from the cache (M7) and parallel builds by
   processes over the graph, with the cache as the exchange between
@@ -2346,6 +2529,9 @@ Listed so that the next roadmap, or the owner, finds them here:
 * **Native units**: the code kind of the header, a second loader, the
   ABI implemented by a calling convention.
 * **Hot reload in production**, if M12's decision is yes.
+* **Printing without the compiler** (D10's review): type descriptions
+  and a run-time model of `Rep` for a debugger or the IDE's hover on a
+  live value; jit M8's representations section is its start.
 
 ## References
 
