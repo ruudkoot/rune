@@ -4,7 +4,7 @@
    The VM keeps these counters whether or not a program asks for them --
    `runevm --count` and `runevm --stats` print them when it ends -- so reading
    one costs a call and nothing else. None of them allocates, which is what
-   makes the six numbers of a `stats` one consistent set: nothing but an
+   makes the nine numbers of a `stats` one consistent set: nothing but an
    allocation moves the numbers of the heap, so they cannot drift apart while
    they are being read.
 
@@ -30,7 +30,11 @@ sig
 
      `instructions` is the bytecode instructions executed, `bytes` and
      `objects` what has been allocated in the heap -- including everything
-     since collected -- and `collections` the number of collections made.
+     since collected -- and `collections` the number of collections made:
+     `minorCollections` of them minor ones, which copy what of the nursery
+     is reached into the old space, `promoted` the bytes they copied, and
+     `majorCollections` of the whole heap -- full collections, and the
+     cycles of incremental marking of `runevm --gc low-pause`.
 
      `live` is the bytes of objects in the heap: what the last collection
      kept -- a minor one keeps every old object, dead or not -- plus what has
@@ -42,9 +46,11 @@ sig
 
      The first three depend on the program and its input alone -- not on the
      machine, the pointer width, the heap's size or when the collector ran --
-     so two runs of one program report the same. The other three depend on
-     the heap's size too, and so on `runevm --heap-size` and `--heap-fill`:
-     two runs with the same options make the same collections. `bytes` and
+     so two runs of one program report the same. The other six depend on
+     the heap's size too, and so on `runevm --heap-size`, `--heap-fill`,
+     `--nursery` and `--gc`: two runs with the same options make the same
+     collections. None is a time: the collector's time is `Timer`'s
+     (`checkGCTime`) and `runevm --stats`'. `bytes` and
      `live` leave out the boxes the representation makes for a real that
      has no immediate, as `--count` does.
 
@@ -52,7 +58,8 @@ sig
      of 8-byte fields, so the smallest object is 16 bytes and a list cell,
      one object of two fields, is 24. *)
   type stats = { instructions : int, bytes : int, objects : int,
-                 collections : int, live : int, heapSize : int }
+                 collections : int, live : int, heapSize : int,
+                 minorCollections : int, majorCollections : int, promoted : int }
 
   (* `stats ()` is the counters as they stand.
 

@@ -464,6 +464,32 @@ int main(void) {
         CHECK("and what the snapshot did not reach is freed", !chunk_bit(gk, (size_t)((char *)g - (char *)gk)));
     }
 
+    /* An indirection shortcut (D18): a minor collection gives the field that
+       pointed to a young one what it holds, and copies the indirection not;
+       a full collection does the same for an old one */
+    {
+        VM *iv = new_vm(1 << 20);
+        iv->gc.old_kind = OLD_IMMIX;
+        heap_nursery(iv, 1 << 14);
+        vm_push(iv, mk_unit());                          /* slot 0: the suspension */
+        vm_push(iv, tuple(iv, 2, 80));                   /* slot 1: its value */
+        Obj *th = vm_alloc_fields(iv, K_THUNK, 0, 2);
+        obj_fill_field(th, 0, mk_imm(0));
+        obj_fill_field(th, 1, mk_imm(0));
+        iv->stack[0] = mk_ptr(th);
+        obj_become_ind(iv, th, iv->stack[1]);
+        collect_minor(iv);
+        CHECK("a minor collection shortcuts a young indirection", iv->stack[0] == iv->stack[1] && obj_field(val_ptr(iv->stack[0]), 0) == mk_imm(80));
+        Obj *old = vm_alloc_fields(iv, K_THUNK, 0, 1);   /* an old one: promoted while it is a suspension */
+        obj_fill_field(old, 0, mk_imm(0));
+        iv->stack[0] = mk_ptr(old);
+        collect_minor(iv);
+        old = val_ptr(iv->stack[0]);
+        obj_become_ind(iv, old, iv->stack[1]);
+        vm_gc(iv, 0);
+        CHECK("and a full one an old one", iv->stack[0] == iv->stack[1] && heap_check(iv, NULL) == NULL);
+    }
+
     /* The adaptive nursery (docs/plans/garbage-collector-v2.md, D2): after a
        full collection, half of the heap's room, within its least and most */
     {

@@ -152,6 +152,12 @@ static inline size_t chunk_extent(const VM *vm, const Chunk *c) { return c->kind
 void nursery_start(VM *vm, size_t bytes);   /* the nursery made, of bytes; 0: none */
 void collect_minor(VM *vm);
 void gc_queue(VM *vm, Obj *o);              /* an old object whose fields a collection is to scan */
+/* an indirection (K_IND) is shortcut where a minor collection copies it or
+   a full one marks it -- the field that pointed to it given what it holds
+   -- along a chain of at most IND_HOPS of them (D18); the copier of
+   --nursery 0 copies it as it is, and the low-pause collector's cycle marks
+   it as it is */
+#define IND_HOPS 16
 void gc_born(VM *vm, Obj *o);               /* a large object with fields, made: scanned whole by the next minor */
 static inline int gc_in_nursery(const VM *vm, const void *p) {
     return vm->gc.nursery && (uintptr_t)((const char *)p - vm->alloc.from) < (uintptr_t)vm->alloc.size;

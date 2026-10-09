@@ -19,6 +19,9 @@ val () = say ("instructions", #instructions after - #instructions start)
 val () = say ("bytes", #bytes after - #bytes start)
 val () = say ("objects", #objects after - #objects start)
 val () = say ("collections", #collections after - #collections start)
+val () = say ("  of them minor", #minorCollections after - #minorCollections start)
+val () = say ("  of the whole heap", #majorCollections after - #majorCollections start)
+val () = say ("bytes promoted", #promoted after - #promoted start)
 
 (* Three objects a cell, and 104 bytes, where a list cell is two objects and
    64 bytes -- the pair of head and tail, and the `::` around it. The third is
@@ -31,5 +34,5 @@ val () = say ("objects a cell", (#objects after - #objects start) div 100000)
 val () = Runtime.collect ()
 val s = Runtime.stats ()
 val () = say ("live after collecting", #live s)
-val () = say ("semispace", #heapSize s)
+val () = say ("heap size", #heapSize s)
 val () = print ("the list is still " ^ Int.toString (List.length live) ^ " long\n")

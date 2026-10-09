@@ -1,5 +1,11 @@
 # Brief: the collector after the copier
 
+*Retired (2026-10-09): answered by
+[garbage-collector-v2.md](garbage-collector-v2.md), whose ten questions'
+answers are its *The request*; what was built is
+[../runtime.md](../runtime.md)'s *The garbage collector*. Kept as it was
+written.*
+
 A brief, not a roadmap: what the roadmap of the next collector is asked,
 what is known, and what is in place. Written on 2026-10-04 as the last
 piece of the heap layout's M7 (`heap-layout.md`), from that roadmap's

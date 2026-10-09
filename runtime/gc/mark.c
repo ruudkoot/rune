@@ -149,7 +149,14 @@ static Obj *mark_obj(VM *vm, Obj *o) {
 }
 
 static void mark_value(VM *vm, Value *v) {
-    if (val_is_ptr(*v)) *v = mk_ptr(mark_obj(vm, val_ptr(*v)));
+    if (!val_is_ptr(*v)) return;
+    /* an indirection shortcut: the field given what it holds (D18; one
+       thread, so no race with the program) */
+    for (int hops = 0; hops < IND_HOPS && obj_kind(val_ptr(*v)) == K_IND; hops++) {
+        *v = obj_fields(val_ptr(*v))[0];
+        if (!val_is_ptr(*v)) return;
+    }
+    *v = mk_ptr(mark_obj(vm, val_ptr(*v)));
 }
 #define MARK_VALUE(v) (vm->gc_counts.other_roots++, mark_value(vm, (v)))
 #define MARK_OBJ(o) (vm->gc_counts.other_roots++, *(o) = mark_obj(vm, *(o)))

@@ -5,6 +5,7 @@ live within the semispace: true
 allocated covers what is in use: true
 kept: 1
 collect makes one collection: true
+collections are minor or major: true
 a ref is itself across a collection: true
 two equal refs are two: true
 profile sees the cell and nothing else: true

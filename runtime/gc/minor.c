@@ -147,6 +147,11 @@ static Obj *promote(VM *vm, Obj *o) {
 
 static int promote_value(VM *vm, Value *v) {
     if (!val_is_ptr(*v) || !gc_in_nursery(vm, val_ptr(*v))) return 0;
+    /* a young indirection shortcut: the field given what it holds (D18) */
+    for (int hops = 0; hops < IND_HOPS && obj_kind(val_ptr(*v)) == K_IND; hops++) {
+        *v = obj_fields(val_ptr(*v))[0];
+        if (!val_is_ptr(*v) || !gc_in_nursery(vm, val_ptr(*v))) return 0;
+    }
     *v = mk_ptr(promote(vm, val_ptr(*v)));
     return 1;
 }

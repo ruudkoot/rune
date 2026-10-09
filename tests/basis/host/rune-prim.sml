@@ -1403,6 +1403,9 @@ struct
   fun rt_collections () = unsupported ~1
   fun rt_live () = unsupported ~1
   fun rt_heap_size () = unsupported ~1
+  fun rt_minor_collections () = unsupported ~1
+  fun rt_major_collections () = unsupported ~1
+  fun rt_promoted () = unsupported ~1
   fun rt_collect () = unsupported ()
   fun rt_version () = unsupported ""
   fun rt_trace (_ : int) : (string * string * int * int) list = unsupported []

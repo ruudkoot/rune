@@ -598,11 +598,11 @@ struct
          {name = "rt_collections", arity = 1, ty = "unit -> int", effects = anything,
           doc = "Collections the collector has made."},
          {name = "rt_live", arity = 1, ty = "unit -> int", effects = anything,
-          doc = "Bytes of the current semispace that are in use: what the last collection kept plus what has been allocated since."},
+          doc = "Bytes of objects in the heap: what the last collection kept plus what has been allocated since."},
          {name = "rt_heap_size", arity = 1, ty = "unit -> int", effects = anything,
-          doc = "The size of one semispace, in bytes."},
+          doc = "The heap's size, in bytes: what it holds before it is collected."},
          {name = "rt_collect", arity = 1, ty = "unit -> unit", effects = anything,
-          doc = "Collect the heap now: free every unreachable object and move every surviving one."},
+          doc = "Collect the heap now, a full collection: free every unreachable object."},
          {name = "rt_version", arity = 1, ty = "unit -> string", effects = anything,
           doc = "The version of Rune this VM was built as, which `runevm --version` prints."},
          {name = "rt_trace", arity = 1, ty = "int -> (string * string * int * int) list", effects = anything,
@@ -738,5 +738,12 @@ struct
          {name = "reals_update", arity = 3, ty = "realarray * int * real -> unit", effects = [Raises, WritesHeap],
           doc = "Store an element; raises Subscript."},
          {name = "reals_blit", arity = 5, ty = "realarray * int * realarray * int * int -> unit", effects = [Raises, ReadsHeap, WritesHeap],
-          doc = "Copy a run of elements (source, its start, destination, its start, the count), right where the two overlap; raises Subscript."}]]
+          doc = "Copy a run of elements (source, its start, destination, its start, the count), right where the two overlap; raises Subscript."}],
+       group "the collector's counters (Runtime.stats; garbage-collector-v2 D12, M8)"
+        [{name = "rt_minor_collections", arity = 1, ty = "unit -> int", effects = anything,
+          doc = "Minor collections the collector has made."},
+         {name = "rt_major_collections", arity = 1, ty = "unit -> int", effects = anything,
+          doc = "Collections of the whole heap the collector has made: full collections and the low-pause collector's cycles."},
+         {name = "rt_promoted", arity = 1, ty = "unit -> int", effects = anything,
+          doc = "Bytes minor collections have promoted into the old space."}]]
 end

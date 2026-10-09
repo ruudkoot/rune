@@ -155,6 +155,25 @@ a run chooses between two (`runevm --gc G`;
   incrementally, a slice at a time between the program's allocations
   (below), so that no pause marks the whole of it.
 
+Which to choose: the throughput collector for a program whose answer
+matters more than its latency -- a compiler, a batch job, a test -- and
+the low-pause collector for one that must answer while it works -- an
+editor, a server, anything with a person or a deadline at the other end.
+Over the evaluation set, against the copier of `--nursery 0`, the
+throughput collector takes the same time (1.00) in 0.57 of the memory,
+and the low-pause collector 6% more time (1.07) in 0.54 of it; the
+throughput collector's full collection is a pause in proportion to the
+objects live (42 ms on the compiler compiling itself, 140-170 ms at 0.9 GB
+of messages of a kilobyte, two to three seconds at Rune compiling MLton's
+gigabytes), the low-pause collector's longest a few
+milliseconds up to a gigabyte (3 ms on the compiler compiling itself, 1-5
+ms at 100 MB and 0.9 GB, more where the heap is still growing and its
+pages are new) and about 20 ms in a heap of 5 GB, where the end of a cycle
+sorts every block. Where a program allocates much that lives a little while, both cost
+more than the copier: up to twice its time on the evaluation set
+([plans/garbage-collector-v2.md](plans/garbage-collector-v2.md), *M5 to
+M7*).
+
 Both have the same nursery, barrier and large-object space, and:
 
 * **A minor collection,** when the nursery is full, copies what of it is
@@ -357,8 +376,11 @@ what `Runtime.stats` says is live.
   collections, the bytes promoted, and the large objects made, their bytes
   and the bytes of those still live; and the boxes the program made, which
   `--count` leaves out.
-* `Runtime.stats ()` gives the collections, the bytes in use (boxes left
-  out) and the heap's size to the program. The bytes in use are an
+* `Runtime.stats ()` gives the collections -- the minor ones, those of the
+  whole heap (full collections and the low-pause collector's cycles), and
+  the bytes the minor ones promoted -- the bytes in use (boxes left out)
+  and the heap's size to the program, deterministic counts all, and no
+  time. The bytes in use are an
   upper bound of what is live, and right after `Runtime.collect ()` they
   are what the collector kept, with the list above.
 * The processor time of the collector is measured around every collection,
@@ -472,7 +494,11 @@ is a change to the collector and not to everything that touches the heap.
   chunk.
 * **An object can become an indirection in place** (`obj_become_ind`), its
   first field the value, and the collector follows that field alone: a
-  lazy language's update of a suspension. No program of SML does it.
+  lazy language's update of a suspension. No program of SML does it. A
+  minor collection that meets a young indirection, and a full collection
+  any, gives the field that pointed to it what it holds (along a chain of
+  at most 16), so that the indirection dies; the copier of `--nursery 0`
+  and the low-pause collector's cycle keep it as it is.
 * **The collector's state is the VM's** (`GcState`), and where the next
   object goes is the allocating thread's (`AllocState`): no variable of
   the collector is the process's, so two VMs of a process collect each by

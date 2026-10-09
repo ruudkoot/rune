@@ -302,12 +302,17 @@ void vm_gc(VM *vm, size_t needed) {
            the low-pause collector's cycle marks, it is ended first, and is
            the collection where that leaves room (cycle.c) */
         size_t count = vm->gc_count;
+        uint64_t minors = vm->gc.minors;
         int marking = cycle_complete(vm);
         int ended = marking && !vm->gc.full_wanted
                     && USED_STOCK(vm) <= vm->gc.size && needed <= vm->gc.size - USED_STOCK(vm);
         /* one call one collection, as Runtime.stats counts them: the
-           cycle's end, or the full collection after it */
-        if (marking) vm->gc_count = count + (size_t)ended;
+           cycle's end, or the full collection after it -- of the whole heap,
+           and no minor one */
+        if (marking) {
+            vm->gc_count = count + (size_t)ended;
+            vm->gc.minors = minors;
+        }
         if (!ended) collect_pass(vm, vm->gc.size);
         vm->gc.size = grown(vm, vm->gc.size, USED_STOCK(vm), needed);
     } else {

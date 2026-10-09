@@ -35,6 +35,11 @@ val was = #collections (Runtime.stats ())
 val () = Runtime.collect ()
 val () = print ("collect makes one collection: "
                 ^ Bool.toString (#collections (Runtime.stats ()) - was = 1) ^ "\n")
+(* a collection is minor or of the whole heap, and collect's is of the whole *)
+val t = Runtime.stats ()
+val () = print ("collections are minor or major: "
+                ^ Bool.toString (#minorCollections t + #majorCollections t = #collections t
+                                 andalso #majorCollections t >= 1 andalso #promoted t >= 0) ^ "\n")
 val r = ref 0
 val held = r
 val () = Runtime.collect ()

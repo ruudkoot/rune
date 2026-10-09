@@ -3,8 +3,8 @@ structure RegCodes =
 struct
   (* the fingerprint of the register instruction set, which its .rbc
      carries; the layout's version is the stack bytecode's *)
-  val fingerprint = 11837710
-  val fingerprintHex = "00b4a10e"
+  val fingerprint = 6232668
+  val fingerprintHex = "005f1a5c"
   val HALT = 0
   val MOVE = 1
   val INT = 2

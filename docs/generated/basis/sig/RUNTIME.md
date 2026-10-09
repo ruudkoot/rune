@@ -7,7 +7,7 @@
 | Status | extension |
 | Implementations | 1 |
 | Documentation | 12 of 12 entries documented |
-| Tests | 37 checks of 9 entries |
+| Tests | 39 checks of 9 entries |
 | Source | [lib/basis/runtime\_sig.sml](../../../../lib/basis/runtime_sig.sml) |
 
 ## Synopsis
@@ -27,7 +27,7 @@ has done, and how much memory that took.
 The VM keeps these counters whether or not a program asks for them --
 `runevm --count` and `runevm --stats` print them when it ends -- so reading
 one costs a call and nothing else. None of them allocates, which is what
-makes the six numbers of a [`stats`](#val-stats) one consistent set: nothing but an
+makes the nine numbers of a [`stats`](#val-stats) one consistent set: nothing but an
 allocation moves the numbers of the heap, so they cannot drift apart while
 they are being read.
 
@@ -48,7 +48,8 @@ only wants the time a computation took should use [`Timer`](../str/Timer.md), wh
 signature RUNTIME =
 sig
   type <a href="#type-stats">stats</a> = { <a href="#fld-stats.instructions">instructions</a> : int, <a href="#fld-stats.bytes">bytes</a> : int, <a href="#fld-stats.objects">objects</a> : int,
-                 <a href="#fld-stats.collections">collections</a> : int, <a href="#fld-stats.live">live</a> : int, <a href="#fld-stats.heapsize">heapSize</a> : int }
+                 <a href="#fld-stats.collections">collections</a> : int, <a href="#fld-stats.live">live</a> : int, <a href="#fld-stats.heapsize">heapSize</a> : int,
+                 <a href="#fld-stats.minorcollections">minorCollections</a> : int, <a href="#fld-stats.majorcollections">majorCollections</a> : int, <a href="#fld-stats.promoted">promoted</a> : int }
   val <a href="#val-stats">stats</a> : unit -&gt; stats
   val <a href="#val-profile">profile</a> : (unit -&gt; 'a) -&gt; 'a * stats
   val <a href="#val-collect">collect</a> : unit -&gt; unit
@@ -67,14 +68,19 @@ end
 
 ```sml
 type stats = { instructions : int, bytes : int, objects : int,
-               collections : int, live : int, heapSize : int }
+               collections : int, live : int, heapSize : int,
+               minorCollections : int, majorCollections : int, promoted : int }
 ```
 
 The counters of the VM, all of them since the program started.
 
 `instructions` is the bytecode instructions executed, `bytes` and
 `objects` what has been allocated in the heap -- including everything
-since collected -- and `collections` the number of collections made.
+since collected -- and `collections` the number of collections made:
+`minorCollections` of them minor ones, which copy what of the nursery
+is reached into the old space, `promoted` the bytes they copied, and
+`majorCollections` of the whole heap -- full collections, and the
+cycles of incremental marking of `runevm --gc low-pause`.
 
 `live` is the bytes of objects in the heap: what the last collection
 kept -- a minor one keeps every old object, dead or not -- plus what has
@@ -86,9 +92,11 @@ is collected, which grows as the collector needs it to.
 
 The first three depend on the program and its input alone -- not on the
 machine, the pointer width, the heap's size or when the collector ran --
-so two runs of one program report the same. The other three depend on
-the heap's size too, and so on `runevm --heap-size` and `--heap-fill`:
-two runs with the same options make the same collections. `bytes` and
+so two runs of one program report the same. The other six depend on
+the heap's size too, and so on `runevm --heap-size`, `--heap-fill`,
+`--nursery` and `--gc`: two runs with the same options make the same
+collections. None is a time: the collector's time is [`Timer`](../str/Timer.md)'s
+(`checkGCTime`) and `runevm --stats`'. `bytes` and
 `live` leave out the boxes the representation makes for a real that
 has no immediate, as `--count` does.
 
@@ -104,6 +112,9 @@ one object of two fields, is 24.
 | <a name="fld-stats.collections"></a>`collections` | `int` |  |
 | <a name="fld-stats.live"></a>`live` | `int` |  |
 | <a name="fld-stats.heapsize"></a>`heapSize` | `int` |  |
+| <a name="fld-stats.minorcollections"></a>`minorCollections` | `int` |  |
+| <a name="fld-stats.majorcollections"></a>`majorCollections` | `int` |  |
+| <a name="fld-stats.promoted"></a>`promoted` | `int` |  |
 
 ### <a name="val-stats"></a>`stats`
 
@@ -119,9 +130,9 @@ though, so the other five agree.
 
 **Example** `#live (stats ()) <= #heapSize (stats ()) = true`
 
-<details><summary>Tests (10)</summary>
+<details><summary>Tests (12)</summary>
 
-For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `instructions-grow` &middot; `bytes-count-a-list-cell` &middot; `objects-count-a-list-cell` &middot; `bytes-count-the-smallest-object` &middot; `objects-count-the-smallest-object` &middot; `bytes-count-an-array-of-bytes` &middot; `bytes-count-an-array-of-reals` &middot; `live-is-within-the-semispace` &middot; `bytes-cover-what-is-in-use` &middot; `collections-and-objects-are-not-negative`
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `instructions-grow` &middot; `bytes-count-a-list-cell` &middot; `objects-count-a-list-cell` &middot; `bytes-count-the-smallest-object` &middot; `objects-count-the-smallest-object` &middot; `bytes-count-an-array-of-bytes` &middot; `bytes-count-an-array-of-reals` &middot; `live-is-within-the-semispace` &middot; `bytes-cover-what-is-in-use` &middot; `collections-and-objects-are-not-negative` &middot; `collections-are-minor-or-major` &middot; `collect-is-a-major-collection`
 
 </details>
 
