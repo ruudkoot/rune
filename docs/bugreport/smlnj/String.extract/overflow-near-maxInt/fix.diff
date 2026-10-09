@@ -1,0 +1,17 @@
+diff --git a/base/system/Basis/Implementation/string.sml b/base/system/Basis/Implementation/string.sml
+--- a/base/system/Basis/Implementation/string.sml
++++ b/base/system/Basis/Implementation/string.sml
+@@ -93,11 +93,11 @@
+ 		      then ""
+ 		      else newVec (len - base)
+ 	      | (_, SOME 1) =>
+-		  if ((base < 0) orelse (len < (base ++ 1)))
++		  if ((base < 0) orelse (len <= base))
+ 		    then raise General.Subscript
+ 		    else str(unsafeSub(v, base))
+ 	      | (_, SOME n) =>
+-		  if ((base < 0) orelse (n < 0) orelse (len < (base ++ n)))
++		  if ((base < 0) orelse (n < 0) orelse (len < base) orelse ((len -- base) < n))
+ 		    then raise General.Subscript
+ 		    else newVec n
+ 	    (* end case *)

@@ -231,3 +231,17 @@ the release fails `random.*` and `property.*` on 32 bits and
 `property.core` on 64 bits. On 64 bits `property.core` passed 20 runs of
 20. With the fixes before GC/real-corrupted-on-64-bit it passed none of
 20, and with that fix but not GC/spilled-word64-argument, 10 of 20.
+
+## The library on Rune (`xc2`), checked 2026-10-09
+
+Two bugs of the Basis Library's own code that show natively only as a
+crash, which `xc2:smlnj-legacy` (SML/NJ's library compiled by Rune, whose
+machine checks every access; `tests/basis/xc2`) ran to the end. Their
+programs were run on the 64-bit 110.99.9 release and on 2026.2. The fixes
+were tested by compiling the patched file as a program on 110.99.9, with
+stand-ins for the compiler's primitives, not by rebuilding the Basis.
+
+| Report | 110.99.9 and 2026.2 | with the fix | Upstream |
+|---|---|---|---|
+| [String.extract/overflow-near-maxInt](String.extract/overflow-near-maxInt/BUGREPORT.md): the region check wraps round, and the system dies | 3 of 3 (crash) | 0 | not reported; the same in smlnj/smlnj `main` |
+| [Array2/no-rows-or-columns](Array2/no-rows-or-columns/BUGREPORT.md): an array or region without rows or columns is traversed anyway, past the end of the array | 10 of 10 | 0 | smlnj/smlnj `204968a` fixes 8 of 10 for 2026.3; legacy not fixed; not reported |

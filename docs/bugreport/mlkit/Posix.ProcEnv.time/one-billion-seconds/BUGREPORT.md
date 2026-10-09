@@ -102,4 +102,7 @@ Rune's `tests/basis/posix_procenv.sml` compares `time ()` with
 `Posix.ProcEnv.time/date`). On MLKit the test does not build (report
 `X64/push-immediate`), so the run reports only `@load/posix_procenv`;
 built with that constant worked around, both checks fail. No line of
-`tests/basis/deviations.txt` is needed while the test does not build.
+`tests/basis/deviations.txt` is needed for `native:mlkit` while the test
+does not build. `xc2:mlkit`, which compiles MLKit's own library with Rune
+(`tests/basis/xc2`), builds and runs the test, and both checks fail there
+(`xc2:mlkit@* | Posix.ProcEnv.time/*`).

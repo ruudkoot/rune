@@ -569,21 +569,27 @@ host's library.
     (until 2033): the runtime splits the seconds into a quotient and a
     remainder of 10^9, and the library adds a status field to the quotient
     where it means the remainder (`posix_procenv`, which MLKit's compiler
-    does not load).
+    does not load;
+    [bugreport/mlkit/Posix.ProcEnv.time](bugreport/mlkit/Posix.ProcEnv.time/one-billion-seconds/BUGREPORT.md)).
   * SML/NJ 110.99.9: the check of `String.extract (s, i, SOME j)` adds `i`
     and `j` without checking for `Overflow`, so near `Int.maxInt` the sum
     wraps round, the region passes and a string of `j` characters is asked
-    for (natively the system fails to allocate it). `Array2.array (r, c, x)`
-    with `r` or `c` zero has the dimensions (0, 0), and a traversal of a
-    region without rows or columns applies its function to one anyway.
+    for (natively the system fails to allocate it;
+    [bugreport/smlnj/String.extract](bugreport/smlnj/String.extract/overflow-near-maxInt/BUGREPORT.md)).
+    `Array2.array (r, c, x)` with `r` or `c` zero has the dimensions (0, 0),
+    and a traversal of a region without rows or columns applies its
+    function to one anyway
+    ([bugreport/smlnj/Array2](bugreport/smlnj/Array2/no-rows-or-columns/BUGREPORT.md)).
   * Poly/ML 5.9.2: `OS.Process.exit` passes C's `exit` the status that
     `OS.Process.system` returned, the raw status of `waitpid` (768 for
     `exit 3`, whose low byte is 0), so the program ends with another
-    status (natively the child that calls it never ends).
+    status (natively the child that calls it never ends;
+    [bugreport/polyml/OS.Process.exit](bugreport/polyml/OS.Process.exit/status-of-system/BUGREPORT.md)).
   * MLton 20241230, built for a 64-bit `int` as `xc2:mlton` builds it: the
     region checks of `Array2` add the start and the length with `+!`, which
     does not check for `Overflow`, so a length of `Int.maxInt` wraps round
-    and passes.
+    and passes
+    ([bugreport/mlton/Array2](bugreport/mlton/Array2/region-check-wraps-with-int64/BUGREPORT.md)).
 * **Bugs xc2 does not reach.** A bug of the host's compiler does not show:
   SML/NJ's match of an exception value under another name of the exception
   (`General.*/as-value`) and MLKit's x86-64 code generator (a word constant
