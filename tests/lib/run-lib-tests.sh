@@ -30,15 +30,17 @@
 #   - the examples of both libraries' documentation hold;
 #   - the libraries of docs/plans/repl.md (The libraries) pass their tests in
 #     tests/lib/NAME, their MANIFESTs and their examples (libsuite).
-# Override the tools with RUNE=, RUNEVM= and RUNEDOC=.
+# The programs run on the register VM with its JIT (bin/rune, bin/runevm);
+# RUNE=bin/rune-stack RUNEVM=bin/runevm-stack runs them on the stack VM, to
+# compare the two. Override the tools with RUNE=, RUNEVM= and RUNEDOC=.
 set -u
 # What is compared must not depend on colour forced from outside
 # (docs/diagnostics.md).
 unset FORCE_COLOR CLICOLOR_FORCE
 cd "$(dirname "$0")/../.."
 top=$(pwd)
-rune=${RUNE:-bin/rune-stack}
-runevm=${RUNEVM:-bin/runevm-stack}
+rune=${RUNE:-bin/rune}
+runevm=${RUNEVM:-bin/runevm}
 runedoc=${RUNEDOC:-bin/runedoc}
 out=tests/out/lib
 root=$out/root

@@ -27,7 +27,10 @@
 # The environment of the programs chooses how the laws run (Check.laws):
 # RUNE_PROPERTY_DEEP=1 for the deep mode, RUNE_PROPERTY_ONLY=LABEL for one
 # law, RUNE_PROPERTY_REPLAY=TOKEN for one case. It is not part of `make check`
-# until the hunt ends (D12). Override the tools with RUNE=, RUNEVM= and
+# until the hunt ends (D12). The programs are compiled to the register
+# bytecode and run on the register VM with its JIT (bin/rune, bin/runevm);
+# RUNE=bin/rune-stack RUNEVM=bin/runevm-stack runs them on the stack VM, to
+# compare the two. Override the tools with RUNE=, RUNEVM= and
 # RUNEDOC=.
 set -u
 # What is compared must not depend on colour forced from outside
@@ -35,8 +38,8 @@ set -u
 unset FORCE_COLOR CLICOLOR_FORCE
 cd "$(dirname "$0")/../.."
 top=$(pwd)
-rune=${RUNE:-bin/rune-stack}
-runevm=${RUNEVM:-bin/runevm-stack}
+rune=${RUNE:-bin/rune}
+runevm=${RUNEVM:-bin/runevm}
 runedoc=${RUNEDOC:-bin/runedoc}
 timeout=${LAWS_TIMEOUT:-60}
 memory=${LAWS_MEMORY:-4096}

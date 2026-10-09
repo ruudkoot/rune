@@ -90,6 +90,11 @@ RUNE    ?= bin/rune
 RUNE_STACK := bin/rune-stack
 $(shell mkdir -p bin && printf '#!/bin/sh\nexec "%s" --target=stack "$$@"\n' '$(abspath $(RUNE))' > $(RUNE_STACK) && chmod +x $(RUNE_STACK))
 RUNEVM  ?= bin/runevm-stack
+# The register VM with its JIT, which runs what $(RUNE) makes: the default for
+# the suites of the libraries, the examples and the laws (the owner,
+# 2026-10-09). The stack VM is what they are compared with: run a suite's
+# script with RUNE=bin/rune-stack RUNEVM=bin/runevm-stack.
+RUNEVM_REGISTER ?= bin/runevm
 RUNEDOC ?= bin/runedoc
 RUNEOPT ?= bin/runeopt
 
@@ -1085,7 +1090,7 @@ docs: $(RUNEDOC) manifests
 test-basis: $(RUNE) $(RUNEDOC) vm | build/.doctor-check
 	RUNE=$(abspath $(RUNE_STACK)) RUNEVM=$(abspath $(RUNEVM)) \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune
-	RUNE=$(RUNE_STACK) RUNEVM=$(RUNEVM) RUNEDOC=$(RUNEDOC) sh tests/basis/run-examples.sh
+	RUNE=$(RUNE) RUNEVM=$(RUNEVM_REGISTER) RUNEDOC=$(RUNEDOC) sh tests/basis/run-examples.sh
 
 # Deterministic budgets on what `runevm-stack --count` reports, for benchmark
 # programs, the hello compile and the bootstrap (tests/perf/run-perf.sh;
@@ -1098,13 +1103,13 @@ test-doc: $(RUNEDOC) vm
 # The libraries beside the basis library and rune --library (tests/lib;
 # docs/plans/quickcheck.md, D1).
 test-lib: $(RUNE) $(RUNEDOC) vm manifests
-	RUNE=$(RUNE_STACK) RUNEVM=$(RUNEVM) RUNEDOC=$(RUNEDOC) sh tests/lib/run-lib-tests.sh
+	RUNE=$(RUNE) RUNEVM=$(RUNEVM_REGISTER) RUNEDOC=$(RUNEDOC) sh tests/lib/run-lib-tests.sh
 
 # The laws of the Basis Library's documentation, each at every structure that
 # implements its signature (docs/plans/quickcheck.md, M8). Not in `make check`
 # until every law holds (D12); RUNE_PROPERTY_DEEP=1 runs the deep mode.
 test-laws: $(RUNE) $(RUNEDOC) vm manifests
-	RUNE=$(RUNE_STACK) RUNEVM=$(RUNEVM) RUNEDOC=$(RUNEDOC) sh tests/basis/run-laws.sh -j $(JOBS)
+	RUNE=$(RUNE) RUNEVM=$(RUNEVM_REGISTER) RUNEDOC=$(RUNEDOC) sh tests/basis/run-laws.sh -j $(JOBS)
 
 # The same libraries on the hosts, against their own Basis Library (after a
 # change to a library, as matrix-quick is after one to lib/basis).

@@ -14,12 +14,13 @@
 # STILLBORN when a program does not compile. In
 # tests/out/mutants: results.txt, a line for each mutant with the laws that
 # killed it, and summary.txt, the counts of each target.
-# Override the tools with RUNE=, RUNEVM= and RUNEDOC=.
+# The programs run on the register VM with its JIT (bin/rune, bin/runevm),
+# as run-laws.sh's do. Override the tools with RUNE=, RUNEVM= and RUNEDOC=.
 set -u
 cd "$(dirname "$0")/../.."
 top=$(pwd)
-rune=${RUNE:-bin/rune-stack}
-runevm=${RUNEVM:-bin/runevm-stack}
+rune=${RUNE:-bin/rune}
+runevm=${RUNEVM:-bin/runevm}
 runedoc=${RUNEDOC:-bin/runedoc}
 timeout=${LAWS_TIMEOUT:-30}
 memory=${LAWS_MEMORY:-4096}
