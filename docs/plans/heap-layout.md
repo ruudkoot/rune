@@ -1047,7 +1047,11 @@ Built on 2026-10-04 on branch `heap-layout-word` (`31872015` to
   property library's frozen hash of everything its generators draw
   moved in the default build, and under the switch the old value comes
   back to the bit: what changed is the width of `int` and `word` and
-  nothing else.
+  nothing else. Its tier 2 had a bug until 2026-10-09: a home that holds
+  an int's or a word's word holds a box's address past 63 bits, and
+  after a call into C that collected, the homes that C keeps were not
+  loaded again, so the code read the box where it had been
+  (`runtime/register/jit/masm.c`, `may_move`; `make test-int64`).
 
 **SplitMix64**, the workload D2's note asked for (`lib/random`'s
 generator: three million words and a tree of 2^18 splits), at the

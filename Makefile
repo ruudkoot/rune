@@ -140,7 +140,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: isa check-isa test-ir check-levels test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa test-ir check-levels test-register test-register-jit test-register-asan test-int64 vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -447,6 +447,18 @@ bin/runevm-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-asan
 bin/runevm-int64: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 $(RT_INC) -o $@ $(NEW_SRCS) -lm
+# The JIT on the first (tests/register/int64-box-home.sml), at every tier,
+# and with raw homes: a word past 63 bits is a box, which a home that holds
+# the word must not keep across a collection. Not part of make check.
+test-int64: bin/runevm-int64 bin/runevm-rawhomes $(RUNE)
+	@mkdir -p tests/out/int64
+	bin/rune --int-bits=64 tests/register/int64-box-home.sml -o tests/out/int64/box-home.rbc
+	@for vm in runevm-int64 runevm-rawhomes; do for mode in off baseline opt all; do \
+	  bin/$$vm --jit=$$mode tests/out/int64/box-home.rbc > tests/out/int64/box-home.$$vm.$$mode.out 2>&1; \
+	  cmp -s tests/out/int64/box-home.$$vm.$$mode.out tests/register/int64-box-home.expected \
+	    || { echo "test-int64: $$vm --jit=$$mode: $$(head -1 tests/out/int64/box-home.$$vm.$$mode.out)"; exit 1; }; \
+	done; done
+	@echo "test-int64: a word's box in a home survives the collection"
 bin/runevm-realboxed: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_REAL_BOXED $(RT_INC) -o $@ $(NEW_SRCS) -lm
