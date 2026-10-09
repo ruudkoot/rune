@@ -13,6 +13,13 @@ root=${1:-$(pwd)}
 cd "$root"
 mkdir -p build
 
+# put FILE: the standard input into FILE, which is written only when it
+# changes, so that what depends on it is made again only then
+put() {
+  cat > "$1.new"
+  if cmp -s "$1.new" "$1"; then rm -f "$1.new"; else mv "$1.new" "$1"; fi
+}
+
 # gen PROG LIST MAINPREFIX POLYSCRIPT
 gen() {
   prog=$1 list=$2 mainprefix=$3 polyscript=$4
@@ -32,7 +39,7 @@ gen() {
       esac
     done
     echo "../src/main/${mainprefix}mlton-main.sml"
-  } > "build/$prog.mlb"
+  } | put "build/$prog.mlb"
 
   # --- SML/NJ ---------------------------------------------------------------
   {
@@ -41,7 +48,7 @@ gen() {
     echo '  $/basis.cm'
     echo '  config.sml'
     for f in $srcs; do echo "  ../$f"; done
-  } > "build/$prog.cm"
+  } | put "build/$prog.cm"
 
   # --- Poly/ML --------------------------------------------------------------
   {
@@ -50,7 +57,7 @@ gen() {
     echo 'use "build/config.sml";'
     for f in $srcs; do echo "use \"$f\";"; done
     echo "use \"src/main/${mainprefix}polyml-main.sml\";"
-  } > "build/$polyscript"
+  } | put "build/$polyscript"
 
   # --- MLKit ----------------------------------------------------------------
   # MLton's without its annotation, which MLton's build enforces for all;
@@ -62,7 +69,7 @@ gen() {
     echo 'config.sml'
     for f in $srcs; do echo "../$f"; done
     echo "../src/main/${mainprefix}mlkit-main.sml"
-  } > "build/$prog-mlkit.mlb"
+  } | put "build/$prog-mlkit.mlb"
 }
 
 gen rune sources.txt "" polyml-build.sml

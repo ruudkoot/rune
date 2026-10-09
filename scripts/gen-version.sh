@@ -1,6 +1,7 @@
 #!/bin/sh
 # Write the version into build/config.sml, for the compiler, and
-# runtime/version.h, for the VM.
+# runtime/version.h, for the VM; and the compiler's identity, a hash of its
+# sources, into build/config.sml.
 # Usage: scripts/gen-version.sh [ROOT_DIR]
 #
 # git decides the version: the name of the tag that points at HEAD, or else
@@ -8,7 +9,8 @@
 # from HEAD (untracked files do not count, as with `git describe --dirty`;
 # git leaves the index alone, which a copy of the tree may share).
 # Without git or a repository (a tarball, a copy without .git) the files keep
-# the version they have, or say "unknown" when there are none.
+# the version they have, or say "unknown" when there are none; the identity
+# is worked out all the same.
 #
 # The Makefile runs this on every make, so a file is written only when what
 # it says changes: its time stays put and nothing is rebuilt for nothing.
@@ -27,9 +29,21 @@ if version=$(git describe --tags --exact-match HEAD 2> /dev/null) ||
   git --no-optional-locks diff --quiet HEAD -- 2> /dev/null || status=$?
   [ "$status" -ne 1 ] || version=$version-dirty
 elif [ -f build/config.sml ] && [ -f runtime/version.h ]; then
-  exit 0
+  version=$(sed -n 's/^  val version = "\(.*\)"$/\1/p' build/config.sml)
 else
   version=unknown
+fi
+
+# The compiler's identity: a hash of its sources, the same for every host
+# that builds them, which the cache of compiled units keys its entries by
+# (docs/units.md, The cache): a compiler built from other sources finds none
+# of them. Worked out on every make, as the version is, and written only
+# when it changes.
+srcs=$(grep -v -E '^[[:space:]]*(#|$)' sources.txt)
+# shellcheck disable=SC2086
+if command -v sha256sum > /dev/null 2>&1; then identity=$(cat $srcs | sha256sum | cut -c1-32)
+elif command -v shasum > /dev/null 2>&1; then identity=$(cat $srcs | shasum -a 256 | cut -c1-32)
+else identity=$(cat $srcs | cksum | tr ' ' '-')
 fi
 
 # update FILE: FILE.tmp becomes FILE, unless the two are the same
@@ -42,6 +56,7 @@ cat > build/config.sml.tmp <<EOC
 structure Config =
 struct
   val version = "$version"
+  val identity = "$identity"
 end
 EOC
 update build/config.sml

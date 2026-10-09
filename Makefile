@@ -145,9 +145,20 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: isa check-isa test-ir check-levels check-units repl test-repl test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
+.PHONY: isa check-isa test-ir check-levels check-units test-incremental basis-cache repl test-repl test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
 
-all: vm boot runedoc runeopt
+all: vm boot runedoc runeopt basis-cache
+
+# The frozen Basis Library (docs/units.md, The cache): every unit of
+# lib/basis compiled once, for each bytecode, into lib/cache, which every
+# compile in units reads after its own cache and never writes; made again,
+# empty first, when the compiler or the library changes
+basis-cache: lib/cache/made
+lib/cache/made: bin/rune.rbc bin/runevm $(wildcard lib/basis/*.sml) lib/basis/MANIFEST
+	rm -rf lib/cache
+	bin/rune --units --basis all --cache-dir lib/cache examples/hello.sml -o build/basis-cache.rbc
+	bin/rune --units --basis all --target=stack --cache-dir lib/cache examples/hello.sml -o build/basis-cache.stack.rbc
+	touch $@
 
 # ---------------------------------------------------------------- environment
 # `make doctor` reports on everything. Targets depend (order-only) on a stamp
@@ -890,6 +901,10 @@ test-repl: bin/rune-repl bin/runevm
 	sh tests/repl/run.sh --vm-opts --jit=all --out tests/out/repl-all
 	sh tests/repl/run.sh --vm-opts "--jit=all --jit-tier=2" --out tests/out/repl-tier2
 
+# the cache's scenarios (tests/incremental/SCENARIOS.md; docs/units.md, The cache)
+test-incremental: $(RUNE) vm
+	sh tests/incremental/run.sh --rune $(RUNE)
+
 check-positions: $(RUNE) $(RUNEVM)
 	sh scripts/check-positions.sh -j $(JOBS) --rune $(RUNE_STACK) --vm $(RUNEVM)
 
@@ -1215,6 +1230,7 @@ check:
 	@$(MAKE) --no-print-directory test-opt
 	@$(MAKE) --no-print-directory test-ir check-levels
 	@$(MAKE) --no-print-directory check-units
+	@$(MAKE) --no-print-directory test-incremental
 	@$(MAKE) --no-print-directory test-repl
 	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory test-register

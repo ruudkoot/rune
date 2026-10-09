@@ -42,7 +42,7 @@ What it rests on:
 | M3 | Unit bytecode, the static linker, and the VM loads units | done 2026-10-09, `9d97b311`: `.rbu`, `--emit-units`, linking unit files, `rt_link`/`Runtime.link`/`Runtime.load`, the dynamic path in `check-units` (*M3, as built*); the globals' barrier moved to M4 |
 | M4 | The resident compiler, `use` and the REPL | done 2026-10-09: `bin/rune-repl` and `rune -i`, Chapter 8, `use`, printing, the globals' barrier, the JIT across loads, the boot image, interrupts, a session saved and restored (*M4, as built*) |
 | M5 | HOL4 on Rune | |
-| M6 | The cache, with cut-off | |
+| M6 | The cache, with cut-off | in progress 2026-10-09: the export basis, names that do not depend on what came before, every unit through its basis, unit files by keys, the cache with usages by binder, the frozen Basis, `use` through it, `tests/incremental` (*M6, ... as built*); fingerprints per entry and the warm-build time to come |
 | M7 | Mid per unit: whole-program builds from the cache | |
 | M8 | The dependency graph, and a program from an entry point | |
 | M9 | Compiling against a signature alone, and dynamic modules | |
@@ -2528,6 +2528,105 @@ What was built, and where it differs from the plan above:
   Windows; cold and warm `--units` builds are byte-identical;
   `check-cross` runs with the cache on and stays identical.
 * **Touches:** the language server (its store); M7; M11.
+
+#### M6, the first part as built (2026-10-09)
+
+* **The export basis** (D4 A): `UnitBasis` (`src/driver/unitbasis.sml`)
+  writes what the units after a unit need of it -- its environment,
+  fixity directives, signatures, functors and overloading, and the
+  compiler's tables of what it declared (each value's scheme, each
+  exception's argument, each datatype's constructors, realisations, the
+  primitives' aliases, the functions known by name, `dataCons`) -- and
+  reads it back. Not written: the IRs' caches made from those tables
+  (`Translate.schemes`, `ToMid.globalSchemes`), and Mid for inlining:
+  nothing is inlined across units (D6's first mode). A functor's body is
+  its place in the source and the hash of its text; loading parses the
+  source again with the fixity of the unit's start, and refuses a source
+  whose hash is not the one compiled. A functor's basis is what the unit
+  added to its start (`envDelta`); its signatures and functors those the
+  unit declared before it; a functor names one of another unit's by the
+  unit's identity (`FunInfo.origin`).
+* **Names** (D3 A, as a range per unit rather than a renumbering pass):
+  stamps, type names and type variables are written as built in, the
+  unit's own (numbered as the writing meets them), or an earlier unit's
+  (its identity and number); loading gives a unit's numbers a range of the
+  session after what its compile used, and registers it. A unit's
+  identity is its name and the hash of its basis, without those counts.
+* **Every unit through its basis:** after a unit is compiled its basis is
+  loaded in place of what the compile left (`Pipeline.unitThrough`), so a
+  unit after it sees the same whether the unit was compiled or taken from
+  the cache, and the outputs are the same bytes (`check-units`, the
+  compiler compiled in units compiling itself).
+* **Keys in code:** `Link.unitCode` names globals and functions by
+  `{unit, number}`; unit files are version 2 (identities of the units
+  named, keys) and so is the VM's loader; units of different compiles
+  link. `--emit-units` writes each unit's `.rbi` beside its `.rbu`.
+* **The REPL** loads the Basis units' bases at start instead of compiling
+  the Basis again (0.36 s without its image, was 3 s); a declaration is a
+  unit through its basis, named `stdIn#N`.
+* **The cache** (D14 A, `UnitCache`, `src/driver/unitcache.sml`):
+  `--cache-dir`, `RUNE_CACHE`, `.rune` beside the first input,
+  `--no-cache`, `--explain-rebuild`; a directory per configuration
+  (`Config.identity`, a hash of the compiler's sources that
+  `gen-build-files.sh` writes, the versions, the instruction set, `-O`,
+  `--passes`, `--int-bits`, `--fuel`); an entry per key -- the unit's name,
+  source, `_prim` and the identities of every unit before it -- holding its
+  basis and code with their hash, written by rename; a damaged entry is a
+  miss. **Coarser than D14's usages:** a key names every unit before, so
+  every unit after one whose basis changed is compiled again; the cut-off
+  is per basis (a body that changes keeps its identity).
+* **Found on the way:** a functor's body was in no identity, so a unit
+  applying a functor whose body changed would have been taken from the
+  cache; the body's hash is now in its unit's basis (S8). Hashing was a
+  third of a warm build (four passes over every byte); it is one.
+* **Measured** (one machine, busy): the two-line program of *What a compile
+  costs*, warm, 0.45 s (cold whole 0.29 s on a quiet machine): reading,
+  checking, loading and linking its 56 Basis units each time. The compiler
+  in units: 10.1 s cold, 5.4 s warm.
+* **Tests:** `make check-units` builds every program without the cache,
+  through a shared one and from it, and wants the same bytes; `tests/units`
+  likewise; `make test-incremental` runs S1, S2, S3, S5, S6, S8, S13, S24,
+  S31, S33, S34 and S36 (`tests/incremental`).
+* **The keys of this part** named every unit before a unit; the second
+  part (below) replaced them with usages.
+
+#### M6, the second part as built so far (2026-10-09)
+
+* **Usages** (D14 A, by binder rather than fingerprint): `Usage` records
+  every name a compile looks up -- values, types, structures (the head of
+  a long name), signatures, functors, and every identifier's fixity --
+  where what was found is the session's binding (`Env.session`; a
+  structure by a witness binding), and `UnitBasis.binders` says which unit
+  bound each top-level name. A key is the unit's name, source and `_prim`;
+  under it an entry per set of usages, and an entry serves where each name
+  is bound by the same unit. So S17 (reorder), S18 (insert), S19 (shadow)
+  and S8 without `main.sml` hold. Coarser than per-entry fingerprints:
+  S3 compiles `c.sml` (which uses `a.sml`'s unchanged `SHAPE`), S4 every
+  user of `a.sml`.
+* **The frozen Basis** (D8): `make basis-cache` (in `make all`) compiles
+  every unit of `lib/basis` for both bytecodes into `lib/cache` (8 MB),
+  read after a compile's own cache and installed read-only. A two-line
+  program's first compile takes all but one of its Basis units from it:
+  `seal_string.sml` uses `Char`, which `seal_char.sml` binds where a
+  program names `Char` and `char.sml` otherwise. Library units are named by
+  their place in the library (`lib/basis/...`), so a cache follows the
+  tree, and a unit from the cache names its source where it is now.
+* **`use` through the cache** (S38): a used file's declarations are units
+  named by the file and their place, in `$RUNE_CACHE` or `.rune` beside
+  it (`tests/repl/usecache.in`).
+* **Warnings** kept with an entry and given again (S32).
+* **Found on the way:** the first recording of usages, every lookup's
+  first name in whatever scope, made a functor's parameter `Array` a usage
+  of the top-level `Array` (`io_functors.sml` missed the frozen Basis).
+* **Left:** fingerprints per entry (S3, S4 as `SCENARIOS.md` wants them);
+  the warm build within twice `hello`'s time (0.45 s, busy machine; the
+  Basis's units decoded and linked per compile: within reach only for a
+  compiler that keeps a loaded Basis between compiles -- an image of the
+  compiler, or M12's service -- with a linker of bytes for the rest);
+  S27, S28, S37, S39-S40 in the runner (S29, relocation, runs);
+  `check-cross` with the cache (S43); an overloading a unit registers for
+  a type another unit binds is no usage (only the Basis Library registers
+  any, beside its types).
 
 ### M7. Mid per unit: whole-program builds from the cache (M, about 500 SML)
 

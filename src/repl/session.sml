@@ -5,24 +5,21 @@
 
    The REPL program is itself units: the files of the Basis Library the
    compiler uses, the compiler, the REPL, loaded one by one, so that what
-   they export is in the VM's table (runtime/loader.c). The units a
-   declaration makes name the Basis's by the stamps they were compiled
-   with, which this session must give them too: `start` compiles the same
-   Basis files again, in the same order and in the same way, and the
-   compiler being deterministic, it gives each the stamps it had -- which
-   the unit it makes, the same bytes as the unit file the REPL was loaded
-   from, shows (one Basis for the REPL and for what it compiles: D8).
-   Everything after starts above all of those stamps, so that what a
-   declaration declares is never taken for something of the REPL's own. *)
+   they export is in the VM's table (runtime/loader.c), by each unit's
+   identity and its numbers there. At start the session loads the bases of
+   the Basis's units (UnitBasis), which the build wrote beside their code:
+   the environment the declarations are compiled in, and the units their
+   code names, by the same identities (one Basis for the REPL and for what
+   it compiles: D8). A declaration is a unit after them, compiled and loaded
+   again from its basis, as the build's units were. *)
 structure ReplSession =
 struct
   exception Failed of string
 
   val env : Env.env ref = ref Env.initial
   val fixity : Fixity.env ref = ref Fixity.initial
-  val session : string ref = ref ""
-  val fingerprint : int ref = ref 0
-  (* the declarations compiled so far, for the names of their sources *)
+  (* the declarations compiled so far, for the names of their units and of
+     their printers' sources *)
   val count : int ref = ref 0
   (* whether a declaration's values are echoed: not those of the REPL's own
      declarations at start *)
@@ -32,54 +29,44 @@ struct
     let val inp = BinIO.openIn path
     in Byte.bytesToString (BinIO.inputAll inp) before BinIO.closeIn inp end
 
-  (* A unit, elaborated, made into the bytes of its file, of this session *)
-  fun unitBytes (decs : Ast.dec list) : string =
-    String.concat (UnitFile.chunks (!fingerprint, !session, Pipeline.unitOf decs))
-
   (* start {units, sources, lib}: the units the REPL program was loaded from
-     and the source of each, as the build named them; the Basis's among them
-     compiled again, from lib's files, each held to its unit's file *)
+     and the source of each, as the build named them; the bases of the
+     Basis's among them loaded, each from the file beside its code (.rbi),
+     a functor's body from lib's source of it, which must be the one the
+     build compiled *)
   fun start {units : string list, sources : string list, lib : string} : unit =
     let
       val () = Pass.whole := false
       val () = Elaborate.recover := false
-      val () =
-        case units of
-          first :: _ =>
-            (let val (fp, s, _) = UnitFile.read (readBytes first)
-             in fingerprint := fp; session := s end
-             handle UnitFile.Bad why => raise Failed (first ^ ": " ^ why))
-        | [] => raise Failed "no units to start from"
+      val () = UnitBasis.startSession ()
       (* the Basis's units: those of the build's library, up to the first
          that is not *)
       fun basisFile name =
         case String.fields (fn c => c = #"/") name of
           parts => List.length parts >= 2 andalso List.nth (parts, List.length parts - 2) = "basis"
-      fun replay ((unit, name) :: rest) =
+      fun load ((unit, name) :: rest) =
             if not (basisFile name) then ()
             else
               let
                 val path = OS.Path.joinDirFile {dir = lib ^ "/basis", file = OS.Path.file name}
-                val text = #text (Source.readFile path)
-                val file = Source.fromString (name, text)
-                val () = Source.register file
-                val (decs, fx) = Parser.parseTokensWith (Lexer.tokenize file, !fixity)
-                val () = fixity := fx
-                val () = Elaborate.allowPrim := true
-                val () = Elaborate.elabTop (env, decs)
-                val () = Elaborate.finish ()
-                val () = Error.warnings := []
-                val bytes = unitBytes decs
+                val rbi = OS.Path.joinBaseExt {base = OS.Path.base unit, ext = SOME "rbi"}
+                val pickle = readBytes rbi handle IO.Io _ => raise Failed ("cannot read " ^ rbi)
+                val st = UnitBasis.begin (!env, !fixity)
+                val l =
+                  UnitBasis.load {pickle = pickle, file = name, at = #counters st, env = !env, fixity = !fixity,
+                                  text = fn () => #text (Source.readFile path)}
+                  handle Pickle.Bad why => raise Failed (rbi ^ ": " ^ why)
+                       | UnitBasis.Missing u => raise Failed (rbi ^ ": names " ^ u ^ ", which was not loaded")
+                       | IO.Io _ => raise Failed ("cannot read " ^ path)
               in
-                if bytes = readBytes unit then replay rest
-                else raise Failed ("the library at " ^ lib ^ " is not the one the REPL was built with: " ^ OS.Path.file name)
+                env := Env.plus (!env, #delta l);
+                fixity := Fixity.extend (!fixity, #directives l);
+                UnitBasis.bind l;
+                load rest
               end
-        | replay [] = ()
-      val () = replay (ListPair.zip (units, sources))
+        | load [] = ()
     in
-      Elaborate.allowPrim := false;
-      (* above every stamp of the REPL's own units *)
-      if !Elaborate.stampCounter < 0x20000000 then Elaborate.stampCounter := 0x20000000 else ()
+      load (ListPair.zip (units, sources))
     end
 
   (* The values a declaration bound, in the order of their names, with
@@ -121,35 +108,113 @@ struct
      is the session's already -- and what to echo of what is not a value.
      A declaration that does not elaborate leaves the session as it was and
      raises Error.CompileError, as the batch compiler does. *)
-  fun compile (decs : Ast.dec list) : {run : unit -> unit, delta : Env.env, declared : string list} =
+  (* The cache of a file's units (UnitCache): RUNE_CACHE, else .rune beside
+     the file; NONE where RUNE_CACHE is empty *)
+  fun cacheOf (file : string) : (string * string) option =
     let
-      val saved = Elaborate.snapshot ()
+      val dir = case OS.Process.getEnv "RUNE_CACHE" of
+                  SOME d => if d = "" then NONE else SOME d
+                | NONE => SOME (OS.Path.joinDirFile {dir = OS.Path.dir file, file = ".rune"})
+    in Option.map (fn d => (d, UnitCache.configuration ())) dir end
+
+  (* compile (decs, file, text, cached): the declarations elaborated against
+     the session, and the printer of what they bind with them (ReplShow),
+     made into a unit and linked; the function that runs it, what they bind,
+     which the REPL adds to the session once it has run -- a declaration that
+     raises binds nothing (Chapter 8), while what it compiled as it ran (a
+     nested use) is the session's already -- and what to echo of what is not
+     a value; and bind, which makes its names the unit's for the usages of
+     the units after it, when the REPL adds them. A declaration that does not
+     elaborate leaves the session as it was and raises
+     Error.CompileError, as the batch compiler does.
+
+     cached is SOME (n, names) for the n-th declaration of a file `use`d,
+     which parsing it looked up names of: the unit is the file's n-th, and is
+     taken from the cache where an entry's usages hold (docs/units.md, The
+     cache), and kept there where it is compiled. *)
+  fun compile (decs : Ast.dec list, file : string, text : string, cached : (int * string list) option)
+      : {run : unit -> unit, delta : Env.env, declared : string list, bind : unit -> unit} =
+    let
+      val start = UnitBasis.begin (!env, !fixity)
       val here = ref (!env)
+      val () = count := !count + 1
+      val k = !count
+      val name = case cached of SOME (n, _) => file ^ "#" ^ Int.toString n | NONE => file ^ "#" ^ Int.toString k
+      val cache =
+        case cached of
+          NONE => NONE
+        | SOME _ => Option.map (fn (d, c) => (d, c, UnitCache.key {name = name, text = text, allow = false})) (cacheOf file)
+      fun result (l : UnitBasis.result, run) =
+        {run = run, delta = #delta l, declared = declared (#delta l), bind = fn () => UnitBasis.bind l}
+      (* from the cache: its basis loaded, its code linked *)
+      val hit =
+        case cache of
+          NONE => NONE
+        | SOME (d, c, key) =>
+            case UnitCache.find (d, c, key) of
+              UnitCache.Missed _ => NONE
+            | UnitCache.Found {pickle, code, warnings, ...} =>
+                let val at = UnitBasis.counters ()
+                in
+                  (let
+                     val l = UnitBasis.load {pickle = pickle, file = file, at = at, env = !env, fixity = #fixity start,
+                                             text = fn () => text}
+                     val run = Runtime.link (Byte.stringToBytes code)
+                   in
+                     (* the warnings its compile gave, again *)
+                     List.app (fn w => TextIO.output (TextIO.stdErr, w ^ "\n")) warnings;
+                     SOME (result (l, run))
+                   end)
+                  handle Pickle.Bad _ => (UnitBasis.setCounters at; NONE)
+                       | UnitBasis.Missing _ => (UnitBasis.setCounters at; NONE)
+                       | Fail _ => (UnitBasis.setCounters at; NONE)
+                end
+      val warnings : string list ref = ref []
     in
+      case hit of
+        SOME r => r
+      | NONE =>
       (let
-         val () = Elaborate.allowPrim := false
-         val () = Elaborate.elabTop (here, decs)
-         val () = Elaborate.finish ()
-         val delta = !Elaborate.lastDelta
-         val () = Error.flushWarnings ()
-         val pdecs =
-           case if !quiet then NONE else ReplShow.echoes (bound delta) of
-             NONE => []
-           | SOME (text, synth) =>
-               let
-                 val () = count := !count + 1
-                 val file = Source.fromString ("<echo " ^ Int.toString (!count) ^ ">", text)
-                 val () = Source.register file
-                 (* the standard fixity, whatever the declarations made of the
-                    names the printer uses *)
-                 val (pd, _) = Parser.parseTokensWith (Lexer.tokenize file, Fixity.initial)
-                 val penv = ref (Env.plus (!here, synth))
-                 val () = Elaborate.elabTop (penv, pd)
-                 val () = Elaborate.finish ()
-                 val () = Error.warnings := []
-               in pd end
-         val run = Runtime.link (Byte.stringToBytes (unitBytes (decs @ pdecs)))
-       in {run = run, delta = delta, declared = declared delta} end)
-      handle e => (Elaborate.restore saved; raise e)
+         val ((delta, pdecs), names) =
+           Usage.record
+             (fn () =>
+                let
+                  val () = Elaborate.allowPrim := false
+                  val () = Elaborate.elabTop (here, decs)
+                  val () = Elaborate.finish ()
+                  val delta = !Elaborate.lastDelta
+                  val () = warnings := List.rev (!Error.warnings)
+                  val () = Error.flushWarnings ()
+                  val pdecs =
+                    case if !quiet then NONE else ReplShow.echoes (bound delta) of
+                      NONE => []
+                    | SOME (text, synth) =>
+                        let
+                          val file = Source.fromString ("<echo " ^ Int.toString k ^ ">", text)
+                          val () = Source.register file
+                          (* the standard fixity, whatever the declarations made of the
+                             names the printer uses *)
+                          val (pd, _) = Parser.parseTokensWith (Lexer.tokenize file, Fixity.initial)
+                          val penv = ref (Env.plus (!here, synth))
+                          val () = Elaborate.elabTop (penv, pd)
+                          val () = Elaborate.finish ()
+                          val () = Error.warnings := []
+                        in pd end
+                in (delta, pdecs) end)
+         val usages = UnitBasis.usagesOf (names @ (case cached of SOME (_, ns) => ns | NONE => []))
+         (* compiled, and loaded again from its basis: what it declared,
+            the session's after it has run, is what the basis says *)
+         val {code, loaded, exported} =
+           Pipeline.unitThrough {start = start, name = name, file = file, text = fn () => text,
+                                 decs = decs @ pdecs, delta = delta, fixity = #fixity start}
+         val bytes = String.concat (UnitFile.chunks (Pipeline.fingerprint (), code))
+         val () =
+           case cache of
+             SOME (d, c, key) =>
+               UnitCache.store (d, c, key, {usages = usages, warnings = !warnings, file = file, pickle = #pickle exported,
+                                            code = bytes})
+           | NONE => ()
+       in result (loaded, Runtime.link (Byte.stringToBytes bytes)) end)
+      handle e => (UnitBasis.undo start; raise e)
     end
 end

@@ -185,8 +185,9 @@ struct
   (* --units: every file a unit of its own -- the basis library's, those of
      the libraries beside it, the program's -- compiled after the ones before
      it, and the units linked (docs/units.md; Link). The environment, the
-     fixity and the compiler's tables go on from unit to unit; the passes see
-     one unit at a time (Pass.whole). *)
+     fixity and the compiler's tables go on from unit to unit, as each unit's
+     basis gives them (Pipeline.unitThrough); the passes see one unit at a
+     time (Pass.whole). *)
   and compileUnits (basis : entry list, final : entry list, userToks, inputs : string list) : OS.Process.status =
     let
       val () = Pass.whole := false
@@ -195,43 +196,146 @@ struct
       val registers = !Options.target = "registers"
       val () = if registers then Code.opcodeNames := RegCodes.names else ()
       val env = ref Env.initial
-      (* each unit's name, its tokens when wanted, and whether it may use
-         _prim: the basis library may, the libraries beside it may not *)
-      fun file (e : entry, allow) = (BasisManifest.path e, fn () => loadTokens (BasisManifest.path e), allow)
+      val () = UnitBasis.startSession ()
+      (* each unit's source, its tokens when wanted, whether it may use
+         _prim -- the basis library may, the libraries beside it may not --
+         and its name: a library's file by where it is in the library, so
+         that a cache follows the library where it is moved (UnitCache) *)
+      fun libName (e : entry) : string =
+        let val root = libRoot () ^ "/"
+        in
+          if String.isPrefix root (#dir e) then "lib/" ^ String.extract (#dir e, String.size root, NONE) ^ "/" ^ #file e
+          else BasisManifest.path e
+        end
+      fun file (e : entry, allow) = (BasisManifest.path e, fn () => loadTokens (BasisManifest.path e), allow, libName e)
       val sources =
         List.map (fn e => file (e, inBasis e)) basis
-        @ ListPair.map (fn (toks, name) => (name, fn () => toks, !Options.allowPrim)) (userToks, inputs)
+        @ ListPair.map (fn (toks, name) => (name, fn () => toks, !Options.allowPrim, name)) (userToks, inputs)
         @ List.map (fn e => file (e, !Options.allowPrim)) final
       (* the front end's stages, for --pass-stats; their size is the number of
          top-level declarations *)
       fun frontStage name f =
         Pass.stage {name = name, showIn = NONE, show = fn _ => "", check = fn _ => (), size = List.length} f
-      fun unit ((name, load, allow), acc) =
+      fun text name () =
+        case Source.findFile name of
+          SOME f => #text f
+        | NONE => #text (Source.load name) handle IO.Io _ => raise Options.Usage ("cannot read " ^ name)
+      (* the cache (UnitCache): its directory and configuration; after a
+         unit that failed, the units are elaborated for their errors alone,
+         and not looked for *)
+      val cache = Option.map (fn d => (d, UnitCache.configuration ())) (UnitCache.directory ())
+      val frozen = UnitCache.frozen ()
+      val failedBefore = ref false
+      fun explain msg = if !Options.explainRebuild then TextIO.output (TextIO.stdErr, msg ^ "\n") else ()
+      (* the cache's work, for --pass-stats *)
+      fun timed name f = Pass.stage {name = name, showIn = NONE, show = fn _ => "", check = fn _ => (), size = fn _ => 0} f ()
+      fun unit ((name, load, allow, ident), acc) =
         let
           val () = if !Pass.stats then TextIO.output (TextIO.stdErr, "unit " ^ name ^ "\n") else ()
-          val decs = frontStage "parse" (fn () => parseTokens (load ())) ()
-          (* a unit's flexible records are settled at its end, and its
-             matches reported (docs/units.md) *)
-          val _ = frontStage "elaborate"
-                             (fn () => (Elaborate.allowPrim := allow; Elaborate.elabTop (env, decs); Elaborate.finish (); decs))
-                             ()
+          val k = case cache of
+                    SOME _ =>
+                      if !failedBefore then NONE
+                      else SOME (timed "cache-key" (fn () => UnitCache.key {name = ident, text = text name (), allow = allow}))
+                  | NONE => NONE
+          val found =
+            case (cache, k) of
+              (SOME (dir, config), SOME k) =>
+                timed "cache-find"
+                  (fn () => case (UnitCache.find (dir, config, k), frozen) of
+                              (UnitCache.Missed why, SOME f) =>
+                                (case UnitCache.find (f, config, k) of
+                                   UnitCache.Missed "no entry" => UnitCache.Missed why
+                                 | UnitCache.Missed fwhy => UnitCache.Missed (why ^ "; the frozen Basis's: " ^ fwhy)
+                                 | found => found)
+                            | (found, _) => found)
+            | _ => UnitCache.Missed (if isSome cache then "a unit before it failed" else "the cache is off")
+          (* from the cache: its basis loaded, its code read *)
+          val hit =
+            case found of
+              UnitCache.Missed why => (explain ("rune: compiled " ^ name ^ ": " ^ why); NONE)
+            | UnitCache.Found {pickle, code, warnings, file, ...} =>
+                let val at = UnitBasis.counters ()
+                in
+                  (let
+                     val l = timed "cache-basis" (fn () => UnitBasis.load {pickle = pickle, file = name, at = at, env = !env,
+                                                                           fixity = !fixity, text = text name})
+                     val (fp, u) = timed "cache-code" (fn () => UnitFile.read code)
+                     (* its source where it is now, in its code's files *)
+                     val u = if file = name then u else UnitFile.renameFile (u, file, name)
+                   in
+                     if fp <> Pipeline.fingerprint () then raise UnitFile.Bad "another instruction set" else ();
+                     explain ("rune: from the cache " ^ name);
+                     (* the warnings its compile gave, again *)
+                     if !Options.noWarnings then ()
+                     else List.app (fn w => TextIO.output (TextIO.stdErr, w ^ "\n")) warnings;
+                     SOME (l, u, pickle)
+                   end)
+                  handle Pickle.Bad why => (UnitBasis.setCounters at; explain ("rune: compiled " ^ name ^ ": a damaged entry: " ^ why); NONE)
+                       | UnitFile.Bad why => (UnitBasis.setCounters at; explain ("rune: compiled " ^ name ^ ": a damaged entry: " ^ why); NONE)
+                       | UnitBasis.Missing u => (UnitBasis.setCounters at; explain ("rune: compiled " ^ name ^ ": its entry names " ^ u); NONE)
+                end
+        in
+          case hit of
+            SOME (l, u, pickle) =>
+              (env := Env.plus (!env, #delta l);
+               fixity := Fixity.extend (!fixity, #directives l);
+               UnitBasis.bind l;
+               (u, pickle) :: acc)
+          | NONE => compileUnit ((name, load, allow, ident), k, acc)
+        end
+      and compileUnit ((name, load, allow, ident), k, acc) =
+        let
+          val start = UnitBasis.begin (!env, !fixity)
+          (* parsed and elaborated, the names it looks up recorded: its
+             usages (UnitCache) *)
+          val (decs, names) =
+            Usage.record
+              (fn () =>
+                 let
+                   val decs = frontStage "parse" (fn () => parseTokens (load ())) ()
+                 in
+                   (* a unit's flexible records are settled at its end, and its
+                      matches reported (docs/units.md) *)
+                   frontStage "elaborate"
+                              (fn () => (Elaborate.allowPrim := allow; Elaborate.elabTop (env, decs); Elaborate.finish (); decs))
+                              ()
+                 end)
           (* after an error, the units are only elaborated, for their errors *)
           val failed = !Error.errors > 0
+          val warnings = List.rev (!Error.warnings)
           val () = if failed then () else if !Options.noWarnings then Error.warnings := [] else Error.flushWarnings ()
         in
-          if !Options.typecheckOnly orelse failed then acc
-          else Pipeline.unitOf decs :: acc
+          if !Options.typecheckOnly orelse failed then (if failed then failedBefore := true else (); acc)
+          else
+            let
+              val usages = UnitBasis.usagesOf names
+              val {code, exported, loaded} =
+                Pipeline.unitThrough {start = start, name = ident, file = name, text = text name, decs = decs,
+                                      delta = !Elaborate.lastDelta, fixity = !fixity}
+            in
+              env := Env.plus (#env start, #delta loaded);
+              fixity := Fixity.extend (#fixity start, #directives loaded);
+              UnitBasis.bind loaded;
+              (case (cache, k) of
+                 (SOME (dir, config), SOME k) =>
+                   UnitCache.store (dir, config, k,
+                                    {usages = usages, warnings = warnings, file = name, pickle = #pickle exported,
+                                     code = String.concat (UnitFile.chunks (Pipeline.fingerprint (), code))})
+               | _ => ());
+              (code, #pickle exported) :: acc
+            end
         end
-      val units = List.rev (List.foldl unit [] sources)
+      val compiled = List.rev (List.foldl unit [] sources)
+      val units = List.map #1 compiled
       val () = failIfReported ()
       val fingerprint = Pipeline.fingerprint ()
       val () =
         case !Options.emitUnits of
           NONE => ()
-        | SOME dir => if !Options.typecheckOnly then () else emitUnitFiles (dir, fingerprint, List.map #1 sources, units)
+        | SOME dir => if !Options.typecheckOnly then () else emitUnitFiles (dir, fingerprint, List.map #1 sources, compiled)
     in
       if !Options.typecheckOnly then OS.Process.success
-      else linkUnits (fingerprint, inputs, units)
+      else timed "link" (fn () => linkUnits (fingerprint, inputs, units))
     end
 
   (* The units linked into the program, by the target of the fingerprint *)
@@ -242,26 +346,24 @@ struct
     else emitProgram (inputs, Link.program (Stack.program, Opcodes.linked, units))
 
   (* --emit-units DIR: each unit's file, its number and its source's name,
-     and DIR/units, their names in order. The units of one compile share a
-     session, a hash of the names and texts of all of them, since the
-     stamps they name each other by mean something only beside each other
-     (UnitFile). *)
-  and emitUnitFiles (dir : string, fingerprint : int, names : string list, units : Link.unitCode list) : unit =
+     and beside it the unit's basis (.rbi, UnitBasis), which a compile after
+     it loads (the REPL); DIR/units, their names in order, and DIR/sources,
+     their sources. *)
+  and emitUnitFiles (dir : string, fingerprint : int, names : string list, units : (Link.unitCode * string) list) : unit =
     let
-      fun hash (m, k) s (h : int) = CharVector.foldl (fn (c, h) => (h * k + Char.ord c) mod m) h s
-      fun text name = case Source.findFile name of SOME f => #text f | NONE => ""
-      val (h1, h2) =
-        List.foldl (fn (n, (a, b)) =>
-                      let val s = n ^ "\000" ^ text n ^ "\000"
-                      in (hash (16777213, 31) s a, hash (16777199, 37) s b) end) (7, 11) names
-      fun hex6 n = StringCvt.padLeft #"0" 6 (Int.fmt StringCvt.HEX n)
-      val session = hex6 h1 ^ hex6 h2
       val () = (OS.FileSys.mkDir dir handle OS.SysErr _ => ())
       fun base n = OS.Path.base (OS.Path.file n)
       val files =
-        ListPair.map (fn ((n, u), i) =>
-                        let val f = OS.Path.joinDirFile {dir = dir, file = StringCvt.padLeft #"0" 4 (Int.toString i) ^ "-" ^ base n ^ ".rbu"}
-                        in UnitFile.write (f, fingerprint, session, u); f end)
+        ListPair.map (fn ((n, (u, pickle)), i) =>
+                        let
+                          val stem = OS.Path.joinDirFile {dir = dir, file = StringCvt.padLeft #"0" 4 (Int.toString i) ^ "-" ^ base n}
+                          val f = stem ^ ".rbu"
+                          val out = BinIO.openOut (stem ^ ".rbi")
+                        in
+                          UnitFile.write (f, fingerprint, u);
+                          BinIO.output (out, Byte.stringToBytes pickle); BinIO.closeOut out;
+                          f
+                        end)
                      (ListPair.zip (names, units), List.tabulate (List.length units, fn i => i))
       fun write (file, lines) =
         let val out = TextIO.openOut (OS.Path.joinDirFile {dir = dir, file = file})
@@ -272,17 +374,29 @@ struct
       write ("sources", names)
     end
 
-  (* rune -o P.rbc A.rbu B.rbu ...: unit files of one compile, linked *)
+  (* rune -o P.rbc A.rbu B.rbu ...: unit files linked, each after those it
+     names *)
   and linkUnitFiles (inputs : string list) : OS.Process.status =
     let
       val read = List.map (fn f => UnitFile.readFile f handle UnitFile.Bad why => raise Options.Usage why
                                                         | IO.Io _ => raise Options.Usage ("cannot read " ^ f)) inputs
-      val (fingerprint, session, _) = List.hd read
+      val (fingerprint, _) = List.hd read
       val () =
-        if List.all (fn (fp, s, _) => fp = fingerprint andalso s = session) read then ()
-        else raise Options.Usage "the units were not compiled together: their instruction sets or sessions differ"
+        if List.all (fn (fp, _) => fp = fingerprint) read then ()
+        else raise Options.Usage "the units are of different instruction sets"
+      (* each unit names only units before it *)
+      val () =
+        ignore (List.foldl (fn ((_, u : Link.unitCode), seen) =>
+                              let
+                                fun known ({unit, ...} : Link.key) = unit = "" orelse unit = #identity u
+                                                                     orelse StringMap.member (seen, unit)
+                              in
+                                if List.all (known o #1) (#globals u) andalso List.all (known o #2) (#imports u)
+                                then StringMap.insert (seen, #identity u, ())
+                                else raise Options.Usage ("the unit " ^ #identity u ^ " names a unit not linked before it")
+                              end) StringMap.empty read)
     in
-      linkUnits (fingerprint, inputs, List.map #3 read)
+      linkUnits (fingerprint, inputs, List.map #2 read)
     end
 
   and frontEnd (basis : entry list, final : entry list, userToks, _ : string list) : Lambda.lexp option =

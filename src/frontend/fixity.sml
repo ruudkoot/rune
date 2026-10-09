@@ -23,9 +23,10 @@ struct
       ("before", Infix 0)])
 
   fun lookup ({table, ...} : env, name) =
-    case StringMap.find (table, name) of
-      SOME f => f
-    | NONE => Nonfix
+    (Usage.use ("fix", name);
+     case StringMap.find (table, name) of
+       SOME f => f
+     | NONE => Nonfix)
 
   (* After `local d1 in d2 end`, where env0 was in scope before it, env1
      after d1 and env2 after d2: the directives of d2 on top of env0, those

@@ -548,13 +548,23 @@ int64_t load_unit_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_
     Program *p = &vm->prog;
     if (!need(&r, 8) || memcmp(data, "RUNU", 4) != 0) { fail(err, errlen, "not a unit of Rune bytecode"); return -1; }
     r.pos = 4;
-    if (rd_u32(&r) != 1) { fail(err, errlen, "unsupported unit version"); return -1; }
+    if (rd_u32(&r) != 2) { fail(err, errlen, "unsupported unit version"); return -1; }
     if (rd_u32(&r) != isa_fingerprint) { fail(err, errlen, "a unit of another instruction set"); return -1; }
     if (rd_u32(&r) != 0) { fail(err, errlen, "a unit of another kind of code"); return -1; }
+    /* its identity, then those of the units it names, each key's unit being
+       its place among them, 0 the unit's own (docs/bytecode.md, Units) */
     uint32_t slen = rd_u32(&r);
-    if (r.error || slen > 4096 || !need(&r, slen)) { fail(err, errlen, "bad session"); return -1; }
-    const uint8_t *session_bytes = data + r.pos;
+    if (r.error || slen > 4096 || !need(&r, slen)) { fail(err, errlen, "bad identity"); return -1; }
+    const uint8_t *identity_bytes = data + r.pos;
     r.pos += slen;
+    uint32_t nnamed = rd_u32(&r);
+    if (r.error || nnamed > 100000) { fail(err, errlen, "bad table of units"); return -1; }
+    size_t named_at = r.pos;
+    for (uint32_t i = 0; i < nnamed; i++) {
+        uint32_t n = rd_u32(&r);
+        if (r.error || n > 4096 || !need(&r, n)) { fail(err, errlen, "bad table of units"); return -1; }
+        r.pos += n;
+    }
 
     /* its constants, found and checked now and made once the program has
        room for them, where the collector sees them */
@@ -598,35 +608,40 @@ int64_t load_unit_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_
     /* its functions, code and tables, as a program's file has them */
     Program u;
     memset(&u, 0, sizeof u);
-    uint32_t *stamps = NULL, *defines = NULL, *imports = NULL, *global_map = NULL, *import_ix = NULL;
+    uint32_t *places = NULL, *stamps = NULL, *imports = NULL, *global_map = NULL, *import_ix = NULL,
+             *import_place = NULL, *sessions = NULL;
     int32_t *import_stamp = NULL;
-    uint32_t ndefines = 0, nimports = 0, nexports = 0;
+    uint32_t nimports = 0, nexports = 0;
     size_t exports_at = 0;
     int64_t result = -1;
     Mark m = mark_of(vm);
 #define FAIL(msg) do { fail(err, errlen, (msg)); goto done; } while (0)
     if (!read_code_and_tables(&r, &u, data, err, errlen)) goto done;
 
-    /* the linker's tables: each global's stamp, the globals it sets, the
-       functions it names past its own, what it exports */
+    /* the linker's tables: each global's key (a unit's place, its number
+       there), the functions it names past its own, what it exports */
+    places = malloc((nglobals ? nglobals : 1) * sizeof *places);
     stamps = malloc((nglobals ? nglobals : 1) * sizeof *stamps);
-    if (!stamps) FAIL("out of memory");
-    for (uint32_t i = 0; i < nglobals; i++) stamps[i] = rd_u32(&r);
-    ndefines = rd_u32(&r);
-    if (r.error || ndefines > nglobals) FAIL("bad table of the unit's globals");
-    defines = malloc((ndefines ? ndefines : 1) * sizeof *defines);
-    if (!defines) FAIL("out of memory");
-    for (uint32_t i = 0; i < ndefines; i++) defines[i] = rd_u32(&r);
+    if (!places || !stamps) FAIL("out of memory");
+    for (uint32_t i = 0; i < nglobals; i++) {
+        places[i] = rd_u32(&r);
+        stamps[i] = rd_u32(&r);
+        if (places[i] > nnamed) FAIL("bad table of the unit's globals");
+    }
     nimports = rd_u32(&r);
     if (r.error || nimports > 10000000) FAIL("bad table of imports");
     import_ix = malloc((nimports ? nimports : 1) * sizeof *import_ix);
+    import_place = malloc((nimports ? nimports : 1) * sizeof *import_place);
     import_stamp = malloc((nimports ? nimports : 1) * sizeof *import_stamp);
-    if (!import_ix || !import_stamp) FAIL("out of memory");
+    if (!import_ix || !import_place || !import_stamp) FAIL("out of memory");
     uint32_t nslots = 0;
     for (uint32_t i = 0; i < nimports; i++) {
         import_ix[i] = rd_u32(&r);
+        import_place[i] = rd_u32(&r);
         import_stamp[i] = (int32_t)rd_u32(&r);
-        if (import_ix[i] < u.nfuncs || import_ix[i] - u.nfuncs >= 10000000) FAIL("bad table of imports");
+        if (import_ix[i] < u.nfuncs || import_ix[i] - u.nfuncs >= 10000000 || import_place[i] > nnamed
+            || (import_place[i] == 0 && import_stamp[i] != -1))
+            FAIL("bad table of imports");
         if (import_ix[i] - u.nfuncs + 1 > nslots) nslots = import_ix[i] - u.nfuncs + 1;
     }
     nexports = rd_u32(&r);
@@ -638,11 +653,22 @@ int64_t load_unit_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_
     }
     if (r.error || r.pos != size) FAIL("bad tables of the unit");
 
-    uint32_t session;
-    if (!unit_session(vm, session_bytes, slen, &session)) FAIL("out of memory");
+    /* the units by their places: the unit's own first */
+    sessions = malloc((nnamed + 1) * sizeof *sessions);
+    if (!sessions) FAIL("out of memory");
+    if (!unit_session(vm, identity_bytes, slen, &sessions[0])) FAIL("out of memory");
+    {
+        Reader n = { data, size, named_at, 0 };
+        for (uint32_t i = 0; i < nnamed; i++) {
+            uint32_t len = rd_u32(&n);
+            if (!unit_session(vm, data + n.pos, len, &sessions[i + 1])) FAIL("out of memory");
+            n.pos += len;
+        }
+    }
+    uint32_t session = sessions[0];
     /* each function it names past its own: another unit's export, or the
-       next unit's top level (stamp -1), which here is the function that
-       returns */
+       next unit's top level (its own place, number -1), which here is the
+       function that returns */
     imports = malloc((nslots ? nslots : 1) * sizeof *imports);
     if (!imports) FAIL("out of memory");
     for (uint32_t i = 0; i < nslots; i++) imports[i] = UINT32_MAX;
@@ -653,9 +679,10 @@ int64_t load_unit_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_
             m = mark_of(vm);
             to = vm->unit_return;
         } else {
-            UnitExport *x = unit_find(vm, session, import_stamp[i], 0);
+            UnitExport *x = unit_find(vm, sessions[import_place[i]], import_stamp[i], 0);
             if (!x) {
-                snprintf(err, errlen, "the unit names function %d of its compile, which no unit loaded has", import_stamp[i]);
+                snprintf(err, errlen, "the unit names function %d of unit %s, which no unit loaded has",
+                         import_stamp[i], vm->unit_sessions[sessions[import_place[i]]]);
                 goto done;
             }
             to = x->index;
@@ -668,13 +695,12 @@ int64_t load_unit_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_
     if (!global_map) FAIL("out of memory");
     uint32_t nown = 0;
     for (uint32_t i = 0; i < nglobals; i++) {
-        int own = 0;
-        for (uint32_t k = 0; k < ndefines && !own; k++) own = defines[k] == stamps[i];
-        if (own) global_map[i] = p->nglobals + nown++;
+        if (places[i] == 0) global_map[i] = p->nglobals + nown++;
         else {
-            UnitExport *x = unit_find(vm, session, (int32_t)stamps[i], 1);
+            UnitExport *x = unit_find(vm, sessions[places[i]], (int32_t)stamps[i], 1);
             if (!x) {
-                snprintf(err, errlen, "the unit names global %d of its compile, which no unit loaded has", (int32_t)stamps[i]);
+                snprintf(err, errlen, "the unit names global %d of unit %s, which no unit loaded has",
+                         (int32_t)stamps[i], vm->unit_sessions[sessions[places[i]]]);
                 goto done;
             }
             global_map[i] = x->index;
@@ -777,7 +803,7 @@ int64_t load_unit_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_
             if (!unit_export(vm, session, stamp, 0, func_base + ix)) { undo(vm, m); FAIL("out of memory"); }
         }
         for (uint32_t i = 0; i < nglobals; i++)
-            if (global_map[i] >= m.nglobals && !unit_export(vm, session, (int32_t)stamps[i], 1, global_map[i])) {
+            if (places[i] == 0 && !unit_export(vm, session, (int32_t)stamps[i], 1, global_map[i])) {
                 undo(vm, m); FAIL("out of memory");
             }
     }
@@ -797,6 +823,7 @@ done:
     free(u.lines);
     for (uint32_t i = 0; i < u.ninlines; i++) free(u.inlines[i].name);
     free(u.inlines);
-    free(const_at); free(stamps); free(defines); free(imports); free(import_ix); free(import_stamp); free(global_map);
+    free(const_at); free(places); free(stamps); free(imports); free(import_ix); free(import_place); free(import_stamp);
+    free(global_map); free(sessions);
     return result;
 }

@@ -8,6 +8,7 @@ src/util/ordmap.sml
 src/util/inttable.sml
 src/util/source.sml
 src/util/error.sml
+src/util/usage.sml
 src/frontend/token.sml
 src/frontend/lexer.sml
 src/elab/types.sml

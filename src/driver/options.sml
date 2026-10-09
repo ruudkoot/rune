@@ -19,6 +19,9 @@ struct
   val typecheckOnly = ref false
   val units = ref false                        (* --units: a unit per file, linked (docs/units.md) *)
   val emitUnits : string option ref = ref NONE (* --emit-units DIR: each unit's file there too *)
+  val cacheDir : string option ref = ref NONE  (* --cache-dir DIR: the cache of units (UnitCache) *)
+  val noCache = ref false                      (* --no-cache: compile every unit *)
+  val explainRebuild = ref false               (* --explain-rebuild: say why each unit was compiled *)
   val noWarnings = ref false
   val showVersion = ref false
   val showHelp = ref false
@@ -55,9 +58,16 @@ struct
     \  --units           compile every file, of the basis library too, as a unit\n\
     \                    of its own after the files before it, and link them\n\
     \                    (docs/units.md)\n\
-    \  --emit-units DIR  with --units, write each unit's file (.rbu) into DIR too,\n\
-    \                    and DIR/units, their names in order; `rune -o P.rbc`\n\
-    \                    given those files links them\n\
+    \  --emit-units DIR  with --units, write each unit's code (.rbu) and basis\n\
+    \                    (.rbi) into DIR too, and DIR/units, their names in\n\
+    \                    order; `rune -o P.rbc` given those files links them\n\
+    \  --cache-dir DIR   with --units, keep each unit compiled in the cache in DIR\n\
+    \                    and take it from there when nothing it was compiled from\n\
+    \                    changed (default: $RUNE_CACHE, else .rune beside the\n\
+    \                    first input; docs/units.md)\n\
+    \  --no-cache        with --units, compile every unit\n\
+    \  --explain-rebuild with --units, say of each unit whether it was taken from\n\
+    \                    the cache, or why it was compiled\n\
     \  --typecheck-only  stop after type checking\n\
     \  --type-work=N     type traversal budget per top-level declaration (50000000)\n\
     \  --match-work=N    pattern-analysis budget per match (1000000)\n\
@@ -118,6 +128,10 @@ struct
     | "--units" :: rest => (units := true; parse rest)
     | "--emit-units" :: d :: rest => (emitUnits := SOME d; parse rest)
     | ["--emit-units"] => raise Usage "--emit-units requires a directory"
+    | "--cache-dir" :: d :: rest => (cacheDir := SOME d; parse rest)
+    | ["--cache-dir"] => raise Usage "--cache-dir requires a directory"
+    | "--no-cache" :: rest => (noCache := true; parse rest)
+    | "--explain-rebuild" :: rest => (explainRebuild := true; parse rest)
     | "--typecheck-only" :: rest => (typecheckOnly := true; parse rest)
     | "--no-warnings" :: rest => (noWarnings := true; parse rest)
     | "--dump-tokens" :: rest => (dumpTokens := true; parse rest)

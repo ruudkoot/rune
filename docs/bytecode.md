@@ -156,38 +156,66 @@ function, local, primitive or builtin-exception operands.
 
 A unit's file ([units.md](units.md)) is the code of one unit, numbered
 from 0 as a program's is, and what a linker needs to put it beside the
-units of the compile it belongs to. `rune --units --emit-units DIR` writes
-one per unit; `rune -o P.rbc` given unit files of one compile, in order,
-links them into the program `rune --units` makes of the same sources, byte
-for byte (`make check-units`).
+units before it. `rune --units --emit-units DIR` writes one per unit;
+`rune -o P.rbc` given unit files, in order, links them into the program
+`rune --units` makes of the same sources, byte for byte (`make
+check-units`).
 
 ```
 magic       4 bytes   "RUNU"
-version     u32       1
+version     u32       2
 fingerprint u32       of the instruction set its code is of
 kind        u32       0: bytecode of that set (native code later)
-session     len u32, bytes   the compile the unit belongs to (below)
+identity    len u32, bytes   the unit's identity (below)
+nunits      u32
+units       nunits × { len u32, bytes }   the identities of the units it names
             ... a program's file from nconsts to the representations section,
                 its functions, globals, constants, labels, files and inlined
                 frames the unit's own, numbered from 0 ...
-stamps      nglobals × i32   the stamp of each global it names, by index
-ndefines    u32
-defines     ndefines × i32   the stamps of the globals it sets: its own
+globals     nglobals × key        the name of each global it names, by index
 nimports    u32
-imports     nimports × { index u32, stamp i32 }   a function of a unit before it, by its index here;
-                                                  stamp -1 is the next unit's top level
+imports     nimports × { index u32, key }   a function of a unit before it, by its index here;
+                                            the unit's own place and number -1: the next unit's top level
 nexports    u32
-exports     nexports × { stamp i32, index u32 }   its functions another unit may call by name
+exports     nexports × { number u32, index u32 }   its functions another unit may call by name
+key         { place u32, number i32 }   a unit's place among those named, 0 being the unit itself,
+                                        and the name's number there
 ```
 
-A unit names what other units declared by the *stamps* the compiler gave
-it, which mean something only beside the units compiled with it: the
-session is a hash of the names and texts of all the units of the compile,
-and a linker refuses units of different sessions or instruction sets. A
+A unit names what units declared by a *key*: the identity of the unit that
+declared it and the number the unit's basis gave it
+([units.md](units.md), *Names*). The identity is the unit's name and the
+hash of its basis, so that a unit names the same things whatever was
+compiled before it, and a unit compiled in one compile links with units
+of another. The globals whose key is the unit's own are those it sets. A
 unit's function 0 is its top level, which ends in a tail call of the next
-unit's (import `-1`); a unit's other functions follow it, and an index past
-them names an import. (The cache of the incremental roadmap's M6 numbers
-the names canonically, so that units of different compiles link.)
+unit's; a unit's other functions follow it, and an index past them names
+an import.
+
+### A unit's basis (`.rbi`)
+
+Beside its code, `--emit-units` writes each unit's basis, what the
+compiles after it need of it ([units.md](units.md), *The export basis*):
+
+```
+used        3 × varint   what the unit's compile used of each kind of name
+source      varint len, bytes   the hash of its source
+magic       3 bytes   "RBI"
+version     varint    1
+name        varint len, bytes   the unit's name
+units       varint n, n × string   the identities of the units it names
+counts      3 × varint   its own names of each kind
+            ... the fixity directives, the environment, the signatures,
+                functors and overloading it declared, and the tables of its
+                own names, each name of a kind written as built in, the
+                unit's own (a number), or another unit's (its place, a
+                number) ...
+```
+
+Numbers are varints (seven bits a byte, the high bit set where another
+follows; an integer zigzagged). The identity of the unit is its name and
+the hash of the bytes from `magic` on; what comes before them is not part
+of it.
 
 ## Values
 

@@ -79,6 +79,7 @@ if [ "$uninstall" = 1 ]; then
         "$bindir/runeopt" "$bindir/runeopt-mlton" "$bindir/runeopt-smlnj-legacy" \
         "$bindir/runeopt-smlnj-dev" "$bindir/runeopt-polyml" "$bindir/runeopt-mlkit" \
         "$bindir/rune-repl"
+  [ -d "$libdir" ] && chmod -R u+w "$libdir"   # the frozen Basis is read-only
   rm -rf "$libdir"
   rm -f "$mandir/rune.1" "$mandir/runevm-stack.1" "$mandir/runevm.1" "$mandir/runedoc.1" "$mandir/runeopt.1"
   rm -f "$bashdir/rune" "$bashdir/runedoc" "$bashdir/runeopt"
@@ -157,6 +158,15 @@ else
   chmod 755 "$bindir/rune-$host"
   ln -sfn "rune-$host" "$bindir/rune"
   installed="rune-$host"
+fi
+
+# the frozen Basis Library, when it is made (make basis-cache): the cache of
+# its units, which every compile in units reads (docs/units.md, The cache)
+if [ -f "$root/lib/cache/made" ]; then
+  [ -d "$libdir/cache" ] && chmod -R u+w "$libdir/cache"
+  rm -rf "$libdir/cache"
+  cp -R "$root/lib/cache" "$libdir/cache"
+  chmod -R a-w "$libdir/cache"
 fi
 
 # the REPL, when it is built (make repl): its image, restored by runevm;

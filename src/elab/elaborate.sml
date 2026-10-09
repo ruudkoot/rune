@@ -15,8 +15,14 @@ struct
 
   datatype funinfo =
       FunInfo of {param : string option, paramSig : SigMatch.sigma, body : strexp, defEnv : env, allowPrim : bool,
-                  defSigs : SigMatch.sigma StringMap.map, defFuns : funinfo StringMap.map}
+                  defSigs : SigMatch.sigma StringMap.map, defFuns : funinfo StringMap.map,
+                  origin : string}   (* the identity of the unit it was loaded from; "" where elaborated *)
   val funs : funinfo StringMap.map ref = ref StringMap.empty
+
+  (* The signatures and functors declared since UnitBasis.begin, newest
+     first: what a unit's basis holds of them (src/driver/unitbasis.sml) *)
+  val insertedSigs : string list ref = ref []
+  val insertedFuns : string list ref = ref []
 
   (* The constructors of every datatype declared so far, with their schemes,
      by the stamp of its type name, in or out of scope: what the REPL's
@@ -901,7 +907,10 @@ struct
     | DSignature (binds, _) =>
         (* all bindings are elaborated in the same basis (rule 67) *)
         let val elaborated = List.map (fn (b : sigbind) => (#name b, elabSigexp (env, #sigexp b))) binds
-        in List.app (fn (n, sg) => sigs := StringMap.insert (!sigs, n, sg)) elaborated; Env.empty end
+        in
+          List.app (fn (n, sg) => (sigs := StringMap.insert (!sigs, n, sg); insertedSigs := n :: !insertedSigs)) elaborated;
+          Env.empty
+        end
     | DFunctor (binds, _) =>
         let
           val elaborated =
@@ -918,10 +927,13 @@ struct
                            val sigsNow = !sigs
                            val funsNow = !funs
                          in
-                           (#name b, FunInfo {param = #param b, paramSig = sigma, body = #body b, defEnv = env,
+                           (#name b, FunInfo {param = #param b, paramSig = sigma, body = #body b, defEnv = env, origin = "",
                                               allowPrim = !allowPrim, defSigs = sigsNow, defFuns = funsNow})
                          end) binds
-        in List.app (fn (n, f) => funs := StringMap.insert (!funs, n, f)) elaborated; Env.empty end
+        in
+          List.app (fn (n, f) => (funs := StringMap.insert (!funs, n, f); insertedFuns := n :: !insertedFuns)) elaborated;
+          Env.empty
+        end
 
   (* ------------------------------------------------------------------ *)
   (* Structure expressions.                                               *)
@@ -938,9 +950,10 @@ struct
           val sigma = elabSigexp (env, sigexp)
         in SigMatch.ascribe (sigma, e, opaque, sp) end
     | StrApp (funid, arg, slot, sp) =>
-        (case StringMap.find (!funs, funid) of
+        (Usage.use ("fun", funid);
+         case StringMap.find (!funs, funid) of
            NONE => err (sp, "unbound functor: " ^ funid)
-         | SOME (FunInfo {param, paramSig, body, defEnv, allowPrim = ap, defSigs, defFuns}) =>
+         | SOME (FunInfo {param, paramSig, body, defEnv, allowPrim = ap, defSigs, defFuns, ...}) =>
              let
                (* rule 54: match the argument, then specialise a copy of the body to it,
                   in the basis of the functor's definition *)
@@ -971,7 +984,8 @@ struct
   and elabSigexp (env, se : sigexp) : SigMatch.sigma =
     case se of
       SigId (n, sp) =>
-        (case StringMap.find (!sigs, n) of
+        (Usage.use ("sig", n);
+         case StringMap.find (!sigs, n) of
            SOME sg => SigMatch.instantiate sg
          | NONE => err (sp, "unbound signature: " ^ n))
     | SigSig (specs, sp) => elabSpecs (env, specs)

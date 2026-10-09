@@ -8,6 +8,8 @@ src/util/inttable.sml
 src/util/source.sml
 src/util/error.sml
 src/util/pass.sml
+src/util/usage.sml
+src/util/pickle.sml
 src/frontend/token.sml
 src/frontend/lexer.sml
 src/elab/types.sml
@@ -51,5 +53,7 @@ src/backend/link.sml
 src/backend/unitfile.sml
 src/driver/basismanifest.sml
 src/driver/options.sml
+src/driver/unitbasis.sml
 src/driver/pipeline.sml
+src/driver/unitcache.sml
 src/driver/main.sml

@@ -139,6 +139,53 @@ and
 .I word
 set the default back. The option may be given once for each.
 .TP
+.B \-\-units
+Compile every file, the basis library's too, as a unit of its own after the
+files before it, and link the units into the program
+.RB ( docs/units.md ).
+The program behaves as the one compiled whole does; no function of one unit
+is inlined into another. Each unit compiled is kept in a cache and taken
+from there by the compiles after it while nothing it was compiled from
+changes.
+.TP
+.BI \-\-emit\-units " DIR"
+With
+.BR \-\-units ,
+write each unit's code
+.RI ( .rbu )
+and basis
+.RI ( .rbi )
+into
+.I DIR
+too, and
+.IR DIR /units,
+their names in order;
+.B rune \-o
+.I P.rbc
+given those files links them.
+.TP
+.BI \-\-cache\-dir " DIR"
+With
+.BR \-\-units ,
+keep the cache of units in
+.IR DIR .
+The default is
+.BR $RUNE_CACHE ,
+else
+.B .rune
+beside the first input.
+.TP
+.B \-\-no\-cache
+With
+.BR \-\-units ,
+compile every unit, and keep none.
+.TP
+.B \-\-explain\-rebuild
+With
+.BR \-\-units ,
+say of each unit on standard error whether it was taken from the cache, or
+why it was compiled.
+.TP
 .B \-\-typecheck\-only
 Stop after type checking; write no bytecode.
 .TP

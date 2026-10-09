@@ -67,10 +67,15 @@ struct
         if String.isSubstring "unterminated" msg then More else Wrong (Error.format (sp, msg))
     end
 
-  (* run decs: each declaration compiled and run in turn; false at the first
-     that fails, where stopping says so. Masked but for the running, which
-     may be inside another declaration's (a nested use). *)
-  fun run (decs : Ast.dec list, stopping : bool) : bool =
+  (* run (decs, name, text, cached, stopping): each declaration of the text
+     of source name compiled and run in turn; false at the first that fails,
+     where stopping says so. cached is SOME (n, names) where the text is a
+     file's, n the place of the first declaration in it and names what
+     parsing it looked up: its units are then the file's, through the cache
+     (ReplSession.compile). Masked but for the running, which may be inside
+     another declaration's (a nested use). *)
+  fun run (decs : Ast.dec list, name : string, text : string, cached : (int * string list) option,
+           stopping : bool) : bool =
     case decs of
       [] => true
     | d :: rest =>
@@ -79,7 +84,7 @@ struct
             let
               (* compiled: an error is the declaration's, or the compiler's own *)
               val compiled =
-                SOME (ReplSession.compile [d])
+                SOME (ReplSession.compile ([d], name, text, cached))
                 handle Error.CompileError (sp, msg) => (err (Error.format (sp, msg) ^ "\n"); NONE)
                      | Error.Bug msg => (err ("rune-repl: " ^ msg ^ "\n"); NONE)
                      | Fail msg => (err ("rune-repl: " ^ msg ^ "\n"); NONE)
@@ -87,16 +92,19 @@ struct
               (* run: what it raises is the program's, and use passes it on *)
               case compiled of
                 NONE => false
-              | SOME {run, delta, declared} =>
+              | SOME {run, delta, declared, bind} =>
                   ((unmasked run;
                     ReplSession.env := Env.plus (!ReplSession.env, delta);
+                    bind ();
                     List.app (fn s => print (s ^ "\n")) declared;
                     true)
                    handle e => if stopping then raise e else (uncaught e; false))
             end
           val ok = masked one
         in
-          if ok orelse not stopping then run (rest, stopping) else false
+          if ok orelse not stopping
+          then run (rest, name, text, Option.map (fn (n, ns) => (n + 1, ns)) cached, stopping)
+          else false
         end
 
   (* Compiler.use: the declarations of a file, the first that does not
@@ -105,11 +113,14 @@ struct
     let
       val text = #text (Source.readFile file) handle IO.Io _ => raise Fail ("use: cannot read " ^ file)
     in
-      case parse (file, text ^ "\n;") of
-        Decs (decs, fx) => (ReplSession.fixity := fx;
-                            if run (decs, true) then () else raise Fail ("use: " ^ file ^ " has errors"))
-      | More => raise Fail ("use: " ^ file ^ " ends in the middle of a declaration")
-      | Wrong msg => (err (msg ^ "\n"); raise Fail ("use: " ^ file ^ " has errors"))
+      (* parsed, what the parse looked up recorded: each declaration's
+         usages have it (ReplSession.compile) *)
+      case Usage.record (fn () => parse (file, text ^ "\n;")) of
+        (Decs (decs, fx), names) =>
+          (ReplSession.fixity := fx;
+           if run (decs, file, text ^ "\n;", SOME (0, names), true) then () else raise Fail ("use: " ^ file ^ " has errors"))
+      | (More, _) => raise Fail ("use: " ^ file ^ " ends in the middle of a declaration")
+      | (Wrong msg, _) => (err (msg ^ "\n"); raise Fail ("use: " ^ file ^ " has errors"))
     end
 
   (* The loop: a prompt, lines until a declaration ends, the declarations
@@ -130,7 +141,7 @@ struct
          next prompt is the first *)
       and step (text : string, last : bool) : bool =
         case parse ("stdIn", text) of
-          Decs (decs, fx) => (ReplSession.fixity := fx; ignore (run (decs, false)); true)
+          Decs (decs, fx) => (ReplSession.fixity := fx; ignore (run (decs, "stdIn", text, NONE, false)); true)
         | More => last
         | Wrong msg => (err (msg ^ "\n"); true)
     in
@@ -167,7 +178,7 @@ struct
       (* the top level's own: use *)
       ReplSession.quiet := true;
       (case parse ("<repl>", "val use = Compiler.use;") of
-         Decs (decs, _) => ignore (run (decs, true))
+         Decs (decs, _) => ignore (run (decs, "<repl>", "val use = Compiler.use;", NONE, true))
        | _ => ());
       ReplSession.quiet := false;
       (* --make-image IMAGE: the REPL as it is now, written to IMAGE; the

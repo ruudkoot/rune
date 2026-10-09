@@ -1,0 +1,7 @@
+(* use through the cache (S38): a file used twice, the second time from the
+   cache, its top level run again with globals and exceptions of its own *)
+use "tests/repl/lib/counter.sml";
+val first = Counter.n;
+use "tests/repl/lib/counter.sml";
+first := 10;
+!Counter.n;

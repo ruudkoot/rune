@@ -11,7 +11,10 @@
 # writes its unit files (--emit-units), and tests/units/load.sml, which loads
 # each with Runtime.load and runs it, must print the same on standard output
 # and exit the same as the units build linked by the compiler (its traces
-# have the loader's frames below the program's).
+# have the loader's frames below the program's). The units build goes
+# through a cache of the units (docs/units.md, The cache) under
+# tests/out, which the suite empties first; built again from it, every unit
+# taken from there, it must be the same bytes.
 #   tests/units/run.sh [--rune BIN]
 set -u
 cd "$(dirname "$0")/../.."
@@ -23,6 +26,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 out=tests/out/units-suite
+rm -rf "$out/cache"
 mkdir -p "$out"
 fails=0
 n=0
@@ -39,7 +43,7 @@ for dir in tests/units/*/; do
       case $target in registers) vm=bin/runevm ;; stack) vm=bin/runevm-stack ;; esac
       flags="--target=$target"
       result=$out/$name.$build.$target
-      [ $build = units ] && { rm -rf "$result.files"; flags="$flags --units --emit-units $result.files"; }
+      [ $build = units ] && { rm -rf "$result.files"; flags="$flags --units --cache-dir $out/cache --emit-units $result.files"; }
       # shellcheck disable=SC2086
       "$rune" $flags $files -o "$result.rbc" > /dev/null 2> "$result.cerr"
       status=$?
@@ -68,6 +72,20 @@ for dir in tests/units/*/; do
         n=$((n + 1))
         if ! cmp -s "$result.out" "$result.loaded.out" || [ "$(cat "$result.loaded.code")" != "$code" ]; then
           echo "FAIL units-suite.$name: loaded $target (diff $result.out $result.loaded.out; status $code and $(cat "$result.loaded.code"); $result.loaded.err)"
+          fails=$((fails + 1))
+        fi
+      fi
+      # built again, every unit from the cache: the same bytes
+      if [ $build = units ] && [ $status = 0 ]; then
+        # shellcheck disable=SC2086
+        "$rune" --target=$target --units --cache-dir "$out/cache" --explain-rebuild $files -o "$result.warm.rbc" \
+          > /dev/null 2> "$result.warm.cerr"
+        n=$((n + 1))
+        if grep -q '^rune: compiled' "$result.warm.cerr"; then
+          echo "FAIL units-suite.$name: warm $target compiled a unit again ($result.warm.cerr)"
+          fails=$((fails + 1))
+        elif ! cmp -s "$result.rbc" "$result.warm.rbc"; then
+          echo "FAIL units-suite.$name: warm $target differs (cmp $result.rbc $result.warm.rbc)"
           fails=$((fails + 1))
         fi
       fi

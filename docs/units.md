@@ -51,7 +51,58 @@ call of one is a known call (`CALLK`) as in a whole program: such a function
 gets an id after the unit's own functions, and so does the next unit's top
 level, which this unit's top level calls last, in tail position. Globals,
 constants, labels, files and the frames of inlined functions are numbered
-from 0 in each unit, in the order the unit first names them.
+from 0 in each unit, in the order the unit first names them. No function of
+a unit before is inlined into this one, nor specialised for it: what the
+units after a unit see of it is its basis (below), which holds no code.
+
+## The export basis
+
+Once a unit is compiled, what the units after it need of it -- its
+*export basis* (the incremental roadmap's D4) -- is written as bytes
+(`UnitBasis.export`, `src/driver/unitbasis.sml`; [bytecode.md](bytecode.md),
+*A unit's basis*): the environment it declared, its fixity directives,
+signatures, functors and overloading, and the compiler's tables of what it
+declared: each value's scheme, each exception's argument, each datatype's
+constructors, what each opaque type stands for, the primitives some of its
+values are, its functions that may be called by name, and the constructors
+the REPL prints a datatype's values by. A functor's body is not written:
+where it is in the unit's source is, and loading the basis parses the
+source again for it, with the fixity of the unit's start, and checks that
+the source is the one the basis was made from by its hash. A functor's
+basis -- the environment it was declared in -- is written as what the unit
+added to its start.
+
+Then the unit's basis is *loaded* again in place of what its compile left
+(`UnitBasis.load`; `Pipeline.unitThrough`): the compiler's tables go back
+to the unit's start, the bytes are read, their names given names of the
+session after everything before, and the unit's environment, fixity,
+signatures, functors and tables are what the bytes say. So the units after
+a unit see only its basis, whether it was compiled now or taken from the
+cache, and a compile is the same bytes either way.
+
+## Names
+
+Everything a unit declared is named, in its basis and in its code, in a
+way that does not depend on what was compiled before it (D3):
+
+* a name that exists before any unit -- the built-in types, the initial
+  environment -- is itself;
+* one of the unit's own is a number, given in the order the writing of its
+  basis meets them, so that the same declarations always get the same
+  numbers;
+* one of an earlier unit's is that unit's *identity* and its number there.
+
+A unit's identity is its name and the hash of its basis, without what its
+compile used of the session's counters. A unit whose body changed and whose
+basis did not keeps its identity, so that what was compiled against it
+stays valid. Loading a basis gives the unit's numbers a range of each kind
+of name -- stamps, type names, type variables -- after the session's, and
+registers the range, which is how a name of the session is written back as
+a unit's identity and number.
+
+A unit's code names globals and functions by *keys*, the same pairs
+(`Link.key`): its own by the numbers its basis gave them, and those its
+basis did not -- what no unit after it can name -- by numbers after those.
 
 ## Linking
 
@@ -63,7 +114,7 @@ global's number. Every operand that names a function, a global or a
 constant is then renumbered by the kind its instruction gives it
 (`RegCodes.linked` and `Opcodes.linked`, which `make isa` writes from the
 descriptions of the instruction sets): an own function or constant by the
-unit's base, a function or global of another unit by its stamp, through the
+unit's base, a function or global of another unit by its key, through the
 unit that defined it. A unit's call of the next unit's top level becomes a
 call of the next unit's first function, and the last unit's a call of a
 function that returns.
@@ -77,20 +128,18 @@ compiled whole does.
 
 `rune --units --emit-units DIR FILE...` writes each unit's file into
 `DIR` -- `0000-initial.rbu`, ... in the order of the units, the Basis
-Library's first -- and `DIR/units`, their names in order, beside the
-program. A unit's file is its code as the target made it, numbered from 0,
-and the linker's record of it ([bytecode.md](bytecode.md), *Units*).
+Library's first -- and beside each its basis (`0000-initial.rbi`), and
+`DIR/units`, their names in order, and `DIR/sources`, their sources. A
+unit's file is its code as the target made it, numbered from 0, and the
+linker's record of it ([bytecode.md](bytecode.md), *Units*).
 `rune -o P.rbc $(cat DIR/units)` reads them back (`UnitFile.read`: every
 instruction decoded by the layout `make isa` writes into `RegCodes` and
 `Opcodes`, its labels and positions made again) and links them as above:
 the program is the same bytes as the one `rune --units` wrote.
 
-The units of one compile name each other by the compiler's stamps, which
-are not the same from one compile to the next, so a unit's file says which
-compile it came from, and the linker refuses to link units of two. Until
-the cache (incremental roadmap, M6) gives them names that do not depend
-on the compile, unit files are linked with the other units of their
-compile only.
+Units name each other by keys, so a unit's file links with those of the
+units it names whichever compile made them; the linker wants each unit's
+names among the units before it, and refuses one that names another.
 
 ## Loading
 
@@ -108,8 +157,8 @@ val () = List.app (fn file => Runtime.load file ()) (CommandLine.arguments ())
 and runs each as it comes, and prints and exits as the program linked by
 the compiler does (`make check-units`); its traces have the loader's frames
 below the program's. What a loaded unit names of the units before it is
-found among what those exported, by the compile they came from and their
-stamps, so they must be loaded first and come from the same compile. A
+found among what those exported, by their identities and numbers, so they
+must be loaded first. A
 unit's top level, which in a program linked by the compiler goes on to the
 next unit's, here returns to the caller.
 
@@ -126,6 +175,81 @@ code reads where the tables are when it runs, so they may move
 ([runtime.md](runtime.md), *Loading a program*). A REPL that loads a unit
 per declaration pays for its compiler and not for the JIT again
 ([repl.md](repl.md)).
+
+## The cache
+
+A compile in units keeps what it made of each unit -- its basis and its
+code -- in a cache, and a compile after it takes a unit from there rather
+than compiling it again where nothing it depends on changed (`UnitCache`,
+`src/driver/unitcache.sml`; the incremental roadmap's D14):
+
+* the cache is a directory: `--cache-dir DIR`, else `$RUNE_CACHE` (empty:
+  none), else `.rune` beside the first input; `--no-cache` compiles every
+  unit; `--explain-rebuild` says of each unit whether it was taken from the
+  cache or why it was compiled;
+* in it, a directory per *configuration*: the hash of the compiler's
+  identity (`Config.identity`, a hash of the compiler's sources, which
+  `scripts/gen-build-files.sh` writes), the versions of the files, the
+  instruction set, and the options that change what the compiler makes
+  (`-O`, `--passes`, `--int-bits`, `--fuel`). A compiler built from other
+  sources, or another level, finds none of another's entries, and two
+  configurations live side by side;
+* in that, a directory per *key*, the hash of the unit's name, its source
+  and whether it may use `_prim`; a file of the library is named by its
+  place in the library (`lib/basis/list.sml`), so that a cache follows the
+  library where it is moved, and a unit taken from the cache names its
+  source in its code's files where it is now;
+* in that, an entry per set of *usages* the unit was compiled with: every
+  name its compile looked up -- values, types, structures, signatures,
+  functors, and the fixity of every identifier it parsed (`Usage`) -- with
+  the unit that bound the name then (`UnitBasis.binders`; none for the
+  initial basis). A name is recorded only where what was found is the
+  binding the session had for it, and not one of the unit's own or of a
+  scope in it: a functor's parameter named `Array` uses no `Array` of the
+  units before. An entry serves a compile where every one of its usages
+  holds: each name is bound by the same unit, whose identity is its
+  basis, so the name means the same and the compile would be the same.
+  So a unit is compiled again where a unit whose basis it used changed, or
+  a name it used is bound by another unit -- one inserted before it that
+  shadows it -- and not where a unit it did not use changed, was inserted,
+  removed or moved; and a unit whose body changed and whose basis did not
+  keeps its identity, and the units that used it keep their entries: the
+  cut-off;
+* an entry keeps the warnings its compile gave, which a compile that takes
+  it from the cache gives again;
+* an entry is one file, its usages, warnings, basis and code with the hash
+  of them, written under a name of its own and renamed into place, so that
+  two compiles at once never see half of one. One that cannot be read, or
+  does not hold what its hash says, is no entry, and the unit is compiled
+  and the entry written again. A cache that cannot be written is one that
+  is not there. Nothing in a key is a time.
+
+Usages are by the unit that bound a name, not by what the name means: where
+a unit's basis changed in an entry another unit did not use, the other is
+compiled again all the same, and a name bound by another unit to the same
+thing -- `Char`, sealed by `seal_char.sml` where a program names `Char` and
+not otherwise -- is a usage that does not hold. Fingerprints per entry
+(GHC's rule) would tell them apart; the roadmap's M6 leaves them for later.
+
+**The frozen Basis Library** (D8): `make basis-cache`, part of `make all`,
+compiles every unit of `lib/basis` once, for each bytecode, into
+`lib/cache`, which `make install` installs read-only beside the library. A
+compile reads it after its own cache and never writes it, so that a
+program's first compile takes the Basis Library's units from there where
+their usages hold, which they do but for the seals of structures the
+program does not name.
+
+**`use`** in the REPL ([repl.md](repl.md)) takes a file's declarations
+from the cache the same way, each a unit named by the file and its place
+in it, kept in `$RUNE_CACHE`, else `.rune` beside the file: a file used
+again links its units from there, its top level run again with globals of
+its own.
+
+`make check-units` builds every program in units without the cache, then
+through a cache all the programs share, and again from it, every unit
+taken from there, and wants the same bytes three times; `tests/units`
+does the same for its programs of several files; `make test-incremental`
+runs the scenarios of `tests/incremental/SCENARIOS.md` it can be held to.
 
 ## Errors
 

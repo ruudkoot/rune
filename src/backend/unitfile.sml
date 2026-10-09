@@ -3,13 +3,16 @@
    needs beside it (Link.unitCode). `rune --emit-units` writes one per unit;
    the static linker reads them back into the code they were made from
    (read), so that a program linked from files is linked by Link as one
-   compiled in units is, and is the same bytes. *)
+   compiled in units is, and is the same bytes. A unit names what units
+   declared by keys (Link.key): in the file, the unit's identity, then those
+   of the units it names, and each key by its unit's place among them, 0
+   being the unit's own. *)
 structure UnitFile =
 struct
   open Code
 
   val magic = "RUNU"
-  val version = 1
+  val version = 2
 
   (* the code kind: the bytecode of the instruction set the fingerprint
      names; native code will be another (docs/plans/incremental-compilation.md,
@@ -20,28 +23,41 @@ struct
 
   (* ---- writing ---- *)
 
-  (* The chunks of the file of a unit of the given compile (session: the
-     stamps a unit names mean something only beside the units compiled with
-     it) whose code is of the instruction set of fingerprint. *)
-  fun chunks (fingerprint : int, session : string, u : Link.unitCode) : string list =
+  (* The chunks of the file of a unit whose code is of the instruction set of
+     fingerprint. *)
+  fun chunks (fingerprint : int, u : Link.unitCode) : string list =
     let
       val u32 = Emit.u32
       val code = #code u
-      val stamps = Array.array (#nglobals code, 0)
-      val () = List.app (fn (st, ix) => Array.update (stamps, ix, st)) (#globals u)
-      fun pairs ps = u32 (List.length ps) ^ String.concat (List.map (fn (a, b) => u32 a ^ u32 b) ps)
+      val self = #identity u
+      (* the units it names, in the order it first names them *)
+      val keys = List.map #1 (#globals u) @ List.map #2 (#imports u)
+      val named =
+        List.rev (List.foldl (fn ({unit, ...} : Link.key, acc) =>
+                                if unit = self orelse unit = "" orelse List.exists (fn x => x = unit) acc then acc
+                                else unit :: acc) [] keys)
+      fun place unit =
+        if unit = self orelse unit = "" then 0
+        else
+          let fun go (_, []) = raise Bad "a unit not among those named"
+                | go (i, x :: rest) = if x = unit then i else go (i + 1, rest)
+          in go (1, named) end
+      fun key ({unit, number} : Link.key) = u32 (place unit) ^ u32 number
+      val globals = Array.array (#nglobals code, Link.nextKey)
+      val () = List.app (fn (k, ix) => Array.update (globals, ix, k)) (#globals u)
     in
-      [magic, u32 version, u32 fingerprint, u32 bytecode, Emit.str session]
+      [magic, u32 version, u32 fingerprint, u32 bytecode, Emit.str self,
+       u32 (List.length named), String.concat (List.map Emit.str named)]
       @ Emit.sections code
-      @ [String.concat (Array.foldr (fn (st, acc) => u32 st :: acc) [] stamps),
-         u32 (List.length (#defines u)), String.concat (List.map u32 (#defines u)),
-         pairs (#imports u), pairs (#exports u)]
+      @ [String.concat (Array.foldr (fn (k, acc) => key k :: acc) [] globals),
+         u32 (List.length (#imports u)), String.concat (List.map (fn (ix, k) => u32 ix ^ key k) (#imports u)),
+         u32 (List.length (#exports u)), String.concat (List.map (fn (n, ix) => u32 n ^ u32 ix) (#exports u))]
     end
 
-  fun write (path : string, fingerprint : int, session : string, u : Link.unitCode) : unit =
+  fun write (path : string, fingerprint : int, u : Link.unitCode) : unit =
     let val out = BinIO.openOut path
     in
-      List.app (fn s => BinIO.output (out, Byte.stringToBytes s)) (chunks (fingerprint, session, u));
+      List.app (fn s => BinIO.output (out, Byte.stringToBytes s)) (chunks (fingerprint, u));
       BinIO.closeOut out
     end
 
@@ -111,18 +127,21 @@ struct
         val a = Array.array (n, 0)
     in List.app (fn (_, i, ar) => Array.update (a, i, ar)) Prims.table; Array.vector a end
 
-  (* A unit's file read back: the instruction set it is of, the compile it
-     belongs to, and the unit, its code as the target made it -- every
-     instruction an Ops of its operands, a jump's target a label again, the
-     positions and the representations where they were. *)
-  fun read (s : string) : int * string * Link.unitCode =
+  (* A unit's file read back: the instruction set it is of, and the unit, its
+     code as the target made it -- every instruction an Ops of its operands,
+     a jump's target a label again, the positions and the representations
+     where they were. *)
+  fun read (s : string) : int * Link.unitCode =
     let
       val r = {s = s, pos = ref 0}
       val () = if bytes (r, 4) = magic then () else raise Bad "not a unit of Rune bytecode"
       val () = if i32 r = version then () else raise Bad "a unit of another version"
       val fingerprint = i32 r
       val () = if i32 r = bytecode then () else raise Bad "a unit of another kind of code"
-      val session = str r
+      val self = str r
+      val named = Vector.fromList (list (r, str))
+      fun unitAt i = if i = 0 then self else Vector.sub (named, i - 1) handle Subscript => raise Bad "a unit out of range"
+      fun key r = let val i = count r in {unit = unitAt i, number = i32 r} : Link.key end
       val {kinds, listAt, listPrim, label, handler} = layout fingerprint
       val consts = list (r, const)
       val nglobals = count r
@@ -162,10 +181,13 @@ struct
                            val blocks = list (r, fn r => let val pc = count r in (pc, list (r, count)) end)
                            val loops = list (r, count)
                          in (arity, reps, blocks, loops) end)
-      val stamps = List.tabulate (nglobals, fn _ => i32 r)
-      val defines = list (r, i32)
-      val imports = list (r, fn r => let val ix = count r in (ix, i32 r) end)
-      val exports = list (r, fn r => let val st = i32 r in (st, count r) end)
+      val globals = List.tabulate (nglobals, fn _ => key r)
+      val imports = list (r, fn r => let val ix = count r
+                                     in case key r of
+                                          {unit, number = ~1} => (ix, if unit = self then Link.nextKey else raise Bad "an import")
+                                        | k => (ix, k)
+                                     end)
+      val exports = list (r, fn r => let val n = count r in (n, count r) end)
       val () = if !(#pos r) = String.size s then () else raise Bad "more after the unit"
 
       (* the code, decoded: each instruction's opcode and operands *)
@@ -242,13 +264,21 @@ struct
       val code = {consts = consts, nglobals = nglobals, funcs = funcs', files = files, inlines = inlines,
                   nlabels = IntMap.numItems targets}
     in
-      (fingerprint, session,
-       {code = code, globals = ListPair.zip (stamps, List.tabulate (nglobals, fn i => i)), defines = defines,
+      (fingerprint,
+       {code = code, identity = self, globals = ListPair.zip (globals, List.tabulate (nglobals, fn i => i)),
         imports = imports, exports = exports})
     end
     handle Subscript => raise Bad "the file is cut short"
 
-  fun readFile (path : string) : int * string * Link.unitCode =
+  (* u with the source the files of its code name old named new: a unit
+     from the cache whose source has moved *)
+  fun renameFile ({code = {consts, nglobals, funcs, files, inlines, nlabels}, identity, globals, imports, exports}
+                  : Link.unitCode, old : string, new : string) : Link.unitCode =
+    {code = {consts = consts, nglobals = nglobals, funcs = funcs, files = List.map (fn f => if f = old then new else f) files,
+             inlines = inlines, nlabels = nlabels},
+     identity = identity, globals = globals, imports = imports, exports = exports}
+
+  fun readFile (path : string) : int * Link.unitCode =
     let
       val inp = BinIO.openIn path
       val s = Byte.bytesToString (BinIO.inputAll inp) before BinIO.closeIn inp

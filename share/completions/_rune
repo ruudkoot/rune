@@ -11,6 +11,11 @@ _arguments -s \
   '--allow-prim[allow the _prim extension in the inputs]' \
   '--or-patterns[allow or-patterns (p1 | p2), which are not Standard ML]' \
   '*--default-type=[the type an open int or word constant defaults to in the inputs]:type:(int int64 word word64)' \
+  '--units[compile every file as a unit of its own, and link them]' \
+  '--emit-units[with --units, write the files of every unit into DIR]:directory:_files -/' \
+  '--cache-dir[with --units, the cache of units]:directory:_files -/' \
+  '--no-cache[with --units, compile every unit]' \
+  '--explain-rebuild[with --units, say why each unit was compiled]' \
   '--typecheck-only[stop after type checking]' \
   '--no-warnings[do not print match warnings]' \
   '--dump-tokens[print the token stream]' \

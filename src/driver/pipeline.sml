@@ -50,16 +50,16 @@ struct
   fun fingerprint () : int = if !Options.target = "registers" then RegCodes.fingerprint else Opcodes.fingerprint
 
   (* A unit, elaborated, made into its code and what the linker needs of it
-     (Link.unitCode), with Pass.whole false; the units after it may call its
-     functions by name (Lower.knownBefore). *)
-  fun unitOf (decs : Ast.dec list) : Link.unitCode =
+     (Link.sessionCode), with Pass.whole false; the units after it may call
+     its functions by name (Lower.knownBefore). *)
+  fun unitOf (decs : Ast.dec list) : Link.sessionCode =
     let
       val lam = Pass.stage {name = "translate", showIn = NONE, show = Lambda.show, check = LambdaLint.check,
                             size = Lambda.size}
                            Translate.transProgram decs
       val low = lowOf lam
       val code = targetStage low
-      val u : Link.unitCode =
+      val u : Link.sessionCode =
         {code = code, globals = IntMap.listItemsi (!Code.globals), defines = Link.defines low,
          imports = List.map (fn (s, i) => (i, s)) (IntMap.listItemsi (!Lower.imported)),
          exports = IntMap.listItemsi (!Lower.globalFids)}
@@ -68,4 +68,23 @@ struct
                                          (!Lower.globalFids);
       u
     end
+
+  (* unitThrough {start, name, file, text, decs, delta, fixity}: the unit of
+     decs, elaborated since start, which declared delta and left fixity,
+     compiled; its basis written and loaded again in place of what the
+     compile left, so that the units after it see what the bytes say, as
+     they do of a unit from the cache (UnitBasis; docs/units.md). name is
+     the unit's, file its source's in spans, text its source. Its code by
+     keys, its basis, and what loading gave, which the caller adds to the
+     start's environment and fixity. *)
+  fun unitThrough {start : UnitBasis.start, name : string, file : string, text : unit -> string,
+                   decs : Ast.dec list, delta : Env.env, fixity : Fixity.env}
+      : {code : Link.unitCode, exported : UnitBasis.exported, loaded : UnitBasis.result} =
+    let
+      val sc = unitOf decs
+      val x = UnitBasis.export {start = start, name = name, file = file, text = text, delta = delta, fixity = fixity}
+      val () = UnitBasis.undo start
+      val l = UnitBasis.load {pickle = #pickle x, file = file, at = #counters start, env = #env start,
+                              fixity = #fixity start, text = text}
+    in {code = UnitBasis.relative (x, sc), exported = x, loaded = l} end
 end

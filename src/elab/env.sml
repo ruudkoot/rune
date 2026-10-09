@@ -63,21 +63,95 @@ struct
       plus (Env e1, Env e2)
     end
 
-  fun findStr (env, []) = SOME env
-    | findStr (env, s :: rest) =
+  (* The usages of the cache (Usage; docs/units.md, The cache): a name
+     looked up is recorded where what was found for it is the binding the
+     environment a unit began in has for it (session), not one of the unit's
+     own or of a scope within it, which shadowed it: a functor's parameter
+     named Array does not use the Array of the units before. A structure is
+     the session's where one of its bindings, a witness, is the session
+     structure's: cheap, and wrong only towards recording. *)
+  val session : env option ref = ref NONE
+
+  fun sameTy' (a : ty, b : ty) : bool =
+    case (prune a, prune b) of
+      (TVar r1, TVar r2) => r1 = r2
+    | (TCon (c1, a1), TCon (c2, a2)) => #stamp c1 = #stamp c2 andalso ListPair.allEq sameTy' (a1, a2)
+    | (TRecord f1, TRecord f2) => ListPair.allEq (fn ((l1, t1), (l2, t2)) => l1 = l2 andalso sameTy' (t1, t2)) (f1, f2)
+    | (TArrow (a1, b1), TArrow (a2, b2)) => sameTy' (a1, a2) andalso sameTy' (b1, b2)
+    | _ => false
+
+  fun resultStamp (t : ty) : int =
+    case prune t of TArrow (_, r) => resultStamp r | TCon (c, _) => #stamp c | _ => ~1
+
+  fun sameBinding (a : valstatus, b : valstatus) : bool =
+    case (a, b) of
+      (Val x, Val y) => #stamp x = #stamp y
+    | (Con x, Con y) => #tag (#info x) = #tag (#info y) andalso resultStamp (#scheme x) = resultStamp (#scheme y)
+    | (ConAsVal x, ConAsVal y) => #tag (#info x) = #tag (#info y) andalso resultStamp (#scheme x) = resultStamp (#scheme y)
+    | (Exn x, Exn y) => #stamp (#info x) = #stamp (#info y)
+    | (ExnAsVal x, ExnAsVal y) => #stamp (#info x) = #stamp (#info y)
+    | (Prim x, Prim y) => #name x = #name y
+    | _ => false
+
+  fun sameTyStr (TyStr a, TyStr b) : bool =
+    case (#fcn a, #fcn b) of
+      (TName c1, TName c2) => #stamp c1 = #stamp c2
+    | (TAbbrev (i1, t1), TAbbrev (i2, t2)) => i1 = i2 andalso sameTy' (t1, t2)
+    | _ => false
+
+  (* a structure found is the session's s, by a witness of s's *)
+  fun sameStr (found : env, s : env) : bool =
+    case StringMap.firsti (vals s) of
+      SOME (n, b) => (case StringMap.find (vals found, n) of SOME a => sameBinding (a, b) | NONE => false)
+    | NONE =>
+        case StringMap.firsti (tys s) of
+          SOME (n, b) => (case StringMap.find (tys found, n) of SOME a => sameTyStr (a, b) | NONE => false)
+        | NONE =>
+            case StringMap.firsti (strs s) of
+              SOME (n, b) => (case StringMap.find (strs found, n) of SOME a => sameStr (a, b) | NONE => false)
+            | NONE => true
+
+  (* name, of kind, found as found: recorded where that is the session's
+     binding (ofSession), or where nothing was found (the compile then
+     fails), or where there is no session *)
+  fun useIf (kind : string, name : string, same : 'a * 'a -> bool, found : 'a option, ofSession : env -> 'a option) =
+    if not (!Usage.recording) then ()
+    else
+      case (!session, found) of
+        (NONE, _) => Usage.use (kind, name)
+      | (_, NONE) => Usage.use (kind, name)
+      | (SOME s, SOME a) => (case ofSession s of
+                               SOME b => if same (a, b) then Usage.use (kind, name) else ()
+                             | NONE => ())
+
+  fun headStr (env, s) =
+    useIf ("s", s, sameStr, StringMap.find (strs env, s), fn se => StringMap.find (strs se, s))
+
+  fun findStr' (env, []) = SOME env
+    | findStr' (env, s :: rest) =
       case StringMap.find (strs env, s) of
-        SOME e => findStr (e, rest)
+        SOME e => findStr' (e, rest)
       | NONE => NONE
 
+  fun findStr (env, path) = (case path of s :: _ => headStr (env, s) | [] => (); findStr' (env, path))
+
   fun findVal (env, (path, name)) =
-    case findStr (env, path) of
-      SOME e => StringMap.find (vals e, name)
-    | NONE => NONE
+    case path of
+      [] =>
+        let val r = StringMap.find (vals env, name)
+        in useIf ("v", name, sameBinding, r, fn s => StringMap.find (vals s, name)); r end
+    | s :: _ => (headStr (env, s); case findStr' (env, path) of
+                                     SOME e => StringMap.find (vals e, name)
+                                   | NONE => NONE)
 
   fun findTy (env, (path, name)) =
-    case findStr (env, path) of
-      SOME e => StringMap.find (tys e, name)
-    | NONE => NONE
+    case path of
+      [] =>
+        let val r = StringMap.find (tys env, name)
+        in useIf ("t", name, sameTyStr, r, fn s => StringMap.find (tys s, name)); r end
+    | s :: _ => (headStr (env, s); case findStr' (env, path) of
+                                     SOME e => StringMap.find (tys e, name)
+                                   | NONE => NONE)
 
   (* The type name a type structure denotes: its own, or the one an
      abbreviation of no arguments stands for (`where type t = u` leaves an

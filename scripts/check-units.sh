@@ -12,7 +12,11 @@
 # must give the same bytes, and which loaded one by one into a running
 # program (tests/units/load.sml, Runtime.load) must print the same on
 # standard output and exit the same; its traces have the loader's frames
-# below the program's. Left out of it: a program given arguments, since the
+# below the program's. The -O0 build and that -O1 build compile every unit
+# (--no-cache); the -O2 build and another -O1 build go through a cache of
+# the units that every program shares (docs/units.md, The cache), and the
+# -O1 one must be the same bytes as the build without it, and again when
+# built a second time, every unit from the cache. Left out of it: a program given arguments, since the
 # loader takes the files as its arguments; one given options of the VM
 # (.vmargs), which limit the heap for the program and not for the loader
 # too; and the programs of loaded_skip, which print their own call stack.
@@ -49,11 +53,14 @@ mkdir -p "$out"
 if [ -n "$one" ]; then
   name=$(echo "$one" | tr '/' '_')
   builds="whole units.O0 units.O1 units.O2"
-  for b in $builds; do
+  cache="--cache-dir $out/cache"
+  for b in $builds cached.O1 warm.O1; do
     case $b in
       whole) flags="" ;;
-      units.O1) rm -rf "$out/$name.files"; flags="--units -O1 --emit-units $out/$name.files" ;;
-      units.O*) flags="--units -${b#units.}" ;;
+      units.O0) flags="--units -O0 --no-cache" ;;
+      units.O1) rm -rf "$out/$name.files"; flags="--units -O1 --no-cache --emit-units $out/$name.files" ;;
+      units.O2) flags="--units -O2 $cache" ;;
+      cached.O1|warm.O1) flags="--units -O1 $cache --explain-rebuild" ;;
     esac
     # shellcheck disable=SC2086
     if ! "$rune" $flags --lint "$one.sml" -o "$out/$name.$b.rbc" 2> "$out/$name.$b.cerr"; then
@@ -61,6 +68,17 @@ if [ -n "$one" ]; then
       echo "FAIL units.$name: $flags: $(grep -m1 . "$out/$name.$b.cerr")"; exit 0
     fi
   done
+  # through the cache, and again from it: the same bytes as without it, and
+  # the second compiled nothing
+  if ! cmp -s "$out/$name.units.O1.rbc" "$out/$name.cached.O1.rbc"; then
+    echo "FAIL units.$name: built through the cache, it differs (cmp $out/$name.units.O1.rbc $out/$name.cached.O1.rbc)"; exit 0
+  fi
+  if ! cmp -s "$out/$name.units.O1.rbc" "$out/$name.warm.O1.rbc"; then
+    echo "FAIL units.$name: built from the cache, it differs (cmp $out/$name.units.O1.rbc $out/$name.warm.O1.rbc)"; exit 0
+  fi
+  if grep -q '^rune: compiled' "$out/$name.warm.O1.cerr"; then
+    echo "FAIL units.$name: built a second time, it compiled a unit again ($out/$name.warm.O1.cerr)"; exit 0
+  fi
   # the unit files of the -O1 build, linked from the files: the same bytes
   # shellcheck disable=SC2046
   if ! "$rune" -o "$out/$name.relinked.rbc" $(cat "$out/$name.files/units") 2> "$out/$name.relinked.cerr"; then
@@ -100,6 +118,7 @@ if [ -n "$one" ]; then
 fi
 
 progs=$(ls tests/lang/*.sml tests/perf/*.sml | sed 's/\.sml$//' | grep -e "$filter")
+rm -rf "$out/cache"
 n=$(echo "$progs" | wc -l | tr -d ' ')
 "$rune" tests/units/load.sml -o "$out/load.rbc" || { echo "check-units: tests/units/load.sml does not compile"; exit 1; }
 fails=$(echo "$progs" | xargs -P "$jobs" -I{} sh "$0" --rune "$rune" --vm "$vm" --out "$out" --loader "$out/load.rbc" --one {})
@@ -108,4 +127,4 @@ if [ -n "$fails" ]; then
   echo "check-units: $(echo "$fails" | wc -l | tr -d ' ') of $n programs fail"
   exit 1
 fi
-echo "check-units: $n programs, the same whole and in units at -O0, -O1 and -O2, linked from their unit files and loaded"
+echo "check-units: $n programs, the same whole and in units at -O0, -O1 and -O2, through the cache and from it, linked from their unit files and loaded"

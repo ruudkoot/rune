@@ -30,6 +30,11 @@ repl() { "$vm" $vmopts --heap-size 67108864 --restore bin/rune-repl.img --; }
 mkdir -p "$out"
 RUNE_REPL_OUT=$out
 export RUNE_REPL_OUT
+# the cache of the files the transcripts use (docs/units.md, The cache), empty
+# at first: the second use of a file takes it from there
+RUNE_CACHE=$out/cache
+export RUNE_CACHE
+rm -rf "$RUNE_CACHE"
 pass=0
 fail=0
 for t in tests/repl/*.in; do

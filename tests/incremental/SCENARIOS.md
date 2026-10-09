@@ -9,6 +9,17 @@ output equals that of a build with `--no-cache`, byte for byte where the
 program is the same and in what it prints, exits with and traces where the
 build mode differs. A scenario's id is what the runner and a failure name.
 
+`tests/incremental/run.sh` (`make test-incremental`, in `make check`) runs
+those the cache can be held to now, on the project of
+`tests/incremental/project`: S1, S2, S3, S5, S6, S8, S13, S17, S18, S19,
+S24, S29, S31, S33, S34 and S36; `tests/repl/usecache.in` is S38. A unit's
+usages are the names it looked up and the units that bound them
+(docs/units.md, *The cache*), not fingerprints per entry: S3 compiles
+`c.sml` too, which uses `a.sml`'s `SHAPE`, unchanged, and S4 would compile
+every unit that uses a name of `a.sml`. Those, and the scenarios of
+the compiler (S27), the Basis Library (S28), the full disk (S37) and of a
+session's basis (S39, S40) wait for the runner.
+
 Unless a scenario says otherwise, the project is five files in order: `a.sml`
 declares a structure, a signature, a datatype and an exception; `b.sml` uses
 `a.sml`; `c.sml` declares a functor; `d.sml` applies it to `b.sml`'s

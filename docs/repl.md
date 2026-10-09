@@ -48,6 +48,13 @@ to the caller of `use`. A file may `use` another, and a declaration of the
 session may call `use`: what it compiles is the session's at once, and the
 declaration's own bindings join it once it has run.
 
+A file's declarations are units named by the file and their place in it,
+kept in the cache of units -- `$RUNE_CACHE`, else `.rune` beside the file
+([units.md](units.md), *The cache*) -- and a declaration whose usages hold,
+the names it uses bound as they were, is linked from there rather than
+compiled: a file used again, unchanged, compiles nothing, and its top level
+runs again with globals of its own.
+
 ## Interrupts
 
 Ctrl-C interrupts the declaration that is running: it is reported,
@@ -99,25 +106,27 @@ the REPL's own `use`, put into `RuneCompiler.useHook` when it starts.
 
 * `bin/rune-repl.units/` is the compiler and the REPL compiled a unit per
   file (`rune --units --emit-units`, [units.md](units.md)): the files of the
-  Basis Library they use, the compiler's, the REPL's (`src/repl/`), and
-  `units` and `sources`, their files and their sources in order.
+  Basis Library they use, the compiler's, the REPL's (`src/repl/`), each
+  unit's code (`.rbu`) and basis (`.rbi`), and `units` and `sources`, their
+  files and their sources in order.
 * `bin/rune-repl` runs `bin/rune-repl.load.rbc` (`src/repl/load.sml`), which
   loads those units one by one with `Runtime.load` and runs each, the last
   being the REPL's main (`src/main/repl-main.sml`). So what the REPL program
-  exports is in the VM's table of the units loaded, under its compile's
-  session, which the units it makes name too.
-* At start the resident compiler (`src/repl/session.sml`) compiles the
-  Basis Library's files again, in the order the build did, to have their
-  environment: the compiler is deterministic, so it gives them the stamps
-  they were built with, and it checks that each unit it makes is the same
-  bytes as the unit file it was loaded from -- a library that is not the
-  one the REPL was built with is refused. The declarations after take
-  stamps above all of the REPL's own.
+  exports is in the VM's table of the units loaded, by each unit's
+  identity, which the units it makes name too ([units.md](units.md),
+  *Names*).
+* At start the resident compiler (`src/repl/session.sml`) loads the bases
+  of the Basis Library's units, in the order the build did, from the files
+  beside their code: the environment the declarations are compiled in, and
+  the identities their code names those units by. A functor's body is
+  parsed again from the library's source, which must be the one the build
+  compiled: its hash is in the basis. A declaration is then a unit after
+  them, compiled and loaded again from its basis as the build's units were.
 * `bin/rune-repl.img` is the REPL saved once it has done all that
   (`--make-image`): `bin/rune-repl` restores it, `runevm --restore
   bin/rune-repl.img -- FILE...`, the files after `--` its arguments, so that
-  it starts in half a second rather than three ([bytecode.md](bytecode.md),
-  `--restore`). The image holds the Basis's environment and the units
+  it starts at once ([bytecode.md](bytecode.md), `--restore`); without it,
+  loading the units and the bases takes a third of a second. The image holds the Basis's environment and the units
   loaded, and none of the code the JIT made, which it makes again.
 * `make install` installs it too: the image in `lib/rune`, and
   `rune-repl` beside `rune` (`scripts/install.sh`).

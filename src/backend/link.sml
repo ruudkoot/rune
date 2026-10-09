@@ -8,7 +8,10 @@
    renumbers every operand that names one, by the kind the instruction set
    gives it (RegCodes.linked, Opcodes.linked): an own function or
    constant by the unit's base, a function or global of another unit by
-   its stamp, through the unit that defines it.
+   its name, through the unit that defines it. A unit names what it
+   declared, and what earlier units did, by a key: a unit's identity and a
+   number there (UnitBasis, which gives the numbers), so that a unit's code
+   does not depend on what was compiled before it.
 
    A unit's top level ends in a tail call of the next unit's (Lower, the
    import `next`), so that the program's function 0 is the first unit's
@@ -19,20 +22,36 @@ structure Link =
 struct
   open Code
 
-  (* What the linker needs of a unit besides its code: the stamp of every
-     global it names, by its index here; the stamps of the globals it sets
-     (its own); the functions of earlier units it calls by name, and the
-     next unit's top level (stamp `next`), by their index here; and its own
-     functions that other units may call by name, by stamp. Its own
-     functions are those of code. *)
-  type unitCode = {code : Code.program,
-                   globals : (int * int) list,      (* stamp, index here *)
-                   defines : int list,              (* stamps *)
-                   imports : (int * int) list,      (* index here, stamp *)
-                   exports : (int * int) list}      (* stamp, index here *)
+  (* A unit as the compile made it, its names the session's stamps: the
+     stamp of every global it names, by its index here; the stamps of the
+     globals it sets (its own); the functions of earlier units it calls by
+     name, and the next unit's top level (stamp `next`), by their index here;
+     and its own functions that other units may call by name, by stamp. Its
+     own functions are those of code. *)
+  type sessionCode = {code : Code.program,
+                      globals : (int * int) list,      (* stamp, index here *)
+                      defines : int list,              (* stamps *)
+                      imports : (int * int) list,      (* index here, stamp *)
+                      exports : (int * int) list}      (* stamp, index here *)
 
-  (* the stamp a unit's top level names the next unit's by *)
+  (* A name a unit's code has of a unit: that unit's identity and its number
+     there; the next unit's top level is {unit = "", number = ~1} *)
+  type key = {unit : string, number : int}
+
+  (* A unit as it is linked, written and loaded: its identity; each global
+     it names, by its index here; the functions of earlier units it calls by
+     name, and the next unit's top level, by their index here; and its own
+     functions that other units may call by name, by number. The globals
+     whose key is the unit's own are those it sets. *)
+  type unitCode = {code : Code.program,
+                   identity : string,
+                   globals : (key * int) list,         (* key, index here *)
+                   imports : (int * key) list,         (* index here, key *)
+                   exports : (int * int) list}         (* number, index here *)
+
+  (* the stamp a unit's top level names the next unit's by, and its key *)
   val next = Lower.nextUnit
+  val nextKey : key = {unit = "", number = ~1}
 
   (* The globals a unit's code sets, by stamp, each once: its own. *)
   fun defines (p : Low.program) : int list =
@@ -57,7 +76,18 @@ struct
   fun program (target : Low.program -> Code.program, linked : (int * int) list vector, units : unitCode list)
       : Code.program =
     let
-      val units = units @ [{code = endFunction target, globals = [], defines = [], imports = [], exports = []}]
+      val units = units @ [{code = endFunction target, identity = "", globals = [], imports = [], exports = []}]
+      (* every key a number of the link's own: next is next *)
+      val keyIds : int StringMap.map ref = ref StringMap.empty
+      fun keyId ({unit, number} : key) : int =
+        if unit = "" andalso number = ~1 then next
+        else
+          let val k = unit ^ "\000" ^ Int.toString number
+          in
+            case StringMap.find (!keyIds, k) of
+              SOME i => i
+            | NONE => let val i = StringMap.numItems (!keyIds) in keyIds := StringMap.insert (!keyIds, k, i); i end
+          end
       (* the bases of each unit's functions *)
       val nunits = List.length units
       val fbases =
@@ -66,7 +96,9 @@ struct
       (* every function another unit may call by name, by stamp *)
       val exported =
         #2 (List.foldl (fn (u : unitCode, (i, m)) =>
-                          (i + 1, List.foldl (fn ((s, f), m) => IntMap.insert (m, s, Vector.sub (fbases, i) + f)) m
+                          (i + 1, List.foldl (fn ((n, f), m) =>
+                                                IntMap.insert (m, keyId {unit = #identity u, number = n},
+                                                               Vector.sub (fbases, i) + f)) m
                                              (#exports u)))
                        (0, IntMap.empty) units)
       (* the files and inlined frames of the whole, in order *)
@@ -94,10 +126,12 @@ struct
           val ibase = !ninlines
           (* the stamp of each global it names, by its index here *)
           val stamps = Array.array (#nglobals code, ~1)
-          val () = List.app (fn (st, ix) => Array.update (stamps, ix, st)) (#globals u)
-          (* the globals it sets get the next numbers, in the order of their
-             index here; the others are another unit's *)
-          val own = List.foldl (fn (st, m) => IntMap.insert (m, st, ())) IntMap.empty (#defines u)
+          val () = List.app (fn (k, ix) => Array.update (stamps, ix, keyId k)) (#globals u)
+          (* the globals it sets, its own, get the next numbers, in the order
+             of their index here; the others are another unit's *)
+          val own = List.foldl (fn (({unit, ...} : key, ix), m) =>
+                                  if unit = #identity u then IntMap.insert (m, Array.sub (stamps, ix), ()) else m)
+                               IntMap.empty (#globals u)
           val () =
             Array.app (fn st =>
                          if IntMap.member (own, st) andalso not (IntMap.member (!globalOf, st))
@@ -109,9 +143,9 @@ struct
                             fn ix => let val st = Array.sub (stamps, ix)
                                      in case IntMap.find (!globalOf, st) of
                                           SOME g => g
-                                        | NONE => bug ("global " ^ Int.toString st ^ " is set by no unit before")
+                                        | NONE => bug ("a global is set by no unit before (" ^ Int.toString st ^ ")")
                                      end)
-          val importMap = List.foldl (fn ((ix, s), m) => IntMap.insert (m, ix, s)) IntMap.empty (#imports u)
+          val importMap = List.foldl (fn ((ix, k), m) => IntMap.insert (m, ix, keyId k)) IntMap.empty (#imports u)
           fun func f =
             if f < nown then fbase + f
             else case IntMap.find (importMap, f) of
@@ -119,7 +153,7 @@ struct
                      if s = next then Vector.sub (fbases, i + 1)
                      else (case IntMap.find (exported, s) of
                              SOME g => g
-                           | NONE => bug ("function " ^ Int.toString s ^ " is exported by no unit before"))
+                           | NONE => bug ("a function is exported by no unit before (" ^ Int.toString s ^ ")"))
                  | NONE => bug ("function " ^ Int.toString f ^ " of a unit is neither its own nor imported")
           fun global g = Array.sub (globalMap, g)
           fun renumber (kind, v) =
