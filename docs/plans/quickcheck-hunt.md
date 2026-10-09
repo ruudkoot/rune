@@ -239,3 +239,43 @@ here (the protocol's step 4). Two things for later:
 
 What remains of the protocol: the deep mode (P11), the runs against the
 other compilers (D10), and the owner naming the law they meant.
+
+## A week's pause, and a new implementation (2026-10-09)
+
+The branch was rebased onto master after the heap-layout and collector
+roadmaps had merged. Rune's implementation changed under the laws:
+- `int` and `word` have 63 bits, a word of the machine less the bit that tells a number from a pointer, and so does `SysWord`; `Int64` and `Word64` are types of their own;
+- a new collector, with a nursery and two old spaces;
+- the compiler makes the register bytecode, which the register VM runs with its JIT.
+
+What the rebase changed in the hunt's work, each in the commit that made
+it:
+- six counterexamples of the Posix conversions named `0wx8000000000000000`, which no longer fits a `SysWord`; they now name the word one past `maxInt`, whatever the widths, and it still raises `Overflow`;
+- Rune's Date note: a date at an offset now reaches about 12.6 * 10^15 either way, and `toTime` raises `Date` from about the year 148000, not 292000 (the latter was stale since the 63-bit `int`);
+- the hash of the frozen generators, `2DFFB655CD4806DC`: the edges of P1 with `Int64` as a type of its own.
+
+**The register VM with its JIT is the default** (the owner, 2026-10-09):
+the laws run on it, and the stack VM is what they are compared with.
+
+## Run 5 (2026-10-09)
+
+On the register VM with its JIT, at eight jobs: 8 minutes, 32 of CPU.
+
+| Result | Laws |
+|---|---:|
+| pass | 1,726 |
+| fail | 8, every one on the list |
+| stopped | 0 |
+| cases skipped | 0 |
+| laws on the list that pass | 0 |
+
+The same as run 4, on the old implementation: nothing new.
+
+**Compared with the stack VM.** The same run on the stack VM
+(`RUNE=bin/rune-stack RUNEVM=bin/runevm-stack`), 27 minutes and 116 of
+CPU, gives the same result for every law. With the seeds fixed, 171 of the
+174 outputs of a program at a structure are the same to the byte. The other
+three differ only by four cases of `tabulate`, at `LargeIntArray`,
+`Int64Vector` and `LargeIntVector`, that ran past the watchdog's minute on
+the stack VM and were skipped, which the register VM finished. The two VMs
+agree on every law, every case drawn and every counterexample.
