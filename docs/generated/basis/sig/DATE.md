@@ -246,9 +246,12 @@ val year : date -> int
 
 `year d` is the year of `d`, as a number and not counted from 1900.
 
-**Law** `year (date r) = #year r`, and `month (date r) = #month r`, and `day (date r) = #day r`, and `hour (date r) = #hour r`, and `minute (date r) = #minute r`, and `second (date r) = #second r`, when `let val {year = y, month = m, day = d, hour = h, minute = mi, second = s, offset = off} = r val leap = (y mod 4 = 0 andalso y mod 100 <> 0) orelse y mod 400 = 0 val days = case m of Feb => if leap then 29 else 28 | Apr => 30 | Jun => 30 | Sep => 30 | Nov => 30 | _ => 31 in 1 <= d andalso d <= days andalso 0 <= h andalso h <= 23 andalso 0 <= mi andalso mi <= 59 andalso 0 <= s andalso s <= 59 andalso (case off of NONE => true | SOME t => Time.< (Time.fromSeconds ~86400, t) andalso Time.< (t, Time.fromSeconds 86400)) end` (for every `r : {day : int, hour : int, minute : int, month : Date.month, offset : Time.time option, second : int, year : int}`)
+**Law** `year (date r) = #year r`, and `month (date r) = #month r`, and `day (date r) = #day r`, and `hour (date r) = #hour r`, and `minute (date r) = #minute r`, and `second (date r) = #second r`, when `let val {year = y, month = m, day = d, hour = h, minute = mi, second = s, offset = off} = r val leap = (y mod 4 = 0 andalso y mod 100 <> 0) orelse y mod 400 = 0 val days = case m of Feb => if leap then 29 else 28 | Apr => 30 | Jun => 30 | Sep => 30 | Nov => 30 | _ => 31 in ~1000000000 <= y andalso y <= 1000000000 andalso 1 <= d andalso d <= days andalso 0 <= h andalso h <= 23 andalso 0 <= mi andalso mi <= 59 andalso 0 <= s andalso s <= 59 andalso (case off of NONE => true | SOME t => Time.< (Time.fromSeconds ~86400, t) andalso Time.< (t, Time.fromSeconds 86400)) end`, and it is run for `r`
+from `DateArb.fieldsInRange` (for every `r : {day : int, hour : int, minute : int, month : Date.month, offset : Time.time option, second : int, year : int}`)
 
 **Example** `year (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 1995`
+
+**Counterexample** `year (date {year = valOf Int.maxInt, month = Jan, day = 1, hour = 0, minute = 0, second = 0, offset = SOME Time.zeroTime}) = valOf Int.maxInt`, for the days to such a year are past the largest int.
 
 <details><summary>Tests (2)</summary>
 

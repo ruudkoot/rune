@@ -46,9 +46,14 @@ sig
 
   (* `wordToUid w` is the user numbered `w`, whether or not there is such a user.
 
-     Law: `uidToWord (wordToUid w) = w`
+     Law: `uidToWord (wordToUid w) = w` for `SysWord.<= (w, SysWord.fromInt
+     (valOf Int.maxInt))`
 
-     Example: `uidToWord (wordToUid 0w0) = 0w0` *)
+     Example: `uidToWord (wordToUid 0w0) = 0w0`
+
+     Counterexample: `let val w = SysWord.+ (SysWord.fromInt (valOf
+     Int.maxInt), 0w1) in uidToWord (wordToUid w) = w end`, for the number of a
+     user is an int. *)
   val wordToUid : SysWord.word -> uid
 
   (* `gidToWord g` is the number of the group `g`. *)
@@ -56,7 +61,12 @@ sig
 
   (* `wordToGid w` is the group numbered `w`.
 
-     Law: `gidToWord (wordToGid w) = w` *)
+     Law: `gidToWord (wordToGid w) = w` for `SysWord.<= (w, SysWord.fromInt
+     (valOf Int.maxInt))`
+
+     Counterexample: `let val w = SysWord.+ (SysWord.fromInt (valOf
+     Int.maxInt), 0w1) in gidToWord (wordToGid w) = w end`, for the number of a
+     group is an int. *)
   val wordToGid : SysWord.word -> gid
 
   (* `getpid ()` is the number of this process. *)

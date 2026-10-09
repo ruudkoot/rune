@@ -111,7 +111,16 @@ sig
 
      Law: `atan2 (y, x) = atan (y / x)` for `x > 0.0`
 
-     Example: `Real.== (atan2 (0.0, ~1.0), pi) = true` *)
+     The law holds over the reals, and not in floating point: `y / x` is
+     rounded before `atan` sees it, so the two sides can differ in the last
+     place, and for two infinities `y / x` is a NaN. `atan2` is the side that
+     is correctly rounded, in Rune as in C's library.
+
+     Example: `Real.== (atan2 (0.0, ~1.0), pi) = true`
+
+     Counterexample: `Real.== (atan2 (9.9740199574360859E~257,
+     1.1351872380907991E~255), atan (9.9740199574360859E~257 /
+     1.1351872380907991E~255))`, for the quotient is rounded first. *)
   val atan2 : real * real -> real
 
   (* `exp x` is `e` to the power `x`.

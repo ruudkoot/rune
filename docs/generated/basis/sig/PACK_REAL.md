@@ -244,10 +244,12 @@ val update : Word8Array.array * int * real -> unit
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `arr` is shorter than `bytesPerElem * (i + 1)`.
 
-**Law** `(update (arr, i, r); subArr (arr, i)) = r`, except that a NaN comes
-back as some NaN (for every `arr : Word8Array.array`, `i : int`, `r : real`)
+**Law** `(update (arr, i, r); subArr (arr, i)) = r` for `0 <= i andalso i < Word8Array.length arr div bytesPerElem`, except that a NaN comes back as
+some NaN (for every `arr : Word8Array.array`, `i : int`, `r : real`)
 
 **Example** `let val a = Word8Array.array (8, 0w0) in PackReal64Little.update (a, 0, 1.0); Word8Array.sub (a, 7) end = 0wx3F`
+
+**Counterexample** `(PackReal64Little.update (Word8Array.array (4, 0w0), 0, 1.0); true)`, for the eight bytes of the real are not all there.
 
 <details><summary>Other implementations (5)</summary>
 

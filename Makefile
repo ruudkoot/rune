@@ -844,6 +844,7 @@ check-docs: $(RUNE) $(RUNEDOC)
 # tests/basis/annotations.txt is what the suite knows about other implementations,
 # made from deviations.txt by tests/basis/gen-annotations.sh and committed.
 DOCS_BASIS := --lib lib --library basis --tests tests/basis --annotations tests/basis/annotations.txt \
+              --law-skips tests/basis/law-skips.txt \
               --out docs/generated/basis --title "The Standard ML Basis Library"
 # the libraries beside it (docs/plans/quickcheck.md, D1)
 DOCS_RANDOM := --lib lib --library random --out docs/generated/random --basis-docs ../basis --title "Random numbers"

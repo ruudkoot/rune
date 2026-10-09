@@ -46,7 +46,12 @@ sig
 
   (* `wordToFD w` is the descriptor numbered `w`, whether or not it is open.
 
-     Law: `fdToWord (wordToFD w) = w` *)
+     Law: `fdToWord (wordToFD w) = w` for `SysWord.<= (w, SysWord.fromInt
+     (valOf Int.maxInt))`
+
+     Counterexample: `let val w = SysWord.+ (SysWord.fromInt (valOf
+     Int.maxInt), 0w1) in fdToWord (wordToFD w) = w end`, for the number of a
+     descriptor is an int. *)
   val wordToFD : SysWord.word -> file_desc
 
   (* `fdToIOD fd` is `fd` as the `OS.IO.iodesc` that `OS.IO.poll` takes. *)
@@ -299,7 +304,12 @@ sig
 
   (* `devToWord d` is the number of the device `d`.
 
-     Law: `devToWord (wordToDev w) = w` *)
+     Law: `devToWord (wordToDev w) = w` for `SysWord.<= (w, SysWord.fromInt
+     (valOf Int.maxInt))`
+
+     Counterexample: `let val w = SysWord.+ (SysWord.fromInt (valOf
+     Int.maxInt), 0w1) in devToWord (wordToDev w) = w end`, for the number of a
+     device is an int. *)
   val devToWord : dev -> SysWord.word
 
   (* The type of the number that names a file within its device. *)
@@ -310,7 +320,12 @@ sig
 
   (* `inoToWord i` is the number of the file `i`.
 
-     Law: `inoToWord (wordToIno w) = w` *)
+     Law: `inoToWord (wordToIno w) = w` for `SysWord.<= (w, SysWord.fromInt
+     (valOf Int.maxInt))`
+
+     Counterexample: `let val w = SysWord.+ (SysWord.fromInt (valOf
+     Int.maxInt), 0w1) in inoToWord (wordToIno w) = w end`, for the number of a
+     file is an int. *)
   val inoToWord : ino -> SysWord.word
 
   (* What the system records about a file, and the functions that read it. *)

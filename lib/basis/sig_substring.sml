@@ -51,9 +51,13 @@ sig
 
   (* `base ss` is the triple of the string that `ss` is a stretch of, where it starts in that string, and how long it is.
 
-     Law: `base (substring (s, i, n)) = (s, i, n)`
+     Law: `base (substring (s, i, n)) = (s, i, n)` for `0 <= i andalso i <=
+     size (full s) andalso 0 <= n andalso n <= size (full s) - i`
 
-     Example: `base (substring ("hello", 1, 3)) = ("hello", 1, 3)` *)
+     Example: `base (substring ("hello", 1, 3)) = ("hello", 1, 3)`
+
+     Counterexample: `base (substring ("", 0, ~1)) = ("", 0, ~1)`, for no
+     substring has a negative size. *)
   val base : substring -> string * int * int
 
   (* ---- Making a substring ---- *)
@@ -213,10 +217,15 @@ sig
 
   (* `splitl p ss` is the pair of the longest prefix of `ss` whose characters satisfy `p` and the rest.
 
-     Law: `splitl p ss = (takel p ss, dropl p ss)`
+     Law: `splitl p ss = (takel p ss, dropl p ss)` when `p` has no effects
 
      Example: `(fn (a, b) => (string a, string b)) (splitl Char.isAlpha (full
-     "ab12")) = ("ab", "12")` *)
+     "ab12")) = ("ab", "12")`
+
+     Counterexample: `let val n = ref 0 fun p _ = (n := !n + 1; false) in
+     ignore (splitl p (full "a")); !n end = let val n = ref 0 fun p _ = (n :=
+     !n + 1; false) in ignore (takel p (full "a"), dropl p (full "a")); !n
+     end`, for the pair looks at the character twice. *)
   val splitl : (char -> bool) -> substring -> substring * substring
 
   (* `splitr p ss` is the pair of what comes before the longest suffix whose characters satisfy `p`, and that suffix.

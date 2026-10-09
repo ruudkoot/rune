@@ -215,10 +215,13 @@ What does not fit in that many bytes is dropped.
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or if the bytes of element `i` are not
 all in `arr`.
 
-**Law** `(update (arr, i, w); subArr (arr, i)) = LargeWord.andb (w, LargeWord.- (LargeWord.<< (0w1, Word.fromInt (8 * bytesPerElem)), 0w1))`:
-`w` with the bits above `8 * bytesPerElem` cleared (for every `arr : Word8Array.array`, `i : int`, `w : Word64.word`)
+**Law** `(update (arr, i, w); subArr (arr, i)) = LargeWord.andb (w, LargeWord.- (LargeWord.<< (0w1, Word.fromInt (8 * bytesPerElem)), 0w1))`
+for `0 <= i andalso i < Word8Array.length arr div bytesPerElem`: `w` with
+the bits above `8 * bytesPerElem` cleared (for every `arr : Word8Array.array`, `i : int`, `w : Word64.word`)
 
 **Example** `let val a = Word8Array.array (2, 0w0) in PackWord16Big.update (a, 0, 0wx1234); Word8Array.vector a end = Word8Vector.fromList [0wx12, 0wx34]`
+
+**Counterexample** `(PackWord16Big.update (Word8Array.array (1, 0w0), 0, 0wx1234); true)`, for the two bytes of the word are not both there.
 
 <details><summary>Other implementations (2)</summary>
 

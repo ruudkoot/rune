@@ -485,7 +485,8 @@ val mod : int * int -> int
 
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero.
 
-**Law** `(i div j) * j + (i mod j) = i` (for every `i : int`, `j : int`)
+**Law** `LargeInt.+ (LargeInt.* (toLarge (i div j), toLarge j), toLarge (i mod j)) = toLarge i` for `j <> 0 andalso (j <> ~1 orelse minInt <> SOME i)`. It is computed in [`LargeInt`](../str/IntInf.md): in [`int`](#type-int) the product can overflow where
+neither [`div`](#val-div) nor [`mod`](#val-mod) does. (for every `i : int`, `j : int`)
 
 > **Reading** `Int.mod/minInt-by-minus-one`. [`mod`](#val-mod) never raises [`Overflow`](../sig/GENERAL.md#exn-overflow),
 > although [`div`](#val-div) does at the same arguments: `minInt mod ~1` is 0.
@@ -494,6 +495,10 @@ Its sign is the divisor's, where that of [`rem`](#val-rem) is the dividend's:
 `rem (~7, 2)` is `~1`.
 
 **Example** `~7 mod 2 = 1`
+
+**Counterexample** `(1 div 0) * 0 + (1 mod 0) = 1`, for there is no dividing
+by zero; `(valOf minInt div ~1) * ~1 + (valOf minInt mod ~1) = valOf minInt`, for that quotient is past the largest int; and `(valOf maxInt div ~2) * ~2 + (valOf maxInt mod ~2) = valOf maxInt`, for the product is past
+the largest int, though the quotient and the remainder are not.
 
 <details><summary>Other implementations (2)</summary>
 
@@ -550,7 +555,7 @@ val rem : int * int -> int
 
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero.
 
-**Law** `quot (i, j) * j + rem (i, j) = i` (for every `i : int`, `j : int`)
+**Law** `quot (i, j) * j + rem (i, j) = i` for `j <> 0 andalso (j <> ~1 orelse minInt <> SOME i)` (for every `i : int`, `j : int`)
 
 > **Reading** `Int.rem/minInt-by-minus-one`. As [`mod`](#val-mod), it never raises
 > [`Overflow`](../sig/GENERAL.md#exn-overflow): `rem (minInt, ~1)` is 0.
@@ -559,6 +564,9 @@ Its sign is the dividend's, where that of [`mod`](#val-mod) is the divisor's:
 `~7 mod 2` is `1`.
 
 **Example** `rem (~7, 2) = ~1`
+
+**Counterexample** `quot (1, 0) * 0 + rem (1, 0) = 1`, for there is no
+dividing by zero, and `quot (valOf minInt, ~1) * ~1 + rem (valOf minInt, ~1) = valOf minInt`, for that quotient is past the largest int.
 
 <details><summary>Other implementations (2)</summary>
 

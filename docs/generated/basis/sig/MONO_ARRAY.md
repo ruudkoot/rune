@@ -167,9 +167,13 @@ val array : int * elem -> array
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0` or `n > maxLen`.
 
-**Law** `sub (array (n, x), i) = x` for `0 <= i andalso i < n` (for every `n : int`, `x : char`, `i : int`)
+**Law** `sub (array (n, x), i) = x` for `0 <= i andalso i < n andalso n <= maxLen`, and it is run for `n` from `Arb.intRange (0, 1048576)`, as the
+tester cannot hold a longer one (for every `n : int`, `x : char`, `i : int`)
 
 **Example** `vector (array (3, #"x")) = "xxx"`
+
+**Counterexample** `sub (array (maxLen + 1, #"x"), 0) = #"x"`, for there is
+no array so long.
 
 <details><summary>Tests (24)</summary>
 
@@ -218,10 +222,13 @@ val tabulate : int * (int -> elem) -> array
 > [`Array.tabulate`](../sig/ARRAY.md#val-tabulate): a length out of range raises [`Size`](../sig/GENERAL.md#exn-size) without applying
 > `f` at all.
 
-**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n`, when `f`
-has no effects (for every `n : int`, `f : int -> char`, `i : int`)
+**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n andalso n <= maxLen`, when `f` has no effects, and it is run for `n` from
+`Arb.intRange (0, 65536)`, as a longer one takes the tester too long (for every `n : int`, `f : int -> char`, `i : int`)
 
 **Example** `vector (tabulate (3, fn i => Char.chr (97 + i))) = "abc"`
+
+**Counterexample** `sub (tabulate (maxLen + 1, fn _ => #"x"), 0) = #"x"`, for
+there is no array so long.
 
 <details><summary>Tests (16)</summary>
 
@@ -377,9 +384,12 @@ that overlap are what [`MONO_ARRAY_SLICE.copy`](../sig/MONO_ARRAY_SLICE.md#val-c
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `di < 0` or `di + length src > length dst`, and
 then nothing has been copied.
 
-**Law** `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)` for `0 <= i andalso i < length src andalso src <> dst` (for every `src : CharArray.array`, `dst : CharArray.array`, `di : int`, `i : int`)
+**Law** `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)` for `0 <= di andalso di <= length dst - length src andalso 0 <= i andalso i < length src andalso src <> dst` (for every `src : CharArray.array`, `dst : CharArray.array`, `di : int`, `i : int`)
 
 **Example** `let val b = array (4, #".") in copy {src = fromList [#"a", #"b", #"c"], dst = b, di = 1}; vector b end = ".abc"`
+
+**Counterexample** `let val b = array (1, #".") in copy {src = fromList [#"a", #"b"], dst = b, di = 0}; sub (b, 0) end = #"a"`, for the source
+does not fit.
 
 | Field | Type | Description |
 | --- | --- | --- |

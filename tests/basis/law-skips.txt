@@ -1,0 +1,30 @@
+# The laws of the Basis Library's documentation that do not hold in Rune, or
+# are not tested there (docs/plans/quickcheck.md, D12, as the owner changed it
+# on 2026-09-28; docs/plans/quickcheck-hunt.md):
+#
+#   label-glob | FAILS or UNTESTED | why
+#
+# The glob matches a law's label at a structure, SIGNATURE.member/law-N@S, with
+# * ? and [...] as the shell has them. FAILS: the law does not hold. UNTESTED:
+# it is not run, because the tester gives up on it or it is no Standard ML at
+# the structure. `runedoc --law-skips` marks every law listed here on its page,
+# with the reason, and fails on a line that names no law.
+# tests/basis/run-laws.sh counts a listed law's failure as known, and a listed
+# law that passes as a line to remove.
+
+# ---- Real arithmetic: laws that hold over the reals and not in floating point
+# (a general solution is for later: docs/plans/quickcheck.md, Later)
+MATH.atan2/law-1@* | FAILS | it is a law of the reals. In floating point `y / x` is rounded before `atan` sees it, so the two sides can differ in the last place, and for two infinities `y / x` is a NaN; `atan2` is the side that is correctly rounded (the counterexample).
+
+# ---- Laws for `char` that are no Standard ML at the wide structures. `STRING`
+# and `SUBSTRING` name no structure of their characters, so a law that needs
+# one names `Char` or `String`, and holds only where those are the characters
+# (companion structures, for later: docs/plans/quickcheck.md, Later).
+STRING.compare/law-1@WideString | UNTESTED | it names `Char.compare`, and the characters of `WideString` are `WideChar.char`.
+STRING.toString/law-1@WideString | UNTESTED | it names `Char.toString`, and the characters of `WideString` are `WideChar.char`.
+STRING.fromString/law-1@WideString | UNTESTED | `StringCvt.scanString` gives `scan` the characters of a `String.string`, and `WideString.scan` reads those of `WideChar.char`.
+SUBSTRING.compare/law-1@WideSubstring | UNTESTED | it names `String.compare`, and the strings of `WideSubstring` are `WideString.string`.
+
+# ---- Laws the tester gives up on: their condition is seldom met (variables
+# drawn together, for later: docs/plans/quickcheck.md, Later)
+LIST_PAIR.unzip/law-1@ListPair | UNTESTED | the tester seldom draws two lists of one length, and gives up; `zip (unzip l) = l`, the law turned round, is tested.

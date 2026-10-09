@@ -119,7 +119,10 @@ val pidToWord : pid -> SysWord.word
 
 `pidToWord pid` is the number of `pid`.
 
-**Law** `pidToWord (wordToPid w) = w` (for every `w : word`)
+**Law** `pidToWord (wordToPid w) = w` for `SysWord.<= (w, SysWord.fromInt (valOf Int.maxInt))` (for every `w : word`)
+
+**Counterexample** `let val w = SysWord.+ (SysWord.fromInt (valOf Int.maxInt), 0w1) in pidToWord (wordToPid w) = w end`, for the number of a
+process is an int.
 
 <details><summary>Tests (2)</summary>
 

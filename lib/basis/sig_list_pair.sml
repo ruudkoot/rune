@@ -37,6 +37,8 @@ sig
 
      Law: `unzip (zip (l, m)) = (l, m)` when `length l = length m`
 
+     Law: `zip (unzip l) = l`
+
      Example: `unzip [(1, "a"), (2, "b")] = ([1, 2], ["a", "b"])` *)
   val unzip : ('a * 'b) list -> 'a list * 'b list
 

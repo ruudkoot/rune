@@ -147,7 +147,7 @@ val length : slice -> int
 
 `length x` is the number of elements.
 
-**Law** `length (slice (v, i, SOME n)) = n` when `(ignore (slice (v, i, SOME n)); true)` (for every `v : string`, `i : int`, `n : int`)
+**Law** `length (slice (v, i, SOME n)) = n` for `0 <= i andalso i <= length (full v) andalso 0 <= n andalso n <= length (full v) - i` (for every `v : string`, `i : int`, `n : int`)
 
 **Example** `length (slice ("abc", 1, NONE)) = 2`
 
@@ -251,9 +251,11 @@ The bounds are those of `sl`, not of what it is a slice of.
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i > length sl`, or, with `SOME n`, if
 `n < 0` or `i + n > length sl`.
 
-**Law** `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= k andalso k < length sl - i` (for every `sl : Substring.substring`, `i : int`, `k : int`)
+**Law** `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= i andalso i < length sl andalso 0 <= k andalso k < length sl - i` (for every `sl : Substring.substring`, `i : int`, `k : int`)
 
 **Example** `vector (subslice (slice ("abcd", 1, NONE), 1, SOME 1)) = "c"`
+
+**Counterexample** `sub (subslice (full "ab", ~1, NONE), 1) = sub (full "ab", 0)`, for a subslice cannot start before its slice.
 
 <details><summary>Other implementations (1)</summary>
 

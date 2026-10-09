@@ -129,9 +129,11 @@ val toAddr : NetHostDB.in_addr * int -> sock_addr
 
 `toAddr (a, port)` is the address of the port `port` at the host address `a`.
 
-**Law** `fromAddr (toAddr (a, port)) = (a, port)` (for every `a : RuneNet.in_addr`, `port : int`)
+**Law** `fromAddr (toAddr (a, port)) = (a, port)` for `0 <= port andalso port <= 65535` (for every `a : RuneNet.in_addr`, `port : int`)
 
 **Example** `#2 (fromAddr (toAddr (valOf (NetHostDB.fromString "10.0.0.1"), 8080))) = 8080`
+
+**Counterexample** `#2 (fromAddr (toAddr (valOf (NetHostDB.fromString "10.0.0.1"), ~1))) = ~1`, for a port is kept in sixteen bits.
 
 <details><summary>Tests (3)</summary>
 
