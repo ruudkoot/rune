@@ -47,16 +47,16 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
   portable Standard ML, that its `_prim` annotations agree with
   `runtime/prims.def`, and that its code is right independently of Rune's compiler
   and VM.
-* `xc2:mlton`, `xc2:mlkit` and `xc2:smlnj-legacy`: the suite on MLton's, MLKit's
-  or SML/NJ's library (its sources: `lib/mlton/sml/basis` or
-  `lib/mlkit/basis` of the host, `system/Basis` of SML/NJ's release)
-  compiled by Rune, with the host's primitives and C functions made of
-  Rune's (`tests/basis/xc2`). This checks Rune's compiler and VM on another
-  implementation's 37,000 (MLton), 25,000 (MLKit) or 26,000 (SML/NJ) lines
-  of library, as the tests use them: where it fails a check that
-  `native:HOST` passes, or passes one that it fails, the compilers or the
-  shim differ. Poly/ML's library leans on its compiler's representations
-  too much for a shim ([tests/basis/xc2/README.md](../tests/basis/xc2/README.md)).
+* `xc2:mlton`, `xc2:mlkit`, `xc2:smlnj-legacy` and `xc2:polyml`: the suite
+  on MLton's, MLKit's, SML/NJ's or Poly/ML's library (its sources:
+  `lib/mlton/sml/basis` or `lib/mlkit/basis` of the host, `system/Basis` of
+  SML/NJ's release, `basis` of Poly/ML's) compiled by Rune, with the host's
+  primitives and C functions or runtime made of Rune's (`tests/basis/xc2`).
+  This checks Rune's compiler and VM on another implementation's 37,000
+  (MLton), 25,000 (MLKit), 26,000 (SML/NJ) or 20,000 (Poly/ML) lines of
+  library, as the tests use them: where it fails a check that `native:HOST`
+  passes, or passes one that it fails, the compilers or the shim differ
+  ([tests/basis/xc2/README.md](../tests/basis/xc2/README.md)).
 * `rune:windows` and `rune:windows32`: the suite on Rune, on the VMs of
   Windows (`make windows`, `make test-windows`; [building.md](building.md)).
   Their lines of `deviations.txt` are `WINDOWS`: what Windows does not
@@ -94,8 +94,9 @@ needs.
 | `xc2:mlton@20241230` | 138,668 | 138,072 | 596 | 0 | 9 | 0 |
 | `xc2:mlkit@4.7.23` | 116,568 | 115,602 | 966 | 0 | 44 | 0 |
 | `xc2:smlnj-legacy@110.99.9` | 62,012 | 61,321 | 691 | 0 | 63 | 0 |
+| `xc2:polyml@5.9.2` | 68,572 | 67,901 | 671 | 0 | 53 | 0 |
 
-The `xc2` rows are of a run of those three configurations alone, on
+The `xc2` rows are of a run of those four configurations alone, on
 2026-10-09 (under WSL2). `xc2:mlkit` runs more checks than
 `native:mlkit`: MLKit's compiler cannot load `posix_procenv` and
 `posix_sysdb`, which Rune compiles; `xc2:smlnj-legacy` runs more than

@@ -643,6 +643,8 @@ native:polyml@* | *StreamIO.inputAll/is-input-to-end-of-stream | HOST-BUG | inpu
 native:polyml@* | *StreamIO.inputN/allAndN-random-* | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it, so that inputN and inputAll disagree (allAndN)
 native:polyml@* | *StreamIO.inputN/exactly-n-before-end-of-stream | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it
 native:polyml@* | StreamIO.input/Io-* | HOST-BUG | the stream of the functor StreamIO lets the exception of its reader through, instead of raising Io with it as the cause
+xc2:polyml@* | OS.Process.exit/keeps-the-exit-code-of-a-command | HOST-BUG | exit passes C's exit the status that OS.Process.system gives, the status of waitpid (768 for `exit 3`, whose low byte is 0), so that the child ends with 0; native Poly/ML's child does not end (the line below)
+xc2:polyml@* | OS.Process.exit/signal-status-is-failure | HOST-BUG | exit passes C's exit the status of waitpid, the signal (15) for a command that SIGTERM ends, which is not failure (1); native Poly/ML passes the check only because neither child ends
 native:polyml@* | OS.Process.exit/keeps-the-exit-code-of-a-command | HOST-BUG | a child that calls exit with the status of a command has not ended after 5 seconds, when the check kills it
 native:polyml@* | Real32.Math.* | HOST-BUG | where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos ~2.0, ln ~1.0, log10 ~1.0, pow (nan, 1.0)
 native:polyml@* | TextIO.StreamIO.outputSubstr/LINE_BUF | HOST-BUG | outputSubstr does not flush a line-buffered stream at a newline, which output does ("equivalent to: output (strm, Substring.string ss)")

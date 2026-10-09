@@ -26,7 +26,8 @@
 #    build of this host compiles through a tree of symlinks
 #    (scripts/smlnj-dev-root.sh) and does not share those directories.
 #  * Poly/ML: built from the source release with ./configure && make (from a
-#    clone of the release's tag where the archive cannot be downloaded).
+#    clone of the release's tag where the archive cannot be downloaded), and
+#    beside it the sources of its library.
 #  * MLKit: the binary release from github.com/melsman/mlkit on Linux x86-64
 #    (built by MLKit itself, needing no GMP), checked against its SHA-256;
 #    elsewhere, or with MLKIT_FROM_SOURCE=1, built from a clone of the
@@ -191,7 +192,7 @@ install_smlnj_dev() {
   activate smlnj-dev "$v"
 }
 
-install_polyml() {
+install_polyml_build() {
   v=$POLYML_VERSION
   if installed polyml "$v"; then echo "polyml $v is already installed"; return; fi
   rm -rf "$prefix/polyml-$v" "$prefix/src/polyml-$v"
@@ -211,9 +212,24 @@ install_polyml() {
      ./configure --prefix="$prefix/polyml-$v" &&
      make -j "$jobs" && make compiler && make install) > "$prefix/src/polyml-$v.log" 2>&1 ||
     { echo "fetch-hosts: building Poly/ML failed; see $prefix/src/polyml-$v.log" >&2; return 1; }
+  cp -R "$prefix/src/polyml-$v/basis" "$prefix/polyml-$v/basis"
   rm -rf "$prefix/src/polyml-$v"
   activate polyml "$v"
 }
+# polyml_basis: the sources of Poly/ML's library (basis of the release) in
+# <prefix>/polyml-<version>/basis, for the xc2:polyml configuration of the
+# Basis matrix (tests/basis/xc2); an installation made before keeps none.
+polyml_basis() {
+  v=$POLYML_VERSION
+  [ -f "$prefix/polyml-$v/basis/build.sml" ] && return 0
+  if [ ! -d "$prefix/src/polyml-$v/basis" ]; then
+    [ -f "$prefix/src/polyml-$v.tar.gz" ] ||
+      fetch "https://github.com/polyml/polyml/archive/refs/tags/v$v.tar.gz" "$prefix/src/polyml-$v.tar.gz" || return 1
+    tar -xzf "$prefix/src/polyml-$v.tar.gz" -C "$prefix/src" "polyml-$v/basis" || return 1
+  fi
+  cp -R "$prefix/src/polyml-$v/basis" "$prefix/polyml-$v/basis" && rm -rf "$prefix/src/polyml-$v"
+}
+install_polyml() { install_polyml_build && polyml_basis; }
 
 # MLKit: the binary release where there is one, else (or with
 # MLKIT_FROM_SOURCE=1) its tag built with the MLton of the prefix, which then

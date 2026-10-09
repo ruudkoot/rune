@@ -15,16 +15,16 @@ where `native:HOST` fails a check because of the host's library, `xc2:HOST`
 fails it too, and a check that fails in one and not in the other is a
 difference between the compilers (or a defect of the shim below). So the
 configuration tests Rune's compiler on another implementation's SML, as the
-test programs use it. There are three:
+test programs use it. There are four:
 
 * `xc2:mlton`: MLton's library (`lib/mlton/sml/basis` of the host), some
   37,000 lines in 387 files.
 * `xc2:mlkit`: MLKit's (`lib/mlkit/basis`), some 25,000 lines in 139 files.
-* `xc2:smlnj-legacy`: SML/NJ's (`system/Basis` of the release, and the part of
-  `system/smlnj/init` that is not the compiler's primitives), some 26,000
-  lines in 265 files.
-
-Poly/ML has none; see the end.
+* `xc2:smlnj-legacy`: SML/NJ 110.99.9's (`system/Basis` of the release, and
+  the part of `system/smlnj/init` that is not the compiler's primitives),
+  some 26,000 lines in 265 files.
+* `xc2:polyml`: Poly/ML's (`basis` of its source release), some 20,000
+  lines in 84 files.
 
 ## How a program is made
 
@@ -41,7 +41,7 @@ Poly/ML has none; see the end.
 2. **The host's extensions.** `HOST/rewrite.awk` replaces the host's way of
    naming a primitive or a C function by a name of the shim, keeping the
    line breaks.
-3. **The shim.** `xc2.sml`, which both share (an array that is allocated
+3. **The shim.** `xc2.sml`, which all share (an array that is allocated
    before it has elements, `XC2Sys`: the primitives of Rune's machine the
    shims use, and Rune's exceptions for a host to take for its own),
    `HOST/prologue.sml` (the host's primitive types as Rune's) and
@@ -216,19 +216,62 @@ What differs from SML/NJ, and why:
   the size of a terminal's window (`Posix.TTY.getWindowSz` gives `NONE`):
   their C functions raise, or answer as a system without them would.
 
-## Poly/ML
+## xc2:polyml
 
-Its library is written against its compiler's representations more than
-the others are:
+`polyml/gen.sh OUTDIR POLYML` takes Poly/ML's installation, whose `basis`
+directory holds the sources of its library (`scripts/fetch-hosts.sh` keeps
+them there from the source release). `polyml/order.awk` reads the order of
+the files from the library's `build.sml`, as it is for a 64-bit Unix
+system, with the structures `build.sml` declares between them, and leaves
+out what is Poly/ML's compiler and extensions rather than the Basis Library
+(the foreign-function interface, weak references, signals, the printer,
+the top level). Poly/ML compiles its library in an initial environment of
+its compiler's (`INITIALISE_.ML`): `polyml/prologue.sml` makes that
+environment of Rune's (`XC2PolyBuiltin`, which a program opens after the
+shim): `FixedInt.int` and `int` are Rune's `int` and `Word.word` Rune's
+`word`, of 63 bits as Poly/ML's, `LargeWord.word` Rune's `Word64.word`,
+`LargeInt.int` Rune's `IntInf.int`, and `RunCall`, `Bootstrap`, `Thread`
+and `PolyML` have what the library uses of them. `polyml/rewrite.awk`
+replaces a call of the runtime, `RunCall.rtsCallFullN "NAME"`, by
+`XC2PR.NAME`, and a call of one of its dispatchers (`PolyBasicIOGeneral`,
+`PolyOSSpecificGeneral`), which take a code and arguments whose types
+depend on it, by `XC2PR.NAME_CODE` where the code is a constant;
+`polyml/rts.sml` makes those the test programs reach, of Rune's, and the
+generated stubs raise for the rest.
 
-* **Poly/ML** (32,000 lines in `basis`, 63 of its 102 files calling
-  `RunCall`) reaches its runtime by 220 `RunCall.rtsCall*`s, casts 147 times
-  (`RunCall.unsafeCast`), and builds strings, vectors and `IntInf`s on raw
-  memory (173 calls of `loadByte`, `storeByte`, `allocateByteMemory`, ...;
-  `String.sml` reads a string's bytes after its length word, a `char` as a
-  string through a table of words): its `String`, `CharVector`,
-  `Word8Array` and `LargeInt` would have to be rewritten, and what ran would
-  no longer be Poly/ML's library.
+Poly/ML's library is written against its compiler's representations more
+than the others are: 63 of its files call `RunCall`, it casts with
+`RunCall.unsafeCast` some 150 times, and it builds strings, vectors and
+`IntInf`s in raw memory. So the patch (33 files) is the largest of the
+four:
+
+* **Casts.** Each `RunCall.unsafeCast` is replaced by the conversion its
+  types call for (`XC2P.wordToInt`, `XC2P.largeToFixed`, ...), which
+  `rewrite.awk` does where the line gives the types and the patch
+  elsewhere.
+* **Memory.** Poly/ML reads and writes the bytes of a string after its
+  length word, of a byte array and of a byte vector, and allocates a
+  string to fill it before it clears its mutable bit. `polyml/mem.sml`
+  makes such an address of Rune's (`XC2P.address`): an array of bytes, a
+  string, a string being made, whose bytes are at a string's offsets and
+  which `XC2P.freeze` makes a string, or a byte vector. Vectors and arrays
+  of any type are Rune's, one being made an array of `XC2`'s; `Array2`'s
+  array is a `ref`, so that it admits equality as Poly/ML's does.
+* **Overloading.** `RunCall.addOverload` is left out, since Rune's compiler
+  overloads the operators at its own types; `Int32.int`, a type of
+  Poly/ML's library (a `LargeInt.int`) and not Rune's, gets its operators
+  and constants with Rune's `_overload`.
+* **Threads.** Rune's machine has one: `Thread` is the part the library
+  uses (its mutexes, never held by another thread), and forking a thread
+  raises `Thread`.
+* **Structures.** Rune's `Int64` and `Real64`, which the shim's part of
+  Rune's library would bring and Poly/ML lacks, are taken out of it.
+
+As with SML/NJ, the shim does what Poly/ML's C++ runtime (`libpolyml`) does:
+a socket is non-blocking, as the runtime makes it, an I/O descriptor is a
+`ref` that `close` clears, and a status of `OS.Process.system` is the
+status of `waitpid`, which `OS.Process.exit` passes on (a host bug of the
+library's that only xc2 shows: `deviations.txt`).
 
 ## Deviations
 
