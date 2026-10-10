@@ -10,8 +10,10 @@
    of the process, and the console as a terminal. A path of a drive goes to
    the library as /C:/... (the section on paths says why). What it does not
    do fails with ENOSYS, as in `make vm SYS=none`, and the library turns that
-   into OS.SysErr; docs/plans/windows.md says which milestone takes what, and
-   tests/basis/deviations.txt which checks of the suite fail. */
+   into OS.SysErr; docs/basis-compat.md and the WINDOWS lines of
+   tests/basis/deviations.txt say which calls those are and which checks of
+   the suite fail, and docs/building.md (Windows) how this is built and
+   tested. */
 #include "sys.h"
 
 #include <errno.h>

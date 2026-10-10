@@ -14,7 +14,7 @@ unsigned 32-bit, signed 32-bit and signed 64-bit two's complement.
 
 ```
 magic       4 bytes   "RUNE"
-version     u32       3
+version     u32       6
 fingerprint u32       of the instruction set the file is of (below)
 nconsts     u32
 consts      nconsts × constant
