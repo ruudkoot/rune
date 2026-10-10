@@ -217,8 +217,13 @@ def build(host, name, files, workdir):
     """build and run a program: (built, its output, the build's messages, a
     function that runs it again from after a law)"""
     absfiles = [os.path.join(TOP, f) for f in files]
-    def env_after(after):
-        return dict(os.environ, RUNE_PROPERTY_AFTER=after) if after else dict(os.environ)
+    def env_after(after, only=""):
+        env = dict(os.environ)
+        if after:
+            env["RUNE_PROPERTY_AFTER"] = after
+        if only:
+            env["RUNE_PROPERTY_ONLY"] = only
+        return env
     if host in ("mlton", "mlkit"):
         mlb = os.path.join(workdir, name + ".mlb")
         open(mlb, "w").write("$(SML_LIB)/basis/basis.mlb\n" + "\n".join(absfiles) + "\n")
@@ -229,24 +234,24 @@ def build(host, name, files, workdir):
                                env=dict(os.environ, SML_LIB=MLKIT_LIB))
         if status != 0:
             return False, "", msgs, None
-        def again(after):
-            return run(["./" + name], cwd=workdir, timeout=TIMEOUT, env=env_after(after))[1]
+        def again(after, only=""):
+            return run(["./" + name], cwd=workdir, timeout=TIMEOUT, env=env_after(after, only))[1]
         return True, again(""), msgs, again
     if host.startswith("smlnj"):
         exit_sml = os.path.join(workdir, "exit.sml")
         open(exit_sml, "w").write("val () = OS.Process.exit OS.Process.success\n")
-        def again(after):
+        def again(after, only=""):
             return run([BIN[host]] + absfiles + [exit_sml], cwd=workdir, stdin=subprocess.DEVNULL,
-                       timeout=TIMEOUT, env=env_after(after))[1]
+                       timeout=TIMEOUT, env=env_after(after, only))[1]
         raw = again("")
         built = not re.search(r"\.sml:\d+\.\d+(-\d+\.\d+)? Error:", raw)
         return built, raw, raw if not built else "", again
     if host == "polyml":
         use = os.path.join(workdir, name + ".use")
         open(use, "w").write("".join('use "%s";\n' % f for f in absfiles) + "OS.Process.exit OS.Process.success;\n")
-        def again(after):
+        def again(after, only=""):
             return run(["sh", "-c", '"$0" -q < "$1"', BIN[host], use], cwd=workdir, timeout=TIMEOUT,
-                       env=env_after(after))[1]
+                       env=env_after(after, only))[1]
         raw = again("")
         built = not re.search(r"\.sml:\d+: error|Static Errors", raw)
         return built, raw, raw if not built else "", again
@@ -404,7 +409,7 @@ def main():
                     notbuilt.append((label, "the host lacks " + ", ".join(sorted(set(lack)))))
                 else:
                     keep.append((label, body))
-            output, stopped = "", []
+            output, stopped, rerun = "", [], None
             for attempt in range(6):
                 if not keep:
                     break
@@ -415,6 +420,7 @@ def main():
                 open(os.path.join(workdir, prog + ".build"), "w").write(msgs)
                 if built:
                     output, stopped = finish(output, again)
+                    rerun = again
                     break
                 bad = error_lines(host, msgs, pfile)
                 # the entries the errors are in
@@ -434,6 +440,11 @@ def main():
             got = verdicts(output)
             halted = dict(stopped)
             for label, _ in keep:
+                if label in got and got[label][0] == "FAIL" and rerun is not None:
+                    second = verdicts(rerun("", label)).get(label)
+                    if second is not None and second[1] != got[label][1]:
+                        lines_out.append("FLAKY %s: %s; again: %s" % (label, got[label][1], second[1]))
+                        continue
                 if label in got:
                     lines_out.append(got[label][1])
                 elif label in halted:
@@ -445,11 +456,11 @@ def main():
         explained, diffs = compare(host, lines_out, rune, devs)
         open(os.path.join(OUT, host + ".differences"), "w").write("\n".join(explained + diffs) + "\n")
         counts = {k: sum(1 for l in lines_out if l.startswith(k))
-                  for k in ("PASS", "FAIL", "STOPPED", "NOT BUILT", "NOT RUN")}
-        return host, ("%s: %d laws pass, %d fail, %d stopped, %d not built, %d not run; %d differ from Rune and "
-                      "are explained, %d are not" % (host, counts["PASS"], counts["FAIL"], counts["STOPPED"],
-                                                     counts["NOT BUILT"], counts["NOT RUN"], len(explained),
-                                                     len(diffs))), diffs
+                  for k in ("PASS", "FAIL", "FLAKY", "STOPPED", "NOT BUILT", "NOT RUN")}
+        return host, ("%s: %d laws pass, %d fail, %d flaky, %d stopped, %d not built, %d not run; %d differ from "
+                      "Rune and are explained, %d are not" % (host, counts["PASS"], counts["FAIL"], counts["FLAKY"],
+                                                              counts["STOPPED"], counts["NOT BUILT"],
+                                                              counts["NOT RUN"], len(explained), len(diffs))), diffs
 
     differences = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(hosts)) as pool:

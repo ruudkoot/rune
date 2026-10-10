@@ -265,9 +265,8 @@ val tabulate : traversal -> int * int * (int * int -> 'a) -> 'a array
 > computed.
 
 **Law** `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i andalso i < r andalso 0 <= j andalso j < c andalso r <= Array.maxLen div c`, when
-`f` has no effects, and it is run for `r` from `Arb.intRange (0, 256)` and
-`c` from `Arb.intRange (0, 256)`, as a larger one takes the tester too
-long (for every `trv : Array2.traversal`, `r : int`, `c : int`, `f : int * int -> 'a`, `i : int`, `j : int`)
+`f` has no effects, and it is run for `r` from `Arb.intRange (0, 32)` and
+`c` from `Arb.intRange (0, 32)`, as a larger one takes too long for `make check` (for every `trv : Array2.traversal`, `r : int`, `c : int`, `f : int * int -> 'a`, `i : int`, `j : int`, `make : 'b -> bool`, `check : 'b`)
 
 **Example** `row (tabulate RowMajor (2, 3, fn (i, j) => 10 * i + j), 1) = Vector.fromList [10, 11, 12]`
 

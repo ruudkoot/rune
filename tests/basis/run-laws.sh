@@ -27,8 +27,8 @@
 # other failure or stop, and on such a pass.
 # The environment of the programs chooses how the laws run (Check.laws):
 # RUNE_PROPERTY_DEEP=1 for the deep mode, RUNE_PROPERTY_ONLY=LABEL for one
-# law, RUNE_PROPERTY_REPLAY=TOKEN for one case. It is not part of `make check`
-# until the hunt ends (D12). The programs are compiled to the register
+# law, RUNE_PROPERTY_REPLAY=TOKEN for one case. `make check` runs it (since
+# the end of the hunt, M9). The programs are compiled to the register
 # bytecode and run on the register VM with its JIT (bin/rune, bin/runevm);
 # RUNE=bin/rune-stack RUNEVM=bin/runevm-stack runs them on the stack VM, to
 # compare the two. Override the tools with RUNE=, RUNEVM= and
@@ -96,18 +96,24 @@ one() {
     ( ulimit -v $((memory * 1024))
       RUNE_PROPERTY_CASES=1 RUNE_PROPERTY_AT=$at RUNE_PROPERTY_AFTER=$last RUNE_PROPERTY_SKIP=$skips exec "$runevm" "$out/$name.rbc" ) > "$o.run" 2>&1 &
     pid=$!
-    # the watchdog: a case that runs $timeout seconds without the next line
-    lines=0
-    idle=0
-    stopped=0
-    while kill -0 $pid 2> /dev/null; do
-      sleep 2
-      n=$(wc -l < "$o.run")
-      if [ "$n" != "$lines" ]; then lines=$n; idle=0; else idle=$((idle + 2)); fi
-      if [ $idle -ge "$timeout" ]; then kill $pid 2> /dev/null; stopped=1; break; fi
-    done
+    # the watchdog, beside the program: it stops a case that runs $timeout
+    # seconds without the next line, and the program's end is seen at once
+    rm -f "$o.stopped"
+    ( lines=0
+      idle=0
+      while kill -0 $pid 2> /dev/null; do
+        sleep 2
+        n=$(wc -l < "$o.run")
+        if [ "$n" != "$lines" ]; then lines=$n; idle=0; else idle=$((idle + 2)); fi
+        if [ $idle -ge "$timeout" ]; then : > "$o.stopped"; kill $pid 2> /dev/null; break; fi
+      done ) &
+    watchdog=$!
     wait $pid
     status=$?
+    kill $watchdog 2> /dev/null
+    wait $watchdog 2> /dev/null
+    stopped=0
+    [ -f "$o.stopped" ] && stopped=1
     grep -v '^CASE ' "$o.run" >> "$o.out"
     grep -E '^(PASS|FAIL) ' "$o.run" >> "$o.result"
     if grep -q '^laws: ' "$o.run"; then break; fi
@@ -150,12 +156,21 @@ if [ -n "$at_filter" ]; then
   grep -E "^[^ ]+ ($at_filter)\$" "$out/jobs.txt" > "$out/jobs.at" || :
   mv "$out/jobs.at" "$out/jobs.txt"
 fi
+# the slowest first, by what each took the time before (tests/out/laws.times,
+# kept beside the output), so that the longest does not start last
+if [ -f "$out.times" ]; then
+  awk 'NR == FNR { if ($2 == "run") t[$1] = $3; next }
+       { k = $1 "@" $2; print ((k in t) ? t[k] : 1e9), $0 }' "$out.times" "$out/jobs.txt" |
+    sort -k1,1 -g -r -s | cut -d' ' -f2- > "$out/jobs.sorted"
+  mv "$out/jobs.sorted" "$out/jobs.txt"
+fi
 # shellcheck disable=SC2016
 xargs -P "$jobs" -L 1 sh -c "$(sed -n '/^one() {$/,/^}$/p' "$0"); one \"\$0\" \"\$1\"" < "$out/jobs.txt"
 
 cat "$out"/*.cresult > "$out/compile.txt" 2> /dev/null || : > "$out/compile.txt"
 cat "$out/compile.txt" "$out"/*.result > "$out/results.txt"
 cat "$out"/*.ctime "$out"/*.time > "$out/times.txt"
+[ -n "$filter$at_filter" ] || cp "$out/times.txt" "$out.times"
 cat "$out"/*.skips > "$out/skips.txt" 2> /dev/null || : > "$out/skips.txt"
 laws=$(grep -c '^\(PASS\|FAIL\|STOPPED\) ' "$out/results.txt")
 passed=$(grep -c '^PASS ' "$out/results.txt")

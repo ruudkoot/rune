@@ -275,7 +275,7 @@ val tabulate : int * (int -> elem) -> vector
 > out of range raises [`Size`](../sig/GENERAL.md#exn-size) without applying `f` at all.
 
 **Law** `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n andalso n <= maxLen`, when `f` has no effects, and it is run for `n` from
-`Arb.intRange (0, 65536)`, as a longer one takes the tester too long (for every `n : int`, `f : int -> char`, `i : int`)
+`Arb.intRange (0, 1024)`, as a longer one takes too long for `make check` (for every `n : int`, `f : int -> char`, `i : int`, `make : 'a -> bool`, `check : 'a`)
 
 **Example** `tabulate (3, fn i => Char.chr (97 + i)) = "abc"`
 

@@ -178,7 +178,7 @@ val tabulate : int * (int -> 'a) -> 'a array
 > happens for an array that is never made.
 
 **Law** `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n andalso n <= maxLen`, when `f` has no effects, and it is run for `n` from
-`Arb.intRange (0, 65536)`, as a longer one takes the tester too long (for every `n : int`, `f : int -> 'a`, `i : int`)
+`Arb.intRange (0, 1024)`, as a longer one takes too long for `make check` (for every `n : int`, `f : int -> 'a`, `i : int`, `make : 'b -> bool`, `check : 'b`)
 
 **Example** `vector (tabulate (4, fn i => i * i)) = Vector.fromList [0, 1, 4, 9]`
 

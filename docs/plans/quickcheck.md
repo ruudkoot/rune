@@ -35,7 +35,7 @@ What it rests on:
 | M6 | The Basis's instances, and the generators frozen | done 2026-09-28 |
 | M7 | Laws elaborated | done 2026-09-28; the owner took the rewrites the same day |
 | M8 | Laws run | done 2026-09-28 |
-| M9 | The hunt | |
+| M9 | The hunt | done 2026-10-10; `make test-laws` in `make check` |
 
 The owner decided D1 to D13 on 2026-09-28, every one as recommended
 (*Decisions*). M1 is independent of
@@ -1072,6 +1072,21 @@ test fair:
   4. Restate, or fix, and run again. Classes hide one another: in E3 a `Div` found first masked the `Overflow`. So the hunt is repeated until a full run reports nothing new.
   5. The owner then says which law was meant. It counts as found if it was reported with a shrunk counterexample in steps 1-4. If it was not, the gap is analysed and written up: which principle would have found it, and whether that principle is general.
 
+**The result** (2026-10-10). The owner named the law: the law of
+composition, `o`, under functions with effects, which they had believed
+wrong. No run of the hunt failed it: not the runs at the settings of
+`make check`, not the deep run, not the other compilers. Its laws
+(Definition, Associative, Left-identity and Right-identity) draw `f`, `g`
+and `h` pure, raising and with effects, and compare the calls each side
+makes. Before the hunt the tester's power for it was measured: the law of
+associativity caught compositions that call `g` twice, that swallow or
+retry an exception of `f` or `g`, and that drop `f`'s result, and passed
+only the one that runs `f` first, which is associative too. The owner
+agreed that the law holds: `f o g` is a value, and applying it runs `g`
+and then `f`, effects and exceptions alike, however it is bracketed. So
+the blind test's law was not found because it is not wrong; the hunt
+found others that were (`docs/plans/quickcheck-hunt.md`).
+
 ## Decisions
 
 Each decision gives the options, what favours each, and the
@@ -1265,7 +1280,7 @@ same day, in the hunt: A, with a skip list for what cannot be fixed.
 
 * **A. A fix, and no skip list.** **Recommended.**
   - **The fix.** A law that does not hold is restated so that it does, with the counterexample kept as a `Counterexample:` (added before the hunt, 2026-09-28: a closed claim that must not hold, judged as a law is). An implementation that does not do what the law and the specification say is fixed. Where the specification's own text is what fails, a `Reading:` says so.
-  - **Joining `make check`.** The law programs join `make check` at the end of M9, when every law holds. Until then `make test-laws` stands alone, so that `make check` stays green in every commit.
+  - **Joining `make check`.** Done at the end of M9 (2026-10-10): every law holds or is on the skip list. Before, `make test-laws` stood alone, so that `make check` stays green in every commit.
 * **B. A deviation list for laws**, as `tests/basis/deviations.txt` is for checks. It makes a wrong law a line in a file, where the brief wants it found and fixed.
 
 ### D13. Reporting and replay

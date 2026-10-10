@@ -1106,8 +1106,9 @@ test-lib: $(RUNE) $(RUNEDOC) vm manifests
 	RUNE=$(RUNE) RUNEVM=$(RUNEVM_REGISTER) RUNEDOC=$(RUNEDOC) sh tests/lib/run-lib-tests.sh
 
 # The laws of the Basis Library's documentation, each at every structure that
-# implements its signature (docs/plans/quickcheck.md, M8). Not in `make check`
-# until every law holds (D12); RUNE_PROPERTY_DEEP=1 runs the deep mode.
+# implements its signature (docs/plans/quickcheck.md, M8): every law holds,
+# or tests/basis/law-skips.txt lists it (D12). In `make check` since the end
+# of the hunt (M9); RUNE_PROPERTY_DEEP=1 runs the deep mode.
 test-laws: $(RUNE) $(RUNEDOC) vm manifests
 	RUNE=$(RUNE) RUNEVM=$(RUNEVM_REGISTER) RUNEDOC=$(RUNEDOC) sh tests/basis/run-laws.sh -j $(JOBS)
 
@@ -1377,6 +1378,7 @@ check:
 	@$(MAKE) --no-print-directory test bootstrap
 	@$(MAKE) --no-print-directory test-doc
 	@$(MAKE) --no-print-directory test-lib
+	@$(MAKE) --no-print-directory test-laws
 	@$(MAKE) --no-print-directory test-all
 	@$(MAKE) --no-print-directory test-basis
 	@$(MAKE) --no-print-directory test-opt

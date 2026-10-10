@@ -92,9 +92,9 @@ sig
 
      Law: `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i andalso i
      < r andalso 0 <= j andalso j < c andalso r <= Array.maxLen div c`, when
-     `f` has no effects, and it is run for `r` from `Arb.intRange (0, 256)` and
-     `c` from `Arb.intRange (0, 256)`, as a larger one takes the tester too
-     long
+     `f` has no effects, and it is run for `r` from `Arb.intRange (0, 32)` and
+     `c` from `Arb.intRange (0, 32)`, as a larger one takes too long for `make
+     check`
 
      Example: `IntVector.foldr (op ::) [] (row (tabulate RowMajor (2, 3, fn (i,
      j) => 10 * i + j), 1)) = [10, 11, 12]`

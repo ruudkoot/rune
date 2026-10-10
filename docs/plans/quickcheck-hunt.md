@@ -402,3 +402,58 @@ The deviations hold the host bugs and the rest, with their probes. The
 owner decided the other two (2026-10-10):
 - **The Date laws' years.** The specification: "A conforming `Date` structure should support date values ranging from around 1900 to 2200", and "If the resulting date is outside the range supported by the implementation, the `Date` exception is raised". The laws of `Date.year` are now two: for the years 1900 to 2200, a date of fields in range keeps them, on every implementation; for any year, it keeps them or raises `Date`, and gives no other fields. Rune's wider range is its note, `Date.date/any-year`. The first six pass on every other compiler. MLton and MLKit raise `Overflow` for a year they cannot represent (a deviation), and SML/NJ and Poly/ML take more than ten minutes over one (STOPPED).
 - **`tokens` and its predicate.** The laws of `String.tokens` and `Substring.tokens` hold when `p` has no effects, as `Substring.splitl`'s does: MLKit asks `p` twice for each character, which the specification does not forbid. Rune asks once, which its reading `String.tokens/order` says and a check pins.
+
+### Run 7, and D10 again (2026-10-10)
+
+**Run 7**, every law on Rune at the settings of `make check`, with the
+Date laws in two and `tokens` for a pure `p`: 1,740 laws at their
+structures, 1,732 pass, the 8 failures the listed ones.
+
+**D10 again**, now going on after a law where a program stops (STOPPED):
+
+| Host | Pass | Fail | Stopped | Not built | Differ from Rune, explained | Not explained |
+|---|---:|---:|---:|---:|---:|---:|
+| MLton | 761 | 16 | 0 | 963 | 9 | 0 |
+| SML/NJ 110.99.9, 64 bits | 404 | 16 | 47 | 1,273 | 11 | 3 |
+| SML/NJ 110.99.9, 32 bits | 0 | 0 | 0 | 1,232 | 0 | 0 |
+| SML/NJ 2026.2 | 424 | 12 | 31 | 1,273 | 9 | 0 |
+| Poly/ML 5.9.2 | 478 | 10 | 6 | 1,246 | 7 | 0 |
+| MLKit 4.7.23 | 572 | 21 | 0 | 1,147 | 14 | 0 |
+
+The laws STOPPED are SML/NJ's crashes ("bogus overflow fault"), its
+running out of memory, and laws that ran past ten minutes there; and on
+Poly/ML the six Date laws for any year. The three not explained are all on
+the 64-bit SML/NJ, and all its collector: in `OPTION.compose` a drawn
+function gives `1` and then `8` for one argument, `MONO_VECTOR.foldr`'s
+function is as inconsistent, and in `Real.?=` a drawn real prints as `0`;
+probed alone, `?=` is right there. As the programs are deterministic, the
+runner now runs a failing law once more by itself, and a verdict that
+changes is FLAKY, the host's, and no difference.
+
+## The owner names the law (2026-10-10)
+
+The owner had believed the law of composition, `o`, wrong under functions
+with effects, and now judges that it holds. Every run of the hunt agrees:
+its four laws (Definition, Associative, Left-identity, Right-identity)
+passed at the settings of `make check`, in the deep mode and on every other
+compiler, with `f`, `g` and `h` drawn pure, raising and with effects, and
+their calls compared. The blind test's law was not reported because it is
+not wrong. What the hunt did find: the named law of `div` and `mod` (run 3),
+`OS.Path.splitDirFile`'s law (the deep run), the laws the documented
+exceptions broke (runs 2 and 3), a bug of Rune's `Date` (the restatement's
+probe), and, on the other compilers, a dozen bugs of theirs (D10).
+
+## `make test-laws` joins `make check` (2026-10-10)
+
+As the owner asked. Nearly all its time was `tabulate`: at `LargeIntArray`
+its law took 162 of the program's 161 seconds, a length up to 2^16 calling
+`f` for a large `IntInf` each time. The laws of `tabulate` now draw lengths
+up to 2^10, and those of `Array2` 32 by 32: the program takes 14 seconds.
+`run-laws.sh` starts the slowest jobs first, by the times of its last full
+run (`tests/out/laws.times`), and its watchdog runs beside a program, so a
+job ends when the program does. A run then takes about 13 job-minutes and 2
+of compiling. The longest job left is `MONO_ARRAY2` at `LargeIntArray2`,
+about two minutes, nearly all of it `fromList`'s discards: rows of one
+length are seldom drawn, which the general solution noted for later (variables drawn
+together) would mend.
+

@@ -345,9 +345,11 @@ keep these invariants:
   test-laws` runs at every structure that implements its signature, with its
   variables drawn by lib/test/property (`docs/doc-comments.md`, *Laws*). Write
   a condition as Standard ML after "for" or "when", not in prose, or the law
-  is run without it. `make test-laws` is not part of `make check` until every
-  law holds (docs/plans/quickcheck.md, D12); the owner's review of the M7
-  rewrites and the hunt of M9 come first.
+  is run without it. `make test-laws` is part of `make check`: every law
+  holds, or `tests/basis/law-skips.txt` lists it, which runedoc marks on its
+  page (docs/plans/quickcheck.md, D12). A law that a change breaks is
+  restated, or the implementation fixed, with the owner; a law is listed only
+  where neither can be done.
 * A change to the documentation generator (`src/doc`) needs a test in
   `tests/doc` (`make test-doc`): an input and the expected `.ir`, `.md` and `.diag` next to it,
   reviewed line by line like any `.expected` file.
