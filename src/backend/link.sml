@@ -73,6 +73,12 @@ struct
              blocks = [{label = 0, params = [], instrs = [], transfer = Low.Return 0}], pos = NONE,
              reps = Vector.fromList [Low.RUnit]}]
 
+  (* What each unit of the last program linked exports, by its numbers, as
+     the program has it -- a function (0) or a global (1), its number in the
+     unit, its index in the program -- for a unit loaded into the program
+     later to name (docs/units.md, Dynamic modules) *)
+  val lastExports : (string * (int * int * int) list) list ref = ref []
+
   fun program (target : Low.program -> Code.program, linked : (int * int) list vector, units : unitCode list)
       : Code.program =
     let
@@ -201,6 +207,29 @@ struct
                    (#funcs code)
         end
       val funcs = List.concat (List.rev (#2 (List.foldl (fn (u, (i, acc)) => (i + 1, linkUnit (i, u) :: acc)) (0, []) units)))
+      val () =
+        lastExports :=
+          List.mapPartial
+            (fn (i, u : unitCode) =>
+               if #identity u = "" then NONE
+               else
+                 (* by kind and number: a unit read from the cache lists its
+                    globals in another order than its compile did *)
+                 SOME (#identity u,
+                       List.foldl (fn (x as (k, n, _), acc) =>
+                                     let fun ins [] = [x]
+                                           | ins ((y as (k', n', _)) :: rest) =
+                                               if k < k' orelse (k = k' andalso n < n') then x :: y :: rest
+                                               else if k = k' andalso n = n' then y :: rest
+                                               else y :: ins rest
+                                     in ins acc end) []
+                                  (List.map (fn (n, f) => (0, n, Vector.sub (fbases, i) + f)) (#exports u)
+                                   @ List.mapPartial (fn (k : key, _) =>
+                                                        if #unit k = #identity u
+                                                        then Option.map (fn g => (1, #number k, g)) (IntMap.find (!globalOf, keyId k))
+                                                        else NONE)
+                                                     (#globals u))))
+            (ListPair.zip (List.tabulate (nunits, fn i => i), units))
     in
       {consts = List.rev (!consts), nglobals = !nglobals, funcs = funcs, files = List.rev (!files),
        inlines = List.rev (!inlines), nlabels = !nlabels}

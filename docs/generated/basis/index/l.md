@@ -17,7 +17,7 @@
 - `listen` (val): [SOCKET](../sig/SOCKET.md#val-listen)
 - `Ln` (exn): [SML90](../sig/SML90.md#exn-ln)
 - `ln` (val): [MATH](../sig/MATH.md#val-ln), [SML90](../sig/SML90.md#val-ln)
-- `load` (val): [RUNTIME](../sig/RUNTIME.md#val-load)
+- `load` (val): [DYNAMIC](../sig/DYNAMIC.md#val-load), [RUNTIME](../sig/RUNTIME.md#val-load)
 - `localOffset` (val): [DATE](../sig/DATE.md#val-localoffset)
 - `location` (type): [COMPILER](../sig/COMPILER.md#type-location)
 - `lock_type` (type): [POSIX_IO](../sig/POSIX_IO.md#type-lock_type)

@@ -93,6 +93,9 @@ struct
   fun namesOf (toks : Lexer.item vector, acc : names) : names =
     Vector.foldl (fn ((Token.ID s, _), acc) => StringMap.insert (acc, s, ())
                    | ((Token.LONGID (s :: _, _), _), acc) => StringMap.insert (acc, s, ())
+                   (* a dynamic module's boundary is RuneDynamic's (docs/units.md) *)
+                   | ((Token.DYNAMIC, _), acc) => StringMap.insert (acc, "RuneDynamic", ())
+                   | ((Token.EXPORT, _), acc) => StringMap.insert (acc, "RuneDynamic", ())
                    | (_, acc) => acc) acc toks
 
   (* name -> the files that provide it, as paths, in MANIFEST order *)

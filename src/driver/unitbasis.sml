@@ -203,6 +203,9 @@ struct
      defines it, so that a change of the definition shows in every
      fingerprint that names it *)
   val tyconFps : string IntTable.table = IntTable.table 64
+  (* whether a value's fingerprint names the value (not for a signature's
+     ABI: sigFingerprint) *)
+  val anchorValues = ref true
   val inProgress : unit IntTable.table = IntTable.table 16
 
   (* the text a fingerprint hashes, of a type: its generic variables
@@ -271,15 +274,16 @@ struct
     in
       case v of
         Env.Val {scheme, stamp, ...} =>
-          (* which value: another with the same type is another value *)
-          "val " ^ anchor (kStamp, stamp) ^ " " ^ ty scheme
+          (* which value: another with the same type is another value --
+             but for a signature's ABI, whose values are specifications *)
+          "val " ^ (if !anchorValues then anchor (kStamp, stamp) ^ " " else "") ^ ty scheme
           ^ (case IntMap.find (!Translate.primAliases, stamp) of SOME p => " prim " ^ p | NONE => "")
           ^ (if IntMap.member (!Lower.knownBefore, stamp) then " known" else "")
       | Env.Con {scheme, info} => "con " ^ #name info ^ "#" ^ Int.toString (#tag info) ^ " " ^ ty scheme
-      | Env.Exn {ty = t, info} => "exn " ^ anchor (kStamp, #stamp info) ^ " " ^ ty t
+      | Env.Exn {ty = t, info} => "exn " ^ (if !anchorValues then anchor (kStamp, #stamp info) ^ " " else "") ^ ty t
       | Env.Prim {scheme, name} => "prim " ^ name ^ " " ^ ty scheme
       | Env.ConAsVal {scheme, info} => "conval " ^ #name info ^ "#" ^ Int.toString (#tag info) ^ " " ^ ty scheme
-      | Env.ExnAsVal {ty = t, info} => "exnval " ^ anchor (kStamp, #stamp info) ^ " " ^ ty t
+      | Env.ExnAsVal {ty = t, info} => "exnval " ^ (if !anchorValues then anchor (kStamp, #stamp info) ^ " " else "") ^ ty t
     end
 
   fun fpTyStr (local' : int IntMap.map, Env.TyStr {fcn, cons}) : string =
@@ -293,6 +297,22 @@ struct
   fun fpSigma ({bound, env = en} : SigMatch.sigma) : string =
     let val local' = #2 (List.foldl (fn (c, (i, m)) => (i + 1, IntMap.insert (m, #stamp c, i))) (0, IntMap.empty) bound)
     in Int.toString (List.length bound) ^ fpEnv (local', en) end
+
+  (* the fingerprint of a signature's ABI (a dynamic module's: Elaborate,
+     StrDynamic and StrExport): what its specifications say, the types they
+     name by their units' names and paths, and nothing of where the
+     signature was written *)
+  (* A program compiled whole -- by a whole-program compile, or of its units'
+     Mid -- loads no module and is none, and its _export's fingerprint is a
+     constant, the same both ways (Main sets wholeFingerprints) *)
+  val wholeFingerprints = ref false
+  val () = Elaborate.sigFingerprint :=
+             (* a usage too: a unit made with one is not the other's *)
+             (fn sg => if (Usage.use ("whole", "on"); !wholeFingerprints) then "whole"
+                       else
+                         let val () = anchorValues := false
+                             val f = P.hash (fpSigma sg) handle e => (anchorValues := true; raise e)
+                         in anchorValues := true; f end)
 
   (* The fingerprint of what a usage names in the session as it is now:
      NONE where nothing does. A functor and an overloading are their
@@ -332,6 +352,7 @@ struct
      structure's; of a setting of the REPL's, "on" where it is on *)
   fun binderOfKey (key : string) : string =
     if String.isPrefix "p " key orelse String.isPrefix "echo " key then (if !replSetting key then "on" else "")
+    else if key = "whole on" then (if !wholeFingerprints then "on" else "")
     else
     case String.fields (fn c => c = #" ") key of
       [kind, name] =>
@@ -1117,9 +1138,16 @@ struct
                   else unit :: acc)
                [] (List.map #1 (#globals u) @ List.map #2 (#imports u))
 
+  (* Whether an entry may be loaded against a unit other than one it names:
+     not in a program that may load units while it runs (Main), which names
+     its units in its file as a build from source does, for a unit loaded
+     into it -- compiled from source -- to find them by *)
+  val remapAllowed = ref true
+
   (* the remapping that loads an entry -- its basis pickle, its code u -- in
      the session, or Missing: of every unit either names *)
   fun remapping (pickle : string, u : Link.unitCode, oldPaths : string -> (int * int * string) list option) : remap =
+    if not (!remapAllowed) then [] else
     List.mapPartial
       (fn i =>
          if isSome (StringMap.find (!byIdentity, i)) then NONE

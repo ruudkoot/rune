@@ -26,6 +26,7 @@
 - `minNormalPos` (val): [REAL](../sig/REAL.md#val-minnormalpos)
 - `minPos` (val): [REAL](../sig/REAL.md#val-minpos)
 - `minute` (val): [DATE](../sig/DATE.md#val-minute)
+- `Mismatch` (exn): [DYNAMIC](../sig/DYNAMIC.md#exn-mismatch)
 - `mkAbsolute` (val): [OS_PATH](../sig/OS_PATH.md#val-mkabsolute)
 - `mkBinReader` (val): [POSIX_IO](../sig/POSIX_IO.md#val-mkbinreader)
 - `mkBinWriter` (val): [POSIX_IO](../sig/POSIX_IO.md#val-mkbinwriter)

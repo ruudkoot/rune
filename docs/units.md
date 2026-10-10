@@ -353,6 +353,43 @@ program names, the compiler says so.
 requires (`lib/basis/MANIFEST`), and `rune --basis-check` checks both
 columns against the sources: the requires column is what `Deps` derives.
 
+## Dynamic modules
+
+A program can load a module while it runs and use it through a signature
+alone (the incremental roadmap's M9; D17 and D18):
+
+```sml
+(* the program, compiled against SHAPE alone *)
+structure S = _dynamic "impl.rbu" : SHAPE
+val () = print (S.name ^ "\n")
+
+(* the module, compiled to impl.rbu: rune --units --emit-units DIR shape.sml impl.sml *)
+_export structure Impl : SHAPE = struct ... end
+```
+
+Both sides agree on the signature's ABI: a slot for each value and
+exception it specifies -- its values and exceptions by name, then its
+structures', by name, recursively -- the tags of each datatype it
+specifies in the order of its specification, which the module's datatype
+of that name is given whatever order it declares its constructors in, and
+abstract types that stay abstract to the program. Its fingerprint is the
+hash of what the signature's specifications say, every type named by its
+unit's name and path (`UnitBasis.fpSigma`): a program and a module compiled
+against one signature, from the same library, agree on it.
+
+When the program reaches the declaration, `RuneDynamic.load` loads the
+unit (`Runtime.load`), runs its top level -- which ends by handing its
+slots and the fingerprint to `RuneDynamic.export` -- and gives the program
+the slots, where the fingerprints agree, or raises `Dynamic.Mismatch`
+naming both. The module's code names what it uses of the program's units by
+their identities, which a program linked from units keeps (*The units
+section of a program*, [bytecode.md](bytecode.md)): so a program compiled
+whole, whose units are one, cannot load a module, and is refused one at
+compile time. Two modules compiled against one library share its types
+with each other and with the program. `Dynamic.load file` is the untyped
+form, for a unit that registers what it offers through a structure of the
+program. `tests/dynamic/run.sh` (`make test-dynamic`) is each of these.
+
 ## Errors
 
 A top-level declaration that fails to elaborate is reported at once and

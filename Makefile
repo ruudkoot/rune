@@ -145,7 +145,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: isa check-isa test-ir check-levels check-units test-incremental test-deps basis-cache repl test-repl test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
+.PHONY: isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic basis-cache repl test-repl test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
 
 all: vm boot runedoc runeopt basis-cache
 
@@ -905,6 +905,9 @@ test-repl: bin/rune-repl bin/runevm
 test-deps: $(RUNE) vm
 	sh tests/deps/run.sh --rune $(RUNE)
 
+test-dynamic: $(RUNE) vm
+	sh tests/dynamic/run.sh --rune $(RUNE)
+
 test-incremental: $(RUNE) vm basis-cache bin/rune-repl
 	sh tests/incremental/run.sh --rune $(RUNE)
 	python3 tests/incremental/mutate.py --rune $(RUNE) --steps 30 tests/incremental/functors tests/incremental/project
@@ -1237,6 +1240,7 @@ check:
 	@$(MAKE) --no-print-directory check-units
 	@$(MAKE) --no-print-directory test-incremental
 	@$(MAKE) --no-print-directory test-deps
+	@$(MAKE) --no-print-directory test-dynamic
 	@$(MAKE) --no-print-directory test-repl
 	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory test-register

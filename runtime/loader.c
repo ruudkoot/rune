@@ -254,6 +254,9 @@ int load_program(VM *vm, const char *path, char *err, size_t errlen) {
 /* A program from the bytes of a .rbc, which stay the caller's: what
    load_program does with a file, and a program of runeopt's with the .rbc
    it carries (docs/native.md). */
+static int unit_export(VM *vm, uint32_t session, int32_t stamp, uint32_t kind, uint32_t index);
+static int unit_session(VM *vm, const uint8_t *s, uint32_t n, uint32_t *out);
+
 int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t errlen) {
     Reader r = { data, size, 0, 0 };
     Program *p = &vm->prog;
@@ -327,6 +330,31 @@ int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t
     for (uint32_t i = 0; i < p->nglobals; i++) vm->globals[i] = mk_unit();
 
     if (!read_code_and_tables(&r, p, data, err, errlen)) return 0;
+
+    /* the units it was linked from, where it was (rune --units): each one's
+       identity and what it exports, by its number there -- a function or a
+       global -- which a unit loaded into it later names (Runtime.load; a
+       dynamic module, docs/units.md) */
+    if (r.pos < size) {
+        uint32_t nunits = rd_u32(&r);
+        if (r.error || nunits > 100000) return fail(err, errlen, "bad table of units");
+        for (uint32_t i = 0; i < nunits; i++) {
+            uint32_t n = rd_u32(&r);
+            if (r.error || n > 4096 || !need(&r, n)) return fail(err, errlen, "bad table of units");
+            uint32_t session;
+            if (!unit_session(vm, data + r.pos, n, &session)) return fail(err, errlen, "out of memory");
+            r.pos += n;
+            uint32_t nexports = rd_u32(&r);
+            if (r.error || nexports > 10000000) return fail(err, errlen, "bad table of units");
+            for (uint32_t j = 0; j < nexports; j++) {
+                uint32_t kind = rd_u32(&r), number = rd_u32(&r), index = rd_u32(&r);
+                if (r.error || kind > 1 || index >= (kind == 0 ? p->nfuncs : p->nglobals))
+                    return fail(err, errlen, "bad table of units");
+                if (!unit_export(vm, session, (int32_t)number, kind, index)) return fail(err, errlen, "out of memory");
+            }
+        }
+        if (r.pos != size) return fail(err, errlen, "bad table of units");
+    }
     program_epoch(vm);
 
     uint8_t *starts = validate_program(p, err, errlen);

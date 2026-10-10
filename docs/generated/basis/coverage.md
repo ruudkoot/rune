@@ -17,6 +17,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`COMMAND_LINE`](sig/COMMAND_LINE.md) | 2 | 2 | 100% | 2 | 2 |
 | [`COMPILER`](sig/COMPILER.md) | 11 | 11 | 100% | 4 | 4 |
 | [`DATE`](sig/DATE.md) | 24 | 24 | 100% | 20 | 20 |
+| [`DYNAMIC`](sig/DYNAMIC.md) | 2 | 2 | 100% | 1 | 1 |
 | [`GENERAL`](sig/GENERAL.md) | 20 | 20 | 100% | 7 | 7 |
 | [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) | 4 | 4 | 100% | 4 | 4 |
 | [`IEEE_REAL`](sig/IEEE_REAL.md) | 10 | 10 | 100% | 5 | 5 |
@@ -75,7 +76,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
 | [`WINDOWS`](sig/WINDOWS.md) | 88 | 88 | 100% | 30 | 30 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1674 | 1674 | 100% | 1136 | 1136 |
+| **all** | 1676 | 1676 | 100% | 1137 | 1137 |
 
 ## Members a signature describes
 
@@ -84,7 +85,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-198 structures have a page, with 4320 members, of which 4235 (98%) are described by a signature.
+199 structures have a page, with 4322 members, of which 4237 (98%) are described by a signature.
 
 | Structure | Members | Described |  |
 | --- | --- | --- | --- |
@@ -107,6 +108,7 @@ A deviation or a limitation that the test suite does not show. A reading or an e
 be pinned: many are about the text and not about behaviour.
 
 - `COMPILER/not-in-the-specification` (Deviation), COMPILER
+- `DYNAMIC/not-in-the-specification` (Deviation), DYNAMIC
 - `INET6_SOCK/not-in-the-specification` (Deviation), INET6_SOCK
 - `MONO_VECTOR_EQ/not-in-the-specification` (Deviation), MONO_VECTOR_EQ
 - `Posix.Process.fork/read-ahead-of-a-pipe` (Limitation), POSIX_PROCESS

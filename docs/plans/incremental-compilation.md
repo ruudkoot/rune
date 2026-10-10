@@ -45,7 +45,7 @@ What it rests on:
 | M6 | The cache, with cut-off | the first two parts done 2026-10-09, `40e2b23a`: the export basis, names that do not depend on what came before, every unit through its basis, unit files by keys, the cache with usages by binder, the frozen Basis, `use` through it, `tests/incremental` (*M6, ... as built*); the soundness of it examined and fixed in [build-cache-issues.md](build-cache-issues.md), with `--verify-cache` and a mutation tester; the third part, fingerprints per entry and entries loaded across changed units, built 2026-10-10 (*M6, the third part as built*); the warm-build time left to M12 |
 | M7 | Mid per unit: whole-program builds from the cache | built 2026-10-10: `rune --units --whole`, units' Mid in the cache, the canonical renumbering, and a program made of its units' Mid the bytes of the whole-program compile (*M7, as built*) |
 | M8 | The dependency graph, and a program from an entry point | built 2026-10-10: `rune --deps`, `--deps-dot`, `-I` entry points, the MANIFEST's requires column derived and checked (*M8, as built*) |
-| M9 | Compiling against a signature alone, and dynamic modules | |
+| M9 | Compiling against a signature alone, and dynamic modules | built 2026-10-10: `_dynamic` and `_export`, the signature's ABI and its fingerprint, the constructors' order renumbered, `Dynamic`, programs linked from units keeping their exports (*M9, as built*) |
 | M10 | The build language and virtual modules | |
 | M11 | Parallel and reproducible builds | |
 | M12 | Hot reload, the compiler as a service, packages: research and prototypes | |
@@ -2943,6 +2943,38 @@ What M6 and M7 measured changes the plan below in three places:
 * **Done when:** the tests pass on both VMs and every `--jit`; the
   ABI is documented and its fingerprint stable across the five builds.
 * **Touches:** M10; native units later (the code kind).
+
+#### M9, as built (2026-10-10)
+
+* **As designed above**, with these as built: `_dynamic "path" : SIG` (a
+  structure expression) and `_export structure X : SIG = e` (a top-level
+  declaration), `StrDynamic` and `StrExport` in the syntax; the client's
+  datatypes are given their constructors under their fresh names from the
+  specification's own (an instance of a signature by name has fresh names
+  that no table knows); the slots cross as units through `unsafe_cast`, a
+  polymorphic one instantiated at unit, which changes nothing of its value;
+  `RuneDynamic` and `Dynamic : DYNAMIC` in the Basis (`lib/basis/dynamic.sml`,
+  `dynamic_sig.sml`); the units section of a program (`docs/bytecode.md`),
+  which `Link` writes and the VM enters in its table of exports at start --
+  the C of this milestone, about forty lines; `tests/dynamic`
+  (`make test-dynamic`), `tests/lang/mod.dynamic_export_order.sml`.
+* **The ABI's fingerprint** names no value or exception by where it was
+  declared (its specification is not one), so a client and a module that
+  declare the same signature in different files agree; types the signature
+  names from other units by those units' names and paths. A program compiled
+  whole can load no module and is none: its fingerprints are a constant, the
+  same in a whole-program compile and one of the units' Mid (S42), and a
+  usage, so that a unit compiled one way is not the other's entry.
+* **A program that may load units** -- one that links `runtime.sml` or
+  `dynamic.sml` -- keeps its units' exports in its file, under the
+  identities a build from source gives them, which a module compiled from
+  source names: so it takes no unit from the cache across a changed unit
+  (M6's remapping), whose old identity it would keep. Other programs carry
+  no units section, and are the bytes they were.
+* **Left:** a constructor or an exception that a structure gives as a value
+  specification (`val A : t` where `A` is a constructor) is refused at
+  `_export`; the client's slots go through the wrapper of every call, as
+  D17 says, with no adapter for a worker's arity.
 
 ### M10. The build language and virtual modules (L, about 1,200 SML)
 

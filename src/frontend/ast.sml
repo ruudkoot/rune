@@ -103,6 +103,8 @@ struct
     | StrAscribe of strexp * sigexp * bool * span            (* true = opaque (:>) *)
     | StrApp of string * strexp * strexp option ref * span   (* functor application; the slot receives the elaborated copy of the body *)
     | StrLet of dec list * strexp * span
+    | StrDynamic of string * sigexp * dynamic option ref * span   (* _dynamic "path" : SIG (docs/units.md, Dynamic modules) *)
+    | StrExport of sigexp * strexp * dynamic option ref * span    (* _export structure X : SIG = strexp *)
 
   and sigexp =
       SigSig of spec list * span
@@ -134,6 +136,12 @@ struct
        and strbind = {name : string, strexp : strexp, span : span}
        and sigbind = {name : string, sigexp : sigexp, span : span}
        and funbind = {name : string, param : string option, paramSig : sigexp, body : strexp, span : span}
+       (* what elaboration finds of a dynamic module's boundary: the
+          fingerprint of the signature's ABI, its slots in the ABI's order --
+          each a global, its type, and whether it is an exception's -- and the
+          global of RuneDynamic.load or RuneDynamic.export, and a global of
+          the client's for the tuple of the slots *)
+       and dynamic = {fingerprint : string, slots : (int * Types.ty * bool) list, via : int, temp : int}
 
   type program = dec list
 
@@ -204,6 +212,7 @@ struct
     case e of
       StrStruct (_, s) => s | StrId (_, s) => s | StrAscribe (_, _, _, s) => s
     | StrApp (_, _, _, s) => s | StrLet (_, _, s) => s
+    | StrDynamic (_, _, _, s) => s | StrExport (_, _, _, s) => s
 
   fun spanOfSigexp e =
     case e of
@@ -297,6 +306,8 @@ struct
     | StrAscribe (e, sg, opaque, sp) => StrAscribe (copyStrexp e, sg, opaque, sp)
     | StrApp (f, a, _, sp) => StrApp (f, copyStrexp a, ref NONE, sp)
     | StrLet (ds, e, sp) => StrLet (List.map copyDec ds, copyStrexp e, sp)
+    | StrDynamic (path, sg, _, sp) => StrDynamic (path, sg, ref NONE, sp)
+    | StrExport (sg, e, _, sp) => StrExport (sg, copyStrexp e, ref NONE, sp)
 
   (* --- debugging printer (used by --dump-ast) --- *)
   fun sconToString sc =
@@ -423,6 +434,8 @@ struct
     | StrAscribe (e, s, opaque, _) => strexpToString e ^ (if opaque then " :> " else " : ") ^ sigexpToString s
     | StrApp (f, a, _, _) => f ^ " (" ^ strexpToString a ^ ")"
     | StrLet (ds, e, _) => "let " ^ String.concatWith " " (List.map decToString ds) ^ " in " ^ strexpToString e ^ " end"
+    | StrDynamic (path, s, _, _) => "_dynamic \"" ^ String.toString path ^ "\" : " ^ sigexpToString s
+    | StrExport (s, e, _, _) => "_export " ^ sigexpToString s ^ " (" ^ strexpToString e ^ ")"
 
   and sigexpToString s =
     case s of

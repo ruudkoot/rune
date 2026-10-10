@@ -19,6 +19,19 @@ struct
                   origin : string}   (* the identity of the unit it was loaded from; "" where elaborated *)
   val funs : funinfo StringMap.map ref = ref StringMap.empty
 
+  (* Dynamic modules (docs/units.md, Dynamic modules; the incremental
+     roadmap's M9, D17 and D18): the fingerprint of a signature's ABI, which
+     UnitBasis gives (the hash of UnitBasis.fpSigma); and, while the body
+     of an _export is elaborated, the order the signature gives the
+     constructors of each datatype it specifies, by the datatype's name,
+     which a datatype of the body of that name and those constructors takes
+     its tags in *)
+  val sigFingerprint : (SigMatch.sigma -> string) ref = ref (fn _ => "")
+  val exportTags : string list StringMap.map ref = ref StringMap.empty
+  (* where the program loads a dynamic module, which only a program built in
+     units can (Main): the first such declaration *)
+  val dynamicAt : Source.span option ref = ref NONE
+
   (* The signatures and functors declared since UnitBasis.begin, newest
      first: what a unit's basis holds of them (src/driver/unitbasis.sml) *)
   val insertedSigs : string list ref = ref []
@@ -818,7 +831,19 @@ struct
                                           (ListPair.zip (#tyvars db, List.map #2 params)))
               val resTy = TCon (tc, List.map #2 params)
               val ncons = List.length (#cons db)
-              val siblings = List.map (fn (cname, argOpt, _) => (cname, isSome argOpt)) (#cons db)
+              (* the tags: in the order of the declaration, or of the
+                 signature an _export ascribes it to (exportTags) *)
+              val order =
+                case StringMap.find (!exportTags, #name db) of
+                  SOME names =>
+                    if List.length names = ncons
+                       andalso List.all (fn (c, _, _) => List.exists (fn n => n = c) names) (#cons db)
+                    then names else List.map #1 (#cons db)
+                | NONE => List.map #1 (#cons db)
+              fun tagOf c =
+                let fun go (_, []) = 0 | go (i, n :: rest) = if n = c then i else go (i + 1, rest)
+                in go (0, order) end
+              val siblings = List.map (fn n => (n, List.exists (fn (c, a, _) => c = n andalso isSome a) (#cons db))) order
               val conArgs : (int * string * ty option) list ref = ref []
               val cons =
                 List.foldl (fn ((cname, argOpt, csp), (acc, i, args)) =>
@@ -826,18 +851,24 @@ struct
                                  val () = checkBindable (cname, csp, false)
                                  val () = if List.exists (fn (n, _) => n = cname) acc then
                                             err (csp, "duplicate constructor '" ^ cname ^ "'") else ()
+                                 val tag = tagOf cname
                                  val (scheme, args) =
                                    case argOpt of
-                                     NONE => (conArgs := (i, cname, NONE) :: !conArgs; (resTy, args))
+                                     NONE => (conArgs := (tag, cname, NONE) :: !conArgs; (resTy, args))
                                    | SOME t => let val ta = elabTy (env2, scope, level, t)
-                                               in conArgs := (i, cname, SOME ta) :: !conArgs; (TArrow (ta, resTy), ta :: args) end
-                                 val info = {name = cname, tag = i, hasArg = isSome argOpt, ncons = ncons, isRef = false,
+                                               in conArgs := (tag, cname, SOME ta) :: !conArgs; (TArrow (ta, resTy), ta :: args) end
+                                 val info = {name = cname, tag = tag, hasArg = isSome argOpt, ncons = ncons, isRef = false,
                                              siblings = siblings}
                                in ((cname, Con {scheme = scheme, info = info}) :: acc, i + 1, args) end)
                            ([], 0, []) (#cons db)
               val args = #3 cons
               val cons = List.rev (#1 cons)
-              val () = Ty.bindDatatype (#stamp tc, {params = List.map #1 params, cons = List.rev (!conArgs)})
+              (* by tag *)
+              val sortedArgs = List.foldl (fn (x as (t, _, _), acc) =>
+                                             let fun ins [] = [x]
+                                                   | ins ((y as (u, _, _)) :: rest) = if t < u then x :: y :: rest else y :: ins rest
+                                             in ins acc end) [] (!conArgs)
+              val () = Ty.bindDatatype (#stamp tc, {params = List.map #1 params, cons = sortedArgs})
               val () = dataCons := IntMap.insert (!dataCons, #stamp tc, cons)
               val delta = bindTy (delta, #name db, TyStr {fcn = TName tc, cons = cons})
             in (List.foldl (fn ((n, v), d) => bindVal (d, n, v)) delta cons, (tc, args) :: groups) end
@@ -991,6 +1022,12 @@ struct
           Env.empty
         end
 
+  (* RuneDynamic.load or .export, which a dynamic module's boundary calls *)
+  and dynamicVia (env, name, sp) : int =
+    case findVal (env, (["RuneDynamic"], name)) of
+      SOME (Val {stamp, ...}) => stamp
+    | _ => err (sp, "a dynamic module needs RuneDynamic." ^ name ^ " of the Basis Library")
+
   (* ------------------------------------------------------------------ *)
   (* Structure expressions.                                               *)
   and elabStrexp (env, level, top, scope : scope, se : strexp) : env =
@@ -1034,6 +1071,117 @@ struct
     | StrLet (decs, body, _) =>
         let val delta = elabDecs (env, level, top, scope, decs)
         in elabStrexp (plus (env, delta), level, top, scope, body) end
+    | StrDynamic (_, sigexp, slot, sp) =>
+        (* a structure the program loads when it runs (D18): an instance
+           of the signature with nothing behind it -- fresh abstract types,
+           as an opaque ascription gives -- and a fresh global per value
+           and exception, its slot, set from what the module exports *)
+        let
+          val () = if isSome (!dynamicAt) then () else dynamicAt := SOME sp
+          val sigma = elabSigexp (env, sigexp)
+          (* the signature's names made fresh (rule 65), and each datatype it
+             specifies given its constructors under its fresh name -- from the
+             specification's constructors, their schemes and tags -- which no
+             structure's datatype realises here *)
+          val fresh = List.map (fn c => (c, freshTycon (#name c, #arity c, #eq c))) (#bound sigma)
+          val phi = List.foldl (fn ((c, c'), m) => IntMap.insert (m, #stamp c, TName c')) IntMap.empty fresh
+          val inst = realizeEnv (phi, #env sigma)
+          fun datatypes (Env {tys, strs, ...}) =
+            (StringMap.app (fn TyStr {fcn = TName c, cons = cs as _ :: _} =>
+                               if List.exists (fn (_, c') => #stamp c' = #stamp c) fresh then
+                                 let
+                                   fun result t = case prune t of TArrow (_, r) => prune r | r => r
+                                   val params = case cs of
+                                                  (_, Con {scheme, ...}) :: _ =>
+                                                    (case result scheme of
+                                                       TCon (_, args) => List.mapPartial (fn a => case prune a of
+                                                                                                    TVar (ref (Unbound {id, ...})) => SOME id
+                                                                                                  | _ => NONE) args
+                                                     | _ => [])
+                                                | _ => []
+                                   val cons = List.mapPartial (fn (n, Con {scheme, info}) =>
+                                                                    SOME (#tag info, n, case prune scheme of TArrow (a, _) => SOME a | _ => NONE)
+                                                                | _ => NONE) cs
+                                   val sorted = List.foldl (fn (x as (t, _, _), acc) =>
+                                                              let fun ins [] = [x]
+                                                                    | ins ((y as (u, _, _)) :: rest) = if t < u then x :: y :: rest else y :: ins rest
+                                                              in ins acc end) [] cons
+                                 in
+                                   Ty.bindDatatype (#stamp c, {params = params, cons = sorted});
+                                   dataCons := IntMap.insert (!dataCons, #stamp c, cs)
+                                 end
+                               else ()
+                             | _ => ()) tys;
+             StringMap.app datatypes strs)
+          val () = datatypes inst
+          val via = dynamicVia (env, "load", sp)
+          val slots : (int * ty * bool) list ref = ref []
+          fun restamp (Env {vals, tys, strs}) : env =
+            let
+              fun slotOf v =
+                case v of
+                  Val {scheme, ...} =>
+                    let val s = freshStamp ()
+                    in Ty.bindVar (s, scheme); slots := (s, scheme, false) :: !slots;
+                       Val {scheme = scheme, stamp = s, global = true}
+                    end
+                | Exn {ty = t, info} =>
+                    let
+                      val s = freshStamp ()
+                      val arg = case prune t of TArrow (a, _) => SOME a | _ => NONE
+                    in
+                      Ty.bindExn (s, arg); slots := (s, t, true) :: !slots;
+                      Exn {ty = t, info = {name = #name info, stamp = s, isGlobal = true, hasArg = #hasArg info, builtin = NONE}}
+                    end
+                | other => other
+              val vals' = List.foldl (fn ((n, v), m) => StringMap.insert (m, n, slotOf v)) StringMap.empty
+                                     (StringMap.listItemsi vals)
+              val strs' = List.foldl (fn ((n, e), m) => StringMap.insert (m, n, restamp e)) StringMap.empty
+                                     (StringMap.listItemsi strs)
+            in Env {vals = vals', tys = tys, strs = strs'} end
+          val e = restamp inst
+          val slots = List.rev (!slots)
+          val temp = freshStamp ()
+          val () = Ty.bindVar (temp, tupleTy (List.tabulate (Int.max (List.length slots, 2), fn _ => unitTy)))
+        in slot := SOME {fingerprint = !sigFingerprint sigma, slots = slots, via = via, temp = temp}; e end
+    | StrExport (sigexp, body, slot, sp) =>
+        (* a dynamic module's implementation (D17): its body elaborated with
+           the signature's order of each datatype's constructors, ascribed
+           to the signature opaquely, and its values and exceptions, in the
+           ABI's order, what it exports *)
+        let
+          val sigma = elabSigexp (env, sigexp)
+          fun orders (Env {tys, strs, ...}, m) =
+            StringMap.foldli (fn (_, e, m) => orders (e, m))
+                             (StringMap.foldli (fn (n, TyStr {cons = cs as _ :: _, ...}, m) =>
+                                                   StringMap.insert (m, n, List.map #1 (List.foldl (fn (c, acc) =>
+                                                     let fun tagOf (_, Con {info, ...}) = #tag info | tagOf _ = 0
+                                                         fun ins [] = [c] | ins (d :: rest) = if tagOf c < tagOf d then c :: d :: rest else d :: ins rest
+                                                     in ins acc end) [] cs))
+                                               | (_, _, m) => m) m tys)
+                             strs
+          val saved = !exportTags
+          val () = exportTags := orders (#env sigma, StringMap.empty)
+          val e = elabStrexp (env, level, top, scope, body) handle x => (exportTags := saved; raise x)
+          val () = exportTags := saved
+          val ascribed = SigMatch.ascribe (sigma, e, true, sp)
+          val via = dynamicVia (env, "export", sp)
+          val slots : (int * ty * bool) list ref = ref []
+          fun collect (Env {vals, strs, ...}) =
+            (List.app (fn (n, v) =>
+                         case v of
+                           Val {stamp, scheme, ...} => slots := (stamp, scheme, false) :: !slots
+                         | Exn {ty = t, info} => slots := (#stamp info, t, true) :: !slots
+                         | ConAsVal _ => err (sp, "_export: a constructor given as the value " ^ n ^ " is not supported")
+                         | ExnAsVal _ => err (sp, "_export: an exception given as the value " ^ n ^ " is not supported")
+                         | _ => ())
+                      (StringMap.listItemsi vals);
+             List.app (fn (_, e) => collect e) (StringMap.listItemsi strs))
+          val () = collect ascribed
+        in
+          slot := SOME {fingerprint = !sigFingerprint sigma, slots = List.rev (!slots), via = via, temp = 0};
+          ascribed
+        end
 
   (* ------------------------------------------------------------------ *)
   (* Signature expressions and specifications (rules 62-84).             *)

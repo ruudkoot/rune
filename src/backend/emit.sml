@@ -58,9 +58,23 @@ struct
     | instrSize (Lab _) = 0
     | instrSize (Pos _) = 0
 
+  (* What follows a program linked from units (rune --units): each unit's
+     identity and what it exports, which the VM enters in its table of what
+     units export, for a unit loaded into the program later to name
+     (Link.lastExports; docs/bytecode.md, The units section); "" where the
+     program was not linked from units *)
+  val trailer = ref ""
+  fun unitsSection (units : (string * (int * int * int) list) list) : string =
+    u32 (List.length units)
+    ^ String.concat (List.map (fn (identity, xs) =>
+                                 str identity ^ u32 (List.length xs)
+                                 ^ String.concat (List.map (fn (k, n, i) => u32 k ^ u32 n ^ u32 i) xs))
+                              units)
+
   (* The file as chunks in order: the header, then one chunk per function. *)
   fun serialize (fingerprint : int, p : program) : string list =
     String.concat [magic, u32 Opcodes.rbcVersion, u32 fingerprint] :: sections p
+    @ (if !trailer = "" then [] else [!trailer])
 
   (* What follows a file's version and fingerprint, from its constants to
      its representations: a program's (serialize), and a unit's, after its

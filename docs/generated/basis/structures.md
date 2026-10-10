@@ -37,6 +37,7 @@ signature names and no others, unless the structure is listed at the end of this
 | [`CommandLine`](str/CommandLine.md) | : [`COMMAND_LINE`](sig/COMMAND_LINE.md) |  | required |  | [lib/basis/commandline.sml](../../../lib/basis/commandline.sml) |
 | [`Compiler`](str/Compiler.md) | : [`COMPILER`](sig/COMPILER.md) |  | extension | is `RuneCompiler` | [lib/basis/compiler.sml](../../../lib/basis/compiler.sml) |
 | [`Date`](str/Date.md) | : [`DATE`](sig/DATE.md) |  | required |  | [lib/basis/date.sml](../../../lib/basis/date.sml) |
+| [`Dynamic`](str/Dynamic.md) | : [`DYNAMIC`](sig/DYNAMIC.md) |  | extension |  | [lib/basis/dynamic.sml](../../../lib/basis/dynamic.sml) |
 | [`FixedInt`](str/Int64.md) | : [`INTEGER`](sig/INTEGER.md) | `where type int = Int64.int` | optional | is [`Int64`](str/Int64.md) | [lib/basis/int64.sml](../../../lib/basis/int64.sml) |
 | [`General`](str/General.md) | : [`GENERAL`](sig/GENERAL.md) |  | required |  | [lib/basis/general.sml](../../../lib/basis/general.sml) |
 | [`GenericSock`](str/GenericSock.md) | : [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) |  | optional | is `RuneGenericSock` | [lib/basis/inetsock.sml](../../../lib/basis/inetsock.sml) |

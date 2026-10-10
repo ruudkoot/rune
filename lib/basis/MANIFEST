@@ -155,6 +155,8 @@ commandline.sml | demand | yes  | CommandLine           |
 sml90.sml       | demand | yes  | SML90                 | Char IO List Math Real String TextIO
 runtime_sig.sml | demand | no   | RUNTIME               | TextIO Word8Vector
 runtime.sml     | demand | no   | Runtime RuneRuntime   | Int IO List RuneError TextIO Byte BinIO SML90
+dynamic_sig.sml | demand | no   | DYNAMIC               |
+dynamic.sml     | demand | no   | Dynamic RuneDynamic   | DYNAMIC Runtime
 compiler_sig.sml | demand | no  | COMPILER              | 
 compiler.sml    | demand | no   | Compiler RuneCompiler RuneShow | Array Char CharVector General Int List Real String Vector Word
 # ---- the signatures of the specification (scripts/gen-basis-sigs.sh)

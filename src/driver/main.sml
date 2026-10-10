@@ -137,6 +137,10 @@ struct
       OS.Process.success
     end
 
+  (* whether the program being linked keeps its units' exports in its file
+     (compileUnits) *)
+  val keepExports = ref false
+
   (* ---- the graph (Deps; the incremental roadmap's M8) ---- *)
 
   (* a file's syntax, for the names it declares and uses: the fixity of the
@@ -209,6 +213,8 @@ struct
 
   fun compile () : OS.Process.status =
     let
+      (* a whole program's dynamic modules: none (UnitBasis.wholeFingerprints) *)
+      val () = UnitBasis.wholeFingerprints := (not (!Options.units) orelse !Options.wholeFromUnits)
       (* -I: the entry point's files before it *)
       val () =
         case (!Options.includeDirs, !Options.inputs) of
@@ -294,6 +300,16 @@ struct
         List.map (fn e => file (e, inBasis e)) basis
         @ ListPair.map (fn (toks, name) => (name, fn () => toks, !Options.allowPrim, name)) (userToks, inputs)
         @ List.map (fn e => file (e, !Options.allowPrim)) final
+      (* a program that may load units while it runs -- it has Runtime's
+         loading or a dynamic module's: their files are among its units --
+         keeps in its file what its units export, under the identities a
+         build from source gives them, which a unit loaded into it names: so
+         it takes no unit from the cache across a unit that changed
+         (UnitBasis.remapAllowed; docs/units.md, Dynamic modules) *)
+      val loadsUnits = List.exists (fn (_, _, _, ident) => ident = "lib/basis/runtime.sml" orelse ident = "lib/basis/dynamic.sml")
+                                   sources
+      val () = UnitBasis.remapAllowed := not loadsUnits
+      val () = keepExports := loadsUnits
       (* the front end's stages, for --pass-stats; their size is the number of
          top-level declarations *)
       fun frontStage name f =
@@ -474,6 +490,7 @@ struct
       else if !Options.wholeFromUnits then
         (* one program of the units' Mid, with the passes of a whole one *)
         let
+          val () = refuseDynamic ()
           val prog = MidCanon.concat (List.rev (!mids))
           val () = Pass.whole := true
           val low = Pipeline.lowOfMid prog
@@ -486,10 +503,15 @@ struct
 
   (* The units linked into the program, by the target of the fingerprint *)
   and linkUnits (fingerprint : int, inputs : string list, units : Link.unitCode list) : OS.Process.status =
-    if fingerprint = RegCodes.fingerprint then
-      (Code.opcodeNames := RegCodes.names;
-       emitProgramAs (fingerprint, inputs, Link.program (Regs.program, RegCodes.linked, units)))
-    else emitProgram (inputs, Link.program (Stack.program, Opcodes.linked, units))
+    let
+      val prog = if fingerprint = RegCodes.fingerprint then (Code.opcodeNames := RegCodes.names;
+                                                             Link.program (Regs.program, RegCodes.linked, units))
+                 else Link.program (Stack.program, Opcodes.linked, units)
+      (* the units' exports, for a unit loaded into the program later,
+         where it may load one *)
+      val () = Emit.trailer := (if !keepExports then Emit.unitsSection (!Link.lastExports) else "")
+      val status = emitProgramAs (fingerprint, inputs, prog) handle e => (Emit.trailer := ""; raise e)
+    in Emit.trailer := ""; status end
 
   (* --emit-units DIR: each unit's file, its number and its source's name,
      and beside it the unit's basis (.rbi, UnitBasis), which a compile after
@@ -541,6 +563,11 @@ struct
                                 then StringMap.insert (seen, #identity u, ())
                                 else raise Options.Usage ("the unit " ^ #identity u ^ " names a unit not linked before it")
                               end) StringMap.empty read)
+      (* a program that may load units keeps their exports, as compileUnits
+         says *)
+      val () = keepExports := List.exists (fn (_, u : Link.unitCode) =>
+                                             List.exists (fn n => String.isPrefix (n ^ "@") (#identity u))
+                                                         ["lib/basis/runtime.sml", "lib/basis/dynamic.sml"]) read
     in
       linkUnits (fingerprint, inputs, List.map #2 read)
     end
@@ -595,13 +622,22 @@ struct
   (* -O0 is the same stages with no optional pass *)
   and backEnd (_, NONE) = OS.Process.success
     | backEnd (inputs, SOME lam) =
-        let val low = Pipeline.lowOf lam
+        let val () = refuseDynamic ()
+            val low = Pipeline.lowOf lam
         in
           if !Options.target = "registers" then
             (Code.opcodeNames := RegCodes.names;
              emitProgramAs (RegCodes.fingerprint, inputs, Pipeline.targetStage low))
           else emitProgram (inputs, Pipeline.targetStage low)
         end
+
+  (* A whole program has no units for a dynamic module to link against:
+     its units are one (docs/units.md, Dynamic modules) *)
+  and refuseDynamic () =
+    case !Elaborate.dynamicAt of
+      SOME sp => raise Error.CompileError (sp, "a program that loads a dynamic module (_dynamic) is built in units "
+                                                ^ "(rune --units), which the module links against, and not whole")
+    | NONE => ()
 
   and emitProgram (inputs : string list, prog : Code.program) : OS.Process.status =
     emitProgramAs (Opcodes.fingerprint, inputs, prog)

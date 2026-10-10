@@ -745,6 +745,23 @@ struct
                        | _ => err "expected a function name after via")
                   | _ => OvBits 64
               in DOverload {kind = kind, strid = strid, literal = literal, span = spanFrom start} end
+          (* _export structure Name : SIG = strexp: a dynamic module's
+             implementation (docs/units.md, Dynamic modules) *)
+          | EXPORT =>
+              if ctx <> Top then err "_export declares a structure at the top level only"
+              else
+                let
+                  val () = advance ()
+                  val () = expect STRUCTURE
+                  val name = case next () of ID s => s | _ => err "expected structure name"
+                  val () = expect COLON
+                  val sg = parseSigexp ()
+                  val () = expect EQUALS
+                  val body = parseStrexp ()
+                in
+                  DStructure ([{name = name, strexp = StrExport (sg, body, ref NONE, spanFrom start), span = spanFrom start}],
+                              spanFrom start)
+                end
           | STRUCTURE =>
               if ctx = Let then err "structure declarations are not allowed inside expressions"
               else
@@ -883,6 +900,16 @@ struct
                   in StrApp (s, arg, ref NONE, spanFrom start) end
                 else (advance (); StrId (([], s), start))
             | LONGID (p, s) => (advance (); StrId ((p, s), start))
+            (* _dynamic "path" : SIG, a structure loaded when the program runs
+               (docs/units.md, Dynamic modules) *)
+            | DYNAMIC =>
+                let
+                  val () = advance ()
+                  val path = case peek () of
+                               STRING s => (advance (); s)
+                             | t => err ("expected the path of a dynamic module but found '" ^ toString t ^ "'")
+                  val () = expect COLON
+                in StrDynamic (path, parseSigexp (), ref NONE, spanFrom start) end
             | t => err ("expected structure expression but found '" ^ toString t ^ "'")
           fun ascribe e =
             case peek () of

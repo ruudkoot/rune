@@ -192,6 +192,24 @@ unit's function 0 is its top level, which ends in a tail call of the next
 unit's; a unit's other functions follow it, and an index past them names
 an import.
 
+### The units section of a program
+
+A program that `rune --units` linked from units ends, after its
+representations section, with what each of its units exports, so that a
+unit loaded into it while it runs (`Runtime.load`, a dynamic module:
+[units.md](units.md), *Dynamic modules*) can name them by the units'
+identities, as it names those of units loaded before it. A program
+compiled whole has none, and its file ends with the representations
+section; a VM that reads one stops there too.
+
+```
+nunits      u32
+units       nunits × { identity: len u32, bytes;
+                       nexports u32;
+                       exports nexports × { kind u32, number u32, index u32 } }
+            kind 0 a function, by its index in the program; 1 a global
+```
+
 ### A unit's basis (`.rbi`)
 
 Beside its code, `--emit-units` writes each unit's basis, what the
