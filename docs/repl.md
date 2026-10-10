@@ -66,7 +66,10 @@ kept in the cache of units -- `$RUNE_CACHE`, else `.rune` beside the file
 ([units.md](units.md), *The cache*) -- and a declaration whose usages hold,
 the names it uses bound as they were, is linked from there rather than
 compiled: a file used again, unchanged, compiles nothing, and its top level
-runs again with globals of its own.
+runs again with globals of its own. With `RUNE_VERIFY_CACHE` set (not
+empty), a declaration found there is compiled all the same, and one whose
+entry is not what compiling it gives stops the file with an error, as
+`--verify-cache` does for `rune`.
 
 ## Interrupts
 

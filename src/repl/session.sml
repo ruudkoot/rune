@@ -157,37 +157,41 @@ struct
         | SOME _ => Option.map (fn (d, c) => (d, c, UnitCache.key {name = name, text = text, allow = false})) (cacheOf file)
       fun result (l : UnitBasis.result, run) =
         {run = run, delta = #delta l, declared = declared (#delta l), bind = fn () => UnitBasis.bind l}
-      (* from the cache: its basis loaded, its code linked *)
-      val hit =
+      val found =
         case cache of
           NONE => NONE
-        | SOME (d, c, key) =>
-            case UnitCache.find (d, c, key) of
-              UnitCache.Missed _ => NONE
-            | UnitCache.Found {pickle, code, warnings, file = was, others, ...} =>
-                let val at = UnitBasis.counters ()
-                in
-                  (let
-                     val (fp, u) = UnitFile.read code
-                     val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
-                     val l = UnitBasis.load {pickle = pickle, file = file, at = at, env = !env, fixity = #fixity start,
-                                             text = fn () => text}
-                     (* its source, and those of the functors' bodies it
-                        applied, where they are now, in its code's files *)
-                     val code = if UnitBasis.moves (u, was, file, others)
-                                then String.concat (UnitFile.chunks (fp, UnitBasis.relocate (u, was, file, others)))
-                                else code
-                     val run = Runtime.link (Byte.stringToBytes code)
-                   in
-                     (* the warnings its compile gave, again *)
-                     List.app (fn w => TextIO.output (TextIO.stdErr, w ^ "\n")) warnings;
-                     SOME (result (l, run))
-                   end)
-                  handle Pickle.Bad _ => (UnitBasis.setCounters at; NONE)
-                       | UnitBasis.Missing _ => (UnitBasis.setCounters at; NONE)
-                       | UnitFile.Bad _ => (UnitBasis.setCounters at; NONE)
-                       | Fail _ => (UnitBasis.setCounters at; NONE)
-                end
+        | SOME (d, c, key) => (case UnitCache.find (d, c, key) of UnitCache.Found e => SOME e | UnitCache.Missed _ => NONE)
+      (* RUNE_VERIFY_CACHE: an entry found is compiled all the same, and what
+         that gives is compared with it (UnitCache.verifying) *)
+      val against = if UnitCache.verifying () then found else NONE
+      (* from the cache: its basis loaded, its code linked *)
+      val hit =
+        case if isSome against then NONE else found of
+          NONE => NONE
+        | SOME {pickle, code, warnings, file = was, others, ...} =>
+          let val at = UnitBasis.counters ()
+          in
+            (let
+               val (fp, u) = UnitFile.read code
+               val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
+               val l = UnitBasis.load {pickle = pickle, file = file, at = at, env = !env, fixity = #fixity start,
+                                       text = fn () => text}
+               (* its source, and those of the functors' bodies it
+                  applied, where they are now, in its code's files *)
+               val code = if UnitBasis.moves (u, was, file, others)
+                          then String.concat (UnitFile.chunks (fp, UnitBasis.relocate (u, was, file, others)))
+                          else code
+               val run = Runtime.link (Byte.stringToBytes code)
+             in
+               (* the warnings its compile gave, again *)
+               List.app (fn w => TextIO.output (TextIO.stdErr, w ^ "\n")) warnings;
+               SOME (result (l, run))
+             end)
+            handle Pickle.Bad _ => (UnitBasis.setCounters at; NONE)
+                 | UnitBasis.Missing _ => (UnitBasis.setCounters at; NONE)
+                 | UnitFile.Bad _ => (UnitBasis.setCounters at; NONE)
+                 | Fail _ => (UnitBasis.setCounters at; NONE)
+          end
       val warnings : string list ref = ref []
       (* the source of the printer, which nothing names once it is compiled *)
       val echoName = "<echo " ^ Int.toString k ^ ">"
@@ -230,6 +234,12 @@ struct
            Pipeline.unitThrough {start = start, name = name, file = file, text = fn () => text,
                                  decs = decs @ pdecs, delta = delta, fixity = #fixity start, used = used}
          val bytes = String.concat (UnitFile.chunks (Pipeline.fingerprint (), code))
+         val () =
+           case against of
+             SOME e =>
+               if UnitCache.verifies (e, file, #pickle exported, bytes) then ()
+               else raise Fail ("the cache's entry for " ^ name ^ " is not what compiling it gives")
+           | NONE => ()
          val () =
            case cache of
              SOME (d, c, key) =>

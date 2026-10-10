@@ -9,15 +9,18 @@ A PROJECT is a directory of SML files with `files`, their order, or
 `compiler`, the compiler's own sources as `make` lists them. Each step
 edits the project as a person might -- a fixity directive's precedence or
 side, two constructors of a datatype swapped, a numeral changed, a value
-added at top level or inside a structure, an earlier file declared again
-later in the order, two files swapped, a comment added, a file put back as
-it was -- and builds it in units through one cache (rune --units
+added at top level or inside a structure, a type abbreviation or an
+exception's argument changed (in other words or in meaning), an earlier
+file declared again later in the order, two files swapped, a file removed
+or renamed, a comment added, a file put back as it was -- and builds it in units through one cache (rune --units
 --cache-dir) and without it (--no-cache). The two must agree: both fail,
 or both succeed and are the same bytes. Most edits leave a program that
 compiles; those that do not still check that the cache does not make a
 program where compiling everything makes none.
 
---flags gives both builds more options (`--flags=-O2`).
+--flags gives both builds more options (`--flags=-O2`). --basis NAME,...
+gives each project a copy of the Basis Library of its own, whose files of
+those names the edits change too: the library edited under a kept cache.
 
 --history N replays the last N commits of the repository (this one unless
 --repo names another): each commit's compiler sources, built through one
@@ -50,9 +53,12 @@ def run_rune(rune, cwd, files, flags):
 
 
 class Project:
-    def __init__(self, src, work, files):
+    def __init__(self, src, work, files, basis=()):
         self.work = work
         self.files = list(files)
+        # the Basis files that may be edited, in the project's own copy of
+        # the library (lib/basis/NAME), which builds name with --lib
+        self.basis = ['lib/basis/' + b for b in basis]
         self.original = {f: open(os.path.join(src, f), encoding='latin-1').read() for f in files}
         self.text = dict(self.original)
         self.counter = 0
@@ -60,6 +66,16 @@ class Project:
             shutil.rmtree(work)
         for f, t in self.text.items():
             self.write(f, t)
+        if self.basis:
+            shutil.copytree(os.path.join(ROOT, 'lib', 'basis'), os.path.join(work, 'lib', 'basis'))
+            for b in self.basis:
+                self.original[b] = self.text[b] = open(os.path.join(work, b), encoding='latin-1').read()
+
+    def editable(self):
+        return self.files + self.basis
+
+    def flags(self):
+        return ['--lib', os.path.join(self.work, 'lib')] if self.basis else []
 
     def write(self, f, t):
         p = os.path.join(self.work, f)
@@ -76,7 +92,7 @@ class Project:
 # ---- the edits: each returns a description, or None where it does not apply ----
 
 def edit_fixity(pr, rng):
-    cands = [(f, m) for f in pr.files for m in re.finditer(r'\b(infixr?)\s+(\d)\b', pr.text[f])]
+    cands = [(f, m) for f in pr.editable() for m in re.finditer(r'\b(infixr?)\s+(\d)\b', pr.text[f])]
     if not cands:
         return None
     f, m = rng.choice(cands)
@@ -117,7 +133,7 @@ def alternatives(t, start):
 
 def edit_constructors(pr, rng):
     cands = []
-    for f in pr.files:
+    for f in pr.editable():
         t = pr.text[f]
         for m in re.finditer(r'\bdatatype\s+(?:\([^)]*\)\s*|\'\w+\s+)?[\w\']+\s*=(?!\s*datatype)', t):
             spans = alternatives(t, m.end())
@@ -168,7 +184,7 @@ def code_spans(t):
 
 def edit_numeral(pr, rng):
     cands = []
-    for f in pr.files:
+    for f in pr.editable():
         t = pr.text[f]
         for s, e in code_spans(t):
             for m in re.finditer(r'(?<![\w\'#.~])(\d+)(?![\w.])', t[s:e]):
@@ -184,7 +200,7 @@ def edit_numeral(pr, rng):
 
 
 def edit_top_value(pr, rng):
-    f = rng.choice(pr.files)
+    f = rng.choice(pr.editable())
     k = pr.fresh()
     pr.write(f, pr.text[f] + '\nval runeMutant%d = %d\n' % (k, k))
     return 'value runeMutant%d added at the end of %s' % (k, f)
@@ -192,7 +208,7 @@ def edit_top_value(pr, rng):
 
 def edit_struct_value(pr, rng):
     cands = []
-    for f in pr.files:
+    for f in pr.editable():
         t = pr.text[f]
         for s, e in code_spans(t):
             for m in re.finditer(r'\bstruct\b', t[s:e]):
@@ -207,7 +223,7 @@ def edit_struct_value(pr, rng):
 
 
 def edit_comment(pr, rng):
-    f = rng.choice(pr.files)
+    f = rng.choice(pr.editable())
     k = pr.fresh()
     pr.write(f, pr.text[f] + '\n(* mutant %d *)\n' % k)
     return 'comment added to %s' % f
@@ -235,14 +251,14 @@ def edit_swap(pr, rng):
 
 
 def edit_revert(pr, rng):
-    changed = [f for f in pr.files if f in pr.original and pr.text[f] != pr.original[f]]
+    changed = [f for f in pr.editable() if f in pr.original and pr.text[f] != pr.original[f]]
     extra = [f for f in pr.files if f not in pr.original]
-    if rng.random() < 0.3 and (extra or changed):
-        pr.files = [f for f in pr.files if f in pr.original]
-        order = list(pr.original)
-        pr.files.sort(key=order.index)
-        for f in changed:
-            pr.write(f, pr.original[f])
+    missing = [f for f in pr.original if f not in pr.files]
+    if rng.random() < 0.3 and (extra or changed or missing):
+        pr.files = [f for f in pr.original if f not in pr.basis]
+        for f in pr.original:
+            if pr.text[f] != pr.original[f]:
+                pr.write(f, pr.original[f])
         return 'the whole project put back'
     if not changed:
         return None
@@ -251,8 +267,75 @@ def edit_revert(pr, rng):
     return '%s put back' % f
 
 
+def edit_type(pr, rng):
+    """A type abbreviation's body: the same type in other words, or another"""
+    cands = []
+    for f in pr.editable():
+        t = pr.text[f]
+        for s, e in code_spans(t):
+            for m in re.finditer(r'\btype\s+(?:\([^)]*\)\s*|\'\w+\s+)?[\w\']+\s*=\s*([^\n=]+?)\s*(?=\n|\band\b|\bend\b|\bval\b|\bfun\b|\btype\b|\bdatatype\b|$)',
+                                 t[s:e]):
+                if 'datatype' not in m.group(0):
+                    cands.append((f, s + m.start(1), s + m.end(1)))
+    if not cands:
+        return None
+    f, a, b = rng.choice(cands)
+    t = pr.text[f]
+    body = t[a:b]
+    if body.strip() == 'int' and rng.random() < 0.5:
+        new = 'IntInf.int'
+    elif rng.random() < 0.5:
+        new = '(' + body + ')'
+    else:
+        new = body + ' * unit'
+    pr.write(f, t[:a] + new + t[b:])
+    return 'type in %s: %r -> %r' % (f, body, new)
+
+
+def edit_exception(pr, rng):
+    """An exception's argument: added, wrapped, or made a pair"""
+    cands = []
+    for f in pr.editable():
+        t = pr.text[f]
+        for s, e in code_spans(t):
+            for m in re.finditer(r'\bexception\s+([\w\']+)(\s+of\s+[^\n]+?)?(?=\s*(?:\n|\band\b|\bend\b|\bval\b|\bfun\b|$))',
+                                 t[s:e]):
+                if '=' not in m.group(0):
+                    cands.append((f, s + m.start(), s + m.end(), m.group(1), m.group(2)))
+    if not cands:
+        return None
+    f, a, b, name, arg = rng.choice(cands)
+    t = pr.text[f]
+    if arg is None:
+        new = 'exception %s of int' % name
+    elif rng.random() < 0.5:
+        new = 'exception %s of (%s)' % (name, arg.split(None, 1)[1])
+    else:
+        new = 'exception %s of %s * unit' % (name, arg.split(None, 1)[1])
+    pr.write(f, t[:a] + new + t[b:])
+    return 'exception in %s: %r -> %r' % (f, t[a:b], new)
+
+
+def edit_remove(pr, rng):
+    if len(pr.files) < 2:
+        return None
+    f = rng.choice(pr.files)
+    pr.files.remove(f)
+    return '%s removed from the order' % f
+
+
+def edit_rename(pr, rng):
+    f = rng.choice(pr.files)
+    k = pr.fresh()
+    g = os.path.join(os.path.dirname(f), 'renamed%d_%s' % (k, os.path.basename(f)))
+    pr.write(g, pr.text[f])
+    pr.files[pr.files.index(f)] = g
+    return '%s renamed %s' % (f, g)
+
+
 EDITS = [(edit_fixity, 3), (edit_constructors, 4), (edit_numeral, 5), (edit_top_value, 2),
-         (edit_struct_value, 3), (edit_comment, 1), (edit_shadow, 2), (edit_swap, 1), (edit_revert, 3)]
+         (edit_struct_value, 3), (edit_comment, 1), (edit_shadow, 2), (edit_swap, 1), (edit_revert, 4),
+         (edit_type, 3), (edit_exception, 2), (edit_remove, 1), (edit_rename, 1)]
 
 
 def compiler_project():
@@ -267,8 +350,9 @@ class Checker:
 
     def check(self, pr, history):
         cache = os.path.join(self.out, 'cache')
-        st1, b1, e1 = run_rune(self.rune, pr.work, pr.files, self.flags + ['--cache-dir', cache, '--explain-rebuild'])
-        st2, b2, e2 = run_rune(self.rune, pr.work, pr.files, self.flags + ['--no-cache'])
+        flags = self.flags + pr.flags()
+        st1, b1, e1 = run_rune(self.rune, pr.work, pr.files, flags + ['--cache-dir', cache, '--explain-rebuild'])
+        st2, b2, e2 = run_rune(self.rune, pr.work, pr.files, flags + ['--no-cache'])
         self.builds += 1
         self.compiled += len([l for l in e1.splitlines() if l.startswith('rune: compiled ') and 'lib/basis' not in l])
         ok = (st1 == 0) == (st2 == 0) and (st1 != 0 or b1 == b2)
@@ -300,7 +384,8 @@ def mutations(args, checker, rng):
             src = os.path.abspath(spec)
             files = open(os.path.join(src, 'files')).read().split()
             name = os.path.basename(src.rstrip('/'))
-        pr = Project(src, os.path.join(args.out, 'work-' + name), files)
+        pr = Project(src, os.path.join(args.out, 'work-' + name), files,
+                     [b for b in args.basis.split(',') if b])
         history = ['the project as it is']
         ok, built = checker.check(pr, history)
         counts, builtn = {}, 0
@@ -356,7 +441,7 @@ def replay(args, checker):
             os.makedirs(os.path.dirname(os.path.join(work, f)), exist_ok=True)
             shutil.copy(os.path.join(tree, f), os.path.join(work, f))
         pr = Project.__new__(Project)
-        pr.work, pr.files, pr.text, pr.original, pr.counter = work, files, {}, {}, 0
+        pr.work, pr.files, pr.text, pr.original, pr.counter, pr.basis = work, files, {}, {}, 0, []
         before = checker.compiled
         ok, built = checker.check(pr, ['commit ' + c])
         print('mutate history: %s %s, %d units compiled' %
@@ -372,6 +457,7 @@ def main():
     ap.add_argument('--history', type=int, default=0)
     ap.add_argument('--repo')
     ap.add_argument('--flags', default='')
+    ap.add_argument('--basis', default='')
     ap.add_argument('projects', nargs='*')
     args = ap.parse_args()
     args.rune = os.path.abspath(args.rune)

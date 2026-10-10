@@ -10,21 +10,35 @@ program is the same and in what it prints, exits with and traces where the
 build mode differs. A scenario's id is what the runner and a failure name.
 
 `tests/incremental/run.sh` (`make test-incremental`, in `make check`) runs
-those the cache can be held to now, on the project of
-`tests/incremental/project`: S1, S2, S3, S5, S6, S8, S13, S17, S18, S19,
-S24, S29, S31, S33, S34 and S36, and S28, S40 and S49 to S56 on projects
-of their own; `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
-S39; `scripts/check-cross.sh` (`rune-units`) is S43. Beside them,
-`tests/incremental/mutate.py` edits projects mechanically and wants each
-warm build to be what compiling everything gives (*Edits nobody wrote*,
-below). A unit's usages are the
-names it looked up and the units that bound them (docs/units.md, *The
-cache*), not fingerprints per entry: S3 compiles `c.sml` too, which uses
-`a.sml`'s `SHAPE`, unchanged, and S4 would compile every unit that uses a
-name of `a.sml`. Two are not run: S27 wants a second build of the
-compiler to other bytes, and S37 a disk that fills, which a user cannot
-make here (`ulimit -f` would stop the program's own file too); S36's
-read-only cache is the store that fails.
+every scenario a runner can make, on the project of
+`tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
+a file system without case), S28 to S36, S40, and S49 to S57. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+S39; `scripts/check-cross.sh` (`rune-units`) is S43; S41 is `make
+check-units`. Beside them, `tests/incremental/mutate.py` edits projects
+mechanically and wants each warm build to be what compiling everything
+gives (*Edits nobody wrote*, below), and `tests/incremental/mlton.sh` is
+S44 to S48.
+
+Where the cache does less than a scenario asks, its runner holds it to
+what it does, and says so:
+
+* a unit's usages are the names it looked up and the units that bound them
+  (`docs/units.md`, *The cache*), not fingerprints per entry: S3 compiles
+  `c.sml` too, which uses `a.sml`'s `SHAPE`, unchanged, S4 every unit that
+  uses a name of `a.sml`, and S11 the unit that only names the type,
+  which is the scenario's correct fallback (M6's third part, step 3, is
+  where fewer are compiled);
+* a unit is known by its name, which is in its identity: two files of the
+  same text and different names are two units (S7 is run as one project
+  in two directories), a file renamed is another unit, and the units that
+  used it compile again (S21 compiles `c2.sml` and `d.sml`), and a source
+  reached through a link to it is named by the link (S22 is run as a link
+  to the project's directory).
+
+Not run: S27 wants a second build of the compiler to other bytes, and S37
+a disk that fills, which a user cannot make here (`ulimit -f` would stop
+the program's own file too); S36's read-only cache is the store that
+fails. S42 is M7's.
 
 Unless a scenario says otherwise, the project is five files in order: `a.sml`
 declares a structure, a signature, a datatype and an exception; `b.sml` uses
@@ -201,6 +215,10 @@ when the scenarios above were all green
   printer.
 * **S54, the print depth.** A file whose entry was written at print depth
   0 echoes at the default depth.
+* **S57, verifying the cache in the REPL.** As S55 for a file used: its
+  entry planted under the usages of another text's is taken by a session,
+  which shows the old value, and a session with `RUNE_VERIFY_CACHE` set
+  compiles the declaration all the same and stops the file with an error.
 * **S56, the frozen Basis by another path.** The frozen library was
   compiled where its sources were `bin/../lib/basis`, and a compiler run by
   another path uses it: a unit of it that applied another file's functor --

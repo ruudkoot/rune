@@ -317,6 +317,234 @@ prints() {
   else echo "FAIL incremental.$s: the program printed [$got], wanted [$1]"; fail=$((fail + 1)); fi
 }
 
+# S4, an unused entry: a value added to a.sml, and the one no unit uses
+# changed in type; every unit that used a name a.sml binds compiles again,
+# and those that used theirs (fingerprints per entry -- M6's third part,
+# step 3 -- would compile a.sml alone)
+if run S4; then
+  fresh S4; build
+  edit a.sml -e 's/  val unused = 0/  val unused = "zero"\n  val extra = 1/'
+  build; want "$all"
+fi
+
+# S7, the same text twice: the project copied to another directory, built
+# with the first's cache: one entry serves both, and nothing is compiled
+# (two files of the same text and different names are two units: a unit's
+# name is in its identity)
+if run S7; then
+  fresh S7; build
+  rm -rf "$out/S7-other"
+  mkdir -p "$out/S7-other"
+  cp "$dir"/*.sml "$dir/files" "$out/S7-other/"
+  first=$dir
+  dir=$out/S7-other
+  (cd "$dir" && "$rune" --units --cache-dir "$first/cache" --explain-rebuild $(cat files) -o p.rbc) > "$dir/build.out" 2> "$dir/build.err"
+  status=$?
+  compiled=$(sed -n 's|^rune: compiled \([^/:]*\.sml\):.*|\1|p' "$dir/build.err" | tr '\n' ' ' | sed 's/ $//')
+  flags=""
+  want ""
+fi
+
+# S9, constructor order: a.sml's datatype's constructors reordered; its
+# users compile again, and the program prints the same
+if run S9; then
+  fresh S9; build
+  edit a.sml -e 's/datatype shape = Square of int | Rect of int \* int/datatype shape = Rect of int * int | Square of int/'
+  build; want "$all"; prints "$(printf '20\nhandled a')"
+fi
+
+# S10, a constructor's argument: a tuple made a record of the same fields
+if run S10; then
+  fresh S10; build
+  edit a.sml -e 's/Rect of int \* int/Rect of {w : int, h : int}/' -e 's/area (Rect (w, h))/area (Rect {w, h})/'
+  build; want "$all"; prints "$(printf '20\nhandled a')"
+fi
+
+# S11, behind opaque ascription: p.sml's type changes its representation
+# behind :>, which the IRs see through (the realisation): r.sml, which
+# compiles code on it, and q.sml, which only names it, compile again --
+# the correct fallback where the two are not told apart
+if run S11; then
+  own S11 p.sml q.sml r.sml
+  put p.sml 'structure P :> sig type t val make : int -> t val get : t -> int end = struct type t = int fun make n = n fun get n = n end'
+  put q.sml 'structure Q = struct type u = P.t list end'
+  put r.sml 'val () = print (Int.toString (P.get (P.make 4)) ^ "\n")'
+  build; want "p.sml q.sml r.sml"
+  put p.sml 'structure P :> sig type t val make : int -> t val get : t -> int end = struct type t = int * unit fun make n = (n, ()) fun get (n, ()) = n end'
+  build; want "p.sml q.sml r.sml"; prints 4
+fi
+
+# S12, a signature: s.sml's signature, which u.sml ascribes, given another
+# value; u.sml compiles again, and v.sml, which names it in a comment only,
+# does not
+if run S12; then
+  own S12 s.sml u.sml v.sml
+  put s.sml 'signature S = sig val x : int end'
+  put u.sml 'structure U : S = struct val x = 1 val y = 2 end'
+  put v.sml '(* S, the signature, named in a comment *) val () = print "v\n"'
+  build; want "s.sml u.sml v.sml"
+  put s.sml 'signature S = sig val x : int val y : int end'
+  build; want "s.sml u.sml"
+fi
+
+# S14, overloading: k.sml's value made a word; m.sml, whose + resolved at
+# int, compiles again and resolves it at word
+if run S14; then
+  own S14 k.sml m.sml
+  put k.sml 'structure K = struct val n = 3 end'
+  put m.sml 'val r = K.n + K.n  val () = print "ok\n"'
+  build; want "k.sml m.sml"
+  put k.sml 'structure K = struct val n = 0w3 end'
+  build; want "k.sml m.sml"; prints ok
+fi
+
+# S15, an exception: e.sml's exception's argument made an IntInf.int; its
+# raiser and its handler compile again, and a unit that names neither
+# does not
+if run S15; then
+  own S15 e.sml r.sml h.sml u.sml
+  put e.sml 'structure E = struct exception X of int end'
+  put r.sml 'fun boom () = raise E.X 1'
+  put h.sml 'val () = boom () handle E.X n => print (if n = 1 then "one\n" else "other\n")'
+  put u.sml 'val () = print "u\n"'
+  build; want "e.sml r.sml h.sml u.sml"
+  put e.sml 'structure E = struct exception X of IntInf.int end'
+  build; want "e.sml r.sml h.sml"; prints "$(printf 'one\nu')"
+fi
+
+# S16, open: p.sml opens O; O given a name p.sml binds later: p.sml
+# compiles again, though it names nothing new, and prints the same
+if run S16; then
+  own S16 o.sml p.sml
+  put o.sml 'structure O = struct val a = 1 end'
+  put p.sml 'open O  val b = a + 1  val () = print (Int.toString b ^ "\n")'
+  build; want "o.sml p.sml"
+  put o.sml 'structure O = struct val a = 1 val b = 100 end'
+  build; want "o.sml p.sml"; prints 2
+fi
+
+# S20, remove: a file nothing uses taken out of the order compiles
+# nothing; then b.sml, which d.sml uses, taken out: the build fails
+if run S20; then
+  fresh S20
+  put x.sml 'val unusedX = 1'
+  printf 'a.sml\nb.sml\nx.sml\nc.sml\nd.sml\nmain.sml\n' > "$dir/files"
+  build; want "a.sml b.sml x.sml c.sml d.sml main.sml"
+  printf 'a.sml\nb.sml\nc.sml\nd.sml\nmain.sml\n' > "$dir/files"
+  build; want ""
+  printf 'a.sml\nc.sml\nd.sml\nmain.sml\n' > "$dir/files"
+  build; fails
+fi
+
+# S21, rename: c.sml renamed c2.sml, unchanged: it compiles again, and
+# d.sml, which applies its functor -- a unit is known by its name, so the
+# renamed file is another unit (SCENARIOS.md wants nothing compiled, which
+# content-addressed identities would give)
+if run S21; then
+  fresh S21; build
+  mv "$dir/c.sml" "$dir/c2.sml"
+  printf 'a.sml\nb.sml\nc2.sml\nd.sml\nmain.sml\n' > "$dir/files"
+  build; want "c2.sml d.sml"
+fi
+
+# S22, symlinks: the project reached through a link to its directory, the
+# files named as before: the same entries, nothing compiled
+if run S22; then
+  fresh S22; build
+  rm -f "$out/S22-link"
+  ln -s "$dir" "$out/S22-link"
+  real=$dir
+  dir=$out/S22-link
+  build; want ""
+  dir=$real
+fi
+
+# S23, case: A.sml and a.sml, two files on Linux, two keys; A.sml's body
+# changed compiles A.sml alone (on a file system without case, one file,
+# and the scenario is not run)
+if run S23; then
+  own S23 a.sml A.sml main.sml
+  put a.sml 'structure Lo = struct val x = 1 end'
+  put A.sml 'structure Up = struct val x = 2 end'
+  if grep -q Lo "$dir/a.sml"; then
+    put main.sml 'val () = print (Int.toString (Lo.x + Up.x) ^ "\n")'
+    build; want "a.sml A.sml main.sml"
+    put A.sml 'structure Up = struct val x = 3 end'
+    build; want "A.sml"; prints 4
+  fi
+fi
+
+# S25 and S26, the target and the width of int: each another
+# configuration, which compiles everything, beside the first
+if run S25; then
+  fresh S25; build; want "$all"
+  build --target=stack; want "$all"
+  build; want ""
+  build --target=stack; want ""
+fi
+if run S26; then
+  fresh S26; build; want "$all"
+  build --int-bits=64; want "$all"
+  build; want ""
+fi
+
+# S30, debug and release: -O0 and -O2 in one cache, neither evicting the
+# other
+if run S30; then
+  fresh S30; build -O0; want "$all"
+  build -O2; want "$all"
+  build -O0; want ""
+  build -O2; want ""
+fi
+
+# S32, warnings: a unit whose match is not exhaustive, taken from the
+# cache, warns again the same way
+if run S32; then
+  own S32 w.sml
+  put w.sml 'fun f 0 = 1  val () = print (Int.toString (f 0) ^ "\n")'
+  build; want "w.sml"
+  cp "$dir/build.err" "$dir/cold.err"
+  build; want ""
+  if grep -q 'w.sml:1:5: warning: match is not exhaustive' "$dir/build.err"; then pass=$((pass + 1))
+  else echo "FAIL incremental.S32: the warning was not given again ($dir/build.err)"; fail=$((fail + 1)); fi
+fi
+
+# S35, interrupted: what a build killed while it stored an entry leaves --
+# a file under another name beside the entries -- is no entry, and is not
+# taken
+if run S35; then
+  fresh S35; build
+  for k in "$dir"/cache/*/*/; do printf 'half an entry' > "$k/$(ls "$k" | head -1).tmp-1-1"; done
+  build; want ""
+fi
+
+# S57, verifying the cache in the REPL: u.sml's entry from its first text
+# planted under the usages of its second's (tests/incremental/plant.py); a
+# session takes it and shows the first's value, and one with
+# RUNE_VERIFY_CACHE set compiles it all the same and fails
+if run S57; then
+  s=S57
+  dir=$out/S57
+  rm -rf "$dir"
+  mkdir -p "$dir"
+  session() { (cd "$dir" && printf '%s\n' "$@" | env $verify RUNE_CACHE="$dir/cache" "$repl" > "$dir/session.out" 2>&1); }
+  verify=""
+  put u.sml 'val twice = base + base'
+  session 'val base = 1;' 'use "u.sml";'
+  first=$(find "$dir/cache" -type f | sort)
+  put u.sml 'val twice = base * 3'
+  session 'val base = 1;' 'use "u.sml";'
+  second=$(find "$dir/cache" -type f | sort | grep -vxF "$first")
+  python3 "$root/tests/incremental/plant.py" $(echo "$first" | head -1) "$second"
+  session 'val base = 1;' 'use "u.sml";'
+  if grep -q 'val twice = 2 : int' "$dir/session.out"; then pass=$((pass + 1))
+  else echo "FAIL incremental.S57: the planted entry was not taken ($dir/session.out)"; fail=$((fail + 1)); fi
+  verify=RUNE_VERIFY_CACHE=1
+  session 'val base = 1;' 'use "u.sml";'
+  if grep -q "the cache's entry for .* is not what compiling it gives" "$dir/session.out"; then pass=$((pass + 1))
+  else echo "FAIL incremental.S57: RUNE_VERIFY_CACHE did not find the planted entry ($dir/session.out)"; fail=$((fail + 1)); fi
+fi
+
 # S56, the frozen Basis by another path: the frozen library's units were
 # compiled where their sources were bin/../lib/basis (make basis-cache), and
 # this compiler is run by a path of its own. word8vector.sml applies

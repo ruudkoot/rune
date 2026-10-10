@@ -38,6 +38,29 @@ struct
   (* an entry found, or why there is none *)
   datatype found = Found of entry | Missed of string
 
+  (* --verify-cache, or RUNE_VERIFY_CACHE set and not empty (for a compile
+     that takes no flags, the REPL's use): each unit found is compiled all
+     the same, and must be what its entry holds *)
+  fun verifying () : bool =
+    !Options.verifyCache orelse (case OS.Process.getEnv "RUNE_VERIFY_CACHE" of SOME s => s <> "" | NONE => false)
+
+  (* whether an entry found for the unit now named name holds the basis and
+     the code that compiling it gave: the code by the bytes, where none of
+     its files moved, and else with its files named where they are now,
+     both written again from what they read as, which is not always the
+     bytes read *)
+  fun verifies ({pickle, code, file, others, ...} : entry, name : string, pickle' : string, bytes : string)
+      : bool =
+    pickle = pickle'
+    andalso ((let
+                val (fp, u) = UnitFile.read code
+                fun again s = let val (fp, u) = UnitFile.read s in String.concat (UnitFile.chunks (fp, u)) end
+              in
+                if not (UnitBasis.moves (u, file, name, others)) then code = bytes
+                else String.concat (UnitFile.chunks (fp, UnitBasis.relocate (u, file, name, others))) = again bytes
+              end)
+             handle UnitFile.Bad _ => false)
+
   (* The hash of the configuration of this compile *)
   fun configuration () : string =
     P.hash (String.concatWith "\000"

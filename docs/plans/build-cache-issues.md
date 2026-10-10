@@ -150,7 +150,8 @@ they were found.
   as what compiling it gives. S55 plants an entry whose usages hold and
   whose content is another compile's (`tests/incremental/plant.py`): a
   build takes it and prints the old result, and `--verify-cache` finds it.
-  Not yet in the REPL's `use`.
+  The REPL's `use`, which takes no flags, verifies where `RUNE_VERIFY_CACHE`
+  is set (S57).
 
 * **10. `make check` never used the frozen Basis.** `make check` built the
   compiler and not `lib/cache`, so in a clean tree -- every snapshot the

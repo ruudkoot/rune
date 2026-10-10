@@ -255,7 +255,7 @@ struct
              what that gives is compared with it *)
           val (found, against) =
             case found of
-              UnitCache.Found e => if !Options.verifyCache then (UnitCache.Missed "to verify its entry", SOME e)
+              UnitCache.Found e => if UnitCache.verifying () then (UnitCache.Missed "to verify its entry", SOME e)
                                    else (found, NONE)
             | _ => (found, NONE)
           (* from the cache: its basis loaded, its code read *)
@@ -329,19 +329,7 @@ struct
               val verified =
                 case against of
                   NONE => true
-                | SOME {pickle, code = c, file, others, ...} =>
-                    pickle = #pickle exported
-                    andalso ((let
-                                val (fp, u) = UnitFile.read c
-                                val moved = UnitBasis.relocate (u, file, name, others)
-                                (* both written again from what they read as,
-                                   which is not always the bytes read *)
-                                fun again s = let val (fp, u) = UnitFile.read s in String.concat (UnitFile.chunks (fp, u)) end
-                              in
-                                if not (UnitBasis.moves (u, file, name, others)) then c = bytes
-                                else String.concat (UnitFile.chunks (fp, moved)) = again bytes
-                              end)
-                             handle UnitFile.Bad _ => false)
+                | SOME e => UnitCache.verifies (e, name, #pickle exported, bytes)
             in
               env := Env.plus (#env start, #delta loaded);
               fixity := Fixity.extend (#fixity start, #directives loaded);

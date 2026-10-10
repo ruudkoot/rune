@@ -187,9 +187,10 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
 * the cache is a directory: `--cache-dir DIR`, else `$RUNE_CACHE` (empty:
   none), else `.rune` beside the first input; `--no-cache` compiles every
   unit; `--explain-rebuild` says of each unit whether it was taken from the
-  cache or why it was compiled; `--verify-cache` compiles each unit the
-  cache has too, and fails where the cache's is not the same bytes as what
-  compiling it gives;
+  cache or why it was compiled; `--verify-cache`, or `RUNE_VERIFY_CACHE`
+  set and not empty (for the REPL's `use`, which takes no flags), compiles
+  each unit the cache has too, and fails where the cache's is not the same
+  bytes as what compiling it gives;
 * in it, a directory per *configuration*: the hash of the compiler's
   identity (`Config.identity`, a hash of the compiler's sources, which
   `scripts/gen-build-files.sh` writes), the versions of the files, the
