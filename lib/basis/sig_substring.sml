@@ -308,6 +308,7 @@ sig
      same base string, so nothing is copied.
 
      Law: `tokens p ss = List.filter (fn t => not (isEmpty t)) (fields p ss)`
+     when `p` has no effects: how often `p` is asked is the implementation's
 
      Example: `map string (tokens Char.isSpace (full " a  b ")) = ["a", "b"]`
 

@@ -439,7 +439,8 @@ nothing behind, so this is how a line is split into words.
 
 **Example** `tokens Char.isSpace "  a  b " = ["a", "b"]`
 
-**Law** `tokens p s = List.filter (fn t => Int.> (size t, 0)) (fields p s)` (for every `p : char -> bool`, `s : string`)
+**Law** `tokens p s = List.filter (fn t => Int.> (size t, 0)) (fields p s)`
+when `p` has no effects (for every `p : char -> bool`, `s : string`)
 
 > **Reading** `String.tokens/order`. The specification says the tokens are
 > "derived from s from left to right", and not how often `p` is asked:

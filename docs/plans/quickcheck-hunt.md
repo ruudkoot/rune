@@ -398,7 +398,7 @@ date far outside 1900 to 2200.
 | `Date.year` and its five sisters | `Date` (SML/NJ, MLKit) or `Overflow` (MLton) for years outside the host's range; Poly/ML takes too long | four hosts | for the owner (below) |
 | `String.tokens`, `Substring.tokens` | the predicate is called twice for each character | MLKit | for the owner (below) |
 
-The deviations hold the host bugs and the rest, with their probes. Two
-differences need the owner:
-- **The Date laws' years.** The laws draw years from ~10^9 to 10^9, which Rune represents; the specification asks for 1900 to 2200, and the other systems represent less (MLton raises `Overflow` where it should raise `Date`, a bug of its own). Drawing the years of 1900 to 2200 would make the laws the signature's, true of every system; Rune's wider range stays pinned by its own checks and its note.
-- **`tokens` and its predicate.** Its laws compare the calls of `p`, and MLKit calls `p` twice for each character, which the specification does not forbid. As with `Substring.splitl`, the law would hold "when `p` has no effects".
+The deviations hold the host bugs and the rest, with their probes. The
+owner decided the other two (2026-10-10):
+- **The Date laws' years.** The specification: "A conforming `Date` structure should support date values ranging from around 1900 to 2200", and "If the resulting date is outside the range supported by the implementation, the `Date` exception is raised". The laws of `Date.year` are now two: for the years 1900 to 2200, a date of fields in range keeps them, on every implementation; for any year, it keeps them or raises `Date`, and gives no other fields. Rune's wider range is its note, `Date.date/any-year`. The first six pass on every other compiler. MLton and MLKit raise `Overflow` for a year they cannot represent (a deviation), and SML/NJ and Poly/ML take more than ten minutes over one (STOPPED).
+- **`tokens` and its predicate.** The laws of `String.tokens` and `Substring.tokens` hold when `p` has no effects, as `Substring.splitl`'s does: MLKit asks `p` twice for each character, which the specification does not forbid. Rune asks once, which its reading `String.tokens/order` says and a check pins.
