@@ -227,7 +227,10 @@ the same bytes as what compiling it gives.
 .B $RUNE_VERIFY_CACHE
 set and not empty does the same, and for the REPL's
 .B use
-too.
+too;
+.BI $RUNE_VERIFY_DUMP= DIR
+writes each entry that does not verify, and what compiling it gave, to
+.IR DIR .
 .TP
 .B \-\-deps
 Print the inputs in an order where each comes after the files that declare

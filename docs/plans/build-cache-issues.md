@@ -186,7 +186,8 @@ they were found.
   a unit's code and writing it again lists the units it names in another
   order. Linking does not care, and `--verify-cache` compares the bytes as
   read (it first reported two units of the Basis wrongly because it did
-  not), but a unit's code is not one representation.
+  not), but a unit's code is not one representation. Issue 13 is the same
+  list's order across two sessions.
 
 * **12. Fingerprints grew with what a type is made of.** Step 3's
   fingerprint of a type name held the text of its definition, which named
@@ -196,3 +197,16 @@ they were found.
   wrong result, but the cost of a cache is part of whether it is used. A
   type name's fingerprint is now its anchor and the hash of its
   definition; found measuring M11.
+
+* **13. A unit compiled in two sessions was two sets of bytes.** Its
+  code listed the names it uses of other units in the order of the
+  stamps the session gave those names, and a session gives them as it
+  loads the units, so two sessions that loaded the same units in two
+  orders wrote the same unit two ways. Linking took either alike, so no
+  program was wrong, but `--verify-cache` failed on a correct entry, and
+  an entry was not one representation. Found verifying HOL4's build
+  (`RUNE_VERIFY_CACHE=1`, the scripts' sessions loading HOL's files in
+  their own orders); the code now lists them by their places in it, and
+  S59 builds a unit after `a b` and after `b a` through one cache and
+  verifies it. `RUNE_VERIFY_DUMP` writes both sides of a failure, which is
+  how this one was read.

@@ -720,5 +720,24 @@ if run S58; then
   unset RUNE_PARALLEL_MIN
 fi
 
+# S59, the same unit in two sessions: c.sml uses a.sml and b.sml, which do
+# not use each other; built after them in one order and then the other,
+# c.sml's entry is taken, and compiled again by --verify-cache it is the
+# same bytes, though the session gave a.sml's and b.sml's names other
+# stamps (found verifying HOL4's build, where the REPL's sessions load
+# HOL's files in their scripts' orders)
+if run S59; then
+  own S59 a.sml b.sml c.sml
+  put a.sml 'structure A = struct fun f x = x + 1 end'
+  put b.sml 'structure B = struct fun g x = x * 2 end'
+  put c.sml 'val () = print (Int.toString (A.f (B.g 20)) ^ "\n")'
+  build; want "a.sml b.sml c.sml"
+  printf '%s\n' b.sml a.sml c.sml > "$dir/files"
+  build --verify-cache
+  if [ "$status" = 0 ]; then pass=$((pass + 1))
+  else echo "FAIL incremental.S59: an entry did not verify in another order ($dir/build.err)"; fail=$((fail + 1)); fi
+  prints 41
+fi
+
 echo "incremental: passed $pass, failed $fail"
 [ $fail = 0 ]

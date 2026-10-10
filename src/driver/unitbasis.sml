@@ -901,10 +901,18 @@ struct
       (* a global the unit sets is its own: no unit before it has it *)
       val () = List.app (fn s => if #unit (key s) = #identity x then () else bug "a global set by a unit is another's")
                         (#defines u)
+      (* in the order of their places in the code, not of the session's
+         stamps: the stamps of other units' names are those a session gave
+         them as it loaded those units, so a unit compiled in two sessions
+         would list them in two orders (found verifying HOL4's build) *)
+      fun byPlace (place : 'a -> int) (l : 'a list) : 'a list =
+        let val sorted = IntMap.listItems (List.foldl (fn (x, m) => IntMap.insert (m, place x, x)) IntMap.empty l)
+        in if List.length sorted = List.length l then sorted else bug "two names of a unit's code at one place" end
     in
-      {code = #code u, identity = #identity x, globals = List.map (fn (s, ix) => (key s, ix)) (#globals u),
-       imports = List.map (fn (ix, s) => (ix, key s)) (#imports u),
-       exports = List.map (fn (s, ix) => (#number (key s), ix)) (#exports u)}
+      {code = #code u, identity = #identity x,
+       globals = byPlace #2 (List.map (fn (s, ix) => (key s, ix)) (#globals u)),
+       imports = byPlace #1 (List.map (fn (ix, s) => (ix, key s)) (#imports u)),
+       exports = byPlace #1 (List.map (fn (s, ix) => (#number (key s), ix)) (#exports u))}
     end
 
   (* ---- reading ---- *)

@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `tests/incremental/run.sh` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, and S49 to S58. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, and S49 to S59. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; `scripts/check-cross.sh` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `tests/incremental/mutate.py` edits projects
@@ -216,6 +216,12 @@ when the scenarios above were all green
   printer.
 * **S54, the print depth.** A file whose entry was written at print depth
   0 echoes at the default depth.
+* **S59, one unit in two sessions.** `c.sml` uses `a.sml` and `b.sml`,
+  which do not use each other. Built after them in one order and then in
+  the other through one cache, `c.sml`'s entry is taken, and compiled
+  again by `--verify-cache` it is the same bytes: its code does not list
+  the names it uses in the order of the session's stamps
+  (docs/plans/build-cache-issues.md, issue 13).
 * **S58, a parallel build.** The project built with `-j 4` beside a copy
   built by one process, the same edits made to both: cold, warm, after an
   edit that only `b.sml` sees, after one that every unit after `a.sml`

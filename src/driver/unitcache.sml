@@ -50,19 +50,47 @@ struct
      its files moved, and else with its files named where they are now,
      both written again from what they read as, which is not always the
      bytes read *)
+  (* RUNE_VERIFY_DUMP=DIR: an entry that does not verify, and what compiling
+     it gave, written to DIR, NAME.cached.{pickle,code,mid} and
+     NAME.fresh.{pickle,code,mid}, to compare *)
+  val dumped = ref 0
+  fun dump (name, (pickle, code, mid), (pickle', code', mid')) =
+    case OS.Process.getEnv "RUNE_VERIFY_DUMP" of
+      NONE => ()
+    | SOME dir =>
+        let
+          val () = dumped := !dumped + 1
+          val base = OS.Path.joinDirFile {dir = dir, file = Int.toString (!dumped) ^ "-"
+                                                            ^ String.translate (fn #"/" => "_" | c => String.str c) name}
+          fun put (suffix, text) =
+            let val out = BinIO.openOut (base ^ suffix)
+            in BinIO.output (out, Byte.stringToBytes text); BinIO.closeOut out end
+        in
+          ((OS.FileSys.mkDir dir handle OS.SysErr _ => ());
+           put (".cached.pickle", pickle); put (".cached.code", code); put (".cached.mid", mid);
+           put (".fresh.pickle", pickle'); put (".fresh.code", code'); put (".fresh.mid", mid'))
+          handle IO.Io _ => ()
+        end
+
   fun verifies ({pickle, code, file, others, mid, ...} : entry, name : string, pickle' : string, bytes : string,
                 mid' : string) : bool =
-    pickle = pickle'
-    andalso (mid = mid'
-             orelse ((UnitMid.relocate (mid, UnitBasis.movedTo (file, name, others)) = mid') handle UnitMid.Bad _ => false))
-    andalso ((let
-                val (fp, u) = UnitFile.read code
-                fun again s = let val (fp, u) = UnitFile.read s in String.concat (UnitFile.chunks (fp, u)) end
-              in
-                if not (UnitBasis.moves (u, file, name, others)) then code = bytes
-                else String.concat (UnitFile.chunks (fp, UnitBasis.relocate (u, file, name, others))) = again bytes
-              end)
-             handle UnitFile.Bad _ => false)
+    let
+      val same =
+        pickle = pickle'
+        andalso (mid = mid'
+                 orelse ((UnitMid.relocate (mid, UnitBasis.movedTo (file, name, others)) = mid') handle UnitMid.Bad _ => false))
+        andalso ((let
+                    val (fp, u) = UnitFile.read code
+                    fun again s = let val (fp, u) = UnitFile.read s in String.concat (UnitFile.chunks (fp, u)) end
+                  in
+                    if not (UnitBasis.moves (u, file, name, others)) then code = bytes
+                    else String.concat (UnitFile.chunks (fp, UnitBasis.relocate (u, file, name, others))) = again bytes
+                  end)
+                 handle UnitFile.Bad _ => false)
+    in
+      if same then () else dump (name, (pickle, code, mid), (pickle', bytes, mid'));
+      same
+    end
 
   (* The hash of the configuration of this compile *)
   fun configuration () : string =
