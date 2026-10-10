@@ -340,9 +340,9 @@ where it runs (`man runeopt`).
 
 * `sources.txt` is the single ordered list of compiler source files.
   `scripts/gen-build-files.sh` generates `build/rune.mlb` (MLton),
-  `build/rune.cm` (SML/NJ), `build/polyml-build.sml` (Poly/ML `use` script),
-  `build/rune-mlkit.mlb` (MLKit: MLton's, without its annotations and with
-  its own entry point) and `build/config.sml` (the version) from it.
+  `build/rune.cm` (SML/NJ), `build/polyml-build.sml` (Poly/ML `use` script)
+  and `build/rune-mlkit.mlb` (MLKit: MLton's, without its annotations and
+  with its own entry point) from it.
   **Add new source files to `sources.txt` only.**
 * `sources-doc.txt` is the same for `runedoc`: the compiler's utilities,
   frontend and elaborator in the order of `sources.txt`, then `src/doc`. The
@@ -357,6 +357,16 @@ where it runs (`man runeopt`).
 * `sources-opt.txt` is the same for `runeopt`, with `src/opt`; the entry
   points are `src/main/runeopt-*-main.sml`, and the rules below hold for
   `src/opt` too.
+* The version is git's: the name of the tag that points at the commit
+  checked out, or else the commit's abbreviated hash, with `-dirty` after
+  it when a tracked file has changed. `scripts/gen-version.sh` writes it
+  into `build/config.sml`, which every build of the four programs loads
+  first, and `runtime/version.h` for the VMs (`Runtime.version`). make asks
+  git on every run but writes the files only when the version changes, so
+  a new commit, a checkout or the first edit of a clean tree rebuilds the
+  programs and the VMs once. Without git or a repository the files keep the
+  version they have, or say `unknown`. The manual pages are committed with
+  none; `scripts/install.sh` gives each the version of what it installs.
 * The instruction set and the primitives are described once, in Standard
   ML: `src/isa/stack.sml` and `src/isa/prims.sml`, in the language of
   `src/isa/isa.sml`. `runeisa` (`sources-isa.txt`, `src/isa`) writes from

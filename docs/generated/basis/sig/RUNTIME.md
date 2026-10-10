@@ -367,6 +367,10 @@ val version : string
 The version of Rune that this program is running on, as
 `runevm --version` prints it.
 
+It is the name of the git tag of the commit Rune was built from, or
+else that commit's abbreviated hash, with `-dirty` after it when the
+tree had changes that were not committed.
+
 The compiler and the VM are built from one string, so `rune --version`
 says the same. It is not the version of the bytecode, which the VM
 checks when it loads a program and which changes only when the file
@@ -376,7 +380,7 @@ format does.
 
 <details><summary>Tests (1)</summary>
 
-For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `is-numbers-separated-by-dots`
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `is-a-word`
 
 </details>
 

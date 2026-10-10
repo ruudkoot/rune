@@ -98,15 +98,15 @@ for f in tests/errors/*.sml; do
   [ -f "${f%.sml}.expected" ] || fail "missing ${f%.sml}.expected"
 done
 
-# 7. the version is one string. scripts/gen-build-files.sh writes it into
+# 7. the version is one string, git's. scripts/gen-version.sh writes it into
 # build/config.sml for the compiler and runtime/version.h for the VM; the manual
-# pages are written by hand and once said two different things.
-version=$(sed -n 's/^version=\(.*\)$/\1/p' scripts/gen-build-files.sh)
-[ -n "$version" ] || fail "scripts/gen-build-files.sh does not set a version"
+# pages are written by hand, once said two different things, and cannot say
+# the commit they are in: their title line names the program alone, and
+# scripts/install.sh puts the version after it.
 for page in share/man/rune.1 share/man/runedoc.1 share/man/runeopt.1 share/man/runevm.1; do
   prog=$(basename "$page" .1)
-  grep -q "\"$prog $version\"" "$page" ||
-    fail "$page does not say \"$prog $version\", the version of scripts/gen-build-files.sh"
+  head -n 1 "$page" | grep -q "^\.TH [A-Z-]* 1 \"[^\"]*\" \"$prog\" " ||
+    fail "$page does not name \"$prog\" alone in its title line, where scripts/install.sh puts the version"
 done
 
 # 8. every primitive has a definition for the hosts. tests/basis/host/rune-prim.sml

@@ -99,7 +99,9 @@ GEN_C    := runtime/isa.h runtime/stack/opcodes.h runtime/prims_table.h runtime/
 SOURCES_DOC := $(shell grep -v '^[[:space:]]*\#' sources-doc.txt | grep -v '^[[:space:]]*$$')
 SOURCES_OPT := $(shell grep -v '^[[:space:]]*\#' sources-opt.txt | grep -v '^[[:space:]]*$$')
 SOURCES_ISA := $(shell grep -v '^[[:space:]]*\#' sources-isa.txt | grep -v '^[[:space:]]*$$')
-BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb build/config.sml runtime/version.h
+BUILDFILES := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb
+VERSIONGEN := build/config.sml runtime/version.h
+BUILDGEN := $(BUILDFILES) $(VERSIONGEN)
 
 # The core VM is ISO C99; what needs the operating system is in runtime/sys/sys.h and
 # one of its implementations. `make SYS=none` builds without POSIX, and the
@@ -168,8 +170,17 @@ build/.doctor-%: scripts/doctor.sh
 # ---------------------------------------------------------------- generated
 gen: $(BUILDGEN)
 
-$(BUILDGEN) &: sources.txt sources-doc.txt sources-opt.txt sources-isa.txt scripts/gen-build-files.sh
+$(BUILDFILES) &: sources.txt sources-doc.txt sources-opt.txt sources-isa.txt scripts/gen-build-files.sh
 	sh scripts/gen-build-files.sh "$(ROOT)"
+
+# The version is git's (scripts/gen-version.sh): asked on every make, and
+# written only when it changes, so that a new commit, a checkout or the first
+# edit of a clean tree rebuilds what says it and nothing else does.
+$(VERSIONGEN) &: FORCE
+	@sh scripts/gen-version.sh "$(ROOT)"
+
+.PHONY: FORCE
+FORCE:
 
 # The instruction sets are described in src/isa (docs/plans/middle-end.md,
 # M1); runeisa writes from them the tables of the VM and the compiler and

@@ -114,6 +114,15 @@ copy() { # args SRC DST MODE
   chmod "$3" "$2"
 }
 
+# The manual pages are committed with no version, which is git's
+# (scripts/gen-version.sh); each is given the one bin/ was built as.
+version=$(sed -n 's/^#define RUNE_VERSION "\(.*\)"$/\1/p' "$root/runtime/version.h" 2> /dev/null || true)
+version=$(printf '%s' "${version:-unknown}" | sed 's/[&|\\]/\\&/g')
+manpage() { # args PROG
+  sed "1s|\"$1\"|\"$1 $version\"|" "$root/share/man/$1.1" > "$mandir/$1.1"
+  chmod 644 "$mandir/$1.1"
+}
+
 mkdir -p "$bindir" "$libdir/basis" "$mandir" "$bashdir" "$zshdir"
 
 copy "$root/bin/runevm-stack" "$bindir/runevm-stack" 755
@@ -234,19 +243,19 @@ for manifest in $(cd "$root/lib" && find . -name MANIFEST | sort); do
   done
 done
 
-copy "$root/share/man/rune.1" "$mandir/rune.1" 644
+manpage rune
 copy "$root/share/man/runevm-stack.1" "$mandir/runevm-stack.1" 644
-copy "$root/share/man/runevm.1" "$mandir/runevm.1" 644
+manpage runevm
 copy "$root/share/completions/rune.bash" "$bashdir/rune" 644
 copy "$root/share/completions/_rune" "$zshdir/_rune" 644
 copy "$root/share/completions/_runevm" "$zshdir/_runevm" 644
 if [ -n "$doc" ]; then
-  copy "$root/share/man/runedoc.1" "$mandir/runedoc.1" 644
+  manpage runedoc
   copy "$root/share/completions/runedoc.bash" "$bashdir/runedoc" 644
   copy "$root/share/completions/_runedoc" "$zshdir/_runedoc" 644
 fi
 if [ -n "$opt" ]; then
-  copy "$root/share/man/runeopt.1" "$mandir/runeopt.1" 644
+  manpage runeopt
   copy "$root/share/completions/runeopt.bash" "$bashdir/runeopt" 644
   copy "$root/share/completions/_runeopt" "$zshdir/_runeopt" 644
 fi
