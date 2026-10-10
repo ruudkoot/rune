@@ -9,6 +9,9 @@
 # so they are not tried on the hosts. Override the tools with RUNEDOC=, RUNE=
 # and RUNEVM=.
 set -u
+# What is compared must not depend on colour forced from outside
+# (docs/diagnostics.md).
+unset FORCE_COLOR CLICOLOR_FORCE
 cd "$(dirname "$0")/../.."
 runedoc=${RUNEDOC:-bin/runedoc}
 rune=${RUNE:-bin/rune-stack}

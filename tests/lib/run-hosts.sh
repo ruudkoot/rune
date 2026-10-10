@@ -11,6 +11,9 @@
 # `make test-lib-hosts` runs this; it is not part of `make check`, as the
 # Basis suite's matrix is not.
 set -u
+# What is compared must not depend on colour forced from outside
+# (docs/diagnostics.md).
+unset FORCE_COLOR CLICOLOR_FORCE
 cd "$(dirname "$0")/../.."
 hosts_dir=${RUNE_HOSTS:-$HOME/.local/rune-hosts}
 mlton=${MLTON:-$hosts_dir/mlton/bin/mlton}
@@ -36,10 +39,16 @@ random="lib/random/random_sig.sml lib/random/random.sml"
 # the library's files that the other compilers build (host column yes); the
 # rest name structures that the Basis leaves optional, or Rune's own
 property=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/test\/property\/\1/p' lib/test/property/MANIFEST | tr '\n' ' ')
+unicode=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/unicode\/\1/p' lib/unicode/MANIFEST | tr '\n' ' ')
+json=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/json\/\1/p' lib/json/MANIFEST | tr '\n' ' ')
 tests="random.kat|$random|tests/lib/random/kat.sml|kat
 random.props|$random|tests/lib/random/props.sml|props
 property.core|$random $property|tests/lib/property/core.sml|core
-property.shrink|$random $property|tests/lib/property/shrink.sml|props"
+property.shrink|$random $property|tests/lib/property/shrink.sml|props
+unicode.utf8|$random $unicode|tests/lib/unicode/utf8.sml|props
+unicode.graphemes|$unicode|tests/lib/unicode/graphemes.sml|props
+json.suite|$unicode $json|tests/lib/json/suite.sml|props
+json.roundtrip|$random $unicode $json|tests/lib/json/roundtrip.sml|props"
 
 passed=0
 explained=0
@@ -59,30 +68,33 @@ deviation() {
 }
 
 # build HOST NAME FILES...: the program of the files, built by the host,
-# written to $out/NAME.out when it runs; a build error to $out/NAME.err
+# written to $out/NAME.out when it runs; a build error to $out/NAME.err.
+# A program has ten minutes, so that one a host's bug hangs (a socket that
+# blocks where it must not) fails rather than stopping the run.
+limit="timeout 600"
 build() {
   host=$1; name=$2; shift 2
   case "$host" in
     mlton)
       { echo '$(SML_LIB)/basis/basis.mlb'; for f in "$@"; do echo "$top/$f"; done; } > "$out/$name.mlb"
-      "$mlton" -output "$out/$name" "$out/$name.mlb" > "$out/$name.err" 2>&1 && "$out/$name" > "$out/$name.out" 2>&1 ;;
+      "$mlton" -output "$out/$name" "$out/$name.mlb" > "$out/$name.err" 2>&1 && $limit "$out/$name" > "$out/$name.out" 2>&1 ;;
     smlnj-legacy|smlnj32|smlnj-dev)
       if [ "$host" = smlnj-legacy ]; then sml=$smlnj_legacy
       elif [ "$host" = smlnj-dev ]; then sml=$smlnj_dev
       else sml=$smlnj32
       fi
       echo 'val () = OS.Process.exit OS.Process.success' > "$out/exit.sml"
-      "$sml" "$@" "$out/exit.sml" < /dev/null > "$out/$name.raw" 2>&1
+      $limit "$sml" "$@" "$out/exit.sml" < /dev/null > "$out/$name.raw" 2>&1
       grep -v -E '^(\[|Standard ML|val |- |structure |signature |type |datatype |exception |fun )' "$out/$name.raw" > "$out/$name.out"
       ! grep -q -E 'Error:|uncaught exception' "$out/$name.raw" ;;
     polyml)
       { for f in "$@"; do echo "use \"$f\";"; done; echo 'OS.Process.exit OS.Process.success;'; } > "$out/$name.use"
-      "$poly" -q < "$out/$name.use" > "$out/$name.raw" 2>&1
+      $limit "$poly" -q < "$out/$name.use" > "$out/$name.raw" 2>&1
       grep -v -E '^(val |structure |signature |type |datatype |exception |fun |> )' "$out/$name.raw" > "$out/$name.out"
       ! grep -q -E 'Error-|Exception-' "$out/$name.raw" ;;
     mlkit)
       { echo '$(SML_LIB)/basis/basis.mlb'; for f in "$@"; do echo "$top/$f"; done; } > "$out/$name.mlb"
-      (cd "$out" && SML_LIB=$mlkit_lib "$mlkit" -o "$name" "$name.mlb" > "$name.err" 2>&1) && "$out/$name" > "$out/$name.out" 2>&1 ;;
+      (cd "$out" && SML_LIB=$mlkit_lib "$mlkit" -o "$name" "$name.mlb" > "$name.err" 2>&1) && $limit "$out/$name" > "$out/$name.out" 2>&1 ;;
   esac
 }
 

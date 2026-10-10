@@ -13,6 +13,10 @@ _arguments -s \
   '--page[print the pages of the signatures of the files]' \
   '--dump-ir[print what is extracted from the files]' \
   '--lint[check the comments of the files]' \
+  '--palette[write palette.css and palette.json to DIR]:directory:_files -/' \
+  '--color=[colour the diagnostics]:when:(always never auto)' \
+  '--diagnostics=[the source lines of a diagnostic, or its first line only]:form:(full short)' \
+  '--diagnostics-json[also write the diagnostics to FILE as JSON]:JSON file:_files' \
   '--lib[directory holding the libraries]:library directory:_files -/' \
   '--version[print the version and exit]' \
   '(- *)'{-h,--help}'[print a usage summary and exit]' \

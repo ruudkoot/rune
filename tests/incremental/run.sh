@@ -10,6 +10,9 @@
 # units compiled, the scenario says so.
 #   tests/incremental/run.sh [--rune BIN] [FILTER]
 set -u
+# What is compared must not depend on colour forced from outside
+# (docs/diagnostics.md).
+unset FORCE_COLOR CLICOLOR_FORCE
 cd "$(dirname "$0")/../.."
 root=$(pwd)
 rune=bin/rune

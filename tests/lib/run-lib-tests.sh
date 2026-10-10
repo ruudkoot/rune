@@ -27,9 +27,14 @@
 #     the census of the Basis Library's laws and draw what frozen.expected
 #     says (instances.sml), and its properties kill every mutant of
 #     mutants.sml;
-#   - the examples of both libraries' documentation hold.
+#   - the examples of both libraries' documentation hold;
+#   - the libraries of docs/plans/repl.md (The libraries) pass their tests in
+#     tests/lib/NAME, their MANIFESTs and their examples (libsuite).
 # Override the tools with RUNE=, RUNEVM= and RUNEDOC=.
 set -u
+# What is compared must not depend on colour forced from outside
+# (docs/diagnostics.md).
+unset FORCE_COLOR CLICOLOR_FORCE
 cd "$(dirname "$0")/../.."
 top=$(pwd)
 rune=${RUNE:-bin/rune-stack}
@@ -226,6 +231,58 @@ if "$runedoc" --lib lib --library test/property --examples "$ex" > "$ex/runedoc.
 else
   bad "property: runedoc --examples (see $ex/runedoc.log)"
 fi
+
+# libsuite NAME: a library of docs/plans/repl.md (The libraries), as a
+# program uses it. Each tests/lib/NAME/*.sml is compiled with --library NAME
+# and the libraries its first line names (`(* libraries: random *)`), and
+# run from the top of the tree; it must print a line that starts with PASS
+# and none that starts with FAIL. Then tests/lib/NAME/interop.sh, where
+# there is one (a peer of another implementation), the MANIFEST against
+# the sources, and the examples of the library's documentation.
+libsuite() {
+  lib=$1
+  for t in tests/lib/$lib/*.sml; do
+    [ -f "$t" ] || continue
+    name=$lib-$(basename "$t" .sml)
+    extra=""
+    for l in $(sed -n '1s/^(\* libraries: \(.*\) \*)$/\1/p' "$t"); do extra="$extra --library $l"; done
+    # shellcheck disable=SC2086
+    if "$rune" --library "$lib" $extra "$t" -o "$out/$name.rbc" > "$out/$name.cerr" 2>&1 &&
+       "$runevm" "$out/$name.rbc" > "$out/$name.out" 2>&1 &&
+       grep -q "^PASS" "$out/$name.out" && ! grep -q "^FAIL" "$out/$name.out"; then
+      ok
+    else
+      bad "$lib: $(basename "$t") (see $out/$name.cerr, $out/$name.out)"
+    fi
+  done
+  if [ -f "tests/lib/$lib/interop.sh" ]; then
+    if sh "tests/lib/$lib/interop.sh" "$rune" "$runevm" "$out" > "$out/$lib-interop.txt" 2>&1; then ok
+    else bad "$lib: interop.sh (see $out/$lib-interop.txt)"
+    fi
+  fi
+  if "$rune" --library "$lib" --basis-check > "$out/$lib-check.txt" 2>&1; then
+    ok
+  else
+    bad "$lib: --basis-check (see $out/$lib-check.txt)"
+  fi
+  ex=$out/$lib-examples
+  mkdir -p "$ex"
+  if "$runedoc" --lib lib --library "$lib" --examples "$ex" > "$ex/runedoc.log" 2>&1; then
+    for f in "$ex"/*.sml; do
+      [ -f "$f" ] || continue
+      p=${f%.sml}
+      if "$rune" --library "$lib" "$f" -o "$p.rbc" > "$p.cerr" 2>&1 && "$runevm" "$p.rbc" > "$p.out" 2>&1 &&
+         grep -q "^PASS" "$p.out" && ! grep -q "^FAIL" "$p.out"; then
+        ok
+      else
+        bad "$lib: the examples of $(basename "$f" .sml) (see $p.cerr, $p.out)"
+      fi
+    done
+  else
+    bad "$lib: runedoc --examples (see $ex/runedoc.log)"
+  fi
+}
+for lib in unicode json; do libsuite "$lib"; done
 
 echo "test-lib: passed $passed, failed $failed"
 [ "$failed" -eq 0 ]

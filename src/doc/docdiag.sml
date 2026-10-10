@@ -27,8 +27,10 @@ struct
       List.foldl (fn (d, acc) => insert (d, acc)) [] (List.rev ds)
     end
 
+  (* through Error.show, which the command line may have pointed at
+     Diagnostic's rendering *)
   fun format (sp, severity, msg) =
-    Source.describe sp ^ (case severity of Error => ": error: " | Warning => ": warning: ") ^ msg
+    !Error.show (case severity of Error => "error" | Warning => "warning", sp, msg)
 
   (* The diagnostics as lines, in source order; those found first come first
      among equals, and what was found twice is said once. *)

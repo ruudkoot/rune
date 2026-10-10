@@ -1,0 +1,15 @@
+(* The Unicode library (docs/plans/repl.md, The libraries): UTF-8, the
+   display widths of code points, and grapheme clusters, from the tables
+   that scripts/gen-unicode-tables.py writes; its files in load order, in
+   the form of lib/basis/library.build. The compiler shares utf8,
+   width_data, display_width and grapheme (rune.build). *)
+annotate "demand" in
+  utf8_sig.sml
+  utf8.sml
+  width_data.sml
+  display_width_sig.sml
+  display_width.sml
+  grapheme_data.sml
+  grapheme_sig.sml
+  grapheme.sml
+end

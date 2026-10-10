@@ -47,7 +47,7 @@ M1 measures them again on a quiet machine.
 |---|---|---|
 | M0 | This roadmap | done |
 | M1 | The terminal harness and the baselines | done |
-| M2 | The palette and coloured diagnostics | planned |
+| M2 | The palette and coloured diagnostics | done |
 | M3 | The console in the runtime and the Basis | planned |
 | M4 | `lib/terminal`: styles, keys, raw mode | planned |
 | M5 | `lib/terminal`: the line editor | planned |
@@ -1991,12 +1991,12 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
   times as much, the parse of the whole buffer after every line.
 
   Checked: every target of `make check` but one, and `make test-windows`
-  (the terminal scripts through interop among it). `check-units` fails
-  for the stack bytecode: 37 programs come out otherwise through the
-  cache at `-O1`. It fails the same at incremental's head `f2141599`
-  with `runtime/prims.c` as it was there, so it is incremental's and
-  flagged to the owner. The sanitiser build did not run: `libasan8` is
-  not installed (`make doctor`).
+  (the terminal scripts through interop among it). `check-units` failed
+  for the stack bytecode (37 programs otherwise through the cache at
+  `-O1`) in M1's snapshot, which was copied from the working tree with
+  its outputs; it passes in M2's, made from the commit, so it was the
+  copy's. The sanitiser build did not run: `libasan8` is not installed
+  (`make doctor`).
 
 ### M2. The palette and coloured diagnostics (L, about 1,200 SML and 1,500 generated)
 
@@ -2030,6 +2030,49 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
 * **Done when:** `rune` on a terminal shows coloured excerpts, and
   nothing else changed. It needs nothing of incremental and can be
   built on master (*Prerequisites and flags*).
+* **As built** (2026-10-10): `src/util/color.sml`, `src/util/diagnostic.sml`
+  and `Error.show`, through which `rune` and `runedoc` print; `--color`,
+  `--diagnostics` and `--diagnostics-json` on both; `runedoc --palette`,
+  which `make docs` runs into `docs/generated/palette`; `lib/unicode` and
+  `lib/json`; `tests/diagnostics` (eleven cases, reviewed), `tests/color`,
+  `make test-diagnostics`, and a terminal script of `rune`'s excerpt;
+  `docs/diagnostics.md`, the manual pages and the completions. Where it
+  differs from the plan:
+  * **`lib/json` came here from M10**, for `--diagnostics-json`, and the
+    compiler's sources list it with `lib/unicode`'s portable files.
+  * **The theme was measured, and `auto` lost colours** (decision C's
+    rule). `tests/color/contrast.py` draws each role on the default
+    palettes of xterm, VTE (GNOME), Windows Terminal (Campbell) and the
+    legacy console, bold drawn bright where the terminal does so, also
+    under protanopia, deuteranopia and tritanopia, and wants 3:1 (2.5:1
+    under a deficiency, which no colour of the 16 reaches on both
+    backgrounds). Only bright red and magenta passed on both: `auto` keeps
+    them, `note`, `help`, prompts and types are bold or plain there, and
+    `dark` and `light` have the rest. Four palettes, not D24's seven:
+    Terminal.app, iTerm2 and VS Code are for M13's sweep.
+  * **Excerpts are measured by grapheme cluster**, so the compiler's
+    sources also take `lib/unicode`'s cluster tables: an emoji of several
+    code points is two columns, as a terminal draws it.
+  * **No `note:`, `help:` or secondary spans yet**: the compiler makes no
+    such diagnostics; their roles are in the palette.
+  * **`NO_COLOR` on a dumb terminal is no styles at all**, not
+    attributes, since a dumb terminal shows the escapes.
+  * Two faults of MLKit 4.7.23, recorded and not worked around
+    (`tests/lib/deviations.txt`): an internal assertion on `lib/unicode`'s
+    test in the runner's order, and a segmentation fault in the code it
+    makes of `lib/json`'s random round trips (`docs/bugreport/mlkit`).
+  * SML/NJ and MLKit wanted the type of a record projection in
+    `Diagnostic` written out, where MLton and Rune inferred it.
+  * **`lib/unicode`'s tables are strings of hexadecimal digits, built
+    into vectors at their first use**: as lists of integer literals they
+    cost the compiler's bootstrap a seventh more work and every compile
+    410 KB of allocation, which moved `check-heapsim`'s `compile-sigs` at
+    4 MiB across a collection. Its validation (`tools/heapsim/validate.sh`)
+    now allows the live data the slack of a few dead registers, 64 KiB, as
+    it allowed the copied bytes: the stock VM kept 2,464 bytes more than
+    the model's lower band. ASCII asks no table. The bootstrap's budget
+    (`tests/perf/bootstrap.budget`) is measured again: the compiler
+    compiles 1,800 more lines, 8.6 % more instructions.
 
 ### M3. The console in the runtime and the Basis (M, about 450 C and 250 SML)
 
@@ -2054,7 +2097,6 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
   uncaught exception, `SIGTERM`, `SIGHUP` and a fatal error.
 * **Done when:** those pass; the fingerprint and the image format
   number change, documented.
-
 ### M4. `lib/terminal`: styles, keys, raw mode (M, about 1,000 SML)
 
 * **What:** the library's first half, with its `MANIFEST` and
@@ -2071,7 +2113,6 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
   * `make test-lib-hosts` on the files marked `host yes`.
 * **Done when:** green on Rune and on the hosts; P1's decoder retired
   for `Key`.
-
 ### M5. `lib/terminal`: the line editor (L, about 2,500 SML)
 
 * **What:** D7 to D11.
@@ -2090,7 +2131,6 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
   * editing scripts in `tests/terminal`, on Linux and Windows.
 * **Done when:** those pass and a keystroke at 1,000 lines costs under
   16 ms (M1's harness).
-
 ### M6. The REPL on the editor (L, about 1,500 SML)
 
 * **What:** starting from incremental's head at the time (the REPL's
@@ -2428,7 +2468,9 @@ Windows, and any Rune program can read a line with them.
 
 `scripts/perf-repl.sh` (M1), on a quiet machine (load average under 2),
 compared at every milestone with the table below, which M1 fills. The
-first column is what the experiments measured under a load of 30.
+first column is what the experiments measured under a load of 30; the
+next, what each milestone measured, with the load it was measured at
+(another session's builds kept the machine busy throughout).
 
 | What | P0 to P4 (loaded) | M1 | Target (D24) |
 |---|---|---|---|

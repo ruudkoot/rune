@@ -18,6 +18,9 @@
 # 4. Images: saved by runevm-stack and carried on natively, and the other way round,
 #    and one of another program, which native code refuses.
 set -u
+# What is compared must not depend on colour forced from outside
+# (docs/diagnostics.md).
+unset FORCE_COLOR CLICOLOR_FORCE
 opt=bin/runeopt
 rune=bin/rune-stack
 vm=bin/runevm-stack

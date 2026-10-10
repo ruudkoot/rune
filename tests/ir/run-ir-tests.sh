@@ -11,6 +11,9 @@
 #                                  for a program a lint must refuse.
 #   tests/ir/run-ir-tests.sh [--rune BIN] [--update] [FILTER]
 set -u
+# What is compared must not depend on colour forced from outside
+# (docs/diagnostics.md).
+unset FORCE_COLOR CLICOLOR_FORCE
 cd "$(dirname "$0")/../.."
 rune=bin/rune-stack
 update=0

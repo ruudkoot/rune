@@ -13,6 +13,9 @@
 # The VM is given the name of the file relative to the directory it runs in,
 # which is what a Windows VM started from WSL can open.
 set -u
+# What is compared must not depend on colour forced from outside
+# (docs/diagnostics.md).
+unset FORCE_COLOR CLICOLOR_FORCE
 vm=bin/runevm-stack
 out=tests/out/vm
 def=runtime/stack/opcodes.def

@@ -12,6 +12,9 @@
 # Without tmux the scripts are skipped, and say so (make doctor --scope
 # terminal).
 set -u
+# The screens compared must not depend on colour chosen from outside
+# (docs/diagnostics.md).
+unset FORCE_COLOR CLICOLOR_FORCE NO_COLOR CLICOLOR RUNE_COLORS
 cd "$(dirname "$0")/../.."
 windows=0
 filter=""

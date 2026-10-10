@@ -12,6 +12,9 @@
 # register bytecode (bin/runevm-asan), which restores the same image.
 #   tests/repl/run.sh [--vm VM] [--vm-opts OPTS] [--out DIR] [FILTER]
 set -u
+# What is compared must not depend on colour forced from outside
+# (docs/diagnostics.md).
+unset FORCE_COLOR CLICOLOR_FORCE
 cd "$(dirname "$0")/../.."
 vm=bin/runevm
 vmopts=""

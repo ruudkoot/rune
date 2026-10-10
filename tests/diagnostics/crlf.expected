@@ -1,0 +1,4 @@
+\e[1mtests/diagnostics/crlf.sml:2:9:\e[0m \e[1;91merror:\e[0m \e[1mfunction argument: type mismatch between int * int and int * string (type constructor mismatch: string vs int)\e[0m
+\e[2m  |\e[0m
+\e[2m2 |\e[0m val b = a + "two"
+\e[2m  |\e[0m         \e[1;91m^^^^^^^^^\e[0m

@@ -21,6 +21,9 @@
 # check` until every law holds (D12). Override the tools with RUNE=, RUNEVM=
 # and RUNEDOC=.
 set -u
+# What is compared must not depend on colour forced from outside
+# (docs/diagnostics.md).
+unset FORCE_COLOR CLICOLOR_FORCE
 cd "$(dirname "$0")/../.."
 top=$(pwd)
 rune=${RUNE:-bin/rune-stack}

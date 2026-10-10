@@ -1,0 +1,4 @@
+\e[1mtests/diagnostics/gutter.sml:10:5:\e[0m \e[1;91merror:\e[0m \e[1mval binding: type mismatch between string and int (type constructor mismatch: string vs int)\e[0m
+\e[2m   |\e[0m
+\e[2m10 |\e[0m val total : string = v1 + v2
+\e[2m   |\e[0m     \e[1;91m^^^^^^^^^^^^^^\e[0m

@@ -1,0 +1,7 @@
+# rune's diagnostics on a terminal: the excerpt by default, where a pipe
+# gets the first line only (docs/diagnostics.md). The screen is compared
+# without its styles; tests/diagnostics checks those. The pane stays alive
+# after rune ends, since tmux scrolls the screen to say that a pane died.
+start 100 10 bin/rune tests/diagnostics/unbound.sml -o tests/out/terminal/unbound.rbc; sleep 30
+wait \^\^\^\^\^\^
+expect @DIR@/rune-diagnostics.screen

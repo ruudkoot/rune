@@ -196,7 +196,7 @@ struct
                val run = Runtime.link (Byte.stringToBytes code)
              in
                (* the warnings its compile gave, again *)
-               List.app (fn w => TextIO.output (TextIO.stdErr, w ^ "\n")) warnings;
+               List.app (fn w => TextIO.output (TextIO.stdErr, Diagnostic.showCached w ^ "\n")) warnings;
                SOME (result (l, run))
              end)
             handle Pickle.Bad _ => (UnitBasis.abandon at; NONE)
@@ -220,7 +220,7 @@ struct
                   val () = Elaborate.elabTop (here, decs)
                   val () = Elaborate.finish ()
                   val delta = !Elaborate.lastDelta
-                  val () = warnings := List.rev (!Error.warnings)
+                  val () = warnings := map Error.formatWarning (List.rev (!Error.warnings))
                   val () = Error.flushWarnings ()
                   val pdecs =
                     case if (Usage.use ("echo", "on"); echoing ()) then ReplShow.echoes (bound delta) else NONE of

@@ -1,0 +1,10 @@
+val v1 = 1
+val v2 = 2
+val v3 = 3
+val v4 = 4
+val v5 = 5
+val v6 = 6
+val v7 = 7
+val v8 = 8
+val v9 = 9
+val total : string = v1 + v2

@@ -132,6 +132,9 @@ MLKIT     ?= $(HOSTS)/mlkit/bin/mlkit
 MLKIT_LIB ?= $(HOSTS)/mlkit/lib/mlkit
 export RUNE_HOSTS := $(HOSTS)
 export MLTON SMLNJ SMLNJ32 SMLNJ_DEV POLYC MLKIT MLKIT_LIB
+# What the tests compare must not depend on colour forced from outside
+# (docs/diagnostics.md).
+unexport FORCE_COLOR CLICOLOR_FORCE
 
 # Sources of the compiler as compiled by itself, the host build that compiles
 # stage 1, and the initial semispace of the VM that bin/rune runs on. The heap
@@ -145,7 +148,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build check-reproducible test-serve basis-cache repl test-repl test-terminal test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
+.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
 
 all: vm boot runedoc runeopt manifests basis-cache
 
@@ -153,13 +156,21 @@ all: vm boot runedoc runeopt manifests basis-cache
 # its files provides and requires, made from the library's build file and
 # its sources by the first host's compiler, which builds before any rune
 # (rune --basis-index)
-manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST
+# the libraries of docs/plans/repl.md (The libraries)
+REPL_LIBS := unicode json
+manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
 lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/basis
 lib/random/MANIFEST: lib/random/library.build $(wildcard lib/random/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/random
 lib/test/property/MANIFEST: lib/test/property/library.build $(wildcard lib/test/property/*.sml) lib/random/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/test/property
+# the libraries of docs/plans/repl.md (The libraries), each after those it
+# is written on
+lib/unicode/MANIFEST: lib/unicode/library.build $(wildcard lib/unicode/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/unicode
+lib/json/MANIFEST: lib/json/library.build $(wildcard lib/json/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/json
 
 # The frozen Basis Library (docs/units.md, The cache): every unit of
 # lib/basis compiled once, for each bytecode, into lib/cache, which every
@@ -917,8 +928,13 @@ test-repl: bin/rune-repl bin/runevm
 # Programs on a terminal (docs/plans/repl.md, M1): each script of
 # tests/terminal starts a program in a tmux pane, types at it and waits for
 # the screen; skipped where tmux is missing (make doctor --scope terminal).
-test-terminal: bin/rune-repl bin/runevm
+test-terminal: bin/rune-repl bin/runevm $(RUNE)
 	sh tests/terminal/run.sh
+
+# diagnostics rendered with colour, and the palette's contrast (docs/diagnostics.md)
+test-diagnostics: $(RUNE)
+	sh tests/diagnostics/run.sh
+	python3 tests/color/contrast.py
 
 # the cache's scenarios (tests/incremental/SCENARIOS.md; docs/units.md, The cache)
 test-deps: $(RUNE) vm
@@ -951,11 +967,13 @@ check-docs: $(RUNE) $(RUNEDOC) manifests
 	sh scripts/check-docs.sh
 	RUNE=$(RUNE_STACK) sh scripts/gen-basis-sigs.sh --check
 	$(RUNE_STACK) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	sh tests/basis/gen-annotations.sh --check
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	$(RUNEDOC) $(DOCS_RANDOM) --check
 	$(RUNEDOC) $(DOCS_PROPERTY) --check
+	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) --check &&) true
+	$(RUNEDOC) --palette docs/generated/palette --check
 	sh tests/basis/check-claims.sh
 	sh tests/basis/check-notes.sh
 
@@ -969,11 +987,18 @@ DOCS_BASIS := --lib lib --library basis --tests tests/basis --annotations tests/
 DOCS_RANDOM := --lib lib --library random --out docs/generated/random --basis-docs ../basis --title "Random numbers"
 DOCS_PROPERTY := --lib lib --library test/property --out docs/generated/test/property --basis-docs ../../basis \
                  --title "Property testing"
+# the libraries of docs/plans/repl.md (The libraries), each in
+# docs/generated/NAME (REPL_LIBS, with the manifests)
+TITLE_unicode := Unicode
+TITLE_json := JSON
+docs_lib = --lib lib --library $(1) --out docs/generated/$(1) --basis-docs ../basis --title "$(TITLE_$(1))"
 
 docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_BASIS)
 	$(RUNEDOC) $(DOCS_RANDOM)
 	$(RUNEDOC) $(DOCS_PROPERTY)
+	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) &&) true
+	$(RUNEDOC) --palette docs/generated/palette
 
 # ---------------------------------------------------------------- Basis Library suite
 # tests/basis/README.md. The matrix targets compare Rune with other systems
@@ -1275,7 +1300,7 @@ check:
 	@$(MAKE) --no-print-directory test-build
 	@$(MAKE) --no-print-directory check-reproducible
 	@$(MAKE) --no-print-directory test-serve
-	@$(MAKE) --no-print-directory test-repl test-terminal
+	@$(MAKE) --no-print-directory test-repl test-terminal test-diagnostics
 	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory test-register
 	@$(MAKE) --no-print-directory test-register-jit

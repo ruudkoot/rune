@@ -286,6 +286,33 @@ Stop after type checking; write no bytecode.
 .B \-\-no\-warnings
 Do not print warnings about nonexhaustive or redundant matches.
 .TP
+.BI \-\-color= WHEN
+Colour the diagnostics:
+.BR always ,
+.B never
+or
+.BR auto ,
+the default, which colours them when the standard error is a terminal (see
+.BR ENVIRONMENT ).
+.TP
+.BI \-\-diagnostics= FORM
+.B full
+shows the lines of source a diagnostic is about under its first line, with
+carets under the span;
+.B short
+shows the first line only,
+.IR file : line : col ": error: " message ,
+as earlier versions did. The default is full when the standard error is a
+terminal and
+.B TERM
+is not
+.BR dumb .
+.TP
+.BI \-\-diagnostics\-json " FILE"
+Also write every diagnostic of the run to
+.I FILE
+as JSON, in the form rune-ide reads (docs/diagnostics.md).
+.TP
 .B \-\-dump\-tokens
 Print the tokens of each input and stop: no library is loaded and nothing is
 compiled or written.
@@ -362,6 +389,40 @@ Print the version and exit.
 .TP
 .BR \-\-help ", " \-h
 Print a usage summary and exit.
+.SH ENVIRONMENT
+.TP
+.B NO_COLOR
+When set and not empty, no colours: on a terminal the diagnostics keep their
+bold and underline.
+.TP
+.BR FORCE_COLOR ", " CLICOLOR_FORCE
+When set to anything but empty,
+.B 0
+or
+.BR false ,
+colour also where the standard error is not a terminal.
+.TP
+.B CLICOLOR
+.B 0
+turns colour off.
+.TP
+.B TERM
+.BR dumb ,
+or unset on a system other than Windows, turns colour off and makes the
+diagnostics short.
+.TP
+.B RUNE_COLORS
+A theme
+.RB ( auto ", " dark ", " light ", " mono ", " none )
+and styles of roles, separated by colons, as in
+.BR dark:error=1;38;5;203:diag.gutter=2 ;
+a style is SGR parameters (docs/diagnostics.md).
+.TP
+.B COLORFGBG
+Where the terminal sets it, its background chooses the theme
+.B dark
+or
+.BR light .
 .SH EXIT STATUS
 .B rune
 exits 0 when it wrote the bytecode (or when
