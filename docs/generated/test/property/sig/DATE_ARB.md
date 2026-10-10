@@ -42,8 +42,8 @@ sig
   val <a href="#val-weekday">weekday</a> : Date.weekday Arb.arb
   val <a href="#val-fields">fields</a> : {<a href="#fld-fields.year">year</a> : int, <a href="#fld-fields.month">month</a> : Date.month, <a href="#fld-fields.day">day</a> : int, <a href="#fld-fields.hour">hour</a> : int, <a href="#fld-fields.minute">minute</a> : int, <a href="#fld-fields.second">second</a> : int,
                 <a href="#fld-fields.offset">offset</a> : Time.time option} Arb.arb
-  val <a href="#val-fieldsinrange">fieldsInRange</a> : {<a href="#fld-fieldsinrange.year">year</a> : int, <a href="#fld-fieldsinrange.month">month</a> : Date.month, <a href="#fld-fieldsinrange.day">day</a> : int, <a href="#fld-fieldsinrange.hour">hour</a> : int, <a href="#fld-fieldsinrange.minute">minute</a> : int, <a href="#fld-fieldsinrange.second">second</a> : int,
-                       <a href="#fld-fieldsinrange.offset">offset</a> : Time.time option} Arb.arb
+  val <a href="#val-fieldsinrange">fieldsInRange</a> : int * int -&gt; {<a href="#fld-fieldsinrange.year">year</a> : int, <a href="#fld-fieldsinrange.month">month</a> : Date.month, <a href="#fld-fieldsinrange.day">day</a> : int, <a href="#fld-fieldsinrange.hour">hour</a> : int, <a href="#fld-fieldsinrange.minute">minute</a> : int,
+                                    <a href="#fld-fieldsinrange.second">second</a> : int, <a href="#fld-fieldsinrange.offset">offset</a> : Time.time option} Arb.arb
 end
 </pre>
 
@@ -102,15 +102,15 @@ The arbitrary of the records of fields that [`Date.date`](../../../basis/sig/DAT
 ### <a name="val-fieldsinrange"></a>`fieldsInRange`
 
 ```sml
-val fieldsInRange : {year : int, month : Date.month, day : int, hour : int, minute : int, second : int,
-                     offset : Time.time option} Arb.arb
+val fieldsInRange : int * int -> {year : int, month : Date.month, day : int, hour : int, minute : int,
+                                  second : int, offset : Time.time option} Arb.arb
 ```
 
-The arbitrary of the records of fields that are all in range: a domain a law can name (D7).
+`fieldsInRange (lo, hi)` is the arbitrary of the records of fields all in range, with a year from `lo` to `hi`: a domain a law can name (D7).
 
-The year is from \~10^9 to 10^9, the day one of its month, the hour,
-the minute and the second within the day, and the offset less than a
-day either way, or `NONE`.
+The day is one of its month, the hour, the minute and the second are
+within the day, and the offset is less than a day either way, or
+`NONE`.
 
 | Field | Type | Description |
 | --- | --- | --- |

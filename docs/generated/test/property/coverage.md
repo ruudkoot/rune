@@ -11,7 +11,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`BASIS_DATA_ARB`](sig/BASIS_DATA_ARB.md) | 6 | 6 | 100% | 0 | 0 |
 | [`CHECK`](sig/CHECK.md) | 9 | 9 | 100% | 6 | 6 |
 | [`CO`](sig/CO.md) | 14 | 14 | 100% | 4 | 4 |
-| [`DATE_ARB`](sig/DATE_ARB.md) | 6 | 6 | 100% | 0 | 0 |
+| [`DATE_ARB`](sig/DATE_ARB.md) | 6 | 6 | 100% | 1 | 1 |
 | [`GEN`](sig/GEN.md) | 44 | 44 | 100% | 31 | 31 |
 | [`IEEE_REAL_ARB`](sig/IEEE_REAL_ARB.md) | 3 | 3 | 100% | 0 | 0 |
 | [`INET6_SOCK_ARB`](sig/INET6_SOCK_ARB.md) | 2 | 2 | 100% | 1 | 1 |
@@ -19,7 +19,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`SHOW`](sig/SHOW.md) | 17 | 17 | 100% | 7 | 7 |
 | [`SML90_ARB`](sig/SML90_ARB.md) | 1 | 1 | 100% | 0 | 0 |
 | [`SYSTEM_ARB`](sig/SYSTEM_ARB.md) | 33 | 33 | 100% | 1 | 1 |
-| **all** | 180 | 180 | 100% | 78 | 78 |
+| **all** | 180 | 180 | 100% | 79 | 79 |
 
 ## Members a signature describes
 

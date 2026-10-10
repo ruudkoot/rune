@@ -49,3 +49,8 @@ native:smlnj* | STREAM_IO.input1/law-1@* | HOST-BUG | TextIO.StreamIO.inputAll o
 native:smlnj-legacy | ARRAY_SLICE.foldl/law-1@* | HOST-FLAKY | a drawn function gave two outcomes for one argument: the 64-bit build's garbage collection corrupts a Word64 now and then
 native:smlnj-legacy | STRING_CVT.takel/law-1@* | HOST-FLAKY | a drawn function gave two outcomes for one argument: the 64-bit build's garbage collection corrupts a Word64 now and then
 native:smlnj-legacy | MONO_VECTOR.fromList/law-1@Real64Vector | HOST-FLAKY | a real changed between two reads (both print 8.078194267465491E37): the 64-bit build's garbage collection corrupts a real now and then
+
+# ---- Date for years outside 1900 to 2200, where an implementation may raise
+# Date: the laws hold there when a date keeps its fields or Date is raised
+native:mlton | DATE.year/law-*@Date | HOST-BUG | Date.date raises Overflow for a year it cannot represent, where the specification asks for Date
+native:mlkit | DATE.year/law-*@Date | HOST-BUG | Date.date raises Overflow for a year it cannot represent, where the specification asks for Date

@@ -26,6 +26,7 @@ import concurrent.futures
 import fnmatch
 import os
 import re
+import signal
 import subprocess
 import sys
 
@@ -45,7 +46,7 @@ RUNEDOC = os.environ.get("RUNEDOC", "bin/runedoc")
 RESULTS = os.environ.get("LAWS_RESULTS", "tests/out/laws/results.txt")
 DEVIATIONS = os.environ.get("LAWS_DEVIATIONS", "tests/basis/law-deviations.txt")
 SKIPS = os.environ.get("LAWS_SKIPS", "tests/basis/law-skips.txt")
-TIMEOUT = int(os.environ.get("LAWS_HOST_TIMEOUT", "1800"))     # seconds for a program to build and run
+TIMEOUT = int(os.environ.get("LAWS_HOST_TIMEOUT", "600"))      # seconds for a program to build and run, each time
 MEMORY = int(os.environ.get("LAWS_HOST_MEMORY", "8192"))        # megabytes, for a host and its program
 OUT = os.path.join(TOP, "tests/out/laws-hosts")
 PROGRAMS = os.environ.get("LAWS_PROGRAMS", "")    # a regular expression: only the programs it matches
@@ -53,14 +54,22 @@ RANDOM = ["lib/random/random_sig.sml", "lib/random/random.sml"]
 
 
 def run(cmd, cwd=None, stdin=None, timeout=None, env=None):
-    """the command's status and its output, stdout and stderr together"""
+    """the command's status and its output, stdout and stderr together; a
+    command that runs past its time is stopped with every process it started
+    (sml and a use file through sh are more than one)"""
     limit = "ulimit -v %d; " % (MEMORY * 1024)
+    p = subprocess.Popen(["sh", "-c", limit + 'exec "$@"', "sh"] + cmd, cwd=cwd, stdin=stdin,
+                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env, start_new_session=True)
     try:
-        p = subprocess.run(["sh", "-c", limit + 'exec "$@"', "sh"] + cmd, cwd=cwd, stdin=stdin,
-                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout, env=env)
-        return p.returncode, p.stdout.decode("utf-8", "replace")
-    except subprocess.TimeoutExpired as e:
-        return -1, (e.stdout or b"").decode("utf-8", "replace") + "\n(stopped after %d s)\n" % timeout
+        out, _ = p.communicate(timeout=timeout)
+        return p.returncode, out.decode("utf-8", "replace")
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(p.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        out, _ = p.communicate()
+        return -1, out.decode("utf-8", "replace") + "\n(stopped after %d s)\n" % timeout
 
 
 # ---- the library: which files of lib/test/property a host builds ----
@@ -108,7 +117,7 @@ def library_on(host, files, present, workdir):
         chosen, provided = library_for(files, present, dropped)
         main = os.path.join(workdir, "library.sml")
         open(main, "w").write("val () = print \"library built\\n\"\n")
-        built, output, msgs = build(host, "library", RANDOM + chosen + [main], workdir)
+        built, output, msgs, _ = build(host, "library", RANDOM + chosen + [main], workdir)
         if built:
             return chosen, provided, dropped
         bad = [f for f in chosen if os.path.join(TOP, f) in msgs and
@@ -205,8 +214,11 @@ def missing_on(host, names, workdir):
 
 
 def build(host, name, files, workdir):
-    """build and run a program; (built, output, the build's messages)"""
+    """build and run a program: (built, its output, the build's messages, a
+    function that runs it again from after a law)"""
     absfiles = [os.path.join(TOP, f) for f in files]
+    def env_after(after):
+        return dict(os.environ, RUNE_PROPERTY_AFTER=after) if after else dict(os.environ)
     if host in ("mlton", "mlkit"):
         mlb = os.path.join(workdir, name + ".mlb")
         open(mlb, "w").write("$(SML_LIB)/basis/basis.mlb\n" + "\n".join(absfiles) + "\n")
@@ -216,22 +228,51 @@ def build(host, name, files, workdir):
             status, msgs = run([BIN[host], "-o", name, name + ".mlb"], cwd=workdir,
                                env=dict(os.environ, SML_LIB=MLKIT_LIB))
         if status != 0:
-            return False, "", msgs
-        _, output = run(["./" + name], cwd=workdir, timeout=TIMEOUT)
-        return True, output, msgs
+            return False, "", msgs, None
+        def again(after):
+            return run(["./" + name], cwd=workdir, timeout=TIMEOUT, env=env_after(after))[1]
+        return True, again(""), msgs, again
     if host.startswith("smlnj"):
         exit_sml = os.path.join(workdir, "exit.sml")
         open(exit_sml, "w").write("val () = OS.Process.exit OS.Process.success\n")
-        status, raw = run([BIN[host]] + absfiles + [exit_sml], cwd=workdir, stdin=subprocess.DEVNULL, timeout=TIMEOUT)
+        def again(after):
+            return run([BIN[host]] + absfiles + [exit_sml], cwd=workdir, stdin=subprocess.DEVNULL,
+                       timeout=TIMEOUT, env=env_after(after))[1]
+        raw = again("")
         built = not re.search(r"\.sml:\d+\.\d+(-\d+\.\d+)? Error:", raw)
-        return built, raw, raw if not built else ""
+        return built, raw, raw if not built else "", again
     if host == "polyml":
         use = os.path.join(workdir, name + ".use")
         open(use, "w").write("".join('use "%s";\n' % f for f in absfiles) + "OS.Process.exit OS.Process.success;\n")
-        status, raw = run(["sh", "-c", '"$0" -q < "$1"', BIN[host], use], cwd=workdir, timeout=TIMEOUT)
+        def again(after):
+            return run(["sh", "-c", '"$0" -q < "$1"', BIN[host], use], cwd=workdir, timeout=TIMEOUT,
+                       env=env_after(after))[1]
+        raw = again("")
         built = not re.search(r"\.sml:\d+: error|Static Errors", raw)
-        return built, raw, raw if not built else ""
+        return built, raw, raw if not built else "", again
     raise SystemExit("unknown host " + host)
+
+
+def finish(output, again):
+    """the output of a program run to its end: where it stopped in a law (a
+    crash, or the time it was given), that law is STOPPED and the program
+    runs again after it; (the output, the stopped laws)"""
+    outputs, stopped = [output], []
+    for _ in range(50):
+        if re.search(r"^laws: ", output, re.M) or again is None:
+            break
+        started = re.findall(r"^LAW (\S+)", output, re.M)
+        if not started:
+            break
+        stuck = started[-1]
+        if re.search(r"^(PASS|FAIL) " + re.escape(stuck) + r"\b", output, re.M) or stuck in [l for l, _ in stopped]:
+            break
+        tail = [l for l in output.strip().split("\n") if l.strip()][-1:]
+        why = tail[0].strip()[:160] if tail and not tail[0].startswith("LAW ") else "it stopped"
+        stopped.append((stuck, why))
+        output = again(stuck)
+        outputs.append(output)
+    return "\n".join(outputs), stopped
 
 
 def error_lines(host, msgs, program_file):
@@ -363,16 +404,17 @@ def main():
                     notbuilt.append((label, "the host lacks " + ", ".join(sorted(set(lack)))))
                 else:
                     keep.append((label, body))
-            output = ""
+            output, stopped = "", []
             for attempt in range(6):
                 if not keep:
                     break
                 text = head + "\n" + ",\n".join(b for _, b in keep) + tail
                 pfile = os.path.join(workdir, prog + ".sml")
                 open(pfile, "w").write(text)
-                built, output, msgs = build(host, prog, RANDOM + chosen + [pfile], workdir)
+                built, output, msgs, again = build(host, prog, RANDOM + chosen + [pfile], workdir)
                 open(os.path.join(workdir, prog + ".build"), "w").write(msgs)
                 if built:
+                    output, stopped = finish(output, again)
                     break
                 bad = error_lines(host, msgs, pfile)
                 # the entries the errors are in
@@ -390,19 +432,24 @@ def main():
                 keep = [(l, b) for l, b in keep if l not in hit]
             open(os.path.join(workdir, prog + ".out"), "w").write(output)
             got = verdicts(output)
+            halted = dict(stopped)
             for label, _ in keep:
                 if label in got:
                     lines_out.append(got[label][1])
+                elif label in halted:
+                    lines_out.append("STOPPED %s: %s" % (label, halted[label]))
                 else:
                     lines_out.append("NOT RUN %s: the program stopped before it" % label)
             lines_out += ["NOT BUILT %s: %s" % (l, w) for l, w in notbuilt]
         open(os.path.join(OUT, host + ".results"), "w").write("\n".join(lines_out) + "\n")
         explained, diffs = compare(host, lines_out, rune, devs)
         open(os.path.join(OUT, host + ".differences"), "w").write("\n".join(explained + diffs) + "\n")
-        counts = {k: sum(1 for l in lines_out if l.startswith(k)) for k in ("PASS", "FAIL", "NOT BUILT", "NOT RUN")}
-        return host, ("%s: %d laws pass, %d fail, %d not built, %d not run; %d differ from Rune and are "
-                      "explained, %d are not" % (host, counts["PASS"], counts["FAIL"], counts["NOT BUILT"],
-                                                 counts["NOT RUN"], len(explained), len(diffs))), diffs
+        counts = {k: sum(1 for l in lines_out if l.startswith(k))
+                  for k in ("PASS", "FAIL", "STOPPED", "NOT BUILT", "NOT RUN")}
+        return host, ("%s: %d laws pass, %d fail, %d stopped, %d not built, %d not run; %d differ from Rune and "
+                      "are explained, %d are not" % (host, counts["PASS"], counts["FAIL"], counts["STOPPED"],
+                                                     counts["NOT BUILT"], counts["NOT RUN"], len(explained),
+                                                     len(diffs))), diffs
 
     differences = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(hosts)) as pool:

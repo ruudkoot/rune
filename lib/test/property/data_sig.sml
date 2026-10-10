@@ -28,13 +28,13 @@ sig
   val fields : {year : int, month : Date.month, day : int, hour : int, minute : int, second : int,
                 offset : Time.time option} Arb.arb
 
-  (* The arbitrary of the records of fields that are all in range: a domain a law can name (D7).
+  (* `fieldsInRange (lo, hi)` is the arbitrary of the records of fields all in range, with a year from `lo` to `hi`: a domain a law can name (D7).
 
-     The year is from ~10^9 to 10^9, the day one of its month, the hour,
-     the minute and the second within the day, and the offset less than a
-     day either way, or `NONE`. *)
-  val fieldsInRange : {year : int, month : Date.month, day : int, hour : int, minute : int, second : int,
-                       offset : Time.time option} Arb.arb
+     The day is one of its month, the hour, the minute and the second are
+     within the day, and the offset is less than a day either way, or
+     `NONE`. *)
+  val fieldsInRange : int * int -> {year : int, month : Date.month, day : int, hour : int, minute : int,
+                                    second : int, offset : Time.time option} Arb.arb
 end
 
 (* The arbitraries of `IEEEReal`'s types, by the generator principle P12.

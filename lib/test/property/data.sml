@@ -86,8 +86,8 @@ struct
     | Date.Apr => 30 | Date.Jun => 30 | Date.Sep => 30 | Date.Nov => 30
     | _ => 31
 
-  val fieldsInRange : fields Arb.arb =
-    {gen = Gen.bind (Gen.pair (Gen.intRange (~1000000000, 1000000000), #gen month))
+  fun fieldsInRange (lo, hi) : fields Arb.arb =
+    {gen = Gen.bind (Gen.pair (Gen.intRange (lo, hi), #gen month))
                     (fn (y, m) => Gen.map2 (fn ((d, h, mi), (s, off)) => make (y, d, h, mi, s) (m, off))
                                            (Gen.triple (Gen.intRange (1, daysIn (y, m)), Gen.intRange (0, 23),
                                                         Gen.intRange (0, 59)),
