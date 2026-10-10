@@ -67,7 +67,9 @@ Linux and Windows, and `lib/terminal` serves any program; the owner may
 stop there. M7 to M9 finish the REPL as a tool; M10 to M12 open it to
 other programs. M2 to M5 do not need incremental merged and can be
 built from master; M1's harness can too, though its scripts of today's
-REPL need incremental's (*Prerequisites and flags*).
+REPL need incremental's (*Prerequisites and flags*). The libraries of M7
+to M12 are built and tested already, ahead of their milestones (*The
+libraries*, *Built ahead*).
 
 ## The request
 
@@ -2257,6 +2259,9 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
   * a `rune-repl.cmd` for Windows.
 * **Tests:**
   * `tests/repl`'s transcripts unchanged (basic mode);
+  * D23's list for testing by hand, `tests/terminal/MANUAL.md`, written
+    now (M1 to M5 did not), and gone through once on the terminals it
+    names;
   * terminal scripts for the prompt, highlighting, completion, history,
     errors, partial lines and Ctrl-C;
   * HOL4's Emacs mode against the REPL, unchanged.
@@ -2416,6 +2421,12 @@ Windows, and any Rune program can read a line with them.
   the compiler's, M3 the runtime's, M4 and M5 a library's; they can be
   built on master and merged first. M1's harness can too; its scripts
   of today's REPL need incremental's `bin/rune-repl`.
+  This branch stands on incremental's `f2141599`; incremental has since
+  reached `d9d5e5d1` (its M11, 2026-10-10), and 18 files changed on
+  both, `src/driver/main.sml`, `src/driver/options.sml`,
+  `src/repl/session.sml`, the `Makefile` and the bootstrap's budgets
+  among them. M6 begins by rebasing on incremental's head, checking
+  everything again and measuring the budgets again.
 * **New primitives meet incremental's.** M3 adds primitives and changes
   the fingerprint of the instruction set and the image format;
   incremental adds primitives too (`rt_link`, `rt_share`, the interrupt's)
@@ -2438,6 +2449,16 @@ Windows, and any Rune program can read a line with them.
   The Windows tests need WSL interop (`make test-windows` already does).
 * **`print` and the Basis.** D18 changes what `print` writes through: a
   change to the Basis that `docs/language.md` and `tests/basis` record.
+* **The hosts' faults, reported.** What M2 to M5 and the libraries found
+  wrong in the other compilers is written up and not worked around, with
+  a line of `tests/lib/deviations.txt` for each failure it causes:
+  MLKit's region inference (`docs/bugreport/mlkit/region-inference`),
+  its reuse of separately compiled units
+  (`docs/bugreport/mlkit/separate-compilation-reuse`), its `Socket`
+  without `acceptNB` (`docs/bugreport/mlkit/socket-acceptNB-absent`),
+  and Poly/ML's `Socket.recvVecNB`, which blocks on an accepted socket
+  (`docs/bugreport/polyml/recvVecNB-blocks-on-accepted`). None is sent
+  upstream yet; that is the owner's.
 * **Found while writing this** (outside this roadmap; for the owner):
   * `make -j4 all` on a clean checkout of `f8e9fdc5` fails: `lib/cache/made`
     runs `bin/rune` but depends on `bin/rune.rbc` and `bin/runevm` only
@@ -2448,6 +2469,8 @@ Windows, and any Rune program can read a line with them.
   * `docs/bytecode.md:17` says the version is 3 and `:46` says 6.
   * `runtime/sys/sys_win.c:13` points to a `docs/plans/windows.md` that
     does not exist.
+  * The two above are fixed on master (`88aa3fa3`), not on this branch;
+    the fix comes with the merge. The two before them are open.
   * `docs/plans/jit.md`'s M11 names files under `vm/new/`.
   * Rune and rune-ide have no licence file. This roadmap studied the
     sources of GPL code (GNU readline, fish) and copied none.
@@ -2576,7 +2599,10 @@ Windows, and any Rune program can read a line with them.
 compared at every milestone with the table below, which M1 fills. The
 first column is what the experiments measured under a load of 30; the
 next, what each milestone measured, with the load it was measured at
-(another session's builds kept the machine busy throughout).
+(another session's builds kept the machine busy throughout). None of
+the M1 column was measured on a quiet machine yet: before M6 compares
+with it, `scripts/perf-repl.sh` runs again on one, and the column takes
+those numbers.
 
 | What | P0 to P4 (loaded) | M1 | Target (D24) |
 |---|---|---|---|
