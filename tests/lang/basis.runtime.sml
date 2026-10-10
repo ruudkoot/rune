@@ -51,5 +51,6 @@ val () = print ("profile sees the cell and nothing else: "
                 ^ Bool.toString (#bytes cost - #bytes nothing' = 24
                                  andalso #objects cost - #objects nothing' = 1) ^ "\n")
 val () = print ("profile returns the value: " ^ Bool.toString (answer = ()) ^ "\n")
-val () = print ("version is three numbers: "
-                ^ Bool.toString (List.length (String.fields (fn c => c = #".") Runtime.version) = 3) ^ "\n")
+val () = print ("version is a word: "
+                ^ Bool.toString (Runtime.version <> ""
+                                 andalso List.all Char.isGraph (String.explode Runtime.version)) ^ "\n")

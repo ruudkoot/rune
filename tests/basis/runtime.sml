@@ -250,11 +250,8 @@ struct
 
   (* ---- version *)
 
-  val () = T.check ("Runtime.version/is-numbers-separated-by-dots",
+  val () = T.check ("Runtime.version/is-a-word",
                     fn () =>
-                      let val parts = String.fields (fn c => c = #".") Runtime.version
-                      in List.length parts = 3
-                         andalso List.all (fn q => q <> "" andalso List.all Char.isDigit (String.explode q))
-                                          parts
-                      end)
+                      Runtime.version <> ""
+                      andalso List.all Char.isGraph (String.explode Runtime.version))
 end

@@ -196,6 +196,10 @@ sig
   (* The version of Rune that this program is running on, as
      `runevm --version` prints it.
 
+     It is the name of the git tag of the commit Rune was built from, or
+     else that commit's abbreviated hash, with `-dirty` after it when the
+     tree had changes that were not committed.
+
      The compiler and the VM are built from one string, so `rune --version`
      says the same. It is not the version of the bytecode, which the VM
      checks when it loads a program and which changes only when the file
