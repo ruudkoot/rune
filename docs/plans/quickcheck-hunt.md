@@ -286,6 +286,25 @@ Seed 1, 10,000 cases for each law at each structure (`RUNE_PROPERTY_DEEP=1
 RUNE_PROPERTY_SEEDS=1`; P11 as the owner chose), on the register VM with
 its JIT, at eight jobs.
 
+| Result | Laws |
+|---|---:|
+| pass | 1,725 |
+| fail | 9: the 8 on the list, and `OS.Path.splitDirFile` (below) |
+| stopped | 0 |
+| cases skipped | 7, each a case of `tabulate` with `LargeInt` or `Int64` elements that ran past the watchdog's minute |
+| laws on the list that pass | 0 |
+
+It took 16 hours, 60 of CPU. The listed laws failed as before, and more
+plainly: `Math.atan2`'s law at ordinary values (`0.67474094222355263`
+against `0.67474094222355274` at case 702), and `ListPair.unzip`'s gave up
+after 5,753 cases and 100,000 discards.
+
+**The runner's weakness.** After a skipped case, `run-laws.sh` starts the
+law again from its first case, so a law with three skips near its end ran
+most of its 10,000 cases four times: `MONO_ARRAY` at `LargeIntArray` took
+15.6 hours, half the run. The cases are fixed by the seed and their index,
+so the runner could go on at the case after the skipped one. For later.
+
 **Found: the law of `OS.Path.splitDirFile`.** `joinDirFile (splitDirFile
 p) = p` for `p <> ""` failed at case 10,359, shrunk to `p = "//"`:
 `splitDirFile "//"` is `{dir = "/", file = ""}`, which joins to `"/"`. A
@@ -321,4 +340,8 @@ small scope, already shrunk to `"//"`. The six laws of `OS.Path` pass, at
 the regular settings and in the deep mode. The generators' hashes are
 renewed: the fingerprint `CFA1F44CE9D34AAC`, the frozen `AC19EEA9CFFFB60D`.
 The deep run's programs were compiled before the change, so the laws that
-draw characters are run again after it.
+draw characters are run again after it:
+- **Run 6**, every law at the settings of `make check` with the new generators: 1,734 laws at their structures, 1,726 pass, the 8 failures the listed ones. The same as run 5.
+- **The deep mode again**, for the 17 programs whose laws draw characters, strings or paths, at all their structures, and for those of `MONO_VECTOR`, `MONO_ARRAY`, their slices and `MONO_ARRAY2` at the structures of characters (`LAWS_AT`, which `run-laws.sh` now takes): 548 laws at their structures, 544 pass, the 4 failures the listed laws for `char` at the wide structures. The restated law of `OS.Path.splitDirFile` holds.
+
+So the deep mode, with the generators as they are now, finds nothing more.

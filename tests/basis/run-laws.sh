@@ -2,6 +2,7 @@
 # The laws of the Basis Library's documentation, run (docs/plans/quickcheck.md,
 # M8, D9 and D13).
 #   tests/basis/run-laws.sh [-j N] [FILTER]
+# (LAWS_AT=REGEX runs only the structures whose names match it)
 # `runedoc --laws` writes a program for each signature with a law, holding
 # every law at every structure that implements the signature. Each program
 # whose name contains FILTER is compiled with `rune --library test/property`
@@ -44,6 +45,9 @@ runedoc=${RUNEDOC:-bin/runedoc}
 timeout=${LAWS_TIMEOUT:-60}
 memory=${LAWS_MEMORY:-4096}
 skips=${LAWS_SKIPS:-tests/basis/law-skips.txt}
+# LAWS_AT: an extended regular expression; only the structures whose names
+# it matches are run (all of them when it is empty)
+at_filter=${LAWS_AT:-}
 jobs=1
 filter=""
 while [ $# -gt 0 ]; do
@@ -142,6 +146,10 @@ for p in $programs; do
   sts=$(grep -o '^  ("[^"]*"' "$p" | grep -o '@[^"]*' | sort -u | cut -c2-)
   if [ -z "$sts" ] || grep -q '^  ("[^"@]*",' "$p"; then echo "$name -"; else for st in $sts; do echo "$name $st"; done; fi
 done > "$out/jobs.txt"
+if [ -n "$at_filter" ]; then
+  grep -E "^[^ ]+ ($at_filter)\$" "$out/jobs.txt" > "$out/jobs.at" || :
+  mv "$out/jobs.at" "$out/jobs.txt"
+fi
 # shellcheck disable=SC2016
 xargs -P "$jobs" -L 1 sh -c "$(sed -n '/^one() {$/,/^}$/p' "$0"); one \"\$0\" \"\$1\"" < "$out/jobs.txt"
 
