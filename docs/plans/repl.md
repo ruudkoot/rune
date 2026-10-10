@@ -49,7 +49,7 @@ M1 measures them again on a quiet machine.
 | M1 | The terminal harness and the baselines | planned |
 | M2 | The palette and coloured diagnostics | planned |
 | M3 | The console in the runtime and the Basis | planned |
-| M4 | `lib/terminal`: styles, keys, raw mode, widths | planned |
+| M4 | `lib/terminal`: styles, keys, raw mode | planned |
 | M5 | `lib/terminal`: the line editor | planned |
 | M6 | The REPL on the editor | planned |
 | M7 | Printing | planned |
@@ -60,7 +60,8 @@ M1 measures them again on a quiet machine.
 | M12 | The debugger | planned |
 | M13 | Windows, accessibility and the performance sweep | planned |
 
-The owner decides D1 to D25 (*Decisions*) and what starts first. M1 to
+The owner decided D1 to D25 on 2026-10-10, as recommended, and added a
+rule for generic code (*The request*); what starts first is the owner's. M1 to
 M6 are one part: at its end the REPL has colours and a line editor on
 Linux and Windows, and `lib/terminal` serves any program; the owner may
 stop there. M7 to M9 finish the REPL as a tool; M10 to M12 open it to
@@ -103,6 +104,14 @@ The owner's answers to three questions asked before this was written
   editors and IDEs, a Jupyter kernel, debugging at the REPL, and reload
   of changed files.
 
+**The owner's decisions after reading this roadmap (2026-10-10):** every
+recommendation, D1 to D25 (*Decisions*), and a rule, as written:
+
+> if you need any highly generic and reusable functionality (e.g. sha256, zmtp) factor it into a separate well tested library under lib so it can be reused in future projects
+
+What the rule changes is in *The architecture* (*The libraries*) and in
+the milestones that build them.
+
 | The brief asks | Answered in |
 |---|---|
 | a roadmap that makes Rune's REPL best in class | the whole; what "best" means, measurably: D24 |
@@ -120,6 +129,7 @@ The owner's answers to three questions asked before this was written
 | (owner's answer) a Jupyter kernel | D21; M11 |
 | (owner's answer) debugging at the REPL | D22; M12 |
 | (owner's answer) reload of changed files | D19; M9 |
+| (owner's rule) generic code as tested libraries under `lib` | *The libraries*; M2, M4, M5, M7, M8, M10 to M12 |
 
 ## Where we are
 
@@ -1030,40 +1040,77 @@ Two rules hold across the layers:
   runedoc's heading take their style from one table; a user who changes
   `error` in `RUNE_COLORS` changes it everywhere.
 
+### The libraries
+
+The owner's rule (2026-10-10): what is generic and reusable goes into a
+library of its own under `lib`, tested well enough to be reused by other
+projects. The libraries this roadmap makes:
+
+| Library | What | Tested against | Built in | Used by |
+|---|---|---|---|---|
+| `lib/unicode` | UTF-8 encoding and strict decoding (overlong forms, surrogates and code points past 0x10FFFF rejected), display widths, grapheme clusters (UAX #29), from tables generated from Unicode 18 | Unicode's `GraphemeBreakTest.txt` and `emoji-test.txt`; properties of decoding and encoding | M2 | the compiler's excerpts, `lib/terminal`, the kernel's offsets |
+| `lib/terminal` | styles, keys, the terminal, the line editor, history, and a terminal emulator for tests (D23) | the emulator's property; scripts through tmux on Linux and Windows | M4, M5 | the REPL; any program that reads lines |
+| `lib/pretty` | Wadler and Leijen's documents with annotations, laid out at a width, within budgets of depth, length and nodes | properties (a layout fits its width; flattening keeps the text); golden layouts | M7 | the REPL's printing; `Compiler.prettyPrint` through a hook; runedoc later |
+| `lib/markdown` | the Markdown runedoc writes, parsed and rendered in a terminal's styles or as plain text | CommonMark's examples for the constructs it accepts | M8 | `:doc`; any program that shows documentation |
+| `lib/json`, `lib/jsonrpc` | JSON (RFC 8259); JSON-RPC 2.0 framed by lines or `Content-Length`, with requests, notifications and cancellation | JSONTestSuite's cases; properties; transcripts | M10 | the engine's protocol, the kernel, the debug adapter, rune-ide (with its codec) |
+| `lib/digest` | SHA-256, HMAC (RFC 2104), comparison in constant time | FIPS 180-4's and RFC 4231's vectors | M11 | the kernel; the protocol's tokens |
+| `lib/zmtp` | ZMTP 3.1 with the NULL mechanism over the Basis's sockets: greeting, commands, frames, and the socket types a kernel needs (REQ/REP, DEALER/ROUTER, PUB/XPUB) | a peer written from the specification, in the tree; libzmq where installed | M11 | the kernel; any program that speaks to ZeroMQ |
+| `lib/jupyter` | Jupyter's wire protocol: the envelope, signing, the five channels, a kernel's loop with handlers | `jupyter_client` where installed; transcripts | M11 | `rune-kernel`; a kernel for any language written in Rune |
+| `lib/dap` | the Debug Adapter Protocol's messages and framing | transcripts against VS Code's adapter tests | M12 | `rune-repl --dap`; other debuggers |
+
+Each has its `MANIFEST`, `DOCUMENTED` signatures and runedoc pages, its
+tests in `tests/lib/NAME` under `make test-lib`, properties written with
+`lib/test/property`, the published vectors of the standard it implements,
+and `make test-lib-hosts` for its files marked `host yes`. Three limits
+of the rule:
+* **The Basis Library cannot use a library**, since libraries are built
+  on it. `Compiler.prettyPrint` reaches `lib/pretty` through a hook the
+  REPL installs, as `use` does.
+* **The compiler's sources are built by the hosts without Rune's
+  libraries.** Where the compiler needs a library's code (the display
+  width of an excerpt), `sources.txt` lists the library's portable files
+  themselves, so the code is one; M2 settles how a program that has both,
+  the REPL, has it once.
+* **What is specific stays where it is used:** search by type (the
+  compiler's types), the engine, the REPL's commands, `ReplShow`.
+
 ## Decisions
 
 Each gives the options, what favours each, and the recommendation it
-was written with. None is decided; the owner decides.
+was written with. The owner decided all of them on 2026-10-10, as
+recommended:
 
-| Decision | Recommended |
-|---|---|
-| D1. Where the palette lives | A: `src/util/color.sml`, in the compiler's sources and their lint |
-| D2. The roles and their colours | C: a table of roles; the terminal's 16 colours and attributes, no blue, yellow or bright colour in the default theme; themes `dark`, `light`, `mono`, `none`; `RUNE_COLORS` to restyle |
-| D3. When colour is on | A: per stream: the flag, `NO_COLOR` (attributes only), `FORCE_COLOR`, `CLICOLOR=0`, `TERM`, a terminal, a console with VT |
-| D4. The console in the runtime and the Basis | A: a few calls of `sys.h` and a structure `RuneTerminal`; the VM restores the terminal at exit and turns on VT output for a console |
-| D5. Reading the Windows console | A: `ReadConsoleInputW` records with VT input on, to UTF-8, with resize events; a basic mode where VT is refused |
-| D6. Keys | A: a decoder of our own (a CSI grammar, an Escape timeout of 50 ms); bracketed paste always; the kitty protocol when the terminal says it has it |
-| D7. The editor's architecture | A: a pure core (decode, step, lay out, diff) under a thin loop |
-| D8. Drawing | A: frames diffed, relative moves, one write a frame, synchronised output where answered, the editor wraps itself, `PROMPT_SP` |
-| D9. Widths | A: tables generated from Unicode 18, grapheme clusters, a policy for terminals that measure by code point |
-| D10. Keymaps and configuration | A: Emacs bindings; Vi later; configuration in an SML init file through `LineEdit` and `Repl` |
-| D11. History | A: whole entries, escaped, appended one write each, shared between sessions; prefix and incremental search |
-| D12. When an entry is complete | A: a `;` outside any nesting, found by a scanner as keys are typed and confirmed by the parser |
-| D13. Highlighting | A: the compiler's lexer with a mode that never raises and restarts at a line; names coloured from the session |
-| D14. Completion | A: commands, files, labels and long identifiers of the session; common prefix, then a menu; ranked by use |
-| D15. Commands | A: `:` commands without `;`, any unique prefix; a `Repl` structure for scripts |
-| D16. Printing | A: printers that make documents, laid out at the terminal's width; depth, length, strings and a budget; types by shortest path |
-| D17. Errors | A: one renderer: today's first line, then the code with carets in display columns; entries named; recovery on |
-| D18. The terminal and the output, shared with the program | A: a quiet terminal while code runs, cooked when it reads; the echo through a stream; `print` through `TextIO.stdOut`; partial lines marked |
-| D19. Reload | A: `:reload` of changed files and those after them, through the cache, naming the ghosts; `:reload!` resets and replays |
-| D20. The engine and its fronts | B: an `ENGINE` signature, `rune-repl --engine` speaking JSON-RPC 2.0; the terminal front in-process, every other front a process with the engine as its child |
-| D21. The Jupyter kernel | A: `rune-kernel`, a bridge in Standard ML that owns the sockets and drives an engine child; `Display` for rich output |
-| D22. The debugger | A, staged, free when unused: traces of the raise, break on raise, pause and breakpoints in a debug interpreter loop, locals with `-g`, DAP |
-| D23. Testing an interactive program | A: the pure core by unit and property tests over an emulator; tmux end to end on Linux and, through interop, on Windows; a manual list for the rest |
-| D24. What "best in class" means, measurably | the criteria of D24, the gate of M13 |
-| D25. Names | as listed in D25 |
+| Decision | Recommended | Chosen |
+|---|---|---|
+| D1. Where the palette lives | A: `src/util/color.sml`, in the compiler's sources and their lint | A |
+| D2. The roles and their colours | C: a table of roles; the terminal's 16 colours and attributes, no blue, yellow or bright colour in the default theme; themes `dark`, `light`, `mono`, `none`; `RUNE_COLORS` to restyle | C |
+| D3. When colour is on | A: per stream: the flag, `NO_COLOR` (attributes only), `FORCE_COLOR`, `CLICOLOR=0`, `TERM`, a terminal, a console with VT | A |
+| D4. The console in the runtime and the Basis | A: a few calls of `sys.h` and a structure `RuneTerminal`; the VM restores the terminal at exit and turns on VT output for a console | A |
+| D5. Reading the Windows console | A: `ReadConsoleInputW` records with VT input on, to UTF-8, with resize events; a basic mode where VT is refused | A |
+| D6. Keys | A: a decoder of our own (a CSI grammar, an Escape timeout of 50 ms); bracketed paste always; the kitty protocol when the terminal says it has it | A |
+| D7. The editor's architecture | A: a pure core (decode, step, lay out, diff) under a thin loop | A |
+| D8. Drawing | A: frames diffed, relative moves, one write a frame, synchronised output where answered, the editor wraps itself, `PROMPT_SP` | A |
+| D9. Widths | A: tables generated from Unicode 18, grapheme clusters, a policy for terminals that measure by code point | A |
+| D10. Keymaps and configuration | A: Emacs bindings; Vi later; configuration in an SML init file through `LineEdit` and `Repl` | A |
+| D11. History | A: whole entries, escaped, appended one write each, shared between sessions; prefix and incremental search | A |
+| D12. When an entry is complete | A: a `;` outside any nesting, found by a scanner as keys are typed and confirmed by the parser | A |
+| D13. Highlighting | A: the compiler's lexer with a mode that never raises and restarts at a line; names coloured from the session | A |
+| D14. Completion | A: commands, files, labels and long identifiers of the session; common prefix, then a menu; ranked by use | A |
+| D15. Commands | A: `:` commands without `;`, any unique prefix; a `Repl` structure for scripts | A |
+| D16. Printing | A: printers that make documents, laid out at the terminal's width; depth, length, strings and a budget; types by shortest path | A |
+| D17. Errors | A: one renderer: today's first line, then the code with carets in display columns; entries named; recovery on | A |
+| D18. The terminal and the output, shared with the program | A: a quiet terminal while code runs, cooked when it reads; the echo through a stream; `print` through `TextIO.stdOut`; partial lines marked | A |
+| D19. Reload | A: `:reload` of changed files and those after them, through the cache, naming the ghosts; `:reload!` resets and replays | A |
+| D20. The engine and its fronts | B: an `ENGINE` signature, `rune-repl --engine` speaking JSON-RPC 2.0; the terminal front in-process, every other front a process with the engine as its child | B |
+| D21. The Jupyter kernel | A: `rune-kernel`, a bridge in Standard ML that owns the sockets and drives an engine child; `Display` for rich output | A |
+| D22. The debugger | A, staged, free when unused: traces of the raise, break on raise, pause and breakpoints in a debug interpreter loop, locals with `-g`, DAP | A |
+| D23. Testing an interactive program | A: the pure core by unit and property tests over an emulator; tmux end to end on Linux and, through interop, on Windows; a manual list for the rest | A |
+| D24. What "best in class" means, measurably | the criteria of D24, the gate of M13 | as recommended |
+| D25. Names | as listed in D25 | as recommended |
 
 ### D1. Where the palette lives
+
+**Decided: A** (2026-10-10), as recommended.
 
 The brief asks for "a color.sml file under src". `src/` holds the
 compiler's sources one directory deep (`src/util`, `src/elab`, ...);
@@ -1085,6 +1132,8 @@ files of the six hosts are generated from `sources.txt`
 give it; the path is the owner's to change.
 
 ### D2. The roles and their colours
+
+**Decided: C** (2026-10-10), as recommended.
 
 What gets a style is a *role*, never a token or a message: the REPL, the
 compiler and runedoc ask for `repl.prompt`, `syn.keyword`, `error`, not
@@ -1148,6 +1197,8 @@ rune-ide's highlighter already names (`keyword`, `string`, `number`,
 
 ### D3. When colour is on
 
+**Decided: A** (2026-10-10), as recommended.
+
 Each stream decides for itself: stderr may be a terminal while stdout
 is a pipe.
 
@@ -1177,6 +1228,8 @@ or pass `--color=never` (M2), so that a CI that forces colour cannot
 change what they compare.
 
 ### D4. The console in the runtime and the Basis
+
+**Decided: A** (2026-10-10), as recommended.
 
 `lib/terminal` cannot use `_prim`; what it needs beyond `Posix.TTY` must
 come from the Basis. P1 and P3 say what that is: the size, the resize,
@@ -1223,6 +1276,8 @@ and a new image format number. `lib/terminal` keeps a second, portable
 
 ### D5. Reading the Windows console
 
+**Decided: A** (2026-10-10), as recommended.
+
 P3 read the same keys four ways on Windows 11 through ConPTY.
 
 * **A. `ReadConsoleInputW` records with VT input on.** The console
@@ -1248,6 +1303,8 @@ targets needs them.
 
 ### D6. Keys
 
+**Decided: A** (2026-10-10), as recommended.
+
 * **A. A decoder of our own.** A state machine over bytes: UTF-8; a
   CSI grammar that consumes to the final byte and then looks the
   sequence up, so that an unknown key is dropped, never typed (the
@@ -1266,6 +1323,8 @@ targets needs them.
 
 ### D7. The editor's architecture
 
+**Decided: A** (2026-10-10), as recommended.
+
 * **A. A pure core under a thin loop.** `Key.decode` turns bytes into
   events; `LineEdit.step` takes a state and an event to a state and
   effects (accept, cancel, ask for completions); `layout` turns a state
@@ -1283,6 +1342,8 @@ targets needs them.
 **Recommended: A.**
 
 ### D8. Drawing
+
+**Decided: A** (2026-10-10), as recommended.
 
 * **A. Frames diffed.** The previous frame is kept; a new one is
   compared row by row and only changed rows are rewritten, with
@@ -1303,10 +1364,13 @@ targets needs them.
 
 ### D9. Widths
 
+**Decided: A** (2026-10-10), as recommended.
+
 * **A. Tables generated from Unicode 18** (East Asian Width, emoji
   presentation, the zero-width and combining classes, the grapheme break
   properties) by a script in the tree into SML, checked in with their
-  version; the cursor moves by grapheme cluster (UAX #29's extended
+  version, in `lib/unicode` (*The libraries*); the cursor moves by
+  grapheme cluster (UAX #29's extended
   clusters); a cluster is as wide as its widest code point, an emoji
   presentation sequence two; a policy switch for terminals known to
   measure by code point (VS Code's terminal on Windows, by
@@ -1320,6 +1384,8 @@ targets needs them.
 decides the policy, when the terminal answers within 50 ms.
 
 ### D10. Keymaps and configuration
+
+**Decided: A** (2026-10-10), as recommended.
 
 * **A. Emacs bindings by default** (readline's: Ctrl-A, Ctrl-E, Alt-B,
   Alt-F, Ctrl-K, Ctrl-Y, Alt-Y, Ctrl-W, Ctrl-U, Ctrl-T, Ctrl-L, Ctrl-R,
@@ -1337,6 +1403,8 @@ GHCi (`.ghci`) and Julia (`startup.jl`) have; it is trusted like any
 code the user runs, and `--no-init` skips it.
 
 ### D11. History
+
+**Decided: A** (2026-10-10), as recommended.
 
 * **A. Whole entries, appended.** One history entry is one accepted
   entry, however many lines; newlines and backslashes escaped; each
@@ -1358,6 +1426,8 @@ code the user runs, and `--no-init` skips it.
 suggestion stand beside stepping back through recent entries.
 
 ### D12. When an entry is complete
+
+**Decided: A** (2026-10-10), as recommended.
 
 * **A. A `;` outside any nesting.** As now, an entry ends at a `;` that
   is outside brackets, `let`/`local`/`struct`/`sig`/`abstype` ... `end`,
@@ -1381,6 +1451,8 @@ expect; C is listed under *Ready for, not built*.
 
 ### D13. Highlighting
 
+**Decided: A** (2026-10-10), as recommended.
+
 * **A. The compiler's lexer, with a mode that never raises.** A new
   entry of `src/frontend/lexer.sml` returns the tokens with the comments
   between them, turns an error into a token of its own (an unterminated
@@ -1402,6 +1474,8 @@ makes it a line's cost.
 
 ### D14. Completion
 
+**Decided: A** (2026-10-10), as recommended.
+
 * **A. What the cursor is in decides the source.** After a `:`, the
   commands and then each command's arguments; inside a string after
   `use` or `:use`, file names; after `#`, the labels of the record types
@@ -1422,6 +1496,8 @@ makes it a line's cost.
 for, not built*.
 
 ### D15. Commands
+
+**Decided: A** (2026-10-10), as recommended.
 
 * **A. `:` commands.** A `:` and a letter begin no SML (*What is different
   for SML*); a command is `:` and a name of letters, needs no `;` and takes
@@ -1457,6 +1533,8 @@ for, not built*.
 
 ### D16. Printing
 
+**Decided: A** (2026-10-10), as recommended.
+
 * **A. Documents, laid out.** The printers made for each declaration
   (incremental D10 A) build a document of the `Compiler.pretty` datatype
   in Poly/ML's shape, which the incremental worktree is building for
@@ -1482,6 +1560,8 @@ same document the kernel renders as HTML (D21) and the debugger prints
 locals with (D22).
 
 ### D17. Errors
+
+**Decided: A** (2026-10-10), as recommended.
 
 * **A. One renderer, `src/util/diagnostic.sml`.** A diagnostic is a
   level, a message, a primary span, secondary spans with labels, notes
@@ -1529,6 +1609,8 @@ errors (Skalpel) and `:why` (bidirectional type slicing) are under
 
 ### D18. The terminal and the output, shared with the program
 
+**Decided: A** (2026-10-10), as recommended.
+
 The REPL and the program it runs share a terminal and a Basis.
 
 * **A.**
@@ -1572,6 +1654,8 @@ goes through `docs/language.md` and `tests/basis` like any.
 
 ### D19. Reload
 
+**Decided: A** (2026-10-10), as recommended.
+
 Generativity rules out patching a value in place (*What is different for
 SML*); DrScheme's ghosts are SML's too.
 
@@ -1595,6 +1679,8 @@ files after the first that changed" becomes "the files that depend on
 it".
 
 ### D20. The engine and its fronts
+
+**Decided: B** (2026-10-10), as recommended.
 
 rune-ide's M6 waits for "REPL/evaluation"; incremental M12 plans "the
 compiler as a service" on stdio (diagnostics with spans, the type at a
@@ -1664,6 +1750,8 @@ get one service for analysis and evaluation.
 
 ### D21. The Jupyter kernel
 
+**Decided: A** (2026-10-10), as recommended.
+
 Notebook and JupyterLab decide that a kernel died by whether its process
 lives, not by its heartbeat; R's kernel, which has no threads, answers
 the heartbeat between cells in its one loop. What a busy kernel cannot
@@ -1705,6 +1793,8 @@ specification, not against libzmq: M11 begins by running a real
 `jupyter_client` against the bridge (*Prerequisites and flags*).
 
 ### D22. The debugger
+
+**Decided: A** (2026-10-10), as recommended.
 
 What exists: a line table with inlined frames, a name for every
 function, no names for locals (`docs/bytecode.md:24-29,86-138`); the
@@ -1761,6 +1851,8 @@ clock, is under *Ready for, not built*.
 
 ### D23. Testing an interactive program
 
+**Decided: A** (2026-10-10), as recommended.
+
 * **A. Four layers.**
   * The pure core (`Key.decode`, `LineEdit.step`, `layout`, `diff`):
     unit tests on events and frames, in `tests/lib/terminal`, run on
@@ -1786,6 +1878,8 @@ clock, is under *Ready for, not built*.
 **Recommended: A.**
 
 ### D24. What "best in class" means, measurably
+
+**Decided** (2026-10-10), as recommended.
 
 The brief's aim needs a test. Recommended, as the gate of M13:
 * **Features.** Every feature of the matrix (a column of *What the
@@ -1817,12 +1911,14 @@ The brief's aim needs a test. Recommended, as the gate of M13:
 
 ### D25. Names
 
+**Decided** (2026-10-10), as recommended.
+
 | What | Name |
 |---|---|
 | the palette | `src/util/color.sml`, structure `Color` |
 | the diagnostics' renderer | `src/util/diagnostic.sml`, structure `Diagnostic` |
 | the console in the Basis | structure `RuneTerminal` (`lib/basis/runeterminal.sml`), signature `RUNE_TERMINAL` |
-| the library | `lib/terminal`: `Style`, `Key`, `Width`, `Terminal`, `LineEdit`, `History` |
+| the libraries | `lib/terminal`: `Style`, `Key`, `Terminal`, `LineEdit`, `History`, `Emulator`; `lib/unicode`, `lib/pretty`, `lib/markdown`, `lib/json`, `lib/jsonrpc`, `lib/digest`, `lib/zmtp`, `lib/jupyter`, `lib/dap` (*The libraries*) |
 | the REPL's structures for scripts and output | `Repl`, `Display` |
 | the engine's signature | `ENGINE` (`src/repl/engine.sml`) |
 | generated from the palette | `palette.css`, `palette.json` (rune-ide's Monaco theme) |
@@ -1875,13 +1971,16 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
 * **Done when:** the scripts pass on Linux and on Windows through
   interop, and the baselines are in *Measuring*.
 
-### M2. The palette and coloured diagnostics (M, about 800 SML)
+### M2. The palette and coloured diagnostics (L, about 1,200 SML and 1,500 generated)
 
 * **What:**
   * `src/util/color.sml` (D1 to D3): the roles, the default theme, the
     parser of `RUNE_COLORS`, the decision per stream, the renderings to
     SGR, CSS custom properties and plain text. Portable Standard ML;
     `isatty` from `Posix.ProcEnv`.
+  * `lib/unicode` (*The libraries*): UTF-8, widths and clusters from
+    tables generated from Unicode 18's data files, pinned in the tree with
+    their version, by `scripts/gen-unicode-tables.sh`.
   * `src/util/diagnostic.sml` (D17): a diagnostic's first line as today,
     then the excerpt with a gutter, `^` and `-` in display columns,
     labels, `note:` and `help:`; `--diagnostics=short|full`.
@@ -1929,22 +2028,19 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
 * **Done when:** those pass; the fingerprint and the image format
   number change, documented.
 
-### M4. `lib/terminal`: styles, keys, raw mode, widths (M, about 1,000 SML and 1,500 generated)
+### M4. `lib/terminal`: styles, keys, raw mode (M, about 1,000 SML)
 
 * **What:** the library's first half, with its `MANIFEST` and
   `DOCUMENTED`:
   * `Style`: SGR, the depth of colour the terminal has (`COLORTERM`,
     `TERM`), D3's rule for programs that are not the compiler.
   * `Key`: D6's decoder.
-  * `Width`: tables generated from Unicode 18's data files, pinned in the
-    tree with their version, by `scripts/gen-unicode-width.sh`; grapheme
-    clusters; the width policy.
+  * The width policy (D9), over `lib/unicode`.
   * `Terminal`: over `RuneTerminal`, and a portable one over `Posix.TTY`
     for the hosts.
   * Wired into the Makefile's lists for docs and lint.
 * **Tests:**
   * the decoder on every split of every sequence (a property);
-  * clusters against Unicode's `GraphemeBreakTest.txt`;
   * `make test-lib-hosts` on the files marked `host yes`.
 * **Done when:** green on Rune and on the hosts; P1's decoder retired
   for `Key`.
@@ -2008,6 +2104,8 @@ Windows, and any Rune program can read a line with them.
   * Feedback modes.
   * Printers of one's own through `addPrettyPrinter`, the API HOL4
     calls.
+  * `lib/pretty`, the layout engine, a library of its own (*The
+    libraries*).
 * **Tests:** `tests/repl` grows a transcript per rule; HOL4's printers
   through it.
 * **Done when:** those pass.
@@ -2018,7 +2116,8 @@ Windows, and any Rune program can read a line with them.
   * `:info` with where a name was defined (the elaborator records a
     binding's span with the unit).
   * `:doc` over a machine-readable index of members that runedoc writes
-    and the REPL installs, with Markdown rendered in the terminal's styles.
+    and the REPL installs, with Markdown rendered in the terminal's styles
+    by `lib/markdown`.
   * `:search` by name and by type: Rittri's matching over the session's
     environment, ranked by Runciman and Toyn's distance.
   * `:time`, `:edit`, `:save`, `:save-image`.
@@ -2049,8 +2148,8 @@ Windows, and any Rune program can read a line with them.
   * `print` through the VM's slot for descriptor 1, and `OS.IO.poll`
     ended by the interrupt like a terminal read.
   * `docs/repl-protocol.md`, written with rune-ide and incremental M12.
-  * A JSON library (`lib/json`, from rune-ide's codec with its owner's
-    agreement).
+  * `lib/json` (from rune-ide's codec, with its owner's agreement) and
+    `lib/jsonrpc`.
 * **Tests:** protocol transcripts in `tests/repl-protocol`: evaluation,
   output pushed, cancellation, interrupt, completion, the type at a
   position.
@@ -2060,9 +2159,9 @@ Windows, and any Rune program can read a line with them.
 ### M11. The Jupyter kernel (L, about 1,800 SML and 100 C)
 
 * **What:** D21.
-  * `rune-kernel`, the bridge: ZMTP 3.1, HMAC-SHA256 with a replay set
-    (a library, `lib/digest`), the messages of protocol 5.5 a kernel must
-    answer, the engine as its child.
+  * `lib/digest`, `lib/zmtp` and `lib/jupyter` (*The libraries*).
+  * `rune-kernel`, the bridge over them: the messages of protocol 5.5 a
+    kernel must answer, a replay set, the engine as its child.
   * `Display` in the session: registered renderers per type and MIME
     type, `display`, `update`, `clear`; `text/html` from D16's documents
     and the palette's CSS.
@@ -2091,7 +2190,8 @@ Windows, and any Rune program can read a line with them.
     their printers made on demand; evaluation in a frame.
   * `:break`, `:step`, `:next`, `:finish`, `:continue`, `:frame`,
     `:locals`.
-  * `rune-repl --dap`, and Jupyter's debugger through `debug_request`.
+  * `lib/dap`, and `rune-repl --dap` over it; Jupyter's debugger through
+    `debug_request`.
 * **Tests:**
   * a transcript per command;
   * the same program stopped at every tier of the JIT with the same
@@ -2274,6 +2374,9 @@ Windows, and any Rune program can read a line with them.
 
 ## Testing
 
+* **The libraries.** Each of *The libraries* is tested on its own in
+  `make test-lib`, against its standard's vectors and by properties, and
+  on the hosts where its files are portable.
 * **The core of `lib/terminal`.** Unit tests on events, states and
   frames, and the emulator's property (D23), in `make test-lib`, on Rune
   and the hosts.
