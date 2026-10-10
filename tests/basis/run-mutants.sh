@@ -62,7 +62,7 @@ run() {
   : > "$o.result"
   for p in $(grep -l "@$st\"" "$out/programs"/*.sml); do
     b=$o.$(basename "$p" .sml)
-    "$rune" --lib "$lib" --library test/property "$p" -o "$b.rbc" > "$b.cerr" 2>&1 || return 1
+    "$rune" --lib "$lib" --library test/property/basis "$p" -o "$b.rbc" > "$b.cerr" 2>&1 || return 1
     last=""
     while :; do
       ( ulimit -v $((memory * 1024)); RUNE_PROPERTY_AT=$st RUNE_PROPERTY_AFTER=$last exec "$runevm" "$b.rbc" ) > "$b.run" 2>&1 &

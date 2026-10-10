@@ -4,7 +4,6 @@
 
 - `holds` (val): [PROP](../sig/PROP.md#val-holds)
 - `holdsIf` (val): [PROP](../sig/PROP.md#val-holdsif)
-- `hostEntry` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-hostentry)
 
 ---
 

@@ -208,7 +208,7 @@ claim it breaks, and say in the prose why it breaks.
 A `Law:` says what holds for every value of its variables
 (docs/plans/quickcheck.md, D6 and D7). runedoc elaborates every law, as it
 does every example, and gives each variable a type and an arbitrary of
-lib/test/property to draw it from. So a law is Standard ML, in the paragraph's
+lib/test/property/basis to draw it from. So a law is Standard ML, in the paragraph's
 pieces of code, read by a small grammar:
 
 - The first piece of code is a law, and so is one after "and" that follows a

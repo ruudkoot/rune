@@ -6,7 +6,7 @@
 
 The programs of `runedoc --laws` are built by MLton, SML/NJ (64 and 32 bits,
 and the development line), Poly/ML and MLKit against their own Basis Library,
-with lib/random and lib/test/property, and run with the settings of
+with lib/random, lib/test/property and its Basis instances, lib/test/property/basis, and run with the settings of
 `make check`. A law is held at a structure only where the host has what it
 names: a probe asks each host which of the structures the programs name it
 has, and a file of lib/test/property that tests/lib/run-hosts.sh leaves out
@@ -75,13 +75,15 @@ def run(cmd, cwd=None, stdin=None, timeout=None, env=None):
 # ---- the library: which files of lib/test/property a host builds ----
 
 def manifest():
-    """the files of lib/test/property: (file, host, provides, requires)"""
+    """the files of lib/test/property and of its Basis instances,
+    lib/test/property/basis, in load order: (path, host, provides, requires)"""
     files = []
-    for line in open("lib/test/property/MANIFEST"):
-        if line.startswith("#") or "|" not in line:
-            continue
-        f, _, host, provides, requires = [c.strip() for c in line.split("|")[:5]]
-        files.append((f, host, provides.split(), requires.split()))
+    for d in ("lib/test/property", "lib/test/property/basis"):
+        for line in open(d + "/MANIFEST"):
+            if line.startswith("#") or "|" not in line:
+                continue
+            f, _, host, provides, requires = [c.strip() for c in line.split("|")[:5]]
+            files.append((d + "/" + f, host, provides.split(), requires.split()))
     return files
 
 
@@ -103,7 +105,7 @@ def library_for(files, present, dropped=()):
     for f, host, provides, requires in files:
         ok = all((r in provided) if r in library_names(files) else (r in present) for r in requires)
         if (host == "yes" or ok) and f not in dropped:
-            chosen.append("lib/test/property/" + f)
+            chosen.append(f)
             provided.update(provides)
     return chosen, provided
 
@@ -121,10 +123,10 @@ def library_on(host, files, present, workdir):
         if built:
             return chosen, provided, dropped
         bad = [f for f in chosen if os.path.join(TOP, f) in msgs and
-               dict((g, h) for g, h, _, _ in files).get(os.path.basename(f)) == "no"]
+               dict((g, h) for g, h, _, _ in files).get(f) == "no"]
         if not bad:
             raise SystemExit("%s: lib/test/property does not build:\n%s" % (host, first_error(msgs)))
-        dropped.add(os.path.basename(bad[0]))
+        dropped.add(bad[0])
     raise SystemExit(host + ": lib/test/property does not build")
 
 

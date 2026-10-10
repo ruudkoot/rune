@@ -37,7 +37,7 @@ struct
               (* for a library written on the Basis Library: the Basis Library's index, where a reference
                  the library does not resolve is looked up, and where its pages are from the root of the
                  output (--basis-docs), if they are to be linked *)
-              outer : {index : R.index, root : string option} option}
+              outer : {index : R.index, root : string option} list}
 
   fun href (env : env, from : string, {page, anchor} : R.target, span : Source.span) : string =
     (#links env := (page, anchor, span) :: !(#links env);
@@ -48,14 +48,19 @@ struct
      it is written on: NONE when it is not there either, SOME NONE when it is
      but its pages are not to be linked, and SOME (SOME link) otherwise. A
      link out of the output is not checked (verify cannot see those pages). *)
+  (* A name of a library the documented one is written on: the Basis
+     Library, or one of --library-docs. SOME NONE where it has no pages to
+     link to. *)
   fun outside (env : env) (c : string) : string option option =
-    case #outer env of
-      NONE => NONE
-    | SOME {index, root} =>
-        (case R.resolve (index, "", [], []) c of
-           R.Target {page, anchor} =>
-             SOME (Option.map (fn r => #root env ^ r ^ page ^ (if anchor = "" then "" else "#" ^ anchor)) root)
-         | _ => NONE)
+    List.foldl (fn ({index, root}, found) =>
+                  case found of
+                    SOME _ => found
+                  | NONE =>
+                      (case R.resolve (index, "", [], []) c of
+                         R.Target {page, anchor} =>
+                           SOME (Option.map (fn r => #root env ^ r ^ page ^ (if anchor = "" then "" else "#" ^ anchor)) root)
+                       | _ => NONE))
+               NONE (#outer env)
 
   (* A structure's name, as a link to its page when it has one. *)
   fun strLink (env : env, from : string, name : string) : string =

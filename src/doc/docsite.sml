@@ -111,7 +111,7 @@ struct
 
   (* An environment for pages in the directory that `root` leads out of. *)
   fun envOf (modules : I.module list, out : string, ratchet : string list, sites : DocTests.site list,
-             annotations : DocAnnot.file option, outer : {index : R.index, root : string option} option) =
+             annotations : DocAnnot.file option, outer : {index : R.index, root : string option} list) =
     let
       val tests = List.foldl (fn (s : DocTests.site, m) =>
                                 StringMap.insert (m, #scope s, (case StringMap.find (m, #scope s) of
@@ -1517,7 +1517,8 @@ struct
     end
 
   fun build {dir : string, prelude : DocElab.prelude, title : string, out : string, tests : string option,
-             annotations : string option, lawSkips : string option, basisDocs : string option} : file list =
+             annotations : string option, lawSkips : string option, basisDocs : string option,
+             libraryDocs : (string * string) list} : file list =
     let
       val modules = load dir
       val sigs = sort (fn (a : I.signatureRecord, b : I.signatureRecord) => String.compare (#name a, #name b) = LESS) (signaturesOf modules)
@@ -1526,11 +1527,16 @@ struct
       val annotated = Option.map DocAnnot.load annotations
       (* a library written on the Basis Library may name what it documents *)
       val outer =
-        case #basis prelude of
-          NONE => NONE
-        | SOME basis =>
-            let val (_, index, _, _) = envOf (load basis, upFrom out, [], [], NONE, NONE)
-            in SOME {index = index, root = Option.map (fn d => d ^ "/") basisDocs} end
+        (case #basis prelude of
+           NONE => []
+         | SOME basis =>
+             let val (_, index, _, _) = envOf (load basis, upFrom out, [], [], NONE, [])
+             in [{index = index, root = Option.map (fn d => d ^ "/") basisDocs}] end)
+        (* and the other libraries it is written on whose pages are given *)
+        @ List.map (fn (library, docs) =>
+                      let val (_, index, _, _) = envOf (load library, upFrom out, [], [], NONE, [])
+                      in {index = index, root = SOME (docs ^ "/")} end)
+                   libraryDocs
       val (claims, index, paged, env) = envOf (modules, upFrom out, ratchet, sites, annotated, outer)
       val () = DocClaims.checkNames (#signatures index) claims
       val () = checkRatchet (dir, sigs, ratchet)
@@ -1946,7 +1952,7 @@ struct
   fun examples {dir : string} : file list =
     let
       val modules = load dir
-      val (claims, index, _, _) = envOf (modules, "", [], [], NONE, NONE)
+      val (claims, index, _, _) = envOf (modules, "", [], [], NONE, [])
       fun sigStatus s = case StringMap.find (#signatures index, s) of
                           SOME (I.Signature {doc, ...}) => P.statusOf doc
                         | _ => "required"
@@ -1969,7 +1975,7 @@ struct
     | SOME lib =>
         let
           val modules = load dir
-          val (claims, _, _, _) = envOf (modules, "", [], [], NONE, NONE)
+          val (claims, _, _, _) = envOf (modules, "", [], [], NONE, [])
           val implementers = implementersOf claims
           fun entries (l : DocLaws.law) =
             case implementers (#signat l) of
@@ -1994,7 +2000,7 @@ struct
   fun checkCoverage {dir : string, tests : string} : int =
     let
       val modules = load dir
-      val (claims, index, _, _) = envOf (modules, "", [], [], NONE, NONE)
+      val (claims, index, _, _) = envOf (modules, "", [], [], NONE, [])
     in
       coverageOf (modules, claims, index, DocTests.suite tests, tests)
     end

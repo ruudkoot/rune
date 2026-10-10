@@ -343,7 +343,9 @@ keep these invariants:
   `docs/bugreport/HOST`.
 * A `Law:` of lib/basis is Standard ML that runedoc elaborates and `make
   test-laws` runs at every structure that implements its signature, with its
-  variables drawn by lib/test/property (`docs/doc-comments.md`, *Laws*). Write
+  variables drawn by lib/test/property/basis, the arbitraries of the Basis
+  Library's types on the engine lib/test/property (`docs/doc-comments.md`,
+  *Laws*). Write
   a condition as Standard ML after "for" or "when", not in prose, or the law
   is run without it. `make test-laws` is part of `make check`: every law
   holds, or `tests/basis/law-skips.txt` lists it, which runedoc marks on its

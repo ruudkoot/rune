@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's MANIFEST records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 68 requirements between the 30 files become 35 arrows.
+library and not a wall of lines: the 22 requirements between the 13 files become 13 arrows.
 The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -24,7 +24,7 @@ one need a file of the other.
 ```mermaid
 flowchart LR
   a0["Not in an area<br>(1)"]
-  a1["Property testing<br>(29)"]
+  a1["Property testing<br>(12)"]
   a1 -- 2 --> a0
 ```
 
@@ -51,23 +51,6 @@ flowchart TD
   n10["Prop"]
   n11(["CHECK"])
   n12["Check"]
-  n13(["ARB_OF"])
-  n14["IntegerArbFn<br>WordArbFn<br>RealArbFn<br>CharArbFn<br>StringArbFn<br>PropertyDimensions<br>SubstringArbFn<br>MonoVectorArbFn<br>MonoArrayArbFn<br>MonoVectorSliceArbFn<br>MonoArraySliceArbFn<br>MonoArray2ArbFn"]
-  n15(["DATE_ARB<br>IEEE_REAL_ARB<br>BASIS_DATA_ARB"])
-  n16["PropertyAround<br>TimeArb<br>DateArb<br>IEEERealArb<br>BasisDataArb<br>RandomArb"]
-  n17["IntArb<br>IntInfArb<br>LargeIntArb<br>PositionArb<br>WordArb<br>Word8Arb<br>LargeWordArb<br>SysWordArb<br>RealArb<br>LargeRealArb"]
-  n18["Int8Arb<br>Int16Arb<br>Int32Arb<br>Int64Arb<br>FixedIntArb<br>Word16Arb<br>Word32Arb<br>Word64Arb<br>Real32Arb<br>Real64Arb"]
-  n19["CharArb<br>StringArb<br>SubstringArb<br>CharVectorArb<br>CharArrayArb<br>CharVectorSliceArb<br>CharArraySliceArb"]
-  n20["Wide* (4)"]
-  n21["Word8* (4)"]
-  n22["IntArray2Arb<br>CharArray2Arb<br>Word8Array2Arb"]
-  n23(["SYSTEM_ARB"])
-  n24["PropertyScratch<br>SystemArb"]
-  n25(["INET6_SOCK_ARB"])
-  n26["INet6SockArb"]
-  n27(["SML90_ARB"])
-  n28["SML90Arb"]
-  n29["BoolVectorArb<br>BoolArrayArb<br>BoolVectorSliceArb<br>BoolArraySliceArb<br>BoolArray2Arb<br>IntVectorArb<br>IntArrayArb<br>IntVectorSliceArb<br>IntArraySliceArb<br>Int8VectorArb<br>Int8ArrayArb<br>Int8VectorSliceArb<br>Int8ArraySliceArb<br>Int8Array2Arb<br>Int16VectorArb<br>Int16ArrayArb<br>Int16VectorSliceArb<br>Int16ArraySliceArb<br>Int16Array2Arb<br>Int32VectorArb<br>Int32ArrayArb<br>Int32VectorSliceArb<br>Int32ArraySliceArb<br>Int32Array2Arb<br>Int64VectorArb<br>Int64ArrayArb<br>Int64VectorSliceArb<br>Int64ArraySliceArb<br>Int64Array2Arb<br>LargeIntVectorArb<br>LargeIntArrayArb<br>LargeIntVectorSliceArb<br>LargeIntArraySliceArb<br>LargeIntArray2Arb<br>RealVectorArb<br>RealArrayArb<br>RealVectorSliceArb<br>RealArraySliceArb<br>RealArray2Arb<br>Real32VectorArb<br>Real32ArrayArb<br>Real32VectorSliceArb<br>Real32ArraySliceArb<br>Real32Array2Arb<br>Real64VectorArb<br>Real64ArrayArb<br>Real64VectorSliceArb<br>Real64ArraySliceArb<br>Real64Array2Arb<br>LargeRealVectorArb<br>LargeRealArrayArb<br>LargeRealVectorSliceArb<br>LargeRealArraySliceArb<br>LargeRealArray2Arb<br>WordVectorArb<br>WordArrayArb<br>WordVectorSliceArb<br>WordArraySliceArb<br>WordArray2Arb<br>Word16VectorArb<br>Word16ArrayArb<br>Word16VectorSliceArb<br>Word16ArraySliceArb<br>Word16Array2Arb<br>Word32VectorArb<br>Word32ArrayArb<br>Word32VectorSliceArb<br>Word32ArraySliceArb<br>Word32Array2Arb<br>Word64VectorArb<br>Word64ArrayArb<br>Word64VectorSliceArb<br>Word64ArraySliceArb<br>Word64Array2Arb<br>LargeWordVectorArb<br>LargeWordArrayArb<br>LargeWordVectorSliceArb<br>LargeWordArraySliceArb<br>LargeWordArray2Arb<br>WideCharVectorArb<br>WideCharArrayArb<br>WideCharVectorSliceArb<br>WideCharArraySliceArb<br>WideCharArray2Arb"]
   n2 --> n1
   n4 --> n3
   n6 --> n5
@@ -79,28 +62,6 @@ flowchart TD
   n10 --> n9
   n11 --> n10
   n12 --> n11
-  n13 --> n8
-  n14 --> n13
-  n15 --> n8
-  n16 --> n13
-  n16 --> n15
-  n17 --> n14
-  n18 --> n14
-  n19 --> n14
-  n20 --> n14
-  n21 --> n17
-  n22 --> n19
-  n22 --> n17
-  n23 --> n8
-  n24 --> n23
-  n25 --> n8
-  n26 --> n25
-  n27 --> n8
-  n28 --> n24
-  n28 --> n27
-  n29 --> n18
-  n29 --> n17
-  n29 --> n20
 ```
 
 It also needs Not in an area (2).

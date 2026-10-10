@@ -5,7 +5,7 @@
 # (LAWS_AT=REGEX runs only the structures whose names match it)
 # `runedoc --laws` writes a program for each signature with a law, holding
 # every law at every structure that implements the signature. Each program
-# whose name contains FILTER is compiled with `rune --library test/property`
+# whose name contains FILTER is compiled with `rune --library test/property/basis`
 # and run with at most $LAWS_MEMORY megabytes (default 4096), printing a line
 # before each law and each of its cases, under a watchdog that stops it when a
 # case has run $LAWS_TIMEOUT seconds (default 60). A case that the machine
@@ -70,7 +70,7 @@ compile() {
   name=$(basename "$p" .sml)
   o=$out/$name
   start=$(date +%s.%N)
-  if "$rune" --library test/property "$p" -o "$o.rbc" > "$o.cerr" 2>&1; then
+  if "$rune" --library test/property/basis "$p" -o "$o.rbc" > "$o.cerr" 2>&1; then
     echo "$name compile $(echo "$(date +%s.%N) - $start" | bc)" > "$o.ctime"
   else
     echo "COMPILE $name (see $o.cerr)" > "$o.cresult"

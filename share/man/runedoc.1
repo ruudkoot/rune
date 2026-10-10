@@ -107,6 +107,19 @@ are, from the
 directory, so that what the library's comments name of it links there.
 Without it such a name is shown as code.
 .TP
+.BI \-\-library\-docs " NAME DIR"
+As
+.BR \-\-basis\-docs ,
+for a library
+.I NAME
+that this one is written on (its MANIFEST's
+.B # library:
+lines): where
+.IR NAME 's
+pages are, from the
+.B \-\-out
+directory. It may be given for several libraries.
+.TP
 .BI \-\-out " DIR"
 Write the pages to
 .I DIR
@@ -180,7 +193,7 @@ implements it, each labelled
 with its variables drawn from the arbitraries of the library
 .BR test/property ,
 and is compiled with
-.BR "rune \-\-library test/property" .
+.BR "rune \-\-library test/property/basis" .
 It prints a line
 .B LAW
 before each law and

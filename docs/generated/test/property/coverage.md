@@ -7,19 +7,12 @@ documented when a comment describes it, alone or together with the entry before 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
 | [`ARB`](sig/ARB.md) | 28 | 28 | 100% | 16 | 16 |
-| [`ARB_OF`](sig/ARB_OF.md) | 2 | 2 | 100% | 0 | 0 |
-| [`BASIS_DATA_ARB`](sig/BASIS_DATA_ARB.md) | 6 | 6 | 100% | 0 | 0 |
 | [`CHECK`](sig/CHECK.md) | 9 | 9 | 100% | 6 | 6 |
 | [`CO`](sig/CO.md) | 14 | 14 | 100% | 4 | 4 |
-| [`DATE_ARB`](sig/DATE_ARB.md) | 6 | 6 | 100% | 1 | 1 |
 | [`GEN`](sig/GEN.md) | 44 | 44 | 100% | 31 | 31 |
-| [`IEEE_REAL_ARB`](sig/IEEE_REAL_ARB.md) | 3 | 3 | 100% | 0 | 0 |
-| [`INET6_SOCK_ARB`](sig/INET6_SOCK_ARB.md) | 2 | 2 | 100% | 1 | 1 |
 | [`PROP`](sig/PROP.md) | 15 | 15 | 100% | 12 | 12 |
 | [`SHOW`](sig/SHOW.md) | 17 | 17 | 100% | 7 | 7 |
-| [`SML90_ARB`](sig/SML90_ARB.md) | 1 | 1 | 100% | 0 | 0 |
-| [`SYSTEM_ARB`](sig/SYSTEM_ARB.md) | 33 | 33 | 100% | 1 | 1 |
-| **all** | 180 | 180 | 100% | 79 | 79 |
+| **all** | 127 | 127 | 100% | 76 | 76 |
 
 ## Members a signature describes
 
@@ -28,15 +21,11 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-140 structures have a page, with 469 members, of which 424 (90%) are described by a signature.
+7 structures have a page, with 164 members, of which 127 (77%) are described by a signature.
 
 | Structure | Members | Described |  |
 | --- | --- | --- | --- |
-| [`PropertyAround`](str/PropertyAround.md) | 1 | 0 | 0% |
-| [`PropertyDimensions`](str/PropertyDimensions.md) | 3 | 0 | 0% |
-| [`PropertyScratch`](str/PropertyScratch.md) | 2 | 0 | 0% |
 | [`PropertySource`](str/PropertySource.md) | 37 | 0 | 0% |
-| [`WideTextArb`](str/WideTextArb.md) | 2 | 0 | 0% |
 
 ## Examples that are run
 

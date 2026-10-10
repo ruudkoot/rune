@@ -19,6 +19,8 @@ struct
     \  --basis-docs DIR  for a library on top of LIBDIR/basis: where its pages\n\
     \                  are, from DIR of --out, for the links to what it names\n\
     \                  of the basis library (without it, those are plain code)\n\
+    \  --library-docs NAME DIR  as --basis-docs, for the library NAME that this\n\
+    \                  one is written on (# library: NAME); repeatable\n\
     \  --out DIR       write the documentation there, and remove the pages\n\
     \                  that are no longer generated\n\
     \  --check         write nothing: fail if DIR is not what would be written\n\
@@ -37,7 +39,7 @@ struct
     \  --laws DIR      write the laws of the comments as a program for each\n\
     \                  signature, holding each at every structure that\n\
     \                  implements it, and stop; compile one with\n\
-    \                  rune --library test/property\n\
+    \                  rune --library test/property/basis\n\
     \  --labels        print the checks of the suite of --tests and stop\n\
     \  --check-coverage  with --library and --tests: every value and exception\n\
     \                  that a signature specifies has a check for every\n\
@@ -67,6 +69,7 @@ struct
   val library : string option ref = ref NONE
   val out : string option ref = ref NONE
   val basisDocs : string option ref = ref NONE
+  val libraryDocs : (string * string) list ref = ref []
   val title : string option ref = ref NONE
   val check = ref false
   val tests : string option ref = ref NONE
@@ -95,6 +98,7 @@ struct
     | "--library" :: name :: rest => (library := SOME name; parse rest)
     | "--out" :: dir :: rest => (out := SOME dir; parse rest)
     | "--basis-docs" :: dir :: rest => (basisDocs := SOME dir; parse rest)
+    | "--library-docs" :: name :: dir :: rest => (libraryDocs := !libraryDocs @ [(name, dir)]; parse rest)
     | "--title" :: text :: rest => (title := SOME text; parse rest)
     | "--tests" :: dir :: rest => (tests := SOME dir; parse rest)
     | "--annotations" :: file :: rest => (annotations := SOME file; parse rest)
@@ -150,7 +154,7 @@ struct
   fun pages (paths : string list) : unit =
     let
       val modules = List.concat (List.map load paths)
-      val (claims, index, _, envAt) = DocSite.envOf (modules, "", [], [], NONE, NONE)
+      val (claims, index, _, envAt) = DocSite.envOf (modules, "", [], [], NONE, [])
       val () = DocClaims.checkNames (#signatures index) claims
       val env = envAt "../"
     in
@@ -192,7 +196,8 @@ struct
       val dir = case !out of SOME d => d | NONE => raise Usage "no output directory (use --out DIR)"
       val shown = List.last (String.tokens (fn c => c = #"/") name) handle Empty => name
       val files = DocSite.build {dir = lib, prelude = preludeOf lib, out = dir, tests = !tests, annotations = !annotations, lawSkips = !lawSkips,
-                                 title = (case !title of SOME t => t | NONE => shown), basisDocs = !basisDocs}
+                                 title = (case !title of SOME t => t | NONE => shown), basisDocs = !basisDocs,
+                                 libraryDocs = List.map (fn (n, d) => (directoryOf n, d)) (!libraryDocs)}
                   handle BasisManifest.Usage why => raise Usage why
       val status = report ()
     in
@@ -207,15 +212,17 @@ struct
             println ("runedoc: wrote " ^ Int.toString (List.length files) ^ " files to " ^ dir); status)
     end
 
-  (* The arbitraries of lib/test/property, where the library directory has
-     it: what the variables of laws are resolved against (quickcheck M7). *)
+  (* The arbitraries of lib/test/property and of its Basis instances,
+     lib/test/property/basis, where the library directory has them: what the
+     variables of laws are resolved against (quickcheck M7). *)
   fun readInstances () : unit =
     case !libDir of
       NONE => ()
     | SOME d =>
         (DocElab.instanceStructures :=
            SOME (List.filter (fn n => String.isSuffix "Arb" n)
-                             (List.concat (List.map #provides (BasisManifest.readManifest (d ^ "/test/property"))))))
+                             (List.concat (List.map #provides (BasisManifest.readManifest (d ^ "/test/property")
+                                                                @ BasisManifest.readManifest (d ^ "/test/property/basis"))))))
         handle _ => ()
 
   (* --palette: the roles' styles for HTML and for an editor *)

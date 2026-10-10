@@ -36,9 +36,12 @@ cc=${CC:-cc}
 "$cc" -O2 -o "$out/random-reference" tests/lib/random/reference.c && "$out/random-reference" > "$out/random-kat.expected" ||
   { echo "test-lib-hosts: tests/lib/random/reference.c does not build or run"; exit 1; }
 random="lib/random/random_sig.sml lib/random/random.sml"
-# the library's files that the other compilers build (host column yes); the
-# rest name structures that the Basis leaves optional, or Rune's own
-property=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/test\/property\/\1/p' lib/test/property/MANIFEST | tr '\n' ' ')
+# the files that the other compilers build (host column yes) of the engine
+# and of its Basis instances; the rest name structures that the Basis leaves
+# optional, or Rune's own
+property=$(for d in lib/test/property lib/test/property/basis; do
+             sed -n "s#^\\([a-z_0-9/]*\\.sml\\) *| *[a-z]* *| *yes *|.*#$d/\\1#p" "$d/MANIFEST"
+           done | tr '\n' ' ')
 unicode=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/unicode\/\1/p' lib/unicode/MANIFEST | tr '\n' ' ')
 json=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/json\/\1/p' lib/json/MANIFEST | tr '\n' ' ')
 jsonrpc=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/jsonrpc\/\1/p' lib/jsonrpc/MANIFEST | tr '\n' ' ')
