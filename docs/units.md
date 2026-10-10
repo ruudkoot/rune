@@ -395,6 +395,43 @@ virtual module (`structure X = _virtual : SIG`, [build.md](build.md),
 *Virtual modules*) is the same boundary inside one program, its
 implementation chosen by the build file.
 
+## Parallel builds
+
+`rune -j N` compiles the units of a build in up to N processes at once
+(the incremental roadmap's M11, `Parallel`), with the cache as the way
+they hand units on, so it wants the cache. The parent goes through the
+units in order as a build by one process does, each through the cache.
+Before each unit it starts a child for every unit after it that will
+likely be compiled -- one the cache has no entry of, or one that needs a
+unit compiled in this build -- whose units before it are done, and whose
+text is big enough to be worth a process (`RUNE_PARALLEL_MIN` bytes, 16384
+if not set). A unit the parent reaches and misses it compiles itself,
+unless a child has it, whose end it waits for. A unit needs the units
+before it that declare a name it uses (*The graph*; a Basis file by its
+MANIFEST); a unit that breaks the discipline, and an `always` file of the
+Basis, is needed by every unit after it. `RUNE_PARALLEL_DEBUG` set prints
+each child's start and end.
+
+A child is a fork of the parent at the unit it was started at, so it has
+the parent's basis without reading it again. It goes on through the units
+its own unit needs, which the cache has, skips the others, compiles its
+unit into the cache and ends. What the build gives is what the parent's
+pass through the cache gives, which is a build by one process: an entry
+that a child compiled in a basis without some unit is one whose usages
+the parent checks, and compiles again where they do not hold. So `-j`
+changes how long a build takes and nothing else -- the program, the
+warnings, the errors, and what `--explain-rebuild` prints, in the units'
+order (S58). `make check-reproducible` (`scripts/check-reproducible.sh`)
+holds the compiler to one set of bytes over eleven builds: in units and
+whole, without the cache, through a cold cache and warm, by one process and
+by several, and from a copy of its sources in another directory; the whole
+ones are `bin/rune.rbc`.
+
+On Rune's own builds `-j` gives no speed-up (the incremental roadmap,
+*M11, as built*): a unit compiles in tens of milliseconds, the compiler's
+units have a critical path of almost half their work, and under every
+build is the parent's pass through the cache, which a child cannot share.
+
 ## Errors
 
 A top-level declaration that fails to elaborate is reported at once and

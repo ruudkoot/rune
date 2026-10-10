@@ -47,7 +47,7 @@ What it rests on:
 | M8 | The dependency graph, and a program from an entry point | built 2026-10-10: `rune --deps`, `--deps-dot`, `-I` entry points, the MANIFEST's requires column derived and checked (*M8, as built*) |
 | M9 | Compiling against a signature alone, and dynamic modules | built 2026-10-10: `_dynamic` and `_export`, the signature's ABI and its fingerprint, the constructors' order renumbered, `Dynamic`, programs linked from units keeping their exports (*M9, as built*) |
 | M10 | The build language and virtual modules | built 2026-10-10: `rune --build`, the programs' and the libraries' build files in place of `sources*.txt` and the MANIFESTs, `rune --basis-index`, `_virtual` and `implements` (*M10, as built*) |
-| M11 | Parallel and reproducible builds | |
+| M11 | Parallel and reproducible builds | built 2026-10-10: `rune -j N` (children forked through the cache, the build the bytes of one process), `make check-reproducible`; measured, and no speed-up, for reasons in *M11, as built* |
 | M12 | Hot reload, the compiler as a service, packages: research and prototypes | |
 
 The owner decided D1 to D9 and D11 to D19 on 2026-10-09, all as
@@ -3065,6 +3065,69 @@ What M6 and M7 measured changes the plan below in three places:
   is in `make check`.
 * **Touches:** green threads (a later in-process pool); the corpus
   harness (its ad hoc build).
+
+#### M11, as built (2026-10-10)
+
+* **`rune -j N`** (`src/driver/parallel.sml`, `docs/units.md`, *Parallel
+  builds*): the parent goes through the units in order, each through the
+  cache, as a build by one process does, and forks children -- copies of
+  itself at the unit it is at, so with its basis in memory -- for the units
+  after it that are likely to be compiled, whose units before them are
+  done, and whose text is at least `RUNE_PARALLEL_MIN` bytes (16384). A
+  child goes through the units its own needs, from the cache, skips the
+  others, compiles its unit into the cache and ends; the parent takes the
+  unit from the cache when it gets there. A unit the parent misses and no
+  child has, it compiles itself. The graph is M8's, by name, and the
+  MANIFEST's for the Basis. What the build gives is the parent's pass, so
+  `-j` changes the time and nothing else: S58 holds a project built with
+  `-j 4` to the same units compiled, the same standard error and the same
+  bytes as one process, cold, warm, after edits and after an error.
+* **`make check-reproducible`** (`scripts/check-reproducible.sh`): the
+  compiler built from `rune.build` is one set of bytes over eleven builds --
+  in units and whole, without the cache, through a cold cache and warm, at
+  `-j 1` and `-j N`, and from a copy of its sources in another directory --
+  and the whole ones are `bin/rune.rbc`. A program names the Basis's files
+  by the path the compiler was run by (`bin/../lib/basis/...`), so the
+  builds run `bin/rune` by that name, the copy through a link to `bin`; a
+  checkout elsewhere run the same way gives the same bytes.
+* **Measured** (2026-10-10, 16 threads; another session's `make check`
+  shared the machine, so each configuration ran five times interleaved
+  with the others and the least is shown):
+
+  | Build | `-j 1` | `-j 4` | `-j 8` | `-j 16` |
+  |---|---|---|---|---|
+  | the compiler in units, cold (the Basis from the frozen cache) | 5.63 s | 6.17 s | 7.11 s | 6.04 s |
+  | the same, warm | 2.66 s | 2.93 s | 3.03 s | 2.85 s |
+  | the compiler whole (`--whole`), cold | 6.88 s | | | 7.62 s |
+  | the Basis, every file, no frozen cache | 4.38 s | 4.68 s | 4.85 s | 4.43 s |
+
+  **There is no speed-up**, and the reasons are measured. Once a type
+  name's fingerprint is a hash (*M6, the third part as built*), the
+  compiler's 63 units compile in 4.1 s together, and the graph's critical
+  path is 1.7 s of that: at most 2.4 times on the compile work. Under it
+  is the parent's pass through the cache -- reading each unit's entry,
+  loading its basis, linking -- which is what a warm build costs (2.7 s) and
+  which is not parallel at all. So the best a cold build could be is about
+  4.4 s against 5.6 s, and each child costs a fork, its collections over
+  pages it shares with the parent (copied on the first write), and the
+  parent's reading of what it compiled, which uses the margin up; `-j`
+  also analyses every file's dependencies before it starts (0.2 s). The
+  Basis is the same in small: 250 files, most a few hundred lines, in a
+  graph that every `always` file and every seal file make deep.
+* **What would make it pay**, in the order of what it would gain: the
+  parent's pass made cheaper or parallel (loading the entries of the units
+  that do not depend on each other at once; the link reading code in
+  parallel), which is the floor of every build, cold or warm; a pool of
+  compilers that stay up between builds and take units over a pipe, so
+  that no process is forked per unit and no basis is copied (the green
+  threads' in-process pool the plan named); and units coarser than a file
+  where files are small. None of it is built; the measurement is the
+  result.
+* **Found on the way:** a unit's usages were most of a compile in units
+  (the fingerprint of a type named the text of every type it was made of),
+  fixed in M6's third part; `--pass-stats` reports what each unit took, and
+  the phases of a unit's compile outside the passes (`unit-usages`,
+  `unit-export`, ...).
 
 ### M12. Hot reload, the compiler as a service, packages: research and prototypes (L)
 

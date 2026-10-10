@@ -95,11 +95,12 @@ struct
                    decs : Ast.dec list, delta : Env.env, fixity : Fixity.env, used : string list}
       : {code : Link.unitCode, exported : UnitBasis.exported, loaded : UnitBasis.result} =
     let
-      val sc = unitOf decs
-      val x = UnitBasis.export {start = start, name = name, file = file, text = text, delta = delta, fixity = fixity,
-                                used = used}
-      val () = UnitBasis.undo start
-      val l = UnitBasis.load {pickle = #pickle x, file = file, at = #counters start, env = #env start,
-                              fixity = #fixity start, text = text}
-    in {code = UnitBasis.relative (x, sc), exported = x, loaded = l} end
+      fun timed name f = Pass.stage {name = name, showIn = NONE, show = fn _ => "", check = fn _ => (), size = fn _ => 0} f ()
+      val sc = timed "unit-passes" (fn () => unitOf decs)
+      val x = timed "unit-export" (fn () => UnitBasis.export {start = start, name = name, file = file, text = text, delta = delta,
+                                                             fixity = fixity, used = used})
+      val () = timed "unit-undo" (fn () => UnitBasis.undo start)
+      val l = timed "unit-load" (fn () => UnitBasis.load {pickle = #pickle x, file = file, at = #counters start, env = #env start,
+                                                         fixity = #fixity start, text = text})
+    in {code = timed "unit-relative" (fn () => UnitBasis.relative (x, sc)), exported = x, loaded = l} end
 end

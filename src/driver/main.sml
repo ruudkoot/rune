@@ -480,7 +480,26 @@ struct
       fun explain msg = if !Options.explainRebuild then TextIO.output (TextIO.stdErr, msg ^ "\n") else ()
       (* the cache's work, for --pass-stats *)
       fun timed name f = Pass.stage {name = name, showIn = NONE, show = fn _ => "", check = fn _ => (), size = fn _ => 0} f ()
-      fun unit ((name, load, allow, ident), acc) =
+      (* a unit: from the cache, or compiled; with -j, by a child where it
+         is likely to be compiled, or skipped in a child that does not need
+         it (Parallel) *)
+      fun unit (src as (name, _, _, _), acc) =
+        case Parallel.at name of
+          Parallel.Skip => acc
+        | Parallel.Run {quiet} => timedUnit (src, acc, quiet)
+        | Parallel.Compile => timedUnit (src, acc, false)
+      (* --pass-stats: what each unit took, start to end *)
+      and timedUnit (src as (name, _, _, _), acc, quiet) =
+        let
+          val t0 = Time.now ()
+          val (acc, compiledIt) = unitHere (src, acc, quiet)
+          val () = if !Pass.stats
+                   then TextIO.output (TextIO.stdErr, "unit " ^ name ^ " took "
+                                                      ^ Real.fmt (StringCvt.FIX (SOME 3)) (Time.toReal (Time.- (Time.now (), t0)))
+                                                      ^ " s" ^ (if compiledIt then "" else ", from the cache") ^ "\n")
+                   else ()
+        in Parallel.after (name, compiledIt); acc end
+      and unitHere ((name, load, allow, ident), acc, quiet) =
         let
           val () = if !Pass.stats then TextIO.output (TextIO.stdErr, "unit " ^ name ^ "\n") else ()
           val k = case cache of
@@ -490,81 +509,98 @@ struct
                   | NONE => NONE
           (* the unit's place, which its entries' usages are checked at *)
           val () = UnitBasis.position (!env, !fixity)
-          val found =
-            case (cache, k) of
-              (SOME (dir, config), SOME k) =>
-                timed "cache-find"
-                  (fn () => case (UnitCache.find (dir, config, k), frozen) of
-                              (UnitCache.Missed why, SOME f) =>
-                                (case UnitCache.find (f, config, k) of
-                                   UnitCache.Missed "no entry" => UnitCache.Missed why
-                                 | UnitCache.Missed fwhy => UnitCache.Missed (why ^ "; the frozen Basis's: " ^ fwhy)
-                                 | found => found)
-                            | (found, _) => found)
-            | _ => UnitCache.Missed (if isSome cache then "a unit before it failed" else "the cache is off")
-          (* --verify-cache: an entry found is compiled all the same, and
-             what that gives is compared with it *)
-          val (found, against) =
-            case found of
-              UnitCache.Found e => if UnitCache.verifying () then (UnitCache.Missed "to verify its entry", SOME e)
-                                   else (found, NONE)
-            | _ => (found, NONE)
-          (* from the cache: its basis loaded, its code read *)
-          val hit =
-            case found of
-              UnitCache.Missed why => (explain ("rune: compiled " ^ name ^ ": " ^ why); NONE)
-            | UnitCache.Found (e as {pickle, code, warnings, file, others, mid, ...}) =>
-                let val at = UnitBasis.counters ()
-                in
-                  (let
-                     val (fp, u) = timed "cache-code" (fn () => UnitFile.read code)
-                     val () = if fp <> Pipeline.fingerprint () then raise UnitFile.Bad "another instruction set" else ()
-                     (* the units it was compiled against that are others
-                        now, which its usages held of all the same, by the
-                        paths to their names (M6's third part) *)
-                     val remap = case cache of
-                                   SOME (dir, config) =>
-                                     UnitBasis.remapping (pickle, u, UnitCache.pathsIn (dir :: (case frozen of SOME f => [f] | NONE => []),
-                                                                                     config))
-                                 | NONE => []
-                     val u = UnitBasis.remapKeys (u, remap)
-                     val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
-                     val l = timed "cache-basis" (fn () => UnitBasis.loadAgainst ({pickle = pickle, file = name, at = at,
-                                                                                    env = !env, fixity = !fixity,
-                                                                                    text = text name}, remap))
-                     (* its source, and those of the functors' bodies it
-                        applied, where they are now, in its code's files *)
-                     val u = UnitBasis.relocate (u, file, name, others)
-                     (* --whole: its Mid, as the session names it *)
-                     val () =
-                       if not (!Options.wholeFromUnits) then ()
-                       else if mid = "" then raise UnitFile.Bad "no Mid in its entry"
-                       else mids := UnitMid.read (mid, #unit l, remap, UnitBasis.movedTo (file, name, others)) :: !mids
-                   in
-                     explain ("rune: from the cache " ^ name
-                              ^ String.concat (List.map (fn (i, _, _) => ", across " ^ UnitBasis.nameOf i ^ " changed") remap));
-                     (* the warnings its compile gave, again *)
-                     if !Options.noWarnings then ()
-                     else List.app (fn w => TextIO.output (TextIO.stdErr, w ^ "\n")) warnings;
-                     SOME (l, u, pickle)
-                   end)
-                  handle UnitMid.Bad why => (UnitBasis.abandon at; explain ("rune: compiled " ^ name ^ ": a damaged entry: " ^ why); NONE)
-                       | Pickle.Bad why => (UnitBasis.abandon at; explain ("rune: compiled " ^ name ^ ": a damaged entry: " ^ why); NONE)
-                       | UnitFile.Bad why => (UnitBasis.abandon at; explain ("rune: compiled " ^ name ^ ": a damaged entry: " ^ why); NONE)
-                       | UnitBasis.Missing u => (UnitBasis.abandon at; explain ("rune: compiled " ^ name ^ ": its entry names " ^ u); NONE)
-                end
+          (* from the cache: its basis loaded, its code read; or why not *)
+          datatype looked = Hit of UnitBasis.result * Link.unitCode * string * UnitCache.entry | Miss of string
+          fun lookup quiet : looked * UnitCache.entry option =
+            let
+              val found =
+                case (cache, k) of
+                  (SOME (dir, config), SOME k) =>
+                    timed "cache-find"
+                      (fn () => case (UnitCache.find (dir, config, k), frozen) of
+                                  (UnitCache.Missed why, SOME f) =>
+                                    (case UnitCache.find (f, config, k) of
+                                       UnitCache.Missed "no entry" => UnitCache.Missed why
+                                     | UnitCache.Missed fwhy => UnitCache.Missed (why ^ "; the frozen Basis's: " ^ fwhy)
+                                     | found => found)
+                                | (found, _) => found)
+                | _ => UnitCache.Missed (if isSome cache then "a unit before it failed" else "the cache is off")
+              (* --verify-cache: an entry found is compiled all the same, and
+                 what that gives is compared with it *)
+              val (found, against) =
+                case found of
+                  UnitCache.Found e => if UnitCache.verifying () then (UnitCache.Missed "to verify its entry", SOME e)
+                                       else (found, NONE)
+                | _ => (found, NONE)
+            in
+              case found of
+                UnitCache.Missed why => (Miss why, against)
+              | UnitCache.Found (e as {pickle, code, file, others, mid, ...}) =>
+                  let val at = UnitBasis.counters ()
+                  in
+                    (let
+                       val (fp, u) = timed "cache-code" (fn () => UnitFile.read code)
+                       val () = if fp <> Pipeline.fingerprint () then raise UnitFile.Bad "another instruction set" else ()
+                       (* the units it was compiled against that are others
+                          now, which its usages held of all the same, by the
+                          paths to their names (M6's third part) *)
+                       val remap = case cache of
+                                     SOME (dir, config) =>
+                                       UnitBasis.remapping (pickle, u, UnitCache.pathsIn (dir :: (case frozen of SOME f => [f] | NONE => []),
+                                                                                       config))
+                                   | NONE => []
+                       val u = UnitBasis.remapKeys (u, remap)
+                       val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
+                       val l = timed "cache-basis" (fn () => UnitBasis.loadAgainst ({pickle = pickle, file = name, at = at,
+                                                                                      env = !env, fixity = !fixity,
+                                                                                      text = text name}, remap))
+                       (* its source, and those of the functors' bodies it
+                          applied, where they are now, in its code's files *)
+                       val u = UnitBasis.relocate (u, file, name, others)
+                       (* --whole: its Mid, as the session names it *)
+                       val () =
+                         if not (!Options.wholeFromUnits) then ()
+                         else if mid = "" then raise UnitFile.Bad "no Mid in its entry"
+                         else mids := UnitMid.read (mid, #unit l, remap, UnitBasis.movedTo (file, name, others)) :: !mids
+                       val () =
+                         if quiet then ()
+                         else explain ("rune: from the cache " ^ name
+                                       ^ String.concat (List.map (fn (i, _, _) => ", across " ^ UnitBasis.nameOf i ^ " changed") remap))
+                     in
+                       (Hit (l, u, pickle, e), NONE)
+                     end)
+                    handle UnitMid.Bad why => (UnitBasis.abandon at; (Miss ("a damaged entry: " ^ why), NONE))
+                         | Pickle.Bad why => (UnitBasis.abandon at; (Miss ("a damaged entry: " ^ why), NONE))
+                         | UnitFile.Bad why => (UnitBasis.abandon at; (Miss ("a damaged entry: " ^ why), NONE))
+                         | UnitBasis.Missing u => (UnitBasis.abandon at; (Miss ("its entry names " ^ u), NONE))
+                  end
+            end
+          fun bindHit (l, u, pickle, {warnings, ...} : UnitCache.entry) =
+            ((* the warnings its compile gave, again *)
+             if !Options.noWarnings then ()
+             else List.app (fn w => TextIO.output (TextIO.stdErr, w ^ "\n")) warnings;
+             env := Env.plus (!env, #delta l);
+             fixity := Fixity.extend (!fixity, #directives l);
+             UnitBasis.bind l;
+             logDeclared l;
+             ((u, pickle) :: acc, false))
+          fun here (why, against) =
+            (explain ("rune: compiled " ^ name ^ ": " ^ why);
+             (compileUnit ((name, load, allow, ident), k, against, acc), true))
         in
-          case hit of
-            SOME (l, u, pickle) =>
-              (env := Env.plus (!env, #delta l);
-               fixity := Fixity.extend (!fixity, #directives l);
-               UnitBasis.bind l;
-               (u, pickle) :: acc)
-          | NONE => compileUnit ((name, load, allow, ident), k, against, acc)
+          case lookup quiet of
+            (Hit h, _) => bindHit h
+          | (Miss why, against) =>
+              if isSome against then here (why, against)
+              else
+                (case Parallel.missed name of
+                   Parallel.Skip => (acc, false)
+                 | Parallel.Run {quiet} => (case lookup quiet of (Hit h, _) => bindHit h | (Miss why, against) => here (why, against))
+                 | Parallel.Compile => here (why, against))
         end
       and compileUnit ((name, load, allow, ident), k, against : UnitCache.entry option, acc) =
         let
-          val start = UnitBasis.begin (!env, !fixity)
+          val start = timed "unit-begin" (fn () => UnitBasis.begin (!env, !fixity))
           (* parsed and elaborated, the names it looks up recorded: its
              usages (UnitCache) *)
           val (decs, names) =
@@ -587,13 +623,13 @@ struct
           if !Options.typecheckOnly orelse failed then (if failed then failedBefore := true else (); acc)
           else
             let
-              val usages = UnitBasis.usagesOf names
+              val usages = timed "unit-usages" (fn () => UnitBasis.usagesOf names)
               val {code, exported, loaded} =
                 Pipeline.unitThrough {start = start, name = ident, file = name, text = text name, decs = decs,
                                       delta = !Elaborate.lastDelta, fixity = !fixity, used = names}
-              val bytes = String.concat (UnitFile.chunks (Pipeline.fingerprint (), code))
+              val bytes = timed "unit-chunks" (fn () => String.concat (UnitFile.chunks (Pipeline.fingerprint (), code)))
               (* its Mid in bytes, kept in its entry *)
-              val midBytes = case !Pipeline.lastMid of SOME um => UnitMid.write (exported, um) | NONE => ""
+              val midBytes = timed "unit-mid" (fn () => case !Pipeline.lastMid of SOME um => UnitMid.write (exported, um) | NONE => "")
               val () = Pipeline.lastMid := NONE
               (* the entry verified: its basis the same bytes, and its code,
                  named by the source where it is now *)
@@ -728,10 +764,51 @@ struct
                 val b0 = snap ()
                 val acc = elabSteps (ds, acc)
               in apply (b0, deltaOf (b0, snap ()), SOME []); acc end
+      (* -j N: the units before the final ones, each with what it declares
+         and uses -- a Basis file's by its MANIFEST, a program's by Deps --
+         for Parallel to start children in an order that works *)
+      val () =
+        if !Options.jobs > 1 andalso isSome cache andalso not (UnitCache.verifying ())
+           andalso not (!Options.typecheckOnly)
+        then
+          let
+            val basisUnits =
+              ListPair.map (fn (e : entry, (name, _, _, _)) =>
+                              (name, #provides e, List.filter (fn n => not (String.isPrefix "-" n)) (#requires e ()),
+                               #when e = Always))
+                           (basis, basisPart)
+            fun userUnit (name, _, _, _) =
+              let val f = Deps.analyse (name, syntaxOf name)
+              in (name, List.map #2 (#declares f), List.map #2 (#uses f), not (List.null (#breaks f))) end
+              handle _ => (name, [], [], true)
+            val described = Vector.fromList (basisPart @ userPart)
+            fun hasEntry i =
+              case cache of
+                NONE => false
+              | SOME (dir, config) =>
+                  let
+                    val (name, _, allow, ident) = Vector.sub (described, i)
+                    val k = UnitCache.key {name = ident, text = text name (), allow = allow}
+                  in
+                    UnitCache.hasEntry (dir, config, k)
+                    orelse (case frozen of SOME f => UnitCache.hasEntry (f, config, k) | NONE => false)
+                  end
+            (* a unit worth a child: its text at least RUNE_PARALLEL_MIN
+               bytes, 16384 if not set *)
+            val least = case Option.mapPartial Int.fromString (OS.Process.getEnv "RUNE_PARALLEL_MIN") of
+                          SOME n => n | NONE => 16384
+            fun worth i = let val (name, _, _, _) = Vector.sub (described, i) in String.size (text name ()) >= least end
+          in
+            Parallel.start {units = basisUnits @ List.map userUnit userPart, jobs = !Options.jobs, hasEntry = hasEntry,
+                            worth = worth, explain = !Options.explainRebuild}
+          end
+        else ()
       val compiled =
-        case !buildPlan of
-          NONE => List.rev (List.foldl unit [] sources)
-        | SOME plan => List.rev (List.foldl unit (elabSteps (plan, List.foldl unit [] basisPart)) finalPart)
+        (case !buildPlan of
+           NONE => List.rev (List.foldl unit [] sources)
+         | SOME plan => List.rev (List.foldl unit (elabSteps (plan, List.foldl unit [] basisPart)) finalPart))
+        handle e => (Parallel.finish (); raise e)
+      val () = Parallel.finish ()
       val units = List.map #1 compiled
       val () = failIfReported ()
       val () = if !unverified > 0 then raise Reported else ()

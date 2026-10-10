@@ -686,5 +686,39 @@ if run S55; then
   else echo "FAIL incremental.S55: --verify-cache did not find the planted entry ($dir/build.err)"; fail=$((fail + 1)); fi
 fi
 
+# S58, -j: a build by child processes (docs/units.md, Parallel builds) is
+# what one process builds, cold, warm, after an edit that b.sml alone
+# sees, one that every unit after a.sml sees, and an error: the same units
+# compiled, said the same way, in order, the same errors, the same bytes
+if run S58; then
+  # every unit worth a child, small as the project's are
+  RUNE_PARALLEL_MIN=0; export RUNE_PARALLEL_MIN
+  fresh S58-one; one=$dir
+  fresh S58
+  same() {
+    saved=$dir; dir=$one; build; want1=$compiled; st1=$status; dir=$saved
+    build -j 4
+    if [ "$compiled" = "$want1" ] && [ "$status" = "$st1" ] && cmp -s "$dir/build.err" "$one/build.err" &&
+       { [ "$status" != 0 ] || cmp -s "$dir/p.rbc" "$one/p.rbc"; }; then pass=$((pass + 1))
+    else
+      echo "FAIL incremental.S58 ($1): -j 4 compiled [$compiled] ($status), -j 1 [$want1] ($st1)"
+      diff "$one/build.err" "$dir/build.err" | head -5
+      fail=$((fail + 1))
+    fi
+  }
+  both() { for d in "$dir" "$one"; do f=$d/$1; shift; sed "$@" "$f" > "$f.new" && mv "$f.new" "$f"; set -- "$(basename "$f")" "$@"; done; }
+  same cold
+  same warm
+  both b.sml 's/+ 1/+ 2/'
+  same "b.sml changed"
+  both a.sml 's/val unused = 0/val unused = 1  val more = 2/'
+  same "a.sml changed"
+  both c.sml 's/2 \* S.area x/2 * S.area/'
+  same "c.sml broken"
+  both c.sml 's/2 \* S.area$/2 * S.area x/'
+  same "c.sml mended"
+  unset RUNE_PARALLEL_MIN
+fi
+
 echo "incremental: passed $pass, failed $fail"
 [ $fail = 0 ]

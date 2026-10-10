@@ -176,6 +176,17 @@ struct
       try (List.foldl insert [] names, "no entry", NONE)
     end
 
+  (* whether a key has an entry, whatever its usages: a unit likely found,
+     which a parallel build leaves to the parent (Parallel) *)
+  fun hasEntry (dir : string, config : string, k : string) : bool =
+    (let
+       val s = OS.FileSys.openDir (keyDir (dir, config, k))
+       fun go () = case OS.FileSys.readDir s of
+                     NONE => false
+                   | SOME n => not (String.isSubstring ".tmp-" n) orelse go ()
+     in go () before OS.FileSys.closeDir s end)
+    handle OS.SysErr _ => false
+
   (* ---- what the cache keeps of a unit by its identity ---- *)
 
   (* The paths to a unit's names (UnitBasis.pathsOf), kept by its identity
@@ -214,7 +225,8 @@ struct
   val written = ref 0
   fun unique () =
     (written := !written + 1;
-     LargeInt.toString (Time.toMicroseconds (Time.now ()) mod 1000000000000) ^ "-" ^ Int.toString (!written))
+     LargeInt.toString (Time.toMicroseconds (Time.now ()) mod 1000000000000) ^ "-"
+     ^ SysWord.fmt StringCvt.DEC (Posix.Process.pidToWord (Posix.ProcEnv.getpid ())) ^ "-" ^ Int.toString (!written))
 
   (* storePaths: a unit's paths kept by its identity, whole or not at all *)
   fun storePaths (dir : string, config : string, identity : string, ps : (int * int * string) list) : unit =

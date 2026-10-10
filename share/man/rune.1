@@ -205,6 +205,14 @@ With
 say of each unit on standard error whether it was taken from the cache, or
 why it was compiled.
 .TP
+.BI \-j " N" "\fR, \fP" \-\-jobs " N"
+With
+.B \-\-units
+and the cache, compile the units in up to
+.I N
+processes at once, each unit after those it uses; the program is the
+bytes of a build by one process.
+.TP
 .B \-\-verify\-cache
 With
 .BR \-\-units ,

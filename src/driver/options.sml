@@ -23,6 +23,7 @@ struct
   val noCache = ref false                      (* --no-cache: compile every unit *)
   val explainRebuild = ref false               (* --explain-rebuild: say why each unit was compiled *)
   val verifyCache = ref false                  (* --verify-cache: compile each unit found, and compare *)
+  val jobs = ref 1                             (* -j N: units compiled by up to N child processes (Parallel) *)
   val wholeFromUnits = ref false               (* --whole: with --units, one program of the units' Mid *)
   val deps = ref false                         (* --deps: the files' order, by what they declare and use *)
   val depsDot = ref false                      (* --deps-dot: the same as a graph in DOT *)
@@ -82,6 +83,9 @@ struct
     \                    the cache, or why it was compiled\n\
     \  --verify-cache    with --units, compile each unit the cache has too, and\n\
     \                    fail where the cache's is not what compiling it gives\n\
+    \  -j N, --jobs N    with --units and the cache, compile units in up to N\n\
+    \                    processes at once, each unit after the ones it uses\n\
+    \                    (docs/units.md, Parallel builds)\n\
     \  --whole           with --units, make one program of the units' Mid, with\n\
     \                    the passes of a whole program, and not link their code\n\
     \  --deps            print the files in an order where each comes after the\n\
@@ -174,6 +178,8 @@ struct
     | "--no-cache" :: rest => (noCache := true; parse rest)
     | "--explain-rebuild" :: rest => (explainRebuild := true; parse rest)
     | "--verify-cache" :: rest => (verifyCache := true; parse rest)
+    | "-j" :: n :: rest => (jobs := jobCount n; parse rest)
+    | "--jobs" :: n :: rest => (jobs := jobCount n; parse rest)
     | "--whole" :: rest => (wholeFromUnits := true; parse rest)
     | "--deps" :: rest => (deps := true; parse rest)
     | "--deps-dot" :: rest => (depsDot := true; parse rest)
@@ -223,6 +229,10 @@ struct
          | _ =>
              if String.isPrefix "-" a andalso a <> "-" then raise Usage ("unknown option: " ^ a)
              else (inputs := !inputs @ [a]; parse rest))
+  and jobCount text =
+    case Int.fromString text of
+      SOME n => if n >= 1 then n else raise Usage "-j requires a number of jobs, at least 1"
+    | NONE => raise Usage "-j requires a number of jobs, at least 1"
   and workCount (option, text) =
     let
       fun bad () = raise Usage (option ^ " requires a positive integer at most 1000000000")

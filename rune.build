@@ -62,6 +62,7 @@ files
   src/driver/unitmid.sml
   src/driver/unitcache.sml
   src/driver/deps.sml
+  src/driver/parallel.sml
   src/driver/main.sml
 end
 src/main/rune-main.sml
