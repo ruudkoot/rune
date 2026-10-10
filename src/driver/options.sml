@@ -23,6 +23,7 @@ struct
   val noCache = ref false                      (* --no-cache: compile every unit *)
   val explainRebuild = ref false               (* --explain-rebuild: say why each unit was compiled *)
   val verifyCache = ref false                  (* --verify-cache: compile each unit found, and compare *)
+  val wholeFromUnits = ref false               (* --whole: with --units, one program of the units' Mid *)
   val noWarnings = ref false
   val showVersion = ref false
   val showHelp = ref false
@@ -74,6 +75,8 @@ struct
     \                    the cache, or why it was compiled\n\
     \  --verify-cache    with --units, compile each unit the cache has too, and\n\
     \                    fail where the cache's is not what compiling it gives\n\
+    \  --whole           with --units, make one program of the units' Mid, with\n\
+    \                    the passes of a whole program, and not link their code\n\
     \  --typecheck-only  stop after type checking\n\
     \  --type-work=N     type traversal budget per top-level declaration (50000000)\n\
     \  --match-work=N    pattern-analysis budget per match (1000000)\n\
@@ -153,6 +156,7 @@ struct
     | "--no-cache" :: rest => (noCache := true; parse rest)
     | "--explain-rebuild" :: rest => (explainRebuild := true; parse rest)
     | "--verify-cache" :: rest => (verifyCache := true; parse rest)
+    | "--whole" :: rest => (wholeFromUnits := true; parse rest)
     | "--typecheck-only" :: rest => (typecheckOnly := true; parse rest)
     | "--no-warnings" :: rest => (noWarnings := true; parse rest)
     | "--dump-tokens" :: rest => (dumpTokens := true; parse rest)

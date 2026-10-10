@@ -173,11 +173,26 @@ they were found.
 * **8. The next step adds more of the same.** M6's third part, step 3,
   loads an entry across a unit that changed, by mapping each name of the
   old unit to the same path in the new one. That is the same kind of
-  reasoning about what a compile read, with more ways to be wrong. It should
-  wait for the tester of issue 5.
+  reasoning about what a compile read, with more ways to be wrong. It
+  waited for the tester of issue 5, and was built on 2026-10-10
+  (`incremental-compilation.md`, *M6, the third part as built*). Building
+  it found one more hole before it could open: a value's fingerprint did
+  not say which value, so a later unit's `A.x` of the same type would have
+  held a usage of the first's. The tester's runs since -- small projects,
+  Basis edits, `-O2` -- remap about one unit in three builds and none
+  disagrees with `--no-cache`.
 
 * **11. An entry's code read and written again is other bytes.** Reading
   a unit's code and writing it again lists the units it names in another
   order. Linking does not care, and `--verify-cache` compares the bytes as
   read (it first reported two units of the Basis wrongly because it did
   not), but a unit's code is not one representation.
+
+* **12. Fingerprints grew with what a type is made of.** Step 3's
+  fingerprint of a type name held the text of its definition, which named
+  the types it is made of by their text in turn: a unit of the compiler
+  that names `Ast` had megabytes of usages, and working them out was three
+  quarters of compiling the compiler in units (24 s; 4.5 s now). Not a
+  wrong result, but the cost of a cache is part of whether it is used. A
+  type name's fingerprint is now its anchor and the hash of its
+  definition; found measuring M11.

@@ -86,23 +86,24 @@ if run S2; then
   build; want "a.sml"
 fi
 
-# S3, a used type: a constructor added to a.sml's datatype; a.sml and every
-# unit that used a name a.sml binds -- c.sml too, for SHAPE, which did not
-# change (fingerprints per entry would leave it) -- and those that used
-# theirs
+# S3, a used type: a constructor added to a.sml's datatype; a.sml, b.sml,
+# which uses the type, and the units that used what b.sml exports, which
+# changed with it; not c.sml, whose usage of SHAPE holds by its
+# fingerprint (M6's third part)
 if run S3; then
   fresh S3; build
   edit a.sml -e 's/datatype shape = Square of int | Rect of int \* int/datatype shape = Square of int | Rect of int * int | Line of int/' \
     -e 's/    | area (Rect (w, h)) = w \* h/    | area (Rect (w, h)) = w * h\n    | area (Line _) = 0/'
-  build; want "$all"
+  build; want "a.sml b.sml d.sml main.sml"
 fi
 
-# S5, revert: S3's change undone finds the first entries
+# S5, revert: a value added to a.sml, which compiles a.sml alone (S4), and
+# then taken out: the first entries are found, and nothing is compiled
 if run S5; then
   fresh S5; build
   cp "$dir/a.sml" "$dir/a.sml.orig"
   edit a.sml 's/val unused = 0/val unused = 0 val more = 1/'
-  build; want "$all"
+  build; want "a.sml"
   mv "$dir/a.sml.orig" "$dir/a.sml"
   build; want ""
 fi
@@ -239,9 +240,9 @@ fi
 # frozen one, so that its units are in the project's cache. A value added
 # to List that LIST does not have changes list.sml's basis and not what
 # the sealed List shows: no unit of the project is compiled again. A
-# top-level value added to pervasive.sml, which binds print, changes what
-# main.sml used (print and ^, by the unit that bound them): main.sml alone
-# (per-entry fingerprints would compile none of them)
+# top-level value added to pervasive.sml, which binds print, changes
+# pervasive.sml's identity and not what main.sml used of it (print and ^,
+# whose fingerprints are the same): no unit of the project either
 if run S28; then
   fresh S28
   lib=$dir/lib
@@ -251,14 +252,15 @@ if run S28; then
   sed 's/^  datatype list = datatype list$/  val runeScenarioS28 = 0\n&/' "$lib/basis/list.sml" > "$lib/basis/list.sml.new" && mv "$lib/basis/list.sml.new" "$lib/basis/list.sml"
   build --lib "$lib"; want ""
   printf '\nval runeScenarioS28 = 0\n' >> "$lib/basis/pervasive.sml"
-  build --lib "$lib"; want "main.sml"
+  build --lib "$lib"; want ""
 fi
 
 # S28, overloading: w.sml writes a wide string at WideCharVector.vector and
 # never names WideString, but the overloading of its literal is the one
 # widestring.sml registers for that type, which widechar.sml declares; a
-# value added to widestring.sml compiles w.sml again as well as x.sml,
-# which names WideString (the usage "o" of the type's name)
+# value added to widestring.sml compiles w.sml again (the usage "o" of the
+# type's name, which holds by its binder alone), and not x.sml, which
+# names WideString.size, whose fingerprint did not change
 if run S28; then
   s=S28o
   dir=$out/S28o
@@ -270,7 +272,7 @@ if run S28; then
   printf 'x.sml\nw.sml\n' > "$dir/files"
   build --lib "$dir/lib"; want "x.sml w.sml"
   sed 's/^  fun fromLit s = /  val runeScenarioS28 = 0\n&/' "$dir/lib/basis/widestring.sml" > "$dir/w.new" && mv "$dir/w.new" "$dir/lib/basis/widestring.sml"
-  build --lib "$dir/lib"; want "x.sml w.sml"
+  build --lib "$dir/lib"; want "w.sml"
 fi
 
 # S40, a session's basis: a file used in REPL sessions whose earlier
@@ -284,7 +286,7 @@ if run S40; then
   mkdir -p "$dir"
   printf 'val twice = (base, base)\n' > "$dir/uses.sml"
   session() { (cd "$dir" && printf '%s\nuse "uses.sml";\n' "$1" | RUNE_CACHE="$dir/cache" "$repl" > "$dir/session.out" 2>&1); }
-  entries() { find "$dir/cache" -type f | sort | xargs ls -i | awk '{print $1, $2}'; }
+  entries() { find "$dir/cache" -type f -not -path '*/units/*' | sort | xargs ls -i | awk '{print $1, $2}'; }
   session 'val base = "ab";'
   one=$(entries | wc -l)
   session 'val base = 3;'
@@ -318,13 +320,14 @@ prints() {
 }
 
 # S4, an unused entry: a value added to a.sml, and the one no unit uses
-# changed in type; every unit that used a name a.sml binds compiles again,
-# and those that used theirs (fingerprints per entry -- M6's third part,
-# step 3 -- would compile a.sml alone)
+# changed in type; a.sml alone compiles again: every unit after it used
+# entries of a.sml whose fingerprints did not change, and is loaded
+# against the new a.sml by the paths to the names it used (M6's third
+# part)
 if run S4; then
   fresh S4; build
   edit a.sml -e 's/  val unused = 0/  val unused = "zero"\n  val extra = 1/'
-  build; want "$all"
+  build; want "a.sml"
 fi
 
 # S7, the same text twice: the project copied to another directory, built
@@ -350,14 +353,14 @@ fi
 if run S9; then
   fresh S9; build
   edit a.sml -e 's/datatype shape = Square of int | Rect of int \* int/datatype shape = Rect of int * int | Square of int/'
-  build; want "$all"; prints "$(printf '20\nhandled a')"
+  build; want "a.sml b.sml d.sml main.sml"; prints "$(printf '20\nhandled a')"
 fi
 
 # S10, a constructor's argument: a tuple made a record of the same fields
 if run S10; then
   fresh S10; build
   edit a.sml -e 's/Rect of int \* int/Rect of {w : int, h : int}/' -e 's/area (Rect (w, h))/area (Rect {w, h})/'
-  build; want "$all"; prints "$(printf '20\nhandled a')"
+  build; want "a.sml b.sml d.sml main.sml"; prints "$(printf '20\nhandled a')"
 fi
 
 # S11, behind opaque ascription: p.sml's type changes its representation
@@ -531,10 +534,10 @@ if run S57; then
   verify=""
   put u.sml 'val twice = base + base'
   session 'val base = 1;' 'use "u.sml";'
-  first=$(find "$dir/cache" -type f | sort)
+  first=$(find "$dir/cache" -type f -not -path '*/units/*' | sort)
   put u.sml 'val twice = base * 3'
   session 'val base = 1;' 'use "u.sml";'
-  second=$(find "$dir/cache" -type f | sort | grep -vxF "$first")
+  second=$(find "$dir/cache" -type f -not -path '*/units/*' | sort | grep -vxF "$first")
   python3 "$root/tests/incremental/plant.py" $(echo "$first" | head -1) "$second"
   session 'val base = 1;' 'use "u.sml";'
   if grep -q 'val twice = 2 : int' "$dir/session.out"; then pass=$((pass + 1))
@@ -663,7 +666,7 @@ if run S55; then
   put c.sml 'functor F () = struct val v = 10 ++ 3 * 2 end'
   put main.sml 'structure D = F ()  val () = print (Int.toString D.v ^ "\n")'
   build; want "y.sml a.sml c.sml main.sml"
-  entry() { for f in $(find "$dir/cache" -type f); do if grep -q 'main\.sml' "$f"; then echo "$f"; fi; done; }
+  entry() { for f in $(find "$dir/cache" -type f -not -path '*/units/*'); do if grep -q 'main\.sml' "$f"; then echo "$f"; fi; done; }
   old=$(entry)
   cp "$old" "$dir/old-entry"
   put a.sml 'infix 8 ++'

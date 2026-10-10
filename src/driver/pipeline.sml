@@ -11,11 +11,18 @@ struct
                 size = Mid.size}
                f
 
-  (* Lambda to Low: Mid, the optional passes on it, and Lower. Shake runs
-     on a whole program only (Pass.whole). *)
-  fun lowOf (lam : Lambda.lexp) : Low.program =
+  (* a unit's Mid as ToMid made it, with what it needs of the tables, kept
+     where a whole program is to be made of its units' (--whole; the
+     incremental roadmap's M7) *)
+  val keepMid = ref false
+  val lastMid : MidCanon.unitMid option ref = ref NONE
+
+  (* Mid to Low: the optional passes, and Lower. Shake runs on a whole
+     program only (Pass.whole), which is renumbered canonically first, as
+     one made of its units' Mid is (MidCanon) *)
+  fun lowOfMid (mid : Mid.program) : Low.program =
     let
-      val mid = midStage (SOME Lambda.show) ToMid.program lam
+      val mid = if !Pass.whole then MidCanon.program mid else mid
       (* the optional passes on Mid (docs/ir.md) *)
       fun optional (name, f) m =
         if Pass.enabled (name, 1) andalso (name <> "shake" orelse !Pass.whole) then
@@ -36,6 +43,13 @@ struct
                   size = Low.size}
                  (fn m => Lower.program (m, !Translate.funNames)) mid
     end
+
+  (* Lambda to Low: Mid, the optional passes on it, and Lower *)
+  fun lowOf (lam : Lambda.lexp) : Low.program =
+    let
+      val mid = midStage (SOME Lambda.show) ToMid.program lam
+      val () = if not (!Pass.whole) andalso !keepMid then lastMid := SOME (MidCanon.capture mid) else ()
+    in lowOfMid mid end
 
   (* Low to the code of the target --target names *)
   fun targetStage (low : Low.program) : Code.program =

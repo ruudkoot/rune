@@ -192,6 +192,10 @@ struct
     let
       val () = Pass.whole := false
       val () = Elaborate.recover := true
+      (* --whole: each unit's Mid, as the session names it, for one program
+         of them all (the incremental roadmap's M7) *)
+      val () = Pipeline.keepMid := (!Options.wholeFromUnits orelse isSome (UnitCache.directory ()))
+      val mids : MidCanon.unitMid list ref = ref []
       val () = MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE)
       val registers = !Options.target = "registers"
       val () = if registers then Code.opcodeNames := RegCodes.names else ()
@@ -239,6 +243,8 @@ struct
                       if !failedBefore then NONE
                       else SOME (timed "cache-key" (fn () => UnitCache.key {name = ident, text = text name (), allow = allow}))
                   | NONE => NONE
+          (* the unit's place, which its entries' usages are checked at *)
+          val () = UnitBasis.position (!env, !fixity)
           val found =
             case (cache, k) of
               (SOME (dir, config), SOME k) =>
@@ -262,28 +268,45 @@ struct
           val hit =
             case found of
               UnitCache.Missed why => (explain ("rune: compiled " ^ name ^ ": " ^ why); NONE)
-            | UnitCache.Found {pickle, code, warnings, file, others, ...} =>
+            | UnitCache.Found (e as {pickle, code, warnings, file, others, mid, ...}) =>
                 let val at = UnitBasis.counters ()
                 in
                   (let
                      val (fp, u) = timed "cache-code" (fn () => UnitFile.read code)
                      val () = if fp <> Pipeline.fingerprint () then raise UnitFile.Bad "another instruction set" else ()
+                     (* the units it was compiled against that are others
+                        now, which its usages held of all the same, by the
+                        paths to their names (M6's third part) *)
+                     val remap = case cache of
+                                   SOME (dir, config) =>
+                                     UnitBasis.remapping (pickle, u, UnitCache.pathsIn (dir :: (case frozen of SOME f => [f] | NONE => []),
+                                                                                     config))
+                                 | NONE => []
+                     val u = UnitBasis.remapKeys (u, remap)
                      val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
-                     val l = timed "cache-basis" (fn () => UnitBasis.load {pickle = pickle, file = name, at = at, env = !env,
-                                                                           fixity = !fixity, text = text name})
+                     val l = timed "cache-basis" (fn () => UnitBasis.loadAgainst ({pickle = pickle, file = name, at = at,
+                                                                                    env = !env, fixity = !fixity,
+                                                                                    text = text name}, remap))
                      (* its source, and those of the functors' bodies it
                         applied, where they are now, in its code's files *)
                      val u = UnitBasis.relocate (u, file, name, others)
+                     (* --whole: its Mid, as the session names it *)
+                     val () =
+                       if not (!Options.wholeFromUnits) then ()
+                       else if mid = "" then raise UnitFile.Bad "no Mid in its entry"
+                       else mids := UnitMid.read (mid, #unit l, remap, UnitBasis.movedTo (file, name, others)) :: !mids
                    in
-                     explain ("rune: from the cache " ^ name);
+                     explain ("rune: from the cache " ^ name
+                              ^ String.concat (List.map (fn (i, _, _) => ", across " ^ UnitBasis.nameOf i ^ " changed") remap));
                      (* the warnings its compile gave, again *)
                      if !Options.noWarnings then ()
                      else List.app (fn w => TextIO.output (TextIO.stdErr, w ^ "\n")) warnings;
                      SOME (l, u, pickle)
                    end)
-                  handle Pickle.Bad why => (UnitBasis.setCounters at; explain ("rune: compiled " ^ name ^ ": a damaged entry: " ^ why); NONE)
-                       | UnitFile.Bad why => (UnitBasis.setCounters at; explain ("rune: compiled " ^ name ^ ": a damaged entry: " ^ why); NONE)
-                       | UnitBasis.Missing u => (UnitBasis.setCounters at; explain ("rune: compiled " ^ name ^ ": its entry names " ^ u); NONE)
+                  handle UnitMid.Bad why => (UnitBasis.abandon at; explain ("rune: compiled " ^ name ^ ": a damaged entry: " ^ why); NONE)
+                       | Pickle.Bad why => (UnitBasis.abandon at; explain ("rune: compiled " ^ name ^ ": a damaged entry: " ^ why); NONE)
+                       | UnitFile.Bad why => (UnitBasis.abandon at; explain ("rune: compiled " ^ name ^ ": a damaged entry: " ^ why); NONE)
+                       | UnitBasis.Missing u => (UnitBasis.abandon at; explain ("rune: compiled " ^ name ^ ": its entry names " ^ u); NONE)
                 end
         in
           case hit of
@@ -324,16 +347,27 @@ struct
                 Pipeline.unitThrough {start = start, name = ident, file = name, text = text name, decs = decs,
                                       delta = !Elaborate.lastDelta, fixity = !fixity, used = names}
               val bytes = String.concat (UnitFile.chunks (Pipeline.fingerprint (), code))
+              (* its Mid in bytes, kept in its entry *)
+              val midBytes = case !Pipeline.lastMid of SOME um => UnitMid.write (exported, um) | NONE => ""
+              val () = Pipeline.lastMid := NONE
               (* the entry verified: its basis the same bytes, and its code,
                  named by the source where it is now *)
               val verified =
                 case against of
                   NONE => true
-                | SOME e => UnitCache.verifies (e, name, #pickle exported, bytes)
+                | SOME e => UnitCache.verifies (e, name, #pickle exported, bytes, midBytes)
             in
               env := Env.plus (#env start, #delta loaded);
               fixity := Fixity.extend (#fixity start, #directives loaded);
               UnitBasis.bind loaded;
+              (* for --whole, its Mid read back as the session names it, as a
+                 unit from the cache is *)
+              if !Options.wholeFromUnits then mids := UnitMid.read (midBytes, #unit loaded, [], fn f => f) :: !mids
+              else ();
+              (case cache of
+                 SOME (dir, config) =>
+                   UnitCache.storePaths (dir, config, #identity (#unit loaded), UnitBasis.pathsOf (#unit loaded))
+               | NONE => ());
               if verified then ()
               else (TextIO.output (TextIO.stdErr, "rune: " ^ name ^ ": the cache's entry is not what compiling it gives\n");
                     unverified := !unverified + 1);
@@ -343,7 +377,7 @@ struct
                    UnitCache.store (dir, config, k,
                                     {usages = usages, warnings = warnings, file = name,
                                      others = UnitBasis.sourcesOf (code, name), pickle = #pickle exported,
-                                     code = bytes})
+                                     code = bytes, mid = midBytes})
                | _ => ());
               (code, #pickle exported) :: acc
             end
@@ -359,6 +393,16 @@ struct
         | SOME dir => if !Options.typecheckOnly then () else emitUnitFiles (dir, fingerprint, List.map #1 sources, compiled)
     in
       if !Options.typecheckOnly then OS.Process.success
+      else if !Options.wholeFromUnits then
+        (* one program of the units' Mid, with the passes of a whole one *)
+        let
+          val prog = MidCanon.concat (List.rev (!mids))
+          val () = Pass.whole := true
+          val low = Pipeline.lowOfMid prog
+        in
+          if registers then emitProgramAs (RegCodes.fingerprint, inputs, Pipeline.targetStage low)
+          else emitProgram (inputs, Pipeline.targetStage low)
+        end
       else timed "link" (fn () => linkUnits (fingerprint, inputs, units))
     end
 

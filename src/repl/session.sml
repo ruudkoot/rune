@@ -160,7 +160,9 @@ struct
       val found =
         case cache of
           NONE => NONE
-        | SOME (d, c, key) => (case UnitCache.find (d, c, key) of UnitCache.Found e => SOME e | UnitCache.Missed _ => NONE)
+        | SOME (d, c, key) =>
+            (UnitBasis.position (!env, #fixity start);
+             case UnitCache.find (d, c, key) of UnitCache.Found e => SOME e | UnitCache.Missed _ => NONE)
       (* RUNE_VERIFY_CACHE: an entry found is compiled all the same, and what
          that gives is compared with it (UnitCache.verifying) *)
       val against = if UnitCache.verifying () then found else NONE
@@ -173,12 +175,18 @@ struct
           in
             (let
                val (fp, u) = UnitFile.read code
+               (* the units it was compiled against that are others now
+                  (M6's third part) *)
+               val remap = case cache of
+                             SOME (d, c, _) => UnitBasis.remapping (pickle, u, UnitCache.pathsIn ([d], c))
+                           | NONE => []
+               val u = UnitBasis.remapKeys (u, remap)
                val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
-               val l = UnitBasis.load {pickle = pickle, file = file, at = at, env = !env, fixity = #fixity start,
-                                       text = fn () => text}
+               val l = UnitBasis.loadAgainst ({pickle = pickle, file = file, at = at, env = !env, fixity = #fixity start,
+                                               text = fn () => text}, remap)
                (* its source, and those of the functors' bodies it
                   applied, where they are now, in its code's files *)
-               val code = if UnitBasis.moves (u, was, file, others)
+               val code = if UnitBasis.moves (u, was, file, others) orelse not (List.null remap)
                           then String.concat (UnitFile.chunks (fp, UnitBasis.relocate (u, was, file, others)))
                           else code
                val run = Runtime.link (Byte.stringToBytes code)
@@ -187,10 +195,10 @@ struct
                List.app (fn w => TextIO.output (TextIO.stdErr, w ^ "\n")) warnings;
                SOME (result (l, run))
              end)
-            handle Pickle.Bad _ => (UnitBasis.setCounters at; NONE)
-                 | UnitBasis.Missing _ => (UnitBasis.setCounters at; NONE)
-                 | UnitFile.Bad _ => (UnitBasis.setCounters at; NONE)
-                 | Fail _ => (UnitBasis.setCounters at; NONE)
+            handle Pickle.Bad _ => (UnitBasis.abandon at; NONE)
+                 | UnitBasis.Missing _ => (UnitBasis.abandon at; NONE)
+                 | UnitFile.Bad _ => (UnitBasis.abandon at; NONE)
+                 | Fail _ => (UnitBasis.abandon at; NONE)
           end
       val warnings : string list ref = ref []
       (* the source of the printer, which nothing names once it is compiled *)
@@ -237,15 +245,19 @@ struct
          val () =
            case against of
              SOME e =>
-               if UnitCache.verifies (e, file, #pickle exported, bytes) then ()
+               if UnitCache.verifies (e, file, #pickle exported, bytes, "") then ()
                else raise Fail ("the cache's entry for " ^ name ^ " is not what compiling it gives")
+           | NONE => ()
+         val () =
+           case cache of
+             SOME (d, c, _) => UnitCache.storePaths (d, c, #identity (#unit loaded), UnitBasis.pathsOf (#unit loaded))
            | NONE => ()
          val () =
            case cache of
              SOME (d, c, key) =>
                UnitCache.store (d, c, key, {usages = usages, warnings = !warnings, file = file,
                                             others = UnitBasis.sourcesOf (code, file), pickle = #pickle exported,
-                                            code = bytes})
+                                            code = bytes, mid = ""})
            | NONE => ()
        in Source.unregister echoName; result (loaded, Runtime.link (Byte.stringToBytes bytes)) end)
       handle e => (UnitBasis.undo start; Source.unregister echoName; raise e)

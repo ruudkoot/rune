@@ -42,8 +42,8 @@ What it rests on:
 | M3 | Unit bytecode, the static linker, and the VM loads units | done 2026-10-09, `9d97b311`: `.rbu`, `--emit-units`, linking unit files, `rt_link`/`Runtime.link`/`Runtime.load`, the dynamic path in `check-units` (*M3, as built*); the globals' barrier moved to M4 |
 | M4 | The resident compiler, `use` and the REPL | done 2026-10-09, `71f1916e`: `bin/rune-repl` and `rune -i`, Chapter 8, `use`, printing, the globals' barrier, the JIT across loads, the boot image, interrupts, a session saved and restored (*M4, as built*) |
 | M5 | HOL4 on Rune | in progress 2026-10-09: `bin/build` through `src/boss` and `hol` proving, on a local branch of HOL4; what it costs against Poly/ML and why, and `Runtime.share`, `Compiler.compile` through the cache and a leaner REPL that came of it, in [hol4.md](hol4.md) |
-| M6 | The cache, with cut-off | the first two parts done 2026-10-09, `40e2b23a`: the export basis, names that do not depend on what came before, every unit through its basis, unit files by keys, the cache with usages by binder, the frozen Basis, `use` through it, `tests/incremental` (*M6, ... as built*); fingerprints per entry and the warm-build time to come |
-| M7 | Mid per unit: whole-program builds from the cache | |
+| M6 | The cache, with cut-off | the first two parts done 2026-10-09, `40e2b23a`: the export basis, names that do not depend on what came before, every unit through its basis, unit files by keys, the cache with usages by binder, the frozen Basis, `use` through it, `tests/incremental` (*M6, ... as built*); the soundness of it examined and fixed in [build-cache-issues.md](build-cache-issues.md), with `--verify-cache` and a mutation tester; the third part, fingerprints per entry and entries loaded across changed units, built 2026-10-10 (*M6, the third part as built*); the warm-build time left to M12 |
+| M7 | Mid per unit: whole-program builds from the cache | built 2026-10-10: `rune --units --whole`, units' Mid in the cache, the canonical renumbering, and a program made of its units' Mid the bytes of the whole-program compile (*M7, as built*) |
 | M8 | The dependency graph, and a program from an entry point | |
 | M9 | Compiling against a signature alone, and dynamic modules | |
 | M10 | The build language and virtual modules | |
@@ -2694,6 +2694,43 @@ cache that names it is a miss, whatever its usages say. So:
 
 S3 and S4 then want what `SCENARIOS.md` says; S5 to S8 hold as they are.
 
+#### M6, the third part as built (2026-10-10)
+
+The three steps as planned, with what building them showed (`docs/units.md`,
+*The cache*, *Fingerprints*):
+
+* **A value's fingerprint names the value**, by its anchor (its unit's name
+  and path): otherwise a later unit that declares an `A.x` of the same type
+  would hold the usage, and the entry's code would still call the first
+  (S19). Signatures' specifications have paths (`sig:SHAPE.area`), or a unit
+  that ascribed one could not be remapped; a fixity has a fingerprint (its
+  precedence and side), or every usage of an operator would hold by binder
+  only.
+* **The units an entry's code names**, not only those its basis names, are
+  remapped: a unit that declares nothing of `a.sml`'s still calls it.
+* **Where usages are checked**: at the unit's place (`UnitBasis.position`),
+  before the entry is looked for, and not where the unit before it began.
+* **Exact before remapped**: of the entries whose usages hold, one whose
+  binders are all the same is taken before one that holds by fingerprint,
+  which needs a remapping (after a revert, the first entries: S5).
+* **A load that fails half-way** -- a name with no path met in the middle
+  of a basis -- takes out what it entered in the tables by stamp
+  (`UnitBasis.abandon`).
+* **The identity store** is `units/` beside the entries: a file per
+  identity, its paths, written when a unit is compiled, read from the
+  project's cache and then the frozen Basis.
+* **Measured on the scenarios**: S3 compiles `a.sml`, `b.sml`, `d.sml` and
+  `main.sml` (not `c.sml`), S4 and S5 `a.sml` alone, S9 and S10 not `c.sml`,
+  S28 nothing (a value added to `pervasive.sml`), S28o `w.sml` alone; the
+  mutation tester remaps about one unit in three of its builds and no build
+  disagrees with `--no-cache`.
+* **A type name's fingerprint is its anchor and the hash of its
+  definition**, kept by stamp: the definition's own text, which names the
+  types it is made of by theirs, grew with every datatype a type names --
+  the usages of a unit of the compiler that names `Ast` were megabytes of
+  text, and three quarters of compiling the compiler in units (24 s, 4.5 s
+  with the hash; found measuring M11).
+
 ### M7. Mid per unit: whole-program builds from the cache (M, about 500 SML)
 
 * **What:**
@@ -2717,6 +2754,64 @@ S3 and S4 then want what `SCENARIOS.md` says; S5 to S8 hold as they are.
   measured and in the table; `check-levels` holds for `--units`.
 * **Touches:** `docs/ir.md` (Mid's constructor layouts); the JIT's
   metadata (M8's representations come from the same place).
+
+#### M7, as built (2026-10-10)
+
+* **One program of the units' Mid** (`rune --units --whole`): each unit's
+  Mid as `ToMid` made it, before the optional passes, with the layouts of
+  the datatypes its types name and its functions' names
+  (`MidCanon.capture`), written with its names by key as a basis writes
+  them (`UnitMid`, `src/driver/unitmid.sml`), kept in the unit's cache
+  entry (version 5) and read back as the session names it -- from the
+  entry, or from the compile just made, the same way -- then concatenated,
+  renumbered and given the passes of a whole program, `Lower` and the
+  target.
+* **The renumbering is what makes the oracle hold** (`MidCanon`,
+  `src/core/midcanon.sml`): every name -- variable, global, join point,
+  type name, type variable -- numbered by where it first appears, the
+  datatype layouts and function names entered again under the new names,
+  and the counters the passes take fresh names from set after the last. A
+  whole-program compile renumbers its Mid the same way, after `ToMid`, so a
+  program and the one its units' Mid make are the same bytes: every
+  program of `tests/lang` and `tests/perf` and the compiler itself, cold
+  and from a warm cache (`check-units`; `check-cross`, `rune-whole`; S42).
+  `check-levels` builds each both ways at `-O0` and `-O2`.
+* **Against D6 as written:** the Mid is made self-contained by carrying
+  the datatypes' layouts beside it rather than by writing a layout into
+  each `Con` and `Decon`, which leaves `ToMid`, `MidText` and `Lower` as
+  they are; and the Mid kept is the one before the optional passes, so
+  `Workers` needs no idempotence over units already split. The passes after
+  `ToMid` read two tables by stamp, `Ty.datatypeOf` and
+  `Translate.funNames`; both travel with the Mid.
+* **Inlining across units** (measured, instructions at `-O1`, the units
+  linked against the whole program): `list_ops` 1.22, `array_sieve` 1.18,
+  `string_ops` 1.05, `intinf_fact` 1.01, `fib`, `tak`, `real_nbody`,
+  `word_bits` 1.00. A build that links its units inlines nothing across
+  them and the export basis carries nothing for it: `--whole` is the
+  production build, which inlines across units as a whole-program compile
+  does, because it is one.
+* **Measured** (the compiler, one machine, under the load of a check
+  running beside it): compiled whole 4.0 s; in units from a warm cache,
+  linked, 2.8 s; `--whole` from a warm cache 4.4 s; in units cold 11.9 s.
+  `--whole` from the cache is not faster than the whole-program compile for
+  the compiler, whose front end is about 1 s of its 4: the rest is the
+  passes over the whole program (`simplify`, `lower`, `registers`), which
+  `--whole` runs as the whole-program compile does. Where the front end is
+  most of a compile -- MLton's sources, 611 s of elaboration in 625 (M1)
+  -- `--whole` from the cache is what saves it.
+* **Found on the way:** with usages checked by fingerprint, every unit
+  worked out the fingerprint of every name it used, though most are the
+  same entry for every unit that uses them: a cold build in units of the
+  compiler took 40 s rather than 12. The fingerprint of a usage is now kept
+  by its key and binder for the session (`UnitBasis.fingerprintAt`).
+
+* **What the oracle costs a whole compile.** The renumbering copies the
+  program's Mid once: about 7% of the instructions and of the bytes a
+  whole-program compile allocates (measured on the bootstrap and on
+  `compile-hello` with it and without). `tests/perf`'s budgets for those
+  two were recorded again, with that and with the compiler's own sources,
+  which the bootstrap compiles, grown by M6's third part and M7. `ToMid`
+  numbering canonically in the first place would save the copy.
 
 ### M8. The dependency graph, and a program from an entry point (M, about 600 SML)
 

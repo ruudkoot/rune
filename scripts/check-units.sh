@@ -16,7 +16,9 @@
 # (--no-cache); the -O2 build and another -O1 build go through a cache of
 # the units that every program shares (docs/units.md, The cache), and the
 # -O1 one must be the same bytes as the build without it, and again when
-# built a second time, every unit from the cache. Left out of it: a program given arguments, since the
+# built a second time, every unit from the cache; and each made one program
+# of its units' Mid (--units --whole), through the cache and from it, must
+# be the bytes of the whole program (M7). Left out of it: a program given arguments, since the
 # loader takes the files as its arguments; one given options of the VM
 # (.vmargs), which limit the heap for the program and not for the loader
 # too; and the programs of loaded_skip, which print their own call stack.
@@ -79,6 +81,21 @@ if [ -n "$one" ]; then
   if grep -q '^rune: compiled' "$out/$name.warm.O1.cerr"; then
     echo "FAIL units.$name: built a second time, it compiled a unit again ($out/$name.warm.O1.cerr)"; exit 0
   fi
+  # one program of its units' Mid, through the cache and again from it
+  # (--whole; the incremental roadmap's M7, S42): the bytes of the whole
+  # program, and the second compiled nothing
+  for b in mid.cold mid.warm; do
+    # shellcheck disable=SC2086
+    if ! "$rune" --units --whole $cache --explain-rebuild --lint "$one.sml" -o "$out/$name.$b.rbc" 2> "$out/$name.$b.cerr"; then
+      echo "FAIL units.$name: --units --whole: $(grep -m1 . "$out/$name.$b.cerr")"; exit 0
+    fi
+    if ! cmp -s "$out/$name.whole.rbc" "$out/$name.$b.rbc"; then
+      echo "FAIL units.$name: made of its units' Mid ($b), it is not the whole program (cmp $out/$name.whole.rbc $out/$name.$b.rbc)"; exit 0
+    fi
+  done
+  if grep -q '^rune: compiled' "$out/$name.mid.warm.cerr"; then
+    echo "FAIL units.$name: made of its units' Mid a second time, it compiled a unit again ($out/$name.mid.warm.cerr)"; exit 0
+  fi
   # the unit files of the -O1 build, linked from the files: the same bytes
   # shellcheck disable=SC2046
   if ! "$rune" -o "$out/$name.relinked.rbc" $(cat "$out/$name.files/units") 2> "$out/$name.relinked.cerr"; then
@@ -127,4 +144,4 @@ if [ -n "$fails" ]; then
   echo "check-units: $(echo "$fails" | wc -l | tr -d ' ') of $n programs fail"
   exit 1
 fi
-echo "check-units: $n programs, the same whole and in units at -O0, -O1 and -O2, through the cache and from it, linked from their unit files and loaded"
+echo "check-units: $n programs, the same whole and in units at -O0, -O1 and -O2, through the cache and from it, linked from their unit files and loaded, and the whole program's bytes made of their units' Mid"

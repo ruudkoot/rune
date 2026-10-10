@@ -18,6 +18,7 @@ _arguments -s \
   '--no-cache[with --units, compile every unit]' \
   '--explain-rebuild[with --units, say why each unit was compiled]' \
   '--verify-cache[with --units, compile each unit the cache has too, and compare]' \
+  '--whole[with --units, one program of the units'"'"' Mid, as a whole-program compile]' \
   '--typecheck-only[stop after type checking]' \
   '--no-warnings[do not print match warnings]' \
   '--dump-tokens[print the token stream]' \

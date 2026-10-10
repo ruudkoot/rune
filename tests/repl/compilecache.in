@@ -13,7 +13,11 @@ fun entries () =
             NONE => acc
           | SOME f =>
               let val p = OS.Path.joinDirFile {dir = d, file = f}
-              in go (if OS.FileSys.isDir p then walk (p, acc) else (p, OS.FileSys.fileId p) :: acc) end
+              in
+                (* the entries, not what the cache keeps by identity (units/) *)
+                go (if OS.FileSys.isDir p then (if f = "units" then acc else walk (p, acc))
+                    else (p, OS.FileSys.fileId p) :: acc)
+              end
       in go acc before OS.FileSys.closeDir s end
   in walk (valOf (OS.Process.getEnv "RUNE_CACHE"), []) end;
 fun same (a, b) =

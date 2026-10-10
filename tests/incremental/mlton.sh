@@ -3,7 +3,8 @@
 # in the order of its mlton/mlton-rune.txt) built in units through a cache,
 # cold and warm, then edited as each scenario says, each build timed and its
 # units compiled counted (--explain-rebuild); at the end the last warm build
-# against a build without the cache, which must be the same bytes. Not in
+# against a build without the cache, which must be the same bytes; and the
+# program made of the units' Mid from the warm cache (--whole), timed. Not in
 # make check: a cold build takes minutes and gigabytes.
 #   tests/incremental/mlton.sh MLTON-CHECKOUT [OUT]
 # MLTON-CHECKOUT is MLton at 5fe943391 (MLton PR #660), whose mlton/ has
@@ -72,6 +73,9 @@ cached S47-interface
 insert ssa/profile.fun '^functor Profile ' 'struct val _ = ()'
 sed -i '/^struct val _ = ()$/{n;/^struct$/d}' "$work/mlton/ssa/profile.fun"
 cached S48-functor
+# one program of the units' Mid, from the warm cache (--whole; the
+# incremental roadmap's M7): what a production build from the cache costs
+cached S44-whole-warm --whole
 # the last warm build against one without the cache
 build nocache --no-cache
 if cmp -s "$out/S48-functor.rbc" "$out/nocache.rbc"; then echo "mlton: the last warm build is the bytes of a build without the cache"

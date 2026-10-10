@@ -347,6 +347,8 @@ def compiler_project():
 class Checker:
     def __init__(self, rune, out, flags):
         self.rune, self.out, self.flags, self.failures, self.builds, self.compiled = rune, out, flags, 0, 0, 0
+        # units taken from the cache across a unit that changed (M6's third part)
+        self.across = 0
 
     def check(self, pr, history):
         cache = os.path.join(self.out, 'cache')
@@ -355,6 +357,7 @@ class Checker:
         st2, b2, e2 = run_rune(self.rune, pr.work, pr.files, flags + ['--no-cache'])
         self.builds += 1
         self.compiled += len([l for l in e1.splitlines() if l.startswith('rune: compiled ') and 'lib/basis' not in l])
+        self.across += len([l for l in e1.splitlines() if l.startswith('rune: from the cache ') and ', across ' in l])
         ok = (st1 == 0) == (st2 == 0) and (st1 != 0 or b1 == b2)
         if not ok:
             self.failures += 1
@@ -469,7 +472,8 @@ def main():
     if args.history:
         replay(args, checker)
     mutations(args, checker, random.Random(args.seed))
-    print('mutate: %d builds, %d disagreements' % (checker.builds, checker.failures), flush=True)
+    print('mutate: %d builds, %d disagreements; %d units taken from the cache across a unit that changed'
+          % (checker.builds, checker.failures, checker.across), flush=True)
     sys.exit(1 if checker.failures else 0)
 
 

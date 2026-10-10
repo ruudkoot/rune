@@ -251,12 +251,51 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   and the entry written again. A cache that cannot be written is one that
   is not there. Nothing in a key is a time.
 
-Usages are by the unit that bound a name, not by what the name means: where
-a unit's basis changed in an entry another unit did not use, the other is
-compiled again all the same, and a name bound by another unit to the same
-thing -- `Char`, sealed by `seal_char.sml` where a program names `Char` and
-not otherwise -- is a usage that does not hold. Fingerprints per entry
-(GHC's rule) would tell them apart; the roadmap's M6 leaves them for later.
+**Fingerprints** (GHC's rule; the incremental roadmap's M6, the third
+part). A usage keeps, beside the unit that bound the name, the
+fingerprint of what the name named: the hash of an entry -- a value's
+scheme and where it is from, a type's definition with its constructors and
+realisation, a structure's entries, a signature, an identifier's fixity --
+with every name in it written by its unit's name and the path that reaches
+it there (`a.sml:A.shape`, `a.sml:sig:SHAPE.area`), so that a change under
+a name changes every fingerprint that mentions it, and a change beside it
+none. A usage holds where its binder is the same unit, or where what the
+name names now has the same fingerprint. A functor, an overloading and the
+REPL's settings hold by their binder alone.
+
+So a unit whose usages hold may have been compiled against a unit that has
+changed since -- a value added to `a.sml` changes its identity, not what
+`b.sml` used of it. Its entry is then loaded against the unit of the same
+name that is there now: the cache keeps, by each unit's identity, the
+path to each of its names (in `units/` of the configuration's directory),
+and each name of the old unit the entry's basis and code name is read by
+its path in the old and found by the same path in the new. Where one has
+no path, or none in the new unit, the entry is a miss and the unit is
+compiled. An entry whose usages hold by their binders is taken before one
+that needs this. `--explain-rebuild` says "from the cache X, across A
+changed". So S3 of `tests/incremental/SCENARIOS.md` compiles the unit that
+used the changed type and those after it whose usages changed, and S4,
+a value added, the changed unit alone.
+
+The cost is precision, not correctness, where a usage holds only by its
+binder: every unit that applies a functor of a changed unit, or resolved an
+overloading one registered, is compiled again.
+
+**One program of the units' Mid** (`--units --whole`; the incremental
+roadmap's M7 and D6). A compile in units links its units' code; with
+`--whole` it makes one program as a whole-program compile does. Each unit's
+Mid -- what `ToMid` made of it, before the optional passes, with the
+datatypes its types name and its functions' names, which the next unit's
+compile does not keep -- is written with its names by key, as a basis
+writes them (`UnitMid`), kept in its cache entry, and read back as the
+session names it, whether the unit was compiled or taken from the cache;
+the units' Mid is concatenated, renumbered canonically (`MidCanon`: every
+name by where it first appears), and the passes of a whole program run
+over it before `Lower` and the target. A whole-program compile renumbers
+its Mid the same way, so the two are one program and the same bytes:
+`check-units` builds every program of `tests/lang` and `tests/perf` both
+ways, through the cache and from it, `check-levels` at both levels, and
+`check-cross` the compiler (S42 of `tests/incremental/SCENARIOS.md`).
 
 **The frozen Basis Library** (D8): `make basis-cache`, part of `make all`,
 compiles every unit of `lib/basis` once, for each bytecode, into

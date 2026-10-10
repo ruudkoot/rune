@@ -6,7 +6,9 @@
 # its .args, .stdin and .vmargs, and its .cargs for the compiler -- and must
 # print the same, on both streams, traces included, and exit the same: the
 # differential check of the optimisations (docs/plans/middle-end.md, M2 and
-# M10).
+# M10). Each is built a second time as one program of its units' Mid
+# (--units --whole; the incremental roadmap's M7), at both levels, and must
+# print the same too.
 #   scripts/check-levels.sh [--rune BIN] [--vm BIN] [-j N]
 set -u
 cd "$(dirname "$0")/.."
@@ -30,25 +32,30 @@ mkdir -p "$out"
 if [ -n "$one" ]; then
   name=$(echo "$one" | tr '/' '_')
   cargs=""; [ -f "$one.cargs" ] && cargs=$(cat "$one.cargs")
-  for level in 0 2; do
-    flags="-O$level $cargs"
+  for b in O0 O2 U0 U2; do
+    case $b in
+      O*) flags="-O${b#O} $cargs" ;;
+      U*) flags="--units --whole --no-cache -O${b#U} $cargs" ;;
+    esac
     # shellcheck disable=SC2086
-    if ! "$rune" $flags --lint --mid-roundtrip "$one.sml" -o "$out/$name.O$level.rbc" 2> "$out/$name.O$level.cerr"; then
-      echo "FAIL levels.$name: $flags: $(grep -m1 . "$out/$name.O$level.cerr")"; exit 0
+    if ! "$rune" $flags --lint --mid-roundtrip "$one.sml" -o "$out/$name.$b.rbc" 2> "$out/$name.$b.cerr"; then
+      echo "FAIL levels.$name: $flags: $(grep -m1 . "$out/$name.$b.cerr")"; exit 0
     fi
   done
   args=""; [ -f "$one.args" ] && args=$(cat "$one.args")
   vmargs=""; [ -f "$one.vmargs" ] && vmargs=$(cat "$one.vmargs")
   stdin=/dev/null; [ -f "$one.stdin" ] && stdin=$one.stdin
-  for level in 0 2; do
+  for b in O0 O2 U0 U2; do
     # shellcheck disable=SC2086
-    "$vm" --checked $vmargs "$out/$name.O$level.rbc" $args < "$stdin" > "$out/$name.O$level.out" 2> "$out/$name.O$level.err"
-    echo $? > "$out/$name.O$level.code"
+    "$vm" --checked $vmargs "$out/$name.$b.rbc" $args < "$stdin" > "$out/$name.$b.out" 2> "$out/$name.$b.err"
+    echo $? > "$out/$name.$b.code"
   done
-  for part in out err code; do
-    if ! cmp -s "$out/$name.O0.$part" "$out/$name.O2.$part"; then
-      echo "FAIL levels.$name: -O0 and -O2 differ ($part: diff $out/$name.O0.$part $out/$name.O2.$part)"; exit 0
-    fi
+  for b in O2 U0 U2; do
+    for part in out err code; do
+      if ! cmp -s "$out/$name.O0.$part" "$out/$name.$b.$part"; then
+        echo "FAIL levels.$name: -O0 and $b differ ($part: diff $out/$name.O0.$part $out/$name.$b.$part)"; exit 0
+      fi
+    done
   done
   exit 0
 fi
@@ -61,4 +68,4 @@ if [ -n "$fails" ]; then
   echo "check-levels: $(echo "$fails" | wc -l | tr -d ' ') of $n programs fail"
   exit 1
 fi
-echo "check-levels: $n programs, the same at -O0 and -O2"
+echo "check-levels: $n programs, the same at -O0 and -O2, whole and made of their units' Mid"

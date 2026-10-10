@@ -14,7 +14,8 @@ every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
 a file system without case), S28 to S36, S40, and S49 to S57. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; `scripts/check-cross.sh` (`rune-units`) is S43; S41 is `make
-check-units`. Beside them, `tests/incremental/mutate.py` edits projects
+check-units`, and S42 is `make check-units` (`--units --whole`) and
+`check-cross` (`rune-whole`). Beside them, `tests/incremental/mutate.py` edits projects
 mechanically and wants each warm build to be what compiling everything
 gives (*Edits nobody wrote*, below), and `tests/incremental/mlton.sh` is
 S44 to S48.
@@ -22,12 +23,12 @@ S44 to S48.
 Where the cache does less than a scenario asks, its runner holds it to
 what it does, and says so:
 
-* a unit's usages are the names it looked up and the units that bound them
-  (`docs/units.md`, *The cache*), not fingerprints per entry: S3 compiles
-  `c.sml` too, which uses `a.sml`'s `SHAPE`, unchanged, S4 every unit that
-  uses a name of `a.sml`, and S11 the unit that only names the type,
-  which is the scenario's correct fallback (M6's third part, step 3, is
-  where fewer are compiled);
+* a usage holds by its binder or by its fingerprint (`docs/units.md`,
+  *The cache*, *Fingerprints*), and a type's fingerprint is its definition:
+  S11 compiles the unit that only names the type whose representation
+  changed, which is the scenario's correct fallback; a functor and an
+  overloading hold by their binder alone, so S8 compiles every unit that
+  applies the functor and S28o every unit that resolved the overloading;
 * a unit is known by its name, which is in its identity: two files of the
   same text and different names are two units (S7 is run as one project
   in two directories), a file renamed is another unit, and the units that
@@ -38,7 +39,7 @@ what it does, and says so:
 Not run: S27 wants a second build of the compiler to other bytes, and S37
 a disk that fills, which a user cannot make here (`ulimit -f` would stop
 the program's own file too); S36's read-only cache is the store that
-fails. S42 is M7's.
+fails.
 
 Unless a scenario says otherwise, the project is five files in order: `a.sml`
 declares a structure, a signature, a datatype and an exception; `b.sml` uses

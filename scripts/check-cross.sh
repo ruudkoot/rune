@@ -114,6 +114,26 @@ if [ -n "$one" ]; then
       done
       if [ -z "$failed" ]; then echo OK; else echo "FAIL rune-units: through one cache:$failed (tests/out/cross/rune-units.*)"; fi
       ;;
+    # S42 (tests/incremental/SCENARIOS.md; the incremental roadmap's M7):
+    # the compiler made one program of its units' Mid (--units --whole)
+    # through one cache by every build in turn, which must be the bytes of
+    # the compiler compiled whole by the first
+    rune-whole)
+      cache=$out/whole-cache
+      rm -rf "$cache"
+      # shellcheck disable=SC2046
+      set -- build/config.sml $(grep -v '^[[:space:]]*#' sources.txt | grep -v '^[[:space:]]*$') src/main/rune-main.sml
+      failed=""
+      bin/rune-mlton "$@" -o "$out/rune-whole.whole.rbc" 2> "$out/rune-whole.whole.err" || failed=" whole"
+      for c in $builds; do
+        if "bin/rune-$c" --units --whole --cache-dir "$cache" "$@" -o "$out/rune-whole.$c.rbc" 2> "$out/rune-whole.$c.err"; then
+          cmp -s "$out/rune-whole.$c.rbc" "$out/rune-whole.whole.rbc" || failed="$failed $c(differs)"
+        else
+          failed="$failed $c"
+        fi
+      done
+      if [ -z "$failed" ]; then echo OK; else echo "FAIL rune-whole: of its units' Mid:$failed (tests/out/cross/rune-whole.*)"; fi
+      ;;
     basis:*)
       may_fail=1
       t=tests/basis/${one#basis:}.sml
@@ -142,7 +162,7 @@ rm -f "$out"/*.result
 # The compiler is the longest job, so it goes first.
 # shellcheck disable=SC2086
 sources="$sources basis-all"
-printf '%s\n' rune rune-stack rune-units runedoc runedoc-stack runeopt runeopt-stack $sources | xargs -n 1 -P "$jobs" sh scripts/check-cross.sh --one
+printf '%s\n' rune rune-stack rune-units rune-whole runedoc runedoc-stack runeopt runeopt-stack $sources | xargs -n 1 -P "$jobs" sh scripts/check-cross.sh --one
 
 status=0
 count=0

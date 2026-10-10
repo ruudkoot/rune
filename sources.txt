@@ -34,6 +34,7 @@ src/core/mid.sml
 src/core/midlint.sml
 src/core/midtext.sml
 src/core/tomid.sml
+src/core/midcanon.sml
 src/core/target.sml
 src/core/shake.sml
 src/core/lift.sml
@@ -55,5 +56,6 @@ src/driver/basismanifest.sml
 src/driver/options.sml
 src/driver/unitbasis.sml
 src/driver/pipeline.sml
+src/driver/unitmid.sml
 src/driver/unitcache.sml
 src/driver/main.sml
