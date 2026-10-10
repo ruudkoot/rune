@@ -157,7 +157,7 @@ all: vm boot runedoc runeopt manifests basis-cache
 # its sources by the first host's compiler, which builds before any rune
 # (rune --basis-index)
 # the libraries of docs/plans/repl.md (The libraries)
-REPL_LIBS := unicode json terminal
+REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter
 manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
 lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/basis
@@ -173,6 +173,20 @@ lib/json/MANIFEST: lib/json/library.build $(wildcard lib/json/*.sml) lib/basis/M
 	bin/rune-$(BOOTHOST) --basis-index lib/json
 lib/terminal/MANIFEST: lib/terminal/library.build $(wildcard lib/terminal/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/terminal
+lib/pretty/MANIFEST: lib/pretty/library.build $(wildcard lib/pretty/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/pretty
+lib/markdown/MANIFEST: lib/markdown/library.build $(wildcard lib/markdown/*.sml) lib/basis/MANIFEST lib/pretty/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/markdown
+lib/digest/MANIFEST: lib/digest/library.build $(wildcard lib/digest/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/digest
+lib/jsonrpc/MANIFEST: lib/jsonrpc/library.build $(wildcard lib/jsonrpc/*.sml) lib/basis/MANIFEST lib/json/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/jsonrpc
+lib/dap/MANIFEST: lib/dap/library.build $(wildcard lib/dap/*.sml) lib/basis/MANIFEST lib/jsonrpc/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/dap
+lib/zmtp/MANIFEST: lib/zmtp/library.build $(wildcard lib/zmtp/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/zmtp
+lib/jupyter/MANIFEST: lib/jupyter/library.build $(wildcard lib/jupyter/*.sml) lib/basis/MANIFEST lib/zmtp/MANIFEST lib/json/MANIFEST lib/digest/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/jupyter
 
 # The frozen Basis Library (docs/units.md, The cache): every unit of
 # lib/basis compiled once, for each bytecode, into lib/cache, which every
@@ -994,6 +1008,13 @@ DOCS_PROPERTY := --lib lib --library test/property --out docs/generated/test/pro
 TITLE_unicode := Unicode
 TITLE_json := JSON
 TITLE_terminal := Terminal
+TITLE_digest := Digests
+TITLE_jsonrpc := JSON-RPC
+TITLE_dap := Debug Adapter Protocol
+TITLE_pretty := Pretty printing
+TITLE_markdown := Markdown
+TITLE_zmtp := ZMTP
+TITLE_jupyter := Jupyter
 docs_lib = --lib lib --library $(1) --out docs/generated/$(1) --basis-docs ../basis --title "$(TITLE_$(1))"
 
 docs: $(RUNEDOC) manifests

@@ -1,0 +1,3 @@
+name	kind	signature	realisations	status	origin	source
+JUPYTER	signature			required	declared	lib/jupyter/jupyter_sig.sml
+Jupyter	structure	JUPYTER		required	claimed	lib/jupyter/jupyter.sml

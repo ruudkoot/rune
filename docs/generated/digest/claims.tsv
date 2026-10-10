@@ -1,0 +1,8 @@
+name	kind	signature	realisations	status	origin	source
+DIGEST	signature			required	declared	lib/digest/digest_sig.sml
+HEX	signature			required	declared	lib/digest/hex_sig.sml
+HMAC	signature			required	declared	lib/digest/hmac_sig.sml
+Hex	structure	HEX		required	claimed	lib/digest/hex.sml
+HmacFn	functor	HMAC		required	claimed	lib/digest/hmac_fn.sml
+HmacSha256	structure	HMAC		required	claimed	lib/digest/hmac_fn.sml
+Sha256	structure	DIGEST		required	claimed	lib/digest/sha256.sml

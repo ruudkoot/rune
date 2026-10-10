@@ -1,0 +1,11 @@
+(* The digest library (docs/plans/repl.md, The libraries; M11): SHA-256
+   of FIPS 180-4, HMAC of RFC 2104, and hexadecimal; its files in load
+   order, in the form of lib/basis/library.build. *)
+annotate "demand" in
+  digest_sig.sml
+  sha256.sml
+  hex_sig.sml
+  hex.sml
+  hmac_sig.sml
+  hmac_fn.sml
+end

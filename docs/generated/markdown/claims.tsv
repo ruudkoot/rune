@@ -1,0 +1,3 @@
+name	kind	signature	realisations	status	origin	source
+MARKDOWN	signature			required	declared	lib/markdown/markdown_sig.sml
+Markdown	structure	MARKDOWN		required	claimed	lib/markdown/markdown.sml

@@ -1,0 +1,9 @@
+(* The ZMTP library (docs/plans/repl.md, The libraries; M11): ZeroMQ's
+   sockets over ZMTP 3.1 with the NULL mechanism; its files in load order,
+   in the form of lib/basis/library.build. *)
+annotate "demand" in
+  wire_sig.sml
+  wire.sml
+  zmtp_sig.sml
+  zmtp.sml
+end

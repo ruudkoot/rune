@@ -282,7 +282,7 @@ libsuite() {
     bad "$lib: runedoc --examples (see $ex/runedoc.log)"
   fi
 }
-for lib in unicode json terminal; do libsuite "$lib"; done
+for lib in unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter; do libsuite "$lib"; done
 
 echo "test-lib: passed $passed, failed $failed"
 [ "$failed" -eq 0 ]

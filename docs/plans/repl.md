@@ -1058,6 +1058,20 @@ projects. The libraries this roadmap makes:
 | `lib/jupyter` | Jupyter's wire protocol: the envelope, signing, the five channels, a kernel's loop with handlers | `jupyter_client` where installed; transcripts | M11 | `rune-kernel`; a kernel for any language written in Rune |
 | `lib/dap` | the Debug Adapter Protocol's messages and framing | transcripts against VS Code's adapter tests | M12 | `rune-repl --dap`; other debuggers |
 
+**Built ahead** (2026-10-10, the owner's request after M5): every library
+of the table exists, ahead of the milestones that use it. `lib/json`
+came with M2. `lib/markdown` reads all 652 of CommonMark 0.31.2's
+examples as its reference implementation does; `lib/digest` is checked
+on FIPS 180-4's and RFC 4231's vectors and on 134 of Python's; `lib/zmtp`
+and `lib/jupyter` on peers written from their specifications with
+Python's standard library (`tests/lib/zmtp/interop.sh`,
+`tests/lib/jupyter/interop.sh`), `jupyter_client` itself being M11's.
+Poly/ML's `Socket.recvVecNB` blocks on an accepted socket
+(`docs/bugreport/polyml`), so `lib/zmtp`'s test hangs there; MLKit's
+`Socket` lacks `acceptNB`, and its region inference corrupts the names
+`lib/json` decodes (`docs/bugreport/mlkit`): the failures this makes on
+the hosts are explained in `tests/lib/deviations.txt`.
+
 Each has its `MANIFEST`, `DOCUMENTED` signatures and runedoc pages, its
 tests in `tests/lib/NAME` under `make test-lib`, properties written with
 `lib/test/property`, the published vectors of the standard it implements,
@@ -2061,8 +2075,9 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
     attributes, since a dumb terminal shows the escapes.
   * Two faults of MLKit 4.7.23, recorded and not worked around
     (`tests/lib/deviations.txt`): an internal assertion on `lib/unicode`'s
-    test in the runner's order, and a segmentation fault in the code it
-    makes of `lib/json`'s random round trips (`docs/bugreport/mlkit`).
+    test in the runner's order, and region inference that hands
+    `lib/json`'s random round trips values no longer theirs
+    (`docs/bugreport/mlkit`).
   * SML/NJ and MLKit wanted the type of a record projection in
     `Diagnostic` written out, where MLton and Rune inferred it.
   * **`lib/unicode`'s tables are strings of hexadecimal digits, built

@@ -1,0 +1,9 @@
+(* The pretty-printing library (docs/plans/repl.md, The libraries; M7):
+   documents laid out at a width, within budgets; its files in load order,
+   in the form of lib/basis/library.build. It is written on lib/unicode,
+   for the display width of text: *)
+libraries unicode end
+annotate "demand" in
+  pretty_sig.sml
+  pretty.sml
+end

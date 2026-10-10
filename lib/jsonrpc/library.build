@@ -1,0 +1,11 @@
+(* The JSON-RPC library (docs/plans/repl.md, The libraries; M10):
+   JSON-RPC 2.0's messages, and messages framed by lines or
+   Content-Length; its files in load order, in the form of
+   lib/basis/library.build. It is written on lib/json: *)
+libraries json end
+annotate "demand" in
+  framing_sig.sml
+  framing.sml
+  jsonrpc_sig.sml
+  jsonrpc.sml
+end

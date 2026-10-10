@@ -41,6 +41,13 @@ random="lib/random/random_sig.sml lib/random/random.sml"
 property=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/test\/property\/\1/p' lib/test/property/MANIFEST | tr '\n' ' ')
 unicode=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/unicode\/\1/p' lib/unicode/MANIFEST | tr '\n' ' ')
 json=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/json\/\1/p' lib/json/MANIFEST | tr '\n' ' ')
+jsonrpc=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/jsonrpc\/\1/p' lib/jsonrpc/MANIFEST | tr '\n' ' ')
+dap=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/dap\/\1/p' lib/dap/MANIFEST | tr '\n' ' ')
+pretty=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/pretty\/\1/p' lib/pretty/MANIFEST | tr '\n' ' ')
+markdown=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/markdown\/\1/p' lib/markdown/MANIFEST | tr '\n' ' ')
+zmtp=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/zmtp\/\1/p' lib/zmtp/MANIFEST | tr '\n' ' ')
+jupyter=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/jupyter\/\1/p' lib/jupyter/MANIFEST | tr '\n' ' ')
+digest=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/digest\/\1/p' lib/digest/MANIFEST | tr '\n' ' ')
 terminal=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/terminal\/\1/p' lib/terminal/MANIFEST | tr '\n' ' ')
 tests="random.kat|$random|tests/lib/random/kat.sml|kat
 random.props|$random|tests/lib/random/props.sml|props
@@ -53,7 +60,14 @@ json.roundtrip|$random $unicode $json|tests/lib/json/roundtrip.sml|props
 terminal.key|$random $unicode $terminal|tests/lib/terminal/key.sml|props
 terminal.style|$random $unicode $terminal|tests/lib/terminal/style.sml|props
 terminal.emulator|$unicode $terminal|tests/lib/terminal/emulator.sml|props
-terminal.edit|$random $unicode $terminal|tests/lib/terminal/edit.sml|props"
+terminal.edit|$random $unicode $terminal|tests/lib/terminal/edit.sml|props
+digest.digest|$random $digest|tests/lib/digest/digest.sml|props
+jsonrpc.jsonrpc|$random $unicode $json $jsonrpc|tests/lib/jsonrpc/jsonrpc.sml|props
+dap.dap|$unicode $json $jsonrpc $dap|tests/lib/dap/dap.sml|props
+pretty.pretty|$random $unicode $pretty|tests/lib/pretty/pretty.sml|props
+markdown.spec|$unicode $json $pretty $markdown|tests/lib/markdown/spec.sml|props
+zmtp.zmtp|$zmtp|tests/lib/zmtp/zmtp.sml|props
+jupyter.jupyter|$unicode $json $digest $zmtp $jupyter|tests/lib/jupyter/jupyter.sml|props"
 
 passed=0
 explained=0
