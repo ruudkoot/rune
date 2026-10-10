@@ -74,7 +74,7 @@ struct
     | TCon (c, args) =>
         let val s = #stamp c
         in
-          case Option.mapPartial (fn k => if RuneShow.hasPrinter k then SOME k else NONE)
+          case Option.mapPartial (fn k => (Usage.use ("p", k); if RuneShow.hasPrinter k then SOME k else NONE))
                                  (UnitBasis.stableName (UnitBasis.kTycon, s)) of
             SOME key => installed (g, key, args)
           | NONE =>

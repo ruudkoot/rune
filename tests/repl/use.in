@@ -1,4 +1,9 @@
-(* use: a library of several files, one using another, and files that fail *)
+(* use: a library of several files, one using another, and files that fail.
+   A file is used a top-level declaration at a time -- to a `;` or its end
+   -- each compiled and run as one, as Poly/ML does (--flex-records=topdec):
+   main.sml ends one after its use of part.sml, whose names the next one
+   then sees; one that does not compile, or raises, binds nothing, and the
+   ones before it are kept *)
 use "tests/repl/lib/main.sml";
 total;
 use "tests/repl/lib/broken.sml";

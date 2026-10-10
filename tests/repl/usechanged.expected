@@ -1,0 +1,25 @@
+- = = = = = val write = fn : string * string -> unit
+- = val it = () : unit
+- val file = "changed.sml" : string
+- val it = () : unit
+- val version = 1 : int
+val it = () : unit
+- val it = 1 : int
+- val it = () : unit
+- val version = 2 : int
+val it = () : unit
+- val it = 2 : int
+- val uses = "uses.sml" : string
+- val it = () : unit
+- val base = "ab" : string
+- val twice = "abab" : string
+val it = () : unit
+- val it = "abab" : string
+- val base = 3 : int
+- uses.sml:1:13: error: function argument: type mismatch between string * string and int * int (type constructor mismatch: string vs int)
+uncaught exception Fail: use: uses.sml has errors
+- val base = "cd" : string
+- val twice = "cdcd" : string
+val it = () : unit
+- val it = "cdcd" : string
+- 

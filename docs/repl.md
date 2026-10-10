@@ -22,7 +22,11 @@ it reads anything, and the end of the input ends it.
 
 ## What a declaration does
 
-The REPL follows Chapter 8 of the Definition, a declaration at a time:
+The REPL follows Chapter 8 of the Definition, a top-level declaration at a
+time: the declarations to a `;`, or to the end of a file `use`d, compiled
+and run as one, as Poly/ML does (in the default mode of `--flex-records`,
+which settles flexible records there; in the others, each declaration
+alone). What follows says "a declaration" for it:
 
 * A declaration that does not elaborate is reported, with its file, line and
   column, and the session is as it was before it: nothing it declared is
@@ -44,7 +48,8 @@ them, one after another, as if they had been typed: each declaration the
 file completes stays in the session, even when a later one fails. A
 declaration that does not compile stops the file there and `use` raises
 `Fail`; one that raises an exception stops it too, and the exception goes on
-to the caller of `use`. A file may `use` another, and a declaration of the
+to the caller of `use`. A file that cannot be read raises `IO.Io`, as in
+Poly/ML. A file may `use` another, and a declaration of the
 session may call `use`: what it compiles is the session's at once, and the
 declaration's own bindings join it once it has run.
 

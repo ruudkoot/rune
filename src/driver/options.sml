@@ -22,6 +22,7 @@ struct
   val cacheDir : string option ref = ref NONE  (* --cache-dir DIR: the cache of units (UnitCache) *)
   val noCache = ref false                      (* --no-cache: compile every unit *)
   val explainRebuild = ref false               (* --explain-rebuild: say why each unit was compiled *)
+  val verifyCache = ref false                  (* --verify-cache: compile each unit found, and compare *)
   val noWarnings = ref false
   val showVersion = ref false
   val showHelp = ref false
@@ -55,6 +56,9 @@ struct
     \  --default-type=T  in the input files, the type of an int or word constant or\n\
     \                    operator that its declaration leaves open: int (default)\n\
     \                    or int64, word (default) or word64\n\
+    \  --flex-records=M  what must determine a flexible record's labels\n\
+    \                    (docs/language.md): binding, declaration,\n\
+    \                    topdec-monomorphic, topdec (default) or program\n\
     \  --units           compile every file, of the basis library too, as a unit\n\
     \                    of its own after the files before it, and link them\n\
     \                    (docs/units.md)\n\
@@ -68,6 +72,8 @@ struct
     \  --no-cache        with --units, compile every unit\n\
     \  --explain-rebuild with --units, say of each unit whether it was taken from\n\
     \                    the cache, or why it was compiled\n\
+    \  --verify-cache    with --units, compile each unit the cache has too, and\n\
+    \                    fail where the cache's is not what compiling it gives\n\
     \  --typecheck-only  stop after type checking\n\
     \  --type-work=N     type traversal budget per top-level declaration (50000000)\n\
     \  --match-work=N    pattern-analysis budget per match (1000000)\n\
@@ -102,7 +108,20 @@ struct
       | NONE => NONE
     else NONE
 
+  (* --flex-records=MODE, before the options of fixed spelling *)
   fun parse (args : string list) : unit =
+    case args of
+      arg :: rest =>
+        if String.isPrefix "--flex-records=" arg then
+          let val m = String.extract (arg, size "--flex-records=", NONE)
+          in
+            case Elaborate.flexModeOf m of
+              SOME mode => (Elaborate.flexRecords := mode; parse rest)
+            | NONE => raise Usage ("--flex-records: binding, declaration, topdec-monomorphic, topdec or program, not " ^ m)
+          end
+        else parse' args
+    | [] => ()
+  and parse' (args : string list) : unit =
     case args of
       [] => ()
     | "-o" :: f :: rest => (output := SOME f; parse rest)
@@ -125,6 +144,7 @@ struct
     | "--default-type=int64" :: rest => (defaultInt64 := true; parse rest)
     | "--default-type=word" :: rest => (defaultWord64 := false; parse rest)
     | "--default-type=word64" :: rest => (defaultWord64 := true; parse rest)
+
     | "--units" :: rest => (units := true; parse rest)
     | "--emit-units" :: d :: rest => (emitUnits := SOME d; parse rest)
     | ["--emit-units"] => raise Usage "--emit-units requires a directory"
@@ -132,6 +152,7 @@ struct
     | ["--cache-dir"] => raise Usage "--cache-dir requires a directory"
     | "--no-cache" :: rest => (noCache := true; parse rest)
     | "--explain-rebuild" :: rest => (explainRebuild := true; parse rest)
+    | "--verify-cache" :: rest => (verifyCache := true; parse rest)
     | "--typecheck-only" :: rest => (typecheckOnly := true; parse rest)
     | "--no-warnings" :: rest => (noWarnings := true; parse rest)
     | "--dump-tokens" :: rest => (dumpTokens := true; parse rest)

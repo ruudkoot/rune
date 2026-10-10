@@ -31,13 +31,14 @@ its `--count` differs.
 The front end runs on one unit as on a program: its tokens are parsed with
 the fixity the units before left, and its declarations are elaborated one
 by one into the environment they left. Overloading and the literals are
-settled at the end of each top-level declaration, as in a whole program;
-the flexible records and the reports of the matches at the end of the
-unit, where a whole program settles them at its end. So nothing of a unit
-waits on the units after it, and a flexible record must be determined in
-its own file: a program that leaves it to a declaration of a later file
-compiles whole and not with `--units` ([language.md](language.md),
-*Flexible records*).
+settled at the end of each top-level declaration, as in a whole program,
+and so are the flexible records, in the default mode of `--flex-records`
+([language.md](language.md), *Flexible records*), a file's end ending one;
+the reports of the matches at the end of the unit. So nothing of a unit
+waits on the units after it. Under `--flex-records=program`, which settles
+flexible records at the end of the program, a unit settles them at its
+end: a program that leaves one to a declaration of a later file then
+compiles whole and not with `--units`.
 
 The unit's declarations alone are then translated, and the passes run on
 them with `Pass.whole` false: every top-level binding of a unit may be named
@@ -186,7 +187,9 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
 * the cache is a directory: `--cache-dir DIR`, else `$RUNE_CACHE` (empty:
   none), else `.rune` beside the first input; `--no-cache` compiles every
   unit; `--explain-rebuild` says of each unit whether it was taken from the
-  cache or why it was compiled;
+  cache or why it was compiled; `--verify-cache` compiles each unit the
+  cache has too, and fails where the cache's is not the same bytes as what
+  compiling it gives;
 * in it, a directory per *configuration*: the hash of the compiler's
   identity (`Config.identity`, a hash of the compiler's sources, which
   `scripts/gen-build-files.sh` writes), the versions of the files, the
@@ -198,12 +201,19 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   and whether it may use `_prim`; a file of the library is named by its
   place in the library (`lib/basis/list.sml`), so that a cache follows the
   library where it is moved, and a unit taken from the cache names its
-  source in its code's files where it is now;
+  source in its code's files where it is now -- its own, and those of the
+  functors' bodies it applied, which an entry keeps with the unit each is
+  the source of (S56);
 * in that, an entry per set of *usages* the unit was compiled with: every
   name its compile looked up -- values, types, structures, signatures,
   functors, and the fixity of every identifier it parsed (`Usage`) -- with
   the unit that bound the name then (`UnitBasis.binders`; none for the
-  initial basis). A name is recorded only where what was found is the
+  initial basis). Overloading resolved at a type is a usage too, of the
+  type's name (`UnitBasis.stableName`), which the unit that registered the
+  type's overloading binds: `widestring.sml` registers it for a type
+  `widechar.sml` declares, and a unit that writes a wide string at
+  `WideCharVector.vector` uses it without naming `WideString` (S28 of
+  `tests/incremental/SCENARIOS.md`). A name is recorded only where what was found is the
   binding the session had for it, and not one of the unit's own or of a
   scope in it: a functor's parameter named `Array` uses no `Array` of the
   units before. An entry serves a compile where every one of its usages
@@ -215,6 +225,22 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   removed or moved; and a unit whose body changed and whose basis did not
   keeps its identity, and the units that used it keep their entries: the
   cut-off;
+* a functor's body is elaborated again at each application, in the basis
+  of its declaration, as it was parsed there: what its names were bound to
+  and the fixity it had are the functor's as much as its text is. So a
+  unit that declares a functor has in its basis, and so in its identity,
+  the unit that bound each name its compile looked up, and a unit that
+  applies one of its functors is compiled again where one of them changed,
+  though it names none of them and another unit may bind them where it is
+  (S49 to S51);
+* in the REPL, what a declaration of a file used echoes is compiled with
+  it: two usages more say what that was compiled by, `echo on` whether it
+  echoed at all (the print depth was above 0) and `p KEY` whether a printer
+  was installed for the type `KEY` names (`Compiler.addPrettyPrinter`),
+  and each holds where the REPL decides the same now (S53, S54);
+* an entry whose code names a unit the session has not -- one its usages
+  should have found changed -- is no entry, and the unit is compiled
+  rather than the link finding nothing to take the name from;
 * an entry keeps the warnings its compile gave, which a compile that takes
   it from the cache gives again;
 * an entry is one file, its usages, warnings, basis and code with the hash

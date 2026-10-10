@@ -12,13 +12,19 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `tests/incremental/run.sh` (`make test-incremental`, in `make check`) runs
 those the cache can be held to now, on the project of
 `tests/incremental/project`: S1, S2, S3, S5, S6, S8, S13, S17, S18, S19,
-S24, S29, S31, S33, S34 and S36; `tests/repl/usecache.in` is S38. A unit's
-usages are the names it looked up and the units that bound them
-(docs/units.md, *The cache*), not fingerprints per entry: S3 compiles
-`c.sml` too, which uses `a.sml`'s `SHAPE`, unchanged, and S4 would compile
-every unit that uses a name of `a.sml`. Those, and the scenarios of
-the compiler (S27), the Basis Library (S28), the full disk (S37) and of a
-session's basis (S39, S40) wait for the runner.
+S24, S29, S31, S33, S34 and S36, and S28, S40 and S49 to S56 on projects
+of their own; `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+S39; `scripts/check-cross.sh` (`rune-units`) is S43. Beside them,
+`tests/incremental/mutate.py` edits projects mechanically and wants each
+warm build to be what compiling everything gives (*Edits nobody wrote*,
+below). A unit's usages are the
+names it looked up and the units that bound them (docs/units.md, *The
+cache*), not fingerprints per entry: S3 compiles `c.sml` too, which uses
+`a.sml`'s `SHAPE`, unchanged, and S4 would compile every unit that uses a
+name of `a.sml`. Two are not run: S27 wants a second build of the
+compiler to other bytes, and S37 a disk that fills, which a user cannot
+make here (`ulimit -f` would stop the program's own file too); S36's
+read-only cache is the store that fails.
 
 Unless a scenario says otherwise, the project is five files in order: `a.sml`
 declares a structure, a signature, a datatype and an exception; `b.sml` uses
@@ -167,6 +173,61 @@ exactly the units X and nothing else.
   included (M7).
 * **S43, five builds.** `check-cross` with the cache on: the five builds of
   the compiler still write the same bytes.
+
+## Functors, and what the REPL echoes
+
+What a compile reads that is not a name it looks up where it is. Found
+when the scenarios above were all green
+(`docs/plans/build-cache-issues.md`):
+
+* **S49, a functor's fixity.** `c.sml`'s functor's body is parsed with the
+  fixity `a.sml` gives `++`, and `a.sml` changes it. Recompiles `a.sml`,
+  `c.sml` and `main.sml`, which applies the functor and names nothing of
+  `a.sml`: what a functor's body found where it was declared is in its
+  unit's identity. Before, `main.sml` was taken from the cache and the
+  program printed the old result.
+* **S50, a functor's type, shadowed.** The body uses `a.sml`'s `A.t`, which
+  changes from `int` to `IntInf.int`, and a unit between the functor and
+  `main.sml` declares another `A`. Recompiles `a.sml`, `c.sml` and
+  `main.sml`, though at `main.sml` the name `A` is the other unit's.
+* **S51, a functor's call, shadowed.** As S50, the body calling `a.sml`'s
+  function and matching constructors `a.sml` reorders. The same units;
+  before, `main.sml` was taken from the cache and its link failed.
+* **S52, hidden code renumbered.** A body changed with functions, a
+  reference and a datatype added in a `local` before what `a.sml` exports.
+  Recompiles `a.sml` only (the cut-off of S2).
+* **S53, a printer installed.** A file used in a session that installed a
+  printer for a type of it since its entry was written echoes through the
+  printer.
+* **S54, the print depth.** A file whose entry was written at print depth
+  0 echoes at the default depth.
+* **S56, the frozen Basis by another path.** The frozen library was
+  compiled where its sources were `bin/../lib/basis`, and a compiler run by
+  another path uses it: a unit of it that applied another file's functor --
+  `word8vector.sml`, `mono_vector_fn.sml`'s -- names that file where it is
+  now, as it names its own. Before, a trace through the functor's body
+  named `bin/../lib/basis/mono_vector_fn.sml` wherever the program ran, and
+  the program was not the bytes of a build without the cache. Found by
+  `mutate.py` on the compiler's sources.
+* **S55, verifying the cache.** A warm build with `--verify-cache` succeeds;
+  an entry planted with usages that hold and the content of another compile
+  (`tests/incremental/plant.py`) is taken by a build and found by
+  `--verify-cache`, which fails.
+
+## Edits nobody wrote
+
+`tests/incremental/mutate.py` edits a project as a person might -- a
+fixity directive's precedence or side, two constructors of a datatype
+swapped, a numeral changed, a value added at top level or inside a
+structure, an earlier file declared again later in the order, two files
+swapped, a comment added, a file put back -- and builds it through one cache
+and without one after each edit. The two must agree: both fail, or both
+succeed and are the same bytes. Its projects are `tests/incremental/project`,
+`tests/incremental/functors` (functors over a datatype, fixity and a type,
+and a unit that declares their names again) and `compiler`, the compiler's
+own sources; `--history N` replays the compiler's last N commits through one
+cache. `make test-incremental` runs it briefly, with a seed of its own; a
+long run is by hand.
 
 ## A large project: MLton
 

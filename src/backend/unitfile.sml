@@ -272,11 +272,14 @@ struct
 
   (* u with the source the files of its code name old named new: a unit
      from the cache whose source has moved *)
-  fun renameFile ({code = {consts, nglobals, funcs, files, inlines, nlabels}, identity, globals, imports, exports}
-                  : Link.unitCode, old : string, new : string) : Link.unitCode =
-    {code = {consts = consts, nglobals = nglobals, funcs = funcs, files = List.map (fn f => if f = old then new else f) files,
+  fun mapFiles ({code = {consts, nglobals, funcs, files, inlines, nlabels}, identity, globals, imports, exports}
+                : Link.unitCode, f : string -> string) : Link.unitCode =
+    {code = {consts = consts, nglobals = nglobals, funcs = funcs, files = List.map f files,
              inlines = inlines, nlabels = nlabels},
      identity = identity, globals = globals, imports = imports, exports = exports}
+
+  fun renameFile (u : Link.unitCode, old : string, new : string) : Link.unitCode =
+    mapFiles (u, fn f => if f = old then new else f)
 
   fun readFile (path : string) : int * Link.unitCode =
     let

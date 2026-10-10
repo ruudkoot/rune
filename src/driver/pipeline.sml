@@ -69,20 +69,21 @@ struct
       u
     end
 
-  (* unitThrough {start, name, file, text, decs, delta, fixity}: the unit of
-     decs, elaborated since start, which declared delta and left fixity,
-     compiled; its basis written and loaded again in place of what the
+  (* unitThrough {start, name, file, text, decs, delta, fixity, used}: the
+     unit of decs, elaborated since start, which declared delta and left
+     fixity, and looked up the names used, compiled; its basis written and loaded again in place of what the
      compile left, so that the units after it see what the bytes say, as
      they do of a unit from the cache (UnitBasis; docs/units.md). name is
      the unit's, file its source's in spans, text its source. Its code by
      keys, its basis, and what loading gave, which the caller adds to the
      start's environment and fixity. *)
   fun unitThrough {start : UnitBasis.start, name : string, file : string, text : unit -> string,
-                   decs : Ast.dec list, delta : Env.env, fixity : Fixity.env}
+                   decs : Ast.dec list, delta : Env.env, fixity : Fixity.env, used : string list}
       : {code : Link.unitCode, exported : UnitBasis.exported, loaded : UnitBasis.result} =
     let
       val sc = unitOf decs
-      val x = UnitBasis.export {start = start, name = name, file = file, text = text, delta = delta, fixity = fixity}
+      val x = UnitBasis.export {start = start, name = name, file = file, text = text, delta = delta, fixity = fixity,
+                                used = used}
       val () = UnitBasis.undo start
       val l = UnitBasis.load {pickle = #pickle x, file = file, at = #counters start, env = #env start,
                               fixity = #fixity start, text = text}

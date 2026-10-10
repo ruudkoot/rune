@@ -27,6 +27,10 @@ struct
   fun uncaught e =
     case e of
       SML90.Interrupt => err "Interrupt\n"
+    | IO.Io {name, function, cause} =>
+        (* what failed, on what and why, as Poly/ML shows the fields *)
+        err ("uncaught exception Io: " ^ function ^ " " ^ name ^ ": "
+             ^ (case cause of OS.SysErr (m, _) => m | c => General.exnMessage c) ^ "\n")
     | _ => err ("uncaught exception " ^ General.exnMessage e ^ "\n")
 
   (* f () with the interrupt's mask on, and as it was after, which raises
@@ -79,7 +83,29 @@ struct
      another declaration's (a nested use). *)
   fun run (decs : Ast.dec list, name : string, text : string, cached : (string * int * string list) option,
            stopping : bool) : bool =
-    case decs of
+    runGroups (topdecs decs, name, text, cached, stopping)
+
+  (* The declarations as units: a top-level declaration each -- those to a
+     `;` or the end -- where flexible records are settled there, as Poly/ML
+     compiles and runs a topdec at once (--flex-records, docs/repl.md);
+     else each declaration *)
+  and topdecs (decs : Ast.dec list) : Ast.dec list list =
+    case !Elaborate.flexRecords of
+      Elaborate.FlexTopdec => groupTopdecs decs
+    | Elaborate.FlexTopdecMono => groupTopdecs decs
+    | _ => List.map (fn d => [d]) decs
+  and groupTopdecs decs =
+    let
+      fun go ([], [], acc) = List.rev acc
+        | go ([], cur, acc) = List.rev (List.rev cur :: acc)
+        | go (d :: rest, cur, acc) =
+            if Parser.endsTopdec (Ast.spanOfDec d) then go (rest, [], List.rev (d :: cur) :: acc)
+            else go (rest, d :: cur, acc)
+    in go (decs, [], []) end
+
+  and runGroups (groups : Ast.dec list list, name : string, text : string,
+                 cached : (string * int * string list) option, stopping : bool) : bool =
+    case groups of
       [] => true
     | d :: rest =>
         let
@@ -87,7 +113,7 @@ struct
             let
               (* compiled: an error is the declaration's, or the compiler's own *)
               val compiled =
-                SOME (ReplSession.compile ([d], name, text, cached))
+                SOME (ReplSession.compile (d, name, text, cached))
                 handle Error.CompileError (sp, msg) => (err (Error.format (sp, msg) ^ "\n"); NONE)
                      | Error.Bug msg => (err ("rune-repl: " ^ msg ^ "\n"); NONE)
                      | Fail msg => (err ("rune-repl: " ^ msg ^ "\n"); NONE)
@@ -106,7 +132,7 @@ struct
           val ok = masked one
         in
           if ok orelse not stopping
-          then run (rest, name, text, Option.map (fn (s, n, ns) => (s, n + 1, ns)) cached, stopping)
+          then runGroups (rest, name, text, Option.map (fn (s, n, ns) => (s, n + 1, ns)) cached, stopping)
           else false
         end
 
@@ -114,7 +140,8 @@ struct
      compile ending it, the exception of one that raises going on *)
   fun use (file : string) : unit =
     let
-      val text = #text (Source.readFile file) handle IO.Io _ => raise Fail ("use: cannot read " ^ file)
+      (* a file that cannot be read raises IO.Io, as Poly/ML's use does *)
+      val text = #text (Source.readFile file)
       (* compiled, the file's lines are what the session keeps of it *)
       fun done () = Source.keepLines file
     in

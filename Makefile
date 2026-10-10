@@ -154,7 +154,7 @@ all: vm boot runedoc runeopt basis-cache
 # compile in units reads after its own cache and never writes; made again,
 # empty first, when the compiler or the library changes
 basis-cache: lib/cache/made
-lib/cache/made: bin/rune.rbc bin/runevm $(wildcard lib/basis/*.sml) lib/basis/MANIFEST
+lib/cache/made: bin/rune bin/rune.rbc bin/runevm $(wildcard lib/basis/*.sml) lib/basis/MANIFEST
 	rm -rf lib/cache
 	bin/rune --units --basis all --cache-dir lib/cache examples/hello.sml -o build/basis-cache.rbc
 	bin/rune --units --basis all --target=stack --cache-dir lib/cache examples/hello.sml -o build/basis-cache.stack.rbc
@@ -902,8 +902,10 @@ test-repl: bin/rune-repl bin/runevm
 	sh tests/repl/run.sh --vm-opts "--jit=all --jit-tier=2" --out tests/out/repl-tier2
 
 # the cache's scenarios (tests/incremental/SCENARIOS.md; docs/units.md, The cache)
-test-incremental: $(RUNE) vm
+test-incremental: $(RUNE) vm basis-cache bin/rune-repl
 	sh tests/incremental/run.sh --rune $(RUNE)
+	python3 tests/incremental/mutate.py --rune $(RUNE) --steps 30 tests/incremental/functors tests/incremental/project
+	sh tests/flexrec/run.sh --rune $(RUNE)
 
 check-positions: $(RUNE) $(RUNEVM)
 	sh scripts/check-positions.sh -j $(JOBS) --rune $(RUNE_STACK) --vm $(RUNEVM)

@@ -4,6 +4,18 @@ structure Parser =
 struct
   open Token Ast
 
+  (* The top-level declarations of each file that end a top-level
+     declaration of the Definition (Section 8: topdec), by the end of their
+     span: those a `;` or the end of the file follows, which the parser does
+     not otherwise keep. Elaborate settles flexible records there
+     (--flex-records=topdec), and the REPL compiles a topdec as one unit.
+     The file's parsed last are its own. *)
+  val topdecEnds : unit IntTable.table StringMap.map ref = ref StringMap.empty
+  fun endsTopdec ({file, stop, ...} : Source.span) : bool =
+    case StringMap.find (!topdecEnds, file) of
+      SOME t => isSome (IntTable.find (t, stop))
+    | NONE => false
+
   (* Items of an infix expression/pattern before fixity resolution. *)
   datatype 'a item = Atom of 'a | Oper of string * Fixity.fixity * Source.span
 
@@ -560,13 +572,25 @@ struct
       (* Declarations                                                      *)
       and parseDecs (ctx : ctx) : dec list =
         let
+          (* at the top level, a `;` or the end ends a topdec *)
+          fun ends (d :: _) =
+                if ctx = Top then
+                  let val {file, stop, ...} = spanOfDec d
+                  in
+                    case StringMap.find (!topdecEnds, file) of
+                      SOME t => IntTable.insert (t, stop, ())
+                    | NONE => topdecEnds := StringMap.insert (!topdecEnds, file, let val t = IntTable.table 16
+                                                                                in IntTable.insert (t, stop, ()); t end)
+                  end
+                else ()
+            | ends [] = ()
           fun loop acc =
             case peek () of
-              SEMI => (advance (); loop acc)
+              SEMI => (ends acc; advance (); loop acc)
             | IN => List.rev acc
             | END => List.rev acc
             | RPAREN => List.rev acc
-            | EOF => List.rev acc
+            | EOF => (ends acc; List.rev acc)
             | _ => loop (parseDec ctx :: acc)
         in loop [] end
 
@@ -1221,6 +1245,8 @@ struct
             end
         end
 
+      (* this file's topdecs are what this parse finds *)
+      val () = topdecEnds := StringMap.insert (!topdecEnds, #file (#2 (tokAt 0)), IntTable.table 16)
       val program = parseDecs Top
     in
       if peek () <> EOF then err ("unexpected '" ^ toString (peek ()) ^ "'") else (program, !fixenv)

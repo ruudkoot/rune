@@ -24,6 +24,12 @@ struct
   (* whether a declaration's values are echoed: not those of the REPL's own
      declarations at start *)
   val quiet : bool ref = ref false
+  fun echoing () = not (!quiet) andalso !RuneCompiler.printDepth > 0
+  (* what a declaration's echo was compiled by, as the usages of the cache
+     see it (UnitBasis.replSetting) *)
+  val () = UnitBasis.replSetting :=
+             (fn key => if key = "echo on" then echoing ()
+                        else String.isPrefix "p " key andalso RuneShow.hasPrinter (String.extract (key, 2, NONE)))
 
   fun readBytes (path : string) : string =
     let val inp = BinIO.openIn path
@@ -158,12 +164,19 @@ struct
         | SOME (d, c, key) =>
             case UnitCache.find (d, c, key) of
               UnitCache.Missed _ => NONE
-            | UnitCache.Found {pickle, code, warnings, ...} =>
+            | UnitCache.Found {pickle, code, warnings, file = was, others, ...} =>
                 let val at = UnitBasis.counters ()
                 in
                   (let
+                     val (fp, u) = UnitFile.read code
+                     val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
                      val l = UnitBasis.load {pickle = pickle, file = file, at = at, env = !env, fixity = #fixity start,
                                              text = fn () => text}
+                     (* its source, and those of the functors' bodies it
+                        applied, where they are now, in its code's files *)
+                     val code = if UnitBasis.moves (u, was, file, others)
+                                then String.concat (UnitFile.chunks (fp, UnitBasis.relocate (u, was, file, others)))
+                                else code
                      val run = Runtime.link (Byte.stringToBytes code)
                    in
                      (* the warnings its compile gave, again *)
@@ -172,6 +185,7 @@ struct
                    end)
                   handle Pickle.Bad _ => (UnitBasis.setCounters at; NONE)
                        | UnitBasis.Missing _ => (UnitBasis.setCounters at; NONE)
+                       | UnitFile.Bad _ => (UnitBasis.setCounters at; NONE)
                        | Fail _ => (UnitBasis.setCounters at; NONE)
                 end
       val warnings : string list ref = ref []
@@ -193,7 +207,7 @@ struct
                   val () = warnings := List.rev (!Error.warnings)
                   val () = Error.flushWarnings ()
                   val pdecs =
-                    case if !quiet orelse !RuneCompiler.printDepth <= 0 then NONE else ReplShow.echoes (bound delta) of
+                    case if (Usage.use ("echo", "on"); echoing ()) then ReplShow.echoes (bound delta) else NONE of
                       NONE => []
                     | SOME (text, synth) =>
                         let
@@ -208,17 +222,19 @@ struct
                           val () = Error.warnings := []
                         in pd end
                 in (delta, pdecs) end)
-         val usages = UnitBasis.usagesOf (names @ (case cached of SOME (_, _, ns) => ns | NONE => []))
+         val used = names @ (case cached of SOME (_, _, ns) => ns | NONE => [])
+         val usages = UnitBasis.usagesOf used
          (* compiled, and loaded again from its basis: what it declared,
             the session's after it has run, is what the basis says *)
          val {code, loaded, exported} =
            Pipeline.unitThrough {start = start, name = name, file = file, text = fn () => text,
-                                 decs = decs @ pdecs, delta = delta, fixity = #fixity start}
+                                 decs = decs @ pdecs, delta = delta, fixity = #fixity start, used = used}
          val bytes = String.concat (UnitFile.chunks (Pipeline.fingerprint (), code))
          val () =
            case cache of
              SOME (d, c, key) =>
-               UnitCache.store (d, c, key, {usages = usages, warnings = !warnings, file = file, pickle = #pickle exported,
+               UnitCache.store (d, c, key, {usages = usages, warnings = !warnings, file = file,
+                                            others = UnitBasis.sourcesOf (code, file), pickle = #pickle exported,
                                             code = bytes})
            | NONE => ()
        in Source.unregister echoName; result (loaded, Runtime.link (Byte.stringToBytes bytes)) end)

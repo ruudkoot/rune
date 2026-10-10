@@ -2226,10 +2226,12 @@ What was built, and where it differs from the plan above:
   Poly/ML accept it as one top-level declaration -- measured 2026-10-09,
   correcting what this said before). So the program
   compiled whole is unchanged, and with `--units` a flexible record must
-  be determined in its own file. **For the owner:** keep the extension,
-  or settle every flexible record at the end of its top-level declaration,
-  as the other compilers do and as the REPL will have to (M4, where a
-  declaration is a unit)?
+  be determined in its own file. **The owner decided (2026-10-09):** a
+  language option with every variant the implementations have,
+  `--flex-records=binding|declaration|topdec-monomorphic|topdec|program`,
+  and Poly/ML's, `topdec`, the default; the REPL then compiles a
+  top-level declaration as one unit, as Poly/ML does (`docs/language.md`,
+  *Flexible records*; `tests/flexrec`).
 * **The basis as a value** is, after M2, the environment (`Env.env`,
   threaded), the fixity (functional), the elaborator's snapshot and the
   tables that only grow. A record of all of it with a delta, which M6
@@ -2632,10 +2634,65 @@ What was built, and where it differs from the plan above:
   Basis's units decoded and linked per compile: within reach only for a
   compiler that keeps a loaded Basis between compiles -- an image of the
   compiler, or M12's service -- with a linker of bytes for the rest);
-  S27, S28, S37, S39-S40 in the runner (S29, relocation, runs);
-  `check-cross` with the cache (S43); an overloading a unit registers for
-  a type another unit binds is no usage (only the Basis Library registers
-  any, beside its types).
+  S27 and S37, which the runner cannot make (`SCENARIOS.md` says why).
+  Done since (2026-10-09, for the commit after M5's): S28, S39, S40 in the
+  runners and S43 in `check-cross`; overloading resolved at a type is a
+  usage of the type's name, bound by the unit that registered it -- which
+  closed a real gap, `widestring.sml` registering overloading for a type
+  `widechar.sml` declares.
+* **Found when the owner asked how sure the cache is** (2026-10-09; all in
+  [build-cache-issues.md](build-cache-issues.md)): a functor's body is
+  elaborated again where it is applied, but what it found where it was
+  declared -- its fixity, and names a later unit declares again -- was in
+  no identity, and a warm build printed another result than a cold one
+  (S49, S50; S51 failed at link). A unit that declares a functor now has
+  in its basis the unit that bound each name its compile used. The REPL's
+  echo of a file used was cached with the print depth and the printers of
+  the session that compiled it (S53, S54), now usages. An entry whose code
+  names a unit that is gone is a miss. `--verify-cache` compiles every unit
+  found and compares; `tests/incremental/mutate.py` edits projects
+  mechanically and replays the compiler's history, each warm build against
+  compiling everything. Fingerprints and step 3 below wait for it.
+
+#### M6, the third part: usages per entry (plan, 2026-10-09)
+
+What D14 A asks and the second part did not do: a unit's usages by the
+fingerprint of each entry it used, so that S3 (a type changed that a unit
+did not use) and S4 (an entry added) compile only what used what changed.
+Fingerprints alone gain nothing, because what a unit's basis and code name
+of an earlier unit they name by that unit's identity and its numbers, and
+a unit whose identity changed is not loaded again: a unit taken from the
+cache that names it is a miss, whatever its usages say. So:
+
+1. **A fingerprint per entry.** The hash of what an entry is -- a value's
+   scheme, a type's definition (a datatype's constructors and their
+   arguments, an abbreviation's body, an abstract type's equality and
+   arity), a structure's entries, a signature, a functor's basis and the
+   hash of its body, an exception's argument, and the compiler's tables
+   for it (primitive alias, known function) -- with every name in it
+   written by the unit's *name* and the path that reaches the name in
+   that unit's export (`t A.shape`), and the fingerprint of the entry
+   behind it, so that a change under a name changes every fingerprint
+   that mentions it, and a change beside it none. A name no path reaches
+   (a type made in a `local` whose values escape) is written by its place
+   among the hidden names of its unit, which may move when the unit
+   changes: then the fingerprints that mention it change too, which is a
+   miss and never a wrong hit.
+2. **Usages by whole names, with the fingerprint.** `Usage` records the
+   long name (`v A.area`, not `s A`), and a structure used whole -- `open
+   A`, `structure B = A`, a functor's argument -- as `s A`; a usage keeps
+   the binder's identity, which settles most lookups at once, and the
+   fingerprint, which settles the rest.
+3. **Loading across a changed unit.** The cache keeps the basis of every
+   unit it wrote by identity. A unit taken from it that names an identity
+   no unit of the session has is loaded against the unit of the same name
+   that is there: each of its names of the old unit is read by its path
+   in the old unit's basis and found by that path in the new one, and its
+   code's keys are mapped the same way before it is linked. Where a name
+   has no path, or the path is not in the new unit, it is a miss.
+   Formats do not change: the mapping happens before anything is linked.
+
+S3 and S4 then want what `SCENARIOS.md` says; S5 to S8 hold as they are.
 
 ### M7. Mid per unit: whole-program builds from the cache (M, about 500 SML)
 

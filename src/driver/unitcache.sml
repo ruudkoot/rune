@@ -25,13 +25,15 @@ struct
   structure P = Pickle
 
   val magic = "RCE"
-  val version = 3
+  val version = 4
 
   (* what a unit's entry holds: its usages, the warnings its compile gave,
      which a compile that takes it from the cache gives again, the name its
-     source had in the compile, which its code's files name it by, its
-     basis, and its code's file *)
-  type entry = {usages : (string * string) list, warnings : string list, file : string, pickle : string, code : string}
+     source had in the compile, which its code's files name it by, the other
+     files its code names with the unit each is the source of
+     (UnitBasis.sourcesOf), its basis, and its code's file *)
+  type entry = {usages : (string * string) list, warnings : string list, file : string,
+                others : (string * string) list, pickle : string, code : string}
 
   (* an entry found, or why there is none *)
   datatype found = Found of entry | Missed of string
@@ -42,7 +44,7 @@ struct
               [Config.identity, Int.toString version, Int.toString UnitBasis.version, Int.toString UnitFile.version,
                Int.toString (Pipeline.fingerprint ()), Int.toString (!Pass.level),
                (case !Pass.only of NONE => "-" | SOME ps => String.concatWith "," ps),
-               Int.toString (!Target.intBits),
+               Int.toString (!Target.intBits), Elaborate.flexModeName (!Elaborate.flexRecords),
                (case !Pass.fuel of NONE => "-" | SOME n => Int.toString n)])
 
   (* The directory of the cache: --cache-dir, else RUNE_CACHE, else .rune in
@@ -102,11 +104,12 @@ struct
            val us = P.rlist (fn r => let val k = P.rstring r in (k, P.rstring r) end) r
            val warnings = P.rlist P.rstring r
            val file = P.rstring r
+           val others = P.rlist (fn r => let val f = P.rstring r in (f, P.rstring r) end) r
            val pickle = P.rstring r
            val code = P.rstring r
          in
            if not (P.atEnd r) orelse P.hash (String.extract (s, at, NONE)) <> h then Missed "a damaged entry"
-           else Found {usages = us, warnings = warnings, file = file, pickle = pickle, code = code}
+           else Found {usages = us, warnings = warnings, file = file, others = others, pickle = pickle, code = code}
          end
          handle P.Bad why => Missed ("a damaged entry: " ^ why)
               | Overflow => Missed "a damaged entry"
@@ -155,7 +158,7 @@ struct
   (* store: the entry of a key written, whole or not at all, by the hash of
      its usages, beside the key's others; a cache that cannot be written is
      a cache that is not there *)
-  fun store (dir : string, config : string, k : string, {usages = us, warnings, file, pickle, code} : entry) : unit =
+  fun store (dir : string, config : string, k : string, {usages = us, warnings, file, others, pickle, code} : entry) : unit =
     let
       val d = keyDir (dir, config, k)
       val u = P.writer ()
@@ -163,8 +166,8 @@ struct
       val p = OS.Path.joinDirFile {dir = d, file = P.hash (P.contents u)}
       val tmp = p ^ ".tmp-" ^ unique ()
       val body = P.writer ()
-      val () = (usages (body, us); P.list P.string (body, warnings); P.string (body, file); P.string (body, pickle);
-                P.string (body, code))
+      val () = (usages (body, us); P.list P.string (body, warnings); P.string (body, file);
+                usages (body, others); P.string (body, pickle); P.string (body, code))
       val b = P.contents body
       val w = P.writer ()
       val () = (P.bytes (w, magic); P.nat (w, version); P.string (w, P.hash b); P.bytes (w, b))

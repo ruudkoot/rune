@@ -33,6 +33,23 @@ struct
   val pendingOverloads : tvar ref list ref = ref []
   val pendingFlex : (tvar ref * span) list ref = ref []
 
+  (* How large the context is that must determine a flexible record's
+     labels (Section 4.11 leaves it open; docs/language.md, --flex-records):
+     the binding that would generalise it (SML/NJ, Hamlet), the declaration
+     at structure level it is in (MLKit), the top-level declaration -- to a
+     `;` or the end of the file -- with no flexible record generalised
+     (Moscow ML) or with one generalised and determined at each use
+     (Poly/ML and MLton, the default), or the whole program (the unit, with
+     --units) *)
+  datatype flexMode = FlexBinding | FlexDeclaration | FlexTopdecMono | FlexTopdec | FlexProgram
+  val flexRecords = ref FlexTopdec
+  fun flexModeName m =
+    case m of
+      FlexBinding => "binding" | FlexDeclaration => "declaration" | FlexTopdecMono => "topdec-monomorphic"
+    | FlexTopdec => "topdec" | FlexProgram => "program"
+  fun flexModeOf name =
+    List.find (fn m => flexModeName m = name) [FlexBinding, FlexDeclaration, FlexTopdecMono, FlexTopdec, FlexProgram]
+
   (* Exhaustiveness and redundancy reports are deferred to the end of the
      top-level declaration, when flexible record patterns have their types.
      They are switched off while a functor body is re-elaborated for an
@@ -121,15 +138,48 @@ struct
      match reports (which need the records' labels); with --units, at the
      end of each unit, which is then settled before the next is compiled
      (docs/units.md). *)
-  fun finish () =
+  (* every flexible record so far determined, or an error at the first that
+     is not: where the context --flex-records names ends *)
+  fun settleFlex () =
     (List.app (fn (r, sp) =>
                  case !r of
                    Unbound {kind = KFlex _, ...} =>
                      err (sp, "unresolved flexible record: cannot determine the full set of fields")
                  | _ => ()) (List.rev (!pendingFlex));
-     pendingFlex := [];
+     pendingFlex := [])
+
+  fun finish () =
+    (settleFlex ();
      List.app (fn f => f ()) (List.rev (!pendingChecks));
      pendingChecks := [])
+
+  (* A binding's type generalised (rule 15's Clos): under
+     --flex-records=binding a flexible record it would generalise is an
+     error there; under topdec-monomorphic it is not generalised, nor are
+     the variables of its fields, and the uses after it determine it *)
+  fun flexAbove (level : int, t : ty) : bool =
+    case prune t of
+      TVar (ref (Unbound {kind = KFlex _, level = l, ...})) => l > level andalso l <> genericLevel
+    | TVar _ => false
+    | TCon (_, args) => List.exists (fn a => flexAbove (level, a)) args
+    | TRecord fields => List.exists (fn (_, a) => flexAbove (level, a)) fields
+    | TArrow (a, b) => flexAbove (level, a) orelse flexAbove (level, b)
+  fun lowerFlex (level : int, t : ty) : unit =
+    case prune t of
+      t' as TVar (ref (Unbound {kind = KFlex _, level = l, ...})) =>
+        if l > level andalso l <> genericLevel then Unify.lowerLevels (level, t') else ()
+    | TVar _ => ()
+    | TCon (_, args) => List.app (fn a => lowerFlex (level, a)) args
+    | TRecord fields => List.app (fn (_, a) => lowerFlex (level, a)) fields
+    | TArrow (a, b) => (lowerFlex (level, a); lowerFlex (level, b))
+  fun generalizeBinding (level : int, t : ty, sp : span) : unit =
+    case !flexRecords of
+      FlexBinding =>
+        (if flexAbove (level, t) then err (sp, "unresolved flexible record: cannot determine the full set of fields")
+         else ();
+         Unify.generalize (level, t))
+    | FlexTopdecMono => (lowerFlex (level, t); Unify.generalize (level, t))
+    | _ => Unify.generalize (level, t)
 
   (* Section 2.9 and 3.5: identifiers that no binding or description may (re)bind. *)
   val reservedVids = ["true", "false", "nil", "::", "ref"]
@@ -633,7 +683,7 @@ struct
                            val bound = ref []
                            val (tp, bindings) = elabPat (env, level + 1, scope, top, p, bound)
                            val () = unifyAt (spanOfPat p, tp, te, "val binding")
-                           val () = if nonexpansive e then Unify.generalize (level, tp)
+                           val () = if nonexpansive e then generalizeBinding (level, tp, spanOfPat p)
                                     else Unify.lowerLevels (level, tp)
                            (* 4.11: reported except for components of a top-level declaration *)
                            val () = if top then () else deferCheck (fn () => Exhaust.checkBinding (p, spanOfPat p))
@@ -643,7 +693,11 @@ struct
             | checkDups ((n, _) :: rest) =
               if List.exists (fn (m, _) => m = n) rest then err (sp, "duplicate variable '" ^ n ^ "' in val declaration")
               else checkDups rest
-        in checkDups flat; checkGeneralised (scope, scoped, level, sp); bindingsToEnv flat end
+        in
+          checkDups flat; checkGeneralised (scope, scoped, level, sp);
+          if top andalso !flexRecords = FlexDeclaration then settleFlex () else ();
+          bindingsToEnv flat
+        end
     | DValRec (tvs, binds, sp) =>
         let
           val (scope, scoped) = valScope (outerScope, tvs, d, level + 1, sp)
@@ -683,8 +737,9 @@ struct
                          val () = List.app (fn t => unifyAt (psp, elabTy (env, scope, level + 1, t), tv, "val rec type annotation")) tys
                          val te = elabExp (env', level + 1, scope, e)
                        in unifyAt (spanOfExp e, tv, te, "val rec binding") end) prepared;
-          List.app (fn (_, tv, _, _, _) => Unify.generalize (level, tv)) prepared;
+          List.app (fn (_, tv, _, _, psp) => generalizeBinding (level, tv, psp)) prepared;
           checkGeneralised (scope, scoped, level, sp);
+          if top andalso !flexRecords = FlexDeclaration then settleFlex () else ();
           bindingsToEnv allBindings
         end
     | DFun (tvs, fundefs, sp) =>
@@ -725,8 +780,9 @@ struct
                          Exhaust.checkClauses (List.map #pats (#clauses f),
                                                List.map (fn (c : clause) => spanOfPat (List.hd (#pats c))) (#clauses f),
                                                #span f)))) prepared;
-          List.app (fn (_, _, tv, _) => Unify.generalize (level, tv)) prepared;
+          List.app (fn (_, _, tv, _) => generalizeBinding (level, tv, sp)) prepared;
           checkGeneralised (scope, scoped, level, sp);
+          if top andalso !flexRecords = FlexDeclaration then settleFlex () else ();
           bindingsToEnv (List.map (fn (n, v, _, _) => (n, v)) prepared)
         end
     | DType (typbinds, _) =>
@@ -1113,6 +1169,9 @@ struct
   (* What the last elabTop added to the environment, its declarations' in
      one: what the REPL echoes of a declaration (src/repl/session.sml). *)
   val lastDelta : env ref = ref Env.empty
+  (* the declarations of the topdec so far, whose free variables are checked
+     where it ends *)
+  val pendingClosed : (env * span) list ref = ref []
 
   fun elabTop (env : env ref, decs : dec list) : unit =
     (lastDelta := Env.empty;
@@ -1124,13 +1183,32 @@ struct
                       val () = Types.startWork (spanOfDec d)
                       val () = Unify.flexHook := (fn r => pendingFlex := (r, spanOfDec d) :: !pendingFlex)
                       val delta = elabDec (!env, 0, true, ref StringMap.empty, d)
-                    in resolvePending (); checkClosed (delta, spanOfDec d); env := plus (!env, delta);
-                       lastDelta := plus (!lastDelta, delta); Types.stopWork () end
+                      (* the modes that settle flexible records where a
+                         top-level declaration ends check rules 87-89 there
+                         too, as the Definition does: a variable a later
+                         declaration of the same topdec determines is not
+                         free (a flexible record not generalised under
+                         topdec-monomorphic, or val r = ref nil) *)
+                      val byTopdec = case !flexRecords of FlexDeclaration => false | FlexProgram => false | _ => true
+                    in resolvePending ();
+                       if byTopdec then pendingClosed := (delta, spanOfDec d) :: !pendingClosed
+                       else checkClosed (delta, spanOfDec d);
+                       env := plus (!env, delta);
+                       lastDelta := plus (!lastDelta, delta);
+                       if byTopdec andalso Parser.endsTopdec (spanOfDec d) then
+                         (settleFlex ();
+                          List.app checkClosed (List.rev (!pendingClosed));
+                          pendingClosed := [])
+                       else ();
+                       Types.stopWork () end
                 in
                   case saved of
                     NONE => go ()
                   | SOME s => go () handle Error.CompileError e => (Types.stopWork (); restore s; Error.report e)
-                end) decs)
+                end) decs;
+     (* what is elaborated together ends a topdec (a file, a REPL's unit) *)
+     List.app checkClosed (List.rev (!pendingClosed));
+     pendingClosed := [])
 
   fun elabProgram (decs : dec list) : env =
     let val env = ref Env.initial

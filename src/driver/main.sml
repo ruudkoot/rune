@@ -226,6 +226,8 @@ struct
       val cache = Option.map (fn d => (d, UnitCache.configuration ())) (UnitCache.directory ())
       val frozen = UnitCache.frozen ()
       val failedBefore = ref false
+      (* --verify-cache: the units whose entry is not what compiling them gives *)
+      val unverified = ref 0
       fun explain msg = if !Options.explainRebuild then TextIO.output (TextIO.stdErr, msg ^ "\n") else ()
       (* the cache's work, for --pass-stats *)
       fun timed name f = Pass.stage {name = name, showIn = NONE, show = fn _ => "", check = fn _ => (), size = fn _ => 0} f ()
@@ -249,21 +251,30 @@ struct
                                  | found => found)
                             | (found, _) => found)
             | _ => UnitCache.Missed (if isSome cache then "a unit before it failed" else "the cache is off")
+          (* --verify-cache: an entry found is compiled all the same, and
+             what that gives is compared with it *)
+          val (found, against) =
+            case found of
+              UnitCache.Found e => if !Options.verifyCache then (UnitCache.Missed "to verify its entry", SOME e)
+                                   else (found, NONE)
+            | _ => (found, NONE)
           (* from the cache: its basis loaded, its code read *)
           val hit =
             case found of
               UnitCache.Missed why => (explain ("rune: compiled " ^ name ^ ": " ^ why); NONE)
-            | UnitCache.Found {pickle, code, warnings, file, ...} =>
+            | UnitCache.Found {pickle, code, warnings, file, others, ...} =>
                 let val at = UnitBasis.counters ()
                 in
                   (let
+                     val (fp, u) = timed "cache-code" (fn () => UnitFile.read code)
+                     val () = if fp <> Pipeline.fingerprint () then raise UnitFile.Bad "another instruction set" else ()
+                     val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
                      val l = timed "cache-basis" (fn () => UnitBasis.load {pickle = pickle, file = name, at = at, env = !env,
                                                                            fixity = !fixity, text = text name})
-                     val (fp, u) = timed "cache-code" (fn () => UnitFile.read code)
-                     (* its source where it is now, in its code's files *)
-                     val u = if file = name then u else UnitFile.renameFile (u, file, name)
+                     (* its source, and those of the functors' bodies it
+                        applied, where they are now, in its code's files *)
+                     val u = UnitBasis.relocate (u, file, name, others)
                    in
-                     if fp <> Pipeline.fingerprint () then raise UnitFile.Bad "another instruction set" else ();
                      explain ("rune: from the cache " ^ name);
                      (* the warnings its compile gave, again *)
                      if !Options.noWarnings then ()
@@ -281,9 +292,9 @@ struct
                fixity := Fixity.extend (!fixity, #directives l);
                UnitBasis.bind l;
                (u, pickle) :: acc)
-          | NONE => compileUnit ((name, load, allow, ident), k, acc)
+          | NONE => compileUnit ((name, load, allow, ident), k, against, acc)
         end
-      and compileUnit ((name, load, allow, ident), k, acc) =
+      and compileUnit ((name, load, allow, ident), k, against : UnitCache.entry option, acc) =
         let
           val start = UnitBasis.begin (!env, !fixity)
           (* parsed and elaborated, the names it looks up recorded: its
@@ -311,16 +322,40 @@ struct
               val usages = UnitBasis.usagesOf names
               val {code, exported, loaded} =
                 Pipeline.unitThrough {start = start, name = ident, file = name, text = text name, decs = decs,
-                                      delta = !Elaborate.lastDelta, fixity = !fixity}
+                                      delta = !Elaborate.lastDelta, fixity = !fixity, used = names}
+              val bytes = String.concat (UnitFile.chunks (Pipeline.fingerprint (), code))
+              (* the entry verified: its basis the same bytes, and its code,
+                 named by the source where it is now *)
+              val verified =
+                case against of
+                  NONE => true
+                | SOME {pickle, code = c, file, others, ...} =>
+                    pickle = #pickle exported
+                    andalso ((let
+                                val (fp, u) = UnitFile.read c
+                                val moved = UnitBasis.relocate (u, file, name, others)
+                                (* both written again from what they read as,
+                                   which is not always the bytes read *)
+                                fun again s = let val (fp, u) = UnitFile.read s in String.concat (UnitFile.chunks (fp, u)) end
+                              in
+                                if not (UnitBasis.moves (u, file, name, others)) then c = bytes
+                                else String.concat (UnitFile.chunks (fp, moved)) = again bytes
+                              end)
+                             handle UnitFile.Bad _ => false)
             in
               env := Env.plus (#env start, #delta loaded);
               fixity := Fixity.extend (#fixity start, #directives loaded);
               UnitBasis.bind loaded;
-              (case (cache, k) of
-                 (SOME (dir, config), SOME k) =>
+              if verified then ()
+              else (TextIO.output (TextIO.stdErr, "rune: " ^ name ^ ": the cache's entry is not what compiling it gives\n");
+                    unverified := !unverified + 1);
+              (* an entry that did not verify is left as it was, to be looked at *)
+              (case (cache, k, verified) of
+                 (SOME (dir, config), SOME k, true) =>
                    UnitCache.store (dir, config, k,
-                                    {usages = usages, warnings = warnings, file = name, pickle = #pickle exported,
-                                     code = String.concat (UnitFile.chunks (Pipeline.fingerprint (), code))})
+                                    {usages = usages, warnings = warnings, file = name,
+                                     others = UnitBasis.sourcesOf (code, name), pickle = #pickle exported,
+                                     code = bytes})
                | _ => ());
               (code, #pickle exported) :: acc
             end
@@ -328,6 +363,7 @@ struct
       val compiled = List.rev (List.foldl unit [] sources)
       val units = List.map #1 compiled
       val () = failIfReported ()
+      val () = if !unverified > 0 then raise Reported else ()
       val fingerprint = Pipeline.fingerprint ()
       val () =
         case !Options.emitUnits of

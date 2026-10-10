@@ -135,23 +135,31 @@ struct
 
   fun findStr (env, path) = (case path of s :: _ => headStr (env, s) | [] => (); findStr' (env, path))
 
+  (* A long name is recorded whole (`v A.area`), where its first structure
+     is the session's: a unit that used A.area used that entry, and not the
+     rest of A (the incremental roadmap's M6, the third part) *)
+  fun longUse (kind, env, s, path, name) =
+    if not (!Usage.recording) then ()
+    else useIf (kind, String.concatWith "." (path @ [name]), sameStr, StringMap.find (strs env, s),
+                fn se => StringMap.find (strs se, s))
+
   fun findVal (env, (path, name)) =
     case path of
       [] =>
         let val r = StringMap.find (vals env, name)
         in useIf ("v", name, sameBinding, r, fn s => StringMap.find (vals s, name)); r end
-    | s :: _ => (headStr (env, s); case findStr' (env, path) of
-                                     SOME e => StringMap.find (vals e, name)
-                                   | NONE => NONE)
+    | s :: _ => (longUse ("v", env, s, path, name); case findStr' (env, path) of
+                                                    SOME e => StringMap.find (vals e, name)
+                                                  | NONE => NONE)
 
   fun findTy (env, (path, name)) =
     case path of
       [] =>
         let val r = StringMap.find (tys env, name)
         in useIf ("t", name, sameTyStr, r, fn s => StringMap.find (tys s, name)); r end
-    | s :: _ => (headStr (env, s); case findStr' (env, path) of
-                                     SOME e => StringMap.find (tys e, name)
-                                   | NONE => NONE)
+    | s :: _ => (longUse ("t", env, s, path, name); case findStr' (env, path) of
+                                                    SOME e => StringMap.find (tys e, name)
+                                                  | NONE => NONE)
 
   (* The type name a type structure denotes: its own, or the one an
      abbreviation of no arguments stands for (`where type t = u` leaves an
