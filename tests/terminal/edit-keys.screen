@@ -1,0 +1,7 @@
+> hello world;
+read 12 bytes: hello world;
+> hello!;
+read 7 bytes: hello!;
+> x;
+read 2 bytes: x;
+>

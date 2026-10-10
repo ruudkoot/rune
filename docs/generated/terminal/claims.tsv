@@ -1,8 +1,15 @@
 name	kind	signature	realisations	status	origin	source
+EMULATOR	signature			required	declared	lib/terminal/emulator_sig.sml
+HISTORY	signature			required	declared	lib/terminal/history_sig.sml
 KEY	signature			required	declared	lib/terminal/key_sig.sml
+LINE_EDIT	signature			required	declared	lib/terminal/line_edit_sig.sml
 STYLE	signature			required	declared	lib/terminal/style_sig.sml
 TERMINAL	signature			required	declared	lib/terminal/terminal_sig.sml
+Emulator	structure	EMULATOR		required	claimed	lib/terminal/emulator.sml
+History	structure	HISTORY		required	claimed	lib/terminal/history.sml
 Key	structure	KEY		required	claimed	lib/terminal/key.sml
+LineEdit	structure	LINE_EDIT		required	claimed	lib/terminal/line_edit.sml
+LineEditFn	functor	LINE_EDIT		required	claimed	lib/terminal/line_edit_fn.sml
 PosixTerminal	structure	TERMINAL		required	claimed	lib/terminal/posix_terminal.sml
 Style	structure	STYLE		required	claimed	lib/terminal/style.sml
 Terminal	structure	TERMINAL		required	claimed	lib/terminal/terminal.sml

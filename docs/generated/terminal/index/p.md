@@ -1,6 +1,6 @@
 # Index: P
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [n](n.md) **p** [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) **p** [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md) [y](y.md)
 
 - `PageDown` (con): [KEY](../sig/KEY.md#con-pagedown)
 - `PageUp` (con): [KEY](../sig/KEY.md#con-pageup)
@@ -9,6 +9,8 @@
 - `pending` (val): [KEY](../sig/KEY.md#val-pending)
 - `plain` (val): [STYLE](../sig/STYLE.md#val-plain)
 - `policy` (val): [TERMINAL](../sig/TERMINAL.md#val-policy)
+- `PreviousHistory` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-previoushistory)
+- `PreviousLine` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-previousline)
 
 ---
 

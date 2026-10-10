@@ -1,13 +1,24 @@
 # Index: C
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) **c** [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [n](n.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) **c** [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md) [y](y.md)
 
+- `Cancel` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-cancel)
+- `Cancelled` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-cancelled)
+- `CapitalizeWord` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-capitalizeword)
+- `cell` (type): [EMULATOR](../sig/EMULATOR.md#type-cell), [LINE_EDIT](../sig/LINE_EDIT.md#type-cell)
 - `change` (val): [STYLE](../sig/STYLE.md#val-change)
 - `Char` (con): [KEY](../sig/KEY.md#con-char)
 - `choice` (type): [STYLE](../sig/STYLE.md#type-choice)
+- `Clear` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-clear)
+- `ClearScreen` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-clearscreen)
 - `color` (type): [STYLE](../sig/STYLE.md#type-color)
 - `Colors16` (con): [STYLE](../sig/STYLE.md#con-colors16)
 - `Colors256` (con): [STYLE](../sig/STYLE.md#con-colors256)
+- `command` (type): [LINE_EDIT](../sig/LINE_EDIT.md#type-command)
+- `Complete` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-complete)
+- `config` (type): [LINE_EDIT](../sig/LINE_EDIT.md#type-config)
+- `Continue` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-continue)
+- `cursor` (val): [EMULATOR](../sig/EMULATOR.md#val-cursor), [LINE_EDIT](../sig/LINE_EDIT.md#val-cursor)
 - `CursorAt` (con): [KEY](../sig/KEY.md#con-cursorat)
 
 ---

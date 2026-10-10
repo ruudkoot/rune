@@ -1,13 +1,20 @@
 # Index: E
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) **e** [f](f.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [n](n.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) **e** [f](f.md) [h](h.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md) [y](y.md)
 
+- `emacs` (val): [LINE_EDIT](../sig/LINE_EDIT.md#val-emacs)
 - `empty` (val): [KEY](../sig/KEY.md#val-empty)
 - `enabled` (val): [STYLE](../sig/STYLE.md#val-enabled)
-- `End` (con): [KEY](../sig/KEY.md#con-end)
+- `End` (con): [KEY](../sig/KEY.md#con-end), [LINE_EDIT](../sig/LINE_EDIT.md#con-end)
+- `EndOfBuffer` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-endofbuffer)
+- `EndOfHistory` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-endofhistory)
+- `EndOfInput` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-endofinput)
+- `EndOfLine` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-endofline)
 - `Enter` (con): [KEY](../sig/KEY.md#con-enter)
 - `enter` (val): [TERMINAL](../sig/TERMINAL.md#val-enter)
+- `entries` (val): [HISTORY](../sig/HISTORY.md#val-entries)
 - `Escape` (con): [KEY](../sig/KEY.md#con-escape)
+- `escape` (val): [HISTORY](../sig/HISTORY.md#val-escape)
 - `event` (type): [KEY](../sig/KEY.md#type-event)
 
 ---

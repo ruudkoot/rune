@@ -1,0 +1,5 @@
+> val x =
+. 1;
+read 10 bytes: val x =\n1;
+> 0123456789中文abcdefghij中文
+klmnop

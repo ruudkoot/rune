@@ -17,4 +17,13 @@ annotate "demand" "host=no" in
 end
 annotate "demand" in
   posix_terminal.sml
+  emulator_sig.sml
+  emulator.sml
+  history_sig.sml
+  history.sml
+  line_edit_sig.sml
+  line_edit_fn.sml
+end
+annotate "demand" "host=no" in
+  line_edit.sml
 end

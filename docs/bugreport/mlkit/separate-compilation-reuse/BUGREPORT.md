@@ -75,3 +75,16 @@ sh tests/lib/run-hosts.sh mlkit
 
 The line `FAIL mlkit unicode.utf8` is the fault; `tests/lib/deviations.txt`
 explains it as a `HOST-BUG`.
+
+## A second program
+
+`terminal.emulator` (`lib/unicode`, `lib/terminal` and
+`tests/lib/terminal/emulator.sml`), built by the runner after the
+programs before it, stops with another internal assertion,
+
+```
+Impossible: LambdaStatSem.APP.argument type not arrow - type list is Types({})
+```
+
+and the same files copied to a fresh directory and built there compile
+and pass (`tests/lib/deviations.txt`, `native:mlkit | terminal.emulator`).

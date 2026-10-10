@@ -2,7 +2,9 @@
 # What the REPL costs a person at a terminal (docs/plans/repl.md, M1 and
 # Measuring): the start to the first prompt, an entry to its answer, and a
 # paste of 10, 100, 1,000 and 2,000 declarations to the answer of the last,
-# each measured on a pty by tests/terminal/ptyraw.py, best of RUNS runs.
+# each measured on a pty by tests/terminal/ptyraw.py, best of RUNS runs; and
+# what lib/terminal's editor does for a key at 10 to 1,000 lines
+# (tests/terminal/keystroke.sml, M5).
 #   scripts/perf-repl.sh [RUNS]
 # The load average is printed with the table: the numbers mean little on a
 # machine that runs something else.
@@ -40,4 +42,8 @@ EOF
   printf '%-36s %12s\n' "a paste of $n lines" "$(measure "$out/paste$n.script" paste)"
   runs=$r
 done
+# what lib/terminal's editor does for a key (M5): tests/terminal/keystroke.sml
+if bin/rune --library terminal tests/terminal/keystroke.sml -o "$out/keystroke.rbc" > /dev/null; then
+  bin/runevm "$out/keystroke.rbc"
+fi
 echo "load average: $(cut -d' ' -f1-3 /proc/loadavg 2> /dev/null || uptime)"

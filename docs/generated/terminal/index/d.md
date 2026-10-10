@@ -1,13 +1,19 @@
 # Index: D
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) **d** [e](e.md) [f](f.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [n](n.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) **d** [e](e.md) [f](f.md) [h](h.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md) [y](y.md)
 
 - `decoder` (type): [KEY](../sig/KEY.md#type-decoder)
 - `Default` (con): [STYLE](../sig/STYLE.md#con-default)
+- `defaultFile` (val): [HISTORY](../sig/HISTORY.md#val-defaultfile)
+- `defaults` (val): [LINE_EDIT](../sig/LINE_EDIT.md#val-defaults)
 - `Delete` (con): [KEY](../sig/KEY.md#con-delete)
+- `DeleteChar` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-deletechar)
+- `DeleteCharOrEnd` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-deletecharorend)
 - `depth` (type): [STYLE](../sig/STYLE.md#type-depth)
 - `depth` (val): [STYLE](../sig/STYLE.md#val-depth)
+- `diff` (val): [LINE_EDIT](../sig/LINE_EDIT.md#val-diff)
 - `Down` (con): [KEY](../sig/KEY.md#con-down)
+- `DowncaseWord` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-downcaseword)
 - `downgrade` (val): [STYLE](../sig/STYLE.md#val-downgrade)
 
 ---

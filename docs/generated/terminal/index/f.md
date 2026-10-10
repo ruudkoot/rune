@@ -1,11 +1,14 @@
 # Index: F
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) **f** [h](h.md) [i](i.md) [l](l.md) [m](m.md) [n](n.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) **f** [h](h.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md) [y](y.md)
 
 - `F` (con): [KEY](../sig/KEY.md#con-f)
 - `feed` (val): [KEY](../sig/KEY.md#val-feed)
 - `flush` (val): [KEY](../sig/KEY.md#val-flush)
 - `Focus` (con): [KEY](../sig/KEY.md#con-focus)
+- `ForwardChar` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-forwardchar)
+- `ForwardWord` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-forwardword)
+- `frame` (type): [LINE_EDIT](../sig/LINE_EDIT.md#type-frame)
 
 ---
 

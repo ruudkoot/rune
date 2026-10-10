@@ -27,4 +27,5 @@ native:smlnj-dev | property.core | HOST-BUG | Real.fromManExp {man = 0.5, exp = 
 # dies in its own code (docs/bugreport/mlkit/json-roundtrip-segfault).
 native:mlkit | unicode.utf8 | HOST-BUG | "Impossible: LambdaStatSem.eqType" at the round trip of tests/lib/unicode/utf8.sml when lib/random's programs were built first in this tree (run-hosts.sh's order); the same .mlb built alone, or the files copied elsewhere, compiles and passes
 native:mlkit | json.roundtrip | HOST-BUG | the program MLKit makes dies with SIGSEGV in its generated code (L_selLab_...) before it prints anything, also built from fresh copies of the files and with an unlimited stack; the test's parts without the random round trips pass, and its drawing and walking of values copied into a program of their own run right (docs/bugreport/mlkit/json-roundtrip-segfault)
+native:mlkit | terminal.emulator | HOST-BUG | "Impossible: LambdaStatSem.APP.argument type not arrow" compiling tests/lib/terminal/emulator.sml after the programs before it were built in the same tree (run-hosts.sh's order); the same files copied to a fresh directory compile and pass (docs/bugreport/mlkit/separate-compilation-reuse)
 

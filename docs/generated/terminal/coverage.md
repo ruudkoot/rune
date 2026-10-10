@@ -6,10 +6,13 @@ documented when a comment describes it, alone or together with the entry before 
 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
+| [`EMULATOR`](sig/EMULATOR.md) | 9 | 9 | 100% | 7 | 7 |
+| [`HISTORY`](sig/HISTORY.md) | 8 | 8 | 100% | 7 | 7 |
 | [`KEY`](sig/KEY.md) | 10 | 10 | 100% | 4 | 4 |
+| [`LINE_EDIT`](sig/LINE_EDIT.md) | 16 | 16 | 100% | 7 | 7 |
 | [`STYLE`](sig/STYLE.md) | 11 | 11 | 100% | 6 | 6 |
 | [`TERMINAL`](sig/TERMINAL.md) | 8 | 8 | 100% | 8 | 8 |
-| **all** | 29 | 29 | 100% | 18 | 18 |
+| **all** | 62 | 62 | 100% | 39 | 39 |
 
 ## Members a signature describes
 
@@ -18,12 +21,17 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-4 structures have a page, with 37 members, of which 37 (100%) are described by a signature.
+7 structures have a page, with 70 members, of which 70 (100%) are described by a signature.
 
 ## Examples that are run
 
 Every example is a closed expression of type `bool` that is true, and every counterexample a closed claim
-that does not hold: each is elaborated when these pages are made and tried by the test suite: 11 of them, in [`KEY`](sig/KEY.md) (5), [`STYLE`](sig/STYLE.md) (6).
+that does not hold: each is elaborated when these pages are made and tried by the test suite: 16 of them, in [`EMULATOR`](sig/EMULATOR.md) (2), [`HISTORY`](sig/HISTORY.md) (2), [`KEY`](sig/KEY.md) (5), [`LINE_EDIT`](sig/LINE_EDIT.md) (1), [`STYLE`](sig/STYLE.md) (6).
+
+## Laws that are run
+
+Every law is elaborated when these pages are made, with its variables typed and given an arbitrary
+to draw them from, and `make test-laws` holds it at every structure that implements its signature: 1 of them, in [`HISTORY`](sig/HISTORY.md) (1).
 
 ---
 

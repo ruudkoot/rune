@@ -5,6 +5,7 @@
 From the **Raises** paragraphs of the documented entries.
 
 - `OS.SysErr`: [`enter`](sig/TERMINAL.md#val-enter) of TERMINAL, [`read`](sig/TERMINAL.md#val-read) of TERMINAL
+- `Subscript`: [`row`](sig/EMULATOR.md#val-row) of EMULATOR
 
 ---
 

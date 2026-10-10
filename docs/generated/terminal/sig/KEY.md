@@ -35,7 +35,7 @@ protocol's `CSI code ; modifiers u` and xterm's `CSI 27 ; modifiers ; code ~`, w
 
 Escape alone is ambiguous: it begins every sequence. The decoder keeps
 it pending, and [`flush`](#val-flush) \-- called when no byte has come for a while, 50
-ms by default in `LineEdit` \-- says it was the key Escape (or Alt and
+ms by default in [`LineEdit`](../str/LineEdit.md) \-- says it was the key Escape (or Alt and
 `[` or `O`, when those followed it).
 
 The decoder is a value: [`feed`](#val-feed) takes it and some bytes to the keys they

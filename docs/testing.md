@@ -173,6 +173,17 @@ or equals an expected screen. The rules it keeps:
   console of the pane's size (a ConPTY), so `make test-windows` runs the
   scripts marked `# windows` on `runevm.exe` too. Interop delivers no
   console Ctrl-C there; an interrupt is tested on Linux.
+* Compare a screen while the program still runs: tmux scrolls the screen
+  by a line to say that a pane has died, so a program that ends at once
+  is started with something after it that keeps the pane alive.
+* After a narrowing resize compare only what the program draws anew:
+  terminals that reflow (Windows' console) and terminals that cut (tmux)
+  leave the old rows differently.
+
+What `lib/terminal`'s editor draws is also tested without a terminal:
+`tests/lib/terminal/edit.sml` gives the bytes its `diff` writes for random
+edits at random widths to `Emulator`, a terminal in SML, and checks that
+the screen is the next frame (D23's property); it runs on every compiler.
 
 `tests/terminal/ptyraw.py` is the other driver: a pty, exact bytes, and
 times to the microsecond, which `scripts/perf-repl.sh` uses for the REPL's

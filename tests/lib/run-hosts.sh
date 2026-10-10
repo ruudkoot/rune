@@ -51,7 +51,9 @@ unicode.graphemes|$unicode|tests/lib/unicode/graphemes.sml|props
 json.suite|$unicode $json|tests/lib/json/suite.sml|props
 json.roundtrip|$random $unicode $json|tests/lib/json/roundtrip.sml|props
 terminal.key|$random $unicode $terminal|tests/lib/terminal/key.sml|props
-terminal.style|$random $unicode $terminal|tests/lib/terminal/style.sml|props"
+terminal.style|$random $unicode $terminal|tests/lib/terminal/style.sml|props
+terminal.emulator|$unicode $terminal|tests/lib/terminal/emulator.sml|props
+terminal.edit|$random $unicode $terminal|tests/lib/terminal/edit.sml|props"
 
 passed=0
 explained=0

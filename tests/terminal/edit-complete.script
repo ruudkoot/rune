@@ -1,0 +1,21 @@
+# windows
+# lib/terminal's editor: completion -- the common prefix, then the
+# matches under the input -- and a narrowing resize, after which the input
+# is drawn again at the new width below what was drawn before (which a
+# terminal that reflows and one that cuts show otherwise, so only the new
+# drawing is compared).
+start 40 12 @READLINE@
+wait ^>$
+send pri
+keys Tab
+wait ^> print$
+keys Tab
+keys Tab
+wait ^print +println +printLength
+keys BSpace BSpace BSpace BSpace BSpace
+send abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGH
+wait ^> abcdefghij
+resize 20 12
+wait ^> abcdefghijklmnopqr\nstuvwxyz0123456789AB\nCDEFGH$
+keys C-u C-d
+wait ^bye$

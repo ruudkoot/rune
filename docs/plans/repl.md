@@ -50,7 +50,7 @@ M1 measures them again on a quiet machine.
 | M2 | The palette and coloured diagnostics | done |
 | M3 | The console in the runtime and the Basis | done |
 | M4 | `lib/terminal`: styles, keys, raw mode | done |
-| M5 | `lib/terminal`: the line editor | planned |
+| M5 | `lib/terminal`: the line editor | done |
 | M6 | The REPL on the editor | planned |
 | M7 | Printing | planned |
 | M8 | Commands and documentation | planned |
@@ -1995,8 +1995,10 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
   for the stack bytecode (37 programs otherwise through the cache at
   `-O1`) in M1's snapshot, which was copied from the working tree with
   its outputs; it passes in M2's, made from the commit, so it was the
-  copy's. The sanitiser build did not run: `libasan8` is not installed
-  (`make doctor`).
+  copy's. The sanitiser builds did not run here: the checks ran under a
+  limit of address space, which AddressSanitizer's shadow memory needs,
+  and `make doctor` took the failure for a missing `libasan8`. They ran
+  with M5 (below).
 
 ### M2. The palette and coloured diagnostics (L, about 1,200 SML and 1,500 generated)
 
@@ -2133,7 +2135,7 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
     (the owner's choice).
   * Checked beyond `make check`: `make test-windows` and `make
     test-portability` (32-bit x86, and big-endian ppc64 and aarch64 under
-    qemu). Not run: the sanitiser build (`libasan8` missing).
+    qemu); the sanitiser builds ran with M5, whose tree has this runtime.
 
 ### M4. `lib/terminal`: styles, keys, raw mode (M, about 1,000 SML)
 
@@ -2179,6 +2181,39 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
   * editing scripts in `tests/terminal`, on Linux and Windows.
 * **Done when:** those pass and a keystroke at 1,000 lines costs under
   16 ms (M1's harness).
+* **As built** (2026-10-10): `LineEdit` (`LineEditFn` over a `TERMINAL`,
+  so that the editor and its tests build on every host), `History`,
+  `Emulator`; `examples/readline.sml`; `tests/lib/terminal/edit.sml`
+  (the commands, the history, search and completion, and D23's property:
+  300 random runs of random keys at random widths, what `diff` writes
+  replayed by the emulator showing the next frame) and `emulator.sml`;
+  `edit-keys`, `edit-lines` and `edit-complete` in `tests/terminal`, on
+  Linux and on Windows. Measured (`tests/terminal/keystroke.sml`, in
+  `scripts/perf-repl.sh`): a key at 1,000 lines costs 3.6 ms, the worst
+  of thirty 10.4, at a load average of 13; a line is laid out again only
+  when its text, prompt or styles change (418 ms before). Where it
+  differs from the plan:
+  * **A narrowing resize draws below what was drawn**, as fish does:
+    terminals that reflow (VTE, kitty, Windows' console) and those that
+    cut (xterm, tmux) leave the old rows in different places, and moving
+    up too far would erase the program's output. Widening draws in place.
+  * **Synchronised output is always written** (mode 2026): a terminal
+    that does not know a private mode ignores it, and asking costs a
+    round trip.
+  * **An input taller than the window is shown in a window of it** that
+    follows the cursor.
+  * **After a line that fills the width exactly, the prompt is on a line
+    of its own without zsh's mark**: the line looks complete.
+  * `scripts/check-cross.sh` compiles an example with the libraries its
+    first line names, as `tests/lib` does, so that every build of the
+    compiler must make the same bytecode of `lib/terminal` too.
+  * Checked beyond `make check`: `make test-windows` (the editing
+    scripts through ConPTY), `make test-lib-hosts` (MLKit's internal error
+    of `docs/bugreport/mlkit/separate-compilation-reuse` once more, on the
+    emulator's test), and the sanitiser builds (`make vm-asan` with the
+    suite on it, `make test-register-asan`, `make test-native-asan`), run
+    without the limit of address space the other checks run under.
+
 ### M6. The REPL on the editor (L, about 1,500 SML)
 
 * **What:** starting from incremental's head at the time (the REPL's
@@ -2526,9 +2561,9 @@ next, what each milestone measured, with the load it was measured at
 | `1;` to the next prompt | 8 to 16 ms | 7.8 ms | as M1 |
 | paste of 1,000 lines | 6.7 to 7.0 s | 5.8 s | linear in the length |
 | paste of 2,000 lines | hung in the harness | 33.1 s | linear in the length |
-| keystroke, 10 lines | 0.38 ms (P2) | from M5 | 16 ms |
-| keystroke, 1,000 lines | 29.6 ms (P2) | from M5 | 16 ms |
-| bytes written a keystroke, 1,000 lines | 1,324 (P2) | from M5 | as M5 |
+| keystroke, 10 lines | 0.38 ms (P2) | 0.32 ms (M5, load 13) | 16 ms |
+| keystroke, 1,000 lines | 29.6 ms (P2) | 3.56 ms, worst 10.4 (M5, load 13) | 16 ms |
+| bytes written a keystroke, 1,000 lines | 1,324 (P2) | 14 typing at the end, 1,052 in the middle (M5) | as M5 |
 | completion menu over the Basis | none | from M6 | 50 ms |
 | kernel round trip, 16 bytes | 66 µs median (P4) | from M11 | as M11 |
 | a program not debugged, under M12 | as before | from M12 | no slower |

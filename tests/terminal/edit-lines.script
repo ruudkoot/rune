@@ -1,0 +1,19 @@
+# windows
+# lib/terminal's editor: an input of several lines with its continuation
+# prompt, a long line wrapped at the width with wide characters in it,
+# and Ctrl-C.
+start 30 12 @READLINE@
+wait ^>$
+send val x =
+keys Enter
+wait ^\.$
+send 1;
+keys Enter
+wait ^read 10 bytes: val x =\\n1;$
+send 0123456789\xe4\xb8\xad\xe6\x96\x87abcdefghij\xe4\xb8\xad\xe6\x96\x87klmnop
+wait klmnop$
+expect @DIR@/edit-lines.screen
+keys C-c
+wait ^cancelled$
+keys C-d
+wait ^bye$

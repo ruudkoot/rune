@@ -1,8 +1,16 @@
 # Index: B
 
-[Overview](../README.md) &middot; [a](a.md) **b** [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [n](n.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) **b** [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md) [y](y.md)
 
 - `Backspace` (con): [KEY](../sig/KEY.md#con-backspace)
+- `BackwardChar` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-backwardchar)
+- `BackwardDeleteChar` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-backwarddeletechar)
+- `BackwardKillLine` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-backwardkillline)
+- `BackwardKillWord` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-backwardkillword)
+- `BackwardWord` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-backwardword)
+- `BeginningOfBuffer` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-beginningofbuffer)
+- `BeginningOfHistory` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-beginningofhistory)
+- `BeginningOfLine` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-beginningofline)
 
 ---
 
