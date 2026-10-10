@@ -48,7 +48,7 @@ What it rests on:
 | M9 | Compiling against a signature alone, and dynamic modules | built 2026-10-10: `_dynamic` and `_export`, the signature's ABI and its fingerprint, the constructors' order renumbered, `Dynamic`, programs linked from units keeping their exports (*M9, as built*) |
 | M10 | The build language and virtual modules | built 2026-10-10: `rune --build`, the programs' and the libraries' build files in place of `sources*.txt` and the MANIFESTs, `rune --basis-index`, `_virtual` and `implements` (*M10, as built*) |
 | M11 | Parallel and reproducible builds | built 2026-10-10: `rune -j N` (children forked through the cache, the build the bytes of one process), `make check-reproducible`; measured, and no speed-up, for reasons in *M11, as built* |
-| M12 | Hot reload, the compiler as a service, packages: research and prototypes | |
+| M12 | Hot reload, the compiler as a service, packages: research and prototypes | studied 2026-10-10: `Dynamic.reload` on Erlang's rule, `rune --serve` (diagnostics and hover over JSON-RPC), a survey of package systems and a lock file sketched; three decisions for the owner (*M12, as built*) |
 
 The owner decided D1 to D9 and D11 to D19 on 2026-10-09, all as
 recommended (*Decisions*), and asked for D10 to be reviewed against the
@@ -3153,6 +3153,131 @@ What M6 and M7 measured changes the plan below in three places:
   part is known.
 * **Done when:** each study has its prototype measured and its
   decision written.
+
+#### M12, as built (2026-10-10)
+
+Three studies, each with its prototype behind a flag, what it measured, and
+a decision for the owner.
+
+**Hot reload.** `Dynamic.reload FILE` loads the unit in `FILE` again for
+every `_dynamic` declaration that loaded it. A declaration's slots are now
+set by a function of the module's tuple, which `RuneDynamic.load` calls and
+keeps; `reload` runs the new unit's top level, checks its fingerprint and
+calls the function again. This is Erlang's rule: a call through the
+structure (`L.step`, a load of the slot's global) reaches the new code, and
+a function taken from the structure before (`val kept = L.version`) stays
+the old one, as a local call in Erlang does. A module of another signature
+changes nothing, and `Mismatch` says so. `tests/dynamic/run.sh` reloads v1
+to v2 while the program runs, under the interpreter and `--jit=all`; that
+it passes under the JIT says that compiled code reads a slot's global when
+it calls through it and keeps no old value of it. A reload of a 653-byte module costs 0.8 ms in the interpreter
+and 1.1 ms with `--jit=all`, the file copied each time included (500
+reloads in a loop). Old code is never freed: every version stays in the
+VM's table of units, where Erlang purges a module's old version when a
+third is loaded.
+
+*The state question*, which the prototype answers only by refusing:
+
+* **Abstract types.** The program holds values of the signature's abstract
+  types (`S.t`) made by v1, and v2's functions read them by v2's
+  representation. The fingerprint is the signature's, so it cannot see the
+  difference, and the result is a type confusion. `reload` therefore
+  refuses a module whose signature has an abstract type (datatypes are
+  safe: their constructors and tags are the signature's). Hicks and
+  Nettles (*Dynamic software updating*, TOPLAS 2005) answer this with a
+  *state transformer*: the new version supplies `upgrade : old.t -> t`,
+  applied to every value of the old type that is live, which needs either
+  the collector to find them (a typed heap walk) or the values to be
+  reached through one indirection that the update rewrites.
+* **Module state.** A `ref` in v1 is not carried to v2: v2 starts with its
+  own top level. Erlang's OTP carries state through `code_change/3`, a
+  callback of the new version given the old state. In Rune that would be
+  an `_export`ed `migrate : Old.state -> state` that `reload` calls with
+  what v1 exports, which needs v1's state type in v2's signature.
+* **When.** The reload happens when the program calls it, between two
+  calls through the structure, which is Hicks and Nettles's update point
+  chosen by the program. Frames of v1's functions on the stack keep
+  running v1's code, as in Erlang.
+
+*For the owner:* (a) keep `reload` for signatures without abstract types
+and grow from there, (b) add state transformers (`upgrade` per abstract
+type, chosen by the new module) with a heap walk at the update point, or
+(c) leave hot reload as this prototype. Recommended: (a), with (b)
+designed when a program wants it. Old versions could be dropped on the
+third load, as Erlang does, once nothing names them: the units section
+knows which unit a slot came from.
+
+**The compiler as a service.** `rune --serve [OPTION...]` reads one
+JSON-RPC 2.0 message per line on standard input and answers on standard
+output, which is the transport `docs/plans/ide.md` chose for the IDE's
+service (`src/driver/serve.sml`). A request names a program's files in
+order and an editor's text of one of them, which is compiled in place of
+the file (`Source.overlays`). The methods are `initialize`, `diagnostics`
+(every error and warning with its byte span, line and column, kept as data
+by `Error.note`), `hover` (the innermost variable whose span holds an
+offset, its name and its type at that use, from the elaborated syntax that
+`Main.keptSyntax` keeps) and `shutdown`. Each request is answered by a
+child forked for it, which compiles the program in units through the cache
+as far as types and ends: nothing one request leaves in the compiler's
+state reaches the next, which is the isolation `docs/plans/ide.md` asks
+for without making the compiler's state explicit. `tests/serve/run.py`
+(`make test-serve`) drives it; a request on a two-file program takes 21 ms
+warm, the Basis taken from the frozen cache. Not built: the definition of
+a name and its references (the stamps in the syntax give both, as the
+IDE's own adapter in rune-ide does), and a parent that keeps the
+program's units loaded and forks at the edited unit -- as `Parallel`'s
+children do -- so that a request compiles only that unit and the ones
+after it, which is the next step for a large program.
+
+*For the owner:* the IDE (rune-ide) builds the compiler's front end into
+its own service and reads the elaborated syntax there. The choice is
+between (a) the IDE driving `rune --serve` -- one compiler for the command
+line and the IDE, with the cache, the build files and `-j` shared, at a
+fork per request -- and (b) the IDE embedding the front end as now, which
+avoids a process but keeps its own copy of the compiler's state.
+Recommended: (a), with the methods grown to what rune-ide's M5 needs.
+
+**Packages.** A survey of four systems against Rune's build files and
+cache; no implementation.
+
+| | Smackage | opam | cargo | Nix |
+|---|---|---|---|---|
+| What a package is | a git repository; versions are its tags (`v1.2.3`) | an `opam` file in a repository of descriptions, the sources a tarball or a git URL | a crate on a registry (crates.io), a `Cargo.toml` | a derivation: a build of inputs, each pinned |
+| Choosing versions | the newest tag with the asked prefix | a solver (CUDF) over version constraints | semver ranges, one version per major per build, a lock file | none: every input pinned by hash |
+| Pinned how | not pinned | `opam lock`: exact versions | `Cargo.lock`: exact versions and the checksum of each crate | `flake.lock`: revisions and the hash of each input's files |
+| Builds | CM or MLB through a path variable | per package, by its own build (dune) | cargo, per project, with fingerprints | sandboxed, from the pinned inputs |
+| Shared results | none | dune's cache, by the digest of each rule | none across projects | the store and binary caches, by the hash of the inputs |
+
+Rune has two of the pieces already. A build file reaches another by a path
+variable (`use $(JSON)/library.build`), which is what Smackage does with
+CM's and MLB's variables; and the cache keeps a unit by its name, its text
+and the identities of what it used (M6), which is content addressing at
+the grain of a unit, finer than dune's rules or Nix's derivations. What is
+missing is the lock: what a path variable names, pinned. A sketch:
+
+```
+(* rune.lock -- written by `rune lock`, read by `rune --build` *)
+package json 1.2.0
+  source git https://example.org/sml-json.git 4f1c2e9a...
+  files sha256 9b0d...      (* the files its build file lists, in order *)
+  path JSON                 (* the path variable it is reached by *)
+```
+
+`rune --build` would fetch each package by its revision into a store
+named by the files' hash, set its path variable there, and refuse a
+package whose files hash otherwise. A unit of a package is then named by
+the package and its version (`json-1.2.0/parser.sml`), so that its entry in
+the cache is the same in every project that locks that version, and a
+cache could be shared between projects and machines as the frozen Basis is
+between programs.
+
+*For the owner:* (a) git repositories and tags, as Smackage, with the lock
+file above, (b) a registry of descriptions, as opam and cargo, or (c)
+nothing yet. Then: one version of a package per build (simplest; SML's
+names would otherwise need `library` export lists to keep two apart), or
+several. Recommended: (a) and one version per build, the lock first, since
+it is what makes a build of someone else's code reproducible
+(`make check-reproducible` holds that for Rune's own).
 
 ### Why this order
 

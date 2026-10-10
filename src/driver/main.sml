@@ -40,6 +40,10 @@ struct
   exception Reported
   fun failIfReported () = if !Error.errors > 0 then raise Reported else ()
 
+  (* the syntax of the program's units, elaborated, when wanted (Serve) *)
+  val keepSyntax = ref false
+  val keptSyntax : (string * Ast.dec list) list ref = ref []
+
   fun loadTokens (path : string) : Lexer.item vector =
     let
       val file = Source.load path
@@ -615,6 +619,7 @@ struct
                               (fn () => (Elaborate.allowPrim := allow; Elaborate.elabTop (env, decs); Elaborate.finish (); decs))
                               ()
                  end)
+          val () = if !keepSyntax then keptSyntax := (name, decs) :: !keptSyntax else ()
           (* after an error, the units are only elaborated, for their errors *)
           val failed = !Error.errors > 0
           val warnings = List.rev (!Error.warnings)
@@ -1001,7 +1006,7 @@ struct
      else compile ())
     handle BasisManifest.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
          | Options.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
-         | Error.CompileError (sp, msg) => (eprintln (Error.format (sp, msg)); OS.Process.failure)
+         | Error.CompileError (sp, msg) => (eprintln (Error.format (sp, msg)); Error.note ("error", sp, msg); OS.Process.failure)
          | Reported => OS.Process.failure
          | Error.Bug msg => (eprintln ("rune: " ^ msg); OS.Process.failure)
          | IO.Io {name, ...} => (eprintln ("rune: I/O error on " ^ name); OS.Process.failure)

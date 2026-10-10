@@ -543,26 +543,46 @@ struct
     | StrLet (decs, e, _) => transTopDecs (decs, fn () => transStrexp (e, k))
     (* a dynamic module (D17, D18): what RuneDynamic.load gives -- or
        RuneDynamic.take, for a virtual module -- a tuple of the slots as
-       units, in a global of the client's, and each slot's global set from it *)
+       units, and each slot's global set from it *)
     | StrDynamic (from, _, slot, sp) =>
         (case !slot of
            NONE => bug (sp, "a dynamic structure not elaborated")
-         | SOME {fingerprint, slots, via, temp} =>
+         | SOME {fingerprint, slots, via, temp, reloadable} =>
              let
                val n = Int.max (List.length slots, 2)
                val tupleTy = Types.tupleTy (List.tabulate (n, fn _ => Types.unitTy))
-               val loadTy = Types.TArrow (Types.tupleTy [Types.stringTy, Types.stringTy], tupleTy)
                val str = Ty.fromTypes Types.stringTy
-               val call = App (useOf (Global via, via, loadTy),
-                               Tuple [Const (CString (case from of DynamicFile p => p | DynamicVirtual n => n), str),
-                                      Const (CString fingerprint, str)])
                fun slotTy (t, isExn) = if isExn then Ty.ExnCon else Ty.fromTypes t
-               fun set ([], _) = k ()
-                 | set ((s, t, isExn) :: rest, i) =
+               fun set (_, [], _, k) = k ()
+                 | set (from, (s, t, isExn) :: rest, i, k) =
                      Seq (SetGlobal (s, Prim ("unsafe_cast", SOME (Ty.Arrow (Ty.unit, slotTy (t, isExn))),
-                                              [Select (i, Global temp)])),
-                          set (rest, i + 1))
-             in Mark (sp, Seq (SetGlobal (temp, call), set (slots, 0))) end)
+                                              [Select (i, from)])),
+                          set (from, rest, i + 1, k))
+             in
+               case from of
+                 DynamicVirtual name =>
+                   let
+                     val takeTy = Types.TArrow (Types.tupleTy [Types.stringTy, Types.stringTy], tupleTy)
+                     val call = App (useOf (Global via, via, takeTy),
+                                     Tuple [Const (CString name, str), Const (CString fingerprint, str)])
+                   in Mark (sp, Seq (SetGlobal (temp, call), set (Global temp, slots, 0, k))) end
+               | DynamicFile path =>
+                   (* the slots set by a function of the tuple, which load
+                      calls, and calls again for each Dynamic.reload of the
+                      file: what calls through the structure reach is the
+                      new module's, what a closure holds stays the old *)
+                   let
+                     val setterTy = Types.TArrow (tupleTy, Types.unitTy)
+                     val loadTy = Types.TArrow (Types.tupleTy [Types.stringTy, Types.stringTy, Types.boolTy, setterTy],
+                                                Types.unitTy)
+                     val x = MatchComp.freshVar ()
+                     val setter = Fn (x, Ty.fromTypes setterTy, set (Var x, slots, 0, fn () => Unit))
+                     val call = App (useOf (Global via, via, loadTy),
+                                     Tuple [Const (CString path, str), Const (CString fingerprint, str),
+                                            if reloadable then trueExp else falseExp,
+                                            setter])
+                   in Mark (sp, Seq (call, k ())) end
+             end)
     (* its implementation: the body, then its slots, each cast to unit -- a
        polymorphic one at unit, which changes nothing of its value -- given
        to RuneDynamic.export with the fingerprint *)

@@ -64,5 +64,7 @@ files
   src/driver/deps.sml
   src/driver/parallel.sml
   src/driver/main.sml
+  src/driver/serveexn.sml
+  src/driver/serve.sml
 end
 src/main/rune-main.sml

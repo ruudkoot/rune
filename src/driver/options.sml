@@ -86,6 +86,9 @@ struct
     \  -j N, --jobs N    with --units and the cache, compile units in up to N\n\
     \                    processes at once, each unit after the ones it uses\n\
     \                    (docs/units.md, Parallel builds)\n\
+    \  --serve           answer requests on stdin, one JSON-RPC message a line:\n\
+    \                    the diagnostics of a buffer, the type at an offset (a\n\
+    \                    prototype; src/driver/serve.sml)\n\
     \  --whole           with --units, make one program of the units' Mid, with\n\
     \                    the passes of a whole program, and not link their code\n\
     \  --deps            print the files in an order where each comes after the\n\

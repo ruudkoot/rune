@@ -1,12 +1,13 @@
 (* requires: Dynamic *)
 (* Dynamic matches DYNAMIC, which is Rune's own signature: an exception and
-   a function, nothing abstract. *)
+   two functions, nothing abstract. *)
 structure TestDynamicSig =
 struct
-  val () = T.check ("Dynamic:DYNAMIC/an-exception-and-a-function",
+  val () = T.check ("Dynamic:DYNAMIC/an-exception-and-two-functions",
                     fn () =>
                       let
                         val l : string -> unit = Dynamic.load
+                        val r : string -> unit = Dynamic.reload
                         val m : string -> exn = Dynamic.Mismatch
-                      in (ignore (l, m); true) end)
+                      in (ignore (l, r, m); true) end)
 end

@@ -28,7 +28,9 @@ struct
     | NONE => raise Mismatch ("the virtual module " ^ name ^ " has no implementation (implements " ^ name
                               ^ " = ... end, before it in the build file)")
 
-  fun load (path : string, fingerprint : string) : 'a =
+  (* the unit at path run, and what it exported, where the fingerprints
+     agree, given to set, which sets the slots of the declaration *)
+  fun run (path : string, fingerprint : string, set : 'a -> unit) : unit =
     let
       val () = exported := NONE
       val () = Runtime.load path ()
@@ -36,14 +38,34 @@ struct
       case !exported of
         SOME (f, slots) =>
           (exported := NONE;
-           if f = fingerprint then cast slots
+           if f = fingerprint then set (cast slots)
            else raise Mismatch (path ^ " implements another signature (" ^ f ^ ") than the program wants (" ^ fingerprint ^ ")"))
       | NONE => raise Mismatch (path ^ " exports no structure (_export)")
     end
+
+  (* the declarations that loaded each file, the last first, as they load
+     it again: NONE for one whose signature has an abstract type *)
+  val loaded : (string * (unit -> unit) option) list ref = ref []
+
+  fun load (path : string, fingerprint : string, reloadable : bool, set : 'a -> unit) : unit =
+    (run (path, fingerprint, set);
+     loaded := (path, if reloadable then SOME (fn () => run (path, fingerprint, set)) else NONE) :: !loaded)
+
+  (* Dynamic.reload: the file loaded again for every declaration that loaded
+     it, each declaration's slots set to the new module's *)
+  fun reload (path : string) : unit =
+    case List.filter (fn (p, _) => p = path) (!loaded) of
+      [] => raise Mismatch (path ^ " was loaded by no _dynamic declaration")
+    | ds =>
+        if List.exists (fn (_, again) => not (isSome again)) ds
+        then raise Mismatch (path ^ " is loaded through a signature with an abstract type, whose values the program holds"
+                             ^ " could be of another representation in the new module: it is not reloaded")
+        else List.app (fn (_, again) => valOf again ()) (List.rev ds)
 end
 
 structure Dynamic : DYNAMIC =
 struct
   exception Mismatch = RuneDynamic.Mismatch
   fun load file = Runtime.load file ()
+  val reload = RuneDynamic.reload
 end

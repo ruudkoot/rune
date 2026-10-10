@@ -37,14 +37,21 @@ struct
   fun fromStringAt (name, text, line) : file =
     {name = name, text = text, lineStarts = computeLineStarts text, line = Int.max (line - 1, 0)}
 
+  (* the text of a file that is other than the file system's: an editor's
+     buffer, which the compiler as a service compiles (Serve) *)
+  val overlays : string StringMap.map ref = ref StringMap.empty
+
   fun readFile (name : string) : file =
-    let
-      val ins = TextIO.openIn name
-      val text = TextIO.inputAll ins
-      val () = TextIO.closeIn ins
-    in
-      fromString (name, text)
-    end
+    case StringMap.find (!overlays, name) of
+      SOME text => fromString (name, text)
+    | NONE =>
+        let
+          val ins = TextIO.openIn name
+          val text = TextIO.inputAll ins
+          val () = TextIO.closeIn ins
+        in
+          fromString (name, text)
+        end
 
   (* 1-based line and column for a byte offset. *)
   fun lineCol ({lineStarts, line = first, ...} : file, pos : pos) : int * int =

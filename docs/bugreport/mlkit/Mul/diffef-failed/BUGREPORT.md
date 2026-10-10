@@ -196,3 +196,14 @@ code generator (`runeopt`) that MLKit rejected.
   the change.
 * **When it can go:** once `make hosts` installs a release of MLKit that
   compiles `bug.sml`.
+
+**Met again** (2026-10-10): MLKit 4.7.23 stopped the same way at
+`src/driver/serve.sml`, the JSON parser of the compiler as a service.
+There `value` calls itself through two functions nested inside it
+(`fields`, `items`), and they and `str` raise `Bad of string`, declared in
+the same file; no function is passed to another. Replacing the parser by
+a stub let MLKit through, and so did declaring the exception elsewhere, so
+the trigger is wider than the summary's first point says. This shape is
+not yet reduced to a program of its own. The workaround is the same:
+`src/driver/serveexn.sml` declares the exception, and `serve.sml` binds it
+again with `exception Bad = ServeExn.Bad`.

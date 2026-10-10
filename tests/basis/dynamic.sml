@@ -5,6 +5,8 @@ structure TestDynamic =
 struct
   val () = T.check ("Dynamic.load/raises-io-on-a-missing-file",
                     fn () => (Dynamic.load "no such file of a unit.rbu"; false) handle IO.Io _ => true)
+  val () = T.check ("Dynamic.reload/raises-mismatch-for-a-file-not-loaded",
+                    fn () => (Dynamic.reload "never loaded.rbu"; false) handle Dynamic.Mismatch _ => true)
   val () = T.check ("Dynamic.Mismatch/carries-its-message",
                     fn () => (raise Dynamic.Mismatch "m") handle Dynamic.Mismatch s => s = "m")
 end

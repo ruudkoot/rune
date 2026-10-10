@@ -44,6 +44,7 @@
 - `recvVecNB'` (val): [SOCKET](../sig/SOCKET.md#val-recvvecnb-prime)
 - `Reg` (str): [WINDOWS](../sig/WINDOWS.md#str-reg)
 - `region` (type): [ARRAY2](../sig/ARRAY2.md#type-region), [MONO_ARRAY2](../sig/MONO_ARRAY2.md#type-region)
+- `reload` (val): [DYNAMIC](../sig/DYNAMIC.md#val-reload)
 - `rem` (val): [INTEGER](../sig/INTEGER.md#val-rem), [REAL](../sig/REAL.md#val-rem)
 - `remove` (val): [OS_FILE_SYS](../sig/OS_FILE_SYS.md#val-remove)
 - `rename` (val): [OS_FILE_SYS](../sig/OS_FILE_SYS.md#val-rename), [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-rename)

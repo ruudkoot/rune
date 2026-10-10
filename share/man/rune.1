@@ -213,6 +213,12 @@ and the cache, compile the units in up to
 processes at once, each unit after those it uses; the program is the
 bytes of a build by one process.
 .TP
+.B \-\-serve
+Answer requests on standard input, one JSON-RPC 2.0 message a line: the
+diagnostics of an editor's buffer, and the type of the variable at an
+offset of it, each compiled by a child process with the other options
+given. A prototype of the compiler as a service.
+.TP
 .B \-\-verify\-cache
 With
 .BR \-\-units ,

@@ -6,8 +6,8 @@
 | --- | --- |
 | Signature | [`DYNAMIC`](../sig/DYNAMIC.md) |
 | Status | extension |
-| Members | 2 |
-| Tests | 2 checks |
+| Members | 3 |
+| Tests | 3 checks |
 | Source | [lib/basis/dynamic.sml](../../../../lib/basis/dynamic.sml) |
 
 ## Synopsis
@@ -24,6 +24,7 @@ What each means is on [`DYNAMIC`](../sig/DYNAMIC.md); the types are this structu
 | --- | --- | --- |
 | exception | [`Mismatch`](../sig/DYNAMIC.md#exn-mismatch) | `of string` |
 | val | [`load`](../sig/DYNAMIC.md#val-load) | `string -> unit` |
+| val | [`reload`](../sig/DYNAMIC.md#val-reload) | `string -> unit` |
 
 ---
 

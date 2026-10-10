@@ -43,4 +43,19 @@ sig
      Raises: `IO.Io` if the file cannot be read, and `Fail` if it is not a
      unit's file or names what no unit loaded exports. *)
   val load : string -> unit
+
+  (* `reload file` loads the unit in `file` again, for every `_dynamic`
+     declaration that loaded it, and runs its top level: each declaration's
+     structure is then the new module's, so a call through it reaches the
+     new code, and a function taken from it before is the old one. Where
+     the new module implements another signature, nothing changes.
+
+     A module whose signature has an abstract type is not loaded again: a
+     value of the type that the program holds could be of another
+     representation in the new module.
+
+     Raises: `Mismatch` if no declaration loaded `file`, one did through a
+     signature with an abstract type, or the new module implements another
+     signature; `IO.Io` and `Fail` as `load`. *)
+  val reload : string -> unit
 end

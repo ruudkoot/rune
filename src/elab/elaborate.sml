@@ -1090,10 +1090,12 @@ struct
           val fresh = List.map (fn c => (c, freshTycon (#name c, #arity c, #eq c))) (#bound sigma)
           val phi = List.foldl (fn ((c, c'), m) => IntMap.insert (m, #stamp c, TName c')) IntMap.empty fresh
           val inst = realizeEnv (phi, #env sigma)
+          val specified : int list ref = ref []
           fun datatypes (Env {tys, strs, ...}) =
             (StringMap.app (fn TyStr {fcn = TName c, cons = cs as _ :: _} =>
                                if List.exists (fn (_, c') => #stamp c' = #stamp c) fresh then
                                  let
+                                   val () = specified := #stamp c :: !specified
                                    fun result t = case prune t of TArrow (_, r) => prune r | r => r
                                    val params = case cs of
                                                   (_, Con {scheme, ...}) :: _ =>
@@ -1147,7 +1149,14 @@ struct
           val slots = List.rev (!slots)
           val temp = freshStamp ()
           val () = Ty.bindVar (temp, tupleTy (List.tabulate (Int.max (List.length slots, 2), fn _ => unitTy)))
-        in slot := SOME {fingerprint = !sigFingerprint sigma, slots = slots, via = via, temp = temp}; e end
+          (* a module may be loaded again (Dynamic.reload) where the
+             signature has no abstract type: a value the program holds of
+             one could be of another representation in the new module *)
+          val reloadable = List.all (fn (_, c') => List.exists (fn s => s = #stamp c') (!specified)) fresh
+        in
+          slot := SOME {fingerprint = !sigFingerprint sigma, slots = slots, via = via, temp = temp, reloadable = reloadable};
+          e
+        end
     | StrExport (_, sigexp, body, slot, sp) =>
         (* a dynamic module's implementation (D17): its body elaborated with
            the signature's order of each datatype's constructors, ascribed
@@ -1183,7 +1192,7 @@ struct
              List.app (fn (_, e) => collect e) (StringMap.listItemsi strs))
           val () = collect ascribed
         in
-          slot := SOME {fingerprint = !sigFingerprint sigma, slots = List.rev (!slots), via = via, temp = 0};
+          slot := SOME {fingerprint = !sigFingerprint sigma, slots = List.rev (!slots), via = via, temp = 0, reloadable = false};
           ascribed
         end
 

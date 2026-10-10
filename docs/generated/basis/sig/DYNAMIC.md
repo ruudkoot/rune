@@ -6,8 +6,8 @@
 | --- | --- |
 | Status | extension |
 | Implementations | 1 |
-| Documentation | 2 of 2 entries documented |
-| Tests | 2 checks of 2 entries |
+| Documentation | 3 of 3 entries documented |
+| Tests | 3 checks of 3 entries |
 | Source | [lib/basis/dynamic\_sig.sml](../../../../lib/basis/dynamic_sig.sml) |
 
 ## Synopsis
@@ -50,6 +50,7 @@ signature DYNAMIC =
 sig
   exception <a href="#exn-mismatch">Mismatch</a> of string
   val <a href="#val-load">load</a> : string -&gt; unit
+  val <a href="#val-reload">reload</a> : string -&gt; unit
 end
 </pre>
 
@@ -86,6 +87,32 @@ unit's file or names what no unit loaded exports.
 <details><summary>Tests (1)</summary>
 
 For `Dynamic`, in [tests/basis/dynamic.sml](../../../../tests/basis/dynamic.sml): `raises-io-on-a-missing-file`
+
+</details>
+
+### <a name="val-reload"></a>`reload`
+
+```sml
+val reload : string -> unit
+```
+
+`reload file` loads the unit in `file` again, for every `_dynamic`
+declaration that loaded it, and runs its top level: each declaration's
+structure is then the new module's, so a call through it reaches the
+new code, and a function taken from it before is the old one. Where
+the new module implements another signature, nothing changes.
+
+A module whose signature has an abstract type is not loaded again: a
+value of the type that the program holds could be of another
+representation in the new module.
+
+**Raises** [`Mismatch`](#exn-mismatch) if no declaration loaded `file`, one did through a
+signature with an abstract type, or the new module implements another
+signature; [`IO.Io`](../sig/IO.md#exn-io) and [`Fail`](../sig/GENERAL.md#exn-fail) as [`load`](#val-load).
+
+<details><summary>Tests (1)</summary>
+
+For `Dynamic`, in [tests/basis/dynamic.sml](../../../../tests/basis/dynamic.sml): `raises-mismatch-for-a-file-not-loaded`
 
 </details>
 

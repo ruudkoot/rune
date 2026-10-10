@@ -146,7 +146,7 @@ struct
           each a global, its type, and whether it is an exception's -- and the
           global of RuneDynamic.load or RuneDynamic.export, and a global of
           the client's for the tuple of the slots *)
-       and dynamic = {fingerprint : string, slots : (int * Types.ty * bool) list, via : int, temp : int}
+       and dynamic = {fingerprint : string, slots : (int * Types.ty * bool) list, via : int, temp : int, reloadable : bool}
 
   type program = dec list
 
