@@ -541,10 +541,10 @@ struct
             SOME body => transStrexp (body, k)
           | NONE => bug (sp, "functor application not elaborated"))
     | StrLet (decs, e, _) => transTopDecs (decs, fn () => transStrexp (e, k))
-    (* a dynamic module (D17, D18): what RuneDynamic.load gives, a tuple of
-       the slots as units, in a global of the client's, and each slot's
-       global set from it *)
-    | StrDynamic (path, _, slot, sp) =>
+    (* a dynamic module (D17, D18): what RuneDynamic.load gives -- or
+       RuneDynamic.take, for a virtual module -- a tuple of the slots as
+       units, in a global of the client's, and each slot's global set from it *)
+    | StrDynamic (from, _, slot, sp) =>
         (case !slot of
            NONE => bug (sp, "a dynamic structure not elaborated")
          | SOME {fingerprint, slots, via, temp} =>
@@ -554,7 +554,8 @@ struct
                val loadTy = Types.TArrow (Types.tupleTy [Types.stringTy, Types.stringTy], tupleTy)
                val str = Ty.fromTypes Types.stringTy
                val call = App (useOf (Global via, via, loadTy),
-                               Tuple [Const (CString path, str), Const (CString fingerprint, str)])
+                               Tuple [Const (CString (case from of DynamicFile p => p | DynamicVirtual n => n), str),
+                                      Const (CString fingerprint, str)])
                fun slotTy (t, isExn) = if isExn then Ty.ExnCon else Ty.fromTypes t
                fun set ([], _) = k ()
                  | set ((s, t, isExn) :: rest, i) =
@@ -565,7 +566,7 @@ struct
     (* its implementation: the body, then its slots, each cast to unit -- a
        polymorphic one at unit, which changes nothing of its value -- given
        to RuneDynamic.export with the fingerprint *)
-    | StrExport (_, body, slot, sp) =>
+    | StrExport (name, _, body, slot, sp) =>
         transStrexp (body, fn () =>
           case !slot of
             NONE => bug (sp, "an exported structure not elaborated")
@@ -573,7 +574,7 @@ struct
               let
                 val n = Int.max (List.length slots, 2)
                 val tupleTy = Types.tupleTy (List.tabulate (n, fn _ => Types.unitTy))
-                val exportTy = Types.TArrow (Types.tupleTy [Types.stringTy, tupleTy], Types.unitTy)
+                val exportTy = Types.TArrow (Types.tupleTy [Types.stringTy, Types.stringTy, tupleTy], Types.unitTy)
                 fun cast (s, t, isExn) =
                   if isExn then Prim ("unsafe_cast", SOME (Ty.Arrow (Ty.ExnCon, Ty.unit)), [Global s])
                   else
@@ -582,7 +583,8 @@ struct
                 val elems = List.map cast slots @ List.tabulate (n - List.length slots, fn _ => Unit)
               in
                 Seq (App (useOf (Global via, via, exportTy),
-                          Tuple [Const (CString fingerprint, Ty.fromTypes Types.stringTy), Tuple elems]),
+                          Tuple [Const (CString name, Ty.fromTypes Types.stringTy),
+                                 Const (CString fingerprint, Ty.fromTypes Types.stringTy), Tuple elems]),
                      k ())
               end)
 

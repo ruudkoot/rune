@@ -1083,10 +1083,15 @@ struct
      the unit, for the usages of the units after it. The caller says when:
      at once, or once the unit has run (the REPL: a declaration that raises
      binds nothing) *)
+  (* the keys of binders each bind sets, in order: what a scope of a build
+     file added (Main, --build) *)
+  val bindLog : string list ref = ref []
+
   fun bind ({unit, delta, directives, sigs, funs, overloads} : result) : unit =
     let
       val id = #identity unit
-      fun put (kind, names) = List.app (fn n => binders := StringMap.insert (!binders, kind ^ " " ^ n, id)) names
+      fun put (kind, names) = List.app (fn n => (binders := StringMap.insert (!binders, kind ^ " " ^ n, id);
+                                                 bindLog := (kind ^ " " ^ n) :: !bindLog)) names
     in
       put ("v", StringMap.listKeys (Env.vals delta));
       put ("t", StringMap.listKeys (Env.tys delta));

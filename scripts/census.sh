@@ -68,7 +68,7 @@ limit() { if [ -n "$tmo" ]; then timeout "$tmo" "$@"; else "$@"; fi; }
 
 boot_sources() {
   echo build/config.sml
-  grep -v -E '^[[:space:]]*(#|$)' sources.txt
+  sh scripts/build-files.sh rune.build
   echo src/main/rune-main.sml
 }
 budget_args() { sed -n 's/^args //p' "tests/perf/$1.budget"; }

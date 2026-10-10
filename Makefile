@@ -93,12 +93,12 @@ RUNEVM  ?= bin/runevm-stack
 RUNEDOC ?= bin/runedoc
 RUNEOPT ?= bin/runeopt
 
-SOURCES  := $(shell grep -v '^[[:space:]]*\#' sources.txt | grep -v '^[[:space:]]*$$')
+SOURCES  := $(shell sh scripts/build-files.sh rune.build)
 GEN_SML  := src/backend/opcodes.sml src/backend/prims.sml src/backend/regcodes.sml
 GEN_C    := runtime/isa.h runtime/stack/opcodes.h runtime/prims_table.h runtime/stack/interp_cases.h runtime/stack/interp_labels.h runtime/stack/ops.h runtime/register/regops.h runtime/register/reg_cases.h
-SOURCES_DOC := $(shell grep -v '^[[:space:]]*\#' sources-doc.txt | grep -v '^[[:space:]]*$$')
-SOURCES_OPT := $(shell grep -v '^[[:space:]]*\#' sources-opt.txt | grep -v '^[[:space:]]*$$')
-SOURCES_ISA := $(shell grep -v '^[[:space:]]*\#' sources-isa.txt | grep -v '^[[:space:]]*$$')
+SOURCES_DOC := $(shell sh scripts/build-files.sh runedoc.build)
+SOURCES_OPT := $(shell sh scripts/build-files.sh runeopt.build)
+SOURCES_ISA := $(shell sh scripts/build-files.sh runeisa.build)
 BUILDFILES := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb
 VERSIONGEN := build/config.sml runtime/version.h
 BUILDGEN := $(BUILDFILES) $(VERSIONGEN)
@@ -145,9 +145,21 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic basis-cache repl test-repl test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
+.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build basis-cache repl test-repl test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
 
-all: vm boot runedoc runeopt basis-cache
+all: vm boot runedoc runeopt manifests basis-cache
+
+# The MANIFEST of each library (BasisManifest; docs/build.md), what each of
+# its files provides and requires, made from the library's build file and
+# its sources by the first host's compiler, which builds before any rune
+# (rune --basis-index)
+manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST
+lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/basis
+lib/random/MANIFEST: lib/random/library.build $(wildcard lib/random/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/random
+lib/test/property/MANIFEST: lib/test/property/library.build $(wildcard lib/test/property/*.sml) lib/random/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/test/property
 
 # The frozen Basis Library (docs/units.md, The cache): every unit of
 # lib/basis compiled once, for each bytecode, into lib/cache, which every
@@ -184,7 +196,7 @@ build/.doctor-%: scripts/doctor.sh
 # ---------------------------------------------------------------- generated
 gen: $(BUILDGEN)
 
-$(BUILDFILES) &: sources.txt sources-doc.txt sources-opt.txt sources-isa.txt scripts/gen-build-files.sh
+$(BUILDFILES) &: rune.build runedoc.build runeopt.build runeisa.build scripts/build-files.sh scripts/gen-build-files.sh
 	sh scripts/gen-build-files.sh "$(ROOT)"
 
 # The version is git's (scripts/gen-version.sh): asked on every make, and
@@ -298,7 +310,7 @@ bin/rune-mlkit: bin/rune-mlkit.bin Makefile
 
 # ---------------------------------------------------------------- runedoc
 # The documentation generator (docs/plans/docgen.md): the sources of
-# sources-doc.txt, built like the compiler by every host and by the compiler
+# runedoc.build, built like the compiler by every host and by the compiler
 # itself (bin/runedoc, on runevm). The SML/NJ builds come one after another
 # and after the compiler's: CM keeps them all in the same .cm directories.
 runedoc-host-builds: bin/runedoc-mlton bin/runedoc-smlnj-legacy bin/runedoc-smlnj32 bin/runedoc-smlnj-dev bin/runedoc-polyml bin/runedoc-mlkit
@@ -348,7 +360,7 @@ bin/runedoc-mlkit: bin/runedoc-mlkit.bin Makefile
 
 # ---------------------------------------------------------------- runeopt
 # The native code generator (docs/native.md): the sources of
-# sources-opt.txt, built like runedoc by every host and by the compiler itself
+# runeopt.build, built like runedoc by every host and by the compiler itself
 # (bin/runeopt, on runevm). It reads no library; its wrappers pass instead the
 # directory of the runtime a program is linked with (build/librune.a and
 # build/rune-offsets.s). The SML/NJ builds come after runedoc's, for the same
@@ -908,6 +920,10 @@ test-deps: $(RUNE) vm
 test-dynamic: $(RUNE) vm
 	sh tests/dynamic/run.sh --rune $(RUNE)
 
+# build files (docs/build.md)
+test-build: $(RUNE) vm
+	sh tests/buildfile/run.sh --rune $(RUNE)
+
 test-incremental: $(RUNE) vm basis-cache bin/rune-repl
 	sh tests/incremental/run.sh --rune $(RUNE)
 	python3 tests/incremental/mutate.py --rune $(RUNE) --steps 30 tests/incremental/functors tests/incremental/project
@@ -916,7 +932,7 @@ test-incremental: $(RUNE) vm basis-cache bin/rune-repl
 check-positions: $(RUNE) $(RUNEVM)
 	sh scripts/check-positions.sh -j $(JOBS) --rune $(RUNE_STACK) --vm $(RUNEVM)
 
-check-docs: $(RUNE) $(RUNEDOC)
+check-docs: $(RUNE) $(RUNEDOC) manifests
 	sh scripts/check-docs.sh
 	RUNE=$(RUNE_STACK) sh scripts/gen-basis-sigs.sh --check
 	$(RUNE_STACK) --basis-check
@@ -939,7 +955,7 @@ DOCS_RANDOM := --lib lib --library random --out docs/generated/random --basis-do
 DOCS_PROPERTY := --lib lib --library test/property --out docs/generated/test/property --basis-docs ../../basis \
                  --title "Property testing"
 
-docs: $(RUNEDOC)
+docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_BASIS)
 	$(RUNEDOC) $(DOCS_RANDOM)
 	$(RUNEDOC) $(DOCS_PROPERTY)
@@ -965,18 +981,18 @@ test-doc: $(RUNEDOC) vm
 
 # The libraries beside the basis library and rune --library (tests/lib;
 # docs/plans/quickcheck.md, D1).
-test-lib: $(RUNE) $(RUNEDOC) vm
+test-lib: $(RUNE) $(RUNEDOC) vm manifests
 	RUNE=$(RUNE_STACK) RUNEVM=$(RUNEVM) RUNEDOC=$(RUNEDOC) sh tests/lib/run-lib-tests.sh
 
 # The laws of the Basis Library's documentation, each at every structure that
 # implements its signature (docs/plans/quickcheck.md, M8). Not in `make check`
 # until every law holds (D12); RUNE_PROPERTY_DEEP=1 runs the deep mode.
-test-laws: $(RUNE) $(RUNEDOC) vm
+test-laws: $(RUNE) $(RUNEDOC) vm manifests
 	RUNE=$(RUNE_STACK) RUNEVM=$(RUNEVM) RUNEDOC=$(RUNEDOC) sh tests/basis/run-laws.sh -j $(JOBS)
 
 # The same libraries on the hosts, against their own Basis Library (after a
 # change to a library, as matrix-quick is after one to lib/basis).
-test-lib-hosts:
+test-lib-hosts: manifests
 	sh tests/lib/run-hosts.sh
 
 # The native code generator's own tests (tests/opt): after the suites, whose
@@ -1241,6 +1257,7 @@ check:
 	@$(MAKE) --no-print-directory test-incremental
 	@$(MAKE) --no-print-directory test-deps
 	@$(MAKE) --no-print-directory test-dynamic
+	@$(MAKE) --no-print-directory test-build
 	@$(MAKE) --no-print-directory test-repl
 	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory test-register

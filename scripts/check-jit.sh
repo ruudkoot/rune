@@ -174,7 +174,7 @@ fi
 # the compiler as register bytecode compiling itself (M5): the same bytes
 # and the same counts under every mode
 mkdir -p "$out/bootstrap"
-srcs="build/config.sml $(grep -v '^#' sources.txt | tr '\n' ' ') src/main/rune-main.sml"
+srcs="build/config.sml $(sh scripts/build-files.sh rune.build | tr '\n' ' ') src/main/rune-main.sml"
 # shellcheck disable=SC2086
 if ! "$rune" -o "$out/bootstrap/rune.rbc" $srcs 2> "$out/bootstrap/cerr"; then
   fails="$fails${fails:+

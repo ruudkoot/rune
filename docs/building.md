@@ -106,6 +106,7 @@ name the tools to check.
 | `make check-units` | every program of `tests/lang` and `tests/perf` compiled whole and a unit per file, at `-O0`, `-O1` and `-O2`, without the cache of units, through it and from it; all must print and exit the same, the builds through and from the cache be the bytes of the one without it, and the unit files linked or loaded do the same; and the compiler compiled in units compiling itself ([units.md](units.md)) |
 | `make test-deps` | the dependency graph: files ordered by the modules they declare and use, a cycle, a name declared twice and a file that breaks the discipline refused, the graph as DOT, and an entry point with `-I` compiling the files it needs and only those (`tests/deps/run.sh`; [units.md](units.md), *The graph*) |
 | `make test-dynamic` | dynamic modules: a module through `_dynamic`, with an abstract type, a datatype declared in another order, a polymorphic value and an exception across the boundary, under the interpreter and `--jit=all`; a module of another signature refused; a plugin through `Dynamic.load`; two modules sharing a library's types; a whole program refused (`tests/dynamic/run.sh`; [units.md](units.md), *Dynamic modules*) |
+| `make test-build` | build files: a list, `local`, a library's exports, a group put in order, a build file used twice and elaborated once, an annotation, a path variable, a virtual module with either implementation and the other's units from the cache, and the errors (`tests/buildfile/run.sh`; [build.md](build.md)) |
 | `make test-incremental` | the cache's scenarios: a project edited, reverted, broken, built at two levels, its cache damaged or shared by two compiles, each build holding to what it must compile again (`tests/incremental/SCENARIOS.md`), and a project edited mechanically, each warm build the bytes of compiling everything (`tests/incremental/mutate.py`) |
 | `make test-repl` | the REPL's transcripts on every mode of the JIT ([repl.md](repl.md)) |
 | `make docs` | write the generated documentation of the basis library, `docs/generated/basis`, with `bin/runedoc`; it is committed, and `make check-docs` fails when it is not what the sources give (`runedoc --check`) |
@@ -346,14 +347,18 @@ starts ([repl.md](repl.md)).
 
 ## How the build works
 
-* `sources.txt` is the single ordered list of compiler source files.
-  `scripts/gen-build-files.sh` generates `build/rune.mlb` (MLton),
-  `build/rune.cm` (SML/NJ), `build/polyml-build.sml` (Poly/ML `use` script)
-  and `build/rune-mlkit.mlb` (MLKit: MLton's, without its annotations and
-  with its own entry point) from it.
-  **Add new source files to `sources.txt` only.**
-* `sources-doc.txt` is the same for `runedoc`: the compiler's utilities,
-  frontend and elaborator in the order of `sources.txt`, then `src/doc`. The
+* `rune.build` is the compiler's build file ([build.md](build.md)): its
+  `files ... end` block is the single ordered list of compiler source files,
+  between `build/config.sml` and the self-hosted entry point, and `rune --build
+  rune.build` compiles it. `scripts/gen-build-files.sh` generates
+  `build/rune.mlb` (MLton), `build/rune.cm` (SML/NJ), `build/polyml-build.sml`
+  (Poly/ML `use` script), `build/rune-mlkit.mlb` (MLKit: MLton's, without its
+  annotations and with its own entry point) from the block, which
+  `scripts/build-files.sh` reads, since the hosts build before there is a
+  `rune` to read a build file with. **Add new source files to `rune.build`
+  only.**
+* `runedoc.build` is the same for `runedoc`: the compiler's utilities,
+  frontend and elaborator in the order of `rune.build`, then `src/doc`. The
   script makes `build/runedoc.mlb`, `build/runedoc.cm`,
   `build/runedoc-polyml-build.sml` and `build/runedoc-mlkit.mlb` from it;
   the entry points are
@@ -362,7 +367,7 @@ starts ([repl.md](repl.md)).
   builds run one after another, because CM keeps its results for all of them
   in the same `.cm` directories, and so do the MLKit builds, for their `MLB`
   directories.
-* `sources-opt.txt` is the same for `runeopt`, with `src/opt`; the entry
+* `runeopt.build` is the same for `runeopt`, with `src/opt`; the entry
   points are `src/main/runeopt-*-main.sml`, and the rules below hold for
   `src/opt` too.
 * The version is git's: the name of the tag that points at the commit
@@ -377,7 +382,7 @@ starts ([repl.md](repl.md)).
   none; `scripts/install.sh` gives each the version of what it installs.
 * The instruction set and the primitives are described once, in Standard
   ML: `src/isa/stack.sml` and `src/isa/prims.sml`, in the language of
-  `src/isa/isa.sml`. `runeisa` (`sources-isa.txt`, `src/isa`) writes from
+  `src/isa/isa.sml`. `runeisa` (`runeisa.build`, `src/isa`) writes from
   them `runtime/isa.h` (what the two instruction sets share: the `.rbc` version and
   each set's fingerprint), `runtime/stack/opcodes.h`, `runtime/prims_table.h`, `src/backend/opcodes.sml`,
   `src/backend/prims.sml`, and `runtime/stack/opcodes.def` and `runtime/prims.def`, which the
@@ -403,7 +408,7 @@ starts ([repl.md](repl.md)).
 The compiler is written in the language it compiles, so it builds itself, and
 the result is the compiler you get:
 
-1. `make boot` compiles `build/config.sml`, the files of `sources.txt` and
+1. `make boot` compiles `build/config.sml`, the files of `rune.build` and
    `src/main/rune-main.sml` with `bin/rune-$(BOOTHOST)` into `bin/rune.rbc`
    (stage 1), writes `bin/rune-boot`, a wrapper that runs
    `runevm --heap-size $(RUNE_HEAP) bin/rune.rbc`, and points `bin/rune` at
@@ -479,9 +484,10 @@ are the VM's standard streams.
 
 A library other than the basis library is compiled with `--library NAME`:
 the directory `NAME` of the `--lib` directory (`lib/test/property`, say),
-or a path when `NAME` begins with `/` or `.`. It has a `MANIFEST` in the
-basis library's form, whose `# library: NAME ...` lines name the libraries
-it is written on; those are compiled first, and the files of all of them are
+or a path when `NAME` begins with `/` or `.`. It has a `library.build` in
+the basis library's form, whose `libraries NAME ... end` names the
+libraries it is written on, and the `MANIFEST` that `make manifests` makes
+of it (`rune --basis-index DIR`); those are compiled first, and the files of all of them are
 chosen as the basis library's are, by what the program names
 (`tests/lib/run-lib-tests.sh`, `make test-lib`). A library other than the
 basis library may not use `_prim`.

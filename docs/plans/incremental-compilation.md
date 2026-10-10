@@ -46,7 +46,7 @@ What it rests on:
 | M7 | Mid per unit: whole-program builds from the cache | built 2026-10-10: `rune --units --whole`, units' Mid in the cache, the canonical renumbering, and a program made of its units' Mid the bytes of the whole-program compile (*M7, as built*) |
 | M8 | The dependency graph, and a program from an entry point | built 2026-10-10: `rune --deps`, `--deps-dot`, `-I` entry points, the MANIFEST's requires column derived and checked (*M8, as built*) |
 | M9 | Compiling against a signature alone, and dynamic modules | built 2026-10-10: `_dynamic` and `_export`, the signature's ABI and its fingerprint, the constructors' order renumbered, `Dynamic`, programs linked from units keeping their exports (*M9, as built*) |
-| M10 | The build language and virtual modules | |
+| M10 | The build language and virtual modules | built 2026-10-10: `rune --build`, the programs' and the libraries' build files in place of `sources*.txt` and the MANIFESTs, `rune --basis-index`, `_virtual` and `implements` (*M10, as built*) |
 | M11 | Parallel and reproducible builds | |
 | M12 | Hot reload, the compiler as a service, packages: research and prototypes | |
 
@@ -1296,7 +1296,7 @@ sources' own; the *References* give them.
   language accepts -- `use`, the REPL's semantics, `_dynamic`, the
   build language's effect on a program -- is a row of `docs/language.md`
   with a test in `tests/lang`, or a suite of its own named there
-  (`tests/repl`, `tests/incremental`, `tests/build`); the instruction
+  (`tests/repl`, `tests/incremental`, `tests/buildfile`); the instruction
   set and the primitives change through their descriptions; a signal
   handler goes behind `vm/sys.h` and every layer answers it; a change to
   the VM core, `vm/sys.h`, the loader or `vm/image.c` passes `make
@@ -2990,7 +2990,7 @@ What M6 and M7 measured changes the plan below in three places:
   chosen here (not `.rune`, which the cache directory has);
   `lib/basis`'s build file replacing MANIFEST (seals as re-ascriptions,
   the epilogue as the last unit); the compiler built from its own build
-  file; `tests/build`; a `basis.virtual` example swapping `IntInf`'s
+  file; `tests/buildfile`; a `basis.virtual` example swapping `IntInf`'s
   implementation, the brief's own case.
 * **Why now:** after the graph (M8) and the ABI (M9) it composes.
 * **Done when:** `rune` builds itself, `runedoc`, `runeopt` and the
@@ -2999,6 +2999,56 @@ What M6 and M7 measured changes the plan below in three places:
   `IntInf` example runs with either implementation.
 * **Touches:** the hosts' build files; `docs/building.md`;
   `AGENTS.md` (the rules about `sources.txt` and MANIFEST).
+
+#### M10, as built (2026-10-10)
+
+* **The language** is what `docs/build.md` has: files in order, `files`,
+  `group` (in the order of M8's graph), `local`, `library` with an export
+  list, `use` (a build file elaborated once), `implements`, `annotate`,
+  `cache`, `libraries`, and path variables (`--path NAME=DIR`). `BuildFile`
+  (`src/driver/buildfile.sml`) reads it; the units driver follows the plan
+  it gives, a step's basis a snapshot of the elaborator's tables and a step
+  what it adds to them (`Main`'s `snapshot`, `deltaOf`, `apply`), so an
+  export list or a `local` hides what the files after it do not see.
+  `rune --build FILE`, `--build-list FILE`; `tests/buildfile` (`make
+  test-build`, in `make check`).
+* **The programs** have build files, `rune.build`, `runedoc.build`,
+  `runeopt.build` and `runeisa.build`, in place of `sources*.txt`; before a
+  rune exists the Makefile and `scripts/gen-build-files.sh` read their
+  `files` blocks with `scripts/build-files.sh`, and `rune --build rune.build
+  --whole` is the bytes of the compiler built from the hosts' generated
+  scripts (`scripts/check-cross.sh`, the build-files job).
+* **The libraries** have `library.build` (`lib/basis`, `lib/random`,
+  `lib/test/property`): the files in load order, in blocks annotated with
+  what a file is to a program (`always`, `demand`, `seal`, `final`,
+  `host=...`), and `libraries` for those a library is written on. What a
+  file provides and requires is no longer written by hand: `rune
+  --basis-index DIR` derives it -- the declarations, and `Deps`'s uses --
+  and writes `DIR/MANIFEST`, which `make manifests` makes and git does not
+  keep. The seals stay files of their own and the epilogue a `final` file,
+  as they were; `scripts/gen-basis-sigs.sh` writes its block into the
+  Basis's build file.
+* **Virtual modules**: `structure X = _virtual : SIG` at a structure
+  binding, `StrDynamic` with `DynamicVirtual X`; the build file's
+  `implements X = ... end`, whose files end with `_export structure X :
+  SIG`; `RuneDynamic.take` finds the export of the name, where the
+  fingerprints agree, as `load` does for a loaded unit. What an
+  implementation declares is hidden from the files after it, so the units
+  compiled against the virtual module name none of it: in
+  `examples/virtual/bigint`, two implementations of a `BIGINT` (the Basis's
+  `IntInf`, lists of digits), the second build through the first one's
+  cache compiles the implementation alone. Two implementations are refused;
+  none raises `Dynamic.Mismatch` when the declaration runs, the build not
+  knowing which units declare a virtual module when the cache serves them.
+  A virtual module is part of its program, which can be compiled whole.
+* **Left:** `open` and renaming in a build file, `where type` between
+  virtual modules, levels per unit; and the brief's case exactly, the
+  Basis's own `IntInf` virtual: inside the Basis it is named by `Int`,
+  `Word`, `Real` and the scanners, which would all reach it through the
+  slots, and the Basis is compiled by its MANIFEST, not a program's build
+  file -- so the example swaps a program's big integers, one of them
+  `IntInf`, and the Basis's waits for the Basis to be built from its build
+  file as a program's units are.
 
 ### M11. Parallel and reproducible builds (M, about 500 SML)
 
@@ -3207,7 +3257,7 @@ them:
   own graphs.
 * **The ABI and dynamic modules** (M9): plugins, mismatches, shared
   types, every `--jit`.
-* **The build language** (`tests/build`, M10): its grammar's cases, the
+* **The build language** (`tests/buildfile`, M10): its grammar's cases, the
   generated host files, the virtual `IntInf`.
 * **Rules for `AGENTS.md`** (M2, M3, M6, M10): a unit's format is its
   description in `docs/bytecode.md` and its writer and reader; the

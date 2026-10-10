@@ -1,0 +1,321 @@
+(* The Basis Library's build file (docs/build.md): its files, in load order,
+   each with what it is to a program, by its annotations:
+
+   "always"  the file is compiled before every program
+   "demand"  it is compiled before the programs that mention a name it
+             provides, and before the files that require it (the default)
+   "seal"    it is compiled before the programs that mention a name it
+             provides, and for no file of the library: see the end of the list
+   "final"   the file is compiled after every program: what is left to do
+             when it ends
+   "host=swap", "host=no"
+             how tests/basis/host/gen-host-basis.sh gives the file to MLton,
+             SML/NJ, Poly/ML and MLKit: as it is (the default), without the
+             types and exceptions a host must keep its own of, or not at all
+
+   What a file provides -- the structures, signatures, functors and
+   top-level types it declares -- and what it requires -- those of other
+   files that it names (Deps, src/driver/deps.sml; docs/units.md, The graph)
+   -- are worked out from the files: `make manifests` writes them to
+   lib/basis/MANIFEST (rune --basis-index), which the compiler reads. A name
+   the library needs for itself and offers to nobody is written `RuneFoo` or
+   `RUNE_FOO`: the documentation leaves those out. A program can still name
+   one -- every declaration of a file that loads is in scope -- so the prefix
+   is how a reader tells them apart and not a wall. A demand file declares
+   modules and types only, so that a program that mentions it loads it (a
+   top-level value or fixity directive belongs in an always file); `rune
+   --basis-check` checks that. `rune --basis-deps FILE...` prints the files a
+   program loads, and `rune --basis all` loads every file. *)
+annotate "always" "host=swap" in
+  initial.sml
+end
+annotate "always" in
+  pervasive.sml
+end
+annotate "demand" in
+  general.sml
+  stringcvt.sml
+  bool.sml
+  option.sml
+  list.sml
+  listpair.sml
+  intinf.sml
+  int.sml
+  word.sml
+  word64.sml
+  word_sig.sml
+  int_sig.sml
+  intn_fn.sml
+  int8.sml
+  int16.sml
+  int32.sml
+  int64.sml
+  wordn_fn.sml
+  word8.sml
+  word16.sml
+  word32.sml
+  char.sml
+  string.sml
+  ieeereal.sml
+  real.sml
+  vector.sml
+  array.sml
+  vectorslice.sml
+  arrayslice.sml
+  mono_sigs.sml
+  mono_vector_fn.sml
+  mono_poly_vector_fn.sml
+  mono_array_fn.sml
+  mono_vector_slice_fn.sml
+  mono_array_slice_fn.sml
+  charvector.sml
+  substring.sml
+  charvectorslice.sml
+  word8vector.sml
+  runebytes.sml
+  byte_array_fn.sml
+  word8array.sml
+  word8arrayslice.sml
+  pack_word.sml
+  pack_real.sml
+  chararray.sml
+  chararrayslice.sml
+  sig_array2.sml
+  array2.sml
+  sig_mono_array2.sml
+  mono_array2_fn.sml
+  chararray2.sml
+  word8array2.sml
+  mono_bool.sml
+  mono_int.sml
+  mono_int8.sml
+  mono_int16.sml
+  mono_int32.sml
+  mono_largeint.sml
+  mono_word.sml
+  mono_word16.sml
+  mono_word32.sml
+  runereals.sml
+  mono_real.sml
+  mono_int64.sml
+  mono_word64.sml
+  mono_largeword.sml
+  mono_largereal.sml
+  mono_real64.sml
+  text.sml
+  position.sml
+end
+(* TIME comes before Time, which is sealed with it where it is declared: `time`
+   is abstract for the library too, and the other files go through
+   `Time.micros` and `Time.ofMicros`, which the seal file hides from a program. *)
+annotate "demand" in
+  sig_time.sml
+  time.sml
+  timer.sml
+  date.sml
+  runeerror.sml
+  runeexit.sml
+  ospath.sml
+  osfilesys.sml
+  osio.sml
+  os.sml
+  io.sml
+  primio_sig.sml
+  primio_fn.sml
+  streamio_sig.sml
+  streamio_fn.sml
+  runefile.sml
+  runepos.sml
+  textprimio.sml
+  binprimio.sml
+  posix_error.sml
+  posix_signal.sml
+  posix_process.sml
+  posix_procenv.sml
+  posix_filesys.sml
+  posix_io.sml
+  posix_sysdb.sml
+  posix_tty.sml
+  posix.sml
+  sig_imperative_io.sml
+  imperativeio_fn.sml
+  io_functors.sml
+  textio.sml
+  byte.sml
+  binio.sml
+  runenet.sml
+  socket.sml
+  netdb.sml
+  inetsock.sml
+  inet6sock_sig.sml
+  inet6sock.sml
+  unix.sml
+  windows.sml
+  commandline.sml
+  sml90.sml
+end
+annotate "demand" "host=no" in
+  runtime_sig.sml
+  runtime.sml
+  dynamic_sig.sml
+  dynamic.sml
+  compiler_sig.sml
+  compiler.sml
+end
+(* ---- the signatures of the specification (scripts/gen-basis-sigs.sh) *)
+annotate "demand" in
+  sig_array.sml
+  sig_array_slice.sml
+  sig_bin_io.sml
+  sig_bit_flags.sml
+  sig_bool.sml
+  sig_byte.sml
+  sig_char.sml
+  sig_command_line.sml
+  sig_date.sml
+  sig_general.sml
+  sig_generic_sock.sml
+  sig_ieee_real.sml
+  sig_inet_sock.sml
+  sig_int_inf.sml
+  sig_io.sml
+  sig_list.sml
+  sig_list_pair.sml
+  sig_math.sml
+  sig_net_host_db.sml
+  sig_net_prot_db.sml
+  sig_net_serv_db.sml
+  sig_option.sml
+  sig_os_file_sys.sml
+  sig_os_io.sml
+  sig_os_path.sml
+  sig_os_process.sml
+  sig_pack_real.sml
+  sig_pack_word.sml
+  sig_posix_proc_env.sml
+  sig_posix_signal.sml
+  sig_posix_sys_db.sml
+  sig_sml90.sml
+  sig_string.sml
+  sig_string_cvt.sml
+  sig_substring.sml
+  sig_text_stream_io.sml
+  sig_timer.sml
+  sig_unix_sock.sml
+  sig_vector.sml
+  sig_vector_slice.sml
+  sig_posix_tty.sml
+  sig_posix_io.sml
+  sig_real.sml
+  sig_os.sml
+  sig_text.sml
+  sig_text_io.sml
+  sig_windows.sml
+  sig_unix.sml
+  sig_socket.sml
+  sig_posix_process.sml
+  sig_posix_file_sys.sml
+  sig_posix_error.sml
+  sig_posix.sml
+end
+(* ---- end of the signatures
+   After the signatures, which they are sealed with or name. *)
+annotate "demand" in
+  real32.sml
+  pack_real32.sml
+  mono_real32.sml
+  widechar.sml
+  widestring.sml
+  widetext.sml
+  widetextio.sml
+end
+(* ---- what a program sees of the structures
+   A seal file binds the structures of a file again, each as its signature
+   shows it (`structure List : LIST = List`), so that a program has the members
+   the specification names and no others. The files above are compiled before
+   these and have every structure whole. A seal is opaque where that makes a
+   type abstract that no other signature names, and says `where type` for the
+   types that other signatures name: they were read with the structure whole. *)
+annotate "seal" in
+  seal_general.sml
+  seal_stringcvt.sml
+  seal_bool.sml
+  seal_option.sml
+  seal_list.sml
+  seal_listpair.sml
+  seal_intinf.sml
+  seal_int.sml
+  seal_word.sml
+  seal_int8.sml
+  seal_int16.sml
+  seal_int32.sml
+  seal_int64.sml
+  seal_word8.sml
+  seal_word8vector.sml
+  seal_word16.sml
+  seal_word32.sml
+  seal_word64.sml
+  seal_char.sml
+  seal_string.sml
+  seal_ieeereal.sml
+  seal_real.sml
+  seal_vector.sml
+  seal_array.sml
+  seal_vectorslice.sml
+  seal_arrayslice.sml
+  seal_substring.sml
+  seal_pack_word.sml
+  seal_pack_real.sml
+  seal_array2.sml
+  seal_chararray2.sml
+  seal_word8array2.sml
+  seal_mono_bool.sml
+  seal_mono_int.sml
+  seal_mono_int8.sml
+  seal_mono_int16.sml
+  seal_mono_int32.sml
+  seal_mono_largeint.sml
+  seal_mono_word.sml
+  seal_mono_word16.sml
+  seal_mono_word32.sml
+  seal_mono_real.sml
+  seal_mono_int64.sml
+  seal_mono_largeword.sml
+  seal_mono_word64.sml
+  seal_mono_largereal.sml
+  seal_mono_real64.sml
+  seal_text.sml
+  seal_position.sml
+  seal_time.sml
+  seal_timer.sml
+  seal_date.sml
+  seal_os.sml
+  seal_io.sml
+  seal_textprimio.sml
+  seal_binprimio.sml
+  seal_posix.sml
+  seal_textio.sml
+  seal_byte.sml
+  seal_binio.sml
+  seal_socket.sml
+  seal_netdb.sml
+  seal_inet6sock.sml
+  seal_inetsock.sml
+  seal_unix.sml
+  seal_windows.sml
+  seal_commandline.sml
+  seal_sml90.sml
+end
+annotate "seal" "host=no" in
+  seal_runtime.sml
+  seal_compiler.sml
+end
+annotate "seal" in
+  seal_pack_real32.sml
+  seal_mono_real32.sml
+  seal_widetext.sml
+  seal_widetextio.sml
+end
+annotate "final" "host=no" in
+  epilogue.sml
+end

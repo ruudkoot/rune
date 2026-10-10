@@ -82,17 +82,17 @@ if [ -n "$one" ]; then
   target=""
   case "$one" in
     # shellcheck disable=SC2046
-    rune) check rune build/config.sml $(grep -v '^[[:space:]]*#' sources.txt | grep -v '^[[:space:]]*$') src/main/rune-main.sml ;;
+    rune) check rune build/config.sml $(sh scripts/build-files.sh rune.build) src/main/rune-main.sml ;;
     # shellcheck disable=SC2046
-    runedoc) check runedoc build/config.sml $(grep -v '^[[:space:]]*#' sources-doc.txt | grep -v '^[[:space:]]*$') src/main/runedoc-rune-main.sml ;;
+    runedoc) check runedoc build/config.sml $(sh scripts/build-files.sh runedoc.build) src/main/runedoc-rune-main.sml ;;
     # shellcheck disable=SC2046
-    runeopt) check runeopt build/config.sml $(grep -v '^[[:space:]]*#' sources-opt.txt | grep -v '^[[:space:]]*$') src/main/runeopt-rune-main.sml ;;
+    runeopt) check runeopt build/config.sml $(sh scripts/build-files.sh runeopt.build) src/main/runeopt-rune-main.sml ;;
     # shellcheck disable=SC2046
-    rune-stack) target=--target=stack; check rune-stack build/config.sml $(grep -v '^[[:space:]]*#' sources.txt | grep -v '^[[:space:]]*$') src/main/rune-main.sml ;;
+    rune-stack) target=--target=stack; check rune-stack build/config.sml $(sh scripts/build-files.sh rune.build) src/main/rune-main.sml ;;
     # shellcheck disable=SC2046
-    runedoc-stack) target=--target=stack; check runedoc-stack build/config.sml $(grep -v '^[[:space:]]*#' sources-doc.txt | grep -v '^[[:space:]]*$') src/main/runedoc-rune-main.sml ;;
+    runedoc-stack) target=--target=stack; check runedoc-stack build/config.sml $(sh scripts/build-files.sh runedoc.build) src/main/runedoc-rune-main.sml ;;
     # shellcheck disable=SC2046
-    runeopt-stack) target=--target=stack; check runeopt-stack build/config.sml $(grep -v '^[[:space:]]*#' sources-opt.txt | grep -v '^[[:space:]]*$') src/main/runeopt-rune-main.sml ;;
+    runeopt-stack) target=--target=stack; check runeopt-stack build/config.sml $(sh scripts/build-files.sh runeopt.build) src/main/runeopt-rune-main.sml ;;
     basis-all) check basis-all --basis all examples/hello.sml ;;
     # S43 (tests/incremental/SCENARIOS.md): the compiler compiled in units
     # through one cache by every build in turn -- the first fills it, each
@@ -102,7 +102,7 @@ if [ -n "$one" ]; then
       cache=$out/units-cache
       rm -rf "$cache"
       # shellcheck disable=SC2046
-      set -- build/config.sml $(grep -v '^[[:space:]]*#' sources.txt | grep -v '^[[:space:]]*$') src/main/rune-main.sml
+      set -- build/config.sml $(sh scripts/build-files.sh rune.build) src/main/rune-main.sml
       failed=""
       bin/rune-mlton --units --no-cache "$@" -o "$out/rune-units.nocache.rbc" 2> "$out/rune-units.nocache.err" || failed=" nocache"
       for c in $builds; do
@@ -122,7 +122,7 @@ if [ -n "$one" ]; then
       cache=$out/whole-cache
       rm -rf "$cache"
       # shellcheck disable=SC2046
-      set -- build/config.sml $(grep -v '^[[:space:]]*#' sources.txt | grep -v '^[[:space:]]*$') src/main/rune-main.sml
+      set -- build/config.sml $(sh scripts/build-files.sh rune.build) src/main/rune-main.sml
       failed=""
       bin/rune-mlton "$@" -o "$out/rune-whole.whole.rbc" 2> "$out/rune-whole.whole.err" || failed=" whole"
       for c in $builds; do

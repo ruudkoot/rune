@@ -56,7 +56,7 @@ root=$(pwd)
 out=$root/tests/out/perf-units
 mkdir -p "$out"
 heap=67108864
-boot_srcs="build/config.sml $(grep -v '^[[:space:]]*#' sources.txt | grep -v '^[[:space:]]*$' | tr '\n' ' ') src/main/rune-main.sml"
+boot_srcs="build/config.sml $(sh scripts/build-files.sh rune.build | tr '\n' ' ') src/main/rune-main.sml"
 for f in bin/runevm bin/runevm-stack bin/rune.rbc bin/rune.stack.rbc bin/rune-mlton; do
   [ -e "$f" ] || { echo "perf-units: $f is missing (make all bin/rune.stack.rbc)" >&2; exit 2; }
 done

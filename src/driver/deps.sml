@@ -140,7 +140,7 @@ struct
         | StrApp (f, arg, _, _) => (use (Fun, f); strexp (sc, arg))
         | StrLet (ds, se, _) => strexp (decs (sc, ds), se)
         | StrDynamic (_, sg, _, _) => ignore (sigexp (sc, sg))
-        | StrExport (sg, se, _, _) => (ignore (sigexp (sc, sg)); strexp (sc, se))
+        | StrExport (_, sg, se, _, _) => (ignore (sigexp (sc, sg)); strexp (sc, se))
       (* a signature's uses, and the names its specifications bind *)
       and sigexp (sc, sg) : scope =
         case sg of

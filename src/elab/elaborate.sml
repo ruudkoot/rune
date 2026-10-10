@@ -1022,7 +1022,7 @@ struct
           Env.empty
         end
 
-  (* RuneDynamic.load or .export, which a dynamic module's boundary calls *)
+  (* RuneDynamic.load, .take or .export, which a dynamic module's boundary calls *)
   and dynamicVia (env, name, sp) : int =
     case findVal (env, (["RuneDynamic"], name)) of
       SOME (Val {stamp, ...}) => stamp
@@ -1071,13 +1071,17 @@ struct
     | StrLet (decs, body, _) =>
         let val delta = elabDecs (env, level, top, scope, decs)
         in elabStrexp (plus (env, delta), level, top, scope, body) end
-    | StrDynamic (_, sigexp, slot, sp) =>
+    | StrDynamic (from, sigexp, slot, sp) =>
         (* a structure the program loads when it runs (D18): an instance
            of the signature with nothing behind it -- fresh abstract types,
            as an opaque ascription gives -- and a fresh global per value
            and exception, its slot, set from what the module exports *)
         let
-          val () = if isSome (!dynamicAt) then () else dynamicAt := SOME sp
+          (* a loaded unit names the program's units by their identities;
+             a virtual module's implementation is part of the program *)
+          val () = case from of
+                     DynamicFile _ => if isSome (!dynamicAt) then () else dynamicAt := SOME sp
+                   | DynamicVirtual _ => ()
           val sigma = elabSigexp (env, sigexp)
           (* the signature's names made fresh (rule 65), and each datatype it
              specifies given its constructors under its fresh name -- from the
@@ -1114,7 +1118,7 @@ struct
                              | _ => ()) tys;
              StringMap.app datatypes strs)
           val () = datatypes inst
-          val via = dynamicVia (env, "load", sp)
+          val via = dynamicVia (env, case from of DynamicFile _ => "load" | DynamicVirtual _ => "take", sp)
           val slots : (int * ty * bool) list ref = ref []
           fun restamp (Env {vals, tys, strs}) : env =
             let
@@ -1144,7 +1148,7 @@ struct
           val temp = freshStamp ()
           val () = Ty.bindVar (temp, tupleTy (List.tabulate (Int.max (List.length slots, 2), fn _ => unitTy)))
         in slot := SOME {fingerprint = !sigFingerprint sigma, slots = slots, via = via, temp = temp}; e end
-    | StrExport (sigexp, body, slot, sp) =>
+    | StrExport (_, sigexp, body, slot, sp) =>
         (* a dynamic module's implementation (D17): its body elaborated with
            the signature's order of each datatype's constructors, ascribed
            to the signature opaquely, and its values and exceptions, in the

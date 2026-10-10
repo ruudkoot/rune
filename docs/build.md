@@ -1,0 +1,134 @@
+# Build files
+
+A build file says what a program, a library or the Basis Library is made of:
+its files, in what order, which of them are a library's and which names the
+library exports, which implementation a virtual module has, and what each
+unit may do (the incremental roadmap's M10; D16). `rune --build FILE`
+compiles what a build file says, in units (docs/units.md), through the
+cache. The file's extension is `.build`.
+
+Its semantics is MLB's (MLton's ML Basis system): a *basis* -- the
+structures, signatures, functors, types, values and fixity in scope -- is a
+value; a file is compiled in the basis before it and adds what it declares
+to it; `local`, export lists and renaming say what of a basis the files
+after it see; each build file is elaborated once. Its syntax is Rune's own.
+
+## The language
+
+```
+build    ::= dec ...
+dec      ::= path                            a file, compiled in the basis before it
+           | "files" path ... "end"          files, in the order given
+           | "group" path ... "end"          files, in the order the modules they
+                                             declare and use give (docs/units.md, The graph)
+           | "local" dec ... "in" dec ... "end"
+                                             the second part sees the first; what
+                                             follows sees the second part only
+           | "library" exports "=" dec ... "end"
+                                             what follows sees the exports only
+           | "use" path                      another build file, elaborated once
+           | "implements" id "=" dec ... "end"
+                                             the implementation of the virtual
+                                             module id (below)
+           | "annotate" string ... "in" dec ... "end"
+                                             what the units inside may do (below)
+           | "cache" path                    where the cache of the build is
+           | "libraries" name ... "end"      the libraries a library is written on
+                                             (a library's build file, below)
+exports  ::= "(" export "," ... ")"          export ::= kind id
+kind     ::= "structure" | "signature" | "functor" | "type"
+path     ::= a file's path, relative to the build file's directory, in which
+             $(NAME) is the path variable NAME (--path NAME=DIR)
+string   ::= "..."
+```
+
+Comments are SML's, `(* ... *)`. A path is a word of letters, digits and `/
+. _ - $ ( )`, or a string.
+
+## Units and bases
+
+Every file is a unit. A build file elaborates to the list of its units in
+order, each with the basis it is compiled in, which is what `rune --build`
+compiles: the cache serves each unit whose usages hold, in that basis
+(docs/units.md, The cache), and `--whole` makes one program of them all
+(M7). `rune --build-list FILE` prints the files in order, which is what the
+hosts' build files are made from (`scripts/gen-build-files.sh`).
+
+* A sequence of declarations elaborates each in the basis the ones before
+  it leave.
+* `local A in B end`: B is elaborated in the basis A leaves; the files
+  after it see what was before it and what B declared.
+* `library (structure X, signature S) = D end`: the files after it see X
+  and S of what D declared, and nothing else of D.
+* `use FILE`: the declarations of another build file, in place; a build
+  file used twice is elaborated once, the second use adding what the first
+  declared.
+
+## Annotations
+
+`annotate "NAME" ... in D end` gives the units of D:
+
+| Annotation | What it does |
+|---|---|
+| `allowPrim` | the units may use `_prim` and `_overload` (the Basis Library's) |
+| `noWarnings` | their warnings are not printed |
+
+Levels per unit (`O0` ... `O2`) are not built: a build has the level of
+its command line.
+
+## A library's build file
+
+A library of `--lib` -- the Basis Library (`lib/basis/library.build`),
+`lib/random`, `lib/test/property` -- has a build file `library.build` that
+lists its files in load order, each in an `annotate` block that says what
+it is to a program:
+
+| Annotation | What it does |
+|---|---|
+| `always` | the file is compiled before every program |
+| `demand` | it is compiled before the programs that name what it provides, and the files that need it |
+| `seal` | as `demand`, but for no file of the library: it binds a structure again as its signature shows it |
+| `final` | it is compiled after every program |
+| `host=swap`, `host=no` | how `tests/basis/host/gen-host-basis.sh` gives the file to the other SML systems |
+
+`libraries random end` names the libraries it is written on. What each
+file provides and requires is not written down: `rune --basis-index DIR`
+works it out from the sources (`Deps`, docs/units.md, The graph) and writes
+`DIR/MANIFEST`, which is what the compiler reads (`BasisManifest`). `make
+manifests` makes the three, and they are not committed.
+
+## Virtual modules
+
+A virtual module is a structure that units are compiled against by its
+signature alone, and whose implementation the program's build file chooses
+(D17; the brief's case: the Basis Library's `IntInf` swapped for another).
+A unit declares it in SML:
+
+```sml
+structure BigInt = _virtual : BIGINT
+```
+
+and the build file says, before that unit, which files implement it:
+
+```
+bigint_sig.sml
+implements BigInt = digits.sml end
+bigint.sml                          (* structure BigInt = _virtual : BIGINT *)
+main.sml
+```
+
+The implementing files end by exporting a structure of the module's name
+and signature (`_export structure BigInt : BIGINT = ...`), and the virtual
+declaration takes its slots, as `_dynamic` takes a loaded module's
+(docs/units.md, Dynamic modules): `RuneDynamic.take` finds the export of
+that name, where the fingerprints of the signature agree. The files after
+an `implements` block see nothing that it declares, so the units compiled
+against the virtual module name nothing of the implementation, and another
+implementation compiles none of them again: `examples/virtual/bigint` has two,
+the Basis Library's `IntInf` (`intinf.build`) and lists of digits
+(`digits.build`), and the second build through the first one's cache
+compiles `digits.sml` alone (`tests/buildfile/run.sh`). A program has one
+implementation of each virtual module: two are refused. One without any is
+compiled, and raises `Dynamic.Mismatch` when the declaration runs. Unlike a
+loaded module, a virtual module is part of the program, which can be
+compiled whole (`--whole`).

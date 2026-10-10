@@ -229,6 +229,33 @@ directory and of each
 .I DIR
 that declare the modules it uses, and those they need.
 .TP
+.BI \-\-build " FILE"
+Compile in units what the build file
+.I FILE
+says: its files, each in the basis the declarations before it leave, with
+its libraries' export lists, its
+.B local
+parts and its virtual modules' implementations (docs/build.md).
+.TP
+.BI \-\-build\-list " FILE"
+Print the files of the build file
+.IR FILE ,
+in the order they are compiled.
+.TP
+.BI \-\-path " NAME" = DIR
+The path variable
+.BI $( NAME )
+of build files is
+.IR DIR .
+.TP
+.BI \-\-basis\-index " DIR"
+Write
+.IB DIR /MANIFEST\fR,\fP
+what each file of a library provides and requires, worked out from the
+library's build file
+.IB DIR /library.build
+and its sources.
+.TP
 .B \-\-whole
 With
 .BR \-\-units ,

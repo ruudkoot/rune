@@ -87,7 +87,7 @@ EOF
     bench) set -- $args; cwd=$out/bench/$1; stdin=$out/inputs/$name; args=prog.rbc ;;
     mlton-compile) cwd=$MLTON_SOURCES ;;
   esac
-  boot="build/config.sml $(grep -v -E '^[[:space:]]*(#|$)' sources.txt | tr '\n' ' ') src/main/rune-main.sml"
+  boot="build/config.sml $(sh scripts/build-files.sh rune.build | tr '\n' ' ') src/main/rune-main.sml"
   mlton=""; [ "$kind" = mlton-compile ] && mlton=$(tr '\n' ' ' < "$MLTON_SOURCES/mlton-rune.txt")
   args=$(printf '%s\n' "$args" | sed "s|@root|$root|g; s|@out|$output|g; s|@boot|$boot|g; s|@mlton|$mlton|g")
   perf=""

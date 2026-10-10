@@ -270,6 +270,8 @@ struct
                   andalso not (isIdentChar (ch (i + 8))) then (DYNAMIC, span (i, i + 8), i + 8)
                else if String.size text >= i + 7 andalso String.substring (text, i, 7) = "_export"
                   andalso not (isIdentChar (ch (i + 7))) then (EXPORT, span (i, i + 7), i + 7)
+               else if String.size text >= i + 8 andalso String.substring (text, i, 8) = "_virtual"
+                  andalso not (isIdentChar (ch (i + 8))) then (VIRTUAL, span (i, i + 8), i + 8)
                else (UNDERSCORE, span (i, i + 1), i + 1))
             else if c = #"." then
               (if ch (i + 1) = #"." andalso ch (i + 2) = #"." then (DOTS, span (i, i + 3), i + 3)

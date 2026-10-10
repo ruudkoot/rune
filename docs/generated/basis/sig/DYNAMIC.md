@@ -34,7 +34,9 @@ abstract, and an exception the module raises is the program's to
 handle. A program that loads a module is built in units (`rune --units`), whose units the module links against.
 
 [`Dynamic.load`](#val-load) is the untyped form: a unit that registers what it offers
-through a structure of the program (a plugin).
+through a structure of the program (a plugin). A virtual module, `structure X = _virtual : SIG`, is the same boundary inside one program: its
+implementation is the structure `X` that a unit before it exports, which
+the program's build file chooses (docs/build.md, Virtual modules).
 
 This signature is Rune's own.
 
@@ -59,7 +61,9 @@ exception Mismatch of string
 
 [`Mismatch`](#exn-mismatch) is raised where a module loaded through `_dynamic` was
 compiled against another signature than the program, or exports no
-structure. Its argument names the file and both fingerprints.
+structure, and where a virtual module (`_virtual`) has no
+implementation or one of another signature. Its argument names the
+file or the module, and both fingerprints.
 
 <details><summary>Tests (1)</summary>
 

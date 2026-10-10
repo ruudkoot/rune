@@ -1,8 +1,10 @@
 #!/bin/sh
-# Generate per-compiler build files from the source lists.
+# Generate per-compiler build files from the programs' build files
+# (docs/build.md): the files of their `files ... end` blocks
+# (scripts/build-files.sh).
 # Usage: scripts/gen-build-files.sh [ROOT_DIR]
-# For every program (rune from sources.txt, runedoc from sources-doc.txt,
-# runeopt from sources-opt.txt, runeisa from sources-isa.txt)
+# For every program (rune from rune.build, runedoc from runedoc.build,
+# runeopt from runeopt.build, runeisa from runeisa.build)
 # produces build/PROG.mlb (MLton), build/PROG.cm (SML/NJ),
 # build/PROG-polyml-build.sml (Poly/ML, run from ROOT; polyml-build.sml for
 # rune) and build/PROG-mlkit.mlb (MLKit). Each loads build/config.sml first,
@@ -23,7 +25,7 @@ put() {
 # gen PROG LIST MAINPREFIX POLYSCRIPT
 gen() {
   prog=$1 list=$2 mainprefix=$3 polyscript=$4
-  srcs=$(grep -v '^[[:space:]]*#' "$list" | grep -v '^[[:space:]]*$')
+  srcs=$(sh scripts/build-files.sh "$list")
 
   # --- MLton ----------------------------------------------------------------
   {
@@ -72,9 +74,9 @@ gen() {
   } | put "build/$prog-mlkit.mlb"
 }
 
-gen rune sources.txt "" polyml-build.sml
-gen runedoc sources-doc.txt runedoc- runedoc-polyml-build.sml
-gen runeopt sources-opt.txt runeopt- runeopt-polyml-build.sml
-gen runeisa sources-isa.txt runeisa- runeisa-polyml-build.sml
+gen rune rune.build "" polyml-build.sml
+gen runedoc runedoc.build runedoc- runedoc-polyml-build.sml
+gen runeopt runeopt.build runeopt- runeopt-polyml-build.sml
+gen runeisa runeisa.build runeisa- runeisa-polyml-build.sml
 
 echo "generated build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb"

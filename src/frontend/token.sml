@@ -25,6 +25,7 @@ struct
   | OVERLOAD                              (* _overload *)
   | DYNAMIC                               (* _dynamic *)
   | EXPORT                                (* _export *)
+  | VIRTUAL                               (* _virtual *)
   | EOF
 
   fun toString t =
@@ -57,6 +58,7 @@ struct
     | OVERLOAD => "_overload"
     | DYNAMIC => "_dynamic"
     | EXPORT => "_export"
+    | VIRTUAL => "_virtual"
     | EOF => "<eof>"
 
   val reserved : (string * token) list =

@@ -19,6 +19,10 @@ _arguments -s \
   '--explain-rebuild[with --units, say why each unit was compiled]' \
   '--verify-cache[with --units, compile each unit the cache has too, and compare]' \
   '--whole[with --units, one program of the units'"'"' Mid, as a whole-program compile]' \
+  '--build[compile in units what a build file says]:build file:_files -g "*.build"' \
+  '--build-list[print a build file'"'"'s files in order]:build file:_files -g "*.build"' \
+  '--path[a path variable of build files]:NAME=DIR:' \
+  '--basis-index[write DIR/MANIFEST from DIR/library.build]:library:_files -/' \
   '--deps[print the files in the order the modules they declare and use give]' \
   '--deps-dot[the files'"'"' dependency graph in DOT]' \
   '*-I[an entry point'"'"'s directory of files]:directory:_files -/' \

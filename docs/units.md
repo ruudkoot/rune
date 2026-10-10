@@ -328,7 +328,7 @@ it uses the first structure of a long name (`A` in `A.B.x`), a signature's
 or a functor's name, and a type named without a structure, where nothing in
 scope binds it -- a structure of its own, a functor's parameter, a
 signature's specification. The order keeps the order given wherever the
-uses allow it: the compiler's own sources in the order of `sources.txt`
+uses allow it: the compiler's own sources in the order of `rune.build`
 come back as they are, and in any order as an order it builds in.
 
 The order is the files' only where each file keeps a discipline (CM's): its
@@ -350,8 +350,10 @@ breaks the discipline is none of them; where it declares a module the
 program names, the compiler says so.
 
 **The Basis Library's MANIFEST** says what each of its files provides and
-requires (`lib/basis/MANIFEST`), and `rune --basis-check` checks both
-columns against the sources: the requires column is what `Deps` derives.
+requires (`lib/basis/MANIFEST`). It is made from the library's build file
+(`lib/basis/library.build`, docs/build.md) by `rune --basis-index DIR`:
+the provides column is what a file declares and the requires column what
+`Deps` derives, so neither is written by hand.
 
 ## Dynamic modules
 
@@ -388,7 +390,10 @@ whole, whose units are one, cannot load a module, and is refused one at
 compile time. Two modules compiled against one library share its types
 with each other and with the program. `Dynamic.load file` is the untyped
 form, for a unit that registers what it offers through a structure of the
-program. `tests/dynamic/run.sh` (`make test-dynamic`) is each of these.
+program. `tests/dynamic/run.sh` (`make test-dynamic`) is each of these. A
+virtual module (`structure X = _virtual : SIG`, [build.md](build.md),
+*Virtual modules*) is the same boundary inside one program, its
+implementation chosen by the build file.
 
 ## Errors
 

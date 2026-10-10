@@ -39,7 +39,7 @@ fi
 # (docs/units.md, The cache): a compiler built from other sources finds none
 # of them. Worked out on every make, as the version is, and written only
 # when it changes.
-srcs=$(grep -v -E '^[[:space:]]*(#|$)' sources.txt)
+srcs=$(sh scripts/build-files.sh rune.build)
 # shellcheck disable=SC2086
 if command -v sha256sum > /dev/null 2>&1; then identity=$(cat $srcs | sha256sum | cut -c1-32)
 elif command -v shasum > /dev/null 2>&1; then identity=$(cat $srcs | shasum -a 256 | cut -c1-32)

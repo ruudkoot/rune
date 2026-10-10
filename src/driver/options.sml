@@ -28,6 +28,9 @@ struct
   val depsDot = ref false                      (* --deps-dot: the same as a graph in DOT *)
   val depsUses = ref false                     (* --deps-uses: the module names each input uses *)
   val includeDirs : string list ref = ref []   (* -I DIR: where an entry point's files are looked for *)
+  val build : string option ref = ref NONE     (* --build FILE: compile what a build file says (docs/build.md) *)
+  val buildList = ref false                    (* --build-list: print the build file's files in order *)
+  val basisIndex : string option ref = ref NONE (* --basis-index DIR: DIR/MANIFEST from DIR/library.build *)
   val noWarnings = ref false
   val showVersion = ref false
   val showHelp = ref false
@@ -87,6 +90,11 @@ struct
     \  --deps-uses       print the module names the inputs use, one per line\n\
     \  -I DIR            with one input, an entry point: compile before it the files\n\
     \                    of its directory and of each -I DIR that it needs\n\
+    \  --build FILE      compile in units what the build file FILE says\n\
+    \                    (docs/build.md); --build-list prints its files in order\n\
+    \  --path NAME=DIR   the path variable $(NAME) of build files\n\
+    \  --basis-index DIR write DIR/MANIFEST, what a library's files provide and\n\
+    \                    require, from its build file DIR/library.build\n\
     \  --typecheck-only  stop after type checking\n\
     \  --type-work=N     type traversal budget per top-level declaration (50000000)\n\
     \  --match-work=N    pattern-analysis budget per match (1000000)\n\
@@ -171,6 +179,15 @@ struct
     | "--deps-dot" :: rest => (depsDot := true; parse rest)
     | "--deps-uses" :: rest => (depsUses := true; parse rest)
     | "-I" :: d :: rest => (includeDirs := !includeDirs @ [d]; parse rest)
+    | "--build" :: f :: rest => (build := SOME f; units := true; parse rest)
+    | ["--build"] => raise Usage "--build requires a build file"
+    | "--build-list" :: f :: rest => (build := SOME f; buildList := true; parse rest)
+    | "--basis-index" :: d :: rest => (basisIndex := SOME d; parse rest)
+    | "--path" :: v :: rest =>
+        (case String.fields (fn c => c = #"=") v of
+           name :: (dir as _ :: _) => (BuildFile.variables := StringMap.insert (!BuildFile.variables, name, String.concatWith "=" dir);
+                                       parse rest)
+         | _ => raise Usage "--path requires NAME=DIR")
     | ["-I"] => raise Usage "-I requires a directory"
     | "--typecheck-only" :: rest => (typecheckOnly := true; parse rest)
     | "--no-warnings" :: rest => (noWarnings := true; parse rest)

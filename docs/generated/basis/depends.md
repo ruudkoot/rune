@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's MANIFEST records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 591 requirements between the 151 files become 256 arrows.
+library and not a wall of lines: the 592 requirements between the 151 files become 256 arrows.
 The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -24,10 +24,10 @@ one need a file of the other.
 ```mermaid
 flowchart LR
   a0["The language<br>(4)"]
-  a1["Text and characters<br>(17)"]
+  a1["Text and characters<br>(16)"]
   a2["Lists and options<br>(6)"]
   a3["Numbers<br>(26)"]
-  a4["Sequences<br>(37)"]
+  a4["Sequences<br>(38)"]
   a5["The operating system<br>(41)"]
   a6["Input and output<br>(14)"]
   a7["The runtime<br>(6)"]
@@ -41,9 +41,9 @@ flowchart LR
   a3 -- 4 --> a1
   a4 -- 2 --> a2
   a4 -- 10 --> a3
-  a4 -- 3 --> a1
+  a4 -- 4 --> a1
   a1 -- 1 --> a3
-  a1 -- 6 --> a4
+  a1 -- 5 --> a4
   a0 -- 1 --> a6
   a5 -- 12 --> a6
   a5 -- 2 --> a2
@@ -87,7 +87,6 @@ flowchart TD
   n124(["STRING_CVT"])
   n125(["SUBSTRING"])
   n135(["TEXT"])
-  n147["WideChar* (6)"]
   n148["WideString<br>WideSubstring"]
   n149["WideText"]
   n2 --> n1
@@ -99,14 +98,12 @@ flowchart TD
   n135 --> n97
   n135 --> n123
   n135 --> n125
-  n147 --> n97
-  n148 --> n147
   n148 --> n123
   n148 --> n125
   n149 --> n148
 ```
 
-It also needs Numbers (1), Sequences (6).
+It also needs Numbers (1), Sequences (5).
 
 ## Lists and options
 
@@ -133,7 +130,7 @@ flowchart TD
   n12["Int8"]
   n13["Int16"]
   n14["Int32"]
-  n15["FixedInt<br>Int64"]
+  n15["Int64<br>FixedInt"]
   n16["Word8"]
   n17["Word16"]
   n18["Word32"]
@@ -220,6 +217,7 @@ flowchart TD
   n129(["VECTOR"])
   n130(["VECTOR_SLICE"])
   n146["Real32* (5)"]
+  n147["WideChar* (6)"]
   n24 --> n23
   n25 --> n23
   n26 --> n24
@@ -273,9 +271,11 @@ flowchart TD
   n130 --> n23
   n146 --> n27
   n146 --> n40
+  n147 --> n27
+  n147 --> n40
 ```
 
-It also needs Lists and options (2), Text and characters (3), Numbers (10).
+It also needs Lists and options (2), Text and characters (4), Numbers (10).
 
 ## The operating system
 
@@ -289,7 +289,7 @@ flowchart TD
   n70["Posix"]
   n76["Socket"]
   n77["NetHostDB<br>NetProtDB<br>NetServDB"]
-  n78["GenericSock<br>INetSock<br>UnixSock"]
+  n78["INetSock<br>UnixSock<br>GenericSock"]
   n79(["INET6_SOCK"])
   n80["INet6Sock"]
   n81["Unix"]
@@ -391,14 +391,14 @@ flowchart TD
   n68["TextPrimIO"]
   n69["BinPrimIO"]
   n71(["IMPERATIVE_IO"])
-  n72["ImperativeIO<br>PrimIO<br>StreamIO"]
+  n72["PrimIO<br>StreamIO<br>ImperativeIO"]
   n73["TextIO"]
   n75["BinIO"]
   n93(["BIN_IO"])
   n105(["IO"])
   n126(["TEXT_STREAM_IO"])
   n136(["TEXT_IO"])
-  n150["WideTextIO<br>WideTextPrimIO"]
+  n150["WideTextPrimIO<br>WideTextIO"]
   n67 --> n105
   n67 --> n65
   n68 --> n105

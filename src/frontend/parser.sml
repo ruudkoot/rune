@@ -759,7 +759,7 @@ struct
                   val () = expect EQUALS
                   val body = parseStrexp ()
                 in
-                  DStructure ([{name = name, strexp = StrExport (sg, body, ref NONE, spanFrom start), span = spanFrom start}],
+                  DStructure ([{name = name, strexp = StrExport (name, sg, body, ref NONE, spanFrom start), span = spanFrom start}],
                               spanFrom start)
                 end
           | STRUCTURE =>
@@ -777,7 +777,16 @@ struct
                         | COLONGT => (advance (); SOME (parseSigexp (), true))
                         | _ => NONE
                       val () = expect EQUALS
-                      val body = parseStrexp ()
+                      (* structure S = _virtual : SIG, a virtual module: its
+                         implementation is the module of the program that
+                         exports S (docs/build.md, Virtual modules) *)
+                      val body =
+                        if peek () = VIRTUAL then
+                          let val vstart = peekSpan ()
+                              val () = advance ()
+                              val () = expect COLON
+                          in StrDynamic (DynamicVirtual name, parseSigexp (), ref NONE, spanFrom vstart) end
+                        else parseStrexp ()
                       (* derived forms: structure S : SIG = e  ==>  structure S = e : SIG  (and :>) *)
                       val body = case ascription of
                                    NONE => body
@@ -909,7 +918,7 @@ struct
                                STRING s => (advance (); s)
                              | t => err ("expected the path of a dynamic module but found '" ^ toString t ^ "'")
                   val () = expect COLON
-                in StrDynamic (path, parseSigexp (), ref NONE, spanFrom start) end
+                in StrDynamic (DynamicFile path, parseSigexp (), ref NONE, spanFrom start) end
             | t => err ("expected structure expression but found '" ^ toString t ^ "'")
           fun ascribe e =
             case peek () of

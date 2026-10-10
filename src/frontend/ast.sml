@@ -38,6 +38,11 @@ struct
                       siblings : (string * bool) list}   (* all constructors of the datatype (name, has argument), by tag *)
        and exninfo = {name : string, stamp : int, isGlobal : bool, hasArg : bool, builtin : int option}
 
+  (* where a dynamic structure comes from: the unit in a file, loaded when
+     the declaration runs, or the module of the program that exports the
+     name, a virtual module's implementation (docs/build.md) *)
+  datatype dynamicFrom = DynamicFile of string | DynamicVirtual of string
+
   datatype exp =
       EScon of scon * Types.ty option ref * span   (* the type of an int or word constant, filled by elaboration *)
     | EVar of longid * varinfo option ref * span
@@ -103,8 +108,8 @@ struct
     | StrAscribe of strexp * sigexp * bool * span            (* true = opaque (:>) *)
     | StrApp of string * strexp * strexp option ref * span   (* functor application; the slot receives the elaborated copy of the body *)
     | StrLet of dec list * strexp * span
-    | StrDynamic of string * sigexp * dynamic option ref * span   (* _dynamic "path" : SIG (docs/units.md, Dynamic modules) *)
-    | StrExport of sigexp * strexp * dynamic option ref * span    (* _export structure X : SIG = strexp *)
+    | StrDynamic of dynamicFrom * sigexp * dynamic option ref * span   (* _dynamic "path" : SIG, _virtual : SIG (docs/units.md, Dynamic modules) *)
+    | StrExport of string * sigexp * strexp * dynamic option ref * span    (* _export structure X : SIG = strexp *)
 
   and sigexp =
       SigSig of spec list * span
@@ -212,7 +217,7 @@ struct
     case e of
       StrStruct (_, s) => s | StrId (_, s) => s | StrAscribe (_, _, _, s) => s
     | StrApp (_, _, _, s) => s | StrLet (_, _, s) => s
-    | StrDynamic (_, _, _, s) => s | StrExport (_, _, _, s) => s
+    | StrDynamic (_, _, _, s) => s | StrExport (_, _, _, _, s) => s
 
   fun spanOfSigexp e =
     case e of
@@ -306,8 +311,8 @@ struct
     | StrAscribe (e, sg, opaque, sp) => StrAscribe (copyStrexp e, sg, opaque, sp)
     | StrApp (f, a, _, sp) => StrApp (f, copyStrexp a, ref NONE, sp)
     | StrLet (ds, e, sp) => StrLet (List.map copyDec ds, copyStrexp e, sp)
-    | StrDynamic (path, sg, _, sp) => StrDynamic (path, sg, ref NONE, sp)
-    | StrExport (sg, e, _, sp) => StrExport (sg, copyStrexp e, ref NONE, sp)
+    | StrDynamic (from, sg, _, sp) => StrDynamic (from, sg, ref NONE, sp)
+    | StrExport (n, sg, e, _, sp) => StrExport (n, sg, copyStrexp e, ref NONE, sp)
 
   (* --- debugging printer (used by --dump-ast) --- *)
   fun sconToString sc =
@@ -434,8 +439,9 @@ struct
     | StrAscribe (e, s, opaque, _) => strexpToString e ^ (if opaque then " :> " else " : ") ^ sigexpToString s
     | StrApp (f, a, _, _) => f ^ " (" ^ strexpToString a ^ ")"
     | StrLet (ds, e, _) => "let " ^ String.concatWith " " (List.map decToString ds) ^ " in " ^ strexpToString e ^ " end"
-    | StrDynamic (path, s, _, _) => "_dynamic \"" ^ String.toString path ^ "\" : " ^ sigexpToString s
-    | StrExport (s, e, _, _) => "_export " ^ sigexpToString s ^ " (" ^ strexpToString e ^ ")"
+    | StrDynamic (DynamicFile path, s, _, _) => "_dynamic \"" ^ String.toString path ^ "\" : " ^ sigexpToString s
+    | StrDynamic (DynamicVirtual _, s, _, _) => "_virtual : " ^ sigexpToString s
+    | StrExport (_, s, e, _, _) => "_export " ^ sigexpToString s ^ " (" ^ strexpToString e ^ ")"
 
   and sigexpToString s =
     case s of

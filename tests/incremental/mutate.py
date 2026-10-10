@@ -338,10 +338,19 @@ EDITS = [(edit_fixity, 3), (edit_constructors, 4), (edit_numeral, 5), (edit_top_
          (edit_type, 3), (edit_exception, 2), (edit_remove, 1), (edit_rename, 1)]
 
 
+def sources_of(tree):
+    """The compiler's sources in a tree: its rune.build's files, or, before
+    there were build files, its sources.txt"""
+    if os.path.exists(os.path.join(tree, 'rune.build')):
+        p = subprocess.run(['sh', os.path.join(ROOT, 'scripts', 'build-files.sh'), os.path.join(tree, 'rune.build')],
+                           stdout=subprocess.PIPE, check=True)
+        return p.stdout.decode().split()
+    with open(os.path.join(tree, 'sources.txt')) as f:
+        return [l.strip() for l in f if l.strip() and not l.strip().startswith('#')]
+
+
 def compiler_project():
-    with open(os.path.join(ROOT, 'sources.txt')) as f:
-        srcs = [l.strip() for l in f if l.strip() and not l.strip().startswith('#')]
-    return ROOT, ['build/config.sml'] + srcs + ['src/main/rune-main.sml']
+    return ROOT, ['build/config.sml'] + sources_of(ROOT) + ['src/main/rune-main.sml']
 
 
 class Checker:
@@ -428,9 +437,7 @@ def replay(args, checker):
         if g.returncode != 0 or not os.path.exists(os.path.join(tree, 'build', 'config.sml')):
             print('mutate history: %s skipped, its build files could not be made' % c[:10], flush=True)
             continue
-        with open(os.path.join(tree, 'sources.txt')) as f:
-            srcs = [l.strip() for l in f if l.strip() and not l.strip().startswith('#')]
-        files = ['build/config.sml'] + srcs + ['src/main/rune-main.sml']
+        files = ['build/config.sml'] + sources_of(tree) + ['src/main/rune-main.sml']
         missing = [f for f in files if not os.path.exists(os.path.join(tree, f))]
         if missing:
             # a file `make` generated then, which the commit does not hold

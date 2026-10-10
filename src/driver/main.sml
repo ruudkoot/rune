@@ -211,8 +211,154 @@ struct
       handle Deps.Graph msg => raise Options.Usage msg
     end
 
+  (* ---- build files (docs/build.md; the incremental roadmap's M10) ---- *)
+
+  (* What a build file says, as the units driver follows it: a unit -- a
+     file, with the annotations in force -- or a scope of units whose basis
+     the build file says (compileUnits, elabSteps) *)
+  datatype step = SUnit of string * string list
+                | SLocal of step list * step list
+                | SLibrary of (BuildFile.kind * string) list * step list
+                | SUse of string * step list            (* a build file used, by its path: elaborated once *)
+                | SImplements of string * step list
+
+  val buildPlan : step list option ref = ref NONE
+
+  fun readText (f : string) : string =
+    let val i = TextIO.openIn f in TextIO.inputAll i before TextIO.closeIn i end
+
+  (* A build file read: its paths made the files' (relative to its
+     directory, the variables given), each build file it uses read in its
+     place, each group put in the order its files' modules give (Deps), the
+     annotations given to each unit; and the cache directories it names *)
+  fun planOf (file : string) : step list * string list =
+    let
+      val caches : string list ref = ref []
+      fun read (f : string, seen : string list) : step list =
+        let
+          val canonical = OS.Path.mkCanonical f
+          val () = if List.exists (fn s => s = canonical) seen then raise Options.Usage ("the build file " ^ f ^ " uses itself")
+                   else ()
+          val text = readText f handle IO.Io _ => raise Options.Usage ("cannot read the build file " ^ f)
+          val decs = BuildFile.parse (f, text) handle BuildFile.Error m => raise Options.Usage m
+          val dir = OS.Path.dir f
+          fun path p = BuildFile.expand (dir, p) handle BuildFile.Error m => raise Options.Usage (f ^ ": " ^ m)
+          fun steps (anns, ds) = List.concat (List.map (fn d => step (anns, d)) ds)
+          and step (anns, d) =
+            case d of
+              BuildFile.File p => [SUnit (path p, anns)]
+            | BuildFile.Files ps => List.map (fn p => SUnit (path p, anns)) ps
+            | BuildFile.Group ps =>
+                let
+                  val analysed = List.map (fn p => Deps.analyse (p, syntaxOf p)) (List.map path ps)
+                  val broken = List.concat (List.map breaksOf analysed)
+                  val () = case broken of [] => () | b :: _ => raise Options.Usage b
+                  val (ordered, _) = Deps.order analysed handle Deps.Graph m => raise Options.Usage (f ^ ": " ^ m)
+                in List.map (fn (g : Deps.file) => SUnit (#path g, anns)) ordered end
+            | BuildFile.Local (a, b) => [SLocal (steps (anns, a), steps (anns, b))]
+            | BuildFile.Library (es, ds) => [SLibrary (es, steps (anns, ds))]
+            | BuildFile.Use p => let val q = path p in [SUse (OS.Path.mkCanonical q, read (q, canonical :: seen))] end
+            | BuildFile.Implements (x, ds) => [SImplements (x, steps (anns, ds))]
+            | BuildFile.Annotate (a, ds) => steps (anns @ a, ds)
+            | BuildFile.Cache p => (caches := path p :: !caches; [])
+            | BuildFile.Libraries _ => []
+        in steps ([], decs) end
+      val plan = read (file, [])
+    in (plan, List.rev (!caches)) end
+
+  (* --basis-index DIR: DIR/MANIFEST, what each file of the library provides
+     and requires (BasisManifest), from its build file DIR/library.build --
+     each file's class and host by its annotations ("always", "demand",
+     "seal", "final"; "host=swap", "host=no"), the libraries it is written
+     on by `libraries` -- and from the files: what each declares (Deps), and
+     what it uses that the files before it, the Basis Library or the
+     libraries it is written on provide. A file that uses a name only a file
+     after it provides is refused. *)
+  fun basisIndex (dir : string) : OS.Process.status =
+    let
+      val file = OS.Path.joinDirFile {dir = dir, file = "library.build"}
+      val text = readText file handle IO.Io _ => raise Options.Usage ("cannot read the build file " ^ file)
+      val decs = BuildFile.parse (file, text) handle BuildFile.Error m => raise Options.Usage m
+      val libs : string list ref = ref []
+      fun entries (anns, ds) = List.concat (List.map (fn d => entry (anns, d)) ds)
+      and entry (anns, d) =
+        case d of
+          BuildFile.File p => [(p, anns)]
+        | BuildFile.Files ps => List.map (fn p => (p, anns)) ps
+        | BuildFile.Annotate (a, ds) => entries (anns @ a, ds)
+        | BuildFile.Libraries ns => (libs := !libs @ ns; [])
+        | _ => raise Options.Usage (file ^ ": a library's build file lists its files, annotated; no more")
+      val listed = entries ([], decs)
+      fun classOf anns =
+        case List.filter (fn a => List.exists (fn c => c = a) ["always", "demand", "seal", "final"]) anns of
+          [] => "demand" | cs => List.last cs
+      fun hostOf anns =
+        case List.filter (fn a => String.isPrefix "host=" a) anns of
+          [] => "yes" | hs => String.extract (List.last hs, 5, NONE)
+      val analysed = List.map (fn (p, anns) => (p, anns, Deps.analyse (p, syntaxOf (OS.Path.joinDirFile {dir = dir, file = p}))))
+                              listed
+      (* what the Basis Library and the libraries this one is written on
+         provide, from their MANIFESTs, made before this one's *)
+      val outside =
+        if OS.Path.mkCanonical dir = OS.Path.mkCanonical (libRoot () ^ "/basis") then []
+        else readManifest () @ List.concat (List.map BasisManifest.readManifest
+                                                    (BasisManifest.libraries (libRoot (), !libs)))
+      val provided = List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => StringMap.insert (m, n, ())) m (#provides e))
+                                StringMap.empty outside
+      fun sorted l = StringMap.listKeys (List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty l)
+      val providers = List.foldl (fn ((_, _, f : Deps.file), m) => List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) m
+                                                                               (#declares f))
+                                 provided analysed
+      val (lines, _) =
+        List.foldl
+          (fn ((p, anns, f : Deps.file), (acc, earlier)) =>
+             let
+               val provides = List.map #2 (#declares f)
+               val requires = sorted (List.filter (fn n => StringMap.member (providers, n) andalso
+                                                           not (List.exists (fn m => m = n) provides))
+                                                  (List.map #2 (#uses f)))
+               val () = List.app (fn n => if StringMap.member (earlier, n) then ()
+                                          else raise Options.Usage (file ^ ": " ^ p ^ " uses " ^ n ^
+                                                                    ", which only a file after it provides"))
+                                 requires
+               val line = p ^ " | " ^ classOf anns ^ " | " ^ hostOf anns ^ " | " ^ String.concatWith " " provides ^ " | "
+                          ^ String.concatWith " " requires
+             in (line :: acc, List.foldl (fn (n, m) => StringMap.insert (m, n, ())) earlier provides) end)
+          ([], provided) analysed
+      val out = OS.Path.joinDirFile {dir = dir, file = "MANIFEST"}
+      val o' = TextIO.openOut out
+    in
+      TextIO.output (o', "# Generated from library.build by rune --basis-index -- do not edit.\n");
+      List.app (fn l => TextIO.output (o', "# library: " ^ l ^ "\n")) (!libs);
+      List.app (fn l => TextIO.output (o', l ^ "\n")) (List.rev lines);
+      TextIO.closeOut o';
+      OS.Process.success
+    end
+
+  (* the files of a plan, in the order they are compiled *)
+  fun filesOf (steps : step list) : string list =
+    List.concat (List.map (fn SUnit (p, _) => [p]
+                            | SLocal (a, b) => filesOf a @ filesOf b
+                            | SLibrary (_, ds) => filesOf ds
+                            | SUse (_, ds) => filesOf ds
+                            | SImplements (_, ds) => filesOf ds) steps)
+
   fun compile () : OS.Process.status =
     let
+      (* --build: the inputs are the build file's files, its plan what the
+         units driver follows *)
+      val () =
+        case !Options.build of
+          NONE => ()
+        | SOME f =>
+            let val (plan, caches) = planOf f
+            in
+              buildPlan := SOME plan;
+              Options.inputs := filesOf plan;
+              case (caches, !Options.cacheDir) of
+                (c :: _, NONE) => Options.cacheDir := SOME c
+              | _ => ()
+            end
       (* a whole program's dynamic modules: none (UnitBasis.wholeFingerprints) *)
       val () = UnitBasis.wholeFingerprints := (not (!Options.units) orelse !Options.wholeFromUnits)
       (* -I: the entry point's files before it *)
@@ -296,10 +442,15 @@ struct
           else BasisManifest.path e
         end
       fun file (e : entry, allow) = (BasisManifest.path e, fn () => loadTokens (BasisManifest.path e), allow, libName e)
-      val sources =
-        List.map (fn e => file (e, inBasis e)) basis
-        @ ListPair.map (fn (toks, name) => (name, fn () => toks, !Options.allowPrim, name)) (userToks, inputs)
-        @ List.map (fn e => file (e, !Options.allowPrim)) final
+      val basisPart = List.map (fn e => file (e, inBasis e)) basis
+      val userPart = ListPair.map (fn (toks, name) => (name, fn () => toks, !Options.allowPrim, name)) (userToks, inputs)
+      val finalPart = List.map (fn e => file (e, !Options.allowPrim)) final
+      val sources = basisPart @ userPart @ finalPart
+      (* the signatures and functors the units declared, newest first: what a
+         scope of a build file added (elabSteps) *)
+      val declLog : (string * string) list ref = ref []
+      fun logDeclared (l : UnitBasis.result) =
+        declLog := List.map (fn n => ("fun", n)) (#funs l) @ List.map (fn n => ("sig", n)) (#sigs l) @ !declLog
       (* a program that may load units while it runs -- it has Runtime's
          loading or a dynamic module's: their files are among its units --
          keeps in its file what its units export, under the identities a
@@ -454,6 +605,7 @@ struct
               env := Env.plus (#env start, #delta loaded);
               fixity := Fixity.extend (#fixity start, #directives loaded);
               UnitBasis.bind loaded;
+              logDeclared loaded;
               (* for --whole, its Mid read back as the session names it, as a
                  unit from the cache is *)
               if !Options.wholeFromUnits then mids := UnitMid.read (midBytes, #unit loaded, [], fn f => f) :: !mids
@@ -476,7 +628,110 @@ struct
               (code, #pickle exported) :: acc
             end
         end
-      val compiled = List.rev (List.foldl unit [] sources)
+      (* --build: the user's units as the build file says (docs/build.md):
+         each compiled in the basis the steps before it leave. A basis is the
+         environment, the fixity, the signatures and functors, and the units
+         that bound each name (UnitBasis.binders), which the usages of the
+         units after it are of *)
+      type snapshot = {env : Env.env, fixity : Fixity.env, sigs : SigMatch.sigma StringMap.map,
+                       funs : Elaborate.funinfo StringMap.map, binders : string StringMap.map,
+                       declared : int, bound : int}
+      fun snap () : snapshot =
+        {env = !env, fixity = !fixity, sigs = !Elaborate.sigs, funs = !Elaborate.funs, binders = !UnitBasis.binders,
+         declared = List.length (!declLog), bound = List.length (!UnitBasis.bindLog)}
+      (* what the steps between two snapshots added *)
+      type delta = {env : Env.env, directives : (string * Fixity.fixity) list, declared : (string * string) list,
+                    bound : string list, sigs : SigMatch.sigma StringMap.map, funs : Elaborate.funinfo StringMap.map,
+                    binders : string StringMap.map}
+      fun deltaOf (b1 : snapshot, b2 : snapshot) : delta =
+        {env = UnitBasis.envDelta (#env b1, #env b2),
+         directives = List.take (#list (#fixity b2), List.length (#list (#fixity b2)) - List.length (#list (#fixity b1))),
+         declared = List.rev (List.take (!declLog, List.length (!declLog) - #declared b1)),
+         bound = List.rev (List.take (!UnitBasis.bindLog, List.length (!UnitBasis.bindLog) - #bound b1)),
+         sigs = #sigs b2, funs = #funs b2, binders = #binders b2}
+      (* b0's basis, and what a delta adds to it: all of it, or a library's
+         exports *)
+      fun apply (b0 : snapshot, d : delta, exports : (BuildFile.kind * string) list option) =
+        let
+          fun exported (k, n) = case exports of NONE => true | SOME es => List.exists (fn e => e = (k, n)) es
+          val Env.Env {vals, tys, strs} = #env d
+          val e = Env.Env {vals = if isSome exports then StringMap.empty else vals,
+                           tys = StringMap.filteri (fn (n, _) => exported (BuildFile.Ty, n)) tys,
+                           strs = StringMap.filteri (fn (n, _) => exported (BuildFile.Str, n)) strs}
+          fun keyVisible key =
+            case String.fields (fn c => c = #" ") key of
+              [kind, n] =>
+                (case kind of
+                   "s" => exported (BuildFile.Str, n) | "t" => exported (BuildFile.Ty, n)
+                 | "sig" => exported (BuildFile.Sig, n) | "fun" => exported (BuildFile.Fun, n)
+                 | _ => not (isSome exports))
+            | _ => not (isSome exports)
+        in
+          env := Env.plus (#env b0, e);
+          fixity := Fixity.extend (#fixity b0, if isSome exports then [] else #directives d);
+          Elaborate.sigs := List.foldl (fn (("sig", n), m) =>
+                                          if exported (BuildFile.Sig, n)
+                                          then (case StringMap.find (#sigs d, n) of SOME x => StringMap.insert (m, n, x) | NONE => m)
+                                          else m
+                                        | (_, m) => m) (#sigs b0) (#declared d);
+          Elaborate.funs := List.foldl (fn (("fun", n), m) =>
+                                          if exported (BuildFile.Fun, n)
+                                          then (case StringMap.find (#funs d, n) of SOME x => StringMap.insert (m, n, x) | NONE => m)
+                                          else m
+                                        | (_, m) => m) (#funs b0) (#declared d);
+          UnitBasis.binders := List.foldl (fn (key, m) =>
+                                             if keyVisible key
+                                             then (case StringMap.find (#binders d, key) of
+                                                     SOME i => StringMap.insert (m, key, i)
+                                                   | NONE => m)
+                                             else m) (#binders b0) (#bound d)
+        end
+      val implemented : string list ref = ref []
+      val used : (string * delta) list ref = ref []
+      fun elabSteps (steps : step list, acc) = List.foldl elabStep acc steps
+      and elabStep (SUnit (p, anns), acc) =
+            let
+              val allow = !Options.allowPrim orelse List.exists (fn a => a = "allowPrim") anns
+              val quiet = !Options.noWarnings
+              val () = if List.exists (fn a => a = "noWarnings") anns then Options.noWarnings := true else ()
+              val acc = unit ((p, fn () => loadTokens p, allow, p), acc) handle e => (Options.noWarnings := quiet; raise e)
+            in Options.noWarnings := quiet; acc end
+        | elabStep (SLocal (a, b), acc) =
+            let
+              val b0 = snap ()
+              val acc = elabSteps (a, acc)
+              val b1 = snap ()
+              val acc = elabSteps (b, acc)
+            in apply (b0, deltaOf (b1, snap ()), NONE); acc end
+        | elabStep (SLibrary (exports, ds), acc) =
+            let
+              val b0 = snap ()
+              val acc = elabSteps (ds, acc)
+            in apply (b0, deltaOf (b0, snap ()), SOME exports); acc end
+        | elabStep (SUse (p, ds), acc) =
+            (case List.find (fn (q, _) => q = p) (!used) of
+               SOME (_, d) => (apply (snap (), d, NONE); acc)
+             | NONE =>
+                 let
+                   val b1 = snap ()
+                   val acc = elabSteps (ds, acc)
+                 in used := (p, deltaOf (b1, snap ())) :: !used; acc end)
+        | elabStep (SImplements (x, ds), acc) =
+            if List.exists (fn y => y = x) (!implemented)
+            then raise Options.Usage ("the build gives the virtual module " ^ x ^ " two implementations")
+            else
+              (* what the implementation declares is the program's, and no
+                 file after it names it: it is reached through the virtual
+                 module, whose units do not change with it *)
+              let
+                val () = implemented := x :: !implemented
+                val b0 = snap ()
+                val acc = elabSteps (ds, acc)
+              in apply (b0, deltaOf (b0, snap ()), SOME []); acc end
+      val compiled =
+        case !buildPlan of
+          NONE => List.rev (List.foldl unit [] sources)
+        | SOME plan => List.rev (List.foldl unit (elabSteps (plan, List.foldl unit [] basisPart)) finalPart)
       val units = List.map #1 compiled
       val () = failIfReported ()
       val () = if !unverified > 0 then raise Reported else ()
@@ -661,6 +916,9 @@ struct
      else if !Options.showVersion then (println ("rune " ^ Config.version); OS.Process.success)
      else if !Options.basisCheck then checkManifest ()
      else if !Options.deps orelse !Options.depsDot orelse !Options.depsUses then depsCommand ()
+     else if isSome (!Options.basisIndex) then basisIndex (valOf (!Options.basisIndex))
+     else if !Options.buildList then
+       (List.app println (filesOf (#1 (planOf (valOf (!Options.build))))); OS.Process.success)
      else if !Options.dumpTokens then dumpTokens ()
      else if isSome (!Options.readMid) then readMid (valOf (!Options.readMid))
      else compile ())

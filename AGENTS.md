@@ -23,7 +23,7 @@ keep these invariants:
   commit that finishes documenting it, and none should be added without one.
 * A program sees of a basis structure what its signature names and nothing
   else: a structure that is not ascribed its signature where it is declared
-  is bound to it again in a seal file at the end of `lib/basis/MANIFEST`
+  is bound to it again in a seal file at the end of `lib/basis/library.build`
   (`seal_list.sml`: `structure List : LIST = List`), which is loaded for the
   programs that mention the structure and for no file of the library, so the
   library keeps its helpers. `make docs` fails for a structure that shows a
@@ -37,12 +37,15 @@ keep these invariants:
   `tests/basis/<name>_sig.sml` matches it against the transcription;
   `make check-docs` (`tests/basis/check-claims.sh`) wants both.
 * When adding a basis structure, add a `basis.<name>` row listing its members
-  and add the file to `lib/basis/MANIFEST` with what it provides and requires
-  (`rune --basis-check`, part of `make check-docs`, verifies the columns; a
-  file loaded on demand declares modules and types only, all in its provides column). A signature of the
+  and add the file to `lib/basis/library.build` in a block of its class
+  (`docs/build.md`). What it provides and requires is worked out from the
+  source: `make manifests` writes `lib/basis/MANIFEST`, which is generated
+  and never committed or edited (`rune --basis-check`, part of `make
+  check-docs`, verifies that a file loaded on demand declares modules and
+  types only). A signature of the
   specification is transcribed in `tests/basis/spec-sigs` first;
   `scripts/gen-basis-sigs.sh` then makes `lib/basis/sig_<sig>.sml` and its
-  MANIFEST line, and from there on the library's file is edited by hand
+  line in the build file, and from there on the library's file is edited by hand
   (`make check-docs` wants the same tokens in both). Its test belongs to the Basis
   Library suite: `tests/basis/<name>.sml` and `tests/basis/<name>_sig.sml`,
   written as `tests/basis/README.md` describes, with expected values worked
@@ -227,10 +230,12 @@ keep these invariants:
 
 ## Build and verification
 
-* Compiler sources are listed in `sources.txt` (ordered), those of the
-  documentation generator `runedoc` in `sources-doc.txt` and those of the
-  native code generator `runeopt` in `sources-opt.txt`; the MLton, SML/NJ and
-  Poly/ML build files are generated from them — never edit `build/`.
+* Compiler sources are listed in `rune.build` (ordered, in its `files ...
+  end` block; docs/build.md), those of the documentation generator `runedoc`
+  in `runedoc.build`, those of the native code generator `runeopt` in
+  `runeopt.build` and those of `runeisa` in `runeisa.build`; the MLton,
+  SML/NJ and Poly/ML build files are generated from them — never edit
+  `build/`.
 * The SML systems come from `make hosts` (`${RUNE_HOSTS:-~/.local/rune-hosts}`),
   never from the machine's PATH.
 * In a cloud coding environment (e.g. `CLAUDE_CODE_REMOTE=true`), follow
@@ -325,10 +330,10 @@ keep these invariants:
   compiled by `make docs` and run by `make test-basis`; give a description an example where it shows
   what prose cannot, and find its value by running it.
 * A library beside the basis library (`lib/NAME`, compiled with `rune --library
-  NAME`) has a `MANIFEST` in the basis library's form, whose requires column
-  names what it uses of the basis library as well (`rune --basis-check
-  --library NAME` checks it), and whose `# library:` lines name the libraries
-  it is written on. It may not use `_prim`. The mechanism's tests are in
+  NAME`) has a `library.build` in the basis library's form, whose
+  `libraries` declaration names the libraries it is written on; its
+  generated `MANIFEST` records what each file uses of the basis library as
+  well (`rune --basis-check --library NAME` checks it). It may not use `_prim`. The mechanism's tests are in
   `tests/lib` (`make test-lib`). After a change to such a library, run `make
   test-lib-hosts`: its tests on MLton, SML/NJ 110.99.9, SML/NJ 2026.2, Poly/ML and MLKit, against their
   own Basis. **Never work around a bug of a compiler other than Rune in such a
