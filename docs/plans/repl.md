@@ -1,0 +1,18 @@
+- this is a draft roadmap to make Rune's REPL best-in-class
+- the basic repl has been implemented on the incremantal worktree
+  - that worktree and the incremental-compilation.md are still being implemented
+  - but the user-facing functionally of the repl should be mostly done now
+- please research existing REPLs to find the features we need to support
+  - some implementation can be found in /home/ruud/reference
+  - you can probably find the source of other programming languages you want to study on the internet
+  - there might even be some academic literature on the topic?
+- i want the REPL to have colors and good editing
+  - start lib/terminal that has color output and a full readline implementation that can be used any rune program
+    - readline needs to work on both linux and windows terminals
+  - add a color.sml file under src that has a shared color pallete than can be used to ensure consistency across rune repl and rune compiler output and runedoc etc.
+  - in the repl we should distinguish:
+    - repl 'ui'
+    - user input
+    - evaluation output (non-errors)
+    - evaluation output (errors)
+    - etc.
