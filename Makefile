@@ -153,7 +153,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
+.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64 test-laws-hosts
 
 all: vm boot runedoc runeopt manifests basis-cache
 
@@ -1115,6 +1115,13 @@ test-laws: $(RUNE) $(RUNEDOC) vm manifests
 # change to a library, as matrix-quick is after one to lib/basis).
 test-lib-hosts: manifests
 	sh tests/lib/run-hosts.sh
+
+# The laws of the Basis Library's documentation on the other compilers
+# (docs/plans/quickcheck.md, D10): the differences from Rune's last run of
+# test-laws that tests/basis/law-deviations.txt does not explain. Not part of
+# `make check`.
+test-laws-hosts: $(RUNEDOC)
+	RUNEDOC=$(RUNEDOC) python3 tests/basis/run-laws-hosts.py
 
 # The native code generator's own tests (tests/opt): after the suites, whose
 # programs it checks and disassembles.

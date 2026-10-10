@@ -1609,6 +1609,7 @@ tomorrow. M2 to M6 are part 1 of the brief; M1 and M7 to M9 are part 2.
   - **A resource shared by a case.** `Gen.shared` makes a resource once for each case, so the condition and both sides see the same one. A pipe was drawn afresh for each side, and so the laws of `OS.IO.pollToIODesc` and `Posix.FileSys.iodToFD` compared two pipes. The descriptors of `system.sml` and the sockets of `inet6.sml` are drawn so now.
   - **Equality in a condition.** `x = y` draws `y` as `x` (P14). The law of `OS.IO.hash` gave up without it.
   - **Cycles of bounds** break at the variable first in the law, which keeps its other bounds (P14). The restated laws of `tabulate`, `array` and `Array2` need it: their lengths are bounded by `maxLen` as well as by an index.
+  - **The other compilers (D10)**: `tests/basis/run-laws-hosts.py` (`make test-laws-hosts`) runs the laws on MLton, SML/NJ, Poly/ML and MLKit against their own Basis, each at the structures it has, and compares every verdict with Rune's; `tests/basis/law-deviations.txt` explains the differences that are the hosts'. Its first run found no difference that was Rune's (`docs/plans/quickcheck-hunt.md`).
   - **Named domains** (D7) that the hunt needed: `Arb.intRange`, `Arb.wordRange` and `BasisDataArb.canonicalAbsolutePath`, and ``and `y` from `H` `` after ``for `x` from `G` ``.
 
 ### Later

@@ -345,3 +345,60 @@ draw characters are run again after it:
 - **The deep mode again**, for the 17 programs whose laws draw characters, strings or paths, at all their structures, and for those of `MONO_VECTOR`, `MONO_ARRAY`, their slices and `MONO_ARRAY2` at the structures of characters (`LAWS_AT`, which `run-laws.sh` now takes): 548 laws at their structures, 544 pass, the 4 failures the listed laws for `char` at the wide structures. The restated law of `OS.Path.splitDirFile` holds.
 
 So the deep mode, with the generators as they are now, finds nothing more.
+
+## The other compilers (D10, 2026-10-10)
+
+`tests/basis/run-laws-hosts.py` (`make test-laws-hosts`) builds the
+programs of `runedoc --laws` with MLton, SML/NJ 110.99.9 (64 and 32 bits),
+SML/NJ 2026.2, Poly/ML and MLKit, against their own Basis Library, and runs
+them with the settings of `make check`. A law is held at a structure only
+where the host has what it names: a probe asks each host which structures
+it has, and each builds the files of `lib/test/property` it can. A law that
+still does not build is NOT BUILT there, with the first error. Each verdict
+is compared with Rune's (run 6). A difference that a line of
+`tests/basis/law-deviations.txt` explains is EXPLAINED.
+
+| Host | Pass | Fail | Not built | Not run | Differ from Rune |
+|---|---:|---:|---:|---:|---:|
+| MLton | 755 | 16 | 963 | 0 | 10 |
+| SML/NJ 110.99.9, 64 bits | 298 | 21 | 1,273 | 142 | 18 |
+| SML/NJ 110.99.9, 32 bits | 0 | 0 | 1,232 | 502 | 0 |
+| SML/NJ 2026.2 | 318 | 18 | 1,273 | 125 | 16 |
+| Poly/ML 5.9.2 | 471 | 10 | 1,246 | 7 | 7 |
+| MLKit 4.7.23 | 564 | 23 | 1,147 | 0 | 16 |
+
+Most laws are not built on a host because the arbitraries of the optional
+structures are in files of `lib/test/property` that a host builds whole or
+not at all: `sequences.sml` (the monomorphic arrays and vectors) requires
+every one of their structures. SML/NJ 32 bits builds nothing that runs: its
+`Word64` is wrong (`tests/lib/deviations.txt`). The laws not run are where a
+program stopped: SML/NJ's "bogus fault" and "bogus overflow fault" (the
+64-bit collector, `docs/bugreport/smlnj/GC`), SML/NJ 2026.2 running out of
+memory at `STRING.concat`, and Poly/ML taking more than half an hour over a
+date far outside 1900 to 2200.
+
+**No difference was Rune's.** Each was probed on all six systems:
+
+| Law | What differs | On | Class |
+|---|---|---|---|
+| `nRows arr = #1 (dimensions arr)` | `dimensions` of an empty array raises `Subscript` | Poly/ML | host bug |
+| `~>> (i, n) = i div pow (2, Word.toInt n)` | `~>>` rounds a negative towards zero: `~>> (~1, 0w1)` is `0` on MLKit; past 62 bits on Poly/ML too | Poly/ML, MLKit | host bug |
+| `fromInt (toInt i) = i` | `IntInf.toInt` raises `Overflow` at 2^31, with a 63-bit `int` | MLKit | host bug |
+| `exnMessage ex` holds `exnName ex` | `exnMessage Overflow` is `"overflow"` | SML/NJ | host bug |
+| `joinBaseExt (splitBaseExt p) = p` | `splitBaseExt "//"` has the base `"/"` | SML/NJ | host bug |
+| `skipWS` | does not skip the vertical tab | SML/NJ | host bug |
+| `STREAM_IO.input`, `input1` | `inputAll` of `TextIO.openString ""` raises `Io` from `Div`, so the arbitrary of instreams fails | SML/NJ | host bug |
+| `Socket.SOCK.fromString` | `toString` of the raw type is `"RAM"` | MLKit | host bug |
+| `getgrgid`, `getpwuid` | raise `Overflow` for 1000 | MLKit | host bug |
+| `getiflag`'s fourth law | `getlflag` returns the `oflag` | MLton | host bug |
+| `toTime (fromTimeUniv t)` | `toTime (fromTimeUniv Time.zeroTime)` raises `Date` | MLton, SML/NJ, MLKit | host bug |
+| `joinDirFile (splitDirFile p) = p` | an arc that is NUL raises `InvalidArc` | SML/NJ, Poly/ML | the specification leaves valid arcs to the system |
+| `PRIM_IO.compare` | the reader of `openVector` has no `getPos`, which the arbitrary of positions needs | all | the tester |
+| `foldl`, `takel`, `Real64Vector.fromList` | a drawn function gives two outcomes for one argument; a real changes | SML/NJ 110.99.9, 64 bits | the host's collector (flaky) |
+| `Date.year` and its five sisters | `Date` (SML/NJ, MLKit) or `Overflow` (MLton) for years outside the host's range; Poly/ML takes too long | four hosts | for the owner (below) |
+| `String.tokens`, `Substring.tokens` | the predicate is called twice for each character | MLKit | for the owner (below) |
+
+The deviations hold the host bugs and the rest, with their probes. Two
+differences need the owner:
+- **The Date laws' years.** The laws draw years from ~10^9 to 10^9, which Rune represents; the specification asks for 1900 to 2200, and the other systems represent less (MLton raises `Overflow` where it should raise `Date`, a bug of its own). Drawing the years of 1900 to 2200 would make the laws the signature's, true of every system; Rune's wider range stays pinned by its own checks and its note.
+- **`tokens` and its predicate.** Its laws compare the calls of `p`, and MLKit calls `p` twice for each character, which the specification does not forbid. As with `Substring.splitl`, the law would hold "when `p` has no effects".
