@@ -19,19 +19,22 @@
 #           declaration of a file that loads is in scope, and a file that
 #           later files need is a file programs can see -- so the prefix is
 #           how a reader tells them apart and not a wall.
-# requires  those of other files that it names; each must be provided by an
-#           earlier line. -Name: the file has the identifier Name without
-#           needing the file that provides it (initial.sml declares the
-#           exception Option, pervasive.sml raises it and defines the
-#           function substring, which is also the name of a type).
+# requires  those of other files that it names: the structures, signatures
+#           and functors its syntax uses where nothing in it binds them, and
+#           the top-level types it names without a structure (Deps,
+#           src/driver/deps.sml; docs/units.md, The graph); each must be
+#           provided by an earlier line. A name in a specification (the
+#           `structure Math : MATH` of REAL) or a value's (the exception
+#           Option) is none of them.
 #
-# `rune --basis-check` verifies the last two columns against the sources, and
+# `rune --basis-check` verifies the last two columns against the sources (the
+# requires column is what Deps derives), and
 # that a demand file declares modules and types only: everything it puts in
 # scope is in its provides column, so a program that mentions it loads the
 # file. (A top-level value or fixity directive belongs in an always file.) `rune --basis-deps FILE...` prints the files a program loads, and
 # `rune --basis all` loads every file.
-initial.sml     | always | swap |                       | -Option
-pervasive.sml   | always | yes  |                       | -Option -substring
+initial.sml     | always | swap |                       |
+pervasive.sml   | always | yes  |                       |
 general.sml     | demand | yes  | General               |
 stringcvt.sml   | demand | yes  | StringCvt             |
 bool.sml        | demand | yes  | Bool                  | StringCvt
@@ -54,7 +57,7 @@ word8.sml       | demand | yes  | Word8                 | RuneWordNFn
 word16.sml      | demand | yes  | Word16                | RuneWordNFn
 word32.sml      | demand | yes  | Word32                | RuneWordNFn
 char.sml        | demand | yes  | RuneEscape Char       | Int StringCvt
-string.sml      | demand | yes  | String                | Char Int List RuneEscape StringCvt -substring
+string.sml      | demand | yes  | String                | Char Int List RuneEscape StringCvt
 ieeereal.sml    | demand | yes  | IEEEReal              | StringCvt
 real.sml        | demand | yes  | Real Math LargeReal Real64 | IEEEReal Int IntInf List StringCvt
 vector.sml      | demand | yes  | Vector                | List Option
@@ -106,7 +109,7 @@ position.sml    | demand | yes  | Position              | Int
 # TIME comes before Time, which is sealed with it where it is declared: `time`
 # is abstract for the library too, and the other files go through
 # `Time.micros` and `Time.ofMicros`, which the seal file hides from a program.
-sig_time.sml    | demand | yes  | TIME                  | LargeInt LargeReal StringCvt -Time
+sig_time.sml    | demand | yes  | TIME                  | LargeInt LargeReal StringCvt
 time.sml        | demand | yes  | Time                  | Char IEEEReal Int IntInf LargeInt List Real String StringCvt TIME
 timer.sml       | demand | yes  | Timer                 | Time
 date.sml        | demand | yes  | Date                  | Char Int List Option String StringCvt Time
@@ -115,7 +118,7 @@ runeexit.sml    | demand | yes  | RuneExit RuneStatus   |
 ospath.sml      | demand | yes  | RunePath              | List String
 osfilesys.sml   | demand | yes  | RuneFileSys           | Int IntInf List RuneError RunePath Time Word
 osio.sml        | demand | yes  | RuneIODesc            | Int List RuneError Time Word
-os.sml          | demand | yes  | OS                    | RuneError RuneExit RuneFileSys RuneIODesc RunePath RuneStatus Time -IO
+os.sml          | demand | yes  | OS                    | RuneError RuneExit RuneFileSys RuneIODesc RunePath RuneStatus Time
 io.sml          | demand | yes  | IO                    |
 primio_sig.sml  | demand | yes  | PRIM_IO               | RuneIODesc
 primio_fn.sml   | demand | yes  | RunePrimIOFn          | IO MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE Option RuneIODesc
@@ -133,13 +136,13 @@ posix_filesys.sml | demand | yes | RunePosixFileSys     | List RuneError RuneFil
 posix_io.sml    | demand | yes  | RunePosixIO           | BinPrimIO CharVectorSlice List Option RuneError RuneIODesc RunePosixFileSys RunePosixProcess RuneTextPos TextPrimIO Word Word8Array Word8ArraySlice Word8Vector Word8VectorSlice
 posix_sysdb.sml | demand | yes  | RunePosixSysDB        | Int RuneError RunePosixProcEnv
 posix_tty.sml   | demand | yes  | RunePosixTTY RunePosixTTYFlagsFn | Char CharVector Int List RuneError RunePosixFileSys RunePosixProcess String Word
-posix.sml       | demand | yes  | Posix                 | -IO RunePosixError RunePosixFileSys RunePosixIO RunePosixProcEnv RunePosixProcess RunePosixSignal RunePosixSysDB RunePosixTTY
-sig_imperative_io.sml | demand | yes  | IMPERATIVE_IO | STREAM_IO -StreamIO
-imperativeio_fn.sml | demand | yes | RuneImperativeIOFn | MONO_VECTOR STREAM_IO -StreamIO
-io_functors.sml | demand | yes  | ImperativeIO PrimIO StreamIO | -Array -ArraySlice MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE IMPERATIVE_IO PRIM_IO RuneImperativeIOFn RunePrimIOFn RuneStreamIOFn STREAM_IO -Vector -VectorSlice
-textio.sml      | demand | yes  | TextIO                | CharVector CharVectorSlice IO List Option RuneFile RuneImperativeIOFn RuneIODesc RuneStreamIOFn RuneTextPos -StreamIO String Substring TextPrimIO
+posix.sml       | demand | yes  | Posix                 | RunePosixError RunePosixFileSys RunePosixIO RunePosixProcEnv RunePosixProcess RunePosixSignal RunePosixSysDB RunePosixTTY
+sig_imperative_io.sml | demand | yes  | IMPERATIVE_IO | STREAM_IO
+imperativeio_fn.sml | demand | yes | RuneImperativeIOFn | MONO_VECTOR STREAM_IO
+io_functors.sml | demand | yes  | ImperativeIO PrimIO StreamIO | IMPERATIVE_IO MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE PRIM_IO RuneImperativeIOFn RunePrimIOFn RuneStreamIOFn STREAM_IO
+textio.sml      | demand | yes  | TextIO                | CharVector CharVectorSlice IO List Option RuneFile RuneIODesc RuneImperativeIOFn RuneStreamIOFn RuneTextPos String Substring TextPrimIO
 byte.sml        | demand | yes  | Byte                  | Substring Word8 Word8Array Word8ArraySlice Word8Vector Word8VectorSlice substring
-binio.sml       | demand | yes  | BinIO                 | BinPrimIO IO Position RuneFile RuneImperativeIOFn RuneIODesc RuneStreamIOFn -StreamIO Word8 Word8Vector Word8VectorSlice
+binio.sml       | demand | yes  | BinIO                 | BinPrimIO IO Position RuneFile RuneIODesc RuneImperativeIOFn RuneStreamIOFn Word8 Word8Vector Word8VectorSlice
 runenet.sml     | demand | yes  | RuneNet               |
 socket.sml      | demand | yes  | RuneSocket Socket     | IntInf List Option RuneError RuneIODesc RuneNet Time Word Word8Array Word8ArraySlice Word8Vector Word8VectorSlice
 netdb.sml       | demand | yes  | NetHostDB NetProtDB NetServDB RuneNetHostDB RuneNetProtDB RuneNetServDB | Char Int RuneNet String StringCvt
@@ -157,13 +160,13 @@ compiler.sml    | demand | no   | Compiler RuneCompiler RuneShow | Array Char Ch
 # ---- the signatures of the specification (scripts/gen-basis-sigs.sh)
 sig_array.sml | demand | yes  | ARRAY | Vector
 sig_array_slice.sml | demand | yes  | ARRAY_SLICE | Array Vector VectorSlice
-sig_bin_io.sml | demand | yes  | BIN_IO | BinPrimIO IMPERATIVE_IO StreamIO Word8 Word8Vector
+sig_bin_io.sml | demand | yes  | BIN_IO | BinPrimIO IMPERATIVE_IO Word8 Word8Vector
 sig_bit_flags.sml | demand | yes  | BIT_FLAGS | SysWord
 sig_bool.sml | demand | yes  | BOOL | StringCvt
 sig_byte.sml | demand | yes  | BYTE | Word8 Word8Array Word8ArraySlice Word8Vector Word8VectorSlice substring
 sig_char.sml | demand | yes  | CHAR | Char String StringCvt
 sig_command_line.sml | demand | yes  | COMMAND_LINE |
-sig_date.sml | demand | yes  | DATE | Date StringCvt Time
+sig_date.sml | demand | yes  | DATE | StringCvt Time
 sig_general.sml | demand | yes  | GENERAL |
 sig_generic_sock.sml | demand | yes  | GENERIC_SOCK | Socket
 sig_ieee_real.sml | demand | yes  | IEEE_REAL | StringCvt
@@ -176,7 +179,7 @@ sig_math.sml | demand | yes  | MATH |
 sig_net_host_db.sml | demand | yes  | NET_HOST_DB | StringCvt
 sig_net_prot_db.sml | demand | yes  | NET_PROT_DB |
 sig_net_serv_db.sml | demand | yes  | NET_SERV_DB |
-sig_option.sml | demand | yes  | OPTION | Option
+sig_option.sml | demand | yes  | OPTION |
 sig_os_file_sys.sml | demand | yes  | OS_FILE_SYS | Position Time
 sig_os_io.sml | demand | yes  | OS_IO | Time
 sig_os_path.sml | demand | yes  | OS_PATH |
@@ -187,9 +190,9 @@ sig_posix_proc_env.sml | demand | yes  | POSIX_PROC_ENV | SysWord Time
 sig_posix_signal.sml | demand | yes  | POSIX_SIGNAL | SysWord
 sig_posix_sys_db.sml | demand | yes  | POSIX_SYS_DB |
 sig_sml90.sml | demand | yes  | SML90 |
-sig_string.sml | demand | yes  | STRING | String StringCvt substring
+sig_string.sml | demand | yes  | STRING | String StringCvt
 sig_string_cvt.sml | demand | yes  | STRING_CVT |
-sig_substring.sml | demand | yes  | SUBSTRING | substring
+sig_substring.sml | demand | yes  | SUBSTRING |
 sig_text_stream_io.sml | demand | yes  | TEXT_STREAM_IO | Char CharVector STREAM_IO substring
 sig_timer.sml | demand | yes  | TIMER | Time
 sig_unix_sock.sml | demand | yes  | UNIX_SOCK | Socket
@@ -197,26 +200,26 @@ sig_vector.sml | demand | yes  | VECTOR |
 sig_vector_slice.sml | demand | yes  | VECTOR_SLICE | Vector
 sig_posix_tty.sml | demand | yes  | POSIX_TTY | BIT_FLAGS SysWord
 sig_posix_io.sml | demand | yes  | POSIX_IO | BIT_FLAGS BinPrimIO Position TextPrimIO Word8ArraySlice Word8Vector Word8VectorSlice
-sig_real.sml | demand | yes  | REAL | IEEEReal LargeInt LargeReal MATH Math StringCvt
-sig_os.sml | demand | yes  | OS | IO OS_FILE_SYS OS_IO OS_PATH OS_PROCESS
-sig_text.sml | demand | yes  | TEXT | CHAR Char CharArray CharArraySlice CharVector CharVectorSlice MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE STRING SUBSTRING String Substring
-sig_text_io.sml | demand | yes  | TEXT_IO | Char StreamIO StringCvt TEXT_STREAM_IO TextPrimIO substring
+sig_real.sml | demand | yes  | REAL | IEEEReal LargeInt LargeReal MATH StringCvt
+sig_os.sml | demand | yes  | OS | OS_FILE_SYS OS_IO OS_PATH OS_PROCESS
+sig_text.sml | demand | yes  | TEXT | CHAR MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE STRING SUBSTRING
+sig_text_io.sml | demand | yes  | TEXT_IO | Char StringCvt TEXT_STREAM_IO TextPrimIO substring
 sig_windows.sml | demand | yes  | WINDOWS | BIT_FLAGS BinIO OS SysWord TextIO Time Word8Vector
 sig_unix.sml | demand | yes  | UNIX | BinIO OS TextIO Word8
 sig_socket.sml | demand | yes  | SOCKET | NetHostDB OS Time Word8ArraySlice Word8Vector Word8VectorSlice
 sig_posix_process.sml | demand | yes  | POSIX_PROCESS | BIT_FLAGS OS SysWord Time Word8
 sig_posix_file_sys.sml | demand | yes  | POSIX_FILE_SYS | BIT_FLAGS OS Position SysWord Time
 sig_posix_error.sml | demand | yes  | POSIX_ERROR | OS SysWord
-sig_posix.sml | demand | yes  | POSIX | IO POSIX_ERROR POSIX_FILE_SYS POSIX_IO POSIX_PROCESS POSIX_PROC_ENV POSIX_SIGNAL POSIX_SYS_DB POSIX_TTY
+sig_posix.sml | demand | yes  | POSIX | POSIX_ERROR POSIX_FILE_SYS POSIX_IO POSIX_PROCESS POSIX_PROC_ENV POSIX_SIGNAL POSIX_SYS_DB POSIX_TTY
 # ---- end of the signatures
 # After the signatures, which they are sealed with or name.
 real32.sml      | demand | yes  | Real32 RuneReal32 RuneReal32Lit | Char IEEEReal Int IntInf List Math REAL Real String StringCvt Word
 pack_real32.sml | demand | yes  | PackReal32Big PackReal32Little RunePackReal32Fn | IEEEReal Real Real32 RunePackWordFn Word Word8 Word8Array
 mono_real32.sml | demand | yes  | Real32Array Real32Array2 Real32ArraySlice Real32Vector Real32VectorSlice | MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE Real32 RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
 widechar.sml    | demand | yes  | RuneWideChar RuneWideCharImpl RuneWideCharLit WideChar WideCharArray WideCharArray2 WideCharArraySlice WideCharVector WideCharVectorSlice | CHAR Char Int MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR_EQ MONO_VECTOR_SLICE RuneEscape RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn String StringCvt
-widestring.sml  | demand | yes  | RuneWideString RuneWideStringLit RuneWideSubstring WideString WideSubstring | Char Int List RuneEscape RuneWideCharImpl STRING String StringCvt SUBSTRING -substring WideChar WideCharVector WideCharVectorSlice
-widetext.sml    | demand | yes  | WideText              | -Char -CharArray -CharArraySlice -CharVector -CharVectorSlice -String -Substring WideChar WideCharArray WideCharArraySlice WideCharVector WideCharVectorSlice WideString WideSubstring
-widetextio.sml  | demand | yes  | WideTextIO WideTextPrimIO | Char Int IO List RuneImperativeIOFn RunePrimIOFn RuneStreamIOFn RuneWideTextPos -StreamIO String TextIO WideChar WideCharArray WideCharArraySlice WideCharVector WideCharVectorSlice WideString WideSubstring
+widestring.sml  | demand | yes  | RuneWideString RuneWideStringLit RuneWideSubstring WideString WideSubstring | Char Int List RuneEscape RuneWideCharImpl STRING SUBSTRING String StringCvt WideChar WideCharVector WideCharVectorSlice
+widetext.sml    | demand | yes  | WideText              | WideChar WideCharArray WideCharArraySlice WideCharVector WideCharVectorSlice WideString WideSubstring
+widetextio.sml  | demand | yes  | WideTextIO WideTextPrimIO | Char IO Int List RuneImperativeIOFn RunePrimIOFn RuneStreamIOFn RuneWideTextPos String TextIO WideChar WideCharArray WideCharArraySlice WideCharVector WideCharVectorSlice WideString WideSubstring
 # ---- what a program sees of the structures
 # A seal file binds the structures of a file again, each as its signature
 # shows it (`structure List : LIST = List`), so that a program has the members
@@ -276,14 +279,14 @@ seal_position.sml       | seal   | yes  | Position | INTEGER
 seal_time.sml           | seal   | yes  | Time | TIME
 seal_timer.sml          | seal   | yes  | Timer | TIMER
 seal_date.sml           | seal   | yes  | Date | DATE
-seal_os.sml             | seal   | yes  | OS | -IO
+seal_os.sml             | seal   | yes  | OS |
 seal_io.sml             | seal   | yes  | IO | 
 seal_textprimio.sml     | seal   | yes  | TextPrimIO | Char CharArray CharArraySlice CharVector CharVectorSlice PRIM_IO
 seal_binprimio.sml      | seal   | yes  | BinPrimIO | PRIM_IO Position Word8 Word8Array Word8ArraySlice Word8Vector Word8VectorSlice
 seal_posix.sml          | seal   | yes  | Posix | OS POSIX
-seal_textio.sml         | seal   | yes  | TextIO | -StreamIO TEXT_IO
+seal_textio.sml         | seal   | yes  | TextIO | TEXT_IO
 seal_byte.sml           | seal   | yes  | Byte | BYTE
-seal_binio.sml          | seal   | yes  | BinIO | BIN_IO -StreamIO
+seal_binio.sml          | seal   | yes  | BinIO | BIN_IO
 seal_socket.sml         | seal   | yes  | Socket | SOCKET
 seal_netdb.sml          | seal   | yes  | NetHostDB NetProtDB NetServDB | NET_HOST_DB NET_PROT_DB NET_SERV_DB
 seal_inet6sock.sml      | seal   | yes  | INet6Sock | INET6_SOCK

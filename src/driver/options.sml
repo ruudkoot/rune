@@ -24,6 +24,10 @@ struct
   val explainRebuild = ref false               (* --explain-rebuild: say why each unit was compiled *)
   val verifyCache = ref false                  (* --verify-cache: compile each unit found, and compare *)
   val wholeFromUnits = ref false               (* --whole: with --units, one program of the units' Mid *)
+  val deps = ref false                         (* --deps: the files' order, by what they declare and use *)
+  val depsDot = ref false                      (* --deps-dot: the same as a graph in DOT *)
+  val depsUses = ref false                     (* --deps-uses: the module names each input uses *)
+  val includeDirs : string list ref = ref []   (* -I DIR: where an entry point's files are looked for *)
   val noWarnings = ref false
   val showVersion = ref false
   val showHelp = ref false
@@ -77,6 +81,12 @@ struct
     \                    fail where the cache's is not what compiling it gives\n\
     \  --whole           with --units, make one program of the units' Mid, with\n\
     \                    the passes of a whole program, and not link their code\n\
+    \  --deps            print the files in an order where each comes after the\n\
+    \                    files declaring the modules it uses (docs/units.md)\n\
+    \  --deps-dot        the same, as a graph in DOT\n\
+    \  --deps-uses       print the module names the inputs use, one per line\n\
+    \  -I DIR            with one input, an entry point: compile before it the files\n\
+    \                    of its directory and of each -I DIR that it needs\n\
     \  --typecheck-only  stop after type checking\n\
     \  --type-work=N     type traversal budget per top-level declaration (50000000)\n\
     \  --match-work=N    pattern-analysis budget per match (1000000)\n\
@@ -157,6 +167,11 @@ struct
     | "--explain-rebuild" :: rest => (explainRebuild := true; parse rest)
     | "--verify-cache" :: rest => (verifyCache := true; parse rest)
     | "--whole" :: rest => (wholeFromUnits := true; parse rest)
+    | "--deps" :: rest => (deps := true; parse rest)
+    | "--deps-dot" :: rest => (depsDot := true; parse rest)
+    | "--deps-uses" :: rest => (depsUses := true; parse rest)
+    | "-I" :: d :: rest => (includeDirs := !includeDirs @ [d]; parse rest)
+    | ["-I"] => raise Usage "-I requires a directory"
     | "--typecheck-only" :: rest => (typecheckOnly := true; parse rest)
     | "--no-warnings" :: rest => (noWarnings := true; parse rest)
     | "--dump-tokens" :: rest => (dumpTokens := true; parse rest)

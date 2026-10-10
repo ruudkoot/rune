@@ -62,30 +62,17 @@ done
 cut -d ' ' -f 1 "$tmp/sigs" | sort -u > "$tmp/generated"
 cat "$tmp/provided" "$tmp/generated" | sort -u > "$tmp/all"
 
-# Write each file, and find what it requires: the names in it that another
-# file provides, heads of long identifiers only, as the loader counts them (a
-# signature's own name excepted).
+# Write each file, and find what it requires: the module names it uses that
+# another file provides, as rune --basis-check derives them (Deps,
+# src/driver/deps.sml), a signature's own name excepted.
 mkdir -p "$tmp/out"
 : > "$tmp/edges"
 : > "$tmp/lines"
 while read -r sig src; do
   name=sig_$(echo "$sig" | tr 'A-Z' 'a-z').sml
   sed 's/SPEC_\([A-Z0-9_]*\)/\1/g' "$src" > "$tmp/out/$name"
-  # identifiers, and the heads of long identifiers, outside comments
-  requires=$(sed 's/SPEC_\([A-Z0-9_]*\)/\1/g' "$src" |
-    awk '{ line = $0; out = "";
-           while (length(line) > 0) {
-             if (depth == 0 && substr(line, 1, 2) == "(*") { depth = 1; line = substr(line, 3); continue }
-             if (depth > 0) {
-               if (substr(line, 1, 2) == "(*") { depth++; line = substr(line, 3); continue }
-               if (substr(line, 1, 2) == "*)") { depth--; line = substr(line, 3); continue }
-               line = substr(line, 2); continue
-             }
-             out = out substr(line, 1, 1); line = substr(line, 2)
-           }
-           print out }' |
-    grep -o "[A-Za-z][A-Za-z0-9_']*\(\.[A-Za-z][A-Za-z0-9_']*\)*" | sed 's/\..*//' |
-    sort -u | grep -x -F -f "$tmp/all" | grep -v -x "$sig" | tr '\n' ' ')
+  # the module names it uses, as rune --basis-check derives them (Deps)
+  requires=$("$rune" --deps-uses "$tmp/out/$name" | grep -x -F -f "$tmp/all" | grep -v -x "$sig" | tr '\n' ' ')
   printf '%s | demand | yes  | %s | %s\n' "$name" "$sig" "$requires" | sed 's/ *$//' >> "$tmp/lines"
   echo "$sig $sig" >> "$tmp/edges"
   for r in $requires; do

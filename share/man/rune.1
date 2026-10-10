@@ -215,6 +215,20 @@ set and not empty does the same, and for the REPL's
 .B use
 too.
 .TP
+.B \-\-deps
+Print the inputs in an order where each comes after the files that declare
+the modules it uses, or name a cycle, a module declared twice or a file
+that declares something other than modules and type abbreviations.
+.TP
+.B \-\-deps\-dot
+The same, as a graph in DOT.
+.TP
+.BI \-I " DIR"
+With one input, a program's entry point: compile before it the files of its
+directory and of each
+.I DIR
+that declare the modules it uses, and those they need.
+.TP
 .B \-\-whole
 With
 .BR \-\-units ,

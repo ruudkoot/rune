@@ -58,4 +58,5 @@ src/driver/unitbasis.sml
 src/driver/pipeline.sml
 src/driver/unitmid.sml
 src/driver/unitcache.sml
+src/driver/deps.sml
 src/driver/main.sml

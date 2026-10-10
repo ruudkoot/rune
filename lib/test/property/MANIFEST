@@ -17,7 +17,7 @@ co.sml        | demand | yes | Co             | CO Char List PropertySource Rand
 show_sig.sml  | demand | yes | SHOW           | Word64
 show.sml      | demand | yes | Show           | Array Bool Char CharVector Int List Real SHOW String StringCvt Vector Word Word64
 arb_sig.sml   | demand | yes | ARB            | Array2 ArraySlice Gen IntInf VectorSlice Word64
-arb.sml       | demand | yes | Arb            | ARB Array Array2 ArraySlice Co Gen Int IntInf List ListPair Option Random Real Show Vector VectorSlice Word64
+arb.sml       | demand | yes | Arb            | ARB Array Array2 ArraySlice Co Gen Int IntInf List ListPair Random Real Show Vector VectorSlice Word64
 prop_sig.sml  | demand | yes | PROP           | Arb Gen PropertySource
 prop.sml      | demand | yes | Prop           | Arb Gen PROP PropertySource String
 check_sig.sml | demand | yes | CHECK          | Prop Word64

@@ -99,7 +99,9 @@ struct
                                  andalso (case StringMap.find (provider, n) of
                                             SOME files => List.exists (fn f => f <> BasisManifest.path e) files
                                           | NONE => false))
-                        (StringMap.listKeys (namesOf (toks, StringMap.empty)))
+                        (StringMap.listKeys
+                           (List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) StringMap.empty
+                                       (#uses (Deps.analyse (BasisManifest.path e, prog)))))
           (* -Name in the column: named, but not required *)
           fun plain n = if String.isPrefix "-" n then String.extract (n, 1, NONE) else n
           val () = if used = sorted (List.map plain (#requires e ())) then ()
@@ -135,8 +137,84 @@ struct
       OS.Process.success
     end
 
+  (* ---- the graph (Deps; the incremental roadmap's M8) ---- *)
+
+  (* a file's syntax, for the names it declares and uses: the fixity of the
+     initial basis, as a file of a group's has no other (D15) *)
+  fun syntaxOf (path : string) : Ast.program = #1 (Parser.parseTokensWith (loadTokens path, Fixity.initial))
+
+  (* where a file breaks the discipline, as errors *)
+  fun breaksOf (f : Deps.file) : string list =
+    List.map (fn (sp, what) => Error.format (sp, "a file of a group declares modules and type abbreviations only, and this is " ^ what))
+             (#breaks f)
+
+  (* --deps, --deps-dot: the inputs in an order the modules they declare and
+     use give, or as the graph *)
+  fun depsCommand () : OS.Process.status =
+    if !Options.depsUses then
+      (* the names, whatever they are of: what a MANIFEST's requires
+         column is made of (scripts/gen-basis-sigs.sh) *)
+      let
+        val names = List.foldl (fn (p, m) => List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) m
+                                                        (#uses (Deps.analyse (p, syntaxOf p))))
+                               StringMap.empty (!Options.inputs)
+      in List.app println (StringMap.listKeys names); OS.Process.success end
+    else
+    let
+      val files = List.map (fn p => Deps.analyse (p, syntaxOf p)) (!Options.inputs)
+      val broken = List.concat (List.map breaksOf files)
+    in
+      if not (List.null broken) then (List.app eprintln broken; OS.Process.failure)
+      else
+        (let val (ordered, edges) = Deps.order files
+         in
+           if !Options.depsDot then print (Deps.dot edges) else List.app (fn (f : Deps.file) => println (#path f)) ordered;
+           OS.Process.success
+         end)
+        handle Deps.Graph msg => (eprintln ("rune: " ^ msg); OS.Process.failure)
+    end
+
+  (* -I DIR: the one input an entry point, and before it the files of its
+     directory and of each DIR that it needs, in the graph's order. A file
+     that breaks the discipline cannot be ordered, and is none of them *)
+  fun entryFiles (main : string) : string list =
+    let
+      fun smlFiles d =
+        (let
+           val s = OS.FileSys.openDir (if d = "" then "." else d)
+           fun go acc = case OS.FileSys.readDir s of
+                          NONE => acc
+                        | SOME f => go (if String.isSuffix ".sml" f then OS.Path.joinDirFile {dir = d, file = f} :: acc else acc)
+         in go [] before OS.FileSys.closeDir s end)
+        handle OS.SysErr _ => raise Options.Usage ("-I: cannot read the directory " ^ d)
+      fun sorted l = StringMap.listKeys (List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty l)
+      val same = fn (a, b) => OS.Path.mkCanonical a = OS.Path.mkCanonical b
+      val candidates = List.filter (fn p => not (same (p, main)))
+                                   (sorted (List.concat (List.map smlFiles (OS.Path.dir main :: !Options.includeDirs))))
+      val analysed = List.map (fn p => Deps.analyse (p, syntaxOf p)) candidates
+      val (group, broken) = List.partition (fn (f : Deps.file) => List.null (#breaks f)) analysed
+      val program = Deps.analyse (main, syntaxOf main)
+      (* a file left out that declares what the program names: said *)
+      val () =
+        List.app (fn (f : Deps.file) =>
+                    if List.exists (fn d => List.exists (fn u => u = d) (#uses program)) (#declares f)
+                    then eprintln ("rune: " ^ #path f ^ " declares a module " ^ main ^ " names, and breaks the discipline: "
+                                   ^ hd (breaksOf f))
+                    else ())
+                 broken
+    in
+      List.map #path (Deps.closure (group, #uses program)) @ [main]
+      handle Deps.Graph msg => raise Options.Usage msg
+    end
+
   fun compile () : OS.Process.status =
     let
+      (* -I: the entry point's files before it *)
+      val () =
+        case (!Options.includeDirs, !Options.inputs) of
+          ([], _) => ()
+        | (_, [main]) => Options.inputs := entryFiles main
+        | _ => raise Options.Usage "-I wants one input, the entry point"
       val inputs = !Options.inputs
       val () = if List.null inputs then raise Options.Usage "no input files" else ()
     in
@@ -546,6 +624,7 @@ struct
      if !Options.showHelp then (print Options.usage; OS.Process.success)
      else if !Options.showVersion then (println ("rune " ^ Config.version); OS.Process.success)
      else if !Options.basisCheck then checkManifest ()
+     else if !Options.deps orelse !Options.depsDot orelse !Options.depsUses then depsCommand ()
      else if !Options.dumpTokens then dumpTokens ()
      else if isSome (!Options.readMid) then readMid (valOf (!Options.readMid))
      else compile ())

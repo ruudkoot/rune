@@ -19,6 +19,9 @@ _arguments -s \
   '--explain-rebuild[with --units, say why each unit was compiled]' \
   '--verify-cache[with --units, compile each unit the cache has too, and compare]' \
   '--whole[with --units, one program of the units'"'"' Mid, as a whole-program compile]' \
+  '--deps[print the files in the order the modules they declare and use give]' \
+  '--deps-dot[the files'"'"' dependency graph in DOT]' \
+  '*-I[an entry point'"'"'s directory of files]:directory:_files -/' \
   '--typecheck-only[stop after type checking]' \
   '--no-warnings[do not print match warnings]' \
   '--dump-tokens[print the token stream]' \

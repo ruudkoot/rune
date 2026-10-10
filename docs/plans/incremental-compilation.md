@@ -44,7 +44,7 @@ What it rests on:
 | M5 | HOL4 on Rune | in progress 2026-10-09: `bin/build` through `src/boss` and `hol` proving, on a local branch of HOL4; what it costs against Poly/ML and why, and `Runtime.share`, `Compiler.compile` through the cache and a leaner REPL that came of it, in [hol4.md](hol4.md) |
 | M6 | The cache, with cut-off | the first two parts done 2026-10-09, `40e2b23a`: the export basis, names that do not depend on what came before, every unit through its basis, unit files by keys, the cache with usages by binder, the frozen Basis, `use` through it, `tests/incremental` (*M6, ... as built*); the soundness of it examined and fixed in [build-cache-issues.md](build-cache-issues.md), with `--verify-cache` and a mutation tester; the third part, fingerprints per entry and entries loaded across changed units, built 2026-10-10 (*M6, the third part as built*); the warm-build time left to M12 |
 | M7 | Mid per unit: whole-program builds from the cache | built 2026-10-10: `rune --units --whole`, units' Mid in the cache, the canonical renumbering, and a program made of its units' Mid the bytes of the whole-program compile (*M7, as built*) |
-| M8 | The dependency graph, and a program from an entry point | |
+| M8 | The dependency graph, and a program from an entry point | built 2026-10-10: `rune --deps`, `--deps-dot`, `-I` entry points, the MANIFEST's requires column derived and checked (*M8, as built*) |
 | M9 | Compiling against a signature alone, and dynamic modules | |
 | M10 | The build language and virtual modules | |
 | M11 | Parallel and reproducible builds | |
@@ -2830,6 +2830,99 @@ The three steps as planned, with what building them showed (`docs/units.md`,
   MANIFEST's requires columns; the entry-point build of every example
   matches its listed build.
 * **Touches:** M10; the language server (the graph of a project).
+
+#### M8, as built (2026-10-10)
+
+* **`Deps`** (`src/driver/deps.sml`): what each file declares at its top
+  level -- structures, signatures, functors, type abbreviations -- and the
+  module names it uses where nothing in scope binds them, from its syntax
+  with the scopes of structures, functors' parameters, signatures'
+  specifications and `let`; the discipline (a top-level value, function,
+  exception, datatype, fixity directive or `open` named with its line); the
+  order, which keeps the given order wherever the uses allow; a cycle and a
+  name declared twice refused; `rune --deps` and `--deps-dot`; `-I DIR`,
+  which makes the one input an entry point; `tests/deps` (`make test-deps`,
+  in `make check`); `docs/units.md`, *The graph*.
+* **The compiler's sources** come back from `rune --deps` in the order of
+  `sources.txt`, and given in reverse, in an order the compiler builds in.
+* **The Basis Library's MANIFEST**: `--basis-check` checks the requires
+  column against what `Deps` derives rather than against every identifier
+  of the file's tokens, and 27 files' column became what it derives. The
+  tokens had made a requirement of a name in a specification (`structure
+  Math : MATH` in `REAL`) or of a value's (the exception `Option`), and
+  the `-Name` entries were the way around that; none is left.
+* **The entry points** (examples/benchmarks, a program's `shared/main.sml`
+  with `-I` its benchmark's directory, against the catalog's list of its
+  sources): 122 of 152 are the same bytes; 10 are their list less a helper
+  file the list names and the program never uses, which has no effect at
+  its top level (`shared/output.sml`, `files.sml`, `input.sml`); 20 are
+  ported programs whose files declare values or functions at the top level,
+  which the analysis names and cannot order -- the case D15 leaves to an
+  ordered list (M10).
+* **Against D15 as written:** the entry point is `-I`'s and not every
+  single-file compile's: `rune main.sml` alone compiles `main.sml`, as it
+  did, so that a file that names a structure some other file of its
+  directory declares (`tests/lang` has 276 files in one directory) is not
+  compiled with that file.
+
+#### M8 to M12, planned again after M7 (2026-10-10)
+
+What M6 and M7 measured changes the plan below in three places:
+
+* **The production build from the cache is `--whole`**, and it costs what
+  the passes over the whole program cost: for the compiler 4.4 s warm
+  against 4.0 s compiled whole, for MLton (whose front end is nearly all
+  of its compile) to be measured by `tests/incremental/mlton.sh`. So M11's
+  parallel build helps the front end and the units' own passes, and leaves
+  the whole program's to one process: what it gains is the front end's
+  share, which M11 measures rather than assumes.
+* **A program that loads a dynamic module is built in units** (M9): a
+  module names what it imports by unit identity (M3, M6), and a program
+  compiled whole has none, its units renumbered into one (M7). The linked
+  program keeps its units' exports for that; a whole program cannot host a
+  dynamic module, and is told so.
+* **M10's build files list units, and the cache is theirs** (M6): what a
+  build file adds over `-I` and `sources.txt` is libraries, export lists
+  and virtual modules, which M10 builds on M8's graph and M9's ABI as
+  planned.
+
+#### M9, the design (2026-10-10)
+
+* **The ABI of a signature** (D17): a slot per value specification, in
+  the signature's order, substructures' in place, recursively; a
+  datatype specification's constructors take their tags in the
+  specification's order; exceptions are values in their slots; abstract
+  types stay abstract to the client. Its fingerprint is the hash of the
+  signature's fingerprint text (`UnitBasis.fpSigma`), which names every
+  type by its unit's name and path, so a client and an implementation
+  compiled against the same signature in the same library agree.
+* **The client**: `structure X = _dynamic "path" : SIG` elaborates as an
+  opaque ascription of no structure: fresh abstract types, a fresh global
+  per slot. Its translation calls `rt_dynamic (path, fingerprint, n)` where
+  the declaration is, which loads the unit at `path`, runs its top level,
+  checks the fingerprint it exported against the client's, and gives the
+  slots as a tuple, which the client's globals are set from; a mismatch,
+  or a unit that exports none, is `Dynamic.Mismatch` naming both.
+* **The implementation**: `_export structure Name : SIG = strexp` in a
+  unit, compiled with `--units`. The signature is known before the body,
+  so a datatype of the body that a datatype specification of the signature
+  matches by name takes its tags in the specification's order (D17's
+  renumbering, without a second elaboration); the structure is ascribed
+  opaquely; the unit's top level ends by handing the slots, in the ABI's
+  order, and the fingerprint to `rt_dynamic_export`.
+* **Linking the module into the program**: a unit's code names what it
+  imports by unit identity, and a program linked from units keeps its
+  units' identities and exports in a section of its `.rbc`, which the VM
+  enters in its table of exports at start (the table `Runtime.link` already
+  resolves a loaded unit against). So a module and the program share the
+  Basis Library's units, and two modules that import one library share
+  its types (SMLSC's definite references).
+* **`Dynamic.load file`**, the untyped form (D18): `Runtime.load`, which
+  M3 built, under the name D18 gives it, for a plugin that registers
+  itself through a structure of the program.
+* **Tests** (`tests/dynamic`): a plugin; a module through `_dynamic`; a
+  mismatch; two modules sharing a library's types; a module loaded under
+  `--jit=all`; the constructor order renumbered.
 
 ### M9. Compiling against a signature alone, and dynamic modules (M, about 700 SML and 100 C)
 

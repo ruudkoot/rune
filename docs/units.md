@@ -317,6 +317,42 @@ taken from there, and wants the same bytes three times; `tests/units`
 does the same for its programs of several files; `make test-incremental`
 runs the scenarios of `tests/incremental/SCENARIOS.md` it can be held to.
 
+## The graph
+
+`rune --deps FILE...` puts files in an order where each comes after the
+files that declare the modules it uses (`Deps`, `src/driver/deps.sml`; the
+incremental roadmap's M8 and D15), and `--deps-dot` gives the graph in DOT,
+each file to the files it needs. A file declares the structures,
+signatures, functors and top-level type abbreviations of its top level;
+it uses the first structure of a long name (`A` in `A.B.x`), a signature's
+or a functor's name, and a type named without a structure, where nothing in
+scope binds it -- a structure of its own, a functor's parameter, a
+signature's specification. The order keeps the order given wherever the
+uses allow it: the compiler's own sources in the order of `sources.txt`
+come back as they are, and in any order as an order it builds in.
+
+The order is the files' only where each file keeps a discipline (CM's): its
+top-level declarations declare structures, signatures, functors, type
+abbreviations or (the Basis Library's) overloading, and none declares a
+value, a function, an exception, a datatype -- whose constructors are
+values -- or a fixity, or opens a structure, because a use of a value or of
+an operator names no module, and the analysis cannot see it. A file that
+breaks it is named, with the line; so are a name two files declare and a
+cycle. Inside a structure anything goes, but a name a structure `open`ed
+may bring in is counted as a use where a file of the group declares it,
+which the analysis cannot tell apart.
+
+**An entry point.** With `-I DIR`, the one input is a program's entry
+point: the `.sml` files of its directory and of each `-I DIR` are analysed,
+and those its uses reach -- the files declaring what it names, and those
+they need -- are compiled before it, in the graph's order. A file that
+breaks the discipline is none of them; where it declares a module the
+program names, the compiler says so.
+
+**The Basis Library's MANIFEST** says what each of its files provides and
+requires (`lib/basis/MANIFEST`), and `rune --basis-check` checks both
+columns against the sources: the requires column is what `Deps` derives.
+
 ## Errors
 
 A top-level declaration that fails to elaborate is reported at once and
