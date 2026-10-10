@@ -157,7 +157,7 @@ all: vm boot runedoc runeopt manifests basis-cache
 # its sources by the first host's compiler, which builds before any rune
 # (rune --basis-index)
 # the libraries of docs/plans/repl.md (The libraries)
-REPL_LIBS := unicode json
+REPL_LIBS := unicode json terminal
 manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
 lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/basis
@@ -171,6 +171,8 @@ lib/unicode/MANIFEST: lib/unicode/library.build $(wildcard lib/unicode/*.sml) li
 	bin/rune-$(BOOTHOST) --basis-index lib/unicode
 lib/json/MANIFEST: lib/json/library.build $(wildcard lib/json/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/json
+lib/terminal/MANIFEST: lib/terminal/library.build $(wildcard lib/terminal/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/terminal
 
 # The frozen Basis Library (docs/units.md, The cache): every unit of
 # lib/basis compiled once, for each bytecode, into lib/cache, which every
@@ -991,6 +993,7 @@ DOCS_PROPERTY := --lib lib --library test/property --out docs/generated/test/pro
 # docs/generated/NAME (REPL_LIBS, with the manifests)
 TITLE_unicode := Unicode
 TITLE_json := JSON
+TITLE_terminal := Terminal
 docs_lib = --lib lib --library $(1) --out docs/generated/$(1) --basis-docs ../basis --title "$(TITLE_$(1))"
 
 docs: $(RUNEDOC) manifests

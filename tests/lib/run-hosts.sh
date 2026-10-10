@@ -41,6 +41,7 @@ random="lib/random/random_sig.sml lib/random/random.sml"
 property=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/test\/property\/\1/p' lib/test/property/MANIFEST | tr '\n' ' ')
 unicode=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/unicode\/\1/p' lib/unicode/MANIFEST | tr '\n' ' ')
 json=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/json\/\1/p' lib/json/MANIFEST | tr '\n' ' ')
+terminal=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/terminal\/\1/p' lib/terminal/MANIFEST | tr '\n' ' ')
 tests="random.kat|$random|tests/lib/random/kat.sml|kat
 random.props|$random|tests/lib/random/props.sml|props
 property.core|$random $property|tests/lib/property/core.sml|core
@@ -48,7 +49,9 @@ property.shrink|$random $property|tests/lib/property/shrink.sml|props
 unicode.utf8|$random $unicode|tests/lib/unicode/utf8.sml|props
 unicode.graphemes|$unicode|tests/lib/unicode/graphemes.sml|props
 json.suite|$unicode $json|tests/lib/json/suite.sml|props
-json.roundtrip|$random $unicode $json|tests/lib/json/roundtrip.sml|props"
+json.roundtrip|$random $unicode $json|tests/lib/json/roundtrip.sml|props
+terminal.key|$random $unicode $terminal|tests/lib/terminal/key.sml|props
+terminal.style|$random $unicode $terminal|tests/lib/terminal/style.sml|props"
 
 passed=0
 explained=0

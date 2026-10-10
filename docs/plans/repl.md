@@ -49,7 +49,7 @@ M1 measures them again on a quiet machine.
 | M1 | The terminal harness and the baselines | done |
 | M2 | The palette and coloured diagnostics | done |
 | M3 | The console in the runtime and the Basis | done |
-| M4 | `lib/terminal`: styles, keys, raw mode | planned |
+| M4 | `lib/terminal`: styles, keys, raw mode | done |
 | M5 | `lib/terminal`: the line editor | planned |
 | M6 | The REPL on the editor | planned |
 | M7 | Printing | planned |
@@ -2151,6 +2151,16 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
   * `make test-lib-hosts` on the files marked `host yes`.
 * **Done when:** green on Rune and on the hosts; P1's decoder retired
   for `Key`.
+* **As built** (2026-10-10): `Style`, `Key`, `TERMINAL` with `Terminal`
+  (over `RuneTerminal`, `host no`) and `PosixTerminal` (over `Posix.TTY`,
+  `host yes`), and the width policy as `Terminal.policy` over
+  `lib/unicode`'s `Grapheme`; `tests/lib/terminal/key.sml` (24 streams,
+  every split in two, a byte a read, 2,000 random streams in random
+  reads) and `style.sml`. The decoder reads the kitty protocol's
+  `CSI u` and xterm's `modifyOtherKeys`; asking a terminal for the kitty
+  protocol is M6's. A named key is `Key.Named`, so that the signature
+  names no structure that a later file provides.
+
 ### M5. `lib/terminal`: the line editor (L, about 2,500 SML)
 
 * **What:** D7 to D11.

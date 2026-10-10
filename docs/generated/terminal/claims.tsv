@@ -1,0 +1,8 @@
+name	kind	signature	realisations	status	origin	source
+KEY	signature			required	declared	lib/terminal/key_sig.sml
+STYLE	signature			required	declared	lib/terminal/style_sig.sml
+TERMINAL	signature			required	declared	lib/terminal/terminal_sig.sml
+Key	structure	KEY		required	claimed	lib/terminal/key.sml
+PosixTerminal	structure	TERMINAL		required	claimed	lib/terminal/posix_terminal.sml
+Style	structure	STYLE		required	claimed	lib/terminal/style.sml
+Terminal	structure	TERMINAL		required	claimed	lib/terminal/terminal.sml
