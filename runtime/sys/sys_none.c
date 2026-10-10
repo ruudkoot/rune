@@ -242,6 +242,11 @@ int sys_code_protect(void *code, size_t size, int executable) { (void)code; (voi
 void sys_code_flush(void *code, size_t size) { (void)code; (void)size; }
 void sys_code_free(void *code, size_t size) { (void)code; (void)size; }
 int sys_interrupt_catch(volatile int *flag) { if (!flag) return 0; last = ENOSYS; return -1; }
+int sys_term_size(int fd, int *cols, int *rows) { (void)fd; (void)cols; (void)rows; last = ENOSYS; return -1; }
+int64_t sys_term_resizes(void) { last = ENOSYS; return -1; }
+int sys_term_enter(int in, int out, const char *undo, int64_t n) { (void)in; (void)out; (void)undo; (void)n; last = ENOSYS; return -1; }
+int sys_term_leave(void) { return 0; }
+int64_t sys_term_read(int in, char *buf, int64_t n, int64_t ms) { (void)in; (void)buf; (void)n; (void)ms; last = ENOSYS; return -1; }
 
 /* the heap's memory from malloc, aligned by hand: the block malloc gave is
    kept in the word before the aligned one, for sys_mem_release */

@@ -1,0 +1,6 @@
+size: none
+resizes: 0
+enter: SysErr notty
+enter, a long undo: SysErr notty
+read: SysErr notty
+leave: done

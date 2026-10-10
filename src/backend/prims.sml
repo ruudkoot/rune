@@ -366,7 +366,12 @@ struct
     ("reals_blit", 360, 5),
     ("rt_minor_collections", 361, 1),
     ("rt_major_collections", 362, 1),
-    ("rt_promoted", 363, 1)
+    ("rt_promoted", 363, 1),
+    ("term_size", 364, 1),
+    ("term_resizes", 365, 1),
+    ("term_enter", 366, 3),
+    ("term_leave", 367, 1),
+    ("term_read", 368, 3)
   ]
   val byName =
     List.foldl (fn ((n, i, a), m) => StringMap.insert (m, n, (i, a))) StringMap.empty table
@@ -877,7 +882,12 @@ struct
            ("reals_blit", ([6, 1, 6, 1, 1], 8)),
            ("rt_minor_collections", ([8], 1)),
            ("rt_major_collections", ([8], 1)),
-           ("rt_promoted", ([8], 1))
+           ("rt_promoted", ([8], 1)),
+           ("term_size", ([1], 7)),
+           ("term_resizes", ([8], 1)),
+           ("term_enter", ([1, 1, 6], 1)),
+           ("term_leave", ([8], 1)),
+           ("term_read", ([1, 1, 1], 0))
          ]);
          repsOf name)
 end

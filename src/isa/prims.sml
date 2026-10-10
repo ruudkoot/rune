@@ -761,5 +761,16 @@ struct
          {name = "rt_major_collections", arity = 1, ty = "unit -> int", effects = anything,
           doc = "Collections of the whole heap the collector has made: full collections and the low-pause collector's cycles."},
          {name = "rt_promoted", arity = 1, ty = "unit -> int", effects = anything,
-          doc = "Bytes minor collections have promoted into the old space."}]]
+          doc = "Bytes minor collections have promoted into the old space."}],
+       group "the terminal of a line editor (RuneTerminal; docs/plans/repl.md, D4 and D5; runtime/sys/sys.h)"
+        [{name = "term_size", arity = 1, ty = "int -> int list", effects = anything,
+          doc = "The columns and rows of the window of the terminal a descriptor is; [] when it is none."},
+         {name = "term_resizes", arity = 1, ty = "unit -> int", effects = anything,
+          doc = "How many times the window has changed its size since the first call, which starts the count; ~1 where it cannot be counted."},
+         {name = "term_enter", arity = 3, ty = "int * int * string -> int", effects = anything,
+          doc = "Put the terminal of the first descriptor in raw mode, the second being where the program draws, and the string what to write there when it is put back (at term_leave, exit, a fatal error, or a signal that ends the process); 0, or ~1 with the reason in sys_errno."},
+         {name = "term_leave", arity = 1, ty = "unit -> int", effects = anything,
+          doc = "Put the terminal back as it was before term_enter; 0, or ~1."},
+         {name = "term_read", arity = 3, ty = "int * int * int -> string option", effects = anything,
+          doc = "At most n bytes typed at the terminal (descriptor, n, milliseconds to wait, ~1 for no limit): SOME \"\" when the time is up or a resize ended the wait; NONE at the end of the input, or when the read fails, sys_errno saying why (0 at the end). The user's interrupt, where it is caught, is raised."}]]
 end

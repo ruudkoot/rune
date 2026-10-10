@@ -649,6 +649,64 @@ The REPL catches it ([repl.md](repl.md), *Interrupts*). `tests/lang`'s
 catches the interrupt, as Ctrl-C does; `tests/repl/interrupt.in` sends the
 REPL `SIGINT` while a declaration loops.
 
+## The terminal
+
+A program that edits what is typed at it -- the REPL's line editor,
+`lib/terminal` -- needs more of the terminal than `Posix.TTY` gives, and
+some of it only the runtime can do (`RuneTerminal`; docs/plans/repl.md, D4
+and D5). Five calls of the system layer (`runtime/sys/sys.h`), behind the
+primitives `term_size`, `term_resizes`, `term_enter`, `term_leave` and
+`term_read`:
+
+* **Raw mode.** `term_enter` saves what the terminal was, once, and makes
+  it raw: on POSIX the settings of `cfmakeraw` with `OPOST` kept, so that
+  a newline written is still a carriage return and a newline; on Windows
+  the console's input with VT input on, the window's size records, and no
+  line, echo or processed input, so that Ctrl-C is the byte 3 there as it
+  is on a terminal of Unix. A console that refuses VT input (before
+  Windows 10 1511, the legacy console) is refused, `ENOTSUP`, and the
+  editor keeps to its basic mode.
+* **Put back whatever happens.** The program gives `term_enter` the bytes
+  that undo what it turned on with escapes (bracketed paste, a hidden
+  cursor). The terminal is put back and those bytes written by
+  `term_leave`, at exit (`atexit`: an uncaught exception, a fatal error
+  and a stack overflow all end in `exit`), by `Posix.Process.exit`, and
+  on POSIX in the handlers of `SIGTERM`, `SIGHUP` and `SIGQUIT`, which then
+  end the process by the signal's own action. They are installed only
+  where the signal's action was the default, and use `tcsetattr` and
+  `write` alone, which a signal handler may. `SIGTSTP` puts the terminal
+  back and stops; `SIGCONT` makes it raw again and counts a resize, since
+  the screen may have changed meanwhile.
+* **The window's size and its changes.** `term_size` is `TIOCGWINSZ`, and
+  on Windows the window (`srWindow`, not the buffer) of
+  `GetConsoleScreenBufferInfo`. `term_resizes` counts `SIGWINCH`, from its
+  first call; the handler is installed with `SA_RESTART`, so that no other
+  call is cut short, and ends a wait in `poll` all the same. On Windows a
+  size record that `term_read` reads is counted when the window's size has
+  changed (the console sends them for its buffer too).
+* **Reading.** `term_read` waits in `poll` at most the time given, then
+  reads what is there; nothing in the time, a resize and the user's
+  interrupt end it with nothing (the interrupt is then raised, as in a
+  read of `TextIO`). On Windows it reads the console's records
+  (`ReadConsoleInputW`): the character of a key-down, repeated as the
+  record says (32 times at most), the character of an Alt key-up, which is
+  how a character typed on the numeric keypad or pasted from outside the
+  keyboard's layout comes, and a surrogate pair as one code point, given
+  out as UTF-8.
+
+At the start of every program on Windows the VM turns on VT processing
+for each of the standard output and error that is a console, and the
+UTF-8 output code page, and puts both back at exit, so that escapes and
+UTF-8 display as on a terminal of Unix without the program asking. Where
+the console refuses, the VM sets `TERM=dumb` for itself if `TERM` was
+not set, which turns colour off ([diagnostics.md](diagnostics.md)). The
+console wait of `OS.IO.poll` wakes on a key that gives a character in
+UTF-16, which in VT input mode is every key, arrows included.
+
+`sys_none.c` fails them with `ENOSYS`. `tests/terminal`'s `term-keys`,
+`term-resize` and `term-restore` drive the probe `tests/terminal/keys.sml`
+on a terminal, the first two on Linux and on Windows alike.
+
 ## Numbers
 
 `Int` and `Word` are 63 bits on every VM, whatever the pointer width -- a

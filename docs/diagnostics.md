@@ -71,7 +71,10 @@ With `--color=auto`, the first rule that applies decides:
    `false`: colour.
 3. `CLICOLOR=0`: no colour.
 4. `TERM=dumb`, or `TERM` unset on a system other than Windows (Emacs's
-   `M-x compile`, cron, a CI log): no colour.
+   `M-x compile`, cron, a CI log): no colour. On Windows the VM sets
+   `TERM=dumb` for itself where a console refuses escapes (before Windows
+   10 1511, or the legacy console; [runtime.md](runtime.md), *The
+   terminal*).
 5. Otherwise colour exactly when the standard error is a terminal.
 
 The test runners and `make` unset `FORCE_COLOR` and `CLICOLOR_FORCE`, so

@@ -2460,6 +2460,52 @@ static int p_reals_blit(VM *vm) {
     return ret(vm, 5, mk_unit());
 }
 
+/* ================================================================ the terminal of a line editor
+   (RuneTerminal; docs/plans/repl.md, D4 and D5; sys.h) */
+static int p_term_size(VM *vm) {
+    INT1("term_size");
+    int cols = 0, rows = 0;
+    int64_t out[2];
+    if (sys_term_size((int)x, &cols, &rows) != 0) return push_int_list(vm, NULL, 0, 1);
+    out[0] = cols;
+    out[1] = rows;
+    return push_int_list(vm, out, 2, 1);
+}
+static int p_term_resizes(VM *vm) { return ret(vm, 1, mk_int(sys_term_resizes())); }
+static int p_term_enter(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "term_enter");
+    check_tag(vm, ARG(1), T_INT, "term_enter");
+    Obj *undo = check_obj(vm, ARG(0), K_STRING, "term_enter");
+    int r = sys_term_enter((int)val_imm(ARG(2)), (int)val_imm(ARG(1)), obj_bytes(undo), obj_len(undo));
+    return ret(vm, 3, mk_int(r));
+}
+static int p_term_leave(VM *vm) { return ret(vm, 1, mk_int(sys_term_leave())); }
+/* SOME "" for nothing in the time; NONE at the end or on failure; the
+   user's interrupt raised where it ended the wait, as read_fd does */
+static int p_term_read(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "term_read");
+    check_tag(vm, ARG(1), T_INT, "term_read");
+    check_tag(vm, ARG(0), T_INT, "term_read");
+    int64_t n = val_imm(ARG(1));
+    if (n < 0 || n > MAX_STRING) return raise_with(vm, 3, EXN_SIZE);
+    char *buf = malloc((size_t)n ? (size_t)n : 1);
+    if (!buf) vm_fatal(vm, "out of memory");
+    int64_t got = n == 0 ? 0 : sys_term_read((int)val_imm(ARG(2)), buf, n, val_imm(ARG(0)));
+    if (got == 0 && vm_interrupted(vm)) {
+        free(buf);
+        vm->sp -= 3;
+        return vm_interrupt(vm);
+    }
+    if (got < 0) {
+        free(buf);
+        if (got == -2) sys_set_errno(0);
+        return ret(vm, 3, mk_con0(0));
+    }
+    Obj *str = vm_string_from(vm, buf, (uint32_t)got);
+    free(buf);
+    return ret(vm, 3, mk_some(vm, mk_ptr(str)));
+}
+
 const PrimFn prim_table[PRIM__COUNT] = {
     RUNE_PRIM_LIST(PRIM_ENTRY)
 };

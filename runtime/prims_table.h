@@ -367,6 +367,11 @@ enum Prim {
   PRIM_rt_minor_collections = 361,
   PRIM_rt_major_collections = 362,
   PRIM_rt_promoted = 363,
+  PRIM_term_size = 364,
+  PRIM_term_resizes = 365,
+  PRIM_term_enter = 366,
+  PRIM_term_leave = 367,
+  PRIM_term_read = 368,
   PRIM__COUNT
 };
 
@@ -735,6 +740,11 @@ static const char *const prim_names[] = {
   "rt_minor_collections",
   "rt_major_collections",
   "rt_promoted",
+  "term_size",
+  "term_resizes",
+  "term_enter",
+  "term_leave",
+  "term_read",
 };
 
 static const unsigned char prim_arity[] = {
@@ -1102,6 +1112,11 @@ static const unsigned char prim_arity[] = {
   1,
   1,
   1,
+  1,
+  1,
+  3,
+  1,
+  3,
 };
 
 /* what each primitive's result is (the representations of
@@ -1472,6 +1487,11 @@ static const unsigned char prim_result[] = {
   1,
   1,
   1,
+  7,
+  1,
+  1,
+  1,
+  0,
 };
 
 #define RUNE_PRIM_LIST(X) \
@@ -1838,6 +1858,11 @@ static const unsigned char prim_result[] = {
   X(reals_blit) \
   X(rt_minor_collections) \
   X(rt_major_collections) \
-  X(rt_promoted)
+  X(rt_promoted) \
+  X(term_size) \
+  X(term_resizes) \
+  X(term_enter) \
+  X(term_leave) \
+  X(term_read)
 
 #endif

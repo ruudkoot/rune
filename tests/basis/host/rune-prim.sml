@@ -1420,6 +1420,14 @@ struct
   fun rt_interrupt_catch (_ : exn) = false
   fun rt_interrupt_mask (_ : bool) = false
   fun rt_interrupt_is (_ : exn) = false
+  (* RuneTerminal is Rune's alone (host no): a host has no terminal of a
+     line editor here, and lib/terminal has a Terminal over Posix.TTY for
+     the hosts *)
+  fun term_size (_ : int) : int list = []
+  fun term_resizes () = ~1
+  fun term_enter (_ : int, _ : int, _ : string) = ~1
+  fun term_leave () = 0
+  fun term_read (_ : int, _ : int, _ : int) : string option = NONE
 
   fun posix_getgr (name, gid) =
     let

@@ -53,6 +53,49 @@ static void rune_binary_streams(void) {
     _setmode(_fileno(stderr), _O_BINARY);
 }
 
+/* At the VM's start a console that is the standard output or error is made
+   to interpret VT sequences and to take UTF-8, as a terminal of Unix does,
+   and is put back at exit (docs/plans/repl.md, D4), so that the colours of
+   the compiler's diagnostics and any program's UTF-8 show as they do
+   elsewhere. A console that refuses (before Windows 10 1511, or the legacy
+   console) is a terminal without escapes: TERM=dumb is set for the process
+   where TERM was not set, which turns colour off (docs/diagnostics.md). */
+static HANDLE vt_handles[2];
+static DWORD vt_modes[2];
+static UINT vt_code_page;
+static int vt_code_page_set;
+static void vt_restore(void) {
+    for (int i = 0; i < 2; i++)
+        if (vt_handles[i]) SetConsoleMode(vt_handles[i], vt_modes[i]);
+    if (vt_code_page_set) SetConsoleOutputCP(vt_code_page);
+}
+__attribute__((constructor))
+static void rune_console_vt(void) {
+    HANDLE hs[2] = {GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE)};
+    int any = 0, refused = 0;
+    for (int i = 0; i < 2; i++) {
+        DWORD mode;
+        if (hs[i] == NULL || hs[i] == INVALID_HANDLE_VALUE || !GetConsoleMode(hs[i], &mode)) continue;
+        any = 1;
+        if (mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING) continue;
+        if (SetConsoleMode(hs[i], mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING)) {
+            vt_handles[i] = hs[i];
+            vt_modes[i] = mode;
+        } else refused = 1;
+    }
+    if (!any) return;
+    UINT cp = GetConsoleOutputCP();
+    if (cp != CP_UTF8 && SetConsoleOutputCP(CP_UTF8)) {
+        vt_code_page = cp;
+        vt_code_page_set = 1;
+    }
+    if (refused && !getenv("TERM")) {
+        _putenv("TERM=dumb");
+        SetEnvironmentVariableA("TERM", "dumb");
+    }
+    atexit(vt_restore);
+}
+
 static char path_buffer[MAX_PATH * 4];
 /* Rune's OS.Path is the one of POSIX: it separates with "/" and knows no
    drive letter. Windows takes "/" everywhere the CRT is used, so every path
@@ -911,16 +954,23 @@ int sys_desc_kind(int fd) {
    until one is ready or the time is up; sockets alone wait in WSAPoll. No
    descriptors at all is a wait for the time given. */
 static int access_of(HANDLE h);
+/* A key that gives a character waits: a key-down, or the key-up of Alt
+   that ends a character typed on the numeric keypad (and one pasted from
+   outside the layout). Asked in UTF-16: in VT input mode an arrow is
+   characters too, and a character outside the code page would be 0 in
+   the ANSI records. */
 static int console_key_waits(HANDLE h) {
     DWORD n = 0;
     if (!GetNumberOfConsoleInputEvents(h, &n) || n == 0) return 0;
     INPUT_RECORD records[64];
     DWORD got = 0;
-    if (!PeekConsoleInputA(h, records, n < 64 ? n : 64, &got)) return 0;
-    for (DWORD i = 0; i < got; i++)
-        if (records[i].EventType == KEY_EVENT && records[i].Event.KeyEvent.bKeyDown &&
-            records[i].Event.KeyEvent.uChar.AsciiChar != 0)
+    if (!PeekConsoleInputW(h, records, n < 64 ? n : 64, &got)) return 0;
+    for (DWORD i = 0; i < got; i++) {
+        KEY_EVENT_RECORD *k = &records[i].Event.KeyEvent;
+        if (records[i].EventType == KEY_EVENT && k->uChar.UnicodeChar != 0 &&
+            (k->bKeyDown || k->wVirtualKeyCode == VK_MENU))
             return 1;
+    }
     return 0;
 }
 /* what a descriptor that is no socket is ready for now, of what is asked */
@@ -2606,7 +2656,10 @@ int sys_alarm(int seconds) {
 /* _exit and _Exit end in ExitProcess, which lets msvcrt.dll flush every
    stream as it is unloaded; a process that ends itself does not unload
    anything. */
+static void term_restore(void);
 void sys_exit_now(int status) {
+    term_restore();
+    vt_restore();
     TerminateProcess(GetCurrentProcess(), (UINT)status);
     _exit(status);
 }
@@ -3150,6 +3203,175 @@ int sys_interrupt_catch(volatile int *flag) {
     interrupt_flag = flag;
     if (!SetConsoleCtrlHandler(on_interrupt, flag != NULL)) { errno = EINVAL; return failed(); }
     return 0;
+}
+
+/* ---------------------------------------------------------- the terminal
+   of a line editor (sys.h; docs/plans/repl.md, D5). Raw is the console's
+   records with VT input on: the console turns each key into the bytes a
+   terminal of Unix sends, as UTF-16 in the records, which are read here and
+   given out as UTF-8: a key-down's character as many times as it repeats,
+   the character of an Alt key-up (the keypad's, and one from outside the
+   layout), a surrogate pair as one code point, and a size record as a
+   resize. Ctrl-C is a character like any other while raw. */
+static HANDLE term_in;
+static HANDLE term_out_handle;
+static DWORD term_in_before;
+static int term_saved;
+static volatile LONG term_raw_on;
+static char term_undo[256];
+static DWORD term_undo_n;
+static volatile LONG term_resize_count;
+static int term_last_cols, term_last_rows;
+/* bytes taken from records and not yet given out */
+static char term_queue[16384];
+static size_t term_head, term_tail;
+static WCHAR term_high;
+
+static void term_restore(void) {
+    if (!InterlockedExchange(&term_raw_on, 0)) return;
+    if (term_undo_n > 0 && term_out_handle) {
+        DWORD wrote;
+        WriteFile(term_out_handle, term_undo, term_undo_n, &wrote, NULL);
+    }
+    SetConsoleMode(term_in, term_in_before);
+}
+
+int sys_term_size(int fd, int *cols, int *rows) {
+    static HANDLE conout;
+    CONSOLE_SCREEN_BUFFER_INFO info;
+    HANDLE own = console_of(fd);
+    HANDLE hs[3] = {own, GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE)};
+    for (int i = 0; i < 3; i++)
+        if (hs[i] && hs[i] != INVALID_HANDLE_VALUE && GetConsoleScreenBufferInfo(hs[i], &info)) {
+            *cols = info.srWindow.Right - info.srWindow.Left + 1;
+            *rows = info.srWindow.Bottom - info.srWindow.Top + 1;
+            return 0;
+        }
+    /* the console of an input whose outputs go elsewhere */
+    if (own && !conout)
+        conout = CreateFileW(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                             NULL, OPEN_EXISTING, 0, NULL);
+    if (own && conout != INVALID_HANDLE_VALUE && GetConsoleScreenBufferInfo(conout, &info)) {
+        *cols = info.srWindow.Right - info.srWindow.Left + 1;
+        *rows = info.srWindow.Bottom - info.srWindow.Top + 1;
+        return 0;
+    }
+    last = ENOTTY;
+    return -1;
+}
+
+int64_t sys_term_resizes(void) { return (int64_t)term_resize_count; }
+
+int sys_term_enter(int in, int out, const char *undo, int64_t n) {
+    HANDLE h = console_of(in);
+    if (!h) { last = ENOTTY; return -1; }
+    if (n < 0 || (size_t)n > sizeof term_undo) { last = EINVAL; return -1; }
+    if (!term_saved) {
+        if (!GetConsoleMode(h, &term_in_before)) { last = ENOTTY; return -1; }
+        term_saved = 1;
+        atexit(term_restore);
+        sys_term_size(in, &term_last_cols, &term_last_rows);
+    }
+    InterlockedExchange(&term_raw_on, 0);
+    memcpy(term_undo, undo, (size_t)n);
+    term_undo_n = (DWORD)n;
+    term_in = h;
+    term_out_handle = console_of(out);
+    DWORD mode = ENABLE_VIRTUAL_TERMINAL_INPUT | ENABLE_WINDOW_INPUT | ENABLE_EXTENDED_FLAGS |
+                 (term_in_before & (ENABLE_QUICK_EDIT_MODE | ENABLE_INSERT_MODE));
+    if (!SetConsoleMode(h, mode)) { last = ENOTSUP; return -1; }
+    InterlockedExchange(&term_raw_on, 1);
+    return 0;
+}
+
+int sys_term_leave(void) {
+    term_restore();
+    return 0;
+}
+
+static void term_put(uint32_t c) {
+    char *q = term_queue + term_tail;
+    if (term_tail + 4 > sizeof term_queue) return;
+    if (c < 0x80) { q[0] = (char)c; term_tail += 1; }
+    else if (c < 0x800) { q[0] = (char)(0xC0 | c >> 6); q[1] = (char)(0x80 | (c & 0x3F)); term_tail += 2; }
+    else if (c < 0x10000) {
+        q[0] = (char)(0xE0 | c >> 12); q[1] = (char)(0x80 | (c >> 6 & 0x3F)); q[2] = (char)(0x80 | (c & 0x3F));
+        term_tail += 3;
+    } else {
+        q[0] = (char)(0xF0 | c >> 18); q[1] = (char)(0x80 | (c >> 12 & 0x3F));
+        q[2] = (char)(0x80 | (c >> 6 & 0x3F)); q[3] = (char)(0x80 | (c & 0x3F));
+        term_tail += 4;
+    }
+}
+/* a unit of UTF-16: a half of a pair waits for the other; a lone half is
+   U+FFFD */
+static void term_put_unit(WCHAR u) {
+    if (u >= 0xD800 && u < 0xDC00) {
+        if (term_high) term_put(0xFFFD);
+        term_high = u;
+    } else if (u >= 0xDC00 && u < 0xE000) {
+        if (term_high) term_put(0x10000 + ((uint32_t)(term_high - 0xD800) << 10) + (uint32_t)(u - 0xDC00));
+        else term_put(0xFFFD);
+        term_high = 0;
+    } else {
+        if (term_high) term_put(0xFFFD);
+        term_high = 0;
+        term_put(u);
+    }
+}
+
+int64_t sys_term_read(int in, char *buf, int64_t n, int64_t ms) {
+    HANDLE h = console_of(in);
+    if (!h) { last = ENOTTY; return -1; }
+    ULONGLONG deadline = ms < 0 ? 0 : GetTickCount64() + (ULONGLONG)ms;
+    for (;;) {
+        if (term_head < term_tail) {
+            size_t k = term_tail - term_head;
+            if ((int64_t)k > n) k = (size_t)n;
+            memcpy(buf, term_queue + term_head, k);
+            term_head += k;
+            if (term_head == term_tail) term_head = term_tail = 0;
+            return (int64_t)k;
+        }
+        DWORD wait = INFINITE;
+        if (ms >= 0) {
+            ULONGLONG now = GetTickCount64();
+            wait = now >= deadline ? 0 : (DWORD)(deadline - now);
+        }
+        DWORD w = WaitForSingleObject(h, wait);
+        if (w == WAIT_TIMEOUT) return 0;
+        if (w != WAIT_OBJECT_0) { last = errno_of_win(GetLastError()); return -1; }
+        if (interrupt_flag && *interrupt_flag) return 0;
+        DWORD waiting = 0;
+        if (!GetNumberOfConsoleInputEvents(h, &waiting)) { last = errno_of_win(GetLastError()); return -1; }
+        if (waiting == 0) continue;
+        INPUT_RECORD records[64];
+        DWORD got = 0;
+        if (!ReadConsoleInputW(h, records, 64, &got)) { last = errno_of_win(GetLastError()); return -1; }
+        int resized = 0;
+        for (DWORD i = 0; i < got; i++) {
+            if (records[i].EventType == WINDOW_BUFFER_SIZE_EVENT) { resized = 1; continue; }
+            if (records[i].EventType != KEY_EVENT) continue;
+            KEY_EVENT_RECORD *k = &records[i].Event.KeyEvent;
+            WCHAR c = k->uChar.UnicodeChar;
+            if (c == 0 || !(k->bKeyDown || k->wVirtualKeyCode == VK_MENU)) continue;
+            /* a held key's repeats, as many as fit (64 records of 32 at most) */
+            int times = k->bKeyDown && k->wRepeatCount > 1 ? (k->wRepeatCount < 32 ? k->wRepeatCount : 32) : 1;
+            for (int t = 0; t < times; t++) term_put_unit(c);
+        }
+        if (resized) {
+            /* the console sends a size record for the buffer too: count a
+               change of the window */
+            int cols, rows;
+            if (sys_term_size(in, &cols, &rows) == 0 && (cols != term_last_cols || rows != term_last_rows)) {
+                term_last_cols = cols;
+                term_last_rows = rows;
+                InterlockedIncrement(&term_resize_count);
+                if (term_head == term_tail) return 0;
+            }
+        }
+        if (ms >= 0 && term_head == term_tail && GetTickCount64() >= deadline) return 0;
+    }
 }
 
 /* The heap's memory. A reservation cannot be trimmed here: where the

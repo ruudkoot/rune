@@ -48,7 +48,7 @@ M1 measures them again on a quiet machine.
 | M0 | This roadmap | done |
 | M1 | The terminal harness and the baselines | done |
 | M2 | The palette and coloured diagnostics | done |
-| M3 | The console in the runtime and the Basis | planned |
+| M3 | The console in the runtime and the Basis | done |
 | M4 | `lib/terminal`: styles, keys, raw mode | planned |
 | M5 | `lib/terminal`: the line editor | planned |
 | M6 | The REPL on the editor | planned |
@@ -2097,6 +2097,44 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
   uncaught exception, `SIGTERM`, `SIGHUP` and a fatal error.
 * **Done when:** those pass; the fingerprint and the image format
   number change, documented.
+* **As built** (2026-10-10): `sys_term_size`, `sys_term_resizes`,
+  `sys_term_enter`, `sys_term_leave` and `sys_term_read` in `sys.h`, the
+  three system layers, the primitives `term_*` and `RuneTerminal` with
+  `RUNE_TERMINAL` (`host no`; the host shim answers that there is no
+  terminal); VT processing and the UTF-8 code page at the VM's start on
+  Windows; `docs/runtime.md` (*The terminal*), `docs/bytecode.md`,
+  `docs/language.md`. Tests: `tests/lang/basis.runeterminal_noterminal` where
+  nothing is a terminal; the probe `tests/terminal/keys.sml` in
+  `term-keys` (ten keys, the same bytes on Linux and on Windows through
+  ConPTY, Ctrl-C as the byte 3 and an emoji as one code point among
+  them), `term-resize` (on both) and `term-restore` (Linux: the terminal
+  cooked again after a return, an uncaught exception, a stack overflow,
+  `SIGTERM` and `SIGHUP`). Where it differs from the plan:
+  * **`RuneTerminal` works on the standard streams**: keys from the
+    standard input, drawing on the standard output, the size of
+    whichever is a terminal. The primitives take descriptors.
+  * **`enter` takes the bytes that undo the program's own modes**
+    (bracketed paste, a hidden cursor), which the runtime writes when it
+    puts the terminal back, at exit and from a signal handler alike.
+  * **A stop puts the terminal back and a continue makes it raw again**
+    (`SIGTSTP`, `SIGCONT`), counted as a resize; the handlers of
+    `SIGTERM`, `SIGHUP`, `SIGQUIT` and `SIGTSTP` are installed only where
+    the signal's action was the default.
+  * **A console that refuses VT output makes the VM set `TERM=dumb`**
+    for itself where `TERM` was unset, which turns colour off by D3's
+    rule 4.
+  * **No new image format number**: an image's magic carries the
+    instruction set's fingerprint, which the five primitives changed.
+  * **`RuneTerminal` has no generated page**: the Basis's MANIFEST takes a
+    name that begins `Rune` or `RUNE_` for the library's own, which runedoc
+    leaves out, and D25 chose that name for a structure programs use. It
+    is documented in `docs/language.md`, `docs/runtime.md` and its
+    signature's comments; a name without the prefix would have its page
+    (the owner's choice).
+  * Checked beyond `make check`: `make test-windows` and `make
+    test-portability` (32-bit x86, and big-endian ppc64 and aarch64 under
+    qemu). Not run: the sanitiser build (`libasan8` missing).
+
 ### M4. `lib/terminal`: styles, keys, raw mode (M, about 1,000 SML)
 
 * **What:** the library's first half, with its `MANIFEST` and

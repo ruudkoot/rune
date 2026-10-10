@@ -1,0 +1,27 @@
+# windows
+# RuneTerminal's raw mode (docs/plans/repl.md, M3): each key's bytes as the
+# program reads them, the same on Linux and on Windows, where the console's
+# records with VT input on are made the bytes a terminal of Unix sends.
+start 80 24 @KEYS@
+wait ^size 80x24$
+send a
+wait ^keys 61$
+send \xc3\xa9
+wait ^keys c3 a9$
+send \xf0\x9f\x98\x80
+wait ^keys f0 9f 98 80$
+keys Up
+wait ^keys 1b 5b 41$
+keys C-a
+wait ^keys 01$
+keys M-b
+wait ^keys 1b 62$
+keys Enter
+wait ^keys 0d$
+keys BSpace
+wait ^keys 7f$
+keys C-c
+wait ^keys 03$
+send q
+wait ^bye$
+exited 0
