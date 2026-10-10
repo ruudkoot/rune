@@ -153,6 +153,32 @@ JIT tier (the premise of `check-jit.sh`).
 * A program whose count depends on the clock is not a test and not a count
   workload until its clock is shimmed.
 
+## Programs on a terminal
+
+What a program shows on a terminal -- the REPL, a line editor -- is tested
+by `tests/terminal` (`make test-terminal`, in `make check`; the plan is
+[plans/repl.md](plans/repl.md), D23). `tests/terminal/term.py` starts the
+program in a pane of a private tmux server at a given size, types keys
+and text at it, resizes it, and waits until the screen matches a pattern
+or equals an expected screen. The rules it keeps:
+
+* Wait on the screen, never on time: every `wait` is a pattern with a
+  deadline, so a loaded machine makes a script slower and not wrong; a
+  `sleep` is only for giving a program the time to do something wrong.
+* Type bytes (tmux's `send-keys -H`): tmux takes a lone `;` among its
+  arguments for its own separator.
+* Compare screens with their trailing blanks dropped, against a file
+  reviewed line by line, as an `.expected` file is.
+* On Windows, through WSL interop, a program started in a pane gets a
+  console of the pane's size (a ConPTY), so `make test-windows` runs the
+  scripts marked `# windows` on `runevm.exe` too. Interop delivers no
+  console Ctrl-C there; an interrupt is tested on Linux.
+
+`tests/terminal/ptyraw.py` is the other driver: a pty, exact bytes, and
+times to the microsecond, which `scripts/perf-repl.sh` uses for the REPL's
+latencies. Times taken on a loaded machine say little; the script prints
+the load average with them.
+
 ## Harnesses that measure
 
 Two C harnesses measure what a design costs on the machine rather than

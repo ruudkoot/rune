@@ -19,6 +19,9 @@
 #   windows mingw-w64 for both Windows VMs (make windows), and whether an
 #           .exe runs here (make test-windows); not part of all, since
 #           nothing else needs it
+#   terminal  tmux and python3, which drive programs on a terminal
+#           (tests/terminal, make test-terminal); without tmux its scripts
+#           are skipped, so tmux is only a warning
 #   portability  a 32-bit x86 compiler and a big-endian 64-bit PowerPC one,
 #           with qemu to run the latter (make portability,
 #           make test-portability); not part of all either
@@ -41,10 +44,10 @@ done
 expanded=""
 for s in $scopes; do
   case "$s" in
-    all) expanded="$expanded vm mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit check asan sys matrix perf native" ;;
+    all) expanded="$expanded vm mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit check asan sys matrix perf native terminal" ;;
     build) expanded="$expanded vm mlton" ;;
     hosts) expanded="$expanded mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit" ;;
-    vm|mlton|smlnj-legacy|smlnj32|smlnj-dev|polyml|mlkit|check|asan|sys|matrix|perf|native|windows|portability) expanded="$expanded $s" ;;
+    vm|mlton|smlnj-legacy|smlnj32|smlnj-dev|polyml|mlkit|check|asan|sys|matrix|perf|native|terminal|windows|portability) expanded="$expanded $s" ;;
     *) echo "doctor: unknown scope '$s'" >&2; exit 2 ;;
   esac
 done
@@ -434,6 +437,15 @@ if in_scope native; then
 fi
 
 # ---------------------------------------------------------------- windows
+if in_scope terminal; then
+  section "programs on a terminal (make test-terminal)"
+  if command -v tmux > /dev/null 2>&1; then ok tmux "$(tmux -V 2> /dev/null)"
+  else warn tmux "not found: the scripts of tests/terminal are skipped" tmux
+  fi
+  if command -v python3 > /dev/null 2>&1; then ok python3 "$(python3 --version 2>&1)"
+  else bad python3 "not found: tests/terminal/term.py needs it" python3
+  fi
+fi
 if in_scope windows; then
   section "mingw-w64 (make windows, make test-windows)"
   cat > "$tmp/win.c" << 'EOF'

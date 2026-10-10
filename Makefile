@@ -145,7 +145,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build check-reproducible test-serve basis-cache repl test-repl test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
+.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build check-reproducible test-serve basis-cache repl test-repl test-terminal test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
 
 all: vm boot runedoc runeopt manifests basis-cache
 
@@ -667,13 +667,14 @@ bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-windows
 # The runtime/register VMs run with every function given to the JIT (RUNEVM_JIT,
 # which WSLENV passes to a program of Windows), so that the JIT's Windows
 # convention is what the suites test there.
-test-windows: windows $(RUNE)
+test-windows: windows $(RUNE) bin/rune-repl
 	sh tests/run-windows.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack.exe --vm bin/runevm-stack32.exe
 	WSLENV=RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all sh tests/run-windows.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
 	  --vm bin/runevm.exe --vm bin/runevm32.exe
 	WSLENV=RUNEVM_JIT:RUNEVM_JIT_TIER:$$WSLENV RUNEVM_JIT=all RUNEVM_JIT_TIER=2 sh tests/run-windows.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
 	  --vm bin/runevm.exe
 	WSLENV=RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all RUNE=$(abspath $(RUNE_STACK)) sh tests/basis/run-matrix.sh -j $(JOBS) --configs windows
+	sh tests/terminal/run.sh --windows
 
 # ------------------------------------------------------------- portability
 # The VM on machines this one is not: a 32-bit x86, where a pointer is four
@@ -912,6 +913,12 @@ test-repl: bin/rune-repl bin/runevm
 	sh tests/repl/run.sh --vm-opts --jit=off --out tests/out/repl-off
 	sh tests/repl/run.sh --vm-opts --jit=all --out tests/out/repl-all
 	sh tests/repl/run.sh --vm-opts "--jit=all --jit-tier=2" --out tests/out/repl-tier2
+
+# Programs on a terminal (docs/plans/repl.md, M1): each script of
+# tests/terminal starts a program in a tmux pane, types at it and waits for
+# the screen; skipped where tmux is missing (make doctor --scope terminal).
+test-terminal: bin/rune-repl bin/runevm
+	sh tests/terminal/run.sh
 
 # the cache's scenarios (tests/incremental/SCENARIOS.md; docs/units.md, The cache)
 test-deps: $(RUNE) vm
@@ -1268,7 +1275,7 @@ check:
 	@$(MAKE) --no-print-directory test-build
 	@$(MAKE) --no-print-directory check-reproducible
 	@$(MAKE) --no-print-directory test-serve
-	@$(MAKE) --no-print-directory test-repl
+	@$(MAKE) --no-print-directory test-repl test-terminal
 	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory test-register
 	@$(MAKE) --no-print-directory test-register-jit

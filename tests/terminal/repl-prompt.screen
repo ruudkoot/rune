@@ -1,0 +1,6 @@
+- 1;
+val it = 1 : int
+- val (a, b) = (2, "two");
+val a = 2 : int
+val b = "two" : string
+-

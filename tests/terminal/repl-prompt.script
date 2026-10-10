@@ -1,0 +1,15 @@
+# windows
+# Today's REPL on a terminal: the prompt, an entry, a declaration, the
+# screen they leave, and the end of the session.
+start 80 24 @REPL@
+wait ^-$
+send 1;
+keys Enter
+wait ^val it = 1 : int$
+send val (a, b) = (2, "two");
+keys Enter
+wait ^val b = "two" : string$
+expect @DIR@/repl-prompt.screen
+send val () = OS.Process.exit OS.Process.success;
+keys Enter
+exited 0

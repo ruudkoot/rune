@@ -46,7 +46,7 @@ M1 measures them again on a quiet machine.
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done |
-| M1 | The terminal harness and the baselines | planned |
+| M1 | The terminal harness and the baselines | done |
 | M2 | The palette and coloured diagnostics | planned |
 | M3 | The console in the runtime and the Basis | planned |
 | M4 | `lib/terminal`: styles, keys, raw mode | planned |
@@ -1970,6 +1970,33 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
   numbers were taken under a load of 30.
 * **Done when:** the scripts pass on Linux and on Windows through
   interop, and the baselines are in *Measuring*.
+* **As built** (2026-10-10): `tests/terminal/` (`term.py`, `ptyraw.py`,
+  `run.sh`, three scripts of today's REPL and one expected screen),
+  `make test-terminal` in `make check`, the scripts again through interop
+  in `make test-windows`, `make doctor --scope terminal`, and
+  `scripts/perf-repl.sh`. Two findings:
+  * **The REPL could not read a line on a Windows console.**
+    `file_read_vec` read a handle with a position through `fread`, which
+    waits for all its bytes, and the C runtime of Windows gives a console
+    a position (`_ftelli64` answers 0); a terminal is now read with one
+    `read` whatever `ftell` says (`runtime/prims.c`).
+  * **WSL interop under tmux delivers no console Ctrl-C.** A stock
+    `ping -t` ignores the key, and SIGINT to interop's process ends the
+    program rather than signalling it; the interrupt script runs on Linux
+    only, and Windows' interrupt stays with `rt.interrupt_self` and the
+    manual list (M13).
+
+  The baselines were taken at a load average of 14 to 20 (another
+  session's chain): the doubling from 1,000 to 2,000 lines costs 5.7
+  times as much, the parse of the whole buffer after every line.
+
+  Checked: every target of `make check` but one, and `make test-windows`
+  (the terminal scripts through interop among it). `check-units` fails
+  for the stack bytecode: 37 programs come out otherwise through the
+  cache at `-O1`. It fails the same at incremental's head `f2141599`
+  with `runtime/prims.c` as it was there, so it is incremental's and
+  flagged to the owner. The sanitiser build did not run: `libasan8` is
+  not installed (`make doctor`).
 
 ### M2. The palette and coloured diagnostics (L, about 1,200 SML and 1,500 generated)
 
@@ -2405,9 +2432,10 @@ first column is what the experiments measured under a load of 30.
 
 | What | P0 to P4 (loaded) | M1 | Target (D24) |
 |---|---|---|---|
-| start to the first prompt | 72 to 87 ms | to measure | 100 ms |
-| `1;` to the next prompt | 8 to 16 ms | to measure | as M1 |
-| paste of 1,000 lines | 6.7 to 7.0 s | to measure | linear in the length |
+| start to the first prompt | 72 to 87 ms | 46.5 ms | 100 ms |
+| `1;` to the next prompt | 8 to 16 ms | 7.8 ms | as M1 |
+| paste of 1,000 lines | 6.7 to 7.0 s | 5.8 s | linear in the length |
+| paste of 2,000 lines | hung in the harness | 33.1 s | linear in the length |
 | keystroke, 10 lines | 0.38 ms (P2) | from M5 | 16 ms |
 | keystroke, 1,000 lines | 29.6 ms (P2) | from M5 | 16 ms |
 | bytes written a keystroke, 1,000 lines | 1,324 (P2) | from M5 | as M5 |

@@ -1900,9 +1900,11 @@ static int p_file_read_vec(VM *vm) {
        its buffer; a pipe's or a terminal's -- no position -- by one read of
        its descriptor, which gives what has come, a line typed, where fread
        would wait for all n. Nothing reads such a handle through its FILE
-       (the library reads with this alone), whose buffer stays empty. */
+       (the library reads with this alone), whose buffer stays empty. A
+       Windows console tells a position (its C runtime's ftell answers 0),
+       so a terminal is asked for by name. */
     size_t got;
-    if (n > 0 && sys_ftell(f) < 0) {
+    if (n > 0 && (sys_ftell(f) < 0 || sys_isatty(sys_fileno(f)))) {
         int raised;
         int64_t k = read_fd(vm, sys_fileno(f), buf, n, 2, &raised);
         if (raised) { free(buf); return 1; }

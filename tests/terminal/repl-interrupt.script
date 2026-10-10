@@ -1,0 +1,20 @@
+# Ctrl-C ends a computation that does not end, and the session goes on.
+# Not run on Windows: WSL interop under tmux delivers no console Ctrl-C (a
+# stock `ping -t` ignores the key, and SIGINT to interop's process ends the
+# program instead); tests/lang/rt.interrupt_self is the VM's side there.
+start 80 24 @REPL@
+wait ^-$
+send fun loop () = loop ();
+keys Enter
+wait ^val loop = fn
+send loop () : unit;
+keys Enter
+sleep 500
+keys C-c
+wait Interrupt\n-$
+send 2;
+keys Enter
+wait ^val it = 2 : int$
+send val () = OS.Process.exit OS.Process.success;
+keys Enter
+exited 0
