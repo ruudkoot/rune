@@ -4,7 +4,7 @@
 
 From the **Raises** paragraphs of the documented entries.
 
-- `OS.SysErr`: [`enter`](sig/TERMINAL.md#val-enter) of TERMINAL, [`read`](sig/TERMINAL.md#val-read) of TERMINAL
+- `OS.SysErr`: [`enter`](sig/DEVICE.md#val-enter) of DEVICE, [`read`](sig/DEVICE.md#val-read) of DEVICE
 - `Subscript`: [`row`](sig/EMULATOR.md#val-row) of EMULATOR
 
 ---

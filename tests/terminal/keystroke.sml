@@ -5,7 +5,7 @@
    LineEdit.readLine does for a key -- for keys typed at the end and in
    the middle. scripts/perf-repl.sh runs it; it prints the median and the
    worst in milliseconds. *)
-structure L = LineEditFn (structure Device = PosixTerminal)
+structure L = LineEditFn (structure Device = PosixDevice)
 
 fun ms t = Real.fromLargeInt (Time.toMicroseconds t) / 1000.0
 

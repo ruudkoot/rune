@@ -289,7 +289,7 @@ void sys_code_free(void *code, size_t size);
    -1 and the error (ENOSYS in sys_none, which has no interrupt). */
 int sys_interrupt_catch(volatile int *flag);
 
-/* The terminal of a program that edits what is typed (RuneTerminal;
+/* The terminal of a program that edits what is typed (Terminal;
    docs/plans/repl.md, D4 and D5), named by descriptors: in, where keys are
    read, and out, where the program draws.
    sys_term_size: the columns and rows of the window, 0 or -1.

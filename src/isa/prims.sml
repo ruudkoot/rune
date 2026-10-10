@@ -762,7 +762,7 @@ struct
           doc = "Collections of the whole heap the collector has made: full collections and the low-pause collector's cycles."},
          {name = "rt_promoted", arity = 1, ty = "unit -> int", effects = anything,
           doc = "Bytes minor collections have promoted into the old space."}],
-       group "the terminal of a line editor (RuneTerminal; docs/plans/repl.md, D4 and D5; runtime/sys/sys.h)"
+       group "the terminal of a line editor (Terminal; docs/plans/repl.md, D4 and D5; runtime/sys/sys.h)"
         [{name = "term_size", arity = 1, ty = "int -> int list", effects = anything,
           doc = "The columns and rows of the window of the terminal a descriptor is; [] when it is none."},
          {name = "term_resizes", arity = 1, ty = "unit -> int", effects = anything,

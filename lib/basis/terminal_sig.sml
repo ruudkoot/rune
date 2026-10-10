@@ -21,30 +21,35 @@
 
    Status: extension
 
-   Deviation: `RUNE_TERMINAL/not-in-the-specification`. The specification
+   Deviation: `TERMINAL/not-in-the-specification`. The specification
    has `Posix.TTY` for a terminal's modes and nothing for a window's size,
    a key read with a time limit or a console of Windows; this signature is
    Rune's alone, and a program that uses it does not port.
 
    See also: `POSIX_TTY`, `RUNTIME` *)
-signature RUNE_TERMINAL =
+signature TERMINAL =
 sig
-  (* `size ()` is the columns and rows of the window of the terminal the
-     standard output is -- or, when it is not one, the standard input or
-     error -- or `NONE` when none of them is a terminal. A terminal that
-     does not know its size says 0 for both. *)
+  (* `size ()` is the columns and rows of the terminal's window, or `NONE`
+     when no standard stream is a terminal.
+
+     The terminal is the standard output's, or, when that is not one, the
+     standard input's or error's. A terminal that does not know its size
+     says 0 for both. *)
   val size : unit -> {columns : int, rows : int} option
 
   (* `resizes ()` is how many times the window has changed its size since
-     the first call of `resizes`, which starts the count; a program asks
-     it before it draws and draws the whole screen again when it has grown.
-     On Windows the changes are seen by `read`, while the terminal is raw.
-     `~1` where the system cannot count them. *)
+     the first call of `resizes`, which starts the count.
+
+     A program asks it before it draws and draws the whole screen again
+     when it has grown. On Windows the changes are seen by `read`, while
+     the terminal is raw. `~1` where the system cannot count them. *)
   val resizes : unit -> int
 
-  (* `enter {undo}` puts the terminal of the standard input in raw mode:
-     each byte as it is typed, nothing echoed, no signal from a key --
-     Ctrl-C is the byte 3 -- and the output still translated, a newline
+  (* `enter {undo}` puts the terminal of the standard input in raw mode,
+     which the runtime undoes however the program ends.
+
+     Raw is each byte as it is typed, nothing echoed, no signal from a key
+     -- Ctrl-C is the byte 3 -- and the output still translated, a newline
      written as a carriage return and a newline. On Windows the console
      makes each key the bytes a terminal of Unix sends, in UTF-8.
 
@@ -70,11 +75,12 @@ sig
   val leave : unit -> unit
 
   (* `read wait` is the bytes typed at the terminal since the last `read`,
-     waiting for them at most `wait` (`NONE`: as long as it takes): `SOME
-     ""` when the time is up or a resize ended the wait, and `NONE` at the
-     end of the input. A key can arrive in two reads; the bytes are those
-     the terminal sent, so a key is decoded from what the reads gave, not
-     from one read.
+     waiting for them at most `wait` (`NONE`: as long as it takes).
+
+     It is `SOME ""` when the time is up or a resize ended the wait, and
+     `NONE` at the end of the input. A key can arrive in two reads; the
+     bytes are those the terminal sent, so a key is decoded from what the
+     reads gave, not from one read.
 
      Raises: `OS.SysErr` when the standard input is not a terminal, or the
      read fails. The user's interrupt, where the program catches it

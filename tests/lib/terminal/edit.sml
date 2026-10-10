@@ -4,8 +4,8 @@
    docs/plans/repl.md's D23 -- for random edits at random widths, what
    diff writes, given to the emulator over a screen that shows the frame
    before, makes it show the frame after. The editor is applied to
-   PosixTerminal, so that the test is the same on every compiler. *)
-structure L = LineEditFn (structure Device = PosixTerminal)
+   PosixDevice, so that the test is the same on every compiler. *)
+structure L = LineEditFn (structure Device = PosixDevice)
 
 structure EditTest =
 struct

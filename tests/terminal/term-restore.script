@@ -1,4 +1,4 @@
-# RuneTerminal: the terminal cooked again however the program ends --
+# Terminal: the terminal cooked again however the program ends --
 # returning, an uncaught exception, a fatal error, SIGTERM, SIGHUP -- as
 # stty sees it afterwards. Linux only: the console of Windows is put back
 # at exit alike, but there is no stty to ask.

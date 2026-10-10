@@ -21,7 +21,7 @@ functor LineEditFn (...) :> LINE_EDIT
 | Implementation |  | Source |
 | --- | --- | --- |
 | [`LineEdit`](../str/LineEdit.md) | LineEdit: the line editor on Rune's terminal. | [lib/terminal/line\_edit.sml](../../../../lib/terminal/line_edit.sml) |
-| `LineEditFn` | LineEditFn: the line editor over a terminal device; LineEdit is it over Terminal, and a program on another compiler applies it to PosixTerminal. | [lib/terminal/line\_edit\_fn.sml](../../../../lib/terminal/line_edit_fn.sml) |
+| `LineEditFn` | LineEditFn: the line editor over a terminal device; LineEdit is it over Device, and a program on another compiler applies it to PosixDevice. | [lib/terminal/line\_edit\_fn.sml](../../../../lib/terminal/line_edit_fn.sml) |
 
 A line editor: what is typed at a prompt, edited with Emacs's keys,
 drawn on a terminal, of one line or many.

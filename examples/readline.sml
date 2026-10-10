@@ -25,7 +25,7 @@ val config =
   {prompt = "> ", continuation = ". ", isComplete = fn t => t = "" orelse String.isSuffix ";" t,
    complete = complete, hint = #hint LineEdit.defaults, highlight = #highlight LineEdit.defaults,
    styles = #styles LineEdit.defaults, bindings = #bindings LineEdit.defaults,
-   escapeTimeout = #escapeTimeout LineEdit.defaults, policy = Terminal.policy (), basic = false}
+   escapeTimeout = #escapeTimeout LineEdit.defaults, policy = Device.policy (), basic = false}
 
 fun loop () =
   case LineEdit.readLine (config, SOME history) of

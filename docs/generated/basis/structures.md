@@ -182,6 +182,7 @@ signature names and no others, unless the structure is listed at the end of this
 | [`StringCvt`](str/StringCvt.md) | : [`STRING_CVT`](sig/STRING_CVT.md) |  | required |  | [lib/basis/stringcvt.sml](../../../lib/basis/stringcvt.sml) |
 | [`Substring`](str/Substring.md) | : [`SUBSTRING`](sig/SUBSTRING.md) | `where type string = string where type char = Char.char` | required |  | [lib/basis/substring.sml](../../../lib/basis/substring.sml) |
 | [`SysWord`](str/Word.md) | : [`WORD`](sig/WORD.md) |  | optional | is [`Word`](str/Word.md) | [lib/basis/word.sml](../../../lib/basis/word.sml) |
+| [`Terminal`](str/Terminal.md) | : [`TERMINAL`](sig/TERMINAL.md) |  | extension |  | [lib/basis/terminal.sml](../../../lib/basis/terminal.sml) |
 | [`Text`](str/Text.md) | : [`TEXT`](sig/TEXT.md) | `where type Char.char = Char.char where type String.string = String.string where type Substring.substring = Substring.substring where type CharArray.array = CharArray.array where type CharVectorSlice.slice = CharVectorSlice.slice where type CharArraySlice.slice = CharArraySlice.slice` | required |  | [lib/basis/text.sml](../../../lib/basis/text.sml) |
 | [`TextIO`](str/TextIO.md) | : [`TEXT_IO`](sig/TEXT_IO.md) |  | required |  | [lib/basis/textio.sml](../../../lib/basis/textio.sml) |
 | [`TextIO`](str/TextIO.md) | : [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) |  | required |  | [lib/basis/textio.sml](../../../lib/basis/textio.sml) |

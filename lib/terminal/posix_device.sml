@@ -1,8 +1,8 @@
-(* PosixTerminal: the terminal of a program over Posix.TTY and OS.IO.poll,
-   for the compilers that have no RuneTerminal.
+(* PosixDevice: the terminal of the line editor over Posix.TTY and
+   OS.IO.poll, for the compilers whose Basis has no Terminal.
 
-   Implements: TERMINAL *)
-structure PosixTerminal :> TERMINAL =
+   Implements: DEVICE *)
+structure PosixDevice :> DEVICE =
 struct
   structure T = Posix.TTY
 

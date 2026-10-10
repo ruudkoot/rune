@@ -1,5 +1,5 @@
 # windows
-# RuneTerminal: the window's size, and a change of it seen while a read
+# Terminal: the window's size, and a change of it seen while a read
 # waits (SIGWINCH; a console's size records).
 start 80 24 @KEYS@
 wait ^size 80x24$

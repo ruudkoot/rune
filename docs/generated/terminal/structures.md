@@ -14,13 +14,13 @@ signature names and no others, unless the structure is listed at the end of this
 
 | Structure | Signature | Realisations | Status |  | Source |
 | --- | --- | --- | --- | --- | --- |
+| [`Device`](str/Device.md) | :> [`DEVICE`](sig/DEVICE.md) |  | required |  | [lib/terminal/device.sml](../../../lib/terminal/device.sml) |
 | [`Emulator`](str/Emulator.md) | :> [`EMULATOR`](sig/EMULATOR.md) |  | required |  | [lib/terminal/emulator.sml](../../../lib/terminal/emulator.sml) |
 | [`History`](str/History.md) | :> [`HISTORY`](sig/HISTORY.md) |  | required |  | [lib/terminal/history.sml](../../../lib/terminal/history.sml) |
 | [`Key`](str/Key.md) | :> [`KEY`](sig/KEY.md) |  | required |  | [lib/terminal/key.sml](../../../lib/terminal/key.sml) |
 | [`LineEdit`](str/LineEdit.md) | : [`LINE_EDIT`](sig/LINE_EDIT.md) |  | required | an application of `LineEditFn` | [lib/terminal/line\_edit.sml](../../../lib/terminal/line_edit.sml) |
-| [`PosixTerminal`](str/PosixTerminal.md) | :> [`TERMINAL`](sig/TERMINAL.md) |  | required |  | [lib/terminal/posix\_terminal.sml](../../../lib/terminal/posix_terminal.sml) |
+| [`PosixDevice`](str/PosixDevice.md) | :> [`DEVICE`](sig/DEVICE.md) |  | required |  | [lib/terminal/posix\_device.sml](../../../lib/terminal/posix_device.sml) |
 | [`Style`](str/Style.md) | :> [`STYLE`](sig/STYLE.md) |  | required |  | [lib/terminal/style.sml](../../../lib/terminal/style.sml) |
-| [`Terminal`](str/Terminal.md) | :> [`TERMINAL`](sig/TERMINAL.md) |  | required |  | [lib/terminal/terminal.sml](../../../lib/terminal/terminal.sml) |
 
 ---
 

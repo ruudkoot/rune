@@ -973,9 +973,9 @@ unit`.
          |                            protocol (--engine, JSON-RPC)
          |                            kernel (rune-kernel: Jupyter)
          |                            debug adapter (--dap: DAP)
-  lib/terminal:  Style  Key  Width  Terminal  LineEdit  History
+  lib/terminal:  Style  Key  Width  Device  LineEdit  History
          |
-  lib/basis: Posix.TTY, OS.IO, RuneTerminal (new)
+  lib/basis: Posix.TTY, OS.IO, Terminal (new)
          |
   runtime: sys_term_* in sys_posix.c, sys_win.c, sys_none.c
 ```
@@ -991,10 +991,11 @@ Five layers, each usable without the ones above it.
   UTF-16 (D5, P3). At start the VM turns on virtual terminal processing
   and UTF-8 output for a console's output handles, so that any program's
   escapes and UTF-8 display, the compiler's included. The Basis shows
-  them as `RuneTerminal` (D4), next to `Posix.TTY`, which stays as it is.
+  them as `Terminal` (D4), an extension like `Runtime`, next to
+  `Posix.TTY`, which stays as it is.
 * **`lib/terminal`** (M4, M5), a library like `lib/random`: styles and
   capabilities (`Style`), keys decoded from bytes (`Key`), the widths of
-  code points and clusters (`Width`), the terminal itself (`Terminal`: raw
+  code points and clusters (`Width`), the terminal itself (`Device`: raw
   mode, size, resize, reading keys with a timeout, writing), a line
   editor (`LineEdit`) and its history (`History`). The editor is a pure
   core (a buffer, actions on it, a rendering to a virtual screen) under
@@ -1002,7 +1003,8 @@ Five layers, each usable without the ones above it.
   screens (D7, D8). It knows nothing of SML: the program gives it
   callbacks to decide whether an entry is complete, to colour it, to
   complete a word and to hint. A program that wants a line gets one with
-  `LineEdit.readLine`. Its files that need `RuneTerminal` are `host no`;
+  `LineEdit.readLine`. Its files that need the Basis's `Terminal`
+  are `host no`;
   the rest, the core included, build and are tested on the other
   systems, with `Posix.TTY` for the terminal.
 * **The palette** (M2), `src/util/color.sml`: the roles (a prompt, a
@@ -1099,7 +1101,7 @@ recommended:
 | D1. Where the palette lives | A: `src/util/color.sml`, in the compiler's sources and their lint | A |
 | D2. The roles and their colours | C: a table of roles; the terminal's 16 colours and attributes, no blue, yellow or bright colour in the default theme; themes `dark`, `light`, `mono`, `none`; `RUNE_COLORS` to restyle | C |
 | D3. When colour is on | A: per stream: the flag, `NO_COLOR` (attributes only), `FORCE_COLOR`, `CLICOLOR=0`, `TERM`, a terminal, a console with VT | A |
-| D4. The console in the runtime and the Basis | A: a few calls of `sys.h` and a structure `RuneTerminal`; the VM restores the terminal at exit and turns on VT output for a console | A |
+| D4. The console in the runtime and the Basis | A: a few calls of `sys.h` and a structure `Terminal`; the VM restores the terminal at exit and turns on VT output for a console | A |
 | D5. Reading the Windows console | A: `ReadConsoleInputW` records with VT input on, to UTF-8, with resize events; a basic mode where VT is refused | A |
 | D6. Keys | A: a decoder of our own (a CSI grammar, an Escape timeout of 50 ms); bracketed paste always; the kitty protocol when the terminal says it has it | A |
 | D7. The editor's architecture | A: a pure core (decode, step, lay out, diff) under a thin loop | A |
@@ -1251,7 +1253,7 @@ a restore that survives a crash, and on Windows a console that delivers
 keys at all.
 
 * **A. A few calls of `runtime/sys/sys.h`, answered by `sys_posix.c`,
-  `sys_win.c` and `sys_none.c`, and a structure `RuneTerminal` of the
+  `sys_win.c` and `sys_none.c`, and a structure `Terminal` of the
   Basis over them** (Rune-only, `host no`):
   * `term_size`: `TIOCGWINSZ`; the window (`srWindow`, not the buffer) of
     `GetConsoleScreenBufferInfo`.
@@ -1286,7 +1288,7 @@ keys at all.
 **Recommended: A.** About 150 lines of C for POSIX and 300 for Windows
 (R2's estimate from the editors that do the same), a fingerprint change
 and a new image format number. `lib/terminal` keeps a second, portable
-`Terminal` over B for the hosts, so that its core is tested on them.
+device (`PosixDevice`) over B for the hosts, so that its core is tested on them.
 
 ### D5. Reading the Windows console
 
@@ -1931,8 +1933,8 @@ The brief's aim needs a test. Recommended, as the gate of M13:
 |---|---|
 | the palette | `src/util/color.sml`, structure `Color` |
 | the diagnostics' renderer | `src/util/diagnostic.sml`, structure `Diagnostic` |
-| the console in the Basis | structure `RuneTerminal` (`lib/basis/runeterminal.sml`), signature `RUNE_TERMINAL` |
-| the libraries | `lib/terminal`: `Style`, `Key`, `Terminal`, `LineEdit`, `History`, `Emulator`; `lib/unicode`, `lib/pretty`, `lib/markdown`, `lib/json`, `lib/jsonrpc`, `lib/digest`, `lib/zmtp`, `lib/jupyter`, `lib/dap` (*The libraries*) |
+| the console in the Basis | structure `Terminal` (`lib/basis/terminal.sml`), signature `TERMINAL`, an extension like `Runtime` |
+| the libraries | `lib/terminal`: `Style`, `Key`, `Device`, `LineEdit`, `History`, `Emulator`; `lib/unicode`, `lib/pretty`, `lib/markdown`, `lib/json`, `lib/jsonrpc`, `lib/digest`, `lib/zmtp`, `lib/jupyter`, `lib/dap` (*The libraries*) |
 | the REPL's structures for scripts and output | `Repl`, `Display` |
 | the engine's signature | `ENGINE` (`src/repl/engine.sml`) |
 | generated from the palette | `palette.css`, `palette.json` (rune-ide's Monaco theme) |
@@ -1942,7 +1944,11 @@ The brief's aim needs a test. Recommended, as the gate of M13:
 | programs | `rune-repl` (as now, and `rune -i`), `rune-kernel` |
 
 **Recommended:** as listed; `Terminal` rather than `Term`, since the
-Basis has `Posix.TTY` and no structure `Terminal`.
+Basis has `Posix.TTY` and no structure `Terminal`. Built as
+`RuneTerminal`, a name runedoc takes for the Basis's private own; the
+owner renamed it after M5 (2026-10-10) to `Terminal`, an extension like
+`Runtime`, and `lib/terminal`'s layer over it, which had been
+`Terminal`, became `Device`.
 
 ## The milestones
 
@@ -2104,11 +2110,11 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
   * At the VM's start on Windows: VT processing and the UTF-8 output
     code page on console output handles, restored at exit.
   * The Windows console wait fixed to wake on any record in VT mode.
-  * `RuneTerminal` and `RUNE_TERMINAL` in `lib/basis`, with their
-    MANIFEST lines, transcription, doc comments, `basis.runeterminal`
+  * `Terminal` and `TERMINAL` in `lib/basis`, with their
+    MANIFEST lines, transcription, doc comments, `basis.terminal`
     row and tests; the host shim; `docs/bytecode.md` and
     `docs/runtime.md`.
-* **Tests:** P1's probe rewritten on `RuneTerminal` as a terminal test:
+* **Tests:** P1's probe rewritten on `Terminal` as a terminal test:
   the same key script gives the same bytes on Linux and on Windows; the
   size and a resize seen on both; the terminal cooked again after an
   uncaught exception, `SIGTERM`, `SIGHUP` and a fatal error.
@@ -2116,18 +2122,18 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
   number change, documented.
 * **As built** (2026-10-10): `sys_term_size`, `sys_term_resizes`,
   `sys_term_enter`, `sys_term_leave` and `sys_term_read` in `sys.h`, the
-  three system layers, the primitives `term_*` and `RuneTerminal` with
-  `RUNE_TERMINAL` (`host no`; the host shim answers that there is no
+  three system layers, the primitives `term_*` and `Terminal` with
+  `TERMINAL` (`host no`; the host shim answers that there is no
   terminal); VT processing and the UTF-8 code page at the VM's start on
   Windows; `docs/runtime.md` (*The terminal*), `docs/bytecode.md`,
-  `docs/language.md`. Tests: `tests/lang/basis.runeterminal_noterminal` where
-  nothing is a terminal; the probe `tests/terminal/keys.sml` in
+  `docs/language.md`. Tests: `tests/basis/terminal.sml` where nothing is
+  a terminal; the probe `tests/terminal/keys.sml` in
   `term-keys` (ten keys, the same bytes on Linux and on Windows through
   ConPTY, Ctrl-C as the byte 3 and an emoji as one code point among
   them), `term-resize` (on both) and `term-restore` (Linux: the terminal
   cooked again after a return, an uncaught exception, a stack overflow,
   `SIGTERM` and `SIGHUP`). Where it differs from the plan:
-  * **`RuneTerminal` works on the standard streams**: keys from the
+  * **`Terminal` works on the standard streams**: keys from the
     standard input, drawing on the standard output, the size of
     whichever is a terminal. The primitives take descriptors.
   * **`enter` takes the bytes that undo the program's own modes**
@@ -2142,12 +2148,14 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
     rule 4.
   * **No new image format number**: an image's magic carries the
     instruction set's fingerprint, which the five primitives changed.
-  * **`RuneTerminal` has no generated page**: the Basis's MANIFEST takes a
-    name that begins `Rune` or `RUNE_` for the library's own, which runedoc
-    leaves out, and D25 chose that name for a structure programs use. It
-    is documented in `docs/language.md`, `docs/runtime.md` and its
-    signature's comments; a name without the prefix would have its page
-    (the owner's choice).
+  * **Named `Terminal`, an extension of the Basis** (the owner,
+    2026-10-10, after M5). Built as `RuneTerminal`, a name the Basis's
+    MANIFEST takes for the library's own and runedoc leaves out, it
+    became `Terminal` and `TERMINAL`, an extension like `Runtime`: its
+    page is among the Basis's (`lib/basis/DOCUMENTED`) and its tests are
+    in the Basis suite (`tests/basis/terminal.sml`, `terminal_sig.sml`).
+    `lib/terminal`'s layer, which had been `Terminal`, `TERMINAL` and
+    `PosixTerminal`, became `Device`, `DEVICE` and `PosixDevice`.
   * Checked beyond `make check`: `make test-windows` and `make
     test-portability` (32-bit x86, and big-endian ppc64 and aarch64 under
     qemu); the sanitiser builds ran with M5, whose tree has this runtime.
@@ -2160,17 +2168,17 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
     `TERM`), D3's rule for programs that are not the compiler.
   * `Key`: D6's decoder.
   * The width policy (D9), over `lib/unicode`.
-  * `Terminal`: over `RuneTerminal`, and a portable one over `Posix.TTY`
-    for the hosts.
+  * `Device`: over the Basis's `Terminal`, and a portable one
+    (`PosixDevice`) over `Posix.TTY` for the hosts.
   * Wired into the Makefile's lists for docs and lint.
 * **Tests:**
   * the decoder on every split of every sequence (a property);
   * `make test-lib-hosts` on the files marked `host yes`.
 * **Done when:** green on Rune and on the hosts; P1's decoder retired
   for `Key`.
-* **As built** (2026-10-10): `Style`, `Key`, `TERMINAL` with `Terminal`
-  (over `RuneTerminal`, `host no`) and `PosixTerminal` (over `Posix.TTY`,
-  `host yes`), and the width policy as `Terminal.policy` over
+* **As built** (2026-10-10): `Style`, `Key`, `DEVICE` with `Device`
+  (over the Basis's `Terminal`, `host no`) and `PosixDevice` (over
+  `Posix.TTY`, `host yes`), and the width policy as `Device.policy` over
   `lib/unicode`'s `Grapheme`; `tests/lib/terminal/key.sml` (24 streams,
   every split in two, a byte a read, 2,000 random streams in random
   reads) and `style.sml`. The decoder reads the kitty protocol's
@@ -2196,7 +2204,7 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
   * editing scripts in `tests/terminal`, on Linux and Windows.
 * **Done when:** those pass and a keystroke at 1,000 lines costs under
   16 ms (M1's harness).
-* **As built** (2026-10-10): `LineEdit` (`LineEditFn` over a `TERMINAL`,
+* **As built** (2026-10-10): `LineEdit` (`LineEditFn` over a `DEVICE`,
   so that the editor and its tests build on every host), `History`,
   `Emulator`; `examples/readline.sml`; `tests/lib/terminal/edit.sml`
   (the commands, the history, search and completion, and D23's property:
@@ -2507,7 +2515,7 @@ Windows, and any Rune program can read a line with them.
   covers exit, fatal errors and terminating signals, but not `SIGKILL`;
   `reset` remains the user's answer to that, as for every editor.
 * **`lib/terminal` on the hosts.** Their `Posix.TTY`s differ in details.
-  The portable `Terminal` is tested by `make test-lib-hosts`, and a
+  The portable `PosixDevice` is tested by `make test-lib-hosts`, and a
   difference is a `HOST-BUG` line, never a workaround (`AGENTS.md`).
 * **Flaky end-to-end tests.** tmux and timing. The harness waits on
   screens, never on time, and retries a wait. The latency numbers come

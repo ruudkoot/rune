@@ -1,5 +1,5 @@
 # windows
-# RuneTerminal's raw mode (docs/plans/repl.md, M3): each key's bytes as the
+# Terminal's raw mode (docs/plans/repl.md, M3): each key's bytes as the
 # program reads them, the same on Linux and on Windows, where the console's
 # records with VT input on are made the bytes a terminal of Unix sends.
 start 80 24 @KEYS@

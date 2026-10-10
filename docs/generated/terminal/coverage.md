@@ -6,12 +6,12 @@ documented when a comment describes it, alone or together with the entry before 
 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
+| [`DEVICE`](sig/DEVICE.md) | 8 | 8 | 100% | 8 | 8 |
 | [`EMULATOR`](sig/EMULATOR.md) | 9 | 9 | 100% | 7 | 7 |
 | [`HISTORY`](sig/HISTORY.md) | 8 | 8 | 100% | 7 | 7 |
 | [`KEY`](sig/KEY.md) | 10 | 10 | 100% | 4 | 4 |
 | [`LINE_EDIT`](sig/LINE_EDIT.md) | 16 | 16 | 100% | 7 | 7 |
 | [`STYLE`](sig/STYLE.md) | 11 | 11 | 100% | 6 | 6 |
-| [`TERMINAL`](sig/TERMINAL.md) | 8 | 8 | 100% | 8 | 8 |
 | **all** | 62 | 62 | 100% | 39 | 39 |
 
 ## Members a signature describes

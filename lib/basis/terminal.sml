@@ -1,7 +1,12 @@
-(* RuneTerminal: the terminal of a line editor, over the runtime's
-   term_size, term_resizes, term_enter, term_leave and term_read
-   (runtime/sys/sys.h). *)
-structure RuneTerminal =
+(* Terminal: the terminal of a program that edits what is typed at it, over
+   the runtime's term_size, term_resizes, term_enter, term_leave and
+   term_read (runtime/sys/sys.h). It is Rune's own and not of the
+   specification.
+
+   Implements: TERMINAL
+
+   Status: extension *)
+structure Terminal =
 struct
   local
     val size' = _prim "term_size" : int -> int list

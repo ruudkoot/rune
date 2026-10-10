@@ -34,9 +34,9 @@ flowchart TD
   n1["Style"]
   n2(["KEY"])
   n3["Key"]
-  n4(["TERMINAL"])
-  n5["Terminal"]
-  n6["PosixTerminal"]
+  n4(["DEVICE"])
+  n5["Device"]
+  n6["PosixDevice"]
   n7(["EMULATOR"])
   n8["Emulator"]
   n9(["HISTORY"])
@@ -54,10 +54,10 @@ flowchart TD
   n11 --> n10
   n11 --> n3
   n11 --> n1
-  n12 --> n11
   n12 --> n4
-  n13 --> n12
+  n12 --> n11
   n13 --> n5
+  n13 --> n12
 ```
 
 ---

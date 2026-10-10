@@ -1,7 +1,7 @@
-(* Terminal: the terminal of a program over the Basis's RuneTerminal.
+(* Device: the terminal of the line editor over the Basis's Terminal.
 
-   Implements: TERMINAL *)
-structure Terminal :> TERMINAL =
+   Implements: DEVICE *)
+structure Device :> DEVICE =
 struct
   fun env name = case OS.Process.getEnv name of SOME v => v | NONE => ""
 
@@ -10,16 +10,16 @@ struct
     andalso env "TERM" <> "dumb"
 
   fun size () =
-    case RuneTerminal.size () of
+    case Terminal.size () of
       SOME {columns, rows} =>
         if columns > 0 andalso rows > 0 then {columns = columns, rows = rows} else {columns = 80, rows = 24}
     | NONE => {columns = 80, rows = 24}
 
-  fun resizes () = Int.max (0, RuneTerminal.resizes ())
+  fun resizes () = Int.max (0, Terminal.resizes ())
 
-  val enter = RuneTerminal.enter
-  val leave = RuneTerminal.leave
-  val read = RuneTerminal.read
+  val enter = Terminal.enter
+  val leave = Terminal.leave
+  val read = Terminal.read
 
   fun write s = (TextIO.output (TextIO.stdOut, s); TextIO.flushOut TextIO.stdOut)
 

@@ -1,22 +1,22 @@
 (* The terminal library (docs/plans/repl.md, The libraries; M4 and M5):
-   styles, keys, the terminal, and the line editor; its files in load
-   order, in the form of lib/basis/library.build. It is written on
+   styles, keys, the terminal device, and the line editor; its files in
+   load order, in the form of lib/basis/library.build. It is written on
    lib/unicode, for UTF-8 and the widths of what it draws: *)
 libraries unicode end
 (* A file that every compiler of tests/lib/run-hosts.sh builds is
-   "demand"; one that names Rune's own RuneTerminal is "host=no" as well. *)
+   "demand"; one that names Rune's own Terminal is "host=no" as well. *)
 annotate "demand" in
   style_sig.sml
   style.sml
   key_sig.sml
   key.sml
-  terminal_sig.sml
+  device_sig.sml
 end
 annotate "demand" "host=no" in
-  terminal.sml
+  device.sml
 end
 annotate "demand" in
-  posix_terminal.sml
+  posix_device.sml
   emulator_sig.sml
   emulator.sml
   history_sig.sml

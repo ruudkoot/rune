@@ -8,7 +8,7 @@
 - `Paste` (con): [KEY](../sig/KEY.md#con-paste)
 - `pending` (val): [KEY](../sig/KEY.md#val-pending)
 - `plain` (val): [STYLE](../sig/STYLE.md#val-plain)
-- `policy` (val): [TERMINAL](../sig/TERMINAL.md#val-policy)
+- `policy` (val): [DEVICE](../sig/DEVICE.md#val-policy)
 - `PreviousHistory` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-previoushistory)
 - `PreviousLine` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-previousline)
 

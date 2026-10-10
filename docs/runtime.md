@@ -653,7 +653,7 @@ REPL `SIGINT` while a declaration loops.
 
 A program that edits what is typed at it -- the REPL's line editor,
 `lib/terminal` -- needs more of the terminal than `Posix.TTY` gives, and
-some of it only the runtime can do (`RuneTerminal`; docs/plans/repl.md, D4
+some of it only the runtime can do (`Terminal`; docs/plans/repl.md, D4
 and D5). Five calls of the system layer (`runtime/sys/sys.h`), behind the
 primitives `term_size`, `term_resizes`, `term_enter`, `term_leave` and
 `term_read`:

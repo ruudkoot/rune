@@ -85,7 +85,7 @@
 - `sin` (val): [MATH](../sig/MATH.md#val-sin), [SML90](../sig/SML90.md#val-sin)
 - `sinh` (val): [MATH](../sig/MATH.md#val-sinh)
 - `Size` (exn): [GENERAL](../sig/GENERAL.md#exn-size)
-- `size` (val): [STRING](../sig/STRING.md#val-size), [SUBSTRING](../sig/SUBSTRING.md#val-size)
+- `size` (val): [STRING](../sig/STRING.md#val-size), [SUBSTRING](../sig/SUBSTRING.md#val-size), [TERMINAL](../sig/TERMINAL.md#val-size)
 - `skipWS` (val): [STRING_CVT](../sig/STRING_CVT.md#val-skipws)
 - `sleep` (val): [OS_PROCESS](../sig/OS_PROCESS.md#val-sleep), [POSIX_PROCESS](../sig/POSIX_PROCESS.md#val-sleep)
 - `slice` (type): [ARRAY_SLICE](../sig/ARRAY_SLICE.md#type-slice), [MONO_ARRAY_SLICE](../sig/MONO_ARRAY_SLICE.md#type-slice), [MONO_VECTOR_SLICE](../sig/MONO_VECTOR_SLICE.md#type-slice), [VECTOR_SLICE](../sig/VECTOR_SLICE.md#type-slice)

@@ -9,7 +9,7 @@
 - `Always` (con): [STYLE](../sig/STYLE.md#con-always)
 - `Ansi` (con): [STYLE](../sig/STYLE.md#con-ansi)
 - `Auto` (con): [STYLE](../sig/STYLE.md#con-auto)
-- `available` (val): [TERMINAL](../sig/TERMINAL.md#val-available)
+- `available` (val): [DEVICE](../sig/DEVICE.md#val-available)
 
 ---
 

@@ -1,4 +1,4 @@
-(* A probe of RuneTerminal for tests/terminal: the terminal raw, its size,
+(* A probe of Terminal for tests/terminal: the terminal raw, its size,
    then what is typed, as hex, a line for each burst (bytes that come with
    less than 150 ms between them, so that a key split over two reads is
    still one line), and a line when the window changes its size. Some
@@ -11,17 +11,17 @@ fun hex s =
                              (explode s))
 fun say s = (print (s ^ "\n"); TextIO.flushOut TextIO.stdOut)
 fun sizeText () =
-  case RuneTerminal.size () of
+  case Terminal.size () of
     SOME {columns, rows} => Int.toString columns ^ "x" ^ Int.toString rows
   | NONE => "none"
 fun deep n = 1 + deep (n + 1)
 fun signal s = Posix.Process.kill (Posix.Process.K_PROC (Posix.ProcEnv.getpid ()), s)
 
 fun burst (got, seen) =
-  case RuneTerminal.read (SOME (Time.fromMilliseconds 150)) of
+  case Terminal.read (SOME (Time.fromMilliseconds 150)) of
     NONE => (got, seen, true)
   | SOME "" =>
-      let val r = RuneTerminal.resizes ()
+      let val r = Terminal.resizes ()
       in
         if r <> seen then (say ("resized " ^ sizeText ()); burst (got, r))
         else (got, seen, false)
@@ -42,8 +42,8 @@ fun loop seen =
        | "h" => signal Posix.Signal.hup
        | _ => loop seen)
 
-val () = RuneTerminal.enter {undo = ""}
+val () = Terminal.enter {undo = ""}
 val () = say ("size " ^ sizeText ())
-val () = loop (RuneTerminal.resizes ())
-val () = RuneTerminal.leave ()
+val () = loop (Terminal.resizes ())
+val () = Terminal.leave ()
 val () = say "bye"

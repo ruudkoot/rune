@@ -5,7 +5,7 @@
 #   tests/terminal/run.sh [--windows] [FILTER]
 # A script names the program it starts with @REPL@ (bin/rune-repl's world
 # on bin/runevm), @KEYS@ (tests/terminal/keys.sml, a probe of
-# RuneTerminal) or @READLINE@ (examples/readline.sml, lib/terminal's
+# Terminal) or @READLINE@ (examples/readline.sml, lib/terminal's
 # editor), and its expected screens with @DIR@ (tests/terminal).
 # With --windows, the scripts whose first line is `# windows` run again on
 # bin/runevm.exe, staged with the REPL's image and the probe in the directory of Windows
@@ -33,7 +33,7 @@ fi
 out=tests/out/terminal
 mkdir -p "$out"
 heap="--heap-size 67108864"
-# the probe of RuneTerminal; a small stack, so that its fatal error comes soon
+# the probe of Terminal; a small stack, so that its fatal error comes soon
 if ! bin/rune tests/terminal/keys.sml -o "$out/keys.rbc"; then
   echo "FAIL terminal: tests/terminal/keys.sml does not compile"
   exit 1

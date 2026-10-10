@@ -1,9 +1,9 @@
 (* LineEditFn: the line editor over a terminal device; LineEdit is it
-   over Terminal, and a program on another compiler applies it to
-   PosixTerminal.
+   over Device, and a program on another compiler applies it to
+   PosixDevice.
 
    Implements: LINE_EDIT *)
-functor LineEditFn (structure Device : TERMINAL) :> LINE_EDIT =
+functor LineEditFn (structure Device : DEVICE) :> LINE_EDIT =
 struct
   datatype command =
       Insert

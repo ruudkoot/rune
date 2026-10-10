@@ -1,15 +1,16 @@
-(* The terminal a program edits on: the standard input and output, put in
-   raw mode and read key by key, and the window's size.
+(* The terminal as the line editor uses it: the standard input and output,
+   put in raw mode and read key by key, the window's size, and how the
+   terminal measures what it draws.
 
-   `Terminal` is Rune's, over the Basis's `RuneTerminal`: the runtime puts
-   the terminal back however the program ends, counts the window's
-   changes of size, and reads a console of Windows. `PosixTerminal` is
-   the same signature over `Posix.TTY` and `OS.IO.poll` alone, for the
-   other compilers of Standard ML: it knows no size but `COLUMNS` and
-   `LINES`, sees no resize, and puts the terminal back at `leave` only.
+   `Device` is Rune's, over the Basis's `Terminal`: the runtime puts the
+   terminal back however the program ends, counts the window's changes of
+   size, and reads a console of Windows. `PosixDevice` is the same
+   signature over `Posix.TTY` and `OS.IO.poll` alone, for the other
+   compilers of Standard ML: it knows no size but `COLUMNS` and `LINES`,
+   sees no resize, and puts the terminal back at `leave` only.
 
    Area: Terminals *)
-signature TERMINAL =
+signature DEVICE =
 sig
   (* `available ()` is whether the standard input and output are both a
      terminal and `TERM` is not `dumb`: whether a program can edit there. *)

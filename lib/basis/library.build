@@ -160,8 +160,8 @@ annotate "demand" "host=no" in
   dynamic_sig.sml
   dynamic.sml
   compiler_sig.sml
-  runeterminal_sig.sml
-  runeterminal.sml
+  terminal_sig.sml
+  terminal.sml
   compiler.sml
 end
 (* ---- the signatures of the specification (scripts/gen-basis-sigs.sh) *)
@@ -311,7 +311,7 @@ end
 annotate "seal" "host=no" in
   seal_runtime.sml
   seal_compiler.sml
-  seal_runeterminal.sml
+  seal_terminal.sml
 end
 annotate "seal" in
   seal_pack_real32.sml

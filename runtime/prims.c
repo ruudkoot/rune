@@ -2461,7 +2461,7 @@ static int p_reals_blit(VM *vm) {
 }
 
 /* ================================================================ the terminal of a line editor
-   (RuneTerminal; docs/plans/repl.md, D4 and D5; sys.h) */
+   (Terminal; docs/plans/repl.md, D4 and D5; sys.h) */
 static int p_term_size(VM *vm) {
     INT1("term_size");
     int cols = 0, rows = 0;
