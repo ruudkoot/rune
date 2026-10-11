@@ -1,4 +1,4 @@
-Rune @VERSION@. Ctrl-D ends the session.
+Rune @VERSION@. Type :help for instructions.
 - :type [1, 2]
 [1, 2] : int list
 - :doc Option.isSome

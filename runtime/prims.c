@@ -2581,6 +2581,26 @@ static int p_rt_debug_return(VM *vm) {
 
 static int p_rt_debug_program(VM *vm) { return ret(vm, 1, mk_int(vm->prog.nfuncs)); }
 
+/* rt_random_bytes n: n bytes of the system's randomness, "" where it has none */
+static int p_rt_random_bytes(VM *vm) {
+    INT1("rt_random_bytes");
+    size_t n = x < 0 ? 0 : (size_t)x;
+    if (n > MAX_STRING) n = MAX_STRING;
+    char *buf = malloc(n ? n : 1);
+    if (!buf) vm_fatal(vm, "out of memory");
+    int ok = n == 0 || sys_random(buf, n) == 0;
+    Obj *str = vm_string_from(vm, buf, ok ? (uint32_t)n : 0);
+    free(buf);
+    return ret(vm, 1, mk_ptr(str));
+}
+
+/* win_event_new (): an event a child inherits, watched as its interrupt (sys.h) */
+static int p_win_event_new(VM *vm) { return ret(vm, 1, mk_int(sys_event_new())); }
+static int p_win_event_set(VM *vm) {
+    INT1("win_event_set");
+    return ret(vm, 1, mk_bool(sys_event_set(x) == 0));
+}
+
 /* Runtime.save: 0 in the world that writes the image, and 1 -- `Restored` --
    in the world that starts again from it, which vm_resume pushes in place of
    this call's argument. ~1 says the image could not be written. */

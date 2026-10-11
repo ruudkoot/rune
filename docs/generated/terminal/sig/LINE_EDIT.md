@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 2 |
-| Documentation | 17 of 17 entries documented |
+| Documentation | 20 of 20 entries documented |
 | Tests | not listed |
 | Source | [lib/terminal/line\_edit\_sig.sml](../../../../lib/terminal/line_edit_sig.sml) |
 
@@ -46,6 +46,14 @@ complete; Enter to accept a complete input or begin a new line, and
 Alt-Enter for a new line always; Ctrl-L to clear the screen; Ctrl-C to
 cancel; Ctrl-Z to suspend. `bindings` changes them.
 
+With `keys = Vi` the editor has Vi's modes: what is typed is inserted,
+as with Emacs's keys, until Escape, which goes to the normal mode,
+where letters are commands -- counts, the motions h l w b e 0 ^ \$, the
+operators d c y with a motion or doubled, x X D C s S r \~ p P u, j and
+k through the lines and the history, G and gg, and i a I A o O back to
+inserting. The cursor is a block in the normal mode and a bar while
+inserting.
+
 ## Interface
 
 <pre>
@@ -62,6 +70,7 @@ sig
     | <a href="#con-acceptornewline">AcceptOrNewline</a> | <a href="#con-newline">Newline</a> | <a href="#con-complete">Complete</a> | <a href="#con-reversesearch">ReverseSearch</a> | <a href="#con-abort">Abort</a> | <a href="#con-cancel">Cancel</a> | <a href="#con-clearscreen">ClearScreen</a> | <a href="#con-suspend">Suspend</a>
     | <a href="#con-ignore">Ignore</a>
   val <a href="#val-emacs">emacs</a> : (Key.event * command) list
+  datatype <a href="#type-keys">keys</a> = <a href="#con-emacs">Emacs</a> | <a href="#con-vi">Vi</a>
   type <a href="#type-config">config</a> = {
     <a href="#fld-config.prompt">prompt</a> : string, <a href="#fld-config.continuation">continuation</a> : string,
     <a href="#fld-config.iscomplete">isComplete</a> : string -&gt; bool,
@@ -73,9 +82,11 @@ sig
     <a href="#fld-config.bindings">bindings</a> : (Key.event * command) list,
     <a href="#fld-config.escapetimeout">escapeTimeout</a> : Time.time,
     <a href="#fld-config.policy">policy</a> : Grapheme.policy,
-    <a href="#fld-config.basic">basic</a> : bool}
+    <a href="#fld-config.basic">basic</a> : bool,
+    <a href="#fld-config.keys">keys</a> : keys}
   val <a href="#val-defaults">defaults</a> : config
   type <a href="#type-state">state</a>
+  val <a href="#val-normal">normal</a> : state -&gt; bool
   datatype <a href="#type-outcome">outcome</a> = <a href="#con-continue">Continue</a> | <a href="#con-accept">Accept</a> of string | <a href="#con-cancelled">Cancelled</a> | <a href="#con-endofinput">EndOfInput</a> | <a href="#con-clear">Clear</a> | <a href="#con-stop">Stop</a>
   val <a href="#val-start">start</a> : string vector * string -&gt; state
   val <a href="#val-step">step</a> : config * state * Key.event -&gt; state * outcome
@@ -88,6 +99,7 @@ sig
   datatype <a href="#type-result">result</a> = <a href="#con-line">Line</a> of string | <a href="#con-interrupted">Interrupted</a> | <a href="#con-end">End</a>
   val <a href="#val-basic">basic</a> : config -&gt; bool
   val <a href="#val-readline">readLine</a> : config * History.history option -&gt; result
+  val <a href="#val-terminal">terminal</a> : unit -&gt; {<a href="#fld-terminal.policy">policy</a> : Grapheme.policy option, <a href="#fld-terminal.kitty">kitty</a> : bool}
 end
 </pre>
 
@@ -159,6 +171,20 @@ val emacs : (Key.event * command) list
 
 Readline's keys, as the comment above lists them.
 
+### <a name="type-keys"></a>`keys`
+
+```sml
+datatype keys = Emacs | Vi
+```
+
+Whether letters are typed always (Emacs's keys), or are Vi's commands
+in its normal mode.
+
+| Constructor | Argument | Description |
+| --- | --- | --- |
+| <a name="con-emacs"></a>`Emacs` |  |  |
+| <a name="con-vi"></a>`Vi` |  |  |
+
 ### <a name="type-config"></a>`config`
 
 ```sml
@@ -173,7 +199,8 @@ type config = {
   bindings : (Key.event * command) list,
   escapeTimeout : Time.time,
   policy : Grapheme.policy,
-  basic : bool}
+  basic : bool,
+  keys : keys}
 ```
 
 What the editor is given: the prompts, what it asks of the program,
@@ -187,7 +214,8 @@ Ctrl-E there accepts. `highlight text` is styles for byte ranges of
 the text, `(start, stop, style)`. `styles` are those of the parts the
 editor draws itself. `escapeTimeout` is how long Escape waits for
 the rest of a sequence; `policy` how the terminal measures clusters;
-[`basic`](#val-basic) asks for the basic mode.
+[`basic`](#val-basic) asks for the basic mode; [`keys`](#type-keys) whether Vi's modes are on
+(`bindings` are those of both modes but the normal mode's letters).
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -202,6 +230,7 @@ the rest of a sequence; `policy` how the terminal measures clusters;
 | <a name="fld-config.escapetimeout"></a>`escapeTimeout` | `Time.time` |  |
 | <a name="fld-config.policy"></a>`policy` | `Grapheme.policy` |  |
 | <a name="fld-config.basic"></a>`basic` | `bool` |  |
+| <a name="fld-config.keys"></a>`keys` | `keys` |  |
 
 ### <a name="val-defaults"></a>`defaults`
 
@@ -222,7 +251,16 @@ type state
 ```
 
 What the editor holds: the text, the cursor, the kill ring, what can
-be undone, the history and where in it the text came from.
+be undone, the history and where in it the text came from, and Vi's
+mode.
+
+### <a name="val-normal"></a>`normal`
+
+```sml
+val normal : state -> bool
+```
+
+`normal s` is whether `s` is in Vi's normal mode.
 
 ### <a name="type-outcome"></a>`outcome`
 
@@ -384,6 +422,26 @@ It puts the terminal back before it returns. It is the basic mode when
 `#basic c`, when the standard input or output is not a terminal,
 when `TERM` is `dumb`, `unknown`, `cons25` or [`emacs`](#val-emacs), when
 `INSIDE_EMACS` names comint, or when `RUNE_BASIC_REPL` is set.
+
+### <a name="val-terminal"></a>`terminal`
+
+```sml
+val terminal : unit -> {policy : Grapheme.policy option, kitty : bool}
+```
+
+`terminal ()` is what the terminal said of itself at the first
+[`readLine`](#val-readline), once its answers have come.
+
+How it measures a cluster, which [`readLine`](#val-readline) then uses in place of the
+config's `policy`, and whether it speaks the kitty keyboard protocol,
+which [`readLine`](#val-readline) turns on while it reads (keys told apart: Escape at
+once, Ctrl-I apart from Tab). `NONE` and false where it has not
+answered.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-terminal.policy"></a>`policy` | `Grapheme.policy option` |  |
+| <a name="fld-terminal.kitty"></a>`kitty` | `bool` |  |
 
 ---
 

@@ -652,7 +652,16 @@ D11):
   program's and not the reader's (`rt_interrupt_is`,
   `lib/basis/streamio_fn.sml`);
 * an image keeps the exception and the mask, and the world started from it
-  catches the interrupt again, at the flag of the VM that runs it.
+  catches the interrupt again, at the flag of the VM that runs it;
+* on Windows, where one process has no signal to send another, a program
+  that catches the interrupt also watches, on a thread, the events that
+  the variables `RUNE_INTERRUPT_EVENT` and `JPY_INTERRUPT_EVENT` name by
+  their handles' numbers: one set is the user's interrupt, as Ctrl-C is.
+  A number that is no handle of the process -- a variable a parent passed
+  on without the handle -- is passed over. The REPL's fronts give their
+  engine one (`RuneRuntime.interruptEvent`, `setInterrupt`;
+  `src/front/engine.sml`), and Jupyter gives its kernel one, which the
+  kernel keeps from its engine.
 
 Uncaught, it ends the program as any exception does:
 `runevm: uncaught exception Interrupt`, status 1. A process started with

@@ -186,7 +186,7 @@ struct
            [role ("syn.string", "\"" ^ String.toString (String.substring (s, 0, Int.max (0, !RuneCompiler.stringLength))) ^ "\""),
             dots])
   fun unit (_ : int) () = str "()"
-  fun function (_ : int) (_ : 'a) = role ("repl.ui", "fn")
+  fun function (_ : int) (_ : 'a) = role ("syn.keyword", "fn")
   fun hidden (_ : int) (_ : 'a) = role ("repl.ui", "?")
   fun list (f : int -> 'a -> pretty) (d : int) (xs : 'a list) =
     cut (d, fn () =>

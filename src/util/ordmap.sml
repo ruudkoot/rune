@@ -24,6 +24,11 @@ sig
   val listItemsi : 'a map -> (key * 'a) list
   val listKeys : 'a map -> key list
   val firsti : 'a map -> (key * 'a) option   (* the binding of the least key *)
+  (* For p true of the keys up to some key and false of those after it: the
+     least key of which p is false, and the greatest of which it is true --
+     the edges of a range of keys, found in the height of the tree. *)
+  val firstNot : (key -> bool) -> 'a map -> key option
+  val lastWhere : (key -> bool) -> 'a map -> key option
   val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
   val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
   val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
@@ -154,6 +159,18 @@ struct
   fun firsti E = NONE
     | firsti (T (_, E, k, v, _)) = SOME (k, v)
     | firsti (T (_, l, _, _, _)) = firsti l
+
+  fun firstNot p m =
+    let
+      fun go (E, best) = best
+        | go (T (_, l, k, _, r), best) = if p k then go (r, best) else go (l, SOME k)
+    in go (m, NONE) end
+
+  fun lastWhere p m =
+    let
+      fun go (E, best) = best
+        | go (T (_, l, k, _, r), best) = if p k then go (r, SOME k) else go (l, best)
+    in go (m, NONE) end
 
   fun app f m = foldl (fn (v, ()) => f v) () m
   fun appi f m = foldli (fn (k, v, ()) => f (k, v)) () m

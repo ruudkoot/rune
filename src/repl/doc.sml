@@ -62,8 +62,11 @@ struct
 
   fun paint role s = ReplFront.paint role s
 
+  (* a specification, coloured as SML is where it is typed *)
+  fun spec' (s : string) : string = ReplHighlight.paint (!ReplSession.env, s, ReplHighlight.code)
+
   fun showMember (structure' : string, sigName : string, {spec, doc, page, ...} : member) : string =
-    paint "doc.code" spec ^ "\n" ^ paint "repl.ui" ("  " ^ structure' ^ " : " ^ sigName ^ ", docs/generated/basis/" ^ page) ^ "\n"
+    spec' spec ^ "\n" ^ paint "repl.ui" ("  " ^ structure' ^ " : " ^ sigName ^ ", docs/generated/basis/" ^ page) ^ "\n"
     ^ (if doc = "" then "" else "\n" ^ render doc ^ "\n")
 
   fun memberOf (sigName : string, name : string) : member option =
@@ -100,7 +103,7 @@ struct
           SOME {doc, page, members} =>
             SOME (paint "doc.heading" title ^ "\n" ^ paint "repl.ui" ("  docs/generated/basis/" ^ page) ^ "\n\n"
                   ^ (if doc = "" then "" else render doc ^ "\n\n")
-                  ^ String.concatWith "\n" (List.map (fn m => "  " ^ paint "doc.code" (#spec m))
+                  ^ String.concatWith "\n" (List.map (fn m => "  " ^ spec' (#spec m))
                                                      (List.filter (fn m => #kind m <> "include") members)) ^ "\n")
         | NONE => NONE
     in

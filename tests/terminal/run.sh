@@ -15,8 +15,12 @@
 # terminal).
 set -u
 # The screens compared must not depend on colour chosen from outside
-# (docs/diagnostics.md).
-unset FORCE_COLOR CLICOLOR_FORCE NO_COLOR CLICOLOR RUNE_COLORS
+# (docs/diagnostics.md): the theme is auto's 16 colours wherever the scripts
+# run -- a terminal of 256 colours would make it wide, which a script asks
+# for itself (repl-colours) -- on Windows too (WSLENV, below).
+unset FORCE_COLOR CLICOLOR_FORCE NO_COLOR CLICOLOR
+RUNE_COLORS=auto
+export RUNE_COLORS
 cd "$(dirname "$0")/../.."
 windows=0
 filter=""
@@ -70,7 +74,7 @@ fi
 XDG_STATE_HOME=$PWD/$out/state
 XDG_CONFIG_HOME=$PWD/$out/config
 export XDG_STATE_HOME XDG_CONFIG_HOME
-case ":${WSLENV:-}:" in *:XDG_STATE_HOME/p:*) ;; *) WSLENV="XDG_STATE_HOME/p:XDG_CONFIG_HOME/p${WSLENV:+:$WSLENV}"; export WSLENV ;; esac
+case ":${WSLENV:-}:" in *:XDG_STATE_HOME/p:*) ;; *) WSLENV="XDG_STATE_HOME/p:XDG_CONFIG_HOME/p:RUNE_COLORS${WSLENV:+:$WSLENV}"; export WSLENV ;; esac
 # the version the REPL's banner says (scripts/gen-version.sh: a tag or a
 # hash), which the screens write @VERSION@
 version=$(sed -n 's/^ *val version = "\(.*\)"$/\1/p' build/config.sml)

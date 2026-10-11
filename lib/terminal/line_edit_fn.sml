@@ -16,6 +16,8 @@ struct
     | AcceptOrNewline | Newline | Complete | ReverseSearch | Abort | Cancel | ClearScreen | Suspend
     | Ignore
 
+  datatype keys = Emacs | Vi
+
   type config = {
     prompt : string, continuation : string,
     isComplete : string -> bool,
@@ -27,7 +29,8 @@ struct
     bindings : (Key.event * command) list,
     escapeTimeout : Time.time,
     policy : Grapheme.policy,
-    basic : bool}
+    basic : bool,
+    keys : keys}
 
   type cell = {text : string, style : Style.style}
   type frame = {rows : cell list vector, cursor : int * int}
@@ -75,7 +78,8 @@ struct
     bindings = emacs,
     escapeTimeout = Time.fromMilliseconds 50,
     policy = Grapheme.ByCluster,
-    basic = false}
+    basic = false,
+    keys = Emacs}
 
   fun commandOf (c : config, e) =
     case List.find (fn (k, _) => k = e) (#bindings c) of
@@ -159,43 +163,56 @@ struct
 
   datatype last = Other | Typed | Killed | Yanked of int | Tabbed
 
-  type search = {query : string, at : int, original : buffer, failing : bool}
+  (* a search of the history: what is sought, the entry the incremental
+     search is at, what was there before, whether nothing has it, and the
+     entry of the fuzzy menu chosen (~1: none) *)
+  type search = {query : string, at : int, original : buffer, failing : bool, pick : int}
+
+  (* Vi's mode: normal or inserting, and in the normal mode a count and a
+     command begun (d c y with no motion yet, g, r) *)
+  type vi = {normal : bool, count : int, pending : string}
+  val inserting : vi = {normal = false, count = 0, pending = ""}
 
   type state = {buf : buffer, ring : string list, last : last, undo : buffer list,
                 history : string vector, place : int, saved : buffer, prefix : string,
-                search : search option, menu : string list option}
+                search : search option, menu : string list option, vi : vi}
 
   fun start (history, t) =
     let val b = fromText (t, size t)
     in
       {buf = b, ring = [], last = Other, undo = [], history = history, place = Vector.length history,
-       saved = b, prefix = "", search = NONE, menu = NONE}
+       saved = b, prefix = "", search = NONE, menu = NONE, vi = inserting}
     end
+
+  fun normal (s : state) = #normal (#vi s)
 
   fun text (s : state) = textOf (#buf s)
   fun cursor (s : state) = offsetOf (#buf s)
 
-  fun withBuf ({ring, last, undo, history, place, saved, prefix, search, menu, ...} : state) b : state =
+  fun withBuf ({ring, last, undo, history, place, saved, prefix, search, menu, vi, ...} : state) b : state =
     {buf = b, ring = ring, last = last, undo = undo, history = history, place = place, saved = saved,
-     prefix = prefix, search = search, menu = menu}
-  fun withLast ({buf, ring, undo, history, place, saved, prefix, search, menu, ...} : state) l : state =
+     prefix = prefix, search = search, menu = menu, vi = vi}
+  fun withLast ({buf, ring, undo, history, place, saved, prefix, search, menu, vi, ...} : state) l : state =
     {buf = buf, ring = ring, last = l, undo = undo, history = history, place = place, saved = saved,
-     prefix = prefix, search = search, menu = menu}
-  fun withRing ({buf, last, undo, history, place, saved, prefix, search, menu, ...} : state) r : state =
+     prefix = prefix, search = search, menu = menu, vi = vi}
+  fun withRing ({buf, last, undo, history, place, saved, prefix, search, menu, vi, ...} : state) r : state =
     {buf = buf, ring = r, last = last, undo = undo, history = history, place = place, saved = saved,
-     prefix = prefix, search = search, menu = menu}
-  fun withUndo ({buf, ring, last, history, place, saved, prefix, search, menu, ...} : state) u : state =
+     prefix = prefix, search = search, menu = menu, vi = vi}
+  fun withUndo ({buf, ring, last, history, place, saved, prefix, search, menu, vi, ...} : state) u : state =
     {buf = buf, ring = ring, last = last, undo = u, history = history, place = place, saved = saved,
-     prefix = prefix, search = search, menu = menu}
-  fun withPlace ({buf, ring, last, undo, history, search, menu, ...} : state) (place, saved, prefix) : state =
+     prefix = prefix, search = search, menu = menu, vi = vi}
+  fun withPlace ({buf, ring, last, undo, history, search, menu, vi, ...} : state) (place, saved, prefix) : state =
     {buf = buf, ring = ring, last = last, undo = undo, history = history, place = place, saved = saved,
-     prefix = prefix, search = search, menu = menu}
-  fun withSearch ({buf, ring, last, undo, history, place, saved, prefix, menu, ...} : state) se : state =
+     prefix = prefix, search = search, menu = menu, vi = vi}
+  fun withSearch ({buf, ring, last, undo, history, place, saved, prefix, menu, vi, ...} : state) se : state =
     {buf = buf, ring = ring, last = last, undo = undo, history = history, place = place, saved = saved,
-     prefix = prefix, search = se, menu = menu}
-  fun withMenu ({buf, ring, last, undo, history, place, saved, prefix, search, ...} : state) m : state =
+     prefix = prefix, search = se, menu = menu, vi = vi}
+  fun withMenu ({buf, ring, last, undo, history, place, saved, prefix, search, vi, ...} : state) m : state =
     {buf = buf, ring = ring, last = last, undo = undo, history = history, place = place, saved = saved,
-     prefix = prefix, search = search, menu = m}
+     prefix = prefix, search = search, menu = m, vi = vi}
+  fun withVi ({buf, ring, last, undo, history, place, saved, prefix, search, menu, ...} : state) v : state =
+    {buf = buf, ring = ring, last = last, undo = undo, history = history, place = place, saved = saved,
+     prefix = prefix, search = search, menu = menu, vi = v}
 
   (* an edit: what was there pushed to be undone (typing groups until a
      blank), then the new buffer *)
@@ -230,10 +247,11 @@ struct
 
   fun fresh (s : state) = #place s = Vector.length (#history s)
 
-  (* the entry before or after the place that begins with what was typed *)
-  fun previous (s : state) =
+  (* the entry before or after the place that begins with what was typed
+     (Vi's k and j: any entry) *)
+  fun previousBy (s : state, byPrefix) =
     let
-      val s = if fresh s then withPlace s (#place s, #buf s, textOf (#buf s)) else s
+      val s = if fresh s then withPlace s (#place s, #buf s, if byPrefix then textOf (#buf s) else "") else s
       val now = textOf (#buf s)
       fun go i = if i < 0 then s
                  else let val e = Vector.sub (#history s, i)
@@ -241,6 +259,7 @@ struct
     in
       go (#place s - 1)
     end
+  fun previous s = previousBy (s, true)
 
   fun next (s : state) =
     let
@@ -266,6 +285,49 @@ struct
                  else case has (Vector.sub (#history s, i)) of SOME j => SOME (i, j) | NONE => go (i - 1)
     in
       go i
+    end
+
+  (* The fuzzy menu of a search (D11): the entries that have the query's
+     characters in order, ignoring case, the best first -- a character
+     after the one before it, or at a word's start, scores more -- and of
+     those that score the same the newest; each entry once, at most
+     `menuSize` of them, by their place in the history. *)
+  val menuSize = 8
+  fun fuzzyScore (query : string, entry : string) : int option =
+    let
+      val q = String.map Char.toLower query
+      val e = String.map Char.toLower entry
+      fun go (qi, ei, prev, score) =
+        if qi >= size q then SOME score
+        else if ei >= size e then NONE
+        else if String.sub (q, qi) = String.sub (e, ei) then
+          let
+            val adjacent = prev = ei - 1
+            val start = ei = 0 orelse not (isWord (String.sub (e, ei - 1)))
+          in go (qi + 1, ei + 1, ei, score + 1 + (if adjacent then 3 else 0) + (if start then 2 else 0)) end
+        else go (qi, ei + 1, prev, score)
+    in
+      if q = "" then NONE else go (0, 0, ~2, 0)
+    end
+  fun fuzzy (history : string vector, query : string) : int list =
+    let
+      fun gather (i, seen, acc) =
+        if i < 0 then acc
+        else
+          let val e = Vector.sub (history, i)
+          in
+            if List.exists (fn x => x = e) seen then gather (i - 1, seen, acc)
+            else case fuzzyScore (query, e) of
+                   SOME sc => gather (i - 1, e :: seen, (sc, i) :: acc)
+                 | NONE => gather (i - 1, e :: seen, acc)
+          end
+      val scored = gather (Vector.length history - 1, [], [])
+      fun better ((s1, i1), (s2, i2)) = s1 > s2 orelse (s1 = s2 andalso i1 > i2)
+      fun insert (x, []) = [x]
+        | insert (x, y :: ys) = if better (x, y) then x :: y :: ys else y :: insert (x, ys)
+      val sorted = foldl insert [] scored
+    in
+      List.map #2 (List.take (sorted, Int.min (menuSize, List.length sorted)))
     end
 
   (* ------------------------------------------------------------ commands *)
@@ -447,7 +509,7 @@ struct
                 end
           end
       | ReverseSearch =>
-          cont (withSearch (withLast s Other) (SOME {query = "", at = Vector.length (#history s), original = b, failing = false}))
+          cont (withSearch (withLast s Other) (SOME {query = "", at = Vector.length (#history s), original = b, failing = false, pick = ~1}))
       | Abort => cont (withMenu (withSearch (withLast s Other) NONE) NONE)
       | Cancel => (s, Cancelled)
       | ClearScreen => (s, Clear)
@@ -461,24 +523,37 @@ struct
      search, keeping the match, and does what it does *)
   fun searching (c : config, s : state, se : search, e) =
     let
-      val {query, at, original, ...} = se
+      val {query, at, original, pick, ...} = se
+      (* the fuzzy menu's entry n chosen, the line its text *)
+      fun choose n =
+        case List.drop (fuzzy (#history s, query), n) handle Subscript => [] of
+          k :: _ =>
+            let
+              val entry = Vector.sub (#history s, k)
+              val s = withPlace (withSearch s (SOME {query = query, at = at, original = original, failing = false, pick = n}))
+                                (k, original, "")
+            in (withBuf s (fromText (entry, size entry)), Continue) end
+        | [] => (s, Continue)
       fun seek (q, from) =
         case searchFrom (s, q, from) of
           SOME (k, j) =>
             let
               val entry = Vector.sub (#history s, k)
-              val s = withPlace (withSearch s (SOME {query = q, at = k, original = original, failing = false}))
+              val s = withPlace (withSearch s (SOME {query = q, at = k, original = original, failing = false, pick = ~1}))
                                 (k, original, "")
             in
               (withBuf s (fromText (entry, j)), Continue)
             end
-        | NONE => (withSearch s (SOME {query = q, at = at, original = original, failing = q <> ""}), Continue)
+        | NONE => (withSearch s (SOME {query = q, at = at, original = original,
+                                       failing = q <> "" andalso null (fuzzy (#history s, q)), pick = ~1}), Continue)
       val cmd = commandOf (c, e)
     in
       case (cmd, e) of
         (Insert, Key.Char (ch, _)) => seek (query ^ (Utf8.encode ch handle Chr => ""),
                                             if at < Vector.length (#history s) then at else at - 1)
       | (ReverseSearch, _) => seek (query, at - 1)
+      | (NextLine, _) => choose (pick + 1)
+      | (PreviousLine, _) => if pick > 0 then choose (pick - 1) else seek (query, Vector.length (#history s) - 1)
       | (BackwardDeleteChar, _) =>
           let val q = if query = "" then "" else String.substring (query, 0, prevBoundary (query, size query))
           in seek (q, Vector.length (#history s) - 1) end
@@ -487,13 +562,221 @@ struct
       | _ => command (c, withSearch s NONE, cmd, e)
     end
 
+  (* ------------------------------------------------------------ Vi *)
+
+  (* the classes of Vi's words: blank, word, other *)
+  fun viClass ch = if Char.isSpace ch then 0 else if isWord ch then 1 else 2
+
+  (* w: the start of the next word; e: the last character of this or the
+     next; b: the start of this or the last; across lines *)
+  fun viNextWord (t, i) =
+    let
+      val n = size t
+      fun skip (j, k) = if j < n andalso viClass (String.sub (t, j)) = k then skip (j + 1, k) else j
+      val j = if i < n andalso viClass (String.sub (t, i)) <> 0 then skip (i, viClass (String.sub (t, i))) else i
+    in skip (j, 0) end
+  fun viWordEnd (t, i) =
+    let
+      val n = size t
+      fun blanks j = if j < n andalso viClass (String.sub (t, j)) = 0 then blanks (j + 1) else j
+      val j = blanks (i + 1)
+      fun run (j, k) = if j + 1 < n andalso viClass (String.sub (t, j + 1)) = k then run (j + 1, k) else j
+    in if j >= n then Int.max (n - 1, 0) else run (j, viClass (String.sub (t, j))) end
+  fun viWordBack (t, i) =
+    let
+      fun blanks j = if j > 0 andalso viClass (String.sub (t, j - 1)) = 0 then blanks (j - 1) else j
+      val j = blanks i
+      fun run (j, k) = if j > 0 andalso viClass (String.sub (t, j - 1)) = k then run (j - 1, k) else j
+    in if j = 0 then 0 else run (j - 1, viClass (String.sub (t, j - 1))) end
+  (* the line of t that i is in: where it begins, where it ends (its newline or the end) *)
+  fun lineStart (t, i) = if i > 0 andalso String.sub (t, i - 1) <> #"\n" then lineStart (t, i - 1) else i
+  fun lineEnd (t, i) = if i < size t andalso String.sub (t, i) <> #"\n" then lineEnd (t, i + 1) else i
+  fun firstNonBlank (t, i) =
+    let fun go j = if j < size t andalso (String.sub (t, j) = #" " orelse String.sub (t, j) = #"\t") then go (j + 1) else j
+    in go (lineStart (t, i)) end
+
+  (* the normal mode's cursor is on a character: not after a line's last *)
+  fun onChar (s : state) =
+    let val b = #buf s val l = lineOf b
+    in if #col b > 0 andalso #col b >= size l then withBuf s (setLine (b, l, prevBoundary (l, size l))) else s end
+
+  fun viNormal (c : config, s : state, e) : state * outcome =
+    let
+      val vi = #vi s
+      val b = #buf s
+      val t = textOf b
+      val i = offsetOf b
+      val n = if #count vi = 0 then 1 else #count vi
+      fun normalVi (s : state) = withVi s {normal = true, count = 0, pending = ""}
+      fun done s = (onChar (normalVi s), Continue)
+      fun insert (s, at) = (withVi (move (s, fromText (textOf (#buf s), at))) inserting, Continue)
+      fun repeat f = let fun go (0, x) = x | go (k, x) = go (k - 1, f x) in go (n, i) end
+      fun next1 j = if j < size t andalso String.sub (t, j) <> #"\n" then j + 1 else j
+      fun prev1 j = if j > 0 andalso String.sub (t, j - 1) <> #"\n" then j - 1 else j
+      (* a motion's target from the cursor, as many times as the count *)
+      fun motion ch =
+        case ch of
+          #"h" => SOME (repeat prev1)
+        | #"l" => SOME (repeat next1)
+        | #"w" => SOME (repeat (fn j => viNextWord (t, j)))
+        | #"b" => SOME (repeat (fn j => viWordBack (t, j)))
+        | #"e" => SOME (repeat (fn j => viWordEnd (t, j)))
+        | #"0" => SOME (lineStart (t, i))
+        | #"^" => SOME (firstNonBlank (t, i))
+        | #"$" => SOME (lineEnd (t, i))
+        | _ => NONE
+      (* the bytes an operator with the motion covers *)
+      fun range (ch, j) =
+        case ch of
+          #"e" => (Int.min (i, j), Int.min (size t, Int.max (i, j) + 1))
+        | #"w" => (i, Int.min (j, lineEnd (t, i)))
+        | _ => (Int.min (i, j), Int.max (i, j))
+      (* a whole line: with its newline where another follows, else the one before *)
+      fun lineRange () =
+        let val ls = lineStart (t, i) val le = lineEnd (t, i)
+        in if le < size t then (ls, le + 1) else if ls > 0 then (ls - 1, le) else (ls, le) end
+      (* the ring takes a whole line with its newline, which p puts as a line *)
+      fun theLine () = String.substring (t, lineStart (t, i), lineEnd (t, i) - lineStart (t, i)) ^ "\n"
+      fun ring (s : state, k) = withRing s (List.take (k :: #ring s, Int.min (60, 1 + List.length (#ring s))))
+      fun yank (from, to) = ring (s, String.substring (t, from, to - from))
+      fun operate (opr, from, to) =
+        case opr of
+          "d" => done (kill (s, from, to, false))
+        | "c" => insert (kill (s, from, to, false), from)
+        | _ => done (move (yank (from, to), fromText (t, from)))
+      (* an edit, and the cursor at a byte of what it made *)
+      fun editAt (s, b', at) = let val s = edit (s, b', Other) in move (s, fromText (textOf (#buf s), at)) end
+      fun pend p = (withVi s {normal = true, count = #count vi, pending = p}, Continue)
+      fun cmd command' = let val (s', out) = command (c, normalVi s, command', e) in (onChar s', out) end
+    in
+      case e of
+        Key.Char (ch32, {ctrl = false, alt = false, ...}) =>
+          let val ch = if ch32 < 128 then Char.chr ch32 else #"\000"
+          in
+            case (#pending vi, ch) of
+              ("r", _) =>
+                if i < size t andalso String.sub (t, i) <> #"\n" then
+                  done (editAt (s, replaceText (b, i, next1 i, Utf8.encode ch32 handle Chr => ""), i))
+                else done s
+            | ("g", #"g") => done (move (s, fromText (t, 0)))
+            | ("g", _) => done s
+            | (opr, _) =>
+                (* a digit is a count, but 0 first, which is a motion *)
+                if Char.isDigit ch andalso (ch <> #"0" orelse #count vi > 0) then
+                  (withVi s {normal = true, count = 10 * #count vi + (ch32 - 48), pending = opr}, Continue)
+                else if opr <> "" then
+                  if String.str ch = opr then
+                    let val (from, to) = lineRange ()
+                    in
+                      case opr of
+                        "c" =>
+                          let val ls = lineStart (t, i) val le = lineEnd (t, i)
+                          in insert (ring (edit (s, replaceText (b, ls, le, ""), Other), theLine ()), ls) end
+                      | "d" =>
+                          let val s' = ring (edit (s, replaceText (b, from, to, ""), Other), theLine ())
+                          in done (move (s', fromText (textOf (#buf s'), firstNonBlank (textOf (#buf s'), Int.min (from, size (textOf (#buf s'))))))) end
+                      | _ => done (ring (s, theLine ()))
+                    end
+                  else if opr = "c" andalso ch = #"w" andalso i < size t andalso viClass (String.sub (t, i)) <> 0 then
+                    (* cw on a word changes to the end of the word it is in
+                       (of the count's words) *)
+                    let
+                      fun runEnd j =
+                        let val k = viClass (String.sub (t, j))
+                            fun go j = if j + 1 < size t andalso viClass (String.sub (t, j + 1)) = k then go (j + 1) else j
+                        in go j end
+                      fun words (0, j) = j
+                        | words (m, j) = words (m - 1, viWordEnd (t, j))
+                      val last = words (n - 1, runEnd i)
+                    in operate (opr, i, Int.min (size t, last + 1)) end
+                  else
+                    (case motion ch of
+                       SOME j => let val (from, to) = range (ch, j) in operate (opr, from, to) end
+                     | NONE => done s)
+                else
+                  case motion ch of
+                    SOME j => done (move (s, fromText (t, j)))
+                  | NONE =>
+                      case ch of
+                        #"i" => insert (s, i)
+                      | #"a" => insert (s, next1 i)
+                      | #"I" => insert (s, firstNonBlank (t, i))
+                      | #"A" => insert (s, lineEnd (t, i))
+                      | #"o" => let val le = lineEnd (t, i) in insert (edit (s, replaceText (b, le, le, "\n"), Other), le + 1) end
+                      | #"O" => let val ls = lineStart (t, i) in insert (edit (s, replaceText (b, ls, ls, "\n"), Other), ls) end
+                      | #"x" => done (kill (s, i, repeat next1, false))
+                      | #"X" => done (kill (s, repeat prev1, i, false))
+                      | #"D" => done (kill (s, i, lineEnd (t, i), false))
+                      | #"C" => insert (kill (s, i, lineEnd (t, i), false), i)
+                      | #"s" => insert (kill (s, i, repeat next1, false), i)
+                      | #"S" => let val ls = lineStart (t, i) in insert (kill (s, ls, lineEnd (t, i), false), ls) end
+                      | #"d" => pend "d"
+                      | #"c" => pend "c"
+                      | #"y" => pend "y"
+                      | #"g" => pend "g"
+                      | #"r" => pend "r"
+                      | #"~" =>
+                          if i < size t andalso String.sub (t, i) <> #"\n" then
+                            let
+                              val x = String.sub (t, i)
+                              val y = if Char.isUpper x then Char.toLower x else Char.toUpper x
+                            in done (editAt (s, replaceText (b, i, i + 1, String.str y), next1 i)) end
+                          else done s
+                      (* p after the cursor, P before it; a line after or
+                         before the line; the cursor on the last character
+                         put, or a line's first *)
+                      | #"p" =>
+                          (case #ring s of
+                             [] => done s
+                           | k :: _ =>
+                               if String.isSuffix "\n" k then
+                                 let val le = lineEnd (t, i)
+                                 in
+                                   if le < size t then done (editAt (s, replaceText (b, le + 1, le + 1, k), le + 1))
+                                   else done (editAt (s, replaceText (b, le, le, "\n" ^ String.substring (k, 0, size k - 1)), le + 1))
+                                 end
+                               else
+                                 let val at = next1 i
+                                 in done (editAt (s, replaceText (b, at, at, k), at + size k - 1)) end)
+                      | #"P" =>
+                          (case #ring s of
+                             [] => done s
+                           | k :: _ =>
+                               if String.isSuffix "\n" k then
+                                 let val ls = lineStart (t, i) in done (editAt (s, replaceText (b, ls, ls, k), ls)) end
+                               else done (editAt (s, replaceText (b, i, i, k), i + size k - 1)))
+                      | #"u" => cmd Undo
+                      | #"j" =>
+                          if #row b < Vector.length (#lines b) - 1 then cmd NextLine else done (next s)
+                      | #"k" =>
+                          if #row b > 0 then cmd PreviousLine else done (previousBy (s, false))
+                      | #"G" => done (move (s, fromText (t, lineStart (t, size t))))
+                      | _ => done s
+          end
+      | Key.Named (Key.Escape, _) => done s
+      | Key.Paste p => insert (edit (s, insertText (b, normalise p), Other), i + size (normalise p))
+      | _ => cmd (commandOf (c, e))
+    end
+
   fun step (c : config, s : state, e) =
     let val s = case e of Key.Named (Key.Tab, _) => s | _ => withMenu s NONE
     in
       case (#search s, e) of
         (SOME se, _) => searching (c, s, se, e)
-      | (NONE, Key.Paste p) => (edit (s, insertText (#buf s, normalise p), Other), Continue)
-      | (NONE, _) => command (c, s, commandOf (c, e), e)
+      | (NONE, _) =>
+          if #keys c = Vi andalso #normal (#vi s) then viNormal (c, s, e)
+          else
+            case e of
+              Key.Paste p => (edit (s, insertText (#buf s, normalise p), Other), Continue)
+            | Key.Named (Key.Escape, {ctrl = false, alt = false, shift = false}) =>
+                if #keys c = Vi then
+                  (* Vi's normal mode, the cursor on the character before *)
+                  let val b = #buf s val l = lineOf b
+                  in (onChar (withVi (move (s, setLine (b, l, prevBoundary (l, #col b)))) {normal = true, count = 0, pending = ""}),
+                      Continue)
+                  end
+                else command (c, s, commandOf (c, e), e)
+            | _ => command (c, s, commandOf (c, e), e)
     end
 
   (* ------------------------------------------------------------ layout *)
@@ -708,10 +991,24 @@ struct
         if not extras then ()
         else
           case (#search s, #menu s) of
-            (SOME {query, failing, ...}, _) =>
+            (SOME {query, failing, pick, ...}, _) =>
               (emitCells extra (cellsOf (policy, (if failing then "(failing reverse-i-search)`" else "(reverse-i-search)`")
                                                  ^ query ^ "'", #search styles, #control styles));
-               finish extra)
+               finish extra;
+               (* the fuzzy menu: each entry's first line, the chosen one marked *)
+               List.foldl (fn (k, n) =>
+                             let
+                               val entry = Vector.sub (#history s, k)
+                               val first = case String.fields (fn ch => ch = #"\n") entry of l :: _ => l | [] => ""
+                               val first = if size first + 2 > columns then String.substring (first, 0, Int.max (0, columns - 3)) else first
+                             in
+                               emitCells extra (cellsOf (policy, (if n = pick then "> " else "  ") ^ first,
+                                                         if n = pick then #search styles else #menu styles, #control styles));
+                               finish extra;
+                               n + 1
+                             end)
+                          0 (fuzzy (#history s, query));
+               ())
           | (NONE, SOME cands) =>
               let
                 val w = foldl (fn (x, m) => Int.max (Grapheme.width policy x, m)) 0 cands + 2
@@ -865,6 +1162,43 @@ struct
     not (List.exists (fn (k, v) => k = "sysname" andalso v = "Windows") (Posix.ProcEnv.uname ()))
     handle _ => false
 
+  (* ---- what the terminal says of itself, asked once (docs/plans/repl.md,
+     D9 and M13) ----
+     At the first read the editor writes, at the start of the line, a
+     family of three joined by zero-width joiners -- two columns where the
+     terminal draws a cluster as one, six where it draws each code point --
+     asks where the cursor is, rubs the line out, and asks for the kitty
+     keyboard protocol's flags and the device's attributes, which every
+     terminal answers. The answers come among the keys: the cursor's
+     column is the policy of widths, which then overrides the config's;
+     the flags say the protocol is spoken, and from the next read the
+     editor turns on its first flag, keys told apart -- Escape at once,
+     Ctrl-I apart from Tab -- and off again at the end of each read (and
+     in the undo the runtime writes however the program ends). *)
+  val asked = ref false
+  val measured : Grapheme.policy option ref = ref NONE
+  val kitty = ref false
+  val probe = "\240\159\145\168\226\128\141\240\159\145\169\226\128\141\240\159\145\167"
+
+  fun terminal () = {policy = !measured, kitty = !kitty}
+
+  fun withPolicy ({prompt, continuation, isComplete, complete, hint, highlight, styles, bindings, escapeTimeout,
+                   basic, keys, ...} : config, policy) : config =
+    {prompt = prompt, continuation = continuation, isComplete = isComplete, complete = complete, hint = hint,
+     highlight = highlight, styles = styles, bindings = bindings, escapeTimeout = escapeTimeout, policy = policy,
+     basic = basic, keys = keys}
+
+  (* an answer of the terminal's among the keys: taken, and not a key *)
+  fun answered (e : Key.event) : bool =
+    case e of
+      Key.CursorAt (_, col) =>
+        (if isSome (!measured) then ()
+         else measured := SOME (if col - 1 >= 4 then Grapheme.ByCodePoint else Grapheme.ByCluster);
+         true)
+    | Key.Reply r =>
+        (if String.isPrefix "\027[?" r andalso String.isSuffix "u" r then kitty := true else (); true)
+    | _ => false
+
   fun readLine (c : config, h) =
     if isBasic c then
       (case basicLine c of
@@ -872,6 +1206,9 @@ struct
        | r => r)
     else
       let
+        val c = case !measured of SOME p => withPolicy (c, p) | NONE => c
+        (* the kitty protocol, where the terminal said at an earlier read that it speaks it *)
+        val kittyOn = !kitty
         val () = case h of SOME h => History.refresh h | NONE => ()
         val history = case h of SOME h => History.entries h | NONE => Vector.fromList []
         val seen = ref (Device.resizes ())
@@ -921,6 +1258,15 @@ struct
                             ^ ending ^ "\r\n");
             top := t
           end
+        (* Vi's mode as the cursor's shape (DECSCUSR): a block in the
+           normal mode, a bar while inserting; as it was at the end *)
+        val shaped = ref NONE
+        fun shape s =
+          if #keys c <> Vi then ()
+          else
+            let val want = normal s
+            in if !shaped = SOME want then () else (shaped := SOME want; Device.write (if want then "\027[2 q" else "\027[6 q")) end
+        fun unshape () = if isSome (!shaped) then Device.write "\027[0 q" else ()
         fun loop (s, d) =
           let
             val wait = if Key.pending d then SOME (#escapeTimeout c) else NONE
@@ -940,31 +1286,36 @@ struct
                                     else Key.feed (d, bytes)
                   fun run (s, []) = (s, NONE)
                     | run (s, e :: es) =
+                        if answered e then run (s, es) else
                         case step (c, s, e) of
                           (s, Continue) => run (s, es)
                         | (s, Clear) => (Device.write "\027[H\027[2J"; shown := NONE; drawn := 1; top := 0; run (s, es))
                         | (s, Stop) =>
                             if not (canStop ()) then run (s, es) else
                             (finish (s, ""); Device.leave (); suspend ();
-                             Device.enter {undo = pasteOff}; Device.write pasteOn;
+                             Device.enter {undo = pasteOff ^ (if kittyOn then "\027[<u" else "")};
+                             Device.write (pasteOn ^ (if kittyOn then "\027[>1u" else ""));
                              size := Device.size (); seen := Device.resizes ();
                              shown := NONE; drawn := 1; top := 0; run (s, es))
                         | (s, outcome) => (s, SOME outcome)
                 in
                   case run (s, events) of
-                    (s, NONE) => (if bytes <> "" orelse not (null events) then draw (s, true) else (); loop (s, d))
+                    (s, NONE) => (if bytes <> "" orelse not (null events) then (shape s; draw (s, true)) else (); loop (s, d))
                   | (s, SOME (Accept t)) => (finish (s, ""); Line t)
                   | (s, SOME Cancelled) => (finish (s, "^C"); Interrupted)
                   | (s, SOME _) => (finish (s, ""); End)
                 end
           end
-        val () = Device.enter {undo = pasteOff}
-        val () = Device.write pasteOn
+        val () = Device.enter {undo = pasteOff ^ (if kittyOn then "\027[<u" else "")}
+        val () = Device.write (pasteOn ^ (if kittyOn then "\027[>1u" else ""))
+        val () = if !asked then ()
+                 else (asked := true; Device.write ("\r" ^ probe ^ "\027[6n\r\027[K\027[?u\027[c"))
         val () = mark ()
         val s = start (history, "")
-        val result = (draw (s, true); loop (s, Key.empty))
-                     handle x => (Device.leave (); raise x)
+        val result = (shape s; draw (s, true); loop (s, Key.empty))
+                     handle x => (unshape (); Device.leave (); raise x)
       in
+        unshape ();
         Device.leave ();
         (case (result, h) of (Line t, SOME h) => History.add (h, t) | _ => ());
         result

@@ -26,43 +26,10 @@ struct
 
   (* ---- the engine, the child ---- *)
 
-  type engine = {pid : Posix.ProcEnv.pid, to : Posix.IO.file_desc, from : Posix.IO.file_desc,
-                 out : Posix.IO.file_desc, errs : Posix.IO.file_desc}
+  (* the engine, a child of the adapter's (src/front/engine.sml) *)
+  type engine = EngineClient.engine
 
   fun fd (k : int) = Posix.FileSys.wordToFD (Word.fromInt k)
-
-  (* its channel the descriptors 3 and 4, its output and error pipes of
-     this adapter's, its standard input nothing *)
-  fun start (vm : string, image : string) : engine =
-    let
-      val {infd = toR, outfd = toW} = Posix.IO.pipe ()
-      val {infd = fromR, outfd = fromW} = Posix.IO.pipe ()
-      val {infd = outR, outfd = outW} = Posix.IO.pipe ()
-      val {infd = errR, outfd = errW} = Posix.IO.pipe ()
-    in
-      case Posix.Process.fork () of
-        NONE =>
-          (Posix.IO.dup2 {old = toR, new = fd 3};
-           Posix.IO.dup2 {old = fromW, new = fd 4};
-           Posix.IO.dup2 {old = outW, new = fd 1};
-           Posix.IO.dup2 {old = errW, new = fd 2};
-           (let val null = Posix.FileSys.openf ("/dev/null", Posix.FileSys.O_RDONLY, Posix.FileSys.O.flags [])
-            in Posix.IO.dup2 {old = null, new = fd 0} end handle OS.SysErr _ => ());
-           let fun shut k = if k > 1023 then () else ((Posix.IO.close (fd k) handle OS.SysErr _ => ()); shut (k + 1))
-           in shut 5 end;
-           Posix.Process.exec (vm, [vm, "--heap-size", "67108864", "--restore", image, "--", "--no-init", "--engine"])
-           handle OS.SysErr (m, _) => (err ("cannot start the engine " ^ vm ^ ": " ^ m); Posix.Process.exit 0w127))
-      | SOME pid =>
-          (List.app Posix.IO.close [toR, fromW, outW, errW];
-           {pid = pid, to = toW, from = fromR, out = outR, errs = errR})
-    end
-
-  fun writeAll (f : Posix.IO.file_desc, s : string) : unit =
-    let
-      val bytes = Byte.stringToBytes s
-      fun go i = if i >= Word8Vector.length bytes then ()
-                 else go (i + Posix.IO.writeVec (f, Word8VectorSlice.slice (bytes, i, NONE)))
-    in go 0 end
 
   fun readSome (f : Posix.IO.file_desc) : string = Byte.bytesToString (Posix.IO.readVec (f, 65536))
 
@@ -97,6 +64,17 @@ struct
 
   fun theEngine () = case !engine of SOME e => e | NONE => raise Fail "no engine"
 
+  (* what the engine has written to its output and error, given before any
+     message of its read after: the message can be seen first (Windows) *)
+  fun drain () : unit =
+    let
+      val e = theEngine ()
+      fun ready f = not (List.null (OS.IO.poll ([OS.IO.pollIn (Option.valOf (OS.IO.pollDesc (Posix.FileSys.fdToIOD f)))],
+                                                 SOME Time.zeroTime)))
+      fun go (f, category) =
+        if ready f then (case readSome f of "" => () | s => (output (category, s); go (f, category))) else ()
+    in go (#out e, "stdout"); go (#errs e, "stderr") end
+
   (* the engine reads now: it is idle, or at a stop *)
   fun responsive () = not (!running) orelse !stopped
 
@@ -107,7 +85,7 @@ struct
       val m = R.Request {id = R.Number id, method = method, params = SOME params}
     in
       awaited := !awaited @ [(id, k)];
-      writeAll (#to (theEngine ()), Framing.frame (Framing.Lines, Json.encode (R.toJson m)))
+      #write (theEngine ()) (Framing.frame (Framing.Lines, Json.encode (R.toJson m)))
     end
 
   (* a request of the engine's: now where it reads, else when it does *)
@@ -189,7 +167,7 @@ struct
           in call (method, params, answered (m, DapEngine.variablesBody)) end
       | "pause" =>
           (if !running andalso not (!stopped) then
-             Posix.Process.kill (Posix.Process.K_PROC (#pid (theEngine ())), Posix.Signal.int)
+             #interrupt (theEngine ()) ()
            else ();
            respond (m, Json.Object []))
       | "evaluate" =>
@@ -225,8 +203,8 @@ struct
     | [R.Message (R.Request {id, method = "input", ...})] =>
         (* the program reads its input, which an editor's debugger has
            none of to give: the end of it *)
-        writeAll (#to (theEngine ()),
-                  Framing.frame (Framing.Lines, Json.encode (R.toJson (R.Response {id = SOME id, outcome = R.Result Json.Null}))))
+        #write (theEngine ())
+          (Framing.frame (Framing.Lines, Json.encode (R.toJson (R.Response {id = SOME id, outcome = R.Result Json.Null}))))
     | _ => ()
 
   (* ---- the loop ---- *)
@@ -240,13 +218,13 @@ struct
       let
         val e = theEngine ()
         val stdin = fd 0
-        val ready = OS.IO.poll (List.map pollIn [stdin, #from e, #out e, #errs e], SOME (Time.fromSeconds 1))
+        val ready = OS.IO.poll (OS.IO.pollIn (#poll e) :: List.map pollIn [stdin, #out e, #errs e], SOME (Time.fromSeconds 1))
         fun has f = List.exists (isOf f) ready
+        val fromIt = List.exists (fn p => OS.IO.pollToIODesc (OS.IO.infoToPollDesc p) = OS.IO.pollToIODesc (#poll e)) ready
       in
-        if has (#out e) then (case readSome (#out e) of "" => () | s => output ("stdout", s)) else ();
-        if has (#errs e) then (case readSome (#errs e) of "" => () | s => output ("stderr", s)) else ();
-        if has (#from e) then
-          (case readSome (#from e) of
+        if fromIt orelse has (#out e) orelse has (#errs e) then drain () else ();
+        if fromIt then
+          (case #read e () of
              "" => (if !ended then () else (output ("stderr", "the engine has ended\n"); event ("terminated", Json.Object []));
                     ended := true)
            | bytes =>
@@ -263,7 +241,7 @@ struct
         loop ()
       end
 
-  fun absolute (p : string) = if OS.Path.isAbsolute p then p else OS.Path.concat (OS.FileSys.getDir (), p)
+  val absolute = EngineClient.absolute
 
   fun main (args : string list) : unit =
     let
@@ -271,15 +249,17 @@ struct
         let fun f (a :: b :: rest) = if a = name then SOME b else f (b :: rest) | f _ = NONE in f args end
       val vm = absolute (getOpt (opt ("--vm", args), "runevm"))
       val image = absolute (getOpt (opt ("--image", args), "rune-repl.img"))
-      val e = start (vm, image)
+      val e = EngineClient.start (vm, image, err)
     in
       engine := SOME e;
       send ("initialize", Json.Object [("protocol", num 1)], fn _ => ());
       loop ();
-      (Posix.Process.waitpid (Posix.Process.W_CHILD (#pid e), []); ()) handle OS.SysErr _ => ()
+      EngineClient.finish e
     end
     handle Fail m => (err m; OS.Process.exit OS.Process.failure)
          | Framing.Header why => (err why; OS.Process.exit OS.Process.failure)
+         | EngineClient.Refused why => (err why; OS.Process.exit OS.Process.failure)
+         | OS.SysErr (m, _) => (err ("the system: " ^ m); OS.Process.exit OS.Process.failure)
 end
 
 val () = DapAdapter.main (CommandLine.arguments ())

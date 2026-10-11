@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`LINE_EDIT`](../sig/LINE_EDIT.md) |
 | Status | required |
-| Members | 17 |
+| Members | 20 |
 | Tests | not listed |
 | Source | [lib/terminal/line\_edit.sml](../../../../lib/terminal/line_edit.sml) |
 
@@ -26,8 +26,9 @@ What each means is on [`LINE_EDIT`](../sig/LINE_EDIT.md); the types are this str
 | --- | --- | --- |
 | type | [`cell`](../sig/LINE_EDIT.md#type-cell) | `{style : {bg : Style.color, bold : bool, faint : bool, fg : Style.color, italic : bool, reverse : bool, struck : bool, underline : bool}, text : string}` |
 | datatype | [`command`](../sig/LINE_EDIT.md#type-command) | `Insert` &#124; `BeginningOfLine` &#124; `EndOfLine` &#124; `ForwardChar` &#124; `BackwardChar` &#124; `ForwardWord` &#124; `BackwardWord` &#124; `PreviousLine` &#124; `NextLine` &#124; `PreviousHistory` &#124; `NextHistory` &#124; `BeginningOfHistory` &#124; `EndOfHistory` &#124; `BeginningOfBuffer` &#124; `EndOfBuffer` &#124; `DeleteChar` &#124; `DeleteCharOrEnd` &#124; `BackwardDeleteChar` &#124; `KillLine` &#124; `BackwardKillLine` &#124; `KillWord` &#124; `BackwardKillWord` &#124; `KillWordBehind` &#124; `Yank` &#124; `YankPop` &#124; `TransposeChars` &#124; `UpcaseWord` &#124; `DowncaseWord` &#124; `CapitalizeWord` &#124; `Undo` &#124; `AcceptOrNewline` &#124; `Newline` &#124; `Complete` &#124; `ReverseSearch` &#124; `Abort` &#124; `Cancel` &#124; `ClearScreen` &#124; `Suspend` &#124; `Ignore` |
-| type | [`config`](../sig/LINE_EDIT.md#type-config) | `{basic : bool, bindings : (Key.event * command) list, complete : string * int -> {candidates : string list, start : int}, continuation : string, escapeTimeout : Time.time, highlight : string -> (int * int * {bg : Style.color, bold : bool, faint : bool, fg : Style.color, italic : bool, reverse : bool, struck : bool, underline : bool}) list, hint : string -> string option, isComplete : string -> bool, policy : Grapheme.policy, prompt : string, styles : {control : {bg : Style.color, bold : bool, faint : bool, fg : Style.color, italic : bool, reverse : bool, struck : bool, underline : bool}, hint : {bg : Style.color, bold : bool, faint : bool, fg : Style.color, italic : bool, reverse : bool, struck : bool, underline : bool}, mark : {bg : Style.color, bold : bool, faint : bool, fg : Style.color, italic : bool, reverse : bool, struck : bool, underline : bool}, menu : {bg : Style.color, bold : bool, faint : bool, fg : Style.color, italic : bool, reverse : bool, struck : bool, underline : bool}, prompt : {bg : Style.color, bold : bool, faint : bool, fg : Style.color, italic : bool, reverse : bool, struck : bool, underline : bool}, search : {bg : Style.color, bold : bool, faint : bool, fg : Style.color, italic : bool, reverse : bool, struck : bool, underline : bool}}}` |
+| type | [`config`](../sig/LINE_EDIT.md#type-config) | `{basic : bool, bindings : (Key.event * command) list, complete : string * int -> {candidates : string list, start : int}, continuation : string, escapeTimeout : Time.time, highlight : string -> (int * int * {bg : Style.color, bold : bool, faint : bool, fg : Style.color, italic : bool, reverse : bool, struck : bool, underline : bool}) list, hint : string -> string option, isComplete : string -> bool, keys : keys, policy : Grapheme.policy, prompt : string, styles : {control : {bg : Style.color, bold : bool, faint : bool, fg : Style.color, italic : bool, reverse : bool, struck : bool, underline : bool}, hint : {bg : Style.color, bold : bool, faint : bool, fg : Style.color, italic : bool, reverse : bool, struck : bool, underline : bool}, mark : {bg : Style.color, bold : bool, faint : bool, fg : Style.color, italic : bool, reverse : bool, struck : bool, underline : bool}, menu : {bg : Style.color, bold : bool, faint : bool, fg : Style.color, italic : bool, reverse : bool, struck : bool, underline : bool}, prompt : {bg : Style.color, bold : bool, faint : bool, fg : Style.color, italic : bool, reverse : bool, struck : bool, underline : bool}, search : {bg : Style.color, bold : bool, faint : bool, fg : Style.color, italic : bool, reverse : bool, struck : bool, underline : bool}}}` |
 | type | [`frame`](../sig/LINE_EDIT.md#type-frame) | `{cursor : int * int, rows : cell list vector}` |
+| datatype | [`keys`](../sig/LINE_EDIT.md#type-keys) | `Emacs` &#124; `Vi` |
 | datatype | [`outcome`](../sig/LINE_EDIT.md#type-outcome) | `Continue` &#124; `Accept` &#124; `Cancelled` &#124; `EndOfInput` &#124; `Clear` &#124; `Stop` |
 | datatype | [`result`](../sig/LINE_EDIT.md#type-result) | `Line` &#124; `Interrupted` &#124; `End` |
 | type | [`state`](../sig/LINE_EDIT.md#type-state) | *a type of its own* |
@@ -37,9 +38,11 @@ What each means is on [`LINE_EDIT`](../sig/LINE_EDIT.md); the types are this str
 | val | [`diff`](../sig/LINE_EDIT.md#val-diff) | `{columns : int, drawn : int, new : frame, old : frame option} -> string * int` |
 | val | [`emacs`](../sig/LINE_EDIT.md#val-emacs) | `(Key.event * command) list` |
 | val | [`layout`](../sig/LINE_EDIT.md#val-layout) | `config * state * int -> frame` |
+| val | [`normal`](../sig/LINE_EDIT.md#val-normal) | `state -> bool` |
 | val | [`readLine`](../sig/LINE_EDIT.md#val-readline) | `config * History.history option -> result` |
 | val | [`start`](../sig/LINE_EDIT.md#val-start) | `string vector * string -> state` |
 | val | [`step`](../sig/LINE_EDIT.md#val-step) | `config * state * Key.event -> state * outcome` |
+| val | [`terminal`](../sig/LINE_EDIT.md#val-terminal) | `unit -> {kitty : bool, policy : Grapheme.policy option}` |
 | val | [`text`](../sig/LINE_EDIT.md#val-text) | `state -> string` |
 
 ---

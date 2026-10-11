@@ -339,6 +339,9 @@ rt_debug_env     2  int * int -> 'a          Slot e of the environment of the cl
 rt_debug_exn     1  unit -> exn              The exception a stop at a raise stopped for.
 rt_debug_return  1  'a -> unit               <debug>'s own, after the hook: its frame taken off, and the program on from the instruction it stopped at, or with the exception it stopped for (its argument).
 rt_debug_program 1  unit -> int              How many functions the program has: after a unit is linked, its own are the last.
+rt_random_bytes  1  int -> string            n bytes of the system's randomness (/dev/urandom, RtlGenRandom), as a string; "" where there is none.
+win_event_new    1  unit -> int              An event of Windows that a child inherits, by its handle's number, to watch as its interrupt (RUNE_INTERRUPT_EVENT); ~1 elsewhere.
+win_event_set    1  int -> bool              The event of that number set: the interrupt of the child that watches it; false where it cannot be.
 
 # --- comparisons that answer an order (LESS = tag 0, EQUAL = 1, GREATER = 2, as lib/basis/initial.sml declares it), for Int, Word, Char and String.compare ---
 int_order        2  int * int -> order       LESS, EQUAL or GREATER: how the first int compares with the second.

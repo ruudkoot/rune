@@ -288,6 +288,17 @@ void sys_code_free(void *code, size_t size);
    EINTR (sys_read_fd). NULL: the interrupt ends the process again. 0, or
    -1 and the error (ENOSYS in sys_none, which has no interrupt). */
 int sys_interrupt_catch(volatile int *flag);
+/* An interrupt from another process on Windows, which has no SIGINT to
+   send one (docs/repl.md; the REPL roadmap's M13): sys_event_new makes an
+   event a child inherits, by its handle's number, and sys_event_set sets
+   it; a process that catches the interrupt watches the events the
+   variables RUNE_INTERRUPT_EVENT and JPY_INTERRUPT_EVENT (Jupyter's) name
+   by number, and each that is set is the user's interrupt. -1 and ENOSYS
+   where there are none (POSIX has SIGINT). */
+int64_t sys_event_new(void);
+int sys_event_set(int64_t handle);
+/* n bytes of the system's randomness at out: 0, or -1 and the error */
+int sys_random(void *out, size_t n);
 
 /* The terminal of a program that edits what is typed (Terminal;
    docs/plans/repl.md, D4 and D5), named by descriptors: in, where keys are

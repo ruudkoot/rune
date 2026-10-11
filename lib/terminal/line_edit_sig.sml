@@ -21,6 +21,14 @@
    Alt-Enter for a new line always; Ctrl-L to clear the screen; Ctrl-C to
    cancel; Ctrl-Z to suspend. `bindings` changes them.
 
+   With `keys = Vi` the editor has Vi's modes: what is typed is inserted,
+   as with Emacs's keys, until Escape, which goes to the normal mode,
+   where letters are commands -- counts, the motions h l w b e 0 ^ $, the
+   operators d c y with a motion or doubled, x X D C s S r ~ p P u, j and
+   k through the lines and the history, G and gg, and i a I A o O back to
+   inserting. The cursor is a block in the normal mode and a bar while
+   inserting.
+
    Area: Terminals *)
 signature LINE_EDIT =
 sig
@@ -40,6 +48,10 @@ sig
   (* Readline's keys, as the comment above lists them. *)
   val emacs : (Key.event * command) list
 
+  (* Whether letters are typed always (Emacs's keys), or are Vi's commands
+     in its normal mode. *)
+  datatype keys = Emacs | Vi
+
   (* What the editor is given: the prompts, what it asks of the program,
      its styles and keys.
 
@@ -51,7 +63,8 @@ sig
      the text, `(start, stop, style)`. `styles` are those of the parts the
      editor draws itself. `escapeTimeout` is how long Escape waits for
      the rest of a sequence; `policy` how the terminal measures clusters;
-     `basic` asks for the basic mode. *)
+     `basic` asks for the basic mode; `keys` whether Vi's modes are on
+     (`bindings` are those of both modes but the normal mode's letters). *)
   type config = {
     prompt : string, continuation : string,
     isComplete : string -> bool,
@@ -63,7 +76,8 @@ sig
     bindings : (Key.event * command) list,
     escapeTimeout : Time.time,
     policy : Grapheme.policy,
-    basic : bool}
+    basic : bool,
+    keys : keys}
 
   (* A configuration for an input of one line at the prompt `"> "`.
 
@@ -73,8 +87,12 @@ sig
   val defaults : config
 
   (* What the editor holds: the text, the cursor, the kill ring, what can
-     be undone, the history and where in it the text came from. *)
+     be undone, the history and where in it the text came from, and Vi's
+     mode. *)
   type state
+
+  (* `normal s` is whether `s` is in Vi's normal mode. *)
+  val normal : state -> bool
 
   (* What a key asks of the loop: nothing more, to return the text or no
      text, to clear the screen, or to suspend the process. *)
@@ -143,4 +161,14 @@ sig
      when `TERM` is `dumb`, `unknown`, `cons25` or `emacs`, when
      `INSIDE_EMACS` names comint, or when `RUNE_BASIC_REPL` is set. *)
   val readLine : config * History.history option -> result
+
+  (* `terminal ()` is what the terminal said of itself at the first
+     `readLine`, once its answers have come.
+
+     How it measures a cluster, which `readLine` then uses in place of the
+     config's `policy`, and whether it speaks the kitty keyboard protocol,
+     which `readLine` turns on while it reads (keys told apart: Escape at
+     once, Ctrl-I apart from Tab). `NONE` and false where it has not
+     answered. *)
+  val terminal : unit -> {policy : Grapheme.policy option, kitty : bool}
 end

@@ -1436,6 +1436,9 @@ struct
   fun rt_debug_exn () : exn = raise Fail "rt_debug_exn: Rune's alone"
   fun rt_debug_return (_ : 'a) = ()
   fun rt_debug_program () = 0
+  fun rt_random_bytes (_ : int) = ""
+  fun win_event_new () = ~1
+  fun win_event_set (_ : int) = false
   (* Terminal is Rune's alone (host no): a host has no terminal of a
      line editor here, and lib/terminal has a Terminal over Posix.TTY for
      the hosts *)

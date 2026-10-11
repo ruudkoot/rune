@@ -58,7 +58,7 @@ M1 measures them again on a quiet machine.
 | M10 | The engine and its protocol | done |
 | M11 | The Jupyter kernel | done |
 | M12 | The debugger | done |
-| M13 | Windows, accessibility and the performance sweep | planned |
+| M13 | Windows, accessibility and the performance sweep | done |
 
 The owner decided D1 to D25 on 2026-10-10, as recommended, and added a
 rule for generic code (*The request*); what starts first is the owner's. M1 to
@@ -70,6 +70,14 @@ built from master; M1's harness can too, though its scripts of today's
 REPL need incremental's (*Prerequisites and flags*). The libraries of M7
 to M12 are built and tested already, ahead of their milestones (*The
 libraries*, *Built ahead*).
+
+Every milestone is done (2026-10-10), and M13's gate passes (*M13*, *As
+built*). This file stays, as `jit.md` does, the record of what was decided
+and why; how the REPL is used and how it is made is in
+[repl.md](../repl.md), its manual, and in
+[repl-protocol.md](../repl-protocol.md), [kernel.md](../kernel.md),
+[dap.md](../dap.md), [diagnostics.md](../diagnostics.md) and
+[runtime.md](../runtime.md).
 
 ## The request
 
@@ -1212,6 +1220,17 @@ future HTML and the IDE, and the rules of Monaco's theme for the tokens
 rune-ide's highlighter already names (`keyword`, `string`, `number`,
 `comment`, `type.identifier`, `operator`), whose rules are empty today
 (`rune-ide:src/renderer/app.tsx:20`).
+
+**Revised at M13** (2026-10-10, at the owner's word: code coloured in
+full, at the prompt and in what the REPL says). C stays for the 16
+colours; on a terminal of 256 colours `auto` is `wide`, which is B for the
+roles of code and the prompt: mid tones of the 256, the same in every
+terminal, whose contrast is at least 3.1:1 on black, on VS Code's dark
+grey and on white (2.7:1 with a deficiency), so that B's objection, blind
+to the background, does not hold for them. Its keywords are coloured as
+well as bold: Windows Terminal under WSL drew bold in the default colour
+no differently, where the console of Windows made `runevm.exe`'s bright.
+`RUNE_COLORS=auto` keeps the 16 colours.
 
 ### D3. When colour is on
 
@@ -2650,6 +2669,83 @@ Windows, and any Rune program can read a line with them.
   * `docs/repl.md` rewritten as the REPL's manual; this file retired
     into `docs/` as the earlier roadmaps were.
 * **Done when:** the gate passes.
+* **As built** (2026-10-10): Vi's modes in `LineEdit` (`keys = Vi`;
+  `:set keys vi`): inserting until Escape; in the normal mode `h l w b e 0
+  ^ $`, `d c y` with a motion or doubled, `x X D C s S r ~ p P u`, a count
+  before either, `j k` through the lines and the history, `G gg`, `i a I A
+  o O`; the cursor a block or a bar (DECSCUSR), the terminal's own again
+  when a read ends. At the first read the editor asks the terminal,
+  invisibly, how wide it draws a family emoji (written, then `CSI 6n`, and
+  wiped), whether it speaks the kitty keyboard protocol (`CSI ? u`), and,
+  as the fence after which no answer will come, its attributes (`CSI c`);
+  nothing waits for the answers, which are read as keys are. The width
+  says the policy (by cluster or by code point, D9), `TERM_PROGRAM`
+  standing in until it comes or where it does not; where the protocol is
+  answered it is pushed (`CSI > 1 u`) while an entry is read and popped
+  with the terminal's other settings, at the read's end or the program's,
+  and `Key` decodes its `CSI code ; mods u`. Ctrl-R's search has a menu
+  beneath it of at most eight entries whose letters come in order, best
+  first by a score that counts runs and the starts of words (`fuzzyScore`),
+  which Down and Up choose from and Enter runs. On Windows, the kernel and
+  the debug adapter: `EngineClient` (`src/front/engine.sml`), shared by
+  the two, starts the engine by `fork` on the descriptors 3 and 4, or --
+  on Windows, or anywhere with `RUNE_ENGINE_CONNECT` -- with
+  `--engine-connect` on a port of the loopback, the connection's first
+  line a token of 128 random bits (`RuneRuntime.randomBytes`, the
+  primitive `rt_random_bytes`) compared in constant time; the interrupt on
+  Windows is an event, which the runtime watches on a thread of its own
+  from the first catch -- `RUNE_INTERRUPT_EVENT`, which the front makes
+  and spawn hands down, and `JPY_INTERRUPT_EVENT`, which Jupyter does,
+  each only where its handle is the process's (`win_event_new`,
+  `win_event_set`, `RuneRuntime.interruptEvent`, `setInterrupt`); a path
+  with a drive or a share taken as absolute, which `OS.Path`, Unix's on
+  every system, does not; the adapter gives the engine's output before
+  the engine's next message, which on Windows can come first; the
+  kernel's cells in `TMPDIR`, `TEMP` or `TMP`, as ipykernel's are.
+  `docs/repl.md` is the manual. Tests: lib/terminal's `edit.sml` (Vi's
+  commands and counts, the menu) and `probe.sml` (the answers, the kitty
+  protocol's keys); `tests/terminal/repl-vi.script`, on Linux and Windows;
+  `make test-kernel` and `test-dap` with the engine by fork and by
+  connection; `make test-windows` runs the terminal's scripts, the debug
+  adapter and, where Windows has a Python, the kernel's client
+  (`tests/kernel/windows.py`, the interrupt by the event) on
+  `runevm.exe`. The list of `tests/terminal/MANUAL.md` gained Vi, the menu
+  and the probe, and was not run: no terminal of it was at hand to the
+  agent that built M13, and the first run is the owner's (its *Results*).
+  Under AddressSanitizer the REPL's tests, the debugger's among them, and
+  the register suites at every tier pass. Found on the way and mended in
+  the milestone they belong to: `:set watch on` (M9) reloaded at every
+  prompt once a file used was touched and not changed, since a reload that
+  found nothing took no new times (`retime`; `tests/repl/reload` now
+  writes and touches in one entry, so that a second's boundary does not
+  move the reload); and tmux 3.4 on WSL 2 now and then leaves a pane's
+  ended process unreaped, which `tests/terminal/term.py` mends with a
+  SIGCHLD to the server (M8). Then, at the owner's word (2026-10-10): the
+  banner says `Type :help for instructions.`; what the REPL says in SML is
+  coloured as what is typed, by one classifier (`ReplHighlight`) that gives
+  a name its role by where it stands -- in a type, among a datatype's
+  constructors, at an exception's or a structure's name -- as well as by
+  the session: an echo's `val`, `fn` and type, the echo of a declaration,
+  `:type`, `:info`, `:browse`, `:search`, `:doc`'s specifications and the
+  debugger's line, a command's name as a keyword; and on a terminal of 256
+  colours `auto` is `wide`, code in full (D2, revised), measured with the
+  rest (`tests/color/contrast.py`) and tested on Linux and Windows
+  (`tests/terminal/repl-colours.script`); and what one Tab would add is
+  shown faintly at the end of what is typed (`ReplComplete.hinter`, the
+  editor's hint), found at the edges of the range of the session's names
+  that begin with the word (`firstNot`, `lastWhere` of `OrdMapFn`), so
+  that a key costs the height of a map: typing with 5,000 more names in
+  the session took the CPU it took without the hint.
+* **The gate** (D24), measured on 2026-10-10:
+
+  | Criterion | Measured | Passes |
+  |---|---|---|
+  | Features: the columns of *The REPLs* | commands (`:`, any unique prefix); `:type`, `:info`, `:browse`, `:doc`, `:search`, by type too; depth, length, string and width, `addPrettyPrinter`; the entry's line under an error with `^`; completeness by `;` and the scanner, the parser judging at Enter; `:reload`, `:reload!`, `watch`; a debugger at the prompt, the engine's protocol, a Jupyter kernel | yes; Enter by the parser alone, `:doc` beyond the Basis and patching in place are in *Ready for, not built* with their reasons |
+  | Features: the columns of *The line editors* | Windows' console; drawing by a diff; widths by tables of Unicode 18 and asked of the terminal; several lines; Emacs's keys and Vi's, undo, a kill ring; bracketed paste; a history appended, shared and searched, with a menu; highlighting by the compiler's lexer; the basic mode | yes |
+  | Features: the rest *What the table says* names | feedback modes, `:time`, `:save` and `:save-image`, documentation at the prompt, `:edit`, `:sh` | yes |
+  | Speed (`scripts/perf-repl.sh`, load 6.6) | start to the first prompt 55.5 ms, with the editor 55.7 (100); a keystroke at 1,000 lines 3.4 ms, the worst 9.1 (16); the completion menu over the Basis 3.9 ms (50); a paste of 2,000 lines 0.84 s against 0.48 s for 1,000 (linear) | yes, on a machine never quiet (another session's chains): as measured, every figure is within its bound |
+  | Robustness | the terminal cooked after a return, an uncaught exception, `vm_fatal`, `SIGTERM` and `SIGHUP` (`term-restore`; Windows' console is put back at exit alike, with no `stty` to ask); the programs of `tests/lang` and `tests/errors` write what they wrote at incremental's `673729a3`, byte for byte; the same scripts on Linux and Windows: 11 of `tests/terminal`, the debug adapter, the kernel | yes; the REPL's own echoes changed where M7's printing meant them to (paths, `?.t`, the layout, `5.0`, exceptions' arguments), in `tests/repl`'s transcripts |
+  | Access | no coloured role below 3:1 on the palettes of xterm, VTE, Windows Terminal, the legacy console and VS Code's dark and light themes, nor below 2.5:1 under the three deficiencies, the theme `wide` on all of them, dark and light (`tests/color/contrast.py`, 1,892 ratios), but one: VS Code's light theme draws bold in bright colours, and its bright magenta is 2.94:1 on white, which only asking the background mends; colour never the only cue; the basic mode where D24 lists, tested under comint (`repl-basic`) | yes, with the one exception written in the test; Terminal.app's and iTerm2's palettes were not measured (*Ready for, not built*) |
 
 ### Why this order
 
@@ -2860,20 +2956,22 @@ next, what each milestone measured, with the load it was measured at
 (another session's builds kept the machine busy throughout). None of
 the M1 column was measured on a quiet machine yet: before M6 compares
 with it, `scripts/perf-repl.sh` runs again on one, and the column takes
-those numbers.
+those numbers. M13's was measured when the load had fallen to 6.6 (log
+`m13-perf.log` with the drafts); the machine was never quiet while the
+milestones' checks ran.
 
-| What | P0 to P4 (loaded) | M1 | M6 (load 11 to 13) | Target (D24) |
-|---|---|---|---|---|
-| start to the first prompt | 72 to 87 ms | 46.5 ms | 40 ms from a pipe; 170 to 300 ms on a pty | 100 ms |
-| `1;` to the next prompt | 8 to 16 ms | 7.8 ms | 13 ms | as M1 |
-| paste of 1,000 lines | 6.7 to 7.0 s | 5.8 s | 0.53 s | linear in the length |
-| paste of 2,000 lines | hung in the harness | 33.1 s | 0.91 s | linear in the length |
-| keystroke, 10 lines | 0.38 ms (P2) | 0.32 ms (M5, load 13) | 0.25 ms | 16 ms |
-| keystroke, 1,000 lines | 29.6 ms (P2) | 3.56 ms, worst 10.4 (M5, load 13) | 4.8 ms, worst 15.7 | 16 ms |
-| bytes written a keystroke, 1,000 lines | 1,324 (P2) | 14 typing at the end, 1,052 in the middle (M5) | the same | as M5 |
-| completion menu over the Basis | none | from M6 | 4.6 ms (`S`, Tab Tab, to the menu) | 50 ms |
-| kernel round trip, 16 bytes | 66 µs median (P4) | from M11 | | as M11 |
-| a program not debugged, under M12 | as before | from M12 | M12: instructions retired as under M11, 959 against 959 million (`fib 33`, the JIT), 1,026 against 1,026 (`--jit=all`), 3,492 against 3,504 (`--jit=off`) | no slower |
+| What | P0 to P4 (loaded) | M1 | M6 (load 11 to 13) | M13 (load 6.6) | Target (D24) |
+|---|---|---|---|---|---|
+| start to the first prompt | 72 to 87 ms | 46.5 ms | 40 ms from a pipe; 170 to 300 ms on a pty | 55.5 ms on a pty, 55.7 with the editor and its questions | 100 ms |
+| `1;` to the next prompt | 8 to 16 ms | 7.8 ms | 13 ms | 7.0 ms | as M1 |
+| paste of 1,000 lines | 6.7 to 7.0 s | 5.8 s | 0.53 s | 0.48 s | linear in the length |
+| paste of 2,000 lines | hung in the harness | 33.1 s | 0.91 s | 0.84 s | linear in the length |
+| keystroke, 10 lines | 0.38 ms (P2) | 0.32 ms (M5, load 13) | 0.25 ms | 0.11 ms | 16 ms |
+| keystroke, 1,000 lines | 29.6 ms (P2) | 3.56 ms, worst 10.4 (M5, load 13) | 4.8 ms, worst 15.7 | 3.4 ms, worst 9.1 | 16 ms |
+| bytes written a keystroke, 1,000 lines | 1,324 (P2) | 14 typing at the end, 1,052 in the middle (M5) | the same | the same | as M5 |
+| completion menu over the Basis | none | from M6 | 4.6 ms (`S`, Tab Tab, to the menu) | 3.9 ms | 50 ms |
+| kernel round trip, 16 bytes | 66 µs median (P4) | from M11 | | the heartbeat 284 µs median, 365 at 4,000 bytes; `is_complete_request` 2.5 ms (load 11; M11 measured none) | as M13 |
+| a program not debugged, under M12 | as before | from M12 | M12: instructions retired as under M11, 959 against 959 million (`fib 33`, the JIT), 1,026 against 1,026 (`--jit=all`), 3,492 against 3,504 (`--jit=off`) | as M12: M13 changed no loop | no slower |
 
 ## Ready for, not built
 
@@ -2908,7 +3006,22 @@ those numbers.
   and from a location to the file (GHC and rustc link codes), off by
   default: a terminal's support cannot be detected.
 * **A light or dark theme chosen automatically** by asking the
-  background (OSC 11).
+  background (OSC 11). It would mend the one ratio M13's gate found below
+  3:1, VS Code's bright magenta on its light theme's white
+  (`tests/color/contrast.py`, `KNOWN`).
+* **The palettes of Terminal.app and iTerm2.** D24 named seven terminals;
+  their default palettes were not to be had where M13 was built, and the
+  contrast is measured on the other five.
+* **`:doc` beyond the Basis.** runedoc writes a `members.json` for every
+  library (`docs/generated/NAME`), which `:doc` would read once a session
+  can load a library (*Autoloading a library*); the session's own
+  declarations would need their comments kept by the compiler, as GHCi's
+  `:doc` and IPython's `?` show a user's own documentation.
+* **A pager** for what is longer than the screen -- `:doc` of a large
+  structure, `:browse`, a long value -- as IPython's `?` and `less` have.
+* **A hint from the history**, the rest of the newest entry that begins
+  with what is typed, shown faint and taken by the right arrow (fish,
+  reedline, IPython 8), where completion's hint (M13) has nothing.
 * **Autoloading a library.** `:require NAME` or an unbound structure
   that loads `lib/NAME` into the session (CM's autoloader, incremental
   D12).

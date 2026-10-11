@@ -5,9 +5,35 @@
 # ports this script picks: what a notebook asks of a kernel, an interrupt
 # among it. jupyter_client itself is tested where it is installed
 # (tests/kernel/notebook_client.py).
-#   tests/kernel/run.sh
+#   tests/kernel/run.sh [--windows]
+# With --windows, the kernel and its engine are runevm.exe's, staged in the
+# directory tests/windows-dir.sh names, and a Python of Windows drives them
+# (tests/kernel/windows.py), interrupting by JPY_INTERRUPT_EVENT.
 set -u
 cd "$(dirname "$0")/../.."
+if [ "${1:-}" = --windows ]; then
+  if ! python.exe -c 'import ctypes' > /dev/null 2>&1; then
+    echo "kernel (Windows): skipped, no Python of Windows (python.exe)"
+    exit 0
+  fi
+  if ! windir=$(sh tests/windows-dir.sh); then
+    echo "kernel (Windows): no Windows to run on (tests/windows-dir.sh)" >&2
+    exit 1
+  fi
+  stage=$windir/kernel
+  mkdir -p "$stage/bin" "$stage/tests/kernel" "$stage/tests/lib/zmtp/interop"
+  cp bin/runevm.exe bin/rune-repl.img bin/rune-kernel.rbc "$stage/bin/"
+  for dll in bin/*.dll; do [ -f "$dll" ] && cp "$dll" "$stage/bin/"; done
+  cp tests/kernel/client.py tests/kernel/windows.py "$stage/tests/kernel/"
+  cp tests/lib/zmtp/interop/peer.py "$stage/tests/lib/zmtp/interop/"
+  if (cd "$stage" && timeout 300 python.exe -u tests/kernel/windows.py); then
+    echo "kernel (Windows): passed"
+  else
+    echo "kernel (Windows): FAILED"
+    exit 1
+  fi
+  exit 0
+fi
 command -v python3 > /dev/null || { echo "kernel: skipped, no python3"; exit 0; }
 out=tests/out/kernel
 mkdir -p "$out"

@@ -307,7 +307,8 @@ struct
 
   fun excerpt (file : string, line : int) : string =
     case sourceLine (file, line) of
-      SOME l => ReplFront.paint "diag.gutter" (StringCvt.padLeft #" " 5 (Int.toString line) ^ " |") ^ " " ^ l ^ "\n"
+      SOME l => ReplFront.paint "diag.gutter" (StringCvt.padLeft #" " 5 (Int.toString line) ^ " |") ^ " "
+                ^ ReplHighlight.paint (!ReplSession.env, l, ReplHighlight.code) ^ "\n"
     | NONE => ""
 
   fun describe () : string =

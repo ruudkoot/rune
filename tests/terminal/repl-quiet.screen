@@ -1,4 +1,4 @@
-Rune @VERSION@. Ctrl-D ends the session.
+Rune @VERSION@. Type :help for instructions.
 - (Posix.Process.sleep (Time.fromSeconds 2); 0);
 val it = 0 : int
 - 7;

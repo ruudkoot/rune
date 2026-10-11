@@ -1,8 +1,9 @@
 # Index: T
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) **t** [u](u.md) [w](w.md) [y](y.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) **t** [u](u.md) [v](v.md) [w](w.md) [y](y.md)
 
 - `Tab` (con): [KEY](../sig/KEY.md#con-tab)
+- `terminal` (val): [LINE_EDIT](../sig/LINE_EDIT.md#val-terminal)
 - `text` (val): [EMULATOR](../sig/EMULATOR.md#val-text), [LINE_EDIT](../sig/LINE_EDIT.md#val-text)
 - `toString` (val): [KEY](../sig/KEY.md#val-tostring)
 - `TransposeChars` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-transposechars)

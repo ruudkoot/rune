@@ -1293,6 +1293,23 @@ void sys_code_free(void *code, size_t size) { munmap(code, size); }
 static struct sigaction interrupt_before;
 static int interrupt_caught;
 static void on_interrupt(int sig) { (void)sig; if (interrupt_flag) *interrupt_flag = 1; }
+int64_t sys_event_new(void) { errno = ENOSYS; return -1; }
+int sys_event_set(int64_t handle) { (void)handle; errno = ENOSYS; return -1; }
+
+int sys_random(void *out, size_t n) {
+    int fd = open("/dev/urandom", O_RDONLY);
+    if (fd < 0) return -1;
+    size_t got = 0;
+    while (got < n) {
+        ssize_t k = read(fd, (char *)out + got, n - got);
+        if (k < 0 && errno == EINTR) continue;
+        if (k <= 0) { int e = k < 0 ? errno : EIO; close(fd); errno = e; return -1; }
+        got += (size_t)k;
+    }
+    close(fd);
+    return 0;
+}
+
 int sys_interrupt_catch(volatile int *flag) {
     if (!flag) {
         interrupt_flag = NULL;

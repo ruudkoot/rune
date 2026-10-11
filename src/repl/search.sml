@@ -131,7 +131,7 @@ struct
     in go ("", env, 3) end
 
   fun line (env : Env.env) (name : string, t : Types.ty) : string =
-    ReplFront.paint "repl.name" name ^ " : " ^ ReplFront.paint "repl.type" (ReplShow.typeIn env t)
+    ReplFront.paint "repl.name" name ^ " : " ^ ReplHighlight.paint (env, ReplShow.typeIn env t, ReplHighlight.aType)
 
   fun limited (k : int, results : string list) : string =
     let val shown = List.take (results, Int.min (k, List.length results))

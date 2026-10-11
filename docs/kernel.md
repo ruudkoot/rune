@@ -37,8 +37,15 @@ one that a later update replaces, and `Display.clear` clears the cell.
 
 Tab completes as at the REPL, and Shift-Tab shows what `:info` and `:doc`
 say of the name under the cursor. Jupyter's interrupt (`interrupt_mode
-signal`) reaches the kernel as `SIGINT`, which it gives to the engine: the
-cell ends with `Interrupt`, and the session goes on.
+signal`) reaches the kernel as `SIGINT` -- on Windows as the event
+`JPY_INTERRUPT_EVENT` names, which Jupyter sets -- and the kernel gives it to
+the engine: the cell ends with `Interrupt`, and the session goes on.
+
+The engine is the kernel's child on its descriptors 3 and 4 where the system
+forks, and on Windows on a connection of the loopback that the kernel
+listens on, whose first line is a token only the two know
+(`--engine-connect`, `src/front/engine.sml`; `RUNE_ENGINE_CONNECT` asks for
+it elsewhere too).
 
 ## The debugger
 
@@ -67,10 +74,6 @@ stopped at a breakpoint can be looked into and sent on.
 
 ## Limits
 
-* POSIX only: the kernel starts its engine with `fork` and two pipes as the
-  engine's descriptors 3 and 4. On Windows, where neither is, the engine's
-  `--engine-connect` is the channel to use, and the kernel does not use it
-  yet.
 * No widgets or comms. A type's own
   renderers registered by its type, as `addPrettyPrinter` registers a
   printer, are not built: a cell's rich output is the HTML of its values
@@ -88,4 +91,8 @@ debugger -- `debugInfo`, a cell dumped under the name its hash gives,
 a breakpoint in it, the stop as a `debug_event` while the cell runs, its
 frames, variables and an expression in the frame, `continue` -- an
 interrupt, and a shutdown. Where Python's `jupyter_client` is installed,
-`tests/kernel/notebook_client.py` does the same through it.
+`tests/kernel/notebook_client.py` does the same through it. `make
+test-kernel` runs both again with the engine on a connection, and `make
+test-windows` runs the client on Windows, where Windows has a Python, against
+`runevm.exe`'s kernel, interrupting it by its event
+(`tests/kernel/windows.py`).

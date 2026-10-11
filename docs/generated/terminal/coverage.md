@@ -10,9 +10,9 @@ documented when a comment describes it, alone or together with the entry before 
 | [`EMULATOR`](sig/EMULATOR.md) | 9 | 9 | 100% | 7 | 7 |
 | [`HISTORY`](sig/HISTORY.md) | 8 | 8 | 100% | 7 | 7 |
 | [`KEY`](sig/KEY.md) | 10 | 10 | 100% | 4 | 4 |
-| [`LINE_EDIT`](sig/LINE_EDIT.md) | 17 | 17 | 100% | 8 | 8 |
+| [`LINE_EDIT`](sig/LINE_EDIT.md) | 20 | 20 | 100% | 10 | 10 |
 | [`STYLE`](sig/STYLE.md) | 11 | 11 | 100% | 6 | 6 |
-| **all** | 63 | 63 | 100% | 40 | 40 |
+| **all** | 66 | 66 | 100% | 42 | 42 |
 
 ## Members a signature describes
 
@@ -21,7 +21,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-7 structures have a page, with 71 members, of which 71 (100%) are described by a signature.
+7 structures have a page, with 74 members, of which 74 (100%) are described by a signature.
 
 ## Examples that are run
 

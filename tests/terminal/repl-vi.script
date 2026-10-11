@@ -1,0 +1,33 @@
+# windows
+# Vi's modes and the history's fuzzy menu at the REPL (docs/plans/repl.md,
+# M13): :set keys vi; Escape to the normal mode, a motion and cw, Enter;
+# then Ctrl-R, a query whose letters are in order in an entry, the menu of
+# the entries, Down to take the best and Enter to run it.
+start 80 24 @REPL@
+wait ^-$
+send :set keys vi
+keys Enter
+wait ^-$
+send val x = 1 + 2;
+keys Escape
+sleep 200
+send 0wcwy
+keys Escape
+sleep 200
+keys Enter
+wait ^val y = 3 : int$
+send val z = y * 10;
+keys Enter
+wait ^val z = 30 : int$
+keys C-r
+send vy
+wait \(reverse-i-search\)`vy'
+wait ^  val z = y \* 10;$
+wait ^  val y = 1 \+ 2;$
+keys Down
+wait ^> val z = y \* 10;$
+keys Enter
+wait ^val z = 30 : int\n-$
+send val () = OS.Process.exit OS.Process.success;
+keys Enter
+exited 0

@@ -1,4 +1,4 @@
-Rune @VERSION@. Ctrl-D ends the session.
+Rune @VERSION@. Type :help for instructions.
 - val a = undefined1 val b = undefined2;
 stdIn#1:1:9: error: unbound variable or constructor: undefined1
   |

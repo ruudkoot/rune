@@ -1,4 +1,4 @@
-Rune @VERSION@. Ctrl-D ends the session.
+Rune @VERSION@. Type :help for instructions.
 - 1;
 val it = 1 : int
 - val (a, b) = (2, "two");

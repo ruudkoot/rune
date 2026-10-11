@@ -4,7 +4,11 @@ docs/plans/repl.md, M12), with the standard library alone: the Debug
 Adapter Protocol's messages framed by Content-Length on the adapter's
 standard input and output.
 
-  tests/dap/run.py
+  tests/dap/run.py [--windows]
+
+With --windows, the adapter and its engine are runevm.exe's, staged in the
+directory tests/windows-dir.sh names (make test-windows): the engine on a
+connection of the loopback, as on Windows it always is.
 
 Two sessions: prog.sml stopped at a breakpoint -- its frames, scopes,
 variables, an expression in its frame, a step --, at a raise its own
@@ -18,6 +22,30 @@ import sys
 import time
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+COMMAND = ["bin/rune-dap"]
+WHERE = ""
+if sys.argv[1:] == ["--windows"]:
+    import shutil
+    try:
+        windir = subprocess.check_output(["sh", os.path.join(ROOT, "tests", "windows-dir.sh")]).decode().strip()
+    except subprocess.CalledProcessError:
+        print("dap (Windows): no Windows to run on (tests/windows-dir.sh)")
+        sys.exit(1)
+    stage = os.path.join(windir, "dap")
+    os.makedirs(os.path.join(stage, "tests", "dap"), exist_ok=True)
+    for f in ["runevm.exe", "rune-repl.img", "rune-dap.rbc"] + [d for d in os.listdir(os.path.join(ROOT, "bin"))
+                                                                  if d.endswith(".dll")]:
+        shutil.copy(os.path.join(ROOT, "bin", f), stage)
+    for f in ["prog.sml", "loop.sml"]:
+        shutil.copy(os.path.join(ROOT, "tests", "dap", f), os.path.join(stage, "tests", "dap"))
+
+    def windows(path):
+        return subprocess.check_output(["wslpath", "-w", path]).decode().strip()
+    vm = os.path.join(stage, "runevm.exe")
+    COMMAND = [vm, windows(os.path.join(stage, "rune-dap.rbc")), "--vm", windows(vm),
+               "--image", windows(os.path.join(stage, "rune-repl.img"))]
+    ROOT = stage
+    WHERE = " (Windows)"
 ok = True
 
 
@@ -29,7 +57,7 @@ def check(name, cond, detail=""):
 
 class Adapter:
     def __init__(self):
-        self.p = subprocess.Popen(["bin/rune-dap"], cwd=ROOT, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        self.p = subprocess.Popen(COMMAND, cwd=ROOT, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE)
         self.seq = 0
         self.buf = b""
@@ -163,5 +191,5 @@ check("the loop's variable", "n" in vs, vs)
 a.end()
 check("ended while stopped", a.p.returncode == 0, a.p.returncode)
 
-print("dap: " + ("passed" if ok else "FAILED"))
+print("dap%s: %s" % (WHERE, "passed" if ok else "FAILED"))
 sys.exit(0 if ok else 1)

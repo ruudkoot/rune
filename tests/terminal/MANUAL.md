@@ -32,21 +32,26 @@ Start the REPL in an empty directory with `XDG_STATE_HOME` and
 `LOCALAPPDATA` and `APPDATA`), so that no history or init file of one's
 own takes part.
 
-1. **The start.** One line of banner in the faint style, then the prompt
-   `- ` in bold. With `-q`, no banner.
-2. **Colours as typed.** `val s = "two" (* c *) : string;` -- `val` bold, the
-   string coloured, the comment faint, before Enter. In the light and
-   dark themes (`RUNE_COLORS=theme=light`, `theme=dark`) every role reads
-   on the terminal's background. With `NO_COLOR=1`, bold and faint only;
-   with `--color=never`, nothing.
+1. **The start.** One line of banner in the faint style, `Rune VERSION.
+   Type :help for instructions.`, then the prompt `- ` in bold (green where
+   the terminal has 256 colours). With `-q`, no banner.
+2. **Colours as typed.** `val s = "two" (* c *) : string;` -- before Enter,
+   `val` bold (and blue), the string coloured, the comment faint or grey,
+   `string` teal where the terminal has 256 colours; after it, the echo's
+   `val`, string and type as they were typed. `:browse Option` coloured the
+   same. In the themes light, dark and auto (`RUNE_COLORS=light`, `dark`,
+   `auto`) every role reads on the terminal's background. With
+   `NO_COLOR=1`, bold and faint only; with `--color=never`, nothing.
 3. **Editing.** Ctrl-A, Ctrl-E, Alt-B, Alt-F, the arrows, Ctrl-K and Ctrl-Y,
    Ctrl-_ to undo, Alt-Enter for a new line in the middle of an entry.
    Home, End, Delete and the arrows with Ctrl on each terminal.
 4. **Several lines.** `fun f 0 = 1` Enter `| f n = n * f (n - 1);` Enter: the
    continuation prompt `= ` on the second line, the entry run once.
    Up brings back both lines as one entry.
-5. **Completion.** `Lis` Tab gives `List`; `List.fi` Tab Tab shows the
-   menu under the entry; `use "` Tab lists the files of the directory.
+5. **Completion.** `Lis` shows `t` faintly after it, and Tab gives
+   `List`; `List.fi` Tab Tab shows the menu under the entry; `use "` Tab
+   lists the files of the directory. `TextIO.inputL` shows `ine` faintly,
+   which Right takes; typing fast is not slowed by it.
 6. **History.** Up and Down; Ctrl-R and a word; a second REPL started
    meanwhile sees the entries of the first at its next prompt.
 7. **Paste.** A block of twenty declarations pasted at once is one entry
@@ -77,8 +82,29 @@ own takes part.
 17. **The basic mode.** `rune-repl --basic`, `TERM=dumb rune-repl`, and in
     Emacs: a prompt and a line at a time, no escapes at all in what is
     written (`rune-repl --basic | od -c` shows none).
+18. **Vi's keys.** `:set keys vi`, `val x = 1`, Escape: the cursor a
+    block; `0`, `w`, `cw`, `y`, Escape, `A;`, Enter runs `val y = 1;`. The
+    cursor a bar again at the next prompt, and as it was after the REPL
+    ends.
+19. **The history's menu.** After a few entries, Ctrl-R and letters of one
+    of them in order: a menu of at most eight beneath the line, the best
+    first; Down and Enter run the one chosen.
+20. **What the terminal is asked.** Nothing of the probe seen at the start
+    (a cluster of emoji written and wiped at once). On kitty, WezTerm,
+    foot or Ghostty (the kitty keyboard protocol): Escape in Vi's keys
+    without a wait, Ctrl-I not Tab; after the REPL ends, the shell's keys
+    as they were.
 
 ## Results
+
+M13 (2026-10-10) did not run this list: it was built by an agent, with no
+terminal of the list to type into. What runs without a person instead:
+the scripts of `tests/terminal` on tmux (Linux, `make test-terminal`) and on
+ConPTY through WSL interop (Windows, `make test-windows`, the scripts whose
+first line is `# windows`), the bytes of `*.pty` as VS Code's terminal is
+given them, and the colours measured on the palettes of
+`tests/color/contrast.py`. The first run by hand is the owner's, and its
+row goes below.
 
 | Date | Terminal | Version | Steps that failed | Notes |
 |---|---|---|---|---|

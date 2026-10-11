@@ -23,14 +23,19 @@ struct
 
   fun isNameChar c = Char.isAlphaNum c orelse c = #"_" orelse c = #"'"
 
+  (* whether a name is offered for what is typed: the library's own
+     (`Rune...`) only when what is typed begins so, and never the names the
+     REPL makes (`rune'...`) *)
+  fun offered (prefix : string) (n : string) : bool =
+    String.isPrefix prefix n
+    andalso (String.isPrefix "Rune" prefix orelse String.isPrefix "RUNE" prefix
+             orelse not (String.isPrefix "Rune" n orelse String.isPrefix "RUNE" n))
+    andalso not (String.isPrefix "rune'" n)
+
   (* the candidates in order: most used first, then by name *)
   fun ranked (prefix : string, names : string list) : string list =
     let
-      val own = String.isPrefix "Rune" prefix orelse String.isPrefix "RUNE" prefix
-      val chosen = List.filter (fn n => String.isPrefix prefix n
-                                        andalso (own orelse not (String.isPrefix "Rune" n orelse String.isPrefix "RUNE" n))
-                                        andalso not (String.isPrefix "rune'" n))
-                               names
+      val chosen = List.filter (offered prefix) names
       fun earlier (a, b) =
         case Int.compare (count b, count a) of
           EQUAL => String.compare (a, b) = LESS
@@ -95,9 +100,14 @@ struct
       | [] => NONE
     end
 
-  (* complete env (text, i): where the word before byte i begins and what it
-     can be completed to (LineEdit's complete) *)
-  fun complete (env : Env.env) (text : string, i : int) : {start : int, candidates : string list} =
+  (* What the word before byte i of a text is: the name of a command (`:`
+     beginning the entry), a file's name in a string after `use`, a name --
+     after a structure's path, a type's where one is expected -- or
+     nothing; with where it begins. *)
+  datatype word = Command of int * string | File of int * string | Name of int * string list * string * bool
+                | Nothing of int
+
+  fun wordAt (text : string, i : int) : word =
     let
       fun back j = if j > 0 andalso (isNameChar (String.sub (text, j - 1)) orelse String.sub (text, j - 1) = #".")
                    then back (j - 1) else j
@@ -106,33 +116,116 @@ struct
     in
       if first < i andalso String.sub (text, first) = #":" andalso
          CharVector.all isNameChar (String.substring (text, first + 1, i - first - 1)) then
-        (* a command *)
-        {start = first, candidates = ranked (String.substring (text, first, i - first), !commands)}
+        Command (first, String.substring (text, first, i - first))
       else
         case stringStart (text, i) of
           SOME s =>
-            let
-              val ahead = String.substring (text, 0, s - 1)
-              val words = String.tokens (not o isNameChar) ahead
+            let val words = String.tokens (not o isNameChar) (String.substring (text, 0, s - 1))
             in
-              if not (List.null words) andalso List.last words = "use" then
-                {start = s, candidates = ranked (String.substring (text, s, i - s), files (String.substring (text, s, i - s)))}
-              else {start = i, candidates = []}
+              if not (List.null words) andalso List.last words = "use" then File (s, String.substring (text, s, i - s))
+              else Nothing i
             end
         | NONE =>
             let
               val s = back i
-              val word = String.substring (text, s, i - s)
-              val parts = String.fields (fn c => c = #".") word
+              val parts = String.fields (fn c => c = #".") (String.substring (text, s, i - s))
               val last = List.last parts
               val path = List.take (parts, List.length parts - 1)
-              val start = i - String.size last
             in
-              case ReplHighlight.structureAt (env, path) of
-                SOME e =>
-                  if last = "" andalso List.null path then {start = i, candidates = []}
-                  else {start = start, candidates = ranked (last, namesIn (e, typeExpected (text, s)))}
-              | NONE => {start = i, candidates = []}
+              if last = "" andalso List.null path then Nothing i
+              else Name (i - String.size last, path, last, typeExpected (text, s))
             end
+    end
+
+  (* complete env (text, i): where the word before byte i begins and what it
+     can be completed to (LineEdit's complete) *)
+  fun complete (env : Env.env) (text : string, i : int) : {start : int, candidates : string list} =
+    case wordAt (text, i) of
+      Command (s, w) => {start = s, candidates = ranked (w, !commands)}
+    | File (s, w) => {start = s, candidates = ranked (w, files w)}
+    | Name (s, path, last, types) =>
+        (case ReplHighlight.structureAt (env, path) of
+           SOME e => {start = s, candidates = ranked (last, namesIn (e, types))}
+         | NONE => {start = i, candidates = []})
+    | Nothing i => {start = i, candidates = []}
+
+  (* the longest text each of the names begins with *)
+  fun commonPrefix ([] : string list) : string = ""
+    | commonPrefix (n :: ns) =
+        List.foldl (fn (m, p) =>
+                      let fun same k = if k < String.size p andalso k < String.size m
+                                          andalso String.sub (p, k) = String.sub (m, k) then same (k + 1) else k
+                      in String.substring (p, 0, same 0) end) n ns
+
+  (* What the names of a map offered for p (`offered`) all begin with: what
+     the least and the greatest of them do, which are found at the edges of
+     the range of keys beginning with p, past the ranges of the names not
+     offered -- in the height of the tree, whatever the map's size. *)
+  fun edges (m : 'a StringMap.map, p : string) : string list =
+    let
+      val hidden = List.filter (fn x => not (String.isPrefix x p) orelse x = "rune'")
+                               (if String.isPrefix "Rune" p orelse String.isPrefix "RUNE" p then ["rune'"]
+                                else ["Rune", "RUNE", "rune'"])
+      fun below x k = String.compare (k, x) = LESS
+      fun upTo x k = below x k orelse String.isPrefix x k
+      fun hiddenBy k = List.find (fn x => String.isPrefix x k) hidden
+      fun least k =
+        case k of
+          SOME k => if not (String.isPrefix p k) then NONE
+                    else (case hiddenBy k of SOME x => least (StringMap.firstNot (upTo x) m) | NONE => SOME k)
+        | NONE => NONE
+      fun greatest k =
+        case k of
+          SOME k => if not (String.isPrefix p k) then NONE
+                    else (case hiddenBy k of SOME x => greatest (StringMap.lastWhere (below x) m) | NONE => SOME k)
+        | NONE => NONE
+    in
+      List.mapPartial (fn x => x) [least (StringMap.firstNot (below p) m), greatest (StringMap.lastWhere (upTo p) m)]
+    end
+
+  (* hinter env: what Tab would add at the end of a text, to be shown
+     faintly after it (LineEdit's hint) -- the rest of the one candidate,
+     or of what every candidate begins with -- and NONE where that is
+     nothing or the text ends in a comment. A name's costs the height of
+     the session's maps (edges); made for a prompt, it keeps the last
+     text's hint, for a redraw of the same text, and the entries of each
+     directory it read. *)
+  fun hinter (env : Env.env) : string -> string option =
+    let
+      val last : (string * string option) option ref = ref NONE
+      val listings : (string * string list) list ref = ref []
+      fun kept (cache, key, make) =
+        case List.find (fn (k, _) => k = key) (!cache) of
+          SOME (_, v) => v
+        | NONE => let val v = make () in cache := (key, v) :: !cache; v end
+      fun filesFor typed =
+        let
+          val {dir, ...} = OS.Path.splitDirFile typed
+          val entries = kept (listings, dir, fn () => files (if dir = "" then "" else OS.Path.joinDirFile {dir = dir, file = ""}))
+        in List.filter (String.isPrefix typed) entries end
+        handle OS.Path.Path => []
+      fun rest (typed, NONE) = NONE
+        | rest (typed, SOME p) =
+            if String.size p > String.size typed andalso String.isPrefix typed p
+            then SOME (String.extract (p, String.size typed, NONE)) else NONE
+      fun common [] = NONE
+        | common cs = SOME (commonPrefix cs)
+      fun compute text =
+        if ReplHighlight.endsInComment (env, text) then NONE
+        else
+          case wordAt (text, String.size text) of
+            Command (_, w) => rest (w, common (List.filter (offered w) (!commands)))
+          | File (_, w) => rest (w, common (filesFor w))
+          | Name (_, path, word, types) =>
+              (case ReplHighlight.structureAt (env, path) of
+                 SOME e => rest (word, common (edges (Env.vals e, word) @ edges (Env.strs e, word)
+                                               @ (if types then edges (Env.tys e, word) else [])))
+               | NONE => NONE)
+          | Nothing _ => NONE
+    in
+      fn text =>
+        case !last of
+          SOME (t, h) => if t = text then h else let val h = compute text in last := SOME (text, h); h end
+        | NONE => let val h = compute text in last := SOME (text, h); h end
     end
 end

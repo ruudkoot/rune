@@ -690,11 +690,13 @@ bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-windows
 
 # The suites on the Windows VMs of both bytecodes: the stack one compiled
 # by bin/rune-stack, the register one by bin/rune, each on its two VMs
-# (tests/run-windows.sh), then the Basis Library suite on all four.
+# (tests/run-windows.sh), then the Basis Library suite on all four; then the
+# REPL on a console, its debug adapter, and its Jupyter kernel where Windows
+# has a Python.
 # The runtime/register VMs run with every function given to the JIT (RUNEVM_JIT,
 # which WSLENV passes to a program of Windows), so that the JIT's Windows
 # convention is what the suites test there.
-test-windows: windows $(RUNE) bin/rune-repl bin/rune-repl.cmd
+test-windows: windows $(RUNE) bin/rune-repl bin/rune-repl.cmd bin/rune-dap bin/rune-kernel
 	sh tests/run-windows.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack.exe --vm bin/runevm-stack32.exe
 	WSLENV=RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all sh tests/run-windows.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
 	  --vm bin/runevm.exe --vm bin/runevm32.exe
@@ -702,6 +704,8 @@ test-windows: windows $(RUNE) bin/rune-repl bin/rune-repl.cmd
 	  --vm bin/runevm.exe
 	WSLENV=RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all RUNE=$(abspath $(RUNE_STACK)) sh tests/basis/run-matrix.sh -j $(JOBS) --configs windows
 	sh tests/terminal/run.sh --windows
+	python3 tests/dap/run.py --windows
+	sh tests/kernel/run.sh --windows
 
 # ------------------------------------------------------------- portability
 # The VM on machines this one is not: a 32-bit x86, where a pointer is four
@@ -957,27 +961,31 @@ test-repl: bin/rune-repl bin/runevm
 
 # rune-kernel, a Jupyter kernel for Standard ML (docs/kernel.md): a bridge
 # in SML over lib/jupyter that drives the REPL's engine as its child
-bin/rune-kernel.rbc: $(RUNE) src/dap/translate.sml src/kernel/kernel.sml manifests \
+bin/rune-kernel.rbc: $(RUNE) src/front/engine.sml src/dap/translate.sml src/kernel/kernel.sml manifests \
                      $(wildcard lib/jupyter/*.sml lib/zmtp/*.sml lib/digest/*.sml lib/json/*.sml lib/jsonrpc/*.sml)
-	$(RUNE) --library jupyter --library jsonrpc --library digest src/dap/translate.sml src/kernel/kernel.sml -o $@
+	$(RUNE) --library jupyter --library jsonrpc --library digest src/front/engine.sml src/dap/translate.sml src/kernel/kernel.sml -o $@
 bin/rune-kernel: bin/rune-kernel.rbc bin/rune-repl.img bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-kernel.rbc" --vm "$$d/runevm" --image "$$d/rune-repl.img" --program "$$d/rune-kernel.rbc" "$$@"\n' > $@
 	chmod +x $@
 kernel: bin/rune-kernel
+# and again with the engine's channel a connection, as on Windows
+# (src/front/engine.sml)
 test-kernel: bin/rune-kernel
 	sh tests/kernel/run.sh
+	RUNE_ENGINE_CONNECT=1 sh tests/kernel/run.sh
 
 # rune-dap, the Debug Adapter Protocol for Standard ML (docs/dap.md): an
 # adapter in SML over lib/dap that drives the REPL's engine as its child;
 # `rune-repl --dap` is it
-bin/rune-dap.rbc: $(RUNE) src/dap/translate.sml src/dap/adapter.sml manifests $(wildcard lib/dap/*.sml lib/json/*.sml lib/jsonrpc/*.sml)
-	$(RUNE) --library dap --library jsonrpc src/dap/translate.sml src/dap/adapter.sml -o $@
+bin/rune-dap.rbc: $(RUNE) src/front/engine.sml src/dap/translate.sml src/dap/adapter.sml manifests $(wildcard lib/dap/*.sml lib/json/*.sml lib/jsonrpc/*.sml)
+	$(RUNE) --library dap --library jsonrpc src/front/engine.sml src/dap/translate.sml src/dap/adapter.sml -o $@
 bin/rune-dap: bin/rune-dap.rbc bin/rune-repl.img bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-dap.rbc" --vm "$$d/runevm" --image "$$d/rune-repl.img" "$$@"\n' > $@
 	chmod +x $@
 dap: bin/rune-dap
 test-dap: bin/rune-dap bin/rune-repl
 	python3 tests/dap/run.py
+	RUNE_ENGINE_CONNECT=1 python3 tests/dap/run.py
 
 # The REPL's engine and its protocol (docs/repl-protocol.md): each script
 # of tests/repl-protocol played to rune-repl --engine, as a front drives it

@@ -56,10 +56,11 @@ with Python's standard library: `prog.sml` stopped at a breakpoint, its
 frames, its variables, an expression in its frame and one that does not
 elaborate, a step, a stop at a raise its own handler takes, its output and
 its end; and `loop.sml` paused while it runs, in compiled code, and its
-variable at the pause.
+variable at the pause. `make test-dap` runs it again with the engine on a
+connection (`RUNE_ENGINE_CONNECT`), as on Windows, and `make test-windows`
+on `runevm.exe` (`--windows`).
 
 ## Limits
 
-POSIX only, as the kernel is: the adapter starts its engine with `fork`.
 No conditional breakpoints, logpoints or data breakpoints; the variables
 are a frame's, not the session's top level.

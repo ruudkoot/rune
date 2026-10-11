@@ -84,11 +84,13 @@ that a CI that forces colour changes nothing that the tests compare.
 
 Each piece of text has a **role** (`error`, `diag.gutter`, `syn.keyword`,
 `repl.prompt`, ...); `Color.table` gives the style of each role in three
-themes:
+themes, and `Color.wide` that of the roles of code and the prompt in a
+fourth:
 
 | Theme | For |
 |---|---|
 | `auto` | the default, for a background not known: bright red and magenta with bold, faint and underline |
+| `wide` | `auto` on a terminal of 256 colours: code in full -- keywords blue and bold, strings purple, numbers green, constructors orange, types teal, comments grey -- in colours of the 256 that read on dark and light backgrounds alike |
 | `dark` | a dark background: the bright colours, cyan and green among them |
 | `light` | a light background: red, blue and magenta |
 | `mono` | the attributes of `auto` without its colours |
@@ -96,16 +98,28 @@ themes:
 
 The theme is the one `RUNE_COLORS` names; else `dark` or `light` when
 `COLORFGBG` (which some terminals set, as `fg;bg`) gives the background;
-else `auto`. Every role also carries a word or a mark (`error:`, `^`), so
-colour is never the only cue.
+else `auto`, which is `wide` where the terminal draws 256 colours: by
+`COLORTERM` (`truecolor`, `24bit`), a `TERM` that ends in `256color` or
+names such a terminal (kitty, Alacritty, foot, WezTerm, Ghostty),
+`WT_SESSION` (Windows Terminal), `TERM_PROGRAM` (VS Code, iTerm2,
+Terminal.app, WezTerm, Ghostty), and on Windows, whose console draws them
+wherever it takes VT. `RUNE_COLORS=auto` keeps the 16 colours. Every role
+also carries a word or a mark (`error:`, `^`), so colour is never the only
+cue.
 
 `auto` has so few colours because the others fail somewhere:
 `tests/color/contrast.py` draws each role on the default palettes of
-xterm, VTE, Windows Terminal and the legacy console, on the backgrounds
-its theme is for, also as seen with protanopia, deuteranopia and
-tritanopia, and requires WCAG's 3:1 (2.5:1 with a deficiency). On white,
-xterm's green and cyan reach 2.0 to 2.3; on black, the legacy console's
-red 1.9 and blue 1.3. Only bright red and magenta pass on both.
+xterm, VTE, Windows Terminal, the legacy console and VS Code, on the
+backgrounds its theme is for, also as seen with protanopia, deuteranopia
+and tritanopia, and requires WCAG's 3:1 (2.5:1 with a deficiency). On
+white, xterm's green and cyan reach 2.0 to 2.3; on black, the legacy
+console's red 1.9 and blue 1.3. Only bright red and magenta pass on both.
+The colours from 16 up are the same in every terminal, and `wide`'s are
+mid tones whose contrast is at least 3.1:1 on black, on VS Code's dark grey
+and on white (2.7:1 with a deficiency). Its keywords are coloured as well
+as bold: a terminal may draw bold text in its default colour no
+differently, as Windows Terminal did for the REPL under WSL (2026-10-10),
+where the console of Windows, for `runevm.exe`, made it bright.
 
 `RUNE_COLORS` follows `GCC_COLORS`: fields separated by colons, each a
 theme's name or `ROLE=STYLE`, where a style is SGR parameters separated by

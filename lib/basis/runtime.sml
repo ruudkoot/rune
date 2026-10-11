@@ -36,6 +36,10 @@ struct
     val debugLive' = _prim "rt_debug_live" : int * int -> int
     val debugExn' = _prim "rt_debug_exn" : unit -> exn
     val debugProgram' = _prim "rt_debug_program" : unit -> int
+    val randomBytes' = _prim "rt_random_bytes" : int -> string
+    val eventNew' = _prim "win_event_new" : unit -> int
+    val eventSet' = _prim "win_event_set" : int -> bool
+    val spawn' = _prim "posix_spawn" : string * string list * string list * int * int list -> int
   in
     type stats = { instructions : int, bytes : int, objects : int,
                    collections : int, live : int, heapSize : int,
@@ -187,6 +191,30 @@ struct
     fun debugLive (k, r) = debugLive' (k, r)
     fun debugExn () = debugExn' ()
     fun debugProgram () = debugProgram' ()
+
+    (* `randomBytes n` is n bytes of the system's randomness, "" where it
+       has none: a secret, such as the token of the REPL's engine
+       (docs/repl-protocol.md). *)
+    fun randomBytes n = randomBytes' n
+
+    (* Windows has no signal to interrupt another process by. `interruptEvent ()`
+       is an event a child started after inherits, by the number this
+       gives, ~1 elsewhere: a child that catches the interrupt and is given
+       the number in RUNE_INTERRUPT_EVENT takes `setInterrupt n` -- the
+       event set -- as the user's interrupt (docs/runtime.md, Interrupts). *)
+    fun interruptEvent () = eventNew' ()
+    fun setInterrupt n = eventSet' n
+
+    (* `spawn (path, args, env, fds)` starts the program at path with the
+       arguments (its name first), the environment where one is given, and
+       the descriptors of its standard input, output and error by number
+       (`Posix.FileSys.fdToWord`; ~1: this process's own) -- as fork, dup2
+       and exec would, but on Windows too, which has no fork to give a
+       child pipes; its process's number.
+       Raises: `OS.SysErr` when it cannot be started. *)
+    fun spawn (path : string, args : string list, env : string list option, fds : int list) : int =
+      let val pid = spawn' (path, args, getOpt (env, []), if isSome env then 2 else 0, fds)
+      in if pid < 0 then raise RuneError.lastError () else pid end
   end
 end
 

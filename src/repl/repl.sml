@@ -210,7 +210,9 @@ struct
                        andalso (!RuneCompiler.feedback = "normal" orelse !RuneCompiler.feedback = "verbose")
                     then (case !uncaughtHook of
                             SOME _ => !declaredHook declared
-                          | NONE => (ReplFront.freshLine (); List.app (fn s => print (s ^ "\n")) declared))
+                          | NONE => (ReplFront.freshLine ();
+                                     List.app (fn s => print (ReplHighlight.paint (!ReplSession.env, s, ReplHighlight.code) ^ "\n"))
+                                              declared))
                     else ();
                     true)
                    handle e => if stopping then raise e else (uncaught e; whereRaised e; false))

@@ -28,6 +28,16 @@ Emacs or with `--basic`, it is in its basic mode, a prompt and a line at a
 time, as above, and what it writes is the same byte for byte as it always
 was.
 
+This file is the REPL's manual: [The command line](#the-command-line), [On
+a terminal](#on-a-terminal) (editing, Vi's keys, completion, the history
+and its menu, what the terminal is asked), [Commands](#commands),
+[Settings](#settings), [Configuration](#configuration), [Reload](#reload),
+[What a declaration does](#what-a-declaration-does), [`use`](#use),
+[Interrupts](#interrupts), [The debugger](#the-debugger),
+[Printing](#printing), [Other fronts](#other-fronts), and how it is built
+and tested. [plans/repl.md](plans/repl.md) is the roadmap it was built by,
+with the reasons for what it does.
+
 ## The command line
 
 ```
@@ -78,15 +88,33 @@ lib/terminal ([plans/repl.md](plans/repl.md), M5 and M6):
   does. A string that a line ends inside is reported at Enter. A paste is
   one entry. Ctrl-C drops the entry, and Ctrl-D on an empty one ends the
   session.
+* **Vi's keys.** With `:set keys vi` (or `Repl.set ("keys", "vi")` in the
+  init file) the editor has Vi's modes: what is typed is inserted until
+  Escape, which goes to the normal mode, where `h l w b e 0 ^ $` move, `d
+  c y` take a motion or are doubled for the line, `x X D C s S r ~ p P u`
+  edit, a count goes before either, `j` and `k` go through the lines and
+  the history, `G` and `gg` to the end and the start, and `i a I A o O`
+  go back to inserting; Enter submits in either mode. The cursor is a
+  block in the normal mode and a bar while inserting.
 * **Colours.** What is typed is coloured as it is typed by the compiler's
   own lexer, in a mode that never fails (`Lexer.scan`;
-  `src/repl/highlight.sml`): keywords, strings, comments, numbers, type
-  variables, what the lexer does not take, and names by what they are in
-  the session -- a constructor, a type, a structure. The prompt, the names
-  and types of the echo, `uncaught exception` and `Interrupt` have the
-  roles of the palette (`src/util/color.sml`; `RUNE_COLORS` restyles them).
-  A diagnostic shows the line it is about, with `^` under the place
-  ([diagnostics.md](diagnostics.md)).
+  `src/repl/highlight.sml`): keywords, strings, characters, comments,
+  numbers, type variables, what the lexer does not take, and names by where
+  they stand -- in a type, among a datatype's constructors, after
+  `exception` or `structure` -- and elsewhere by what they are in the
+  session: a constructor, a type, a structure. What the REPL says in SML is
+  coloured by the same rules: the echo of a value (`val`, `fn`, the value's
+  numbers, strings and constructors, its type) and of a declaration, and
+  what `:type`, `:info`, `:browse`, `:search` and `:doc` say, and the line
+  the debugger stopped at; a command's name is coloured as a keyword. On a
+  terminal of 256 colours code is coloured in full -- keywords blue and
+  bold, strings purple, numbers green, constructors orange, types teal,
+  comments grey -- in colours that read on dark and light backgrounds alike
+  (the theme `wide`); elsewhere in the 16 colours' few, which do too
+  ([diagnostics.md](diagnostics.md), *Themes*). The prompt, the names of
+  the echo, `uncaught exception` and `Interrupt` have the roles of the
+  palette (`src/util/color.sml`; `RUNE_COLORS` restyles them). A diagnostic
+  shows the line it is about, with `^` under the place.
 * **Completion.** Tab completes what the cursor is in: after a `:` at the
   start, a command; in a string after `use`, a file; after a structure's
   name and a dot, its members; elsewhere the session's values,
@@ -94,11 +122,28 @@ lib/terminal ([plans/repl.md](plans/repl.md), M5 and M6):
   `*`. One Tab completes as far as every candidate agrees, a second shows
   them under the entry; they come by how often the session has used them,
   then in order, and the library's own (`Rune...`) only when what is
-  typed begins so (`src/repl/complete.sml`).
+  typed begins so (`src/repl/complete.sml`). What one Tab would add is
+  shown faintly after the end of the entry as it is typed -- `fol` after
+  `List.` shows `d`, where `foldl` and `foldr` agree -- and Tab, Right or
+  Ctrl-E takes it; not in a comment. Finding it costs a search down the
+  session's maps, so that typing is no slower in a session of thousands of
+  names.
 * **History.** Up and Down go through the entries of this session and of
   every other, kept in `$XDG_STATE_HOME/rune/history`
-  (`%LOCALAPPDATA%\rune\history`, `~/.local/state/rune/history`), and
-  Ctrl-R searches them; an entry of several lines comes back whole.
+  (`%LOCALAPPDATA%\rune\history`, `~/.local/state/rune/history`), and with
+  text typed only those that begin with it. Ctrl-R searches them for what
+  is typed after it, Ctrl-R again for an older one; beneath it a menu
+  lists the eight entries that have the typed characters in order, the
+  best first -- one after another, or at a word's start, counts more --
+  which Down and Up choose from and Enter runs. An entry of several lines
+  comes back whole.
+* **What the terminal is asked.** At the first prompt the editor asks,
+  invisibly, how wide the terminal draws a cluster of joined emoji, which
+  says how it measures text (by cluster or by code point, D9), and
+  whether it speaks the kitty keyboard protocol; where it does, the
+  protocol is on while an entry is read, so that Escape needs no wait
+  and Ctrl-I is not Tab. A terminal that answers neither is measured by
+  `TERM_PROGRAM`, as before.
 * **While a declaration runs** the terminal is quiet (`Terminal.quiet`):
   keys typed ahead are neither echoed into what it writes nor lost, and
   are the editor's at the next prompt; Ctrl-C is the interrupt. A program
@@ -150,13 +195,59 @@ and any unique prefix of a command's name names it (`:t` for `:type`).
 
 `:doc` reads what runedoc wrote of the Basis for programs to read
 (`docs/generated/basis/members.json`), once, before the REPL's image is
-saved. `:bt` reads the frames the VM recorded as the exception left the
-code the REPL ran (`RuneRuntime.raiseMark`, `raiseTrace`;
-[runtime.md](runtime.md), *Stacks, calls and exceptions*); on a terminal, an uncaught
-exception says where it was raised. The structure `Repl` of the session
-has the same as functions -- `Repl.command ":set depth 5"`, `Repl.typeOf`,
-`Repl.info`, `Repl.doc`, `Repl.search`, `Repl.set`, `Repl.settings` -- for
-init files, scripts and HOL4; outside the REPL each raises `Fail`.
+saved. `:bt` reads the frames the VM recorded as the exception left the code
+the REPL ran (`RuneRuntime.raiseMark`, `raiseTrace`;
+[runtime.md](runtime.md), *Stacks, calls and exceptions*); on a terminal, an
+uncaught exception says where it was raised. The structure `Repl` of the
+session has the same as functions -- `Repl.command ":set depth 5"`,
+`Repl.typeOf`, `Repl.info`, `Repl.doc`, `Repl.search`, `Repl.set`,
+`Repl.settings` -- for init files, scripts and HOL4; outside the REPL each
+raises `Fail`.
+
+## Settings
+
+`:set NAME VALUE` changes one, `:show` lists them, `Repl.set (NAME,
+VALUE)` from the init file:
+
+| Setting | Values | Says |
+|---|---|---|
+| `depth` | a number, 20 | levels of a value printed (`Compiler.printDepth`) |
+| `length` | a number, 100 | items of a list, an array or a vector printed (`Compiler.printLength`) |
+| `string` | a number, 1000 | characters of a string printed (`Compiler.stringLength`) |
+| `width` | a number, 80 | columns a value is laid out in where there is no terminal (`Compiler.lineLength`) |
+| `feedback` | `normal`, `concise`, `verbose`, `silent` | what is said of a declaration (*Printing*) |
+| `prompt`, `prompt2` | text | the prompts (`Compiler.prompt1`, `prompt2`) |
+| `time` | `on`, `off` | the time and memory of each entry (`:time`) |
+| `watch` | `on`, `off` | a file used is used again at the prompt where it has changed (*Reload*) |
+| `keys` | `emacs`, `vi` | the editor's keys (*On a terminal*) |
+| `debug` | `on`, `off` | what is entered and used is compiled for the debugger (`:break` puts it on) |
+| `pause` | `on`, `off` | Ctrl-C pauses the program in the debugger rather than interrupting it |
+
+## Configuration
+
+**The init file**, `$XDG_CONFIG_HOME/rune/init.sml`
+(`%APPDATA%\rune\init.sml`, `~/.config/rune/init.sml`), is SML that the
+REPL `use`s at start, before the files of the command line; `--no-init`
+skips it. For example:
+
+```
+val () = Repl.set ("keys", "vi");
+val () = Compiler.printLength := 30;
+val () = Compiler.addPrettyPrinter (fn _ => fn _ => fn (s : Word8Vector.vector) =>
+           Compiler.PrettyString ("<" ^ Int.toString (Word8Vector.length s) ^ " bytes>"));
+```
+
+**The environment** the REPL reads:
+
+| Variable | Says |
+|---|---|
+| `NO_COLOR`, `FORCE_COLOR`, `CLICOLOR_FORCE` | whether to colour, where `--color` does not say ([diagnostics.md](diagnostics.md)) |
+| `RUNE_COLORS` | the palette's roles restyled (`src/util/color.sml`) |
+| `TERM`, `INSIDE_EMACS`, `RUNE_BASIC_REPL` | the basic mode (*On a terminal*) |
+| `TERM_PROGRAM` | how the terminal measures text, until it is asked, and whether it takes marks |
+| `XDG_CONFIG_HOME`, `XDG_STATE_HOME`, `APPDATA`, `LOCALAPPDATA` | where the init file and the history are |
+| `RUNE_CACHE` | where a file's compiled units are cached (empty: nowhere; [units.md](units.md)) |
+| `VISUAL`, `EDITOR` | `:edit`'s editor |
 
 ## Reload
 
@@ -391,6 +482,25 @@ session and for a unit taken from the cache. Where the type is a type
 variable or one the same top-level declaration declares, nothing is
 installed; a program compiled by `rune` installs nothing either.
 
+## Other fronts
+
+The session is the engine's, which a front in another process drives
+through a protocol of its own ([repl-protocol.md](repl-protocol.md);
+`rune-repl --engine`): an evaluation's answer is data, its values with
+handles to open them a level at a time, its diagnostics, its exception
+and frames, and the debugger is requests and a notification. Two fronts
+come with it:
+
+* **Jupyter**, `rune-kernel` ([kernel.md](kernel.md)): cells are entries,
+  values come back as text and as HTML in the palette's colours, `Display`
+  shows rich output, and JupyterLab's debugger stops in cells.
+* **An editor's debugger**, `rune-repl --dap` ([dap.md](dap.md)): the
+  Debug Adapter Protocol for VS Code, Emacs's dape, Neovim's nvim-dap.
+
+Each starts the engine as its child: on its descriptors 3 and 4 where the
+system forks, and on Windows over a connection of the loopback with a
+token (`--engine-connect`, `src/front/engine.sml`).
+
 ## How it is built
 
 The REPL is one program with what it compiles, and they share one Basis
@@ -424,8 +534,9 @@ the REPL's own `use`, put into `RuneCompiler.useHook` when it starts.
   (`--make-image`): `bin/rune-repl` restores it, `runevm --restore
   bin/rune-repl.img -- FILE...`, the files after `--` its arguments, so that
   it starts at once ([bytecode.md](bytecode.md), `--restore`); without it,
-  loading the units and the bases takes a third of a second. The image holds the Basis's environment and the units
-  loaded, and none of the code the JIT made, which it makes again.
+  loading the units and the bases takes a third of a second. The image
+  holds the Basis's environment and the units loaded, and none of the code
+  the JIT made, which it makes again.
 * `make install` installs it too: the image in `lib/rune`, and
   `rune-repl` beside `rune` (`scripts/install.sh`).
 * A declaration is a unit of its own: elaborated against the session,
@@ -442,21 +553,21 @@ about a millisecond a declaration (incremental roadmap, M4).
 
 `tests/repl/run.sh` (`make test-repl`) types each `tests/repl/NAME.in` to
 the REPL -- with the arguments of `NAME.args` where there is one, else
-`--no-init` -- and wants `NAME.expected`, both of its streams, on every mode of
-the JIT: `-e` and the init file; the values of every kind of type; Chapter 8's cases; datatypes in
-and out of scope, at their instances, abstract, and a printing depth;
-`use` of a library of files, of one that does not compile and of one that
-raises; Ctrl-C, which `tests/repl/drive.py` sends the REPL as `SIGINT`
-where `interrupt.in` says, while a declaration loops, one with a handler of
-its own and one without; and a session saved with `Runtime.save`
-(`session.in`) and restored, `session.then` typed to the world restored,
-which has the bindings made before the save and reads its own input, not
-what the session that saved it had read ahead; and the debugger
-(`debug.in`): a breakpoint in a file used after it was set, the frames, the
-variables of each and an expression among them, steps into, over and out
-of a function the library calls, a variable of an enclosing function, one
-a later binding hides, and a stop at a raise ended with `:abort` -- the
-same frames and values on every mode of the JIT.
+`--no-init` -- and wants `NAME.expected`, both of its streams, on every mode
+of the JIT: `-e` and the init file; the values of every kind of type;
+Chapter 8's cases; datatypes in and out of scope, at their instances,
+abstract, and a printing depth; `use` of a library of files, of one that
+does not compile and of one that raises; Ctrl-C, which `tests/repl/drive.py`
+sends the REPL as `SIGINT` where `interrupt.in` says, while a declaration
+loops, one with a handler of its own and one without; and a session saved
+with `Runtime.save` (`session.in`) and restored, `session.then` typed to the
+world restored, which has the bindings made before the save and reads its
+own input, not what the session that saved it had read ahead; and the
+debugger (`debug.in`): a breakpoint in a file used after it was set, the
+frames, the variables of each and an expression among them, steps into, over
+and out of a function the library calls, a variable of an enclosing
+function, one a later binding hides, and a stop at a raise ended with
+`:abort` -- the same frames and values on every mode of the JIT.
 
 `tests/terminal` (`make test-terminal`, and on Windows through WSL interop
 in `make test-windows`) drives the REPL in a tmux pane and waits for the
@@ -464,8 +575,14 @@ screen: the prompt and the banner, colours as typed, completion, the
 history, an entry of several lines, errors with their lines, an open
 string, keys typed ahead while code runs, a program that reads a line,
 Ctrl-C, the debugger's stop and its prompt and Ctrl-C pausing a loop
-(`repl-debug`), the basic mode under Emacs, and the marks of OSC 133 byte for byte
-on a pty; on Windows, `rune-repl.cmd` from `cmd.exe` too.
+(`repl-debug`), Vi's modes and the history's menu (`repl-vi`), the basic
+mode under Emacs, and the marks of OSC 133 byte for byte on a pty; on
+Windows, the scripts whose first line is `# windows`, and `rune-repl.cmd`
+from `cmd.exe`. lib/terminal's own tests (`tests/lib/terminal`) give the
+editor keys and look at its state: Vi's commands and counts, the menu and
+its order, and the answers to what the terminal is asked, the kitty
+protocol's keys among them. `tests/terminal/MANUAL.md` is the list checked
+by hand.
 
 ## Not yet
 

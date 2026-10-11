@@ -310,7 +310,9 @@ struct
                   write (c, R.Response {id = SOME id, outcome = result});
                   notify (c, "status", Json.Object [("state", str "idle")])
                 end
-                handle Shutdown => (write (c, R.Response {id = SOME id, outcome = R.Result Json.Null}); raise Shutdown))
+                handle Shutdown =>
+                  ((write (c, R.Response {id = SOME id, outcome = R.Result Json.Null}) handle OS.SysErr _ => ());
+                   raise Shutdown))
             | R.Message _ => ())     (* notifications ($/cancelRequest) and stray responses: nothing to do idle *)
           (R.decode text)
       (* the wait is masked, so that no message read is lost to an
@@ -341,8 +343,11 @@ struct
                                     SOME e => [("exception", Json.Object [("name", str (General.exnName e)),
                                                                            ("message", str (General.exnMessage e))])]
                                   | NONE => [])));
+          (* the front gone -- shut down, or its channel failed -- the
+             engine ends, rather than the program going on unasked *)
           ReplLoop.masked until
           handle Shutdown => OS.Process.exit OS.Process.success
+               | OS.SysErr _ => OS.Process.exit OS.Process.failure
         end
     in
       ReplLoop.numbered := true;

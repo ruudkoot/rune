@@ -270,7 +270,7 @@
    ]
   },
   "LINE_EDIT": {
-   "doc": "A line editor: what is typed at a prompt, edited with Emacs's keys,\ndrawn on a terminal, of one line or many.\n\nThe editor is a pure core under a thin loop (docs/plans/repl.md, D7).\n`step` takes a state and a key to the next state and what it asks of\nthe loop; `layout` turns a state into a frame, the rows of cells the\nterminal should show and where the cursor is, wrapping by display\nwidth itself; `diff` turns the frame the terminal shows and the next\ninto the bytes that change one into the other, with relative moves and\nonly the rows that changed. `readLine` is the loop: it reads keys,\nsteps and draws, and falls back to a basic mode -- a prompt and\n`TextIO.inputLine` \\-- where the terminal cannot be edited on.\n\nThe keys are readline's: Ctrl-A, Ctrl-E, Ctrl-B, Ctrl-F, Alt-B, Alt-F\nand the arrows to move; Ctrl-D, Delete, Backspace, Ctrl-K, Ctrl-U,\nCtrl-W, Alt-D and Alt-Backspace to delete, killing into a ring that\nCtrl-Y and Alt-Y yank from; Ctrl-T, Alt-U, Alt-L and Alt-C; Ctrl-\\_ to\nundo; Up and Down through the lines and then the history, searching\nit by what was typed; Ctrl-R to search it incrementally; Tab to\ncomplete; Enter to accept a complete input or begin a new line, and\nAlt-Enter for a new line always; Ctrl-L to clear the screen; Ctrl-C to\ncancel; Ctrl-Z to suspend. `bindings` changes them.\n\n",
+   "doc": "A line editor: what is typed at a prompt, edited with Emacs's keys,\ndrawn on a terminal, of one line or many.\n\nThe editor is a pure core under a thin loop (docs/plans/repl.md, D7).\n`step` takes a state and a key to the next state and what it asks of\nthe loop; `layout` turns a state into a frame, the rows of cells the\nterminal should show and where the cursor is, wrapping by display\nwidth itself; `diff` turns the frame the terminal shows and the next\ninto the bytes that change one into the other, with relative moves and\nonly the rows that changed. `readLine` is the loop: it reads keys,\nsteps and draws, and falls back to a basic mode -- a prompt and\n`TextIO.inputLine` \\-- where the terminal cannot be edited on.\n\nThe keys are readline's: Ctrl-A, Ctrl-E, Ctrl-B, Ctrl-F, Alt-B, Alt-F\nand the arrows to move; Ctrl-D, Delete, Backspace, Ctrl-K, Ctrl-U,\nCtrl-W, Alt-D and Alt-Backspace to delete, killing into a ring that\nCtrl-Y and Alt-Y yank from; Ctrl-T, Alt-U, Alt-L and Alt-C; Ctrl-\\_ to\nundo; Up and Down through the lines and then the history, searching\nit by what was typed; Ctrl-R to search it incrementally; Tab to\ncomplete; Enter to accept a complete input or begin a new line, and\nAlt-Enter for a new line always; Ctrl-L to clear the screen; Ctrl-C to\ncancel; Ctrl-Z to suspend. `bindings` changes them.\n\nWith `keys = Vi` the editor has Vi's modes: what is typed is inserted,\nas with Emacs's keys, until Escape, which goes to the normal mode,\nwhere letters are commands -- counts, the motions h l w b e 0 ^ \\$, the\noperators d c y with a motion or doubled, x X D C s S r \\~ p P u, j and\nk through the lines and the history, G and gg, and i a I A o O back to\ninserting. The cursor is a block in the normal mode and a bar while\ninserting.\n\n",
    "page": "sig/LINE_EDIT.md",
    "members": [
     {
@@ -288,10 +288,17 @@
      "page": "sig/LINE_EDIT.md#val-emacs"
     },
     {
+     "kind": "datatype",
+     "name": "keys",
+     "spec": "datatype keys = Emacs | Vi",
+     "doc": "Whether letters are typed always (Emacs's keys), or are Vi's commands\nin its normal mode.\n\n",
+     "page": "sig/LINE_EDIT.md#type-keys"
+    },
+    {
      "kind": "type",
      "name": "config",
-     "spec": "type config = {\n  prompt : string, continuation : string,\n  isComplete : string -> bool,\n  complete : string * int -> {start : int, candidates : string list},\n  hint : string -> string option,\n  highlight : string -> (int * int * Style.style) list,\n  styles : {prompt : Style.style, hint : Style.style, menu : Style.style, search : Style.style,\n            control : Style.style, mark : Style.style},\n  bindings : (Key.event * command) list,\n  escapeTimeout : Time.time,\n  policy : Grapheme.policy,\n  basic : bool}",
-     "doc": "What the editor is given: the prompts, what it asks of the program,\nits styles and keys.\n\n`prompt` begins the first line and `continuation` the others. `isComplete text` says whether Enter\naccepts `text` or begins a new line. `complete (text, i)` is where\nthe word before byte `i` begins and what it can be completed to.\n`hint text` is text shown faintly after the end, which Right or\nCtrl-E there accepts. `highlight text` is styles for byte ranges of\nthe text, `(start, stop, style)`. `styles` are those of the parts the\neditor draws itself. `escapeTimeout` is how long Escape waits for\nthe rest of a sequence; `policy` how the terminal measures clusters;\n`basic` asks for the basic mode.\n\n",
+     "spec": "type config = {\n  prompt : string, continuation : string,\n  isComplete : string -> bool,\n  complete : string * int -> {start : int, candidates : string list},\n  hint : string -> string option,\n  highlight : string -> (int * int * Style.style) list,\n  styles : {prompt : Style.style, hint : Style.style, menu : Style.style, search : Style.style,\n            control : Style.style, mark : Style.style},\n  bindings : (Key.event * command) list,\n  escapeTimeout : Time.time,\n  policy : Grapheme.policy,\n  basic : bool,\n  keys : keys}",
+     "doc": "What the editor is given: the prompts, what it asks of the program,\nits styles and keys.\n\n`prompt` begins the first line and `continuation` the others. `isComplete text` says whether Enter\naccepts `text` or begins a new line. `complete (text, i)` is where\nthe word before byte `i` begins and what it can be completed to.\n`hint text` is text shown faintly after the end, which Right or\nCtrl-E there accepts. `highlight text` is styles for byte ranges of\nthe text, `(start, stop, style)`. `styles` are those of the parts the\neditor draws itself. `escapeTimeout` is how long Escape waits for\nthe rest of a sequence; `policy` how the terminal measures clusters;\n`basic` asks for the basic mode; `keys` whether Vi's modes are on\n(`bindings` are those of both modes but the normal mode's letters).\n\n",
      "page": "sig/LINE_EDIT.md#type-config"
     },
     {
@@ -305,8 +312,15 @@
      "kind": "type",
      "name": "state",
      "spec": "type state",
-     "doc": "What the editor holds: the text, the cursor, the kill ring, what can\nbe undone, the history and where in it the text came from.\n\n",
+     "doc": "What the editor holds: the text, the cursor, the kill ring, what can\nbe undone, the history and where in it the text came from, and Vi's\nmode.\n\n",
      "page": "sig/LINE_EDIT.md#type-state"
+    },
+    {
+     "kind": "val",
+     "name": "normal",
+     "spec": "val normal : state -> bool",
+     "doc": "`normal s` is whether `s` is in Vi's normal mode.\n\n",
+     "page": "sig/LINE_EDIT.md#val-normal"
     },
     {
      "kind": "datatype",
@@ -391,6 +405,13 @@
      "spec": "val readLine : config * History.history option -> result",
      "doc": "`readLine (c, h)` reads an input at the terminal with the editor,\ngoing back through the history `h` and adding the input to it.\n\nIt puts the terminal back before it returns. It is the basic mode when\n`#basic c`, when the standard input or output is not a terminal,\nwhen `TERM` is `dumb`, `unknown`, `cons25` or `emacs`, when\n`INSIDE_EMACS` names comint, or when `RUNE_BASIC_REPL` is set.\n\n",
      "page": "sig/LINE_EDIT.md#val-readline"
+    },
+    {
+     "kind": "val",
+     "name": "terminal",
+     "spec": "val terminal : unit -> {policy : Grapheme.policy option, kitty : bool}",
+     "doc": "`terminal ()` is what the terminal said of itself at the first\n`readLine`, once its answers have come.\n\nHow it measures a cluster, which `readLine` then uses in place of the\nconfig's `policy`, and whether it speaks the kitty keyboard protocol,\nwhich `readLine` turns on while it reads (keys told apart: Escape at\nonce, Ctrl-I apart from Tab). `NONE` and false where it has not\nanswered.\n\n",
+     "page": "sig/LINE_EDIT.md#val-terminal"
     }
    ]
   },

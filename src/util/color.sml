@@ -4,14 +4,19 @@
    colour at all, and a style written as SGR escapes for a terminal, as CSS
    for a page, or as the rules of an editor's theme. A style is SGR
    parameters: 1 bold, 2 dim, 3 italic, 4 underline, 7 reverse, 9 struck
-   through, 31 to 36 the colours, 91 to 96 their bright forms. The default
-   theme keeps to bright red and magenta with weights, the only colours of
-   the 16 that read on dark and light backgrounds alike in the palettes
-   tests/color measures; the themes dark and light have more. Every role
-   also carries a word or a mark, so that colour is never the only cue. *)
+   through, 31 to 36 the colours, 91 to 96 their bright forms, 38;5;N
+   colour N of the 256. The default theme keeps to bright red and magenta
+   with weights, the only colours of the 16 that read on dark and light
+   backgrounds alike in the palettes tests/color measures; the themes dark
+   and light have more. On a terminal of 256 colours the default theme is
+   Wide: the colours from 16 up are the same everywhere, and those of
+   `wide` read on every background measured, dark and light, so that code
+   is coloured in full -- keywords, literals, types -- whatever the
+   background. Every role also carries a word or a mark, so that colour
+   is never the only cue. *)
 structure Color =
 struct
-  datatype theme = Auto | Dark | Light | Mono | NoTheme
+  datatype theme = Auto | Wide | Dark | Light | Mono | NoTheme
   datatype choice = Always | Never | WhenTerminal
 
   (* role, its style in the themes auto, dark and light *)
@@ -75,11 +80,31 @@ struct
 
   val roles = map #1 table
 
+  (* role, its style in the theme auto on a terminal of 256 colours (Wide),
+     where it is not auto's: colours of the 256 whose contrast is at least
+     3:1 on every background tests/color measures, black and white among
+     them, and 2.5:1 seen with each deficiency -- a keyword blue and bold,
+     a string purple, a number green, a constructor orange, a type teal, a
+     structure grey-teal, a comment grey -- and the prompt green *)
+  val wide : (string * string) list = [
+    ("repl.prompt", "1;38;5;28"),
+    ("repl.prompt2", "38;5;28"),
+    ("repl.type", "38;5;30"),
+    ("syn.keyword", "1;38;5;32"),
+    ("syn.constructor", "38;5;166"),
+    ("syn.number", "38;5;64"),
+    ("syn.type", "38;5;30"),
+    ("syn.tyvar", "3;38;5;30"),
+    ("syn.module", "38;5;66"),
+    ("syn.string", "38;5;133"),
+    ("syn.comment", "38;5;244")]
+
   fun isDigits s = s <> "" andalso CharVector.all (fn c => Char.isDigit c orelse c = #";") s
 
   fun env name = case OS.Process.getEnv name of SOME v => v | NONE => ""
 
   fun themeNamed "auto" = SOME Auto
+    | themeNamed "wide" = SOME Wide
     | themeNamed "dark" = SOME Dark
     | themeNamed "light" = SOME Light
     | themeNamed "mono" = SOME Mono
@@ -131,9 +156,12 @@ struct
 
   (* a role's style in a theme as the table has it, whatever RUNE_COLORS says *)
   fun baseStyle (theme, role) =
-    case List.find (fn (r, _, _, _) => r = role) table of
-      SOME (_, a, d, l) => (case theme of Dark => d | Light => l | _ => a)
-    | NONE => ""
+    case (theme, List.find (fn (r, _) => r = role) wide) of
+      (Wide, SOME (_, w)) => w
+    | _ =>
+        case List.find (fn (r, _, _, _) => r = role) table of
+          SOME (_, a, d, l) => (case theme of Dark => d | Light => l | _ => a)
+        | NONE => ""
 
   fun style (theme, role) =
     let
@@ -159,6 +187,27 @@ struct
     List.exists (fn (k, v) => k = "sysname" andalso v = "Windows") (Posix.ProcEnv.uname ())
     handle _ => false
 
+  (* whether the terminal draws the 256 colours: by COLORTERM, TERM, the
+     variables a terminal sets (Windows Terminal's, VS Code's and the like),
+     and on Windows, whose console draws them wherever it takes VT *)
+  fun colours256 () =
+    let
+      val term = env "TERM"
+      val program = env "TERM_PROGRAM"
+    in
+      env "COLORTERM" = "truecolor" orelse env "COLORTERM" = "24bit"
+      orelse String.isSuffix "256color" term orelse String.isSuffix "-direct" term
+      orelse List.exists (fn t => t = term) ["xterm-kitty", "xterm-ghostty", "alacritty", "foot", "wezterm", "contour"]
+      orelse env "WT_SESSION" <> ""
+      orelse List.exists (fn p => p = program) ["vscode", "iTerm.app", "Apple_Terminal", "WezTerm", "ghostty"]
+      orelse onWindows ()
+    end
+
+  (* the theme auto as the terminal can draw it, where RUNE_COLORS names
+     no theme: RUNE_COLORS=auto is the 16 colours' everywhere *)
+  fun widened Auto = if List.null (#1 (overrides ())) andalso colours256 () then Wide else Auto
+    | widened t = t
+
   (* the theme a stream gets, or NONE for no styles at all (D3) *)
   fun decide (choice, fd) =
     let
@@ -169,14 +218,14 @@ struct
     in
       case choice of
         Never => NONE
-      | Always => SOME (chosenTheme ())
+      | Always => SOME (widened (chosenTheme ()))
       | WhenTerminal =>
           if env "NO_COLOR" <> "" then (if tty andalso not dumb then SOME Mono else NONE)
-          else if truthy (env "FORCE_COLOR") orelse truthy (env "CLICOLOR_FORCE") then SOME (chosenTheme ())
+          else if truthy (env "FORCE_COLOR") orelse truthy (env "CLICOLOR_FORCE") then SOME (widened (chosenTheme ()))
           else if env "CLICOLOR" = "0" then NONE
           else if dumb then NONE
           else if not tty then NONE
-          else SOME (chosenTheme ())
+          else SOME (widened (chosenTheme ()))
     end
 
   fun choiceNamed "always" = SOME Always

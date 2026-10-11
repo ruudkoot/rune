@@ -49,6 +49,10 @@ struct
             (fn () => if !ReplSession.debugging then "on" else "off",
              fn v => case v of "on" => ReplDebug.ensure () | "off" => ReplSession.debugging := false
                              | _ => raise Fail ("on or off, not " ^ v))),
+       row ("keys", "the editor's keys: emacs, or vi for Vi's modes",
+            (fn () => case !ReplFront.keys of LineEdit.Vi => "vi" | LineEdit.Emacs => "emacs",
+             fn v => case v of "vi" => ReplFront.keys := LineEdit.Vi | "emacs" => ReplFront.keys := LineEdit.Emacs
+                             | _ => raise Fail ("emacs or vi, not " ^ v))),
        row ("pause", "Ctrl-C pauses the program in the debugger rather than interrupting it",
             (fn () => if !ReplDebug.pauses then "on" else "off",
              fn v => case v of "on" => ReplDebug.setPauses true | "off" => ReplDebug.setPauses false
@@ -73,11 +77,15 @@ struct
 
   fun typeOf (text : string) : string = ReplShow.typeIn (env ()) (ReplQuery.typeOf text)
 
+  (* where a name of the session was defined, as a comment after it *)
   fun place (kind : string, name : string) : string =
     case StringMap.find (!ReplSession.defined, kind ^ " " ^ name) of
-      SOME (file, 0) => "  " ^ paint "repl.ui" ("(* from " ^ file ^ " *)")
-    | SOME (file, line) => "  " ^ paint "repl.ui" ("(* defined at " ^ file ^ ":" ^ Int.toString line ^ " *)")
+      SOME (file, 0) => "  (* from " ^ file ^ " *)"
+    | SOME (file, line) => "  (* defined at " ^ file ^ ":" ^ Int.toString line ^ " *)"
     | NONE => ""
+
+  (* SML the REPL says, coloured as it is where it is typed *)
+  fun code (text : string, ctx : ReplHighlight.context) : string = ReplHighlight.paint (env (), text, ctx)
 
   (* the structure a long name is in, and its last part *)
   fun split (name : string) : string list * string =
@@ -288,11 +296,12 @@ struct
        {name = "quit", args = "", help = "end the session (as Ctrl-D on an empty entry)",
         run = fn _ => OS.Process.exit OS.Process.success},
        {name = "type", args = "exp", help = "the type of an expression, not evaluated",
-        run = fn a => say (a ^ " : " ^ paint "repl.type" (typeOf (mustHave ("expression", a))) ^ "\n")},
+        run = fn a => let val ty = typeOf (mustHave ("expression", a))
+                      in say (code (a, ReplHighlight.code) ^ " : " ^ code (ty, ReplHighlight.aType) ^ "\n") end},
        {name = "info", args = "name", help = "what a name is, and where it was defined",
-        run = fn a => say (info (mustHave ("name", a)))},
+        run = fn a => say (code (info (mustHave ("name", a)), ReplHighlight.code))},
        {name = "browse", args = "structure", help = "a structure's or a signature's specifications",
-        run = fn a => say (browse (mustHave ("structure", a)))},
+        run = fn a => say (code (browse (mustHave ("structure", a)), ReplHighlight.code))},
        {name = "doc", args = "name", help = "the documentation of a name of the Basis Library",
         run = fn a => say (ReplDoc.doc (env (), mustHave ("name", a)))},
        {name = "search", args = "text or type", help = "names that contain the text, or values whose type is like it",

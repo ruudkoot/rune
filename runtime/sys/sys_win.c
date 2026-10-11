@@ -2487,8 +2487,10 @@ static int64_t spawn(const char *path, char *const argv[], char *const envp[], i
         *o++ = 0;
         if (o == block + 1) *o = 0;
     }
-    /* the three handles, as inheritable copies, and only they inherited */
-    HANDLE std[3], list[4];
+    /* the three handles, as inheritable copies, and only they inherited --
+       with the interrupt's event the child's environment names (sys.h,
+       sys_event_new), which it is to watch */
+    HANDLE std[3], list[5];
     int nlist = 0;
     for (int i = 0; i < 3; i++) {
         HANDLE h = handle_of(fds[i] >= 0 ? fds[i] : i);
@@ -2498,6 +2500,14 @@ static int64_t spawn(const char *path, char *const argv[], char *const envp[], i
             list[nlist++] = std[i];
     }
     if (extra) list[nlist++] = extra;
+    if (envp)
+        for (char *const *e = envp; *e; e++)
+            if (strncmp(*e, "RUNE_INTERRUPT_EVENT=", 21) == 0) {
+                char *end;
+                unsigned long long h = strtoull(*e + 21, &end, 10);
+                if (!*end && h != 0) list[nlist++] = (HANDLE)(uintptr_t)h;
+                break;
+            }
     SIZE_T size = 0;
     InitializeProcThreadAttributeList(NULL, 1, 0, &size);
     LPPROC_THREAD_ATTRIBUTE_LIST attributes = malloc(size);
@@ -3199,9 +3209,68 @@ static BOOL WINAPI on_interrupt(DWORD event) {
     if ((event == CTRL_C_EVENT || event == CTRL_BREAK_EVENT) && interrupt_flag) { *interrupt_flag = 1; return TRUE; }
     return FALSE;
 }
+/* the events of RUNE_INTERRUPT_EVENT and JPY_INTERRUPT_EVENT (sys.h),
+   watched on a thread of their own from the first catch: each set is the
+   user's interrupt, as the console's handler's Ctrl-C is, and is reset */
+static HANDLE event_of(const char *name) {
+    const char *v = getenv(name);
+    if (!v || !*v) return NULL;
+    char *end;
+    unsigned long long h = strtoull(v, &end, 10);
+    return *end || h == 0 ? NULL : (HANDLE)(uintptr_t)h;
+}
+static DWORD WINAPI watch_events(LPVOID unused) {
+    (void)unused;
+    HANDLE hs[2];
+    DWORD n = 0;
+    HANDLE a = event_of("RUNE_INTERRUPT_EVENT"), b = event_of("JPY_INTERRUPT_EVENT");
+    DWORD flags;
+    /* only a handle of this process: a variable a parent passed on without
+       its handle would fail every wait, the other's too */
+    if (a && GetHandleInformation(a, &flags)) hs[n++] = a;
+    if (b && b != a && GetHandleInformation(b, &flags)) hs[n++] = b;
+    if (n == 0) return 0;
+    for (;;) {
+        DWORD r = WaitForMultipleObjects(n, hs, FALSE, INFINITE);
+        if (r >= WAIT_OBJECT_0 + n) return 0;   /* WAIT_OBJECT_0 is 0: a failure, or an abandoned wait */
+        ResetEvent(hs[r - WAIT_OBJECT_0]);
+        if (interrupt_flag) *interrupt_flag = 1;
+    }
+}
 int sys_interrupt_catch(volatile int *flag) {
+    static int watching;
     interrupt_flag = flag;
     if (!SetConsoleCtrlHandler(on_interrupt, flag != NULL)) { errno = EINVAL; return failed(); }
+    if (flag && !watching && (event_of("RUNE_INTERRUPT_EVENT") || event_of("JPY_INTERRUPT_EVENT"))) {
+        HANDLE t = CreateThread(NULL, 0, watch_events, NULL, 0, NULL);
+        if (t) { watching = 1; CloseHandle(t); }
+    }
+    return 0;
+}
+
+int64_t sys_event_new(void) {
+    SECURITY_ATTRIBUTES sa;
+    sa.nLength = sizeof sa;
+    sa.lpSecurityDescriptor = NULL;
+    sa.bInheritHandle = TRUE;   /* a child started after has it, by the same number */
+    HANDLE h = CreateEventA(&sa, TRUE, FALSE, NULL);
+    if (!h) { last = errno_of_win(GetLastError()); return -1; }
+    return (int64_t)(uintptr_t)h;
+}
+int sys_event_set(int64_t handle) {
+    if (!SetEvent((HANDLE)(uintptr_t)handle)) { last = errno_of_win(GetLastError()); return -1; }
+    return 0;
+}
+
+/* RtlGenRandom, advapi32's SystemFunction036 */
+BOOLEAN WINAPI SystemFunction036(PVOID buffer, ULONG length);
+int sys_random(void *out, size_t n) {
+    while (n > 0) {
+        ULONG k = n > 0x10000 ? 0x10000 : (ULONG)n;
+        if (!SystemFunction036(out, k)) { last = EIO; return -1; }
+        out = (char *)out + k;
+        n -= k;
+    }
     return 0;
 }
 

@@ -4,7 +4,7 @@ a kernel, with the standard library alone, on the ZMTP peer of tests/lib/zmtp
 and Jupyter's messaging specification (5.4). Every message must carry the
 right signature.
 
-  client.py CONNECTION-FILE KERNEL-PID"""
+  client.py CONNECTION-FILE (KERNEL-PID | event:HANDLE)"""
 import hashlib
 import hmac
 import json
@@ -18,7 +18,20 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "lib", "zmtp", 
 import peer  # noqa: E402
 
 conn = json.load(open(sys.argv[1]))
-kernel_pid = int(sys.argv[2])
+# the kernel to interrupt: its process, or on Windows the event it was given
+# as JPY_INTERRUPT_EVENT, which this client inherited (tests/kernel/windows.py)
+kernel = sys.argv[2]
+
+
+def interrupt():
+    """Jupyter's interrupt of a kernel whose interrupt_mode is signal"""
+    if kernel.startswith("event:"):
+        import ctypes
+        ctypes.windll.kernel32.SetEvent(ctypes.c_void_p(int(kernel[len("event:"):])))
+    else:
+        os.kill(int(kernel), signal.SIGINT)
+
+
 key = conn["key"].encode()
 session = uuid.uuid4().hex
 ok = True
@@ -231,12 +244,13 @@ check("the cell ends", reply["status"] == "ok" and results and results[0]["data"
       (reply, results))
 check("debug disconnect", debug("disconnect", {"restart": False})["success"])
 
-# an interrupt, as Jupyter gives it with interrupt_mode signal
+# an interrupt, as Jupyter gives it with interrupt_mode signal: SIGINT, or on
+# Windows the event
 mid = send(shell, "execute_request", {"code": "fun loop () : unit = loop (); loop ();", "silent": False,
                                       "store_history": True, "user_expressions": {}, "allow_stdin": False,
                                       "stop_on_error": True})
 time.sleep(1.5)
-os.kill(kernel_pid, signal.SIGINT)
+interrupt()
 header, parent, reply = receive(shell)
 said = iopub_until_idle(mid)
 check("an interrupt ends the execution", reply["status"] == "error" and reply["ename"] == "Interrupt", reply)

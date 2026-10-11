@@ -198,12 +198,14 @@ struct
   fun render (d : string Pretty.doc) : string = renderAs (fn r => r) d
 
   (* what the REPL says of a value a declaration bound: its type on the
-     line of the value's end where it fits *)
+     line of the value's end where it fits; `val` and the type coloured as
+     they are where they are typed (ReplHighlight) *)
   fun echoDoc (name : string, shown : RuneCompiler.pretty, ty : string) : string Pretty.doc =
-    Pretty.concat [Pretty.text "val ", Pretty.annotate ("repl.name", Pretty.text name), Pretty.text " = ",
+    Pretty.concat [Pretty.annotate ("syn.keyword", Pretty.text "val"), Pretty.text " ",
+                   Pretty.annotate ("repl.name", Pretty.text name), Pretty.text " = ",
                    toDoc shown,
                    Pretty.group (Pretty.nest 2 (Pretty.concat [Pretty.line, Pretty.text ": ",
-                                                               Pretty.annotate ("repl.type", Pretty.text ty)]))]
+                                                               ReplHighlight.doc (!ReplSession.env, ty, ReplHighlight.aType)]))]
 
   (* a document as HTML, laid out at the width: its text escaped, its roles
      spans of the palette's classes (Color.cssOf); and the roles it used *)
@@ -270,6 +272,9 @@ struct
     let val t = Substring.dropl Char.isSpace (Substring.full text)
     in Substring.size t >= 2 andalso Substring.sub (t, 0) = #":" andalso Char.isAlpha (Substring.sub (t, 1)) end
 
+  (* the editor's keys: Emacs's, or Vi's modes (:set keys) *)
+  val keys : LineEdit.keys ref = ref LineEdit.Emacs
+
   fun config (sessionEnv : Env.env, isWhole : string -> bool) : LineEdit.config =
     let val st = ReplHighlight.styleOf
     in
@@ -279,12 +284,13 @@ struct
        isComplete = fn t => CharVector.all Char.isSpace t orelse isCommand t
                             orelse (ReplScan.complete (ReplScan.ofText (t ^ "\n")) andalso isWhole t),
        complete = ReplComplete.complete sessionEnv,
-       hint = fn _ => NONE,
+       (* what Tab would add, shown faintly at the end (ReplComplete.hinter) *)
+       hint = ReplComplete.hinter sessionEnv,
        highlight = ReplHighlight.highlight sessionEnv,
        styles = {prompt = st "repl.prompt", hint = st "repl.hint", menu = st "repl.menu", search = st "repl.search",
                  control = st "syn.error", mark = st "repl.partial-line"},
        bindings = #bindings LineEdit.defaults, escapeTimeout = #escapeTimeout LineEdit.defaults,
-       policy = Device.policy (), basic = false}
+       policy = Device.policy (), basic = false, keys = !keys}
     end
 
   (* the next entry, read with the editor; isWhole says whether the parser
@@ -318,6 +324,6 @@ struct
         (marking := marksTaken ();
          history := SOME (History.load {file = History.defaultFile (), limit = 1000});
          wrapStdIn ();
-         if quiet then () else out (paint "repl.ui" ("Rune " ^ Config.version ^ ". Ctrl-D ends the session.") ^ "\n"))
+         if quiet then () else out (paint "repl.ui" ("Rune " ^ Config.version ^ ". Type :help for instructions.") ^ "\n"))
     end
 end

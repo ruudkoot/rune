@@ -59,7 +59,7 @@ struct
       val incomplete = {prompt = "- ", continuation = "= ", isComplete = fn t => String.isSuffix ";" t,
                         complete = #complete L.defaults, hint = #hint L.defaults, highlight = #highlight L.defaults,
                         styles = #styles L.defaults, bindings = #bindings L.defaults,
-                        escapeTimeout = #escapeTimeout L.defaults, policy = #policy L.defaults, basic = false}
+                        escapeTimeout = #escapeTimeout L.defaults, policy = #policy L.defaults, basic = false, keys = L.Emacs}
       fun outcome (c, es) = #2 (run (c, [], es))
     in
       check ("Enter accepts", outcome (L.defaults, typed "1" @ [key Key.Enter]) = L.Accept "1");
@@ -90,7 +90,20 @@ struct
       check ("Ctrl-G gives back", r (typed "q" @ [ctrl #"r"] @ typed "fun" @ [ctrl #"g"]) = "q");
       check ("a key ends the search", r ([ctrl #"r"] @ typed "fun" @ [ctrl #"e"] @ typed "!") = "fun f x = x;!");
       check ("Enter accepts the match", #2 (run (L.defaults, h, [ctrl #"r"] @ typed "a =" @ [key Key.Enter]))
-                                        = L.Accept "val a = 1;")
+                                        = L.Accept "val a = 1;");
+      (* the fuzzy menu: the characters in order, the best first *)
+      check ("Down takes the menu's best", r ([ctrl #"r"] @ typed "fx" @ [key Key.Down]) = "fun f x = x;");
+      check ("Down Down the next", r ([ctrl #"r"] @ typed "vl" @ [key Key.Down, key Key.Down]) = "val a = 1;");
+      check ("Up back to the first", r ([ctrl #"r"] @ typed "vl" @ [key Key.Down, key Key.Down, key Key.Up]) = "val b = 2;");
+      check ("Enter accepts the menu's", #2 (run (L.defaults, h, [ctrl #"r"] @ typed "fx" @ [key Key.Down, key Key.Enter]))
+                                         = L.Accept "fun f x = x;");
+      let
+        val (s, _) = run (L.defaults, h, [ctrl #"r"] @ typed "va")
+        val {rows, ...} = L.layout (L.defaults, s, 40)
+        fun rowText r = String.concat (List.map #text (Vector.sub (rows, r)))
+      in
+        check ("the menu drawn", Vector.length rows = 4 andalso rowText 2 = "  val b = 2;" andalso rowText 3 = "  val a = 1;")
+      end
     end
 
   fun completion () =
@@ -107,7 +120,7 @@ struct
       val c = {prompt = "> ", continuation = "  ", isComplete = fn _ => true, complete = complete,
                hint = fn t => if t = "pri" then SOME "nt" else NONE, highlight = #highlight L.defaults,
                styles = #styles L.defaults, bindings = #bindings L.defaults,
-               escapeTimeout = #escapeTimeout L.defaults, policy = #policy L.defaults, basic = false}
+               escapeTimeout = #escapeTimeout L.defaults, policy = #policy L.defaults, basic = false, keys = L.Emacs}
       fun r es = #1 (result (c, [], es))
       val (s, _) = run (c, [], typed "pr" @ [key Key.Tab, key Key.Tab, key Key.Tab])
       val f = L.layout (c, s, 40)
@@ -127,7 +140,7 @@ struct
       val c = {prompt = "> ", continuation = ". ", isComplete = fn _ => false, complete = #complete L.defaults,
                hint = #hint L.defaults, highlight = #highlight L.defaults, styles = #styles L.defaults,
                bindings = #bindings L.defaults, escapeTimeout = #escapeTimeout L.defaults, policy = #policy L.defaults,
-               basic = false}
+               basic = false, keys = L.Emacs}
       val (s, _) = run (c, [], typed "abc")
       val _ = L.layout (c, s, 20)
       val (s, _) = L.step (c, s, ctrl #"a")
@@ -169,7 +182,7 @@ struct
                         complete = #complete L.defaults, hint = #hint L.defaults,
                         highlight = fn t => if size t > 3 then [(1, 3, Style.parameters "1;31")] else [],
                         styles = #styles L.defaults, bindings = #bindings L.defaults,
-                        escapeTimeout = #escapeTimeout L.defaults, policy = Grapheme.ByCluster, basic = false}
+                        escapeTimeout = #escapeTimeout L.defaults, policy = Grapheme.ByCluster, basic = false, keys = L.Emacs}
           fun go (0, _, _, _, _, g) = (true, g)
             | go (k, s, screen, frame, drawn, g) =
                 let
@@ -224,8 +237,61 @@ struct
       check ("the mark after a full line", after "0123456789" = "0123456789\n>")
     end
 
+  (* Vi's modes: Escape to the normal mode, its motions, operators and
+     commands, and back to inserting; what the text and the cursor are *)
+  fun vi () =
+    let
+      val c = {prompt = "> ", continuation = "  ", isComplete = fn _ => true, complete = #complete L.defaults,
+               hint = #hint L.defaults, highlight = #highlight L.defaults, styles = #styles L.defaults,
+               bindings = #bindings L.defaults, escapeTimeout = #escapeTimeout L.defaults, policy = #policy L.defaults,
+               basic = false, keys = L.Vi}
+      val esc = key Key.Escape
+      fun v (name, events, want) =
+        let val (s, _) = run (c, ["first entry"], events)
+            val got = (L.text s, L.cursor s)
+        in check ("vi " ^ name ^ ": " ^ String.toString (#1 got) ^ " at " ^ Int.toString (#2 got), got = want) end
+      fun mode (name, events, want) = check ("vi mode " ^ name, L.normal (#1 (run (c, [], events))) = want)
+    in
+      mode ("inserting at first", typed "a", false);
+      mode ("Escape to normal", typed "a" @ [esc], true);
+      mode ("i back to inserting", typed "a" @ [esc] @ typed "i", false);
+      v ("Escape moves back", typed "hello" @ [esc], ("hello", 4));
+      v ("x", typed "hello" @ [esc] @ typed "x", ("hell", 3));
+      v ("h and l", typed "abc" @ [esc] @ typed "hhl", ("abc", 1));
+      v ("0 and $", typed "abc def" @ [esc] @ typed "0$", ("abc def", 6));
+      v ("^", typed "  abc" @ [esc] @ typed "0^", ("  abc", 2));
+      v ("w and b", typed "one two three" @ [esc] @ typed "0ww", ("one two three", 8));
+      v ("b", typed "one two three" @ [esc] @ typed "bb", ("one two three", 4));
+      v ("e", typed "one two" @ [esc] @ typed "0e", ("one two", 2));
+      v ("dw", typed "one two three" @ [esc] @ typed "0dw", ("two three", 0));
+      v ("a count", typed "a b c d" @ [esc] @ typed "02dw", ("c d", 0));
+      v ("a count after the operator", typed "a b c d" @ [esc] @ typed "0d2w", ("c d", 0));
+      v ("cw", typed "one two" @ [esc] @ typed "0cwONE", ("ONE two", 3));
+      v ("cw on a word of one letter", typed "val x = 1" @ [esc] @ typed "0wcwy", ("val y = 1", 5));
+      v ("de", typed "foo bar" @ [esc] @ typed "0de", (" bar", 0));
+      v ("d$ and D", typed "abc def" @ [esc] @ typed "0wD", ("abc ", 3));
+      v ("C", typed "abc def" @ [esc] @ typed "0wCxyz", ("abc xyz", 7));
+      v ("dd", typed "line" @ [esc] @ typed "dd", ("", 0));
+      v ("cc", typed "line" @ [esc] @ typed "ccnew", ("new", 3));
+      v ("A", typed "ab" @ [esc] @ typed "0Acd", ("abcd", 4));
+      v ("I", typed "  ab" @ [esc] @ typed "Ix", ("  xab", 3));
+      v ("a", typed "ac" @ [esc] @ typed "0ab", ("abc", 2));
+      v ("x then p", typed "abc" @ [esc] @ typed "0xp", ("bac", 1));
+      v ("P", typed "abc" @ [esc] @ typed "0xlP", ("bac", 1));
+      v ("yy and p, line by line", typed "one" @ [esc] @ typed "yyp", ("one\none", 4));
+      v ("o", typed "one" @ [esc] @ typed "otwo", ("one\ntwo", 7));
+      v ("O", typed "two" @ [esc] @ typed "Oone", ("one\ntwo", 3));
+      v ("r", typed "abc" @ [esc] @ typed "0rz", ("zbc", 0));
+      v ("~", typed "abc" @ [esc] @ typed "0~~", ("ABc", 2));
+      v ("u", typed "abc" @ [esc] @ typed "0xu", ("abc", 0));
+      v ("s", typed "abc" @ [esc] @ typed "0sX", ("Xbc", 1));
+      v ("k into the history", typed "x" @ [esc] @ typed "k", ("first entry", 10));
+      v ("gg and G", typed "a" @ [ctrl #"j"] @ typed "b" @ [esc] @ typed "gg", ("a\nb", 0));
+      v ("Escape in the normal mode does nothing", typed "ab" @ [esc, esc], ("ab", 1))
+    end
+
   fun main () =
-    (editing (); outcomes (); history (); completion (); prompts (); property (); promptMark ();
+    (vi (); editing (); outcomes (); history (); completion (); prompts (); property (); promptMark ();
      print ((if !failures = 0 then "PASS" else "FAIL") ^ " edit: " ^ Int.toString (!failures) ^ " failed\n"))
 end
 

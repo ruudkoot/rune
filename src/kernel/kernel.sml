@@ -33,45 +33,17 @@ struct
 
   (* ---- the engine, a child ---- *)
 
-  type engine = {pid : Posix.ProcEnv.pid, to : Posix.IO.file_desc, from : Posix.IO.file_desc,
-                 out : Posix.IO.file_desc, errs : Posix.IO.file_desc, reader : Framing.reader ref,
-                 waiting : string list ref, serial : int ref}
+  (* the engine, a child of the kernel's (src/front/engine.sml: its
+     descriptors 3 and 4 where the system forks, a connection on Windows),
+     and the messages of its channel read and not yet taken *)
+  type engine = {client : EngineClient.engine, reader : Framing.reader ref, waiting : string list ref, serial : int ref}
 
-  fun fd (k : int) = Posix.FileSys.wordToFD (Word.fromInt k)
-
-  (* the engine started: its channel the descriptors 3 and 4, its output and
-     error pipes of this kernel's; every other descriptor the child has
-     closed, so that it holds none of the kernel's sockets *)
   fun start (vm : string, image : string) : engine =
-    let
-      val {infd = toR, outfd = toW} = Posix.IO.pipe ()
-      val {infd = fromR, outfd = fromW} = Posix.IO.pipe ()
-      val {infd = outR, outfd = outW} = Posix.IO.pipe ()
-      val {infd = errR, outfd = errW} = Posix.IO.pipe ()
-    in
-      case Posix.Process.fork () of
-        NONE =>
-          ((* the child: 3 and 4 the channel, 1 and 2 the pipes, 0 nothing *)
-           Posix.IO.dup2 {old = toR, new = fd 3};
-           Posix.IO.dup2 {old = fromW, new = fd 4};
-           Posix.IO.dup2 {old = outW, new = fd 1};
-           Posix.IO.dup2 {old = errW, new = fd 2};
-           let fun shut k = if k > 1023 then () else ((Posix.IO.close (fd k) handle OS.SysErr _ => ()); shut (k + 1))
-           in shut 5 end;
-           Posix.Process.exec (vm, [vm, "--heap-size", "67108864", "--restore", image, "--", "--no-init", "--engine"])
-           handle OS.SysErr (m, _) => (err ("cannot start the engine " ^ vm ^ ": " ^ m); Posix.Process.exit 0w127))
-      | SOME pid =>
-          (List.app Posix.IO.close [toR, fromW, outW, errW];
-           {pid = pid, to = toW, from = fromR, out = outR, errs = errR, reader = ref (Framing.reader Framing.Lines),
-            waiting = ref [], serial = ref 0})
-    end
+    {client = EngineClient.start (vm, image, err), reader = ref (Framing.reader Framing.Lines), waiting = ref [],
+     serial = ref 0}
 
   fun send (e : engine, m : R.message) : unit =
-    let
-      val bytes = Byte.stringToBytes (Framing.frame (Framing.Lines, Json.encode (R.toJson m)))
-      fun go i = if i >= Word8Vector.length bytes then ()
-                 else go (i + Posix.IO.writeVec (#to e, Word8VectorSlice.slice (bytes, i, NONE)))
-    in go 0 end
+    #write (#client e) (Framing.frame (Framing.Lines, Json.encode (R.toJson m)))
 
   fun readSome (f : Posix.IO.file_desc) : string = Byte.bytesToString (Posix.IO.readVec (f, 65536))
 
@@ -122,7 +94,7 @@ struct
                [R.Message (R.Response {id = SOME i, outcome})] =>
                  if i = id then SOME outcome else (stash := (i, outcome) :: !stash; NONE)
              | [R.Message (R.Notification {method = "debug/stopped", params = SOME p})] =>
-                 (drain (#out e, "stdout"); drain (#errs e, "stderr");
+                 (drain (#out (#client e), "stdout"); drain (#errs (#client e), "stderr");
                   if !interrupting andalso DapEngine.string ("reason", p) = "pause" then
                     (* the notebook's interrupt, which pauses while a
                        debugger is attached: raised where it paused *)
@@ -133,7 +105,7 @@ struct
                   #idle req ();
                   NONE)
              | [R.Message (R.Notification {method = "display", params = SOME p})] =>
-                 (drain (#out e, "stdout"); drain (#errs e, "stderr");
+                 (drain (#out (#client e), "stdout"); drain (#errs (#client e), "stderr");
                   #publish req ((case field ("update", p) of SOME (Json.Bool true) => "update_display_data"
                                                           | _ => "display_data"),
                                 Json.Object [("data", getOpt (field ("data", p), Json.Object [])),
@@ -148,7 +120,7 @@ struct
                   #idle req ();
                   NONE)
              | [R.Message (R.Request {id = i, method = "input", ...})] =>
-                 (drain (#out e, "stdout"); drain (#errs e, "stderr");
+                 (drain (#out (#client e), "stdout"); drain (#errs (#client e), "stderr");
                   send (e, R.Response {id = SOME i,
                                        outcome = R.Result (case #input req {prompt = "", password = false} of
                                                              SOME l => Json.String (l ^ "\n")
@@ -162,25 +134,26 @@ struct
         | NONE => NONE
       fun loop () =
         case (case stashed () of SOME found => SOME found | NONE => step ()) of
-          SOME outcome => (drain (#out e, "stdout"); drain (#errs e, "stderr"); outcome)
+          SOME outcome => (drain (#out (#client e), "stdout"); drain (#errs (#client e), "stderr"); outcome)
         | NONE =>
             if not (List.null (!(#waiting e))) then loop ()
             else
               let
                 (* the interrupt: Jupyter's SIGINT, while the kernel waits *)
                 val () = (ignore (Runtime.maskInterrupt false);
-                          ignore (OS.IO.poll (List.map pollIn [#from e, #out e, #errs e], SOME (Time.fromMilliseconds 50)));
+                          ignore (OS.IO.poll (OS.IO.pollIn (#poll (#client e)) :: List.map pollIn [#out (#client e), #errs (#client e)],
+                                              SOME (Time.fromMilliseconds 50)));
                           ignore (Runtime.maskInterrupt true))
                          handle SML90.Interrupt =>
                            (ignore (Runtime.maskInterrupt true);
                             interrupting := !debugging;
-                            Posix.Process.kill (Posix.Process.K_PROC (#pid e), Posix.Signal.int))
+                            #interrupt (#client e) ())
               in
                 #idle req ();
-                drain (#out e, "stdout");
-                drain (#errs e, "stderr");
-                if ready (#from e, Time.zeroTime) then
-                  (case readSome (#from e) of
+                drain (#out (#client e), "stdout");
+                drain (#errs (#client e), "stderr");
+                if not (List.null (OS.IO.poll ([OS.IO.pollIn (#poll (#client e))], SOME Time.zeroTime))) then
+                  (case #read (#client e) () of
                      "" => raise Died
                    | bytes =>
                        let val (ms, r) = Framing.feed (!(#reader e), bytes)
@@ -242,7 +215,10 @@ struct
       SOME d => d
     | NONE =>
         let
-          val tmp = case OS.Process.getEnv "TMPDIR" of SOME t => t | NONE => "/tmp"
+          (* the temporary directory as ipykernel finds it (Python's
+             tempfile): TMPDIR, TEMP, TMP -- Windows sets the last two *)
+          val tmp = getOpt (List.foldl (fn (v, NONE) => OS.Process.getEnv v | (_, found) => found) NONE
+                                       ["TMPDIR", "TEMP", "TMP"], "/tmp")
           val d = OS.Path.concat (tmp, "rune-kernel-" ^ SysWord.fmt StringCvt.DEC (Posix.Process.pidToWord (Posix.ProcEnv.getpid ())))
         in
           (OS.FileSys.mkDir d handle OS.SysErr _ => ());
@@ -411,7 +387,7 @@ struct
       | "evaluate" =>
           let val (method, params) = DapEngine.evaluateRequest (args, !stopped)
           in engine (method, params, DapEngine.evaluateBody) end
-      | "pause" => (Posix.Process.kill (Posix.Process.K_PROC (#pid e), Posix.Signal.int); ok (Json.Object []))
+      | "pause" => (#interrupt (#client e) (); ok (Json.Object []))
       | "source" =>
           (ok (Json.Object [("content", Json.String (readFile (case field ("source", args) of
                                                                   SOME s => DapEngine.string ("path", s)
@@ -487,7 +463,7 @@ struct
       Jupyter.serve (k, {info = info implementation, respond = respond});
       Jupyter.close k;
       (send (!engine, R.Request {id = R.Number 0, method = "shutdown", params = SOME (Json.Object [])}) handle _ => ());
-      ignore (Posix.Process.waitpid (Posix.Process.W_CHILD (#pid (!engine)), []))
+      EngineClient.finish (#client (!engine))
     end
 
   (* ---- --install: the kernelspec ---- *)
@@ -526,7 +502,7 @@ struct
       print ("installed the kernelspec in " ^ dir ^ "\n")
     end
 
-  fun absolute (p : string) = if OS.Path.isAbsolute p then p else OS.Path.concat (OS.FileSys.getDir (), p)
+  val absolute = EngineClient.absolute
 
   fun main (args : string list) : unit =
     let
@@ -551,6 +527,8 @@ struct
     end
     handle Fail m => (err m; OS.Process.exit OS.Process.failure)
          | Jupyter.Connection m => (err ("the connection file: " ^ m); OS.Process.exit OS.Process.failure)
+         | EngineClient.Refused why => (err why; OS.Process.exit OS.Process.failure)
+         | OS.SysErr (m, _) => (err ("the system: " ^ m); OS.Process.exit OS.Process.failure)
 end
 
 val () = Kernel.main (CommandLine.arguments ())
