@@ -21,46 +21,58 @@ struct
   (* ---- the command line (D25) ---- *)
 
   type options = {quiet : bool, exprs : string list, init : bool, color : Color.choice, basic : bool,
-                  files : string list}
+                  files : string list, engine : string option}
 
   exception Usage of string
 
   val usage =
     "usage: rune-repl [-q] [-e DECLARATIONS]... [--no-init] [--color=always|never|auto] [--basic] [FILE]...\n\
+    \       rune-repl --engine | --engine-connect PORT [--no-init] [FILE]...\n\
     \  -q             no banner\n\
     \  -e TEXT        run TEXT's declarations, then end, after the files (a `;` is added where TEXT has none)\n\
     \  --no-init      do not use the init file (~/.config/rune/init.sml)\n\
     \  --color=WHEN   colour the REPL's output and the diagnostics: always, never or auto (on a terminal)\n\
     \  --basic        a prompt and a line at a time, as on a pipe\n\
+    \  --engine       the engine, for a front: JSON-RPC on the descriptors 3 and 4 (docs/repl-protocol.md)\n\
+    \  --engine-connect PORT  the same on a connection to 127.0.0.1:PORT, its token in RUNE_ENGINE_TOKEN\n\
     \  FILE           used before the first prompt\n"
 
   fun parseArgs (args : string list) : options =
     let
-      fun color w = case Color.choiceNamed w of SOME c => c | NONE => raise Usage ("--color takes always, never or auto, not " ^ w)
-      fun go ([], o') = o'
-        | go (a :: rest, o' as {quiet, exprs, init, color = c, basic, files}) =
-            case a of
-              "-q" => go (rest, {quiet = true, exprs = exprs, init = init, color = c, basic = basic, files = files})
-            | "--quiet" => go (rest, {quiet = true, exprs = exprs, init = init, color = c, basic = basic, files = files})
-            | "-e" =>
-                (case rest of
-                   e :: rest => go (rest, {quiet = quiet, exprs = exprs @ [e], init = init, color = c, basic = basic, files = files})
-                 | [] => raise Usage "-e takes the text to run")
-            | "--no-init" => go (rest, {quiet = quiet, exprs = exprs, init = false, color = c, basic = basic, files = files})
-            | "--basic" => go (rest, {quiet = quiet, exprs = exprs, init = init, color = c, basic = true, files = files})
-            | "--color" =>
-                (case rest of
-                   w :: rest => go (rest, {quiet = quiet, exprs = exprs, init = init, color = color w, basic = basic, files = files})
-                 | [] => raise Usage "--color takes always, never or auto")
-            | "--" => {quiet = quiet, exprs = exprs, init = init, color = c, basic = basic, files = files @ rest}
+      val quiet = ref false
+      val exprs = ref []
+      val init = ref true
+      val color = ref Color.WhenTerminal
+      val basic = ref false
+      val files = ref []
+      val engine = ref NONE
+      fun colorOf w = case Color.choiceNamed w of SOME c => c | NONE => raise Usage ("--color takes always, never or auto, not " ^ w)
+      fun go [] = ()
+        | go (a :: rest) =
+            case (a, rest) of
+              ("-q", _) => (quiet := true; go rest)
+            | ("--quiet", _) => (quiet := true; go rest)
+            | ("-e", e :: rest) => (exprs := !exprs @ [e]; go rest)
+            | ("-e", []) => raise Usage "-e takes the text to run"
+            | ("--no-init", _) => (init := false; go rest)
+            | ("--basic", _) => (basic := true; go rest)
+            | ("--color", w :: rest) => (color := colorOf w; go rest)
+            | ("--color", []) => raise Usage "--color takes always, never or auto"
+            | ("--engine", _) => (engine := SOME "fds"; go rest)
+            | ("--engine-connect", p :: rest) =>
+                (case Int.fromString p of
+                   SOME _ => (engine := SOME p; go rest)
+                 | NONE => raise Usage ("--engine-connect takes a port, not " ^ p))
+            | ("--engine-connect", []) => raise Usage "--engine-connect takes a port"
+            | ("--", _) => files := !files @ rest
             | _ =>
-                if String.isPrefix "--color=" a then
-                  go (rest, {quiet = quiet, exprs = exprs, init = init, color = color (String.extract (a, 8, NONE)),
-                             basic = basic, files = files})
+                if String.isPrefix "--color=" a then (color := colorOf (String.extract (a, 8, NONE)); go rest)
                 else if String.isPrefix "-" a andalso a <> "-" then raise Usage ("unknown option " ^ a)
-                else go (rest, {quiet = quiet, exprs = exprs, init = init, color = c, basic = basic, files = files @ [a]})
+                else (files := !files @ [a]; go rest)
     in
-      go (args, {quiet = false, exprs = [], init = true, color = Color.WhenTerminal, basic = false, files = []})
+      go args;
+      {quiet = !quiet, exprs = !exprs, init = !init, color = !color, basic = !basic orelse isSome (!engine),
+       files = !files, engine = !engine}
     end
 
   fun env (name : string) : string = case OS.Process.getEnv name of SOME v => v | NONE => ""

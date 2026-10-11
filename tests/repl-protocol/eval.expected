@@ -1,0 +1,36 @@
+-> {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":1,"width":40}}
+<- {"id": 1, "jsonrpc": "2.0", "result": {"implementation": "rune-repl VERSION", "methods": ["initialize", "ping", "eval", "use", "reload", "isComplete", "complete", "inspect", "typeAt", "check", "value/children", "value/release", "interrupt", "shutdown"], "protocol": 1}}
+-> {"jsonrpc":"2.0","id":2,"method":"ping","params":[1,"two"]}
+<- {"id": 2, "jsonrpc": "2.0", "result": [1, "two"]}
+-> {"jsonrpc":"2.0","id":3,"method":"eval","params":{"text":"val x = 1 + 2; val pairs = [(1, \"one\"), (2, \"two\")];"}}
+<- {"id": 3, "jsonrpc": "2.0", "result": {"bindings": [{"handle": 1, "name": "x", "shown": "3", "type": "int"}, {"handle": 2, "name": "pairs", "shown": "[(1, \"one\"), (2, \"two\")]", "type": "(int * string) list"}], "declared": [], "diagnostics": [], "exception": null, "messages": [], "ok": true}}
+-> {"jsonrpc":"2.0","id":4,"method":"value/children","params":{"handle":2}}
+<- {"id": 4, "jsonrpc": "2.0", "result": [{"handle": 3, "label": "1", "more": true, "shown": "(1, \"one\")"}, {"handle": 4, "label": "2", "more": true, "shown": "(2, \"two\")"}]}
+-> {"jsonrpc":"2.0","id":5,"method":"value/children","params":{"handle":3}}
+<- {"id": 5, "jsonrpc": "2.0", "result": [{"handle": 5, "label": "1", "more": false, "shown": "1"}, {"handle": 6, "label": "2", "more": false, "shown": "\"one\""}]}
+-> {"jsonrpc":"2.0","id":6,"method":"value/release","params":{"handles":[2,3,4]}}
+<- {"id": 6, "jsonrpc": "2.0", "result": null}
+-> {"jsonrpc":"2.0","id":7,"method":"eval","params":{"text":"datatype t = A | B of int; val y = x + undefined;"}}
+<- {"id": 7, "jsonrpc": "2.0", "result": {"bindings": [], "declared": ["datatype t = A | B of int"], "diagnostics": [{"endByte": 48, "message": "unbound variable or constructor: undefined", "path": "stdIn#2", "range": {"endColumn": 49, "endLineNumber": 1, "startColumn": 40, "startLineNumber": 1}, "rendered": "stdIn#2:1:40: error: unbound variable or constructor: undefined\n  |\n1 | datatype t = A | B of int; val y = x + undefined;\n  |                                        ^^^^^^^^^", "severity": "error", "startByte": 39}], "exception": null, "messages": [], "ok": false}}
+-> {"jsonrpc":"2.0","id":8,"method":"eval","params":{"text":"fun f 0 = raise Fail \"zero\" | f n = f (n - 1); f 2 : int;"}}
+<- {"id": 8, "jsonrpc": "2.0", "result": {"bindings": [{"handle": 7, "name": "f", "shown": "fn", "type": "int -> 'a"}], "declared": [], "diagnostics": [], "exception": {"message": "Fail: zero", "name": "Fail", "trace": [{"column": 17, "file": "stdIn#3", "function": "f", "line": 1}, {"column": 48, "file": "stdIn#3", "function": "<toplevel>", "line": 1}]}, "messages": [], "ok": false}}
+-> {"jsonrpc":"2.0","id":9,"method":"isComplete","params":{"text":"val z = let in 1"}}
+<- {"id": 9, "jsonrpc": "2.0", "result": {"indent": 2, "status": "incomplete"}}
+-> {"jsonrpc":"2.0","id":10,"method":"isComplete","params":{"text":"val z = 1;"}}
+<- {"id": 10, "jsonrpc": "2.0", "result": {"status": "complete"}}
+-> {"jsonrpc":"2.0","id":11,"method":"isComplete","params":{"text":"val z = ) ;"}}
+<- {"id": 11, "jsonrpc": "2.0", "result": {"status": "invalid"}}
+-> {"jsonrpc":"2.0","id":12,"method":"complete","params":{"text":"List.fil","offset":8}}
+<- {"id": 12, "jsonrpc": "2.0", "result": {"candidates": ["filter"], "start": 5}}
+-> {"jsonrpc":"2.0","id":13,"method":"inspect","params":{"name":"x"}}
+<- {"id": 13, "jsonrpc": "2.0", "result": {"doc": null, "info": "val x : int  (* defined at stdIn#1:1 *)\n"}}
+-> {"jsonrpc":"2.0","id":14,"method":"typeAt","params":{"text":"val w = x + 1","offset":8}}
+<- {"id": 14, "jsonrpc": "2.0", "result": {"name": "x", "start": 8, "stop": 9, "type": "int"}}
+-> {"jsonrpc":"2.0","id":15,"method":"check","params":{"text":"val v = x ^ \"s\";"}}
+<- {"id": 15, "jsonrpc": "2.0", "result": {"diagnostics": [{"endByte": 15, "message": "function argument: type mismatch between string * string and int * string (type constructor mismatch: string vs int)", "path": "stdIn", "range": {"endColumn": 16, "endLineNumber": 1, "startColumn": 9, "startLineNumber": 1}, "rendered": "stdIn:1:9: error: function argument: type mismatch between string * string and int * string (type constructor mismatch: string vs int)\n  |\n1 | val v = x ^ \"s\";\n  |         ^^^^^^^", "severity": "error", "startByte": 8}]}}
+-> {"jsonrpc":"2.0","id":16,"method":"use","params":{"path":"tests/repl/lib/counter.sml"}}
+stdout: counted 1
+<- {"id": 16, "jsonrpc": "2.0", "result": {"bindings": [], "declared": ["structure Counter"], "diagnostics": [], "exception": null, "messages": [], "ok": true}}
+-> {"jsonrpc":"2.0","id":17,"method":"shutdown","params":{}}
+<- {"id": 17, "jsonrpc": "2.0", "result": null}
+ended 0

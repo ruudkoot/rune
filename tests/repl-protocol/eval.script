@@ -1,0 +1,40 @@
+# Evaluation and what an editor asks of the session (docs/repl-protocol.md):
+# bindings with their types, what is laid out of them and their handles; a
+# value opened a level at a time; diagnostics in rune-ide's schema; an
+# exception with its trace; completeness, completion, inspection, the type
+# at a position, a check that runs nothing, and a file used.
+send {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":1,"width":40}}
+until 1
+send {"jsonrpc":"2.0","id":2,"method":"ping","params":[1,"two"]}
+until 2
+send {"jsonrpc":"2.0","id":3,"method":"eval","params":{"text":"val x = 1 + 2; val pairs = [(1, \"one\"), (2, \"two\")];"}}
+until 3
+send {"jsonrpc":"2.0","id":4,"method":"value/children","params":{"handle":2}}
+until 4
+send {"jsonrpc":"2.0","id":5,"method":"value/children","params":{"handle":3}}
+until 5
+send {"jsonrpc":"2.0","id":6,"method":"value/release","params":{"handles":[2,3,4]}}
+until 6
+send {"jsonrpc":"2.0","id":7,"method":"eval","params":{"text":"datatype t = A | B of int; val y = x + undefined;"}}
+until 7
+send {"jsonrpc":"2.0","id":8,"method":"eval","params":{"text":"fun f 0 = raise Fail \"zero\" | f n = f (n - 1); f 2 : int;"}}
+until 8
+send {"jsonrpc":"2.0","id":9,"method":"isComplete","params":{"text":"val z = let in 1"}}
+until 9
+send {"jsonrpc":"2.0","id":10,"method":"isComplete","params":{"text":"val z = 1;"}}
+until 10
+send {"jsonrpc":"2.0","id":11,"method":"isComplete","params":{"text":"val z = ) ;"}}
+until 11
+send {"jsonrpc":"2.0","id":12,"method":"complete","params":{"text":"List.fil","offset":8}}
+until 12
+send {"jsonrpc":"2.0","id":13,"method":"inspect","params":{"name":"x"}}
+until 13
+send {"jsonrpc":"2.0","id":14,"method":"typeAt","params":{"text":"val w = x + 1","offset":8}}
+until 14
+send {"jsonrpc":"2.0","id":15,"method":"check","params":{"text":"val v = x ^ \"s\";"}}
+until 15
+send {"jsonrpc":"2.0","id":16,"method":"use","params":{"path":"tests/repl/lib/counter.sml"}}
+until 16
+send {"jsonrpc":"2.0","id":17,"method":"shutdown","params":{}}
+until 17
+end

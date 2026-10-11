@@ -148,7 +148,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
+.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
 
 all: vm boot runedoc runeopt manifests basis-cache
 
@@ -919,15 +919,17 @@ check-units: $(RUNE) bin/rune-boot bin/runevm bin/runevm-stack
 # file into bin/rune-repl.units (their units in order, and the sources they
 # came from), and loaded unit by unit by bin/rune-repl.load.rbc, so that the
 # REPL and what it compiles share one Basis Library (incremental roadmap, M4)
-# lib/terminal's editor (docs/plans/repl.md, M6), lib/pretty's layout (M7)
-# and lib/markdown (M8), after the compiler, which has lib/unicode already
+# lib/terminal's editor (docs/plans/repl.md, M6), lib/pretty's layout (M7),
+# lib/markdown (M8) and lib/jsonrpc (M10), after the compiler, which has
+# lib/unicode and lib/json already
 REPL_TERMINAL := $(addprefix lib/terminal/,style_sig.sml style.sml key_sig.sml key.sml device_sig.sml device.sml \
                    history_sig.sml history.sml line_edit_sig.sml line_edit_fn.sml line_edit.sml)
 REPL_SRCS := build/config.sml $(SOURCES) $(REPL_TERMINAL) lib/pretty/pretty_sig.sml lib/pretty/pretty.sml \
              lib/markdown/entities.sml lib/markdown/markdown_sig.sml lib/markdown/markdown.sml \
+             lib/jsonrpc/framing_sig.sml lib/jsonrpc/framing.sml lib/jsonrpc/jsonrpc_sig.sml lib/jsonrpc/jsonrpc.sml \
              src/repl/show.sml src/repl/session.sml src/repl/scan.sml src/repl/highlight.sml src/repl/complete.sml \
              src/repl/front.sml src/repl/doc.sml src/repl/search.sml src/repl/repl.sml src/repl/commands.sml \
-             src/main/repl-main.sml
+             src/repl/engine.sml src/repl/protocol.sml src/main/repl-main.sml
 bin/rune-repl.units/units: bin/rune-boot $(REPL_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
 	rm -rf bin/rune-repl.units
 	bin/rune-boot --units --basis all --emit-units bin/rune-repl.units -o bin/rune-repl.rbc $(REPL_SRCS)
@@ -952,6 +954,11 @@ test-repl: bin/rune-repl bin/runevm
 	sh tests/repl/run.sh --vm-opts --jit=off --out tests/out/repl-off
 	sh tests/repl/run.sh --vm-opts --jit=all --out tests/out/repl-all
 	sh tests/repl/run.sh --vm-opts "--jit=all --jit-tier=2" --out tests/out/repl-tier2
+
+# The REPL's engine and its protocol (docs/repl-protocol.md): each script
+# of tests/repl-protocol played to rune-repl --engine, as a front drives it
+test-repl-protocol: bin/rune-repl bin/runevm
+	python3 tests/repl-protocol/run.py
 
 # Programs on a terminal (docs/plans/repl.md, M1): each script of
 # tests/terminal starts a program in a tmux pane, types at it and waits for
@@ -1336,7 +1343,7 @@ check:
 	@$(MAKE) --no-print-directory test-build
 	@$(MAKE) --no-print-directory check-reproducible
 	@$(MAKE) --no-print-directory test-serve
-	@$(MAKE) --no-print-directory test-repl test-terminal test-diagnostics
+	@$(MAKE) --no-print-directory test-repl test-terminal test-diagnostics test-repl-protocol
 	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory test-register
 	@$(MAKE) --no-print-directory test-register-jit

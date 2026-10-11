@@ -1768,15 +1768,23 @@ static int p_vector_sub(VM *vm) {
 }
 
 /* ================================================================ I/O and system */
+/* print and print_err write through the VM's slots for the descriptors 1
+   and 2, as a stream of TextIO does, not to C's stdout and stderr
+   themselves: what owns the slot owns all the program writes there
+   (docs/plans/repl.md, D18 and M10) */
+static FILE *std_slot(VM *vm, int fd) {
+    FILE *f = (size_t)fd < vm->nfiles ? vm->files[fd] : NULL;
+    return f ? f : fd == 1 ? stdout : stderr;
+}
 static int p_print(VM *vm) {
     Obj *s = check_obj(vm, ARG(0), K_STRING, "print");
-    fwrite(obj_bytes(s), 1, obj_len(s), stdout);
+    fwrite(obj_bytes(s), 1, obj_len(s), std_slot(vm, 1));
     return ret(vm, 1, mk_unit());
 }
 static int p_print_err(VM *vm) {
     Obj *s = check_obj(vm, ARG(0), K_STRING, "print_err");
-    fflush(stdout);
-    fwrite(obj_bytes(s), 1, obj_len(s), stderr);
+    fflush(std_slot(vm, 1));
+    fwrite(obj_bytes(s), 1, obj_len(s), std_slot(vm, 2));
     return ret(vm, 1, mk_unit());
 }
 static int p_flush_out(VM *vm) { fflush(stdout); return ret(vm, 1, mk_unit()); }
@@ -2157,6 +2165,13 @@ static int p_os_poll(VM *vm) {
         wide_events[i] = events[i];
     }
     int ready = sys_poll(wide_fds, wide_events, (int)n, val_imm(ARG(0)));
+    /* the user's interrupt that ended the wait raised, as a read of a
+       terminal raises it (read_fd) */
+    if (ready < 0 && sys_errno() == EINTR && vm->interrupt && !vm->interrupt_mask) {
+        free(fds); free(events); free(wide_fds); free(wide_events);
+        vm->sp -= 3;
+        return vm_interrupt(vm);
+    }
     int64_t *out = malloc((size_t)(n > 0 ? n : 1) * sizeof *out);
     if (!out) vm_fatal(vm, "out of memory");
     for (int i = 0; i < (int)n; i++) out[i] = wide_events[i];

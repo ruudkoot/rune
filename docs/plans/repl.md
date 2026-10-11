@@ -55,7 +55,7 @@ M1 measures them again on a quiet machine.
 | M7 | Printing | done |
 | M8 | Commands and documentation | done |
 | M9 | Reload | done |
-| M10 | The engine and its protocol | planned |
+| M10 | The engine and its protocol | done |
 | M11 | The Jupyter kernel | planned |
 | M12 | The debugger | planned |
 | M13 | Windows, accessibility and the performance sweep | planned |
@@ -2473,6 +2473,38 @@ Windows, and any Rune program can read a line with them.
   position.
 * **Done when:** those pass and rune-ide can drive it (its M6, built
   there).
+* **As built** (2026-10-10): `src/repl/engine.sml` (`ENGINE`, `ReplEngine`:
+  `eval`, `use`, `reload`, `isComplete`, `complete`, `inspect`, `typeAt`,
+  `check`, the values' handles and `children`), which takes as data what the
+  loop prints -- `Error.silent` and `Error.kept`, and hooks for the echo,
+  the declarations, the uncaught exception and the REPL's messages -- and
+  `src/repl/protocol.sml` (`rune-repl --engine` on the descriptors 3 and
+  4, `--engine-connect PORT` with `RUNE_ENGINE_TOKEN`; lib/jsonrpc's framing,
+  lines or `Content-Length` by the first byte; `status` notifications; the
+  program's input as the engine's own `input` request).
+  `docs/repl-protocol.md` follows rune-ide's conventions (`initialize`
+  with a protocol number, its error codes, its diagnostics through
+  `Diagnostic.item`). `typeAt` shares the search of incremental M12's
+  `rune --serve` (`Serve.variableAt`, extracted from its `hover`). `print`
+  and `print_err` write through the VM's slots for the descriptors 1 and 2,
+  and `OS.IO.poll` ended by the interrupt raises it.
+  `tests/repl-protocol/run.py` (`make test-repl-protocol`) plays six
+  scripts: evaluation and every method, the program's output in order with
+  the answers, its input, an interrupt, the protocol's errors, and
+  `Content-Length` framing. Where it differs from the plan:
+  * **A handle names a value's document, not the value**: the engine's
+    table holds the `Compiler.pretty` the printer made, and `children`
+    opens it by its blocks -- a list's items, a record's fields by label --
+    which needs no printer per type at run time and no root in the
+    collector beyond the table itself, an SML value.
+  * **`print` through `TextIO.stdOut` is not done.** The fronts drain the
+    engine's pipes (D20), so nothing needs to capture the program's
+    output in its process; the VM's slot is the hook for a mode that frames
+    it, which stays in *Ready for, not built*.
+  * **rune-ide's driving it is that repository's M6**, not built here; the
+    protocol keeps rune-ide's conventions so that its service can.
+  * `lib/json` and `lib/jsonrpc` were written ahead (*The libraries*), not
+    taken from rune-ide's codec.
 
 ### M11. The Jupyter kernel (L, about 1,800 SML and 100 C)
 

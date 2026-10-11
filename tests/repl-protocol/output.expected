@@ -1,0 +1,9 @@
+-> {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":1}}
+<- {"id": 1, "jsonrpc": "2.0", "result": {"implementation": "rune-repl VERSION", "methods": ["initialize", "ping", "eval", "use", "reload", "isComplete", "complete", "inspect", "typeAt", "check", "value/children", "value/release", "interrupt", "shutdown"], "protocol": 1}}
+-> {"jsonrpc":"2.0","id":2,"method":"eval","params":{"text":"val () = print \"hello\\n\"; val () = TextIO.output (TextIO.stdErr, \"to stderr\\n\"); val v = 3;"}}
+stdout: hello
+stderr: to stderr
+<- {"id": 2, "jsonrpc": "2.0", "result": {"bindings": [{"handle": 1, "name": "v", "shown": "3", "type": "int"}], "declared": [], "diagnostics": [], "exception": null, "messages": [], "ok": true}}
+-> {"jsonrpc":"2.0","id":3,"method":"shutdown","params":{}}
+<- {"id": 3, "jsonrpc": "2.0", "result": null}
+ended 0

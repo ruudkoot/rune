@@ -29,11 +29,20 @@ struct
   val lastTrace : Runtime.frame list ref = ref []
 
   (* an error at a place, as the diagnostics show it (Diagnostic, with the
-     excerpt where stderr is a terminal) *)
-  fun report (sp : Source.span, msg : string) = err (!Error.show ("error", sp, msg) ^ "\n")
+     excerpt where stderr is a terminal); only kept where Error is silent
+     (the engine) *)
+  fun report (sp : Source.span, msg : string) =
+    if !Error.silent then (Error.errors := !Error.errors + 1; Error.note ("error", sp, msg))
+    else err (!Error.show ("error", sp, msg) ^ "\n")
+
+  (* what an entry's declarations declared that is not a value, and an
+     exception nothing handled: printed, or taken by the engine *)
+  val declaredHook : (string list -> unit) ref = ref (fn _ => ())
+  val uncaughtHook : (exn -> unit) option ref = ref NONE
 
   (* An exception that nothing handled, as the REPL says so *)
   fun uncaught e =
+    case !uncaughtHook of SOME h => h e | NONE =>
     case e of
       SML90.Interrupt => err (ReplFront.paint "repl.interrupt" "Interrupt" ^ "\n")
     | IO.Io {name, function, cause} =>
@@ -74,6 +83,8 @@ struct
   val entries : (string * bool) list ref = ref []
   val lastUsed : string option ref = ref NONE
   val commandHook : (string -> bool) ref = ref (fn _ => (err "rune-repl: no commands\n"; false))
+  (* the engine's loop (ReplProtocol.start), put here at start too *)
+  val engineHook : (string -> unit) ref = ref (fn _ => err "rune-repl: no engine\n")
   val reloadHook : (string -> unit) ref = ref (fn _ => err "rune-repl: no :reload\n")
 
   (* :time: what an entry took, compiling apart from running *)
@@ -197,7 +208,10 @@ struct
                     (* what is not a value, in feedback normal and verbose *)
                     if !RuneCompiler.printDepth > 0 andalso not (!ReplSession.quiet)
                        andalso (!RuneCompiler.feedback = "normal" orelse !RuneCompiler.feedback = "verbose")
-                    then (ReplFront.freshLine (); List.app (fn s => print (s ^ "\n")) declared) else ();
+                    then (case !uncaughtHook of
+                            SOME _ => !declaredHook declared
+                          | NONE => (ReplFront.freshLine (); List.app (fn s => print (s ^ "\n")) declared))
+                    else ();
                     true)
                    handle e => if stopping then raise e else (uncaught e; whereRaised e; false))
             end
@@ -321,7 +335,12 @@ struct
      prompt is the first; whether what it ran all went well beside *)
   (* ---- :reload, :reload! and :mark (D19) ---- *)
 
-  fun say (s : string) = (ReplFront.freshLine (); TextIO.output (TextIO.stdOut, s); TextIO.flushOut TextIO.stdOut)
+  (* what the REPL says, or the engine takes *)
+  val sayHook : (string -> unit) option ref = ref NONE
+  fun say (s : string) =
+    case !sayHook of
+      SOME h => h s
+    | NONE => (ReplFront.freshLine (); TextIO.output (TextIO.stdOut, s); TextIO.flushOut TextIO.stdOut)
   fun ui (s : string) = say (ReplFront.paint "repl.ui" s ^ "\n")
 
   fun hasChanged ({file, text, ...} : used) = (#text (Source.readFile file) <> text) handle IO.Io _ => true
@@ -450,7 +469,10 @@ struct
      always said so, and stdIn#k for the k-th entry on a terminal, so that a
      trace tells entries apart *)
   val entryCount = ref 0
-  fun entryName () = if !ReplFront.editing then "stdIn#" ^ Int.toString (!entryCount + 1) else "stdIn"
+  (* the engine numbers its entries too, whose traces a front shows *)
+  val numbered = ref false
+  fun entryName () =
+    if !ReplFront.editing orelse !numbered then "stdIn#" ^ Int.toString (!entryCount + 1) else "stdIn"
 
   (* what :time says of an entry *)
   fun ms (t : Time.time) = Real.fmt (StringCvt.FIX (SOME 1)) (Time.toReal t * 1000.0) ^ " ms"
@@ -587,7 +609,7 @@ struct
          the loop, or the text of -e and the end *)
       fun session args =
         let
-          val options as {init, files, exprs, ...} =
+          val options as {init, files, exprs, engine, ...} =
             ReplFront.parseArgs args
             handle ReplFront.Usage msg => (err ("rune-repl: " ^ msg ^ "\n" ^ ReplFront.usage); OS.Process.exit OS.Process.failure)
           val () = ReplFront.start options
@@ -596,9 +618,10 @@ struct
           val () = if init then Option.app (fn f => use f handle e => uncaught e) (ReplFront.initFile ()) else ()
           val () = List.app (fn f => use f handle e => uncaught e) files
         in
-          case exprs of
-            [] => loop ()
-          | _ =>
+          case (engine, exprs) of
+            (SOME how, _) => !engineHook how
+          | (NONE, []) => loop ()
+          | (NONE, _) =>
               let
                 fun whole t = if ReplScan.complete (ReplScan.ofText t) then t else t ^ "\n;"
                 val ok = List.foldl (fn (t, ok) => #2 (step (whole t, true)) andalso ok) true exprs

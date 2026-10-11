@@ -21,18 +21,24 @@ struct
   val kept : (string * Source.span * string) list ref = ref []
   fun note (severity, sp, msg) = if !keep then kept := (severity, sp, msg) :: !kept else ()
 
+  (* nothing printed: what is reported is only kept (the REPL's engine,
+     which answers with it as data) *)
+  val silent = ref false
+
   (* The errors a compile that goes on after an error has reported so far
      (Elaborate.recover): each is printed when it is found. *)
   val errors = ref 0
   fun report (sp, msg) =
-    (TextIO.output (TextIO.stdErr, !show ("error", sp, msg) ^ "\n"); errors := !errors + 1; note ("error", sp, msg))
+    ((if !silent then () else TextIO.output (TextIO.stdErr, !show ("error", sp, msg) ^ "\n"));
+     errors := !errors + 1; note ("error", sp, msg))
 
   val warnings : (Source.span * string) list ref = ref []
 
   fun warn (sp, msg) = (warnings := (sp, msg) :: !warnings; note ("warning", sp, msg))
 
   fun flushWarnings () =
-    (List.app (fn w => TextIO.output (TextIO.stdErr, !show ("warning", #1 w, #2 w) ^ "\n")) (List.rev (!warnings));
+    (if !silent then ()
+     else List.app (fn w => TextIO.output (TextIO.stdErr, !show ("warning", #1 w, #2 w) ^ "\n")) (List.rev (!warnings));
      warnings := [])
 
   (* Internal invariant violations: not user errors. *)

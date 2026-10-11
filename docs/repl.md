@@ -51,6 +51,14 @@ rune-repl [-q] [-e DECLARATIONS]... [--no-init] [--color=WHEN] [--basic] [FILE].
 On Windows, `rune-repl.cmd` beside `runevm.exe` is `rune-repl` for the
 command prompt and PowerShell.
 
+`rune-repl --engine` and `rune-repl --engine-connect PORT` are the session
+for a front in another process -- an editor, the Jupyter kernel -- in the
+place of the terminal: JSON-RPC 2.0 on the descriptors 3 and 4, or on a
+connection to `127.0.0.1:PORT`, which [repl-protocol.md](repl-protocol.md)
+describes. An `eval` there is an entry as at the prompt, and its answer is
+data: the values with their types and handles, the diagnostics in
+rune-ide's schema, the exception and its trace.
+
 ## On a terminal
 
 Where the standard input and output are a terminal that can be edited on
@@ -381,7 +389,7 @@ on a pty; on Windows, `rune-repl.cmd` from `cmd.exe` too.
 
 ## Not yet
 
-The engine and its protocol, a Jupyter kernel and a debugger are M10 to
-M12 of [plans/repl.md](plans/repl.md). `Compiler.prettyPrint` ignores a block's context
+A Jupyter kernel and a debugger are M11 and M12 of
+[plans/repl.md](plans/repl.md). `Compiler.prettyPrint` ignores a block's context
 (`ContextLocation`, `ContextProperty`), which Poly/ML's IDE support reads.
 [plans/repl.md](plans/repl.md) lists what comes next.

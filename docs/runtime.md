@@ -574,6 +574,11 @@ Tail calls do not grow the frame stack, so a tail-recursive loop runs in
 constant space -- except in the body of a `handle`, where the handler has to
 stay ([language.md](language.md), `rt.tailcall`).
 
+`print` writes through the VM's slot for the descriptor 1, as a stream of
+`TextIO` does, and `print_err` through the slot for 2 -- not to C's
+`stdout` and `stderr` themselves -- so that what owns the slot owns
+everything the program writes there (docs/plans/repl.md, D18 and M10).
+
 A `raise` unwinds to the innermost handler, which is an entry recording the
 code position, the stack height and the frame. With no handler left, the VM
 prints `runevm: uncaught exception Name payload` on standard error, flushes,
@@ -633,9 +638,11 @@ D11):
 * a read from a terminal that the interrupt cuts short -- the REPL's
   prompt -- raises it too, in the primitive: a terminal is read through
   `poll` first, which a signal ends whatever `SA_RESTART` says, and the
-  read is begun again where the interrupt is masked. Every other call into
-  the system is begun again, as before, and the interrupt waits for the
-  next poll; a primitive that is running finishes first;
+  read is begun again where the interrupt is masked. `OS.IO.poll` ended by
+  it raises it the same way, so that a program that waits for several
+  descriptors can be interrupted. Every other call into the system is begun again,
+  as before, and the interrupt waits for the next poll; a primitive that is
+  running finishes first;
 * `Runtime.maskInterrupt true` defers it: the flag stays set and the polls
   leave it, until `Runtime.maskInterrupt false`, which raises it as it
   returns. A section that an interrupt must not cut in two -- what HOL4's

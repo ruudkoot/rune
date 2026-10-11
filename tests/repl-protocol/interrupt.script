@@ -1,0 +1,14 @@
+# An evaluation that does not end, ended by the front's SIGINT: its answer
+# is the exception Interrupt, with where it was; the session goes on.
+send {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":1}}
+until 1
+send {"jsonrpc":"2.0","id":2,"method":"eval","params":{"text":"fun loop () : unit = loop ();"}}
+until 2
+send {"jsonrpc":"2.0","id":3,"method":"eval","params":{"text":"loop ();"}}
+signal
+until 3
+send {"jsonrpc":"2.0","id":4,"method":"eval","params":{"text":"1 + 1;"}}
+until 4
+send {"jsonrpc":"2.0","id":5,"method":"shutdown","params":{}}
+until 5
+end

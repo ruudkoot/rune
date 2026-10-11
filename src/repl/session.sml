@@ -306,6 +306,49 @@ end
    `val it = (exp);` and then undone, as a declaration that fails is. *)
 structure ReplQuery =
 struct
+  (* a text's tokens as declarations, or else as an expression behind the
+     tokens of `val it =`: lexed by itself, so that its positions are its
+     own (the source stdIn) *)
+  fun declarations (text : string) : Ast.dec list =
+    let
+      val file = Source.fromString ("stdIn", text)
+      val () = Source.register file
+      val toks = Lexer.tokenize file
+      val n = Vector.length toks
+      val at = {file = "stdIn", start = 0, stop = 0}
+      val stop = #2 (Vector.sub (toks, n - 1))
+      fun asDecs () = #1 (Parser.parseTokensWith (toks, !ReplSession.fixity))
+      fun asExp () =
+        #1 (Parser.parseTokensWith (Vector.concat [Vector.fromList [(Token.VAL, at), (Token.ID "it", at), (Token.EQUALS, at)],
+                                                   VectorSlice.vector (VectorSlice.slice (toks, 0, SOME (n - 1))),
+                                                   Vector.fromList [(Token.SEMI, stop), (Token.EOF, stop)]],
+                                    !ReplSession.fixity))
+    in
+      asDecs () handle Error.CompileError e => (asExp () handle Error.CompileError _ => raise Error.CompileError e)
+    end
+
+  (* the text elaborated against the session, every error reported, and then
+     undone: the declarations, their variables resolved and typed (the
+     engine's typeAt and check) *)
+  fun elaborated (text : string) : Ast.dec list =
+    let
+      val decs = declarations text
+      val start = UnitBasis.begin (!ReplSession.env, !ReplSession.fixity)
+      val snap = Elaborate.snapshot ()
+      val here = ref (!ReplSession.env)
+      val errors = !Error.errors
+      val recovering = !Elaborate.recover
+      fun undo () = (Elaborate.recover := recovering; Elaborate.restore snap; UnitBasis.undo start; Error.warnings := [])
+    in
+      (Elaborate.allowPrim := false;
+       Elaborate.recover := true;
+       Elaborate.elabTop (here, decs);
+       if !Error.errors > errors then raise ReplSession.Reported else Elaborate.finish ();
+       undo ();
+       decs)
+      handle e => (undo (); raise e)
+    end
+
   fun typeOf (text : string) : Types.ty =
     let
       (* the expression lexed by itself, so that an error points into it,

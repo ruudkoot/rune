@@ -50,7 +50,11 @@ skips the init file
 .B \-\-color
 colours the REPL's output always, never or on a terminal (auto), and
 .B \-\-basic
-reads a line at a time, as on a pipe.
+reads a line at a time, as on a pipe;
+.B \-\-engine
+is the session for a front in another process, JSON-RPC 2.0 on the
+descriptors 3 and 4
+.RI ( docs/repl-protocol.md ).
 The wrapper does this, and the compiler never sees the option.
 .TP
 .BI \-o " FILE"

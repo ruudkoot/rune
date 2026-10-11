@@ -8,7 +8,7 @@ keys Enter
 wait ^val it = 1 : int$
 send val (a, b) = (2, "two");
 keys Enter
-wait ^val b = "two" : string$
+wait ^val b = "two" : string\n-$
 expect @DIR@/repl-prompt.screen
 send val () = OS.Process.exit OS.Process.success;
 keys Enter
