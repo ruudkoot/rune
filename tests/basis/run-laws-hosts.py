@@ -6,21 +6,29 @@
 
 The programs of `runedoc --laws` are built by MLton, SML/NJ (64 and 32 bits,
 and the development line), Poly/ML and MLKit against their own Basis Library,
-with lib/random, lib/test/property and its Basis instances, lib/test/property/basis, and run with the settings of
-`make check`. A law is held at a structure only where the host has what it
-names: a probe asks each host which of the structures the programs name it
-has, and a file of lib/test/property that tests/lib/run-hosts.sh leaves out
-(host column no) is built where the structures it requires are there. A
-program that still does not build loses the laws its errors are in, and is
-built again; those laws are NOT BUILT on the host, with the first error.
+with lib/random, lib/test/property and lib/test/property/basis, and run with
+the settings of `make check`, $LAWS_HOST_JOBS hosts at once (default 3). A law
+is held at a structure only where the host has what it names: a probe asks
+each host which of the structures the programs name it has, and a file of the
+libraries that tests/lib/run-hosts.sh leaves out (host column no) is built
+where the structures it requires are there, and left out where an error points
+into it. A program that still does not build loses the laws its errors are in,
+and is built again; those laws are NOT BUILT on the host, with the first
+error. A program the host stops (SML/NJ's "bogus fault", or after
+$LAWS_HOST_TIMEOUT seconds) goes on after the law it was in, which is STOPPED.
+A law that fails is run again by itself, three times at most where the host
+stops before a verdict: as the programs are deterministic, a verdict that
+changes is FLAKY, the host's.
 
 The verdicts are compared with Rune's (tests/out/laws/results.txt, or
 $LAWS_RESULTS): a law that passes on one and fails on the other is a
 DIFFERENCE, which the hunt classifies -- the law, Rune, or the host (a host's
-bug is a line of tests/lib/deviations.txt, as for the libraries). A law that
-fails on both is AGREED. In tests/out/laws-hosts: HOST.structures, what the
-host lacks of the names the programs use; HOST/, each program as the host
-builds it and its output; HOST.results; and differences.txt.
+bug is a line of tests/basis/law-deviations.txt). A law that fails on both is
+AGREED. In tests/out/laws-hosts: HOST.structures, what the host lacks of the
+names the programs use; HOST.library, the files it builds; HOST/, each
+program as the host builds it and its output; HOST.results; and
+differences.txt. `--compare [HOST...]` judges the results there again, as
+after a change to the deviations.
 """
 import concurrent.futures
 import fnmatch
@@ -48,8 +56,11 @@ DEVIATIONS = os.environ.get("LAWS_DEVIATIONS", "tests/basis/law-deviations.txt")
 SKIPS = os.environ.get("LAWS_SKIPS", "tests/basis/law-skips.txt")
 TIMEOUT = int(os.environ.get("LAWS_HOST_TIMEOUT", "600"))      # seconds for a program to build and run, each time
 MEMORY = int(os.environ.get("LAWS_HOST_MEMORY", "8192"))        # megabytes, for a host and its program
+JOBS = int(os.environ.get("LAWS_HOST_JOBS", "3"))               # hosts at once: six at once, MLton building
+                                                                # beside the others, can fill the machine
 OUT = os.path.join(TOP, "tests/out/laws-hosts")
 PROGRAMS = os.environ.get("LAWS_PROGRAMS", "")    # a regular expression: only the programs it matches
+ATTEMPTS = 12      # builds of a program, each without the laws the errors before were in
 RANDOM = ["lib/random/random_sig.sml", "lib/random/random.sml"]
 
 
@@ -122,7 +133,8 @@ def library_on(host, files, present, workdir):
         built, output, msgs, _ = build(host, "library", RANDOM + chosen + [main], workdir)
         if built:
             return chosen, provided, dropped
-        bad = [f for f in chosen if os.path.join(TOP, f) in msgs and
+        # the file an error points into (MLKit names every file it reads)
+        bad = [f for f in chosen if error_lines(host, msgs, f) and
                dict((g, h) for g, h, _, _ in files).get(f) == "no"]
         if not bad:
             raise SystemExit("%s: lib/test/property does not build:\n%s" % (host, first_error(msgs)))
@@ -164,10 +176,20 @@ def names_in(entry_text):
         path = m.group(1)
         # `Int.maxInt` names Int; `Date.Jan` names Date (a constructor); `OS.Path.x` OS.Path
         names.add(path)
-    for m in re.finditer(r"let open ([A-Za-z0-9_. ]+?) in", code):
-        for p in m.group(1).split():
-            names.add(p)
+    names.update(opens_in(entry_text))
     return names
+
+
+def opens_in(entry_text):
+    """the structures an entry opens, under which a path may be relative:
+    `StreamIO` is `BinIO.StreamIO` in `let open BinIO in ... StreamIO.input`"""
+    code = re.sub(r'"(?:[^"\\]|\\.)*"', '""', entry_text)
+    return [p for m in re.finditer(r"let open ([A-Za-z0-9_. ]+?) in", code) for p in m.group(1).split()]
+
+
+def opened(entry_text):
+    """(a structure the entry opens, a path the entry names) for each pair"""
+    return {(o, n) for o in opens_in(entry_text) for n in names_in(entry_text) if n != o}
 
 
 def prefixes(path):
@@ -198,8 +220,7 @@ def probe(host, names, workdir, kind="structure"):
         open(os.path.join(workdir, "probe.mlb"), "w").write("$(SML_LIB)/basis/basis.mlb\nprobe.sml\n")
         _, text = run([BIN[host], "-o", "probe", "probe.mlb"], cwd=workdir,
                       env=dict(os.environ, SML_LIB=MLKIT_LIB))
-        unbound = set(re.findall(r"unbound (?:structure|signature) (?:identifier )?([A-Za-z0-9_.']+)\.?", text))
-        bad = {i + 1 for i, n in enumerate(names) if any(n == u or n.startswith(u + ".") for u in unbound)}
+        bad = {int(m.group(1)) for m in re.finditer(r"probe\.sml, line (\d+), column", text)}
     else:
         raise SystemExit("unknown host " + host)
     return {names[i - 1] for i in bad if 1 <= i <= len(names)}
@@ -207,7 +228,14 @@ def probe(host, names, workdir, kind="structure"):
 
 def missing_on(host, names, workdir):
     """the names the host has neither as a structure nor as a signature"""
-    missing = probe(host, names, workdir)
+    missing, rest = set(), set(names)
+    # again without the names found: MLKit reports at most 50 errors
+    while rest:
+        found = probe(host, rest, workdir)
+        if not found:
+            break
+        missing |= found
+        rest -= found
     sigs = {n for n in missing if "." not in n and re.fullmatch(r"[A-Z][A-Z0-9_]*", n)}
     if not sigs:
         return missing
@@ -282,9 +310,10 @@ def finish(output, again):
     return "\n".join(outputs), stopped
 
 
-def error_lines(host, msgs, program_file):
-    """the lines of the program the build's errors point to"""
-    base = re.escape(os.path.basename(program_file))
+def error_lines(host, msgs, source_file):
+    """the lines of a program, or of a file of the library, that the build's
+    errors point to"""
+    base = r"(?<![\w.-])" + re.escape(os.path.basename(source_file))
     pats = {"mlton": base + r" (\d+)\.\d+", "smlnj": base + r":(\d+)\.\d+", "polyml": base + r":(\d+): error",
             "mlkit": base + r", line (\d+)"}
     key = "smlnj" if host.startswith("smlnj") else host
@@ -378,10 +407,11 @@ def main():
             programs[f[:-4]] = split_program(open(os.path.join(OUT, "programs", f)).read())
     files = manifest()
     lib_names = library_names(files)
-    wanted = set()
+    wanted, pairs = set(), set()
     for _, entries, _ in programs.values():
         for label, body in entries:
             wanted.update(names_in(body))
+            pairs.update(opened(body))
             wanted.add(label.split("@", 1)[1])
     for _, _, _, requires in files:
         wanted.update(requires)
@@ -396,6 +426,11 @@ def main():
         workdir = os.path.join(OUT, host)
         os.makedirs(workdir)
         missing = missing_on(host, basis_names, workdir)
+        # a path the host lacks at the top may be under a structure that an
+        # entry opens: `StreamIO` under `open BinIO`
+        under = {p for o, n in pairs if any(q in missing for q in prefixes(n))
+                 for p in prefixes(o + "." + n) if p.split(".")[0] not in lib_names} - basis_names
+        missing |= missing_on(host, under, workdir)
         open(os.path.join(OUT, host + ".structures"), "w").write("".join(n + "\n" for n in sorted(missing)))
         present = basis_names - missing
         chosen, provided, dropped = library_on(host, files, present, workdir)
@@ -405,14 +440,19 @@ def main():
         for prog, (head, entries, tail) in programs.items():
             keep, notbuilt = [], []
             for label, body in entries:
-                lack = [p for n in names_in(body) | {label.split("@", 1)[1]} for p in prefixes(n)
-                        if (p in lib_names and p not in provided) or (p.split(".")[0] not in lib_names and p in missing)]
+                def lacks(n):
+                    return [p for p in prefixes(n) if (p in lib_names and p not in provided) or
+                            (p.split(".")[0] not in lib_names and p in missing)]
+                # a path is there at the top or under a structure the entry opens
+                lack = [p for n in names_in(body) | {label.split("@", 1)[1]}
+                        if not any(not lacks(o + "." + n) for o in opens_in(body) if o != n)
+                        for p in lacks(n)]
                 if lack:
                     notbuilt.append((label, "the host lacks " + ", ".join(sorted(set(lack)))))
                 else:
                     keep.append((label, body))
             output, stopped, rerun = "", [], None
-            for attempt in range(6):
+            for attempt in range(ATTEMPTS):
                 if not keep:
                     break
                 text = head + "\n" + ",\n".join(b for _, b in keep) + tail
@@ -438,14 +478,28 @@ def main():
                     break
                 notbuilt += [(label, why) for label in sorted(hit)]
                 keep = [(l, b) for l, b in keep if l not in hit]
+            else:
+                if keep:
+                    notbuilt += [(label, "the program does not build after %d attempts: %s" % (ATTEMPTS, why))
+                                 for label, _ in keep]
+                    keep = []
             open(os.path.join(workdir, prog + ".out"), "w").write(output)
             got = verdicts(output)
             halted = dict(stopped)
             for label, _ in keep:
                 if label in got and got[label][0] == "FAIL" and rerun is not None:
-                    second = verdicts(rerun("", label)).get(label)
+                    # by itself, three times at most where the host stops
+                    # before a verdict (SML/NJ's "bogus fault")
+                    second = None
+                    for _ in range(3):
+                        second = verdicts(rerun("", label)).get(label)
+                        if second is not None:
+                            break
                     if second is not None and second[1] != got[label][1]:
                         lines_out.append("FLAKY %s: %s; again: %s" % (label, got[label][1], second[1]))
+                        continue
+                    if second is None:
+                        lines_out.append("%s; again: the program stopped before a verdict, three times" % got[label][1])
                         continue
                 if label in got:
                     lines_out.append(got[label][1])
@@ -465,7 +519,7 @@ def main():
                                                               counts["NOT RUN"], len(explained), len(diffs))), diffs
 
     differences = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(hosts)) as pool:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(JOBS, len(hosts))) as pool:
         for host, summary, diffs in pool.map(one, hosts):
             print(summary, flush=True)
             differences += diffs

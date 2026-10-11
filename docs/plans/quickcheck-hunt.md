@@ -457,3 +457,86 @@ about two minutes, nearly all of it `fromList`'s discards: rows of one
 length are seldom drawn, which the general solution noted for later (variables drawn
 together) would mend.
 
+
+## D10 on the split library (2026-10-10 and 11)
+
+With the arbitrary of each optional structure in a file of its own
+(`lib/test/property/basis`), a compiler builds the arbitraries of every
+structure it has. Three runs on the new layout, mending the tester as they
+went; the last, with the settings of `make check` and against Rune's run of
+the same tree:
+
+| Host | Pass (before) | Fail | Flaky | Stopped | Not built | Not run | Differ from Rune, explained | Not explained |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| MLton | 1,524 (761) | 17 | 0 | 0 | 199 | 0 | 9 | 1 |
+| SML/NJ 110.99.9, 64 bits | 545 (404) | 27 | 8 | 58 | 1,102 | 0 | 24 | 0 |
+| SML/NJ 110.99.9, 32 bits | 0 (0) | 0 | 0 | 0 | 1,061 | 679 | 0 | 0 |
+| SML/NJ 2026.2 | 584 (424) | 23 | 0 | 31 | 1,102 | 0 | 20 | 0 |
+| Poly/ML 5.9.2 | 686 (478) | 12 | 0 | 6 | 1,036 | 0 | 9 | 0 |
+| MLKit 4.7.23 | 1,444 (572) | 18 | 0 | 0 | 278 | 0 | 14 | 1 |
+
+**No difference was Rune's.** New since the last runs:
+
+| Law | What differs | On | Class |
+|---|---|---|---|
+| `abs i = (if i < 0 then ~i else i)` at `Int32` | `Int32.abs (valOf Int32.minInt)` is `~2147483648`, where `Int32.~` of it raises `Overflow`, as the 32-bit build, MLton, Poly/ML, MLKit and Rune do | SML/NJ, 64 bits (110.99.9 and 2026.2) | host bug; found now that `Int32`'s arbitrary is not in a file with `Int8`'s |
+| `IMPERATIVE_IO`'s laws | `inputAll` of a stream over an empty vector raises `Io`, from `Div`, for `BinIO` as for `TextIO` (the line of `STREAM_IO.input` now says so), and the arbitraries of instreams read one to show it | SML/NJ | host bug |
+| `MONO_VECTOR.tabulate` at `Real64Vector`, `MONO_ARRAY.fromList` at `Real64Array`, `LIST.mapPartial`, `MONO_ARRAY.array` at `RealArray`, `MONO_ARRAY.foldl` at `CharArray`, `MONO_VECTOR.foldr` at `RealVector` | a drawn pure function gives two outcomes for one argument, or two reals that print alike differ; by itself each fails again or the host stops ("bogus overflow fault"), and with `@SMLalloc=64M` each passes | SML/NJ 110.99.9, 64 bits | the host's collector (flaky) |
+| `canInput (f, n) = StreamIO.canInput (getInstream f, n)` at `TextIO` | `TextIO.canInput` of `TextIO.openString` gives at most `SOME 32`, where `StreamIO.canInput` of its stream counts them all (33, 100, 5,000) | MLton, MLKit | for the owner (below) |
+
+Each run of the 64-bit SML/NJ 110.99.9 brings laws of its collector anew:
+the runner marks a failure FLAKY when the law by itself gives another
+verdict (eight this time), and a law whose failure repeats by itself is a
+line of the deviations with its probe.
+
+**For the owner: `canInput`.** The definition, as MLton's notes quote it
+(`basis-library/notes.txt`): `canInput (f, n)` returns `SOME k` "if a call
+to input would return immediately with at least k characters", and it
+"should attempt to return as large a k as possible". MLton and MLKit return
+what their imperative buffer holds, 32 characters; their functional streams
+count all. The law holds of Rune, whose imperative `canInput` is its
+`StreamIO.canInput`, but asks more of other implementations than the
+definition does. It stays as it is until the owner decides, and the two
+differences are not explained.
+
+**MLton's `canInput` after a read through `getInstream`.** Once the
+functional stream of `getInstream f` has been read to its end,
+`TextIO.canInput (f, 1)` is `SOME 0`, though `input f` still gives what `f`
+holds and `StreamIO.canInput (getInstream f, 1)` is `SOME 1` (the same for
+`BinIO.openIn` of a file; every other compiler and Rune give `SOME 1`). The
+law met it only through the tester's fault below; mended, no law reaches
+it, and it is kept here for a report.
+
+**The tester.** `Prop.law` and `Prop.equalIf` showed the left side's value
+before the sides ran, and showing a stream reads it through `getInstream`:
+the left side met a stream already read, the right one a fresh one. On a
+correct implementation that cannot be seen, but `canInput` can: Poly/ML's
+`BinPrimIO.openVector` has no `readVecNB` (Rune reads the specification as
+giving it one, `PrimIO.openVector/readVecNB-is-there`, as MLton does), so
+`StreamIO.canInput` of a fresh stream raises `NonblockingNotSupported` and
+of a read one answers. The value shown is now drawn on its own. The
+`forAll`s, with one value and nothing to compare it with, still show it
+before the property runs, which a case's single draw keeps
+(`resource/released-after-each-case`).
+
+**The runner** (`tests/basis/run-laws-hosts.py`):
+- MLKit's probe read `WideChar.` with its full stop and so found nothing absent; it reads the lines of the errors now, as for the other hosts.
+- The probe is repeated without the names it found until it finds none, as MLKit reports at most 50 errors.
+- A file of host column `no` that does not build was left out by the first such file the messages named, and MLKit names every file it reads: `Int32`, `Int64`, `Word32`, `Word64`, `FixedInt` and the `Bool` and `Int` sequences were left out though MLKit has them. A file is left out now where an error points into it.
+- A path under a structure that the law opens (`StreamIO` in `let open BinIO in ... StreamIO.input ...`) was asked for at the top, so sixteen laws were NOT BUILT on every compiler; where the host lacks it at the top, it is asked for under the opened structures.
+- A program that does not build after twelve attempts gives NOT BUILT, not NOT RUN.
+- A failing law's run by itself is tried three times where the host stops before a verdict.
+- At most `$LAWS_HOST_JOBS` hosts at once (default 3): a run with all six at once, MLton building beside another session's MLton builds, ended in a crash of the machine seven minutes in (memory, most likely; not shown).
+
+**What is still not built** is what a host lacks (`Int8`, `WideChar`,
+`Real32`, the arrays of two dimensions, ...) and the hosts' own identities
+of types: on MLton `Real64Vector` is not `RealVector`, `LargeWordVector`
+not `Word64Vector` and `Position` not `Int`; on SML/NJ and Poly/ML
+`Position` and `SysWord` are their own; MLKit's `LargeIntArray` holds
+`int`. The programs take one structure's arbitrary for another's type, as
+on Rune they are one; a program made for each host would build them. The
+32-bit SML/NJ builds the library now, but every program stops as it loads
+the arbitraries of numbers, with `Domain` from `Gen.largeRange`: there
+`Word64.notb 0w0` is 18446744070488326143, not 2^64 - 1 (bits 30 and 31
+lost, `tests/lib/deviations.txt`), so the widest range `Gen` allows is too
+narrow.

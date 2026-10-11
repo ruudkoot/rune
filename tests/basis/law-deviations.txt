@@ -39,8 +39,10 @@ native:smlnj* | GENERAL.exnMessage/law-1@General | HOST-BUG | exnMessage Overflo
 native:smlnj* | OS_PATH.splitBaseExt/law-1@OS.Path | HOST-BUG | splitBaseExt "//" has the base "/", and joinBaseExt of it is "/": a separator is lost
 native:smlnj* | OS_PATH.splitDirFile/law-1@OS.Path | SPEC-AMBIGUOUS | joinDirFile raises InvalidArc for an arc that is NUL, as Poly/ML does; Rune, MLton and MLKit take it. The specification leaves which arcs are valid to the system, and POSIX names hold no NUL
 native:smlnj* | STRING_CVT.skipWS/law-1@StringCvt | HOST-BUG | StringCvt.skipWS does not skip the vertical tab, which Char.isSpace counts as space
-native:smlnj* | STREAM_IO.input/law-1@* | HOST-BUG | TextIO.StreamIO.inputAll of TextIO.openString "" raises Io, from Div; the arbitrary of instreams shows one by reading it all, so the law cannot be made
-native:smlnj* | STREAM_IO.input1/law-1@* | HOST-BUG | TextIO.StreamIO.inputAll of TextIO.openString "" raises Io, from Div; the arbitrary of instreams shows one by reading it all, so the law cannot be made
+native:smlnj* | STREAM_IO.input/law-1@* | HOST-BUG | inputAll of a stream over an empty vector (TextIO.openString "", or BinPrimIO.openVector of no bytes) raises Io, from Div; the arbitraries of instreams show one by reading it all, so the law cannot be made
+native:smlnj* | STREAM_IO.input1/law-1@* | HOST-BUG | inputAll of a stream over an empty vector (TextIO.openString "", or BinPrimIO.openVector of no bytes) raises Io, from Div; the arbitraries of instreams show one by reading it all, so the law cannot be made
+native:smlnj* | IMPERATIVE_IO.*@* | HOST-BUG | inputAll of a stream over an empty vector (TextIO.openString "", or BinPrimIO.openVector of no bytes) raises Io, from Div; the arbitraries of instreams show one by reading it all, so the law cannot be made
+native:smlnj-* | INTEGER.abs/law-1@Int32 | HOST-BUG | Int32.abs (valOf Int32.minInt) is ~2147483648 on the 64-bit builds, where Int32.~ of it raises Overflow, as abs should; the 32-bit build, MLton, Poly/ML, MLKit and Rune raise Overflow
 
 # ---- SML/NJ 110.99.9, 64 bits: a garbage collection now and then corrupts a
 # Word64 or a real (docs/bugreport/smlnj/GC/real-corrupted-on-64-bit,
@@ -49,6 +51,12 @@ native:smlnj* | STREAM_IO.input1/law-1@* | HOST-BUG | TextIO.StreamIO.inputAll o
 native:smlnj-legacy | ARRAY_SLICE.foldl/law-1@* | HOST-FLAKY | a drawn function gave two outcomes for one argument: the 64-bit build's garbage collection corrupts a Word64 now and then
 native:smlnj-legacy | STRING_CVT.takel/law-1@* | HOST-FLAKY | a drawn function gave two outcomes for one argument: the 64-bit build's garbage collection corrupts a Word64 now and then
 native:smlnj-legacy | MONO_VECTOR.fromList/law-1@Real64Vector | HOST-FLAKY | a real changed between two reads (both print 8.078194267465491E37): the 64-bit build's garbage collection corrupts a real now and then
+native:smlnj-legacy | MONO_VECTOR.tabulate/law-1@Real64Vector | HOST-FLAKY | a drawn pure function gave two outcomes for one argument at case 75, with other reals each time; with @SMLalloc=64M the law passes, with @SMLalloc=256k the host stops ("bogus overflow fault"), and on SML/NJ 2026.2 it passes
+native:smlnj-legacy | LIST.mapPartial/law-1@List | HOST-FLAKY | a drawn pure function gave two outcomes for one argument (fn ~2781978662954296116 => SOME ~15 | ~2781978662954296116 => SOME 19), and its runs by itself stopped three times before a verdict; by itself the law has stopped ("bogus overflow fault"), failed at another case, and passed with @SMLalloc=64M
+native:smlnj-legacy | MONO_ARRAY.array/law-1@RealArray | HOST-FLAKY | two reals that both print 0.5 compared unequal at case 102; by itself the law fails so again, and with @SMLalloc=64M it passes
+native:smlnj-legacy | MONO_ARRAY.foldl/law-1@CharArray | HOST-FLAKY | a drawn function gave two outcomes for one argument, and its runs by itself stopped three times before a verdict; by itself the host stops ("bogus fault not in ML"), and with @SMLalloc=64M the law passes
+native:smlnj-legacy | MONO_VECTOR.foldr/law-1@RealVector | HOST-FLAKY | a drawn function gave two outcomes for one argument at case 82; by itself the law fails so again, and with @SMLalloc=64M it passes
+native:smlnj-legacy | MONO_ARRAY.fromList/law-1@Real64Array | HOST-FLAKY | List.nth of a list whose element is 0 gave 1.0675005574680372E~229 after the program's other laws; by itself the law passes, at three sizes of @SMLalloc
 
 # ---- Date for years outside 1900 to 2200, where an implementation may raise
 # Date: the laws hold there when a date keeps its fields or Date is raised
