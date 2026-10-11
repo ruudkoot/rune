@@ -2775,12 +2775,14 @@ Windows, and any Rune program can read a line with them.
   the compiler's, M3 the runtime's, M4 and M5 a library's; they can be
   built on master and merged first. M1's harness can too; its scripts
   of today's REPL need incremental's `bin/rune-repl`.
-  This branch stands on incremental's `f2141599`; incremental has since
-  reached `d9d5e5d1` (its M11, 2026-10-10), and 18 files changed on
-  both, `src/driver/main.sml`, `src/driver/options.sml`,
-  `src/repl/session.sml`, the `Makefile` and the bootstrap's budgets
-  among them. M6 begins by rebasing on incremental's head, checking
-  everything again and measuring the budgets again.
+  M1 to M5 were built on incremental's `f2141599`, and M6 to M13 on its
+  `673729a3`, merged in. On 2026-10-11 the branch was rebased onto
+  incremental's head (`5d83f906`), itself rebased on master, so that it
+  merges into master: each commit replayed -- the sources M2 adds are in
+  `rune.build` and `runedoc.build`, each library's `MANIFEST` is a
+  `library.build` (incremental M10), from which `make manifests` writes
+  it -- and checked again, its generated documentation made again and the
+  bootstrap's budgets measured again where they had moved.
 * **New primitives meet incremental's.** M3 adds primitives and changes
   the fingerprint of the instruction set and the image format;
   incremental adds primitives too (`rt_link`, `rt_share`, the interrupt's)
@@ -2823,8 +2825,9 @@ Windows, and any Rune program can read a line with them.
   * `docs/bytecode.md:17` says the version is 3 and `:46` says 6.
   * `runtime/sys/sys_win.c:13` points to a `docs/plans/windows.md` that
     does not exist.
-  * The two above are fixed on master (`88aa3fa3`), not on this branch;
-    the fix comes with the merge. The two before them are open.
+  * The two above are fixed on master (`88aa3fa3`), which this branch
+    now stands on; the two before them are fixed too (2026-10-11):
+    `lib/cache/made` depends on `bin/rune`, and `use` raises `IO.Io`.
   * `docs/plans/jit.md`'s M11 names files under `vm/new/`.
   * Rune and rune-ide have no licence file. This roadmap studied the
     sources of GPL code (GNU readline, fish) and copied none.
