@@ -397,6 +397,13 @@ enum Prim {
   PRIM_proc_kill = 391,
   PRIM_intinf_unpack = 392,
   PRIM_intinf_pack = 393,
+  PRIM_intinf_gmp_available = 394,
+  PRIM_intinf_max_bits = 395,
+  PRIM_intinf_check_bits = 396,
+  PRIM_intinf_binary = 397,
+  PRIM_intinf_divmod = 398,
+  PRIM_intinf_shift = 399,
+  PRIM_intinf_power = 400,
   PRIM__COUNT
 };
 
@@ -795,6 +802,13 @@ static const char *const prim_names[] = {
   "proc_kill",
   "intinf_unpack",
   "intinf_pack",
+  "intinf_gmp_available",
+  "intinf_max_bits",
+  "intinf_check_bits",
+  "intinf_binary",
+  "intinf_divmod",
+  "intinf_shift",
+  "intinf_power",
 };
 
 static const unsigned char prim_arity[] = {
@@ -1191,6 +1205,13 @@ static const unsigned char prim_arity[] = {
   2,
   2,
   2,
+  3,
+  1,
+  1,
+  1,
+  5,
+  5,
+  4,
   3,
 };
 
@@ -1592,6 +1613,13 @@ static const unsigned char prim_result[] = {
   1,
   6,
   6,
+  5,
+  1,
+  8,
+  0,
+  0,
+  0,
+  0,
 };
 
 #define RUNE_PRIM_LIST(X) \
@@ -1988,6 +2016,13 @@ static const unsigned char prim_result[] = {
   X(proc_wait) \
   X(proc_kill) \
   X(intinf_unpack) \
-  X(intinf_pack)
+  X(intinf_pack) \
+  X(intinf_gmp_available) \
+  X(intinf_max_bits) \
+  X(intinf_check_bits) \
+  X(intinf_binary) \
+  X(intinf_divmod) \
+  X(intinf_shift) \
+  X(intinf_power)
 
 #endif

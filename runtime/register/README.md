@@ -780,3 +780,14 @@ and runs the Basis Library suite; `make test-register-asan` and `make
 test-stress` run `tests/lang` with the sanitisers and with a collection
 every 101st allocation; `make test-windows` and `make test-portability`
 run the suites on the other machines' builds.
+
+## Optional IntInf arithmetic
+
+The register VM can link `runtime/intinf.c` with GMP ahead of the shared
+GMP-free archive. SML dispatch reads the current VM's capability on each
+large operation; every tier calls the same generated primitives. Values and
+images contain canonical small integers or immutable magnitude bytes, with
+no GMP pointers. GMP objects are scoped to a primitive call and its allocator
+is separately budgeted. See `docs/runtime.md` and `docs/plans/gmp.md`. Count
+comparisons across stack, native and register engines force SML; comparisons
+across register tiers also run separately with GMP.

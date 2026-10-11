@@ -1,6 +1,7 @@
 /* runevm: portable interpreter for Rune bytecode. */
 #include "version.h"
 #include "vm.h"
+#include "intinf.h"
 #ifdef RUNE_CENSUS
 #include "register/jit.h"
 #endif
@@ -63,6 +64,10 @@ static void usage(void) {
         "  --jit-perf-map  register VM: write /tmp/perf-PID.map, so that perf record names compiled functions\n"
         "  --jit-profile   register VM: count what compiled code calls, branches and loops on (--jit-stats shows them)\n"
         "  --jit-check     register VM: run a few bytes of code from executable memory and exit\n"
+        "  --intinf=MODE   auto (default), gmp or sml; explicit GMP requires a supported library\n"
+        "  --intinf-max-bits N  magnitude budget, 64..1073741822 (default 134217728)\n"
+        "  --intinf-gmp-memory N  tracked GMP allocation budget in bytes (default 268435456)\n"
+        "  --intinf-stats  report backend and native arithmetic allocations\n"
         "  --version       print the version and exit\n"
 #ifdef RUNE_CENSUS
         "  --census-dir DIR     census VM: write the allocation traces of docs/census.md into DIR\n"
@@ -92,6 +97,8 @@ int main(int argc, char **argv) {
     size_t heap_limit = 0, equality_work = 0, nursery = (size_t)1 << 20, nursery_max = (size_t)8 << 20;
     int old_kind = OLD_IMMIX, gc_compact = 0, gc_stress_cycles = 0, low_pause = 0, nursery_max_set = 0;   /* --gc throughput, the default (docs/plans/garbage-collector-v2.md, D3) */
     int disasm = 0, trace = 0, stats = 0, count = 0, emulate_fork = 0, checked = 0, gc_verify = 0;
+    size_t intinf_bits = 0, intinf_memory = 0;
+    int intinf_mode = INTINF_AUTO, intinf_given = 0, intinf_stats = 0;
     int jit_check = 0, jit_given = 0;
     JitOptions jit;
     memset(&jit, 0, sizeof jit);
@@ -111,7 +118,15 @@ int main(int argc, char **argv) {
             if (!size_arg(argv[++i], &heap_limit) || heap_limit < 4096) { usage(); return 2; }
         } else if (strcmp(argv[i], "--equality-work") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &equality_work) || equality_work == 0) { usage(); return 2; }
-        } else if (strcmp(argv[i], "--stack-size") == 0 && i + 1 < argc) {
+        } else if (strncmp(argv[i], "--intinf=", 9) == 0) {
+            if (!vm_intinf_mode(argv[i] + 9, &intinf_mode)) { usage(); return 2; }
+            intinf_given = 1;
+        } else if (strcmp(argv[i], "--intinf-max-bits") == 0 && i + 1 < argc) {
+            if (!size_arg(argv[++i], &intinf_bits) || intinf_bits < 64 || intinf_bits > INTINF_MAX_BITS) { usage(); return 2; }
+        } else if (strcmp(argv[i], "--intinf-gmp-memory") == 0 && i + 1 < argc) {
+            if (!size_arg(argv[++i], &intinf_memory) || !intinf_memory) { usage(); return 2; }
+        } else if (strcmp(argv[i], "--intinf-stats") == 0) intinf_stats = 1;
+        else if (strcmp(argv[i], "--stack-size") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &stack) || stack < 65536) { usage(); return 2; }
         } else if (strcmp(argv[i], "--disasm") == 0) disasm = 1;
         else if (strcmp(argv[i], "--trace") == 0) trace = 1;
@@ -173,7 +188,7 @@ int main(int argc, char **argv) {
             if (!size_arg(argv[++i], &census_ids)) { usage(); return 2; }
         }
 #endif
-        else if (strcmp(argv[i], "--version") == 0) { printf("runevm %s\n", RUNE_VERSION); return 0; }
+        else if (strcmp(argv[i], "--version") == 0) { printf("runevm %s\n", RUNE_VERSION); vm_intinf_version(stdout); return 0; }
         else if (strcmp(argv[i], "--help") == 0) { usage(); return 0; }
         else if (strcmp(argv[i], "--") == 0) { i++; args_given = 1; break; }
         else if (argv[i][0] == '-' && argv[i][1] != 0) { usage(); return 2; }
@@ -189,6 +204,14 @@ int main(int argc, char **argv) {
         else if (strcmp(t, "2") == 0) jit.tier = 2;
         else { fprintf(stderr, "runevm: RUNEVM_JIT_TIER=%s: 1 or 2\n", t); return 2; }
     }
+    if (!intinf_given && getenv("RUNEVM_INTINF") &&
+        !vm_intinf_mode(getenv("RUNEVM_INTINF"), &intinf_mode)) {
+        fputs("runevm: RUNEVM_INTINF must be auto, gmp or sml\n", stderr);
+        return 2;
+    }
+    VM arithmetic = {0};
+    arithmetic.intinf_mode = intinf_mode;
+    if (!vm_intinf_configure(&arithmetic)) return 2;
     if (jit_check) return vm_jit_check();
     /* the low-pause collector's nursery stays --nursery N: a minor
        collection's pause is in proportion to it (docs/runtime.md) */
@@ -200,6 +223,10 @@ int main(int argc, char **argv) {
         char err[256];
         if (vm) vm->stack_limit = stack;   /* before the image's stack is made */
         if (vm) { vm->heap_limit = heap_limit; vm->equality_work = equality_work; vm->gc.nursery_size = vm->gc.nursery_min = nursery; vm->gc.nursery_max = nursery_max; vm->gc.old_kind = old_kind; vm->gc.compact_always = gc_compact; vm->gc.stress_cycles = gc_stress_cycles; }
+        if (vm) {
+            vm->intinf_max_bits = intinf_bits; vm->intinf_gmp_memory = intinf_memory;
+            vm->intinf_mode = intinf_mode; vm->intinf_stats = intinf_stats;
+        }
         if (!vm || !vm_restore(vm, restore, err, sizeof err)) {
             fprintf(stderr, "runevm: --restore: %s\n", vm ? err : "out of memory");
             if (vm) vm_destroy(vm);
@@ -248,6 +275,10 @@ int main(int argc, char **argv) {
         char err[256];
         if (vm) vm->stack_limit = stack;
         if (vm) { vm->heap_limit = heap_limit; vm->equality_work = equality_work; vm->gc.nursery_size = vm->gc.nursery_min = nursery; vm->gc.nursery_max = nursery_max; vm->gc.old_kind = old_kind; vm->gc.compact_always = gc_compact; vm->gc.stress_cycles = gc_stress_cycles; }
+        if (vm) {
+            vm->intinf_max_bits = intinf_bits; vm->intinf_gmp_memory = intinf_memory;
+            vm->intinf_mode = intinf_mode; vm->intinf_stats = intinf_stats;
+        }
         if (!vm || !vm_resume(vm, resume, err, sizeof err)) {
             fprintf(stderr, "runevm: --resume: %s\n", vm ? err : "out of memory");
             if (vm) vm_destroy(vm);
@@ -273,6 +304,8 @@ int main(int argc, char **argv) {
     vm->stack_limit = stack;
     vm->heap_limit = heap_limit;
     vm->equality_work = equality_work;
+    vm->intinf_max_bits = intinf_bits; vm->intinf_gmp_memory = intinf_memory;
+    vm->intinf_mode = intinf_mode; vm->intinf_stats = intinf_stats;
     vm_init(vm, heap);
     vm->heap_fill = (unsigned)heap_fill;
 #ifdef RUNE_CENSUS

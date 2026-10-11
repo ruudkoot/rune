@@ -14,10 +14,14 @@
    See also: `INTEGER`, `WORD`
 
    Implementation: `IntInf.int/limbs`. A small machine integer or a sign
-   and immutable little-endian magnitude bytes. Arithmetic is written in
-   SML with indexed 30-bit scratch digits (15-bit on narrow hosts); storage
+   and immutable little-endian magnitude bytes. The register VM optionally
+   uses GMP through temporary native objects; the independent SML backend
+   uses indexed 30-bit scratch digits (15-bit on narrow hosts). Storage
    primitives pack and unpack the bytes. Normalization gives equal numbers
-   equal values, so `=` compares them. `LargeInt` is `IntInf`.
+   equal values, so `=` compares them. `LargeInt` is `IntInf`. Both backends
+   enforce a finite operational magnitude budget (134217728 bits by default),
+   with a runtime-limit failure rather than `Overflow` when it is exceeded.
+   The budget is configurable and does not change `precision = NONE`.
 
    Implementation: `INT_INF/constants`. An integer constant may have the type
    `IntInf.int`, and then be of any size, and the overloaded operators work

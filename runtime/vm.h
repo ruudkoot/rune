@@ -363,6 +363,11 @@ typedef struct VM {
     size_t heap_limit;       /* maximum semispace size; 0 = unlimited */
     size_t equality_work;    /* comparison steps; 0 = the default 1000000 */
 
+    size_t intinf_max_bits, intinf_gmp_memory; /* zero selects finite defaults */
+    int intinf_mode, intinf_stats; /* resolved from this VM, never from an image */
+    size_t intinf_gmp_live, intinf_gmp_peak;
+    uint64_t intinf_gmp_allocated, intinf_gmp_allocations, intinf_gmp_calls;
+
     int trace;
     int stats;
     int count;               /* --count: report the deterministic counters at exit */
@@ -733,7 +738,7 @@ uint32_t return_function_code(uint8_t *out, uint32_t *nlocals);
 
 /* What each VM's instruction set gives (runtime/stack/isa_stack.c, runtime/register/isa_regs.c):
    the fingerprint an .rbc must carry, and the first bytes of an image. */
-#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 12 isa 00000000")
+#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 13 isa 00000000")
 extern const uint32_t isa_fingerprint;
 extern const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE];
 const LineEntry *line_at(const Program *p, uint32_t pc);

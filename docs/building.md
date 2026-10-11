@@ -35,6 +35,42 @@ Makefile, and is where the scripts of `tests/` look when they are run by
 hand.
 
 
+## GMP dependency
+
+`make GMP=auto|yes|no` controls the register VM's optional arithmetic backend.
+`auto` checks a system installation through pkg-config; `yes` requires a
+successful compile/link/run check, and `no` builds without GMP. Rune requires
+GMP 6.3.0 or newer, matching header/library major versions and limb widths,
+and no nails. Explicit unsupported requests fail clearly. Switching the mode
+relinks the VM; it does not change bytecode primitive identities. The stack
+VM and `build/librune.a` remain GMP-free. `bin/runevm-sml` is a GMP-free
+register VM useful for checking the same bytecode on both builds.
+
+CI and release builds use the pinned recipe rather than the system package:
+
+```
+python3 scripts/build-gmp.py --jobs 4
+make GMP=yes GMP_PREFIX=build/deps/gmp/native
+```
+
+The recipe verifies GMP 6.3.0's source archive SHA-256
+`a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898`,
+builds a static library, runs upstream tests, and records the source URL,
+checksum, compiler, requested and configured options, target, commands and
+installed library/header hashes. Reusing its cache verifies those installed
+hashes. `GMP_PREFIX` can also select a checked local prefix; absent pinned
+metadata, provenance is explicitly local/unknown. System builds report
+unknown source/build options instead of attributing them to the pinned recipe.
+The recipe retains license notices beside the dependency. `--cc`, `--host`,
+`--runner` and `--prefix` support separate cross-build trees; platform release
+validation is recorded in the GMP roadmap.
+
+Configuration evidence is in `build/gmp/KEY/config.json`; `runevm --version`
+reports the header and linked-library versions and embedded provenance. The
+runtime rechecks compatibility too. The pin is dependency provenance, not a
+correctness proof: independent SML arithmetic and bounded oracle tests remain
+required.
+
 ## Prerequisites
 
 The acceptance tests also need Python 3. The compiler-driver tests use its

@@ -23,6 +23,9 @@ jobs:
   check:
     runs-on: ubuntu-24.04
     timeout-minutes: 180
+    env:
+      GMP: "yes"
+      GMP_PREFIX: build/deps/gmp/native
     steps:
       - uses: actions/checkout@v4
 
@@ -37,6 +40,9 @@ jobs:
         with:
           path: ~/.local/rune-hosts
           key: rune-hosts-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/fetch-hosts.sh') }}
+
+      - name: Pinned GMP (build and upstream checks)
+        run: python3 scripts/build-gmp.py --jobs 4
 
       - name: make hosts
         run: make hosts

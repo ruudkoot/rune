@@ -68,6 +68,7 @@
 # `make JOBS=N ...` uses N instead.
 
 SHELL   := /bin/sh
+.DEFAULT_GOAL := all
 ifndef JOBS
 JOBS    := $(shell sh scripts/ncpus.sh)
 endif
@@ -131,11 +132,32 @@ endif
 SYS ?= posix
 # what a VM links beside the runtime
 VM_LIBS  = -lm $(if $(MINGW),$(WIN_LIBS))
-RT_SRCS := runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
+RT_SRCS := runtime/intinf.c runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
 VM_SRCS := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_$(SYS).c
-VM_HDRS := runtime/vm.h runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
+VM_HDRS := runtime/intinf.h runtime/vm.h runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
 RT_OBJS := $(patsubst runtime/%.c,build/librune/%.o,$(RT_SRCS) runtime/sys/sys_$(SYS).c)
 AR      ?= ar
+
+# Optional arithmetic is linked ahead of the GMP-free archive. Stack/native
+# programs keep the archive's SML-only implementation and the same primitives.
+GMP ?= auto
+GMP_PREFIX ?=
+GMP_KEY := $(shell printf '%s\n' '$(GMP)' '$(GMP_PREFIX)' '$(CC)' '$(CFLAGS)' | cksum | cut -d' ' -f1)
+GMP_DIR := build/gmp/$(GMP_KEY)
+$(GMP_DIR)/config.mk: scripts/configure-gmp.py $(if $(GMP_PREFIX),$(wildcard $(GMP_PREFIX)/include/gmp.h $(GMP_PREFIX)/lib/libgmp.a $(GMP_PREFIX)/rune-gmp.json))
+	python3 scripts/configure-gmp.py --mode '$(GMP)' --prefix '$(GMP_PREFIX)' --cc '$(CC)' --cflags '$(CFLAGS)' --out $(GMP_DIR)
+include $(GMP_DIR)/config.mk
+GMP_FLAGS = $(GMP_CPPFLAGS) -include $(GMP_DIR)/config.h
+.PHONY: gmp-force gmp-dep
+gmp-force:
+build/gmp/selected: gmp-force
+	@mkdir -p build/gmp
+	@printf '%s\n' '$(GMP_KEY)' > $@.tmp
+	@cmp -s $@.tmp $@ && rm $@.tmp || mv $@.tmp $@
+gmp-dep:
+	python3 scripts/build-gmp.py --jobs $(JOBS)
+$(GMP_DIR)/intinf.o: runtime/intinf.c $(VM_HDRS) $(GMP_DIR)/config.mk
+	$(CC) $(CFLAGS) $(RT_INC) $(GMP_FLAGS) -c -o $@ runtime/intinf.c
 
 # The host SML systems (`make hosts`).
 HOSTS     ?= $(or $(RUNE_HOSTS),$(HOME)/.local/rune-hosts)
@@ -505,8 +527,11 @@ RUNE_JIT ?= 1
 JIT_SRCS := runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c
 JIT_HDRS := runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/asm.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
 NEW_LOOP := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS)
-bin/runevm: $(NEW_LOOP) build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+bin/runevm: $(NEW_LOOP) $(GMP_DIR)/intinf.o build/gmp/selected build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) $(RT_INC) -o $@ $(NEW_LOOP) $(GMP_DIR)/intinf.o build/librune.a $(GMP_LDLIBS) $(VM_LIBS)
+
+bin/runevm-sml: $(NEW_LOOP) build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) $(RT_INC) -o $@ $(NEW_LOOP) build/librune.a $(VM_LIBS)
 
 vm-asan: bin/runevm-stack-asan bin/runevm-asan
@@ -530,17 +555,17 @@ bin/runevm-stack-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 # runtime/register with the sanitizers: its loop, its instruction set's part, and the
 # runtime but for the stack bytecode's part
 NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
-bin/runevm-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-asan
+bin/runevm-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-asan
 	@mkdir -p bin
-	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer $(RT_INC) -o $@ $(NEW_SRCS) -lm
+	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 
 # The word's switches (docs/plans/heap-layout.md, D2 and D3), each a VM of its
 # own for measurements: ints and words that keep 64 bits (D2 A; a compiler
 # given --int-bits=64 makes its bytecode), and every real in a box (D3 B).
 # Not part of make check.
-bin/runevm-int64: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+bin/runevm-int64: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 $(RT_INC) -o $@ $(NEW_SRCS) $(VM_LIBS)
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 # The JIT on the first (tests/register/int64-box-home.sml), at every tier,
 # and with raw homes: a word past 63 bits is a box, which a home that holds
 # the word must not keep across a collection. Not part of make check.
@@ -553,32 +578,32 @@ test-int64: bin/runevm-int64 bin/runevm-rawhomes $(RUNE)
 	    || { echo "test-int64: $$vm --jit=$$mode: $$(head -1 tests/out/int64/box-home.$$vm.$$mode.out)"; exit 1; }; \
 	done; done
 	@echo "test-int64: a word's box in a home survives the collection"
-bin/runevm-realboxed: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+bin/runevm-realboxed: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_REAL_BOXED $(RT_INC) -o $@ $(NEW_SRCS) $(VM_LIBS)
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_REAL_BOXED $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 # D2 A with tier 2's homes of ints and words holding the 64 bits (D5 A as the
 # roadmap states it): faster where words pass 63 bits, slower where a small
 # int crosses a slot at every call.
-bin/runevm-rawhomes: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+bin/runevm-rawhomes: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 -DRUNE_RAW_HOMES $(RT_INC) -o $@ $(NEW_SRCS) $(VM_LIBS)
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 -DRUNE_RAW_HOMES $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 # The hooks for the collector to come (docs/plans/heap-layout.md, M7), each a
 # VM of its own to test or to measure with: the collector sets the header's
 # four bits on every object it copies and every reader of a kind masks them;
 # and the barrier marks a card at every store into an object that exists.
-bin/runevm-gcbits: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+bin/runevm-gcbits: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_GC_BITS $(RT_INC) -o $@ $(NEW_SRCS) $(VM_LIBS)
-bin/runevm-cards: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_GC_BITS $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
+bin/runevm-cards: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_BARRIER_CARDS $(RT_INC) -o $@ $(NEW_SRCS) $(VM_LIBS)
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_BARRIER_CARDS $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 # The instrument of docs/plans/performance-64bit.md's experiments 1 and 5
 # (x86-64): compiled code counts every conversion between a raw number in a
 # home and its word, by the instruction that makes it; runevm-conv
 # --jit-stats prints the table.
-bin/runevm-conv: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+bin/runevm-conv: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_JIT_CONV $(RT_INC) -o $@ $(NEW_SRCS) $(VM_LIBS)
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_JIT_CONV $(RT_INC) $(GMP_FLAGS) -o $@ $(NEW_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 
 # The census VM (docs/census.md; docs/plans/heap-layout.md, M1, and
 # docs/plans/garbage-collector-v2.md, M1): runtime/register's loop on the runtime
@@ -587,9 +612,9 @@ bin/runevm-conv: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-
 # --count line, which scripts/check-census.sh checks.
 CENSUS_SRCS := $(NEW_SRCS) runtime/census/census.c runtime/census/census_static.c
 vm-census: bin/runevm-census
-bin/runevm-census: $(CENSUS_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/census/census.h runtime/census/layouts.h | build/.doctor-vm
+bin/runevm-census: $(CENSUS_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/census/census.h runtime/census/layouts.h $(GMP_DIR)/config.mk build/gmp/selected | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=1 -DRUNE_CENSUS $(RT_INC) -o $@ $(CENSUS_SRCS) $(VM_LIBS)
+	$(CC) $(CFLAGS) -DRUNE_JIT=1 -DRUNE_CENSUS $(RT_INC) $(GMP_FLAGS) -o $@ $(CENSUS_SRCS) $(GMP_LDLIBS) $(VM_LIBS)
 
 # The census VM against the stock one on a small program: the same --count
 # line, every byte and object in census.txt, the trace's own consistency
@@ -1377,6 +1402,7 @@ runeopt: bin/runeopt
 bootstrap: bin/rune-boot bin/rune.stack.rbc bin/rune-test
 	$(RUNE_TEST) --tier bootstrap
 
+check test test-all test-opt test-native test-register test-register-jit test-stress test-heap test-windows test-portability perf-check: export RUNEVM_INTINF = sml
 # The test runner (docs/plans/unit-testing.md, M3; docs/testing.md, Running
 # the tests): the inventory of tests/runner over lib/test/runner, compiled
 # by $(RUNE) and run on the register VM with its JIT.
@@ -1400,7 +1426,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: $(CHECK_TOOLS)
+check-tools: $(CHECK_TOOLS) bin/runevm-sml
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what
@@ -1486,3 +1512,10 @@ build/bench-counts.rbc: examples/benchmarks/shared/catalog.sml examples/benchmar
 bench bench-count bench-stats: build/bench-catalog.rbc build/bench-report.rbc build/bench-counts.rbc vm
 	bin/runevm-stack build/bench-catalog.rbc --check
 	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' BENCH_LEVEL=$(BENCH_LEVEL) BENCH_MODE=$(BENCH_MODE) BENCH_SAMPLES=$(BENCH_SAMPLES) BENCH_REPETITIONS=$(BENCH_REPETITIONS) sh scripts/measure-benchmarks.sh $(if $(filter bench-count,$@),count,$(if $(filter bench-stats,$@),stats,time))
+
+.PHONY: test-intinf-backends
+test-intinf-backends: $(RUNE) bin/runevm bin/runevm-sml
+	python3 tests/intinf/backends.py --rune $(RUNE)
+	python3 tests/intinf/build-config.py
+	python3 tests/intinf/options.py --vm bin/runevm
+	python3 tests/intinf/options.py --vm bin/runevm-sml

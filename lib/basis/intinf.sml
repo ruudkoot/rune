@@ -39,12 +39,28 @@ struct
 
   fun byte (s,i) = ord (strSub (s,i))
   fun bput (a,i,n) = RuneBytes.update (a,i,chr n)
+  val gmpAvailable = _prim "intinf_gmp_available" : unit -> bool
+  val maxBits = _prim "intinf_max_bits" : unit -> limb
+  val checkBits = _prim "intinf_check_bits" : limb -> unit
+  val gmpBinary = _prim "intinf_binary" : limb * bool * string * bool * string -> bool * string
+  val gmpDivMod = _prim "intinf_divmod" : bool * bool * string * bool * string -> (bool * string) * (bool * string)
+  val gmpShift = _prim "intinf_shift" : bool * bool * string * word -> bool * string
+  val gmpPower = _prim "intinf_power" : bool * string * limb -> bool * string
+  fun digitBits 0 = 0 | digitBits n = 1 + digitBits(n div 2)
+  fun magBits s =
+    let val n = strSize s in if n = 0 then 0 else (n-1)*8+digitBits(byte(s,n-1)) end
+  fun checkMag s =
+    if strSize s <= 8 then ()
+    else let val limit = maxBits()
+         in if strSize s > limit div 8 + 1 then checkBits(limit+1)
+            else checkBits(magBits s) end
   fun trimBytes s =
     let fun top n = if n > 0 andalso byte (s,n-1) = 0 then top (n-1) else n
         val n = top (strSize s)
     in if n = strSize s then s else strExtract (s,0,n) end
   fun make (neg,s) =
     let val s = trimBytes s
+        val () = checkMag s
         val n = strSize s
         fun small (i,acc) =
           if i < 0 then S acc
@@ -59,7 +75,7 @@ struct
           else let val r = intRem (x,256)
                in bput (out,i,if r < 0 then ~r else r); loop (intQuot(x,256),i+1) end
     in loop (n,0) end
-  fun magnitude (S n) = smallMag n | magnitude (B (_,s)) = s
+  fun magnitude (S n) = smallMag n | magnitude (B (_,s)) = (checkMag s; s)
   fun negative (S n) = n < 0 | negative (B (n,_)) = n
   fun isZero (S 0) = true | isZero _ = false
   fun fromInt n = S n
@@ -70,7 +86,10 @@ struct
   val unpackBytes = _prim "intinf_unpack" : string * limb -> limb array
   val packBytes = _prim "intinf_pack" : limb array * limb * limb -> string
   fun unpack s = let val a = unpackBytes(s,limbBits) in trim(a,alen a) end
-  fun pack (a,n) = packBytes(a,n,limbBits)
+  fun pack (a,n) =
+    let val (a,n) = trim(a,n)
+        val () = if n = 0 then () else checkBits((n-1)*limbBits+digitBits(at(a,n-1)))
+    in packBytes(a,n,limbBits) end
   fun cmpMag (a,b) =
     let val na = strSize a and nb = strSize b
         fun loop i = if i < 0 then EQUAL
@@ -164,28 +183,43 @@ struct
   fun addBig (a,b) =
     let val na = negative a and nb = negative b
         val ma = magnitude a and mb = magnitude b
-    in if na = nb then make(na,addMag(ma,mb))
+    in if gmpAvailable() then make(gmpBinary(0,na,ma,nb,mb))
+       else if na = nb then make(na,addMag(ma,mb))
        else if cmpMag(ma,mb) = LESS then make(nb,subMag(mb,ma))
        else make(na,subMag(ma,mb)) end
   fun addI (S a,S b) = (S(a+b) handle Overflow => addBig(S a,S b))
     | addI (a,S 0) = a | addI (S 0,b) = b | addI p = addBig p
   fun subI (S a,S b) = (S(a-b) handle Overflow => addBig(S a,negI(S b)))
     | subI (a,b) = addI(a,negI b)
-  fun mulBig (a,b) = make(negative a <> negative b,mulMag(magnitude a,magnitude b))
+  fun mulBig (a,b) =
+    let val ma = magnitude a and mb = magnitude b
+        val () = checkBits(magBits ma+magBits mb-1)
+    in if gmpAvailable() then make(gmpBinary(2,negative a,ma,negative b,mb))
+       else make(negative a <> negative b,mulMag(ma,mb)) end
   fun mulI (S a,S b) = (S(a*b) handle Overflow => mulBig(S a,S b))
     | mulI (S 0,_) = zero | mulI (_,S 0) = zero
     | mulI (S 1,b) = b | mulI (a,S 1) = a | mulI p = mulBig p
   fun quotBig (a,b) =
     if isZero b then raise Div
+    else if gmpAvailable() then
+      let val (q,r) = gmpDivMod(false,negative a,magnitude a,negative b,magnitude b)
+      in (make q,make r) end
     else let val (q,r) = divModMag(magnitude a,magnitude b)
          in (make(negative a <> negative b,q),make(negative a,r)) end
   fun quotRemI (S a,S b) = ((S(intQuot(a,b)),S(intRem(a,b)))
                            handle Overflow => quotBig(S a,S b))
     | quotRemI p = quotBig p
-  fun divModI (a,b) =
+  fun floorFromTrunc (a,b) =
     let val (q,r) = quotRemI(a,b)
     in if isZero r orelse negative a = negative b then (q,r)
        else (subI(q,one),addI(r,b)) end
+  fun divModI (a as S _,b as S _) = floorFromTrunc(a,b)
+    | divModI (a,b) =
+      if isZero b then raise Div
+      else if gmpAvailable() then
+        let val (q,r) = gmpDivMod(true,negative a,magnitude a,negative b,magnitude b)
+        in (make q,make r) end
+      else floorFromTrunc(a,b)
   fun compare (S a,S b) = if a < b then LESS else if a > b then GREATER else EQUAL
     (* Canonical large values lie outside the machine range. Mixed
        comparisons therefore need neither conversion nor allocation. *)
@@ -201,11 +235,19 @@ struct
       else if x = one then one
       else if x = S (~1) then (if intRem(n,2) = 0 then one else x)
       else zero
-    else let fun loop(b,e,acc) =
+    else if n = 0 then one
+    else if isZero x orelse x = one then x
+    else if x = S (~1) then (if n mod 2 = 0 then one else x)
+    else let val m = magnitude x
+             val bits = magBits m
+             val limit = maxBits()
+             val () = if bits > 1 andalso n > (limit-1) div (bits-1)
+                      then checkBits(limit+1) else ()
+             fun loop(b,e,acc) =
                if e = 0 then acc
                else let val acc = if e mod 2 = 0 then acc else mulI(acc,b)
                     in if e = 1 then acc else loop(mulI(b,b),e div 2,acc) end
-         in loop(x,n,one) end
+         in if gmpAvailable() then make(gmpPower(negative x,m,n)) else loop(x,n,one) end
 
   val decimalChunk = if limbBits = 30 then 1000000000 else 10000
   val decimalDigits = if limbBits = 30 then 9 else 4
@@ -222,10 +264,6 @@ struct
               in t::render(false,cs) end
         val texts = render(true,chunks(unpack s,[]))
       in concat(if neg then "~"::texts else texts) end
-  fun magBits s =
-    let fun bits(0,n) = n | bits(v,n) = bits(v div 2,n+1)
-        val n = strSize s
-    in if n = 0 then 0 else (n-1)*8+bits(byte(s,n-1),0) end
   fun log2 x = if sign x <= 0 then raise Domain else magBits(magnitude x)-1
   fun radixBase StringCvt.BIN = 2 | radixBase StringCvt.OCT = 8
     | radixBase StringCvt.DEC = 10 | radixBase StringCvt.HEX = 16
@@ -276,7 +314,8 @@ struct
                 val () = copy 0
             in b end
           fun more(d,rest) =
-            let val a = if n = alen a then grow() else a
+            let val () = if n = 0 then () else checkBits((n-1)*limbBits+digitBits(at(a,n-1)))
+                val a = if n = alen a then grow() else a
                 fun mul(i,c) = if i = n then
                     if c = 0 then n else (put(a,n,c); n+1)
                   else let val v = at(a,i)*r+c
@@ -315,9 +354,10 @@ struct
   val wordFromInt = _prim "word_from_int" : limb -> word
   val wordToInt = _prim "word_to_int" : word -> limb
   val wordToIntX = _prim "word_to_int_x" : word -> limb
-  fun bitwise (f,signOf) (S a,S b) = S(wordToIntX(f(wordFromInt a,wordFromInt b)))
-    | bitwise (f,signOf) (a,b) =
-    let val na = negative a and nb = negative b
+  fun bitwise (code,f,signOf) (S a,S b) = S(wordToIntX(f(wordFromInt a,wordFromInt b)))
+    | bitwise (code,f,signOf) (a,b) =
+    if gmpAvailable() then make(gmpBinary(code,negative a,magnitude a,negative b,magnitude b))
+    else let val na = negative a and nb = negative b
         val (ma,la) = unpack(magnitude (if na then subI(absI a,one) else a))
         val (mb,lb) = unpack(magnitude (if nb then subI(absI b,one) else b))
         val n = (if la > lb then la else lb)+1
@@ -332,26 +372,33 @@ struct
                in put(out,i,v mod base); loop(i+1,v div base) end
         val () = loop(0,if neg then 1 else 0)
     in make(neg,pack(out,n)) end
-  val andb = bitwise(wordAnd,fn(a,b)=>a andalso b)
-  val orb = bitwise(wordOr,fn(a,b)=>a orelse b)
-  val xorb = bitwise(wordXor,fn(a,b)=>a <> b)
+  val andb = bitwise(3,wordAnd,fn(a,b)=>a andalso b)
+  val orb = bitwise(4,wordOr,fn(a,b)=>a orelse b)
+  val xorb = bitwise(5,wordXor,fn(a,b)=>a <> b)
   fun notb x = subI(negI x,one)
   fun << (x,w) =
     if w = 0w0 then x
     else if isZero x then zero
-    else let val k = wordToInt w
-             val s = magnitude x
+    else let val s = magnitude x
+             val available = maxBits()-magBits s
+             val wordGreater = _prim "word_gt" : word * word -> bool
+             val () = if wordGreater(w,wordFromInt available) then checkBits(maxBits()+1) else ()
+             val k = wordToInt w
              val n = strSize s
              val whole = k div 8 and bits = k mod 8
              val factor = pow2 bits
-             val out = RuneBytes.new(n+whole+1,0)
+             fun smlShift () =
+             let val out = RuneBytes.new(n+whole+1,0)
              fun loop(i,c) = if i = n then bput(out,i+whole,c)
                else let val v = byte(s,i)*factor+c
                     in bput(out,i+whole,v mod 256); loop(i+1,v div 256) end
              val () = loop(0,0)
-         in make(negative x,RuneBytes.extract(out,0,n+whole+1)) end
+             in make(negative x,RuneBytes.extract(out,0,n+whole+1)) end
+         in if gmpAvailable() then make(gmpShift(true,negative x,s,w)) else smlShift() end
   fun ~>> (x,w) =
     if w = 0w0 then x
+    else if isZero x then zero
+    else if gmpAvailable() then make(gmpShift(false,negative x,magnitude x,w))
     else let val k = wordToIntX w
         val neg = negative x
         val m = magnitude(if neg then subI(absI x,one) else x)

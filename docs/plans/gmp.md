@@ -19,7 +19,7 @@ replacement arithmetic, or performance measurement is claimed here.
 | M0: record the design | the original brief and owner's decisions | done 2026-10-06; delivery evidence below |
 | M1: establish correctness and performance baselines | M0 | done 2026-10-06; fixed corpus and baseline below |
 | M2: replace the SML representation and kernels | M1 | done 2026-10-08; implementation and acceptance evidence below |
-| M3: add GMP behind the shared interface | M2 | planned |
+| M3: add GMP behind the shared interface | M2 | done 2026-10-11; integration and acceptance evidence below |
 | M4: harden runtime integration and tune dispatch | M3 | planned |
 | M5: complete portability and release validation | M4 | planned |
 
@@ -647,7 +647,7 @@ compiler measurements are retained in their respective records too.
   `make test-heap JOBS=8`, `make test-windows JOBS=2`, and
   `make test-portability JOBS=8` passed. The runtime was unchanged after
   these runs; the final SML comparison change was rechecked as above.
-  `tests/out/intinf/m2-runtime-acceptance.log` indexes their `m2-*-3` logs.
+  `tests/out/intinf/m2-runtime-acceptance.log` indexes their `m2-*3` logs.
   The storage ABI also passed its 150 checks under collection stress and
   ASan/UBSan. Windows, Linux32, big-endian PowerPC, and AArch64 tests ran;
   these were not inferred from the native Linux result.
@@ -657,3 +657,67 @@ compiler measurements are retained in their respective records too.
 Raw commands, streams, source snapshots, and reports are local under
 `tests/out/intinf`; the portable performance records above are committed.
 The main checkout and its unrelated collector draft remain untouched.
+
+## M3: shared GMP bindings and finite runtime policy
+
+The optional `runtime/intinf.c` implementation uses public `mpz` operations,
+with canonical little-endian import/export and no native arithmetic pointers
+in Rune values. Generated primitives are present in every build. SML keeps
+small arithmetic, scanning, normalization, exceptional cases, and dispatch.
+`GMP=auto|yes|no`, `GMP_PREFIX`, `--intinf=auto|gmp|sml`, and the wrapper default
+`RUNEVM_INTINF` select availability without changing bytecode fingerprints.
+Explicit unavailable GMP requests fail. Stack/native output remains SML.
+
+The pinned recipe verifies the GMP 6.3.0 source checksum and installed artifacts,
+runs upstream tests, and records requested/configured options, target, compiler,
+commands, and provenance. Both header and linked-library versions are checked
+before arithmetic and reported by the VM. CI invokes the pinned recipe; the
+local pinned build and its upstream tests passed. Remote CI is not claimed
+as executed here. CPU-family release packaging remains part of M5.
+
+Both arithmetic paths enforce the 134217728-bit default budget. The supported
+configuration range is 64 through 1073741822 bits: this keeps machine values
+within the minimum and binary formatting and scanner scratch growth within their storage
+representations at the maximum. Low limits may reject Basis initialization (Word64 constructs the
+65-bit magnitude 2^64). GMP separately tracks allocations against the default
+256 MiB live budget. Requested bytes, allocation calls, and peak live bytes
+are reported separately from managed allocations and process memory. Image
+format 11 carries both limits, preserving the stricter invocation/saved value;
+backend selection comes from the current VM.
+
+The initial backend suite passed the same bytecode with GMP, forced SML, and
+a GMP-free VM on the interpreter and both JIT tiers. It checks independent
+arithmetic fixtures, backend-equivalent counts, zero live GMP allocations,
+bounded resource failures, and images restored between builds. Build probes
+passed automatic fallback, explicit rejection, older headers, and modified
+pinned artifacts. `make check JOBS=8` passed with the pinned GMP build,
+including bootstrap and cross-host bytecode equality for 510 programs.
+
+The first full host matrix caught a host-adapter name collision between the
+new `intinf_power` stub and the packed-storage helper. The helper is renamed;
+no deviation entries were changed for this failure. The rerun passed all
+seven configurations with the existing explained host deviations. Its report
+is preserved as `tests/out/intinf/m3/host-report.md`.
+
+[M3 acceptance evidence](../../tests/intinf/gmp-integration.json) records the
+source and transcript hashes, dependency provenance, bytecode counts, and
+build-switch results. Final acceptance passed: `make check JOBS=8`, the full
+host matrix, stack and register sanitizer suites (including deoptimization),
+GC stress, heap header/barrier tests, Windows, and portability. The Windows,
+Linux32, PowerPC and AArch64 VMs use the GMP-free path in this milestone;
+GMP-enabled cross builds remain M5. `make check` includes 340 language tests,
+139,218 Basis checks, and cross-host bytecode equality for 510 programs.
+
+The dedicated sanitizer suite passed 76 bounded subprocesses across backends
+and register tiers, with no live native allocations after returning calls.
+Running the entire preserved list oracle with ASan and collection at every
+allocation exceeded its 180-second timeout; that transcript remains recorded
+as a timeout, not a sanitizer pass. The complete corpus then passed with a
+collection interval of 101, and compact signed quotient/remainder, image,
+limit and special-case tests passed with collection at every allocation.
+
+Additional checks passed C99 builds with and without GMP, eleven option-bound
+checks for each VM, eight dependency-configuration probes, and build switching
+from pinned GMP to disabled and back to the identical pinned VM binary.
+`git diff --check` and local roadmap links passed. Raw local evidence is under
+`tests/out/intinf/m3`; remote CI has not been executed from this worktree.

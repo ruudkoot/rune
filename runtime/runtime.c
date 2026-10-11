@@ -5,6 +5,7 @@
    program that runeopt made (docs/native.md). */
 #include "gc/gc.h"
 #include "sys/sys.h"
+#include "intinf.h"
 #include <stdarg.h>
 
 /* Where a frame is stopped: the instruction being executed in the innermost
@@ -365,6 +366,7 @@ void vm_destroy(VM *vm) {
 void vm_exit(VM *vm, int status) {
     fflush(stdout);
     CENSUS_EXIT(vm);
+    if (vm->intinf_stats) vm_intinf_report(vm, stderr);
     if (vm->count)
         fprintf(stderr, "runevm: count: %llu instructions, %llu bytes, %llu objects\n",
                 (unsigned long long)vm->instructions, (unsigned long long)vm->bytes_allocated,

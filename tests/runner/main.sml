@@ -110,6 +110,7 @@ struct
        alone ("perf-check", [], perfFiles),
        alone ("bench-smoke", [], ["examples/benchmarks/*", "tests/benchmarks/*"]),
        Test.requires ["python3"] (alone ("test-intinf", [], ["tests/intinf/*"])),
+       Test.requires ["python3"] (alone ("test-intinf-backends", [], ["tests/intinf/*"])),
        alone ("check-isa", [], [])]
 
   (* the profiles' extras (docs/testing.md, Profiles): AGENTS.md's targets

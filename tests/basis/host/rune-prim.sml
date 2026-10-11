@@ -465,10 +465,22 @@ struct
   val vector_length = Vector.length
   val vector_sub = Vector.sub
 
+  (* Host builds exercise the independent arithmetic and finite policy. *)
+  fun intinf_gmp_available () = false
+  fun intinf_max_bits () = 134217728
+  fun intinf_check_bits n =
+    if n < 0 then raise Fail "invalid IntInf bit count"
+    else if n > intinf_max_bits () then raise Fail "IntInf runtime limit: magnitude budget exceeded"
+    else ()
+  fun intinf_binary _ : bool * string = raise Fail "GMP unavailable on this host"
+  fun intinf_divmod _ : (bool * string) * (bool * string) = raise Fail "GMP unavailable on this host"
+  fun intinf_shift _ : bool * string = raise Fail "GMP unavailable on this host"
+  fun intinf_power _ : bool * string = raise Fail "GMP unavailable on this host"
+
   (* Packed storage, independently of the runtime's C implementation. A
      narrow host's IntInf kernel requests 15-bit digits, a wide one 30. *)
   fun intinf_width bits = if bits = 15 orelse bits = 30 then () else raise Fail "invalid limb width"
-  fun intinf_power k = if k = 0 then 1 else 2 * intinf_power (k-1)
+  fun intinf_storage_power k = if k = 0 then 1 else 2 * intinf_storage_power (k-1)
   fun intinf_unpack (s,bits) =
     let val () = intinf_width bits
         val n = String.size s
@@ -479,17 +491,17 @@ struct
           else let val c = Char.ord(String.sub(s,i))
                    val remaining = bits-k
                in if remaining <= 8 then
-                    let val split = intinf_power remaining
-                    in Array.update(a,j,v+(c mod split)*intinf_power k);
+                    let val split = intinf_storage_power remaining
+                    in Array.update(a,j,v+(c mod split)*intinf_storage_power k);
                        loop(i+1,j+1,c div split,8-remaining) end
-                  else loop(i+1,j,v+c*intinf_power k,k+8)
+                  else loop(i+1,j,v+c*intinf_storage_power k,k+8)
                end
         val () = loop(0,0,0,0)
     in a end
   fun intinf_pack (a,n,bits) =
     let val () = intinf_width bits
         val () = if n < 0 orelse n > Array.length a then raise Fail "invalid limb count" else ()
-        val half = intinf_power (bits-1)
+        val half = intinf_storage_power (bits-1)
         fun checked i = if i = n then () else
           if Array.sub(a,i) < 0 orelse Array.sub(a,i) div half >= 2 then raise Fail "invalid limb"
           else checked(i+1)
@@ -502,8 +514,8 @@ struct
           if k = 8 then (Word8Array.update(out,j,Word8.fromInt v); loop(i,j+1,0,0,d,left))
           else if left > 0 then
             let val take = Int.min(8-k,left)
-                val split = intinf_power take
-            in loop(i,j,v+(d mod split)*intinf_power k,k+take,d div split,left-take) end
+                val split = intinf_storage_power take
+            in loop(i,j,v+(d mod split)*intinf_storage_power k,k+take,d div split,left-take) end
           else if i = n then
             if v = 0 then j else (Word8Array.update(out,j,Word8.fromInt v); j+1)
           else loop(i+1,j,v,k,Array.sub(a,i),bits)

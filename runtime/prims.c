@@ -4,6 +4,7 @@
    that a garbage collection during allocation keeps them alive. */
 #include "version.h"
 #include "vm.h"
+#include "intinf.h"
 #include <math.h>
 #include <errno.h>
 #include <fenv.h>
@@ -2967,6 +2968,63 @@ static int p_intinf_pack(VM *vm) {
     if (at < length) p[at++] = (unsigned char)acc;
     if (at != length) vm_fatal(vm, "primitive intinf_pack: internal length mismatch");
     return ret(vm, 3, mk_ptr(s));
+}
+
+/* The SML layer owns exceptions, normalization, and backend dispatch. */
+static int intinf_boolean(VM *vm, Value v) {
+    if (!val_is(v, T_CON0) || val_imm(v) < 0 || val_imm(v) > 1)
+        vm_fatal(vm, "intinf primitive: invalid boolean");
+    return (int)val_imm(v);
+}
+static void intinf_unit(VM *vm, Value v) {
+    if (!val_is(v, T_UNIT) || val_imm(v) != 0)
+        vm_fatal(vm, "intinf primitive: expected unit");
+}
+static int p_intinf_gmp_available(VM *vm) {
+    intinf_unit(vm, ARG(0));
+    return ret(vm, 1, mk_bool(vm_intinf_available(vm)));
+}
+static int p_intinf_max_bits(VM *vm) {
+    intinf_unit(vm, ARG(0));
+    return ret(vm, 1, mk_int((int64_t)vm_intinf_max_bits(vm)));
+}
+static int p_intinf_check_bits(VM *vm) {
+    check_tag(vm, ARG(0), T_INT, "intinf_check_bits");
+    int64_t bits = val_int(ARG(0));
+    if (bits < 0) vm_fatal(vm, "intinf primitive: negative bit count");
+    vm_intinf_check(vm, (uint64_t)bits);
+    return ret(vm, 1, mk_unit());
+}
+static int p_intinf_binary(VM *vm) {
+    check_tag(vm, ARG(4), T_INT, "intinf_binary");
+    int64_t op = val_int(ARG(4));
+    if (op < 0 || op > 5) vm_fatal(vm, "intinf primitive: invalid operation");
+    int na = intinf_boolean(vm, ARG(3)), nb = intinf_boolean(vm, ARG(1));
+    Value v = vm_intinf_binary(vm, (unsigned)op, na, ARG(2), nb, ARG(0));
+    return ret(vm, 5, v);
+}
+static int p_intinf_divmod(VM *vm) {
+    int floor = intinf_boolean(vm, ARG(4));
+    int na = intinf_boolean(vm, ARG(3)), nb = intinf_boolean(vm, ARG(1));
+    check_obj(vm, ARG(2), K_STRING, "intinf_divmod");
+    Obj *b = check_obj(vm, ARG(0), K_STRING, "intinf_divmod");
+    if (obj_len(b) == 0) return raise_with(vm, 5, EXN_DIV);
+    Value v = vm_intinf_divmod(vm, floor, na, ARG(2), nb, ARG(0));
+    return ret(vm, 5, v);
+}
+static int p_intinf_shift(VM *vm) {
+    int left = intinf_boolean(vm, ARG(3)), neg = intinf_boolean(vm, ARG(2));
+    check_tag(vm, ARG(0), T_WORD, "intinf_shift");
+    Value v = vm_intinf_shift(vm, left, neg, ARG(1), val_word(ARG(0)));
+    return ret(vm, 4, v);
+}
+static int p_intinf_power(VM *vm) {
+    int neg = intinf_boolean(vm, ARG(2));
+    check_tag(vm, ARG(0), T_INT, "intinf_power");
+    int64_t exponent = val_int(ARG(0));
+    if (exponent < 0) vm_fatal(vm, "intinf primitive: negative exponent");
+    Value v = vm_intinf_power(vm, neg, ARG(1), (uint64_t)exponent);
+    return ret(vm, 3, v);
 }
 
 const PrimFn prim_table[PRIM__COUNT] = {
