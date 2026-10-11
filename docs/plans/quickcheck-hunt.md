@@ -622,11 +622,15 @@ restated laws (1,742 at their structures):
 | Poly/ML 5.9.2 | 715 (686) | 12 | 0 | 6 | 1,009 (1,036) | 27 | 0 |
 | MLKit 4.7.23 | 1,447 (1,444) | 17 | 0 | 0 | 278 (278) | 0 | 0 |
 
-No difference is unexplained. What MLton still does not build is six laws
+No difference is unexplained. What MLton still does not build is five laws
 of structures it lacks (`INet6Sock`, `WideTextPrimIO`, `SML90`) and
-thirteen whose types are of two structures that Rune's are one of:
-`SysWord.word` in `Posix`'s conversions, and `Word.word`, the amount of
-`SysWord`'s shifts. Neither entry fits there; an alternative for each
-type's own name would. MLKit's are its own types (its `LargeIntArray`
+fourteen whose types are another structure's, which Rune's are one with
+`int` or `word`: `SysWord.word` in `Posix`'s conversions, `Position.int`
+in `Posix.IO.FLock` and as `BinPrimIO.pos`, and `Word.word`, the amount of
+`SysWord`'s shifts. The entry draws them by `IntArb` and `WordArb`, the
+alternative prefers only the law's own structure's family, and on MLton
+`int` and `word` have 32 bits where `Position` and `SysWord` have 64.
+Neither entry fits there; an alternative by the name the signature gives
+each type would. MLKit's are its own types (its `LargeIntArray`
 holds `Word64.word`; `LargeIntVector/elem-is-Word64`) and the structures it
 lacks. The 32-bit SML/NJ's programs still stop as they load (above).
