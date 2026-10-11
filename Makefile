@@ -1135,7 +1135,7 @@ test-lib-hosts: manifests
 # (docs/plans/quickcheck.md, D10): the differences from Rune's last run of
 # test-laws that tests/basis/law-deviations.txt does not explain. Not part of
 # `make check`.
-test-laws-hosts: $(RUNEDOC)
+test-laws-hosts: $(RUNEDOC) manifests
 	RUNEDOC=$(RUNEDOC) python3 tests/basis/run-laws-hosts.py
 
 # The native code generator's own tests (tests/opt): after the suites, whose
