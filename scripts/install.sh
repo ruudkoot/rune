@@ -274,10 +274,12 @@ for manifest in $(cd "$root/lib" && find . -name MANIFEST | sort); do
   l=$(dirname "$manifest" | sed 's|^\./||')
   mkdir -p "$libdir/$l"
   copy "$root/lib/$l/MANIFEST" "$libdir/$l/MANIFEST" 644
-  # the first column of a line is the file
+  # the first column of a line is the file, which may be in a subdirectory
+  # (lib/test/property/basis/sized/int8.sml)
   while IFS='|' read -r f _; do
     f=$(echo $f)
     case "$f" in ""|\#*) continue ;; esac
+    mkdir -p "$(dirname "$libdir/$l/$f")"
     copy "$root/lib/$l/$f" "$libdir/$l/$f" 644
   done < "$root/lib/$l/MANIFEST"
   # what runedoc reads besides: the overview

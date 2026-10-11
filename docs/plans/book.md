@@ -1,0 +1,3 @@
+- intermediate language with can generate markdown/github and latex/pdf
+- there should be an interactive online reader / mooc that allows users to check their exercise and track progress
+  - generally usable not just for this book
