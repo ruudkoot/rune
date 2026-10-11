@@ -1029,7 +1029,7 @@ static int p_posix_pipe(VM *vm) {
 static int64_t read_fd(VM *vm, int fd, char *buf, int64_t n, int arity, int *raised) {
     int64_t got;
     *raised = 0;
-    while ((got = sys_read_fd(fd, buf, n)) < 0 && sys_errno() == EINTR && vm->interrupt)
+    while ((got = sys_read_fd(fd, buf, n)) < 0 && sys_errno() == EINTR && (vm->interrupt & 1))
         if (!vm->interrupt_mask) { vm->sp -= (size_t)arity; *raised = 1; return vm_interrupt(vm); }
     return got;
 }
@@ -1768,15 +1768,23 @@ static int p_vector_sub(VM *vm) {
 }
 
 /* ================================================================ I/O and system */
+/* print and print_err write through the VM's slots for the descriptors 1
+   and 2, as a stream of TextIO does, not to C's stdout and stderr
+   themselves: what owns the slot owns all the program writes there
+   (docs/plans/repl.md, D18 and M10) */
+static FILE *std_slot(VM *vm, int fd) {
+    FILE *f = (size_t)fd < vm->nfiles ? vm->files[fd] : NULL;
+    return f ? f : fd == 1 ? stdout : stderr;
+}
 static int p_print(VM *vm) {
     Obj *s = check_obj(vm, ARG(0), K_STRING, "print");
-    fwrite(obj_bytes(s), 1, obj_len(s), stdout);
+    fwrite(obj_bytes(s), 1, obj_len(s), std_slot(vm, 1));
     return ret(vm, 1, mk_unit());
 }
 static int p_print_err(VM *vm) {
     Obj *s = check_obj(vm, ARG(0), K_STRING, "print_err");
-    fflush(stdout);
-    fwrite(obj_bytes(s), 1, obj_len(s), stderr);
+    fflush(std_slot(vm, 1));
+    fwrite(obj_bytes(s), 1, obj_len(s), std_slot(vm, 2));
     return ret(vm, 1, mk_unit());
 }
 static int p_flush_out(VM *vm) { fflush(stdout); return ret(vm, 1, mk_unit()); }
@@ -1900,9 +1908,11 @@ static int p_file_read_vec(VM *vm) {
        its buffer; a pipe's or a terminal's -- no position -- by one read of
        its descriptor, which gives what has come, a line typed, where fread
        would wait for all n. Nothing reads such a handle through its FILE
-       (the library reads with this alone), whose buffer stays empty. */
+       (the library reads with this alone), whose buffer stays empty. A
+       Windows console tells a position (its C runtime's ftell answers 0),
+       so a terminal is asked for by name. */
     size_t got;
-    if (n > 0 && sys_ftell(f) < 0) {
+    if (n > 0 && (sys_ftell(f) < 0 || sys_isatty(sys_fileno(f)))) {
         int raised;
         int64_t k = read_fd(vm, sys_fileno(f), buf, n, 2, &raised);
         if (raised) { free(buf); return 1; }
@@ -2155,6 +2165,13 @@ static int p_os_poll(VM *vm) {
         wide_events[i] = events[i];
     }
     int ready = sys_poll(wide_fds, wide_events, (int)n, val_imm(ARG(0)));
+    /* the user's interrupt that ended the wait raised, as a read of a
+       terminal raises it (read_fd) */
+    if (ready < 0 && sys_errno() == EINTR && (vm->interrupt & 1) && !vm->interrupt_mask) {
+        free(fds); free(events); free(wide_fds); free(wide_events);
+        vm->sp -= 3;
+        return vm_interrupt(vm);
+    }
     int64_t *out = malloc((size_t)(n > 0 ? n : 1) * sizeof *out);
     if (!out) vm_fatal(vm, "out of memory");
     for (int i = 0; i < (int)n; i++) out[i] = wide_events[i];
@@ -2270,6 +2287,318 @@ static int p_rt_trace(VM *vm) {
     }
     Value l = vm_pop(vm);
     return ret(vm, 1, l);
+}
+
+/* rt_raise_mark m: with m = ~1, the handler pushed last is the REPL's own,
+   and a raise that takes it records the frames it leaves (vm_raise); any
+   other m is a mark rt_raise_mark gave before, put back (0: none). The mark
+   it replaces. */
+static int p_rt_raise_mark(VM *vm) {
+    INT1("rt_raise_mark");
+    size_t before = vm->raise_mark;
+    vm->raise_mark = x == -1 ? vm->hp : x < 0 ? 0 : (size_t)x;
+    return ret(vm, 1, mk_int((int64_t)before));
+}
+
+/* rt_raise_trace (): the frames the last raise that left the REPL's code
+   left, innermost first, as rt_trace gives them, inlined functions each a
+   frame of its own; built from the outermost in */
+static int p_rt_raise_trace(VM *vm) {
+    vm_push(vm, mk_con0(0));
+    TraceFrame fs[64];
+    for (uint32_t k = vm->raise_n; k > 0; k--) {
+        uint32_t f = vm->raise_frames[k - 1].func, pc = vm->raise_frames[k - 1].pc;
+        const char *name = f < vm->prog.nfuncs ? vm->prog.funcs[f].name : "?";
+        const LineEntry *e = line_at(&vm->prog, pc > 0 ? pc - 1 : 0);
+        uint32_t n;
+        if (e && e->file < vm->prog.nfiles) n = trace_frames(&vm->prog, e, name, fs, 64);
+        else { fs[0].name = name; fs[0].file = UINT32_MAX; fs[0].line = 0; fs[0].col = 0; n = 1; }
+        for (uint32_t j = n; j > 0; j--) {
+            const TraceFrame *t = &fs[j - 1];
+            push_frame(vm, t->name, t->file == UINT32_MAX ? "" : vm->prog.files[t->file], t->line, t->col);
+            vm_cons(vm);
+        }
+    }
+    Value l = vm_pop(vm);
+    return ret(vm, 1, l);
+}
+
+/* ---- the debugger's (the REPL roadmap's D22 and M12; runtime/debug.c) ---- */
+
+/* rt_debug_hook f: f the hook, and <debug>, which calls it, made the first
+   time -- a function more in the program, which PRIM_NEW_WORLD, after the
+   result is pushed, makes the loop and the JIT take again, as rt_link's
+   does; false where the VM has none (runevm-stack, a program of native
+   code) */
+static int p_rt_debug_hook(VM *vm) {
+    Debugger *d = vm->native ? NULL : dbg_get(vm);
+    if (!d) return ret(vm, 1, mk_bool(0));
+    int grew = 0;
+    if (d->func == UINT32_MAX) {
+        uint8_t code[64];
+        uint32_t nlocals;
+        uint32_t len = debug_function_code(code, &nlocals);
+        char err[256];
+        if (!len) return ret(vm, 1, mk_bool(0));
+        d->func = program_add_function(vm, "<debug>", code, len, nlocals, 2, err, sizeof err);
+        if (d->func == UINT32_MAX) return ret(vm, 1, mk_bool(0));
+        grew = 1;
+    }
+    if (d->has_hook) vm_handle_set(vm, d->hook, ARG(0));
+    else { d->hook = vm_handle_new(vm, ARG(0)); d->has_hook = 1; }
+    ret(vm, 1, mk_bool(1));
+    return grew ? PRIM_NEW_WORLD : 0;
+}
+
+static int dbg_flags(const Debugger *d) {
+    return (d->on ? 1 : 0) | (d->raise_mode == 1 ? 2 : 0) | (d->raise_mode == 2 ? 4 : 0) | (d->pauses ? 8 : 0);
+}
+
+/* rt_debug_mode m: debug mode (1), a stop at every raise (2) or at a raise
+   the REPL's handler takes (4) -- which only the debug loop makes --, and
+   the user's interrupt a pause (8); the mode it replaces */
+static int p_rt_debug_mode(VM *vm) {
+    INT1("rt_debug_mode");
+    Debugger *d = dbg_get(vm);
+    if (!d) return ret(vm, 1, mk_int(0));
+    int was = dbg_flags(d);
+    d->raise_mode = (x & 2) ? 1 : (x & 4) ? 2 : 0;
+    d->pauses = (x & 8) != 0;
+    int on = (x & 1) || d->raise_mode;
+    int began = on && !d->on;
+    if (on != d->on) dbg_set_on(vm, on);
+    dbg_update(d);
+    ret(vm, 1, mk_int(was));
+    /* debug mode put on: the loop gives the program to the driver (PRIMPUSH) */
+    return began ? PRIM_NEW_WORLD : 0;
+}
+
+static int p_rt_debug_user(VM *vm) {
+    Debugger *d = dbg_get(vm);
+    if (d) d->user_files = vm->prog.nfiles;
+    return ret(vm, 1, mk_unit());
+}
+
+static int break_set(Debugger *d, uint32_t key, int set) {
+    uint32_t lo = 0, hi = d->nbreaks;
+    while (lo < hi) {
+        uint32_t mid = lo + (hi - lo) / 2;
+        if (d->breaks[mid] < key) lo = mid + 1; else hi = mid;
+    }
+    int there = lo < d->nbreaks && d->breaks[lo] == key;
+    if (set && !there) {
+        if (d->nbreaks == d->breaks_cap) {
+            uint32_t cap = d->breaks_cap ? 2 * d->breaks_cap : 16;
+            uint32_t *b = realloc(d->breaks, cap * sizeof *b);
+            if (!b) return 0;
+            d->breaks = b;
+            d->breaks_cap = cap;
+        }
+        memmove(d->breaks + lo + 1, d->breaks + lo, (d->nbreaks - lo) * sizeof *d->breaks);
+        d->breaks[lo] = key;
+        d->nbreaks++;
+    } else if (!set && there) {
+        memmove(d->breaks + lo, d->breaks + lo + 1, (d->nbreaks - lo - 1) * sizeof *d->breaks);
+        d->nbreaks--;
+    }
+    return 1;
+}
+
+/* rt_debug_break (file, line, set): the breakpoint set or cleared in every
+   file of the program of that name; how many entries of the line table
+   begin the line, 0 where no code is there (yet) */
+static int p_rt_debug_break(VM *vm) {
+    Obj *f = check_obj(vm, ARG(2), K_STRING, "rt_debug_break");
+    check_tag(vm, ARG(1), T_INT, "rt_debug_break");
+    int64_t line = val_imm(ARG(1));
+    int set = val_imm(ARG(0)) != 0;
+    Debugger *d = dbg_get(vm);
+    if (!d) return ret(vm, 3, mk_int(0));
+    const Program *p = &vm->prog;
+    if (obj_len(f) == 0 && !set) { d->nbreaks = 0; dbg_update(d); return ret(vm, 3, mk_int(0)); }
+    int64_t n = 0;
+    if (line > 0 && line < 0x100000)
+        for (uint32_t i = 0; i < p->nfiles; i++) {
+            if (strlen(p->files[i]) != obj_len(f) || memcmp(p->files[i], obj_bytes(f), obj_len(f)) != 0) continue;
+            if (!break_set(d, ((i + 1) << 20) | (uint32_t)line, set)) vm_fatal(vm, "out of memory");
+            for (uint32_t k = 0; k < p->nlines; k++)
+                if (p->lines[k].file == i && p->lines[k].line == (uint32_t)line
+                    && (k == 0 || p->lines[k - 1].file != i || p->lines[k - 1].line != (uint32_t)line)) n++;
+        }
+    dbg_update(d);
+    return ret(vm, 3, mk_int(n));
+}
+
+/* rt_debug_step m: how the stop ends (vm.h, DBG_GO ... DBG_ABORT); a step
+   puts debug mode on */
+static int p_rt_debug_step(VM *vm) {
+    INT1("rt_debug_step");
+    Debugger *d = vm->dbg;
+    int began = 0;
+    if (d && d->in_hook) {
+        if (x == DBG_ABORT) d->resume = DBG_ABORT;
+        else if (x >= DBG_STEP_IN && x <= DBG_STEP_OUT) {
+            d->step = (int)x;
+            d->step_fp = d->stop_fp;
+            if (!d->on) { dbg_set_on(vm, 1); began = 1; }
+        } else { d->step = DBG_GO; d->step_fp = 0; }
+        dbg_update(d);
+    }
+    ret(vm, 1, mk_unit());
+    return began ? PRIM_NEW_WORLD : 0;
+}
+
+/* the frames of the stop: the VM's frame of frame k, or SIZE_MAX */
+static size_t stop_frame(const VM *vm, int64_t k) {
+    const Debugger *d = vm->dbg;
+    if (!d || !d->in_hook || k < 0 || (uint64_t)k > d->stop_fp) return SIZE_MAX;
+    size_t i = d->stop_fp - (size_t)k;
+    if (d->stop_floor && i <= d->stop_floor) return SIZE_MAX;
+    return i;
+}
+/* the pc a trace reads for frame i of the stop: in the instruction it is at */
+static uint32_t stop_pc_in(const VM *vm, size_t i) {
+    const Debugger *d = vm->dbg;
+    if (i == d->stop_fp)
+        return d->event == DBG_RAISE || d->event == DBG_UNCAUGHT ? (d->stop_pc ? d->stop_pc - 1 : 0) : d->stop_pc;
+    uint32_t r = vm->frames[i + 1].ret_pc;
+    return r ? r - 1 : 0;
+}
+
+static int p_rt_debug_frames(VM *vm) {
+    vm_push(vm, mk_con0(0));
+    TraceFrame fs[64];
+    size_t lowest = SIZE_MAX;
+    for (int64_t k = 0; stop_frame(vm, k) != SIZE_MAX; k++) lowest = (size_t)k;
+    for (size_t kk = lowest + 1; lowest != SIZE_MAX && kk > 0; kk--) {
+        size_t i = stop_frame(vm, (int64_t)(kk - 1));
+        uint32_t f = vm->frames[i].func;
+        const char *name = f < vm->prog.nfuncs ? vm->prog.funcs[f].name : "?";
+        const LineEntry *e = line_at(&vm->prog, stop_pc_in(vm, i));
+        uint32_t n;
+        if (e && e->file < vm->prog.nfiles) n = trace_frames(&vm->prog, e, name, fs, 64);
+        else { fs[0].name = name; fs[0].file = UINT32_MAX; fs[0].line = 0; fs[0].col = 0; n = 1; }
+        for (uint32_t j = n; j > 0; j--) {
+            const TraceFrame *t = &fs[j - 1];
+            const char *file = t->file == UINT32_MAX ? "" : vm->prog.files[t->file];
+            vm_push(vm, mk_int((int64_t)(kk - 1)));
+            vm_push(vm, mk_ptr(vm_string_from(vm, t->name, (uint32_t)strlen(t->name))));
+            vm_push(vm, mk_ptr(vm_string_from(vm, file, (uint32_t)strlen(file))));
+            vm_push(vm, mk_int(t->line));
+            vm_push(vm, mk_int(t->col));
+            Obj *tu = vm_alloc_fields(vm, K_TUPLE, 0, 5);
+            for (int q = 0; q < 5; q++) obj_fill_field(tu, q, vm->stack[vm->sp - 5 + q]);
+            vm->sp -= 5;
+            vm_push(vm, mk_ptr(tu));
+            vm_cons(vm);
+        }
+    }
+    Value l = vm_pop(vm);
+    return ret(vm, 1, l);
+}
+
+static int pair(VM *vm, int arity, int64_t a, int64_t b) {
+    Obj *t = vm_alloc_fields(vm, K_TUPLE, 0, 2);
+    obj_fill_field(t, 0, mk_int(a));
+    obj_fill_field(t, 1, mk_int(b));
+    return ret(vm, arity, mk_ptr(t));
+}
+
+static int p_rt_debug_where(VM *vm) {
+    INT1("rt_debug_where");
+    size_t i = stop_frame(vm, x);
+    if (i == SIZE_MAX) return pair(vm, 1, -1, 0);
+    uint32_t f = vm->frames[i].func;
+    return pair(vm, 1, f, (int64_t)stop_pc_in(vm, i) - (int64_t)vm->prog.funcs[f].code_offset);
+}
+
+static int p_rt_debug_live(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "rt_debug_live");
+    check_tag(vm, ARG(0), T_INT, "rt_debug_live");
+    size_t i = stop_frame(vm, val_imm(ARG(1)));
+    int64_t r = val_imm(ARG(0));
+    if (i == SIZE_MAX || r < 0 || (uint64_t)r >= vm->prog.funcs[vm->frames[i].func].nlocals) return ret(vm, 2, mk_int(0));
+    uint64_t live = vm->frame_live ? vm->frame_live(vm, vm->frames[i].func, vm->frames[i + 1].ret_pc) : ~(uint64_t)0;
+    if (r < 64 && !((live >> r) & 1)) return ret(vm, 2, mk_int(0));
+    /* an immediate is what a register holds before it is written, and what
+       the collector leaves in one dead where its frame waited: the REPL
+       reads one only at a type an immediate may be */
+    return ret(vm, 2, mk_int(val_is_ptr(vm->stack[vm->frames[i].base + (size_t)r]) ? 2 : 1));
+}
+
+static int p_rt_debug_local(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "rt_debug_local");
+    check_tag(vm, ARG(0), T_INT, "rt_debug_local");
+    size_t i = stop_frame(vm, val_imm(ARG(1)));
+    int64_t r = val_imm(ARG(0));
+    if (i == SIZE_MAX || r < 0 || (uint64_t)r >= vm->prog.funcs[vm->frames[i].func].nlocals) return ret(vm, 2, mk_unit());
+    return ret(vm, 2, vm->stack[vm->frames[i].base + (size_t)r]);
+}
+
+static int p_rt_debug_env(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "rt_debug_env");
+    check_tag(vm, ARG(0), T_INT, "rt_debug_env");
+    size_t i = stop_frame(vm, val_imm(ARG(1)));
+    int64_t e = val_imm(ARG(0));
+    Obj *c = i == SIZE_MAX ? NULL : vm->frames[i].closure;
+    if (!c || e < 0 || (uint64_t)e + 1 >= obj_len(c)) return ret(vm, 2, mk_unit());
+    return ret(vm, 2, obj_field(c, (uint32_t)e + 1));
+}
+
+static int p_rt_debug_exn(VM *vm) {
+    const Debugger *d = vm->dbg;
+    if (!d || !d->in_hook) vm_fatal(vm, "rt_debug_exn where nothing stopped");
+    return ret(vm, 1, vm->stack[vm->frames[d->stop_fp + 1].base + 3]);
+}
+
+/* rt_debug_return x, <debug>'s last: its frame off, and the program on
+   from where it stopped -- at the instruction, or, after a raise, with the
+   exception x, or with the interrupt's where the REPL said so; the loop
+   takes the VM up as after a raise (1) */
+static int p_rt_debug_return(VM *vm) {
+    Debugger *d = vm->dbg;
+    if (!d || !d->in_hook || !vm->frames_active || vm->frames[vm->fp].func != d->func)
+        vm_fatal(vm, "rt_debug_return outside <debug>");
+    Value exn = ARG(0);
+    const Frame *f = &vm->frames[vm->fp];
+    uint32_t at = f->ret_pc;
+    size_t top = f->base;
+    vm_frame_pop(vm);
+    vm->sp = top;
+    vm->pc = at;
+    int event = d->event, resume = d->resume;
+    d->in_hook = 0;
+    d->event = 0;
+    d->resume = DBG_GO;
+    dbg_update(d);
+    if (resume == DBG_ABORT && vm->interrupt_exn) exn = mk_ptr(vm->interrupt_exn);
+    else if (event != DBG_RAISE && event != DBG_UNCAUGHT) return 1;
+    d->skip_raise = 1;
+    vm_raise(vm, exn);
+    d->skip_raise = 0;
+    return 1;
+}
+
+static int p_rt_debug_program(VM *vm) { return ret(vm, 1, mk_int(vm->prog.nfuncs)); }
+
+/* rt_random_bytes n: n bytes of the system's randomness, "" where it has none */
+static int p_rt_random_bytes(VM *vm) {
+    INT1("rt_random_bytes");
+    size_t n = x < 0 ? 0 : (size_t)x;
+    if (n > MAX_STRING) n = MAX_STRING;
+    char *buf = malloc(n ? n : 1);
+    if (!buf) vm_fatal(vm, "out of memory");
+    int ok = n == 0 || sys_random(buf, n) == 0;
+    Obj *str = vm_string_from(vm, buf, ok ? (uint32_t)n : 0);
+    free(buf);
+    return ret(vm, 1, mk_ptr(str));
+}
+
+/* win_event_new (): an event a child inherits, watched as its interrupt (sys.h) */
+static int p_win_event_new(VM *vm) { return ret(vm, 1, mk_int(sys_event_new())); }
+static int p_win_event_set(VM *vm) {
+    INT1("win_event_set");
+    return ret(vm, 1, mk_bool(sys_event_set(x) == 0));
 }
 
 /* Runtime.save: 0 in the world that writes the image, and 1 -- `Restored` --
@@ -2456,6 +2785,54 @@ static int p_reals_blit(VM *vm) {
     if (!run_ok(si, n, obj_len(src)) || !run_ok(di, n, obj_len(dst))) return raise_with(vm, 5, EXN_SUBSCRIPT);
     if (n) memmove(obj_bytes(dst) + 8 * (size_t)di, obj_bytes(src) + 8 * (size_t)si, (size_t)n * 8);
     return ret(vm, 5, mk_unit());
+}
+
+/* ================================================================ the terminal of a line editor
+   (Terminal; docs/plans/repl.md, D4 and D5; sys.h) */
+static int p_term_size(VM *vm) {
+    INT1("term_size");
+    int cols = 0, rows = 0;
+    int64_t out[2];
+    if (sys_term_size((int)x, &cols, &rows) != 0) return push_int_list(vm, NULL, 0, 1);
+    out[0] = cols;
+    out[1] = rows;
+    return push_int_list(vm, out, 2, 1);
+}
+static int p_term_resizes(VM *vm) { return ret(vm, 1, mk_int(sys_term_resizes())); }
+static int p_term_enter(VM *vm) {
+    check_tag(vm, ARG(3), T_INT, "term_enter");
+    check_tag(vm, ARG(2), T_INT, "term_enter");
+    Obj *undo = check_obj(vm, ARG(1), K_STRING, "term_enter");
+    check_tag(vm, ARG(0), T_INT, "term_enter");
+    int r = sys_term_enter((int)val_imm(ARG(3)), (int)val_imm(ARG(2)), obj_bytes(undo), obj_len(undo),
+                           val_imm(ARG(0)) != 0);
+    return ret(vm, 4, mk_int(r));
+}
+static int p_term_leave(VM *vm) { return ret(vm, 1, mk_int(sys_term_leave())); }
+/* SOME "" for nothing in the time; NONE at the end or on failure; the
+   user's interrupt raised where it ended the wait, as read_fd does */
+static int p_term_read(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "term_read");
+    check_tag(vm, ARG(1), T_INT, "term_read");
+    check_tag(vm, ARG(0), T_INT, "term_read");
+    int64_t n = val_imm(ARG(1));
+    if (n < 0 || n > MAX_STRING) return raise_with(vm, 3, EXN_SIZE);
+    char *buf = malloc((size_t)n ? (size_t)n : 1);
+    if (!buf) vm_fatal(vm, "out of memory");
+    int64_t got = n == 0 ? 0 : sys_term_read((int)val_imm(ARG(2)), buf, n, val_imm(ARG(0)));
+    if (got == 0 && vm_interrupted(vm)) {
+        free(buf);
+        vm->sp -= 3;
+        return vm_interrupt(vm);
+    }
+    if (got < 0) {
+        free(buf);
+        if (got == -2) sys_set_errno(0);
+        return ret(vm, 3, mk_con0(0));
+    }
+    Obj *str = vm_string_from(vm, buf, (uint32_t)got);
+    free(buf);
+    return ret(vm, 3, mk_some(vm, mk_ptr(str)));
 }
 
 const PrimFn prim_table[PRIM__COUNT] = {

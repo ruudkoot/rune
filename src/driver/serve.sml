@@ -155,8 +155,11 @@ struct
                                            ("stop", int (#stop sp))] @ position sp @ [("message", Str msg)]))
                                   (!Error.kept))))]
 
-  (* the innermost variable of the file whose span holds the offset *)
-  fun hover (path : string, offset : int) : json =
+  (* the innermost variable of the declarations of the file whose span
+     holds the offset, with its type: what hover answers, and what the REPL's
+     engine answers typeAt with (src/repl/engine.sml) *)
+  fun variableAt (syntax : (string * Ast.dec list) list, path : string, offset : int)
+      : (string * Types.ty * Source.span) option =
     let
       val best : (string * Types.ty * Source.span) option ref = ref NONE
       fun consider (name, ty, sp : Source.span) =
@@ -204,13 +207,17 @@ struct
         | Ast.StrLet (ds, s, _) => (List.app dec ds; strexp s)
         | Ast.StrExport (_, _, s, _, _) => strexp s
         | _ => ()
-      val () = List.app (fn (n, ds) => if n = path then List.app dec ds else ()) (!Main.keptSyntax)
+      val () = List.app (fn (n, ds) => if n = path then List.app dec ds else ()) syntax
     in
-      case !best of
-        SOME (name, ty, sp) => Obj [("name", Str name), ("type", Str (Types.toString ty)),
-                                    ("start", int (#start sp)), ("stop", int (#stop sp))]
-      | NONE => Null
+      !best
     end
+
+  (* the innermost variable of the file whose span holds the offset *)
+  fun hover (path : string, offset : int) : json =
+    case variableAt (!Main.keptSyntax, path, offset) of
+      SOME (name, ty, sp) => Obj [("name", Str name), ("type", Str (Types.toString ty)),
+                                  ("start", int (#start sp)), ("stop", int (#stop sp))]
+    | NONE => Null
 
   fun answer (options : string list, method : string, params : json) : json =
     case method of

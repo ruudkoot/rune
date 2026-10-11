@@ -1,6 +1,8 @@
-/* The body of runtime/register's loop (runtime/register/interp.c), which includes it twice: as
-   loop_fast and as loop_traced, TRACED saying whether each instruction is
-   printed first (runevm --trace). Not a header of its own. */
+/* The body of runtime/register's loop (runtime/register/interp.c), which
+   includes it three times: as loop_fast, as loop_traced, TRACED saying
+   whether each instruction is printed first (runevm --trace), and as
+   loop_debug, whose DBG_CHECK looks at each instruction for the debugger
+   (runtime/debug.c). Not a header of its own. */
 
 static int LOOP_NAME(VM *vm, JitProgram *jit) {
     Program *p = &vm->prog;
@@ -22,7 +24,7 @@ static int LOOP_NAME(VM *vm, JitProgram *jit) {
 #include "reg_labels.h"
     };
 #define CASE(name) L_##name:
-#define NEXT do { CENSUS_NEXT(pc); goto *dispatch[code[pc]]; } while (0)
+#define NEXT do { CENSUS_NEXT(pc); DBG_CHECK(); goto *dispatch[code[pc]]; } while (0)
     NEXT;
 #include "reg_cases.h"
 #else
@@ -30,6 +32,7 @@ static int LOOP_NAME(VM *vm, JitProgram *jit) {
 #define NEXT continue
     for (;;) {
         CENSUS_NEXT(pc);
+        DBG_CHECK();
         switch (code[pc]) {
 #include "reg_cases.h"
         default:

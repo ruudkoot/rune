@@ -1,0 +1,7 @@
+name	kind	signature	realisations	status	origin	source
+DISPLAY_WIDTH	signature			required	declared	lib/unicode/display_width_sig.sml
+GRAPHEME	signature			required	declared	lib/unicode/grapheme_sig.sml
+UTF8	signature			required	declared	lib/unicode/utf8_sig.sml
+DisplayWidth	structure	DISPLAY_WIDTH		required	claimed	lib/unicode/display_width.sml
+Grapheme	structure	GRAPHEME		required	claimed	lib/unicode/grapheme.sml
+Utf8	structure	UTF8		required	claimed	lib/unicode/utf8.sml

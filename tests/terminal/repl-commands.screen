@@ -1,0 +1,19 @@
+Rune @VERSION@. Type :help for instructions.
+- :type [1, 2]
+[1, 2] : int list
+- :doc Option.isSome
+val isSome : 'a option -> bool
+  Option : OPTION, docs/generated/basis/sig/OPTION.md#val-issome
+
+isSome opt is true when opt carries a value.
+
+Example isSome (SOME 0) = true
+- fun f 0 = raise Fail "zero" | f n = f (n - 1);
+val f = fn : int -> 'a
+- f 2 : int;
+uncaught exception Fail: zero
+  raised in f at stdIn#1:1:17 (:bt for the rest)
+- :bt
+  in f at stdIn#1:1:17
+  in <toplevel> at stdIn#2:1:1
+-

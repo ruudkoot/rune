@@ -1,0 +1,5 @@
+name	kind	signature	realisations	status	origin	source
+ZMTP	signature			required	declared	lib/zmtp/zmtp_sig.sml
+ZMTP_WIRE	signature			required	declared	lib/zmtp/wire_sig.sml
+Zmtp	structure	ZMTP		required	claimed	lib/zmtp/zmtp.sml
+ZmtpWire	structure	ZMTP_WIRE		required	claimed	lib/zmtp/wire.sml

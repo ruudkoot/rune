@@ -1,0 +1,5 @@
+name	kind	signature	realisations	status	origin	source
+FRAMING	signature			required	declared	lib/jsonrpc/framing_sig.sml
+JSON_RPC	signature			required	declared	lib/jsonrpc/jsonrpc_sig.sml
+Framing	structure	FRAMING		required	claimed	lib/jsonrpc/framing.sml
+JsonRpc	structure	JSON_RPC		required	claimed	lib/jsonrpc/jsonrpc.sml

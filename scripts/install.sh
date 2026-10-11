@@ -2,7 +2,9 @@
 # Install (or remove) Rune: the rune wrapper, runevm (the VM of the register
 # bytecode, with its JIT) and runevm-stack, the compiler it runs, the
 # basis library, the man pages and the shell completions; rune-repl, the
-# REPL, when it is built (bin/rune-repl.img), which `rune -i` starts; and runedoc, the
+# REPL, when it is built (bin/rune-repl.img), which `rune -i` starts, with
+# its debug adapter (rune-dap, `rune-repl --dap`) and its Jupyter kernel
+# (rune-kernel) where they are built; and runedoc, the
 # documentation generator, and runeopt, the native code generator, when they
 # are built (bin/runedoc.rbc, or bin/runedoc-NAME with --host, and the same of
 # runeopt), runeopt with the runtime it links a program with (lib/rune/runtime).
@@ -78,7 +80,7 @@ if [ "$uninstall" = 1 ]; then
         "$bindir/runedoc-smlnj-dev" "$bindir/runedoc-polyml" "$bindir/runedoc-mlkit" \
         "$bindir/runeopt" "$bindir/runeopt-mlton" "$bindir/runeopt-smlnj-legacy" \
         "$bindir/runeopt-smlnj-dev" "$bindir/runeopt-polyml" "$bindir/runeopt-mlkit" \
-        "$bindir/rune-repl"
+        "$bindir/rune-repl" "$bindir/rune-dap" "$bindir/rune-kernel"
   [ -d "$libdir" ] && chmod -R u+w "$libdir"   # the frozen Basis is read-only
   rm -rf "$libdir"
   rm -f "$mandir/rune.1" "$mandir/runevm-stack.1" "$mandir/runevm.1" "$mandir/runedoc.1" "$mandir/runeopt.1"
@@ -170,14 +172,30 @@ if [ -f "$root/lib/cache/made" ]; then
 fi
 
 # the REPL, when it is built (make repl): its image, restored by runevm;
-# `rune -i` starts it
+# `rune -i` starts it, and `rune-repl --dap` its debug adapter. The adapter
+# (make dap) and the Jupyter kernel (make kernel), where they are built,
+# start the REPL's engine from the same image (docs/dap.md, docs/kernel.md).
 repl=""
 if [ -e "$root/bin/rune-repl.img" ]; then
   copy "$root/bin/rune-repl.img" "$libdir/rune-repl.img" 644
-  printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" --heap-size %s --restore "$d/../lib/rune/rune-repl.img" -- "$@"\n' \
+  printf '#!/bin/sh\nd=$(dirname "$0")\nif [ "$1" = --dap ]; then shift; exec "$d/rune-dap" "$@"; fi\nexec "$d/runevm" --heap-size %s --restore "$d/../lib/rune/rune-repl.img" -- "$@"\n' \
     "$heap" > "$bindir/rune-repl"
   chmod 755 "$bindir/rune-repl"
   repl=rune-repl
+  if [ -e "$root/bin/rune-dap.rbc" ]; then
+    copy "$root/bin/rune-dap.rbc" "$libdir/rune-dap.rbc" 644
+    printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" "$d/../lib/rune/rune-dap.rbc" --vm "$d/runevm" --image "$d/../lib/rune/rune-repl.img" "$@"\n' \
+      > "$bindir/rune-dap"
+    chmod 755 "$bindir/rune-dap"
+    repl="$repl, rune-dap"
+  fi
+  if [ -e "$root/bin/rune-kernel.rbc" ]; then
+    copy "$root/bin/rune-kernel.rbc" "$libdir/rune-kernel.rbc" 644
+    printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" "$d/../lib/rune/rune-kernel.rbc" --vm "$d/runevm" --image "$d/../lib/rune/rune-repl.img" --program "$d/../lib/rune/rune-kernel.rbc" "$@"\n' \
+      > "$bindir/rune-kernel"
+    chmod 755 "$bindir/rune-kernel"
+    repl="$repl, rune-kernel"
+  fi
 fi
 
 # runedoc, when it is built: the same kind of build as rune.
@@ -285,7 +303,7 @@ if [ -n "$opt" ]; then
   copy "$root/share/completions/_runeopt" "$zshdir/_runeopt" 644
 fi
 
-echo "installed $installed${doc:+, runedoc}${opt:+, runeopt}${repl:+, rune-repl}, runevm and runevm-stack in $prefix/bin, the basis library in $prefix/lib/rune"
+echo "installed $installed${doc:+, runedoc}${opt:+, runeopt}${repl:+, $repl}, runevm and runevm-stack in $prefix/bin, the basis library in $prefix/lib/rune"
 if sml=$(sml_for_host "$host"); then
   echo "note: rune-$host runs with $sml"
 fi

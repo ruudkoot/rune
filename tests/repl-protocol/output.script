@@ -1,0 +1,10 @@
+# The program's output stays on its standard output and error, which the
+# front drains before it reads each message: what an evaluation printed is
+# in the transcript before its answer.
+send {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":1}}
+until 1
+send {"jsonrpc":"2.0","id":2,"method":"eval","params":{"text":"val () = print \"hello\\n\"; val () = TextIO.output (TextIO.stdErr, \"to stderr\\n\"); val v = 3;"}}
+until 2
+send {"jsonrpc":"2.0","id":3,"method":"shutdown","params":{}}
+until 3
+end

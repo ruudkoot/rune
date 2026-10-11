@@ -1,0 +1,48 @@
+{
+ "signatures": {
+  "SHAPE": {
+   "doc": "Shapes.\n\n",
+   "page": "sig/SHAPE.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "shape",
+     "spec": "datatype shape\n  = Circle of int\n  | Square of int",
+     "doc": "A shape.\n\n",
+     "page": "sig/SHAPE.md#type-shape"
+    },
+    {
+     "kind": "val",
+     "name": "area",
+     "spec": "val area : shape -> int",
+     "doc": "`area s` is the area of `s`, rounded down.\n\n",
+     "page": "sig/SHAPE.md#val-area"
+    },
+    {
+     "kind": "val",
+     "name": "scale",
+     "spec": "val scale : shape * int -> shape",
+     "doc": "`scale (s, k)` is `s`, `k` times as large.\n\n",
+     "page": "sig/SHAPE.md#val-scale"
+    },
+    {
+     "kind": "val",
+     "name": "name",
+     "spec": "val name : shape -> string",
+     "doc": "`name s` is what `s` is called.\n\nThe blanks of code stay, as in `\"a  circle\"`, and a line end in it is one\nblank: `scale (Circle 1, 2)`.\n\n",
+     "page": "sig/SHAPE.md#val-name"
+    },
+    {
+     "kind": "val",
+     "name": "grow",
+     "spec": "val grow : shape -> shape",
+     "doc": "`grow s` is `scale (s, 2)`.\n\n",
+     "page": "sig/SHAPE.md#val-grow"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Shape": "SHAPE"
+ }
+}

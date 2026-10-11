@@ -1,0 +1,16 @@
+# windows
+# An entry over several lines: the continuation prompt until the `;`.
+start 80 24 @REPL@
+wait ^-$
+send val x =
+keys Enter
+wait ^=$
+send   3;
+keys Enter
+wait ^val x = 3 : int$
+send x + 1;
+keys Enter
+wait ^val it = 4 : int$
+send val () = OS.Process.exit OS.Process.success;
+keys Enter
+exited 0

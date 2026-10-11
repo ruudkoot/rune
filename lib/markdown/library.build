@@ -1,0 +1,10 @@
+(* The Markdown library (docs/plans/repl.md, The libraries; M8):
+   CommonMark and GitHub's tables, as a tree, HTML and documents; its files
+   in load order, in the form of lib/basis/library.build. It is written on
+   lib/pretty, for the documents, and so on lib/unicode: *)
+libraries pretty end
+annotate "demand" in
+  entities.sml
+  markdown_sig.sml
+  markdown.sml
+end

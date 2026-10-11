@@ -1,0 +1,12 @@
+# The marks of OSC 133 (docs/plans/repl.md, D18), byte for byte on a pty, as
+# a terminal that takes them (VS Code's, by TERM_PROGRAM) is given them: A
+# before the prompt, C before the output, D and the entry's status after it
+# -- 0 where everything ran, 1 where something failed. tmux does not pass
+# them on, so this is read by tests/terminal/ptyraw.py.
+until \x1b\]133;A\x1b\\ 20
+write 1;\r
+until \x1b\]133;C\x1b\\.*val.*it.* = 1 : int.*\x1b\]133;D;0\x1b\\ 20
+write val x = undefinedName;\r
+until undefinedName.*\x1b\]133;D;1\x1b\\ 20
+write \x04
+quiet 300

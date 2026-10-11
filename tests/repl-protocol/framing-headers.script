@@ -1,0 +1,9 @@
+# Content-Length framing, as Emacs's jsonrpc.el, VS Code and Neovim speak:
+# the engine answers in the framing the front's first byte chose.
+send {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":1}}
+until 1
+send {"jsonrpc":"2.0","id":2,"method":"eval","params":{"text":"val s = \"framed\";"}}
+until 2
+send {"jsonrpc":"2.0","id":3,"method":"shutdown","params":{}}
+until 3
+end

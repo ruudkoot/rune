@@ -35,6 +35,12 @@ bin/runevm hello.rbc
 Hello, world!
 ```
 
+`make repl` builds the REPL, `bin/rune-repl`: entries edited and coloured as
+they are typed, completion, history, commands such as `:type`, `:doc` and
+`:search`, reload, and a debugger ([docs/repl.md](docs/repl.md)). `make
+kernel` builds a Jupyter kernel ([docs/kernel.md](docs/kernel.md)), and
+`bin/rune-repl --dap` debugs SML from an editor ([docs/dap.md](docs/dap.md)).
+
 `make doctor` reports what the machine lacks, and the command that installs
 it. `make check` runs every test. Prerequisites, every `make` target and
 installing are in [docs/building.md](docs/building.md).
@@ -69,6 +75,11 @@ slower on `IntInf`. The compiler compiles itself in 3.0 s, MLton's build in
 * [ir.md](docs/ir.md): the intermediate representations.
 * [bytecode.md](docs/bytecode.md): the instruction sets and the file format.
 * [runtime.md](docs/runtime.md): what a running program can count on.
+* [repl.md](docs/repl.md): the REPL's manual.
+* [diagnostics.md](docs/diagnostics.md): how errors are shown, colours and `RUNE_COLORS`.
+* [repl-protocol.md](docs/repl-protocol.md): the REPL's engine, for editors and other fronts.
+* [kernel.md](docs/kernel.md): the Jupyter kernel.
+* [dap.md](docs/dap.md): the debug adapter for editors.
 * [native.md](docs/native.md): translating bytecode to machine code.
 * [performance.md](docs/performance.md): timings against the SML systems, and why.
 * [basis-compat.md](docs/basis-compat.md): running Rune's Basis Library on the other SML systems.

@@ -8,6 +8,7 @@
 - `Empty` (exn): [LIST](../sig/LIST.md#exn-empty)
 - `end_of_stream` (val): [SML90](../sig/SML90.md#val-end_of_stream)
 - `endOfStream` (val): [IMPERATIVE_IO](../sig/IMPERATIVE_IO.md#val-endofstream), [STREAM_IO](../sig/STREAM_IO.md#val-endofstream), [TEXT_IO](../sig/TEXT_IO.md#val-endofstream)
+- `enter` (val): [TERMINAL](../sig/TERMINAL.md#val-enter)
 - `entry` (type): [NET_HOST_DB](../sig/NET_HOST_DB.md#type-entry), [NET_PROT_DB](../sig/NET_PROT_DB.md#type-entry), [NET_SERV_DB](../sig/NET_SERV_DB.md#type-entry)
 - `environ` (val): [POSIX_PROC_ENV](../sig/POSIX_PROC_ENV.md#val-environ)
 - `EQUAL` (con): [GENERAL](../sig/GENERAL.md#con-equal), [IEEE_REAL](../sig/IEEE_REAL.md#con-equal)

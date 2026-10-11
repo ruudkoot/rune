@@ -253,6 +253,9 @@ int relocate_code(uint8_t *code, const Relocation *r, char *err, size_t errlen) 
 }
 
 /* LOCAL 0, the argument, and RET, in a frame of one local */
+/* runevm-stack has no debugger (runtime/debug.c) */
+uint32_t debug_function_code(uint8_t *out, uint32_t *nlocals) { (void)out; *nlocals = 0; return 0; }
+
 uint32_t return_function_code(uint8_t *out, uint32_t *nlocals) {
     out[0] = OP_LOCAL;
     write_u32(out + 1, 0);

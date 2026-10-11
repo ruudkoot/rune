@@ -63,6 +63,14 @@ sig
      declaration declared. *)
   val printDepth : int ref
 
+  (* How many items of a list, an array or a vector the REPL prints (100);
+     the rest print as one `...`. *)
+  val printLength : int ref
+
+  (* How many characters of a string the REPL prints (1,000); the rest
+     print as `...` after the closing quote. *)
+  val stringLength : int ref
+
   (* What the REPL writes before it reads a declaration. *)
   val prompt1 : string ref
 
@@ -104,8 +112,10 @@ sig
      Example: `let val b = ref "" in prettyPrint (fn s => b := !b ^ s, 3) (PrettyBlock (2, false, [], [PrettyString "ab", PrettyBreak (1, 0), PrettyString "cd"])); !b end = "ab\n  cd"` *)
   val prettyPrint : (string -> unit) * int -> pretty -> unit
 
-  (* How wide the REPL lays out what the printers of `addPrettyPrinter`
-     make. *)
+  (* How wide the REPL lays out a value where its output is not a terminal.
+
+     It is the width of what the REPL's own printers make and what those of
+     `addPrettyPrinter` make; on a terminal, the terminal's width is. *)
   val lineLength : int ref
 
   (* `addPrettyPrinter f` makes `f` the REPL's printer of the values of a

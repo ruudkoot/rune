@@ -35,13 +35,16 @@
      native code (runtime/register/jit.h), RETURN_NATIVE(at), where a return lands
      in native code, RAISED(), on after a raise, into the handler's native
      code where it has some, BACKWARD(t), a loop's jump back, counted and
-     gone on in the function's code where it has some, POLL(), the user's
-     interrupt raised here where one waits (VM.interrupt), at a jump back
-     and a call, before either does anything, RESUME_NATIVE(f, pc),
+     gone on in the function's code where it has some, POLL(len), the
+     user's interrupt raised here where one waits (VM.interrupt), at a jump
+     back and a call, before either does anything -- or, where the debugger
+     makes it a pause (runtime/debug.c), the instruction, len bytes back,
+     left to the debug loop -- RESUME_NATIVE(f, pc),
      on in function f's code at pc where a run begins there, RESULT_OF(pc),
      the frame just pushed told the register of the RESULT at pc, if that
-     is one, and NEW_PROGRAM(), the JIT's view made again of a program
-     that became another;
+     is one, NEW_PROGRAM(), the JIT's view made again of a program
+     that became another, and DEBUG_BEGUN(), the program given to the
+     driver where a primitive put the debugger's debug mode on;
    * FATAL(...), a fatal error at this instruction; EXPECT(v, kind, what),
      the object v points to, of that kind, or a fatal error;
    * NEXT, on to the next instruction, for a body that ends early. *)
@@ -121,7 +124,7 @@ struct
         "R(a) = mk_ptr(fr->closure);"],
      rinst ("CALL", [("f", reg), ("x", reg)], Call,
             "Call the closure in register f with register x; RESULT takes what it returns.")
-       (["POLL();",
+       (["POLL(9);",
          "CENSUS_CALL(0, R(b), CENSUS_REP(p, fr->func, b));"]   (* the census VM's hook: nothing in the stock build *)
         @ callee
         @ ["size_t top = (size_t)(sp - vm->stack);",
@@ -133,7 +136,7 @@ struct
      rinst ("RESULT", [("d", reg)], Next, "Register d := what the call or primitive before it left on the stack.")
        ["R(a) = POP();"],
      rinst ("TAILCALL", [("f", reg), ("x", reg)], TailCall, "Like CALL, but the current frame is replaced.")
-       (["POLL();",
+       (["POLL(9);",
          "CENSUS_CALL(1, R(b), CENSUS_REP(p, fr->func, b));"]
         @ callee
         @ ["size_t top = fr->base;",
@@ -187,6 +190,7 @@ struct
            "int r = prim_table[a](vm);",
            "if (r == PRIM_NEW_WORLD) NEW_PROGRAM();",
            "RELOAD();",
+           "if (r == PRIM_NEW_WORLD) DEBUG_BEGUN();",
            "if (r == 1) RAISED();"]),
      rinst ("TUPLE", [("d", reg), ("n", K Count), ("fields", Registers 1)], Next,
             "Register d := a tuple of the n registers of fields.")
@@ -256,7 +260,7 @@ struct
      rinst ("JUMP", [("o", K Label)], Jump, "Jump to absolute code offset o.")
        ["/* a jump back is a loop's: a poll, counted, and where the",
         "   function has code, gone on in it (M6) */",
-        "if ((uint32_t)a < pc) { POLL(); BACKWARD((uint32_t)a); }",
+        "if ((uint32_t)a < pc) { POLL(5); BACKWARD((uint32_t)a); }",
         "pc = (uint32_t)a;"],
      rinst ("JUMPIF", [("s", reg), ("o", K Label)], Branch, "Jump to o if register s holds true.")
        ["Value v = R(a);",
@@ -295,7 +299,7 @@ struct
            "RAISED();"]),
      rinst ("CALLK", [("f", K Function), ("n", K Count), ("args", Registers 1)], Call,
             "Call function f, known, with the n registers of args, which become its registers 0 to n-1; no closure; RESULT takes what it returns.")
-       ["POLL();",
+       ["POLL(9 + 4 * n);",
         "for (uint32_t i = 0; i < n; i++) CENSUS_CALL(2, R(LIST(i)), CENSUS_REP(p, fr->func, LIST(i)));",
         "Function *fn = &p->funcs[a];",
         "size_t top = (size_t)(sp - vm->stack);",
@@ -310,7 +314,7 @@ struct
         "HANDOVER((uint32_t)a);"],
      rinst ("TAILCALLK", [("f", K Function), ("n", K Count), ("args", Registers 1)], TailCall,
             "Like CALLK, but the current frame is replaced.")
-       ["POLL();",
+       ["POLL(9 + 4 * n);",
         "for (uint32_t i = 0; i < n; i++) CENSUS_CALL(3, R(LIST(i)), CENSUS_REP(p, fr->func, LIST(i)));",
         "Function *fn = &p->funcs[a];",
         "size_t top = fr->base;",

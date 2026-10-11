@@ -2,6 +2,6 @@
 - datatype t = A | B of int
 - val f = fn : int -> t
 - val r = ref [1, 2] : int list ref
-- val w = Saved : world
+- val w = Saved : Runtime.world
 - val y = "after the save" : string
 - 

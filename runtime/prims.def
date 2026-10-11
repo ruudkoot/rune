@@ -317,6 +317,8 @@ repl_printer_add 1  (int -> 'a -> 'b -> 'c) -> unit   Compiler.addPrettyPrinter:
 unsafe_cast      1  'a -> 'b                 Its argument, at any type: for the library alone (RuneShow keeps the printers of every type in one table, each taken out at the type it was put in at). A value is a word whatever its type, so nothing moves.
 rt_version       1  unit -> string           The version of Rune this VM was built as, which `runevm --version` prints.
 rt_trace         1  int -> (string * string * int * int) list   The frames, innermost first, leaving out the innermost n: the name of each function, the file it is in, and the line and column it is stopped at; the file is "" and both numbers 0 where the program carries no position.
+rt_raise_mark    1  int -> int               With ~1, make the handler pushed last the one whose raises record the frames they leave (rt_raise_trace); with another number, put back a mark this gave (0: none). The mark it replaces.
+rt_raise_trace   1  unit -> (string * string * int * int) list   The frames the last raise rt_raise_mark watches for left, innermost first, as rt_trace gives them.
 rt_save          1  string -> int            Write the whole VM to a file, to be carried on by `runevm --restore`: 0 here, 1 in the world that starts again from it, ~1 if it could not be written.
 rt_restore       1  string -> int            Become the world in a file that Runtime.save wrote, bytecode and all; it does not come back, and gives ~1 only when the image cannot be read.
 rt_link          1  string -> (unit -> unit) option   Append the unit whose file's bytes are given to the program (docs/units.md, Loading): its imports found among what the units loaded before export, its code checked as a file's is; SOME of the closure of its top level, which the caller runs, or NONE, rt_link_error saying why.
@@ -324,6 +326,22 @@ rt_link_error    1  unit -> string           Why the last rt_link gave NONE.
 rt_interrupt_catch 1  exn -> bool              From now on the user's interrupt (SIGINT, Ctrl-C at a console) raises the exception given where the program next jumps back or calls, or in a terminal's read it ends, rather than ending the program (docs/runtime.md, Interrupts); false where the system has no interrupt to catch.
 rt_interrupt_mask 1  bool -> bool             Whether an interrupt waits rather than being raised, set; what it was. One that waited is raised as the mask goes.
 rt_interrupt_is  1  exn -> bool              Whether the exception is the one the user's interrupt raises (rt_interrupt_catch), which a stream passes on as it is rather than as the cause of IO.Io.
+rt_debug_hook    1  (int -> unit) -> bool    The REPL's debugger: the function the VM calls where the program stops, with the event (1 a breakpoint, 2 a step, 3 a pause, 4 a raise, 5 a raise the REPL's handler takes), on the frames it stopped in; the frame of <debug> that calls it is made the first time, which grows the program. false where the VM has no debugger.
+rt_debug_mode    1  int -> int               The debugger's mode, set: 1 debug mode (the debug loop, every instruction interpreted), 2 a stop at every raise in the user's code, 4 at a raise the REPL's handler takes, 8 the user's interrupt a pause; the mode it replaces.
+rt_debug_user    1  unit -> unit             The files the program has now are the library's: a step stops only in the files that come after.
+rt_debug_break   3  string * int * bool -> int   A breakpoint at the line of the file, as the program names it, set (true) or cleared; how many entries of the line table begin that line. With "" and false, every breakpoint cleared.
+rt_debug_step    1  int -> unit              How the stop ends, from the frame it stopped in: 0 on, 1 to the next line, 2 to the next line of that frame or one below it, 3 to where it returns, 4 the interrupt's exception raised there.
+rt_debug_frames  1  unit -> (int * string * string * int * int) list   The frames of the stop, innermost first, as rt_trace gives them, each with the number of the VM's frame it is of (0 the one that stopped), down to the REPL's; [] where nothing stopped.
+rt_debug_where   1  int -> int * int         The function of frame k of the stop and a pc in the instruction it is at, from the function's first; (~1, 0) where there is no such frame.
+rt_debug_live    2  int * int -> int         What register r of frame k of the stop holds: 0 nothing (no such register, or dead where the frame waits), 1 an immediate -- which is also what a register holds before it is written, and what the collector leaves in one it found dead --, 2 a pointer.
+rt_debug_local   2  int * int -> 'a          Register r of frame k of the stop, at any type: for the REPL alone, which knows its type (rt_debug_live first).
+rt_debug_env     2  int * int -> 'a          Slot e of the environment of the closure of frame k of the stop, at any type, as rt_debug_local; unit where there is none.
+rt_debug_exn     1  unit -> exn              The exception a stop at a raise stopped for.
+rt_debug_return  1  'a -> unit               <debug>'s own, after the hook: its frame taken off, and the program on from the instruction it stopped at, or with the exception it stopped for (its argument).
+rt_debug_program 1  unit -> int              How many functions the program has: after a unit is linked, its own are the last.
+rt_random_bytes  1  int -> string            n bytes of the system's randomness (/dev/urandom, RtlGenRandom), as a string; "" where there is none.
+win_event_new    1  unit -> int              An event of Windows that a child inherits, by its handle's number, to watch as its interrupt (RUNE_INTERRUPT_EVENT); ~1 elsewhere.
+win_event_set    1  int -> bool              The event of that number set: the interrupt of the child that watches it; false where it cannot be.
 
 # --- comparisons that answer an order (LESS = tag 0, EQUAL = 1, GREATER = 2, as lib/basis/initial.sml declares it), for Int, Word, Char and String.compare ---
 int_order        2  int * int -> order       LESS, EQUAL or GREATER: how the first int compares with the second.
@@ -402,3 +420,10 @@ reals_blit       5  realarray * int * realarray * int * int -> unit   Copy a run
 rt_minor_collections 1  unit -> int              Minor collections the collector has made.
 rt_major_collections 1  unit -> int              Collections of the whole heap the collector has made: full collections and the low-pause collector's cycles.
 rt_promoted      1  unit -> int              Bytes minor collections have promoted into the old space.
+
+# --- the terminal of a line editor (Terminal; docs/plans/repl.md, D4 and D5; runtime/sys/sys.h) ---
+term_size        1  int -> int list          The columns and rows of the window of the terminal a descriptor is; [] when it is none.
+term_resizes     1  unit -> int              How many times the window has changed its size since the first call, which starts the count; ~1 where it cannot be counted.
+term_enter       4  int * int * string * int -> int   Put the terminal of the first descriptor in raw mode, or quiet where the last is 1 (no echo, keys kept, signals from keys), the second being where the program draws, and the string what to write there when it is put back (at term_leave, exit, a fatal error, or a signal that ends the process); 0, or ~1 with the reason in sys_errno.
+term_leave       1  unit -> int              Put the terminal back as it was before term_enter; 0, or ~1.
+term_read        3  int * int * int -> string option   At most n bytes typed at the terminal (descriptor, n, milliseconds to wait, ~1 for no limit): SOME "" when the time is up or a resize ended the wait; NONE at the end of the input, or when the read fails, sys_errno saying why (0 at the end). The user's interrupt, where it is caught, is raised.

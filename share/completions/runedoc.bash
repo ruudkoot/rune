@@ -21,7 +21,8 @@ _runedoc() {
 
     if [[ $cur == -* ]]; then
         COMPREPLY=($(compgen -W '--library --out --check --title --tests --annotations --examples
-            --labels --check-coverage --page --dump-ir --lint --lib --version --help' -- "$cur"))
+            --labels --check-coverage --page --dump-ir --lint --palette --color=always --color=never --color=auto
+            --diagnostics=full --diagnostics=short --diagnostics-json --lib --version --help' -- "$cur"))
         return
     fi
 

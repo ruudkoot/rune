@@ -1,0 +1,13 @@
+-> {"jsonrpc":"2.0","id":1,"method":"eval","params":{"text":"1;"}}
+<- {"error": {"code": -32002, "message": "initialize first"}, "id": 1, "jsonrpc": "2.0"}
+-> (raw) {"jsonrpc":\n
+<- {"error": {"code": -32700, "message": "Parse error: expected a value"}, "id": null, "jsonrpc": "2.0"}
+-> {"jsonrpc":"2.0","id":2,"method":"initialize","params":{"protocol":2}}
+<- {"error": {"code": -32001, "message": "this engine speaks protocol 1"}, "id": 2, "jsonrpc": "2.0"}
+-> {"jsonrpc":"2.0","id":3,"method":"initialize","params":{"protocol":1}}
+<- {"id": 3, "jsonrpc": "2.0", "result": {"implementation": "rune-repl VERSION", "methods": ["initialize", "ping", "eval", "use", "reload", "isComplete", "complete", "inspect", "typeAt", "check", "value/children", "value/release", "interrupt", "shutdown", "debug/setBreakpoints", "debug/setRaise", "debug/configure", "debug/frames", "debug/variables", "debug/evaluate", "debug/continue"], "protocol": 1}}
+-> {"jsonrpc":"2.0","id":4,"method":"evaluate","params":{}}
+<- {"error": {"code": -32601, "message": "no method evaluate"}, "id": 4, "jsonrpc": "2.0"}
+-> {"jsonrpc":"2.0","id":5,"method":"eval","params":{"text":1}}
+<- {"error": {"code": -32602, "message": "wants a string text"}, "id": 5, "jsonrpc": "2.0"}
+ended 0

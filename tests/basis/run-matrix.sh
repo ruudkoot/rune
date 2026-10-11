@@ -135,6 +135,9 @@
 # int is too narrow for the Time of lib/basis. A host that fails a program
 # is reported under the table; only a failure of `rune` fails the run.
 set -u
+# What is compared must not depend on colour forced from outside
+# (docs/diagnostics.md).
+unset FORCE_COLOR CLICOLOR_FORCE
 
 jobs=""
 perf=${RUNE_MATRIX_PERF:-0}

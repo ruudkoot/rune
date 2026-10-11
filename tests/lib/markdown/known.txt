@@ -1,0 +1,2 @@
+# CommonMark examples (tests/lib/markdown/spec.json) that lib/markdown does
+# not read as CommonMark does: NUMBER | reason

@@ -1,0 +1,9 @@
+(* The Jupyter library (docs/plans/repl.md, The libraries; M11): a
+   kernel's side of Jupyter's messaging protocol; its files in load order,
+   in the form of lib/basis/library.build. It is written on lib/zmtp,
+   lib/json and lib/digest: *)
+libraries zmtp json digest end
+annotate "demand" in
+  jupyter_sig.sml
+  jupyter.sml
+end

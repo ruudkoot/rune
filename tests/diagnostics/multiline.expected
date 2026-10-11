@@ -1,0 +1,7 @@
+\e[1mtests/diagnostics/multiline.sml:3:5:\e[0m \e[1;35mwarning:\e[0m \e[1mmatch is not exhaustive (missing case: D)\e[0m
+\e[2m  |\e[0m
+\e[2m3 |\e[0m fun name A = "a"
+\e[2m  |\e[0m     \e[1;35m^^^^^^^^^^^^\e[0m
+\e[2m...\e[0m
+\e[2m5 |\e[0m   | name C = "c"
+\e[2m  |\e[0m \e[1;35m^^^^^^^^^^^^^^^^\e[0m

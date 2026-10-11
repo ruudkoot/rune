@@ -612,7 +612,7 @@ struct
           fun bindHit (l, u, pickle, {warnings, ...} : UnitCache.entry) =
             ((* the warnings its compile gave, again *)
              if !Options.noWarnings then ()
-             else List.app (fn w => TextIO.output (TextIO.stdErr, w ^ "\n")) warnings;
+             else List.app (fn w => TextIO.output (TextIO.stdErr, Diagnostic.showCached w ^ "\n")) warnings;
              env := Env.plus (!env, #delta l);
              fixity := Fixity.extend (!fixity, #directives l);
              UnitBasis.bind l;
@@ -652,7 +652,7 @@ struct
           val () = if !keepSyntax then keptSyntax := (name, decs) :: !keptSyntax else ()
           (* after an error, the units are only elaborated, for their errors *)
           val failed = !Error.errors > 0
-          val warnings = List.rev (!Error.warnings)
+          val warnings = map Error.formatWarning (List.rev (!Error.warnings))
           val () = if failed then () else if !Options.noWarnings then Error.warnings := [] else Error.flushWarnings ()
         in
           if !Options.typecheckOnly orelse failed then (if failed then failedBefore := true else (); acc)
@@ -1029,9 +1029,14 @@ struct
       OS.Process.success
     end
 
-  fun main (_ : string, args : string list) : OS.Process.status =
+  fun main (name : string, args : string list) : OS.Process.status =
+    let val status = main' (name, args)
+    in Diagnostic.finish (OS.Process.isSuccess status); status end
+
+  and main' (_ : string, args : string list) : OS.Process.status =
     (Options.parse args;
      Parser.orPatterns := !Options.orPatterns;
+     Diagnostic.install {color = !Options.color, full = !Options.diagnostics, json = !Options.diagnosticsJson};
      if !Options.showHelp then (print Options.usage; OS.Process.success)
      else if !Options.showVersion then (println ("rune " ^ Config.version); OS.Process.success)
      else if !Options.basisCheck then checkManifest ()
@@ -1044,7 +1049,7 @@ struct
      else compile ())
     handle BasisManifest.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
          | Options.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
-         | Error.CompileError (sp, msg) => (eprintln (Error.format (sp, msg)); Error.note ("error", sp, msg); OS.Process.failure)
+         | Error.CompileError (sp, msg) => (eprintln (!Error.show ("error", sp, msg)); Error.note ("error", sp, msg); OS.Process.failure)
          | Reported => OS.Process.failure
          | Error.Bug msg => (eprintln ("rune: " ^ msg); OS.Process.failure)
          | IO.Io {name, ...} => (eprintln ("rune: I/O error on " ^ name); OS.Process.failure)

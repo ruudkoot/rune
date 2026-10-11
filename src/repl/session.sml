@@ -15,6 +15,9 @@
 structure ReplSession =
 struct
   exception Failed of string
+  (* a declaration whose errors were reported as they were found: each
+     independent one of a top-level declaration (Elaborate.recover, D17) *)
+  exception Reported
 
   val env : Env.env ref = ref Env.initial
   val fixity : Fixity.env ref = ref Fixity.initial
@@ -24,12 +27,137 @@ struct
   (* whether a declaration's values are echoed: not those of the REPL's own
      declarations at start *)
   val quiet : bool ref = ref false
-  fun echoing () = not (!quiet) andalso !RuneCompiler.printDepth > 0
+  fun echoing () = not (!quiet) andalso !RuneCompiler.printDepth > 0 andalso !RuneCompiler.feedback <> "silent"
   (* what a declaration's echo was compiled by, as the usages of the cache
      see it (UnitBasis.replSetting) *)
   val () = UnitBasis.replSetting :=
              (fn key => if key = "echo on" then echoing ()
                         else String.isPrefix "p " key andalso RuneShow.hasPrinter (String.extract (key, 2, NONE)))
+
+  (* Where the session's top-level names were bound, by kind and name ("v x",
+     "t t", "s S", "g SIG", "f F"): the file and the line of the declaration,
+     and for the Basis's the file of its unit, line 0 (:info, :edit) *)
+  val defined : (string * int) StringMap.map ref = ref StringMap.empty
+
+  fun noteDefined (delta : Env.env, file : string, line : int) : unit =
+    let
+      fun note kind n = defined := StringMap.insert (!defined, kind ^ " " ^ n, (file, line))
+    in
+      StringMap.appi (fn (n, _) => note "v" n) (Env.vals delta);
+      StringMap.appi (fn (n, _) => note "t" n) (Env.tys delta);
+      StringMap.appi (fn (n, _) => note "s" n) (Env.strs delta)
+    end
+
+  (* ---- -g: what the debugger knows of the units (the REPL roadmap's D22
+     and M12) ----
+     While debugging is on, a declaration is compiled for the debugger: at
+     -O0, each variable of the source a register of its own (Regs), and what
+     each function binds and captures kept (Lower.debugVars, Ty.names), so
+     that a stopped frame's variables are found by name and shown by their
+     types; no cache is read or written. Each unit compiled so is kept here
+     by the number its first function has in the program. *)
+  val debugging = ref false
+  (* a variable of a function: its name, its type, where it is -- a register,
+     from the byte of the function's code where it has been set, or a slot
+     of the closure's environment *)
+  datatype place = Reg of int * int | Captured of int
+  type var = {name : string, ty : Types.ty, place : place}
+  val debugUnits : {base : int, funcs : var list vector} list ref = ref []
+
+  (* The types of a unit's own declarations are made again when it is
+     loaded from its basis (UnitBasis.load): the types its variables had as
+     it was compiled are the old ones, which the session names no more. The
+     old type constructors of the unit's types, by stamp, to the new: the
+     two environments, by name. *)
+  fun tyconsMoved (old : Env.env, new : Env.env) : Types.tycon IntMap.map =
+    let
+      fun go (old, new, acc) =
+        let
+          val acc =
+            StringMap.foldli (fn (n, Env.TyStr {fcn, ...}, acc) =>
+                                case (StringMap.find (Env.tys new, n), Types.fcnIsName fcn) of
+                                  (SOME (Env.TyStr {fcn = fcn', ...}), SOME c) =>
+                                    (case Types.fcnIsName fcn' of
+                                       SOME c' => if #stamp c = #stamp c' then acc else IntMap.insert (acc, #stamp c, c')
+                                     | NONE => acc)
+                                | _ => acc)
+                             acc (Env.tys old)
+        in
+          StringMap.foldli (fn (n, s, acc) => case StringMap.find (Env.strs new, n) of
+                                                SOME s' => go (s, s', acc)
+                                              | NONE => acc)
+                           acc (Env.strs old)
+        end
+    in go (old, new, IntMap.empty) end
+
+  fun retype (m : Types.tycon IntMap.map) (t : Types.ty) : Types.ty =
+    if IntMap.isEmpty m then t
+    else
+      case Types.prune t of
+        Types.TCon (c, args) => Types.TCon (getOpt (IntMap.find (m, #stamp c), c), List.map (retype m) args)
+      | Types.TRecord fs => Types.TRecord (List.map (fn (l, a) => (l, retype m a)) fs)
+      | Types.TArrow (a, b) => Types.TArrow (retype m a, retype m b)
+      | t => t
+
+  (* the variables of each function of the unit just compiled, by its
+     number in the unit, their types the loaded unit's (moved) *)
+  fun debugTable (moved : Types.tycon IntMap.map) : var list vector =
+    let
+      val n = List.foldl (fn ({id, ...} : {id : int, vars : (int * int) list, env : (int * int) list}, m) =>
+                            Int.max (id + 1, m)) 0 (!Lower.debugVars)
+      fun regOf (id, v) =
+        case List.find (fn (i, _, _) => i = id) (!Lower.debugRegs) of
+          SOME (_, rs, at) => if v >= 0 andalso v < Vector.length rs then (Vector.sub (rs, v), Vector.sub (at, v)) else (~1, ~1)
+        | NONE => (~1, ~1)
+      fun named (stamp, place) =
+        case IntTable.find (Ty.names, stamp) of
+          SOME (name, ty) => SOME {name = name, ty = retype moved ty, place = place}
+        | NONE => NONE
+      val a = Array.array (n, [])
+    in
+      List.app (fn {id, vars, env} =>
+                  if id < 0 orelse id >= n then ()
+                  else Array.update (a, id,
+                         List.mapPartial (fn (s, v) => let val (r, at) = regOf (id, v)
+                                                       in if r < 0 orelse at < 0 then NONE else named (s, Reg (r, at)) end)
+                                         vars
+                         @ List.mapPartial (fn (s, i) => named (s, Captured i)) env))
+               (!Lower.debugVars);
+      Array.vector a
+    end
+
+  (* f () compiling for the debugger, where debugging is on *)
+  fun forDebugger (f : unit -> 'a) : 'a =
+    if not (!debugging) then f ()
+    else
+      let
+        val (level, info, names) = (!Pass.level, !Lower.debugInfo, !Ty.keepNames)
+        fun restore () = (Pass.level := level; Lower.debugInfo := info; Ty.keepNames := names)
+      in
+        Pass.level := 0; Lower.debugInfo := true; Ty.keepNames := true;
+        (f () before restore ()) handle e => (restore (); raise e)
+      end
+
+  (* the unit just compiled linked, and kept for the debugger where it was
+     compiled for it; the breakpoints set again, which its files may have *)
+  val linkedHook : (unit -> unit) ref = ref (fn () => ())
+  fun linkFor (bytes : string, moved : Types.tycon IntMap.map) : unit -> unit =
+    let val run = Runtime.link (Byte.stringToBytes bytes)
+    in
+      if !debugging then
+        let val table = debugTable moved
+        in debugUnits := {base = RuneRuntime.debugProgram () - Vector.length table, funcs = table} :: !debugUnits end
+      else ();
+      !linkedHook ();
+      run
+    end
+
+  (* the variables of function f of the program, where a unit compiled for
+     the debugger has it *)
+  fun varsOf (f : int) : var list option =
+    case List.find (fn {base, funcs} => f >= base andalso f < base + Vector.length funcs) (!debugUnits) of
+      SOME {base, funcs} => SOME (Vector.sub (funcs, f - base))
+    | NONE => NONE
 
   fun readBytes (path : string) : string =
     let val inp = BinIO.openIn path
@@ -68,6 +196,7 @@ struct
                 env := Env.plus (!env, #delta l);
                 fixity := Fixity.extend (!fixity, #directives l);
                 UnitBasis.bind l;
+                noteDefined (#delta l, "lib/basis/" ^ OS.Path.file name, 0);
                 load rest
               end
         | load [] = ()
@@ -85,13 +214,14 @@ struct
     StringMap.foldri (fn (n, Env.Val {scheme, ...}, acc) => (n, scheme) :: acc | (_, _, acc) => acc) []
                      (Env.vals delta)
 
-  (* The other things a declaration declared, as the REPL echoes them *)
-  fun declared (delta : Env.env) : string list =
+  (* The other things a declaration declared, as the REPL echoes them, the
+     types named as the session env names them *)
+  fun declared (env : Env.env, delta : Env.env) : string list =
     let
       fun con (name, Env.Con {scheme, info}) =
             if #hasArg info then
               case Types.prune scheme of
-                Types.TArrow (a, _) => name ^ " of " ^ Types.toString a
+                Types.TArrow (a, _) => name ^ " of " ^ ReplShow.typeIn env a
               | _ => name
             else name
         | con (name, _) = name
@@ -107,7 +237,13 @@ struct
                                  [] (Env.tys delta)
       val exns = StringMap.foldri (fn (n, Env.Exn _, acc) => ("exception " ^ n) :: acc | (_, _, acc) => acc) []
                                   (Env.vals delta)
-      val strs = StringMap.foldri (fn (n, _, acc) => ("structure " ^ n) :: acc) [] (Env.strs delta)
+      (* with feedback verbose, a structure with its signature *)
+      val verbose = !RuneCompiler.feedback = "verbose"
+      val strs = StringMap.foldri (fn (n, s, acc) =>
+                                     if verbose then
+                                       String.concatWith "\n" (("structure " ^ n ^ " :") :: "  sig"
+                                                               :: ReplShow.signatureLines (env, s, "    ") @ ["  end"]) :: acc
+                                     else ("structure " ^ n) :: acc) [] (Env.strs delta)
     in tys @ exns @ strs end
 
   (* compile decs: the declarations elaborated against the session, and the
@@ -145,9 +281,17 @@ struct
      cache), and kept there where it is compiled. *)
   fun compile (decs : Ast.dec list, file : string, text : string, cached : (string * int * string list) option)
       : {run : unit -> unit, delta : Env.env, declared : string list, bind : unit -> unit} =
+    forDebugger (fn () => compileWith (decs, file, text, if !debugging then NONE else cached, Env.empty))
+
+  (* compileWith (..., extra): extra, beside the session, in the environment
+     the declarations are elaborated in: the constructors of the printers of
+     a stopped frame's variables (ReplDebug) *)
+  and compileWith (decs : Ast.dec list, file : string, text : string, cached : (string * int * string list) option,
+                   extra : Env.env)
+      : {run : unit -> unit, delta : Env.env, declared : string list, bind : unit -> unit} =
     let
       val start = UnitBasis.begin (!env, !fixity)
-      val here = ref (!env)
+      val here = ref (Env.plus (!env, extra))
       val () = count := !count + 1
       val k = !count
       val name = case cached of SOME (stem, n, _) => stem ^ "#" ^ Int.toString n | NONE => file ^ "#" ^ Int.toString k
@@ -156,7 +300,8 @@ struct
           NONE => NONE
         | SOME _ => Option.map (fn (d, c) => (d, c, UnitCache.key {name = name, text = text, allow = false, settings = ""})) (cacheOf file)
       fun result (l : UnitBasis.result, run) =
-        {run = run, delta = #delta l, declared = declared (#delta l), bind = fn () => UnitBasis.bind l}
+        {run = run, delta = #delta l, declared = declared (Env.plus (!env, #delta l), #delta l),
+         bind = fn () => UnitBasis.bind l}
       val found =
         case cache of
           NONE => NONE
@@ -193,10 +338,10 @@ struct
                val code = if UnitBasis.moves (u, was, file, others) orelse not (List.null remap)
                           then String.concat (UnitFile.chunks (fp, UnitBasis.relocate (u, was, file, others)))
                           else code
-               val run = Runtime.link (Byte.stringToBytes code)
+               val run = linkFor (code, IntMap.empty)
              in
                (* the warnings its compile gave, again *)
-               List.app (fn w => TextIO.output (TextIO.stdErr, w ^ "\n")) warnings;
+               List.app (fn w => TextIO.output (TextIO.stdErr, Diagnostic.showCached w ^ "\n")) warnings;
                SOME (result (l, run))
              end)
             handle Pickle.Bad _ => (UnitBasis.abandon at; NONE)
@@ -217,13 +362,20 @@ struct
              (fn () =>
                 let
                   val () = Elaborate.allowPrim := false
-                  val () = Elaborate.elabTop (here, decs)
+                  (* every independent error of the declaration reported,
+                     and then none of it kept *)
+                  val errors = !Error.errors
+                  val recovering = !Elaborate.recover
+                  val () = Elaborate.recover := true
+                  val () = Elaborate.elabTop (here, decs) handle e => (Elaborate.recover := recovering; raise e)
+                  val () = Elaborate.recover := recovering
+                  val () = if !Error.errors > errors then (Error.warnings := []; raise Reported) else ()
                   val () = Elaborate.finish ()
                   val delta = !Elaborate.lastDelta
-                  val () = warnings := List.rev (!Error.warnings)
+                  val () = warnings := map Error.formatWarning (List.rev (!Error.warnings))
                   val () = Error.flushWarnings ()
                   val pdecs =
-                    case if (Usage.use ("echo", "on"); echoing ()) then ReplShow.echoes (bound delta) else NONE of
+                    case ReplShow.echoes (!here, bound delta, delta, (Usage.use ("echo", "on"); echoing ())) of
                       NONE => []
                     | SOME (text, synth) =>
                         let
@@ -263,7 +415,89 @@ struct
                                             others = UnitBasis.sourcesOf (code, file), pickle = #pickle exported,
                                             code = bytes, mid = ""})
            | NONE => ()
-       in Source.unregister echoName; result (loaded, Runtime.link (Byte.stringToBytes bytes)) end)
+       in
+         Source.unregister echoName;
+         result (loaded, linkFor (bytes, if !debugging then tyconsMoved (delta, #delta loaded) else IntMap.empty))
+       end)
       handle e => (UnitBasis.undo start; Source.unregister echoName; raise e)
+    end
+end
+
+(* What the REPL's commands ask of the session without running anything
+   (src/repl/commands.sml): the type of an expression, elaborated as
+   `val it = (exp);` and then undone, as a declaration that fails is. *)
+structure ReplQuery =
+struct
+  (* a text's tokens as declarations, or else as an expression behind the
+     tokens of `val it =`: lexed by itself, so that its positions are its
+     own (the source stdIn) *)
+  fun declarations (text : string) : Ast.dec list =
+    let
+      val file = Source.fromString ("stdIn", text)
+      val () = Source.register file
+      val toks = Lexer.tokenize file
+      val n = Vector.length toks
+      val at = {file = "stdIn", start = 0, stop = 0}
+      val stop = #2 (Vector.sub (toks, n - 1))
+      fun asDecs () = #1 (Parser.parseTokensWith (toks, !ReplSession.fixity))
+      fun asExp () =
+        #1 (Parser.parseTokensWith (Vector.concat [Vector.fromList [(Token.VAL, at), (Token.ID "it", at), (Token.EQUALS, at)],
+                                                   VectorSlice.vector (VectorSlice.slice (toks, 0, SOME (n - 1))),
+                                                   Vector.fromList [(Token.SEMI, stop), (Token.EOF, stop)]],
+                                    !ReplSession.fixity))
+    in
+      asDecs () handle Error.CompileError e => (asExp () handle Error.CompileError _ => raise Error.CompileError e)
+    end
+
+  (* the text elaborated against the session, every error reported, and then
+     undone: the declarations, their variables resolved and typed (the
+     engine's typeAt and check) *)
+  fun elaborated (text : string) : Ast.dec list =
+    let
+      val decs = declarations text
+      val start = UnitBasis.begin (!ReplSession.env, !ReplSession.fixity)
+      val snap = Elaborate.snapshot ()
+      val here = ref (!ReplSession.env)
+      val errors = !Error.errors
+      val recovering = !Elaborate.recover
+      fun undo () = (Elaborate.recover := recovering; Elaborate.restore snap; UnitBasis.undo start; Error.warnings := [])
+    in
+      (Elaborate.allowPrim := false;
+       Elaborate.recover := true;
+       Elaborate.elabTop (here, decs);
+       if !Error.errors > errors then raise ReplSession.Reported else Elaborate.finish ();
+       undo ();
+       decs)
+      handle e => (undo (); raise e)
+    end
+
+  fun typeOf (text : string) : Types.ty =
+    let
+      (* the expression lexed by itself, so that an error points into it,
+         behind the tokens of `val it =` *)
+      val file = Source.fromString ("stdIn", text)
+      val () = Source.register file
+      val toks = Lexer.tokenize file
+      val n = Vector.length toks
+      val at = {file = "stdIn", start = 0, stop = 0}
+      val stop = #2 (Vector.sub (toks, n - 1))
+      val whole = Vector.concat [Vector.fromList [(Token.VAL, at), (Token.ID "it", at), (Token.EQUALS, at)],
+                                 VectorSlice.vector (VectorSlice.slice (toks, 0, SOME (n - 1))),
+                                 Vector.fromList [(Token.SEMI, stop), (Token.EOF, stop)]]
+      val (decs, _) = Parser.parseTokensWith (whole, !ReplSession.fixity)
+      val start = UnitBasis.begin (!ReplSession.env, !ReplSession.fixity)
+      val snap = Elaborate.snapshot ()
+      val here = ref (!ReplSession.env)
+      fun undo () = (Elaborate.restore snap; UnitBasis.undo start; Error.warnings := [])
+    in
+      (let
+         val () = Elaborate.allowPrim := false
+         val () = Elaborate.elabTop (here, decs)
+         val () = Elaborate.finish ()
+         val t = case StringMap.find (Env.vals (!Elaborate.lastDelta), "it") of
+                   SOME (Env.Val {scheme, ...}) => scheme
+                 | _ => raise Fail "the expression has no type"
+       in undo (); t end)
+      handle e => (undo (); raise e)
     end
 end

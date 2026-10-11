@@ -17,6 +17,9 @@
 # taken from there, it must be the same bytes.
 #   tests/units/run.sh [--rune BIN]
 set -u
+# What is compared must not depend on colour forced from outside
+# (docs/diagnostics.md).
+unset FORCE_COLOR CLICOLOR_FORCE
 cd "$(dirname "$0")/../.."
 rune=bin/rune
 while [ $# -gt 0 ]; do

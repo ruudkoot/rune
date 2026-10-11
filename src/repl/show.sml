@@ -4,14 +4,18 @@
    so that the back end represents the printer's values as it represents the
    value's own and the printer never reads a value's bits.
 
-   A printer is an expression of type `int -> t -> string`, the depth left
-   and the value, built from the pieces of RuneShow (lib/basis/compiler.sml).
+   A printer is an expression of type `int -> t -> RuneCompiler.pretty`, the
+   depth left and the value to a document with the roles of its parts,
+   built from the pieces of RuneShow (lib/basis/compiler.sml), which the
+   REPL lays out (docs/plans/repl.md, D16).
    A datatype gets a function per type it is shown at, all of them one
    recursive group, which matches its constructors by names of their own:
    `rune'c<stamp>'<tag>`, bound in the environment the printer is elaborated
    in to the constructors the elaborator registered (Elaborate.dataCons), so
    that a datatype whose constructors are out of scope still shows them. An
-   abstract type, a type variable and a function show as `?`, `?` and `fn`. *)
+   abstract type, a type variable and a function show as `?`, `?` and `fn`.
+   A type is named by the shortest path that names it in the session, and
+   `?.t` where none does, as SML/NJ names one a later declaration hid. *)
 structure ReplShow =
 struct
   open Types
@@ -19,12 +23,14 @@ struct
   (* What the printers of one declaration need beyond its environment: the
      constructors they name, and the functions of the datatypes they made,
      by datatype and type, in the order they were made. *)
-  type gen = {cons : Env.valstatus StringMap.map ref,
+  type gen = {env : Env.env,                           (* the session, which names types *)
+              cons : Env.valstatus StringMap.map ref,
               funs : (string * string) list ref,      (* name, text of its clause *)
               made : string StringMap.map ref,         (* the datatype at its arguments -> name *)
               count : int ref}
 
-  fun newGen () : gen = {cons = ref StringMap.empty, funs = ref [], made = ref StringMap.empty, count = ref 0}
+  fun newGen (env : Env.env) : gen =
+    {env = env, cons = ref StringMap.empty, funs = ref [], made = ref StringMap.empty, count = ref 0}
 
   fun isTuple (fields : (string * ty) list) =
     List.length fields >= 2
@@ -55,7 +61,178 @@ struct
 
   fun quote s = "\"" ^ String.toString s ^ "\""
 
-  (* SML text of an `int -> t -> string` printer for t *)
+  (* ---- the names of types in the session ---- *)
+
+  (* the type constructor a type structure is, or abbreviates with its
+     parameters in order *)
+  fun tyconOf (Env.TyStr {fcn, ...}) = Option.map #stamp (fcnIsName fcn)
+
+  (* the environment of the structure at a path *)
+  fun structureAt (env : Env.env, path : string list) : Env.env option =
+    case path of
+      [] => SOME env
+    | p :: rest => (case StringMap.find (Env.strs env, p) of SOME e => structureAt (e, rest) | NONE => NONE)
+
+  (* the shortest path that names the type constructor in the session: its
+     own name at the top where that is it, else the structures breadth
+     first, a path that ends in its own name before one that does not, then
+     the first in order; NONE where none does *)
+  fun pathOf (env : Env.env, c : tycon) : string option =
+    let
+      val stamp = #stamp c
+      fun named e n = case StringMap.find (Env.tys e, n) of SOME ts => tyconOf ts = SOME stamp | NONE => false
+      fun search ([], _) = NONE
+        | search (_, 0) = NONE
+        | search (level : (string * Env.env) list, depth : int) =
+            let
+              fun own (p, e) = if named e (#name c) then SOME (p ^ #name c) else NONE
+              fun other (p, e) =
+                StringMap.foldli (fn (n, ts, found) => case found of
+                                                         SOME _ => found
+                                                       | NONE => if tyconOf ts = SOME stamp then SOME (p ^ n) else NONE)
+                                 NONE (Env.tys e)
+              (* the library's own structures (Rune...) after the others *)
+              fun private p = String.isPrefix "Rune" p orelse String.isPrefix "RUNE" p
+              fun firstOf f =
+                case List.mapPartial f level of
+                  [] => NONE
+                | found => SOME (case List.filter (not o private) found of p :: _ => p | [] => hd found)
+            in
+              case firstOf own of
+                SOME p => SOME p
+              | NONE =>
+                  case firstOf other of
+                    SOME p => SOME p
+                  | NONE =>
+                      search (List.concat (List.map (fn (p, e) => StringMap.foldri (fn (n, s, acc) => (p ^ n ^ ".", s) :: acc)
+                                                                                    [] (Env.strs e)) level),
+                              depth - 1)
+            end
+    in
+      if named env (#name c) then SOME (#name c) else search ([("", env)], 5)
+    end
+
+  (* a type as the session names it, the type constructors of `local` by
+     the names given there first *)
+  fun typeNamed (env : Env.env, local' : string IntMap.map) (t : ty) : string =
+    let
+      val memo : string IntMap.map ref = ref local'
+      fun nameOf (c : tycon) =
+        case IntMap.find (!memo, #stamp c) of
+          SOME n => SOME n
+        | NONE =>
+            let val n = case pathOf (env, c) of SOME p => p | NONE => "?." ^ #name c
+            in memo := IntMap.insert (!memo, #stamp c, n); SOME n end
+    in toStringNamed (nameOf, newPrinter ()) t end
+
+  fun typeIn (env : Env.env) (t : ty) : string = typeNamed (env, IntMap.empty) t
+
+  (* the type constructors a structure's or a signature's environment
+     declares, by the paths they have in it *)
+  fun ownNames (prefix : string, e : Env.env, acc : string IntMap.map) : string IntMap.map =
+    let
+      (* a type the environment declares, a datatype or an abstract type,
+         has its own name; an abbreviation names another *)
+      val acc = StringMap.foldli (fn (n, Env.TyStr {fcn = TName c, ...}, acc) =>
+                                       if #name c <> n orelse IntMap.member (acc, #stamp c) then acc
+                                       else IntMap.insert (acc, #stamp c, prefix ^ n)
+                                   | (_, _, acc) => acc) acc (Env.tys e)
+    in StringMap.foldli (fn (n, s, acc) => ownNames (prefix ^ n ^ ".", s, acc)) acc (Env.strs e) end
+
+  (* ---- signatures, as the REPL shows a structure's ---- *)
+
+  fun params (k : int) : string =
+    case k of
+      0 => ""
+    | 1 => "'a "
+    | _ => "(" ^ String.concatWith ", " (List.tabulate (k, fn i => "'" ^ String.str (Char.chr (97 + i)))) ^ ") "
+
+  (* a type's specification: a datatype with its constructors, an
+     abbreviation with what it stands for, else the type alone *)
+  fun typeSpecNamed (env : Env.env, own : string IntMap.map) (name : string, ts as Env.TyStr {fcn, cons}) : string =
+    case (fcn, cons) of
+      (_, _ :: _) =>
+        "datatype " ^ params (fcnArity fcn) ^ name ^ " = "
+        ^ String.concatWith " | "
+            (List.map (fn (n, Env.Con {scheme, info}) =>
+                            if #hasArg info then
+                              (case prune scheme of TArrow (a, _) => n ^ " of " ^ typeNamed (env, own) a | _ => n)
+                            else n
+                        | (n, _) => n) cons)
+    | (TAbbrev (ps, body), []) =>
+        (case fcnIsName fcn of
+           SOME c => if #name c = name then "type " ^ params (List.length ps) ^ name
+                     else "type " ^ params (List.length ps) ^ name ^ " = " ^ typeNamed (env, own) body
+         | NONE => "type " ^ params (List.length ps) ^ name ^ " = " ^ typeNamed (env, own) body)
+    | (TName c, []) => (if #eq c then "eqtype " else "type ") ^ params (#arity c) ^ name
+
+  fun typeSpec (env : Env.env) = typeSpecNamed (env, IntMap.empty)
+
+  (* the specifications of a structure's environment, each line indented,
+     its own types by the names it gives them *)
+  fun signatureLines (env : Env.env, e : Env.env, indent : string) : string list =
+    signatureLinesNamed (env, ownNames ("", e, IntMap.empty), e, indent)
+  and signatureLinesNamed (env : Env.env, own : string IntMap.map, e : Env.env, indent : string) : string list =
+    let
+      val typeIn = fn env => typeNamed (env, own)
+      val typeSpec = fn env => typeSpecNamed (env, own)
+      val tys = StringMap.foldri (fn (n, ts, acc) => (indent ^ typeSpec env (n, ts)) :: acc) [] (Env.tys e)
+      val vals =
+        StringMap.foldri
+          (fn (n, Env.Val {scheme, ...}, acc) => (indent ^ "val " ^ n ^ " : " ^ typeIn env scheme) :: acc
+            | (n, Env.Prim {scheme, ...}, acc) => (indent ^ "val " ^ n ^ " : " ^ typeIn env scheme) :: acc
+            | (n, Env.ConAsVal {scheme, ...}, acc) => (indent ^ "val " ^ n ^ " : " ^ typeIn env scheme) :: acc
+            | (n, Env.Exn {ty, info}, acc) =>
+                (indent ^ "exception " ^ n
+                 ^ (if #hasArg info then case prune ty of TArrow (a, _) => " of " ^ typeIn env a | _ => "" else "")) :: acc
+            | (n, Env.ExnAsVal {ty, ...}, acc) => (indent ^ "val " ^ n ^ " : " ^ typeIn env ty) :: acc
+            | (_, Env.Con _, acc) => acc)
+          [] (Env.vals e)
+      val strs =
+        StringMap.foldri (fn (n, s, acc) => (indent ^ "structure " ^ n ^ " :") :: (indent ^ "  sig")
+                                            :: signatureLinesNamed (env, own, s, indent ^ "    ") @ [indent ^ "  end"] @ acc)
+                         [] (Env.strs e)
+    in tys @ vals @ strs end
+
+  (* A type the session names S.t, of no arguments, whose structure has
+     S.toString : t -> string, prints by it: Word8.word, IntInf.int,
+     Time.time; a word with 0wx before it, as a word prints *)
+  fun shownBy (env : Env.env, c : tycon, args : ty list) : string option =
+    case (args, pathOf (env, c)) of
+      ([], SOME path) =>
+        let
+          val parts = String.fields (fn ch => ch = #".") path
+          val structure' = List.take (parts, List.length parts - 1)
+        in
+          if List.null structure' then NONE
+          else
+            case Option.mapPartial (fn e => StringMap.find (Env.vals e, "toString"))
+                                   (structureAt (env, structure')) of
+              SOME (Env.Val {scheme, ...}) =>
+                (case prune scheme of
+                   TArrow (a, r) =>
+                     (case (prune a, prune r) of
+                        (TCon (c', []), TCon (s, [])) =>
+                          if #stamp c' = #stamp c andalso #stamp s = #stamp stringTycon then
+                            let
+                              val name = String.concatWith "." structure' ^ ".toString"
+                              val word = String.isPrefix "Word" (List.last structure') orelse List.last structure' = "LargeWord"
+                                         orelse List.last structure' = "SysWord"
+                              val numeric = word orelse String.isPrefix "Int" (List.last structure')
+                                            orelse List.last structure' = "LargeInt" orelse String.isPrefix "Real" (List.last structure')
+                                            orelse List.last structure' = "LargeReal"
+                            in
+                              SOME ("(fn _ => fn x => RuneShow.role (" ^ (if numeric then "\"syn.number\"" else "\"text\"")
+                                    ^ ", " ^ (if word then "\"0wx\" ^ " else "") ^ name ^ " x))")
+                            end
+                          else NONE
+                      | _ => NONE)
+                 | _ => NONE)
+            | _ => NONE
+        end
+    | _ => NONE
+
+  (* SML text of an `int -> t -> RuneCompiler.pretty` printer for t *)
   fun printer (g : gen, t : ty) : string =
     case prune t of
       TVar _ => "RuneShow.hidden"
@@ -84,7 +261,7 @@ struct
           else if s = #stamp charTycon then "RuneShow.char"
           else if s = #stamp stringTycon then "RuneShow.string"
           else if s = #stamp exnTycon then "RuneShow.exn"
-          else if s = #stamp boolTycon then "(fn _ => fn b => if b then \"true\" else \"false\")"
+          else if s = #stamp boolTycon then "(fn _ => fn b => RuneShow.con0 (if b then \"true\" else \"false\"))"
           else
             case (s = #stamp listTycon, s = #stamp refTycon, s = #stamp arrayTycon, s = #stamp vectorTycon, args) of
               (true, _, _, _, [a]) => "(RuneShow.list " ^ printer (g, a) ^ ")"
@@ -94,7 +271,7 @@ struct
             | _ =>
                 case IntMap.find (!Elaborate.dataCons, s) of
                   SOME cons => datatypeAt (g, c, cons, args)
-                | NONE => "RuneShow.hidden"
+                | NONE => case shownBy (#env g, c, args) of SOME p => p | NONE => "RuneShow.hidden"
         end
 
   (* the printer Compiler.addPrettyPrinter installed for the type key
@@ -144,21 +321,46 @@ struct
             end
     end
 
-  (* The text of the declaration that echoes the values bound, and the
-     environment it is elaborated in beside the session's: the constructors
-     it names. NONE where there is nothing to show. *)
-  fun echoes (bound : (string * ty) list) : (string * Env.env) option =
-    case bound of
-      [] => NONE
-    | _ =>
+  fun valueName n = if CharVector.all (fn c => Char.isAlphaNum c orelse c = #"_" orelse c = #"'") n then n
+                    else "(op " ^ n ^ ")"
+
+  (* the exception constructors with an argument a declaration declared, at
+     their paths, with the argument's type *)
+  fun exceptions (delta : Env.env) : (string * string * ty) list =
+    let
+      fun go (prefix, e) =
+        StringMap.foldri (fn (n, Env.Exn {ty, info}, acc) =>
+                              if #hasArg info then
+                                case prune ty of TArrow (a, _) => (prefix ^ valueName n, n, a) :: acc | _ => acc
+                              else acc
+                            | (_, _, acc) => acc) [] (Env.vals e)
+        @ List.concat (StringMap.foldri (fn (n, s, acc) => go (prefix ^ n ^ ".", s) :: acc) [] (Env.strs e))
+    in go ("", delta) end
+
+  (* The text of the declaration that echoes the values bound and registers
+     the printers of the exceptions declared, and the environment it is
+     elaborated in beside the session's: the constructors it names. NONE
+     where there is nothing to do. echo says whether the values are shown;
+     env is the session after the declaration, which names the types. *)
+  fun echoes (env : Env.env, bound : (string * ty) list, delta : Env.env, echo : bool) : (string * Env.env) option =
+    echoesOf (env, List.map (fn (n, t) => (n, t, valueName n)) (if echo then bound else []), exceptions delta)
+
+  (* the same of values each given by an expression of SML, which may be of
+     any type the printer makes it (the debugger's, RuneDebug.register) *)
+  and echoesOf (env : Env.env, bound : (string * ty * string) list, exns : (string * string * ty) list)
+      : (string * Env.env) option =
+    case (bound, exns) of
+      ([], []) => NONE
+    | (bound, exns) =>
         let
-          val g = newGen ()
-          fun name n = if CharVector.all (fn c => Char.isAlphaNum c orelse c = #"_" orelse c = #"'") n then n
-                       else "(op " ^ n ^ ")"
+          val g = newGen env
           val lines =
-            List.map (fn (n, t) =>
-                        "val () = RuneShow.echo (" ^ quote n ^ ", " ^ printer (g, t) ^ " (!RuneCompiler.printDepth) "
-                        ^ name n ^ ", " ^ quote (toString t) ^ ")") bound
+            List.map (fn (n, t, value) =>
+                        "val () = RuneShow.echo (" ^ quote n ^ ", fn () => " ^ printer (g, t) ^ " (!RuneCompiler.printDepth) ("
+                        ^ value ^ "), " ^ quote (typeIn env t) ^ ")") bound
+            @ List.map (fn (path, n, a) =>
+                          "val () = RuneShow.addExn (fn d => fn e => case e of " ^ path ^ " a => SOME (RuneShow.con1 d ("
+                          ^ quote n ^ ", fn d => " ^ printer (g, a) ^ " d a)) | _ => NONE)") exns
           val funs = List.rev (!(#funs g))
           val group =
             case funs of

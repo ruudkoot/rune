@@ -1,0 +1,36 @@
+- = = = val write = fn : string * string -> unit
+- - - - val f = fn : int -> int
+datatype t = A | B
+val it = () : unit
+- val g = 11 : int
+val it = () : unit
+- val h = 42 : int
+val it = () : unit
+- val keep = A : t
+- nothing used has changed
+- - using again tests/out/repl/reload-a.sml, tests/out/repl/reload-b.sml; shadowing A B f g t
+val f = fn : int -> int
+datatype t = A | B | C
+val g = 12 : int
+made at the prompt, of a type the reload replaced:
+  keep : ?.t
+- val it = 12 : int
+- val it = 42 : int
+- val it = A : ?.t
+- marked: :reload! comes back here
+- - val later = 1 : int
+- back to the mark
+- stdIn:1:1: error: unbound variable or constructor: later
+- val it = 42 : int
+- using again tests/out/repl/reload-c.sml; shadowing h
+val h = 43 : int
+made at the prompt, of a type the reload replaced:
+  keep : ?.t
+- - = using again tests/out/repl/reload-c.sml; shadowing h
+val h = 44 : int
+made at the prompt, of a type the reload replaced:
+  keep : ?.t
+- val it = 44 : int
+- = - val it = 44 : int
+- val it = 44 : int
+- 

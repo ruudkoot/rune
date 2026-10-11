@@ -1,0 +1,32 @@
+(* :reload and :reload! (docs/plans/repl.md, D19 and M9), on files the
+   transcript writes: a.sml declares a datatype and a function, b.sml uses
+   the function, c.sml uses neither *)
+fun write (f, s) = let val out = TextIO.openOut f in TextIO.output (out, s); TextIO.closeOut out end;
+val () = write ("tests/out/repl/reload-a.sml", "datatype t = A | B\nfun f x = x + 1\n");
+val () = write ("tests/out/repl/reload-b.sml", "val g = f 10\n");
+val () = write ("tests/out/repl/reload-c.sml", "val h = 42\n");
+use "tests/out/repl/reload-a.sml";
+use "tests/out/repl/reload-b.sml";
+use "tests/out/repl/reload-c.sml";
+val keep = A;
+:reload
+val () = write ("tests/out/repl/reload-a.sml", "datatype t = A | B | C\nfun f x = x + 2\n");
+:reload
+g;
+h;
+keep;
+:mark
+val () = write ("tests/out/repl/reload-c.sml", "val h = 43\n");
+val later = 1;
+:reload!
+later;
+h;
+:reload
+:set watch on
+val () = (write ("tests/out/repl/reload-c.sml", "val h = 44\n");
+          OS.FileSys.setTime ("tests/out/repl/reload-c.sml", SOME (Time.+ (Time.now (), Time.fromSeconds 60))));
+h;
+(* touched, not changed: no reload, at this prompt or the next *)
+val () = OS.FileSys.setTime ("tests/out/repl/reload-c.sml", SOME (Time.+ (Time.now (), Time.fromSeconds 120)));
+h;
+h;

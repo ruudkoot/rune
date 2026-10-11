@@ -1,0 +1,140 @@
+{
+ "signatures": {
+  "DIGEST": {
+   "doc": "A hash function that reads its message in pieces: the context holds\nwhat it has read, and `finish` gives the digest, as raw bytes.\n\n",
+   "page": "sig/DIGEST.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "name",
+     "spec": "val name : string",
+     "doc": "The function's name, as its standard writes it.\n\n**Example** `Sha256.name = \"SHA-256\"`\n\n",
+     "page": "sig/DIGEST.md#val-name"
+    },
+    {
+     "kind": "val",
+     "name": "size",
+     "spec": "val size : int",
+     "doc": "The bytes of a digest.\n\n**Example** `Sha256.size = 32`\n\n",
+     "page": "sig/DIGEST.md#val-size"
+    },
+    {
+     "kind": "val",
+     "name": "blockSize",
+     "spec": "val blockSize : int",
+     "doc": "The bytes of a block, what HMAC pads its key to.\n\n**Example** `Sha256.blockSize = 64`\n\n",
+     "page": "sig/DIGEST.md#val-blocksize"
+    },
+    {
+     "kind": "type",
+     "name": "context",
+     "spec": "type context",
+     "doc": "What has been read of a message.\n\n",
+     "page": "sig/DIGEST.md#type-context"
+    },
+    {
+     "kind": "val",
+     "name": "empty",
+     "spec": "val empty : context",
+     "doc": "The context that has read nothing.\n\n",
+     "page": "sig/DIGEST.md#val-empty"
+    },
+    {
+     "kind": "val",
+     "name": "update",
+     "spec": "val update : context * string -> context",
+     "doc": "`update (c, s)` is `c` having read `s` after what it had read.\n\n",
+     "page": "sig/DIGEST.md#val-update"
+    },
+    {
+     "kind": "val",
+     "name": "finish",
+     "spec": "val finish : context -> string",
+     "doc": "`finish c` is the digest of what `c` has read.\n\n**Law** `finish (update (update (empty, a), b)) = digest (a ^ b)`\n\n",
+     "page": "sig/DIGEST.md#val-finish"
+    },
+    {
+     "kind": "val",
+     "name": "digest",
+     "spec": "val digest : string -> string",
+     "doc": "`digest s` is the digest of `s`.\n\n**Example** `Hex.fromBytes (Sha256.digest \"abc\") = \"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad\"`\n\n",
+     "page": "sig/DIGEST.md#val-digest"
+    }
+   ]
+  },
+  "HEX": {
+   "doc": "Bytes written as hexadecimal digits, two to a byte, and read back.\n\n",
+   "page": "sig/HEX.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "fromBytes",
+     "spec": "val fromBytes : string -> string",
+     "doc": "`fromBytes s` is the bytes of `s` as lower-case hexadecimal.\n\n**Example** `fromBytes \"\\001\\171\" = \"01ab\"`\n\n",
+     "page": "sig/HEX.md#val-frombytes"
+    },
+    {
+     "kind": "val",
+     "name": "toBytes",
+     "spec": "val toBytes : string -> string option",
+     "doc": "`toBytes h` is the bytes that the hexadecimal `h` writes, in either\ncase, or `NONE` when `h` has an odd length or a character that is no\nhexadecimal digit.\n\n**Law** `toBytes (fromBytes s) = SOME s`\n\n**Example** `toBytes \"01AB\" = SOME \"\\001\\171\" andalso toBytes \"1\" = NONE`\n\n",
+     "page": "sig/HEX.md#val-tobytes"
+    }
+   ]
+  },
+  "HMAC": {
+   "doc": "HMAC (RFC 2104): a message authenticated by a key, over a hash\nfunction, and the comparison of two of them in a time that does not\ndepend on where they differ.\n\n",
+   "page": "sig/HMAC.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "size",
+     "spec": "val size : int",
+     "doc": "The bytes of a code: the hash's digest size.\n\n**Example** `HmacSha256.size = 32`\n\n",
+     "page": "sig/HMAC.md#val-size"
+    },
+    {
+     "kind": "val",
+     "name": "mac",
+     "spec": "val mac : {key : string, message : string} -> string",
+     "doc": "`mac {key, message}` is the code of `message` under `key`, raw bytes.\n\n**Example** `Hex.fromBytes (HmacSha256.mac {key = \"Jefe\", message = \"what do ya want for nothing?\"}) = \"5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843\"`\n\n",
+     "page": "sig/HMAC.md#val-mac"
+    },
+    {
+     "kind": "val",
+     "name": "macParts",
+     "spec": "val macParts : {key : string, parts : string list} -> string",
+     "doc": "`macParts {key, parts}` is the code of the parts joined, without\njoining them.\n\n**Law** `macParts {key = k, parts = ps} = mac {key = k, message = String.concat ps}`\n\n",
+     "page": "sig/HMAC.md#val-macparts"
+    },
+    {
+     "kind": "val",
+     "name": "equal",
+     "spec": "val equal : string * string -> bool",
+     "doc": "`equal (a, b)` is whether `a` and `b` are the same bytes, looking at\nevery byte whatever it finds, so that the time it takes says nothing\nof where two codes differ.\n\n**Example** `HmacSha256.equal (\"abc\", \"abc\") andalso not (HmacSha256.equal (\"abc\", \"abd\"))`\n\n",
+     "page": "sig/HMAC.md#val-equal"
+    }
+   ]
+  },
+  "MURMUR2": {
+   "doc": "MurmurHash2, 32 bits (Austin Appleby's, on x86): a fast hash that is no\ndigest -- it resists no adversary -- which tools agree on by name, as\nJupyterLab's debugger names a notebook's cell by the hash of its code.\n\n",
+   "page": "sig/MURMUR2.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "hash",
+     "spec": "val hash : {seed : Word32.word, data : string} -> Word32.word",
+     "doc": "`hash {seed, data}` is the hash of the bytes of `data` (a string of\nbytes: text as its UTF-8) from `seed`.\n\n**Example** `hash {seed = 0w0, data = \"a\"} = 0w2456313694`\n\n",
+     "page": "sig/MURMUR2.md#val-hash"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Hex": "HEX",
+  "HmacFn": "HMAC",
+  "HmacSha256": "HMAC",
+  "Murmur2": "MURMUR2",
+  "Sha256": "DIGEST"
+ }
+}

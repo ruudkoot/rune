@@ -30,10 +30,12 @@ struct
   val int32Max : IntInf.int = IntInf.fromInt 1073741823
   val int32Min : IntInf.int = IntInf.fromInt ~1073741824
 
-  (* the primitives that save or restore an image (Isa.effect), or grow the
-     program (rt_link): a PRIMPUSH, so that the loop takes the program again
-     after them and their result comes back through RESULT *)
-  val imagePrims = ["posix_fork", "rt_save", "rt_restore", "rt_link"]
+  (* the primitives that save or restore an image (Isa.effect), grow the
+     program (rt_link, rt_debug_hook), or put the debugger's debug mode on
+     (rt_debug_mode, rt_debug_step): a PRIMPUSH, so that the loop takes the
+     program again after them, or gives it to the driver, and their result
+     comes back through RESULT *)
+  val imagePrims = ["posix_fork", "rt_save", "rt_restore", "rt_link", "rt_debug_hook", "rt_debug_mode", "rt_debug_step"]
 
   fun func (f : L.func) : C.func =
     let
@@ -102,9 +104,12 @@ struct
       val () =
         let
           val buckets : int list array = Array.array (!pos + 1, [])
+          (* -g (Lower.debugInfo): a register for every variable, never given
+             again, so that the debugger finds each where it was put *)
+          val debugging = !Lower.debugInfo
           val () =
             Array.appi (fn (x, s) =>
-                          if s < 0 orelse isParam x orelse usesOf x = 0 then ()
+                          if s < 0 orelse isParam x orelse (usesOf x = 0 andalso not debugging) then ()
                           else Array.update (buckets, s, x :: Array.sub (buckets, s)))
                        first
           val byStart = Array.foldr (fn (xs, acc) => List.revAppend (xs, acc)) [] buckets
@@ -128,7 +133,7 @@ struct
                 let
                   val s = Array.sub (first, x)
                   val (expired, still) = List.partition (fn (e, _) => e < s) active
-                  val free = List.foldl (fn ((_, k), fr) => insert (k, fr)) free expired
+                  val free = if debugging then free else List.foldl (fn ((_, k), fr) => insert (k, fr)) free expired
                   val (r, free) =
                     case take (repOf x, free) of
                       SOME (k, more) => (k, more)
@@ -149,13 +154,20 @@ struct
       val scratch = !nregs
       val nlocals = scratch + 1
       fun reg x = let val r = Array.sub (regs, x) in if r < 0 then scratch else r end
+      val debugging = !Lower.debugInfo
 
       (* ---- the code ---- *)
       val code : C.item list ref = ref []
+      (* -g: how many items there are, and for each variable how many there
+         were once it was set *)
+      val items = ref 0
+      val setAt : int array = Array.array (if debugging then nv else 0, ~1)
+      fun set x = if debugging then Array.update (setAt, x, !items) else ()
+      val () = if debugging then List.app (fn x => Array.update (setAt, x, 0)) (#params f) else ()
       fun emit it =
         case (it, !code) of
           (C.Pos _, C.Pos _ :: rest) => code := it :: rest
-        | _ => code := it :: !code
+        | _ => (code := it :: !code; items := !items + 1)
       val here : (int * int * int * int) ref = ref (~1, ~1, ~1, ~1)
       fun at ((sp, frames) : L.pos) =
         case Source.lineColOf sp of
@@ -235,7 +247,8 @@ struct
             let val {params, ...} = Vector.sub (blocks, i)
             in
               moves (List.filter (fn (d, _) => d <> scratch)
-                                 (ListPair.map (fn (p, v) => (if usesOf p = 0 then scratch else reg p, reg v)) (params, vs)));
+                                 (ListPair.map (fn (p, v) => (if usesOf p = 0 andalso not debugging then scratch else reg p, reg v))
+                                               (params, vs)));
               if i = from + 1 then () else emit (C.Ops (R.JUMP, [C.L (labelOf i)]))
             end
         end
@@ -253,7 +266,8 @@ struct
               [x] => op' (R.CATCH, [reg x])
             | _ => bug "a handler's block of other than one parameter")
          else ();
-         List.app (fn L.Def (x, oper) => operation (x, oper)
+         List.app set params;
+         List.app (fn L.Def (x, oper) => (operation (x, oper); set x)
                     | L.Push l => emit (C.Ops (R.PUSHHANDLER, [C.L (labelOf (blockIndex l))]))
                     | L.Pop => op' (R.POPHANDLER, [])
                     | L.At sp => at sp) instrs;
@@ -288,6 +302,20 @@ struct
          | L.TailCallK (fid, vs) => op' (R.TAILCALLK, fid :: List.length vs :: List.map reg vs)
          | L.Raise v => op' (R.RAISE, [reg v]))
       val () = Vector.appi block blocks
+      (* -g: each variable's register, and the byte where it has been set *)
+      val () =
+        if debugging then
+          let
+            val offsets = Array.array (!items + 1, 0)
+            val _ = List.foldl (fn (it, (j, o')) => (Array.update (offsets, j + 1, o' + C.itemSize it); (j + 1, o' + C.itemSize it)))
+                               (0, 0) (List.rev (!code))
+          in
+            Lower.debugRegs := (#id f, Array.vector regs,
+                                Vector.tabulate (nv, fn x => let val k = Array.sub (setAt, x)
+                                                             in if k < 0 then ~1 else Array.sub (offsets, k) end))
+                               :: !Lower.debugRegs
+          end
+        else ()
     in
       {id = #id f, nlocals = nlocals, code = List.rev (!code), name = #name f,
        meta = SOME {arity = List.length (#params f),
@@ -308,6 +336,7 @@ struct
   fun program (p : L.program) : C.program =
     let
       val () = C.reset ()
+      val () = Lower.debugRegs := []
       val funcs = List.map func p
       val sorted = IntMap.listItems (List.foldl (fn (f : C.func, m) => IntMap.insert (m, #id f, f)) IntMap.empty funcs)
     in

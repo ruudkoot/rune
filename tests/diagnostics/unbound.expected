@@ -1,0 +1,4 @@
+\e[1mtests/diagnostics/unbound.sml:2:9:\e[0m \e[1;91merror:\e[0m \e[1munbound variable or constructor: lenght\e[0m
+\e[2m  |\e[0m
+\e[2m2 |\e[0m val n = lenght xs
+\e[2m  |\e[0m         \e[1;91m^^^^^^\e[0m

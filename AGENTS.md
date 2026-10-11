@@ -258,7 +258,7 @@ keep these invariants:
 * Before finishing any change run `make check` (= `test`, `bootstrap`,
   `test-doc`, `test-lib`, `test-all`, `test-basis`, `test-opt`, `test-ir`,
   `check-levels`, `check-units`, `test-incremental`, `test-deps`, `test-dynamic`, `test-build`,
-  `check-reproducible`, `test-serve`, `test-repl`, `test-native`, `test-register`, `test-register-jit`,
+  `check-reproducible`, `test-serve`, `test-repl`, `test-terminal`, `test-diagnostics`, `test-repl-protocol`, `test-kernel`, `test-dap`, `test-native`, `test-register`, `test-register-jit`,
   `test-heap`, `test-gc`, `test-census`, `check-heapsim`, `check-gcsim`,
   `check-layouts`, `check-gcbench`, `perf-check`, `bench-smoke`,
   `check-positions`, `check-cross`, `check-docs`, `check-isa`; runs on all

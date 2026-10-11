@@ -1,7 +1,7 @@
 #!/bin/sh
 # Verify that the MLton, SML/NJ 110.99.9 (64- and 32-bit), SML/NJ 2026.2, Poly/ML, MLKit and (when built)
 # self-hosted builds of the compiler produce byte-identical bytecode for every test program, the
-# examples, the programs of the Basis Library suite, the compiler itself,
+# examples (with the libraries their first line names), the programs of the Basis Library suite, the compiler itself,
 # runedoc and runeopt, that the builds of runedoc (scripts/check-doc-cross.sh)
 # write the same documentation, and that the builds of runeopt
 # (scripts/check-opt-cross.sh) say the same of the same programs.
@@ -142,8 +142,15 @@ if [ -n "$one" ]; then
       # shellcheck disable=SC2086
       check "$(result_name "$one")" tests/basis/harness.sml $uses "$t" tests/basis/finish.sml
       ;;
-    # shellcheck disable=SC2046
-    *) check "$(result_name "$one")" $(cat "${one%.sml}.cargs" 2> /dev/null) "$one" ;;
+    # a program on libraries names them on its first line, as
+    # tests/lib's do (`(* libraries: terminal *)`), and is compiled with
+    # them, and with the arguments of its .cargs where it has one: the
+    # libraries' code must come out the same from every build too
+    *)
+      libs=""
+      for l in $(sed -n '1s/^(\* libraries: \(.*\) \*)$/\1/p' "$one"); do libs="$libs --library $l"; done
+      # shellcheck disable=SC2046,SC2086
+      check "$(result_name "$one")" $libs $(cat "${one%.sml}.cargs" 2> /dev/null) "$one" ;;
   esac > "$out/$(result_name "$one").result"
   exit 0
 fi

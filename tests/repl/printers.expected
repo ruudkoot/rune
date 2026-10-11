@@ -1,22 +1,24 @@
 - = = = = structure Printed
 val it = () : unit
-- val it = ? : t
+- val it = ? : Printed.t
 - val it = () : unit
-- val it = <printed> : t
-- val it = [<printed>, <printed>] : t list
+- val it = <printed> : Printed.t
+- val it = [<printed>, <printed>] : Printed.t list
 - val it = () : unit
-- val it = <other> : t
+- val it = <other> : Printed.t
 - val it = () : unit
-- val it = <printed> : t
+- val it = <printed> : Printed.t
 - structure P
 - datatype 'a box = Box of 'a
 - val it = Box 3 : int box
 - val it = () : unit
 - val it = box 3 : int box
-- val it = box <printed> : t box
-- val it = () : unit
+- val it = box <printed> : Printed.t box
+- val it = ()
+  : unit
 - val it = box
-  "a longer string" : string box
+           "a longer string"
+  : string box
 - val it = () : unit
 - val install = fn : unit -> unit
 - val it = [1, 2] : int list

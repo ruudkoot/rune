@@ -37,6 +37,7 @@ signature names and no others, unless the structure is listed at the end of this
 | [`CommandLine`](str/CommandLine.md) | : [`COMMAND_LINE`](sig/COMMAND_LINE.md) |  | required |  | [lib/basis/commandline.sml](../../../lib/basis/commandline.sml) |
 | [`Compiler`](str/Compiler.md) | : [`COMPILER`](sig/COMPILER.md) |  | extension | is `RuneCompiler` | [lib/basis/compiler.sml](../../../lib/basis/compiler.sml) |
 | [`Date`](str/Date.md) | : [`DATE`](sig/DATE.md) |  | required |  | [lib/basis/date.sml](../../../lib/basis/date.sml) |
+| [`Display`](str/Display.md) | : [`DISPLAY`](sig/DISPLAY.md) |  | extension | is `RuneDisplay` | [lib/basis/display.sml](../../../lib/basis/display.sml) |
 | [`Dynamic`](str/Dynamic.md) | : [`DYNAMIC`](sig/DYNAMIC.md) |  | extension |  | [lib/basis/dynamic.sml](../../../lib/basis/dynamic.sml) |
 | [`FixedInt`](str/Int64.md) | : [`INTEGER`](sig/INTEGER.md) | `where type int = Int64.int` | optional | is [`Int64`](str/Int64.md) | [lib/basis/int64.sml](../../../lib/basis/int64.sml) |
 | [`General`](str/General.md) | : [`GENERAL`](sig/GENERAL.md) |  | required |  | [lib/basis/general.sml](../../../lib/basis/general.sml) |
@@ -172,6 +173,7 @@ signature names and no others, unless the structure is listed at the end of this
 | [`RealArraySlice`](str/RealArraySlice.md) | :> [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) | `where type vector = RealVector.vector where type vector_slice = RealVectorSlice.slice where type array = RealArray.array where type elem = real` | optional | an application of `RuneMonoArraySliceFn` | [lib/basis/mono\_real.sml](../../../lib/basis/mono_real.sml) |
 | [`RealVector`](str/RealVector.md) | : [`MONO_VECTOR`](sig/MONO_VECTOR.md) | `where type elem = real` | optional | is `RuneRealSeq.V` | [lib/basis/mono\_real.sml](../../../lib/basis/mono_real.sml) |
 | [`RealVectorSlice`](str/RealVectorSlice.md) | :> [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) | `where type vector = RealVector.vector where type elem = real` | optional | an application of `RuneMonoVectorSliceFn` | [lib/basis/mono\_real.sml](../../../lib/basis/mono_real.sml) |
+| [`Repl`](str/Repl.md) | : [`REPL`](sig/REPL.md) |  | extension | is `RuneRepl` | [lib/basis/repl.sml](../../../lib/basis/repl.sml) |
 | [`Runtime`](str/Runtime.md) | : [`RUNTIME`](sig/RUNTIME.md) |  | extension | is `RuneRuntime` | [lib/basis/runtime.sml](../../../lib/basis/runtime.sml) |
 | [`SML90`](str/SML90.md) | : [`SML90`](sig/SML90.md) |  | optional |  | [lib/basis/sml90.sml](../../../lib/basis/sml90.sml) |
 | [`Socket`](str/Socket.md) | : [`SOCKET`](sig/SOCKET.md) |  | optional | is `RuneSocket` | [lib/basis/socket.sml](../../../lib/basis/socket.sml) |
@@ -182,6 +184,7 @@ signature names and no others, unless the structure is listed at the end of this
 | [`StringCvt`](str/StringCvt.md) | : [`STRING_CVT`](sig/STRING_CVT.md) |  | required |  | [lib/basis/stringcvt.sml](../../../lib/basis/stringcvt.sml) |
 | [`Substring`](str/Substring.md) | : [`SUBSTRING`](sig/SUBSTRING.md) | `where type string = string where type char = Char.char` | required |  | [lib/basis/substring.sml](../../../lib/basis/substring.sml) |
 | [`SysWord`](str/Word.md) | : [`WORD`](sig/WORD.md) |  | optional | is [`Word`](str/Word.md) | [lib/basis/word.sml](../../../lib/basis/word.sml) |
+| [`Terminal`](str/Terminal.md) | : [`TERMINAL`](sig/TERMINAL.md) |  | extension |  | [lib/basis/terminal.sml](../../../lib/basis/terminal.sml) |
 | [`Text`](str/Text.md) | : [`TEXT`](sig/TEXT.md) | `where type Char.char = Char.char where type String.string = String.string where type Substring.substring = Substring.substring where type CharArray.array = CharArray.array where type CharVectorSlice.slice = CharVectorSlice.slice where type CharArraySlice.slice = CharArraySlice.slice` | required |  | [lib/basis/text.sml](../../../lib/basis/text.sml) |
 | [`TextIO`](str/TextIO.md) | : [`TEXT_IO`](sig/TEXT_IO.md) |  | required |  | [lib/basis/textio.sml](../../../lib/basis/textio.sml) |
 | [`TextIO`](str/TextIO.md) | : [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) |  | required |  | [lib/basis/textio.sml](../../../lib/basis/textio.sml) |

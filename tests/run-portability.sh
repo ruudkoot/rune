@@ -30,6 +30,9 @@
 # Windows are make test-windows, which has a save and restore of its own
 # between Windows and this system.
 set -u
+# What is compared must not depend on colour forced from outside
+# (docs/diagnostics.md).
+unset FORCE_COLOR CLICOLOR_FORCE
 TZ='NST3:30NDT,M3.2.0,M11.1.0'
 export TZ
 

@@ -44,6 +44,14 @@ struct
     \  --lint      check the comments of the files: every comment is in the\n\
     \              language of doc comments, and those that document\n\
     \              something say it in the way the generator can use\n\
+    \  --palette DIR  write the palette of the roles as palette.css and\n\
+    \              palette.json (for an editor's theme) to DIR, and stop; with\n\
+    \              --check, fail if they are not what would be written\n\
+    \  --color=WHEN  colour the diagnostics: always, never or auto (the\n\
+    \              default: when the standard error is a terminal)\n\
+    \  --diagnostics=full|short  show the source lines of a diagnostic, or\n\
+    \              its first line only (the default: full on a terminal)\n\
+    \  --diagnostics-json FILE  also write the diagnostics to FILE as JSON\n\
     \  --lib DIR   the directory of the libraries (the wrappers pass it)\n\
     \  --version   print the version\n\
     \  --help      print this text\n"
@@ -64,6 +72,10 @@ struct
   val labels = ref false
   val checkCoverage = ref false
   val lint = ref false
+  val palette : string option ref = ref NONE
+  val color = ref Color.WhenTerminal
+  val diagnostics : bool option ref = ref NONE
+  val diagnosticsJson : string option ref = ref NONE
   val showHelp = ref false
   val showVersion = ref false
 
@@ -86,11 +98,19 @@ struct
     | "--labels" :: rest => (labels := true; parse rest)
     | "--check-coverage" :: rest => (checkCoverage := true; parse rest)
     | "--lint" :: rest => (lint := true; parse rest)
+    | "--palette" :: dir :: rest => (palette := SOME dir; parse rest)
+    | "--diagnostics-json" :: file :: rest => (diagnosticsJson := SOME file; parse rest)
+    | "--diagnostics=full" :: rest => (diagnostics := SOME true; parse rest)
+    | "--diagnostics=short" :: rest => (diagnostics := SOME false; parse rest)
     | "--version" :: rest => (showVersion := true; parse rest)
     | "--help" :: rest => (showHelp := true; parse rest)
     | "-h" :: rest => (showHelp := true; parse rest)
     | arg :: rest =>
-        if String.isPrefix "-" arg then raise Usage ("unknown option " ^ arg)
+        if String.isPrefix "--color=" arg then
+          (case Color.choiceNamed (String.extract (arg, 8, NONE)) of
+             SOME c => (color := c; parse rest)
+           | NONE => raise Usage ("--color takes always, never or auto, not " ^ String.extract (arg, 8, NONE)))
+        else if String.isPrefix "-" arg then raise Usage ("unknown option " ^ arg)
         else (inputs := !inputs @ [arg]; parse rest)
 
   fun load (path : string) : DocIR.module list =
@@ -192,9 +212,30 @@ struct
                              (List.concat (List.map #provides (BasisManifest.readManifest (d ^ "/test/property"))))))
         handle _ => ()
 
+  (* --palette: the roles' styles for HTML and for an editor *)
+  fun writePalette (dir : string) : OS.Process.status =
+    let
+      val files = [("palette.css", Color.css ()), ("palette.json", Color.editorTheme ())]
+      fun read path =
+        let val i = TextIO.openIn path in TextIO.inputAll i before TextIO.closeIn i end handle IO.Io _ => ""
+      fun write (name, text) =
+        let val o' = TextIO.openOut (dir ^ "/" ^ name) in TextIO.output (o', text); TextIO.closeOut o' end
+    in
+      if !check then
+        case List.filter (fn (name, text) => read (dir ^ "/" ^ name) <> text) files of
+          [] => (println ("runedoc: " ^ dir ^ " has the palette"); OS.Process.success)
+        | stale => (List.app (fn (name, _) => eprintln ("runedoc: " ^ dir ^ "/" ^ name ^ " is not the palette")) stale;
+                    eprintln "runedoc: run `make docs`"; OS.Process.failure)
+      else
+        ((OS.FileSys.mkDir dir handle OS.SysErr _ => ());
+         List.app write files;
+         println ("runedoc: wrote the palette to " ^ dir); OS.Process.success)
+    end
+
   fun run () : OS.Process.status =
-    (readInstances ();
-     run' ())
+    case !palette of
+      SOME dir => writePalette dir
+    | NONE => (readInstances (); run' ())
 
   and run' () : OS.Process.status =
     if !labels then
@@ -257,13 +298,18 @@ struct
          else raise Usage "nothing to do (use --library, --page, --dump-ir or --lint)";
          report ())
 
-  fun main (_ : string, args : string list) : OS.Process.status =
+  fun main (name : string, args : string list) : OS.Process.status =
+    let val status = main' (name, args)
+    in Diagnostic.finish (OS.Process.isSuccess status); status end
+
+  and main' (_ : string, args : string list) : OS.Process.status =
     (parse args;
+     Diagnostic.install {color = !color, full = !diagnostics, json = !diagnosticsJson};
      if !showHelp then (print usage; OS.Process.success)
      else if !showVersion then (println ("runedoc " ^ Config.version); OS.Process.success)
      else run ())
     handle Usage msg => (eprintln ("runedoc: " ^ msg); eprintln "try 'runedoc --help'"; OS.Process.failure)
-         | Error.CompileError (sp, msg) => (eprintln (Error.format (sp, msg)); OS.Process.failure)
+         | Error.CompileError (sp, msg) => (eprintln (!Error.show ("error", sp, msg)); OS.Process.failure)
          | Error.Bug msg => (eprintln ("runedoc: " ^ msg); OS.Process.failure)
          | IO.Io {name, ...} => (eprintln ("runedoc: I/O error on " ^ name); OS.Process.failure)
 end

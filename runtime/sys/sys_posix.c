@@ -675,7 +675,8 @@ int sys_waitpid(int64_t pid, int flags, int64_t out[3]) {
 int sys_kill(int64_t pid, int signal) { return kill((pid_t)pid, signal); }
 int sys_alarm(int seconds) { return (int)alarm((unsigned)seconds); }
 int sys_pause(void) { pause(); return 0; }
-void sys_exit_now(int status) { _exit(status); }
+static void term_restore(void);
+void sys_exit_now(int status) { term_restore(); _exit(status); }
 int64_t sys_getpid(void) { return (int64_t)getpid(); }
 int64_t sys_getppid(void) { return (int64_t)getppid(); }
 int64_t sys_getuid(void) { return (int64_t)getuid(); }
@@ -789,7 +790,7 @@ int64_t sys_read_fd(int fd, char *buf, int64_t n) {
         struct pollfd q;
         q.fd = fd; q.events = POLLIN; q.revents = 0;
         while (poll(&q, 1, -1) < 0 && errno == EINTR)
-            if (*interrupt_flag) return -1;
+            if (*interrupt_flag & 1) return -1;   /* the user's; bit 2 is the debugger's */
     }
     do { errno = 0; k = read(fd, buf, (size_t)n); } while (k < 0 && errno == EINTR);
     return (int64_t)k;
@@ -1292,6 +1293,23 @@ void sys_code_free(void *code, size_t size) { munmap(code, size); }
 static struct sigaction interrupt_before;
 static int interrupt_caught;
 static void on_interrupt(int sig) { (void)sig; if (interrupt_flag) *interrupt_flag = 1; }
+int64_t sys_event_new(void) { errno = ENOSYS; return -1; }
+int sys_event_set(int64_t handle) { (void)handle; errno = ENOSYS; return -1; }
+
+int sys_random(void *out, size_t n) {
+    int fd = open("/dev/urandom", O_RDONLY);
+    if (fd < 0) return -1;
+    size_t got = 0;
+    while (got < n) {
+        ssize_t k = read(fd, (char *)out + got, n - got);
+        if (k < 0 && errno == EINTR) continue;
+        if (k <= 0) { int e = k < 0 ? errno : EIO; close(fd); errno = e; return -1; }
+        got += (size_t)k;
+    }
+    close(fd);
+    return 0;
+}
+
 int sys_interrupt_catch(volatile int *flag) {
     if (!flag) {
         interrupt_flag = NULL;
@@ -1309,6 +1327,172 @@ int sys_interrupt_catch(volatile int *flag) {
     if (sigaction(SIGINT, &sa, NULL) != 0) { interrupt_flag = NULL; return -1; }
     interrupt_caught = 1;
     return 0;
+}
+
+/* ---------------------------------------------------------- the terminal
+   of a line editor (sys.h). What the terminal was is kept from the first
+   sys_term_enter; term_fd is the terminal while it is raw, -1 otherwise. Put
+   back from a signal handler too, by tcsetattr and write alone, which are
+   async-signal-safe. */
+static struct termios term_before;
+static int term_saved;
+static volatile sig_atomic_t term_fd = -1;
+static int term_out = -1;
+static char term_undo[256];
+static size_t term_undo_n;
+static volatile sig_atomic_t term_resize_count;
+static int term_resize_counting;
+static int term_handlers;
+
+/* raw, or quiet (sys_term_enter): term_quiet says which the terminal is put
+   in again after a stop */
+static int term_quiet;
+static int term_raw(int fd) {
+    struct termios t = term_before;
+    if (term_quiet) {
+        /* keys queued as they are typed, Enter a carriage return still,
+           for the raw mode that reads them next */
+        t.c_iflag &= ~(tcflag_t)(INLCR | IGNCR | ICRNL);
+        t.c_lflag &= ~(tcflag_t)(ECHO | ECHONL | ICANON);
+        t.c_cc[VMIN] = 1;
+        t.c_cc[VTIME] = 0;
+        return tcsetattr(fd, TCSADRAIN, &t);
+    }
+    t.c_iflag &= ~(tcflag_t)(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
+    t.c_lflag &= ~(tcflag_t)(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+    t.c_cflag &= ~(tcflag_t)(CSIZE | PARENB);
+    t.c_cflag |= CS8;
+    t.c_cc[VMIN] = 1;
+    t.c_cc[VTIME] = 0;
+    return tcsetattr(fd, TCSADRAIN, &t);
+}
+
+static void term_restore(void) {
+    int fd = term_fd;
+    if (fd < 0) return;
+    term_fd = -1;
+    if (term_undo_n > 0 && term_out >= 0) {
+        ssize_t k = write(term_out, term_undo, term_undo_n);
+        (void)k;
+    }
+    tcsetattr(fd, TCSADRAIN, &term_before);
+}
+
+/* SIGTERM, SIGHUP and SIGQUIT: the terminal put back, then the signal's
+   own action, which ends the process. SIGTSTP: put back, stopped, and raw
+   again when continued. */
+static const int term_ending[] = {SIGTERM, SIGHUP, SIGQUIT};
+static void on_term_signal(int sig);
+static void term_catch(int sig) {
+    struct sigaction sa;
+    memset(&sa, 0, sizeof sa);
+    sa.sa_handler = on_term_signal;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    sigaction(sig, &sa, NULL);
+}
+static void on_term_signal(int sig) {
+    int saved = errno;
+    int fd = term_fd;
+    term_restore();
+    signal(sig, SIG_DFL);
+    /* the signal is blocked while its handler runs; let it in at once */
+    sigset_t set;
+    sigemptyset(&set);
+    sigaddset(&set, sig);
+    sigprocmask(SIG_UNBLOCK, &set, NULL);
+    raise(sig);
+    /* only a stop comes back here, when the process is continued */
+    term_catch(sig);
+    if (fd >= 0 && term_raw(fd) == 0) {
+        term_fd = fd;
+        term_resize_count++;
+    }
+    errno = saved;
+}
+
+#ifdef SIGWINCH
+static void on_resize(int sig) { (void)sig; term_resize_count++; }
+#endif
+
+int sys_term_size(int fd, int *cols, int *rows) {
+#ifdef TIOCGWINSZ
+    struct winsize w;
+    if (ioctl(fd, TIOCGWINSZ, &w) != 0) return -1;
+    *cols = w.ws_col;
+    *rows = w.ws_row;
+    return 0;
+#else
+    (void)fd; (void)cols; (void)rows;
+    errno = ENOSYS;
+    return -1;
+#endif
+}
+
+int64_t sys_term_resizes(void) {
+#ifdef SIGWINCH
+    if (!term_resize_counting) {
+        struct sigaction sa;
+        memset(&sa, 0, sizeof sa);
+        sa.sa_handler = on_resize;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = SA_RESTART;   /* poll is ended all the same (sys_term_read) */
+        if (sigaction(SIGWINCH, &sa, NULL) != 0) return -1;
+        term_resize_counting = 1;
+    }
+    return (int64_t)term_resize_count;
+#else
+    errno = ENOSYS;
+    return -1;
+#endif
+}
+
+int sys_term_enter(int in, int out, const char *undo, int64_t n, int quiet) {
+    if (!isatty(in)) { errno = ENOTTY; return -1; }
+    if (n < 0 || (size_t)n > sizeof term_undo) { errno = EINVAL; return -1; }
+    if (!term_saved) {
+        if (tcgetattr(in, &term_before) != 0) return -1;
+        term_saved = 1;
+        atexit(term_restore);
+    }
+    if (!term_handlers) {
+        /* only where the signal would end or stop the process as it is */
+        for (size_t i = 0; i < sizeof term_ending / sizeof term_ending[0]; i++) {
+            struct sigaction old;
+            if (sigaction(term_ending[i], NULL, &old) == 0 && old.sa_handler == SIG_DFL) term_catch(term_ending[i]);
+        }
+        struct sigaction old;
+        if (sigaction(SIGTSTP, NULL, &old) == 0 && old.sa_handler == SIG_DFL) term_catch(SIGTSTP);
+        term_handlers = 1;
+    }
+    term_fd = -1;   /* not put back by a signal while it changes */
+    memcpy(term_undo, undo, (size_t)n);
+    term_undo_n = (size_t)n;
+    term_out = out;
+    term_quiet = quiet;
+    if (term_raw(in) != 0) return -1;
+    term_fd = in;
+    return 0;
+}
+
+int sys_term_leave(void) {
+    if (term_fd < 0) return 0;
+    int fd = term_fd;
+    term_restore();
+    return isatty(fd) ? 0 : -1;
+}
+
+int64_t sys_term_read(int in, char *buf, int64_t n, int64_t ms) {
+    if (!isatty(in)) { errno = ENOTTY; return -1; }
+    struct pollfd q;
+    q.fd = in; q.events = POLLIN; q.revents = 0;
+    int r = poll(&q, 1, ms < 0 ? -1 : ms > INT_MAX ? INT_MAX : (int)ms);
+    if (r < 0) return errno == EINTR ? 0 : -1;
+    if (r == 0) return 0;
+    ssize_t k = read(in, buf, (size_t)n);
+    if (k < 0) return errno == EINTR || errno == EAGAIN ? 0 : -1;
+    if (k == 0) { errno = 0; return -2; }
+    return (int64_t)k;
 }
 
 /* ---------------------------------------------------------- the heap's memory */

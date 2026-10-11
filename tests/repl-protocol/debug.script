@@ -1,0 +1,52 @@
+# The debugger through the engine (docs/repl-protocol.md, The debugger): a
+# breakpoint set before its entry is compiled, the stop it makes, its
+# frames, variables and an expression in a frame, a step, a stop at a
+# raise nothing handles, and a pause by the front's SIGINT, ended by abort.
+send {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":1}}
+until 1
+send {"jsonrpc":"2.0","id":2,"method":"debug/setBreakpoints","params":{"path":"stdIn#1","lines":[2]}}
+until 2
+send {"jsonrpc":"2.0","id":3,"method":"eval","params":{"text":"fun f x =\n  let val y = x + 1\n      val z = y * 2\n  in z + y\n  end"}}
+until 3
+send {"jsonrpc":"2.0","id":4,"method":"eval","params":{"text":"f 20;"}}
+until debug/stopped
+send {"jsonrpc":"2.0","id":5,"method":"debug/frames","params":{}}
+until 5
+send {"jsonrpc":"2.0","id":6,"method":"debug/variables","params":{"frame":0}}
+until 6
+send {"jsonrpc":"2.0","id":7,"method":"debug/evaluate","params":{"frame":0,"text":"x * 3"}}
+until 7
+send {"jsonrpc":"2.0","id":8,"method":"debug/continue","params":{"mode":"next"}}
+until debug/stopped
+send {"jsonrpc":"2.0","id":9,"method":"debug/variables","params":{"frame":0}}
+until 9
+send {"jsonrpc":"2.0","id":10,"method":"debug/continue","params":{"mode":"continue"}}
+until 4
+send {"jsonrpc":"2.0","id":11,"method":"debug/frames","params":{}}
+until 11
+send {"jsonrpc":"2.0","id":12,"method":"debug/setBreakpoints","params":{"path":"stdIn#1","lines":[]}}
+until 12
+send {"jsonrpc":"2.0","id":13,"method":"debug/setRaise","params":{"mode":"uncaught"}}
+until 13
+send {"jsonrpc":"2.0","id":14,"method":"eval","params":{"text":"fun h n = if n = 0 then raise Fail \"zero\" else h (n - 1);"}}
+until 14
+send {"jsonrpc":"2.0","id":15,"method":"eval","params":{"text":"(h 3 : int);"}}
+until debug/stopped
+send {"jsonrpc":"2.0","id":16,"method":"debug/continue","params":{"mode":"continue"}}
+until 15
+send {"jsonrpc":"2.0","id":17,"method":"debug/setRaise","params":{"mode":"none"}}
+until 17
+send {"jsonrpc":"2.0","id":18,"method":"debug/configure","params":{"pause":true}}
+until 18
+send {"jsonrpc":"2.0","id":19,"method":"eval","params":{"text":"fun loop (n : int) = if n = 0 then 0 else loop (n - 1);"}}
+until 19
+send {"jsonrpc":"2.0","id":20,"method":"eval","params":{"text":"loop 100000000000;"}}
+signal
+until debug/stopped
+send {"jsonrpc":"2.0","id":21,"method":"debug/continue","params":{"mode":"abort"}}
+until 20
+send {"jsonrpc":"2.0","id":22,"method":"eval","params":{"text":"f 1;"}}
+until 22
+send {"jsonrpc":"2.0","id":23,"method":"shutdown","params":{}}
+until 23
+end

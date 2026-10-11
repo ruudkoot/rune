@@ -1,0 +1,22 @@
+# The terminal while code runs (D18): keys typed ahead are not echoed into
+# what the code writes, and are the editor's at the next prompt; and a
+# program that reads the standard input reads a line echoed as at a shell.
+# Not run on Windows: WSL interop under tmux delivers keys typed while the
+# program sleeps only once it reads (see repl-interrupt).
+start 80 24 @REPL@
+wait ^-$
+send (Posix.Process.sleep (Time.fromSeconds 2); 0);
+keys Enter
+send 7;
+keys Enter
+wait ^val it = 7 : int$ 30
+send val l = TextIO.inputLine TextIO.stdIn;
+keys Enter
+sleep 500
+send hello
+keys Enter
+wait ^val l = SOME "hello\\n" : string option$
+expect @DIR@/repl-quiet.screen
+send val () = OS.Process.exit OS.Process.success;
+keys Enter
+exited 0

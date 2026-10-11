@@ -1,0 +1,29 @@
+# windows
+# lib/terminal's editor (examples/readline.sml): typing, Emacs's moves and
+# kills, accepting, the history, and the end of the input.
+start 60 12 @READLINE@
+wait ^>$
+send world
+keys C-a
+send hello\x20
+keys C-e
+send ;
+wait ^> hello world;$
+keys Enter
+wait ^read 12 bytes: hello world;$
+keys Up
+wait ^> hello world;$
+keys C-a M-f C-k
+send !;
+keys Enter
+wait ^read 7 bytes: hello!;$
+send abc def
+keys C-w C-a C-y
+wait ^> defabc$
+keys C-e BSpace C-u
+send x;
+keys Enter
+wait ^read 2 bytes: x;$
+expect @DIR@/edit-keys.screen
+keys C-d
+wait ^bye$

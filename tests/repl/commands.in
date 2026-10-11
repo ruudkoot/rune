@@ -1,0 +1,34 @@
+:type List.map
+:t fn x => (x, [x])
+:type 1 + "two"
+:info SOME
+:info option
+:info List.foldl
+:info ::
+datatype shape = Circle of real | Square of real;
+fun area (Circle r) = 3.0 * r * r | area (Square s) = s * s;
+:info area
+:info shape
+:browse Option
+:browse OPTION
+:search isSome
+:search 'a list -> int
+:search int -> 'a list -> 'a
+:doc Option.isSome
+:set depth 2
+[[[1]]];
+:set feedback concise
+datatype t = T;
+:set feedback normal
+:show
+:set nothing 1
+fun down 0 = raise Fail "at the bottom" | down n = 1 + down (n - 1);
+down 3;
+:bt
+:history
+:sh echo from the shell
+:save tests/out/repl/commands-saved.sml
+:nonsense
+:h type
+:quit
+1;

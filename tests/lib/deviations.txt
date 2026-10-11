@@ -20,3 +20,23 @@ native:smlnj32 | random.* | HOST-BUG | SplitMix64's 64-bit constants lose bits 3
 # Real.nextAfter steps from the least normal real to 0.0.
 native:smlnj-legacy | property.core | HOST-BUG | Real.fromManExp {man = 0.5, exp = ~1021} is 0.0, not the least normal real, and so is every subnormal, and Real.nextAfter (Real.minNormalPos, 0.0) is 0.0: lib/test/property decodes a real node's bits with fromManExp and draws that nextAfter as an edge case, so the fingerprint differs (docs/bugreport/smlnj/Real.fromManExp, Real.nextAfter); the 64-bit build also now and then loses a real in a garbage collection, as functions share GC code that does not save it (docs/bugreport/smlnj/GC/real-corrupted-on-64-bit), or stops with "bogus fault" when the collector meets a raw Word64 in a record of arguments (docs/bugreport/smlnj/GC/spilled-word64-argument)
 native:smlnj-dev | property.core | HOST-BUG | Real.fromManExp {man = 0.5, exp = ~1021} is 0.0, not the least normal real, and so is every subnormal, and Real.nextAfter (Real.minNormalPos, 0.0) is 0.0: lib/test/property decodes a real node's bits with fromManExp and draws that nextAfter as an edge case, so the fingerprint differs (docs/bugreport/smlnj/Real.fromManExp, Real.nextAfter)
+
+# ---- MLKit 4.7.23: an internal assertion on a program it compiles alone,
+# after other programs were built in the same tree first
+# (docs/bugreport/mlkit/separate-compilation-reuse); region inference that
+# corrupts values still in use (docs/bugreport/mlkit/region-inference);
+# and a Socket without acceptNB (docs/bugreport/mlkit/socket-acceptNB-absent).
+native:mlkit | unicode.utf8 | HOST-BUG | "Impossible: LambdaStatSem.eqType" at the round trip of tests/lib/unicode/utf8.sml when lib/random's programs were built first in this tree (run-hosts.sh's order); the same .mlb built alone, or the files copied elsewhere, compiles and passes
+native:mlkit | json.roundtrip | HOST-BUG | region inference hands the program strings and values that are no longer its own, and it dies with SIGSEGV; built with -no_ri it passes (docs/bugreport/mlkit/region-inference)
+native:mlkit | terminal.emulator | HOST-BUG | "Impossible: LambdaStatSem.APP.argument type not arrow" compiling tests/lib/terminal/emulator.sml after the programs before it were built in the same tree (run-hosts.sh's order); the same files copied to a fresh directory compile and pass (docs/bugreport/mlkit/separate-compilation-reuse)
+native:mlkit | jsonrpc.jsonrpc | HOST-BUG | region inference: a name lib/json decodes comes back corrupt, and the program dies with SIGSEGV; built with -no_ri it passes (docs/bugreport/mlkit/region-inference)
+native:mlkit | dap.dap | HOST-BUG | region inference: the names of the members of a message lib/json decodes come back corrupt, so no message reads back; built with -no_ri it passes (docs/bugreport/mlkit/region-inference)
+native:mlkit | markdown.spec | HOST-BUG | region inference: the test reads CommonMark's examples with lib/json, whose names come back corrupt, and dies with SIGSEGV (docs/bugreport/mlkit/region-inference)
+native:mlkit | pretty.pretty | HOST-BUG | region inference: the random documents end in SIGSEGV; built with -no_ri the test passes (docs/bugreport/mlkit/region-inference)
+native:mlkit | zmtp.zmtp | HOST-ABSENT | MLKit's Socket has no acceptNB, which lib/zmtp's loop accepts with (docs/bugreport/mlkit/socket-acceptNB-absent)
+native:mlkit | jupyter.jupyter | HOST-ABSENT | lib/jupyter is written on lib/zmtp, which needs Socket.acceptNB (docs/bugreport/mlkit/socket-acceptNB-absent)
+
+# ---- Poly/ML 5.9.2: Socket.recvVecNB blocks on a socket that accept or
+# acceptNB returned, where it must return NONE
+# (docs/bugreport/polyml/recvVecNB-blocks-on-accepted).
+native:polyml | zmtp.zmtp | HOST-BUG | the first Zmtp.wait reads the connection the ROUTER accepted with recvVecNB, which waits for data that never comes, so the test hangs until run-hosts.sh's time limit; on the connecting socket the same call returns NONE, and MLton and Rune return NONE on both

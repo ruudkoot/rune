@@ -9,6 +9,18 @@ files
   src/util/inttable.sml
   src/util/source.sml
   src/util/error.sml
+  lib/unicode/utf8_sig.sml
+  lib/unicode/utf8.sml
+  lib/unicode/width_data.sml
+  lib/unicode/display_width_sig.sml
+  lib/unicode/display_width.sml
+  lib/unicode/grapheme_data.sml
+  lib/unicode/grapheme_sig.sml
+  lib/unicode/grapheme.sml
+  lib/json/json_sig.sml
+  lib/json/json.sml
+  src/util/color.sml
+  src/util/diagnostic.sml
   src/util/pass.sml
   src/util/usage.sml
   src/util/pickle.sml

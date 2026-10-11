@@ -1,0 +1,58 @@
+{
+  "dark": {
+    "base": "vs-dark",
+    "rules": [
+      {
+        "token": "keyword",
+        "foreground": "b4009e",
+        "fontStyle": "bold"
+      },
+      {
+        "token": "string",
+        "foreground": "16c60c"
+      },
+      {
+        "token": "number",
+        "foreground": "c19c00"
+      },
+      {
+        "token": "comment"
+      },
+      {
+        "token": "type.identifier",
+        "foreground": "61d6d6"
+      },
+      {
+        "token": "operator"
+      }
+    ]
+  },
+  "light": {
+    "base": "vs",
+    "rules": [
+      {
+        "token": "keyword",
+        "foreground": "0451a5",
+        "fontStyle": "bold"
+      },
+      {
+        "token": "string",
+        "foreground": "cd3131"
+      },
+      {
+        "token": "number",
+        "foreground": "bc05bc"
+      },
+      {
+        "token": "comment"
+      },
+      {
+        "token": "type.identifier",
+        "foreground": "0451a5"
+      },
+      {
+        "token": "operator"
+      }
+    ]
+  }
+}

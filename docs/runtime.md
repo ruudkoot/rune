@@ -574,10 +574,25 @@ Tail calls do not grow the frame stack, so a tail-recursive loop runs in
 constant space -- except in the body of a `handle`, where the handler has to
 stay ([language.md](language.md), `rt.tailcall`).
 
+`print` writes through the VM's slot for the descriptor 1, as a stream of
+`TextIO` does, and `print_err` through the slot for 2 -- not to C's
+`stdout` and `stderr` themselves -- so that what owns the slot owns
+everything the program writes there (docs/plans/repl.md, D18 and M10).
+
 A `raise` unwinds to the innermost handler, which is an entry recording the
 code position, the stack height and the frame. With no handler left, the VM
 prints `runevm: uncaught exception Name payload` on standard error, flushes,
 and exits with status 1.
+
+A REPL catches what the code it runs raises, and by then the frames are
+gone. So it marks a handler of its own (`rt_raise_mark`, the REPL's
+`RuneRuntime.raiseMark`): a raise whose handler is the marked one -- one that
+left the code the REPL ran -- records the frames it unwinds, at most 64,
+innermost first, by function and position, before it unwinds them
+(`vm_raise`), and `rt_raise_trace` gives them as `rt_trace` gives the stack's
+(the REPL's `:bt`; docs/plans/repl.md, D22's first stage). A raise that a
+handler of the program takes is not recorded and costs a comparison; with
+no mark, nothing. An image keeps no mark.
 
 The exit statuses of the VM itself:
 
@@ -623,9 +638,11 @@ D11):
 * a read from a terminal that the interrupt cuts short -- the REPL's
   prompt -- raises it too, in the primitive: a terminal is read through
   `poll` first, which a signal ends whatever `SA_RESTART` says, and the
-  read is begun again where the interrupt is masked. Every other call into
-  the system is begun again, as before, and the interrupt waits for the
-  next poll; a primitive that is running finishes first;
+  read is begun again where the interrupt is masked. `OS.IO.poll` ended by
+  it raises it the same way, so that a program that waits for several
+  descriptors can be interrupted. Every other call into the system is begun again,
+  as before, and the interrupt waits for the next poll; a primitive that is
+  running finishes first;
 * `Runtime.maskInterrupt true` defers it: the flag stays set and the polls
   leave it, until `Runtime.maskInterrupt false`, which raises it as it
   returns. A section that an interrupt must not cut in two -- what HOL4's
@@ -635,7 +652,16 @@ D11):
   program's and not the reader's (`rt_interrupt_is`,
   `lib/basis/streamio_fn.sml`);
 * an image keeps the exception and the mask, and the world started from it
-  catches the interrupt again, at the flag of the VM that runs it.
+  catches the interrupt again, at the flag of the VM that runs it;
+* on Windows, where one process has no signal to send another, a program
+  that catches the interrupt also watches, on a thread, the events that
+  the variables `RUNE_INTERRUPT_EVENT` and `JPY_INTERRUPT_EVENT` name by
+  their handles' numbers: one set is the user's interrupt, as Ctrl-C is.
+  A number that is no handle of the process -- a variable a parent passed
+  on without the handle -- is passed over. The REPL's fronts give their
+  engine one (`RuneRuntime.interruptEvent`, `setInterrupt`;
+  `src/front/engine.sml`), and Jupyter gives its kernel one, which the
+  kernel keeps from its engine.
 
 Uncaught, it ends the program as any exception does:
 `runevm: uncaught exception Interrupt`, status 1. A process started with
@@ -648,6 +674,136 @@ The REPL catches it ([repl.md](repl.md), *Interrupts*). `tests/lang`'s
 `Posix.Process.kill`, which on Windows sets the flag where the program
 catches the interrupt, as Ctrl-C does; `tests/repl/interrupt.in` sends the
 REPL `SIGINT` while a declaration loops.
+
+The flag has two bits: 1 the user's interrupt, which the system layer's
+handler writes and the reads of a terminal look at, and 2 the debugger's
+(*The debugger*), which only makes compiled code leave for the interpreter
+at its next poll.
+
+## The debugger
+
+The REPL's debugger stops the program at a breakpoint, a step, a pause or
+a raise, and asks the user what to do on the frames it stopped in, in the
+same process and on the same stack ([repl.md](repl.md), *The debugger*;
+docs/plans/repl.md, D22 and M12; `runtime/debug.c`). Nothing of it costs a
+program that is not being debugged: the polls are the interrupt's, and the
+debug loop is a loop of its own.
+
+* **The hook.** The REPL gives the VM an SML function, the hook
+  (`rt_debug_hook`), and the VM makes a function of its own, `<debug>`:
+  it calls the hook with the event, then `rt_debug_return`. A stop pushes a
+  frame of `<debug>` above the frame that stopped -- its return the
+  instruction it stopped at -- and goes on in it, in the same loop: the VM
+  does not call SML from C, it makes a call as `CALL` would. The hook runs
+  the REPL's own loop on top of the stopped frames, and returns when the
+  user says how to go on; `rt_debug_return` then takes the frame off and
+  goes on at the instruction, or raises the exception the stop was for.
+  Nothing stops while the hook runs.
+* **Debug mode.** While anything can stop the program, the driver runs the
+  debug loop: a third copy of the register loop, interpreted throughout --
+  it enters no compiled code, and a frame that compiled code was waiting in
+  returns into the interpreter, as a frame of an image does -- which looks
+  at each instruction first: the key of its line, `(file + 1) << 20 |
+  line`, from a table made per function the first time it runs there, set
+  against the key last seen in the same frame. Turning debug mode on sets
+  the debugger's bit of the interrupt's flag, so compiled code leaves at
+  its next poll; the interpreter's other loops leave at theirs, the
+  instruction begun again in the debug loop. In debug mode every register
+  of every frame is a root of the collector, so that a variable that is
+  dead where its frame waits keeps its value for the debugger.
+* **Stops.** A breakpoint is a key: the debug loop stops where a frame comes
+  to its line from another. A step stops at the next new line of the user's
+  files (`rt_debug_user`: those after the files the program had when the
+  REPL started), of any frame, of the frame or one below it, or once the
+  frame is left, as `rt_debug_step` says; a step that returns into the
+  library's code goes on as if it had begun there. The user's interrupt
+  pauses rather than raises where the mode says so (8): a poll, in any
+  loop or in compiled code, leaves for the debug loop, which stops at the
+  instruction. A raise stops in `vm_raise`, before anything unwinds,
+  where the mode says so -- every raise (2), or one the REPL's handler takes
+  (4) -- in the debug loop only. A stop is only ever in the user's code: a
+  frame above the one the REPL's handler is in (`rt_raise_mark`).
+* **What the hook reads.** `rt_debug_frames` is the stop's frames, as
+  `rt_trace` gives them; `rt_debug_where` a frame's function and where it
+  is in it, which the REPL finds the variables of; `rt_debug_live` what a
+  register holds -- nothing where it is dead, an immediate, a pointer -- and
+  `rt_debug_local` and `rt_debug_env` a register of the frame and a slot of
+  its closure, at any type, which the REPL reads at the type the compiler
+  gave the variable. `rt_debug_exn` is the exception of a stop at a raise.
+* **Not in an image.** The debugger is a process's: an image keeps none of
+  it, and `runevm-stack`, which has no debug loop, refuses the hook.
+
+`tests/repl/debug.in` stops a program at every mode of the JIT and wants the
+same frames and values; `tests/terminal/repl-debug.script` pauses a loop
+running in compiled code.
+
+## The terminal
+
+A program that edits what is typed at it -- the REPL's line editor,
+`lib/terminal` -- needs more of the terminal than `Posix.TTY` gives, and
+some of it only the runtime can do (`Terminal`; docs/plans/repl.md, D4
+and D5). Five calls of the system layer (`runtime/sys/sys.h`), behind the
+primitives `term_size`, `term_resizes`, `term_enter`, `term_leave` and
+`term_read`:
+
+* **Raw mode.** `term_enter` saves what the terminal was, once, and makes
+  it raw: on POSIX the settings of `cfmakeraw` with `OPOST` kept, so that
+  a newline written is still a carriage return and a newline; on Windows
+  the console's input with VT input on, the window's size records, and no
+  line, echo or processed input, so that Ctrl-C is the byte 3 there as it
+  is on a terminal of Unix. A console that refuses VT input (before
+  Windows 10 1511, the legacy console) is refused, `ENOTSUP`, and the
+  editor keeps to its basic mode.
+* **Quiet mode.** `term_enter`'s last argument asks for quiet mode in
+  place of raw: on POSIX the saved settings without `ECHO`, `ECHONL`,
+  `ICANON` and the translations of carriage returns and newlines on
+  input, `ISIG` kept, so that keys wait as they were typed for the raw
+  mode that reads them next; on Windows raw mode with processed input on.
+  Nothing typed is echoed or edited, keys typed ahead wait for the next
+  read, and Ctrl-C is still the user's interrupt. The REPL holds the
+  terminal quiet while the code it compiled runs (`Terminal.quiet`;
+  docs/plans/repl.md, D18), and quiet mode is put back in every way raw
+  mode is.
+* **Put back whatever happens.** The program gives `term_enter` the bytes
+  that undo what it turned on with escapes (bracketed paste, a hidden
+  cursor). The terminal is put back and those bytes written by
+  `term_leave`, at exit (`atexit`: an uncaught exception, a fatal error
+  and a stack overflow all end in `exit`), by `Posix.Process.exit`, and
+  on POSIX in the handlers of `SIGTERM`, `SIGHUP` and `SIGQUIT`, which then
+  end the process by the signal's own action. They are installed only
+  where the signal's action was the default, and use `tcsetattr` and
+  `write` alone, which a signal handler may. `SIGTSTP` puts the terminal
+  back and stops; `SIGCONT` makes it raw again and counts a resize, since
+  the screen may have changed meanwhile.
+* **The window's size and its changes.** `term_size` is `TIOCGWINSZ`, and
+  on Windows the window (`srWindow`, not the buffer) of
+  `GetConsoleScreenBufferInfo`. `term_resizes` counts `SIGWINCH`, from its
+  first call; the handler is installed with `SA_RESTART`, so that no other
+  call is cut short, and ends a wait in `poll` all the same. On Windows a
+  size record that `term_read` reads is counted when the window's size has
+  changed (the console sends them for its buffer too).
+* **Reading.** `term_read` waits in `poll` at most the time given, then
+  reads what is there; nothing in the time, a resize and the user's
+  interrupt end it with nothing (the interrupt is then raised, as in a
+  read of `TextIO`). On Windows it reads the console's records
+  (`ReadConsoleInputW`): the character of a key-down, repeated as the
+  record says (32 times at most), the character of an Alt key-up, which is
+  how a character typed on the numeric keypad or pasted from outside the
+  keyboard's layout comes, and a surrogate pair as one code point, given
+  out as UTF-8.
+
+At the start of every program on Windows the VM turns on VT processing
+for each of the standard output and error that is a console, and the
+UTF-8 output code page, and puts both back at exit, so that escapes and
+UTF-8 display as on a terminal of Unix without the program asking. Where
+the console refuses, the VM sets `TERM=dumb` for itself if `TERM` was
+not set, which turns colour off ([diagnostics.md](diagnostics.md)). The
+console wait of `OS.IO.poll` wakes on a key that gives a character in
+UTF-16, which in VT input mode is every key, arrows included.
+
+`sys_none.c` fails them with `ENOSYS`. `tests/terminal`'s `term-keys`,
+`term-resize` and `term-restore` drive the probe `tests/terminal/keys.sml`
+on a terminal, the first two on Linux and on Windows alike.
 
 ## Numbers
 

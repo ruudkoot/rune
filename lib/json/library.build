@@ -1,0 +1,9 @@
+(* The JSON library (docs/plans/repl.md, The libraries): RFC 8259 text
+   read strictly and written back; its files in load order, in the form of
+   lib/basis/library.build. It is written on lib/unicode, for the UTF-8 of
+   strings: *)
+libraries unicode end
+annotate "demand" in
+  json_sig.sml
+  json.sml
+end

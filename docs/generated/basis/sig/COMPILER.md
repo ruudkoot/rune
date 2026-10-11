@@ -6,8 +6,8 @@
 | --- | --- |
 | Status | extension |
 | Implementations | 1 |
-| Documentation | 11 of 11 entries documented |
-| Tests | 13 checks of 8 entries |
+| Documentation | 13 of 13 entries documented |
+| Tests | 15 checks of 10 entries |
 | Source | [lib/basis/compiler\_sig.sml](../../../../lib/basis/compiler_sig.sml) |
 
 ## Synopsis
@@ -49,6 +49,8 @@ sig
   val <a href="#val-use">use</a> : string -&gt; unit
   val <a href="#val-compile">compile</a> : {<a href="#fld-compile.read">read</a> : unit -&gt; char option, <a href="#fld-compile.file">file</a> : string, <a href="#fld-compile.line">line</a> : int} -&gt; unit -&gt; unit
   val <a href="#val-printdepth">printDepth</a> : int ref
+  val <a href="#val-printlength">printLength</a> : int ref
+  val <a href="#val-stringlength">stringLength</a> : int ref
   val <a href="#val-prompt1">prompt1</a> : string ref
   val <a href="#val-prompt2">prompt2</a> : string ref
   type <a href="#type-location">location</a> = {<a href="#fld-location.file">file</a> : string, <a href="#fld-location.startline">startLine</a> : int, <a href="#fld-location.startposition">startPosition</a> : int, <a href="#fld-location.endline">endLine</a> : int, <a href="#fld-location.endposition">endPosition</a> : int}
@@ -143,6 +145,36 @@ declaration declared.
 <details><summary>Tests (1)</summary>
 
 For `Compiler`, in [tests/basis/compiler.sml](../../../../tests/basis/compiler.sml): `is-twenty`
+
+</details>
+
+### <a name="val-printlength"></a>`printLength`
+
+```sml
+val printLength : int ref
+```
+
+How many items of a list, an array or a vector the REPL prints (100);
+the rest print as one `...`.
+
+<details><summary>Tests (1)</summary>
+
+For `Compiler`, in [tests/basis/compiler.sml](../../../../tests/basis/compiler.sml): `is-a-hundred`
+
+</details>
+
+### <a name="val-stringlength"></a>`stringLength`
+
+```sml
+val stringLength : int ref
+```
+
+How many characters of a string the REPL prints (1,000); the rest
+print as `...` after the closing quote.
+
+<details><summary>Tests (1)</summary>
+
+For `Compiler`, in [tests/basis/compiler.sml](../../../../tests/basis/compiler.sml): `is-a-thousand`
 
 </details>
 
@@ -262,8 +294,10 @@ For `Compiler`, in [tests/basis/compiler.sml](../../../../tests/basis/compiler.s
 val lineLength : int ref
 ```
 
-How wide the REPL lays out what the printers of [`addPrettyPrinter`](#val-addprettyprinter)
-make.
+How wide the REPL lays out a value where its output is not a terminal.
+
+It is the width of what the REPL's own printers make and what those of
+[`addPrettyPrinter`](#val-addprettyprinter) make; on a terminal, the terminal's width is.
 
 <details><summary>Tests (1)</summary>
 

@@ -88,6 +88,10 @@ const void *jit_h_call(VM *vm, int32_t a, int32_t b, const void *after);
 const void *jit_h_tailcall(VM *vm, int32_t a, int32_t b);
 void jit_h_push_handler(VM *vm, int32_t pc, const void *native);
 const void *jit_h_raise(VM *vm, int32_t s);
+/* what jit_h_interrupt answers beside a handler's native code or NULL:
+   the code goes on, or leaves for the debug loop at the instruction */
+#define JIT_LEAVE ((const void *)1)
+#define JIT_BACK ((const void *)2)
 const void *jit_h_interrupt(VM *vm);
 int jit_h_primpush(VM *vm, int prim, uint32_t at);
 /* helpers that touch no state of the VM (no allocation, no raise, nothing

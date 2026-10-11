@@ -1,0 +1,512 @@
+{
+ "signatures": {
+  "DEVICE": {
+   "doc": "The terminal as the line editor uses it: the standard input and output,\nput in raw mode and read key by key, the window's size, and how the\nterminal measures what it draws.\n\n`Device` is Rune's, over the Basis's `Terminal`: the runtime puts the\nterminal back however the program ends, counts the window's changes of\nsize, and reads a console of Windows. `PosixDevice` is the same\nsignature over `Posix.TTY` and `OS.IO.poll` alone, for the other\ncompilers of Standard ML: it knows no size but `COLUMNS` and `LINES`,\nsees no resize, and puts the terminal back at `leave` only.\n\n",
+   "page": "sig/DEVICE.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "available",
+     "spec": "val available : unit -> bool",
+     "doc": "`available ()` is whether the standard input and output are both a\nterminal and `TERM` is not `dumb`: whether a program can edit there.\n\n",
+     "page": "sig/DEVICE.md#val-available"
+    },
+    {
+     "kind": "val",
+     "name": "size",
+     "spec": "val size : unit -> {columns : int, rows : int}",
+     "doc": "`size ()` is the columns and rows of the window, 80 and 24 where it\ncannot be known.\n\n",
+     "page": "sig/DEVICE.md#val-size"
+    },
+    {
+     "kind": "val",
+     "name": "resizes",
+     "spec": "val resizes : unit -> int",
+     "doc": "`resizes ()` is how many times the window has changed its size since\nthe first call.\n\nA program draws everything again when it has grown. It stays 0 where\nchanges cannot be seen.\n\n",
+     "page": "sig/DEVICE.md#val-resizes"
+    },
+    {
+     "kind": "val",
+     "name": "enter",
+     "spec": "val enter : {undo : string} -> unit",
+     "doc": "`enter {undo}` puts the terminal in raw mode: each byte as it is\ntyped, no echo, no signal from a key.\n\n`undo` is what to write when it is put back, to take back what the\nprogram turned on with escapes.\n\n**Raises** `OS.SysErr` when the standard input is not a terminal.\n\n",
+     "page": "sig/DEVICE.md#val-enter"
+    },
+    {
+     "kind": "val",
+     "name": "leave",
+     "spec": "val leave : unit -> unit",
+     "doc": "`leave ()` puts the terminal back as it was, writing `undo`.\n\n",
+     "page": "sig/DEVICE.md#val-leave"
+    },
+    {
+     "kind": "val",
+     "name": "read",
+     "spec": "val read : Time.time option -> string option",
+     "doc": "`read wait` is the bytes typed, waiting at most `wait`, or `NONE` at\nthe end of the input.\n\n`wait` `NONE` waits as long as it takes; `SOME \"\"` is nothing in the\ntime, or a resize that ended the wait.\n\n**Raises** `OS.SysErr` when the read fails.\n\n",
+     "page": "sig/DEVICE.md#val-read"
+    },
+    {
+     "kind": "val",
+     "name": "write",
+     "spec": "val write : string -> unit",
+     "doc": "`write s` writes `s` to the standard output at once.\n\n",
+     "page": "sig/DEVICE.md#val-write"
+    },
+    {
+     "kind": "val",
+     "name": "policy",
+     "spec": "val policy : unit -> Grapheme.policy",
+     "doc": "`policy ()` is how the terminal measures a grapheme cluster.\n\nBy code point in VS Code's terminal on Windows (`TERM_PROGRAM`),\nwhich draws each code point of a cluster as wide as its own width,\nand by cluster everywhere else.\n\n",
+     "page": "sig/DEVICE.md#val-policy"
+    }
+   ]
+  },
+  "EMULATOR": {
+   "doc": "A terminal emulated in memory: what a screen shows after a program has\nwritten to it, for testing what a program draws without a terminal.\n\nIt knows what a line editor writes: text, with grapheme clusters as wide\nas the width policy says and a wide one wrapped whole; carriage return,\nnewline (which scrolls at the bottom), backspace and tab; ECMA-48's\ncursor movements (CUU, CUD, CUF, CUB, CHA, CUP), erasing in a line and\nin the display (EL, ED), and SGR; and xterm's pending wrap -- after a\ncharacter in the last column the cursor stays there until the next\ncharacter, which goes to the start of the next line. Modes are\nrecorded (bracketed paste, a hidden cursor); other escapes are\nignored.\n\n",
+   "page": "sig/EMULATOR.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "cell",
+     "spec": "type cell = {text : string, style : Style.style}",
+     "doc": "A cell of the screen: the cluster it shows (\" \" when blank, \"\" for\nthe right half of a wide cluster) and its style.\n\n",
+     "page": "sig/EMULATOR.md#type-cell"
+    },
+    {
+     "kind": "type",
+     "name": "screen",
+     "spec": "type screen",
+     "doc": "A screen and its cursor.\n\n",
+     "page": "sig/EMULATOR.md#type-screen"
+    },
+    {
+     "kind": "val",
+     "name": "new",
+     "spec": "val new : {columns : int, rows : int, policy : Grapheme.policy} -> screen",
+     "doc": "`new {columns, rows, policy}` is a blank screen of that size with the\ncursor at its top left, measuring clusters by `policy`.\n\n**Example** `cursor (new {columns = 80, rows = 24, policy = Grapheme.ByCluster}) = (0, 0)`\n\n",
+     "page": "sig/EMULATOR.md#val-new"
+    },
+    {
+     "kind": "val",
+     "name": "write",
+     "spec": "val write : screen * string -> screen",
+     "doc": "`write (s, bytes)` is the screen after `bytes` were written to `s`.\n\nBytes of a UTF-8 character or an escape split between two writes\nare joined, as a terminal joins them.\n\n",
+     "page": "sig/EMULATOR.md#val-write"
+    },
+    {
+     "kind": "val",
+     "name": "cursor",
+     "spec": "val cursor : screen -> int * int",
+     "doc": "`cursor s` is the cursor's row and column, from 0.\n\n",
+     "page": "sig/EMULATOR.md#val-cursor"
+    },
+    {
+     "kind": "val",
+     "name": "row",
+     "spec": "val row : screen * int -> cell list",
+     "doc": "`row (s, i)` is the cells of row `i`, without the blank cells of\ndefault style at its end.\n\n**Raises** `Subscript` when there is no row `i`.\n\n",
+     "page": "sig/EMULATOR.md#val-row"
+    },
+    {
+     "kind": "val",
+     "name": "text",
+     "spec": "val text : screen -> string",
+     "doc": "`text s` is the screen as text, a line a row, without the blanks at\nthe ends of rows and the empty rows at the end.\n\n**Example** `text (write (new {columns = 4, rows = 2, policy = Grapheme.ByCluster}, \"abcde\")) = \"abcd\\ne\"`\n\n",
+     "page": "sig/EMULATOR.md#val-text"
+    },
+    {
+     "kind": "val",
+     "name": "scrolled",
+     "spec": "val scrolled : screen -> int",
+     "doc": "`scrolled s` is how many rows have scrolled off the top.\n\n",
+     "page": "sig/EMULATOR.md#val-scrolled"
+    },
+    {
+     "kind": "val",
+     "name": "modes",
+     "spec": "val modes : screen -> {bracketedPaste : bool, cursorVisible : bool}",
+     "doc": "`modes s` is whether bracketed paste is on (mode 2004) and whether\nthe cursor is shown (mode 25).\n\n",
+     "page": "sig/EMULATOR.md#val-modes"
+    }
+   ]
+  },
+  "HISTORY": {
+   "doc": "The history of what was typed at a prompt, kept in a file that several\nsessions share.\n\nAn entry is one accepted input, however many lines it has; in the file\nit is one line, with its newlines and backslashes escaped. Each entry\nis appended with one write, so that two sessions that add at once\ninterleave entries and never lines, and a session reads at each prompt\nwhat the others have appended since it last looked. An entry the same\nas the one before it is not added again. The file is kept under twice\nthe limit of entries by writing the last of them to a new file and\nrenaming it over the old.\n\n",
+   "page": "sig/HISTORY.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "history",
+     "spec": "type history",
+     "doc": "A history: its entries, and the file they are kept in, if any.\n\n",
+     "page": "sig/HISTORY.md#type-history"
+    },
+    {
+     "kind": "val",
+     "name": "defaultFile",
+     "spec": "val defaultFile : unit -> string option",
+     "doc": "`defaultFile ()` is where Rune's programs keep their history, or\n`NONE` when the environment names no place.\n\nIt is `$XDG_STATE_HOME/rune/history`, `%LOCALAPPDATA%\\rune\\history`\non Windows, or `~/.local/state/rune/history`, by the first of those\nvariables that is set.\n\n",
+     "page": "sig/HISTORY.md#val-defaultfile"
+    },
+    {
+     "kind": "val",
+     "name": "load",
+     "spec": "val load : {file : string option, limit : int} -> history",
+     "doc": "`load {file, limit}` is the history of `file`, its last `limit`\nentries; an empty one when the file does not exist yet, and one that\nis not kept when `file` is `NONE`.\n\n",
+     "page": "sig/HISTORY.md#val-load"
+    },
+    {
+     "kind": "val",
+     "name": "entries",
+     "spec": "val entries : history -> string vector",
+     "doc": "`entries h` is the entries of `h`, the oldest first.\n\n",
+     "page": "sig/HISTORY.md#val-entries"
+    },
+    {
+     "kind": "val",
+     "name": "add",
+     "spec": "val add : history * string -> unit",
+     "doc": "`add (h, e)` adds the entry `e` to `h` and its file, after what the\nother sessions have added.\n\nIt does nothing when `e` is empty or is the last entry. A file that\ncannot be written is left alone.\n\n",
+     "page": "sig/HISTORY.md#val-add"
+    },
+    {
+     "kind": "val",
+     "name": "refresh",
+     "spec": "val refresh : history -> unit",
+     "doc": "`refresh h` reads what other sessions have appended to the file since\n`h` last read it.\n\n",
+     "page": "sig/HISTORY.md#val-refresh"
+    },
+    {
+     "kind": "val",
+     "name": "escape",
+     "spec": "val escape : string -> string",
+     "doc": "`escape e` is the entry `e` as a line of the file: a newline is `\\n`,\na carriage return `\\r`, a backslash `\\\\`.\n\n**Example** `escape \"a\\nb\\\\c\" = \"a\\\\nb\\\\\\\\c\"`\n\n",
+     "page": "sig/HISTORY.md#val-escape"
+    },
+    {
+     "kind": "val",
+     "name": "unescape",
+     "spec": "val unescape : string -> string",
+     "doc": "`unescape l` is the entry that the line `l` is.\n\n**Law** `unescape (escape e) = e`\n\n**Example** `unescape \"a\\\\nb\" = \"a\\nb\"`\n\n",
+     "page": "sig/HISTORY.md#val-unescape"
+    }
+   ]
+  },
+  "KEY": {
+   "doc": "Keys: the bytes a terminal sends turned into the keys that were pressed.\n\nA terminal sends a printable key as its UTF-8, a key with Ctrl as a\ncontrol character, a key with Alt as Escape and the key, and the\narrows, the function keys and the rest as escape sequences: CSI\n(`ESC [`, parameters, a final byte) or SS3 (`ESC O` and a byte), with\nthe modifiers in xterm's parameter. The decoder reads a CSI sequence to\nits final byte before it looks it up, so that a sequence it does not\nknow is reported as `Unknown` and never typed as text. Bracketed paste\n(mode 2004) arrives as one `Paste`. It also reads the kitty keyboard\nprotocol's `CSI code ; modifiers u` and xterm's `CSI 27 ; modifiers ; code ~`, where a terminal sends them.\n\nEscape alone is ambiguous: it begins every sequence. The decoder keeps\nit pending, and `flush` \\-- called when no byte has come for a while, 50\nms by default in `LineEdit` \\-- says it was the key Escape (or Alt and\n`[` or `O`, when those followed it).\n\nThe decoder is a value: `feed` takes it and some bytes to the keys they\ncomplete and the decoder that waits for the rest, so the bytes of one\nkey may come in any number of reads.\n\n",
+   "page": "sig/KEY.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "name",
+     "spec": "datatype name =\n    Up | Down | Left | Right | Home | End | Insert | Delete | PageUp | PageDown\n  | Enter | Tab | Backspace | Escape | F of int",
+     "doc": "The keys that are not characters.\n\n",
+     "page": "sig/KEY.md#type-name"
+    },
+    {
+     "kind": "type",
+     "name": "mods",
+     "spec": "type mods = {shift : bool, alt : bool, ctrl : bool}",
+     "doc": "The modifiers held with a key. Shift is reported for the named keys\nonly: a character typed with Shift is the shifted character.\n\n",
+     "page": "sig/KEY.md#type-mods"
+    },
+    {
+     "kind": "datatype",
+     "name": "event",
+     "spec": "datatype event =\n    Char of int * mods\n  | Named of name * mods\n  | Paste of string\n  | CursorAt of int * int\n  | Reply of string\n  | Focus of bool\n  | Unknown of string",
+     "doc": "What was pressed or sent.\n\n`Char (c, m)` is the code point `c` with the modifiers `m`: Ctrl and\na letter is the lower-case letter with `ctrl` (Ctrl-A is `Char (97, ...)`), and the control characters that are not keys of their own are\n`@`, `\\`, `]`, `^` and `_` with `ctrl`. A byte that is not UTF-8 is\nU+FFFD. `Named (n, m)` is a named key. `Paste s` is the text of a\nbracketed paste, as it came. `CursorAt (row, column)` is a terminal's\nreport of its cursor (from 1), the answer to `ESC [ 6 n`. `Reply s` is\nanother answer to a question, an escape sequence with a private\nparameter (`ESC [ ? ...`). `Focus b` is the window's focus gained or\nlost (mode 1004). `Unknown s` is a sequence the decoder does not\nknow, as it came.\n\n",
+     "page": "sig/KEY.md#type-event"
+    },
+    {
+     "kind": "val",
+     "name": "none",
+     "spec": "val none : mods",
+     "doc": "No modifier.\n\n**Example** `none = {shift = false, alt = false, ctrl = false}`\n\n",
+     "page": "sig/KEY.md#val-none"
+    },
+    {
+     "kind": "type",
+     "name": "decoder",
+     "spec": "type decoder",
+     "doc": "A decoder: the bytes of a key begun and not yet complete.\n\n",
+     "page": "sig/KEY.md#type-decoder"
+    },
+    {
+     "kind": "val",
+     "name": "empty",
+     "spec": "val empty : decoder",
+     "doc": "The decoder that has seen nothing.\n\n**Example** `pending empty = false`\n\n",
+     "page": "sig/KEY.md#val-empty"
+    },
+    {
+     "kind": "val",
+     "name": "feed",
+     "spec": "val feed : decoder * string -> event list * decoder",
+     "doc": "`feed (d, s)` is the keys that `d`'s pending bytes and `s` complete,\nin the order they were sent, and the decoder that holds what is left\nof a key not complete.\n\nThe keys do not depend on how the bytes were split between calls:\ntests/lib/terminal/key.sml checks that every split of many streams\ngives the same keys.\n\n**Example** `#1 (feed (empty, \"a\\027[A\")) = [Char (97, none), Named (Up, none)]`\n\n",
+     "page": "sig/KEY.md#val-feed"
+    },
+    {
+     "kind": "val",
+     "name": "pending",
+     "spec": "val pending : decoder -> bool",
+     "doc": "`pending d` is whether `d` holds the beginning of a key.\n\n",
+     "page": "sig/KEY.md#val-pending"
+    },
+    {
+     "kind": "val",
+     "name": "flush",
+     "spec": "val flush : decoder -> event list * decoder",
+     "doc": "`flush d` is the keys that `d`'s pending bytes are when no more come,\nand the empty decoder.\n\nEscape alone is the key Escape, Escape and `[` or `O` is that\ncharacter with Alt, an incomplete sequence is `Unknown`, an\nincomplete UTF-8 character U+FFFD.\n\n**Example** `#1 (flush (#2 (feed (empty, \"\\027\")))) = [Named (Escape, none)]`\n\n",
+     "page": "sig/KEY.md#val-flush"
+    },
+    {
+     "kind": "val",
+     "name": "toString",
+     "spec": "val toString : event -> string",
+     "doc": "`toString e` is a key as Emacs writes one: `C-a`, `M-b`, `Up`,\n`S-Tab`, `F5`, `SPC`, a character as itself; the other events by\ntheir constructor and what they carry.\n\n**Example** `toString (Char (97, {shift = false, alt = true, ctrl = true})) = \"C-M-a\"`\n\n",
+     "page": "sig/KEY.md#val-tostring"
+    }
+   ]
+  },
+  "LINE_EDIT": {
+   "doc": "A line editor: what is typed at a prompt, edited with Emacs's keys,\ndrawn on a terminal, of one line or many.\n\nThe editor is a pure core under a thin loop (docs/plans/repl.md, D7).\n`step` takes a state and a key to the next state and what it asks of\nthe loop; `layout` turns a state into a frame, the rows of cells the\nterminal should show and where the cursor is, wrapping by display\nwidth itself; `diff` turns the frame the terminal shows and the next\ninto the bytes that change one into the other, with relative moves and\nonly the rows that changed. `readLine` is the loop: it reads keys,\nsteps and draws, and falls back to a basic mode -- a prompt and\n`TextIO.inputLine` \\-- where the terminal cannot be edited on.\n\nThe keys are readline's: Ctrl-A, Ctrl-E, Ctrl-B, Ctrl-F, Alt-B, Alt-F\nand the arrows to move; Ctrl-D, Delete, Backspace, Ctrl-K, Ctrl-U,\nCtrl-W, Alt-D and Alt-Backspace to delete, killing into a ring that\nCtrl-Y and Alt-Y yank from; Ctrl-T, Alt-U, Alt-L and Alt-C; Ctrl-\\_ to\nundo; Up and Down through the lines and then the history, searching\nit by what was typed; Ctrl-R to search it incrementally; Tab to\ncomplete; Enter to accept a complete input or begin a new line, and\nAlt-Enter for a new line always; Ctrl-L to clear the screen; Ctrl-C to\ncancel; Ctrl-Z to suspend. `bindings` changes them.\n\nWith `keys = Vi` the editor has Vi's modes: what is typed is inserted,\nas with Emacs's keys, until Escape, which goes to the normal mode,\nwhere letters are commands -- counts, the motions h l w b e 0 ^ \\$, the\noperators d c y with a motion or doubled, x X D C s S r \\~ p P u, j and\nk through the lines and the history, G and gg, and i a I A o O back to\ninserting. The cursor is a block in the normal mode and a bar while\ninserting.\n\n",
+   "page": "sig/LINE_EDIT.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "command",
+     "spec": "datatype command =\n    Insert\n  | BeginningOfLine | EndOfLine | ForwardChar | BackwardChar | ForwardWord | BackwardWord\n  | PreviousLine | NextLine | PreviousHistory | NextHistory | BeginningOfHistory | EndOfHistory\n  | BeginningOfBuffer | EndOfBuffer\n  | DeleteChar | DeleteCharOrEnd | BackwardDeleteChar | KillLine | BackwardKillLine\n  | KillWord | BackwardKillWord | KillWordBehind | Yank | YankPop\n  | TransposeChars | UpcaseWord | DowncaseWord | CapitalizeWord | Undo\n  | AcceptOrNewline | Newline | Complete | ReverseSearch | Abort | Cancel | ClearScreen | Suspend\n  | Ignore",
+     "doc": "What a key does. `Insert` types the character of the key; the others\nare named as in readline.\n\n",
+     "page": "sig/LINE_EDIT.md#type-command"
+    },
+    {
+     "kind": "val",
+     "name": "emacs",
+     "spec": "val emacs : (Key.event * command) list",
+     "doc": "Readline's keys, as the comment above lists them.\n\n",
+     "page": "sig/LINE_EDIT.md#val-emacs"
+    },
+    {
+     "kind": "datatype",
+     "name": "keys",
+     "spec": "datatype keys = Emacs | Vi",
+     "doc": "Whether letters are typed always (Emacs's keys), or are Vi's commands\nin its normal mode.\n\n",
+     "page": "sig/LINE_EDIT.md#type-keys"
+    },
+    {
+     "kind": "type",
+     "name": "config",
+     "spec": "type config = {\n  prompt : string, continuation : string,\n  isComplete : string -> bool,\n  complete : string * int -> {start : int, candidates : string list},\n  hint : string -> string option,\n  highlight : string -> (int * int * Style.style) list,\n  styles : {prompt : Style.style, hint : Style.style, menu : Style.style, search : Style.style,\n            control : Style.style, mark : Style.style},\n  bindings : (Key.event * command) list,\n  escapeTimeout : Time.time,\n  policy : Grapheme.policy,\n  basic : bool,\n  keys : keys}",
+     "doc": "What the editor is given: the prompts, what it asks of the program,\nits styles and keys.\n\n`prompt` begins the first line and `continuation` the others. `isComplete text` says whether Enter\naccepts `text` or begins a new line. `complete (text, i)` is where\nthe word before byte `i` begins and what it can be completed to.\n`hint text` is text shown faintly after the end, which Right or\nCtrl-E there accepts. `highlight text` is styles for byte ranges of\nthe text, `(start, stop, style)`. `styles` are those of the parts the\neditor draws itself. `escapeTimeout` is how long Escape waits for\nthe rest of a sequence; `policy` how the terminal measures clusters;\n`basic` asks for the basic mode; `keys` whether Vi's modes are on\n(`bindings` are those of both modes but the normal mode's letters).\n\n",
+     "page": "sig/LINE_EDIT.md#type-config"
+    },
+    {
+     "kind": "val",
+     "name": "defaults",
+     "spec": "val defaults : config",
+     "doc": "A configuration for an input of one line at the prompt `\"> \"`.\n\nEvery input is complete; there is nothing to complete, hint or\nhighlight; hints are faint and a search bold; the keys are Emacs's,\nEscape waits 50 ms, and clusters are measured whole.\n\n",
+     "page": "sig/LINE_EDIT.md#val-defaults"
+    },
+    {
+     "kind": "type",
+     "name": "state",
+     "spec": "type state",
+     "doc": "What the editor holds: the text, the cursor, the kill ring, what can\nbe undone, the history and where in it the text came from, and Vi's\nmode.\n\n",
+     "page": "sig/LINE_EDIT.md#type-state"
+    },
+    {
+     "kind": "val",
+     "name": "normal",
+     "spec": "val normal : state -> bool",
+     "doc": "`normal s` is whether `s` is in Vi's normal mode.\n\n",
+     "page": "sig/LINE_EDIT.md#val-normal"
+    },
+    {
+     "kind": "datatype",
+     "name": "outcome",
+     "spec": "datatype outcome = Continue | Accept of string | Cancelled | EndOfInput | Clear | Stop",
+     "doc": "What a key asks of the loop: nothing more, to return the text or no\ntext, to clear the screen, or to suspend the process.\n\n",
+     "page": "sig/LINE_EDIT.md#type-outcome"
+    },
+    {
+     "kind": "val",
+     "name": "start",
+     "spec": "val start : string vector * string -> state",
+     "doc": "`start (history, text)` is the state of a new input with `text`\ntyped and the cursor after it, `history` the entries Up goes back\nthrough, the oldest first.\n\n",
+     "page": "sig/LINE_EDIT.md#val-start"
+    },
+    {
+     "kind": "val",
+     "name": "step",
+     "spec": "val step : config * state * Key.event -> state * outcome",
+     "doc": "`step (c, s, e)` is the state after the key `e`, and what it asks.\n\n**Example** `text (#1 (step (defaults, start (Vector.fromList [], \"\"), Key.Char (97, Key.none)))) = \"a\"`\n\n",
+     "page": "sig/LINE_EDIT.md#val-step"
+    },
+    {
+     "kind": "val",
+     "name": "text",
+     "spec": "val text : state -> string",
+     "doc": "`text s` is the text, its lines joined by newlines.\n\n",
+     "page": "sig/LINE_EDIT.md#val-text"
+    },
+    {
+     "kind": "val",
+     "name": "cursor",
+     "spec": "val cursor : state -> int",
+     "doc": "`cursor s` is the byte of the text the cursor is at.\n\n",
+     "page": "sig/LINE_EDIT.md#val-cursor"
+    },
+    {
+     "kind": "type",
+     "name": "cell",
+     "spec": "type cell = {text : string, style : Style.style}",
+     "doc": "A cell of the screen: a cluster (\" \" blank, \"\" the right half of a\nwide one) and its style, as the emulator has them.\n\n",
+     "page": "sig/LINE_EDIT.md#type-cell"
+    },
+    {
+     "kind": "type",
+     "name": "frame",
+     "spec": "type frame = {rows : cell list vector, cursor : int * int}",
+     "doc": "What the terminal shows of the editor: rows of cells, without the\nblank cells of plain style at their ends, and the cursor's row and\ncolumn.\n\n",
+     "page": "sig/LINE_EDIT.md#type-frame"
+    },
+    {
+     "kind": "val",
+     "name": "layout",
+     "spec": "val layout : config * state * int -> frame",
+     "doc": "`layout (c, s, columns)` is the frame of `s` on a terminal that wide.\n\nIt holds the prompt, the lines wrapped at `columns`, the hint, the\nmatches of a completion and the line of a search.\n\n",
+     "page": "sig/LINE_EDIT.md#val-layout"
+    },
+    {
+     "kind": "val",
+     "name": "diff",
+     "spec": "val diff : {old : frame option, new : frame, columns : int, drawn : int} -> string * int",
+     "doc": "`diff {old, new, columns, drawn}` is the bytes that change what the\nterminal shows from `old` to `new`, and the rows drawn on since.\n\n`old` is `NONE` when nothing is drawn yet and the cursor is at the\nstart of an empty line; `drawn` is the rows drawn on before. Rows that\ndid not change are not written; a row is written from its first\nchanged cell; the cursor moves relative to where it was, by rows, and\nto a column. Neither frame may be taller than the terminal.\n\ntests/lib/terminal/edit.sml checks, for random edits at random\nwidths, that `Emulator` shows `new` once it has been given what\n`diff` writes over a screen that shows `old`.\n\n",
+     "page": "sig/LINE_EDIT.md#val-diff"
+    },
+    {
+     "kind": "datatype",
+     "name": "result",
+     "spec": "datatype result = Line of string | Interrupted | End",
+     "doc": "What `readLine` read: a line, a cancelled one, or the end of the\ninput.\n\n",
+     "page": "sig/LINE_EDIT.md#type-result"
+    },
+    {
+     "kind": "val",
+     "name": "basic",
+     "spec": "val basic : config -> bool",
+     "doc": "`basic c` is whether `readLine` keeps to its basic mode with `c`, by\nthe rule `readLine` gives.\n\nA program with a basic mode of its own, as the REPL has, asks it\nbefore it reads.\n\n",
+     "page": "sig/LINE_EDIT.md#val-basic"
+    },
+    {
+     "kind": "val",
+     "name": "readLine",
+     "spec": "val readLine : config * History.history option -> result",
+     "doc": "`readLine (c, h)` reads an input at the terminal with the editor,\ngoing back through the history `h` and adding the input to it.\n\nIt puts the terminal back before it returns. It is the basic mode when\n`#basic c`, when the standard input or output is not a terminal,\nwhen `TERM` is `dumb`, `unknown`, `cons25` or `emacs`, when\n`INSIDE_EMACS` names comint, or when `RUNE_BASIC_REPL` is set.\n\n",
+     "page": "sig/LINE_EDIT.md#val-readline"
+    },
+    {
+     "kind": "val",
+     "name": "terminal",
+     "spec": "val terminal : unit -> {policy : Grapheme.policy option, kitty : bool}",
+     "doc": "`terminal ()` is what the terminal said of itself at the first\n`readLine`, once its answers have come.\n\nHow it measures a cluster, which `readLine` then uses in place of the\nconfig's `policy`, and whether it speaks the kitty keyboard protocol,\nwhich `readLine` turns on while it reads (keys told apart: Escape at\nonce, Ctrl-I apart from Tab). `NONE` and false where it has not\nanswered.\n\n",
+     "page": "sig/LINE_EDIT.md#val-terminal"
+    }
+   ]
+  },
+  "STYLE": {
+   "doc": "The look of text on a terminal: colours and attributes, the escapes of\nECMA-48's SGR that give them, and whether a program should use them at\nall.\n\nA style is a record, so that a cell of a screen can carry one and two\ncan be compared; `sgr` writes the escape that sets a style from nothing,\nand `change` the shortest that goes from one style to another. A colour\nis one of the terminal's 16, which follow the user's theme, one of 256,\nor a colour of 24 bits; `downgrade` maps one a terminal does not have\nto the nearest it has.\n\n",
+   "page": "sig/STYLE.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "color",
+     "spec": "datatype color = Default | Ansi of int | Indexed of int | Rgb of int * int * int",
+     "doc": "A colour: the terminal's own, one of its 16 or of xterm's 256, or one\nof 24 bits.\n\n`Ansi` is 0 to 7 and their bright forms 8 to 15; `Rgb` is red, green\nand blue of 0 to 255.\n\n",
+     "page": "sig/STYLE.md#type-color"
+    },
+    {
+     "kind": "type",
+     "name": "style",
+     "spec": "type style = {fg : color, bg : color, bold : bool, faint : bool, italic : bool,\n              underline : bool, reverse : bool, struck : bool}",
+     "doc": "A style: the colours of the text and of its background, and the\nattributes.\n\n",
+     "page": "sig/STYLE.md#type-style"
+    },
+    {
+     "kind": "val",
+     "name": "plain",
+     "spec": "val plain : style",
+     "doc": "The style of plain text: default colours, no attribute.\n\n**Example** `sgr plain = \"\\027[0m\"`\n\n",
+     "page": "sig/STYLE.md#val-plain"
+    },
+    {
+     "kind": "val",
+     "name": "sgr",
+     "spec": "val sgr : style -> string",
+     "doc": "`sgr s` is the escape that sets `s` whatever the terminal had before:\na reset and then the parameters of `s`.\n\n**Example** `sgr {fg = Ansi 1, bg = Default, bold = true, faint = false, italic = false, underline = false, reverse = false, struck = false} = \"\\027[0;1;31m\"`\n\n",
+     "page": "sig/STYLE.md#val-sgr"
+    },
+    {
+     "kind": "val",
+     "name": "change",
+     "spec": "val change : style * style -> string",
+     "doc": "`change (a, b)` is what to write to go from style `a` to style `b`:\nnothing when they are the same, else `sgr b`.\n\n**Example** `change (plain, plain) = \"\"`\n\n",
+     "page": "sig/STYLE.md#val-change"
+    },
+    {
+     "kind": "val",
+     "name": "parameters",
+     "spec": "val parameters : string -> style",
+     "doc": "`parameters p` is the style that the SGR parameters `p` set from\nplain.\n\nThey are written as in an escape or a `GCC_COLORS` value (\"1;31\",\n\"38;5;203\", \"38;2;255;95;95\"); parameters it does not know are left\nout, and so is everything after a part that is not a number.\n\n**Example** `#bold (parameters \"1;31\") andalso #fg (parameters \"1;31\") = Ansi 1`\n\n",
+     "page": "sig/STYLE.md#val-parameters"
+    },
+    {
+     "kind": "datatype",
+     "name": "depth",
+     "spec": "datatype depth = Mono | Colors16 | Colors256 | TrueColor",
+     "doc": "How many colours a terminal shows: none (attributes only), 16, 256,\nor 24 bits.\n\n",
+     "page": "sig/STYLE.md#type-depth"
+    },
+    {
+     "kind": "val",
+     "name": "depth",
+     "spec": "val depth : unit -> depth",
+     "doc": "`depth ()` is the colours the environment says the terminal has.\n\n`Mono` when `NO_COLOR` is set and not empty, `TrueColor` when\n`COLORTERM` is `truecolor` or `24bit`, 256 when `TERM` ends in\n`256color`, else 16.\n\n",
+     "page": "sig/STYLE.md#val-depth"
+    },
+    {
+     "kind": "val",
+     "name": "downgrade",
+     "spec": "val downgrade : depth -> style -> style",
+     "doc": "`downgrade d s` is `s` with each colour that `d` lacks replaced by the\nnearest one it has.\n\nAn `Rgb` becomes the nearest of the 256, one of the 256 the nearest of\nthe 16, and every colour `Default` at `Mono`.\n\n**Example** `#fg (downgrade Colors256 (parameters \"38;2;255;0;0\")) = Indexed 196`\n\n",
+     "page": "sig/STYLE.md#val-downgrade"
+    },
+    {
+     "kind": "datatype",
+     "name": "choice",
+     "spec": "datatype choice = Always | Never | Auto",
+     "doc": "When to style: always, never, or when the stream is a terminal.\n\n",
+     "page": "sig/STYLE.md#type-choice"
+    },
+    {
+     "kind": "val",
+     "name": "enabled",
+     "spec": "val enabled : choice * bool -> bool",
+     "doc": "`enabled (c, isTerminal)` is whether a program should style a stream,\n`isTerminal` saying whether the stream is a terminal.\n\nFor `Auto` it is the rule of Rune's compiler (docs/diagnostics.md):\n`NO_COLOR`, `FORCE_COLOR`, `CLICOLOR_FORCE`, `CLICOLOR` and `TERM`\ndecide before `isTerminal` does.\n\n**Example** `enabled (Never, true) = false`\n\n",
+     "page": "sig/STYLE.md#val-enabled"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Device": "DEVICE",
+  "Emulator": "EMULATOR",
+  "History": "HISTORY",
+  "Key": "KEY",
+  "LineEdit": "LINE_EDIT",
+  "LineEditFn": "LINE_EDIT",
+  "PosixDevice": "DEVICE",
+  "Style": "STYLE"
+ }
+}

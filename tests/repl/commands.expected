@@ -1,0 +1,82 @@
+- List.map : ('a -> 'b) -> 'a list -> 'b list
+- fn x => (x, [x]) : 'a -> 'a * 'a list
+- stdIn:1:1: error: function argument: type mismatch between int * int and int * string (no common type for overloaded operators (int vs string))
+- con SOME : 'a -> 'a option
+  datatype 'a option = NONE | SOME of 'a
+- datatype 'a option = NONE | SOME of 'a  (* from lib/basis/initial.sml *)
+- val List.foldl : ('a * 'b -> 'b) -> 'b -> 'a list -> 'b
+- con :: : 'a * 'a list -> 'a list
+  datatype 'a list = nil | :: of 'a * 'a list
+infixr 5 ::
+- datatype shape = Circle of real | Square of real
+- val area = fn : shape -> real
+- val area : shape -> real  (* defined at stdIn:1 *)
+- datatype shape = Circle of real | Square of real  (* defined at stdIn:1 *)
+- datatype 'a option = NONE | SOME of 'a
+exception Option
+val app : ('a -> unit) -> 'a option -> unit
+val compose : ('a -> 'b) * ('c -> 'a option) -> 'c -> 'b option
+val composePartial : ('a -> 'b option) * ('c -> 'a option) -> 'c -> 'b option
+val filter : ('a -> bool) -> 'a -> 'a option
+val getOpt : 'a option * 'a -> 'a
+val isSome : 'a option -> bool
+val join : 'a option option -> 'a option
+val map : ('a -> 'b) -> 'a option -> 'b option
+val mapPartial : ('a -> 'b option) -> 'a option -> 'b option
+val valOf : 'a option -> 'a
+- datatype 'a option = NONE | SOME of 'a
+exception Option
+val app : ('a -> unit) -> 'a option -> unit
+val compose : ('a -> 'b) * ('c -> 'a option) -> 'c -> 'b option
+val composePartial : ('a -> 'b option) * ('c -> 'a option) -> 'c -> 'b option
+val filter : ('a -> bool) -> 'a -> 'a option
+val getOpt : 'a option * 'a -> 'a
+val isSome : 'a option -> bool
+val join : 'a option option -> 'a option
+val map : ('a -> 'b) -> 'a option -> 'b option
+val mapPartial : ('a -> 'b option) -> 'a option -> 'b option
+val valOf : 'a option -> 'a
+- isSome : 'a option -> bool
+Option.isSome : 'a option -> bool
+- length : 'a list -> int
+List.length : 'a list -> int
+- List.nth : 'a list * int -> 'a
+- val isSome : 'a option -> bool
+  Option : OPTION, docs/generated/basis/sig/OPTION.md#val-issome
+
+isSome opt is true when opt carries a value.
+
+Example isSome (SOME 0) = true
+- - val it = [[...]] : int list list list
+- - - - depth = 2    (levels of a value printed (Compiler.printDepth))
+length = 100    (items of a list, an array or a vector printed (Compiler.printLength))
+string = 1000    (characters of a string printed (Compiler.stringLength))
+width = 80    (columns a value is laid out in without a terminal (Compiler.lineLength))
+feedback = normal    (what is said of a declaration: normal, concise, verbose or silent)
+prompt = -     (the prompt (Compiler.prompt1))
+prompt2 = =     (the prompt of a line that continues an entry (Compiler.prompt2))
+time = off    (the time and memory of each entry (:time))
+watch = off    (reload at each prompt where a file used has changed)
+debug = off    (compile what is entered and used for the debugger (:break turns it on))
+keys = emacs    (the editor's keys: emacs, or vi for Vi's modes)
+pause = off    (Ctrl-C pauses the program in the debugger rather than interrupting it)
+- error: no setting nothing (:show lists them)
+- val down = fn : int -> int
+- uncaught exception Fail: at the bottom
+-   in down at stdIn:1:20
+  in down at stdIn:1:62
+  in down at stdIn:1:62
+  in down at stdIn:1:62
+  in <toplevel> at stdIn:1:1
+-    1   datatype shape = Circle of real | Square of real;
+   2   fun area (Circle r) = 3.0 * r * r | area (Square s) = s * s;
+   3   [[[1]]];
+   4   datatype t = T;
+   5   fun down 0 = raise Fail "at the bottom" | down n = 1 + down (n - 1);
+   6 ! down 3;
+- from the shell
+- saved 5 entries to tests/out/repl/commands-saved.sml
+- error: no command :nonsense (:help lists them)
+- :type exp
+  the type of an expression, not evaluated
+- 

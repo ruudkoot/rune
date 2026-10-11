@@ -33,6 +33,9 @@ struct
   val buildList = ref false                    (* --build-list: print the build file's files in order *)
   val basisIndex : string option ref = ref NONE (* --basis-index DIR: DIR/MANIFEST from DIR/library.build *)
   val noWarnings = ref false
+  val color = ref Color.WhenTerminal           (* --color=WHEN (docs/diagnostics.md) *)
+  val diagnostics : bool option ref = ref NONE (* --diagnostics=full|short: SOME true, SOME false *)
+  val diagnosticsJson : string option ref = ref NONE (* --diagnostics-json FILE *)
   val showVersion = ref false
   val showHelp = ref false
   val readMid : string option ref = ref NONE   (* --read-mid FILE: a Mid program, not SML *)
@@ -106,6 +109,12 @@ struct
     \  --type-work=N     type traversal budget per top-level declaration (50000000)\n\
     \  --match-work=N    pattern-analysis budget per match (1000000)\n\
     \  --no-warnings     do not print warnings (nonexhaustive or redundant matches)\n\
+    \  --color=WHEN      colour the diagnostics: auto (the default: on a terminal,\n\
+    \                    as NO_COLOR, FORCE_COLOR and TERM say), always or never\n\
+    \  --diagnostics=M   short: the line file:line:col: error: msg alone; full:\n\
+    \                    the lines of source under it too (default: full on a\n\
+    \                    terminal, short elsewhere; docs/diagnostics.md)\n\
+    \  --diagnostics-json FILE  write every diagnostic to FILE as JSON as well\n\
     \  --dump-tokens     print the tokens of the input files and stop\n\
     \  --dump-ast        print the parsed program\n\
     \  --dump-lambda     print the intermediate representation (--dump-after=translate)\n\
@@ -200,6 +209,8 @@ struct
     | ["-I"] => raise Usage "-I requires a directory"
     | "--typecheck-only" :: rest => (typecheckOnly := true; parse rest)
     | "--no-warnings" :: rest => (noWarnings := true; parse rest)
+    | "--diagnostics-json" :: f :: rest => (diagnosticsJson := SOME f; parse rest)
+    | ["--diagnostics-json"] => raise Usage "--diagnostics-json requires a file"
     | "--dump-tokens" :: rest => (dumpTokens := true; parse rest)
     | "--dump-ast" :: rest => (dumpAst := true; parse rest)
     | "--dump-lambda" :: rest => (Pass.dumpAfter := !Pass.dumpAfter @ ["translate"]; parse rest)
@@ -223,6 +234,13 @@ struct
          | SOME ("--target", v) =>
              if v = "stack" orelse v = "registers" then (target := v; parse rest)
              else raise Usage "--target requires stack or registers"
+         | SOME ("--color", v) =>
+             (case Color.choiceNamed v of
+                SOME c => (color := c; parse rest)
+              | NONE => raise Usage "--color requires auto, always or never")
+         | SOME ("--diagnostics", "full") => (diagnostics := SOME true; parse rest)
+         | SOME ("--diagnostics", "short") => (diagnostics := SOME false; parse rest)
+         | SOME ("--diagnostics", _) => raise Usage "--diagnostics requires short or full"
          | SOME ("--fuel", v) =>
              (case Int.fromString v of
                 SOME n => if n >= 0 then (Pass.fuel := SOME n; parse rest) else raise Usage "--fuel requires a number"

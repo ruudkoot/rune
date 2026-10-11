@@ -1,0 +1,6 @@
+spec.json is the examples of the CommonMark Spec, version 0.31.2
+(https://spec.commonmark.org/0.31.2/spec.json), copyright John MacFarlane,
+licensed under the Creative Commons BY-SA 4.0 license
+(https://creativecommons.org/licenses/by-sa/4.0/). It is used here as it
+is, as test data; its SHA-256 is
+d431b29d97b6f73e69d547109cf5081578fac931e72afe95639ebe766c1b2a20.

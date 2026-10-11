@@ -242,6 +242,21 @@ uint32_t return_function_code(uint8_t *out, uint32_t *nlocals) {
     return 5;
 }
 
+/* <debug> (runtime/debug.c): register 0 the hook, 1 the event, 2 what
+   nothing reads, 3 the exception it stopped for or unit. The hook called,
+   then rt_debug_return, which takes the frame off; the RET is never
+   reached, but makes the code end as a function's does. */
+uint32_t debug_function_code(uint8_t *out, uint32_t *nlocals) {
+    uint32_t n = 0;
+    out[n++] = ROP_CALL; write_u32(out + n, 0); n += 4; write_u32(out + n, 1); n += 4;
+    out[n++] = ROP_RESULT; write_u32(out + n, 2); n += 4;
+    out[n++] = ROP_PRIM; write_u32(out + n, PRIM_rt_debug_return); n += 4; write_u32(out + n, 2); n += 4;
+    write_u32(out + n, 3); n += 4;
+    out[n++] = ROP_RET; write_u32(out + n, 2); n += 4;
+    *nlocals = 4;
+    return n;
+}
+
 void disassemble(const Program *p, FILE *out) {
     for (uint32_t i = 0; i < p->nconsts; i++) {
         Value c = p->consts[i];

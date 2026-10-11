@@ -1,0 +1,10 @@
+# windows
+# Terminal: the window's size, and a change of it seen while a read
+# waits (SIGWINCH; a console's size records).
+start 80 24 @KEYS@
+wait ^size 80x24$
+resize 100 30
+wait ^resized 100x30$
+send q
+wait ^bye$
+exited 0

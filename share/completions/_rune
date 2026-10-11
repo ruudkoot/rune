@@ -30,6 +30,9 @@ _arguments -s \
   '*-I[an entry point'"'"'s directory of files]:directory:_files -/' \
   '--typecheck-only[stop after type checking]' \
   '--no-warnings[do not print match warnings]' \
+  '--color=[colour the diagnostics]:when:(always never auto)' \
+  '--diagnostics=[the source lines of a diagnostic, or its first line only]:form:(full short)' \
+  '--diagnostics-json[also write the diagnostics to FILE as JSON]:JSON file:_files' \
   '--dump-tokens[print the token stream]' \
   '--dump-ast[print the parsed program]' \
   '--dump-lambda[print the intermediate representation]' \

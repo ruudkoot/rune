@@ -1,0 +1,4 @@
+tests/diagnostics/unbound.sml:2:9: error: unbound variable or constructor: lenght
+  |
+2 | val n = lenght xs
+  |         ^^^^^^

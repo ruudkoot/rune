@@ -1,0 +1,10 @@
+# The program's input: a read of TextIO.stdIn is a request `input` of the
+# engine's own, which the front answers.
+send {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":1}}
+until 1
+input typed by the front\n
+send {"jsonrpc":"2.0","id":2,"method":"eval","params":{"text":"val l = TextIO.inputLine TextIO.stdIn;"}}
+until 2
+send {"jsonrpc":"2.0","id":3,"method":"shutdown","params":{}}
+until 3
+end

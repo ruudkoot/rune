@@ -53,6 +53,7 @@
 - `PrettyStringWithWidth` (con): [COMPILER](../sig/COMPILER.md#con-prettystringwithwidth)
 - `print` (val): [TEXT_IO](../sig/TEXT_IO.md#val-print)
 - `printDepth` (val): [COMPILER](../sig/COMPILER.md#val-printdepth)
+- `printLength` (val): [COMPILER](../sig/COMPILER.md#val-printlength)
 - `printTrace` (val): [RUNTIME](../sig/RUNTIME.md#val-printtrace)
 - `proc` (type): [UNIX](../sig/UNIX.md#type-proc), [WINDOWS](../sig/WINDOWS.md#type-proc)
 - `ProcEnv` (str): [POSIX](../sig/POSIX.md#str-procenv)

@@ -1,0 +1,5 @@
+- val x = "two";
+val x = "two" : string
+- x;
+val it = "two" : string
+-

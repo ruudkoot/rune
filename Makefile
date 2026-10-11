@@ -112,7 +112,7 @@ BUILDGEN := $(BUILDFILES) $(VERSIONGEN)
 # build/librune.a, which bin/runevm-stack links, and so will a program runeopt
 # makes (docs/native.md); the other VMs compile the same list.
 SYS ?= posix
-RT_SRCS := runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
+RT_SRCS := runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
 VM_SRCS := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_$(SYS).c
 VM_HDRS := runtime/vm.h runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
 RT_OBJS := $(patsubst runtime/%.c,build/librune/%.o,$(RT_SRCS) runtime/sys/sys_$(SYS).c)
@@ -132,6 +132,9 @@ MLKIT     ?= $(HOSTS)/mlkit/bin/mlkit
 MLKIT_LIB ?= $(HOSTS)/mlkit/lib/mlkit
 export RUNE_HOSTS := $(HOSTS)
 export MLTON SMLNJ SMLNJ32 SMLNJ_DEV POLYC MLKIT MLKIT_LIB
+# What the tests compare must not depend on colour forced from outside
+# (docs/diagnostics.md).
+unexport FORCE_COLOR CLICOLOR_FORCE
 
 # Sources of the compiler as compiled by itself, the host build that compiles
 # stage 1, and the initial semispace of the VM that bin/rune runs on. The heap
@@ -145,7 +148,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build check-reproducible test-serve basis-cache repl test-repl test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
+.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
 
 all: vm boot runedoc runeopt manifests basis-cache
 
@@ -153,13 +156,37 @@ all: vm boot runedoc runeopt manifests basis-cache
 # its files provides and requires, made from the library's build file and
 # its sources by the first host's compiler, which builds before any rune
 # (rune --basis-index)
-manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST
+# the libraries of docs/plans/repl.md (The libraries)
+REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter
+manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
 lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/basis
 lib/random/MANIFEST: lib/random/library.build $(wildcard lib/random/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/random
 lib/test/property/MANIFEST: lib/test/property/library.build $(wildcard lib/test/property/*.sml) lib/random/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/test/property
+# the libraries of docs/plans/repl.md (The libraries), each after those it
+# is written on
+lib/unicode/MANIFEST: lib/unicode/library.build $(wildcard lib/unicode/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/unicode
+lib/json/MANIFEST: lib/json/library.build $(wildcard lib/json/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/json
+lib/terminal/MANIFEST: lib/terminal/library.build $(wildcard lib/terminal/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/terminal
+lib/pretty/MANIFEST: lib/pretty/library.build $(wildcard lib/pretty/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/pretty
+lib/markdown/MANIFEST: lib/markdown/library.build $(wildcard lib/markdown/*.sml) lib/basis/MANIFEST lib/pretty/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/markdown
+lib/digest/MANIFEST: lib/digest/library.build $(wildcard lib/digest/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/digest
+lib/jsonrpc/MANIFEST: lib/jsonrpc/library.build $(wildcard lib/jsonrpc/*.sml) lib/basis/MANIFEST lib/json/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/jsonrpc
+lib/dap/MANIFEST: lib/dap/library.build $(wildcard lib/dap/*.sml) lib/basis/MANIFEST lib/jsonrpc/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/dap
+lib/zmtp/MANIFEST: lib/zmtp/library.build $(wildcard lib/zmtp/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/zmtp
+lib/jupyter/MANIFEST: lib/jupyter/library.build $(wildcard lib/jupyter/*.sml) lib/basis/MANIFEST lib/zmtp/MANIFEST lib/json/MANIFEST lib/digest/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/jupyter
 
 # The frozen Basis Library (docs/units.md, The cache): every unit of
 # lib/basis compiled once, for each bytecode, into lib/cache, which every
@@ -441,13 +468,13 @@ bin/runevm-stack: runtime/main.c runtime/stack/interp.c build/librune.a $(VM_HDR
 # runtime/register's first loop (docs/plans/middle-end.md, M5): the register bytecode,
 # on the runtime of runevm-stack. Its own instruction set's part (runtime/register/isa_regs.c)
 # is linked before build/librune.a, whose runtime/stack/isa_stack.c it takes the place of.
-NEW_HDRS := runtime/register/regvm.h runtime/register/live.h runtime/register/regops.h runtime/register/reg_cases.h runtime/register/reg_labels.h runtime/register/reg_loop.h runtime/register/fastprim.h runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
+NEW_HDRS := runtime/register/regvm.h runtime/register/live.h runtime/register/regops.h runtime/register/reg_cases.h runtime/register/reg_labels.h runtime/register/reg_loop.h runtime/register/reg_words.h runtime/register/fastprim.h runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
 # RUNE_JIT=0 builds it without the JIT (docs/plans/jit.md): the
 # interpreter alone, which refuses --jit.
 RUNE_JIT ?= 1
 JIT_SRCS := runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c
 JIT_HDRS := runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/asm.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
-NEW_LOOP := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS)
+NEW_LOOP := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS)
 bin/runevm: $(NEW_LOOP) build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) $(RT_INC) -o $@ $(NEW_LOOP) build/librune.a -lm
@@ -472,7 +499,7 @@ bin/runevm-stack-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 
 # runtime/register with the sanitizers: its loop, its instruction set's part, and the
 # runtime but for the stack bytecode's part
-NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
+NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
 bin/runevm-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-asan
 	@mkdir -p bin
 	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer $(RT_INC) -o $@ $(NEW_SRCS) -lm
@@ -628,7 +655,7 @@ WINCFLAGS32 ?= -msse2 -mfpmath=sse -Wl,--large-address-aware
 WIN_SRCS    := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_win.c
 # runtime/register for Windows: its loop and its instruction set's part in place of
 # the stack bytecode's (runtime/stack/isa_stack.c), as bin/runevm-asan is built
-WIN_NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_win.c
+WIN_NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_win.c
 WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32 -lpsapi
 
 # windows_dlls CC: refuse $@ when it imports a DLL whose name starts with lib
@@ -663,17 +690,22 @@ bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-windows
 
 # The suites on the Windows VMs of both bytecodes: the stack one compiled
 # by bin/rune-stack, the register one by bin/rune, each on its two VMs
-# (tests/run-windows.sh), then the Basis Library suite on all four.
+# (tests/run-windows.sh), then the Basis Library suite on all four; then the
+# REPL on a console, its debug adapter, and its Jupyter kernel where Windows
+# has a Python.
 # The runtime/register VMs run with every function given to the JIT (RUNEVM_JIT,
 # which WSLENV passes to a program of Windows), so that the JIT's Windows
 # convention is what the suites test there.
-test-windows: windows $(RUNE)
+test-windows: windows $(RUNE) bin/rune-repl bin/rune-repl.cmd bin/rune-dap bin/rune-kernel
 	sh tests/run-windows.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack.exe --vm bin/runevm-stack32.exe
 	WSLENV=RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all sh tests/run-windows.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
 	  --vm bin/runevm.exe --vm bin/runevm32.exe
 	WSLENV=RUNEVM_JIT:RUNEVM_JIT_TIER:$$WSLENV RUNEVM_JIT=all RUNEVM_JIT_TIER=2 sh tests/run-windows.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
 	  --vm bin/runevm.exe
 	WSLENV=RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all RUNE=$(abspath $(RUNE_STACK)) sh tests/basis/run-matrix.sh -j $(JOBS) --configs windows
+	sh tests/terminal/run.sh --windows
+	python3 tests/dap/run.py --windows
+	sh tests/kernel/run.sh --windows
 
 # ------------------------------------------------------------- portability
 # The VM on machines this one is not: a 32-bit x86, where a pointer is four
@@ -713,7 +745,7 @@ A64FLAGS   ?= --target=aarch64-linux-gnu -B$(A64ROOT)/bin -L$(A64ROOT)/lib -I$(A
               -Wl,-dynamic-linker,$(A64ROOT)/lib/ld-linux-aarch64.so.1 -Wl,-rpath,$(A64ROOT)/lib
 QEMUA64    ?= qemu-aarch64
 JIT_SRCS_A64 := runtime/register/jit.c runtime/register/jit/a64.c runtime/register/jit/asm_a64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c
-NEW_SRCS_A64 := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS_A64) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
+NEW_SRCS_A64 := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS_A64) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
 PORT_TIMEOUT ?= 900
 
 portability: bin/runevm-stack32 bin/runevm-stack-ppc64 bin/runevm32 bin/runevm-ppc64 bin/runevm-aarch64
@@ -891,20 +923,34 @@ check-units: $(RUNE) bin/rune-boot bin/runevm bin/runevm-stack
 # file into bin/rune-repl.units (their units in order, and the sources they
 # came from), and loaded unit by unit by bin/rune-repl.load.rbc, so that the
 # REPL and what it compiles share one Basis Library (incremental roadmap, M4)
-REPL_SRCS := build/config.sml $(SOURCES) src/repl/show.sml src/repl/session.sml src/repl/repl.sml src/main/repl-main.sml
+# lib/terminal's editor (docs/plans/repl.md, M6), lib/pretty's layout (M7),
+# lib/markdown (M8) and lib/jsonrpc (M10), after the compiler, which has
+# lib/unicode and lib/json already
+REPL_TERMINAL := $(addprefix lib/terminal/,style_sig.sml style.sml key_sig.sml key.sml device_sig.sml device.sml \
+                   history_sig.sml history.sml line_edit_sig.sml line_edit_fn.sml line_edit.sml)
+REPL_SRCS := build/config.sml $(SOURCES) $(REPL_TERMINAL) lib/pretty/pretty_sig.sml lib/pretty/pretty.sml \
+             lib/markdown/entities.sml lib/markdown/markdown_sig.sml lib/markdown/markdown.sml \
+             lib/jsonrpc/framing_sig.sml lib/jsonrpc/framing.sml lib/jsonrpc/jsonrpc_sig.sml lib/jsonrpc/jsonrpc.sml \
+             src/repl/show.sml src/repl/session.sml src/repl/scan.sml src/repl/highlight.sml src/repl/complete.sml \
+             src/repl/front.sml src/repl/doc.sml src/repl/search.sml src/repl/repl.sml src/repl/debug.sml src/repl/commands.sml \
+             src/repl/engine.sml src/repl/protocol.sml src/main/repl-main.sml
 bin/rune-repl.units/units: bin/rune-boot $(REPL_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
 	rm -rf bin/rune-repl.units
 	bin/rune-boot --units --basis all --emit-units bin/rune-repl.units -o bin/rune-repl.rbc $(REPL_SRCS)
 bin/rune-repl.load.rbc: bin/rune-boot src/repl/load.sml lib/basis/MANIFEST
 	bin/rune-boot -o $@ src/repl/load.sml
 # the REPL started once and saved once it has compiled its library again
-# (docs/repl.md): what bin/rune-repl restores, its arguments the files to use
-bin/rune-repl.img: bin/rune-repl.units/units bin/rune-repl.load.rbc bin/runevm
+# (docs/repl.md): what bin/rune-repl restores, its arguments the files to
+# use; it reads the Basis's documentation for :doc before it is saved
+bin/rune-repl.img: bin/rune-repl.units/units bin/rune-repl.load.rbc bin/runevm docs/generated/basis/members.json
 	bin/runevm --heap-size 67108864 bin/rune-repl.load.rbc bin/rune-repl.units/units --make-image $@ < /dev/null
 bin/rune-repl: bin/rune-repl.img
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size 67108864 --restore "$$d/rune-repl.img" -- "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ "$$1" = --dap ]; then shift; exec "$$d/rune-dap" "$$@"; fi\nexec "$$d/runevm" --heap-size 67108864 --restore "$$d/rune-repl.img" -- "$$@"\n' > $@
 	chmod +x $@
-repl: bin/rune-repl
+# the same for Windows' command prompt, beside runevm.exe (M6)
+bin/rune-repl.cmd: Makefile
+	printf '@echo off\r\n"%%~dp0runevm.exe" --heap-size 67108864 --restore "%%~dp0rune-repl.img" -- %%*\r\n' > $@
+repl: bin/rune-repl bin/rune-repl.cmd
 
 # The REPL's transcripts, on every mode of the JIT (docs/repl.md)
 test-repl: bin/rune-repl bin/runevm
@@ -912,6 +958,50 @@ test-repl: bin/rune-repl bin/runevm
 	sh tests/repl/run.sh --vm-opts --jit=off --out tests/out/repl-off
 	sh tests/repl/run.sh --vm-opts --jit=all --out tests/out/repl-all
 	sh tests/repl/run.sh --vm-opts "--jit=all --jit-tier=2" --out tests/out/repl-tier2
+
+# rune-kernel, a Jupyter kernel for Standard ML (docs/kernel.md): a bridge
+# in SML over lib/jupyter that drives the REPL's engine as its child
+bin/rune-kernel.rbc: $(RUNE) src/front/engine.sml src/dap/translate.sml src/kernel/kernel.sml manifests \
+                     $(wildcard lib/jupyter/*.sml lib/zmtp/*.sml lib/digest/*.sml lib/json/*.sml lib/jsonrpc/*.sml)
+	$(RUNE) --library jupyter --library jsonrpc --library digest src/front/engine.sml src/dap/translate.sml src/kernel/kernel.sml -o $@
+bin/rune-kernel: bin/rune-kernel.rbc bin/rune-repl.img bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-kernel.rbc" --vm "$$d/runevm" --image "$$d/rune-repl.img" --program "$$d/rune-kernel.rbc" "$$@"\n' > $@
+	chmod +x $@
+kernel: bin/rune-kernel
+# and again with the engine's channel a connection, as on Windows
+# (src/front/engine.sml)
+test-kernel: bin/rune-kernel
+	sh tests/kernel/run.sh
+	RUNE_ENGINE_CONNECT=1 sh tests/kernel/run.sh
+
+# rune-dap, the Debug Adapter Protocol for Standard ML (docs/dap.md): an
+# adapter in SML over lib/dap that drives the REPL's engine as its child;
+# `rune-repl --dap` is it
+bin/rune-dap.rbc: $(RUNE) src/front/engine.sml src/dap/translate.sml src/dap/adapter.sml manifests $(wildcard lib/dap/*.sml lib/json/*.sml lib/jsonrpc/*.sml)
+	$(RUNE) --library dap --library jsonrpc src/front/engine.sml src/dap/translate.sml src/dap/adapter.sml -o $@
+bin/rune-dap: bin/rune-dap.rbc bin/rune-repl.img bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-dap.rbc" --vm "$$d/runevm" --image "$$d/rune-repl.img" "$$@"\n' > $@
+	chmod +x $@
+dap: bin/rune-dap
+test-dap: bin/rune-dap bin/rune-repl
+	python3 tests/dap/run.py
+	RUNE_ENGINE_CONNECT=1 python3 tests/dap/run.py
+
+# The REPL's engine and its protocol (docs/repl-protocol.md): each script
+# of tests/repl-protocol played to rune-repl --engine, as a front drives it
+test-repl-protocol: bin/rune-repl bin/runevm
+	python3 tests/repl-protocol/run.py
+
+# Programs on a terminal (docs/plans/repl.md, M1): each script of
+# tests/terminal starts a program in a tmux pane, types at it and waits for
+# the screen; skipped where tmux is missing (make doctor --scope terminal).
+test-terminal: bin/rune-repl bin/runevm $(RUNE)
+	sh tests/terminal/run.sh
+
+# diagnostics rendered with colour, and the palette's contrast (docs/diagnostics.md)
+test-diagnostics: $(RUNE)
+	sh tests/diagnostics/run.sh
+	python3 tests/color/contrast.py
 
 # the cache's scenarios (tests/incremental/SCENARIOS.md; docs/units.md, The cache)
 test-deps: $(RUNE) vm
@@ -944,11 +1034,13 @@ check-docs: $(RUNE) $(RUNEDOC) manifests
 	sh scripts/check-docs.sh
 	RUNE=$(RUNE_STACK) sh scripts/gen-basis-sigs.sh --check
 	$(RUNE_STACK) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	sh tests/basis/gen-annotations.sh --check
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	$(RUNEDOC) $(DOCS_RANDOM) --check
 	$(RUNEDOC) $(DOCS_PROPERTY) --check
+	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) --check &&) true
+	$(RUNEDOC) --palette docs/generated/palette --check
 	sh tests/basis/check-claims.sh
 	sh tests/basis/check-notes.sh
 
@@ -962,11 +1054,26 @@ DOCS_BASIS := --lib lib --library basis --tests tests/basis --annotations tests/
 DOCS_RANDOM := --lib lib --library random --out docs/generated/random --basis-docs ../basis --title "Random numbers"
 DOCS_PROPERTY := --lib lib --library test/property --out docs/generated/test/property --basis-docs ../../basis \
                  --title "Property testing"
+# the libraries of docs/plans/repl.md (The libraries), each in
+# docs/generated/NAME (REPL_LIBS, with the manifests)
+TITLE_unicode := Unicode
+TITLE_json := JSON
+TITLE_terminal := Terminal
+TITLE_digest := Digests
+TITLE_jsonrpc := JSON-RPC
+TITLE_dap := Debug Adapter Protocol
+TITLE_pretty := Pretty printing
+TITLE_markdown := Markdown
+TITLE_zmtp := ZMTP
+TITLE_jupyter := Jupyter
+docs_lib = --lib lib --library $(1) --out docs/generated/$(1) --basis-docs ../basis --title "$(TITLE_$(1))"
 
 docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_BASIS)
 	$(RUNEDOC) $(DOCS_RANDOM)
 	$(RUNEDOC) $(DOCS_PROPERTY)
+	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) &&) true
+	$(RUNEDOC) --palette docs/generated/palette
 
 # ---------------------------------------------------------------- Basis Library suite
 # tests/basis/README.md. The matrix targets compare Rune with other systems
@@ -1268,7 +1375,7 @@ check:
 	@$(MAKE) --no-print-directory test-build
 	@$(MAKE) --no-print-directory check-reproducible
 	@$(MAKE) --no-print-directory test-serve
-	@$(MAKE) --no-print-directory test-repl
+	@$(MAKE) --no-print-directory test-repl test-terminal test-diagnostics test-repl-protocol test-kernel test-dap
 	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory test-register
 	@$(MAKE) --no-print-directory test-register-jit

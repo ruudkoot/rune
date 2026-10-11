@@ -1,0 +1,4 @@
+The parsing tests of JSONTestSuite (https://github.com/nst/JSONTestSuite,
+test_parsing at its master of 2026-10-10), under the MIT licence in LICENSE:
+y_ a parser must accept, n_ it must reject, i_ it may do either but must not
+fail otherwise. tests/lib/json/suite.sml reads them all.

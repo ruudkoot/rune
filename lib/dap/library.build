@@ -1,0 +1,9 @@
+(* The Debug Adapter Protocol library (docs/plans/repl.md, The
+   libraries; M12): its messages and their framing; its files in load
+   order, in the form of lib/basis/library.build. It is written on
+   lib/jsonrpc, for the framing, and so on lib/json: *)
+libraries jsonrpc end
+annotate "demand" in
+  dap_sig.sml
+  dap.sml
+end

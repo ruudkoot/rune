@@ -1,0 +1,16 @@
+# What the protocol refuses: a method before initialize, text that is no
+# JSON, a method there is not, parameters of the wrong kind, a protocol of
+# another version; and the end of the channel ends the engine.
+send {"jsonrpc":"2.0","id":1,"method":"eval","params":{"text":"1;"}}
+until 1
+raw {"jsonrpc":\n
+until null
+send {"jsonrpc":"2.0","id":2,"method":"initialize","params":{"protocol":2}}
+until 2
+send {"jsonrpc":"2.0","id":3,"method":"initialize","params":{"protocol":1}}
+until 3
+send {"jsonrpc":"2.0","id":4,"method":"evaluate","params":{}}
+until 4
+send {"jsonrpc":"2.0","id":5,"method":"eval","params":{"text":1}}
+until 5
+end

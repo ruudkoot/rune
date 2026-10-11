@@ -13,3 +13,13 @@ __pycache__/
 /lib/basis/MANIFEST
 /lib/random/MANIFEST
 /lib/test/property/MANIFEST
+/lib/unicode/MANIFEST
+/lib/json/MANIFEST
+/lib/terminal/MANIFEST
+/lib/pretty/MANIFEST
+/lib/markdown/MANIFEST
+/lib/digest/MANIFEST
+/lib/jsonrpc/MANIFEST
+/lib/dap/MANIFEST
+/lib/zmtp/MANIFEST
+/lib/jupyter/MANIFEST

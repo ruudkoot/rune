@@ -1412,6 +1412,8 @@ struct
   fun unsafe_cast (_ : 'a) : 'b = raise Fail "unsafe_cast: Rune's alone"
   fun rt_version () = unsupported ""
   fun rt_trace (_ : int) : (string * string * int * int) list = unsupported []
+  fun rt_raise_mark (_ : int) : int = 0
+  fun rt_raise_trace () : (string * string * int * int) list = []
   fun rt_save (_ : string) = unsupported ~1
   fun rt_restore (_ : string) = unsupported ~1
   (* a host has no program of Rune's to append a unit to *)
@@ -1420,6 +1422,31 @@ struct
   fun rt_interrupt_catch (_ : exn) = false
   fun rt_interrupt_mask (_ : bool) = false
   fun rt_interrupt_is (_ : exn) = false
+  (* a host has no debugger of Rune's VM *)
+  fun rt_debug_hook (_ : int -> unit) = false
+  fun rt_debug_mode (_ : int) = 0
+  fun rt_debug_user () = ()
+  fun rt_debug_break (_ : string, _ : int, _ : bool) = 0
+  fun rt_debug_step (_ : int) = ()
+  fun rt_debug_frames () : (int * string * string * int * int) list = []
+  fun rt_debug_where (_ : int) = (~1, 0)
+  fun rt_debug_live (_ : int, _ : int) = 0
+  fun rt_debug_local (_ : int, _ : int) : 'a = raise Fail "rt_debug_local: Rune's alone"
+  fun rt_debug_env (_ : int, _ : int) : 'a = raise Fail "rt_debug_env: Rune's alone"
+  fun rt_debug_exn () : exn = raise Fail "rt_debug_exn: Rune's alone"
+  fun rt_debug_return (_ : 'a) = ()
+  fun rt_debug_program () = 0
+  fun rt_random_bytes (_ : int) = ""
+  fun win_event_new () = ~1
+  fun win_event_set (_ : int) = false
+  (* Terminal is Rune's alone (host no): a host has no terminal of a
+     line editor here, and lib/terminal has a Terminal over Posix.TTY for
+     the hosts *)
+  fun term_size (_ : int) : int list = []
+  fun term_resizes () = ~1
+  fun term_enter (_ : int, _ : int, _ : string, _ : int) = ~1
+  fun term_leave () = 0
+  fun term_read (_ : int, _ : int, _ : int) : string option = NONE
 
   fun posix_getgr (name, gid) =
     let

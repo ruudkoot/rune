@@ -201,6 +201,43 @@ Print what is extracted from the files, before any rendering.
 Check that every comment of the files is in the language of doc comments,
 also those that document nothing.
 .TP
+.BI \-\-palette " DIR"
+Write the palette of the roles that colour Rune's text to
+.IB DIR /palette.css
+(custom properties and classes, light and dark) and
+.IB DIR /palette.json
+(the rules of an editor's theme), and stop; with
+.BR \-\-check ,
+fail if they are not what would be written.
+.TP
+.BI \-\-color= WHEN
+Colour the diagnostics:
+.BR always ,
+.B never
+or
+.BR auto ,
+the default, which colours them when the standard error is a terminal, as
+.BR rune (1)
+says.
+.TP
+.BI \-\-diagnostics= FORM
+.B full
+shows the lines of source a diagnostic is about under its first line, with
+carets under the span;
+.B short
+shows the first line only,
+.IR file : line : col ": error: " message ,
+as earlier versions did. The default is full when the standard error is a
+terminal and
+.B TERM
+is not
+.BR dumb .
+.TP
+.BI \-\-diagnostics\-json " FILE"
+Also write every diagnostic of the run to
+.I FILE
+as JSON, in the form rune-ide reads.
+.TP
 .BI \-\-lib " DIR"
 The directory that holds the libraries. The wrapper script passes it; a later
 one wins.

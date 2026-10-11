@@ -1,0 +1,97 @@
+{
+ "signatures": {
+  "DAP": {
+   "doc": "The Debug Adapter Protocol's messages: requests, responses and events\nas values, read from JSON and written to it, framed as the protocol\nframes them (`Content-Length`, `Framing`), and the events an adapter\nsends most.\n\nEvery message has a sequence number, which the side that sends it\ncounts from 1; a response names the request it answers by its number.\n\n",
+   "page": "sig/DAP.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "message",
+     "spec": "datatype message =\n    Request of {seq : int, command : string, arguments : Json.value option}\n  | Response of {seq : int, requestSeq : int, success : bool, command : string,\n                 message : string option, body : Json.value option}\n  | Event of {seq : int, event : string, body : Json.value option}",
+     "doc": "A message of the protocol.\n\n",
+     "page": "sig/DAP.md#type-message"
+    },
+    {
+     "kind": "val",
+     "name": "toJson",
+     "spec": "val toJson : message -> Json.value",
+     "doc": "`toJson m` is `m` as the protocol writes it, with its `type`.\n\n",
+     "page": "sig/DAP.md#val-tojson"
+    },
+    {
+     "kind": "val",
+     "name": "fromJson",
+     "spec": "val fromJson : Json.value -> message option",
+     "doc": "`fromJson v` is the message `v` is, or `NONE` when it is not one of\nthe protocol's.\n\n**Example** `fromJson (Json.decode \"{\\\"seq\\\":1,\\\"type\\\":\\\"request\\\",\\\"command\\\":\\\"threads\\\"}\") = SOME (Request {seq = 1, command = \"threads\", arguments = NONE})`\n\n",
+     "page": "sig/DAP.md#val-fromjson"
+    },
+    {
+     "kind": "val",
+     "name": "encode",
+     "spec": "val encode : message -> string",
+     "doc": "`encode m` is `m` framed for the wire: its header and its JSON.\n\n**Example** `String.isPrefix \"Content-Length: \" (encode (Event {seq = 1, event = \"initialized\", body = NONE}))`\n\n",
+     "page": "sig/DAP.md#val-encode"
+    },
+    {
+     "kind": "val",
+     "name": "decode",
+     "spec": "val decode : string -> message option",
+     "doc": "`decode s` is the message whose body, its framing taken off, is `s`,\nor `NONE` when it is no message.\n\n",
+     "page": "sig/DAP.md#val-decode"
+    },
+    {
+     "kind": "val",
+     "name": "reply",
+     "spec": "val reply : {seq : int, request : message, body : Json.value option} -> message option",
+     "doc": "`reply {seq, request, body}` is the successful response numbered\n`seq` to `request`, or `NONE` when `request` is no request.\n\n",
+     "page": "sig/DAP.md#val-reply"
+    },
+    {
+     "kind": "val",
+     "name": "refuse",
+     "spec": "val refuse : {seq : int, request : message, message : string} -> message option",
+     "doc": "`refuse {seq, request, message}` is the failed response numbered `seq`\nto `request`, saying `message`, or `NONE` when `request` is no\nrequest.\n\n",
+     "page": "sig/DAP.md#val-refuse"
+    },
+    {
+     "kind": "val",
+     "name": "initialized",
+     "spec": "val initialized : int -> message",
+     "doc": "`initialized seq` is the event that the adapter is ready to be\nconfigured.\n\n",
+     "page": "sig/DAP.md#val-initialized"
+    },
+    {
+     "kind": "val",
+     "name": "stopped",
+     "spec": "val stopped : {seq : int, reason : string, threadId : int, text : string option} -> message",
+     "doc": "`stopped {seq, reason, threadId, text}` is the event that a thread\nstopped, for a reason such as `\"breakpoint\"`, `\"step\"`, `\"exception\"`\nor `\"pause\"`.\n\n",
+     "page": "sig/DAP.md#val-stopped"
+    },
+    {
+     "kind": "val",
+     "name": "output",
+     "spec": "val output : {seq : int, category : string, output : string} -> message",
+     "doc": "`output {seq, category, output}` is the event of the program's or the\nadapter's output, of a category such as `\"stdout\"`, `\"stderr\"` or\n`\"console\"`.\n\n",
+     "page": "sig/DAP.md#val-output"
+    },
+    {
+     "kind": "val",
+     "name": "terminated",
+     "spec": "val terminated : int -> message",
+     "doc": "`terminated seq` is the event that the session has ended.\n\n",
+     "page": "sig/DAP.md#val-terminated"
+    },
+    {
+     "kind": "val",
+     "name": "exited",
+     "spec": "val exited : {seq : int, exitCode : int} -> message",
+     "doc": "`exited {seq, exitCode}` is the event that the program has exited,\nwith its status.\n\n",
+     "page": "sig/DAP.md#val-exited"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Dap": "DAP"
+ }
+}
