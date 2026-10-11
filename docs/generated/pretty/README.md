@@ -6,7 +6,7 @@
 
 | Signature |  | Status | Documented |
 | --- | --- | --- | --- |
-| [`PRETTY`](sig/PRETTY.md) | Documents laid out at a width: Wadler's prettier printer, strictly, as Lindig wrote it, with annotations that a renderer turns into styles, and budgets that cut a document of a deep or long value short. | required | 18 of 18 |
+| [`PRETTY`](sig/PRETTY.md) | Documents laid out at a width: Wadler's prettier printer, strictly, as Lindig wrote it, with annotations that a renderer turns into styles, and budgets that cut a document of a deep or long value short. | required | 21 of 21 |
 
 ---
 

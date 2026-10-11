@@ -140,9 +140,14 @@ def run(path, subst):
                     if time.monotonic() > deadline:
                         raise Failure("the program has not ended after %g s" % seconds)
                     time.sleep(0.02)
-                if status is not None and pane("pane_dead_status") != status:
-                    raise Failure("the program ended with %s, not %s"
-                                  % (pane("pane_dead_status"), status))
+                # tmux may say the pane is dead a moment before it has the
+                # status: wait for it a little
+                got = pane("pane_dead_status")
+                while got == "" and time.monotonic() < deadline + 2:
+                    time.sleep(0.02)
+                    got = pane("pane_dead_status")
+                if status is not None and got != status:
+                    raise Failure("the program ended with %s, not %s" % (got or "no status", status))
             elif command == "sleep":
                 time.sleep(int(rest) / 1000.0)
             else:

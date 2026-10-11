@@ -25,7 +25,16 @@ struct
      check ("cut", render 80 (group (concat [text "a", cut, text "b"])) = "ab");
      check ("hardline breaks its group", render 80 (group (concat [text "a", line, text "b", hardline, text "c"]))
                                          = "a\nb\nc");
-     check ("wide characters", render 5 (group (concat [text "\228\184\173\230\150\135", line, text "x"])) = "\228\184\173\230\150\135\nx"))
+     check ("wide characters", render 5 (group (concat [text "\228\184\173\230\150\135", line, text "x"])) = "\228\184\173\230\150\135\nx");
+     check ("break, flat", render 80 (group (concat [text "ab", break (2, 4), text "cd"])) = "ab  cd");
+     check ("break, broken", render 3 (group (concat [text "ab", break (2, 4), text "cd"])) = "ab\n    cd");
+     check ("break in a nest", render 3 (nest 2 (group (concat [text "ab", break (1, ~1), text "cd"]))) = "ab\n cd");
+     check ("sized fits as its width", render 6 (group (concat [sized ("\027[1mab\027[0m", 2), line, text "cd"]))
+                                       = "\027[1mab\027[0m cd");
+     check ("sized breaks as its width", render 4 (group (concat [sized ("ab", 4), line, text "cd"])) = "ab\ncd");
+     check ("align", render 5 (concat [text "x = ", align (group (concat [text "ab", line, text "cd"]))]) = "x = ab\n    cd");
+     check ("a sequence aligns after its opening where it begins",
+            render 12 (concat [text "val x = ", list [int 1, int 2, int 3]]) = "val x = [1,\n         2,\n         3]"))
 
   fun budgets () =
     let

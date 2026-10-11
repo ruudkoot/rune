@@ -184,21 +184,45 @@ The printer is Standard ML, built from the pieces of `RuneShow` in the
 library, so it takes a value apart as the rest of the program does --
 `case` over a datatype's constructors, `#1` of a tuple, `!` of a `ref` --
 and never looks at a value's bits, which since the word layout say nothing
-of its type ([runtime.md](runtime.md), *Values and objects*):
+of its type ([runtime.md](runtime.md), *Values and objects*). It makes a
+document, a `Compiler.pretty` in Poly/ML's shape whose parts carry their
+roles of the palette, which the REPL lays out with lib/pretty at the
+terminal's width, or `Compiler.lineLength` (80) where there is no terminal,
+and styles on a terminal ([plans/repl.md](plans/repl.md), D16):
 
-* an `int`, a `word`, a `real`, a `char` and a `string` as their `toString`
-  shows them, a `word` with `0wx`, a `char` and a `string` quoted;
+* an `int`, a `word`, a `char` and a `string` as their `toString` shows
+  them, a `word` with `0wx`, a `char` and a `string` quoted; a `real` so
+  that it reads back as a real (`5.0`, `1E10`);
+* a type `S.t` of a structure that has `S.toString : t -> string` by it:
+  `0wx3 : Word8.word`, an `IntInf.int`, a `Time.time`;
 * a tuple, a record, a list, `ref`, an array (`fromList[...]`) and a vector
-  (`#[...]`) by their parts;
+  (`#[...]`) by their parts; a list, an array and a vector filling its lines
+  where it is wider than the line, a tuple and a record one part to a line;
 * a datatype by its constructors, an argument that is an application in
   parentheses, whether or not the constructors are in scope: the printer
   names them by names of its own (`rune'c<stamp>'<tag>`), bound to the
   constructors the elaborator registered for the type (`Elaborate.dataCons`);
+* an exception with its argument: each declaration that declares an
+  exception constructor with an argument registers a printer of it with
+  `RuneShow.addExn`, compiled where the constructor is in scope, and the
+  REPL registers those of the Basis's (`Fail`, `IO.Io`, `OS.SysErr`); an
+  exception none of them takes -- one declared in a `local` or a functor's
+  body -- by its name;
 * a function as `fn`; an abstract type -- one made by `:>` -- and a type
-  variable as `?`; an exception by its name.
+  variable as `?`.
 
-`Compiler.printDepth` (20) is how many levels of a value are shown, from the
-outside in, before the rest prints as `...`.
+A type is named by the shortest path that names it in the session --
+`OS.FileSys.file_id`, `Runtime.world` rather than the library's own
+`RuneRuntime.world` -- and `?.t` where no path does, as SML/NJ names a type a
+later declaration hid or a `local` declared. Four limits cut a value short
+with `...`: `Compiler.printDepth` (20) levels from the outside in,
+`Compiler.printLength` (100) items of a list, an array or a vector,
+`Compiler.stringLength` (1,000) characters of a string, and 10,000 parts of
+a value in all (`RuneCompiler.printNodes`).
+
+How much the REPL says of a declaration is `RuneCompiler.feedback`:
+`"normal"`; `"concise"`, its values and not the types it declared;
+`"verbose"`, a structure with its signature too; and `"silent"`, nothing.
 
 ### Printers of one's own
 
@@ -298,9 +322,7 @@ on a pty; on Windows, `rune-repl.cmd` from `cmd.exe` too.
 
 ## Not yet
 
-An exception's argument is not printed; a type is printed without the
-structure it is in; a value is one line, however wide (M7 of
-[plans/repl.md](plans/repl.md)). There are no commands (`:type` and the
-rest, M8). `Compiler.prettyPrint` ignores a block's context
+There are no commands (`:type` and the rest, and `:set` for the limits
+and the feedback, M8 of [plans/repl.md](plans/repl.md)). `Compiler.prettyPrint` ignores a block's context
 (`ContextLocation`, `ContextProperty`), which Poly/ML's IDE support reads.
 [plans/repl.md](plans/repl.md) lists what comes next.

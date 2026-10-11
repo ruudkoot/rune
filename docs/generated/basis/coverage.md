@@ -15,7 +15,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`BYTE`](sig/BYTE.md) | 7 | 7 | 100% | 7 | 7 |
 | [`CHAR`](sig/CHAR.md) | 35 | 35 | 100% | 30 | 30 |
 | [`COMMAND_LINE`](sig/COMMAND_LINE.md) | 2 | 2 | 100% | 2 | 2 |
-| [`COMPILER`](sig/COMPILER.md) | 11 | 11 | 100% | 4 | 4 |
+| [`COMPILER`](sig/COMPILER.md) | 13 | 13 | 100% | 4 | 4 |
 | [`DATE`](sig/DATE.md) | 24 | 24 | 100% | 20 | 20 |
 | [`DYNAMIC`](sig/DYNAMIC.md) | 3 | 3 | 100% | 2 | 2 |
 | [`GENERAL`](sig/GENERAL.md) | 20 | 20 | 100% | 7 | 7 |
@@ -77,7 +77,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
 | [`WINDOWS`](sig/WINDOWS.md) | 88 | 88 | 100% | 30 | 30 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1683 | 1683 | 100% | 1144 | 1144 |
+| **all** | 1685 | 1685 | 100% | 1144 | 1144 |
 
 ## Members a signature describes
 
@@ -86,7 +86,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-200 structures have a page, with 4329 members, of which 4244 (98%) are described by a signature.
+200 structures have a page, with 4331 members, of which 4246 (98%) are described by a signature.
 
 | Structure | Members | Described |  |
 | --- | --- | --- | --- |

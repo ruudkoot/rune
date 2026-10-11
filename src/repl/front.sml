@@ -129,10 +129,68 @@ struct
   (* code is about to run, which may leave a line unfinished *)
   fun running () = fresh := false
 
-  (* the echo of a value a declaration bound (RuneCompiler.echoHook) *)
-  fun echo (name : string, shown : string, ty : string) : unit =
+  (* ---- documents laid out (D16) ---- *)
+
+  (* the printers' document (Compiler.pretty, Poly/ML's shape) as one of
+     lib/pretty: a block indented from the column it begins at, its breaks
+     all or none where it is consistent and each as it must where not, and
+     its roles (ContextProperty "role") as annotations *)
+  fun toDoc (p : RuneCompiler.pretty) : string Pretty.doc =
+    case p of
+      RuneCompiler.PrettyString s => Pretty.text s
+    | RuneCompiler.PrettyStringWithWidth (s, w) => Pretty.sized (s, w)
+    | RuneCompiler.PrettyBreak (b, off) => Pretty.break (b, off)
+    | RuneCompiler.PrettyLineBreak => Pretty.hardline
+    | RuneCompiler.PrettyBlock (indent, consistent, context, items) =>
+        let
+          (* inconsistent: each break grouped with what follows it to the
+             next break, so that it breaks where that does not fit after it
+             (Oppen's rule) and what follows is then laid out by itself *)
+          fun filled [] = []
+            | filled (RuneCompiler.PrettyBreak (b, off) :: rest) =
+                let
+                  fun upto (acc, []) = (List.rev acc, [])
+                    | upto (acc, r as RuneCompiler.PrettyBreak _ :: _) = (List.rev acc, r)
+                    | upto (acc, q :: r) = upto (toDoc q :: acc, r)
+                  val (segment, rest) = upto ([], rest)
+                in Pretty.group (Pretty.concat (Pretty.break (b, off) :: segment)) :: filled rest end
+            | filled (q :: rest) = toDoc q :: filled rest
+          val docs = if consistent then List.map toDoc items else filled items
+          val body = Pretty.align (Pretty.nest indent (Pretty.concat docs))
+        in
+          List.foldr (fn (RuneCompiler.ContextProperty ("role", r), d) => Pretty.annotate (r, d) | (_, d) => d)
+                     (if consistent then Pretty.group body else body) context
+        end
+
+  (* how wide what the REPL prints is laid out: the terminal's width where
+     entries are edited, else Compiler.lineLength *)
+  fun width () : int =
+    if !editing then (case Terminal.size () of SOME {columns, ...} => if columns > 1 then columns else 80 | NONE => 80)
+    else Int.max (1, !RuneCompiler.lineLength)
+
+  (* a document laid out, in the palette's styles where there are colours *)
+  fun render (d : string Pretty.doc) : string =
+    case !ReplHighlight.theme of
+      NONE => Pretty.render (width ()) d
+    | SOME t =>
+        let
+          val styles : string list ref = ref []
+          fun start r = let val st = Color.sgr (t, r) in styles := st :: !styles; st end
+          fun finish _ =
+            case !styles of
+              st :: rest => (styles := rest; if st = "" then "" else "\027[0m" ^ String.concat (List.rev rest))
+            | [] => ""
+        in Pretty.renderWith {width = width (), start = start, finish = finish} d end
+
+  (* the echo of a value a declaration bound (RuneCompiler.echoHook): its
+     type on the line of the value's end where it fits *)
+  fun echo (name : string, shown : RuneCompiler.pretty, ty : string) : unit =
     (freshLine ();
-     print ("val " ^ paint "repl.name" name ^ " = " ^ shown ^ " : " ^ paint "repl.type" ty ^ "\n"))
+     print (render (Pretty.concat [Pretty.text "val ", Pretty.annotate ("repl.name", Pretty.text name), Pretty.text " = ",
+                                   toDoc shown,
+                                   Pretty.group (Pretty.nest 2 (Pretty.concat [Pretty.line, Pretty.text ": ",
+                                                                               Pretty.annotate ("repl.type", Pretty.text ty)]))])
+            ^ "\n"))
 
   (* ---- the terminal while code runs (D18) ---- *)
 

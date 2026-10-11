@@ -4,6 +4,7 @@
 
 - `Begin` (con): [PRETTY](../sig/PRETTY.md#con-begin)
 - `bound` (val): [PRETTY](../sig/PRETTY.md#val-bound)
+- `break` (val): [PRETTY](../sig/PRETTY.md#val-break)
 
 ---
 

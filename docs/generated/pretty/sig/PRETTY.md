@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 18 of 18 entries documented |
+| Documentation | 21 of 21 entries documented |
 | Tests | not listed |
 | Source | [lib/pretty/pretty\_sig.sml](../../../../lib/pretty/pretty_sig.sml) |
 
@@ -45,8 +45,11 @@ sig
   val <a href="#val-line">line</a> : 'a doc
   val <a href="#val-cut">cut</a> : 'a doc
   val <a href="#val-hardline">hardline</a> : 'a doc
+  val <a href="#val-break">break</a> : int * int -&gt; 'a doc
+  val <a href="#val-sized">sized</a> : string * int -&gt; 'a doc
   val <a href="#val-concat">concat</a> : 'a doc list -&gt; 'a doc
   val <a href="#val-nest">nest</a> : int -&gt; 'a doc -&gt; 'a doc
+  val <a href="#val-align">align</a> : 'a doc -&gt; 'a doc
   val <a href="#val-group">group</a> : 'a doc -&gt; 'a doc
   val <a href="#val-annotate">annotate</a> : 'a * 'a doc -&gt; 'a doc
   val <a href="#val-sequence">sequence</a> : {<a href="#fld-sequence.opening">opening</a> : string, <a href="#fld-sequence.closing">closing</a> : string, <a href="#fld-sequence.separator">separator</a> : string} -&gt; 'a doc list -&gt; 'a doc
@@ -111,6 +114,28 @@ val hardline : 'a doc
 
 A newline always, which keeps the groups around it from fitting.
 
+### <a name="val-break"></a>`break`
+
+```sml
+val break : int * int -> 'a doc
+```
+
+`break (blanks, offset)` is `blanks` blanks when its group fits, and
+else a newline and the indentation `offset` further in.
+
+It is Oppen's break, which Poly/ML's `PrettyBreak` is. [`line`](#val-line) is
+`break (1, 0)` and [`cut`](#val-cut) is `break (0, 0)`.
+Example: `render 3 (group (concat [text "ab", break (2, 4), text "cd"])) = "ab\n    cd"`
+
+### <a name="val-sized"></a>`sized`
+
+```sml
+val sized : string * int -> 'a doc
+```
+
+`sized (s, w)` is `s` laid out as if it were `w` columns wide: text
+with escapes of its own, which the layout must not count.
+
 ### <a name="val-concat"></a>`concat`
 
 ```sml
@@ -128,6 +153,18 @@ val nest : int -> 'a doc -> 'a doc
 ```
 
 `nest n d` is `d` with every newline in it indented by `n` more.
+
+### <a name="val-align"></a>`align`
+
+```sml
+val align : 'a doc -> 'a doc
+```
+
+`align d` is `d` with its newlines indented to the column `d` begins
+at.
+
+Oppen's and Poly/ML's blocks indent from where they begin.
+Example: `render 5 (concat [text "x = ", align (group (concat [text "ab", line, text "cd"]))]) = "x = ab\n    cd"`
 
 ### <a name="val-group"></a>`group`
 

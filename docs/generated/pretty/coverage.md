@@ -6,8 +6,8 @@ documented when a comment describes it, alone or together with the entry before 
 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
-| [`PRETTY`](sig/PRETTY.md) | 18 | 18 | 100% | 11 | 11 |
-| **all** | 18 | 18 | 100% | 11 | 11 |
+| [`PRETTY`](sig/PRETTY.md) | 21 | 21 | 100% | 14 | 14 |
+| **all** | 21 | 21 | 100% | 14 | 14 |
 
 ## Members a signature describes
 
@@ -16,7 +16,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-1 structures have a page, with 18 members, of which 18 (100%) are described by a signature.
+1 structures have a page, with 21 members, of which 21 (100%) are described by a signature.
 
 ## Examples that are run
 

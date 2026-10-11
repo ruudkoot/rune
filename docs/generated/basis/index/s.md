@@ -146,6 +146,7 @@
 - `String` (str): [TEXT](../sig/TEXT.md#str-string)
 - `string` (type): [CHAR](../sig/CHAR.md#type-string), [STRING](../sig/STRING.md#type-string), [SUBSTRING](../sig/SUBSTRING.md#type-string)
 - `string` (val): [SUBSTRING](../sig/SUBSTRING.md#val-string)
+- `stringLength` (val): [COMPILER](../sig/COMPILER.md#val-stringlength)
 - `stringToBytes` (val): [BYTE](../sig/BYTE.md#val-stringtobytes)
 - `Strm` (str): [UNIX_SOCK](../sig/UNIX_SOCK.md#str-strm)
 - `Strm.socket` (val): [UNIX_SOCK](../sig/UNIX_SOCK.md#val-strm.socket)

@@ -27,7 +27,7 @@ struct
   (* whether a declaration's values are echoed: not those of the REPL's own
      declarations at start *)
   val quiet : bool ref = ref false
-  fun echoing () = not (!quiet) andalso !RuneCompiler.printDepth > 0
+  fun echoing () = not (!quiet) andalso !RuneCompiler.printDepth > 0 andalso !RuneCompiler.feedback <> "silent"
   (* what a declaration's echo was compiled by, as the usages of the cache
      see it (UnitBasis.replSetting) *)
   val () = UnitBasis.replSetting :=
@@ -88,13 +88,14 @@ struct
     StringMap.foldri (fn (n, Env.Val {scheme, ...}, acc) => (n, scheme) :: acc | (_, _, acc) => acc) []
                      (Env.vals delta)
 
-  (* The other things a declaration declared, as the REPL echoes them *)
-  fun declared (delta : Env.env) : string list =
+  (* The other things a declaration declared, as the REPL echoes them, the
+     types named as the session env names them *)
+  fun declared (env : Env.env, delta : Env.env) : string list =
     let
       fun con (name, Env.Con {scheme, info}) =
             if #hasArg info then
               case Types.prune scheme of
-                Types.TArrow (a, _) => name ^ " of " ^ Types.toString a
+                Types.TArrow (a, _) => name ^ " of " ^ ReplShow.typeIn env a
               | _ => name
             else name
         | con (name, _) = name
@@ -110,7 +111,13 @@ struct
                                  [] (Env.tys delta)
       val exns = StringMap.foldri (fn (n, Env.Exn _, acc) => ("exception " ^ n) :: acc | (_, _, acc) => acc) []
                                   (Env.vals delta)
-      val strs = StringMap.foldri (fn (n, _, acc) => ("structure " ^ n) :: acc) [] (Env.strs delta)
+      (* with feedback verbose, a structure with its signature *)
+      val verbose = !RuneCompiler.feedback = "verbose"
+      val strs = StringMap.foldri (fn (n, s, acc) =>
+                                     if verbose then
+                                       String.concatWith "\n" (("structure " ^ n ^ " :") :: "  sig"
+                                                               :: ReplShow.signatureLines (env, s, "    ") @ ["  end"]) :: acc
+                                     else ("structure " ^ n) :: acc) [] (Env.strs delta)
     in tys @ exns @ strs end
 
   (* compile decs: the declarations elaborated against the session, and the
@@ -159,7 +166,8 @@ struct
           NONE => NONE
         | SOME _ => Option.map (fn (d, c) => (d, c, UnitCache.key {name = name, text = text, allow = false, settings = ""})) (cacheOf file)
       fun result (l : UnitBasis.result, run) =
-        {run = run, delta = #delta l, declared = declared (#delta l), bind = fn () => UnitBasis.bind l}
+        {run = run, delta = #delta l, declared = declared (Env.plus (!env, #delta l), #delta l),
+         bind = fn () => UnitBasis.bind l}
       val found =
         case cache of
           NONE => NONE
@@ -233,7 +241,7 @@ struct
                   val () = warnings := map Error.formatWarning (List.rev (!Error.warnings))
                   val () = Error.flushWarnings ()
                   val pdecs =
-                    case if (Usage.use ("echo", "on"); echoing ()) then ReplShow.echoes (bound delta) else NONE of
+                    case ReplShow.echoes (!here, bound delta, delta, (Usage.use ("echo", "on"); echoing ())) of
                       NONE => []
                     | SOME (text, synth) =>
                         let

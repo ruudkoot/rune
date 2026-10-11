@@ -6,10 +6,12 @@ struct
   datatype 'a doc =
       Empty
     | Txt of string
-    | Break of string            (* what it is when flat *)
+    | Sized of string * int      (* text, and the columns it takes *)
+    | Break of string * int      (* what it is when flat, and the offset of the newline *)
     | Hard
     | Cat of 'a doc list
     | Nest of int * 'a doc
+    | Align of 'a doc            (* indented to the column it begins at *)
     | Group of 'a doc
     | Ann of 'a * 'a doc
     | Seq of {opening : string, closing : string, separator : string} * 'a doc list
@@ -18,11 +20,14 @@ struct
 
   val empty = Empty
   fun text s = Txt s
-  val line = Break " "
-  val cut = Break ""
+  val line = Break (" ", 0)
+  val cut = Break ("", 0)
   val hardline = Hard
+  fun break (blanks, offset) = Break (CharVector.tabulate (Int.max (0, blanks), fn _ => #" "), offset)
+  fun sized (s, w) = Sized (s, w)
   fun concat ds = Cat ds
   fun nest n d = Nest (n, d)
+  fun align d = Align d
   fun group d = Group d
   fun annotate (a, d) = Ann (a, d)
   fun sequence brackets ds = Seq (brackets, ds)
@@ -35,9 +40,9 @@ struct
     let
       fun items [] = []
         | items [d] = [d]
-        | items (d :: rest) = d :: Txt separator :: Break " " :: items rest
+        | items (d :: rest) = d :: Txt separator :: Break (" ", 0) :: items rest
     in
-      Group (Cat [Txt opening, Nest (width opening, Cat (items ds)), Txt closing])
+      Group (Align (Cat [Txt opening, Nest (width opening, Cat (items ds)), Txt closing]))
     end
 
   fun bound {depth, length, nodes} d =
@@ -62,6 +67,7 @@ struct
               end
         | Cat ds => Cat (map (fn x => go (level, x)) ds)
         | Nest (n, x) => Nest (n, go (level, x))
+        | Align x => Align (go (level, x))
         | Group x => Group (go (level, x))
         | Ann (a, x) => Ann (a, go (level, x))
         | other => other
@@ -85,10 +91,12 @@ struct
          case d of
            Empty => fits (w, rest)
          | Txt s => fits (w - width s, rest)
-         | Break s => (case m of Flat => fits (w - width s, rest) | Broken => true)
+         | Sized (_, k) => fits (w - k, rest)
+         | Break (s, _) => (case m of Flat => fits (w - width s, rest) | Broken => true)
          | Hard => (case m of Flat => false | Broken => true)
          | Cat ds => fits (w, map (fn x => Doc (i, m, x)) ds @ rest)
          | Nest (n, x) => fits (w, Doc (i + n, m, x) :: rest)
+         | Align x => fits (w, Doc (i, m, x) :: rest)
          | Group x => fits (w, Doc (i, m, x) :: rest)
          | Ann (_, x) => fits (w, Doc (i, m, x) :: rest)
          | Seq sq => fits (w, Doc (i, m, expand sq) :: rest))
@@ -101,13 +109,15 @@ struct
             case d of
               Empty => go (col, rest, acc)
             | Txt s => go (col + width s, rest, Text s :: acc)
-            | Break s =>
+            | Sized (s, k) => go (col + k, rest, Text s :: acc)
+            | Break (s, off) =>
                 (case m of
                    Flat => go (col + width s, rest, (if s = "" then acc else Text s :: acc))
-                 | Broken => go (i, rest, Newline i :: acc))
+                 | Broken => go (i + off, rest, Newline (i + off) :: acc))
             | Hard => go (i, rest, Newline i :: acc)
             | Cat ds => go (col, map (fn x => Doc (i, m, x)) ds @ rest, acc)
             | Nest (n, x) => go (col, Doc (i + n, m, x) :: rest, acc)
+            | Align x => go (col, Doc (col, m, x) :: rest, acc)
             | Group x =>
                 (case m of
                    Flat => go (col, Doc (i, Flat, x) :: rest, acc)
@@ -137,10 +147,12 @@ struct
     let
       fun go (Empty, acc) = acc
         | go (Txt s, acc) = s :: acc
-        | go (Break s, acc) = s :: acc
+        | go (Sized (s, _), acc) = s :: acc
+        | go (Break (s, _), acc) = s :: acc
         | go (Hard, acc) = "\n" :: acc
         | go (Cat ds, acc) = foldl go acc ds
         | go (Nest (_, x), acc) = go (x, acc)
+        | go (Align x, acc) = go (x, acc)
         | go (Group x, acc) = go (x, acc)
         | go (Ann (_, x), acc) = go (x, acc)
         | go (Seq sq, acc) = go (expand sq, acc)

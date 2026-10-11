@@ -2,6 +2,7 @@
 
 [Overview](../README.md) &middot; **a** [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [l](l.md) [n](n.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md)
 
+- `align` (val): [PRETTY](../sig/PRETTY.md#val-align)
 - `annotate` (val): [PRETTY](../sig/PRETTY.md#val-annotate)
 
 ---

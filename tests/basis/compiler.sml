@@ -13,6 +13,8 @@ struct
                      fn Fail _ => true | _ => false,
                      fn () => Compiler.compile {read = fn () => NONE, file = "none", line = 1})
   val () = T.check ("Compiler.printDepth/is-twenty", fn () => !Compiler.printDepth = 20)
+  val () = T.check ("Compiler.printLength/is-a-hundred", fn () => !Compiler.printLength = 100)
+  val () = T.check ("Compiler.stringLength/is-a-thousand", fn () => !Compiler.stringLength = 1000)
   val () = T.check ("Compiler.prompt1/is-a-dash", fn () => !Compiler.prompt1 = "- ")
   val () = T.check ("Compiler.prompt2/is-an-equals-sign", fn () => !Compiler.prompt2 = "= ")
 

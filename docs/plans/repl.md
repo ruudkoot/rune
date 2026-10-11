@@ -51,8 +51,8 @@ M1 measures them again on a quiet machine.
 | M3 | The console in the runtime and the Basis | done |
 | M4 | `lib/terminal`: styles, keys, raw mode | done |
 | M5 | `lib/terminal`: the line editor | done |
-| M6 | The REPL on the editor | planned |
-| M7 | Printing | planned |
+| M6 | The REPL on the editor | done |
+| M7 | Printing | done |
 | M8 | Commands and documentation | planned |
 | M9 | Reload | planned |
 | M10 | The engine and its protocol | planned |
@@ -2344,6 +2344,41 @@ Windows, and any Rune program can read a line with them.
 * **Tests:** `tests/repl` grows a transcript per rule; HOL4's printers
   through it.
 * **Done when:** those pass.
+* **As built** (2026-10-10): `RuneShow` (`lib/basis/compiler.sml`) makes a
+  `Compiler.pretty` of each value, its parts in their roles
+  (`ContextProperty ("role", ...)`), cut by `printDepth`, the new
+  `Compiler.printLength` (100) and `Compiler.stringLength` (1,000), and a
+  budget of 10,000 parts (`RuneCompiler.printNodes`); the echo takes the
+  document (`RuneCompiler.echoHook`), and `src/repl/front.sml` turns it into
+  one of lib/pretty -- a block indented from the column it begins at, its
+  breaks all or none where it is consistent and each with what follows it
+  where it is not -- laid out at the terminal's width, or
+  `Compiler.lineLength` without a terminal, and styled by its roles. A
+  type is named by `ReplShow.typeIn`: its own name at the top where that
+  is it, else the shortest path through the structures, a public one
+  before the library's own, and `?.t` where none names it. Reals read back
+  (`5.0`); a type `S.t` whose structure has `S.toString` prints by it
+  (`0wx3 : Word8.word`, `Time.time`). The feedback modes are
+  `RuneCompiler.feedback`, a structure's signature in the verbose one by
+  `ReplShow.signatureLines`, which `:browse` (M8) prints with too.
+  `tests/repl/printing` has a line per rule; `printers`, `values`,
+  `datatypes`, `session` and `compilecache` changed where the rules did.
+  lib/pretty gained `break` (Oppen's), `sized` and `align`.
+  Where it differs from the plan:
+  * **Exceptions print by a registry**, not by a printer in the
+    constructor's object (incremental D10's condition 4, a layout change
+    of the runtime): each declaration that declares an exception
+    constructor with an argument registers a printer of it
+    (`RuneShow.addExn`), compiled where the constructor is in scope, and
+    the REPL registers the Basis's before its image is saved. One declared
+    in a `local` or a functor's body prints by its name; the runtime is
+    untouched. `uncaught exception` keeps `exnMessage`'s text.
+  * **Lists fill their lines** (Poly/ML's and utop's way) and tuples and
+    records break all or none; one item to a line made a list of a
+    hundred numbers a hundred lines.
+  * **The whole echo is laid out at the width**, not only what
+    `addPrettyPrinter`'s printers make: with `lineLength` 6, a type goes
+    to a line of its own.
 
 ### M8. Commands and documentation (M, about 1,200 SML)
 

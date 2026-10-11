@@ -108,7 +108,7 @@ the system answer on Windows only.
 
 | Signature |  | Status | Documented |
 | --- | --- | --- | --- |
-| [`COMPILER`](sig/COMPILER.md) | What a program can ask of the compiler it runs beside: in the REPL (`rune-repl`, docs/repl.md) the compiler is in the same program as the code it compiled, and a program compiles more of itself with `use`. | extension | 11 of 11 |
+| [`COMPILER`](sig/COMPILER.md) | What a program can ask of the compiler it runs beside: in the REPL (`rune-repl`, docs/repl.md) the compiler is in the same program as the code it compiled, and a program compiles more of itself with `use`. | extension | 13 of 13 |
 | [`DYNAMIC`](sig/DYNAMIC.md) | Dynamic modules: units of code that a program loads while it runs (docs/units.md, Dynamic modules). | extension | 3 of 3 |
 | [`RUNTIME`](sig/RUNTIME.md) | What a program can ask about the machine it is running on: how much work it has done, and how much memory that took. | extension | 17 of 17 |
 | [`TERMINAL`](sig/TERMINAL.md) | The terminal of a program that edits what is typed at it, as a line editor does: the window's size and its changes, keys read one by one with a time limit, and a terminal put back as it was whatever way the program ends (docs/plans/repl.md, D4 and D5). | extension | 6 of 6 |

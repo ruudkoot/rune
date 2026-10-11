@@ -137,7 +137,10 @@ struct
                   ((ReplFront.running (); unmasked run; ReplFront.freshLine ();
                     ReplSession.env := Env.plus (!ReplSession.env, delta);
                     bind ();
-                    if !RuneCompiler.printDepth > 0 then List.app (fn s => print (s ^ "\n")) declared else ();
+                    (* what is not a value, in feedback normal and verbose *)
+                    if !RuneCompiler.printDepth > 0 andalso not (!ReplSession.quiet)
+                       andalso (!RuneCompiler.feedback = "normal" orelse !RuneCompiler.feedback = "verbose")
+                    then (ReplFront.freshLine (); List.app (fn s => print (s ^ "\n")) declared) else ();
                     true)
                    handle e => if stopping then raise e else (uncaught e; false))
             end
@@ -292,6 +295,24 @@ struct
 
   fun loop () : unit = if !ReplFront.editing then editorLoop () else basicLoop ()
 
+  (* The printers of the Basis's exceptions with an argument, as a
+     declaration of the session registers its own (ReplShow.echoes) *)
+  val basisExceptions =
+    "local\n\
+    \  fun s d x = RuneShow.string d x\n\
+    \  fun sysErr d e = case e of NONE => RuneShow.con0 \"NONE\" \n\
+    \                           | SOME c => RuneShow.con1 d (\"SOME\", fn _ => RuneShow.con0 (OS.errorName c))\n\
+    \in\n\
+    \  val () = RuneShow.addExn (fn d => fn e =>\n\
+    \    case e of\n\
+    \      Fail m => SOME (RuneShow.con1 d (\"Fail\", fn d => s d m))\n\
+    \    | IO.Io {name, function, cause} =>\n\
+    \        SOME (RuneShow.con1 d (\"Io\", fn d => RuneShow.record d\n\
+    \                [(\"cause\", fn d => RuneShow.exn d cause), (\"function\", fn d => s d function), (\"name\", fn d => s d name)]))\n\
+    \    | OS.SysErr (m, c) => SOME (RuneShow.con1 d (\"SysErr\", fn d => RuneShow.tuple d [fn d => s d m, fn d => sysErr d c]))\n\
+    \    | _ => NONE)\n\
+    \end;"
+
   (* The lines of a file *)
   fun linesOf (file : string) : string list =
     let val ins = TextIO.openIn file
@@ -339,11 +360,15 @@ struct
       ReplSession.start {units = units, sources = sources, lib = lib};
       RuneCompiler.useHook := use;
       RuneCompiler.compileHook := compileReader;
-      (* the top level's own: use *)
+      (* the top level's own: use, and the printers of the Basis's
+         exceptions that have an argument (RuneShow.addExn), before the
+         image is saved *)
       ReplSession.quiet := true;
-      (case parse ("<repl>", "val use = Compiler.use;") of
-         Decs (decs, _) => ignore (run (decs, "<repl>", "val use = Compiler.use;", NONE, true))
-       | _ => ());
+      List.app (fn text =>
+                  case parse ("<repl>", text) of
+                    Decs (decs, _) => ignore (run (decs, "<repl>", text, NONE, true))
+                  | _ => ())
+               ["val use = Compiler.use;", basisExceptions];
       ReplSession.quiet := false;
       (* --make-image IMAGE: the REPL as it is now, written to IMAGE; the
          world that writes it stops, and one started from it (runevm

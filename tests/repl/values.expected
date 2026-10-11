@@ -1,10 +1,10 @@
 - = val i = ~2 : int
 - val w = 0wxFF : word
-- val r = 5 : real
+- val r = 5.0 : real
 - val c = #"q" : char
 - val s = "tab\there \"quoted\"" : string
 - val u = () : unit
-- val t = (1, "two", 3) : int * string * real
+- val t = (1, "two", 3.0) : int * string * real
 - val rc = {age = 3, name = "rune"} : {age : int, name : string}
 - val l = [1, 2, 3] : int list
 - val e = [] : 'a list
@@ -14,7 +14,7 @@
 - val v = #["x"] : string vector
 - val f = fn : int -> int
 - val id = fn : 'a -> 'a
-- val ex = Fail : exn
+- val ex = Fail "boom" : exn
 - val it = 2 : int
 - val it = 20 : int
 - 

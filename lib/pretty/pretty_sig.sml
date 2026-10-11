@@ -34,6 +34,16 @@ sig
 
   (* A newline always, which keeps the groups around it from fitting. *)
   val hardline : 'a doc
+  (* `break (blanks, offset)` is `blanks` blanks when its group fits, and
+     else a newline and the indentation `offset` further in.
+
+     It is Oppen's break, which Poly/ML's `PrettyBreak` is. `line` is
+     `break (1, 0)` and `cut` is `break (0, 0)`.
+     Example: `render 3 (group (concat [text "ab", break (2, 4), text "cd"])) = "ab\n    cd"` *)
+  val break : int * int -> 'a doc
+  (* `sized (s, w)` is `s` laid out as if it were `w` columns wide: text
+     with escapes of its own, which the layout must not count. *)
+  val sized : string * int -> 'a doc
 
   (* `concat ds` is the documents one after the other.
 
@@ -42,6 +52,12 @@ sig
 
   (* `nest n d` is `d` with every newline in it indented by `n` more. *)
   val nest : int -> 'a doc -> 'a doc
+  (* `align d` is `d` with its newlines indented to the column `d` begins
+     at.
+
+     Oppen's and Poly/ML's blocks indent from where they begin.
+     Example: `render 5 (concat [text "x = ", align (group (concat [text "ab", line, text "cd"]))]) = "x = ab\n    cd"` *)
+  val align : 'a doc -> 'a doc
 
   (* `group d` is `d` on one line, its breaks blanks or nothing, when that
      fits the width, and `d` with its breaks as newlines otherwise.

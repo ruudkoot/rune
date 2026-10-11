@@ -1,5 +1,6 @@
-- = = = = = = = = = = = = = = = = = = = = = val entries = fn : unit -> (string * file_id) list
-- = = val same = fn : (''a * file_id) list * (''a * file_id) list -> bool
+- = = = = = = = = = = = = = = = = = = = = = val entries = fn : unit -> (string * OS.FileSys.file_id) list
+- = = val same = fn
+  : (''a * OS.FileSys.file_id) list * (''a * OS.FileSys.file_id) list -> bool
 - val part = fn : string -> unit -> char option
 - val c1 = fn : unit -> unit
 - counted 1
