@@ -376,8 +376,10 @@ starts ([repl.md](repl.md)).
   checked out, or else the commit's abbreviated hash, with `-dirty` after
   it when a tracked file has changed. `scripts/gen-version.sh` writes it
   into `build/config.sml`, which every build of the four programs loads
-  first, and `runtime/version.h` for the VMs (`Runtime.version`). make asks
-  git on every run but writes the files only when the version changes, so
+  first, with the compiler's identity, the hash of its sources that the
+  cache of compiled units keys its entries by ([units.md](units.md), *The
+  cache*), and into `runtime/version.h` for the VMs (`Runtime.version`). make
+  asks git on every run but writes the files only when they change, so
   a new commit, a checkout or the first edit of a clean tree rebuilds the
   programs and the VMs once. Without git or a repository the files keep the
   version they have, or say `unknown`. The manual pages are committed with

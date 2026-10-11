@@ -202,13 +202,15 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   its code took and how much the heap holds, collected;
 * in it, a directory per *configuration*: the hash of the compiler's
   identity (`Config.identity`, a hash of the compiler's sources, which
-  `scripts/gen-build-files.sh` writes), the versions of the files, the
+  `scripts/gen-version.sh` writes), the versions of the files, the
   instruction set, and the options that change what the compiler makes
   (`-O`, `--passes`, `--int-bits`, `--fuel`). A compiler built from other
   sources, or another level, finds none of another's entries, and two
   configurations live side by side;
 * in that, a directory per *key*, the hash of the unit's name, its source
-  and whether it may use `_prim`; a file of the library is named by its
+  and whether it may use `_prim`, and of an input file's unit the settings
+  that hold for the input files and not the libraries (`--default-type`,
+  `--or-patterns`; S62); a file of the library is named by its
   place in the library (`lib/basis/list.sml`), so that a cache follows the
   library where it is moved, and a unit taken from the cache names its
   source in its code's files where it is now -- its own, and those of the

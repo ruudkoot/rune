@@ -8,7 +8,9 @@
    The configuration is the compiler's identity (Config.identity, a hash of
    its sources), the versions of the files, the instruction set, and every
    option that changes what it makes. A unit is keyed by its name, the hash
-   of its source and whether it may use _prim; under the key are its
+   of its source, whether it may use _prim, and the settings that hold for
+   the input files and not the libraries (--default-type, --or-patterns),
+   where it is an input file's; under the key are its
    entries, one for each set of *usages* it was compiled with: every name
    its compile looked up (Usage), and the unit that bound the name then
    (UnitBasis.binders; "" the initial basis). An entry serves a compile
@@ -131,8 +133,13 @@ struct
           in if (OS.FileSys.isDir d handle OS.SysErr _ => false) then SOME d else NONE end
 
   (* the key of a unit *)
-  fun key {name : string, text : string, allow : bool} : string =
-    P.hash (String.concatWith "\000" [name, P.hash text, if allow then "1" else "0"])
+  (* settings: what the unit was compiled under that the configuration does
+     not say, because it holds for the input files and not the libraries
+     (--default-type, --or-patterns); "" for none, which keeps the key it
+     had before there were such settings *)
+  fun key {name : string, text : string, allow : bool, settings : string} : string =
+    P.hash (String.concatWith "\000" ([name, P.hash text, if allow then "1" else "0"]
+                                        @ (if settings = "" then [] else [settings])))
 
   fun keyDir (dir : string, config : string, k : string) : string =
     OS.Path.joinDirFile {dir = OS.Path.joinDirFile {dir = dir, file = config}, file = k}

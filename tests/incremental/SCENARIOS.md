@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `tests/incremental/run.sh` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, and S49 to S61. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, and S49 to S62. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; `scripts/check-cross.sh` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `tests/incremental/mutate.py` edits projects
@@ -216,6 +216,11 @@ when the scenarios above were all green
   printer.
 * **S54, the print depth.** A file whose entry was written at print depth
   0 echoes at the default depth.
+* **S62, the input files' own settings.** `--or-patterns` and
+  `--default-type` hold for the input files and not the libraries, so a
+  unit's key says them, not the configuration: a file built with one and
+  then, through the same cache, without it is refused the second time, as
+  a compile without the cache refuses it.
 * **S61, a program that keeps its units' identities.** `main.sml` names
   `Runtime`, so the program keeps its units' identities; `b.sml` declares
   a functor whose body uses `A.x`, and `a.sml` gains a value while `A.x`

@@ -154,7 +154,7 @@ struct
       val cache =
         case cached of
           NONE => NONE
-        | SOME _ => Option.map (fn (d, c) => (d, c, UnitCache.key {name = name, text = text, allow = false})) (cacheOf file)
+        | SOME _ => Option.map (fn (d, c) => (d, c, UnitCache.key {name = name, text = text, allow = false, settings = ""})) (cacheOf file)
       fun result (l : UnitBasis.result, run) =
         {run = run, delta = #delta l, declared = declared (#delta l), bind = fn () => UnitBasis.bind l}
       val found =

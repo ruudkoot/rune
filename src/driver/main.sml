@@ -484,6 +484,25 @@ struct
       fun explain msg = if !Options.explainRebuild then TextIO.output (TextIO.stdErr, msg ^ "\n") else ()
       (* the cache's work, for --pass-stats *)
       fun timed name f = Pass.stage {name = name, showIn = NONE, show = fn _ => "", check = fn _ => (), size = fn _ => 0} f ()
+      (* the input files' settings, which the libraries are compiled
+         without: in their units' keys, so that a unit compiled under them is
+         not taken for one compiled without (--default-type, --or-patterns) *)
+      val userSettings =
+        String.concatWith " " (List.filter (fn s => s <> "")
+                                 [if !Options.defaultInt64 then "int64" else "",
+                                  if !Options.defaultWord64 then "word64" else "",
+                                  if !Options.orPatterns then "or-patterns" else ""])
+      val userNames = List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty inputs
+      fun settingsOf ident = if isSome (StringMap.find (userNames, ident)) then userSettings else ""
+      (* --default-type holds for the input files, not for the libraries *)
+      fun withDefaults f x =
+        let
+          fun reset () = (Elaborate.intDefault := Types.intTy; Elaborate.wordDefault := Types.wordTy)
+        in
+          Elaborate.intDefault := (if !Options.defaultInt64 then Types.int64Ty else Types.intTy);
+          Elaborate.wordDefault := (if !Options.defaultWord64 then Types.word64Ty else Types.wordTy);
+          (f x before reset ()) handle e => (reset (); raise e)
+        end
       (* a unit's basis, kept to the end for --emit-units alone, which
          writes it: a unit of MLton's has megabytes of it *)
       fun keptPickle (p : string) : string = if isSome (!Options.emitUnits) then p else ""
@@ -515,7 +534,7 @@ struct
           val k = case cache of
                     SOME _ =>
                       if !failedBefore then NONE
-                      else SOME (timed "cache-key" (fn () => UnitCache.key {name = ident, text = text name (), allow = allow}))
+                      else SOME (timed "cache-key" (fn () => UnitCache.key {name = ident, text = text name (), allow = allow, settings = settingsOf ident}))
                   | NONE => NONE
           (* the unit's place, which its entries' usages are checked at *)
           val () = UnitBasis.position (!env, !fixity)
@@ -810,7 +829,7 @@ struct
               | SOME (dir, config) =>
                   let
                     val (name, _, allow, ident) = Vector.sub (described, i)
-                    val k = UnitCache.key {name = ident, text = text name (), allow = allow}
+                    val k = UnitCache.key {name = ident, text = text name (), allow = allow, settings = settingsOf ident}
                   in
                     UnitCache.hasEntry (dir, config, k)
                     orelse (case frozen of SOME f => UnitCache.hasEntry (f, config, k) | NONE => false)
@@ -827,8 +846,10 @@ struct
         else ()
       val compiled =
         (case !buildPlan of
-           NONE => List.rev (List.foldl unit [] sources)
-         | SOME plan => List.rev (List.foldl unit (elabSteps (plan, List.foldl unit [] basisPart)) finalPart))
+           NONE => List.rev (List.foldl unit (withDefaults (fn acc => List.foldl unit acc userPart) (List.foldl unit [] basisPart))
+                                        finalPart)
+         | SOME plan =>
+             List.rev (List.foldl unit (withDefaults (fn acc => elabSteps (plan, acc)) (List.foldl unit [] basisPart)) finalPart))
         handle e => (Parallel.finish (); raise e)
       val () = Parallel.finish ()
       val units = List.map #1 compiled

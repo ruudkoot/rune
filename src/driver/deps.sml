@@ -65,6 +65,7 @@ struct
         | PApp (id, _, p, _) => (longStr (sc, id); pat (sc, p))
         | PTyped (p, t, _) => (pat (sc, p); ty (sc, t))
         | PLayered (_, t, p, _, _) => (Option.app (fn t => ty (sc, t)) t; pat (sc, p))
+        | POr (ps, _) => List.app (fn p => pat (sc, p)) ps
         | _ => ()
       fun exp (sc, e) =
         case e of

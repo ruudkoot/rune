@@ -778,5 +778,25 @@ val () = print (Int.toString B.y ^ " " ^ Int.toString (#instructions (Runtime.st
   prints "42 0"
 fi
 
+# S62, the input files' own settings: --or-patterns and --default-type hold
+# for the input files and not the libraries, so the configuration does not
+# say them; a unit's key does. Built with the setting and then, through the
+# same cache, without it, the second build is refused as a compile without
+# the cache refuses it, rather than served the first one's unit
+if run S62; then
+  own S62 p.sml
+  put p.sml 'fun f (1 | 2) = "small" | f _ = "big"
+val () = print (f 2 ^ "\n")'
+  build --or-patterns; want "p.sml"
+  prints small
+  build; fails
+  own S62d d.sml
+  put d.sml 'val x = 1
+val () = print (Int64.toString x ^ "\n")'
+  build --default-type=int64; want "d.sml"
+  prints 1
+  build; fails
+fi
+
 echo "incremental: passed $pass, failed $fail"
 [ $fail = 0 ]
