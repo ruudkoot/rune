@@ -19,6 +19,8 @@ struct
   (* Rule 65: every use of a signature gets fresh bound names. *)
   fun instantiate ({bound, env} : sigma) : sigma =
     let
+      val () = if !ElabStats.on then (ElabStats.count ElabStats.InstSig; ElabStats.add (ElabStats.InstNames, List.length bound))
+               else ()
       val fresh = List.map (fn c => (c, freshTycon (#name c, #arity c, #eq c))) bound
       val phi = List.foldl (fn ((c, c'), m) => IntMap.insert (m, #stamp c, TName c')) IntMap.empty fresh
     in {bound = List.map #2 fresh, env = realizeEnv (phi, env)} end
@@ -48,7 +50,9 @@ struct
 
   (* Rule 64: sigexp where type tyvarseq longtycon = ty *)
   fun whereType (sigma : sigma, longid, fcn : tyfcn, sp) : sigma =
-    let val (c, cons) = flexibleAt (sigma, longid, sp)
+    let
+      val () = if !ElabStats.on then ElabStats.count ElabStats.WhereClause else ()
+      val (c, cons) = flexibleAt (sigma, longid, sp)
     in
       if fcnArity fcn <> #arity c then
         err (sp, "type " ^ pathString longid ^ " has " ^ Int.toString (#arity c) ^ " parameter(s) but its definition has "
@@ -63,6 +67,7 @@ struct
   (* Rule 78: sharing type longtycon1 = ... = longtyconn *)
   fun shareTypes (sigma as {bound, env} : sigma, longids, sp) : sigma =
     let
+      val () = if !ElabStats.on then ElabStats.count ElabStats.ShareTypes else ()
       val named = List.map (fn id => (id, #1 (flexibleAt (sigma, id, sp)))) longids
       val (id0, c0) = List.hd named
       val () = List.app (fn (id, c) =>
@@ -79,6 +84,7 @@ struct
      every type constructor specified in all of them, recursively. *)
   fun shareStructures (sigma : sigma, longids, sp) : sigma =
     let
+      val () = if !ElabStats.on then ElabStats.count ElabStats.ShareStructures else ()
       fun envAt (sigma : sigma, path) =
         case findStr (#env sigma, path) of
           SOME e => e
@@ -267,7 +273,10 @@ struct
                    else IntMap.insert (phi, #stamp c, fa))
             else phi
         | TAbbrev _ => phi
-      val phi = List.foldl one IntMap.empty (tyPaths sigEnv)
+      val paths = tyPaths sigEnv
+      val () = if !ElabStats.on then (ElabStats.count ElabStats.MatchSig; ElabStats.add (ElabStats.MatchPaths, List.length paths))
+               else ()
+      val phi = List.foldl one IntMap.empty paths
       val specE = realizeEnv (phi, sigEnv)
     in
       checkEnrich (specE, actual, [], sp);

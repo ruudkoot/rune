@@ -35,6 +35,7 @@ struct
 
   fun unify (t1 : ty, t2 : ty) : unit =
     let
+      val () = if !ElabStats.on then ElabStats.count ElabStats.Unifies else ()
       val t1 = prune t1
       val t2 = prune t2
       fun isRigid r = case !r of Unbound {kind = KRigid _, ...} => true | _ => false

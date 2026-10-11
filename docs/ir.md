@@ -45,6 +45,7 @@ what `simplify` does besides shrinking, each of which may be left out.
 | `--lint` | check what every pass makes, and stop with `Error.Bug`, which names the pass, at the first breach |
 | `--fuel=N` | make no more than `N` rewrites: a pass that rewrites asks `Pass.spend` before each |
 | `--pass-stats` | the size of what every stage makes and its processor time, on standard error, as `pass NAME: N nodes, T s`; then `total: T s processor time, S s in the stages (P%)` (below) |
+| `--pass-stats=elab` | `--pass-stats`, and a line for each top-level declaration elaborated: where its processor time went, by context and operation, and what the elaborator counted (*The elaborator's counters* below) |
 | `--units` | run the pipeline on one unit, a file, at a time, and link them ([units.md](units.md)): the passes see a unit, with `Pass.whole` false, and `--pass-stats` names each unit before its passes |
 | `--read-mid FILE` | read a Mid program in the text a dump prints, and make and check it as the pass `mid` would (there is no bytecode from Mid yet) |
 | `--mid-roundtrip` | check that Mid printed with its positions, read and printed again is the same |
@@ -71,6 +72,45 @@ stages of the pipeline above, the compile's stages are:
 below it unless they are all atoms, and leaves positions out. Variables
 and globals are numbered afresh (`v1`, `g1`, ...) in the order they appear,
 so that an expected dump does not change with stamps made elsewhere.
+
+### The elaborator's counters
+
+`--pass-stats=elab` (`src/elab/elabstats.sml`) prints, for each top-level
+declaration, a line
+
+```
+elab FILE:LINE:COL KIND NAME total=US CONTEXT.OPERATION=US ... COUNTER=N ...
+```
+
+with `KIND` one of `signature`, `functor`, `structure` and `core`, and
+`NAME` the first name it binds (`-` for a core declaration). Times are
+microseconds of processor time; what is zero is left out. The
+declaration's time is split by:
+
+* **context:** `top`, the top level; `fundecl`, a functor's body checked at
+  its declaration; `appcode`, the copy of a body elaborated at an
+  application whose code is made; `appcheck`, a copy elaborated only to be
+  checked, at an application inside a declaration's check or such a copy;
+* **operation:** `inst`, a signature instantiated; `where`, `where type`;
+  `share`, sharing; `match`, a structure matched against a signature;
+  `specs`, a signature's specifications, without the operations before
+  inside them; `copy`, a body copied for an application; `core`, the rest.
+  Time goes to the innermost operation running.
+
+The counters: `realize`, the environments realised, and `nodes`, the type
+nodes they visited (the steps of type work they took, one a node); `inst` and `inst.names`, the signatures instantiated
+and the flexible names renamed; `where`, the clauses of `where type`;
+`share.types` and `share.structures`, the sharing equations (a structure's
+counting its types' among `share.types`); `match` and `match.paths`, the
+matches and the type paths of their signatures; `fundecl`, the functor
+bodies checked; `app.code` and `app.check`, the applications of each kind,
+and `app.depth` their deepest nesting; `unify`, the pairs of types
+unified; `steps`, the steps of type work that `--type-work` bounds. The
+counters do not depend on the machine. The checks deferred to the end of
+the program or of a unit -- whether matches are exhaustive, flexible
+records -- have a line of their own, `elab - deferred - ...`.
+`scripts/elab-stats.awk` adds the lines up into a table of contexts and
+operations, and names the declarations that took longest.
 
 ## What a `Lambda` keeps
 

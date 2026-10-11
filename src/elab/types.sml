@@ -239,7 +239,7 @@ struct
   type realisation = tyfcn IntMap.map
 
   fun realize (phi : realisation, t : ty) : ty =
-    case prune t of
+    (case prune t of
       t as TVar _ => t
     | TCon (c, args) =>
         let val args' = List.map (fn a => realize (phi, a)) args
@@ -249,7 +249,7 @@ struct
           | NONE => TCon (c, args')
         end
     | TRecord fields => TRecord (List.map (fn (l, a) => (l, realize (phi, a))) fields)
-    | TArrow (a, b) => TArrow (realize (phi, a), realize (phi, b))
+    | TArrow (a, b) => TArrow (realize (phi, a), realize (phi, b)))
 
   fun realizeFcn (phi : realisation, f : tyfcn) : tyfcn =
     case f of

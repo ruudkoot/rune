@@ -436,6 +436,62 @@ struct
                andalso r (["--no-prelude", "--type-work=2000", "-o", "output.rbc", "input.sml"], NONE) <> 0
                andalso contains (f "err", "type translation exceeds 2000 steps")
                andalso r (["--type-work=1000000", "-o", "output.rbc", "input.sml"], NONE) = 0)
+      (* --pass-stats=elab: a line for each top-level declaration, its time by
+         context and operation adding up to its total, and its counters, which
+         do not depend on the machine (docs/ir.md, The elaborator's counters) *)
+      val () = write (f "input.sml", "signature A = sig type t val x : t end\n"
+                                     ^ "signature B = sig structure P : A structure Q : A sharing P = Q\n"
+                                     ^ "  type u sharing type u = P.t end where type u = int\n"
+                                     ^ "functor F (X : A) = struct val y = X.x datatype d = D of X.t end\n"
+                                     ^ "functor G (Y : A) = struct structure S = F (Y) val z = S.y end\n"
+                                     ^ "structure M = struct type t = int val x = 3 end\n"
+                                     ^ "structure N = G (M)\n"
+                                     ^ "val v = N.z + 1\n")
+      val () = check ("pass-stats=elab: compiled",
+                      r (["--no-prelude", "--typecheck-only", "--pass-stats=elab", "input.sml"], NONE) = 0)
+      val elab = List.map (String.tokens Char.isSpace) (List.filter (String.isPrefix "elab ") (lines (read (f "err"))))
+      fun fieldsOf l = List.mapPartial (fn w => case String.fields (fn c => c = #"=") w of [k, v] => SOME (k, v) | _ => NONE)
+                                       (if length l > 4 then List.drop (l, 4) else [])
+      (* input.sml's declarations, each by its first line and with the
+         counters of its last *)
+      val mine = List.mapPartial (fn _ :: at :: kind :: name :: _ =>
+                                       if String.isPrefix "input.sml:" at then SOME (kind ^ " " ^ name) else NONE
+                                   | _ => NONE) elab
+      val names = List.foldl (fn (n, ns) => if List.exists (fn x => x = n) ns then ns else ns @ [n]) [] mine
+      fun counters name =
+        case List.filter (fn _ :: at :: kind :: n :: _ => String.isPrefix "input.sml:" at andalso kind ^ " " ^ n = name
+                           | _ => false) elab of
+          [] => []
+        | ls => fieldsOf (List.last ls)
+      fun get name k = Option.map #2 (List.find (fn (k', _) => k' = k) (counters name))
+      fun number v = getOpt (IntInf.fromString v, ~1)
+      fun adds l =
+        let
+          val fs = fieldsOf l
+          val cells = List.foldl (fn ((k, v), s) =>
+                                     case String.fields (fn c => c = #".") k of
+                                       context :: _ :: _ =>
+                                         if List.exists (fn c => c = context) ["top", "fundecl", "appcode", "appcheck"]
+                                         then s + number v else s
+                                     | _ => s) 0 fs
+        in
+          case List.find (fn (k, _) => k = "total") fs of SOME (_, t) => number t = cells | NONE => false
+        end
+      val () = check ("pass-stats=elab: the declarations",
+                      names = ["signature A", "signature B", "functor F", "functor G", "structure M", "structure N", "core -"])
+      val () = check ("pass-stats=elab: the deferred line last",
+                      case List.rev elab of (_ :: a :: b :: c :: _) :: _ => [a, b, c] = ["-", "deferred", "-"] | _ => false)
+      val () = check ("pass-stats=elab: the times add up", List.all adds elab)
+      val () = check ("pass-stats=elab: signature B",
+                      List.map (get "signature B") ["share.types", "share.structures", "where", "inst"]
+                      = [SOME "2", SOME "1", SOME "1", SOME "2"])
+      val () = check ("pass-stats=elab: functor G",
+                      List.map (get "functor G") ["fundecl", "app.check", "app.code", "match"] = [SOME "1", SOME "1", NONE, SOME "1"])
+      val () = check ("pass-stats=elab: structure N",
+                      List.map (get "structure N") ["app.code", "app.depth", "app.check"] = [SOME "2", SOME "2", NONE])
+      val () = check ("pass-stats=elab: another kind refused",
+                      r (["--no-prelude", "--typecheck-only", "--pass-stats=types", "input.sml"], NONE) <> 0
+                      andalso contains (f "err", "--pass-stats= requires elab"))
       (* --pass-stats accounts for the whole compile (docs/plans/performance.md, M1):
          a line `pass NAME: N nodes, T s` per stage, then
          `total: T s processor time, S s in the stages (P%)`, the process's

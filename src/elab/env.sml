@@ -182,10 +182,22 @@ struct
   fun realizeTyStr (phi : realisation, TyStr {fcn, cons}) : tystatus =
     TyStr {fcn = realizeFcn (phi, fcn), cons = List.map (fn (n, v) => (n, realizeVal (phi, v))) cons}
 
-  fun realizeEnv (phi : realisation, Env {vals, tys, strs}) : env =
+  fun realizeEnv' (phi : realisation, Env {vals, tys, strs}) : env =
     Env {vals = StringMap.map (fn v => realizeVal (phi, v)) vals,
          tys = StringMap.map (fn t => realizeTyStr (phi, t)) tys,
-         strs = StringMap.map (fn e => realizeEnv (phi, e)) strs}
+         strs = StringMap.map (fn e => realizeEnv' (phi, e)) strs}
+
+  (* with --pass-stats=elab, counted, and the nodes visited by the steps of
+     type work taken, one for each (a prune) *)
+  fun realizeEnv (phi : realisation, env : env) : env =
+    if not (!ElabStats.on) then realizeEnv' (phi, env)
+    else
+      let
+        val left = !workLeft
+        val r = realizeEnv' (phi, env)
+      in
+        ElabStats.count ElabStats.Realize; ElabStats.add (ElabStats.Nodes, left - !workLeft); r
+      end
 
   (* --- initial environment --- *)
   fun generic (id, eq) = TVar (ref (Unbound {id = id, level = genericLevel, kind = KPlain, eq = eq}))
