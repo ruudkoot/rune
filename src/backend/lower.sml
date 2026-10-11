@@ -356,9 +356,24 @@ struct
      Mid bound in the function is. *)
   type cx = {ret : ret, depth : int, labels : (L.label * int) IntMap.map, subst : L.var IntTable.table}
 
+  (* What the REPL's debugger needs of each function (`-g`; the REPL
+     roadmap's M12), where debugInfo says so: the variables of Mid bound in
+     it, each with the variable of Low it is, and those it captures, each
+     with its slot of the closure's environment; by the function's id.
+     Kept for the function being lowered in binds, and the functions it is
+     in on a stack. *)
+  val debugInfo = ref false
+  val debugVars : {id : int, vars : (int * L.var) list, env : (int * int) list} list ref = ref []
+  (* and, from the register target, the register of each variable of Low
+     and the byte of the function's code where it has been set, ~1 for
+     none, by the function's id (Regs, whose signature has no room) *)
+  val debugRegs : (int * int vector * int vector) list ref = ref []
+  val binds : (int * L.var) list ref = ref []
+
   (* x is v from here on: in one table for the function, since each variable
      of Mid is bound once *)
-  fun bindAs (cx : cx, x : int, v : L.var) : cx = (IntTable.insert (#subst cx, x, v); cx)
+  fun bindAs (cx : cx, x : int, v : L.var) : cx =
+    (IntTable.insert (#subst cx, x, v); if !debugInfo then binds := (x, v) :: !binds else (); cx)
 
   (* An expression with one way out, and that at its end: its value can go
      on in the same block. *)
@@ -420,9 +435,17 @@ struct
             finish (b, L.Goto (l, List.map #2 ps)); start (b, l, List.map #2 hs); #head b := SOME l; hs
           end
         else ps
+      val outer = !binds
+      val () = binds := (if !debugInfo then List.rev bound else [])
       val () = exp (b, #body f, {ret = FunRet, depth = 0, labels = IntMap.empty,
                                  subst = let val t = IntTable.table 64
                                          in List.app (fn (x, v) => IntTable.insert (t, x, v)) bound; t end})
+      val () =
+        if !debugInfo then
+          debugVars := {id = id, vars = !binds, env = #2 (List.foldl (fn (c, (i, acc)) => (i + 1, (c, i) :: acc)) (0, []) cs)}
+                       :: !debugVars
+        else ()
+      val () = binds := outer
     in
       funcs := {id = id, name = name, params = List.map #2 ps, ncaptured = List.length cs, nvars = !(#nvars b),
                 blocks = List.rev (!(#blocks b)), pos = pos,
@@ -709,6 +732,7 @@ struct
       val () = (useCounts := IntTable.table 4096; captures := IntMap.empty; selfRefs := IntMap.empty; funcs := [];
                 selectUses := IntTable.table 1024; binderFn := IntTable.table 4096; nextFn := 0; virtuals := IntTable.table 1024;
                 nextFuncId := 0; funNames := names; globalFids := IntMap.empty; imported := IntMap.empty;
+                debugVars := []; binds := [];
                 knownFuns := List.foldl (fn (M.Funs fs, m) => List.foldl (fn (f, m) => IntMap.insert (m, #name f, ())) m fs
                                           | (_, m) => m)
                                         (if !Pass.whole then IntMap.empty else !knownBefore) p)
@@ -758,6 +782,7 @@ struct
       val u = def (b, L.Unit)
       val () = finish (b, if !Pass.whole then L.Return u else L.TailCallK (nextUnit, [u]))
       val () = ignore top
+      val () = if !debugInfo then debugVars := {id = id, vars = !binds, env = []} :: !debugVars else ()
       val topFunc : L.func = {id = id, name = "<toplevel>", params = [param], ncaptured = 0, nvars = !(#nvars b),
                               blocks = List.rev (!(#blocks b)), pos = NONE,
                               reps = Vector.tabulate (!(#nvars b), fn x => case IntTable.find (#reps b, x) of SOME r => r | NONE => L.RAny)}

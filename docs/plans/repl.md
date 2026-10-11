@@ -57,7 +57,7 @@ M1 measures them again on a quiet machine.
 | M9 | Reload | done |
 | M10 | The engine and its protocol | done |
 | M11 | The Jupyter kernel | done |
-| M12 | The debugger | planned |
+| M12 | The debugger | done |
 | M13 | Windows, accessibility and the performance sweep | planned |
 
 The owner decided D1 to D25 on 2026-10-10, as recommended, and added a
@@ -2587,6 +2587,55 @@ Windows, and any Rune program can read a line with them.
 * **Done when:** those pass, and a program not being debugged runs at
   the speed it ran before (*Measuring*). Writing `BREAK` over
   instructions, in place of the debug loop, is a measured follow-up.
+* **As built** (2026-10-10): the VM (`runtime/debug.c`,
+  `runtime/register/debug_loop.c`; docs/runtime.md, *The debugger*): the
+  REPL's hook and `<debug>`, a function the VM makes, whose frame a stop
+  pushes above the frame that stopped -- the VM makes a call as `CALL`
+  does, and calls no SML from C -- and `rt_debug_return`, which takes it
+  off and goes on at the instruction, or with the exception; debug mode,
+  in which the driver runs a third copy of the register loop, in a file of
+  its own, interpreted throughout, that looks at each instruction for a new
+  line (a key per byte of a function's code, made when it first runs
+  there; per frame the key last seen), a frame left by a step, a pause;
+  compiled code leaves for it at its polls (bit 2 of the interrupt's flag,
+  and `jit_h_interrupt`'s `JIT_LEAVE`: the VM exact at the instruction's
+  start, its run's instructions uncounted), the interpreter's other loops
+  at theirs (`poll_slow`) or after a primitive that put it on (PRIMPUSH's
+  `DEBUG_BEGUN`); every register a root in it. Stops: breakpoints by key,
+  steps in, over and out (a step that returns into the library goes on as
+  from there), a pause (the user's interrupt, in any loop or in compiled
+  code), a raise in `vm_raise` before anything unwinds (every one, or one
+  the REPL's handler takes), only ever above the REPL's handler. Thirteen
+  primitives (`rt_debug_*`). `-g` (`ReplSession.debugging`): `-O0`,
+  `Lower.debugVars` (each function's variables of Mid and the variables of
+  Low they are, and its closure's), `Lower.debugRegs` (a register each,
+  never given again, and the byte where it has been set), `Ty.names` (name
+  and type at the binder), the types of the unit's own declarations moved
+  to those its basis loads (`tyconsMoved`); `ReplDebug`
+  (`src/repl/debug.sml`): breakpoints by file and line, set again at each
+  link; the stop's frames; a frame's variables that hold a value -- set by
+  where the frame is, of a type whose value the register holds -- shown
+  as echoes (`ReplShow.echoesOf`, values read by `RuneDebug.register` and
+  `env`); an expression or `val x = exp` at a stop evaluated as `(fn (x :
+  t, ...) => exp) values`, its tokens its own; `:break`, `:delete`,
+  `:step`, `:next`, `:finish`, `:continue`, `:abort`, `:frame`, `:locals`,
+  `:bt` at a stop (the debugger's first where a prefix names several),
+  `:set debug`, `:set pause`; the `debug>` prompt (`ReplLoop.nested`). The
+  engine: `debug/setBreakpoints`, `setRaise`, `configure`, `frames`,
+  `variables`, `evaluate`, `continue`, the notification `debug/stopped`,
+  `eval`'s `path`; `capture` nests. `rune-repl --dap` (`bin/rune-dap`,
+  `src/dap/adapter.sml`, docs/dap.md) over lib/dap, the engine its child;
+  the Jupyter kernel's debugger (`debug_request`, `debug_event`,
+  `debugInfo`, `dumpCell` by `Murmur2` -- new in lib/digest -- `source`),
+  lib/jupyter's `idle` answering the control channel while a request is in
+  hand; `src/dap/translate.sml` the two share. Tests:
+  `tests/repl/debug.in` on every mode of the JIT, the same frames and
+  values; `tests/repl-protocol/debug.script`; `tests/dap/run.py` (`make
+  test-dap`, in `make check`); the kernel's client and the debugger's
+  session; `tests/terminal/repl-debug.script` (Ctrl-C pausing a loop in
+  compiled code). Measured: a program not debugged retires the
+  instructions it did under M11 to 0.1% with the JIT, and 0.3% fewer
+  interpreted (*Measuring*).
 
 ### M13. Windows, accessibility and the performance sweep (M, about 800 SML)
 
@@ -2824,7 +2873,7 @@ those numbers.
 | bytes written a keystroke, 1,000 lines | 1,324 (P2) | 14 typing at the end, 1,052 in the middle (M5) | the same | as M5 |
 | completion menu over the Basis | none | from M6 | 4.6 ms (`S`, Tab Tab, to the menu) | 50 ms |
 | kernel round trip, 16 bytes | 66 µs median (P4) | from M11 | | as M11 |
-| a program not debugged, under M12 | as before | from M12 | | no slower |
+| a program not debugged, under M12 | as before | from M12 | M12: instructions retired as under M11, 959 against 959 million (`fib 33`, the JIT), 1,026 against 1,026 (`--jit=all`), 3,492 against 3,504 (`--jit=off`) | no slower |
 
 ## Ready for, not built
 

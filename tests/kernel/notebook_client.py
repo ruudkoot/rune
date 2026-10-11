@@ -39,11 +39,13 @@ try:
     streams = [m["content"]["text"] for m in outputs if m["msg_type"] == "stream"]
     check("a stream", "hello\n" in streams, outputs)
     threading.Timer(2.0, km.interrupt_kernel).start()
-    reply = kc.execute_interactive("fun loop () : unit = loop (); loop ();", timeout=60)
+    reply = kc.execute_interactive("fun loop () : unit = loop (); loop ();", timeout=60, output_hook=lambda m: None)
     check("interrupt_kernel", reply["content"]["status"] == "error" and reply["content"]["ename"] == "Interrupt", reply)
     reply = kc.complete("List.fil", 8, reply=True, timeout=30)
     check("complete", "filter" in reply["content"]["matches"], reply)
 finally:
     kc.stop_channels()
     km.shutdown_kernel(now=False)
+    # gone before the interpreter ends, whose logging its __del__ uses
+    del kc, km
 sys.exit(0 if ok else 1)

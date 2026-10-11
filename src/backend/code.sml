@@ -19,6 +19,14 @@ struct
     | Pos of int * int * int * int        (* file, line, column of what follows, and the inlined
                                              frames it is in (inlineIdx) *)
 
+  (* The bytes an item takes in the code (Emit) *)
+  fun itemSize (Op (_, args)) = 1 + 4 * List.length args
+    | itemSize (Ops (_, args)) = 1 + 4 * List.length args
+    | itemSize (OpLab _) = 5
+    | itemSize (OpLabImm _) = 9
+    | itemSize (Lab _) = 0
+    | itemSize (Pos _) = 0
+
   (* What the register target says of a function beside its code
      (docs/bytecode.md, The representations; docs/plans/jit.md, M8): its
      arity, what each of its registers holds (Low.repCode, nlocals of

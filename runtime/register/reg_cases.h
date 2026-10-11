@@ -99,7 +99,7 @@ CASE(CALL) {
     TRACE(ROP_CALL, a, b, 0);
     pc += 9;
     count++;
-    POLL();
+    POLL(9);
     CENSUS_CALL(0, R(b), CENSUS_REP(p, fr->func, b));
     Value arg = R(b);
     Obj *c = EXPECT(R(a), K_CLOSURE, "closure in call");
@@ -131,7 +131,7 @@ CASE(TAILCALL) {
     TRACE(ROP_TAILCALL, a, b, 0);
     pc += 9;
     count++;
-    POLL();
+    POLL(9);
     CENSUS_CALL(1, R(b), CENSUS_REP(p, fr->func, b));
     Value arg = R(b);
     Obj *c = EXPECT(R(a), K_CLOSURE, "closure in call");
@@ -213,6 +213,7 @@ CASE(PRIMPUSH) {
     int r = prim_table[a](vm);
     if (r == PRIM_NEW_WORLD) NEW_PROGRAM();
     RELOAD();
+    if (r == PRIM_NEW_WORLD) DEBUG_BEGUN();
     if (r == 1) RAISED();
     NEXT;
 }
@@ -380,7 +381,7 @@ CASE(JUMP) {
     count++;
     /* a jump back is a loop's: a poll, counted, and where the
        function has code, gone on in it (M6) */
-    if ((uint32_t)a < pc) { POLL(); BACKWARD((uint32_t)a); }
+    if ((uint32_t)a < pc) { POLL(5); BACKWARD((uint32_t)a); }
     pc = (uint32_t)a;
     NEXT;
 }
@@ -467,7 +468,7 @@ CASE(CALLK) {
     TRACE(ROP_CALLK, a, b, 0);
     pc += 9 + 4 * n;
     count++;
-    POLL();
+    POLL(9 + 4 * n);
     for (uint32_t i = 0; i < n; i++) CENSUS_CALL(2, R(LIST(i)), CENSUS_REP(p, fr->func, LIST(i)));
     Function *fn = &p->funcs[a];
     size_t top = (size_t)(sp - vm->stack);
@@ -490,7 +491,7 @@ CASE(TAILCALLK) {
     TRACE(ROP_TAILCALLK, a, b, 0);
     pc += 9 + 4 * n;
     count++;
-    POLL();
+    POLL(9 + 4 * n);
     for (uint32_t i = 0; i < n; i++) CENSUS_CALL(3, R(LIST(i)), CENSUS_REP(p, fr->func, LIST(i)));
     Function *fn = &p->funcs[a];
     size_t top = fr->base;

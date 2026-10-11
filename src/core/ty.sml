@@ -49,6 +49,13 @@ struct
   val extras = ref Unknown
 
   fun bindVar (stamp : int, t : Types.ty) = IntTable.insert (binders, stamp, t)
+  (* the names and types of the variables bound, kept where the REPL
+     debugs (`-g`; the REPL roadmap's M12), which shows them: binders loses
+     a unit's once it is compiled (UnitBasis.undo) *)
+  val keepNames = ref false
+  val names : (string * Types.ty) IntTable.table = IntTable.table 64
+  fun nameVar (stamp : int, name : string, t : Types.ty) =
+    if !keepNames then IntTable.insert (names, stamp, (name, t)) else ()
   fun bindExn (stamp : int, arg : Types.ty option) = IntTable.insert (exnArgs, stamp, arg)
   fun bindDatatype (stamp : int, {params, cons} : {params : int list, cons : (int * string * Types.ty option) list}) =
     (extras := Unknown;

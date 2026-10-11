@@ -439,7 +439,7 @@ typedef struct VM {
        interrupt_mask is not 0, the polls leave it waiting. An image keeps
        the exception and the mask, and its world catches the interrupt
        again. */
-    volatile int interrupt;
+    volatile int interrupt;   /* bit 1 the user's; bit 2 the debugger's (runtime/debug.c), which compiled code leaves at */
     int interrupt_mask;
     Obj *interrupt_exn;
     /* The raises that leave the code a REPL runs, for its :bt (the REPL
@@ -451,6 +451,9 @@ typedef struct VM {
     size_t raise_mark;
     uint32_t raise_n;
     struct { uint32_t func, pc; } raise_frames[64];
+    /* The debugger (the REPL roadmap's D22, M12; runtime/debug.c): NULL
+       until the REPL asks for it */
+    struct Debugger *dbg;
 } VM;
 
 /* Whether p points into the room objects are made in (alloc). Young and
@@ -583,7 +586,7 @@ int vm_raise(VM *vm, Value exn);            /* unwinds; returns 1 (never returns
 int vm_raise_builtin(VM *vm, int k);
 int vm_interrupt(VM *vm);                   /* the interrupt waiting raised, the VM exact (VM.interrupt) */
 /* whether a poll raises the interrupt: one waits, and the mask lets it */
-static inline int vm_interrupted(const VM *vm) { return vm->interrupt && !vm->interrupt_mask; }
+static inline int vm_interrupted(const VM *vm) { return (vm->interrupt & 1) && !vm->interrupt_mask; }
 void vm_push_handler(VM *vm, uint32_t pc);
 void vm_start(VM *vm);                       /* the builtin exceptions, and function 0 called with () */
 void vm_cons(VM *vm);                        /* stack: ..., hd, tl  ->  ..., hd :: tl */
@@ -591,6 +594,81 @@ int values_equal(VM *vm, Value a, Value b);
 void vm_print_trace(VM *vm, FILE *out);
 void vm_release(VM *vm);                     /* free what a VM holds, but not the VM */
 void vm_destroy(VM *vm);                     /* and the VM */
+
+/* The debugger (runtime/debug.c; the REPL roadmap's D22 and M12). The
+   REPL installs an SML hook; where the program stops -- at a breakpoint, a
+   step, a pause, a raise -- the VM pushes a frame of `<debug>`, a function
+   it makes, above the frame that stopped, which calls the hook with the
+   event and, when the hook returns, takes the frame off again and goes on
+   (rt_debug_return): from the instruction it stopped at, or with the
+   exception it stopped for. Nothing of it costs while it is off. In debug
+   mode (`on`) the driver runs runtime/register's debug loop, which looks
+   at every instruction for a new line, and compiled code leaves for it at
+   its next poll (bit 2 of VM.interrupt). */
+enum { DBG_BREAK = 1, DBG_STEP = 2, DBG_PAUSE = 3, DBG_RAISE = 4, DBG_UNCAUGHT = 5 };
+enum { DBG_GO = 0, DBG_STEP_IN = 1, DBG_STEP_OVER = 2, DBG_STEP_OUT = 3, DBG_ABORT = 4 };
+#define DBG_NOKEY UINT32_MAX
+typedef struct Debugger {
+    int on;                  /* debug mode */
+    int running;             /* the debug loop runs: a raise stops only there */
+    int in_hook;             /* the hook runs: nothing stops */
+    int check;               /* the debug loop looks at each instruction: armed, or debug mode ended */
+    int raise_mode;          /* 0 none, 1 every raise, 2 a raise the REPL's handler takes */
+    int pauses;              /* the user's interrupt pauses the program rather than raising */
+    int pending;             /* a pause asked for: stop at the next instruction of the user's */
+    int skip_raise;          /* rt_debug_return raising what it stopped for */
+    int step;                /* DBG_GO or DBG_STEP_*, and the frame it is of */
+    size_t step_fp;
+    int resume;              /* how the stop ends: DBG_GO, or DBG_ABORT (the interrupt's exception raised) */
+    size_t hook;             /* the hook closure, a handle (heap.c) */
+    int has_hook;
+    uint32_t func;           /* <debug>'s number, UINT32_MAX until made */
+    uint32_t user_files;     /* files from this one on are the user's; before it the library's */
+    int event;               /* the stop: what, of which frame, at which pc, and the REPL's frame below the user's */
+    size_t stop_fp;
+    uint32_t stop_pc;
+    size_t stop_floor;
+    /* lines: per function, a key per byte of its code, (file + 1) << 20 |
+       line, made the first time the debug loop runs it; per frame, the key
+       last seen there (DBG_NOKEY in a frame just made); the breakpoints,
+       sorted keys */
+    uint32_t nfuncs;
+    uint32_t **keys;
+    size_t nframe_keys;
+    uint32_t *frame_key;
+    uint32_t nbreaks, breaks_cap;
+    uint32_t *breaks;
+    /* the collector's liveness, put aside in debug mode: every register a
+       root, so that a variable dead where its frame waits keeps its value
+       for the debugger to show */
+    uint64_t (*frame_live)(struct VM *vm, uint32_t func, uint32_t ret_pc);
+} Debugger;
+Debugger *dbg_get(VM *vm);                   /* made on first use; NULL with no memory */
+void dbg_free(VM *vm);
+void dbg_update(Debugger *d);                /* check, from the rest */
+void dbg_set_on(VM *vm, int on);
+int dbg_pause(VM *vm);                       /* a poll's: the user's interrupt as a pause, debug mode on; 1 when it is one */
+uint32_t dbg_key_slow(VM *vm, uint32_t func, uint32_t pc);
+static inline uint32_t dbg_key(VM *vm, Debugger *d, uint32_t func, uint32_t pc) {
+    if (func < d->nfuncs && d->keys[func]) return d->keys[func][pc - vm->prog.funcs[func].code_offset];
+    return dbg_key_slow(vm, func, pc);
+}
+void dbg_new_frame(VM *vm);                  /* the debug loop's call: the frame on top is new */
+int dbg_event(VM *vm, uint32_t pc, uint32_t key);   /* the debug loop at an instruction it looks at: 1 when it stopped */
+int dbg_raise(VM *vm, Value exn);            /* vm_raise's: 1 when it stopped */
+int dbg_in_user(const VM *vm);               /* the user's code runs: a frame above the REPL's handler */
+/* whether a poll leaves for the debug loop (bit 2), or makes the user's
+   interrupt a pause */
+static inline int vm_debug_leaves(VM *vm) {
+    return (vm->interrupt & 2) || ((vm->interrupt & 1) && vm->dbg && vm->dbg->pauses && !vm->interrupt_mask && dbg_pause(vm));
+}
+/* The code of <debug>, in the VM's instruction set, at out (64 bytes);
+   its length, 0 where the VM has no debugger (runtime/stack) */
+uint32_t debug_function_code(uint8_t *out, uint32_t *nlocals);
+/* A function added to the program (runtime/loader.c): its number, or
+   UINT32_MAX and why in err */
+uint32_t program_add_function(VM *vm, const char *name, const uint8_t *code, uint32_t len, uint32_t nlocals,
+                              uint32_t arity, char *err, size_t errlen);
 
 /* interp.c */
 int vm_run(VM *vm);                          /* vm_start, then the loop */

@@ -9,7 +9,8 @@ documented when a comment describes it, alone or together with the entry before 
 | [`DIGEST`](sig/DIGEST.md) | 8 | 8 | 100% | 3 | 3 |
 | [`HEX`](sig/HEX.md) | 2 | 2 | 100% | 2 | 2 |
 | [`HMAC`](sig/HMAC.md) | 4 | 4 | 100% | 3 | 3 |
-| **all** | 14 | 14 | 100% | 8 | 8 |
+| [`MURMUR2`](sig/MURMUR2.md) | 1 | 1 | 100% | 1 | 1 |
+| **all** | 15 | 15 | 100% | 9 | 9 |
 
 ## Members a signature describes
 
@@ -18,12 +19,12 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-3 structures have a page, with 14 members, of which 14 (100%) are described by a signature.
+4 structures have a page, with 15 members, of which 15 (100%) are described by a signature.
 
 ## Examples that are run
 
 Every example is a closed expression of type `bool` that is true, and every counterexample a closed claim
-that does not hold: each is elaborated when these pages are made and tried by the test suite: 9 of them, in [`DIGEST`](sig/DIGEST.md) (4), [`HEX`](sig/HEX.md) (2), [`HMAC`](sig/HMAC.md) (3).
+that does not hold: each is elaborated when these pages are made and tried by the test suite: 10 of them, in [`DIGEST`](sig/DIGEST.md) (4), [`HEX`](sig/HEX.md) (2), [`HMAC`](sig/HMAC.md) (3), [`MURMUR2`](sig/MURMUR2.md) (1).
 
 ## Laws that are run
 

@@ -54,7 +54,12 @@ reads a line at a time, as on a pipe;
 .B \-\-engine
 is the session for a front in another process, JSON-RPC 2.0 on the
 descriptors 3 and 4
-.RI ( docs/repl-protocol.md ).
+.RI ( docs/repl-protocol.md ),
+and
+.B \-\-dap
+the debugger of an editor, the Debug Adapter Protocol on the standard
+input and output
+.RI ( docs/dap.md ).
 The wrapper does this, and the compiler never sees the option.
 .TP
 .BI \-o " FILE"

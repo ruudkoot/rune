@@ -666,6 +666,68 @@ The REPL catches it ([repl.md](repl.md), *Interrupts*). `tests/lang`'s
 catches the interrupt, as Ctrl-C does; `tests/repl/interrupt.in` sends the
 REPL `SIGINT` while a declaration loops.
 
+The flag has two bits: 1 the user's interrupt, which the system layer's
+handler writes and the reads of a terminal look at, and 2 the debugger's
+(*The debugger*), which only makes compiled code leave for the interpreter
+at its next poll.
+
+## The debugger
+
+The REPL's debugger stops the program at a breakpoint, a step, a pause or
+a raise, and asks the user what to do on the frames it stopped in, in the
+same process and on the same stack ([repl.md](repl.md), *The debugger*;
+docs/plans/repl.md, D22 and M12; `runtime/debug.c`). Nothing of it costs a
+program that is not being debugged: the polls are the interrupt's, and the
+debug loop is a loop of its own.
+
+* **The hook.** The REPL gives the VM an SML function, the hook
+  (`rt_debug_hook`), and the VM makes a function of its own, `<debug>`:
+  it calls the hook with the event, then `rt_debug_return`. A stop pushes a
+  frame of `<debug>` above the frame that stopped -- its return the
+  instruction it stopped at -- and goes on in it, in the same loop: the VM
+  does not call SML from C, it makes a call as `CALL` would. The hook runs
+  the REPL's own loop on top of the stopped frames, and returns when the
+  user says how to go on; `rt_debug_return` then takes the frame off and
+  goes on at the instruction, or raises the exception the stop was for.
+  Nothing stops while the hook runs.
+* **Debug mode.** While anything can stop the program, the driver runs the
+  debug loop: a third copy of the register loop, interpreted throughout --
+  it enters no compiled code, and a frame that compiled code was waiting in
+  returns into the interpreter, as a frame of an image does -- which looks
+  at each instruction first: the key of its line, `(file + 1) << 20 |
+  line`, from a table made per function the first time it runs there, set
+  against the key last seen in the same frame. Turning debug mode on sets
+  the debugger's bit of the interrupt's flag, so compiled code leaves at
+  its next poll; the interpreter's other loops leave at theirs, the
+  instruction begun again in the debug loop. In debug mode every register
+  of every frame is a root of the collector, so that a variable that is
+  dead where its frame waits keeps its value for the debugger.
+* **Stops.** A breakpoint is a key: the debug loop stops where a frame comes
+  to its line from another. A step stops at the next new line of the user's
+  files (`rt_debug_user`: those after the files the program had when the
+  REPL started), of any frame, of the frame or one below it, or once the
+  frame is left, as `rt_debug_step` says; a step that returns into the
+  library's code goes on as if it had begun there. The user's interrupt
+  pauses rather than raises where the mode says so (8): a poll, in any
+  loop or in compiled code, leaves for the debug loop, which stops at the
+  instruction. A raise stops in `vm_raise`, before anything unwinds,
+  where the mode says so -- every raise (2), or one the REPL's handler takes
+  (4) -- in the debug loop only. A stop is only ever in the user's code: a
+  frame above the one the REPL's handler is in (`rt_raise_mark`).
+* **What the hook reads.** `rt_debug_frames` is the stop's frames, as
+  `rt_trace` gives them; `rt_debug_where` a frame's function and where it
+  is in it, which the REPL finds the variables of; `rt_debug_live` what a
+  register holds -- nothing where it is dead, an immediate, a pointer -- and
+  `rt_debug_local` and `rt_debug_env` a register of the frame and a slot of
+  its closure, at any type, which the REPL reads at the type the compiler
+  gave the variable. `rt_debug_exn` is the exception of a stop at a raise.
+* **Not in an image.** The debugger is a process's: an image keeps none of
+  it, and `runevm-stack`, which has no debug loop, refuses the hook.
+
+`tests/repl/debug.in` stops a program at every mode of the JIT and wants the
+same frames and values; `tests/terminal/repl-debug.script` pauses a loop
+running in compiled code.
+
 ## The terminal
 
 A program that edits what is typed at it -- the REPL's line editor,

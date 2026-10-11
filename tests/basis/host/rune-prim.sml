@@ -1422,6 +1422,20 @@ struct
   fun rt_interrupt_catch (_ : exn) = false
   fun rt_interrupt_mask (_ : bool) = false
   fun rt_interrupt_is (_ : exn) = false
+  (* a host has no debugger of Rune's VM *)
+  fun rt_debug_hook (_ : int -> unit) = false
+  fun rt_debug_mode (_ : int) = 0
+  fun rt_debug_user () = ()
+  fun rt_debug_break (_ : string, _ : int, _ : bool) = 0
+  fun rt_debug_step (_ : int) = ()
+  fun rt_debug_frames () : (int * string * string * int * int) list = []
+  fun rt_debug_where (_ : int) = (~1, 0)
+  fun rt_debug_live (_ : int, _ : int) = 0
+  fun rt_debug_local (_ : int, _ : int) : 'a = raise Fail "rt_debug_local: Rune's alone"
+  fun rt_debug_env (_ : int, _ : int) : 'a = raise Fail "rt_debug_env: Rune's alone"
+  fun rt_debug_exn () : exn = raise Fail "rt_debug_exn: Rune's alone"
+  fun rt_debug_return (_ : 'a) = ()
+  fun rt_debug_program () = 0
   (* Terminal is Rune's alone (host no): a host has no terminal of a
      line editor here, and lib/terminal has a Terminal over Posix.TTY for
      the hosts *)

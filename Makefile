@@ -112,7 +112,7 @@ BUILDGEN := $(BUILDFILES) $(VERSIONGEN)
 # build/librune.a, which bin/runevm-stack links, and so will a program runeopt
 # makes (docs/native.md); the other VMs compile the same list.
 SYS ?= posix
-RT_SRCS := runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
+RT_SRCS := runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
 VM_SRCS := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_$(SYS).c
 VM_HDRS := runtime/vm.h runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
 RT_OBJS := $(patsubst runtime/%.c,build/librune/%.o,$(RT_SRCS) runtime/sys/sys_$(SYS).c)
@@ -148,7 +148,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
+.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
 
 all: vm boot runedoc runeopt manifests basis-cache
 
@@ -468,13 +468,13 @@ bin/runevm-stack: runtime/main.c runtime/stack/interp.c build/librune.a $(VM_HDR
 # runtime/register's first loop (docs/plans/middle-end.md, M5): the register bytecode,
 # on the runtime of runevm-stack. Its own instruction set's part (runtime/register/isa_regs.c)
 # is linked before build/librune.a, whose runtime/stack/isa_stack.c it takes the place of.
-NEW_HDRS := runtime/register/regvm.h runtime/register/live.h runtime/register/regops.h runtime/register/reg_cases.h runtime/register/reg_labels.h runtime/register/reg_loop.h runtime/register/fastprim.h runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
+NEW_HDRS := runtime/register/regvm.h runtime/register/live.h runtime/register/regops.h runtime/register/reg_cases.h runtime/register/reg_labels.h runtime/register/reg_loop.h runtime/register/reg_words.h runtime/register/fastprim.h runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
 # RUNE_JIT=0 builds it without the JIT (docs/plans/jit.md): the
 # interpreter alone, which refuses --jit.
 RUNE_JIT ?= 1
 JIT_SRCS := runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c
 JIT_HDRS := runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/asm.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
-NEW_LOOP := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS)
+NEW_LOOP := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS)
 bin/runevm: $(NEW_LOOP) build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) $(RT_INC) -o $@ $(NEW_LOOP) build/librune.a -lm
@@ -499,7 +499,7 @@ bin/runevm-stack-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 
 # runtime/register with the sanitizers: its loop, its instruction set's part, and the
 # runtime but for the stack bytecode's part
-NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
+NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
 bin/runevm-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-asan
 	@mkdir -p bin
 	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer $(RT_INC) -o $@ $(NEW_SRCS) -lm
@@ -655,7 +655,7 @@ WINCFLAGS32 ?= -msse2 -mfpmath=sse -Wl,--large-address-aware
 WIN_SRCS    := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_win.c
 # runtime/register for Windows: its loop and its instruction set's part in place of
 # the stack bytecode's (runtime/stack/isa_stack.c), as bin/runevm-asan is built
-WIN_NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_win.c
+WIN_NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_win.c
 WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32 -lpsapi
 
 # windows_dlls CC: refuse $@ when it imports a DLL whose name starts with lib
@@ -741,7 +741,7 @@ A64FLAGS   ?= --target=aarch64-linux-gnu -B$(A64ROOT)/bin -L$(A64ROOT)/lib -I$(A
               -Wl,-dynamic-linker,$(A64ROOT)/lib/ld-linux-aarch64.so.1 -Wl,-rpath,$(A64ROOT)/lib
 QEMUA64    ?= qemu-aarch64
 JIT_SRCS_A64 := runtime/register/jit.c runtime/register/jit/a64.c runtime/register/jit/asm_a64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c
-NEW_SRCS_A64 := runtime/main.c runtime/register/interp.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS_A64) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
+NEW_SRCS_A64 := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS_A64) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
 PORT_TIMEOUT ?= 900
 
 portability: bin/runevm-stack32 bin/runevm-stack-ppc64 bin/runevm32 bin/runevm-ppc64 bin/runevm-aarch64
@@ -928,7 +928,7 @@ REPL_SRCS := build/config.sml $(SOURCES) $(REPL_TERMINAL) lib/pretty/pretty_sig.
              lib/markdown/entities.sml lib/markdown/markdown_sig.sml lib/markdown/markdown.sml \
              lib/jsonrpc/framing_sig.sml lib/jsonrpc/framing.sml lib/jsonrpc/jsonrpc_sig.sml lib/jsonrpc/jsonrpc.sml \
              src/repl/show.sml src/repl/session.sml src/repl/scan.sml src/repl/highlight.sml src/repl/complete.sml \
-             src/repl/front.sml src/repl/doc.sml src/repl/search.sml src/repl/repl.sml src/repl/commands.sml \
+             src/repl/front.sml src/repl/doc.sml src/repl/search.sml src/repl/repl.sml src/repl/debug.sml src/repl/commands.sml \
              src/repl/engine.sml src/repl/protocol.sml src/main/repl-main.sml
 bin/rune-repl.units/units: bin/rune-boot $(REPL_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
 	rm -rf bin/rune-repl.units
@@ -941,7 +941,7 @@ bin/rune-repl.load.rbc: bin/rune-boot src/repl/load.sml lib/basis/MANIFEST
 bin/rune-repl.img: bin/rune-repl.units/units bin/rune-repl.load.rbc bin/runevm docs/generated/basis/members.json
 	bin/runevm --heap-size 67108864 bin/rune-repl.load.rbc bin/rune-repl.units/units --make-image $@ < /dev/null
 bin/rune-repl: bin/rune-repl.img
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size 67108864 --restore "$$d/rune-repl.img" -- "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ "$$1" = --dap ]; then shift; exec "$$d/rune-dap" "$$@"; fi\nexec "$$d/runevm" --heap-size 67108864 --restore "$$d/rune-repl.img" -- "$$@"\n' > $@
 	chmod +x $@
 # the same for Windows' command prompt, beside runevm.exe (M6)
 bin/rune-repl.cmd: Makefile
@@ -957,15 +957,27 @@ test-repl: bin/rune-repl bin/runevm
 
 # rune-kernel, a Jupyter kernel for Standard ML (docs/kernel.md): a bridge
 # in SML over lib/jupyter that drives the REPL's engine as its child
-bin/rune-kernel.rbc: $(RUNE) src/kernel/kernel.sml manifests \
+bin/rune-kernel.rbc: $(RUNE) src/dap/translate.sml src/kernel/kernel.sml manifests \
                      $(wildcard lib/jupyter/*.sml lib/zmtp/*.sml lib/digest/*.sml lib/json/*.sml lib/jsonrpc/*.sml)
-	$(RUNE) --library jupyter --library jsonrpc src/kernel/kernel.sml -o $@
+	$(RUNE) --library jupyter --library jsonrpc --library digest src/dap/translate.sml src/kernel/kernel.sml -o $@
 bin/rune-kernel: bin/rune-kernel.rbc bin/rune-repl.img bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-kernel.rbc" --vm "$$d/runevm" --image "$$d/rune-repl.img" --program "$$d/rune-kernel.rbc" "$$@"\n' > $@
 	chmod +x $@
 kernel: bin/rune-kernel
 test-kernel: bin/rune-kernel
 	sh tests/kernel/run.sh
+
+# rune-dap, the Debug Adapter Protocol for Standard ML (docs/dap.md): an
+# adapter in SML over lib/dap that drives the REPL's engine as its child;
+# `rune-repl --dap` is it
+bin/rune-dap.rbc: $(RUNE) src/dap/translate.sml src/dap/adapter.sml manifests $(wildcard lib/dap/*.sml lib/json/*.sml lib/jsonrpc/*.sml)
+	$(RUNE) --library dap --library jsonrpc src/dap/translate.sml src/dap/adapter.sml -o $@
+bin/rune-dap: bin/rune-dap.rbc bin/rune-repl.img bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-dap.rbc" --vm "$$d/runevm" --image "$$d/rune-repl.img" "$$@"\n' > $@
+	chmod +x $@
+dap: bin/rune-dap
+test-dap: bin/rune-dap bin/rune-repl
+	python3 tests/dap/run.py
 
 # The REPL's engine and its protocol (docs/repl-protocol.md): each script
 # of tests/repl-protocol played to rune-repl --engine, as a front drives it
@@ -1355,7 +1367,7 @@ check:
 	@$(MAKE) --no-print-directory test-build
 	@$(MAKE) --no-print-directory check-reproducible
 	@$(MAKE) --no-print-directory test-serve
-	@$(MAKE) --no-print-directory test-repl test-terminal test-diagnostics test-repl-protocol test-kernel
+	@$(MAKE) --no-print-directory test-repl test-terminal test-diagnostics test-repl-protocol test-kernel test-dap
 	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory test-register
 	@$(MAKE) --no-print-directory test-register-jit

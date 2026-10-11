@@ -112,7 +112,80 @@ struct
                                       ("trace", Json.Array (List.map frameJson trace))])]
 
   val methods = ["initialize", "ping", "eval", "use", "reload", "isComplete", "complete", "inspect", "typeAt",
-                 "check", "value/children", "value/release", "interrupt", "shutdown"]
+                 "check", "value/children", "value/release", "interrupt", "shutdown",
+                 "debug/setBreakpoints", "debug/setRaise", "debug/configure",
+                 "debug/frames", "debug/variables", "debug/evaluate", "debug/continue"]
+
+  (* ---- the debugger's (docs/plans/repl.md, D22 and M12; src/repl/debug.sml) ---- *)
+
+  fun stopFrames () : Json.value =
+    case !ReplDebug.current of
+      SOME {frames, ...} =>
+        Json.Array (List.tabulate (List.length frames, fn i =>
+                      let val {function, file, line, column, ...} = List.nth (frames, i)
+                      in Json.Object [("id", int i), ("function", str function), ("file", str file), ("line", int line),
+                                      ("column", int column)] end))
+    | NONE => Json.Array []
+
+  fun stopped () =
+    raise R.Failed {code = ~32003, message = "the program is not stopped", data = NONE}
+
+  (* the frame of the stop a request names (its frame, 0 by default), looked at *)
+  fun frameOf (params : Json.value option) : int =
+    let val i = case Option.mapPartial Json.toInt (field (params, "frame")) of SOME i => i | NONE => 0
+    in
+      if not (ReplDebug.isStopped ()) then stopped ()
+      else (ignore (ReplDebug.selectFrame (Int.toString i))
+            handle Fail m => raise R.Failed {code = R.invalidParams, message = m, data = NONE});
+      i
+    end
+
+  fun debugAnswer (method : string, params : Json.value option) : Json.value =
+    case method of
+      "debug/setBreakpoints" =>
+        let
+          val path = ReplDebug.fileFor (string (params, "path"))
+          val lines = case field (params, "lines") of
+                        SOME (Json.Array ls) => List.mapPartial Json.toInt ls
+                      | _ => raise R.Failed {code = R.invalidParams, message = "wants lines", data = NONE}
+          val () = ReplDebug.ensure ()
+          val () = List.app (fn (f, l) => if f = path then ReplDebug.clearBreak (f, l) else ()) (!ReplDebug.breaks)
+        in
+          Json.Object [("breakpoints",
+                        Json.Array (List.map (fn l => Json.Object [("line", int l),
+                                                                    ("verified", Json.Bool (ReplDebug.setBreak (path, l) > 0))])
+                                             lines))]
+        end
+    | "debug/setRaise" =>
+        (ReplDebug.setRaises (case string (params, "mode") of
+                                "none" => 0 | "all" => 1 | "uncaught" => 2
+                              | m => raise R.Failed {code = R.invalidParams, message = "no mode " ^ m, data = NONE});
+         Json.Null)
+    | "debug/configure" =>
+        (case field (params, "pause") of SOME (Json.Bool b) => ReplDebug.setPauses b | _ => ();
+         Json.Null)
+    | "debug/frames" => if ReplDebug.isStopped () then stopFrames () else stopped ()
+    | "debug/variables" =>
+        let
+          val i = frameOf params
+          val k = #k (valOf (ReplDebug.selectedFrame ()))
+        in
+          Json.Array (List.map (fn (n, p, t) =>
+                                  Json.Object [("name", str n), ("type", str t),
+                                               ("shown", str (ReplEngine.shown p)), ("handle", int (ReplEngine.hold p)),
+                                               ("more", Json.Bool (ReplEngine.more p))])
+                               (ReplDebug.collect k))
+          before ignore i
+        end
+    | "debug/evaluate" => (ignore (frameOf params); outcome (ReplEngine.eval (string (params, "text"))))
+    | "debug/continue" =>
+        if not (ReplDebug.isStopped ()) then stopped ()
+        else
+          (ReplDebug.go (case string (params, "mode") of
+                           "continue" => 0 | "stepIn" => 1 | "next" => 2 | "stepOut" => 3 | "abort" => 4
+                         | m => raise R.Failed {code = R.invalidParams, message = "no mode " ^ m, data = NONE});
+           Json.Null)
+    | _ => raise R.Unknown
 
   val initialized = ref false
   exception Shutdown
@@ -134,7 +207,8 @@ struct
         if not (!initialized) then raise R.Failed {code = ~32002, message = "initialize first", data = NONE}
         else
           case method of
-            "eval" => outcome (ReplEngine.eval (string (params, "text")))
+            "eval" => outcome (ReplEngine.evalAs (string (params, "text"),
+                                                  case field (params, "path") of SOME (Json.String p) => SOME p | _ => NONE))
           | "use" => outcome (ReplEngine.use (string (params, "path")))
           | "reload" => outcome (ReplEngine.reload (case field (params, "force") of SOME (Json.Bool b) => b | _ => false))
           | "isComplete" =>
@@ -166,7 +240,7 @@ struct
                  SOME (Json.Array hs) => (ReplEngine.release (List.mapPartial Json.toInt hs); Json.Null)
                | _ => raise R.Failed {code = R.invalidParams, message = "wants handles", data = NONE})
           | "interrupt" => Json.Null     (* idle: nothing runs; while code runs, the front's SIGINT *)
-          | _ => raise R.Unknown
+          | _ => debugAnswer (method, params)
 
   (* ---- the program's input, asked of the front ---- *)
 
@@ -247,8 +321,32 @@ struct
         case next c of
           NONE => ()
         | SOME text => (dropPending (); one text; loop ())
+      (* at a stop of the debugger: the front told, and its requests served
+         until one says how the program goes on (debug/continue), or the
+         channel ends; masked, as the wait is *)
+      fun atStop event =
+        let
+          val reason = case event of 1 => "breakpoint" | 2 => "step" | 3 => "pause" | _ => "exception"
+          val exn = if event >= 4 then SOME (RuneRuntime.debugExn ()) else NONE
+          fun until () =
+            if isSome (!ReplDebug.resume) then ()
+            else case next c of
+                   NONE => ReplDebug.resume := SOME 0
+                 | SOME text => (one text; until ())
+        in
+          notify (c, "debug/stopped",
+                  Json.Object ([("reason", str reason), ("description", str (ReplDebug.eventName event)),
+                                ("frames", stopFrames ())]
+                               @ (case exn of
+                                    SOME e => [("exception", Json.Object [("name", str (General.exnName e)),
+                                                                           ("message", str (General.exnMessage e))])]
+                                  | NONE => [])));
+          ReplLoop.masked until
+          handle Shutdown => OS.Process.exit OS.Process.success
+        end
     in
       ReplLoop.numbered := true;
+      ReplDebug.stopHook := atStop;
       inputFromFront c;
       (* what the program shows with Display, given to the front as it is
          shown, after what it printed before *)

@@ -157,7 +157,9 @@ def run(path, subst):
                         nudge = time.monotonic() + 0.5
                     got = pane("pane_dead_status")
                 if status is not None and got != status:
-                    raise Failure("the program ended with %s, not %s" % (got or "no status", status))
+                    by = pane("pane_dead_signal")
+                    raise Failure("the program ended with %s, not %s" % (got or ("signal " + by if by else "no status"),
+                                                                         status))
             elif command == "sleep":
                 time.sleep(int(rest) / 1000.0)
             else:

@@ -1,6 +1,6 @@
 # Digests
 
-[How to read these pages](conventions.md) &middot; [the top-level environment](top-level.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [types that are one type](types.md) &middot; [readings of the specification](readings.md) &middot; [what is documented](coverage.md) &middot; index: [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [m](index/m.md) [n](index/n.md) [s](index/s.md) [t](index/t.md) [u](index/u.md)
+[How to read these pages](conventions.md) &middot; [the top-level environment](top-level.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [types that are one type](types.md) &middot; [readings of the specification](readings.md) &middot; [what is documented](coverage.md) &middot; index: [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [h](index/h.md) [m](index/m.md) [n](index/n.md) [s](index/s.md) [t](index/t.md) [u](index/u.md)
 
 ## Digests
 
@@ -9,6 +9,12 @@
 | [`DIGEST`](sig/DIGEST.md) | A hash function that reads its message in pieces: the context holds what it has read, and `finish` gives the digest, as raw bytes. | required | 8 of 8 |
 | [`HEX`](sig/HEX.md) | Bytes written as hexadecimal digits, two to a byte, and read back. | required | 2 of 2 |
 | [`HMAC`](sig/HMAC.md) | HMAC (RFC 2104): a message authenticated by a key, over a hash function, and the comparison of two of them in a time that does not depend on where they differ. | required | 4 of 4 |
+
+## Data formats
+
+| Signature |  | Status | Documented |
+| --- | --- | --- | --- |
+| [`MURMUR2`](sig/MURMUR2.md) | MurmurHash2, 32 bits (Austin Appleby's, on x86): a fast hash that is no digest -- it resists no adversary -- which tools agree on by name, as JupyterLab's debugger names a notebook's cell by the hash of its code. | required | 1 of 1 |
 
 ## Functors
 

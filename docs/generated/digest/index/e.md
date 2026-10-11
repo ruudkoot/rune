@@ -1,6 +1,6 @@
 # Index: E
 
-[Overview](../README.md) &middot; [b](b.md) [c](c.md) [d](d.md) **e** [f](f.md) [m](m.md) [n](n.md) [s](s.md) [t](t.md) [u](u.md)
+[Overview](../README.md) &middot; [b](b.md) [c](c.md) [d](d.md) **e** [f](f.md) [h](h.md) [m](m.md) [n](n.md) [s](s.md) [t](t.md) [u](u.md)
 
 - `empty` (val): [DIGEST](../sig/DIGEST.md#val-empty)
 - `equal` (val): [HMAC](../sig/HMAC.md#val-equal)

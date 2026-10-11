@@ -1,6 +1,6 @@
 # Index: B
 
-[Overview](../README.md) &middot; **b** [c](c.md) [d](d.md) [e](e.md) [f](f.md) [m](m.md) [n](n.md) [s](s.md) [t](t.md) [u](u.md)
+[Overview](../README.md) &middot; **b** [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) [m](m.md) [n](n.md) [s](s.md) [t](t.md) [u](u.md)
 
 - `blockSize` (val): [DIGEST](../sig/DIGEST.md#val-blocksize)
 

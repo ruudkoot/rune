@@ -1,0 +1,51 @@
+# The debugger at the terminal (docs/repl.md, The debugger): a breakpoint,
+# the stop with its line, the debugger's prompt, the frame's variables and
+# an expression among them, a step, and on; then Ctrl-C, with :set pause
+# on, pausing a computation that does not end where it is, and :abort.
+# Not run on Windows, for the reason repl-interrupt is not.
+start 80 24 @REPL@
+wait ^-$
+send :break 3
+keys Enter
+wait which file
+send :break stdIn#1:3
+keys Enter
+wait ^breakpoint 1 at stdIn#1:3
+send fun f x =
+keys Enter
+send let val y = x * 2
+keys Enter
+send in y + 1
+keys Enter
+send end;
+keys Enter
+wait ^val f = fn : int -> int$
+send f 20;
+keys Enter
+wait stopped at a breakpoint: in f at stdIn#1:3:\d+\n +3 \|\s+in y \+ 1\ndebug>$
+send :locals
+keys Enter
+wait val x = 20 : int\nval y = 40 : int\ndebug>$
+send x + y;
+keys Enter
+wait val it = 60 : int\ndebug>$
+send :continue
+keys Enter
+wait ^val it = 41 : int\n-$
+send :set pause on
+keys Enter
+send fun loop (n : int) = if n = 0 then 0 else loop (n - 1);
+keys Enter
+wait ^val loop = fn
+send loop 100000000000;
+keys Enter
+sleep 500
+keys C-c
+wait stopped at a pause: in loop at stdIn#\d+:1:\d+
+wait debug>$
+send :abort
+keys Enter
+wait Interrupt\n  interrupted in loop at stdIn#\d+:1:\d+ \(:bt for the rest\)\n-$
+send val () = OS.Process.exit OS.Process.success;
+keys Enter
+exited 0

@@ -77,6 +77,25 @@ struct
 
   exception Died
 
+  (* ---- the debugger's state (docs/kernel.md, The debugger) ---- *)
+
+  (* a debugger is attached: cells are compiled under the files that name
+     them (dumpCell); the program is at a stop; the interrupt the notebook
+     asked for while the engine pauses at one (its abort, not a stop); the
+     numbers of DAP's messages the kernel sends *)
+  val debugging = ref false
+  val stopped = ref false
+  val interrupting = ref false
+  val dapSeq = ref 0
+  fun dapEvent (name : string, body : Json.value) : Json.value =
+    (dapSeq := !dapSeq + 1;
+     Json.Object [("seq", Json.int (!dapSeq)), ("type", Json.String "event"), ("event", Json.String name), ("body", body)])
+
+  (* answers to requests other than the one awaited: one awaited within
+     another's wait, the debugger's (a request of the control channel's
+     while a cell runs) *)
+  val stash : (R.id * R.outcome) list ref = ref []
+
   (* ---- the wait for an answer, while the program runs ---- *)
 
   (* the engine's answer to the request id, the program's output published
@@ -101,7 +120,18 @@ struct
           SOME text =>
             (case R.decode text of
                [R.Message (R.Response {id = SOME i, outcome})] =>
-                 if i = id then SOME outcome else NONE
+                 if i = id then SOME outcome else (stash := (i, outcome) :: !stash; NONE)
+             | [R.Message (R.Notification {method = "debug/stopped", params = SOME p})] =>
+                 (drain (#out e, "stdout"); drain (#errs e, "stderr");
+                  if !interrupting andalso DapEngine.string ("reason", p) = "pause" then
+                    (* the notebook's interrupt, which pauses while a
+                       debugger is attached: raised where it paused *)
+                    (interrupting := false;
+                     send (e, R.Request {id = R.String "abort", method = "debug/continue",
+                                         params = SOME (Json.Object [("mode", Json.String "abort")])}))
+                  else (stopped := true; #publish req ("debug_event", dapEvent ("stopped", DapEngine.stoppedBody p)));
+                  #idle req ();
+                  NONE)
              | [R.Message (R.Notification {method = "display", params = SOME p})] =>
                  (drain (#out e, "stdout"); drain (#errs e, "stderr");
                   #publish req ((case field ("update", p) of SOME (Json.Bool true) => "update_display_data"
@@ -126,8 +156,12 @@ struct
                   NONE)
              | _ => NONE)
         | NONE => NONE
+      fun stashed () =
+        case List.find (fn (i, _) => i = id) (!stash) of
+          SOME (_, outcome) => (stash := List.filter (fn (i, _) => i <> id) (!stash); SOME outcome)
+        | NONE => NONE
       fun loop () =
-        case step () of
+        case (case stashed () of SOME found => SOME found | NONE => step ()) of
           SOME outcome => (drain (#out e, "stdout"); drain (#errs e, "stderr"); outcome)
         | NONE =>
             if not (List.null (!(#waiting e))) then loop ()
@@ -139,6 +173,7 @@ struct
                           ignore (Runtime.maskInterrupt true))
                          handle SML90.Interrupt =>
                            (ignore (Runtime.maskInterrupt true);
+                            interrupting := !debugging;
                             Posix.Process.kill (Posix.Process.K_PROC (#pid e), Posix.Signal.int))
               in
                 #idle req ();
@@ -195,14 +230,43 @@ struct
 
   fun escape s = String.translate (fn #"<" => "&lt;" | #">" => "&gt;" | #"&" => "&amp;" | c => String.str c) s
 
+  (* ---- the cells' files, which JupyterLab's debugger names them by ----
+     A cell's code is the file tmpFilePrefix, its hash (Murmur2, the seed
+     ipykernel's), tmpFileSuffix (debugInfo), which the notebook works out
+     for itself to set a cell's breakpoints, and which the cell is compiled
+     under, so that its frames are the cell's. *)
+  val seed : Word32.word = 0w3339675911
+  val cells : string option ref = ref NONE
+  fun cellDir () : string =
+    case !cells of
+      SOME d => d
+    | NONE =>
+        let
+          val tmp = case OS.Process.getEnv "TMPDIR" of SOME t => t | NONE => "/tmp"
+          val d = OS.Path.concat (tmp, "rune-kernel-" ^ SysWord.fmt StringCvt.DEC (Posix.Process.pidToWord (Posix.ProcEnv.getpid ())))
+        in
+          (OS.FileSys.mkDir d handle OS.SysErr _ => ());
+          cells := SOME (d ^ "/");
+          d ^ "/"
+        end
+  fun cellFile (code : string) : string =
+    cellDir () ^ Word32.fmt StringCvt.DEC (Murmur2.hash {seed = seed, data = code}) ^ ".sml"
+  fun dumpCell (code : string) : string =
+    let
+      val path = cellFile code
+      val out = TextIO.openOut path
+    in TextIO.output (out, code); TextIO.closeOut out; path end
+
   fun execute (e : engine, req : Jupyter.request) : Json.value =
     let
       val code = string ("code", #content req)
       val silent = bool ("silent", #content req, false)
       val () = if silent then () else count := !count + 1
       val () = #publish req ("execute_input", Json.Object [("code", Json.String code), ("execution_count", Json.int (!count))])
+      val () = (interrupting := false; stopped := false)
+      val path = if !debugging then [("path", Json.String (dumpCell code))] else []
     in
-      case call (e, req, "eval", Json.Object [("text", Json.String code)]) of
+      case call (e, req, "eval", Json.Object ([("text", Json.String code)] @ path)) of
         R.Error {message, ...} => failed (req, "EngineError", message, [message])
       | R.Result r =>
           let
@@ -290,6 +354,91 @@ struct
                    ("metadata", Json.Object [])]
     end
 
+  fun readFile (path : string) : string =
+    let val ins = TextIO.openIn path in TextIO.inputAll ins before TextIO.closeIn ins end
+
+  (* ---- the debugger: JupyterLab's, by DAP over the control channel ----
+     A debug_request is a request of DAP (src/dap/translate.sml), and its
+     debug_reply DAP's response; a stop is a debug_event. JupyterLab adds
+     debugInfo, dumpCell, inspectVariables and source (ipykernel's). *)
+  val breakpoints : (string * Json.value) list ref = ref []
+
+  fun debug (e : engine, req : Jupyter.request) : Json.value =
+    let
+      val m = #content req
+      val command = string ("command", m)
+      val args = getOpt (field ("arguments", m), Json.Object [])
+      fun response (success, rest) =
+        (dapSeq := !dapSeq + 1;
+         Json.Object ([("seq", Json.int (!dapSeq)), ("type", Json.String "response"), ("request_seq", Json.int (int ("seq", m))),
+                       ("success", Json.Bool success), ("command", Json.String command)] @ rest))
+      fun ok body = response (true, [("body", body)])
+      fun fail message = response (false, [("message", Json.String message)])
+      fun engine (method, params, f) =
+        case call (e, req, method, params) of
+          R.Result v => (ok (f v) handle Fail why => fail why)
+        | R.Error {message, ...} => fail message
+      fun quietly (method, params) = ignore (call (e, req, method, params))
+    in
+      case command of
+        "initialize" => ok (DapEngine.capabilities ())
+      | "attach" => (debugging := true; quietly ("debug/configure", Json.Object [("pause", Json.Bool true)]); ok (Json.Object []))
+      | "debugInfo" =>
+          ok (Json.Object [("isStarted", Json.Bool (!debugging)), ("hashMethod", Json.String "Murmur2"),
+                           ("hashSeed", Json.int (Word32.toInt seed)), ("tmpFilePrefix", Json.String (cellDir ())),
+                           ("tmpFileSuffix", Json.String ".sml"),
+                           ("breakpoints", Json.Array (List.map (fn (p, bs) => Json.Object [("source", Json.String p),
+                                                                                             ("breakpoints", bs)])
+                                                                (!breakpoints))),
+                           ("stoppedThreads", Json.Array (if !stopped then [Json.int 1] else [])),
+                           ("richRendering", Json.Bool false), ("exceptionPaths", Json.Array [])])
+      | "dumpCell" => ok (Json.Object [("sourcePath", Json.String (dumpCell (DapEngine.string ("code", args))))])
+      | "setBreakpoints" =>
+          let val path = case field ("source", args) of SOME s => DapEngine.string ("path", s) | NONE => ""
+          in
+            breakpoints := List.filter (fn (p, _) => p <> path) (!breakpoints)
+                           @ (case field ("breakpoints", args) of
+                                SOME (bs as Json.Array (_ :: _)) => [(path, bs)]
+                              | _ => []);
+            engine ("debug/setBreakpoints", DapEngine.breakpointsParams args, DapEngine.breakpointsBody)
+          end
+      | "setExceptionBreakpoints" => engine ("debug/setRaise", DapEngine.raiseParams args, fn _ => Json.Object [])
+      | "configurationDone" => ok (Json.Object [])
+      | "threads" => ok (DapEngine.threadsBody ())
+      | "stackTrace" => engine ("debug/frames", Json.Object [], DapEngine.stackTraceBody)
+      | "scopes" => ok (DapEngine.scopesBody args)
+      | "variables" => engine (#1 (DapEngine.variablesRequest args), #2 (DapEngine.variablesRequest args), DapEngine.variablesBody)
+      | "evaluate" =>
+          let val (method, params) = DapEngine.evaluateRequest (args, !stopped)
+          in engine (method, params, DapEngine.evaluateBody) end
+      | "pause" => (Posix.Process.kill (Posix.Process.K_PROC (#pid e), Posix.Signal.int); ok (Json.Object []))
+      | "source" =>
+          (ok (Json.Object [("content", Json.String (readFile (case field ("source", args) of
+                                                                  SOME s => DapEngine.string ("path", s)
+                                                                | NONE => "")))])
+           handle IO.Io _ => fail "no such source")
+      | "inspectVariables" => ok (Json.Object [("variables", Json.Array [])])
+      | "modules" => ok (Json.Object [("modules", Json.Array []), ("totalModules", Json.int 0)])
+      | "disconnect" =>
+          (List.app (fn (p, _) => quietly ("debug/setBreakpoints", Json.Object [("path", Json.String p), ("lines", Json.Array [])]))
+                    (!breakpoints);
+           breakpoints := [];
+           quietly ("debug/setRaise", Json.Object [("mode", Json.String "none")]);
+           quietly ("debug/configure", Json.Object [("pause", Json.Bool false)]);
+           debugging := false;
+           ok (Json.Object []))
+      | _ =>
+          case DapEngine.continueMode command of
+            SOME mode =>
+              if not (!stopped) then fail "the program is not stopped"
+              else (stopped := false; engine ("debug/continue", Json.Object [("mode", Json.String mode)], fn _ => Json.Object []))
+          | NONE => fail ("rune-kernel's debugger does not do " ^ command)
+    end
+    handle e' as Died => raise e'
+         | ex => Json.Object [("type", Json.String "response"), ("success", Json.Bool false),
+                              ("command", Json.String (string ("command", #content req))),
+                              ("message", Json.String (General.exnMessage ex))]
+
   (* ---- the kernel ---- *)
 
   fun info (implementation : string) : (string * Json.value) list =
@@ -298,10 +447,8 @@ struct
                                     ("mimetype", Json.String "text/x-sml"), ("file_extension", Json.String ".sml"),
                                     ("pygments_lexer", Json.String "sml"), ("codemirror_mode", Json.String "mllike")]),
      ("banner", Json.String ("Rune: Standard ML '97 (" ^ implementation ^ ")")),
-     ("help_links", Json.Array [])]
-
-  fun readFile (path : string) : string =
-    let val ins = TextIO.openIn path in TextIO.inputAll ins before TextIO.closeIn ins end
+     ("help_links", Json.Array []),
+     ("debugger", Json.Bool true)]
 
   (* initialize, as a front does, for its answer's implementation *)
   fun initialize (e : engine) : string =
@@ -330,6 +477,7 @@ struct
          | "inspect_request" => SOME (inspect (!engine, req))
          | "comm_info_request" => SOME (Json.Object [("status", Json.String "ok"), ("comms", Json.Object [])])
          | "history_request" => SOME (Json.Object [("status", Json.String "ok"), ("history", Json.Array [])])
+         | "debug_request" => SOME (debug (!engine, req))
          | _ => NONE)
         handle Died =>
           (again ();

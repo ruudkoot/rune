@@ -74,8 +74,10 @@ sig
      `input {prompt, password}` asks the client for a line of input on the
      stdin channel, where the request allows it (`NONE` where it does not
      or the client gave none). `idle ()`, which a handler that takes long
-     calls now and then, writes what it published and answers the
-     heartbeat. *)
+     calls now and then, writes what it published, answers the heartbeat,
+     and answers the requests of the control channel -- a debugger's
+     `debug_request`, an `interrupt_request` -- which come while the
+     handler's is in hand (not those of another handler's idle). *)
   type request = {msgType : string, content : Json.value, publish : string * Json.value -> unit,
                   input : {prompt : string, password : bool} -> string option, idle : unit -> unit}
 

@@ -2,7 +2,8 @@
 # The REPL on lib/terminal's editor (docs/plans/repl.md, M6): what is typed
 # coloured by the compiler's lexer as it is typed -- a keyword, a string, a
 # comment -- Tab completing from the session's names and a structure's
-# members, and Up going back through what was entered.
+# members, and Up going back through what was entered. A console's
+# pseudoconsole (Windows) may give the same styles in another order.
 start 80 24 @REPL@
 wait ^-$
 send val alpha = 1; val alphabet = "two" (* comment *);

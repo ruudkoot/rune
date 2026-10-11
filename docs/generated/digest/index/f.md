@@ -1,6 +1,6 @@
 # Index: F
 
-[Overview](../README.md) &middot; [b](b.md) [c](c.md) [d](d.md) [e](e.md) **f** [m](m.md) [n](n.md) [s](s.md) [t](t.md) [u](u.md)
+[Overview](../README.md) &middot; [b](b.md) [c](c.md) [d](d.md) [e](e.md) **f** [h](h.md) [m](m.md) [n](n.md) [s](s.md) [t](t.md) [u](u.md)
 
 - `finish` (val): [DIGEST](../sig/DIGEST.md#val-finish)
 - `fromBytes` (val): [HEX](../sig/HEX.md#val-frombytes)

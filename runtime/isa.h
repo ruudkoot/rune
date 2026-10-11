@@ -6,10 +6,10 @@
    .rbc, and the fingerprint of each set, which its .rbc and its images
    carry. */
 #define RBC_VERSION 6
-#define STACK_ISA_FINGERPRINT 0x0051c5a9u
-#define STACK_ISA_FINGERPRINT_HEX "0051c5a9"
-#define REG_ISA_FINGERPRINT 0x006309ddu
-#define REG_ISA_FINGERPRINT_HEX "006309dd"
+#define STACK_ISA_FINGERPRINT 0x00981b30u
+#define STACK_ISA_FINGERPRINT_HEX "00981b30"
+#define REG_ISA_FINGERPRINT 0x00379effu
+#define REG_ISA_FINGERPRINT_HEX "00379eff"
 
 /* Where control goes after an instruction (src/isa/isa.sml, flow): what
    each set's table says of its own (op_flow in runtime/stack/opcodes.h,

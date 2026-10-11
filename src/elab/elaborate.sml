@@ -437,7 +437,10 @@ struct
              let
                val stamp = freshStamp ()
                val t = fresh level
-             in Ty.bindVar (stamp, t); (stamp, t, (name, Val {scheme = t, stamp = stamp, global = isGlobal})) end)
+             in
+               Ty.bindVar (stamp, t); Ty.nameVar (stamp, name, t);
+               (stamp, t, (name, Val {scheme = t, stamp = stamp, global = isGlobal}))
+             end)
       fun elab p =
         case p of
           PWild _ => (fresh level, [])
@@ -733,6 +736,7 @@ struct
                                           in
                                             checkBindable (name, psp, true);
                                             Ty.bindVar (stamp, tv);
+                                            Ty.nameVar (stamp, name, tv);
                                             slot := SOME (PIVar (stamp, top));
                                             (name, Val {scheme = tv, stamp = stamp, global = top})
                                           end) vars
@@ -765,6 +769,7 @@ struct
                            val stamp = freshStamp ()
                            val tv = fresh (level + 1)
                            val () = Ty.bindVar (stamp, tv)
+                           val () = Ty.nameVar (stamp, #name f, tv)
                            val () = #info f := SOME (PIVar (stamp, top))
                          in (#name f, Val {scheme = tv, stamp = stamp, global = top}, tv, f) end) fundefs
           fun checkDups [] = ()

@@ -1,0 +1,39 @@
+:step
+:break tests/repl/lib/debug.sml:9
+use "tests/repl/lib/debug.sml";
+total [Circle 1.0, Square 2];
+:locals
+:bt
+:frame 1
+:locals
+:frame 0
+parts;
+size label + length shapes;
+:step
+:locals
+:bt
+:finish
+:next
+:locals
+val doubled = sum * 2.0;
+:continue
+doubled;
+:delete all
+:break tests/repl/lib/debug.sml:16
+(adder 5) 10;
+:locals
+k * x;
+:continue
+:delete 1
+:break 20
+twice 4;
+:locals
+:continue
+:delete all
+:break raise
+(fail 2 : int);
+:locals
+:abort
+:delete raise
+:break
+total [];

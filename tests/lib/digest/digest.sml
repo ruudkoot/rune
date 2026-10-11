@@ -4,7 +4,8 @@
    on messages of every length around a block's edges
    (tests/lib/digest/python.txt, which tests/lib/digest/gen-vectors.py
    wrote), a message read in random pieces, Hex
-   both ways, and equal. *)
+   both ways, and equal; MurmurHash2 against ipykernel's murmur2_x86, by
+   which JupyterLab names cells. *)
 structure DigestTest =
 struct
   val failures = ref 0
@@ -26,6 +27,14 @@ struct
      check ("a million a's", Hex.fromBytes (Sha256.finish (foldl (fn (p, c) => Sha256.update (c, p)) Sha256.empty
                                                                   (List.tabulate (1000, fn _ => times (1000, "a")))))
                              = "cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0"))
+
+  (* the values ipykernel's murmur2_x86 gives (Python), the code as UTF-8 *)
+  fun murmur2 () =
+    List.app (fn (data, seed, h) => check ("murmur2 " ^ String.toString data, Murmur2.hash {seed = seed, data = data} = h))
+      [("", 0w0, 0w0), ("a", 0w0, 0w2456313694), ("ab", 0w1, 0w1692487918), ("abc", 0w2, 0w3876204518),
+       ("abcd", 0w3, 0w1741750889), ("val x = 1 + 2", 0w3339675911, 0w641062586),
+       ("fun f x =\n  x * 2\n", 0w3339675911, 0w2832423594), ("h\195\169llo w\195\182rld", 0w42, 0w4111791591),
+       (times (100, "x"), 0wxFFFFFFFF, 0w1188873513)]
 
   fun rfc4231 () =
     let
@@ -106,7 +115,7 @@ struct
                      andalso not (HmacSha256.equal ("ab", "ac")) andalso not (HmacSha256.equal ("ab", "abc"))))
 
   fun main () =
-    (fips (); rfc4231 (); python (); pieces (); hexAndEqual ();
+    (fips (); rfc4231 (); python (); pieces (); hexAndEqual (); murmur2 ();
      print ((if !failures = 0 then "PASS" else "FAIL") ^ " digest: " ^ Int.toString (!failures) ^ " failed\n"))
 end
 

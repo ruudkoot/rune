@@ -26,6 +26,16 @@ struct
     val maskInterrupt' = _prim "rt_interrupt_mask" : bool -> bool
     val raiseMark' = _prim "rt_raise_mark" : int -> int
     val raiseTrace' = _prim "rt_raise_trace" : unit -> (string * string * int * int) list
+    val debugHook' = _prim "rt_debug_hook" : (int -> unit) -> bool
+    val debugMode' = _prim "rt_debug_mode" : int -> int
+    val debugUser' = _prim "rt_debug_user" : unit -> unit
+    val debugBreak' = _prim "rt_debug_break" : string * int * bool -> int
+    val debugStep' = _prim "rt_debug_step" : int -> unit
+    val debugFrames' = _prim "rt_debug_frames" : unit -> (int * string * string * int * int) list
+    val debugWhere' = _prim "rt_debug_where" : int -> int * int
+    val debugLive' = _prim "rt_debug_live" : int * int -> int
+    val debugExn' = _prim "rt_debug_exn" : unit -> exn
+    val debugProgram' = _prim "rt_debug_program" : unit -> int
   in
     type stats = { instructions : int, bytes : int, objects : int,
                    collections : int, live : int, heapSize : int,
@@ -145,7 +155,49 @@ struct
     fun raiseMark m = raiseMark' m
     fun raiseTrace () : frame list =
       List.map (fn (f, file, l, c) => {function = f, file = file, line = l, column = c}) (raiseTrace' ())
+
+    (* The REPL's debugger (the REPL roadmap's D22 and M12; runtime/debug.c,
+       the rt_debug primitives).
+
+       `debugHook f` makes f what the VM calls where the program stops,
+       with the event (1 a breakpoint, 2 a step, 3 a pause, 4 a raise, 5 a
+       raise the REPL's handler takes), false where the VM has no debugger.
+       `debugMode m` sets the mode -- 1 debug mode, 2 a stop at every raise
+       of the user's code, 4 at a raise the REPL's handler takes, 8 the
+       user's interrupt a pause -- and gives the one it replaces;
+       `debugUser ()` makes the files the program has the library's, where
+       a step does not stop. `debugBreak (file, line, set)` sets or clears
+       a breakpoint, and says how many places of the code begin the line.
+       While the hook runs, `debugStep m` says how the stop ends (0 on, 1
+       a step in, 2 over, 3 out, 4 the interrupt raised), `debugFrames ()`
+       is its frames, innermost first, each with the number of the VM's
+       frame (0 the one that stopped), `debugWhere k` that frame's function
+       and its pc in it, `debugLive (k, r)` what register r of it holds --
+       0 nothing, 1 an immediate, 2 a pointer -- which `RuneDebug.register`
+       reads, and `debugExn ()` the
+       exception a stop at a raise stopped for. `debugProgram ()` is how
+       many functions the program has. *)
+    fun debugHook f = debugHook' f
+    fun debugMode m = debugMode' m
+    fun debugUser () = debugUser' ()
+    fun debugBreak (file, line, set) = debugBreak' (file, line, set)
+    fun debugStep m = debugStep' m
+    fun debugFrames () = debugFrames' ()
+    fun debugWhere k = debugWhere' k
+    fun debugLive (k, r) = debugLive' (k, r)
+    fun debugExn () = debugExn' ()
+    fun debugProgram () = debugProgram' ()
   end
+end
+
+(* The debugger's reads of a stopped frame, at any type: the REPL's alone,
+   which knows the type from the compiler (`-g`). `register (k, r)` is
+   register r of frame k of the stop, `env (k, e)` slot e of the
+   environment of its closure (RuneRuntime.debugLive first). *)
+structure RuneDebug =
+struct
+  val register = _prim "rt_debug_local" : int * int -> 'a
+  val env = _prim "rt_debug_env" : int * int -> 'a
 end
 
 (* Runtime: the VM's view of the running program -- its counters, its call

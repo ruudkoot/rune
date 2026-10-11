@@ -529,44 +529,57 @@ static void undo(VM *vm, Mark m) {
     if (p->nfuncs) p->funcs[p->nfuncs - 1].code_end = p->code_len;
 }
 
-/* The function a unit's top level goes to last, when no unit follows it:
-   it returns its argument. Made the first time a unit names it, with the
-   representations every function of the program has, if they have them. */
-static int unit_return_function(VM *vm, char *err, size_t errlen) {
-    if (vm->unit_return != UINT32_MAX) return 1;
+/* A function added to the program by the VM itself: its code, its
+   registers, and the representations every function of the program has,
+   if they have them (every register `anything`, and one block),
+   checked as a unit's code is. Its number, or UINT32_MAX and why. */
+uint32_t program_add_function(VM *vm, const char *name, const uint8_t *code, uint32_t len, uint32_t nlocals,
+                              uint32_t arity, char *err, size_t errlen) {
     Program *p = &vm->prog;
-    uint8_t code[16];
-    uint32_t nlocals;
-    uint32_t len = return_function_code(code, &nlocals);
     Mark m = mark_of(vm);
-    if (!grow((void **)&p->funcs, sizeof(Function), p->nfuncs, 1) || !grow((void **)&p->code, 1, p->code_len, len))
-        return fail(err, errlen, "out of memory");
+    if (!grow((void **)&p->funcs, sizeof(Function), p->nfuncs, 1) || !grow((void **)&p->code, 1, p->code_len, len)) {
+        fail(err, errlen, "out of memory");
+        return UINT32_MAX;
+    }
     Function *fn = &p->funcs[p->nfuncs];
     memset(fn, 0, sizeof *fn);
     fn->code_offset = p->code_len;
     fn->code_end = p->code_len + len;
     fn->nlocals = nlocals;
-    fn->name = malloc(sizeof "<return>");
-    if (!fn->name) return fail(err, errlen, "out of memory");
-    memcpy(fn->name, "<return>", sizeof "<return>");
+    size_t nlen = strlen(name) + 1;
+    fn->name = malloc(nlen);
+    if (!fn->name) { fail(err, errlen, "out of memory"); return UINT32_MAX; }
+    memcpy(fn->name, name, nlen);
     if (p->nfuncs && p->funcs[0].has_meta) {
         fn->has_meta = 1;
-        fn->arity = 1;
+        fn->arity = arity;
         fn->reps = calloc(nlocals, 1);
         fn->nblocks = 1;
         fn->blocks = calloc(1, sizeof(MetaBlock));
-        if (!fn->reps || !fn->blocks) return fail(err, errlen, "out of memory");
+        if (!fn->reps || !fn->blocks) { fail(err, errlen, "out of memory"); return UINT32_MAX; }
         fn->blocks[0].pc = p->code_len;
         fn->blocks[0].params = calloc(1, sizeof(uint32_t));
-        if (!fn->blocks[0].params) return fail(err, errlen, "out of memory");
+        if (!fn->blocks[0].params) { fail(err, errlen, "out of memory"); return UINT32_MAX; }
     }
     memcpy(p->code + p->code_len, code, len);
     p->code_len += len;
     p->nfuncs++;
     uint8_t *starts = validate_program_from(p, m.nfuncs, err, errlen);
-    if (!starts) { undo(vm, m); return 0; }
+    if (!starts) { undo(vm, m); return UINT32_MAX; }
     free(starts);
-    vm->unit_return = m.nfuncs;
+    return m.nfuncs;
+}
+
+/* The function a unit's top level goes to last, when no unit follows it:
+   it returns its argument. Made the first time a unit names it. */
+static int unit_return_function(VM *vm, char *err, size_t errlen) {
+    if (vm->unit_return != UINT32_MAX) return 1;
+    uint8_t code[16];
+    uint32_t nlocals;
+    uint32_t len = return_function_code(code, &nlocals);
+    uint32_t f = program_add_function(vm, "<return>", code, len, nlocals, 1, err, errlen);
+    if (f == UINT32_MAX) return 0;
+    vm->unit_return = f;
     return 1;
 }
 

@@ -18,49 +18,8 @@
    next; elsewhere, and with -DRUNE_SWITCH, a switch does. A second copy of
    the loop prints every instruction (--trace), so that the first need not
    ask. */
-#include "regvm.h"
-#include "live.h"
-#include "fastprim.h"
-#include "jit.h"
+#include "reg_words.h"
 
-#ifndef RUNE_JIT
-#define RUNE_JIT 1
-#endif
-
-#define RUN_JIT (RUNE_JIT != 0)
-
-#if defined(__GNUC__) && !defined(RUNE_SWITCH)
-#define THREADED 1
-/* a computed goto is not ISO C, which -pedantic says of every one */
-#pragma GCC diagnostic ignored "-Wpedantic"
-#else
-#define THREADED 0
-#endif
-
-/* The words the bodies are written in (src/isa/regs.sml). The loop is
-   given the JIT's view of the program (jit), NULL where --jit is off. */
-#define R(x) (base[(x)])
-#define LIST(i) read_i32(L + 4 * (size_t)(i))
-#define PUSH(v) (*sp++ = (v))
-#define POP() (*--sp)
-#define SYNC() (vm->sp = (size_t)(sp - vm->stack), vm->pc = pc, vm->instructions = count)
-#define RELOAD() (code = p->code, pc = vm->pc, fr = &vm->frames[vm->fp], base = vm->stack + fr->base, \
-                  sp = vm->stack + vm->sp)
-#define ENTER(slot, fn) (fr = &vm->frames[vm->fp], base = (slot), sp = (slot) + (fn)->nlocals, \
-                         pc = (fn)->code_offset)
-/* room on the stack for a frame of fn whose registers begin at top: its
-   registers and its deepest stack above them; growing the stack moves it */
-#define ROOM(top, fn) \
-    do { \
-        if ((top) + (fn)->nlocals + (fn)->maxstack > vm->stack_cap) { \
-            SYNC(); \
-            vm_grow_stack(vm, (top) + (fn)->nlocals + (fn)->maxstack); \
-            base = vm->stack + fr->base; \
-            sp = vm->stack + vm->sp; \
-        } \
-    } while (0)
-#define FATAL(...) (SYNC(), vm_fatal(vm, __VA_ARGS__))
-#define EXPECT(v, kind, what) expect_obj(vm, (v), (kind), (what), sp, pc, count)
 /* the frame on top handed to the driver, where function f has native code
    (runtime/register/jit.h): the VM made exact first */
 #define HANDOVER(f) \
@@ -94,10 +53,43 @@
     } while (0)
 /* the user's interrupt, where one waits and the mask lets it, raised at
    this instruction as RAISE raises (VM.interrupt; D11): at a jump back and
-   at a call, before either does anything. Not a do-while: NEXT is
-   `continue` in the switch's loop. */
-#define POLL() \
-    if (vm_interrupted(vm)) { SYNC(); vm_interrupt(vm); RELOAD(); RAISED(); NEXT; } else (void)0
+   at a call, before either does anything. The test is of the flag whole,
+   as it was before the debugger, and what it found is the cold path's to
+   tell (poll_slow): the interrupt raised, the mask's wait, or -- where the
+   debugger makes the interrupt a pause, or has put debug mode on -- the
+   instruction, len bytes back, left to the debug loop, uncounted. Not a
+   do-while: NEXT is `continue` in the switch's loop. */
+#define POLL(len) \
+    if (vm->interrupt) { \
+        SYNC(); \
+        switch (poll_slow(vm, (len))) { \
+        case 1: RELOAD(); RAISED(); NEXT; \
+        case 2: return RUN_INTERP; \
+        default: break; \
+        } \
+    } else (void)0
+/* 0: on (the mask holds the interrupt); 1: raised; 2: the VM at the
+   instruction's start for the debug loop (runtime/debug.c). Out of the
+   loops' way, so that their code is what it was. */
+#if defined(__GNUC__)
+__attribute__((noinline, cold))
+#endif
+static int poll_slow(VM *vm, uint32_t len) {
+    if (!(vm->interrupt & 2) && vm->interrupt_mask) return 0;
+    if ((vm->interrupt & 2) || (vm->dbg && vm->dbg->pauses && dbg_pause(vm))) {
+        vm->pc -= len;
+        vm->instructions--;
+        return 2;
+    }
+    vm_interrupt(vm);
+    return 1;
+}
+/* the debug loop's look at an instruction (loop_debug, below); nothing in
+   the others */
+#define DBG_CHECK() ((void)0)
+/* a primitive put debug mode on (PRIMPUSH, PRIM_NEW_WORLD): the program to
+   the driver, which runs the debug loop */
+#define DEBUG_BEGUN() do { if (vm->dbg && vm->dbg->on) { SYNC(); return RUN_INTERP; } } while (0)
 /* on at pc in the code of function f, where it has some and a run begins
    there (M6): a return into a frame that kept no native address, a raise
    into a handler that kept none */
@@ -110,10 +102,6 @@
     } while (0)
 /* a return into native code, at the address the frame kept */
 #define RETURN_NATIVE(at_) do { SYNC(); jit->at = (at_); jit->handed_native++; return RUN_NATIVE; } while (0)
-/* the frame just pushed records where its return goes: the register of
-   the RESULT at pc, the caller's next instruction, if that is one (M7) */
-#define RESULT_OF(at_pc) \
-    (vm->frames[vm->fp].result = code[(at_pc)] == ROP_RESULT ? (uint32_t)read_i32(code + (at_pc) + 1) : UINT32_MAX)
 /* the program became another (Runtime.restore): the JIT's view of it again */
 #define NEW_PROGRAM() (jit = RUN_JIT && !vm->trace ? jit_program(vm) : NULL)
 /* after a raise (vm_raise, which left the handler it took at hp): on in the
@@ -124,16 +112,6 @@
         RESUME_NATIVE(fr->func, pc); \
         NEXT; \
     } while (0)
-
-/* The object v points to, which must be of that kind; the program stops
-   with "expected <what>" where it is not, the VM told where it is. */
-static inline Obj *expect_obj(VM *vm, Value v, int kind, const char *what, Value *sp, uint32_t pc, uint64_t count) {
-    if (!val_is(v, T_PTR) || obj_kind(val_ptr(v)) != kind) {
-        SYNC();
-        vm_fatal(vm, "expected %s", what);
-    }
-    return val_ptr(v);
-}
 
 #define LOOP_NAME loop_fast
 #define TRACED 0
@@ -146,6 +124,9 @@ static inline Obj *expect_obj(VM *vm, Value v, int kind, const char *what, Value
 #include "reg_loop.h"
 #undef LOOP_NAME
 #undef TRACED
+
+/* the debug loop (runtime/register/debug_loop.c) */
+int loop_debug(VM *vm, JitProgram *jit);
 
 /* Room on the stack for every frame there is to go as deep as its function
    does: the loop's pushes do not check. A frame made by vm_start or read
@@ -185,6 +166,15 @@ int vm_loop(VM *vm) {
 #endif
     int r = RUN_INTERP;
     for (;;) {
+        /* debug mode: the debug loop, which gives the program back when it
+           ends (runtime/debug.c) */
+        if (r == RUN_INTERP && vm->dbg && vm->dbg->on) {
+            vm->dbg->running = 1;
+            r = loop_debug(vm, NULL);
+            vm->dbg->running = 0;
+            if (r == RUN_HALT) return 0;
+            continue;
+        }
         /* the program may have become another (Runtime.restore) */
         JitProgram *jit = RUN_JIT && !vm->trace ? jit_program(vm) : NULL;   /* --trace: every instruction, interpreted */
         /* a frame handed to the interpreter whose function has code, at a

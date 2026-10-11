@@ -44,7 +44,15 @@ struct
        row ("prompt2", "the prompt of a line that continues an entry (Compiler.prompt2)",
             (fn () => !RuneCompiler.prompt2, fn v => RuneCompiler.prompt2 := v)),
        row ("time", "the time and memory of each entry (:time)", bool timing),
-       row ("watch", "reload at each prompt where a file used has changed", bool ReplLoop.watching)]
+       row ("watch", "reload at each prompt where a file used has changed", bool ReplLoop.watching),
+       row ("debug", "compile what is entered and used for the debugger (:break turns it on)",
+            (fn () => if !ReplSession.debugging then "on" else "off",
+             fn v => case v of "on" => ReplDebug.ensure () | "off" => ReplSession.debugging := false
+                             | _ => raise Fail ("on or off, not " ^ v))),
+       row ("pause", "Ctrl-C pauses the program in the debugger rather than interrupting it",
+            (fn () => if !ReplDebug.pauses then "on" else "off",
+             fn v => case v of "on" => ReplDebug.setPauses true | "off" => ReplDebug.setPauses false
+                             | _ => raise Fail ("on or off, not " ^ v)))]
     end
 
   fun set (name : string, value : string) : unit =
@@ -237,6 +245,10 @@ struct
         [{name, args, help, ...}] => ":" ^ name ^ (if args = "" then "" else " " ^ args) ^ "\n  " ^ help ^ "\n"
       | _ => raise Fail ("no command " ^ which)
 
+  (* the debugger's commands at a stop: these are first where a prefix
+     names several (:s is :step, :n :next, :c :continue, :f :frame) *)
+  val atStop = ["step", "next", "continue", "finish", "frame", "locals", "abort", "break", "delete"]
+
   fun find (word : string) : command =
     case List.filter (fn {name, ...} => name = word) (!table) of
       [c] => c
@@ -244,8 +256,13 @@ struct
         (* where a prefix names several, the first in the table, as in
            GHCi: :t is :type, :h is :help *)
         case List.filter (fn {name, ...} => String.isPrefix word name) (!table) of
-          c :: _ => c
-        | [] => raise Fail ("no command :" ^ word ^ " (:help lists them)")
+          [] => raise Fail ("no command :" ^ word ^ " (:help lists them)")
+        | cs as c :: _ =>
+            if ReplDebug.isStopped () then
+              case List.find (fn n => String.isPrefix word n) atStop of
+                SOME n => (case List.find (fn {name, ...} => name = n) cs of SOME d => d | NONE => c)
+              | NONE => c
+            else c
 
   (* a command line: `:name rest` *)
   fun dispatch (line : string) : bool =
@@ -304,8 +321,23 @@ struct
        {name = "save", args = "file", help = "the entries that went well, as a script", run = fn a => save (mustHave ("file", a))},
        {name = "save-image", args = "file", help = "the whole session, as an image runevm --restore starts again",
         run = fn a => saveImage (mustHave ("file", a))},
-       {name = "bt", args = "", help = "where the last exception that ended an entry was raised",
-        run = fn _ => say (backtrace ())}]
+       {name = "bt", args = "", help = "the frames of a stop, or where the last exception that ended an entry was raised",
+        run = fn _ => say (if ReplDebug.isStopped () then ReplDebug.backtrace () else backtrace ())},
+       {name = "break", args = "[file:]line | raise [all]",
+        help = "stop at a line, or at a raise nothing handles (all: every raise); alone, the breakpoints",
+        run = fn a => say (ReplDebug.break a)},
+       {name = "delete", args = "n | raise | all", help = "a breakpoint, the stops at a raise, or all of them",
+        run = fn a => say (ReplDebug.delete (mustHave ("breakpoint", a)))},
+       {name = "step", args = "", help = "at a stop: on to the next line, into what it calls", run = fn _ => ReplDebug.go 1},
+       {name = "next", args = "", help = "at a stop: on to the next line of this function, or where it returns",
+        run = fn _ => ReplDebug.go 2},
+       {name = "finish", args = "", help = "at a stop: on to where this function returns", run = fn _ => ReplDebug.go 3},
+       {name = "continue", args = "", help = "at a stop: on, to the next stop", run = fn _ => ReplDebug.go 0},
+       {name = "abort", args = "", help = "at a stop: the program interrupted there", run = fn _ => ReplDebug.go 4},
+       {name = "frame", args = "[n | up | down]", help = "at a stop: the frame looked at, or another",
+        run = fn a => say (ReplDebug.selectFrame a)},
+       {name = "locals", args = "", help = "at a stop: the variables of the frame looked at",
+        run = fn _ => ReplDebug.showLocals ()}]
 
   (* the hooks of the session's Repl (lib/basis/repl.sml), and :reload until
      M9 makes it the files' *)

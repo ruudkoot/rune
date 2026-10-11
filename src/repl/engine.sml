@@ -27,6 +27,8 @@ sig
   val width : int ref
 
   val eval : string -> outcome
+  (* the same, its source named so (where NONE, stdIn#k) *)
+  val evalAs : string * string option -> outcome
   val use : string -> outcome
   val reload : bool -> outcome
   val isComplete : string -> completeness
@@ -36,6 +38,12 @@ sig
   val check : string -> Json.value list
   val children : int -> {label : string, shown : string, id : int, more : bool} list
   val release : int list -> unit
+  (* a document laid out at the width, and held for a handle (the
+     debugger's variables) *)
+  val shown : RuneCompiler.pretty -> string
+  val hold : RuneCompiler.pretty -> int
+  (* whether a document has parts to open (children) *)
+  val more : RuneCompiler.pretty -> bool
 end
 
 structure ReplEngine : ENGINE =
@@ -95,6 +103,8 @@ struct
       | _ => []
     end
 
+  fun more (p : RuneCompiler.pretty) : bool = not (List.null (parts p))
+
   fun children (h : int) : {label : string, shown : string, id : int, more : bool} list =
     case IntMap.find (!handles, h) of
       NONE => raise Fail ("no value has the handle " ^ Int.toString h)
@@ -106,7 +116,9 @@ struct
   fun diagnostics () : Json.value list =
     List.map (fn (level, sp, msg) => Diagnostic.item (level, sp, msg)) (List.rev (!Error.kept))
 
-  (* f () with the REPL's output taken as data, and its ok *)
+  (* f () with the REPL's output taken as data, and its ok; inside another
+     (an evaluation at a stop of the debugger, within the one that ran the
+     program) as well, which has what it took kept for it *)
   fun capture (f : unit -> bool) : outcome =
     let
       val bindings = ref []
@@ -114,6 +126,8 @@ struct
       val messages = ref []
       val raised = ref NONE
       val echo = !RuneCompiler.echoHook
+      val (declaredWas, uncaughtWas, sayWas) = (!ReplLoop.declaredHook, !ReplLoop.uncaughtHook, !ReplLoop.sayHook)
+      val (silentWas, keepWas, keptWas) = (!Error.silent, !Error.keep, !Error.kept)
       val roles = ref []
       fun bound (n, p, t) =
         let
@@ -132,8 +146,8 @@ struct
       val () = ReplLoop.sayHook := SOME (fn s => messages := s :: !messages)
       val () = (Error.silent := true; Error.keep := true; Error.kept := [])
       fun restore () =
-        (RuneCompiler.echoHook := echo; ReplLoop.uncaughtHook := NONE; ReplLoop.sayHook := NONE;
-         Error.silent := false; Error.keep := false)
+        (RuneCompiler.echoHook := echo; ReplLoop.declaredHook := declaredWas; ReplLoop.uncaughtHook := uncaughtWas;
+         ReplLoop.sayHook := sayWas; Error.silent := silentWas; Error.keep := keepWas; Error.kept := keptWas)
       val ok = (f () handle e => (ReplLoop.uncaught e; false)) handle e => (restore (); raise e)
       val diags = diagnostics ()
     in
@@ -145,9 +159,10 @@ struct
 
   (* a text that does not end its last declaration with a `;` ends it, as a
      notebook's cell or -e's text is written *)
-  fun eval (text : string) : outcome =
+  fun evalAs (text : string, name : string option) : outcome =
     let val whole = if ReplScan.complete (ReplScan.ofText (text ^ "\n")) then text else text ^ "\n;"
-    in capture (fn () => #2 (ReplLoop.step (whole, true))) end
+    in capture (fn () => (ReplLoop.nextName := name; #2 (ReplLoop.step (whole, true)))) end
+  fun eval (text : string) : outcome = evalAs (text, NONE)
 
   fun use (file : string) : outcome = capture (fn () => (ReplLoop.use file; true))
 

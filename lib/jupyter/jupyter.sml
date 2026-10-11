@@ -145,6 +145,11 @@ struct
     let
       val key = #key (#connection k)
       val sockets = [#shell k, #control k, #stdin k, #heartbeat k, #iopub k]
+      (* a shutdown that came on the control channel while the shell's
+         request was handled, and whether a control request is being
+         handled from within one (not again: no nesting) *)
+      val stopping = ref false
+      val nested = ref false
       fun one (socket, m : message) =
         let
           val t = #msgType (#header m)
@@ -162,7 +167,7 @@ struct
                  true)
             | _ =>
                 (case respond {msgType = t, content = #content m, publish = publish (k, m), input = input (k, m),
-                               idle = idle k} of
+                               idle = busy} of
                    SOME c => reply (k, socket, m, replyType t, c)
                  | NONE => ();
                  false)
@@ -170,6 +175,25 @@ struct
           status (k, m, "idle");
           stop
         end
+      (* a handler's idle: the queue written, the heartbeat answered, and
+         the control channel's requests answered -- a debugger's, an
+         interrupt's -- which come while the shell's is in hand *)
+      and busy () =
+        (idle k ();
+         if !nested then ()
+         else
+           (nested := true;
+            ignore (Zmtp.wait ([#control k], SOME Time.zeroTime));
+            (control () handle e => (nested := false; raise e));
+            nested := false))
+      and control () =
+        case Zmtp.receive (#control k) of
+          NONE => ()
+        | SOME parts =>
+            ((case decode key parts of
+                SOME m => if one (#control k, m) then stopping := true else ()
+              | NONE => ());
+             control ())
       fun requests socket =
         case Zmtp.receive socket of
           NONE => false
@@ -182,7 +206,7 @@ struct
          (* the heartbeat comes back as it came *)
          let fun beat () = case Zmtp.receive (#heartbeat k) of SOME m => (Zmtp.send (#heartbeat k, m); beat ()) | NONE => ()
          in beat () end;
-         if requests (#control k) orelse requests (#shell k) then
+         if requests (#control k) orelse requests (#shell k) orelse !stopping then
            List.app (fn s => Zmtp.flush (s, SOME (Time.fromSeconds 2))) [#shell k, #control k, #iopub k]
          else loop ())
     in

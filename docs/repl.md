@@ -59,6 +59,10 @@ describes. An `eval` there is an entry as at the prompt, and its answer is
 data: the values with their types and handles, the diagnostics in
 rune-ide's schema, the exception and its trace.
 
+`rune-repl --dap` is the debugger of an editor -- the Debug Adapter
+Protocol on the standard input and output, over an engine of its own
+([dap.md](dap.md)).
+
 ## On a terminal
 
 Where the standard input and output are a terminal that can be edited on
@@ -133,12 +137,16 @@ and any unique prefix of a command's name names it (`:t` for `:type`).
 | `:edit [name or file]` | `$VISUAL` or `$EDITOR` at a name's definition or at a file, and the file used again |
 | `:cd dir`, `:pwd` | the directory |
 | `:sh command` | a command of the shell, on the terminal as it was |
-| `:set setting value`, `:show` | the settings: `depth`, `length`, `string`, `width`, `feedback`, `prompt`, `prompt2`, `time`, `watch` |
+| `:set setting value`, `:show` | the settings: `depth`, `length`, `string`, `width`, `feedback`, `prompt`, `prompt2`, `time`, `watch`, `debug`, `pause` |
 | `:time [on or off]` | after each entry, its time in all, compiling and running apart, the CPU it took, what it allocated and the collections |
 | `:history` | the entries of the session, `!` beside those that failed |
 | `:save file` | the entries that went well, as a script to `use` |
 | `:save-image file` | the whole session as an image, which `runevm --restore file` starts again |
-| `:bt` | where the last exception that ended an entry was raised, frame by frame |
+| `:bt` | where the last exception that ended an entry was raised, frame by frame; at a stop of the debugger, its frames |
+| `:break [file:]line`, `:break raise [all]`, `:break` | a breakpoint at a line (of the file of the frame looked at, or of the file used last, where none is named); a stop at a raise nothing of the program's handles, or at every raise; the breakpoints (*The debugger*) |
+| `:delete n`, `:delete raise`, `:delete all` | a breakpoint, the stops at a raise, or all of them |
+| `:step`, `:next`, `:finish`, `:continue`, `:abort` | at a stop: on to the next line, into what it calls; to the next line of the function, or where it returns; to where it returns; on; the program interrupted where it stopped |
+| `:frame [n, up or down]`, `:locals` | at a stop: the frame looked at; its variables |
 
 `:doc` reads what runedoc wrote of the Basis for programs to read
 (`docs/generated/basis/members.json`), once, before the REPL's image is
@@ -237,6 +245,72 @@ masks it while it does its own work -- reading what it has been given,
 compiling, echoing -- so that an interrupt then waits, and is taken by the
 declaration once it runs, or by the wait for the next line; a `use` masks it
 the same way, a declaration at a time.
+
+## The debugger
+
+A breakpoint stops the program at a line; so does a step, the user's
+interrupt where `:set pause on` says so, and a raise where `:break raise`
+does ([plans/repl.md](plans/repl.md), D22 and M12; [runtime.md](runtime.md),
+*The debugger*). At a stop the REPL says where, with the line, and reads
+entries at its own prompt, `debug>`, until one says how the program goes
+on:
+
+```
+- :break lib/shapes.sml:9
+breakpoint 1 at lib/shapes.sml:9 (no code there yet: ...)
+- use "lib/shapes.sml";
+- total [Circle 1.0, Square 2];
+stopped at a breakpoint: in total at lib/shapes.sml:9:17
+    9 |     val parts = map area shapes
+debug> :locals
+val shapes = [Circle 1.0, Square 2] : shape list
+val label = "total" : string
+debug> size label + length shapes;
+val it = 7 : int
+debug> :next
+```
+
+* **What is debugged.** From the first `:break` (or `:set debug on`) what is
+  entered and used is compiled for the debugger: at `-O0`, each variable a
+  register of its own, and what each function binds kept with its name and
+  type. What was compiled before has no variables to show, and a function
+  of it may have been inlined where it was called; `:reload!` compiles it
+  again. While anything can stop the program -- a breakpoint, a step, the
+  stop at a raise -- it runs in the VM's debug loop, interpreted, which
+  costs it, and the REPL's own work with it, perhaps a factor of three; with
+  nothing to stop at, the program runs as it ran before.
+* **Lines and files.** A breakpoint is a line of a file as `use` named it,
+  or of an entry, `stdIn#k`; once debugging is on, entries are numbered in
+  the basic mode too. It stops where the code of the line begins, and again
+  only where the code comes to the line from another; a line of no code --
+  `in`, `end`, a variable alone -- has none to stop at. A breakpoint set
+  before its file is used stops once it is.
+* **Steps.** `:step` stops at the next line of the session's code, into what
+  it calls; `:next` at the next line of the function, or of one it returns
+  to; `:finish` where the function returns. A step stops in the session's
+  code only: the Basis, and the REPL's own program, are the library, which a
+  step goes through as through code with no source. A tail call leaves no
+  frame, so `:next` over one stops in what it called.
+* **A raise.** `:break raise` stops at a raise that nothing of the
+  program's handles, before anything unwinds, with the exception;
+  `:break raise all` at every raise of the program's. `:continue` goes on
+  with the raise, `:abort` raises `Interrupt` in its place.
+* **The variables.** `:locals` shows the variables of the frame looked at
+  (`:frame`) that hold a value there -- bound by where it is, and of a type
+  whose value it holds -- the last bound of each name, as echoes, with the
+  printers of *Printing*; a variable of an enclosing function is read from
+  the closure. One whose binding a later binding hides is not shown.
+* **In a frame.** An expression at the `debug>` prompt, or `val x = exp`, is
+  evaluated with the frame's variables in scope, as `(fn (x : t, ...) =>
+  exp) values` would be, where the session names their types; anything else
+  is an entry as at the prompt. Nothing stops while it runs.
+* **Pause.** With `:set pause on`, Ctrl-C stops the program where it is
+  rather than interrupting it; `:abort` then interrupts it there.
+
+The engine has the same as requests (`debug/*`,
+[repl-protocol.md](repl-protocol.md), *The debugger*), which the Debug
+Adapter Protocol's adapter ([dap.md](dap.md)) and the Jupyter kernel's
+debugger ([kernel.md](kernel.md)) drive.
 
 ## Printing
 
@@ -377,19 +451,26 @@ where `interrupt.in` says, while a declaration loops, one with a handler of
 its own and one without; and a session saved with `Runtime.save`
 (`session.in`) and restored, `session.then` typed to the world restored,
 which has the bindings made before the save and reads its own input, not
-what the session that saved it had read ahead.
+what the session that saved it had read ahead; and the debugger
+(`debug.in`): a breakpoint in a file used after it was set, the frames, the
+variables of each and an expression among them, steps into, over and out
+of a function the library calls, a variable of an enclosing function, one
+a later binding hides, and a stop at a raise ended with `:abort` -- the
+same frames and values on every mode of the JIT.
 
 `tests/terminal` (`make test-terminal`, and on Windows through WSL interop
 in `make test-windows`) drives the REPL in a tmux pane and waits for the
 screen: the prompt and the banner, colours as typed, completion, the
 history, an entry of several lines, errors with their lines, an open
 string, keys typed ahead while code runs, a program that reads a line,
-Ctrl-C, the basic mode under Emacs, and the marks of OSC 133 byte for byte
+Ctrl-C, the debugger's stop and its prompt and Ctrl-C pausing a loop
+(`repl-debug`), the basic mode under Emacs, and the marks of OSC 133 byte for byte
 on a pty; on Windows, `rune-repl.cmd` from `cmd.exe` too.
 
 ## Not yet
 
-A Jupyter kernel and a debugger are M11 and M12 of
-[plans/repl.md](plans/repl.md). `Compiler.prettyPrint` ignores a block's context
-(`ContextLocation`, `ContextProperty`), which Poly/ML's IDE support reads.
+`Compiler.prettyPrint` ignores a block's context (`ContextLocation`,
+`ContextProperty`), which Poly/ML's IDE support reads. The debugger has no
+conditional breakpoints, no watchpoints, no stepping back, and no `BREAK`
+written over an instruction in place of the debug loop.
 [plans/repl.md](plans/repl.md) lists what comes next.

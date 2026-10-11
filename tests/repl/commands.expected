@@ -57,6 +57,8 @@ prompt = -     (the prompt (Compiler.prompt1))
 prompt2 = =     (the prompt of a line that continues an entry (Compiler.prompt2))
 time = off    (the time and memory of each entry (:time))
 watch = off    (reload at each prompt where a file used has changed)
+debug = off    (compile what is entered and used for the debugger (:break turns it on))
+pause = off    (Ctrl-C pauses the program in the debugger rather than interrupting it)
 - error: no setting nothing (:show lists them)
 - val down = fn : int -> int
 - uncaught exception Fail: at the bottom

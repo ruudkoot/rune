@@ -43,7 +43,7 @@ refused. Positions are bytes of the text the request gave, from 0.
 |---|---|---|
 | `initialize` | `{protocol: 1, width?: number}` | `{protocol: 1, implementation: string, methods: string[]}` |
 | `ping` | any | the same |
-| `eval` | `{text}` | an *outcome* |
+| `eval` | `{text, path?}` | an *outcome*; `path` names the text's source in place of `stdIn#k` (a notebook's cell, by its file) |
 | `use` | `{path}` | an *outcome* |
 | `reload` | `{force?: boolean}` | an *outcome*; `force` is `:reload!` |
 | `isComplete` | `{text}` | `{status: "complete" \| "incomplete" \| "invalid", indent?: number}` |
@@ -55,6 +55,7 @@ refused. Positions are bytes of the text the request gave, from 0.
 | `value/release` | `{handles: number[]}` | `null` |
 | `interrupt` | `{}` | `null`: nothing runs while the engine can read it (below) |
 | `shutdown` | `{}` | `null`, and the engine ends |
+| `debug/...` | | the debugger's (*The debugger*) |
 
 An *outcome* is
 
@@ -97,6 +98,32 @@ and whether it has parts.
   or `null` for the end of the input. While it waits, the engine refuses
   any request but the answer, with `-32000`.
 
+## The debugger
+
+The REPL's debugger ([repl.md](repl.md), *The debugger*) as requests: the
+first of them puts it on, and from then on what the engine compiles is
+compiled for it.
+
+| Method | Parameters | Result |
+|---|---|---|
+| `debug/setBreakpoints` | `{path, lines: number[]}` | `{breakpoints: [{line, verified}]}`: the file's breakpoints, in place of those it had; `verified` where code begins the line now |
+| `debug/setRaise` | `{mode: "none" \| "uncaught" \| "all"}` | `null`: whether a raise stops the program, and which |
+| `debug/configure` | `{pause?: boolean}` | `null`: with `pause`, the front's `SIGINT` pauses the program rather than interrupting it |
+| `debug/frames` | `{}` | `[{id, function, file, line, column}]`, innermost first |
+| `debug/variables` | `{frame?}` | `[{name, type, shown, handle, more}]`: the variables of the frame (0 by default) that hold a value, as `eval`'s bindings; `more` where `value/children` opens it |
+| `debug/evaluate` | `{frame?, text}` | an *outcome*: the text evaluated with the frame's variables in scope |
+| `debug/continue` | `{mode: "continue" \| "stepIn" \| "next" \| "stepOut" \| "abort"}` | `null`, and the program goes on as the mode says |
+
+Where the program stops -- while an `eval`, a `use` or a `reload` runs --
+the engine says so with the notification `debug/stopped` `{reason:
+"breakpoint" | "step" | "pause" | "exception", description, frames,
+exception?: {name, message}}` and reads requests again: those of the
+debugger, `eval` (in the frame last named, as `debug/evaluate`), and the
+others, until a `debug/continue`. The request that ran the program is
+answered once it ends. `debug/frames`, `debug/variables`,
+`debug/evaluate` and `debug/continue` are refused with `-32003` where the
+program is not stopped.
+
 ## Interrupts
 
 The engine has no thread: while an `eval` runs, it reads nothing. A front
@@ -120,4 +147,7 @@ that is no JSON does not end the session.
 opened and released, diagnostics, an exception's trace, completeness,
 completion, inspection, the type at a position, a check, a file used, the
 program's output in order with the answers, the program's input, an
-interrupt, the protocol's errors, and `Content-Length` framing.
+interrupt, the protocol's errors, `Content-Length` framing, and the
+debugger: a breakpoint set before its entry, the stop's frames, variables
+and an expression in a frame, a step, a stop at a raise, and a pause by
+`SIGINT` ended by `abort`.

@@ -1,6 +1,6 @@
 # Index: C
 
-[Overview](../README.md) &middot; [b](b.md) **c** [d](d.md) [e](e.md) [f](f.md) [m](m.md) [n](n.md) [s](s.md) [t](t.md) [u](u.md)
+[Overview](../README.md) &middot; [b](b.md) **c** [d](d.md) [e](e.md) [f](f.md) [h](h.md) [m](m.md) [n](n.md) [s](s.md) [t](t.md) [u](u.md)
 
 - `context` (type): [DIGEST](../sig/DIGEST.md#type-context)
 

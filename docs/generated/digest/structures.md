@@ -16,6 +16,7 @@ signature names and no others, unless the structure is listed at the end of this
 | --- | --- | --- | --- | --- | --- |
 | [`Hex`](str/Hex.md) | :> [`HEX`](sig/HEX.md) |  | required |  | [lib/digest/hex.sml](../../../lib/digest/hex.sml) |
 | [`HmacSha256`](str/HmacSha256.md) | : [`HMAC`](sig/HMAC.md) |  | required | an application of `HmacFn` | [lib/digest/hmac\_fn.sml](../../../lib/digest/hmac_fn.sml) |
+| [`Murmur2`](str/Murmur2.md) | :> [`MURMUR2`](sig/MURMUR2.md) |  | required |  | [lib/digest/murmur2.sml](../../../lib/digest/murmur2.sml) |
 | [`Sha256`](str/Sha256.md) | :> [`DIGEST`](sig/DIGEST.md) |  | required |  | [lib/digest/sha256.sml](../../../lib/digest/sha256.sml) |
 
 ---

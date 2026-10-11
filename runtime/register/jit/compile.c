@@ -285,9 +285,13 @@ const void *jit_h_raise(VM *vm, int32_t s) {
     vm_raise(vm, v);
     return native;
 }
-/* the user's interrupt, which a poll found waiting and the mask lets
-   (SLOW_INTERRUPT), raised as jit_h_raise raises */
+/* what a poll found in the interrupt's flag (SLOW_INTERRUPT): JIT_LEAVE
+   where the debugger wants the debug loop (runtime/debug.c), JIT_BACK
+   where the mask holds the user's interrupt, else the interrupt raised as
+   jit_h_raise raises */
 const void *jit_h_interrupt(VM *vm) {
+    if (vm_debug_leaves(vm)) return JIT_LEAVE;
+    if (!vm_interrupted(vm)) return JIT_BACK;
     const void *native = handler_native(vm);
     vm_interrupt(vm);
     return native;
@@ -637,22 +641,36 @@ static void emit_slow(Masm *m, Slow *sp) {
         ms_reload(m);
         as_jmp(&m->a, &s.back);
     } else if (s.kind == SLOW_INTERRUPT) {
-        /* the user's interrupt waiting at a poll: back where the code
-           goes on while the mask holds it; else raised from the
+        /* the interrupt's flag set at a poll (jit_h_interrupt): back where
+           the code goes on while the mask holds the user's interrupt; the
+           instruction left to the debug loop, the VM exact at its start
+           and its run's instructions from it uncounted (s.n), where the
+           debugger wants that; else the interrupt raised from the
            instruction, the VM exact, as RAISE raises it, and on in the
            handler's code where it has some, else in the interpreter */
-        as_cmp32_mi(&m->a, VMR, (int32_t)offsetof(VM, interrupt_mask), 0);
-        as_jcc(&m->a, CC_NE, &s.back);
         ms_sync(m, s.pc, 0);
         ms_call(m, (MsHelper)jit_h_interrupt);
+        AsmLabel other, leave, hand;
+        as_label_init(&other); as_label_init(&leave); as_label_init(&hand);
+        as_cmp_ri(&m->a, R_S0, (int32_t)(intptr_t)JIT_BACK);
+        as_jcc(&m->a, CC_NE, &other);
         ms_reload(m);
-        AsmLabel hand; as_label_init(&hand);
+        as_jmp(&m->a, &s.back);
+        as_bind(&m->a, &other);
+        as_cmp_ri(&m->a, R_S0, (int32_t)(intptr_t)JIT_LEAVE);
+        as_jcc(&m->a, CC_E, &leave);
+        ms_reload(m);
         as_test_rr(&m->a, R_S0, R_S0);
         as_jcc(&m->a, CC_E, &hand);
         as_jmp_r(&m->a, R_S0);
         as_bind(&m->a, &hand);
-        as_label_free(&hand);
         ms_handback(m, RUN_INTERP);
+        as_bind(&m->a, &leave);
+        as_st32i(&m->a, VMR, (int32_t)offsetof(VM, pc), (int32_t)s.cur);
+        as_lea(&m->a, R_S1, COUNTR, -1, 1, -(int32_t)s.n);
+        as_st64(&m->a, VMR, (int32_t)offsetof(VM, instructions), R_S1);
+        ms_handback(m, RUN_INTERP);
+        as_label_free(&other); as_label_free(&leave); as_label_free(&hand);
     } else if (s.kind == SLOW_DEOPT) {
         /* --deopt-stress: the Nth boundary reached (r11 is the counter's
            address): the count begun again, the exit counted, and out
@@ -785,6 +803,7 @@ static int emit_function(Jit *j, Scan *sc) {
             || (op == ROP_JUMP && (uint32_t)read_i32(code + pc + 1) <= pc)) {
             Slow *s = ms_slow(m, SLOW_INTERRUPT, j->next);
             if (s) {
+                s->n = run_left + 1;   /* this instruction and the rest of its run, for a leave */
                 as_cmp32_mi(&m->a, VMR, (int32_t)offsetof(VM, interrupt), 0);
                 as_jcc(&m->a, CC_NE, &s->here);
                 as_bind(&m->a, &s->back);

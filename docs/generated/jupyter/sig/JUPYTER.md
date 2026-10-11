@@ -212,8 +212,10 @@ request's child, such as a `stream` or an `execute_result`.
 `input {prompt, password}` asks the client for a line of input on the
 stdin channel, where the request allows it (`NONE` where it does not
 or the client gave none). `idle ()`, which a handler that takes long
-calls now and then, writes what it published and answers the
-heartbeat.
+calls now and then, writes what it published, answers the heartbeat,
+and answers the requests of the control channel -- a debugger's
+`debug_request`, an `interrupt_request` \-- which come while the
+handler's is in hand (not those of another handler's idle).
 
 | Field | Type | Description |
 | --- | --- | --- |

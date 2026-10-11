@@ -1476,8 +1476,8 @@ int64_t sys_read_fd(int fd, char *buf, int64_t n) {
     if (r <= 0 && interrupt_flag && sys_isatty(fd)) {
         /* the handler runs on a thread of its own, which may come after
            the read it ended */
-        for (int i = 0; i < 20 && !*interrupt_flag; i++) Sleep(5);
-        if (*interrupt_flag) { last = EINTR; return -1; }
+        for (int i = 0; i < 20 && !(*interrupt_flag & 1); i++) Sleep(5);
+        if (*interrupt_flag & 1) { last = EINTR; return -1; }   /* the user's; bit 2 is the debugger's */
     }
     return r < 0 ? failed() : r;
 }
@@ -3343,7 +3343,7 @@ int64_t sys_term_read(int in, char *buf, int64_t n, int64_t ms) {
         DWORD w = WaitForSingleObject(h, wait);
         if (w == WAIT_TIMEOUT) return 0;
         if (w != WAIT_OBJECT_0) { last = errno_of_win(GetLastError()); return -1; }
-        if (interrupt_flag && *interrupt_flag) return 0;
+        if (interrupt_flag && (*interrupt_flag & 1)) return 0;
         DWORD waiting = 0;
         if (!GetNumberOfConsoleInputEvents(h, &waiting)) { last = errno_of_win(GetLastError()); return -1; }
         if (waiting == 0) continue;

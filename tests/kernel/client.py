@@ -99,7 +99,7 @@ check("the heart beats", peer.read_message(hb) == [b"", b"beat"])
 
 reply, _ = request("kernel_info_request", {})
 check("kernel_info", reply["language_info"]["name"] == "sml" and reply["implementation"] == "rune-kernel"
-      and reply["protocol_version"] == "5.4", reply)
+      and reply["protocol_version"] == "5.4" and reply.get("debugger") is True, reply)
 
 reply, said = execute("val x = 1 + 2")
 results = of(said, "execute_result")
@@ -149,6 +149,87 @@ check("Display: display_data, update_display_data, clear_output",
       and of(said, "display_data")[0]["data"]["text/html"] == "<b>first</b>"
       and of(said, "display_data")[0]["transient"] == {"display_id": "d"}
       and of(said, "update_display_data")[0]["data"] == {"text/plain": "second"}, said)
+
+# JupyterLab's debugger: DAP in debug_request on the control channel, a stop
+# a debug_event, a cell compiled under the file its code's hash names
+
+
+def murmur2_x86(data, seed):
+    """ipykernel's, which JupyterLab names a cell's file by"""
+    m = 0x5BD1E995
+    data = data.encode("utf8")
+    h = seed ^ len(data)
+    end = len(data) & ~3
+    for i in range(0, end, 4):
+        k = data[i] | (data[i + 1] << 8) | (data[i + 2] << 16) | (data[i + 3] << 24)
+        k = (k * m) & 0xFFFFFFFF
+        k ^= k >> 24
+        k = (k * m) & 0xFFFFFFFF
+        h = ((h * m) & 0xFFFFFFFF) ^ k
+    rest = len(data) & 3
+    if rest:
+        k = 0
+        if rest == 3:
+            k = data[end + 2] << 16
+        if rest >= 2:
+            k |= data[end + 1] << 8
+        k |= data[end]
+        h = ((h ^ k) * m) & 0xFFFFFFFF
+    h ^= h >> 13
+    h = (h * m) & 0xFFFFFFFF
+    return h ^ (h >> 15)
+
+
+dseq = 0
+
+
+def debug(command, arguments=None):
+    global dseq
+    dseq += 1
+    mid = send(control, "debug_request", {"seq": dseq, "type": "request", "command": command,
+                                          "arguments": arguments or {}})
+    h, p, c = receive(control)
+    check("debug " + command + " answered", h["msg_type"] == "debug_reply" and p["msg_id"] == mid
+          and c.get("request_seq") == dseq, (h["msg_type"], c))
+    return c
+
+
+check("debug initialize", debug("initialize", {"clientID": "test", "adapterID": "rune"})["success"])
+check("debug attach", debug("attach", {})["success"])
+info = debug("debugInfo")["body"]
+check("debugInfo", info["isStarted"] and info["hashMethod"] == "Murmur2" and info["tmpFileSuffix"] == ".sml", info)
+cell = "fun dbl x =\n  let val y = x + 1\n  in y * 2\n  end"
+path = debug("dumpCell", {"code": cell})["body"]["sourcePath"]
+check("dumpCell names the cell by its hash",
+      path == info["tmpFilePrefix"] + str(murmur2_x86(cell, info["hashSeed"])) + info["tmpFileSuffix"]
+      and open(path).read() == cell, path)
+r = debug("setBreakpoints", {"source": {"path": path}, "breakpoints": [{"line": 2}]})
+check("setBreakpoints", r["success"] and len(r["body"]["breakpoints"]) == 1, r)
+check("configurationDone", debug("configurationDone")["success"])
+reply, said = execute(cell)
+check("the cell compiled under its file", reply["status"] == "ok", reply)
+mid = send(shell, "execute_request", {"code": "dbl 20;", "silent": False, "store_history": True,
+                                      "user_expressions": {}, "allow_stdin": False, "stop_on_error": True})
+while True:
+    h, p, c = receive(iopub)
+    if h["msg_type"] == "debug_event":
+        break
+check("a stop is a debug_event", c["event"] == "stopped" and c["body"]["reason"] == "breakpoint", c)
+frames = debug("stackTrace", {"threadId": 1})["body"]["stackFrames"]
+check("stackTrace: the cell's frame", frames[0]["name"] == "dbl" and frames[0]["line"] == 2
+      and frames[0]["source"]["path"] == path, frames)
+ref = debug("scopes", {"frameId": 0})["body"]["scopes"][0]["variablesReference"]
+vs = {v["name"]: v["value"] for v in debug("variables", {"variablesReference": ref})["body"]["variables"]}
+check("variables", vs == {"x": "20"}, vs)
+r = debug("evaluate", {"expression": "x * 2", "frameId": 0, "context": "repl"})
+check("evaluate in the frame", r["success"] and r["body"]["result"] == "40", r)
+check("continue", debug("continue", {"threadId": 1})["success"])
+header, parent, reply = receive(shell)
+said = iopub_until_idle(mid)
+results = of(said, "execute_result")
+check("the cell ends", reply["status"] == "ok" and results and results[0]["data"]["text/plain"] == "val it = 42 : int",
+      (reply, results))
+check("debug disconnect", debug("disconnect", {"restart": False})["success"])
 
 # an interrupt, as Jupyter gives it with interrupt_mode signal
 mid = send(shell, "execute_request", {"code": "fun loop () : unit = loop (); loop ();", "silent": False,

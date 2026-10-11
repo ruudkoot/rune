@@ -1,6 +1,6 @@
 # Index: M
 
-[Overview](../README.md) &middot; [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) **m** [n](n.md) [s](s.md) [t](t.md) [u](u.md)
+[Overview](../README.md) &middot; [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) **m** [n](n.md) [s](s.md) [t](t.md) [u](u.md)
 
 - `mac` (val): [HMAC](../sig/HMAC.md#val-mac)
 - `macParts` (val): [HMAC](../sig/HMAC.md#val-macparts)

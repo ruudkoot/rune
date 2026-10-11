@@ -40,13 +40,38 @@ say of the name under the cursor. Jupyter's interrupt (`interrupt_mode
 signal`) reaches the kernel as `SIGINT`, which it gives to the engine: the
 cell ends with `Interrupt`, and the session goes on.
 
+## The debugger
+
+The kernel says it has one (`kernel_info`'s `debugger`), and JupyterLab's
+debugger drives it as it drives ipykernel's: a `debug_request` on the
+control channel is a request of the Debug Adapter Protocol, which the kernel
+answers from the engine's debugger as [dap.md](dap.md)'s adapter does
+(`src/dap/translate.sml`; [repl-protocol.md](repl-protocol.md), *The
+debugger*), and a stop is a `debug_event` on iopub. The control channel is
+answered while a cell runs (`Jupyter.request`'s `idle`), so that a cell
+stopped at a breakpoint can be looked into and sent on.
+
+* **Cells as files.** Once a debugger is attached, a cell is compiled under
+  the file its code names -- `tmpFilePrefix`, the code's MurmurHash2
+  (`lib/digest`, the seed ipykernel's), `tmpFileSuffix` (`debugInfo`) --
+  into which the kernel writes it (`dumpCell`): the notebook works out the
+  same name for a cell to set its breakpoints, and finds the cell of a
+  frame by it.
+* **JupyterLab's own.** `debugInfo` (whether a debugger is attached, the
+  hash and the files, the breakpoints, the stopped thread), `dumpCell`,
+  `source` (a file's text), `inspectVariables` (empty: the session's values
+  are the notebook's own) and `modules` (none).
+* **Interrupts.** With a debugger attached, the engine pauses at the
+  front's `SIGINT`; the notebook's interrupt is told from a pause the
+  debugger asked for, and ends the cell with `Interrupt` as before.
+
 ## Limits
 
 * POSIX only: the kernel starts its engine with `fork` and two pipes as the
   engine's descriptors 3 and 4. On Windows, where neither is, the engine's
   `--engine-connect` is the channel to use, and the kernel does not use it
   yet.
-* No widgets or comms, and no debugger (`debug_request`). A type's own
+* No widgets or comms. A type's own
   renderers registered by its type, as `addPrettyPrinter` registers a
   printer, are not built: a cell's rich output is the HTML of its values
   and what it shows with `Display`.
@@ -58,6 +83,9 @@ cell ends with `Interrupt`, and the session goes on.
 written from Jupyter's messaging specification with Python's standard
 library: the heartbeat, `kernel_info`, executions with their results as
 text and HTML, streams, a compile error, an uncaught exception,
-`is_complete`, `complete`, `inspect`, input from the notebook, an
+`is_complete`, `complete`, `inspect`, input from the notebook, the
+debugger -- `debugInfo`, a cell dumped under the name its hash gives,
+a breakpoint in it, the stop as a `debug_event` while the cell runs, its
+frames, variables and an expression in the frame, `continue` -- an
 interrupt, and a shutdown. Where Python's `jupyter_client` is installed,
 `tests/kernel/notebook_client.py` does the same through it.

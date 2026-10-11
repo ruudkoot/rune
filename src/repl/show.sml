@@ -343,15 +343,21 @@ struct
      where there is nothing to do. echo says whether the values are shown;
      env is the session after the declaration, which names the types. *)
   fun echoes (env : Env.env, bound : (string * ty) list, delta : Env.env, echo : bool) : (string * Env.env) option =
-    case (if echo then bound else [], exceptions delta) of
+    echoesOf (env, List.map (fn (n, t) => (n, t, valueName n)) (if echo then bound else []), exceptions delta)
+
+  (* the same of values each given by an expression of SML, which may be of
+     any type the printer makes it (the debugger's, RuneDebug.register) *)
+  and echoesOf (env : Env.env, bound : (string * ty * string) list, exns : (string * string * ty) list)
+      : (string * Env.env) option =
+    case (bound, exns) of
       ([], []) => NONE
     | (bound, exns) =>
         let
           val g = newGen env
           val lines =
-            List.map (fn (n, t) =>
-                        "val () = RuneShow.echo (" ^ quote n ^ ", fn () => " ^ printer (g, t) ^ " (!RuneCompiler.printDepth) "
-                        ^ valueName n ^ ", " ^ quote (typeIn env t) ^ ")") bound
+            List.map (fn (n, t, value) =>
+                        "val () = RuneShow.echo (" ^ quote n ^ ", fn () => " ^ printer (g, t) ^ " (!RuneCompiler.printDepth) ("
+                        ^ value ^ "), " ^ quote (typeIn env t) ^ ")") bound
             @ List.map (fn (path, n, a) =>
                           "val () = RuneShow.addExn (fn d => fn e => case e of " ^ path ^ " a => SOME (RuneShow.con1 d ("
                           ^ quote n ^ ", fn d => " ^ printer (g, a) ^ " d a)) | _ => NONE)") exns

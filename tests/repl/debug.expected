@@ -1,0 +1,64 @@
+- error: the program is not stopped
+- breakpoint 1 at tests/repl/lib/debug.sml:9 (no code there yet: a file used from now on, compiled for the debugger, may have some)
+- val adder = fn : int -> int -> int
+val area = fn : shape -> real
+val fail = fn : int -> 'a
+val total = fn : shape list -> string * real
+val twice = fn : int -> int
+datatype shape = Circle of real | Square of int
+val it = () : unit
+- stopped at a breakpoint: in total at tests/repl/lib/debug.sml:9:17
+    9 |     val parts = map area shapes
+debug> val shapes = [Circle 1.0, Square 2] : shape list
+val label = "total" : string
+debug> > 0 in total at tests/repl/lib/debug.sml:9:17
+  1 in <toplevel> at stdIn#2:1:20
+debug> frame 1: in <toplevel> at stdIn#2:1:20
+    1 | total [Circle 1.0, Square 2];
+debug>   no variables here (the frame's function was not compiled for the debugger, or binds none)
+debug> frame 0: in total at tests/repl/lib/debug.sml:9:17
+    9 |     val parts = map area shapes
+debug> stdIn#2:1:1: error: unbound variable or constructor: parts
+debug> val it = 7 : int
+debug> stopped at a step: in area at tests/repl/lib/debug.sml:3:3
+    3 |   case s of
+debug> val s = Circle 1.0 : shape
+debug> > 0 in area at tests/repl/lib/debug.sml:3:3
+  1 in map at bin/../lib/basis/pervasive.sml:61:23
+  2 in total at tests/repl/lib/debug.sml:9:17
+  3 in <toplevel> at stdIn#2:1:20
+debug> stopped at a step: in total at tests/repl/lib/debug.sml:10:15
+   10 |     val sum = foldl op+ 0.0 parts
+debug> stopped at a step: in total at tests/repl/lib/debug.sml:12:5
+   12 |     (label, sum)
+debug> val shapes = [Circle 1.0, Square 2] : shape list
+val label = "total" : string
+val parts = [3.0, 4.0] : real list
+val sum = 7.0 : real
+debug> val doubled = 14.0 : real
+debug> val it = ("total", 7.0) : string * real
+- val it = 14.0 : real
+- no breakpoints
+- breakpoint 1 at tests/repl/lib/debug.sml:16
+- stopped at a breakpoint: in add at tests/repl/lib/debug.sml:16:9
+   16 |         x + k
+debug> val k = 5 : int
+val x = 10 : int
+debug> val it = 50 : int
+debug> val it = 15 : int
+- breakpoint 1 deleted
+- breakpoint 1 at tests/repl/lib/debug.sml:20
+- stopped at a breakpoint: in twice at tests/repl/lib/debug.sml:20:15
+   20 |       val x = x + 1
+debug> val x = 8 : int
+debug> val it = 9 : int
+- no breakpoints
+- stops at a raise nothing of the program's handles
+- stopped at a raise of Fail: none left, which nothing of the program's handles: in fail at tests/repl/lib/debug.sml:23:34
+   23 | fun fail n = if n = 0 then raise Fail "none left" else fail (n - 1)
+debug> val n = 0 : int
+debug> Interrupt
+- no stops at a raise
+- no breakpoints
+- val it = ("total", 0.0) : string * real
+- 

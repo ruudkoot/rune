@@ -1,6 +1,6 @@
 # Index: T
 
-[Overview](../README.md) &middot; [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [m](m.md) [n](n.md) [s](s.md) **t** [u](u.md)
+[Overview](../README.md) &middot; [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) [m](m.md) [n](n.md) [s](s.md) **t** [u](u.md)
 
 - `toBytes` (val): [HEX](../sig/HEX.md#val-tobytes)
 

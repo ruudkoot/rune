@@ -217,6 +217,8 @@ static void print_exn_payload(FILE *out, Value v) {
 }
 
 int vm_raise(VM *vm, Value exn) {
+    /* the debugger's stop at a raise, before anything unwinds (runtime/debug.c) */
+    if (vm->dbg && vm->dbg->raise_mode && dbg_raise(vm, exn)) return 1;
     if (vm->hp == 0) {
         fflush(stdout);
         fprintf(stderr, "runevm: uncaught exception ");
@@ -269,7 +271,7 @@ int vm_raise_builtin(VM *vm, int k) {
    raises it, from the instruction the VM is at. The flag is set by no
    handler but the one installed with the exception, so there is one. */
 int vm_interrupt(VM *vm) {
-    vm->interrupt = 0;
+    vm->interrupt = vm->dbg && vm->dbg->on ? 2 : 0;   /* the debugger's bit stays */
     if (!vm->interrupt_exn) vm_fatal(vm, "an interrupt with no exception to raise");
     return vm_raise(vm, mk_ptr(vm->interrupt_exn));
 }
@@ -320,6 +322,7 @@ void vm_init(VM *vm, size_t heap) {
 
 /* Also for a VM that an image was read into only in part (vm_resume). */
 void vm_release(VM *vm) {
+    dbg_free(vm);
     program_free_meta(&vm->prog);
     for (uint32_t i = 0; vm->prog.funcs && i < vm->prog.nfuncs; i++) free(vm->prog.funcs[i].name);
     free(vm->prog.funcs);

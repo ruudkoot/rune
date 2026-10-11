@@ -48,6 +48,117 @@ struct
       StringMap.appi (fn (n, _) => note "s" n) (Env.strs delta)
     end
 
+  (* ---- -g: what the debugger knows of the units (the REPL roadmap's D22
+     and M12) ----
+     While debugging is on, a declaration is compiled for the debugger: at
+     -O0, each variable of the source a register of its own (Regs), and what
+     each function binds and captures kept (Lower.debugVars, Ty.names), so
+     that a stopped frame's variables are found by name and shown by their
+     types; no cache is read or written. Each unit compiled so is kept here
+     by the number its first function has in the program. *)
+  val debugging = ref false
+  (* a variable of a function: its name, its type, where it is -- a register,
+     from the byte of the function's code where it has been set, or a slot
+     of the closure's environment *)
+  datatype place = Reg of int * int | Captured of int
+  type var = {name : string, ty : Types.ty, place : place}
+  val debugUnits : {base : int, funcs : var list vector} list ref = ref []
+
+  (* The types of a unit's own declarations are made again when it is
+     loaded from its basis (UnitBasis.load): the types its variables had as
+     it was compiled are the old ones, which the session names no more. The
+     old type constructors of the unit's types, by stamp, to the new: the
+     two environments, by name. *)
+  fun tyconsMoved (old : Env.env, new : Env.env) : Types.tycon IntMap.map =
+    let
+      fun go (old, new, acc) =
+        let
+          val acc =
+            StringMap.foldli (fn (n, Env.TyStr {fcn, ...}, acc) =>
+                                case (StringMap.find (Env.tys new, n), Types.fcnIsName fcn) of
+                                  (SOME (Env.TyStr {fcn = fcn', ...}), SOME c) =>
+                                    (case Types.fcnIsName fcn' of
+                                       SOME c' => if #stamp c = #stamp c' then acc else IntMap.insert (acc, #stamp c, c')
+                                     | NONE => acc)
+                                | _ => acc)
+                             acc (Env.tys old)
+        in
+          StringMap.foldli (fn (n, s, acc) => case StringMap.find (Env.strs new, n) of
+                                                SOME s' => go (s, s', acc)
+                                              | NONE => acc)
+                           acc (Env.strs old)
+        end
+    in go (old, new, IntMap.empty) end
+
+  fun retype (m : Types.tycon IntMap.map) (t : Types.ty) : Types.ty =
+    if IntMap.isEmpty m then t
+    else
+      case Types.prune t of
+        Types.TCon (c, args) => Types.TCon (getOpt (IntMap.find (m, #stamp c), c), List.map (retype m) args)
+      | Types.TRecord fs => Types.TRecord (List.map (fn (l, a) => (l, retype m a)) fs)
+      | Types.TArrow (a, b) => Types.TArrow (retype m a, retype m b)
+      | t => t
+
+  (* the variables of each function of the unit just compiled, by its
+     number in the unit, their types the loaded unit's (moved) *)
+  fun debugTable (moved : Types.tycon IntMap.map) : var list vector =
+    let
+      val n = List.foldl (fn ({id, ...} : {id : int, vars : (int * int) list, env : (int * int) list}, m) =>
+                            Int.max (id + 1, m)) 0 (!Lower.debugVars)
+      fun regOf (id, v) =
+        case List.find (fn (i, _, _) => i = id) (!Lower.debugRegs) of
+          SOME (_, rs, at) => if v >= 0 andalso v < Vector.length rs then (Vector.sub (rs, v), Vector.sub (at, v)) else (~1, ~1)
+        | NONE => (~1, ~1)
+      fun named (stamp, place) =
+        case IntTable.find (Ty.names, stamp) of
+          SOME (name, ty) => SOME {name = name, ty = retype moved ty, place = place}
+        | NONE => NONE
+      val a = Array.array (n, [])
+    in
+      List.app (fn {id, vars, env} =>
+                  if id < 0 orelse id >= n then ()
+                  else Array.update (a, id,
+                         List.mapPartial (fn (s, v) => let val (r, at) = regOf (id, v)
+                                                       in if r < 0 orelse at < 0 then NONE else named (s, Reg (r, at)) end)
+                                         vars
+                         @ List.mapPartial (fn (s, i) => named (s, Captured i)) env))
+               (!Lower.debugVars);
+      Array.vector a
+    end
+
+  (* f () compiling for the debugger, where debugging is on *)
+  fun forDebugger (f : unit -> 'a) : 'a =
+    if not (!debugging) then f ()
+    else
+      let
+        val (level, info, names) = (!Pass.level, !Lower.debugInfo, !Ty.keepNames)
+        fun restore () = (Pass.level := level; Lower.debugInfo := info; Ty.keepNames := names)
+      in
+        Pass.level := 0; Lower.debugInfo := true; Ty.keepNames := true;
+        (f () before restore ()) handle e => (restore (); raise e)
+      end
+
+  (* the unit just compiled linked, and kept for the debugger where it was
+     compiled for it; the breakpoints set again, which its files may have *)
+  val linkedHook : (unit -> unit) ref = ref (fn () => ())
+  fun linkFor (bytes : string, moved : Types.tycon IntMap.map) : unit -> unit =
+    let val run = Runtime.link (Byte.stringToBytes bytes)
+    in
+      if !debugging then
+        let val table = debugTable moved
+        in debugUnits := {base = RuneRuntime.debugProgram () - Vector.length table, funcs = table} :: !debugUnits end
+      else ();
+      !linkedHook ();
+      run
+    end
+
+  (* the variables of function f of the program, where a unit compiled for
+     the debugger has it *)
+  fun varsOf (f : int) : var list option =
+    case List.find (fn {base, funcs} => f >= base andalso f < base + Vector.length funcs) (!debugUnits) of
+      SOME {base, funcs} => SOME (Vector.sub (funcs, f - base))
+    | NONE => NONE
+
   fun readBytes (path : string) : string =
     let val inp = BinIO.openIn path
     in Byte.bytesToString (BinIO.inputAll inp) before BinIO.closeIn inp end
@@ -170,9 +281,17 @@ struct
      cache), and kept there where it is compiled. *)
   fun compile (decs : Ast.dec list, file : string, text : string, cached : (string * int * string list) option)
       : {run : unit -> unit, delta : Env.env, declared : string list, bind : unit -> unit} =
+    forDebugger (fn () => compileWith (decs, file, text, if !debugging then NONE else cached, Env.empty))
+
+  (* compileWith (..., extra): extra, beside the session, in the environment
+     the declarations are elaborated in: the constructors of the printers of
+     a stopped frame's variables (ReplDebug) *)
+  and compileWith (decs : Ast.dec list, file : string, text : string, cached : (string * int * string list) option,
+                   extra : Env.env)
+      : {run : unit -> unit, delta : Env.env, declared : string list, bind : unit -> unit} =
     let
       val start = UnitBasis.begin (!env, !fixity)
-      val here = ref (!env)
+      val here = ref (Env.plus (!env, extra))
       val () = count := !count + 1
       val k = !count
       val name = case cached of SOME (stem, n, _) => stem ^ "#" ^ Int.toString n | NONE => file ^ "#" ^ Int.toString k
@@ -219,7 +338,7 @@ struct
                val code = if UnitBasis.moves (u, was, file, others) orelse not (List.null remap)
                           then String.concat (UnitFile.chunks (fp, UnitBasis.relocate (u, was, file, others)))
                           else code
-               val run = Runtime.link (Byte.stringToBytes code)
+               val run = linkFor (code, IntMap.empty)
              in
                (* the warnings its compile gave, again *)
                List.app (fn w => TextIO.output (TextIO.stdErr, Diagnostic.showCached w ^ "\n")) warnings;
@@ -296,7 +415,10 @@ struct
                                             others = UnitBasis.sourcesOf (code, file), pickle = #pickle exported,
                                             code = bytes, mid = ""})
            | NONE => ()
-       in Source.unregister echoName; result (loaded, Runtime.link (Byte.stringToBytes bytes)) end)
+       in
+         Source.unregister echoName;
+         result (loaded, linkFor (bytes, if !debugging then tyconsMoved (delta, #delta loaded) else IntMap.empty))
+       end)
       handle e => (UnitBasis.undo start; Source.unregister echoName; raise e)
     end
 end

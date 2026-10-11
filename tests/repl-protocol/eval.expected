@@ -1,5 +1,5 @@
 -> {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":1,"width":40}}
-<- {"id": 1, "jsonrpc": "2.0", "result": {"implementation": "rune-repl VERSION", "methods": ["initialize", "ping", "eval", "use", "reload", "isComplete", "complete", "inspect", "typeAt", "check", "value/children", "value/release", "interrupt", "shutdown"], "protocol": 1}}
+<- {"id": 1, "jsonrpc": "2.0", "result": {"implementation": "rune-repl VERSION", "methods": ["initialize", "ping", "eval", "use", "reload", "isComplete", "complete", "inspect", "typeAt", "check", "value/children", "value/release", "interrupt", "shutdown", "debug/setBreakpoints", "debug/setRaise", "debug/configure", "debug/frames", "debug/variables", "debug/evaluate", "debug/continue"], "protocol": 1}}
 -> {"jsonrpc":"2.0","id":2,"method":"ping","params":[1,"two"]}
 <- {"id": 2, "jsonrpc": "2.0", "result": [1, "two"]}
 -> {"jsonrpc":"2.0","id":3,"method":"eval","params":{"text":"val x = 1 + 2; val pairs = [(1, \"one\"), (2, \"two\")];"}}

@@ -51,12 +51,7 @@ struct
   (* SML real literal text to C strtod syntax. *)
   fun realText (r : string) = String.map (fn #"~" => #"-" | c => c) r
 
-  fun instrSize (Op (_, args)) = 1 + 4 * List.length args
-    | instrSize (Ops (_, args)) = 1 + 4 * List.length args
-    | instrSize (OpLab _) = 5
-    | instrSize (OpLabImm _) = 9
-    | instrSize (Lab _) = 0
-    | instrSize (Pos _) = 0
+  val instrSize = itemSize
 
   (* What follows a program linked from units (rune --units): each unit's
      identity and what it exports, which the VM enters in its table of what

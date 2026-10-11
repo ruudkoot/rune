@@ -488,19 +488,30 @@ struct
               ^ Int.toString (#collections s1 - #collections s0) ^ " collections") ^ "\n")
     end
 
+  (* an expression entered at a stop of the debugger, evaluated in the
+     frame looked at, its variables in scope (ReplDebug): SOME of whether
+     it went well, or NONE where the entry is run as any other *)
+  val evalHook : (string * string * Ast.dec list -> bool option) ref = ref (fn _ => NONE)
+
+  (* the name of the next entry's source, where a front gives one (the
+     Jupyter kernel's debugger names a cell by its file) *)
+  val nextName : string option ref = ref NONE
+
   fun step (text : string, last : bool) : bool * bool =
     if CharVector.all Char.isSpace text then (true, true)
     else if ReplFront.isCommand text then (true, !commandHook text)
     else
       let
-        val name = entryName ()
+        val name = case !nextName of SOME n => (nextName := NONE; n) | NONE => entryName ()
         val () = (compiling := Time.zeroTime; running := Time.zeroTime)
         val w0 = Time.now ()
         val cpu = Timer.startCPUTimer ()
         val s0 = Runtime.stats ()
         val result =
           case parse (name, text) of
-            Decs (decs, fx) => (ReplSession.fixity := fx; (true, run (decs, name, text, NONE, false)))
+            Decs (decs, fx) =>
+              (ReplSession.fixity := fx;
+               (true, case !evalHook (name, text, decs) of SOME ok => ok | NONE => run (decs, name, text, NONE, false)))
           | More => (last, false)
           | Wrong e => (report e; (true, false))
       in
@@ -516,9 +527,13 @@ struct
      declarations run; on to the end of the input. The lines are scanned as
      they come (ReplScan), and parsed only where one may end a declaration,
      so that what is pasted costs time in proportion to its length. *)
-  fun basicLoop () : unit =
+  fun basicLoop () : unit = basicLoopUntil (fn () => false)
+  (* and until done () says so after an entry or a command: the debugger's
+     prompt at a stop (ReplDebug) *)
+  and basicLoopUntil (done : unit -> bool) : unit =
     let
-      fun read (lines : string list, scan : ReplScan.t, prompt : string) =
+      fun again () = if done () then () else read ([], ReplScan.new (), !RuneCompiler.prompt1)
+      and read (lines : string list, scan : ReplScan.t, prompt : string) =
         ((if null lines then watch () else ());
          print prompt; TextIO.flushOut TextIO.stdOut;
          (* the wait with the mask off: an interrupt drops what has been
@@ -528,14 +543,14 @@ struct
          | SOME NONE => if null lines then print "\n" else ignore (step (String.concat (List.rev lines) ^ "\n;", true))
          | SOME (SOME line) =>
              if null lines andalso ReplFront.isCommand line then
-               (ignore (!commandHook line); read ([], ReplScan.new (), !RuneCompiler.prompt1))
+               (ignore (!commandHook line); again ())
              else
              let
                val () = ReplScan.string (scan, line)
                val lines = line :: lines
              in
                if ReplScan.complete scan andalso #1 (step (String.concat (List.rev lines), false))
-               then read ([], ReplScan.new (), !RuneCompiler.prompt1)
+               then again ()
                else read (lines, scan, !RuneCompiler.prompt2)
              end)
     in
@@ -549,11 +564,12 @@ struct
 
   (* The loop on the editor (ReplFront): an entry at a time, run with the
      terminal held quiet; ended at Ctrl-D on an empty entry *)
-  fun editorLoop () : unit =
+  fun editorLoop () : unit = editorLoopUntil (fn () => false)
+  and editorLoopUntil (done : unit -> bool) : unit =
     (watch ();
     case unmasked (fn () => ReplFront.readEntry (!ReplSession.env, isWhole)) handle SML90.Interrupt => ReplFront.Interrupted of
       ReplFront.EndOfInput => ()
-    | ReplFront.Interrupted => editorLoop ()
+    | ReplFront.Interrupted => editorLoopUntil done
     | ReplFront.Entry text =>
         (if CharVector.all Char.isSpace text then ()
          else
@@ -565,9 +581,30 @@ struct
              ReplHighlight.reset ();
              ReplFront.ended ok
            end;
-         editorLoop ()))
+         if done () then () else editorLoopUntil done))
 
   fun loop () : unit = if !ReplFront.editing then editorLoop () else basicLoop ()
+
+  (* The loop at a stop of the debugger (ReplDebug): its prompt, the
+     terminal as at the prompt, and the interrupt masked but for what runs,
+     until done () or the end of the input *)
+  fun nested (prompt : string, done : unit -> bool) : unit =
+    let
+      val (p1, p2) = (!RuneCompiler.prompt1, !RuneCompiler.prompt2)
+      val held = !ReplFront.holding
+      (* no file reloads while the program is stopped in one *)
+      val watched = !watching
+      fun restore () =
+        (RuneCompiler.prompt1 := p1; RuneCompiler.prompt2 := p2; watching := watched;
+         if held then ReplFront.hold () else ())
+    in
+      watching := false;
+      RuneCompiler.prompt1 := prompt;
+      RuneCompiler.prompt2 := String.implode (List.map (fn _ => #" ") (String.explode prompt));
+      ReplFront.release ();
+      (masked (fn () => if !ReplFront.editing then editorLoopUntil done else basicLoopUntil done) before restore ())
+      handle e => (restore (); raise e)
+    end
 
   (* The printers of the Basis's exceptions with an argument, as a
      declaration of the session registers its own (ReplShow.echoes) *)
@@ -613,6 +650,9 @@ struct
             ReplFront.parseArgs args
             handle ReplFront.Usage msg => (err ("rune-repl: " ^ msg ^ "\n" ^ ReplFront.usage); OS.Process.exit OS.Process.failure)
           val () = ReplFront.start options
+          (* the files of the REPL's program are the library's: the
+             debugger's steps stop only in the session's *)
+          val () = RuneRuntime.debugUser ()
           (* where :reload! comes back to, before the init file and the files *)
           val () = mark true
           val () = if init then Option.app (fn f => use f handle e => uncaught e) (ReplFront.initFile ()) else ()

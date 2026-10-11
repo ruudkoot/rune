@@ -790,7 +790,7 @@ int64_t sys_read_fd(int fd, char *buf, int64_t n) {
         struct pollfd q;
         q.fd = fd; q.events = POLLIN; q.revents = 0;
         while (poll(&q, 1, -1) < 0 && errno == EINTR)
-            if (*interrupt_flag) return -1;
+            if (*interrupt_flag & 1) return -1;   /* the user's; bit 2 is the debugger's */
     }
     do { errno = 0; k = read(fd, buf, (size_t)n); } while (k < 0 && errno == EINTR);
     return (int64_t)k;
