@@ -33,7 +33,7 @@ What each means is on [`OS_FILE_SYS`](../sig/OS_FILE_SYS.md); the types are this
 | val | [`closeDir`](../sig/OS_FILE_SYS.md#val-closedir) | `RuneFileSys.dirstream -> unit` |
 | val | [`compare`](../sig/OS_FILE_SYS.md#val-compare) | `file_id * file_id -> order` |
 | val | [`fileId`](../sig/OS_FILE_SYS.md#val-fileid) | `string -> file_id` |
-| val | [`fileSize`](../sig/OS_FILE_SYS.md#val-filesize) | `string -> int` |
+| val | [`fileSize`](../sig/OS_FILE_SYS.md#val-filesize) | `string -> Position.int` |
 | val | [`fullPath`](../sig/OS_FILE_SYS.md#val-fullpath) | `string -> string` |
 | val | [`getDir`](../sig/OS_FILE_SYS.md#val-getdir) | `unit -> string` |
 | val | [`hash`](../sig/OS_FILE_SYS.md#val-hash) | `file_id -> word` |

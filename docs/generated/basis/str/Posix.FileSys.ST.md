@@ -37,7 +37,7 @@ What each means is on [`POSIX_FILE_SYS`](../sig/POSIX_FILE_SYS.md); the types ar
 | val | [`mode`](../sig/POSIX_FILE_SYS.md#val-st.mode) | `stat -> Posix.FileSys.S.mode` |
 | val | [`mtime`](../sig/POSIX_FILE_SYS.md#val-st.mtime) | `stat -> Time.time` |
 | val | [`nlink`](../sig/POSIX_FILE_SYS.md#val-st.nlink) | `stat -> int` |
-| val | [`size`](../sig/POSIX_FILE_SYS.md#val-st.size) | `stat -> int` |
+| val | [`size`](../sig/POSIX_FILE_SYS.md#val-st.size) | `stat -> Position.int` |
 | val | [`uid`](../sig/POSIX_FILE_SYS.md#val-st.uid) | `stat -> Posix.ProcEnv.uid` |
 
 ## Notes

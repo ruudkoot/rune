@@ -22,8 +22,8 @@ What each means is on [`ARB_OF`](../sig/ARB_OF.md); the types are this structure
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`t`](../sig/ARB_OF.md#type-t) | `int` |
-| val | [`arb`](../sig/ARB_OF.md#val-arb) | `{co : int -> Word64.word, eq : (int * int -> bool) option, gen : int Gen.gen, show : int -> string}` |
+| type | [`t`](../sig/ARB_OF.md#type-t) | `Position.int` |
+| val | [`arb`](../sig/ARB_OF.md#val-arb) | `{co : Position.int -> Word64.word, eq : (Position.int * Position.int -> bool) option, gen : Position.int Gen.gen, show : Position.int -> string}` |
 
 ---
 

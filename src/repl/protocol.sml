@@ -27,8 +27,8 @@ struct
   type channel = {read : unit -> string, write : string -> unit}
 
   fun fds (input : int, output : int) : channel =
-    {read = fn () => Byte.bytesToString (Posix.IO.readVec (Posix.FileSys.wordToFD (Word.fromInt input), 65536)),
-     write = fn s => ignore (Posix.IO.writeVec (Posix.FileSys.wordToFD (Word.fromInt output),
+    {read = fn () => Byte.bytesToString (Posix.IO.readVec (Posix.FileSys.wordToFD (SysWord.fromInt input), 65536)),
+     write = fn s => ignore (Posix.IO.writeVec (Posix.FileSys.wordToFD (SysWord.fromInt output),
                                                 Word8VectorSlice.full (Byte.stringToBytes s)))}
 
   (* a connection to 127.0.0.1:port, the token its first line *)

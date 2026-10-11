@@ -14,8 +14,8 @@
 
    The structures differ in their width: `Word` is the default one and
    `Word8`, `Word16`, `Word32` and `Word64` are the sized ones; `LargeWord`
-   is the widest, and `SysWord` is what the operating system's flags are
-   counted in.
+   is the widest, and `SysWord` is what the operating system's flags and
+   numbers are counted in.
 
    Area: Numbers
 
@@ -26,13 +26,13 @@ sig
 
   (* The type of words of this structure.
 
-     Implementation: `Word.word/63-bits`. `Word.word` is the top-level
-     `word`, of 63 bits -- a word of the machine less the bit that tells a
-     number from a pointer -- and so is `SysWord`. `Word64`, which is also
-     `LargeWord`, has 64 bits on every machine: a word of its type is kept in
-     a word of the machine where it fits 63 bits and in a small object where
-     it needs the 64th. `Word8`, `Word16` and `Word32` are kept in a word of
-     the machine whose upper bits are zero.
+     Implementation: `Word.word/63-bits`. `Word.word` is the top-level `word`,
+     of 63 bits -- a word of the machine less the bit that tells a number from
+     a pointer. `Word64`, which is also `LargeWord`, has 64 bits on every
+     machine, and so has `SysWord`, a type of its own beside it: a word of
+     theirs is kept in a word of the machine where it fits 63 bits and in a
+     small object where it needs the 64th. `Word8`, `Word16` and `Word32` are
+     kept in a word of the machine whose upper bits are zero.
 
      Implementation: `Word.word/constants-overloaded`. A word constant has the
      word type that its context asks for, `Word8.word` as well as `word`, and

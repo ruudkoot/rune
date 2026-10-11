@@ -18,7 +18,7 @@ struct
                  poll : OS.IO.poll_desc, out : Posix.IO.file_desc, errs : Posix.IO.file_desc,
                  interrupt : unit -> unit, close : unit -> unit}
 
-  fun fd (k : int) = Posix.FileSys.wordToFD (Word.fromInt k)
+  fun fd (k : int) = Posix.FileSys.wordToFD (SysWord.fromInt k)
 
   fun writeAll (f : Posix.IO.file_desc, s : string) : unit =
     let

@@ -27,16 +27,17 @@ sig
 
   (* The type of integers of this structure.
 
-     Implementation: `Int.int/63-bits`. `Int.int` is the top-level `int`,
-     whose width is the VM's: 63 bits on this one, a word of the machine less
-     the bit that tells a number from a pointer, so that `Int.precision` is
-     `SOME 63`. `Position` is `Int`. `Int64` and `FixedInt` are of 64 bits, a
-     type of their own: a number of theirs is kept in a word where it fits 63
-     bits and in a small object where it needs the 64th, so that code written
-     for 64 bits has them on every machine; `Int8`, `Int16` and `Int32` keep
-     a value of their own width, and `LargeInt` is `IntInf`, which has no
-     width. Constants of each are checked against its
-     range where they are written. *)
+     Implementation: `Int.int/63-bits`. `Int.int` is the top-level `int`, whose
+     width is the VM's: 63 bits on this one, a word of the machine less the bit
+     that tells a number from a pointer, so that `Int.precision` is `SOME 63`.
+     `Int64` and `FixedInt` are of 64 bits, a type of their own, and so is
+     `Position`, a type of its own beside them: a number of theirs is kept in a
+     word where it fits 63 bits and in a small object where it needs the 64th,
+     so that code written for 64 bits has them on every machine; `Int8`,
+     `Int16` and `Int32` keep a value of their own width, and `LargeInt` is
+     `IntInf`, which has no width. Constants of each are checked against its
+     range where they are written, and those of `Position` where they are
+     evaluated. *)
   eqtype int
 
   (* ---- Conversions ---- *)

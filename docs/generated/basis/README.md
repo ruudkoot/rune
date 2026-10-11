@@ -11,7 +11,7 @@ linked below, collects them all.
 
 A signature says what a member means, and a structure says what it is here.
 So [`LIST`](sig/LIST.md) describes what [`List`](str/List.md) does, [`INTEGER`](sig/INTEGER.md) what [`Int`](str/Int.md), [`Int32`](str/Int32.md),
-[`LargeInt`](str/IntInf.md) and [`Position`](str/Int.md) all do, and [`MONO_VECTOR`](sig/MONO_VECTOR.md) what [`Word8Vector`](str/Word8Vector.md) and
+[`LargeInt`](str/IntInf.md) and [`Position`](str/Position.md) all do, and [`MONO_VECTOR`](sig/MONO_VECTOR.md) what [`Word8Vector`](str/Word8Vector.md) and
 [`CharVector`](str/CharVector.md) do, while the page of a structure shows its members with the
 types it gives them: [`Word8Vector.sub`](sig/MONO_VECTOR.md#val-sub) is `vector * int -> Word8.word` where
 [`MONO_VECTOR`](sig/MONO_VECTOR.md) can only write `vector * int -> elem`. Follow a member to the

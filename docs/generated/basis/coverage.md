@@ -83,7 +83,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-197 structures have a page, with 4303 members, of which 4219 (98%) are described by a signature.
+199 structures have a page, with 4371 members, of which 4287 (98%) are described by a signature.
 
 | Structure | Members | Described |  |
 | --- | --- | --- | --- |

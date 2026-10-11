@@ -6,7 +6,7 @@ val () = print ("isDir: " ^ Bool.toString (OS.FileSys.isDir dir) ^ "\n")
 val f = OS.Path.concat (dir, "a.txt")
 val out = TextIO.openOut f
 val () = (TextIO.output (out, "hello\n"); TextIO.closeOut out)
-val () = print ("size: " ^ Int.toString (OS.FileSys.fileSize f) ^ " access: "
+val () = print ("size: " ^ Position.toString (OS.FileSys.fileSize f) ^ " access: "
                 ^ Bool.toString (OS.FileSys.access (f, [OS.FileSys.A_READ, OS.FileSys.A_WRITE])) ^ "\n")
 val d = OS.FileSys.openDir dir
 fun names acc = case OS.FileSys.readDir d of NONE => List.rev acc | SOME n => names (n :: acc)

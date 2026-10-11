@@ -12,8 +12,8 @@ val two = Byte.bytesToString (Posix.IO.readVec (fd, 2))
 val start = Posix.IO.lseek (fd, 1, Posix.IO.SEEK_SET)
 val three = Byte.bytesToString (Posix.IO.readVec (fd, 3))
 val () = Posix.IO.close fd
-val () = print ("wrote " ^ Int.toString n ^ ", end " ^ Int.toString atEnd ^ ", back " ^ Int.toString back
-                ^ " reads " ^ two ^ ", start " ^ Int.toString start ^ " reads " ^ three ^ "\n")
-val () = print ("size " ^ Int.toString (OS.FileSys.fileSize path) ^ "\n")
+val () = print ("wrote " ^ Int.toString n ^ ", end " ^ Position.toString atEnd ^ ", back " ^ Position.toString back
+                ^ " reads " ^ two ^ ", start " ^ Position.toString start ^ " reads " ^ three ^ "\n")
+val () = print ("size " ^ Position.toString (OS.FileSys.fileSize path) ^ "\n")
 val () = Posix.FileSys.unlink path
 val () = print ("gone: " ^ Bool.toString (not (OS.FileSys.access (path, []))) ^ "\n")

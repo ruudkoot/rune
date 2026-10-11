@@ -8,10 +8,7 @@ BOOL	signature			required	declared	lib/basis/sig_bool.sml
 BYTE	signature			required	declared	lib/basis/sig_byte.sml
 CHAR	signature			required	declared	lib/basis/sig_char.sml
 COMMAND_LINE	signature			required	declared	lib/basis/sig_command_line.sml
-COMPILER	signature			extension	declared	lib/basis/compiler_sig.sml
 DATE	signature			required	declared	lib/basis/sig_date.sml
-DISPLAY	signature			extension	declared	lib/basis/display_sig.sml
-DYNAMIC	signature			extension	declared	lib/basis/dynamic_sig.sml
 GENERAL	signature			required	declared	lib/basis/sig_general.sml
 GENERIC_SOCK	signature			optional	declared	lib/basis/sig_generic_sock.sml
 IEEE_REAL	signature			required	declared	lib/basis/sig_ieee_real.sml
@@ -52,7 +49,6 @@ POSIX_SYS_DB	signature			optional	declared	lib/basis/sig_posix_sys_db.sml
 POSIX_TTY	signature			optional	declared	lib/basis/sig_posix_tty.sml
 PRIM_IO	signature			required	declared	lib/basis/primio_sig.sml
 REAL	signature			required	declared	lib/basis/sig_real.sml
-REPL	signature			extension	declared	lib/basis/repl_sig.sml
 RUNTIME	signature			extension	declared	lib/basis/runtime_sig.sml
 SML90	signature			optional	declared	lib/basis/sig_sml90.sml
 SOCKET	signature			optional	declared	lib/basis/sig_socket.sml
@@ -60,7 +56,6 @@ STREAM_IO	signature			required	declared	lib/basis/streamio_sig.sml
 STRING	signature			required	declared	lib/basis/sig_string.sml
 STRING_CVT	signature			required	declared	lib/basis/sig_string_cvt.sml
 SUBSTRING	signature			required	declared	lib/basis/sig_substring.sml
-TERMINAL	signature			extension	declared	lib/basis/terminal_sig.sml
 TEXT	signature			required	declared	lib/basis/sig_text.sml
 TEXT_IO	signature			required	declared	lib/basis/sig_text_io.sml
 TEXT_STREAM_IO	signature			required	declared	lib/basis/sig_text_stream_io.sml
@@ -93,10 +88,7 @@ CharArraySlice	structure	MONO_ARRAY_SLICE	where type vector = CharVector.vector 
 CharVector	structure	MONO_VECTOR	where type vector = String.string where type elem = char	required	claimed	lib/basis/charvector.sml
 CharVectorSlice	structure	MONO_VECTOR_SLICE	where type slice = Substring.substring where type vector = String.string where type elem = char	required	claimed	lib/basis/charvectorslice.sml
 CommandLine	structure	COMMAND_LINE		required	claimed	lib/basis/commandline.sml
-Compiler	structure	COMPILER		extension	claimed	lib/basis/compiler.sml
 Date	structure	DATE		required	claimed	lib/basis/date.sml
-Display	structure	DISPLAY		extension	claimed	lib/basis/display.sml
-Dynamic	structure	DYNAMIC		extension	ascribed	lib/basis/dynamic.sml
 FixedInt	structure	INTEGER	where type int = Int64.int	optional	claimed	lib/basis/int64.sml
 General	structure	GENERAL		required	claimed	lib/basis/general.sml
 GenericSock	structure	GENERIC_SOCK		optional	claimed	lib/basis/inetsock.sml
@@ -221,7 +213,6 @@ RealArray2	structure	MONO_ARRAY2	where type vector = RealVector.vector where typ
 RealArraySlice	structure	MONO_ARRAY_SLICE	where type vector = RealVector.vector where type vector_slice = RealVectorSlice.slice where type array = RealArray.array where type elem = real	optional	claimed	lib/basis/mono_real.sml
 RealVector	structure	MONO_VECTOR	where type elem = real	optional	claimed	lib/basis/mono_real.sml
 RealVectorSlice	structure	MONO_VECTOR_SLICE	where type vector = RealVector.vector where type elem = real	optional	claimed	lib/basis/mono_real.sml
-Repl	structure	REPL		extension	claimed	lib/basis/repl.sml
 Runtime	structure	RUNTIME		extension	claimed	lib/basis/runtime.sml
 SML90	structure	SML90		optional	claimed	lib/basis/sml90.sml
 Socket	structure	SOCKET		optional	claimed	lib/basis/socket.sml
@@ -229,8 +220,7 @@ StreamIO	functor	STREAM_IO		optional	ascribed	lib/basis/io_functors.sml
 String	structure	STRING	where type string = string where type char = Char.char	required	claimed	lib/basis/string.sml
 StringCvt	structure	STRING_CVT		required	claimed	lib/basis/stringcvt.sml
 Substring	structure	SUBSTRING	where type string = string where type char = Char.char	required	claimed	lib/basis/substring.sml
-SysWord	structure	WORD		optional	claimed	lib/basis/word.sml
-Terminal	structure	TERMINAL		extension	claimed	lib/basis/terminal.sml
+SysWord	structure	WORD		optional	claimed	lib/basis/sysword.sml
 Text	structure	TEXT	where type Char.char = Char.char where type String.string = String.string where type Substring.substring = Substring.substring where type CharArray.array = CharArray.array where type CharVectorSlice.slice = CharVectorSlice.slice where type CharArraySlice.slice = CharArraySlice.slice	required	claimed	lib/basis/text.sml
 TextIO	structure	IMPERATIVE_IO		required	claimed	lib/basis/textio.sml
 TextIO	structure	TEXT_IO		required	claimed	lib/basis/textio.sml

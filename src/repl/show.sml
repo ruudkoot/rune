@@ -219,7 +219,8 @@ struct
                               val word = String.isPrefix "Word" (List.last structure') orelse List.last structure' = "LargeWord"
                                          orelse List.last structure' = "SysWord"
                               val numeric = word orelse String.isPrefix "Int" (List.last structure')
-                                            orelse List.last structure' = "LargeInt" orelse String.isPrefix "Real" (List.last structure')
+                                            orelse List.last structure' = "LargeInt" orelse List.last structure' = "Position"
+                                            orelse String.isPrefix "Real" (List.last structure')
                                             orelse List.last structure' = "LargeReal"
                             in
                               SOME ("(fn _ => fn x => RuneShow.role (" ^ (if numeric then "\"syn.number\"" else "\"text\"")

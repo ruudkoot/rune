@@ -32,7 +32,7 @@ What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_FILE_SYS`](
 | val | [`anySet`](../sig/BIT_FLAGS.md#val-anyset) | `mode * mode -> bool` |
 | val | [`clear`](../sig/BIT_FLAGS.md#val-clear) | `mode * mode -> mode` |
 | val | [`flags`](../sig/BIT_FLAGS.md#val-flags) | `mode list -> mode` |
-| val | [`fromWord`](../sig/BIT_FLAGS.md#val-fromword) | `word -> mode` |
+| val | [`fromWord`](../sig/BIT_FLAGS.md#val-fromword) | `SysWord.word -> mode` |
 | val | [`intersect`](../sig/BIT_FLAGS.md#val-intersect) | `mode list -> mode` |
 | val | [`irgrp`](../sig/POSIX_FILE_SYS.md#val-s.irgrp) | `mode` |
 | val | [`iroth`](../sig/POSIX_FILE_SYS.md#val-s.iroth) | `mode` |
@@ -48,7 +48,7 @@ What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_FILE_SYS`](
 | val | [`ixgrp`](../sig/POSIX_FILE_SYS.md#val-s.ixgrp) | `mode` |
 | val | [`ixoth`](../sig/POSIX_FILE_SYS.md#val-s.ixoth) | `mode` |
 | val | [`ixusr`](../sig/POSIX_FILE_SYS.md#val-s.ixusr) | `mode` |
-| val | [`toWord`](../sig/BIT_FLAGS.md#val-toword) | `mode -> word` |
+| val | [`toWord`](../sig/BIT_FLAGS.md#val-toword) | `mode -> SysWord.word` |
 
 ## Notes
 

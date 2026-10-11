@@ -32,11 +32,11 @@ What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_IO`](../sig
 | val | [`append`](../sig/POSIX_IO.md#val-o.append) | `flags` |
 | val | [`clear`](../sig/BIT_FLAGS.md#val-clear) | `flags * flags -> flags` |
 | val | [`flags`](../sig/BIT_FLAGS.md#val-flags) | `flags list -> flags` |
-| val | [`fromWord`](../sig/BIT_FLAGS.md#val-fromword) | `word -> flags` |
+| val | [`fromWord`](../sig/BIT_FLAGS.md#val-fromword) | `SysWord.word -> flags` |
 | val | [`intersect`](../sig/BIT_FLAGS.md#val-intersect) | `flags list -> flags` |
 | val | [`nonblock`](../sig/POSIX_IO.md#val-o.nonblock) | `flags` |
 | val | [`sync`](../sig/POSIX_IO.md#val-o.sync) | `flags` |
-| val | [`toWord`](../sig/BIT_FLAGS.md#val-toword) | `flags -> word` |
+| val | [`toWord`](../sig/BIT_FLAGS.md#val-toword) | `flags -> SysWord.word` |
 
 <details><summary>Other implementations (5)</summary>
 

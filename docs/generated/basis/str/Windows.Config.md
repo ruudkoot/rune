@@ -22,12 +22,12 @@ What each means is on [`WINDOWS`](../sig/WINDOWS.md); the types are this structu
 | val | [`getComputerName`](../sig/WINDOWS.md#val-config.getcomputername) | `unit -> string` |
 | val | [`getSystemDirectory`](../sig/WINDOWS.md#val-config.getsystemdirectory) | `unit -> string` |
 | val | [`getUserName`](../sig/WINDOWS.md#val-config.getusername) | `unit -> string` |
-| val | [`getVersionEx`](../sig/WINDOWS.md#val-config.getversionex) | `unit -> {buildNumber : word, csdVersion : string, majorVersion : word, minorVersion : word, platformId : word}` |
+| val | [`getVersionEx`](../sig/WINDOWS.md#val-config.getversionex) | `unit -> {buildNumber : SysWord.word, csdVersion : string, majorVersion : SysWord.word, minorVersion : SysWord.word, platformId : SysWord.word}` |
 | val | [`getWindowsDirectory`](../sig/WINDOWS.md#val-config.getwindowsdirectory) | `unit -> string` |
-| val | [`platformWin32CE`](../sig/WINDOWS.md#val-config.platformwin32ce) | `word` |
-| val | [`platformWin32NT`](../sig/WINDOWS.md#val-config.platformwin32nt) | `word` |
-| val | [`platformWin32Windows`](../sig/WINDOWS.md#val-config.platformwin32windows) | `word` |
-| val | [`platformWin32s`](../sig/WINDOWS.md#val-config.platformwin32s) | `word` |
+| val | [`platformWin32CE`](../sig/WINDOWS.md#val-config.platformwin32ce) | `SysWord.word` |
+| val | [`platformWin32NT`](../sig/WINDOWS.md#val-config.platformwin32nt) | `SysWord.word` |
+| val | [`platformWin32Windows`](../sig/WINDOWS.md#val-config.platformwin32windows) | `SysWord.word` |
+| val | [`platformWin32s`](../sig/WINDOWS.md#val-config.platformwin32s) | `SysWord.word` |
 
 ## Notes
 

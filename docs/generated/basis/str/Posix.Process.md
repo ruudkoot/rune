@@ -39,12 +39,12 @@ What each means is on [`POSIX_PROCESS`](../sig/POSIX_PROCESS.md); the types are 
 | val | [`fromStatus`](../sig/POSIX_PROCESS.md#val-fromstatus) | `RuneStatus.status -> RunePosixProcess.exit_status` |
 | val | [`kill`](../sig/POSIX_PROCESS.md#val-kill) | `killpid_arg * RunePosixSignal.signal -> unit` |
 | val | [`pause`](../sig/POSIX_PROCESS.md#val-pause) | `unit -> unit` |
-| val | [`pidToWord`](../sig/POSIX_PROCESS.md#val-pidtoword) | `pid -> word` |
+| val | [`pidToWord`](../sig/POSIX_PROCESS.md#val-pidtoword) | `pid -> SysWord.word` |
 | val | [`sleep`](../sig/POSIX_PROCESS.md#val-sleep) | `Time.time -> Time.time` |
 | val | [`wait`](../sig/POSIX_PROCESS.md#val-wait) | `unit -> pid * RunePosixProcess.exit_status` |
 | val | [`waitpid`](../sig/POSIX_PROCESS.md#val-waitpid) | `waitpid_arg * W.flags list -> pid * RunePosixProcess.exit_status` |
 | val | [`waitpid_nh`](../sig/POSIX_PROCESS.md#val-waitpid_nh) | `waitpid_arg * W.flags list -> (pid * RunePosixProcess.exit_status) option` |
-| val | [`wordToPid`](../sig/POSIX_PROCESS.md#val-wordtopid) | `word -> pid` |
+| val | [`wordToPid`](../sig/POSIX_PROCESS.md#val-wordtopid) | `SysWord.word -> pid` |
 | structure | [`W`](../str/Posix.Process.W.md) | [`BIT_FLAGS`](../sig/BIT_FLAGS.md) |
 
 ## Notes

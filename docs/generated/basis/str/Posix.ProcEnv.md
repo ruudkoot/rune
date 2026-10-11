@@ -41,20 +41,20 @@ What each means is on [`POSIX_PROC_ENV`](../sig/POSIX_PROC_ENV.md); the types ar
 | val | [`getpid`](../sig/POSIX_PROC_ENV.md#val-getpid) | `unit -> Posix.Process.pid` |
 | val | [`getppid`](../sig/POSIX_PROC_ENV.md#val-getppid) | `unit -> Posix.Process.pid` |
 | val | [`getuid`](../sig/POSIX_PROC_ENV.md#val-getuid) | `unit -> uid` |
-| val | [`gidToWord`](../sig/POSIX_PROC_ENV.md#val-gidtoword) | `gid -> word` |
+| val | [`gidToWord`](../sig/POSIX_PROC_ENV.md#val-gidtoword) | `gid -> SysWord.word` |
 | val | [`isatty`](../sig/POSIX_PROC_ENV.md#val-isatty) | `file_desc -> bool` |
 | val | [`setgid`](../sig/POSIX_PROC_ENV.md#val-setgid) | `gid -> unit` |
 | val | [`setpgid`](../sig/POSIX_PROC_ENV.md#val-setpgid) | `{pgid : Posix.Process.pid option, pid : Posix.Process.pid option} -> unit` |
 | val | [`setsid`](../sig/POSIX_PROC_ENV.md#val-setsid) | `unit -> Posix.Process.pid` |
 | val | [`setuid`](../sig/POSIX_PROC_ENV.md#val-setuid) | `uid -> unit` |
-| val | [`sysconf`](../sig/POSIX_PROC_ENV.md#val-sysconf) | `string -> word` |
+| val | [`sysconf`](../sig/POSIX_PROC_ENV.md#val-sysconf) | `string -> SysWord.word` |
 | val | [`time`](../sig/POSIX_PROC_ENV.md#val-time) | `unit -> Time.time` |
 | val | [`times`](../sig/POSIX_PROC_ENV.md#val-times) | `unit -> {cstime : Time.time, cutime : Time.time, elapsed : Time.time, stime : Time.time, utime : Time.time}` |
 | val | [`ttyname`](../sig/POSIX_PROC_ENV.md#val-ttyname) | `file_desc -> string` |
-| val | [`uidToWord`](../sig/POSIX_PROC_ENV.md#val-uidtoword) | `uid -> word` |
+| val | [`uidToWord`](../sig/POSIX_PROC_ENV.md#val-uidtoword) | `uid -> SysWord.word` |
 | val | [`uname`](../sig/POSIX_PROC_ENV.md#val-uname) | `unit -> (string * string) list` |
-| val | [`wordToGid`](../sig/POSIX_PROC_ENV.md#val-wordtogid) | `word -> gid` |
-| val | [`wordToUid`](../sig/POSIX_PROC_ENV.md#val-wordtouid) | `word -> uid` |
+| val | [`wordToGid`](../sig/POSIX_PROC_ENV.md#val-wordtogid) | `SysWord.word -> gid` |
+| val | [`wordToUid`](../sig/POSIX_PROC_ENV.md#val-wordtouid) | `SysWord.word -> uid` |
 
 ## Notes
 

@@ -29,7 +29,7 @@ struct
   (* the engine, a child of the adapter's (src/front/engine.sml) *)
   type engine = EngineClient.engine
 
-  fun fd (k : int) = Posix.FileSys.wordToFD (Word.fromInt k)
+  fun fd (k : int) = Posix.FileSys.wordToFD (SysWord.fromInt k)
 
   fun readSome (f : Posix.IO.file_desc) : string = Byte.bytesToString (Posix.IO.readVec (f, 65536))
 

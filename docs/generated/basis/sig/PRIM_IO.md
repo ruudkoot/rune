@@ -152,7 +152,7 @@ eqtype pos
 The type of positions in the source or the sink.
 
 > **Implementation** `PRIM_IO.pos/of-the-instances`. [`BinPrimIO.pos`](#type-pos) is the
-> integer type of [`Position`](../str/Int.md), and a position is the offset of a byte from
+> integer type of [`Position`](../str/Position.md), and a position is the offset of a byte from
 > the start of the file, so [`compare`](#val-compare) is the order of those numbers.
 > [`TextPrimIO.pos`](#type-pos) is abstract, as the specification leaves it: a program
 > can compare positions and give them back to `setPos`, and nothing more.
@@ -168,7 +168,7 @@ val compare : pos * pos -> order
 
 `compare (p, q)` orders two positions: earlier in the stream is less.
 
-**Law** `(compare (p, q) = EQUAL) = (p = q)` (for every `p : int`, `q : int`)
+**Law** `(compare (p, q) = EQUAL) = (p = q)` (for every `p : Position.int`, `q : Position.int`)
 
 **Example** `compare (0, 1) = LESS`
 

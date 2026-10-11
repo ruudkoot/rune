@@ -31,10 +31,10 @@ struct
     fun check r = if r < 0 then raise RuneError.lastError () else r
     fun checkString s = if s = "" then raise RuneError.lastError () else s
   in
-    fun uidToWord (u : uid) = Word.fromInt u
-    fun wordToUid w = Word.toInt w
-    fun gidToWord (g : gid) = Word.fromInt g
-    fun wordToGid w = Word.toInt w
+    fun uidToWord (u : uid) = SysWord.fromInt u
+    fun wordToUid w = SysWord.toInt w
+    fun gidToWord (g : gid) = SysWord.fromInt g
+    fun wordToGid w = SysWord.toInt w
 
     (* POSIX never fails these, but a system without them gives -1, which is
        no process or user *)
@@ -85,6 +85,6 @@ struct
                    if RuneError.toInt n = 0 then raise RuneError.SysErr ("sysconf: " ^ name ^ " has no limit", NONE)
                    else raise e
                | e => raise e)
-      | v => Word.fromInt v
+      | v => SysWord.fromInt v
   end
 end

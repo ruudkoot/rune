@@ -22,7 +22,7 @@ structure Int64 : INTEGER  (* optional *)
 structure Int8 : INTEGER  (* optional *)
 structure IntInf : INTEGER  (* optional *)
 structure LargeInt : INTEGER where type int = IntInf.int
-structure Position : INTEGER
+structure Position :> INTEGER
 ```
 
 | Implementation |  | Source |
@@ -35,14 +35,14 @@ structure Position : INTEGER
 | [`Int8`](../str/Int8.md) | Int8: integers of 8 bits. | [lib/basis/int8.sml](../../../../lib/basis/int8.sml) |
 | [`IntInf`](../str/IntInf.md) | IntInf: arbitrary precision integers implemented in SML on top of the VM's int (63 bits). A value is a sign and a little-endian list of base-2^30 limbs without high zero limbs; zero is never negative. The representation is therefore canonical and structural equality is value equality. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
 | [`LargeInt`](../str/IntInf.md) | The largest integers are the arbitrary precision ones: "If an implementation provides the IntInf structure, then LargeInt must be the same structure as IntInf (viewed through a thinning INTEGER signature)", which is why the seal file shows a program only what INTEGER names, as MLton, SML/NJ and Poly/ML do. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
-| [`Position`](../str/Int.md) | Position: the positions in a file. On the VM it is Int. | [lib/basis/position.sml](../../../../lib/basis/position.sml) |
+| [`Position`](../str/Position.md) | Position: the positions in a file and in a stream of I/O, as `lseek` and `ftruncate` take them and `fileSize` gives them: 64 bits, as a file offset of the system has, and a type of its own. It is [`Int64`](../str/Int64.md) behind, but not [`Int.int`](#type-int) nor [`Int64.int`](#type-int), as the specification makes it the same as neither and other implementations keep it apart from [`Int`](../str/Int.md) (MLton's and SML/NJ's are [`Int64`](../str/Int64.md), Poly/ML's [`LargeInt`](../str/IntInf.md)). A program converts with [`fromInt`](#val-fromint), [`toInt`](#val-toint), [`fromLarge`](#val-fromlarge) and [`toLarge`](#val-tolarge). | [lib/basis/position.sml](../../../../lib/basis/position.sml) |
 
 Integers of a fixed precision, with arithmetic that raises [`Overflow`](../sig/GENERAL.md#exn-overflow)
 rather than wrapping round.
 
 The structures that implement this signature differ only in how many bits
 they keep: [`Int`](../str/Int.md) is the default one, [`Int8`](../str/Int8.md) to [`Int64`](../str/Int64.md) are the sized ones,
-[`LargeInt`](../str/IntInf.md) is the largest there is, and [`Position`](../str/Int.md) is what a file position
+[`LargeInt`](../str/IntInf.md) is the largest there is, and [`Position`](../str/Position.md) is what a file position
 is measured in. [`IntInf`](../str/IntInf.md) implements it too, through [`INT_INF`](../sig/INT_INF.md), and has no
 bounds at all: there [`precision`](#val-precision), [`minInt`](#val-minint) and [`maxInt`](#val-maxint) are `NONE` and
 nothing overflows.
@@ -114,16 +114,17 @@ eqtype int
 
 The type of integers of this structure.
 
-> **Implementation** `Int.int/63-bits`. [`Int.int`](#type-int) is the top-level [`int`](#type-int),
-> whose width is the VM's: 63 bits on this one, a word of the machine less
-> the bit that tells a number from a pointer, so that [`Int.precision`](#val-precision) is
-> `SOME 63`. [`Position`](../str/Int.md) is [`Int`](../str/Int.md). [`Int64`](../str/Int64.md) and [`FixedInt`](../str/Int64.md) are of 64 bits, a
-> type of their own: a number of theirs is kept in a word where it fits 63
-> bits and in a small object where it needs the 64th, so that code written
-> for 64 bits has them on every machine; [`Int8`](../str/Int8.md), [`Int16`](../str/Int16.md) and [`Int32`](../str/Int32.md) keep
-> a value of their own width, and [`LargeInt`](../str/IntInf.md) is [`IntInf`](../str/IntInf.md), which has no
-> width. Constants of each are checked against its
-> range where they are written.
+> **Implementation** `Int.int/63-bits`. [`Int.int`](#type-int) is the top-level [`int`](#type-int), whose
+> width is the VM's: 63 bits on this one, a word of the machine less the bit
+> that tells a number from a pointer, so that [`Int.precision`](#val-precision) is `SOME 63`.
+> [`Int64`](../str/Int64.md) and [`FixedInt`](../str/Int64.md) are of 64 bits, a type of their own, and so is
+> [`Position`](../str/Position.md), a type of its own beside them: a number of theirs is kept in a
+> word where it fits 63 bits and in a small object where it needs the 64th,
+> so that code written for 64 bits has them on every machine; [`Int8`](../str/Int8.md),
+> [`Int16`](../str/Int16.md) and [`Int32`](../str/Int32.md) keep a value of their own width, and [`LargeInt`](../str/IntInf.md) is
+> [`IntInf`](../str/IntInf.md), which has no width. Constants of each are checked against its
+> range where they are written, and those of [`Position`](../str/Position.md) where they are
+> evaluated.
 
 <details><summary>Tests (4)</summary>
 

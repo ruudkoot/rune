@@ -280,7 +280,7 @@ val largeRange : LargeInt.int * LargeInt.int -> LargeInt.int gen
 `largeRange (lo, hi)` draws an integer of `[lo, hi]` as [`intRange`](#val-intrange) does, for a range of at most 2^64 integers.
 
 The integers may be of any size: this is what the arbitraries of [`Int64`](../../../basis/str/Int64.md)
-and [`Position`](../../../basis/str/Int.md) are made of where [`Int.int`](../../../basis/sig/INTEGER.md#type-int) is narrower.
+and [`Position`](../../../basis/str/Position.md) are made of where [`Int.int`](../../../basis/sig/INTEGER.md#type-int) is narrower.
 
 **Raises** [`Domain`](../../../basis/sig/GENERAL.md#exn-domain) if `hi < lo`, or if the range has more than 2^64
 integers.

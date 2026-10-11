@@ -30,13 +30,13 @@ What each means is on [`WINDOWS`](../sig/WINDOWS.md) and [`BIT_FLAGS`](../sig/BI
 | val | [`enumerateSubKeys`](../sig/WINDOWS.md#val-key.enumeratesubkeys) | `flags` |
 | val | [`execute`](../sig/WINDOWS.md#val-key.execute) | `flags` |
 | val | [`flags`](../sig/BIT_FLAGS.md#val-flags) | `flags list -> flags` |
-| val | [`fromWord`](../sig/BIT_FLAGS.md#val-fromword) | `word -> flags` |
+| val | [`fromWord`](../sig/BIT_FLAGS.md#val-fromword) | `SysWord.word -> flags` |
 | val | [`intersect`](../sig/BIT_FLAGS.md#val-intersect) | `flags list -> flags` |
 | val | [`notify`](../sig/WINDOWS.md#val-key.notify) | `flags` |
 | val | [`queryValue`](../sig/WINDOWS.md#val-key.queryvalue) | `flags` |
 | val | [`read`](../sig/WINDOWS.md#val-key.read) | `flags` |
 | val | [`setValue`](../sig/WINDOWS.md#val-key.setvalue) | `flags` |
-| val | [`toWord`](../sig/BIT_FLAGS.md#val-toword) | `flags -> word` |
+| val | [`toWord`](../sig/BIT_FLAGS.md#val-toword) | `flags -> SysWord.word` |
 | val | [`write`](../sig/WINDOWS.md#val-key.write) | `flags` |
 
 ## Notes

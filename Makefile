@@ -596,9 +596,14 @@ bin/gcsim: tools/heapsim/gcsim.c runtime/census/layouts.h | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) $(RT_INC) -o $@ tools/heapsim/gcsim.c -lm
 heapsim: bin/heapsim bin/heapsim-gen bin/gcsim
+# The census of the validation is taken every 8192 instructions, in traces
+# of its own: at scripts/census.sh's 32768 the lower band of compile-sigs
+# missed a collection that the stock VM made at 4 MiB, where the live data
+# crossed its trigger between two samples (2026-10-11, when Position and
+# SysWord became types of their own and the workload grew a little).
 check-heapsim: heapsim bin/runevm-census bin/runevm $(RUNE) bin/rune.rbc
 	sh tools/heapsim/test.sh
-	sh tools/heapsim/validate.sh compile-sigs intinf_fact
+	CENSUS_TRACES=tests/out/census-validate CENSUS_EVERY=8192 sh tools/heapsim/validate.sh compile-sigs intinf_fact
 check-gcsim: heapsim
 	sh tools/heapsim/test2.sh
 check-layouts:
