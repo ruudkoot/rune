@@ -46,7 +46,7 @@ is the page of timings, stale until M1.
 | M0 | This roadmap | done (2026-10-11) |
 | M1 | Measure: the JIT's code dumped, the elaborator's counters, the register VM in every timing target, HOL and MLton as scripts, new budgets | not started |
 | M2 | Signatures: sharing and `where` in one realisation | not started; prototype E20 |
-| M3 | Functors: summaries for checks, cheaper matching, MidCanon's quadratic | not started; prototypes E21, E24 |
+| M3 | Functors: typed from their signature, copies only for code (D3 decided), cheaper matching, MidCanon's quadratic | not started; prototypes E21, E24 |
 | M4 | Types shared: `Ty.ty` hash-consed, `exponential.sml` compiled | not started; partial prototypes E23 (not enough) |
 | M5 | Runtime calls in line: equality, `ptr_eq`, strings, handlers, raise | not started; prototypes E11 a to e |
 | M6 | The call made lean | not started; prototypes E9 |
@@ -556,9 +556,9 @@ One regression: instantiating one big signature 256 times got 20% slower.
     made. Either the counters are replayed or the gate compares canonical
     output.
   * A datatype made in a body takes its equality from the functor's formal
-    parameter, which is what the Definition's functor signatures say. That
-    can be stricter than elaborating again with the actual argument; no
-    test showed a difference.
+    parameter. That is what the Definition's functor signatures say, and
+    stricter than what Rune does today. A test written since shows the
+    difference: [functors.md](functors.md), *What the Definition says*.
 
 **E24: MidCanon's quadratic.** `MidCanon.program` derives `Ty.extras` again
 over every datatype for each datatype it enters. A 20-line fix takes nested
@@ -1114,7 +1114,9 @@ line, are kept with the plan's drafts (*Measuring*).
   application. On the Kit itself (about 87,000 lines), 6 of 138 functors
   were applied more than once, and the code grew by 10.9%. Rune's D1 of the
   incremental plan keeps static interpretation "for now to keep strict
-  SML'97 semantics", and that is about the code. Typing an application from a summary does not change
+  SML'97 semantics". The Definition does not require static
+  interpretation; it requires typing by the functor's signature (rule
+  54), which Rune's copies do not keep ([functors.md](functors.md)). Typing an application from a summary does not change
   what is generated.
 
 ### Types in a typed IR, and the exponential program
@@ -1411,23 +1413,51 @@ regression of 20% measured).
 
 ### D3. Functors
 
-* **A. Static interpretation as now**, with a summary for applications
-  made only to check a functor's declaration (E21). That is MLton's
-  `functorClosure`. Measured: −19.6% of instructions, `main.fun` from
-  9.2 s to 0.01 s, identical whole-program output. It needs either the
-  counters replayed or a canonical comparison of unit files, and a decision
-  on the equality of datatypes made in a functor body.
+**Decided (2026-10-12): A, extended, now; B to be revisited.**
+[functors.md](functors.md) holds everything learned for that.
+
+What the Definition says decides most of it. An application is typed from
+the functor's signature (rules 86, 54, §5.4), never from its body again,
+and evaluates the body afresh at run time (rule 154). So compiling once or
+per application is the implementation's choice; typing by rule 54 is not.
+
+Rune's applications that make code are typed from their elaborated copy,
+which sees the actual argument. So Rune accepts a program the Definition
+rejects (functors.md, *What the Definition says*). HaMLet, SML/NJ,
+Poly/ML, Moscow ML and MLKit reject it; Rune and MLton accept it.
+
+* **A, extended. Static interpretation for code, the functor's signature
+  for types (MLKit's design).**
+  * Every application is typed from the functor's signature: its
+    parameter matched, its generated datatypes renamed apart. That
+    includes applications that make code.
+  * A copy of the body is elaborated only to make each application's code.
+    It is safe because the body was checked against the abstract
+    parameter at its declaration.
+  * In units, the export basis carries the functor's signature, and a
+    use of a functor depends on its signature's fingerprint for types and
+    on the body's hash for code. Today it depends on its unit's identity
+    alone.
+  * The prototype of the part that types checks from a summary (E21)
+    measured −19.5% of instructions, with `main.fun` from 9.2 s to 0.01 s
+    and identical whole-program output.
 * **B. Functors as functions,** compiled once and typed from their
-  signature, as Poly/ML and SML/NJ do. This changes D1 of the incremental
-  plan and the code Rune makes, and it gains nothing more for type-checking
-  than A does.
+  signature, as SML/NJ does.
+  * It gives separate compilation: a client depends on the signature only.
+  * It costs code quality, unless the whole-program build specialises each
+    application from the cached Mid (a link-time expansion).
+  * It changes Translate and Lambda (F-ing modules is the recipe).
 * **C. As now.**
 
-**Recommendation: A, with matching made cheaper.** Re-elaborating to make
-code is inherent in static interpretation, and MLton does it too: on
-nested functors MLton is exponential as well. What is left of
-`main.sml`'s 22.7 s is matching. The fast path of E20 for equal schemes,
-and a cheaper `checkEnrich` and `mergeInfo`, are for that.
+**Recommendation and decision: A, extended, with matching made cheaper.**
+
+* Re-elaborating the copies that make code stays, as in MLton and MLKit.
+  On nested functors MLton is exponential as well.
+* What is left of `main.sml`'s 22.7 s is matching. The fast path of E20 for
+  equal schemes, and a cheaper `checkEnrich` and `mergeInfo`, are for that.
+* B is the answer to the incremental plan's risk 3 if functor-heavy
+  projects (HOL4 first) show the cost of recompiling every application of
+  a changed body.
 
 ### D4. Types in the IR
 
@@ -1667,7 +1697,7 @@ The columns:
 | 4 | Short strings compared in line; `String.<` not generic (D7) | measured, beyond item 2's identity test that it includes: `lexgen` −6.6%, `mlyacc` −7.8% of cycles; HOL about nothing more | `emit.c` | S-M, ~150 lines | none | stays | same |
 | 5 | The call made lean: no fill, poll in the room check, frames grown with the stack, landing in line (D5 A) | measured: `fib` 82.5 to 71.5 instructions; bootstrap −4.5%, HOL −6.9% of instructions | the JIT's emitters, the collector's clean watermark | M, ~300 lines | a clean watermark for the stack | subsumed in part | same |
 | 6 | Pointers in the homes there are (D6 A) | measured: bootstrap −6.5% of cycles, a list walk −39% | `compile.c`, `masm.c` | M, ~200 lines with the boxing path | homes that may move | stays | same |
-| 7 | Functors typed from a summary when only checked (D3) | measured: −19.6% of instructions; `main.fun` 9.2 s to 0.01 s | `src/elab`, the units' files | M, ~300 lines | summaries per body; replayed counters | stays | same |
+| 7 | Functors typed from their signature, copies only for code (D3, extended A) | measured for checks: −19.5% of instructions; `main.fun` 9.2 s to 0.01 s; fixes a deviation from rule 54 | `src/elab`, the units' files | M, ~300 lines | summaries per body; replayed counters | stays | same |
 | 8 | MidCanon's quadratic | measured: nested functors 20.3 s to 0.88 s | `src/core/midcanon.sml` | S, 20 lines | none | stays | same |
 | 9 | Equality by type in the middle end (D7 B) | est.: `tsp`'s 158M calls and HOL's ref compares to `ptr_eq` | `simplify.sml`, a string primitive | S | none | stays | same |
 | 10 | Tuples flattened at joins and from known calls; small leaves inlined (D8) | est.: `fft` −75%, `barnes-hut` −60%, `raytrace` −70% of bytes | Mid passes | M-L | multi-value returns in Mid and Low | stays | move |
@@ -1735,8 +1765,16 @@ path that allocates where nothing changes free of allocation.
 
 ### M3. Functors (M)
 
-* D3 A: summaries for applications made only to check, with the counters
-  replayed so that unit files stay the same, or a canonical comparison.
+* D3 A, extended ([functors.md](functors.md)):
+  * every application typed from the functor's signature (rule 54), with a
+    copy of the body elaborated only for each code-producing application's
+    code;
+  * the counters replayed so that unit files stay byte for byte the same;
+  * the functor's signature in the export basis;
+  * a use of a functor depending on the signature's fingerprint for types
+    and on the body's hash for code;
+  * the equality program of functors.md rejected, with a test, and
+    `docs/language.md`'s row for functors made true.
 * Matching made cheaper: the fast path for equal schemes, `checkEnrich`
   and `mergeInfo`.
 * MidCanon's quadratic.
@@ -1750,7 +1788,9 @@ path that allocates where nothing changes free of allocation.
   * the prototypes' 41.4 s on MLton's build, times tier 2's 4.5 to 5.3
     times MLton's build, is 186 to 219 s;
   * 611 s divided by the fivefold drop in instructions is 122 s.
-* the functor budgets met.
+* the functor budgets met;
+* MLton's sources, HOL4, the Basis libraries of xc2 and every suite still
+  compile: none may rely on the equality leak that MLton also has.
 
 ### M4. Types shared (L)
 
@@ -1897,7 +1937,11 @@ for: a `fib` call at most 25 instructions and 10 cycles.
   M8 takes what the census says the middle end could remove, without
   needing the first.
 * **[incremental-compilation.md](incremental-compilation.md)**:
-  * its D1 (static interpretation) stands (D3);
+  * its D1 (static interpretation) stands for code (D3). The functor's
+    signature joins the export basis, and a use of a functor gets a
+    fingerprint for types (M3).
+  * Functors as functions with a link-time expansion, the answer to its
+    risk 3, are for later ([functors.md](functors.md));
   * its *Ready for, not built*, "the elaborator at the scale of MLton", is
     this plan's M2 and M3;
   * the 3.3 GB that building MLton in units keeps live is E22's open
@@ -1926,10 +1970,12 @@ for: a `fib` call at most 25 instructions and 10 cycles.
    bytes of unit files. Replaying the counters may turn out awkward, in
    which case the gate must compare canonical output, and the cache's
    reproducibility needs care.
-3. **The semantics of summaries.** A datatype made inside a functor body
-   takes its equality from the formal parameter. No test showed a
-   difference, but the Definition's reading must be checked against
-   HaMLet before M3 lands.
+3. **Programs that rely on the equality leak.** Typing by rule 54 rejects
+   programs Rune accepts today: a datatype made in a functor body
+   compared with `=` where only the actual argument admits equality.
+   HaMLet, SML/NJ, Poly/ML, Moscow ML and MLKit reject them already. MLton
+   accepts them, so code written for MLton may rely on the leak. M3
+   compiles MLton's sources, HOL4 and xc2 before it lands.
 4. **Pointer homes and the collector.** A home holding a stale pointer
    after a collection is the class of bug that the `RUNE_INT64` tier-2 fix
    (`75192718`) was. M7 needs `--gc-stress` with a check that slots and
