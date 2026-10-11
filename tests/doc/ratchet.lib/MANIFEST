@@ -1,3 +1,0 @@
-# A small library for the tests of the ratchet (tests/doc/run-doc-tests.sh).
-done.sml    | demand | yes | DONE Done       |
-partial.sml | demand | yes | PARTIAL Partial | DONE

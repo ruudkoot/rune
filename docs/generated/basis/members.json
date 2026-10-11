@@ -1305,7 +1305,7 @@
      "kind": "exception",
      "name": "Mismatch",
      "spec": "exception Mismatch of string",
-     "doc": "`Mismatch` is raised where a module loaded through `_dynamic` was\ncompiled against another signature than the program, or exports no\nstructure, and where a virtual module (`_virtual`) has no\nimplementation or one of another signature. Its argument names the\nfile or the module, and both fingerprints.\n\n",
+     "doc": "`Mismatch` is raised where a module does not fit what the program was compiled against.\n\nThat is a module loaded through `_dynamic` that was compiled against\nanother signature than the program, or exports no structure, and a\nvirtual module (`_virtual`) that has no implementation or one of\nanother signature. Its argument names the file or the module, and both\nfingerprints.\n\n",
      "page": "sig/DYNAMIC.md#exn-mismatch"
     },
     {
@@ -1319,7 +1319,7 @@
      "kind": "val",
      "name": "reload",
      "spec": "val reload : string -> unit",
-     "doc": "`reload file` loads the unit in `file` again, for every `_dynamic`\ndeclaration that loaded it, and runs its top level: each declaration's\nstructure is then the new module's, so a call through it reaches the\nnew code, and a function taken from it before is the old one. Where\nthe new module implements another signature, nothing changes.\n\nA module whose signature has an abstract type is not loaded again: a\nvalue of the type that the program holds could be of another\nrepresentation in the new module.\n\n**Raises** `Mismatch` if no declaration loaded `file`, one did through a\nsignature with an abstract type, or the new module implements another\nsignature; `IO.Io` and `Fail` as `load`.\n\n",
+     "doc": "`reload file` loads the unit in `file` again, for every `_dynamic` declaration that loaded it.\n\nIt runs the unit's top level, and each declaration's structure is then\nthe new module's, so a call through it reaches the new code, and a\nfunction taken from it before is the old one. Where the new module\nimplements another signature, nothing changes.\n\nA module whose signature has an abstract type is not loaded again: a\nvalue of the type that the program holds could be of another\nrepresentation in the new module.\n\n**Raises** `Mismatch` if no declaration loaded `file`, one did through a\nsignature with an abstract type, or the new module implements another\nsignature; `IO.Io` and `Fail` as `load`.\n\n",
      "page": "sig/DYNAMIC.md#val-reload"
     }
    ]
@@ -1832,7 +1832,7 @@
      "kind": "val",
      "name": "toAddr",
      "spec": "val toAddr : in6_addr * int -> sock_addr",
-     "doc": "`toAddr (a, port)` is the address of that host and port.\n\n**Raises** `SysErr` if the system will not make it.\n\n**Example** `#2 (fromAddr (toAddr (valOf (fromString \"::1\"), 8080))) = 8080`\n\n",
+     "doc": "`toAddr (a, port)` is the address of that host and port.\n\n**Raises** `OS.SysErr` if the system will not make it.\n\n**Example** `#2 (fromAddr (toAddr (valOf (fromString \"::1\"), 8080))) = 8080`\n\n",
      "page": "sig/INET6_SOCK.md#val-toaddr"
     },
     {

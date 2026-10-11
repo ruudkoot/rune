@@ -291,17 +291,18 @@ For the Basis Library the file is `tests/basis/annotations.txt`, which
 `tests/basis/deviations.txt`. It is committed and `make check-docs` checks
 that it is up to date, so `runedoc` never reads `deviations.txt`.
 
-## The ratchet
+## Documented in full
 
-`lib/basis/DOCUMENTED` lists the signatures that are documented in full. For
-them `runedoc` makes an error of what it only counts elsewhere
-(`docs/generated/basis/coverage.md`): an entry without a comment (one that is
-documented together with the entry before it counts as documented), a
-function without a usage head, a first paragraph of more than 160 characters
-(it is the summary of the index pages: say the rest in a second paragraph), a
-qualified name in backquotes that leads nowhere, a `Raises:` whose exception
-is not documented anywhere (the exceptions of the top level are `General`'s). Add a signature to the list
-in the commit that finishes its documentation.
+Every signature of a library is documented in full: `runedoc` makes an error
+of what it only counts elsewhere (`docs/generated/basis/coverage.md`): an
+entry without a comment (one that is documented together with the entry
+before it counts as documented), a function without a usage head, a first
+paragraph of more than 160 characters (it is the summary of the index pages:
+say the rest in a second paragraph), a qualified name in backquotes that
+leads nowhere, a `Raises:` whose exception is not documented anywhere (the
+exceptions of the top level are `General`'s), and a structure that shows a
+program more than its signatures name (bind it to its signature in a seal
+file). A signature is documented in the commit that adds it.
 
 ## Trying it
 

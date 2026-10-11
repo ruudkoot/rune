@@ -1,4 +1,4 @@
-(* A signature that the ratchet list names too early. *)
+(* A signature that is not documented in full, as every signature must be. *)
 signature PARTIAL =
 sig
   type t

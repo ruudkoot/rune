@@ -30,11 +30,13 @@
    See also: `RUNTIME` *)
 signature DYNAMIC =
 sig
-  (* `Mismatch` is raised where a module loaded through `_dynamic` was
-     compiled against another signature than the program, or exports no
-     structure, and where a virtual module (`_virtual`) has no
-     implementation or one of another signature. Its argument names the
-     file or the module, and both fingerprints. *)
+  (* `Mismatch` is raised where a module does not fit what the program was compiled against.
+
+     That is a module loaded through `_dynamic` that was compiled against
+     another signature than the program, or exports no structure, and a
+     virtual module (`_virtual`) that has no implementation or one of
+     another signature. Its argument names the file or the module, and both
+     fingerprints. *)
   exception Mismatch of string
 
   (* `load file` loads the unit in `file` into the running program and runs
@@ -44,11 +46,12 @@ sig
      unit's file or names what no unit loaded exports. *)
   val load : string -> unit
 
-  (* `reload file` loads the unit in `file` again, for every `_dynamic`
-     declaration that loaded it, and runs its top level: each declaration's
-     structure is then the new module's, so a call through it reaches the
-     new code, and a function taken from it before is the old one. Where
-     the new module implements another signature, nothing changes.
+  (* `reload file` loads the unit in `file` again, for every `_dynamic` declaration that loaded it.
+
+     It runs the unit's top level, and each declaration's structure is then
+     the new module's, so a call through it reaches the new code, and a
+     function taken from it before is the old one. Where the new module
+     implements another signature, nothing changes.
 
      A module whose signature has an abstract type is not loaded again: a
      value of the type that the program holds could be of another

@@ -16,11 +16,10 @@ keep these invariants:
   *Supported* or *Partial* needs a test file `tests/lang/<id>_<name>.sml` with
   a hand-verified `.expected` file; a test needs a row. New ids use the
   prefixes `lex. dec. exp. pat. ty. mod. rt. basis.`. Ids contain no `_`.
-* `lib/basis/DOCUMENTED` lists the signatures that are documented in full,
-  which is all 65 of them. A member added to one needs a doc comment, a
-  function among them a usage head (`docs/doc-comments.md`): `make docs` and
-  `make check-docs` fail otherwise. A new signature joins the list in the
-  commit that finishes documenting it, and none should be added without one.
+* Every signature of every library under `lib` is documented in full: a
+  member added to one needs a doc comment, a function among them a usage
+  head, and so does a new signature (`docs/doc-comments.md`, Documented in
+  full): `make docs` and `make check-docs` fail otherwise.
 * A program sees of a basis structure what its signature names and nothing
   else: a structure that is not ascribed its signature where it is declared
   is bound to it again in a seal file at the end of `lib/basis/library.build`

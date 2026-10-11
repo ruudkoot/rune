@@ -110,7 +110,7 @@ struct
     end
 
   (* An environment for pages in the directory that `root` leads out of. *)
-  fun envOf (modules : I.module list, out : string, ratchet : string list, sites : DocTests.site list,
+  fun envOf (modules : I.module list, out : string, own : string list, sites : DocTests.site list,
              annotations : DocAnnot.file option, outer : {index : R.index, root : string option} list) =
     let
       val tests = List.foldl (fn (s : DocTests.site, m) =>
@@ -279,7 +279,7 @@ struct
       (claims, index, paged,
        fn root => {index = index, root = root, up = out, claims = claims, notesOf = notesOf modules,
                    topLevel = topLevel, tests = tests, annotations = annotated,
-                   ratchet = fn s => List.exists (fn r => r = s) ratchet,
+                   ownSignature = fn s => List.exists (fn r => r = s) own,
                    strPageOf = strPageOf,
                    links = links, anchors = anchors, outer = outer} : P.env)
     end
@@ -504,16 +504,15 @@ struct
 
   (* namesOf: what elaboration knows a structure to declare, if the library
      was elaborated. *)
-  (* strict: the library has a list of what is documented in full, and then a
-     structure that shows a program more than its signatures name is an error:
-     it needs a seal file in the MANIFEST. *)
+  (* A structure that shows a program more than its signatures name is an
+     error: it needs a seal file in the MANIFEST. *)
   (* rows: every structure that has a page, with the claims it makes and the
      status of its page, so that the index reaches all of them. *)
   fun structuresPage (env : P.env, title : string, modules : I.module list, sigStatus : string -> string,
                       rows' : {name : string, rhs : I.rhs, file : string, mine : DocClaims.claim list,
                                (* the signature that specifies it, when it claims none itself *)
                                within : string option, status : string} list,
-                      namesOf : (string list -> string list option) option, strict : bool) : string =
+                      namesOf : (string list -> string list option) option) : string =
     let
       val claims = sort (fn (a : DocClaims.claim, b : DocClaims.claim) =>
                            case String.compare (#name a, #name b) of
@@ -577,18 +576,14 @@ struct
       val firstClaims = List.foldl (fn (c : DocClaims.claim, acc) =>
                                       if List.exists (fn c' : DocClaims.claim => #name c' = #name c) acc then acc else acc @ [c])
                                    [] claims
-      val beyondRows = List.mapPartial (fn c => case extras c of [] => NONE
-                                                               | ms => SOME [M.code (#name c), String.concatWith ", " (List.map M.code ms)])
-                                       firstClaims
       val () =
-        if not strict then ()
-        else List.app (fn c : DocClaims.claim =>
-                         case extras c of
-                           [] => ()
-                         | ms => DocDiag.error (#span c, #name c ^ " shows a program " ^ String.concatWith ", " ms
-                                                         ^ ", which " ^ #signat c ^ " does not name: bind it to its signature"
-                                                         ^ " in a seal file of the MANIFEST"))
-                      firstClaims
+        List.app (fn c : DocClaims.claim =>
+                    case extras c of
+                      [] => ()
+                    | ms => DocDiag.error (#span c, #name c ^ " shows a program " ^ String.concatWith ", " ms
+                                                    ^ ", which " ^ #signat c ^ " does not name: bind it to its signature"
+                                                    ^ " in a seal file of the MANIFEST"))
+                 firstClaims
     in
       "# Structures and what they implement\n\n"
       ^ "[" ^ M.escape title ^ "](README.md)\n\n"
@@ -599,14 +594,9 @@ struct
       ^ "described.\n\n"
       ^ "`:>` means that the source seals the structure with the signature, so that its types are its own;\n"
       ^ "`:` that it matches it, which the test suite checks. Either way a program sees the members that the\n"
-      ^ "signature names and no others, unless the structure is listed at the end of this page.\n\n"
+      ^ "signature names and no others.\n\n"
       ^ M.table (["Structure", "Signature", "Realisations", "Status", "", "Source"],
                  List.concat (List.map rowsOf (sort (fn (a, b) => String.compare (#name a, #name b) = LESS) rows')))
-      ^ (if List.null beyondRows then ""
-         else "## Names beyond the signature\n\n"
-              ^ "What a program can name in a structure although its signatures do not specify it: these structures\n"
-              ^ "are not bound to their signature for the program. A program that uses such a name is not portable.\n\n"
-              ^ M.table (["Structure", "Also declares"], beyondRows))
       ^ "---\n\n<sub>Generated by runedoc; do not edit.</sub>\n"
     end
 
@@ -822,7 +812,7 @@ struct
                   (List.map (fn o' : occurrence =>
                                "[" ^ #signat o' ^ "](" ^ P.href ({index = #index env, root = "../", up = #up env,
                                                                   claims = #claims env, notesOf = #notesOf env,
-                                                                  ratchet = #ratchet env, topLevel = #topLevel env,
+                                                                  ownSignature = #ownSignature env, topLevel = #topLevel env,
                                                                   strPageOf = #strPageOf env,
                                                                   tests = #tests env, annotations = #annotations env,
                                                                   links = #links env, anchors = #anchors env,
@@ -1174,50 +1164,33 @@ struct
       ^ "---\n\n<sub>Generated by runedoc; do not edit.</sub>\n"
     end
 
-  (* ---- the ratchet ---- *)
-  (* DOCUMENTED, in the directory of the library, lists the signatures that are
-     documented in full, one on a line (# begins a comment). For them what is
-     otherwise only counted in coverage.md is an error: an entry without
-     documentation, a function without a usage head, a first paragraph that is
-     too long for a summary, a reference that leads nowhere. So what is done
-     stays done. *)
+  (* ---- documented in full ---- *)
+  (* Every signature of a library is documented in full: what is otherwise
+     only counted in coverage.md is an error for it -- an entry without
+     documentation, a function without a usage head, a first paragraph that
+     is too long for a summary, a reference that leads nowhere -- so that a
+     signature added is documented as the others are. *)
   val summaryLimit = 160
 
-  fun ratchetOf (dir : string) : string list =
-    let
-      val ins = TextIO.openIn (dir ^ "/DOCUMENTED")
-      val text = TextIO.inputAll ins before TextIO.closeIn ins
-    in
-      List.filter (fn l => l <> "" andalso not (String.isPrefix "#" l))
-                  (List.map (fn l => String.concat (String.tokens Char.isSpace l)) (String.fields (fn c => c = #"\n") text))
-    end
-    handle IO.Io _ => []
-
-  fun checkRatchet (dir : string, sigs : I.signatureRecord list, ratchet : string list) : unit =
-    (List.app (fn r =>
-                 if List.exists (fn s : I.signatureRecord => #name s = r) sigs then ()
-                 else DocDiag.error ({file = dir ^ "/DOCUMENTED", start = 0, stop = 0}, r ^ " is no signature of the library"))
-              ratchet;
-     List.app (fn s : I.signatureRecord =>
-                 if not (List.exists (fn r => r = #name s) ratchet) then ()
-                 else
-                   (if List.null (#doc s) then DocDiag.error (#span s, "signature " ^ #name s ^ " has no comment, and DOCUMENTED lists it") else ();
-                    List.app (fn e : I.entryRecord =>
-                                let
-                                  val what = I.kindName (#kind e) ^ " " ^ String.concatWith "." (#path e @ [#name e])
-                                  val summary = T.plain (P.summaryOf (#doc e))
-                                in
-                                  if not (P.isDocumented e) then
-                                    DocDiag.error (#span e, what ^ " is not documented, and DOCUMENTED lists " ^ #name s)
-                                  else if P.isFunction e andalso List.null (#heads e) then
-                                    DocDiag.error (#span e, what ^ " is a function whose description shows no usage, such as `" ^ #name e ^ " x`")
-                                  else if String.size summary > summaryLimit then
-                                    DocDiag.error (#span e, "the first paragraph of " ^ what ^ " has " ^ Int.toString (String.size summary)
-                                                            ^ " characters; it is the summary, of at most " ^ Int.toString summaryLimit)
-                                  else ()
-                                end)
-                             (P.entriesOf (#body s))))
-              sigs)
+  fun checkDocumented (sigs : I.signatureRecord list) : unit =
+    List.app (fn s : I.signatureRecord =>
+                (if List.null (#doc s) then DocDiag.error (#span s, "signature " ^ #name s ^ " has no comment") else ();
+                 List.app (fn e : I.entryRecord =>
+                             let
+                               val what = I.kindName (#kind e) ^ " " ^ String.concatWith "." (#path e @ [#name e])
+                               val summary = T.plain (P.summaryOf (#doc e))
+                             in
+                               if not (P.isDocumented e) then
+                                 DocDiag.error (#span e, what ^ " of " ^ #name s ^ " is not documented")
+                               else if P.isFunction e andalso List.null (#heads e) then
+                                 DocDiag.error (#span e, what ^ " is a function whose description shows no usage, such as `" ^ #name e ^ " x`")
+                               else if String.size summary > summaryLimit then
+                                 DocDiag.error (#span e, "the first paragraph of " ^ what ^ " has " ^ Int.toString (String.size summary)
+                                                         ^ " characters; it is the summary, of at most " ^ Int.toString summaryLimit)
+                               else ()
+                             end)
+                          (P.entriesOf (#body s))))
+             sigs
 
   (* The structure that the examples of a signature are read in. *)
   fun exampleStructureOf (claims : DocClaims.claim list, sigStatus : string -> string) : string -> string option =
@@ -1522,7 +1495,7 @@ struct
     let
       val modules = load dir
       val sigs = sort (fn (a : I.signatureRecord, b : I.signatureRecord) => String.compare (#name a, #name b) = LESS) (signaturesOf modules)
-      val ratchet = ratchetOf dir
+      val own = List.map #name sigs
       val sites = case tests of SOME t => DocTests.suite t | NONE => []
       val annotated = Option.map DocAnnot.load annotations
       (* a library written on the Basis Library may name what it documents *)
@@ -1537,9 +1510,9 @@ struct
                       let val (_, index, _, _) = envOf (load library, upFrom out, [], [], NONE, [])
                       in {index = index, root = SOME (docs ^ "/")} end)
                    libraryDocs
-      val (claims, index, paged, env) = envOf (modules, upFrom out, ratchet, sites, annotated, outer)
+      val (claims, index, paged, env) = envOf (modules, upFrom out, own, sites, annotated, outer)
       val () = DocClaims.checkNames (#signatures index) claims
-      val () = checkRatchet (dir, sigs, ratchet)
+      val () = checkDocumented sigs
       val () = case lawSkips of SOME file => setLawSkips (file, sigs, claims) | NONE => DocPage.lawSkips := (fn _ => [])
       (* with a suite: every specified member of a claimed structure has a check *)
       val () = case tests of SOME t => ignore (coverageOf (modules, claims, index, sites, t)) | NONE => ()
@@ -1904,7 +1877,7 @@ struct
                                                 | NONE => []))
         :: ("structures.md",
             structuresPage (env "", title, modules, sigStatus, indexRows,
-                            Option.map DocElab.namesOf elaborated, not (List.null ratchet)))
+                            Option.map DocElab.namesOf elaborated))
         :: ("depends.md", dependsPage (env "", title, BasisManifest.readManifest dir, areaOfModule))
         :: ("top-level.md", topLevelPage (env "", title, modules))
         :: ("exceptions.md", exceptionsPage (env "", title, sigs))

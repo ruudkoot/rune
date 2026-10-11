@@ -9,8 +9,7 @@
 #   NAME.md    the output of `runedoc --page tests/doc/NAME.sml`: the pages of
 #              the signatures of the file
 #   NAME.md.diag  the diagnostics of that run; without it there must be none
-# Every directory tests/doc/NAME.lib is a small library (a MANIFEST, perhaps a
-# DOCUMENTED). Its documentation is generated into tests/out/doc/NAME.site:
+# Every directory tests/doc/NAME.lib is a small library (a MANIFEST). Its documentation is generated into tests/out/doc/NAME.site:
 #   NAME.lib.diag   the diagnostics of `runedoc --lib tests/doc --library NAME.lib`
 #   NAME.lib.files  the files it writes, one on a line (none after an error)
 #   NAME.lib.labels for a library with a suite in NAME.lib/tests: the checks

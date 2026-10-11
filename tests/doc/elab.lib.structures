@@ -10,7 +10,7 @@ described.
 
 `:>` means that the source seals the structure with the signature, so that its types are its own;
 `:` that it matches it, which the test suite checks. Either way a program sees the members that the
-signature names and no others, unless the structure is listed at the end of this page.
+signature names and no others.
 
 | Structure | Signature | Realisations | Status |  | Source |
 | --- | --- | --- | --- | --- | --- |
@@ -18,16 +18,6 @@ signature names and no others, unless the structure is listed at the end of this
 | [`Chest`](str/Chest.md) | : [`BOX`](sig/BOX.md) | `where type elem = string` | required |  | [tests/doc/elab.lib/box.sml](../../../../tests/doc/elab.lib/box.sml) |
 | [`Chest.Label`](str/Chest.Label.md) | *in* [`BOX`](sig/BOX.md) |  | required |  | [tests/doc/elab.lib/box.sml](../../../../tests/doc/elab.lib/box.sml) |
 | [`Crate`](str/Box.md) | : [`BOX`](sig/BOX.md) | `where type elem = int` | required | is [`Box`](str/Box.md) | [tests/doc/elab.lib/box.sml](../../../../tests/doc/elab.lib/box.sml) |
-
-## Names beyond the signature
-
-What a program can name in a structure although its signatures do not specify it: these structures
-are not bound to their signature for the program. A program that uses such a name is not portable.
-
-| Structure | Also declares |
-| --- | --- |
-| `Box` | `full` |
-| `Crate` | `full` |
 
 ---
 

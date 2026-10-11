@@ -315,7 +315,7 @@ $PREFIX/lib/rune/rune-repl.img        the REPL, saved once started (docs/repl.md
 $PREFIX/lib/rune/runtime/            librune.a and rune-offsets.s, what
                                      runeopt links a program with
 $PREFIX/lib/rune/basis/              MANIFEST and the basis library sources,
-                                     overview.doc and DOCUMENTED for runedoc
+                                     overview.doc for runedoc
 $PREFIX/share/man/man1/              rune.1, runevm.1, runevm-stack.1, runedoc.1, runeopt.1
 $PREFIX/share/bash-completion/completions/rune, runedoc, runeopt
 $PREFIX/share/zsh/site-functions/    _rune, _runevm, _runedoc, _runeopt

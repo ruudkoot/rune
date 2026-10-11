@@ -19,8 +19,9 @@ struct
      written, as (page, anchor). *)
   type env = {index : R.index, root : string, up : string,
               claims : DocClaims.claim list,
-              (* the signatures that are documented in full: what is a warning elsewhere is an error there *)
-              ratchet : string -> bool,
+              (* whether a name is a signature of the library, every one of which is documented in full:
+                 what is a warning elsewhere is an error there *)
+              ownSignature : string -> bool,
               (* the top-level name that a member of a signature also has, through a structure that implements it *)
               topLevel : string * string -> string option,
               (* the check sites of the test suite, by their scope: List.take *)
@@ -115,7 +116,7 @@ struct
 
   (* ---- the blocks of a comment ---- *)
   (* strict: a reference that leads nowhere is an error. It is, for what a
-     signature of the ratchet says; it is not for a structure's own comment,
+     signature of the library says; it is not for a structure's own comment,
      which may name the library's internals -- `RuneIODesc.FD` is real and is
      documented nowhere. *)
   (* The variables of a law of a signature, where it elaborated: set by the
@@ -140,7 +141,7 @@ struct
                SOME l => l
              | NONE =>
                  (if quiet then ()
-                  else (if strict andalso #ratchet env sigName then DocDiag.error else DocDiag.warn)
+                  else (if strict andalso #ownSignature env sigName then DocDiag.error else DocDiag.warn)
                          (span, "`" ^ c ^ "` names nothing that is documented");
                   NONE))
         | R.Unknown => Option.join (outside env c)
@@ -159,7 +160,7 @@ struct
                      SOME exn =>
                        (case R.resolve (#index env, sigName, path, args) exn of
                           R.Target _ => ()
-                        | _ => if #ratchet env sigName andalso not (isSome (outside env exn))
+                        | _ => if #ownSignature env sigName andalso not (isSome (outside env exn))
                                then DocDiag.error (span, "`Raises:` names `" ^ exn ^ "`, which is no exception that is documented")
                                else ())
                    | NONE => ());

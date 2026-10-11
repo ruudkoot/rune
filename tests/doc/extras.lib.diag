@@ -1,0 +1,2 @@
+tests/doc/extras.lib/pair.sml:17:11: error: Pair shows a program second, which PAIR does not name: bind it to its signature in a seal file of the MANIFEST
+tests/doc/extras.lib/pair.sml:20:11: error: Twin shows a program second, which PAIR does not name: bind it to its signature in a seal file of the MANIFEST

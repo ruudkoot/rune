@@ -280,8 +280,8 @@ for manifest in $(cd "$root/lib" && find . -name MANIFEST | sort); do
     case "$f" in ""|\#*) continue ;; esac
     copy "$root/lib/$l/$f" "$libdir/$l/$f" 644
   done < "$root/lib/$l/MANIFEST"
-  # what runedoc reads besides: the overview and the list of what is documented in full
-  for f in overview.doc DOCUMENTED; do
+  # what runedoc reads besides: the overview
+  for f in overview.doc; do
     if [ -e "$root/lib/$l/$f" ]; then copy "$root/lib/$l/$f" "$libdir/$l/$f" 644; fi
   done
 done

@@ -233,7 +233,7 @@ val toAddr : in6_addr * int -> sock_addr
 
 `toAddr (a, port)` is the address of that host and port.
 
-**Raises** `SysErr` if the system will not make it.
+**Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the system will not make it.
 
 **Example** `#2 (fromAddr (toAddr (valOf (fromString "::1"), 8080))) = 8080`
 
