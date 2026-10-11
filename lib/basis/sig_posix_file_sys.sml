@@ -46,12 +46,17 @@ sig
 
   (* `wordToFD w` is the descriptor numbered `w`, whether or not it is open.
 
-     Law: `fdToWord (wordToFD w) = w` for `SysWord.<= (w, SysWord.fromInt
-     (valOf Int.maxInt))`
+     A descriptor is "a per-process unique, non-negative integer" of the
+     system, an `int` of C, which POSIX makes at least 32 bits wide
+     (`{INT_MAX}` is at least 2147483647). Beyond that an implementation may
+     wrap the word, as one that keeps a descriptor in such an `int` does, or
+     keep it, as Rune does up to its own `int`, of 63 bits.
+
+     Law: `fdToWord (wordToFD w) = w` for `SysWord.<= (w, 0wx7FFFFFFF)`
 
      Counterexample: `let val w = SysWord.+ (SysWord.fromInt (valOf
      Int.maxInt), 0w1) in fdToWord (wordToFD w) = w end`, for the number of a
-     descriptor is an int. *)
+     descriptor is an int, on Rune of 63 bits. *)
   val wordToFD : SysWord.word -> file_desc
 
   (* `fdToIOD fd` is `fd` as the `OS.IO.iodesc` that `OS.IO.poll` takes. *)

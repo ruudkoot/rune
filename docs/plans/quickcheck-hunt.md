@@ -674,10 +674,13 @@ Poly/ML, fails there at `w = 0wx80000000`, which comes back as
 `0wxFFFFFFFF80000000`. Poly/ML and MLton keep a descriptor in a C `int` of
 32 bits, so a word of 2^31 or more wraps; MLton passes only because its
 `Int.maxInt` is 2^31 - 1, and SML/NJ, MLKit and Rune keep the word. A
-descriptor of POSIX is a C `int`, and the condition was written to Rune's,
-which is an `int` of 63 bits: the law asks more than the specification of
-words that are no descriptor. Holding `w` to what a descriptor can be
-(`SysWord.<= (w, 0wx7FFFFFFF)`) would state it for every implementation;
-the laws of `wordToPid` (a C `int` too), `wordToUid` and `wordToGid` (32
-bits without sign) have the same condition. Until the owner decides, the
-difference is not explained.
+descriptor of POSIX is "a per-process unique, non-negative integer", a C
+`int`, which POSIX makes at least 32 bits wide (`{INT_MAX}` is at least
+2147483647) but not exactly 32, and the condition was written to Rune's,
+an `int` of 63 bits: the law asked more than the specification of words
+that a system's `int` need not hold. The owner had it restated
+(2026-10-11): the law holds for `SysWord.<= (w, 0wx7FFFFFFF)`, the largest
+number every POSIX system's `int` holds, and the page says why; the
+counterexample beyond Rune's `int` stays. It passes on MLton, Poly/ML,
+SML/NJ 2026.2, MLKit and Rune, and no difference is left unexplained. The
+laws of `wordToPid`, `wordToUid` and `wordToGid` keep their condition.
