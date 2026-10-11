@@ -1,8 +1,10 @@
 #!/bin/sh
-# Generate per-compiler build files from the source lists.
+# Generate per-compiler build files from the programs' build files
+# (docs/build.md): the files of their `files ... end` blocks
+# (scripts/build-files.sh).
 # Usage: scripts/gen-build-files.sh [ROOT_DIR]
-# For every program (rune from sources.txt, runedoc from sources-doc.txt,
-# runeopt from sources-opt.txt, runeisa from sources-isa.txt)
+# For every program (rune from rune.build, runedoc from runedoc.build,
+# runeopt from runeopt.build, runeisa from runeisa.build)
 # produces build/PROG.mlb (MLton), build/PROG.cm (SML/NJ),
 # build/PROG-polyml-build.sml (Poly/ML, run from ROOT; polyml-build.sml for
 # rune) and build/PROG-mlkit.mlb (MLKit). Each loads build/config.sml first,
@@ -13,10 +15,17 @@ root=${1:-$(pwd)}
 cd "$root"
 mkdir -p build
 
+# put FILE: the standard input into FILE, which is written only when it
+# changes, so that what depends on it is made again only then
+put() {
+  cat > "$1.new"
+  if cmp -s "$1.new" "$1"; then rm -f "$1.new"; else mv "$1.new" "$1"; fi
+}
+
 # gen PROG LIST MAINPREFIX POLYSCRIPT
 gen() {
   prog=$1 list=$2 mainprefix=$3 polyscript=$4
-  srcs=$(grep -v '^[[:space:]]*#' "$list" | grep -v '^[[:space:]]*$')
+  srcs=$(sh scripts/build-files.sh "$list")
 
   # --- MLton ----------------------------------------------------------------
   {
@@ -32,7 +41,7 @@ gen() {
       esac
     done
     echo "../src/main/${mainprefix}mlton-main.sml"
-  } > "build/$prog.mlb"
+  } | put "build/$prog.mlb"
 
   # --- SML/NJ ---------------------------------------------------------------
   {
@@ -41,7 +50,7 @@ gen() {
     echo '  $/basis.cm'
     echo '  config.sml'
     for f in $srcs; do echo "  ../$f"; done
-  } > "build/$prog.cm"
+  } | put "build/$prog.cm"
 
   # --- Poly/ML --------------------------------------------------------------
   {
@@ -50,7 +59,7 @@ gen() {
     echo 'use "build/config.sml";'
     for f in $srcs; do echo "use \"$f\";"; done
     echo "use \"src/main/${mainprefix}polyml-main.sml\";"
-  } > "build/$polyscript"
+  } | put "build/$polyscript"
 
   # --- MLKit ----------------------------------------------------------------
   # MLton's without its annotation, which MLton's build enforces for all;
@@ -62,12 +71,12 @@ gen() {
     echo 'config.sml'
     for f in $srcs; do echo "../$f"; done
     echo "../src/main/${mainprefix}mlkit-main.sml"
-  } > "build/$prog-mlkit.mlb"
+  } | put "build/$prog-mlkit.mlb"
 }
 
-gen rune sources.txt "" polyml-build.sml
-gen runedoc sources-doc.txt runedoc- runedoc-polyml-build.sml
-gen runeopt sources-opt.txt runeopt- runeopt-polyml-build.sml
-gen runeisa sources-isa.txt runeisa- runeisa-polyml-build.sml
+gen rune rune.build "" polyml-build.sml
+gen runedoc runedoc.build runedoc- runedoc-polyml-build.sml
+gen runeopt runeopt.build runeopt- runeopt-polyml-build.sml
+gen runeisa runeisa.build runeisa- runeisa-polyml-build.sml
 
 echo "generated build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb"

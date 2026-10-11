@@ -1,0 +1,2 @@
+tests/units/flex/a.sml:5:14: error: unresolved flexible record: cannot determine the full set of fields
+compile: 1

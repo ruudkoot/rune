@@ -1,0 +1,14 @@
+- = = = = = = val part = 2 : int
+val base = 40 : int
+val total = 42 : int
+val it = () : unit
+- val it = 42 : int
+- val fromBroken = 1 : int
+tests/repl/lib/broken.sml:2:11: error: function argument: type mismatch between int * int and int * string (type constructor mismatch: string vs int)
+uncaught exception Fail: use: tests/repl/lib/broken.sml has errors
+- val it = 1 : int
+- val beforeRaise = "kept" : string
+uncaught exception Fail: in raises.sml
+- val it = "kept" : string
+- uncaught exception Io: openIn tests/repl/lib/missing.sml: No such file or directory
+- 

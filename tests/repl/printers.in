@@ -1,0 +1,26 @@
+(* Compiler.addPrettyPrinter: a printer of one's own, for an abstract type
+   and for a datatype at its argument, installed through another name of
+   it, found again when the file that installs it comes from the cache, and
+   one installed in a function for the type it names *)
+use "tests/repl/lib/printed.sml";
+Printed.mk 4;
+use "tests/repl/lib/printer.sml";
+Printed.mk 4;
+[Printed.mk 1, Printed.mk 2];
+Compiler.addPrettyPrinter (fn _ => fn () => fn (_ : Printed.t) => Compiler.PrettyString "<other>");
+Printed.mk 4;
+use "tests/repl/lib/printer.sml";
+Printed.mk 4;
+structure P = struct val add = Compiler.addPrettyPrinter end;
+datatype 'a box = Box of 'a;
+Box 3;
+P.add (fn d => fn shw => fn (Box v) => Compiler.PrettyBlock (2, false, [], [Compiler.PrettyString "box", Compiler.PrettyBreak (1, 0), shw (v, d - 1)]));
+Box 3;
+Box (Printed.mk 1);
+Compiler.lineLength := 6;
+Box "a longer string";
+Compiler.lineLength := 80;
+fun install () = Compiler.addPrettyPrinter (fn _ => fn _ => fn (_ : 'a list) => Compiler.PrettyString "a list");
+[1, 2];
+install ();
+[1, 2];

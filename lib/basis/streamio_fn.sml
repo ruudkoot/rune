@@ -35,11 +35,15 @@ struct
   type pos = PIO.pos
 
   fun ioError (name, function, cause) = raise IO.Io {name = name, function = function, cause = cause}
+  (* the user's interrupt (Runtime.catchInterrupt), which is the program's
+     and not the reader's, though it may come in a read *)
+  val isInterrupt = _prim "rt_interrupt_is" : exn -> bool
   (* guarded (name, function) f x: f x, with what the reader or writer raises
      reported as the cause of Io ("the underlying exception is caught and
-     propagated up as the cause component of the IO.Io exception value"). *)
+     propagated up as the cause component of the IO.Io exception value"),
+     but the interrupt, which goes on as it is. *)
   fun guarded (name, function) f x =
-    f x handle e as IO.Io _ => raise e | e => ioError (name, function, e)
+    f x handle e as IO.Io _ => raise e | e => if isInterrupt e then raise e else ioError (name, function, e)
 
   (* ---- input ---- *)
   datatype segment = Unread | Chunk of vector * pos option * segment ref | Eos of pos option * segment ref

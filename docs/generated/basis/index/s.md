@@ -74,6 +74,7 @@
 - `setsid` (val): [POSIX_PROC_ENV](../sig/POSIX_PROC_ENV.md#val-setsid)
 - `setTime` (val): [OS_FILE_SYS](../sig/OS_FILE_SYS.md#val-settime)
 - `setuid` (val): [POSIX_PROC_ENV](../sig/POSIX_PROC_ENV.md#val-setuid)
+- `share` (val): [RUNTIME](../sig/RUNTIME.md#val-share)
 - `shutdown` (val): [SOCKET](../sig/SOCKET.md#val-shutdown)
 - `shutdown_mode` (type): [SOCKET](../sig/SOCKET.md#type-shutdown_mode)
 - `sign` (val): [INTEGER](../sig/INTEGER.md#val-sign), [REAL](../sig/REAL.md#val-sign)

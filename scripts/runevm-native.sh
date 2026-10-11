@@ -4,7 +4,7 @@
 # as it takes bin/runevm-stack-ppc64, and needs to know nothing of native code.
 #   scripts/runevm-native.sh [runevm-stack options] FILE.rbc [args ...]
 # The options a native program takes go to it in RUNEVM_OPTIONS (docs/native.md), and
-# FILE.rbc, which is its name under runevm-stack, in RUNEVM_NAME; the program
+# FILE.rbc, which is its name under runevm-stack, or --name NAME, in RUNEVM_NAME; the program
 # takes both out of its environment, so that it sees the one it sees under
 # runevm-stack. (This is sh, not bash, which changes the variable _.) --restore
 # IMAGE makes a program of the program in the image (runeopt --from-image)
@@ -26,10 +26,12 @@ fi
 cache=${RUNEOPT_CACHE:-$root/tests/out/opt-cache}
 
 options=""
+name=""
 while [ $# -gt 0 ]; do
   case $1 in
     --count|--stats|--emulate-fork|--checked|--gc-verify|--gc-compact|--gc-stress-cycles) options="$options $1"; shift ;;
     --heap-size|--heap-limit|--equality-work|--heap-fill|--gc-stress|--gc-log|--nursery|--nursery-max|--gc|--old-space) options="$options $1 ${2:-}"; shift 2 ;;
+    --name) name=${2:-}; shift 2 ;;
     --restore)
       image=${2:-}
       [ -f "$image" ] || exec "$vm" "$@"
@@ -42,7 +44,11 @@ while [ $# -gt 0 ]; do
         exit 2
       fi
       rm -f "$exe.log"
-      RUNEVM_OPTIONS="${RUNEVM_OPTIONS:-}$options --restore $image" exec "$exe" ;;
+      # the restored world's own arguments, after the image or after --,
+      # which goes along to say that none may be meant (runtime/main.c)
+      shift 2
+      if [ -n "$name" ]; then RUNEVM_NAME=$name; export RUNEVM_NAME; fi
+      RUNEVM_OPTIONS="${RUNEVM_OPTIONS:-}$options --restore $image" exec "$exe" "$@" ;;
     --disasm|--trace|--resume|--version|--help) exec "$vm" "$@" ;;
     -*) exec "$vm" "$@" ;;
     *) break ;;
@@ -68,4 +74,4 @@ if [ ! -x "$exe" ]; then
   rm -f "$tmp.log"
   mv -f "$tmp" "$exe"
 fi
-RUNEVM_OPTIONS="${RUNEVM_OPTIONS:-}$options" RUNEVM_NAME=$rbc exec "$exe" "$@"
+RUNEVM_OPTIONS="${RUNEVM_OPTIONS:-}$options" RUNEVM_NAME=${name:-$rbc} exec "$exe" "$@"

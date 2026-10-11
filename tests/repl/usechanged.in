@@ -1,0 +1,25 @@
+(* S39 (tests/incremental/SCENARIOS.md): a file used, changed, and used
+   again is compiled again, and the program sees the change; and a file
+   that uses a name of the session, used after the name is bound again, is
+   compiled again where its usages do not hold. S40, across sessions, is in
+   tests/incremental/run.sh. *)
+fun write (file, text) = let val out = TextIO.openOut file in TextIO.output (out, text); TextIO.closeOut out end;
+(* in the directory of the run's output, so that nothing shown names it *)
+OS.FileSys.chDir (valOf (OS.Process.getEnv "RUNE_REPL_OUT"));
+val file = "changed.sml";
+write (file, "val version = 1\n");
+use file;
+version;
+write (file, "val version = 2\n");
+use file;
+version;
+val uses = "uses.sml";
+write (uses, "val twice = base ^ base\n");
+val base = "ab";
+use uses;
+twice;
+val base = 3;
+use uses;
+val base = "cd";
+use uses;
+twice;

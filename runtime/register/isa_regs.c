@@ -5,7 +5,7 @@
 #include "regvm.h"
 
 const uint32_t isa_fingerprint = REG_ISA_FINGERPRINT;
-const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 10 isa " REG_ISA_FINGERPRINT_HEX;
+const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 12 isa " REG_ISA_FINGERPRINT_HEX;
 
 static int fail(char *err, size_t errlen, const char *msg) {
     snprintf(err, errlen, "%s", msg);
@@ -41,20 +41,32 @@ static int operand_ok(const Program *p, uint32_t fi, int kind, int32_t v) {
    function's stack goes above its registers (Function.maxstack): the
    arguments of a primitive, or the one value a call returns and a raise
    leaves for CATCH. The loop's pushes do not check (runtime/register/interp.c),
-   which this is what makes safe. */
+   which this is what makes safe.
+
+   validate_program_from checks the functions from first on, and the code
+   from where the first of them begins, which is what a unit appended to
+   the program brings (runtime/loader.c, load_unit_mem): what is before it
+   was checked when it came. Its result is indexed from that place. */
 uint8_t *validate_program(Program *p, char *err, size_t errlen) {
-    for (uint32_t i = 0; i < p->nfuncs; i++) {
+    return validate_program_from(p, 0, err, errlen);
+}
+
+uint8_t *validate_program_from(Program *p, uint32_t first, char *err, size_t errlen) {
+    if (first >= p->nfuncs) { fail(err, errlen, "no function to check"); return NULL; }
+    const uint32_t base = p->funcs[first].code_offset;
+    for (uint32_t i = first; i < p->nfuncs; i++) {
         if (p->funcs[i].code_offset >= p->code_len) { fail(err, errlen, "function offset out of range"); return NULL; }
         if (i > 0 && p->funcs[i].code_offset < p->funcs[i - 1].code_offset) { fail(err, errlen, "functions out of order"); return NULL; }
         if (p->funcs[i].nlocals < 1 || p->funcs[i].nlocals > 1000000) { fail(err, errlen, "bad frame size"); return NULL; }
         uint32_t end = (i + 1 < p->nfuncs) ? p->funcs[i + 1].code_offset : p->code_len;
         if (p->funcs[i].code_end != end) { fail(err, errlen, "function does not end where the next begins"); return NULL; }
     }
-    uint8_t *starts = calloc(p->code_len + 1, 1);
+    if (first > 0 && p->funcs[first - 1].code_end != base) { fail(err, errlen, "function does not end where the next begins"); return NULL; }
+    uint8_t *starts = calloc(p->code_len - base + 1, 1);
     if (!starts) { fail(err, errlen, "out of memory"); return NULL; }
-    for (uint32_t i = 0; i < p->nfuncs; i++) p->funcs[i].maxstack = 1;
-    uint32_t fi = 0;
-    uint32_t pc = 0;
+    for (uint32_t i = first; i < p->nfuncs; i++) p->funcs[i].maxstack = 1;
+    uint32_t fi = first;
+    uint32_t pc = base;
     while (pc < p->code_len) {
         while (fi + 1 < p->nfuncs && pc >= p->funcs[fi + 1].code_offset) fi++;
         const uint8_t *at = p->code + pc;
@@ -75,14 +87,14 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
             bad = !operand_ok(p, fi, RK_REGISTER, read_i32(at + 1 + 4 * (rop_nfixed[op] + i)));
         if (bad) { free(starts); snprintf(err, errlen, "bad register for %s at %u", rop_names[op], pc); return NULL; }
         if ((op == ROP_PRIM || op == ROP_PRIMPUSH) && n > p->funcs[fi].maxstack) p->funcs[fi].maxstack = n;
-        starts[pc] = 1;
+        starts[pc - base] = 1;
         pc += len;
     }
     /* jump targets and function entries must be instruction boundaries,
        and a jump stays in its function; a SWITCH's table is JUMPs of its
        own function, which the code goes on after */
-    pc = 0;
-    fi = 0;
+    pc = base;
+    fi = first;
     while (pc < p->code_len) {
         while (fi + 1 < p->nfuncs && pc >= p->funcs[fi + 1].code_offset) fi++;
         const uint8_t *at = p->code + pc;
@@ -95,34 +107,34 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
             int bad = end >= p->funcs[fi].code_end;
             for (uint32_t k = 0; k < n && !bad; k++) {
                 uint64_t e = table + 5 * (uint64_t)k;
-                bad = !starts[e] || p->code[e] != ROP_JUMP;
+                bad = !starts[e - base] || p->code[e] != ROP_JUMP;
             }
-            if (bad || !starts[end]) { free(starts); snprintf(err, errlen, "bad SWITCH table at %u", pc); return NULL; }
+            if (bad || !starts[end - base]) { free(starts); snprintf(err, errlen, "bad SWITCH table at %u", pc); return NULL; }
         }
         for (int k = 0; k < rop_nfixed[op]; k++)
             if (rop_kinds[op][k] == RK_LABEL || rop_kinds[op][k] == RK_HANDLER_LABEL) {
                 int32_t t = read_i32(at + 1 + 4 * k);
-                if (t < 0 || (uint32_t)t < from || (uint32_t)t >= to || !starts[t]) {
+                if (t < 0 || (uint32_t)t < from || (uint32_t)t >= to || !starts[(uint32_t)t - base]) {
                     free(starts); snprintf(err, errlen, "bad jump target at %u", pc); return NULL;
                 }
             }
         pc += rop_length(at);
     }
-    for (uint32_t i = 0; i < p->nfuncs; i++)
-        if (!starts[p->funcs[i].code_offset]) { free(starts); fail(err, errlen, "function entry is not an instruction"); return NULL; }
+    for (uint32_t i = first; i < p->nfuncs; i++)
+        if (!starts[p->funcs[i].code_offset - base]) { free(starts); fail(err, errlen, "function entry is not an instruction"); return NULL; }
     /* the representations section, where the file has one: its blocks
        and loop heads begin at instructions of their functions, and each
        register's representation agrees with what the code writes into it,
        where the instruction says (docs/bytecode.md, The representations) */
-    for (uint32_t fi = 0; fi < p->nfuncs; fi++) {
+    for (uint32_t fi = first; fi < p->nfuncs; fi++) {
         const Function *fn = &p->funcs[fi];
         if (!fn->has_meta) continue;
         for (uint32_t b = 0; b < fn->nblocks; b++)
-            if (fn->blocks[b].pc < fn->code_offset || fn->blocks[b].pc >= fn->code_end || !starts[fn->blocks[b].pc]) {
+            if (fn->blocks[b].pc < fn->code_offset || fn->blocks[b].pc >= fn->code_end || !starts[fn->blocks[b].pc - base]) {
                 free(starts); snprintf(err, errlen, "a block of %s begins at %u, which is no instruction of it", fn->name, fn->blocks[b].pc); return NULL;
             }
         for (uint32_t k = 0; k < fn->nloops; k++)
-            if (fn->loops[k] < fn->code_offset || fn->loops[k] >= fn->code_end || !starts[fn->loops[k]]) {
+            if (fn->loops[k] < fn->code_offset || fn->loops[k] >= fn->code_end || !starts[fn->loops[k] - base]) {
                 free(starts); snprintf(err, errlen, "a loop of %s begins at %u, which is no instruction of it", fn->name, fn->loops[k]); return NULL;
             }
         for (uint32_t at = fn->code_offset; at < fn->code_end; ) {
@@ -174,6 +186,60 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
         }
     }
     return starts;
+}
+
+/* A unit's code, its own numbers made the program's (vm.h, Relocation):
+   every operand by the kind the instruction set gives it, the lists of
+   registers left as they are. A number past what the unit has is refused
+   here; the check of the code (validate_program_from) refuses the rest. */
+int relocate_code(uint8_t *code, const Relocation *r, char *err, size_t errlen) {
+    uint32_t pc = 0;
+    while (pc < r->code_len) {
+        uint8_t *at = code + pc;
+        uint8_t op = at[0];
+        if (op >= ROP__COUNT) { snprintf(err, errlen, "invalid opcode %u at %u", op, pc); return 0; }
+        if ((uint64_t)pc + 1 + 4 * (uint64_t)rop_nfixed[op] > r->code_len) return fail(err, errlen, "truncated instruction");
+        uint64_t len = 1 + 4 * ((uint64_t)rop_nfixed[op] + rop_list_length(at));
+        if ((uint64_t)pc + len > r->code_len) return fail(err, errlen, "truncated instruction");
+        for (int k = 0; k < rop_nfixed[op]; k++) {
+            uint8_t *o = at + 1 + 4 * k;
+            int32_t v = read_i32(o);
+            uint32_t to;
+            switch ((enum RegOperandKind)rop_kinds[op][k]) {
+            case RK_FUNCTION:
+                if (v >= 0 && (uint32_t)v < r->nfuncs) to = r->func_base + (uint32_t)v;
+                else if (v >= 0 && (uint32_t)v - r->nfuncs < r->nimports && r->imports[(uint32_t)v - r->nfuncs] != UINT32_MAX)
+                    to = r->imports[(uint32_t)v - r->nfuncs];
+                else { snprintf(err, errlen, "a function of no unit for %s at %u", rop_names[op], pc); return 0; }
+                break;
+            case RK_GLOBAL:
+                if (v < 0 || (uint32_t)v >= r->nglobals) { snprintf(err, errlen, "bad global for %s at %u", rop_names[op], pc); return 0; }
+                to = r->globals[v];
+                break;
+            case RK_CONSTANT: case RK_STRING_CONSTANT:
+                if (v < 0 || (uint32_t)v >= r->nconsts) { snprintf(err, errlen, "bad constant for %s at %u", rop_names[op], pc); return 0; }
+                to = r->const_base + (uint32_t)v;
+                break;
+            case RK_LABEL: case RK_HANDLER_LABEL:
+                if (v < 0 || (uint32_t)v >= r->code_len) { snprintf(err, errlen, "bad jump target at %u", pc); return 0; }
+                to = r->code_base + (uint32_t)v;
+                break;
+            default:
+                continue;
+            }
+            write_u32(o, to);
+        }
+        pc += (uint32_t)len;
+    }
+    return 1;
+}
+
+/* RET of register 0, the argument, in a frame of one register */
+uint32_t return_function_code(uint8_t *out, uint32_t *nlocals) {
+    out[0] = ROP_RET;
+    write_u32(out + 1, 0);
+    *nlocals = 1;
+    return 5;
 }
 
 void disassemble(const Program *p, FILE *out) {

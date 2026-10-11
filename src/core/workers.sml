@@ -368,10 +368,12 @@ struct
                               | (Val (g, s, e), true) => Val (g, s, exp e)
                               | (Funs fs, true) => Funs (List.concat (List.map split fs))
                               | (Do (gs, e), true) => Do (gs, exp e)) touched
-          (* a wrapper nothing names now, every call being the worker's, goes *)
+          (* a wrapper nothing names now, every call being the worker's, goes;
+             in a unit, a unit after it may name it (Pass.whole) *)
           fun times (t, x) = case IntTable.find (t, x) of SOME n => n | NONE => 0
           fun wanted (f : fundef) =
-            not (IntMap.member (workers, #name f)) orelse times (refs, #name f) > times (redirected, #name f)
+            not (!Pass.whole) orelse not (IntMap.member (workers, #name f))
+            orelse times (refs, #name f) > times (redirected, #name f)
         in
           List.mapPartial (fn Funs fs => (case List.filter wanted fs of [] => NONE | fs' => SOME (Funs fs'))
                             | d => SOME d) p'

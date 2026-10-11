@@ -37,21 +37,27 @@ What it rests on:
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done |
-| M1 | Measure | |
-| M2 | Units in memory: the basis as a value, the front end resumable, a back end per unit | |
-| M3 | Unit bytecode, the static linker, and the VM loads units | |
-| M4 | The resident compiler, `use` and the REPL | |
-| M5 | HOL4 on Rune | |
-| M6 | The cache, with cut-off | |
-| M7 | Mid per unit: whole-program builds from the cache | |
-| M8 | The dependency graph, and a program from an entry point | |
-| M9 | Compiling against a signature alone, and dynamic modules | |
-| M10 | The build language and virtual modules | |
-| M11 | Parallel and reproducible builds | |
-| M12 | Hot reload, the compiler as a service, packages: research and prototypes | |
+| M1 | Measure | done 2026-10-09, `0bc5bd38`: `scripts/perf-units.sh`, the table in *What a compile costs* (*Measured again*), HOL4 on Poly/ML in *HOL4 today*, `tests/incremental/SCENARIOS.md`; D6 settled (Mid binary), D9 measured (4%), the globals given a barrier in M3 |
+| M2 | Units in memory: the basis as a value, the front end resumable, a back end per unit | done 2026-10-09, `79e0598b`: `rune --units`, the linker, `Pass.whole`, errors recovered per declaration, `make check-units` (*M2, as built*); one question for the owner (flexible records) |
+| M3 | Unit bytecode, the static linker, and the VM loads units | done 2026-10-09, `9d97b311`: `.rbu`, `--emit-units`, linking unit files, `rt_link`/`Runtime.link`/`Runtime.load`, the dynamic path in `check-units` (*M3, as built*); the globals' barrier moved to M4 |
+| M4 | The resident compiler, `use` and the REPL | done 2026-10-09, `71f1916e`: `bin/rune-repl` and `rune -i`, Chapter 8, `use`, printing, the globals' barrier, the JIT across loads, the boot image, interrupts, a session saved and restored (*M4, as built*) |
+| M5 | HOL4 on Rune | done 2026-10-10, `f8e9fdc5` and HOL4's local branch `trindemossen-2-rune`: `bin/build` through `src/boss`, `hol` proving, the costs against Poly/ML and why in [hol4.md](hol4.md), with what did not port; the rebuild from a warm cache verified (`RUNE_VERIFY_CACHE`, issues 13 and 14). Whether to go on to the rest of HOL4 is the owner's |
+| M6 | The cache, with cut-off | the first two parts done 2026-10-09, `40e2b23a`: the export basis, names that do not depend on what came before, every unit through its basis, unit files by keys, the cache with usages by binder, the frozen Basis, `use` through it, `tests/incremental` (*M6, ... as built*); the soundness of it examined and fixed in [build-cache-issues.md](build-cache-issues.md), with `--verify-cache` and a mutation tester; the third part, fingerprints per entry and entries loaded across changed units, built 2026-10-10 (*M6, the third part as built*); issues 13 to 15 since. Not met: the two-line program from a warm cache in under twice `hello`'s time (*After M12*) |
+| M7 | Mid per unit: whole-program builds from the cache | built 2026-10-10: `rune --units --whole`, units' Mid in the cache, the canonical renumbering, and a program made of its units' Mid the bytes of the whole-program compile (*M7, as built*) |
+| M8 | The dependency graph, and a program from an entry point | built 2026-10-10: `rune --deps`, `--deps-dot`, `-I` entry points, the MANIFEST's requires column derived and checked (*M8, as built*) |
+| M9 | Compiling against a signature alone, and dynamic modules | built 2026-10-10: `_dynamic` and `_export`, the signature's ABI and its fingerprint, the constructors' order renumbered, `Dynamic`, programs linked from units keeping their exports (*M9, as built*) |
+| M10 | The build language and virtual modules | built 2026-10-10: `rune --build`, the programs' and the libraries' build files in place of `sources*.txt` and the MANIFESTs, `rune --basis-index`, `_virtual` and `implements` (*M10, as built*) |
+| M11 | Parallel and reproducible builds | built 2026-10-10: `rune -j N` (children forked through the cache, the build the bytes of one process), `make check-reproducible`; measured, and no speed-up, for reasons in *M11, as built* |
+| M12 | Hot reload, the compiler as a service, packages: research and prototypes | studied 2026-10-10: `Dynamic.reload` on Erlang's rule, `rune --serve` (diagnostics and hover over JSON-RPC), a survey of package systems and a lock file sketched; three decisions for the owner (*M12, as built*) |
 
-The owner decides D1 to D19 after reading this (*Decisions*); what
-starts first is theirs too. M1 to M7 are one part: at the end of M4
+The owner decided D1 to D9 and D11 to D19 on 2026-10-09, all as
+recommended (*Decisions*), and asked for D10 to be reviewed against the
+heap layout and the collector built since this was written; after the
+review, which is in D10, the owner decided D10 as A on 2026-10-09. The
+work runs on branch
+`incremental`, one commit per milestone, from M1 in order; *Since this
+was written* says what changed under the plan between 2026-09-25 and
+2026-10-09. M1 to M7 are one part: at the end of M4
 Rune has a REPL, at the end of M5 it hosts HOL4, at the end of M7 a
 compile costs what changed, and the owner may stop at any of the three.
 M8 to M12 are sized now and planned again after M7, with its numbers
@@ -127,8 +133,16 @@ system"; "whole-program vs incremental"; "language server protocol"),
 and the brief of a future IDE (`docs/plans/ide.md`), which will be the
 first consumer of the compiler as a service (M12) and does no work here.
 
-**The owner's decisions after reading this roadmap:** none yet. D1 to
-D19 are written with a recommendation each (*Decisions*).
+**The owner's decisions after reading this roadmap (2026-10-09):**
+every recommendation taken, with three notes: D1 and D2 are A "for now
+to keep strict SML'97 semantics", and B of each may be considered for
+Rune 2.0; D18 is A, and C (first-class packages) may be considered for
+Rune 2.0. D10 asked for a review: "is A still possible with the new
+heap layout that has been introduced (and possible future optimization
+planned) or is B now required?" The answer is in D10: A is still
+possible and B is not required, but A's justification was wrong under
+the new layout and is rewritten there with the conditions that keep it
+true.
 
 | The brief asks | Answered in |
 |---|---|
@@ -158,6 +172,80 @@ D19 are written with a recommendation each (*Decisions*).
 | document and test behaviour beyond the Definition; the plan file is ephemeral | *Constraints* (the lasting documents: `docs/units.md`, `docs/repl.md`, `docs/build.md`, rows of `docs/language.md`); *Testing* |
 | what is missing | *Disagreements and additions* |
 | the prior research listed | each item in *What the literature says*; Elsman's "1997" is his 1999 paper and his 2008 report, and his 2026 REPL paper is the closest precedent of all |
+
+## Since this was written
+
+Between 2026-09-25 and the owner's decisions of 2026-10-09, master
+moved under this plan. What moved, and what it changes here; *Where we
+are* below is the tree of 2026-09-25 and is left as it was read.
+
+* **The JIT roadmap finished** (M1 to M12, merged as PR #21): code
+  objects and the driver, tiering and invalidation with its poll points
+  (M6), the representations section per function (M8), deoptimisation
+  (M11) and aarch64 (M12) all exist, so every prerequisite of
+  *Prerequisites and flags* holds as built, and none of the "without
+  M6/M8/M11" fallbacks is needed. `runevm` tiers to tier 2 by default.
+* **The tree was renamed** (2026-10-03): `vm/` is `runtime/`. The
+  runtime both VMs link is directly under it (`vm.h`, `value.h`,
+  `loader.c`, `image.c`, `prims.c`, `runtime.c`), the collector is in
+  `runtime/gc/`, the system layer in `runtime/sys/` (`sys.h`), the stack
+  VM in `runtime/stack/` (`bin/runevm-stack`, which was `runevm`), the
+  register VM in `runtime/register/` (`bin/runevm`, which was
+  `vm/new` and `runevm-new`) with its JIT in `runtime/register/jit/`;
+  `rune` makes register bytecode unless told `--target=stack`. Every
+  `vm/...` path below is the old tree's. The names they cite were all
+  found again on 2026-10-09 at the new paths (`load_program_mem`,
+  `validate_program`, `rop_kinds`, `op_kinds`, `JitProgram`,
+  `CodeObject`, `jit_entry`, `PRIM_NEW_WORLD`, `heap_relocate`,
+  `vm_become`); line numbers are not to be trusted.
+* **The heap layout** ([heap-layout.md](heap-layout.md), merged as PR
+  #33; `docs/runtime.md`, *Values and objects*). A value is one 64-bit
+  word on every machine, and its low bit says only "immediate" or
+  "pointer". `int` and `word` are 63 bits; `Int64` and `Word64` are
+  boxed past 63 bits; a real is an immediate by the rotation encoding
+  where its exponent allows, boxed otherwise; an object has an 8-byte
+  header of kind, constructor tag and length; a constructor whose
+  argument is a tuple is one object of the tuple's fields (`CONN`);
+  `Word8Array`, `CharArray`, `RealArray` and `RealVector` hold raw
+  bytes and doubles. **An immediate no longer says what it is**: an
+  `int`, a `word`, a `char`, `unit`, a nullary constructor and a real
+  in range are all odd words, and `val_tag` answers `T_INT` for every
+  one of them ("the program knows which", `runtime/value.h`). This is
+  what D10 had to be reviewed for. It changes nothing in D3 to D7: a
+  datatype's representation is still a function of its declaration
+  (`Rep.ofDatatype`), which is what lets a later unit match an earlier
+  unit's constructors. Kept open by that roadmap and not built: raw
+  real fields (deferred by the owner to a roadmap of their own),
+  headerless pairs (branch `heap-layout-pairs`; its D1 C "later, in the
+  whole-program compiler"), a 32-bit machine's own word
+  (`32-bit-vm.md`), and a pointer code kept for a lazy front end.
+* **The collector** (`garbage-collector-v2.md`, merged as PR #34;
+  `docs/runtime.md`, *The heap* and *The garbage collector*): a nursery,
+  an old space that is not copied (mark-region with opportunistic
+  evacuation under `--gc throughput`, the default, and incremental
+  marking from a snapshot under `--gc low-pause`), a large-object space,
+  a heap of 2 MiB chunks rather than one block, and a barrier on every
+  store into an object. What it changes here:
+  * D9's cost and risk 4 shrink. The resident basis -- the Basis
+    Library's and HOL4's static environment, kept live in the heap -- is
+    promoted once and afterwards marked at each major collection, not
+    copied at every collection. M1 still measures it, under both
+    collectors.
+  * A new cost to measure: the globals are roots of **every** minor
+    collection and are scanned whole (`docs/runtime.md`, *The roots*),
+    since `SETGLOBAL` has no barrier. A REPL session grows its globals
+    with every declaration (HOL4's heap has tens of thousands of
+    top-level values), so each minor collection pays for all of them.
+    M1 measures the cost per global; if it matters, M3 gives the
+    globals a dirty bit per slot (cards for the globals table), which
+    `rt_load` sizes as it grows the table.
+  * Nothing in M3 assumed one contiguous heap. An image after loads
+    is still the whole program, its magic still the instruction set's
+    fingerprint (which `rt_load`, a new primitive, changes), and a
+    loaded unit's code makes its stores through the barrier as any
+    bytecode does.
+* **Numbers.** *What a compile costs* predates all three; M1 measures it
+  again, on today's tree.
 
 ## Where we are
 
@@ -310,6 +398,117 @@ of three rounds) and [weak-points.md](weak-points.md) (2026-09-24):
   Basis suite's saved host images keyed by a checksum of the library's
   sources and `vm/prims.def` (`tests/basis/run-matrix.sh:730-784`). Both
   key on content plus tool identity, never on time.
+
+#### Measured again: M1, 2026-10-09
+
+`scripts/perf-units.sh` on `incremental` at M0 (master `b9506382`: the
+JIT, the word layout and the second collector all in), on an idle
+machine, the least wall time of five runs (one for MLton). The compiler
+runs on `bin/runevm` tiering up to tier 2 (*tier2*), interpreted
+(`--jit=off`), at tier 1 (`--jit=baseline`), as stack bytecode on
+`bin/runevm-stack`, and as MLton's build. The phases are the processor
+time `--pass-stats` gives each, in seconds; `parse` and `elaborate` are
+new stages of it (M1), and both shakes are added together. The lines are
+those of every file the compile reads, the Basis Library's included.
+
+| Compiler | Program | wall | parse | elaborate | translate | mid | shake | lift | workers | simplify | lower | registers | lines read | lines/s, front end |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| tier2 | hello | 0.037 | 0.006 | 0.007 | 0.003 | 0.002 | 0.001 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 108 | 8,308 |
+| interp | hello | 0.023 | 0.001 | 0.003 | 0.001 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 108 | 27,000 |
+| baseline | hello | 0.033 | 0.004 | 0.006 | 0.002 | 0.002 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 108 | 10,800 |
+| stack | hello | 0.022 | 0.002 | 0.002 | 0.001 | 0.001 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 108 | 27,000 |
+| mlton | hello | 0.008 | 0.001 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 108 | 108,000 |
+| tier2 | two lines | 0.291 | 0.050 | 0.092 | 0.030 | 0.017 | 0.009 | 0.005 | 0.006 | 0.025 | 0.013 | 0.012 | 7,419 | 52,246 |
+| interp | two lines | 0.412 | 0.085 | 0.140 | 0.043 | 0.024 | 0.012 | 0.004 | 0.005 | 0.030 | 0.009 | 0.018 | 7,419 | 32,973 |
+| baseline | two lines | 0.270 | 0.043 | 0.086 | 0.028 | 0.016 | 0.007 | 0.005 | 0.007 | 0.029 | 0.009 | 0.011 | 7,419 | 57,512 |
+| stack | two lines | 0.449 | 0.101 | 0.157 | 0.043 | 0.028 | 0.012 | 0.004 | 0.005 | 0.034 | 0.011 | 0.016 | 7,419 | 28,756 |
+| mlton | two lines | 0.100 | 0.016 | 0.041 | 0.008 | 0.005 | 0.003 | 0.001 | 0.001 | 0.007 | 0.003 | 0.003 | 7,419 | 130,158 |
+| tier2 | the Basis whole | 0.784 | 0.096 | 0.284 | 0.095 | 0.071 | 0.028 | 0.007 | 0.009 | 0.046 | 0.036 | 0.076 | 23,616 | 62,147 |
+| interp | the Basis whole | 1.612 | 0.247 | 0.606 | 0.176 | 0.130 | 0.065 | 0.007 | 0.010 | 0.067 | 0.054 | 0.202 | 23,616 | 27,686 |
+| baseline | the Basis whole | 0.849 | 0.104 | 0.295 | 0.111 | 0.078 | 0.031 | 0.007 | 0.011 | 0.044 | 0.045 | 0.085 | 23,616 | 59,188 |
+| stack | the Basis whole | 1.895 | 0.327 | 0.687 | 0.247 | 0.154 | 0.062 | 0.008 | 0.012 | 0.081 | 0.054 | 0.212 | 23,616 | 23,290 |
+| mlton | the Basis whole | 0.387 | 0.054 | 0.170 | 0.043 | 0.034 | 0.017 | 0.002 | 0.002 | 0.017 | 0.006 | 0.014 | 23,616 | 105,429 |
+| tier2 | the compiler | 2.011 | 0.100 | 0.277 | 0.121 | 0.118 | 0.051 | 0.077 | 0.113 | 0.337 | 0.276 | 0.325 | 25,267 | 67,021 |
+| interp | the compiler | 4.231 | 0.240 | 0.567 | 0.275 | 0.207 | 0.090 | 0.160 | 0.162 | 0.633 | 0.592 | 0.811 | 25,267 | 31,310 |
+| baseline | the compiler | 2.136 | 0.113 | 0.277 | 0.139 | 0.129 | 0.056 | 0.087 | 0.107 | 0.311 | 0.300 | 0.367 | 25,267 | 64,787 |
+| stack | the compiler | 4.990 | 0.276 | 0.707 | 0.278 | 0.262 | 0.117 | 0.182 | 0.194 | 0.777 | 0.707 | 0.877 | 25,267 | 25,704 |
+| mlton | the compiler | 1.131 | 0.067 | 0.097 | 0.162 | 0.042 | 0.032 | 0.036 | 0.030 | 0.214 | 0.108 | 0.150 | 25,267 | 154,067 |
+| tier2 | the corpus harness | 0.846 | 0.067 | 0.145 | 0.054 | 0.032 | 0.020 | 0.031 | 0.020 | 0.153 | 0.055 | 0.154 | 16,544 | 78,038 |
+| interp | the corpus harness | 1.761 | 0.156 | 0.279 | 0.091 | 0.058 | 0.037 | 0.051 | 0.039 | 0.261 | 0.111 | 0.504 | 16,544 | 38,032 |
+| baseline | the corpus harness | 0.921 | 0.079 | 0.156 | 0.056 | 0.034 | 0.021 | 0.022 | 0.031 | 0.151 | 0.068 | 0.193 | 16,544 | 70,400 |
+| stack | the corpus harness | 2.084 | 0.192 | 0.338 | 0.102 | 0.074 | 0.046 | 0.038 | 0.046 | 0.347 | 0.131 | 0.526 | 16,544 | 31,215 |
+| mlton | the corpus harness | 0.393 | 0.025 | 0.069 | 0.050 | 0.017 | 0.016 | 0.007 | 0.006 | 0.084 | 0.022 | 0.054 | 16,544 | 176,000 |
+| tier2 | MLton's compiler | 624.670 | 0.495 | 611.250 | 1.261 | 0.548 | 0.475 | 0.511 | 0.451 | 2.517 | 1.542 | 3.232 | about 205,000 | 335 |
+| mlton | MLton's compiler | 142.486 | 0.138 | 135.504 | 0.658 | 0.352 | 0.199 | 0.409 | 0.324 | 0.845 | 0.871 | 1.392 | about 205,000 | 1,511 |
+
+MLton's compiler is MLton at `5fe943391` (MLton PR #660, the first
+commit Rune builds: 606 files, 198,458 lines, in the order of its
+`mlton-rune.txt`), compiled under `ulimit -v 12582912` with `--heap-limit
+5368709120`, as `scripts/gc-eval.sh` compiles it.
+
+What the numbers say:
+
+* **Compiles are 3 to 6 times faster than when this was written**: the two
+  lines 0.29 s at tier 2 (1.8 s on 2026-09-24), the compiler 2.0 s (5.03
+  s). The JIT's tier 2, the word layout and the generational collector did
+  it; the stack VM, which has none of the JIT, is where the old numbers
+  were.
+* **The Basis is the two-line program's compile.** Of its 7,419 lines two
+  are the program's; the front end is half of its 0.29 s and the back end,
+  translating the same Basis files, the rest. A compile against a Basis
+  compiled once (D8, M6) would cost what `hello` costs, 0.04 s.
+* **The front end reads 50,000 to 80,000 lines a second at tier 2** on
+  ordinary code, about half of what MLton's build of the compiler reads:
+  HOL4's `use` of a file of 5,000 lines is about 0.1 s of front end.
+* **But not on MLton's sources: 335 lines a second, and 98% of the
+  compile is elaboration** (611 s of 625 s; 135 s of 142 s on MLton's
+  build of Rune, so it is the elaborator and not the VM). Elaborating each
+  file as a unit (`--units --typecheck-only --pass-stats`, M2, MLton's
+  build) puts 82 s of 130 s in the 282 signature files, 40 s in the 223
+  files of functors and 9 s in the rest. The worst are signatures that
+  share structures of a large signature five times over (`sharing amd64
+  = amd64MLton.amd64` in `amd64-generate-transfers.sig`, 10 s each), then
+  the files that apply the functors (`main.sml`, `main.fun`,
+  `compile.fun`, 8 s each), whose bodies static interpretation
+  elaborates again at every application. This is a cost of the
+  elaborator, not of incremental compilation, and it is found here
+  because MLton is the first large functorised program Rune compiles: the
+  cache (M6) avoids paying it for files that did not change, but a change
+  to a signature or a functor that much of MLton depends on pays it
+  again. Profiling and fixing signature instantiation and sharing is
+  worth a plan of its own; it is listed in *Ready for, not built*.
+* **D6: Mid is stored binary.** The compiler's own Mid, printed (5.2 MB)
+  and read back with `--read-mid`, takes longer to read than to make
+  from the sources: 1.02 s against 0.72 s at tier 2, 0.43 s against 0.36
+  s on MLton's build, and so at every configuration. D6's condition was
+  "if text is not several times faster, Mid is stored binary"; M7
+  stores it binary.
+* **D9: the resident basis costs 4%.** The compiler with its front
+  end's environment and syntax kept reachable through the back end (a
+  scratch build, `keptEnv`), compiling itself, best of three: 32 MB more
+  live (66 MB to 98 MB), 12% to 15% more time in the collector (427 to
+  479 ms under `--gc throughput`, 457 to 490 ms under `--gc low-pause`),
+  4% more wall time (1.95 to 2.02 s) and 35% more peak memory, the same
+  output. The generational collector promotes the basis once; the
+  collector's place in the plans does not move.
+* **The globals cost every minor collection** (*Since this was
+  written*): a program of N top-level values, at `-O0` so that all are
+  kept, that then allocates 384 MB of short-lived lists:
+
+  | globals | minor collections | their processor time | per minor collection | roots besides the stack |
+  |---:|---:|---:|---:|---:|
+  | 0 | 691 | 11.1 ms | 16.1 µs | 230 |
+  | 1,000 | 691 | 13.6 ms | 19.7 µs | 1,231 |
+  | 10,000 | 700 | 36.8 ms | 52.5 µs | 10,230 |
+  | 50,000 | 770 | 159.7 ms | 207.4 µs | 50,230 |
+  | 100,000 | 940 | 369.8 ms | 393.4 µs | 100,230 |
+
+  About 3.8 ns a global at every minor collection. With 100,000 globals the
+  program, whose run without them takes 0.2 s, spends 0.37 s more in the
+  collector. A REPL session, and HOL4's above all, holds that many, so
+  M3 gives the globals a barrier: a card per block of globals, marked by
+  `SETGLOBAL` when the value is young, and only the marked cards scanned
+  at a minor collection, as the old objects' fields are.
 
 ### The VM today: one program, absolute everywhere
 
@@ -560,6 +759,29 @@ futures at once. The owner has said the heaps need not be catered to
 (`~/notes/virtual-machine.md:19`); images give them almost free (D13).
 What Rune has of this today: images, `SML90.Interrupt` as an
 exception that nothing raises, and nothing else.
+
+**Measured on Poly/ML (M1, 2026-10-09)**, the baseline M5 is held to: a
+fresh clone of the built copy (`bdc6917`), configured with Poly/ML 5.9.2
+(`tools/smart-configure.sml`), built through `src/boss` and `bin/hol` --
+the sequence files `kernel` and `core-theories` up to that line, as
+`bin/build --seq=FILE --nograph -j 16` -- on an otherwise idle machine:
+
+| | Poly/ML 5.9.2 |
+|---|---:|
+| `build` through `src/boss`, wall | 5 min 19 s |
+| its processor time, user and system | 370 s and 40 s |
+| its peak resident memory | 748 MB |
+| theories built (`sigobj/*Theory.uo`) and objects (`sigobj/*.uo`) | 47 and 489 |
+| `.sml` and `.sig` lines in the directories built | 245,533 |
+| `bin/hol.state` and `bin/hol.state0` | 13.2 MB and 16.7 MB |
+| `hol` started and ended, best of five | 0.43 s |
+| `hol` with a declaration, a proof (`DECIDE`) or `load "pred_setTheory"` | 0.43 s each |
+
+The heap's loading is the whole latency: a declaration or a small proof
+adds nothing measurable to it. At the front end's 50,000 to 80,000 lines
+a second (*What a compile costs*), compiling the 245,533 lines once would
+take Rune about four seconds at tier 2; what HOL4's build spends is in
+running proofs, which is the VM's speed and not this roadmap's.
 
 **HOL4's sources obey Moscow ML's discipline** (*What the literature
 says*): `X.sig` holds `signature X` and `X.sml` holds `structure X`
@@ -1074,7 +1296,7 @@ sources' own; the *References* give them.
   language accepts -- `use`, the REPL's semantics, `_dynamic`, the
   build language's effect on a program -- is a row of `docs/language.md`
   with a test in `tests/lang`, or a suite of its own named there
-  (`tests/repl`, `tests/incremental`, `tests/build`); the instruction
+  (`tests/repl`, `tests/incremental`, `tests/buildfile`); the instruction
   set and the primitives change through their descriptions; a signal
   handler goes behind `vm/sys.h` and every layer answers it; a change to
   the VM core, `vm/sys.h`, the loader or `vm/image.c` passes `make
@@ -1205,33 +1427,35 @@ compiler as a service (M12). No work on it here.
 ## Decisions
 
 Each gives the options, what favours each, and the recommendation it
-was written with. The owner decides.
+was written with. The owner decided all but D10 on 2026-10-09, as
+recommended; D10 was reviewed that day against the word layout and
+waits for the owner:
 
-| Decision | Recommended |
-|---|---|
-| D1. What a unit is | A: a source file; a REPL declaration; functor bodies compiled at each application |
-| D2. Incremental or separate compilation | A: IC against the actual bases before it, in explicit order; SC only against a signature, for virtual and dynamic modules |
-| D3. Names across units | A: stamps stay `int`, local per unit; canonical renumbering at export, a base added at import and link |
-| D4. The compilation basis | A: one record with deltas, holding what every phase needs; spans kept |
-| D5. Memory before disk | A: the front end and back end made resumable and per-unit first (M2); serialisation after (M6) |
-| D6. What a unit object holds | A: export basis, self-contained Mid, unit bytecode; whole-program builds from the Mid |
-| D7. Linking | A: a static linker in the compiler and `rt_load` in the VM, one relocation, cross-checked; `rt_load` returns a closure |
-| D8. The Basis and the compiler as units | A: the compiler is the first client of unit builds; the Basis ships as one frozen library |
-| D9. The resident compiler | A: in-process, Poly/ML's model; a two-process front end later if wanted |
-| D10. Printing at the top level | A: printers generated per declaration from the static type, plus a registry by type name |
-| D11. Interrupts | A: a flag set by a handler behind `sys.h`, polled at the JIT's poll points, raised as `Interrupt`, maskable |
-| D12. The REPL's semantics | A: Chapter 8: skip a failed declaration, keep effects of one that raised; errors recoverable per declaration |
-| D13. HOL4 | A: a port layer in a HOL4 fork; images as heaps; single-threaded shims; the owner may stop before it |
-| D14. The cache | A: `.rune/` per source directory by default, relocatable; content-addressed under a configuration hash; cut-off by usages; no timestamps |
-| D15. The dependency graph and the file discipline | A: analysis for files with module-only top levels, checked; an explicit list as the escape hatch; nothing restricts `rune` |
-| D16. The build language | A: a language of Rune's own with MLB's semantics, groups, virtual modules, packages, annotations; host build files generated from it |
-| D17. Compiling against a signature alone | A: an ABI fixed by the signature: slots, tags and layouts in signature order, calls through wrappers, no functors |
-| D18. Dynamic modules | A: `structure X = _dynamic "path" : SIG`, checked by interface fingerprint at load; plus an untyped `Dynamic.load` |
-| D19. The second part | as recommended: whole-program from the cache, parallel and reproducible builds; reload, service and packages as research with a decision each |
+| Decision | Recommended | Chosen |
+|---|---|---|
+| D1. What a unit is | A: a source file; a REPL declaration; functor bodies compiled at each application | A, "for now to keep strict SML'97 semantics"; B may be considered for Rune 2.0 |
+| D2. Incremental or separate compilation | A: IC against the actual bases before it, in explicit order; SC only against a signature, for virtual and dynamic modules | A, "for now to keep strict SML'97 semantics"; B may be considered for Rune 2.0 |
+| D3. Names across units | A: stamps stay `int`, local per unit; canonical renumbering at export, a base added at import and link | A |
+| D4. The compilation basis | A: one record with deltas, holding what every phase needs; spans kept | A |
+| D5. Memory before disk | A: the front end and back end made resumable and per-unit first (M2); serialisation after (M6) | A |
+| D6. What a unit object holds | A: export basis, self-contained Mid, unit bytecode; whole-program builds from the Mid | A |
+| D7. Linking | A: a static linker in the compiler and `rt_load` in the VM, one relocation, cross-checked; `rt_load` returns a closure | A |
+| D8. The Basis and the compiler as units | A: the compiler is the first client of unit builds; the Basis ships as one frozen library | A |
+| D9. The resident compiler | A: in-process, Poly/ML's model; a two-process front end later if wanted | A |
+| D10. Printing at the top level | A: printers generated per declaration from the static type, plus a registry by type name | reviewed on 2026-10-09 (below): A still holds, B is not required; A's reason rewritten; decided A by the owner on 2026-10-09 |
+| D11. Interrupts | A: a flag set by a handler behind `sys.h`, polled at the JIT's poll points, raised as `Interrupt`, maskable | A |
+| D12. The REPL's semantics | A: Chapter 8: skip a failed declaration, keep effects of one that raised; errors recoverable per declaration | A |
+| D13. HOL4 | A: a port layer in a HOL4 fork; images as heaps; single-threaded shims; the owner may stop before it | A |
+| D14. The cache | A: `.rune/` per source directory by default, relocatable; content-addressed under a configuration hash; cut-off by usages; no timestamps | A |
+| D15. The dependency graph and the file discipline | A: analysis for files with module-only top levels, checked; an explicit list as the escape hatch; nothing restricts `rune` | A |
+| D16. The build language | A: a language of Rune's own with MLB's semantics, groups, virtual modules, packages, annotations; host build files generated from it | A |
+| D17. Compiling against a signature alone | A: an ABI fixed by the signature: slots, tags and layouts in signature order, calls through wrappers, no functors | A |
+| D18. Dynamic modules | A: `structure X = _dynamic "path" : SIG`, checked by interface fingerprint at load; plus an untyped `Dynamic.load` | A; C may be considered for Rune 2.0 |
+| D19. The second part | as recommended: whole-program from the cache, parallel and reproducible builds; reload, service and packages as research with a decision each | as recommended |
 
 ### D1. What a unit is
 
-**Recommended: A**, a source file.
+**Decided: A**, a source file (2026-10-09), as recommended. "For now to keep strict SML'97 semantics": B may be considered for Rune 2.0.
 
 * **A. A file of top-level declarations; a REPL declaration; a functor
   body compiled at each application in the applying unit.** The unit
@@ -1252,7 +1476,7 @@ was written with. The owner decides.
 
 ### D2. Incremental or separate compilation
 
-**Recommended: A**, incremental by default.
+**Decided: A**, incremental by default (2026-10-09), as recommended. "For now to keep strict SML'97 semantics": B may be considered for Rune 2.0.
 
 * **A. IC: each unit compiled against the actual export bases of the
   units before it, in an order the build says; SC only against a
@@ -1273,7 +1497,7 @@ was written with. The owner decides.
 
 ### D3. Names across units
 
-**Recommended: A**, integers, local per unit, rebased.
+**Decided: A**, integers, local per unit, rebased (2026-10-09), as recommended.
 
 * **A. Stamps stay `int`; every unit numbers from 0 (type names from
   100, since 0 to 99 are the builtins, and type variables from 0); in
@@ -1305,7 +1529,7 @@ was written with. The owner decides.
 
 ### D4. The compilation basis as a value
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. One record, `Basis.t`, with a delta type, holding what every
   phase needs of the units before:** the elaborator's environment,
@@ -1333,7 +1557,7 @@ was written with. The owner decides.
 
 ### D5. Memory before disk
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. Make the compiler resumable in memory first** (M2): `elabTop`
   takes a basis and returns a delta; `Elaborate.finish` and the
@@ -1351,7 +1575,7 @@ was written with. The owner decides.
 
 ### D6. What a unit object holds
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. Three parts: the export basis (`.rbi`); the unit's Mid after
   the unit-local passes, made self-contained by writing each
@@ -1381,7 +1605,7 @@ was written with. The owner decides.
 
 ### D7. Linking
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. A static linker in the compiler and `rt_load` in the VM, with
   one relocation.** The static linker makes a `.rbc` from units, so
@@ -1408,7 +1632,7 @@ was written with. The owner decides.
 
 ### D8. The Basis and the compiler as units
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. The compiler is the first client of unit builds, and the Basis
   Library ships as one frozen library.** `bin/rune` is built in unit
@@ -1428,7 +1652,7 @@ was written with. The owner decides.
 
 ### D9. The resident compiler
 
-**Recommended: A**, in-process.
+**Decided: A**, in-process (2026-10-09), as recommended.
 
 * **A. In-process, Poly/ML's model.** The compiler is a library of
   units loaded into the same VM; `Compiler.compile {read, file, line,
@@ -1462,26 +1686,121 @@ was written with. The owner decides.
 
 ### D10. Printing at the top level
 
-**Recommended: A.**
+**Decided: A, as rewritten by the review of 2026-10-09 below (the
+owner, 2026-10-09).**
+The owner asked whether A is still possible under the heap layout built
+since this was written, and the optimisations it keeps open, or
+whether B is now required. A is still possible and B is not required.
+But the reason this section first gave for A -- "every value carries
+its tag" -- is false under the word layout, and was never what A rests
+on.
 
-* **A. Printers generated per declaration from the static type**, as
-  Poly/ML does: the compiler, knowing `val it : int * string list`,
-  emits the code that prints one, honouring a print depth, a line
-  length and a registry of user printers keyed by type name that the
-  generated code consults (`Compiler.addPrettyPrinter`, which HOL4
-  calls 39 times). Abstract types print by their name; functions as
-  `fn`; exceptions by their constructor. No run-time type information
-  is needed, because every value carries its tag and the compiler knows
-  every top-level type.
+* **A. Printers generated from the static type, as typed code, before
+  representations are chosen.** The compiler, knowing `val it : int *
+  string list`, makes Standard ML code -- in the elaborated program
+  that `Translate` reads, not in Mid, `Lower` or C -- that prints such
+  a value: a `case` over a datatype's constructors, a selection of a
+  tuple's fields, `Int.toString`, `Real.toString`, `!`, `Array.sub`.
+  That code is compiled by the same passes as the value it prints, so
+  `Rep`, the real encoding, the boxes and the flat arrays reach it the
+  way they reach every other piece of code, and it never inspects a
+  value's bits. It honours a print depth, a line length and a registry
+  of user printers keyed by type name (`Compiler.addPrettyPrinter`,
+  which HOL4 calls 39 times). It prints as Poly/ML 5.9.2 does, as
+  checked on 2026-10-09: `val x = B 3: t` for a datatype whose
+  constructors are out of scope, `?` for an abstract type, `fn` for a
+  function, `E 3` for an exception value.
 * **B. A type-indexed interpreter over type descriptions** (Elsman
-  2026). Needed where representations lose the type -- untagged
-  records, unboxed constructors -- and Rune's values are tagged.
-* **C. The compiler's `Ty` printer over a reflected value.** The
-  VM has no reflection and D5's basis is not the value's type.
+  2026): one printer, written once, that walks a value at run time by a
+  description of its type. Under the word layout the interpreter would
+  have to know every representation that `Rep` and the runtime choose
+  -- that an immediate is an `int`, a `char`, a nullary constructor's
+  tag or a rotated real, which constructors are flattened, which reals
+  and 64-bit numbers are boxed, which arrays are raw -- and would have
+  to be kept in step with every later change. This is a second
+  implementation of `Rep`. B is not required, and the new layout makes
+  it dearer, not cheaper.
+* **C. The compiler's `Ty` printer over a reflected value.** Now
+  impossible, not only absent: the bits of an immediate do not say
+  which type it has.
+
+**The review (2026-10-09).** Under the word layout (*Since this was
+written*), a value's low bit says "immediate" or "pointer" and nothing
+more. `0`, `#"\^@"`, `false`, `()`, `nil` and `NONE` are one word. A
+real in range is an odd word as well. An object's header gives a kind,
+a constructor tag and a length, and a flattened constructor or a raw
+array does not say what its fields are. The runtime's own
+uncaught-exception message is the one printer in the tree that reads
+bits without a type (`print_exn_payload`, `runtime/runtime.c`), and on
+today's tree it prints wrong:
+
+| `raise E v` with | prints | should print |
+|---|---|---|
+| `exception E of char`, `#"a"` | `E 97` | `E #"a"` |
+| `exception E of bool`, `true` | `E 1` | `E true` |
+| `exception E of real`, `1.5` | `E 4607182418800017408` | `E 1.5` |
+| `exception E of int`, `0` | `E` | `E 0` |
+| `datatype t = A \| B \| C`, `C` | `E 2` | `E C` |
+
+The decided D12 of [heap-layout.md](heap-layout.md) said that the REPL's
+printer "stays tag-directed" and needs types only for raw fields. That
+was written before its gate chose the word on every machine with
+untyped immediates, and the gate superseded it. Any printer that reads
+bits is wrong now. A printer generated from types is unaffected: it
+asks the static type, which the compiler has for every top-level
+binding, and lets the back end deal with representation.
+
+A stays true, against today's layout and the ones kept open, under six
+conditions. M4 builds to them:
+
+1. **Printers are made before `ToMid`**, as ordinary code from the
+   elaborated types, and never by a walker in C or in `Lower`. Then raw
+   real fields, headerless pairs, a 32-bit machine's word, or a pointer
+   code for thunks change the printer exactly as they change the rest
+   of the program, with no work here.
+2. **A datatype's printer is made once**, from its constructors and
+   the printers of its parameters, and kept in the basis beside its
+   layout (D4). A declaration then only composes printers. A datatype
+   whose constructors are out of scope (`local`, or a structure that
+   hides them) still prints by its constructors, since the basis keeps
+   them whether or not they are in scope. An abstract type (opaque
+   ascription, or a slot of an SC import, D17) prints `?`. The basis
+   carries no other description of a type.
+3. **A type variable prints `?`**, and nothing under it is looked at.
+4. **`exn` is the one open type**: the argument's type is unknown where
+   the value is printed. An exception constructor keeps a printer for
+   its argument, made where it is declared, in a second field of its
+   `K_EXNCON` object beside the name (a layout change of
+   `runtime/value.h`; images and `make test-portability` with it). A
+   unit compiled without printers stores a default that prints the
+   name alone. `exnMessage` and the uncaught-exception message can then
+   print the argument correctly instead of guessing.
+5. **A unit build keeps each datatype's representation a function of
+   its declaration.** D3 to D6 need this anyway. The whole-program-only
+   choices kept open (headerless pairs "in the whole-program compiler",
+   heap-layout D1 C) stay out of unit builds and of the REPL, or are
+   made per declaration. If they were made per program, a loaded unit
+   could not match an earlier unit's constructors, before any printing
+   happens.
+6. **`addPrettyPrinter` is keyed at compile time.** The registry's key
+   is the type name's stamp, taken from the static type of the
+   printer's argument where the call is elaborated (a special the
+   elaborator knows; Poly/ML's values carry no types either, so its
+   `addPrettyPrinter` has to work from the static type too), never from
+   a value. Generated
+   code passes a registered printer the printers of the type's
+   arguments, Poly/ML's `int -> 'a -> 'b -> pretty`.
+
+**When B would be needed:** to print where no compiler made the code,
+for a type known only as data at run time. A debugger reading a stopped
+program's frames, or the IDE's hover on a live value, would need type
+descriptions and a run-time model of `Rep`; jit M8's representations
+section is a start on that model. None of this is in this roadmap. It
+goes in *Ready for, not built*.
 
 ### D11. Interrupts
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. A flag in the VM set by a signal handler behind `vm/sys.h`**
   (`SIGINT` on POSIX; `SetConsoleCtrlHandler` on Windows; `ENOSYS` in
@@ -1500,7 +1819,7 @@ was written with. The owner decides.
 
 ### D12. The REPL's semantics
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. Chapter 8 of the Definition.** A declaration that fails to
   elaborate is reported and skipped, the session's basis unchanged; one
@@ -1520,7 +1839,7 @@ was written with. The owner decides.
 
 ### D13. HOL4
 
-**Recommended: A**, with the owner's stop before it kept open.
+**Decided: A**, with the owner's stop before it kept open (2026-10-09), as recommended.
 
 * **A. A port layer for Rune inside a fork of HOL4** -- `tools-rune/`
   and `src/portableML/rune/`, beside `poly` and `mosml` -- written to
@@ -1548,7 +1867,7 @@ was written with. The owner decides.
 
 ### D14. The cache
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. `.rune/` beside the sources by default, and anywhere the owner
   says** (`--cache-dir DIR`, `RUNE_CACHE`, and from M10 the build
@@ -1607,7 +1926,7 @@ The owner asked for a serious discussion. The facts first.
   code: HOL4's libraries are the clean case, and its scripts are
   interactive input, which no analysis is asked to order.
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. Analysis for the files that obey the rules, checked, and an
   explicit order for everything else.** `rune --deps FILE...` parses
@@ -1633,7 +1952,7 @@ The owner asked for a serious discussion. The facts first.
 
 ### D16. The build language
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. A language of Rune's own, with MLB's semantics inside.** The
   owner dislikes CM, MLB, `sources.txt` and MANIFEST, so the syntax is
@@ -1659,7 +1978,7 @@ The owner asked for a serious discussion. The facts first.
 
 ### D17. Compiling against a signature alone
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended.
 
 * **A. An ABI fixed by the signature**, and nothing else. A client
   compiled against `SIG` alone, for a virtual module (M10) or a dynamic
@@ -1693,7 +2012,7 @@ The owner asked for a serious discussion. The facts first.
 
 ### D18. Dynamic modules
 
-**Recommended: A.**
+**Decided: A** (2026-10-09), as recommended. C, first-class packages, may be considered for Rune 2.0.
 
 * **A. `structure X = _dynamic "path" : SIG`**, an extension in the
   family of `_prim` and `_overload` that the compiler already has: the
@@ -1717,7 +2036,7 @@ The owner asked for a serious discussion. The facts first.
 
 ### D19. The second part
 
-**As recommended**, and planned again after M7:
+**Decided: as recommended** (2026-10-09), and planned again after M7:
 
 * whole-program builds from the cache (M7) and parallel builds by
   processes over the graph, with the cache as the exchange between
@@ -1859,6 +2178,76 @@ M7.
 * **Touches:** every later milestone; the language server (an
   elaborator that resumes per declaration).
 
+#### M2, as built (2026-10-09)
+
+`rune --units` compiles every file -- of the Basis Library, of a library
+beside it, of the program -- as a unit after the ones before it, and
+links them (`docs/units.md`, the lasting record; `src/backend/link.sml`).
+What was built, and where it differs from the plan above:
+
+* **The passes per unit.** `Pass.whole`: false under `--units`, where
+  `Shake` does not run, `Workers` keeps every wrapper and `Simplify` does
+  not put in place a function called once; `Lower` knows the functions of
+  the units before (`knownBefore`) and gives each it calls an id after the
+  unit's own (`imported`); the lints of Mid and Low accept a global or a
+  function of a unit before. Everything else ran per unit unchanged:
+  `Translate`, `ToMid`, `Lift`, specialisation and both targets keep their
+  tables between units, which the stamps being unique in a session
+  allows.
+* **The linker** works on `Code.program`s, not on bytes: each unit's
+  functions, constants, labels, files and inlined frames get a base, its
+  globals are numbered by stamp through the unit that sets them, and
+  every operand that names a function, global or constant is renumbered
+  by the kind the instruction set gives it, which `make isa` now writes
+  into `RegCodes.linked` and `Opcodes.linked` (the fingerprint does not
+  change). The export and import tables are the linker's record of a
+  unit (`Link.unitCode`) rather than fields of `Code.program`; M3 writes
+  them into the `.rbu`.
+* **No function calls the units' top levels.** Each unit's top level ends
+  in a tail call of the next one's, so function 0 is the first unit's top
+  level and only one is ever on the stack: a trace shows the same frames
+  as the program compiled whole, which `check-units` holds it to.
+* **Numbering stays first use**, per unit: deterministic, which is all
+  the five builds need; definition order is left to M6, where a unit's
+  numbering must not depend on what came before.
+* **Errors per declaration.** A top-level declaration that fails to
+  elaborate is reported, undone (`Elaborate.snapshot`, `restore`) and
+  skipped, whole or in units, and the compile fails at the end of the
+  front end having reported every independent error; a syntax error still
+  ends it. The state to put back is small because the elaborator's maps
+  are functional and the tables keyed by stamps only grow. No error
+  datatype was needed: `Error.report` prints and counts. `docs/language.md`
+  says so in its *Programs* row.
+* **Flexible records are settled at the end of each unit, not of each
+  top-level declaration.** Settling them per declaration rejected
+  `tests/lang/ty.record.flex_program`, which `docs/language.md` keeps on
+  purpose (a generalised flexible record resolved by a later
+  declaration; SML/NJ, MLKit, Moscow ML and Hamlet reject it, MLton and
+  Poly/ML accept it as one top-level declaration -- measured 2026-10-09,
+  correcting what this said before). So the program
+  compiled whole is unchanged, and with `--units` a flexible record must
+  be determined in its own file. **The owner decided (2026-10-09):** a
+  language option with every variant the implementations have,
+  `--flex-records=binding|declaration|topdec-monomorphic|topdec|program`,
+  and Poly/ML's, `topdec`, the default; the REPL then compiles a
+  top-level declaration as one unit, as Poly/ML does (`docs/language.md`,
+  *Flexible records*; `tests/flexrec`).
+* **The basis as a value** is, after M2, the environment (`Env.env`,
+  threaded), the fixity (functional), the elaborator's snapshot and the
+  tables that only grow. A record of all of it with a delta, which M6
+  must serialise, is built in M6, where what it must hold is known; M2 did
+  not need it.
+* **Checked by** `make check-units` (in `make check`): every program of
+  `tests/lang` and `tests/perf` the same whole and in units at `-O0`,
+  `-O1` and `-O2` with the lint on, for both bytecodes (280 programs);
+  `tests/units`, programs of several files; and the compiler compiled in
+  units compiling its own sources whole to `bin/rune.rbc`, byte for byte.
+  The whole-program path is unchanged: every program of `tests/lang` and
+  `tests/perf` compiles to the same bytes as before M2, for both targets.
+* **Cost**: a unit build of a small program is about ten times the size
+  of its whole build, since nothing is shaken out of the Basis Library's
+  files (`rt.trace_inlined`: 348 KB against 38 KB).
+
 ### M3. Unit bytecode, the static linker, and the VM loads units (L, about 600 C and 500 SML)
 
 * **What:**
@@ -1894,6 +2283,67 @@ M7.
   machines.
 * **Touches:** the JIT (code objects grown; `--jit=all` on arrival);
   images; `docs/runtime.md` (loading); `vm/new/ARCHITECTURE.md`.
+
+#### M3, as built (2026-10-09)
+
+* **The unit file** (`.rbu`, `docs/bytecode.md`, *Units*): a short header
+  (version, the instruction set's fingerprint, a code kind, the compile's
+  session), then the sections of a `.rbc` of the unit's own code, then the
+  linker's tables: the stamp of each global it names, the globals it sets,
+  the functions it names past its own (the next unit's top level being
+  stamp -1) and those it exports. `rune --units --emit-units DIR` writes
+  one per unit and `DIR/units`; `rune -o P.rbc` given unit files links
+  them. The **static linker** reads a unit file back into the code the
+  target made (`UnitFile.read`: every instruction decoded by the layout
+  `make isa` now writes into `RegCodes` and `Opcodes`, its labels and
+  positions made again) and links it with M2's linker, so a program linked
+  from files is the same bytes as `--units` makes (`check-units`, every
+  program). One relocation in SML (`Link`), one in C (`relocate_code`),
+  held to each other by the dynamic path below.
+* **Names across compiles.** Until M6 numbers them canonically, a unit
+  names other units by the compiler's stamps, which mean nothing outside
+  the compile; a unit carries its compile's *session* (a hash of the names
+  and texts of all its units) and the linkers refuse units of two. The
+  import table of the plan (unit identity, export name, fingerprint) is
+  M6's.
+* **`rt_load` is `rt_link`**, a primitive taking the unit's bytes, with
+  `Runtime.link : Word8Vector.vector -> unit -> unit` and `Runtime.load :
+  string -> unit -> unit` over it; `rt_link_error` gives why one failed,
+  which `Runtime.link` raises as `Fail`. The VM's side (`load_unit_mem`,
+  `runtime/loader.c`) reads the unit whole with the `.rbc` reader's own
+  code, finds its imports in a table of what the units loaded export (by
+  session, stamp and kind; saved in images, version 11), renumbers its
+  operands (`relocate_code`, per instruction set), appends everything,
+  makes its constants once the table that roots them has room, and checks
+  its code from its first function (`validate_program_from`), taking the
+  unit out again if it fails. A unit's top level returns where the static
+  linker would chain it to the next. A unit loaded twice is two units, and
+  the later units find the second. Native programs load nothing.
+* **The JIT** was the one surprise: compiled code embeds the address of
+  the table of code objects, so the table cannot be grown under it.
+  `rt_link` is a `PRIMPUSH` that says `PRIM_NEW_WORLD`, as
+  `Runtime.restore` does, and `jit_make` now invalidates every compiled
+  function before it frees the tables, so that frames below the load
+  return into the interpreter. Correct, and it costs the JIT all its code
+  at every load; M4, where the REPL loads a unit per declaration, needs
+  tables reserved to a capacity that does not move (the code objects, the
+  fill table, the functions), or code that reads the table's address from
+  the VM.
+* **Tests.** `check-units` runs the dynamic path for every program of
+  `tests/lang` and `tests/perf` (`tests/units/load.sml` loading each unit
+  file and running it; same output and status, both instruction sets),
+  leaving out programs that print their own call stack, take arguments or
+  limit the heap; `tests/units` adds a unit loaded twice, one shadowed,
+  files that are no unit or are cut short, imports not loaded or of
+  another compile or instruction set, and a world saved after loading and
+  restored to load the rest; `tests/basis/runtime.sml` the failing paths
+  of `link` and `load`. `--count` of a program linked statically is not
+  compared with its units loaded, as the plan said: the loader is a
+  program of its own, whose instructions the count includes.
+* **Left for later in M3's place:** the barrier for the globals that M1
+  asked for (`SETGLOBAL` in every engine, the minor collection scanning
+  only the cards of the globals written since, and the constants scanned
+  once). A REPL is where it is needed, so it is M4's first step.
 
 ### M4. The resident compiler, `use` and the REPL (L, about 1,500 SML)
 
@@ -1935,6 +2385,94 @@ M7.
   session continues; a saved session restores with its bindings.
 * **Touches:** HOL4 (M5); the language server (the service of M12 is
   this compiler behind a protocol).
+
+#### M4, as built (2026-10-09)
+
+* **The globals' barrier** (M1's finding, moved here from M3): every
+  engine's `SETGLOBAL` already stored 1 in the global's byte of
+  `global_set`, so a minor collection takes only globals marked 1 and marks
+  them 2, and only the constants made since the last (`MINOR_ROOTS`,
+  `runtime/gc/gc.h`) -- no engine changed. 100,000 globals: 14 roots besides
+  the stack where there were 100,230.
+* **The JIT across loads.** Compiled code read the tables of code objects,
+  of fills and of functions, and the number of functions, as constants;
+  they are read from the JitProgram and the VM now (`entry_of`,
+  `closure_function`, `fill_unit_dynamic`, `to_callee_dynamic`), and the
+  primitives' helpers are given where their operands are rather than a
+  pointer into code a load may move. So a load grows the JIT's tables
+  (`jit_grow`, by `VM.prog_epoch`) and keeps what it compiled. `use` of a
+  file of 5,000 lines went from 7.4 s to 1.2 s (1.9 s with the JIT off).
+* **The REPL** (`docs/repl.md`, the lasting record): `bin/rune-repl` is the
+  compiler and the REPL compiled a unit per file and loaded unit by unit,
+  so that they and what they compile share one Basis (D8 A). At start the
+  resident compiler compiles the Basis's files again to have their
+  environment, the compiler being deterministic, and holds each unit it
+  makes to the unit file it was loaded from, byte for byte; the session's
+  stamps start above the REPL's own. A declaration is a unit, linked with
+  `Runtime.link`; Chapter 8 per declaration (D12): an error leaves the
+  session as it was (`Elaborate.snapshot`), an uncaught exception keeps
+  the effects and binds nothing, a declaration's bindings join the
+  session once it has run, so that what a nested `use` compiled stays.
+  `use`, `Compiler.printDepth`, `prompt1`, `prompt2`, in a new Basis
+  structure `Compiler` (Rune's own; in a batch program `use` raises
+  `Fail`). The new pipeline code is `src/driver/pipeline.sml`, shared by
+  `Main` and the REPL.
+* **Printing (D10 A, which the owner decided after the review):** a
+  printer of SML text per declaration, made from the types it bound
+  (`src/repl/show.sml`), compiled with it, from `RuneShow`'s pieces;
+  datatypes matched by names of their own bound to the constructors the
+  elaborator registers (`Elaborate.dataCons`), so that hidden ones print;
+  `?` for abstract types and type variables; a print depth. Not yet:
+  exceptions print by name only (D10's condition 4, the printer in the
+  exception constructor), a type is printed without its structure's path,
+  and the registry of user printers (D10's item 6,
+  `Compiler.addPrettyPrinter` and a `Pretty` datatype in Poly/ML's shape)
+  was not built in M4; it was built for M5, keyed by a name of the type
+  that the cache keeps rather than by its stamp ([hol4.md](hol4.md);
+  `docs/repl.md`, *Printers of one's own*).
+* **Tests:** `tests/repl` (`make test-repl`, in `make check`): transcripts
+  of values, Chapter 8, datatypes, `use`, on every mode of the JIT;
+  `tests/lang/basis.compiler`, `tests/basis/compiler*.sml`.
+* **The boot image:** `bin/rune-repl.img`, the REPL saved after its
+  start (`--make-image`), restored by `bin/rune-repl` with `runevm --restore
+  IMAGE -- FILE...`, whose arguments after `--` now replace the saved
+  ones; a start and a declaration take 0.6 s rather than 3.
+* **Interrupts (D11 A):** `sys_interrupt_catch` behind `sys.h` (SIGINT;
+  Ctrl-C and Ctrl-Break at a Windows console; ENOSYS in `sys_none`) sets
+  `VM.interrupt`; both loops poll it at a jump back and at a call
+  (`POLL`), and the JIT's code with a compare and a slow path
+  (`SLOW_INTERRUPT`), raising it as `RAISE` does, with what a handler needs
+  live at a jump back as at a call (`live.c`). It is `SML90.Interrupt`,
+  caught when a program asks (`Runtime.catchInterrupt`, `rt_interrupt_catch`)
+  rather than as a built-in exception, so that a program that does not ask
+  still ends at Ctrl-C; `Runtime.maskInterrupt` defers it, and raises it
+  as the mask goes. A terminal's read is ended by it (through `poll`, which
+  no signal restarts); streams pass it on rather than wrapping it in
+  `IO.Io` (`rt_interrupt_is`); an image keeps it caught (images version 12).
+  The REPL masks its own work and runs a declaration, and waits for a
+  line, unmasked. Found on the way: `TextIO.stdIn` read a pipe or a
+  terminal with `fread` of 4,096 bytes, which waits for all of them, so a
+  REPL behind a pipe kept open never saw a line; such a handle is now read
+  by one `read` of its descriptor. Tests: `rt.interrupt_self` and
+  `rt.save_interrupt` (`tests/lang`, the program interrupting itself);
+  `tests/repl/interrupt.in`, `SIGINT` sent to the REPL by
+  `tests/repl/drive.py` while a declaration loops; checked by hand at a
+  terminal: Ctrl-C at the prompt drops the line typed. What the polls
+  cost, against M3's VM, three runs each: nothing measurable in the
+  interpreter (a loop of 2*10^8 and `fib 32`: 14.1 s against 14.5 s);
+  5% in compiled code that does nothing but jump back and call (the same:
+  4.12 s against 3.91 s); within the noise for the compiler compiling
+  itself (3.46 s against 3.41 s).
+* **`rune -i`:** every `rune` wrapper -- the build's and the installed
+  ones -- starts the `rune-repl` beside it for `-i`, which the compiler
+  never sees; `make install` builds and installs the REPL, its image in
+  `lib/rune`.
+* **A session saved and restored:** `Runtime.save` from a declaration
+  saves the whole session, and the world restored from it has its
+  bindings. Found on the way: what the saving world had read ahead of its
+  standard input was in `TextIO.stdIn`'s buffer, part of the heap, and the
+  restored world read it again; `Runtime.save` now drops it in the world
+  restored (`tests/repl/session.in`, `session.then`).
 
 ### M5. HOL4 on Rune (XL; in a fork of HOL4 the owner names)
 
@@ -2002,6 +2540,197 @@ M7.
   `check-cross` runs with the cache on and stays identical.
 * **Touches:** the language server (its store); M7; M11.
 
+#### M6, the first part as built (2026-10-09)
+
+* **The export basis** (D4 A): `UnitBasis` (`src/driver/unitbasis.sml`)
+  writes what the units after a unit need of it -- its environment,
+  fixity directives, signatures, functors and overloading, and the
+  compiler's tables of what it declared (each value's scheme, each
+  exception's argument, each datatype's constructors, realisations, the
+  primitives' aliases, the functions known by name, `dataCons`) -- and
+  reads it back. Not written: the IRs' caches made from those tables
+  (`Translate.schemes`, `ToMid.globalSchemes`), and Mid for inlining:
+  nothing is inlined across units (D6's first mode). A functor's body is
+  its place in the source and the hash of its text; loading parses the
+  source again with the fixity of the unit's start, and refuses a source
+  whose hash is not the one compiled. A functor's basis is what the unit
+  added to its start (`envDelta`); its signatures and functors those the
+  unit declared before it; a functor names one of another unit's by the
+  unit's identity (`FunInfo.origin`).
+* **Names** (D3 A, as a range per unit rather than a renumbering pass):
+  stamps, type names and type variables are written as built in, the
+  unit's own (numbered as the writing meets them), or an earlier unit's
+  (its identity and number); loading gives a unit's numbers a range of the
+  session after what its compile used, and registers it. A unit's
+  identity is its name and the hash of its basis, without those counts.
+* **Every unit through its basis:** after a unit is compiled its basis is
+  loaded in place of what the compile left (`Pipeline.unitThrough`), so a
+  unit after it sees the same whether the unit was compiled or taken from
+  the cache, and the outputs are the same bytes (`check-units`, the
+  compiler compiled in units compiling itself).
+* **Keys in code:** `Link.unitCode` names globals and functions by
+  `{unit, number}`; unit files are version 2 (identities of the units
+  named, keys) and so is the VM's loader; units of different compiles
+  link. `--emit-units` writes each unit's `.rbi` beside its `.rbu`.
+* **The REPL** loads the Basis units' bases at start instead of compiling
+  the Basis again (0.36 s without its image, was 3 s); a declaration is a
+  unit through its basis, named `stdIn#N`.
+* **The cache** (D14 A, `UnitCache`, `src/driver/unitcache.sml`):
+  `--cache-dir`, `RUNE_CACHE`, `.rune` beside the first input,
+  `--no-cache`, `--explain-rebuild`; a directory per configuration
+  (`Config.identity`, a hash of the compiler's sources that
+  `gen-build-files.sh` writes, the versions, the instruction set, `-O`,
+  `--passes`, `--int-bits`, `--fuel`); an entry per key -- the unit's name,
+  source, `_prim` and the identities of every unit before it -- holding its
+  basis and code with their hash, written by rename; a damaged entry is a
+  miss. **Coarser than D14's usages:** a key names every unit before, so
+  every unit after one whose basis changed is compiled again; the cut-off
+  is per basis (a body that changes keeps its identity).
+* **Found on the way:** a functor's body was in no identity, so a unit
+  applying a functor whose body changed would have been taken from the
+  cache; the body's hash is now in its unit's basis (S8). Hashing was a
+  third of a warm build (four passes over every byte); it is one.
+* **Measured** (one machine, busy): the two-line program of *What a compile
+  costs*, warm, 0.45 s (cold whole 0.29 s on a quiet machine): reading,
+  checking, loading and linking its 56 Basis units each time. The compiler
+  in units: 10.1 s cold, 5.4 s warm.
+* **Tests:** `make check-units` builds every program without the cache,
+  through a shared one and from it, and wants the same bytes; `tests/units`
+  likewise; `make test-incremental` runs S1, S2, S3, S5, S6, S8, S13, S24,
+  S31, S33, S34 and S36 (`tests/incremental`).
+* **The keys of this part** named every unit before a unit; the second
+  part (below) replaced them with usages.
+
+#### M6, the second part as built so far (2026-10-09)
+
+* **Usages** (D14 A, by binder rather than fingerprint): `Usage` records
+  every name a compile looks up -- values, types, structures (the head of
+  a long name), signatures, functors, and every identifier's fixity --
+  where what was found is the session's binding (`Env.session`; a
+  structure by a witness binding), and `UnitBasis.binders` says which unit
+  bound each top-level name. A key is the unit's name, source and `_prim`;
+  under it an entry per set of usages, and an entry serves where each name
+  is bound by the same unit. So S17 (reorder), S18 (insert), S19 (shadow)
+  and S8 without `main.sml` hold. Coarser than per-entry fingerprints:
+  S3 compiles `c.sml` (which uses `a.sml`'s unchanged `SHAPE`), S4 every
+  user of `a.sml`.
+* **The frozen Basis** (D8): `make basis-cache` (in `make all`) compiles
+  every unit of `lib/basis` for both bytecodes into `lib/cache` (8 MB),
+  read after a compile's own cache and installed read-only. A two-line
+  program's first compile takes all but one of its Basis units from it:
+  `seal_string.sml` uses `Char`, which `seal_char.sml` binds where a
+  program names `Char` and `char.sml` otherwise. Library units are named by
+  their place in the library (`lib/basis/...`), so a cache follows the
+  tree, and a unit from the cache names its source where it is now.
+* **`use` through the cache** (S38): a used file's declarations are units
+  named by the file and their place, in `$RUNE_CACHE` or `.rune` beside
+  it (`tests/repl/usecache.in`).
+* **Warnings** kept with an entry and given again (S32).
+* **Found on the way:** the first recording of usages, every lookup's
+  first name in whatever scope, made a functor's parameter `Array` a usage
+  of the top-level `Array` (`io_functors.sml` missed the frozen Basis).
+* **Left:** fingerprints per entry (S3, S4 as `SCENARIOS.md` wants them);
+  the warm build within twice `hello`'s time (0.45 s, busy machine; the
+  Basis's units decoded and linked per compile: within reach only for a
+  compiler that keeps a loaded Basis between compiles -- an image of the
+  compiler, or M12's service -- with a linker of bytes for the rest);
+  S27 and S37, which the runner cannot make (`SCENARIOS.md` says why).
+  Done since (2026-10-09, for the commit after M5's): S28, S39, S40 in the
+  runners and S43 in `check-cross`; overloading resolved at a type is a
+  usage of the type's name, bound by the unit that registered it -- which
+  closed a real gap, `widestring.sml` registering overloading for a type
+  `widechar.sml` declares.
+* **Found when the owner asked how sure the cache is** (2026-10-09; all in
+  [build-cache-issues.md](build-cache-issues.md)): a functor's body is
+  elaborated again where it is applied, but what it found where it was
+  declared -- its fixity, and names a later unit declares again -- was in
+  no identity, and a warm build printed another result than a cold one
+  (S49, S50; S51 failed at link). A unit that declares a functor now has
+  in its basis the unit that bound each name its compile used. The REPL's
+  echo of a file used was cached with the print depth and the printers of
+  the session that compiled it (S53, S54), now usages. An entry whose code
+  names a unit that is gone is a miss. `--verify-cache` compiles every unit
+  found and compares; `tests/incremental/mutate.py` edits projects
+  mechanically and replays the compiler's history, each warm build against
+  compiling everything. Fingerprints and step 3 below wait for it.
+
+#### M6, the third part: usages per entry (plan, 2026-10-09)
+
+What D14 A asks and the second part did not do: a unit's usages by the
+fingerprint of each entry it used, so that S3 (a type changed that a unit
+did not use) and S4 (an entry added) compile only what used what changed.
+Fingerprints alone gain nothing, because what a unit's basis and code name
+of an earlier unit they name by that unit's identity and its numbers, and
+a unit whose identity changed is not loaded again: a unit taken from the
+cache that names it is a miss, whatever its usages say. So:
+
+1. **A fingerprint per entry.** The hash of what an entry is -- a value's
+   scheme, a type's definition (a datatype's constructors and their
+   arguments, an abbreviation's body, an abstract type's equality and
+   arity), a structure's entries, a signature, a functor's basis and the
+   hash of its body, an exception's argument, and the compiler's tables
+   for it (primitive alias, known function) -- with every name in it
+   written by the unit's *name* and the path that reaches the name in
+   that unit's export (`t A.shape`), and the fingerprint of the entry
+   behind it, so that a change under a name changes every fingerprint
+   that mentions it, and a change beside it none. A name no path reaches
+   (a type made in a `local` whose values escape) is written by its place
+   among the hidden names of its unit, which may move when the unit
+   changes: then the fingerprints that mention it change too, which is a
+   miss and never a wrong hit.
+2. **Usages by whole names, with the fingerprint.** `Usage` records the
+   long name (`v A.area`, not `s A`), and a structure used whole -- `open
+   A`, `structure B = A`, a functor's argument -- as `s A`; a usage keeps
+   the binder's identity, which settles most lookups at once, and the
+   fingerprint, which settles the rest.
+3. **Loading across a changed unit.** The cache keeps the basis of every
+   unit it wrote by identity. A unit taken from it that names an identity
+   no unit of the session has is loaded against the unit of the same name
+   that is there: each of its names of the old unit is read by its path
+   in the old unit's basis and found by that path in the new one, and its
+   code's keys are mapped the same way before it is linked. Where a name
+   has no path, or the path is not in the new unit, it is a miss.
+   Formats do not change: the mapping happens before anything is linked.
+
+S3 and S4 then want what `SCENARIOS.md` says; S5 to S8 hold as they are.
+
+#### M6, the third part as built (2026-10-10)
+
+The three steps as planned, with what building them showed (`docs/units.md`,
+*The cache*, *Fingerprints*):
+
+* **A value's fingerprint names the value**, by its anchor (its unit's name
+  and path): otherwise a later unit that declares an `A.x` of the same type
+  would hold the usage, and the entry's code would still call the first
+  (S19). Signatures' specifications have paths (`sig:SHAPE.area`), or a unit
+  that ascribed one could not be remapped; a fixity has a fingerprint (its
+  precedence and side), or every usage of an operator would hold by binder
+  only.
+* **The units an entry's code names**, not only those its basis names, are
+  remapped: a unit that declares nothing of `a.sml`'s still calls it.
+* **Where usages are checked**: at the unit's place (`UnitBasis.position`),
+  before the entry is looked for, and not where the unit before it began.
+* **Exact before remapped**: of the entries whose usages hold, one whose
+  binders are all the same is taken before one that holds by fingerprint,
+  which needs a remapping (after a revert, the first entries: S5).
+* **A load that fails half-way** -- a name with no path met in the middle
+  of a basis -- takes out what it entered in the tables by stamp
+  (`UnitBasis.abandon`).
+* **The identity store** is `units/` beside the entries: a file per
+  identity, its paths, written when a unit is compiled, read from the
+  project's cache and then the frozen Basis.
+* **Measured on the scenarios**: S3 compiles `a.sml`, `b.sml`, `d.sml` and
+  `main.sml` (not `c.sml`), S4 and S5 `a.sml` alone, S9 and S10 not `c.sml`,
+  S28 nothing (a value added to `pervasive.sml`), S28o `w.sml` alone; the
+  mutation tester remaps about one unit in three of its builds and no build
+  disagrees with `--no-cache`.
+* **A type name's fingerprint is its anchor and the hash of its
+  definition**, kept by stamp: the definition's own text, which names the
+  types it is made of by theirs, grew with every datatype a type names --
+  the usages of a unit of the compiler that names `Ast` were megabytes of
+  text, and three quarters of compiling the compiler in units (24 s, 4.5 s
+  with the hash; found measuring M11).
+
 ### M7. Mid per unit: whole-program builds from the cache (M, about 500 SML)
 
 * **What:**
@@ -2026,6 +2755,64 @@ M7.
 * **Touches:** `docs/ir.md` (Mid's constructor layouts); the JIT's
   metadata (M8's representations come from the same place).
 
+#### M7, as built (2026-10-10)
+
+* **One program of the units' Mid** (`rune --units --whole`): each unit's
+  Mid as `ToMid` made it, before the optional passes, with the layouts of
+  the datatypes its types name and its functions' names
+  (`MidCanon.capture`), written with its names by key as a basis writes
+  them (`UnitMid`, `src/driver/unitmid.sml`), kept in the unit's cache
+  entry (version 5) and read back as the session names it -- from the
+  entry, or from the compile just made, the same way -- then concatenated,
+  renumbered and given the passes of a whole program, `Lower` and the
+  target.
+* **The renumbering is what makes the oracle hold** (`MidCanon`,
+  `src/core/midcanon.sml`): every name -- variable, global, join point,
+  type name, type variable -- numbered by where it first appears, the
+  datatype layouts and function names entered again under the new names,
+  and the counters the passes take fresh names from set after the last. A
+  whole-program compile renumbers its Mid the same way, after `ToMid`, so a
+  program and the one its units' Mid make are the same bytes: every
+  program of `tests/lang` and `tests/perf` and the compiler itself, cold
+  and from a warm cache (`check-units`; `check-cross`, `rune-whole`; S42).
+  `check-levels` builds each both ways at `-O0` and `-O2`.
+* **Against D6 as written:** the Mid is made self-contained by carrying
+  the datatypes' layouts beside it rather than by writing a layout into
+  each `Con` and `Decon`, which leaves `ToMid`, `MidText` and `Lower` as
+  they are; and the Mid kept is the one before the optional passes, so
+  `Workers` needs no idempotence over units already split. The passes after
+  `ToMid` read two tables by stamp, `Ty.datatypeOf` and
+  `Translate.funNames`; both travel with the Mid.
+* **Inlining across units** (measured, instructions at `-O1`, the units
+  linked against the whole program): `list_ops` 1.22, `array_sieve` 1.18,
+  `string_ops` 1.05, `intinf_fact` 1.01, `fib`, `tak`, `real_nbody`,
+  `word_bits` 1.00. A build that links its units inlines nothing across
+  them and the export basis carries nothing for it: `--whole` is the
+  production build, which inlines across units as a whole-program compile
+  does, because it is one.
+* **Measured** (the compiler, one machine, under the load of a check
+  running beside it): compiled whole 4.0 s; in units from a warm cache,
+  linked, 2.8 s; `--whole` from a warm cache 4.4 s; in units cold 11.9 s.
+  `--whole` from the cache is not faster than the whole-program compile for
+  the compiler, whose front end is about 1 s of its 4: the rest is the
+  passes over the whole program (`simplify`, `lower`, `registers`), which
+  `--whole` runs as the whole-program compile does. Where the front end is
+  most of a compile -- MLton's sources, 611 s of elaboration in 625 (M1)
+  -- `--whole` from the cache is what saves it.
+* **Found on the way:** with usages checked by fingerprint, every unit
+  worked out the fingerprint of every name it used, though most are the
+  same entry for every unit that uses them: a cold build in units of the
+  compiler took 40 s rather than 12. The fingerprint of a usage is now kept
+  by its key and binder for the session (`UnitBasis.fingerprintAt`).
+
+* **What the oracle costs a whole compile.** The renumbering copies the
+  program's Mid once: about 7% of the instructions and of the bytes a
+  whole-program compile allocates (measured on the bootstrap and on
+  `compile-hello` with it and without). `tests/perf`'s budgets for those
+  two were recorded again, with that and with the compiler's own sources,
+  which the bootstrap compiles, grown by M6's third part and M7. `ToMid`
+  numbering canonically in the first place would save the copy.
+
 ### M8. The dependency graph, and a program from an entry point (M, about 600 SML)
 
 * **What:** `Deps` (`src/driver/deps.sml`): for each file, the
@@ -2043,6 +2830,99 @@ M7.
   MANIFEST's requires columns; the entry-point build of every example
   matches its listed build.
 * **Touches:** M10; the language server (the graph of a project).
+
+#### M8, as built (2026-10-10)
+
+* **`Deps`** (`src/driver/deps.sml`): what each file declares at its top
+  level -- structures, signatures, functors, type abbreviations -- and the
+  module names it uses where nothing in scope binds them, from its syntax
+  with the scopes of structures, functors' parameters, signatures'
+  specifications and `let`; the discipline (a top-level value, function,
+  exception, datatype, fixity directive or `open` named with its line); the
+  order, which keeps the given order wherever the uses allow; a cycle and a
+  name declared twice refused; `rune --deps` and `--deps-dot`; `-I DIR`,
+  which makes the one input an entry point; `tests/deps` (`make test-deps`,
+  in `make check`); `docs/units.md`, *The graph*.
+* **The compiler's sources** come back from `rune --deps` in the order of
+  `sources.txt`, and given in reverse, in an order the compiler builds in.
+* **The Basis Library's MANIFEST**: `--basis-check` checks the requires
+  column against what `Deps` derives rather than against every identifier
+  of the file's tokens, and 27 files' column became what it derives. The
+  tokens had made a requirement of a name in a specification (`structure
+  Math : MATH` in `REAL`) or of a value's (the exception `Option`), and
+  the `-Name` entries were the way around that; none is left.
+* **The entry points** (examples/benchmarks, a program's `shared/main.sml`
+  with `-I` its benchmark's directory, against the catalog's list of its
+  sources): 122 of 152 are the same bytes; 10 are their list less a helper
+  file the list names and the program never uses, which has no effect at
+  its top level (`shared/output.sml`, `files.sml`, `input.sml`); 20 are
+  ported programs whose files declare values or functions at the top level,
+  which the analysis names and cannot order -- the case D15 leaves to an
+  ordered list (M10).
+* **Against D15 as written:** the entry point is `-I`'s and not every
+  single-file compile's: `rune main.sml` alone compiles `main.sml`, as it
+  did, so that a file that names a structure some other file of its
+  directory declares (`tests/lang` has 276 files in one directory) is not
+  compiled with that file.
+
+#### M8 to M12, planned again after M7 (2026-10-10)
+
+What M6 and M7 measured changes the plan below in three places:
+
+* **The production build from the cache is `--whole`**, and it costs what
+  the passes over the whole program cost: for the compiler 4.4 s warm
+  against 4.0 s compiled whole, for MLton (whose front end is nearly all
+  of its compile) to be measured by `tests/incremental/mlton.sh`. So M11's
+  parallel build helps the front end and the units' own passes, and leaves
+  the whole program's to one process: what it gains is the front end's
+  share, which M11 measures rather than assumes.
+* **A program that loads a dynamic module is built in units** (M9): a
+  module names what it imports by unit identity (M3, M6), and a program
+  compiled whole has none, its units renumbered into one (M7). The linked
+  program keeps its units' exports for that; a whole program cannot host a
+  dynamic module, and is told so.
+* **M10's build files list units, and the cache is theirs** (M6): what a
+  build file adds over `-I` and `sources.txt` is libraries, export lists
+  and virtual modules, which M10 builds on M8's graph and M9's ABI as
+  planned.
+
+#### M9, the design (2026-10-10)
+
+* **The ABI of a signature** (D17): a slot per value specification, in
+  the signature's order, substructures' in place, recursively; a
+  datatype specification's constructors take their tags in the
+  specification's order; exceptions are values in their slots; abstract
+  types stay abstract to the client. Its fingerprint is the hash of the
+  signature's fingerprint text (`UnitBasis.fpSigma`), which names every
+  type by its unit's name and path, so a client and an implementation
+  compiled against the same signature in the same library agree.
+* **The client**: `structure X = _dynamic "path" : SIG` elaborates as an
+  opaque ascription of no structure: fresh abstract types, a fresh global
+  per slot. Its translation calls `rt_dynamic (path, fingerprint, n)` where
+  the declaration is, which loads the unit at `path`, runs its top level,
+  checks the fingerprint it exported against the client's, and gives the
+  slots as a tuple, which the client's globals are set from; a mismatch,
+  or a unit that exports none, is `Dynamic.Mismatch` naming both.
+* **The implementation**: `_export structure Name : SIG = strexp` in a
+  unit, compiled with `--units`. The signature is known before the body,
+  so a datatype of the body that a datatype specification of the signature
+  matches by name takes its tags in the specification's order (D17's
+  renumbering, without a second elaboration); the structure is ascribed
+  opaquely; the unit's top level ends by handing the slots, in the ABI's
+  order, and the fingerprint to `rt_dynamic_export`.
+* **Linking the module into the program**: a unit's code names what it
+  imports by unit identity, and a program linked from units keeps its
+  units' identities and exports in a section of its `.rbc`, which the VM
+  enters in its table of exports at start (the table `Runtime.link` already
+  resolves a loaded unit against). So a module and the program share the
+  Basis Library's units, and two modules that import one library share
+  its types (SMLSC's definite references).
+* **`Dynamic.load file`**, the untyped form (D18): `Runtime.load`, which
+  M3 built, under the name D18 gives it, for a plugin that registers
+  itself through a structure of the program.
+* **Tests** (`tests/dynamic`): a plugin; a module through `_dynamic`; a
+  mismatch; two modules sharing a library's types; a module loaded under
+  `--jit=all`; the constructor order renumbered.
 
 ### M9. Compiling against a signature alone, and dynamic modules (M, about 700 SML and 100 C)
 
@@ -2064,6 +2944,38 @@ M7.
   ABI is documented and its fingerprint stable across the five builds.
 * **Touches:** M10; native units later (the code kind).
 
+#### M9, as built (2026-10-10)
+
+* **As designed above**, with these as built: `_dynamic "path" : SIG` (a
+  structure expression) and `_export structure X : SIG = e` (a top-level
+  declaration), `StrDynamic` and `StrExport` in the syntax; the client's
+  datatypes are given their constructors under their fresh names from the
+  specification's own (an instance of a signature by name has fresh names
+  that no table knows); the slots cross as units through `unsafe_cast`, a
+  polymorphic one instantiated at unit, which changes nothing of its value;
+  `RuneDynamic` and `Dynamic : DYNAMIC` in the Basis (`lib/basis/dynamic.sml`,
+  `dynamic_sig.sml`); the units section of a program (`docs/bytecode.md`),
+  which `Link` writes and the VM enters in its table of exports at start --
+  the C of this milestone, about forty lines; `tests/dynamic`
+  (`make test-dynamic`), `tests/lang/mod.dynamic_export_order.sml`.
+* **The ABI's fingerprint** names no value or exception by where it was
+  declared (its specification is not one), so a client and a module that
+  declare the same signature in different files agree; types the signature
+  names from other units by those units' names and paths. A program compiled
+  whole can load no module and is none: its fingerprints are a constant, the
+  same in a whole-program compile and one of the units' Mid (S42), and a
+  usage, so that a unit compiled one way is not the other's entry.
+* **A program that may load units** -- one that links `runtime.sml` or
+  `dynamic.sml` -- keeps its units' exports in its file, under the
+  identities a build from source gives them, which a module compiled from
+  source names: so it takes no unit from the cache across a changed unit
+  (M6's remapping), whose old identity it would keep. Other programs carry
+  no units section, and are the bytes they were.
+* **Left:** a constructor or an exception that a structure gives as a value
+  specification (`val A : t` where `A` is a constructor) is refused at
+  `_export`; the client's slots go through the wrapper of every call, as
+  D17 says, with no adapter for a worker's arity.
+
 ### M10. The build language and virtual modules (L, about 1,200 SML)
 
 * **What:** the language of D16 -- its grammar and AST in
@@ -2078,7 +2990,7 @@ M7.
   chosen here (not `.rune`, which the cache directory has);
   `lib/basis`'s build file replacing MANIFEST (seals as re-ascriptions,
   the epilogue as the last unit); the compiler built from its own build
-  file; `tests/build`; a `basis.virtual` example swapping `IntInf`'s
+  file; `tests/buildfile`; a `basis.virtual` example swapping `IntInf`'s
   implementation, the brief's own case.
 * **Why now:** after the graph (M8) and the ABI (M9) it composes.
 * **Done when:** `rune` builds itself, `runedoc`, `runeopt` and the
@@ -2087,6 +2999,56 @@ M7.
   `IntInf` example runs with either implementation.
 * **Touches:** the hosts' build files; `docs/building.md`;
   `AGENTS.md` (the rules about `sources.txt` and MANIFEST).
+
+#### M10, as built (2026-10-10)
+
+* **The language** is what `docs/build.md` has: files in order, `files`,
+  `group` (in the order of M8's graph), `local`, `library` with an export
+  list, `use` (a build file elaborated once), `implements`, `annotate`,
+  `cache`, `libraries`, and path variables (`--path NAME=DIR`). `BuildFile`
+  (`src/driver/buildfile.sml`) reads it; the units driver follows the plan
+  it gives, a step's basis a snapshot of the elaborator's tables and a step
+  what it adds to them (`Main`'s `snapshot`, `deltaOf`, `apply`), so an
+  export list or a `local` hides what the files after it do not see.
+  `rune --build FILE`, `--build-list FILE`; `tests/buildfile` (`make
+  test-build`, in `make check`).
+* **The programs** have build files, `rune.build`, `runedoc.build`,
+  `runeopt.build` and `runeisa.build`, in place of `sources*.txt`; before a
+  rune exists the Makefile and `scripts/gen-build-files.sh` read their
+  `files` blocks with `scripts/build-files.sh`, and `rune --build rune.build
+  --whole` is the bytes of the compiler built from the hosts' generated
+  scripts (`scripts/check-cross.sh`, the build-files job).
+* **The libraries** have `library.build` (`lib/basis`, `lib/random`,
+  `lib/test/property`): the files in load order, in blocks annotated with
+  what a file is to a program (`always`, `demand`, `seal`, `final`,
+  `host=...`), and `libraries` for those a library is written on. What a
+  file provides and requires is no longer written by hand: `rune
+  --basis-index DIR` derives it -- the declarations, and `Deps`'s uses --
+  and writes `DIR/MANIFEST`, which `make manifests` makes and git does not
+  keep. The seals stay files of their own and the epilogue a `final` file,
+  as they were; `scripts/gen-basis-sigs.sh` writes its block into the
+  Basis's build file.
+* **Virtual modules**: `structure X = _virtual : SIG` at a structure
+  binding, `StrDynamic` with `DynamicVirtual X`; the build file's
+  `implements X = ... end`, whose files end with `_export structure X :
+  SIG`; `RuneDynamic.take` finds the export of the name, where the
+  fingerprints agree, as `load` does for a loaded unit. What an
+  implementation declares is hidden from the files after it, so the units
+  compiled against the virtual module name none of it: in
+  `examples/virtual/bigint`, two implementations of a `BIGINT` (the Basis's
+  `IntInf`, lists of digits), the second build through the first one's
+  cache compiles the implementation alone. Two implementations are refused;
+  none raises `Dynamic.Mismatch` when the declaration runs, the build not
+  knowing which units declare a virtual module when the cache serves them.
+  A virtual module is part of its program, which can be compiled whole.
+* **Left:** `open` and renaming in a build file, `where type` between
+  virtual modules, levels per unit; and the brief's case exactly, the
+  Basis's own `IntInf` virtual: inside the Basis it is named by `Int`,
+  `Word`, `Real` and the scanners, which would all reach it through the
+  slots, and the Basis is compiled by its MANIFEST, not a program's build
+  file -- so the example swaps a program's big integers, one of them
+  `IntInf`, and the Basis's waits for the Basis to be built from its build
+  file as a program's units are.
 
 ### M11. Parallel and reproducible builds (M, about 500 SML)
 
@@ -2103,6 +3065,69 @@ M7.
   is in `make check`.
 * **Touches:** green threads (a later in-process pool); the corpus
   harness (its ad hoc build).
+
+#### M11, as built (2026-10-10)
+
+* **`rune -j N`** (`src/driver/parallel.sml`, `docs/units.md`, *Parallel
+  builds*): the parent goes through the units in order, each through the
+  cache, as a build by one process does, and forks children -- copies of
+  itself at the unit it is at, so with its basis in memory -- for the units
+  after it that are likely to be compiled, whose units before them are
+  done, and whose text is at least `RUNE_PARALLEL_MIN` bytes (16384). A
+  child goes through the units its own needs, from the cache, skips the
+  others, compiles its unit into the cache and ends; the parent takes the
+  unit from the cache when it gets there. A unit the parent misses and no
+  child has, it compiles itself. The graph is M8's, by name, and the
+  MANIFEST's for the Basis. What the build gives is the parent's pass, so
+  `-j` changes the time and nothing else: S58 holds a project built with
+  `-j 4` to the same units compiled, the same standard error and the same
+  bytes as one process, cold, warm, after edits and after an error.
+* **`make check-reproducible`** (`scripts/check-reproducible.sh`): the
+  compiler built from `rune.build` is one set of bytes over eleven builds --
+  in units and whole, without the cache, through a cold cache and warm, at
+  `-j 1` and `-j N`, and from a copy of its sources in another directory --
+  and the whole ones are `bin/rune.rbc`. A program names the Basis's files
+  by the path the compiler was run by (`bin/../lib/basis/...`), so the
+  builds run `bin/rune` by that name, the copy through a link to `bin`; a
+  checkout elsewhere run the same way gives the same bytes.
+* **Measured** (2026-10-10, 16 threads; another session's `make check`
+  shared the machine, so each configuration ran five times interleaved
+  with the others and the least is shown):
+
+  | Build | `-j 1` | `-j 4` | `-j 8` | `-j 16` |
+  |---|---|---|---|---|
+  | the compiler in units, cold (the Basis from the frozen cache) | 5.63 s | 6.17 s | 7.11 s | 6.04 s |
+  | the same, warm | 2.66 s | 2.93 s | 3.03 s | 2.85 s |
+  | the compiler whole (`--whole`), cold | 6.88 s | | | 7.62 s |
+  | the Basis, every file, no frozen cache | 4.38 s | 4.68 s | 4.85 s | 4.43 s |
+
+  **There is no speed-up**, and the reasons are measured. Once a type
+  name's fingerprint is a hash (*M6, the third part as built*), the
+  compiler's 63 units compile in 4.1 s together, and the graph's critical
+  path is 1.7 s of that: at most 2.4 times on the compile work. Under it
+  is the parent's pass through the cache -- reading each unit's entry,
+  loading its basis, linking -- which is what a warm build costs (2.7 s) and
+  which is not parallel at all. So the best a cold build could be is about
+  4.4 s against 5.6 s, and each child costs a fork, its collections over
+  pages it shares with the parent (copied on the first write), and the
+  parent's reading of what it compiled, which uses the margin up; `-j`
+  also analyses every file's dependencies before it starts (0.2 s). The
+  Basis is the same in small: 250 files, most a few hundred lines, in a
+  graph that every `always` file and every seal file make deep.
+* **What would make it pay**, in the order of what it would gain: the
+  parent's pass made cheaper or parallel (loading the entries of the units
+  that do not depend on each other at once; the link reading code in
+  parallel), which is the floor of every build, cold or warm; a pool of
+  compilers that stay up between builds and take units over a pipe, so
+  that no process is forked per unit and no basis is copied (the green
+  threads' in-process pool the plan named); and units coarser than a file
+  where files are small. None of it is built; the measurement is the
+  result.
+* **Found on the way:** a unit's usages were most of a compile in units
+  (the fingerprint of a type named the text of every type it was made of),
+  fixed in M6's third part; `--pass-stats` reports what each unit took, and
+  the phases of a unit's compile outside the passes (`unit-usages`,
+  `unit-export`, ...).
 
 ### M12. Hot reload, the compiler as a service, packages: research and prototypes (L)
 
@@ -2128,6 +3153,164 @@ M7.
   part is known.
 * **Done when:** each study has its prototype measured and its
   decision written.
+
+#### M12, as built (2026-10-10)
+
+Three studies, each with its prototype behind a flag, what it measured, and
+a decision for the owner.
+
+**Hot reload.** `Dynamic.reload FILE` loads the unit in `FILE` again for
+every `_dynamic` declaration that loaded it. A declaration's slots are now
+set by a function of the module's tuple, which `RuneDynamic.load` calls and
+keeps; `reload` runs the new unit's top level, checks its fingerprint and
+calls the function again. This is Erlang's rule: a call through the
+structure (`L.step`, a load of the slot's global) reaches the new code, and
+a function taken from the structure before (`val kept = L.version`) stays
+the old one, as a local call in Erlang does. A module of another signature
+changes nothing, and `Mismatch` says so. `tests/dynamic/run.sh` reloads v1
+to v2 while the program runs, under the interpreter and `--jit=all`; that
+it passes under the JIT says that compiled code reads a slot's global when
+it calls through it and keeps no old value of it. A reload of a 653-byte module costs 0.8 ms in the interpreter
+and 1.1 ms with `--jit=all`, the file copied each time included (500
+reloads in a loop). Old code is never freed: every version stays in the
+VM's table of units, where Erlang purges a module's old version when a
+third is loaded.
+
+*The state question*, which the prototype answers only by refusing:
+
+* **Abstract types.** The program holds values of the signature's abstract
+  types (`S.t`) made by v1, and v2's functions read them by v2's
+  representation. The fingerprint is the signature's, so it cannot see the
+  difference, and the result is a type confusion. `reload` therefore
+  refuses a module whose signature has an abstract type (datatypes are
+  safe: their constructors and tags are the signature's). Hicks and
+  Nettles (*Dynamic software updating*, TOPLAS 2005) answer this with a
+  *state transformer*: the new version supplies `upgrade : old.t -> t`,
+  applied to every value of the old type that is live, which needs either
+  the collector to find them (a typed heap walk) or the values to be
+  reached through one indirection that the update rewrites.
+* **Module state.** A `ref` in v1 is not carried to v2: v2 starts with its
+  own top level. Erlang's OTP carries state through `code_change/3`, a
+  callback of the new version given the old state. In Rune that would be
+  an `_export`ed `migrate : Old.state -> state` that `reload` calls with
+  what v1 exports, which needs v1's state type in v2's signature.
+* **When.** The reload happens when the program calls it, between two
+  calls through the structure, which is Hicks and Nettles's update point
+  chosen by the program. Frames of v1's functions on the stack keep
+  running v1's code, as in Erlang.
+
+*For the owner:* (a) keep `reload` for signatures without abstract types
+and grow from there, (b) add state transformers (`upgrade` per abstract
+type, chosen by the new module) with a heap walk at the update point, or
+(c) leave hot reload as this prototype. Recommended: (a), with (b)
+designed when a program wants it. Old versions could be dropped on the
+third load, as Erlang does, once nothing names them: the units section
+knows which unit a slot came from.
+
+**The compiler as a service.** `rune --serve [OPTION...]` reads one
+JSON-RPC 2.0 message per line on standard input and answers on standard
+output, which is the transport `docs/plans/ide.md` chose for the IDE's
+service (`src/driver/serve.sml`). A request names a program's files in
+order and an editor's text of one of them, which is compiled in place of
+the file (`Source.overlays`). The methods are `initialize`, `diagnostics`
+(every error and warning with its byte span, line and column, kept as data
+by `Error.note`), `hover` (the innermost variable whose span holds an
+offset, its name and its type at that use, from the elaborated syntax that
+`Main.keptSyntax` keeps) and `shutdown`. Each request is answered by a
+child forked for it, which compiles the program in units through the cache
+as far as types and ends: nothing one request leaves in the compiler's
+state reaches the next, which is the isolation `docs/plans/ide.md` asks
+for without making the compiler's state explicit. `tests/serve/run.py`
+(`make test-serve`) drives it; a request on a two-file program takes 21 ms
+warm, the Basis taken from the frozen cache. Not built: the definition of
+a name and its references (the stamps in the syntax give both, as the
+IDE's own adapter in rune-ide does), and a parent that keeps the
+program's units loaded and forks at the edited unit -- as `Parallel`'s
+children do -- so that a request compiles only that unit and the ones
+after it, which is the next step for a large program.
+
+*For the owner:* the IDE (rune-ide) builds the compiler's front end into
+its own service and reads the elaborated syntax there. The choice is
+between (a) the IDE driving `rune --serve` -- one compiler for the command
+line and the IDE, with the cache, the build files and `-j` shared, at a
+fork per request -- and (b) the IDE embedding the front end as now, which
+avoids a process but keeps its own copy of the compiler's state.
+Recommended: (a), with the methods grown to what rune-ide's M5 needs.
+
+**Packages.** A survey of four systems against Rune's build files and
+cache; no implementation.
+
+| | Smackage | opam | cargo | Nix |
+|---|---|---|---|---|
+| What a package is | a git repository; versions are its tags (`v1.2.3`) | an `opam` file in a repository of descriptions, the sources a tarball or a git URL | a crate on a registry (crates.io), a `Cargo.toml` | a derivation: a build of inputs, each pinned |
+| Choosing versions | the newest tag with the asked prefix | a solver (CUDF) over version constraints | semver ranges, one version per major per build, a lock file | none: every input pinned by hash |
+| Pinned how | not pinned | `opam lock`: exact versions | `Cargo.lock`: exact versions and the checksum of each crate | `flake.lock`: revisions and the hash of each input's files |
+| Builds | CM or MLB through a path variable | per package, by its own build (dune) | cargo, per project, with fingerprints | sandboxed, from the pinned inputs |
+| Shared results | none | dune's cache, by the digest of each rule | none across projects | the store and binary caches, by the hash of the inputs |
+
+Rune has two of the pieces already. A build file reaches another by a path
+variable (`use $(JSON)/library.build`), which is what Smackage does with
+CM's and MLB's variables; and the cache keeps a unit by its name, its text
+and the identities of what it used (M6), which is content addressing at
+the grain of a unit, finer than dune's rules or Nix's derivations. What is
+missing is the lock: what a path variable names, pinned. A sketch:
+
+```
+(* rune.lock -- written by `rune lock`, read by `rune --build` *)
+package json 1.2.0
+  source git https://example.org/sml-json.git 4f1c2e9a...
+  files sha256 9b0d...      (* the files its build file lists, in order *)
+  path JSON                 (* the path variable it is reached by *)
+```
+
+`rune --build` would fetch each package by its revision into a store
+named by the files' hash, set its path variable there, and refuse a
+package whose files hash otherwise. A unit of a package is then named by
+the package and its version (`json-1.2.0/parser.sml`), so that its entry in
+the cache is the same in every project that locks that version, and a
+cache could be shared between projects and machines as the frozen Basis is
+between programs.
+
+*For the owner:* (a) git repositories and tags, as Smackage, with the lock
+file above, (b) a registry of descriptions, as opam and cargo, or (c)
+nothing yet. Then: one version of a package per build (simplest; SML's
+names would otherwise need `library` export lists to keep two apart), or
+several. Recommended: (a) and one version per build, the lock first, since
+it is what makes a build of someone else's code reproducible
+(`make check-reproducible` holds that for Rune's own).
+
+#### After M12: what is left (2026-10-11)
+
+What this roadmap did not finish, and where each is written down:
+
+* **M6's warm build of a small program.** Its "done when" asked for the
+  two-line program from a warm cache in under twice `hello`'s time. It
+  takes 0.34 to 0.45 s, `hello` 0.04 to 0.09 s, and compiling the two
+  lines whole 0.32 to 0.46 s (five runs each, a busy machine): reading,
+  checking and loading the bases of the 56 Basis units it uses, and
+  linking them, cost what compiling does. Loading a basis is what to make
+  cheaper -- the bases are smaller since issue 14 -- or a program could
+  link against the frozen Basis's units without loading their bases
+  whole.
+* **Issue 15's remainder** ([build-cache-issues.md](build-cache-issues.md)):
+  an entry taken across a unit that changed keeps the old unit's
+  identity; written again against the new units when it is loaded, it
+  would have a fresh compile's, and `--verify-cache` could compare it.
+* **`-j` gives no speed-up** (*M11, as built*: what would make it pay).
+* **M12's three decisions** for the owner (*M12, as built*): hot reload,
+  the IDE on `rune --serve`, packages. `Dynamic.reload` frees no old code.
+* **The compiler as a library**, as the owner meant M12's service:
+  [compiler-library.md](compiler-library.md), after the REPL's branch is
+  merged.
+* **Two measurements not explained.** MLton's compiler built in units
+  without the cache holds 3.3 GB at its peak, where through the cache the
+  heap held 166 MB after 400 units; what the build without the cache
+  keeps is not known (`tests/incremental/mlton.sh` allows for it). And
+  measuring issue 14, a value a `ref` had held stayed reachable until the
+  next store into that `ref` -- a list rebuilt into `UnitBasis.units` freed
+  the old one only when the list was rebuilt a second time -- which may be
+  a dead register of the measuring frame or something of the collector's;
+  it was not looked into.
 
 ### Why this order
 
@@ -2295,7 +3478,7 @@ them:
   own graphs.
 * **The ABI and dynamic modules** (M9): plugins, mismatches, shared
   types, every `--jit`.
-* **The build language** (`tests/build`, M10): its grammar's cases, the
+* **The build language** (`tests/buildfile`, M10): its grammar's cases, the
   generated host files, the virtual `IntInf`.
 * **Rules for `AGENTS.md`** (M2, M3, M6, M10): a unit's format is its
   description in `docs/bytecode.md` and its writer and reader; the
@@ -2346,6 +3529,15 @@ Listed so that the next roadmap, or the owner, finds them here:
 * **Native units**: the code kind of the header, a second loader, the
   ABI implemented by a calling convention.
 * **Hot reload in production**, if M12's decision is yes.
+* **The elaborator at the scale of MLton** (M1): signatures that share
+  structures of a large signature take seconds each, and functor bodies
+  are elaborated again at every application; 98% of compiling MLton's
+  compiler is elaboration. A profile and a plan of its own, with
+  `type-checker.md`; the cache only hides it for files that do not
+  change.
+* **Printing without the compiler** (D10's review): type descriptions
+  and a run-time model of `Rep` for a debugger or the IDE's hover on a
+  live value; jit M8's representations section is its start.
 
 ## References
 

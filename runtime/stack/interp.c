@@ -42,6 +42,10 @@
                          pc = (fn)->code_offset)
 #define RETURN_TO(back) (fr = &vm->frames[vm->fp], base = vm->stack + fr->base, pc = (back))
 #define FATAL(...) (SYNC(), vm_fatal(vm, __VA_ARGS__))
+/* the user's interrupt, where one waits and the mask lets it, raised at
+   this instruction as RAISE raises (VM.interrupt; D11). Not a do-while:
+   NEXT is `continue` in the switch's loop. */
+#define POLL() if (vm_interrupted(vm)) { SYNC(); vm_interrupt(vm); RELOAD(); NEXT; } else (void)0
 #define EXPECT(v, kind, what) expect_obj(vm, (v), (kind), (what), sp, pc, count)
 
 /* The object v points to, which must be of that kind; the program stops

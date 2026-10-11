@@ -312,10 +312,18 @@ rt_collections   1  unit -> int              Collections the collector has made.
 rt_live          1  unit -> int              Bytes of objects in the heap: what the last collection kept plus what has been allocated since.
 rt_heap_size     1  unit -> int              The heap's size, in bytes: what it holds before it is collected.
 rt_collect       1  unit -> unit             Collect the heap now, a full collection: free every unreachable object.
+rt_share         1  unit -> int              Make the heap's equal immutable objects one, as Poly/ML's shareCommonData does (runtime/gc/share.c): the bytes of the copies it freed.
+repl_printer_add 1  (int -> 'a -> 'b -> 'c) -> unit   Compiler.addPrettyPrinter: nothing, here. Where the REPL compiles a program, Translate makes an application of it a call of RuneShow.addPrinterAt with the name of the type the printer prints, which the elaborator gave the application (docs/repl.md, Printers).
+unsafe_cast      1  'a -> 'b                 Its argument, at any type: for the library alone (RuneShow keeps the printers of every type in one table, each taken out at the type it was put in at). A value is a word whatever its type, so nothing moves.
 rt_version       1  unit -> string           The version of Rune this VM was built as, which `runevm --version` prints.
 rt_trace         1  int -> (string * string * int * int) list   The frames, innermost first, leaving out the innermost n: the name of each function, the file it is in, and the line and column it is stopped at; the file is "" and both numbers 0 where the program carries no position.
 rt_save          1  string -> int            Write the whole VM to a file, to be carried on by `runevm --restore`: 0 here, 1 in the world that starts again from it, ~1 if it could not be written.
 rt_restore       1  string -> int            Become the world in a file that Runtime.save wrote, bytecode and all; it does not come back, and gives ~1 only when the image cannot be read.
+rt_link          1  string -> (unit -> unit) option   Append the unit whose file's bytes are given to the program (docs/units.md, Loading): its imports found among what the units loaded before export, its code checked as a file's is; SOME of the closure of its top level, which the caller runs, or NONE, rt_link_error saying why.
+rt_link_error    1  unit -> string           Why the last rt_link gave NONE.
+rt_interrupt_catch 1  exn -> bool              From now on the user's interrupt (SIGINT, Ctrl-C at a console) raises the exception given where the program next jumps back or calls, or in a terminal's read it ends, rather than ending the program (docs/runtime.md, Interrupts); false where the system has no interrupt to catch.
+rt_interrupt_mask 1  bool -> bool             Whether an interrupt waits rather than being raised, set; what it was. One that waited is raised as the mask goes.
+rt_interrupt_is  1  exn -> bool              Whether the exception is the one the user's interrupt raises (rt_interrupt_catch), which a stream passes on as it is rather than as the cause of IO.Io.
 
 # --- comparisons that answer an order (LESS = tag 0, EQUAL = 1, GREATER = 2, as lib/basis/initial.sml declares it), for Int, Word, Char and String.compare ---
 int_order        2  int * int -> order       LESS, EQUAL or GREATER: how the first int compares with the second.

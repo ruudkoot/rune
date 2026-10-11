@@ -1,0 +1,10 @@
+- = = counted 1
+structure Counter
+val it = () : unit
+- val first = ref 1 : int ref
+- counted 1
+structure Counter
+val it = () : unit
+- val it = () : unit
+- val it = 1 : int
+- 

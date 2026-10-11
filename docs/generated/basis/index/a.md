@@ -15,6 +15,7 @@
 - `access_mode` (type): [OS_FILE_SYS](../sig/OS_FILE_SYS.md#type-access_mode), [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#type-access_mode)
 - `acos` (val): [MATH](../sig/MATH.md#val-acos)
 - `active` (type): [SOCKET](../sig/SOCKET.md#type-active)
+- `addPrettyPrinter` (val): [COMPILER](../sig/COMPILER.md#val-addprettyprinter)
 - `addr` (val): [NET_HOST_DB](../sig/NET_HOST_DB.md#val-addr)
 - `addr_family` (type): [NET_HOST_DB](../sig/NET_HOST_DB.md#type-addr_family)
 - `addrs` (val): [NET_HOST_DB](../sig/NET_HOST_DB.md#val-addrs)

@@ -82,7 +82,7 @@ mkdir -p "$out"
 
 boot_sources() {
   echo build/config.sml
-  grep -v -E '^[[:space:]]*(#|$)' sources.txt
+  sh scripts/build-files.sh rune.build
   echo src/main/rune-main.sml
 }
 

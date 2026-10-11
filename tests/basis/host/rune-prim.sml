@@ -1407,10 +1407,19 @@ struct
   fun rt_major_collections () = unsupported ~1
   fun rt_promoted () = unsupported ~1
   fun rt_collect () = unsupported ()
+  fun rt_share () = unsupported ~1
+  fun repl_printer_add (_ : int -> 'a -> 'b -> 'c) = ()
+  fun unsafe_cast (_ : 'a) : 'b = raise Fail "unsafe_cast: Rune's alone"
   fun rt_version () = unsupported ""
   fun rt_trace (_ : int) : (string * string * int * int) list = unsupported []
   fun rt_save (_ : string) = unsupported ~1
   fun rt_restore (_ : string) = unsupported ~1
+  (* a host has no program of Rune's to append a unit to *)
+  fun rt_link (_ : string) : (unit -> unit) option = unsupported NONE
+  fun rt_link_error () = "a host of another compiler links no units of Rune's"
+  fun rt_interrupt_catch (_ : exn) = false
+  fun rt_interrupt_mask (_ : bool) = false
+  fun rt_interrupt_is (_ : exn) = false
 
   fun posix_getgr (name, gid) =
     let

@@ -1,0 +1,34 @@
+- = = = val reader = fn : string -> unit -> char option
+- val r = fn : unit -> char option
+- val first = fn : unit -> unit
+- val a = 2 : int
+val it = () : unit
+- val it = 2 : int
+- val second = fn : unit -> unit
+- val b = 20 : int
+val it = () : unit
+- val it = 20 : int
+- val rest = fn : unit -> unit
+- val it = () : unit
+- val bad = fn : unit -> unit
+- bad.sml:5:9: error: function argument: type mismatch between int * int and int * string (no common type for overloaded operators (int vs string))
+uncaught exception Fail: Static errors in bad.sml
+- val it = () : unit
+- - - val it = 42 : int
+- = = val tricky = fn : unit -> char option
+- val c1 = fn : unit -> unit
+- val s1 = "a;b\";" : string
+val it = () : unit
+- val it = "a;b\";" : string
+- val c2 = fn : unit -> unit
+- val t1 = 3 : int
+val it = () : unit
+- val it = 3 : int
+- val c3 = fn : unit -> unit
+- structure S1
+val it = () : unit
+- val c4 = fn : unit -> unit
+- val z1 = [1, 2] : int list
+val it = () : unit
+- val it = [1, 2] : int list
+- 

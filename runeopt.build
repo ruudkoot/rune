@@ -1,0 +1,24 @@
+(* The build file of the sources of runeopt, the native code generator
+  (docs/plans/codegen.md): the compiler's utilities and its description of
+  the machine (the descriptions of src/isa, and the opcodes and primitives
+  runeisa generates from them), which it shares with rune.build in the same
+  order, and src/opt. scripts/gen-build-files.sh makes the build files of
+  every host from this file -- edit only this file. The rules of rune.build
+  hold here too. *)
+build/config.sml
+files
+  src/util/ordmap.sml
+  src/isa/isa.sml
+  src/isa/stack.sml
+  src/isa/prims.sml
+  src/backend/opcodes.sml
+  src/backend/prims.sml
+  src/opt/rbc.sml
+  src/opt/x64_layout.sml
+  src/opt/rbcimage.sml
+  src/opt/rbccheck.sml
+  src/opt/rbcdisasm.sml
+  src/opt/x64.sml
+  src/opt/optmain.sml
+end
+src/main/runeopt-rune-main.sml

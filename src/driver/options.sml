@@ -17,6 +17,21 @@ struct
   val dumpTokens = ref false
   val dumpAst = ref false
   val typecheckOnly = ref false
+  val units = ref false                        (* --units: a unit per file, linked (docs/units.md) *)
+  val emitUnits : string option ref = ref NONE (* --emit-units DIR: each unit's file there too *)
+  val cacheDir : string option ref = ref NONE  (* --cache-dir DIR: the cache of units (UnitCache) *)
+  val noCache = ref false                      (* --no-cache: compile every unit *)
+  val explainRebuild = ref false               (* --explain-rebuild: say why each unit was compiled *)
+  val verifyCache = ref false                  (* --verify-cache: compile each unit found, and compare *)
+  val jobs = ref 1                             (* -j N: units compiled by up to N child processes (Parallel) *)
+  val wholeFromUnits = ref false               (* --whole: with --units, one program of the units' Mid *)
+  val deps = ref false                         (* --deps: the files' order, by what they declare and use *)
+  val depsDot = ref false                      (* --deps-dot: the same as a graph in DOT *)
+  val depsUses = ref false                     (* --deps-uses: the module names each input uses *)
+  val includeDirs : string list ref = ref []   (* -I DIR: where an entry point's files are looked for *)
+  val build : string option ref = ref NONE     (* --build FILE: compile what a build file says (docs/build.md) *)
+  val buildList = ref false                    (* --build-list: print the build file's files in order *)
+  val basisIndex : string option ref = ref NONE (* --basis-index DIR: DIR/MANIFEST from DIR/library.build *)
   val noWarnings = ref false
   val showVersion = ref false
   val showHelp = ref false
@@ -50,6 +65,43 @@ struct
     \  --default-type=T  in the input files, the type of an int or word constant or\n\
     \                    operator that its declaration leaves open: int (default)\n\
     \                    or int64, word (default) or word64\n\
+    \  --flex-records=M  what must determine a flexible record's labels\n\
+    \                    (docs/language.md): binding, declaration,\n\
+    \                    topdec-monomorphic, topdec (default) or program\n\
+    \  --units           compile every file, of the basis library too, as a unit\n\
+    \                    of its own after the files before it, and link them\n\
+    \                    (docs/units.md)\n\
+    \  --emit-units DIR  with --units, write each unit's code (.rbu) and basis\n\
+    \                    (.rbi) into DIR too, and DIR/units, their names in\n\
+    \                    order; `rune -o P.rbc` given those files links them\n\
+    \  --cache-dir DIR   with --units, keep each unit compiled in the cache in DIR\n\
+    \                    and take it from there when nothing it was compiled from\n\
+    \                    changed (default: $RUNE_CACHE, else .rune beside the\n\
+    \                    first input; docs/units.md)\n\
+    \  --no-cache        with --units, compile every unit\n\
+    \  --explain-rebuild with --units, say of each unit whether it was taken from\n\
+    \                    the cache, or why it was compiled\n\
+    \  --verify-cache    with --units, compile each unit the cache has too, and\n\
+    \                    fail where the cache's is not what compiling it gives\n\
+    \  -j N, --jobs N    with --units and the cache, compile units in up to N\n\
+    \                    processes at once, each unit after the ones it uses\n\
+    \                    (docs/units.md, Parallel builds)\n\
+    \  --serve           answer requests on stdin, one JSON-RPC message a line:\n\
+    \                    the diagnostics of a buffer, the type at an offset (a\n\
+    \                    prototype; src/driver/serve.sml)\n\
+    \  --whole           with --units, make one program of the units' Mid, with\n\
+    \                    the passes of a whole program, and not link their code\n\
+    \  --deps            print the files in an order where each comes after the\n\
+    \                    files declaring the modules it uses (docs/units.md)\n\
+    \  --deps-dot        the same, as a graph in DOT\n\
+    \  --deps-uses       print the module names the inputs use, one per line\n\
+    \  -I DIR            with one input, an entry point: compile before it the files\n\
+    \                    of its directory and of each -I DIR that it needs\n\
+    \  --build FILE      compile in units what the build file FILE says\n\
+    \                    (docs/build.md); --build-list prints its files in order\n\
+    \  --path NAME=DIR   the path variable $(NAME) of build files\n\
+    \  --basis-index DIR write DIR/MANIFEST, what a library's files provide and\n\
+    \                    require, from its build file DIR/library.build\n\
     \  --typecheck-only  stop after type checking\n\
     \  --type-work=N     type traversal budget per top-level declaration (50000000)\n\
     \  --match-work=N    pattern-analysis budget per match (1000000)\n\
@@ -84,7 +136,20 @@ struct
       | NONE => NONE
     else NONE
 
+  (* --flex-records=MODE, before the options of fixed spelling *)
   fun parse (args : string list) : unit =
+    case args of
+      arg :: rest =>
+        if String.isPrefix "--flex-records=" arg then
+          let val m = String.extract (arg, size "--flex-records=", NONE)
+          in
+            case Elaborate.flexModeOf m of
+              SOME mode => (Elaborate.flexRecords := mode; parse rest)
+            | NONE => raise Usage ("--flex-records: binding, declaration, topdec-monomorphic, topdec or program, not " ^ m)
+          end
+        else parse' args
+    | [] => ()
+  and parse' (args : string list) : unit =
     case args of
       [] => ()
     | "-o" :: f :: rest => (output := SOME f; parse rest)
@@ -107,6 +172,32 @@ struct
     | "--default-type=int64" :: rest => (defaultInt64 := true; parse rest)
     | "--default-type=word" :: rest => (defaultWord64 := false; parse rest)
     | "--default-type=word64" :: rest => (defaultWord64 := true; parse rest)
+
+    | "--units" :: rest => (units := true; parse rest)
+    | "--emit-units" :: d :: rest => (emitUnits := SOME d; parse rest)
+    | ["--emit-units"] => raise Usage "--emit-units requires a directory"
+    | "--cache-dir" :: d :: rest => (cacheDir := SOME d; parse rest)
+    | ["--cache-dir"] => raise Usage "--cache-dir requires a directory"
+    | "--no-cache" :: rest => (noCache := true; parse rest)
+    | "--explain-rebuild" :: rest => (explainRebuild := true; parse rest)
+    | "--verify-cache" :: rest => (verifyCache := true; parse rest)
+    | "-j" :: n :: rest => (jobs := jobCount n; parse rest)
+    | "--jobs" :: n :: rest => (jobs := jobCount n; parse rest)
+    | "--whole" :: rest => (wholeFromUnits := true; parse rest)
+    | "--deps" :: rest => (deps := true; parse rest)
+    | "--deps-dot" :: rest => (depsDot := true; parse rest)
+    | "--deps-uses" :: rest => (depsUses := true; parse rest)
+    | "-I" :: d :: rest => (includeDirs := !includeDirs @ [d]; parse rest)
+    | "--build" :: f :: rest => (build := SOME f; units := true; parse rest)
+    | ["--build"] => raise Usage "--build requires a build file"
+    | "--build-list" :: f :: rest => (build := SOME f; buildList := true; parse rest)
+    | "--basis-index" :: d :: rest => (basisIndex := SOME d; parse rest)
+    | "--path" :: v :: rest =>
+        (case String.fields (fn c => c = #"=") v of
+           name :: (dir as _ :: _) => (BuildFile.variables := StringMap.insert (!BuildFile.variables, name, String.concatWith "=" dir);
+                                       parse rest)
+         | _ => raise Usage "--path requires NAME=DIR")
+    | ["-I"] => raise Usage "-I requires a directory"
     | "--typecheck-only" :: rest => (typecheckOnly := true; parse rest)
     | "--no-warnings" :: rest => (noWarnings := true; parse rest)
     | "--dump-tokens" :: rest => (dumpTokens := true; parse rest)
@@ -141,6 +232,10 @@ struct
          | _ =>
              if String.isPrefix "-" a andalso a <> "-" then raise Usage ("unknown option: " ^ a)
              else (inputs := !inputs @ [a]; parse rest))
+  and jobCount text =
+    case Int.fromString text of
+      SOME n => if n >= 1 then n else raise Usage "-j requires a number of jobs, at least 1"
+    | NONE => raise Usage "-j requires a number of jobs, at least 1"
   and workCount (option, text) =
     let
       fun bad () = raise Usage (option ^ " requires a positive integer at most 1000000000")

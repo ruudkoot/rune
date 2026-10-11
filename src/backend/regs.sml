@@ -30,8 +30,10 @@ struct
   val int32Max : IntInf.int = IntInf.fromInt 1073741823
   val int32Min : IntInf.int = IntInf.fromInt ~1073741824
 
-  (* the primitives that save or restore an image (Isa.effect) *)
-  val imagePrims = ["posix_fork", "rt_save", "rt_restore"]
+  (* the primitives that save or restore an image (Isa.effect), or grow the
+     program (rt_link): a PRIMPUSH, so that the loop takes the program again
+     after them and their result comes back through RESULT *)
+  val imagePrims = ["posix_fork", "rt_save", "rt_restore", "rt_link"]
 
   fun func (f : L.func) : C.func =
     let

@@ -65,7 +65,7 @@ n=$(echo "$progs" | wc -l | tr -d ' ')
 fails=$(echo "$progs" | xargs -P "$jobs" -I{} sh "$0" --rune "$rune" --vm "$vm" --new "$new" --one {})
 
 # the compiler on each VM, making its own bytecode
-srcs="build/config.sml $(grep -v '^#' sources.txt | tr '\n' ' ') src/main/rune-main.sml"
+srcs="build/config.sml $(sh scripts/build-files.sh rune.build | tr '\n' ' ') src/main/rune-main.sml"
 boot=""
 # shellcheck disable=SC2086
 if ! "$rune" --target=registers -o "$out/rune.new.rbc" $srcs 2> "$out/boot.err"; then

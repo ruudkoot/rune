@@ -1,0 +1,11 @@
+(* datatypes, in scope and out of it, at their instances; abstract types *)
+datatype t = A | B of int * string | C of t list;
+val x = C [A, B (1, "a"), C []];
+datatype 'a tree = Leaf | Node of 'a tree * 'a * 'a tree;
+val tr = Node (Node (Leaf, 1, Leaf), 2, Leaf);
+local datatype hidden = H of int in val h = H 3 end;
+structure S :> sig type t val v : t end = struct type t = int val v = 3 end;
+val y = S.v;
+val deep = [[[[[[[[[[[[[[[[[[[[[[[[1]]]]]]]]]]]]]]]]]]]]]]]];
+Compiler.printDepth := 3;
+val shallow = [[[[1]]]];

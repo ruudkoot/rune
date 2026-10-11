@@ -96,6 +96,7 @@ typedef struct JitFatalSite {
 
 typedef struct JitProgram {
     const uint8_t *code;    /* the program these belong to */
+    uint64_t epoch;         /* its VM.prog_epoch, the same while units are loaded into it */
     uint32_t nfuncs;
     CodeObject *codes;
     const void *at;         /* where native code is entered next (RUN_NATIVE) */

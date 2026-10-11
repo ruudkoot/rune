@@ -112,6 +112,17 @@ typedef struct Program {
 /* the representations section freed with the program (runtime/loader.c) */
 void program_free_meta(Program *p);
 
+/* What a unit loaded into the program exports (runtime/loader.c,
+   load_unit_mem; docs/units.md, Loading): a function or a global another
+   unit may name, by the compile it came from (an index of
+   VM.unit_sessions) and its stamp there, and its number in the program. */
+typedef struct UnitExport {
+    uint32_t session;
+    int32_t stamp;
+    uint32_t kind;       /* 0 a function, 1 a global */
+    uint32_t index;
+} UnitExport;
+
 /* ---------------------------------------------------------------- machine */
 
 typedef struct Frame {
@@ -393,6 +404,44 @@ typedef struct VM {
 #ifdef RUNE_BARRIER_CARDS
     uint8_t *jit_cards;      /* the measuring barrier's table, where compiled code finds it (value.h, BARRIER) */
 #endif
+    /* The units loaded into the program (runtime/loader.c, load_unit_mem;
+       docs/units.md, Loading): the compiles they came from, what they
+       export, found by a table of their hashes (an index of unit_exports
+       plus one, 0 for none; unit_slots a power of 2), and the function the
+       top level of a unit loaded last goes to (UINT32_MAX until one is
+       loaded). An image carries them all but the table, which is made
+       again. The last, for rt_link_error, is why the last load failed. */
+    char **unit_sessions;
+    uint32_t nunit_sessions;
+    UnitExport *unit_exports;
+    uint32_t nunit_exports, unit_exports_cap;
+    uint32_t *unit_table;
+    uint32_t unit_slots;
+    uint32_t unit_return;
+    char unit_error[256];
+    /* The constants a minor collection has taken as roots, from 0: they
+       never change, so those below it point into the old space and are not
+       taken again (runtime/gc/gc.h, MINOR_ROOTS); a unit loaded adds above
+       it. The globals' own mark is global_set: 1 written since the last
+       minor collection, which every engine's SETGLOBAL stores, 2 taken since,
+       0 never written. */
+    uint32_t consts_minor;
+    /* Which program this is: a new number each time one is read, from a
+       .rbc or from an image (program_epoch), and the same while units are
+       appended to it -- what tells the JIT a program that grew from one
+       that became another (runtime/register/jit.c, jit_grow) */
+    uint64_t prog_epoch;
+    /* The user's interrupt (docs/runtime.md, Interrupts; the incremental
+       roadmap's D11): interrupt is 1 from when the handler that
+       rt_interrupt_catch installed ran (sys_interrupt_catch) until a poll
+       takes it -- a jump back or a call, in either loop and in compiled
+       code -- and raises interrupt_exn there (vm_interrupt); while
+       interrupt_mask is not 0, the polls leave it waiting. An image keeps
+       the exception and the mask, and its world catches the interrupt
+       again. */
+    volatile int interrupt;
+    int interrupt_mask;
+    Obj *interrupt_exn;
 } VM;
 
 /* Whether p points into the room objects are made in (alloc). Young and
@@ -440,6 +489,7 @@ Obj *vm_string_from(VM *vm, const char *s, uint32_t len);
 static inline size_t obj_size(const Obj *o) { return obj_size_of(obj_kind(o), obj_len(o)); }
 void vm_gc(VM *vm, size_t needed);
 void vm_collect(VM *vm);   /* Runtime.collect: a full collection, the low-pause collector's cycle ended first */
+uint64_t vm_share(VM *vm);   /* Runtime.share: equal immutable objects made one (runtime/gc/share.c); the bytes freed */
 int heap_relocate(VM *vm, uintptr_t old_base);  /* after an image is read: 0 when it is not sound */
 /* --gc-log FILE: one line per pass of the collector into FILE, and its last
    lines when the VM exits (docs/runtime.md, *Watching it*) */
@@ -522,6 +572,9 @@ static inline void vm_frame_pop(VM *vm) {
 VM_NORETURN void vm_exit(VM *vm, int status);
 int vm_raise(VM *vm, Value exn);            /* unwinds; returns 1 (never returns on uncaught) */
 int vm_raise_builtin(VM *vm, int k);
+int vm_interrupt(VM *vm);                   /* the interrupt waiting raised, the VM exact (VM.interrupt) */
+/* whether a poll raises the interrupt: one waits, and the mask lets it */
+static inline int vm_interrupted(const VM *vm) { return vm->interrupt && !vm->interrupt_mask; }
 void vm_push_handler(VM *vm, uint32_t pc);
 void vm_start(VM *vm);                       /* the builtin exceptions, and function 0 called with () */
 void vm_cons(VM *vm);                        /* stack: ..., hd, tl  ->  ..., hd :: tl */
@@ -560,10 +613,40 @@ int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t
 /* Where every instruction begins, or NULL: a program from a .rbc or from an
    image is checked the same way. The caller frees it. */
 uint8_t *validate_program(Program *p, char *err, size_t errlen);
+/* the same of the functions from first on and the code from where the
+   first of them begins, which a unit appended brings; indexed from there */
+uint8_t *validate_program_from(Program *p, uint32_t first, char *err, size_t errlen);
+/* A unit's file (docs/bytecode.md, Units) appended to the running program:
+   the number of its top level's function, or -1 and why (docs/units.md,
+   Loading). The bytes stay the caller's. */
+int64_t load_unit_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t errlen);
+/* the exports of the units loaded, found again after an image was read */
+int unit_exports_rehash(VM *vm);
+/* the program is another (VM.prog_epoch) */
+void program_epoch(VM *vm);
+
+/* What each instruction set gives the loading of a unit (runtime/stack/isa_stack.c,
+   runtime/register/isa_regs.c): its code's operands renumbered from the
+   unit's to the program's, by their kinds -- a function of its own by its
+   base, of another unit by what its import names; a global by the map; a
+   constant by its base; a label by where the code goes -- or 0 and why;
+   and the code of a function that returns its argument. */
+typedef struct Relocation {
+    uint32_t nfuncs, func_base;          /* the unit's own functions and where they go */
+    uint32_t nimports;                   /* the functions it names past its own: */
+    const uint32_t *imports;             /* the program's number of each (UINT32_MAX: none) */
+    uint32_t nglobals;
+    const uint32_t *globals;             /* the program's number of each of the unit's globals */
+    uint32_t nconsts, const_base;
+    uint32_t code_len, code_base;
+} Relocation;
+int relocate_code(uint8_t *code, const Relocation *r, char *err, size_t errlen);
+/* into out, at least 16 bytes: the code; its frame's size; how long */
+uint32_t return_function_code(uint8_t *out, uint32_t *nlocals);
 
 /* What each VM's instruction set gives (runtime/stack/isa_stack.c, runtime/register/isa_regs.c):
    the fingerprint an .rbc must carry, and the first bytes of an image. */
-#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 10 isa 00000000")
+#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 12 isa 00000000")
 extern const uint32_t isa_fingerprint;
 extern const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE];
 const LineEntry *line_at(const Program *p, uint32_t pc);
@@ -592,6 +675,9 @@ static inline int32_t read_i32(const uint8_t *p) {
     return (int32_t)u;
 }
 static inline uint32_t read_u32(const uint8_t *p) { return (uint32_t)read_i32(p); }
+static inline void write_u32(uint8_t *p, uint32_t u) {
+    p[0] = (uint8_t)u; p[1] = (uint8_t)(u >> 8); p[2] = (uint8_t)(u >> 16); p[3] = (uint8_t)(u >> 24);
+}
 
 #include "census/census.h"
 

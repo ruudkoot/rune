@@ -82,18 +82,58 @@ if [ -n "$one" ]; then
   target=""
   case "$one" in
     # shellcheck disable=SC2046
-    rune) check rune build/config.sml $(grep -v '^[[:space:]]*#' sources.txt | grep -v '^[[:space:]]*$') src/main/rune-main.sml ;;
+    rune) check rune build/config.sml $(sh scripts/build-files.sh rune.build) src/main/rune-main.sml ;;
     # shellcheck disable=SC2046
-    runedoc) check runedoc build/config.sml $(grep -v '^[[:space:]]*#' sources-doc.txt | grep -v '^[[:space:]]*$') src/main/runedoc-rune-main.sml ;;
+    runedoc) check runedoc build/config.sml $(sh scripts/build-files.sh runedoc.build) src/main/runedoc-rune-main.sml ;;
     # shellcheck disable=SC2046
-    runeopt) check runeopt build/config.sml $(grep -v '^[[:space:]]*#' sources-opt.txt | grep -v '^[[:space:]]*$') src/main/runeopt-rune-main.sml ;;
+    runeopt) check runeopt build/config.sml $(sh scripts/build-files.sh runeopt.build) src/main/runeopt-rune-main.sml ;;
     # shellcheck disable=SC2046
-    rune-stack) target=--target=stack; check rune-stack build/config.sml $(grep -v '^[[:space:]]*#' sources.txt | grep -v '^[[:space:]]*$') src/main/rune-main.sml ;;
+    rune-stack) target=--target=stack; check rune-stack build/config.sml $(sh scripts/build-files.sh rune.build) src/main/rune-main.sml ;;
     # shellcheck disable=SC2046
-    runedoc-stack) target=--target=stack; check runedoc-stack build/config.sml $(grep -v '^[[:space:]]*#' sources-doc.txt | grep -v '^[[:space:]]*$') src/main/runedoc-rune-main.sml ;;
+    runedoc-stack) target=--target=stack; check runedoc-stack build/config.sml $(sh scripts/build-files.sh runedoc.build) src/main/runedoc-rune-main.sml ;;
     # shellcheck disable=SC2046
-    runeopt-stack) target=--target=stack; check runeopt-stack build/config.sml $(grep -v '^[[:space:]]*#' sources-opt.txt | grep -v '^[[:space:]]*$') src/main/runeopt-rune-main.sml ;;
+    runeopt-stack) target=--target=stack; check runeopt-stack build/config.sml $(sh scripts/build-files.sh runeopt.build) src/main/runeopt-rune-main.sml ;;
     basis-all) check basis-all --basis all examples/hello.sml ;;
+    # S43 (tests/incremental/SCENARIOS.md): the compiler compiled in units
+    # through one cache by every build in turn -- the first fills it, each
+    # after takes what the builds before wrote -- and each writes the
+    # bytes of a build without the cache
+    rune-units)
+      cache=$out/units-cache
+      rm -rf "$cache"
+      # shellcheck disable=SC2046
+      set -- build/config.sml $(sh scripts/build-files.sh rune.build) src/main/rune-main.sml
+      failed=""
+      bin/rune-mlton --units --no-cache "$@" -o "$out/rune-units.nocache.rbc" 2> "$out/rune-units.nocache.err" || failed=" nocache"
+      for c in $builds; do
+        if "bin/rune-$c" --units --cache-dir "$cache" "$@" -o "$out/rune-units.$c.rbc" 2> "$out/rune-units.$c.err"; then
+          cmp -s "$out/rune-units.$c.rbc" "$out/rune-units.nocache.rbc" || failed="$failed $c(differs)"
+        else
+          failed="$failed $c"
+        fi
+      done
+      if [ -z "$failed" ]; then echo OK; else echo "FAIL rune-units: through one cache:$failed (tests/out/cross/rune-units.*)"; fi
+      ;;
+    # S42 (tests/incremental/SCENARIOS.md; the incremental roadmap's M7):
+    # the compiler made one program of its units' Mid (--units --whole)
+    # through one cache by every build in turn, which must be the bytes of
+    # the compiler compiled whole by the first
+    rune-whole)
+      cache=$out/whole-cache
+      rm -rf "$cache"
+      # shellcheck disable=SC2046
+      set -- build/config.sml $(sh scripts/build-files.sh rune.build) src/main/rune-main.sml
+      failed=""
+      bin/rune-mlton "$@" -o "$out/rune-whole.whole.rbc" 2> "$out/rune-whole.whole.err" || failed=" whole"
+      for c in $builds; do
+        if "bin/rune-$c" --units --whole --cache-dir "$cache" "$@" -o "$out/rune-whole.$c.rbc" 2> "$out/rune-whole.$c.err"; then
+          cmp -s "$out/rune-whole.$c.rbc" "$out/rune-whole.whole.rbc" || failed="$failed $c(differs)"
+        else
+          failed="$failed $c"
+        fi
+      done
+      if [ -z "$failed" ]; then echo OK; else echo "FAIL rune-whole: of its units' Mid:$failed (tests/out/cross/rune-whole.*)"; fi
+      ;;
     basis:*)
       may_fail=1
       t=tests/basis/${one#basis:}.sml
@@ -122,11 +162,11 @@ rm -f "$out"/*.result
 # The compiler is the longest job, so it goes first.
 # shellcheck disable=SC2086
 sources="$sources basis-all"
-printf '%s\n' rune rune-stack runedoc runedoc-stack runeopt runeopt-stack $sources | xargs -n 1 -P "$jobs" sh scripts/check-cross.sh --one
+printf '%s\n' rune rune-stack rune-units rune-whole runedoc runedoc-stack runeopt runeopt-stack $sources | xargs -n 1 -P "$jobs" sh scripts/check-cross.sh --one
 
 status=0
 count=0
-for p in $sources rune rune-stack runedoc runedoc-stack runeopt runeopt-stack; do
+for p in $sources rune rune-stack rune-units runedoc runedoc-stack runeopt runeopt-stack; do
   name=$(result_name "$p")
   result=$(cat "$out/$name.result" 2> /dev/null)
   if [ "$result" = OK ]; then

@@ -52,6 +52,30 @@ struct
      variable still gets its closure, for the uses that are not applications. *)
   val primAliases : string IntMap.map ref = ref IntMap.empty
 
+  (* Compiler.addPrettyPrinter (docs/repl.md, Printers of one's own): where
+     the REPL compiles, the global of RuneShow.addPrinterAt, which an
+     application of it becomes, given the name of the type its printer
+     prints; and that name of a type name's stamp, the same from session to
+     session (UnitBasis.stableName). Elsewhere it does nothing. *)
+  val printerTarget : int option ref = ref NONE
+  val printerKey : (int -> string option) ref = ref (fn _ => NONE)
+
+  (* the stamp of the type a printer of addPrettyPrinter's type prints *)
+  fun printedTycon (t : Types.ty) : int option =
+    let
+      fun arrow t = case Types.prune t of Types.TArrow (a, b) => SOME (a, b) | _ => NONE
+    in
+      case arrow t of
+        SOME (pp, _) =>
+          (case Option.mapPartial (arrow o #2) (arrow pp) of
+             SOME (_, rest) =>
+               (case arrow rest of
+                  SOME (b, _) => (case Types.prune b of Types.TCon (c, _) => SOME (#stamp c) | _ => NONE)
+                | NONE => NONE)
+           | NONE => NONE)
+      | NONE => NONE
+    end
+
   (* The name a function was given in the source, by the stamp of its
      parameter, which belongs to that function alone. The code generator puts
      it in the bytecode, where it is what a disassembly and a stack trace show
@@ -108,6 +132,16 @@ struct
         in IntTable.insert (!schemes, stamp, s); s end
 
   (* A use of a variable at the type elaboration found for this use. *)
+  (* a type with its generic variables made unit: an instance of a scheme
+     that changes nothing of a value of it (a dynamic module's slots) *)
+  fun monoOf (t : Types.ty) : Types.ty =
+    case Types.prune t of
+      t' as Types.TVar (ref (Types.Unbound {level, ...})) => if level = Types.genericLevel then Types.unitTy else t'
+    | Types.TCon (c, args) => Types.TCon (c, List.map monoOf args)
+    | Types.TRecord fs => Types.TRecord (List.map (fn (l, a) => (l, monoOf a)) fs)
+    | Types.TArrow (a, b) => Types.TArrow (monoOf a, monoOf b)
+    | t' => t'
+
   fun useOf (e : lexp, stamp : int, t : Types.ty) : lexp =
     case schemeOf stamp of
       Mono => e
@@ -301,6 +335,28 @@ struct
   and stripTyped (ETyped (e, _, _)) = stripTyped e
     | stripTyped e = e
 
+  (* an application of a variable: of a primitive it names, or of a function *)
+  and varApp (f, t : Types.ty, a) =
+    case primAliasOf f of
+      SOME ("repl_printer_add", _) => printerAdd (t, a)
+    | SOME (prim, pt) => applyPrim (prim, pt, a)
+    | NONE => App (transExp f, transExp a)
+
+  (* Compiler.addPrettyPrinter, of type t here, applied to a: where the REPL
+     compiles and the type printed is known and named, RuneShow.addPrinterAt
+     (name, a); otherwise a, for its effects, and nothing installed *)
+  and printerAdd (t : Types.ty, a) =
+    case (!printerTarget, Option.mapPartial (fn s => !printerKey s) (printedTycon t)) of
+      (SOME g, SOME key) =>
+        let
+          val pp = case Types.prune t of Types.TArrow (pp, _) => pp | _ => Error.bug "addPrettyPrinter's type"
+          val targetTy = Types.TArrow (Types.TRecord [("1", Types.stringTy), ("2", pp)], Types.unitTy)
+        in
+          App (useOf (Global g, g, targetTy),
+               Tuple [Const (CString key, Ty.fromTypes Types.stringTy), transExp a])
+        end
+    | _ => Seq (transExp a, Unit)
+
   and transApp (f, a, sp) =
     case stripTyped f of
       EVar (_, slot, vsp) =>
@@ -320,10 +376,10 @@ struct
                     val prim = builtinPrim (name, ty)
                     val call = applyPrim (prim, Ty.fromTypes ty, a)
                   in if name = "<>" then notExp call else call end)
-         | _ =>
-             (case primAliasOf f of
-                SOME (prim, t) => applyPrim (prim, t, a)
-              | NONE => App (transExp f, transExp a)))
+         | VGlobal (_, t) => varApp (f, t, a)
+         | VLocal (_, t) => varApp (f, t, a))
+    | EPrim ("repl_printer_add", _, slot, psp) =>
+        (case !slot of SOME t => printerAdd (t, a) | NONE => bug (psp, "expression without a type"))
     | EPrim (name, _, slot, psp) => applyPrim (name, ty (slot, psp), a)
     | ESelect (lab, slot, ssp) => Select (recordIndex (slot, lab, ssp), transExp a)
     | _ => App (transExp f, transExp a)
@@ -485,6 +541,72 @@ struct
             SOME body => transStrexp (body, k)
           | NONE => bug (sp, "functor application not elaborated"))
     | StrLet (decs, e, _) => transTopDecs (decs, fn () => transStrexp (e, k))
+    (* a dynamic module (D17, D18): what RuneDynamic.load gives -- or
+       RuneDynamic.take, for a virtual module -- a tuple of the slots as
+       units, and each slot's global set from it *)
+    | StrDynamic (from, _, slot, sp) =>
+        (case !slot of
+           NONE => bug (sp, "a dynamic structure not elaborated")
+         | SOME {fingerprint, slots, via, temp, reloadable} =>
+             let
+               val n = Int.max (List.length slots, 2)
+               val tupleTy = Types.tupleTy (List.tabulate (n, fn _ => Types.unitTy))
+               val str = Ty.fromTypes Types.stringTy
+               fun slotTy (t, isExn) = if isExn then Ty.ExnCon else Ty.fromTypes t
+               fun set (_, [], _, k) = k ()
+                 | set (from, (s, t, isExn) :: rest, i, k) =
+                     Seq (SetGlobal (s, Prim ("unsafe_cast", SOME (Ty.Arrow (Ty.unit, slotTy (t, isExn))),
+                                              [Select (i, from)])),
+                          set (from, rest, i + 1, k))
+             in
+               case from of
+                 DynamicVirtual name =>
+                   let
+                     val takeTy = Types.TArrow (Types.tupleTy [Types.stringTy, Types.stringTy], tupleTy)
+                     val call = App (useOf (Global via, via, takeTy),
+                                     Tuple [Const (CString name, str), Const (CString fingerprint, str)])
+                   in Mark (sp, Seq (SetGlobal (temp, call), set (Global temp, slots, 0, k))) end
+               | DynamicFile path =>
+                   (* the slots set by a function of the tuple, which load
+                      calls, and calls again for each Dynamic.reload of the
+                      file: what calls through the structure reach is the
+                      new module's, what a closure holds stays the old *)
+                   let
+                     val setterTy = Types.TArrow (tupleTy, Types.unitTy)
+                     val loadTy = Types.TArrow (Types.tupleTy [Types.stringTy, Types.stringTy, Types.boolTy, setterTy],
+                                                Types.unitTy)
+                     val x = MatchComp.freshVar ()
+                     val setter = Fn (x, Ty.fromTypes setterTy, set (Var x, slots, 0, fn () => Unit))
+                     val call = App (useOf (Global via, via, loadTy),
+                                     Tuple [Const (CString path, str), Const (CString fingerprint, str),
+                                            if reloadable then trueExp else falseExp,
+                                            setter])
+                   in Mark (sp, Seq (call, k ())) end
+             end)
+    (* its implementation: the body, then its slots, each cast to unit -- a
+       polymorphic one at unit, which changes nothing of its value -- given
+       to RuneDynamic.export with the fingerprint *)
+    | StrExport (name, _, body, slot, sp) =>
+        transStrexp (body, fn () =>
+          case !slot of
+            NONE => bug (sp, "an exported structure not elaborated")
+          | SOME {fingerprint, slots, via, ...} =>
+              let
+                val n = Int.max (List.length slots, 2)
+                val tupleTy = Types.tupleTy (List.tabulate (n, fn _ => Types.unitTy))
+                val exportTy = Types.TArrow (Types.tupleTy [Types.stringTy, Types.stringTy, tupleTy], Types.unitTy)
+                fun cast (s, t, isExn) =
+                  if isExn then Prim ("unsafe_cast", SOME (Ty.Arrow (Ty.ExnCon, Ty.unit)), [Global s])
+                  else
+                    let val m = monoOf t
+                    in Prim ("unsafe_cast", SOME (Ty.Arrow (Ty.fromTypes m, Ty.unit)), [useOf (Global s, s, m)]) end
+                val elems = List.map cast slots @ List.tabulate (n - List.length slots, fn _ => Unit)
+              in
+                Seq (App (useOf (Global via, via, exportTy),
+                          Tuple [Const (CString name, Ty.fromTypes Types.stringTy),
+                                 Const (CString fingerprint, Ty.fromTypes Types.stringTy), Tuple elems]),
+                     k ())
+              end)
 
   (* Recursive bindings: globals are assigned in sequence (closures refer to
      them through the global table); locals use LetRec. *)

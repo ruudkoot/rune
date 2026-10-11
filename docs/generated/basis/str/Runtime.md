@@ -6,8 +6,8 @@
 | --- | --- |
 | Signature | [`RUNTIME`](../sig/RUNTIME.md) |
 | Status | extension |
-| Members | 12 |
-| Tests | 39 checks |
+| Members | 17 |
+| Tests | 47 checks |
 | Source | [lib/basis/runtime.sml](../../../../lib/basis/runtime.sml) |
 
 ## Synopsis
@@ -17,7 +17,8 @@ structure Runtime : RUNTIME
 ```
 
 Runtime: the VM's view of the running program -- its counters, its call
-stack, the identity of objects, and saving and restoring the whole of it.
+stack, the identity of objects, saving and restoring the whole of it,
+units appended to it, and the user's interrupt.
 It is Rune's own and not of the specification.
 
 ## Members
@@ -29,12 +30,17 @@ What each means is on [`RUNTIME`](../sig/RUNTIME.md); the types are this structu
 | type | [`frame`](../sig/RUNTIME.md#type-frame) | `{column : int, file : string, function : string, line : int}` |
 | type | [`stats`](../sig/RUNTIME.md#type-stats) | `{bytes : int, collections : int, heapSize : int, instructions : int, live : int, majorCollections : int, minorCollections : int, objects : int, promoted : int}` |
 | datatype | [`world`](../sig/RUNTIME.md#type-world) | `Saved` &#124; `Restored` |
+| val | [`catchInterrupt`](../sig/RUNTIME.md#val-catchinterrupt) | `unit -> bool` |
 | val | [`collect`](../sig/RUNTIME.md#val-collect) | `unit -> unit` |
+| val | [`link`](../sig/RUNTIME.md#val-link) | `Word8Vector.vector -> unit -> unit` |
+| val | [`load`](../sig/RUNTIME.md#val-load) | `string -> unit -> unit` |
+| val | [`maskInterrupt`](../sig/RUNTIME.md#val-maskinterrupt) | `bool -> bool` |
 | val | [`printTrace`](../sig/RUNTIME.md#val-printtrace) | `TextIO.outstream -> unit` |
 | val | [`profile`](../sig/RUNTIME.md#val-profile) | `(unit -> 'a) -> 'a * stats` |
 | val | [`restore`](../sig/RUNTIME.md#val-restore) | `string -> 'a` |
 | val | [`same`](../sig/RUNTIME.md#val-same) | `'a * 'a -> bool` |
 | val | [`save`](../sig/RUNTIME.md#val-save) | `string -> world` |
+| val | [`share`](../sig/RUNTIME.md#val-share) | `unit -> int` |
 | val | [`stats`](../sig/RUNTIME.md#val-stats) | `unit -> stats` |
 | val | [`trace`](../sig/RUNTIME.md#val-trace) | `unit -> frame list` |
 | val | [`version`](../sig/RUNTIME.md#val-version) | `string` |

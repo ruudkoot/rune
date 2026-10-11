@@ -35,7 +35,9 @@
      native code (runtime/register/jit.h), RETURN_NATIVE(at), where a return lands
      in native code, RAISED(), on after a raise, into the handler's native
      code where it has some, BACKWARD(t), a loop's jump back, counted and
-     gone on in the function's code where it has some, RESUME_NATIVE(f, pc),
+     gone on in the function's code where it has some, POLL(), the user's
+     interrupt raised here where one waits (VM.interrupt), at a jump back
+     and a call, before either does anything, RESUME_NATIVE(f, pc),
      on in function f's code at pc where a run begins there, RESULT_OF(pc),
      the frame just pushed told the register of the RESULT at pc, if that
      is one, and NEW_PROGRAM(), the JIT's view made again of a program
@@ -119,7 +121,8 @@ struct
         "R(a) = mk_ptr(fr->closure);"],
      rinst ("CALL", [("f", reg), ("x", reg)], Call,
             "Call the closure in register f with register x; RESULT takes what it returns.")
-       (["CENSUS_CALL(0, R(b), CENSUS_REP(p, fr->func, b));"]   (* the census VM's hook: nothing in the stock build *)
+       (["POLL();",
+         "CENSUS_CALL(0, R(b), CENSUS_REP(p, fr->func, b));"]   (* the census VM's hook: nothing in the stock build *)
         @ callee
         @ ["size_t top = (size_t)(sp - vm->stack);",
            "ROOM(top, fn);",
@@ -130,7 +133,8 @@ struct
      rinst ("RESULT", [("d", reg)], Next, "Register d := what the call or primitive before it left on the stack.")
        ["R(a) = POP();"],
      rinst ("TAILCALL", [("f", reg), ("x", reg)], TailCall, "Like CALL, but the current frame is replaced.")
-       (["CENSUS_CALL(1, R(b), CENSUS_REP(p, fr->func, b));"]
+       (["POLL();",
+         "CENSUS_CALL(1, R(b), CENSUS_REP(p, fr->func, b));"]
         @ callee
         @ ["size_t top = fr->base;",
            "ROOM(top, fn);",
@@ -250,9 +254,9 @@ struct
         "CENSUS_STORE(o, b + 1, R(c), 0, CENSUS_REP(p, fr->func, c));",
         "obj_set_field(vm, o, b + 1, R(c));"],
      rinst ("JUMP", [("o", K Label)], Jump, "Jump to absolute code offset o.")
-       ["/* a jump back is a loop's: counted, and where the function has",
-        "   code, gone on in it (M6) */",
-        "if ((uint32_t)a < pc) BACKWARD((uint32_t)a);",
+       ["/* a jump back is a loop's: a poll, counted, and where the",
+        "   function has code, gone on in it (M6) */",
+        "if ((uint32_t)a < pc) { POLL(); BACKWARD((uint32_t)a); }",
         "pc = (uint32_t)a;"],
      rinst ("JUMPIF", [("s", reg), ("o", K Label)], Branch, "Jump to o if register s holds true.")
        ["Value v = R(a);",
@@ -291,7 +295,8 @@ struct
            "RAISED();"]),
      rinst ("CALLK", [("f", K Function), ("n", K Count), ("args", Registers 1)], Call,
             "Call function f, known, with the n registers of args, which become its registers 0 to n-1; no closure; RESULT takes what it returns.")
-       ["for (uint32_t i = 0; i < n; i++) CENSUS_CALL(2, R(LIST(i)), CENSUS_REP(p, fr->func, LIST(i)));",
+       ["POLL();",
+        "for (uint32_t i = 0; i < n; i++) CENSUS_CALL(2, R(LIST(i)), CENSUS_REP(p, fr->func, LIST(i)));",
         "Function *fn = &p->funcs[a];",
         "size_t top = (size_t)(sp - vm->stack);",
         "ROOM(top, fn);",
@@ -305,7 +310,8 @@ struct
         "HANDOVER((uint32_t)a);"],
      rinst ("TAILCALLK", [("f", K Function), ("n", K Count), ("args", Registers 1)], TailCall,
             "Like CALLK, but the current frame is replaced.")
-       ["for (uint32_t i = 0; i < n; i++) CENSUS_CALL(3, R(LIST(i)), CENSUS_REP(p, fr->func, LIST(i)));",
+       ["POLL();",
+        "for (uint32_t i = 0; i < n; i++) CENSUS_CALL(3, R(LIST(i)), CENSUS_REP(p, fr->func, LIST(i)));",
         "Function *fn = &p->funcs[a];",
         "size_t top = fr->base;",
         "size_t need = (size_t)(sp - vm->stack) + n;",

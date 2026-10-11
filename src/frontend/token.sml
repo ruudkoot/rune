@@ -23,6 +23,9 @@ struct
     (* extension *)
   | PRIM                                  (* _prim *)
   | OVERLOAD                              (* _overload *)
+  | DYNAMIC                               (* _dynamic *)
+  | EXPORT                                (* _export *)
+  | VIRTUAL                               (* _virtual *)
   | EOF
 
   fun toString t =
@@ -53,6 +56,9 @@ struct
     | DARROW => "=>" | ARROW => "->" | HASH => "#"
     | PRIM => "_prim"
     | OVERLOAD => "_overload"
+    | DYNAMIC => "_dynamic"
+    | EXPORT => "_export"
+    | VIRTUAL => "_virtual"
     | EOF => "<eof>"
 
   val reserved : (string * token) list =

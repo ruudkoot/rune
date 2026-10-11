@@ -1,0 +1,7 @@
+val w = Restored : world
+- val it = 43 : int
+- val it = B 43 : t
+- val it = () : unit
+- val it = [3, 1, 2] : int list
+- stdIn:1:1: error: unbound variable or constructor: y
+- 

@@ -16,6 +16,8 @@ sig
   val update : 'a table * int * ('a option -> 'a) -> unit
   (* a count kept in the table: one more *)
   val bump : int table * int -> unit
+  (* every key from lo up to hi, but not hi, taken out *)
+  val removeRange : 'a table * int * int -> unit
 end
 
 structure IntTable :> INT_TABLE =
@@ -70,4 +72,22 @@ struct
     end
 
   fun bump (t, k) = update (t, k, fn SOME n => n + 1 | NONE => 1)
+
+  (* key by key where the range is the smaller, else bucket by bucket *)
+  fun removeRange ({buckets, count} : 'a table, lo, hi) =
+    let
+      val b = !buckets
+      fun out i =
+        let
+          val (gone, kept) = List.partition (fn (k, _) => k >= lo andalso k < hi) (Array.sub (b, i))
+        in
+          case gone of
+            [] => ()
+          | _ => (Array.update (b, i, kept); count := !count - List.length gone)
+        end
+      fun keys k = if k >= hi then () else (out (slot (b, k)); keys (k + 1))
+      fun all i = if i >= Array.length b then () else (out i; all (i + 1))
+    in
+      if hi <= lo then () else if hi - lo < Array.length b then keys lo else all 0
+    end
 end

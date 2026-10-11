@@ -4,6 +4,18 @@ structure Parser =
 struct
   open Token Ast
 
+  (* The top-level declarations of each file that end a top-level
+     declaration of the Definition (Section 8: topdec), by the end of their
+     span: those a `;` or the end of the file follows, which the parser does
+     not otherwise keep. Elaborate settles flexible records there
+     (--flex-records=topdec), and the REPL compiles a topdec as one unit.
+     The file's parsed last are its own. *)
+  val topdecEnds : unit IntTable.table StringMap.map ref = ref StringMap.empty
+  fun endsTopdec ({file, stop, ...} : Source.span) : bool =
+    case StringMap.find (!topdecEnds, file) of
+      SOME t => isSome (IntTable.find (t, stop))
+    | NONE => false
+
   (* Items of an infix expression/pattern before fixity resolution. *)
   datatype 'a item = Atom of 'a | Oper of string * Fixity.fixity * Source.span
 
@@ -560,13 +572,25 @@ struct
       (* Declarations                                                      *)
       and parseDecs (ctx : ctx) : dec list =
         let
+          (* at the top level, a `;` or the end ends a topdec *)
+          fun ends (d :: _) =
+                if ctx = Top then
+                  let val {file, stop, ...} = spanOfDec d
+                  in
+                    case StringMap.find (!topdecEnds, file) of
+                      SOME t => IntTable.insert (t, stop, ())
+                    | NONE => topdecEnds := StringMap.insert (!topdecEnds, file, let val t = IntTable.table 16
+                                                                                in IntTable.insert (t, stop, ()); t end)
+                  end
+                else ()
+            | ends [] = ()
           fun loop acc =
             case peek () of
-              SEMI => (advance (); loop acc)
+              SEMI => (ends acc; advance (); loop acc)
             | IN => List.rev acc
             | END => List.rev acc
             | RPAREN => List.rev acc
-            | EOF => List.rev acc
+            | EOF => (ends acc; List.rev acc)
             | _ => loop (parseDec ctx :: acc)
         in loop [] end
 
@@ -721,6 +745,23 @@ struct
                        | _ => err "expected a function name after via")
                   | _ => OvBits 64
               in DOverload {kind = kind, strid = strid, literal = literal, span = spanFrom start} end
+          (* _export structure Name : SIG = strexp: a dynamic module's
+             implementation (docs/units.md, Dynamic modules) *)
+          | EXPORT =>
+              if ctx <> Top then err "_export declares a structure at the top level only"
+              else
+                let
+                  val () = advance ()
+                  val () = expect STRUCTURE
+                  val name = case next () of ID s => s | _ => err "expected structure name"
+                  val () = expect COLON
+                  val sg = parseSigexp ()
+                  val () = expect EQUALS
+                  val body = parseStrexp ()
+                in
+                  DStructure ([{name = name, strexp = StrExport (name, sg, body, ref NONE, spanFrom start), span = spanFrom start}],
+                              spanFrom start)
+                end
           | STRUCTURE =>
               if ctx = Let then err "structure declarations are not allowed inside expressions"
               else
@@ -736,7 +777,16 @@ struct
                         | COLONGT => (advance (); SOME (parseSigexp (), true))
                         | _ => NONE
                       val () = expect EQUALS
-                      val body = parseStrexp ()
+                      (* structure S = _virtual : SIG, a virtual module: its
+                         implementation is the module of the program that
+                         exports S (docs/build.md, Virtual modules) *)
+                      val body =
+                        if peek () = VIRTUAL then
+                          let val vstart = peekSpan ()
+                              val () = advance ()
+                              val () = expect COLON
+                          in StrDynamic (DynamicVirtual name, parseSigexp (), ref NONE, spanFrom vstart) end
+                        else parseStrexp ()
                       (* derived forms: structure S : SIG = e  ==>  structure S = e : SIG  (and :>) *)
                       val body = case ascription of
                                    NONE => body
@@ -859,6 +909,16 @@ struct
                   in StrApp (s, arg, ref NONE, spanFrom start) end
                 else (advance (); StrId (([], s), start))
             | LONGID (p, s) => (advance (); StrId ((p, s), start))
+            (* _dynamic "path" : SIG, a structure loaded when the program runs
+               (docs/units.md, Dynamic modules) *)
+            | DYNAMIC =>
+                let
+                  val () = advance ()
+                  val path = case peek () of
+                               STRING s => (advance (); s)
+                             | t => err ("expected the path of a dynamic module but found '" ^ toString t ^ "'")
+                  val () = expect COLON
+                in StrDynamic (DynamicFile path, parseSigexp (), ref NONE, spanFrom start) end
             | t => err ("expected structure expression but found '" ^ toString t ^ "'")
           fun ascribe e =
             case peek () of
@@ -1221,6 +1281,8 @@ struct
             end
         end
 
+      (* this file's topdecs are what this parse finds *)
+      val () = topdecEnds := StringMap.insert (!topdecEnds, #file (#2 (tokAt 0)), IntTable.table 16)
       val program = parseDecs Top
     in
       if peek () <> EOF then err ("unexpected '" ^ toString (peek ()) ^ "'") else (program, !fixenv)

@@ -384,6 +384,34 @@ int main(int argc, char **argv) {
             return 2;
         }
         free(o.restore);
+        /* arguments after the image, and after `--` even none, take the
+           place of those the world was saved with, as under runevm
+           --restore (runtime/main.c) */
+        if (!child && argc > 1) {
+            int i = strcmp(argv[1], "--") == 0 ? 2 : 1;
+            char **args = calloc((size_t)(argc - i) + 1, sizeof(char *));
+            if (!args) { fprintf(stderr, "runevm: out of memory\n"); return 2; }
+            for (int k = i; k < argc; k++) {
+                args[k - i] = strdup(argv[k]);
+                if (!args[k - i]) { fprintf(stderr, "runevm: out of memory\n"); return 2; }
+            }
+            if (vm->owns_args) {
+                for (int k = 0; vm->argv && k < vm->argc; k++) free(vm->argv[k]);
+                free(vm->argv);
+            }
+            vm->argv = args;
+            vm->argc = argc - i;
+            vm->owns_args = 1;
+        }
+        /* and RUNEVM_NAME (runevm --name) the name it was saved with */
+        const char *rename = child ? NULL : getenv("RUNEVM_NAME");
+        if (rename) {
+            char *n = strdup(rename);
+            if (!n) { fprintf(stderr, "runevm: out of memory\n"); return 2; }
+            unsetenv("RUNEVM_NAME");
+            free((char *)vm->progname);   /* the image's: vm->owns_args */
+            vm->progname = n;
+        }
         vm->gc_verify = o.gc_verify;
         if (o.gc_log && !child) heap_log_open(vm, o.gc_log);
         rune_enter(vm, code);

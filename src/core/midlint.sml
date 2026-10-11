@@ -18,6 +18,11 @@ structure MidLint =
 struct
   open Mid
 
+  (* The scheme of a global of a unit before this one, which a unit names
+     and does not define (not Pass.whole); set by the driver, since it is
+     ToMid's to say. *)
+  val importedScheme : (int -> scheme option) ref = ref (fn _ => NONE)
+
   fun check (p : program) : unit =
     let
       fun bug msg = Error.bug msg
@@ -80,7 +85,10 @@ struct
         | Global (g, args) =>
             (case IntMap.find (!globals, g) of
                SOME s => instance ("g" ^ Int.toString g, s, args)
-             | NONE => bug ("global g" ^ Int.toString g ^ " is not defined"))
+             | NONE =>
+                 case if !Pass.whole then NONE else !importedScheme g of
+                   SOME s => instance ("g" ^ Int.toString g, s, args)
+                 | NONE => bug ("global g" ^ Int.toString g ^ " is not defined"))
         | Const (_, t) => t
         | Con0 (tag, t) =>
             (case conArg ("a nullary constructor", t, tag) of

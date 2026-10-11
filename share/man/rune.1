@@ -5,6 +5,9 @@ rune \- compile Standard ML '97 to Rune bytecode
 .B rune
 .RI [ options ]
 .IR file.sml " ..."
+.br
+.B rune \-i
+.RI [ file.sml " ...]"
 .SH DESCRIPTION
 .B rune
 compiles one or more Standard ML '97 source files into a single Rune bytecode
@@ -24,6 +27,13 @@ for the installed basis library; a
 .B \-\-lib
 on the command line comes later and therefore wins.
 .SH OPTIONS
+.TP
+.B \-i
+As the first argument: start the REPL,
+.BR rune\-repl ,
+beside the wrapper, instead of compiling, with the arguments that follow;
+it uses those files and then reads declarations from the standard input.
+The wrapper does this, and the compiler never sees the option.
 .TP
 .BI \-o " FILE"
 Write the bytecode to
@@ -128,6 +138,147 @@ does;
 and
 .I word
 set the default back. The option may be given once for each.
+.TP
+.BI \-\-flex\-records= MODE
+What must determine the labels of a flexible record
+.RB ( {a,\ ...} ,
+.BR #a ),
+which the Definition leaves open:
+.B binding
+(the binding that would generalise it, as SML/NJ),
+.B declaration
+(the declaration at structure level it is in, as MLKit),
+.B topdec\-monomorphic
+(the top-level declaration, to a
+.B ;
+or the end of the file, none generalised, as Moscow ML),
+.B topdec
+(the default, as Poly/ML and MLton: the same, one generalised determined at
+each use) or
+.B program
+(the whole program, or the unit).
+.TP
+.B \-\-units
+Compile every file, the basis library's too, as a unit of its own after the
+files before it, and link the units into the program
+.RB ( docs/units.md ).
+The program behaves as the one compiled whole does; no function of one unit
+is inlined into another. Each unit compiled is kept in a cache and taken
+from there by the compiles after it while nothing it was compiled from
+changes.
+.TP
+.BI \-\-emit\-units " DIR"
+With
+.BR \-\-units ,
+write each unit's code
+.RI ( .rbu )
+and basis
+.RI ( .rbi )
+into
+.I DIR
+too, and
+.IR DIR /units,
+their names in order;
+.B rune \-o
+.I P.rbc
+given those files links them.
+.TP
+.BI \-\-cache\-dir " DIR"
+With
+.BR \-\-units ,
+keep the cache of units in
+.IR DIR .
+The default is
+.BR $RUNE_CACHE ,
+else
+.B .rune
+beside the first input.
+.TP
+.B \-\-no\-cache
+With
+.BR \-\-units ,
+compile every unit, and keep none.
+.TP
+.B \-\-explain\-rebuild
+With
+.BR \-\-units ,
+say of each unit on standard error whether it was taken from the cache, or
+why it was compiled.
+.TP
+.BI \-j " N" "\fR, \fP" \-\-jobs " N"
+With
+.B \-\-units
+and the cache, compile the units in up to
+.I N
+processes at once, each unit after those it uses; the program is the
+bytes of a build by one process.
+.TP
+.B \-\-serve
+Answer requests on standard input, one JSON-RPC 2.0 message a line: the
+diagnostics of an editor's buffer, and the type of the variable at an
+offset of it, each compiled by a child process with the other options
+given. A prototype of the compiler as a service.
+.TP
+.B \-\-verify\-cache
+With
+.BR \-\-units ,
+compile each unit the cache has too, and fail where the cache's is not
+the same bytes as what compiling it gives.
+.B $RUNE_VERIFY_CACHE
+set and not empty does the same, and for the REPL's
+.B use
+too;
+.BI $RUNE_VERIFY_DUMP= DIR
+writes each entry that does not verify, and what compiling it gave, to
+.IR DIR .
+.TP
+.B \-\-deps
+Print the inputs in an order where each comes after the files that declare
+the modules it uses, or name a cycle, a module declared twice or a file
+that declares something other than modules and type abbreviations.
+.TP
+.B \-\-deps\-dot
+The same, as a graph in DOT.
+.TP
+.BI \-I " DIR"
+With one input, a program's entry point: compile before it the files of its
+directory and of each
+.I DIR
+that declare the modules it uses, and those they need.
+.TP
+.BI \-\-build " FILE"
+Compile in units what the build file
+.I FILE
+says: its files, each in the basis the declarations before it leave, with
+its libraries' export lists, its
+.B local
+parts and its virtual modules' implementations (docs/build.md).
+.TP
+.BI \-\-build\-list " FILE"
+Print the files of the build file
+.IR FILE ,
+in the order they are compiled.
+.TP
+.BI \-\-path " NAME" = DIR
+The path variable
+.BI $( NAME )
+of build files is
+.IR DIR .
+.TP
+.BI \-\-basis\-index " DIR"
+Write
+.IB DIR /MANIFEST\fR,\fP
+what each file of a library provides and requires, worked out from the
+library's build file
+.IB DIR /library.build
+and its sources.
+.TP
+.B \-\-whole
+With
+.BR \-\-units ,
+make one program of the units' Mid, kept in the cache, with the passes of a
+whole-program compile, rather than link the units' code: the same bytes as
+compiling the program whole.
 .TP
 .B \-\-typecheck\-only
 Stop after type checking; write no bytecode.

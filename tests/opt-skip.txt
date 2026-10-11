@@ -3,7 +3,8 @@
 #
 #   NAME CATEGORY: reason
 #
-# The list is empty: native code runs every program of tests/lang, the one
+# Native code runs every program of tests/lang but those below -- the one
 # that forks by a second process (rt.fork_image) and those that carry on an
-# image (the .restore tests) included, since M9. A category is added here
-# again only with a program to go under it.
+# image (the .restore tests) included, since M9. A category is here only
+# with a program to go under it.
+rt.interrupt_self interrupt: native code does not poll for the user's interrupt (docs/native.md, Interrupts)

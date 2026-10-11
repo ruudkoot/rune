@@ -352,6 +352,18 @@ struct
 
   (* ---- the tables of the compiler and of runeopt ---- *)
 
+  (* The operands of an instruction that name an entry of a table of the
+     program, by position: 0 a function, 1 a global, 2 a constant (a string
+     constant too); what a linker renumbers (RegGen.linkedOperands). *)
+  fun linkedOperands (i : instruction) : string =
+    let
+      fun kindOf k = case k of Function => SOME 0 | Global => SOME 1 | Constant => SOME 2
+                             | StringConstant => SOME 2 | _ => NONE
+      val ops = List.mapPartial (fn (n, (_, k)) => Option.map (fn c => "(" ^ Int.toString n ^ ", " ^ Int.toString c ^ ")")
+                                                              (kindOf k))
+                                (numbered (#operands i))
+    in "[" ^ commaList ops ^ "]" end
+
   fun opcodesSml (instrs : instruction list, fp : int) : file =
     let val is = numbered instrs
     in
@@ -370,6 +382,15 @@ struct
             @ ["  val count = " ^ Int.toString (List.length instrs),
                "  val names = Vector.fromList [" ^ commaList (List.map (fn i : instruction => "\"" ^ #name i ^ "\"") instrs) ^ "]",
                "  val nargs = Vector.fromList [" ^ commaList (List.map (fn i : instruction => Int.toString (List.length (#operands i))) instrs) ^ "]",
+               "  (* each opcode's operands that name a function (0), a global (1) or",
+               "     a constant (2), by position: what a linker renumbers *)",
+               "  val linked : (int * int) list vector = Vector.fromList [" ^ commaList (List.map linkedOperands instrs) ^ "]",
+               "  (* each opcode's operands by kind (the loader's numbers, as",
+               "     RegCodes.operandKinds): what reading the code back needs (UnitFile) *)",
+               "  val operandKinds : int list vector = Vector.fromList ["
+               ^ commaList (List.map (fn i : instruction =>
+                                        "[" ^ commaList (List.map (fn (_, k) => Int.toString (#1 (valOf (List.find (fn (_, k') => k' = k) (numbered Isa.kinds))))) (#operands i)) ^ "]") instrs)
+               ^ "]",
                "end",
                "",
                "(* The opcodes as a datatype, for code that says what it does with each",

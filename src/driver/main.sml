@@ -35,6 +35,15 @@ struct
 
   val fixity : Fixity.env ref = ref Fixity.initial
 
+  (* A compile that reported its errors as it found them (Error.report),
+     and so fails once the front end is done *)
+  exception Reported
+  fun failIfReported () = if !Error.errors > 0 then raise Reported else ()
+
+  (* the syntax of the program's units, elaborated, when wanted (Serve) *)
+  val keepSyntax = ref false
+  val keptSyntax : (string * Ast.dec list) list ref = ref []
+
   fun loadTokens (path : string) : Lexer.item vector =
     let
       val file = Source.load path
@@ -94,7 +103,9 @@ struct
                                  andalso (case StringMap.find (provider, n) of
                                             SOME files => List.exists (fn f => f <> BasisManifest.path e) files
                                           | NONE => false))
-                        (StringMap.listKeys (namesOf (toks, StringMap.empty)))
+                        (StringMap.listKeys
+                           (List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) StringMap.empty
+                                       (#uses (Deps.analyse (BasisManifest.path e, prog)))))
           (* -Name in the column: named, but not required *)
           fun plain n = if String.isPrefix "-" n then String.extract (n, 1, NONE) else n
           val () = if used = sorted (List.map plain (#requires e ())) then ()
@@ -119,13 +130,6 @@ struct
       else OS.Process.failure
     end
 
-  (* The stage that makes Mid, from Lambda or from its text. *)
-  fun midStage (showIn : ('a -> string) option) (f : 'a -> Mid.program) : 'a -> Mid.program =
-    Pass.stage {name = "mid", showIn = showIn, show = MidText.show,
-                check = fn p => (MidLint.check p; if !Options.midRoundTrip then MidText.roundTrip p else ()),
-                size = Mid.size}
-               f
-
   (* --read-mid: a Mid program from its text, made and checked as the pass
      mid makes and checks one; there is no bytecode from Mid yet. *)
   fun readMid (file : string) : OS.Process.status =
@@ -133,14 +137,249 @@ struct
       val text = #text (Source.readFile file) handle IO.Io _ => raise Options.Usage ("cannot read " ^ file)
       fun parse t = MidText.parse t handle MidText.Syntax msg => raise Options.Usage (file ^ ": " ^ msg)
     in
-      ignore (midStage NONE parse text);
+      ignore (Pipeline.midStage NONE parse text);
       OS.Process.success
     end
 
+  (* whether the program being linked keeps its units' exports in its file
+     (compileUnits) *)
+  val keepExports = ref false
+
+  (* ---- the graph (Deps; the incremental roadmap's M8) ---- *)
+
+  (* a file's syntax, for the names it declares and uses: the fixity of the
+     initial basis, as a file of a group's has no other (D15) *)
+  fun syntaxOf (path : string) : Ast.program = #1 (Parser.parseTokensWith (loadTokens path, Fixity.initial))
+
+  (* where a file breaks the discipline, as errors *)
+  fun breaksOf (f : Deps.file) : string list =
+    List.map (fn (sp, what) => Error.format (sp, "a file of a group declares modules and type abbreviations only, and this is " ^ what))
+             (#breaks f)
+
+  (* --deps, --deps-dot: the inputs in an order the modules they declare and
+     use give, or as the graph *)
+  fun depsCommand () : OS.Process.status =
+    if !Options.depsUses then
+      (* the names, whatever they are of: what a MANIFEST's requires
+         column is made of (scripts/gen-basis-sigs.sh) *)
+      let
+        val names = List.foldl (fn (p, m) => List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) m
+                                                        (#uses (Deps.analyse (p, syntaxOf p))))
+                               StringMap.empty (!Options.inputs)
+      in List.app println (StringMap.listKeys names); OS.Process.success end
+    else
+    let
+      val files = List.map (fn p => Deps.analyse (p, syntaxOf p)) (!Options.inputs)
+      val broken = List.concat (List.map breaksOf files)
+    in
+      if not (List.null broken) then (List.app eprintln broken; OS.Process.failure)
+      else
+        (let val (ordered, edges) = Deps.order files
+         in
+           if !Options.depsDot then print (Deps.dot edges) else List.app (fn (f : Deps.file) => println (#path f)) ordered;
+           OS.Process.success
+         end)
+        handle Deps.Graph msg => (eprintln ("rune: " ^ msg); OS.Process.failure)
+    end
+
+  (* -I DIR: the one input an entry point, and before it the files of its
+     directory and of each DIR that it needs, in the graph's order. A file
+     that breaks the discipline cannot be ordered, and is none of them *)
+  fun entryFiles (main : string) : string list =
+    let
+      fun smlFiles d =
+        (let
+           val s = OS.FileSys.openDir (if d = "" then "." else d)
+           fun go acc = case OS.FileSys.readDir s of
+                          NONE => acc
+                        | SOME f => go (if String.isSuffix ".sml" f then OS.Path.joinDirFile {dir = d, file = f} :: acc else acc)
+         in go [] before OS.FileSys.closeDir s end)
+        handle OS.SysErr _ => raise Options.Usage ("-I: cannot read the directory " ^ d)
+      fun sorted l = StringMap.listKeys (List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty l)
+      val same = fn (a, b) => OS.Path.mkCanonical a = OS.Path.mkCanonical b
+      val candidates = List.filter (fn p => not (same (p, main)))
+                                   (sorted (List.concat (List.map smlFiles (OS.Path.dir main :: !Options.includeDirs))))
+      val analysed = List.map (fn p => Deps.analyse (p, syntaxOf p)) candidates
+      val (group, broken) = List.partition (fn (f : Deps.file) => List.null (#breaks f)) analysed
+      val program = Deps.analyse (main, syntaxOf main)
+      (* a file left out that declares what the program names: said *)
+      val () =
+        List.app (fn (f : Deps.file) =>
+                    if List.exists (fn d => List.exists (fn u => u = d) (#uses program)) (#declares f)
+                    then eprintln ("rune: " ^ #path f ^ " declares a module " ^ main ^ " names, and breaks the discipline: "
+                                   ^ hd (breaksOf f))
+                    else ())
+                 broken
+    in
+      List.map #path (Deps.closure (group, #uses program)) @ [main]
+      handle Deps.Graph msg => raise Options.Usage msg
+    end
+
+  (* ---- build files (docs/build.md; the incremental roadmap's M10) ---- *)
+
+  (* What a build file says, as the units driver follows it: a unit -- a
+     file, with the annotations in force -- or a scope of units whose basis
+     the build file says (compileUnits, elabSteps) *)
+  datatype step = SUnit of string * string list
+                | SLocal of step list * step list
+                | SLibrary of (BuildFile.kind * string) list * step list
+                | SUse of string * step list            (* a build file used, by its path: elaborated once *)
+                | SImplements of string * step list
+
+  val buildPlan : step list option ref = ref NONE
+
+  fun readText (f : string) : string =
+    let val i = TextIO.openIn f in TextIO.inputAll i before TextIO.closeIn i end
+
+  (* A build file read: its paths made the files' (relative to its
+     directory, the variables given), each build file it uses read in its
+     place, each group put in the order its files' modules give (Deps), the
+     annotations given to each unit; and the cache directories it names *)
+  fun planOf (file : string) : step list * string list =
+    let
+      val caches : string list ref = ref []
+      fun read (f : string, seen : string list) : step list =
+        let
+          val canonical = OS.Path.mkCanonical f
+          val () = if List.exists (fn s => s = canonical) seen then raise Options.Usage ("the build file " ^ f ^ " uses itself")
+                   else ()
+          val text = readText f handle IO.Io _ => raise Options.Usage ("cannot read the build file " ^ f)
+          val decs = BuildFile.parse (f, text) handle BuildFile.Error m => raise Options.Usage m
+          val dir = OS.Path.dir f
+          fun path p = BuildFile.expand (dir, p) handle BuildFile.Error m => raise Options.Usage (f ^ ": " ^ m)
+          fun steps (anns, ds) = List.concat (List.map (fn d => step (anns, d)) ds)
+          and step (anns, d) =
+            case d of
+              BuildFile.File p => [SUnit (path p, anns)]
+            | BuildFile.Files ps => List.map (fn p => SUnit (path p, anns)) ps
+            | BuildFile.Group ps =>
+                let
+                  val analysed = List.map (fn p => Deps.analyse (p, syntaxOf p)) (List.map path ps)
+                  val broken = List.concat (List.map breaksOf analysed)
+                  val () = case broken of [] => () | b :: _ => raise Options.Usage b
+                  val (ordered, _) = Deps.order analysed handle Deps.Graph m => raise Options.Usage (f ^ ": " ^ m)
+                in List.map (fn (g : Deps.file) => SUnit (#path g, anns)) ordered end
+            | BuildFile.Local (a, b) => [SLocal (steps (anns, a), steps (anns, b))]
+            | BuildFile.Library (es, ds) => [SLibrary (es, steps (anns, ds))]
+            | BuildFile.Use p => let val q = path p in [SUse (OS.Path.mkCanonical q, read (q, canonical :: seen))] end
+            | BuildFile.Implements (x, ds) => [SImplements (x, steps (anns, ds))]
+            | BuildFile.Annotate (a, ds) => steps (anns @ a, ds)
+            | BuildFile.Cache p => (caches := path p :: !caches; [])
+            | BuildFile.Libraries _ => []
+        in steps ([], decs) end
+      val plan = read (file, [])
+    in (plan, List.rev (!caches)) end
+
+  (* --basis-index DIR: DIR/MANIFEST, what each file of the library provides
+     and requires (BasisManifest), from its build file DIR/library.build --
+     each file's class and host by its annotations ("always", "demand",
+     "seal", "final"; "host=swap", "host=no"), the libraries it is written
+     on by `libraries` -- and from the files: what each declares (Deps), and
+     what it uses that the files before it, the Basis Library or the
+     libraries it is written on provide. A file that uses a name only a file
+     after it provides is refused. *)
+  fun basisIndex (dir : string) : OS.Process.status =
+    let
+      val file = OS.Path.joinDirFile {dir = dir, file = "library.build"}
+      val text = readText file handle IO.Io _ => raise Options.Usage ("cannot read the build file " ^ file)
+      val decs = BuildFile.parse (file, text) handle BuildFile.Error m => raise Options.Usage m
+      val libs : string list ref = ref []
+      fun entries (anns, ds) = List.concat (List.map (fn d => entry (anns, d)) ds)
+      and entry (anns, d) =
+        case d of
+          BuildFile.File p => [(p, anns)]
+        | BuildFile.Files ps => List.map (fn p => (p, anns)) ps
+        | BuildFile.Annotate (a, ds) => entries (anns @ a, ds)
+        | BuildFile.Libraries ns => (libs := !libs @ ns; [])
+        | _ => raise Options.Usage (file ^ ": a library's build file lists its files, annotated; no more")
+      val listed = entries ([], decs)
+      fun classOf anns =
+        case List.filter (fn a => List.exists (fn c => c = a) ["always", "demand", "seal", "final"]) anns of
+          [] => "demand" | cs => List.last cs
+      fun hostOf anns =
+        case List.filter (fn a => String.isPrefix "host=" a) anns of
+          [] => "yes" | hs => String.extract (List.last hs, 5, NONE)
+      val analysed = List.map (fn (p, anns) => (p, anns, Deps.analyse (p, syntaxOf (OS.Path.joinDirFile {dir = dir, file = p}))))
+                              listed
+      (* what the Basis Library and the libraries this one is written on
+         provide, from their MANIFESTs, made before this one's *)
+      val outside =
+        if OS.Path.mkCanonical dir = OS.Path.mkCanonical (libRoot () ^ "/basis") then []
+        else readManifest () @ List.concat (List.map BasisManifest.readManifest
+                                                    (BasisManifest.libraries (libRoot (), !libs)))
+      val provided = List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => StringMap.insert (m, n, ())) m (#provides e))
+                                StringMap.empty outside
+      fun sorted l = StringMap.listKeys (List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty l)
+      val providers = List.foldl (fn ((_, _, f : Deps.file), m) => List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) m
+                                                                               (#declares f))
+                                 provided analysed
+      val (lines, _) =
+        List.foldl
+          (fn ((p, anns, f : Deps.file), (acc, earlier)) =>
+             let
+               val provides = List.map #2 (#declares f)
+               val requires = sorted (List.filter (fn n => StringMap.member (providers, n) andalso
+                                                           not (List.exists (fn m => m = n) provides))
+                                                  (List.map #2 (#uses f)))
+               val () = List.app (fn n => if StringMap.member (earlier, n) then ()
+                                          else raise Options.Usage (file ^ ": " ^ p ^ " uses " ^ n ^
+                                                                    ", which only a file after it provides"))
+                                 requires
+               val line = p ^ " | " ^ classOf anns ^ " | " ^ hostOf anns ^ " | " ^ String.concatWith " " provides ^ " | "
+                          ^ String.concatWith " " requires
+             in (line :: acc, List.foldl (fn (n, m) => StringMap.insert (m, n, ())) earlier provides) end)
+          ([], provided) analysed
+      val out = OS.Path.joinDirFile {dir = dir, file = "MANIFEST"}
+      val o' = TextIO.openOut out
+    in
+      TextIO.output (o', "# Generated from library.build by rune --basis-index -- do not edit.\n");
+      List.app (fn l => TextIO.output (o', "# library: " ^ l ^ "\n")) (!libs);
+      List.app (fn l => TextIO.output (o', l ^ "\n")) (List.rev lines);
+      TextIO.closeOut o';
+      OS.Process.success
+    end
+
+  (* the files of a plan, in the order they are compiled *)
+  fun filesOf (steps : step list) : string list =
+    List.concat (List.map (fn SUnit (p, _) => [p]
+                            | SLocal (a, b) => filesOf a @ filesOf b
+                            | SLibrary (_, ds) => filesOf ds
+                            | SUse (_, ds) => filesOf ds
+                            | SImplements (_, ds) => filesOf ds) steps)
+
   fun compile () : OS.Process.status =
     let
+      (* --build: the inputs are the build file's files, its plan what the
+         units driver follows *)
+      val () =
+        case !Options.build of
+          NONE => ()
+        | SOME f =>
+            let val (plan, caches) = planOf f
+            in
+              buildPlan := SOME plan;
+              Options.inputs := filesOf plan;
+              case (caches, !Options.cacheDir) of
+                (c :: _, NONE) => Options.cacheDir := SOME c
+              | _ => ()
+            end
+      (* a whole program's dynamic modules: none (UnitBasis.wholeFingerprints) *)
+      val () = UnitBasis.wholeFingerprints := (not (!Options.units) orelse !Options.wholeFromUnits)
+      (* -I: the entry point's files before it *)
+      val () =
+        case (!Options.includeDirs, !Options.inputs) of
+          ([], _) => ()
+        | (_, [main]) => Options.inputs := entryFiles main
+        | _ => raise Options.Usage "-I wants one input, the entry point"
       val inputs = !Options.inputs
       val () = if List.null inputs then raise Options.Usage "no input files" else ()
+    in
+      if List.all (fn f => String.isSuffix ".rbu" f) inputs then linkUnitFiles inputs
+      else compileSources inputs
+    end
+
+  and compileSources (inputs : string list) : OS.Process.status =
+    let
       val userToks = List.map loadTokens inputs
       val () = if !Options.noPrelude andalso not (List.null (!Options.libraries))
                then raise Options.Usage "--library needs the basis library (not --no-prelude)" else ()
@@ -174,32 +413,578 @@ struct
      copied by every collection, while the second runs: compileWith
      calls frontEnd and then hands its result on in a tail call. *)
   and compileWith (args : entry list * entry list * Lexer.item vector list * string list) : OS.Process.status =
-    backEnd (#4 args, frontEnd args)
+    if !Options.units then compileUnits args
+    else backEnd (#4 args, frontEnd args)
+
+  (* --units: every file a unit of its own -- the basis library's, those of
+     the libraries beside it, the program's -- compiled after the ones before
+     it, and the units linked (docs/units.md; Link). The environment, the
+     fixity and the compiler's tables go on from unit to unit, as each unit's
+     basis gives them (Pipeline.unitThrough); the passes see one unit at a
+     time (Pass.whole). *)
+  and compileUnits (basis : entry list, final : entry list, userToks, inputs : string list) : OS.Process.status =
+    let
+      val () = Pass.whole := false
+      val () = Elaborate.recover := true
+      (* --whole: each unit's Mid, as the session names it, for one program
+         of them all (the incremental roadmap's M7) *)
+      val () = Pipeline.keepMid := (!Options.wholeFromUnits orelse isSome (UnitCache.directory ()))
+      val mids : MidCanon.unitMid list ref = ref []
+      val () = MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE)
+      val registers = !Options.target = "registers"
+      val () = if registers then Code.opcodeNames := RegCodes.names else ()
+      val env = ref Env.initial
+      val () = UnitBasis.startSession ()
+      (* each unit's source, its tokens when wanted, whether it may use
+         _prim -- the basis library may, the libraries beside it may not --
+         and its name: a library's file by where it is in the library, so
+         that a cache follows the library where it is moved (UnitCache) *)
+      fun libName (e : entry) : string =
+        let val root = libRoot () ^ "/"
+        in
+          if String.isPrefix root (#dir e) then "lib/" ^ String.extract (#dir e, String.size root, NONE) ^ "/" ^ #file e
+          else BasisManifest.path e
+        end
+      fun file (e : entry, allow) = (BasisManifest.path e, fn () => loadTokens (BasisManifest.path e), allow, libName e)
+      val basisPart = List.map (fn e => file (e, inBasis e)) basis
+      val userPart = ListPair.map (fn (toks, name) => (name, fn () => toks, !Options.allowPrim, name)) (userToks, inputs)
+      val finalPart = List.map (fn e => file (e, !Options.allowPrim)) final
+      val sources = basisPart @ userPart @ finalPart
+      (* the signatures and functors the units declared, newest first: what a
+         scope of a build file added (elabSteps) *)
+      val declLog : (string * string) list ref = ref []
+      fun logDeclared (l : UnitBasis.result) =
+        declLog := List.map (fn n => ("fun", n)) (#funs l) @ List.map (fn n => ("sig", n)) (#sigs l) @ !declLog
+      (* a program that may load units while it runs -- it has Runtime's
+         loading or a dynamic module's: their files are among its units --
+         keeps in its file what its units export, under the identities a
+         build from source gives them, which a unit loaded into it names: so
+         it takes no unit from the cache across a unit that changed
+         (UnitBasis.remapAllowed; docs/units.md, Dynamic modules) *)
+      val loadsUnits = List.exists (fn (_, _, _, ident) => ident = "lib/basis/runtime.sml" orelse ident = "lib/basis/dynamic.sml")
+                                   sources
+      val () = UnitBasis.remapAllowed := not loadsUnits
+      val () = keepExports := loadsUnits
+      (* the front end's stages, for --pass-stats; their size is the number of
+         top-level declarations *)
+      fun frontStage name f =
+        Pass.stage {name = name, showIn = NONE, show = fn _ => "", check = fn _ => (), size = List.length} f
+      fun text name () =
+        case Source.findFile name of
+          SOME f => #text f
+        | NONE => #text (Source.load name) handle IO.Io _ => raise Options.Usage ("cannot read " ^ name)
+      (* the cache (UnitCache): its directory and configuration; after a
+         unit that failed, the units are elaborated for their errors alone,
+         and not looked for *)
+      val cache = Option.map (fn d => (d, UnitCache.configuration ())) (UnitCache.directory ())
+      val frozen = UnitCache.frozen ()
+      val failedBefore = ref false
+      (* --verify-cache: the units whose entry is not what compiling them gives *)
+      val unverified = ref 0
+      fun explain msg = if !Options.explainRebuild then TextIO.output (TextIO.stdErr, msg ^ "\n") else ()
+      (* the cache's work, for --pass-stats *)
+      fun timed name f = Pass.stage {name = name, showIn = NONE, show = fn _ => "", check = fn _ => (), size = fn _ => 0} f ()
+      (* the input files' settings, which the libraries are compiled
+         without: in their units' keys, so that a unit compiled under them is
+         not taken for one compiled without (--default-type, --or-patterns) *)
+      val userSettings =
+        String.concatWith " " (List.filter (fn s => s <> "")
+                                 [if !Options.defaultInt64 then "int64" else "",
+                                  if !Options.defaultWord64 then "word64" else "",
+                                  if !Options.orPatterns then "or-patterns" else ""])
+      val userNames = List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty inputs
+      fun settingsOf ident = if isSome (StringMap.find (userNames, ident)) then userSettings else ""
+      (* --default-type holds for the input files, not for the libraries *)
+      fun withDefaults f x =
+        let
+          fun reset () = (Elaborate.intDefault := Types.intTy; Elaborate.wordDefault := Types.wordTy)
+        in
+          Elaborate.intDefault := (if !Options.defaultInt64 then Types.int64Ty else Types.intTy);
+          Elaborate.wordDefault := (if !Options.defaultWord64 then Types.word64Ty else Types.wordTy);
+          (f x before reset ()) handle e => (reset (); raise e)
+        end
+      (* a unit's basis, kept to the end for --emit-units alone, which
+         writes it: a unit of MLton's has megabytes of it *)
+      fun keptPickle (p : string) : string = if isSome (!Options.emitUnits) then p else ""
+      (* a unit: from the cache, or compiled; with -j, by a child where it
+         is likely to be compiled, or skipped in a child that does not need
+         it (Parallel) *)
+      fun unit (src as (name, _, _, _), acc) =
+        case Parallel.at name of
+          Parallel.Skip => acc
+        | Parallel.Run {quiet} => timedUnit (src, acc, quiet)
+        | Parallel.Compile => timedUnit (src, acc, false)
+      (* --pass-stats: what each unit took, start to end *)
+      and timedUnit (src as (name, _, _, _), acc, quiet) =
+        let
+          val t0 = Time.now ()
+          val (acc, compiledIt) = unitHere (src, acc, quiet)
+          val () = if !Pass.stats
+                   then TextIO.output (TextIO.stdErr, "unit " ^ name ^ " took "
+                                                      ^ Real.fmt (StringCvt.FIX (SOME 3)) (Time.toReal (Time.- (Time.now (), t0)))
+                                                      ^ " s" ^ (if compiledIt then "" else ", from the cache")
+                                                      ^ (if isSome (OS.Process.getEnv "RUNE_MEM")
+                                                         then ", live " ^ Int.toString (!Pass.liveBytes ()) else "")
+                                                      ^ "\n")
+                   else ()
+        in Parallel.after (name, compiledIt); acc end
+      and unitHere ((name, load, allow, ident), acc, quiet) =
+        let
+          val () = if !Pass.stats then TextIO.output (TextIO.stdErr, "unit " ^ name ^ "\n") else ()
+          val k = case cache of
+                    SOME _ =>
+                      if !failedBefore then NONE
+                      else SOME (timed "cache-key" (fn () => UnitCache.key {name = ident, text = text name (), allow = allow, settings = settingsOf ident}))
+                  | NONE => NONE
+          (* the unit's place, which its entries' usages are checked at *)
+          val () = UnitBasis.position (!env, !fixity)
+          (* from the cache: its basis loaded, its code read; or why not *)
+          datatype looked = Hit of UnitBasis.result * Link.unitCode * string * UnitCache.entry | Miss of string
+          fun lookup quiet : looked * UnitCache.entry option =
+            let
+              val found =
+                case (cache, k) of
+                  (SOME (dir, config), SOME k) =>
+                    timed "cache-find"
+                      (fn () => case (UnitCache.find (dir, config, k), frozen) of
+                                  (UnitCache.Missed why, SOME f) =>
+                                    (case UnitCache.find (f, config, k) of
+                                       UnitCache.Missed "no entry" => UnitCache.Missed why
+                                     | UnitCache.Missed fwhy => UnitCache.Missed (why ^ "; the frozen Basis's: " ^ fwhy)
+                                     | found => found)
+                                | (found, _) => found)
+                | _ => UnitCache.Missed (if isSome cache then "a unit before it failed" else "the cache is off")
+              (* --verify-cache: an entry found is compiled all the same, and
+                 what that gives is compared with it *)
+              val (found, against) =
+                case found of
+                  UnitCache.Found (e as {usages, ...}) =>
+                    if not (UnitCache.verifying ()) then (found, NONE)
+                    else if UnitBasis.exact usages then (UnitCache.Missed "to verify its entry", SOME e)
+                    (* one taken across a unit that changed names the old
+                       unit, and is compiled again rather than compared
+                       (issue 15) *)
+                    else (UnitCache.Missed "to verify: its entry holds across a unit that changed, and is compiled again", NONE)
+                | _ => (found, NONE)
+            in
+              case found of
+                UnitCache.Missed why => (Miss why, against)
+              | UnitCache.Found (e as {pickle, code, file, others, mid, ...}) =>
+                  let val at = UnitBasis.counters ()
+                  in
+                    (let
+                       val (fp, u) = timed "cache-code" (fn () => UnitFile.read code)
+                       val () = if fp <> Pipeline.fingerprint () then raise UnitFile.Bad "another instruction set" else ()
+                       (* the units it was compiled against that are others
+                          now, which its usages held of all the same, by the
+                          paths to their names (M6's third part) *)
+                       val remap = case cache of
+                                     SOME (dir, config) =>
+                                       UnitBasis.remapping (pickle, u, UnitCache.pathsIn (dir :: (case frozen of SOME f => [f] | NONE => []),
+                                                                                       config))
+                                   | NONE => []
+                       val u = UnitBasis.remapKeys (u, remap)
+                       val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
+                       val l = timed "cache-basis" (fn () => UnitBasis.loadAgainst ({pickle = pickle, file = name, at = at,
+                                                                                      env = !env, fixity = !fixity,
+                                                                                      text = text name}, remap))
+                       (* its source, and those of the functors' bodies it
+                          applied, where they are now, in its code's files *)
+                       val u = UnitBasis.relocate (u, file, name, others)
+                       (* --whole: its Mid, as the session names it *)
+                       val () =
+                         if not (!Options.wholeFromUnits) then ()
+                         else if mid = "" then raise UnitFile.Bad "no Mid in its entry"
+                         else mids := UnitMid.read (mid, #unit l, remap, UnitBasis.movedTo (file, name, others)) :: !mids
+                       val () =
+                         if quiet then ()
+                         else explain ("rune: from the cache " ^ name
+                                       ^ String.concat (List.map (fn (i, _, _) => ", across " ^ UnitBasis.nameOf i ^ " changed") remap))
+                     in
+                       (Hit (l, u, pickle, e), NONE)
+                     end)
+                    handle UnitMid.Bad why => (UnitBasis.abandon at; (Miss ("a damaged entry: " ^ why), NONE))
+                         | Pickle.Bad why => (UnitBasis.abandon at; (Miss ("a damaged entry: " ^ why), NONE))
+                         | UnitFile.Bad why => (UnitBasis.abandon at; (Miss ("a damaged entry: " ^ why), NONE))
+                         | UnitBasis.Missing u => (UnitBasis.abandon at; (Miss ("its entry names " ^ u), NONE))
+                  end
+            end
+          fun bindHit (l, u, pickle, {warnings, ...} : UnitCache.entry) =
+            ((* the warnings its compile gave, again *)
+             if !Options.noWarnings then ()
+             else List.app (fn w => TextIO.output (TextIO.stdErr, w ^ "\n")) warnings;
+             env := Env.plus (!env, #delta l);
+             fixity := Fixity.extend (!fixity, #directives l);
+             UnitBasis.bind l;
+             logDeclared l;
+             ((u, keptPickle pickle) :: acc, false))
+          fun here (why, against) =
+            (explain ("rune: compiled " ^ name ^ ": " ^ why);
+             (compileUnit ((name, load, allow, ident), k, against, acc), true))
+        in
+          case lookup quiet of
+            (Hit h, _) => bindHit h
+          | (Miss why, against) =>
+              if isSome against then here (why, against)
+              else
+                (case Parallel.missed name of
+                   Parallel.Skip => (acc, false)
+                 | Parallel.Run {quiet} => (case lookup quiet of (Hit h, _) => bindHit h | (Miss why, against) => here (why, against))
+                 | Parallel.Compile => here (why, against))
+        end
+      and compileUnit ((name, load, allow, ident), k, against : UnitCache.entry option, acc) =
+        let
+          val start = timed "unit-begin" (fn () => UnitBasis.begin (!env, !fixity))
+          (* parsed and elaborated, the names it looks up recorded: its
+             usages (UnitCache) *)
+          val (decs, names) =
+            Usage.record
+              (fn () =>
+                 let
+                   val decs = frontStage "parse" (fn () => parseTokens (load ())) ()
+                 in
+                   (* a unit's flexible records are settled at its end, and its
+                      matches reported (docs/units.md) *)
+                   frontStage "elaborate"
+                              (fn () => (Elaborate.allowPrim := allow; Elaborate.elabTop (env, decs); Elaborate.finish (); decs))
+                              ()
+                 end)
+          val () = if !keepSyntax then keptSyntax := (name, decs) :: !keptSyntax else ()
+          (* after an error, the units are only elaborated, for their errors *)
+          val failed = !Error.errors > 0
+          val warnings = List.rev (!Error.warnings)
+          val () = if failed then () else if !Options.noWarnings then Error.warnings := [] else Error.flushWarnings ()
+        in
+          if !Options.typecheckOnly orelse failed then (if failed then failedBefore := true else (); acc)
+          else
+            let
+              val usages = timed "unit-usages" (fn () => UnitBasis.usagesOf names)
+              val {code, exported, loaded} =
+                Pipeline.unitThrough {start = start, name = ident, file = name, text = text name, decs = decs,
+                                      delta = !Elaborate.lastDelta, fixity = !fixity, used = names}
+              val bytes = timed "unit-chunks" (fn () => String.concat (UnitFile.chunks (Pipeline.fingerprint (), code)))
+              (* --pass-stats with RUNE_MEM set: the bytes of its basis and
+                 its code (issue 14) *)
+              val () = if !Pass.stats andalso isSome (OS.Process.getEnv "RUNE_MEM")
+                       then TextIO.output (TextIO.stdErr, "unit " ^ name ^ " basis " ^ Int.toString (String.size (#pickle exported))
+                                                          ^ " bytes, code " ^ Int.toString (String.size bytes) ^ " bytes\n")
+                       else ()
+              (* its Mid in bytes, kept in its entry *)
+              val midBytes = timed "unit-mid" (fn () => case !Pipeline.lastMid of SOME um => UnitMid.write (exported, um) | NONE => "")
+              val () = Pipeline.lastMid := NONE
+              (* the entry verified: its basis the same bytes, and its code,
+                 named by the source where it is now *)
+              val verified =
+                case against of
+                  NONE => true
+                | SOME e => UnitCache.verifies (e, name, #pickle exported, bytes, midBytes)
+            in
+              env := Env.plus (#env start, #delta loaded);
+              fixity := Fixity.extend (#fixity start, #directives loaded);
+              UnitBasis.bind loaded;
+              logDeclared loaded;
+              (* for --whole, its Mid read back as the session names it, as a
+                 unit from the cache is *)
+              if !Options.wholeFromUnits then mids := UnitMid.read (midBytes, #unit loaded, [], fn f => f) :: !mids
+              else ();
+              (case cache of
+                 SOME (dir, config) =>
+                   UnitCache.storePaths (dir, config, #identity (#unit loaded), UnitBasis.pathsOf (#unit loaded))
+               | NONE => ());
+              if verified then ()
+              else (TextIO.output (TextIO.stdErr, "rune: " ^ name ^ ": the cache's entry is not what compiling it gives\n");
+                    unverified := !unverified + 1);
+              (* an entry that did not verify is left as it was, to be looked at *)
+              (case (cache, k, verified) of
+                 (SOME (dir, config), SOME k, true) =>
+                   UnitCache.store (dir, config, k,
+                                    {usages = usages, warnings = warnings, file = name,
+                                     others = UnitBasis.sourcesOf (code, name), pickle = #pickle exported,
+                                     code = bytes, mid = midBytes})
+               | _ => ());
+              (code, keptPickle (#pickle exported)) :: acc
+            end
+        end
+      (* --build: the user's units as the build file says (docs/build.md):
+         each compiled in the basis the steps before it leave. A basis is the
+         environment, the fixity, the signatures and functors, and the units
+         that bound each name (UnitBasis.binders), which the usages of the
+         units after it are of *)
+      type snapshot = {env : Env.env, fixity : Fixity.env, sigs : SigMatch.sigma StringMap.map,
+                       funs : Elaborate.funinfo StringMap.map, binders : string StringMap.map,
+                       declared : int, bound : int}
+      fun snap () : snapshot =
+        {env = !env, fixity = !fixity, sigs = !Elaborate.sigs, funs = !Elaborate.funs, binders = !UnitBasis.binders,
+         declared = List.length (!declLog), bound = List.length (!UnitBasis.bindLog)}
+      (* what the steps between two snapshots added *)
+      type delta = {env : Env.env, directives : (string * Fixity.fixity) list, declared : (string * string) list,
+                    bound : string list, sigs : SigMatch.sigma StringMap.map, funs : Elaborate.funinfo StringMap.map,
+                    binders : string StringMap.map}
+      fun deltaOf (b1 : snapshot, b2 : snapshot) : delta =
+        {env = UnitBasis.envDelta (#env b1, #env b2),
+         directives = List.take (#list (#fixity b2), List.length (#list (#fixity b2)) - List.length (#list (#fixity b1))),
+         declared = List.rev (List.take (!declLog, List.length (!declLog) - #declared b1)),
+         bound = List.rev (List.take (!UnitBasis.bindLog, List.length (!UnitBasis.bindLog) - #bound b1)),
+         sigs = #sigs b2, funs = #funs b2, binders = #binders b2}
+      (* b0's basis, and what a delta adds to it: all of it, or a library's
+         exports *)
+      fun apply (b0 : snapshot, d : delta, exports : (BuildFile.kind * string) list option) =
+        let
+          fun exported (k, n) = case exports of NONE => true | SOME es => List.exists (fn e => e = (k, n)) es
+          val Env.Env {vals, tys, strs} = #env d
+          val e = Env.Env {vals = if isSome exports then StringMap.empty else vals,
+                           tys = StringMap.filteri (fn (n, _) => exported (BuildFile.Ty, n)) tys,
+                           strs = StringMap.filteri (fn (n, _) => exported (BuildFile.Str, n)) strs}
+          fun keyVisible key =
+            case String.fields (fn c => c = #" ") key of
+              [kind, n] =>
+                (case kind of
+                   "s" => exported (BuildFile.Str, n) | "t" => exported (BuildFile.Ty, n)
+                 | "sig" => exported (BuildFile.Sig, n) | "fun" => exported (BuildFile.Fun, n)
+                 | _ => not (isSome exports))
+            | _ => not (isSome exports)
+        in
+          env := Env.plus (#env b0, e);
+          fixity := Fixity.extend (#fixity b0, if isSome exports then [] else #directives d);
+          Elaborate.sigs := List.foldl (fn (("sig", n), m) =>
+                                          if exported (BuildFile.Sig, n)
+                                          then (case StringMap.find (#sigs d, n) of SOME x => StringMap.insert (m, n, x) | NONE => m)
+                                          else m
+                                        | (_, m) => m) (#sigs b0) (#declared d);
+          Elaborate.funs := List.foldl (fn (("fun", n), m) =>
+                                          if exported (BuildFile.Fun, n)
+                                          then (case StringMap.find (#funs d, n) of SOME x => StringMap.insert (m, n, x) | NONE => m)
+                                          else m
+                                        | (_, m) => m) (#funs b0) (#declared d);
+          UnitBasis.binders := List.foldl (fn (key, m) =>
+                                             if keyVisible key
+                                             then (case StringMap.find (#binders d, key) of
+                                                     SOME i => StringMap.insert (m, key, i)
+                                                   | NONE => m)
+                                             else m) (#binders b0) (#bound d)
+        end
+      val implemented : string list ref = ref []
+      val used : (string * delta) list ref = ref []
+      fun elabSteps (steps : step list, acc) = List.foldl elabStep acc steps
+      and elabStep (SUnit (p, anns), acc) =
+            let
+              val allow = !Options.allowPrim orelse List.exists (fn a => a = "allowPrim") anns
+              val quiet = !Options.noWarnings
+              val () = if List.exists (fn a => a = "noWarnings") anns then Options.noWarnings := true else ()
+              val acc = unit ((p, fn () => loadTokens p, allow, p), acc) handle e => (Options.noWarnings := quiet; raise e)
+            in Options.noWarnings := quiet; acc end
+        | elabStep (SLocal (a, b), acc) =
+            let
+              val b0 = snap ()
+              val acc = elabSteps (a, acc)
+              val b1 = snap ()
+              val acc = elabSteps (b, acc)
+            in apply (b0, deltaOf (b1, snap ()), NONE); acc end
+        | elabStep (SLibrary (exports, ds), acc) =
+            let
+              val b0 = snap ()
+              val acc = elabSteps (ds, acc)
+            in apply (b0, deltaOf (b0, snap ()), SOME exports); acc end
+        | elabStep (SUse (p, ds), acc) =
+            (case List.find (fn (q, _) => q = p) (!used) of
+               SOME (_, d) => (apply (snap (), d, NONE); acc)
+             | NONE =>
+                 let
+                   val b1 = snap ()
+                   val acc = elabSteps (ds, acc)
+                 in used := (p, deltaOf (b1, snap ())) :: !used; acc end)
+        | elabStep (SImplements (x, ds), acc) =
+            if List.exists (fn y => y = x) (!implemented)
+            then raise Options.Usage ("the build gives the virtual module " ^ x ^ " two implementations")
+            else
+              (* what the implementation declares is the program's, and no
+                 file after it names it: it is reached through the virtual
+                 module, whose units do not change with it *)
+              let
+                val () = implemented := x :: !implemented
+                val b0 = snap ()
+                val acc = elabSteps (ds, acc)
+              in apply (b0, deltaOf (b0, snap ()), SOME []); acc end
+      (* -j N: the units before the final ones, each with what it declares
+         and uses -- a Basis file's by its MANIFEST, a program's by Deps --
+         for Parallel to start children in an order that works *)
+      val () =
+        if !Options.jobs > 1 andalso isSome cache andalso not (UnitCache.verifying ())
+           andalso not (!Options.typecheckOnly)
+        then
+          let
+            val basisUnits =
+              ListPair.map (fn (e : entry, (name, _, _, _)) =>
+                              (name, #provides e, List.filter (fn n => not (String.isPrefix "-" n)) (#requires e ()),
+                               #when e = Always))
+                           (basis, basisPart)
+            fun userUnit (name, _, _, _) =
+              let val f = Deps.analyse (name, syntaxOf name)
+              in (name, List.map #2 (#declares f), List.map #2 (#uses f), not (List.null (#breaks f))) end
+              handle _ => (name, [], [], true)
+            val described = Vector.fromList (basisPart @ userPart)
+            fun hasEntry i =
+              case cache of
+                NONE => false
+              | SOME (dir, config) =>
+                  let
+                    val (name, _, allow, ident) = Vector.sub (described, i)
+                    val k = UnitCache.key {name = ident, text = text name (), allow = allow, settings = settingsOf ident}
+                  in
+                    UnitCache.hasEntry (dir, config, k)
+                    orelse (case frozen of SOME f => UnitCache.hasEntry (f, config, k) | NONE => false)
+                  end
+            (* a unit worth a child: its text at least RUNE_PARALLEL_MIN
+               bytes, 16384 if not set *)
+            val least = case Option.mapPartial Int.fromString (OS.Process.getEnv "RUNE_PARALLEL_MIN") of
+                          SOME n => n | NONE => 16384
+            fun worth i = let val (name, _, _, _) = Vector.sub (described, i) in String.size (text name ()) >= least end
+          in
+            Parallel.start {units = basisUnits @ List.map userUnit userPart, jobs = !Options.jobs, hasEntry = hasEntry,
+                            worth = worth, explain = !Options.explainRebuild}
+          end
+        else ()
+      val compiled =
+        (case !buildPlan of
+           NONE => List.rev (List.foldl unit (withDefaults (fn acc => List.foldl unit acc userPart) (List.foldl unit [] basisPart))
+                                        finalPart)
+         | SOME plan =>
+             List.rev (List.foldl unit (withDefaults (fn acc => elabSteps (plan, acc)) (List.foldl unit [] basisPart)) finalPart))
+        handle e => (Parallel.finish (); raise e)
+      val () = Parallel.finish ()
+      val units = List.map #1 compiled
+      val () = failIfReported ()
+      val () = if !unverified > 0 then raise Reported else ()
+      val fingerprint = Pipeline.fingerprint ()
+      val () =
+        case !Options.emitUnits of
+          NONE => ()
+        | SOME dir => if !Options.typecheckOnly then () else emitUnitFiles (dir, fingerprint, List.map #1 sources, compiled)
+    in
+      if !Options.typecheckOnly then OS.Process.success
+      else if !Options.wholeFromUnits then
+        (* one program of the units' Mid, with the passes of a whole one *)
+        let
+          val () = refuseDynamic ()
+          val prog = MidCanon.concat (List.rev (!mids))
+          val () = Pass.whole := true
+          val low = Pipeline.lowOfMid prog
+        in
+          if registers then emitProgramAs (RegCodes.fingerprint, inputs, Pipeline.targetStage low)
+          else emitProgram (inputs, Pipeline.targetStage low)
+        end
+      else timed "link" (fn () => linkUnits (fingerprint, inputs, units))
+    end
+
+  (* The units linked into the program, by the target of the fingerprint *)
+  and linkUnits (fingerprint : int, inputs : string list, units : Link.unitCode list) : OS.Process.status =
+    let
+      val prog = if fingerprint = RegCodes.fingerprint then (Code.opcodeNames := RegCodes.names;
+                                                             Link.program (Regs.program, RegCodes.linked, units))
+                 else Link.program (Stack.program, Opcodes.linked, units)
+      (* the units' exports, for a unit loaded into the program later,
+         where it may load one *)
+      val () = Emit.trailer := (if !keepExports then Emit.unitsSection (!Link.lastExports) else "")
+      val status = emitProgramAs (fingerprint, inputs, prog) handle e => (Emit.trailer := ""; raise e)
+    in Emit.trailer := ""; status end
+
+  (* --emit-units DIR: each unit's file, its number and its source's name,
+     and beside it the unit's basis (.rbi, UnitBasis), which a compile after
+     it loads (the REPL); DIR/units, their names in order, and DIR/sources,
+     their sources. *)
+  and emitUnitFiles (dir : string, fingerprint : int, names : string list, units : (Link.unitCode * string) list) : unit =
+    let
+      val () = (OS.FileSys.mkDir dir handle OS.SysErr _ => ())
+      fun base n = OS.Path.base (OS.Path.file n)
+      val files =
+        ListPair.map (fn ((n, (u, pickle)), i) =>
+                        let
+                          val stem = OS.Path.joinDirFile {dir = dir, file = StringCvt.padLeft #"0" 4 (Int.toString i) ^ "-" ^ base n}
+                          val f = stem ^ ".rbu"
+                          val out = BinIO.openOut (stem ^ ".rbi")
+                        in
+                          UnitFile.write (f, fingerprint, u);
+                          BinIO.output (out, Byte.stringToBytes pickle); BinIO.closeOut out;
+                          f
+                        end)
+                     (ListPair.zip (names, units), List.tabulate (List.length units, fn i => i))
+      fun write (file, lines) =
+        let val out = TextIO.openOut (OS.Path.joinDirFile {dir = dir, file = file})
+        in List.app (fn l => TextIO.output (out, l ^ "\n")) lines; TextIO.closeOut out end
+    in
+      (* the units' files in order, and the source of each, as named here *)
+      write ("units", files);
+      write ("sources", names)
+    end
+
+  (* rune -o P.rbc A.rbu B.rbu ...: unit files linked, each after those it
+     names *)
+  and linkUnitFiles (inputs : string list) : OS.Process.status =
+    let
+      val read = List.map (fn f => UnitFile.readFile f handle UnitFile.Bad why => raise Options.Usage why
+                                                        | IO.Io _ => raise Options.Usage ("cannot read " ^ f)) inputs
+      val (fingerprint, _) = List.hd read
+      val () =
+        if List.all (fn (fp, _) => fp = fingerprint) read then ()
+        else raise Options.Usage "the units are of different instruction sets"
+      (* each unit names only units before it *)
+      val () =
+        ignore (List.foldl (fn ((_, u : Link.unitCode), seen) =>
+                              let
+                                fun known ({unit, ...} : Link.key) = unit = "" orelse unit = #identity u
+                                                                     orelse StringMap.member (seen, unit)
+                              in
+                                if List.all (known o #1) (#globals u) andalso List.all (known o #2) (#imports u)
+                                then StringMap.insert (seen, #identity u, ())
+                                else raise Options.Usage ("the unit " ^ #identity u ^ " names a unit not linked before it")
+                              end) StringMap.empty read)
+      (* a program that may load units keeps their exports, as compileUnits
+         says *)
+      val () = keepExports := List.exists (fn (_, u : Link.unitCode) =>
+                                             List.exists (fn n => String.isPrefix (n ^ "@") (#identity u))
+                                                         ["lib/basis/runtime.sml", "lib/basis/dynamic.sml"]) read
+    in
+      linkUnits (fingerprint, inputs, List.map #2 read)
+    end
 
   and frontEnd (basis : entry list, final : entry list, userToks, _ : string list) : Lambda.lexp option =
     let
       fun parseEntries es = List.concat (List.map (fn e : entry => parseTokens (loadTokens (BasisManifest.path e))) es)
+      (* The front end's two stages, for --pass-stats; their size is the
+         number of top-level declarations. *)
+      fun frontStage name f =
+        Pass.stage {name = name, showIn = NONE, show = fn _ => "", check = fn _ => (),
+                    size = fn (b, l, u, fin) => List.length b + List.length l + List.length u + List.length fin}
+                   f
       (* the basis library may use _prim; the libraries beside it may not *)
-      val basisProg = parseEntries (List.filter inBasis basis)
-      val libraryProg = parseEntries (List.filter (not o inBasis) basis)
+      val (basisProg, libraryProg, userProg, finalProg) =
+        frontStage "parse"
+                   (fn () => let
+                               val b = parseEntries (List.filter inBasis basis)
+                               val l = parseEntries (List.filter (not o inBasis) basis)
+                             in (b, l, List.concat (List.map parseTokens userToks), parseEntries final) end)
+                   ()
       val preludeProg = basisProg @ libraryProg
-      val userProg = List.concat (List.map parseTokens userToks)
-      val finalProg = parseEntries final
       val () = if !Options.dumpAst then List.app (fn d => println (Ast.decToString d)) (userProg @ finalProg) else ()
       val env = ref Env.initial
-      val () = Elaborate.allowPrim := true
-      val () = Elaborate.elabTop (env, basisProg)
-      val () = Elaborate.allowPrim := false
-      val () = Elaborate.elabTop (env, libraryProg)
-      val () = Elaborate.allowPrim := !Options.allowPrim
-      (* --default-type holds for the input files, not for the libraries *)
-      val () = Elaborate.intDefault := (if !Options.defaultInt64 then Types.int64Ty else Types.intTy)
-      val () = Elaborate.wordDefault := (if !Options.defaultWord64 then Types.word64Ty else Types.wordTy)
-      val () = Elaborate.elabTop (env, userProg)
-      val () = Elaborate.intDefault := Types.intTy
-      val () = Elaborate.wordDefault := Types.wordTy
-      val () = Elaborate.elabTop (env, finalProg)
-      val () = Elaborate.finish ()
+      fun elaborate (progs as (b, l, u, fin)) =
+        (Elaborate.allowPrim := true;
+         Elaborate.elabTop (env, b);
+         Elaborate.allowPrim := false;
+         Elaborate.elabTop (env, l);
+         Elaborate.allowPrim := !Options.allowPrim;
+         (* --default-type holds for the input files, not for the libraries *)
+         Elaborate.intDefault := (if !Options.defaultInt64 then Types.int64Ty else Types.intTy);
+         Elaborate.wordDefault := (if !Options.defaultWord64 then Types.word64Ty else Types.wordTy);
+         Elaborate.elabTop (env, u);
+         Elaborate.intDefault := Types.intTy;
+         Elaborate.wordDefault := Types.wordTy;
+         Elaborate.elabTop (env, fin);
+         Elaborate.finish ();
+         progs)
+      val () = Elaborate.recover := true
+      val _ = frontStage "elaborate" elaborate (basisProg, libraryProg, userProg, finalProg)
+      val () = failIfReported ()
       val () = if !Options.noWarnings then Error.warnings := [] else Error.flushWarnings ()
     in
       if !Options.typecheckOnly then NONE
@@ -212,39 +997,22 @@ struct
   (* -O0 is the same stages with no optional pass *)
   and backEnd (_, NONE) = OS.Process.success
     | backEnd (inputs, SOME lam) =
-        let
-          val mid = midStage (SOME Lambda.show) ToMid.program lam
-          (* the optional passes on Mid (docs/ir.md) *)
-          fun optional (name, f) m =
-            if Pass.enabled (name, 1) then
-              Pass.stage {name = name, showIn = SOME MidText.show, show = MidText.show, check = MidLint.check,
-                          size = Mid.size}
-                         f m
-            else m
-          val mid = optional ("shake", Shake.program) mid
-          val mid = optional ("lift", Lift.program) mid
-          val mid = optional ("workers", Workers.program) mid
-          val mid = optional ("simplify", Simplify.program) mid
-          (* what the inliner left of the functions it put in place goes *)
-          val mid =
-            if Pass.enabled ("simplify", 1) andalso Pass.enabled ("inline", 1) then optional ("shake", Shake.program) mid
-            else mid
-          val low = Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = LowLint.check,
-                                size = Low.size}
-                               (fn m => Lower.program (m, !Translate.funNames)) mid
+        let val () = refuseDynamic ()
+            val low = Pipeline.lowOf lam
         in
           if !Options.target = "registers" then
             (Code.opcodeNames := RegCodes.names;
-             emitProgramAs (RegCodes.fingerprint, inputs,
-                            Pass.stage {name = "registers", showIn = SOME Low.show, show = Code.dump,
-                                        check = fn _ => (), size = Code.size}
-                                       Regs.program low))
-          else
-            emitProgram (inputs,
-                         Pass.stage {name = "stack", showIn = SOME Low.show, show = Code.dump,
-                                     check = fn _ => (), size = Code.size}
-                                    Stack.program low)
+             emitProgramAs (RegCodes.fingerprint, inputs, Pipeline.targetStage low))
+          else emitProgram (inputs, Pipeline.targetStage low)
         end
+
+  (* A whole program has no units for a dynamic module to link against:
+     its units are one (docs/units.md, Dynamic modules) *)
+  and refuseDynamic () =
+    case !Elaborate.dynamicAt of
+      SOME sp => raise Error.CompileError (sp, "a program that loads a dynamic module (_dynamic) is built in units "
+                                                ^ "(rune --units), which the module links against, and not whole")
+    | NONE => ()
 
   and emitProgram (inputs : string list, prog : Code.program) : OS.Process.status =
     emitProgramAs (Opcodes.fingerprint, inputs, prog)
@@ -267,12 +1035,17 @@ struct
      if !Options.showHelp then (print Options.usage; OS.Process.success)
      else if !Options.showVersion then (println ("rune " ^ Config.version); OS.Process.success)
      else if !Options.basisCheck then checkManifest ()
+     else if !Options.deps orelse !Options.depsDot orelse !Options.depsUses then depsCommand ()
+     else if isSome (!Options.basisIndex) then basisIndex (valOf (!Options.basisIndex))
+     else if !Options.buildList then
+       (List.app println (filesOf (#1 (planOf (valOf (!Options.build))))); OS.Process.success)
      else if !Options.dumpTokens then dumpTokens ()
      else if isSome (!Options.readMid) then readMid (valOf (!Options.readMid))
      else compile ())
     handle BasisManifest.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
          | Options.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
-         | Error.CompileError (sp, msg) => (eprintln (Error.format (sp, msg)); OS.Process.failure)
+         | Error.CompileError (sp, msg) => (eprintln (Error.format (sp, msg)); Error.note ("error", sp, msg); OS.Process.failure)
+         | Reported => OS.Process.failure
          | Error.Bug msg => (eprintln ("rune: " ^ msg); OS.Process.failure)
          | IO.Io {name, ...} => (eprintln ("rune: I/O error on " ^ name); OS.Process.failure)
 end

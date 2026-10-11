@@ -110,6 +110,16 @@ this time. No
 .I file.rbc
 is given: the image carries its program.
 .TP
+.BI \-\-name " NAME"
+The name the program has, which
+.B CommandLine.name
+gives, rather than the file's: a script that runs a
+.I file.rbc
+as a command of its own gives its own path.
+With
+.BR \-\-restore ,
+it takes the place of the name the world was saved with.
+.TP
 .BI \-\-jit= MODE
 .RB ( runevm )
 .B off

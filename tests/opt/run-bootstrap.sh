@@ -11,7 +11,7 @@ mkdir -p "$out"
 runeopt=${RUNEOPT:-bin/runeopt-mlton}
 "$runeopt" bin/rune.stack.rbc -o "$out/rune" --options "--heap-size ${RUNE_HEAP:-67108864}" ||
   { echo "FAIL opt-bootstrap: runeopt could not translate bin/rune.stack.rbc"; exit 1; }
-srcs="build/config.sml $(grep -v '^[[:space:]]*#' sources.txt | grep -v '^[[:space:]]*$' | tr '\n' ' ') src/main/rune-main.sml"
+srcs="build/config.sml $(sh scripts/build-files.sh rune.build | tr '\n' ' ') src/main/rune-main.sml"
 # shellcheck disable=SC2086
 "$out/rune" --target=stack --lib bin/../lib -o "$out/rune.stage2.rbc" $srcs ||
   { echo "FAIL opt-bootstrap: the compiler as native code failed"; exit 1; }

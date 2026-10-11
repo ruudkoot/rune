@@ -3,8 +3,8 @@ structure RegCodes =
 struct
   (* the fingerprint of the register instruction set, which its .rbc
      carries; the layout's version is the stack bytecode's *)
-  val fingerprint = 6232668
-  val fingerprintHex = "005f1a5c"
+  val fingerprint = 460396
+  val fingerprintHex = "0007066c"
   val HALT = 0
   val MOVE = 1
   val INT = 2
@@ -48,4 +48,17 @@ struct
   val FIELD = 40
   val count = 41
   val names = Vector.fromList ["HALT", "MOVE", "INT", "CONST", "UNIT", "CON0", "GLOBAL", "SETGLOBAL", "ENV", "SELF", "CALL", "RESULT", "TAILCALL", "RET", "PRIM", "PRIMPUSH", "TUPLE", "CLOSURE", "SELECT", "CON", "DECON", "CONTAG", "NEWEXN", "BUILTINEXN", "MKEXN", "EXNCON", "EXNARG", "SETENV", "JUMP", "JUMPIF", "JUMPIFNOT", "JUMPIFNOTTAG", "PUSHHANDLER", "POPHANDLER", "CATCH", "RAISE", "CALLK", "TAILCALLK", "SWITCH", "CONN", "FIELD"]
+  (* each opcode's operands that name a function (0), a global (1) or
+     a constant (2), by position: what a linker renumbers *)
+  val linked : (int * int) list vector = Vector.fromList [[], [], [], [(1, 2)], [], [], [(1, 1)], [(0, 1)], [], [], [], [], [], [], [], [], [], [(1, 0)], [], [], [], [], [(1, 2)], [], [], [], [], [], [], [], [], [], [], [], [], [], [(0, 0)], [(0, 0)], [], [], []]
+  (* each opcode's operands before its list, by kind (the loader's RK_
+     numbers: a label 8, a handler's label 9); the operand that
+     says how long its list is, ~1 for none; and whether that operand
+     names a primitive, whose arity it is: what reading the code back
+     needs (UnitFile) *)
+  val kindLabel = 8
+  val kindHandlerLabel = 9
+  val operandKinds : int list vector = Vector.fromList [[], [14, 14], [14, 2], [14, 0], [14], [14, 3], [14, 6], [6, 14], [14, 5], [14], [14, 14], [14], [14, 14], [14], [10, 14], [10], [14, 11], [14, 7, 11], [14, 12, 14], [14, 3, 14], [14, 14, 3], [14, 14], [14, 1], [14, 13], [14, 14, 14], [14, 14], [14, 14], [14, 5, 14], [8], [14, 8], [14, 8], [14, 8, 3], [9], [], [14], [14], [7, 11], [7, 11], [14, 11], [14, 3, 11], [14, 14, 3, 12]]
+  val listAt : int vector = Vector.fromList [~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, 0, 0, 1, 2, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, 1, 1, ~1, 2, ~1]
+  val listPrim : bool vector = Vector.fromList [false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]
 end

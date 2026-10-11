@@ -105,6 +105,29 @@ sig
      Example: `(collect (); #collections (stats ()) >= 1) = true` *)
   val collect : unit -> unit
 
+  (* `share ()` makes the equal immutable values of the heap one object
+     each, and is the bytes it freed.
+
+     It is what Poly/ML's PolyML.shareCommonData does before a heap is
+     saved.
+
+     Equal is as `=` has it, at any type: tuples, records, vectors and
+     values of a datatype whose fields are equal, strings of the same
+     characters, reals of the same bits, exception values of the same
+     constructor and argument. A `ref`, an `array`, a function and an
+     exception constructor keep their identity. A program that builds the
+     same values again and again --
+     terms, types, environments -- keeps one of each, the more so in an
+     image `save` writes after it.
+
+     It collects first and after, and it needs memory of its own about the
+     number of objects times 24 bytes; where it cannot have it, it shares
+     nothing and is 0. Nothing an SML program can see changes but `same`,
+     which may now say of two equal values that they are one.
+
+     Example: `share () >= 0 = true` *)
+  val share : unit -> int
+
   (* One function on the call stack, and where in the source it has got to.
 
      `function` is the name the compiler recorded, qualified by the structures
@@ -142,7 +165,7 @@ sig
      `same (0.0, ~0.0)` is false because the two are different reals. Of the
      rest, whether two equal values are one object is whatever the compiler
      shared: two equal string constants are one, and two lists written
-     separately are two.
+     separately are two, until `share` makes them one.
 
      Example: `let val r = ref 0 in same (r, r) end = true` *)
   val same : 'a * 'a -> bool
@@ -158,11 +181,15 @@ sig
      `Posix.Process.fork` gives a pid to one process and 0 to another. The
      file is not used up by being restored.
 
-     What is written is everything the program is made of -- the heap, the
-     stacks, the counters, and the files it has open, which are opened again
+     What is written is everything the program is made of -- the heap,
+     collected first (`collect`) so that it is the live data and no more,
+     the stacks, the counters, and the files it has open, which are opened again
      by name and put back where they were left. What belongs to the process
      rather than to the program is not: a socket, a directory stream and a
-     pipe are the system's, and a restored world does not have them.
+     pipe are the system's, and a restored world does not have them. Nor is
+     what the program read ahead of its standard input and has not taken:
+     `TextIO.stdIn` in the restored world reads that world's standard input
+     from where it begins.
 
      Raises: `OS.SysErr` if the image cannot be written. *)
   val save : string -> world
@@ -192,6 +219,74 @@ sig
 
      Raises: `OS.SysErr` if the image cannot be read. *)
   val restore : string -> 'a
+
+  (* `link bytes` appends to the running program the unit that `bytes` is
+     the file of, and is the function that runs the unit's top-level
+     declarations.
+
+     A unit is a file of a program compiled a file at a time
+     (`rune --units --emit-units DIR`, docs/units.md): its code, and what it
+     names of the units compiled before it. Those must have been linked
+     first; what the unit names is found among what they declared, and its
+     code is checked as the VM checks a program's file. Nothing runs until
+     the function is called, and calling it again runs the declarations
+     again. A unit linked twice is two units, each with globals of its own;
+     the units linked after it see the second.
+
+     Implementation: `RUNTIME.link/the-last-unit-returns`. The top level of
+     a unit compiled with others ends by calling the next one's; linked
+     here, it returns to the caller instead.
+
+     Raises: `Fail` if `bytes` is not a unit's file, is of another
+     instruction set, or names what no unit linked before it declared;
+     the message says which. *)
+  val link : Word8Vector.vector -> unit -> unit
+
+  (* `load file` is `link` of what `file` holds.
+
+     Raises: `IO.Io` if the file cannot be read, and `Fail` as `link`
+     does. *)
+  val load : string -> unit -> unit
+
+  (* `catchInterrupt ()` makes Ctrl-C, the user's interrupt, raise
+     `SML90.Interrupt` in the program from now on rather than end it.
+
+     It is true; it is false where the system has no interrupt to catch,
+     and the program goes on as before. The exception is raised where the
+     program next jumps back, as a loop does, or calls a function, or in a
+     read from a terminal that the interrupt cuts short, as a `raise` there
+     would raise it: the handlers, the frames and `trace` are what they
+     would be. A primitive that is running finishes first. The interrupt is
+     caught even where the program was started with it ignored, as a shell
+     starts one in the background, and a world started from an image that
+     `save` wrote catches it as the program that saved it did.
+
+     Implementation: `RUNTIME.catchInterrupt/polled`. The VM looks at the
+     interrupt at a jump back and at a call, in the interpreters and in the
+     code the JIT makes; the code of `runeopt` does not, and an interrupt
+     never comes to it. *)
+  val catchInterrupt : unit -> bool
+
+  (* `maskInterrupt b` says whether an interrupt waits rather than being
+     raised, and is what it said before.
+
+     From `maskInterrupt true` on, one waits until `maskInterrupt false`,
+     which raises it, if one came, as it returns. A section that an
+     interrupt must not cut in two is
+
+         let val was = maskInterrupt true
+         in (f () before ignore (maskInterrupt was))
+            handle e => (ignore (maskInterrupt was); raise e)
+         end
+
+     The mask is off when a program starts, and a world started from an
+     image has the mask its program had.
+
+     Raises: `SML90.Interrupt`, from `maskInterrupt false`, where one
+     waited.
+
+     Example: `maskInterrupt (maskInterrupt true) = true` *)
+  val maskInterrupt : bool -> bool
 
   (* The version of Rune that this program is running on, as
      `runevm --version` prints it.

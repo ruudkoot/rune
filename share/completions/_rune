@@ -2,6 +2,7 @@
 
 _arguments -s \
   '-o[write bytecode to FILE]:output file:_files' \
+  '-i[start the REPL, rune-repl, with the files that follow]' \
   '--lib[directory holding the basis library in DIR/basis]:library directory:_files -/' \
   '--no-prelude[do not compile the basis library before the inputs]' \
   '--basis[which files of the basis library to compile]:mode:(demand all)' \
@@ -10,6 +11,23 @@ _arguments -s \
   '--allow-prim[allow the _prim extension in the inputs]' \
   '--or-patterns[allow or-patterns (p1 | p2), which are not Standard ML]' \
   '*--default-type=[the type an open int or word constant defaults to in the inputs]:type:(int int64 word word64)' \
+  '--flex-records=[what must determine a flexible record]:mode:(binding declaration topdec-monomorphic topdec program)' \
+  '--units[compile every file as a unit of its own, and link them]' \
+  '--emit-units[with --units, write the files of every unit into DIR]:directory:_files -/' \
+  '--cache-dir[with --units, the cache of units]:directory:_files -/' \
+  '--no-cache[with --units, compile every unit]' \
+  '--explain-rebuild[with --units, say why each unit was compiled]' \
+  '--verify-cache[with --units, compile each unit the cache has too, and compare]' \
+  '(-j --jobs)'{-j,--jobs}'[with --units and the cache, compile units in up to N processes]:jobs:' \
+  '--serve[answer JSON-RPC requests on stdin: diagnostics, the type at an offset]' \
+  '--whole[with --units, one program of the units'"'"' Mid, as a whole-program compile]' \
+  '--build[compile in units what a build file says]:build file:_files -g "*.build"' \
+  '--build-list[print a build file'"'"'s files in order]:build file:_files -g "*.build"' \
+  '--path[a path variable of build files]:NAME=DIR:' \
+  '--basis-index[write DIR/MANIFEST from DIR/library.build]:library:_files -/' \
+  '--deps[print the files in the order the modules they declare and use give]' \
+  '--deps-dot[the files'"'"' dependency graph in DOT]' \
+  '*-I[an entry point'"'"'s directory of files]:directory:_files -/' \
   '--typecheck-only[stop after type checking]' \
   '--no-warnings[do not print match warnings]' \
   '--dump-tokens[print the token stream]' \

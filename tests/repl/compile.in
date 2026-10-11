@@ -1,0 +1,33 @@
+(* Compiler.compile: declarations read from a reader, to a `;` that ends one,
+   run when the function it gives is called; an error at the line given; and
+   the print depth at 0, at which nothing is echoed *)
+fun reader s = let val i = ref 0 in fn () => if !i < size s then SOME (String.sub (s, !i)) before i := !i + 1 else NONE end;
+val r = reader "val a = 1 + 1; val b = a * 10;";
+val first = Compiler.compile {read = r, file = "<string>", line = 1};
+first ();
+a;
+val second = Compiler.compile {read = r, file = "<string>", line = 1};
+second ();
+b;
+val rest = Compiler.compile {read = r, file = "<string>", line = 1};
+rest ();
+val bad = Compiler.compile {read = reader "val c = 1 + \"x\"", file = "bad.sml", line = 5};
+bad ();
+Compiler.printDepth := 0;
+val quiet = 42;
+Compiler.printDepth := 20;
+quiet;
+(* where a `;` ends a declaration: not in a string, a comment (nested, or
+   with `end` in it), brackets, or let, local, struct, sig ... end *)
+val tricky = reader "val s1 = \"a;b\\\";\"; (* x; end (* y; *) ; *) val t1 = let val u = 1; val w = (u; 2) in u + w end; structure S1 = struct val x = [1, 2]; val y = {a = 1}; end; val z1 = S1.x;";
+val c1 = Compiler.compile {read = tricky, file = "<string>", line = 1};
+c1 ();
+s1;
+val c2 = Compiler.compile {read = tricky, file = "<string>", line = 1};
+c2 ();
+t1;
+val c3 = Compiler.compile {read = tricky, file = "<string>", line = 1};
+c3 ();
+val c4 = Compiler.compile {read = tricky, file = "<string>", line = 1};
+c4 ();
+z1;

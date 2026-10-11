@@ -281,6 +281,14 @@ int sys_code_protect(void *code, size_t size, int executable);
 void sys_code_flush(void *code, size_t size);
 void sys_code_free(void *code, size_t size);
 
+/* Interrupts (docs/runtime.md, Interrupts; the incremental roadmap's D11):
+   from now on, the user's interrupt -- SIGINT, Ctrl-C at a console -- sets
+   *flag to 1 instead of ending the process, and the VM raises an exception
+   where it next polls the flag; a terminal's read it comes during fails,
+   EINTR (sys_read_fd). NULL: the interrupt ends the process again. 0, or
+   -1 and the error (ENOSYS in sys_none, which has no interrupt). */
+int sys_interrupt_catch(volatile int *flag);
+
 /* Memory for the heap (runtime/gc/chunk.c): sys_mem_reserve gives size
    bytes at an address aligned to align (a power of two, a multiple of the
    page), readable and writable, or NULL; size is a multiple of align. It

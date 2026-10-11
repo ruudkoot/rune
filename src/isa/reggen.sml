@@ -301,6 +301,20 @@ struct
 
   (* ---- the opcodes of the compiler's register target ---- *)
 
+  (* The operands of an instruction that name an entry of a table of the
+     program, by their position among its operands: 0 a function, 1 a
+     global, 2 a constant (a string constant too). A linker renumbers them
+     (Link, docs/plans/incremental-compilation.md, M2); labels are left
+     out, since the compiler's code names them symbolically. *)
+  fun linkedOperands (i : rinstruction) : string =
+    let
+      fun kindOf k = case k of K Function => SOME 0 | K Global => SOME 1 | K Constant => SOME 2
+                             | K StringConstant => SOME 2 | _ => NONE
+      val ops = List.mapPartial (fn (n, (_, k)) => Option.map (fn c => "(" ^ Int.toString n ^ ", " ^ Int.toString c ^ ")")
+                                                              (kindOf k))
+                                (numbered (#operands i))
+    in "[" ^ commaList ops ^ "]" end
+
   fun regcodesSml (instrs : rinstruction list, fp : int) : file =
     let val is = numbered instrs
     in
@@ -317,6 +331,27 @@ struct
             @ List.map (fn (n, i : rinstruction) => "  val " ^ #name i ^ " = " ^ Int.toString n) is
             @ ["  val count = " ^ Int.toString (List.length instrs),
                "  val names = Vector.fromList [" ^ commaList (List.map (fn i : rinstruction => "\"" ^ #name i ^ "\"") instrs) ^ "]",
+               "  (* each opcode's operands that name a function (0), a global (1) or",
+               "     a constant (2), by position: what a linker renumbers *)",
+               "  val linked : (int * int) list vector = Vector.fromList [" ^ commaList (List.map linkedOperands instrs) ^ "]",
+               "  (* each opcode's operands before its list, by kind (the loader's RK_",
+               "     numbers: a label " ^ Int.toString (kindNumber (K Label)) ^ ", a handler's label "
+               ^ Int.toString (kindNumber (K HandlerLabel)) ^ "); the operand that",
+               "     says how long its list is, ~1 for none; and whether that operand",
+               "     names a primitive, whose arity it is: what reading the code back",
+               "     needs (UnitFile) *)",
+               "  val kindLabel = " ^ Int.toString (kindNumber (K Label)),
+               "  val kindHandlerLabel = " ^ Int.toString (kindNumber (K HandlerLabel)),
+               "  val operandKinds : int list vector = Vector.fromList ["
+               ^ commaList (List.map (fn i => "[" ^ commaList (List.map (fn (_, k) => Int.toString (kindNumber k)) (fixed i)) ^ "]") instrs)
+               ^ "]",
+               "  val listAt : int vector = Vector.fromList ["
+               ^ commaList (List.map (fn i => case list i of
+                                                SOME (_, Registers k) => Int.toString k
+                                              | SOME (_, PrimArgs k) => Int.toString k
+                                              | _ => "~1") instrs) ^ "]",
+               "  val listPrim : bool vector = Vector.fromList ["
+               ^ commaList (List.map (fn i => case list i of SOME (_, PrimArgs _) => "true" | _ => "false") instrs) ^ "]",
                "end"])}
     end
 

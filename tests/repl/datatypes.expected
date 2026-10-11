@@ -1,0 +1,11 @@
+- = datatype t = A | B of int * string | C of t list
+- val x = C [A, B (1, "a"), C []] : t
+- datatype 'a tree = Leaf | Node of 'a tree * 'a * 'a tree
+- val tr = Node (Node (Leaf, 1, Leaf), 2, Leaf) : int tree
+- val h = H 3 : hidden
+- structure S
+- val y = ? : t
+- val deep = [[[[[[[[[[[[[[[[[[[[...]]]]]]]]]]]]]]]]]]]] : int list list list list list list list list list list list list list list list list list list list list list list list list
+- val it = () : unit
+- val shallow = [[[...]]] : int list list list list
+- 

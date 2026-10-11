@@ -31,7 +31,11 @@ struct
                                               StringMap.empty ops,
                              literal = literal})
 
-  fun find (tycon : Types.tycon) : entry option = IntMap.find (!table, #stamp tycon)
+  (* what a lookup tells the cache: that the unit being compiled used the
+     type's overloading (UnitBasis sets it) *)
+  val used : (Types.tycon -> unit) ref = ref (fn _ => ())
+
+  fun find (tycon : Types.tycon) : entry option = (!used tycon; IntMap.find (!table, #stamp tycon))
 
   (* The kind of a type constructor, if it is an overloading type. *)
   fun kindOf tycon = case find tycon of SOME {kind, ...} => SOME kind | NONE => NONE

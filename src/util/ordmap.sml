@@ -23,6 +23,7 @@ sig
   val listItems : 'a map -> 'a list
   val listItemsi : 'a map -> (key * 'a) list
   val listKeys : 'a map -> key list
+  val firsti : 'a map -> (key * 'a) option   (* the binding of the least key *)
   val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
   val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
   val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
@@ -150,6 +151,9 @@ struct
   fun listItemsi m = foldri (fn (k, v, acc) => (k, v) :: acc) [] m
   fun listItems m = foldri (fn (_, v, acc) => v :: acc) [] m
   fun listKeys m = foldri (fn (k, _, acc) => k :: acc) [] m
+  fun firsti E = NONE
+    | firsti (T (_, E, k, v, _)) = SOME (k, v)
+    | firsti (T (_, l, _, _, _)) = firsti l
 
   fun app f m = foldl (fn (v, ()) => f v) () m
   fun appi f m = foldli (fn (k, v, ()) => f (k, v)) () m

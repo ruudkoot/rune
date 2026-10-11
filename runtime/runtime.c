@@ -254,6 +254,16 @@ int vm_raise_builtin(VM *vm, int k) {
     return vm_raise(vm, mk_ptr(e));
 }
 
+/* The user's interrupt, taken at a poll where vm_interrupted (D11): the
+   flag cleared and the exception rt_interrupt_catch gave raised, as RAISE
+   raises it, from the instruction the VM is at. The flag is set by no
+   handler but the one installed with the exception, so there is one. */
+int vm_interrupt(VM *vm) {
+    vm->interrupt = 0;
+    if (!vm->interrupt_exn) vm_fatal(vm, "an interrupt with no exception to raise");
+    return vm_raise(vm, mk_ptr(vm->interrupt_exn));
+}
+
 /* A program begins: the builtin exception constructors, then a frame for
    function 0 applied to unit, at its first instruction. What vm_run does
    before its loop, and what a program runeopt made does before its code. */
@@ -294,6 +304,7 @@ void vm_init(VM *vm, size_t heap) {
     vm->file_modes[1] = vm->file_modes[2] = 1;
     vm->nfiles = 3;
     if (!vm->stack_limit) vm->stack_limit = STACK_LIMIT_DEFAULT;
+    vm->unit_return = UINT32_MAX;
     heap_init(vm, heap);
 }
 
@@ -312,6 +323,10 @@ void vm_release(VM *vm) {
     free(vm->prog.inlines);
     free(vm->globals);
     free(vm->global_set);
+    for (uint32_t i = 0; i < vm->nunit_sessions; i++) free(vm->unit_sessions[i]);
+    free(vm->unit_sessions);
+    free(vm->unit_exports);
+    free(vm->unit_table);
     free(vm->stack);
     free(vm->frames);
     free(vm->handlers);

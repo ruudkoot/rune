@@ -1,0 +1,15 @@
+- = = val a = 10 : int
+- stdIn:1:9: error: function argument: type mismatch between int * int and int * string (type constructor mismatch: string vs int)
+- val c = 11 : int
+- val g = fn : int -> int
+- uncaught exception Fail: zero
+- stdIn:1:1: error: unbound variable or constructor: d
+- val n = ref 0 : int ref
+- uncaught exception Div
+- val it = 7 : int
+- val x = 1 : int
+- val h = fn : unit -> int
+- val x = "shadowed" : string
+- val it = 1 : int
+- val it = "shadowed" : string
+- 

@@ -9,8 +9,11 @@ struct
   fun join (a : span, b : span) : span =
     {file = #file a, start = Int.min (#start a, #start b), stop = Int.max (#stop a, #stop b)}
 
-  (* A loaded source file with a table of line start offsets. *)
-  type file = {name : string, text : string, lineStarts : int vector}
+  (* A loaded source file with a table of line start offsets; line is the
+     number, less one, of its first line in the file it is from: 0 for a
+     whole file, more for a part of one compiled on its own
+     (Compiler.compile). *)
+  type file = {name : string, text : string, lineStarts : int vector, line : int}
 
   fun computeLineStarts (text : string) : int vector =
     let
@@ -28,19 +31,30 @@ struct
     end
 
   fun fromString (name, text) : file =
-    {name = name, text = text, lineStarts = computeLineStarts text}
+    {name = name, text = text, lineStarts = computeLineStarts text, line = 0}
+
+  (* a part of a file that begins at its line `line` (from 1) *)
+  fun fromStringAt (name, text, line) : file =
+    {name = name, text = text, lineStarts = computeLineStarts text, line = Int.max (line - 1, 0)}
+
+  (* the text of a file that is other than the file system's: an editor's
+     buffer, which the compiler as a service compiles (Serve) *)
+  val overlays : string StringMap.map ref = ref StringMap.empty
 
   fun readFile (name : string) : file =
-    let
-      val ins = TextIO.openIn name
-      val text = TextIO.inputAll ins
-      val () = TextIO.closeIn ins
-    in
-      fromString (name, text)
-    end
+    case StringMap.find (!overlays, name) of
+      SOME text => fromString (name, text)
+    | NONE =>
+        let
+          val ins = TextIO.openIn name
+          val text = TextIO.inputAll ins
+          val () = TextIO.closeIn ins
+        in
+          fromString (name, text)
+        end
 
   (* 1-based line and column for a byte offset. *)
-  fun lineCol ({lineStarts, ...} : file, pos : pos) : int * int =
+  fun lineCol ({lineStarts, line = first, ...} : file, pos : pos) : int * int =
     let
       val n = Vector.length lineStarts
       fun search (lo, hi) =
@@ -51,7 +65,7 @@ struct
           end
       val line = search (0, n - 1)
     in
-      (line + 1, pos - Vector.sub (lineStarts, line) + 1)
+      (first + line + 1, pos - Vector.sub (lineStarts, line) + 1)
     end
 
   (* Registry of loaded files so that spans can be rendered anywhere. *)
@@ -62,6 +76,18 @@ struct
   val lastFile : (string * file) option ref = ref NONE
 
   fun register (f : file) = (files := StringMap.insert (!files, #name f, f); lastFile := NONE)
+
+  (* What a session that compiles one source after another (the REPL)
+     keeps of one it has compiled: its lines, to name the positions of its
+     spans, and not its text; and nothing of one it made for itself. *)
+  fun keepLines (name : string) =
+    case StringMap.find (!files, name) of
+      SOME {lineStarts, line, ...} =>
+        (files := StringMap.insert (!files, name, {name = name, text = "", lineStarts = lineStarts, line = line});
+         lastFile := NONE)
+    | NONE => ()
+  fun unregister (name : string) =
+    (files := (if StringMap.member (!files, name) then StringMap.remove (!files, name) else !files); lastFile := NONE)
 
   fun load (name : string) : file =
     let val f = readFile name in register f; f end

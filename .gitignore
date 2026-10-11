@@ -6,3 +6,10 @@ tests/out/
 runtime/version.h
 MLB/
 __pycache__/
+# the cache of compiled units, and the frozen Basis Library (docs/units.md, The cache)
+.rune/
+/lib/cache/
+# made from each library's library.build (rune --basis-index; make manifests)
+/lib/basis/MANIFEST
+/lib/random/MANIFEST
+/lib/test/property/MANIFEST

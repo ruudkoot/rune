@@ -1,0 +1,9 @@
+(* a session saved (Runtime.save) and restored: the world restored has what
+   was bound before the save, and reads its own input (session.then), not
+   what this one had read ahead *)
+val x = 42;
+datatype t = A | B of int;
+fun f n = B (n + x);
+val r = ref [1, 2];
+val w = Runtime.save (valOf (OS.Process.getEnv "RUNE_REPL_OUT") ^ "/session.img");
+val y = "after the save";

@@ -1,0 +1,16 @@
+(* the Definition's Chapter 8: a declaration that fails is skipped, one that
+   raises keeps its effects and binds nothing *)
+val a = 10;
+val b = a + "x";
+val c = a + 1;
+fun g 0 = raise Fail "zero" | g n = n;
+val d = g 0;
+d;
+val n = ref 0;
+val _ = (n := 7; raise Div);
+!n;
+val x = 1;
+fun h () = x;
+val x = "shadowed";
+h ();
+x;

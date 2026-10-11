@@ -152,6 +152,89 @@ The loader rejects files with unknown opcodes, truncated instructions, jump
 targets that are not instruction boundaries, and out-of-range constant, global,
 function, local, primitive or builtin-exception operands.
 
+### Units (`.rbu`)
+
+A unit's file ([units.md](units.md)) is the code of one unit, numbered
+from 0 as a program's is, and what a linker needs to put it beside the
+units before it. `rune --units --emit-units DIR` writes one per unit;
+`rune -o P.rbc` given unit files, in order, links them into the program
+`rune --units` makes of the same sources, byte for byte (`make
+check-units`).
+
+```
+magic       4 bytes   "RUNU"
+version     u32       2
+fingerprint u32       of the instruction set its code is of
+kind        u32       0: bytecode of that set (native code later)
+identity    len u32, bytes   the unit's identity (below)
+nunits      u32
+units       nunits × { len u32, bytes }   the identities of the units it names
+            ... a program's file from nconsts to the representations section,
+                its functions, globals, constants, labels, files and inlined
+                frames the unit's own, numbered from 0 ...
+globals     nglobals × key        the name of each global it names, by index
+nimports    u32
+imports     nimports × { index u32, key }   a function of a unit before it, by its index here;
+                                            the unit's own place and number -1: the next unit's top level
+nexports    u32
+exports     nexports × { number u32, index u32 }   its functions another unit may call by name
+key         { place u32, number i32 }   a unit's place among those named, 0 being the unit itself,
+                                        and the name's number there
+```
+
+A unit names what units declared by a *key*: the identity of the unit that
+declared it and the number the unit's basis gave it
+([units.md](units.md), *Names*). The identity is the unit's name and the
+hash of its basis, so that a unit names the same things whatever was
+compiled before it, and a unit compiled in one compile links with units
+of another. The globals whose key is the unit's own are those it sets. A
+unit's function 0 is its top level, which ends in a tail call of the next
+unit's; a unit's other functions follow it, and an index past them names
+an import.
+
+### The units section of a program
+
+A program that `rune --units` linked from units ends, after its
+representations section, with what each of its units exports, so that a
+unit loaded into it while it runs (`Runtime.load`, a dynamic module:
+[units.md](units.md), *Dynamic modules*) can name them by the units'
+identities, as it names those of units loaded before it. A program
+compiled whole has none, and its file ends with the representations
+section; a VM that reads one stops there too.
+
+```
+nunits      u32
+units       nunits × { identity: len u32, bytes;
+                       nexports u32;
+                       exports nexports × { kind u32, number u32, index u32 } }
+            kind 0 a function, by its index in the program; 1 a global
+```
+
+### A unit's basis (`.rbi`)
+
+Beside its code, `--emit-units` writes each unit's basis, what the
+compiles after it need of it ([units.md](units.md), *The export basis*):
+
+```
+used        3 × varint   what the unit's compile used of each kind of name
+source      varint len, bytes   the hash of its source
+magic       3 bytes   "RBI"
+version     varint    1
+name        varint len, bytes   the unit's name
+units       varint n, n × string   the identities of the units it names
+counts      3 × varint   its own names of each kind
+            ... the fixity directives, the environment, the signatures,
+                functors and overloading it declared, and the tables of its
+                own names, each name of a kind written as built in, the
+                unit's own (a number), or another unit's (its place, a
+                number) ...
+```
+
+Numbers are varints (seven bits a byte, the high bit set where another
+follows; an integer zigzagged). The identity of the unit is its name and
+the hash of the bytes from `magic` on; what comes before them is not part
+of it.
+
 ## Values
 
 Every value is one 64-bit word ([runtime.md](runtime.md), *Values and
@@ -288,7 +371,9 @@ refuses the other's file and image.
   which `scripts/check-register.sh` holds `tests/opt/prims.sml` to on both VMs.
 * **A primitive that saves or restores an image** (`rt_save`, `rt_restore`,
   `posix_fork`) is `PRIMPUSH` and `RESULT`, so that a program resumed from
-  an image finds its result where `RESULT` takes it.
+  an image finds its result where `RESULT` takes it; so is `rt_link`, which
+  grows the program, so that the loop and compiled code hand the VM to the
+  driver after it and the JIT's view of the program is made again.
 * **The JIT** (`docs/plans/jit.md`; `runtime/register/README.md`, The driver
   and Tier 1): `--jit=off|baseline|opt|all` says which functions get
   native code (`RUNEVM_JIT=MODE` in the environment where no `--jit=` is
@@ -368,7 +453,7 @@ raised as noted.
 | Polymorphic | `poly_eq` (structural equality; refs/arrays/closures by identity), `ptr_eq` (identity), `exn_name` (the constructor name of an exception value), `imm_eq` (the equality of two values never in the heap -- ints, words, chars, nullary constructors of a type that has no other -- by tag and bits, which the compiler makes of `poly_eq` where it knows the type is one of those) |
 | System (`runtime/sys/sys.h`, ISO C99 core plus `runtime/sys/sys_posix.c`, `runtime/sys/sys_win.c` or `runtime/sys/sys_none.c`) | `sys_errno sys_error_msg sys_error_name sys_error_of_name` (the last failure, its text and its POSIX name), `time_now time_user time_sys time_sleep` (microseconds), `time_gc_user time_gc_sys` (the processor time the collector has taken, which the VM adds up around every collection, for `Timer.checkCPUTimes` and `checkGCTime`), `date_parts date_seconds date_offset date_format` (broken-down time as a nine-element `int list`: second, minute, hour, day, month 0–11, year − 1900, weekday, day of the year, daylight saving; `date_format` is `strftime` in the C locale, written in the core so that it is the same everywhere, which asks the system only for the name of the local zone), `os_system os_getenv`, the file system (`os_mkdir os_rmdir os_chdir os_getcwd os_remove os_rename os_access os_file_kind os_link_kind os_file_size os_mod_time os_set_time os_read_link os_real_path os_tmp_name os_file_id`), directories (`os_open_dir os_read_dir os_rewind_dir os_close_dir`) and descriptors (`os_desc_kind os_poll`). POSIX itself: `posix_const` gives the value of a named constant (an errno, a signal, a flag of `open`, a bit of a file mode), and the rest are the calls behind `Posix` (`posix_fork posix_exec posix_exece posix_waitpid posix_kill posix_alarm posix_pause posix_exit`, the last ending the process with nothing flushed; where the system has no fork, `posix_fork` starts a second VM and hands it this one's state (`runtime/image.c`); `posix_spawn` starts a program with three descriptors as its standard streams, as fork, dup2 and exec would, without the fork (`Unix.execute`); `posix_lock` is `fcntl` with a `struct flock` (the locks of `Posix.IO`), `posix_pathconf` is `pathconf`/`fpathconf` with the limit named without its `_PC_` prefix, and `posix_utime` sets both times of a file; `posix_tcgetattr`, `posix_tcsetattr` and `posix_tcop` are the calls on a terminal (`Posix.TTY`), the process and user numbers (`posix_getpid posix_getppid posix_getuid posix_geteuid posix_getgid posix_getegid posix_setuid posix_setgid posix_getgroups posix_getlogin posix_getpgrp posix_setsid posix_setpgid`), `posix_uname posix_times posix_environ posix_ctermid posix_ttyname posix_isatty posix_sysconf`, `posix_openf posix_close posix_dup posix_dup2 posix_pipe posix_read posix_write posix_lseek posix_fsync posix_fcntl posix_ftruncate posix_stat posix_chmod posix_chown posix_link posix_symlink posix_mkfifo posix_umask posix_getpw posix_getgr`). Sockets: `socket_create socket_pair socket_bind socket_connect socket_listen socket_accept socket_send socket_sendto socket_recv socket_recvfrom socket_shutdown socket_name socket_peer socket_getopt socket_setopt`, the addresses (`socket_inet_addr socket_unix_addr socket_addr_family socket_inet_parts socket_unix_path`, which keep an address as the bytes of a `sockaddr`, with `socket_inet6_addr` and `socket_inet6_parts` for the `sockaddr_in6` of IPv6 (`INet6Sock`)), the options that are no `int` (`socket_linger`, a `struct linger`; `socket_query`, `FIONREAD` and `sockatmark`) and the databases (`netdb_host_byname netdb_host_byaddr netdb_hostname netdb_proto_byname netdb_proto_bynumber netdb_serv_byname netdb_serv_byport`). A call that fails gives `~1`, or `""` or `[]`, and leaves the reason in `sys_errno` |
 | Windows (`lib/basis/windows.sml`; `runtime/sys/sys_win.c`, `ENOSYS` on every other system) | The registry (`win_reg_open win_reg_close win_reg_delete win_reg_enum win_reg_query win_reg_set`, a key being a number of the system layer, the seven at the roots 0 to 6), the machine (`win_config win_version win_volume`), the shell (`win_find_executable win_shell_execute`), programs started with one command line (`win_spawn`) and waited for with the whole code they end with (`win_wait`), and dynamic data exchange (`win_dde_start win_dde_execute win_dde_stop`) |
-| Runtime (`lib/basis/runtime.sml`) | The counters the VM keeps for the program it runs, each reading one field and allocating nothing: `rt_instructions` (what `--count` prints), `rt_bytes` and `rt_objects` (allocated since the start, collected or not), `rt_collections`, `rt_live` (the bytes of objects in the heap) and `rt_heap_size` (the heap's size), and of the collections `rt_minor_collections`, `rt_major_collections` (of the whole heap: full collections and the low-pause collector's cycles) and `rt_promoted` (the bytes minor collections promoted); `rt_collect`, which collects the heap on demand; and `rt_version`, the version the VM was built as, which `--version` prints and `scripts/gen-version.sh` writes from git into `runtime/version.h` and `build/config.sml` alike; `rt_trace` gives the frames of the call stack, innermost first, leaving out the innermost n of them, each as its function's name and the position it is stopped at (the line table above); `rt_save` writes the whole VM to a file for `runevm-stack --restore`, and `rt_restore` makes this VM become the world in such a file, bytecode and all, so that it does not come back (`runtime/image.c`) |
+| Runtime (`lib/basis/runtime.sml`) | The counters the VM keeps for the program it runs, each reading one field and allocating nothing: `rt_instructions` (what `--count` prints), `rt_bytes` and `rt_objects` (allocated since the start, collected or not), `rt_collections`, `rt_live` (the bytes of objects in the heap) and `rt_heap_size` (the heap's size), and of the collections `rt_minor_collections`, `rt_major_collections` (of the whole heap: full collections and the low-pause collector's cycles) and `rt_promoted` (the bytes minor collections promoted); `rt_collect`, which collects the heap on demand; `rt_share`, which makes the heap's equal immutable objects one and gives the bytes it freed ([runtime.md](runtime.md), *Sharing*); `repl_printer_add`, `Compiler.addPrettyPrinter`, which does nothing where it is run, since the REPL's compiler makes each application of it a call of `RuneShow.addPrinterAt` with the name of the type ([repl.md](repl.md), *Printers of one's own*); `unsafe_cast`, its argument at any type, which the library alone uses, to keep the printers of every type in one table; and `rt_version`, the version the VM was built as, which `--version` prints and `scripts/gen-version.sh` writes from git into `runtime/version.h` and `build/config.sml` alike; `rt_trace` gives the frames of the call stack, innermost first, leaving out the innermost n of them, each as its function's name and the position it is stopped at (the line table above); `rt_save` writes the whole VM to a file for `runevm-stack --restore`, and `rt_restore` makes this VM become the world in such a file, bytecode and all, so that it does not come back (`runtime/image.c`); `rt_link` appends the unit whose file's bytes it is given to the program and gives `SOME` of the closure of its top level, or `NONE`, `rt_link_error` saying why ([runtime.md](runtime.md), *Loading a program*); `rt_interrupt_catch` makes the user's interrupt raise the exception it is given, `rt_interrupt_mask` defers it, and `rt_interrupt_is` tells that exception from others, for the streams that pass it on ([runtime.md](runtime.md), *Interrupts*) |
 | Real, from the C library (ISO C99) | `real_floor_r real_ceil_r real_trunc_r real_round_r` (integral reals; `real_round_r` rounds ties to even in every rounding mode), `real_sign_bit`, `real_copy_sign`, `real_to_bits real_from_bits` (the 64 bits of IEEE 754 binary64 as a `Word64.word`, for `PackReal`), `real_to_single real_single_from_string` (rounding to IEEE 754 binary32 and C `strtof`, for `Real32`), `real_frexp_man real_frexp_exp real_ldexp` (`frexp`, `ldexp`), `real_next_after`, `real_rem` (`fmod`), `real_fmt_e real_fmt_f` (`printf` `%.*e` and `%.*f` of a finite real; `Size` for a precision that is negative or above 100000), `real_shortest` (the `%.*e` text with the fewest digits that reads back as the same real), `real_set_round real_get_round` (0 nearest, 1 downward, 2 upward, 3 toward zero), `real_sinh real_cosh real_tanh` |
 | Int (63 bits, the VM's immediate; `Overflow` checked) | `int_add int_sub int_mul int_div int_mod int_quot int_rem int_neg int_abs int_lt int_le int_gt int_ge int_order int_to_string int_from_string int_to_char int_to_real` — `int_div/int_mod` floor, `int_quot/int_rem` truncate, both raise `Div` on zero; `int_to_char` raises `Chr`; `int_order` gives `LESS`, `EQUAL` or `GREATER`, and so do `word_order`, `char_order` and `string_order`, which `compare` of each structure is bound to |
 | Word (63 bits, wrapping) | `word_add word_sub word_mul word_div word_mod word_lt word_le word_gt word_ge word_order word_neg word_andb word_orb word_xorb word_notb word_lsl word_lsr word_to_int word_to_int_x word_from_int word_to_string` — `word_div/word_mod` raise `Div`; `word_to_int` raises `Overflow`; `word_to_string` is uppercase hex |
@@ -451,7 +536,17 @@ raised as noted.
   `bin/runevm-stack32.exe`. What the system layer holds -- a socket, a directory
   stream, a pipe -- goes to a fork's child and not into a file, so a restored
   world does not have them; the files the program opened come back by name,
-  put where they were left (`tests/lang/rt.save_restore`);
+  put where they were left (`tests/lang/rt.save_restore`). Its arguments
+  (`CommandLine.arguments`) are those it was saved with, unless the command
+  line gives others after `FILE` -- or `--`, after which even none are
+  others: `runevm --restore FILE -- A B` restores a world whose arguments
+  are `A` and `B`, which is how `bin/rune-repl` starts the REPL from its
+  boot image ([repl.md](repl.md)); `--` ends `runevm`'s options anywhere;
+* `runevm --name NAME file.rbc` runs the program as `NAME`, which
+  `CommandLine.name` gives rather than the file's: a script that runs a
+  `.rbc` as a command of its own gives its own path, as `exec -a` would to
+  an executable. With `--restore` it takes the
+  place of the name the world was saved with (`tests/lang/rt.args_name`);
 * `rune --dump-code file.sml` prints the generated code with symbolic labels
   before serialization; `--dump-lambda` prints the intermediate representation.
 

@@ -179,6 +179,7 @@ CASE(CALL) {
     TRACE(OP_CALL, 0, 0);
     pc += 1;
     count++;
+    POLL();
     Value arg = POP();
     Value cv = POP();
     Obj *c = EXPECT(cv, K_CLOSURE, "closure in call");
@@ -199,6 +200,7 @@ CASE(TAILCALL) {
     TRACE(OP_TAILCALL, 0, 0);
     pc += 1;
     count++;
+    POLL();
     Value arg = POP();
     Value cv = POP();
     Obj *c = EXPECT(cv, K_CLOSURE, "closure in call");
@@ -235,6 +237,7 @@ CASE(JUMP) {
     TRACE(OP_JUMP, a, 0);
     pc += 5;
     count++;
+    if ((uint32_t)a < PC) { POLL(); }   /* a jump back is a loop's */
     JUMP_TO(a);
     NEXT;
 }
@@ -374,6 +377,7 @@ CASE(CALLK) {
     TRACE(OP_CALLK, a, b);
     pc += 9;
     count++;
+    POLL();
     Function *fn = &p->funcs[a];
     size_t at = (size_t)(sp - vm->stack) - (size_t)b;
     vm_push_frame(vm, (uint32_t)a, NULL, PC, at);
@@ -406,6 +410,7 @@ CASE(TAILCALLK) {
     TRACE(OP_TAILCALLK, a, b);
     pc += 9;
     count++;
+    POLL();
     Function *fn = &p->funcs[a];
     size_t at = FRAME->base;
     size_t from = (size_t)(sp - vm->stack) - (size_t)b;

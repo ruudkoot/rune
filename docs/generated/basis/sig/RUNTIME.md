@@ -6,8 +6,8 @@
 | --- | --- |
 | Status | extension |
 | Implementations | 1 |
-| Documentation | 12 of 12 entries documented |
-| Tests | 39 checks of 9 entries |
+| Documentation | 17 of 17 entries documented |
+| Tests | 47 checks of 14 entries |
 | Source | [lib/basis/runtime\_sig.sml](../../../../lib/basis/runtime_sig.sml) |
 
 ## Synopsis
@@ -19,7 +19,7 @@ structure Runtime : RUNTIME  (* extension *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`Runtime`](../str/Runtime.md) | Runtime: the VM's view of the running program -- its counters, its call stack, the identity of objects, and saving and restoring the whole of it. It is Rune's own and not of the specification. | [lib/basis/runtime.sml](../../../../lib/basis/runtime.sml) |
+| [`Runtime`](../str/Runtime.md) | Runtime: the VM's view of the running program -- its counters, its call stack, the identity of objects, saving and restoring the whole of it, units appended to it, and the user's interrupt. It is Rune's own and not of the specification. | [lib/basis/runtime.sml](../../../../lib/basis/runtime.sml) |
 
 What a program can ask about the machine it is running on: how much work it
 has done, and how much memory that took.
@@ -53,6 +53,7 @@ sig
   val <a href="#val-stats">stats</a> : unit -&gt; stats
   val <a href="#val-profile">profile</a> : (unit -&gt; 'a) -&gt; 'a * stats
   val <a href="#val-collect">collect</a> : unit -&gt; unit
+  val <a href="#val-share">share</a> : unit -&gt; int
   type <a href="#type-frame">frame</a> = { <a href="#fld-frame.function">function</a> : string, <a href="#fld-frame.file">file</a> : string, <a href="#fld-frame.line">line</a> : int, <a href="#fld-frame.column">column</a> : int }
   val <a href="#val-trace">trace</a> : unit -&gt; frame list
   val <a href="#val-printtrace">printTrace</a> : TextIO.outstream -&gt; unit
@@ -60,6 +61,10 @@ sig
   datatype <a href="#type-world">world</a> = <a href="#con-saved">Saved</a> | <a href="#con-restored">Restored</a>
   val <a href="#val-save">save</a> : string -&gt; world
   val <a href="#val-restore">restore</a> : string -&gt; 'a
+  val <a href="#val-link">link</a> : Word8Vector.vector -&gt; unit -&gt; unit
+  val <a href="#val-load">load</a> : string -&gt; unit -&gt; unit
+  val <a href="#val-catchinterrupt">catchInterrupt</a> : unit -&gt; bool
+  val <a href="#val-maskinterrupt">maskInterrupt</a> : bool -&gt; bool
   val <a href="#val-version">version</a> : string
 end
 </pre>
@@ -193,6 +198,40 @@ For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml)
 
 </details>
 
+### <a name="val-share"></a>`share`
+
+```sml
+val share : unit -> int
+```
+
+`share ()` makes the equal immutable values of the heap one object
+each, and is the bytes it freed.
+
+It is what Poly/ML's PolyML.shareCommonData does before a heap is
+saved.
+
+Equal is as `=` has it, at any type: tuples, records, vectors and
+values of a datatype whose fields are equal, strings of the same
+characters, reals of the same bits, exception values of the same
+constructor and argument. A `ref`, an `array`, a function and an
+exception constructor keep their identity. A program that builds the
+same values again and again --
+terms, types, environments -- keeps one of each, the more so in an
+image [`save`](#val-save) writes after it.
+
+It collects first and after, and it needs memory of its own about the
+number of objects times 24 bytes; where it cannot have it, it shares
+nothing and is 0. Nothing an SML program can see changes but [`same`](#val-same),
+which may now say of two equal values that they are one.
+
+**Example** `share () >= 0 = true`
+
+<details><summary>Tests (3)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `equal-values-become-one` &middot; `a-ref-keeps-its-identity` &middot; `while-a-vector-is-made`
+
+</details>
+
 ### <a name="type-frame"></a>`frame`
 
 ```sml
@@ -270,7 +309,7 @@ the comparison is of the values themselves, so `same (1, 1)` is true and
 `same (0.0, ~0.0)` is false because the two are different reals. Of the
 rest, whether two equal values are one object is whatever the compiler
 shared: two equal string constants are one, and two lists written
-separately are two.
+separately are two, until [`share`](#val-share) makes them one.
 
 **Example** `let val r = ref 0 in same (r, r) end = true`
 
@@ -307,11 +346,15 @@ call, where it is [`Restored`](#con-restored): one call and two worlds, as
 [`Posix.Process.fork`](../sig/POSIX_PROCESS.md#val-fork) gives a pid to one process and 0 to another. The
 file is not used up by being restored.
 
-What is written is everything the program is made of -- the heap, the
-stacks, the counters, and the files it has open, which are opened again
+What is written is everything the program is made of -- the heap,
+collected first ([`collect`](#val-collect)) so that it is the live data and no more,
+the stacks, the counters, and the files it has open, which are opened again
 by name and put back where they were left. What belongs to the process
 rather than to the program is not: a socket, a directory stream and a
-pipe are the system's, and a restored world does not have them.
+pipe are the system's, and a restored world does not have them. Nor is
+what the program read ahead of its standard input and has not taken:
+[`TextIO.stdIn`](../sig/TEXT_IO.md#val-stdin) in the restored world reads that world's standard input
+from where it begins.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the image cannot be written.
 
@@ -355,6 +398,120 @@ Nothing written after the call is reached.
 <details><summary>Tests (3)</summary>
 
 For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `a-file-that-is-not-an-image` (raises) &middot; `a-file-that-is-not-there` (raises) &middot; `leaves-this-world-running`
+
+</details>
+
+### <a name="val-link"></a>`link`
+
+```sml
+val link : Word8Vector.vector -> unit -> unit
+```
+
+`link bytes` appends to the running program the unit that `bytes` is
+the file of, and is the function that runs the unit's top-level
+declarations.
+
+A unit is a file of a program compiled a file at a time
+(`rune --units --emit-units DIR`, docs/units.md): its code, and what it
+names of the units compiled before it. Those must have been linked
+first; what the unit names is found among what they declared, and its
+code is checked as the VM checks a program's file. Nothing runs until
+the function is called, and calling it again runs the declarations
+again. A unit linked twice is two units, each with globals of its own;
+the units linked after it see the second.
+
+> **Implementation** `RUNTIME.link/the-last-unit-returns`. The top level of
+> a unit compiled with others ends by calling the next one's; linked
+> here, it returns to the caller instead.
+
+**Raises** [`Fail`](../sig/GENERAL.md#exn-fail) if `bytes` is not a unit's file, is of another
+instruction set, or names what no unit linked before it declared;
+the message says which.
+
+<details><summary>Tests (1)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `bytes-that-are-no-unit` (raises)
+
+</details>
+
+### <a name="val-load"></a>`load`
+
+```sml
+val load : string -> unit -> unit
+```
+
+`load file` is [`link`](#val-link) of what `file` holds.
+
+**Raises** [`IO.Io`](../sig/IO.md#exn-io) if the file cannot be read, and [`Fail`](../sig/GENERAL.md#exn-fail) as [`link`](#val-link)
+does.
+
+<details><summary>Tests (1)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `a-file-that-is-not-there` (raises)
+
+</details>
+
+### <a name="val-catchinterrupt"></a>`catchInterrupt`
+
+```sml
+val catchInterrupt : unit -> bool
+```
+
+`catchInterrupt ()` makes Ctrl-C, the user's interrupt, raise
+[`SML90.Interrupt`](../sig/SML90.md#exn-interrupt) in the program from now on rather than end it.
+
+It is true; it is false where the system has no interrupt to catch,
+and the program goes on as before. The exception is raised where the
+program next jumps back, as a loop does, or calls a function, or in a
+read from a terminal that the interrupt cuts short, as a `raise` there
+would raise it: the handlers, the frames and [`trace`](#val-trace) are what they
+would be. A primitive that is running finishes first. The interrupt is
+caught even where the program was started with it ignored, as a shell
+starts one in the background, and a world started from an image that
+[`save`](#val-save) wrote catches it as the program that saved it did.
+
+> **Implementation** `RUNTIME.catchInterrupt/polled`. The VM looks at the
+> interrupt at a jump back and at a call, in the interpreters and in the
+> code the JIT makes; the code of `runeopt` does not, and an interrupt
+> never comes to it.
+
+<details><summary>Tests (1)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `caught-where-the-system-has-one`
+
+</details>
+
+### <a name="val-maskinterrupt"></a>`maskInterrupt`
+
+```sml
+val maskInterrupt : bool -> bool
+```
+
+`maskInterrupt b` says whether an interrupt waits rather than being
+raised, and is what it said before.
+
+From `maskInterrupt true` on, one waits until `maskInterrupt false`,
+which raises it, if one came, as it returns. A section that an
+interrupt must not cut in two is
+
+```sml
+let val was = maskInterrupt true
+in (f () before ignore (maskInterrupt was))
+   handle e => (ignore (maskInterrupt was); raise e)
+end
+```
+
+The mask is off when a program starts, and a world started from an
+image has the mask its program had.
+
+**Raises** [`SML90.Interrupt`](../sig/SML90.md#exn-interrupt), from `maskInterrupt false`, where one
+waited.
+
+**Example** `maskInterrupt (maskInterrupt true) = true`
+
+<details><summary>Tests (2)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `gives-back-what-it-was` &middot; `with-nothing-waiting-raises-nothing`
 
 </details>
 

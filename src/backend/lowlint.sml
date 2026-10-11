@@ -44,7 +44,10 @@ struct
         List.foldl (fn ({id, ncaptured, ...} : func, m) => IntMap.insert (m, id, ncaptured)) IntMap.empty p
       fun known (where', f, args) =
         case IntMap.find (arity, f) of
-          NONE => bug (where' ^ ": a known call of no function f" ^ Int.toString f)
+          NONE =>
+            (* in a unit, a function of a unit before it, or the next unit's top
+               level (Lower.imported) *)
+            if !Pass.whole then bug (where' ^ ": a known call of no function f" ^ Int.toString f) else ()
         | SOME n =>
             if n = List.length args then ()
             else bug (where' ^ ": f" ^ Int.toString f ^ " of " ^ Int.toString n ^ " parameters given "
