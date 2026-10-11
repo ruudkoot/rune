@@ -634,3 +634,50 @@ Neither entry fits there; an alternative by the name the signature gives
 each type would. MLKit's are its own types (its `LargeIntArray`
 holds `Word64.word`; `LargeIntVector/elem-is-Word64`) and the structures it
 lacks. The 32-bit SML/NJ's programs still stop as they load (above).
+
+## `Position` and `SysWord`, types of their own (2026-10-11)
+
+The fourteen laws that no host but Rune built were all of `Position.int`
+and `SysWord.word`, which Rune made `int` and `word`. The specification
+makes them the same as nothing: "The type Position.int is used to represent
+positions in files and I/O streams", and "The type SysWord.word is
+guaranteed to be large enough to hold any unsigned integral value used by
+the underlying system", which on a 64-bit system has 64 bits, so Rune's
+63-bit `SysWord` was too small. MLton (`Position` is `Int64`, `SysWord`
+`Word64`), SML/NJ (`Int64`, a 64-bit word of its own) and Poly/ML
+(`LargeInt`, `LargeWord`) keep both apart from `Int` and `Word`; MLKit,
+like Rune before, does not. The owner decided to keep them apart:
+`Position :> INTEGER = Int64` and `SysWord :> WORD = Word64`, each a type
+of its own of 64 bits, whose constants are converted where they are
+evaluated (commit `5abdae70`). The Basis converts where the VM's ints and
+words meet them; the Basis suite (139,221 checks), the examples and the
+laws pass, and the generators' hash is renewed for P1 (without the two
+types it is unchanged).
+
+D10 with them:
+
+| Host | Pass (before) | Fail | Flaky | Stopped | Not built (before) | By their alternatives | Not explained |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| MLton | 1,721 (1,707) | 16 | 0 | 0 | 5 (19) | 153 | 0 |
+| SML/NJ 110.99.9, 64 bits | 586 (571) | 28 | 12 | 55 | 1,061 (1,075) | 0 | 0 |
+| SML/NJ 110.99.9, 32 bits | 0 (0) | 0 | 0 | 0 | 1,061 (1,061) | 0 | 0 |
+| SML/NJ 2026.2 | 622 (609) | 26 | 0 | 33 | 1,061 (1,075) | 0 | 0 |
+| Poly/ML 5.9.2 | 728 (715) | 13 | 0 | 6 | 995 (1,009) | 0 | 1 |
+| MLKit 4.7.23 | 1,447 (1,447) | 17 | 0 | 0 | 278 (278) | 0 | 0 |
+
+Every law not built on MLton, SML/NJ and Poly/ML is now of a structure the
+host lacks (on Poly/ML `INet6Sock` too, whose arbitrary it cannot build).
+
+**For the owner: `wordToFD`.** The law `fdToWord (wordToFD w) = w`, for
+`SysWord.<= (w, SysWord.fromInt (valOf Int.maxInt))`, newly built on
+Poly/ML, fails there at `w = 0wx80000000`, which comes back as
+`0wxFFFFFFFF80000000`. Poly/ML and MLton keep a descriptor in a C `int` of
+32 bits, so a word of 2^31 or more wraps; MLton passes only because its
+`Int.maxInt` is 2^31 - 1, and SML/NJ, MLKit and Rune keep the word. A
+descriptor of POSIX is a C `int`, and the condition was written to Rune's,
+which is an `int` of 63 bits: the law asks more than the specification of
+words that are no descriptor. Holding `w` to what a descriptor can be
+(`SysWord.<= (w, 0wx7FFFFFFF)`) would state it for every implementation;
+the laws of `wordToPid` (a C `int` too), `wordToUid` and `wordToGid` (32
+bits without sign) have the same condition. Until the owner decides, the
+difference is not explained.
