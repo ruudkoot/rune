@@ -502,10 +502,12 @@ differences are not explained.
 **MLton's `canInput` after a read through `getInstream`.** Once the
 functional stream of `getInstream f` has been read to its end,
 `TextIO.canInput (f, 1)` is `SOME 0`, though `input f` still gives what `f`
-holds and `StreamIO.canInput (getInstream f, 1)` is `SOME 1` (the same for
-`BinIO.openIn` of a file; every other compiler and Rune give `SOME 1`). The
-law met it only through the tester's fault below; mended, no law reaches
-it, and it is kept here for a report.
+holds (the same for `BinIO.openIn` of a file; every other compiler and Rune
+give `SOME 1`). The fault is in MLton's `StreamIO.canInput`, which gives
+`SOME 0` of that stream too: its report,
+`docs/bugreport/mlton/TextIO.StreamIO.canInput/SOME-0-on-determined-stream`,
+finds it fixed upstream since (MLton PR #656, in no release yet). The law
+met it only through the tester's fault below; mended, no law reaches it.
 
 **The tester.** `Prop.law` and `Prop.equalIf` showed the left side's value
 before the sides ran, and showing a stream reads it through `getInstream`:
@@ -540,3 +542,91 @@ the arbitraries of numbers, with `Domain` from `Gen.largeRange`: there
 `Word64.notb 0w0` is 18446744070488326143, not 2^64 - 1 (bits 30 and 31
 lost, `tests/lib/deviations.txt`), so the widest range `Gen` allows is too
 narrow.
+
+## The owner's decisions (2026-10-11)
+
+The owner asked for three things: the hosts' bugs filed under
+`docs/bugreport`, the law of `canInput` restated, and a law program for
+each host.
+
+**The bug reports.** Each bug the hunt found on another compiler is a
+report in `docs/bugreport/HOST/`, in the form of those already there: a
+program that shows it with the host's own Basis Library, its output on
+every build, the cause in the host's sources, a fix and how it was checked
+(no compiler was rebuilt; the patched code was run on the release), and
+what the host's tracker has of it. Nothing was posted. The lines of
+`tests/basis/law-deviations.txt` name their reports.
+
+| Host | Report | Upstream |
+|---|---|---|
+| MLton | `Posix.TTY.getlflag/returns-oflag` | not reported; so since 2001 |
+| MLton | `Date.date/Overflow-not-Date` | not reported |
+| MLton | `Date.toTime/offset-read-at-zone-offset-of-now` | not reported; `master` has a regression of its own (PR #654) |
+| MLton | `TextIO.StreamIO.canInput/SOME-0-on-determined-stream` | fixed (PR #656), in no release yet |
+| Poly/ML | `Array2.dimensions/no-rows-Subscript` | not reported |
+| Poly/ML | `IntInf/shift-right-rounds-towards-zero` | polyml#243, fixed on `master` |
+| MLKit | `IntInf/shift-right-rounds-towards-zero` | not reported |
+| MLKit | `IntInf/shift-right-by-30-or-more` (found on the way: any `~>>` by 30 or more bits gives 0) | not reported |
+| MLKit | `Socket.SOCK.toString/raw-is-RAM` | not reported |
+| MLKit | `Date.date/Overflow-not-Date` | not reported |
+| MLKit | `Date.toTime/before-1970`, extended (London in 1970) | not reported |
+| MLKit | `IntInf.toInt` is `Time.toSeconds/beyond-2^31-seconds`, already there | mlkit#230, fixed (PR #234) |
+| MLKit | `getgrgid` and `getpwuid` are `Posix.SysDB.getpwuid/untagged-results`, already there | not reported |
+| SML/NJ | `General.exnMessage/name-missing` | not reported |
+| SML/NJ | `OS.Path.splitBaseExt/empty-arc-dropped` (more than `"//"`) | not reported |
+| SML/NJ | `Int.scan/whitespace-vt-ff-cr` | `skipWS` is smlnj#447, fixed; the scanners of integers not reported |
+| SML/NJ | `TextIO.inputAll/empty-stream-Div` | smlnj#449, fixed in both lines |
+| SML/NJ | `Int32.abs/minInt-on-64-bit` | smlnj#444, fixed in the 2026 line only |
+| SML/NJ | `Date.toTime/local-offset-applied` | in part smlnj#452 (2026.3) |
+| SML/NJ | `TextIO.canInput/loses-input` | not reported (below) |
+
+The law of `toTime (fromTimeUniv t)` failed at the epoch on three of them
+for one reason in three forms: the United Kingdom kept UTC+1 all year from
+1968-10-27 to 1971-10-31, and MLton, MLKit and SML/NJ each convert a date
+at an offset through the zone's offset of another day, so a date of 1970
+comes out an hour early, the epoch before itself, and `Date` is raised.
+Poly/ML and Rune convert by the calendar. Some older reports' Status lines
+are behind their trackers (MLKit's #230 to #233, closed by PR #234; MLton's
+#658, closed): they are left for the owner.
+
+**`canInput` restated.** As the owner decided, the laws are what the
+definition promises of any implementation: `SOME k` with `k <= n` means
+that `k` elements can be read (by `input1`), and `canInput` is `NONE`
+exactly when the stream's is. Rune's full count is its reading,
+`IMPERATIVE_IO.canInput/counts-the-stream`, pinned by an example of
+`TextIO.canInput`. Choosing the laws found two more bugs. SML/NJ's
+`canInput` loses input: after `canInput (TextIO.openString "ab", 5)`,
+which is `SOME 2`, `input` gives `""`, as each chunk read is linked to the
+stream's first buffer in place of the one before it (and the count comes
+back short). MLton's `StreamIO.canInput` is `SOME 0` of a stream whose
+buffer is spent and whose next one is read (above). The laws hold on MLton,
+Poly/ML, MLKit and Rune; on SML/NJ they cannot be made, its `inputAll` of
+an empty stream raising `Io`.
+
+**A program for each host.** `runedoc --laws` writes, beside each program,
+the alternative entry of each law that draws its types by the arbitraries
+of its structure's own family (`Real64VectorArb` for
+`Real64Vector.vector`, `PositionArb` for `Position.int`), where Rune's
+types are one and the entry takes another's (`LargeRealVectorArb`,
+`IntArb`). The runner builds each host a program of its own: a law's entry,
+or its alternative where the host lacks what the entry names or the entry
+does not build there. Rune's programs are as before. The run, with the
+restated laws (1,742 at their structures):
+
+| Host | Pass (before) | Fail | Flaky | Stopped | Not built (before) | By their alternatives | Not explained |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| MLton | 1,707 (1,524) | 16 | 0 | 0 | 19 (199) | 180 | 0 |
+| SML/NJ 110.99.9, 64 bits | 571 (545) | 25 | 9 | 62 | 1,075 (1,102) | 27 | 0 |
+| SML/NJ 110.99.9, 32 bits | 0 (0) | 0 | 0 | 0 | 1,061 (1,061) | 0 | 0 |
+| SML/NJ 2026.2 | 609 (584) | 25 | 0 | 33 | 1,075 (1,102) | 27 | 0 |
+| Poly/ML 5.9.2 | 715 (686) | 12 | 0 | 6 | 1,009 (1,036) | 27 | 0 |
+| MLKit 4.7.23 | 1,447 (1,444) | 17 | 0 | 0 | 278 (278) | 0 | 0 |
+
+No difference is unexplained. What MLton still does not build is six laws
+of structures it lacks (`INet6Sock`, `WideTextPrimIO`, `SML90`) and
+thirteen whose types are of two structures that Rune's are one of:
+`SysWord.word` in `Posix`'s conversions, and `Word.word`, the amount of
+`SysWord`'s shifts. Neither entry fits there; an alternative for each
+type's own name would. MLKit's are its own types (its `LargeIntArray`
+holds `Word64.word`; `LargeIntVector/elem-is-Word64`) and the structures it
+lacks. The 32-bit SML/NJ's programs still stop as they load (above).

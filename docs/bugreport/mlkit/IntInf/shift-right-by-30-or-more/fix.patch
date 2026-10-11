@@ -1,0 +1,22 @@
+--- a/basis/IntInf.sml
++++ b/basis/IntInf.sml
+@@ -1000,12 +1000,17 @@
+ 	fun rshift (i, w:word) =
+ 	case i of
+ 	    _IntInf { digits = [], negative } => i (* i = 0 *)
+-	  | _IntInf { digits, negative } => let
++	  | _IntInf { digits, negative } =>
++	    (* a shift by the bits of all the digits or more leaves none of
++	     * them (and keeps w within the 31 bits of shiftAmount) *)
++	    if Word.>= (w, Word.fromInt (Int.* (Int31.toInt baseBits, List.length digits)))
++	    then _IntInf { negative=false, digits = [] }
++	    else let
+ 		val { bytes, bits } = shiftAmount w
+ 		val bits' = Int31.-(baseBits, bits)
+ 		fun drop (0, i) = i
+ 		  | drop (n, []) = []
+-		  | drop (n, x :: xs) = drop (Int31.-(n,0), xs)
++		  | drop (n, x :: xs) = drop (Int31.-(n,1), xs)
+ 		fun shift [] = ([], 0w0)
+ 		  | shift (x :: xs) =
+ 		    let val (zs, borrow) = shift xs

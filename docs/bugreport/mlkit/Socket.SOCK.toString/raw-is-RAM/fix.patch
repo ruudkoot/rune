@@ -1,0 +1,11 @@
+--- a/basis/Socket.sml
++++ b/basis/Socket.sml
+@@ -83,7 +83,7 @@
+                      ("STREAM",SOCK_STREAM)]
+       fun toString i =
+           if i = SOCK_DGRAM then "DGRAM"
+-          else if i = SOCK_RAW then "RAM"
++          else if i = SOCK_RAW then "RAW"
+           else if i = SOCK_STREAM then "STREAM"
+           else raise Fail "Socket.SOCK.toString: impossible"
+       fun fromString "DGRAM" = SOME SOCK_DGRAM

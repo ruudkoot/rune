@@ -1,0 +1,23 @@
+diff --git a/base/system/Basis/Implementation/scan-util.sml b/base/system/Basis/Implementation/scan-util.sml
+index 5e34344..a24b616 100644
+--- a/base/system/Basis/Implementation/scan-util.sml
++++ b/base/system/Basis/Implementation/scan-util.sml
+@@ -54,13 +54,14 @@ structure ScanUtil : sig
+ 
+   end = struct
+ 
+-  (* A table for mapping digits to values.  Whitespace characters map to
+-   * 128, "+" maps to 129, "-","~" map to 130, "." maps to 131, and the
+-   * characters 0-9,A-Z,a-z map to their base-36 value.  All other
++  (* A table for mapping digits to values.  Whitespace characters (those of
++   * Char.isSpace: space, tab, newline, vertical tab, form feed and carriage
++   * return) map to 128, "+" maps to 129, "-","~" map to 130, "." maps to 131,
++   * and the characters 0-9,A-Z,a-z map to their base-36 value.  All other
+    * characters map to 255.
+    *)
+     val cvtTable = "\
+-	  \\255\255\255\255\255\255\255\255\255\128\128\255\255\255\255\255\
++	  \\255\255\255\255\255\255\255\255\255\128\128\128\128\128\255\255\
+ 	  \\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\
+ 	  \\128\255\255\255\255\255\255\255\255\255\255\129\255\130\131\255\
+ 	  \\000\001\002\003\004\005\006\007\008\009\255\255\255\255\255\255\

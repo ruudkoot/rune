@@ -1,0 +1,12 @@
+--- a/basis-library/io/stream-io.fun
++++ b/basis-library/io/stream-io.fun
+@@ -680,7 +680,8 @@
+                if pos < V.length inp
+                  then SOME (Int.min (V.length inp - pos, n))
+                  else case !next of
+-                        End => 
++                         Link {buf as Buf {inp, ...}} => SOME (Int.min (V.length inp, n))
++                       | End =>
+                           (case extendNB "canInput" is of
+                              NONE => NONE
+                            | SOME (Link {buf = Buf {inp, base, ...}}) =>
