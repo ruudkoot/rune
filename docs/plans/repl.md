@@ -54,7 +54,7 @@ M1 measures them again on a quiet machine.
 | M6 | The REPL on the editor | done |
 | M7 | Printing | done |
 | M8 | Commands and documentation | done |
-| M9 | Reload | planned |
+| M9 | Reload | done |
 | M10 | The engine and its protocol | planned |
 | M11 | The Jupyter kernel | planned |
 | M12 | The debugger | planned |
@@ -2436,6 +2436,23 @@ Windows, and any Rune program can read a line with them.
   ghosts named), to nothing (all relinked from the cache); `:reload!`
   against a fresh session.
 * **Done when:** those pass.
+* **As built** (2026-10-10): `ReplLoop` keeps the files used from the top,
+  in order, with their texts and times (`usedFiles`); `:reload` uses again,
+  each in its place and through the cache, the first that changed and each
+  after it that changed or names what a file used again before it binds --
+  incremental M8's rule of dependence, by the names the session records for
+  each file and the identifiers of its text, so that values count as much
+  as modules -- saying first what it shadows and after which values made at
+  the prompt are ghosts (their types print `?.t`). `:reload!` undoes to a
+  mark (`UnitBasis.begin` at the start, before the init file, and at each
+  `:mark`) and uses again the files used since; `:set watch on` reloads at a
+  prompt where a file's time changed; `:edit` reloads the file it edited.
+  `tests/repl/reload` writes its own files: nothing changed, a function and
+  a datatype changed with a file that uses them and one that does not, a
+  ghost, `:mark` and `:reload!`, and the watch. Where it differs from the
+  plan: a `:reload` with nothing changed does nothing and says so; it is
+  `:reload!` that uses every file again, its declarations linked from the
+  cache.
 
 ### M10. The engine and its protocol (L, about 1,800 SML)
 

@@ -56,6 +56,7 @@ feedback = normal    (what is said of a declaration: normal, concise, verbose or
 prompt = -     (the prompt (Compiler.prompt1))
 prompt2 = =     (the prompt of a line that continues an entry (Compiler.prompt2))
 time = off    (the time and memory of each entry (:time))
+watch = off    (reload at each prompt where a file used has changed)
 - error: no setting nothing (:show lists them)
 - val down = fn : int -> int
 - uncaught exception Fail: at the bottom

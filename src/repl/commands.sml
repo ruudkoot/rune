@@ -43,7 +43,8 @@ struct
        row ("prompt", "the prompt (Compiler.prompt1)", (fn () => !RuneCompiler.prompt1, fn v => RuneCompiler.prompt1 := v)),
        row ("prompt2", "the prompt of a line that continues an entry (Compiler.prompt2)",
             (fn () => !RuneCompiler.prompt2, fn v => RuneCompiler.prompt2 := v)),
-       row ("time", "the time and memory of each entry (:time)", bool timing)]
+       row ("time", "the time and memory of each entry (:time)", bool timing),
+       row ("watch", "reload at each prompt where a file used has changed", bool ReplLoop.watching)]
     end
 
   fun set (name : string, value : string) : unit =
@@ -280,8 +281,11 @@ struct
        {name = "search", args = "text or type", help = "names that contain the text, or values whose type is like it",
         run = fn a => say (ReplSearch.search (env (), mustHave ("text", a)))},
        {name = "use", args = "file", help = "use a file (Compiler.use)", run = fn a => ReplLoop.use (mustHave ("file", a))},
-       {name = "reload", args = "", help = "use again the files used, from the first that changed (M9)",
-        run = fn a => !ReplLoop.reloadHook a},
+       {name = "reload", args = "[!]", help = "use again the files that changed and those that name what they bind; ! from the start",
+        run = fn a => case a of "" => ReplLoop.reload () | "!" => ReplLoop.restart ()
+                              | _ => raise Fail (":reload or :reload!, not " ^ a)},
+       {name = "mark", args = "", help = "where :reload! comes back to from now on",
+        run = fn _ => (ReplLoop.mark false; say "marked: :reload! comes back here\n")},
        {name = "edit", args = "[name or file]", help = "$EDITOR at a name's definition or a file, then use it again",
         run = edit},
        {name = "cd", args = "dir", help = "change the directory", run = fn a => OS.FileSys.chDir (mustHave ("directory", a))},
@@ -318,9 +322,9 @@ struct
      RuneRepl.searchHook := (fn t => ReplSearch.search (env (), t));
      RuneRepl.setHook := set;
      RuneRepl.settingsHook := (fn () => List.map (fn (n, _, get, _) => (n, get ())) settings);
+     (* :edit's file used again: the files reload, where it is one of them *)
      ReplLoop.reloadHook := (fn file =>
-                               case (file, !ReplLoop.lastUsed) of
-                                 ("", SOME f) => ReplLoop.use f
-                               | ("", NONE) => raise Fail "no file has been used"
-                               | (f, _) => ReplLoop.use f))
+                               if List.exists (fn {file = f, ...} : ReplLoop.used => f = file) (!ReplLoop.usedFiles)
+                               then ReplLoop.reload ()
+                               else ReplLoop.use file))
 end

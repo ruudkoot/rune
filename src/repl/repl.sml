@@ -210,13 +210,37 @@ struct
 
   (* Compiler.use: the declarations of a file, the first that does not
      compile ending it, the exception of one that raises going on *)
+  (* ---- the files of the session (docs/plans/repl.md, D19 and M9) ----
+     Each file used from the top -- at the prompt, by a command, the init
+     file, the command line; not by another file, which its user uses again
+     -- in the order they were last used, with its text and its time then. *)
+  type used = {file : string, text : string, time : Time.time}
+  val usedFiles : used list ref = ref []
+  val useDepth = ref 0
+
+  fun modTime (file : string) : Time.time = OS.FileSys.modTime file handle OS.SysErr _ => Time.zeroTime
+
+  (* while files are used again by :reload, each keeps its place *)
+  val reloading = ref false
+
+  fun noteUsed (file : string, text : string) : unit =
+    let val u = {file = file, text = text, time = modTime file}
+    in
+      if !reloading andalso List.exists (fn {file = f, ...} : used => f = file) (!usedFiles)
+      then usedFiles := List.map (fn v => if #file v = file then u else v) (!usedFiles)
+      else usedFiles := List.filter (fn {file = f, ...} : used => f <> file) (!usedFiles) @ [u]
+    end
+
   fun use (file : string) : unit =
     let
       val () = lastUsed := SOME file
       (* a file that cannot be read raises IO.Io, as Poly/ML's use does *)
       val text = #text (Source.readFile file)
+      val top = !useDepth = 0
+      val () = if top then noteUsed (file, text) else ()
+      val () = useDepth := !useDepth + 1
       (* compiled, the file's lines are what the session keeps of it *)
-      fun done () = Source.keepLines file
+      fun done () = (useDepth := !useDepth - 1; Source.keepLines file)
     in
       (* parsed, what the parse looked up recorded: each declaration's
          usages have it (ReplSession.compile) *)
@@ -295,6 +319,133 @@ struct
 
   (* true where the text was taken -- run, or reported wrong -- and the next
      prompt is the first; whether what it ran all went well beside *)
+  (* ---- :reload, :reload! and :mark (D19) ---- *)
+
+  fun say (s : string) = (ReplFront.freshLine (); TextIO.output (TextIO.stdOut, s); TextIO.flushOut TextIO.stdOut)
+  fun ui (s : string) = say (ReplFront.paint "repl.ui" s ^ "\n")
+
+  fun hasChanged ({file, text, ...} : used) = (#text (Source.readFile file) <> text) handle IO.Io _ => true
+
+  (* the names a text names: its identifiers, and the first part of each
+     long one; NONE where it does not lex *)
+  fun namesIn (text : string) : string list option =
+    SOME (Vector.foldr (fn ((Token.ID n, _), acc) => n :: acc
+                         | ((Token.LONGID (p :: _, _), _), acc) => p :: acc
+                         | ((Token.LONGID ([], n), _), acc) => n :: acc
+                         | (_, acc) => acc)
+                       [] (Lexer.tokenize (Source.fromString ("<reload>", text))))
+    handle Error.CompileError _ => NONE
+
+  (* the session's names a file bound at the top *)
+  fun boundBy (file : string) : string list =
+    StringMap.foldli (fn (k, (f, _), acc) => if f = file then String.extract (k, 2, NONE) :: acc else acc)
+                     [] (!ReplSession.defined)
+
+  (* The files to use again: from the first that changed, each that changed
+     and each that names what a file used again before it binds, which its
+     code holds the old of (the dependency rule of incremental M8, by names) *)
+  fun toReload (files : used list) : used list =
+    let
+      fun go ([], _, acc) = List.rev acc
+        | go (u :: rest, names, acc) =
+            let
+              val again = hasChanged u
+                          orelse (case namesIn (#text u) of
+                                    SOME ns => List.exists (fn n => List.exists (fn m => m = n) names) ns
+                                  | NONE => true)
+            in if again then go (rest, boundBy (#file u) @ names, u :: acc) else go (rest, names, acc) end
+      fun from [] = []
+        | from (u :: rest) = if hasChanged u then go (u :: rest, [], []) else from rest
+    in from files end
+
+  (* the values made at the prompt whose types a reload replaced: ghosts,
+     which print ?.t and match no value of the new type *)
+  fun ghosts () : string list =
+    StringMap.foldri
+      (fn (k, (f, _), acc) =>
+         if String.isPrefix "v " k andalso String.isPrefix "stdIn" f then
+           let val n = String.extract (k, 2, NONE)
+           in
+             case StringMap.find (Env.vals (!ReplSession.env), n) of
+               SOME (Env.Val {scheme, ...}) =>
+                 let val t = ReplShow.typeIn (!ReplSession.env) scheme
+                 in if String.isSubstring "?." t then (n ^ " : " ^ t) :: acc else acc end
+             | _ => acc
+           end
+         else acc)
+      [] (!ReplSession.defined)
+
+  fun sorted (names : string list) : string list =
+    let fun insert (x, []) = [x] | insert (x, y :: ys) = if x <= y then x :: y :: ys else y :: insert (x, ys)
+    in List.foldl insert [] names end
+
+  (* :reload: the files to use again, used again in their places, through
+     the cache, so that a declaration that did not change is linked and not
+     compiled; what they shadow said before, and the ghosts after *)
+  (* the times of the files used whose text is the same taken again: a file
+     whose time changed and whose text did not is not a change, at the next
+     prompt either (:set watch on) *)
+  fun retime () : unit =
+    usedFiles := List.map (fn u as {file, text, ...} : used =>
+                             if hasChanged u then u else {file = file, text = text, time = modTime file})
+                          (!usedFiles)
+
+  fun reload () : unit =
+    case toReload (!usedFiles) of
+      [] => (retime (); ui "nothing used has changed")
+    | again =>
+        let val shadowed = sorted (List.concat (List.map (fn {file, ...} => boundBy file) again))
+        in
+          ui ("using again " ^ String.concatWith ", " (List.map #file again)
+              ^ (if List.null shadowed then "" else "; shadowing " ^ String.concatWith " " shadowed));
+          reloading := true;
+          List.app (fn {file, ...} => use file handle e => uncaught e) again;
+          reloading := false;
+          retime ();
+          case ghosts () of
+            [] => ()
+          | gs => (ui "made at the prompt, of a type the reload replaced:";
+                   List.app (fn g => say ("  " ^ g ^ "\n")) gs)
+        end
+        handle e => (reloading := false; raise e)
+
+  (* the session to come back to: its start, or a :mark *)
+  type mark = {start : UnitBasis.start, env : Env.env, fixity : Fixity.env, defined : (string * int) StringMap.map,
+               files : used list, atStart : bool}
+  val marked : mark option ref = ref NONE
+
+  fun mark (atStart : bool) : unit =
+    marked := SOME {start = UnitBasis.begin (!ReplSession.env, !ReplSession.fixity), env = !ReplSession.env,
+                    fixity = !ReplSession.fixity, defined = !ReplSession.defined, files = !usedFiles, atStart = atStart}
+
+  (* :reload!: the session as it was at the mark, and the files used since
+     used again, as DrScheme's Run does *)
+  fun restart () : unit =
+    case !marked of
+      NONE => raise Fail "there is no mark to come back to"
+    | SOME {start, env, fixity, defined, files, atStart} =>
+        let
+          val replay = List.filter (fn u => not (List.exists (fn v => #file v = #file u) files)) (!usedFiles)
+        in
+          UnitBasis.undo start;
+          ReplSession.env := env;
+          ReplSession.fixity := fixity;
+          ReplSession.defined := defined;
+          usedFiles := files;
+          ReplHighlight.reset ();
+          ui ("back to the " ^ (if atStart then "start" else "mark")
+              ^ (if List.null replay then "" else "; using " ^ String.concatWith ", " (List.map #file replay)));
+          List.app (fn {file, ...} => use file handle e => uncaught e) replay
+        end
+
+  (* :set watch on: at each prompt, a file used whose time changed reloads,
+     where its text did too; where none did, the times are taken, quietly *)
+  val watching = ref false
+  fun watch () : unit =
+    if !watching andalso List.exists (fn {file, time, ...} : used => modTime file <> time) (!usedFiles)
+    then ((case toReload (!usedFiles) of [] => retime () | _ => reload ()) handle e => uncaught e)
+    else ()
+
   (* an entry's source: stdIn in the basic mode, whose transcripts have
      always said so, and stdIn#k for the k-th entry on a terminal, so that a
      trace tells entries apart *)
@@ -346,7 +497,8 @@ struct
   fun basicLoop () : unit =
     let
       fun read (lines : string list, scan : ReplScan.t, prompt : string) =
-        (print prompt; TextIO.flushOut TextIO.stdOut;
+        ((if null lines then watch () else ());
+         print prompt; TextIO.flushOut TextIO.stdOut;
          (* the wait with the mask off: an interrupt drops what has been
             typed of the declaration *)
          case SOME (unmasked (fn () => TextIO.inputLine TextIO.stdIn)) handle SML90.Interrupt => NONE of
@@ -376,6 +528,7 @@ struct
   (* The loop on the editor (ReplFront): an entry at a time, run with the
      terminal held quiet; ended at Ctrl-D on an empty entry *)
   fun editorLoop () : unit =
+    (watch ();
     case unmasked (fn () => ReplFront.readEntry (!ReplSession.env, isWhole)) handle SML90.Interrupt => ReplFront.Interrupted of
       ReplFront.EndOfInput => ()
     | ReplFront.Interrupted => editorLoop ()
@@ -390,7 +543,7 @@ struct
              ReplHighlight.reset ();
              ReplFront.ended ok
            end;
-         editorLoop ())
+         editorLoop ()))
 
   fun loop () : unit = if !ReplFront.editing then editorLoop () else basicLoop ()
 
@@ -438,6 +591,8 @@ struct
             ReplFront.parseArgs args
             handle ReplFront.Usage msg => (err ("rune-repl: " ^ msg ^ "\n" ^ ReplFront.usage); OS.Process.exit OS.Process.failure)
           val () = ReplFront.start options
+          (* where :reload! comes back to, before the init file and the files *)
+          val () = mark true
           val () = if init then Option.app (fn f => use f handle e => uncaught e) (ReplFront.initFile ()) else ()
           val () = List.app (fn f => use f handle e => uncaught e) files
         in

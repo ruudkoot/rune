@@ -120,11 +120,12 @@ and any unique prefix of a command's name names it (`:t` for `:type`).
 | `:doc name` | the documentation of a name of the Basis Library, its Markdown laid out for the terminal |
 | `:search text` | values whose name holds the text; with `->`, values whose type is like it, arguments in any order, curried or tupled, the nearest first |
 | `:use file` | `use` |
-| `:reload` | uses again the file used last (M9 makes it every file from the first that changed) |
+| `:reload`, `:reload!` | uses again the files that changed and those that name what they bind; `!` goes back to the start or the mark first (*Reload*) |
+| `:mark` | where `:reload!` comes back to from now on |
 | `:edit [name or file]` | `$VISUAL` or `$EDITOR` at a name's definition or at a file, and the file used again |
 | `:cd dir`, `:pwd` | the directory |
 | `:sh command` | a command of the shell, on the terminal as it was |
-| `:set setting value`, `:show` | the settings: `depth`, `length`, `string`, `width`, `feedback`, `prompt`, `prompt2`, `time` |
+| `:set setting value`, `:show` | the settings: `depth`, `length`, `string`, `width`, `feedback`, `prompt`, `prompt2`, `time`, `watch` |
 | `:time [on or off]` | after each entry, its time in all, compiling and running apart, the CPU it took, what it allocated and the collections |
 | `:history` | the entries of the session, `!` beside those that failed |
 | `:save file` | the entries that went well, as a script to `use` |
@@ -140,6 +141,27 @@ exception says where it was raised. The structure `Repl` of the session
 has the same as functions -- `Repl.command ":set depth 5"`, `Repl.typeOf`,
 `Repl.info`, `Repl.doc`, `Repl.search`, `Repl.set`, `Repl.settings` -- for
 init files, scripts and HOL4; outside the REPL each raises `Fail`.
+
+## Reload
+
+The REPL remembers the files used from the top -- at the prompt, by
+`:use`, the init file, the command line; not by another file, which its
+user uses again -- in order, with their texts and their times
+([plans/repl.md](plans/repl.md), D19):
+
+* `:reload` finds the first that changed, and uses it again, and every
+  file after it that changed or names something a file used again before
+  it binds, each in its place and through the cache, so that a declaration
+  that did not change is linked rather than compiled. It says first what
+  it shadows, and after which values made at the prompt are of a type the
+  reload replaced -- ghosts, which print `?.t` and match no value of the
+  new type, because a datatype declared again is another type.
+* `:reload!` puts the session back as it was at its start, or at the last
+  `:mark` (undoing what was declared since, `UnitBasis.undo`), and uses
+  again the files used since then: DrScheme's Run. What was made at the
+  prompt since is gone.
+* `:set watch on` checks the files' times at each prompt and reloads when
+  one changed; `:edit` reloads the file it edited.
 
 ## What a declaration does
 
@@ -359,8 +381,7 @@ on a pty; on Windows, `rune-repl.cmd` from `cmd.exe` too.
 
 ## Not yet
 
-`:reload` uses again the file used last; M9 of
-[plans/repl.md](plans/repl.md) makes it every file from the first that
-changed, and names what it shadows. `Compiler.prettyPrint` ignores a block's context
+The engine and its protocol, a Jupyter kernel and a debugger are M10 to
+M12 of [plans/repl.md](plans/repl.md). `Compiler.prettyPrint` ignores a block's context
 (`ContextLocation`, `ContextProperty`), which Poly/ML's IDE support reads.
 [plans/repl.md](plans/repl.md) lists what comes next.
