@@ -41,8 +41,8 @@ What it rests on:
 | M2 | Units in memory: the basis as a value, the front end resumable, a back end per unit | done 2026-10-09, `79e0598b`: `rune --units`, the linker, `Pass.whole`, errors recovered per declaration, `make check-units` (*M2, as built*); one question for the owner (flexible records) |
 | M3 | Unit bytecode, the static linker, and the VM loads units | done 2026-10-09, `9d97b311`: `.rbu`, `--emit-units`, linking unit files, `rt_link`/`Runtime.link`/`Runtime.load`, the dynamic path in `check-units` (*M3, as built*); the globals' barrier moved to M4 |
 | M4 | The resident compiler, `use` and the REPL | done 2026-10-09, `71f1916e`: `bin/rune-repl` and `rune -i`, Chapter 8, `use`, printing, the globals' barrier, the JIT across loads, the boot image, interrupts, a session saved and restored (*M4, as built*) |
-| M5 | HOL4 on Rune | in progress 2026-10-09: `bin/build` through `src/boss` and `hol` proving, on a local branch of HOL4; what it costs against Poly/ML and why, and `Runtime.share`, `Compiler.compile` through the cache and a leaner REPL that came of it, in [hol4.md](hol4.md) |
-| M6 | The cache, with cut-off | the first two parts done 2026-10-09, `40e2b23a`: the export basis, names that do not depend on what came before, every unit through its basis, unit files by keys, the cache with usages by binder, the frozen Basis, `use` through it, `tests/incremental` (*M6, ... as built*); the soundness of it examined and fixed in [build-cache-issues.md](build-cache-issues.md), with `--verify-cache` and a mutation tester; the third part, fingerprints per entry and entries loaded across changed units, built 2026-10-10 (*M6, the third part as built*); the warm-build time left to M12 |
+| M5 | HOL4 on Rune | done 2026-10-10, `f8e9fdc5` and HOL4's local branch `trindemossen-2-rune`: `bin/build` through `src/boss`, `hol` proving, the costs against Poly/ML and why in [hol4.md](hol4.md), with what did not port; the rebuild from a warm cache verified (`RUNE_VERIFY_CACHE`, issues 13 and 14). Whether to go on to the rest of HOL4 is the owner's |
+| M6 | The cache, with cut-off | the first two parts done 2026-10-09, `40e2b23a`: the export basis, names that do not depend on what came before, every unit through its basis, unit files by keys, the cache with usages by binder, the frozen Basis, `use` through it, `tests/incremental` (*M6, ... as built*); the soundness of it examined and fixed in [build-cache-issues.md](build-cache-issues.md), with `--verify-cache` and a mutation tester; the third part, fingerprints per entry and entries loaded across changed units, built 2026-10-10 (*M6, the third part as built*); issues 13 to 15 since. Not met: the two-line program from a warm cache in under twice `hello`'s time (*After M12*) |
 | M7 | Mid per unit: whole-program builds from the cache | built 2026-10-10: `rune --units --whole`, units' Mid in the cache, the canonical renumbering, and a program made of its units' Mid the bytes of the whole-program compile (*M7, as built*) |
 | M8 | The dependency graph, and a program from an entry point | built 2026-10-10: `rune --deps`, `--deps-dot`, `-I` entry points, the MANIFEST's requires column derived and checked (*M8, as built*) |
 | M9 | Compiling against a signature alone, and dynamic modules | built 2026-10-10: `_dynamic` and `_export`, the signature's ABI and its fingerprint, the constructors' order renumbered, `Dynamic`, programs linked from units keeping their exports (*M9, as built*) |
@@ -3278,6 +3278,39 @@ names would otherwise need `library` export lists to keep two apart), or
 several. Recommended: (a) and one version per build, the lock first, since
 it is what makes a build of someone else's code reproducible
 (`make check-reproducible` holds that for Rune's own).
+
+#### After M12: what is left (2026-10-11)
+
+What this roadmap did not finish, and where each is written down:
+
+* **M6's warm build of a small program.** Its "done when" asked for the
+  two-line program from a warm cache in under twice `hello`'s time. It
+  takes 0.34 to 0.45 s, `hello` 0.04 to 0.09 s, and compiling the two
+  lines whole 0.32 to 0.46 s (five runs each, a busy machine): reading,
+  checking and loading the bases of the 56 Basis units it uses, and
+  linking them, cost what compiling does. Loading a basis is what to make
+  cheaper -- the bases are smaller since issue 14 -- or a program could
+  link against the frozen Basis's units without loading their bases
+  whole.
+* **Issue 15's remainder** ([build-cache-issues.md](build-cache-issues.md)):
+  an entry taken across a unit that changed keeps the old unit's
+  identity; written again against the new units when it is loaded, it
+  would have a fresh compile's, and `--verify-cache` could compare it.
+* **`-j` gives no speed-up** (*M11, as built*: what would make it pay).
+* **M12's three decisions** for the owner (*M12, as built*): hot reload,
+  the IDE on `rune --serve`, packages. `Dynamic.reload` frees no old code.
+* **The compiler as a library**, as the owner meant M12's service:
+  [compiler-library.md](compiler-library.md), after the REPL's branch is
+  merged.
+* **Two measurements not explained.** MLton's compiler built in units
+  without the cache holds 3.3 GB at its peak, where through the cache the
+  heap held 166 MB after 400 units; what the build without the cache
+  keeps is not known (`tests/incremental/mlton.sh` allows for it). And
+  measuring issue 14, a value a `ref` had held stayed reachable until the
+  next store into that `ref` -- a list rebuilt into `UnitBasis.units` freed
+  the old one only when the list was rebuilt a second time -- which may be
+  a dead register of the measuring frame or something of the collector's;
+  it was not looked into.
 
 ### Why this order
 
