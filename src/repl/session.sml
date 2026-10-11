@@ -15,6 +15,9 @@
 structure ReplSession =
 struct
   exception Failed of string
+  (* a declaration whose errors were reported as they were found: each
+     independent one of a top-level declaration (Elaborate.recover, D17) *)
+  exception Reported
 
   val env : Env.env ref = ref Env.initial
   val fixity : Fixity.env ref = ref Fixity.initial
@@ -217,7 +220,14 @@ struct
              (fn () =>
                 let
                   val () = Elaborate.allowPrim := false
-                  val () = Elaborate.elabTop (here, decs)
+                  (* every independent error of the declaration reported,
+                     and then none of it kept *)
+                  val errors = !Error.errors
+                  val recovering = !Elaborate.recover
+                  val () = Elaborate.recover := true
+                  val () = Elaborate.elabTop (here, decs) handle e => (Elaborate.recover := recovering; raise e)
+                  val () = Elaborate.recover := recovering
+                  val () = if !Error.errors > errors then (Error.warnings := []; raise Reported) else ()
                   val () = Elaborate.finish ()
                   val delta = !Elaborate.lastDelta
                   val () = warnings := map Error.formatWarning (List.rev (!Error.warnings))

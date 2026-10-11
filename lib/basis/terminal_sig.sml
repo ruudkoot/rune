@@ -70,8 +70,22 @@ sig
      legacy console), or `undo` is longer than 256 bytes. *)
   val enter : {undo : string} -> unit
 
-  (* `leave ()` puts the terminal back as it was before `enter`, writing
-     `undo`; nothing when it is not raw. *)
+  (* `quiet ()` puts the terminal of the standard input in quiet mode,
+     for while a program runs that the user may interrupt.
+
+     Quiet is nothing echoed and lines not edited, so that keys typed
+     ahead stay unseen until a program reads them, while a key still makes
+     its signal: Ctrl-C is the user's interrupt (`Runtime`). The runtime
+     puts the terminal back from quiet mode as it does from raw mode, and
+     `enter` and `quiet` go from one to the other; `quiet` has no `undo`.
+     The REPL holds the terminal quiet while what it compiled runs
+     (docs/repl.md).
+
+     Raises: `OS.SysErr` as `enter` does. *)
+  val quiet : unit -> unit
+
+  (* `leave ()` puts the terminal back as it was before `enter` or `quiet`,
+     writing `undo`; nothing when it is neither raw nor quiet. *)
   val leave : unit -> unit
 
   (* `read wait` is the bytes typed at the terminal since the last `read`,

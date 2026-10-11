@@ -1425,7 +1425,7 @@ struct
      the hosts *)
   fun term_size (_ : int) : int list = []
   fun term_resizes () = ~1
-  fun term_enter (_ : int, _ : int, _ : string) = ~1
+  fun term_enter (_ : int, _ : int, _ : string, _ : int) = ~1
   fun term_leave () = 0
   fun term_read (_ : int, _ : int, _ : int) : string option = NONE
 

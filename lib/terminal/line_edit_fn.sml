@@ -832,6 +832,8 @@ struct
     orelse String.isSubstring "comint" (env "INSIDE_EMACS")
     orelse env "RUNE_BASIC_REPL" <> ""
 
+  val basic = isBasic
+
   fun basicLine (c : config) =
     let
       fun ask (prompt, acc) =

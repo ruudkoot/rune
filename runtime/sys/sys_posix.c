@@ -1327,8 +1327,20 @@ static volatile sig_atomic_t term_resize_count;
 static int term_resize_counting;
 static int term_handlers;
 
+/* raw, or quiet (sys_term_enter): term_quiet says which the terminal is put
+   in again after a stop */
+static int term_quiet;
 static int term_raw(int fd) {
     struct termios t = term_before;
+    if (term_quiet) {
+        /* keys queued as they are typed, Enter a carriage return still,
+           for the raw mode that reads them next */
+        t.c_iflag &= ~(tcflag_t)(INLCR | IGNCR | ICRNL);
+        t.c_lflag &= ~(tcflag_t)(ECHO | ECHONL | ICANON);
+        t.c_cc[VMIN] = 1;
+        t.c_cc[VTIME] = 0;
+        return tcsetattr(fd, TCSADRAIN, &t);
+    }
     t.c_iflag &= ~(tcflag_t)(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
     t.c_lflag &= ~(tcflag_t)(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
     t.c_cflag &= ~(tcflag_t)(CSIZE | PARENB);
@@ -1418,7 +1430,7 @@ int64_t sys_term_resizes(void) {
 #endif
 }
 
-int sys_term_enter(int in, int out, const char *undo, int64_t n) {
+int sys_term_enter(int in, int out, const char *undo, int64_t n, int quiet) {
     if (!isatty(in)) { errno = ENOTTY; return -1; }
     if (n < 0 || (size_t)n > sizeof term_undo) { errno = EINVAL; return -1; }
     if (!term_saved) {
@@ -1440,6 +1452,7 @@ int sys_term_enter(int in, int out, const char *undo, int64_t n) {
     memcpy(term_undo, undo, (size_t)n);
     term_undo_n = (size_t)n;
     term_out = out;
+    term_quiet = quiet;
     if (term_raw(in) != 0) return -1;
     term_fd = in;
     return 0;

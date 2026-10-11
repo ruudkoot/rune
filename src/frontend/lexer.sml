@@ -61,10 +61,13 @@ struct
     if Char.isDigit c then Char.ord c - Char.ord #"0"
     else Char.ord (Char.toLower c) - Char.ord #"a" + 10
 
-  fun tokenize (file : Source.file) : item vector =
+  (* The lexer of a text: the token at an index, with its span and the index
+     after it (whitespace and comments before it skipped), and the index
+     after a comment that begins at an index. Both raise Error.CompileError
+     where the text is not SML. tokenize reads a file with it, and scan a
+     line to colour. *)
+  fun lexerOf (name : string, text : string) : {next : int -> token * Source.span * int, skipComment : int -> int} =
     let
-      val text = #text file
-      val name = #name file
       val n = String.size text
       fun span (a, b) : Source.span = {file = name, start = a, stop = b}
       fun err (a, b, msg) = Error.error (span (a, b), msg)
@@ -295,10 +298,107 @@ struct
               in (t, span (i, i + 1), i + 1) end
           end
 
+    in
+      {next = next, skipComment = skipComment}
+    end
+
+  fun tokenize (file : Source.file) : item vector =
+    let
+      val {next, ...} = lexerOf (#name file, #text file)
       fun loop (i, acc) =
         let val (t, sp, j) = next i
         in case t of EOF => List.rev ((t, sp) :: acc) | _ => loop (j, (t, sp) :: acc) end
     in
       Vector.fromList (loop (0, []))
+    end
+
+  (* ---- the lexer for the eye (docs/plans/repl.md, D13) ----
+     What a text is to someone reading it, a piece at a time, for colouring
+     it as it is typed: the same tokens as tokenize, with the comments
+     between them, and never an error -- what the lexer refuses is a piece
+     of its own (Bad): an unterminated string to the end of its line, an
+     unexpected character by itself. A text is scanned from the state its
+     first line begins in, and scan gives the state its end leaves, so that
+     an editor scans a line again only where it or the state before it
+     changed. *)
+  datatype class = Keyword | Name | LongName | Operator | TyVar | Number | Text | Comment | Bad | Other
+
+  (* where a line begins: in code, in a comment that many deep, or in a
+     string's gap (`\` whitespace `\`) *)
+  datatype state = Code | InComment of int | InGap
+
+  fun scan (text : string, state : state) : (int * int * class) list * state =
+    let
+      val n = String.size text
+      val {next, ...} = lexerOf ("", text)
+      fun ch i = if i < n then String.sub (text, i) else #"\000"
+      (* the index after a comment's end, from i at depth d; 0 for the depth
+         where it ends, else the depth at the text's end *)
+      fun comment (i, d) =
+        if i >= n then (n, d)
+        else if ch i = #"(" andalso ch (i + 1) = #"*" then comment (i + 2, d + 1)
+        else if ch i = #"*" andalso ch (i + 1) = #")" then (if d = 1 then (i + 2, 0) else comment (i + 2, d - 1))
+        else comment (i + 1, d)
+      (* a string's body from i: SOME the index after its quote, or NONE where
+         a line or the text ends first, with the index and whether it ended
+         in a gap *)
+      fun body (i, gap) : int option * int * bool =
+        if i >= n then (NONE, n, gap)
+        else if gap then body (i + 1, ch i <> #"\\")
+        else
+          case ch i of
+            #"\"" => (SOME (i + 1), i + 1, false)
+          | #"\\" => if Char.isSpace (ch (i + 1)) then body (i + 1, true) else body (i + 2, false)
+          | #"\n" => (NONE, i, false)
+          | _ => body (i + 1, false)
+      fun classOf (t : token, i : int) : class =
+        case t of
+          ID s => if Char.isAlpha (String.sub (s, 0)) then Name else Operator
+        | LONGID _ => LongName
+        | TYVAR _ => TyVar
+        | INT _ => Number
+        | WORD _ => Number
+        | REAL _ => Number
+        | STRING _ => Text
+        | WIDESTRING _ => Text
+        | CHAR _ => Text
+        | _ => if Char.isAlpha (ch i) orelse ch i = #"_" andalso Char.isAlpha (ch (i + 1)) then Keyword else Other
+      fun string (start, from, acc) =
+        case body (from, false) of
+          (SOME j, _, _) => go (j, (start, j, Text) :: acc)
+        | (NONE, j, true) => (List.rev ((start, j, Text) :: acc), InGap)
+        | (NONE, j, false) => go (j, (start, j, Bad) :: acc)
+      and go (i, acc) =
+        if i >= n then (List.rev acc, Code)
+        else
+          let val c = ch i
+          in
+            if Char.isSpace c then go (i + 1, acc)
+            else if c = #"(" andalso ch (i + 1) = #"*" then
+              (case comment (i + 2, 1) of
+                 (j, 0) => go (j, (i, j, Comment) :: acc)
+               | (j, d) => (List.rev ((i, j, Comment) :: acc), InComment d))
+            else if c = #"\"" then string (i, i + 1, acc)
+            else if c = #"#" andalso ch (i + 1) = #"\"" then string (i, i + 2, acc)
+            else
+              let
+                (* the handler is the token's alone, so that go stays a loop *)
+                val (j, class) =
+                  (let val (t, _, j) = next i in (j, classOf (t, i)) end)
+                  handle Error.CompileError ({stop, ...}, _) => (Int.min (n, Int.max (i + 1, stop)), Bad)
+              in go (j, (i, j, class) :: acc) end
+          end
+    in
+      case state of
+        Code => go (0, [])
+      | InComment d =>
+          (case comment (0, d) of
+             (j, 0) => go (j, if j > 0 then [(0, j, Comment)] else [])
+           | (j, d') => ([(0, j, Comment)], InComment d'))
+      | InGap =>
+          (case body (0, true) of
+             (SOME j, _, _) => go (j, [(0, j, Text)])
+           | (NONE, j, true) => ([(0, j, Text)], InGap)
+           | (NONE, j, false) => go (j, [(0, j, Bad)]))
     end
 end

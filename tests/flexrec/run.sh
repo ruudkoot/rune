@@ -80,7 +80,7 @@ done
 # accepted as Poly/ML accepts them; after_semicolon.sml is refused at its
 # first `;`
 for p in next_dec two_types after_semicolon; do
-  printf 'use "tests/flexrec/%s.sml";\n' "$p" | RUNE_CACHE= "$repl" > "$out/$p.repl" 2>&1
+  printf 'use "tests/flexrec/%s.sml";\n' "$p" | RUNE_CACHE= "$repl" --no-init > "$out/$p.repl" 2>&1
   case $p in
     after_semicolon) grep -q 'unresolved flexible record' "$out/$p.repl" ;;
     *) grep -q "$(expected_out "$p")\$" "$out/$p.repl" && ! grep -q 'error' "$out/$p.repl" ;;

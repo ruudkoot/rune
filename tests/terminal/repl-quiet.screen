@@ -1,0 +1,9 @@
+Rune @VERSION@. Ctrl-D ends the session.
+- (Posix.Process.sleep (Time.fromSeconds 2); 0);
+val it = 0 : int
+- 7;
+val it = 7 : int
+- val l = TextIO.inputLine TextIO.stdIn;
+hello
+val l = SOME "hello\n" : string option
+-

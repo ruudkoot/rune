@@ -51,7 +51,7 @@ if [ $windows = 1 ]; then
   fi
   stage=$windir/terminal
   mkdir -p "$stage"
-  cp bin/runevm.exe bin/rune-repl.img "$out/keys.rbc" "$out/readline.rbc" "$stage/"
+  cp bin/runevm.exe bin/rune-repl.img bin/rune-repl.cmd "$out/keys.rbc" "$out/readline.rbc" "$stage/"
   for dll in bin/*.dll; do [ -f "$dll" ] && cp "$dll" "$stage/"; done
   repl="sh -c 'cd $stage && ./runevm.exe $heap --restore rune-repl.img --'"
   keys="sh -c 'cd $stage && ./runevm.exe $probe keys.rbc'"
@@ -63,18 +63,59 @@ else
   keys="bin/runevm $probe $out/keys.rbc"
   readline="bin/runevm $out/readline.rbc"
 fi
+# Each script's programs keep their history and find their init file in a
+# directory of the script's own, empty when it starts, and never the user's;
+# a program of Windows sees the variables through WSLENV, its paths
+# translated (/p).
+XDG_STATE_HOME=$PWD/$out/state
+XDG_CONFIG_HOME=$PWD/$out/config
+export XDG_STATE_HOME XDG_CONFIG_HOME
+case ":${WSLENV:-}:" in *:XDG_STATE_HOME/p:*) ;; *) WSLENV="XDG_STATE_HOME/p:XDG_CONFIG_HOME/p${WSLENV:+:$WSLENV}"; export WSLENV ;; esac
+# the version the REPL's banner says (scripts/gen-version.sh: a tag or a
+# hash), which the screens write @VERSION@
+version=$(sed -n 's/^ *val version = "\(.*\)"$/\1/p' build/config.sml)
 pass=0
 fail=0
 for s in tests/terminal/*.script; do
   name=$(basename "$s" .script)
   case "$name" in *"$filter"*) ;; *) continue ;; esac
   if [ $windows = 1 ] && [ "$(head -1 "$s")" != "# windows" ]; then continue; fi
-  if python3 tests/terminal/term.py "$s" "REPL=$repl" "KEYS=$keys" "READLINE=$readline" DIR=tests/terminal > "$out/$name.log" 2>&1; then
+  rm -rf "${XDG_STATE_HOME:?}" "${XDG_CONFIG_HOME:?}"
+  mkdir -p "$XDG_STATE_HOME" "$XDG_CONFIG_HOME"
+  if python3 tests/terminal/term.py "$s" "REPL=$repl" "KEYS=$keys" "READLINE=$readline" "VERSION=$version" DIR=tests/terminal > "$out/$name.log" 2>&1; then
     pass=$((pass + 1))
   else
     echo "FAIL terminal.$name (see $out/$name.log)"
     fail=$((fail + 1))
   fi
 done
+# rune-repl.cmd, the REPL started from Windows' command prompt
+if [ $windows = 1 ] && [ -z "$filter" ]; then
+  got=$(cd "$stage" && cmd.exe /c rune-repl.cmd --no-init -e "1 + 1;" 2>&1 | tr -d '\r')
+  if [ "$got" = "val it = 2 : int" ]; then
+    pass=$((pass + 1))
+  else
+    echo "FAIL terminal.rune-repl.cmd: $got"
+    fail=$((fail + 1))
+  fi
+fi
+# the bytes a terminal is given that tmux does not show: each SCRIPT.pty is
+# read by tests/terminal/ptyraw.py, the REPL on a pty that says it is VS
+# Code's terminal (Linux only)
+if [ $windows = 0 ]; then
+  for p in tests/terminal/*.pty; do
+    name=$(basename "$p" .pty)
+    case "$name" in *"$filter"*) ;; *) continue ;; esac
+    rm -rf "${XDG_STATE_HOME:?}" "${XDG_CONFIG_HOME:?}"
+    mkdir -p "$XDG_STATE_HOME" "$XDG_CONFIG_HOME"
+    # shellcheck disable=SC2086
+    if python3 tests/terminal/ptyraw.py 80 24 "$p" -- env TERM=xterm-256color TERM_PROGRAM=vscode $repl > "$out/$name.log" 2>&1; then
+      pass=$((pass + 1))
+    else
+      echo "FAIL terminal.$name (see $out/$name.log)"
+      fail=$((fail + 1))
+    fi
+  done
+fi
 echo "terminal$([ $windows = 1 ] && echo ' (Windows)'): passed $pass, failed $fail"
 [ $fail = 0 ]

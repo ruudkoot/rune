@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 2 |
-| Documentation | 16 of 16 entries documented |
+| Documentation | 17 of 17 entries documented |
 | Tests | not listed |
 | Source | [lib/terminal/line\_edit\_sig.sml](../../../../lib/terminal/line_edit_sig.sml) |
 
@@ -86,6 +86,7 @@ sig
   val <a href="#val-layout">layout</a> : config * state * int -&gt; frame
   val <a href="#val-diff">diff</a> : {<a href="#fld-diff.old">old</a> : frame option, <a href="#fld-diff.new">new</a> : frame, <a href="#fld-diff.columns">columns</a> : int, <a href="#fld-diff.drawn">drawn</a> : int} -&gt; string * int
   datatype <a href="#type-result">result</a> = <a href="#con-line">Line</a> of string | <a href="#con-interrupted">Interrupted</a> | <a href="#con-end">End</a>
+  val <a href="#val-basic">basic</a> : config -&gt; bool
   val <a href="#val-readline">readLine</a> : config * History.history option -&gt; result
 end
 </pre>
@@ -186,7 +187,7 @@ Ctrl-E there accepts. `highlight text` is styles for byte ranges of
 the text, `(start, stop, style)`. `styles` are those of the parts the
 editor draws itself. `escapeTimeout` is how long Escape waits for
 the rest of a sequence; `policy` how the terminal measures clusters;
-`basic` asks for the basic mode.
+[`basic`](#val-basic) asks for the basic mode.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -357,6 +358,18 @@ input.
 | <a name="con-line"></a>`Line` | `string` |  |
 | <a name="con-interrupted"></a>`Interrupted` |  |  |
 | <a name="con-end"></a>`End` |  |  |
+
+### <a name="val-basic"></a>`basic`
+
+```sml
+val basic : config -> bool
+```
+
+`basic c` is whether [`readLine`](#val-readline) keeps to its basic mode with `c`, by
+the rule [`readLine`](#val-readline) gives.
+
+A program with a basic mode of its own, as the REPL has, asks it
+before it reads.
 
 ### <a name="val-readline"></a>`readLine`
 

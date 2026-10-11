@@ -129,6 +129,12 @@ sig
      input. *)
   datatype result = Line of string | Interrupted | End
 
+  (* `basic c` is whether `readLine` keeps to its basic mode with `c`, by
+     the rule `readLine` gives.
+
+     A program with a basic mode of its own, as the REPL has, asks it
+     before it reads. *)
+  val basic : config -> bool
   (* `readLine (c, h)` reads an input at the terminal with the editor,
      going back through the history `h` and adding the input to it.
 

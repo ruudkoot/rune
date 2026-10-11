@@ -17,8 +17,92 @@ val it = Node (Leaf, "x", Leaf) : string tree
 A declaration ends with a `;` at the top level, as in every SML REPL: the
 REPL reads lines, `- ` before the first of a declaration and `= ` before the
 others (`Compiler.prompt1`, `Compiler.prompt2`), until what it has read
-parses and ends with one. Files given on the command line are `use`d before
-it reads anything, and the end of the input ends it.
+ends with one -- a `;` outside brackets, `let` ... `end` and the like,
+strings and comments, which a scanner follows as the lines come
+(`src/repl/scan.sml`) -- and parses. Files given on the command line are
+`use`d before it reads anything, and the end of the input ends it.
+
+On a terminal the REPL reads with lib/terminal's line editor, and colours
+what it says and what is typed (*On a terminal*); on a pipe, a file, under
+Emacs or with `--basic`, it is in its basic mode, a prompt and a line at a
+time, as above, and what it writes is the same byte for byte as it always
+was.
+
+## The command line
+
+```
+rune-repl [-q] [-e DECLARATIONS]... [--no-init] [--color=WHEN] [--basic] [FILE]...
+```
+
+* `-q`: no banner on a terminal.
+* `-e TEXT`: the declarations of `TEXT` run, after the init file and the
+  files, and the REPL ends, with a failure status where one of them did not
+  compile or raised. A `;` is added where `TEXT` has none at its end.
+* `--no-init`: the init file is not used. It is
+  `$XDG_CONFIG_HOME/rune/init.sml`, `%APPDATA%\rune\init.sml` on Windows,
+  or `~/.config/rune/init.sml`, by the first of those variables that is
+  set: `use`d before the files, as any file is, where it is there.
+* `--color=always|never|auto`: whether the REPL's output and its
+  diagnostics are coloured; `auto`, the default, by the rule of
+  [diagnostics.md](diagnostics.md) (a terminal, `NO_COLOR`, `FORCE_COLOR`,
+  `TERM`), each stream by itself.
+* `--basic`: the basic mode on a terminal too.
+
+On Windows, `rune-repl.cmd` beside `runevm.exe` is `rune-repl` for the
+command prompt and PowerShell.
+
+## On a terminal
+
+Where the standard input and output are a terminal that can be edited on
+-- not `TERM=dumb`, `unknown`, `cons25` or `emacs`, not Emacs's comint
+(`INSIDE_EMACS`), not `RUNE_BASIC_REPL` or `--basic`, and on Windows a
+console that takes VT input -- an entry is read with `LineEdit` of
+lib/terminal ([plans/repl.md](plans/repl.md), M5 and M6):
+
+* **Editing.** Emacs's keys, as in readline: Ctrl-A, Ctrl-E, Alt-B, Alt-F,
+  Ctrl-K, Ctrl-Y, Ctrl-_ to undo, and the rest that `LINE_EDIT` lists.
+  Enter submits an entry that a `;` ends at the top, and the parser takes;
+  in one that does not end yet, it begins a new line, and Alt-Enter always
+  does. A string that a line ends inside is reported at Enter. A paste is
+  one entry. Ctrl-C drops the entry, and Ctrl-D on an empty one ends the
+  session.
+* **Colours.** What is typed is coloured as it is typed by the compiler's
+  own lexer, in a mode that never fails (`Lexer.scan`;
+  `src/repl/highlight.sml`): keywords, strings, comments, numbers, type
+  variables, what the lexer does not take, and names by what they are in
+  the session -- a constructor, a type, a structure. The prompt, the names
+  and types of the echo, `uncaught exception` and `Interrupt` have the
+  roles of the palette (`src/util/color.sml`; `RUNE_COLORS` restyles them).
+  A diagnostic shows the line it is about, with `^` under the place
+  ([diagnostics.md](diagnostics.md)).
+* **Completion.** Tab completes what the cursor is in: after a `:` at the
+  start, a command; in a string after `use`, a file; after a structure's
+  name and a dot, its members; elsewhere the session's values,
+  constructors and structures, and its types after `:`, `of`, `->` or
+  `*`. One Tab completes as far as every candidate agrees, a second shows
+  them under the entry; they come by how often the session has used them,
+  then in order, and the library's own (`Rune...`) only when what is
+  typed begins so (`src/repl/complete.sml`).
+* **History.** Up and Down go through the entries of this session and of
+  every other, kept in `$XDG_STATE_HOME/rune/history`
+  (`%LOCALAPPDATA%\rune\history`, `~/.local/state/rune/history`), and
+  Ctrl-R searches them; an entry of several lines comes back whole.
+* **While a declaration runs** the terminal is quiet (`Terminal.quiet`):
+  keys typed ahead are neither echoed into what it writes nor lost, and
+  are the editor's at the next prompt; Ctrl-C is the interrupt. A program
+  that reads `TextIO.stdIn` gets each read as at a shell, echoed and
+  edited by lines.
+* **A line left unfinished** by the program -- `print "abc"` -- is marked
+  `%` (zsh's way) and what the REPL writes next starts on a line of its
+  own.
+* **Marks.** On a terminal known to take them -- Windows Terminal, VS
+  Code's, WezTerm, iTerm2, kitty, Ghostty -- the prompt, the output and
+  the end of each entry with whether it failed are marked for the terminal
+  (OSC 133), which can then go from entry to entry and mark the ones that
+  failed.
+
+`tests/terminal/MANUAL.md` lists what is checked by hand, terminal by
+terminal.
 
 ## What a declaration does
 
@@ -30,7 +114,10 @@ alone). What follows says "a declaration" for it:
 
 * A declaration that does not elaborate is reported, with its file, line and
   column, and the session is as it was before it: nothing it declared is
-  there, and the declarations after it go on.
+  there, and the declarations after it go on. Every error of it that does
+  not follow from another is reported: its declarations are elaborated one
+  by one, each that fails left out of those after it (`Elaborate.recover`),
+  and then none of it is kept.
 * A declaration whose running raises an exception nothing handles is
   reported (`uncaught exception ...`). What it did before it raised is done
   -- a `ref` it assigned stays assigned -- and it binds nothing.
@@ -148,7 +235,8 @@ the REPL's own `use`, put into `RuneCompiler.useHook` when it starts.
 
 * `bin/rune-repl.units/` is the compiler and the REPL compiled a unit per
   file (`rune --units --emit-units`, [units.md](units.md)): the files of the
-  Basis Library they use, the compiler's, the REPL's (`src/repl/`), each
+  Basis Library they use, the compiler's, lib/terminal's editor, the
+  REPL's (`src/repl/`), each
   unit's code (`.rbu`) and basis (`.rbi`), and `units` and `sources`, their
   files and their sources in order.
 * `bin/rune-repl` runs `bin/rune-repl.load.rbc` (`src/repl/load.sml`), which
@@ -188,8 +276,9 @@ about a millisecond a declaration (incremental roadmap, M4).
 ## Tests
 
 `tests/repl/run.sh` (`make test-repl`) types each `tests/repl/NAME.in` to
-the REPL and wants `NAME.expected`, both of its streams, on every mode of
-the JIT: the values of every kind of type; Chapter 8's cases; datatypes in
+the REPL -- with the arguments of `NAME.args` where there is one, else
+`--no-init` -- and wants `NAME.expected`, both of its streams, on every mode of
+the JIT: `-e` and the init file; the values of every kind of type; Chapter 8's cases; datatypes in
 and out of scope, at their instances, abstract, and a printing depth;
 `use` of a library of files, of one that does not compile and of one that
 raises; Ctrl-C, which `tests/repl/drive.py` sends the REPL as `SIGINT`
@@ -199,10 +288,19 @@ its own and one without; and a session saved with `Runtime.save`
 which has the bindings made before the save and reads its own input, not
 what the session that saved it had read ahead.
 
+`tests/terminal` (`make test-terminal`, and on Windows through WSL interop
+in `make test-windows`) drives the REPL in a tmux pane and waits for the
+screen: the prompt and the banner, colours as typed, completion, the
+history, an entry of several lines, errors with their lines, an open
+string, keys typed ahead while code runs, a program that reads a line,
+Ctrl-C, the basic mode under Emacs, and the marks of OSC 133 byte for byte
+on a pty; on Windows, `rune-repl.cmd` from `cmd.exe` too.
+
 ## Not yet
 
-An exception's argument is not printed; a type is printed without the structure it is in; there is no
-history or editing of lines. `Compiler.prettyPrint` ignores a block's
-context (`ContextLocation`, `ContextProperty`), which Poly/ML's IDE support
-reads. The incremental roadmap's M4 lists what comes
-next.
+An exception's argument is not printed; a type is printed without the
+structure it is in; a value is one line, however wide (M7 of
+[plans/repl.md](plans/repl.md)). There are no commands (`:type` and the
+rest, M8). `Compiler.prettyPrint` ignores a block's context
+(`ContextLocation`, `ContextProperty`), which Poly/ML's IDE support reads.
+[plans/repl.md](plans/repl.md) lists what comes next.

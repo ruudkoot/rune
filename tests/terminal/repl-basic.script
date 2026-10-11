@@ -1,0 +1,15 @@
+# The basic mode on a terminal (D24): under Emacs's comint, a prompt and a
+# line at a time, echoed by the terminal, no banner, no colours -- what
+# HOL4's Emacs mode and a screen reader read.
+start 80 24 env INSIDE_EMACS=29.1,comint @REPL@
+wait ^-$
+send val x = "two";
+keys Enter
+wait ^val x = "two" : string$
+send x;
+keys Enter
+wait ^val it = "two" : string$
+expect @DIR@/repl-basic.screen
+send val () = OS.Process.exit OS.Process.success;
+keys Enter
+exited 0

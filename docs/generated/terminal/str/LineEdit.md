@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`LINE_EDIT`](../sig/LINE_EDIT.md) |
 | Status | required |
-| Members | 16 |
+| Members | 17 |
 | Tests | not listed |
 | Source | [lib/terminal/line\_edit.sml](../../../../lib/terminal/line_edit.sml) |
 
@@ -31,6 +31,7 @@ What each means is on [`LINE_EDIT`](../sig/LINE_EDIT.md); the types are this str
 | datatype | [`outcome`](../sig/LINE_EDIT.md#type-outcome) | `Continue` &#124; `Accept` &#124; `Cancelled` &#124; `EndOfInput` &#124; `Clear` &#124; `Stop` |
 | datatype | [`result`](../sig/LINE_EDIT.md#type-result) | `Line` &#124; `Interrupted` &#124; `End` |
 | type | [`state`](../sig/LINE_EDIT.md#type-state) | *a type of its own* |
+| val | [`basic`](../sig/LINE_EDIT.md#val-basic) | `config -> bool` |
 | val | [`cursor`](../sig/LINE_EDIT.md#val-cursor) | `state -> int` |
 | val | [`defaults`](../sig/LINE_EDIT.md#val-defaults) | `config` |
 | val | [`diff`](../sig/LINE_EDIT.md#val-diff) | `{columns : int, drawn : int, new : frame, old : frame option} -> string * int` |

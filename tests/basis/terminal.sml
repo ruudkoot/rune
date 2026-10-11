@@ -16,6 +16,7 @@ struct
                      fn () => Terminal.enter {undo = ""})
   val () = T.raises ("Terminal.enter/refused-without-a-terminal-whatever-the-undo", isNotty,
                      fn () => Terminal.enter {undo = CharVector.tabulate (257, fn _ => #"x")})
+  val () = T.raises ("Terminal.quiet/refused-without-a-terminal", isNotty, Terminal.quiet)
   val () = T.raises ("Terminal.read/refused-without-a-terminal", isNotty,
                      fn () => Terminal.read (SOME Time.zeroTime))
   val () = T.check ("Terminal.leave/nothing-when-not-raw", fn () => (Terminal.leave (); true))

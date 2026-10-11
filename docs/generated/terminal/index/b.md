@@ -8,6 +8,7 @@
 - `BackwardKillLine` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-backwardkillline)
 - `BackwardKillWord` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-backwardkillword)
 - `BackwardWord` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-backwardword)
+- `basic` (val): [LINE_EDIT](../sig/LINE_EDIT.md#val-basic)
 - `BeginningOfBuffer` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-beginningofbuffer)
 - `BeginningOfHistory` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-beginningofhistory)
 - `BeginningOfLine` (con): [LINE_EDIT](../sig/LINE_EDIT.md#con-beginningofline)

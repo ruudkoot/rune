@@ -1,0 +1,28 @@
+# windows
+# The REPL on lib/terminal's editor (docs/plans/repl.md, M6): what is typed
+# coloured by the compiler's lexer as it is typed -- a keyword, a string, a
+# comment -- Tab completing from the session's names and a structure's
+# members, and Up going back through what was entered.
+start 80 24 @REPL@
+wait ^-$
+send val alpha = 1; val alphabet = "two" (* comment *);
+waits \e\[1m- val\e\[0m alpha
+waits \e\[95m"two"(\e\[39m)? (\e\[2m)?(\e\[39m)?\(\* comment \*\)
+keys Enter
+wait ^val alphabet = "two" : string$
+send alp
+keys Tab
+wait ^- alpha$
+keys Tab
+keys Tab
+wait alpha +alphabet
+keys C-u
+send List.fil
+keys Tab
+wait ^- List.filter$
+keys C-u Up
+wait ^- val alpha = 1; val alphabet = "two" \(\* comment \*\);$
+keys C-u
+send val () = OS.Process.exit OS.Process.success;
+keys Enter
+exited 0

@@ -11,7 +11,7 @@ struct
   local
     val size' = _prim "term_size" : int -> int list
     val resizes' = _prim "term_resizes" : unit -> int
-    val enter' = _prim "term_enter" : int * int * string -> int
+    val enter' = _prim "term_enter" : int * int * string * int -> int
     val leave' = _prim "term_leave" : unit -> int
     val read' = _prim "term_read" : int * int * int -> string option
     val errno = _prim "sys_errno" : unit -> int
@@ -26,7 +26,9 @@ struct
     fun resizes () = resizes' ()
 
     fun enter {undo : string} =
-      if enter' (0, 1, undo) = 0 then () else raise RuneError.lastError ()
+      if enter' (0, 1, undo, 0) = 0 then () else raise RuneError.lastError ()
+
+    fun quiet () = if enter' (0, 1, "", 1) = 0 then () else raise RuneError.lastError ()
 
     fun leave () = if leave' () = 0 then () else raise RuneError.lastError ()
 

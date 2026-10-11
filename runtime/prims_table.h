@@ -1114,7 +1114,7 @@ static const unsigned char prim_arity[] = {
   1,
   1,
   1,
-  3,
+  4,
   1,
   3,
 };

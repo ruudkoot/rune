@@ -2473,11 +2473,13 @@ static int p_term_size(VM *vm) {
 }
 static int p_term_resizes(VM *vm) { return ret(vm, 1, mk_int(sys_term_resizes())); }
 static int p_term_enter(VM *vm) {
+    check_tag(vm, ARG(3), T_INT, "term_enter");
     check_tag(vm, ARG(2), T_INT, "term_enter");
-    check_tag(vm, ARG(1), T_INT, "term_enter");
-    Obj *undo = check_obj(vm, ARG(0), K_STRING, "term_enter");
-    int r = sys_term_enter((int)val_imm(ARG(2)), (int)val_imm(ARG(1)), obj_bytes(undo), obj_len(undo));
-    return ret(vm, 3, mk_int(r));
+    Obj *undo = check_obj(vm, ARG(1), K_STRING, "term_enter");
+    check_tag(vm, ARG(0), T_INT, "term_enter");
+    int r = sys_term_enter((int)val_imm(ARG(3)), (int)val_imm(ARG(2)), obj_bytes(undo), obj_len(undo),
+                           val_imm(ARG(0)) != 0);
+    return ret(vm, 4, mk_int(r));
 }
 static int p_term_leave(VM *vm) { return ret(vm, 1, mk_int(sys_term_leave())); }
 /* SOME "" for nothing in the time; NONE at the end or on failure; the

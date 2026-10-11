@@ -305,8 +305,12 @@ int sys_interrupt_catch(volatile int *flag);
    exit, at a fatal error, and at the signals that end the process
    (SIGTERM, SIGHUP, SIGQUIT), all safe in a signal handler. A stop
    (SIGTSTP) puts it back and a continue (SIGCONT) raw again, counted as a
-   resize, since the screen may have changed meanwhile. 0, or -1 and the
-   error (ENOTTY; ENOTSUP from a console that has no VT input).
+   resize, since the screen may have changed meanwhile. With quiet, the
+   terminal is not raw but quiet: nothing echoed and keys kept for the next
+   read, while keys still make their signals (Ctrl-C) and lines are not
+   edited -- what a REPL wants while the code it runs may be interrupted --
+   and put back in all the same ways. 0, or -1 and the error (ENOTTY;
+   ENOTSUP from a console that has no VT input).
    sys_term_leave: the terminal as it was, and undo written; 0 or -1.
    sys_term_read: at most n bytes typed, as UTF-8, waiting at most ms
    milliseconds (-1: as long as it takes); 0 when the time is up or a
@@ -314,7 +318,7 @@ int sys_interrupt_catch(volatile int *flag);
    input, -1 and the error. */
 int sys_term_size(int fd, int *cols, int *rows);
 int64_t sys_term_resizes(void);
-int sys_term_enter(int in, int out, const char *undo, int64_t n);
+int sys_term_enter(int in, int out, const char *undo, int64_t n, int quiet);
 int sys_term_leave(void);
 int64_t sys_term_read(int in, char *buf, int64_t n, int64_t ms);
 

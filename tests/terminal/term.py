@@ -19,6 +19,8 @@ replaced by the NAME=VALUE given on the command line.
   keys KEY...               tmux's names of keys: Up C-a M-b Enter Escape BSpace
   paste TEXT                TEXT inside bracketed-paste markers
   wait REGEX [SECONDS]      until the screen matches REGEX (default 20 s)
+  waits REGEX [SECONDS]     the same, on the screen with its styles as SGR
+                            escapes (tmux's capture-pane -e; \\e for ESC)
   gone REGEX [SECONDS]      until the screen no longer matches REGEX
   resize COLS ROWS          the pane's new size
   expect FILE               the screen, trailing blanks dropped, is FILE's
@@ -70,11 +72,11 @@ class Failure(Exception):
     pass
 
 
-def wait_for(pattern, seconds, present):
+def wait_for(pattern, seconds, present, escapes=False):
     deadline = time.monotonic() + seconds
-    rx = re.compile(pattern, re.M)
+    rx = re.compile(pattern.replace("\\e", "\x1b") if escapes else pattern, re.M)
     while True:
-        if bool(rx.search(screen())) == present:
+        if bool(rx.search(screen(escapes))) == present:
             return
         if time.monotonic() > deadline:
             raise Failure("%s %r after %g s" % ("no" if present else "still", pattern, seconds))
@@ -109,17 +111,20 @@ def run(path, subst):
                 tmux("send-keys", "-t", PANE, *rest.split())
             elif command == "paste":
                 type_bytes(b"\x1b[200~" + bytes_of(rest) + b"\x1b[201~")
-            elif command in ("wait", "gone"):
+            elif command in ("wait", "gone", "waits"):
                 pattern, seconds = rest, 20.0
                 m = re.match(r"(.*) ([0-9.]+)$", rest)
                 if m:
                     pattern, seconds = m.group(1), float(m.group(2))
-                wait_for(pattern, seconds, command == "wait")
+                wait_for(pattern, seconds, command != "gone", command == "waits")
             elif command == "resize":
                 cols, rows = rest.split()
                 tmux("resize-window", "-t", PANE, "-x", cols, "-y", rows)
             elif command == "expect":
                 want = open(rest, encoding="utf-8").read()
+                # what a screen writes @KEY@ is the script's KEY: @VERSION@
+                for k, v in subst.items():
+                    want = want.replace("@%s@" % k, v)
                 got = plain(screen())
                 if plain(want) != got:
                     open(rest + ".got", "w", encoding="utf-8").write(got)

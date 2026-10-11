@@ -694,7 +694,7 @@ bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-windows
 # The runtime/register VMs run with every function given to the JIT (RUNEVM_JIT,
 # which WSLENV passes to a program of Windows), so that the JIT's Windows
 # convention is what the suites test there.
-test-windows: windows $(RUNE) bin/rune-repl
+test-windows: windows $(RUNE) bin/rune-repl bin/rune-repl.cmd
 	sh tests/run-windows.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack.exe --vm bin/runevm-stack32.exe
 	WSLENV=RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all sh tests/run-windows.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
 	  --vm bin/runevm.exe --vm bin/runevm32.exe
@@ -919,7 +919,12 @@ check-units: $(RUNE) bin/rune-boot bin/runevm bin/runevm-stack
 # file into bin/rune-repl.units (their units in order, and the sources they
 # came from), and loaded unit by unit by bin/rune-repl.load.rbc, so that the
 # REPL and what it compiles share one Basis Library (incremental roadmap, M4)
-REPL_SRCS := build/config.sml $(SOURCES) src/repl/show.sml src/repl/session.sml src/repl/repl.sml src/main/repl-main.sml
+# lib/terminal's editor (docs/plans/repl.md, M6), after the compiler, which
+# has lib/unicode already
+REPL_TERMINAL := $(addprefix lib/terminal/,style_sig.sml style.sml key_sig.sml key.sml device_sig.sml device.sml \
+                   history_sig.sml history.sml line_edit_sig.sml line_edit_fn.sml line_edit.sml)
+REPL_SRCS := build/config.sml $(SOURCES) $(REPL_TERMINAL) src/repl/show.sml src/repl/session.sml src/repl/scan.sml \
+             src/repl/highlight.sml src/repl/complete.sml src/repl/front.sml src/repl/repl.sml src/main/repl-main.sml
 bin/rune-repl.units/units: bin/rune-boot $(REPL_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
 	rm -rf bin/rune-repl.units
 	bin/rune-boot --units --basis all --emit-units bin/rune-repl.units -o bin/rune-repl.rbc $(REPL_SRCS)
@@ -932,7 +937,10 @@ bin/rune-repl.img: bin/rune-repl.units/units bin/rune-repl.load.rbc bin/runevm
 bin/rune-repl: bin/rune-repl.img
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size 67108864 --restore "$$d/rune-repl.img" -- "$$@"\n' > $@
 	chmod +x $@
-repl: bin/rune-repl
+# the same for Windows' command prompt, beside runevm.exe (M6)
+bin/rune-repl.cmd: Makefile
+	printf '@echo off\r\n"%%~dp0runevm.exe" --heap-size 67108864 --restore "%%~dp0rune-repl.img" -- %%*\r\n' > $@
+repl: bin/rune-repl bin/rune-repl.cmd
 
 # The REPL's transcripts, on every mode of the JIT (docs/repl.md)
 test-repl: bin/rune-repl bin/runevm

@@ -3262,7 +3262,7 @@ int sys_term_size(int fd, int *cols, int *rows) {
 
 int64_t sys_term_resizes(void) { return (int64_t)term_resize_count; }
 
-int sys_term_enter(int in, int out, const char *undo, int64_t n) {
+int sys_term_enter(int in, int out, const char *undo, int64_t n, int quiet) {
     HANDLE h = console_of(in);
     if (!h) { last = ENOTTY; return -1; }
     if (n < 0 || (size_t)n > sizeof term_undo) { last = EINVAL; return -1; }
@@ -3277,7 +3277,9 @@ int sys_term_enter(int in, int out, const char *undo, int64_t n) {
     term_undo_n = (DWORD)n;
     term_in = h;
     term_out_handle = console_of(out);
+    /* quiet: Ctrl-C the console's control event, as the user's interrupt */
     DWORD mode = ENABLE_VIRTUAL_TERMINAL_INPUT | ENABLE_WINDOW_INPUT | ENABLE_EXTENDED_FLAGS |
+                 (quiet ? ENABLE_PROCESSED_INPUT : 0) |
                  (term_in_before & (ENABLE_QUICK_EDIT_MODE | ENABLE_INSERT_MODE));
     if (!SetConsoleMode(h, mode)) { last = ENOTSUP; return -1; }
     InterlockedExchange(&term_raw_on, 1);

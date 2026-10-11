@@ -1,3 +1,4 @@
+Rune @VERSION@. Ctrl-D ends the session.
 - 1;
 val it = 1 : int
 - val (a, b) = (2, "two");

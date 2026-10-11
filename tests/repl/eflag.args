@@ -1,0 +1,7 @@
+--no-init
+-e
+val x = 2 + 3
+-e
+x * 2;
+-e
+val y = x div 0

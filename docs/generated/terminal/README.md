@@ -10,7 +10,7 @@
 | [`EMULATOR`](sig/EMULATOR.md) | A terminal emulated in memory: what a screen shows after a program has written to it, for testing what a program draws without a terminal. | required | 9 of 9 |
 | [`HISTORY`](sig/HISTORY.md) | The history of what was typed at a prompt, kept in a file that several sessions share. | required | 8 of 8 |
 | [`KEY`](sig/KEY.md) | Keys: the bytes a terminal sends turned into the keys that were pressed. | required | 10 of 10 |
-| [`LINE_EDIT`](sig/LINE_EDIT.md) | A line editor: what is typed at a prompt, edited with Emacs's keys, drawn on a terminal, of one line or many. | required | 16 of 16 |
+| [`LINE_EDIT`](sig/LINE_EDIT.md) | A line editor: what is typed at a prompt, edited with Emacs's keys, drawn on a terminal, of one line or many. | required | 17 of 17 |
 | [`STYLE`](sig/STYLE.md) | The look of text on a terminal: colours and attributes, the escapes of ECMA-48's SGR that give them, and whether a program should use them at all. | required | 11 of 11 |
 
 ## Functors

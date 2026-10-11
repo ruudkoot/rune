@@ -2267,6 +2267,63 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
   * HOL4's Emacs mode against the REPL, unchanged.
 * **Done when:** those pass, and a paste of 2,000 lines costs time linear
   in its length.
+* **As built** (2026-10-10): incremental's head merged first (*Prerequisites
+  and flags*). `src/repl/scan.sml` (`ReplScan`, D12's scanner, which the
+  editor asks at Enter, the basic mode at each line and `Compiler.compile`
+  at each `;`), `highlight.sml` (D13, over `Lexer.scan`, the lexer's new
+  mode that never raises and that `tokenize` shares its reader with, a
+  line's pieces kept by its text and the state it begins in),
+  `complete.sml` (D14) and `front.sml` (the flags of D25, the init file,
+  the choice of the basic mode by `LineEdit.basic`, the editor's
+  configuration, the history, the banner, OSC 133, the partial line, and
+  the terminal held quiet while code runs). The REPL program is built
+  with lib/terminal's editor files listed in `REPL_SRCS` rather than
+  `--library terminal`, which would compile lib/unicode a second time
+  beside the compiler's copy. A declaration's errors are all reported
+  (`Elaborate.recover` per declaration, the declaration then failing
+  whole) through `Error.show`, so that on a terminal each has its
+  excerpt; parse errors keep their span for it. A string that a line ends
+  in is reported at once, in the basic mode too.
+  Where it differs from the plan:
+  * **Quiet mode is the runtime's** (`Terminal.quiet`, `term_enter`'s new
+    last argument): a mode set with `Posix.TTY` would have stayed set
+    after a `SIGTERM` or a fatal error, which put back only raw mode. It
+    turns off the translation of carriage returns too, so that an Enter
+    typed ahead reaches the editor as Enter. The instruction set's
+    fingerprint changes with the primitive's type.
+  * **`print` through `TextIO.stdOut` moves to M10.** Routing it there
+    would flush the VM's buffer at every `print` of any program that
+    loads `TextIO`; nothing in M6 needs it (the editor marks a partial
+    line by zsh's way, without knowing the column), and M10, which
+    captures a program's output, changes `print` with the VM's slot for
+    descriptor 1.
+  * **Entries keep the name `stdIn`**; naming them `stdIn#3` waits for
+    the traces of M8, which are the first to point back at an earlier
+    entry. The basic mode's transcripts are unchanged byte for byte, as
+    D24 asks.
+  * **The partial line is marked before the REPL's own output** too, not
+    only before the prompt: `print "abc";` is followed by `abc%` and the
+    echo on a line of its own.
+  * Tests: `tests/repl` gains `-e` and the init file (`NAME.args` gives a
+    transcript its arguments, `--no-init` by default); `tests/terminal`
+    gains `repl-edit` (colours as typed, completion, history),
+    `repl-errors`, `repl-quiet` (keys typed ahead while code runs, and a
+    program's read), `repl-basic` (comint), `repl-marks.pty` (OSC 133 byte
+    for byte on a pty, which tmux does not pass on), and on Windows
+    `rune-repl.cmd` from `cmd.exe`; `term.py` waits on styles (`waits`).
+    HOL4's Emacs mode is covered by the basic mode's transcripts and
+    `repl-basic`, not run in Emacs. `tests/terminal/MANUAL.md` is written;
+    going through it on the terminals it names is M13's, which records
+    the results there.
+  * Measured (`scripts/perf-repl.sh`, the basic mode as M1 was, load 11
+    to 13): a paste of 1,000 lines answered in 0.53 s and of 2,000 in
+    0.91 s, linear but for a fixed 0.15 s (M1: 5.8 s and 33.1 s); an entry
+    answered in 13 ms; a key at the end of 1,000 lines drawn in 4.8 ms
+    (worst 15.7). The start to the first prompt is 0.04 s from a pipe and
+    0.17 to 0.30 s on a pty under that load, two runs apart: it is
+    measured again on a quiet machine (*Measuring*). The echo of a
+    declaration of many values comes in the order of their names, as it
+    did, which `perf-repl.sh`'s pastes now allow for.
 
 The first part ends here: the REPL has colours and editing on Linux and
 Windows, and any Rune program can read a line with them.
@@ -2604,18 +2661,18 @@ the M1 column was measured on a quiet machine yet: before M6 compares
 with it, `scripts/perf-repl.sh` runs again on one, and the column takes
 those numbers.
 
-| What | P0 to P4 (loaded) | M1 | Target (D24) |
-|---|---|---|---|
-| start to the first prompt | 72 to 87 ms | 46.5 ms | 100 ms |
-| `1;` to the next prompt | 8 to 16 ms | 7.8 ms | as M1 |
-| paste of 1,000 lines | 6.7 to 7.0 s | 5.8 s | linear in the length |
-| paste of 2,000 lines | hung in the harness | 33.1 s | linear in the length |
-| keystroke, 10 lines | 0.38 ms (P2) | 0.32 ms (M5, load 13) | 16 ms |
-| keystroke, 1,000 lines | 29.6 ms (P2) | 3.56 ms, worst 10.4 (M5, load 13) | 16 ms |
-| bytes written a keystroke, 1,000 lines | 1,324 (P2) | 14 typing at the end, 1,052 in the middle (M5) | as M5 |
-| completion menu over the Basis | none | from M6 | 50 ms |
-| kernel round trip, 16 bytes | 66 µs median (P4) | from M11 | as M11 |
-| a program not debugged, under M12 | as before | from M12 | no slower |
+| What | P0 to P4 (loaded) | M1 | M6 (load 11 to 13) | Target (D24) |
+|---|---|---|---|---|
+| start to the first prompt | 72 to 87 ms | 46.5 ms | 40 ms from a pipe; 170 to 300 ms on a pty | 100 ms |
+| `1;` to the next prompt | 8 to 16 ms | 7.8 ms | 13 ms | as M1 |
+| paste of 1,000 lines | 6.7 to 7.0 s | 5.8 s | 0.53 s | linear in the length |
+| paste of 2,000 lines | hung in the harness | 33.1 s | 0.91 s | linear in the length |
+| keystroke, 10 lines | 0.38 ms (P2) | 0.32 ms (M5, load 13) | 0.25 ms | 16 ms |
+| keystroke, 1,000 lines | 29.6 ms (P2) | 3.56 ms, worst 10.4 (M5, load 13) | 4.8 ms, worst 15.7 | 16 ms |
+| bytes written a keystroke, 1,000 lines | 1,324 (P2) | 14 typing at the end, 1,052 in the middle (M5) | the same | as M5 |
+| completion menu over the Basis | none | from M6 | 4.6 ms (`S`, Tab Tab, to the menu) | 50 ms |
+| kernel round trip, 16 bytes | 66 µs median (P4) | from M11 | | as M11 |
+| a program not debugged, under M12 | as before | from M12 | | no slower |
 
 ## Ready for, not built
 

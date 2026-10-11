@@ -21,17 +21,22 @@
    what has been typed of one. *)
 structure Repl =
 struct
-  fun err s = (TextIO.flushOut TextIO.stdOut; TextIO.output (TextIO.stdErr, s); TextIO.flushOut TextIO.stdErr)
+  fun err s =
+    (TextIO.flushOut TextIO.stdOut; ReplFront.freshLine (); TextIO.output (TextIO.stdErr, s); TextIO.flushOut TextIO.stdErr)
+
+  (* an error at a place, as the diagnostics show it (Diagnostic, with the
+     excerpt where stderr is a terminal) *)
+  fun report (sp : Source.span, msg : string) = err (!Error.show ("error", sp, msg) ^ "\n")
 
   (* An exception that nothing handled, as the REPL says so *)
   fun uncaught e =
     case e of
-      SML90.Interrupt => err "Interrupt\n"
+      SML90.Interrupt => err (ReplFront.paint "repl.interrupt" "Interrupt" ^ "\n")
     | IO.Io {name, function, cause} =>
         (* what failed, on what and why, as Poly/ML shows the fields *)
-        err ("uncaught exception Io: " ^ function ^ " " ^ name ^ ": "
+        err (ReplFront.paint "repl.exception" "uncaught exception" ^ " Io: " ^ function ^ " " ^ name ^ ": "
              ^ (case cause of OS.SysErr (m, _) => m | c => General.exnMessage c) ^ "\n")
-    | _ => err ("uncaught exception " ^ General.exnMessage e ^ "\n")
+    | _ => err (ReplFront.paint "repl.exception" "uncaught exception" ^ " " ^ General.exnMessage e ^ "\n")
 
   (* f () with the interrupt's mask on, and as it was after, which raises
      an interrupt that waited where the mask was off *)
@@ -46,7 +51,7 @@ struct
     handle e => (ignore (Runtime.maskInterrupt true); raise e)
 
   (* What a text is to the parser: declarations, more to read, or an error *)
-  datatype parsed = Decs of Ast.dec list * Fixity.env | More | Wrong of string
+  datatype parsed = Decs of Ast.dec list * Fixity.env | More | Wrong of Source.span * string
 
   (* The declarations of a text, if it ends with a `;` that ends one; the
      text is the source name's from its line `line` on. *)
@@ -65,11 +70,14 @@ struct
          else
            (let val (decs, fx) = Parser.parseTokensWith (toks, !ReplSession.fixity)
             in if ends then Decs (decs, fx) else More end)
-           handle Error.CompileError (sp, msg) => if sp = eof then More else Wrong (Error.format (sp, msg))
+           handle Error.CompileError (sp, msg) => if sp = eof then More else Wrong (sp, msg)
        end)
       handle Error.CompileError (sp, msg) =>
-        (* a string or a comment the text has not finished yet *)
-        if String.isSubstring "unterminated" msg then More else Wrong (Error.format (sp, msg))
+        (* a comment, or a string's gap, the text has not finished yet; a
+           string that a line ends in cannot be finished, and is reported at
+           once (D12) *)
+        if String.isSubstring "unterminated" msg andalso not (String.isSubstring "string literal" msg) then More
+        else Wrong (sp, msg)
     end
   fun parse (name : string, text : string) : parsed = parseAt (name, text, 1)
 
@@ -111,10 +119,14 @@ struct
         let
           fun one () =
             let
+              (* what was written before reaches the file before what the
+                 compile reports *)
+              val () = TextIO.flushOut TextIO.stdOut
               (* compiled: an error is the declaration's, or the compiler's own *)
               val compiled =
                 SOME (ReplSession.compile (d, name, text, cached))
-                handle Error.CompileError (sp, msg) => (err (Error.format (sp, msg) ^ "\n"); NONE)
+                handle Error.CompileError (sp, msg) => (report (sp, msg); NONE)
+                     | ReplSession.Reported => NONE
                      | Error.Bug msg => (err ("rune-repl: " ^ msg ^ "\n"); NONE)
                      | Fail msg => (err ("rune-repl: " ^ msg ^ "\n"); NONE)
             in
@@ -122,7 +134,7 @@ struct
               case compiled of
                 NONE => false
               | SOME {run, delta, declared, bind} =>
-                  ((unmasked run;
+                  ((ReplFront.running (); unmasked run; ReplFront.freshLine ();
                     ReplSession.env := Env.plus (!ReplSession.env, delta);
                     bind ();
                     if !RuneCompiler.printDepth > 0 then List.app (fn s => print (s ^ "\n")) declared else ();
@@ -132,7 +144,7 @@ struct
           val ok = masked one
         in
           if ok orelse not stopping
-          then runGroups (rest, name, text, Option.map (fn (s, n, ns) => (s, n + 1, ns)) cached, stopping)
+          then runGroups (rest, name, text, Option.map (fn (s, n, ns) => (s, n + 1, ns)) cached, stopping) andalso ok
           else false
         end
 
@@ -153,7 +165,7 @@ struct
             if run (decs, file, text ^ "\n;", SOME (file, 0, names), true) then ()
             else raise Fail ("use: " ^ file ^ " has errors"))
        | (More, _) => raise Fail ("use: " ^ file ^ " ends in the middle of a declaration")
-       | (Wrong msg, _) => (err (msg ^ "\n"); raise Fail ("use: " ^ file ^ " has errors")))
+       | (Wrong e, _) => (report e; raise Fail ("use: " ^ file ^ " has errors")))
       handle e => (done (); raise e);
       done ()
     end
@@ -171,6 +183,7 @@ struct
   fun compileReader {read : unit -> char option, file : string, line : int} : unit -> unit =
     let
       fun static msg = (err (msg ^ "\n"); raise Fail ("Static errors in " ^ file))
+      fun wrong e = (report e; raise Fail ("Static errors in " ^ file))
       val isFile = (OS.FileSys.access (file, [OS.FileSys.A_READ]) andalso not (OS.FileSys.isDir file))
                    handle OS.SysErr _ => false
       fun run' (decs, fx, text, names) =
@@ -184,52 +197,11 @@ struct
              if ok then () else raise Fail ("Static errors in " ^ file)
            end)
       fun parsed text = Usage.record (fn () => parseAt (file, text, line))
-      (* How deep what has been read is in brackets and in let, local,
-         struct, sig and abstype ... end, outside strings and comments. A
-         `;` at depth 0 may end a declaration at the top level, and only
-         there is the text parsed: a structure has a `;` after most of its
-         declarations, and parsing the text at each of them made reading
-         one quadratic. Where the count is wrong the text is parsed at a
-         `;` too many or too few; the parse decides. *)
-      val depth = ref 0
-      val comment = ref 0
-      val inString = ref false
-      val escaped = ref false
-      val prev = ref #" "
-      val word = ref ([] : char list)
-      fun endWord () =
-        (case String.implode (List.rev (!word)) of
-           "let" => depth := !depth + 1
-         | "local" => depth := !depth + 1
-         | "struct" => depth := !depth + 1
-         | "sig" => depth := !depth + 1
-         | "abstype" => depth := !depth + 1
-         | "end" => depth := !depth - 1
-         | _ => ();
-         word := [])
-      fun scan (c : char) =
-        if !comment > 0 then
-          if !prev = #"(" andalso c = #"*" then (comment := !comment + 1; prev := #" ")
-          else if !prev = #"*" andalso c = #")" then (comment := !comment - 1; prev := #" ")
-          else prev := c
-        else if !inString then
-          if !escaped then escaped := false
-          else if c = #"\\" then escaped := true
-          else if c = #"\"" then inString := false
-          else ()
-        else if Char.isAlphaNum c orelse c = #"_" orelse c = #"'" then word := c :: !word
-        else
-          (if null (!word) then () else endWord ();
-           case c of
-             #"*" => if !prev = #"(" then (depth := !depth - 1; comment := 1; prev := #" ") else prev := c
-           | #"(" => (depth := !depth + 1; prev := c)
-           | #"[" => (depth := !depth + 1; prev := c)
-           | #"{" => (depth := !depth + 1; prev := c)
-           | #")" => (depth := !depth - 1; prev := c)
-           | #"]" => (depth := !depth - 1; prev := c)
-           | #"}" => (depth := !depth - 1; prev := c)
-           | #"\"" => (inString := true; prev := c)
-           | _ => prev := c)
+      (* where a `;` may end a declaration at the top level (ReplScan): only
+         there is the text parsed, since a structure has a `;` after most of
+         its declarations, and parsing the text at each of them made reading
+         one quadratic. Where the scanner is wrong the parse decides. *)
+      val scan = ReplScan.new ()
       fun gather (acc : char list) =
         case read () of
           NONE =>
@@ -240,50 +212,85 @@ struct
                 case parsed (text ^ "\n;") of
                   (Decs (decs, fx), names) => run' (decs, fx, text ^ "\n;", names)
                 | (More, _) => static (file ^ ": the text ends in the middle of a declaration")
-                | (Wrong msg, _) => static msg
+                | (Wrong e, _) => wrong e
             end
         | SOME #";" =>
             let
-              val () = scan #";"
+              val () = ReplScan.char (scan, #";")
               val acc = #";" :: acc
             in
-              if !depth > 0 orelse !comment > 0 orelse !inString then gather acc
+              if not (ReplScan.complete scan) then gather acc
               else
                 let val text = String.implode (List.rev acc)
                 in
                   case parsed text of
                     (Decs (decs, fx), names) => run' (decs, fx, text, names)
                   | (More, _) => gather acc
-                  | (Wrong msg, _) => static msg
+                  | (Wrong e, _) => wrong e
                 end
             end
-        | SOME c => (scan c; gather (c :: acc))
+        | SOME c => (ReplScan.char (scan, c); gather (c :: acc))
     in gather [] end
 
-  (* The loop: a prompt, lines until a declaration ends, the declarations
-     run; on to the end of the input *)
-  fun loop () : unit =
+  (* true where the text was taken -- run, or reported wrong -- and the next
+     prompt is the first; whether what it ran all went well beside *)
+  fun step (text : string, last : bool) : bool * bool =
+    case parse ("stdIn", text) of
+      Decs (decs, fx) => (ReplSession.fixity := fx; (true, run (decs, "stdIn", text, NONE, false)))
+    | More => (last, false)
+    | Wrong e => (report e; (true, false))
+
+  (* The basic mode's loop: a prompt, lines until a declaration ends, the
+     declarations run; on to the end of the input. The lines are scanned as
+     they come (ReplScan), and parsed only where one may end a declaration,
+     so that what is pasted costs time in proportion to its length. *)
+  fun basicLoop () : unit =
     let
-      fun read (buffer : string, prompt : string) =
+      fun read (lines : string list, scan : ReplScan.t, prompt : string) =
         (print prompt; TextIO.flushOut TextIO.stdOut;
          (* the wait with the mask off: an interrupt drops what has been
             typed of the declaration *)
          case SOME (unmasked (fn () => TextIO.inputLine TextIO.stdIn)) handle SML90.Interrupt => NONE of
-           NONE => (print "\n"; uncaught SML90.Interrupt; read ("", !RuneCompiler.prompt1))
-         | SOME NONE => if buffer = "" then print "\n" else ignore (step (buffer ^ "\n;", true))
+           NONE => (print "\n"; uncaught SML90.Interrupt; read ([], ReplScan.new (), !RuneCompiler.prompt1))
+         | SOME NONE => if null lines then print "\n" else ignore (step (String.concat (List.rev lines) ^ "\n;", true))
          | SOME (SOME line) =>
-             let val text = buffer ^ line
-             in if step (text, false) then read ("", !RuneCompiler.prompt1) else read (text, !RuneCompiler.prompt2) end)
-      (* true where the text was taken -- run, or reported wrong -- and the
-         next prompt is the first *)
-      and step (text : string, last : bool) : bool =
-        case parse ("stdIn", text) of
-          Decs (decs, fx) => (ReplSession.fixity := fx; ignore (run (decs, "stdIn", text, NONE, false)); true)
-        | More => last
-        | Wrong msg => (err (msg ^ "\n"); true)
+             let
+               val () = ReplScan.string (scan, line)
+               val lines = line :: lines
+             in
+               if ReplScan.complete scan andalso #1 (step (String.concat (List.rev lines), false))
+               then read ([], ReplScan.new (), !RuneCompiler.prompt1)
+               else read (lines, scan, !RuneCompiler.prompt2)
+             end)
     in
-      read ("", !RuneCompiler.prompt1)
+      read ([], ReplScan.new (), !RuneCompiler.prompt1)
     end
+
+  (* whether the parser takes a text as whole: what the editor asks at
+     Enter, once the scanner says it may be *)
+  fun isWhole (text : string) : bool =
+    case parse ("stdIn", text) of More => false | _ => true
+
+  (* The loop on the editor (ReplFront): an entry at a time, run with the
+     terminal held quiet; ended at Ctrl-D on an empty entry *)
+  fun editorLoop () : unit =
+    case unmasked (fn () => ReplFront.readEntry (!ReplSession.env, isWhole)) handle SML90.Interrupt => ReplFront.Interrupted of
+      ReplFront.EndOfInput => ()
+    | ReplFront.Interrupted => editorLoop ()
+    | ReplFront.Entry text =>
+        (if CharVector.all Char.isSpace text then ()
+         else
+           let
+             val () = ReplFront.hold ()
+             val (_, ok) = step (text, true)
+           in
+             ReplComplete.noteUses text;
+             ReplHighlight.reset ();
+             ReplFront.ended ok
+           end;
+         editorLoop ())
+
+  fun loop () : unit = if !ReplFront.editing then editorLoop () else basicLoop ()
 
   (* The lines of a file *)
   fun linesOf (file : string) : string list =
@@ -303,8 +310,27 @@ struct
       val units = List.map (fn u => OS.Path.joinDirFile {dir = dir, file = OS.Path.file u}) (linesOf list)
       val sources = linesOf (OS.Path.joinDirFile {dir = dir, file = "sources"})
       val lib = OS.Path.concat (dir, "../../lib")
-      (* the files given used, then the loop *)
-      fun session files = (List.app (fn f => use f handle e => uncaught e) files; loop ())
+      (* the options and files given: the init file, the files used, then
+         the loop, or the text of -e and the end *)
+      fun session args =
+        let
+          val options as {init, files, exprs, ...} =
+            ReplFront.parseArgs args
+            handle ReplFront.Usage msg => (err ("rune-repl: " ^ msg ^ "\n" ^ ReplFront.usage); OS.Process.exit OS.Process.failure)
+          val () = ReplFront.start options
+          val () = if init then Option.app (fn f => use f handle e => uncaught e) (ReplFront.initFile ()) else ()
+          val () = List.app (fn f => use f handle e => uncaught e) files
+        in
+          case exprs of
+            [] => loop ()
+          | _ =>
+              let
+                fun whole t = if ReplScan.complete (ReplScan.ofText t) then t else t ^ "\n;"
+                val ok = List.foldl (fn (t, ok) => #2 (step (whole t, true)) andalso ok) true exprs
+              in
+                OS.Process.exit (if ok then OS.Process.success else OS.Process.failure)
+              end
+        end
     in
       (* the interrupt caught and masked from the start: one during the
          start waits for the first prompt *)

@@ -1,0 +1,3 @@
+val greeting = "from the init file" : string
+- val it = "from the init file" : string
+- 

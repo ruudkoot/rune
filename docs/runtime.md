@@ -666,6 +666,16 @@ primitives `term_size`, `term_resizes`, `term_enter`, `term_leave` and
   is on a terminal of Unix. A console that refuses VT input (before
   Windows 10 1511, the legacy console) is refused, `ENOTSUP`, and the
   editor keeps to its basic mode.
+* **Quiet mode.** `term_enter`'s last argument asks for quiet mode in
+  place of raw: on POSIX the saved settings without `ECHO`, `ECHONL`,
+  `ICANON` and the translations of carriage returns and newlines on
+  input, `ISIG` kept, so that keys wait as they were typed for the raw
+  mode that reads them next; on Windows raw mode with processed input on.
+  Nothing typed is echoed or edited, keys typed ahead wait for the next
+  read, and Ctrl-C is still the user's interrupt. The REPL holds the
+  terminal quiet while the code it compiled runs (`Terminal.quiet`;
+  docs/plans/repl.md, D18), and quiet mode is put back in every way raw
+  mode is.
 * **Put back whatever happens.** The program gives `term_enter` the bytes
   that undo what it turned on with escapes (bracketed paste, a hidden
   cursor). The terminal is put back and those bytes written by

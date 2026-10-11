@@ -7,6 +7,12 @@ rune \- compile Standard ML '97 to Rune bytecode
 .IR file.sml " ..."
 .br
 .B rune \-i
+.RB [ \-q ]
+.RB [ \-e
+.IR text ]...
+.RB [ \-\-no\-init ]
+.RB [ \-\-color=\fIwhen\fP ]
+.RB [ \-\-basic ]
 .RI [ file.sml " ...]"
 .SH DESCRIPTION
 .B rune
@@ -32,7 +38,19 @@ on the command line comes later and therefore wins.
 As the first argument: start the REPL,
 .BR rune\-repl ,
 beside the wrapper, instead of compiling, with the arguments that follow;
-it uses those files and then reads declarations from the standard input.
+it uses its init file and those files, and then reads declarations from the
+standard input, with a line editor on a terminal.
+.B \-q
+leaves out the banner,
+.B \-e
+runs the declarations of its text and ends,
+.B \-\-no\-init
+skips the init file
+.RI ( ~/.config/rune/init.sml ),
+.B \-\-color
+colours the REPL's output always, never or on a terminal (auto), and
+.B \-\-basic
+reads a line at a time, as on a pipe.
 The wrapper does this, and the compiler never sees the option.
 .TP
 .BI \-o " FILE"

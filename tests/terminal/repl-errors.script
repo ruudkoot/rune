@@ -1,0 +1,20 @@
+# windows
+# Errors at the REPL (D17): every independent error of a declaration, each
+# with the line it is about; a string that a line ends in reported at
+# Enter rather than waited on; and the session as it was before.
+start 80 24 @REPL@
+wait ^-$
+send val a = undefined1 val b = undefined2;
+keys Enter
+wait undefined2;\n +\| +\^+
+send val s = "no end
+keys Enter
+wait unterminated string literal
+wait ^-$
+send val a = 1;
+keys Enter
+wait ^val a = 1 : int\n-$
+expect @DIR@/repl-errors.screen
+send val () = OS.Process.exit OS.Process.success;
+keys Enter
+exited 0

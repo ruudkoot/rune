@@ -6,8 +6,8 @@
 | --- | --- |
 | Status | extension |
 | Implementations | 1 |
-| Documentation | 5 of 5 entries documented |
-| Tests | 6 checks of 5 entries |
+| Documentation | 6 of 6 entries documented |
+| Tests | 7 checks of 6 entries |
 | Source | [lib/basis/terminal\_sig.sml](../../../../lib/basis/terminal_sig.sml) |
 
 ## Synopsis
@@ -53,6 +53,7 @@ sig
   val <a href="#val-size">size</a> : unit -&gt; {<a href="#fld-size.columns">columns</a> : int, <a href="#fld-size.rows">rows</a> : int} option
   val <a href="#val-resizes">resizes</a> : unit -&gt; int
   val <a href="#val-enter">enter</a> : {<a href="#fld-enter.undo">undo</a> : string} -&gt; unit
+  val <a href="#val-quiet">quiet</a> : unit -&gt; unit
   val <a href="#val-leave">leave</a> : unit -&gt; unit
   val <a href="#val-read">read</a> : Time.time option -&gt; string option
 end
@@ -141,14 +142,39 @@ For `Terminal`, in [tests/basis/terminal.sml](../../../../tests/basis/terminal.s
 
 </details>
 
+### <a name="val-quiet"></a>`quiet`
+
+```sml
+val quiet : unit -> unit
+```
+
+`quiet ()` puts the terminal of the standard input in quiet mode,
+for while a program runs that the user may interrupt.
+
+Quiet is nothing echoed and lines not edited, so that keys typed
+ahead stay unseen until a program reads them, while a key still makes
+its signal: Ctrl-C is the user's interrupt ([`Runtime`](../str/Runtime.md)). The runtime
+puts the terminal back from quiet mode as it does from raw mode, and
+[`enter`](#val-enter) and [`quiet`](#val-quiet) go from one to the other; [`quiet`](#val-quiet) has no `undo`.
+The REPL holds the terminal quiet while what it compiled runs
+(docs/repl.md).
+
+**Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) as [`enter`](#val-enter) does.
+
+<details><summary>Tests (1)</summary>
+
+For `Terminal`, in [tests/basis/terminal.sml](../../../../tests/basis/terminal.sml): `refused-without-a-terminal` (raises)
+
+</details>
+
 ### <a name="val-leave"></a>`leave`
 
 ```sml
 val leave : unit -> unit
 ```
 
-`leave ()` puts the terminal back as it was before [`enter`](#val-enter), writing
-`undo`; nothing when it is not raw.
+`leave ()` puts the terminal back as it was before [`enter`](#val-enter) or [`quiet`](#val-quiet),
+writing `undo`; nothing when it is neither raw nor quiet.
 
 <details><summary>Tests (1)</summary>
 

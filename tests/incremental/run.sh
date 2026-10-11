@@ -288,7 +288,7 @@ if run S40; then
   rm -rf "$dir"
   mkdir -p "$dir"
   printf 'val twice = (base, base)\n' > "$dir/uses.sml"
-  session() { (cd "$dir" && printf '%s\nuse "uses.sml";\n' "$1" | RUNE_CACHE="$dir/cache" "$repl" > "$dir/session.out" 2>&1); }
+  session() { (cd "$dir" && printf '%s\nuse "uses.sml";\n' "$1" | RUNE_CACHE="$dir/cache" "$repl" --no-init > "$dir/session.out" 2>&1); }
   entries() { find "$dir/cache" -type f -not -path '*/units/*' | sort | xargs ls -i | awk '{print $1, $2}'; }
   session 'val base = "ab";'
   one=$(entries | wc -l)
@@ -533,7 +533,7 @@ if run S57; then
   dir=$out/S57
   rm -rf "$dir"
   mkdir -p "$dir"
-  session() { (cd "$dir" && printf '%s\n' "$@" | env $verify RUNE_CACHE="$dir/cache" "$repl" > "$dir/session.out" 2>&1); }
+  session() { (cd "$dir" && printf '%s\n' "$@" | env $verify RUNE_CACHE="$dir/cache" "$repl" --no-init > "$dir/session.out" 2>&1); }
   verify=""
   put u.sml 'val twice = base + base'
   session 'val base = 1;' 'use "u.sml";'
@@ -635,7 +635,7 @@ if run S53; then
   mkdir -p "$dir"
   put t.sml 'datatype t = T of int'
   put v.sml 'val v = T 3'
-  session() { (cd "$dir" && printf '%s\n' "$@" | RUNE_CACHE="$dir/cache" "$repl" > "$dir/session.out" 2>&1); }
+  session() { (cd "$dir" && printf '%s\n' "$@" | RUNE_CACHE="$dir/cache" "$repl" --no-init > "$dir/session.out" 2>&1); }
   session 'use "t.sml";' 'use "v.sml";'
   session 'use "t.sml";' \
     'Compiler.addPrettyPrinter (fn _ => fn _ => fn (T n) => Compiler.PrettyString ("<t " ^ Int.toString n ^ ">"));' \
@@ -650,7 +650,7 @@ if run S54; then
   mkdir -p "$dir"
   put t.sml 'datatype t = T of int'
   put v.sml 'val v = T 3'
-  session() { (cd "$dir" && printf '%s\n' "$@" | RUNE_CACHE="$dir/cache" "$repl" > "$dir/session.out" 2>&1); }
+  session() { (cd "$dir" && printf '%s\n' "$@" | RUNE_CACHE="$dir/cache" "$repl" --no-init > "$dir/session.out" 2>&1); }
   session 'RuneCompiler.printDepth := 0;' 'use "t.sml";' 'use "v.sml";'
   session 'use "t.sml";' 'use "v.sml";'
   if grep -q 'val v = T 3 : t' "$dir/session.out"; then pass=$((pass + 1))

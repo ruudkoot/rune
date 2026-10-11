@@ -16,6 +16,10 @@ struct
   val printDepth = ref 20
   val prompt1 = ref "- "
   val prompt2 = ref "= "
+  (* what the REPL writes for a value a declaration bound: its name, the
+     value shown and its type; the REPL styles it on a terminal *)
+  val echoHook : (string * string * string -> unit) ref =
+    ref (fn (name, shown, ty) => print ("val " ^ name ^ " = " ^ shown ^ " : " ^ ty ^ "\n"))
 
   type location = {file : string, startLine : int, startPosition : int, endLine : int, endPosition : int}
   datatype context = ContextLocation of location | ContextProperty of string * string
@@ -111,7 +115,7 @@ struct
   fun vector (f : int -> 'a -> string) (d : int) (v : 'a vector) =
     cut (d, fn () => "#[" ^ String.concatWith ", " (Vector.foldr (fn (x, l) => f (d - 1) x :: l) [] v) ^ "]")
   (* a value bound by a declaration, as the REPL echoes it *)
-  fun echo (name : string, shown : string, ty : string) = print ("val " ^ name ^ " = " ^ shown ^ " : " ^ ty ^ "\n")
+  fun echo (name : string, shown : string, ty : string) = !RuneCompiler.echoHook (name, shown, ty)
 
   (* The printers of Compiler.addPrettyPrinter, by the name of their type
      (UnitBasis.stableName), each kept at a type of its own and taken out at

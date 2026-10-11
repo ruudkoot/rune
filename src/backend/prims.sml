@@ -369,7 +369,7 @@ struct
     ("rt_promoted", 363, 1),
     ("term_size", 364, 1),
     ("term_resizes", 365, 1),
-    ("term_enter", 366, 3),
+    ("term_enter", 366, 4),
     ("term_leave", 367, 1),
     ("term_read", 368, 3)
   ]
@@ -885,7 +885,7 @@ struct
            ("rt_promoted", ([8], 1)),
            ("term_size", ([1], 7)),
            ("term_resizes", ([8], 1)),
-           ("term_enter", ([1, 1, 6], 1)),
+           ("term_enter", ([1, 1, 6, 1], 1)),
            ("term_leave", ([8], 1)),
            ("term_read", ([1, 1, 1], 0))
          ]);

@@ -6,8 +6,8 @@
 | --- | --- |
 | Signature | [`TERMINAL`](../sig/TERMINAL.md) |
 | Status | extension |
-| Members | 5 |
-| Tests | 6 checks |
+| Members | 6 |
+| Tests | 7 checks |
 | Source | [lib/basis/terminal.sml](../../../../lib/basis/terminal.sml) |
 
 ## Synopsis
@@ -29,6 +29,7 @@ What each means is on [`TERMINAL`](../sig/TERMINAL.md); the types are this struc
 | --- | --- | --- |
 | val | [`enter`](../sig/TERMINAL.md#val-enter) | `{undo : string} -> unit` |
 | val | [`leave`](../sig/TERMINAL.md#val-leave) | `unit -> unit` |
+| val | [`quiet`](../sig/TERMINAL.md#val-quiet) | `unit -> unit` |
 | val | [`read`](../sig/TERMINAL.md#val-read) | `Time.time option -> string option` |
 | val | [`resizes`](../sig/TERMINAL.md#val-resizes) | `unit -> int` |
 | val | [`size`](../sig/TERMINAL.md#val-size) | `unit -> {columns : int, rows : int} option` |
