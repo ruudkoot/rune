@@ -72,6 +72,25 @@ typedef struct Slow {
    mistake, said at compile time. */
 #define MS_REAL_HOMES 1
 enum HomeKind { HOME_SLOT = 0, HOME_GPR, HOME_XMM };
+
+/* --jit-dump (performance M1): what each part of a function's code is
+   for, its role, as the code is made: a mark where an instruction of the
+   bytecode begins, and one where the role changes, each at its offset in
+   the function's code, which the dump writes beside the bytes (dump.c).
+   So every machine instruction has a role -- that of the last mark at or
+   before it -- and a bytecode instruction. MR_BODY is the instruction's
+   own work; the others are what the protocol around it costs: the count
+   of a run, the poll, the write-back of the homes at a call, a call's
+   arguments, its room checks (the stack's, the frames'), its frame
+   record, its jump; the fill of registers with unit, a landing that loads
+   the homes, a return, the slow paths, the VM made exact for C and taken
+   back, the closure a call goes through, a pointer loaded from its slot,
+   a tag or kind test, an allocation in line. */
+enum MsRole { MR_BODY, MR_COUNT, MR_POLL, MR_WB, MR_ARGS, MR_ROOM, MR_FRAMEROOM, MR_FRAME, MR_JUMP,
+              MR_FILL, MR_LAND, MR_RET, MR_SLOW, MR_SYNC, MR_CLOS, MR_PTRLD, MR_TAG, MR_ALLOC, MR__COUNT };
+extern const char *const ms_role_names[MR__COUNT];
+typedef struct MsMark { uint32_t off; int32_t role; uint32_t pc; } MsMark;   /* role -1: the instruction at pc begins */
+typedef struct MsMarks { MsMark *at; size_t n, cap; } MsMarks;
 typedef struct Home {
     uint8_t kind;
     uint8_t reg;          /* the machine register */
@@ -123,6 +142,11 @@ typedef struct Masm {
     uint64_t cur_reals;
     void (*box_real)(void);   /* the helper that boxes a real into a slot (compile.c, jit_h_box_real) */
     void (*box_num)(void);    /* and the one that boxes an int or a word of 64 bits (jit_h_box_num) */
+    /* --jit-dump: the marks of the code's roles (NULL: none kept), and
+       the role of the code being made */
+    MsMarks *marks;
+    int role;
+    int in_slow;          /* the slow paths are being made: all of their code is of MR_SLOW */
 } Masm;
 /* whether the shape of R(s) is trusted for an object of kind (REP_PTR; a
    constructor with fields for K_CON from a datatype with nullary ones too) */
@@ -281,6 +305,12 @@ void ms_fill_units(Masm *m, int base, uint32_t from, uint32_t to);  /* the value
 void ms_field_from_nth(Masm *m, int obj, uint32_t i, int base, uint32_t k);   /* field i of the object in obj := the k-th value at base */
 void ms_slot_from_nth_raw(Masm *m, int32_t d, int base, uint32_t k);
 void ms_scale_index(Masm *m, int r);                               /* r := r * the size of a value: a count of values or registers as bytes */   /* the slot of R(d) := the k-th value at base, the slot itself whatever home d has (a callee's registers) */
+
+/* --jit-dump: the role of the code from here on, and the one it had (a
+   mark where it changes, where marks are kept); and a mark where the
+   instruction at pc begins */
+int ms_role(Masm *m, int role);
+void ms_mark_pc(Masm *m, uint32_t pc);
 
 /* slow paths */
 Slow *ms_slow(Masm *m, int kind, uint32_t pc);

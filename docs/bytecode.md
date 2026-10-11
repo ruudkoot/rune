@@ -406,7 +406,13 @@ refuses the other's file and image.
   every Nth instruction boundary (plans/jit.md M11; runtime/register/README.md,
   Deoptimisation), a test that the frame is exact everywhere, which the
   oracle runs at N = 1. `--jit-perf-map` writes `/tmp/perf-PID.map`, so that `perf record`
-  names compiled functions (`jit1:NAME`, `jit2:NAME` by tier). Under
+  names compiled functions (`jit1:NAME`, `jit2:NAME` by tier). `--jit-dump=DIR`
+  writes the code of every function compiled into DIR, each part with
+  the bytecode instruction it does and its role (the instruction's own
+  work, or the protocol's: the count, a call's frame, a return, a slow
+  path, ...), which `scripts/jit-dump.py` reads, and perf's jitdump of it
+  for `perf inject --jit` and `perf annotate` (runtime/register/README.md,
+  *What is measured, and how*). Under
   `--jit=opt` a function is compiled by the same counters at tier 2
   (plans/jit.md M9; runtime/register/README.md, Tier 2), whose code keeps ints,
   words, chars, nullary constructors and reals of the function's

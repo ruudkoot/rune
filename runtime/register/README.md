@@ -767,6 +767,24 @@ interpreter's output and counts.
 allocated, and `make perf-check` holds them to `tests/perf/*.budget`.
 Cycles are `scripts/perf-cycles.sh`, whose configuration `rune` is this VM
 as shipped (docs/plans/jit.md, *Measuring*; docs/performance.md).
+`--jit-dump=DIR` (docs/plans/performance.md, M1; `jit/dump.c`) writes the
+code of every function compiled, as placed, and what each part of it is
+for: the bytecode instruction it does and its *role* -- the instruction's
+own work, or what the protocol around it costs: the count of a run, the
+poll, a call's write-back of the homes, its arguments, its room checks,
+its frame record and its jump, the fill with unit, a landing, a return, a
+slow path, the VM made exact for C, a closure's lookup, a pointer loaded
+from its slot, a tag test, an allocation (`MsRole`, `masm.h`). The
+macro-assembler keeps the marks where the role changes (`ms_role`,
+`ms_mark_pc`) when the dump asks for them, and nothing else; an emitter
+that adds a part of the protocol says its role, so that the dump keeps
+telling what a call, a return or a primitive costs. `scripts/jit-dump.py`
+disassembles the code with each machine instruction's role, and counts
+the instructions callgrind saw by role (the cost of a call is the
+difference of two runs, per call); the same directory holds perf's
+jitdump of the code, so that `perf record -k mono`, `perf inject --jit`
+and `perf annotate` read it. `make test-register-jit` holds the dump to
+its format (`tests/register/jit-dump.py`).
 `make test-register-jit` (part of `make check`) runs `tests/lang` and the Basis
 Library suite with every function given to the JIT (`--jit=all`), holds
 every program of `tests/lang` and `tests/perf` and the primitives' edge

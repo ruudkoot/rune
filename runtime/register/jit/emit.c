@@ -950,24 +950,35 @@ void emit_CALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uin
     (void)pc; (void)b;
     const Function *fn = &j->vm->prog.funcs[a];
     AsmLabel *after = jit_landing(j, j->next + 5);   /* past the RESULT */
+    ms_role(M, MR_WB);
     ms_writeback_call(M, pc, j->next + 5, result_at(j, j->next));   /* the homes needed after it to their slots: the callee has the registers, and after loads them again (M9) */
+    ms_role(M, MR_ARGS);
     for (uint32_t i = 0; i < n; i++) ms_need_word(M, read_i32(L + 4 * i));   /* an argument's word, before the frame is reserved (a box's slow path clobbers rax) */
+    ms_role(M, MR_ROOM);
     room(j, j->m.nlocals + fn->nlocals + fn->maxstack);
+    ms_role(M, MR_FRAMEROOM);
     frame_room(j);
+    ms_role(M, MR_ARGS);
     make_registers(j, n, L, (uint32_t)a, fn);
+    ms_role(M, MR_FRAME);
     as_lea(A, R_S2, BASEI, -1, 1, (int32_t)j->m.nlocals);
     push_frame(j, (uint32_t)a, (int32_t)j->next, after);
     as_mov_rr(A, BASEI, R_S2);
     ms_slot_addr(M, BASER, (int32_t)j->m.nlocals);
+    ms_role(M, MR_JUMP);
     to_callee(j, (uint32_t)a, fn);
+    ms_role(M, MR_BODY);
 }
 void emit_TAILCALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint32_t n) {
     (void)pc; (void)b;
     const Function *fn = &j->vm->prog.funcs[a];
     uint32_t need = j->m.nlocals + n;
     if (fn->nlocals + fn->maxstack > need) need = fn->nlocals + fn->maxstack;
+    ms_role(M, MR_ARGS);
     for (uint32_t i = 0; i < n; i++) ms_need_word(M, read_i32(L + 4 * i));
+    ms_role(M, MR_ROOM);
     room(j, need);
+    ms_role(M, MR_ARGS);
     /* the arguments above the frame first, since they are its registers */
     for (uint32_t i = 0; i < n; i++) ms_store_nth(M, BASER, j->m.nlocals + i, read_i32(L + 4 * i));
     for (uint32_t i = 0; i < n; i++) ms_slot_from_nth_raw(M, (int32_t)i, BASER, j->m.nlocals + i);   /* the slots: the callee's registers, not this function's homes */
@@ -975,10 +986,13 @@ void emit_TAILCALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L,
         uint32_t from = jit_fill_from(j->vm, j->jit, (uint32_t)a);
         fill_unit(j, BASER, from < n ? n : from, fn->nlocals);
     }
+    ms_role(M, MR_FRAME);
     ms_frame(M, R_S1);
     as_st32i(A, R_S1, FR(func), a);
     as_st64i(A, R_S1, FR(closure), 0);
+    ms_role(M, MR_JUMP);
     to_callee(j, (uint32_t)a, fn);
+    ms_role(M, MR_BODY);
 }
 /* ---- calls through a closure, in line (M7) ---- */
 
@@ -1111,17 +1125,23 @@ void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     /* before the restart label: the slots stay right across a restart (M9);
        under --jit-profile, every home live here, which the profile's helper
        loads again (called) */
+    ms_role(M, MR_WB);
     if (j->jit->profile) ms_writeback(M, pc);
     else ms_writeback_call(M, pc, j->next + 5, result_at(j, j->next));
+    ms_role(M, MR_ARGS);
     ms_need_word(M, b);
     int grow = grow_slow(j);
     if (grow < 0) return;
     /* the frames first: their slow path comes back to its check with the
        registers clobbered, so nothing may be live across it */
+    ms_role(M, MR_FRAMEROOM);
     frame_room(j);
+    ms_role(M, MR_CLOS);
     closure_function(j, a, R_S2);
     called(j, pc);
+    ms_role(M, MR_ROOM);
     room_dynamic(j, grow, j->m.nlocals);
+    ms_role(M, MR_ARGS);
     /* the callee's registers above the frame: register 0 from register b,
        the rest unit where the callee's code will not do it (every
        function of the program has its arity in the section: all_meta) */
@@ -1131,6 +1151,7 @@ void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     as_ld32(A, R_S3, R_S1, (int32_t)offsetof(Function, nlocals));
     ms_slot_addr(M, R_S4, (int32_t)j->m.nlocals);
     if (!j->jit->all_meta) fill_unit_dynamic(j);
+    ms_role(M, MR_FRAME);
     /* the frame: function r11, closure r10, base rdx, returning to after */
     as_ld64(A, R_S0, VMR, OFF(fp));
     as_add_ri(A, R_S0, 1);
@@ -1147,29 +1168,38 @@ void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     as_st64(A, VMR, OFF(fp), R_S0);
     as_mov_rr(A, BASEI, R_S2);
     as_mov_rr(A, BASER, R_S4);
+    ms_role(M, MR_JUMP);
     to_callee_dynamic(j);
+    ms_role(M, MR_BODY);
 }
 void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     /* the frame is replaced: of its homes only the argument is wanted, and
        under --jit-profile every one, which the profile's helper (called)
        loads again (M9) */
+    ms_role(M, MR_ARGS);
     if (j->jit->profile) ms_writeback(M, pc);
     else ms_need_word(M, b);
     int grow = grow_slow(j);
     if (grow < 0) return;
+    ms_role(M, MR_CLOS);
     closure_function(j, a, R_S2);
     called(j, pc);
+    ms_role(M, MR_ROOM);
     room_dynamic(j, grow, 0);
+    ms_role(M, MR_FRAME);
     /* the frame replaced: its function and closure; its return kept */
     ms_frame(M, R_S0);
     as_st32(A, R_S0, (int32_t)offsetof(Frame, func), R_S6);
     as_st64(A, R_S0, (int32_t)offsetof(Frame, closure), R_S2);
+    ms_role(M, MR_ARGS);
     /* the callee's registers are this frame's, from its base */
     ms_store_nth(M, BASER, 0, b);
     as_ld32(A, R_S3, R_S1, (int32_t)offsetof(Function, nlocals));
     as_mov_rr(A, R_S4, BASER);
     if (!j->jit->all_meta) fill_unit_dynamic(j);
+    ms_role(M, MR_JUMP);
     to_callee_dynamic(j);
+    ms_role(M, MR_BODY);
 }
 /* after a CALL or CALLK a RESULT is the callee's RET's to do, and is passed
    over (compile.c, phantom); after a PRIMPUSH it takes what the primitive
@@ -1184,6 +1214,7 @@ void emit_RESULT(Jit *j, uint32_t pc, int32_t a) {
 void emit_RET(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;
     AsmLabel no_result, go, interp; as_label_init(&no_result); as_label_init(&go); as_label_init(&interp);
+    ms_role(M, MR_RET);
     ms_need_word(M, a);
     Slow *s = ms_slow(M, SLOW_RET, j->next);
     if (!s) return;
@@ -1255,6 +1286,7 @@ void emit_RET(Jit *j, uint32_t pc, int32_t a) {
     as_st64(A, VMR, OFF(sp), R_S2);
     as_st64(A, VMR, OFF(instructions), COUNTR);
     ms_handback(M, RUN_INTERP);
+    ms_role(M, MR_BODY);
     as_label_free(&no_result); as_label_free(&go); as_label_free(&interp);
 }
 void emit_PRIMPUSH(Jit *j, uint32_t pc, int32_t a, const uint8_t *L, uint32_t n) {

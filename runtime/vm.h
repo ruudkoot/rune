@@ -160,6 +160,7 @@ typedef struct JitOptions {
     int mode;
     int stats;
     int perf_map;            /* --jit-perf-map: /tmp/perf-PID.map, for perf record (M7) */
+    const char *dump;        /* --jit-dump=DIR: the code of every function compiled, with its roles, and perf's jitdump (performance M1); NULL: none */
     int profile;             /* --jit-profile: the profiles of tier 1's code, shown by --jit-stats (M8) */
     const char *only;
     uint32_t calls, work;

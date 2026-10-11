@@ -1376,6 +1376,15 @@ void sys_code_flush(void *code, size_t size) {
 #endif
 }
 void sys_code_free(void *code, size_t size) { munmap(code, size); }
+int sys_code_marker(const char *path) {
+    int fd = open(path, O_RDONLY);
+    if (fd < 0) return -1;
+    void *p = mmap(NULL, sys_code_page(), PROT_READ | PROT_EXEC, MAP_PRIVATE, fd, 0);
+    int e = errno;
+    close(fd);
+    if (p == MAP_FAILED) { errno = e; return -1; }
+    return 0;
+}
 
 /* ---------------------------------------------------------- interrupts:
    SIGINT, restarting what it interrupts but a terminal's read

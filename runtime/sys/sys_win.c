@@ -3278,6 +3278,7 @@ int sys_code_protect(void *code, size_t size, int executable) {
 }
 void sys_code_flush(void *code, size_t size) { FlushInstructionCache(GetCurrentProcess(), code, size); }
 void sys_code_free(void *code, size_t size) { (void)size; VirtualFree(code, 0, MEM_RELEASE); }
+int sys_code_marker(const char *path) { (void)path; last = ENOSYS; return -1; }
 
 /* ---------------------------------------------------------- interrupts:
    Ctrl-C and Ctrl-Break at the console, by a handler that Windows runs on a

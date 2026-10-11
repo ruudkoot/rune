@@ -775,6 +775,7 @@ static int emit_function(Jit *j, Scan *sc) {
         if (!sc->start[at]) { pc++; continue; }
         if (sc->phantom[at]) { pc += rop_length(code + pc); in_run = 0; continue; }
         if (sc->target[at]) { as_bind(&m->a, &j->labels[at]); in_run = 0; }
+        ms_mark_pc(m, pc);
         if (!in_run) {
             /* the run's length: to the next end, or the next target */
             uint32_t k = 0, q = pc;
@@ -809,9 +810,11 @@ static int emit_function(Jit *j, Scan *sc) {
             Slow *s = ms_slow(m, SLOW_INTERRUPT, j->next);
             if (s) {
                 s->n = run_left + 1;   /* this instruction and the rest of its run, for a leave */
+                ms_role(m, MR_POLL);
                 as_cmp32_mi(&m->a, VMR, (int32_t)offsetof(VM, interrupt), 0);
                 as_jcc(&m->a, CC_NE, &s->here);
                 as_bind(&m->a, &s->back);
+                ms_role(m, MR_BODY);
             }
         }
         switch (op) {
@@ -921,6 +924,8 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     Jit j;
     memset(&j, 0, sizeof j);
     ms_init(&j.m, fn->nlocals, fn->maxstack, JIT_WIN, jit->leave_at);
+    MsMarks marks = { NULL, 0, 0 };
+    if (vm->jit.dump) j.m.marks = &marks;   /* the roles of the code, for --jit-dump (performance M1) */
 #ifdef RUNE_JIT_CONV
     j.m.conv_code = vm->prog.code;
     j.m.conv_prim_op = ROP_PRIM;
@@ -960,7 +965,9 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
            a value. It is so already wherever the function reads an
            argument first, which makes the answer 0.) */
         if (from < fn->arity || tier == 2) from = fn->arity;
+        ms_role(&j.m, MR_FILL);
         ms_fill_units(&j.m, BASER, from, fn->nlocals);
+        ms_role(&j.m, MR_BODY);
     }
     /* tier 2: the representations trusted for the shapes of values (M10),
        and the homes, where the function has registers a machine register
@@ -981,7 +988,9 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
                 j.m.from = j.from;
                 /* the entry: the parameters' homes loaded */
                 as_bind(&j.m.a, &j.landings[0]);
+                ms_role(&j.m, MR_LAND);
                 land(&j, j.from);
+                ms_role(&j.m, MR_BODY);
             }
         } else { free(j.live_in); j.live_in = NULL; }
     }
@@ -997,6 +1006,8 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
             if (sc.target[i] && j.labels[i].at >= 0) {
                 as_bind(&j.m.a, &j.landings[i]);
                 ms_begin(&j.m, j.from + i);
+                ms_role(&j.m, MR_LAND);
+                ms_mark_pc(&j.m, j.from + i);
                 land(&j, j.from + i);
                 as_jmp(&j.m.a, &j.labels[i]);
             }
@@ -1045,6 +1056,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
                 co->entry = at;   /* published last */
                 jit->compiled++;
                 if (j.tier == 2) jit->compiled_opt++;
+                if (j.m.marks) jit_dump_function(&j, at);
             }
         }
     }
@@ -1054,6 +1066,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     free(j.live_in); free(j.homes);
     free(j.sites);
     free(sc.start); free(sc.target); free(sc.ends); free(sc.phantom);
+    free(marks.at);
     ms_free(&j.m);
     return ok;
 #else

@@ -300,6 +300,12 @@ size_t sys_code_page(void);
 int sys_code_protect(void *code, size_t size, int executable);
 void sys_code_flush(void *code, size_t size);
 void sys_code_free(void *code, size_t size);
+/* A profiler's marker (runevm --jit-dump; perf's jitdump): the first page
+   of the file at path mapped executable and left so, which a profiler
+   that watches the process's mappings (perf record) sees, and so learns
+   of the file. 0, or -1 and the error (ENOSYS where there are no such
+   mappings to watch: Windows and sys_none). */
+int sys_code_marker(const char *path);
 
 /* Interrupts (docs/runtime.md, Interrupts; the incremental roadmap's D11):
    from now on, the user's interrupt -- SIGINT, Ctrl-C at a console -- sets

@@ -122,6 +122,32 @@ void ms_free(Masm *m) {
 
 int ms_arg(const Masm *m, int i) { return as_arg(m->win, i); }
 
+/* ---- the roles of the code, for --jit-dump (masm.h) ---- */
+const char *const ms_role_names[MR__COUNT] = { "body", "count", "poll", "writeback", "args", "room", "frameroom", "frame", "jump",
+    "fill", "land", "ret", "slow", "sync", "closure", "ptrload", "tag", "alloc" };
+static void mark(Masm *m, int32_t role, uint32_t pc) {
+    MsMarks *mk = m->marks;
+    if (mk->n == mk->cap) {
+        size_t cap = mk->cap ? 2 * mk->cap : 1024;
+        MsMark *at = realloc(mk->at, cap * sizeof *at);
+        if (!at) { m->a.failed = 1; return; }
+        mk->at = at;
+        mk->cap = cap;
+    }
+    mk->at[mk->n].off = (uint32_t)m->a.n;
+    mk->at[mk->n].role = role;
+    mk->at[mk->n].pc = pc;
+    mk->n++;
+}
+int ms_role(Masm *m, int role) {
+    int old = m->role;
+    if (m->in_slow) return old;   /* a slow path's sync, reload and all are the slow path's */
+    if (m->marks && role != old) mark(m, role, m->cur_pc);
+    m->role = role;
+    return old;
+}
+void ms_mark_pc(Masm *m, uint32_t pc) { if (m->marks) mark(m, -1, pc); }
+
 /* ---- values ---- */
 
 static int is_xmm(const Home *h) { return h && h->kind == HOME_XMM; }
@@ -1003,11 +1029,15 @@ int ms_trusts(const Masm *m, int32_t s, int kind) {
 }
 void ms_load_obj(Masm *m, int r, int32_t s, int kind, AsmLabel *unless) {
     m->nfields = UINT32_MAX;   /* an object of the program's, whose length the code tests */
+    int role = ms_role(m, MR_PTRLD);
     as_ld64(&m->a, r, BASER, SLOT(s));
-    if (ms_trusts(m, s, kind)) return;   /* tier 2: the section says so (M10) */
-    as_test_ri(&m->a, r, 1);
-    as_jcc(&m->a, CC_NE, unless);
-    kind_is(m, r, kind, unless);
+    if (!ms_trusts(m, s, kind)) {   /* tier 2: the section says so (M10) */
+        ms_role(m, MR_TAG);
+        as_test_ri(&m->a, r, 1);
+        as_jcc(&m->a, CC_NE, unless);
+        kind_is(m, r, kind, unless);
+    }
+    ms_role(m, role);
 }
 void ms_load_obj_tested(Masm *m, int r, int32_t s, int kind, AsmLabel *unless) {
     const uint8_t *reps = m->reps;
@@ -1039,12 +1069,14 @@ void ms_load_tag_of_con(Masm *m, int r, int32_t s, AsmLabel *unless) {
 
 /* ---- the VM ---- */
 void ms_sync(Masm *m, uint32_t pc, int pushed) {
+    int role = ms_role(m, MR_SYNC);
     writeback(m, m->cur_pc, pushed);
     m->sync_pc = pc;
     as_st32i(&m->a, VMR, OFF(pc), (int32_t)pc);
     as_lea(&m->a, R_S0, BASEI, -1, 1, (int32_t)(m->nlocals + (uint32_t)pushed));
     as_st64(&m->a, VMR, OFF(sp), R_S0);
     as_st64(&m->a, VMR, OFF(instructions), COUNTR);
+    ms_role(m, role);
 }
 /* r := &vm->frames[vm->fp] */
 void ms_frame(Masm *m, int r) {
@@ -1053,6 +1085,7 @@ void ms_frame(Masm *m, int r) {
     as_add_rm(&m->a, r, VMR, OFF(frames));
 }
 void ms_reload(Masm *m) {
+    int role = ms_role(m, MR_SYNC);
     m->nfields = UINT32_MAX;
     ms_frame(m, R_S1);
     as_ld64(&m->a, BASEI, R_S1, (int32_t)offsetof(Frame, base));
@@ -1086,6 +1119,7 @@ void ms_reload(Masm *m) {
                 slot_to_home(m, (int32_t)r, &m->homes[r]);
             }
     }
+    ms_role(m, role);
 }
 void ms_call_lean(Masm *m, MsHelper helper) {
     ms_call(m, helper);
@@ -1112,7 +1146,12 @@ void ms_call(Masm *m, MsHelper helper) {
 }
 /* lea, not add: the flags of a comparison just made live through it to
    the branch after (emit.c, a fused compare and branch, M7) */
-void ms_count(Masm *m, uint32_t k) { if (k) as_lea(&m->a, COUNTR, COUNTR, -1, 1, (int32_t)k); }
+void ms_count(Masm *m, uint32_t k) {
+    if (!k) return;
+    int role = ms_role(m, MR_COUNT);
+    as_lea(&m->a, COUNTR, COUNTR, -1, 1, (int32_t)k);
+    ms_role(m, role);
+}
 void ms_exit(Masm *m, uint32_t pc, uint32_t remaining) {
     ms_writeback(m, pc);
     as_st32i(&m->a, VMR, OFF(pc), (int32_t)pc);
@@ -1135,6 +1174,7 @@ void ms_handback_rax(Masm *m) {
 /* ---- the heap ---- */
 void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow) {
     uint32_t size = (uint32_t)obj_size_of(kind, n);
+    int role = ms_role(m, MR_ALLOC);
     as_cmp_mi(&m->a, VMR, OFF(gc_stress), 0);
     as_jcc(&m->a, CC_NE, slow);
     as_ld64(&m->a, R_S0, VMR, OFF(alloc.used));
@@ -1149,6 +1189,7 @@ void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow) {
     as_st32i(&m->a, R_S0, 0, (int32_t)((uint32_t)kind | ((uint32_t)contag << 16)));
     as_st32i(&m->a, R_S0, 4, (int32_t)n);
     m->nfields = n;
+    ms_role(m, role);
 }
 void ms_store_field(Masm *m, int obj, uint32_t i, int32_t s) {
     if (i >= m->nfields) bug("a field the object does not have", i, m->nfields);
@@ -1320,10 +1361,15 @@ Slow *ms_slow(Masm *m, int kind, uint32_t pc) {
     return s;
 }
 void ms_emit_slow_paths(Masm *m, void (*emit)(Masm *m, Slow *s)) {
+    ms_role(m, MR_SLOW);
+    m->in_slow = 1;
     for (int i = 0; i < m->nslow; i++) {
         as_bind(&m->a, &m->slow[i]->here);
+        m->cur_pc = m->slow[i]->cur;
+        ms_mark_pc(m, m->slow[i]->cur);
         emit(m, m->slow[i]);
     }
+    m->in_slow = 0;
 }
 
 /* ---- the stubs ---- */

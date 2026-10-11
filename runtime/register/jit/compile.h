@@ -104,6 +104,10 @@ int64_t jit_h_values_equal(VM *vm, const Value *x, const Value *y);
 void jit_h_box_real(VM *vm, int32_t slot, uint64_t bits);
 void jit_h_box_num(VM *vm, int32_t slot, uint64_t bits);
 
+/* --jit-dump: the code of the function just compiled, placed at at, and
+   its parts, written (dump.c) */
+void jit_dump_function(Jit *j, const uint8_t *at);
+
 /* the compiler: 1 when function f now has an entry, 0 when it stays interpreted */
 int jit_compile(VM *vm, JitProgram *jit, uint32_t f);
 int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier);

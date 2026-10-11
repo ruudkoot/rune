@@ -536,7 +536,7 @@ NEW_HDRS := runtime/register/regvm.h runtime/register/live.h runtime/register/re
 # RUNE_JIT=0 builds it without the JIT (docs/plans/jit.md): the
 # interpreter alone, which refuses --jit.
 RUNE_JIT ?= 1
-JIT_SRCS := runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c
+JIT_SRCS := runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c runtime/register/jit/dump.c
 JIT_HDRS := runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/asm.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
 NEW_LOOP := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS)
 bin/runevm: $(NEW_LOOP) $(GMP_DIR)/intinf.o build/gmp/selected build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) scripts/record-vm-build.py scripts/runtime_inputs.py | build/.doctor-vm
@@ -851,7 +851,7 @@ DIST_A64FLAGS ?= --target=aarch64-linux-gnu -B$(A64ROOT)/bin -L$(A64ROOT)/lib -I
 DIST_PPCFLAGS ?= --target=powerpc64-linux-gnu -B$(PPCROOT)/bin -L$(PPCROOT)/lib -I$(PPCROOT)/include \
               -Wl,-dynamic-linker,/lib64/ld64.so.1
 QEMUA64    ?= qemu-aarch64
-JIT_SRCS_A64 := runtime/register/jit.c runtime/register/jit/a64.c runtime/register/jit/asm_a64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c
+JIT_SRCS_A64 := runtime/register/jit.c runtime/register/jit/a64.c runtime/register/jit/asm_a64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c runtime/register/jit/dump.c
 NEW_SRCS_A64 := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS_A64) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
 PORT_TIMEOUT ?= 900
 GMP_LINUX32_PREFIX ?= $(GMP_CROSS_PREFIX)/linux32
@@ -1476,7 +1476,7 @@ test-register-jit-steps: bin/runevm $(RUNE)
 	chmod +x bin/runevm-jit
 	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --jit-tier=2 "$$@"\n' > bin/runevm-opt
 	chmod +x bin/runevm-opt
-	@! grep -n "\bx64_\|\ba64_\|\bX64\|\bA64" runtime/register/jit/emit.c runtime/register/jit/masm.c runtime/register/jit/masm.h runtime/register/jit/compile.c runtime/register/jit/compile.h runtime/register/jit.c \
+	@! grep -n "\bx64_\|\ba64_\|\bX64\|\bA64" runtime/register/jit/emit.c runtime/register/jit/masm.c runtime/register/jit/masm.h runtime/register/jit/compile.c runtime/register/jit/compile.h runtime/register/jit/dump.c runtime/register/jit.c \
 	  || { echo "check-asm: the emitters, the macro-assembler and the compiler name an encoder: they are written over runtime/register/jit/asm.h alone (M12)"; false; }
 	@echo "check-asm: the emitters name no encoder"
 	bin/runevm --jit-check
@@ -1493,6 +1493,8 @@ test-register-jit-steps: bin/runevm $(RUNE)
 	  cmp tests/out/register-jit/deeprec.out tests/lang/rt.deeprec_stack.expected && echo "test-register-jit: the driver never nests"
 	(ulimit -s 1024 && bin/runevm --jit=baseline --jit-calls=1 --jit-work=1 --jit-stress=3 tests/out/register-jit/deeprec.rbc > tests/out/register-jit/deeprec-tiered.out) && \
 	  cmp tests/out/register-jit/deeprec-tiered.out tests/lang/rt.deeprec_stack.expected && echo "test-register-jit: nor while tiering up and invalidating"
+	bin/rune tests/perf/fib.sml -o tests/out/register-jit/fib.rbc
+	python3 tests/register/jit-dump.py bin/runevm tests/out/register-jit/fib.rbc tests/out/register-jit/dump
 
 bin/rune-boot: bin/rune.rbc Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/rune.rbc" --lib "$$d/../lib" "$$@"\n' > $@
