@@ -321,9 +321,20 @@ val canInput : instream * int -> int option
 
 `canInput (f, n)` is how many of `n` elements, at most, can be read without waiting, or `NONE`.
 
+`SOME k` promises that `k` elements can be read at once, and `NONE`
+that the stream would wait. The specification asks only that an
+implementation "should attempt to return as large a k as possible":
+one may count no more than it has buffered.
+
+> **Reading** `IMPERATIVE_IO.canInput/counts-the-stream`. Rune's counts
+> what the stream of `f` does: `canInput (f, n)` is `StreamIO.canInput (getInstream f, n)`.
+
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0`.
 
-**Law** `canInput (f, n) = StreamIO.canInput (getInstream f, n)` (for every `f : BinIO.instream`, `n : int`)
+**Law** `(case canInput (f, n) of SOME k => k <= n andalso List.all isSome (List.tabulate (k, fn _ => input1 f)) | NONE => true)`,
+and it is run for `n` from `Arb.intRange (0, 1024)` (for every `f : BinIO.instream`, `n : int`)
+
+**Law** `isSome (canInput (f, n)) = isSome (StreamIO.canInput (getInstream f, n))` (for every `f : BinIO.instream`, `n : int`)
 
 **Example** `canInput (mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")), 1) = SOME 1`
 

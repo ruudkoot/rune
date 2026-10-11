@@ -90,7 +90,9 @@ sig
 
      Raises: `Size` if `n < 0`.
 
-     Example: `canInput (openString "ab", 1) = SOME 1` *)
+     Example: `canInput (openString "ab", 1) = SOME 1`
+
+     Example: `canInput (openString (CharVector.tabulate (40, fn _ => #"a")), 40) = SOME 40` *)
   val canInput : instream * int -> int option
 
   (* `lookahead f` is `SOME` of the next character without removing it, or `NONE` at an end of stream.
