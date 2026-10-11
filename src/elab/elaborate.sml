@@ -162,9 +162,15 @@ struct
      pendingFlex := [])
 
   fun finish () =
-    (settleFlex ();
-     List.app (fn f => f ()) (List.rev (!pendingChecks));
-     pendingChecks := [])
+    let
+      val () = ElabStats.reset ()
+      val () = settleFlex ()
+      val () = List.app (fn f => f ()) (List.rev (!pendingChecks))
+      val () = pendingChecks := []
+    in
+      (* --pass-stats=elab: the checks deferred to here, a line of their own *)
+      if !ElabStats.on then ElabStats.emit ("-", "deferred", "", 0) else ()
+    end
 
   (* A binding's type generalised (rule 15's Clos): under
      --flex-records=binding a flexible record it would generalise is an
@@ -1014,7 +1020,8 @@ struct
                                          | NONE => plus (env, #env sigma)
                            (* the body is checked once against the parameter signature (rule 86);
                               its annotations are discarded, each application elaborates a copy *)
-                           val _ = elabStrexp (bodyEnv, level, top, outerScope, #body b)
+                           val () = if !ElabStats.on then ElabStats.count ElabStats.FunDecls else ()
+                           val _ = ElabStats.within ElabStats.FunDecl (fn () => elabStrexp (bodyEnv, level, top, outerScope, #body b))
                            val () = resolvePending ()
                            val sigsNow = !sigs
                            val funsNow = !funs
@@ -1046,7 +1053,7 @@ struct
         let
           val e = elabStrexp (env, level, top, scope, se)
           val sigma = elabSigexp (env, sigexp)
-        in SigMatch.ascribe (sigma, e, opaque, sp) end
+        in ElabStats.during ElabStats.Match (fn () => SigMatch.ascribe (sigma, e, opaque, sp)) end
     | StrApp (funid, arg, slot, sp) =>
         (Usage.use ("fun", funid);
          case StringMap.find (!funs, funid) of
@@ -1056,23 +1063,28 @@ struct
                (* rule 54: match the argument, then specialise a copy of the body to it,
                   in the basis of the functor's definition *)
                val argEnv = elabStrexp (env, level, top, scope, arg)
-               val thinned = SigMatch.ascribe (paramSig, argEnv, false, sp)
-               val bodyEnv = case param of
-                               SOME x => bindStr (defEnv, x, thinned)
-                             | NONE => plus (defEnv, thinned)
-               val copy = copyStrexp body
-               val saved = (!allowPrim, !reportMatches, !sigs, !funs)
-               fun restore () =
-                 (allowPrim := #1 saved; reportMatches := #2 saved; sigs := #3 saved; funs := #4 saved)
-               val () = (allowPrim := ap; reportMatches := false; sigs := defSigs; funs := defFuns)
-               val result =
-                 elabStrexp (bodyEnv, level, top, scope, copy)
-                 handle Error.CompileError (sp', msg) =>
-                   (restore ();
-                    raise Error.CompileError (sp', "in the application of functor " ^ funid ^ " at "
-                                                   ^ Source.describe sp ^ ": " ^ msg))
-               val () = restore ()
-             in slot := SOME copy; result end)
+               (* --pass-stats=elab: the match, the copy and its elaboration
+                  are the application's *)
+               fun apply () =
+                 let
+                   val thinned = ElabStats.during ElabStats.Match (fn () => SigMatch.ascribe (paramSig, argEnv, false, sp))
+                   val bodyEnv = case param of
+                                   SOME x => bindStr (defEnv, x, thinned)
+                                 | NONE => plus (defEnv, thinned)
+                   val copy = ElabStats.during ElabStats.Copy (fn () => copyStrexp body)
+                   val saved = (!allowPrim, !reportMatches, !sigs, !funs)
+                   fun restore () =
+                     (allowPrim := #1 saved; reportMatches := #2 saved; sigs := #3 saved; funs := #4 saved)
+                   val () = (allowPrim := ap; reportMatches := false; sigs := defSigs; funs := defFuns)
+                   val result =
+                     elabStrexp (bodyEnv, level, top, scope, copy)
+                     handle Error.CompileError (sp', msg) =>
+                       (restore ();
+                        raise Error.CompileError (sp', "in the application of functor " ^ funid ^ " at "
+                                                       ^ Source.describe sp ^ ": " ^ msg))
+                   val () = restore ()
+                 in slot := SOME copy; result end
+             in ElabStats.application apply end)
     | StrLet (decs, body, _) =>
         let val delta = elabDecs (env, level, top, scope, decs)
         in elabStrexp (plus (env, delta), level, top, scope, body) end
@@ -1182,7 +1194,7 @@ struct
           val () = exportTags := orders (#env sigma, StringMap.empty)
           val e = elabStrexp (env, level, top, scope, body) handle x => (exportTags := saved; raise x)
           val () = exportTags := saved
-          val ascribed = SigMatch.ascribe (sigma, e, true, sp)
+          val ascribed = ElabStats.during ElabStats.Match (fn () => SigMatch.ascribe (sigma, e, true, sp))
           val via = dynamicVia (env, "export", sp)
           val slots : (int * ty * bool) list ref = ref []
           fun collect (Env {vals, strs, ...}) =
@@ -1208,7 +1220,7 @@ struct
       SigId (n, sp) =>
         (Usage.use ("sig", n);
          case StringMap.find (!sigs, n) of
-           SOME sg => SigMatch.instantiate sg
+           SOME sg => ElabStats.during ElabStats.Inst (fn () => SigMatch.instantiate sg)
          | NONE => err (sp, "unbound signature: " ^ n))
     | SigSig (specs, sp) => elabSpecs (env, specs)
     | SigWhere (se, clauses, _) =>
@@ -1217,7 +1229,7 @@ struct
                          val params = List.map paramVar tvs
                          val scope = ref (StringMap.fromList (ListPair.zip (tvs, List.map #2 params)))
                          val body = elabTy (env, scope, 0, ty)
-                       in SigMatch.whereType (sigma, longid, TAbbrev (List.map #1 params, body), csp) end)
+                       in ElabStats.during ElabStats.Where (fn () => SigMatch.whereType (sigma, longid, TAbbrev (List.map #1 params, body), csp)) end)
                    (elabSigexp (env, se)) clauses
 
   and elabSpecs (env, specs : spec list) : SigMatch.sigma =
@@ -1275,10 +1287,10 @@ struct
         | SpecInclude (sg, sp) =>
             let val sg' = elabSigexp (cur sigma, sg)
             in add (sigma, #bound sg', #env sg', sp) end
-        | SpecSharingType (ids, sp) => SigMatch.shareTypes (sigma, ids, sp)
-        | SpecSharing (ids, sp) => SigMatch.shareStructures (sigma, ids, sp)
+        | SpecSharingType (ids, sp) => ElabStats.during ElabStats.Share (fn () => SigMatch.shareTypes (sigma, ids, sp))
+        | SpecSharing (ids, sp) => ElabStats.during ElabStats.Share (fn () => SigMatch.shareStructures (sigma, ids, sp))
     in
-      List.foldl one {bound = [], env = Env.empty} specs
+      ElabStats.during ElabStats.Specs (fn () => List.foldl one {bound = [], env = Env.empty} specs)
     end
 
   (* ------------------------------------------------------------------ *)
@@ -1343,11 +1355,23 @@ struct
      one: what the REPL echoes of a declaration (src/repl/session.sml). *)
   val lastDelta : env ref = ref Env.empty
 
+  (* --pass-stats=elab: the line of a top-level declaration elaborated *)
+  fun stats (d : dec) : unit =
+    let
+      val (kind, name) =
+        case d of
+          DSignature ({name, ...} :: _, _) => ("signature", name)
+        | DFunctor ({name, ...} :: _, _) => ("functor", name)
+        | DStructure ({name, ...} :: _, _) => ("structure", name)
+        | _ => ("core", "")
+    in ElabStats.emit (Source.describe (spanOfDec d), kind, name, !Types.workLimit - !Types.workLeft) end
+
   fun elabTop (env : env ref, decs : dec list) : unit =
     (lastDelta := Env.empty;
      List.app (fn d =>
                 let
                   val saved = if !recover then SOME (snapshot ()) else NONE
+                  val () = ElabStats.reset ()
                   fun go () =
                     let
                       val () = Types.startWork (spanOfDec d)
@@ -1370,6 +1394,7 @@ struct
                           List.app checkClosed (List.rev (!pendingClosed));
                           pendingClosed := [])
                        else ();
+                       if !ElabStats.on then stats d else ();
                        Types.stopWork () end
                 in
                   case saved of

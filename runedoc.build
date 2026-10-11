@@ -25,6 +25,7 @@ files
   src/util/usage.sml
   src/frontend/token.sml
   src/frontend/lexer.sml
+  src/elab/elabstats.sml
   src/elab/types.sml
   src/core/ty.sml
   src/elab/overload.sml

@@ -80,6 +80,39 @@ with tempfile.TemporaryDirectory(dir=out) as d:
     assert result.returncode != 0 and b'type translation exceeds 2000 steps' in result.stderr, result.stderr
     result = run('--no-prelude', '--type-work=1000000', '-o', target, source)
     assert result.returncode == 0, result.stderr
+
+    # --pass-stats=elab: a line for each top-level declaration, its time by
+    # context and operation adding up to its total, and its counters, which
+    # do not depend on the machine (docs/ir.md, The elaborator's counters)
+    source.write_text('signature A = sig type t val x : t end\n'
+                      'signature B = sig structure P : A structure Q : A sharing P = Q\n'
+                      '  type u sharing type u = P.t end where type u = int\n'
+                      'functor F (X : A) = struct val y = X.x datatype d = D of X.t end\n'
+                      'functor G (Y : A) = struct structure S = F (Y) val z = S.y end\n'
+                      'structure M = struct type t = int val x = 3 end\n'
+                      'structure N = G (M)\n'
+                      'val v = N.z + 1\n')
+    result = run('--no-prelude', '--typecheck-only', '--pass-stats=elab', source)
+    assert result.returncode == 0, result.stderr
+    lines = [l.split() for l in result.stderr.decode().splitlines() if l.startswith('elab ')]
+    mine = {l[2] + ' ' + l[3]: dict(f.split('=') for f in l[4:]) for l in lines if l[1].startswith(str(source) + ':')}
+    assert list(mine) == ['signature A', 'signature B', 'functor F', 'functor G', 'structure M', 'structure N',
+                          'core -'], list(mine)
+    assert [l[1:4] for l in lines[-1:]] == [['-', 'deferred', '-']], lines[-1:]
+    for l in lines:
+        fields = dict(f.split('=') for f in l[4:])
+        cells = sum(int(v) for k, v in fields.items() if '.' in k and k.split('.')[0] in ('top', 'fundecl', 'appcode', 'appcheck'))
+        assert int(fields['total']) == cells, l
+    def counters(name, *keys):
+        return {k: mine[name].get(k) for k in keys}
+    assert counters('signature B', 'share.types', 'share.structures', 'where', 'inst') == \
+        {'share.types': '2', 'share.structures': '1', 'where': '1', 'inst': '2'}, mine['signature B']
+    assert counters('functor G', 'fundecl', 'app.check', 'app.code', 'match') == \
+        {'fundecl': '1', 'app.check': '1', 'app.code': None, 'match': '1'}, mine['functor G']
+    assert counters('structure N', 'app.code', 'app.depth', 'app.check') == \
+        {'app.code': '2', 'app.depth': '2', 'app.check': None}, mine['structure N']
+    result = run('--no-prelude', '--typecheck-only', '--pass-stats=types', source)
+    assert result.returncode != 0 and b'--pass-stats= requires elab' in result.stderr, result.stderr
 print('PASS compiler output protection and resource budgets')
 
 # --pass-stats accounts for the whole compile (docs/plans/performance.md, M1):
