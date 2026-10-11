@@ -684,3 +684,31 @@ number every POSIX system's `int` holds, and the page says why; the
 counterexample beyond Rune's `int` stays. It passes on MLton, Poly/ML,
 SML/NJ 2026.2, MLKit and Rune, and no difference is left unexplained. The
 laws of `wordToPid`, `wordToUid` and `wordToGid` keep their condition.
+
+## On repl's head (2026-10-11)
+
+The branch was rebased onto `repl` (371ba661), whose tree master has since
+the merge of its pull request. What the rebase needed besides its
+conflicts:
+- **Build files.** A library is described by its `library.build` since
+  incremental's M10, and `make manifests` makes each MANIFEST from it
+  (`rune --basis-index`); they are not committed. The edits of the
+  MANIFESTs became edits of the build files, the split's two libraries
+  have one each (`lib/test/property/basis/library.build`, with
+  `libraries random test/property`), and `--basis-index` takes a file in a
+  directory below the library's (`sized/int32.sml`: `OS.Path.concat`, not
+  `joinDirFile`).
+- **`RUNEVM_JIT`.** repl's VM reads it from the environment for the JIT's
+  mode, so the make variable for the register VM is `RUNEVM_REGISTER`.
+- **The REPL's sources.** Its protocol, the debug adapter and the engine
+  they share with the Jupyter kernel made a descriptor of `Word.fromInt`; with `SysWord` a type of its own they make
+  it of `SysWord.fromInt`, and the REPL shows a `Position` as a number.
+- **`test-doc` makes the manifests first.** On a fresh checkout nothing
+  before it made those of `lib/random` and `lib/test/property`, runedoc
+  knew no arbitrary, and `lawerrors.lib` lost diagnostics: master's check
+  failed so after the merge of `repl`. A tree that kept generated
+  MANIFESTs hid it, the snapshots of this work included; the branch was
+  checked on a fresh checkout.
+
+The owner then retired `DOCUMENTED`: every signature is documented in
+full (`docs/plans/docgen.md`, the status of 2026-10-11).
