@@ -1977,24 +1977,42 @@ struct
           val modules = load dir
           val (claims, _, _, _) = envOf (modules, "", [], [], NONE, [])
           val implementers = implementersOf claims
-          fun entries (l : DocLaws.law) =
+          (* the entry of a law at a structure, and its alternative where
+             that draws a type by an arbitrary of the structure's own family
+             (DocElab.preferred) *)
+          fun entries (l : DocLaws.law) : (string * string option) list =
             case implementers (#signat l) of
-              [] => ["  (" ^ DocLaws.str (DocLaws.label l) ^ ", fn () => raise Fail \"no structure implements "
-                     ^ #signat l ^ "\")"]
+              [] => [("  (" ^ DocLaws.str (DocLaws.label l) ^ ", fn () => raise Fail \"no structure implements "
+                      ^ #signat l ^ "\")", NONE)]
             | ss => List.map (fn st =>
-                                let val opens = DocLaws.opens (st, #path l)
+                                let
+                                  val opens = DocLaws.opens (st, #path l)
+                                  fun make () = DocLaws.entry (l, st, opens, DocElab.elabLaw lib (opens, #code l, #conditions l, #pure l),
+                                                               DocElab.sides (#fixity lib) (#code l), #fixity lib)
+                                  val e = make ()
+                                  val e' = (DocElab.preferred := SOME st; make ())
+                                           handle ex => (DocElab.preferred := NONE; raise ex)
+                                  val () = DocElab.preferred := NONE
                                 in
-                                  DocLaws.entry (l, st, opens, DocElab.elabLaw lib (opens, #code l, #conditions l, #pure l),
-                                                 DocElab.sides (#fixity lib) (#code l), #fixity lib)
+                                  (e, if e' = e then NONE else SOME e')
                                 end)
                              ss
         in
-          List.mapPartial (fn s : I.signatureRecord =>
-                             case DocLaws.ofSignature s of
-                               [] => NONE
-                             | ls => SOME (#name s ^ ".sml",
-                                           DocLaws.program (#name s, P.normalise (#file s), List.concat (List.map entries ls))))
-                          (sort (fn (a : I.signatureRecord, b : I.signatureRecord) => #name a < #name b) (signaturesOf modules))
+          List.concat
+            (List.mapPartial (fn s : I.signatureRecord =>
+                                case DocLaws.ofSignature s of
+                                  [] => NONE
+                                | ls =>
+                                    let
+                                      val es = List.concat (List.map entries ls)
+                                      val file = P.normalise (#file s)
+                                      val alts = List.mapPartial #2 es
+                                    in
+                                      SOME ((#name s ^ ".sml", DocLaws.program (#name s, file, List.map #1 es))
+                                            :: (if List.null alts then []
+                                                else [(#name s ^ ".alt", DocLaws.alternatives (#name s, file, alts))]))
+                                    end)
+                             (sort (fn (a : I.signatureRecord, b : I.signatureRecord) => #name a < #name b) (signaturesOf modules)))
         end
 
   fun checkCoverage {dir : string, tests : string} : int =

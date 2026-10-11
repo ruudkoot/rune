@@ -280,7 +280,9 @@ struct
            in
              if OS.Process.isSuccess status
              then (DocSite.write (dir, files);
-                   println ("runedoc: wrote " ^ Int.toString (List.length files) ^ " programs of laws to " ^ dir))
+                   println ("runedoc: wrote " ^ Int.toString (List.length (List.filter (fn (n, _) => String.isSuffix ".sml" n) files))
+                            ^ " programs of laws to " ^ dir ^ ", with their alternative entries ("
+                            ^ Int.toString (List.length (List.filter (fn (n, _) => String.isSuffix ".alt" n) files)) ^ " files)"))
              else ();
              status
            end

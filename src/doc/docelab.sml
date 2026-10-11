@@ -610,9 +610,30 @@ struct
       else "int"
     end
 
+  (* The structure a law is held at while its alternative entry is made
+     (docs/plans/quickcheck.md, D10): a type is then drawn by the arbitrary
+     of a name of that structure's family where there is one,
+     `Real64VectorArb` for `Real64Vector.vector` and `PositionArb` for
+     `Position.int`, as another compiler may tell apart types that Rune's
+     are one of. NONE: by the name the pages print first. *)
+  val preferred : string option ref = ref NONE
+
+  (* the family of a structure's name: `Real64` of `Real64ArraySlice` and of
+     `Real64`, `Wide` of `WideCharVector` *)
+  fun family (x : string) : string =
+    case List.find (fn s => String.isSuffix s x andalso String.size x > String.size s)
+                   ["Array2", "ArraySlice", "VectorSlice", "Array", "Vector", "Substring", "String", "Char"] of
+      SOME s => family (String.substring (x, 0, String.size x - String.size s))
+    | NONE => x
+
   fun instanceOf (lib : library) (pure : bool) (ty : Types.ty) : string option =
     let
       val known = case !instanceStructures of SOME l => l | NONE => []
+      (* `X.t` whose `XArb.arb` is the arbitrary of `t` *)
+      fun arbOf (n : string) : string option =
+        case String.fields (fn ch => ch = #".") n of
+          [x, t] => if List.exists (fn k => k = x ^ "Arb") known andalso t = mainType x then SOME x else NONE
+        | _ => NONE
       fun all xs = if List.all isSome xs then SOME (List.map valOf xs) else NONE
       fun apply (f, []) = f
         | apply (f, args) = f ^ " (" ^ String.concatWith ", " args ^ ")"
@@ -662,8 +683,15 @@ struct
                          else NONE
                      | _ => NONE)
                 | _ => NONE
+              (* the name of the preferred structure's family, if one has an arbitrary *)
+              val own =
+                case (!preferred, args) of
+                  (SOME home, []) =>
+                    List.find (fn n => case arbOf n of SOME x => family x = family home | NONE => false) ns
+                | _ => NONE
             in
               if List.exists (fn n => n = "Socket.sock") ns then sock ()
+              else if isSome own then Option.map (fn x => x ^ "Arb.arb") (arbOf (valOf own))
               else
                 case List.find (fn (n, _) => List.exists (fn m => m = n) ns) instanceTable of
                   SOME (_, e) => Option.map (fn xs => apply (e, xs)) (all (List.map inst args))
@@ -671,11 +699,7 @@ struct
                     if not (List.null args) then NONE
                     else
                       List.foldl (fn (n, SOME e) => SOME e
-                                   | (n, NONE) =>
-                                       case String.fields (fn ch => ch = #".") n of
-                                         [x, t] => if List.exists (fn k => k = x ^ "Arb") known andalso t = mainType x
-                                                   then SOME (x ^ "Arb.arb") else NONE
-                                       | _ => NONE)
+                                   | (n, NONE) => Option.map (fn x => x ^ "Arb.arb") (arbOf n))
                                  NONE ns
             end
       and function (a, b) =

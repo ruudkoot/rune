@@ -12,13 +12,18 @@ is held at a structure only where the host has what it names: a probe asks
 each host which of the structures the programs name it has, and a file of the
 libraries that tests/lib/run-hosts.sh leaves out (host column no) is built
 where the structures it requires are there, and left out where an error points
-into it. A program that still does not build loses the laws its errors are in,
-and is built again; those laws are NOT BUILT on the host, with the first
-error. A program the host stops (SML/NJ's "bogus fault", or after
-$LAWS_HOST_TIMEOUT seconds) goes on after the law it was in, which is STOPPED.
-A law that fails is run again by itself, three times at most where the host
-stops before a verdict: as the programs are deterministic, a verdict that
-changes is FLAKY, the host's.
+into it. Each host builds a program of its own: a law's entry, or where the
+host lacks what that names or it does not build there, the law's alternative
+entry (PROGRAM.alt of `runedoc --laws`), which draws its types by the
+arbitraries of the structure's own family, as a host may tell apart types that
+Rune's are one of (`Real64VectorArb` for `Real64Vector.vector`, where the
+entry takes `LargeRealVectorArb`). A program that still does not build loses
+the laws its errors are in, and is built again; those laws are NOT BUILT on
+the host, with the first error. A program the host stops (SML/NJ's "bogus
+fault", or after $LAWS_HOST_TIMEOUT seconds) goes on after the law it was in,
+which is STOPPED. A law that fails is run again by itself, three times at most
+where the host stops before a verdict: as the programs are deterministic, a
+verdict that changes is FLAKY, the host's.
 
 The verdicts are compared with Rune's (tests/out/laws/results.txt, or
 $LAWS_RESULTS): a law that passes on one and fails on the other is a
@@ -26,7 +31,8 @@ DIFFERENCE, which the hunt classifies -- the law, Rune, or the host (a host's
 bug is a line of tests/basis/law-deviations.txt). A law that fails on both is
 AGREED. In tests/out/laws-hosts: HOST.structures, what the host lacks of the
 names the programs use; HOST.library, the files it builds; HOST/, each
-program as the host builds it and its output; HOST.results; and
+program as the host builds it and its output; HOST.alternatives, the laws
+it holds by their alternative entries; HOST.results; and
 differences.txt. `--compare [HOST...]` judges the results there again, as
 after a change to the deviations.
 """
@@ -401,17 +407,25 @@ def main():
     st, log = run([RUNEDOC, "--lib", "lib", "--library", "basis", "--laws", OUT + "/programs"])
     if st != 0:
         raise SystemExit("test-laws-hosts: runedoc --laws failed:\n" + log)
-    programs = {}
+    programs, alternatives = {}, {}
     for f in sorted(os.listdir(OUT + "/programs")):
         if f.endswith(".sml") and re.search(PROGRAMS, f[:-4]):
             programs[f[:-4]] = split_program(open(os.path.join(OUT, "programs", f)).read())
+    # the alternative entries of a law: its types drawn by the arbitraries of
+    # its structure's own family, for a host that tells apart types that
+    # Rune's are one of (Real64Vector's and RealVector's vectors on MLton)
+    for f in sorted(os.listdir(OUT + "/programs")):
+        if f.endswith(".alt") and f[:-4] in programs:
+            for label, body in split_program(open(os.path.join(OUT, "programs", f)).read())[1]:
+                alternatives.setdefault(label, []).append(body)
     files = manifest()
     lib_names = library_names(files)
     wanted, pairs = set(), set()
     for _, entries, _ in programs.values():
         for label, body in entries:
-            wanted.update(names_in(body))
-            pairs.update(opened(body))
+            for b in [body] + alternatives.get(label, []):
+                wanted.update(names_in(b))
+                pairs.update(opened(b))
             wanted.add(label.split("@", 1)[1])
     for _, _, _, requires in files:
         wanted.update(requires)
@@ -436,26 +450,33 @@ def main():
         chosen, provided, dropped = library_on(host, files, present, workdir)
         open(os.path.join(OUT, host + ".library"), "w").write(
             "".join(f + "\n" for f in chosen) + "".join("left out: %s\n" % f for f in sorted(dropped)))
-        lines_out = []
+        def lacks(n):
+            return [p for p in prefixes(n) if (p in lib_names and p not in provided) or
+                    (p.split(".")[0] not in lib_names and p in missing)]
+        def lack_of(label, body):
+            """what the host lacks of what an entry names: a path is there at
+            the top or under a structure the entry opens"""
+            return sorted({p for n in names_in(body) | {label.split("@", 1)[1]}
+                           if not any(not lacks(o + "." + n) for o in opens_in(body) if o != n)
+                           for p in lacks(n)})
+        lines_out, on_alternative = [], []
         for prog, (head, entries, tail) in programs.items():
+            # each law's entry, then its alternative: the host's own program
+            # takes the first that the host has what it names of, and the
+            # next where it does not build
             keep, notbuilt = [], []
             for label, body in entries:
-                def lacks(n):
-                    return [p for p in prefixes(n) if (p in lib_names and p not in provided) or
-                            (p.split(".")[0] not in lib_names and p in missing)]
-                # a path is there at the top or under a structure the entry opens
-                lack = [p for n in names_in(body) | {label.split("@", 1)[1]}
-                        if not any(not lacks(o + "." + n) for o in opens_in(body) if o != n)
-                        for p in lacks(n)]
-                if lack:
-                    notbuilt.append((label, "the host lacks " + ", ".join(sorted(set(lack)))))
+                choices = [b for b in [body] + alternatives.get(label, []) if not lack_of(label, b)]
+                if choices:
+                    keep.append((label, choices[0], choices[1:]))
                 else:
-                    keep.append((label, body))
+                    notbuilt.append((label, "the host lacks " + ", ".join(lack_of(label, body))))
+            primary = dict(entries)
             output, stopped, rerun = "", [], None
             for attempt in range(ATTEMPTS):
                 if not keep:
                     break
-                text = head + "\n" + ",\n".join(b for _, b in keep) + tail
+                text = head + "\n" + ",\n".join(b for _, b, _ in keep) + tail
                 pfile = os.path.join(workdir, prog + ".sml")
                 open(pfile, "w").write(text)
                 built, output, msgs, again = build(host, prog, RANDOM + chosen + [pfile], workdir)
@@ -467,26 +488,28 @@ def main():
                 bad = error_lines(host, msgs, pfile)
                 # the entries the errors are in
                 starts, at = [], len(head.split("\n"))
-                for label, body in keep:
+                for label, body, _ in keep:
                     starts.append((at + 1, at + len(body.split("\n")), label))
                     at += len(body.split("\n"))
                 hit = {label for lo, hi, label in starts for b in bad if lo <= b <= hi}
                 why = first_error(msgs)
                 if not hit:
-                    notbuilt += [(label, "the program does not build: " + why) for label, _ in keep]
+                    notbuilt += [(label, "the program does not build: " + why) for label, _, _ in keep]
                     keep = []
                     break
-                notbuilt += [(label, why) for label in sorted(hit)]
-                keep = [(l, b) for l, b in keep if l not in hit]
+                # an entry the errors are in takes its next choice, or is not built
+                notbuilt += [(l, why) for l, _, rest in keep if l in hit and not rest]
+                keep = [(l, rest[0], rest[1:]) if l in hit else (l, b, rest) for l, b, rest in keep if l not in hit or rest]
             else:
                 if keep:
                     notbuilt += [(label, "the program does not build after %d attempts: %s" % (ATTEMPTS, why))
-                                 for label, _ in keep]
+                                 for label, _, _ in keep]
                     keep = []
             open(os.path.join(workdir, prog + ".out"), "w").write(output)
             got = verdicts(output)
             halted = dict(stopped)
-            for label, _ in keep:
+            on_alternative += [label for label, b, _ in keep if b != primary[label]]
+            for label, _, _ in keep:
                 if label in got and got[label][0] == "FAIL" and rerun is not None:
                     # by itself, three times at most where the host stops
                     # before a verdict (SML/NJ's "bogus fault")
@@ -509,14 +532,15 @@ def main():
                     lines_out.append("NOT RUN %s: the program stopped before it" % label)
             lines_out += ["NOT BUILT %s: %s" % (l, w) for l, w in notbuilt]
         open(os.path.join(OUT, host + ".results"), "w").write("\n".join(lines_out) + "\n")
+        open(os.path.join(OUT, host + ".alternatives"), "w").write("".join(l + "\n" for l in on_alternative))
         explained, diffs = compare(host, lines_out, rune, devs)
         open(os.path.join(OUT, host + ".differences"), "w").write("\n".join(explained + diffs) + "\n")
         counts = {k: sum(1 for l in lines_out if l.startswith(k))
                   for k in ("PASS", "FAIL", "FLAKY", "STOPPED", "NOT BUILT", "NOT RUN")}
-        return host, ("%s: %d laws pass, %d fail, %d flaky, %d stopped, %d not built, %d not run; %d differ from "
-                      "Rune and are explained, %d are not" % (host, counts["PASS"], counts["FAIL"], counts["FLAKY"],
-                                                              counts["STOPPED"], counts["NOT BUILT"],
-                                                              counts["NOT RUN"], len(explained), len(diffs))), diffs
+        return host, ("%s: %d laws pass, %d fail, %d flaky, %d stopped, %d not built, %d not run (%d by their "
+                      "alternative entries); %d differ from Rune and are explained, %d are not"
+                      % (host, counts["PASS"], counts["FAIL"], counts["FLAKY"], counts["STOPPED"], counts["NOT BUILT"],
+                         counts["NOT RUN"], len(on_alternative), len(explained), len(diffs))), diffs
 
     differences = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=min(JOBS, len(hosts))) as pool:
