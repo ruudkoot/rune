@@ -9,10 +9,10 @@ val () = Posix.IO.close infd
 val path = OS.FileSys.tmpName ()
 val fd = Posix.FileSys.createf (path, Posix.FileSys.O_RDWR, Posix.FileSys.O.flags [], Posix.FileSys.S.flags [Posix.FileSys.S.irusr, Posix.FileSys.S.iwusr, Posix.FileSys.S.irgrp, Posix.FileSys.S.iroth])
 val _ = Posix.IO.writeVec (fd, Word8VectorSlice.full (Byte.stringToBytes "0123456789"))
-val () = print ("seek: " ^ Int.toString (Posix.IO.lseek (fd, 3, Posix.IO.SEEK_SET)) ^ " read: "
+val () = print ("seek: " ^ Position.toString (Posix.IO.lseek (fd, 3, Posix.IO.SEEK_SET)) ^ " read: "
                 ^ Byte.bytesToString (Posix.IO.readVec (fd, 4)) ^ "\n")
 val st = Posix.FileSys.fstat fd
-val () = print ("size " ^ Int.toString (Posix.FileSys.ST.size st) ^ " reg "
+val () = print ("size " ^ Position.toString (Posix.FileSys.ST.size st) ^ " reg "
                 ^ Bool.toString (Posix.FileSys.ST.isReg st) ^ " uid "
                 ^ Bool.toString (Posix.FileSys.ST.uid st = Posix.ProcEnv.getuid ()) ^ "\n")
 val () = Posix.IO.close fd

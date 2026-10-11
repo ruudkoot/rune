@@ -260,3 +260,88 @@ checked against native 2026.2.
 | Report | 2026.2 | Upstream |
 |---|---|---|
 | [Word8.rotateL/tagged-words](Word8.rotateL/tagged-words/BUGREPORT.md): `rotateL` and `rotateR` of `Word8`, `Word32` and `Word` fill the bits rotated in with the top bit | 6 of 7 | fixed by smlnj/smlnj `d6f6888` (2026-09-23), for 2026.3; nothing to send |
+
+## The Basis Library's laws on 110.99.9 and 2026.2 (checked 2026-10-11)
+
+These reports come from the laws of Rune's Basis Library documentation
+(each `Law:` is tested on generated values), run against SML/NJ's own Basis
+Library: `tests/basis/run-laws-hosts.py`, `docs/plans/quickcheck-hunt.md`
+(the sections on the other compilers) and the SML/NJ lines of
+`tests/basis/law-deviations.txt`. Each was checked afresh on these builds,
+installed by `scripts/fetch-hosts.sh`:
+
+* **110.99.9, 64-bit and 32-bit:** the release, `config/install.sh`;
+* **2026.2:** the release's sources, `build.sh` (64-bit);
+* Ubuntu 24.04 on WSL2, in the machine's time zone, `Europe/London`
+  (`Date.toTime` also in `America/Chicago`, `Asia/Tokyo` and `UTC`).
+
+The code of smlnj/legacy `main` was read at `6ed5a0a` (2026-09-13) and that
+of smlnj/smlnj at `17362d2` (2026-09-24). No SML/NJ was built with a fix:
+each report that has a `fix.diff` has a `fix-check.sml`, a standalone copy
+of the patched code that was run on all three builds.
+
+Each cell is the number of wrong lines of the report's `bug.sml`; "read"
+means by reading the code. The table is in the order of the ranking below.
+
+| # | Report | 110.99.9, 64-bit | 110.99.9, 32-bit | 2026.2 | legacy `main`; smlnj `main` (read) | `fix.diff` (`fix-check.sml`) | Upstream |
+|---|---|---|---|---|---|---|---|
+| 1 | [Date.toTime/local-offset-applied](Date.toTime/local-offset-applied/BUGREPORT.md): through the local time zone, off by twice its offset; `Date` at the epoch east of UTC | 6 of 7 in London, 7 in Chicago and Tokyo, 3 in UTC | the same | the same | legacy: the same; smlnj: the `Date` cases (2026.3's formula, computed) | 0 | [smlnj#452](https://github.com/smlnj/smlnj/issues/452), fixed for 2026.3 only; the `Date` cases not reported |
+| 2 | [TextIO.canInput/loses-input](TextIO.canInput/loses-input/BUGREPORT.md) (and `BinIO`, `StreamIO`) | 5 of 6 | 5 | 5 | the same | 0 | not reported |
+| 3 | [Int.scan/whitespace-vt-ff-cr](Int.scan/whitespace-vt-ff-cr/BUGREPORT.md): `\v`, `\f`, `\r` not skipped, so no numbers from CRLF text | 13 of 13 | 13 | 13 | 9 (`Int`, `Word` and their sizes) | the table checked | `skipWS`: [smlnj#447](https://github.com/smlnj/smlnj/issues/447), fixed in both; the integer and word scanners not reported |
+| 4 | [TextIO.inputAll/empty-stream-Div](TextIO.inputAll/empty-stream-Div/BUGREPORT.md) (and `BinIO`) | 5 of 8 | 5 | 5 | 0 | none (upstream's) | [smlnj#449](https://github.com/smlnj/smlnj/issues/449), fixed in both |
+| 5 | [Int32.abs/minInt-on-64-bit](Int32.abs/minInt-on-64-bit/BUGREPORT.md) | 3 of 5 | 0 | 3 | legacy: 3 (64-bit); smlnj: 0 | 0 | [smlnj#444](https://github.com/smlnj/smlnj/issues/444), fixed for 2026.3 only |
+| 6 | [OS.Path.splitBaseExt/empty-arc-dropped](OS.Path.splitBaseExt/empty-arc-dropped/BUGREPORT.md) (and `joinBaseExt`) | 6 of 8 | 6 | 6 | the same | 0 | not reported |
+| 7 | [General.exnMessage/name-missing](General.exnMessage/name-missing/BUGREPORT.md) | 7 of 13 | 7 | 7 | the same | 0 | not reported |
+
+Nothing the laws flagged turned out not to be a bug. `Date.toTime`'s law
+failed at the epoch because the machine's zone is `Europe/London`, which was
+UTC+1 all through 1970; with `TZ=UTC` it holds there. But `toTime` should
+not depend on the local zone at all for a date that carries an offset, and
+where the zone is not at UTC it is off by hours, so it is filed. The laws
+that the 64-bit 110.99.9 fails now and then (`HOST-FLAKY` in
+`law-deviations.txt`) are the collector's corruption of reals and `Word64`
+values: [GC/real-corrupted-on-64-bit](GC/real-corrupted-on-64-bit/BUGREPORT.md)
+and [GC/spilled-word64-argument](GC/spilled-word64-argument/BUGREPORT.md)
+above, and no new report.
+
+### Ranking
+
+1. **Date.toTime/local-offset-applied.** A date from `fromTimeUniv`
+   converts back wrong, silently and by hours, wherever the local zone is
+   not at UTC on that date; east of UTC the first hours of 1970 raise
+   `Date`, and everywhere a date before 1970 does. 2026.3 mends the hours
+   but not the `Date` cases.
+2. **TextIO.canInput/loses-input.** Silent loss of input, from files,
+   strings and the functional streams alike, whenever `canInput` looks
+   further than the buffer and one chunk. `canInput` is not much used.
+3. **Int.scan/whitespace-vt-ff-cr.** Text with CRLF line ends cannot be
+   scanned for numbers: the scan returns `NONE` at the second line.
+   Upstream's fix of `skipWS` mends `Real`, `Bool` and `IntInf`, not `Int`
+   and `Word`.
+4. **TextIO.inputAll/empty-stream-Div.** `inputAll (openString "")` raises
+   `Io`. Loud, and fixed upstream in both lines.
+5. **Int32.abs/minInt-on-64-bit.** A silent, malformed result, but only
+   for `minInt`; fixed in 2026.3, not in 110.x.
+6. **OS.Path.splitBaseExt/empty-arc-dropped.** Only paths with `//` before
+   the last arc, which name the same file on POSIX systems without it
+   (except at the start).
+7. **General.exnMessage/name-missing.** Messages only.
+
+### Drafts for upstream
+
+Each report's `upstream.md` is the text to post. Six new issues on
+smlnj/legacy, each saying whether the development version has the bug:
+
+* [Date.toTime](Date.toTime/local-offset-applied/upstream.md), which names
+  smlnj#452 and asks for its port with the rest;
+* [canInput](TextIO.canInput/loses-input/upstream.md);
+* [the integer and word scanners](Int.scan/whitespace-vt-ff-cr/upstream.md),
+  the rest of smlnj#447;
+* [Int32.abs](Int32.abs/minInt-on-64-bit/upstream.md), a request to port
+  smlnj#444's fix;
+* [splitBaseExt and joinBaseExt](OS.Path.splitBaseExt/empty-arc-dropped/upstream.md);
+* [exnMessage](General.exnMessage/name-missing/upstream.md).
+
+`TextIO.inputAll/empty-stream-Div` has no draft: smlnj#449 is fixed in both
+lines. Its report notes that the readers of an empty string or vector
+still have the illegal `chunkSize` 0.

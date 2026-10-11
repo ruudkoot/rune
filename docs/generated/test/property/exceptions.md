@@ -4,7 +4,7 @@
 
 From the **Raises** paragraphs of the documented entries.
 
-- `Domain`: [`intRange`](sig/GEN.md#val-intrange) of GEN, [`largeRange`](sig/GEN.md#val-largerange) of GEN, [`intInfRange`](sig/GEN.md#val-intinfrange) of GEN
+- `Domain`: [`intRange`](sig/ARB.md#val-intrange) of ARB, [`wordRange`](sig/ARB.md#val-wordrange) of ARB, [`intRange`](sig/GEN.md#val-intrange) of GEN, [`largeRange`](sig/GEN.md#val-largerange) of GEN, [`intInfRange`](sig/GEN.md#val-intinfrange) of GEN
 - `Empty`: [`enum`](sig/ARB.md#val-enum) of ARB, [`oneOf`](sig/GEN.md#val-oneof) of GEN, [`frequency`](sig/GEN.md#val-frequency) of GEN, [`elements`](sig/GEN.md#val-elements) of GEN
 
 ---

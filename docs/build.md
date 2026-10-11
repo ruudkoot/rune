@@ -79,9 +79,9 @@ its command line.
 ## A library's build file
 
 A library of `--lib` -- the Basis Library (`lib/basis/library.build`),
-`lib/random`, `lib/test/property` -- has a build file `library.build` that
-lists its files in load order, each in an `annotate` block that says what
-it is to a program:
+`lib/random`, `lib/test/property`, `lib/test/property/basis` -- has a
+build file `library.build` that lists its files in load order, each in an
+`annotate` block that says what it is to a program:
 
 | Annotation | What it does |
 |---|---|
@@ -95,7 +95,7 @@ it is to a program:
 file provides and requires is not written down: `rune --basis-index DIR`
 works it out from the sources (`Deps`, docs/units.md, The graph) and writes
 `DIR/MANIFEST`, which is what the compiler reads (`BasisManifest`). `make
-manifests` makes the three, and they are not committed.
+manifests` makes them all, and they are not committed.
 
 ## Virtual modules
 

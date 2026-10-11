@@ -91,8 +91,9 @@ sig
   (* `intRange (lo, hi)` draws an integer of `[lo, hi]`.
 
      It is a third of the time small (within the size of 0), a third on an
-     edge (0, 1, ~1, the bounds and their neighbours, powers of two and their
-     neighbours), and a third anywhere.
+     edge, and a third anywhere. Half the edges are the extremes (0, 1, ~1,
+     the bounds and their neighbours) and half the powers of two in range
+     and their neighbours.
 
      Raises: `Domain` if `hi < lo`.
 
@@ -129,9 +130,11 @@ sig
      Raises: `Domain` if `hi < lo`. *)
   val intInfRange : IntInf.int * IntInf.int -> IntInf.int gen
 
-  (* `word` draws a word: a third of the time small, a third on an edge (0,
-     1, the largest, powers of two and their neighbours, the top bit), a
-     third anywhere. *)
+  (* `word` draws a word: a third of the time small, a third on an edge, a third anywhere.
+
+     Half the edges are the extremes (0, 1, the largest and its neighbour,
+     the top bit and its neighbours) and half the powers of two and their
+     neighbours. *)
   val word : word gen
 
   (* `word64` draws a 64-bit word as `word` draws a word. *)
@@ -148,7 +151,7 @@ sig
 
      The other half it is a letter or digit, a space or control, or a
      character that the syntax of numbers, characters and strings gives a
-     meaning to. *)
+     meaning to, or the separator of paths, `/`. *)
   val char : char gen
 
   (* `real` draws a real: a special one, a small one, or any, a third of the time each.
@@ -233,4 +236,12 @@ sig
      when the case is over: a generator of things that must be undone, such
      as a file or a socket. *)
   val resource : 'a gen * ('a -> unit) -> 'a gen
+
+  (* `shared (g, release)` draws as `resource` does, but once in a case at each place: the condition of a law and each of its sides get the same thing.
+
+     It is for a thing that is its identity, as a file descriptor or a
+     socket is, where each side of a law must see the same one. A thing
+     whose state a side changes, as a stream's, is drawn by `resource`, so
+     that each side has its own. *)
+  val shared : 'a gen * ('a -> unit) -> 'a gen
 end

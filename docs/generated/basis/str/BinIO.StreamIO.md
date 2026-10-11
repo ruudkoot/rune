@@ -29,7 +29,7 @@ What each means is on [`STREAM_IO`](../sig/STREAM_IO.md); the types are this str
 | type | [`instream`](../sig/STREAM_IO.md#type-instream) | *a type of its own* |
 | type | [`out_pos`](../sig/STREAM_IO.md#type-out_pos) | *a type of its own* |
 | type | [`outstream`](../sig/STREAM_IO.md#type-outstream) | *a type of its own* |
-| type | [`pos`](../sig/STREAM_IO.md#type-pos) | `int` |
+| type | [`pos`](../sig/STREAM_IO.md#type-pos) | `Position.int` |
 | type | [`reader`](../sig/STREAM_IO.md#type-reader) | `BinPrimIO.reader` |
 | type | [`vector`](../sig/STREAM_IO.md#type-vector) | `Word8Vector.vector` |
 | type | [`writer`](../sig/STREAM_IO.md#type-writer) | `BinPrimIO.writer` |
@@ -37,8 +37,8 @@ What each means is on [`STREAM_IO`](../sig/STREAM_IO.md); the types are this str
 | val | [`closeIn`](../sig/STREAM_IO.md#val-closein) | `instream -> unit` |
 | val | [`closeOut`](../sig/STREAM_IO.md#val-closeout) | `outstream -> unit` |
 | val | [`endOfStream`](../sig/STREAM_IO.md#val-endofstream) | `instream -> bool` |
-| val | [`filePosIn`](../sig/STREAM_IO.md#val-fileposin) | `instream -> int` |
-| val | [`filePosOut`](../sig/STREAM_IO.md#val-fileposout) | `out_pos -> int` |
+| val | [`filePosIn`](../sig/STREAM_IO.md#val-fileposin) | `instream -> Position.int` |
+| val | [`filePosOut`](../sig/STREAM_IO.md#val-fileposout) | `out_pos -> Position.int` |
 | val | [`flushOut`](../sig/STREAM_IO.md#val-flushout) | `outstream -> unit` |
 | val | [`getBufferMode`](../sig/STREAM_IO.md#val-getbuffermode) | `outstream -> IO.buffer_mode` |
 | val | [`getPosOut`](../sig/STREAM_IO.md#val-getposout) | `outstream -> out_pos` |

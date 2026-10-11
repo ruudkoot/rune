@@ -1,0 +1,44 @@
+diff --git a/base/system/Basis/Implementation/OS/os-path-fn.sml b/base/system/Basis/Implementation/OS/os-path-fn.sml
+index 9f8d281..d96a4a5 100644
+--- a/base/system/Basis/Implementation/OS/os-path-fn.sml
++++ b/base/system/Basis/Implementation/OS/os-path-fn.sml
+@@ -131,23 +131,31 @@ functor OS_PathFn (OSPathBase : sig
+     fun dir p = #dir(splitDirFile p)
+     fun file p = #file(splitDirFile p)
+ 
++  (* The base is the path up to the "." of the extension, and joinBaseExt
++   * appends to the base: going through joinDirFile would drop an empty arc
++   * before the last one (e.g., "a//b.c" would become "a/b.c").  The arcs are
++   * checked as joinDirFile checked them before.
++   *)
+     fun splitBaseExt p = let
+-	  val {dir, file} = splitDirFile p
++	  val {file, ...} = splitDirFile p
+ 	  val (file', ext') = SS.splitr (fn c => c <> #".") (SS.full file)
+ 	  val fileLen = SS.size file'
+-	  val (file, ext) =
+-		if (fileLen <= 1) orelse (SS.isEmpty ext')
+-		  then (file, NONE)
+-		  else (SS.string(SS.trimr 1 file'), SOME(SS.string ext'))
+ 	  in
+-	    {base = joinDirFile{dir=dir, file=file}, ext = ext}
++	    if (fileLen <= 1) orelse (SS.isEmpty ext')
++	      then (ignore (checkArc file); {base = p, ext = NONE})
++	      else (
++		ignore (checkArc (SS.string(SS.trimr 1 file')));
++		{ base = SS.string(SS.trimr (SS.size ext' + 1) (SS.full p)),
++		  ext = SOME(SS.string ext')
++		})
+ 	  end
+     fun joinBaseExt {base, ext=NONE} = base
+       | joinBaseExt {base, ext=SOME ""} = base
+       | joinBaseExt {base, ext=SOME ext} = let
+-	  val {dir, file} = splitDirFile base
++	  val {file, ...} = splitDirFile base
+ 	  in
+-	    joinDirFile{dir=dir, file=String.concat[file, ".", ext]}
++	    ignore (checkArc (String.concat[file, ".", ext]));
++	    String.concat[base, ".", ext]
+ 	  end
+     fun base p = #base(splitBaseExt p)
+     fun ext p = #ext(splitBaseExt p)

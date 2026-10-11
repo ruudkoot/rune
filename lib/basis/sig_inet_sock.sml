@@ -42,10 +42,14 @@ sig
 
   (* `toAddr (a, port)` is the address of the port `port` at the host address `a`.
 
-     Law: `fromAddr (toAddr (a, port)) = (a, port)`
+     Law: `fromAddr (toAddr (a, port)) = (a, port)` for `0 <= port andalso port
+     <= 65535`
 
      Example: `#2 (fromAddr (toAddr (valOf (NetHostDB.fromString "10.0.0.1"),
-     8080))) = 8080` *)
+     8080))) = 8080`
+
+     Counterexample: `#2 (fromAddr (toAddr (valOf (NetHostDB.fromString
+     "10.0.0.1"), ~1))) = ~1`, for a port is kept in sixteen bits. *)
   val toAddr : NetHostDB.in_addr * int -> sock_addr
 
   (* `fromAddr a` is the host address and the port that `a` names.

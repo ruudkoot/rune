@@ -55,7 +55,7 @@ struct
       else RunePath.mkRelative {path = fullPath path, relativeTo = fullPath (getDir ())}
 
     fun modTime path = Time.fromSeconds (IntInf.fromInt (check (modTime' path)))
-    fun fileSize path = check (fileSize' path)
+    fun fileSize path = Position.fromInt (check (fileSize' path))
     fun setTime (path, NONE) = checkUnit (setTime' (path, 0, 1))
       | setTime (path, SOME t) = checkUnit (setTime' (path, IntInf.toInt (Time.toSeconds t), 0))
 

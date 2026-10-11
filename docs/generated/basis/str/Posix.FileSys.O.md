@@ -38,12 +38,12 @@ What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_FILE_SYS`](
 | val | [`clear`](../sig/BIT_FLAGS.md#val-clear) | `flags * flags -> flags` |
 | val | [`excl`](../sig/POSIX_FILE_SYS.md#val-o.excl) | `flags` |
 | val | [`flags`](../sig/BIT_FLAGS.md#val-flags) | `flags list -> flags` |
-| val | [`fromWord`](../sig/BIT_FLAGS.md#val-fromword) | `word -> flags` |
+| val | [`fromWord`](../sig/BIT_FLAGS.md#val-fromword) | `SysWord.word -> flags` |
 | val | [`intersect`](../sig/BIT_FLAGS.md#val-intersect) | `flags list -> flags` |
 | val | [`noctty`](../sig/POSIX_FILE_SYS.md#val-o.noctty) | `flags` |
 | val | [`nonblock`](../sig/POSIX_FILE_SYS.md#val-o.nonblock) | `flags` |
 | val | [`sync`](../sig/POSIX_FILE_SYS.md#val-o.sync) | `flags` |
-| val | [`toWord`](../sig/BIT_FLAGS.md#val-toword) | `flags -> word` |
+| val | [`toWord`](../sig/BIT_FLAGS.md#val-toword) | `flags -> SysWord.word` |
 | val | [`trunc`](../sig/POSIX_FILE_SYS.md#val-o.trunc) | `flags` |
 
 ## Notes

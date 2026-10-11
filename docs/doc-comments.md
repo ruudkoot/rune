@@ -208,18 +208,25 @@ claim it breaks, and say in the prose why it breaks.
 A `Law:` says what holds for every value of its variables
 (docs/plans/quickcheck.md, D6 and D7). runedoc elaborates every law, as it
 does every example, and gives each variable a type and an arbitrary of
-lib/test/property to draw it from. So a law is Standard ML, in the paragraph's
+lib/test/property/basis to draw it from. So a law is Standard ML, in the paragraph's
 pieces of code, read by a small grammar:
 
 - The first piece of code is a law, and so is one after "and" that follows a
   law: ``Law: `concat [s, t] = s ^ t`, and `concat [] = ""` ``.
 - A piece after "for" or "when" is a condition, a `bool`, and so is one after
-  "and" that follows a condition: ``for `0 <= i andalso i < length l` ``. A
-  condition that raises an exception does not hold, so ``when `(ignore
-  (slice (v, i, SOME n)); true)` `` says "when the slice exists".
-- ``for `x` from `G` `` draws `x` from the arbitrary `G`, and ``when `f` has
-  no effects`` (or ``when `f` and `g` have no effects``) draws the functions
-  from the pure ones. Other functions may raise and have effects, and a law
+  "and" that follows a condition: ``for `0 <= i andalso i < length l` ``. An
+  integer variable that a condition bounds this way, `lo <= x`, `x < hi` and
+  the like joined by `andalso`, is drawn within the bounds, after the
+  variables they name, and not drawn and thrown away. Where the bounds name
+  each other in a cycle, as `0 <= i andalso i < n andalso n <= maxLen` does,
+  the variable first in the law keeps those that name no variable of the
+  cycle, and one that is such a variable gives way to that variable's own
+  bounds: `n` is drawn from 1 to `maxLen`, then `i` below it. A condition `x = y` between two variables of one type draws `y` as
+  `x`. A condition that raises an exception does not hold, so ``when
+  `(ignore (slice (v, i, SOME n)); true)` `` says "when the slice exists".
+- ``for `x` from `G` `` draws `x` from the arbitrary `G`, and so does ``and
+  `y` from `H` `` after it; ``when `f` has no effects`` (or ``when `f` and
+  `g` have no effects``) draws the functions from the pure ones. Other functions may raise and have effects, and a law
   compares what its two sides do with them.
 - Any other piece is prose: a name or a result the sentence speaks of.
 
@@ -242,6 +249,14 @@ library as a program for each signature, held at every structure that
 implements it, and `make test-laws` runs those of lib/basis. The fixity is the top level's, so write
 `Real.== (x, y)`, and name another structure's operators in full where
 `open S` rebinds them (`Int.< (ord c, ord d)` under `open Char`).
+
+A law that does not hold in the implementation, or that is not tested there,
+is a line of `tests/basis/law-skips.txt`, `label-glob | FAILS or UNTESTED |
+why`, and not a law left out: `runedoc --law-skips` marks it on its page,
+beneath the law, with the structures and the reason, and `make test-laws`
+counts its failure as known and its pass as a line to remove. A law that can
+be restated so that it holds is restated instead, with the case that broke it
+as a `Counterexample:`.
 
 ## Annotations
 
@@ -276,17 +291,18 @@ For the Basis Library the file is `tests/basis/annotations.txt`, which
 `tests/basis/deviations.txt`. It is committed and `make check-docs` checks
 that it is up to date, so `runedoc` never reads `deviations.txt`.
 
-## The ratchet
+## Documented in full
 
-`lib/basis/DOCUMENTED` lists the signatures that are documented in full. For
-them `runedoc` makes an error of what it only counts elsewhere
-(`docs/generated/basis/coverage.md`): an entry without a comment (one that is
-documented together with the entry before it counts as documented), a
-function without a usage head, a first paragraph of more than 160 characters
-(it is the summary of the index pages: say the rest in a second paragraph), a
-qualified name in backquotes that leads nowhere, a `Raises:` whose exception
-is not documented anywhere (the exceptions of the top level are `General`'s). Add a signature to the list
-in the commit that finishes its documentation.
+Every signature of a library is documented in full: `runedoc` makes an error
+of what it only counts elsewhere (`docs/generated/basis/coverage.md`): an
+entry without a comment (one that is documented together with the entry
+before it counts as documented), a function without a usage head, a first
+paragraph of more than 160 characters (it is the summary of the index pages:
+say the rest in a second paragraph), a qualified name in backquotes that
+leads nowhere, a `Raises:` whose exception is not documented anywhere (the
+exceptions of the top level are `General`'s), and a structure that shows a
+program more than its signatures name (bind it to its signature in a seal
+file). A signature is documented in the commit that adds it.
 
 ## Trying it
 

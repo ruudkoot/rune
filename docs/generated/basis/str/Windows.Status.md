@@ -18,33 +18,33 @@ What each means is on [`WINDOWS`](../sig/WINDOWS.md); the types are this structu
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`status`](../sig/WINDOWS.md#type-status.status) | `word` |
-| val | [`accessViolation`](../sig/WINDOWS.md#val-status.accessviolation) | `word` |
-| val | [`arrayBoundsExceeded`](../sig/WINDOWS.md#val-status.arrayboundsexceeded) | `word` |
-| val | [`breakpoint`](../sig/WINDOWS.md#val-status.breakpoint) | `word` |
-| val | [`controlCExit`](../sig/WINDOWS.md#val-status.controlcexit) | `word` |
-| val | [`datatypeMisalignment`](../sig/WINDOWS.md#val-status.datatypemisalignment) | `word` |
-| val | [`floatDenormalOperand`](../sig/WINDOWS.md#val-status.floatdenormaloperand) | `word` |
-| val | [`floatDivideByZero`](../sig/WINDOWS.md#val-status.floatdividebyzero) | `word` |
-| val | [`floatInexactResult`](../sig/WINDOWS.md#val-status.floatinexactresult) | `word` |
-| val | [`floatInvalidOperation`](../sig/WINDOWS.md#val-status.floatinvalidoperation) | `word` |
-| val | [`floatOverflow`](../sig/WINDOWS.md#val-status.floatoverflow) | `word` |
-| val | [`floatStackCheck`](../sig/WINDOWS.md#val-status.floatstackcheck) | `word` |
-| val | [`floatUnderflow`](../sig/WINDOWS.md#val-status.floatunderflow) | `word` |
-| val | [`guardPageViolation`](../sig/WINDOWS.md#val-status.guardpageviolation) | `word` |
-| val | [`illegalInstruction`](../sig/WINDOWS.md#val-status.illegalinstruction) | `word` |
-| val | [`inPageError`](../sig/WINDOWS.md#val-status.inpageerror) | `word` |
-| val | [`integerDivideByZero`](../sig/WINDOWS.md#val-status.integerdividebyzero) | `word` |
-| val | [`integerOverflow`](../sig/WINDOWS.md#val-status.integeroverflow) | `word` |
-| val | [`invalidDisposition`](../sig/WINDOWS.md#val-status.invaliddisposition) | `word` |
-| val | [`invalidHandle`](../sig/WINDOWS.md#val-status.invalidhandle) | `word` |
-| val | [`noncontinuableException`](../sig/WINDOWS.md#val-status.noncontinuableexception) | `word` |
-| val | [`pending`](../sig/WINDOWS.md#val-status.pending) | `word` |
-| val | [`privilegedInstruction`](../sig/WINDOWS.md#val-status.privilegedinstruction) | `word` |
-| val | [`singleStep`](../sig/WINDOWS.md#val-status.singlestep) | `word` |
-| val | [`stackOverflow`](../sig/WINDOWS.md#val-status.stackoverflow) | `word` |
-| val | [`timeout`](../sig/WINDOWS.md#val-status.timeout) | `word` |
-| val | [`userAPC`](../sig/WINDOWS.md#val-status.userapc) | `word` |
+| type | [`status`](../sig/WINDOWS.md#type-status.status) | `SysWord.word` |
+| val | [`accessViolation`](../sig/WINDOWS.md#val-status.accessviolation) | `SysWord.word` |
+| val | [`arrayBoundsExceeded`](../sig/WINDOWS.md#val-status.arrayboundsexceeded) | `SysWord.word` |
+| val | [`breakpoint`](../sig/WINDOWS.md#val-status.breakpoint) | `SysWord.word` |
+| val | [`controlCExit`](../sig/WINDOWS.md#val-status.controlcexit) | `SysWord.word` |
+| val | [`datatypeMisalignment`](../sig/WINDOWS.md#val-status.datatypemisalignment) | `SysWord.word` |
+| val | [`floatDenormalOperand`](../sig/WINDOWS.md#val-status.floatdenormaloperand) | `SysWord.word` |
+| val | [`floatDivideByZero`](../sig/WINDOWS.md#val-status.floatdividebyzero) | `SysWord.word` |
+| val | [`floatInexactResult`](../sig/WINDOWS.md#val-status.floatinexactresult) | `SysWord.word` |
+| val | [`floatInvalidOperation`](../sig/WINDOWS.md#val-status.floatinvalidoperation) | `SysWord.word` |
+| val | [`floatOverflow`](../sig/WINDOWS.md#val-status.floatoverflow) | `SysWord.word` |
+| val | [`floatStackCheck`](../sig/WINDOWS.md#val-status.floatstackcheck) | `SysWord.word` |
+| val | [`floatUnderflow`](../sig/WINDOWS.md#val-status.floatunderflow) | `SysWord.word` |
+| val | [`guardPageViolation`](../sig/WINDOWS.md#val-status.guardpageviolation) | `SysWord.word` |
+| val | [`illegalInstruction`](../sig/WINDOWS.md#val-status.illegalinstruction) | `SysWord.word` |
+| val | [`inPageError`](../sig/WINDOWS.md#val-status.inpageerror) | `SysWord.word` |
+| val | [`integerDivideByZero`](../sig/WINDOWS.md#val-status.integerdividebyzero) | `SysWord.word` |
+| val | [`integerOverflow`](../sig/WINDOWS.md#val-status.integeroverflow) | `SysWord.word` |
+| val | [`invalidDisposition`](../sig/WINDOWS.md#val-status.invaliddisposition) | `SysWord.word` |
+| val | [`invalidHandle`](../sig/WINDOWS.md#val-status.invalidhandle) | `SysWord.word` |
+| val | [`noncontinuableException`](../sig/WINDOWS.md#val-status.noncontinuableexception) | `SysWord.word` |
+| val | [`pending`](../sig/WINDOWS.md#val-status.pending) | `SysWord.word` |
+| val | [`privilegedInstruction`](../sig/WINDOWS.md#val-status.privilegedinstruction) | `SysWord.word` |
+| val | [`singleStep`](../sig/WINDOWS.md#val-status.singlestep) | `SysWord.word` |
+| val | [`stackOverflow`](../sig/WINDOWS.md#val-status.stackoverflow) | `SysWord.word` |
+| val | [`timeout`](../sig/WINDOWS.md#val-status.timeout) | `SysWord.word` |
+| val | [`userAPC`](../sig/WINDOWS.md#val-status.userapc) | `SysWord.word` |
 
 ---
 

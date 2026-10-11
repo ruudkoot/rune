@@ -1,0 +1,140 @@
+(* The arbitraries of the Basis Library's types for the property-testing
+   library (docs/plans/quickcheck.md, M6 and D10), its files in load order,
+   in the form of lib/basis/library.build. It is written on test/property: *)
+libraries random test/property end
+(* A file that every compiler of tests/lib/run-hosts.sh builds is "demand";
+   one that names a structure the Basis leaves optional (Int8, WideChar,
+   SML90, IntArray2) or Rune's own (INet6Sock) is "host=no" as well. The
+   arbitrary of an optional structure is a file of its own, in sized/,
+   wide/, arrays2/ and sequences/, so that a compiler without the structure
+   builds the rest (tests/basis/run-laws-hosts.py). *)
+annotate "demand" in
+  family_sig.sml
+  family.sml
+  data_sig.sml
+  data.sml
+  numbers.sml
+end
+annotate "demand" "host=no" in
+  sized/int8.sml
+  sized/int16.sml
+  sized/int32.sml
+  sized/int64.sml
+  sized/fixedint.sml
+  sized/word16.sml
+  sized/word32.sml
+  sized/word64.sml
+  sized/real32.sml
+  sized/real64.sml
+end
+annotate "demand" in
+  text.sml
+end
+annotate "demand" "host=no" in
+  wide/widechar.sml
+  wide/widestring.sml
+  wide/widesubstring.sml
+  wide/widetext.sml
+end
+annotate "demand" in
+  bytes.sml
+end
+annotate "demand" "host=no" in
+  arrays2/intarray2.sml
+  arrays2/chararray2.sml
+  arrays2/word8array2.sml
+end
+annotate "demand" in
+  system_sig.sml
+  system.sml
+end
+annotate "demand" "host=no" in
+  inet6_sig.sml
+  inet6.sml
+  sml90_sig.sml
+  sml90.sml
+  sequences/boolvector.sml
+  sequences/boolarray.sml
+  sequences/boolvectorslice.sml
+  sequences/boolarrayslice.sml
+  sequences/boolarray2.sml
+  sequences/intvector.sml
+  sequences/intarray.sml
+  sequences/intvectorslice.sml
+  sequences/intarrayslice.sml
+  sequences/int8vector.sml
+  sequences/int8array.sml
+  sequences/int8vectorslice.sml
+  sequences/int8arrayslice.sml
+  sequences/int8array2.sml
+  sequences/int16vector.sml
+  sequences/int16array.sml
+  sequences/int16vectorslice.sml
+  sequences/int16arrayslice.sml
+  sequences/int16array2.sml
+  sequences/int32vector.sml
+  sequences/int32array.sml
+  sequences/int32vectorslice.sml
+  sequences/int32arrayslice.sml
+  sequences/int32array2.sml
+  sequences/int64vector.sml
+  sequences/int64array.sml
+  sequences/int64vectorslice.sml
+  sequences/int64arrayslice.sml
+  sequences/int64array2.sml
+  sequences/largeintvector.sml
+  sequences/largeintarray.sml
+  sequences/largeintvectorslice.sml
+  sequences/largeintarrayslice.sml
+  sequences/largeintarray2.sml
+  sequences/realvector.sml
+  sequences/realarray.sml
+  sequences/realvectorslice.sml
+  sequences/realarrayslice.sml
+  sequences/realarray2.sml
+  sequences/real32vector.sml
+  sequences/real32array.sml
+  sequences/real32vectorslice.sml
+  sequences/real32arrayslice.sml
+  sequences/real32array2.sml
+  sequences/real64vector.sml
+  sequences/real64array.sml
+  sequences/real64vectorslice.sml
+  sequences/real64arrayslice.sml
+  sequences/real64array2.sml
+  sequences/largerealvector.sml
+  sequences/largerealarray.sml
+  sequences/largerealvectorslice.sml
+  sequences/largerealarrayslice.sml
+  sequences/largerealarray2.sml
+  sequences/wordvector.sml
+  sequences/wordarray.sml
+  sequences/wordvectorslice.sml
+  sequences/wordarrayslice.sml
+  sequences/wordarray2.sml
+  sequences/word16vector.sml
+  sequences/word16array.sml
+  sequences/word16vectorslice.sml
+  sequences/word16arrayslice.sml
+  sequences/word16array2.sml
+  sequences/word32vector.sml
+  sequences/word32array.sml
+  sequences/word32vectorslice.sml
+  sequences/word32arrayslice.sml
+  sequences/word32array2.sml
+  sequences/word64vector.sml
+  sequences/word64array.sml
+  sequences/word64vectorslice.sml
+  sequences/word64arrayslice.sml
+  sequences/word64array2.sml
+  sequences/largewordvector.sml
+  sequences/largewordarray.sml
+  sequences/largewordvectorslice.sml
+  sequences/largewordarrayslice.sml
+  sequences/largewordarray2.sml
+  sequences/widecharvector.sml
+  sequences/widechararray.sml
+  sequences/widecharvectorslice.sml
+  sequences/widechararrayslice.sml
+  sequences/widechararray2.sml
+end

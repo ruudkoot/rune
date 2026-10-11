@@ -1,10 +1,9 @@
-(* The property-testing library (docs/plans/quickcheck.md, M4 to M6), its
-   files in load order, in the form of lib/basis/library.build. It is written
-   on lib/random: *)
+(* The property-testing library (docs/plans/quickcheck.md, M4 to M6): its
+   engine, its files in load order, in the form of lib/basis/library.build.
+   The arbitraries of the Basis Library's types are the library
+   test/property/basis, in basis/. It is written on lib/random: *)
 libraries random end
-(* A file that every compiler of tests/lib/run-hosts.sh builds is "demand";
-   one that names a structure the Basis leaves optional (Int8, WideChar,
-   SML90, IntArray2) or Rune's own (INet6Sock) is "host=no" as well. *)
+(* Every compiler of tests/lib/run-hosts.sh builds every file. *)
 annotate "demand" in
   source.sml
   gen_sig.sml
@@ -19,35 +18,4 @@ annotate "demand" in
   prop.sml
   check_sig.sml
   check.sml
-  family_sig.sml
-  family.sml
-  data_sig.sml
-  data.sml
-  numbers.sml
-end
-annotate "demand" "host=no" in
-  sized.sml
-end
-annotate "demand" in
-  text.sml
-end
-annotate "demand" "host=no" in
-  wide.sml
-end
-annotate "demand" in
-  bytes.sml
-end
-annotate "demand" "host=no" in
-  arrays2.sml
-end
-annotate "demand" in
-  system_sig.sml
-  system.sml
-end
-annotate "demand" "host=no" in
-  inet6_sig.sml
-  inet6.sml
-  sml90_sig.sml
-  sml90.sml
-  sequences.sml
 end

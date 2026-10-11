@@ -211,7 +211,16 @@ val wordToFD : SysWord.word -> file_desc
 
 `wordToFD w` is the descriptor numbered `w`, whether or not it is open.
 
-**Law** `fdToWord (wordToFD w) = w` (for every `w : word`)
+A descriptor is "a per-process unique, non-negative integer" of the
+system, an `int` of C, which POSIX makes at least 32 bits wide
+(`{INT_MAX}` is at least 2147483647). Beyond that an implementation may
+wrap the word, as one that keeps a descriptor in such an `int` does, or
+keep it, as Rune does up to its own `int`, of 63 bits.
+
+**Law** `fdToWord (wordToFD w) = w` for `SysWord.<= (w, 0wx7FFFFFFF)` (for every `w : SysWord.word`)
+
+**Counterexample** `let val w = SysWord.+ (SysWord.fromInt (valOf Int.maxInt), 0w1) in fdToWord (wordToFD w) = w end`, for the number of a
+descriptor is an int, on Rune of 63 bits.
 
 <details><summary>Other implementations (1)</summary>
 
@@ -1172,7 +1181,10 @@ val devToWord : dev -> SysWord.word
 
 `devToWord d` is the number of the device `d`.
 
-**Law** `devToWord (wordToDev w) = w` (for every `w : word`)
+**Law** `devToWord (wordToDev w) = w` for `SysWord.<= (w, SysWord.fromInt (valOf Int.maxInt))` (for every `w : SysWord.word`)
+
+**Counterexample** `let val w = SysWord.+ (SysWord.fromInt (valOf Int.maxInt), 0w1) in devToWord (wordToDev w) = w end`, for the number of a
+device is an int.
 
 <details><summary>Tests (2)</summary>
 
@@ -1210,7 +1222,10 @@ val inoToWord : ino -> SysWord.word
 
 `inoToWord i` is the number of the file `i`.
 
-**Law** `inoToWord (wordToIno w) = w` (for every `w : word`)
+**Law** `inoToWord (wordToIno w) = w` for `SysWord.<= (w, SysWord.fromInt (valOf Int.maxInt))` (for every `w : SysWord.word`)
+
+**Counterexample** `let val w = SysWord.+ (SysWord.fromInt (valOf Int.maxInt), 0w1) in inoToWord (wordToIno w) = w end`, for the number of a
+file is an int.
 
 <details><summary>Tests (2)</summary>
 

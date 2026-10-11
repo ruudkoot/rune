@@ -439,7 +439,8 @@ nothing behind, so this is how a line is split into words.
 
 **Example** `tokens Char.isSpace "  a  b " = ["a", "b"]`
 
-**Law** `tokens p s = List.filter (fn t => Int.> (size t, 0)) (fields p s)` (for every `p : char -> bool`, `s : string`)
+**Law** `tokens p s = List.filter (fn t => Int.> (size t, 0)) (fields p s)`
+when `p` has no effects (for every `p : char -> bool`, `s : string`)
 
 > **Reading** `String.tokens/order`. The specification says the tokens are
 > "derived from s from left to right", and not how often `p` is asked:
@@ -562,6 +563,8 @@ A string that is a prefix of another comes before it.
 
 **Law** `compare (s, t) = collate Char.compare (s, t)` (for every `s : string`, `t : string`)
 
+> **Not tested in Rune** at `WideString`: it names [`Char.compare`](../sig/CHAR.md#val-compare), and the characters of [`WideString`](../str/WideString.md) are [`WideChar.char`](../sig/CHAR.md#type-char).
+
 **Example** `compare ("abc", "abd") = LESS`
 
 **Example** `compare ("Z", "a") = LESS` for the capitals come first in ASCII.
@@ -633,6 +636,8 @@ quote, and the others as a named escape, `\^c`, or three decimal digits.
 
 **Law** `toString s = translate Char.toString s` (for every `s : string`)
 
+> **Not tested in Rune** at `WideString`: it names [`Char.toString`](../sig/CHAR.md#val-tostring), and the characters of [`WideString`](../str/WideString.md) are [`WideChar.char`](../sig/CHAR.md#type-char).
+
 **Example** `toString "a\tb\"" = "a\\tb\\\""`
 
 <details><summary>Tests (13)</summary>
@@ -697,6 +702,8 @@ val fromString : String.string -> string option
 `fromString s` is the characters that the text `s` begins with, read as [`scan`](#val-scan) reads them, or `NONE`.
 
 **Law** `fromString s = StringCvt.scanString scan s` (for every `s : string`)
+
+> **Not tested in Rune** at `WideString`: [`StringCvt.scanString`](../sig/STRING_CVT.md#val-scanstring) gives [`scan`](#val-scan) the characters of a [`String.string`](#type-string), and [`WideString.scan`](#val-scan) reads those of [`WideChar.char`](../sig/CHAR.md#type-char).
 
 > **Reading** `String.fromString/format-first`. A formatting sequence counts
 > as read although it stands for no character, so a text of nothing but

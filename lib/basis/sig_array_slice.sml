@@ -27,10 +27,14 @@ sig
 
      Raises: `Subscript` if `i < 0` or `i >= length sl`.
 
-     Law: `sub (slice (arr, i, NONE), k) = Array.sub (arr, i + k)` for `0 <= k
-     andalso k < Array.length arr - i`
+     Law: `sub (slice (arr, i, NONE), k) = Array.sub (arr, i + k)` for `0 <= i
+     andalso i < Array.length arr andalso 0 <= k andalso k < Array.length arr -
+     i`
 
-     Example: `sub (slice (Array.fromList [1, 2, 3, 4], 1, NONE), 0) = 2` *)
+     Example: `sub (slice (Array.fromList [1, 2, 3, 4], 1, NONE), 0) = 2`
+
+     Counterexample: `sub (slice (Array.fromList [1, 2], ~1, NONE), 1) = 1`,
+     for a slice cannot start before its array. *)
   val sub : 'a slice * int -> 'a
 
   (* `update (sl, i, x)` puts `x` at position `i` of `sl`, and so of the array it is a slice of.
@@ -58,8 +62,8 @@ sig
      Raises: `Subscript` if `i < 0` or `i > Array.length arr`, or, with `SOME
      n`, if `n < 0` or `i + n > Array.length arr`.
 
-     Law: `base (slice (arr, i, SOME n)) = (arr, i, n)` when `(ignore (slice
-     (arr, i, SOME n)); true)`
+     Law: `base (slice (arr, i, SOME n)) = (arr, i, n)` for `0 <= i andalso i
+     <= Array.length arr andalso 0 <= n andalso n <= Array.length arr - i`
 
      Example: `vector (slice (Array.fromList [1, 2, 3, 4], 1, SOME 2)) =
      Vector.fromList [2, 3]`
@@ -80,11 +84,14 @@ sig
      Raises: `Subscript` if `i < 0` or `i > length sl`, or, with `SOME n`, if
      `n < 0` or `i + n > length sl`.
 
-     Law: `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= k
-     andalso k < length sl - i`
+     Law: `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= i
+     andalso i < length sl andalso 0 <= k andalso k < length sl - i`
 
      Example: `vector (subslice (slice (Array.fromList [1, 2, 3, 4], 1, NONE),
-     1, SOME 1)) = Vector.fromList [3]` *)
+     1, SOME 1)) = Vector.fromList [3]`
+
+     Counterexample: `sub (subslice (full (Array.fromList [1, 2]), ~1, NONE),
+     1) = 1`, for a subslice cannot start before its slice. *)
   val subslice : 'a slice * int * int option -> 'a slice
 
   (* `base sl` is the triple of the array that `sl` is a stretch of, where it starts in that array, and how long it is.

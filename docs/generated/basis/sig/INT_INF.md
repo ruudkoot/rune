@@ -165,7 +165,9 @@ and 0 for every other `i` but 0.
 
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `i` is zero and `j` is negative.
 
-**Law** `pow (i, Int.+ (j, k)) = pow (i, j) * pow (i, k)` for `Int.>= (j, 0) andalso Int.>= (k, 0)` (for every `i : IntInf.int`, `j : int`, `k : int`)
+**Law** `pow (i, Int.+ (j, k)) = pow (i, j) * pow (i, k)` for `Int.>= (j, 0) andalso Int.>= (k, 0)`, and it is run for `j` from `Arb.intRange (0, 15)`
+and `k` from `Arb.intRange (0, 15)`, as a larger power of a large number
+takes long (for every `i : IntInf.int`, `j : int`, `k : int`)
 
 **Example** `pow (2, 100) = 1267650600228229401496703205376`
 
@@ -285,7 +287,8 @@ val << : int * Word.word -> int
 
 `<< (i, n)` is `i` shifted left by `n` bits: `i * 2^n`.
 
-**Law** `<< (i, n) = i * pow (2, Word.toInt n)` (for every `i : IntInf.int`, `n : word`)
+**Law** `<< (i, n) = i * pow (2, Word.toInt n)`, run for `n` from
+`Arb.wordRange (0w0, 0w4095)` (for every `i : IntInf.int`, `n : word`)
 
 **Example** `<< (1, 0w100) = pow (2, 100)`
 
@@ -303,7 +306,9 @@ val ~>> : int * Word.word -> int
 
 `~>> (i, n)` is `i` shifted right by `n` bits with its sign kept: `i div 2^n`, rounded towards negative infinity.
 
-**Law** `~>> (i, n) = i div pow (2, Word.toInt n)` (for every `i : IntInf.int`, `n : word`)
+**Law** `~>> (i, n) = i div pow (2, Word.toInt n)`, run for `n` from
+`Arb.wordRange (0w0, 0w4095)`, as `Word.toInt n` overflows for a larger
+shift (for every `i : IntInf.int`, `n : word`)
 
 **Example** `~>> (~5, 0w1) = ~3`
 

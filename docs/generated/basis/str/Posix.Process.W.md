@@ -31,9 +31,9 @@ What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_PROCESS`](.
 | val | [`anySet`](../sig/BIT_FLAGS.md#val-anyset) | `flags * flags -> bool` |
 | val | [`clear`](../sig/BIT_FLAGS.md#val-clear) | `flags * flags -> flags` |
 | val | [`flags`](../sig/BIT_FLAGS.md#val-flags) | `flags list -> flags` |
-| val | [`fromWord`](../sig/BIT_FLAGS.md#val-fromword) | `word -> flags` |
+| val | [`fromWord`](../sig/BIT_FLAGS.md#val-fromword) | `SysWord.word -> flags` |
 | val | [`intersect`](../sig/BIT_FLAGS.md#val-intersect) | `flags list -> flags` |
-| val | [`toWord`](../sig/BIT_FLAGS.md#val-toword) | `flags -> word` |
+| val | [`toWord`](../sig/BIT_FLAGS.md#val-toword) | `flags -> SysWord.word` |
 | val | [`untraced`](../sig/POSIX_PROCESS.md#val-w.untraced) | `flags` |
 
 ## Notes

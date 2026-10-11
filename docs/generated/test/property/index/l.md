@@ -8,7 +8,6 @@
 - `laws` (val): [CHECK](../sig/CHECK.md#val-laws)
 - `list` (val): [ARB](../sig/ARB.md#val-list), [CO](../sig/CO.md#val-list), [GEN](../sig/GEN.md#val-list), [SHOW](../sig/SHOW.md#val-list)
 - `listOf` (val): [GEN](../sig/GEN.md#val-listof)
-- `lockType` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-locktype)
 
 ---
 

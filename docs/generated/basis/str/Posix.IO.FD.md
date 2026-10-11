@@ -33,9 +33,9 @@ What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_IO`](../sig
 | val | [`clear`](../sig/BIT_FLAGS.md#val-clear) | `flags * flags -> flags` |
 | val | [`cloexec`](../sig/POSIX_IO.md#val-fd.cloexec) | `flags` |
 | val | [`flags`](../sig/BIT_FLAGS.md#val-flags) | `flags list -> flags` |
-| val | [`fromWord`](../sig/BIT_FLAGS.md#val-fromword) | `word -> flags` |
+| val | [`fromWord`](../sig/BIT_FLAGS.md#val-fromword) | `SysWord.word -> flags` |
 | val | [`intersect`](../sig/BIT_FLAGS.md#val-intersect) | `flags list -> flags` |
-| val | [`toWord`](../sig/BIT_FLAGS.md#val-toword) | `flags -> word` |
+| val | [`toWord`](../sig/BIT_FLAGS.md#val-toword) | `flags -> SysWord.word` |
 
 <details><summary>Other implementations (3)</summary>
 

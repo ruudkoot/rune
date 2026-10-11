@@ -44,6 +44,7 @@ annotate "demand" in
   word.sml
   word64.sml
   word_sig.sml
+  sysword.sml
   int_sig.sml
   intn_fn.sml
   int8.sml
@@ -252,6 +253,7 @@ annotate "seal" in
   seal_intinf.sml
   seal_int.sml
   seal_word.sml
+  seal_sysword.sml
   seal_int8.sml
   seal_int16.sml
   seal_int32.sml

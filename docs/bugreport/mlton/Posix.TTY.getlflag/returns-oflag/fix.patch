@@ -1,0 +1,11 @@
+--- a/basis-library/posix/tty.sml
++++ b/basis-library/posix/tty.sml
+@@ -180,7 +180,7 @@
+       val getiflag: termios -> I.flags = #iflag
+       val getoflag: termios -> O.flags = #oflag
+       val getcflag: termios -> C.flags = #cflag
+-      val getlflag: termios -> L.flags = #oflag
++      val getlflag: termios -> L.flags = #lflag
+       val getcc: termios -> V.cc = #cc
+ 
+       structure CF =

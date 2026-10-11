@@ -38,7 +38,7 @@ What each means is on [`POSIX_IO`](../sig/POSIX_IO.md); the types are this struc
 | val | [`getfd`](../sig/POSIX_IO.md#val-getfd) | `Posix.ProcEnv.file_desc -> FD.flags` |
 | val | [`getfl`](../sig/POSIX_IO.md#val-getfl) | `Posix.ProcEnv.file_desc -> O.flags * Posix.FileSys.open_mode` |
 | val | [`getlk`](../sig/POSIX_IO.md#val-getlk) | `Posix.ProcEnv.file_desc * FLock.flock -> FLock.flock` |
-| val | [`lseek`](../sig/POSIX_IO.md#val-lseek) | `Posix.ProcEnv.file_desc * int * whence -> int` |
+| val | [`lseek`](../sig/POSIX_IO.md#val-lseek) | `Posix.ProcEnv.file_desc * Position.int * whence -> Position.int` |
 | val | [`mkBinReader`](../sig/POSIX_IO.md#val-mkbinreader) | `{fd : Posix.ProcEnv.file_desc, initBlkMode : bool, name : string} -> BinPrimIO.reader` |
 | val | [`mkBinWriter`](../sig/POSIX_IO.md#val-mkbinwriter) | `{appendMode : bool, chunkSize : int, fd : Posix.ProcEnv.file_desc, initBlkMode : bool, name : string} -> BinPrimIO.writer` |
 | val | [`mkTextReader`](../sig/POSIX_IO.md#val-mktextreader) | `{fd : Posix.ProcEnv.file_desc, initBlkMode : bool, name : string} -> TextPrimIO.reader` |

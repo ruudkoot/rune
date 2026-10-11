@@ -90,6 +90,11 @@ RUNE    ?= bin/rune
 RUNE_STACK := bin/rune-stack
 $(shell mkdir -p bin && printf '#!/bin/sh\nexec "%s" --target=stack "$$@"\n' '$(abspath $(RUNE))' > $(RUNE_STACK) && chmod +x $(RUNE_STACK))
 RUNEVM  ?= bin/runevm-stack
+# The register VM with its JIT, which runs what $(RUNE) makes: the default for
+# the suites of the libraries, the examples and the laws (the owner,
+# 2026-10-09). The stack VM is what they are compared with: run a suite's
+# script with RUNE=bin/rune-stack RUNEVM=bin/runevm-stack.
+RUNEVM_REGISTER ?= bin/runevm
 RUNEDOC ?= bin/runedoc
 RUNEOPT ?= bin/runeopt
 
@@ -148,7 +153,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
+.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64 test-laws-hosts
 
 all: vm boot runedoc runeopt manifests basis-cache
 
@@ -158,13 +163,15 @@ all: vm boot runedoc runeopt manifests basis-cache
 # (rune --basis-index)
 # the libraries of docs/plans/repl.md (The libraries)
 REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter
-manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
+manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
 lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/basis
 lib/random/MANIFEST: lib/random/library.build $(wildcard lib/random/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/random
 lib/test/property/MANIFEST: lib/test/property/library.build $(wildcard lib/test/property/*.sml) lib/random/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/test/property
+lib/test/property/basis/MANIFEST: lib/test/property/basis/library.build $(wildcard lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml) lib/test/property/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/test/property/basis
 # the libraries of docs/plans/repl.md (The libraries), each after those it
 # is written on
 lib/unicode/MANIFEST: lib/unicode/library.build $(wildcard lib/unicode/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
@@ -589,9 +596,14 @@ bin/gcsim: tools/heapsim/gcsim.c runtime/census/layouts.h | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) $(RT_INC) -o $@ tools/heapsim/gcsim.c -lm
 heapsim: bin/heapsim bin/heapsim-gen bin/gcsim
+# The census of the validation is taken every 8192 instructions, in traces
+# of its own: at scripts/census.sh's 32768 the lower band of compile-sigs
+# missed a collection that the stock VM made at 4 MiB, where the live data
+# crossed its trigger between two samples (2026-10-11, when Position and
+# SysWord became types of their own and the workload grew a little).
 check-heapsim: heapsim bin/runevm-census bin/runevm $(RUNE) bin/rune.rbc
 	sh tools/heapsim/test.sh
-	sh tools/heapsim/validate.sh compile-sigs intinf_fact
+	CENSUS_TRACES=tests/out/census-validate CENSUS_EVERY=8192 sh tools/heapsim/validate.sh compile-sigs intinf_fact
 check-gcsim: heapsim
 	sh tools/heapsim/test2.sh
 check-layouts:
@@ -1034,11 +1046,12 @@ check-docs: $(RUNE) $(RUNEDOC) manifests
 	sh scripts/check-docs.sh
 	RUNE=$(RUNE_STACK) sh scripts/gen-basis-sigs.sh --check
 	$(RUNE_STACK) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	sh tests/basis/gen-annotations.sh --check
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	$(RUNEDOC) $(DOCS_RANDOM) --check
 	$(RUNEDOC) $(DOCS_PROPERTY) --check
+	$(RUNEDOC) $(DOCS_PROPERTY_BASIS) --check
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) --check &&) true
 	$(RUNEDOC) --palette docs/generated/palette --check
 	sh tests/basis/check-claims.sh
@@ -1049,11 +1062,17 @@ check-docs: $(RUNE) $(RUNEDOC) manifests
 # tests/basis/annotations.txt is what the suite knows about other implementations,
 # made from deviations.txt by tests/basis/gen-annotations.sh and committed.
 DOCS_BASIS := --lib lib --library basis --tests tests/basis --annotations tests/basis/annotations.txt \
+              --law-skips tests/basis/law-skips.txt \
               --out docs/generated/basis --title "The Standard ML Basis Library"
 # the libraries beside it (docs/plans/quickcheck.md, D1)
 DOCS_RANDOM := --lib lib --library random --out docs/generated/random --basis-docs ../basis --title "Random numbers"
 DOCS_PROPERTY := --lib lib --library test/property --out docs/generated/test/property --basis-docs ../../basis \
                  --title "Property testing"
+# the arbitraries of the Basis Library's types, the library beside it (in a
+# directory of its own: runedoc removes from its output what it did not write)
+DOCS_PROPERTY_BASIS := --lib lib --library test/property/basis --out docs/generated/test/property-basis \
+                       --basis-docs ../../basis --library-docs test/property ../property \
+                       --title "Property testing: the Basis Library's arbitraries"
 # the libraries of docs/plans/repl.md (The libraries), each in
 # docs/generated/NAME (REPL_LIBS, with the manifests)
 TITLE_unicode := Unicode
@@ -1072,6 +1091,7 @@ docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_BASIS)
 	$(RUNEDOC) $(DOCS_RANDOM)
 	$(RUNEDOC) $(DOCS_PROPERTY)
+	$(RUNEDOC) $(DOCS_PROPERTY_BASIS)
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) &&) true
 	$(RUNEDOC) --palette docs/generated/palette
 
@@ -1084,31 +1104,39 @@ docs: $(RUNEDOC) manifests
 test-basis: $(RUNE) $(RUNEDOC) vm | build/.doctor-check
 	RUNE=$(abspath $(RUNE_STACK)) RUNEVM=$(abspath $(RUNEVM)) \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune
-	RUNE=$(RUNE_STACK) RUNEVM=$(RUNEVM) RUNEDOC=$(RUNEDOC) sh tests/basis/run-examples.sh
+	RUNE=$(RUNE) RUNEVM=$(RUNEVM_REGISTER) RUNEDOC=$(RUNEDOC) sh tests/basis/run-examples.sh
 
 # Deterministic budgets on what `runevm-stack --count` reports, for benchmark
 # programs, the hello compile and the bootstrap (tests/perf/run-perf.sh;
 # --update after a deliberate change). About 10 seconds.
 # The tests of the documentation generator (tests/doc), with bin/runedoc;
 # `make test-doc RUNEDOC=bin/runedoc-mlton` is the faster loop.
-test-doc: $(RUNEDOC) vm
+test-doc: $(RUNEDOC) vm manifests
 	RUNEDOC=$(RUNEDOC) sh tests/doc/run-doc-tests.sh
 
 # The libraries beside the basis library and rune --library (tests/lib;
 # docs/plans/quickcheck.md, D1).
 test-lib: $(RUNE) $(RUNEDOC) vm manifests
-	RUNE=$(RUNE_STACK) RUNEVM=$(RUNEVM) RUNEDOC=$(RUNEDOC) sh tests/lib/run-lib-tests.sh
+	RUNE=$(RUNE) RUNEVM=$(RUNEVM_REGISTER) RUNEDOC=$(RUNEDOC) sh tests/lib/run-lib-tests.sh
 
 # The laws of the Basis Library's documentation, each at every structure that
-# implements its signature (docs/plans/quickcheck.md, M8). Not in `make check`
-# until every law holds (D12); RUNE_PROPERTY_DEEP=1 runs the deep mode.
+# implements its signature (docs/plans/quickcheck.md, M8): every law holds,
+# or tests/basis/law-skips.txt lists it (D12). In `make check` since the end
+# of the hunt (M9); RUNE_PROPERTY_DEEP=1 runs the deep mode.
 test-laws: $(RUNE) $(RUNEDOC) vm manifests
-	RUNE=$(RUNE_STACK) RUNEVM=$(RUNEVM) RUNEDOC=$(RUNEDOC) sh tests/basis/run-laws.sh -j $(JOBS)
+	RUNE=$(RUNE) RUNEVM=$(RUNEVM_REGISTER) RUNEDOC=$(RUNEDOC) sh tests/basis/run-laws.sh -j $(JOBS)
 
 # The same libraries on the hosts, against their own Basis Library (after a
 # change to a library, as matrix-quick is after one to lib/basis).
 test-lib-hosts: manifests
 	sh tests/lib/run-hosts.sh
+
+# The laws of the Basis Library's documentation on the other compilers
+# (docs/plans/quickcheck.md, D10): the differences from Rune's last run of
+# test-laws that tests/basis/law-deviations.txt does not explain. Not part of
+# `make check`.
+test-laws-hosts: $(RUNEDOC) manifests
+	RUNEDOC=$(RUNEDOC) python3 tests/basis/run-laws-hosts.py
 
 # The native code generator's own tests (tests/opt): after the suites, whose
 # programs it checks and disassembles.
@@ -1364,6 +1392,7 @@ check:
 	@$(MAKE) --no-print-directory test bootstrap
 	@$(MAKE) --no-print-directory test-doc
 	@$(MAKE) --no-print-directory test-lib
+	@$(MAKE) --no-print-directory test-laws
 	@$(MAKE) --no-print-directory test-all
 	@$(MAKE) --no-print-directory test-basis
 	@$(MAKE) --no-print-directory test-opt

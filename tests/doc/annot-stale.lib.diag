@@ -5,3 +5,4 @@ tests/doc/annot-stale.lib/ANNOTATIONS:5:1: error: `Unit.extra/is-unit` is the la
 tests/doc/annot-stale.lib/ANNOTATIONS:6:1: error: `Unit.i[t/is-unit` is the label of no check of a documented member
 tests/doc/annot-stale.lib/ANNOTATIONS:11:1: error: `Unit.a*/never-written` is the label of no check of a documented member
 tests/doc/annot-stale.lib/ANNOTATIONS:12:1: error: `Unit.a*/made-*` is the label of no check of a documented member
+tests/doc/annot-stale.lib/unit.sml:14:11: error: Unit shows a program extra, which UNIT does not name: bind it to its signature in a seal file of the MANIFEST

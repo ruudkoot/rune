@@ -121,7 +121,13 @@ sig
 
      Example: `splitDirFile "a/b/" = {dir = "a/b", file = ""}`
 
-     Law: `joinDirFile (splitDirFile p) = p` for `p <> ""` *)
+     Law: `joinDirFile (splitDirFile p) = p` for `p <> ""` when `let val arcs =
+     #arcs (fromString p) in List.all (fn a => a <> "") (List.take (arcs,
+     length arcs - 1)) end`, and it is run for `p` from `BasisDataArb.path`: an
+     empty arc before the last, as in `"a//b"`, is lost
+
+     Counterexample: `joinDirFile (splitDirFile "//") = "//"`, for an empty arc
+     before the last is lost. *)
   val splitDirFile : string -> {dir : string, file : string}
 
   (* `joinDirFile {dir, file}` is the path of `file` inside `dir`.
@@ -139,7 +145,8 @@ sig
 
   (* `dir p` is the `dir` part of `splitDirFile p`.
 
-     Law: `dir p = #dir (splitDirFile p)`
+     Law: `dir p = #dir (splitDirFile p)`, and it is run for `p` from
+     `BasisDataArb.path`
 
      Example: `dir "a/b/c" = "a/b"` *)
   val dir : string -> string
@@ -163,7 +170,8 @@ sig
 
      Example: `splitBaseExt ".profile" = {base = ".profile", ext = NONE}`
 
-     Law: `joinBaseExt (splitBaseExt p) = p` *)
+     Law: `joinBaseExt (splitBaseExt p) = p`, and it is run for `p` from
+     `BasisDataArb.path` *)
   val splitBaseExt : string -> {base : string, ext : string option}
 
   (* `joinBaseExt {base, ext}` is `base` with `ext` appended after a `.`, or `base` alone when `ext` is `NONE`.
@@ -202,7 +210,8 @@ sig
 
   (* `isCanonical p` is `true` when `p` is what `mkCanonical` would give.
 
-     Law: `isCanonical p = (mkCanonical p = p)`
+     Law: `isCanonical p = (mkCanonical p = p)`, and it is run for `p` from
+     `BasisDataArb.path`
 
      Example: `isCanonical "a/../b" = false` *)
   val isCanonical : string -> bool
@@ -234,7 +243,10 @@ sig
 
      Law: `mkAbsolute {path = mkRelative {path = p, relativeTo = q}, relativeTo
      = q} = p` for `isCanonical p andalso isAbsolute p andalso isCanonical q
-     andalso isAbsolute q`; a path that is not canonical comes back canonical *)
+     andalso isAbsolute q`, and it is run for `p` from
+     `BasisDataArb.canonicalAbsolutePath` and `q` from
+     `BasisDataArb.canonicalAbsolutePath`; a path that is not canonical comes
+     back canonical *)
   val mkRelative : {path : string, relativeTo : string} -> string
 
   (* `isAbsolute p` is `true` when `p` starts from a root.
@@ -244,7 +256,8 @@ sig
 
   (* `isRelative p` is `true` when `p` does not start from a root.
 
-     Law: `isRelative p = not (isAbsolute p)`
+     Law: `isRelative p = not (isAbsolute p)`, and it is run for `p` from
+     `BasisDataArb.path`
 
      Example: `isRelative "a/b" = true` *)
   val isRelative : string -> bool

@@ -31,7 +31,7 @@ What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_TTY`](../si
 | val | [`brkint`](../sig/POSIX_TTY.md#val-i.brkint) | `flags` |
 | val | [`clear`](../sig/BIT_FLAGS.md#val-clear) | `flags * flags -> flags` |
 | val | [`flags`](../sig/BIT_FLAGS.md#val-flags) | `flags list -> flags` |
-| val | [`fromWord`](../sig/BIT_FLAGS.md#val-fromword) | `word -> flags` |
+| val | [`fromWord`](../sig/BIT_FLAGS.md#val-fromword) | `SysWord.word -> flags` |
 | val | [`icrnl`](../sig/POSIX_TTY.md#val-i.icrnl) | `flags` |
 | val | [`ignbrk`](../sig/POSIX_TTY.md#val-i.ignbrk) | `flags` |
 | val | [`igncr`](../sig/POSIX_TTY.md#val-i.igncr) | `flags` |
@@ -43,7 +43,7 @@ What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_TTY`](../si
 | val | [`ixoff`](../sig/POSIX_TTY.md#val-i.ixoff) | `flags` |
 | val | [`ixon`](../sig/POSIX_TTY.md#val-i.ixon) | `flags` |
 | val | [`parmrk`](../sig/POSIX_TTY.md#val-i.parmrk) | `flags` |
-| val | [`toWord`](../sig/BIT_FLAGS.md#val-toword) | `flags -> word` |
+| val | [`toWord`](../sig/BIT_FLAGS.md#val-toword) | `flags -> SysWord.word` |
 
 ## Notes
 
@@ -52,7 +52,7 @@ What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_TTY`](../si
 > **Reading** `Posix.TTY.I/bits-are-posix's`. The page says nothing about
 > what bits these flags have; the suite follows POSIX and asks that
 > every named flag of `I` and `L` have non-zero bits of its own inside
-> [`all`](../sig/BIT_FLAGS.md#val-all), comparing through [`SysWord`](../str/Word.md) rather than through [`allSet`](../sig/BIT_FLAGS.md#val-allset).
+> [`all`](../sig/BIT_FLAGS.md#val-all), comparing through [`SysWord`](../str/SysWord.md) rather than through [`allSet`](../sig/BIT_FLAGS.md#val-allset).
 
 <details><summary>Other implementations (3)</summary>
 

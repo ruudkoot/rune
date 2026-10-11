@@ -50,7 +50,9 @@ struct
     fun whenceBits SEEK_SET = named "SEEK_SET"
       | whenceBits SEEK_CUR = named "SEEK_CUR"
       | whenceBits SEEK_END = named "SEEK_END"
-    fun lseek (fd, offset, whence) = check (lseek' (fd, offset, whenceBits whence))
+    (* in the VM's ints; Position.int is what Posix.IO.lseek takes and gives *)
+    fun seek (fd, offset, whence) = check (lseek' (fd, offset, whenceBits whence))
+    fun lseek (fd, offset, whence) = Position.fromInt (seek (fd, Position.toInt offset, whence))
     fun fsync fd = ignore (check (fsync' fd))
 
     (* Locks on segments of a file: fcntl with a struct flock. *)
@@ -58,7 +60,8 @@ struct
     (* Posix.IO.FLock: the description of a lock on a stretch of a file. *)
     structure FLock =
     struct
-      datatype flock = FLock of {ltype : lock_type, whence : whence, start : int, len : int, pid : pid option}
+      datatype flock = FLock of {ltype : lock_type, whence : whence, start : Position.int, len : Position.int,
+                                 pid : pid option}
       fun flock r = FLock r
       fun ltype (FLock r) = #ltype r
       fun whence (FLock r) = #whence r
@@ -75,9 +78,9 @@ struct
       (* The lock afterwards: for getlk the one that is in the way (with the
          process that holds it), or fl itself with the type F_UNLCK. *)
       fun lock (command, fd, FLock.FLock {ltype, whence, start, len, pid}) =
-        case lock' (fd, named command, typeBits ltype, whenceBits whence, start, len) of
+        case lock' (fd, named command, typeBits ltype, whenceBits whence, Position.toInt start, Position.toInt len) of
           [t, w, s, l, p] =>
-            FLock.FLock {ltype = typeOf t, whence = whenceOf w, start = s, len = l,
+            FLock.FLock {ltype = typeOf t, whence = whenceOf w, start = Position.fromInt s, len = Position.fromInt l,
                          pid = if command = "F_GETLK" then (if typeOf t = F_UNLCK then NONE else SOME p) else pid}
         | _ => raise RuneError.lastError ()
     in
@@ -96,8 +99,8 @@ struct
       type flags = word
       val cloexec = Word.fromInt (named "FD_CLOEXEC")
       val all = if Word.wordSize > 32 then Word.<< (0w1, 0w32) - 0w1 else Word.notb 0w0
-      fun toWord (f : flags) = f
-      fun fromWord w = Word.andb (w, all)
+      fun toWord (f : flags) = RuneSysWord.fromWord f
+      fun fromWord w = Word.andb (RuneSysWord.toWord w, all)
       fun flags l = List.foldl Word.orb 0w0 l
       fun intersect l = List.foldl Word.andb all l
       fun allSet (a, b) = Word.andb (a, b) = a
@@ -113,7 +116,7 @@ struct
     datatype open_mode = datatype RunePosixFileSys.open_mode
 
     fun dupfd {old, base} = check (fcntl' (old, named "F_DUPFD", base))
-    fun getfd fd = FD.fromWord (Word.fromInt (check (fcntl' (fd, named "F_GETFD", 0))))
+    fun getfd fd = FD.fromWord (SysWord.fromInt (check (fcntl' (fd, named "F_GETFD", 0))))
     fun setfd (fd, flags) = ignore (check (fcntl' (fd, named "F_SETFD", Word.toInt flags)))
     fun getfl fd =
       let
@@ -122,7 +125,7 @@ struct
         val mode = if Word.andb (Word.fromInt bits, 0w3) = Word.fromInt (named "O_WRONLY") then O_WRONLY
                    else if Word.andb (Word.fromInt bits, 0w3) = Word.fromInt (named "O_RDWR") then O_RDWR
                    else O_RDONLY
-      in (O.fromWord (Word.andb (Word.fromInt bits, Word.notb 0w3)), mode) end
+      in (O.fromWord (RuneSysWord.fromWord (Word.andb (Word.fromInt bits, Word.notb 0w3))), mode) end
     fun setfl (fd, flags) = ignore (check (fcntl' (fd, named "F_SETFL", Word.toInt flags)))
 
     (* The readers and writers of PRIM_IO over a descriptor. Only a regular
@@ -130,13 +133,13 @@ struct
        that their getPos, setPos, endPos and verifyPos are NONE. *)
     fun positions fd =
       if (RunePosixFileSys.ST.isReg (RunePosixFileSys.fstat fd) handle RuneError.SysErr _ => false) then
-        {getPos = SOME (fn () => lseek (fd, 0, SEEK_CUR)),
-         setPos = SOME (fn p => ignore (lseek (fd, p, SEEK_SET))),
+        {getPos = SOME (fn () => seek (fd, 0, SEEK_CUR)),
+         setPos = SOME (fn p => ignore (seek (fd, p, SEEK_SET))),
          endPos = SOME (fn () =>
-           let val here = lseek (fd, 0, SEEK_CUR)
-               val theEnd = lseek (fd, 0, SEEK_END)
-           in ignore (lseek (fd, here, SEEK_SET)); theEnd end),
-         verifyPos = SOME (fn () => lseek (fd, 0, SEEK_CUR))}
+           let val here = seek (fd, 0, SEEK_CUR)
+               val theEnd = seek (fd, 0, SEEK_END)
+           in ignore (seek (fd, here, SEEK_SET)); theEnd end),
+         verifyPos = SOME (fn () => seek (fd, 0, SEEK_CUR))}
       else {getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE}
 
     (* The same offsets as a position of TextPrimIO, which is abstract. *)
@@ -151,8 +154,20 @@ struct
          verifyPos = Option.map out verifyPos}
       end
 
+    (* the same offsets as a position of BinPrimIO, Position.int *)
+    fun binPositions fd =
+      let
+        val {getPos, setPos, endPos, verifyPos} = positions fd
+        fun out f = fn () => Position.fromInt (f ())
+      in
+        {getPos = Option.map out getPos,
+         setPos = Option.map (fn f => fn p => f (Position.toInt p)) setPos,
+         endPos = Option.map out endPos,
+         verifyPos = Option.map out verifyPos}
+      end
+
     fun mkBinReader {fd, name, initBlkMode} =
-      let val {getPos, setPos, endPos, verifyPos} = positions fd
+      let val {getPos, setPos, endPos, verifyPos} = binPositions fd
       in
         BinPrimIO.RD {name = name, chunkSize = 4096,
                       readVec = SOME (fn n => readVec (fd, n)), readArr = SOME (fn sl => readArr (fd, sl)),
@@ -163,7 +178,7 @@ struct
       end
 
     fun mkBinWriter {fd, name, initBlkMode, appendMode, chunkSize} =
-      let val {getPos, setPos, endPos, verifyPos} = positions fd
+      let val {getPos, setPos, endPos, verifyPos} = binPositions fd
       in
         BinPrimIO.WR {name = name, chunkSize = chunkSize,
                       writeVec = SOME (fn sl => writeVec (fd, sl)), writeArr = SOME (fn sl => writeArr (fd, sl)),

@@ -59,6 +59,9 @@ val index : color -> int
 
 **Law** `index (fromIndex i) = i` for `0 <= i andalso i < 3` (for every `i : int`)
 
+**Law** `index (fromIndex (List.nth (List.tabulate (n, fn k => k), i))) = i`
+for `0 <= i andalso i < n andalso n <= 3` (for every `n : int`, `i : int`)
+
 ### <a name="val-fromindex"></a>`fromIndex`
 
 ```sml
@@ -70,6 +73,10 @@ val fromIndex : int -> color
 **Raises** `Subscript` if `i` is not a place of a colour.
 
 **Law** `index (fromIndex (i mod 3)) = index (fromIndex ((i + 3) mod 3))` (for every `i : int`)
+
+> **Does not hold in Rune** at `Colors`: `i + 3` overflows at the largest `int`.
+
+**Law** `index (fromIndex (i mod 3)) = index (fromIndex (j mod 3))` for `i = j` (for every `i : int`, `j : int`)
 
 ### <a name="val-keep"></a>`keep`
 
@@ -83,10 +90,17 @@ val keep : (int -> bool) * int list -> int list
 
 **Law (Constant)** `keep (fn _ => true, l) = l`, and `keep (fn _ => false, l) = []` (for every `l : 'a list`)
 
+> **Not tested in Rune** (`keep (fn _ => true, l) = l`) at `Colors`: a listed law of a paragraph with two is named beneath it.
+
+> **Not tested in Rune** (`keep (fn _ => false, l) = []`) at `Colors`: a listed law of a paragraph with two is named beneath it.
+
 **Law (Idempotent)** `keep (f, keep (f, l)) = keep (f, l)` when `f` has no effects (for every `f : 'a -> bool`, `l : 'a list`)
 
 **Law** `keep (f, keep (g, l)) = keep (g, keep (f, l))` when `f` and `g` have
 no effects (for every `f : 'a -> bool`, `g : 'a -> bool`, `l : 'a list`)
+
+**Law** `List.length (keep (fn k => k < m, List.tabulate (n, fn k => k))) = Int.min (Int.max (m, 0), n)` for `n` from `Arb.intRange (0, 5)` and `m`
+from `Arb.intRange (~2, 7)` (for every `m : int`, `n : int`)
 
 ---
 

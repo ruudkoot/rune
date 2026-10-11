@@ -1,0 +1,46 @@
+diff --git a/base/system/Basis/Implementation/IO/bin-io-fn.sml b/base/system/Basis/Implementation/IO/bin-io-fn.sml
+index 372986c..0dceb73 100644
+--- a/base/system/Basis/Implementation/IO/bin-io-fn.sml
++++ b/base/system/Basis/Implementation/IO/bin-io-fn.sml
+@@ -256,15 +256,16 @@ functor BinIOFn (
+ 			inputExn(info, "canInput", IO.NonblockingNotSupported)
+ 		    | (IBUF{info=INFO{readVecNB=SOME f, ...}, ...}) => f
+ 		  (* end case *))
++	    (* n is what remains of amount to be found, from position i of buf *)
+ 	      fun tryInput (buf as IBUF{data, ...}, i, n) = let
+ 		    val len = V.length data
+ 		    val remain = len - i
+ 		    in
+ 		      if (remain >= n)
+-			then SOME n
++			then SOME amount
+ 			else nextBuf (buf, n - remain)
+ 		    end
+-	      and nextBuf (IBUF{more, ...}, n) = (case !more
++	      and nextBuf (buf as IBUF{more, ...}, n) = (case !more
+ 		     of (MORE buf) => tryInput (buf, 0, n)
+ 		      | (EOS _) => SOME(amount - n)
+ 		      | TERMINATED => SOME(amount - n)
+diff --git a/base/system/Basis/Implementation/IO/text-io-fn.sml b/base/system/Basis/Implementation/IO/text-io-fn.sml
+index de48898..31b2df0 100644
+--- a/base/system/Basis/Implementation/IO/text-io-fn.sml
++++ b/base/system/Basis/Implementation/IO/text-io-fn.sml
+@@ -268,15 +268,16 @@ functor TextIOFn (
+ 			inputExn(info, "canInput", IO.NonblockingNotSupported)
+ 		    | (IBUF{info=INFO{readVecNB=SOME f, ...}, ...}) => f
+ 		  (* end case *))
++	    (* n is what remains of amount to be found, from position i of buf *)
+ 	      fun tryInput (buf as IBUF{data, ...}, i, n) = let
+ 		    val len = V.length data
+ 		    val remain = len - i
+ 		    in
+ 		      if (remain >= n)
+-			then SOME n
++			then SOME amount
+ 			else nextBuf (buf, n - remain)
+ 		    end
+-	      and nextBuf (IBUF{more, ...}, n) = (case !more
++	      and nextBuf (buf as IBUF{more, ...}, n) = (case !more
+ 		     of (MORE buf) => tryInput (buf, 0, n)
+ 		      | (EOS _) => SOME(amount - n)
+ 		      | TERMINATED => SOME(amount - n)

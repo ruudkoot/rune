@@ -1,0 +1,43 @@
+--- a/basis-library/system/date.sml
++++ b/basis-library/system/date.sml
+@@ -285,17 +285,32 @@
+     fun fromTimeUniv t = 
+         tmozToDate (getgmtime_ (C_Time.fromInt (Time.toSeconds t))) (SOME 0)
+ 
+-    (* The following implements conversion from a local date to 
+-     * a Time.time.  It IGNORES wday and yday.
++    (* The following implements conversion from a date to a Time.time.
++     * It IGNORES wday and yday.  A local date (offset NONE) is converted
++     * by mktime.  A date at an offset is converted by the calendar: mktime
++     * would read it in the local time zone, at the zone's offset on that
++     * date, which need not be its offset now, localoffset ().
+      *)
+ 
+-    fun toTime (date as T {offset, ...}) = 
++    fun toTime (date as T {year, month, day, hour, minute, second,
++                           offset, ...}) =
+         let
+-           val secoffset = 
+-              case offset of
+-                 NONE      => 0
+-               | SOME secs => localoffset () + secs
+-            val clock = C_Time.toInt (mktime_ (dateToTmoz date)) - secoffset
++            val clock =
++               case offset of
++                  NONE => C_Time.toInt (mktime_ (dateToTmoz date))
++                | SOME secs =>
++                     if not (okDate date)
++                        then raise Date
++                     else
++                        let
++                           val days =
++                              todaynumber year month day
++                              - todaynumber 1970 Jan 1
++                        in
++                           (* secs is seconds West of UTC *)
++                           ((days * 24 + hour) * 60 + minute) * 60 + second
++                           + secs
++                        end
+         in
+             if clock < 0 then raise Date
+             else Time.fromSeconds clock

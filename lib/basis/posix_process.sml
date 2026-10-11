@@ -17,8 +17,8 @@ struct
     val sleep' = _prim "time_sleep" : int -> unit
     fun check r = if r < 0 then raise RuneError.lastError () else r
   in
-    fun pidToWord (p : pid) = Word.fromInt p
-    fun wordToPid w = Word.toInt w
+    fun pidToWord (p : pid) = SysWord.fromInt p
+    fun wordToPid w = SysWord.toInt w
 
     datatype waitpid_arg = W_ANY_CHILD | W_CHILD of pid | W_SAME_GROUP | W_GROUP of pid
     datatype exit_status = W_EXITED | W_EXITSTATUS of Word8.word | W_SIGNALED of signal | W_STOPPED of signal
@@ -57,9 +57,9 @@ struct
       type flags = word
       val untraced = Word.fromInt (case const "WUNTRACED" of ~1 => 0 | v => v)
       val all = untraced
-      fun toWord (f : flags) = f
+      fun toWord (f : flags) = RuneSysWord.fromWord f
       (* "toWord o fromWord must be equivalent to fn w => andb (w, toWord all)" *)
-      fun fromWord w = Word.andb (w, all)
+      fun fromWord w = Word.andb (RuneSysWord.toWord w, all)
       fun flags l = List.foldl Word.orb 0w0 l
       fun intersect l = List.foldl Word.andb all l
       fun clear (a, b) = Word.andb (Word.notb a, b)

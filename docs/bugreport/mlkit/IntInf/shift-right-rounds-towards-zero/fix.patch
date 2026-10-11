@@ -1,0 +1,17 @@
+--- a/basis/IntInf.sml
++++ b/basis/IntInf.sml
+@@ -1029,7 +1029,13 @@
+     end
+ 
+     val << = lshift
+-    val ~>> = rshift
++
++    (* rshift shifts the magnitude, which rounds a negative number towards
++     * zero; ~>> rounds towards negative infinity.  A negative i is shifted
++     * as notb i = ~1 - i, which is not negative:
++     * i div 2^n = notb ((notb i) div 2^n). *)
++    fun ~>> (i as _IntInf { negative = true, ... }, w) = notb (rshift (notb i, w))
++      | ~>> (i, w) = rshift (i, w)
+   end
+ 
+ (** SigDoc *)

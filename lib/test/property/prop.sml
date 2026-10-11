@@ -76,8 +76,9 @@ struct
          (* each side has an x of its own, drawn from the same nodes *)
          val xl = Gen.draw (#gen a) (s, here)
          val xr = Gen.draw (#gen a) (s, here)
-         (* shown before the sides run, which may change it (a stream) *)
-         val shown = #show a xl
+         (* shown from an x of its own, as the sides may change theirs and
+            showing may read it (a stream) *)
+         val shown = #show a (Gen.draw (#gen a) (s, here))
        in
          {verdict = judge b (outcome s (fn () => l xl), outcome s (fn () => r xr)),
           shown = [shown], labels = [], covers = []}
@@ -119,7 +120,8 @@ struct
            let
              val xl = Gen.draw (#gen a) (s, here)
              val xr = Gen.draw (#gen a) (s, here)
-             val shown = #show a xl
+             (* shown from an x of its own, as in law *)
+             val shown = #show a (Gen.draw (#gen a) (s, here))
            in
              {verdict = judge b (outcome s (fn () => l xl), outcome s (fn () => r xr)),
               shown = [shown], labels = [], covers = []}

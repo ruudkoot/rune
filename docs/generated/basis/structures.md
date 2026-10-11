@@ -10,7 +10,7 @@ described.
 
 `:>` means that the source seals the structure with the signature, so that its types are its own;
 `:` that it matches it, which the test suite checks. Either way a program sees the members that the
-signature names and no others, unless the structure is listed at the end of this page.
+signature names and no others.
 
 | Structure | Signature | Realisations | Status |  | Source |
 | --- | --- | --- | --- | --- | --- |
@@ -126,7 +126,7 @@ signature names and no others, unless the structure is listed at the end of this
 | [`PackWord32Little`](str/PackWord32Little.md) | : [`PACK_WORD`](sig/PACK_WORD.md) |  | optional | an application of `RunePackWordFn` | [lib/basis/pack\_word.sml](../../../lib/basis/pack_word.sml) |
 | [`PackWord64Big`](str/PackWord64Big.md) | : [`PACK_WORD`](sig/PACK_WORD.md) |  | optional | an application of `RunePackWordFn` | [lib/basis/pack\_word.sml](../../../lib/basis/pack_word.sml) |
 | [`PackWord64Little`](str/PackWord64Little.md) | : [`PACK_WORD`](sig/PACK_WORD.md) |  | optional | an application of `RunePackWordFn` | [lib/basis/pack\_word.sml](../../../lib/basis/pack_word.sml) |
-| [`Position`](str/Int.md) | : [`INTEGER`](sig/INTEGER.md) |  | required | is [`Int`](str/Int.md) | [lib/basis/position.sml](../../../lib/basis/position.sml) |
+| [`Position`](str/Position.md) | :> [`INTEGER`](sig/INTEGER.md) |  | required | is [`Int64`](str/Int64.md) | [lib/basis/position.sml](../../../lib/basis/position.sml) |
 | [`Posix`](str/Posix.md) | : [`POSIX`](sig/POSIX.md) | `where type FileSys.dirstream = OS.FileSys.dirstream where type FileSys.access_mode = OS.FileSys.access_mode` | optional |  | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
 | [`Posix.Error`](str/Posix.Error.md) | : [`POSIX_ERROR`](sig/POSIX_ERROR.md) |  | optional | is `RunePosixError` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
 | [`Posix.FileSys`](str/Posix.FileSys.md) | : [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) |  | optional | is `RunePosixFileSys` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
@@ -183,7 +183,7 @@ signature names and no others, unless the structure is listed at the end of this
 | [`String`](str/String.md) | : [`STRING`](sig/STRING.md) | `where type string = string where type char = Char.char` | required |  | [lib/basis/string.sml](../../../lib/basis/string.sml) |
 | [`StringCvt`](str/StringCvt.md) | : [`STRING_CVT`](sig/STRING_CVT.md) |  | required |  | [lib/basis/stringcvt.sml](../../../lib/basis/stringcvt.sml) |
 | [`Substring`](str/Substring.md) | : [`SUBSTRING`](sig/SUBSTRING.md) | `where type string = string where type char = Char.char` | required |  | [lib/basis/substring.sml](../../../lib/basis/substring.sml) |
-| [`SysWord`](str/Word.md) | : [`WORD`](sig/WORD.md) |  | optional | is [`Word`](str/Word.md) | [lib/basis/word.sml](../../../lib/basis/word.sml) |
+| [`SysWord`](str/SysWord.md) | :> [`WORD`](sig/WORD.md) |  | optional | is [`Word64`](str/Word64.md) | [lib/basis/sysword.sml](../../../lib/basis/sysword.sml) |
 | [`Terminal`](str/Terminal.md) | : [`TERMINAL`](sig/TERMINAL.md) |  | extension |  | [lib/basis/terminal.sml](../../../lib/basis/terminal.sml) |
 | [`Text`](str/Text.md) | : [`TEXT`](sig/TEXT.md) | `where type Char.char = Char.char where type String.string = String.string where type Substring.substring = Substring.substring where type CharArray.array = CharArray.array where type CharVectorSlice.slice = CharVectorSlice.slice where type CharArraySlice.slice = CharArraySlice.slice` | required |  | [lib/basis/text.sml](../../../lib/basis/text.sml) |
 | [`TextIO`](str/TextIO.md) | : [`TEXT_IO`](sig/TEXT_IO.md) |  | required |  | [lib/basis/textio.sml](../../../lib/basis/textio.sml) |

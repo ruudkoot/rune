@@ -1,0 +1,4 @@
+# Structures that show a program more than their signature names, as only
+# elaboration knows: an application of a functor and another name for it.
+# Every signature is documented in full, so each is an error.
+pair.sml | demand | yes | PAIR Pair Twin RunePairFn |

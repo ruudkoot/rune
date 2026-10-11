@@ -39,12 +39,12 @@ What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_TTY`](../si
 | val | [`csize`](../sig/POSIX_TTY.md#val-c.csize) | `flags` |
 | val | [`cstopb`](../sig/POSIX_TTY.md#val-c.cstopb) | `flags` |
 | val | [`flags`](../sig/BIT_FLAGS.md#val-flags) | `flags list -> flags` |
-| val | [`fromWord`](../sig/BIT_FLAGS.md#val-fromword) | `word -> flags` |
+| val | [`fromWord`](../sig/BIT_FLAGS.md#val-fromword) | `SysWord.word -> flags` |
 | val | [`hupcl`](../sig/POSIX_TTY.md#val-c.hupcl) | `flags` |
 | val | [`intersect`](../sig/BIT_FLAGS.md#val-intersect) | `flags list -> flags` |
 | val | [`parenb`](../sig/POSIX_TTY.md#val-c.parenb) | `flags` |
 | val | [`parodd`](../sig/POSIX_TTY.md#val-c.parodd) | `flags` |
-| val | [`toWord`](../sig/BIT_FLAGS.md#val-toword) | `flags -> word` |
+| val | [`toWord`](../sig/BIT_FLAGS.md#val-toword) | `flags -> SysWord.word` |
 
 <details><summary>Other implementations (3)</summary>
 

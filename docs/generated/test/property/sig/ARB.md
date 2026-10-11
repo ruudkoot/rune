@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 26 of 26 entries documented |
+| Documentation | 28 of 28 entries documented |
 | Tests | not listed |
 | Source | [lib/test/property/arb\_sig.sml](../../../../../lib/test/property/arb_sig.sml) |
 
@@ -47,6 +47,8 @@ sig
   val <a href="#val-vector">vector</a> : 'a arb -&gt; 'a vector arb
   val <a href="#val-array">array</a> : 'a arb -&gt; 'a array arb
   val <a href="#val-intinf">intInf</a> : IntInf.int arb
+  val <a href="#val-intrange">intRange</a> : int * int -&gt; int arb
+  val <a href="#val-wordrange">wordRange</a> : word * word -&gt; word arb
   val <a href="#val-reference">reference</a> : 'a arb -&gt; 'a ref arb
   val <a href="#val-enum">enum</a> : (''a * string) list -&gt; ''a arb
   val <a href="#val-vectorslice">vectorSlice</a> : 'a arb -&gt; 'a VectorSlice.slice arb
@@ -202,6 +204,26 @@ val intInf : IntInf.int arb
 ```
 
 [`intInf`](#val-intinf) is the arbitrary of [`IntInf.int`](../../../basis/sig/INTEGER.md#type-int), drawn by [`Gen.intInf`](../sig/GEN.md#val-intinf).
+
+### <a name="val-intrange"></a>`intRange`
+
+```sml
+val intRange : int * int -> int arb
+```
+
+`intRange (lo, hi)` is the arbitrary of the integers of `[lo, hi]`, drawn by [`Gen.intRange`](../sig/GEN.md#val-intrange): a domain a law can name (D7).
+
+**Raises** [`Domain`](../../../basis/sig/GENERAL.md#exn-domain) if `hi < lo`.
+
+### <a name="val-wordrange"></a>`wordRange`
+
+```sml
+val wordRange : word * word -> word arb
+```
+
+`wordRange (lo, hi)` is the arbitrary of the words of `[lo, hi]`, drawn as [`Gen.intRange`](../sig/GEN.md#val-intrange) draws integers.
+
+**Raises** [`Domain`](../../../basis/sig/GENERAL.md#exn-domain) if `hi < lo`.
 
 ### <a name="val-reference"></a>`reference`
 

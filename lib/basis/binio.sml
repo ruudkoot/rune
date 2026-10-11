@@ -46,13 +46,24 @@ struct
 
   local
     fun closedIo (name, function) = raise IO.Io {name = name, function = function, cause = IO.ClosedStream}
+    (* The file counts bytes in ints; a position of BinPrimIO is a Position.int. *)
+    fun positions (fd, name, closed) =
+      let
+        val ({getPos, setPos, endPos, verifyPos}, remember) = RuneFile.positions (fd, name, closed)
+        fun out f = fn () => Position.fromInt (f ())
+      in
+        ({getPos = Option.map out getPos,
+          setPos = Option.map (fn f => fn p => f (Position.toInt p)) setPos,
+          endPos = Option.map out endPos,
+          verifyPos = Option.map out verifyPos}, remember)
+      end
     (* The reader and the writer of a file of the VM, as in TextIO: the
        positions of the file when it has them; the writer writes through, the
        stream leaves the VM to buffer. *)
     fun reader (fd, name) =
       let
         val closed = ref false
-        val ({getPos, setPos, endPos, verifyPos}, remember) = RuneFile.positions (fd, name, closed)
+        val ({getPos, setPos, endPos, verifyPos}, remember) = positions (fd, name, closed)
         fun readVec n = if !closed then closedIo (name, "readVec") else Word8Vector.fromString (RuneFile.readVec fd n)
       in
         BinPrimIO.RD {name = name, chunkSize = RuneFile.chunkSize,
@@ -66,7 +77,7 @@ struct
     fun writer (fd, name) =
       let
         val closed = ref false
-        val ({getPos, setPos, endPos, verifyPos}, remember) = RuneFile.positions (fd, name, closed)
+        val ({getPos, setPos, endPos, verifyPos}, remember) = positions (fd, name, closed)
         fun put v = if !closed then closedIo (name, "writeVec") else ignore (RuneFile.writeString (fd, name) (Word8Vector.toString v))
         fun writeVec sl =
           let val v = Word8VectorSlice.vector sl in put v; RuneFile.flush fd (); Word8Vector.length v end

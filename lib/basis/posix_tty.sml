@@ -10,8 +10,8 @@ functor RunePosixTTYFlagsFn () =
 struct
   type flags = word
   val all = if Word.wordSize > 32 then Word.- (Word.<< (0w1, 0w32), 0w1) else Word.notb 0w0
-  fun toWord (f : flags) = f
-  fun fromWord w = Word.andb (w, all)
+  fun toWord (f : flags) = RuneSysWord.fromWord f
+  fun fromWord w = Word.andb (RuneSysWord.toWord w, all)
   fun flags l = List.foldl Word.orb 0w0 l
   fun intersect l = List.foldl Word.andb all l
   fun clear (a, b) = Word.andb (Word.notb a, b)
@@ -131,8 +131,8 @@ struct
        baud rate *)
     type speed = int
     val compareSpeed = Int.compare
-    fun speedToWord (s : speed) = Word.fromInt s
-    fun wordToSpeed w : speed = Word.toInt w
+    fun speedToWord (s : speed) = SysWord.fromInt s
+    fun wordToSpeed w : speed = SysWord.toInt w
     val b0 = named "B0"
     val b50 = named "B50"
     val b75 = named "B75"

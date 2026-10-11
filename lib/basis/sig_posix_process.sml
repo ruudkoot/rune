@@ -34,7 +34,12 @@ sig
 
   (* `pidToWord pid` is the number of `pid`.
 
-     Law: `pidToWord (wordToPid w) = w` *)
+     Law: `pidToWord (wordToPid w) = w` for `SysWord.<= (w, SysWord.fromInt
+     (valOf Int.maxInt))`
+
+     Counterexample: `let val w = SysWord.+ (SysWord.fromInt (valOf
+     Int.maxInt), 0w1) in pidToWord (wordToPid w) = w end`, for the number of a
+     process is an int. *)
   val pidToWord : pid -> SysWord.word
 
   (* `fork ()` splits the process in two, and is `NONE` in the child and `SOME` of the child's number in the parent.

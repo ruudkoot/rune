@@ -299,7 +299,8 @@ struct
       fun hostOf anns =
         case List.filter (fn a => String.isPrefix "host=" a) anns of
           [] => "yes" | hs => String.extract (List.last hs, 5, NONE)
-      val analysed = List.map (fn (p, anns) => (p, anns, Deps.analyse (p, syntaxOf (OS.Path.joinDirFile {dir = dir, file = p}))))
+      (* a file may be in a directory below the library's: sized/int32.sml *)
+      val analysed = List.map (fn (p, anns) => (p, anns, Deps.analyse (p, syntaxOf (OS.Path.concat (dir, p)))))
                               listed
       (* what the Basis Library and the libraries this one is written on
          provide, from their MANIFESTs, made before this one's *)

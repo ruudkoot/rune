@@ -8,14 +8,19 @@ sig
 
   (* `index c` is the place of `c` among the colours, from 0.
 
-     Law: `index (fromIndex i) = i` for `0 <= i andalso i < 3` *)
+     Law: `index (fromIndex i) = i` for `0 <= i andalso i < 3`
+
+     Law: `index (fromIndex (List.nth (List.tabulate (n, fn k => k), i))) = i`
+     for `0 <= i andalso i < n andalso n <= 3` *)
   val index : color -> int
 
   (* `fromIndex i` is the colour at the place `i`.
 
      Raises: `Subscript` if `i` is not a place of a colour.
 
-     Law: `index (fromIndex (i mod 3)) = index (fromIndex ((i + 3) mod 3))` *)
+     Law: `index (fromIndex (i mod 3)) = index (fromIndex ((i + 3) mod 3))`
+
+     Law: `index (fromIndex (i mod 3)) = index (fromIndex (j mod 3))` for `i = j` *)
   val fromIndex : int -> color
 
   (* `keep (f, l)` is the places of `l` that `f` keeps.
@@ -27,7 +32,11 @@ sig
      Law (Idempotent): `keep (f, keep (f, l)) = keep (f, l)` when `f` has no effects
 
      Law: `keep (f, keep (g, l)) = keep (g, keep (f, l))` when `f` and `g` have
-     no effects *)
+     no effects
+
+     Law: `List.length (keep (fn k => k < m, List.tabulate (n, fn k => k))) =
+     Int.min (Int.max (m, 0), n)` for `n` from `Arb.intRange (0, 5)` and `m`
+     from `Arb.intRange (~2, 7)` *)
   val keep : (int -> bool) * int list -> int list
 end
 

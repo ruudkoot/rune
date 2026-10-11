@@ -24,8 +24,8 @@ struct
     fun nonEmpty "" = let val e = RuneError.fromInt (named "ENOENT") in raise RuneError.SysErr (RuneError.errorMsg e, SOME e) end
       | nonEmpty p = p
   in
-    fun fdToWord (fd : file_desc) = Word.fromInt fd
-    fun wordToFD w = Word.toInt w
+    fun fdToWord (fd : file_desc) = SysWord.fromInt fd
+    fun wordToFD w = SysWord.toInt w
     fun fdToIOD (fd : file_desc) = RuneIODesc.FD fd
     fun iodToFD (RuneIODesc.FD fd) = SOME fd
 
@@ -52,8 +52,8 @@ struct
       val sync = Word.fromInt (named "O_SYNC")
       val trunc = Word.fromInt (named "O_TRUNC")
       val all = if Word.wordSize > 32 then Word.<< (0w1, 0w32) - 0w1 else Word.notb 0w0
-      fun toWord (f : flags) = f
-      fun fromWord w = Word.andb (w, all)
+      fun toWord (f : flags) = RuneSysWord.fromWord f
+      fun fromWord w = Word.andb (RuneSysWord.toWord w, all)
       fun flags l = List.foldl Word.orb 0w0 l
       fun intersect l = List.foldl Word.andb all l
       fun allSet (a, b) = Word.andb (a, b) = a
@@ -85,8 +85,8 @@ struct
       val isgid = Word.fromInt (named "S_ISGID")
       (* every bit that chmod sets: those above and S_ISVTX, 07777 *)
       val all = 0w4095
-      fun toWord (m : mode) = m
-      fun fromWord w = Word.andb (w, all)
+      fun toWord (m : mode) = RuneSysWord.fromWord m
+      fun fromWord w = Word.andb (RuneSysWord.toWord w, all)
       fun flags l = List.foldl Word.orb 0w0 l
       fun intersect l = List.foldl Word.andb all l
       fun allSet (a, b) = Word.andb (a, b) = a
@@ -118,7 +118,7 @@ struct
     fun symlink {old, new} = ignore (check (symlink' (old, new)))
     fun mkfifo (path, perms) = ignore (check (mkfifo' (path, Word.toInt perms)))
     fun umask mask = Word.fromInt (check (umask' (Word.toInt mask)))
-    fun ftruncate (fd, length) = ignore (check (ftruncate' (fd, length)))
+    fun ftruncate (fd, length) = ignore (check (ftruncate' (fd, Position.toInt length)))
 
     (* "creates a new directory named s with protection mode m (as modified
        by the umask)". The directory of OS.FileSys gets every permission the
@@ -135,10 +135,10 @@ struct
 
     type dev = int
     type ino = int
-    fun wordToDev w : dev = Word.toInt w
-    fun devToWord (d : dev) = Word.fromInt d
-    fun wordToIno w : ino = Word.toInt w
-    fun inoToWord (i : ino) = Word.fromInt i
+    fun wordToDev w : dev = SysWord.toInt w
+    fun devToWord (d : dev) = SysWord.fromInt d
+    fun wordToIno w : ino = SysWord.toInt w
+    fun inoToWord (i : ino) = SysWord.fromInt i
 
     (* Posix.FileSys.ST: what `stat` reports about a file, and the functions
        that read it. The kind is posix_stat's: 0 regular file, 1
@@ -162,7 +162,7 @@ struct
       fun nlink (s : stat) = #nlink s
       fun uid (s : stat) = #uid s
       fun gid (s : stat) = #gid s
-      fun size (s : stat) = #size s
+      fun size (s : stat) = Position.fromInt (#size s)
       fun atime (s : stat) = #atime s
       fun mtime (s : stat) = #mtime s
       fun ctime (s : stat) = #ctime s
@@ -171,7 +171,7 @@ struct
     fun statOf (path, follow, fd) =
       case stat' (path, follow, fd) of
         [kind, mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime] =>
-          ({kind = kind, mode = S.fromWord (Word.fromInt mode), ino = ino, dev = dev, nlink = nlink,
+          ({kind = kind, mode = S.fromWord (SysWord.fromInt mode), ino = ino, dev = dev, nlink = nlink,
             uid = uid, gid = gid, size = size,
             atime = Time.ofMicros (atime * 1000000), mtime = Time.ofMicros (mtime * 1000000),
             ctime = Time.ofMicros (ctime * 1000000)} : ST.stat)
@@ -205,7 +205,7 @@ struct
       val pathconf' = _prim "posix_pathconf" : string * int * string -> int list
       fun seconds t = Time.micros t div 1000000
       fun limit [~1] = NONE
-        | limit [v] = SOME (Word.fromInt v)
+        | limit [v] = SOME (SysWord.fromInt v)
         | limit _ = raise RuneError.lastError ()
     in
       fun utime (path, NONE) = RuneFileSys.setTime (path, NONE)

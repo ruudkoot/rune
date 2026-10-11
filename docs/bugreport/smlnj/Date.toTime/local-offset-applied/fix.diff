@@ -1,0 +1,61 @@
+diff --git a/base/system/Basis/Implementation/date.sml b/base/system/Basis/Implementation/date.sml
+index fa8b640..3d31439 100644
+--- a/base/system/Basis/Implementation/date.sml
++++ b/base/system/Basis/Implementation/date.sml
+@@ -315,6 +315,8 @@ structure Date : DATE =
+ 	    hour = hour, minute = minute, second = second
+ 	  } end
+ 
++    val secsPerDay : IntInf.int = 24*60*60
++
+     fun date {year, month, day, hour, minute, second, offset} = let
+ 	  val (secAdjust, offset) = (case offset
+ 		 of NONE => (0, NONE)
+@@ -323,7 +325,8 @@ structure Date : DATE =
+                        * it is necessary to use "quot/rem" so that we round toward
+                        * zero when `t` is negative!
+                        *)
+-		      val (adjust, offset) = IntInf.quotRem(Time.toSeconds t, 24*60*60)
++		      val (adjust, offset) = IntInf.quotRem(Time.toSeconds t, secsPerDay)
++                      val adjust = adjust * secsPerDay
+ 		      in
+ 			(Int.fromLarge adjust, SOME(Time.fromSeconds offset))
+ 		      end
+@@ -356,20 +359,23 @@ structure Date : DATE =
+     fun fromTimeUniv t = tm2date (gmTime t, SOME Time.zeroTime)
+ 
+   (* return the UTC time corresponding to the given date. *)
+-    fun toTime (date as DATE{offset, ...}) = let
+-	  val t = mkTime' (date2tm date)
+-	  in
+-	    case offset
+-	     of NONE => nsToTime t
+-	      | SOME offset =>
+-		(* note that representation of a date is canonical, which means that the
+-		 * offset has already been applied, so we do not need to adjust by the
+-		 * date's offset.  On the other hand, mkTime' returns the _local_ time,
+-		 * so we do need to adjust for the local offset.
+-		 *)
+-		  Time.+(nsToTime t, localOffsetForTime t)  (* converts local time to UTC *)
+-	    (* end case *)
+-	  end
++    fun toTime (date as DATE{year, month, day, hour, minute, second, offset, ...}) = (
++	  case offset
++	   of NONE => nsToTime (mkTime' (date2tm date))
++	    | SOME offset => let
++	      (* a date at an offset is converted by the calendar: the local time zone
++	       * has no part in it, and mkTime' would refuse a date that is before the
++	       * epoch in the local time zone.  The offset is west of UTC, so it is
++	       * added to the time of the fields read as UTC.
++	       *)
++		val days = toAbsoluteDay {year = year, month = monthToInt month + 1, day = day}
++		      - toAbsoluteDay {year = 1970, month = 1, day = 1}
++		val secs = ((Int.toLarge days * 24 + Int.toLarge hour) * 60
++		      + Int.toLarge minute) * 60 + Int.toLarge second
++		in
++		  Time.+(Time.fromSeconds secs, offset)
++		end
++	  (* end case *))
+ 
+   (* date comparison does not take into account the offset
+    * thus, it does not compare dates in different time zones

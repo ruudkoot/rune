@@ -29,8 +29,8 @@ struct
        ("range", "ERANGE"), ("rofs", "EROFS"), ("spipe", "ESPIPE"), ("srch", "ESRCH"),
        ("stale", "ESTALE"), ("timedout", "ETIMEDOUT"), ("txtbsy", "ETXTBSY"), ("xdev", "EXDEV")]
   in
-    fun toWord (e : syserror) = Word.fromInt (RuneError.toInt e)
-    fun fromWord w = RuneError.fromInt (Word.toInt w)
+    fun toWord (e : syserror) = SysWord.fromInt (RuneError.toInt e)
+    fun fromWord w = RuneError.fromInt (SysWord.toInt w)
     val errorMsg = RuneError.errorMsg
     fun errorName e =
       let

@@ -19,7 +19,7 @@ structure Word : WORD
 Word: unsigned words of the VM's width less the bit of a value's tag, 63
 bits, the type of the top-level [`word`](../sig/WORD.md#type-word) and of its literals.
 
-[`SysWord`](Word.md) is this structure by another name. [`Word64`](../str/Word64.md), which is also
+[`SysWord`](../str/SysWord.md) is this structure by another name. [`Word64`](../str/Word64.md), which is also
 [`LargeWord`](../str/Word64.md), is the type that has 64 bits whatever the VM (word64.sml).
 The size is found by shifting a bit out, so that this file means the same
 to a system whose word is another width.
@@ -79,13 +79,13 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 
 ### word
 
-> **Implementation** `Word.word/63-bits`. [`Word.word`](../sig/WORD.md#type-word) is the top-level
-> [`word`](../sig/WORD.md#type-word), of 63 bits -- a word of the machine less the bit that tells a
-> number from a pointer -- and so is [`SysWord`](Word.md). [`Word64`](../str/Word64.md), which is also
-> [`LargeWord`](../str/Word64.md), has 64 bits on every machine: a word of its type is kept in
-> a word of the machine where it fits 63 bits and in a small object where
-> it needs the 64th. [`Word8`](../str/Word8.md), [`Word16`](../str/Word16.md) and [`Word32`](../str/Word32.md) are kept in a word of
-> the machine whose upper bits are zero.
+> **Implementation** `Word.word/63-bits`. [`Word.word`](../sig/WORD.md#type-word) is the top-level [`word`](../sig/WORD.md#type-word),
+> of 63 bits -- a word of the machine less the bit that tells a number from
+> a pointer. [`Word64`](../str/Word64.md), which is also [`LargeWord`](../str/Word64.md), has 64 bits on every
+> machine, and so has [`SysWord`](../str/SysWord.md), a type of its own beside it: a word of
+> theirs is kept in a word of the machine where it fits 63 bits and in a
+> small object where it needs the 64th. [`Word8`](../str/Word8.md), [`Word16`](../str/Word16.md) and [`Word32`](../str/Word32.md) are
+> kept in a word of the machine whose upper bits are zero.
 
 > **Implementation** `Word.word/constants-overloaded`. A word constant has the
 > word type that its context asks for, [`Word8.word`](../sig/WORD.md#type-word) as well as [`word`](../sig/WORD.md#type-word), and

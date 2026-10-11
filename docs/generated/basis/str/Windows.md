@@ -32,10 +32,10 @@ What each means is on [`WINDOWS`](../sig/WINDOWS.md); the types are this structu
 | val | [`binInstreamOf`](../sig/WINDOWS.md#val-bininstreamof) | `(BinIO.instream, 'a) proc -> BinIO.instream` |
 | val | [`binOutstreamOf`](../sig/WINDOWS.md#val-binoutstreamof) | `('a, BinIO.outstream) proc -> BinIO.outstream` |
 | val | [`execute`](../sig/WINDOWS.md#val-execute) | `string * string -> ('a, 'b) proc` |
-| val | [`exit`](../sig/WINDOWS.md#val-exit) | `word -> 'a` |
+| val | [`exit`](../sig/WINDOWS.md#val-exit) | `SysWord.word -> 'a` |
 | val | [`findExecutable`](../sig/WINDOWS.md#val-findexecutable) | `string -> string option` |
-| val | [`fromStatus`](../sig/WINDOWS.md#val-fromstatus) | `RuneStatus.status -> word` |
-| val | [`getVolumeInformation`](../sig/WINDOWS.md#val-getvolumeinformation) | `string -> {maximumComponentLength : int, serialNumber : word, systemName : string, volumeName : string}` |
+| val | [`fromStatus`](../sig/WINDOWS.md#val-fromstatus) | `RuneStatus.status -> SysWord.word` |
+| val | [`getVolumeInformation`](../sig/WINDOWS.md#val-getvolumeinformation) | `string -> {maximumComponentLength : int, serialNumber : SysWord.word, systemName : string, volumeName : string}` |
 | val | [`launchApplication`](../sig/WINDOWS.md#val-launchapplication) | `string * string -> unit` |
 | val | [`openDocument`](../sig/WINDOWS.md#val-opendocument) | `string -> unit` |
 | val | [`reap`](../sig/WINDOWS.md#val-reap) | `('a, 'b) proc -> RuneStatus.status` |

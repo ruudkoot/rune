@@ -1,0 +1,27 @@
+--- a/basis/Date.sml
++++ b/basis/Date.sml
+@@ -340,9 +340,12 @@
+ 	    fn _ => EQUAL))))))
+ 	end
+ 
++    (* "If the resulting date is outside the range supported by the
++       implementation, the Date exception is raised": a date whose day
++       number does not fit in an int is outside it. *)
+     fun date { year, month, day, hour, minute, second, offset } =
+-	if year < 0 then raise Date
+-	else
++	(if year < 0 then raise Date
++	 else
+ 	    let val (dayoffset, offset') =
+ 	        case offset of
+ 		    NONE      => (0, NONE)
+@@ -354,7 +357,8 @@
+ 		val day' = day + dayoffset
+ 	    in
+ 		normalizedate year month day' hour minute second offset'
+-	    end
++	    end)
++	handle Overflow => raise Date
+ 
+     fun year (DATE { year, ... }) = year
+ 

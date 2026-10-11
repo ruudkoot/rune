@@ -5,7 +5,6 @@
 - `main` (val): [CHECK](../sig/CHECK.md#val-main)
 - `map` (val): [GEN](../sig/GEN.md#val-map)
 - `map2` (val): [GEN](../sig/GEN.md#val-map2)
-- `month` (val): [DATE_ARB](../sig/DATE_ARB.md#val-month)
 
 ---
 

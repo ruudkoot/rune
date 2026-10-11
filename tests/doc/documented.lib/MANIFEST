@@ -1,0 +1,4 @@
+# A small library whose signatures must be documented in full, as every
+# library's are (tests/doc/run-doc-tests.sh).
+done.sml    | demand | yes | DONE Done       |
+partial.sml | demand | yes | PARTIAL Partial | DONE

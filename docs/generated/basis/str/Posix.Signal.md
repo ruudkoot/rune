@@ -31,7 +31,7 @@ What each means is on [`POSIX_SIGNAL`](../sig/POSIX_SIGNAL.md); the types are th
 | val | [`chld`](../sig/POSIX_SIGNAL.md#val-chld) | `RunePosixSignal.signal` |
 | val | [`cont`](../sig/POSIX_SIGNAL.md#val-cont) | `RunePosixSignal.signal` |
 | val | [`fpe`](../sig/POSIX_SIGNAL.md#val-fpe) | `RunePosixSignal.signal` |
-| val | [`fromWord`](../sig/POSIX_SIGNAL.md#val-fromword) | `word -> RunePosixSignal.signal` |
+| val | [`fromWord`](../sig/POSIX_SIGNAL.md#val-fromword) | `SysWord.word -> RunePosixSignal.signal` |
 | val | [`hup`](../sig/POSIX_SIGNAL.md#val-hup) | `RunePosixSignal.signal` |
 | val | [`ill`](../sig/POSIX_SIGNAL.md#val-ill) | `RunePosixSignal.signal` |
 | val | [`int`](../sig/POSIX_SIGNAL.md#val-int) | `RunePosixSignal.signal` |
@@ -41,7 +41,7 @@ What each means is on [`POSIX_SIGNAL`](../sig/POSIX_SIGNAL.md); the types are th
 | val | [`segv`](../sig/POSIX_SIGNAL.md#val-segv) | `RunePosixSignal.signal` |
 | val | [`stop`](../sig/POSIX_SIGNAL.md#val-stop) | `RunePosixSignal.signal` |
 | val | [`term`](../sig/POSIX_SIGNAL.md#val-term) | `RunePosixSignal.signal` |
-| val | [`toWord`](../sig/POSIX_SIGNAL.md#val-toword) | `RunePosixSignal.signal -> word` |
+| val | [`toWord`](../sig/POSIX_SIGNAL.md#val-toword) | `RunePosixSignal.signal -> SysWord.word` |
 | val | [`tstp`](../sig/POSIX_SIGNAL.md#val-tstp) | `RunePosixSignal.signal` |
 | val | [`ttin`](../sig/POSIX_SIGNAL.md#val-ttin) | `RunePosixSignal.signal` |
 | val | [`ttou`](../sig/POSIX_SIGNAL.md#val-ttou) | `RunePosixSignal.signal` |

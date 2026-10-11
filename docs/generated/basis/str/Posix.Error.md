@@ -40,7 +40,7 @@ What each means is on [`POSIX_ERROR`](../sig/POSIX_ERROR.md); the types are this
 | val | [`exist`](../sig/POSIX_ERROR.md#val-exist) | `RuneError.syserror` |
 | val | [`fault`](../sig/POSIX_ERROR.md#val-fault) | `RuneError.syserror` |
 | val | [`fbig`](../sig/POSIX_ERROR.md#val-fbig) | `RuneError.syserror` |
-| val | [`fromWord`](../sig/POSIX_ERROR.md#val-fromword) | `word -> RuneError.syserror` |
+| val | [`fromWord`](../sig/POSIX_ERROR.md#val-fromword) | `SysWord.word -> RuneError.syserror` |
 | val | [`inprogress`](../sig/POSIX_ERROR.md#val-inprogress) | `RuneError.syserror` |
 | val | [`intr`](../sig/POSIX_ERROR.md#val-intr) | `RuneError.syserror` |
 | val | [`inval`](../sig/POSIX_ERROR.md#val-inval) | `RuneError.syserror` |
@@ -71,7 +71,7 @@ What each means is on [`POSIX_ERROR`](../sig/POSIX_ERROR.md); the types are this
 | val | [`spipe`](../sig/POSIX_ERROR.md#val-spipe) | `RuneError.syserror` |
 | val | [`srch`](../sig/POSIX_ERROR.md#val-srch) | `RuneError.syserror` |
 | val | [`syserror`](../sig/POSIX_ERROR.md#val-syserror) | `string -> RuneError.syserror option` |
-| val | [`toWord`](../sig/POSIX_ERROR.md#val-toword) | `RuneError.syserror -> word` |
+| val | [`toWord`](../sig/POSIX_ERROR.md#val-toword) | `RuneError.syserror -> SysWord.word` |
 | val | [`toobig`](../sig/POSIX_ERROR.md#val-toobig) | `RuneError.syserror` |
 | val | [`xdev`](../sig/POSIX_ERROR.md#val-xdev) | `RuneError.syserror` |
 

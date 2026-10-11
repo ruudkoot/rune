@@ -107,6 +107,19 @@ are, from the
 directory, so that what the library's comments name of it links there.
 Without it such a name is shown as code.
 .TP
+.BI \-\-library\-docs " NAME DIR"
+As
+.BR \-\-basis\-docs ,
+for a library
+.I NAME
+that this one is written on (its MANIFEST's
+.B # library:
+lines): where
+.IR NAME 's
+pages are, from the
+.B \-\-out
+directory. It may be given for several libraries.
+.TP
 .BI \-\-out " DIR"
 Write the pages to
 .I DIR
@@ -143,6 +156,19 @@ Each is shown under every member that has such a check. A line
 names the block they are shown in. A glob that finds no check of a documented
 member is an error.
 .TP
+.BI \-\-law\-skips " FILE"
+The laws that do not hold in the library's implementation, or are not tested
+there, as lines
+.IB glob " | " "" "FAILS \fRor\fP UNTESTED" " | " why \fR,\fP
+where the glob is that of a law's label at a structure, as
+.BR MATH.atan2/law\-1@Real.Math .
+Each law is marked on its page, beneath it, with the structures and the
+reason. A glob that finds no law is an error. The Basis Library's list is
+.BR tests/basis/law\-skips.txt ,
+which
+.B make test\-laws
+reads too.
+.TP
 .BI \-\-examples " DIR"
 Write the examples of the comments, each a claim of type
 .BR bool ,
@@ -167,7 +193,7 @@ implements it, each labelled
 with its variables drawn from the arbitraries of the library
 .BR test/property ,
 and is compiled with
-.BR "rune \-\-library test/property" .
+.BR "rune \-\-library test/property/basis" .
 It prints a line
 .B LAW
 before each law and

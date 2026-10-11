@@ -4,8 +4,8 @@ sig
   (* abstract, as the specification has it; the number goes in and out
      through fromInt and toInt, which only the library names *)
   eqtype signal
-  val toWord : signal -> Word.word
-  val fromWord : Word.word -> signal
+  val toWord : signal -> SysWord.word
+  val fromWord : SysWord.word -> signal
   val abrt : signal  val alrm : signal  val bus : signal   val chld : signal
   val cont : signal  val fpe : signal   val hup : signal   val ill : signal
   val int : signal   val kill : signal  val pipe : signal  val quit : signal
@@ -23,8 +23,8 @@ struct
     val const = _prim "posix_const" : string -> int
     fun named name = case const name of ~1 => 0 | v => v
   in
-    fun toWord (s : signal) = Word.fromInt s
-    fun fromWord w = Word.toInt w
+    fun toWord (s : signal) = SysWord.fromInt s
+    fun fromWord w = SysWord.toInt w
 
     val abrt = named "SIGABRT"   val alrm = named "SIGALRM"
     val bus = named "SIGBUS"     val chld = named "SIGCHLD"

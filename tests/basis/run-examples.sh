@@ -5,8 +5,10 @@
 # runedoc writes a program for every signature that has such examples into
 # tests/out/basis-examples; each is compiled and run with Rune, and prints a
 # line PASS or FAIL for every example. `make test-basis` runs this after the
-# suite. The examples say what Rune's library does (`Int.precision = SOME 64`),
-# so they are not tried on the hosts. Override the tools with RUNEDOC=, RUNE=
+# suite. The examples say what Rune's library does (`Int.precision = SOME 63`),
+# so they are not tried on the hosts. They run on the register VM with its JIT
+# (bin/rune, bin/runevm); RUNE=bin/rune-stack RUNEVM=bin/runevm-stack runs them
+# on the stack VM, to compare the two. Override the tools with RUNEDOC=, RUNE=
 # and RUNEVM=.
 set -u
 # What is compared must not depend on colour forced from outside
@@ -14,8 +16,8 @@ set -u
 unset FORCE_COLOR CLICOLOR_FORCE
 cd "$(dirname "$0")/../.."
 runedoc=${RUNEDOC:-bin/runedoc}
-rune=${RUNE:-bin/rune-stack}
-runevm=${RUNEVM:-bin/runevm-stack}
+rune=${RUNE:-bin/rune}
+runevm=${RUNEVM:-bin/runevm}
 out=tests/out/basis-examples
 mkdir -p "$out"
 

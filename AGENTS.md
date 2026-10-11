@@ -16,11 +16,10 @@ keep these invariants:
   *Supported* or *Partial* needs a test file `tests/lang/<id>_<name>.sml` with
   a hand-verified `.expected` file; a test needs a row. New ids use the
   prefixes `lex. dec. exp. pat. ty. mod. rt. basis.`. Ids contain no `_`.
-* `lib/basis/DOCUMENTED` lists the signatures that are documented in full,
-  which is all 65 of them. A member added to one needs a doc comment, a
-  function among them a usage head (`docs/doc-comments.md`): `make docs` and
-  `make check-docs` fail otherwise. A new signature joins the list in the
-  commit that finishes documenting it, and none should be added without one.
+* Every signature of every library under `lib` is documented in full: a
+  member added to one needs a doc comment, a function among them a usage
+  head, and so does a new signature (`docs/doc-comments.md`, Documented in
+  full): `make docs` and `make check-docs` fail otherwise.
 * A program sees of a basis structure what its signature names and nothing
   else: a structure that is not ascribed its signature where it is declared
   is bound to it again in a seal file at the end of `lib/basis/library.build`
@@ -343,11 +342,15 @@ keep these invariants:
   `docs/bugreport/HOST`.
 * A `Law:` of lib/basis is Standard ML that runedoc elaborates and `make
   test-laws` runs at every structure that implements its signature, with its
-  variables drawn by lib/test/property (`docs/doc-comments.md`, *Laws*). Write
+  variables drawn by lib/test/property/basis, the arbitraries of the Basis
+  Library's types on the engine lib/test/property (`docs/doc-comments.md`,
+  *Laws*). Write
   a condition as Standard ML after "for" or "when", not in prose, or the law
-  is run without it. `make test-laws` is not part of `make check` until every
-  law holds (docs/plans/quickcheck.md, D12); the owner's review of the M7
-  rewrites and the hunt of M9 come first.
+  is run without it. `make test-laws` is part of `make check`: every law
+  holds, or `tests/basis/law-skips.txt` lists it, which runedoc marks on its
+  page (docs/plans/quickcheck.md, D12). A law that a change breaks is
+  restated, or the implementation fixed, with the owner; a law is listed only
+  where neither can be done.
 * A change to the documentation generator (`src/doc`) needs a test in
   `tests/doc` (`make test-doc`): an input and the expected `.ir`, `.md` and `.diag` next to it,
   reviewed line by line like any `.expected` file.

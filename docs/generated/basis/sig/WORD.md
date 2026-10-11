@@ -15,7 +15,7 @@
 ```sml
 signature WORD
 structure LargeWord : WORD
-structure SysWord : WORD  (* optional *)
+structure SysWord :> WORD  (* optional *)
 structure Word : WORD
 structure Word16 : WORD  (* optional *)
 structure Word32 : WORD  (* optional *)
@@ -26,7 +26,7 @@ structure Word8 : WORD
 | Implementation |  | Source |
 | --- | --- | --- |
 | [`LargeWord`](../str/Word64.md) | LargeWord: the widest words, which are [`Word64`](../str/Word64.md). | [lib/basis/word64.sml](../../../../lib/basis/word64.sml) |
-| [`SysWord`](../str/Word.md) | SysWord: the words in which the operating system's flags and modes are counted, which are [`Word`](../str/Word.md). | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
+| [`SysWord`](../str/SysWord.md) | SysWord: the words of the operating system's interfaces, [`Posix`](../str/Posix.md)'s and [`Windows`](../str/Windows.md)'s: their flags, modes and numbers. "The type SysWord.word is guaranteed to be large enough to hold any unsigned integral value used by the underlying system", which on a 64-bit system has 64 bits, so it is [`Word64`](../str/Word64.md) behind, but a type of its own: not [`Word.word`](#type-word), nor [`Word64.word`](#type-word), as the specification makes it the same as neither, and other implementations keep it apart from each (MLton's is [`Word64`](../str/Word64.md), and its [`word`](#type-word) has 32 bits). A program converts with [`fromLarge`](#val-fromlarge), [`toLarge`](#val-tolarge), [`fromInt`](#val-fromint) and [`toInt`](#val-toint). | [lib/basis/sysword.sml](../../../../lib/basis/sysword.sml) |
 | [`Word`](../str/Word.md) | Word: unsigned words of the VM's width less the bit of a value's tag, 63 bits, the type of the top-level [`word`](#type-word) and of its literals. | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
 | [`Word16`](../str/Word16.md) | Word16: words of 16 bits. | [lib/basis/word16.sml](../../../../lib/basis/word16.sml) |
 | [`Word32`](../str/Word32.md) | Word32: words of 32 bits. | [lib/basis/word32.sml](../../../../lib/basis/word32.sml) |
@@ -49,8 +49,8 @@ their name are those that sign-extend; the others fill with zeros.
 
 The structures differ in their width: [`Word`](../str/Word.md) is the default one and
 [`Word8`](../str/Word8.md), [`Word16`](../str/Word16.md), [`Word32`](../str/Word32.md) and [`Word64`](../str/Word64.md) are the sized ones; [`LargeWord`](../str/Word64.md)
-is the widest, and [`SysWord`](../str/Word.md) is what the operating system's flags are
-counted in.
+is the widest, and [`SysWord`](../str/SysWord.md) is what the operating system's flags and
+numbers are counted in.
 
 ## Contents
 
@@ -118,13 +118,13 @@ eqtype word
 
 The type of words of this structure.
 
-> **Implementation** `Word.word/63-bits`. [`Word.word`](#type-word) is the top-level
-> [`word`](#type-word), of 63 bits -- a word of the machine less the bit that tells a
-> number from a pointer -- and so is [`SysWord`](../str/Word.md). [`Word64`](../str/Word64.md), which is also
-> [`LargeWord`](../str/Word64.md), has 64 bits on every machine: a word of its type is kept in
-> a word of the machine where it fits 63 bits and in a small object where
-> it needs the 64th. [`Word8`](../str/Word8.md), [`Word16`](../str/Word16.md) and [`Word32`](../str/Word32.md) are kept in a word of
-> the machine whose upper bits are zero.
+> **Implementation** `Word.word/63-bits`. [`Word.word`](#type-word) is the top-level [`word`](#type-word),
+> of 63 bits -- a word of the machine less the bit that tells a number from
+> a pointer. [`Word64`](../str/Word64.md), which is also [`LargeWord`](../str/Word64.md), has 64 bits on every
+> machine, and so has [`SysWord`](../str/SysWord.md), a type of its own beside it: a word of
+> theirs is kept in a word of the machine where it fits 63 bits and in a
+> small object where it needs the 64th. [`Word8`](../str/Word8.md), [`Word16`](../str/Word16.md) and [`Word32`](../str/Word32.md) are
+> kept in a word of the machine whose upper bits are zero.
 
 > **Implementation** `Word.word/constants-overloaded`. A word constant has the
 > word type that its context asks for, [`Word8.word`](#type-word) as well as [`word`](#type-word), and
@@ -669,9 +669,12 @@ val mod : word * word -> word
 
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `b` is zero.
 
-**Law** `(a div b) * b + (a mod b) = a` (for every `a : word`, `b : word`)
+**Law** `(a div b) * b + (a mod b) = a` for `b <> 0w0` (for every `a : word`, `b : word`)
 
 **Example** `0w7 mod 0w2 = 0w1`
+
+**Counterexample** `(0w1 div 0w0) * 0w0 + (0w1 mod 0w0) = 0w1`, for there is
+no dividing by zero.
 
 <details><summary>Tests (13)</summary>
 

@@ -34,13 +34,13 @@ What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_TTY`](../si
 | val | [`echok`](../sig/POSIX_TTY.md#val-l.echok) | `flags` |
 | val | [`echonl`](../sig/POSIX_TTY.md#val-l.echonl) | `flags` |
 | val | [`flags`](../sig/BIT_FLAGS.md#val-flags) | `flags list -> flags` |
-| val | [`fromWord`](../sig/BIT_FLAGS.md#val-fromword) | `word -> flags` |
+| val | [`fromWord`](../sig/BIT_FLAGS.md#val-fromword) | `SysWord.word -> flags` |
 | val | [`icanon`](../sig/POSIX_TTY.md#val-l.icanon) | `flags` |
 | val | [`iexten`](../sig/POSIX_TTY.md#val-l.iexten) | `flags` |
 | val | [`intersect`](../sig/BIT_FLAGS.md#val-intersect) | `flags list -> flags` |
 | val | [`isig`](../sig/POSIX_TTY.md#val-l.isig) | `flags` |
 | val | [`noflsh`](../sig/POSIX_TTY.md#val-l.noflsh) | `flags` |
-| val | [`toWord`](../sig/BIT_FLAGS.md#val-toword) | `flags -> word` |
+| val | [`toWord`](../sig/BIT_FLAGS.md#val-toword) | `flags -> SysWord.word` |
 | val | [`tostop`](../sig/POSIX_TTY.md#val-l.tostop) | `flags` |
 
 <details><summary>Other implementations (3)</summary>

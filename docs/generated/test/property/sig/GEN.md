@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 43 of 43 entries documented |
+| Documentation | 44 of 44 entries documented |
 | Tests | not listed |
 | Source | [lib/test/property/gen\_sig.sml](../../../../../lib/test/property/gen_sig.sml) |
 
@@ -79,6 +79,7 @@ sig
   val <a href="#val-wordbits">wordBits</a> : int -&gt; Word64.word gen
   val <a href="#val-primitive">primitive</a> : (PropertySource.source * PropertySource.position -&gt; 'a) -&gt; 'a gen
   val <a href="#val-resource">resource</a> : 'a gen * ('a -&gt; unit) -&gt; 'a gen
+  val <a href="#val-shared">shared</a> : 'a gen * ('a -&gt; unit) -&gt; 'a gen
 end
 </pre>
 
@@ -253,8 +254,9 @@ val intRange : int * int -> int gen
 `intRange (lo, hi)` draws an integer of `[lo, hi]`.
 
 It is a third of the time small (within the size of 0), a third on an
-edge (0, 1, \~1, the bounds and their neighbours, powers of two and their
-neighbours), and a third anywhere.
+edge, and a third anywhere. Half the edges are the extremes (0, 1, \~1,
+the bounds and their neighbours) and half the powers of two in range
+and their neighbours.
 
 **Raises** [`Domain`](../../../basis/sig/GENERAL.md#exn-domain) if `hi < lo`.
 
@@ -278,7 +280,7 @@ val largeRange : LargeInt.int * LargeInt.int -> LargeInt.int gen
 `largeRange (lo, hi)` draws an integer of `[lo, hi]` as [`intRange`](#val-intrange) does, for a range of at most 2^64 integers.
 
 The integers may be of any size: this is what the arbitraries of [`Int64`](../../../basis/str/Int64.md)
-and [`Position`](../../../basis/str/Int.md) are made of where [`Int.int`](../../../basis/sig/INTEGER.md#type-int) is narrower.
+and [`Position`](../../../basis/str/Position.md) are made of where [`Int.int`](../../../basis/sig/INTEGER.md#type-int) is narrower.
 
 **Raises** [`Domain`](../../../basis/sig/GENERAL.md#exn-domain) if `hi < lo`, or if the range has more than 2^64
 integers.
@@ -316,9 +318,11 @@ anywhere in the range.
 val word : word gen
 ```
 
-[`word`](#val-word) draws a word: a third of the time small, a third on an edge (0,
-1, the largest, powers of two and their neighbours, the top bit), a
-third anywhere.
+[`word`](#val-word) draws a word: a third of the time small, a third on an edge, a third anywhere.
+
+Half the edges are the extremes (0, 1, the largest and its neighbour,
+the top bit and its neighbours) and half the powers of two and their
+neighbours.
 
 ### <a name="val-word64"></a>`word64`
 
@@ -350,7 +354,7 @@ val char : char gen
 
 The other half it is a letter or digit, a space or control, or a
 character that the syntax of numbers, characters and strings gives a
-meaning to.
+meaning to, or the separator of paths, `/`.
 
 ### <a name="val-real"></a>`real`
 
@@ -519,6 +523,19 @@ val resource : 'a gen * ('a -> unit) -> 'a gen
 `resource (g, release)` draws what `g` draws, and calls `release` on it
 when the case is over: a generator of things that must be undone, such
 as a file or a socket.
+
+### <a name="val-shared"></a>`shared`
+
+```sml
+val shared : 'a gen * ('a -> unit) -> 'a gen
+```
+
+`shared (g, release)` draws as [`resource`](#val-resource) does, but once in a case at each place: the condition of a law and each of its sides get the same thing.
+
+It is for a thing that is its identity, as a file descriptor or a
+socket is, where each side of a law must see the same one. A thing
+whose state a side changes, as a stream's, is drawn by [`resource`](#val-resource), so
+that each side has its own.
 
 ---
 

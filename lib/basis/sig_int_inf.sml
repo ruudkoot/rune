@@ -64,7 +64,9 @@ sig
      Raises: `Div` if `i` is zero and `j` is negative.
 
      Law: `pow (i, Int.+ (j, k)) = pow (i, j) * pow (i, k)` for `Int.>= (j, 0)
-     andalso Int.>= (k, 0)`
+     andalso Int.>= (k, 0)`, and it is run for `j` from `Arb.intRange (0, 15)`
+     and `k` from `Arb.intRange (0, 15)`, as a larger power of a large number
+     takes long
 
      Example: `pow (2, 100) = 1267650600228229401496703205376`
 
@@ -112,7 +114,8 @@ sig
 
   (* `<< (i, n)` is `i` shifted left by `n` bits: `i * 2^n`.
 
-     Law: `<< (i, n) = i * pow (2, Word.toInt n)`
+     Law: `<< (i, n) = i * pow (2, Word.toInt n)`, run for `n` from
+     `Arb.wordRange (0w0, 0w4095)`
 
      Example: `<< (1, 0w100) = pow (2, 100)` *)
   val << : int * Word.word -> int
@@ -120,7 +123,9 @@ sig
   (* `~>> (i, n)` is `i` shifted right by `n` bits with its sign kept: `i div
      2^n`, rounded towards negative infinity.
 
-     Law: `~>> (i, n) = i div pow (2, Word.toInt n)`
+     Law: `~>> (i, n) = i div pow (2, Word.toInt n)`, run for `n` from
+     `Arb.wordRange (0w0, 0w4095)`, as `Word.toInt n` overflows for a larger
+     shift
 
      Example: `~>> (~5, 0w1) = ~3` *)
   val ~>> : int * Word.word -> int

@@ -51,6 +51,13 @@ struct
   val intInf : IntInf.int arb =
     {gen = Gen.intInf, show = IntInf.toString, co = fn i => Random.hashString (IntInf.toString i), eq = SOME (op =)}
 
+  fun intRange (lo : int, hi : int) : int arb =
+    {gen = Gen.intRange (lo, hi), show = Show.int, co = Co.int, eq = SOME (op =)}
+
+  fun wordRange (lo : word, hi : word) : word arb =
+    {gen = Gen.map (fn i => Word.fromLargeInt i) (Gen.largeRange (Word.toLargeInt lo, Word.toLargeInt hi)),
+     show = Show.word, co = Co.word, eq = SOME (op =)}
+
   fun reference (a : 'a arb) : 'a ref arb =
     {gen = Gen.map ref (#gen a), show = fn r => "ref " ^ Show.parens (#show a (!r)), co = fn r => #co a (!r),
      eq = SOME (op =)}

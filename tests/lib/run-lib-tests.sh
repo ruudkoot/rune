@@ -30,15 +30,17 @@
 #   - the examples of both libraries' documentation hold;
 #   - the libraries of docs/plans/repl.md (The libraries) pass their tests in
 #     tests/lib/NAME, their MANIFESTs and their examples (libsuite).
-# Override the tools with RUNE=, RUNEVM= and RUNEDOC=.
+# The programs run on the register VM with its JIT (bin/rune, bin/runevm);
+# RUNE=bin/rune-stack RUNEVM=bin/runevm-stack runs them on the stack VM, to
+# compare the two. Override the tools with RUNE=, RUNEVM= and RUNEDOC=.
 set -u
 # What is compared must not depend on colour forced from outside
 # (docs/diagnostics.md).
 unset FORCE_COLOR CLICOLOR_FORCE
 cd "$(dirname "$0")/../.."
 top=$(pwd)
-rune=${RUNE:-bin/rune-stack}
-runevm=${RUNEVM:-bin/runevm-stack}
+rune=${RUNE:-bin/rune}
+runevm=${RUNEVM:-bin/runevm}
 runedoc=${RUNEDOC:-bin/runedoc}
 out=tests/out/lib
 root=$out/root
@@ -168,10 +170,12 @@ else
   bad "random: runedoc --examples (see $ex/runedoc.log)"
 fi
 
-# lib/test/property (docs/plans/quickcheck.md, M4 on): its core, the
-# fingerprint of what a seed draws (the same on every compiler), its
-# shrinker, its MANIFEST and the examples of its documentation
-if "$rune" --library test/property tests/lib/property/core.sml -o "$out/property-core.rbc" > "$out/property-core.cerr" 2>&1 &&
+# lib/test/property (docs/plans/quickcheck.md, M4 on) and its Basis
+# instances, lib/test/property/basis: the core, the fingerprint of what a
+# seed draws (the same on every compiler), the shrinker, the instances and
+# what they draw (frozen), each library's MANIFEST and the examples of its
+# documentation
+if "$rune" --library test/property/basis tests/lib/property/core.sml -o "$out/property-core.rbc" > "$out/property-core.cerr" 2>&1 &&
    "$runevm" "$out/property-core.rbc" > "$out/property-core.out" 2>&1 &&
    ! grep -q "^FAIL" "$out/property-core.out" &&
    [ "$(grep '^fingerprint' "$out/property-core.out" | cut -d' ' -f2)" = "$(cat tests/lib/property/fingerprint.expected)" ]; then
@@ -179,14 +183,14 @@ if "$rune" --library test/property tests/lib/property/core.sml -o "$out/property
 else
   bad "property: the core (see $out/property-core.cerr, $out/property-core.out)"
 fi
-if "$rune" --library test/property tests/lib/property/shrink.sml -o "$out/property-shrink.rbc" > "$out/property-shrink.cerr" 2>&1 &&
+if "$rune" --library test/property/basis tests/lib/property/shrink.sml -o "$out/property-shrink.rbc" > "$out/property-shrink.cerr" 2>&1 &&
    "$runevm" "$out/property-shrink.rbc" > "$out/property-shrink.out" 2>&1 &&
    grep -q "^PASS" "$out/property-shrink.out" && ! grep -q "^FAIL" "$out/property-shrink.out"; then
   ok
 else
   bad "property: shrinking (see $out/property-shrink.cerr, $out/property-shrink.out)"
 fi
-if "$rune" --library test/property tests/lib/property/instances.sml -o "$out/property-instances.rbc" > "$out/property-instances.cerr" 2>&1 &&
+if "$rune" --library test/property/basis tests/lib/property/instances.sml -o "$out/property-instances.rbc" > "$out/property-instances.cerr" 2>&1 &&
    "$runevm" "$out/property-instances.rbc" > "$out/property-instances.out" 2>&1 &&
    ! grep -q "^FAIL" "$out/property-instances.out" &&
    [ "$(grep '^frozen' "$out/property-instances.out" | cut -d' ' -f2)" = "$(cat tests/lib/property/frozen.expected)" ]; then
@@ -194,7 +198,7 @@ if "$rune" --library test/property tests/lib/property/instances.sml -o "$out/pro
 else
   bad "property: the instances, or what they draw (see $out/property-instances.cerr, $out/property-instances.out)"
 fi
-if "$rune" --library test/property tests/lib/property/mutants.sml -o "$out/property-mutants.rbc" > "$out/property-mutants.cerr" 2>&1 &&
+if "$rune" --library test/property/basis tests/lib/property/mutants.sml -o "$out/property-mutants.rbc" > "$out/property-mutants.cerr" 2>&1 &&
    "$runevm" "$out/property-mutants.rbc" > "$out/property-mutants.out" 2>&1 &&
    ! grep -q "^FAIL\|^SURVIVED" "$out/property-mutants.out"; then
   ok
@@ -202,7 +206,7 @@ else
   bad "property: the mutants (see $out/property-mutants.cerr, $out/property-mutants.out)"
 fi
 # Check.laws: every law, then one alone
-if "$rune" --library test/property tests/lib/property/laws.sml -o "$out/property-laws.rbc" > "$out/property-laws.cerr" 2>&1 &&
+if "$rune" --library test/property/basis tests/lib/property/laws.sml -o "$out/property-laws.rbc" > "$out/property-laws.cerr" 2>&1 &&
    "$runevm" "$out/property-laws.rbc" > "$out/property-laws.out" 2>&1 &&
    [ "$(grep -c '^LAW ' "$out/property-laws.out")" = 2 ] && grep -q "^laws: 2 pass, 0 fail" "$out/property-laws.out" &&
    RUNE_PROPERTY_ONLY=TEST.nth/law-1@List "$runevm" "$out/property-laws.rbc" > "$out/property-laws-only.out" 2>&1 &&
@@ -211,26 +215,32 @@ if "$rune" --library test/property tests/lib/property/laws.sml -o "$out/property
 else
   bad "property: Check.laws (see $out/property-laws.out, $out/property-laws-only.out)"
 fi
-if "$rune" --library test/property --basis-check > "$out/property-check.txt" 2>&1; then
-  ok
-else
-  bad "property: --basis-check (see $out/property-check.txt)"
-fi
-ex=$out/property-examples
-mkdir -p "$ex"
-if "$runedoc" --lib lib --library test/property --examples "$ex" > "$ex/runedoc.log" 2>&1; then
-  for f in "$ex"/*.sml; do
-    p=${f%.sml}
-    if "$rune" --library test/property "$f" -o "$p.rbc" > "$p.cerr" 2>&1 && "$runevm" "$p.rbc" > "$p.out" 2>&1 &&
-       grep -q "^PASS" "$p.out" && ! grep -q "^FAIL" "$p.out"; then
-      ok
-    else
-      bad "property: the examples of $(basename "$f" .sml) (see $p.cerr, $p.out)"
-    fi
-  done
-else
-  bad "property: runedoc --examples (see $ex/runedoc.log)"
-fi
+# the engine and its Basis instances, each a library: its MANIFEST, and the
+# examples of its documentation
+for lib in test/property test/property/basis; do
+  tag=$(echo "$lib" | tr / -)
+  if "$rune" --library "$lib" --basis-check > "$out/$tag-check.txt" 2>&1; then
+    ok
+  else
+    bad "$lib: --basis-check (see $out/$tag-check.txt)"
+  fi
+  ex=$out/$tag-examples
+  mkdir -p "$ex"
+  if "$runedoc" --lib lib --library "$lib" --examples "$ex" > "$ex/runedoc.log" 2>&1; then
+    for f in "$ex"/*.sml; do
+      [ -f "$f" ] || continue
+      p=${f%.sml}
+      if "$rune" --library "$lib" "$f" -o "$p.rbc" > "$p.cerr" 2>&1 && "$runevm" "$p.rbc" > "$p.out" 2>&1 &&
+         grep -q "^PASS" "$p.out" && ! grep -q "^FAIL" "$p.out"; then
+        ok
+      else
+        bad "$lib: the examples of $(basename "$f" .sml) (see $p.cerr, $p.out)"
+      fi
+    done
+  else
+    bad "$lib: runedoc --examples (see $ex/runedoc.log)"
+  fi
+done
 
 # libsuite NAME: a library of docs/plans/repl.md (The libraries), as a
 # program uses it. Each tests/lib/NAME/*.sml is compiled with --library NAME

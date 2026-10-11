@@ -123,10 +123,3 @@ struct
   val toLargeWordX = toLargeX
   val fromLargeWord = fromLarge
 end
-(* SysWord: the words in which the operating system's flags and modes are
-   counted, which are `Word`.
-
-   Implements: WORD
-
-   Status: optional *)
-structure SysWord = Word

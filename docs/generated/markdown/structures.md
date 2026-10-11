@@ -10,7 +10,7 @@ described.
 
 `:>` means that the source seals the structure with the signature, so that its types are its own;
 `:` that it matches it, which the test suite checks. Either way a program sees the members that the
-signature names and no others, unless the structure is listed at the end of this page.
+signature names and no others.
 
 | Structure | Signature | Realisations | Status |  | Source |
 | --- | --- | --- | --- | --- | --- |

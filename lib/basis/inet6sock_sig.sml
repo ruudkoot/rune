@@ -80,7 +80,7 @@ sig
 
   (* `toAddr (a, port)` is the address of that host and port.
 
-     Raises: `SysErr` if the system will not make it.
+     Raises: `OS.SysErr` if the system will not make it.
 
      Example: `#2 (fromAddr (toAddr (valOf (fromString "::1"), 8080))) = 8080` *)
   val toAddr : in6_addr * int -> sock_addr
@@ -92,7 +92,10 @@ sig
 
   (* `fromAddr addr` is the host and the port of `addr`.
 
-     Law: `fromAddr (toAddr (a, p)) = (a, p)` *)
+     Law: `fromAddr (toAddr (a, p)) = (a, p)` for `0 <= p andalso p <= 65535`
+
+     Counterexample: `#2 (fromAddr (toAddr (valOf (fromString "::1"), ~1))) =
+     ~1`, for a port is kept in sixteen bits. *)
   val fromAddr : sock_addr -> in6_addr * int
 
   (* Datagram sockets of this family. *)

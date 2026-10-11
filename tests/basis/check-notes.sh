@@ -10,7 +10,7 @@
 #      suite, or departs from it: a note says so (`Reading (the suite
 #      differs):`, `Deviation:`) and is pinned by that check; and every note
 #      that says the suite differs has such a line;
-#   2. for a signature that is documented in full (lib/basis/DOCUMENTED), a
+#   2. for a signature (every one is documented in full), a
 #      SPEC-AMBIGUOUS line of a host about a member of it has a `Reading:` of
 #      that member: what the hosts read differently is a reading we took.
 # make check-docs runs this.
@@ -20,7 +20,6 @@ cd "$(dirname "$0")/../.."
 notes=${1:-docs/generated/basis/notes.tsv}
 claims=${2:-docs/generated/basis/claims.tsv}
 deviations=tests/basis/deviations.txt
-documented=lib/basis/DOCUMENTED
 status=0
 [ -f "$notes" ] || { echo "check-notes: no $notes (run make docs)"; exit 1; }
 
@@ -62,7 +61,7 @@ while IFS='	' read -r id pins; do
     { echo "check-notes: the note $id says that the suite differs, and deviations.txt has no rune line for a check that pins it"; status=1; }
 done < "$tmp/suite-differs"
 
-# 2. the host lines about members of documented signatures
+# 2. the host lines about members of the signatures
 grep -E '\|SPEC-AMBIGUOUS$' "$tmp/lines" | grep -v '^rune|' | cut -d '|' -f 2 | sort -u > "$tmp/host"
 count=0
 while read -r label; do
@@ -73,8 +72,7 @@ while read -r label; do
   # a structure may claim several signatures (TextIO: TEXT_IO and
   # IMPERATIVE_IO), and the member belongs to one of them; the note is
   # written once, wherever the member is specified
-  sigs=$(awk -F '\t' -v s="$structure" 'NR > 1 && $1 == s { print $3 }' "$claims" |
-           while read -r s; do grep -q -x "$s" "$documented" 2> /dev/null && echo "$s"; done)
+  sigs=$(awk -F '\t' -v s="$structure" 'NR > 1 && $1 == s { print $3 }' "$claims")
   [ -n "$sigs" ] || continue
   count=$((count + 1))
   found=0
@@ -83,8 +81,8 @@ while read -r label; do
       found=1
   done
   [ $found = 1 ] ||
-    { echo "check-notes: a host reads $scope differently ($label in deviations.txt), and none of $(echo "$sigs" | tr '\n' ' ')which $structure claims and which are documented in full, has a Reading: for $member"; status=1; }
+    { echo "check-notes: a host reads $scope differently ($label in deviations.txt), and none of $(echo "$sigs" | tr '\n' ' ')which $structure claims, has a Reading: for $member"; status=1; }
 done < "$tmp/host"
 
-[ $status = 0 ] && echo "check-notes: OK ($(wc -l < "$tmp/rune" | tr -d ' ') rune lines and $(wc -l < "$tmp/suite-differs" | tr -d ' ') notes that differ agree; $count host readings of documented signatures have their note)"
+[ $status = 0 ] && echo "check-notes: OK ($(wc -l < "$tmp/rune" | tr -d ' ') rune lines and $(wc -l < "$tmp/suite-differs" | tr -d ' ') notes that differ agree; $count host readings of signatures have their note)"
 exit $status

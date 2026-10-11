@@ -33,9 +33,9 @@ What it rests on:
 | M4 | The property core | done 2026-09-28 |
 | M5 | Shrinking and functions | done 2026-09-28 |
 | M6 | The Basis's instances, and the generators frozen | done 2026-09-28 |
-| M7 | Laws elaborated | done 2026-09-28; the rewrites await the owner's review |
+| M7 | Laws elaborated | done 2026-09-28; the owner took the rewrites the same day |
 | M8 | Laws run | done 2026-09-28 |
-| M9 | The hunt | |
+| M9 | The hunt | done 2026-10-10; `make test-laws` in `make check` |
 
 The owner decided D1 to D13 on 2026-09-28, every one as recommended
 (*Decisions*). M1 is independent of
@@ -633,6 +633,15 @@ it holds, in `LargeInt`, with the documented cases as its condition, and
 the counterexample becomes an example that runs, e.g.
 `(((valOf maxInt) div ~2) * ~2; false) handle Overflow => true`.
 
+**Found and fixed in the hunt** (2026-09-28, `docs/plans/quickcheck-hunt.md`,
+run 3). Once the documented cases were conditions of the law, the tester
+found the `Overflow` at all seven structures of fixed width, from `(1, ~128)`
+at `Int8`, exhaustively, to `(~9223372036854775807, 3)` at `Int`. The law is
+now stated in `LargeInt` with the documented cases as its condition, as
+recommended here and taken by the owner, and holds at all nine structures.
+`(valOf maxInt div ~2) * ~2 + (valOf maxInt mod ~2) = valOf maxInt` is its
+`Counterexample:`.
+
 ## The experiments
 
 A prototype was written for this roadmap to test the design before
@@ -1001,12 +1010,12 @@ numbers it gave are reported as they came out.
 
 - **P1. Integers of a structure with bounds** are drawn from three families of equal weight, 1/3 each: small, edges and uniform.
   - *Small:* uniform in `[-size, size]`, clipped to the bounds.
-  - *Edges:* 0, 1, ~1, the bounds and their neighbours, and ±2^k and ±2^k ± 1 for every k below the precision.
+  - *Edges:* 0, 1, ~1, the bounds and their neighbours, and ±2^k and ±2^k ± 1 for every k below the precision. Half the edges drawn are the first kind, the extremes, and half the powers of two (changed before the hunt, 2026-09-28). Before, all were equally likely, so a bound was one of about 380 edges at `Int`. A mutant of `Word.fromLargeInt` that is wrong only at the top bit survived 100 cases, and was killed once the extremes were drawn half the time.
   - *Uniform:* uniform over the whole range.
 
   The prototype used 1/2, 1/4, 1/4 (E3). There, half the draws were small, and it found the named law's overflow in a median of 90 tests at `Int64`, where uniform draws alone needed a median of 11. QuickCheck's size-bounded integers never found it. No family may be dropped: small values give readable counterexamples, the edges find boundaries, and uniform draws cover the whole range.
 - **P2. `IntInf`** has no bounds. Its three families are small, the edges of every fixed width (±2^k and ±2^k ± 1 for k up to 130), and uniform magnitudes of 1 to `size` limbs.
-- **P3. Words**, by P1 without a sign: 0, 1, the maximum and its neighbour, 2^k and 2^k ± 1, and the top bit.
+- **P3. Words**, by P1 without a sign: 0, 1, the maximum and its neighbour, 2^k and 2^k ± 1, and the top bit. The extremes are 0, 1, the maximum and its neighbour, and the top bit and its neighbours (P1).
 - **P4. Reals** also come in three families.
   - *Specials:* ±0, ±∞, a NaN, the least subnormal, the largest subnormal, the least normal, the largest finite, ±1, 0.5, 2^53 and 2^53 + 1.
   - *Small decimals:* integers and halves in `[-size, size]`.
@@ -1014,12 +1023,14 @@ numbers it gave are reported as they came out.
   
   Reals are made from their bits with `Real`'s own exact operations (M5), so the rounding mode a law may set does not change them.
 - **P5. Characters** are uniform over all 256 codes half the time. The other half is split evenly between letters and digits, the space and controls (`\n`, `\t`, `\000`), and the characters Standard ML's own syntax for numbers, characters and strings gives a meaning to (`#"~"`, `#"-"`, `#"+"`, `#"\\"`, `#"\""`, `#"."`, `#"e"`, `#"E"`, `#"0"`, `#"x"`, `#"w"`).
+  - **The separator of paths, `#"/"`,** joined them in the hunt (2026-10-09, with the owner's approval), when the deep run found the law of `OS.Path.splitDirFile` wrong at `"//"` only at case 10,359. As one of 256 characters, `/` was drawn once in 512, and two together almost never. The laws of `OS.Path` also draw from a domain of paths built from arcs (`BasisDataArb.path`). Both change what is drawn, after the generators were frozen and while the blind test is open; the owner took that.
 - **P6. Strings, lists, vectors and arrays** have a length uniform in `[0, size]`, and 0 and 1 with weight 1/8 each. Their elements follow their own rules, so a string has the characters of P5.
 - **P7. Functions** are drawn from the three classes of D5 with equal weight: pure, raising and effect-observing. Their results come from subtrees keyed by the observation of the argument. A raising function raises an exception of the library's own for some arguments (a quarter of them) and returns otherwise. Effect-observing functions log their calls.
 - **P8. Size** grows from 0 to 100 over a run, as in QuickCheck.
 - **P9. Exhaustive search.** It is used when every variable has a finite domain and the product is at most 2^16 cases in `make check`, or 2^20 in the deep mode. `bool`, `order`, `char`, `Int8`, `Word8` and their pairs qualify.
 - **P10. Instances.** A law is tested at every implementation of its signature, and a type variable at `int` (D8).
 - **P11. Counts.** In `make check`: 100 cases per law per implementation, or exhaustively, with a fixed seed. In the deep mode: 10,000 cases per seed for seeds 1 to 1,000, fixed in advance.
+  - **The hunt's deep run** (the owner, 2026-10-09): seed 1 only (`RUNE_PROPERTY_SEEDS=1`), at eight jobs. The thousand seeds would be 10 million cases for each law at each structure, about 100,000 times a run at the settings of `make check`, which takes 50 minutes of CPU: some ten years. The number was fixed in advance without being costed.
 - **P12. Values built from parts** (added at M6, before any law ran).
   - *An abstract value* (`Date.date`, `Time.time`, terminal settings) is made by its structure's own constructor from parts within the range the Basis documents. So a draw never raises: a `Date.date` has a year from 1900 to 2200, which the specification asks for, and fields in range.
   - *A range the specification leaves to the implementation* is read from the structure, as P1 reads `maxInt`. `Time.time`'s range is found by doubling a time until `Time` is raised.
@@ -1030,6 +1041,15 @@ numbers it gave are reported as they came out.
   - This is the small scope hypothesis of Jackson's Alloy and of SmallCheck (Runciman, Naylor and Lindblad 2008): most bugs show on some small input.
   - It reaches the relations between independent values, such as an index one past the end of a string drawn beside it, which three independent random draws rarely meet.
   - A property whose cases are all few enough runs exhaustively instead (P9).
+
+- **P14. Drawing into a condition** (added before the hunt, 2026-09-28, with the owner's approval). An integer variable that a law's conditions bound draws from within the bounds.
+  - The conditions are joined by `andalso`, and the bounds are `lo <= x`, `lo < x`, `x < hi`, `x <= hi` and their mirror images, where the other side does not name `x`.
+  - The variable is drawn by P1's families over the range, after the variables the bounds name. So the range's ends are its edges, and the other variables are drawn as before.
+  - Where the bounds name each other in a cycle, as `0 <= i andalso i < n andalso n <= maxLen` does, the cycle is broken at the variable first in the law. It keeps the bounds that name no variable of the cycle, here `n <= maxLen`, and a bound that is a variable of the cycle gives way to that variable's own bounds on the same side, here `0 <= i` for `i < n`, so `0 < n`. It is drawn first. Before (until the second run of the hunt) it lost all its bounds.
+  - A condition `x = y` between two variables of one type draws `y` as `x`.
+  - The condition is still tested. An empty range, or a bound that raises, discards the case.
+  - **Why:** the first run of the laws (M8) gave up on 145 laws at their structures. Among P1's integers, an index within a length is rare: a third of them are over the whole range. Those laws were not tested at all, and the ones that passed were tested mostly at the small sizes where the condition is easy to meet.
+  - The rule is generic and favours no law, and it changes no draw of a law without such a condition. It is D7's domain, "for `x` from `G`", inferred from the condition.
 
 **Frozen** on 2026-09-28, at the end of M6. `tests/lib/property/instances.sml` draws from the instance of every type of the census and hashes what the draws observe. `frozen.expected` holds that hash, so any change to what the generators draw fails `make test-lib` until the hash is renewed. A renewal needs a reason from the list above, recorded in its commit.
 
@@ -1052,6 +1072,21 @@ test fair:
   4. Restate, or fix, and run again. Classes hide one another: in E3 a `Div` found first masked the `Overflow`. So the hunt is repeated until a full run reports nothing new.
   5. The owner then says which law was meant. It counts as found if it was reported with a shrunk counterexample in steps 1-4. If it was not, the gap is analysed and written up: which principle would have found it, and whether that principle is general.
 
+**The result** (2026-10-10). The owner named the law: the law of
+composition, `o`, under functions with effects, which they had believed
+wrong. No run of the hunt failed it: not the runs at the settings of
+`make check`, not the deep run, not the other compilers. Its laws
+(Definition, Associative, Left-identity and Right-identity) draw `f`, `g`
+and `h` pure, raising and with effects, and compare the calls each side
+makes. Before the hunt the tester's power for it was measured: the law of
+associativity caught compositions that call `g` twice, that swallow or
+retry an exception of `f` or `g`, and that drop `f`'s result, and passed
+only the one that runs `f` first, which is associative too. The owner
+agreed that the law holds: `f o g` is a value, and applying it runs `g`
+and then `f`, effects and exceptions alike, however it is bracketed. So
+the blind test's law was not found because it is not wrong; the hunt
+found others that were (`docs/plans/quickcheck-hunt.md`).
+
 ## Decisions
 
 Each decision gives the options, what favours each, and the
@@ -1071,7 +1106,7 @@ recommendation it was written with. The owner decided all of them on
 | D9. Search, counts and budgets | A: random by the principles, exhaustive when small, fixed seeds, a deep mode |
 | D10. Laws on the other compilers | B: in the hunt, as differential triage; not in `make check` |
 | D11. The Example rule | A: every span a closed `bool` that is true |
-| D12. What a failing law leads to | A: the law or the implementation is fixed; no skip list |
+| D12. What a failing law leads to | A: the law or the implementation is fixed; the owner added a skip list for what cannot be, marked on the pages |
 | D13. Reporting and replay | A: `PASS`/`FAIL` labels in the Basis suite's form, and a replay token |
 
 ### D1. How a program uses a library
@@ -1238,11 +1273,14 @@ condition in prose (*Where we are*).
 
 ### D12. What a failing law leads to
 
-**Decided: A** (2026-09-28), as recommended.
+**Decided: A** (2026-09-28), as recommended. **Changed by the owner** the
+same day, in the hunt: A, with a skip list for what cannot be fixed.
+- `tests/basis/law-skips.txt` lists the laws that do not hold (`FAILS`), or are not tested (`UNTESTED`), with the reason. `runedoc --law-skips` marks each on its page beneath the law, "Does not hold in Rune" or "Not tested in Rune", with the structures and the reason, and fails on a line that names no law. `tests/basis/run-laws.sh` counts a listed law's failure as known, and a listed law that passes as a line to remove.
+- The first lines: `Math.atan2`'s law, which holds over the reals and not in floating point, where Rune's `atan2` is the correctly rounded side; the laws for `char` that are no Standard ML at `WideString` and `WideSubstring`; and `ListPair.unzip`'s law on two lists of one length, which the tester gives up on, beside the law turned round, which it tests.
 
 * **A. A fix, and no skip list.** **Recommended.**
   - **The fix.** A law that does not hold is restated so that it does, with the counterexample kept as a `Counterexample:` (added before the hunt, 2026-09-28: a closed claim that must not hold, judged as a law is). An implementation that does not do what the law and the specification say is fixed. Where the specification's own text is what fails, a `Reading:` says so.
-  - **Joining `make check`.** The law programs join `make check` at the end of M9, when every law holds. Until then `make test-laws` stands alone, so that `make check` stays green in every commit.
+  - **Joining `make check`.** Done at the end of M9 (2026-10-10): every law holds or is on the skip list. Before, `make test-laws` stood alone, so that `make check` stays green in every commit.
 * **B. A deviation list for laws**, as `tests/basis/deviations.txt` is for checks. It makes a wrong law a line in a file, where the brief wants it found and fixed.
 
 ### D13. Reporting and replay
@@ -1525,6 +1563,7 @@ tomorrow. M2 to M6 are part 1 of the brief; M1 and M7 to M9 are part 2.
     - They follow one rule: translate what the text says and add nothing it does not. So a law whose text states no condition for an exception it will meet stays as it is, and M9 will report it.
     - The prose phrases left as prose restrict nothing the arbitraries draw, or are asides: "as the specification defines it", "for a vector type that admits equality", "when the reader does not fail" (the drawn readers never fail), "except that a NaN comes back as some NaN" (D6's identity of reals makes every NaN equal), and "for every condition, named here or not".
     - Before the rewrites, 190 laws did not elaborate: 136 from runedoc's first bugs, and 54 that needed a rewrite.
+  - **Reviewed:** the owner took all 73 rewrites on 2026-09-28. One translation needed more afterwards, from the hunt: the Date law's "fields in range" gained a bound on the year (M9).
   - **For the owner:** the table, and whether a translated condition means what the prose meant. The Date law's "the fields of `r` are in range" is the widest translation. It includes the offset within a day and a day within its month's length in a leap year.
 
 ### M8. Laws run (M, about 450)
@@ -1576,9 +1615,32 @@ tomorrow. M2 to M6 are part 1 of the brief; M1 and M7 to M9 are part 2.
   - **`o` has the laws of a category and its definition**, named: Definition, `(f o g) x = f (g x)`, which alone pins the order; Associative; Left-identity; and Right-identity, the identity written `fn y => y` as the Basis has none. All four pass.
   - **Named laws** (the owner's proposal). `Law (Associative):` names a law, and its label is its name, `GENERAL.o/law-associative`.
   - **Counterexamples** (the owner's proposal). A `Counterexample:` is a closed claim that must not hold, judged as a law is. An equation's sides must have different outcomes; any other claim must be false or raise. runedoc elaborates it with the examples, and the examples' programs try it. It is where D12 keeps the case that broke a law.
+  - **The adequacy of the laws, first.** The last step of the hunt, mutants of the Basis Library's own sources run against its laws (FitSpec's check), was run first, to learn how much a law's pass is worth. The tool is `tools/mutate/mutate.sml` and `tests/basis/run-mutants.sh`, and the results are in `docs/plans/quickcheck-hunt.md`.
+    - Its first run had a bug: a mutant of `List.tabulate` hung the tester itself, which uses the Basis Library, before any law ran, and was counted as surviving. A mutant is now killed when a law that passes on the Basis Library does not pass on it, whatever the reason.
+    - It found a weakness of the generators: the edges of P1 and P3. They changed as P1 says.
+  - **P14, drawing into a condition** (*Generator principles*). It was built on the owner's instruction to fix the library where the hunt shows it is not enough.
   - **Call tables** in a report list each call of a generated function once. The condition and the two sides of a law call copies of it, whose calls were listed together; the comparison of the sides' calls is unchanged.
+* **In the hunt**, what its runs showed the tester lacked (the runs are in `docs/plans/quickcheck-hunt.md`):
+  - **A resource shared by a case.** `Gen.shared` makes a resource once for each case, so the condition and both sides see the same one. A pipe was drawn afresh for each side, and so the laws of `OS.IO.pollToIODesc` and `Posix.FileSys.iodToFD` compared two pipes. The descriptors of `system.sml` and the sockets of `inet6.sml` are drawn so now.
+  - **Equality in a condition.** `x = y` draws `y` as `x` (P14). The law of `OS.IO.hash` gave up without it.
+  - **Cycles of bounds** break at the variable first in the law, which keeps its other bounds (P14). The restated laws of `tabulate`, `array` and `Array2` need it: their lengths are bounded by `maxLen` as well as by an index.
+  - **Two libraries** (the owner, 2026-10-10). `lib/test/property` is the engine alone (`Gen`, `Co`, `Show`, `Arb`, `Prop`, `Check`; about 2,400 lines, every file built by every compiler), and `lib/test/property/basis` the arbitraries of the Basis Library's types on it (its `library.build` names `libraries random test/property`; since incremental's M10 a library's MANIFEST is made from its build file). The arbitrary of a structure the Basis leaves optional is a file of its own (`sized/`, `wide/`, `arrays2/`, `sequences/`), so a compiler that lacks the structure builds the rest; before, `sized.sml` and `sequences.sml` were built whole or not at all. Law programs compile with `--library test/property/basis`. Each library has its own pages, linked by `runedoc --library-docs`.
+  - **The other compilers (D10)**: `tests/basis/run-laws-hosts.py` (`make test-laws-hosts`) runs the laws on MLton, SML/NJ, Poly/ML and MLKit against their own Basis, each at the structures it has, and compares every verdict with Rune's; `tests/basis/law-deviations.txt` explains the differences that are the hosts'. Its first run found no difference that was Rune's (`docs/plans/quickcheck-hunt.md`). On the split library MLton holds 1,524 laws and MLKit 1,444 (761 and 572 before), and again none of the differences is Rune's; the law of `IMPERATIVE_IO.canInput`, which asked more of MLton and MLKit than the definition does, is restated (the owner, 2026-10-11). Each host now builds a law program of its own, taking a law's alternative entry (`runedoc --laws` writes them, by the arbitraries of the structure's own family) where its types are not Rune's: MLton holds 1,707 laws. The hosts' bugs are reports in `docs/bugreport`. `Position` and `SysWord` are now types of their own of 64 bits, as MLton, SML/NJ and Poly/ML have them (the owner, 2026-10-11): MLton holds 1,721 laws and leaves unbuilt only those of structures it lacks; the law of `wordToFD` is held to the numbers every POSIX system's `int` holds.
+  - **Named domains** (D7) that the hunt needed: `Arb.intRange`, `Arb.wordRange` and `BasisDataArb.canonicalAbsolutePath`, and ``and `y` from `H` `` after ``for `x` from `G` ``.
 
 ### Later
+
+**Found in the hunt, for general solutions** (the owner, 2026-09-28). Each
+has a line of `tests/basis/law-skips.txt` until then, and a quick
+workaround was not wanted:
+- **Laws that name a companion structure** (`WideString`). A signature cannot name the structures that go with the one that implements it, so a law that needs one names those of the example structure: `STRING`'s `compare (s, t) = collate Char.compare (s, t)` and `toString s = translate Char.toString s`, and `SUBSTRING`'s `compare`, are no Standard ML at `WideString` and `WideSubstring`. The same holds wherever the Basis has a family of structures that differ in their elements: the 19 of each of `MONO_VECTOR`, `MONO_ARRAY` and the slices, which go with their vector and element structures, `PACK_REAL` with `Real32` or `Real64`, and the I/O structures with their vectors and arrays. The laws there avoid the companions, and so say little about how an array, its vector and its slices relate: where the mutants of M9 survived most.
+  - **The general form:** read a signature's laws as a functor over the companions, as the hand-written suite does (`TestMonoArrayFn (structure A = Word8Array structure V = Word8Vector ...)`). A law is written at the example structure. At another, each structure the law names is replaced by the one that plays its part there: the structure that implements the same signature with that structure's type in its place, from the `where type` clauses and the claims (`WideString :> STRING where type char = WideChar.char`, so `Char` is `WideChar`).
+  - **Open:** a tie where several structures share a type (`Real`, `Real64` and `LargeReal`), and how the page says what each name means at each structure.
+  - **Not solved by it:** `STRING.fromString`, whose text is 8-bit at both structures while `WideString.scan` reads wide characters. It needs a law of `WideString`'s own, and runedoc reads laws only from signatures.
+- **Laws of the reals in floating point** (`Math.atan2`). `atan2 (y, x) = atan (y / x)` for `x > 0.0` holds over the reals and fails in floating point by one place, because `y / x` is rounded first. Rune's `atan2`, which is C's, is the correctly rounded side (checked with mpmath). The documentation has avoided such laws, so `MATH` and `REAL` say little that relates their functions.
+  - **Options:** a comparison of reals within a stated number of places, written in the law ("within 1 ulp"), which D6 would need to learn; a law over exact arithmetic, both sides computed in rationals or at a higher precision; or laws only of what IEEE 754 makes exact, such as symmetries and special values.
+- **Variables drawn together** (`ListPair.unzip`). The tester draws each variable by itself, but for P14's integer bounds and `x = y`. A condition on the shapes of values, as `length l = length m`, or rows of one length for `Array2.fromList`, is seldom met: `ListPair.unzip`'s law gives up, and those of `Array2.fromList` and `MONO_ARRAY2.fromList` pass after 700 to 933 discards in 100 cases.
+  - **The general form:** P14 for the sizes of structures. A list's length is drawn as an integer, before its elements, so that a condition on lengths becomes a bound P14 draws within. It would also serve `ListPair.zipEq` and the other functions of `ListPair` that raise `UnequalLengths`.
 
 These are left out of this roadmap:
 - The Basis suite's random checks (`T.seed`, `T.range` and the rest: 51 files) rewritten on the library, with shrinking.
@@ -1643,6 +1705,8 @@ test that it fails when it should:
 - **Determinism.** The same seed gives the same cases, the same counterexample and the same replay token on every VM, at every `-O` and on every compiler (M4, M9).
 
 ## Appendix: the rewrites of M7
+
+The owner took every row on 2026-09-28.
 
 What each law was, what it is, and why (*M7*). Notation is rewritten
 without changing what the law says. A condition in prose becomes Standard ML

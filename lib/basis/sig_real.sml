@@ -237,10 +237,13 @@ sig
      The whole part is `x` rounded towards zero. For an infinity the
      fractional part is a zero, and for a NaN both are NaNs.
 
-     Law: `== (#whole (split x) + #frac (split x), x)`
+     Law: `== (#whole (split x) + #frac (split x), x)` for `not (isNan x)`
 
      Example: `(fn {whole, frac} => (toString whole, toString frac)) (split
-     ~1.5) = ("~1", "~0.5")` *)
+     ~1.5) = ("~1", "~0.5")`
+
+     Counterexample: `== (#whole (split (0.0 / 0.0)) + #frac (split (0.0 /
+     0.0)), 0.0 / 0.0)`, for a NaN is equal to nothing. *)
   val split : real -> {whole : real, frac : real}
 
   (* `realMod x` is the fractional part of `x`, with its sign.

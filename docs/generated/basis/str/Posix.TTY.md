@@ -51,9 +51,9 @@ What each means is on [`POSIX_TTY`](../sig/POSIX_TTY.md); the types are this str
 | val | [`getiflag`](../sig/POSIX_TTY.md#val-getiflag) | `termios -> I.flags` |
 | val | [`getlflag`](../sig/POSIX_TTY.md#val-getlflag) | `termios -> L.flags` |
 | val | [`getoflag`](../sig/POSIX_TTY.md#val-getoflag) | `termios -> O.flags` |
-| val | [`speedToWord`](../sig/POSIX_TTY.md#val-speedtoword) | `speed -> word` |
+| val | [`speedToWord`](../sig/POSIX_TTY.md#val-speedtoword) | `speed -> SysWord.word` |
 | val | [`termios`](../sig/POSIX_TTY.md#val-termios) | `{cc : V.cc, cflag : C.flags, iflag : I.flags, ispeed : speed, lflag : L.flags, oflag : O.flags, ospeed : speed} -> termios` |
-| val | [`wordToSpeed`](../sig/POSIX_TTY.md#val-wordtospeed) | `word -> speed` |
+| val | [`wordToSpeed`](../sig/POSIX_TTY.md#val-wordtospeed) | `SysWord.word -> speed` |
 | structure | [`C`](../str/Posix.TTY.C.md) | [`BIT_FLAGS`](../sig/BIT_FLAGS.md) |
 | structure | [`CF`](../str/Posix.TTY.CF.md) |  |
 | structure | [`I`](../str/Posix.TTY.I.md) | [`BIT_FLAGS`](../sig/BIT_FLAGS.md) |

@@ -27,14 +27,14 @@ What each means is on [`PRIM_IO`](../sig/PRIM_IO.md); the types are this structu
 | type | [`array`](../sig/PRIM_IO.md#type-array) | `Word8Array.array` |
 | type | [`array_slice`](../sig/PRIM_IO.md#type-array_slice) | `Word8ArraySlice.slice` |
 | type | [`elem`](../sig/PRIM_IO.md#type-elem) | `Word8.word` |
-| type | [`pos`](../sig/PRIM_IO.md#type-pos) | `int` |
+| type | [`pos`](../sig/PRIM_IO.md#type-pos) | `Position.int` |
 | datatype | [`reader`](../sig/PRIM_IO.md#type-reader) | `RD` |
 | type | [`vector`](../sig/PRIM_IO.md#type-vector) | `Word8Vector.vector` |
 | type | [`vector_slice`](../sig/PRIM_IO.md#type-vector_slice) | `Word8VectorSlice.slice` |
 | datatype | [`writer`](../sig/PRIM_IO.md#type-writer) | `WR` |
 | val | [`augmentReader`](../sig/PRIM_IO.md#val-augmentreader) | `reader -> reader` |
 | val | [`augmentWriter`](../sig/PRIM_IO.md#val-augmentwriter) | `writer -> writer` |
-| val | [`compare`](../sig/PRIM_IO.md#val-compare) | `int * int -> order` |
+| val | [`compare`](../sig/PRIM_IO.md#val-compare) | `Position.int * Position.int -> order` |
 | val | [`nullRd`](../sig/PRIM_IO.md#val-nullrd) | `unit -> reader` |
 | val | [`nullWr`](../sig/PRIM_IO.md#val-nullwr) | `unit -> writer` |
 | val | [`openVector`](../sig/PRIM_IO.md#val-openvector) | `Word8Vector.vector -> reader` |

@@ -19,8 +19,9 @@ struct
      written, as (page, anchor). *)
   type env = {index : R.index, root : string, up : string,
               claims : DocClaims.claim list,
-              (* the signatures that are documented in full: what is a warning elsewhere is an error there *)
-              ratchet : string -> bool,
+              (* whether a name is a signature of the library, every one of which is documented in full:
+                 what is a warning elsewhere is an error there *)
+              ownSignature : string -> bool,
               (* the top-level name that a member of a signature also has, through a structure that implements it *)
               topLevel : string * string -> string option,
               (* the check sites of the test suite, by their scope: List.take *)
@@ -37,7 +38,7 @@ struct
               (* for a library written on the Basis Library: the Basis Library's index, where a reference
                  the library does not resolve is looked up, and where its pages are from the root of the
                  output (--basis-docs), if they are to be linked *)
-              outer : {index : R.index, root : string option} option}
+              outer : {index : R.index, root : string option} list}
 
   fun href (env : env, from : string, {page, anchor} : R.target, span : Source.span) : string =
     (#links env := (page, anchor, span) :: !(#links env);
@@ -48,14 +49,19 @@ struct
      it is written on: NONE when it is not there either, SOME NONE when it is
      but its pages are not to be linked, and SOME (SOME link) otherwise. A
      link out of the output is not checked (verify cannot see those pages). *)
+  (* A name of a library the documented one is written on: the Basis
+     Library, or one of --library-docs. SOME NONE where it has no pages to
+     link to. *)
   fun outside (env : env) (c : string) : string option option =
-    case #outer env of
-      NONE => NONE
-    | SOME {index, root} =>
-        (case R.resolve (index, "", [], []) c of
-           R.Target {page, anchor} =>
-             SOME (Option.map (fn r => #root env ^ r ^ page ^ (if anchor = "" then "" else "#" ^ anchor)) root)
-         | _ => NONE)
+    List.foldl (fn ({index, root}, found) =>
+                  case found of
+                    SOME _ => found
+                  | NONE =>
+                      (case R.resolve (index, "", [], []) c of
+                         R.Target {page, anchor} =>
+                           SOME (Option.map (fn r => #root env ^ r ^ page ^ (if anchor = "" then "" else "#" ^ anchor)) root)
+                       | _ => NONE))
+               NONE (#outer env)
 
   (* A structure's name, as a link to its page when it has one. *)
   fun strLink (env : env, from : string, name : string) : string =
@@ -110,28 +116,37 @@ struct
 
   (* ---- the blocks of a comment ---- *)
   (* strict: a reference that leads nowhere is an error. It is, for what a
-     signature of the ratchet says; it is not for a structure's own comment,
+     signature of the library says; it is not for a structure's own comment,
      which may name the library's internals -- `RuneIODesc.FD` is real and is
      documented nowhere. *)
   (* The variables of a law of a signature, where it elaborated: set by the
      site when the library has been elaborated (quickcheck M7). *)
   val lawVariables : (string * string -> DocElab.variable list option) ref = ref (fn _ => NONE)
+  (* What the list of laws that do not hold, or are not tested, says of a law
+     of a signature (--law-skips): its kind, FAILS or UNTESTED, why, and the
+     structures it is listed at. Set by the site. *)
+  val lawSkips : (string * string -> {kind : string, why : string, at : string list} list) ref = ref (fn _ => [])
 
   fun blocksWith (strict : bool)
                  (env : env, page : string, sigName : string, path : string list, args : string list, span : Source.span)
                  (doc : I.doc) : string =
     let
-      fun link c =
+      (* quiet: a reference that leads nowhere is plain code, as the
+         arbitrary of a law's domain is, which names the tester's library *)
+      fun linkWith quiet c =
         case R.resolve (#index env, sigName, path, args) c of
           R.Target t => SOME (href (env, page, t, span))
         | R.Unresolved =>
             (case outside env c of
                SOME l => l
              | NONE =>
-                 ((if strict andalso #ratchet env sigName then DocDiag.error else DocDiag.warn)
-                    (span, "`" ^ c ^ "` names nothing that is documented"); NONE))
+                 (if quiet then ()
+                  else (if strict andalso #ownSignature env sigName then DocDiag.error else DocDiag.warn)
+                         (span, "`" ^ c ^ "` names nothing that is documented");
+                  NONE))
         | R.Unknown => Option.join (outside env c)
         | _ => NONE
+      val link = linkWith false
       val inl = M.inlines link
       fun labelled (label, body) = "**" ^ label ^ "** " ^ inl body ^ "\n\n"
       fun quoted s = String.concatWith "\n" (List.map (fn l => if l = "" then ">" else "> " ^ l)
@@ -145,7 +160,7 @@ struct
                      SOME exn =>
                        (case R.resolve (#index env, sigName, path, args) exn of
                           R.Target _ => ()
-                        | _ => if #ratchet env sigName andalso not (isSome (outside env exn))
+                        | _ => if #ownSignature env sigName andalso not (isSome (outside env exn))
                                then DocDiag.error (span, "`Raises:` names `" ^ exn ^ "`, which is no exception that is documented")
                                else ())
                    | NONE => ());
@@ -153,17 +168,34 @@ struct
              | "Law" =>
                  (* the variables each law holds for, as elaboration typed them *)
                  let
-                   val vars = List.concat (List.mapPartial (fn l => !lawVariables (sigName, l))
-                                                           (#laws (DocLawGrammar.parts body)))
+                   val parts = DocLawGrammar.parts body
+                   val vars = List.concat (List.mapPartial (fn l => !lawVariables (sigName, l)) (#laws parts))
+                   val gens = List.map #2 (#domains parts)
+                   val inl = M.inlines (fn c => linkWith (List.exists (fn g => g = c) gens) c)
+                   fun labelled (label, body) = "**" ^ label ^ "** " ^ inl body ^ "\n\n"
                    val once = List.foldl (fn (v : DocElab.variable, acc) =>
                                             if List.exists (fn (w : DocElab.variable) => #name w = #name v) acc then acc
                                             else acc @ [v]) [] vars
                    val head = case modifier of SOME m => "Law (" ^ M.escape m ^ ")" | NONE => "Law"
+                   (* a law on the list of those that do not hold, or are
+                      not tested, says so beneath it *)
+                   fun listing [x] = x
+                     | listing [x, y] = x ^ " and " ^ y
+                     | listing (x :: rest) = x ^ ", " ^ listing rest
+                     | listing [] = ""
+                   fun mark (code, {kind, why, at}) =
+                     "> **" ^ (if kind = "FAILS" then "Does not hold in Rune" else "Not tested in Rune") ^ "**"
+                     ^ (if List.length (#laws parts) > 1 then " (" ^ M.code code ^ ")" else "")
+                     ^ " at " ^ listing (List.map M.code at) ^ ": " ^ inl (T.inlines (fn _ => ()) why) ^ "\n\n"
+                   val marks = String.concat (List.concat (List.map (fn code => List.map (fn m => mark (code, m))
+                                                                                          (!lawSkips (sigName, code)))
+                                                                    (#laws parts)))
                  in
-                   if List.null once then labelled (head, body)
-                   else "**" ^ head ^ "** " ^ inl body ^ " (for every "
-                        ^ String.concatWith ", " (List.map (fn {name, ty, ...} => M.code (name ^ " : " ^ ty)) once)
-                        ^ ")\n\n"
+                   (if List.null once then labelled (head, body)
+                    else "**" ^ head ^ "** " ^ inl body ^ " (for every "
+                         ^ String.concatWith ", " (List.map (fn {name, ty, ...} => M.code (name ^ " : " ^ ty)) once)
+                         ^ ")\n\n")
+                   ^ marks
                  end
              | "Example" => labelled ("Example", body)
              | "Counterexample" => labelled ("Counterexample", body)

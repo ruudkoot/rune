@@ -1,0 +1,13 @@
+--- a/basis-library/system/date.sml
++++ b/basis-library/system/date.sml
+@@ -538,6 +538,10 @@
+           in
+              normalizedate year month day' hour minute second offset'
+           end
++          (* The day numbers of normalizedate overflow int for a year
++           * past about 5.8 million (with the default 32-bit int):
++           * such a date is outside the range supported. *)
++          handle Overflow => raise Date
+ 
+     fun offset (T {offset, ...}) = 
+         Option.map

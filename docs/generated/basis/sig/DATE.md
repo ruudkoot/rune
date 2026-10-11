@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 24 of 24 entries documented |
-| Tests | 205 checks of 21 entries |
+| Tests | 206 checks of 21 entries |
 | Source | [lib/basis/sig\_date.sml](../../../../lib/basis/sig_date.sml) |
 
 ## Synopsis
@@ -203,13 +203,18 @@ val date : {year : int,
 
 **Example** `(fn d => (month d, day d, hour d)) (date {year = 2001, month = Jan, day = 32, hour = 25, minute = 0, second = 0, offset = SOME Time.zeroTime}) = (Feb, 2, 1)`
 
-> **Implementation** `Date.date/any-year`. The calendar of a date at an offset
-> is computed and not looked up, so any year that is an `int` has its dates,
-> the year \~5 and the year 100000 too. The specification asks for the years
-> from about 1900 to 2200 only, and the suite takes a date or [`Date`](#exn-date) beyond
-> the range of a 32-bit `time_t`. [`toTime`](#val-totime) raises [`Date`](#exn-date) from about the year
-> 292000 on, where the microseconds no longer fit, and [`fmt`](#val-fmt) for a year that
-> C's `int` of 32 bits cannot hold.
+> **Implementation** `Date.date/any-year`. The specification asks for the years
+> from about 1900 to 2200, where the laws of `year` hold on every
+> implementation; Rune's dates reach much further. The calendar of a date at
+> an offset is computed and not looked up, so a year has its dates as long
+> as the count of its days from 1970 is an `int`: the year \~5 and the year
+> 100000 too, and with the 63-bit `int` every year up to about 12.6 \* 10^15
+> either way. Beyond, [`date`](#val-date) raises [`Date`](#exn-date). A local date is made by the C
+> library, whose fields are C `int`s: a field, or the year less 1900, that
+> one cannot hold raises [`Date`](#exn-date). The suite takes a date or [`Date`](#exn-date) beyond the
+> range of a 32-bit `time_t`. [`toTime`](#val-totime) raises [`Date`](#exn-date) from about the year
+> 148000 on, where the microseconds no longer fit an `int`, and [`fmt`](#val-fmt) for a
+> year that C's `int` of 32 bits cannot hold.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -228,9 +233,9 @@ val date : {year : int,
 
 </details>
 
-<details><summary>Tests (26)</summary>
+<details><summary>Tests (27)</summary>
 
-For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `canonical-is-kept` &middot; `spec-example-negative-seconds` &middot; `second-60` &middot; `minutes-to-hours` &middot; `hour-24` &middot; `negative-hour` &middot; `days-to-months` &middot; `day-0` &middot; `negative-day` &middot; `months-to-years` &middot; `seconds-carry-to-the-year` &middot; `seconds-borrow-from-the-year` &middot; `a-year-of-seconds` &middot; `366-days-of-2000` &middot; `leap-2000` &middot; `leap-2004` &middot; `not-leap-2001` &middot; `not-leap-1900` &middot; `not-leap-2100` &middot; `weekDay-of-normalised` &middot; `yearDay-of-normalised` &middot; `is-canonical` &middot; `Date-or-a-year-far-away` &middot; `calendar-1900-2199` &middot; `offset-of-the-local-zone` &middot; `local-normalises`
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `canonical-is-kept` &middot; `spec-example-negative-seconds` &middot; `second-60` &middot; `minutes-to-hours` &middot; `hour-24` &middot; `negative-hour` &middot; `days-to-months` &middot; `day-0` &middot; `negative-day` &middot; `months-to-years` &middot; `seconds-carry-to-the-year` &middot; `seconds-borrow-from-the-year` &middot; `a-year-of-seconds` &middot; `366-days-of-2000` &middot; `leap-2000` &middot; `leap-2004` &middot; `not-leap-2001` &middot; `not-leap-1900` &middot; `not-leap-2100` &middot; `weekDay-of-normalised` &middot; `yearDay-of-normalised` &middot; `is-canonical` &middot; `Date-or-a-year-far-away` &middot; `local-Date-or-the-year-past-an-int-of-C` &middot; `calendar-1900-2199` &middot; `offset-of-the-local-zone` &middot; `local-normalises`
 
 </details>
 
@@ -242,9 +247,21 @@ val year : date -> int
 
 `year d` is the year of `d`, as a number and not counted from 1900.
 
-**Law** `year (date r) = #year r`, and `month (date r) = #month r`, and `day (date r) = #day r`, and `hour (date r) = #hour r`, and `minute (date r) = #minute r`, and `second (date r) = #second r`, when `let val {year = y, month = m, day = d, hour = h, minute = mi, second = s, offset = off} = r val leap = (y mod 4 = 0 andalso y mod 100 <> 0) orelse y mod 400 = 0 val days = case m of Feb => if leap then 29 else 28 | Apr => 30 | Jun => 30 | Sep => 30 | Nov => 30 | _ => 31 in 1 <= d andalso d <= days andalso 0 <= h andalso h <= 23 andalso 0 <= mi andalso mi <= 59 andalso 0 <= s andalso s <= 59 andalso (case off of NONE => true | SOME t => Time.< (Time.fromSeconds ~86400, t) andalso Time.< (t, Time.fromSeconds 86400)) end` (for every `r : {day : int, hour : int, minute : int, month : Date.month, offset : Time.time option, second : int, year : int}`)
+**Law** `year (date r) = #year r`, and `month (date r) = #month r`, and `day (date r) = #day r`, and `hour (date r) = #hour r`, and `minute (date r) = #minute r`, and `second (date r) = #second r`, when `let val {year = y, month = m, day = d, hour = h, minute = mi, second = s, offset = off} = r val leap = (y mod 4 = 0 andalso y mod 100 <> 0) orelse y mod 400 = 0 val days = case m of Feb => if leap then 29 else 28 | Apr => 30 | Jun => 30 | Sep => 30 | Nov => 30 | _ => 31 in 1900 <= y andalso y <= 2200 andalso 1 <= d andalso d <= days andalso 0 <= h andalso h <= 23 andalso 0 <= mi andalso mi <= 59 andalso 0 <= s andalso s <= 59 andalso (case off of NONE => true | SOME t => Time.< (Time.fromSeconds ~86400, t) andalso Time.< (t, Time.fromSeconds 86400)) end`, and it is run for `r` from
+`DateArb.fieldsInRange (1900, 2200)`: in the years every implementation
+supports, the specification's 1900 to 2200, a date of fields in range
+keeps them (for every `r : {day : int, hour : int, minute : int, month : Date.month, offset : Time.time option, second : int, year : int}`)
+
+**Law** `(year (date r) = #year r) handle Date => true`, and `(month (date r) = #month r) handle Date => true`, and `(day (date r) = #day r) handle Date => true`, and `(hour (date r) = #hour r) handle Date => true`, and
+`(minute (date r) = #minute r) handle Date => true`, and `(second (date r) = #second r) handle Date => true`, when `let val {year = y, month = m, day = d, hour = h, minute = mi, second = s, offset = off} = r val leap = (y mod 4 = 0 andalso y mod 100 <> 0) orelse y mod 400 = 0 val days = case m of Feb => if leap then 29 else 28 | Apr => 30 | Jun => 30 | Sep => 30 | Nov => 30 | _ => 31 in 1 <= d andalso d <= days andalso 0 <= h andalso h <= 23 andalso 0 <= mi andalso mi <= 59 andalso 0 <= s andalso s <= 59 andalso (case off of NONE => true | SOME t => Time.< (Time.fromSeconds ~86400, t) andalso Time.< (t, Time.fromSeconds 86400)) end`, and it is run
+for `r` from `DateArb.fieldsInRange (valOf Int.minInt, valOf Int.maxInt)`:
+in another year an implementation may raise [`Date`](#exn-date) instead, as the
+specification lets it, but it does not give other fields. Rune's dates
+reach much further than 1900 to 2200 (`Date.date/any-year`) (for every `r : {day : int, hour : int, minute : int, month : Date.month, offset : Time.time option, second : int, year : int}`)
 
 **Example** `year (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 1995`
+
+**Counterexample** `year (date {year = valOf Int.maxInt, month = Jan, day = 1, hour = 0, minute = 0, second = 0, offset = SOME Time.zeroTime}) = valOf Int.maxInt`, for the days to such a year are past the largest int.
 
 <details><summary>Tests (2)</summary>
 

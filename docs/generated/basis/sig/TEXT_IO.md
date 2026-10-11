@@ -295,6 +295,8 @@ val canInput : instream * int -> int option
 
 **Example** `canInput (openString "ab", 1) = SOME 1`
 
+**Example** `canInput (openString (CharVector.tabulate (40, fn _ => #"a")), 40) = SOME 40`
+
 <details><summary>Tests (9)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `characters-available` &middot; `one` &middot; `more-than-there-is` &middot; `empty-file` &middot; `at-end-of-stream` &middot; `removes-nothing` &middot; `zero` &middot; `Size-negative` (raises Size) &middot; `closed-stream`

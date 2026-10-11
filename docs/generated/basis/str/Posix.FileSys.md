@@ -40,16 +40,16 @@ What each means is on [`POSIX_FILE_SYS`](../sig/POSIX_FILE_SYS.md); the types ar
 | val | [`closedir`](../sig/POSIX_FILE_SYS.md#val-closedir) | `RuneFileSys.dirstream -> unit` |
 | val | [`creat`](../sig/POSIX_FILE_SYS.md#val-creat) | `string * S.mode -> Posix.ProcEnv.file_desc` |
 | val | [`createf`](../sig/POSIX_FILE_SYS.md#val-createf) | `string * open_mode * O.flags * S.mode -> Posix.ProcEnv.file_desc` |
-| val | [`devToWord`](../sig/POSIX_FILE_SYS.md#val-devtoword) | `dev -> word` |
+| val | [`devToWord`](../sig/POSIX_FILE_SYS.md#val-devtoword) | `dev -> SysWord.word` |
 | val | [`fchmod`](../sig/POSIX_FILE_SYS.md#val-fchmod) | `Posix.ProcEnv.file_desc * S.mode -> unit` |
 | val | [`fchown`](../sig/POSIX_FILE_SYS.md#val-fchown) | `Posix.ProcEnv.file_desc * Posix.ProcEnv.uid * Posix.ProcEnv.gid -> unit` |
 | val | [`fdToIOD`](../sig/POSIX_FILE_SYS.md#val-fdtoiod) | `Posix.ProcEnv.file_desc -> RuneIODesc.iodesc` |
-| val | [`fdToWord`](../sig/POSIX_FILE_SYS.md#val-fdtoword) | `Posix.ProcEnv.file_desc -> word` |
-| val | [`fpathconf`](../sig/POSIX_FILE_SYS.md#val-fpathconf) | `Posix.ProcEnv.file_desc * string -> word option` |
+| val | [`fdToWord`](../sig/POSIX_FILE_SYS.md#val-fdtoword) | `Posix.ProcEnv.file_desc -> SysWord.word` |
+| val | [`fpathconf`](../sig/POSIX_FILE_SYS.md#val-fpathconf) | `Posix.ProcEnv.file_desc * string -> SysWord.word option` |
 | val | [`fstat`](../sig/POSIX_FILE_SYS.md#val-fstat) | `Posix.ProcEnv.file_desc -> ST.stat` |
-| val | [`ftruncate`](../sig/POSIX_FILE_SYS.md#val-ftruncate) | `Posix.ProcEnv.file_desc * int -> unit` |
+| val | [`ftruncate`](../sig/POSIX_FILE_SYS.md#val-ftruncate) | `Posix.ProcEnv.file_desc * Position.int -> unit` |
 | val | [`getcwd`](../sig/POSIX_FILE_SYS.md#val-getcwd) | `unit -> string` |
-| val | [`inoToWord`](../sig/POSIX_FILE_SYS.md#val-inotoword) | `ino -> word` |
+| val | [`inoToWord`](../sig/POSIX_FILE_SYS.md#val-inotoword) | `ino -> SysWord.word` |
 | val | [`iodToFD`](../sig/POSIX_FILE_SYS.md#val-iodtofd) | `RuneIODesc.iodesc -> Posix.ProcEnv.file_desc option` |
 | val | [`link`](../sig/POSIX_FILE_SYS.md#val-link) | `{new : string, old : string} -> unit` |
 | val | [`lstat`](../sig/POSIX_FILE_SYS.md#val-lstat) | `string -> ST.stat` |
@@ -57,7 +57,7 @@ What each means is on [`POSIX_FILE_SYS`](../sig/POSIX_FILE_SYS.md); the types ar
 | val | [`mkfifo`](../sig/POSIX_FILE_SYS.md#val-mkfifo) | `string * S.mode -> unit` |
 | val | [`opendir`](../sig/POSIX_FILE_SYS.md#val-opendir) | `string -> RuneFileSys.dirstream` |
 | val | [`openf`](../sig/POSIX_FILE_SYS.md#val-openf) | `string * open_mode * O.flags -> Posix.ProcEnv.file_desc` |
-| val | [`pathconf`](../sig/POSIX_FILE_SYS.md#val-pathconf) | `string * string -> word option` |
+| val | [`pathconf`](../sig/POSIX_FILE_SYS.md#val-pathconf) | `string * string -> SysWord.word option` |
 | val | [`readdir`](../sig/POSIX_FILE_SYS.md#val-readdir) | `RuneFileSys.dirstream -> string option` |
 | val | [`readlink`](../sig/POSIX_FILE_SYS.md#val-readlink) | `string -> string` |
 | val | [`rename`](../sig/POSIX_FILE_SYS.md#val-rename) | `{new : string, old : string} -> unit` |
@@ -71,9 +71,9 @@ What each means is on [`POSIX_FILE_SYS`](../sig/POSIX_FILE_SYS.md); the types ar
 | val | [`umask`](../sig/POSIX_FILE_SYS.md#val-umask) | `S.mode -> S.mode` |
 | val | [`unlink`](../sig/POSIX_FILE_SYS.md#val-unlink) | `string -> unit` |
 | val | [`utime`](../sig/POSIX_FILE_SYS.md#val-utime) | `string * {actime : Time.time, modtime : Time.time} option -> unit` |
-| val | [`wordToDev`](../sig/POSIX_FILE_SYS.md#val-wordtodev) | `word -> dev` |
-| val | [`wordToFD`](../sig/POSIX_FILE_SYS.md#val-wordtofd) | `word -> Posix.ProcEnv.file_desc` |
-| val | [`wordToIno`](../sig/POSIX_FILE_SYS.md#val-wordtoino) | `word -> ino` |
+| val | [`wordToDev`](../sig/POSIX_FILE_SYS.md#val-wordtodev) | `SysWord.word -> dev` |
+| val | [`wordToFD`](../sig/POSIX_FILE_SYS.md#val-wordtofd) | `SysWord.word -> Posix.ProcEnv.file_desc` |
+| val | [`wordToIno`](../sig/POSIX_FILE_SYS.md#val-wordtoino) | `SysWord.word -> ino` |
 | structure | [`O`](../str/Posix.FileSys.O.md) | [`BIT_FLAGS`](../sig/BIT_FLAGS.md) |
 | structure | [`S`](../str/Posix.FileSys.S.md) | [`BIT_FLAGS`](../sig/BIT_FLAGS.md) |
 | structure | [`ST`](../str/Posix.FileSys.ST.md) |  |
