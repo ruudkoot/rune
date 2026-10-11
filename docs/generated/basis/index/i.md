@@ -24,6 +24,7 @@
 - `inet6AF` (val): [INET6_SOCK](../sig/INET6_SOCK.md#val-inet6af)
 - `inetAF` (val): [INET_SOCK](../sig/INET_SOCK.md#val-inetaf)
 - `INF` (con): [IEEE_REAL](../sig/IEEE_REAL.md#con-inf)
+- `info` (val): [REPL](../sig/REPL.md#val-info)
 - `infoToPollDesc` (val): [OS_IO](../sig/OS_IO.md#val-infotopolldesc)
 - `ino` (type): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#type-ino)
 - `inoToWord` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-inotoword)

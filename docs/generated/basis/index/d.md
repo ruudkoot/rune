@@ -23,6 +23,7 @@
 - `Div` (exn): [GENERAL](../sig/GENERAL.md#exn-div)
 - `div` (val): [INTEGER](../sig/INTEGER.md#val-div), [WORD](../sig/WORD.md#val-div)
 - `divMod` (val): [INT_INF](../sig/INT_INF.md#val-divmod)
+- `doc` (val): [REPL](../sig/REPL.md#val-doc)
 - `dom` (val): [POSIX_ERROR](../sig/POSIX_ERROR.md#val-dom)
 - `Domain` (exn): [GENERAL](../sig/GENERAL.md#exn-domain)
 - `drop` (val): [LIST](../sig/LIST.md#val-drop)

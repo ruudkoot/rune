@@ -1,0 +1,76 @@
+{
+ "signatures": {
+  "JSON": {
+   "doc": "JSON (RFC 8259): values read from text and written back.\n\nReading is strict: the grammar of RFC 8259 and nothing beside it -- no\ncomments, no trailing commas, no single quotes, no NaN -- in UTF-8, as the\nRFC requires of text exchanged between systems; a string's escapes must\nname scalar values, so a lone surrogate is an error. A number is kept as\nthe text it was written in, so that nothing is lost to a conversion that\nthe program did not ask for; `int` and `toInt` convert. An object keeps\nits members in the order they were written, a repeated name included.\nNesting deeper than `maxDepth` is refused rather than followed.\n\n",
+   "page": "sig/JSON.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "value",
+     "spec": "datatype value =\n    Null\n  | Bool of bool\n  | Number of string\n  | String of string\n  | Array of value list\n  | Object of (string * value) list",
+     "doc": "A JSON value.\n\n",
+     "page": "sig/JSON.md#type-value"
+    },
+    {
+     "kind": "exception",
+     "name": "Syntax",
+     "spec": "exception Syntax of int * string",
+     "doc": "What `decode` raises: the byte offset where the text stops being JSON,\nand what is wrong there.\n\n",
+     "page": "sig/JSON.md#exn-syntax"
+    },
+    {
+     "kind": "val",
+     "name": "maxDepth",
+     "spec": "val maxDepth : int",
+     "doc": "How deeply arrays and objects may nest in a text `decode` reads.\n\n**Example** `maxDepth = 512`\n\n",
+     "page": "sig/JSON.md#val-maxdepth"
+    },
+    {
+     "kind": "val",
+     "name": "decode",
+     "spec": "val decode : string -> value",
+     "doc": "`decode s` is the value the JSON text `s` is.\n\n**Raises** `Syntax` if `s` is not one JSON value with only blanks around\nit, or nests deeper than `maxDepth`.\n\n**Example** `decode \" [1, \\\"two\\\", null] \" = Array [Number \"1\", String \"two\", Null]`\n\n",
+     "page": "sig/JSON.md#val-decode"
+    },
+    {
+     "kind": "val",
+     "name": "encode",
+     "spec": "val encode : value -> string",
+     "doc": "`encode v` is `v` written as compact JSON text: no blank between\ntokens, `\"`, `\\` and the control characters escaped, the rest of the\nUTF-8 of strings left as it is.\n\n**Raises** `Domain` if a string of `v` is not valid UTF-8, or a `Number`\nis not a number of the RFC's grammar.\n\nReading back what it writes gives `v` again;\ntests/lib/json/roundtrip.sml checks that on random values.\n\n**Example** `encode (Object [(\"a\", Array [Bool true, String \"\\n\"])]) = \"{\\\"a\\\":[true,\\\"\\\\n\\\"]}\"`\n\n",
+     "page": "sig/JSON.md#val-encode"
+    },
+    {
+     "kind": "val",
+     "name": "encodeIndented",
+     "spec": "val encodeIndented : int -> value -> string",
+     "doc": "`encodeIndented n v` is `v` written as JSON text with each element and\nmember on a line of its own, indented by `n` blanks a level.\n\n**Raises** `Domain` where `encode` would.\n\n**Example** `encodeIndented 2 (Array [Null]) = \"[\\n  null\\n]\"`\n\n",
+     "page": "sig/JSON.md#val-encodeindented"
+    },
+    {
+     "kind": "val",
+     "name": "int",
+     "spec": "val int : int -> value",
+     "doc": "`int i` is the number `i`.\n\n**Example** `int ~3 = Number \"-3\"`\n\n",
+     "page": "sig/JSON.md#val-int"
+    },
+    {
+     "kind": "val",
+     "name": "toInt",
+     "spec": "val toInt : value -> int option",
+     "doc": "`toInt v` is the integer `v` is, when it is a `Number` with no\nfraction or exponent that fits an `int`; `NONE` otherwise.\n\n**Example** `toInt (Number \"-42\") = SOME ~42 andalso toInt (Number \"4.2\") = NONE`\n\n",
+     "page": "sig/JSON.md#val-toint"
+    },
+    {
+     "kind": "val",
+     "name": "member",
+     "spec": "val member : string * value -> value option",
+     "doc": "`member (name, v)` is the value of the first member called `name` of\nthe object `v`, or `NONE` when `v` is not an object or has none.\n\n**Example** `member (\"b\", Object [(\"a\", Null), (\"b\", Bool false)]) = SOME (Bool false)`\n\n",
+     "page": "sig/JSON.md#val-member"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Json": "JSON"
+ }
+}

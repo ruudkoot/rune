@@ -1309,17 +1309,24 @@ struct
      (recover; docs/units.md, Errors). The tables that are keyed by stamps
      (Ty.binders and the like) only grow, and no stamp is made twice, so
      what a failed declaration put in them names nothing after it. *)
+  (* the declarations of the topdec so far, whose free variables are checked
+     where it ends *)
+  val pendingClosed : (env * span) list ref = ref []
+
   type snapshot = {sigs : SigMatch.sigma StringMap.map, funs : funinfo StringMap.map,
                    datatypes : Ty.datatypeInfo IntMap.map, overloads : Overload.entry IntMap.map,
                    dataCons : (string * valstatus) list IntMap.map,
-                   pendingFlex : (tvar ref * span) list, pendingChecks : (unit -> unit) list}
+                   pendingFlex : (tvar ref * span) list, pendingChecks : (unit -> unit) list,
+                   pendingClosed : (env * span) list}
   fun snapshot () : snapshot =
     {sigs = !sigs, funs = !funs, datatypes = !Ty.datatypes, overloads = !Overload.table, dataCons = !dataCons,
-     pendingFlex = !pendingFlex, pendingChecks = !pendingChecks}
-  fun restore ({sigs = s, funs = f, datatypes = d, overloads = ov, dataCons = dc, pendingFlex = pf, pendingChecks = pc}
-               : snapshot) =
+     pendingFlex = !pendingFlex, pendingChecks = !pendingChecks, pendingClosed = !pendingClosed}
+  (* also the declarations whose free variables wait for the topdec's end:
+     the one that failed is not checked again at each end after it *)
+  fun restore ({sigs = s, funs = f, datatypes = d, overloads = ov, dataCons = dc, pendingFlex = pf, pendingChecks = pc,
+                pendingClosed = pcl} : snapshot) =
     (sigs := s; funs := f; Ty.datatypes := d; Ty.extras := Ty.Unknown; Overload.table := ov; dataCons := dc;
-     pendingOverloads := []; pendingLiterals := []; pendingFlex := pf; pendingChecks := pc)
+     pendingOverloads := []; pendingLiterals := []; pendingFlex := pf; pendingChecks := pc; pendingClosed := pcl)
 
   (* Whether a top-level declaration that fails to elaborate is reported
      (Error.report), undone and skipped, and the next one elaborated, so
@@ -1330,9 +1337,6 @@ struct
   (* What the last elabTop added to the environment, its declarations' in
      one: what the REPL echoes of a declaration (src/repl/session.sml). *)
   val lastDelta : env ref = ref Env.empty
-  (* the declarations of the topdec so far, whose free variables are checked
-     where it ends *)
-  val pendingClosed : (env * span) list ref = ref []
 
   fun elabTop (env : env ref, decs : dec list) : unit =
     (lastDelta := Env.empty;
@@ -1365,7 +1369,12 @@ struct
                 in
                   case saved of
                     NONE => go ()
-                  | SOME s => go () handle Error.CompileError e => (Types.stopWork (); restore s; Error.report e)
+                  | SOME s =>
+                      go () handle Error.CompileError e =>
+                        (Types.stopWork (); restore s;
+                         (* a failure where the topdec ends came from its checks, all made *)
+                         if Parser.endsTopdec (spanOfDec d) then pendingClosed := [] else ();
+                         Error.report e)
                 end) decs;
      (* what is elaborated together ends a topdec (a file, a REPL's unit) *)
      List.app checkClosed (List.rev (!pendingClosed));

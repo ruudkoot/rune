@@ -73,6 +73,7 @@
 - `TTY` (str): [POSIX](../sig/POSIX.md#str-tty)
 - `ttyname` (val): [POSIX_PROC_ENV](../sig/POSIX_PROC_ENV.md#val-ttyname)
 - `Tue` (con): [DATE](../sig/DATE.md#con-tue)
+- `typeOf` (val): [REPL](../sig/REPL.md#val-typeof)
 - `V.time` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-v.time)
 
 ---

@@ -2274,6 +2274,40 @@ static int p_rt_trace(VM *vm) {
     return ret(vm, 1, l);
 }
 
+/* rt_raise_mark m: with m = ~1, the handler pushed last is the REPL's own,
+   and a raise that takes it records the frames it leaves (vm_raise); any
+   other m is a mark rt_raise_mark gave before, put back (0: none). The mark
+   it replaces. */
+static int p_rt_raise_mark(VM *vm) {
+    INT1("rt_raise_mark");
+    size_t before = vm->raise_mark;
+    vm->raise_mark = x == -1 ? vm->hp : x < 0 ? 0 : (size_t)x;
+    return ret(vm, 1, mk_int((int64_t)before));
+}
+
+/* rt_raise_trace (): the frames the last raise that left the REPL's code
+   left, innermost first, as rt_trace gives them, inlined functions each a
+   frame of its own; built from the outermost in */
+static int p_rt_raise_trace(VM *vm) {
+    vm_push(vm, mk_con0(0));
+    TraceFrame fs[64];
+    for (uint32_t k = vm->raise_n; k > 0; k--) {
+        uint32_t f = vm->raise_frames[k - 1].func, pc = vm->raise_frames[k - 1].pc;
+        const char *name = f < vm->prog.nfuncs ? vm->prog.funcs[f].name : "?";
+        const LineEntry *e = line_at(&vm->prog, pc > 0 ? pc - 1 : 0);
+        uint32_t n;
+        if (e && e->file < vm->prog.nfiles) n = trace_frames(&vm->prog, e, name, fs, 64);
+        else { fs[0].name = name; fs[0].file = UINT32_MAX; fs[0].line = 0; fs[0].col = 0; n = 1; }
+        for (uint32_t j = n; j > 0; j--) {
+            const TraceFrame *t = &fs[j - 1];
+            push_frame(vm, t->name, t->file == UINT32_MAX ? "" : vm->prog.files[t->file], t->line, t->col);
+            vm_cons(vm);
+        }
+    }
+    Value l = vm_pop(vm);
+    return ret(vm, 1, l);
+}
+
 /* Runtime.save: 0 in the world that writes the image, and 1 -- `Restored` --
    in the world that starts again from it, which vm_resume pushes in place of
    this call's argument. ~1 says the image could not be written. */

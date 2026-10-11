@@ -1,0 +1,209 @@
+{
+ "signatures": {
+  "FRAMING": {
+   "doc": "Messages cut out of a stream of bytes and put into one: a line each,\nor a header `Content-Length: N` and a blank line before N bytes, as the\nLanguage Server Protocol and the Debug Adapter Protocol frame theirs.\n\nA reader is a value, as `Key`'s decoder is: `feed` takes it and some\nbytes to the messages they complete and the reader that holds the rest,\nso a message may come in any number of reads.\n\n",
+   "page": "sig/FRAMING.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "framing",
+     "spec": "datatype framing = Lines | ContentLength",
+     "doc": "How messages are framed: one to a line (a newline ends each, and a\ncarriage return before it is dropped), or behind a `Content-Length`\nheader.\n\n",
+     "page": "sig/FRAMING.md#type-framing"
+    },
+    {
+     "kind": "exception",
+     "name": "Header",
+     "spec": "exception Header of string",
+     "doc": "What `feed` raises for a header it cannot read: a header without\n`Content-Length`, or one whose length is no number.\n\n",
+     "page": "sig/FRAMING.md#exn-header"
+    },
+    {
+     "kind": "type",
+     "name": "reader",
+     "spec": "type reader",
+     "doc": "A reader: the bytes of a message begun and not yet complete.\n\n",
+     "page": "sig/FRAMING.md#type-reader"
+    },
+    {
+     "kind": "val",
+     "name": "reader",
+     "spec": "val reader : framing -> reader",
+     "doc": "`reader f` is a reader of `f` that has read nothing.\n\n",
+     "page": "sig/FRAMING.md#val-reader"
+    },
+    {
+     "kind": "val",
+     "name": "feed",
+     "spec": "val feed : reader * string -> string list * reader",
+     "doc": "`feed (r, s)` is the messages that `r`'s bytes and `s` complete, in\norder, and the reader that holds the rest. Empty lines are not\nmessages.\n\n**Raises** `Header` when a header cannot be read.\n\n**Example** `#1 (feed (reader Lines, \"a\\r\\nb\\nc\")) = [\"a\", \"b\"]`\n\n",
+     "page": "sig/FRAMING.md#val-feed"
+    },
+    {
+     "kind": "val",
+     "name": "pending",
+     "spec": "val pending : reader -> bool",
+     "doc": "`pending r` is whether `r` holds part of a message.\n\n",
+     "page": "sig/FRAMING.md#val-pending"
+    },
+    {
+     "kind": "val",
+     "name": "frame",
+     "spec": "val frame : framing * string -> string",
+     "doc": "`frame (f, m)` is the message `m` framed: a newline after it, or the\nheader before it.\n\n**Example** `frame (ContentLength, \"{}\") = \"Content-Length: 2\\r\\n\\r\\n{}\"`\n\n",
+     "page": "sig/FRAMING.md#val-frame"
+    }
+   ]
+  },
+  "JSON_RPC": {
+   "doc": "JSON-RPC 2.0: requests, notifications and responses as values, read\nfrom JSON and written to it, with the errors of the specification and\nthe cancellation the Language Server Protocol adds.\n\n",
+   "page": "sig/JSON_RPC.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "id",
+     "spec": "datatype id = Number of int | String of string",
+     "doc": "A request's id: a number or a string.\n\n",
+     "page": "sig/JSON_RPC.md#type-id"
+    },
+    {
+     "kind": "type",
+     "name": "error",
+     "spec": "type error = {code : int, message : string, data : Json.value option}",
+     "doc": "An error's code and message, and anything more about it.\n\n",
+     "page": "sig/JSON_RPC.md#type-error"
+    },
+    {
+     "kind": "datatype",
+     "name": "outcome",
+     "spec": "datatype outcome = Result of Json.value | Error of error",
+     "doc": "What a request came to: its result, or an error.\n\n",
+     "page": "sig/JSON_RPC.md#type-outcome"
+    },
+    {
+     "kind": "datatype",
+     "name": "message",
+     "spec": "datatype message =\n    Request of {id : id, method : string, params : Json.value option}\n  | Notification of {method : string, params : Json.value option}\n  | Response of {id : id option, outcome : outcome}",
+     "doc": "A message: a request, a notification, or a response.\n\nA `Request` asks for a `Response` with its id; a `Notification` asks\nfor none; a `Response` carries the outcome, its id `NONE` when the\nrequest's could not be read.\n\n",
+     "page": "sig/JSON_RPC.md#type-message"
+    },
+    {
+     "kind": "datatype",
+     "name": "read",
+     "spec": "datatype read = Message of message | Invalid of error * id option",
+     "doc": "A message read, or the error that answers what could not be read,\nwith the id of the request when it could be read.\n\n",
+     "page": "sig/JSON_RPC.md#type-read"
+    },
+    {
+     "kind": "val",
+     "name": "parseError",
+     "spec": "val parseError : int",
+     "doc": "The code of an error: the text is no JSON.\n\n**Example** `parseError = ~32700`\n\n",
+     "page": "sig/JSON_RPC.md#val-parseerror"
+    },
+    {
+     "kind": "val",
+     "name": "invalidRequest",
+     "spec": "val invalidRequest : int",
+     "doc": "The code of an error: the JSON is no request.\n\n**Example** `invalidRequest = ~32600`\n\n",
+     "page": "sig/JSON_RPC.md#val-invalidrequest"
+    },
+    {
+     "kind": "val",
+     "name": "methodNotFound",
+     "spec": "val methodNotFound : int",
+     "doc": "The code of an error: the server has no such method.\n\n**Example** `methodNotFound = ~32601`\n\n",
+     "page": "sig/JSON_RPC.md#val-methodnotfound"
+    },
+    {
+     "kind": "val",
+     "name": "invalidParams",
+     "spec": "val invalidParams : int",
+     "doc": "The code of an error: the parameters are not what the method takes.\n\n**Example** `invalidParams = ~32602`\n\n",
+     "page": "sig/JSON_RPC.md#val-invalidparams"
+    },
+    {
+     "kind": "val",
+     "name": "internalError",
+     "spec": "val internalError : int",
+     "doc": "The code of an error: the server failed.\n\n**Example** `internalError = ~32603`\n\n",
+     "page": "sig/JSON_RPC.md#val-internalerror"
+    },
+    {
+     "kind": "val",
+     "name": "requestCancelled",
+     "spec": "val requestCancelled : int",
+     "doc": "The code of an error, the Language Server Protocol's: the request was\ncancelled.\n\n**Example** `requestCancelled = ~32800`\n\n",
+     "page": "sig/JSON_RPC.md#val-requestcancelled"
+    },
+    {
+     "kind": "val",
+     "name": "toJson",
+     "spec": "val toJson : message -> Json.value",
+     "doc": "`toJson m` is `m` as a JSON object, with `\"jsonrpc\": \"2.0\"`.\n\n",
+     "page": "sig/JSON_RPC.md#val-tojson"
+    },
+    {
+     "kind": "val",
+     "name": "fromJson",
+     "spec": "val fromJson : Json.value -> read",
+     "doc": "`fromJson v` is the message `v` is, or the error that answers it:\n`invalidRequest`, with the request's id when it has one it could\nread.\n\n**Example** `fromJson (Json.decode \"{\\\"jsonrpc\\\":\\\"2.0\\\",\\\"method\\\":\\\"exit\\\"}\") = Message (Notification {method = \"exit\", params = NONE})`\n\n",
+     "page": "sig/JSON_RPC.md#val-fromjson"
+    },
+    {
+     "kind": "val",
+     "name": "decode",
+     "spec": "val decode : string -> read list",
+     "doc": "`decode s` is the messages of the text `s`, each read or answered as\n`fromJson` reads or answers it.\n\nThe text is one message, or a batch, an array of them; a text that is\nno JSON, or an empty batch, is one answer.\n\n",
+     "page": "sig/JSON_RPC.md#val-decode"
+    },
+    {
+     "kind": "val",
+     "name": "encode",
+     "spec": "val encode : message list -> string",
+     "doc": "`encode ms` is the messages as text: one alone, a batch as an array.\n\n**Example** `encode [Notification {method = \"exit\", params = NONE}] = \"{\\\"jsonrpc\\\":\\\"2.0\\\",\\\"method\\\":\\\"exit\\\"}\"`\n\n",
+     "page": "sig/JSON_RPC.md#val-encode"
+    },
+    {
+     "kind": "exception",
+     "name": "Unknown",
+     "spec": "exception Unknown",
+     "doc": "What a handler raises for a method it does not have.\n\n",
+     "page": "sig/JSON_RPC.md#exn-unknown"
+    },
+    {
+     "kind": "exception",
+     "name": "Failed",
+     "spec": "exception Failed of error",
+     "doc": "What a handler raises to answer with an error.\n\n",
+     "page": "sig/JSON_RPC.md#exn-failed"
+    },
+    {
+     "kind": "val",
+     "name": "answer",
+     "spec": "val answer : (string * Json.value option -> Json.value) * message -> message option",
+     "doc": "`answer (serve, m)` is what a server answers `m` with, calling\n`serve (method, params)`.\n\nFor a request it is the result of `serve`, an error when it raises\n`Failed`, and `methodNotFound` when it raises `Unknown`; for a\nnotification nothing, `serve` being called all the same; and nothing\nfor a response.\n\n",
+     "page": "sig/JSON_RPC.md#val-answer"
+    },
+    {
+     "kind": "val",
+     "name": "cancel",
+     "spec": "val cancel : id -> message",
+     "doc": "`cancel i` is the notification that asks the server to give up the\nrequest `i` (`$/cancelRequest`).\n\n**Example** `cancelled (cancel (Number 3)) = SOME (Number 3)`\n\n",
+     "page": "sig/JSON_RPC.md#val-cancel"
+    },
+    {
+     "kind": "val",
+     "name": "cancelled",
+     "spec": "val cancelled : message -> id option",
+     "doc": "`cancelled m` is the request `m` asks to cancel, if it is a\n`$/cancelRequest`.\n\n",
+     "page": "sig/JSON_RPC.md#val-cancelled"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Framing": "FRAMING",
+  "JsonRpc": "JSON_RPC"
+ }
+}

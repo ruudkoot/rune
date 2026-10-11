@@ -19,10 +19,14 @@
    declaration's running and the wait for a line with it off: an
    interrupt ends the declaration, which is reported and binds nothing, or
    what has been typed of one. *)
-structure Repl =
+structure ReplLoop =
 struct
   fun err s =
     (TextIO.flushOut TextIO.stdOut; ReplFront.freshLine (); TextIO.output (TextIO.stdErr, s); TextIO.flushOut TextIO.stdErr)
+
+  (* The frames the last exception that left the code the REPL ran went
+     through, innermost first (:bt) *)
+  val lastTrace : Runtime.frame list ref = ref []
 
   (* an error at a place, as the diagnostics show it (Diagnostic, with the
      excerpt where stderr is a terminal) *)
@@ -38,6 +42,19 @@ struct
              ^ (case cause of OS.SysErr (m, _) => m | c => General.exnMessage c) ^ "\n")
     | _ => err (ReplFront.paint "repl.exception" "uncaught exception" ^ " " ^ General.exnMessage e ^ "\n")
 
+  (* where an uncaught exception was raised, on a terminal: the innermost
+     frame of the trace, :bt the rest *)
+  fun whereRaised (e : exn) =
+    if not (!ReplFront.editing) then ()
+    else
+      case List.find (fn {file, ...} : Runtime.frame => file <> "") (!lastTrace) of
+        SOME {function, file, line, column} =>
+          err (ReplFront.paint "repl.ui" ((case e of SML90.Interrupt => "  interrupted in " | _ => "  raised in ")
+                                          ^ function ^ " at " ^ file ^ ":" ^ Int.toString line ^ ":"
+                                          ^ Int.toString column ^ (if List.length (!lastTrace) > 1 then " (:bt for the rest)" else ""))
+               ^ "\n")
+      | NONE => ()
+
   (* f () with the interrupt's mask on, and as it was after, which raises
      an interrupt that waited where the mask was off *)
   fun masked (f : unit -> 'a) : 'a =
@@ -49,6 +66,36 @@ struct
   fun unmasked (f : unit -> 'a) : 'a =
     ((ignore (Runtime.maskInterrupt false); f ()) before ignore (Runtime.maskInterrupt true))
     handle e => (ignore (Runtime.maskInterrupt true); raise e)
+
+
+  (* the entries of the session, the newest first, and whether each went
+     well (:history, :save); the file used last (:edit); the commands and
+     :reload, which ReplCommands puts here (src/main/repl-main.sml) *)
+  val entries : (string * bool) list ref = ref []
+  val lastUsed : string option ref = ref NONE
+  val commandHook : (string -> bool) ref = ref (fn _ => (err "rune-repl: no commands\n"; false))
+  val reloadHook : (string -> unit) ref = ref (fn _ => err "rune-repl: no :reload\n")
+
+  (* :time: what an entry took, compiling apart from running *)
+  val timing = ref false
+  val compiling = ref Time.zeroTime
+  val running = ref Time.zeroTime
+  fun timed (r : Time.time ref) (f : unit -> 'a) : 'a =
+    let val t0 = Time.now ()
+    in (f () before r := Time.+ (!r, Time.- (Time.now (), t0)))
+       handle e => (r := Time.+ (!r, Time.- (Time.now (), t0)); raise e)
+    end
+
+  (* run (), the code the REPL compiled, inside a handler of the REPL's own
+     whose raises record the frames they leave (RuneRuntime.raiseMark): what
+     escapes run is traced, and what run handles itself costs nothing more *)
+  fun runUser (run : unit -> unit) : unit =
+    let val prior = ref 0
+    in
+      lastTrace := [];
+      (prior := RuneRuntime.raiseMark ~1; run (); ignore (RuneRuntime.raiseMark (!prior)))
+      handle e => (ignore (RuneRuntime.raiseMark (!prior)); lastTrace := RuneRuntime.raiseTrace (); raise e)
+    end
 
   (* What a text is to the parser: declarations, more to read, or an error *)
   datatype parsed = Decs of Ast.dec list * Fixity.env | More | Wrong of Source.span * string
@@ -124,7 +171,7 @@ struct
               val () = TextIO.flushOut TextIO.stdOut
               (* compiled: an error is the declaration's, or the compiler's own *)
               val compiled =
-                SOME (ReplSession.compile (d, name, text, cached))
+                SOME (timed compiling (fn () => ReplSession.compile (d, name, text, cached)))
                 handle Error.CompileError (sp, msg) => (report (sp, msg); NONE)
                      | ReplSession.Reported => NONE
                      | Error.Bug msg => (err ("rune-repl: " ^ msg ^ "\n"); NONE)
@@ -134,15 +181,25 @@ struct
               case compiled of
                 NONE => false
               | SOME {run, delta, declared, bind} =>
-                  ((ReplFront.running (); unmasked run; ReplFront.freshLine ();
+                  ((ReplFront.running (); timed running (fn () => unmasked (fn () => runUser run)); ReplFront.freshLine ();
                     ReplSession.env := Env.plus (!ReplSession.env, delta);
                     bind ();
+                    (* where its names were bound, for :info and :edit *)
+                    (case d of
+                       first :: _ =>
+                         let val sp = Ast.spanOfDec first
+                         in ReplSession.noteDefined (delta, #file sp,
+                                                     case Source.findFile (#file sp) of
+                                                       SOME f => #1 (Source.lineCol (f, #start sp))
+                                                     | NONE => 0)
+                         end
+                     | [] => ());
                     (* what is not a value, in feedback normal and verbose *)
                     if !RuneCompiler.printDepth > 0 andalso not (!ReplSession.quiet)
                        andalso (!RuneCompiler.feedback = "normal" orelse !RuneCompiler.feedback = "verbose")
                     then (ReplFront.freshLine (); List.app (fn s => print (s ^ "\n")) declared) else ();
                     true)
-                   handle e => if stopping then raise e else (uncaught e; false))
+                   handle e => if stopping then raise e else (uncaught e; whereRaised e; false))
             end
           val ok = masked one
         in
@@ -155,6 +212,7 @@ struct
      compile ending it, the exception of one that raises going on *)
   fun use (file : string) : unit =
     let
+      val () = lastUsed := SOME file
       (* a file that cannot be read raises IO.Io, as Poly/ML's use does *)
       val text = #text (Source.readFile file)
       (* compiled, the file's lines are what the session keeps of it *)
@@ -237,11 +295,49 @@ struct
 
   (* true where the text was taken -- run, or reported wrong -- and the next
      prompt is the first; whether what it ran all went well beside *)
+  (* an entry's source: stdIn in the basic mode, whose transcripts have
+     always said so, and stdIn#k for the k-th entry on a terminal, so that a
+     trace tells entries apart *)
+  val entryCount = ref 0
+  fun entryName () = if !ReplFront.editing then "stdIn#" ^ Int.toString (!entryCount + 1) else "stdIn"
+
+  (* what :time says of an entry *)
+  fun ms (t : Time.time) = Real.fmt (StringCvt.FIX (SOME 1)) (Time.toReal t * 1000.0) ^ " ms"
+  fun report' (cpu : Timer.cpu_timer, s0 : Runtime.stats, w0 : Time.time) =
+    let
+      val s1 = Runtime.stats ()
+      val {usr, sys} = Timer.checkCPUTimer cpu
+      val kb = (#bytes s1 - #bytes s0) div 1024
+    in
+      err (ReplFront.paint "repl.timing"
+             ("  " ^ ms (Time.- (Time.now (), w0)) ^ " in all: compiling " ^ ms (!compiling) ^ ", running " ^ ms (!running)
+              ^ "; " ^ ms (Time.+ (usr, sys)) ^ " of CPU; " ^ Int.toString kb ^ " KB allocated, "
+              ^ Int.toString (#collections s1 - #collections s0) ^ " collections") ^ "\n")
+    end
+
   fun step (text : string, last : bool) : bool * bool =
-    case parse ("stdIn", text) of
-      Decs (decs, fx) => (ReplSession.fixity := fx; (true, run (decs, "stdIn", text, NONE, false)))
-    | More => (last, false)
-    | Wrong e => (report e; (true, false))
+    if CharVector.all Char.isSpace text then (true, true)
+    else if ReplFront.isCommand text then (true, !commandHook text)
+    else
+      let
+        val name = entryName ()
+        val () = (compiling := Time.zeroTime; running := Time.zeroTime)
+        val w0 = Time.now ()
+        val cpu = Timer.startCPUTimer ()
+        val s0 = Runtime.stats ()
+        val result =
+          case parse (name, text) of
+            Decs (decs, fx) => (ReplSession.fixity := fx; (true, run (decs, name, text, NONE, false)))
+          | More => (last, false)
+          | Wrong e => (report e; (true, false))
+      in
+        if #1 result then
+          (entryCount := !entryCount + 1;
+           entries := (text, #2 result) :: !entries;
+           if !timing then report' (cpu, s0, w0) else ())
+        else ();
+        result
+      end
 
   (* The basic mode's loop: a prompt, lines until a declaration ends, the
      declarations run; on to the end of the input. The lines are scanned as
@@ -257,6 +353,9 @@ struct
            NONE => (print "\n"; uncaught SML90.Interrupt; read ([], ReplScan.new (), !RuneCompiler.prompt1))
          | SOME NONE => if null lines then print "\n" else ignore (step (String.concat (List.rev lines) ^ "\n;", true))
          | SOME (SOME line) =>
+             if null lines andalso ReplFront.isCommand line then
+               (ignore (!commandHook line); read ([], ReplScan.new (), !RuneCompiler.prompt1))
+             else
              let
                val () = ReplScan.string (scan, line)
                val lines = line :: lines
@@ -284,7 +383,7 @@ struct
         (if CharVector.all Char.isSpace text then ()
          else
            let
-             val () = ReplFront.hold ()
+             val () = if ReplFront.isCommand text then () else ReplFront.hold ()
              val (_, ok) = step (text, true)
            in
              ReplComplete.noteUses text;
@@ -370,6 +469,8 @@ struct
                   | _ => ())
                ["val use = Compiler.use;", basisExceptions];
       ReplSession.quiet := false;
+      (* the Basis's documentation, for :doc, in the image *)
+      ReplDoc.load (OS.Path.concat (lib, "../docs/generated/basis/members.json"));
       (* --make-image IMAGE: the REPL as it is now, written to IMAGE; the
          world that writes it stops, and one started from it (runevm
          --restore IMAGE FILE...) goes on here with its own arguments

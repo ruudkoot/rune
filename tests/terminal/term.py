@@ -34,6 +34,7 @@ since tmux takes a lone `;` among its arguments for its own separator.
 """
 import os
 import re
+import signal
 import subprocess
 import sys
 import time
@@ -141,10 +142,19 @@ def run(path, subst):
                         raise Failure("the program has not ended after %g s" % seconds)
                     time.sleep(0.02)
                 # tmux may say the pane is dead a moment before it has the
-                # status: wait for it a little
+                # status: wait for it a little. Here (tmux 3.4 on WSL 2) the
+                # server sometimes misses the SIGCHLD of the pane's process
+                # and leaves it a zombie, unreaped (4 runs in 80 of a REPL
+                # ending, 2026-10-10); a SIGCHLD sent to the server makes it
+                # reap the process and take the status
+                settled = time.monotonic() + 5
+                nudge = time.monotonic() + 0.5
                 got = pane("pane_dead_status")
-                while got == "" and time.monotonic() < deadline + 2:
+                while got == "" and time.monotonic() < settled:
                     time.sleep(0.02)
+                    if time.monotonic() > nudge:
+                        os.kill(int(tmux("display-message", "-p", "#{pid}").strip()), signal.SIGCHLD)
+                        nudge = time.monotonic() + 0.5
                     got = pane("pane_dead_status")
                 if status is not None and got != status:
                     raise Failure("the program ended with %s, not %s" % (got or "no status", status))

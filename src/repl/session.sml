@@ -34,6 +34,20 @@ struct
              (fn key => if key = "echo on" then echoing ()
                         else String.isPrefix "p " key andalso RuneShow.hasPrinter (String.extract (key, 2, NONE)))
 
+  (* Where the session's top-level names were bound, by kind and name ("v x",
+     "t t", "s S", "g SIG", "f F"): the file and the line of the declaration,
+     and for the Basis's the file of its unit, line 0 (:info, :edit) *)
+  val defined : (string * int) StringMap.map ref = ref StringMap.empty
+
+  fun noteDefined (delta : Env.env, file : string, line : int) : unit =
+    let
+      fun note kind n = defined := StringMap.insert (!defined, kind ^ " " ^ n, (file, line))
+    in
+      StringMap.appi (fn (n, _) => note "v" n) (Env.vals delta);
+      StringMap.appi (fn (n, _) => note "t" n) (Env.tys delta);
+      StringMap.appi (fn (n, _) => note "s" n) (Env.strs delta)
+    end
+
   fun readBytes (path : string) : string =
     let val inp = BinIO.openIn path
     in Byte.bytesToString (BinIO.inputAll inp) before BinIO.closeIn inp end
@@ -71,6 +85,7 @@ struct
                 env := Env.plus (!env, #delta l);
                 fixity := Fixity.extend (!fixity, #directives l);
                 UnitBasis.bind l;
+                noteDefined (#delta l, "lib/basis/" ^ OS.Path.file name, 0);
                 load rest
               end
         | load [] = ()
@@ -283,5 +298,41 @@ struct
            | NONE => ()
        in Source.unregister echoName; result (loaded, Runtime.link (Byte.stringToBytes bytes)) end)
       handle e => (UnitBasis.undo start; Source.unregister echoName; raise e)
+    end
+end
+
+(* What the REPL's commands ask of the session without running anything
+   (src/repl/commands.sml): the type of an expression, elaborated as
+   `val it = (exp);` and then undone, as a declaration that fails is. *)
+structure ReplQuery =
+struct
+  fun typeOf (text : string) : Types.ty =
+    let
+      (* the expression lexed by itself, so that an error points into it,
+         behind the tokens of `val it =` *)
+      val file = Source.fromString ("stdIn", text)
+      val () = Source.register file
+      val toks = Lexer.tokenize file
+      val n = Vector.length toks
+      val at = {file = "stdIn", start = 0, stop = 0}
+      val stop = #2 (Vector.sub (toks, n - 1))
+      val whole = Vector.concat [Vector.fromList [(Token.VAL, at), (Token.ID "it", at), (Token.EQUALS, at)],
+                                 VectorSlice.vector (VectorSlice.slice (toks, 0, SOME (n - 1))),
+                                 Vector.fromList [(Token.SEMI, stop), (Token.EOF, stop)]]
+      val (decs, _) = Parser.parseTokensWith (whole, !ReplSession.fixity)
+      val start = UnitBasis.begin (!ReplSession.env, !ReplSession.fixity)
+      val snap = Elaborate.snapshot ()
+      val here = ref (!ReplSession.env)
+      fun undo () = (Elaborate.restore snap; UnitBasis.undo start; Error.warnings := [])
+    in
+      (let
+         val () = Elaborate.allowPrim := false
+         val () = Elaborate.elabTop (here, decs)
+         val () = Elaborate.finish ()
+         val t = case StringMap.find (Env.vals (!Elaborate.lastDelta), "it") of
+                   SOME (Env.Val {scheme, ...}) => scheme
+                 | _ => raise Fail "the expression has no type"
+       in undo (); t end)
+      handle e => (undo (); raise e)
     end
 end

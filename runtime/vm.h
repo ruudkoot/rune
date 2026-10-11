@@ -442,6 +442,15 @@ typedef struct VM {
     volatile int interrupt;
     int interrupt_mask;
     Obj *interrupt_exn;
+    /* The raises that leave the code a REPL runs, for its :bt (the REPL
+       roadmap's D22, its first stage): raise_mark is the number of
+       handlers there were when the REPL marked its own (rt_raise_mark), 0
+       for none; a raise that takes that handler records the frames it
+       leaves, innermost first, by function and pc (rt_raise_trace). An
+       image keeps none of it. */
+    size_t raise_mark;
+    uint32_t raise_n;
+    struct { uint32_t func, pc; } raise_frames[64];
 } VM;
 
 /* Whether p points into the room objects are made in (alloc). Young and

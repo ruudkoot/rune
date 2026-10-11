@@ -1,0 +1,1448 @@
+{
+ "signatures": {
+  "ARB": {
+   "doc": "Arbitraries: the generator, the printer, the observer and the equality of\na type, as one record -- what QuickCheck finds by a type class and a\nprogram here passes by name (docs/plans/quickcheck.md, D4).\n\n",
+   "page": "sig/ARB.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "arb",
+     "spec": "type 'a arb = {gen : 'a Gen.gen, show : 'a -> string, co : 'a -> Word64.word,\n               eq : ('a * 'a -> bool) option}",
+     "doc": "The record of a type: `eq` is `NONE` where the type has no equality of\nits own and none is given, and is then the equality of what `show`\nshows.\n\n",
+     "page": "sig/ARB.md#type-arb"
+    },
+    {
+     "kind": "val",
+     "name": "equal",
+     "spec": "val equal : 'a arb -> 'a * 'a -> bool",
+     "doc": "`equal a (x, y)` is the equality of `a`: its `eq`, or the equality of\nwhat its `show` shows.\n\n",
+     "page": "sig/ARB.md#val-equal"
+    },
+    {
+     "kind": "val",
+     "name": "int",
+     "spec": "val int : int arb",
+     "doc": "`int` is the arbitrary of `Int.int`.\n\n",
+     "page": "sig/ARB.md#val-int"
+    },
+    {
+     "kind": "val",
+     "name": "word",
+     "spec": "val word : word arb",
+     "doc": "`word` is the arbitrary of `Word.word`.\n\n",
+     "page": "sig/ARB.md#val-word"
+    },
+    {
+     "kind": "val",
+     "name": "word64",
+     "spec": "val word64 : Word64.word arb",
+     "doc": "`word64` is the arbitrary of `Word64.word`.\n\n",
+     "page": "sig/ARB.md#val-word64"
+    },
+    {
+     "kind": "val",
+     "name": "char",
+     "spec": "val char : char arb",
+     "doc": "`char` is the arbitrary of `Char.char`.\n\n",
+     "page": "sig/ARB.md#val-char"
+    },
+    {
+     "kind": "val",
+     "name": "string",
+     "spec": "val string : string arb",
+     "doc": "`string` is the arbitrary of `String.string`.\n\n",
+     "page": "sig/ARB.md#val-string"
+    },
+    {
+     "kind": "val",
+     "name": "real",
+     "spec": "val real : real arb",
+     "doc": "`real` is the arbitrary of `Real.real`, whose equality is identity.\n\nIdentity is the same number, with the zeros told apart and every NaN\nequal to every other (docs/plans/quickcheck.md, D6).\n\n",
+     "page": "sig/ARB.md#val-real"
+    },
+    {
+     "kind": "val",
+     "name": "bool",
+     "spec": "val bool : bool arb",
+     "doc": "`bool` is the arbitrary of `bool`.\n\n",
+     "page": "sig/ARB.md#val-bool"
+    },
+    {
+     "kind": "val",
+     "name": "unit",
+     "spec": "val unit : unit arb",
+     "doc": "`unit` is the arbitrary of `unit`.\n\n",
+     "page": "sig/ARB.md#val-unit"
+    },
+    {
+     "kind": "val",
+     "name": "order",
+     "spec": "val order : order arb",
+     "doc": "`order` is the arbitrary of `order`.\n\n",
+     "page": "sig/ARB.md#val-order"
+    },
+    {
+     "kind": "val",
+     "name": "option",
+     "spec": "val option : 'a arb -> 'a option arb",
+     "doc": "`option a` is the arbitrary of options of `a`.\n\n",
+     "page": "sig/ARB.md#val-option"
+    },
+    {
+     "kind": "val",
+     "name": "list",
+     "spec": "val list : 'a arb -> 'a list arb",
+     "doc": "`list a` is the arbitrary of lists of `a`.\n\n",
+     "page": "sig/ARB.md#val-list"
+    },
+    {
+     "kind": "val",
+     "name": "vector",
+     "spec": "val vector : 'a arb -> 'a vector arb",
+     "doc": "`vector a` is the arbitrary of vectors of `a`.\n\n",
+     "page": "sig/ARB.md#val-vector"
+    },
+    {
+     "kind": "val",
+     "name": "array",
+     "spec": "val array : 'a arb -> 'a array arb",
+     "doc": "`array a` is the arbitrary of arrays of `a`, compared by their elements:\na fresh array at every draw.\n\n",
+     "page": "sig/ARB.md#val-array"
+    },
+    {
+     "kind": "val",
+     "name": "intInf",
+     "spec": "val intInf : IntInf.int arb",
+     "doc": "`intInf` is the arbitrary of `IntInf.int`, drawn by `Gen.intInf`.\n\n",
+     "page": "sig/ARB.md#val-intinf"
+    },
+    {
+     "kind": "val",
+     "name": "reference",
+     "spec": "val reference : 'a arb -> 'a ref arb",
+     "doc": "`reference a` is the arbitrary of references to `a`: a new one at every\ndraw, and equal only to itself, as `=` on references is.\n\n",
+     "page": "sig/ARB.md#val-reference"
+    },
+    {
+     "kind": "val",
+     "name": "enum",
+     "spec": "val enum : (''a * string) list -> ''a arb",
+     "doc": "`enum xs` is the arbitrary of the values of `xs`, each shown as its name:\nthe arbitrary of a datatype with no values in its constructors. The first\nis the simplest.\n\n**Raises** `Empty` if `xs` is empty.\n\n**Example** `#show (enum [(LESS, \"LESS\"), (GREATER, \"GREATER\")]) GREATER = \"GREATER\"`\n\n",
+     "page": "sig/ARB.md#val-enum"
+    },
+    {
+     "kind": "val",
+     "name": "vectorSlice",
+     "spec": "val vectorSlice : 'a arb -> 'a VectorSlice.slice arb",
+     "doc": "`vectorSlice a` is the arbitrary of slices of vectors of `a`: a vector,\nand a start and a length within it.\n\nTwo slices are equal when their vectors have equal elements and their\nstarts and lengths are the same.\n\n",
+     "page": "sig/ARB.md#val-vectorslice"
+    },
+    {
+     "kind": "val",
+     "name": "arraySlice",
+     "spec": "val arraySlice : 'a arb -> 'a ArraySlice.slice arb",
+     "doc": "`arraySlice a` is the arbitrary of slices of arrays of `a`, as\n`vectorSlice` draws them, over a fresh array at every draw.\n\n",
+     "page": "sig/ARB.md#val-arrayslice"
+    },
+    {
+     "kind": "val",
+     "name": "array2",
+     "spec": "val array2 : 'a arb -> 'a Array2.array arb",
+     "doc": "`array2 a` is the arbitrary of two-dimensional arrays of `a`.\n\nThe numbers of rows and of columns are each drawn as a length is, at the\nsquare root of the size; an array with no rows has no columns. Two\narrays are equal when they have the same dimensions and equal elements.\n\n",
+     "page": "sig/ARB.md#val-array2"
+    },
+    {
+     "kind": "val",
+     "name": "exn",
+     "spec": "val exn : exn arb",
+     "doc": "`exn` is the arbitrary of exceptions: those of the Basis Library that\ncarry no value, `Gen.Generated`, and `Fail` with any message.\n\nTwo exceptions are equal when they have the same name, and, for `Fail`,\nthe same message.\n\n",
+     "page": "sig/ARB.md#val-exn"
+    },
+    {
+     "kind": "val",
+     "name": "pair",
+     "spec": "val pair : 'a arb * 'b arb -> ('a * 'b) arb",
+     "doc": "`pair (a, b)` is the arbitrary of pairs.\n\n",
+     "page": "sig/ARB.md#val-pair"
+    },
+    {
+     "kind": "val",
+     "name": "triple",
+     "spec": "val triple : 'a arb * 'b arb * 'c arb -> ('a * 'b * 'c) arb",
+     "doc": "`triple (a, b, c)` is the arbitrary of triples.\n\n",
+     "page": "sig/ARB.md#val-triple"
+    },
+    {
+     "kind": "val",
+     "name": "function",
+     "spec": "val function : 'a arb * 'b arb -> ('a -> 'b) arb",
+     "doc": "`function (a, b)` is the arbitrary of functions from `a` to `b`, of every kind of D5.\n\nA function is pure, raises `Gen.Generated` at some arguments, or\nobserves its effects, which a law compares (docs/plans/quickcheck.md,\nD5 C). A function has no equality and is shown as `fn`; the report\nlists the calls of a counterexample's functions.\n\n",
+     "page": "sig/ARB.md#val-function"
+    },
+    {
+     "kind": "val",
+     "name": "pureFunction",
+     "spec": "val pureFunction : 'a arb * 'b arb -> ('a -> 'b) arb",
+     "doc": "`pureFunction (a, b)` is the arbitrary of pure, total functions from `a` to `b`.\n\nIt is for a law that says its function has no effects (D5, class A).\n\n",
+     "page": "sig/ARB.md#val-purefunction"
+    }
+   ]
+  },
+  "ARB_OF": {
+   "doc": "The arbitrary of one type of a structure: what the functors of the\nlibrary make of a structure of the Basis Library, and what the structures\n`Int8Arb`, `Word8Arb`, `CharArraySliceArb` and the rest are.\n\nThe instance of the type of a structure of the Basis Library is the `arb`\nof the structure of the same name with Arb after it: `Int8Arb.arb` for\n`Int8.int` (docs/plans/quickcheck.md, D4 and M6).\n\n",
+   "page": "sig/ARB_OF.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "t",
+     "spec": "type t",
+     "doc": "The type.\n\n",
+     "page": "sig/ARB_OF.md#type-t"
+    },
+    {
+     "kind": "val",
+     "name": "arb",
+     "spec": "val arb : t Arb.arb",
+     "doc": "The arbitrary of `t`.\n\n",
+     "page": "sig/ARB_OF.md#val-arb"
+    }
+   ]
+  },
+  "BASIS_DATA_ARB": {
+   "doc": "The arbitraries of the small datatypes and readers of the Basis Library.\n\n",
+   "page": "sig/BASIS_DATA_ARB.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "bufferMode",
+     "spec": "val bufferMode : IO.buffer_mode Arb.arb",
+     "doc": "The arbitrary of buffer modes, `IO.NO_BUF` the simplest.\n\n",
+     "page": "sig/BASIS_DATA_ARB.md#val-buffermode"
+    },
+    {
+     "kind": "val",
+     "name": "radix",
+     "spec": "val radix : StringCvt.radix Arb.arb",
+     "doc": "The arbitrary of radixes, `StringCvt.BIN` the simplest.\n\n",
+     "page": "sig/BASIS_DATA_ARB.md#val-radix"
+    },
+    {
+     "kind": "val",
+     "name": "traversal",
+     "spec": "val traversal : Array2.traversal Arb.arb",
+     "doc": "The arbitrary of the orders in which `Array2` traverses an array,\n`Array2.RowMajor` the simplest.\n\n",
+     "page": "sig/BASIS_DATA_ARB.md#val-traversal"
+    },
+    {
+     "kind": "val",
+     "name": "reader",
+     "spec": "val reader : (char, int) StringCvt.reader Arb.arb",
+     "doc": "The arbitrary of readers of characters over a drawn string, whose stream is a position in it.\n\nThe string is drawn as `Arb.string` draws one. From `i`, the reader gives\nthe character at `i` and the position `i + 1`, and `NONE` at the end or\noutside the string.\n\n",
+     "page": "sig/BASIS_DATA_ARB.md#val-reader"
+    }
+   ]
+  },
+  "CHECK": {
+   "doc": "Running properties: many cases, each from its own seed at a size that\ngrows over the run, and a report.\n\nThe seed of a run is a hash of the property's name unless a seed is\ngiven, so that a run is the same on every machine, and a failure is\nreported with a token that runs its case again.\n\nA failing case is shrunk before it is reported. The shrinker changes the\nwords the case read: it deletes, joins and swaps the elements of lists,\nmakes generated functions constants, and lowers words towards 0, the\nsimplest. It keeps a change only when the case still fails with the same\nclass and has become simpler (fewer words read, or smaller ones), so that\na `Div` never turns into an `Overflow` and the shrinking ends.\n\n",
+   "page": "sig/CHECK.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "config",
+     "spec": "type config = {seed : Word64.word option, tests : int, maxSize : int, maxDiscards : int, maxShrinks : int,\n               exhaustiveBelow : int, smallScope : int}",
+     "doc": "How a property is run.\n\n`seed` is the seed of the run (`NONE`: a hash of the name), `tests` the\nnumber of cases that must pass, `maxSize` the largest size,\n`maxDiscards` the number of discarded cases after which the run gives\nup, `maxShrinks` the number of runs the shrinker may make, and\n`exhaustiveBelow` the most cases a property may have for every one of\nthem to be run instead (0: never), and `smallScope` the number of cases\nof the small scope that are run before the random ones (0: none).\n\nA property has finitely many cases when every word its case reads has\nfinitely many values (a `bool`, a `char`, an `Int8.int`, a choice among\na list, and tuples of these), and no length: exhaustive mode then runs\nthem all, at size `maxSize`, simplest first, and a failure found is the\nsimplest there is, with no shrinking.\n\nOtherwise the small scope is run first: the cases in which every word\nread is 0, 1 or 2 (integers 0, \\~1 and 1, lengths up to 2, the first\ncharacters, both booleans), simplest first, as many as `smallScope`\nallows. A failure there is reported as exhaustive mode reports one; the\ncases that pass are not counted in `tests`. A property whose values need\neach other's bounds (an index one past the end of a string drawn beside\nit) fails there where random cases rarely meet it.\n\n",
+     "page": "sig/CHECK.md#type-config"
+    },
+    {
+     "kind": "val",
+     "name": "default",
+     "spec": "val default : config",
+     "doc": "100 cases at sizes up to 100, from a seed that is a hash of the name.\n\nA run gives up after 1000 discarded cases and shrinks in at most 5000\nruns. It runs every case of a property with at most 65536 of them\n(docs/plans/quickcheck.md, P9), and otherwise first 100 cases of the\nsmall scope (P13).\n\n",
+     "page": "sig/CHECK.md#val-default"
+    },
+    {
+     "kind": "datatype",
+     "name": "result",
+     "spec": "datatype result =\n    Passed of {tests : int, discarded : int, exhaustive : bool, labels : (string * int) list,\n               short : (string * real * real) list}\n  | Failed of {test : int, size : int, class : string, message : string, counterexample : string list,\n               calls : string list list, shrinks : int, replay : string}\n  | GaveUp of {tests : int, discarded : int}",
+     "doc": "What a run found.\n\n`Failed` has the shrunk case: `counterexample` is what it drew, as\nshown, and `calls` the calls of each of its generated functions, with\n`shrinks` the runs that the shrinking took. `replay` is the token of the\ncase as it was drawn. `Passed`'s `exhaustive` says that its cases were\nevery case there is.\n\n",
+     "page": "sig/CHECK.md#type-result"
+    },
+    {
+     "kind": "val",
+     "name": "check",
+     "spec": "val check : config -> string -> Prop.prop -> result",
+     "doc": "`check c name p` runs `p` as `c` says.\n\n",
+     "page": "sig/CHECK.md#val-check"
+    },
+    {
+     "kind": "val",
+     "name": "replay",
+     "spec": "val replay : string -> Prop.prop -> Prop.result option",
+     "doc": "`replay token p` runs the case of a `Failed` result's `replay` token again, shrunk as the run shrank it.\n\nIt is the case's verdict and what it drew, or `NONE` when the token is\nnot one.\n\n",
+     "page": "sig/CHECK.md#val-replay"
+    },
+    {
+     "kind": "val",
+     "name": "report",
+     "spec": "val report : string -> result -> string",
+     "doc": "`report name r` is the report of a run: a first line `PASS name` or\n`FAIL name`, and what the run found.\n\n",
+     "page": "sig/CHECK.md#val-report"
+    },
+    {
+     "kind": "val",
+     "name": "passed",
+     "spec": "val passed : result -> bool",
+     "doc": "`passed r` is `true` for a run that passed and had the coverage it asked\nfor.\n\n",
+     "page": "sig/CHECK.md#val-passed"
+    },
+    {
+     "kind": "val",
+     "name": "main",
+     "spec": "val main : (string * Prop.prop) list -> unit",
+     "doc": "`main ps` runs each named property with `default`, prints its report,\nand ends the program with failure if one did not pass.\n\n",
+     "page": "sig/CHECK.md#val-main"
+    },
+    {
+     "kind": "val",
+     "name": "laws",
+     "spec": "val laws : (string * (unit -> Prop.prop)) list -> unit",
+     "doc": "`laws ls` runs the laws of a program of `runedoc --laws`, each named, and ends the program with failure if one did not pass.\n\nBefore each law it prints `LAW name`, so that a run a watchdog stops\nnames the law it was in, and after it the law's report. The\nenvironment chooses how they run (docs/plans/quickcheck.md, D9 and\nD13): `RUNE_PROPERTY_DEEP` runs 10000 cases for each seed from 1 to\n1000 until one fails; `RUNE_PROPERTY_ONLY` runs the law of that name\nalone; `RUNE_PROPERTY_AFTER` runs the laws after the one of that name,\nwhere a run that was stopped goes on; `RUNE_PROPERTY_REPLAY` runs the\ncase of that replay token, shrunk, and prints it. The last line counts\nthe laws that passed and failed.\n\n",
+     "page": "sig/CHECK.md#val-laws"
+    }
+   ]
+  },
+  "CO": {
+   "doc": "Observers: what a generated function sees of its argument (QuickCheck's\nCoArbitrary, reduced to a hash). Two arguments with the same observation\nget the same result from a generated function.\n\n",
+   "page": "sig/CO.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "co",
+     "spec": "type 'a co = 'a -> Word64.word",
+     "doc": "An observer of values of type `'a`: a 64-bit word for each.\n\n",
+     "page": "sig/CO.md#type-co"
+    },
+    {
+     "kind": "val",
+     "name": "int",
+     "spec": "val int : int co",
+     "doc": "`int` observes an integer: different integers are told apart.\n\n",
+     "page": "sig/CO.md#val-int"
+    },
+    {
+     "kind": "val",
+     "name": "word",
+     "spec": "val word : word co",
+     "doc": "`word` observes a word.\n\n",
+     "page": "sig/CO.md#val-word"
+    },
+    {
+     "kind": "val",
+     "name": "word64",
+     "spec": "val word64 : Word64.word co",
+     "doc": "`word64` observes a 64-bit word.\n\n",
+     "page": "sig/CO.md#val-word64"
+    },
+    {
+     "kind": "val",
+     "name": "char",
+     "spec": "val char : char co",
+     "doc": "`char` observes a character.\n\n**Example** `char #\"a\" <> char #\"b\"`\n\n",
+     "page": "sig/CO.md#val-char"
+    },
+    {
+     "kind": "val",
+     "name": "bool",
+     "spec": "val bool : bool co",
+     "doc": "`bool` observes a boolean.\n\n",
+     "page": "sig/CO.md#val-bool"
+    },
+    {
+     "kind": "val",
+     "name": "unit",
+     "spec": "val unit : unit co",
+     "doc": "`unit` observes `()`.\n\n",
+     "page": "sig/CO.md#val-unit"
+    },
+    {
+     "kind": "val",
+     "name": "order",
+     "spec": "val order : order co",
+     "doc": "`order` observes an order.\n\n",
+     "page": "sig/CO.md#val-order"
+    },
+    {
+     "kind": "val",
+     "name": "string",
+     "spec": "val string : string co",
+     "doc": "`string` observes a string, by a hash of its characters.\n\n",
+     "page": "sig/CO.md#val-string"
+    },
+    {
+     "kind": "val",
+     "name": "real",
+     "spec": "val real : real co",
+     "doc": "`real` observes a real by its bits: `0.0` and `~0.0` are told apart,\nand so are NaNs of different bits.\n\n",
+     "page": "sig/CO.md#val-real"
+    },
+    {
+     "kind": "val",
+     "name": "option",
+     "spec": "val option : 'a co -> 'a option co",
+     "doc": "`option c` observes an option, and what it holds by `c`.\n\n",
+     "page": "sig/CO.md#val-option"
+    },
+    {
+     "kind": "val",
+     "name": "list",
+     "spec": "val list : 'a co -> 'a list co",
+     "doc": "`list c` observes a list: its length and every element by `c`.\n\n",
+     "page": "sig/CO.md#val-list"
+    },
+    {
+     "kind": "val",
+     "name": "pair",
+     "spec": "val pair : 'a co * 'b co -> ('a * 'b) co",
+     "doc": "`pair (c, d)` observes a pair by its components.\n\n",
+     "page": "sig/CO.md#val-pair"
+    },
+    {
+     "kind": "val",
+     "name": "triple",
+     "spec": "val triple : 'a co * 'b co * 'c co -> ('a * 'b * 'c) co",
+     "doc": "`triple (c, d, e)` observes a triple by its components.\n\n",
+     "page": "sig/CO.md#val-triple"
+    }
+   ]
+  },
+  "DATE_ARB": {
+   "doc": "The arbitraries of `Date.date`, of its months, weekdays and record of\nfields, by the generator principle P12 (docs/plans/quickcheck.md).\n\nA date is made by `Date.date` from fields in range: a year from 1900 to\n2200 (the years the specification asks for), any month, a day from 1 to\n31, an hour, a minute and a second in range, and the local zone or an\noffset within a day. The record of fields is drawn around those ranges,\nwidened on each side by their own width, so that fields out of range and\non its edges are drawn as often as fields in it; its year is any `int`.\n\n",
+   "page": "sig/DATE_ARB.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "t",
+     "spec": "type t = Date.date",
+     "doc": "The type of dates.\n\n",
+     "page": "sig/DATE_ARB.md#type-t"
+    },
+    {
+     "kind": "val",
+     "name": "arb",
+     "spec": "val arb : Date.date Arb.arb",
+     "doc": "The arbitrary of dates. Two dates are equal when `Date.compare` says\nso and their offsets are the same.\n\n",
+     "page": "sig/DATE_ARB.md#val-arb"
+    },
+    {
+     "kind": "val",
+     "name": "month",
+     "spec": "val month : Date.month Arb.arb",
+     "doc": "The arbitrary of months, `Date.Jan` the simplest.\n\n",
+     "page": "sig/DATE_ARB.md#val-month"
+    },
+    {
+     "kind": "val",
+     "name": "weekday",
+     "spec": "val weekday : Date.weekday Arb.arb",
+     "doc": "The arbitrary of weekdays, `Date.Mon` the simplest.\n\n",
+     "page": "sig/DATE_ARB.md#val-weekday"
+    },
+    {
+     "kind": "val",
+     "name": "fields",
+     "spec": "val fields : {year : int, month : Date.month, day : int, hour : int, minute : int, second : int,\n              offset : Time.time option} Arb.arb",
+     "doc": "The arbitrary of the records of fields that `Date.date` takes.\n\n",
+     "page": "sig/DATE_ARB.md#val-fields"
+    }
+   ]
+  },
+  "GEN": {
+   "doc": "Generators: values drawn from the source of a case of a property.\n\nA generator reads the nodes of its own part of an implicit tree of random\nwords, so that the parts of a value never draw from each other: that is\nwhat lets the shrinker change one part and leave the others be\n(docs/plans/quickcheck.md, D3). How a word becomes a value follows the\ngenerator principles of that roadmap: integers are small, on an edge, or\nanywhere in their range, a third each; a list's length is up to the size,\noften 0 or 1. The size grows from 0 over the cases of a run.\n\n",
+   "page": "sig/GEN.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "gen",
+     "spec": "type 'a gen",
+     "doc": "A generator of values of type `'a`.\n\n",
+     "page": "sig/GEN.md#type-gen"
+    },
+    {
+     "kind": "val",
+     "name": "sample",
+     "spec": "val sample : 'a gen -> Word64.word -> int -> 'a",
+     "doc": "`sample g seed size` is the value `g` draws from the source of `seed`\nat `size`: the same value every time.\n\n**Example** `sample (list int) 0w1 0 = []`\n\n",
+     "page": "sig/GEN.md#val-sample"
+    },
+    {
+     "kind": "val",
+     "name": "draw",
+     "spec": "val draw : 'a gen -> PropertySource.source * PropertySource.position -> 'a",
+     "doc": "`draw g (source, address)` is the value of `g` read at `address` of\n`source`: what the other structures of the library run a generator\nwith.\n\n",
+     "page": "sig/GEN.md#val-draw"
+    },
+    {
+     "kind": "val",
+     "name": "return",
+     "spec": "val return : 'a -> 'a gen",
+     "doc": "`return x` always draws `x`.\n\n**Example** `sample (return 3) 0w0 10 = 3`\n\n",
+     "page": "sig/GEN.md#val-return"
+    },
+    {
+     "kind": "val",
+     "name": "map",
+     "spec": "val map : ('a -> 'b) -> 'a gen -> 'b gen",
+     "doc": "`map f g` draws `f x` for the `x` that `g` draws.\n\n",
+     "page": "sig/GEN.md#val-map"
+    },
+    {
+     "kind": "val",
+     "name": "map2",
+     "spec": "val map2 : ('a * 'b -> 'c) -> 'a gen * 'b gen -> 'c gen",
+     "doc": "`map2 f (g, h)` draws `f (x, y)` for the `x` and `y` that `g` and `h`\ndraw from their own parts.\n\n",
+     "page": "sig/GEN.md#val-map2"
+    },
+    {
+     "kind": "val",
+     "name": "bind",
+     "spec": "val bind : 'a gen -> ('a -> 'b gen) -> 'b gen",
+     "doc": "`bind g f` draws `x` from `g`, and then from `f x` in a part of its own.\n\n",
+     "page": "sig/GEN.md#val-bind"
+    },
+    {
+     "kind": "val",
+     "name": "pair",
+     "spec": "val pair : 'a gen * 'b gen -> ('a * 'b) gen",
+     "doc": "`pair (g, h)` draws a pair, each component from its own part.\n\n",
+     "page": "sig/GEN.md#val-pair"
+    },
+    {
+     "kind": "val",
+     "name": "triple",
+     "spec": "val triple : 'a gen * 'b gen * 'c gen -> ('a * 'b * 'c) gen",
+     "doc": "`triple (g, h, k)` draws a triple, each component from its own part.\n\n",
+     "page": "sig/GEN.md#val-triple"
+    },
+    {
+     "kind": "val",
+     "name": "sized",
+     "spec": "val sized : (int -> 'a gen) -> 'a gen",
+     "doc": "`sized f` is the generator `f n` for the size `n` of the case.\n\n",
+     "page": "sig/GEN.md#val-sized"
+    },
+    {
+     "kind": "val",
+     "name": "resize",
+     "spec": "val resize : int -> 'a gen -> 'a gen",
+     "doc": "`resize n g` is `g` at the size `n`.\n\n",
+     "page": "sig/GEN.md#val-resize"
+    },
+    {
+     "kind": "val",
+     "name": "oneOf",
+     "spec": "val oneOf : 'a gen list -> 'a gen",
+     "doc": "`oneOf gs` draws from one of `gs`, each as likely; the first is the\nsimplest.\n\n**Raises** `Empty` if `gs` is empty.\n\n",
+     "page": "sig/GEN.md#val-oneof"
+    },
+    {
+     "kind": "val",
+     "name": "frequency",
+     "spec": "val frequency : (int * 'a gen) list -> 'a gen",
+     "doc": "`frequency ws` draws from one of the generators of `ws`, each as likely as\nits weight says; the first is the simplest.\n\n**Raises** `Empty` if no weight is positive.\n\n",
+     "page": "sig/GEN.md#val-frequency"
+    },
+    {
+     "kind": "val",
+     "name": "elements",
+     "spec": "val elements : 'a vector -> 'a gen",
+     "doc": "`elements v` draws an element of `v`, each as likely; the first is the\nsimplest.\n\n**Raises** `Empty` if `v` is empty.\n\n**Example** `sample (elements (Vector.fromList [7])) 0w5 3 = 7`\n\n",
+     "page": "sig/GEN.md#val-elements"
+    },
+    {
+     "kind": "val",
+     "name": "filter",
+     "spec": "val filter : ('a -> bool) -> 'a gen -> 'a gen",
+     "doc": "`filter p g` draws from `g` until `p` holds, a hundred times at most,\nand then gives the case up: it is discarded, as a condition that does\nnot hold discards it.\n\n",
+     "page": "sig/GEN.md#val-filter"
+    },
+    {
+     "kind": "exception",
+     "name": "Discarded",
+     "spec": "exception Discarded",
+     "doc": "`Discarded` is raised by a generator that gives its case up.\n\nThe runner counts the case as discarded. It is the library's own, raised\nonly while a case is drawn, never through the code under test.\n\n",
+     "page": "sig/GEN.md#exn-discarded"
+    },
+    {
+     "kind": "val",
+     "name": "fix",
+     "spec": "val fix : ('a gen -> 'a gen) -> 'a gen",
+     "doc": "`fix f` is the generator `g` for which `g = f g`: a recursive generator.\n`f` must make its recursive draws smaller, by `resize`, so that they\nend.\n\n",
+     "page": "sig/GEN.md#val-fix"
+    },
+    {
+     "kind": "val",
+     "name": "intRange",
+     "spec": "val intRange : int * int -> int gen",
+     "doc": "`intRange (lo, hi)` draws an integer of `[lo, hi]`.\n\nIt is a third of the time small (within the size of 0), a third on an\nedge (0, 1, \\~1, the bounds and their neighbours, powers of two and their\nneighbours), and a third anywhere.\n\n**Raises** `Domain` if `hi < lo`.\n\n**Example** `sample (intRange (5, 5)) 0w9 50 = 5`\n\n",
+     "page": "sig/GEN.md#val-intrange"
+    },
+    {
+     "kind": "val",
+     "name": "int",
+     "spec": "val int : int gen",
+     "doc": "`int` draws an integer of the whole range of `Int.int`, as `intRange`\ndoes; where `Int.int` has no bounds, of the range of 64 bits.\n\n",
+     "page": "sig/GEN.md#val-int"
+    },
+    {
+     "kind": "val",
+     "name": "largeRange",
+     "spec": "val largeRange : LargeInt.int * LargeInt.int -> LargeInt.int gen",
+     "doc": "`largeRange (lo, hi)` draws an integer of `[lo, hi]` as `intRange` does, for a range of at most 2^64 integers.\n\nThe integers may be of any size: this is what the arbitraries of `Int64`\nand `Position` are made of where `Int.int` is narrower.\n\n**Raises** `Domain` if `hi < lo`, or if the range has more than 2^64\nintegers.\n\n",
+     "page": "sig/GEN.md#val-largerange"
+    },
+    {
+     "kind": "val",
+     "name": "intInf",
+     "spec": "val intInf : IntInf.int gen",
+     "doc": "`intInf` draws an `IntInf.int`: a third of the time small, a third an\nedge of a fixed width, a third of any magnitude.\n\nAn edge is 2^k, 2^k - 1 or 2^k + 1, or the negation of one, for `k` up\nto 130. A magnitude is 1 to `size` limbs of 30 bits (the limbs of Rune's\n`IntInf`), each uniform, with either sign.\n\n",
+     "page": "sig/GEN.md#val-intinf"
+    },
+    {
+     "kind": "val",
+     "name": "intInfRange",
+     "spec": "val intInfRange : IntInf.int * IntInf.int -> IntInf.int gen",
+     "doc": "`intInfRange (lo, hi)` draws an integer of `[lo, hi]`, a range of any width, as `intRange` does.\n\nIt is a third of the time small, a third on an edge (0, 1, \\~1, the bounds\nand their neighbours, powers of two and their neighbours), and a third\nanywhere in the range.\n\n**Raises** `Domain` if `hi < lo`.\n\n",
+     "page": "sig/GEN.md#val-intinfrange"
+    },
+    {
+     "kind": "val",
+     "name": "word",
+     "spec": "val word : word gen",
+     "doc": "`word` draws a word: a third of the time small, a third on an edge (0,\n1, the largest, powers of two and their neighbours, the top bit), a\nthird anywhere.\n\n",
+     "page": "sig/GEN.md#val-word"
+    },
+    {
+     "kind": "val",
+     "name": "word64",
+     "spec": "val word64 : Word64.word gen",
+     "doc": "`word64` draws a 64-bit word as `word` draws a word.\n\n",
+     "page": "sig/GEN.md#val-word64"
+    },
+    {
+     "kind": "val",
+     "name": "code",
+     "spec": "val code : int -> int gen",
+     "doc": "`code maxOrd` draws the code of a character of a character set of\n`maxOrd + 1` characters, as `char` draws a character.\n\nWhere `maxOrd` is above 255, a third of the draws that are any of the\n256 are instead any of the whole set.\n\n",
+     "page": "sig/GEN.md#val-code"
+    },
+    {
+     "kind": "val",
+     "name": "char",
+     "spec": "val char : char gen",
+     "doc": "`char` draws a character: half the time any of the 256.\n\nThe other half it is a letter or digit, a space or control, or a\ncharacter that the syntax of numbers, characters and strings gives a\nmeaning to.\n\n",
+     "page": "sig/GEN.md#val-char"
+    },
+    {
+     "kind": "val",
+     "name": "real",
+     "spec": "val real : real gen",
+     "doc": "`real` draws a real: a special one, a small one, or any, a third of the time each.\n\nThe special ones are the zeros, the infinities, a NaN, the smallest and\nlargest subnormals and normals, 1, \\~1, 0.5, 2^53 and the real after it.\nThe small ones are integers and halves within the size. Any is any bit\npattern.\n\n",
+     "page": "sig/GEN.md#val-real"
+    },
+    {
+     "kind": "val",
+     "name": "bool",
+     "spec": "val bool : bool gen",
+     "doc": "`bool` draws `true` and `false`, each half the time; `false` is the\nsimpler.\n\n",
+     "page": "sig/GEN.md#val-bool"
+    },
+    {
+     "kind": "val",
+     "name": "unit",
+     "spec": "val unit : unit gen",
+     "doc": "`unit` draws `()`.\n\n",
+     "page": "sig/GEN.md#val-unit"
+    },
+    {
+     "kind": "val",
+     "name": "order",
+     "spec": "val order : order gen",
+     "doc": "`order` draws `LESS`, `EQUAL` or `GREATER`, each a third of the time.\n\n",
+     "page": "sig/GEN.md#val-order"
+    },
+    {
+     "kind": "val",
+     "name": "option",
+     "spec": "val option : 'a gen -> 'a option gen",
+     "doc": "`option g` draws `NONE` a quarter of the time, and `SOME` of what `g`\ndraws otherwise.\n\n",
+     "page": "sig/GEN.md#val-option"
+    },
+    {
+     "kind": "val",
+     "name": "list",
+     "spec": "val list : 'a gen -> 'a list gen",
+     "doc": "`list g` draws a list of elements of `g`, of a length up to the size.\n\nIts length is 0 or 1 an eighth of the time each. Each element has a part\nof its own and a mark the shrinker may clear, which removes it.\n\n",
+     "page": "sig/GEN.md#val-list"
+    },
+    {
+     "kind": "val",
+     "name": "listOf",
+     "spec": "val listOf : int gen -> 'a gen -> 'a list gen",
+     "doc": "`listOf n g` draws a list of the length `n` draws, of elements of `g`\n(with no marks: the shrinker shortens it from its end).\n\n",
+     "page": "sig/GEN.md#val-listof"
+    },
+    {
+     "kind": "val",
+     "name": "string",
+     "spec": "val string : string gen",
+     "doc": "`string` draws a string of characters of `char`, of a length as `list`\ndraws one.\n\n",
+     "page": "sig/GEN.md#val-string"
+    },
+    {
+     "kind": "val",
+     "name": "vector",
+     "spec": "val vector : 'a gen -> 'a vector gen",
+     "doc": "`vector g` draws a vector as `list g` draws a list.\n\n",
+     "page": "sig/GEN.md#val-vector"
+    },
+    {
+     "kind": "val",
+     "name": "array",
+     "spec": "val array : 'a gen -> 'a array gen",
+     "doc": "`array g` draws an array as `list g` draws a list: a fresh one at every\ndraw, so that two draws of the same case do not share it.\n\n",
+     "page": "sig/GEN.md#val-array"
+    },
+    {
+     "kind": "val",
+     "name": "function",
+     "spec": "val function : ('a -> Word64.word) * 'b gen -> ('a -> 'b) gen",
+     "doc": "`function (co, g)` draws a function, whose result at `x` is drawn at `co x`.\n\nThe result comes from the part of the tree that the observation `co x`\nnames, so that the function gives the same result for arguments that\n`co` does not tell apart.\n\n",
+     "page": "sig/GEN.md#val-function"
+    },
+    {
+     "kind": "val",
+     "name": "functionOf",
+     "spec": "val functionOf : ('a -> Word64.word) * ('a -> string) * ('b -> string) * 'b gen -> ('a -> 'b) gen",
+     "doc": "`functionOf (co, showArg, showRes, g)` draws a function of any of the three kinds of D5.\n\nA node chooses the kind: pure, as `function` draws (the simplest);\nraising `Generated` at a quarter of the arguments; or observing its\neffects, whose calls a law compares on its two sides. Every call is\nlogged, and the report shows the calls of a counterexample's function\nas a table. The shrinker makes a function a constant of its kind where\nit can: a pure one gives the simplest value everywhere, and a raising\none raises everywhere.\n\n",
+     "page": "sig/GEN.md#val-functionof"
+    },
+    {
+     "kind": "val",
+     "name": "pureOf",
+     "spec": "val pureOf : ('a -> Word64.word) * ('a -> string) * ('b -> string) * 'b gen -> ('a -> 'b) gen",
+     "doc": "`pureOf (co, showArg, showRes, g)` draws a pure function, as `function`\ndoes, whose calls the report shows.\n\n",
+     "page": "sig/GEN.md#val-pureof"
+    },
+    {
+     "kind": "exception",
+     "name": "Generated",
+     "spec": "exception Generated",
+     "doc": "`Generated` is what a raising function of `functionOf` raises.\n\n",
+     "page": "sig/GEN.md#exn-generated"
+    },
+    {
+     "kind": "val",
+     "name": "wordBits",
+     "spec": "val wordBits : int -> Word64.word gen",
+     "doc": "`wordBits n` draws a word of `n` bits (at most 64), as `word` draws a\nword.\n\n",
+     "page": "sig/GEN.md#val-wordbits"
+    },
+    {
+     "kind": "val",
+     "name": "primitive",
+     "spec": "val primitive : (PropertySource.source * PropertySource.position -> 'a) -> 'a gen",
+     "doc": "`primitive f` is the generator that runs `f` with the source and the position it is given.\n\nIt is a generator that reads its nodes from the source itself, as the\narbitraries of a family of structures do.\n\n",
+     "page": "sig/GEN.md#val-primitive"
+    },
+    {
+     "kind": "val",
+     "name": "resource",
+     "spec": "val resource : 'a gen * ('a -> unit) -> 'a gen",
+     "doc": "`resource (g, release)` draws what `g` draws, and calls `release` on it\nwhen the case is over: a generator of things that must be undone, such\nas a file or a socket.\n\n",
+     "page": "sig/GEN.md#val-resource"
+    }
+   ]
+  },
+  "IEEE_REAL_ARB": {
+   "doc": "The arbitraries of `IEEEReal`'s types, by the generator principle P12.\n\n",
+   "page": "sig/IEEE_REAL_ARB.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "roundingMode",
+     "spec": "val roundingMode : IEEEReal.rounding_mode Arb.arb",
+     "doc": "The arbitrary of rounding modes, `IEEEReal.TO_NEAREST` the simplest.\n\n",
+     "page": "sig/IEEE_REAL_ARB.md#val-roundingmode"
+    },
+    {
+     "kind": "val",
+     "name": "floatClass",
+     "spec": "val floatClass : IEEEReal.float_class Arb.arb",
+     "doc": "The arbitrary of classes of reals, `IEEEReal.NAN` the simplest.\n\n",
+     "page": "sig/IEEE_REAL_ARB.md#val-floatclass"
+    },
+    {
+     "kind": "val",
+     "name": "decimalApprox",
+     "spec": "val decimalApprox : IEEEReal.decimal_approx Arb.arb",
+     "doc": "The arbitrary of decimal approximations.\n\nThe class is any, the sign either, the digits a list of integers from\n\\~10 to 19 (the digits and as many on either side), and the exponent any\n`int`.\n\n",
+     "page": "sig/IEEE_REAL_ARB.md#val-decimalapprox"
+    }
+   ]
+  },
+  "INET6_SOCK_ARB": {
+   "doc": "The arbitraries of Rune's IPv6 sockets and addresses (docs/plans/quickcheck.md,\nM6), apart from `SYSTEM_ARB` because `INet6Sock` is Rune's own.\n\n",
+   "page": "sig/INET6_SOCK_ARB.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "inAddr",
+     "spec": "val inAddr : INet6Sock.in6_addr Arb.arb",
+     "doc": "The arbitrary of IPv6 addresses: eight groups of 16 bits, each drawn as\n`Gen.wordBits 16` draws one.\n\n",
+     "page": "sig/INET6_SOCK_ARB.md#val-inaddr"
+    },
+    {
+     "kind": "val",
+     "name": "streamSock",
+     "spec": "val streamSock : unit -> 'mode INet6Sock.stream_sock Arb.arb",
+     "doc": "`streamSock ()` is the arbitrary of new TCP sockets over IPv6, closed\nwhen the case is over.\n\n",
+     "page": "sig/INET6_SOCK_ARB.md#val-streamsock"
+    }
+   ]
+  },
+  "PROP": {
+   "doc": "Properties: what must hold for every value a generator draws.\n\nA property is run on many cases, each drawn from its own source. It\npasses, fails with a class (`false`, or the exception a side raised) and a\nmessage, or is discarded because a condition does not hold. Two sides of\na law are compared as outcomes: equal values, or the same exception\n(docs/plans/quickcheck.md, D6).\n\n",
+   "page": "sig/PROP.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "prop",
+     "spec": "type prop",
+     "doc": "A property.\n\n",
+     "page": "sig/PROP.md#type-prop"
+    },
+    {
+     "kind": "datatype",
+     "name": "verdict",
+     "spec": "datatype verdict = Pass | Fail of {class : string, message : string} | Discard",
+     "doc": "What a property does with one case.\n\n",
+     "page": "sig/PROP.md#type-verdict"
+    },
+    {
+     "kind": "type",
+     "name": "result",
+     "spec": "type result = {verdict : verdict, shown : string list, labels : string list,\n               covers : (string * real * bool) list}",
+     "doc": "What a case gave: its verdict, the values drawn (shown, outermost\nfirst), and its labels, with the coverages it asks for.\n\n",
+     "page": "sig/PROP.md#type-result"
+    },
+    {
+     "kind": "val",
+     "name": "run",
+     "spec": "val run : prop -> PropertySource.source * PropertySource.position -> result",
+     "doc": "`run p (source, address)` runs `p` on the case of `source`: what the\nrunner does.\n\n",
+     "page": "sig/PROP.md#val-run"
+    },
+    {
+     "kind": "val",
+     "name": "holds",
+     "spec": "val holds : bool -> prop",
+     "doc": "`holds b` passes when `b` is `true`.\n\n",
+     "page": "sig/PROP.md#val-holds"
+    },
+    {
+     "kind": "val",
+     "name": "forAll",
+     "spec": "val forAll : 'a Arb.arb -> ('a -> prop) -> prop",
+     "doc": "`forAll a f` is the property `f x` for every `x` that `a` draws. An\nexception that `f x` raises fails the case, with the exception's name as\nits class.\n\n",
+     "page": "sig/PROP.md#val-forall"
+    },
+    {
+     "kind": "val",
+     "name": "forAllGen",
+     "spec": "val forAllGen : 'a Gen.gen * ('a -> string) -> ('a -> prop) -> prop",
+     "doc": "`forAllGen (g, show) f` is `forAll` with a generator and a printer.\n\n",
+     "page": "sig/PROP.md#val-forallgen"
+    },
+    {
+     "kind": "val",
+     "name": "equal",
+     "spec": "val equal : 'a Arb.arb -> (unit -> 'a) * (unit -> 'a) -> prop",
+     "doc": "`equal a (l, r)` passes when `l ()` and `r ()` have the same outcome.\n\nThe same outcome is values equal by `a`, or the same exception, and the\nsame calls of the effect-observing functions drawn for the case, in the\nsame order.\n\n",
+     "page": "sig/PROP.md#val-equal"
+    },
+    {
+     "kind": "val",
+     "name": "law",
+     "spec": "val law : 'a Arb.arb * 'b Arb.arb -> ('a -> 'b) * ('a -> 'b) -> prop",
+     "doc": "`law (a, b) (l, r)` is the property that `l x` and `r x` have the same outcome.\n\nIt is `forAll a` of `equal b (fn () => l x, fn () => r x)`, except that\neach side is given its own `x`, drawn anew from the same part of the\ntree: a side that changes an array or calls a function with effects does\nnot change what the other side sees.\n\n",
+     "page": "sig/PROP.md#val-law"
+    },
+    {
+     "kind": "val",
+     "name": "holdsIf",
+     "spec": "val holdsIf : 'a Arb.arb -> ('a -> bool) * ('a -> bool) -> prop",
+     "doc": "`holdsIf a (cond, claim)` holds when `claim x` is true for the `x` of `a` for which `cond x` is.\n\nThis is a law of documentation that is not an equation\n(docs/plans/quickcheck.md, M8). `cond` and `claim` each have an `x` of\ntheir own, drawn from the same nodes, so that one does not change what\nthe other sees. A case whose condition is false or raises is discarded,\nand one whose claim raises fails with the exception's class.\n\n",
+     "page": "sig/PROP.md#val-holdsif"
+    },
+    {
+     "kind": "val",
+     "name": "equalIf",
+     "spec": "val equalIf : 'a Arb.arb * 'b Arb.arb -> ('a -> bool) * ('a -> 'b) * ('a -> 'b) -> prop",
+     "doc": "`equalIf (a, b) (cond, l, r)` holds when `l x` and `r x` have one outcome for the `x` of `a` for which `cond x` is true.\n\nThis is a law of documentation that is an equation: the outcomes of the\nsides are compared by `b` as `law` compares them, and each side and the\ncondition have an `x` of their own, drawn from the same nodes. A case\nwhose condition is false or raises is discarded.\n\n",
+     "page": "sig/PROP.md#val-equalif"
+    },
+    {
+     "kind": "val",
+     "name": "==>",
+     "spec": "val ==> : bool * (unit -> prop) -> prop",
+     "doc": "`==> (cond, p)` is `p ()` where `cond` holds, and discards the case where it does not.\n\nWith `infix ==>` it is written `cond ==> p`.\n\n",
+     "page": "sig/PROP.md#val-op-eq-eq-gt"
+    },
+    {
+     "kind": "val",
+     "name": "label",
+     "spec": "val label : string -> prop -> prop",
+     "doc": "`label l p` is `p`, with the case counted under `l` in the report.\n\n",
+     "page": "sig/PROP.md#val-label"
+    },
+    {
+     "kind": "val",
+     "name": "classify",
+     "spec": "val classify : bool -> string -> prop -> prop",
+     "doc": "`classify b l p` is `label l p` where `b` holds, and `p` otherwise.\n\n",
+     "page": "sig/PROP.md#val-classify"
+    },
+    {
+     "kind": "val",
+     "name": "cover",
+     "spec": "val cover : real -> bool -> string -> prop -> prop",
+     "doc": "`cover pct b l p` is `classify b l p`, and asks that at least `pct`\npercent of the cases be so; the report fails a run that falls short.\n\n",
+     "page": "sig/PROP.md#val-cover"
+    }
+   ]
+  },
+  "SHOW": {
+   "doc": "Printers: how a value of a counterexample is shown, as Standard ML that\nreads back where the type has a literal syntax.\n\n",
+   "page": "sig/SHOW.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "show",
+     "spec": "type 'a show = 'a -> string",
+     "doc": "A printer of values of type `'a`.\n\n",
+     "page": "sig/SHOW.md#type-show"
+    },
+    {
+     "kind": "val",
+     "name": "int",
+     "spec": "val int : int show",
+     "doc": "`int` shows an integer.\n\n**Example** `int ~5 = \"~5\"`\n\n",
+     "page": "sig/SHOW.md#val-int"
+    },
+    {
+     "kind": "val",
+     "name": "word",
+     "spec": "val word : word show",
+     "doc": "`word` shows a word in hexadecimal.\n\n**Example** `word 0w255 = \"0wxFF\"`\n\n",
+     "page": "sig/SHOW.md#val-word"
+    },
+    {
+     "kind": "val",
+     "name": "word64",
+     "spec": "val word64 : Word64.word show",
+     "doc": "`word64` shows a 64-bit word in hexadecimal.\n\n",
+     "page": "sig/SHOW.md#val-word64"
+    },
+    {
+     "kind": "val",
+     "name": "char",
+     "spec": "val char : char show",
+     "doc": "`char` shows a character as a character constant.\n\n**Example** `char #\"\\n\" = \"#\\\"\\\\n\\\"\"`\n\n",
+     "page": "sig/SHOW.md#val-char"
+    },
+    {
+     "kind": "val",
+     "name": "string",
+     "spec": "val string : string show",
+     "doc": "`string` shows a string as a string constant.\n\n**Example** `string \"a\\tb\" = \"\\\"a\\\\tb\\\"\"`\n\n",
+     "page": "sig/SHOW.md#val-string"
+    },
+    {
+     "kind": "val",
+     "name": "real",
+     "spec": "val real : real show",
+     "doc": "`real` shows a real with the 17 digits that tell it from every other\nreal, or as `Real.posInf`, `Real.negInf` or `0.0 / 0.0` where it is no\nnumber.\n\n",
+     "page": "sig/SHOW.md#val-real"
+    },
+    {
+     "kind": "val",
+     "name": "bool",
+     "spec": "val bool : bool show",
+     "doc": "`bool` shows a boolean.\n\n**Example** `bool true = \"true\"`\n\n",
+     "page": "sig/SHOW.md#val-bool"
+    },
+    {
+     "kind": "val",
+     "name": "unit",
+     "spec": "val unit : unit show",
+     "doc": "`unit` shows `()`.\n\n",
+     "page": "sig/SHOW.md#val-unit"
+    },
+    {
+     "kind": "val",
+     "name": "order",
+     "spec": "val order : order show",
+     "doc": "`order` shows an order.\n\n",
+     "page": "sig/SHOW.md#val-order"
+    },
+    {
+     "kind": "val",
+     "name": "parens",
+     "spec": "val parens : string -> string",
+     "doc": "`parens t` is `t` in parentheses where it has a space and is not\nalready bracketed or a string: an argument of a constructor.\n\n**Example** `parens \"~3\" = \"~3\" andalso parens \"SOME 1\" = \"(SOME 1)\"`\n\n",
+     "page": "sig/SHOW.md#val-parens"
+    },
+    {
+     "kind": "val",
+     "name": "option",
+     "spec": "val option : 'a show -> 'a option show",
+     "doc": "`option s` shows an option.\n\n**Example** `option int (SOME 3) = \"SOME 3\"`\n\n",
+     "page": "sig/SHOW.md#val-option"
+    },
+    {
+     "kind": "val",
+     "name": "list",
+     "spec": "val list : 'a show -> 'a list show",
+     "doc": "`list s` shows a list.\n\n**Example** `list int [1, ~2] = \"[1, ~2]\"`\n\n",
+     "page": "sig/SHOW.md#val-list"
+    },
+    {
+     "kind": "val",
+     "name": "vector",
+     "spec": "val vector : 'a show -> 'a vector show",
+     "doc": "`vector s` shows a vector as `Vector.fromList` of a list.\n\n",
+     "page": "sig/SHOW.md#val-vector"
+    },
+    {
+     "kind": "val",
+     "name": "array",
+     "spec": "val array : 'a show -> 'a array show",
+     "doc": "`array s` shows an array as `Array.fromList` of a list.\n\n",
+     "page": "sig/SHOW.md#val-array"
+    },
+    {
+     "kind": "val",
+     "name": "pair",
+     "spec": "val pair : 'a show * 'b show -> ('a * 'b) show",
+     "doc": "`pair (s, t)` shows a pair.\n\n**Example** `pair (int, bool) (1, false) = \"(1, false)\"`\n\n",
+     "page": "sig/SHOW.md#val-pair"
+    },
+    {
+     "kind": "val",
+     "name": "triple",
+     "spec": "val triple : 'a show * 'b show * 'c show -> ('a * 'b * 'c) show",
+     "doc": "`triple (s, t, u)` shows a triple.\n\n",
+     "page": "sig/SHOW.md#val-triple"
+    }
+   ]
+  },
+  "SML90_ARB": {
+   "doc": "The arbitrary of the input streams of the optional structure `SML90`,\napart from `SYSTEM_ARB` because not every compiler has that structure.\n\n",
+   "page": "sig/SML90_ARB.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "instream",
+     "spec": "val instream : SML90.instream Arb.arb",
+     "doc": "The arbitrary of SML '90 input streams: a file in a scratch directory\nwith a drawn string in it, removed when the case is over.\n\n",
+     "page": "sig/SML90_ARB.md#val-instream"
+    }
+   ]
+  },
+  "SYSTEM_ARB": {
+   "doc": "The arbitraries of the values of the operating system that the Basis\nLibrary's laws are written over (docs/plans/quickcheck.md, M6).\n\nThese are made, not drawn: a stream over drawn bytes or a file in a\nscratch directory, a pipe, a socket, the process's own ids. What a case\nmakes is undone when the case is over (`Gen.resource`). A value with no\nStandard ML that makes it again is shown as a comment that says what it\nis.\n\n",
+   "page": "sig/SYSTEM_ARB.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "binInstream",
+     "spec": "val binInstream : BinIO.instream Arb.arb",
+     "doc": "The arbitrary of binary input streams over drawn bytes, shown as the\nbytes they have left.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-bininstream"
+    },
+    {
+     "kind": "val",
+     "name": "binStreamInstream",
+     "spec": "val binStreamInstream : BinIO.StreamIO.instream Arb.arb",
+     "doc": "The arbitrary of functional binary input streams over drawn bytes.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-binstreaminstream"
+    },
+    {
+     "kind": "val",
+     "name": "binWriter",
+     "spec": "val binWriter : BinIO.StreamIO.writer Arb.arb",
+     "doc": "The arbitrary of binary writers that keep what they are given and\naccept every write.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-binwriter"
+    },
+    {
+     "kind": "val",
+     "name": "binOutstream",
+     "spec": "val binOutstream : BinIO.StreamIO.outstream Arb.arb",
+     "doc": "The arbitrary of functional binary output streams over a writer of\n`binWriter`, with any buffer mode.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-binoutstream"
+    },
+    {
+     "kind": "val",
+     "name": "textInstream",
+     "spec": "val textInstream : TextIO.instream Arb.arb",
+     "doc": "The arbitrary of text input streams over a drawn string, shown as the\ncharacters they have left.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-textinstream"
+    },
+    {
+     "kind": "val",
+     "name": "textStreamInstream",
+     "spec": "val textStreamInstream : TextIO.StreamIO.instream Arb.arb",
+     "doc": "The arbitrary of functional text input streams over a drawn string.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-textstreaminstream"
+    },
+    {
+     "kind": "val",
+     "name": "textWriter",
+     "spec": "val textWriter : TextIO.StreamIO.writer Arb.arb",
+     "doc": "The arbitrary of text writers that keep what they are given and accept\nevery write.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-textwriter"
+    },
+    {
+     "kind": "val",
+     "name": "textOutstream",
+     "spec": "val textOutstream : TextIO.StreamIO.outstream Arb.arb",
+     "doc": "The arbitrary of functional text output streams over a writer of\n`textWriter`, with any buffer mode.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-textoutstream"
+    },
+    {
+     "kind": "val",
+     "name": "textPos",
+     "spec": "val textPos : TextPrimIO.pos Arb.arb",
+     "doc": "The arbitrary of the positions of text readers: that of a reader over a\ndrawn string after a drawn number of its characters.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-textpos"
+    },
+    {
+     "kind": "val",
+     "name": "iodesc",
+     "spec": "val iodesc : OS.IO.iodesc Arb.arb",
+     "doc": "The arbitrary of I/O descriptors: the read end of a pipe, closed when\nthe case is over.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-iodesc"
+    },
+    {
+     "kind": "val",
+     "name": "pollDesc",
+     "spec": "val pollDesc : OS.IO.poll_desc Arb.arb",
+     "doc": "The arbitrary of poll descriptors of `iodesc`'s pipes.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-polldesc"
+    },
+    {
+     "kind": "val",
+     "name": "fileId",
+     "spec": "val fileId : OS.FileSys.file_id Arb.arb",
+     "doc": "The arbitrary of file ids: that of a file in a scratch directory,\nremoved when the case is over.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-fileid"
+    },
+    {
+     "kind": "val",
+     "name": "syserror",
+     "spec": "val syserror : OS.syserror Arb.arb",
+     "doc": "The arbitrary of the system's errors: each that `Posix.Error` names,\n`acces` the simplest.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-syserror"
+    },
+    {
+     "kind": "val",
+     "name": "fileDesc",
+     "spec": "val fileDesc : Posix.FileSys.file_desc Arb.arb",
+     "doc": "The arbitrary of Posix file descriptors: the read end of a pipe, closed\nwhen the case is over.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-filedesc"
+    },
+    {
+     "kind": "val",
+     "name": "pid",
+     "spec": "val pid : Posix.Process.pid Arb.arb",
+     "doc": "The arbitrary of process ids: the process's own and its parent's.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-pid"
+    },
+    {
+     "kind": "val",
+     "name": "signal",
+     "spec": "val signal : Posix.Signal.signal Arb.arb",
+     "doc": "The arbitrary of signals: each that `Posix.Signal` names.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-signal"
+    },
+    {
+     "kind": "val",
+     "name": "uid",
+     "spec": "val uid : Posix.ProcEnv.uid Arb.arb",
+     "doc": "The arbitrary of user ids: the process's own and 0.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-uid"
+    },
+    {
+     "kind": "val",
+     "name": "gid",
+     "spec": "val gid : Posix.ProcEnv.gid Arb.arb",
+     "doc": "The arbitrary of group ids: the process's own and 0.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-gid"
+    },
+    {
+     "kind": "val",
+     "name": "speed",
+     "spec": "val speed : Posix.TTY.speed Arb.arb",
+     "doc": "The arbitrary of line speeds: each that `Posix.TTY` names.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-speed"
+    },
+    {
+     "kind": "val",
+     "name": "termios",
+     "spec": "val termios : Posix.TTY.termios Arb.arb",
+     "doc": "The arbitrary of terminal settings: flags from drawn words, control\ncharacters drawn for every index, and speeds of `speed`.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-termios"
+    },
+    {
+     "kind": "val",
+     "name": "termiosFields",
+     "spec": "val termiosFields : {iflag : Posix.TTY.I.flags, oflag : Posix.TTY.O.flags, cflag : Posix.TTY.C.flags,\n                     lflag : Posix.TTY.L.flags, cc : Posix.TTY.V.cc, ispeed : Posix.TTY.speed,\n                     ospeed : Posix.TTY.speed} Arb.arb",
+     "doc": "The arbitrary of the records of the fields of terminal settings, as\n`Posix.TTY.fieldsOf` gives them, drawn as `termios` draws settings.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-termiosfields"
+    },
+    {
+     "kind": "val",
+     "name": "ttyIflags",
+     "spec": "val ttyIflags : Posix.TTY.I.flags Arb.arb",
+     "doc": "The arbitrary of the input flags of terminal settings, from a drawn\nword; two are equal when their words are.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-ttyiflags"
+    },
+    {
+     "kind": "val",
+     "name": "ttyOflags",
+     "spec": "val ttyOflags : Posix.TTY.O.flags Arb.arb",
+     "doc": "The arbitrary of the output flags of terminal settings.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-ttyoflags"
+    },
+    {
+     "kind": "val",
+     "name": "ttyCflags",
+     "spec": "val ttyCflags : Posix.TTY.C.flags Arb.arb",
+     "doc": "The arbitrary of the control flags of terminal settings.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-ttycflags"
+    },
+    {
+     "kind": "val",
+     "name": "ttyLflags",
+     "spec": "val ttyLflags : Posix.TTY.L.flags Arb.arb",
+     "doc": "The arbitrary of the local flags of terminal settings.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-ttylflags"
+    },
+    {
+     "kind": "val",
+     "name": "ttyCc",
+     "spec": "val ttyCc : Posix.TTY.V.cc Arb.arb",
+     "doc": "The arbitrary of the control characters of terminal settings, one drawn\nfor every index; two are equal when they have the same characters.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-ttycc"
+    },
+    {
+     "kind": "val",
+     "name": "whence",
+     "spec": "val whence : Posix.IO.whence Arb.arb",
+     "doc": "The arbitrary of the origins of a seek, `Posix.IO.SEEK_SET` the\nsimplest.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-whence"
+    },
+    {
+     "kind": "val",
+     "name": "lockType",
+     "spec": "val lockType : Posix.IO.lock_type Arb.arb",
+     "doc": "The arbitrary of kinds of lock, `Posix.IO.F_RDLCK` the simplest.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-locktype"
+    },
+    {
+     "kind": "val",
+     "name": "addrFamily",
+     "spec": "val addrFamily : Socket.AF.addr_family Arb.arb",
+     "doc": "The arbitrary of address families: each of `Socket.AF.list ()`.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-addrfamily"
+    },
+    {
+     "kind": "val",
+     "name": "sockType",
+     "spec": "val sockType : Socket.SOCK.sock_type Arb.arb",
+     "doc": "The arbitrary of socket types: each of `Socket.SOCK.list ()`.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-socktype"
+    },
+    {
+     "kind": "val",
+     "name": "inetStreamSock",
+     "spec": "val inetStreamSock : unit -> 'mode INetSock.stream_sock Arb.arb",
+     "doc": "`inetStreamSock ()` is the arbitrary of new TCP sockets over IPv4, closed\nwhen the case is over.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-inetstreamsock"
+    },
+    {
+     "kind": "val",
+     "name": "inAddr",
+     "spec": "val inAddr : NetHostDB.in_addr Arb.arb",
+     "doc": "The arbitrary of IPv4 addresses: four drawn bytes.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-inaddr"
+    },
+    {
+     "kind": "val",
+     "name": "hostEntry",
+     "spec": "val hostEntry : NetHostDB.entry Arb.arb",
+     "doc": "The arbitrary of host entries: that of `localhost`.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-hostentry"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Arb": "ARB",
+  "BasisDataArb": "BASIS_DATA_ARB",
+  "BoolArray2Arb": "ARB_OF",
+  "BoolArrayArb": "ARB_OF",
+  "BoolArraySliceArb": "ARB_OF",
+  "BoolVectorArb": "ARB_OF",
+  "BoolVectorSliceArb": "ARB_OF",
+  "CharArb": "ARB_OF",
+  "CharArbFn": "ARB_OF",
+  "CharArray2Arb": "ARB_OF",
+  "CharArrayArb": "ARB_OF",
+  "CharArraySliceArb": "ARB_OF",
+  "CharVectorArb": "ARB_OF",
+  "CharVectorSliceArb": "ARB_OF",
+  "Check": "CHECK",
+  "Co": "CO",
+  "DateArb": "DATE_ARB",
+  "FixedIntArb": "ARB_OF",
+  "Gen": "GEN",
+  "IEEERealArb": "IEEE_REAL_ARB",
+  "INet6SockArb": "INET6_SOCK_ARB",
+  "Int16Arb": "ARB_OF",
+  "Int16Array2Arb": "ARB_OF",
+  "Int16ArrayArb": "ARB_OF",
+  "Int16ArraySliceArb": "ARB_OF",
+  "Int16VectorArb": "ARB_OF",
+  "Int16VectorSliceArb": "ARB_OF",
+  "Int32Arb": "ARB_OF",
+  "Int32Array2Arb": "ARB_OF",
+  "Int32ArrayArb": "ARB_OF",
+  "Int32ArraySliceArb": "ARB_OF",
+  "Int32VectorArb": "ARB_OF",
+  "Int32VectorSliceArb": "ARB_OF",
+  "Int64Arb": "ARB_OF",
+  "Int64Array2Arb": "ARB_OF",
+  "Int64ArrayArb": "ARB_OF",
+  "Int64ArraySliceArb": "ARB_OF",
+  "Int64VectorArb": "ARB_OF",
+  "Int64VectorSliceArb": "ARB_OF",
+  "Int8Arb": "ARB_OF",
+  "Int8Array2Arb": "ARB_OF",
+  "Int8ArrayArb": "ARB_OF",
+  "Int8ArraySliceArb": "ARB_OF",
+  "Int8VectorArb": "ARB_OF",
+  "Int8VectorSliceArb": "ARB_OF",
+  "IntArb": "ARB_OF",
+  "IntArray2Arb": "ARB_OF",
+  "IntArrayArb": "ARB_OF",
+  "IntArraySliceArb": "ARB_OF",
+  "IntInfArb": "ARB_OF",
+  "IntVectorArb": "ARB_OF",
+  "IntVectorSliceArb": "ARB_OF",
+  "IntegerArbFn": "ARB_OF",
+  "LargeIntArb": "ARB_OF",
+  "LargeIntArray2Arb": "ARB_OF",
+  "LargeIntArrayArb": "ARB_OF",
+  "LargeIntArraySliceArb": "ARB_OF",
+  "LargeIntVectorArb": "ARB_OF",
+  "LargeIntVectorSliceArb": "ARB_OF",
+  "LargeRealArb": "ARB_OF",
+  "LargeRealArray2Arb": "ARB_OF",
+  "LargeRealArrayArb": "ARB_OF",
+  "LargeRealArraySliceArb": "ARB_OF",
+  "LargeRealVectorArb": "ARB_OF",
+  "LargeRealVectorSliceArb": "ARB_OF",
+  "LargeWordArb": "ARB_OF",
+  "LargeWordArray2Arb": "ARB_OF",
+  "LargeWordArrayArb": "ARB_OF",
+  "LargeWordArraySliceArb": "ARB_OF",
+  "LargeWordVectorArb": "ARB_OF",
+  "LargeWordVectorSliceArb": "ARB_OF",
+  "MonoArray2ArbFn": "ARB_OF",
+  "MonoArrayArbFn": "ARB_OF",
+  "MonoArraySliceArbFn": "ARB_OF",
+  "MonoVectorArbFn": "ARB_OF",
+  "MonoVectorSliceArbFn": "ARB_OF",
+  "PositionArb": "ARB_OF",
+  "Prop": "PROP",
+  "RandomArb": "ARB_OF",
+  "Real32Arb": "ARB_OF",
+  "Real32Array2Arb": "ARB_OF",
+  "Real32ArrayArb": "ARB_OF",
+  "Real32ArraySliceArb": "ARB_OF",
+  "Real32VectorArb": "ARB_OF",
+  "Real32VectorSliceArb": "ARB_OF",
+  "Real64Arb": "ARB_OF",
+  "Real64Array2Arb": "ARB_OF",
+  "Real64ArrayArb": "ARB_OF",
+  "Real64ArraySliceArb": "ARB_OF",
+  "Real64VectorArb": "ARB_OF",
+  "Real64VectorSliceArb": "ARB_OF",
+  "RealArb": "ARB_OF",
+  "RealArbFn": "ARB_OF",
+  "RealArray2Arb": "ARB_OF",
+  "RealArrayArb": "ARB_OF",
+  "RealArraySliceArb": "ARB_OF",
+  "RealVectorArb": "ARB_OF",
+  "RealVectorSliceArb": "ARB_OF",
+  "SML90Arb": "SML90_ARB",
+  "Show": "SHOW",
+  "StringArb": "ARB_OF",
+  "StringArbFn": "ARB_OF",
+  "SubstringArb": "ARB_OF",
+  "SubstringArbFn": "ARB_OF",
+  "SysWordArb": "ARB_OF",
+  "SystemArb": "SYSTEM_ARB",
+  "TimeArb": "ARB_OF",
+  "WideCharArb": "ARB_OF",
+  "WideCharArray2Arb": "ARB_OF",
+  "WideCharArrayArb": "ARB_OF",
+  "WideCharArraySliceArb": "ARB_OF",
+  "WideCharVectorArb": "ARB_OF",
+  "WideCharVectorSliceArb": "ARB_OF",
+  "WideStringArb": "ARB_OF",
+  "WideSubstringArb": "ARB_OF",
+  "Word16Arb": "ARB_OF",
+  "Word16Array2Arb": "ARB_OF",
+  "Word16ArrayArb": "ARB_OF",
+  "Word16ArraySliceArb": "ARB_OF",
+  "Word16VectorArb": "ARB_OF",
+  "Word16VectorSliceArb": "ARB_OF",
+  "Word32Arb": "ARB_OF",
+  "Word32Array2Arb": "ARB_OF",
+  "Word32ArrayArb": "ARB_OF",
+  "Word32ArraySliceArb": "ARB_OF",
+  "Word32VectorArb": "ARB_OF",
+  "Word32VectorSliceArb": "ARB_OF",
+  "Word64Arb": "ARB_OF",
+  "Word64Array2Arb": "ARB_OF",
+  "Word64ArrayArb": "ARB_OF",
+  "Word64ArraySliceArb": "ARB_OF",
+  "Word64VectorArb": "ARB_OF",
+  "Word64VectorSliceArb": "ARB_OF",
+  "Word8Arb": "ARB_OF",
+  "Word8Array2Arb": "ARB_OF",
+  "Word8ArrayArb": "ARB_OF",
+  "Word8ArraySliceArb": "ARB_OF",
+  "Word8VectorArb": "ARB_OF",
+  "Word8VectorSliceArb": "ARB_OF",
+  "WordArb": "ARB_OF",
+  "WordArbFn": "ARB_OF",
+  "WordArray2Arb": "ARB_OF",
+  "WordArrayArb": "ARB_OF",
+  "WordArraySliceArb": "ARB_OF",
+  "WordVectorArb": "ARB_OF",
+  "WordVectorSliceArb": "ARB_OF"
+ }
+}

@@ -1412,6 +1412,8 @@ struct
   fun unsafe_cast (_ : 'a) : 'b = raise Fail "unsafe_cast: Rune's alone"
   fun rt_version () = unsupported ""
   fun rt_trace (_ : int) : (string * string * int * int) list = unsupported []
+  fun rt_raise_mark (_ : int) : int = 0
+  fun rt_raise_trace () : (string * string * int * int) list = []
   fun rt_save (_ : string) = unsupported ~1
   fun rt_restore (_ : string) = unsupported ~1
   (* a host has no program of Rune's to append a unit to *)

@@ -1,0 +1,188 @@
+{
+ "signatures": {
+  "ZMTP": {
+   "doc": "ZeroMQ's sockets over ZMTP 3.1 with the NULL mechanism, on the Basis's\nTCP sockets: the kinds a Jupyter kernel and its clients use.\n\nA socket binds a port, where any number of peers connect, or connects\nto one. Nothing runs behind the program's back: `wait` reads and writes\nevery connection of the sockets it is given until one of them has a\nmessage or the time is up, and `send` only queues what `wait` (or\n`flush`) writes. A `Router` receives each message with the identity of\nthe peer that sent it first, and sends to the peer a message's first\npart names; a `Dealer` sends to its peers in turn; a `Rep` answers the\npeer of the last request with that request's envelope, and a `Req`\nputs the empty delimiter before what it sends and takes it off what it\nreceives; a `Pub` sends to every peer that subscribed to a prefix of a\nmessage's first part, and a `Sub` subscribes.\n\n",
+   "page": "sig/ZMTP.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "kind",
+     "spec": "datatype kind = Router | Dealer | Rep | Req | Pub | Sub",
+     "doc": "The kinds of socket.\n\n",
+     "page": "sig/ZMTP.md#type-kind"
+    },
+    {
+     "kind": "type",
+     "name": "socket",
+     "spec": "type socket",
+     "doc": "A socket of one of the kinds: its connections and what it has\nreceived.\n\n",
+     "page": "sig/ZMTP.md#type-socket"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of string",
+     "doc": "What the operations raise when the system's sockets fail, or a\nsocket is asked for what its kind does not do.\n\n",
+     "page": "sig/ZMTP.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "bind",
+     "spec": "val bind : kind * {host : string, port : int} -> socket",
+     "doc": "`bind (k, {host, port})` is a socket of kind `k` listening at `host`\n(`\"*\"` for every address) and `port` (0 for one the system picks,\nwhich `port` tells).\n\n**Raises** `Error` when the port cannot be bound.\n\n",
+     "page": "sig/ZMTP.md#val-bind"
+    },
+    {
+     "kind": "val",
+     "name": "connect",
+     "spec": "val connect : kind * {host : string, port : int} * {identity : string option} -> socket",
+     "doc": "`connect (k, {host, port}, {identity})` is a socket of kind `k`\nconnected to a socket bound at `host` and `port`, with the identity\na `Router` there knows it by.\n\n**Raises** `Error` when the connection is refused.\n\n",
+     "page": "sig/ZMTP.md#val-connect"
+    },
+    {
+     "kind": "val",
+     "name": "port",
+     "spec": "val port : socket -> int",
+     "doc": "`port s` is the port `s` is bound to or connected to.\n\n",
+     "page": "sig/ZMTP.md#val-port"
+    },
+    {
+     "kind": "val",
+     "name": "subscribe",
+     "spec": "val subscribe : socket * string -> unit",
+     "doc": "`subscribe (s, prefix)` asks the publishers `s` is connected to for\nthe messages whose first part begins with `prefix`; `\"\"` is all.\n\n**Raises** `Error` when `s` is not a `Sub`.\n\n",
+     "page": "sig/ZMTP.md#val-subscribe"
+    },
+    {
+     "kind": "val",
+     "name": "send",
+     "spec": "val send : socket * string list -> unit",
+     "doc": "`send (s, parts)` queues the message of `parts` for the peers of\n`s`, as its kind sends.\n\n**Raises** `Error` when `s` is a `Sub`, or a `Rep` that has no request\nto answer.\n\n",
+     "page": "sig/ZMTP.md#val-send"
+    },
+    {
+     "kind": "val",
+     "name": "receive",
+     "spec": "val receive : socket -> string list option",
+     "doc": "`receive s` is the next message `s` has received, or `NONE`; it does\nnot wait.\n\n",
+     "page": "sig/ZMTP.md#val-receive"
+    },
+    {
+     "kind": "val",
+     "name": "wait",
+     "spec": "val wait : socket list * Time.time option -> socket list",
+     "doc": "`wait (ss, t)` reads and writes the connections of `ss` until one of\nthem has a message, or `t` has passed (`NONE`: as long as it takes),\nand is those that have one.\n\n",
+     "page": "sig/ZMTP.md#val-wait"
+    },
+    {
+     "kind": "val",
+     "name": "flush",
+     "spec": "val flush : socket * Time.time option -> unit",
+     "doc": "`flush (s, t)` writes what is queued for the peers of `s`, waiting\nat most `t` for them to take it.\n\n",
+     "page": "sig/ZMTP.md#val-flush"
+    },
+    {
+     "kind": "val",
+     "name": "close",
+     "spec": "val close : socket -> unit",
+     "doc": "`close s` closes `s` and its connections.\n\n",
+     "page": "sig/ZMTP.md#val-close"
+    }
+   ]
+  },
+  "ZMTP_WIRE": {
+   "doc": "ZMTP 3.1's bytes (rfc.zeromq.org/spec/37): the greeting, frames and\ncommands, and the metadata of READY.\n\nA connection begins with a greeting of 64 bytes from each side, then\nthe handshake of the security mechanism -- for NULL, a READY command\neach way, with the socket's type and identity -- and then frames: a\nmessage is one or more data frames, all but the last flagged MORE.\n\n",
+   "page": "sig/ZMTP_WIRE.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "greeting",
+     "spec": "val greeting : {mechanism : string, server : bool} -> string",
+     "doc": "`greeting {mechanism, server}` is the 64 bytes that begin a\nconnection.\n\nThey say ZMTP 3.1, the mechanism's name, and whether this side is the\nserver of the mechanism (NULL has none).\n\n**Example** `size (greeting {mechanism = \"NULL\", server = false}) = 64`\n\n",
+     "page": "sig/ZMTP_WIRE.md#val-greeting"
+    },
+    {
+     "kind": "type",
+     "name": "peer",
+     "spec": "type peer = {major : int, minor : int, mechanism : string, server : bool}",
+     "doc": "What a peer's greeting says.\n\n",
+     "page": "sig/ZMTP_WIRE.md#type-peer"
+    },
+    {
+     "kind": "val",
+     "name": "readGreeting",
+     "spec": "val readGreeting : string -> peer option",
+     "doc": "`readGreeting s` is what the greeting `s`, 64 bytes, says, or `NONE`\nwhen it is not one: its signature wrong, or a version before 3.\n\n**Example** `readGreeting (greeting {mechanism = \"NULL\", server = true}) = SOME {major = 3, minor = 1, mechanism = \"NULL\", server = true}`\n\n",
+     "page": "sig/ZMTP_WIRE.md#val-readgreeting"
+    },
+    {
+     "kind": "datatype",
+     "name": "frame",
+     "spec": "datatype frame = Data of {more : bool, body : string} | Command of {name : string, data : string}",
+     "doc": "A frame: data, and whether more of the message follows, or a\ncommand, its name and its data.\n\n",
+     "page": "sig/ZMTP_WIRE.md#type-frame"
+    },
+    {
+     "kind": "val",
+     "name": "encode",
+     "spec": "val encode : frame -> string",
+     "doc": "`encode f` is the bytes of `f`: its flags, its size in one byte or\neight, and its body.\n\n**Example** `encode (Data {more = true, body = \"ab\"}) = \"\\001\\002ab\"`\n\n",
+     "page": "sig/ZMTP_WIRE.md#val-encode"
+    },
+    {
+     "kind": "val",
+     "name": "message",
+     "spec": "val message : string list -> string",
+     "doc": "`message parts` is the frames of a message of those parts.\n\n**Example** `message [\"a\", \"b\"] = \"\\001\\001a\\000\\001b\"`\n\n",
+     "page": "sig/ZMTP_WIRE.md#val-message"
+    },
+    {
+     "kind": "exception",
+     "name": "Malformed",
+     "spec": "exception Malformed of string",
+     "doc": "What `feed` raises for bytes that are no frame: a size past what a\nstring holds, or a command whose name runs past its body.\n\n",
+     "page": "sig/ZMTP_WIRE.md#exn-malformed"
+    },
+    {
+     "kind": "type",
+     "name": "reader",
+     "spec": "type reader",
+     "doc": "A reader of frames: the bytes of a frame begun and not yet complete.\n\n",
+     "page": "sig/ZMTP_WIRE.md#type-reader"
+    },
+    {
+     "kind": "val",
+     "name": "reader",
+     "spec": "val reader : reader",
+     "doc": "The reader that has read nothing.\n\n",
+     "page": "sig/ZMTP_WIRE.md#val-reader"
+    },
+    {
+     "kind": "val",
+     "name": "feed",
+     "spec": "val feed : reader * string -> frame list * reader",
+     "doc": "`feed (r, s)` is the frames that `r`'s bytes and `s` complete, and the\nreader that holds the rest.\n\n**Raises** `Malformed` for bytes that are no frame.\n\n",
+     "page": "sig/ZMTP_WIRE.md#val-feed"
+    },
+    {
+     "kind": "val",
+     "name": "ready",
+     "spec": "val ready : (string * string) list -> frame",
+     "doc": "`ready props` is NULL's READY command with the metadata `props`,\nsuch as `(\"Socket-Type\", \"ROUTER\")`.\n\n",
+     "page": "sig/ZMTP_WIRE.md#val-ready"
+    },
+    {
+     "kind": "val",
+     "name": "properties",
+     "spec": "val properties : string -> (string * string) list",
+     "doc": "`properties d` is the metadata of a READY command's data.\n\n**Raises** `Malformed` when `d` is not metadata.\n\n**Example** `properties (case ready [(\"Socket-Type\", \"REQ\")] of Command {data, ...} => data | _ => \"\") = [(\"Socket-Type\", \"REQ\")]`\n\n",
+     "page": "sig/ZMTP_WIRE.md#val-properties"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Zmtp": "ZMTP",
+  "ZmtpWire": "ZMTP_WIRE"
+ }
+}

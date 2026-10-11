@@ -1,15 +1,15 @@
 Rune @VERSION@. Ctrl-D ends the session.
 - val a = undefined1 val b = undefined2;
-stdIn:1:9: error: unbound variable or constructor: undefined1
+stdIn#1:1:9: error: unbound variable or constructor: undefined1
   |
 1 | val a = undefined1 val b = undefined2;
   |         ^^^^^^^^^^
-stdIn:1:28: error: unbound variable or constructor: undefined2
+stdIn#1:1:28: error: unbound variable or constructor: undefined2
   |
 1 | val a = undefined1 val b = undefined2;
   |                            ^^^^^^^^^^
 - val s = "no end
-stdIn:1:9: error: unterminated string literal
+stdIn#2:1:9: error: unterminated string literal
   |
 1 | val s = "no end
   |         ^^^^^^^

@@ -172,6 +172,7 @@ signature names and no others, unless the structure is listed at the end of this
 | [`RealArraySlice`](str/RealArraySlice.md) | :> [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) | `where type vector = RealVector.vector where type vector_slice = RealVectorSlice.slice where type array = RealArray.array where type elem = real` | optional | an application of `RuneMonoArraySliceFn` | [lib/basis/mono\_real.sml](../../../lib/basis/mono_real.sml) |
 | [`RealVector`](str/RealVector.md) | : [`MONO_VECTOR`](sig/MONO_VECTOR.md) | `where type elem = real` | optional | is `RuneRealSeq.V` | [lib/basis/mono\_real.sml](../../../lib/basis/mono_real.sml) |
 | [`RealVectorSlice`](str/RealVectorSlice.md) | :> [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) | `where type vector = RealVector.vector where type elem = real` | optional | an application of `RuneMonoVectorSliceFn` | [lib/basis/mono\_real.sml](../../../lib/basis/mono_real.sml) |
+| [`Repl`](str/Repl.md) | : [`REPL`](sig/REPL.md) |  | extension | is `RuneRepl` | [lib/basis/repl.sml](../../../lib/basis/repl.sml) |
 | [`Runtime`](str/Runtime.md) | : [`RUNTIME`](sig/RUNTIME.md) |  | extension | is `RuneRuntime` | [lib/basis/runtime.sml](../../../lib/basis/runtime.sml) |
 | [`SML90`](str/SML90.md) | : [`SML90`](sig/SML90.md) |  | optional |  | [lib/basis/sml90.sml](../../../lib/basis/sml90.sml) |
 | [`Socket`](str/Socket.md) | : [`SOCKET`](sig/SOCKET.md) |  | optional | is `RuneSocket` | [lib/basis/socket.sml](../../../lib/basis/socket.sml) |

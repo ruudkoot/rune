@@ -1,0 +1,4 @@
+\e[1mtests/diagnostics/once.sml:5:1:\e[0m \e[1;91merror:\e[0m \e[1mthe type of y, 'a, contains a type variable that cannot be generalised (a top-level declaration may not have free type variables)\e[0m
+\e[2m  |\e[0m
+\e[2m5 |\e[0m val y = f 2;
+\e[2m  |\e[0m \e[1;91m^^^^^^^^^^^\e[0m

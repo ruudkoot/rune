@@ -1,0 +1,167 @@
+{
+ "signatures": {
+  "DISPLAY_WIDTH": {
+   "doc": "Display widths: how many columns of a terminal a code point takes.\n\nA terminal gives a character one column, or two for the wide characters\nof East Asian scripts and for emoji, or none for a mark that combines\nwith the character before it. The widths come from the Unicode Character\nDatabase (East Asian Width, the general categories, emoji presentation)\nof the version `version`, by tables that scripts/gen-unicode-tables.py\nmakes. Characters of ambiguous East Asian width are one column, as\nterminals outside East Asian locales show them. What is shown of a\ngrapheme cluster as a whole -- an emoji joined to another, a flag -- is\n`Grapheme.width`'s.\n\n",
+   "page": "sig/DISPLAY_WIDTH.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "version",
+     "spec": "val version : string",
+     "doc": "The version of Unicode the tables are made from.\n\n**Example** `version = \"18.0.0\"`\n\n",
+     "page": "sig/DISPLAY_WIDTH.md#val-version"
+    },
+    {
+     "kind": "val",
+     "name": "codePoint",
+     "spec": "val codePoint : int -> int",
+     "doc": "`codePoint c` is the columns `c` takes on a terminal: 0, 1 or 2.\n\nIt is 0 for a nonspacing, enclosing or format mark and for the medial\nvowels and final consonants of conjoining Hangul; 2 for an East Asian\nwide or fullwidth character and for an emoji shown as one by default;\n1 for the rest. A control character is 0 too: a program shows it its\nown way (`isControl`).\n\n**Example** `codePoint 0x61 = 1 andalso codePoint 0x6F22 = 2 andalso codePoint 0x301 = 0 andalso codePoint 0x1F600 = 2`\n\n",
+     "page": "sig/DISPLAY_WIDTH.md#val-codepoint"
+    },
+    {
+     "kind": "val",
+     "name": "isControl",
+     "spec": "val isControl : int -> bool",
+     "doc": "`isControl c` is whether `c` is a control character, of C0 (below\n0x20, and 0x7F) or of C1 (0x80 to 0x9F).\n\n**Example** `isControl 0x1B andalso not (isControl 0x20)`\n\n",
+     "page": "sig/DISPLAY_WIDTH.md#val-iscontrol"
+    },
+    {
+     "kind": "val",
+     "name": "columns",
+     "spec": "val columns : string -> int",
+     "doc": "`columns s` is the columns the UTF-8 of `s` takes, the sum of the\nwidths of its code points; an ill-formed part counts as the\nreplacement character, one column.\n\n**Example** `columns \"a\\230\\188\\162\" = 3`\n\n",
+     "page": "sig/DISPLAY_WIDTH.md#val-columns"
+    }
+   ]
+  },
+  "GRAPHEME": {
+   "doc": "Grapheme clusters: the characters a reader sees, by the rules of Unicode\nStandard Annex \\#29.\n\nA user-perceived character may be several code points: a letter and the\naccents on it, a Hangul syllable of conjoining jamo, an Indic conjunct,\nan emoji with a skin tone or joined to others by U+200D, a flag of two\nregional indicators. An editor moves its cursor and deletes by extended\ngrapheme cluster, and a terminal draws one cluster in one cell or two.\nThe rules are those of the Annex for the version `version` of Unicode;\nthe test data of that version (GraphemeBreakTest.txt) passes.\n\n",
+   "page": "sig/GRAPHEME.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "version",
+     "spec": "val version : string",
+     "doc": "The version of Unicode whose rules and properties are followed.\n\n**Example** `version = \"18.0.0\"`\n\n",
+     "page": "sig/GRAPHEME.md#val-version"
+    },
+    {
+     "kind": "val",
+     "name": "next",
+     "spec": "val next : string * int -> int",
+     "doc": "`next (s, i)` is the offset just past the extended grapheme cluster\nthat begins at byte `i` of `s`. An ill-formed part of the UTF-8 is a\ncluster of its own.\n\n**Raises** `Subscript` unless `0 <= i` and `i < size s`.\n\n**Example** `next (\"e\\204\\129x\", 0) = 3`\n\n",
+     "page": "sig/GRAPHEME.md#val-next"
+    },
+    {
+     "kind": "val",
+     "name": "clusters",
+     "spec": "val clusters : string -> string list",
+     "doc": "`clusters s` is the clusters of `s`, in order.\n\n**Example** `clusters \"e\\204\\129x\" = [\"e\\204\\129\", \"x\"]`\n\n",
+     "page": "sig/GRAPHEME.md#val-clusters"
+    },
+    {
+     "kind": "val",
+     "name": "count",
+     "spec": "val count : string -> int",
+     "doc": "`count s` is how many clusters `s` has.\n\n**Example** `count \"\\240\\159\\135\\179\\240\\159\\135\\177\" = 1`, a flag\n\n",
+     "page": "sig/GRAPHEME.md#val-count"
+    },
+    {
+     "kind": "datatype",
+     "name": "policy",
+     "spec": "datatype policy =\n    ByCluster\n  | ByCodePoint",
+     "doc": "How a terminal measures a cluster: as one, or as its code points.\n\nWindows Terminal and kitty measure a cluster as one, as Unicode\nrecommends; xterm, and VS Code's terminal by report, add up its code\npoints.\n\n",
+     "page": "sig/GRAPHEME.md#type-policy"
+    },
+    {
+     "kind": "val",
+     "name": "width",
+     "spec": "val width : policy -> string -> int",
+     "doc": "`width policy s` is the columns `s` takes on a terminal that measures\nby `policy`.\n\n**Example** `width ByCluster \"\\240\\159\\145\\169\\226\\128\\141\\240\\159\\145\\167\" = 2`\n\n**Example** `width ByCodePoint \"\\240\\159\\145\\169\\226\\128\\141\\240\\159\\145\\167\" = 4`\n\n",
+     "page": "sig/GRAPHEME.md#val-width"
+    }
+   ]
+  },
+  "UTF8": {
+   "doc": "UTF-8: code points written as bytes and read back, strictly.\n\nA string holds bytes, and text in it is UTF-8 by convention. Reading is\nstrict in the sense of the Unicode Standard (its section 3.9): an\noverlong form, a surrogate, a code point past 0x10FFFF, a sequence cut\nshort and a continuation byte with no lead are ill-formed, and `decode`\ngives `NONE` for them. Where a program must read whatever bytes it gets\n\\-- what a terminal sends, a file of unknown origin -- `next` and the\nfunctions over whole strings never fail: they read each ill-formed part\nas one replacement character, U+FFFD, as long as the maximal subpart the\nstandard recommends, so that the same bytes give the same characters in\nevery program that follows it.\n\n",
+   "page": "sig/UTF8.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "replacement",
+     "spec": "val replacement : int",
+     "doc": "The replacement character, U+FFFD, which the readers that never fail\ngive for each ill-formed part.\n\n**Example** `replacement = 0xFFFD`\n\n",
+     "page": "sig/UTF8.md#val-replacement"
+    },
+    {
+     "kind": "val",
+     "name": "isScalar",
+     "spec": "val isScalar : int -> bool",
+     "doc": "`isScalar c` is whether `c` is a Unicode scalar value, a code point\nthat UTF-8 can write: from 0 to 0x10FFFF, and not a surrogate (0xD800\nto 0xDFFF).\n\n**Example** `isScalar 0x10FFFF andalso not (isScalar 0xD800)`\n\n",
+     "page": "sig/UTF8.md#val-isscalar"
+    },
+    {
+     "kind": "val",
+     "name": "encode",
+     "spec": "val encode : int -> string",
+     "doc": "`encode c` is the bytes of the code point `c`: one for ASCII, up to\nfour.\n\n**Raises** `Chr` if `c` is not a scalar value.\n\n**Example** `encode 0x20AC = \"\\226\\130\\172\"`\n\n",
+     "page": "sig/UTF8.md#val-encode"
+    },
+    {
+     "kind": "val",
+     "name": "decode",
+     "spec": "val decode : string * int -> (int * int) option",
+     "doc": "`decode (s, i)` is the code point whose bytes begin at byte `i` of\n`s`, and how many bytes it has; `NONE` when the bytes there are\nill-formed, or `i` is the end of `s`.\n\n**Raises** `Subscript` if `i < 0` or `i > size s`.\n\n**Example** `decode (\"\\226\\130\\172\", 0) = SOME (0x20AC, 3)`\n\n**Example** `decode (\"\\192\\128\", 0) = NONE`, an overlong form of 0\n\n",
+     "page": "sig/UTF8.md#val-decode"
+    },
+    {
+     "kind": "val",
+     "name": "next",
+     "spec": "val next : string * int -> int * int",
+     "doc": "`next (s, i)` is the code point at byte `i` of `s` and its length, or\n`replacement` where the bytes there are ill-formed.\n\nA well-formed code point is what `decode` gives; an ill-formed part is\nas long as its maximal subpart.\n\n**Raises** `Subscript` unless `0 <= i` and `i < size s`.\n\n**Example** `next (\"\\240\\128\\128\", 0) = (0xFFFD, 1)`\n\n",
+     "page": "sig/UTF8.md#val-next"
+    },
+    {
+     "kind": "val",
+     "name": "isValid",
+     "spec": "val isValid : string -> bool",
+     "doc": "`isValid s` is whether all of `s` is well-formed UTF-8.\n\n**Example** `isValid \"caf\\195\\169\" andalso not (isValid \"\\237\\160\\128\")`\n\n",
+     "page": "sig/UTF8.md#val-isvalid"
+    },
+    {
+     "kind": "val",
+     "name": "explode",
+     "spec": "val explode : string -> int list",
+     "doc": "`explode s` is the code points of `s`, read by `next`.\n\n**Law** `implode (explode s) = s` when `isValid s`\n\n**Example** `explode \"a\\195\\169\\255\" = [0x61, 0xE9, 0xFFFD]`\n\n",
+     "page": "sig/UTF8.md#val-explode"
+    },
+    {
+     "kind": "val",
+     "name": "implode",
+     "spec": "val implode : int list -> string",
+     "doc": "`implode cs` is the bytes of the code points `cs`, one after another.\n\n**Raises** `Chr` if one of `cs` is not a scalar value.\n\n**Law** `explode (implode cs) = cs` when `List.all isScalar cs`\n\n",
+     "page": "sig/UTF8.md#val-implode"
+    },
+    {
+     "kind": "val",
+     "name": "foldl",
+     "spec": "val foldl : (int * 'a -> 'a) -> 'a -> string -> 'a",
+     "doc": "`foldl f init s` is `f` applied to the code points of `s` from the\nleft, read by `next`, starting from `init`.\n\n**Example** `foldl (fn (c, n) => c + n) 0 \"\\195\\169\" = 0xE9`\n\n",
+     "page": "sig/UTF8.md#val-foldl"
+    },
+    {
+     "kind": "val",
+     "name": "size",
+     "spec": "val size : string -> int",
+     "doc": "`size s` is the number of code points of `s`, read by `next`.\n\n**Example** `size \"caf\\195\\169\" = 4`\n\n",
+     "page": "sig/UTF8.md#val-size"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "DisplayWidth": "DISPLAY_WIDTH",
+  "Grapheme": "GRAPHEME",
+  "Utf8": "UTF8"
+ }
+}

@@ -579,6 +579,16 @@ code position, the stack height and the frame. With no handler left, the VM
 prints `runevm: uncaught exception Name payload` on standard error, flushes,
 and exits with status 1.
 
+A REPL catches what the code it runs raises, and by then the frames are
+gone. So it marks a handler of its own (`rt_raise_mark`, the REPL's
+`RuneRuntime.raiseMark`): a raise whose handler is the marked one -- one that
+left the code the REPL ran -- records the frames it unwinds, at most 64,
+innermost first, by function and position, before it unwinds them
+(`vm_raise`), and `rt_raise_trace` gives them as `rt_trace` gives the stack's
+(the REPL's `:bt`; docs/plans/repl.md, D22's first stage). A raise that a
+handler of the program takes is not recorded and costs a comparison; with
+no mark, nothing. An image keeps no mark.
+
 The exit statuses of the VM itself:
 
 | Status | When |

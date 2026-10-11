@@ -58,6 +58,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`POSIX_TTY`](sig/POSIX_TTY.md) | 110 | 110 | 100% | 25 | 25 |
 | [`PRIM_IO`](sig/PRIM_IO.md) | 14 | 14 | 100% | 6 | 6 |
 | [`REAL`](sig/REAL.md) | 64 | 64 | 100% | 55 | 55 |
+| [`REPL`](sig/REPL.md) | 7 | 7 | 100% | 7 | 7 |
 | [`RUNTIME`](sig/RUNTIME.md) | 17 | 17 | 100% | 13 | 13 |
 | [`SML90`](sig/SML90.md) | 36 | 36 | 100% | 18 | 18 |
 | [`SOCKET`](sig/SOCKET.md) | 93 | 93 | 100% | 76 | 76 |
@@ -77,7 +78,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
 | [`WINDOWS`](sig/WINDOWS.md) | 88 | 88 | 100% | 30 | 30 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1685 | 1685 | 100% | 1144 | 1144 |
+| **all** | 1692 | 1692 | 100% | 1151 | 1151 |
 
 ## Members a signature describes
 
@@ -86,7 +87,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-200 structures have a page, with 4331 members, of which 4246 (98%) are described by a signature.
+201 structures have a page, with 4338 members, of which 4253 (98%) are described by a signature.
 
 | Structure | Members | Described |  |
 | --- | --- | --- | --- |
@@ -113,6 +114,7 @@ be pinned: many are about the text and not about behaviour.
 - `INET6_SOCK/not-in-the-specification` (Deviation), INET6_SOCK
 - `MONO_VECTOR_EQ/not-in-the-specification` (Deviation), MONO_VECTOR_EQ
 - `Posix.Process.fork/read-ahead-of-a-pipe` (Limitation), POSIX_PROCESS
+- `REPL/not-in-the-specification` (Deviation), REPL
 - `RUNTIME/not-in-the-specification` (Deviation), RUNTIME
 - `SML90.Interrupt/never-raised` (Limitation), SML90
 - `SML90/is-history` (Limitation), SML90

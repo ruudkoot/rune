@@ -104,6 +104,43 @@ lib/terminal ([plans/repl.md](plans/repl.md), M5 and M6):
 `tests/terminal/MANUAL.md` lists what is checked by hand, terminal by
 terminal.
 
+## Commands
+
+A line that begins with `:` and a letter is a command
+([plans/repl.md](plans/repl.md), D15): no SML begins so, it needs no `;`,
+and any unique prefix of a command's name names it (`:t` for `:type`).
+
+| Command | Does |
+|---|---|
+| `:help [command]` | the commands, or one |
+| `:quit` | ends the session, as Ctrl-D on an empty entry does |
+| `:type exp` | the type of an expression, which is not evaluated |
+| `:info name` | what a name is -- a value and its type, a constructor and its datatype, a type, a structure and its signature, a signature, a functor, a fixity -- and the file and line it was defined at, or the Basis's file |
+| `:browse name` | a structure's or a signature's specifications |
+| `:doc name` | the documentation of a name of the Basis Library, its Markdown laid out for the terminal |
+| `:search text` | values whose name holds the text; with `->`, values whose type is like it, arguments in any order, curried or tupled, the nearest first |
+| `:use file` | `use` |
+| `:reload` | uses again the file used last (M9 makes it every file from the first that changed) |
+| `:edit [name or file]` | `$VISUAL` or `$EDITOR` at a name's definition or at a file, and the file used again |
+| `:cd dir`, `:pwd` | the directory |
+| `:sh command` | a command of the shell, on the terminal as it was |
+| `:set setting value`, `:show` | the settings: `depth`, `length`, `string`, `width`, `feedback`, `prompt`, `prompt2`, `time` |
+| `:time [on or off]` | after each entry, its time in all, compiling and running apart, the CPU it took, what it allocated and the collections |
+| `:history` | the entries of the session, `!` beside those that failed |
+| `:save file` | the entries that went well, as a script to `use` |
+| `:save-image file` | the whole session as an image, which `runevm --restore file` starts again |
+| `:bt` | where the last exception that ended an entry was raised, frame by frame |
+
+`:doc` reads what runedoc wrote of the Basis for programs to read
+(`docs/generated/basis/members.json`), once, before the REPL's image is
+saved. `:bt` reads the frames the VM recorded as the exception left the
+code the REPL ran (`RuneRuntime.raiseMark`, `raiseTrace`;
+[runtime.md](runtime.md), *Stacks, calls and exceptions*); on a terminal, an uncaught
+exception says where it was raised. The structure `Repl` of the session
+has the same as functions -- `Repl.command ":set depth 5"`, `Repl.typeOf`,
+`Repl.info`, `Repl.doc`, `Repl.search`, `Repl.set`, `Repl.settings` -- for
+init files, scripts and HOL4; outside the REPL each raises `Fail`.
+
 ## What a declaration does
 
 The REPL follows Chapter 8 of the Definition, a top-level declaration at a
@@ -322,7 +359,8 @@ on a pty; on Windows, `rune-repl.cmd` from `cmd.exe` too.
 
 ## Not yet
 
-There are no commands (`:type` and the rest, and `:set` for the limits
-and the feedback, M8 of [plans/repl.md](plans/repl.md)). `Compiler.prettyPrint` ignores a block's context
+`:reload` uses again the file used last; M9 of
+[plans/repl.md](plans/repl.md) makes it every file from the first that
+changed, and names what it shadows. `Compiler.prettyPrint` ignores a block's context
 (`ContextLocation`, `ContextProperty`), which Poly/ML's IDE support reads.
 [plans/repl.md](plans/repl.md) lists what comes next.

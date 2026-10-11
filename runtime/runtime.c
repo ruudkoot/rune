@@ -235,6 +235,16 @@ int vm_raise(VM *vm, Value exn) {
         vm_print_trace(vm, stderr);
         vm_exit(vm, 1);
     }
+    /* a raise that leaves the code the REPL runs: its frames kept */
+    if (vm->raise_mark && vm->hp == vm->raise_mark && vm->frames_active) {
+        size_t base = vm->handlers[vm->hp - 1].fp;
+        vm->raise_n = 0;
+        for (size_t i = vm->fp; i > base && vm->raise_n < 64; i--) {
+            vm->raise_frames[vm->raise_n].func = vm->frames[i].func;
+            vm->raise_frames[vm->raise_n].pc = (i == vm->fp) ? vm->pc : vm->frames[i + 1].ret_pc;
+            vm->raise_n++;
+        }
+    }
     Handler h = vm->handlers[--vm->hp];
     vm->fp = h.fp;
     if (vm->fp < vm->fp_low) vm->fp_low = vm->fp;

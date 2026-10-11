@@ -168,19 +168,22 @@ struct
     if !editing then (case Terminal.size () of SOME {columns, ...} => if columns > 1 then columns else 80 | NONE => 80)
     else Int.max (1, !RuneCompiler.lineLength)
 
-  (* a document laid out, in the palette's styles where there are colours *)
-  fun render (d : string Pretty.doc) : string =
+  (* a document laid out, in the palette's styles where there are colours,
+     its annotations given their roles by roleOf *)
+  fun renderAs (roleOf : 'a -> string) (d : 'a Pretty.doc) : string =
     case !ReplHighlight.theme of
       NONE => Pretty.render (width ()) d
     | SOME t =>
         let
           val styles : string list ref = ref []
-          fun start r = let val st = Color.sgr (t, r) in styles := st :: !styles; st end
+          fun start a = let val st = Color.sgr (t, roleOf a) in styles := st :: !styles; st end
           fun finish _ =
             case !styles of
               st :: rest => (styles := rest; if st = "" then "" else "\027[0m" ^ String.concat (List.rev rest))
             | [] => ""
         in Pretty.renderWith {width = width (), start = start, finish = finish} d end
+
+  fun render (d : string Pretty.doc) : string = renderAs (fn r => r) d
 
   (* the echo of a value a declaration bound (RuneCompiler.echoHook): its
      type on the line of the value's end where it fits *)

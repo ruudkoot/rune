@@ -11,7 +11,7 @@ send loop () : unit;
 keys Enter
 sleep 500
 keys C-c
-wait Interrupt\n-$
+wait Interrupt\n  interrupted in loop at stdIn#1:1:\d+ \(:bt for the rest\)\n-$
 send 2;
 keys Enter
 wait ^val it = 2 : int$

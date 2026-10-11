@@ -17,6 +17,8 @@
 #                   that `runedoc --tests NAME.lib/tests --labels` finds
 #   NAME.lib.cover  and what `--check-coverage` says about them
 #   NAME.lib.notes  the notes.tsv it writes, where the expectation exists
+#   NAME.lib.members  the members.json it writes (the REPL's :doc reads it),
+#                   where the expectation exists
 #   NAME.lib.md     the pages of its signatures, one after another, where the
 #                   expectation exists
 #   NAME.lib.types, NAME.lib.structures  its pages types.md and
@@ -122,6 +124,11 @@ for lib in tests/doc/*.lib; do
     cp "$out/$name.site/notes.tsv" "$out/$name.lib.notes" 2> /dev/null || : > "$out/$name.lib.notes"
     [ $update = 1 ] && cp "$out/$name.lib.notes" "tests/doc/$name.lib.notes"
     same "$name.lib.notes" "$out/$name.lib.notes" "tests/doc/$name.lib.notes"
+  fi
+  if [ -f "tests/doc/$name.lib.members" ]; then
+    cp "$out/$name.site/members.json" "$out/$name.lib.members" 2> /dev/null || : > "$out/$name.lib.members"
+    [ $update = 1 ] && cp "$out/$name.lib.members" "tests/doc/$name.lib.members"
+    same "$name.lib.members" "$out/$name.lib.members" "tests/doc/$name.lib.members"
   fi
   if [ -f "tests/doc/$name.lib.md" ]; then
     cat "$out/$name.site"/sig/*.md > "$out/$name.lib.md" 2> /dev/null || : > "$out/$name.lib.md"

@@ -53,7 +53,7 @@ M1 measures them again on a quiet machine.
 | M5 | `lib/terminal`: the line editor | done |
 | M6 | The REPL on the editor | done |
 | M7 | Printing | done |
-| M8 | Commands and documentation | planned |
+| M8 | Commands and documentation | done |
 | M9 | Reload | planned |
 | M10 | The engine and its protocol | planned |
 | M11 | The Jupyter kernel | planned |
@@ -2395,6 +2395,37 @@ Windows, and any Rune program can read a line with them.
     (D22's first stage), and `:bt`.
 * **Tests:** a transcript per command; runedoc's index in `tests/doc`.
 * **Done when:** those pass.
+* **As built** (2026-10-10): `src/repl/commands.sml` (`ReplCommands`, the
+  table of D15 but `:reload`'s replay of every file, which is M9's: until
+  then it uses the file used last), dispatched from both loops through
+  `ReplLoop.commandHook`; a prefix that names several is the first in the
+  table, as GHCi's `:t` is `:type`. `:type` lexes the expression alone,
+  behind the tokens of `val it =`, so that its errors point into what was
+  typed, and undoes what it elaborated (`ReplQuery`). `:info` says where a
+  name was bound: the REPL records each top-level name's declaration, and
+  the file of the Basis's unit, rather than the elaborator a span per
+  stamp. `:browse` and the verbose feedback print a signature with its own
+  types by its names (`ReplShow.signatureLines`). `:doc` reads
+  `docs/generated/basis/members.json`, which runedoc now writes beside
+  each library's pages (`DocSite.membersIndex`: each public signature's
+  members with their specifications and comments as Markdown, and which
+  structure each describes; exempt from the limit on a page's size, being
+  no page), once, before the REPL's image is saved, and lays it out with
+  lib/markdown in the palette's roles (`src/repl/doc.sml`). `:search`
+  (`src/repl/search.sml`) matches a type up to the order of arguments and
+  currying, the value's type variables instantiable and the query's not.
+  The frames of D22's first stage are the VM's: a raise that takes the
+  handler the REPL marked records the frames it unwinds (`rt_raise_mark`,
+  `rt_raise_trace`, the same at every tier of the JIT), and `:bt` shows
+  them; on a terminal the entries are `stdIn#k` and an uncaught exception
+  says where it was raised, or interrupted. `Repl` (`lib/basis/repl.sml`,
+  `REPL`) has the commands as functions for init files, scripts and HOL4.
+  Tests: `tests/repl/commands`, `tests/terminal/repl-commands`,
+  `tests/basis/repl.sml`. Found and fixed on the way, in the elaborator:
+  a declaration that failed the check of free type variables was reported
+  again where each later top-level declaration ended, in the REPL and in
+  the batch compiler alike (`Elaborate.snapshot` now keeps the pending
+  checks; `tests/diagnostics/once`).
 
 ### M9. Reload (M, about 700 SML)
 

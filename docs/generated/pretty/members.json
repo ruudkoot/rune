@@ -1,0 +1,160 @@
+{
+ "signatures": {
+  "PRETTY": {
+   "doc": "Documents laid out at a width: Wadler's prettier printer, strictly, as\nLindig wrote it, with annotations that a renderer turns into styles, and\nbudgets that cut a document of a deep or long value short.\n\nA document is text, line breaks that become a blank (or nothing) when\nthe group around them fits the rest of the line, nesting, groups and\nannotations. `sequence` is the document of a list, a tuple or a record:\nits items aligned after the opening bracket and separated, all on one\nline when they fit and one to a line when not; `bound` cuts sequences\ndeeper, longer or more numerous than its budgets with `...`, as a\nREPL does with `printDepth` and `printLength`. Text is measured in\ndisplay columns (`DisplayWidth`), so a CJK character takes two.\n\n",
+   "page": "sig/PRETTY.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "doc",
+     "spec": "type 'a doc",
+     "doc": "A document whose annotations are of type `'a`.\n\n",
+     "page": "sig/PRETTY.md#type-doc"
+    },
+    {
+     "kind": "val",
+     "name": "empty",
+     "spec": "val empty : 'a doc",
+     "doc": "Nothing.\n\n",
+     "page": "sig/PRETTY.md#val-empty"
+    },
+    {
+     "kind": "val",
+     "name": "text",
+     "spec": "val text : string -> 'a doc",
+     "doc": "`text s` is `s`, which should have no newline.\n\n**Example** `render 80 (text \"abc\") = \"abc\"`\n\n",
+     "page": "sig/PRETTY.md#val-text"
+    },
+    {
+     "kind": "val",
+     "name": "line",
+     "spec": "val line : 'a doc",
+     "doc": "A newline and the indentation, or one blank when its group fits on\nthe line.\n\n",
+     "page": "sig/PRETTY.md#val-line"
+    },
+    {
+     "kind": "val",
+     "name": "cut",
+     "spec": "val cut : 'a doc",
+     "doc": "A newline and the indentation, or nothing when its group fits.\n\n",
+     "page": "sig/PRETTY.md#val-cut"
+    },
+    {
+     "kind": "val",
+     "name": "hardline",
+     "spec": "val hardline : 'a doc",
+     "doc": "A newline always, which keeps the groups around it from fitting.\n\n",
+     "page": "sig/PRETTY.md#val-hardline"
+    },
+    {
+     "kind": "val",
+     "name": "break",
+     "spec": "val break : int * int -> 'a doc",
+     "doc": "`break (blanks, offset)` is `blanks` blanks when its group fits, and\nelse a newline and the indentation `offset` further in.\n\nIt is Oppen's break, which Poly/ML's `PrettyBreak` is. `line` is\n`break (1, 0)` and `cut` is `break (0, 0)`.\nExample: `render 3 (group (concat [text \"ab\", break (2, 4), text \"cd\"])) = \"ab\\n    cd\"`\n\n",
+     "page": "sig/PRETTY.md#val-break"
+    },
+    {
+     "kind": "val",
+     "name": "sized",
+     "spec": "val sized : string * int -> 'a doc",
+     "doc": "`sized (s, w)` is `s` laid out as if it were `w` columns wide: text\nwith escapes of its own, which the layout must not count.\n\n",
+     "page": "sig/PRETTY.md#val-sized"
+    },
+    {
+     "kind": "val",
+     "name": "concat",
+     "spec": "val concat : 'a doc list -> 'a doc",
+     "doc": "`concat ds` is the documents one after the other.\n\n**Example** `render 80 (concat [text \"a\", line, text \"b\"]) = \"a\\nb\"`\n\n",
+     "page": "sig/PRETTY.md#val-concat"
+    },
+    {
+     "kind": "val",
+     "name": "nest",
+     "spec": "val nest : int -> 'a doc -> 'a doc",
+     "doc": "`nest n d` is `d` with every newline in it indented by `n` more.\n\n",
+     "page": "sig/PRETTY.md#val-nest"
+    },
+    {
+     "kind": "val",
+     "name": "align",
+     "spec": "val align : 'a doc -> 'a doc",
+     "doc": "`align d` is `d` with its newlines indented to the column `d` begins\nat.\n\nOppen's and Poly/ML's blocks indent from where they begin.\nExample: `render 5 (concat [text \"x = \", align (group (concat [text \"ab\", line, text \"cd\"]))]) = \"x = ab\\n    cd\"`\n\n",
+     "page": "sig/PRETTY.md#val-align"
+    },
+    {
+     "kind": "val",
+     "name": "group",
+     "spec": "val group : 'a doc -> 'a doc",
+     "doc": "`group d` is `d` on one line, its breaks blanks or nothing, when that\nfits the width, and `d` with its breaks as newlines otherwise.\n\n**Example** `render 80 (group (concat [text \"a\", line, text \"b\"])) = \"a b\"`\n\n",
+     "page": "sig/PRETTY.md#val-group"
+    },
+    {
+     "kind": "val",
+     "name": "annotate",
+     "spec": "val annotate : 'a * 'a doc -> 'a doc",
+     "doc": "`annotate (a, d)` is `d` marked with `a`, which a renderer may show\n(a colour, a link) and layout passes on.\n\n",
+     "page": "sig/PRETTY.md#val-annotate"
+    },
+    {
+     "kind": "val",
+     "name": "sequence",
+     "spec": "val sequence : {opening : string, closing : string, separator : string} -> 'a doc list -> 'a doc",
+     "doc": "`sequence {opening, closing, separator} ds` is the items `ds` between\nthe brackets, separated.\n\nIt is `[1, 2, 3]` when that fits, and one item to a line, each aligned\nafter the opening bracket, when it does not.\n\n**Example** `render 6 (sequence {opening = \"[\", closing = \"]\", separator = \",\"} [text \"1\", text \"22\", text \"333\"]) = \"[1,\\n 22,\\n 333]\"`\n\n",
+     "page": "sig/PRETTY.md#val-sequence"
+    },
+    {
+     "kind": "val",
+     "name": "ellipsis",
+     "spec": "val ellipsis : 'a doc",
+     "doc": "The text `...`, which stands for what a budget left out.\n\n",
+     "page": "sig/PRETTY.md#val-ellipsis"
+    },
+    {
+     "kind": "val",
+     "name": "bound",
+     "spec": "val bound : {depth : int option, length : int option, nodes : int option} -> 'a doc -> 'a doc",
+     "doc": "`bound {depth, length, nodes} d` is `d` with what is past the budgets\nmade `...`.\n\nA sequence nested more than `depth` deep is `...`; the items of a\nsequence after the first `length` are one `...`; the items after the\nfirst `nodes` of the whole document, counted depth first, are `...`.\n`NONE` is no limit.\n\n**Example** `render 80 (bound {depth = NONE, length = SOME 2, nodes = NONE} (sequence {opening = \"[\", closing = \"]\", separator = \",\"} [text \"1\", text \"2\", text \"3\"])) = \"[1, 2, ...]\"`\n\n",
+     "page": "sig/PRETTY.md#val-bound"
+    },
+    {
+     "kind": "datatype",
+     "name": "piece",
+     "spec": "datatype 'a piece = Text of string | Newline of int | Begin of 'a | End",
+     "doc": "What a layout is made of: text, a newline and its indentation, and\nthe beginning and end of an annotation.\n\n",
+     "page": "sig/PRETTY.md#type-piece"
+    },
+    {
+     "kind": "val",
+     "name": "layout",
+     "spec": "val layout : int -> 'a doc -> 'a piece list",
+     "doc": "`layout w d` is `d` laid out at width `w`: as many groups on one line\nas fit, the outermost first. A line is wider than `w` only where a\npiece of text alone is.\n\n",
+     "page": "sig/PRETTY.md#val-layout"
+    },
+    {
+     "kind": "val",
+     "name": "render",
+     "spec": "val render : int -> 'a doc -> string",
+     "doc": "`render w d` is the layout of `d` as text, its annotations left out.\n\n",
+     "page": "sig/PRETTY.md#val-render"
+    },
+    {
+     "kind": "val",
+     "name": "renderWith",
+     "spec": "val renderWith : {width : int, start : 'a -> string, finish : 'a -> string} -> 'a doc -> string",
+     "doc": "`renderWith {width, start, finish} d` is the layout as text, with\n`start a` before what `a` annotates and `finish a` after it.\n\n",
+     "page": "sig/PRETTY.md#val-renderwith"
+    },
+    {
+     "kind": "val",
+     "name": "flat",
+     "spec": "val flat : 'a doc -> string",
+     "doc": "`flat d` is `d` with every group on one line.\n\n**Example** `flat (concat [text \"a\", line, text \"b\"]) = \"a b\"`\n\n",
+     "page": "sig/PRETTY.md#val-flat"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Pretty": "PRETTY"
+ }
+}

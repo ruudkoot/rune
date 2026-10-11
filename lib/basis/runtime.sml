@@ -24,6 +24,8 @@ struct
     val linkError' = _prim "rt_link_error" : unit -> string
     val catchInterrupt' = _prim "rt_interrupt_catch" : exn -> bool
     val maskInterrupt' = _prim "rt_interrupt_mask" : bool -> bool
+    val raiseMark' = _prim "rt_raise_mark" : int -> int
+    val raiseTrace' = _prim "rt_raise_trace" : unit -> (string * string * int * int) list
   in
     type stats = { instructions : int, bytes : int, objects : int,
                    collections : int, live : int, heapSize : int,
@@ -134,6 +136,15 @@ struct
     fun catchInterrupt () = catchInterrupt' SML90.Interrupt
 
     fun maskInterrupt b = maskInterrupt' b
+
+    (* The REPL's: `raiseMark ~1` makes the handler pushed last the one whose
+       raises -- those that leave the code the REPL runs -- record the
+       frames they leave, and `raiseMark m` puts back a mark it gave before;
+       `raiseTrace ()` is those frames, innermost first (rt_raise_mark,
+       rt_raise_trace) *)
+    fun raiseMark m = raiseMark' m
+    fun raiseTrace () : frame list =
+      List.map (fn (f, file, l, c) => {function = f, file = file, line = l, column = c}) (raiseTrace' ())
   end
 end
 

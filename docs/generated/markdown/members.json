@@ -1,0 +1,69 @@
+{
+ "signatures": {
+  "MARKDOWN": {
+   "doc": "Markdown: CommonMark's (0.31.2) blocks and inlines, with GitHub's\ntables, parsed into a tree; written back as the HTML of CommonMark's\nreference implementation, or laid out as a document of `Pretty` whose\nannotations say what each piece is, for a terminal or plain text.\n\nIt reads what runedoc writes -- headings, paragraphs, fenced code,\ntables, lists, links, emphasis, code spans, entities and the HTML of\nits interface blocks -- and the rest of CommonMark well enough that\ntests/lib/markdown checks it on CommonMark's own examples for those\nconstructs.\n\n",
+   "page": "sig/MARKDOWN.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "inline",
+     "spec": "datatype inline =\n    Text of string\n  | Code of string\n  | Emphasis of inline list\n  | Strong of inline list\n  | Link of {target : string, title : string option, text : inline list}\n  | Image of {source : string, title : string option, alt : inline list}\n  | Html of string\n  | SoftBreak\n  | HardBreak",
+     "doc": "Inline content: text, code spans, emphasis, links and images, raw\nHTML, and the breaks between lines.\n\n",
+     "page": "sig/MARKDOWN.md#type-inline"
+    },
+    {
+     "kind": "datatype",
+     "name": "alignment",
+     "spec": "datatype alignment = Default | Left | Center | Right",
+     "doc": "How a table's column is aligned.\n\n",
+     "page": "sig/MARKDOWN.md#type-alignment"
+    },
+    {
+     "kind": "datatype",
+     "name": "block",
+     "spec": "datatype block =\n    Heading of int * inline list\n  | Paragraph of inline list\n  | CodeBlock of {info : string, text : string}\n  | HtmlBlock of string\n  | Quote of block list\n  | List of {ordered : bool, start : int, tight : bool, items : block list list}\n  | Table of {align : alignment list, header : inline list list, rows : inline list list list}\n  | Rule",
+     "doc": "A block. A list is tight when no blank line separates its items or\nthe blocks of one; its paragraphs are then written without `<p>`.\n\n",
+     "page": "sig/MARKDOWN.md#type-block"
+    },
+    {
+     "kind": "val",
+     "name": "parse",
+     "spec": "val parse : string -> block list",
+     "doc": "`parse s` is the blocks of the Markdown text `s`.\n\n**Example** `parse \"# A *b*\" = [Heading (1, [Text \"A \", Emphasis [Text \"b\"]])]`\n\n",
+     "page": "sig/MARKDOWN.md#val-parse"
+    },
+    {
+     "kind": "val",
+     "name": "toHtml",
+     "spec": "val toHtml : block list -> string",
+     "doc": "`toHtml bs` is the blocks as HTML, as CommonMark's reference\nimplementation writes it.\n\n**Example** `toHtml (parse \"a *b*\") = \"<p>a <em>b</em></p>\\n\"`\n\n",
+     "page": "sig/MARKDOWN.md#val-tohtml"
+    },
+    {
+     "kind": "datatype",
+     "name": "role",
+     "spec": "datatype role = Head of int | Mono | Italic | Bold | Anchor of string | Quoted | Marker | Ruler",
+     "doc": "What a piece of a laid-out document is, for its style.\n\nA heading of a level, code, emphasis, strong emphasis, a link to a\ntarget, a quote, a list's marker, or a table's rule.\n\n",
+     "page": "sig/MARKDOWN.md#type-role"
+    },
+    {
+     "kind": "val",
+     "name": "toDoc",
+     "spec": "val toDoc : block list -> role Pretty.doc",
+     "doc": "`toDoc bs` is the blocks as a document, annotated with their roles.\n\nParagraphs are filled to the width they are laid out at, code is as it\nis, tables are in columns, lists have their markers, and a blank line\nis between blocks.\n\n",
+     "page": "sig/MARKDOWN.md#val-todoc"
+    },
+    {
+     "kind": "val",
+     "name": "toText",
+     "spec": "val toText : int -> block list -> string",
+     "doc": "`toText w bs` is the blocks as plain text at width `w`.\n\n**Example** `toText 80 (parse \"# Title\\n\\nSome *text*.\") = \"Title\\n\\nSome text.\"`\n\n",
+     "page": "sig/MARKDOWN.md#val-totext"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Markdown": "MARKDOWN"
+ }
+}

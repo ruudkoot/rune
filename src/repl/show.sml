@@ -112,10 +112,11 @@ struct
       if named env (#name c) then SOME (#name c) else search ([("", env)], 5)
     end
 
-  (* a type as the session names it *)
-  fun typeIn (env : Env.env) (t : ty) : string =
+  (* a type as the session names it, the type constructors of `local` by
+     the names given there first *)
+  fun typeNamed (env : Env.env, local' : string IntMap.map) (t : ty) : string =
     let
-      val memo : string IntMap.map ref = ref IntMap.empty
+      val memo : string IntMap.map ref = ref local'
       fun nameOf (c : tycon) =
         case IntMap.find (!memo, #stamp c) of
           SOME n => SOME n
@@ -123,6 +124,20 @@ struct
             let val n = case pathOf (env, c) of SOME p => p | NONE => "?." ^ #name c
             in memo := IntMap.insert (!memo, #stamp c, n); SOME n end
     in toStringNamed (nameOf, newPrinter ()) t end
+
+  fun typeIn (env : Env.env) (t : ty) : string = typeNamed (env, IntMap.empty) t
+
+  (* the type constructors a structure's or a signature's environment
+     declares, by the paths they have in it *)
+  fun ownNames (prefix : string, e : Env.env, acc : string IntMap.map) : string IntMap.map =
+    let
+      (* a type the environment declares, a datatype or an abstract type,
+         has its own name; an abbreviation names another *)
+      val acc = StringMap.foldli (fn (n, Env.TyStr {fcn = TName c, ...}, acc) =>
+                                       if #name c <> n orelse IntMap.member (acc, #stamp c) then acc
+                                       else IntMap.insert (acc, #stamp c, prefix ^ n)
+                                   | (_, _, acc) => acc) acc (Env.tys e)
+    in StringMap.foldli (fn (n, s, acc) => ownNames (prefix ^ n ^ ".", s, acc)) acc (Env.strs e) end
 
   (* ---- signatures, as the REPL shows a structure's ---- *)
 
@@ -134,26 +149,33 @@ struct
 
   (* a type's specification: a datatype with its constructors, an
      abbreviation with what it stands for, else the type alone *)
-  fun typeSpec (env : Env.env) (name : string, ts as Env.TyStr {fcn, cons}) : string =
+  fun typeSpecNamed (env : Env.env, own : string IntMap.map) (name : string, ts as Env.TyStr {fcn, cons}) : string =
     case (fcn, cons) of
       (_, _ :: _) =>
         "datatype " ^ params (fcnArity fcn) ^ name ^ " = "
         ^ String.concatWith " | "
             (List.map (fn (n, Env.Con {scheme, info}) =>
                             if #hasArg info then
-                              (case prune scheme of TArrow (a, _) => n ^ " of " ^ typeIn env a | _ => n)
+                              (case prune scheme of TArrow (a, _) => n ^ " of " ^ typeNamed (env, own) a | _ => n)
                             else n
                         | (n, _) => n) cons)
     | (TAbbrev (ps, body), []) =>
         (case fcnIsName fcn of
            SOME c => if #name c = name then "type " ^ params (List.length ps) ^ name
-                     else "type " ^ params (List.length ps) ^ name ^ " = " ^ typeIn env body
-         | NONE => "type " ^ params (List.length ps) ^ name ^ " = " ^ typeIn env body)
+                     else "type " ^ params (List.length ps) ^ name ^ " = " ^ typeNamed (env, own) body
+         | NONE => "type " ^ params (List.length ps) ^ name ^ " = " ^ typeNamed (env, own) body)
     | (TName c, []) => (if #eq c then "eqtype " else "type ") ^ params (#arity c) ^ name
 
-  (* the specifications of a structure's environment, each line indented *)
+  fun typeSpec (env : Env.env) = typeSpecNamed (env, IntMap.empty)
+
+  (* the specifications of a structure's environment, each line indented,
+     its own types by the names it gives them *)
   fun signatureLines (env : Env.env, e : Env.env, indent : string) : string list =
+    signatureLinesNamed (env, ownNames ("", e, IntMap.empty), e, indent)
+  and signatureLinesNamed (env : Env.env, own : string IntMap.map, e : Env.env, indent : string) : string list =
     let
+      val typeIn = fn env => typeNamed (env, own)
+      val typeSpec = fn env => typeSpecNamed (env, own)
       val tys = StringMap.foldri (fn (n, ts, acc) => (indent ^ typeSpec env (n, ts)) :: acc) [] (Env.tys e)
       val vals =
         StringMap.foldri
@@ -168,7 +190,7 @@ struct
           [] (Env.vals e)
       val strs =
         StringMap.foldri (fn (n, s, acc) => (indent ^ "structure " ^ n ^ " :") :: (indent ^ "  sig")
-                                            :: signatureLines (env, s, indent ^ "    ") @ [indent ^ "  end"] @ acc)
+                                            :: signatureLinesNamed (env, own, s, indent ^ "    ") @ [indent ^ "  end"] @ acc)
                          [] (Env.strs e)
     in tys @ vals @ strs end
 

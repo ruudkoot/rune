@@ -50,6 +50,7 @@
 - `collect` (val): [RUNTIME](../sig/RUNTIME.md#val-collect)
 - `ColMajor` (con): [ARRAY2](../sig/ARRAY2.md#con-colmajor)
 - `column` (val): [ARRAY2](../sig/ARRAY2.md#val-column), [MONO_ARRAY2](../sig/MONO_ARRAY2.md#val-column)
+- `command` (val): [REPL](../sig/REPL.md#val-command)
 - `compare` (val): [CHAR](../sig/CHAR.md#val-compare), [DATE](../sig/DATE.md#val-compare), [INTEGER](../sig/INTEGER.md#val-compare), [OS_FILE_SYS](../sig/OS_FILE_SYS.md#val-compare), [OS_IO](../sig/OS_IO.md#val-compare), [PRIM_IO](../sig/PRIM_IO.md#val-compare), [REAL](../sig/REAL.md#val-compare), [STRING](../sig/STRING.md#val-compare), [SUBSTRING](../sig/SUBSTRING.md#val-compare), [TIME](../sig/TIME.md#val-compare), [WORD](../sig/WORD.md#val-compare)
 - `compareReal` (val): [REAL](../sig/REAL.md#val-comparereal)
 - `compareSpeed` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-comparespeed)

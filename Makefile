@@ -919,20 +919,24 @@ check-units: $(RUNE) bin/rune-boot bin/runevm bin/runevm-stack
 # file into bin/rune-repl.units (their units in order, and the sources they
 # came from), and loaded unit by unit by bin/rune-repl.load.rbc, so that the
 # REPL and what it compiles share one Basis Library (incremental roadmap, M4)
-# lib/terminal's editor (docs/plans/repl.md, M6) and lib/pretty's layout
-# (M7), after the compiler, which has lib/unicode already
+# lib/terminal's editor (docs/plans/repl.md, M6), lib/pretty's layout (M7)
+# and lib/markdown (M8), after the compiler, which has lib/unicode already
 REPL_TERMINAL := $(addprefix lib/terminal/,style_sig.sml style.sml key_sig.sml key.sml device_sig.sml device.sml \
                    history_sig.sml history.sml line_edit_sig.sml line_edit_fn.sml line_edit.sml)
-REPL_SRCS := build/config.sml $(SOURCES) $(REPL_TERMINAL) lib/pretty/pretty_sig.sml lib/pretty/pretty.sml src/repl/show.sml src/repl/session.sml src/repl/scan.sml \
-             src/repl/highlight.sml src/repl/complete.sml src/repl/front.sml src/repl/repl.sml src/main/repl-main.sml
+REPL_SRCS := build/config.sml $(SOURCES) $(REPL_TERMINAL) lib/pretty/pretty_sig.sml lib/pretty/pretty.sml \
+             lib/markdown/entities.sml lib/markdown/markdown_sig.sml lib/markdown/markdown.sml \
+             src/repl/show.sml src/repl/session.sml src/repl/scan.sml src/repl/highlight.sml src/repl/complete.sml \
+             src/repl/front.sml src/repl/doc.sml src/repl/search.sml src/repl/repl.sml src/repl/commands.sml \
+             src/main/repl-main.sml
 bin/rune-repl.units/units: bin/rune-boot $(REPL_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
 	rm -rf bin/rune-repl.units
 	bin/rune-boot --units --basis all --emit-units bin/rune-repl.units -o bin/rune-repl.rbc $(REPL_SRCS)
 bin/rune-repl.load.rbc: bin/rune-boot src/repl/load.sml lib/basis/MANIFEST
 	bin/rune-boot -o $@ src/repl/load.sml
 # the REPL started once and saved once it has compiled its library again
-# (docs/repl.md): what bin/rune-repl restores, its arguments the files to use
-bin/rune-repl.img: bin/rune-repl.units/units bin/rune-repl.load.rbc bin/runevm
+# (docs/repl.md): what bin/rune-repl restores, its arguments the files to
+# use; it reads the Basis's documentation for :doc before it is saved
+bin/rune-repl.img: bin/rune-repl.units/units bin/rune-repl.load.rbc bin/runevm docs/generated/basis/members.json
 	bin/runevm --heap-size 67108864 bin/rune-repl.load.rbc bin/rune-repl.units/units --make-image $@ < /dev/null
 bin/rune-repl: bin/rune-repl.img
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size 67108864 --restore "$$d/rune-repl.img" -- "$$@"\n' > $@
