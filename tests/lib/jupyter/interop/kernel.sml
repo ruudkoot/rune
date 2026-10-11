@@ -6,7 +6,7 @@ val c = case CommandLine.arguments () of
         | _ => raise Fail "kernel.sml CONNECTION-FILE"
 val k = Jupyter.bind c
 val count = ref 0
-fun respond {msgType = "execute_request", content, publish} =
+fun respond {msgType = "execute_request", content, publish, ...} =
       let
         val code = case Json.member ("code", content) of SOME (Json.String s) => s | _ => ""
       in

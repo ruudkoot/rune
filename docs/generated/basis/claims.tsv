@@ -10,6 +10,7 @@ CHAR	signature			required	declared	lib/basis/sig_char.sml
 COMMAND_LINE	signature			required	declared	lib/basis/sig_command_line.sml
 COMPILER	signature			extension	declared	lib/basis/compiler_sig.sml
 DATE	signature			required	declared	lib/basis/sig_date.sml
+DISPLAY	signature			extension	declared	lib/basis/display_sig.sml
 DYNAMIC	signature			extension	declared	lib/basis/dynamic_sig.sml
 GENERAL	signature			required	declared	lib/basis/sig_general.sml
 GENERIC_SOCK	signature			optional	declared	lib/basis/sig_generic_sock.sml
@@ -94,6 +95,7 @@ CharVectorSlice	structure	MONO_VECTOR_SLICE	where type slice = Substring.substri
 CommandLine	structure	COMMAND_LINE		required	claimed	lib/basis/commandline.sml
 Compiler	structure	COMPILER		extension	claimed	lib/basis/compiler.sml
 Date	structure	DATE		required	claimed	lib/basis/date.sml
+Display	structure	DISPLAY		extension	claimed	lib/basis/display.sml
 Dynamic	structure	DYNAMIC		extension	ascribed	lib/basis/dynamic.sml
 FixedInt	structure	INTEGER	where type int = Int64.int	optional	claimed	lib/basis/int64.sml
 General	structure	GENERAL		required	claimed	lib/basis/general.sml

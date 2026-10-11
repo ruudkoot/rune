@@ -28,7 +28,7 @@ What each means is on [`JUPYTER`](../sig/JUPYTER.md); the types are this structu
 | type | [`header`](../sig/JUPYTER.md#type-header) | `{date : string, msgId : string, msgType : string, session : string, username : string, version : string}` |
 | type | [`kernel`](../sig/JUPYTER.md#type-kernel) | *a type of its own* |
 | type | [`message`](../sig/JUPYTER.md#type-message) | `{buffers : string list, content : Json.value, header : header, identities : string list, metadata : Json.value, parent : Json.value}` |
-| type | [`request`](../sig/JUPYTER.md#type-request) | `{content : Json.value, msgType : string, publish : string * Json.value -> unit}` |
+| type | [`request`](../sig/JUPYTER.md#type-request) | `{content : Json.value, idle : unit -> unit, input : {password : bool, prompt : string} -> string option, msgType : string, publish : string * Json.value -> unit}` |
 | exception | [`Connection`](../sig/JUPYTER.md#exn-connection) | `of string` |
 | val | [`bind`](../sig/JUPYTER.md#val-bind) | `connection -> kernel` |
 | val | [`close`](../sig/JUPYTER.md#val-close) | `kernel -> unit` |

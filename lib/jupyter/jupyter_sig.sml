@@ -66,10 +66,18 @@ sig
      It raises lib/zmtp's error when a port cannot be bound. *)
   val bind : connection -> kernel
 
-  (* What a handler is given: the request, and how to say something on
-     iopub as its child (`publish (msgType, content)`), such as a
-     `stream` or an `execute_result`. *)
-  type request = {msgType : string, content : Json.value, publish : string * Json.value -> unit}
+  (* What a handler is given: the request, and what it may do while it
+     answers.
+
+     `publish (msgType, content)` says something on iopub as the
+     request's child, such as a `stream` or an `execute_result`.
+     `input {prompt, password}` asks the client for a line of input on the
+     stdin channel, where the request allows it (`NONE` where it does not
+     or the client gave none). `idle ()`, which a handler that takes long
+     calls now and then, writes what it published and answers the
+     heartbeat. *)
+  type request = {msgType : string, content : Json.value, publish : string * Json.value -> unit,
+                  input : {prompt : string, password : bool} -> string option, idle : unit -> unit}
 
   (* `serve (k, {info, respond})` is the kernel's loop, until a
      `shutdown_request` ends it.

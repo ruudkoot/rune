@@ -60,15 +60,20 @@ An *outcome* is
 
 ```
 {ok: boolean,
- bindings: [{name, type, shown, handle}],
+ bindings: [{name, type, shown, line, html, handle}],
  declared: string[],              -- datatypes, types, exceptions, structures, as the REPL says them
  messages: string[],              -- what the REPL would have said (reload's)
  diagnostics: [diagnostic],
- exception: {name, message, trace: [{function, file, line, column}]} | null}
+ exception: {name, message, trace: [{function, file, line, column}]} | null,
+ css?: string}                    -- the palette's rules for the roles the bindings' html uses
 ```
 
 `shown` is the value laid out at the width `initialize` gave (80), as the
-REPL prints it, with its limits (`printDepth` and the rest). A *diagnostic*
+REPL prints it, with its limits (`printDepth` and the rest). `line` is the
+binding as the REPL says it (`val x = 3 : int`), and `html` the same in
+`<span class="rune-ROLE">` elements of the palette's roles
+(`src/util/color.sml`), which `css` styles: a notebook shows it as the
+terminal would. A *diagnostic*
 is rune-ide's: `{severity: "error" | "warning", message, path, startByte,
 endByte, range, rendered}`, `range` Monaco's (`startLineNumber`,
 `startColumn`, `endLineNumber`, `endColumn`, from 1, columns in UTF-16
@@ -83,6 +88,10 @@ and whether it has parts.
 ## From the engine
 
 * `status` `{state: "busy" | "idle"}`, a notification around each request.
+* `display` `{data: {mime: text}, id?: string, update: boolean}` and
+  `clear` `{wait: boolean}`, notifications of what the program shows with
+  `Display` (`DISPLAY`), as it shows it: an output in several MIME types,
+  one that replaces the output of its id, and a clear of the outputs.
 * `input` `{}`, a request of the engine's own when the program reads its
   standard input: its result is the text to give the program, a string,
   or `null` for the end of the input. While it waits, the engine refuses

@@ -1256,6 +1256,47 @@
     }
    ]
   },
+  "DISPLAY": {
+   "doc": "What a program shows beside what it prints: an output in several forms\n\\-- text, HTML, an image -- of which the front shows the best it can\n(docs/kernel.md).\n\nIn a Jupyter notebook an output is the cell's display output, which a\nlater `update` of the same id replaces; at the REPL's terminal, and in a\nprogram compiled by `rune`, its `text/plain` form is printed, or else its\nfirst.\n\n> **Deviation** `DISPLAY/not-in-the-specification`. The specification knows\nno front but a text stream; this signature is Rune's own.\n\n**See also** `REPL`\n\n",
+   "page": "sig/DISPLAY.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "bundle",
+     "spec": "type bundle = (string * string) list",
+     "doc": "The forms of an output, by MIME type: `(\"text/html\", \"<b>hi</b>\")`,\n`(\"text/plain\", \"hi\")`.\n\n",
+     "page": "sig/DISPLAY.md#type-bundle"
+    },
+    {
+     "kind": "val",
+     "name": "display",
+     "spec": "val display : bundle -> unit",
+     "doc": "`display b` shows the output `b`.\n\n",
+     "page": "sig/DISPLAY.md#val-display"
+    },
+    {
+     "kind": "val",
+     "name": "displayAs",
+     "spec": "val displayAs : string * bundle -> unit",
+     "doc": "`displayAs (id, b)` shows `b` as the output named `id`, which `update`\nreplaces.\n\n",
+     "page": "sig/DISPLAY.md#val-displayas"
+    },
+    {
+     "kind": "val",
+     "name": "update",
+     "spec": "val update : string * bundle -> unit",
+     "doc": "`update (id, b)` replaces the output named `id` with `b`, where the\nfront can; elsewhere it shows `b`.\n\n",
+     "page": "sig/DISPLAY.md#val-update"
+    },
+    {
+     "kind": "val",
+     "name": "clear",
+     "spec": "val clear : bool -> unit",
+     "doc": "`clear wait` clears the outputs the cell has shown, at once or, with\n`wait`, when the next comes; nothing where the front cannot.\n\n",
+     "page": "sig/DISPLAY.md#val-clear"
+    }
+   ]
+  },
   "DYNAMIC": {
    "doc": "Dynamic modules: units of code that a program loads while it runs\n(docs/units.md, Dynamic modules).\n\nA program declares `structure X = _dynamic \"path\" : SIG` and is compiled\nagainst the signature alone; a module declares `_export structure Y : SIG = ...` and is compiled to a unit's file (`rune --units --emit-units`).\nWhen the program reaches the declaration, the unit at `path` is loaded,\nits top level runs, and `X` is what it exported, where the module was\ncompiled against the same signature: a constructor's tag is its place in\nthe signature's datatype, a type the signature leaves abstract stays\nabstract, and an exception the module raises is the program's to\nhandle. A program that loads a module is built in units (`rune --units`), whose units the module links against.\n\n`Dynamic.load` is the untyped form: a unit that registers what it offers\nthrough a structure of the program (a plugin). A virtual module, `structure X = _virtual : SIG`, is the same boundary inside one program: its\nimplementation is the structure `X` that a unit before it exports, which\nthe program's build file chooses (docs/build.md, Virtual modules).\n\nThis signature is Rune's own.\n\n> **Deviation** `DYNAMIC/not-in-the-specification`. The Definition has no\nmodules that come while a program runs.\n\n**See also** `RUNTIME`\n\n",
    "page": "sig/DYNAMIC.md",
@@ -12419,6 +12460,7 @@
   "CommandLine": "COMMAND_LINE",
   "Compiler": "COMPILER",
   "Date": "DATE",
+  "Display": "DISPLAY",
   "Dynamic": "DYNAMIC",
   "FixedInt": "INTEGER",
   "General": "GENERAL",

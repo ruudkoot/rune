@@ -56,7 +56,7 @@ M1 measures them again on a quiet machine.
 | M8 | Commands and documentation | done |
 | M9 | Reload | done |
 | M10 | The engine and its protocol | done |
-| M11 | The Jupyter kernel | planned |
+| M11 | The Jupyter kernel | done |
 | M12 | The debugger | planned |
 | M13 | Windows, accessibility and the performance sweep | planned |
 
@@ -2527,6 +2527,43 @@ Windows, and any Rune program can read a line with them.
     flags*).
 * **Done when:** a notebook in JupyterLab runs Rune cells, on Linux and
   Windows.
+* **As built** (2026-10-10): `src/kernel/kernel.sml`, `bin/rune-kernel`
+  (`make kernel`; docs/kernel.md): the bridge, on lib/jupyter, that starts
+  the engine with `fork`, its channel the descriptors 3 and 4 and its output
+  and error pipes the kernel's, every other descriptor closed in the child;
+  `execute_request` is `eval` -- the program's output published as
+  `stream`s while it runs (the kernel polls the engine's channel and pipes
+  and calls lib/jupyter's new `idle` between, which writes iopub and answers
+  the heartbeat), the REPL's lines as the `execute_result`'s `text/plain`
+  and `text/html` (each binding laid out as HTML with the palette's classes,
+  `Color.cssOf` the rules of the roles used), a compile error or an uncaught
+  exception an `error` with the rendered excerpt or the frames --
+  `is_complete`, `complete` (code points to bytes and back) and `inspect`
+  (`:info` and `:doc` of the name at the cursor) the engine's; the
+  program's input asked of the notebook on the stdin channel (lib/jupyter's
+  new `input`); Jupyter's `SIGINT` given to the engine; an engine that dies
+  started again, the cell told so. `Display` (`lib/basis/display.sml`,
+  `DISPLAY`): `display`, `displayAs`, `update`, `clear`, given to the front
+  as the engine's `display` and `clear` notifications, which the kernel
+  publishes as `display_data`, `update_display_data` and `clear_output`;
+  elsewhere a bundle's `text/plain` is printed. `rune-kernel --install
+  [--user | --prefix DIR]` writes the kernelspec, `interrupt_mode signal`.
+  Tests: `tests/kernel/run.sh` (`make test-kernel`, in `make check`): a
+  client from the specification on the tree's ZMTP peer, and
+  `tests/kernel/notebook_client.py` through `jupyter_client` 7.4.9, which is
+  installed here (execute, stream, `interrupt_kernel`, `complete`).
+  Where it differs from the plan:
+  * **POSIX only.** Windows has neither `fork` nor descriptors to pass:
+    the engine's `--engine-connect` is the channel to use there, and the
+    runtime's thread for `JPY_INTERRUPT_EVENT`, which M13 builds with the
+    rest of Windows' parity.
+  * **No renderers registered by type.** `Display` takes a value's forms
+    from the program; registering, for a type, functions to MIME types, as
+    `addPrettyPrinter` registers a printer by the type its application
+    sees, needs the same special application in the compiler, and is in
+    *Ready for, not built*.
+  * **JupyterLab itself was not run**; `jupyter_client` drives the kernel
+    as JupyterLab's server does.
 
 ### M12. The debugger (XL, about 2,500 SML and 400 C)
 
@@ -2809,6 +2846,10 @@ those numbers.
   lacks; Tolmach and Appel's continuations).
 * **A notebook's widgets and comms**, and a bridge in Python (D21's C)
   for whoever wants notebooks before M11.
+* **Renderers registered by type.** `Display.addRenderer`, keyed by the
+  type its application sees as `addPrettyPrinter` is, so that a value of
+  the type shows as HTML or an image in a notebook's result without the
+  program calling `Display`.
 * **A VM mode that frames the program's output** as the protocol's
   `output` notifications, for a client with one pipe (Emacs's
   `make-process`; D20).

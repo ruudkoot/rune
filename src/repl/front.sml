@@ -197,15 +197,31 @@ struct
 
   fun render (d : string Pretty.doc) : string = renderAs (fn r => r) d
 
-  (* the echo of a value a declaration bound (RuneCompiler.echoHook): its
-     type on the line of the value's end where it fits *)
+  (* what the REPL says of a value a declaration bound: its type on the
+     line of the value's end where it fits *)
+  fun echoDoc (name : string, shown : RuneCompiler.pretty, ty : string) : string Pretty.doc =
+    Pretty.concat [Pretty.text "val ", Pretty.annotate ("repl.name", Pretty.text name), Pretty.text " = ",
+                   toDoc shown,
+                   Pretty.group (Pretty.nest 2 (Pretty.concat [Pretty.line, Pretty.text ": ",
+                                                               Pretty.annotate ("repl.type", Pretty.text ty)]))]
+
+  (* a document as HTML, laid out at the width: its text escaped, its roles
+     spans of the palette's classes (Color.cssOf); and the roles it used *)
+  fun html (d : string Pretty.doc) : string * string list =
+    let
+      val used = ref []
+      fun escape s = String.translate (fn #"<" => "&lt;" | #">" => "&gt;" | #"&" => "&amp;" | #"\"" => "&quot;"
+                                        | c => String.str c) s
+      fun piece (Pretty.Text s) = escape s
+        | piece (Pretty.Newline i) = "\n" ^ CharVector.tabulate (i, fn _ => #" ")
+        | piece (Pretty.Begin r) =
+            (used := r :: !used; "<span class=\"rune-" ^ String.translate (fn #"." => "-" | c => String.str c) r ^ "\">")
+        | piece Pretty.End = "</span>"
+    in (String.concat (List.map piece (Pretty.layout (width ()) d)), !used) end
+
+  (* the echo of a value a declaration bound (RuneCompiler.echoHook) *)
   fun echo (name : string, shown : RuneCompiler.pretty, ty : string) : unit =
-    (freshLine ();
-     print (render (Pretty.concat [Pretty.text "val ", Pretty.annotate ("repl.name", Pretty.text name), Pretty.text " = ",
-                                   toDoc shown,
-                                   Pretty.group (Pretty.nest 2 (Pretty.concat [Pretty.line, Pretty.text ": ",
-                                                                               Pretty.annotate ("repl.type", Pretty.text ty)]))])
-            ^ "\n"))
+    (freshLine (); print (render (echoDoc (name, shown, ty)) ^ "\n"))
 
   (* ---- the terminal while code runs (D18) ---- *)
 

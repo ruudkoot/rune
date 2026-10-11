@@ -94,12 +94,14 @@ struct
   fun frameJson ({function, file, line, column} : Runtime.frame) =
     Json.Object [("function", str function), ("file", str file), ("line", int line), ("column", int column)]
 
-  fun outcome ({ok, bindings, declared, messages, diagnostics, exn} : ReplEngine.outcome) : Json.value =
+  fun outcome ({ok, bindings, declared, messages, diagnostics, exn, css} : ReplEngine.outcome) : Json.value =
     Json.Object
       [("ok", Json.Bool ok),
-       ("bindings", Json.Array (List.map (fn {name, ty, shown, id} =>
+       ("bindings", Json.Array (List.map (fn {name, ty, shown, line, html, id} =>
                                             Json.Object [("name", str name), ("type", str ty), ("shown", str shown),
+                                                         ("line", str line), ("html", str html),
                                                          ("handle", int id)]) bindings)),
+       ("css", str css),
        ("declared", Json.Array (List.map str declared)),
        ("messages", Json.Array (List.map str messages)),
        ("diagnostics", Json.Array diagnostics),
@@ -248,6 +250,14 @@ struct
     in
       ReplLoop.numbered := true;
       inputFromFront c;
+      (* what the program shows with Display, given to the front as it is
+         shown, after what it printed before *)
+      RuneDisplay.showHook :=
+        (fn (id, replace, bundle) =>
+           notify (c, "display", Json.Object ([("data", Json.Object (List.map (fn (m, t) => (m, str t)) bundle)),
+                                               ("update", Json.Bool replace)]
+                                              @ (case id of SOME i => [("id", str i)] | NONE => []))));
+      RuneDisplay.clearHook := (fn wait => notify (c, "clear", Json.Object [("wait", Json.Bool wait)]));
       (* the user's interrupt, while code runs, is the front's SIGINT; idle,
          the engine waits in its read, which the interrupt ends *)
       (loop () handle Shutdown => ())

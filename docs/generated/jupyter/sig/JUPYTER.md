@@ -54,7 +54,8 @@ sig
   val <a href="#val-decode">decode</a> : string -&gt; string list -&gt; message option
   type <a href="#type-kernel">kernel</a>
   val <a href="#val-bind">bind</a> : connection -&gt; kernel
-  type <a href="#type-request">request</a> = {<a href="#fld-request.msgtype">msgType</a> : string, <a href="#fld-request.content">content</a> : Json.value, <a href="#fld-request.publish">publish</a> : string * Json.value -&gt; unit}
+  type <a href="#type-request">request</a> = {<a href="#fld-request.msgtype">msgType</a> : string, <a href="#fld-request.content">content</a> : Json.value, <a href="#fld-request.publish">publish</a> : string * Json.value -&gt; unit,
+                  <a href="#fld-request.input">input</a> : {prompt : string, password : bool} -&gt; string option, <a href="#fld-request.idle">idle</a> : unit -&gt; unit}
   val <a href="#val-serve">serve</a> : kernel * {<a href="#fld-serve.info">info</a> : (string * Json.value) list, <a href="#fld-serve.respond">respond</a> : request -&gt; Json.value option} -&gt; unit
   val <a href="#val-close">close</a> : kernel -&gt; unit
 end
@@ -199,18 +200,28 @@ It raises lib/zmtp's error when a port cannot be bound.
 ### <a name="type-request"></a>`request`
 
 ```sml
-type request = {msgType : string, content : Json.value, publish : string * Json.value -> unit}
+type request = {msgType : string, content : Json.value, publish : string * Json.value -> unit,
+                input : {prompt : string, password : bool} -> string option, idle : unit -> unit}
 ```
 
-What a handler is given: the request, and how to say something on
-iopub as its child (`publish (msgType, content)`), such as a
-`stream` or an `execute_result`.
+What a handler is given: the request, and what it may do while it
+answers.
+
+`publish (msgType, content)` says something on iopub as the
+request's child, such as a `stream` or an `execute_result`.
+`input {prompt, password}` asks the client for a line of input on the
+stdin channel, where the request allows it (`NONE` where it does not
+or the client gave none). `idle ()`, which a handler that takes long
+calls now and then, writes what it published and answers the
+heartbeat.
 
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-request.msgtype"></a>`msgType` | `string` |  |
 | <a name="fld-request.content"></a>`content` | `Json.value` |  |
 | <a name="fld-request.publish"></a>`publish` | `string * Json.value -> unit` |  |
+| <a name="fld-request.input"></a>`input` | `{prompt : string, password : bool} -> string option` |  |
+| <a name="fld-request.idle"></a>`idle` | `unit -> unit` |  |
 
 ### <a name="val-serve"></a>`serve`
 

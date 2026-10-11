@@ -148,7 +148,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
+.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64
 
 all: vm boot runedoc runeopt manifests basis-cache
 
@@ -955,6 +955,18 @@ test-repl: bin/rune-repl bin/runevm
 	sh tests/repl/run.sh --vm-opts --jit=all --out tests/out/repl-all
 	sh tests/repl/run.sh --vm-opts "--jit=all --jit-tier=2" --out tests/out/repl-tier2
 
+# rune-kernel, a Jupyter kernel for Standard ML (docs/kernel.md): a bridge
+# in SML over lib/jupyter that drives the REPL's engine as its child
+bin/rune-kernel.rbc: $(RUNE) src/kernel/kernel.sml manifests \
+                     $(wildcard lib/jupyter/*.sml lib/zmtp/*.sml lib/digest/*.sml lib/json/*.sml lib/jsonrpc/*.sml)
+	$(RUNE) --library jupyter --library jsonrpc src/kernel/kernel.sml -o $@
+bin/rune-kernel: bin/rune-kernel.rbc bin/rune-repl.img bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-kernel.rbc" --vm "$$d/runevm" --image "$$d/rune-repl.img" --program "$$d/rune-kernel.rbc" "$$@"\n' > $@
+	chmod +x $@
+kernel: bin/rune-kernel
+test-kernel: bin/rune-kernel
+	sh tests/kernel/run.sh
+
 # The REPL's engine and its protocol (docs/repl-protocol.md): each script
 # of tests/repl-protocol played to rune-repl --engine, as a front drives it
 test-repl-protocol: bin/rune-repl bin/runevm
@@ -1343,7 +1355,7 @@ check:
 	@$(MAKE) --no-print-directory test-build
 	@$(MAKE) --no-print-directory check-reproducible
 	@$(MAKE) --no-print-directory test-serve
-	@$(MAKE) --no-print-directory test-repl test-terminal test-diagnostics test-repl-protocol
+	@$(MAKE) --no-print-directory test-repl test-terminal test-diagnostics test-repl-protocol test-kernel
 	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory test-register
 	@$(MAKE) --no-print-directory test-register-jit

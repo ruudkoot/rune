@@ -13,10 +13,13 @@
    holds what it names until the front releases it. *)
 signature ENGINE =
 sig
-  type binding = {name : string, ty : string, shown : string, id : int}
+  (* a value bound: its name, type, the line the REPL says of it as text
+     and as HTML, and its handle *)
+  type binding = {name : string, ty : string, shown : string, line : string, html : string, id : int}
+  (* css: the palette's rules of the roles the bindings' HTML uses *)
   type outcome = {ok : bool, bindings : binding list, declared : string list, messages : string list,
                   diagnostics : Json.value list,
-                  exn : {name : string, message : string, trace : Runtime.frame list} option}
+                  exn : {name : string, message : string, trace : Runtime.frame list} option, css : string}
 
   datatype completeness = Complete | Incomplete of int | Invalid
 
@@ -37,10 +40,10 @@ end
 
 structure ReplEngine : ENGINE =
 struct
-  type binding = {name : string, ty : string, shown : string, id : int}
+  type binding = {name : string, ty : string, shown : string, line : string, html : string, id : int}
   type outcome = {ok : bool, bindings : binding list, declared : string list, messages : string list,
                   diagnostics : Json.value list,
-                  exn : {name : string, message : string, trace : Runtime.frame list} option}
+                  exn : {name : string, message : string, trace : Runtime.frame list} option, css : string}
 
   datatype completeness = Complete | Incomplete of int | Invalid
 
@@ -111,8 +114,17 @@ struct
       val messages = ref []
       val raised = ref NONE
       val echo = !RuneCompiler.echoHook
-      val () = RuneCompiler.echoHook := (fn (n, p, t) => bindings := {name = n, ty = t, shown = shown p, id = hold p}
-                                                                     :: !bindings)
+      val roles = ref []
+      fun bound (n, p, t) =
+        let
+          val d = ReplFront.echoDoc (n, p, t)
+          val (h, used) = ReplFront.html d
+        in
+          roles := used @ !roles;
+          bindings := {name = n, ty = t, shown = shown p, line = Pretty.render (!width) d, html = h, id = hold p}
+                      :: !bindings
+        end
+      val () = RuneCompiler.echoHook := bound
       val () = ReplLoop.declaredHook := (fn ds => declared := !declared @ ds)
       val () = ReplLoop.uncaughtHook :=
                  SOME (fn e => raised := SOME {name = General.exnName e, message = General.exnMessage e,
@@ -127,10 +139,15 @@ struct
     in
       restore ();
       {ok = ok andalso not (isSome (!raised)) andalso List.null diags, bindings = List.rev (!bindings),
-       declared = !declared, messages = List.rev (!messages), diagnostics = diags, exn = !raised}
+       declared = !declared, messages = List.rev (!messages), diagnostics = diags, exn = !raised,
+       css = if List.null (!roles) then "" else Color.cssOf (!roles)}
     end
 
-  fun eval (text : string) : outcome = capture (fn () => #2 (ReplLoop.step (text, true)))
+  (* a text that does not end its last declaration with a `;` ends it, as a
+     notebook's cell or -e's text is written *)
+  fun eval (text : string) : outcome =
+    let val whole = if ReplScan.complete (ReplScan.ofText (text ^ "\n")) then text else text ^ "\n;"
+    in capture (fn () => #2 (ReplLoop.step (whole, true))) end
 
   fun use (file : string) : outcome = capture (fn () => (ReplLoop.use file; true))
 

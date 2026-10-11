@@ -11,7 +11,8 @@ struct
                  version : string}
   type message = {identities : string list, header : header, parent : Json.value, metadata : Json.value,
                   content : Json.value, buffers : string list}
-  type request = {msgType : string, content : Json.value, publish : string * Json.value -> unit}
+  type request = {msgType : string, content : Json.value, publish : string * Json.value -> unit,
+                  input : {prompt : string, password : bool} -> string option, idle : unit -> unit}
 
   fun field (name, v) = Json.member (name, v)
   fun str (name, v) = case field (name, v) of SOME (Json.String s) => SOME s | _ => NONE
@@ -102,6 +103,42 @@ struct
 
   fun status (k, parent, s) = publish (k, parent) ("status", Json.Object [("execution_state", Json.String s)])
 
+  (* what is queued written, and the heartbeat answered, without waiting *)
+  fun idle (k : kernel) () =
+    let fun beat () = case Zmtp.receive (#heartbeat k) of SOME m => (Zmtp.send (#heartbeat k, m); beat ()) | NONE => ()
+    in
+      ignore (Zmtp.wait ([#heartbeat k], SOME Time.zeroTime));
+      beat ();
+      List.app (fn s => Zmtp.flush (s, SOME Time.zeroTime)) [#iopub k, #heartbeat k]
+    end
+
+  (* a line asked of the client that sent parent, on the stdin channel, where
+     it allows it; the heartbeat answered while it is waited for *)
+  fun input (k : kernel, parent : message) {prompt, password} =
+    case field ("allow_stdin", #content parent) of
+      SOME (Json.Bool false) => NONE
+    | _ =>
+        let
+          val key = #key (#connection k)
+          val () = Zmtp.send (#stdin k, encode key
+                                {identities = #identities parent, header = header (k, "input_request"),
+                                 parent = headerJson (#header parent), metadata = Json.Object [],
+                                 content = Json.Object [("prompt", Json.String prompt), ("password", Json.Bool password)],
+                                 buffers = []})
+          fun wait () =
+            (ignore (Zmtp.wait ([#stdin k, #heartbeat k], NONE));
+             idle k ();
+             case Zmtp.receive (#stdin k) of
+               SOME parts =>
+                 (case decode key parts of
+                    SOME r =>
+                      if #msgType (#header r) = "input_reply" then
+                        (case field ("value", #content r) of SOME (Json.String v) => SOME v | _ => NONE)
+                      else wait ()
+                  | NONE => wait ())
+             | NONE => wait ())
+        in wait () end
+
   fun replyType t = if String.isSuffix "_request" t then String.substring (t, 0, size t - 8) ^ "_reply" else t ^ "_reply"
 
   fun serve (k : kernel, {info, respond}) =
@@ -124,7 +161,8 @@ struct
                                      ("restart", getOpt (field ("restart", #content m), Json.Bool false))]);
                  true)
             | _ =>
-                (case respond {msgType = t, content = #content m, publish = publish (k, m)} of
+                (case respond {msgType = t, content = #content m, publish = publish (k, m), input = input (k, m),
+                               idle = idle k} of
                    SOME c => reply (k, socket, m, replyType t, c)
                  | NONE => ();
                  false)

@@ -31,6 +31,7 @@
 - `BlockingNotSupported` (exn): [IO](../sig/IO.md#exn-blockingnotsupported)
 - `bool` (type): [BOOL](../sig/BOOL.md#type-bool)
 - `buffer_mode` (type): [IO](../sig/IO.md#type-buffer_mode)
+- `bundle` (type): [DISPLAY](../sig/DISPLAY.md#type-bundle)
 - `bus` (val): [POSIX_SIGNAL](../sig/POSIX_SIGNAL.md#val-bus)
 - `busy` (val): [POSIX_ERROR](../sig/POSIX_ERROR.md#val-busy)
 - `bytesPerElem` (val): [PACK_REAL](../sig/PACK_REAL.md#val-bytesperelem), [PACK_WORD](../sig/PACK_WORD.md#val-bytesperelem)

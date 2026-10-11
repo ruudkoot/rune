@@ -207,7 +207,7 @@ struct
        reverse = has 7, struck = has 9}
     end
 
-  fun cssRules (colours, theme, background, foreground) =
+  fun cssRulesOf (rs, colours, theme, background, foreground) =
     String.concat (map (fn role =>
       let
         val {colour, bold, dim, italic, underline, reverse, struck} = parts (colours, baseStyle (theme, role))
@@ -222,7 +222,30 @@ struct
         "  --rune-" ^ name ^ "-style: " ^ (if italic then "italic" else "normal") ^ ";\n" ^
         "  --rune-" ^ name ^ "-decoration: " ^ (if deco = "" then "none" else deco) ^ ";\n" ^
         "  --rune-" ^ name ^ "-opacity: " ^ (if dim then "0.7" else "1") ^ ";\n"
-      end) roles)
+      end) rs)
+
+  fun cssRules (colours, theme, background, foreground) = cssRulesOf (roles, colours, theme, background, foreground)
+
+  fun cssClass role =
+    let val n = String.translate (fn #"." => "-" | c => String.str c) role
+    in
+      ".rune-" ^ n ^ " { color: var(--rune-" ^ n ^ "-color); background: var(--rune-" ^ n ^ "-background); " ^
+      "font-weight: var(--rune-" ^ n ^ "-weight); font-style: var(--rune-" ^ n ^ "-style); " ^
+      "text-decoration: var(--rune-" ^ n ^ "-decoration); opacity: var(--rune-" ^ n ^ "-opacity); }\n"
+    end
+
+  (* the rules of these roles alone, light and dark, for a page that shows
+     a few of them: the HTML of the REPL's values, which the Jupyter kernel
+     shows (docs/plans/repl.md, D21) *)
+  fun cssOf (rs : string list) : string =
+    let
+      val rs = List.foldr (fn (r, acc) => if List.exists (fn x => x = r) acc orelse not (List.exists (fn x => x = r) roles)
+                                          then acc else r :: acc) [] rs
+    in
+      ":root {\n" ^ cssRulesOf (rs, lightColours, Light, "ffffff", "333333") ^ "}\n" ^
+      "@media (prefers-color-scheme: dark) {\n:root {\n" ^ cssRulesOf (rs, darkColours, Dark, "0c0c0c", "cccccc") ^ "}\n}\n" ^
+      String.concat (map cssClass rs)
+    end
 
   (* palette.css: a custom property of each role in the light theme, the
      dark theme's under prefers-color-scheme, and a class of each role *)
