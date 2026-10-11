@@ -132,7 +132,7 @@ name the tools to check.
 | `make matrix-quick` | the Basis Library suite on Rune and on Rune's library compiled by each host (the `xc1` configurations); not part of `make check` |
 | `make matrix` | `matrix-quick` and the suite on each host's own library |
 | `make perf` | the wall-clock times of the programs of `tests/perf` in the configurations of the matrix (`PERF_CONFIGS` selects others), one at a time, in `tests/out/perf/wall.md`; not part of `make check` |
-| `make install` | install `rune`, `runevm`, `runevm-stack`, `runedoc`, `runeopt`, `rune-repl`, the basis library, the man pages and the shell completions under `PREFIX` |
+| `make install` | install `rune`, `runevm`, `runevm-stack`, `runedoc`, `runeopt`, `rune-repl` with `rune-dap` and `rune-kernel` where they are built, the basis library, the man pages and the shell completions under `PREFIX` |
 | `make uninstall` | remove them again |
 | `make clean` | remove `bin/`, `build/`, generated files and test output |
 

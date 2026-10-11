@@ -15,6 +15,10 @@ bin/rune-kernel --install --user          # ~/.local/share/jupyter/kernels/rune
 bin/rune-kernel --install --prefix DIR    # DIR/share/jupyter/kernels/rune
 ```
 
+`make install` installs `rune-kernel` beside `rune` where it is built
+(`make kernel`); `rune-kernel --install --user` then writes a kernelspec
+that runs the installed one.
+
 writes the kernelspec: `argv` runs `runevm` on `rune-kernel.rbc` with the
 REPL's image beside it, the language is `sml`, and `interrupt_mode` is
 `signal`. `jupyter notebook`, `jupyter lab` and `jupyter console --kernel
