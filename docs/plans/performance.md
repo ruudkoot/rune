@@ -43,7 +43,7 @@ is the page of timings, stale until M1.
 
 | Milestone | What | State |
 |---|---|---|
-| M0 | This roadmap | done (2026-10-11) |
+| M0 | This roadmap | done (2026-10-11); every decision taken on 2026-10-12, D7 with an addendum |
 | M1 | Measure: the JIT's code dumped, the elaborator's counters, the register VM in every timing target, HOL and MLton as scripts, new budgets | not started |
 | M2 | Signatures: sharing and `where` in one realisation | not started; prototype E20 |
 | M3 | Functors: typed from their signature, copies only for code (D3 decided), cheaper matching, MidCanon's quadratic | not started; prototypes E21, E24 |
@@ -416,7 +416,7 @@ what is not.
   * `runeopt`'s templates;
   * `fastprim.h`.
 
-  ([weak-points.md](weak-points.md) counts the cost of changing them.)
+  ([weak-points.md](weak-points.md), item 4.)
 
 ## Track A: the compiler
 
@@ -432,7 +432,7 @@ profile under MLton's profiler (E24):
 | register allocation (`Regs`) | 12% |
 | Lower | 9% |
 | Translate | 8% |
-| MidCanon, which `--pass-stats` does not show | 8% |
+| MidCanon, which `--pass-stats` does not show (M1 makes it complete) | 8% |
 | Emit, likewise not shown | 5% |
 | the collector | 17% |
 
@@ -763,7 +763,7 @@ So six homes would do, if pointers could have them.
 
   Instructions barely move, so the gain is in the memory traffic.
 * On the way the prototype found a latent bug: `string_order` loaded its
-  arguments from homes into `rsi`, which is itself a home.
+  arguments from homes into `rsi`, which is itself a home. M5 fixes it.
 * Maps per return address are needed only with native frames and
   callee-saved registers (*The call*).
 
@@ -1368,11 +1368,17 @@ before this one have them.
 
 ## Decisions
 
-Each decision gives the options, the evidence, and a recommendation. The
-owner decides. "Measured" means a prototype measured for this plan;
-"estimated" means reasoned from measurements.
+Each decision gives the options, the evidence, and a recommendation.
+"Measured" means a prototype measured for this plan; "estimated" means
+reasoned from measurements.
+
+The owner took every recommendation on 2026-10-12, with one addendum: D7's
+option C is to be benchmarked too, and implemented if it shows gains. Each
+decision records it.
 
 ### D1. Workloads and yardsticks
+
+**Decided (2026-10-12): as recommended.**
 
 What the milestones are measured on, and against what.
 
@@ -1396,6 +1402,8 @@ What the milestones are measured on, and against what.
   the yardstick for everything else.
 
 ### D2. Sharing and `where type`
+
+**Decided (2026-10-12): as recommended.**
 
 * **A. Resolve each run of sharing specifications, and each chain of
   `where type`, as one realisation by union-find, with realisations that
@@ -1461,6 +1469,8 @@ Poly/ML, Moscow ML and MLKit reject it; Rune and MLton accept it.
 
 ### D4. Types in the IR
 
+**Decided (2026-10-12): as recommended.**
+
 * **A. `Ty.ty` hash-consed throughout**: an abstract type, smart
   constructors, an integer identity per node, every walk memoised on it.
   That covers renaming, substitution, the free variables, the
@@ -1479,6 +1489,8 @@ pathological program, and for the exponential cases of nested functors.
 `--type-work` stays as a budget on inference, which is DEXPTIME-complete.
 
 ### D5. The call
+
+**Decided (2026-10-12): as recommended.**
 
 What a call at tier 2 should be. Today `fib` spends 82.5 machine
 instructions and 31 cycles per call, against 17 and 8.6 in MLton. Calls and
@@ -1527,6 +1539,8 @@ Targets for B: at most 25 instructions and 10 cycles for a `fib` call.
 
 ### D6. Pointers in registers
 
+**Decided (2026-10-12): as recommended.**
+
 * **A. Pointer homes written back to their tagged slots at every
   safepoint.** The tags remain the map; a home is reloaded after anything
   that may collect, as int homes are already written back and reloaded at
@@ -1548,6 +1562,9 @@ bootstrap's pointer loads from slots from 747M to at most 300M.
 
 ### D7. Runtime calls in line, and equality by type
 
+**Decided (2026-10-12): A, then B, as recommended; and C benchmarked as
+well, and implemented if it shows gains** (the owner's addendum).
+
 * **A. Fast paths in the JIT.** Each keeps the count:
   * identity first in `=`: an immediate against a pointer is false, two
     refs or arrays compare by address;
@@ -1563,10 +1580,12 @@ bootstrap's pointer loads from slots from 747M to at most 300M.
   constants a switch on the length. Every engine gains, and the count of
   bytecode instructions is unchanged (one primitive for one).
 * **C. Equality functions per datatype**, as MLton generates. Structural
-  equality is 1.2% of HOL's `poly_eq` and 3.7% of the bootstrap's: not
-  worth it.
+  equality is 1.2% of HOL's `poly_eq` and 3.7% of the bootstrap's, so the
+  counts predict little gain; the owner asked for it to be measured.
 
-**Recommendation: A, then B; not C.** Targets:
+**Recommendation: A, then B.** C was recommended against on the counts.
+The decision adds it as a benchmark: built and timed after A and B, and
+kept if it gains. Targets:
 
 * `poly_eq` that reaches C at most 5% of its calls (99.8% on HOL today);
 * `ptr_eq`, a handler's push and `String.<` never on the generic path of a
@@ -1574,6 +1593,8 @@ bootstrap's pointer loads from slots from 747M to at most 300M.
 * HOL's kernel work at least 5% fewer instructions.
 
 ### D8. Allocation: the middle end, or the JIT
+
+**Decided (2026-10-12): as recommended.**
 
 * **A. The middle end.** In the order of what they gain (E14, E15):
   * tuples flattened at joins;
@@ -1603,6 +1624,8 @@ Targets, by `--count` on every engine:
 
 ### D9. Counting instructions
 
+**Decided (2026-10-12): as recommended.**
+
 * **A. Keep it as it is.** It costs 0.8% of cycles (E13).
 * **B. Count per extended block**, with corrections on the paths that
   leave it: 30% fewer `lea`s in the bootstrap. A part of D5 A, since it
@@ -1616,6 +1639,8 @@ Determinism stays as it is.
 
 ### D10. Exact counts of allocation
 
+**Decided (2026-10-12): as recommended.**
+
 * **A. Keep them exact and the same on every engine.** It costs, by
   estimate (E14), about 0.003% of the bootstrap and nothing measurable on
   25 of 28 of MLton's programs. It costs 5 to 10% of `knuth-bendix`, and
@@ -1627,6 +1652,9 @@ Determinism stays as it is.
 removes allocations.
 
 ### D11. `runeopt`
+
+**Decided (2026-10-12): B, as recommended.** Whether to retire `runeopt` (C)
+stays open.
 
 `runeopt` translates the stack bytecode to native code. The owner kept it
 in heap-layout's D11, against a recommendation to retire it. Measured
@@ -1654,6 +1682,8 @@ The middle end's work (D7 B, D8) reaches it anyway, since it changes the
 bytecode.
 
 ### D12. The order of the two tracks
+
+**Decided (2026-10-12): as recommended.**
 
 The tracks touch different code: the front end on one side; the JIT, the
 runtime and the middle end on the other. They can go in parallel, on
@@ -1699,7 +1729,7 @@ The columns:
 | 6 | Pointers in the homes there are (D6 A) | measured: bootstrap −6.5% of cycles, a list walk −39% | `compile.c`, `masm.c` | M, ~200 lines with the boxing path | homes that may move | stays | same |
 | 7 | Functors typed from their signature, copies only for code (D3, extended A) | measured for checks: −19.5% of instructions; `main.fun` 9.2 s to 0.01 s; fixes a deviation from rule 54 | `src/elab`, the units' files | M, ~300 lines | summaries per body; replayed counters | stays | same |
 | 8 | MidCanon's quadratic | measured: nested functors 20.3 s to 0.88 s | `src/core/midcanon.sml` | S, 20 lines | none | stays | same |
-| 9 | Equality by type in the middle end (D7 B) | est.: `tsp`'s 158M calls and HOL's ref compares to `ptr_eq` | `simplify.sml`, a string primitive | S | none | stays | same |
+| 9 | Equality by type in the middle end (D7 B; C benchmarked, kept if it gains) | est.: `tsp`'s 158M calls and HOL's ref compares to `ptr_eq` | `simplify.sml`, a string primitive | S (C: M) | none (C: an equality function per datatype) | stays | same |
 | 10 | Tuples flattened at joins and from known calls; small leaves inlined (D8) | est.: `fft` −75%, `barnes-hut` −60%, `raytrace` −70% of bytes | Mid passes | M-L | multi-value returns in Mid and Low | stays | move |
 | 11 | Contification and local refs (D8) | est.: `peek`, `imp-for` to about nothing | Mid passes | M | a contification pass | stays | move |
 | 12 | Functions specialised on the closures they are given (D8) | est.: up to 28% more of the bootstrap's bytes removable | `simplify.sml` (its specialisation) | M | code growth to budget | stays | move |
@@ -1722,9 +1752,14 @@ M1's tools. The prototypes behind them are kept with the drafts (*Measuring*).
 * **The JIT's code dumped**, with a role per machine instruction
   (`runevm --jit-dump=DIR`; prototype B1-jit-dump). A perf jitdump too, so
   that `perf annotate` works on compiled code.
+* **`--pass-stats` made complete.** Every stage the compiler spends time
+  in is timed, so that the stages add up to the compile's processor time:
+  * MidCanon and Emit, which it does not show today (8% and 5% of the
+    compiler compiling itself, E24);
+  * whatever else a profile finds outside the stages;
+  * a test holds the stages' sum to the total, within a margin.
 * **The elaborator's time and counters per top-level declaration**
   (prototype A-e18-elab-stats), behind a flag of `--pass-stats`.
-  MidCanon and Emit timed as passes of their own.
 * **`make perf`, `perf-check`, `bench` and `scripts/perf-cycles.sh` on the
   register VM by default**, with the stack VM a configuration of its own.
   Today `make bench`'s configuration `rune:new` passes `--jit=off`
@@ -1821,8 +1856,20 @@ memory, as MLton's, SML/NJ's and Moscow ML's are.
   * a raise that unwinds in compiled code, working with the REPL's raise
     mark and the debugger.
 * D7 B, equality by type in the middle end.
+* D7 C, equality functions per datatype in the middle end, as MLton's
+  `poly-equal` pass makes them:
+  * built after A and B, and benchmarked on HOL's kernel work, the
+    bootstrap and MLton's set (`boyer`, `logic`, `mlyacc`, where
+    structural equality is most frequent);
+  * implemented if it shows gains over A and B; otherwise the result is
+    recorded here and it is dropped.
 * `TextIO`'s output without a handler per call (ranked item 17;
   `output1`).
+* **The bug E12 found:** the emitter of `string_order` loads its arguments
+  from their homes into `rsi` and `rdx`, and `rsi` is itself a home. It is
+  latent today, since strings never have homes, and becomes live with M7.
+  It is to load them from their slots, with a test that fails without the
+  fix when pointers have homes.
 
 **Targets:**
 
@@ -1956,9 +2003,9 @@ for: a `fib` call at most 25 instructions and 10 cycles.
 * **[whole-program-optimization.md](whole-program-optimization.md)** (a note:
   native code, an optimising pipeline, profile-guided optimisation) is
   where M9 and anything beyond this plan's middle-end items would go.
-* **[weak-points.md](weak-points.md)** ranks slow programs among Rune's
-  weak points. Its refresh of 2026-10-11, in progress, adds the slow
-  elaboration of large programs: this plan's two tracks.
+* **[weak-points.md](weak-points.md)**, items 2 (programs run slower than
+  under MLton) and 3 (large programs elaborate slowly), are this plan's
+  two tracks.
 
 ## Risks
 
