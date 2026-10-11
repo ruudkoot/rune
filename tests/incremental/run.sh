@@ -739,5 +739,44 @@ if run S59; then
   prints 41
 fi
 
+# S60, a datatype of many constructors: each constructor's information
+# names all of its datatype's, and written whole for each it made a unit's
+# basis grow with the square of the constructors (issue 14, MLton's
+# DotColor). 300 constructors: the basis is written in under 100 KB
+if run S60; then
+  own S60 colors.sml main.sml
+  { printf 'structure Colors = struct datatype t ='
+    i=1; while [ $i -le 300 ]; do [ $i -gt 1 ] && printf ' |'; printf ' C%d' $i; i=$((i + 1)); done
+    printf '\n fun index C1 = 1 | index _ = 0 end\n'; } > "$dir/colors.sml"
+  put main.sml 'val () = print (Int.toString (Colors.index Colors.C1) ^ "\n")'
+  build --emit-units units
+  basis=$(find "$dir/units" -name '*colors.rbi' | head -1)
+  size=$(wc -c < "$basis" 2> /dev/null || echo 0)
+  if [ "$status" = 0 ] && [ "$size" -gt 0 ] && [ "$size" -lt 100000 ]; then pass=$((pass + 1))
+  else echo "FAIL incremental.S60: the basis of 300 constructors is $size bytes ($dir/build.err)"; fail=$((fail + 1)); fi
+  prints 1
+fi
+
+# S61, a program that keeps its units' identities takes no entry across a
+# unit that changed: main.sml names Runtime, so the program keeps its
+# units' exports under their identities (docs/units.md, Dynamic modules).
+# b.sml declares a functor whose body uses A.x; a.sml gains a value and
+# A.x does not change. b.sml's code names nothing of a.sml -- a functor's
+# body is compiled where it is applied -- but its basis names the unit
+# that bound A.x, and taken by A.x's fingerprint it would keep the old
+# a.sml's identity there, and give the program other bytes than a build
+# without the cache (issue 15; MLton's word-size.fun under S47)
+if run S61; then
+  own S61 a.sml b.sml main.sml
+  put a.sml 'structure A = struct val x = 40 end'
+  put b.sml 'functor F () = struct val y = A.x + 2 end'
+  put main.sml 'structure B = F ()
+val () = print (Int.toString B.y ^ " " ^ Int.toString (#instructions (Runtime.stats ()) div 1000000000) ^ "\n")'
+  build; want "a.sml b.sml main.sml"
+  put a.sml 'structure A = struct val x = 40 val z = 3 end'
+  build; want "a.sml b.sml main.sml"
+  prints "42 0"
+fi
+
 echo "incremental: passed $pass, failed $fail"
 [ $fail = 0 ]

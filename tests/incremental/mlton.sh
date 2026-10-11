@@ -8,7 +8,9 @@
 # make check: a cold build takes minutes and gigabytes.
 #   tests/incremental/mlton.sh MLTON-CHECKOUT [OUT]
 # MLTON-CHECKOUT is MLton at 5fe943391 (MLton PR #660), whose mlton/ has
-# mlton-rune.txt. Wants 20 GB of memory available.
+# mlton-rune.txt. Wants 14 GB of memory available: each compile runs under a
+# 12 GB limit of its address space, and the largest, the build without the
+# cache, holds 3.3 GB at most (issue 14 of docs/plans/build-cache-issues.md).
 set -u
 cd "$(dirname "$0")/../.."
 root=$(pwd)
@@ -16,8 +18,8 @@ src=${1:?usage: tests/incremental/mlton.sh MLTON-CHECKOUT [OUT]}
 out=${2:-$root/tests/out/mlton}
 list=$src/mlton/mlton-rune.txt
 [ -f "$list" ] || { echo "mlton.sh: no $list" >&2; exit 2; }
-if [ "$(free -g | awk '/^Mem:/ { print $7 }')" -lt 20 ]; then
-  echo "mlton.sh: less than 20 GB available" >&2; exit 2
+if [ "$(free -g | awk '/^Mem:/ { print $7 }')" -lt 14 ]; then
+  echo "mlton.sh: less than 14 GB available" >&2; exit 2
 fi
 rm -rf "$out"
 mkdir -p "$out/work/mlton"

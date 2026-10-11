@@ -15,6 +15,10 @@ struct
   val dumpAfter : string list ref = ref []
   val lint = ref false
   val stats = ref false
+  (* the live heap's bytes after a full collection, where the program can
+     ask its runtime (Rune's own main sets it; the hosts' builds cannot):
+     --pass-stats with RUNE_MEM set prints it after each unit *)
+  val liveBytes : (unit -> int) ref = ref (fn () => ~1)
   val fuel : int option ref = ref NONE
 
   (* Whether the passes see the whole program (docs/plans/incremental-

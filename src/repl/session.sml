@@ -165,10 +165,14 @@ struct
              case UnitCache.find (d, c, key) of UnitCache.Found e => SOME e | UnitCache.Missed _ => NONE)
       (* RUNE_VERIFY_CACHE: an entry found is compiled all the same, and what
          that gives is compared with it (UnitCache.verifying) *)
-      val against = if UnitCache.verifying () then found else NONE
-      (* from the cache: its basis loaded, its code linked *)
+      val against = case found of
+                      SOME (e as {usages, ...}) => if UnitCache.verifying () andalso UnitBasis.exact usages then SOME e else NONE
+                    | NONE => NONE
+      (* from the cache: its basis loaded, its code linked; when verifying,
+         compiled all the same, and one taken across a unit that changed
+         compiled again rather than compared (issue 15) *)
       val hit =
-        case if isSome against then NONE else found of
+        case if UnitCache.verifying () then NONE else found of
           NONE => NONE
         | SOME {pickle, code, warnings, file = was, others, ...} =>
           let val at = UnitBasis.counters ()

@@ -39,7 +39,7 @@ struct
   (* a pickle that names a unit the session has not loaded *)
   exception Missing of string
 
-  val version = 3
+  val version = 4
   val magic = "RBI"
 
   (* ---- the kinds of names ---- *)
@@ -509,6 +509,9 @@ struct
               names : int StringMap.map ref,           (* the identities named, by their place in the header *)
               nameList : string list ref,              (* the same, newest first *)
               tycons : int IntTable.table, ntycons : int ref,
+              types : int StringMap.map ref, ntypes : int ref, (* the types written, by their key *)
+              cons : int StringMap.map ref, ncons : int ref,   (* the constructors written, by their key *)
+              sibs : int StringMap.map ref, nsibs : int ref,   (* their lists of siblings, the same *)
               funsDone : unit IntTable.table,          (* own functors written, by where their bodies begin *)
               base : Env.env,                          (* the unit's start *)
               file : string,                           (* the unit's source, as its spans name it *)
@@ -562,17 +565,41 @@ struct
       | T.KFlex _ => bug "a flexible record in a unit's basis"
     end
 
+  (* A type is written once: after that, as the number of the first time
+     (byte 4), which the reader takes for the same object. A basis names
+     the same types over and over -- every value's in its environment and
+     again in Ty.binders, the types of a signature's specifications -- and
+     written whole each time, they were read as that many copies: a unit
+     of MLton's whose signature took 3.7 MB elaborated took 15.7 MB read
+     back (docs/plans/build-cache-issues.md, issue 14). The key is the
+     type's structure, its names by stamp. *)
+  fun tyKey (t : T.ty) : string =
+    case T.prune t of
+      T.TVar (ref (T.Unbound {id, ...})) => "v" ^ Int.toString id
+    | T.TVar _ => bug "a type pruned to a bound variable"
+    | T.TCon (c, args) => "c" ^ Int.toString (#stamp c) ^ "(" ^ String.concatWith "," (List.map tyKey args) ^ ")"
+    | T.TRecord fs => "{" ^ String.concatWith "," (List.map (fn (l, a) => l ^ ":" ^ tyKey a) fs) ^ "}"
+    | T.TArrow (a, b) => "(" ^ tyKey a ^ ">" ^ tyKey b ^ ")"
+
   fun ty (e : enc, t : T.ty) : unit =
-    let val w = #w e
+    let
+      val w = #w e
+      val k = tyKey t
     in
-      case T.prune t of
-        T.TVar (ref (T.Unbound {id, level, kind, eq})) =>
-          (P.byte (w, 0); name (e, kTvar, id); P.nat (w, if level = T.genericLevel then 0 else level + 1);
-           tkind (e, kind); P.bool (w, eq))
-      | T.TVar _ => bug "a type pruned to a bound variable"
-      | T.TCon (c, args) => (P.byte (w, 1); tycon (e, c); P.list (fn (_, a) => ty (e, a)) (w, args))
-      | T.TRecord fs => (P.byte (w, 2); P.list (fn (_, (l, a)) => (P.string (w, l); ty (e, a))) (w, fs))
-      | T.TArrow (a, b) => (P.byte (w, 3); ty (e, a); ty (e, b))
+      case StringMap.find (!(#types e), k) of
+        SOME i => (P.byte (w, 4); P.nat (w, i))
+      | NONE =>
+          ((case T.prune t of
+              T.TVar (ref (T.Unbound {id, level, kind, eq})) =>
+                (P.byte (w, 0); name (e, kTvar, id); P.nat (w, if level = T.genericLevel then 0 else level + 1);
+                 tkind (e, kind); P.bool (w, eq))
+            | T.TVar _ => bug "a type pruned to a bound variable"
+            | T.TCon (c, args) => (P.byte (w, 1); tycon (e, c); P.list (fn (_, a) => ty (e, a)) (w, args))
+            | T.TRecord fs => (P.byte (w, 2); P.list (fn (_, (l, a)) => (P.string (w, l); ty (e, a))) (w, fs))
+            | T.TArrow (a, b) => (P.byte (w, 3); ty (e, a); ty (e, b)));
+           (* numbered when it is written whole, as the reader numbers it *)
+           #types e := StringMap.insert (!(#types e), k, !(#ntypes e));
+           #ntypes e := !(#ntypes e) + 1)
     end
 
   fun tyfcn (e : enc, f : T.tyfcn) : unit =
@@ -593,11 +620,25 @@ struct
       | Ty.ExnCon => P.byte (w, 5)
     end
 
+  (* A constructor's information is written once, and so is its list of
+     siblings -- every constructor of its datatype, which each of them has:
+     written whole for each, a datatype of n constructors took n * n in the
+     basis and as many lists read back (MLton's DotColor, 7 MB; issue 14) *)
+  fun once (table : int StringMap.map ref, count : int ref, w : P.writer, key : string, write : unit -> unit) : unit =
+    case StringMap.find (!table, key) of
+      SOME i => (P.byte (w, 1); P.nat (w, i))
+    | NONE => (P.byte (w, 0); write (); table := StringMap.insert (!table, key, !count); count := !count + 1)
+
   fun coninfo (e : enc, {name = n, tag, hasArg, ncons, isRef, siblings} : Ast.coninfo) =
-    let val w = #w e
+    let
+      val w = #w e
+      val sibKey = String.concatWith " " (List.map (fn (s, b) => s ^ (if b then "+" else "-")) siblings)
+      val key = String.concatWith " " [n, Int.toString tag, Bool.toString hasArg, Int.toString ncons, Bool.toString isRef, sibKey]
     in
-      P.string (w, n); P.nat (w, tag); P.bool (w, hasArg); P.nat (w, ncons); P.bool (w, isRef);
-      P.list (fn (w, (s, b)) => (P.string (w, s); P.bool (w, b))) (w, siblings)
+      once (#cons e, #ncons e, w, key, fn () =>
+        (P.string (w, n); P.nat (w, tag); P.bool (w, hasArg); P.nat (w, ncons); P.bool (w, isRef);
+         once (#sibs e, #nsibs e, w, sibKey, fn () =>
+           P.list (fn (w, (s, b)) => (P.string (w, s); P.bool (w, b))) (w, siblings))))
     end
 
   fun exninfo (e : enc, {name = n, stamp, isGlobal, hasArg, builtin = b} : Ast.exninfo) =
@@ -799,7 +840,9 @@ struct
       val w = P.writer ()
       val e : enc = {w = w, start = #counters start, own = Vector.tabulate (3, fn _ => IntTable.table 256),
                      count = Vector.tabulate (3, fn _ => ref 0), queue = ref [], names = ref StringMap.empty,
-                     nameList = ref [], tycons = IntTable.table 256, ntycons = ref 0, funsDone = IntTable.table 16,
+                     nameList = ref [], tycons = IntTable.table 256, ntycons = ref 0,
+                     types = ref StringMap.empty, ntypes = ref 0, cons = ref StringMap.empty, ncons = ref 0,
+                     sibs = ref StringMap.empty, nsibs = ref 0, funsDone = IntTable.table 16,
                      base = #env start, file = file, text = text}
       (* fixity: the directives the unit added, newest first *)
       val directives = List.take (#list fixity, List.length (#list fixity) - List.length (#list (#fixity start)))
@@ -918,6 +961,9 @@ struct
   (* ---- reading ---- *)
 
   type dec = {r : P.reader, base : int vector, units : loaded vector, ntycons : int ref, tycons : T.tycon array ref,
+              ntypes : int ref, types : T.ty array ref,    (* the types read, in the order written *)
+              ncons : int ref, cons : Ast.coninfo array ref,
+              nsibs : int ref, sibs : (string * bool) list array ref,
               (* of each unit named, where it is one the pickle was not
                  written against, its names by the old numbers, by kind *)
               remaps : int IntMap.map vector option vector}
@@ -979,9 +1025,27 @@ struct
     | _ => raise P.Bad "not a kind"
 
   fun rty (d : dec) : T.ty =
-    let val r = #r d
+    let
+      val r = #r d
+      (* a type read whole, numbered as the writer numbered it *)
+      fun keep (t : T.ty) : T.ty =
+        let val arr = #types d val n = #ntypes d
+        in
+          if !n >= Array.length (!arr) then
+            arr := Array.tabulate (2 * Array.length (!arr) + 64,
+                                   fn i => if i < Array.length (!arr) then Array.sub (!arr, i) else t)
+          else ();
+          Array.update (!arr, !n, t); n := !n + 1; t
+        end
     in
       case P.rbyte r of
+        4 => let val i = P.rnat r in if i < !(#ntypes d) then Array.sub (!(#types d), i) else raise P.Bad "a type out of range" end
+      | b => keep (rtyWhole (d, b))
+    end
+  and rtyWhole (d : dec, b : int) : T.ty =
+    let val r = #r d
+    in
+      case b of
         0 =>
           let
             val id = rname (d, kTvar)
@@ -1020,16 +1084,34 @@ struct
       | _ => raise P.Bad "not a type of the IRs"
     end
 
+  (* what once wrote: the n-th of its kind again, or one read whole and
+     numbered *)
+  fun ronce (r : P.reader, arr : 'a array ref, n : int ref, read : unit -> 'a) : 'a =
+    case P.rbyte r of
+      1 => let val i = P.rnat r in if i < !n then Array.sub (!arr, i) else raise P.Bad "a shared entry out of range" end
+    | 0 =>
+        let val x = read ()
+        in
+          if !n >= Array.length (!arr) then
+            arr := Array.tabulate (2 * Array.length (!arr) + 64, fn i => if i < Array.length (!arr) then Array.sub (!arr, i) else x)
+          else ();
+          Array.update (!arr, !n, x); n := !n + 1; x
+        end
+    | _ => raise P.Bad "not a shared entry"
+
   fun rconinfo (d : dec) : Ast.coninfo =
-    let
-      val r = #r d
-      val n = P.rstring r
-      val tag = P.rnat r
-      val hasArg = P.rbool r
-      val ncons = P.rnat r
-      val isRef = P.rbool r
-      val siblings = P.rlist (fn r => let val s = P.rstring r in (s, P.rbool r) end) r
-    in {name = n, tag = tag, hasArg = hasArg, ncons = ncons, isRef = isRef, siblings = siblings} end
+    let val r = #r d
+    in
+      ronce (r, #cons d, #ncons d, fn () =>
+        let
+          val n = P.rstring r
+          val tag = P.rnat r
+          val hasArg = P.rbool r
+          val ncons = P.rnat r
+          val isRef = P.rbool r
+          val siblings = ronce (r, #sibs d, #nsibs d, fn () => P.rlist (fn r => let val s = P.rstring r in (s, P.rbool r) end) r)
+        in {name = n, tag = tag, hasArg = hasArg, ncons = ncons, isRef = isRef, siblings = siblings} end)
+    end
 
   fun rexninfo (d : dec) : Ast.exninfo =
     let
@@ -1232,6 +1314,8 @@ struct
       val base = Vector.tabulate (3, fn k => Vector.sub (at, k) + Vector.sub (used, k))
       val () = List.app (fn k => counter k := Vector.sub (base, k) + Vector.sub (counts, k)) [kStamp, kTycon, kTvar]
       val d : dec = {r = r, base = base, units = us, ntycons = ref 0, tycons = ref (Array.fromList []),
+                     ntypes = ref 0, types = ref (Array.fromList []), ncons = ref 0, cons = ref (Array.fromList []),
+                     nsibs = ref 0, sibs = ref (Array.fromList []),
                      remaps = remaps}
       fun rfixity r =
         case P.rbyte r of

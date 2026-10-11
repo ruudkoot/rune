@@ -484,6 +484,9 @@ struct
       fun explain msg = if !Options.explainRebuild then TextIO.output (TextIO.stdErr, msg ^ "\n") else ()
       (* the cache's work, for --pass-stats *)
       fun timed name f = Pass.stage {name = name, showIn = NONE, show = fn _ => "", check = fn _ => (), size = fn _ => 0} f ()
+      (* a unit's basis, kept to the end for --emit-units alone, which
+         writes it: a unit of MLton's has megabytes of it *)
+      fun keptPickle (p : string) : string = if isSome (!Options.emitUnits) then p else ""
       (* a unit: from the cache, or compiled; with -j, by a child where it
          is likely to be compiled, or skipped in a child that does not need
          it (Parallel) *)
@@ -500,7 +503,10 @@ struct
           val () = if !Pass.stats
                    then TextIO.output (TextIO.stdErr, "unit " ^ name ^ " took "
                                                       ^ Real.fmt (StringCvt.FIX (SOME 3)) (Time.toReal (Time.- (Time.now (), t0)))
-                                                      ^ " s" ^ (if compiledIt then "" else ", from the cache") ^ "\n")
+                                                      ^ " s" ^ (if compiledIt then "" else ", from the cache")
+                                                      ^ (if isSome (OS.Process.getEnv "RUNE_MEM")
+                                                         then ", live " ^ Int.toString (!Pass.liveBytes ()) else "")
+                                                      ^ "\n")
                    else ()
         in Parallel.after (name, compiledIt); acc end
       and unitHere ((name, load, allow, ident), acc, quiet) =
@@ -533,8 +539,13 @@ struct
                  what that gives is compared with it *)
               val (found, against) =
                 case found of
-                  UnitCache.Found e => if UnitCache.verifying () then (UnitCache.Missed "to verify its entry", SOME e)
-                                       else (found, NONE)
+                  UnitCache.Found (e as {usages, ...}) =>
+                    if not (UnitCache.verifying ()) then (found, NONE)
+                    else if UnitBasis.exact usages then (UnitCache.Missed "to verify its entry", SOME e)
+                    (* one taken across a unit that changed names the old
+                       unit, and is compiled again rather than compared
+                       (issue 15) *)
+                    else (UnitCache.Missed "to verify: its entry holds across a unit that changed, and is compiled again", NONE)
                 | _ => (found, NONE)
             in
               case found of
@@ -587,7 +598,7 @@ struct
              fixity := Fixity.extend (!fixity, #directives l);
              UnitBasis.bind l;
              logDeclared l;
-             ((u, pickle) :: acc, false))
+             ((u, keptPickle pickle) :: acc, false))
           fun here (why, against) =
             (explain ("rune: compiled " ^ name ^ ": " ^ why);
              (compileUnit ((name, load, allow, ident), k, against, acc), true))
@@ -633,6 +644,12 @@ struct
                 Pipeline.unitThrough {start = start, name = ident, file = name, text = text name, decs = decs,
                                       delta = !Elaborate.lastDelta, fixity = !fixity, used = names}
               val bytes = timed "unit-chunks" (fn () => String.concat (UnitFile.chunks (Pipeline.fingerprint (), code)))
+              (* --pass-stats with RUNE_MEM set: the bytes of its basis and
+                 its code (issue 14) *)
+              val () = if !Pass.stats andalso isSome (OS.Process.getEnv "RUNE_MEM")
+                       then TextIO.output (TextIO.stdErr, "unit " ^ name ^ " basis " ^ Int.toString (String.size (#pickle exported))
+                                                          ^ " bytes, code " ^ Int.toString (String.size bytes) ^ " bytes\n")
+                       else ()
               (* its Mid in bytes, kept in its entry *)
               val midBytes = timed "unit-mid" (fn () => case !Pipeline.lastMid of SOME um => UnitMid.write (exported, um) | NONE => "")
               val () = Pipeline.lastMid := NONE
@@ -666,7 +683,7 @@ struct
                                      others = UnitBasis.sourcesOf (code, name), pickle = #pickle exported,
                                      code = bytes, mid = midBytes})
                | _ => ());
-              (code, #pickle exported) :: acc
+              (code, keptPickle (#pickle exported)) :: acc
             end
         end
       (* --build: the user's units as the build file says (docs/build.md):

@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `tests/incremental/run.sh` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, and S49 to S59. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, and S49 to S61. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; `scripts/check-cross.sh` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `tests/incremental/mutate.py` edits projects
@@ -216,6 +216,17 @@ when the scenarios above were all green
   printer.
 * **S54, the print depth.** A file whose entry was written at print depth
   0 echoes at the default depth.
+* **S61, a program that keeps its units' identities.** `main.sml` names
+  `Runtime`, so the program keeps its units' identities; `b.sml` declares
+  a functor whose body uses `A.x`, and `a.sml` gains a value while `A.x`
+  stays. `b.sml` is compiled again, not taken by `A.x`'s fingerprint, and
+  the program is the bytes of a build without the cache
+  (docs/plans/build-cache-issues.md, issue 15).
+* **S60, a datatype of many constructors.** A unit declares a datatype of
+  300 constructors, and its basis (`--emit-units`) is under 100 KB: each
+  constructor's information, and the list of its siblings that every one
+  of them has, is written once (16 KB; 1.5 MB before, which grew with the
+  square of the constructors; docs/plans/build-cache-issues.md, issue 14).
 * **S59, one unit in two sessions.** `c.sml` uses `a.sml` and `b.sml`,
   which do not use each other. Built after them in one order and then in
   the other through one cache, `c.sml`'s entry is taken, and compiled

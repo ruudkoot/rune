@@ -186,7 +186,15 @@ struct
         handle OS.SysErr _ => []
       (* an entry whose usages hold by their binders before one whose hold
          only by fingerprint, which needs units remapped to load *)
-      fun try ([], why, byFingerprint) = (case byFingerprint of SOME e => Found e | NONE => Missed why)
+      (* one that holds by fingerprint alone, never for a program that keeps
+         its units' identities (UnitBasis.remapAllowed): the entry names
+         the units it was compiled against, which are others now
+         (docs/plans/build-cache-issues.md, issue 15) *)
+      fun try ([], why, byFingerprint) =
+            (case byFingerprint of
+               SOME e => if !UnitBasis.remapAllowed then Found e
+                         else Missed "its entries hold across a unit that changed, which a program that keeps its units' identities takes none across"
+             | NONE => Missed why)
         | try (n :: rest, why, byFingerprint) =
             case read (OS.Path.joinDirFile {dir = d, file = n}) of
               Found (e as {usages, ...}) =>

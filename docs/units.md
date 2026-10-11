@@ -190,12 +190,16 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   cache or why it was compiled; `--verify-cache`, or `RUNE_VERIFY_CACHE`
   set and not empty (for the REPL's `use`, which takes no flags), compiles
   each unit the cache has too, and fails where the cache's is not the same
-  bytes as what compiling it gives; `RUNE_VERIFY_DUMP=DIR` writes the
+  bytes as what compiling it gives -- an entry whose usages hold by binder;
+  one that holds by fingerprint alone names the old unit it was compiled
+  against, and is compiled again rather than compared (issue 15); `RUNE_VERIFY_DUMP=DIR` writes the
   entry of each unit that does not verify, and what compiling it gave, to
   DIR (`NAME.cached.pickle`, `NAME.fresh.code`, ...) to compare. A unit's
   code lists the names it uses of other units in the order of their places
   in the code, so a unit compiled in two sessions is the same bytes,
-  whatever order the sessions loaded those units in (S59);
+  whatever order the sessions loaded those units in (S59); `--pass-stats`
+  with `RUNE_MEM` set says after each unit how many bytes its basis and
+  its code took and how much the heap holds, collected;
 * in it, a directory per *configuration*: the hash of the compiler's
   identity (`Config.identity`, a hash of the compiler's sources, which
   `scripts/gen-build-files.sh` writes), the versions of the files, the
