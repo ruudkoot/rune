@@ -1,3 +1,34 @@
+- below is old performance plan. many changes have landed in master since then. you task is to refresh this into a new roadmap to improve rune's performance
+- the register bytecode with jit vm is now the default
+- improved garbage collectors, incremental compilation and have landed in master among other big pieces of work.
+  - gmp support for infint is already being worked on by antoher agent on the gmp worktree. we can measure if poor infint performance is an issue but no need to address it here as well (to avoid duplciating work).
+- we have now been able to use rune to compile two very large systems:
+  - HOL4 (docs/plans/hol4.md): rune is about 4.5x slower than PolyML when doing a full theory build in HOL4. the HOL4 agent speculated on these causes (unclear to me how much measurement was done):
+    - bad code generation for code that calls a lot (fib, tak)
+    - equality and string ordering are not inlined in the jit
+    - nor are raising and exception handling
+  - MLton: rune can build mlton since this PR https://github.com/MLton/mlton/pull/660
+    - mlton-build-rune is about 4x faster than rune-build-rune (roughly what we saw in hol4)
+    - rune-build-mlton is far worse than mlton-build-mlton (20x)
+    - there measurements were before the heap layout and second generation garbage collectors
+- one of the great strengths of rune during has been it's deterministic execution model. we want to retain this but should quantify the cost. and consider what improvements could be made
+  - the vm does instruction counting and we should know how much overhead this adds
+  - avoiding heap allocations should generally be a big win. i think we may have skipped some possible optimizations here to keep allocation counts exact accross vms. we need to quantify how much we lose because of this. is it possible to count heap allocations + elided heap allocations and then we use their sum to compare different vm?
+- the new performance roadmap should focus on two things:
+  1) compiler performance. the following items were noted:
+     - signatures that share large structures;
+     - functors applied many times, whose bodies are elaborated again in full at every application.
+     - we also have the pathalogical https://github.com/MLton/mlton/blob/master/regression/exponential.sml
+     - as always study exising sml implementations (some available at /home/ruud/reference) and the academic literature
+  2) code quality. this encopasses both the register bytecode generated, the optimizations and intermediate languages to create it and the quality of the jit code. items flagged already:
+     - Then the cost of a call at tier 2 and pointers in registers (stack maps)
+     - avoiding heap allocations
+     - please use tools like perf and inspection of intermediate represenation and generated machine code of both rune and other compiler to find the cause of what is needed to reach parity.
+
+**what follows below is the old plan to be refreshed.**
+
+---
+
 # Performance plan: the compiler, `runevm` and native code
 
 This plan covers the speed of what Rune runs:
