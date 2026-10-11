@@ -1111,7 +1111,7 @@ test-basis: $(RUNE) $(RUNEDOC) vm | build/.doctor-check
 # --update after a deliberate change). About 10 seconds.
 # The tests of the documentation generator (tests/doc), with bin/runedoc;
 # `make test-doc RUNEDOC=bin/runedoc-mlton` is the faster loop.
-test-doc: $(RUNEDOC) vm
+test-doc: $(RUNEDOC) vm manifests
 	RUNEDOC=$(RUNEDOC) sh tests/doc/run-doc-tests.sh
 
 # The libraries beside the basis library and rune --library (tests/lib;
