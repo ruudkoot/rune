@@ -29,7 +29,7 @@
      "kind": "val",
      "name": "array",
      "spec": "val array : int * 'a -> 'a array",
-     "doc": "`array (n, x)` is a new array of `n` elements, each of them `x`.\n\n**Raises** `Size` if `n < 0` or `n > maxLen`.\n\n**Law** `sub (array (n, x), i) = x` for `0 <= i andalso i < n`\n\n**Example** `vector (array (3, #\"x\")) = Vector.fromList [#\"x\", #\"x\", #\"x\"]`\n\n",
+     "doc": "`array (n, x)` is a new array of `n` elements, each of them `x`.\n\n**Raises** `Size` if `n < 0` or `n > maxLen`.\n\n**Law** `sub (array (n, x), i) = x` for `0 <= i andalso i < n andalso n <= maxLen`, and it is run for `n` from `Arb.intRange (0, 1048576)`, as the\ntester cannot hold a longer one\n\n**Example** `vector (array (3, #\"x\")) = Vector.fromList [#\"x\", #\"x\", #\"x\"]`\n\n**Counterexample** `sub (array (maxLen + 1, 0), 0) = 0`, for there is no\narray so long.\n\n",
      "page": "sig/ARRAY.md#val-array"
     },
     {
@@ -43,7 +43,7 @@
      "kind": "val",
      "name": "tabulate",
      "spec": "val tabulate : int * (int -> 'a) -> 'a array",
-     "doc": "`tabulate (n, f)` is a new array of `f 0`, `f 1`, ..., `f (n - 1)`.\n\n`f` is applied in order of increasing index.\n\n**Raises** `Size` if `n < 0` or `n > maxLen`.\n\n> **Reading** `Array.tabulate/Size-before-f`. The specification does not say\nwhether the length is checked before `f` is applied. It is: a length out\nof range raises `Size` without applying `f` at all, so no effect of `f`\nhappens for an array that is never made.\n\n**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n`, when `f`\nhas no effects\n\n**Example** `vector (tabulate (4, fn i => i * i)) = Vector.fromList [0, 1, 4, 9]`\n\n",
+     "doc": "`tabulate (n, f)` is a new array of `f 0`, `f 1`, ..., `f (n - 1)`.\n\n`f` is applied in order of increasing index.\n\n**Raises** `Size` if `n < 0` or `n > maxLen`.\n\n> **Reading** `Array.tabulate/Size-before-f`. The specification does not say\nwhether the length is checked before `f` is applied. It is: a length out\nof range raises `Size` without applying `f` at all, so no effect of `f`\nhappens for an array that is never made.\n\n**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n andalso n <= maxLen`, when `f` has no effects, and it is run for `n` from\n`Arb.intRange (0, 1024)`, as a longer one takes too long for `make check`\n\n**Example** `vector (tabulate (4, fn i => i * i)) = Vector.fromList [0, 1, 4, 9]`\n\n**Counterexample** `sub (tabulate (maxLen + 1, fn i => i), 0) = 0`, for there\nis no array so long.\n\n",
      "page": "sig/ARRAY.md#val-tabulate"
     },
     {
@@ -78,14 +78,14 @@
      "kind": "val",
      "name": "copy",
      "spec": "val copy : {src : 'a array, dst : 'a array, di : int} -> unit",
-     "doc": "`copy {src, dst, di}` copies the elements of `src` into `dst`, starting at position `di`.\n\n`src` and `dst` may be the same array, and then `di` must be 0: an array\ncannot hold itself at any other position, so any other `di` raises\n`Subscript`, and at 0 the copy changes nothing. Two stretches of one array\nthat overlap are what `ArraySlice.copy` is for.\n\n**Raises** `Subscript` if `di < 0` or `di + length src > length dst`, and\nthen nothing has been copied.\n\n**Law** `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)` for `0 <= i andalso i < length src andalso src <> dst`\n\n**Example** `let val a = fromList [1, 2, 3, 4] in copy {src = a, dst = a, di = 0}; vector a end = Vector.fromList [1, 2, 3, 4]`\n\n",
+     "doc": "`copy {src, dst, di}` copies the elements of `src` into `dst`, starting at position `di`.\n\n`src` and `dst` may be the same array, and then `di` must be 0: an array\ncannot hold itself at any other position, so any other `di` raises\n`Subscript`, and at 0 the copy changes nothing. Two stretches of one array\nthat overlap are what `ArraySlice.copy` is for.\n\n**Raises** `Subscript` if `di < 0` or `di + length src > length dst`, and\nthen nothing has been copied.\n\n**Law** `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)` for `0 <= di andalso di <= length dst - length src andalso 0 <= i andalso i < length src andalso src <> dst`\n\n**Example** `let val a = fromList [1, 2, 3, 4] in copy {src = a, dst = a, di = 0}; vector a end = Vector.fromList [1, 2, 3, 4]`\n\n**Counterexample** `let val b = array (1, 0) in copy {src = fromList [1, 2], dst = b, di = 0}; sub (b, 0) end = 1`, for the source does not fit.\n\n",
      "page": "sig/ARRAY.md#val-copy"
     },
     {
      "kind": "val",
      "name": "copyVec",
      "spec": "val copyVec : {src : 'a vector, dst : 'a array, di : int} -> unit",
-     "doc": "`copyVec {src, dst, di}` copies the elements of the vector `src` into `dst`, starting at position `di`.\n\n**Raises** `Subscript` if `di < 0` or `di + Vector.length src > length dst`,\nand then nothing has been copied.\n\n**Law** `(copyVec {src = v, dst = dst, di = di}; sub (dst, di + i)) = Vector.sub (v, i)` for `0 <= i andalso i < Vector.length v`\n\n**Example** `let val a = array (4, 0) in copyVec {src = Vector.fromList [1, 2], dst = a, di = 1}; vector a end = Vector.fromList [0, 1, 2, 0]`\n\n",
+     "doc": "`copyVec {src, dst, di}` copies the elements of the vector `src` into `dst`, starting at position `di`.\n\n**Raises** `Subscript` if `di < 0` or `di + Vector.length src > length dst`,\nand then nothing has been copied.\n\n**Law** `(copyVec {src = v, dst = dst, di = di}; sub (dst, di + i)) = Vector.sub (v, i)` for `0 <= di andalso di <= length dst - Vector.length v andalso 0 <= i andalso i < Vector.length v`\n\n**Example** `let val a = array (4, 0) in copyVec {src = Vector.fromList [1, 2], dst = a, di = 1}; vector a end = Vector.fromList [0, 1, 2, 0]`\n\n**Counterexample** `let val b = array (1, 0) in copyVec {src = Vector.fromList [1, 2], dst = b, di = 0}; sub (b, 0) end = 1`, for the\nsource does not fit.\n\n",
      "page": "sig/ARRAY.md#val-copyvec"
     },
     {
@@ -210,7 +210,7 @@
      "kind": "val",
      "name": "array",
      "spec": "val array : int * int * 'a -> 'a array",
-     "doc": "`array (r, c, x)` is a new array of `r` rows and `c` columns, every element `x`.\n\n**Raises** `Size` if `r < 0`, `c < 0`, or the array would be too large.\n\n> **Implementation** `Array2.array/Size`. How large is too large is not\nfixed: an array is too large when the number of its elements is no\n`int`, or when it exceeds what an array can hold.\n\n**Law** `sub (array (r, c, x), i, j) = x` for `0 <= i andalso i < r andalso 0 <= j andalso j < c`\n\n**Example** `dimensions (array (2, 3, 0)) = (2, 3)`\n\n",
+     "doc": "`array (r, c, x)` is a new array of `r` rows and `c` columns, every element `x`.\n\n**Raises** `Size` if `r < 0`, `c < 0`, or the array would be too large.\n\n> **Implementation** `Array2.array/Size`. How large is too large is not\nfixed: an array is too large when the number of its elements is no\n`int`, or when it exceeds what an array can hold.\n\n**Law** `sub (array (r, c, x), i, j) = x` for `0 <= i andalso i < r andalso 0 <= j andalso j < c andalso r <= Array.maxLen div c`, and it is run for `r`\nfrom `Arb.intRange (0, 1024)` and `c` from `Arb.intRange (0, 1024)`, as\nthe tester cannot hold a larger one\n\n**Example** `dimensions (array (2, 3, 0)) = (2, 3)`\n\n**Counterexample** `sub (array (Array.maxLen, 2, 0), 0, 0) = 0`, for there is\nno array so large.\n\n",
      "page": "sig/ARRAY2.md#val-array"
     },
     {
@@ -224,7 +224,7 @@
      "kind": "val",
      "name": "tabulate",
      "spec": "val tabulate : traversal -> int * int * (int * int -> 'a) -> 'a array",
-     "doc": "`tabulate trv (r, c, f)` is a new array of `r` rows and `c` columns whose element at `(i, j)` is `f (i, j)`.\n\n`f` is applied in the order that `trv` gives.\n\n**Raises** `Size` if `r < 0`, `c < 0` or the array would be too large.\n\n> **Reading** `Array2.tabulate/Size-before-f`. The specification does not say\nwhether the dimensions are checked before `f` is applied. They are: an\narray that is too large, or has a negative dimension, raises `Size`\nwithout applying `f` at all.\n\n> **Reading** `Array2.tabulate/traversal-order`. \"Initialized in traversal\norder\" is read as: `f (0, 0)` is applied first whichever traversal is\nasked for, and its result fills the array before the rest is\ncomputed.\n\n**Law** `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i andalso i < r andalso 0 <= j andalso j < c`, when `f` has no effects\n\n**Example** `row (tabulate RowMajor (2, 3, fn (i, j) => 10 * i + j), 1) = Vector.fromList [10, 11, 12]`\n\n",
+     "doc": "`tabulate trv (r, c, f)` is a new array of `r` rows and `c` columns whose element at `(i, j)` is `f (i, j)`.\n\n`f` is applied in the order that `trv` gives.\n\n**Raises** `Size` if `r < 0`, `c < 0` or the array would be too large.\n\n> **Reading** `Array2.tabulate/Size-before-f`. The specification does not say\nwhether the dimensions are checked before `f` is applied. They are: an\narray that is too large, or has a negative dimension, raises `Size`\nwithout applying `f` at all.\n\n> **Reading** `Array2.tabulate/traversal-order`. \"Initialized in traversal\norder\" is read as: `f (0, 0)` is applied first whichever traversal is\nasked for, and its result fills the array before the rest is\ncomputed.\n\n**Law** `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i andalso i < r andalso 0 <= j andalso j < c andalso r <= Array.maxLen div c`, when\n`f` has no effects, and it is run for `r` from `Arb.intRange (0, 32)` and\n`c` from `Arb.intRange (0, 32)`, as a larger one takes too long for `make check`\n\n**Example** `row (tabulate RowMajor (2, 3, fn (i, j) => 10 * i + j), 1) = Vector.fromList [10, 11, 12]`\n\n**Counterexample** `sub (tabulate RowMajor (Array.maxLen, 2, fn _ => 0), 0, 0) = 0`, for there is no array so large.\n\n",
      "page": "sig/ARRAY2.md#val-tabulate"
     },
     {
@@ -349,7 +349,7 @@
      "kind": "val",
      "name": "sub",
      "spec": "val sub : 'a slice * int -> 'a",
-     "doc": "`sub (sl, i)` is the element of `sl` at position `i`, counting from the start of the slice.\n\n**Raises** `Subscript` if `i < 0` or `i >= length sl`.\n\n**Law** `sub (slice (arr, i, NONE), k) = Array.sub (arr, i + k)` for `0 <= k andalso k < Array.length arr - i`\n\n**Example** `sub (slice (Array.fromList [1, 2, 3, 4], 1, NONE), 0) = 2`\n\n",
+     "doc": "`sub (sl, i)` is the element of `sl` at position `i`, counting from the start of the slice.\n\n**Raises** `Subscript` if `i < 0` or `i >= length sl`.\n\n**Law** `sub (slice (arr, i, NONE), k) = Array.sub (arr, i + k)` for `0 <= i andalso i < Array.length arr andalso 0 <= k andalso k < Array.length arr - i`\n\n**Example** `sub (slice (Array.fromList [1, 2, 3, 4], 1, NONE), 0) = 2`\n\n**Counterexample** `sub (slice (Array.fromList [1, 2], ~1, NONE), 1) = 1`,\nfor a slice cannot start before its array.\n\n",
      "page": "sig/ARRAY_SLICE.md#val-sub"
     },
     {
@@ -370,14 +370,14 @@
      "kind": "val",
      "name": "slice",
      "spec": "val slice : 'a Array.array * int * int option -> 'a slice",
-     "doc": "`slice (arr, i, NONE)` is the stretch of `arr` from position `i` to its end, and `slice (arr, i, SOME n)` the `n` elements from `i`.\n\n**Raises** `Subscript` if `i < 0` or `i > Array.length arr`, or, with `SOME n`, if `n < 0` or `i + n > Array.length arr`.\n\n**Law** `base (slice (arr, i, SOME n)) = (arr, i, n)` when `(ignore (slice (arr, i, SOME n)); true)`\n\n**Example** `vector (slice (Array.fromList [1, 2, 3, 4], 1, SOME 2)) = Vector.fromList [2, 3]`\n\n> **Reading** `ArraySlice.slice/Subscript-not-Overflow`. When `i + n` is no\n`int` the slice does not exist, and `Subscript` says so, never `Overflow`;\n`subslice`, `copy` and `copyVec` are the same with their sums, and so are\nthe slices of the monomorphic arrays.\n\n",
+     "doc": "`slice (arr, i, NONE)` is the stretch of `arr` from position `i` to its end, and `slice (arr, i, SOME n)` the `n` elements from `i`.\n\n**Raises** `Subscript` if `i < 0` or `i > Array.length arr`, or, with `SOME n`, if `n < 0` or `i + n > Array.length arr`.\n\n**Law** `base (slice (arr, i, SOME n)) = (arr, i, n)` for `0 <= i andalso i <= Array.length arr andalso 0 <= n andalso n <= Array.length arr - i`\n\n**Example** `vector (slice (Array.fromList [1, 2, 3, 4], 1, SOME 2)) = Vector.fromList [2, 3]`\n\n> **Reading** `ArraySlice.slice/Subscript-not-Overflow`. When `i + n` is no\n`int` the slice does not exist, and `Subscript` says so, never `Overflow`;\n`subslice`, `copy` and `copyVec` are the same with their sums, and so are\nthe slices of the monomorphic arrays.\n\n",
      "page": "sig/ARRAY_SLICE.md#val-slice"
     },
     {
      "kind": "val",
      "name": "subslice",
      "spec": "val subslice : 'a slice * int * int option -> 'a slice",
-     "doc": "`subslice (sl, i, NONE)` is the stretch of `sl` from position `i` on, and `subslice (sl, i, SOME n)` the `n` elements from `i`.\n\nThe bounds are those of `sl`, not of the array it is a slice of.\n\n**Raises** `Subscript` if `i < 0` or `i > length sl`, or, with `SOME n`, if\n`n < 0` or `i + n > length sl`.\n\n**Law** `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= k andalso k < length sl - i`\n\n**Example** `vector (subslice (slice (Array.fromList [1, 2, 3, 4], 1, NONE), 1, SOME 1)) = Vector.fromList [3]`\n\n",
+     "doc": "`subslice (sl, i, NONE)` is the stretch of `sl` from position `i` on, and `subslice (sl, i, SOME n)` the `n` elements from `i`.\n\nThe bounds are those of `sl`, not of the array it is a slice of.\n\n**Raises** `Subscript` if `i < 0` or `i > length sl`, or, with `SOME n`, if\n`n < 0` or `i + n > length sl`.\n\n**Law** `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= i andalso i < length sl andalso 0 <= k andalso k < length sl - i`\n\n**Example** `vector (subslice (slice (Array.fromList [1, 2, 3, 4], 1, NONE), 1, SOME 1)) = Vector.fromList [3]`\n\n**Counterexample** `sub (subslice (full (Array.fromList [1, 2]), ~1, NONE), 1) = 1`, for a subslice cannot start before its slice.\n\n",
      "page": "sig/ARRAY_SLICE.md#val-subslice"
     },
     {
@@ -1118,14 +1118,14 @@
      "kind": "val",
      "name": "date",
      "spec": "val date : {year : int,\n            month : month,\n            day : int,\n            hour : int,\n            minute : int,\n            second : int,\n            offset : Time.time option} -> date",
-     "doc": "`date {year, month, day, hour, minute, second, offset}` is that date, with the fields carried into range.\n\n`offset` is the zone: `NONE` for the local one, `SOME t` for the zone\n`t` west of UTC. The weekday and the day of the year are worked out.\n\n**Raises** `Date` if the date cannot be represented.\n\n> **Reading** `Date.date/fields-carry-upward`. Seconds, minutes, hours, days\nand months outside their range are carried into the field above, up to\nthe year; an offset is reduced modulo twenty-four hours with the whole\ndays moved into the hours. A local date is normalised by the C library\ninstead.\n\n**Example** `(fn d => (month d, day d, hour d)) (date {year = 2001, month = Jan, day = 32, hour = 25, minute = 0, second = 0, offset = SOME Time.zeroTime}) = (Feb, 2, 1)`\n\n> **Implementation** `Date.date/any-year`. The calendar of a date at an offset\nis computed and not looked up, so any year that is an `int` has its dates,\nthe year \\~5 and the year 100000 too. The specification asks for the years\nfrom about 1900 to 2200 only, and the suite takes a date or `Date` beyond\nthe range of a 32-bit `time_t`. `toTime` raises `Date` from about the year\n292000 on, where the microseconds no longer fit, and `fmt` for a year that\nC's `int` of 32 bits cannot hold.\n\n",
+     "doc": "`date {year, month, day, hour, minute, second, offset}` is that date, with the fields carried into range.\n\n`offset` is the zone: `NONE` for the local one, `SOME t` for the zone\n`t` west of UTC. The weekday and the day of the year are worked out.\n\n**Raises** `Date` if the date cannot be represented.\n\n> **Reading** `Date.date/fields-carry-upward`. Seconds, minutes, hours, days\nand months outside their range are carried into the field above, up to\nthe year; an offset is reduced modulo twenty-four hours with the whole\ndays moved into the hours. A local date is normalised by the C library\ninstead.\n\n**Example** `(fn d => (month d, day d, hour d)) (date {year = 2001, month = Jan, day = 32, hour = 25, minute = 0, second = 0, offset = SOME Time.zeroTime}) = (Feb, 2, 1)`\n\n> **Implementation** `Date.date/any-year`. The specification asks for the years\nfrom about 1900 to 2200, where the laws of `year` hold on every\nimplementation; Rune's dates reach much further. The calendar of a date at\nan offset is computed and not looked up, so a year has its dates as long\nas the count of its days from 1970 is an `int`: the year \\~5 and the year\n100000 too, and with the 63-bit `int` every year up to about 12.6 \\* 10^15\neither way. Beyond, `date` raises `Date`. A local date is made by the C\nlibrary, whose fields are C `int`s: a field, or the year less 1900, that\none cannot hold raises `Date`. The suite takes a date or `Date` beyond the\nrange of a 32-bit `time_t`. `toTime` raises `Date` from about the year\n148000 on, where the microseconds no longer fit an `int`, and `fmt` for a\nyear that C's `int` of 32 bits cannot hold.\n\n",
      "page": "sig/DATE.md#val-date"
     },
     {
      "kind": "val",
      "name": "year",
      "spec": "val year : date -> int",
-     "doc": "`year d` is the year of `d`, as a number and not counted from 1900.\n\n**Law** `year (date r) = #year r`, and `month (date r) = #month r`, and `day (date r) = #day r`, and `hour (date r) = #hour r`, and `minute (date r) = #minute r`, and `second (date r) = #second r`, when `let val {year = y, month = m, day = d, hour = h, minute = mi, second = s, offset = off} = r val leap = (y mod 4 = 0 andalso y mod 100 <> 0) orelse y mod 400 = 0 val days = case m of Feb => if leap then 29 else 28 | Apr => 30 | Jun => 30 | Sep => 30 | Nov => 30 | _ => 31 in 1 <= d andalso d <= days andalso 0 <= h andalso h <= 23 andalso 0 <= mi andalso mi <= 59 andalso 0 <= s andalso s <= 59 andalso (case off of NONE => true | SOME t => Time.< (Time.fromSeconds ~86400, t) andalso Time.< (t, Time.fromSeconds 86400)) end`\n\n**Example** `year (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 1995`\n\n",
+     "doc": "`year d` is the year of `d`, as a number and not counted from 1900.\n\n**Law** `year (date r) = #year r`, and `month (date r) = #month r`, and `day (date r) = #day r`, and `hour (date r) = #hour r`, and `minute (date r) = #minute r`, and `second (date r) = #second r`, when `let val {year = y, month = m, day = d, hour = h, minute = mi, second = s, offset = off} = r val leap = (y mod 4 = 0 andalso y mod 100 <> 0) orelse y mod 400 = 0 val days = case m of Feb => if leap then 29 else 28 | Apr => 30 | Jun => 30 | Sep => 30 | Nov => 30 | _ => 31 in 1900 <= y andalso y <= 2200 andalso 1 <= d andalso d <= days andalso 0 <= h andalso h <= 23 andalso 0 <= mi andalso mi <= 59 andalso 0 <= s andalso s <= 59 andalso (case off of NONE => true | SOME t => Time.< (Time.fromSeconds ~86400, t) andalso Time.< (t, Time.fromSeconds 86400)) end`, and it is run for `r` from\n`DateArb.fieldsInRange (1900, 2200)`: in the years every implementation\nsupports, the specification's 1900 to 2200, a date of fields in range\nkeeps them\n\n**Law** `(year (date r) = #year r) handle Date => true`, and `(month (date r) = #month r) handle Date => true`, and `(day (date r) = #day r) handle Date => true`, and `(hour (date r) = #hour r) handle Date => true`, and\n`(minute (date r) = #minute r) handle Date => true`, and `(second (date r) = #second r) handle Date => true`, when `let val {year = y, month = m, day = d, hour = h, minute = mi, second = s, offset = off} = r val leap = (y mod 4 = 0 andalso y mod 100 <> 0) orelse y mod 400 = 0 val days = case m of Feb => if leap then 29 else 28 | Apr => 30 | Jun => 30 | Sep => 30 | Nov => 30 | _ => 31 in 1 <= d andalso d <= days andalso 0 <= h andalso h <= 23 andalso 0 <= mi andalso mi <= 59 andalso 0 <= s andalso s <= 59 andalso (case off of NONE => true | SOME t => Time.< (Time.fromSeconds ~86400, t) andalso Time.< (t, Time.fromSeconds 86400)) end`, and it is run\nfor `r` from `DateArb.fieldsInRange (valOf Int.minInt, valOf Int.maxInt)`:\nin another year an implementation may raise `Date` instead, as the\nspecification lets it, but it does not give other fields. Rune's dates\nreach much further than 1900 to 2200 (`Date.date/any-year`)\n\n**Example** `year (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 1995`\n\n**Counterexample** `year (date {year = valOf Int.maxInt, month = Jan, day = 1, hour = 0, minute = 0, second = 0, offset = SOME Time.zeroTime}) = valOf Int.maxInt`, for the days to such a year are past the largest int.\n\n",
      "page": "sig/DATE.md#val-year"
     },
     {
@@ -1651,7 +1651,7 @@
      "kind": "val",
      "name": "canInput",
      "spec": "val canInput : instream * int -> int option",
-     "doc": "`canInput (f, n)` is how many of `n` elements, at most, can be read without waiting, or `NONE`.\n\n**Raises** `Size` if `n < 0`.\n\n**Law** `canInput (f, n) = StreamIO.canInput (getInstream f, n)`\n\n**Example** `canInput (mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes \"ab\"), Byte.stringToBytes \"\")), 1) = SOME 1`\n\n",
+     "doc": "`canInput (f, n)` is how many of `n` elements, at most, can be read without waiting, or `NONE`.\n\n`SOME k` promises that `k` elements can be read at once, and `NONE`\nthat the stream would wait. The specification asks only that an\nimplementation \"should attempt to return as large a k as possible\":\none may count no more than it has buffered.\n\n> **Reading** `IMPERATIVE_IO.canInput/counts-the-stream`. Rune's counts\nwhat the stream of `f` does: `canInput (f, n)` is `StreamIO.canInput (getInstream f, n)`.\n\n**Raises** `Size` if `n < 0`.\n\n**Law** `(case canInput (f, n) of SOME k => k <= n andalso List.all isSome (List.tabulate (k, fn _ => input1 f)) | NONE => true)`,\nand it is run for `n` from `Arb.intRange (0, 1024)`\n\n**Law** `isSome (canInput (f, n)) = isSome (StreamIO.canInput (getInstream f, n))`\n\n**Example** `canInput (mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes \"ab\"), Byte.stringToBytes \"\")), 1) = SOME 1`\n\n",
      "page": "sig/IMPERATIVE_IO.md#val-caninput"
     },
     {
@@ -1846,7 +1846,7 @@
      "kind": "val",
      "name": "fromAddr",
      "spec": "val fromAddr : sock_addr -> in6_addr * int",
-     "doc": "`fromAddr addr` is the host and the port of `addr`.\n\n**Law** `fromAddr (toAddr (a, p)) = (a, p)`\n\n",
+     "doc": "`fromAddr addr` is the host and the port of `addr`.\n\n**Law** `fromAddr (toAddr (a, p)) = (a, p)` for `0 <= p andalso p <= 65535`\n\n**Counterexample** `#2 (fromAddr (toAddr (valOf (fromString \"::1\"), ~1))) = ~1`, for a port is kept in sixteen bits.\n\n",
      "page": "sig/INET6_SOCK.md#val-fromaddr"
     },
     {
@@ -1957,7 +1957,7 @@
      "kind": "val",
      "name": "toAddr",
      "spec": "val toAddr : NetHostDB.in_addr * int -> sock_addr",
-     "doc": "`toAddr (a, port)` is the address of the port `port` at the host address `a`.\n\n**Law** `fromAddr (toAddr (a, port)) = (a, port)`\n\n**Example** `#2 (fromAddr (toAddr (valOf (NetHostDB.fromString \"10.0.0.1\"), 8080))) = 8080`\n\n",
+     "doc": "`toAddr (a, port)` is the address of the port `port` at the host address `a`.\n\n**Law** `fromAddr (toAddr (a, port)) = (a, port)` for `0 <= port andalso port <= 65535`\n\n**Example** `#2 (fromAddr (toAddr (valOf (NetHostDB.fromString \"10.0.0.1\"), 8080))) = 8080`\n\n**Counterexample** `#2 (fromAddr (toAddr (valOf (NetHostDB.fromString \"10.0.0.1\"), ~1))) = ~1`, for a port is kept in sixteen bits.\n\n",
      "page": "sig/INET_SOCK.md#val-toaddr"
     },
     {
@@ -2040,7 +2040,7 @@
      "kind": "eqtype",
      "name": "int",
      "spec": "eqtype int",
-     "doc": "The type of integers of this structure.\n\n> **Implementation** `Int.int/63-bits`. `Int.int` is the top-level `int`,\nwhose width is the VM's: 63 bits on this one, a word of the machine less\nthe bit that tells a number from a pointer, so that `Int.precision` is\n`SOME 63`. `Position` is `Int`. `Int64` and `FixedInt` are of 64 bits, a\ntype of their own: a number of theirs is kept in a word where it fits 63\nbits and in a small object where it needs the 64th, so that code written\nfor 64 bits has them on every machine; `Int8`, `Int16` and `Int32` keep\na value of their own width, and `LargeInt` is `IntInf`, which has no\nwidth. Constants of each are checked against its\nrange where they are written.\n\n",
+     "doc": "The type of integers of this structure.\n\n> **Implementation** `Int.int/63-bits`. `Int.int` is the top-level `int`, whose\nwidth is the VM's: 63 bits on this one, a word of the machine less the bit\nthat tells a number from a pointer, so that `Int.precision` is `SOME 63`.\n`Int64` and `FixedInt` are of 64 bits, a type of their own, and so is\n`Position`, a type of its own beside them: a number of theirs is kept in a\nword where it fits 63 bits and in a small object where it needs the 64th,\nso that code written for 64 bits has them on every machine; `Int8`,\n`Int16` and `Int32` keep a value of their own width, and `LargeInt` is\n`IntInf`, which has no width. Constants of each are checked against its\nrange where they are written, and those of `Position` where they are\nevaluated.\n\n",
      "page": "sig/INTEGER.md#type-int"
     },
     {
@@ -2124,7 +2124,7 @@
      "kind": "val",
      "name": "mod",
      "spec": "val mod : int * int -> int",
-     "doc": "`i mod j` is what `div` leaves over: it has the sign of `j`.\n\n**Raises** `Div` if `j` is zero.\n\n**Law** `(i div j) * j + (i mod j) = i`\n\n> **Reading** `Int.mod/minInt-by-minus-one`. `mod` never raises `Overflow`,\nalthough `div` does at the same arguments: `minInt mod ~1` is 0.\n\nIts sign is the divisor's, where that of `rem` is the dividend's:\n`rem (~7, 2)` is `~1`.\n\n**Example** `~7 mod 2 = 1`\n\n",
+     "doc": "`i mod j` is what `div` leaves over: it has the sign of `j`.\n\n**Raises** `Div` if `j` is zero.\n\n**Law** `LargeInt.+ (LargeInt.* (toLarge (i div j), toLarge j), toLarge (i mod j)) = toLarge i` for `j <> 0 andalso (j <> ~1 orelse minInt <> SOME i)`. It is computed in `LargeInt`: in `int` the product can overflow where\nneither `div` nor `mod` does.\n\n> **Reading** `Int.mod/minInt-by-minus-one`. `mod` never raises `Overflow`,\nalthough `div` does at the same arguments: `minInt mod ~1` is 0.\n\nIts sign is the divisor's, where that of `rem` is the dividend's:\n`rem (~7, 2)` is `~1`.\n\n**Example** `~7 mod 2 = 1`\n\n**Counterexample** `(1 div 0) * 0 + (1 mod 0) = 1`, for there is no dividing\nby zero; `(valOf minInt div ~1) * ~1 + (valOf minInt mod ~1) = valOf minInt`, for that quotient is past the largest int; and `(valOf maxInt div ~2) * ~2 + (valOf maxInt mod ~2) = valOf maxInt`, for the product is past\nthe largest int, though the quotient and the remainder are not.\n\n",
      "page": "sig/INTEGER.md#val-mod"
     },
     {
@@ -2138,7 +2138,7 @@
      "kind": "val",
      "name": "rem",
      "spec": "val rem : int * int -> int",
-     "doc": "`rem (i, j)` is what `quot` leaves over: it has the sign of `i`.\n\n**Raises** `Div` if `j` is zero.\n\n**Law** `quot (i, j) * j + rem (i, j) = i`\n\n> **Reading** `Int.rem/minInt-by-minus-one`. As `mod`, it never raises\n`Overflow`: `rem (minInt, ~1)` is 0.\n\nIts sign is the dividend's, where that of `mod` is the divisor's:\n`~7 mod 2` is `1`.\n\n**Example** `rem (~7, 2) = ~1`\n\n",
+     "doc": "`rem (i, j)` is what `quot` leaves over: it has the sign of `i`.\n\n**Raises** `Div` if `j` is zero.\n\n**Law** `quot (i, j) * j + rem (i, j) = i` for `j <> 0 andalso (j <> ~1 orelse minInt <> SOME i)`\n\n> **Reading** `Int.rem/minInt-by-minus-one`. As `mod`, it never raises\n`Overflow`: `rem (minInt, ~1)` is 0.\n\nIts sign is the dividend's, where that of `mod` is the divisor's:\n`~7 mod 2` is `1`.\n\n**Example** `rem (~7, 2) = ~1`\n\n**Counterexample** `quot (1, 0) * 0 + rem (1, 0) = 1`, for there is no\ndividing by zero, and `quot (valOf minInt, ~1) * ~1 + rem (valOf minInt, ~1) = valOf minInt`, for that quotient is past the largest int.\n\n",
      "page": "sig/INTEGER.md#val-rem"
     },
     {
@@ -2277,7 +2277,7 @@
      "kind": "val",
      "name": "pow",
      "spec": "val pow : int * Int.int -> int",
-     "doc": "`pow (i, j)` is `i` to the power `j`.\n\nFor a negative `j` the result is what is left of `1 / i^~j` as an integer:\n1 when `i` is 1; for `i` of \\~1, \\~1 when `j` is odd and 1 when it is even;\nand 0 for every other `i` but 0.\n\n**Raises** `Div` if `i` is zero and `j` is negative.\n\n**Law** `pow (i, Int.+ (j, k)) = pow (i, j) * pow (i, k)` for `Int.>= (j, 0) andalso Int.>= (k, 0)`\n\n**Example** `pow (2, 100) = 1267650600228229401496703205376`\n\n**Example** `pow (~1, ~3) = ~1`\n\n",
+     "doc": "`pow (i, j)` is `i` to the power `j`.\n\nFor a negative `j` the result is what is left of `1 / i^~j` as an integer:\n1 when `i` is 1; for `i` of \\~1, \\~1 when `j` is odd and 1 when it is even;\nand 0 for every other `i` but 0.\n\n**Raises** `Div` if `i` is zero and `j` is negative.\n\n**Law** `pow (i, Int.+ (j, k)) = pow (i, j) * pow (i, k)` for `Int.>= (j, 0) andalso Int.>= (k, 0)`, and it is run for `j` from `Arb.intRange (0, 15)`\nand `k` from `Arb.intRange (0, 15)`, as a larger power of a large number\ntakes long\n\n**Example** `pow (2, 100) = 1267650600228229401496703205376`\n\n**Example** `pow (~1, ~3) = ~1`\n\n",
      "page": "sig/INT_INF.md#val-pow"
     },
     {
@@ -2319,14 +2319,14 @@
      "kind": "val",
      "name": "<<",
      "spec": "val << : int * Word.word -> int",
-     "doc": "`<< (i, n)` is `i` shifted left by `n` bits: `i * 2^n`.\n\n**Law** `<< (i, n) = i * pow (2, Word.toInt n)`\n\n**Example** `<< (1, 0w100) = pow (2, 100)`\n\n",
+     "doc": "`<< (i, n)` is `i` shifted left by `n` bits: `i * 2^n`.\n\n**Law** `<< (i, n) = i * pow (2, Word.toInt n)`, run for `n` from\n`Arb.wordRange (0w0, 0w4095)`\n\n**Example** `<< (1, 0w100) = pow (2, 100)`\n\n",
      "page": "sig/INT_INF.md#val-op-lt-lt"
     },
     {
      "kind": "val",
      "name": "~>>",
      "spec": "val ~>> : int * Word.word -> int",
-     "doc": "`~>> (i, n)` is `i` shifted right by `n` bits with its sign kept: `i div 2^n`, rounded towards negative infinity.\n\n**Law** `~>> (i, n) = i div pow (2, Word.toInt n)`\n\n**Example** `~>> (~5, 0w1) = ~3`\n\n",
+     "doc": "`~>> (i, n)` is `i` shifted right by `n` bits with its sign kept: `i div 2^n`, rounded towards negative infinity.\n\n**Law** `~>> (i, n) = i div pow (2, Word.toInt n)`, run for `n` from\n`Arb.wordRange (0w0, 0w4095)`, as `Word.toInt n` overflows for a larger\nshift\n\n**Example** `~>> (~5, 0w1) = ~3`\n\n",
      "page": "sig/INT_INF.md#val-op-tilde-gt-gt"
     }
    ]
@@ -2603,7 +2603,7 @@
      "kind": "val",
      "name": "unzip",
      "spec": "val unzip : ('a * 'b) list -> 'a list * 'b list",
-     "doc": "`unzip l` is the pair of the lists of the first and of the second components of the pairs of `l`.\n\n**Law** `unzip (zip (l, m)) = (l, m)` when `length l = length m`\n\n**Example** `unzip [(1, \"a\"), (2, \"b\")] = ([1, 2], [\"a\", \"b\"])`\n\n",
+     "doc": "`unzip l` is the pair of the lists of the first and of the second components of the pairs of `l`.\n\n**Law** `unzip (zip (l, m)) = (l, m)` when `length l = length m`\n\n**Law** `zip (unzip l) = l`\n\n**Example** `unzip [(1, \"a\"), (2, \"b\")] = ([1, 2], [\"a\", \"b\"])`\n\n",
      "page": "sig/LIST_PAIR.md#val-unzip"
     },
     {
@@ -2763,7 +2763,7 @@
      "kind": "val",
      "name": "atan2",
      "spec": "val atan2 : real * real -> real",
-     "doc": "`atan2 (y, x)` is the angle in radians from the positive x axis to the point `(x, y)`, between `~pi` and `pi`.\n\nUnlike `atan (y / x)` it knows which quadrant the point is in, because\nit has the signs of both coordinates; the sign of a zero counts, so that\nthe answer is continuous as the point crosses an axis. The special cases\nfollow the table of the specification: on the y axis the angle is\n`pi/2` or `~pi/2`, `atan2 (0.0, ~0.0)` is `pi`, and two infinities give\nan odd multiple of `pi/4`.\n\n**Law** `atan2 (y, x) = atan (y / x)` for `x > 0.0`\n\n**Example** `Real.== (atan2 (0.0, ~1.0), pi) = true`\n\n",
+     "doc": "`atan2 (y, x)` is the angle in radians from the positive x axis to the point `(x, y)`, between `~pi` and `pi`.\n\nUnlike `atan (y / x)` it knows which quadrant the point is in, because\nit has the signs of both coordinates; the sign of a zero counts, so that\nthe answer is continuous as the point crosses an axis. The special cases\nfollow the table of the specification: on the y axis the angle is\n`pi/2` or `~pi/2`, `atan2 (0.0, ~0.0)` is `pi`, and two infinities give\nan odd multiple of `pi/4`.\n\n**Law** `atan2 (y, x) = atan (y / x)` for `x > 0.0`\n\nThe law holds over the reals, and not in floating point: `y / x` is\nrounded before `atan` sees it, so the two sides can differ in the last\nplace, and for two infinities `y / x` is a NaN. `atan2` is the side that\nis correctly rounded, in Rune as in C's library.\n\n**Example** `Real.== (atan2 (0.0, ~1.0), pi) = true`\n\n**Counterexample** `Real.== (atan2 (9.9740199574360859E~257, 1.1351872380907991E~255), atan (9.9740199574360859E~257 / 1.1351872380907991E~255))`, for the quotient is rounded first.\n\n",
      "page": "sig/MATH.md#val-atan2"
     },
     {
@@ -2853,7 +2853,7 @@
      "kind": "val",
      "name": "array",
      "spec": "val array : int * elem -> array",
-     "doc": "`array (n, x)` is a new array of `n` elements, each of them `x`.\n\n**Raises** `Size` if `n < 0` or `n > maxLen`.\n\n**Law** `sub (array (n, x), i) = x` for `0 <= i andalso i < n`\n\n**Example** `vector (array (3, #\"x\")) = \"xxx\"`\n\n",
+     "doc": "`array (n, x)` is a new array of `n` elements, each of them `x`.\n\n**Raises** `Size` if `n < 0` or `n > maxLen`.\n\n**Law** `sub (array (n, x), i) = x` for `0 <= i andalso i < n andalso n <= maxLen`, and it is run for `n` from `Arb.intRange (0, 1048576)`, as the\ntester cannot hold a longer one\n\n**Example** `vector (array (3, #\"x\")) = \"xxx\"`\n\n**Counterexample** `sub (array (maxLen + 1, #\"x\"), 0) = #\"x\"`, for there is\nno array so long.\n\n",
      "page": "sig/MONO_ARRAY.md#val-array"
     },
     {
@@ -2867,7 +2867,7 @@
      "kind": "val",
      "name": "tabulate",
      "spec": "val tabulate : int * (int -> elem) -> array",
-     "doc": "`tabulate (n, f)` is a new array of `f 0`, ..., `f (n - 1)`, applied in order.\n\n**Raises** `Size` if `n < 0` or `n > maxLen`.\n\n> **Reading** `MONO_ARRAY.tabulate/Size-before-f`. The specification does not\nsay whether the length is checked before `f` is applied. It is, as for\n`Array.tabulate`: a length out of range raises `Size` without applying\n`f` at all.\n\n**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n`, when `f`\nhas no effects\n\n**Example** `vector (tabulate (3, fn i => Char.chr (97 + i))) = \"abc\"`\n\n",
+     "doc": "`tabulate (n, f)` is a new array of `f 0`, ..., `f (n - 1)`, applied in order.\n\n**Raises** `Size` if `n < 0` or `n > maxLen`.\n\n> **Reading** `MONO_ARRAY.tabulate/Size-before-f`. The specification does not\nsay whether the length is checked before `f` is applied. It is, as for\n`Array.tabulate`: a length out of range raises `Size` without applying\n`f` at all.\n\n**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n andalso n <= maxLen`, when `f` has no effects, and it is run for `n` from\n`Arb.intRange (0, 1024)`, as a longer one takes too long for `make check`\n\n**Example** `vector (tabulate (3, fn i => Char.chr (97 + i))) = \"abc\"`\n\n**Counterexample** `sub (tabulate (maxLen + 1, fn _ => #\"x\"), 0) = #\"x\"`, for\nthere is no array so long.\n\n",
      "page": "sig/MONO_ARRAY.md#val-tabulate"
     },
     {
@@ -2902,7 +2902,7 @@
      "kind": "val",
      "name": "copy",
      "spec": "val copy : {src : array, dst : array, di : int} -> unit",
-     "doc": "`copy {src, dst, di}` copies `src` into `dst` from position `di` on.\n\n`src` and `dst` may be the same array, and then `di` must be 0: an array\ncannot hold itself at any other position, so any other `di` raises\n`Subscript`, and at 0 the copy changes nothing. Two stretches of one array\nthat overlap are what `MONO_ARRAY_SLICE.copy` is for.\n\n**Raises** `Subscript` if `di < 0` or `di + length src > length dst`, and\nthen nothing has been copied.\n\n**Law** `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)` for `0 <= i andalso i < length src andalso src <> dst`\n\n**Example** `let val b = array (4, #\".\") in copy {src = fromList [#\"a\", #\"b\", #\"c\"], dst = b, di = 1}; vector b end = \".abc\"`\n\n",
+     "doc": "`copy {src, dst, di}` copies `src` into `dst` from position `di` on.\n\n`src` and `dst` may be the same array, and then `di` must be 0: an array\ncannot hold itself at any other position, so any other `di` raises\n`Subscript`, and at 0 the copy changes nothing. Two stretches of one array\nthat overlap are what `MONO_ARRAY_SLICE.copy` is for.\n\n**Raises** `Subscript` if `di < 0` or `di + length src > length dst`, and\nthen nothing has been copied.\n\n**Law** `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)` for `0 <= di andalso di <= length dst - length src andalso 0 <= i andalso i < length src andalso src <> dst`\n\n**Example** `let val b = array (4, #\".\") in copy {src = fromList [#\"a\", #\"b\", #\"c\"], dst = b, di = 1}; vector b end = \".abc\"`\n\n**Counterexample** `let val b = array (1, #\".\") in copy {src = fromList [#\"a\", #\"b\"], dst = b, di = 0}; sub (b, 0) end = #\"a\"`, for the source\ndoes not fit.\n\n",
      "page": "sig/MONO_ARRAY.md#val-copy"
     },
     {
@@ -3048,7 +3048,7 @@
      "kind": "val",
      "name": "array",
      "spec": "val array : int * int * elem -> array",
-     "doc": "`array (r, c, x)` is a new array of `r` rows and `c` columns, every element `x`.\n\n**Raises** `Size` if `r < 0`, `c < 0`, or the array would be too large.\n\n**Law** `sub (array (r, c, x), i, j) = x` for `0 <= i andalso i < r andalso 0 <= j andalso j < c`\n\n**Example** `dimensions (array (2, 3, 0)) = (2, 3)`\n\n",
+     "doc": "`array (r, c, x)` is a new array of `r` rows and `c` columns, every element `x`.\n\n**Raises** `Size` if `r < 0`, `c < 0`, or the array would be too large.\n\n**Law** `sub (array (r, c, x), i, j) = x` for `0 <= i andalso i < r andalso 0 <= j andalso j < c andalso r <= Array.maxLen div c`, and it is run for `r`\nfrom `Arb.intRange (0, 1024)` and `c` from `Arb.intRange (0, 1024)`, as\nthe tester cannot hold a larger one\n\n**Example** `dimensions (array (2, 3, 0)) = (2, 3)`\n\n**Counterexample** `sub (array (Array.maxLen, 2, 0), 0, 0) = 0`, for there is\nno array so large.\n\n",
      "page": "sig/MONO_ARRAY2.md#val-array"
     },
     {
@@ -3062,7 +3062,7 @@
      "kind": "val",
      "name": "tabulate",
      "spec": "val tabulate : traversal -> int * int * (int * int -> elem) -> array",
-     "doc": "`tabulate trv (r, c, f)` is a new array whose element at `(i, j)` is `f (i, j)`, applied in the order `trv` gives.\n\n**Raises** `Size` if `r < 0`, `c < 0` or the array would be too large.\n\n> **Reading** `MONO_ARRAY2.tabulate/Size-before-f`. The specification does not\nsay whether the dimensions are checked before `f` is applied. They are,\nas for `Array2.tabulate`: a negative dimension, or an array that is too\nlarge, raises `Size` without applying `f` at all.\n\n**Law** `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i andalso i < r andalso 0 <= j andalso j < c`, when `f` has no effects\n\n**Example** `IntVector.foldr (op ::) [] (row (tabulate RowMajor (2, 3, fn (i, j) => 10 * i + j), 1)) = [10, 11, 12]`\n\n",
+     "doc": "`tabulate trv (r, c, f)` is a new array whose element at `(i, j)` is `f (i, j)`, applied in the order `trv` gives.\n\n**Raises** `Size` if `r < 0`, `c < 0` or the array would be too large.\n\n> **Reading** `MONO_ARRAY2.tabulate/Size-before-f`. The specification does not\nsay whether the dimensions are checked before `f` is applied. They are,\nas for `Array2.tabulate`: a negative dimension, or an array that is too\nlarge, raises `Size` without applying `f` at all.\n\n**Law** `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i andalso i < r andalso 0 <= j andalso j < c andalso r <= Array.maxLen div c`, when\n`f` has no effects, and it is run for `r` from `Arb.intRange (0, 32)` and\n`c` from `Arb.intRange (0, 32)`, as a larger one takes too long for `make check`\n\n**Example** `IntVector.foldr (op ::) [] (row (tabulate RowMajor (2, 3, fn (i, j) => 10 * i + j), 1)) = [10, 11, 12]`\n\n**Counterexample** `sub (tabulate RowMajor (Array.maxLen, 2, fn _ => 0), 0, 0) = 0`, for there is no array so large.\n\n",
      "page": "sig/MONO_ARRAY2.md#val-tabulate"
     },
     {
@@ -3243,7 +3243,7 @@
      "kind": "val",
      "name": "subslice",
      "spec": "val subslice : slice * int * int option -> slice",
-     "doc": "`subslice (sl, i, sz)` is the stretch of `sl` from `i`, of `sz` elements or to its end.\n\nThe bounds are those of `sl`, not of what it is a slice of.\n\n**Raises** `Subscript` if `i < 0` or `i > length sl`, or, with `SOME n`, if\n`n < 0` or `i + n > length sl`.\n\n**Law** `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= k andalso k < length sl - i`\n\n**Example** `vector (subslice (slice (CharArray.fromList [#\"a\", #\"b\", #\"c\", #\"d\"], 1, NONE), 1, SOME 1)) = \"c\"`\n\n",
+     "doc": "`subslice (sl, i, sz)` is the stretch of `sl` from `i`, of `sz` elements or to its end.\n\nThe bounds are those of `sl`, not of what it is a slice of.\n\n**Raises** `Subscript` if `i < 0` or `i > length sl`, or, with `SOME n`, if\n`n < 0` or `i + n > length sl`.\n\n**Law** `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= i andalso i < length sl andalso 0 <= k andalso k < length sl - i`\n\n**Example** `vector (subslice (slice (CharArray.fromList [#\"a\", #\"b\", #\"c\", #\"d\"], 1, NONE), 1, SOME 1)) = \"c\"`\n\n**Counterexample** `sub (subslice (full (CharArray.fromList [#\"a\", #\"b\"]), ~1, NONE), 1) = #\"a\"`, for a subslice cannot start before its slice.\n\n",
      "page": "sig/MONO_ARRAY_SLICE.md#val-subslice"
     },
     {
@@ -3417,7 +3417,7 @@
      "kind": "val",
      "name": "tabulate",
      "spec": "val tabulate : int * (int -> elem) -> vector",
-     "doc": "`tabulate (n, f)` is a vector of `f 0`, ..., `f (n - 1)`, applied in order.\n\n**Raises** `Size` if `n < 0` or `n > maxLen`.\n\n> **Reading** `MONO_VECTOR.tabulate/Size-before-f`. The specification does not\nsay whether the length is checked before `f` is applied. It is: a length\nout of range raises `Size` without applying `f` at all.\n\n**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n`, when `f`\nhas no effects\n\n**Example** `tabulate (3, fn i => Char.chr (97 + i)) = \"abc\"`\n\n",
+     "doc": "`tabulate (n, f)` is a vector of `f 0`, ..., `f (n - 1)`, applied in order.\n\n**Raises** `Size` if `n < 0` or `n > maxLen`.\n\n> **Reading** `MONO_VECTOR.tabulate/Size-before-f`. The specification does not\nsay whether the length is checked before `f` is applied. It is: a length\nout of range raises `Size` without applying `f` at all.\n\n**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n andalso n <= maxLen`, when `f` has no effects, and it is run for `n` from\n`Arb.intRange (0, 1024)`, as a longer one takes too long for `make check`\n\n**Example** `tabulate (3, fn i => Char.chr (97 + i)) = \"abc\"`\n\n**Counterexample** `sub (tabulate (maxLen + 1, fn _ => #\"x\"), 0) = #\"x\"`, for\nthere is no vector so long.\n\n",
      "page": "sig/MONO_VECTOR.md#val-tabulate"
     },
     {
@@ -3438,7 +3438,7 @@
      "kind": "val",
      "name": "update",
      "spec": "val update : vector * int * elem -> vector",
-     "doc": "`update (v, i, x)` is a new vector like `v` but with `x` at position `i`.\n\n`v` itself is not changed.\n\n**Raises** `Subscript` if `i < 0` or `i >= length v`.\n\n**Law** `sub (update (v, i, x), i) = x`\n\n**Law** `sub (update (v, i, x), j) = sub (v, j)` for `j <> i andalso 0 <= j andalso j < length v`\n\n**Example** `update (\"abc\", 1, #\"x\") = \"axc\"`\n\n",
+     "doc": "`update (v, i, x)` is a new vector like `v` but with `x` at position `i`.\n\n`v` itself is not changed.\n\n**Raises** `Subscript` if `i < 0` or `i >= length v`.\n\n**Law** `sub (update (v, i, x), i) = x` for `0 <= i andalso i < length v`\n\n**Law** `sub (update (v, i, x), j) = sub (v, j)` for `0 <= i andalso i < length v andalso 0 <= j andalso j < length v andalso j <> i`\n\n**Example** `update (\"abc\", 1, #\"x\") = \"axc\"`\n\n**Counterexample** `sub (update (\"abc\", 3, #\"x\"), 3) = #\"x\"`, for there is no\nposition 3 to update.\n\n",
      "page": "sig/MONO_VECTOR.md#val-update"
     },
     {
@@ -3730,7 +3730,7 @@
      "kind": "val",
      "name": "length",
      "spec": "val length : slice -> int",
-     "doc": "`length x` is the number of elements.\n\n**Law** `length (slice (v, i, SOME n)) = n` when `(ignore (slice (v, i, SOME n)); true)`\n\n**Example** `length (slice (\"abc\", 1, NONE)) = 2`\n\n",
+     "doc": "`length x` is the number of elements.\n\n**Law** `length (slice (v, i, SOME n)) = n` for `0 <= i andalso i <= length (full v) andalso 0 <= n andalso n <= length (full v) - i`\n\n**Example** `length (slice (\"abc\", 1, NONE)) = 2`\n\n",
      "page": "sig/MONO_VECTOR_SLICE.md#val-length"
     },
     {
@@ -3758,7 +3758,7 @@
      "kind": "val",
      "name": "subslice",
      "spec": "val subslice : slice * int * int option -> slice",
-     "doc": "`subslice (sl, i, sz)` is the stretch of `sl` from `i`, of `sz` elements or to its end.\n\nThe bounds are those of `sl`, not of what it is a slice of.\n\n**Raises** `Subscript` if `i < 0` or `i > length sl`, or, with `SOME n`, if\n`n < 0` or `i + n > length sl`.\n\n**Law** `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= k andalso k < length sl - i`\n\n**Example** `vector (subslice (slice (\"abcd\", 1, NONE), 1, SOME 1)) = \"c\"`\n\n",
+     "doc": "`subslice (sl, i, sz)` is the stretch of `sl` from `i`, of `sz` elements or to its end.\n\nThe bounds are those of `sl`, not of what it is a slice of.\n\n**Raises** `Subscript` if `i < 0` or `i > length sl`, or, with `SOME n`, if\n`n < 0` or `i + n > length sl`.\n\n**Law** `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= i andalso i < length sl andalso 0 <= k andalso k < length sl - i`\n\n**Example** `vector (subslice (slice (\"abcd\", 1, NONE), 1, SOME 1)) = \"c\"`\n\n**Counterexample** `sub (subslice (full \"ab\", ~1, NONE), 1) = sub (full \"ab\", 0)`, for a subslice cannot start before its slice.\n\n",
      "page": "sig/MONO_VECTOR_SLICE.md#val-subslice"
     },
     {
@@ -4702,7 +4702,7 @@
      "kind": "val",
      "name": "splitDirFile",
      "spec": "val splitDirFile : string -> {dir : string, file : string}",
-     "doc": "`splitDirFile p` is `p` split into everything but its last arc, and that last arc.\n\n**Example** `splitDirFile \"a/b/c\" = {dir = \"a/b\", file = \"c\"}`\n\n**Example** `splitDirFile \"a/b/\" = {dir = \"a/b\", file = \"\"}`\n\n**Law** `joinDirFile (splitDirFile p) = p` for `p <> \"\"`\n\n",
+     "doc": "`splitDirFile p` is `p` split into everything but its last arc, and that last arc.\n\n**Example** `splitDirFile \"a/b/c\" = {dir = \"a/b\", file = \"c\"}`\n\n**Example** `splitDirFile \"a/b/\" = {dir = \"a/b\", file = \"\"}`\n\n**Law** `joinDirFile (splitDirFile p) = p` for `p <> \"\"` when `let val arcs = #arcs (fromString p) in List.all (fn a => a <> \"\") (List.take (arcs, length arcs - 1)) end`, and it is run for `p` from `BasisDataArb.path`: an\nempty arc before the last, as in `\"a//b\"`, is lost\n\n**Counterexample** `joinDirFile (splitDirFile \"//\") = \"//\"`, for an empty arc\nbefore the last is lost.\n\n",
      "page": "sig/OS_PATH.md#val-splitdirfile"
     },
     {
@@ -4716,7 +4716,7 @@
      "kind": "val",
      "name": "dir",
      "spec": "val dir : string -> string",
-     "doc": "`dir p` is the `dir` part of `splitDirFile p`.\n\n**Law** `dir p = #dir (splitDirFile p)`\n\n**Example** `dir \"a/b/c\" = \"a/b\"`\n\n",
+     "doc": "`dir p` is the `dir` part of `splitDirFile p`.\n\n**Law** `dir p = #dir (splitDirFile p)`, and it is run for `p` from\n`BasisDataArb.path`\n\n**Example** `dir \"a/b/c\" = \"a/b\"`\n\n",
      "page": "sig/OS_PATH.md#val-dir"
     },
     {
@@ -4730,7 +4730,7 @@
      "kind": "val",
      "name": "splitBaseExt",
      "spec": "val splitBaseExt : string -> {base : string, ext : string option}",
-     "doc": "`splitBaseExt p` is `p` split into what comes before the extension and the extension.\n\nThe extension is the text after the right-most `.` of the last arc, when\nthat `.` is not the first character of the arc and something follows it;\notherwise there is none.\n\n> **Reading** `OS.Path.splitBaseExt/base-keeps-empty-arcs`. The base is\neverything to the left of the extension, empty arcs and all: `\"a//c.x\"`\nhas the base `\"a//c\"`.\n\n**Example** `splitBaseExt \"a.tar.gz\" = {base = \"a.tar\", ext = SOME \"gz\"}`\n\n**Example** `splitBaseExt \".profile\" = {base = \".profile\", ext = NONE}`\n\n**Law** `joinBaseExt (splitBaseExt p) = p`\n\n",
+     "doc": "`splitBaseExt p` is `p` split into what comes before the extension and the extension.\n\nThe extension is the text after the right-most `.` of the last arc, when\nthat `.` is not the first character of the arc and something follows it;\notherwise there is none.\n\n> **Reading** `OS.Path.splitBaseExt/base-keeps-empty-arcs`. The base is\neverything to the left of the extension, empty arcs and all: `\"a//c.x\"`\nhas the base `\"a//c\"`.\n\n**Example** `splitBaseExt \"a.tar.gz\" = {base = \"a.tar\", ext = SOME \"gz\"}`\n\n**Example** `splitBaseExt \".profile\" = {base = \".profile\", ext = NONE}`\n\n**Law** `joinBaseExt (splitBaseExt p) = p`, and it is run for `p` from\n`BasisDataArb.path`\n\n",
      "page": "sig/OS_PATH.md#val-splitbaseext"
     },
     {
@@ -4765,7 +4765,7 @@
      "kind": "val",
      "name": "isCanonical",
      "spec": "val isCanonical : string -> bool",
-     "doc": "`isCanonical p` is `true` when `p` is what `mkCanonical` would give.\n\n**Law** `isCanonical p = (mkCanonical p = p)`\n\n**Example** `isCanonical \"a/../b\" = false`\n\n",
+     "doc": "`isCanonical p` is `true` when `p` is what `mkCanonical` would give.\n\n**Law** `isCanonical p = (mkCanonical p = p)`, and it is run for `p` from\n`BasisDataArb.path`\n\n**Example** `isCanonical \"a/../b\" = false`\n\n",
      "page": "sig/OS_PATH.md#val-iscanonical"
     },
     {
@@ -4779,7 +4779,7 @@
      "kind": "val",
      "name": "mkRelative",
      "spec": "val mkRelative : {path : string, relativeTo : string} -> string",
-     "doc": "`mkRelative {path, relativeTo}` is `path` written as a path from `relativeTo`.\n\n**Raises** `Path` if `relativeTo` is not absolute -- also when `path` is\nalready relative.\n\n> **Reading** `OS.Path.mkRelative/what-is-kept`. `relativeTo` is\ncanonicalised first, while the arcs of `path` are kept as written, a\ntrailing empty arc included: `\"/a/b/\"` relative to `\"/a/c\"` is\n`\"../b/\"`. A root alone has no arcs to keep.\n\n**Example** `mkRelative {path = \"/a/b/c\", relativeTo = \"/a/d\"} = \"../b/c\"`\n\n**Law** `mkAbsolute {path = mkRelative {path = p, relativeTo = q}, relativeTo = q} = p` for `isCanonical p andalso isAbsolute p andalso isCanonical q andalso isAbsolute q`; a path that is not canonical comes back canonical\n\n",
+     "doc": "`mkRelative {path, relativeTo}` is `path` written as a path from `relativeTo`.\n\n**Raises** `Path` if `relativeTo` is not absolute -- also when `path` is\nalready relative.\n\n> **Reading** `OS.Path.mkRelative/what-is-kept`. `relativeTo` is\ncanonicalised first, while the arcs of `path` are kept as written, a\ntrailing empty arc included: `\"/a/b/\"` relative to `\"/a/c\"` is\n`\"../b/\"`. A root alone has no arcs to keep.\n\n**Example** `mkRelative {path = \"/a/b/c\", relativeTo = \"/a/d\"} = \"../b/c\"`\n\n**Law** `mkAbsolute {path = mkRelative {path = p, relativeTo = q}, relativeTo = q} = p` for `isCanonical p andalso isAbsolute p andalso isCanonical q andalso isAbsolute q`, and it is run for `p` from\n`BasisDataArb.canonicalAbsolutePath` and `q` from\n`BasisDataArb.canonicalAbsolutePath`; a path that is not canonical comes\nback canonical\n\n",
      "page": "sig/OS_PATH.md#val-mkrelative"
     },
     {
@@ -4793,7 +4793,7 @@
      "kind": "val",
      "name": "isRelative",
      "spec": "val isRelative : string -> bool",
-     "doc": "`isRelative p` is `true` when `p` does not start from a root.\n\n**Law** `isRelative p = not (isAbsolute p)`\n\n**Example** `isRelative \"a/b\" = true`\n\n",
+     "doc": "`isRelative p` is `true` when `p` does not start from a root.\n\n**Law** `isRelative p = not (isAbsolute p)`, and it is run for `p` from\n`BasisDataArb.path`\n\n**Example** `isRelative \"a/b\" = true`\n\n",
      "page": "sig/OS_PATH.md#val-isrelative"
     },
     {
@@ -4959,7 +4959,7 @@
      "kind": "val",
      "name": "update",
      "spec": "val update : Word8Array.array * int * real -> unit",
-     "doc": "`update (arr, i, r)` writes the encoding of `r` at position `i` of `arr`.\n\n**Raises** `Subscript` if `i < 0` or `arr` is shorter than `bytesPerElem * (i + 1)`.\n\n**Law** `(update (arr, i, r); subArr (arr, i)) = r`, except that a NaN comes\nback as some NaN\n\n**Example** `let val a = Word8Array.array (8, 0w0) in PackReal64Little.update (a, 0, 1.0); Word8Array.sub (a, 7) end = 0wx3F`\n\n",
+     "doc": "`update (arr, i, r)` writes the encoding of `r` at position `i` of `arr`.\n\n**Raises** `Subscript` if `i < 0` or `arr` is shorter than `bytesPerElem * (i + 1)`.\n\n**Law** `(update (arr, i, r); subArr (arr, i)) = r` for `0 <= i andalso i < Word8Array.length arr div bytesPerElem`, except that a NaN comes back as\nsome NaN\n\n**Example** `let val a = Word8Array.array (8, 0w0) in PackReal64Little.update (a, 0, 1.0); Word8Array.sub (a, 7) end = 0wx3F`\n\n**Counterexample** `(PackReal64Little.update (Word8Array.array (4, 0w0), 0, 1.0); true)`, for the eight bytes of the real are not all there.\n\n",
      "page": "sig/PACK_REAL.md#val-update"
     }
    ]
@@ -5014,7 +5014,7 @@
      "kind": "val",
      "name": "update",
      "spec": "val update : Word8Array.array * int * LargeWord.word -> unit",
-     "doc": "`update (arr, i, w)` writes the low `bytesPerElem` bytes of `w` at position `i` of `arr`.\n\nWhat does not fit in that many bytes is dropped.\n\n**Raises** `Subscript` if `i < 0` or if the bytes of element `i` are not\nall in `arr`.\n\n**Law** `(update (arr, i, w); subArr (arr, i)) = LargeWord.andb (w, LargeWord.- (LargeWord.<< (0w1, Word.fromInt (8 * bytesPerElem)), 0w1))`:\n`w` with the bits above `8 * bytesPerElem` cleared\n\n**Example** `let val a = Word8Array.array (2, 0w0) in PackWord16Big.update (a, 0, 0wx1234); Word8Array.vector a end = Word8Vector.fromList [0wx12, 0wx34]`\n\n",
+     "doc": "`update (arr, i, w)` writes the low `bytesPerElem` bytes of `w` at position `i` of `arr`.\n\nWhat does not fit in that many bytes is dropped.\n\n**Raises** `Subscript` if `i < 0` or if the bytes of element `i` are not\nall in `arr`.\n\n**Law** `(update (arr, i, w); subArr (arr, i)) = LargeWord.andb (w, LargeWord.- (LargeWord.<< (0w1, Word.fromInt (8 * bytesPerElem)), 0w1))`\nfor `0 <= i andalso i < Word8Array.length arr div bytesPerElem`: `w` with\nthe bits above `8 * bytesPerElem` cleared\n\n**Example** `let val a = Word8Array.array (2, 0w0) in PackWord16Big.update (a, 0, 0wx1234); Word8Array.vector a end = Word8Vector.fromList [0wx12, 0wx34]`\n\n**Counterexample** `(PackWord16Big.update (Word8Array.array (1, 0w0), 0, 0wx1234); true)`, for the two bytes of the word are not both there.\n\n",
      "page": "sig/PACK_WORD.md#val-update"
     }
    ]
@@ -5466,7 +5466,7 @@
      "kind": "val",
      "name": "wordToFD",
      "spec": "val wordToFD : SysWord.word -> file_desc",
-     "doc": "`wordToFD w` is the descriptor numbered `w`, whether or not it is open.\n\n**Law** `fdToWord (wordToFD w) = w`\n\n",
+     "doc": "`wordToFD w` is the descriptor numbered `w`, whether or not it is open.\n\nA descriptor is \"a per-process unique, non-negative integer\" of the\nsystem, an `int` of C, which POSIX makes at least 32 bits wide\n(`{INT_MAX}` is at least 2147483647). Beyond that an implementation may\nwrap the word, as one that keeps a descriptor in such an `int` does, or\nkeep it, as Rune does up to its own `int`, of 63 bits.\n\n**Law** `fdToWord (wordToFD w) = w` for `SysWord.<= (w, 0wx7FFFFFFF)`\n\n**Counterexample** `let val w = SysWord.+ (SysWord.fromInt (valOf Int.maxInt), 0w1) in fdToWord (wordToFD w) = w end`, for the number of a\ndescriptor is an int, on Rune of 63 bits.\n\n",
      "page": "sig/POSIX_FILE_SYS.md#val-wordtofd"
     },
     {
@@ -5837,7 +5837,7 @@
      "kind": "val",
      "name": "devToWord",
      "spec": "val devToWord : dev -> SysWord.word",
-     "doc": "`devToWord d` is the number of the device `d`.\n\n**Law** `devToWord (wordToDev w) = w`\n\n",
+     "doc": "`devToWord d` is the number of the device `d`.\n\n**Law** `devToWord (wordToDev w) = w` for `SysWord.<= (w, SysWord.fromInt (valOf Int.maxInt))`\n\n**Counterexample** `let val w = SysWord.+ (SysWord.fromInt (valOf Int.maxInt), 0w1) in devToWord (wordToDev w) = w end`, for the number of a\ndevice is an int.\n\n",
      "page": "sig/POSIX_FILE_SYS.md#val-devtoword"
     },
     {
@@ -5858,7 +5858,7 @@
      "kind": "val",
      "name": "inoToWord",
      "spec": "val inoToWord : ino -> SysWord.word",
-     "doc": "`inoToWord i` is the number of the file `i`.\n\n**Law** `inoToWord (wordToIno w) = w`\n\n",
+     "doc": "`inoToWord i` is the number of the file `i`.\n\n**Law** `inoToWord (wordToIno w) = w` for `SysWord.<= (w, SysWord.fromInt (valOf Int.maxInt))`\n\n**Counterexample** `let val w = SysWord.+ (SysWord.fromInt (valOf Int.maxInt), 0w1) in inoToWord (wordToIno w) = w end`, for the number of a\nfile is an int.\n\n",
      "page": "sig/POSIX_FILE_SYS.md#val-inotoword"
     },
     {
@@ -6423,7 +6423,7 @@
      "kind": "val",
      "name": "pidToWord",
      "spec": "val pidToWord : pid -> SysWord.word",
-     "doc": "`pidToWord pid` is the number of `pid`.\n\n**Law** `pidToWord (wordToPid w) = w`\n\n",
+     "doc": "`pidToWord pid` is the number of `pid`.\n\n**Law** `pidToWord (wordToPid w) = w` for `SysWord.<= (w, SysWord.fromInt (valOf Int.maxInt))`\n\n**Counterexample** `let val w = SysWord.+ (SysWord.fromInt (valOf Int.maxInt), 0w1) in pidToWord (wordToPid w) = w end`, for the number of a\nprocess is an int.\n\n",
      "page": "sig/POSIX_PROCESS.md#val-pidtoword"
     },
     {
@@ -6604,7 +6604,7 @@
      "kind": "val",
      "name": "wordToUid",
      "spec": "val wordToUid : SysWord.word -> uid",
-     "doc": "`wordToUid w` is the user numbered `w`, whether or not there is such a user.\n\n**Law** `uidToWord (wordToUid w) = w`\n\n**Example** `uidToWord (wordToUid 0w0) = 0w0`\n\n",
+     "doc": "`wordToUid w` is the user numbered `w`, whether or not there is such a user.\n\n**Law** `uidToWord (wordToUid w) = w` for `SysWord.<= (w, SysWord.fromInt (valOf Int.maxInt))`\n\n**Example** `uidToWord (wordToUid 0w0) = 0w0`\n\n**Counterexample** `let val w = SysWord.+ (SysWord.fromInt (valOf Int.maxInt), 0w1) in uidToWord (wordToUid w) = w end`, for the number of a\nuser is an int.\n\n",
      "page": "sig/POSIX_PROC_ENV.md#val-wordtouid"
     },
     {
@@ -6618,7 +6618,7 @@
      "kind": "val",
      "name": "wordToGid",
      "spec": "val wordToGid : SysWord.word -> gid",
-     "doc": "`wordToGid w` is the group numbered `w`.\n\n**Law** `gidToWord (wordToGid w) = w`\n\n",
+     "doc": "`wordToGid w` is the group numbered `w`.\n\n**Law** `gidToWord (wordToGid w) = w` for `SysWord.<= (w, SysWord.fromInt (valOf Int.maxInt))`\n\n**Counterexample** `let val w = SysWord.+ (SysWord.fromInt (valOf Int.maxInt), 0w1) in gidToWord (wordToGid w) = w end`, for the number of a\ngroup is an int.\n\n",
      "page": "sig/POSIX_PROC_ENV.md#val-wordtogid"
     },
     {
@@ -8272,7 +8272,7 @@
      "kind": "val",
      "name": "split",
      "spec": "val split : real -> {whole : real, frac : real}",
-     "doc": "`split x` is the whole part and the fractional part of `x`, each with the sign of `x`.\n\nThe whole part is `x` rounded towards zero. For an infinity the\nfractional part is a zero, and for a NaN both are NaNs.\n\n**Law** `== (#whole (split x) + #frac (split x), x)`\n\n**Example** `(fn {whole, frac} => (toString whole, toString frac)) (split ~1.5) = (\"~1\", \"~0.5\")`\n\n",
+     "doc": "`split x` is the whole part and the fractional part of `x`, each with the sign of `x`.\n\nThe whole part is `x` rounded towards zero. For an infinity the\nfractional part is a zero, and for a NaN both are NaNs.\n\n**Law** `== (#whole (split x) + #frac (split x), x)` for `not (isNan x)`\n\n**Example** `(fn {whole, frac} => (toString whole, toString frac)) (split ~1.5) = (\"~1\", \"~0.5\")`\n\n**Counterexample** `== (#whole (split (0.0 / 0.0)) + #frac (split (0.0 / 0.0)), 0.0 / 0.0)`, for a NaN is equal to nothing.\n\n",
      "page": "sig/REAL.md#val-split"
     },
     {
@@ -9855,7 +9855,7 @@
      "kind": "val",
      "name": "tokens",
      "spec": "val tokens : (char -> bool) -> string -> string list",
-     "doc": "`tokens p s` is the non-empty pieces of `s` between the characters that satisfy `p`.\n\nA run of delimiters counts as one, and a delimiter at either end leaves\nnothing behind, so this is how a line is split into words.\n\n**Example** `tokens Char.isSpace \"  a  b \" = [\"a\", \"b\"]`\n\n**Law** `tokens p s = List.filter (fn t => Int.> (size t, 0)) (fields p s)`\n\n> **Reading** `String.tokens/order`. The specification says the tokens are\n\"derived from s from left to right\", and not how often `p` is asked:\n`p` is applied once to each character, from left to right.\n\n",
+     "doc": "`tokens p s` is the non-empty pieces of `s` between the characters that satisfy `p`.\n\nA run of delimiters counts as one, and a delimiter at either end leaves\nnothing behind, so this is how a line is split into words.\n\n**Example** `tokens Char.isSpace \"  a  b \" = [\"a\", \"b\"]`\n\n**Law** `tokens p s = List.filter (fn t => Int.> (size t, 0)) (fields p s)`\nwhen `p` has no effects\n\n> **Reading** `String.tokens/order`. The specification says the tokens are\n\"derived from s from left to right\", and not how often `p` is asked:\n`p` is applied once to each character, from left to right.\n\n",
      "page": "sig/STRING.md#val-tokens"
     },
     {
@@ -10091,7 +10091,7 @@
      "kind": "val",
      "name": "base",
      "spec": "val base : substring -> string * int * int",
-     "doc": "`base ss` is the triple of the string that `ss` is a stretch of, where it starts in that string, and how long it is.\n\n**Law** `base (substring (s, i, n)) = (s, i, n)`\n\n**Example** `base (substring (\"hello\", 1, 3)) = (\"hello\", 1, 3)`\n\n",
+     "doc": "`base ss` is the triple of the string that `ss` is a stretch of, where it starts in that string, and how long it is.\n\n**Law** `base (substring (s, i, n)) = (s, i, n)` for `0 <= i andalso i <= size (full s) andalso 0 <= n andalso n <= size (full s) - i`\n\n**Example** `base (substring (\"hello\", 1, 3)) = (\"hello\", 1, 3)`\n\n**Counterexample** `base (substring (\"\", 0, ~1)) = (\"\", 0, ~1)`, for no\nsubstring has a negative size.\n\n",
      "page": "sig/SUBSTRING.md#val-base"
     },
     {
@@ -10224,7 +10224,7 @@
      "kind": "val",
      "name": "splitl",
      "spec": "val splitl : (char -> bool) -> substring -> substring * substring",
-     "doc": "`splitl p ss` is the pair of the longest prefix of `ss` whose characters satisfy `p` and the rest.\n\n**Law** `splitl p ss = (takel p ss, dropl p ss)`\n\n**Example** `(fn (a, b) => (string a, string b)) (splitl Char.isAlpha (full \"ab12\")) = (\"ab\", \"12\")`\n\n",
+     "doc": "`splitl p ss` is the pair of the longest prefix of `ss` whose characters satisfy `p` and the rest.\n\n**Law** `splitl p ss = (takel p ss, dropl p ss)` when `p` has no effects\n\n**Example** `(fn (a, b) => (string a, string b)) (splitl Char.isAlpha (full \"ab12\")) = (\"ab\", \"12\")`\n\n**Counterexample** `let val n = ref 0 fun p _ = (n := !n + 1; false) in ignore (splitl p (full \"a\")); !n end = let val n = ref 0 fun p _ = (n := !n + 1; false) in ignore (takel p (full \"a\"), dropl p (full \"a\")); !n end`, for the pair looks at the character twice.\n\n",
      "page": "sig/SUBSTRING.md#val-splitl"
     },
     {
@@ -10294,7 +10294,7 @@
      "kind": "val",
      "name": "tokens",
      "spec": "val tokens : (char -> bool) -> substring -> substring list",
-     "doc": "`tokens p ss` is the non-empty pieces of `ss` between the characters that satisfy `p`.\n\nA run of delimiters counts as one, and the pieces are substrings of the\nsame base string, so nothing is copied.\n\n**Law** `tokens p ss = List.filter (fn t => not (isEmpty t)) (fields p ss)`\n\n**Example** `map string (tokens Char.isSpace (full \" a  b \")) = [\"a\", \"b\"]`\n\n> **Reading** `Substring.tokens/order`. The specification says the tokens\nare derived \"from left to right\", and not how often `p` is asked: `p`\nis applied once to each character, from left to right.\n\n",
+     "doc": "`tokens p ss` is the non-empty pieces of `ss` between the characters that satisfy `p`.\n\nA run of delimiters counts as one, and the pieces are substrings of the\nsame base string, so nothing is copied.\n\n**Law** `tokens p ss = List.filter (fn t => not (isEmpty t)) (fields p ss)`\nwhen `p` has no effects: how often `p` is asked is the implementation's\n\n**Example** `map string (tokens Char.isSpace (full \" a  b \")) = [\"a\", \"b\"]`\n\n> **Reading** `Substring.tokens/order`. The specification says the tokens\nare derived \"from left to right\", and not how often `p` is asked: `p`\nis applied once to each character, from left to right.\n\n",
      "page": "sig/SUBSTRING.md#val-tokens"
     },
     {
@@ -10529,7 +10529,7 @@
      "kind": "val",
      "name": "canInput",
      "spec": "val canInput : instream * int -> int option",
-     "doc": "`canInput (f, n)` is how many of `n` characters, at most, can be read without waiting, or `NONE`.\n\n**Raises** `Size` if `n < 0`.\n\n**Example** `canInput (openString \"ab\", 1) = SOME 1`\n\n",
+     "doc": "`canInput (f, n)` is how many of `n` characters, at most, can be read without waiting, or `NONE`.\n\n**Raises** `Size` if `n < 0`.\n\n**Example** `canInput (openString \"ab\", 1) = SOME 1`\n\n**Example** `canInput (openString (CharVector.tabulate (40, fn _ => #\"a\")), 40) = SOME 40`\n\n",
      "page": "sig/TEXT_IO.md#val-caninput"
     },
     {
@@ -12165,14 +12165,14 @@
    ]
   },
   "WORD": {
-   "doc": "Words: integers of a fixed number of bits, without a sign, whose\narithmetic wraps round instead of overflowing, and which can be taken\napart bit by bit.\n\nA word of `wordSize` bits holds the numbers from 0 to `2^wordSize - 1`;\nevery operation that would leave that range is taken modulo `2^wordSize`,\nso nothing raises `Overflow` but the conversions to a type that cannot\nhold the value. This is the type for bit sets, masks, hashes and whatever\nis counted in bits rather than in numbers.\n\nWhere a word is read as a signed number (`toIntX`, `toLargeX`, `~>>`) the\ntop bit is the sign, as in two's complement. The functions with an `X` in\ntheir name are those that sign-extend; the others fill with zeros.\n\nThe structures differ in their width: `Word` is the default one and\n`Word8`, `Word16`, `Word32` and `Word64` are the sized ones; `LargeWord`\nis the widest, and `SysWord` is what the operating system's flags are\ncounted in.\n\n**See also** `INTEGER`, `INT_INF`, `BYTE`, `STRING_CVT`, `PACK_WORD`\n\n",
+   "doc": "Words: integers of a fixed number of bits, without a sign, whose\narithmetic wraps round instead of overflowing, and which can be taken\napart bit by bit.\n\nA word of `wordSize` bits holds the numbers from 0 to `2^wordSize - 1`;\nevery operation that would leave that range is taken modulo `2^wordSize`,\nso nothing raises `Overflow` but the conversions to a type that cannot\nhold the value. This is the type for bit sets, masks, hashes and whatever\nis counted in bits rather than in numbers.\n\nWhere a word is read as a signed number (`toIntX`, `toLargeX`, `~>>`) the\ntop bit is the sign, as in two's complement. The functions with an `X` in\ntheir name are those that sign-extend; the others fill with zeros.\n\nThe structures differ in their width: `Word` is the default one and\n`Word8`, `Word16`, `Word32` and `Word64` are the sized ones; `LargeWord`\nis the widest, and `SysWord` is what the operating system's flags and\nnumbers are counted in.\n\n**See also** `INTEGER`, `INT_INF`, `BYTE`, `STRING_CVT`, `PACK_WORD`\n\n",
    "page": "sig/WORD.md",
    "members": [
     {
      "kind": "eqtype",
      "name": "word",
      "spec": "eqtype word",
-     "doc": "The type of words of this structure.\n\n> **Implementation** `Word.word/63-bits`. `Word.word` is the top-level\n`word`, of 63 bits -- a word of the machine less the bit that tells a\nnumber from a pointer -- and so is `SysWord`. `Word64`, which is also\n`LargeWord`, has 64 bits on every machine: a word of its type is kept in\na word of the machine where it fits 63 bits and in a small object where\nit needs the 64th. `Word8`, `Word16` and `Word32` are kept in a word of\nthe machine whose upper bits are zero.\n\n> **Implementation** `Word.word/constants-overloaded`. A word constant has the\nword type that its context asks for, `Word8.word` as well as `word`, and\nis checked against the range of that type when the program is compiled;\n`~` is there for words too. Integer constants are overloaded at\n`IntInf.int` and the `IntN`, real ones at `Real32.real`, and character and\nstring constants at `WideChar.char` and `WideString.string`.\n\n",
+     "doc": "The type of words of this structure.\n\n> **Implementation** `Word.word/63-bits`. `Word.word` is the top-level `word`,\nof 63 bits -- a word of the machine less the bit that tells a number from\na pointer. `Word64`, which is also `LargeWord`, has 64 bits on every\nmachine, and so has `SysWord`, a type of its own beside it: a word of\ntheirs is kept in a word of the machine where it fits 63 bits and in a\nsmall object where it needs the 64th. `Word8`, `Word16` and `Word32` are\nkept in a word of the machine whose upper bits are zero.\n\n> **Implementation** `Word.word/constants-overloaded`. A word constant has the\nword type that its context asks for, `Word8.word` as well as `word`, and\nis checked against the range of that type when the program is compiled;\n`~` is there for words too. Integer constants are overloaded at\n`IntInf.int` and the `IntN`, real ones at `Real32.real`, and character and\nstring constants at `WideChar.char` and `WideString.string`.\n\n",
      "page": "sig/WORD.md#type-word"
     },
     {
@@ -12347,7 +12347,7 @@
      "kind": "val",
      "name": "mod",
      "spec": "val mod : word * word -> word",
-     "doc": "`a mod b` is what `div` leaves over.\n\n**Raises** `Div` if `b` is zero.\n\n**Law** `(a div b) * b + (a mod b) = a`\n\n**Example** `0w7 mod 0w2 = 0w1`\n\n",
+     "doc": "`a mod b` is what `div` leaves over.\n\n**Raises** `Div` if `b` is zero.\n\n**Law** `(a div b) * b + (a mod b) = a` for `b <> 0w0`\n\n**Example** `0w7 mod 0w2 = 0w1`\n\n**Counterexample** `(0w1 div 0w0) * 0w0 + (0w1 mod 0w0) = 0w1`, for there is\nno dividing by zero.\n\n",
      "page": "sig/WORD.md#val-mod"
     },
     {

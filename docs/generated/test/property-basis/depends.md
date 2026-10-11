@@ -33,10 +33,10 @@ flowchart LR
 ```mermaid
 flowchart TD
   n0(["ARB_OF"])
-  n1["CharArbFn<br>IntegerArbFn<br>MonoArray2ArbFn<br>MonoArrayArbFn<br>MonoArraySliceArbFn<br>MonoVectorArbFn<br>MonoVectorSliceArbFn<br>PropertyDimensions<br>RealArbFn<br>StringArbFn<br>SubstringArbFn<br>WordArbFn"]
-  n2(["BASIS_DATA_ARB<br>DATE_ARB<br>IEEE_REAL_ARB"])
-  n3["BasisDataArb<br>DateArb<br>IEEERealArb<br>PropertyAround<br>RandomArb<br>TimeArb"]
-  n4["IntArb<br>IntInfArb<br>LargeIntArb<br>LargeRealArb<br>LargeWordArb<br>PositionArb<br>RealArb<br>SysWordArb<br>Word8Arb<br>WordArb"]
+  n1["IntegerArbFn<br>WordArbFn<br>RealArbFn<br>CharArbFn<br>StringArbFn<br>PropertyDimensions<br>SubstringArbFn<br>MonoVectorArbFn<br>MonoArrayArbFn<br>MonoVectorSliceArbFn<br>MonoArraySliceArbFn<br>MonoArray2ArbFn"]
+  n2(["DATE_ARB<br>IEEE_REAL_ARB<br>BASIS_DATA_ARB"])
+  n3["PropertyAround<br>TimeArb<br>DateArb<br>IEEERealArb<br>BasisDataArb<br>RandomArb"]
+  n4["IntArb<br>IntInfArb<br>LargeIntArb<br>PositionArb<br>WordArb<br>Word8Arb<br>LargeWordArb<br>SysWordArb<br>RealArb<br>LargeRealArb"]
   n5["Int8Arb"]
   n6["Int16Arb"]
   n7["Int32Arb"]
@@ -47,7 +47,7 @@ flowchart TD
   n12["Word64Arb"]
   n13["Real32Arb"]
   n14["Real64Arb"]
-  n15["CharArb<br>CharArrayArb<br>CharArraySliceArb<br>CharVectorArb<br>CharVectorSliceArb<br>StringArb<br>SubstringArb"]
+  n15["CharArb<br>StringArb<br>SubstringArb<br>CharVectorArb<br>CharArrayArb<br>CharVectorSliceArb<br>CharArraySliceArb"]
   n16["WideCharArb"]
   n17["WideStringArb"]
   n18["WideSubstringArb"]

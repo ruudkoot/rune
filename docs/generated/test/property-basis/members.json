@@ -1,0 +1,559 @@
+{
+ "signatures": {
+  "ARB_OF": {
+   "doc": "The arbitrary of one type of a structure: what the functors of the\nlibrary make of a structure of the Basis Library, and what the structures\n`Int8Arb`, `Word8Arb`, `CharArraySliceArb` and the rest are.\n\nThe instance of the type of a structure of the Basis Library is the `arb`\nof the structure of the same name with Arb after it: `Int8Arb.arb` for\n`Int8.int` (docs/plans/quickcheck.md, D4 and M6).\n\n",
+   "page": "sig/ARB_OF.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "t",
+     "spec": "type t",
+     "doc": "The type.\n\n",
+     "page": "sig/ARB_OF.md#type-t"
+    },
+    {
+     "kind": "val",
+     "name": "arb",
+     "spec": "val arb : t Arb.arb",
+     "doc": "The arbitrary of `t`.\n\n",
+     "page": "sig/ARB_OF.md#val-arb"
+    }
+   ]
+  },
+  "BASIS_DATA_ARB": {
+   "doc": "The arbitraries of the small datatypes and readers of the Basis Library.\n\n",
+   "page": "sig/BASIS_DATA_ARB.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "bufferMode",
+     "spec": "val bufferMode : IO.buffer_mode Arb.arb",
+     "doc": "The arbitrary of buffer modes, `IO.NO_BUF` the simplest.\n\n",
+     "page": "sig/BASIS_DATA_ARB.md#val-buffermode"
+    },
+    {
+     "kind": "val",
+     "name": "radix",
+     "spec": "val radix : StringCvt.radix Arb.arb",
+     "doc": "The arbitrary of radixes, `StringCvt.BIN` the simplest.\n\n",
+     "page": "sig/BASIS_DATA_ARB.md#val-radix"
+    },
+    {
+     "kind": "val",
+     "name": "traversal",
+     "spec": "val traversal : Array2.traversal Arb.arb",
+     "doc": "The arbitrary of the orders in which `Array2` traverses an array,\n`Array2.RowMajor` the simplest.\n\n",
+     "page": "sig/BASIS_DATA_ARB.md#val-traversal"
+    },
+    {
+     "kind": "val",
+     "name": "canonicalAbsolutePath",
+     "spec": "val canonicalAbsolutePath : string Arb.arb",
+     "doc": "The arbitrary of canonical absolute paths: `/` and names of letters and digits between slashes, as many as a list's length.\n\nA domain for the laws of `OS.Path` about such paths (D7).\n\n",
+     "page": "sig/BASIS_DATA_ARB.md#val-canonicalabsolutepath"
+    },
+    {
+     "kind": "val",
+     "name": "path",
+     "spec": "val path : string Arb.arb",
+     "doc": "The arbitrary of paths built from arcs: empty, `.`, `..`, names, names with an extension and any string, between slashes.\n\nA domain for the laws of `OS.Path` (D7). A string drawn a character at\na time seldom has two separators together, which is where a path has an\nempty arc, or an arc `..`. A path is absolute or relative, and the\nsimplest is the empty one.\n\n",
+     "page": "sig/BASIS_DATA_ARB.md#val-path"
+    },
+    {
+     "kind": "val",
+     "name": "reader",
+     "spec": "val reader : (char, int) StringCvt.reader Arb.arb",
+     "doc": "The arbitrary of readers of characters over a drawn string, whose stream is a position in it.\n\nThe string is drawn as `Arb.string` draws one. From `i`, the reader gives\nthe character at `i` and the position `i + 1`, and `NONE` at the end or\noutside the string.\n\n",
+     "page": "sig/BASIS_DATA_ARB.md#val-reader"
+    }
+   ]
+  },
+  "DATE_ARB": {
+   "doc": "The arbitraries of `Date.date`, of its months, weekdays and record of\nfields, by the generator principle P12 (docs/plans/quickcheck.md).\n\nA date is made by `Date.date` from fields in range: a year from 1900 to\n2200 (the years the specification asks for), any month, a day from 1 to\n31, an hour, a minute and a second in range, and the local zone or an\noffset within a day. The record of fields is drawn around those ranges,\nwidened on each side by their own width, so that fields out of range and\non its edges are drawn as often as fields in it; its year is any `int`.\n\n",
+   "page": "sig/DATE_ARB.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "t",
+     "spec": "type t = Date.date",
+     "doc": "The type of dates.\n\n",
+     "page": "sig/DATE_ARB.md#type-t"
+    },
+    {
+     "kind": "val",
+     "name": "arb",
+     "spec": "val arb : Date.date Arb.arb",
+     "doc": "The arbitrary of dates. Two dates are equal when `Date.compare` says\nso and their offsets are the same.\n\n",
+     "page": "sig/DATE_ARB.md#val-arb"
+    },
+    {
+     "kind": "val",
+     "name": "month",
+     "spec": "val month : Date.month Arb.arb",
+     "doc": "The arbitrary of months, `Date.Jan` the simplest.\n\n",
+     "page": "sig/DATE_ARB.md#val-month"
+    },
+    {
+     "kind": "val",
+     "name": "weekday",
+     "spec": "val weekday : Date.weekday Arb.arb",
+     "doc": "The arbitrary of weekdays, `Date.Mon` the simplest.\n\n",
+     "page": "sig/DATE_ARB.md#val-weekday"
+    },
+    {
+     "kind": "val",
+     "name": "fields",
+     "spec": "val fields : {year : int, month : Date.month, day : int, hour : int, minute : int, second : int,\n              offset : Time.time option} Arb.arb",
+     "doc": "The arbitrary of the records of fields that `Date.date` takes.\n\n",
+     "page": "sig/DATE_ARB.md#val-fields"
+    },
+    {
+     "kind": "val",
+     "name": "fieldsInRange",
+     "spec": "val fieldsInRange : int * int -> {year : int, month : Date.month, day : int, hour : int, minute : int,\n                                  second : int, offset : Time.time option} Arb.arb",
+     "doc": "`fieldsInRange (lo, hi)` is the arbitrary of the records of fields all in range, with a year from `lo` to `hi`: a domain a law can name (D7).\n\nThe day is one of its month, the hour, the minute and the second are\nwithin the day, and the offset is less than a day either way, or\n`NONE`.\n\n",
+     "page": "sig/DATE_ARB.md#val-fieldsinrange"
+    }
+   ]
+  },
+  "IEEE_REAL_ARB": {
+   "doc": "The arbitraries of `IEEEReal`'s types, by the generator principle P12.\n\n",
+   "page": "sig/IEEE_REAL_ARB.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "roundingMode",
+     "spec": "val roundingMode : IEEEReal.rounding_mode Arb.arb",
+     "doc": "The arbitrary of rounding modes, `IEEEReal.TO_NEAREST` the simplest.\n\n",
+     "page": "sig/IEEE_REAL_ARB.md#val-roundingmode"
+    },
+    {
+     "kind": "val",
+     "name": "floatClass",
+     "spec": "val floatClass : IEEEReal.float_class Arb.arb",
+     "doc": "The arbitrary of classes of reals, `IEEEReal.NAN` the simplest.\n\n",
+     "page": "sig/IEEE_REAL_ARB.md#val-floatclass"
+    },
+    {
+     "kind": "val",
+     "name": "decimalApprox",
+     "spec": "val decimalApprox : IEEEReal.decimal_approx Arb.arb",
+     "doc": "The arbitrary of decimal approximations.\n\nThe class is any, the sign either, the digits a list of integers from\n\\~10 to 19 (the digits and as many on either side), and the exponent any\n`int`.\n\n",
+     "page": "sig/IEEE_REAL_ARB.md#val-decimalapprox"
+    }
+   ]
+  },
+  "INET6_SOCK_ARB": {
+   "doc": "The arbitraries of Rune's IPv6 sockets and addresses (docs/plans/quickcheck.md,\nM6), apart from `SYSTEM_ARB` because `INet6Sock` is Rune's own.\n\n",
+   "page": "sig/INET6_SOCK_ARB.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "inAddr",
+     "spec": "val inAddr : INet6Sock.in6_addr Arb.arb",
+     "doc": "The arbitrary of IPv6 addresses: eight groups of 16 bits, each drawn as\n`Gen.wordBits 16` draws one.\n\n",
+     "page": "sig/INET6_SOCK_ARB.md#val-inaddr"
+    },
+    {
+     "kind": "val",
+     "name": "streamSock",
+     "spec": "val streamSock : unit -> 'mode INet6Sock.stream_sock Arb.arb",
+     "doc": "`streamSock ()` is the arbitrary of new TCP sockets over IPv6, closed\nwhen the case is over.\n\n",
+     "page": "sig/INET6_SOCK_ARB.md#val-streamsock"
+    }
+   ]
+  },
+  "SML90_ARB": {
+   "doc": "The arbitrary of the input streams of the optional structure `SML90`,\napart from `SYSTEM_ARB` because not every compiler has that structure.\n\n",
+   "page": "sig/SML90_ARB.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "instream",
+     "spec": "val instream : SML90.instream Arb.arb",
+     "doc": "The arbitrary of SML '90 input streams: a file in a scratch directory\nwith a drawn string in it, removed when the case is over.\n\n",
+     "page": "sig/SML90_ARB.md#val-instream"
+    }
+   ]
+  },
+  "SYSTEM_ARB": {
+   "doc": "The arbitraries of the values of the operating system that the Basis\nLibrary's laws are written over (docs/plans/quickcheck.md, M6).\n\nThese are made, not drawn: a stream over drawn bytes or a file in a\nscratch directory, a pipe, a socket, the process's own ids. What a case\nmakes is undone when the case is over (`Gen.resource`). A value with no\nStandard ML that makes it again is shown as a comment that says what it\nis.\n\n",
+   "page": "sig/SYSTEM_ARB.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "binInstream",
+     "spec": "val binInstream : BinIO.instream Arb.arb",
+     "doc": "The arbitrary of binary input streams over drawn bytes, shown as the\nbytes they have left.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-bininstream"
+    },
+    {
+     "kind": "val",
+     "name": "binStreamInstream",
+     "spec": "val binStreamInstream : BinIO.StreamIO.instream Arb.arb",
+     "doc": "The arbitrary of functional binary input streams over drawn bytes.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-binstreaminstream"
+    },
+    {
+     "kind": "val",
+     "name": "binWriter",
+     "spec": "val binWriter : BinIO.StreamIO.writer Arb.arb",
+     "doc": "The arbitrary of binary writers that keep what they are given and\naccept every write.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-binwriter"
+    },
+    {
+     "kind": "val",
+     "name": "binOutstream",
+     "spec": "val binOutstream : BinIO.StreamIO.outstream Arb.arb",
+     "doc": "The arbitrary of functional binary output streams over a writer of\n`binWriter`, with any buffer mode.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-binoutstream"
+    },
+    {
+     "kind": "val",
+     "name": "textInstream",
+     "spec": "val textInstream : TextIO.instream Arb.arb",
+     "doc": "The arbitrary of text input streams over a drawn string, shown as the\ncharacters they have left.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-textinstream"
+    },
+    {
+     "kind": "val",
+     "name": "textStreamInstream",
+     "spec": "val textStreamInstream : TextIO.StreamIO.instream Arb.arb",
+     "doc": "The arbitrary of functional text input streams over a drawn string.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-textstreaminstream"
+    },
+    {
+     "kind": "val",
+     "name": "textWriter",
+     "spec": "val textWriter : TextIO.StreamIO.writer Arb.arb",
+     "doc": "The arbitrary of text writers that keep what they are given and accept\nevery write.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-textwriter"
+    },
+    {
+     "kind": "val",
+     "name": "textOutstream",
+     "spec": "val textOutstream : TextIO.StreamIO.outstream Arb.arb",
+     "doc": "The arbitrary of functional text output streams over a writer of\n`textWriter`, with any buffer mode.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-textoutstream"
+    },
+    {
+     "kind": "val",
+     "name": "textPos",
+     "spec": "val textPos : TextPrimIO.pos Arb.arb",
+     "doc": "The arbitrary of the positions of text readers: that of a reader over a\ndrawn string after a drawn number of its characters.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-textpos"
+    },
+    {
+     "kind": "val",
+     "name": "iodesc",
+     "spec": "val iodesc : OS.IO.iodesc Arb.arb",
+     "doc": "The arbitrary of I/O descriptors: the read end of a pipe, closed when\nthe case is over.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-iodesc"
+    },
+    {
+     "kind": "val",
+     "name": "pollDesc",
+     "spec": "val pollDesc : OS.IO.poll_desc Arb.arb",
+     "doc": "The arbitrary of poll descriptors of `iodesc`'s pipes.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-polldesc"
+    },
+    {
+     "kind": "val",
+     "name": "fileId",
+     "spec": "val fileId : OS.FileSys.file_id Arb.arb",
+     "doc": "The arbitrary of file ids: that of a file in a scratch directory,\nremoved when the case is over.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-fileid"
+    },
+    {
+     "kind": "val",
+     "name": "syserror",
+     "spec": "val syserror : OS.syserror Arb.arb",
+     "doc": "The arbitrary of the system's errors: each that `Posix.Error` names,\n`acces` the simplest.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-syserror"
+    },
+    {
+     "kind": "val",
+     "name": "fileDesc",
+     "spec": "val fileDesc : Posix.FileSys.file_desc Arb.arb",
+     "doc": "The arbitrary of Posix file descriptors: the read end of a pipe, closed\nwhen the case is over.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-filedesc"
+    },
+    {
+     "kind": "val",
+     "name": "pid",
+     "spec": "val pid : Posix.Process.pid Arb.arb",
+     "doc": "The arbitrary of process ids: the process's own and its parent's.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-pid"
+    },
+    {
+     "kind": "val",
+     "name": "signal",
+     "spec": "val signal : Posix.Signal.signal Arb.arb",
+     "doc": "The arbitrary of signals: each that `Posix.Signal` names.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-signal"
+    },
+    {
+     "kind": "val",
+     "name": "uid",
+     "spec": "val uid : Posix.ProcEnv.uid Arb.arb",
+     "doc": "The arbitrary of user ids: the process's own and 0.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-uid"
+    },
+    {
+     "kind": "val",
+     "name": "gid",
+     "spec": "val gid : Posix.ProcEnv.gid Arb.arb",
+     "doc": "The arbitrary of group ids: the process's own and 0.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-gid"
+    },
+    {
+     "kind": "val",
+     "name": "speed",
+     "spec": "val speed : Posix.TTY.speed Arb.arb",
+     "doc": "The arbitrary of line speeds: each that `Posix.TTY` names.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-speed"
+    },
+    {
+     "kind": "val",
+     "name": "termios",
+     "spec": "val termios : Posix.TTY.termios Arb.arb",
+     "doc": "The arbitrary of terminal settings: flags from drawn words, control\ncharacters drawn for every index, and speeds of `speed`.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-termios"
+    },
+    {
+     "kind": "val",
+     "name": "termiosFields",
+     "spec": "val termiosFields : {iflag : Posix.TTY.I.flags, oflag : Posix.TTY.O.flags, cflag : Posix.TTY.C.flags,\n                     lflag : Posix.TTY.L.flags, cc : Posix.TTY.V.cc, ispeed : Posix.TTY.speed,\n                     ospeed : Posix.TTY.speed} Arb.arb",
+     "doc": "The arbitrary of the records of the fields of terminal settings, as\n`Posix.TTY.fieldsOf` gives them, drawn as `termios` draws settings.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-termiosfields"
+    },
+    {
+     "kind": "val",
+     "name": "ttyIflags",
+     "spec": "val ttyIflags : Posix.TTY.I.flags Arb.arb",
+     "doc": "The arbitrary of the input flags of terminal settings, from a drawn\nword; two are equal when their words are.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-ttyiflags"
+    },
+    {
+     "kind": "val",
+     "name": "ttyOflags",
+     "spec": "val ttyOflags : Posix.TTY.O.flags Arb.arb",
+     "doc": "The arbitrary of the output flags of terminal settings.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-ttyoflags"
+    },
+    {
+     "kind": "val",
+     "name": "ttyCflags",
+     "spec": "val ttyCflags : Posix.TTY.C.flags Arb.arb",
+     "doc": "The arbitrary of the control flags of terminal settings.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-ttycflags"
+    },
+    {
+     "kind": "val",
+     "name": "ttyLflags",
+     "spec": "val ttyLflags : Posix.TTY.L.flags Arb.arb",
+     "doc": "The arbitrary of the local flags of terminal settings.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-ttylflags"
+    },
+    {
+     "kind": "val",
+     "name": "ttyCc",
+     "spec": "val ttyCc : Posix.TTY.V.cc Arb.arb",
+     "doc": "The arbitrary of the control characters of terminal settings, one drawn\nfor every index; two are equal when they have the same characters.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-ttycc"
+    },
+    {
+     "kind": "val",
+     "name": "whence",
+     "spec": "val whence : Posix.IO.whence Arb.arb",
+     "doc": "The arbitrary of the origins of a seek, `Posix.IO.SEEK_SET` the\nsimplest.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-whence"
+    },
+    {
+     "kind": "val",
+     "name": "lockType",
+     "spec": "val lockType : Posix.IO.lock_type Arb.arb",
+     "doc": "The arbitrary of kinds of lock, `Posix.IO.F_RDLCK` the simplest.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-locktype"
+    },
+    {
+     "kind": "val",
+     "name": "addrFamily",
+     "spec": "val addrFamily : Socket.AF.addr_family Arb.arb",
+     "doc": "The arbitrary of address families: each of `Socket.AF.list ()`.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-addrfamily"
+    },
+    {
+     "kind": "val",
+     "name": "sockType",
+     "spec": "val sockType : Socket.SOCK.sock_type Arb.arb",
+     "doc": "The arbitrary of socket types: each of `Socket.SOCK.list ()`.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-socktype"
+    },
+    {
+     "kind": "val",
+     "name": "inetStreamSock",
+     "spec": "val inetStreamSock : unit -> 'mode INetSock.stream_sock Arb.arb",
+     "doc": "`inetStreamSock ()` is the arbitrary of new TCP sockets over IPv4, closed\nwhen the case is over.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-inetstreamsock"
+    },
+    {
+     "kind": "val",
+     "name": "inAddr",
+     "spec": "val inAddr : NetHostDB.in_addr Arb.arb",
+     "doc": "The arbitrary of IPv4 addresses: four drawn bytes.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-inaddr"
+    },
+    {
+     "kind": "val",
+     "name": "hostEntry",
+     "spec": "val hostEntry : NetHostDB.entry Arb.arb",
+     "doc": "The arbitrary of host entries: that of `localhost`.\n\n",
+     "page": "sig/SYSTEM_ARB.md#val-hostentry"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "BasisDataArb": "BASIS_DATA_ARB",
+  "BoolArray2Arb": "ARB_OF",
+  "BoolArrayArb": "ARB_OF",
+  "BoolArraySliceArb": "ARB_OF",
+  "BoolVectorArb": "ARB_OF",
+  "BoolVectorSliceArb": "ARB_OF",
+  "CharArb": "ARB_OF",
+  "CharArbFn": "ARB_OF",
+  "CharArray2Arb": "ARB_OF",
+  "CharArrayArb": "ARB_OF",
+  "CharArraySliceArb": "ARB_OF",
+  "CharVectorArb": "ARB_OF",
+  "CharVectorSliceArb": "ARB_OF",
+  "DateArb": "DATE_ARB",
+  "FixedIntArb": "ARB_OF",
+  "IEEERealArb": "IEEE_REAL_ARB",
+  "INet6SockArb": "INET6_SOCK_ARB",
+  "Int16Arb": "ARB_OF",
+  "Int16Array2Arb": "ARB_OF",
+  "Int16ArrayArb": "ARB_OF",
+  "Int16ArraySliceArb": "ARB_OF",
+  "Int16VectorArb": "ARB_OF",
+  "Int16VectorSliceArb": "ARB_OF",
+  "Int32Arb": "ARB_OF",
+  "Int32Array2Arb": "ARB_OF",
+  "Int32ArrayArb": "ARB_OF",
+  "Int32ArraySliceArb": "ARB_OF",
+  "Int32VectorArb": "ARB_OF",
+  "Int32VectorSliceArb": "ARB_OF",
+  "Int64Arb": "ARB_OF",
+  "Int64Array2Arb": "ARB_OF",
+  "Int64ArrayArb": "ARB_OF",
+  "Int64ArraySliceArb": "ARB_OF",
+  "Int64VectorArb": "ARB_OF",
+  "Int64VectorSliceArb": "ARB_OF",
+  "Int8Arb": "ARB_OF",
+  "Int8Array2Arb": "ARB_OF",
+  "Int8ArrayArb": "ARB_OF",
+  "Int8ArraySliceArb": "ARB_OF",
+  "Int8VectorArb": "ARB_OF",
+  "Int8VectorSliceArb": "ARB_OF",
+  "IntArb": "ARB_OF",
+  "IntArray2Arb": "ARB_OF",
+  "IntArrayArb": "ARB_OF",
+  "IntArraySliceArb": "ARB_OF",
+  "IntInfArb": "ARB_OF",
+  "IntVectorArb": "ARB_OF",
+  "IntVectorSliceArb": "ARB_OF",
+  "IntegerArbFn": "ARB_OF",
+  "LargeIntArb": "ARB_OF",
+  "LargeIntArray2Arb": "ARB_OF",
+  "LargeIntArrayArb": "ARB_OF",
+  "LargeIntArraySliceArb": "ARB_OF",
+  "LargeIntVectorArb": "ARB_OF",
+  "LargeIntVectorSliceArb": "ARB_OF",
+  "LargeRealArb": "ARB_OF",
+  "LargeRealArray2Arb": "ARB_OF",
+  "LargeRealArrayArb": "ARB_OF",
+  "LargeRealArraySliceArb": "ARB_OF",
+  "LargeRealVectorArb": "ARB_OF",
+  "LargeRealVectorSliceArb": "ARB_OF",
+  "LargeWordArb": "ARB_OF",
+  "LargeWordArray2Arb": "ARB_OF",
+  "LargeWordArrayArb": "ARB_OF",
+  "LargeWordArraySliceArb": "ARB_OF",
+  "LargeWordVectorArb": "ARB_OF",
+  "LargeWordVectorSliceArb": "ARB_OF",
+  "MonoArray2ArbFn": "ARB_OF",
+  "MonoArrayArbFn": "ARB_OF",
+  "MonoArraySliceArbFn": "ARB_OF",
+  "MonoVectorArbFn": "ARB_OF",
+  "MonoVectorSliceArbFn": "ARB_OF",
+  "PositionArb": "ARB_OF",
+  "RandomArb": "ARB_OF",
+  "Real32Arb": "ARB_OF",
+  "Real32Array2Arb": "ARB_OF",
+  "Real32ArrayArb": "ARB_OF",
+  "Real32ArraySliceArb": "ARB_OF",
+  "Real32VectorArb": "ARB_OF",
+  "Real32VectorSliceArb": "ARB_OF",
+  "Real64Arb": "ARB_OF",
+  "Real64Array2Arb": "ARB_OF",
+  "Real64ArrayArb": "ARB_OF",
+  "Real64ArraySliceArb": "ARB_OF",
+  "Real64VectorArb": "ARB_OF",
+  "Real64VectorSliceArb": "ARB_OF",
+  "RealArb": "ARB_OF",
+  "RealArbFn": "ARB_OF",
+  "RealArray2Arb": "ARB_OF",
+  "RealArrayArb": "ARB_OF",
+  "RealArraySliceArb": "ARB_OF",
+  "RealVectorArb": "ARB_OF",
+  "RealVectorSliceArb": "ARB_OF",
+  "SML90Arb": "SML90_ARB",
+  "StringArb": "ARB_OF",
+  "StringArbFn": "ARB_OF",
+  "SubstringArb": "ARB_OF",
+  "SubstringArbFn": "ARB_OF",
+  "SysWordArb": "ARB_OF",
+  "SystemArb": "SYSTEM_ARB",
+  "TimeArb": "ARB_OF",
+  "WideCharArb": "ARB_OF",
+  "WideCharArray2Arb": "ARB_OF",
+  "WideCharArrayArb": "ARB_OF",
+  "WideCharArraySliceArb": "ARB_OF",
+  "WideCharVectorArb": "ARB_OF",
+  "WideCharVectorSliceArb": "ARB_OF",
+  "WideStringArb": "ARB_OF",
+  "WideSubstringArb": "ARB_OF",
+  "Word16Arb": "ARB_OF",
+  "Word16Array2Arb": "ARB_OF",
+  "Word16ArrayArb": "ARB_OF",
+  "Word16ArraySliceArb": "ARB_OF",
+  "Word16VectorArb": "ARB_OF",
+  "Word16VectorSliceArb": "ARB_OF",
+  "Word32Arb": "ARB_OF",
+  "Word32Array2Arb": "ARB_OF",
+  "Word32ArrayArb": "ARB_OF",
+  "Word32ArraySliceArb": "ARB_OF",
+  "Word32VectorArb": "ARB_OF",
+  "Word32VectorSliceArb": "ARB_OF",
+  "Word64Arb": "ARB_OF",
+  "Word64Array2Arb": "ARB_OF",
+  "Word64ArrayArb": "ARB_OF",
+  "Word64ArraySliceArb": "ARB_OF",
+  "Word64VectorArb": "ARB_OF",
+  "Word64VectorSliceArb": "ARB_OF",
+  "Word8Arb": "ARB_OF",
+  "Word8Array2Arb": "ARB_OF",
+  "Word8ArrayArb": "ARB_OF",
+  "Word8ArraySliceArb": "ARB_OF",
+  "Word8VectorArb": "ARB_OF",
+  "Word8VectorSliceArb": "ARB_OF",
+  "WordArb": "ARB_OF",
+  "WordArbFn": "ARB_OF",
+  "WordArray2Arb": "ARB_OF",
+  "WordArrayArb": "ARB_OF",
+  "WordArraySliceArb": "ARB_OF",
+  "WordVectorArb": "ARB_OF",
+  "WordVectorSliceArb": "ARB_OF"
+ }
+}

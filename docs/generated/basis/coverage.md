@@ -15,7 +15,10 @@ documented when a comment describes it, alone or together with the entry before 
 | [`BYTE`](sig/BYTE.md) | 7 | 7 | 100% | 7 | 7 |
 | [`CHAR`](sig/CHAR.md) | 35 | 35 | 100% | 30 | 30 |
 | [`COMMAND_LINE`](sig/COMMAND_LINE.md) | 2 | 2 | 100% | 2 | 2 |
+| [`COMPILER`](sig/COMPILER.md) | 13 | 13 | 100% | 4 | 4 |
 | [`DATE`](sig/DATE.md) | 24 | 24 | 100% | 20 | 20 |
+| [`DISPLAY`](sig/DISPLAY.md) | 5 | 5 | 100% | 4 | 4 |
+| [`DYNAMIC`](sig/DYNAMIC.md) | 3 | 3 | 100% | 2 | 2 |
 | [`GENERAL`](sig/GENERAL.md) | 20 | 20 | 100% | 7 | 7 |
 | [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) | 4 | 4 | 100% | 4 | 4 |
 | [`IEEE_REAL`](sig/IEEE_REAL.md) | 10 | 10 | 100% | 5 | 5 |
@@ -56,13 +59,15 @@ documented when a comment describes it, alone or together with the entry before 
 | [`POSIX_TTY`](sig/POSIX_TTY.md) | 110 | 110 | 100% | 25 | 25 |
 | [`PRIM_IO`](sig/PRIM_IO.md) | 14 | 14 | 100% | 6 | 6 |
 | [`REAL`](sig/REAL.md) | 64 | 64 | 100% | 55 | 55 |
-| [`RUNTIME`](sig/RUNTIME.md) | 12 | 12 | 100% | 8 | 8 |
+| [`REPL`](sig/REPL.md) | 7 | 7 | 100% | 7 | 7 |
+| [`RUNTIME`](sig/RUNTIME.md) | 17 | 17 | 100% | 13 | 13 |
 | [`SML90`](sig/SML90.md) | 36 | 36 | 100% | 18 | 18 |
 | [`SOCKET`](sig/SOCKET.md) | 93 | 93 | 100% | 76 | 76 |
 | [`STREAM_IO`](sig/STREAM_IO.md) | 29 | 29 | 100% | 21 | 21 |
 | [`STRING`](sig/STRING.md) | 31 | 31 | 100% | 28 | 28 |
 | [`STRING_CVT`](sig/STRING_CVT.md) | 11 | 11 | 100% | 7 | 7 |
 | [`SUBSTRING`](sig/SUBSTRING.md) | 39 | 39 | 100% | 36 | 36 |
+| [`TERMINAL`](sig/TERMINAL.md) | 6 | 6 | 100% | 6 | 6 |
 | [`TEXT`](sig/TEXT.md) | 7 | 7 | 100% | 0 | 0 |
 | [`TEXT_IO`](sig/TEXT_IO.md) | 36 | 36 | 100% | 28 | 28 |
 | [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) | 2 | 2 | 100% | 2 | 2 |
@@ -74,7 +79,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
 | [`WINDOWS`](sig/WINDOWS.md) | 88 | 88 | 100% | 30 | 30 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1658 | 1658 | 100% | 1127 | 1127 |
+| **all** | 1697 | 1697 | 100% | 1155 | 1155 |
 
 ## Members a signature describes
 
@@ -83,17 +88,17 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-199 structures have a page, with 4371 members, of which 4287 (98%) are described by a signature.
+204 structures have a page, with 4411 members, of which 4326 (98%) are described by a signature.
 
 | Structure | Members | Described |  |
 | --- | --- | --- | --- |
 | [`WideTextIO`](str/WideTextIO.md) | 37 | 0 | 0% |
-| [`WideTextIO.StreamIO`](str/WideTextIO.StreamIO.md) | 47 | 0 | 0% |
+| [`WideTextIO.StreamIO`](str/WideTextIO.StreamIO.md) | 48 | 0 | 0% |
 
 ## Examples that are run
 
 Every example is a closed expression of type `bool` that is true, and every counterexample a closed claim
-that does not hold: each is elaborated when these pages are made and tried by the test suite: 842 of them, 39 of them counterexamples, in [`ARRAY`](sig/ARRAY.md) (27), [`ARRAY2`](sig/ARRAY2.md) (20), [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) (27), [`BIN_IO`](sig/BIN_IO.md) (2), [`BIT_FLAGS`](sig/BIT_FLAGS.md) (9), [`BOOL`](sig/BOOL.md) (4), [`BYTE`](sig/BYTE.md) (7), [`CHAR`](sig/CHAR.md) (34), [`COMMAND_LINE`](sig/COMMAND_LINE.md) (1), [`DATE`](sig/DATE.md) (21), [`GENERAL`](sig/GENERAL.md) (8), [`IEEE_REAL`](sig/IEEE_REAL.md) (8), [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) (11), [`INET6_SOCK`](sig/INET6_SOCK.md) (7), [`INET_SOCK`](sig/INET_SOCK.md) (6), [`INTEGER`](sig/INTEGER.md) (37), [`INT_INF`](sig/INT_INF.md) (11), [`IO`](sig/IO.md) (1), [`LIST`](sig/LIST.md) (26), [`LIST_PAIR`](sig/LIST_PAIR.md) (15), [`MATH`](sig/MATH.md) (18), [`MONO_ARRAY`](sig/MONO_ARRAY.md) (26), [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) (19), [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) (26), [`MONO_VECTOR`](sig/MONO_VECTOR.md) (22), [`MONO_VECTOR_EQ`](sig/MONO_VECTOR_EQ.md) (6), [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) (23), [`NET_HOST_DB`](sig/NET_HOST_DB.md) (3), [`NET_PROT_DB`](sig/NET_PROT_DB.md) (1), [`NET_SERV_DB`](sig/NET_SERV_DB.md) (1), [`OPTION`](sig/OPTION.md) (11), [`OS`](sig/OS.md) (4), [`OS_FILE_SYS`](sig/OS_FILE_SYS.md) (8), [`OS_IO`](sig/OS_IO.md) (4), [`OS_PATH`](sig/OS_PATH.md) (38), [`OS_PROCESS`](sig/OS_PROCESS.md) (6), [`PACK_REAL`](sig/PACK_REAL.md) (9), [`PACK_WORD`](sig/PACK_WORD.md) (9), [`POSIX_ERROR`](sig/POSIX_ERROR.md) (4), [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) (11), [`POSIX_IO`](sig/POSIX_IO.md) (4), [`POSIX_PROCESS`](sig/POSIX_PROCESS.md) (5), [`POSIX_PROC_ENV`](sig/POSIX_PROC_ENV.md) (8), [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) (2), [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) (3), [`POSIX_TTY`](sig/POSIX_TTY.md) (5), [`PRIM_IO`](sig/PRIM_IO.md) (7), [`REAL`](sig/REAL.md) (36), [`RUNTIME`](sig/RUNTIME.md) (6), [`SML90`](sig/SML90.md) (6), [`SOCKET`](sig/SOCKET.md) (8), [`STREAM_IO`](sig/STREAM_IO.md) (16), [`STRING`](sig/STRING.md) (28), [`STRING_CVT`](sig/STRING_CVT.md) (7), [`SUBSTRING`](sig/SUBSTRING.md) (38), [`TEXT_IO`](sig/TEXT_IO.md) (14), [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) (1), [`TIME`](sig/TIME.md) (22), [`TIMER`](sig/TIMER.md) (3), [`UNIX`](sig/UNIX.md) (3), [`UNIX_SOCK`](sig/UNIX_SOCK.md) (3), [`VECTOR`](sig/VECTOR.md) (19), [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) (24), [`WINDOWS`](sig/WINDOWS.md) (1), [`WORD`](sig/WORD.md) (42).
+that does not hold: each is elaborated when these pages are made and tried by the test suite: 845 of them, 39 of them counterexamples, in [`ARRAY`](sig/ARRAY.md) (27), [`ARRAY2`](sig/ARRAY2.md) (20), [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) (27), [`BIN_IO`](sig/BIN_IO.md) (2), [`BIT_FLAGS`](sig/BIT_FLAGS.md) (9), [`BOOL`](sig/BOOL.md) (4), [`BYTE`](sig/BYTE.md) (7), [`CHAR`](sig/CHAR.md) (34), [`COMMAND_LINE`](sig/COMMAND_LINE.md) (1), [`COMPILER`](sig/COMPILER.md) (1), [`DATE`](sig/DATE.md) (21), [`GENERAL`](sig/GENERAL.md) (8), [`IEEE_REAL`](sig/IEEE_REAL.md) (8), [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) (11), [`INET6_SOCK`](sig/INET6_SOCK.md) (7), [`INET_SOCK`](sig/INET_SOCK.md) (6), [`INTEGER`](sig/INTEGER.md) (37), [`INT_INF`](sig/INT_INF.md) (11), [`IO`](sig/IO.md) (1), [`LIST`](sig/LIST.md) (26), [`LIST_PAIR`](sig/LIST_PAIR.md) (15), [`MATH`](sig/MATH.md) (18), [`MONO_ARRAY`](sig/MONO_ARRAY.md) (26), [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) (19), [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) (26), [`MONO_VECTOR`](sig/MONO_VECTOR.md) (22), [`MONO_VECTOR_EQ`](sig/MONO_VECTOR_EQ.md) (6), [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) (23), [`NET_HOST_DB`](sig/NET_HOST_DB.md) (3), [`NET_PROT_DB`](sig/NET_PROT_DB.md) (1), [`NET_SERV_DB`](sig/NET_SERV_DB.md) (1), [`OPTION`](sig/OPTION.md) (11), [`OS`](sig/OS.md) (4), [`OS_FILE_SYS`](sig/OS_FILE_SYS.md) (8), [`OS_IO`](sig/OS_IO.md) (4), [`OS_PATH`](sig/OS_PATH.md) (38), [`OS_PROCESS`](sig/OS_PROCESS.md) (6), [`PACK_REAL`](sig/PACK_REAL.md) (9), [`PACK_WORD`](sig/PACK_WORD.md) (9), [`POSIX_ERROR`](sig/POSIX_ERROR.md) (4), [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) (11), [`POSIX_IO`](sig/POSIX_IO.md) (4), [`POSIX_PROCESS`](sig/POSIX_PROCESS.md) (5), [`POSIX_PROC_ENV`](sig/POSIX_PROC_ENV.md) (8), [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) (2), [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) (3), [`POSIX_TTY`](sig/POSIX_TTY.md) (5), [`PRIM_IO`](sig/PRIM_IO.md) (7), [`REAL`](sig/REAL.md) (36), [`RUNTIME`](sig/RUNTIME.md) (8), [`SML90`](sig/SML90.md) (6), [`SOCKET`](sig/SOCKET.md) (8), [`STREAM_IO`](sig/STREAM_IO.md) (16), [`STRING`](sig/STRING.md) (28), [`STRING_CVT`](sig/STRING_CVT.md) (7), [`SUBSTRING`](sig/SUBSTRING.md) (38), [`TEXT_IO`](sig/TEXT_IO.md) (14), [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) (1), [`TIME`](sig/TIME.md) (22), [`TIMER`](sig/TIMER.md) (3), [`UNIX`](sig/UNIX.md) (3), [`UNIX_SOCK`](sig/UNIX_SOCK.md) (3), [`VECTOR`](sig/VECTOR.md) (19), [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) (24), [`WINDOWS`](sig/WINDOWS.md) (1), [`WORD`](sig/WORD.md) (42).
 
 ## Laws that are run
 
@@ -105,13 +110,18 @@ to draw them from, and `make test-laws` holds it at every structure that impleme
 A deviation or a limitation that the test suite does not show. A reading or an erratum need not
 be pinned: many are about the text and not about behaviour.
 
+- `COMPILER/not-in-the-specification` (Deviation), COMPILER
+- `DISPLAY/not-in-the-specification` (Deviation), DISPLAY
+- `DYNAMIC/not-in-the-specification` (Deviation), DYNAMIC
 - `INET6_SOCK/not-in-the-specification` (Deviation), INET6_SOCK
 - `MONO_VECTOR_EQ/not-in-the-specification` (Deviation), MONO_VECTOR_EQ
 - `Posix.Process.fork/read-ahead-of-a-pipe` (Limitation), POSIX_PROCESS
+- `REPL/not-in-the-specification` (Deviation), REPL
 - `RUNTIME/not-in-the-specification` (Deviation), RUNTIME
 - `SML90.Interrupt/never-raised` (Limitation), SML90
 - `SML90/is-history` (Limitation), SML90
 - `StreamIO/takes-the-slice-structures` (Deviation), in `StreamIO`
+- `TERMINAL/not-in-the-specification` (Deviation), TERMINAL
 
 ---
 
