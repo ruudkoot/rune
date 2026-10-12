@@ -122,6 +122,20 @@ run past its time, a crash, a flood of output and a leaked process), pass
 only when the runner sees each fault for what it is; they run in every
 `make check`, since the runner is built by the compiler it tests.
 
+## Requirements
+
+A test names the capabilities it needs of the machine (`Test.requires`):
+`tmux`, `python3`, `cc`, `qemu`, `windows`, and each host
+(`mlton`, `smlnj-legacy`, `smlnj32`, `smlnj-dev`, `polyml`, `mlkit`), each
+a probe and an install hint in `tests/runner/main.sml`, the hints
+`scripts/doctor.sh` gives. `bin/rune-test doctor [FILTER]` probes what the
+selected tests need and says how to get what is missing. A run skips a test
+whose capability is missing, with its hint; the tier `check` (and
+`--strict`) fails it instead, since `make check` must be complete.
+`RUNE_TEST_WITHOUT=tmux,qemu` takes those as missing, to see what a machine
+without them gets. `scripts/doctor.sh` keeps its scopes for what must be
+there before anything is built.
+
 ## Expectations
 
 What a suite expects of its tests in some ways (a host's bug, a program

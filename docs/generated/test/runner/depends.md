@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's MANIFEST records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 17 requirements between the 14 files become 12 arrows.
+library and not a wall of lines: the 22 requirements between the 16 files become 14 arrows.
 The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -23,7 +23,7 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Running tests<br>(14)"]
+  a0["Running tests<br>(16)"]
 ```
 
 ## Running tests
@@ -38,24 +38,28 @@ flowchart TD
   n5["History"]
   n6(["EXPECTATIONS"])
   n7["Expectations"]
-  n8(["REPORT"])
-  n9["Report"]
-  n10(["RUN"])
-  n11["Run"]
-  n12(["CLI"])
-  n13["Cli"]
+  n8(["REQUIREMENTS"])
+  n9["Requirements"]
+  n10(["REPORT"])
+  n11["Report"]
+  n12(["RUN"])
+  n13["Run"]
+  n14(["CLI"])
+  n15["Cli"]
   n1 --> n0
   n3 --> n2
   n3 --> n1
   n5 --> n4
   n7 --> n6
   n9 --> n8
-  n10 --> n9
-  n10 --> n3
-  n11 --> n5
   n11 --> n10
   n12 --> n11
+  n12 --> n9
+  n12 --> n3
+  n13 --> n5
   n13 --> n12
+  n14 --> n13
+  n15 --> n14
 ```
 
 ---

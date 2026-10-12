@@ -96,7 +96,10 @@ struct
                      ^ ",\"outputBytes\":" ^ Int.toString outputBytes
                      ^ ",\"kept\":[" ^ String.concatWith "," (List.map json kept) ^ "]}\n");
       TextIO.flushOut (#events r);
-      if verdict = "PASS" orelse verdict = "SKIP" then ()
+      if verdict = "PASS" then ()
+      (* a skip is a line with its reason: a requirement, a known gap, or a
+         test it waits for that did not pass *)
+      else if verdict = "SKIP" then (if reason = "" then () else (clear r; say ("SKIP " ^ path ^ ": " ^ reason ^ "\n")))
       else
         ((* a golden file written is told, and is no failure *)
          if verdict = "ACCEPTED" then ()

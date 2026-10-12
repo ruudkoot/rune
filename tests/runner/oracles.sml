@@ -838,7 +838,7 @@ struct
                       [("units", "bin/rune", "bin/runevm"), ("units-stack", "bin/rune-stack", "bin/runevm-stack")])),
        tagged ["check", "check-positions", "covers:tests/lang/*", "covers:examples/*"]
          (Test.describe "positions" (perProgram ("positions-one", positionsSrcs, [], name))),
-       tagged ["check", "check-cross", "covers:tests/lang/*", "covers:examples/*", "covers:tests/basis/*", "covers:tests/doc/*",
+       Test.requires hostBuilds (tagged ["check", "check-cross", "covers:tests/lang/*", "covers:examples/*", "covers:tests/basis/*", "covers:tests/doc/*",
                "covers:tests/opt/*"]
          (Test.describe "cross"
             (List.map (fn x => job (x, ["cross-one", x], [], 1, 1500, 3600))
@@ -846,7 +846,7 @@ struct
              @ List.map (fn x => job (if String.isPrefix "basis:" x then "basis-" ^ String.extract (x, 6, NONE) else name x,
                                        ["cross-one", x], [], 1, 1000, 3600))
                         crossSrcs
-             @ [job ("@doc", ["doc-cross"], [], 1, 2000, 3600), job ("@opt", ["opt-cross"], [], 1, 2000, 3600)])),
+             @ [job ("@doc", ["doc-cross"], [], 1, 2000, 3600), job ("@opt", ["opt-cross"], [], 1, 2000, 3600)]))),
        tagged ["check", "check-reproducible", "covers:examples/hello.sml"]
          (Test.describe "reproducible"
             (job ("copy", ["repro-copy"], [], 1, 100, 600)

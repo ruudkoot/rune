@@ -127,7 +127,7 @@ struct
                               else SOME kv)
                     (Posix.ProcEnv.environ ())
 
-  fun run {tests, root, out, history, cpus, memory, keep, reader} =
+  fun run {tests, root, out, history, cpus, memory, keep, reader, capabilities, strict} =
     let
       val stamp = Date.fmt "%Y%m%d-%H%M%S" (Date.fromTimeLocal (Time.now ()))
                   ^ "-" ^ SysWord.fmt StringCvt.DEC (Posix.Process.pidToWord (Posix.ProcEnv.getpid ()))
@@ -146,6 +146,9 @@ struct
       val (pending, runnable) = List.partition (fn (_, m : Test.meta, _) => isSome (#pending m)) tests
       val runnable = Vector.fromList runnable
       val n = Vector.length runnable
+      (* what each test needs and the machine lacks: such a test does not
+         run, and is skipped, or fails when the run must be complete *)
+      val unmet = Vector.map (fn (_, meta : Test.meta, _) => Requirements.missing (capabilities, #requires meta)) runnable
       val index = index (Vector.map #1 runnable)
       val env = defaultEnv ()
       fun jobDir i = runDir ^ "/j/" ^ pad5 i
@@ -157,7 +160,8 @@ struct
                          val n = Int.max (1, Int.min (cpus, getOpt (#cpus meta, #cpus c)))
                        in
                        mkdirs (jobDir i);
-                        {program = #program c, args = #args c,
+                        {program = if null (Vector.sub (unmet, i)) then #program c else "/bin/sh",
+                         args = if null (Vector.sub (unmet, i)) then #args c else ["sh", "-c", "exit 0"],
                          env = ("RUNE_TEST_CPUS=" ^ Int.toString n) :: ("RUNE_TEST_RUN=" ^ absRun)
                                :: ("RUNE_TEST_ROOT=" ^ absRoot)
                                :: (if !accept then ["RUNE_TEST_ACCEPT=1"] else []) @ getOpt (#env c, env),
@@ -184,7 +188,12 @@ struct
           val sc = Vector.sub (commands, i)
           val files = {stdout = #stdout sc, stderr = #stderr sc}
           val cancelled = #outcome r = Supervisor.Cancelled
-          val verdict = if cancelled then SOME ("SKIP", "a test it waits for did not pass") else #judge c (r, files)
+          val verdict =
+            if cancelled then SOME ("SKIP", "a test it waits for did not pass")
+            else case Vector.sub (unmet, i) of
+                   [] => #judge c (r, files)
+                 | needs => SOME (if strict then "ERROR" else "SKIP",
+                                  "needs " ^ String.concatWith "; " (List.map (fn (cap, hint) => cap ^ " (" ^ hint ^ ")") needs))
           val bytes = treeBytes (jobDir i)
           val keptDirs =
             if cancelled orelse (not (isSome verdict) andalso not keep) then (freed := !freed + bytes; rmTree (jobDir i); [])

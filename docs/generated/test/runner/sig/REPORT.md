@@ -145,8 +145,8 @@ the first, the last and `SKIP` are not failures.
 val test : report * ended -> unit
 ```
 
-`test (r, e)` reports `e`: a failure as a block, a pass as a count, and
-both as an event.
+`test (r, e)` reports `e`: a failure as a block, a skip as a line with
+its reason, a pass as a count, and each as an event.
 
 ### <a name="val-finish"></a>`finish`
 

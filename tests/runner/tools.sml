@@ -637,7 +637,7 @@ struct
        tagged ["check", "test-lib", "quick", "covers:tests/lib/*", "covers:lib/random/*", "covers:lib/test/property/*"]
          (Test.describe "lib"
             ([job ("toy", ["lib-toy"], [], 300, 600),
-              job ("random-kat", ["lib-random-kat"], [], 300, 600),
+              Test.requires ["cc"] (job ("random-kat", ["lib-random-kat"], [], 300, 600)),
               job ("random-props", ["lib-check", "nofail", "random-props", "test/unit", "tests/lib/random/props.sml"], [], 300, 600),
               job ("random-check", ["lib-basis-check", "random"], [], 300, 600),
               job ("random-examples", ["lib-examples", "random", "unguarded"], [], 300, 600),
@@ -656,7 +656,8 @@ struct
                                         List.map (fn s => job (lib ^ "/" ^ basename s, ["lib-suite", lib, s], [], 500, 600))
                                                  (glob ("tests/lib/" ^ lib, ".sml"))
                                         @ (if exists ("tests/lib/" ^ lib ^ "/interop.sh")
-                                           then [job (lib ^ "/@interop", ["lib-interop", lib], [], 500, 600)] else [])
+                                           then [Test.requires ["python3"] (job (lib ^ "/@interop", ["lib-interop", lib], [], 500, 600))]
+                                           else [])
                                         @ [job (lib ^ "/@check", ["lib-basis-check", lib], [], 300, 600),
                                            job (lib ^ "/@examples", ["lib-examples", lib, "guarded"], [], 300, 600)])
                                      replLibs))),
@@ -672,7 +673,7 @@ struct
        tagged ["check", "covers:tests/compiler/*"]
          (Test.describe "compiler"
             (tagged ["test"] (job ("stack", ["compiler", "bin/rune-stack"], [], 300, 600))
-             :: List.map (fn h => tagged ["test-all"] (job (h, ["compiler", "bin/rune-" ^ h], [], 500, 600)))
+             :: List.map (fn h => Test.requires [h] (tagged ["test-all"] (job (h, ["compiler", "bin/rune-" ^ h], [], 500, 600))))
                          ["mlton", "smlnj-legacy", "smlnj32", "smlnj-dev", "polyml", "mlkit"])),
        tagged ["check", "covers:tests/runtime/*"]
          (Test.describe "limits"

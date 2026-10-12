@@ -36,7 +36,7 @@ What it rests on:
 | M9 | The differential checks as oracles || done 2026-10-12 |
 | M10 | The tools' suites || done 2026-10-12 |
 | M11 | The protocol suites in SML || done 2026-10-12 |
-| M12 | Requirements and the doctor | |
+| M12 | Requirements and the doctor || done 2026-10-12 |
 | M13 | The matrix, and the other machines | |
 | M14 | The rest, and the tools for flaky tests | |
 | M15 | The final calibration | |
@@ -1733,6 +1733,11 @@ M1 and M2 are independent of each other and of the rest.
 
 * **What:** D18. Capabilities are declared on the tests, and `rune-test doctor` probes them. `scripts/doctor.sh` keeps its scopes for what must be known before building, and the test scopes become capabilities. The Makefile's stamps go where the runner checks for itself.
 * **Done when:** a machine without tmux, qemu, Windows or a host gets a skip with its reason in development and an error in `check`, and the install hints are those `doctor.sh` gives today.
+* **Done** (2026-10-12):
+  - **`Requirements`** in `lib/test/runner`: a capability is a name, a probe of the shell and a hint, probed once per run. A test that requires one the machine lacks does not run: it is a SKIP with the hint (now printed, as every skip's reason is), or an ERROR under the tier check or `--strict`, and the tests that wait for it do not start. `rune-test doctor [FILTER]` probes what the selected tests require.
+  - **The inventory** declares `tmux`, `python3`, `cc`, `qemu`, `windows` and the six hosts, with doctor.sh's hints, and the tests that need them say so: the terminal, the Python drivers and interops, the known answers' reference in C, portability, Windows, and every compile and run of a host's build.
+  - **Shown:** `RUNE_TEST_WITHOUT=tmux` (a capability taken as missing, for this) makes the terminal's suite a skip with its hint in a run, and an error under `--tier check`.
+  - **Kept:** `scripts/doctor.sh` with its scopes and the Makefile's stamps, for what must be there before anything is built.
 
 ### M13. The matrix, and the other machines (XL, about 3,000)
 

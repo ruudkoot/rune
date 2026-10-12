@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 1 of 1 entries documented |
+| Documentation | 2 of 2 entries documented |
 | Tests | not listed |
 | Source | [lib/test/runner/cli\_sig.sml](../../../../../lib/test/runner/cli_sig.sml) |
 
@@ -31,7 +31,12 @@ The runner's command line (docs/plans/unit-testing.md, D19):
   `--keep` keeps every test's directory, and `--accept` writes what the
   tests printed into their golden files ([`Run.accept`](../sig/RUN.md#val-accept));
 - `explain PATH`: a test's command, directory and needs;
-- `stats`: the slowest and the flakiest tests in the history.
+- `stats`: the slowest and the flakiest tests in the history;
+- `doctor [FILTER]`: the capabilities the tests require, each probed,
+  with how to get those that are missing (it fails when one is).
+
+A run of the tier check, or with `--strict`, fails a test whose
+capability is missing; any other run skips it.
 
 A filter is the language of [`TestFilter`](../../unit/str/TestFilter.md); two or more of them select
 the tests any of them selects. The tests a selected test waits for are
@@ -54,6 +59,7 @@ command line.
 signature CLI =
 sig
   val <a href="#val-main">main</a> : Run.command Test.tree -&gt; unit
+  val <a href="#val-mainwith">mainWith</a> : {<a href="#fld-mainwith.tests">tests</a> : Run.command Test.tree, <a href="#fld-mainwith.capabilities">capabilities</a> : Requirements.capability list} -&gt; unit
 end
 </pre>
 
@@ -64,6 +70,20 @@ val main : Run.command Test.tree -> unit
 ```
 
 `main tests` runs the command line's command over `tests`.
+
+### <a name="val-mainwith"></a>`mainWith`
+
+```sml
+val mainWith : {tests : Run.command Test.tree, capabilities : Requirements.capability list} -> unit
+```
+
+`mainWith {tests, capabilities}` is `main tests`, with the
+capabilities the tests may require ([`Requirements`](../str/Requirements.md)).
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-mainwith.tests"></a>`tests` | `Run.command Test.tree` |  |
+| <a name="fld-mainwith.capabilities"></a>`capabilities` | `Requirements.capability list` |  |
 
 ---
 

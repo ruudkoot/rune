@@ -6,14 +6,15 @@ documented when a comment describes it, alone or together with the entry before 
 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
-| [`CLI`](sig/CLI.md) | 1 | 1 | 100% | 1 | 1 |
+| [`CLI`](sig/CLI.md) | 2 | 2 | 100% | 2 | 2 |
 | [`EXPECTATIONS`](sig/EXPECTATIONS.md) | 14 | 14 | 100% | 10 | 10 |
 | [`HISTORY`](sig/HISTORY.md) | 9 | 9 | 100% | 6 | 6 |
 | [`REPORT`](sig/REPORT.md) | 8 | 8 | 100% | 5 | 5 |
+| [`REQUIREMENTS`](sig/REQUIREMENTS.md) | 3 | 3 | 100% | 2 | 2 |
 | [`RUN`](sig/RUN.md) | 7 | 7 | 100% | 5 | 5 |
 | [`SCHEDULER`](sig/SCHEDULER.md) | 10 | 10 | 100% | 7 | 7 |
 | [`SUPERVISOR`](sig/SUPERVISOR.md) | 5 | 5 | 100% | 2 | 2 |
-| **all** | 54 | 54 | 100% | 36 | 36 |
+| **all** | 58 | 58 | 100% | 39 | 39 |
 
 ## Members a signature describes
 
@@ -22,7 +23,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-7 structures have a page, with 54 members, of which 54 (100%) are described by a signature.
+8 structures have a page, with 58 members, of which 58 (100%) are described by a signature.
 
 ## Examples that are run
 

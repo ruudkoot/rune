@@ -8,7 +8,12 @@
      `--keep` keeps every test's directory, and `--accept` writes what the
      tests printed into their golden files (`Run.accept`);
    - `explain PATH`: a test's command, directory and needs;
-   - `stats`: the slowest and the flakiest tests in the history.
+   - `stats`: the slowest and the flakiest tests in the history;
+   - `doctor [FILTER]`: the capabilities the tests require, each probed,
+     with how to get those that are missing (it fails when one is).
+
+   A run of the tier check, or with `--strict`, fails a test whose
+   capability is missing; any other run skips it.
 
    A filter is the language of `TestFilter`; two or more of them select
    the tests any of them selects. The tests a selected test waits for are
@@ -30,4 +35,8 @@ signature CLI =
 sig
   (* `main tests` runs the command line's command over `tests`. *)
   val main : Run.command Test.tree -> unit
+
+  (* `mainWith {tests, capabilities}` is `main tests`, with the
+     capabilities the tests may require (`Requirements`). *)
+  val mainWith : {tests : Run.command Test.tree, capabilities : Requirements.capability list} -> unit
 end

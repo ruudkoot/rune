@@ -18,6 +18,7 @@ signature names and no others.
 | [`Expectations`](str/Expectations.md) | :> [`EXPECTATIONS`](sig/EXPECTATIONS.md) |  | required |  | [lib/test/runner/expectations.sml](../../../../lib/test/runner/expectations.sml) |
 | [`History`](str/History.md) | :> [`HISTORY`](sig/HISTORY.md) |  | required |  | [lib/test/runner/history.sml](../../../../lib/test/runner/history.sml) |
 | [`Report`](str/Report.md) | :> [`REPORT`](sig/REPORT.md) |  | required |  | [lib/test/runner/report.sml](../../../../lib/test/runner/report.sml) |
+| [`Requirements`](str/Requirements.md) | :> [`REQUIREMENTS`](sig/REQUIREMENTS.md) |  | required |  | [lib/test/runner/requirements.sml](../../../../lib/test/runner/requirements.sml) |
 | [`Run`](str/Run.md) | :> [`RUN`](sig/RUN.md) |  | required |  | [lib/test/runner/run.sml](../../../../lib/test/runner/run.sml) |
 | [`Scheduler`](str/Scheduler.md) | :> [`SCHEDULER`](sig/SCHEDULER.md) |  | required |  | [lib/test/runner/scheduler.sml](../../../../lib/test/runner/scheduler.sml) |
 | [`Supervisor`](str/Supervisor.md) | :> [`SUPERVISOR`](sig/SUPERVISOR.md) |  | required |  | [lib/test/runner/supervisor.sml](../../../../lib/test/runner/supervisor.sml) |

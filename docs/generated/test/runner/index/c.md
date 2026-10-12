@@ -3,6 +3,7 @@
 [Overview](../README.md) &middot; [a](a.md) **c** [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [l](l.md) [m](m.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md)
 
 - `Cancelled` (con): [SUPERVISOR](../sig/SUPERVISOR.md#con-cancelled)
+- `capability` (type): [REQUIREMENTS](../sig/REQUIREMENTS.md#type-capability)
 - `Capped` (con): [SUPERVISOR](../sig/SUPERVISOR.md#con-capped)
 - `command` (type): [RUN](../sig/RUN.md#type-command), [SUPERVISOR](../sig/SUPERVISOR.md#type-command)
 - `cost` (val): [HISTORY](../sig/HISTORY.md#val-cost)

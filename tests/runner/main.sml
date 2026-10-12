@@ -101,8 +101,8 @@ struct
        some ("check-docs", ["docs"], ["*.md", "docs/*", "tests/basis/*", "lib/random/*", "lib/test/property/*"]),
        step ("check-layouts", {cpus = Int.min (2, few), memory = 500, pools = [], after = []}, ["layout"], ["tests/layouts/*"]),
        alone ("test-install", [], ["tests/install/*", "examples/hello.sml"]),
-       alone ("test-terminal", [], ["tests/terminal/*"]),
-       alone ("test-diagnostics-steps", ["test-diagnostics"], ["tests/color/*"]),
+       Test.requires ["tmux", "python3"] (alone ("test-terminal", [], ["tests/terminal/*"])),
+       Test.requires ["python3"] (alone ("test-diagnostics-steps", ["test-diagnostics"], ["tests/color/*"])),
        alone ("test-census", [], perfFiles @ ["tools/heapsim/*"]),
        alone ("check-heapsim", [], ["tools/heapsim/*"]),
        alone ("check-gcsim", [], ["tools/heapsim/*"]),
@@ -120,10 +120,22 @@ struct
     Test.describe "make"
       [extra ("test-register-asan", ["vm"]),
        extra ("test-stress", ["vm"]),
-       extra ("test-windows", ["vm", "windows"]),
-       extra ("test-portability", ["vm", "portability"]),
-       extra ("matrix-quick", ["library"]),
-       extra ("test-lib-hosts", ["library"])]
+       Test.requires ["windows"] (extra ("test-windows", ["vm", "windows"])),
+       Test.requires ["qemu"] (extra ("test-portability", ["vm", "portability"])),
+       Test.requires Lang.hosts (extra ("matrix-quick", ["library"])),
+       Test.requires Lang.hosts (extra ("test-lib-hosts", ["library"]))]
+
+  (* what tests require of the machine (D18; docs/testing.md, Requirements),
+     with scripts/doctor.sh's hints *)
+  val capabilities =
+    [{name = "tmux", probe = "command -v tmux", hint = "install tmux (apt, dnf, pacman, brew: tmux)"},
+     {name = "python3", probe = "command -v python3", hint = "install python3 (apt, dnf: python3; pacman, brew: python)"},
+     {name = "cc", probe = "command -v ${CC:-cc}", hint = "install a C compiler (apt: build-essential; dnf: gcc; pacman: base-devel; brew: gcc)"},
+     {name = "qemu", probe = "command -v qemu-ppc64 || command -v qemu-ppc64-static",
+      hint = "install qemu-user (apt, dnf: qemu-user), registered for the PowerPC (tests/portability-skip.txt)"},
+     {name = "windows", probe = "sh tests/windows-dir.sh && command -v x86_64-w64-mingw32-gcc",
+      hint = "Windows under WSL with interop (RUNE_WINDOWS_DIR names a directory there) and mingw-w64 (apt: gcc-mingw-w64-x86-64 gcc-mingw-w64-i686)"}]
+    @ List.map (fn h => {name = h, probe = "test -x bin/rune-" ^ h, hint = "run: make hosts, then make " ^ h}) Lang.hosts
 
   (* each file of expectations read by the one engine (docs/testing.md,
      Expectations): it parses, and its skips name programs that are there.
@@ -170,4 +182,6 @@ val () =
       | NONE =>
           case Tools.command args of
             SOME f => f ()
-          | NONE => case Protocols.command args of SOME f => f () | NONE => Cli.main Inventory.tests
+          | NONE => case Protocols.command args of
+                      SOME f => f ()
+                    | NONE => Cli.mainWith {tests = Inventory.tests, capabilities = Inventory.capabilities}

@@ -356,19 +356,19 @@ struct
          (Test.describe "diagnostics" (List.map (fn f => job (basename f, ["diagnostics-one", basename f], [], 300, 600))
                                                 (glob ("tests/diagnostics", ".sml")))),
        tagged ["check", "test-serve", "covers:tests/serve/*"] (Test.describe "serve" [job ("rune", ["serve"], [], 500, 600)]),
-       tagged ["check", "test-repl-protocol", "covers:tests/repl-protocol/*"]
+       Test.requires ["python3"] (tagged ["check", "test-repl-protocol", "covers:tests/repl-protocol/*"]
          (Test.describe "repl-protocol"
             (List.map (fn f => let val n = basename (String.substring (f, 0, size f - 7) ^ ".sml")
                                in driver (n, "exec python3 tests/repl-protocol/run.py " ^ quote n) end)
-                      (glob ("tests/repl-protocol", ".script")))),
-       tagged ["check", "test-dap", "covers:tests/dap/*"]
+                      (glob ("tests/repl-protocol", ".script"))))),
+       Test.requires ["python3"] (tagged ["check", "test-dap", "covers:tests/dap/*"]
          (Test.describe "dap" [driver ("pipe", "exec python3 tests/dap/run.py"),
-                               driver ("connection", "RUNE_ENGINE_CONNECT=1 exec python3 tests/dap/run.py")]),
-       tagged ["check", "test-kernel", "covers:tests/kernel/*"]
+                               driver ("connection", "RUNE_ENGINE_CONNECT=1 exec python3 tests/dap/run.py")])),
+       Test.requires ["python3"] (tagged ["check", "test-kernel", "covers:tests/kernel/*"]
          (Test.describe "kernel" [driverIn ["kernel"] ("pipe", "exec sh tests/kernel/run.sh"),
-                                  driverIn ["kernel"] ("connection", "RUNE_ENGINE_CONNECT=1 exec sh tests/kernel/run.sh")]),
+                                  driverIn ["kernel"] ("connection", "RUNE_ENGINE_CONNECT=1 exec sh tests/kernel/run.sh")])),
        tagged ["check", "test-incremental", "covers:tests/incremental/*", "covers:examples/hello.sml"]
          (Test.describe "incremental"
             (List.map (fn s => driver (s, "INCREMENTAL_EXACT=1 exec sh tests/incremental/run.sh --rune bin/rune " ^ s)) scenarios
-             @ [driver ("@mutate", "exec python3 tests/incremental/mutate.py --rune bin/rune --steps 30 tests/incremental/functors tests/incremental/project")]))]
+             @ [Test.requires ["python3"] (driver ("@mutate", "exec python3 tests/incremental/mutate.py --rune bin/rune --steps 30 tests/incremental/functors tests/incremental/project"))]))]
 end

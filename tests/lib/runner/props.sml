@@ -219,6 +219,13 @@ struct
         Expect.that ("and fails after it",
                      case judged ("rune", "new.test", NONE, false, "2026-11-02") of
                        oc as Expectations.Expired _ => Expectations.failing oc | _ => false))),
+     Test.it "Requirements.missing/probes" (fn () =>
+       let val cs = [{name = "yes", probe = "true", hint = "h1"}, {name = "no", probe = "false", hint = "h2"}]
+       in
+         Expect.that ("a probe that fails, and a capability without one",
+                      Requirements.missing (cs, ["yes", "no", "unknown"]) = [("no", "h2"), ("unknown", "no probe says what it is")]);
+         Expect.that ("probed once, and remembered", Requirements.present (cs, "yes") andalso not (Requirements.present (cs, "no")))
+       end),
      Test.it "Expectations.stale/each" (fn () =>
        let
          val st = Expectations.stale (sample, {ways = ["mlkit", "native"], paths = ["rt.interrupt_self", "flaky.test"],

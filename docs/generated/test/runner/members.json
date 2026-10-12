@@ -1,7 +1,7 @@
 {
  "signatures": {
   "CLI": {
-   "doc": "The runner's command line (docs/plans/unit-testing.md, D19):\n\n- `list [FILTER]`: the tests, with their tags, and nothing run;\n- `run [FILTER] [--tier T] [-j N] [--mem MB] [--keep] [--failed]`: the\n  tests the filter selects (and the tier, a tag), on `N` processors\n  (by default those of the machine less its load from outside) and `MB`\n  megabytes; `--failed` runs the tests that failed last time,\n  `--keep` keeps every test's directory, and `--accept` writes what the\n  tests printed into their golden files (`Run.accept`);\n- `explain PATH`: a test's command, directory and needs;\n- `stats`: the slowest and the flakiest tests in the history.\n\nA filter is the language of `TestFilter`; two or more of them select\nthe tests any of them selects. The tests a selected test waits for are\nselected with it, and a run runs the tests tagged `always` as well.\n`--profile P` is `--tier P`.\n\n`--affected` keeps, of what is selected, the tests that cover a path\nchanged since `HEAD` (in the work tree, or not yet known to git);\n`--since REV` since `REV`, and `--changed FILE` the paths that `FILE`\nlists, one to a line. A test covers the paths its tags `covers:GLOB`\nmatch; a changed path that no test covers keeps every test. `--root DIR` is the directory of the tree (default `.`), `--out DIR` where\nruns go (default `tests/out/r`), `--history FILE` the history (default\n`build/test-history.tsv`). A run ends the program with success when every\ntest passed, with failure otherwise, and with 2 for a mistake in the\ncommand line.\n\n",
+   "doc": "The runner's command line (docs/plans/unit-testing.md, D19):\n\n- `list [FILTER]`: the tests, with their tags, and nothing run;\n- `run [FILTER] [--tier T] [-j N] [--mem MB] [--keep] [--failed]`: the\n  tests the filter selects (and the tier, a tag), on `N` processors\n  (by default those of the machine less its load from outside) and `MB`\n  megabytes; `--failed` runs the tests that failed last time,\n  `--keep` keeps every test's directory, and `--accept` writes what the\n  tests printed into their golden files (`Run.accept`);\n- `explain PATH`: a test's command, directory and needs;\n- `stats`: the slowest and the flakiest tests in the history;\n- `doctor [FILTER]`: the capabilities the tests require, each probed,\n  with how to get those that are missing (it fails when one is).\n\nA run of the tier check, or with `--strict`, fails a test whose\ncapability is missing; any other run skips it.\n\nA filter is the language of `TestFilter`; two or more of them select\nthe tests any of them selects. The tests a selected test waits for are\nselected with it, and a run runs the tests tagged `always` as well.\n`--profile P` is `--tier P`.\n\n`--affected` keeps, of what is selected, the tests that cover a path\nchanged since `HEAD` (in the work tree, or not yet known to git);\n`--since REV` since `REV`, and `--changed FILE` the paths that `FILE`\nlists, one to a line. A test covers the paths its tags `covers:GLOB`\nmatch; a changed path that no test covers keeps every test. `--root DIR` is the directory of the tree (default `.`), `--out DIR` where\nruns go (default `tests/out/r`), `--history FILE` the history (default\n`build/test-history.tsv`). A run ends the program with success when every\ntest passed, with failure otherwise, and with 2 for a mistake in the\ncommand line.\n\n",
    "page": "sig/CLI.md",
    "members": [
     {
@@ -10,6 +10,13 @@
      "spec": "val main : Run.command Test.tree -> unit",
      "doc": "`main tests` runs the command line's command over `tests`.\n\n",
      "page": "sig/CLI.md#val-main"
+    },
+    {
+     "kind": "val",
+     "name": "mainWith",
+     "spec": "val mainWith : {tests : Run.command Test.tree, capabilities : Requirements.capability list} -> unit",
+     "doc": "`mainWith {tests, capabilities}` is `main tests`, with the\ncapabilities the tests may require (`Requirements`).\n\n",
+     "page": "sig/CLI.md#val-mainwith"
     }
    ]
   },
@@ -236,7 +243,7 @@
      "kind": "val",
      "name": "test",
      "spec": "val test : report * ended -> unit",
-     "doc": "`test (r, e)` reports `e`: a failure as a block, a pass as a count, and\nboth as an event.\n\n",
+     "doc": "`test (r, e)` reports `e`: a failure as a block, a skip as a line with\nits reason, a pass as a count, and each as an event.\n\n",
      "page": "sig/REPORT.md#val-test"
     },
     {
@@ -245,6 +252,33 @@
      "spec": "val finish : report * {cpus : int, freed : int, keptBytes : int} -> bool",
      "doc": "`finish (r, {cpus, freed, keptBytes})` writes the summary and the\n`RESULT:` line, and is whether every test ran and passed.\n\n`cpus` is the processors the run had, and `freed` and `keptBytes` the\nbytes of output removed and kept.\n\n",
      "page": "sig/REPORT.md#val-finish"
+    }
+   ]
+  },
+  "REQUIREMENTS": {
+   "doc": "What a test needs of the machine (docs/plans/unit-testing.md, D18): a\ncapability is a name, a probe and an install hint. A test names the\ncapabilities it needs (`Test.requires`); the runner probes each once, and\na test whose capability is missing is skipped with the hint, or fails in\na run that must be complete, as the tier check is.\n\nRUNE\\_TEST\\_WITHOUT names capabilities to take as missing, separated by\ncommas, so that what a machine without them gets can be seen on one\nthat has them.\n\n",
+   "page": "sig/REQUIREMENTS.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "capability",
+     "spec": "type capability = {name : string, probe : string, hint : string}",
+     "doc": "A capability: its name, a command of the shell that exits with 0 when\nit is there, and how to get it.\n\n",
+     "page": "sig/REQUIREMENTS.md#type-capability"
+    },
+    {
+     "kind": "val",
+     "name": "present",
+     "spec": "val present : capability list * string -> bool",
+     "doc": "`present (cs, name)` says whether the capability `name` of `cs` is\nthere, probing it once; one that `cs` does not name is not.\n\n",
+     "page": "sig/REQUIREMENTS.md#val-present"
+    },
+    {
+     "kind": "val",
+     "name": "missing",
+     "spec": "val missing : capability list * string list -> (string * string) list",
+     "doc": "`missing (cs, names)` is the capabilities among `names` that are not\nthere, each with its hint.\n\n",
+     "page": "sig/REQUIREMENTS.md#val-missing"
     }
    ]
   },
@@ -297,8 +331,8 @@
     {
      "kind": "val",
      "name": "run",
-     "spec": "val run : {tests : (string * Test.meta * command) list, root : string, out : string, history : string,\n           cpus : int, memory : int, keep : bool, reader : Report.reader} -> bool",
-     "doc": "`run {tests, root, out, history, cpus, memory, keep, reader}` runs\n`tests` in a new directory under `out`, and is whether every test\npassed.\n\nThe tree's directory is `root`; the run has `cpus` processors and\n`memory` megabytes; it reads and rewrites the history file `history`;\nand `keep` keeps every test's directory.\n\n",
+     "spec": "val run : {tests : (string * Test.meta * command) list, root : string, out : string, history : string,\n           cpus : int, memory : int, keep : bool, reader : Report.reader,\n           capabilities : Requirements.capability list, strict : bool} -> bool",
+     "doc": "`run {tests, root, out, history, cpus, memory, keep, reader, capabilities, strict}` runs `tests` in a new directory under `out`, and\nis whether every test passed.\n\nThe tree's directory is `root`; the run has `cpus` processors and\n`memory` megabytes; it reads and rewrites the history file `history`;\nand `keep` keeps every test's directory. A test that requires a\ncapability the machine lacks (of `capabilities`) does not run: it is\nskipped with the capability's hint, or is an ERROR when `strict`, and\nthe tests that wait for it do not start.\n\n",
      "page": "sig/RUN.md#val-run"
     }
    ]
@@ -426,6 +460,7 @@
   "Expectations": "EXPECTATIONS",
   "History": "HISTORY",
   "Report": "REPORT",
+  "Requirements": "REQUIREMENTS",
   "Run": "RUN",
   "Scheduler": "SCHEDULER",
   "Supervisor": "SUPERVISOR"

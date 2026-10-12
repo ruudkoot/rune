@@ -3,8 +3,10 @@
 [Overview](../README.md) &middot; [a](a.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [l](l.md) **m** [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md)
 
 - `main` (val): [CLI](../sig/CLI.md#val-main)
+- `mainWith` (val): [CLI](../sig/CLI.md#val-mainwith)
 - `meaning` (type): [EXPECTATIONS](../sig/EXPECTATIONS.md#type-meaning)
 - `meaning` (val): [EXPECTATIONS](../sig/EXPECTATIONS.md#val-meaning)
+- `missing` (val): [REQUIREMENTS](../sig/REQUIREMENTS.md#val-missing)
 
 ---
 

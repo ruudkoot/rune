@@ -45,8 +45,8 @@ sig
                 system : Time.time, peakResident : int, outputBytes : int, kept : string list,
                 command : string, rerun : string}
 
-  (* `test (r, e)` reports `e`: a failure as a block, a pass as a count, and
-     both as an event. *)
+  (* `test (r, e)` reports `e`: a failure as a block, a skip as a line with
+     its reason, a pass as a count, and each as an event. *)
   val test : report * ended -> unit
 
   (* `finish (r, {cpus, freed, keptBytes})` writes the summary and the

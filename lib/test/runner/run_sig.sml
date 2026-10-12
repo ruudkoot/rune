@@ -55,13 +55,17 @@ sig
      `ACCEPTED`. It is `false` unless the command line sets it. *)
   val accept : bool ref
 
-  (* `run {tests, root, out, history, cpus, memory, keep, reader}` runs
-     `tests` in a new directory under `out`, and is whether every test
-     passed.
+  (* `run {tests, root, out, history, cpus, memory, keep, reader,
+     capabilities, strict}` runs `tests` in a new directory under `out`, and
+     is whether every test passed.
 
      The tree's directory is `root`; the run has `cpus` processors and
      `memory` megabytes; it reads and rewrites the history file `history`;
-     and `keep` keeps every test's directory. *)
+     and `keep` keeps every test's directory. A test that requires a
+     capability the machine lacks (of `capabilities`) does not run: it is
+     skipped with the capability's hint, or is an ERROR when `strict`, and
+     the tests that wait for it do not start. *)
   val run : {tests : (string * Test.meta * command) list, root : string, out : string, history : string,
-             cpus : int, memory : int, keep : bool, reader : Report.reader} -> bool
+             cpus : int, memory : int, keep : bool, reader : Report.reader,
+             capabilities : Requirements.capability list, strict : bool} -> bool
 end

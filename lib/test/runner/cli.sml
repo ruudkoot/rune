@@ -85,7 +85,7 @@ struct
           end
     end
 
-  fun main (tree : Run.command Test.tree) =
+  fun mainWith {tests = tree : Run.command Test.tree, capabilities} =
     let
       val args = CommandLine.arguments ()
       val (command, rest) = case args of c :: r => (c, r) | [] => ("run", [])
@@ -146,7 +146,9 @@ struct
               Run.run {tests = List.map (fn {path, meta, leaf} => (path, meta, leaf)) selected, root = root,
                        out = getOpt (option ("--out", rest), "tests/out/r"), history = history,
                        cpus = number ("-j", rest, freeProcessors ()), memory = number ("--mem", rest, freeMemory ()),
-                       keep = flag ("--keep", rest), reader = Report.reader ()}
+                       keep = flag ("--keep", rest), reader = Report.reader (), capabilities = capabilities,
+                       (* the tier check must be complete: what it lacks is an error *)
+                       strict = option ("--tier", rest) = SOME "check" orelse flag ("--strict", rest)}
           in OS.Process.exit (if ok then OS.Process.success else OS.Process.failure) end
       | "explain" =>
           List.app (fn {path, meta, leaf = c : Run.command} =>
@@ -175,8 +177,26 @@ struct
             List.app (fn e => say ("  " ^ #path e ^ " " ^ Int.toString (#flips e) ^ "\n"))
                      (top (fn e => real (#flips e), List.filter (fn e => #flips e > 0) es))
           end
-      | _ => raise Usage ("no command " ^ command ^ " (list, run, explain, stats)")
+      | "doctor" =>
+          let
+            val needed = List.foldl (fn ({meta, ...}, acc) =>
+                                       List.foldl (fn (r, acc) => if List.exists (fn x => x = r) acc then acc else acc @ [r]) acc
+                                                  (#requires meta))
+                                    [] selected
+            val missing = Requirements.missing (capabilities, needed)
+          in
+            List.app (fn r => case List.find (fn (m, _) => m = r) missing of
+                                SOME (_, hint) => say ("  missing  " ^ r ^ ": " ^ hint ^ "\n")
+                              | NONE => say ("  ok       " ^ r ^ "\n"))
+                     needed;
+            say ("doctor: " ^ Int.toString (length needed) ^ " capabilities for " ^ Int.toString (length selected) ^ " tests, "
+                 ^ Int.toString (length missing) ^ " missing\n");
+            OS.Process.exit (if null missing then OS.Process.success else OS.Process.failure)
+          end
+      | _ => raise Usage ("no command " ^ command ^ " (list, run, explain, stats, doctor)")
     end
     handle Usage m => (TextIO.output (TextIO.stdErr, "rune-test: " ^ m ^ "\n"); TextIO.flushOut TextIO.stdErr;
                        Posix.Process.exit 0w2)
+
+  fun main tree = mainWith {tests = tree, capabilities = []}
 end

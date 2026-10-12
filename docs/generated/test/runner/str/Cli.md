@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`CLI`](../sig/CLI.md) |
 | Status | required |
-| Members | 1 |
+| Members | 2 |
 | Tests | not listed |
 | Source | [lib/test/runner/cli.sml](../../../../../lib/test/runner/cli.sml) |
 
@@ -25,6 +25,7 @@ What each means is on [`CLI`](../sig/CLI.md); the types are this structure's own
 |  | Member | Is |
 | --- | --- | --- |
 | val | [`main`](../sig/CLI.md#val-main) | `{after : string list, args : string list, cap : int, cpus : int, dir : string option, env : string list option, exclusive : bool, judge : {leaked : bool, outcome : Supervisor.outcome, outputBytes : int, peakResident : int, system : Time.time, user : Time.time, wall : Time.time} * {stderr : string, stdout : string} -> (string * string) option, memory : int, pools : string list, program : string, stdin : string option, timeout : Time.time} Test.tree -> unit` |
+| val | [`mainWith`](../sig/CLI.md#val-mainwith) | `{capabilities : {hint : string, name : string, probe : string} list, tests : {after : string list, args : string list, cap : int, cpus : int, dir : string option, env : string list option, exclusive : bool, judge : {leaked : bool, outcome : Supervisor.outcome, outputBytes : int, peakResident : int, system : Time.time, user : Time.time, wall : Time.time} * {stderr : string, stdout : string} -> (string * string) option, memory : int, pools : string list, program : string, stdin : string option, timeout : Time.time} Test.tree} -> unit` |
 
 ---
 

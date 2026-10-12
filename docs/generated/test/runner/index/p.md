@@ -7,6 +7,7 @@
 - `Pass` (con): [EXPECTATIONS](../sig/EXPECTATIONS.md#con-pass)
 - `plan` (type): [SCHEDULER](../sig/SCHEDULER.md#type-plan)
 - `plan` (val): [SCHEDULER](../sig/SCHEDULER.md#val-plan)
+- `present` (val): [REQUIREMENTS](../sig/REQUIREMENTS.md#val-present)
 - `priority` (val): [SCHEDULER](../sig/SCHEDULER.md#val-priority)
 
 ---

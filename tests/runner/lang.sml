@@ -277,28 +277,30 @@ struct
   (* what the programs cover, for --affected; the tier quick has the
      default way, and the profile layout test-heap's ways *)
   val covers = ["covers:tests/lang/*", "covers:tests/errors/*", "covers:tests/opt-skip.txt"]
+  (* a host's compiler needs the host's build *)
+  fun needs compiler t = if List.exists (fn h => h = compiler) hosts then Test.requires [compiler] t else t
   fun extraTags tag = (if tag = "test" then ["quick"] else []) @ (if tag = "test-heap" then ["layout"] else [])
 
   val tests =
     Test.describe ""
       [Test.describe "compile"
-         (List.map (fn (c, command, _) => tagged ("check" :: covers) (Test.describe c (List.map (compile (c, command)) langPrograms)))
+         (List.map (fn (c, command, _) => needs c (tagged ("check" :: covers) (Test.describe c (List.map (compile (c, command)) langPrograms))))
                    compilers
           @ [tagged ("check" :: covers)
                (Test.it "stack-done"
                   (shell ("true", SOME ".", 60, 10, List.map (fn n => "compile/" ^ stackCompiler ^ "/" ^ n) langPrograms,
                           Run.exitZero)))]),
        Test.describe "errors"
-         (List.map (fn (c, command, tag) => tagged (["check", tag] @ extraTags tag @ covers)
-                                              (Test.describe c (List.map (error (c, command)) errorPrograms)))
+         (List.map (fn (c, command, tag) => needs c (tagged (["check", tag] @ extraTags tag @ covers)
+                                                       (Test.describe c (List.map (error (c, command)) errorPrograms))))
                    compilers),
        Test.describe "lang"
-         (List.map (fn w => tagged (["check", #tag w] @ extraTags (#tag w) @ covers)
+         (List.map (fn w => needs (#compiler w) (tagged (["check", #tag w] @ extraTags (#tag w) @ covers)
                               (Test.describe (#name w)
                                  (List.map (fn n =>
                                               case (#skip w, Expectations.skipped (optSkip, {way = #name w, path = n})) of
                                                 (true, SOME l) => Test.pending (#category l ^ ": " ^ #reason l) (run w n)
                                               | _ => run w n)
-                                           langPrograms)))
+                                           langPrograms))))
                    ways)]
 end
