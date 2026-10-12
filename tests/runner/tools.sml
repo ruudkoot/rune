@@ -430,12 +430,63 @@ struct
       val () = check ("budgets: type", tc "--type-work=1" <> 0 andalso contains (f "err", "type inference exceeds 1 steps")
                                        andalso tc "--type-work=10000" = 0)
       val () = write (f "input.sml", "fun f x = x\nfun g y = f f f f f f f f f f f f y\nval _ = g 3")
+      val () =
+        check ("budgets: translation",
+               r (["--no-prelude", "--typecheck-only", "--type-work=2000", "input.sml"], NONE) = 0
+               andalso r (["--no-prelude", "--type-work=2000", "-o", "output.rbc", "input.sml"], NONE) <> 0
+               andalso contains (f "err", "type translation exceeds 2000 steps")
+               andalso r (["--type-work=1000000", "-o", "output.rbc", "input.sml"], NONE) = 0)
+      (* --pass-stats accounts for the whole compile (docs/plans/performance.md, M1):
+         a line `pass NAME: N nodes, T s` per stage, then
+         `total: T s processor time, S s in the stages (P%)`, the process's
+         processor time from its start and the sum of the outermost stages.
+         The stages must add up to the total, to within the rounding of the
+         lines and 2%, and the process must have taken no more than the
+         total, but for what the VM does after the last line (it exits). A
+         piece of the compile that no stage times shows here. (SML/NJ's
+         processor time counts the collector's twice, so a total may be
+         more than what the process took.) *)
+      fun children () = let val {cutime, cstime, ...} = Posix.ProcEnv.times () in Time.toReal (Time.+ (cutime, cstime)) end
+      fun split sep s =
+        let val (a, b) = Substring.position sep (Substring.full s)
+        in if Substring.isEmpty b then NONE else SOME (Substring.string a, Substring.string (Substring.triml (size sep) b)) end
+      fun stage l =
+        case split ": " l of
+          SOME (name, rest) =>
+            (case split ", " rest of
+               SOME (nodes, secs) =>
+                 if String.isPrefix "pass " name andalso String.isSuffix " nodes" nodes andalso String.isSuffix " s" secs
+                    andalso not (String.isSubstring ", " secs)
+                 then Option.map (fn t => (String.extract (name, 5, NONE), t)) (Real.fromString (String.substring (secs, 0, size secs - 2)))
+                 else NONE
+             | NONE => NONE)
+        | NONE => NONE
+      val start = children ()
+      val code = r (["--target=stack", "--pass-stats", "-o", "sigs.rbc", fromRoot "tests/perf/compile-sigs.sml"], NONE)
+      val process = children () - start
+      val ls = lines (read (f "err"))
+      val stages = List.mapPartial stage (if null ls then [] else List.take (ls, length ls - 1))
+      val names = List.map #1 stages
+      val added = List.foldl (fn ((_, t), s) => s + t) 0.0 stages
+      val n = real (length stages)
+      val (total, inside) =
+        case (if null ls then [] else String.tokens Char.isSpace (List.last ls)) of
+          "total:" :: t :: "s" :: "processor" :: "time," :: i :: _ => (Real.fromString t, Real.fromString i)
+        | _ => (NONE, NONE)
     in
-      check ("budgets: translation",
-             r (["--no-prelude", "--typecheck-only", "--type-work=2000", "input.sml"], NONE) = 0
-             andalso r (["--no-prelude", "--type-work=2000", "-o", "output.rbc", "input.sml"], NONE) <> 0
-             andalso contains (f "err", "type translation exceeds 2000 steps")
-             andalso r (["--type-work=1000000", "-o", "output.rbc", "input.sml"], NONE) = 0)
+      check ("pass-stats: compiled", code = 0);
+      check ("pass-stats: a stage per line", length stages = length ls - 1);
+      check ("pass-stats: the stages",
+             List.all (fn w => List.exists (fn x => x = w) names)
+                      ["startup", "lex", "select", "parse", "elaborate", "translate", "mid", "midcanon", "lower", "stack", "emit",
+                       "stats"]);
+      check ("pass-stats: no stage below zero", List.all (fn (_, t) => t >= 0.0) stages);
+      case (total, inside) of
+        (SOME total, SOME inside) =>
+          (check ("pass-stats: the stages add up to the line", Real.abs (added - inside) <= 0.0005 * n + 0.001);
+           check ("pass-stats: the stages add up to the compile", total - added <= 0.001 * n + 0.02 * total);
+           check ("pass-stats: the process took no more than the total", process <= 1.10 * total + 0.05))
+      | _ => check ("pass-stats: the last line is the total", false)
     end
 
   (* ---- tests/runtime: limits saved with an image and stricter on restore *)

@@ -136,7 +136,7 @@ struct
     \  --dump-after=P    print what the pass P makes (all: every pass)\n\
     \  --lint            check what every pass makes (docs/ir.md)\n\
     \  --fuel=N          make no more than N rewrites (scripts/bisect-fuel.sh)\n\
-    \  --pass-stats      print the size and the time of every pass\n\
+    \  --pass-stats      print the size and the time of every stage, and the total\n\
     \  --read-mid FILE   read a Mid program as --dump-after=mid prints it, and\n\
     \                    make and check it as the pass mid would, but no bytecode\n\
     \  --mid-roundtrip   check that Mid printed, read and printed again is the same\n\

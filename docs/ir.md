@@ -10,6 +10,7 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 |---|---|---|---|
 | `translate` | the elaborated syntax | `Lambda` (`src/core/lambda.sml`) | `LambdaLint` |
 | `mid` | `Lambda` | `Mid` (`src/core/mid.sml`, by `ToMid`) | `MidLint` |
+| `midcanon` | `Mid` | `Mid` numbered canonically (`src/core/midcanon.sml`), as one made of its units' `Mid` is; a whole program only | `MidLint` |
 | `shake` | `Mid` | `Mid`, what nothing reaches gone (`src/core/shake.sml`), from `-O1` | `MidLint` |
 | `lift` | `Mid` | `Mid`, local functions that never escape made functions of the top level (`src/core/lift.sml`), from `-O1` | `MidLint` |
 | `workers` | `Mid` | `Mid`, tupled and curried functions split into workers and wrappers (`src/core/workers.sml`), from `-O1` | `MidLint` |
@@ -17,7 +18,7 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 | `lower` | `Mid` | `Low` (`src/backend/low.sml`, by `Lower`) | `LowLint` |
 | `stack` | `Low` | instruction lists (`src/backend/stack.sml`), with `--target=stack` | none yet |
 | `registers` | `Low` | instruction lists of the register bytecode (`src/backend/regs.sml`), the default target | none yet |
-| emission | instruction lists | the `.rbc` | |
+| `emit` | instruction lists | the `.rbc` (`src/backend/emit.sml`) | |
 
 `-O0` is the same stages with no optional pass; `-O0` and `-O2` must give
 programs that print and exit the same, traces included (`make
@@ -43,10 +44,28 @@ what `simplify` does besides shrinking, each of which may be left out.
 | `--dump-before=P`, `--dump-after=P` | print what the pass `P` is given or makes (`all`: every pass); `--dump-lambda` and `--dump-code` are `--dump-after=translate` and `--dump-after=registers` (`stack` with `--target=stack`) |
 | `--lint` | check what every pass makes, and stop with `Error.Bug`, which names the pass, at the first breach |
 | `--fuel=N` | make no more than `N` rewrites: a pass that rewrites asks `Pass.spend` before each |
-| `--pass-stats` | the size of what every pass makes and its time, on standard error; `parse` and `elaborate` too, whose size is the top-level declarations |
+| `--pass-stats` | the size of what every stage makes and its processor time, on standard error, as `pass NAME: N nodes, T s`; then `total: T s processor time, S s in the stages (P%)` (below) |
 | `--units` | run the pipeline on one unit, a file, at a time, and link them ([units.md](units.md)): the passes see a unit, with `Pass.whole` false, and `--pass-stats` names each unit before its passes |
 | `--read-mid FILE` | read a Mid program in the text a dump prints, and make and check it as the pass `mid` would (there is no bytecode from Mid yet) |
 | `--mid-roundtrip` | check that Mid printed with its positions, read and printed again is the same |
+
+**What `--pass-stats` shows** is the whole compile: the stages add up to
+the process's processor time from its start, which `tests/compiler` holds
+them to (within 2%), so that no part of a compile goes untimed. Beside the
+stages of the pipeline above, the compile's stages are:
+
+* `startup`, what the process took before the compiler's own code ran:
+  loading it, and on `runevm` the bytecode and the compiler's top-level
+  declarations;
+* `lex`, the input files read and lexed (their tokens), and `select`, the
+  files of the libraries they need chosen (those files);
+* `parse` and `elaborate`, whose size is the top-level declarations;
+* with `--units`, the work of the cache and of each unit (`cache-key`,
+  `cache-find`, `unit-begin`, `unit-passes`, `unit-export`, ..., and `link`);
+  the pipeline's stages of a unit run inside its `unit-passes`, and only
+  the outermost stages are added up;
+* `stats`, the sizes `--pass-stats` counted, and `checks`, what `--lint` and
+  the dumps took, apart from the stages they checked or printed.
 
 **A dump** (`Lambda.show`) prints one node to a line, its parts indented
 below it unless they are all atoms, and leaves positions out. Variables
