@@ -57,6 +57,10 @@ jobs:
         with:
           name: check-reports
           path: |
+            tests/out/r/*/summary.md
+            tests/out/r/*/junit.xml
+            tests/out/r/*/events.jsonl
+            tests/out/r/*/failed
             tests/out/matrix/report*.md
             tests/out/*.stdout
             tests/out/*.stderr

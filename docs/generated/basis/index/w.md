@@ -13,7 +13,7 @@
 - `W_SAME_GROUP` (con): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#con-w_same_group)
 - `W_SIGNALED` (con): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#con-w_signaled), [UNIX](../sig/UNIX.md#con-w_signaled)
 - `W_STOPPED` (con): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#con-w_stopped), [UNIX](../sig/UNIX.md#con-w_stopped)
-- `wait` (val): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#val-wait)
+- `wait` (val): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#val-wait), [SUBPROCESS](../sig/SUBPROCESS.md#val-wait)
 - `waitpid` (val): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#val-waitpid)
 - `waitpid_arg` (type): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#type-waitpid_arg)
 - `waitpid_nh` (val): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#val-waitpid_nh)

@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`LINE_EDIT`](../sig/LINE_EDIT.md) |
 | Status | required |
-| Members | 20 |
+| Members | 23 |
 | Tests | not listed |
 | Source | [lib/terminal/line\_edit.sml](../../../../lib/terminal/line_edit.sml) |
 
@@ -30,13 +30,16 @@ What each means is on [`LINE_EDIT`](../sig/LINE_EDIT.md); the types are this str
 | type | [`frame`](../sig/LINE_EDIT.md#type-frame) | `{cursor : int * int, rows : cell list vector}` |
 | datatype | [`keys`](../sig/LINE_EDIT.md#type-keys) | `Emacs` &#124; `Vi` |
 | datatype | [`outcome`](../sig/LINE_EDIT.md#type-outcome) | `Continue` &#124; `Accept` &#124; `Cancelled` &#124; `EndOfInput` &#124; `Clear` &#124; `Stop` |
+| type | [`promptHook`](../sig/LINE_EDIT.md#type-prompthook) | `unit -> unit` |
 | datatype | [`result`](../sig/LINE_EDIT.md#type-result) | `Line` &#124; `Interrupted` &#124; `End` |
 | type | [`state`](../sig/LINE_EDIT.md#type-state) | *a type of its own* |
 | val | [`basic`](../sig/LINE_EDIT.md#val-basic) | `config -> bool` |
+| val | [`beforePrompt`](../sig/LINE_EDIT.md#val-beforeprompt) | `promptHook ref` |
 | val | [`cursor`](../sig/LINE_EDIT.md#val-cursor) | `state -> int` |
 | val | [`defaults`](../sig/LINE_EDIT.md#val-defaults) | `config` |
 | val | [`diff`](../sig/LINE_EDIT.md#val-diff) | `{columns : int, drawn : int, new : frame, old : frame option} -> string * int` |
 | val | [`emacs`](../sig/LINE_EDIT.md#val-emacs) | `(Key.event * command) list` |
+| val | [`keepRaw`](../sig/LINE_EDIT.md#val-keepraw) | `bool ref` |
 | val | [`layout`](../sig/LINE_EDIT.md#val-layout) | `config * state * int -> frame` |
 | val | [`normal`](../sig/LINE_EDIT.md#val-normal) | `state -> bool` |
 | val | [`readLine`](../sig/LINE_EDIT.md#val-readline) | `config * History.history option -> result` |

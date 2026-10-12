@@ -34,6 +34,13 @@
     },
     {
      "kind": "val",
+     "name": "quiet",
+     "spec": "val quiet : unit -> unit",
+     "doc": "`quiet ()` turns the echo off and leaves a return as it was typed,\nand a signal key is a signal again.\n\nRaw mode has taken the signals. `quiet` puts them back without\nturning the echo on. It clears the undo text `enter` stored: the\ncaller writes that text first, since `leave` would otherwise write\nit later.\n\n**Raises** `OS.SysErr` when the standard input is not a terminal.\n\n",
+     "page": "sig/DEVICE.md#val-quiet"
+    },
+    {
+     "kind": "val",
      "name": "leave",
      "spec": "val leave : unit -> unit",
      "doc": "`leave ()` puts the terminal back as it was, writing `undo`.\n\n",
@@ -401,9 +408,30 @@
     },
     {
      "kind": "val",
+     "name": "keepRaw",
+     "spec": "val keepRaw : bool ref",
+     "doc": "`keepRaw`, when set, asks `readLine` to leave the terminal quiet\nafter an accepted line: the echo off, and Ctrl-C a signal.\n\nThe REPL sets it. Putting the terminal back would turn the echo on,\nand a key typed before quiet mode would show up in what the code\nwrites. Full raw mode would instead take Ctrl-C as a byte. An\ninterrupt and the end of the input put the terminal back either way.\n\n",
+     "page": "sig/LINE_EDIT.md#val-keepraw"
+    },
+    {
+     "kind": "type",
+     "name": "promptHook",
+     "spec": "type promptHook = unit -> unit",
+     "doc": "`promptHook` is what to run once the terminal is raw, just before the\nprompt is drawn.\n\n",
+     "page": "sig/LINE_EDIT.md#type-prompthook"
+    },
+    {
+     "kind": "val",
+     "name": "beforePrompt",
+     "spec": "val beforePrompt : promptHook ref",
+     "doc": "`beforePrompt`, when set, is run once the terminal is raw, just\nbefore the prompt is drawn. The basic mode does not run it.\n\nThe REPL announces the prompt there. A key typed at that\nannouncement is then read as itself: in the cooked mode a return is\ntranslated, and echoed, before the editor can see it.\n\n",
+     "page": "sig/LINE_EDIT.md#val-beforeprompt"
+    },
+    {
+     "kind": "val",
      "name": "readLine",
      "spec": "val readLine : config * History.history option -> result",
-     "doc": "`readLine (c, h)` reads an input at the terminal with the editor,\ngoing back through the history `h` and adding the input to it.\n\nIt puts the terminal back before it returns. It is the basic mode when\n`#basic c`, when the standard input or output is not a terminal,\nwhen `TERM` is `dumb`, `unknown`, `cons25` or `emacs`, when\n`INSIDE_EMACS` names comint, or when `RUNE_BASIC_REPL` is set.\n\n",
+     "doc": "`readLine (c, h)` reads an input at the terminal with the editor,\ngoing back through the history `h` and adding the input to it.\n\nIt puts the terminal back before it returns, unless `keepRaw` is set\nand it read a line, when the terminal stays quiet. Where `beforePrompt`\nis set, it is called once the terminal is raw and just before the\nprompt is drawn. It is the basic mode when `#basic c`, when the\nstandard input or output is not a terminal, when `TERM` is `dumb`,\n`unknown`, `cons25` or `emacs`, when `INSIDE_EMACS` names comint, or\nwhen `RUNE_BASIC_REPL` is set.\n\n",
      "page": "sig/LINE_EDIT.md#val-readline"
     },
     {

@@ -1,9 +1,9 @@
+(* libraries: test/unit *)
 (* Emulator: what a terminal shows after text, wrapping, wide clusters,
    moves and erasing, as xterm does. *)
 structure EmulatorTest =
 struct
-  val failures = ref 0
-  fun check (name, ok) = if ok then () else (failures := !failures + 1; print ("FAIL " ^ name ^ "\n"))
+  val check = Expect.that
 
   fun screen (cols, rows, bytes) =
     Emulator.write (Emulator.new {columns = cols, rows = rows, policy = Grapheme.ByCluster}, bytes)
@@ -11,7 +11,7 @@ struct
     let val got = Emulator.text (screen (cols, rows, bytes))
     in check (name ^ ": " ^ String.toString got, got = want) end
 
-  fun main () =
+  fun screens () =
     (shows ("text", 10, 3, "hello", "hello");
      shows ("wrap", 4, 3, "abcdef", "abcd\nef");
      shows ("pending wrap", 4, 3, "abcd\r\nx", "abcd\nx");
@@ -27,23 +27,37 @@ struct
      shows ("EL 1", 10, 2, "abcdef\027[3G\027[1K", "   def");
      shows ("ED", 10, 3, "a\r\nb\r\nc\027[2A\027[J", "a");
      shows ("scroll", 5, 2, "a\r\nb\r\nc", "b\nc");
-     shows ("split writes", 10, 2, "", "");
-     let
-       val s = Emulator.write (Emulator.write (Emulator.new {columns = 10, rows = 2, policy = Grapheme.ByCluster},
-                                               "a\027["), "1Gb\226\130")
-       val s = Emulator.write (s, "\172c")
-     in
-       check ("an escape and a character across writes", Emulator.text s = "b\226\130\172c")
-     end;
-     let val s = screen (10, 2, "\027[1;31mab\027[0mc")
-     in
-       check ("styles", map #style (Emulator.row (s, 0)) = [Style.parameters "1;31", Style.parameters "1;31", Style.plain])
-     end;
-     check ("cursor", Emulator.cursor (screen (10, 3, "ab\r\ncd")) = (1, 2));
-     check ("cursor at the margin", Emulator.cursor (screen (4, 3, "abcd")) = (0, 3));
-     check ("scrolled", Emulator.scrolled (screen (5, 2, "a\r\nb\r\nc\r\nd")) = 2);
-     check ("modes", Emulator.modes (screen (5, 2, "\027[?2004h\027[?25l")) = {bracketedPaste = true, cursorVisible = false});
-     print ((if !failures = 0 then "PASS" else "FAIL") ^ " emulator: " ^ Int.toString (!failures) ^ " failed\n"))
+     shows ("split writes", 10, 2, "", ""))
+
+  fun acrossWrites () =
+    let
+      val s = Emulator.write (Emulator.write (Emulator.new {columns = 10, rows = 2, policy = Grapheme.ByCluster},
+                                              "a\027["), "1Gb\226\130")
+      val s = Emulator.write (s, "\172c")
+    in
+      check ("an escape and a character across writes", Emulator.text s = "b\226\130\172c")
+    end
+
+  fun styles () =
+    let val s = screen (10, 2, "\027[1;31mab\027[0mc")
+    in
+      check ("styles", map #style (Emulator.row (s, 0)) = [Style.parameters "1;31", Style.parameters "1;31", Style.plain])
+    end
+
+  fun cursor () =
+    (check ("cursor", Emulator.cursor (screen (10, 3, "ab\r\ncd")) = (1, 2));
+     check ("cursor at the margin", Emulator.cursor (screen (4, 3, "abcd")) = (0, 3)))
+
+  fun scrolled () = check ("scrolled", Emulator.scrolled (screen (5, 2, "a\r\nb\r\nc\r\nd")) = 2)
+
+  fun modes () =
+    check ("modes", Emulator.modes (screen (5, 2, "\027[?2004h\027[?25l")) = {bracketedPaste = true, cursorVisible = false})
+
+  val tests =
+    Test.describe "terminal/emulator"
+      [Test.it "screens" screens, Test.it "across-writes" acrossWrites, Test.it "styles" styles,
+       Test.it "cursor" cursor, Test.it "scrolled" scrolled, Test.it "modes" modes]
 end
 
-val () = EmulatorTest.main ()
+structure EmulatorMain = Main (struct val name = "terminal/emulator" val tests = EmulatorTest.tests end)
+val () = EmulatorMain.main ()

@@ -1,0 +1,482 @@
+{
+ "signatures": {
+  "CLI": {
+   "doc": "The runner's command line (docs/plans/unit-testing.md, D19):\n\n- `list [FILTER]`: the tests, with their tags, and nothing run;\n- `run [FILTER] [--tier T] [-j N] [--mem MB] [--keep] [--failed]`: the\n  tests the filter selects (and the tier, a tag), on `N` processors\n  (by default those of the machine less its load from outside, and at\n  least half of them) and `MB`\n  megabytes; `--failed` runs the tests that failed last time,\n  `--keep` keeps every test's directory, and `--accept` writes what the\n  tests printed into their golden files (`Run.accept`);\n- `explain PATH`: a test's command, directory and needs;\n- `stats`: the slowest and the flakiest tests in the history;\n- `doctor [FILTER]`: the capabilities the tests require, each probed,\n  with how to get those that are missing (it fails when one is).\n\nA run of the tier check, or with `--strict`, fails a test whose\ncapability is missing; any other run skips it. For flaky tests\n(docs/plans/unit-testing.md, D17): `--repeat N` runs the selection N\ntimes, `--until-fail` until a run fails (at most N times, 100 by\ndefault), and `--under-load` keeps every processor busy beside it.\n\nA filter is the language of `TestFilter`; two or more of them select\nthe tests any of them selects. The tests a selected test waits for are\nselected with it, and a run runs the tests tagged `always` as well.\n`--profile P` is `--tier P`.\n\nThe tier quick, and `--informed`, add every test that failed last time\nor whose verdict has changed between runs, by the history.\n\n`--affected` keeps, of what is selected, the tests that cover a path\nchanged since `HEAD` (in the work tree, or not yet known to git);\n`--since REV` since `REV`, and `--changed FILE` the paths that `FILE`\nlists, one to a line. A test covers the paths its tags `covers:GLOB`\nmatch; a changed path that no test covers keeps every test. `--root DIR` is the directory of the tree (default `.`), `--out DIR` where\nruns go (default `tests/out/r`), `--history FILE` the history (default\n`build/test-history.tsv`). A run ends the program with success when every\ntest passed, with failure otherwise, and with 2 for a mistake in the\ncommand line.\n\n",
+   "page": "sig/CLI.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "main",
+     "spec": "val main : Run.command Test.tree -> unit",
+     "doc": "`main tests` runs the command line's command over `tests`.\n\n",
+     "page": "sig/CLI.md#val-main"
+    },
+    {
+     "kind": "val",
+     "name": "mainWith",
+     "spec": "val mainWith : {tests : Run.command Test.tree, capabilities : Requirements.capability list, quarantine : string} -> unit",
+     "doc": "`mainWith {tests, capabilities, quarantine}` is `main tests`, with\nwhat the tests may require and what is in quarantine.\n\n`capabilities` are what tests may require (`Requirements`), and\n`quarantine` the file of the quarantine's expectations (\"\" for none).\n\n",
+     "page": "sig/CLI.md#val-mainwith"
+    }
+   ]
+  },
+  "EXPECTATIONS": {
+   "doc": "What a suite expects of its tests in some ways (docs/plans/unit-testing.md,\nD16; docs/testing.md, Expectations): one format, and one meaning for\neach category, for every list of deviations and skips.\n\nA file has a line for each expectation, and `#` begins a comment:\n\n```sml\nWAY-GLOB | PATH-GLOB[::LABEL-GLOB] | CATEGORY | reason\n```\n\nThe globs have `*` (any run of characters), `?` (one character) and\n`[...]` (one of the characters, or ranges such as `0-9`, that it holds;\n`[!...]` one that it does not), as the shell has them, and must match the\nwhole way, path or label. A line of three fields,\n`PATH-GLOB | CATEGORY | reason`, is of every way. A category's meaning is one of\nfour:\n\n- strict: the test must fail where the line says (`RUNE-DEV`, `HOST-BUG`,\n  `WIDTH`, `SPEC-AMBIGUOUS`, `WINDOWS`, `EMULATED`, `FAILS`). A test that\n  passes there fails, and a line that matches no failure in a way that\n  ran is stale;\n- lenient: the test may pass or fail (`HOST-FLAKY`, `FLAKY`);\n- skip: the test is not run, for the reason given (`HOST-ABSENT`,\n  `XC1-NA`, `XC2-NA`, `UNTESTED`, `UNSUPPORTED`). A line that names no\n  test is stale;\n- quarantine: the test runs and is reported, and its failure fails\n  nothing until the date the reason begins with (`QUARANTINE`, with\n  `until YYYY-MM-DD:`); after it the line is stale.\n\n",
+   "page": "sig/EXPECTATIONS.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "meaning",
+     "spec": "datatype meaning = Strict | Lenient | Skip | Quarantine",
+     "doc": "What a category means.\n\n",
+     "page": "sig/EXPECTATIONS.md#type-meaning"
+    },
+    {
+     "kind": "type",
+     "name": "line",
+     "spec": "type line = {file : string, number : int, way : string, path : string, label : string option,\n             category : string, reason : string}",
+     "doc": "A line: where it is, its globs, its category and its reason.\n\n",
+     "page": "sig/EXPECTATIONS.md#type-line"
+    },
+    {
+     "kind": "exception",
+     "name": "Parse",
+     "spec": "exception Parse of string",
+     "doc": "Raised by `parse` for a line that is not an expectation, with its file\nand number.\n\n",
+     "page": "sig/EXPECTATIONS.md#exn-parse"
+    },
+    {
+     "kind": "val",
+     "name": "meaning",
+     "spec": "val meaning : string -> meaning option",
+     "doc": "`meaning c` is what the category `c` means, or `NONE` for no category.\n\n**Example** `meaning \"HOST-BUG\" = SOME Strict`\n\n",
+     "page": "sig/EXPECTATIONS.md#val-meaning"
+    },
+    {
+     "kind": "val",
+     "name": "parse",
+     "spec": "val parse : string * string -> line list",
+     "doc": "`parse (file, text)` is the lines of `text`, the contents of `file`.\n\n**Raises** `Parse` for a line with too few fields or a category that is\nnot one, or a quarantine without its date.\n\n**Example** `length (parse (\"f\", \"# a comment\\n* | a/* | FLAKY | why\\n\")) = 1`\n\n",
+     "page": "sig/EXPECTATIONS.md#val-parse"
+    },
+    {
+     "kind": "val",
+     "name": "read",
+     "spec": "val read : string -> line list",
+     "doc": "`read file` is the lines of `file`, or none when there is no file.\n\n",
+     "page": "sig/EXPECTATIONS.md#val-read"
+    },
+    {
+     "kind": "val",
+     "name": "glob",
+     "spec": "val glob : string * string -> bool",
+     "doc": "`glob (g, s)` says whether the glob `g` matches the whole of `s`.\n\n**Example** `glob (\"lang/*/rt.?\", \"lang/native/rt.a\")`\n\n**Example** `glob (\"*.scan/DEC-[avfr]*\", \"Int.scan/DEC-v1\") andalso not (glob (\"[!o]x\", \"ox\"))`\n\n",
+     "page": "sig/EXPECTATIONS.md#val-glob"
+    },
+    {
+     "kind": "val",
+     "name": "find",
+     "spec": "val find : line list * {way : string, path : string, label : string option} -> line option",
+     "doc": "`find (ls, {way, path, label})` is the first line of `ls` that matches\nthe test, if any.\n\nA line with a label matches only that test's label; one without\nmatches the test, whatever its label.\n\n",
+     "page": "sig/EXPECTATIONS.md#val-find"
+    },
+    {
+     "kind": "val",
+     "name": "skipped",
+     "spec": "val skipped : line list * {way : string, path : string} -> line option",
+     "doc": "`skipped (ls, {way, path})` is the line that skips the test of `path`\nin `way`, if one does.\n\n",
+     "page": "sig/EXPECTATIONS.md#val-skipped"
+    },
+    {
+     "kind": "datatype",
+     "name": "outcome",
+     "spec": "datatype outcome = Pass | Fail | Expected of line | Unexpected of line | Flaky of line\n                 | Quarantined of line | Expired of line",
+     "doc": "What a test that ran comes to, given the lines.\n\n`Pass` and `Fail` where no line speaks; `Expected` for a strict line's\nfailure, and `Unexpected` for its pass; `Flaky` for a lenient line;\n`Quarantined` for a quarantined failure before its date, and `Expired`\nfor one after it.\n\n",
+     "page": "sig/EXPECTATIONS.md#type-outcome"
+    },
+    {
+     "kind": "val",
+     "name": "judge",
+     "spec": "val judge : line list * {way : string, path : string, label : string option, passed : bool, today : string}\n            -> outcome",
+     "doc": "`judge (ls, {way, path, label, passed, today})` is what the test comes\nto; `today` is the date as `YYYY-MM-DD`.\n\n",
+     "page": "sig/EXPECTATIONS.md#val-judge"
+    },
+    {
+     "kind": "val",
+     "name": "failing",
+     "spec": "val failing : outcome -> bool",
+     "doc": "`failing oc` says whether `oc` fails the run.\n\n**Example** `failing Fail andalso not (failing Pass)`\n\n",
+     "page": "sig/EXPECTATIONS.md#val-failing"
+    },
+    {
+     "kind": "val",
+     "name": "stale",
+     "spec": "val stale : line list * {ways : string list, paths : string list, used : line list, today : string} -> line list",
+     "doc": "`stale (ls, {ways, paths, used, today})` is the lines of `ls` that are\nstale after a run.\n\nThose are a strict line that names a way in `ways` and is not in\n`used` (the lines of the failures it expected), a skip line whose path\nmatches none of `paths`, and a quarantine past its date.\n\n",
+     "page": "sig/EXPECTATIONS.md#val-stale"
+    },
+    {
+     "kind": "val",
+     "name": "describe",
+     "spec": "val describe : line -> string",
+     "doc": "`describe l` is `l` as its file and number say it, for a report.\n\n",
+     "page": "sig/EXPECTATIONS.md#val-describe"
+    }
+   ]
+  },
+  "HISTORY": {
+   "doc": "What earlier runs found (docs/plans/unit-testing.md, D13): per test, the\nlast wall times, the last outcome and how often it flipped, in a table of\ntab-separated lines that each run rewrites. A fresh tree reads a seed\ninstead, which only a run of every test may write, since a test missing\nfrom it would look cheap (HOL4's rule).\n\n",
+   "page": "sig/HISTORY.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "entry",
+     "spec": "type entry = {path : string, walls : real list, passed : bool, flips : int}",
+     "doc": "A test's record: its path, its last wall times, its last verdict and\nhow often its verdict changed.\n\nThe wall times are in seconds, newest first, at most five; `flips`\ncounts the runs whose verdict was not the one before.\n\n",
+     "page": "sig/HISTORY.md#type-entry"
+    },
+    {
+     "kind": "type",
+     "name": "history",
+     "spec": "type history",
+     "doc": "A history: the records of the tests, by path.\n\n",
+     "page": "sig/HISTORY.md#type-history"
+    },
+    {
+     "kind": "val",
+     "name": "empty",
+     "spec": "val empty : history",
+     "doc": "The empty history.\n\n**Example** `not (isSome (cost (empty, \"any\")))`\n\n",
+     "page": "sig/HISTORY.md#val-empty"
+    },
+    {
+     "kind": "val",
+     "name": "read",
+     "spec": "val read : string -> history",
+     "doc": "`read file` is the history in `file`, or `empty` when there is none.\n\n",
+     "page": "sig/HISTORY.md#val-read"
+    },
+    {
+     "kind": "val",
+     "name": "write",
+     "spec": "val write : string * history -> unit",
+     "doc": "`write (file, h)` writes `h` to `file`, replacing it.\n\n",
+     "page": "sig/HISTORY.md#val-write"
+    },
+    {
+     "kind": "val",
+     "name": "record",
+     "spec": "val record : history * {path : string, wall : real, passed : bool} -> history",
+     "doc": "`record (h, {path, wall, passed})` is `h` with the run of a test\nadded: its wall time first among its five, and its flips counted.\n\n**Example** `Real.== (valOf (cost (record (empty, {path = \"t\", wall = 2.0, passed = true}), \"t\")), 2.0)`\n\n",
+     "page": "sig/HISTORY.md#val-record"
+    },
+    {
+     "kind": "val",
+     "name": "cost",
+     "spec": "val cost : history * string -> real option",
+     "doc": "`cost (h, path)` is what the test of `path` is expected to take: the\nlongest of its last wall times, or `NONE` for a test never run.\n\n",
+     "page": "sig/HISTORY.md#val-cost"
+    },
+    {
+     "kind": "val",
+     "name": "failedLast",
+     "spec": "val failedLast : history * string -> bool",
+     "doc": "`failedLast (h, path)` says whether the test of `path` failed the last\ntime it ran.\n\n**Example** `failedLast (record (empty, {path = \"t\", wall = 1.0, passed = false}), \"t\") = true`\n\n",
+     "page": "sig/HISTORY.md#val-failedlast"
+    },
+    {
+     "kind": "val",
+     "name": "entries",
+     "spec": "val entries : history -> entry list",
+     "doc": "`entries h` is every record of `h`, by path.\n\n",
+     "page": "sig/HISTORY.md#val-entries"
+    }
+   ]
+  },
+  "REPORT": {
+   "doc": "What a run says, to the reader it has (docs/plans/unit-testing.md, D14).\n\nOn a terminal: one status line, redrawn at most ten times a second, with\neach failure printed above it as it happens and a summary at the end. To\na log, and to an agent: nothing for a test that passes, a line every 30\nseconds that says how far the run is, a block for each failure that\nstands alone, and the summary. An agent, recognised by its environment\n(`AI_AGENT`, `CLAUDECODE`, `CODEX_SANDBOX`, `CURSOR_AGENT`,\n`GEMINI_CLI`), gets the path of the run's events at the start as well,\nsince it may see only the head and the tail of a long output. Every\nfailure line begins with its verdict, and the last line with `RESULT:`.\nThe run's events go to a file of JSON lines in every case, and the\nsummary, in Markdown, to the file summary.md beside it, and to the file\n`GITHUB_STEP_SUMMARY` names when it names one; and every test's verdict\nas JUnit's XML to junit.xml, for the tools of CI.\n\n",
+   "page": "sig/REPORT.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "reader",
+     "spec": "datatype reader = Terminal | Log | Agent",
+     "doc": "Who reads: a person at a terminal, a log, or an agent.\n\n",
+     "page": "sig/REPORT.md#type-reader"
+    },
+    {
+     "kind": "val",
+     "name": "reader",
+     "spec": "val reader : unit -> reader",
+     "doc": "`reader ()` is the reader of standard output: an agent when the\nenvironment names one, a terminal when standard output is one, and a\nlog otherwise.\n\n",
+     "page": "sig/REPORT.md#val-reader"
+    },
+    {
+     "kind": "type",
+     "name": "report",
+     "spec": "type report",
+     "doc": "A report being written.\n\n",
+     "page": "sig/REPORT.md#type-report"
+    },
+    {
+     "kind": "val",
+     "name": "start",
+     "spec": "val start : {reader : reader, events : string, total : int} -> report",
+     "doc": "`start {reader, events, total}` begins the report of a run of `total`\ntests, its events written to the file `events`.\n\n",
+     "page": "sig/REPORT.md#val-start"
+    },
+    {
+     "kind": "val",
+     "name": "tick",
+     "spec": "val tick : report * int -> unit",
+     "doc": "`tick (r, running)` redraws the status line, or writes the line that\nsays the run goes on, when it is time to.\n\n",
+     "page": "sig/REPORT.md#val-tick"
+    },
+    {
+     "kind": "type",
+     "name": "ended",
+     "spec": "type ended = {path : string, verdict : string, reason : string, wall : Time.time, user : Time.time,\n              system : Time.time, peakResident : int, outputBytes : int, kept : string list,\n              command : string, rerun : string}",
+     "doc": "What a test ended with: its path, its verdict and why, what it cost,\nwhere its outputs are kept, and the command that reruns it.\n\nThe verdict is one of `PASS`, `FAIL`, `TIMEOUT`, `CRASH`, `LEAK`,\n`ERROR`, `SKIP`, `ACCEPTED` (a golden file written, `Run.accept`),\n`FLAKY` (a failure, then a pass) and `QUARANTINED`; the first, `SKIP`\nand the last three are not failures.\n\n",
+     "page": "sig/REPORT.md#type-ended"
+    },
+    {
+     "kind": "val",
+     "name": "test",
+     "spec": "val test : report * ended -> unit",
+     "doc": "`test (r, e)` reports `e`: a failure as a block, a skip as a line with\nits reason, a pass as a count, and each as an event.\n\n",
+     "page": "sig/REPORT.md#val-test"
+    },
+    {
+     "kind": "val",
+     "name": "finish",
+     "spec": "val finish : report * {cpus : int, freed : int, keptBytes : int} -> bool",
+     "doc": "`finish (r, {cpus, freed, keptBytes})` writes the summary and the\n`RESULT:` line, and is whether every test ran and passed.\n\n`cpus` is the processors the run had, and `freed` and `keptBytes` the\nbytes of output removed and kept.\n\n",
+     "page": "sig/REPORT.md#val-finish"
+    }
+   ]
+  },
+  "REQUIREMENTS": {
+   "doc": "What a test needs of the machine (docs/plans/unit-testing.md, D18): a\ncapability is a name, a probe and an install hint. A test names the\ncapabilities it needs (`Test.requires`); the runner probes each once, and\na test whose capability is missing is skipped with the hint, or fails in\na run that must be complete, as the tier check is.\n\nRUNE\\_TEST\\_WITHOUT names capabilities to take as missing, separated by\ncommas, so that what a machine without them gets can be seen on one\nthat has them.\n\n",
+   "page": "sig/REQUIREMENTS.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "capability",
+     "spec": "type capability = {name : string, probe : string, hint : string}",
+     "doc": "A capability: its name, a command of the shell that exits with 0 when\nit is there, and how to get it.\n\n",
+     "page": "sig/REQUIREMENTS.md#type-capability"
+    },
+    {
+     "kind": "val",
+     "name": "present",
+     "spec": "val present : capability list * string -> bool",
+     "doc": "`present (cs, name)` says whether the capability `name` of `cs` is\nthere, probing it once; one that `cs` does not name is not.\n\n",
+     "page": "sig/REQUIREMENTS.md#val-present"
+    },
+    {
+     "kind": "val",
+     "name": "missing",
+     "spec": "val missing : capability list * string list -> (string * string) list",
+     "doc": "`missing (cs, names)` is the capabilities among `names` that are not\nthere, each with its hint.\n\n",
+     "page": "sig/REQUIREMENTS.md#val-missing"
+    }
+   ]
+  },
+  "RUN": {
+   "doc": "A run of tests that are commands (docs/plans/unit-testing.md, M3): each\nin a directory of its own of a fixed width under the run's directory, or\nin a directory it names; judged when it ends; its directory removed when\nit passed and kept when it did not; its wall time recorded in the\nhistory; and every outcome reported.\n\n",
+   "page": "sig/RUN.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "command",
+     "spec": "type command = {program : string, args : string list, env : string list option, dir : string option,\n                stdin : string option, timeout : Time.time, cap : int, cpus : int, memory : int,\n                pools : string list, exclusive : bool, after : string list,\n                judge : Supervisor.result * {stdout : string, stderr : string} -> (string * string) option}",
+     "doc": "A test that is a command: what runs, where, what it may take, what it\nwaits for, and how its verdict is found.\n\n`after` names the tests it waits for by path. `judge` finds the\nverdict from how the command ended and the files of its output and\nerrors: `NONE` passes, and `SOME (verdict, reason)` does not. `dir` is\n`NONE` for a directory of its own. `env` is `NONE` for the runner's\nenvironment without what would make a `make` inside it a part of the\nrunner's own (`MAKELEVEL`, `MFLAGS`, and the jobs and jobserver of\n`MAKEFLAGS`, whose variables stay) or force colour (`FORCE_COLOR`,\n`CLICOLOR_FORCE`). A command takes no more CPUs than the run has, and\nfinds how many it has in `RUNE_TEST_CPUS`, the run's directory in\n`RUNE_TEST_RUN` and the tree's in `RUNE_TEST_ROOT`, both absolute;\n`RUNE_TEST_ACCEPT` is 1 in a run that accepts (`accept`).\n\n",
+     "page": "sig/RUN.md#type-command"
+    },
+    {
+     "kind": "val",
+     "name": "exitZero",
+     "spec": "val exitZero : Supervisor.result * {stdout : string, stderr : string} -> (string * string) option",
+     "doc": "`exitZero (r, files)` is the verdict of a command that passes when it\nexits with 0.\n\nOtherwise its verdict is `FAIL`, `TIMEOUT`, `CRASH` (a signal) or\n`LEAK` (it left processes behind), with the end of its output.\n\n",
+     "page": "sig/RUN.md#val-exitzero"
+    },
+    {
+     "kind": "val",
+     "name": "shell",
+     "spec": "val shell : string * int -> command",
+     "doc": "`shell (script, cpus)` is a command that runs `script` with `/bin/sh -c`\nin the directory of the tree, judged by `exitZero`.\n\nIts timeout is an hour, and its output has no cap.\n\n",
+     "page": "sig/RUN.md#val-shell"
+    },
+    {
+     "kind": "val",
+     "name": "index",
+     "spec": "val index : string vector -> string -> int option",
+     "doc": "`index names` finds a name among `names`: its place, or `NONE`.\n\n**Example** `index (Vector.fromList [\"b\", \"a\"]) \"a\" = SOME 1`\n\n",
+     "page": "sig/RUN.md#val-index"
+    },
+    {
+     "kind": "val",
+     "name": "tail",
+     "spec": "val tail : int * string -> string",
+     "doc": "`tail (n, file)` is the last `n` lines of `file`, or \"\" when there is\nnone.\n\n",
+     "page": "sig/RUN.md#val-tail"
+    },
+    {
+     "kind": "val",
+     "name": "accept",
+     "spec": "val accept : bool ref",
+     "doc": "Whether the run accepts what its tests printed as what they should\nprint (`--accept`).\n\nA judge that reads a golden file writes it instead, and says\n`ACCEPTED`. It is `false` unless the command line sets it.\n\n",
+     "page": "sig/RUN.md#val-accept"
+    },
+    {
+     "kind": "val",
+     "name": "run",
+     "spec": "val run : {tests : (string * Test.meta * command) list, root : string, out : string, history : string,\n           cpus : int, memory : int, keep : bool, reader : Report.reader,\n           capabilities : Requirements.capability list, strict : bool, quarantine : Expectations.line list} -> bool",
+     "doc": "`run {tests, root, out, history, cpus, memory, keep, reader, capabilities, strict, quarantine}` runs `tests` under `out`, and is\nwhether every test passed.\n\nEach run has a new directory under `out`.\n\nThe tree's directory is `root`; the run has `cpus` processors and\n`memory` megabytes; it reads and rewrites the history file `history`;\nand `keep` keeps every test's directory. A test that requires a\ncapability the machine lacks (of `capabilities`) does not run: it is\nskipped with the capability's hint, or is an ERROR when `strict`, and\nthe tests that wait for it do not start.\n\nA test tagged `flaky` that fails runs once more, and is `FLAKY` (no\nfailure) when it passes then. A failure that a line of `quarantine`\ncovers, of the way `rune-test` and the test's path, is `QUARANTINED`\nuntil the line's date, and a failure again after it.\n\n",
+     "page": "sig/RUN.md#val-run"
+    }
+   ]
+  },
+  "SCHEDULER": {
+   "doc": "Which jobs to start (docs/plans/unit-testing.md, D12): the jobs of a run,\nwhat has ended and what is free decide it, so that it can be tested on a\nsimulated clock.\n\nA job takes CPUs and megabytes of memory while it runs, may hold named\npools (mutexes: two jobs that name one never overlap), may be exclusive\n(it runs alone), and may wait for other jobs. Its priority is the critical\npath: the longest chain of costs from it to the end of the run, so that\namong jobs with no edges the longest starts first (Graham's LPT). A job\nthat failed last time starts before any other. An exclusive job that is\nnext lets the running jobs drain, and nothing starts in front of it.\n\nA run's state is kept as it goes, so that a run of thousands of jobs costs\nlittle at each start and end: the jobs each waits for are counted down,\nand the jobs that may start are kept in the order of their priorities.\n\n",
+   "page": "sig/SCHEDULER.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "job",
+     "spec": "type job = {cost : real, cpus : int, memory : int, pools : string list, exclusive : bool,\n            failedLast : bool, deps : int list}",
+     "doc": "A job as the scheduler sees it: its cost, what it takes and holds, and\nthe jobs it waits for.\n\nThe cost is in seconds, from the history. `deps` are the indices of\nthe jobs it waits for; `exclusive` runs it alone.\n\n",
+     "page": "sig/SCHEDULER.md#type-job"
+    },
+    {
+     "kind": "type",
+     "name": "plan",
+     "spec": "type plan",
+     "doc": "A run's plan: the jobs and their priorities.\n\n",
+     "page": "sig/SCHEDULER.md#type-plan"
+    },
+    {
+     "kind": "val",
+     "name": "plan",
+     "spec": "val plan : job vector -> plan",
+     "doc": "`plan jobs` is the plan of `jobs`, numbered by their places.\n\n**Raises** `Fail` if a job waits for itself, or for one that waits for\nit, or for no job.\n\n",
+     "page": "sig/SCHEDULER.md#val-plan"
+    },
+    {
+     "kind": "val",
+     "name": "priority",
+     "spec": "val priority : plan * int -> real",
+     "doc": "`priority (p, i)` is job `i`'s priority: its cost and the longest chain\nof costs after it, and more than every other for a job that failed\nlast time.\n\n**Example** `Real.== (priority (plan (Vector.fromList [{cost = 2.0, cpus = 1, memory = 0, pools = [], exclusive = false, failedLast = false, deps = []}]), 0), 2.0)`\n\n",
+     "page": "sig/SCHEDULER.md#val-priority"
+    },
+    {
+     "kind": "type",
+     "name": "state",
+     "spec": "type state",
+     "doc": "A run under way: which jobs wait, run and have ended, and what the\nrunning ones take.\n\n",
+     "page": "sig/SCHEDULER.md#type-state"
+    },
+    {
+     "kind": "val",
+     "name": "start",
+     "spec": "val start : plan -> state",
+     "doc": "`start p` is the state of a run of `p` before any job has started.\n\n",
+     "page": "sig/SCHEDULER.md#val-start"
+    },
+    {
+     "kind": "val",
+     "name": "admit",
+     "spec": "val admit : state * {cpus : int, memory : int} -> int list",
+     "doc": "`admit (s, {cpus, memory})` is the jobs to start now, the highest\npriority first, on a machine of `cpus` and `memory`; they are running\nfrom then on.\n\nA job may start once every job it waits for has ended well, when it\nfits what the running jobs leave free, and when no running job holds a\npool of its. A job that takes more than the machine has starts alone\nwhen nothing runs, so that no job waits forever.\n\n",
+     "page": "sig/SCHEDULER.md#val-admit"
+    },
+    {
+     "kind": "val",
+     "name": "ended",
+     "spec": "val ended : state * int * bool -> int list",
+     "doc": "`ended (s, i, ok)` records that job `i` ended, well when `ok`, and is\nthe jobs that will now never start.\n\nThose are the jobs that wait, directly or not, for a job that did not\nend well.\n\n",
+     "page": "sig/SCHEDULER.md#val-ended"
+    },
+    {
+     "kind": "val",
+     "name": "retry",
+     "spec": "val retry : state * int -> unit",
+     "doc": "`retry (s, i)` puts the running job `i` back among those that may\nstart, as if it had not run.\n\n",
+     "page": "sig/SCHEDULER.md#val-retry"
+    },
+    {
+     "kind": "val",
+     "name": "finished",
+     "spec": "val finished : state -> bool",
+     "doc": "`finished s` says whether no job waits or runs.\n\n",
+     "page": "sig/SCHEDULER.md#val-finished"
+    },
+    {
+     "kind": "val",
+     "name": "simulate",
+     "spec": "val simulate : plan * {cpus : int, memory : int} -> real vector * real",
+     "doc": "`simulate (p, {cpus, memory})` is when each job would start, and the\nmakespan, in the schedule `admit` makes.\n\nThe machine has `cpus` and `memory`, and each job takes its cost.\n\n**Example** `Real.== (#2 (simulate (plan (Vector.fromList [{cost = 1.0, cpus = 1, memory = 0, pools = [], exclusive = false, failedLast = false, deps = []}]), {cpus = 4, memory = 100})), 1.0)`\n\n",
+     "page": "sig/SCHEDULER.md#val-simulate"
+    }
+   ]
+  },
+  "SUPERVISOR": {
+   "doc": "Running jobs as children (docs/plans/unit-testing.md, D9 and D11): one\nloop that starts what the scheduler admits, reaps what ended, ends what\nran too long or wrote too much, and sleeps a little when nothing\nhappened. There are no threads and no handlers of signals but the\ninterrupt, so this loop is the runner.\n\nA job is a process in a process group of its own (a job on Windows), with\nits standard input from a file and its output and errors to files, which\na crash leaves on disk; its signals start at their default actions. A\njob that runs past its time is sent TERM, and KILL after a grace period;\none whose output passes its cap is stopped by its file-size limit and by\nthe loop, which looks at the files' sizes. When the job's process has\nended and its group has not, the rest of the group is killed and the job\nis said to have left processes behind.\n\n",
+   "page": "sig/SUPERVISOR.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "command",
+     "spec": "type command = {program : string, args : string list, env : string list, dir : string,\n                stdin : string, stdout : string, stderr : string, timeout : Time.time, cap : int,\n                cost : real, cpus : int, memory : int, pools : string list, exclusive : bool,\n                failedLast : bool, deps : int list}",
+     "doc": "A command to run: the program and its arguments, its environment and\ndirectory, the files of its streams, its time and cap, and what it takes.\n\nThe arguments begin with the program's name. `cap` limits the bytes of\nits output and errors, and of any file it writes (0 for none). The\nrest is what the scheduler needs (`Scheduler.job`).\n\n",
+     "page": "sig/SUPERVISOR.md#type-command"
+    },
+    {
+     "kind": "datatype",
+     "name": "outcome",
+     "spec": "datatype outcome = Exited of int | Signalled of int | TimedOut | Capped | Cancelled | Failed of string",
+     "doc": "How a command ended: its exit status or signal, ended by the loop, or\nnever started.\n\nThe loop ends a command for its time (`TimedOut`) or its output\n(`Capped`). A command is `Cancelled` when a job it waited for did not\nend well, and `Failed` when the system refused to start it.\n\n",
+     "page": "sig/SUPERVISOR.md#type-outcome"
+    },
+    {
+     "kind": "datatype",
+     "name": "verdict",
+     "spec": "datatype verdict = Passed | NotPassed | Again",
+     "doc": "What a command came to: it passed, it did not, or it is to run again\n(a test that may be flaky, the first time it fails).\n\n",
+     "page": "sig/SUPERVISOR.md#type-verdict"
+    },
+    {
+     "kind": "type",
+     "name": "result",
+     "spec": "type result = {outcome : outcome, wall : Time.time, user : Time.time, system : Time.time,\n               peakResident : int, outputBytes : int, leaked : bool}",
+     "doc": "What a command cost: its times, its memory and its output, and whether\nit left processes behind.\n\nThe wall time is on the monotonic clock; `peakResident` is the most\nmemory it held resident, in kilobytes.\n\n",
+     "page": "sig/SUPERVISOR.md#type-result"
+    },
+    {
+     "kind": "val",
+     "name": "outcomeName",
+     "spec": "val outcomeName : outcome -> string",
+     "doc": "`outcomeName oc` is `oc` as a word or two, for a report.\n\n**Example** `outcomeName (Exited 3) = \"exit 3\"`\n\n",
+     "page": "sig/SUPERVISOR.md#val-outcomename"
+    },
+    {
+     "kind": "val",
+     "name": "run",
+     "spec": "val run : {commands : command vector, cpus : int, memory : int,\n           finished : int * result -> verdict, tick : int -> unit} -> unit",
+     "doc": "`run {commands, cpus, memory, finished, tick}` runs `commands` as\n`Scheduler.admit` admits them, and tells `finished` each one's result.\n\nThe machine has `cpus` processors and `memory` megabytes. `tick` is\ncalled with the number running whenever the loop has nothing to do,\nfor a display.\n\n`finished` says what the command came to; one to run `Again` is\nstarted again. A command that waits for one that did not pass is not\nstarted, and is `Cancelled`. An interrupt (`SML90.Interrupt`) kills every\nrunning group and is raised again.\n\n",
+     "page": "sig/SUPERVISOR.md#val-run"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Cli": "CLI",
+  "Expectations": "EXPECTATIONS",
+  "History": "HISTORY",
+  "Report": "REPORT",
+  "Requirements": "REQUIREMENTS",
+  "Run": "RUN",
+  "Scheduler": "SCHEDULER",
+  "Supervisor": "SUPERVISOR"
+ }
+}

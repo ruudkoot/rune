@@ -42,6 +42,10 @@ random="lib/random/random_sig.sml lib/random/random.sml"
 property=$(for d in lib/test/property lib/test/property/basis; do
              sed -n "s#^\\([a-z_0-9/]*\\.sml\\) *| *[a-z]* *| *yes *|.*#$d/\\1#p" "$d/MANIFEST"
            done | tr '\n' ' ')
+# the unit-testing library (docs/plans/unit-testing.md, M1), on the engine
+# alone, which every converted test below is written on
+engine=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/test\/property\/\1/p' lib/test/property/MANIFEST | tr '\n' ' ')
+unit="$random $engine $(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/test\/unit\/\1/p' lib/test/unit/MANIFEST | tr '\n' ' ')"
 unicode=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/unicode\/\1/p' lib/unicode/MANIFEST | tr '\n' ' ')
 json=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/json\/\1/p' lib/json/MANIFEST | tr '\n' ' ')
 jsonrpc=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/jsonrpc\/\1/p' lib/jsonrpc/MANIFEST | tr '\n' ' ')
@@ -53,24 +57,25 @@ jupyter=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/jupyter\/\
 digest=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/digest\/\1/p' lib/digest/MANIFEST | tr '\n' ' ')
 terminal=$(sed -n 's/^\([a-z_0-9]*\.sml\) *| *[a-z]* *| *yes *|.*/lib\/terminal\/\1/p' lib/terminal/MANIFEST | tr '\n' ' ')
 tests="random.kat|$random|tests/lib/random/kat.sml|kat
-random.props|$random|tests/lib/random/props.sml|props
+random.props|$unit|tests/lib/random/props.sml|props
 property.core|$random $property|tests/lib/property/core.sml|core
 property.shrink|$random $property|tests/lib/property/shrink.sml|props
-unicode.utf8|$random $unicode|tests/lib/unicode/utf8.sml|props
-unicode.graphemes|$unicode|tests/lib/unicode/graphemes.sml|props
-json.suite|$unicode $json|tests/lib/json/suite.sml|props
-json.roundtrip|$random $unicode $json|tests/lib/json/roundtrip.sml|props
-terminal.key|$random $unicode $terminal|tests/lib/terminal/key.sml|props
-terminal.style|$random $unicode $terminal|tests/lib/terminal/style.sml|props
-terminal.emulator|$unicode $terminal|tests/lib/terminal/emulator.sml|props
-terminal.edit|$random $unicode $terminal|tests/lib/terminal/edit.sml|props
-digest.digest|$random $digest|tests/lib/digest/digest.sml|props
-jsonrpc.jsonrpc|$random $unicode $json $jsonrpc|tests/lib/jsonrpc/jsonrpc.sml|props
-dap.dap|$unicode $json $jsonrpc $dap|tests/lib/dap/dap.sml|props
-pretty.pretty|$random $unicode $pretty|tests/lib/pretty/pretty.sml|props
-markdown.spec|$unicode $json $pretty $markdown|tests/lib/markdown/spec.sml|props
-zmtp.zmtp|$zmtp|tests/lib/zmtp/zmtp.sml|props
-jupyter.jupyter|$unicode $json $digest $zmtp $jupyter|tests/lib/jupyter/jupyter.sml|props"
+unit.core|$unit|tests/lib/unit/core.sml|props
+unicode.utf8|$unit $unicode|tests/lib/unicode/utf8.sml|props
+unicode.graphemes|$unit $unicode|tests/lib/unicode/graphemes.sml|props
+json.suite|$unit $unicode $json|tests/lib/json/suite.sml|props
+json.roundtrip|$unit $unicode $json|tests/lib/json/roundtrip.sml|props
+terminal.key|$unit $unicode $terminal|tests/lib/terminal/key.sml|props
+terminal.style|$unit $unicode $terminal|tests/lib/terminal/style.sml|props
+terminal.emulator|$unit $unicode $terminal|tests/lib/terminal/emulator.sml|props
+terminal.edit|$unit $unicode $terminal|tests/lib/terminal/edit.sml|props
+digest.digest|$unit $digest|tests/lib/digest/digest.sml|props
+jsonrpc.jsonrpc|$unit $unicode $json $jsonrpc|tests/lib/jsonrpc/jsonrpc.sml|props
+dap.dap|$unit $unicode $json $jsonrpc $dap|tests/lib/dap/dap.sml|props
+pretty.pretty|$unit $unicode $pretty|tests/lib/pretty/pretty.sml|props
+markdown.spec|$unit $unicode $json $pretty $markdown|tests/lib/markdown/spec.sml|props
+zmtp.zmtp|$unit $zmtp|tests/lib/zmtp/zmtp.sml|props
+jupyter.jupyter|$unit $unicode $json $digest $zmtp $jupyter|tests/lib/jupyter/jupyter.sml|props"
 
 passed=0
 explained=0

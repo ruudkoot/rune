@@ -6,8 +6,8 @@
 | --- | --- |
 | Status | extension |
 | Implementations | 1 |
-| Documentation | 17 of 17 entries documented |
-| Tests | 47 checks of 14 entries |
+| Documentation | 19 of 19 entries documented |
+| Tests | 50 checks of 16 entries |
 | Source | [lib/basis/runtime\_sig.sml](../../../../lib/basis/runtime_sig.sml) |
 
 ## Synopsis
@@ -66,6 +66,8 @@ sig
   val <a href="#val-catchinterrupt">catchInterrupt</a> : unit -&gt; bool
   val <a href="#val-maskinterrupt">maskInterrupt</a> : bool -&gt; bool
   val <a href="#val-version">version</a> : string
+  val <a href="#val-clock">clock</a> : unit -&gt; Time.time
+  val <a href="#val-processors">processors</a> : unit -&gt; int
 end
 </pre>
 
@@ -538,6 +540,48 @@ format does.
 <details><summary>Tests (1)</summary>
 
 For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `is-a-word`
+
+</details>
+
+### <a name="val-clock"></a>`clock`
+
+```sml
+val clock : unit -> Time.time
+```
+
+`clock ()` is the time on a clock that never goes back, from a start
+the system chooses.
+
+[`Time.now`](../sig/TIME.md#val-now) is the time of day, which the system may set back or
+forward; the difference of two [`clock`](#val-clock)s is time that passed. Its
+resolution is the microsecond of a [`Time.time`](../sig/TIME.md#type-time). A runner of tests times
+its children by it (docs/plans/unit-testing.md, G1).
+
+**Example** `Time.<= (clock (), clock ()) = true`
+
+<details><summary>Tests (2)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `never-goes-back` &middot; `goes-on`
+
+</details>
+
+### <a name="val-processors"></a>`processors`
+
+```sml
+val processors : unit -> int
+```
+
+`processors ()` is the number of processors this program may run on,
+at least 1.
+
+On Linux it counts the processors of the program's affinity mask, as
+`nproc` does, and elsewhere the system's.
+
+**Example** `processors () >= 1 = true`
+
+<details><summary>Tests (1)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `at-least-one`
 
 </details>
 

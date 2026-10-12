@@ -2,7 +2,7 @@
 # lib/jupyter against a client written from Jupyter's messaging
 # specification in Python (tests/lib/jupyter/interop/client.py): the echo
 # kernel of interop/kernel.sml, compiled with RUNE and run on RUNEVM, at
-# ports the script picks. run-lib-tests.sh runs it after the library's
+# ports the script picks. The runner (tests/runner/tools.sml) runs it after the library's
 # tests. (jupyter_client itself, where it is installed, is M11's.)
 #   tests/lib/jupyter/interop.sh RUNE RUNEVM OUT
 set -u

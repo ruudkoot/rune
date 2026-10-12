@@ -1,6 +1,6 @@
 # Index: R
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) **r** [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [y](y.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) **r** [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [y](y.md)
 
 - `read` (val): [DEVICE](../sig/DEVICE.md#val-read)
 - `readLine` (val): [LINE_EDIT](../sig/LINE_EDIT.md#val-readline)

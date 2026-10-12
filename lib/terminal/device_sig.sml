@@ -36,6 +36,17 @@ sig
      Raises: `OS.SysErr` when the standard input is not a terminal. *)
   val enter : {undo : string} -> unit
 
+  (* `quiet ()` turns the echo off and leaves a return as it was typed,
+     and a signal key is a signal again.
+
+     Raw mode has taken the signals. `quiet` puts them back without
+     turning the echo on. It clears the undo text `enter` stored: the
+     caller writes that text first, since `leave` would otherwise write
+     it later.
+
+     Raises: `OS.SysErr` when the standard input is not a terminal. *)
+  val quiet : unit -> unit
+
   (* `leave ()` puts the terminal back as it was, writing `undo`. *)
   val leave : unit -> unit
 

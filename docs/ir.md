@@ -477,14 +477,14 @@ stack target.
 
 ## Tests
 
-* **`make test-ir`** (`tests/ir/run-ir-tests.sh`): each `tests/ir/NAME.sml`
+* **`make test-ir`** (`ir/*` of `tests/runner/tools.sml`): each `tests/ir/NAME.sml`
   is compiled without the Basis Library, and each `tests/ir/NAME.mid` read
   as Mid, with the lint on. The first line asks for a dump
   (`(* dump: --dump-after=PASS *)`), which is compared with `NAME.expected`
   and reviewed line by line like any `.expected` file, or says with what
   the compiler must stop (`(* fail: MESSAGE *)`), for a program a lint must
   refuse.
-* **`make check-levels`** (`scripts/check-levels.sh`): every program of
+* **`make check-levels`** (the oracle `levels` of `tests/runner/oracles.sml`): every program of
   `tests/lang` and `tests/perf` compiled at `-O0` and at `-O2`, with the
   lint on and Mid's text checked against itself (`--mid-roundtrip`). Both
   run under `runevm-stack --checked` (a `DECON` of another constructor than it

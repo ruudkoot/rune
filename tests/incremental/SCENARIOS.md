@@ -13,7 +13,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
 a file system without case), S28 to S36, S40, and S49 to S62. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
-S39; `scripts/check-cross.sh` (`rune-units`) is S43; S41 is `make
+S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `tests/incremental/mutate.py` edits projects
 mechanically and wants each warm build to be what compiling everything

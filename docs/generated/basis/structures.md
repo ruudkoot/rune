@@ -182,6 +182,7 @@ signature names and no others.
 | [`Socket.SOCK`](str/Socket.SOCK.md) | *in* [`SOCKET`](sig/SOCKET.md) |  | optional |  | [lib/basis/socket.sml](../../../lib/basis/socket.sml) |
 | [`String`](str/String.md) | : [`STRING`](sig/STRING.md) | `where type string = string where type char = Char.char` | required |  | [lib/basis/string.sml](../../../lib/basis/string.sml) |
 | [`StringCvt`](str/StringCvt.md) | : [`STRING_CVT`](sig/STRING_CVT.md) |  | required |  | [lib/basis/stringcvt.sml](../../../lib/basis/stringcvt.sml) |
+| [`Subprocess`](str/Subprocess.md) | : [`SUBPROCESS`](sig/SUBPROCESS.md) |  | extension |  | [lib/basis/subprocess.sml](../../../lib/basis/subprocess.sml) |
 | [`Substring`](str/Substring.md) | : [`SUBSTRING`](sig/SUBSTRING.md) | `where type string = string where type char = Char.char` | required |  | [lib/basis/substring.sml](../../../lib/basis/substring.sml) |
 | [`SysWord`](str/SysWord.md) | :> [`WORD`](sig/WORD.md) |  | optional | is [`Word64`](str/Word64.md) | [lib/basis/sysword.sml](../../../lib/basis/sysword.sml) |
 | [`Terminal`](str/Terminal.md) | : [`TERMINAL`](sig/TERMINAL.md) |  | extension |  | [lib/basis/terminal.sml](../../../lib/basis/terminal.sml) |

@@ -216,7 +216,7 @@ assembles and links with `build/librune.a`: `runtime/runtime.c`, `heap.c`,
   of the VM's layout as `build/rune-offsets.s`, which the code includes. The
   translation writes names, never numbers, so it does not depend on the
   layout, and the five builds of `runeopt` write the same text
-  (`scripts/check-opt-cross.sh`).
+  (the oracle `cross` of `tests/runner/oracles.sml`).
 * **The `.rbc`**, whole (`.incbin`), loaded at start-up by the same loader.
   So the constants are made in the same order, and the counts agree from the
   first instruction; the names and the line table are there for traces; and
@@ -331,7 +331,7 @@ Its limits:
   `make check`: the suites with a collection every 101st allocation, and
   with the runtime built with ASan and UBSan. The stress run is what finds
   a heap pointer kept across an allocation.
-* **`check-cross`** runs `scripts/check-opt-cross.sh`, which wants the same
+* **`check-cross`** runs the oracle `cross` of `tests/runner/oracles.sml`, which wants the same
   output from the five builds of `runeopt`.
 
 ## Keeping it in step

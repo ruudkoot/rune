@@ -17,21 +17,221 @@ is what a change to the layout of values or objects has to pass;
 *Measuring a collector* below is how a new collector is scored against
 today's.
 
+## Writing a test
+
+A test written in Standard ML is a suite on `lib/test/unit`
+([generated/test/unit](generated/test/unit/README.md); the roadmap
+[plans/unit-testing.md](plans/unit-testing.md)): a tree of named tests,
+`Test.describe "json" [Test.it "decode" (fn () => ...), ...]`, whose checks
+(`Expect.that`, `Expect.eq`, `Expect.raises`) are soft, and a program
+`Main (struct val name = "json" val tests = ... end)`. The program prints
+`PASS path` or `FAIL path` with the failed checks for each test and a
+`SUMMARY` line, and fails when a test failed. `--list` lists the tests
+without running them, `--filter` selects (`lib/* & !tag:slow`), `--after`
+goes on after a test, and `--events FILE` writes a JSON line as each test
+starts and ends. The library builds on every host compiler, so the same
+suite runs in `make test-lib` and `make test-lib-hosts`.
+
+## Running the tests
+
+`make check` is `make check-tools`, which builds every tool a test needs,
+and then `bin/rune-test run --tier check`. `bin/rune-test` is the runner
+(`lib/test/runner`, [generated/test/runner](generated/test/runner/README.md)),
+compiled by `bin/rune` from its inventory, `tests/runner/*.sml`, and run on
+`bin/runevm`. Its tests are trees of commands: each runs as a process in a
+group of its own, in a directory of its own under the run's directory
+`tests/out/r/STAMP` or in the one it names, with its output and errors in
+files, its signals at their defaults, a timeout (TERM, then KILL) and a cap
+on its output. A test that ends and leaves processes behind fails with
+`LEAK`. The scheduler starts the jobs whose critical path is longest first,
+and the ones that failed last time before those; it fits them to the CPUs
+and memory of the machine (`-j`, `--mem`; by default its processors less
+its load, but at least half of them, and its available memory), keeps
+apart the jobs that name one pool, and starts a job only after those it
+waits for.
+
+* `bin/rune-test list [FILTER]` lists the tests (`make/*`,
+  `tag:check & !runner/*`), and `explain FILTER` shows each one's command,
+  directory, CPUs, pools and edges;
+* `bin/rune-test run [FILTER] [--tier T]` runs them; `--failed` runs those
+  that failed last time and `--keep` keeps the directory of every test;
+* `bin/rune-test stats` lists the slowest and the flakiest tests.
+
+The output depends on who reads it. On a terminal, one status line and a
+block for each failure as it happens; in a log or to an agent (recognised by
+`AI_AGENT`, `CLAUDECODE` and the like), nothing for a test that passes, a
+line every 30 seconds, and the same blocks. A block gives the verdict
+(`FAIL`, `TIMEOUT`, `CRASH`, `LEAK`, `ERROR`), the reason with the lines of
+the output that say what failed, the directory the test's output is kept in
+(`tests/out/r/STAMP/failed/PATH`), the command, and the command that runs it
+again. The last line begins `RESULT:`. Every run writes its events as JSON
+lines (`events.jsonl`), a summary in Markdown (`summary.md`, and GitHub's
+page of the job) and every verdict as JUnit's XML (`junit.xml`) in its
+directory. The directories of tests that pass are
+removed as they end, and the last five runs are kept. The wall time of each
+test goes into `build/test-history.tsv`, from which the next run orders its
+jobs.
+
+### Tiers, profiles and what changed
+
+A tier or a profile is a tag (`--tier T`, `--profile P`):
+
+| Tag | What it selects |
+|---|---|
+| `quick` | `tests/lang` and `tests/errors` compiled by `bin/rune-stack` and run on `bin/runevm-stack`, the libraries' suites, the documentation generator's, the canaries, and every test that failed last time or whose verdict has changed between runs (the history; `--informed` adds those to any selection): under a minute (`make quick`) |
+| `check` | all of `make check` |
+| `test`, `test-heap`, `test-gc`, `test-all`, `test-native`, `test-register`, `test-register-jit` | the ways of `tests/lang` of that make target |
+| `vm` | `make test-register-asan`, `test-stress`, `test-windows` and `test-portability`, for a change to `runtime/register` or the VMs |
+| `layout` | `tests/lang` in `test-heap`'s ways, `make test-heap-steps` and `check-layouts`, for the heap, the headers and the emitters |
+| `library` | `make matrix-quick` and `test-lib-hosts`, for a library |
+| `windows`, `portability` | `make test-windows`, `test-portability` |
+| `docs` | `make check-docs` and `test-doc` |
+| `nightly` | what `make check` does not run: the profiles' extras, the VMs of other machines, every configuration of the matrix, native code under stress and the sanitizers; once a day in CI (`.github/workflows/nightly.yml`) |
+
+The profiles `vm` and `library` hold what `make check` does not run; the
+others are parts of it, to run alone while iterating.
+
+`--affected` keeps the tests that cover what changed since `HEAD`
+(`--since REV`, `--changed FILE`): each group of tests names the paths it
+covers (`covers:GLOB`, in `tests/runner/*.sml`), and a changed path that no
+group covers (the compiler, the runtime, the Basis Library, the Makefile,
+the scripts) keeps every test. Of the 156 commits before 2026-10-12, 97 select
+every test, 48 (documentation) `make check-docs` alone and 11 a few hundred
+tests.
+
+The programs of `tests/lang` and `tests/errors` are the runner's own tests
+(`compile/COMPILER/NAME`, `lang/WAY/NAME`, `errors/COMPILER/NAME`;
+`tests/runner/lang.sml`), and so are the Basis Library suite's in Rune's four
+configurations and the examples of its documentation
+(`basis-compile/COMPILER/TEST`, `basis/CONFIG/TEST`, `basis/CONFIG/@stale`,
+`basis-examples/NAME`; `tests/runner/basis.sml`) and the laws of its
+documentation (`laws-compile/NAME`, `laws/NAME@STRUCTURE`, each under a
+watchdog that skips a case that hangs or runs out of memory and goes on;
+`tests/runner/laws.sml`), and the differential checks, each program a job
+that compares what it compiles and runs across levels, engines, builds and
+hosts (`levels/*`, `register/*`, `jit/*`, `units/*`, `units-stack/*`,
+`positions/*`, `cross/*`, `reproducible/*`, `bootstrap/*`;
+`tests/runner/oracles.sml`), and the tools' suites (`ir/*`, `doc/*`, `lib/*`,
+`flexrec/*`, `compiler/*`, `limits/*`, `gc-log/*`, and the scenarios of
+`tests/deps`, `tests/dynamic`, `tests/buildfile` and `tests/units` as
+`scenario/*`; `tests/runner/tools.sml`), and the protocol suites (`repl/*`,
+`diagnostics/*`, `serve/*` in SML; `repl-protocol/*`, `dap/*`, `kernel/*`,
+`incremental/*` running their drivers a case at a time;
+`tests/runner/protocols.sml`); the rest of `make check` is a step each, an
+opaque `make` of its target (`tests/runner/main.sml`): the steps that run
+the programs of `tests/lang` from the root of the tree share the pool
+`lang` and run one at a time, and the others run beside them. Five
+canaries, tests that fail on purpose (an exit with 1, a run past its time,
+a crash, a flood of output and a leaked process), pass only when the
+runner sees each fault for what it is; they run in every `make check`,
+since the runner is built by the compiler it tests.
+
+### Before and after
+
+`make check` before the runner was 32 steps run one after another
+(2026-10-11, at `34b2b4c5`); on the runner it is `make check-tools` and one
+run of 14,118 tests (2026-10-12). Both ran with 16 processors on this
+machine while other work kept about five of them busy, so the CPU and the
+processors each run kept busy compare better than the wall times
+([plans/unit-testing.md](plans/unit-testing.md), E1 and M15).
+
+| | Before: 32 steps | After: the runner |
+|---|---|---|
+| Wall time of the tests | 56.4 min | 20.1 min |
+| CPU | 12,355 s | 11,879 s |
+| Processors it kept busy, on average | 3.65 of 16 | 9.9 of 16 |
+| Processors the machine kept busy, on average | 9.1 | 14.9 |
+
+The CPU is about the same; the time went to the 18 steps that ran alone
+and to the idle tails of the others. The longest tests now are a program
+of `tests/errors` compiled by SML/NJ's build (348 s) and the laws of
+`MONO_ARRAY2` on `LargeIntArray2` (292 s). `make check-tools` took another
+8.2 minutes, a full rebuild, since a new commit's version is compiled into
+the tools; the run before was on a build already made.
+
+## Requirements
+
+A test names the capabilities it needs of the machine (`Test.requires`):
+`tmux`, `python3`, `cc`, `qemu`, `windows`, and each host
+(`mlton`, `smlnj-legacy`, `smlnj32`, `smlnj-dev`, `polyml`, `mlkit`), each
+a probe and an install hint in `tests/runner/main.sml`, the hints
+`scripts/doctor.sh` gives. `bin/rune-test doctor [FILTER]` probes what the
+selected tests need and says how to get what is missing. A run skips a test
+whose capability is missing, with its hint; the tier `check` (and
+`--strict`) fails it instead, since `make check` must be complete.
+`RUNE_TEST_WITHOUT=tmux,qemu` takes those as missing, to see what a machine
+without them gets. `scripts/doctor.sh` keeps its scopes for what must be
+there before anything is built.
+
+## Flaky tests
+
+A test that passes and fails with nothing changed is flaky (D17). The
+runner gives three ways to find one and two to live with it:
+
+* `bin/rune-test run FILTER --repeat N` runs the selection N times, and
+  `--until-fail` until a run fails (at most N times, 100 by default);
+  `--under-load` keeps every processor busy beside the runs, which is what
+  makes a test that races fail;
+* `bin/rune-test stats` lists the tests whose verdict changed most often
+  between runs (the history's flips);
+* a test known to be flaky is tagged `flaky` in the inventory: when it
+  fails it runs once more, and a pass then is `FLAKY`, reported and no
+  failure;
+* a failing test can be quarantined until a date in
+  `tests/runner/quarantine.txt` (`rune-test | PATH | QUARANTINE | until
+  YYYY-MM-DD: why`): its failure is `QUARANTINED`, reported and no failure,
+  until the date, and fails again after it, so that a quarantine is never
+  forgotten.
+
+## Expectations
+
+What a suite expects of its tests in some ways (a host's bug, a program
+that native code does not run) is a file of expectations, in one format,
+read by one engine (`Expectations` in `lib/test/runner`, and
+`tests/skipped.sh` for the shell runners):
+
+    WAY-GLOB | PATH-GLOB[::LABEL-GLOB] | CATEGORY | reason
+
+A category means one of four things:
+
+| Meaning | Categories | What it does |
+|---|---|---|
+| strict | `RUNE-DEV`, `HOST-BUG`, `WIDTH`, `SPEC-AMBIGUOUS`, `WINDOWS`, `EMULATED`, `FAILS` | the test must fail there; a pass fails, and a line that matches no failure in a way that ran is stale |
+| lenient | `HOST-FLAKY`, `FLAKY` | the test may pass or fail |
+| skip | `HOST-ABSENT`, `XC1-NA`, `XC2-NA`, `UNTESTED`, `UNSUPPORTED` | the test is not run, and is reported as skipped with the reason; a line that names no test is stale |
+| quarantine | `QUARANTINE`, with `until YYYY-MM-DD:` | the test runs, and its failure fails nothing until the date; after it the line is stale |
+
+The files stay where they are: `tests/opt-skip.txt`, `tests/windows-skip.txt`,
+`tests/portability-skip.txt`, `tests/external/mlton-skip.txt` and
+`tests/lib/deviations.txt` are in this format, and `make check` holds each
+to parse and to name programs that exist (`expectations/*`).
+`tests/basis/deviations.txt` is read by the engine for the Basis suite in
+Rune's configurations (`tests/runner/basis.sml`, with run-matrix.sh's rule
+that any line explains a failure and a line that explains none is stale),
+and by `run-matrix.sh` for the hosts; `tests/basis/law-skips.txt` (lines of
+three fields, of every way) by the engine for the laws
+(`tests/runner/laws.sml`).
+
 ## The three oracles
 
 **The output.** A program under `tests/` runs with `--checked` and its
 standard output is compared with its `.expected` sibling; `.args`,
 `.vmargs`, `.stdin` and `.exitcode` siblings fix the rest of the run
-(`tests/run-tests.sh:6-7,66-74`). This is the ordinary test.
+(`tests/runner/lang.sml`, and `tests/run-tests.sh:6-7,66-74` for the runners
+of other machines). This is the ordinary test. Each program is compiled
+once by each compiler and run in every way (a VM and its options) that
+`make check` has, each run in a directory of its own; `bin/rune-test run
+--accept FILTER` writes what the selected tests printed into their
+`.expected`, `.cwarn` and error files, to be read line by line.
 
 **The counts.** `runevm --count` prints, at exit, the instructions
 executed and the bytes and objects allocated (`runtime/runtime.c:285`). The
 numbers are exact, and the same on every engine: the suites check that
 the two compilers' bytecodes allocate the same bytes and objects
-(`scripts/check-register.sh`), that the interpreter and every JIT mode report
-identical counts (`scripts/check-jit.sh:62-79`), that the 32-bit and the
+(the oracle `register` of `tests/runner/oracles.sml`), that the interpreter and every JIT mode report
+identical counts (the oracle `jit` of `tests/runner/oracles.sml`), that the 32-bit and the
 big-endian VM agree with this machine's to the byte
-(`tests/run-portability.sh:97-111`), that the three Windows VMs do
+(`portability/count/*`, `tests/runner/portability.sml`), that the three Windows VMs do
 (`tests/run-windows.sh:184-191`), that native code does (`AGENTS.md`, the
 native rule), and that the compiler, `runedoc` and the benchmark programs
 stay within their budgets (`tests/perf/*.budget`, `make perf-check`,
@@ -63,11 +263,11 @@ program, `runevm --jit=off --count`, one thing changed at a time):
    reached through a longer path allocates 8 bytes more for every 8
    characters of the path, with the same instructions and objects. The
    harnesses therefore run every program from a directory of its own under
-   a fixed name (`scripts/check-jit.sh:65`: `cd "$out/$name"`, then
+   a fixed name (the oracle `jit` of `tests/runner/oracles.sml`: `cd "$out/$name"`, then
    `prog.rbc`), and a count taken by hand with the program's full path is
    not comparable with the harness's. The two sides of a comparison need
    paths of the same length, not only the same file name:
-   `scripts/check-register.sh` ran its two VMs from directories named
+   the oracle `register` of `tests/runner/oracles.sml` ran its two VMs from directories named
    `stack` and `new`, two characters apart, and every program agreed until
    the directory above them got a name five characters longer and one
    program's name crossed a boundary of that rounding (16 bytes then) on one side alone. The current directory's name is the
@@ -90,10 +290,10 @@ program, `runevm --jit=off --count`, one thing changed at a time):
    from a terminal, or with its output through `tee`, does not count the
    same as in a harness. The harnesses fix all three: standard input from
    `/dev/null` unless the test has a `.stdin` sibling, standard output and
-   error to files (`tests/run-tests.sh:69-74`, `scripts/check-register.sh:40-49`,
-   `scripts/check-jit.sh:49-65`, `tests/run-windows.sh:88-91`). The
+   error to files (`tests/run-tests.sh:69-74`, the oracle `register` of `tests/runner/oracles.sml`,
+   the oracle `jit` of `tests/runner/oracles.sml`, `tests/run-windows.sh:88-91`). The
    portability runner lets the VMs inherit its own standard input
-   (`tests/run-portability.sh:107-109`), which is fine because every VM in
+   (`tests/runner/portability.sml`), which is fine because every VM in
    the comparison gets the same one; that is the rule: both sides of a
    comparison get the same three streams, whatever they are.
 
@@ -131,7 +331,7 @@ What was measured and did **not** matter: address-space randomisation,
 the environment (an empty one gives the same numbers), whether the VM was
 named by an absolute or a relative path, whether an output file already
 existed, `--heap-size` (allocation does not depend on collection), and the
-JIT tier (the premise of `check-jit.sh`).
+JIT tier (the premise of the oracle `jit` of `tests/runner/oracles.sml`).
 
 ## Rules for a harness
 
@@ -141,8 +341,8 @@ JIT tier (the premise of `check-jit.sh`).
 * Run from the program's own directory under a fixed name, with the same
   `.args` and `.vmargs`.
 * Compare the count line as text after stripping the prefix
-  (`sed -n 's/^runevm: count: //p'`, `scripts/check-jit.sh:67`) and print
-  both lines on a failure, as `check-jit.sh:79` does; a reader can then
+  (`sed -n 's/^runevm: count: //p'`, the oracle `jit` of `tests/runner/oracles.sml`) and print
+  both lines on a failure, as the oracle `jit` of `tests/runner/oracles.sml` does; a reader can then
   see at once whether the difference is 17 objects and 408 bytes (the
   streams), a multiple of 8 bytes with nothing else (a string's length)
   or something new.
@@ -242,11 +442,11 @@ change*).
 2. If the program reads the clock, take the clock out (above) before
    reading anything else into the numbers.
 3. Same VM, different modes: `--jit=off` against each mode of
-   `check-jit.sh`, which names the mode that disagrees.
+   the oracle `jit` of `tests/runner/oracles.sml`, which names the mode that disagrees.
 4. Different VMs or widths: the layout of a value or an object
    ([runtime.md](runtime.md)); `test-portability` and `test-windows` say
    which VM disagrees with this machine's.
-5. Two compilers: `check-register.sh` diffs the counts of their bytecodes, and
+5. Two compilers: the oracle `register` of `tests/runner/oracles.sml` diffs the counts of their bytecodes, and
    `--disasm` shows where the code differs.
 
 ## Measuring a collector

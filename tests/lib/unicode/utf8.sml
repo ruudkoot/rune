@@ -1,4 +1,4 @@
-(* libraries: random *)
+(* libraries: test/unit random *)
 (* Utf8 and DisplayWidth: every scalar value written and read back; the
    ill-formed sequences of the Unicode Standard's examples (section 3.9,
    "U+FFFD Substitution of Maximal Subparts") and Markus Kuhn's decoder
@@ -6,9 +6,7 @@
    bytes read without failing; and the widths of known characters. *)
 structure Utf8Test =
 struct
-  val failures = ref 0
-  fun check (name, ok) =
-    if ok then () else (failures := !failures + 1; print ("FAIL " ^ name ^ "\n"))
+  val check = Expect.that
 
   fun bytes l = String.implode (map Char.chr l)
 
@@ -100,10 +98,11 @@ struct
       check ("an ill-formed byte is a cluster", Grapheme.clusters "a\255b" = ["a", "\255", "b"])
     end
 
-  fun main () =
-    (roundTrip (); replacements (); randomBytes (); widths (); clusterWidths ();
-     print ((if !failures = 0 then "PASS" else "FAIL") ^ " utf8, widths: "
-            ^ Int.toString (!failures) ^ " failed\n"))
+  val tests =
+    Test.describe "unicode/utf8"
+      [Test.it "round-trip" roundTrip, Test.it "replacements" replacements, Test.it "random-bytes" randomBytes,
+       Test.it "widths" widths, Test.it "cluster-widths" clusterWidths]
 end
 
-val () = Utf8Test.main ()
+structure Utf8Main = Main (struct val name = "unicode/utf8" val tests = Utf8Test.tests end)
+val () = Utf8Main.main ()

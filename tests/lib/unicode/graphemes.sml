@@ -1,9 +1,11 @@
+(* libraries: test/unit *)
 (* Grapheme against Unicode's own test data: every line of
    tests/lib/unicode/GraphemeBreakTest.txt (copied by
    scripts/gen-unicode-tables.py from the version Grapheme follows) is a
    string of code points with ÷ where a cluster ends and × where it does
-   not; Grapheme.clusters must cut the same string at the same places. Run
-   from the top of the tree. *)
+   not; Grapheme.clusters must cut the same string at the same places. One
+   test for each, named by the number of its line. Run from the top of the
+   tree. *)
 structure GraphemeTest =
 struct
   fun hex s = valOf (StringCvt.scanString (Int.scan StringCvt.HEX) s)
@@ -22,35 +24,31 @@ struct
       go (words, [], [])
     end
 
-  val passed = ref 0
-  val failed = ref 0
+  (* the lines of cases, with their numbers *)
+  val cases =
+    let
+      val f = TextIO.openIn "tests/lib/unicode/GraphemeBreakTest.txt"
+      fun chomp l = if String.isSuffix "\n" l then String.substring (l, 0, size l - 1) else l
+      fun loop (n, acc) =
+        case TextIO.inputLine f of
+          NONE => rev acc
+        | SOME l => loop (n + 1, if String.isPrefix "\195\183" l then (n, chomp l) :: acc else acc)
+    in
+      loop (1, []) before TextIO.closeIn f
+    end
 
-  fun check (n, line) =
+  fun check (n, line) () =
     let
       val want = expected line
       val s = Utf8.implode (List.concat want)
       val got = map Utf8.explode (Grapheme.clusters s)
     in
-      if got = want then passed := !passed + 1
-      else (failed := !failed + 1;
-            if !failed <= 10 then print ("FAIL line " ^ Int.toString n ^ ": " ^ line ^ "\n") else ())
+      Expect.that ("GraphemeBreakTest " ^ Grapheme.version ^ ", line " ^ Int.toString n ^ ": " ^ line, got = want)
     end
 
-  fun main () =
-    let
-      val f = TextIO.openIn "tests/lib/unicode/GraphemeBreakTest.txt"
-      fun loop n =
-        case TextIO.inputLine f of
-          NONE => ()
-        | SOME l =>
-            (if String.isPrefix "\195\183" l then check (n, l) else ();
-             loop (n + 1))
-    in
-      loop 1;
-      TextIO.closeIn f;
-      print ((if !failed = 0 then "PASS" else "FAIL") ^ " GraphemeBreakTest " ^ Grapheme.version
-             ^ ": " ^ Int.toString (!passed) ^ " passed, " ^ Int.toString (!failed) ^ " failed\n")
-    end
+  val tests =
+    Test.describe "unicode/graphemes" (map (fn (n, line) => Test.it ("line-" ^ Int.toString n) (check (n, line))) cases)
 end
 
-val () = GraphemeTest.main ()
+structure GraphemeMain = Main (struct val name = "unicode/graphemes" val tests = GraphemeTest.tests end)
+val () = GraphemeMain.main ()

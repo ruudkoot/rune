@@ -153,7 +153,7 @@ keep these invariants:
   stack); a push does not check, since the checker works out each
   function's deepest stack (`runtime/register/isa_regs.c`). A primitive done in the
   loop (`runtime/register/fastprim.h`) gives the primitive's result or declines, and
-  changes with its C in `runtime/prims.c`; `scripts/check-register.sh` holds
+  changes with its C in `runtime/prims.c`; the oracle `register` of `tests/runner/oracles.sml` holds
   `tests/opt/prims.sml` to the same output on both VMs. `make test-register`,
   part of `make check`, holds runtime/register to what `runevm-stack` prints and allocates;
   a change to the register instruction set is `make isa` and a test, as
@@ -189,7 +189,7 @@ keep these invariants:
   done in line (`prim_inline`) gives exactly what `fastprim.h`'s
   `prim_fast` gives and goes to its slow path wherever that would answer
   0. What the loop does to `--count`, the code
-  does too: `scripts/check-jit.sh` (in `make test-register-jit`) holds every
+  does too: the oracle `jit` of `tests/runner/oracles.sml` (in `make test-register-jit`) holds every
   program, and the compiler compiling itself, to the same output and
   counts interpreted, compiled, with every other function compiled
   (`--jit-only=odd`) and under `--jit-stress`, and every instruction to
@@ -215,7 +215,7 @@ keep these invariants:
   leave for the interpreter at any boundary (`ms_exit`,
   `--deopt-stress`): an emitter that keeps anything outside the frame
   across a boundary -- other than a comparison's flags for the branch
-  fused onto it -- breaks that. Tier 2 is run by `check-jit.sh` on
+  fused onto it -- breaks that. Tier 2 is run by the oracle `jit` of `tests/runner/oracles.sml` on
   every program (`--jit=all --jit-tier=2`, every other function, and
   leaving after every instruction). **The representations
   section** (`docs/bytecode.md`): a new instruction that writes a register
@@ -260,8 +260,29 @@ keep these invariants:
   `test-install`, `check-reproducible`, `test-serve`, `test-repl`, `test-terminal`, `test-diagnostics`, `test-repl-protocol`, `test-kernel`, `test-dap`, `test-native`, `test-register`, `test-register-jit`,
   `test-heap`, `test-gc`, `test-census`, `check-heapsim`, `check-gcsim`,
   `check-layouts`, `check-gcbench`, `perf-check`, `bench-smoke`,
-  `check-positions`, `check-cross`, `check-docs`, `check-isa`; runs on all
-  CPUs, about a quarter of an hour on 16 with nothing else running). `bin/rune` is the self-hosted compiler, so it is what
+  `check-positions`, `check-cross`, `check-docs`, `check-isa`, each a test
+  of the runner `bin/rune-test`, run at once where they share no files; a
+  passing test prints nothing, a failure prints a block with its reason, the
+  directory its output is kept in and the command that reruns it, and the
+  last line begins `RESULT:` (`docs/testing.md`, *Running the tests*).
+  `bin/rune-test run --failed` runs again what failed last time. While
+  iterating, `bin/rune-test run --affected` runs the tests that cover what
+  changed since `HEAD` (all of them when a change is to the compiler, the
+  runtime or the Basis), `make quick` the tier `quick` (`tests/lang` in its
+  first way, the libraries, `tests/doc`; under a minute), and a filter any
+  test (`bin/rune-test list` names them). A profile adds what a kind of
+  change also needs beyond `make check`: `bin/rune-test run --profile vm`
+  (`runtime/register` and the VMs: the sanitizers, stress, Windows,
+  portability), `--profile layout` (the heap and its headers),
+  `--profile library` (the matrix and the hosts) and `--profile docs`
+  (`docs/testing.md`, *Tiers, profiles and what changed*); CI runs the
+  tier `nightly` once a day. A test whose tool the machine lacks (tmux,
+  qemu, Windows, a host) is skipped with how to install it, and is an error
+  in `make check`; `bin/rune-test doctor` lists what a selection needs. A
+  test that fails now and then: `bin/rune-test run FILTER --until-fail
+  --under-load` to catch it, the tag `flaky` or a dated line of
+  `tests/runner/quarantine.txt` to live with it (`docs/testing.md`, *Flaky
+  tests*). `bin/rune` is the self-hosted compiler, so it is what
   every test target uses by default; `make test RUNE=bin/rune-mlton` runs the
   same suite with the MLton build and is the faster loop while iterating. For
   VM changes also run the suite with the
@@ -334,7 +355,9 @@ keep these invariants:
   `libraries` declaration names the libraries it is written on; its
   generated `MANIFEST` records what each file uses of the basis library as
   well (`rune --basis-check --library NAME` checks it). It may not use `_prim`. The mechanism's tests are in
-  `tests/lib` (`make test-lib`). After a change to such a library, run `make
+  `tests/lib` (`make test-lib`), and a library's own tests, `tests/lib/NAME`, are suites on
+  `lib/test/unit` (`Test`, `Expect`, `Main`; docs/generated/test/unit), whose
+  `PASS`/`FAIL` lines both targets read. After a change to such a library, run `make
   test-lib-hosts`: its tests on MLton, SML/NJ 110.99.9, SML/NJ 2026.2, Poly/ML and MLKit, against their
   own Basis. **Never work around a bug of a compiler other than Rune in such a
   library** (the owner's rule, 2026-09-27): write it plainly, and mark the
@@ -355,7 +378,8 @@ keep these invariants:
   `tests/doc` (`make test-doc`): an input and the expected `.ir`, `.md` and `.diag` next to it,
   reviewed line by line like any `.expected` file.
 * `.expected` files are written by hand or reviewed line by line after
-  `tests/run-tests.sh --update <filter>`; never accept generated output
+  `bin/rune-test run --accept 'lang/test/<name>'` (or
+  `tests/run-tests.sh --update <filter>`); never accept generated output
   blindly.
 
 ## Conventions

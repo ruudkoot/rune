@@ -18,6 +18,7 @@ struct
   fun resizes () = Int.max (0, Terminal.resizes ())
 
   val enter = Terminal.enter
+  val quiet = Terminal.quiet
   val leave = Terminal.leave
   val read = Terminal.read
 

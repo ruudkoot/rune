@@ -1,11 +1,10 @@
-(* libraries: random *)
+(* libraries: test/unit random *)
 (* Key: what streams of bytes decode to, whole and split at every place and
    at random places, so that a key whose bytes come in two reads is the
    same key; what flush makes of what is pending. *)
 structure KeyTest =
 struct
-  val failures = ref 0
-  fun check (name, ok) = if ok then () else (failures := !failures + 1; print ("FAIL " ^ name ^ "\n"))
+  val check = Expect.that
 
   open Key
   val ctrl = {shift = false, alt = false, ctrl = true}
@@ -129,9 +128,11 @@ struct
                                       Named (F 5, none), Char (32, none), Char (0xE9, none)]
                         = ["C-a", "M-b", "Up", "S-Tab", "F5", "SPC", "\195\169"]))
 
-  fun main () =
-    (whole (); splits (); random (); pendingAndFlush (); names ();
-     print ((if !failures = 0 then "PASS" else "FAIL") ^ " key: " ^ Int.toString (!failures) ^ " failed\n"))
+  val tests =
+    Test.describe "terminal/key"
+      [Test.it "whole" whole, Test.it "splits" splits, Test.it "random" random,
+       Test.it "pending-and-flush" pendingAndFlush, Test.it "names" names]
 end
 
-val () = KeyTest.main ()
+structure KeyMain = Main (struct val name = "terminal/key" val tests = KeyTest.tests end)
+val () = KeyMain.main ()

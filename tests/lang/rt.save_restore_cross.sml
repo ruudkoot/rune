@@ -4,7 +4,7 @@
    restore which gets a width, an alignment or the order of the bytes wrong
    cannot agree by accident. Both worlds print the same line, which is what
    `make test-windows` and `make test-portability` compare when one machine
-   saves and another restores (tests/run-windows.sh, tests/run-portability.sh). *)
+   saves and another restores (tests/run-windows.sh, tests/runner/portability.sml). *)
 fun count (0, acc) = acc | count (n, acc) = count (n - 1, n :: acc)
 val live = count (2000, [])
 val text = String.concat (List.map Int.toString (List.take (live, 40)))

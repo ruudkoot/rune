@@ -441,7 +441,7 @@ from the value stack rather than holding them in variables; the pattern is in
 line into FILE for every pass of the collector -- a minor collection is
 one, and a full collection that grows the heap two, one into a space of
 the same size and one into a larger -- and some lines at exit. The run is the same with it, `--count`
-included (`tests/runtime/run-gc-log.py`). The first line names the format
+included (`gc-log/*` of `tests/runner/tools.sml`). The first line names the format
 and the heap's settings (`# rune-gc-log 1 nursery=N heap=H fill=P limit=L`)
 and the second the columns, by which a script reads them (`tools/mmu.py`,
 `scripts/gc-eval.sh`; [testing.md](testing.md), *Measuring a collector*):

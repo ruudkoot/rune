@@ -1,0 +1,156 @@
+# signature EXPECT
+
+[Unit testing](../README.md) &rsaquo; Unit testing &rsaquo; **EXPECT**
+
+|  |  |
+| --- | --- |
+| Status | required |
+| Implementations | 1 |
+| Documentation | 9 of 9 entries documented |
+| Tests | not listed |
+| Source | [lib/test/unit/expect\_sig.sml](../../../../../lib/test/unit/expect_sig.sml) |
+
+## Synopsis
+
+```sml
+signature EXPECT
+structure Expect :> EXPECT
+```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| [`Expect`](../str/Expect.md) | Checks inside a test: the failures of the test that runs, in reverse, and the number of its checks. | [lib/test/unit/expect.sml](../../../../../lib/test/unit/expect.sml) |
+
+Checks inside a test (docs/plans/unit-testing.md, D3): a test is the
+unit of verdict, and the checks in it are soft. A check that fails is
+recorded with its label and the test goes on; the test fails if any of
+its checks failed, and [`fail`](#val-fail) ends it at once. A test that raises an
+exception of its own fails with the exception's name and message.
+
+The checks have the shapes of the Basis Library suite's harness
+(tests/basis/harness.sml): a label, then what is expected, then a
+function that computes what is, so that an exception raised while
+computing it fails that check alone.
+
+## Interface
+
+<pre>
+signature EXPECT =
+sig
+  exception <a href="#exn-failure">Failure</a> of string
+  val <a href="#val-check">check</a> : string * (unit -&gt; bool) -&gt; unit
+  val <a href="#val-that">that</a> : string * bool -&gt; unit
+  val <a href="#val-eq">eq</a> : (''a -&gt; string) -&gt; string * ''a * (unit -&gt; ''a) -&gt; unit
+  val <a href="#val-equal">equal</a> : ('a * 'a -&gt; bool) * ('a -&gt; string) -&gt; string * 'a * (unit -&gt; 'a) -&gt; unit
+  val <a href="#val-raises">raises</a> : string * (exn -&gt; bool) * (unit -&gt; 'a) -&gt; unit
+  val <a href="#val-fail">fail</a> : string -&gt; 'a
+  datatype <a href="#type-outcome">outcome</a> = <a href="#con-pass">Pass</a> | <a href="#con-fail">Fail</a> of string list | <a href="#con-error">Error</a> of string
+  val <a href="#val-run">run</a> : (unit -&gt; unit) -&gt; {<a href="#fld-run.outcome">outcome</a> : outcome, <a href="#fld-run.checks">checks</a> : int}
+end
+</pre>
+
+### <a name="exn-failure"></a>`Failure`
+
+```sml
+exception Failure of string
+```
+
+Raised by [`fail`](#val-fail): the test ends, failed, with the message.
+
+### <a name="val-check"></a>`check`
+
+```sml
+val check : string * (unit -> bool) -> unit
+```
+
+`check (label, f)` passes if `f ()` is `true`; it fails if it is
+`false` or raises.
+
+**Example** `#checks (run (fn () => check ("one", fn () => 1 + 1 = 2))) = 1`
+
+### <a name="val-that"></a>`that`
+
+```sml
+val that : string * bool -> unit
+```
+
+`that (label, b)` passes if `b` is `true`.
+
+**Example** `#outcome (run (fn () => that ("false", false))) = Fail ["false"]`
+
+### <a name="val-eq"></a>`eq`
+
+```sml
+val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+```
+
+`eq show (label, expected, f)` passes if `f ()` equals `expected`,
+and otherwise says both, printed by `show`.
+
+**Example** `#outcome (run (fn () => eq Int.toString ("sum", 4, fn () => 2 + 3))) = Fail ["sum: expected 4, got 5"]`
+
+### <a name="val-equal"></a>`equal`
+
+```sml
+val equal : ('a * 'a -> bool) * ('a -> string) -> string * 'a * (unit -> 'a) -> unit
+```
+
+`equal (same, show) (label, expected, f)` passes if `same (expected, f ())`, for a type whose equality is not `=`.
+
+**Example** `#outcome (run (fn () => equal (Real.==, Real.toString) ("half", 0.5, fn () => 1.0 / 2.0))) = Pass`
+
+### <a name="val-raises"></a>`raises`
+
+```sml
+val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+```
+
+`raises (label, isIt, f)` passes if `f ()` raises an exception for
+which `isIt` is `true`.
+
+**Example** `#outcome (run (fn () => raises ("hd", fn Empty => true | _ => false, fn () => hd []))) = Pass`
+
+### <a name="val-fail"></a>`fail`
+
+```sml
+val fail : string -> 'a
+```
+
+`fail message` ends the test, failed.
+
+**Raises** [`Failure`](#exn-failure) always.
+
+### <a name="type-outcome"></a>`outcome`
+
+```sml
+datatype outcome = Pass | Fail of string list | Error of string
+```
+
+How a test ended: every check passed; some failed, or [`fail`](#val-fail) was
+called, with the messages in the order they came; or the test raised
+an exception of its own.
+
+| Constructor | Argument | Description |
+| --- | --- | --- |
+| <a name="con-pass"></a>`Pass` |  |  |
+| <a name="con-fail"></a>`Fail` | `string list` |  |
+| <a name="con-error"></a>`Error` | `string` |  |
+
+### <a name="val-run"></a>`run`
+
+```sml
+val run : (unit -> unit) -> {outcome : outcome, checks : int}
+```
+
+`run f` runs the body of a test and counts its checks.
+
+**Example** `run (fn () => ()) = {outcome = Pass, checks = 0}`
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-run.outcome"></a>`outcome` | `outcome` |  |
+| <a name="fld-run.checks"></a>`checks` | `int` |  |
+
+---
+
+<sub>Generated by runedoc from lib/test/unit/expect\_sig.sml; do not edit.</sub>

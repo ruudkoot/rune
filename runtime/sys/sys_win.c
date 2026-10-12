@@ -2361,7 +2361,7 @@ const char *sys_serv_byport(int port, const char *protocol) {
 #define SIGNALLED_BY 0xE0520000u
 int sys_fork(void) { return fail(); }
 
-typedef struct { DWORD pid; HANDLE process; } Child;
+typedef struct { DWORD pid; HANDLE process; HANDLE job; } Child;   /* job: sys_spawn_with's group, or NULL */
 static Child *children = NULL;
 static int nchildren = 0, children_cap = 0;
 static int add_child(DWORD pid, HANDLE process) {
@@ -2374,6 +2374,7 @@ static int add_child(DWORD pid, HANDLE process) {
     }
     children[nchildren].pid = pid;
     children[nchildren].process = process;
+    children[nchildren].job = NULL;
     nchildren++;
     return 0;
 }
@@ -2450,7 +2451,7 @@ static HANDLE handle_of(int fd) {
    when one is given, gets it before it runs. extra, when given, is an
    inheritable handle the program inherits besides its standard ones. */
 static int64_t spawn(const char *path, char *const argv[], char *const envp[], int search,
-                     const int fds[3], HANDLE job, const char *raw, HANDLE extra) {
+                     const int fds[3], HANDLE job, const char *raw, HANDLE extra, const char *dir, DWORD more) {
     /* raw: a command line given whole, for a program that reads it its own
        way (cmd.exe). Windows takes 32767 characters at most, which is
        E2BIG before the program is looked for, as execve counts the
@@ -2524,8 +2525,9 @@ static int64_t spawn(const char *path, char *const argv[], char *const envp[], i
                                        (SIZE_T)nlist * sizeof(HANDLE), NULL, NULL);
     si.lpAttributeList = attributes;
     PROCESS_INFORMATION pi;
-    DWORD flags = EXTENDED_STARTUPINFO_PRESENT | (job ? CREATE_SUSPENDED : 0);
-    if (ok) ok = CreateProcessA(app, line, NULL, NULL, nlist > 0, flags, block, NULL, &si.StartupInfo, &pi);
+    DWORD flags = EXTENDED_STARTUPINFO_PRESENT | (job ? CREATE_SUSPENDED : 0) | more;
+    if (ok) ok = CreateProcessA(app, line, NULL, NULL, nlist > 0, flags, block, dir ? native(dir) : NULL,
+                                &si.StartupInfo, &pi);
     DWORD error = GetLastError();
     for (int i = 0; i < 3; i++) if (std[i] != INVALID_HANDLE_VALUE) CloseHandle(std[i]);
     if (attributes) { DeleteProcThreadAttributeList(attributes); free(attributes); }
@@ -2544,7 +2546,7 @@ static int64_t spawn(const char *path, char *const argv[], char *const envp[], i
     return (int64_t)pi.dwProcessId;
 }
 int64_t sys_spawn(const char *path, char *const argv[], char *const envp[], int search, const int fds[3]) {
-    return spawn(path, argv, envp, search, fds, NULL, NULL, NULL);
+    return spawn(path, argv, envp, search, fds, NULL, NULL, NULL, NULL, 0);
 }
 
 /* How a process ended, as waitpid tells it: 0 exited with a status, or 1
@@ -2576,22 +2578,23 @@ static void reap_child(int i, int64_t out[3]) {
     out[0] = (int64_t)children[i].pid;
     status_of(code, out + 1);
     CloseHandle(children[i].process);
+    if (children[i].job) CloseHandle(children[i].job);
     children[i] = children[--nchildren];
 }
 /* waitpid: a child by its number, or any (-1; a group, which Windows does
    not have, is taken for all of them); WNOHANG (1) does not wait, and says
    0 when none has ended. */
-int sys_waitpid(int64_t pid, int flags, int64_t out[3]) {
-    int nohang = flags & 1;
+/* the child that has ended, as an index: the one of that number, or any
+   (-1, or a group); -2 when none has and nohang, -1 on failure */
+static int ended(int64_t pid, int nohang) {
     if (pid > 0) {
         int i;
         for (i = 0; i < nchildren; i++) if ((int64_t)children[i].pid == pid) break;
         if (i == nchildren) { last = ECHILD; return -1; }
         DWORD r = WaitForSingleObject(children[i].process, nohang ? 0 : INFINITE);
-        if (r == WAIT_TIMEOUT) { out[0] = 0; out[1] = out[2] = 0; return 0; }
+        if (r == WAIT_TIMEOUT) return -2;
         if (r != WAIT_OBJECT_0) return win_failed(NULL);
-        reap_child(i, out);
-        return 0;
+        return i;
     }
     if (nchildren == 0) { last = ECHILD; return -1; }
     for (;;) {
@@ -2602,12 +2605,87 @@ int sys_waitpid(int64_t pid, int flags, int64_t out[3]) {
             for (int k = 0; k < n; k++) hs[k] = children[from + k].process;
             DWORD wait = nohang || nchildren > MAXIMUM_WAIT_OBJECTS ? 0 : INFINITE;
             DWORD r = WaitForMultipleObjects((DWORD)n, hs, FALSE, wait);
-            if (r < WAIT_OBJECT_0 + (DWORD)n) { reap_child(from + (int)(r - WAIT_OBJECT_0), out); return 0; }
+            if (r < WAIT_OBJECT_0 + (DWORD)n) return from + (int)(r - WAIT_OBJECT_0);
             if (r == WAIT_FAILED) return win_failed(NULL);
         }
-        if (nohang) { out[0] = 0; out[1] = out[2] = 0; return 0; }
+        if (nohang) return -2;
         Sleep(10);
     }
+}
+int sys_waitpid(int64_t pid, int flags, int64_t out[3]) {
+    int i = ended(pid, flags & 1);
+    if (i == -2) { out[0] = 0; out[1] = out[2] = 0; return 0; }
+    if (i < 0) return -1;
+    reap_child(i, out);
+    return 0;
+}
+
+/* What a test runner needs of its children (sys.h): a directory, a job of
+   its own with the limits Windows has (memory and processor time; a file's
+   size and a core dump have none), the job ended as a group, and what the
+   child cost. */
+int64_t sys_spawn_with(const char *path, char *const argv[], char *const envp[], int search, const int fds[3],
+                       const char *dir, int group, int defaults, const int64_t limits[4]) {
+    (void)defaults;   /* a signal's action is always the default here */
+    HANDLE job = NULL;
+    if (group || limits[0] >= 0 || limits[1] >= 0) {
+        job = CreateJobObjectA(NULL, NULL);
+        if (!job) return win_failed(NULL);
+        JOBOBJECT_EXTENDED_LIMIT_INFORMATION l;
+        memset(&l, 0, sizeof l);
+        if (limits[0] >= 0) {
+            l.BasicLimitInformation.LimitFlags |= JOB_OBJECT_LIMIT_PROCESS_MEMORY;
+            l.ProcessMemoryLimit = (SIZE_T)limits[0];
+        }
+        if (limits[1] >= 0) {
+            l.BasicLimitInformation.LimitFlags |= JOB_OBJECT_LIMIT_PROCESS_TIME;
+            l.BasicLimitInformation.PerProcessUserTimeLimit.QuadPart = limits[1] * 10000000LL;
+        }
+        if (l.BasicLimitInformation.LimitFlags &&
+            !SetInformationJobObject(job, JobObjectExtendedLimitInformation, &l, sizeof l)) {
+            CloseHandle(job);
+            return win_failed(NULL);
+        }
+    }
+    int64_t pid = spawn(path, argv, envp, search, fds, job, NULL, NULL, dir, group ? CREATE_NEW_PROCESS_GROUP : 0);
+    if (pid < 0) { if (job) CloseHandle(job); return -1; }
+    for (int i = 0; i < nchildren; i++) if ((int64_t)children[i].pid == pid) { children[i].job = job; job = NULL; break; }
+    if (job) CloseHandle(job);
+    return pid;
+}
+
+int sys_wait_usage(int64_t pid, int flags, int64_t out[6]) {
+    int i = ended(pid, flags & 1);
+    out[0] = out[1] = out[2] = out[3] = out[4] = out[5] = 0;
+    if (i == -2) return 0;
+    if (i < 0) return -1;
+    FILETIME c, e, k, u;
+    if (GetProcessTimes(children[i].process, &c, &e, &k, &u)) {
+        out[3] = of_filetime(u);
+        out[4] = of_filetime(k);
+    }
+    PROCESS_MEMORY_COUNTERS m;
+    if (GetProcessMemoryInfo(children[i].process, &m, sizeof m)) out[5] = (int64_t)(m.PeakWorkingSetSize / 1024);
+    int64_t status[3];
+    reap_child(i, status);
+    out[0] = status[0]; out[1] = status[1]; out[2] = status[2];
+    return 0;
+}
+
+int sys_kill_group(int64_t pid, int signal) {
+    for (int i = 0; i < nchildren; i++)
+        if ((int64_t)children[i].pid == pid && children[i].job) {
+            if (signal == 0 || signal == 17 || signal == 18) return 0;
+            if (!TerminateJobObject(children[i].job, SIGNALLED_BY | (DWORD)signal)) return win_failed(NULL);
+            return 0;
+        }
+    return sys_kill(pid, signal);
+}
+
+int sys_processors(void) {
+    DWORD n = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
+    if (n == 0) { SYSTEM_INFO si; GetSystemInfo(&si); n = si.dwNumberOfProcessors; }
+    return n > 0 ? (int)n : 1;
 }
 
 /* kill: the default action of the signal. 0 asks whether the process is
@@ -2694,7 +2772,7 @@ int sys_exec(const char *path, char *const argv[], char *const envp[], int searc
         SetInformationJobObject(job, JobObjectExtendedLimitInformation, &limits, sizeof limits);
     }
     int fds[3] = { -1, -1, -1 };
-    int64_t pid = spawn(path, argv, envp, search, fds, job, NULL, NULL);
+    int64_t pid = spawn(path, argv, envp, search, fds, job, NULL, NULL, NULL, 0);
     if (pid < 0) { if (job) CloseHandle(job); return -1; }
     HANDLE process = children[nchildren - 1].process;
     for (int fd = 3; fd < FD_TABLE; fd++) if (_get_osfhandle(fd) != -1) _close(fd);
@@ -2719,7 +2797,7 @@ int sys_system(const char *command) {
     sprintf(line, "cmd /d /s /c \"%s\"", command);
     char *argv[] = { (char *)comspec, NULL };
     int fds[3] = { -1, -1, -1 };
-    int64_t pid = spawn(comspec, argv, NULL, 0, fds, NULL, line, NULL);
+    int64_t pid = spawn(comspec, argv, NULL, 0, fds, NULL, line, NULL, NULL, 0);
     free(line);
     if (pid < 0) return -1;
     int64_t out[3];
@@ -2764,7 +2842,7 @@ FILE *sys_fork_start(void) {
     char resume[] = "--resume";
     char *argv[] = { self, resume, token, NULL };
     int fds[3] = { -1, -1, -1 };
-    int64_t pid = spawn(self, argv, NULL, 0, fds, NULL, NULL, inherited);
+    int64_t pid = spawn(self, argv, NULL, 0, fds, NULL, NULL, inherited, NULL, 0);
     CloseHandle(inherited);
     if (pid < 0) { CloseHandle(wr); return NULL; }
     HANDLE child = children[nchildren - 1].process;
@@ -3098,7 +3176,7 @@ int64_t sys_win_spawn(const char *command, const char *arg, const int fds[3]) {
     if (!line) { last = ENOMEM; return -1; }
     sprintf(line, "\"%s\"%s%s", command, *arg ? " " : "", arg);
     char *argv[] = { (char *)command, NULL };
-    int64_t pid = spawn(command, argv, NULL, 0, fds, NULL, line, NULL);
+    int64_t pid = spawn(command, argv, NULL, 0, fds, NULL, line, NULL, NULL, 0);
     free(line);
     return pid;
 }

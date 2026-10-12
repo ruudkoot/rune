@@ -15,6 +15,7 @@
 - `unit` (type): [GENERAL](../sig/GENERAL.md#type-unit)
 - `unix` (type): [UNIX_SOCK](../sig/UNIX_SOCK.md#type-unix)
 - `unixAF` (val): [UNIX_SOCK](../sig/UNIX_SOCK.md#val-unixaf)
+- `unlimited` (val): [SUBPROCESS](../sig/SUBPROCESS.md#val-unlimited)
 - `unlink` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-unlink)
 - `UNORDERED` (con): [IEEE_REAL](../sig/IEEE_REAL.md#con-unordered)
 - `Unordered` (exn): [IEEE_REAL](../sig/IEEE_REAL.md#exn-unordered)

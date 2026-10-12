@@ -11,6 +11,7 @@
 - `leave` (val): [TERMINAL](../sig/TERMINAL.md#val-leave)
 - `length` (val): [ARRAY](../sig/ARRAY.md#val-length), [ARRAY_SLICE](../sig/ARRAY_SLICE.md#val-length), [LIST](../sig/LIST.md#val-length), [MONO_ARRAY](../sig/MONO_ARRAY.md#val-length), [MONO_ARRAY_SLICE](../sig/MONO_ARRAY_SLICE.md#val-length), [MONO_VECTOR](../sig/MONO_VECTOR.md#val-length), [MONO_VECTOR_EQ](../sig/MONO_VECTOR_EQ.md#val-length), [MONO_VECTOR_SLICE](../sig/MONO_VECTOR_SLICE.md#val-length), [VECTOR](../sig/VECTOR.md#val-length), [VECTOR_SLICE](../sig/VECTOR_SLICE.md#val-length)
 - `LESS` (con): [GENERAL](../sig/GENERAL.md#con-less), [IEEE_REAL](../sig/IEEE_REAL.md#con-less)
+- `limits` (type): [SUBPROCESS](../sig/SUBPROCESS.md#type-limits)
 - `LINE_BUF` (con): [IO](../sig/IO.md#con-line_buf)
 - `lineLength` (val): [COMPILER](../sig/COMPILER.md#val-linelength)
 - `link` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-link), [RUNTIME](../sig/RUNTIME.md#val-link)

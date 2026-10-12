@@ -2,7 +2,7 @@
    generators draw, that a seed draws the same everywhere, that a node set by
    the shrinker changes its part alone, and that properties find planted
    bugs. One line PASS or FAIL for each, and a fingerprint of what a seed
-   draws, which tests/lib/run-lib-tests.sh and run-hosts.sh compare with
+   draws, which the runner (tests/runner/tools.sml) and run-hosts.sh compare with
    fingerprint.expected. *)
 val failed = ref 0
 fun check (name, holds) =

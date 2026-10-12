@@ -6,8 +6,8 @@
 | --- | --- |
 | Signature | [`RUNTIME`](../sig/RUNTIME.md) |
 | Status | extension |
-| Members | 17 |
-| Tests | 47 checks |
+| Members | 19 |
+| Tests | 50 checks |
 | Source | [lib/basis/runtime.sml](../../../../lib/basis/runtime.sml) |
 
 ## Synopsis
@@ -31,11 +31,13 @@ What each means is on [`RUNTIME`](../sig/RUNTIME.md); the types are this structu
 | type | [`stats`](../sig/RUNTIME.md#type-stats) | `{bytes : int, collections : int, heapSize : int, instructions : int, live : int, majorCollections : int, minorCollections : int, objects : int, promoted : int}` |
 | datatype | [`world`](../sig/RUNTIME.md#type-world) | `Saved` &#124; `Restored` |
 | val | [`catchInterrupt`](../sig/RUNTIME.md#val-catchinterrupt) | `unit -> bool` |
+| val | [`clock`](../sig/RUNTIME.md#val-clock) | `unit -> Time.time` |
 | val | [`collect`](../sig/RUNTIME.md#val-collect) | `unit -> unit` |
 | val | [`link`](../sig/RUNTIME.md#val-link) | `Word8Vector.vector -> unit -> unit` |
 | val | [`load`](../sig/RUNTIME.md#val-load) | `string -> unit -> unit` |
 | val | [`maskInterrupt`](../sig/RUNTIME.md#val-maskinterrupt) | `bool -> bool` |
 | val | [`printTrace`](../sig/RUNTIME.md#val-printtrace) | `TextIO.outstream -> unit` |
+| val | [`processors`](../sig/RUNTIME.md#val-processors) | `unit -> int` |
 | val | [`profile`](../sig/RUNTIME.md#val-profile) | `(unit -> 'a) -> 'a * stats` |
 | val | [`restore`](../sig/RUNTIME.md#val-restore) | `string -> 'a` |
 | val | [`same`](../sig/RUNTIME.md#val-same) | `'a * 'a -> bool` |

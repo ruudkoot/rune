@@ -1,0 +1,8 @@
+exit: exited 3
+costs: true
+dir: true
+poll: running
+killed: signal 15
+no child: OS.SysErr
+clock: true
+processors: true

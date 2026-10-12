@@ -1,0 +1,14 @@
+name	kind	signature	realisations	status	origin	source
+EXPECT	signature			required	declared	lib/test/unit/expect_sig.sml
+GOLDEN	signature			required	declared	lib/test/unit/golden_sig.sml
+SUITE	signature			required	declared	lib/test/unit/suite_sig.sml
+SUITE_MAIN	signature			required	declared	lib/test/unit/suite_sig.sml
+SUITE_RUN	signature			required	declared	lib/test/unit/suite_sig.sml
+TEST	signature			required	declared	lib/test/unit/test_sig.sml
+TEST_FILTER	signature			required	declared	lib/test/unit/filter_sig.sml
+Expect	structure	EXPECT		required	ascribed	lib/test/unit/expect.sml
+Golden	structure	GOLDEN		required	ascribed	lib/test/unit/golden.sml
+Main	functor	SUITE_MAIN		required	ascribed	lib/test/unit/suite.sml
+Suite	structure	SUITE_RUN		required	ascribed	lib/test/unit/suite.sml
+Test	structure	TEST		required	ascribed	lib/test/unit/test.sml
+TestFilter	structure	TEST_FILTER		required	ascribed	lib/test/unit/filter.sml

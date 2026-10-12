@@ -1,4 +1,4 @@
-(* libraries: random *)
+(* libraries: test/unit random *)
 (* The line editor's core: what keys do to the text and the cursor, the
    history, search, completion and the kill ring; and the property of
    docs/plans/repl.md's D23 -- for random edits at random widths, what
@@ -9,8 +9,7 @@ structure L = LineEditFn (structure Device = PosixDevice)
 
 structure EditTest =
 struct
-  val failures = ref 0
-  fun check (name, ok) = if ok then () else (failures := !failures + 1; print ("FAIL " ^ name ^ "\n"))
+  val check = Expect.that
 
   val none = Key.none
   fun ch c = Key.Char (Char.ord c, none)
@@ -174,6 +173,8 @@ struct
 
   fun property () =
     let
+      (* what each trial that failed showed *)
+      val report : string list ref = ref []
       fun one (g, trial) =
         let
           val (columns, g) = Random.int (4, 30) g
@@ -203,9 +204,9 @@ struct
                     in
                       if rowsOk andalso below andalso cursorOk then go (k - 1, s, screen, after, drawn, g)
                       else
-                        (print ("FAIL trial " ^ Int.toString trial ^ " at width " ^ Int.toString columns ^ " after "
-                                ^ Key.toString e ^ ": " ^ String.toString (L.text s) ^ "\nscreen:\n"
-                                ^ Emulator.text screen ^ "\n");
+                        (report := ("trial " ^ Int.toString trial ^ " at width " ^ Int.toString columns ^ " after "
+                                    ^ Key.toString e ^ ": " ^ String.toString (L.text s) ^ "\nscreen:\n"
+                                    ^ Emulator.text screen) :: !report;
                          (false, g))
                     end
                 end
@@ -218,8 +219,9 @@ struct
         end
       fun trials (0, _, ok) = ok
         | trials (k, g, ok) = let val (ok', g) = one (g, k) in trials (k - 1, g, ok andalso ok') end
+      val ok = trials (300, Random.fromSeed 0w23, true)
     in
-      check ("what diff writes, the emulator shows", trials (300, Random.fromSeed 0w23, true))
+      check (String.concatWith "\n" ("what diff writes, the emulator shows" :: rev (!report)), ok)
     end
 
   (* zsh's PROMPT_SP, as readLine writes it: on a line of its own the mark
@@ -290,9 +292,12 @@ struct
       v ("Escape in the normal mode does nothing", typed "ab" @ [esc, esc], ("ab", 1))
     end
 
-  fun main () =
-    (vi (); editing (); outcomes (); history (); completion (); prompts (); property (); promptMark ();
-     print ((if !failures = 0 then "PASS" else "FAIL") ^ " edit: " ^ Int.toString (!failures) ^ " failed\n"))
+  val tests =
+    Test.describe "terminal/edit"
+      [Test.it "vi" vi, Test.it "editing" editing, Test.it "outcomes" outcomes, Test.it "history" history,
+       Test.it "completion" completion, Test.it "prompts" prompts, Test.it "property" property,
+       Test.it "prompt-mark" promptMark]
 end
 
-val () = EditTest.main ()
+structure EditMain = Main (struct val name = "terminal/edit" val tests = EditTest.tests end)
+val () = EditMain.main ()

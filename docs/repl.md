@@ -551,13 +551,13 @@ about a millisecond a declaration (incremental roadmap, M4).
 
 ## Tests
 
-`tests/repl/run.sh` (`make test-repl`) types each `tests/repl/NAME.in` to
+The runner (`repl/*` of `tests/runner/protocols.sml`; `make test-repl`) types each `tests/repl/NAME.in` to
 the REPL -- with the arguments of `NAME.args` where there is one, else
 `--no-init` -- and wants `NAME.expected`, both of its streams, on every mode
 of the JIT: `-e` and the init file; the values of every kind of type;
 Chapter 8's cases; datatypes in and out of scope, at their instances,
 abstract, and a printing depth; `use` of a library of files, of one that
-does not compile and of one that raises; Ctrl-C, which `tests/repl/drive.py`
+does not compile and of one that raises; Ctrl-C, which the runner
 sends the REPL as `SIGINT` where `interrupt.in` says, while a declaration
 loops, one with a handler of its own and one without; and a session saved
 with `Runtime.save` (`session.in`) and restored, `session.then` typed to the

@@ -8,10 +8,15 @@
    Enter submitting only an entry that a `;` ends at the top (ReplScan, D12).
    While what was compiled runs, the terminal is quiet (Terminal.quiet):
    keys typed ahead are neither echoed nor lost, and Ctrl-C is the user's
-   interrupt; a program that reads the standard input gets it as at a
-   shell, echoed and edited by lines, for that read (D18). Where the
+   interrupt. The editor goes quiet as soon as a line is accepted
+   (LineEdit.keepRaw): putting the terminal back would turn echo on, and
+   staying fully raw would take Ctrl-C as a byte. A program
+   that reads the standard input gets it as at a shell, echoed and edited
+   by lines, for that read (D18). Where the
    terminal is known to take them, the prompt and the output are marked for
-   it (OSC 133).
+   it (OSC 133). The prompt's mark is sent once the editor has the terminal
+   raw (LineEdit.beforePrompt): sent earlier, a key typed at the mark is
+   echoed, and a return is translated to a newline before the editor sees it.
 
    Everywhere else -- a pipe, a file, TERM=dumb, Emacs's comint,
    RUNE_BASIC_REPL, --basic -- the REPL is in its basic mode, a prompt and a
@@ -294,14 +299,19 @@ struct
     end
 
   (* the next entry, read with the editor; isWhole says whether the parser
-     takes a text the scanner says may be whole *)
+     takes a text the scanner says may be whole. The prompt's mark is
+     beforePrompt, sent from the editor once the terminal is raw. *)
   fun readEntry (sessionEnv : Env.env, isWhole : string -> bool) : entry =
-    (mark "A";
-     (case LineEdit.readLine (config (sessionEnv, isWhole), !history) of
-        LineEdit.Line t => (holding := false; mark "C"; Entry t)
-      | LineEdit.Interrupted => (holding := false; Interrupted)
-      | LineEdit.End => (holding := false; EndOfInput))
-     handle SML90.Interrupt => (holding := false; Interrupted))
+    (case LineEdit.readLine (config (sessionEnv, isWhole), !history) of
+       LineEdit.Line t =>
+         (* a line that will run is already quiet; a blank line or a
+            command is put back, since nothing else makes it quiet *)
+         (if CharVector.all Char.isSpace t orelse isCommand t then Terminal.leave () else ();
+          holding := false; mark "C"; Entry t)
+     | LineEdit.Interrupted => (holding := false; Interrupted)
+     | LineEdit.End => (holding := false; EndOfInput))
+    handle SML90.Interrupt =>
+      (holding := false; (Terminal.leave () handle OS.SysErr _ => ()); Interrupted)
 
   (* what an entry ended with, for the terminal's mark *)
   fun ended (ok : bool) = mark (if ok then "D;0" else "D;1")
@@ -321,7 +331,9 @@ struct
       editing := canEdit;
       if not canEdit then ()
       else
-        (marking := marksTaken ();
+        (LineEdit.keepRaw := true;
+         marking := marksTaken ();
+         LineEdit.beforePrompt := (fn () => mark "A");
          history := SOME (History.load {file = History.defaultFile (), limit = 1000});
          wrapStdIn ();
          if quiet then () else out (paint "repl.ui" ("Rune " ^ Config.version ^ ". Type :help for instructions.") ^ "\n"))

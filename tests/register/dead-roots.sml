@@ -1,5 +1,5 @@
 (* What the collector keeps of a frame that waits for a call
-   (runtime/heap.c, stack_roots; scripts/check-register.sh runs this on
+   (runtime/heap.c, stack_roots; tests/runner/oracles.sml (register) runs this on
    runtime/register at every tier). A list of 100,000 cells, 2.4 MB, whose
    last use is before the call is dropped by the collection the callee makes;
    the same list used after the call is kept, and so is one that a handler

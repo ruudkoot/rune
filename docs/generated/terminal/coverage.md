@@ -6,13 +6,13 @@ documented when a comment describes it, alone or together with the entry before 
 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
-| [`DEVICE`](sig/DEVICE.md) | 8 | 8 | 100% | 8 | 8 |
+| [`DEVICE`](sig/DEVICE.md) | 9 | 9 | 100% | 9 | 9 |
 | [`EMULATOR`](sig/EMULATOR.md) | 9 | 9 | 100% | 7 | 7 |
 | [`HISTORY`](sig/HISTORY.md) | 8 | 8 | 100% | 7 | 7 |
 | [`KEY`](sig/KEY.md) | 10 | 10 | 100% | 4 | 4 |
-| [`LINE_EDIT`](sig/LINE_EDIT.md) | 20 | 20 | 100% | 10 | 10 |
+| [`LINE_EDIT`](sig/LINE_EDIT.md) | 23 | 23 | 100% | 10 | 10 |
 | [`STYLE`](sig/STYLE.md) | 11 | 11 | 100% | 6 | 6 |
-| **all** | 66 | 66 | 100% | 42 | 42 |
+| **all** | 70 | 70 | 100% | 43 | 43 |
 
 ## Members a signature describes
 
@@ -21,7 +21,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-7 structures have a page, with 74 members, of which 74 (100%) are described by a signature.
+7 structures have a page, with 79 members, of which 79 (100%) are described by a signature.
 
 ## Examples that are run
 

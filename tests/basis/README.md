@@ -51,6 +51,13 @@ MLton, SML/NJ 110.99.9 built for 64 and for 32 bits (its 31-bit `int` and
 `word` have found many portability bugs), SML/NJ 2026.2 (the development
 line, 64-bit only), Poly/ML and MLKit (63-bit `int` and `word`), never the
 machine's own.
+`make check` runs the suite in Rune's four configurations, `rune`, `rune:new`,
+`rune:jit` and `rune:opt`, on the runner (`tests/runner/basis.sml`, which
+judges the programs and reads `deviations.txt` as run-matrix.sh does; `make
+test-basis` is the first), with the examples of the library's documentation
+that are equations (`docs/doc-comments.md`): `runedoc --examples` writes a
+program for each signature into `build/basis-examples`, and each is compiled
+and run with Rune.
 `make matrix` runs every configuration, `make matrix-quick` Rune and the
 `xc1` ones, `make test-windows` Rune on the two VMs of Windows
 (`--configs windows`), and `sh tests/basis/run-matrix.sh --configs all [FILTER]` runs
@@ -73,7 +80,6 @@ described in [docs/basis-compat.md](../../docs/basis-compat.md).
 | `host/` | what the `xc1` configurations need: `gen-host-basis.sh` and `rune-prim.sml`, the VM's primitives on a host's library |
 | `xc2/` | what the `xc2` configurations need: a generator, a shim and a patch of the host's sources per host (`xc2/mlton/`, `xc2/mlkit/`, `xc2/smlnj-legacy/`, `xc2/smlnj-dev/`, `xc2/polyml/`), and what they share ([xc2/README.md](xc2/README.md)) |
 | `deviations.txt` | every known failure, with its category and reason |
-| `run-examples.sh` | tries the examples of the library's documentation that are equations (`docs/doc-comments.md`): `runedoc --examples` writes a program for each signature into `tests/out/basis-examples`, and each is compiled and run with Rune. `make test-basis` runs it after the suite |
 | `annotations.txt` | what `deviations.txt` says about the hosts, in the format the documentation generator reads (`runedoc --annotations`); made by `gen-annotations.sh`, committed, and checked by `make check-docs`. After a change to a host line of `deviations.txt`: `sh tests/basis/gen-annotations.sh`, then `make docs` |
 
 ## Writing a test

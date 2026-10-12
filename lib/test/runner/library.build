@@ -1,0 +1,27 @@
+(* The runner of tests (docs/plans/unit-testing.md, D8 to D14 and M3): the
+   scheduler, the supervisor of children, the history of runs, the report,
+   the expectations, the requirements and the command line; its files in
+   load order, in the form of lib/basis/library.build. It is written on
+   lib/test/unit, for the tree of tests and the filters, and on
+   lib/terminal, for the status line: *)
+libraries test/unit terminal end
+(* Rune's alone: it runs children through Subprocess and times them by
+   Runtime.clock, which no other compiler has. *)
+annotate "demand" "host=no" in
+  scheduler_sig.sml
+  scheduler.sml
+  supervisor_sig.sml
+  supervisor.sml
+  history_sig.sml
+  history.sml
+  expectations_sig.sml
+  expectations.sml
+  requirements_sig.sml
+  requirements.sml
+  report_sig.sml
+  report.sml
+  run_sig.sml
+  run.sml
+  cli_sig.sml
+  cli.sml
+end

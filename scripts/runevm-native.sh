@@ -14,7 +14,7 @@
 # (tests/out/opt-cache), which the Makefile empties whenever it builds runeopt
 # or the runtime again; RUNEOPT chooses the build of runeopt (by default
 # the MLton one where it is built, which is the fastest, and every build
-# writes the same program: scripts/check-opt-cross.sh), and RUNEOPT_RUNTIME
+# writes the same program: tests/runner/oracles.sml (cross)), and RUNEOPT_RUNTIME
 # and RUNEOPT_CC what it is given as --runtime and --cc (make test-native-asan).
 set -u
 root=$(cd "$(dirname "$0")/.." && pwd)
@@ -63,10 +63,17 @@ mkdir -p "$cache"
 sum=$(sha256sum < "$rbc" | cut -c1-32)
 exe=$cache/$sum
 if [ ! -x "$exe" ]; then
-  # into a name of its own, then into place: runners run programs in parallel
+  # into a name of its own, then into place: runners run programs in
+  # parallel. It is made in the root, wherever the program runs, since the
+  # assembler writes the directory it ran in into the debug information and
+  # a translation is kept by the checksum alone (tests/opt/run-debug.sh)
   tmp=$cache/$sum.$$
-  if ! "$runeopt" ${RUNEOPT_RUNTIME:+--runtime "$RUNEOPT_RUNTIME"} ${RUNEOPT_CC:+--cc "$RUNEOPT_CC"} \
-       "$rbc" -o "$tmp" > "$tmp.log" 2>&1; then
+  here=$(pwd)
+  # a file from here, and a program (one without a directory is on PATH)
+  file() { case $1 in /*) printf '%s' "$1" ;; *) printf '%s/%s' "$here" "$1" ;; esac; }
+  prog() { case $1 in */*) file "$1" ;; *) printf '%s' "$1" ;; esac; }
+  if ! (cd "$root" && exec "$(prog "$runeopt")" ${RUNEOPT_RUNTIME:+--runtime "$(file "$RUNEOPT_RUNTIME")"} \
+          ${RUNEOPT_CC:+--cc "$(prog "$RUNEOPT_CC")"} "$(file "$rbc")" -o "$(file "$tmp")") > "$tmp.log" 2>&1; then
     sed 's/^runeopt: /runevm: /' "$tmp.log" >&2
     rm -f "$tmp" "$tmp.log" "$tmp.s"
     exit 2

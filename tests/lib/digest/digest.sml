@@ -1,4 +1,4 @@
-(* libraries: random *)
+(* libraries: test/unit random *)
 (* SHA-256 against FIPS 180-4's examples and a million a's, HMAC-SHA-256
    against RFC 4231's seven cases, both against Python's hashlib and hmac
    on messages of every length around a block's edges
@@ -8,8 +8,7 @@
    which JupyterLab names cells. *)
 structure DigestTest =
 struct
-  val failures = ref 0
-  fun check (name, ok) = if ok then () else (failures := !failures + 1; print ("FAIL " ^ name ^ "\n"))
+  val check = Expect.that
 
   fun bytes h = valOf (Hex.toBytes h)
   fun sha s = Hex.fromBytes (Sha256.digest s)
@@ -114,9 +113,11 @@ struct
      check ("equal", HmacSha256.equal ("", "") andalso HmacSha256.equal ("ab", "ab")
                      andalso not (HmacSha256.equal ("ab", "ac")) andalso not (HmacSha256.equal ("ab", "abc"))))
 
-  fun main () =
-    (fips (); rfc4231 (); python (); pieces (); hexAndEqual (); murmur2 ();
-     print ((if !failures = 0 then "PASS" else "FAIL") ^ " digest: " ^ Int.toString (!failures) ^ " failed\n"))
+  val tests =
+    Test.describe "digest"
+      [Test.it "fips" fips, Test.it "rfc4231" rfc4231, Test.it "python" python, Test.it "pieces" pieces,
+       Test.it "hex-and-equal" hexAndEqual, Test.it "murmur2" murmur2]
 end
 
-val () = DigestTest.main ()
+structure DigestMain = Main (struct val name = "digest" val tests = DigestTest.tests end)
+val () = DigestMain.main ()

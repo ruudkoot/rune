@@ -130,6 +130,26 @@ int sys_waitpid(int64_t pid, int flags, int64_t out[3]);
    -1 where the system knows at once (Windows). */
 int64_t sys_spawn(const char *path, char *const argv[], char *const envp[], int search, const int fds[3]);
 int sys_kill(int64_t pid, int signal);
+/* What a test runner needs of its children (docs/plans/unit-testing.md,
+   M2): sys_spawn with a directory to start in (NULL: this process's), a
+   process group of its own (POSIX) or a job (Windows) when group is 1, the
+   signals at their default actions when defaults is 1, and limits[] -- the
+   bytes of address space, the seconds of processor time, the bytes of a
+   file written and of a core dump, -1 leaving one as it is. Windows has a
+   job's limits of memory and processor time and no others. */
+int64_t sys_spawn_with(const char *path, char *const argv[], char *const envp[], int search, const int fds[3],
+                       const char *dir, int group, int defaults, const int64_t limits[4]);
+/* sys_waitpid (flags: bit 0 does not wait, and says 0 when nothing ended)
+   that also says what the child cost: out[3] and out[4] its user and
+   system processor time in microseconds, out[5] the most memory it held
+   resident, in kilobytes (0 where the system does not say). */
+int sys_wait_usage(int64_t pid, int flags, int64_t out[6]);
+/* A signal to the child's process group (POSIX), or the end of its job
+   (Windows, for a child sys_spawn_with started in a group; otherwise
+   sys_kill). */
+int sys_kill_group(int64_t pid, int signal);
+/* The processors this process may run on: at least 1. */
+int sys_processors(void);
 int sys_alarm(int seconds);
 int sys_pause(void);
 /* End the process at once with the status, flushing nothing and running

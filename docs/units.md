@@ -432,7 +432,7 @@ that a child compiled in a basis without some unit is one whose usages
 the parent checks, and compiles again where they do not hold. So `-j`
 changes how long a build takes and nothing else -- the program, the
 warnings, the errors, and what `--explain-rebuild` prints, in the units'
-order (S58). `make check-reproducible` (`scripts/check-reproducible.sh`)
+order (S58). `make check-reproducible` (the oracle `reproducible` of `tests/runner/oracles.sml`)
 holds the compiler to one set of bytes over eleven builds: in units and
 whole, without the cache, through a cold cache and warm, by one process and
 by several, and from a copy of its sources in another directory; the whole
@@ -462,7 +462,7 @@ needs, a declaration at a time (Chapter 8 of the Definition).
 
 ## Checking it
 
-`make check-units` (`scripts/check-units.sh`) compiles every program of
+`make check-units` (the oracle `units` of `tests/runner/oracles.sml`) compiles every program of
 `tests/lang` and `tests/perf` whole and with `--units` at `-O0`, `-O1` and
 `-O2`, the lint of every pass on, runs them as `tests/run-tests.sh` does,
 and wants the same output on both streams, traces included, and the same

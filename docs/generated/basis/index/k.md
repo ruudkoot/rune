@@ -6,7 +6,7 @@
 - `K_PROC` (con): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#con-k_proc)
 - `K_SAME_GROUP` (con): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#con-k_same_group)
 - `Key` (str): [WINDOWS](../sig/WINDOWS.md#str-key)
-- `kill` (val): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#val-kill), [POSIX_SIGNAL](../sig/POSIX_SIGNAL.md#val-kill), [UNIX](../sig/UNIX.md#val-kill)
+- `kill` (val): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#val-kill), [POSIX_SIGNAL](../sig/POSIX_SIGNAL.md#val-kill), [SUBPROCESS](../sig/SUBPROCESS.md#val-kill), [UNIX](../sig/UNIX.md#val-kill)
 - `killpid_arg` (type): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#type-killpid_arg)
 - `Kind` (str): [OS_IO](../sig/OS_IO.md#str-kind)
 - `kind` (val): [OS_IO](../sig/OS_IO.md#val-kind)

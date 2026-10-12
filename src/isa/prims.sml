@@ -810,5 +810,16 @@ struct
          {name = "term_leave", arity = 1, ty = "unit -> int", effects = anything,
           doc = "Put the terminal back as it was before term_enter; 0, or ~1."},
          {name = "term_read", arity = 3, ty = "int * int * int -> string option", effects = anything,
-          doc = "At most n bytes typed at the terminal (descriptor, n, milliseconds to wait, ~1 for no limit): SOME \"\" when the time is up or a resize ended the wait; NONE at the end of the input, or when the read fails, sys_errno saying why (0 at the end). The user's interrupt, where it is caught, is raised."}]]
+          doc = "At most n bytes typed at the terminal (descriptor, n, milliseconds to wait, ~1 for no limit): SOME \"\" when the time is up or a resize ended the wait; NONE at the end of the input, or when the read fails, sys_errno saying why (0 at the end). The user's interrupt, where it is caught, is raised."}],
+       group "what a test runner needs of the system (Runtime.clock, Runtime.processors, Subprocess; docs/plans/unit-testing.md, M2)"
+        [{name = "rt_clock_ns", arity = 1, ty = "unit -> int", effects = anything,
+          doc = "A monotonic clock, in nanoseconds from a start the system chooses; 0 where it has none."},
+         {name = "rt_processors", arity = 1, ty = "unit -> int", effects = anything,
+          doc = "The processors this process may run on; at least 1."},
+         {name = "proc_spawn", arity = 7, ty = "string * string list * string list * int * int list * string * int list -> int", effects = anything,
+          doc = "Start a program as posix_spawn does (path, arguments, environment, flags, descriptors), in a directory (\"\": this process's), with flags bit 2 a process group of its own (a job on Windows) and bit 3 the signals at their default actions, and limits [address space bytes, processor seconds, file bytes, core bytes], ~1 leaving one as it is; its process, or ~1."},
+         {name = "proc_wait", arity = 2, ty = "int * int -> int list", effects = anything,
+          doc = "Wait for a child (~1: any), not at all when bit 0 of the flags is set: [process (0 when none has ended), 0 exited or 1 signalled or 2 stopped, status or signal, user microseconds, system microseconds, peak resident kilobytes]; [] on failure."},
+         {name = "proc_kill", arity = 2, ty = "int * int -> int", effects = anything,
+          doc = "Send a signal to a child's process group, or end its job on Windows; 0, or ~1."}]]
 end

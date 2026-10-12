@@ -1,4 +1,4 @@
-(* requires: Runtime Array Byte Char IO List OS String TextIO Vector *)
+(* requires: Runtime Array Byte Char IO List OS String TextIO Time Vector *)
 (* Runtime (signature RUNTIME, Rune's own): the counters the VM keeps for the
    program it is running. No other SML system counts any of this, and
    lib/basis/runtime.sml is `host = no` in the MANIFEST, so this file runs on
@@ -321,4 +321,11 @@ struct
                     fn () =>
                       Runtime.version <> ""
                       andalso List.all Char.isGraph (String.explode Runtime.version))
+  (* the clock never goes back, and goes on; there is a processor *)
+  val () = T.check ("Runtime.clock/never-goes-back",
+                    fn () => let val a = Runtime.clock () val b = Runtime.clock () in Time.<= (a, b) end)
+  val () = T.check ("Runtime.clock/goes-on",
+                    fn () => let val a = Runtime.clock () in OS.Process.sleep (Time.fromMilliseconds 20);
+                                                               Time.>= (Time.- (Runtime.clock (), a), Time.fromMilliseconds 10) end)
+  val () = T.check ("Runtime.processors/at-least-one", fn () => Runtime.processors () >= 1)
 end

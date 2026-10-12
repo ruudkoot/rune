@@ -1,11 +1,10 @@
-(* libraries: random *)
+(* libraries: test/unit random *)
 (* JsonRpc against the examples of the JSON-RPC 2.0 specification (its
    section 7), messages written and read back, a server's answers; and
    Framing on every split of a stream, in both framings. *)
 structure JsonRpcTest =
 struct
-  val failures = ref 0
-  fun check (name, ok) = if ok then () else (failures := !failures + 1; print ("FAIL " ^ name ^ "\n"))
+  val check = Expect.that
 
   open JsonRpc
   fun codes text = map (fn Invalid ({code, ...}, _) => code | Message _ => 0) (decode text)
@@ -105,9 +104,11 @@ struct
              handle Framing.Header _ => true)
     end
 
-  fun main () =
-    (specification (); roundTrip (); serving (); framing ();
-     print ((if !failures = 0 then "PASS" else "FAIL") ^ " jsonrpc: " ^ Int.toString (!failures) ^ " failed\n"))
+  val tests =
+    Test.describe "jsonrpc"
+      [Test.it "specification" specification, Test.it "round-trip" roundTrip, Test.it "serving" serving,
+       Test.it "framing" framing]
 end
 
-val () = JsonRpcTest.main ()
+structure JsonRpcMain = Main (struct val name = "jsonrpc" val tests = JsonRpcTest.tests end)
+val () = JsonRpcMain.main ()

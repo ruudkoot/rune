@@ -673,6 +673,98 @@ int sys_waitpid(int64_t pid, int flags, int64_t out[3]) {
 }
 
 int sys_kill(int64_t pid, int signal) { return kill((pid_t)pid, signal); }
+
+/* What a test runner needs of its children (sys.h). wait4 is BSD's, which
+   glibc and the BSDs give and the strict POSIX of this file's macros does
+   not declare. */
+extern pid_t wait4(pid_t pid, int *status, int options, struct rusage *usage);
+
+static void limit(int resource, int64_t value) {
+    if (value < 0) return;
+    struct rlimit r;
+    if (getrlimit(resource, &r) != 0) return;
+    rlim_t v = (rlim_t)value;
+    r.rlim_cur = r.rlim_max != RLIM_INFINITY && v > r.rlim_max ? r.rlim_max : v;
+    setrlimit(resource, &r);
+}
+
+int64_t sys_spawn_with(const char *path, char *const argv[], char *const envp[], int search, const int fds[3],
+                       const char *dir, int group, int defaults, const int64_t limits[4]) {
+    pid_t pid = fork();
+    if (pid > 0) {
+        /* in the parent too, so that a signal to the group reaches the child
+           however soon it is sent */
+        if (group) setpgid(pid, pid);
+        return (int64_t)pid;
+    }
+    if (pid < 0) return -1;
+    if (group && setpgid(0, 0) != 0) _exit(126);
+    if (defaults) {
+        sigset_t none;
+        sigemptyset(&none);
+        sigprocmask(SIG_SETMASK, &none, NULL);
+        for (int sig = 1; sig < 65; sig++) signal(sig, SIG_DFL);
+    }
+    limit(RLIMIT_AS, limits[0]);
+    limit(RLIMIT_CPU, limits[1]);
+    limit(RLIMIT_FSIZE, limits[2]);
+    limit(RLIMIT_CORE, limits[3]);
+    if (dir && chdir(dir) != 0) _exit(126);
+    for (int i = 0; i < 3; i++)
+        if (fds[i] >= 0 && fds[i] != i && dup2(fds[i], i) < 0) _exit(126);
+    for (int i = 0; i < 3; i++) {
+        int later = 0;
+        for (int j = i + 1; j < 3; j++) later |= fds[j] == fds[i];
+        if (fds[i] > 2 && !later) close(fds[i]);
+    }
+    sys_exec(path, argv, envp, search);
+    _exit(126);
+}
+
+int sys_wait_usage(int64_t pid, int flags, int64_t out[6]) {
+    int status = 0;
+    struct rusage u;
+    memset(&u, 0, sizeof u);
+    pid_t got = wait4((pid_t)pid, &status, (flags & 1) ? WNOHANG : 0, &u);
+    if (got < 0) return -1;
+    out[0] = (int64_t)got;
+    out[1] = out[2] = out[3] = out[4] = out[5] = 0;
+    if (got == 0) return 0;
+    if (WIFEXITED(status)) { out[1] = 0; out[2] = WEXITSTATUS(status); }
+    else if (WIFSIGNALED(status)) { out[1] = 1; out[2] = WTERMSIG(status); }
+    else if (WIFSTOPPED(status)) { out[1] = 2; out[2] = WSTOPSIG(status); }
+    out[3] = (int64_t)u.ru_utime.tv_sec * 1000000 + u.ru_utime.tv_usec;
+    out[4] = (int64_t)u.ru_stime.tv_sec * 1000000 + u.ru_stime.tv_usec;
+#if defined(__APPLE__)
+    out[5] = (int64_t)u.ru_maxrss / 1024;   /* bytes there, kilobytes elsewhere */
+#else
+    out[5] = (int64_t)u.ru_maxrss;
+#endif
+    return 0;
+}
+
+int sys_kill_group(int64_t pid, int signal) {
+    if (pid <= 0) { errno = EINVAL; return -1; }
+    return kill(-(pid_t)pid, signal);
+}
+
+#if defined(__linux__)
+extern int sched_getaffinity(pid_t pid, size_t size, void *mask);
+#endif
+int sys_processors(void) {
+#if defined(__linux__)
+    unsigned long mask[64];
+    memset(mask, 0, sizeof mask);
+    if (sched_getaffinity(0, sizeof mask, mask) == 0) {
+        int n = 0;
+        for (size_t i = 0; i < sizeof mask / sizeof mask[0]; i++)
+            for (unsigned long w = mask[i]; w; w &= w - 1) n++;
+        if (n > 0) return n;
+    }
+#endif
+    long n = sysconf(_SC_NPROCESSORS_ONLN);
+    return n > 0 ? (int)n : 1;
+}
 int sys_alarm(int seconds) { return (int)alarm((unsigned)seconds); }
 int sys_pause(void) { pause(); return 0; }
 static void term_restore(void);

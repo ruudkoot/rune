@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 2 |
-| Documentation | 20 of 20 entries documented |
+| Documentation | 23 of 23 entries documented |
 | Tests | not listed |
 | Source | [lib/terminal/line\_edit\_sig.sml](../../../../lib/terminal/line_edit_sig.sml) |
 
@@ -98,6 +98,9 @@ sig
   val <a href="#val-diff">diff</a> : {<a href="#fld-diff.old">old</a> : frame option, <a href="#fld-diff.new">new</a> : frame, <a href="#fld-diff.columns">columns</a> : int, <a href="#fld-diff.drawn">drawn</a> : int} -&gt; string * int
   datatype <a href="#type-result">result</a> = <a href="#con-line">Line</a> of string | <a href="#con-interrupted">Interrupted</a> | <a href="#con-end">End</a>
   val <a href="#val-basic">basic</a> : config -&gt; bool
+  val <a href="#val-keepraw">keepRaw</a> : bool ref
+  type <a href="#type-prompthook">promptHook</a> = unit -&gt; unit
+  val <a href="#val-beforeprompt">beforePrompt</a> : promptHook ref
   val <a href="#val-readline">readLine</a> : config * History.history option -&gt; result
   val <a href="#val-terminal">terminal</a> : unit -&gt; {<a href="#fld-terminal.policy">policy</a> : Grapheme.policy option, <a href="#fld-terminal.kitty">kitty</a> : bool}
 end
@@ -409,6 +412,42 @@ the rule [`readLine`](#val-readline) gives.
 A program with a basic mode of its own, as the REPL has, asks it
 before it reads.
 
+### <a name="val-keepraw"></a>`keepRaw`
+
+```sml
+val keepRaw : bool ref
+```
+
+[`keepRaw`](#val-keepraw), when set, asks [`readLine`](#val-readline) to leave the terminal quiet
+after an accepted line: the echo off, and Ctrl-C a signal.
+
+The REPL sets it. Putting the terminal back would turn the echo on,
+and a key typed before quiet mode would show up in what the code
+writes. Full raw mode would instead take Ctrl-C as a byte. An
+interrupt and the end of the input put the terminal back either way.
+
+### <a name="type-prompthook"></a>`promptHook`
+
+```sml
+type promptHook = unit -> unit
+```
+
+[`promptHook`](#type-prompthook) is what to run once the terminal is raw, just before the
+prompt is drawn.
+
+### <a name="val-beforeprompt"></a>`beforePrompt`
+
+```sml
+val beforePrompt : promptHook ref
+```
+
+[`beforePrompt`](#val-beforeprompt), when set, is run once the terminal is raw, just
+before the prompt is drawn. The basic mode does not run it.
+
+The REPL announces the prompt there. A key typed at that
+announcement is then read as itself: in the cooked mode a return is
+translated, and echoed, before the editor can see it.
+
 ### <a name="val-readline"></a>`readLine`
 
 ```sml
@@ -418,10 +457,13 @@ val readLine : config * History.history option -> result
 `readLine (c, h)` reads an input at the terminal with the editor,
 going back through the history `h` and adding the input to it.
 
-It puts the terminal back before it returns. It is the basic mode when
-`#basic c`, when the standard input or output is not a terminal,
-when `TERM` is `dumb`, `unknown`, `cons25` or [`emacs`](#val-emacs), when
-`INSIDE_EMACS` names comint, or when `RUNE_BASIC_REPL` is set.
+It puts the terminal back before it returns, unless [`keepRaw`](#val-keepraw) is set
+and it read a line, when the terminal stays quiet. Where [`beforePrompt`](#val-beforeprompt)
+is set, it is called once the terminal is raw and just before the
+prompt is drawn. It is the basic mode when `#basic c`, when the
+standard input or output is not a terminal, when `TERM` is `dumb`,
+`unknown`, `cons25` or [`emacs`](#val-emacs), when `INSIDE_EMACS` names comint, or
+when `RUNE_BASIC_REPL` is set.
 
 ### <a name="val-terminal"></a>`terminal`
 

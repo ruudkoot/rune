@@ -2,6 +2,11 @@
 # Rune test runner.
 #   tests/run-tests.sh [--rune BIN] [--vm BIN] [--out DIR] [--skip FILE] [--update] [-j N] [FILTER]
 #
+# make check and the test targets run these programs on bin/rune-test, in
+# their ways (tests/runner/lang.sml, which judges them as this script does);
+# this script stays for the runner of Windows (run-windows.sh) and for runs
+# by hand.
+#
 # tests/lang/<id>_<name>.sml : compiled and run; stdout must equal the
 #   matching .expected file. Optional siblings: .cargs (options for the
 #   compiler, such as --or-patterns), .args (command line words for the
@@ -191,11 +196,11 @@ fi
 [ -n "$jobs" ] || jobs=$(sh scripts/ncpus.sh)
 # A skip file names the programs to leave out, one to a line, with a reason
 # after the name; a line beginning with # is a comment. Only a runner that
-# gives the VM of another machine uses it (tests/run-portability.sh).
+# gives the VM of another machine uses it (tests/run-windows.sh).
 skipped=""
 nskip=0
 if [ -n "$skip" ]; then
-  skipped=$(sed -e 's/#.*//' -e 's/[[:space:]].*//' "$skip" | grep -v '^$' | tr '\n' ' ')
+  skipped=$(sh tests/skipped.sh "$skip" | tr '\n' ' ')
 fi
 is_skipped() { case " $skipped " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
 
