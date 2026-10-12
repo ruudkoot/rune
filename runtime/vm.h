@@ -368,6 +368,11 @@ typedef struct VM {
     size_t census_used_stock;  /* alloc.used as the stock VM would count it (8-byte headers): the collector's trigger */
 #endif
     size_t gc_count;
+    /* --gc-verify and --gc-stress, runtime/register's code (M7): the collections and the
+       frame's record at its last sync, which the reload after the call
+       into C compares (masm.c, ms_reload) */
+    size_t verify_gc;
+    const Frame *verify_frame;
     size_t live_last;        /* bytes the last collection kept, and the one before it: */
     size_t live_before;      /* vm_gc guesses from them whether the heap must grow */
     int64_t gc_user_us;      /* processor time spent collecting, in microseconds */

@@ -213,7 +213,10 @@ keep these invariants:
   scratch, or sets a call's arguments, writes the homes back first
   (`ms_writeback`) and loads them again after (`ms_reload`,
   `ms_reload_homes`, `ms_call_lean`); a place code is entered from
-  outside is a landing (`jit_landing`), never a label. Tier 2 trusts
+  outside is a landing (`jit_landing`), never a label. A home may hold a
+  pointer (M7): a call into C that may collect is made after `ms_sync`
+  and followed by `ms_reload`, never as a lean call, and a helper's
+  arguments come from scratch registers, never from homes. Tier 2 trusts
   the representations section for the shape of a value (`ms_trusts`):
   an emitter that tests a tag, a kind or a length asks it first, and
   the loop and tier 1 keep every test, so the oracle's interpreted run

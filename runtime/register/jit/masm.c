@@ -173,6 +173,9 @@ static int is_raw_gpr(const Home *h) {
 #endif
 }
 static int is_raw(const Home *h) { return is_xmm(h) || is_raw_gpr(h); }
+/* a home of any word (M7): a pointer's, a constructor's, or one the section
+   says nothing of -- the word as the slot has it */
+static int is_any_word(const Home *h) { return h && h->kind == HOME_GPR && h->tag == T_PTR; }
 const Home *ms_word_home(const Masm *m, int32_t s) {
     const Home *h = ms_home(m, s);
     return h && !is_raw(h) ? h : NULL;
@@ -342,28 +345,32 @@ void ms_copy(Masm *m, int32_t d, int32_t s) {
     if (d == s) return;
     if (is_xmm(hd)) {
         if (is_xmm(hs)) as_fmov(&m->a, hd->reg, hs->reg);
+        else if (is_any_word(hs)) { as_mov_rr(&m->a, R_S2, hs->reg); decode_real(m, hd->reg, NULL); }   /* a real's word (M7) */
         else if (hs) bug("a real's home given what is in a general register", d, s);
         else { as_ld64(&m->a, R_S2, BASER, SLOT(s)); decode_real(m, hd->reg, NULL); }
         real_behind(m, d);
         return;
     }
     if (is_xmm(hs)) {
+        want_current(m, s);   /* its slot has its word: the real's box where it has no immediate (M7) */
+        if (is_any_word(hd)) { as_ld64(&m->a, hd->reg, BASER, SLOT(s)); return; }
         if (hd) bug("a general register given a real's home", d, s);
-        want_current(m, s);   /* its slot has its word */
         as_fld(&m->a, F_S0, BASER, SLOT(s));
         as_fst(&m->a, BASER, SLOT(d), F_S0);
         return;
     }
     if (is_raw_gpr(hd)) {   /* a number's 64 bits */
         if (is_raw_gpr(hs)) as_mov_rr(&m->a, hd->reg, hs->reg);
+        else if (is_any_word(hs)) { as_mov_rr(&m->a, R_S2, hs->reg); decode_num(m, hd->reg, hd->tag, NULL); }   /* a number's word (M7) */
         else if (hs) { as_mov_rr(&m->a, hd->reg, hs->reg); as_sar_ri(&m->a, hd->reg, 1); }   /* a char's or a tag's word */
         else { as_ld64(&m->a, R_S2, BASER, SLOT(s)); decode_num(m, hd->reg, hd->tag, NULL); }
         real_behind(m, d);
         return;
     }
     if (is_raw_gpr(hs)) {
+        want_current(m, s);   /* its slot has its word, or its box (M7) */
+        if (is_any_word(hd)) { as_ld64(&m->a, hd->reg, BASER, SLOT(s)); return; }
         if (hd) bug("a home of words given an int's 64 bits", d, s);
-        want_current(m, s);
         as_fld(&m->a, F_S0, BASER, SLOT(s));
         as_fst(&m->a, BASER, SLOT(d), F_S0);
         return;
@@ -494,7 +501,7 @@ void ms_next_value(Masm *m, int r) { as_add_ri(&m->a, r, VALUE_SIZE); }
    a slot's always; a home's holds what its representation says, which
    under RUNE_INT64 is, for an int or a word, an immediate or its box */
 static int imm_tested(const Masm *m, int32_t s, int tag) {
-    if (!ms_home(m, s)) return 1;
+    if (!ms_home(m, s) || is_any_word(ms_home(m, s))) return 1;
 #ifdef RUNE_INT64
     return tag == T_INT || tag == T_WORD;
 #else
@@ -511,7 +518,8 @@ void ms_check_tag(Masm *m, int32_t s, int tag, AsmLabel *unless) {
     if (is_xmm(h)) { if (tag != T_REAL) as_jmp(&m->a, unless); return; }
     if (is_raw_gpr(h)) { if (tag == T_PTR || tag == T_REAL) as_jmp(&m->a, unless); return; }   /* a number, whatever its size */
     if (tag == T_PTR) {
-        if (h) { as_jmp(&m->a, unless); return; }   /* a home holds no object the program sees */
+        if (is_any_word(h)) { as_test_ri(&m->a, h->reg, 1); as_jcc(&m->a, CC_NE, unless); return; }
+        if (h) { as_jmp(&m->a, unless); return; }   /* a home of numbers holds no object the program sees */
         as_test8_mi(&m->a, BASER, SLOT(s), 1);
         as_jcc(&m->a, CC_NE, unless);
         return;
@@ -556,8 +564,8 @@ static void load_num(Masm *m, int reg, int32_t s, int tag, AsmLabel *slow) {
     const Home *h = ms_home(m, s);
     if (is_xmm(h)) bug("a real read as a number", s, tag);
     if (is_raw_gpr(h)) { as_mov_rr(&m->a, reg, h->reg); return; }
-    if (h) { as_mov_rr(&m->a, reg, h->reg); as_sar_ri(&m->a, reg, 1); return; }   /* a char or a tag: its word */
-    as_ld64(&m->a, R_S2, BASER, SLOT(s));
+    if (h && !is_any_word(h)) { as_mov_rr(&m->a, reg, h->reg); as_sar_ri(&m->a, reg, 1); return; }   /* a char or a tag: its word */
+    if (h) as_mov_rr(&m->a, R_S2, h->reg); else as_ld64(&m->a, R_S2, BASER, SLOT(s));   /* any word: tested as a slot's (M7) */
     if (tag == T_CHAR || tag == T_CON0) {   /* never a box */
         as_test_ri(&m->a, R_S2, 1);
         as_jcc(&m->a, CC_E, slow);
@@ -609,14 +617,15 @@ void ms_set_num64(Masm *m, int32_t d, int tag, int r, AsmLabel *slow) {
         if (h) as_mov_rr(&m->a, h->reg, R_S2); else as_st64(&m->a, BASER, SLOT(d), R_S2);
         return;
     }
-    if (h) bug("an int or a word into a home of words", d, tag);
+    if (h && !is_any_word(h)) bug("an int or a word into a home of words", d, tag);
     /* into a slot: its word, or where it has none its box, which a helper
        makes from the bits (the primitive need not be done again in C);
        where there is no such helper (runeopt's templates) the slow path is
-       the primitive's */
+       the primitive's. A home of any word takes it from there (M7). */
     if (!m->box_num) {
         encode_num(m, r, tag, slow);
         as_st64(&m->a, BASER, SLOT(d), R_S2);
+        if (h) as_mov_rr(&m->a, h->reg, R_S2);
         return;
     }
     Slow *sl = ms_slow(m, SLOW_BOXNUM, m->cur_pc);
@@ -626,6 +635,7 @@ void ms_set_num64(Masm *m, int32_t d, int tag, int r, AsmLabel *slow) {
     encode_num(m, r, tag, &m->slow[which]->here);
     as_st64(&m->a, BASER, SLOT(d), R_S2);
     as_bind(&m->a, &m->slow[which]->back);
+    if (h) as_ld64(&m->a, h->reg, BASER, SLOT(d));
 }
 /* R_S1 := the count of a shift, the payload of the word in R(y); to slow
    where it is no immediate */
@@ -878,10 +888,10 @@ static int kept(const Masm *m, const Home *h) {
    that boxes it waits in that slot, not in the VM's cell, which the
    collector does not see. */
 static int may_move(const Home *h) {
+    if (is_any_word(h)) return 1;   /* a pointer's (M7) */
 #if defined(RUNE_INT64) && !defined(RUNE_RAW_NUMS)
     return h->kind == HOME_GPR && (h->tag == T_INT || h->tag == T_WORD);
 #else
-    (void)h;
     return 0;
 #endif
 }
@@ -1106,7 +1116,9 @@ int ms_trusts(const Masm *m, int32_t s, int kind) {
 void ms_load_obj(Masm *m, int r, int32_t s, int kind, AsmLabel *unless) {
     m->nfields = UINT32_MAX;   /* an object of the program's, whose length the code tests */
     int role = ms_role(m, MR_PTRLD);
-    as_ld64(&m->a, r, BASER, SLOT(s));
+    const Home *h = ms_home(m, s);
+    if (is_any_word(h)) as_mov_rr(&m->a, r, h->reg);   /* the home's (M7) */
+    else as_ld64(&m->a, r, BASER, SLOT(s));
     if (!ms_trusts(m, s, kind)) {   /* tier 2: the section says so (M10) */
         ms_role(m, MR_TAG);
         as_test_ri(&m->a, r, 1);
@@ -1243,10 +1255,10 @@ void ms_string_order_short(Masm *m, AsmLabel *longer) {
    in the object's header */
 void ms_load_tag_of_con(Masm *m, int r, int32_t s, AsmLabel *unless) {
     const Home *h = ms_home(m, s);
-    if (h) { as_mov_rr(&m->a, r, h->reg); as_sar_ri(&m->a, r, 1); return; }   /* a nullary constructor */
+    if (h && !is_any_word(h)) { as_mov_rr(&m->a, r, h->reg); as_sar_ri(&m->a, r, 1); return; }   /* a nullary constructor */
     AsmLabel ptr, done;
     as_label_init(&ptr); as_label_init(&done);
-    as_ld64(&m->a, r, BASER, SLOT(s));
+    if (h) as_mov_rr(&m->a, r, h->reg); else as_ld64(&m->a, r, BASER, SLOT(s));
     as_test_ri(&m->a, r, 1);
     as_jcc(&m->a, CC_E, &ptr);
     as_sar_ri(&m->a, r, 1);
@@ -1306,6 +1318,11 @@ void ms_sync(Masm *m, uint32_t pc, int pushed) {
     store_count(m);
     ms_store_fp(m);
     store_top_live(m);
+    if (m->verify) {   /* for the check after the call (ms_reload, M7) */
+        as_ld64(&m->a, R_S0, VMR, OFF(gc_count));
+        as_st64(&m->a, VMR, OFF(verify_gc), R_S0);
+        as_st64(&m->a, VMR, OFF(verify_frame), BASEI);
+    }
     ms_role(m, role);
 }
 /* r := &vm->frames[vm->fp]: rbp's (M6) */
@@ -1324,6 +1341,28 @@ void ms_reload(Masm *m) {
     /* the homes live at the instruction's entry (the call clobbered them)
        and at its end (the helper may have written the slot of the one it
        defines) */
+    /* --gc-verify and --gc-stress (M7): where the code synced before the call, its frame
+       is the VM's still and no collection ran, the homes C kept that are
+       live at the instruction's entry -- but the one it defines -- agree
+       with their slots: a pointer's home too, before it is loaded again
+       below. A home that does not is a fatal error. */
+    if (m->homes && m->verify && m->home_fails) {
+        AsmLabel skip; as_label_init(&skip);
+        as_ld64(&m->a, R_S2, VMR, OFF(gc_count));
+        as_cmp_rm(&m->a, R_S2, VMR, OFF(verify_gc));
+        as_jcc(&m->a, CC_NE, &skip);
+        as_cmp_rm(&m->a, BASEI, VMR, OFF(verify_frame));
+        as_jcc(&m->a, CC_NE, &skip);
+        for (uint32_t r = 0; r < m->nlocals; r++) {
+            const Home *h = &m->homes[r];
+            if (h->kind != HOME_GPR || is_raw_gpr(h) || !live_at(m, m->cur_pc, r) || !kept(m, h) || ((m->cur_def >> r) & 1)) continue;
+            as_cmp_rm(&m->a, h->reg, BASER, SLOT(r));
+            as_jcc(&m->a, CC_NE, m->home_fails(m, r));
+        }
+        as_bind(&m->a, &skip);
+        as_label_free(&skip);
+        as_st64i(&m->a, VMR, OFF(verify_gc), -1);   /* until the next sync: a collection count never reached */
+    }
     if (m->homes) {
         /* Two registers that are never live together may have one home
            (compile.c): the ones live at the entry have theirs, and of the

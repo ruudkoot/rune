@@ -325,6 +325,11 @@ static void minor_into(VM *vm) {
         if (!vm->gc.nqueue) break;
         scan_object(vm, vm->gc.queue[--vm->gc.nqueue]);
     }
+    /* --gc-verify: the nursery's old copies made garbage, so that a pointer
+       to one left anywhere -- a home of compiled code not loaded again
+       after the collection (performance M7) -- is no object's at once, and
+       not one that reads as before until the nursery fills again */
+    if (vm->gc_verify) memset(vm->alloc.from, 0xdb, vm->alloc.used);
     vm->alloc.used = 0;
     vm_set_fp_low(vm, vm->fp);
     vm->box_bytes_live = vm->gc.old_boxes;

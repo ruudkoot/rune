@@ -59,6 +59,20 @@ typedef struct Slow {
    and loaded again after (ms_reload), so that C, the interpreter and an
    image see the slot, and the collector's roots are the slots as before.
 
+   A pointer's register has a general home too (performance M7, D6 A), and
+   so has one the section says may hold anything, or a constructor: the
+   home's tag is T_PTR, and it holds the word as the slot would, whatever
+   it is -- an object's address, an immediate, a box of a real or of a
+   number of 64 bits. Its tag, kind and length are tested as a slot's are
+   (where the section does not vouch for them), and since the collector
+   moves what it points to, it is loaded again from its slot after every
+   call into C that may collect (may_move), though C keeps its register. A
+   real or a number of 64 bits moved into it from a raw home goes through
+   its slot, boxed there where it has no immediate (ms_need_word). Under
+   --gc-verify and --gc-stress the code checks after every call into C,
+   where no collection ran, that the homes C kept -- the pointers' too,
+   before they are loaded again -- agree with their slots (ms_reload).
+
    A raw home holds the value itself and not its word: a real's is an xmm
    register with the double, and with RUNE_RAW_HOMES, where the VM keeps
    ints and words of 64 bits (RUNE_INT64, D2 A), an int's or a word's
@@ -99,7 +113,7 @@ typedef struct MsMarks { MsMark *at; size_t n, cap; } MsMarks;
 typedef struct Home {
     uint8_t kind;
     uint8_t reg;          /* the machine register */
-    uint8_t tag;          /* the tag the value has: T_INT, T_WORD, T_CHAR, T_CON0, T_REAL */
+    uint8_t tag;          /* the tag the value has: T_INT, T_WORD, T_CHAR, T_CON0, T_REAL; T_PTR any word (M7) */
 } Home;
 
 typedef struct Masm {
@@ -111,6 +125,8 @@ typedef struct Masm {
     const void *leave;    /* the leave stub: where the code hands the VM back */
     const void *low;      /* the watermark's stub (ms_emit_low), where a RET goes that pops below it */
     int placed;           /* where the code will run is known (the Asm's base): the region's stubs and trampolines are in reach of a direct jump or call */
+    int verify;           /* --gc-verify or --gc-stress: the homes checked against their slots after a call into C (ms_reload, M7) */
+    AsmLabel *(*home_fails)(struct Masm *m, uint32_t r);   /* where register r's home and slot disagree: a fatal error (compile.c) */
     /* the trampolines of the calls into C (compile.c, jit_region_init):
        the helper's address to its trampoline's, by open addressing
        (ms_tramp_slot); NULL where there are none */

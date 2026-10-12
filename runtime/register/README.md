@@ -557,7 +557,8 @@ which of them live in a machine register:
 
 * **Which.** A register whose representation a machine register can
   hold -- an int, a word, a char, a nullary constructor, an `Int64.int`
-  or a `Word64.word` in one of six general registers (`rbx`, `r12`,
+  or a `Word64.word`, and since M7 of docs/plans/performance.md a
+  pointer, a constructor or anything at all, in one of six general registers (`rbx`, `r12`,
   `rsi`, `rdi`, `r10`, `r9`; `as_home_g`, `asm.h`), a real in `xmm2`
   to `xmm15` -- the most used first, a use inside a loop (the section's
   loop heads to the last jump back) counting for eight, and a number
@@ -586,8 +587,32 @@ which of them live in a machine register:
   The emitters keep the other general registers as scratch and for the
   arguments of calls into C; `r9` and `r10` are scratch too, but only
   in a call's or a return's sequence after it has read its last home
-  (`emit.c`). A pointer never has a home: the collector's roots are
-  the slots, as at tier 1.
+  (`emit.c`).
+* **Pointers** (M7 of docs/plans/performance.md, D6 A). The collector's
+  roots are the slots, as at tier 1: a home that holds a pointer is
+  written back at every safepoint like any other, and since the
+  collector moves what it points to, it is loaded again from its slot
+  after every call into C that may collect, though C keeps its register
+  (`may_move`, `masm.c`); a lean call collects nothing and leaves it be.
+  Such a home -- a pointer's, a constructor's, or one of a register the
+  section says nothing of, all tagged `T_PTR` (`is_any_word`) -- holds
+  the word as the slot would, whatever it is: its tag, kind and length
+  are tested as a slot's are where the section does not vouch for them
+  (`ms_check_tag`, `ms_load_obj`, `ms_load_tag_of_con`). A real or a
+  number of 64 bits moved into it from a raw home goes through its slot,
+  boxed there where it has no immediate (`ms_move`, `ms_need_word`; a
+  result of 64 bits into it, `ms_set_num64`). Under `--gc-verify` and
+  `--gc-stress` the code checks after every call into C, where it synced
+  first, its frame is the VM's still and no collection ran, that every
+  home C kept and that is live at the instruction's entry -- but the one
+  it defines -- agrees with its slot, a pointer's before it is loaded
+  again: one that does not is a fatal error naming the register
+  (`ms_reload`). And `--gc-verify` fills the nursery with garbage after
+  a minor collection, so that a home not loaded again holds a pointer to
+  no object at once (`runtime/gc/minor.c`). A string's comparison in C
+  takes its arguments from scratch registers, never from homes, which
+  the arguments' registers may be (E12's bug;
+  `tests/lang/rt.gc_pointer-homes.sml`).
 * **Shared.** Two registers have one home where they are never live
   together. They interfere where both are live at the entry of an
   instruction, and where an instruction defines one while the other is

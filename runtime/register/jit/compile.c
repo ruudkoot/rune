@@ -25,7 +25,8 @@ static const char *const fatal_text[] = {
     "MKEXN on non-constructor", "JUMPIF on non-bool", "JUMPIFNOT on non-bool", "JUMPIFNOTTAG on non-constructor",
     "SWITCH on non-constructor", "FIELD of a constructor of tag %d where %d is wanted", "constructor field %d out of range",
     "POPHANDLER with no handler", "RAISE of non-exception", "expected closure in call", "bad function index",
-    "a primitive that changes the world in PRIM"
+    "a primitive that changes the world in PRIM",
+    "--gc-verify/--gc-stress: the home of register %d is not what its slot holds"
 };
 
 void jit_h_fatal(VM *vm, int what, int32_t a, int32_t b) {
@@ -466,7 +467,8 @@ static int choose_homes(Jit *j) {
             if (((seen >> r) & 1) || weight[r] == 0) continue;
             int rep = fn->reps[r];
             int raw = rep == REP_INT64 || rep == REP_WORD64;   /* the 64-bit types: the 64 bits, raw (masm.c) */
-            int gpr = raw || rep == REP_INT || rep == REP_WORD || rep == REP_CHAR || rep == REP_CON0;
+            int gpr = raw || rep == REP_INT || rep == REP_WORD || rep == REP_CHAR || rep == REP_CON0
+                      || rep == REP_PTR || rep == REP_CON || rep == REP_ANY;   /* a word of any kind (M7) */
             int xmm = MS_REAL_HOMES && rep == REP_REAL;   /* a real is a word in its slot until masm.h gives it a home */
             if (!gpr && !xmm) { seen |= (uint64_t)1 << r; continue; }
             if ((uint64_t)weight[r] * 10 <= (uint64_t)calls[r] * (raw || xmm ? HOME_CALL_RAW : HOME_CALL)) { seen |= (uint64_t)1 << r; continue; }
@@ -505,7 +507,8 @@ static int choose_homes(Jit *j) {
         else {
             homes[r].reg = (uint8_t)as_home_g(JIT_WIN, k);
             homes[r].tag = (uint8_t)(rep == REP_INT ? T_INT : rep == REP_WORD ? T_WORD : rep == REP_CHAR ? T_CHAR
-                                     : rep == REP_INT64 ? T_INT64 : rep == REP_WORD64 ? T_WORD64 : T_CON0);
+                                     : rep == REP_INT64 ? T_INT64 : rep == REP_WORD64 ? T_WORD64
+                                     : rep == REP_CON0 ? T_CON0 : T_PTR);   /* T_PTR: any word, a pointer's too (masm.h) */
         }
     }
     free(weight); free(calls); free(meets);
@@ -525,6 +528,10 @@ AsmLabel *jit_fatal(Jit *j, int what, int32_t a, int32_t b, int rcx_arg) {
     s->a = what; s->b = a; s->c = b; s->d = rcx_arg;
     return &s->here;
 }
+#if JIT_TARGET
+/* the masm's check of the homes under --gc-verify (ms_reload, M7) */
+static AsmLabel *home_fails(Masm *m, uint32_t r) { return jit_fatal((Jit *)m, FATAL_HOME_SLOT, (int32_t)r, 0, 0); }
+#endif
 
 AsmLabel *jit_alloc_slow(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d, int32_t a, int32_t b, const uint8_t *L) {
     Slow *s = ms_slow(&j->m, SLOW_ALLOC, j->next);
@@ -950,6 +957,8 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     memset(&j, 0, sizeof j);
     ms_init(&j.m, fn->nlocals, fn->maxstack, JIT_WIN, jit->leave_at);
     j.m.low = jit->low_at;
+    j.m.verify = vm->gc_verify || vm->gc_stress;   /* the homes checked against their slots (ms_reload, M7) */
+    j.m.home_fails = home_fails;
     MsMarks marks = { NULL, 0, 0 };
     if (vm->jit.dump) j.m.marks = &marks;   /* the roles of the code, for --jit-dump (performance M1) */
 #ifdef RUNE_JIT_CONV
