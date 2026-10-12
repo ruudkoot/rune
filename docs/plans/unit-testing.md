@@ -41,9 +41,9 @@ What it rests on:
 | M14 | The rest, and the tools for flaky tests | |
 | M15 | The final calibration | |
 
-The decisions D1 to D24 wait for the owner (*Decisions*). Each
-records the options, the evidence and a recommendation. M1 and M2 do not
-depend on each other or on anything else, and can be done first.
+The owner decided D1 to D24 on 2026-10-12, every one as recommended
+(*Decisions*). M1 and M2 do not depend on each other or on anything else,
+and can be done first.
 
 ## The request
 
@@ -75,6 +75,7 @@ The owner's brief, as written:
 **The owner's answers while this was written (2026-10-11):**
 - **Where it was written:** in a worktree, `.worktrees/unit-testing`, on a new branch `unit-testing` from master, committed as M0 and not pushed.
 - **What it rests on:** measurements, and a prototype that is thrown away. Nothing but this document lands in the tree.
+- **The decisions** (2026-10-12): the owner took every recommendation, D1 to D24.
 
 | The brief asks | Answered in |
 |---|---|
@@ -787,8 +788,9 @@ What the design must keep, from the repository's rules and its documents:
 
 ## The architecture
 
-This is the architecture with every recommendation taken. Each part is
-argued, against its alternatives, in *Decisions*.
+This is the architecture as the owner decided it on 2026-10-12, every
+recommendation taken. Each part is argued, against its alternatives, in
+*Decisions*.
 
 ### The layers
 
@@ -1032,10 +1034,11 @@ M2 does G1 to G5. G6 to G9 are left for when they are wanted.
 
 ## Decisions
 
-Each decision gives the options, what favours each, and a recommendation.
-None is taken yet: the owner decides.
+Each decision gives the options, what favours each, and the recommendation
+it was written with. The owner decided all of them on 2026-10-12, each as
+recommended:
 
-| Decision | Recommended |
+| Decision | Decided |
 |---|---|
 | D1. Layers and names | B: a portable core `lib/test/unit` and a Rune-only `lib/test/runner` |
 | D2. What a suite is | B: a tree of tests as a value, `describe`/`it` included |
@@ -1064,6 +1067,8 @@ None is taken yet: the owner decides.
 
 ### D1. Layers and names
 
+**Decided: B** (2026-10-12), as recommended.
+
 * **A. One library, `lib/test/unit`, Rune-only.** It is the simplest. But the five other compilers could no longer run the libraries' tests (`make test-lib-hosts`), since every test would need what only Rune has.
 * **B. A portable core and a Rune-only runner.** **Recommended.**
   - **`lib/test/unit`** (`host yes`): the tree, checks, golden files, properties as tests, and a suite's `main`. It is written on `lib/test/property`, for its printers and equalities (`Show`, the `eq` of an `'a arb`), so that a check and a law print a value the same way.
@@ -1077,6 +1082,8 @@ it follows the owner's rule that generic code becomes a library of its own
 (AGENTS.md).
 
 ### D2. What a suite is
+
+**Decided: B** (2026-10-12), as recommended.
 
 * **A. Registration by side effect, as HSpec's `describe` and `it` build a spec in a monad.** It reads well. But the tree exists only while a program runs, and a global builder has to be emptied between suites.
 * **B. A tree as a first-class value, as Tasty's `TestTree` and HUnit's `Test` are.** `describe` and `it` are names for building it. **Recommended.**
@@ -1092,6 +1099,8 @@ program (D10).
 
 ### D3. Tests and checks
 
+**Decided: C** (2026-10-12), as recommended.
+
 * **A. One assertion per test, the first failure ends it, as in HUnit and HSpec.**
 * **B. Many soft checks per program, as the Basis suite's `T`, GoogleTest's `EXPECT_*` and Go's `t.Error` do.**
 * **C. Both.** A test is the unit of scheduling, filtering and verdict. Inside it, checks are soft and labelled, and `Expect.fail` ends the test. **Recommended.**
@@ -1099,6 +1108,8 @@ program (D10).
   - **Where a check is.** On Rune a failure can carry `Runtime.trace`'s frames through a hook. On the other compilers it carries its label alone.
 
 ### D4. Paths and filters
+
+**Decided: C** (2026-10-12), as recommended.
 
 * **A. Globs on paths, as HSpec's `--match` and GoogleTest's `--gtest_filter` do.**
 * **B. Tags in boolean expressions, as pytest's `-m` and Bazel's `--test_tag_filters` do.**
@@ -1118,6 +1129,8 @@ The prototype's parser is 30 lines (E9).
 
 ### D5. Properties
 
+**Decided: A** (2026-10-12), as recommended.
+
 * **A. A property is a test.** `Test.property name p` runs `Check.check` with the runner's settings: cases, seed, and the deep mode of `RUNE_PROPERTY_DEEP`. **Recommended.**
   - **Verdicts:** `Passed` is PASS; `Failed` is FAIL, with the shrunk counterexample and the replay token in the failure block; `GaveUp` is an ERROR.
   - **Replay tokens:** the runner's history keeps the token of every failure, and the next run tries it before anything else, as Hypothesis's example database and proptest's regression files do.
@@ -1129,6 +1142,8 @@ failure is the same on every machine.
 
 ### D6. Golden files
 
+**Decided: A** (2026-10-12), as recommended.
+
 * **A. The sidecars as they are.** **Recommended.**
   - **Programs:** `.expected`, `.stderr`, `.stderr-head`, `.exitcode`, `.cwarn`, `.restore` and the rest become one kind of program test in the runner.
   - **Accepting output:** one option, `--accept FILTER`, replaces the seven `--update` modes (`run-tests.sh`, `run-doc-tests.sh`, `run-ir-tests.sh`, `diagnostics/run.sh`, `repl-protocol/run.py`, `run-perf.sh`, `run-mlton-bench.sh`), as tasty-golden's `--accept`, GHC's `make accept` and Rust's `--bless` do.
@@ -1138,6 +1153,8 @@ failure is the same on every machine.
 * **C. Cram transcripts, as Dune's cram tests and Mercurial's `.t` files are.** A candidate for the small command-line suites (`tests/deps`, `tests/buildfile`, `tests/dynamic`) in M10, whose scenarios are shell today.
 
 ### D7. Ways
+
+**Decided: B** (2026-10-12), as recommended.
 
 * **A. No axis.** Each configuration is written out, as the 30-odd calls of `run-tests.sh` in the Makefile are.
 * **B. Ways as a combinator** (`Test.ways`). Every leaf of a subtree is made once per way. **Recommended.**
@@ -1153,6 +1170,8 @@ filter on ways.
 
 ### D8. Steps and sharing
 
+**Decided: C** (2026-10-12), as recommended.
+
 * **A. Every test self-contained, compiling its own program in every way, as today.**
 * **B. Fixtures with set-up and tear-down, as Tasty's `withResource`, pytest's scoped fixtures and CTest's `FIXTURES_*` provide.** Fixtures share a resource, but they share it by hand, and they do not see that two tests compile the same thing.
 * **C. A small graph of steps.** **Recommended.**
@@ -1161,6 +1180,8 @@ filter on ways.
   - **Limit:** make builds the tools, and the runner never rebuilds `bin/rune` (D21).
 
 ### D9. Isolation
+
+**Decided: C** (2026-10-12), as recommended.
 
 * **A. Everything in the runner's process.** Fast, and fragile: a segfault or a loop ends the run.
 * **B. A process per test, as nextest, Criterion, Check's fork mode and Bazel do.** Robust, but costly. It means 139,269 checks as processes, or a fork per test on Windows, where fork is an emulation (about 30 ms plus 3-4 ms per MB of live heap, `docs/building.md:205-208`).
@@ -1176,6 +1197,8 @@ spawn of the VM about a millisecond, an in-process call a microsecond (E5).
 
 ### D10. A suite and the runner
 
+**Decided: A** (2026-10-12), as recommended.
+
 * **A. One program per suite, with a small protocol: `--list`, `--run PATHS`, `--after PATH`, `--events FILE`.** **Recommended.**
   - **Prior art:** this is the test binary of nextest and of Go.
   - **Events:** JSON lines (`start`, `check`, `end` with the verdict, times and message). Plain `PASS`/`FAIL` lines stay for people, the hosts and `DocTests`.
@@ -1190,6 +1213,8 @@ new parser, since `lib/json` exists, and they carry the counts and the
 labels.
 
 ### D11. A job's environment, limits and end
+
+**Decided: C** (2026-10-12), as recommended.
 
 * **A. As today:**
   - each job gets the environment it inherits;
@@ -1210,6 +1235,8 @@ The prototype ran with the environment cut to `PATH`, `HOME` and `TZ`, and
 no test of `tests/lang` or `tests/errors` noticed (E9).
 
 ### D12. The scheduler
+
+**Decided: C** (2026-10-12), as recommended.
 
 * **A. Slots only, as `xargs -P` gives today.**
 * **B. Slots plus named pools and mutexes:**
@@ -1236,6 +1263,8 @@ clock (*Testing the tester*).
 
 ### D13. Records and history
 
+**Decided: A** (2026-10-12), as recommended.
+
 * **What is recorded, per job:**
   * the wall time on a monotonic clock (G1);
   * user and system time (G2), meanwhile the deltas of `Posix.ProcEnv.times`'s `cutime` and `cstime` across each reap, at the clock tick's resolution (10 ms);
@@ -1255,6 +1284,8 @@ clock (*Testing the tester*).
   * **D. SQLite.** Rune has no binding to it.
 
 ### D14. Output
+
+**Decided: B and C** (2026-10-12), as recommended.
 
 * **A. One format for every reader.** People, logs, agents and CI need different things.
 * **B. By reader.** **Recommended, with C.**
@@ -1282,6 +1313,8 @@ clock (*Testing the tester*).
 
 ### D15. Retention
 
+**Decided: C** (2026-10-12), as recommended.
+
 * **A. Keep everything, as today.**
   - `tests/out` holds 7.4 GB in the main tree.
   - The matrix keeps 28 directories of configurations forever, some of them under names that no longer exist.
@@ -1297,6 +1330,8 @@ clock (*Testing the tester*).
   - **What it saves:** about 2.27 GB of the 2.70 GB that a fresh `make check` leaves, and 121,000 files (E6).
 
 ### D16. Expectations
+
+**Decided: B** (2026-10-12), as recommended.
 
 * **A. One list per area, each read by its own code**, as today:
   - `tests/basis/deviations.txt` (904 lines, nine categories);
@@ -1318,6 +1353,8 @@ HOST-FLAKY's leniency (`tests/basis/run-matrix.sh:1603-1626`). B keeps
 them, and gives them to every suite.
 
 ### D17. Flaky tests
+
+**Decided: C** (2026-10-12), as recommended.
 
 * **A. Nothing for Rune's own tests, as today.**
 * **B. Retries by default, as Bazel's `flaky_test_attempts` and much of industry practice provide.**
@@ -1342,6 +1379,8 @@ them, and gives them to every suite.
 
 ### D18. Requirements and the doctor
 
+**Decided: B** (2026-10-12), as recommended.
+
 * **A. As today:** `scripts/doctor.sh` (562 lines, eleven scopes) and the Makefile's stamps (`build/.doctor-<scope>`). At test time each script decides for itself what a missing tool means:
   - exit 2, as `run-portability.sh` does without qemu;
   - a skip with exit 0, as `tests/terminal/run.sh` does without tmux;
@@ -1358,6 +1397,8 @@ from it. That is the brief's "find declared third-party packages from the
 test set".
 
 ### D19. Modes
+
+**Decided: the modes and exit codes listed** (2026-10-12), as recommended.
 
 | Mode | What it does | Prior art |
 |---|---|---|
@@ -1383,6 +1424,8 @@ test set".
 
 ### D20. How the runner is built
 
+**Decided: A** (2026-10-12), as recommended.
+
 * **A. By `$(RUNE)`, run on `bin/runevm`, as `rune-kernel` and `rune-dap` are built and run.** **Recommended.**
   - The register VM with its JIT is the default for every operation (the owner, 2026-10-09).
   - Canaries guard against a runner that a broken compiler built (*Testing the tester*).
@@ -1394,6 +1437,8 @@ The core (`lib/test/unit`) must build on every host. The runner need not.
 
 ### D21. `make check`
 
+**Decided: B** (2026-10-12), as recommended.
+
 * **A. Keep the 32 steps, and replace the scripts under them one by one.** Simple. But the steps stay serial, because they share `tests/out`, and the idle tails and the oversubscription stay too (E1).
 * **B. Make builds, then the runner runs once.** **Recommended.**
   - `make check` is `make check-tools`, every tool the tests need, then `bin/rune-test run --tier check`.
@@ -1402,6 +1447,8 @@ The core (`lib/test/unit`) must build on every host. The runner need not.
 * **C. The runner drives the builds too**, with make's targets as nodes, so that the host builds overlap the tests. Later. E4's schedule reaches the CPU bound without it.
 
 ### D22. Tiers and selection
+
+**Decided: A and B** (2026-10-12), as recommended.
 
 * **A. Tiers by tag and by profile.** **Recommended, with B.**
   - **Prior art:** Alcotest's `Quick` and `Slow`, Bazel's sizes and nextest's profiles.
@@ -1432,6 +1479,8 @@ Selection pays for about a third of the commits. The schedule is what serves the
 
 ### D23. Migration
 
+**Decided: B** (2026-10-12), as recommended.
+
 * **A. Everything at once.**
 * **B. Suite by suite.** **Recommended.**
   - **The commit:** each milestone retires named scripts in the same commit.
@@ -1456,6 +1505,8 @@ Generators and measurement tools are out of scope: `gen-*.sh`, `perf-*.sh`,
 its fate.
 
 ### D24. Windows
+
+**Decided: A** (2026-10-12), as recommended.
 
 * **A. The runner stays on Linux and drives the Windows VMs through WSL's interop, as `make test-windows` does.** **Recommended.**
   - A `windows-interop:k` pool and a timeout multiplier answer the `UtilAcceptVsock` failures under load.
