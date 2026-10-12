@@ -167,7 +167,8 @@ struct
        expectations ("windows-skip", "tests/windows-skip.txt", SOME Lang.langPrograms),
        expectations ("portability-skip", "tests/portability-skip.txt", SOME Lang.langPrograms),
        expectations ("mlton-skip", "tests/external/mlton-skip.txt", NONE),
-       expectations ("lib-deviations", "tests/lib/deviations.txt", NONE)]
+       expectations ("lib-deviations", "tests/lib/deviations.txt", NONE),
+       expectations ("quarantine", "tests/runner/quarantine.txt", NONE)]
 
   val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
 end
@@ -188,4 +189,5 @@ val () =
                     | NONE =>
                   case Portability.command args of
                     SOME f => f ()
-                  | NONE => Cli.mainWith {tests = Inventory.tests, capabilities = Inventory.capabilities}
+                  | NONE => Cli.mainWith {tests = Inventory.tests, capabilities = Inventory.capabilities,
+                                            quarantine = "tests/runner/quarantine.txt"}

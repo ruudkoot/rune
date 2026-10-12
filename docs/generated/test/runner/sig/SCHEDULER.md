@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 10 of 10 entries documented |
+| Documentation | 11 of 11 entries documented |
 | Tests | not listed |
 | Source | [lib/test/runner/scheduler\_sig.sml](../../../../../lib/test/runner/scheduler_sig.sml) |
 
@@ -51,6 +51,7 @@ sig
   val <a href="#val-start">start</a> : plan -&gt; state
   val <a href="#val-admit">admit</a> : state * {<a href="#fld-admit.cpus">cpus</a> : int, <a href="#fld-admit.memory">memory</a> : int} -&gt; int list
   val <a href="#val-ended">ended</a> : state * int * bool -&gt; int list
+  val <a href="#val-retry">retry</a> : state * int -&gt; unit
   val <a href="#val-finished">finished</a> : state -&gt; bool
   val <a href="#val-simulate">simulate</a> : plan * {<a href="#fld-simulate.cpus">cpus</a> : int, <a href="#fld-simulate.memory">memory</a> : int} -&gt; real vector * real
 end
@@ -158,6 +159,15 @@ the jobs that will now never start.
 
 Those are the jobs that wait, directly or not, for a job that did not
 end well.
+
+### <a name="val-retry"></a>`retry`
+
+```sml
+val retry : state * int -> unit
+```
+
+`retry (s, i)` puts the running job `i` back among those that may
+start, as if it had not run.
 
 ### <a name="val-finished"></a>`finished`
 

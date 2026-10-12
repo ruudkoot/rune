@@ -65,6 +65,10 @@ sig
      end well. *)
   val ended : state * int * bool -> int list
 
+  (* `retry (s, i)` puts the running job `i` back among those that may
+     start, as if it had not run. *)
+  val retry : state * int -> unit
+
   (* `finished s` says whether no job waits or runs. *)
   val finished : state -> bool
 

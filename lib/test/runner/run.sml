@@ -127,7 +127,10 @@ struct
                               else SOME kv)
                     (Posix.ProcEnv.environ ())
 
-  fun run {tests, root, out, history, cpus, memory, keep, reader, capabilities, strict} =
+  (* the verdicts that fail a run *)
+  fun failing v = not (List.exists (fn x => x = v) ["PASS", "SKIP", "ACCEPTED", "FLAKY", "QUARANTINED"])
+
+  fun run {tests, root, out, history, cpus, memory, keep, reader, capabilities, strict, quarantine} =
     let
       val stamp = Date.fmt "%Y%m%d-%H%M%S" (Date.fromTimeLocal (Time.now ()))
                   ^ "-" ^ SysWord.fmt StringCvt.DEC (Posix.Process.pidToWord (Posix.ProcEnv.getpid ()))
@@ -149,6 +152,10 @@ struct
       (* what each test needs and the machine lacks: such a test does not
          run, and is skipped, or fails when the run must be complete *)
       val unmet = Vector.map (fn (_, meta : Test.meta, _) => Requirements.missing (capabilities, #requires meta)) runnable
+      (* a test tagged flaky runs once more when it fails, and is FLAKY when
+         it passes then *)
+      val retried = Array.array (n, false)
+      val today = Date.fmt "%Y-%m-%d" (Date.fromTimeLocal (Time.now ()))
       val index = index (Vector.map #1 runnable)
       val env = defaultEnv ()
       fun jobDir i = runDir ^ "/j/" ^ pad5 i
@@ -184,7 +191,7 @@ struct
                  pending
       fun finished (i, r : Supervisor.result) =
         let
-          val (path, _, c) = Vector.sub (runnable, i)
+          val (path, meta : Test.meta, c) = Vector.sub (runnable, i)
           val sc = Vector.sub (commands, i)
           val files = {stdout = #stdout sc, stderr = #stderr sc}
           val cancelled = #outcome r = Supervisor.Cancelled
@@ -194,6 +201,27 @@ struct
                    [] => #judge c (r, files)
                  | needs => SOME (if strict then "ERROR" else "SKIP",
                                   "needs " ^ String.concatWith "; " (List.map (fn (cap, hint) => cap ^ " (" ^ hint ^ ")") needs))
+          val flaky = List.exists (fn t => t = "flaky") (#tags meta)
+        in
+          (* a flaky test's first failure: run it again, in a fresh directory *)
+          if flaky andalso not (Array.sub (retried, i)) andalso (case verdict of SOME (v, _) => failing v | NONE => false)
+             andalso not cancelled
+          then (Array.update (retried, i, true); rmTree (jobDir i); mkdirs (jobDir i); Supervisor.Again)
+          else conclude (i, r, path, c, sc, files, cancelled, verdict)
+        end
+      and conclude (i, r, path, c, sc, files, cancelled, verdict) =
+        let
+          val verdict =
+            case verdict of
+              NONE => if Array.sub (retried, i) then SOME ("FLAKY", "failed, then passed when run again") else NONE
+            | SOME (v, why) =>
+                if not (failing v) then verdict
+                else
+                  (* a failure that a quarantine covers fails nothing until its date *)
+                  case Expectations.judge (quarantine, {way = "rune-test", path = path, label = NONE, passed = false, today = today}) of
+                    Expectations.Quarantined l => SOME ("QUARANTINED", why ^ "\n  quarantined: " ^ #reason l)
+                  | Expectations.Expired l => SOME (v, why ^ "\n  its quarantine has ended: " ^ Expectations.describe l)
+                  | _ => verdict
           val bytes = treeBytes (jobDir i)
           val keptDirs =
             if cancelled orelse (not (isSome verdict) andalso not keep) then (freed := !freed + bytes; rmTree (jobDir i); [])
@@ -204,8 +232,8 @@ struct
           val (v, reason) = getOpt (verdict, ("PASS", ""))
         in
           if cancelled then ()
-          else hist := History.record (!hist, {path = path, wall = Time.toReal (#wall r), passed = not (isSome verdict)});
-          not (isSome verdict) before Report.test (report, {path = path, verdict = v, reason = reason, wall = #wall r, user = #user r,
+          else hist := History.record (!hist, {path = path, wall = Time.toReal (#wall r), passed = not (failing v)});
+          (if not (isSome verdict) orelse v = "FLAKY" then Supervisor.Passed else Supervisor.NotPassed) before Report.test (report, {path = path, verdict = v, reason = reason, wall = #wall r, user = #user r,
                                 system = #system r, peakResident = #peakResident r, outputBytes = #outputBytes r,
                                 kept = keptDirs,
                                 command = "cd " ^ (if #dir sc = jobDir i then (case keptDirs of [d] => d | _ => #dir sc)

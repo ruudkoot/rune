@@ -1,6 +1,6 @@
 # Index: D
 
-[Overview](../README.md) &middot; [a](a.md) [c](c.md) **d** [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [l](l.md) [m](m.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [c](c.md) **d** [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
 
 - `describe` (val): [EXPECTATIONS](../sig/EXPECTATIONS.md#val-describe)
 

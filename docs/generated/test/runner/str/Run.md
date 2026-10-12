@@ -29,7 +29,7 @@ What each means is on [`RUN`](../sig/RUN.md); the types are this structure's own
 | val | [`accept`](../sig/RUN.md#val-accept) | `bool ref` |
 | val | [`exitZero`](../sig/RUN.md#val-exitzero) | `{leaked : bool, outcome : Supervisor.outcome, outputBytes : int, peakResident : int, system : Time.time, user : Time.time, wall : Time.time} * {stderr : string, stdout : string} -> (string * string) option` |
 | val | [`index`](../sig/RUN.md#val-index) | `string vector -> string -> int option` |
-| val | [`run`](../sig/RUN.md#val-run) | `{capabilities : {hint : string, name : string, probe : string} list, cpus : int, history : string, keep : bool, memory : int, out : string, reader : Report.reader, root : string, strict : bool, tests : (string * {cpus : int option, memory : int option, pending : string option, requires : string list, tags : string list, timeout : Time.time option} * command) list} -> bool` |
+| val | [`run`](../sig/RUN.md#val-run) | `{capabilities : {hint : string, name : string, probe : string} list, cpus : int, history : string, keep : bool, memory : int, out : string, quarantine : {category : string, file : string, label : string option, number : int, path : string, reason : string, way : string} list, reader : Report.reader, root : string, strict : bool, tests : (string * {cpus : int option, memory : int option, pending : string option, requires : string list, tags : string list, timeout : Time.time option} * command) list} -> bool` |
 | val | [`shell`](../sig/RUN.md#val-shell) | `string * int -> command` |
 | val | [`tail`](../sig/RUN.md#val-tail) | `int * string -> string` |
 

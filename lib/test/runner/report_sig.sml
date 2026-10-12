@@ -39,8 +39,9 @@ sig
      where its outputs are kept, and the command that reruns it.
 
      The verdict is one of `PASS`, `FAIL`, `TIMEOUT`, `CRASH`, `LEAK`,
-     `ERROR`, `SKIP` and `ACCEPTED` (a golden file written, `Run.accept`);
-     the first, the last and `SKIP` are not failures. *)
+     `ERROR`, `SKIP`, `ACCEPTED` (a golden file written, `Run.accept`),
+     `FLAKY` (a failure, then a pass) and `QUARANTINED`; the first, `SKIP`
+     and the last three are not failures. *)
   type ended = {path : string, verdict : string, reason : string, wall : Time.time, user : Time.time,
                 system : Time.time, peakResident : int, outputBytes : int, kept : string list,
                 command : string, rerun : string}

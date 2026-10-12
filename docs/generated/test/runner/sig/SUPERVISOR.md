@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 5 of 5 entries documented |
+| Documentation | 6 of 6 entries documented |
 | Tests | not listed |
 | Source | [lib/test/runner/supervisor\_sig.sml](../../../../../lib/test/runner/supervisor_sig.sml) |
 
@@ -46,11 +46,12 @@ sig
                   <a href="#fld-command.cost">cost</a> : real, <a href="#fld-command.cpus">cpus</a> : int, <a href="#fld-command.memory">memory</a> : int, <a href="#fld-command.pools">pools</a> : string list, <a href="#fld-command.exclusive">exclusive</a> : bool,
                   <a href="#fld-command.failedlast">failedLast</a> : bool, <a href="#fld-command.deps">deps</a> : int list}
   datatype <a href="#type-outcome">outcome</a> = <a href="#con-exited">Exited</a> of int | <a href="#con-signalled">Signalled</a> of int | <a href="#con-timedout">TimedOut</a> | <a href="#con-capped">Capped</a> | <a href="#con-cancelled">Cancelled</a> | <a href="#con-failed">Failed</a> of string
+  datatype <a href="#type-verdict">verdict</a> = <a href="#con-passed">Passed</a> | <a href="#con-notpassed">NotPassed</a> | <a href="#con-again">Again</a>
   type <a href="#type-result">result</a> = {<a href="#fld-result.outcome">outcome</a> : outcome, <a href="#fld-result.wall">wall</a> : Time.time, <a href="#fld-result.user">user</a> : Time.time, <a href="#fld-result.system">system</a> : Time.time,
                  <a href="#fld-result.peakresident">peakResident</a> : int, <a href="#fld-result.outputbytes">outputBytes</a> : int, <a href="#fld-result.leaked">leaked</a> : bool}
   val <a href="#val-outcomename">outcomeName</a> : outcome -&gt; string
   val <a href="#val-run">run</a> : {<a href="#fld-run.commands">commands</a> : command vector, <a href="#fld-run.cpus">cpus</a> : int, <a href="#fld-run.memory">memory</a> : int,
-             <a href="#fld-run.finished">finished</a> : int * result -&gt; bool, <a href="#fld-run.tick">tick</a> : int -&gt; unit} -&gt; unit
+             <a href="#fld-run.finished">finished</a> : int * result -&gt; verdict, <a href="#fld-run.tick">tick</a> : int -&gt; unit} -&gt; unit
 end
 </pre>
 
@@ -111,6 +112,21 @@ end well, and [`Failed`](#con-failed) when the system refused to start it.
 | <a name="con-cancelled"></a>`Cancelled` |  |  |
 | <a name="con-failed"></a>`Failed` | `string` |  |
 
+### <a name="type-verdict"></a>`verdict`
+
+```sml
+datatype verdict = Passed | NotPassed | Again
+```
+
+What a command came to: it passed, it did not, or it is to run again
+(a test that may be flaky, the first time it fails).
+
+| Constructor | Argument | Description |
+| --- | --- | --- |
+| <a name="con-passed"></a>`Passed` |  |  |
+| <a name="con-notpassed"></a>`NotPassed` |  |  |
+| <a name="con-again"></a>`Again` |  |  |
+
 ### <a name="type-result"></a>`result`
 
 ```sml
@@ -148,7 +164,7 @@ val outcomeName : outcome -> string
 
 ```sml
 val run : {commands : command vector, cpus : int, memory : int,
-           finished : int * result -> bool, tick : int -> unit} -> unit
+           finished : int * result -> verdict, tick : int -> unit} -> unit
 ```
 
 `run {commands, cpus, memory, finished, tick}` runs `commands` as
@@ -158,8 +174,9 @@ The machine has `cpus` processors and `memory` megabytes. `tick` is
 called with the number running whenever the loop has nothing to do,
 for a display.
 
-`finished` says whether the command passed. A command that waits for
-one that did not pass is not started, and is [`Cancelled`](#con-cancelled). An interrupt ([`SML90.Interrupt`](../../../basis/sig/SML90.md#exn-interrupt)) kills every
+`finished` says what the command came to; one to run [`Again`](#con-again) is
+started again. A command that waits for one that did not pass is not
+started, and is [`Cancelled`](#con-cancelled). An interrupt ([`SML90.Interrupt`](../../../basis/sig/SML90.md#exn-interrupt)) kills every
 running group and is raised again.
 
 | Field | Type | Description |
@@ -167,7 +184,7 @@ running group and is raised again.
 | <a name="fld-run.commands"></a>`commands` | `command vector` |  |
 | <a name="fld-run.cpus"></a>`cpus` | `int` |  |
 | <a name="fld-run.memory"></a>`memory` | `int` |  |
-| <a name="fld-run.finished"></a>`finished` | `int * result -> bool` |  |
+| <a name="fld-run.finished"></a>`finished` | `int * result -> verdict` |  |
 | <a name="fld-run.tick"></a>`tick` | `int -> unit` |  |
 
 ---

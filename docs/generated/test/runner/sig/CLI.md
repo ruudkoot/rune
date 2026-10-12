@@ -36,7 +36,10 @@ The runner's command line (docs/plans/unit-testing.md, D19):
   with how to get those that are missing (it fails when one is).
 
 A run of the tier check, or with `--strict`, fails a test whose
-capability is missing; any other run skips it.
+capability is missing; any other run skips it. For flaky tests
+(docs/plans/unit-testing.md, D17): `--repeat N` runs the selection N
+times, `--until-fail` until a run fails (at most N times, 100 by
+default), and `--under-load` keeps every processor busy beside it.
 
 A filter is the language of [`TestFilter`](../../unit/str/TestFilter.md); two or more of them select
 the tests any of them selects. The tests a selected test waits for are
@@ -59,7 +62,7 @@ command line.
 signature CLI =
 sig
   val <a href="#val-main">main</a> : Run.command Test.tree -&gt; unit
-  val <a href="#val-mainwith">mainWith</a> : {<a href="#fld-mainwith.tests">tests</a> : Run.command Test.tree, <a href="#fld-mainwith.capabilities">capabilities</a> : Requirements.capability list} -&gt; unit
+  val <a href="#val-mainwith">mainWith</a> : {<a href="#fld-mainwith.tests">tests</a> : Run.command Test.tree, <a href="#fld-mainwith.capabilities">capabilities</a> : Requirements.capability list, <a href="#fld-mainwith.quarantine">quarantine</a> : string} -&gt; unit
 end
 </pre>
 
@@ -74,16 +77,20 @@ val main : Run.command Test.tree -> unit
 ### <a name="val-mainwith"></a>`mainWith`
 
 ```sml
-val mainWith : {tests : Run.command Test.tree, capabilities : Requirements.capability list} -> unit
+val mainWith : {tests : Run.command Test.tree, capabilities : Requirements.capability list, quarantine : string} -> unit
 ```
 
-`mainWith {tests, capabilities}` is `main tests`, with the
-capabilities the tests may require ([`Requirements`](../str/Requirements.md)).
+`mainWith {tests, capabilities, quarantine}` is `main tests`, with
+what the tests may require and what is in quarantine.
+
+`capabilities` are what tests may require ([`Requirements`](../str/Requirements.md)), and
+`quarantine` the file of the quarantine's expectations ("" for none).
 
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-mainwith.tests"></a>`tests` | `Run.command Test.tree` |  |
 | <a name="fld-mainwith.capabilities"></a>`capabilities` | `Requirements.capability list` |  |
+| <a name="fld-mainwith.quarantine"></a>`quarantine` | `string` |  |
 
 ---
 

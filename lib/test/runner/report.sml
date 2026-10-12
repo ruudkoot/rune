@@ -102,7 +102,7 @@ struct
       else if verdict = "SKIP" then (if reason = "" then () else (clear r; say ("SKIP " ^ path ^ ": " ^ reason ^ "\n")))
       else
         ((* a golden file written is told, and is no failure *)
-         if verdict = "ACCEPTED" then ()
+         if List.exists (fn x => x = verdict) ["ACCEPTED", "FLAKY", "QUARANTINED"] then ()
          else (#failed r := !(#failed r) + 1; #failures r := (path, verdict, reason, kept) :: !(#failures r));
          clear r;
          say (paint (r, verdict) ^ " " ^ path ^ ": " ^ reason ^ "\n"

@@ -35,6 +35,10 @@ sig
      end well, and `Failed` when the system refused to start it. *)
   datatype outcome = Exited of int | Signalled of int | TimedOut | Capped | Cancelled | Failed of string
 
+  (* What a command came to: it passed, it did not, or it is to run again
+     (a test that may be flaky, the first time it fails). *)
+  datatype verdict = Passed | NotPassed | Again
+
   (* What a command cost: its times, its memory and its output, and whether
      it left processes behind.
 
@@ -55,9 +59,10 @@ sig
      called with the number running whenever the loop has nothing to do,
      for a display.
 
-     `finished` says whether the command passed. A command that waits for
-     one that did not pass is not started, and is `Cancelled`. An interrupt (`SML90.Interrupt`) kills every
+     `finished` says what the command came to; one to run `Again` is
+     started again. A command that waits for one that did not pass is not
+     started, and is `Cancelled`. An interrupt (`SML90.Interrupt`) kills every
      running group and is raised again. *)
   val run : {commands : command vector, cpus : int, memory : int,
-             finished : int * result -> bool, tick : int -> unit} -> unit
+             finished : int * result -> verdict, tick : int -> unit} -> unit
 end

@@ -219,6 +219,19 @@ struct
         Expect.that ("and fails after it",
                      case judged ("rune", "new.test", NONE, false, "2026-11-02") of
                        oc as Expectations.Expired _ => Expectations.failing oc | _ => false))),
+     Test.it "Scheduler.retry/again" (fn () =>
+       let
+         val p = Scheduler.plan (Vector.fromList [{cost = 1.0, cpus = 1, memory = 0, pools = [], exclusive = false,
+                                                   failedLast = false, deps = []}])
+         val s = Scheduler.start p
+         val first = Scheduler.admit (s, {cpus = 1, memory = 10})
+         val () = Scheduler.retry (s, 0)
+         val again = Scheduler.admit (s, {cpus = 1, memory = 10})
+       in
+         Expect.that ("started, put back, and started again", first = [0] andalso again = [0]);
+         Expect.that ("not finished until it ends", not (Scheduler.finished s) andalso null (Scheduler.ended (s, 0, true))
+                                                    andalso Scheduler.finished s)
+       end),
      Test.it "Requirements.missing/probes" (fn () =>
        let val cs = [{name = "yes", probe = "true", hint = "h1"}, {name = "no", probe = "false", hint = "h2"}]
        in

@@ -136,6 +136,26 @@ whose capability is missing, with its hint; the tier `check` (and
 without them gets. `scripts/doctor.sh` keeps its scopes for what must be
 there before anything is built.
 
+## Flaky tests
+
+A test that passes and fails with nothing changed is flaky (D17). The
+runner gives three ways to find one and two to live with it:
+
+* `bin/rune-test run FILTER --repeat N` runs the selection N times, and
+  `--until-fail` until a run fails (at most N times, 100 by default);
+  `--under-load` keeps every processor busy beside the runs, which is what
+  makes a test that races fail;
+* `bin/rune-test stats` lists the tests whose verdict changed most often
+  between runs (the history's flips);
+* a test known to be flaky is tagged `flaky` in the inventory: when it
+  fails it runs once more, and a pass then is `FLAKY`, reported and no
+  failure;
+* a failing test can be quarantined until a date in
+  `tests/runner/quarantine.txt` (`rune-test | PATH | QUARANTINE | until
+  YYYY-MM-DD: why`): its failure is `QUARANTINED`, reported and no failure,
+  until the date, and fails again after it, so that a quarantine is never
+  forgotten.
+
 ## Expectations
 
 What a suite expects of its tests in some ways (a host's bug, a program

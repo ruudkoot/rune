@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`SCHEDULER`](../sig/SCHEDULER.md) |
 | Status | required |
-| Members | 10 |
+| Members | 11 |
 | Tests | not listed |
 | Source | [lib/test/runner/scheduler.sml](../../../../../lib/test/runner/scheduler.sml) |
 
@@ -33,6 +33,7 @@ What each means is on [`SCHEDULER`](../sig/SCHEDULER.md); the types are this str
 | val | [`finished`](../sig/SCHEDULER.md#val-finished) | `state -> bool` |
 | val | [`plan`](../sig/SCHEDULER.md#val-plan) | `job vector -> plan` |
 | val | [`priority`](../sig/SCHEDULER.md#val-priority) | `plan * int -> real` |
+| val | [`retry`](../sig/SCHEDULER.md#val-retry) | `state * int -> unit` |
 | val | [`simulate`](../sig/SCHEDULER.md#val-simulate) | `plan * {cpus : int, memory : int} -> real vector * real` |
 | val | [`start`](../sig/SCHEDULER.md#val-start) | `plan -> state` |
 

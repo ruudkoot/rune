@@ -7,6 +7,7 @@ struct
                   cost : real, cpus : int, memory : int, pools : string list, exclusive : bool,
                   failedLast : bool, deps : int list}
   datatype outcome = Exited of int | Signalled of int | TimedOut | Capped | Cancelled | Failed of string
+  datatype verdict = Passed | NotPassed | Again
   type result = {outcome : outcome, wall : Time.time, user : Time.time, system : Time.time,
                  peakResident : int, outputBytes : int, leaked : bool}
 
@@ -70,12 +71,15 @@ struct
       (* a job ended: told, and the jobs that waited for it cancelled when
          it did not end well *)
       fun finish (i, r) =
-        let val ok = finished (i, r)
-        in
-          Array.update (state, i, Done ok);
-          List.app (fn j => (Array.update (state, j, Done false); ignore (finished (j, nothing ()))))
-                   (Scheduler.ended (sched, i, ok))
-        end
+        case finished (i, r) of
+          Again => (Array.update (state, i, Waiting); Scheduler.retry (sched, i))
+        | v =>
+            let val ok = v = Passed
+            in
+              Array.update (state, i, Done ok);
+              List.app (fn j => (Array.update (state, j, Done false); ignore (finished (j, nothing ()))))
+                       (Scheduler.ended (sched, i, ok))
+            end
       fun admit () =
         let
           fun launch i =

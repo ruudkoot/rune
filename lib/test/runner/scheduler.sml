@@ -150,6 +150,19 @@ struct
          else rev (cancel (i, [])))
     end
 
+  fun retry ({plan = {jobs, rank, ...}, status, ready, cpus, memory, held, running, exclusive, ...} : state, i) =
+    if Array.sub (status, i) <> Running then ()
+    else
+      let
+        val {cpus = c, memory = m, pools, exclusive = x, ...} = Vector.sub (jobs, i)
+        fun insert (j, []) = [j]
+          | insert (j, k :: ks) = if Vector.sub (rank, j) < Vector.sub (rank, k) then j :: k :: ks else k :: insert (j, ks)
+      in
+        cpus := !cpus - c; memory := !memory - m; held := List.foldl removeOne (!held) pools;
+        running := !running - 1; if x then exclusive := false else ();
+        Array.update (status, i, Ready); ready := insert (i, !ready)
+      end
+
   fun finished ({unfinished, ...} : state) = !unfinished = 0
 
   fun simulate (p as {jobs, ...} : plan, machine) =

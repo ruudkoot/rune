@@ -122,8 +122,9 @@ What a test ended with: its path, its verdict and why, what it cost,
 where its outputs are kept, and the command that reruns it.
 
 The verdict is one of `PASS`, `FAIL`, `TIMEOUT`, `CRASH`, `LEAK`,
-`ERROR`, `SKIP` and `ACCEPTED` (a golden file written, [`Run.accept`](../sig/RUN.md#val-accept));
-the first, the last and `SKIP` are not failures.
+`ERROR`, `SKIP`, `ACCEPTED` (a golden file written, [`Run.accept`](../sig/RUN.md#val-accept)),
+`FLAKY` (a failure, then a pass) and `QUARANTINED`; the first, `SKIP`
+and the last three are not failures.
 
 | Field | Type | Description |
 | --- | --- | --- |

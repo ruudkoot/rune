@@ -1,6 +1,6 @@
 # Running tests
 
-[How to read these pages](conventions.md) &middot; [the top-level environment](top-level.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [types that are one type](types.md) &middot; [readings of the specification](readings.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [h](index/h.md) [i](index/i.md) [j](index/j.md) [l](index/l.md) [m](index/m.md) [o](index/o.md) [p](index/p.md) [q](index/q.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [w](index/w.md)
+[How to read these pages](conventions.md) &middot; [the top-level environment](top-level.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [types that are one type](types.md) &middot; [readings of the specification](readings.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [h](index/h.md) [i](index/i.md) [j](index/j.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [q](index/q.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md)
 
 ## Running tests
 
@@ -12,8 +12,8 @@
 | [`REPORT`](sig/REPORT.md) | What a run says, to the reader it has (docs/plans/unit-testing.md, D14). | required | 8 of 8 |
 | [`REQUIREMENTS`](sig/REQUIREMENTS.md) | What a test needs of the machine (docs/plans/unit-testing.md, D18): a capability is a name, a probe and an install hint. A test names the capabilities it needs (`Test.requires`); the runner probes each once, and a test whose capability is missing is skipped with the hint, or fails in a run that must be complete, as the tier check is. | required | 3 of 3 |
 | [`RUN`](sig/RUN.md) | A run of tests that are commands (docs/plans/unit-testing.md, M3): each in a directory of its own of a fixed width under the run's directory, or in a directory it names; judged when it ends; its directory removed when it passed and kept when it did not; its wall time recorded in the history; and every outcome reported. | required | 7 of 7 |
-| [`SCHEDULER`](sig/SCHEDULER.md) | Which jobs to start (docs/plans/unit-testing.md, D12): the jobs of a run, what has ended and what is free decide it, so that it can be tested on a simulated clock. | required | 10 of 10 |
-| [`SUPERVISOR`](sig/SUPERVISOR.md) | Running jobs as children (docs/plans/unit-testing.md, D9 and D11): one loop that starts what the scheduler admits, reaps what ended, ends what ran too long or wrote too much, and sleeps a little when nothing happened. There are no threads and no handlers of signals but the interrupt, so this loop is the runner. | required | 5 of 5 |
+| [`SCHEDULER`](sig/SCHEDULER.md) | Which jobs to start (docs/plans/unit-testing.md, D12): the jobs of a run, what has ended and what is free decide it, so that it can be tested on a simulated clock. | required | 11 of 11 |
+| [`SUPERVISOR`](sig/SUPERVISOR.md) | Running jobs as children (docs/plans/unit-testing.md, D9 and D11): one loop that starts what the scheduler admits, reaps what ended, ends what ran too long or wrote too much, and sleeps a little when nothing happened. There are no threads and no handlers of signals but the interrupt, so this loop is the runner. | required | 6 of 6 |
 
 ---
 

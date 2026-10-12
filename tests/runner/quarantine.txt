@@ -1,0 +1,8 @@
+# The tests of the runner in quarantine (docs/testing.md, Flaky tests): a
+# failure of one fails nothing until the date, and fails again after it,
+# when the line is stale. One expectation to a line, in the one format:
+#
+#   rune-test | TEST-PATH-GLOB | QUARANTINE | until YYYY-MM-DD: why, and who looks
+#
+# A test that is flaky and known to be is tagged `flaky` in the inventory
+# instead: it runs once more when it fails. The list is empty.

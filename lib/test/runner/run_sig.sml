@@ -56,16 +56,23 @@ sig
   val accept : bool ref
 
   (* `run {tests, root, out, history, cpus, memory, keep, reader,
-     capabilities, strict}` runs `tests` in a new directory under `out`, and
-     is whether every test passed.
+     capabilities, strict, quarantine}` runs `tests` under `out`, and is
+     whether every test passed.
+
+     Each run has a new directory under `out`.
 
      The tree's directory is `root`; the run has `cpus` processors and
      `memory` megabytes; it reads and rewrites the history file `history`;
      and `keep` keeps every test's directory. A test that requires a
      capability the machine lacks (of `capabilities`) does not run: it is
      skipped with the capability's hint, or is an ERROR when `strict`, and
-     the tests that wait for it do not start. *)
+     the tests that wait for it do not start.
+
+     A test tagged `flaky` that fails runs once more, and is `FLAKY` (no
+     failure) when it passes then. A failure that a line of `quarantine`
+     covers, of the way `rune-test` and the test's path, is `QUARANTINED`
+     until the line's date, and a failure again after it. *)
   val run : {tests : (string * Test.meta * command) list, root : string, out : string, history : string,
              cpus : int, memory : int, keep : bool, reader : Report.reader,
-             capabilities : Requirements.capability list, strict : bool} -> bool
+             capabilities : Requirements.capability list, strict : bool, quarantine : Expectations.line list} -> bool
 end

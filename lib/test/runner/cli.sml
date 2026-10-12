@@ -8,7 +8,7 @@ struct
   fun option (name, args) =
     let fun go (a :: v :: rest) = if a = name then SOME v else go (v :: rest) | go _ = NONE in go args end
   fun flag (name, args) = List.exists (fn a => a = name) args
-  val valued = ["--tier", "--profile", "-j", "--mem", "--root", "--out", "--history", "--since", "--changed"]
+  val valued = ["--tier", "--profile", "-j", "--mem", "--root", "--out", "--history", "--since", "--changed", "--repeat"]
   fun words args =
     let
       fun go (a :: v :: rest) = if List.exists (fn x => x = a) valued then go rest
@@ -85,7 +85,16 @@ struct
           end
     end
 
-  fun mainWith {tests = tree : Run.command Test.tree, capabilities} =
+  (* every processor kept busy beside a run, to find what time makes fail:
+     the busy processes, a group each *)
+  fun load () =
+    List.tabulate (Runtime.processors (), fn _ =>
+      Subprocess.spawn {program = "/bin/sh", args = ["sh", "-c", "while :; do :; done"], env = NONE, search = false,
+                        dir = NONE, stdin = NONE, stdout = NONE, stderr = NONE, group = true, limits = Subprocess.unlimited})
+  fun unload pids =
+    List.app (fn p => ((Subprocess.kill (p, Posix.Signal.kill); ignore (Subprocess.wait (SOME p))) handle OS.SysErr _ => ())) pids
+
+  fun mainWith {tests = tree : Run.command Test.tree, capabilities, quarantine} =
     let
       val args = CommandLine.arguments ()
       val (command, rest) = case args of c :: r => (c, r) | [] => ("run", [])
@@ -142,14 +151,29 @@ struct
            say (Int.toString (length selected) ^ " tests\n"))
       | "run" =>
           let
-            val ok =
+            val lines = if quarantine = "" then [] else Expectations.read quarantine
+            fun once () =
               Run.run {tests = List.map (fn {path, meta, leaf} => (path, meta, leaf)) selected, root = root,
                        out = getOpt (option ("--out", rest), "tests/out/r"), history = history,
                        cpus = number ("-j", rest, freeProcessors ()), memory = number ("--mem", rest, freeMemory ()),
                        keep = flag ("--keep", rest), reader = Report.reader (), capabilities = capabilities,
                        (* the tier check must be complete: what it lacks is an error *)
-                       strict = option ("--tier", rest) = SOME "check" orelse flag ("--strict", rest)}
-          in OS.Process.exit (if ok then OS.Process.success else OS.Process.failure) end
+                       strict = option ("--tier", rest) = SOME "check" orelse flag ("--strict", rest),
+                       quarantine = lines}
+            (* --repeat N runs the selection N times; --until-fail until a run
+               fails, at most N times (100 when N is not given) *)
+            val untilFail = flag ("--until-fail", rest)
+            val times = number ("--repeat", rest, if untilFail then 100 else 1)
+            val busy = if flag ("--under-load", rest) then load () else []
+            fun go (k, allOk) =
+              if k > times then allOk
+              else
+                let
+                  val () = if times > 1 then say ("run " ^ Int.toString k ^ " of " ^ Int.toString times ^ "\n") else ()
+                  val ok = once () handle e => (unload busy; raise e)
+                in if not ok andalso untilFail then false else go (k + 1, allOk andalso ok) end
+            val ok = go (1, true)
+          in unload busy; OS.Process.exit (if ok then OS.Process.success else OS.Process.failure) end
       | "explain" =>
           List.app (fn {path, meta, leaf = c : Run.command} =>
                       say (path ^ "\n  command: " ^ String.concatWith " " (#args c)
@@ -198,5 +222,5 @@ struct
     handle Usage m => (TextIO.output (TextIO.stdErr, "rune-test: " ^ m ^ "\n"); TextIO.flushOut TextIO.stdErr;
                        Posix.Process.exit 0w2)
 
-  fun main tree = mainWith {tests = tree, capabilities = []}
+  fun main tree = mainWith {tests = tree, capabilities = [], quarantine = ""}
 end

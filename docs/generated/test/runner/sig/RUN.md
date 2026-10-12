@@ -43,7 +43,7 @@ sig
   val <a href="#val-accept">accept</a> : bool ref
   val <a href="#val-run">run</a> : {<a href="#fld-run.tests">tests</a> : (string * Test.meta * command) list, <a href="#fld-run.root">root</a> : string, <a href="#fld-run.out">out</a> : string, <a href="#fld-run.history">history</a> : string,
              <a href="#fld-run.cpus">cpus</a> : int, <a href="#fld-run.memory">memory</a> : int, <a href="#fld-run.keep">keep</a> : bool, <a href="#fld-run.reader">reader</a> : Report.reader,
-             <a href="#fld-run.capabilities">capabilities</a> : Requirements.capability list, <a href="#fld-run.strict">strict</a> : bool} -&gt; bool
+             <a href="#fld-run.capabilities">capabilities</a> : Requirements.capability list, <a href="#fld-run.strict">strict</a> : bool, <a href="#fld-run.quarantine">quarantine</a> : Expectations.line list} -&gt; bool
 end
 </pre>
 
@@ -151,11 +151,13 @@ A judge that reads a golden file writes it instead, and says
 ```sml
 val run : {tests : (string * Test.meta * command) list, root : string, out : string, history : string,
            cpus : int, memory : int, keep : bool, reader : Report.reader,
-           capabilities : Requirements.capability list, strict : bool} -> bool
+           capabilities : Requirements.capability list, strict : bool, quarantine : Expectations.line list} -> bool
 ```
 
-`run {tests, root, out, history, cpus, memory, keep, reader, capabilities, strict}` runs `tests` in a new directory under `out`, and
-is whether every test passed.
+`run {tests, root, out, history, cpus, memory, keep, reader, capabilities, strict, quarantine}` runs `tests` under `out`, and is
+whether every test passed.
+
+Each run has a new directory under `out`.
 
 The tree's directory is `root`; the run has `cpus` processors and
 `memory` megabytes; it reads and rewrites the history file `history`;
@@ -163,6 +165,11 @@ and `keep` keeps every test's directory. A test that requires a
 capability the machine lacks (of `capabilities`) does not run: it is
 skipped with the capability's hint, or is an ERROR when `strict`, and
 the tests that wait for it do not start.
+
+A test tagged `flaky` that fails runs once more, and is `FLAKY` (no
+failure) when it passes then. A failure that a line of `quarantine`
+covers, of the way `rune-test` and the test's path, is `QUARANTINED`
+until the line's date, and a failure again after it.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -176,6 +183,7 @@ the tests that wait for it do not start.
 | <a name="fld-run.reader"></a>`reader` | `Report.reader` |  |
 | <a name="fld-run.capabilities"></a>`capabilities` | `Requirements.capability list` |  |
 | <a name="fld-run.strict"></a>`strict` | `bool` |  |
+| <a name="fld-run.quarantine"></a>`quarantine` | `Expectations.line list` |  |
 
 ---
 

@@ -1,7 +1,7 @@
 {
  "signatures": {
   "CLI": {
-   "doc": "The runner's command line (docs/plans/unit-testing.md, D19):\n\n- `list [FILTER]`: the tests, with their tags, and nothing run;\n- `run [FILTER] [--tier T] [-j N] [--mem MB] [--keep] [--failed]`: the\n  tests the filter selects (and the tier, a tag), on `N` processors\n  (by default those of the machine less its load from outside) and `MB`\n  megabytes; `--failed` runs the tests that failed last time,\n  `--keep` keeps every test's directory, and `--accept` writes what the\n  tests printed into their golden files (`Run.accept`);\n- `explain PATH`: a test's command, directory and needs;\n- `stats`: the slowest and the flakiest tests in the history;\n- `doctor [FILTER]`: the capabilities the tests require, each probed,\n  with how to get those that are missing (it fails when one is).\n\nA run of the tier check, or with `--strict`, fails a test whose\ncapability is missing; any other run skips it.\n\nA filter is the language of `TestFilter`; two or more of them select\nthe tests any of them selects. The tests a selected test waits for are\nselected with it, and a run runs the tests tagged `always` as well.\n`--profile P` is `--tier P`.\n\n`--affected` keeps, of what is selected, the tests that cover a path\nchanged since `HEAD` (in the work tree, or not yet known to git);\n`--since REV` since `REV`, and `--changed FILE` the paths that `FILE`\nlists, one to a line. A test covers the paths its tags `covers:GLOB`\nmatch; a changed path that no test covers keeps every test. `--root DIR` is the directory of the tree (default `.`), `--out DIR` where\nruns go (default `tests/out/r`), `--history FILE` the history (default\n`build/test-history.tsv`). A run ends the program with success when every\ntest passed, with failure otherwise, and with 2 for a mistake in the\ncommand line.\n\n",
+   "doc": "The runner's command line (docs/plans/unit-testing.md, D19):\n\n- `list [FILTER]`: the tests, with their tags, and nothing run;\n- `run [FILTER] [--tier T] [-j N] [--mem MB] [--keep] [--failed]`: the\n  tests the filter selects (and the tier, a tag), on `N` processors\n  (by default those of the machine less its load from outside) and `MB`\n  megabytes; `--failed` runs the tests that failed last time,\n  `--keep` keeps every test's directory, and `--accept` writes what the\n  tests printed into their golden files (`Run.accept`);\n- `explain PATH`: a test's command, directory and needs;\n- `stats`: the slowest and the flakiest tests in the history;\n- `doctor [FILTER]`: the capabilities the tests require, each probed,\n  with how to get those that are missing (it fails when one is).\n\nA run of the tier check, or with `--strict`, fails a test whose\ncapability is missing; any other run skips it. For flaky tests\n(docs/plans/unit-testing.md, D17): `--repeat N` runs the selection N\ntimes, `--until-fail` until a run fails (at most N times, 100 by\ndefault), and `--under-load` keeps every processor busy beside it.\n\nA filter is the language of `TestFilter`; two or more of them select\nthe tests any of them selects. The tests a selected test waits for are\nselected with it, and a run runs the tests tagged `always` as well.\n`--profile P` is `--tier P`.\n\n`--affected` keeps, of what is selected, the tests that cover a path\nchanged since `HEAD` (in the work tree, or not yet known to git);\n`--since REV` since `REV`, and `--changed FILE` the paths that `FILE`\nlists, one to a line. A test covers the paths its tags `covers:GLOB`\nmatch; a changed path that no test covers keeps every test. `--root DIR` is the directory of the tree (default `.`), `--out DIR` where\nruns go (default `tests/out/r`), `--history FILE` the history (default\n`build/test-history.tsv`). A run ends the program with success when every\ntest passed, with failure otherwise, and with 2 for a mistake in the\ncommand line.\n\n",
    "page": "sig/CLI.md",
    "members": [
     {
@@ -14,8 +14,8 @@
     {
      "kind": "val",
      "name": "mainWith",
-     "spec": "val mainWith : {tests : Run.command Test.tree, capabilities : Requirements.capability list} -> unit",
-     "doc": "`mainWith {tests, capabilities}` is `main tests`, with the\ncapabilities the tests may require (`Requirements`).\n\n",
+     "spec": "val mainWith : {tests : Run.command Test.tree, capabilities : Requirements.capability list, quarantine : string} -> unit",
+     "doc": "`mainWith {tests, capabilities, quarantine}` is `main tests`, with\nwhat the tests may require and what is in quarantine.\n\n`capabilities` are what tests may require (`Requirements`), and\n`quarantine` the file of the quarantine's expectations (\"\" for none).\n\n",
      "page": "sig/CLI.md#val-mainwith"
     }
    ]
@@ -236,7 +236,7 @@
      "kind": "type",
      "name": "ended",
      "spec": "type ended = {path : string, verdict : string, reason : string, wall : Time.time, user : Time.time,\n              system : Time.time, peakResident : int, outputBytes : int, kept : string list,\n              command : string, rerun : string}",
-     "doc": "What a test ended with: its path, its verdict and why, what it cost,\nwhere its outputs are kept, and the command that reruns it.\n\nThe verdict is one of `PASS`, `FAIL`, `TIMEOUT`, `CRASH`, `LEAK`,\n`ERROR`, `SKIP` and `ACCEPTED` (a golden file written, `Run.accept`);\nthe first, the last and `SKIP` are not failures.\n\n",
+     "doc": "What a test ended with: its path, its verdict and why, what it cost,\nwhere its outputs are kept, and the command that reruns it.\n\nThe verdict is one of `PASS`, `FAIL`, `TIMEOUT`, `CRASH`, `LEAK`,\n`ERROR`, `SKIP`, `ACCEPTED` (a golden file written, `Run.accept`),\n`FLAKY` (a failure, then a pass) and `QUARANTINED`; the first, `SKIP`\nand the last three are not failures.\n\n",
      "page": "sig/REPORT.md#type-ended"
     },
     {
@@ -331,8 +331,8 @@
     {
      "kind": "val",
      "name": "run",
-     "spec": "val run : {tests : (string * Test.meta * command) list, root : string, out : string, history : string,\n           cpus : int, memory : int, keep : bool, reader : Report.reader,\n           capabilities : Requirements.capability list, strict : bool} -> bool",
-     "doc": "`run {tests, root, out, history, cpus, memory, keep, reader, capabilities, strict}` runs `tests` in a new directory under `out`, and\nis whether every test passed.\n\nThe tree's directory is `root`; the run has `cpus` processors and\n`memory` megabytes; it reads and rewrites the history file `history`;\nand `keep` keeps every test's directory. A test that requires a\ncapability the machine lacks (of `capabilities`) does not run: it is\nskipped with the capability's hint, or is an ERROR when `strict`, and\nthe tests that wait for it do not start.\n\n",
+     "spec": "val run : {tests : (string * Test.meta * command) list, root : string, out : string, history : string,\n           cpus : int, memory : int, keep : bool, reader : Report.reader,\n           capabilities : Requirements.capability list, strict : bool, quarantine : Expectations.line list} -> bool",
+     "doc": "`run {tests, root, out, history, cpus, memory, keep, reader, capabilities, strict, quarantine}` runs `tests` under `out`, and is\nwhether every test passed.\n\nEach run has a new directory under `out`.\n\nThe tree's directory is `root`; the run has `cpus` processors and\n`memory` megabytes; it reads and rewrites the history file `history`;\nand `keep` keeps every test's directory. A test that requires a\ncapability the machine lacks (of `capabilities`) does not run: it is\nskipped with the capability's hint, or is an ERROR when `strict`, and\nthe tests that wait for it do not start.\n\nA test tagged `flaky` that fails runs once more, and is `FLAKY` (no\nfailure) when it passes then. A failure that a line of `quarantine`\ncovers, of the way `rune-test` and the test's path, is `QUARANTINED`\nuntil the line's date, and a failure again after it.\n\n",
      "page": "sig/RUN.md#val-run"
     }
    ]
@@ -399,6 +399,13 @@
     },
     {
      "kind": "val",
+     "name": "retry",
+     "spec": "val retry : state * int -> unit",
+     "doc": "`retry (s, i)` puts the running job `i` back among those that may\nstart, as if it had not run.\n\n",
+     "page": "sig/SCHEDULER.md#val-retry"
+    },
+    {
+     "kind": "val",
      "name": "finished",
      "spec": "val finished : state -> bool",
      "doc": "`finished s` says whether no job waits or runs.\n\n",
@@ -432,6 +439,13 @@
      "page": "sig/SUPERVISOR.md#type-outcome"
     },
     {
+     "kind": "datatype",
+     "name": "verdict",
+     "spec": "datatype verdict = Passed | NotPassed | Again",
+     "doc": "What a command came to: it passed, it did not, or it is to run again\n(a test that may be flaky, the first time it fails).\n\n",
+     "page": "sig/SUPERVISOR.md#type-verdict"
+    },
+    {
      "kind": "type",
      "name": "result",
      "spec": "type result = {outcome : outcome, wall : Time.time, user : Time.time, system : Time.time,\n               peakResident : int, outputBytes : int, leaked : bool}",
@@ -448,8 +462,8 @@
     {
      "kind": "val",
      "name": "run",
-     "spec": "val run : {commands : command vector, cpus : int, memory : int,\n           finished : int * result -> bool, tick : int -> unit} -> unit",
-     "doc": "`run {commands, cpus, memory, finished, tick}` runs `commands` as\n`Scheduler.admit` admits them, and tells `finished` each one's result.\n\nThe machine has `cpus` processors and `memory` megabytes. `tick` is\ncalled with the number running whenever the loop has nothing to do,\nfor a display.\n\n`finished` says whether the command passed. A command that waits for\none that did not pass is not started, and is `Cancelled`. An interrupt (`SML90.Interrupt`) kills every\nrunning group and is raised again.\n\n",
+     "spec": "val run : {commands : command vector, cpus : int, memory : int,\n           finished : int * result -> verdict, tick : int -> unit} -> unit",
+     "doc": "`run {commands, cpus, memory, finished, tick}` runs `commands` as\n`Scheduler.admit` admits them, and tells `finished` each one's result.\n\nThe machine has `cpus` processors and `memory` megabytes. `tick` is\ncalled with the number running whenever the loop has nothing to do,\nfor a display.\n\n`finished` says what the command came to; one to run `Again` is\nstarted again. A command that waits for one that did not pass is not\nstarted, and is `Cancelled`. An interrupt (`SML90.Interrupt`) kills every\nrunning group and is raised again.\n\n",
      "page": "sig/SUPERVISOR.md#val-run"
     }
    ]

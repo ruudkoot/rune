@@ -38,7 +38,7 @@ What it rests on:
 | M11 | The protocol suites in SML || done 2026-10-12 |
 | M12 | Requirements and the doctor || done 2026-10-12 |
 | M13 | The matrix, and the other machines || done 2026-10-12 |
-| M14 | The rest, and the tools for flaky tests | |
+| M14 | The rest, and the tools for flaky tests || done 2026-10-12, in part |
 | M15 | The final calibration | |
 
 The owner decided D1 to D24 on 2026-10-12, every one as recommended
@@ -1788,6 +1788,10 @@ M1 and M2 are independent of each other and of the rest.
   | `run-mlton.sh` | 73 |
   | `run-mlton-bench.sh` | 147 |
   | `contrast.py` | 192 |
+
+* **Done** (2026-10-12), the tools for flaky tests; the scripts are still to come:
+  - **In the runner:** `--repeat N`, `--until-fail` and `--under-load` (a busy process on every processor beside the runs); the tag `flaky`, a retry of the failure (`Scheduler.retry`, and the supervisor's verdict `Again`) whose pass is `FLAKY`; the quarantine (`tests/runner/quarantine.txt`, read by the engine of M6, its lines held to parse in `make check`), a failure `QUARANTINED` until the line's date and a failure again after it; `stats` already lists the flakiest tests. Each was shown on a program of tests that fail as they should: a test that fails once, one quarantined, one quarantined in the past.
+  - **Not yet:** the port of `tests/opt`, the census, the simulators, the layouts, gcbench, the budgets, the benchmarks, the documentation's checks, the mutants and the external corpora (the eighteen scripts above); stress and the sanitizer as ways (they are the profile `vm`'s jobs); and the timing jobs in the exclusive pool, of which `make check` has none (the budgets count instructions). Each runs as its make step, a job of the runner.
 
 ### M15. The final calibration (S–M, about 300, and documents)
 

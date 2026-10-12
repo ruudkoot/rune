@@ -13,7 +13,10 @@
      with how to get those that are missing (it fails when one is).
 
    A run of the tier check, or with `--strict`, fails a test whose
-   capability is missing; any other run skips it.
+   capability is missing; any other run skips it. For flaky tests
+   (docs/plans/unit-testing.md, D17): `--repeat N` runs the selection N
+   times, `--until-fail` until a run fails (at most N times, 100 by
+   default), and `--under-load` keeps every processor busy beside it.
 
    A filter is the language of `TestFilter`; two or more of them select
    the tests any of them selects. The tests a selected test waits for are
@@ -36,7 +39,10 @@ sig
   (* `main tests` runs the command line's command over `tests`. *)
   val main : Run.command Test.tree -> unit
 
-  (* `mainWith {tests, capabilities}` is `main tests`, with the
-     capabilities the tests may require (`Requirements`). *)
-  val mainWith : {tests : Run.command Test.tree, capabilities : Requirements.capability list} -> unit
+  (* `mainWith {tests, capabilities, quarantine}` is `main tests`, with
+     what the tests may require and what is in quarantine.
+
+     `capabilities` are what tests may require (`Requirements`), and
+     `quarantine` the file of the quarantine's expectations ("" for none). *)
+  val mainWith : {tests : Run.command Test.tree, capabilities : Requirements.capability list, quarantine : string} -> unit
 end
