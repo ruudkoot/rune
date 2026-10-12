@@ -132,7 +132,7 @@ struct
   fun needs vm t = if String.isSubstring "ppc64" vm orelse String.isSubstring "aarch64" vm then Test.requires ["qemu"] t else t
 
   val tree =
-    Test.tag "test-portability" (Test.tag "portability" (Test.tag "vm"
+    Test.tag "nightly" (Test.tag "test-portability" (Test.tag "portability" (Test.tag "vm"
       (Test.describe ""
          [Test.describe "portability"
             (List.concat (List.map (fn (family, _, _, vms, def) =>
@@ -147,5 +147,5 @@ struct
              @ [Test.requires ["qemu"] (script ("matrix", "RUNE=\"$RUNE_TEST_ROOT\"/bin/rune-stack RUNE_MATRIX_TIMEOUT=" ^ env ("PORT_TIMEOUT", "900")
                                                          ^ " exec sh tests/basis/run-matrix.sh -j \"$RUNE_TEST_CPUS\" --configs portability",
                                                          Int.max (1, Runtime.processors () div 2), 2000, ["matrix"]))]),
-          Test.requires ["qemu"] (Oracles.jitTree ("bin/runevm-aarch64", "port-jit"))])))
+          Test.requires ["qemu"] (Oracles.jitTree ("bin/runevm-aarch64", "port-jit"))]))))
 end

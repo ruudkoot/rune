@@ -22,7 +22,10 @@ struct
       NONE => default
     | SOME v => (case Int.fromString v of SOME n => n | NONE => raise Usage (name ^ " wants a number"))
 
-  (* the processors of the machine less its load from outside, at least 1 *)
+  (* the processors of the machine less its load from outside, but at
+     least half of them: the load is a minute's mean, which still counts
+     the work that has just ended (the tools make check builds first), and
+     on a busy machine it alone would leave a run a single processor *)
   fun freeProcessors () =
     let
       val s = TextIO.openIn "/proc/loadavg"
@@ -30,7 +33,8 @@ struct
                    SOME l => (case String.tokens Char.isSpace l of x :: _ => getOpt (Real.fromString x, 0.0) | [] => 0.0)
                  | NONE => 0.0
       val () = TextIO.closeIn s
-    in Int.max (1, Runtime.processors () - Real.round load) end
+      val n = Runtime.processors ()
+    in Int.max (Int.max (1, n div 2), n - Real.round load) end
     handle IO.Io _ => Runtime.processors ()
 
   (* the megabytes the machine has free, or 8000 where it does not say *)
@@ -120,6 +124,19 @@ struct
         if flag ("--failed", rest) then
           let val h = History.read history
           in List.filter (fn {path, ...} => History.failedLast (h, path)) selected end
+        else selected
+      (* the tier quick, informed by the history: and every test that failed
+         last time or whose verdict has changed between runs *)
+      val selected =
+        if option ("--tier", rest) = SOME "quick" orelse flag ("--informed", rest) then
+          let
+            val h = History.read history
+            val shaky = List.map #path (List.filter (fn {flips, passed, ...} : History.entry => flips > 0 orelse not passed)
+                                                    (History.entries h))
+          in
+            selected @ List.filter (fn {path, ...} => List.exists (fn p => p = path) shaky
+                                                      andalso not (List.exists (fn {path = q, ...} => q = path) selected)) all
+          end
         else selected
       (* and the tests they wait for, and those they wait for: a test runs
          with what it needs *)

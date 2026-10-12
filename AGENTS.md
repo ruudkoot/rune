@@ -275,7 +275,14 @@ keep these invariants:
   (`runtime/register` and the VMs: the sanitizers, stress, Windows,
   portability), `--profile layout` (the heap and its headers),
   `--profile library` (the matrix and the hosts) and `--profile docs`
-  (`docs/testing.md`, *Profiles*). `bin/rune` is the self-hosted compiler, so it is what
+  (`docs/testing.md`, *Tiers, profiles and what changed*); CI runs the
+  tier `nightly` once a day. A test whose tool the machine lacks (tmux,
+  qemu, Windows, a host) is skipped with how to install it, and is an error
+  in `make check`; `bin/rune-test doctor` lists what a selection needs. A
+  test that fails now and then: `bin/rune-test run FILTER --until-fail
+  --under-load` to catch it, the tag `flaky` or a dated line of
+  `tests/runner/quarantine.txt` to live with it (`docs/testing.md`, *Flaky
+  tests*). `bin/rune` is the self-hosted compiler, so it is what
   every test target uses by default; `make test RUNE=bin/rune-mlton` runs the
   same suite with the MLton build and is the faster loop while iterating. For
   VM changes also run the suite with the

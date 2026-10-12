@@ -19,7 +19,9 @@ struct
                  started : Time.time, done : int ref, failed : int ref, counts : (string * int) list ref,
                  cpu : Time.time ref, slowest : (Time.time * string) list ref, lastDraw : Time.time ref,
                  lastBeat : Time.time ref, running : int ref, color : bool,
-                 failures : (string * string * string * string list) list ref}
+                 failures : (string * string * string * string list) list ref,
+                 (* every test's path, verdict, reason and seconds, for JUnit *)
+                 all : (string * string * string * real) list ref}
 
   fun say s = (TextIO.output (TextIO.stdOut, s); TextIO.flushOut TextIO.stdOut)
   fun seconds t = Real.fmt (StringCvt.FIX (SOME 1)) (Time.toReal t)
@@ -38,7 +40,7 @@ struct
       val r = {reader = reader, events = TextIO.openOut events, eventsPath = events, total = total,
                started = Runtime.clock (), done = ref 0, failed = ref 0, counts = ref [], cpu = ref Time.zeroTime,
                slowest = ref [], lastDraw = ref Time.zeroTime, lastBeat = ref (Runtime.clock ()), running = ref 0,
-               color = reader = Terminal andalso Style.enabled (Style.Auto, true), failures = ref []}
+               color = reader = Terminal andalso Style.enabled (Style.Auto, true), failures = ref [], all = ref []}
     in
       (case reader of
          Agent => say ("rune-test: " ^ Int.toString total ^ " tests; events in " ^ events
@@ -87,6 +89,7 @@ struct
       #counts r := bump (!(#counts r));
       #cpu r := Time.+ (!(#cpu r), Time.+ (user, system));
       #slowest r := top5 ((wall, path), !(#slowest r));
+      #all r := (path, verdict, reason, Time.toReal wall) :: !(#all r);
       TextIO.output (#events r,
                      "{\"path\":" ^ json path ^ ",\"verdict\":" ^ json verdict ^ ",\"reason\":" ^ json reason
                      ^ ",\"wall\":" ^ Real.fmt (StringCvt.FIX (SOME 3)) (Time.toReal wall)
@@ -136,6 +139,35 @@ struct
     let val s = TextIO.openAppend file in TextIO.output (s, text); TextIO.closeOut s end
     handle IO.Io _ => ()
 
+  (* the run as JUnit's XML, which CI's tools read: a test case for each
+     test, its suite the path's first part *)
+  fun xml s = String.translate (fn #"&" => "&amp;" | #"<" => "&lt;" | #">" => "&gt;" | #"\"" => "&quot;"
+                                  | c => if Char.ord c < 32 andalso c <> #"\n" andalso c <> #"\t" then "?" else str c) s
+  fun junit (r : report) =
+    let
+      val tests = rev (!(#all r))
+      fun suite p = case String.fields (fn c => c = #"/") p of x :: _ => x | [] => p
+      fun case' (p, v, why, secs) =
+        "    <testcase classname=\"" ^ xml (suite p) ^ "\" name=\"" ^ xml p ^ "\" time=\""
+        ^ Real.fmt (StringCvt.FIX (SOME 3)) secs ^ "\""
+        ^ (case v of
+             "PASS" => "/>\n"
+           | "SKIP" => "><skipped message=\"" ^ xml why ^ "\"/></testcase>\n"
+           | "ACCEPTED" => "/>\n"
+           | "FLAKY" => "><system-out>" ^ xml why ^ "</system-out></testcase>\n"
+           | "QUARANTINED" => "><skipped message=\"" ^ xml ("quarantined: " ^ why) ^ "\"/></testcase>\n"
+           | _ => "><failure type=\"" ^ v ^ "\" message=\"" ^ xml (case String.fields (fn c => c = #"\n") why of l :: _ => l | [] => why)
+                  ^ "\">" ^ xml why ^ "</failure></testcase>\n")
+      val failures = length (List.filter (fn (_, v, _, _) => not (List.exists (fn x => x = v) ["PASS", "SKIP", "ACCEPTED", "FLAKY", "QUARANTINED"])) tests)
+      val skipped = length (List.filter (fn (_, v, _, _) => v = "SKIP" orelse v = "QUARANTINED") tests)
+    in
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<testsuites name=\"rune-test\" tests=\"" ^ Int.toString (length tests)
+      ^ "\" failures=\"" ^ Int.toString failures ^ "\" skipped=\"" ^ Int.toString skipped ^ "\">\n"
+      ^ "  <testsuite name=\"rune-test\" tests=\"" ^ Int.toString (length tests) ^ "\" failures=\"" ^ Int.toString failures
+      ^ "\" skipped=\"" ^ Int.toString skipped ^ "\">\n"
+      ^ String.concat (List.map case' tests) ^ "  </testsuite>\n</testsuites>\n"
+    end
+
   fun finish (r : report, {cpus, freed, keptBytes}) =
     let
       val wall = Time.- (Runtime.clock (), #started r)
@@ -158,6 +190,8 @@ struct
            ^ #eventsPath r ^ ", summary in " ^ summaryPath ^ "\n");
       say (result ^ "\n");
       append (summaryPath, markdown (r, result, slowest));
+      (let val s = TextIO.openOut (OS.Path.concat (OS.Path.dir (#eventsPath r), "junit.xml"))
+       in TextIO.output (s, junit r); TextIO.closeOut s end handle IO.Io _ => ());
       (case OS.Process.getEnv "GITHUB_STEP_SUMMARY" of
          SOME f => if f = "" then () else append (f, markdown (r, result, slowest))
        | NONE => ());

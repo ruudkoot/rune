@@ -115,14 +115,19 @@ struct
      for a kind of change, beyond make check. Each runs alone, as it always
      has: they run tests/lang from the root and the matrix *)
   fun extra (name, tags) =
-    target (name, {cpus = processors, memory = 4000, pools = ["lang", "matrix"], after = [], tags = tags, covers = []})
+    target (name, {cpus = processors, memory = 4000, pools = ["lang", "matrix"], after = [], tags = "nightly" :: tags, covers = []})
   val extras =
     Test.describe "make"
       [extra ("test-register-asan", ["vm"]),
        extra ("test-stress", ["vm"]),
        Test.requires ["windows"] (extra ("test-windows", ["vm", "windows"])),
        Test.requires Lang.hosts (extra ("matrix-quick", ["library"])),
-       Test.requires Lang.hosts (extra ("test-lib-hosts", ["library"]))]
+       Test.requires Lang.hosts (extra ("test-lib-hosts", ["library"])),
+       (* the nightly's own (docs/testing.md, Tiers, profiles and what changed):
+          every configuration of the matrix, and the native code under stress *)
+       Test.requires Lang.hosts (extra ("matrix", [])),
+       extra ("test-native-stress", []),
+       extra ("test-native-asan", [])]
 
   (* what tests require of the machine (D18; docs/testing.md, Requirements),
      with scripts/doctor.sh's hints *)

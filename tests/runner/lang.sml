@@ -298,7 +298,7 @@ struct
   (* a host's compiler needs the host's build *)
   fun needs compiler t = if List.exists (fn h => h = compiler) hosts then Test.requires [compiler] t else t
   fun extraTags tag = (if tag = "test" then ["quick"] else []) @ (if tag = "test-heap" then ["layout"] else [])
-                      @ (if tag = "test-portability" then ["portability", "vm"] else [])
+                      @ (if tag = "test-portability" then ["portability", "vm", "nightly"] else [])
   (* a way of another machine is not make check's, and one under qemu needs qemu *)
   fun portable (w : way) = #tag w = "test-portability"
   fun wayTags (w : way) = (if portable w then [] else ["check"]) @ [#tag w] @ extraTags (#tag w)

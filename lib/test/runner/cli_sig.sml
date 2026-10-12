@@ -3,7 +3,8 @@
    - `list [FILTER]`: the tests, with their tags, and nothing run;
    - `run [FILTER] [--tier T] [-j N] [--mem MB] [--keep] [--failed]`: the
      tests the filter selects (and the tier, a tag), on `N` processors
-     (by default those of the machine less its load from outside) and `MB`
+     (by default those of the machine less its load from outside, and at
+     least half of them) and `MB`
      megabytes; `--failed` runs the tests that failed last time,
      `--keep` keeps every test's directory, and `--accept` writes what the
      tests printed into their golden files (`Run.accept`);
@@ -22,6 +23,9 @@
    the tests any of them selects. The tests a selected test waits for are
    selected with it, and a run runs the tests tagged `always` as well.
    `--profile P` is `--tier P`.
+
+   The tier quick, and `--informed`, add every test that failed last time
+   or whose verdict has changed between runs, by the history.
 
    `--affected` keeps, of what is selected, the tests that cover a path
    changed since `HEAD` (in the work tree, or not yet known to git);

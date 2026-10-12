@@ -39,7 +39,7 @@ What it rests on:
 | M12 | Requirements and the doctor || done 2026-10-12 |
 | M13 | The matrix, and the other machines || done 2026-10-12 |
 | M14 | The rest, and the tools for flaky tests || done 2026-10-12, in part |
-| M15 | The final calibration | |
+| M15 | The final calibration || done 2026-10-12 |
 
 The owner decided D1 to D24 on 2026-10-12, every one as recommended
 (*Decisions*). M1 and M2 do not depend on each other or on anything else,
@@ -1802,6 +1802,13 @@ M1 and M2 are independent of each other and of the rest.
   - AGENTS.md and `docs/testing.md` final;
   - the legacy jobs and wrappers deleted;
   - E1 measured again, for a before-and-after table in `docs/testing.md`.
+
+* **Done** (2026-10-12):
+  - **Selection informed by the history:** the tier quick, and `--informed` with any other, add every test that failed last time or whose verdict has changed between runs.
+  - **CI:** each run writes JUnit's XML (`junit.xml`) beside its events and summary, and the summary goes to the job's page; `check.yml` keeps them with the failures, and `nightly.yml` runs the tier `nightly` once a day (the profiles' extras, the VMs of other machines, every configuration of the matrix, native code under stress and the sanitizers), skipping with their reasons the tests whose tools the machine lacks.
+  - **AGENTS.md and `docs/testing.md`** say what runs when, how to read a failure, the tiers and profiles, the requirements, the flaky tests and the expectations.
+  - **Deleted:** the wrapper VMs of `bin/` (M4) and the scripts M3 to M14 retired. The steps still made are the ones whose ports M13 and M14 leave to come.
+  - **E1 again:** the tests took 20.1 minutes against 56.4, with about the same CPU (11,879 s against 12,355), keeping 9.9 of the 16 processors busy against 3.65, on a machine as busy with other work; see `docs/testing.md`, *Before and after*.
 
 ### Later
 

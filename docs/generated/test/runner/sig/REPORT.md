@@ -34,7 +34,8 @@ since it may see only the head and the tail of a long output. Every
 failure line begins with its verdict, and the last line with `RESULT:`.
 The run's events go to a file of JSON lines in every case, and the
 summary, in Markdown, to the file summary.md beside it, and to the file
-`GITHUB_STEP_SUMMARY` names when it names one.
+`GITHUB_STEP_SUMMARY` names when it names one; and every test's verdict
+as JUnit's XML to junit.xml, for the tools of CI.
 
 ## Interface
 

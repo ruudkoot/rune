@@ -46,8 +46,9 @@ on its output. A test that ends and leaves processes behind fails with
 `LEAK`. The scheduler starts the jobs whose critical path is longest first,
 and the ones that failed last time before those; it fits them to the CPUs
 and memory of the machine (`-j`, `--mem`; by default its processors less
-its load and its available memory), keeps apart the jobs that name one pool,
-and starts a job only after those it waits for.
+its load, but at least half of them, and its available memory), keeps
+apart the jobs that name one pool, and starts a job only after those it
+waits for.
 
 * `bin/rune-test list [FILTER]` lists the tests (`make/*`,
   `tag:check & !runner/*`), and `explain FILTER` shows each one's command,
@@ -64,8 +65,9 @@ line every 30 seconds, and the same blocks. A block gives the verdict
 the output that say what failed, the directory the test's output is kept in
 (`tests/out/r/STAMP/failed/PATH`), the command, and the command that runs it
 again. The last line begins `RESULT:`. Every run writes its events as JSON
-lines (`events.jsonl`) and a summary in Markdown (`summary.md`, and GitHub's
-page of the job) in its directory. The directories of tests that pass are
+lines (`events.jsonl`), a summary in Markdown (`summary.md`, and GitHub's
+page of the job) and every verdict as JUnit's XML (`junit.xml`) in its
+directory. The directories of tests that pass are
 removed as they end, and the last five runs are kept. The wall time of each
 test goes into `build/test-history.tsv`, from which the next run orders its
 jobs.
@@ -76,7 +78,7 @@ A tier or a profile is a tag (`--tier T`, `--profile P`):
 
 | Tag | What it selects |
 |---|---|
-| `quick` | `tests/lang` and `tests/errors` compiled by `bin/rune-stack` and run on `bin/runevm-stack`, `make test-lib`, `make test-doc` and the canaries: under a minute (`make quick`) |
+| `quick` | `tests/lang` and `tests/errors` compiled by `bin/rune-stack` and run on `bin/runevm-stack`, the libraries' suites, the documentation generator's, the canaries, and every test that failed last time or whose verdict has changed between runs (the history; `--informed` adds those to any selection): under a minute (`make quick`) |
 | `check` | all of `make check` |
 | `test`, `test-heap`, `test-gc`, `test-all`, `test-native`, `test-register`, `test-register-jit` | the ways of `tests/lang` of that make target |
 | `vm` | `make test-register-asan`, `test-stress`, `test-windows` and `test-portability`, for a change to `runtime/register` or the VMs |
@@ -84,6 +86,7 @@ A tier or a profile is a tag (`--tier T`, `--profile P`):
 | `library` | `make matrix-quick` and `test-lib-hosts`, for a library |
 | `windows`, `portability` | `make test-windows`, `test-portability` |
 | `docs` | `make check-docs` and `test-doc` |
+| `nightly` | what `make check` does not run: the profiles' extras, the VMs of other machines, every configuration of the matrix, native code under stress and the sanitizers; once a day in CI (`.github/workflows/nightly.yml`) |
 
 The profiles `vm` and `library` hold what `make check` does not run; the
 others are parts of it, to run alone while iterating.
@@ -117,10 +120,34 @@ hosts (`levels/*`, `register/*`, `jit/*`, `units/*`, `units-stack/*`,
 `tests/runner/protocols.sml`); the rest of `make check` is a step each, an
 opaque `make` of its target (`tests/runner/main.sml`): the steps that run
 the programs of `tests/lang` from the root of the tree share the pool
-`lang` and run one at a time, and the others run beside them. Five canaries, tests that fail on purpose (an exit with 1, a
-run past its time, a crash, a flood of output and a leaked process), pass
-only when the runner sees each fault for what it is; they run in every
-`make check`, since the runner is built by the compiler it tests.
+`lang` and run one at a time, and the others run beside them. Five
+canaries, tests that fail on purpose (an exit with 1, a run past its time,
+a crash, a flood of output and a leaked process), pass only when the
+runner sees each fault for what it is; they run in every `make check`,
+since the runner is built by the compiler it tests.
+
+### Before and after
+
+`make check` before the runner was 32 steps run one after another
+(2026-10-11, at `34b2b4c5`); on the runner it is `make check-tools` and one
+run of 14,118 tests (2026-10-12). Both ran with 16 processors on this
+machine while other work kept about five of them busy, so the CPU and the
+processors each run kept busy compare better than the wall times
+([plans/unit-testing.md](plans/unit-testing.md), E1 and M15).
+
+| | Before: 32 steps | After: the runner |
+|---|---|---|
+| Wall time of the tests | 56.4 min | 20.1 min |
+| CPU | 12,355 s | 11,879 s |
+| Processors it kept busy, on average | 3.65 of 16 | 9.9 of 16 |
+| Processors the machine kept busy, on average | 9.1 | 14.9 |
+
+The CPU is about the same; the time went to the 18 steps that ran alone
+and to the idle tails of the others. The longest tests now are a program
+of `tests/errors` compiled by SML/NJ's build (348 s) and the laws of
+`MONO_ARRAY2` on `LargeIntArray2` (292 s). `make check-tools` took another
+8.2 minutes, a full rebuild, since a new commit's version is compiled into
+the tools; the run before was on a build already made.
 
 ## Requirements
 

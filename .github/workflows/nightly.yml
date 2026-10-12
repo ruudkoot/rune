@@ -1,0 +1,60 @@
+# The tier nightly (docs/testing.md, Tiers, profiles and what changed) once a
+# day, on a machine set up as check.yml's: what make check does not run --
+# the sanitizers, stress, the VMs of other machines under qemu, every
+# configuration of the matrix, the hosts' runs of the libraries, native code
+# under stress. A test whose capability the machine lacks (Windows, here) is
+# skipped with its reason. The runner's summary goes to the job's page, and
+# its JUnit and failures to the artefact.
+name: nightly
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nightly:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Packages
+        run: |
+          sudo apt-get update -q
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
+            libgmp-dev gcc-multilib cmake g++ python3 gdb lldb dwarfdump valgrind \
+            qemu-user clang tmux
+          sudo sh -c 'cat /usr/lib/binfmt.d/qemu-ppc64.conf > /proc/sys/fs/binfmt_misc/register' || true
+          sudo sh -c 'cat /usr/lib/binfmt.d/qemu-aarch64.conf > /proc/sys/fs/binfmt_misc/register' || true
+
+      - name: Host SML systems (cache)
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/rune-hosts
+          key: rune-hosts-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/fetch-hosts.sh') }}
+
+      - name: make hosts
+        run: make hosts
+
+      - name: make check-tools portability
+        run: make check-tools portability
+
+      - name: bin/rune-test run --tier nightly
+        run: env --default-signal=PIPE bin/rune-test run --tier nightly
+
+      - name: Keep the runner's results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-results
+          path: |
+            tests/out/r/*/summary.md
+            tests/out/r/*/junit.xml
+            tests/out/r/*/events.jsonl
+            tests/out/r/*/failed
+          if-no-files-found: ignore
+          retention-days: 14
