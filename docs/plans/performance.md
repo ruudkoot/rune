@@ -44,7 +44,7 @@ is the page of timings, stale until M1.
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done (2026-10-11); every decision taken on 2026-10-12, D7 with an addendum |
-| M1 | Measure: the JIT's code dumped, the elaborator's counters, the register VM in every timing target, HOL and MLton as scripts, new budgets | not started |
+| M1 | Measure: the JIT's code dumped, the elaborator's counters, the register VM in every timing target, HOL and MLton as scripts, new budgets | in part (2026-10-12, branch `perf-m1`): `--pass-stats` complete, the timing targets on Rune as shipped, Poly/ML in `perf-cycles.sh`, HOL's and MLton's measurements as scripts, the module language's budgets, Poly/ML's slowdown found and fixed (*M1*, *Done so far*); `docs/performance.md` re-timed next; the JIT's code dumped and the elaborator's counters on their own branches |
 | M2 | Signatures: sharing and `where` in one realisation | not started; prototype E20 |
 | M3 | Functors: typed from their signature, copies only for code (D3 decided), cheaper matching, MidCanon's quadratic | not started; prototypes E21, E24 |
 | M4 | Types shared: `Ty.ty` hash-consed, `exponential.sml` compiled | not started; partial prototypes E23 (not enough) |
@@ -219,6 +219,33 @@ build's 1.65 s: 3.1 to 3.7 times. On 2026-10-03,
 [docs/performance.md](../performance.md) had the two level: 1.08 s and
 1.12 s, wall time, for the stack target. Nothing measured here explains
 the change; M1 bisects it.
+
+*M1 found no commit to blame* (2026-10-12): the slowdown is Poly/ML's
+collector, at the heap Poly/ML starts with.
+
+* **User time against wall time.** Poly/ML's collector runs on several
+  threads, so its user time exceeds its wall time. At `6618017`, the
+  commit docs/performance.md timed on 2026-10-03, the compile took 0.98 s
+  of wall time and 2.45 s of processor time; MLton's build 1.09 s and
+  1.05 s.
+* **The input grew.** The compiler's own sources went from 14,116 lines to
+  22,604, and both builds slowed with them: MLton's from 1.09 to 1.91 s.
+  On a fixed input (`hamlet`, 22,907 lines) both commits time the same on
+  both builds.
+* **The collector's share grows faster than the input.** With one
+  collector thread, compiling the compiler took 11.0G instructions at
+  `6618017` and 22.4G now, against MLton's build's 2.03G and 3.59G. With
+  an initial heap of 1 GB (`-H 1024`) it takes 2.05G and 3.58G: as many as
+  MLton's build. So Poly/ML's collector, at Poly/ML's own initial heap,
+  does five times the compiler's work, the more so the larger the
+  program.
+
+M1 gives the Poly/ML builds (`bin/rune-polyml`, its `runedoc` and
+`runeopt`, and an installed `rune-polyml`) a heap of 1 GB to start with
+(`POLYML_HEAP` in the Makefile). The compiler compiling itself then takes
+1.8 to 1.9 s of user time on Poly/ML's build, as on MLton's, at 712 MB
+resident against 342 MB; the bytecode is the same. The numbers:
+`results/M1/bisect/` with the drafts.
 
 ### Large programs
 
@@ -1339,7 +1366,7 @@ before this one have them.
   change of the JIT that removes work removes none of what is counted.
   The JIT removes no allocation (D10).
 * A change that moves `--count` re-measures the budgets
-  (`tests/perf/run-perf.sh --update`, and `--new`), the count oracle of
+  (`tests/perf/run-perf.sh --update`, and `--stack --update`), the count oracle of
   MLton's set (`tests/perf/mlton-bench.txt`) and
   `examples/benchmarks/count-budgets.tsv`, quoting old and new in its
   commit. Items 10 to 12 move it.
@@ -1784,6 +1811,61 @@ M1's tools. The prototypes behind them are kept with the drafts (*Measuring*).
 
 **Done when:** the tools are in `make check` where they can be, and
 *Where we are* can be measured again with one command per table.
+
+**Done so far** (2026-10-12, branch `perf-m1`, the commits "... (performance
+M1)"):
+
+* **`--pass-stats` complete.** Every stage is timed by the process's
+  processor time from its start, and the output ends with
+  `total: T s processor time, S s in the stages (P%)`. The new stages:
+  `startup` (before the compiler's code runs), `lex` and `select` (the
+  input files lexed, the libraries' files chosen), `midcanon`, `emit`, and
+  `stats` and `checks` (the sizes it counts, `--lint` and the dumps).
+  `tests/compiler` holds the stages to the total within 2%.
+  * The compiler compiling itself: 3.646 of 3.649 s at tier 2, 2.419 of
+    2.420 s on MLton's build; with `--units`, 99.0%.
+  * At tier 2 the new stages take: `midcanon` 0.30 s (9%), `emit` 0.10
+    s, `lex` 0.09 s, `select` 0.07 s, `stats` 0.07 s, `startup` 0.02 s.
+    MLton's profiler (`-profile time`) finds nothing else outside them.
+* **The timing targets on Rune as shipped** (`bin/rune` and
+  `bin/runevm`, tiering up to tier 2):
+  * `make perf-check`: `tests/perf/*.budget` are its counts;
+    `run-perf.sh --stack` holds the stack VM to `tests/perf/stack`.
+  * `make perf` and `make bench`: `rune` is Rune as shipped in a timing
+    run (`run-matrix.sh --perf`, `--timing`), the stack VM `rune:stack`;
+    `measure-benchmarks.sh` no longer passes `--jit=off`.
+  * `scripts/perf-cycles.sh`: `rune` is Rune as shipped, the stack VM
+    `stack`, and `polyml` is Poly/ML's build (the program run from
+    `main`, its `CommandLine` shadowed inside a `local`). Every build of
+    the compiler makes the register bytecode.
+  * `scripts/perf-groups.awk` knows the generational collector (its
+    minor and major work apart) and the tiers of the JIT's code.
+* **HOL4 and MLton as scripts:** `scripts/hol-theory.py` and
+  `scripts/hol-kernel.sh` (with `hol-kernel.sml`) take a built HOL4 tree
+  as argument, never write into it, and give a Rune-built one a cache of
+  units of their own; `scripts/setup-mlton.sh` makes MLton's sources at
+  `5fe943391` ready for `scripts/perf-units.sh --mlton` and
+  `scripts/gc-eval.sh`.
+* **The module language's budgets** (`tests/perf/compile-*.budget`, made
+  by `tests/perf/gen.py`, on Rune as shipped). Today's counts, the same
+  as E19's; the budgets are 10% above them:
+
+  | Budget | Program | Instructions |
+  |---|---|---:|
+  | `compile-share` | 200 specs shared 16 ways, type-checked | 2,369M |
+  | `compile-sharenest` | the same, nested (MLton's shape) | 2,841M |
+  | `compile-where` | a chain of 400 `where type` on 1,000 specs | 326M |
+  | `compile-sig` | a signature of 2,000 specs | 876M |
+  | `compile-funsig` | a parameter of 200 specs, matched 40 times | 35.1M |
+  | `compile-funapp` | a functor of 40 declarations applied 80 times | 197M |
+  | `compile-funnest` | nested functors, depth 8, two applications each | 791M |
+  | `compile-expo` | `exponential.sml` at 18 | 82.6M |
+
+  The first five are type-checked only, the last three compiled; M2 to M4
+  tighten them.
+* **Poly/ML's slowdown** is its collector at its initial heap, not a
+  commit (*Where we are*, *The compiler compiling itself*): its builds now
+  start with a heap of 1 GB.
 
 ### M2. Signatures (M)
 
