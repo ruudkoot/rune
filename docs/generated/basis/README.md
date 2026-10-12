@@ -112,7 +112,8 @@ the system answer on Windows only.
 | [`DISPLAY`](sig/DISPLAY.md) | What a program shows beside what it prints: an output in several forms \-- text, HTML, an image -- of which the front shows the best it can (docs/kernel.md). | extension | 5 of 5 |
 | [`DYNAMIC`](sig/DYNAMIC.md) | Dynamic modules: units of code that a program loads while it runs (docs/units.md, Dynamic modules). | extension | 3 of 3 |
 | [`REPL`](sig/REPL.md) | What a program can ask of the REPL it runs in: its commands, as functions, for init files, scripts and HOL4 (docs/repl.md, Commands). | extension | 7 of 7 |
-| [`RUNTIME`](sig/RUNTIME.md) | What a program can ask about the machine it is running on: how much work it has done, and how much memory that took. | extension | 17 of 17 |
+| [`RUNTIME`](sig/RUNTIME.md) | What a program can ask about the machine it is running on: how much work it has done, and how much memory that took. | extension | 19 of 19 |
+| [`SUBPROCESS`](sig/SUBPROCESS.md) | Programs started as children that a runner of tests supervises (docs/plans/unit-testing.md, M2): in a directory of their own, in a process group (a job on Windows) that can be ended as one, under limits, with the signals at their default actions, and waited for with what they cost. | extension | 8 of 8 |
 | [`TERMINAL`](sig/TERMINAL.md) | The terminal of a program that edits what is typed at it, as a line editor does: the window's size and its changes, keys read one by one with a time limit, and a terminal put back as it was whatever way the program ends (docs/plans/repl.md, D4 and D5). | extension | 6 of 6 |
 
 ## The language

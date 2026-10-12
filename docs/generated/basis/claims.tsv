@@ -59,6 +59,7 @@ SOCKET	signature			optional	declared	lib/basis/sig_socket.sml
 STREAM_IO	signature			required	declared	lib/basis/streamio_sig.sml
 STRING	signature			required	declared	lib/basis/sig_string.sml
 STRING_CVT	signature			required	declared	lib/basis/sig_string_cvt.sml
+SUBPROCESS	signature			extension	declared	lib/basis/subprocess_sig.sml
 SUBSTRING	signature			required	declared	lib/basis/sig_substring.sml
 TERMINAL	signature			extension	declared	lib/basis/terminal_sig.sml
 TEXT	signature			required	declared	lib/basis/sig_text.sml
@@ -228,6 +229,7 @@ Socket	structure	SOCKET		optional	claimed	lib/basis/socket.sml
 StreamIO	functor	STREAM_IO		optional	ascribed	lib/basis/io_functors.sml
 String	structure	STRING	where type string = string where type char = Char.char	required	claimed	lib/basis/string.sml
 StringCvt	structure	STRING_CVT		required	claimed	lib/basis/stringcvt.sml
+Subprocess	structure	SUBPROCESS		extension	claimed	lib/basis/subprocess.sml
 Substring	structure	SUBSTRING	where type string = string where type char = Char.char	required	claimed	lib/basis/substring.sml
 SysWord	structure	WORD		optional	claimed	lib/basis/sysword.sml
 Terminal	structure	TERMINAL		extension	claimed	lib/basis/terminal.sml

@@ -38,6 +38,7 @@
 - `chr` (val): [CHAR](../sig/CHAR.md#val-chr), [SML90](../sig/SML90.md#val-chr)
 - `class` (val): [REAL](../sig/REAL.md#val-class)
 - `clear` (val): [BIT_FLAGS](../sig/BIT_FLAGS.md#val-clear), [DISPLAY](../sig/DISPLAY.md#val-clear)
+- `clock` (val): [RUNTIME](../sig/RUNTIME.md#val-clock)
 - `close` (val): [POSIX_IO](../sig/POSIX_IO.md#val-close), [SOCKET](../sig/SOCKET.md#val-close)
 - `close_in` (val): [SML90](../sig/SML90.md#val-close_in)
 - `close_out` (val): [SML90](../sig/SML90.md#val-close_out)

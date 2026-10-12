@@ -107,6 +107,7 @@
 - `SOME` (con): [OPTION](../sig/OPTION.md#con-some)
 - `Span` (exn): [GENERAL](../sig/GENERAL.md#exn-span)
 - `span` (val): [SUBSTRING](../sig/SUBSTRING.md#val-span)
+- `spawn` (val): [SUBPROCESS](../sig/SUBPROCESS.md#val-spawn)
 - `speed` (type): [POSIX_TTY](../sig/POSIX_TTY.md#type-speed)
 - `speedToWord` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-speedtoword)
 - `spipe` (val): [POSIX_ERROR](../sig/POSIX_ERROR.md#val-spipe)

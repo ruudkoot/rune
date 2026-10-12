@@ -8615,6 +8615,20 @@
      "spec": "val version : string",
      "doc": "The version of Rune that this program is running on, as\n`runevm --version` prints it.\n\nIt is the name of the git tag of the commit Rune was built from, or\nelse that commit's abbreviated hash, with `-dirty` after it when the\ntree had changes that were not committed.\n\nThe compiler and the VM are built from one string, so `rune --version`\nsays the same. It is not the version of the bytecode, which the VM\nchecks when it loads a program and which changes only when the file\nformat does.\n\n**Example** `size version > 0 = true`\n\n",
      "page": "sig/RUNTIME.md#val-version"
+    },
+    {
+     "kind": "val",
+     "name": "clock",
+     "spec": "val clock : unit -> Time.time",
+     "doc": "`clock ()` is the time on a clock that never goes back, from a start\nthe system chooses.\n\n`Time.now` is the time of day, which the system may set back or\nforward; the difference of two `clock`s is time that passed. Its\nresolution is the microsecond of a `Time.time`. A runner of tests times\nits children by it (docs/plans/unit-testing.md, G1).\n\n**Example** `Time.<= (clock (), clock ()) = true`\n\n",
+     "page": "sig/RUNTIME.md#val-clock"
+    },
+    {
+     "kind": "val",
+     "name": "processors",
+     "spec": "val processors : unit -> int",
+     "doc": "`processors ()` is the number of processors this program may run on,\nat least 1.\n\nOn Linux it counts the processors of the program's affinity mask, as\n`nproc` does, and elsewhere the system's.\n\n**Example** `processors () >= 1 = true`\n\n",
+     "page": "sig/RUNTIME.md#val-processors"
     }
    ]
   },
@@ -10045,6 +10059,68 @@
      "spec": "val scanString : ((char, cs) reader -> ('a, cs) reader) -> string -> 'a option",
      "doc": "`scanString scan s` applies the scanner `scan` to the characters of `s`,\nfrom the first.\n\nThe answer is `SOME v` when `scan` reads a value `v`, whatever follows it\nin `s`, and `NONE` when it reads none. This is how every `fromString` of\nthe library is made from its `scan`.\n\n**Example** `scanString (Int.scan DEC) \"12abc\" = SOME 12`\n\n",
      "page": "sig/STRING_CVT.md#val-scanstring"
+    }
+   ]
+  },
+  "SUBPROCESS": {
+   "doc": "Programs started as children that a runner of tests supervises\n(docs/plans/unit-testing.md, M2): in a directory of their own, in a\nprocess group (a job on Windows) that can be ended as one, under limits,\nwith the signals at their default actions, and waited for with what they\ncost.\n\n`Unix` and `Posix.Process` start and reap programs too. This adds what a\nrunner needs and they lack: the directory, the group, the limits and the\nsignals at the start, and the processor time and the memory at the end.\n\nThis signature is Rune's own. On Windows a job has limits of memory and of\nprocessor time only, a signal's action is always the default, and ending\na group ends its job.\n\n",
+   "page": "sig/SUBPROCESS.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "pid",
+     "spec": "type pid = int",
+     "doc": "A child's process: its number, as the system gives it.\n\nA descriptor is given by its number too (`Posix.FileSys.fdToWord`):\n`Posix`'s types are its own, and this structure is not part of it.\n\n",
+     "page": "sig/SUBPROCESS.md#type-pid"
+    },
+    {
+     "kind": "type",
+     "name": "limits",
+     "spec": "type limits = {addressSpace : int option, cpuTime : int option, fileSize : int option, core : int option}",
+     "doc": "Limits on a child, each `NONE` for none.\n\nThey are the bytes of address space it may hold, the seconds of\nprocessor time it may take, the bytes of a file it may write (it gets\nSIGXFSZ beyond them), and the bytes of a core dump (0 for none).\n\n",
+     "page": "sig/SUBPROCESS.md#type-limits"
+    },
+    {
+     "kind": "val",
+     "name": "unlimited",
+     "spec": "val unlimited : limits",
+     "doc": "No limits beyond this program's own.\n\n**Example** `#addressSpace unlimited = NONE`\n\n",
+     "page": "sig/SUBPROCESS.md#val-unlimited"
+    },
+    {
+     "kind": "type",
+     "name": "ended",
+     "spec": "type ended = {pid : pid, status : Posix.Process.exit_status, user : Time.time,\n              system : Time.time, peakResident : int}",
+     "doc": "How a child ended, and what it cost: its user and system processor\ntime, and the most memory it held resident, in kilobytes (0 where the\nsystem does not say).\n\n",
+     "page": "sig/SUBPROCESS.md#type-ended"
+    },
+    {
+     "kind": "val",
+     "name": "spawn",
+     "spec": "val spawn : {program : string, args : string list, env : string list option, search : bool,\n             dir : string option, stdin : int option, stdout : int option, stderr : int option,\n             group : bool, limits : limits} -> pid",
+     "doc": "`spawn {program, args, env, search, dir, stdin, stdout, stderr, group, limits}`\nstarts `program` as a child, and is its process.\n\n`args` are its arguments, its name first, as `Posix.Process.exec` takes\nthem; `env` its environment (`NONE`: this program's); `search` looks\nfor `program` on `PATH`; `dir` is the directory it starts in (`NONE`:\nthis program's); the three descriptors, by number, become its standard\ninput, output and error (`NONE`: this program's own); `group` puts it in a\nprocess group of its own, which `kill` ends as one. Its signals start\nat their default actions. A program that cannot be run is, on POSIX, a\nchild that exits with 126.\n\n**Raises** `OS.SysErr` when the child cannot be started.\n\n",
+     "page": "sig/SUBPROCESS.md#val-spawn"
+    },
+    {
+     "kind": "val",
+     "name": "wait",
+     "spec": "val wait : pid option -> ended",
+     "doc": "`wait pid` waits for the child `pid` to end (`NONE`: any child), and\nis how it ended and what it cost.\n\n**Raises** `OS.SysErr` when there is no such child.\n\n",
+     "page": "sig/SUBPROCESS.md#val-wait"
+    },
+    {
+     "kind": "val",
+     "name": "poll",
+     "spec": "val poll : pid option -> ended option",
+     "doc": "`poll pid` is `wait pid` if the child has ended, and `NONE` at once if\nit has not.\n\n**Raises** `OS.SysErr` when there is no such child.\n\n",
+     "page": "sig/SUBPROCESS.md#val-poll"
+    },
+    {
+     "kind": "val",
+     "name": "kill",
+     "spec": "val kill : pid * Posix.Signal.signal -> unit",
+     "doc": "`kill (pid, s)` sends the signal `s` to the process group of the child\n`pid`, which `spawn` made with `group`.\n\nThe group is the child and every process it started. On Windows it ends\nthe child's job.\n\n**Raises** `OS.SysErr` when there is no such group.\n\n",
+     "page": "sig/SUBPROCESS.md#val-kill"
     }
    ]
   },
@@ -12592,6 +12668,7 @@
   "StreamIO": "STREAM_IO",
   "String": "STRING",
   "StringCvt": "STRING_CVT",
+  "Subprocess": "SUBPROCESS",
   "Substring": "SUBSTRING",
   "SysWord": "WORD",
   "Terminal": "TERMINAL",

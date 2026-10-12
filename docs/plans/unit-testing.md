@@ -26,7 +26,7 @@ What it rests on:
 |---|---|---|
 | M0 | This roadmap | done 2026-10-11 |
 | M1 | `lib/test/unit`, and the libraries' tests on it | done 2026-10-12 |
-| M2 | The runtime's part: a clock, a child's costs, processors, spawn with limits | |
+| M2 | The runtime's part: a clock, a child's costs, processors, spawn with limits | done 2026-10-12 |
 | M3 | The runner, with `make check`'s steps as its first jobs | |
 | M4 | `tests/lang` and `tests/errors` in ways, compiled once | |
 | M5 | The first calibration: tiers, profiles, `--affected` | |
@@ -1558,6 +1558,12 @@ M1 and M2 are independent of each other and of the rest.
 * **What:** G1 to G5 (*What the runtime must add*), with `sys.h` and its three layers, `rune-prim.sml`, the rows of `docs/language.md`, the documented members and their tests.
 * **Why now:** it is independent of M1, and M3 wants it. The Windows halves are the risk, so they come early.
 * **Done when:** the suite's new checks pass on every configuration, `make test-windows` and `make test-portability` included.
+* **Done** (2026-10-12):
+  - **The system layer** (`runtime/sys/sys.h`): `sys_spawn_with` (a directory, a process group or a job, default signals, four limits), `sys_wait_usage` (`wait4`; `GetProcessTimes` and the peak working set on Windows), `sys_kill_group` (`kill (-pid)`; `TerminateJobObject` on Windows) and `sys_processors` (the affinity mask on Linux; `GetActiveProcessorCount` on Windows), in `sys_posix.c`, `sys_win.c` and `sys_none.c`. `sys_clock_ns` existed in all three.
+  - **Five primitives**, added after every other so that none is renumbered: `rt_clock_ns`, `rt_processors`, `proc_spawn`, `proc_wait` and `proc_kill`, with their stubs for the hosts.
+  - **The library:** `Runtime.clock` (G1) and `Runtime.processors` (G3), and a new structure `Subprocess` (`spawn`, `wait`, `poll`, `kill`, `limits`; G2, G4, G5), `Status: extension`, `host=no`. A process and a descriptor are given by number, as `RuneRuntime.spawn` gives them: the library is elaborated against the `Posix` that is not yet sealed, whose `pid` and `file_desc` a program never sees.
+  - **Tests:** `tests/lang/basis.subprocess.sml`, which runs on POSIX and on Windows (sh and cmd.exe), and the Basis suite's `tests/basis/subprocess.sml` (14 checks: exit statuses, the environment, `PATH`, a pipe, any child, polling, a grandchild ended with its group, the file-size and processor-time limits and none, the costs) and three checks of `Runtime.clock` and `processors` in `tests/basis/runtime.sml`.
+  - **Documentation:** the rows `basis.subprocess` and `basis.runtime` of `docs/language.md`, the primitives in `docs/bytecode.md`, and the generated pages.
 
 ### M3. The runner, with `make check`'s steps as its first jobs (L, about 2,300)
 

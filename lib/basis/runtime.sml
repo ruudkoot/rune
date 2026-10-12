@@ -17,6 +17,8 @@ struct
     val collect' = _prim "rt_collect" : unit -> unit
     val share' = _prim "rt_share" : unit -> int
     val version' = _prim "rt_version" : unit -> string
+    val clock' = _prim "rt_clock_ns" : unit -> int
+    val processors' = _prim "rt_processors" : unit -> int
     val trace' = _prim "rt_trace" : int -> (string * string * int * int) list
     val save' = _prim "rt_save" : string -> int
     val restore' = _prim "rt_restore" : string -> int
@@ -115,6 +117,9 @@ struct
     val same = _prim "ptr_eq" : 'a * 'a -> bool
 
     val version = version' ()
+
+    fun clock () = Time.ofMicros (clock' () div 1000)
+    fun processors () = processors' ()
 
     datatype world = Saved | Restored
 

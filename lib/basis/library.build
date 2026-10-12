@@ -163,6 +163,8 @@ annotate "demand" "host=no" in
   compiler_sig.sml
   terminal_sig.sml
   terminal.sml
+  subprocess_sig.sml
+  subprocess.sml
   compiler.sml
   repl_sig.sml
   repl.sml
@@ -318,6 +320,7 @@ annotate "seal" "host=no" in
   seal_runtime.sml
   seal_compiler.sml
   seal_terminal.sml
+  seal_subprocess.sml
   seal_repl.sml
   seal_display.sml
 end

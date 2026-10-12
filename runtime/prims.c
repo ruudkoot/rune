@@ -2835,6 +2835,61 @@ static int p_term_read(VM *vm) {
     return ret(vm, 3, mk_some(vm, mk_ptr(str)));
 }
 
+/* ================================================================ what a test runner needs (docs/plans/unit-testing.md, M2) */
+static int p_rt_clock_ns(VM *vm) { return ret(vm, 1, mk_int(sys_clock_ns())); }
+static int p_rt_processors(VM *vm) { return ret(vm, 1, mk_int(sys_processors())); }
+
+/* the ints of a list of at most n, into out; its length, or -1 */
+static int int64_list(Value l, int64_t *out, int n) {
+    int64_t len = list_length(l);
+    if (len < 0 || len > n) return -1;
+    for (int i = 0; i < (int)len; i++) {
+        Value head = list_head(l);
+        if (!val_is(head, T_INT)) return -1;
+        out[i] = val_imm(head);
+        l = list_tail(l);
+    }
+    return (int)len;
+}
+
+/* proc_spawn (path, args, env, flags, fds, dir, limits) */
+static int p_proc_spawn(VM *vm) {
+    check_tag(vm, ARG(3), T_INT, "proc_spawn");
+    int32_t given[3];
+    int64_t limits[4];
+    if (int_list(ARG(2), given, 3) != 3) vm_fatal(vm, "primitive proc_spawn: malformed descriptors");
+    if (int64_list(ARG(0), limits, 4) != 4) vm_fatal(vm, "primitive proc_spawn: malformed limits");
+    int64_t flags = val_imm(ARG(3));
+    char *path = c_string(vm, ARG(6), "proc_spawn");
+    char **argv = string_array(vm, ARG(5), "proc_spawn", NULL);
+    char **envp = (flags & 2) ? string_array(vm, ARG(4), "proc_spawn", NULL) : NULL;
+    char *dir = c_string(vm, ARG(1), "proc_spawn");
+    int fds[3] = { given[0], given[1], given[2] };
+    fflush(stdout);
+    fflush(stderr);
+    int64_t pid = sys_spawn_with(path, argv, envp, (int)(flags & 1), fds, dir[0] ? dir : NULL,
+                                 (int)((flags >> 2) & 1), (int)((flags >> 3) & 1), limits);
+    free(path);
+    free(dir);
+    free_array(argv);
+    free_array(envp);
+    return ret(vm, 7, mk_int(pid));
+}
+
+static int p_proc_wait(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "proc_wait");
+    check_tag(vm, ARG(0), T_INT, "proc_wait");
+    int64_t out[6];
+    int ok = sys_wait_usage(val_imm(ARG(1)), (int)val_imm(ARG(0)), out);
+    return push_int_list(vm, out, ok == 0 ? 6 : 0, 2);
+}
+
+static int p_proc_kill(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "proc_kill");
+    check_tag(vm, ARG(0), T_INT, "proc_kill");
+    return ret(vm, 2, mk_int(sys_kill_group(val_imm(ARG(1)), (int)val_imm(ARG(0)))));
+}
+
 const PrimFn prim_table[PRIM__COUNT] = {
     RUNE_PRIM_LIST(PRIM_ENTRY)
 };

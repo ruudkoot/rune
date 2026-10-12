@@ -390,6 +390,11 @@ enum Prim {
   PRIM_term_enter = 384,
   PRIM_term_leave = 385,
   PRIM_term_read = 386,
+  PRIM_rt_clock_ns = 387,
+  PRIM_rt_processors = 388,
+  PRIM_proc_spawn = 389,
+  PRIM_proc_wait = 390,
+  PRIM_proc_kill = 391,
   PRIM__COUNT
 };
 
@@ -781,6 +786,11 @@ static const char *const prim_names[] = {
   "term_enter",
   "term_leave",
   "term_read",
+  "rt_clock_ns",
+  "rt_processors",
+  "proc_spawn",
+  "proc_wait",
+  "proc_kill",
 };
 
 static const unsigned char prim_arity[] = {
@@ -1171,6 +1181,11 @@ static const unsigned char prim_arity[] = {
   4,
   1,
   3,
+  1,
+  1,
+  7,
+  2,
+  2,
 };
 
 /* what each primitive's result is (the representations of
@@ -1564,6 +1579,11 @@ static const unsigned char prim_result[] = {
   1,
   1,
   0,
+  1,
+  1,
+  1,
+  7,
+  1,
 };
 
 #define RUNE_PRIM_LIST(X) \
@@ -1953,6 +1973,11 @@ static const unsigned char prim_result[] = {
   X(term_resizes) \
   X(term_enter) \
   X(term_leave) \
-  X(term_read)
+  X(term_read) \
+  X(rt_clock_ns) \
+  X(rt_processors) \
+  X(proc_spawn) \
+  X(proc_wait) \
+  X(proc_kill)
 
 #endif

@@ -302,4 +302,24 @@ sig
 
      Example: `size version > 0 = true` *)
   val version : string
+
+  (* `clock ()` is the time on a clock that never goes back, from a start
+     the system chooses.
+
+     `Time.now` is the time of day, which the system may set back or
+     forward; the difference of two `clock`s is time that passed. Its
+     resolution is the microsecond of a `Time.time`. A runner of tests times
+     its children by it (docs/plans/unit-testing.md, G1).
+
+     Example: `Time.<= (clock (), clock ()) = true` *)
+  val clock : unit -> Time.time
+
+  (* `processors ()` is the number of processors this program may run on,
+     at least 1.
+
+     On Linux it counts the processors of the program's affinity mask, as
+     `nproc` does, and elsewhere the system's.
+
+     Example: `processors () >= 1 = true` *)
+  val processors : unit -> int
 end

@@ -1447,6 +1447,15 @@ struct
   fun term_enter (_ : int, _ : int, _ : string, _ : int) = ~1
   fun term_leave () = 0
   fun term_read (_ : int, _ : int, _ : int) : string option = NONE
+  (* Runtime.clock and processors, and Subprocess, are Rune's alone (host
+     no): what a runner of tests needs of the system, which no host reaches
+     here (docs/plans/unit-testing.md, M2) *)
+  fun rt_clock_ns () = 0
+  fun rt_processors () = 1
+  fun proc_spawn (_ : string, _ : string list, _ : string list, _ : int, _ : int list, _ : string, _ : int list) =
+    unsupported ~1
+  fun proc_wait (_ : int, _ : int) : int list = unsupported []
+  fun proc_kill (_ : int, _ : int) = unsupported ~1
 
   fun posix_getgr (name, gid) =
     let

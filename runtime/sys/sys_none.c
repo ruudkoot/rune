@@ -105,6 +105,14 @@ int64_t sys_spawn(const char *path, char *const argv[], char *const envp[], int 
 }
 int sys_waitpid(int64_t pid, int flags, int64_t out[3]) { (void)pid; (void)flags; (void)out; return fail(); }
 int sys_kill(int64_t pid, int signal) { (void)pid; (void)signal; return fail(); }
+int64_t sys_spawn_with(const char *path, char *const argv[], char *const envp[], int search, const int fds[3],
+                       const char *dir, int group, int defaults, const int64_t limits[4]) {
+    (void)path; (void)argv; (void)envp; (void)search; (void)fds; (void)dir; (void)group; (void)defaults; (void)limits;
+    return fail();
+}
+int sys_wait_usage(int64_t pid, int flags, int64_t out[6]) { (void)pid; (void)flags; (void)out; return fail(); }
+int sys_kill_group(int64_t pid, int signal) { (void)pid; (void)signal; return fail(); }
+int sys_processors(void) { return 1; }
 int sys_alarm(int seconds) { (void)seconds; return fail(); }
 int sys_pause(void) { return fail(); }
 void sys_exit_now(int status) { _Exit(status); }

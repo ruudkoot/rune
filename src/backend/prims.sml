@@ -389,7 +389,12 @@ struct
     ("term_resizes", 383, 1),
     ("term_enter", 384, 4),
     ("term_leave", 385, 1),
-    ("term_read", 386, 3)
+    ("term_read", 386, 3),
+    ("rt_clock_ns", 387, 1),
+    ("rt_processors", 388, 1),
+    ("proc_spawn", 389, 7),
+    ("proc_wait", 390, 2),
+    ("proc_kill", 391, 2)
   ]
   val byName =
     List.foldl (fn ((n, i, a), m) => StringMap.insert (m, n, (i, a))) StringMap.empty table
@@ -923,7 +928,12 @@ struct
            ("term_resizes", ([8], 1)),
            ("term_enter", ([1, 1, 6, 1], 1)),
            ("term_leave", ([8], 1)),
-           ("term_read", ([1, 1, 1], 0))
+           ("term_read", ([1, 1, 1], 0)),
+           ("rt_clock_ns", ([8], 1)),
+           ("rt_processors", ([8], 1)),
+           ("proc_spawn", ([6, 7, 7, 1, 7, 6, 7], 1)),
+           ("proc_wait", ([1, 1], 7)),
+           ("proc_kill", ([1, 1], 1))
          ]);
          repsOf name)
 end

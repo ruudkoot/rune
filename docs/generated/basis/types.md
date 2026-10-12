@@ -7,7 +7,7 @@ them all. They are found by elaborating the library and comparing the type names
 says what is the case and not only what is meant. A type that abbreviates more than a name, such
 as a reader or a record, is not listed. Every name says why it is a name of its type:
 
-- **required by the signature** (352): the signature of the structure, with the `where type`
+- **required by the signature** (353): the signature of the structure, with the `where type`
   of its declaration in the specification, says which type it is, as `CharVector.vector` is `string`;
 - **required of the top level** (5): the top level is defined to have the type of that
   structure, as `int` is `Int.int`;
@@ -33,7 +33,7 @@ as a reader or a record, is not listed. Every name says why it is a name of its 
 | [`CharArray.array`](sig/MONO_ARRAY.md#type-array) | *required by the signature:* [`TextPrimIO.array`](sig/PRIM_IO.md#type-array), [`CharArraySlice.array`](sig/MONO_ARRAY_SLICE.md#type-array), [`Text.CharArray.array`](sig/MONO_ARRAY.md#type-array), [`Text.CharArraySlice.array`](sig/MONO_ARRAY_SLICE.md#type-array) |
 | [`CharArraySlice.slice`](sig/MONO_ARRAY_SLICE.md#type-slice) | *required by the signature:* [`TextPrimIO.array_slice`](sig/PRIM_IO.md#type-array_slice), [`Text.CharArraySlice.slice`](sig/MONO_ARRAY_SLICE.md#type-slice) |
 | `exn` | *required by the signature:* [`General.exn`](sig/GENERAL.md#type-exn) |
-| `int` | *required by the signature:* [`IntArray.elem`](sig/MONO_ARRAY.md#type-elem), [`IntArray2.elem`](sig/MONO_ARRAY2.md#type-elem), [`IntVector.elem`](sig/MONO_VECTOR.md#type-elem), [`IntArraySlice.elem`](sig/MONO_ARRAY_SLICE.md#type-elem), [`IntVectorSlice.elem`](sig/MONO_VECTOR_SLICE.md#type-elem)<br>*required of the top level:* [`Int.int`](sig/INTEGER.md#type-int) |
+| `int` | *required by the signature:* [`IntArray.elem`](sig/MONO_ARRAY.md#type-elem), [`IntArray2.elem`](sig/MONO_ARRAY2.md#type-elem), [`IntVector.elem`](sig/MONO_VECTOR.md#type-elem), [`Subprocess.pid`](sig/SUBPROCESS.md#type-pid), [`IntArraySlice.elem`](sig/MONO_ARRAY_SLICE.md#type-elem), [`IntVectorSlice.elem`](sig/MONO_VECTOR_SLICE.md#type-elem)<br>*required of the top level:* [`Int.int`](sig/INTEGER.md#type-int) |
 | [`Int16.int`](sig/INTEGER.md#type-int) | *required by the signature:* [`Int16Array.elem`](sig/MONO_ARRAY.md#type-elem), [`Int16Array2.elem`](sig/MONO_ARRAY2.md#type-elem), [`Int16Vector.elem`](sig/MONO_VECTOR.md#type-elem), [`Int16ArraySlice.elem`](sig/MONO_ARRAY_SLICE.md#type-elem), [`Int16VectorSlice.elem`](sig/MONO_VECTOR_SLICE.md#type-elem) |
 | [`Int16Array.array`](sig/MONO_ARRAY.md#type-array) | *required by the signature:* [`Int16ArraySlice.array`](sig/MONO_ARRAY_SLICE.md#type-array) |
 | [`Int16Vector.vector`](sig/MONO_VECTOR.md#type-vector) | *required by the signature:* [`Int16Array.vector`](sig/MONO_ARRAY.md#type-vector), [`Int16Array2.vector`](sig/MONO_ARRAY2.md#type-vector), [`Int16ArraySlice.vector`](sig/MONO_ARRAY_SLICE.md#type-vector), [`Int16VectorSlice.vector`](sig/MONO_VECTOR_SLICE.md#type-vector) |

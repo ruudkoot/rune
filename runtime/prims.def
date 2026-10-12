@@ -427,3 +427,10 @@ term_resizes     1  unit -> int              How many times the window has chang
 term_enter       4  int * int * string * int -> int   Put the terminal of the first descriptor in raw mode, or quiet where the last is 1 (no echo, keys kept, signals from keys), the second being where the program draws, and the string what to write there when it is put back (at term_leave, exit, a fatal error, or a signal that ends the process); 0, or ~1 with the reason in sys_errno.
 term_leave       1  unit -> int              Put the terminal back as it was before term_enter; 0, or ~1.
 term_read        3  int * int * int -> string option   At most n bytes typed at the terminal (descriptor, n, milliseconds to wait, ~1 for no limit): SOME "" when the time is up or a resize ended the wait; NONE at the end of the input, or when the read fails, sys_errno saying why (0 at the end). The user's interrupt, where it is caught, is raised.
+
+# --- what a test runner needs of the system (Runtime.clock, Runtime.processors, Subprocess; docs/plans/unit-testing.md, M2) ---
+rt_clock_ns      1  unit -> int              A monotonic clock, in nanoseconds from a start the system chooses; 0 where it has none.
+rt_processors    1  unit -> int              The processors this process may run on; at least 1.
+proc_spawn       7  string * string list * string list * int * int list * string * int list -> int   Start a program as posix_spawn does (path, arguments, environment, flags, descriptors), in a directory ("": this process's), with flags bit 2 a process group of its own (a job on Windows) and bit 3 the signals at their default actions, and limits [address space bytes, processor seconds, file bytes, core bytes], ~1 leaving one as it is; its process, or ~1.
+proc_wait        2  int * int -> int list    Wait for a child (~1: any), not at all when bit 0 of the flags is set: [process (0 when none has ended), 0 exited or 1 signalled or 2 stopped, status or signal, user microseconds, system microseconds, peak resident kilobytes]; [] on failure.
+proc_kill        2  int * int -> int         Send a signal to a child's process group, or end its job on Windows; 0, or ~1.
