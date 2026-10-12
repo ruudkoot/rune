@@ -233,6 +233,69 @@ reaches a program as `/C:/...`; `bin/rune` itself is not run on the Windows
 VMs, only the VM is built and tested there; and nothing of this runs in
 continuous integration.
 
+## MSYS2
+
+The tree also builds on Windows itself, in a UCRT64 shell of
+[MSYS2](https://www.msys2.org) (`MSYSTEM=UCRT64`; MINGW64 and CLANG64 work the
+same way), with the packages
+
+```
+pacman -S --needed make git diffutils patch unzip \
+  mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-gmp mingw-w64-ucrt-x86_64-python
+```
+
+`make hosts` fetches MLton's release for the shell's environment, which is
+the only host there: SML/NJ, Poly/ML and MLKit are not fetched under MSYS2.
+Their links in the hosts directory are links of Windows, which need the
+Developer Mode of Windows or an administrator. Then `make` builds
+`bin/rune-mlton`, the VMs, the self-hosted compiler, `runedoc` and `runeopt`.
+The runner does not run there (below), so the self-hosted compiler is held to
+reproducing itself by hand, as the oracle `bootstrap` of
+`tests/runner/oracles.sml` holds it:
+
+```
+make bin/rune.rbc bin/rune.stack.rbc
+srcs="build/config.sml $(sh scripts/build-files.sh rune.build) src/main/rune-main.sml"
+bin/rune-boot -o build/rune.stage2.rbc $srcs && cmp bin/rune.rbc build/rune.stage2.rbc
+bin/rune-boot --target=stack -o build/rune.stage2.stack.rbc $srcs && cmp bin/rune.stack.rbc build/rune.stage2.stack.rbc
+```
+
+What is different there:
+
+* The compiler of a MinGW environment makes programs of Windows, so the VMs
+  are built with `SYS=win`, with mingw-w64's `printf` and the libraries of
+  Windows that `runtime/sys/sys_win.c` calls, as `make windows` builds them; they
+  are `bin/runevm.exe` and `bin/runevm-stack.exe`. `build/librune.a` goes
+  without `runtime/native/native.c`, which is written for POSIX, so `runeopt`
+  compiles but a program it makes does not link.
+* Git for Windows sets `core.autocrlf`, which would check every file out with
+  a CR before each LF; `.gitattributes` keeps them as they are stored. A file
+  Git wrote before `.gitattributes` said so, in a checkout or a rebase from a
+  commit without it, keeps its CRs: `git ls-files --eol` names it `w/crlf`,
+  and `git checkout-index --force` of it writes it again.
+* The runner, `bin/rune-test`, on which `make test`, `make quick`, `make
+  bootstrap` and `make check` run their tests, starts each test with
+  `/bin/sh`, and a test starts the wrappers of `bin/`, which are scripts of
+  `sh`. A VM of Windows starts neither: `runtime/sys/sys_win.c` starts a
+  program of Windows, or a batch file through `cmd`, and `/bin/sh` is a path
+  of MSYS2 alone. Every test of the runner ends `not started`; what `make
+  test` runs before it, `make test-steps` (`tests/runtime` and
+  `build/heap_test`), passes.
+* MLton's basis under MinGW opens a `TextIO` stream in text mode and gives
+  every file of a drive the same `OS.FileSys.fileId`, so the compiler writes
+  its bytecode, its manifests and its lists of units with `BinIO`, and trusts
+  a file's id only where it tells the output from its directory.
+* The MSYS2 runtime rewrites what a native program is given:
+  `tests/run-tests.sh` passes 350 of the 352 programs of `tests/lang`, and
+  the two others fail for that alone. `rt.args_name` passes the VM
+  `--name /usr/local/bin/tool`, which arrives as
+  `C:/msys64/usr/local/bin/tool`; and `basis.date_local_before_1970` runs in
+  the zone `TZ` names, which MSYS2 drops for a native program when it has
+  the rules of summer time after a comma, so the VM keeps the zone of Windows.
+
+Nothing of this runs in continuous integration, and `make check` needs the
+hosts that MSYS2 does not get.
+
 ## Another machine's VM
 
 `make check` builds the VMs for this machine alone, so it says nothing about a

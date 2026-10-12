@@ -13,6 +13,9 @@
 # `make doctor` checks the tools this script needs.
 #  * MLton: the binary release from github.com/MLton/mlton (MLton is written
 #    in SML and needs an MLton to build; links against the system's GMP).
+#    Under MSYS2 the release for the environment of the shell (UCRT64,
+#    MINGW64 or CLANG64), which links that environment's GMP; it is the
+#    only host there (docs/building.md, MSYS2).
 #  * SML/NJ 110.99.9: config/install.sh, 64-bit (smlnj-legacy) and 32-bit
 #    (smlnj32: 31-bit int and word, which has found many portability bugs;
 #    needs gcc -m32), and beside the 64-bit one the sources of its library.
@@ -65,7 +68,12 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
-[ -n "$hosts" ] || hosts="mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit"
+if [ -z "$hosts" ]; then
+  case "$(uname -s)" in
+    MINGW*|MSYS*) hosts=mlton ;;
+    *) hosts="mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit" ;;
+  esac
+fi
 
 cd "$(dirname "$0")/.."
 jobs=$(sh scripts/ncpus.sh)
@@ -81,6 +89,12 @@ for c in mlton sml poly polyc mlkit; do
 done
 PATH=$guard:$PATH
 export PATH
+
+# MSYS2's ln -s copies unless told to make a symbolic link of Windows, which
+# needs Developer Mode or an administrator; installed() reads the links back.
+case "$(uname -s)" in
+  MINGW*|MSYS*) MSYS="${MSYS:+$MSYS }winsymlinks:nativestrict"; export MSYS ;;
+esac
 
 fetch() {   # fetch URL FILE
   echo "fetching $1"
@@ -104,15 +118,22 @@ install_mlton() {
   case "$(uname -s)-$(uname -m)" in
     Linux-x86_64) arch=amd64-linux; suffix="" ;;
     Linux-aarch64) arch=arm64-linux; suffix=-arm ;;
+    MINGW*-x86_64)
+      case "${MSYSTEM:-}" in
+        UCRT64|MINGW64|CLANG64) arch=amd64-mingw; flavour=windows-2025_msys2_$(echo "$MSYSTEM" | tr '[:upper:]' '[:lower:]') ;;
+        *) echo "fetch-hosts: MLton is released for MSYS2's UCRT64, MINGW64 and CLANG64, not for ${MSYSTEM:-this environment}" >&2; return 1 ;;
+      esac ;;
     *) echo "fetch-hosts: no MLton binary release for $(uname -s) $(uname -m); install it from http://mlton.org" >&2; return 1 ;;
   esac
   # The newest build whose C library is not newer than this system's.
-  glibc=$(getconf GNU_LIBC_VERSION 2> /dev/null | awk '{ print $2 }')
-  minor=${glibc#*.}
-  if [ -n "$glibc" ] && [ "${minor:-0}" -ge 39 ]; then flavour="ubuntu-24.04${suffix}_glibc2.39"
-  elif [ -n "$glibc" ] && [ "${minor:-0}" -ge 35 ]; then flavour="ubuntu-22.04${suffix}_glibc2.35"
-  elif [ -n "$glibc" ] && [ "${minor:-0}" -ge 31 ] && [ -z "$suffix" ]; then flavour="ubuntu-20.04_glibc2.31"
-  else flavour="ubuntu-22.04${suffix}_static"
+  if [ "$arch" != amd64-mingw ]; then
+    glibc=$(getconf GNU_LIBC_VERSION 2> /dev/null | awk '{ print $2 }')
+    minor=${glibc#*.}
+    if [ -n "$glibc" ] && [ "${minor:-0}" -ge 39 ]; then flavour="ubuntu-24.04${suffix}_glibc2.39"
+    elif [ -n "$glibc" ] && [ "${minor:-0}" -ge 35 ]; then flavour="ubuntu-22.04${suffix}_glibc2.35"
+    elif [ -n "$glibc" ] && [ "${minor:-0}" -ge 31 ] && [ -z "$suffix" ]; then flavour="ubuntu-20.04_glibc2.31"
+    else flavour="ubuntu-22.04${suffix}_static"
+    fi
   fi
   name=mlton-$v-1.$arch.$flavour
   fetch "https://github.com/MLton/mlton/releases/download/on-$v-release/$name.tgz" "$prefix/src/$name.tgz"
