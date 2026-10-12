@@ -155,7 +155,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build test-install check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick test-steps test-heap-steps test-all-steps test-native-steps test-register-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64 test-laws-hosts
+.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build test-install check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-all-steps test-native-steps test-register-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64 test-laws-hosts
 
 all: vm boot runedoc runeopt manifests basis-cache
 
@@ -817,7 +817,7 @@ test-portability: portability $(RUNE) vm
 	sh tests/run-portability.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack32 --vm bin/runevm-stack-ppc64
 	sh tests/run-portability.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
 	  --vm bin/runevm32 --vm bin/runevm-ppc64 --vm bin/runevm-aarch64
-	sh scripts/check-jit.sh -j $(JOBS) --vm bin/runevm-aarch64
+	JIT_VM=bin/runevm-aarch64 $(RUNE_TEST) --tier test-register-jit 'jit/*'
 	RUNE=$(abspath $(RUNE_STACK)) RUNE_MATRIX_TIMEOUT=$(PORT_TIMEOUT) \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs portability
 	@for v in runevm-stack32 runevm-stack-ppc64 runevm32 runevm-ppc64; do \
@@ -894,8 +894,8 @@ test-all-steps: host-builds vm | build/.doctor-check
 test-all: test-all-steps bin/rune-test
 	$(RUNE_TEST) --tier test-all
 
-check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/rune.stack.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc | build/.doctor-check
-	sh scripts/check-cross.sh -j $(JOBS)
+check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/rune.stack.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc bin/rune-test | build/.doctor-check
+	$(RUNE_TEST) --tier check-cross
 
 # Every instruction says where it came from, and the line is one the file has.
 # The intermediate representations (docs/ir.md): the dumps of tests/ir, and
@@ -904,17 +904,17 @@ check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/rune.stack.rbc bin/r
 test-ir: $(RUNE)
 	sh tests/ir/run-ir-tests.sh --rune $(RUNE_STACK)
 
-check-levels: $(RUNE) $(RUNEVM)
-	sh scripts/check-levels.sh --rune $(RUNE_STACK) --vm $(RUNEVM) -j $(JOBS)
+check-levels: $(RUNE) $(RUNEVM) bin/rune-test
+	$(RUNE_TEST) --tier check-levels
 
 # Every program of tests/lang and tests/perf compiled a unit per file (--units)
 # prints, traces and exits as the program compiled whole, at -O0 to -O2, on
 # both bytecodes; the programs of several files of tests/units do what they
 # expect; and the compiler compiled in units compiles itself to bin/rune.rbc
 # (docs/units.md; docs/plans/incremental-compilation.md, M2).
-check-units: $(RUNE) bin/rune-boot bin/runevm bin/runevm-stack
-	sh scripts/check-units.sh --rune $(RUNE) --vm bin/runevm -j $(JOBS)
-	sh scripts/check-units.sh --rune $(RUNE_STACK) --vm bin/runevm-stack --out tests/out/units-stack -j $(JOBS)
+check-units: check-units-steps bin/rune-test
+	$(RUNE_TEST) --tier check-units
+check-units-steps: $(RUNE) bin/rune-boot bin/runevm bin/runevm-stack
 	sh tests/units/run.sh --rune $(RUNE)
 	bin/rune-boot --units -o bin/rune.units.rbc $(BOOT_SRCS)
 	bin/runevm --heap-size $(RUNE_HEAP) bin/rune.units.rbc --lib bin/../lib -o bin/rune.stage2.units.rbc $(BOOT_SRCS)
@@ -1026,16 +1026,16 @@ test-serve: $(RUNE) vm basis-cache
 	python3 tests/serve/run.py --rune $(RUNE)
 
 # the compiler the same bytes every way it is built (docs/units.md, Parallel builds)
-check-reproducible: $(RUNE) vm basis-cache bin/rune.rbc
-	sh scripts/check-reproducible.sh -j $(JOBS)
+check-reproducible: $(RUNE) vm basis-cache bin/rune.rbc bin/rune-test
+	$(RUNE_TEST) --tier check-reproducible
 
 test-incremental: $(RUNE) vm basis-cache bin/rune-repl
 	sh tests/incremental/run.sh --rune $(RUNE)
 	python3 tests/incremental/mutate.py --rune $(RUNE) --steps 30 tests/incremental/functors tests/incremental/project
 	sh tests/flexrec/run.sh --rune $(RUNE)
 
-check-positions: $(RUNE) $(RUNEVM)
-	sh scripts/check-positions.sh -j $(JOBS) --rune $(RUNE_STACK) --vm $(RUNEVM)
+check-positions: $(RUNE) $(RUNEVM) bin/rune-test
+	$(RUNE_TEST) --tier check-positions
 
 check-docs: $(RUNE) $(RUNEDOC) manifests
 	sh scripts/check-docs.sh
@@ -1308,13 +1308,12 @@ test-register: test-register-steps bin/rune-test
 test-register-steps: bin/runevm $(RUNE) vm bin/rune.stack.rbc
 	python3 tests/runtime/run-limits.py --rune bin/rune --vm bin/runevm
 	python3 tests/runtime/run-gc-log.py --rune bin/rune --vm bin/runevm
-	sh scripts/check-register.sh -j $(JOBS)
 
 # The suites through runtime/register with every function given to the JIT
 # (--jit=all; docs/plans/jit.md, M3, M4): tests/lang on a wrapper that
 # passes the option; every program of tests/lang and tests/perf, and the
 # primitives on their edge cases, printing and counting the same
-# interpreted and compiled (scripts/check-jit.sh); the Basis Library suite
+# interpreted and compiled (tests/runner/oracles.sml (jit)); the Basis Library suite
 # as rune:jit; the executable memory of the system layer (--jit-check);
 # and a recursion 200,000 deep under a machine stack of 1 MB, which holds
 # the driver to never nesting, compiled at load and while tiering up and
@@ -1326,7 +1325,6 @@ test-register-jit-steps: bin/runevm $(RUNE)
 	chmod +x bin/runevm-jit
 	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --jit-tier=2 "$$@"\n' > bin/runevm-opt
 	chmod +x bin/runevm-opt
-	sh scripts/check-jit.sh -j $(JOBS)
 	@! grep -n "\bx64_\|\ba64_\|\bX64\|\bA64" runtime/register/jit/emit.c runtime/register/jit/masm.c runtime/register/jit/masm.h runtime/register/jit/compile.c runtime/register/jit/compile.h runtime/register/jit.c \
 	  || { echo "check-asm: the emitters, the macro-assembler and the compiler name an encoder: they are written over runtime/register/jit/asm.h alone (M12)"; false; }
 	@echo "check-asm: the emitters name no encoder"
@@ -1381,7 +1379,7 @@ bin/runeopt.rbc: bin/rune bin/rune.rbc $(OPT_SRCS)
 	bin/rune -o $@ $(OPT_SRCS)
 
 # runeopt in the stack bytecode, which runeopt itself translates in the
-# cross-check of its builds (scripts/check-opt-cross.sh).
+# cross-check of its builds (tests/runner/oracles.sml (cross)).
 bin/runeopt.stack.rbc: bin/rune bin/rune.rbc $(OPT_SRCS)
 	bin/rune --target=stack -o $@ $(OPT_SRCS)
 
@@ -1395,17 +1393,14 @@ bin/runeopt: bin/runeopt-boot
 
 runeopt: bin/runeopt
 
-bootstrap: bin/rune-boot bin/rune.stack.rbc
-	bin/rune-boot -o bin/rune.stage2.rbc $(BOOT_SRCS)
-	cmp bin/rune.rbc bin/rune.stage2.rbc
-	bin/rune-boot --target=stack -o bin/rune.stage2.stack.rbc $(BOOT_SRCS)
-	cmp bin/rune.stack.rbc bin/rune.stage2.stack.rbc
-	@echo "bootstrap: bin/rune.rbc and bin/rune.stack.rbc reproduce themselves"
+bootstrap: bin/rune-boot bin/rune.stack.rbc bin/rune-test
+	$(RUNE_TEST) --tier bootstrap
 
 # The test runner (docs/plans/unit-testing.md, M3; docs/testing.md, Running
 # the tests): the inventory of tests/runner over lib/test/runner, compiled
 # by $(RUNE) and run on the register VM with its JIT.
-RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.sml tests/runner/laws.sml tests/runner/main.sml
+RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.sml tests/runner/laws.sml tests/runner/sh.sml \
+               tests/runner/oracles.sml tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml)
 	$(RUNE) --library test/runner $(RUNNER_SRCS) -o $@

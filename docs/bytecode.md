@@ -368,7 +368,7 @@ refuses the other's file and image.
   done from the registers, with nothing pushed (`runtime/register/fastprim.h`), and
   the primitive itself is called for the rest -- an overflow, a divisor of
   zero, an index out of bounds. The result is the primitive's either way,
-  which `scripts/check-register.sh` holds `tests/opt/prims.sml` to on both VMs.
+  which the oracle `register` of `tests/runner/oracles.sml` holds `tests/opt/prims.sml` to on both VMs.
 * **A primitive that saves or restores an image** (`rt_save`, `rt_restore`,
   `posix_fork`) is `PRIMPUSH` and `RESULT`, so that a program resumed from
   an image finds its result where `RESULT` takes it; so is `rt_link`, which
@@ -381,11 +381,11 @@ refuses the other's file and image.
   prints at exit what the JIT did, and `--jit-check` runs a few bytes of
   code from executable memory and exits. `runevm-stack` refuses all three
   options: the JIT is `runtime/register`'s. Compiled code counts, allocates
-  and prints what the loop does: `scripts/check-jit.sh` holds it to that.
+  and prints what the loop does: the oracle `jit` of `tests/runner/oracles.sml` holds it to that.
   `--trace` runs every instruction interpreted, whatever `--jit=` says.
   `--jit-only=LO-HI`, `odd` or `even` gives code to those functions alone:
   for finding one whose code is wrong by halving, and for the third run
-  of `check-jit.sh`, in which calls, returns and raises cross between the
+  of the oracle `jit` of `tests/runner/oracles.sml`, in which calls, returns and raises cross between the
   tiers both ways. Under `--jit=opt`, the default since M10 (M6 to M9:
   `--jit=baseline`, tier 1 by the same counters), a function is
   compiled at its Nth call, or when its work -- the iterations of its
@@ -406,7 +406,7 @@ refuses the other's file and image.
   registers in machine registers and writes them back to their slots at
   every safepoint; `--jit-tier=N` (1 or 2) fixes the tier under any
   mode, so `--jit=all --jit-tier=2` compiles every function at tier 2,
-  the fifth run of `check-jit.sh` (`RUNEVM_JIT_TIER=N` in the environment
+  the fifth run of the oracle `jit` of `tests/runner/oracles.sml` (`RUNEVM_JIT_TIER=N` in the environment
   where no `--jit-tier=` is given, as `RUNEVM_JIT` for the mode: the
   Windows suite runs `tests/lang` at tier 2 so).
 

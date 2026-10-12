@@ -228,7 +228,7 @@ from the VM -- and the primitives' helpers (`jit_h_prim`,
 load may move. Where it became another, `jit_make` invalidates every
 function that has code and makes the view again. `--jit-stress=N` invalidates the
 callee's code at every Nth call into compiled code, so that
-`scripts/check-jit.sh` holds every program to the interpreter's output
+the oracle `jit` of `tests/runner/oracles.sml` holds every program to the interpreter's output
 and counts while functions are compiled, entered mid-way, invalidated
 and compiled again.
 `--jit-check` allocates executable memory through the system layer
@@ -245,7 +245,7 @@ tier (`RAISED` in the loop's words) each cross the driver once, which is
 the cost of the protocol, measured in M3 with stubs for entries.
 `--jit-only=LO-HI`, `odd` or `even` gives code to those functions alone:
 for finding a function whose code is wrong by halving, and for the run of
-`scripts/check-jit.sh` in which every other function is compiled, so
+the oracle `jit` of `tests/runner/oracles.sml` in which every other function is compiled, so
 that calls, returns and raises cross between the tiers both ways.
 `--trace` runs the interpreter alone. `RUNEVM_JIT` in the environment
 names the mode where no `--jit=` does, for the runners that start a VM
@@ -769,13 +769,13 @@ Cycles are `scripts/perf-cycles.sh` (docs/plans/jit.md, *Measuring*).
 Library suite with every function given to the JIT (`--jit=all`), holds
 every program of `tests/lang` and `tests/perf` and the primitives' edge
 cases to the same output and `--count` in both modes and every
-instruction to occurring in them (`scripts/check-jit.sh`), runs
+instruction to occurring in them (the oracle `jit` of `tests/runner/oracles.sml`), runs
 `--jit-check`, and a recursion 200,000 deep under a machine stack of 1
 MB; `make test-stress`, `make test-register-asan` and `make test-windows` run
 the suites under the JIT as well.
 `make test-register` (part of `make check`) runs `tests/lang` on it, holds every
 program's allocation and the compiler's own output to `runevm-stack`'s and the
-primitives of `fastprim.h` to their edge cases (`scripts/check-register.sh`),
+primitives of `fastprim.h` to their edge cases (the oracle `register` of `tests/runner/oracles.sml`),
 and runs the Basis Library suite; `make test-register-asan` and `make
 test-stress` run `tests/lang` with the sanitisers and with a collection
 every 101st allocation; `make test-windows` and `make test-portability`

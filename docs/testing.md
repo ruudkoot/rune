@@ -104,7 +104,11 @@ configurations and the examples of its documentation
 `basis-examples/NAME`; `tests/runner/basis.sml`) and the laws of its
 documentation (`laws-compile/NAME`, `laws/NAME@STRUCTURE`, each under a
 watchdog that skips a case that hangs or runs out of memory and goes on;
-`tests/runner/laws.sml`); the rest of `make check` is a step each, an
+`tests/runner/laws.sml`), and the differential checks, each program a job
+that compares what it compiles and runs across levels, engines, builds and
+hosts (`levels/*`, `register/*`, `jit/*`, `units/*`, `units-stack/*`,
+`positions/*`, `cross/*`, `reproducible/*`, `bootstrap/*`;
+`tests/runner/oracles.sml`); the rest of `make check` is a step each, an
 opaque `make` of its target (`tests/runner/main.sml`): the steps that run
 the programs of `tests/lang` from the root of the tree share the pool
 `lang` and run one at a time, and the others run beside them. Five canaries, tests that fail on purpose (an exit with 1, a
@@ -157,8 +161,8 @@ once by each compiler and run in every way (a VM and its options) that
 executed and the bytes and objects allocated (`runtime/runtime.c:285`). The
 numbers are exact, and the same on every engine: the suites check that
 the two compilers' bytecodes allocate the same bytes and objects
-(`scripts/check-register.sh`), that the interpreter and every JIT mode report
-identical counts (`scripts/check-jit.sh:62-79`), that the 32-bit and the
+(the oracle `register` of `tests/runner/oracles.sml`), that the interpreter and every JIT mode report
+identical counts (the oracle `jit` of `tests/runner/oracles.sml`), that the 32-bit and the
 big-endian VM agree with this machine's to the byte
 (`tests/run-portability.sh:97-111`), that the three Windows VMs do
 (`tests/run-windows.sh:184-191`), that native code does (`AGENTS.md`, the
@@ -192,11 +196,11 @@ program, `runevm --jit=off --count`, one thing changed at a time):
    reached through a longer path allocates 8 bytes more for every 8
    characters of the path, with the same instructions and objects. The
    harnesses therefore run every program from a directory of its own under
-   a fixed name (`scripts/check-jit.sh:65`: `cd "$out/$name"`, then
+   a fixed name (the oracle `jit` of `tests/runner/oracles.sml`: `cd "$out/$name"`, then
    `prog.rbc`), and a count taken by hand with the program's full path is
    not comparable with the harness's. The two sides of a comparison need
    paths of the same length, not only the same file name:
-   `scripts/check-register.sh` ran its two VMs from directories named
+   the oracle `register` of `tests/runner/oracles.sml` ran its two VMs from directories named
    `stack` and `new`, two characters apart, and every program agreed until
    the directory above them got a name five characters longer and one
    program's name crossed a boundary of that rounding (16 bytes then) on one side alone. The current directory's name is the
@@ -219,8 +223,8 @@ program, `runevm --jit=off --count`, one thing changed at a time):
    from a terminal, or with its output through `tee`, does not count the
    same as in a harness. The harnesses fix all three: standard input from
    `/dev/null` unless the test has a `.stdin` sibling, standard output and
-   error to files (`tests/run-tests.sh:69-74`, `scripts/check-register.sh:40-49`,
-   `scripts/check-jit.sh:49-65`, `tests/run-windows.sh:88-91`). The
+   error to files (`tests/run-tests.sh:69-74`, the oracle `register` of `tests/runner/oracles.sml`,
+   the oracle `jit` of `tests/runner/oracles.sml`, `tests/run-windows.sh:88-91`). The
    portability runner lets the VMs inherit its own standard input
    (`tests/run-portability.sh:107-109`), which is fine because every VM in
    the comparison gets the same one; that is the rule: both sides of a
@@ -260,7 +264,7 @@ What was measured and did **not** matter: address-space randomisation,
 the environment (an empty one gives the same numbers), whether the VM was
 named by an absolute or a relative path, whether an output file already
 existed, `--heap-size` (allocation does not depend on collection), and the
-JIT tier (the premise of `check-jit.sh`).
+JIT tier (the premise of the oracle `jit` of `tests/runner/oracles.sml`).
 
 ## Rules for a harness
 
@@ -270,8 +274,8 @@ JIT tier (the premise of `check-jit.sh`).
 * Run from the program's own directory under a fixed name, with the same
   `.args` and `.vmargs`.
 * Compare the count line as text after stripping the prefix
-  (`sed -n 's/^runevm: count: //p'`, `scripts/check-jit.sh:67`) and print
-  both lines on a failure, as `check-jit.sh:79` does; a reader can then
+  (`sed -n 's/^runevm: count: //p'`, the oracle `jit` of `tests/runner/oracles.sml`) and print
+  both lines on a failure, as the oracle `jit` of `tests/runner/oracles.sml` does; a reader can then
   see at once whether the difference is 17 objects and 408 bytes (the
   streams), a multiple of 8 bytes with nothing else (a string's length)
   or something new.
@@ -371,11 +375,11 @@ change*).
 2. If the program reads the clock, take the clock out (above) before
    reading anything else into the numbers.
 3. Same VM, different modes: `--jit=off` against each mode of
-   `check-jit.sh`, which names the mode that disagrees.
+   the oracle `jit` of `tests/runner/oracles.sml`, which names the mode that disagrees.
 4. Different VMs or widths: the layout of a value or an object
    ([runtime.md](runtime.md)); `test-portability` and `test-windows` say
    which VM disagrees with this machine's.
-5. Two compilers: `check-register.sh` diffs the counts of their bytecodes, and
+5. Two compilers: the oracle `register` of `tests/runner/oracles.sml` diffs the counts of their bytecodes, and
    `--disasm` shows where the code differs.
 
 ## Measuring a collector

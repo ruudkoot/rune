@@ -90,25 +90,19 @@ struct
     Test.describe "make"
       [lang ("test-opt", [], ["compile/stack-done", "basis-compile/stack-done"],
              langFiles @ perfFiles @ ["tests/opt/*", "tests/runtime/*", "tests/basis/*", "examples/*"]),
-       lang ("check-levels", [], [], langFiles @ perfFiles),
-       lang ("check-units", [], [], langFiles @ perfFiles @ ["tests/units/*"]),
+       alone ("check-units-steps", [], ["tests/units/*"]),
        lang ("test-native-steps", [], ["compile/stack-done"],
              langFiles @ ["tests/opt/*", "tests/basis/*", "tests/runtime/*", "examples/nqueens.sml"]),
-       lang ("test-register-steps", [], [],
-             langFiles @ perfFiles @ ["tests/opt/*", "tests/register/*", "tests/runtime/*", "tests/basis/*"]),
-       lang ("check-cross", [], [],
-             langFiles @ ["examples/*", "tests/basis/*", "tests/incremental/*", "tests/lib/*", "tests/doc/*", "tests/opt/*"]),
-       step ("test-register-jit-steps", {cpus = half, memory = 1000, pools = [], after = []}, [],
-             langFiles @ perfFiles @ ["tests/opt/*", "tests/register/*", "tests/basis/*"]),
+       step ("test-register-steps", {cpus = 1, memory = 500, pools = [], after = []}, [],
+             ["tests/runtime/*"]),
+       step ("test-register-jit-steps", {cpus = 1, memory = 1000, pools = [], after = []}, [],
+             ["tests/register/*", "tests/lang/rt.deeprec_stack.*"]),
        step ("test-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}, [],
              ["tests/compiler/*", "tests/runtime/*"]),
        step ("test-heap-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}, ["layout"], ["tests/runtime/*"]),
        alone ("test-all-steps", [], ["tests/compiler/*"]),
-       some ("check-positions", [], langFiles @ ["examples/*"]),
        some ("check-docs", ["docs"], ["*.md", "docs/*", "tests/basis/*", "lib/random/*", "lib/test/property/*"]),
-       step ("check-reproducible", {cpus = Int.min (2, few), memory = 500, pools = [], after = []}, [], ["examples/hello.sml"]),
        step ("check-layouts", {cpus = Int.min (2, few), memory = 500, pools = [], after = []}, ["layout"], ["tests/layouts/*"]),
-       alone ("bootstrap", [], []),
        alone ("test-doc", ["quick", "docs"], ["tests/doc/*"]),
        alone ("test-lib", ["quick"], ["tests/lib/*", "lib/random/*", "lib/test/property/*"]),
        alone ("test-ir", [], ["tests/ir/*"]),
@@ -177,7 +171,7 @@ struct
        expectations ("mlton-skip", "tests/external/mlton-skip.txt", NONE),
        expectations ("lib-deviations", "tests/lib/deviations.txt", NONE)]
 
-  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, Canary.tests]
+  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, Oracles.tree, Canary.tests]
 end
 
 (* laws-one RBC STRUCTURE is the command of a job of the laws
@@ -185,4 +179,4 @@ end
 val () =
   case CommandLine.arguments () of
     ["laws-one", rbc, st] => Laws.one (rbc, st)
-  | _ => Cli.main Inventory.tests
+  | args => case Oracles.command args of SOME f => f () | NONE => Cli.main Inventory.tests

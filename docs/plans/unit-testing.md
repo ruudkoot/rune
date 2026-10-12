@@ -33,7 +33,7 @@ What it rests on:
 | M6 | One engine for expectations | done 2026-10-12 |
 | M7 | The Basis suite on the runner || done 2026-10-12 |
 | M8 | Laws on the runner || done 2026-10-12 |
-| M9 | The differential checks as oracles | |
+| M9 | The differential checks as oracles || done 2026-10-12 |
 | M10 | The tools' suites | |
 | M11 | The protocol suites in SML | |
 | M12 | Requirements and the doctor | |
@@ -1670,6 +1670,12 @@ M1 and M2 are independent of each other and of the rest.
 
   Also the bootstrap's comparisons in the Makefile.
 * **Done when:** each oracle fails on a planted difference of one byte, and of one count.
+* **Done** (2026-10-12):
+  - **`tests/runner/oracles.sml`**, on `tests/runner/sh.sml` (files and processes, as the scripts used the shell): each script's work on one program is a command of `bin/rune-test` (`levels-one`, `register-one`, `jit-one`, `units-one`, `positions-one`, `cross-one`), run as a job for each program, which prints a line FAIL for what it finds; each check of a script's own is a job (the JIT's every opcode, fatal errors and every instruction; the register VM's bootstrap, primitives and dead roots; the units' setup; runedoc's and runeopt's builds; the copy, each of the eleven builds and the comparison of the reproducible build; the two halves of the bootstrap). The six modes of the JIT's bootstrap and the eleven reproducible builds now run at once, with edges where a cache must be warm first.
+  - **Each program of `tests/lang` runs in a directory of its own** with `tests/out` and `tests/lang`, so two checks that run it at once do not share its images: the pool `lang` is down to test-opt and test-native-steps.
+  - **Specified by an agent from the scripts** (inputs, commands, comparisons, quirks): the scripts' decisions are kept, but check-cross's `rune-whole`, which it computed and never counted, is left out.
+  - **Planted:** one instruction more under `--jit=all` (jit), one byte more allocated on runevm-stack (register), one byte appended at `-O2` (levels), at `--units -O0` (units), by `bin/rune-boot` (bootstrap) and by one cache's whole build (reproducible): each found.
+  - **Retired:** `check-jit.sh`, `check-register.sh`, `check-levels.sh`, `check-units.sh`, `check-positions.sh`, `check-cross.sh`, `check-doc-cross.sh`, `check-opt-cross.sh`, `check-reproducible.sh`, and the bootstrap's comparisons in the Makefile. `make check-levels` and the rest run their tags; `make test-portability` runs the JIT's oracle on the aarch64 VM (`JIT_VM`).
 
 ### M10. The tools' suites (L, about 1,500)
 

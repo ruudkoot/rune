@@ -153,7 +153,7 @@ keep these invariants:
   stack); a push does not check, since the checker works out each
   function's deepest stack (`runtime/register/isa_regs.c`). A primitive done in the
   loop (`runtime/register/fastprim.h`) gives the primitive's result or declines, and
-  changes with its C in `runtime/prims.c`; `scripts/check-register.sh` holds
+  changes with its C in `runtime/prims.c`; the oracle `register` of `tests/runner/oracles.sml` holds
   `tests/opt/prims.sml` to the same output on both VMs. `make test-register`,
   part of `make check`, holds runtime/register to what `runevm-stack` prints and allocates;
   a change to the register instruction set is `make isa` and a test, as
@@ -189,7 +189,7 @@ keep these invariants:
   done in line (`prim_inline`) gives exactly what `fastprim.h`'s
   `prim_fast` gives and goes to its slow path wherever that would answer
   0. What the loop does to `--count`, the code
-  does too: `scripts/check-jit.sh` (in `make test-register-jit`) holds every
+  does too: the oracle `jit` of `tests/runner/oracles.sml` (in `make test-register-jit`) holds every
   program, and the compiler compiling itself, to the same output and
   counts interpreted, compiled, with every other function compiled
   (`--jit-only=odd`) and under `--jit-stress`, and every instruction to
@@ -215,7 +215,7 @@ keep these invariants:
   leave for the interpreter at any boundary (`ms_exit`,
   `--deopt-stress`): an emitter that keeps anything outside the frame
   across a boundary -- other than a comparison's flags for the branch
-  fused onto it -- breaks that. Tier 2 is run by `check-jit.sh` on
+  fused onto it -- breaks that. Tier 2 is run by the oracle `jit` of `tests/runner/oracles.sml` on
   every program (`--jit=all --jit-tier=2`, every other function, and
   leaving after every instruction). **The representations
   section** (`docs/bytecode.md`): a new instruction that writes a register
