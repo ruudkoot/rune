@@ -1,11 +1,13 @@
 name	kind	signature	realisations	status	origin	source
 CLI	signature			required	declared	lib/test/runner/cli_sig.sml
+EXPECTATIONS	signature			required	declared	lib/test/runner/expectations_sig.sml
 HISTORY	signature			required	declared	lib/test/runner/history_sig.sml
 REPORT	signature			required	declared	lib/test/runner/report_sig.sml
 RUN	signature			required	declared	lib/test/runner/run_sig.sml
 SCHEDULER	signature			required	declared	lib/test/runner/scheduler_sig.sml
 SUPERVISOR	signature			required	declared	lib/test/runner/supervisor_sig.sml
 Cli	structure	CLI		required	ascribed	lib/test/runner/cli.sml
+Expectations	structure	EXPECTATIONS		required	ascribed	lib/test/runner/expectations.sml
 History	structure	HISTORY		required	ascribed	lib/test/runner/history.sml
 Report	structure	REPORT		required	ascribed	lib/test/runner/report.sml
 Run	structure	RUN		required	ascribed	lib/test/runner/run.sml

@@ -144,7 +144,37 @@ struct
        extra ("matrix-quick", ["library"]),
        extra ("test-lib-hosts", ["library"])]
 
-  val tests = Test.describe "" [make, extras, Lang.tests, Canary.tests]
+  (* each file of expectations read by the one engine (docs/testing.md,
+     Expectations): it parses, and its skips name programs that are there.
+     The command does nothing; the judge reads the file *)
+  fun expectations (name, file, paths) =
+    Test.tag "check"
+      (Test.tag ("covers:" ^ file)
+        (Test.it name
+           {program = "/bin/sh", args = ["sh", "-c", "true"], env = NONE, dir = SOME ".", stdin = NONE,
+            timeout = Time.fromSeconds 60, cap = 0, cpus = 1, memory = 10, pools = [], exclusive = false, after = [],
+            judge = fn _ =>
+              let
+                val ls = Expectations.read file
+                val stale = case paths of
+                              NONE => []
+                            | SOME ps => Expectations.stale (ls, {ways = [], paths = ps, used = [], today = "0000-00-00"})
+              in
+                case stale of
+                  [] => NONE
+                | _ => SOME ("FAIL", "stale: " ^ String.concatWith "\n  " (List.map Expectations.describe stale))
+              end
+              handle Expectations.Parse m => SOME ("FAIL", m)} : Run.command Test.tree))
+
+  val expected =
+    Test.describe "expectations"
+      [expectations ("opt-skip", "tests/opt-skip.txt", SOME Lang.langPrograms),
+       expectations ("windows-skip", "tests/windows-skip.txt", SOME Lang.langPrograms),
+       expectations ("portability-skip", "tests/portability-skip.txt", SOME Lang.langPrograms),
+       expectations ("mlton-skip", "tests/external/mlton-skip.txt", NONE),
+       expectations ("lib-deviations", "tests/lib/deviations.txt", NONE)]
+
+  val tests = Test.describe "" [make, extras, expected, Lang.tests, Canary.tests]
 end
 
 val () = Cli.main Inventory.tests

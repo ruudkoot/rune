@@ -5,6 +5,7 @@
 From the **Raises** paragraphs of the documented entries.
 
 - `Fail`: [`plan`](sig/SCHEDULER.md#val-plan) of SCHEDULER
+- `Parse`: [`parse`](sig/EXPECTATIONS.md#val-parse) of EXPECTATIONS
 
 ---
 

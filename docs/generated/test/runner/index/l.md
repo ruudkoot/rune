@@ -1,7 +1,9 @@
 # Index: L
 
-[Overview](../README.md) &middot; [a](a.md) [c](c.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [j](j.md) **l** [m](m.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) **l** [m](m.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md)
 
+- `Lenient` (con): [EXPECTATIONS](../sig/EXPECTATIONS.md#con-lenient)
+- `line` (type): [EXPECTATIONS](../sig/EXPECTATIONS.md#type-line)
 - `Log` (con): [REPORT](../sig/REPORT.md#con-log)
 
 ---

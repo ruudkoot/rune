@@ -30,7 +30,7 @@ What it rests on:
 | M3 | The runner, with `make check`'s steps as its first jobs | done 2026-10-12 |
 | M4 | `tests/lang` and `tests/errors` in ways, compiled once | done 2026-10-12 |
 | M5 | The first calibration: tiers, profiles, `--affected` | done 2026-10-12 |
-| M6 | One engine for expectations | |
+| M6 | One engine for expectations | done 2026-10-12 |
 | M7 | The Basis suite on the runner | |
 | M8 | Laws on the runner | |
 | M9 | The differential checks as oracles | |
@@ -1620,6 +1620,10 @@ M1 and M2 are independent of each other and of the rest.
 
 * **What:** D16. `tests/opt-skip.txt`, `tests/windows-skip.txt`, `tests/portability-skip.txt`, `tests/external/mlton-skip.txt` and `tests/lib/deviations.txt` are read by one engine, in one format. `deviations.txt` and `law-skips.txt` follow in M7 and M8.
 * **Done when:** stale lines are found as they are now, and each category's meaning has a test.
+* **Done** (2026-10-12):
+  - **`Expectations`** in `lib/test/runner`: the format `WAY-GLOB | PATH-GLOB[::LABEL-GLOB] | CATEGORY | reason`, the four meanings (strict, lenient, skip, quarantine with its date), a judge from what a test did to what it comes to, and the stale lines of a run. `tests/skipped.sh` is its reading of skips for the shell runners.
+  - **The files:** `tests/opt-skip.txt`, `tests/windows-skip.txt`, `tests/portability-skip.txt` and `tests/external/mlton-skip.txt` are in the format (mlton-skip's kinds kept in its reasons, read back to the same names and reasons); `tests/lib/deviations.txt` was already. Their readers (`run-tests.sh --skip`, `run-windows.sh`, `run-mlton.sh`, `test-native-steps`' count check, `tests/runner/lang.sml`) read it; a program native code skips is now a skipped test with its reason, where it was left out.
+  - **Tests:** each meaning, the glob and the parser (`tests/lib/runner/props.sml`), and `expectations/*` in `make check`: each file parses and its skips name programs that are there, with a stale line and a bad category planted and found.
 
 ### M7. The Basis suite on the runner (M, about 900)
 

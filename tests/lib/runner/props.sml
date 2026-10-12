@@ -158,8 +158,77 @@ struct
   val pathGen = Gen.map (fn k => "suite/" ^ Int.toString k) (Gen.intRange (0, 5))
   val showEntries = Show.list (Show.triple (Show.string, Show.int, Show.bool))
 
+  (* the expectations: one file of each meaning *)
+  val sample =
+    Expectations.parse ("e.txt",
+      "# a comment, and an empty line\n\n"
+      ^ "native* | rt.interrupt_self | UNSUPPORTED | native code does not poll\n"
+      ^ "smlnj* | Word64.toInt::overflow | HOST-BUG | the host's bug\n"
+      ^ "* | flaky.test | HOST-FLAKY | it races\n"
+      ^ "* | new.test | QUARANTINE | until 2026-11-01: being fixed\n"
+      ^ "mlkit | gone.test | HOST-BUG | a test that passes now\n")
+  fun at n = List.nth (sample, n)
+  fun judged (way, path, label, passed, today) =
+    Expectations.judge (sample, {way = way, path = path, label = label, passed = passed, today = today})
+  fun expectationTests () =
+    [Test.it "Expectations.parse/the-lines" (fn () =>
+       (Expect.that ("five lines", length sample = 5);
+        Expect.that ("the label", #label (at 1) = SOME "overflow" andalso #path (at 1) = "Word64.toInt");
+        Expect.that ("the reason", #reason (at 3) = "until 2026-11-01: being fixed"))),
+     Test.it "Expectations.parse/refuses" (fn () =>
+       (Expect.raises ("no category", fn Expectations.Parse _ => true | _ => false,
+                       fn () => Expectations.parse ("e", "* | a | NOPE | why\n"));
+        Expect.raises ("too few fields", fn Expectations.Parse _ => true | _ => false,
+                       fn () => Expectations.parse ("e", "* | a\n"));
+        Expect.raises ("a quarantine without its date", fn Expectations.Parse _ => true | _ => false,
+                       fn () => Expectations.parse ("e", "* | a | QUARANTINE | soon\n")))),
+     Test.it "Expectations.glob/whole" (fn () =>
+       (Expect.that ("a star", Expectations.glob ("native*", "native-cycles"));
+        Expect.that ("the whole", not (Expectations.glob ("native", "native-cycles")));
+        Expect.that ("a question mark", Expectations.glob ("rt.?", "rt.a") andalso not (Expectations.glob ("rt.?", "rt.ab")));
+        Expect.that ("stars between", Expectations.glob ("a*b*c", "axxbyyc") andalso not (Expectations.glob ("a*b*c", "axxbyy"))))),
+     Test.it "Expectations.skipped/skip" (fn () =>
+       (Expect.that ("skipped where it says", isSome (Expectations.skipped (sample, {way = "native", path = "rt.interrupt_self"})));
+        Expect.that ("run elsewhere", not (isSome (Expectations.skipped (sample, {way = "test", path = "rt.interrupt_self"})))))),
+     Test.it "Expectations.judge/strict" (fn () =>
+       (Expect.that ("its failure expected",
+                     case judged ("smlnj32", "Word64.toInt", SOME "overflow", false, "2026-10-12") of
+                       Expectations.Expected _ => true | _ => false);
+        Expect.that ("its pass unexpected, and failing",
+                     case judged ("smlnj32", "Word64.toInt", SOME "overflow", true, "2026-10-12") of
+                       oc as Expectations.Unexpected _ => Expectations.failing oc | _ => false);
+        Expect.that ("another label is not its",
+                     judged ("smlnj32", "Word64.toInt", SOME "other", false, "2026-10-12") = Expectations.Fail))),
+     Test.it "Expectations.judge/lenient" (fn () =>
+       Expect.that ("either way, and failing nothing",
+                    List.all (fn passed => case judged ("polyml", "flaky.test", NONE, passed, "2026-10-12") of
+                                             oc as Expectations.Flaky _ => not (Expectations.failing oc) | _ => false)
+                             [true, false])),
+     Test.it "Expectations.judge/quarantine" (fn () =>
+       (Expect.that ("its failure fails nothing before the date",
+                     case judged ("rune", "new.test", NONE, false, "2026-11-01") of
+                       oc as Expectations.Quarantined _ => not (Expectations.failing oc) | _ => false);
+        Expect.that ("and fails after it",
+                     case judged ("rune", "new.test", NONE, false, "2026-11-02") of
+                       oc as Expectations.Expired _ => Expectations.failing oc | _ => false))),
+     Test.it "Expectations.stale/each" (fn () =>
+       let
+         val st = Expectations.stale (sample, {ways = ["mlkit", "native"], paths = ["rt.interrupt_self", "flaky.test"],
+                                               used = [], today = "2026-12-01"})
+       in
+         Expect.that ("the strict line that matched no failure in a way that ran", List.exists (fn l => #path l = "gone.test") st);
+         Expect.that ("not a strict line of a way that did not run", not (List.exists (fn l => #path l = "Word64.toInt") st));
+         Expect.that ("not a skip that names a test", not (List.exists (fn l => #path l = "rt.interrupt_self") st));
+         Expect.that ("the quarantine past its date", List.exists (fn l => #path l = "new.test") st);
+         Expect.that ("never a lenient line", not (List.exists (fn l => #path l = "flaky.test") st));
+         Expect.that ("a used strict line is not stale",
+                      not (List.exists (fn l => #path l = "gone.test")
+                             (Expectations.stale (sample, {ways = ["mlkit"], paths = [], used = [at 4], today = "2026-10-12"}))))
+       end)]
+
   val tests =
     Test.describe "runner/props"
+      (expectationTests () @
       [Test.property "Scheduler.simulate/after-its-dependencies" (prop afterItsDeps),
        Test.property "Scheduler.simulate/fits-the-machine" (prop fitsTheMachine),
        Test.property "Scheduler.simulate/pools-exclude" (prop poolsExclude),
@@ -195,7 +264,7 @@ struct
          end),
        Test.property "History.write/read-back" (fn () =>
          Prop.forAllGen (Gen.list (Gen.triple (pathGen, Gen.intRange (0, 4000), Gen.bool)), showEntries)
-                        (Prop.holds o historyRoundTrip))]
+                        (Prop.holds o historyRoundTrip))])
 end
 
 structure RunnerPropsMain = Main (struct val name = "runner/props" val tests = RunnerProps.tests end)

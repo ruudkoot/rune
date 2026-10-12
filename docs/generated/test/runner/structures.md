@@ -15,6 +15,7 @@ signature names and no others.
 | Structure | Signature | Realisations | Status |  | Source |
 | --- | --- | --- | --- | --- | --- |
 | [`Cli`](str/Cli.md) | :> [`CLI`](sig/CLI.md) |  | required |  | [lib/test/runner/cli.sml](../../../../lib/test/runner/cli.sml) |
+| [`Expectations`](str/Expectations.md) | :> [`EXPECTATIONS`](sig/EXPECTATIONS.md) |  | required |  | [lib/test/runner/expectations.sml](../../../../lib/test/runner/expectations.sml) |
 | [`History`](str/History.md) | :> [`HISTORY`](sig/HISTORY.md) |  | required |  | [lib/test/runner/history.sml](../../../../lib/test/runner/history.sml) |
 | [`Report`](str/Report.md) | :> [`REPORT`](sig/REPORT.md) |  | required |  | [lib/test/runner/report.sml](../../../../lib/test/runner/report.sml) |
 | [`Run`](str/Run.md) | :> [`RUN`](sig/RUN.md) |  | required |  | [lib/test/runner/run.sml](../../../../lib/test/runner/run.sml) |

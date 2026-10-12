@@ -1,7 +1,7 @@
-# Programs that `make test-portability` leaves out, one per line
-# (tests/run-portability.sh):
+# Programs that `make test-portability` leaves out (tests/run-portability.sh),
+# an expectation to a line in the one format (docs/testing.md, Expectations):
 #
-#   NAME CATEGORY: reason
+#   WAY-GLOB | PROGRAM | CATEGORY | reason
 #
 # The list is empty: both VMs, bin/runevm-stack32 and bin/runevm-stack-ppc64, run every
 # program of tests/lang (docs/building.md). A category is added here again only

@@ -1211,7 +1211,8 @@ test-native-steps: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) v
 	@$(MAKE) --no-print-directory check-templates
 	python3 tests/runtime/run-limits.py --rune $(RUNE_STACK) --vm bin/runevm-native
 	python3 tests/runtime/run-gc-log.py --rune $(RUNE_STACK) --vm bin/runevm-native
-	sh tests/opt/run-counts.sh -j $(JOBS) $$(for t in tests/lang/*.sml; do n=$$(basename $$t .sml); grep -q "^$$n " tests/opt-skip.txt || echo tests/out/$$n.rbc; done)
+	skip=" $$(sh tests/skipped.sh tests/opt-skip.txt native | tr '\n' ' ') "; \
+	  sh tests/opt/run-counts.sh -j $(JOBS) $$(for t in tests/lang/*.sml; do n=$$(basename $$t .sml); case $$skip in *" $$n "*) ;; *) echo tests/out/$$n.rbc ;; esac; done)
 	RUNE=$(abspath $(RUNE_STACK)) RUNE_MATRIX_BYTECODE="$(ROOT)/tests/out/matrix/rune" \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:opt
 	RUNE_HEAP=$(RUNE_HEAP) sh tests/opt/run-bootstrap.sh

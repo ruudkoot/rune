@@ -145,7 +145,8 @@ if ! windir=$(sh tests/windows-dir.sh); then
 fi
 
 skip=tests/windows-skip.txt
-skipped() { [ -f "$skip" ] && grep -q "^$1 " "$skip"; }
+skips=" $(sh tests/skipped.sh "$skip" | tr '\n' ' ') "
+skipped() { case $skips in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
 
 mkdir -p "$rbcdir"
 rm -f "$rbcdir"/*.cresult

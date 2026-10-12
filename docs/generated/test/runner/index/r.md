@@ -1,8 +1,8 @@
 # Index: R
 
-[Overview](../README.md) &middot; [a](a.md) [c](c.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [j](j.md) [l](l.md) [m](m.md) [o](o.md) [p](p.md) **r** [s](s.md) [t](t.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [l](l.md) [m](m.md) [o](o.md) [p](p.md) [q](q.md) **r** [s](s.md) [t](t.md) [u](u.md) [w](w.md)
 
-- `read` (val): [HISTORY](../sig/HISTORY.md#val-read)
+- `read` (val): [EXPECTATIONS](../sig/EXPECTATIONS.md#val-read), [HISTORY](../sig/HISTORY.md#val-read)
 - `reader` (type): [REPORT](../sig/REPORT.md#type-reader)
 - `reader` (val): [REPORT](../sig/REPORT.md#val-reader)
 - `record` (val): [HISTORY](../sig/HISTORY.md#val-record)

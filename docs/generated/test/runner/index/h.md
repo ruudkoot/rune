@@ -1,6 +1,6 @@
 # Index: H
 
-[Overview](../README.md) &middot; [a](a.md) [c](c.md) [e](e.md) [f](f.md) **h** [i](i.md) [j](j.md) [l](l.md) [m](m.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) **h** [i](i.md) [j](j.md) [l](l.md) [m](m.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md)
 
 - `history` (type): [HISTORY](../sig/HISTORY.md#type-history)
 

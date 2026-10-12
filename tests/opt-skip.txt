@@ -1,10 +1,14 @@
-# Programs that `make test-native` leaves out, one per line: what a program
-# runeopt made does not do (docs/native.md):
+# Programs that `make test-native` leaves out: what a program runeopt made
+# does not do (docs/native.md). An expectation to a line, in the one format
+# (docs/testing.md, Expectations):
 #
-#   NAME CATEGORY: reason
+#   WAY-GLOB | PROGRAM | CATEGORY | reason
+#
+# The ways are the runner's native ones (tests/runner/lang.sml); the shell
+# runners given this file (run-tests.sh --skip) read every line.
 #
 # Native code runs every program of tests/lang but those below -- the one
 # that forks by a second process (rt.fork_image) and those that carry on an
 # image (the .restore tests) included, since M9. A category is here only
 # with a program to go under it.
-rt.interrupt_self interrupt: native code does not poll for the user's interrupt (docs/native.md, Interrupts)
+native* | rt.interrupt_self | UNSUPPORTED | interrupt: native code does not poll for the user's interrupt (docs/native.md, Interrupts)

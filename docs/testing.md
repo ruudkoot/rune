@@ -106,6 +106,31 @@ run past its time, a crash, a flood of output and a leaked process), pass
 only when the runner sees each fault for what it is; they run in every
 `make check`, since the runner is built by the compiler it tests.
 
+## Expectations
+
+What a suite expects of its tests in some ways (a host's bug, a program
+that native code does not run) is a file of expectations, in one format,
+read by one engine (`Expectations` in `lib/test/runner`, and
+`tests/skipped.sh` for the shell runners):
+
+    WAY-GLOB | PATH-GLOB[::LABEL-GLOB] | CATEGORY | reason
+
+A category means one of four things:
+
+| Meaning | Categories | What it does |
+|---|---|---|
+| strict | `RUNE-DEV`, `HOST-BUG`, `WIDTH`, `SPEC-AMBIGUOUS`, `WINDOWS`, `EMULATED`, `FAILS` | the test must fail there; a pass fails, and a line that matches no failure in a way that ran is stale |
+| lenient | `HOST-FLAKY`, `FLAKY` | the test may pass or fail |
+| skip | `HOST-ABSENT`, `XC1-NA`, `XC2-NA`, `UNTESTED`, `UNSUPPORTED` | the test is not run, and is reported as skipped with the reason; a line that names no test is stale |
+| quarantine | `QUARANTINE`, with `until YYYY-MM-DD:` | the test runs, and its failure fails nothing until the date; after it the line is stale |
+
+The files stay where they are: `tests/opt-skip.txt`, `tests/windows-skip.txt`,
+`tests/portability-skip.txt`, `tests/external/mlton-skip.txt` and
+`tests/lib/deviations.txt` are in this format, and `make check` holds each
+to parse and to name programs that exist (`expectations/*`).
+`tests/basis/deviations.txt` and the laws' lists have their own readers
+until their suites are on the runner.
+
 ## The three oracles
 
 **The output.** A program under `tests/` runs with `--checked` and its

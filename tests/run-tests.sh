@@ -200,7 +200,7 @@ fi
 skipped=""
 nskip=0
 if [ -n "$skip" ]; then
-  skipped=$(sed -e 's/#.*//' -e 's/[[:space:]].*//' "$skip" | grep -v '^$' | tr '\n' ' ')
+  skipped=$(sh tests/skipped.sh "$skip" | tr '\n' ' ')
 fi
 is_skipped() { case " $skipped " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
 

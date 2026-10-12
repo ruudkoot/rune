@@ -71,13 +71,6 @@ struct
     in sort names end
     handle OS.SysErr _ => []
 
-  (* the names a skip file leaves out: the first word of each line that is
-     not a comment *)
-  fun skipped file =
-    List.mapPartial (fn l => case String.tokens Char.isSpace (hd (String.fields (fn c => c = #"#") l)) of
-                               w :: _ => SOME w
-                             | [] => NONE)
-                    (String.fields (fn c => c = #"\n") (read file))
 
   (* ---- compilers and ways *)
   val stackCompiler = "stack"
@@ -89,8 +82,8 @@ struct
     @ List.map (fn h => (h, "bin/rune-" ^ h ^ " --target=stack", "test-all")) hosts
 
   (* a way: its name, its compiler, its VM with the options before the
-     program's, the tag of the make target it comes from, and whether it
-     leaves out tests/opt-skip.txt's programs *)
+     program's, the tag of the make target it comes from, and whether it is
+     native code, whose expectations are tests/opt-skip.txt's *)
   type way = {name : string, compiler : string, vm : string, tag : string, skip : bool}
 
   val gcStress = env ("GC_STRESS", "101")
@@ -277,7 +270,8 @@ struct
   (* ---- the tree *)
   val langPrograms = programs "tests/lang"
   val errorPrograms = programs "tests/errors"
-  val optSkip = skipped "tests/opt-skip.txt"
+  (* the programs native code does not run (docs/testing.md, Expectations) *)
+  val optSkip = Expectations.read "tests/opt-skip.txt"
 
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
   (* what the programs cover, for --affected; the tier quick has the
@@ -301,8 +295,10 @@ struct
        Test.describe "lang"
          (List.map (fn w => tagged (["check", #tag w] @ extraTags (#tag w) @ covers)
                               (Test.describe (#name w)
-                                 (List.map (run w)
-                                    (if #skip w then List.filter (fn n => not (List.exists (fn s => s = n) optSkip)) langPrograms
-                                     else langPrograms))))
+                                 (List.map (fn n =>
+                                              case (#skip w, Expectations.skipped (optSkip, {way = #name w, path = n})) of
+                                                (true, SOME l) => Test.pending (#category l ^ ": " ^ #reason l) (run w n)
+                                              | _ => run w n)
+                                           langPrograms)))
                    ways)]
 end

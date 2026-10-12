@@ -34,8 +34,9 @@ skip=tests/external/mlton-skip.txt
 run_one() {
   name=$1
   src=$dir/$name.sml
-  if [ -f "$skip" ] && grep -q "^$name\( \|$\)" "$skip"; then
-    echo "SKIP $name: $(grep "^$name\( \|$\)" "$skip" | sed "s/^$name *//")"
+  why=$(sh tests/skipped.sh --reasons "$skip" | sed -n "s/^$name //p")
+  if [ -n "$why" ]; then
+    echo "SKIP $name: $why"
     return
   fi
   if ! "$rune" --no-warnings "$src" -o "$out/$name.rbc" 2> "$out/$name.cerr"; then

@@ -1,6 +1,6 @@
 # Index: A
 
-[Overview](../README.md) &middot; **a** [c](c.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [j](j.md) [l](l.md) [m](m.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [w](w.md)
+[Overview](../README.md) &middot; **a** [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [l](l.md) [m](m.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md)
 
 - `accept` (val): [RUN](../sig/RUN.md#val-accept)
 - `admit` (val): [SCHEDULER](../sig/SCHEDULER.md#val-admit)

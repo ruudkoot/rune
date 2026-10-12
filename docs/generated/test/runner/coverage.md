@@ -7,12 +7,13 @@ documented when a comment describes it, alone or together with the entry before 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
 | [`CLI`](sig/CLI.md) | 1 | 1 | 100% | 1 | 1 |
+| [`EXPECTATIONS`](sig/EXPECTATIONS.md) | 14 | 14 | 100% | 10 | 10 |
 | [`HISTORY`](sig/HISTORY.md) | 9 | 9 | 100% | 6 | 6 |
 | [`REPORT`](sig/REPORT.md) | 8 | 8 | 100% | 5 | 5 |
 | [`RUN`](sig/RUN.md) | 7 | 7 | 100% | 5 | 5 |
 | [`SCHEDULER`](sig/SCHEDULER.md) | 10 | 10 | 100% | 7 | 7 |
 | [`SUPERVISOR`](sig/SUPERVISOR.md) | 5 | 5 | 100% | 2 | 2 |
-| **all** | 40 | 40 | 100% | 26 | 26 |
+| **all** | 54 | 54 | 100% | 36 | 36 |
 
 ## Members a signature describes
 
@@ -21,12 +22,12 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-6 structures have a page, with 40 members, of which 40 (100%) are described by a signature.
+7 structures have a page, with 54 members, of which 54 (100%) are described by a signature.
 
 ## Examples that are run
 
 Every example is a closed expression of type `bool` that is true, and every counterexample a closed claim
-that does not hold: each is elaborated when these pages are made and tried by the test suite: 7 of them, in [`HISTORY`](sig/HISTORY.md) (3), [`RUN`](sig/RUN.md) (1), [`SCHEDULER`](sig/SCHEDULER.md) (2), [`SUPERVISOR`](sig/SUPERVISOR.md) (1).
+that does not hold: each is elaborated when these pages are made and tried by the test suite: 11 of them, in [`EXPECTATIONS`](sig/EXPECTATIONS.md) (4), [`HISTORY`](sig/HISTORY.md) (3), [`RUN`](sig/RUN.md) (1), [`SCHEDULER`](sig/SCHEDULER.md) (2), [`SUPERVISOR`](sig/SUPERVISOR.md) (1).
 
 ---
 

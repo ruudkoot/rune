@@ -1,6 +1,6 @@
 (* The runner of tests (docs/plans/unit-testing.md, D8 to D14 and M3): the
-   scheduler, the supervisor of children, the history of runs, the report
-   and the command line; its files in load order, in the form of
+   scheduler, the supervisor of children, the history of runs, the report,
+   the expectations and the command line; its files in load order, in the form of
    lib/basis/library.build. It is written on lib/test/unit, for the tree of
    tests and the filters, and on lib/terminal, for the status line: *)
 libraries test/unit terminal end
@@ -13,6 +13,8 @@ annotate "demand" "host=no" in
   supervisor.sml
   history_sig.sml
   history.sml
+  expectations_sig.sml
+  expectations.sml
   report_sig.sml
   report.sml
   run_sig.sml

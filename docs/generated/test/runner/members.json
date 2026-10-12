@@ -13,6 +13,110 @@
     }
    ]
   },
+  "EXPECTATIONS": {
+   "doc": "What a suite expects of its tests in some ways (docs/plans/unit-testing.md,\nD16; docs/testing.md, Expectations): one format, and one meaning for\neach category, for every list of deviations and skips.\n\nA file has a line for each expectation, and `#` begins a comment:\n\n```sml\nWAY-GLOB | PATH-GLOB[::LABEL-GLOB] | CATEGORY | reason\n```\n\nThe globs have `*` (any run of characters) and `?` (one character), and\nmust match the whole way, path or label. A category's meaning is one of\nfour:\n\n- strict: the test must fail where the line says (`RUNE-DEV`, `HOST-BUG`,\n  `WIDTH`, `SPEC-AMBIGUOUS`, `WINDOWS`, `EMULATED`, `FAILS`). A test that\n  passes there fails, and a line that matches no failure in a way that\n  ran is stale;\n- lenient: the test may pass or fail (`HOST-FLAKY`, `FLAKY`);\n- skip: the test is not run, for the reason given (`HOST-ABSENT`,\n  `XC1-NA`, `XC2-NA`, `UNTESTED`, `UNSUPPORTED`). A line that names no\n  test is stale;\n- quarantine: the test runs and is reported, and its failure fails\n  nothing until the date the reason begins with (`QUARANTINE`, with\n  `until YYYY-MM-DD:`); after it the line is stale.\n\n",
+   "page": "sig/EXPECTATIONS.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "meaning",
+     "spec": "datatype meaning = Strict | Lenient | Skip | Quarantine",
+     "doc": "What a category means.\n\n",
+     "page": "sig/EXPECTATIONS.md#type-meaning"
+    },
+    {
+     "kind": "type",
+     "name": "line",
+     "spec": "type line = {file : string, number : int, way : string, path : string, label : string option,\n             category : string, reason : string}",
+     "doc": "A line: where it is, its globs, its category and its reason.\n\n",
+     "page": "sig/EXPECTATIONS.md#type-line"
+    },
+    {
+     "kind": "exception",
+     "name": "Parse",
+     "spec": "exception Parse of string",
+     "doc": "Raised by `parse` for a line that is not an expectation, with its file\nand number.\n\n",
+     "page": "sig/EXPECTATIONS.md#exn-parse"
+    },
+    {
+     "kind": "val",
+     "name": "meaning",
+     "spec": "val meaning : string -> meaning option",
+     "doc": "`meaning c` is what the category `c` means, or `NONE` for no category.\n\n**Example** `meaning \"HOST-BUG\" = SOME Strict`\n\n",
+     "page": "sig/EXPECTATIONS.md#val-meaning"
+    },
+    {
+     "kind": "val",
+     "name": "parse",
+     "spec": "val parse : string * string -> line list",
+     "doc": "`parse (file, text)` is the lines of `text`, the contents of `file`.\n\n**Raises** `Parse` for a line with too few fields or a category that is\nnot one, or a quarantine without its date.\n\n**Example** `length (parse (\"f\", \"# a comment\\n* | a/* | FLAKY | why\\n\")) = 1`\n\n",
+     "page": "sig/EXPECTATIONS.md#val-parse"
+    },
+    {
+     "kind": "val",
+     "name": "read",
+     "spec": "val read : string -> line list",
+     "doc": "`read file` is the lines of `file`, or none when there is no file.\n\n",
+     "page": "sig/EXPECTATIONS.md#val-read"
+    },
+    {
+     "kind": "val",
+     "name": "glob",
+     "spec": "val glob : string * string -> bool",
+     "doc": "`glob (g, s)` says whether the glob `g` matches the whole of `s`.\n\n**Example** `glob (\"lang/*/rt.?\", \"lang/native/rt.a\")`\n\n",
+     "page": "sig/EXPECTATIONS.md#val-glob"
+    },
+    {
+     "kind": "val",
+     "name": "find",
+     "spec": "val find : line list * {way : string, path : string, label : string option} -> line option",
+     "doc": "`find (ls, {way, path, label})` is the first line of `ls` that matches\nthe test, if any.\n\nA line with a label matches only that test's label; one without\nmatches the test, whatever its label.\n\n",
+     "page": "sig/EXPECTATIONS.md#val-find"
+    },
+    {
+     "kind": "val",
+     "name": "skipped",
+     "spec": "val skipped : line list * {way : string, path : string} -> line option",
+     "doc": "`skipped (ls, {way, path})` is the line that skips the test of `path`\nin `way`, if one does.\n\n",
+     "page": "sig/EXPECTATIONS.md#val-skipped"
+    },
+    {
+     "kind": "datatype",
+     "name": "outcome",
+     "spec": "datatype outcome = Pass | Fail | Expected of line | Unexpected of line | Flaky of line\n                 | Quarantined of line | Expired of line",
+     "doc": "What a test that ran comes to, given the lines.\n\n`Pass` and `Fail` where no line speaks; `Expected` for a strict line's\nfailure, and `Unexpected` for its pass; `Flaky` for a lenient line;\n`Quarantined` for a quarantined failure before its date, and `Expired`\nfor one after it.\n\n",
+     "page": "sig/EXPECTATIONS.md#type-outcome"
+    },
+    {
+     "kind": "val",
+     "name": "judge",
+     "spec": "val judge : line list * {way : string, path : string, label : string option, passed : bool, today : string}\n            -> outcome",
+     "doc": "`judge (ls, {way, path, label, passed, today})` is what the test comes\nto; `today` is the date as `YYYY-MM-DD`.\n\n",
+     "page": "sig/EXPECTATIONS.md#val-judge"
+    },
+    {
+     "kind": "val",
+     "name": "failing",
+     "spec": "val failing : outcome -> bool",
+     "doc": "`failing oc` says whether `oc` fails the run.\n\n**Example** `failing Fail andalso not (failing Pass)`\n\n",
+     "page": "sig/EXPECTATIONS.md#val-failing"
+    },
+    {
+     "kind": "val",
+     "name": "stale",
+     "spec": "val stale : line list * {ways : string list, paths : string list, used : line list, today : string} -> line list",
+     "doc": "`stale (ls, {ways, paths, used, today})` is the lines of `ls` that are\nstale after a run.\n\nThose are a strict line that names a way in `ways` and is not in\n`used` (the lines of the failures it expected), a skip line whose path\nmatches none of `paths`, and a quarantine past its date.\n\n",
+     "page": "sig/EXPECTATIONS.md#val-stale"
+    },
+    {
+     "kind": "val",
+     "name": "describe",
+     "spec": "val describe : line -> string",
+     "doc": "`describe l` is `l` as its file and number say it, for a report.\n\n",
+     "page": "sig/EXPECTATIONS.md#val-describe"
+    }
+   ]
+  },
   "HISTORY": {
    "doc": "What earlier runs found (docs/plans/unit-testing.md, D13): per test, the\nlast wall times, the last outcome and how often it flipped, in a table of\ntab-separated lines that each run rewrites. A fresh tree reads a seed\ninstead, which only a run of every test may write, since a test missing\nfrom it would look cheap (HOL4's rule).\n\n",
    "page": "sig/HISTORY.md",
@@ -319,6 +423,7 @@
  },
  "structures": {
   "Cli": "CLI",
+  "Expectations": "EXPECTATIONS",
   "History": "HISTORY",
   "Report": "REPORT",
   "Run": "RUN",

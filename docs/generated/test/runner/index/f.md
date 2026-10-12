@@ -1,11 +1,15 @@
 # Index: F
 
-[Overview](../README.md) &middot; [a](a.md) [c](c.md) [e](e.md) **f** [h](h.md) [i](i.md) [j](j.md) [l](l.md) [m](m.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [c](c.md) [d](d.md) [e](e.md) **f** [g](g.md) [h](h.md) [i](i.md) [j](j.md) [l](l.md) [m](m.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [w](w.md)
 
+- `Fail` (con): [EXPECTATIONS](../sig/EXPECTATIONS.md#con-fail)
 - `Failed` (con): [SUPERVISOR](../sig/SUPERVISOR.md#con-failed)
 - `failedLast` (val): [HISTORY](../sig/HISTORY.md#val-failedlast)
+- `failing` (val): [EXPECTATIONS](../sig/EXPECTATIONS.md#val-failing)
+- `find` (val): [EXPECTATIONS](../sig/EXPECTATIONS.md#val-find)
 - `finish` (val): [REPORT](../sig/REPORT.md#val-finish)
 - `finished` (val): [SCHEDULER](../sig/SCHEDULER.md#val-finished)
+- `Flaky` (con): [EXPECTATIONS](../sig/EXPECTATIONS.md#con-flaky)
 
 ---
 
