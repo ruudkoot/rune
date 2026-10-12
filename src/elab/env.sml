@@ -170,27 +170,58 @@ struct
     | tyStrName _ = NONE
 
   (* --- realisation of environments --- *)
+  (* Each gives back what it is given where the realisation changes
+     nothing in it, as Types.realize does (Types.changes). *)
   fun realizeVal (phi : realisation, v : valstatus) : valstatus =
-    case v of
-      Val {scheme, stamp, global} => Val {scheme = realize (phi, scheme), stamp = stamp, global = global}
-    | Con {scheme, info} => Con {scheme = realize (phi, scheme), info = info}
-    | Exn {ty, info} => Exn {ty = realize (phi, ty), info = info}
-    | Prim {scheme, name} => Prim {scheme = realize (phi, scheme), name = name}
-    | ConAsVal {scheme, info} => ConAsVal {scheme = realize (phi, scheme), info = info}
-    | ExnAsVal {ty, info} => ExnAsVal {ty = realize (phi, ty), info = info}
+    let val n = !changes
+    in
+      case v of
+        Val {scheme, stamp, global} =>
+          let val s = realize (phi, scheme) in if !changes = n then v else Val {scheme = s, stamp = stamp, global = global} end
+      | Con {scheme, info} =>
+          let val s = realize (phi, scheme) in if !changes = n then v else Con {scheme = s, info = info} end
+      | Exn {ty, info} =>
+          let val t = realize (phi, ty) in if !changes = n then v else Exn {ty = t, info = info} end
+      | Prim {scheme, name} =>
+          let val s = realize (phi, scheme) in if !changes = n then v else Prim {scheme = s, name = name} end
+      | ConAsVal {scheme, info} =>
+          let val s = realize (phi, scheme) in if !changes = n then v else ConAsVal {scheme = s, info = info} end
+      | ExnAsVal {ty, info} =>
+          let val t = realize (phi, ty) in if !changes = n then v else ExnAsVal {ty = t, info = info} end
+    end
 
-  fun realizeTyStr (phi : realisation, TyStr {fcn, cons}) : tystatus =
-    TyStr {fcn = realizeFcn (phi, fcn), cons = List.map (fn (n, v) => (n, realizeVal (phi, v))) cons}
+  fun realizeCons (phi : realisation, l : (string * valstatus) list) : (string * valstatus) list =
+    case l of
+      [] => l
+    | (c, v) :: rest =>
+        let
+          val n = !changes
+          val v' = realizeVal (phi, v)
+          val rest' = realizeCons (phi, rest)
+        in if !changes = n then l else (c, v') :: rest' end
 
-  fun realizeEnv' (phi : realisation, Env {vals, tys, strs}) : env =
-    Env {vals = StringMap.map (fn v => realizeVal (phi, v)) vals,
-         tys = StringMap.map (fn t => realizeTyStr (phi, t)) tys,
-         strs = StringMap.map (fn e => realizeEnv' (phi, e)) strs}
+  fun realizeTyStr (phi : realisation, ts as TyStr {fcn, cons}) : tystatus =
+    let
+      val n = !changes
+      val fcn' = realizeFcn (phi, fcn)
+      val cons' = realizeCons (phi, cons)
+    in if !changes = n then ts else TyStr {fcn = fcn', cons = cons'} end
+
+  fun changeCount () = !changes
+
+  fun realizeEnv' (phi : realisation, e as Env {vals, tys, strs}) : env =
+    let
+      val n = !changes
+      val vals' = StringMap.mapKeep changeCount (fn v => realizeVal (phi, v)) vals
+      val tys' = StringMap.mapKeep changeCount (fn t => realizeTyStr (phi, t)) tys
+      val strs' = StringMap.mapKeep changeCount (fn s => realizeEnv' (phi, s)) strs
+    in if !changes = n then e else Env {vals = vals', tys = tys', strs = strs'} end
 
   (* with --pass-stats=elab, counted, and the nodes visited by the steps of
      type work taken, one for each (a prune) *)
   fun realizeEnv (phi : realisation, env : env) : env =
-    if not (!ElabStats.on) then realizeEnv' (phi, env)
+    if IntMap.isEmpty phi then (if !ElabStats.on then ElabStats.count ElabStats.Realize else (); env)
+    else if not (!ElabStats.on) then realizeEnv' (phi, env)
     else
       let
         val left = !workLeft
