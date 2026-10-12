@@ -181,6 +181,7 @@ void as_mul_ri(Asm *a, int rd, int rs, int32_t v) { emit(a, "imul $%d, %s, %s", 
 void as_mul_jo(Asm *a, int rd, int rs, AsmLabel *overflow) { as_mul_rr(a, rd, rs); as_jcc(a, CC_O, overflow); }
 void as_neg(Asm *a, int r) { emit(a, "neg %s", r64(a, r)); }
 void as_not(Asm *a, int r) { emit(a, "not %s", r64(a, r)); }
+void as_bswap(Asm *a, int r) { emit(a, "bswap %s", r64(a, r)); }
 void as_shl_ri(Asm *a, int r, int n) { emit(a, "shl $%d, %s", n, r64(a, r)); }
 void as_shr_ri(Asm *a, int r, int n) { emit(a, "shr $%d, %s", n, r64(a, r)); }
 void as_sar_ri(Asm *a, int r, int n) { emit(a, "sar $%d, %s", n, r64(a, r)); }

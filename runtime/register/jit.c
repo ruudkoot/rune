@@ -328,6 +328,13 @@ void jit_print_stats(void) {
             fprintf(stderr, "runevm: jit: tier 2's homes: %llu functions of more than 64 registers have none\n", (unsigned long long)jit->homes_too_large);
     }
     if (jit->profile) print_profile(jit);
+    if (jit->eq_calls)
+        fprintf(stderr, "runevm: jit: poly_eq: %llu calls from code, %llu walked by values_equal in C (%.2f%%)\n",
+                (unsigned long long)jit->eq_calls, (unsigned long long)jit->eq_walked, 100.0 * (double)jit->eq_walked / (double)jit->eq_calls);
+    if (jit->pushes || jit->raises)
+        fprintf(stderr, "runevm: jit: %llu handlers pushed by code, %llu of them in C; %llu raises, %llu of them in C\n",
+                (unsigned long long)jit->pushes, (unsigned long long)jit->pushes_c, (unsigned long long)jit->raises,
+                (unsigned long long)jit->raises_c);
     /* the primitives called from code, most called first: what is not in
        line yet, or in line and out of its fast case */
     if (jit->prim_calls) {

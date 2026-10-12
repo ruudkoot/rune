@@ -190,6 +190,7 @@ void as_mul_ri(Asm *a, int rd, int rs, int32_t v);
 void as_mul_jo(Asm *a, int rd, int rs, AsmLabel *overflow);
 void as_neg(Asm *a, int r);
 void as_not(Asm *a, int r);
+void as_bswap(Asm *a, int r);                               /* the 8 bytes of r in the other order: bswap, rev */
 void as_shl_ri(Asm *a, int r, int n);
 void as_shr_ri(Asm *a, int r, int n);
 void as_sar_ri(Asm *a, int r, int n);

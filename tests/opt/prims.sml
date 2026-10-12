@@ -195,3 +195,35 @@ val pairs = [(0.0, ~1.0), (~0.0, ~1.0), (0.0, 0.0), (~1.0, 1.0 / 0.0), (0.0 / 0.
 val () = List.app (fn (x, y) =>
            print (r17 x ^ " " ^ r17 y ^ ": pow " ^ r17 (Math.pow (x, y)) ^ " atan2 " ^ r17 (Math.atan2 (x, y)) ^ "\n"))
          pairs
+
+(* ---- `=` where no walk is needed, the identity of exceptions and the
+   order of strings, which the register VM does in its loop and its JIT in
+   line (docs/plans/performance.md, M5): poly_eq ptr_eq string_order
+   string_lt string_le string_gt string_ge. Strings of every length about
+   a word's and two words', each against a copy made as the program runs
+   (another object of the same bytes, whose bytes past its length are
+   anyone's), bytes past 127 and zeros; refs, arrays and boxes of numbers;
+   a value against itself. *)
+val strs = ["", "a", "b", "ab", "abc", "abcdefg", "abcdefgh", "abcdefgi", "abcdefghi", "abcdefghj",
+            "abcdefghijklmno", "abcdefghijklmnop", "abcdefghijklmnoq", "abcdefghijklmnopq", "abcdefghijklmnopr",
+            "\255", "\128a", "a\000", "a\000b", "abcdefghijklmnopqrstuvwxyz0123456789", "abcdefghijklmnopqrstuvwxyz0123456788"]
+val copies = List.map (fn s => String.implode (String.explode s)) strs
+val () = List.app (fn s => List.app (fn t =>
+           show ("streq " ^ String.toString s ^ " " ^ String.toString t)
+                (fn () => b (s = t) ^ b (s < t) ^ b (s <= t) ^ b (s > t) ^ b (s >= t) ^ " " ^ ord3 (String.compare (s, t))))
+           copies) strs
+val r1 = ref 1
+val r2 = ref 1
+val a1 = Array.array (2, 0)
+val a2 = Array.array (2, 0)
+val c1 = CharArray.array (2, #"a")
+val c2 = CharArray.array (2, #"a")
+val l1 = [1, 2, 3]
+val () = show "eq refs" (fn () => b (r1 = r1) ^ b (r1 = r2) ^ b (!r1 = !r2))
+val () = show "eq arrays" (fn () => b (a1 = a1) ^ b (a1 = a2) ^ b (c1 = c1) ^ b (c1 = c2))
+val () = show "eq itself" (fn () => b (l1 = l1) ^ b ((l1, "x") = (l1, "x")) ^ b (SOME l1 = SOME l1) ^ b ([r1] = [r1]) ^ b ([r1] = [r2]))
+val big = Int64.fromInt maxInt * 2
+val () = show "eq boxes" (fn () => b (big = big) ^ b (big = Int64.fromInt maxInt * 2) ^ b (big = big + 1)
+                                   ^ b (big = 1) ^ b (Int64.fromInt 1 = 1))
+fun exn (e : exn) = (raise e) handle Fail _ => "Fail" | Div => "Div" | Subscript => "Subscript" | Overflow => "Overflow" | _ => "other"
+val () = show "exceptions" (fn () => String.concatWith " " (List.map exn [Fail "x", Div, Subscript, Overflow, Size, Chr]))

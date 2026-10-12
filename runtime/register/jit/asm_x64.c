@@ -61,6 +61,7 @@ void as_mul_ri(Asm *a, int rd, int rs, int32_t v) { x64_imul_rri(a, rd, rs, v); 
 void as_mul_jo(Asm *a, int rd, int rs, AsmLabel *overflow) { x64_imul_rr(a, rd, rs); x64_jcc(a, CC_O, overflow); }
 void as_neg(Asm *a, int r) { x64_neg_r(a, r); }
 void as_not(Asm *a, int r) { x64_not_r(a, r); }
+void as_bswap(Asm *a, int r) { x64_bswap_r(a, r); }
 void as_shl_ri(Asm *a, int r, int n) { x64_shl_ri(a, r, n); }
 void as_shr_ri(Asm *a, int r, int n) { x64_shr_ri(a, r, n); }
 void as_sar_ri(Asm *a, int r, int n) { x64_sar_ri(a, r, n); }

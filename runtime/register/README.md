@@ -396,7 +396,16 @@ registers. `PUSHHANDLER` records, beside the pc, the address of the
 handler's code (`Handler.native`, `runtime/vm.h`; NULL from the loop's and from
 an image), so that a raise -- `RAISE` through `jit_h_raise`, a primitive's
 through `jit_h_prim` -- lands in the handler's native code where it has
-some, from the interpreter too (`RAISED` in the loop's words). `--trace`
+some, from the interpreter too (`RAISED` in the loop's words). Since
+docs/plans/performance.md's M5 the handler is written in line where the
+table has room, as `vm_push_handler` writes it, and a `RAISE` unwinds in
+line where nothing else is to be done -- no debugger watching raises
+(`Debugger.raise_mode`), a handler there that is not the REPL's
+(`VM.raise_mark`, whose raise records the frames it leaves) and whose code
+is compiled: the handler popped, its frame the VM's and the watermark
+lowered to it, the exception at its stack pointer, and on into its code,
+which loads its homes from the slots (written back first in a function
+with handlers). `--trace`
 runs the interpreter alone. The user's interrupt is polled where the loop
 polls it (`POLL`), at a jump back and at a call: a compare of
 `VM.interrupt` and a branch, before the instruction does anything, to a
@@ -409,9 +418,23 @@ Made fast (M7): **the primitives of `fastprim.h` are in line**
 a slow path -- the helper, which does the primitive as the loop would
 and may raise -- wherever `prim_fast` would answer 0 (a tag that is not
 the one, an overflow, a divisor of 0 or -1, an index out of bounds);
-`string_order` goes to `jit_h_string_order`, and `string_eq` (`=` of
-strings, performance M5) to `jit_h_string_eq`, which touch nothing of the
-VM and are called with nothing synced or reloaded. `poly_eq` on a pointer
+`=`, `ptr_eq` and the order of strings are in line too (performance M5;
+`fastprim.h` does the same in the loop): `poly_eq` on a pointer decides
+in line what needs no walk (`ms_equal_heap`, `masm.c`) -- an immediate
+against a pointer, a pointer against itself (but a real's box: a NaN),
+objects of different kinds, refs and arrays by their address, boxes of
+numbers by their bits, strings by their lengths and then a word at a time
+(`ms_string_equal`) -- and `--jit-stats` counts its calls and those
+walked in C; `string_eq`, the compiler's `=` of strings, is the same
+compare of strings, in line whatever their length; `ptr_eq` is a compare of words, but for two boxes of one
+number; `string_order` and `String.<`, `<=`, `>` and `>=` compare in line
+where the shorter string is at most 8 bytes (a word of each, its bytes in
+the other order, the rest shifted out: `ms_string_order_short`), else call
+`jit_h_string_order`, which touches nothing of the VM and is called with
+nothing synced or reloaded: the homes C clobbers wait in the VM's cells
+around it (`ms_save_volatile`), and its arguments come from scratch
+registers, never from homes, which the arguments' registers may be.
+Else `poly_eq` on a pointer
 or a real calls `jit_h_values_equal` with the VM exact and reloaded after:
 structural equality can end the process at its work limit. `ref_new` is an allocation
 in line. **A primitive not in line is called as the loop calls it:** its
@@ -650,7 +673,8 @@ implementation gives:
 * **The operations**, with x86-64's meanings where the machines differ:
   `add`, `sub`, `cmp`, `test` and `neg` set the flags a `jcc` or `setcc`
   reads, and nothing else promises to (an emitter that wants the sign
-  of an `xor` tests it); a multiply that may overflow is one operation
+  of an `xor` tests it); the bytes of a register in the other order are
+  `as_bswap` (`bswap`, `rev`: M5's order of strings); a multiply that may overflow is one operation
   with its jump (`as_mul_jo`: `imul` and `jo`, or `mul`, `smulh` and a
   compare); a divide gives the quotient in `R_S0` and the remainder in
   `R_S2` (`cqo` and `idiv`, or `sdiv` and `msub`); a shift by a

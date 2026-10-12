@@ -197,14 +197,38 @@ static void equal(Jit *j, int32_t d, int32_t x, int32_t y, int poly, AsmLabel *s
         return;
     }
     AsmLabel done, heap; as_label_init(&done); as_label_init(&heap);
-    /* Structural comparison may stop at its work limit, so its helper
-       needs the exact VM for the fatal error and its trace. */
+    if (poly && j->jit->prim_calls) {   /* --jit-stats: poly_eq's calls from code */
+        as_mov_ri(A, R_S2, (int64_t)(intptr_t)&j->jit->eq_calls);
+        as_add_mi(A, R_S2, 0, 1);
+    }
     ms_two_words(M, x, y, poly ? &heap : slow);
     as_cmp_rr(A, R_S0, R_S1);
     set_bool(j, d, CC_E);
     if (poly) {
+        /* one at least in the heap: decided in line where no walk is
+           needed (ms_equal_heap, M5) -- identity, kinds, refs and arrays,
+           boxes of numbers, strings -- else walked by values_equal, which
+           may stop at its work limit, and so needs the exact VM for the
+           fatal error and its trace */
+        AsmLabel yes, no, store, walk;
+        as_label_init(&yes); as_label_init(&no); as_label_init(&store); as_label_init(&walk);
         as_jmp(A, &done);
         as_bind(A, &heap);
+        ms_equal_heap(M, R_S0, R_S1, &yes, &no, &walk);
+        as_bind(A, &yes);
+        as_mov_ri(A, R_S0, 1);
+        as_jmp(A, &store);
+        as_bind(A, &no);
+        as_mov_ri(A, R_S0, 0);
+        as_bind(A, &store);
+        ms_set_reg(M, d, T_CON0, R_S0);
+        ms_bool_flags(M, R_S0);
+        as_jmp(A, &done);
+        as_bind(A, &walk);
+        if (j->jit->prim_calls) {   /* --jit-stats: and those walked in C */
+            as_mov_ri(A, R_S2, (int64_t)(intptr_t)&j->jit->eq_walked);
+            as_add_mi(A, R_S2, 0, 1);
+        }
         ms_sync(M, j->next, 0);
         ms_slot_addr(M, ms_arg(M, 1), x);
         ms_slot_addr(M, ms_arg(M, 2), y);
@@ -212,9 +236,84 @@ static void equal(Jit *j, int32_t d, int32_t x, int32_t y, int poly, AsmLabel *s
         ms_reload(M);
         ms_set_reg(M, d, T_CON0, R_S0);
         ms_bool_flags(M, R_S0);
+        as_label_free(&yes); as_label_free(&no); as_label_free(&store); as_label_free(&walk);
     }
     as_bind(A, &done);
     as_label_free(&done); as_label_free(&heap);
+}
+/* ptr_eq: the identity of two values, the identity of their words -- but
+   for two boxes of one number (p_ptr_eq, runtime/prims.c), which the
+   helper does: the words' compare leaves its flags where the words are
+   the same or x is no box */
+static void identical(Jit *j, int32_t d, int32_t x, int32_t y, AsmLabel *slow) {
+    AsmLabel same; as_label_init(&same);
+    ms_need_word(M, x);
+    ms_need_word(M, y);
+    ms_load_bits(M, R_S0, x);
+    ms_cmp_bits(M, R_S0, y);
+    as_jcc(A, CC_E, &same);
+    as_test_ri(A, R_S0, 1);
+    as_jcc(A, CC_NE, &same);           /* an immediate: unequal, and the flags say so */
+    ms_load_kind(M, R_S1, R_S0);
+    as_cmp_ri(A, R_S1, K_BOX);
+    as_jcc(A, CC_E, slow);             /* else unequal, and the flags say so */
+    as_bind(A, &same);
+    set_bool(j, d, CC_E);
+    as_label_free(&same);
+}
+/* `=` of strings (string_eq, the compiler's `=` at string; performance M5):
+   in line whatever their lengths -- the same string, else the lengths,
+   then the bytes a word at a time (ms_string_equal) -- from scratch
+   registers, so no home is clobbered and nothing is called; the bool in
+   the flags too, for a branch fused onto it */
+static void string_equal(Jit *j, int32_t d, int32_t x, int32_t y, AsmLabel *slow) {
+    AsmLabel yes, no, done;
+    as_label_init(&yes); as_label_init(&no); as_label_init(&done);
+    ms_load_obj(M, R_S0, x, K_STRING, slow);
+    ms_load_obj(M, R_S1, y, K_STRING, slow);
+    as_cmp_rr(A, R_S0, R_S1);
+    as_jcc(A, CC_E, &yes);
+    ms_string_equal(M, R_S0, R_S1, &yes, &no);
+    as_bind(A, &yes);
+    as_mov_ri(A, R_S0, 1);
+    as_jmp(A, &done);
+    as_bind(A, &no);
+    as_mov_ri(A, R_S0, 0);
+    as_bind(A, &done);
+    ms_set_reg(M, d, T_CON0, R_S0);
+    ms_bool_flags(M, R_S0);
+    as_label_free(&yes); as_label_free(&no); as_label_free(&done);
+}
+/* the order of two strings (string_order, String.< and the others): in
+   line where the shorter is at most 8 bytes (ms_string_order_short, M5),
+   else the lean helper, which touches nothing of the VM: nothing synced,
+   the homes C clobbers waiting in the VM's cells around it, the arguments
+   from scratch registers, never from homes (the latent bug of E12: they
+   were loaded from their homes into the arguments' registers, which are
+   homes themselves). Either way the order as the flags of an unsigned
+   compare, then as the primitive's result. */
+static void string_compare(Jit *j, int32_t p, int32_t d, int32_t x, int32_t y, AsmLabel *slow) {
+    AsmLabel longer, done; as_label_init(&longer); as_label_init(&done);
+    ms_load_obj(M, R_S0, x, K_STRING, slow);
+    ms_load_obj(M, R_S2, y, K_STRING, slow);
+    ms_string_order_short(M, &longer);
+    as_jmp(A, &done);
+    as_bind(A, &longer);
+    ms_save_volatile(M, j->next, d);
+    as_mov_rr(A, ms_arg(M, 2), R_S2);   /* first: R_S2 is the first argument on Windows */
+    as_mov_rr(A, ms_arg(M, 1), R_S0);
+    ms_call(M, (MsHelper)jit_h_string_order);
+    ms_restore_volatile(M, j->next, d);
+    as_cmp_ri(A, R_S0, 1);              /* LESS, EQUAL, GREATER: 0, 1, 2 */
+    as_bind(A, &done);
+    switch (p) {
+    case PRIM_string_order: set_order(j, d, CC_AE, CC_A); break;
+    case PRIM_string_lt: set_bool(j, d, CC_B); break;
+    case PRIM_string_le: set_bool(j, d, CC_BE); break;
+    case PRIM_string_gt: set_bool(j, d, CC_A); break;
+    default: set_bool(j, d, CC_AE); break;
+    }
+    as_label_free(&longer); as_label_free(&done);
 }
 
 static void alloc(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d, int32_t a, int32_t b, const uint8_t *L);
@@ -224,6 +323,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     int32_t x = read_i32(L), y = n > 1 ? read_i32(L + 4) : x, z = n > 2 ? read_i32(L + 8) : x;
     switch (p) {
     case PRIM_poly_eq: case PRIM_imm_eq: case PRIM_string_order: case PRIM_string_eq: case PRIM_ref_new:
+    case PRIM_ptr_eq: case PRIM_string_lt: case PRIM_string_le: case PRIM_string_gt: case PRIM_string_ge:
     case PRIM_int_add: case PRIM_int_sub: case PRIM_int_mul: case PRIM_int_div: case PRIM_int_mod:
     case PRIM_int_quot: case PRIM_int_rem: case PRIM_int_neg: case PRIM_int_lt: case PRIM_int_le:
     case PRIM_int_gt: case PRIM_int_ge: case PRIM_int_order: case PRIM_int_to_char:
@@ -268,24 +368,12 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     switch (p) {
     case PRIM_poly_eq: equal(j, d, x, y, 1, slow); break;
     case PRIM_imm_eq: equal(j, d, x, y, 0, slow); break;
-    case PRIM_string_order:
-        /* the two strings to the lean helper, which touches nothing of the
-           VM: no sync, no reload */
-        ms_writeback(M, M->cur_pc);
-        ms_load_obj(M, ms_arg(M, 1), x, K_STRING, slow);
-        ms_load_obj(M, ms_arg(M, 2), y, K_STRING, slow);
-        ms_call_lean(M, (MsHelper)jit_h_string_order);
-        ms_set_reg(M, d, T_CON0, R_S0);
+    case PRIM_ptr_eq: identical(j, d, x, y, slow); break;
+    case PRIM_string_order: case PRIM_string_lt: case PRIM_string_le: case PRIM_string_gt: case PRIM_string_ge:
+        string_compare(j, p, d, x, y, slow);
         break;
     case PRIM_string_eq:
-        /* `=` at string (performance M5): the two strings to the lean
-           helper, as string_order's; the bool in the flags too */
-        ms_writeback(M, M->cur_pc);
-        ms_load_obj(M, ms_arg(M, 1), x, K_STRING, slow);
-        ms_load_obj(M, ms_arg(M, 2), y, K_STRING, slow);
-        ms_call_lean(M, (MsHelper)jit_h_string_eq);
-        ms_set_reg(M, d, T_CON0, R_S0);
-        ms_bool_flags(M, R_S0);
+        string_equal(j, d, x, y, slow);
         break;
     case PRIM_ref_new:
         alloc(j, K_REF, 0, 1, FILL_ONE, d, x, 0, NULL);
@@ -599,7 +687,8 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     /* a comparison leaves its bool in the flags, for the branch after
        (M7): said to the walk, and to its slow path */
     switch (p) {
-    case PRIM_poly_eq: case PRIM_imm_eq: case PRIM_string_eq:
+    case PRIM_poly_eq: case PRIM_imm_eq: case PRIM_string_eq: case PRIM_ptr_eq:
+    case PRIM_string_lt: case PRIM_string_le: case PRIM_string_gt: case PRIM_string_ge:
     case PRIM_int_lt: case PRIM_int_le: case PRIM_int_gt: case PRIM_int_ge:
     case PRIM_word_lt: case PRIM_word_le: case PRIM_word_gt: case PRIM_word_ge:
     case PRIM_real_lt: case PRIM_real_le: case PRIM_real_gt: case PRIM_real_ge: case PRIM_real_eq:
@@ -1303,13 +1392,39 @@ void emit_PRIMPUSH(Jit *j, uint32_t pc, int32_t a, const uint8_t *L, uint32_t n)
     as_bind(A, &done);
     as_label_free(&done);
 }
+/* PUSHHANDLER in line where the table has room (M5): the handler written
+   as vm_push_handler writes it -- its pc, the VM's stack pointer (the
+   frame's registers' top), its frame, and the address of its code here --
+   else the helper, which grows the table */
 void emit_PUSHHANDLER(Jit *j, uint32_t pc, int32_t a) {
-    (void)pc;
+    AsmLabel full, pushed; as_label_init(&full); as_label_init(&pushed);
+    if (j->jit->prim_calls) {   /* --jit-stats */
+        as_mov_ri(A, R_S0, (int64_t)(intptr_t)&j->jit->pushes);
+        as_add_mi(A, R_S0, 0, 1);
+    }
+    as_ld64(A, R_S0, VMR, OFF(hp));
+    as_cmp_rm(A, R_S0, VMR, OFF(handlers_cap));
+    as_jcc(A, CC_AE, &full);
+    as_mul_ri(A, R_S1, R_S0, (int32_t)sizeof(Handler));
+    as_add_rm(A, R_S1, VMR, OFF(handlers));
+    as_st32i(A, R_S1, (int32_t)offsetof(Handler, pc), a);
+    as_lea(A, R_S2, BASEI, -1, 1, (int32_t)j->m.nlocals);
+    as_st64(A, R_S1, (int32_t)offsetof(Handler, sp), R_S2);
+    as_ld64(A, R_S2, VMR, OFF(fp));
+    as_st64(A, R_S1, (int32_t)offsetof(Handler, fp), R_S2);
+    as_lea_label(A, R_S2, jit_landing(j, (uint32_t)a));
+    as_st64(A, R_S1, (int32_t)offsetof(Handler, native), R_S2);
+    as_add_ri(A, R_S0, 1);
+    as_st64(A, VMR, OFF(hp), R_S0);
+    as_jmp(A, &pushed);
+    as_bind(A, &full);
     ms_sync(M, j->next, 0);
     as_mov_ri(A, ms_arg(M, 1), a);
     as_lea_label(A, ms_arg(M, 2), jit_landing(j, (uint32_t)a));
     ms_call(M, (MsHelper)jit_h_push_handler);
     ms_reload_clobbered(M, pc);   /* the stack did not move; the homes the call clobbered (M9) */
+    as_bind(A, &pushed);
+    as_label_free(&full); as_label_free(&pushed);
 }
 void emit_POPHANDLER(Jit *j, uint32_t pc) {
     (void)pc;
@@ -1321,10 +1436,68 @@ void emit_CATCH(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;
     ms_copy(M, a, (int32_t)j->m.nlocals);
 }
+/* RAISE: in line where nothing but the unwinding is to be done (M5) --
+   no debugger watching raises, a handler there, not the REPL's (whose
+   raise records the frames it leaves: vm_raise), and its code compiled --
+   as vm_raise unwinds: the handler popped, its frame the VM's (the
+   watermark lowered to it), the exception pushed at its stack pointer,
+   and on into its code, which loads the homes it needs from their slots
+   (written back first where the handler may be this function's). Else
+   the helper. */
 void emit_RAISE(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;
     AsmLabel hand; as_label_init(&hand);
+    if (j->jit->prim_calls) {   /* --jit-stats */
+        as_mov_ri(A, R_S0, (int64_t)(intptr_t)&j->jit->raises);
+        as_add_mi(A, R_S0, 0, 1);
+    }
+    /* the homes written back first: a raw one's word may be a box, whose
+       helper clobbers rax */
+    if (j->m.has_handlers) ms_writeback(M, M->cur_pc);
     ms_load_obj(M, R_S0, a, K_EXN, jit_fatal(j, FATAL_RAISE, 0, 0, 0));
+    {
+        AsmLabel slow, nodbg, above;
+        as_label_init(&slow); as_label_init(&nodbg); as_label_init(&above);
+        as_ld64(A, R_S1, VMR, OFF(dbg));
+        as_test_rr(A, R_S1, R_S1);
+        as_jcc(A, CC_E, &nodbg);
+        as_cmp32_mi(A, R_S1, (int32_t)offsetof(Debugger, raise_mode), 0);
+        as_jcc(A, CC_NE, &slow);
+        as_bind(A, &nodbg);
+        as_ld64(A, R_S1, VMR, OFF(hp));
+        as_test_rr(A, R_S1, R_S1);
+        as_jcc(A, CC_E, &slow);                       /* uncaught */
+        as_cmp_rm(A, R_S1, VMR, OFF(raise_mark));
+        as_jcc(A, CC_E, &slow);                       /* the REPL's handler */
+        as_sub_ri(A, R_S1, 1);
+        as_mul_ri(A, R_S2, R_S1, (int32_t)sizeof(Handler));
+        as_add_rm(A, R_S2, VMR, OFF(handlers));
+        as_ld64(A, R_S6, R_S2, (int32_t)offsetof(Handler, native));
+        as_test_rr(A, R_S6, R_S6);
+        as_jcc(A, CC_E, &slow);                       /* the interpreter's */
+        as_st64(A, VMR, OFF(hp), R_S1);
+        as_ld64(A, R_S3, R_S2, (int32_t)offsetof(Handler, fp));
+        as_st64(A, VMR, OFF(fp), R_S3);
+        as_cmp_rm(A, R_S3, VMR, OFF(fp_low));
+        as_jcc(A, CC_AE, &above);
+        as_st64(A, VMR, OFF(fp_low), R_S3);
+        as_bind(A, &above);
+        /* the handler's frame's registers the code's, the exception at its
+           stack pointer, its code */
+        as_mul_ri(A, R_S3, R_S3, (int32_t)sizeof(Frame));
+        as_add_rm(A, R_S3, VMR, OFF(frames));
+        as_ld64(A, BASEI, R_S3, (int32_t)offsetof(Frame, base));
+        as_mov_rr(A, BASER, BASEI);
+        ms_scale_index(M, BASER);
+        as_add_rm(A, BASER, VMR, OFF(stack));
+        as_ld64(A, R_S1, R_S2, (int32_t)offsetof(Handler, sp));
+        ms_scale_index(M, R_S1);
+        as_add_rm(A, R_S1, VMR, OFF(stack));
+        as_st64(A, R_S1, 0, R_S0);
+        as_jmp_r(A, R_S6);
+        as_bind(A, &slow);
+        as_label_free(&slow); as_label_free(&nodbg); as_label_free(&above);
+    }
     ms_sync(M, j->next, 0);
     as_mov_ri(A, ms_arg(M, 1), a);
     ms_call(M, (MsHelper)jit_h_raise);

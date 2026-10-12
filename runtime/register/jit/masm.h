@@ -268,6 +268,13 @@ void ms_call(Masm *m, MsHelper helper);                            /* the VM as 
    it sets the arguments, and this loads them again after */
 void ms_call_lean(Masm *m, MsHelper helper);
 void ms_call_pure(Masm *m, MsHelper f, uint32_t after, int32_t d);  /* f of the C library on reals in F_S0 (and F_S1), its result in F_S0: the homes live here or at after that C clobbers kept around it raw, d's not */
+/* the homes live at the instruction's start or at after that a call into C
+   would clobber -- d's not, the result goes there -- waiting in the VM's
+   cells as they are around a call of a helper that touches nothing of the
+   VM (ms_call_pure's, and the lean helpers' of M5): saved before its
+   arguments are set, which may be homes, and loaded again after */
+void ms_save_volatile(Masm *m, uint32_t after, int32_t d);
+void ms_restore_volatile(Masm *m, uint32_t after, int32_t d);
 void ms_count(Masm *m, uint32_t k);
 void ms_handback(Masm *m, int code);                               /* the VM handed back with that answer */
 /* the code left at the boundary after an instruction, for the interpreter
@@ -293,6 +300,36 @@ void ms_store_field_imm(Masm *m, int obj, uint32_t i, int tag, int32_t payload);
 void ms_load_field_payload(Masm *m, int r, int obj, uint32_t i);    /* r := the payload of field i of the object in obj */
 void ms_element(Masm *m, int obj, int index);                       /* obj := the address of element index of the object in obj (a vector or an array), index clobbered */
 void ms_string_byte(Masm *m, int r, int obj, int index);            /* r := byte index of the string in obj; obj clobbered */
+/* `=` and the order of strings in line (docs/plans/performance.md, M5;
+   D7 A), as values_equal and str_cmp have them (runtime/runtime.c,
+   runtime/prims.c): */
+/* `=` of two words in a and b of which one at least is a pointer (the
+   and of their low bits clear): to yes or no where it is decided without
+   walking them -- an immediate against a pointer, a pointer against
+   itself, two objects of different kinds, two refs or arrays (identity),
+   two boxes of numbers (their bits), two strings (their bytes, any length,
+   word by word) -- and to walk where only values_equal can say (a tuple,
+   a constructor, an exception, a real's box against itself: a NaN). a
+   and b are kept on the way to walk, not to yes or no; R_S2, R_S3 and
+   R_S6 are clobbered, and on a string's way R_S1 */
+void ms_equal_heap(Masm *m, int a, int b, AsmLabel *yes, AsmLabel *no, AsmLabel *walk);
+/* `=` of the strings at a and b (R_S0 and R_S1, clobbered): to yes or no;
+   their lengths, then their bytes a word at a time, any length; R_S2,
+   R_S3 and R_S6 are clobbered too (what ms_equal_heap does with two
+   strings, and string_eq's emitter, M5) */
+void ms_string_equal(Masm *m, int a, int b, AsmLabel *yes, AsmLabel *no);
+/* the order of the strings at R_S0 and R_S2, as the flags of an unsigned
+   compare -- below LESS, equal EQUAL, above GREATER -- where the shorter
+   is at most 8 bytes: its bytes against as many of the other's, a word of
+   each with its bytes in the other order (big-endian, so that the compare
+   of words is that of bytes) and the rest shifted out, then the lengths.
+   To longer, R_S0 and R_S2 kept, where both are longer. R_S1, R_S3 and
+   R_S6 are clobbered. */
+void ms_string_order_short(Masm *m, AsmLabel *longer);
+/* r := the kind of the object in obj (its header's byte, without the
+   collector's bits where they are set: RUNE_GC_BITS) */
+void ms_load_kind(Masm *m, int r, int obj);
+
 /* arrays of values outside the heap's objects: the constants, the globals,
    a frame's registers at an address */
 void ms_load_nth(Masm *m, int32_t d, int base, uint32_t i);         /* R(d) := the i-th value at base */

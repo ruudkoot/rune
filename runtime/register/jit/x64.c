@@ -215,6 +215,7 @@ void x64_imul_rri(X64 *a, int dst, int src, int32_t imm) {
 }
 void x64_neg_r(X64 *a, int r) { op_rr(a, 1, 0xF7, -1, 3, r); }
 void x64_not_r(X64 *a, int r) { op_rr(a, 1, 0xF7, -1, 2, r); }
+void x64_bswap_r(X64 *a, int r) { x64_byte(a, (uint8_t)(0x48 | ((r >> 3) & 1))); x64_byte(a, 0x0F); x64_byte(a, (uint8_t)(0xC8 + (r & 7))); }
 void x64_shl_ri(X64 *a, int r, int imm) { op_rr(a, 1, 0xC1, -1, 4, r); x64_byte(a, (uint8_t)imm); }
 void x64_shr_ri(X64 *a, int r, int imm) { op_rr(a, 1, 0xC1, -1, 5, r); x64_byte(a, (uint8_t)imm); }
 void x64_sar_ri(X64 *a, int r, int imm) { op_rr(a, 1, 0xC1, -1, 7, r); x64_byte(a, (uint8_t)imm); }

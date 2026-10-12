@@ -88,6 +88,7 @@ void x64_imul_rr(X64 *a, int dst, int src);
 void x64_imul_rri(X64 *a, int dst, int src, int32_t imm);   /* dst := src * imm */
 void x64_neg_r(X64 *a, int r);
 void x64_not_r(X64 *a, int r);
+void x64_bswap_r(X64 *a, int r);    /* the bytes of r in the other order */
 void x64_shl_ri(X64 *a, int r, int imm);
 void x64_shr_ri(X64 *a, int r, int imm);
 void x64_sar_ri(X64 *a, int r, int imm);

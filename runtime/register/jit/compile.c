@@ -274,12 +274,16 @@ const void *jit_h_tailcall(VM *vm, int32_t a, int32_t b) {
 }
 /* PUSHHANDLER o, the handler's native code at native */
 void jit_h_push_handler(VM *vm, int32_t pc, const void *native) {
+    JitProgram *jit = jit_program(vm);
+    if (jit->prim_calls) jit->pushes_c++;   /* --jit-stats */
     vm_push_handler(vm, (uint32_t)pc);
     vm->handlers[vm->hp - 1].native = native;
 }
 /* RAISE s: the handler's native code to go on at, or NULL for the
    interpreter; an uncaught exception ends the program in vm_raise */
 const void *jit_h_raise(VM *vm, int32_t s) {
+    JitProgram *jit = jit_program(vm);
+    if (jit->prim_calls) jit->raises_c++;   /* --jit-stats */
     Value v = vm->stack[vm->frames[vm->fp].base + (size_t)s];
     const void *native = handler_native(vm);
     vm_raise(vm, v);
@@ -307,11 +311,6 @@ int64_t jit_h_string_order(VM *vm, const Obj *a, const Obj *b) {
     if (c != 0) return c < 0 ? 0 : 2;
     if (obj_len(a) == obj_len(b)) return 1;
     return obj_len(a) < obj_len(b) ? 0 : 2;
-}
-/* string_eq (performance M5): the lengths, then the bytes */
-int64_t jit_h_string_eq(VM *vm, const Obj *a, const Obj *b) {
-    (void)vm;
-    return a == b || (obj_len(a) == obj_len(b) && memcmp(obj_bytes_c(a), obj_bytes_c(b), obj_len(a)) == 0);
 }
 int64_t jit_h_values_equal(VM *vm, const Value *x, const Value *y) { return values_equal(vm, *x, *y); }
 /* a real of tier 2 that has no immediate, boxed into its register's slot
@@ -853,7 +852,6 @@ static int emit_function(Jit *j, Scan *sc) {
 static const MsHelper helpers[] = {
     (MsHelper)jit_h_prim, (MsHelper)jit_h_alloc, (MsHelper)jit_h_ret, (MsHelper)jit_h_grow, (MsHelper)jit_h_grow_frames,
     (MsHelper)jit_h_push_handler, (MsHelper)jit_h_raise, (MsHelper)jit_h_string_order, (MsHelper)jit_h_values_equal,
-    (MsHelper)jit_h_string_eq,
     (MsHelper)jit_h_box_real, (MsHelper)jit_h_box_num, (MsHelper)jit_h_primpush, (MsHelper)jit_h_called
 };
 /* The region: the stubs that enter and leave compiled code, the stub of

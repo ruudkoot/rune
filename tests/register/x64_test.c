@@ -65,6 +65,9 @@ int main(void) {
     x64_init(&a); x64_or_ri(&a, RAX, 1); fails += expect("or rax, 1", &a, "4883c801"); x64_free(&a);
     x64_init(&a); x64_ror_ri(&a, RDX, 12); fails += expect("ror rdx, 12", &a, "48c1ca0c"); x64_free(&a);
     x64_init(&a); x64_ror_ri(&a, RAX, 52); fails += expect("ror rax, 52", &a, "48c1c834"); x64_free(&a);
+    x64_init(&a); x64_bswap_r(&a, RAX); fails += expect("bswap rax", &a, "480fc8"); x64_free(&a);
+    x64_init(&a); x64_bswap_r(&a, R11); fails += expect("bswap r11", &a, "490fcb"); x64_free(&a);
+    x64_init(&a); x64_bswap_r(&a, RDX); fails += expect("bswap rdx", &a, "480fca"); x64_free(&a);
     x64_init(&a); x64_add_ri(&a, R15, 3); fails += expect("add r15, 3", &a, "4983c703"); x64_free(&a);
     x64_init(&a); x64_lea(&a, RAX, R13, RBP, 1, 48); fails += expect("lea rax, [r13+rbp+48]", &a, "498d442d30"); x64_free(&a);
     x64_init(&a); x64_jmp_r(&a, R11); fails += expect("jmp r11", &a, "41ffe3"); x64_free(&a);

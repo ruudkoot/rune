@@ -79,6 +79,7 @@ void as_mul_jo(Asm *a, int rd, int rs, AsmLabel *overflow) {
 }
 void as_neg(Asm *a, int r) { a64_subs_rr(a, r, XZR, r); }
 void as_not(Asm *a, int r) { a64_orn_rr(a, r, XZR, r); }
+void as_bswap(Asm *a, int r) { a64_rev(a, r, r); }
 void as_shl_ri(Asm *a, int r, int n) { a64_lsl_ri(a, r, r, n); }
 void as_shr_ri(Asm *a, int r, int n) { a64_lsr_ri(a, r, r, n); }
 void as_sar_ri(Asm *a, int r, int n) { a64_asr_ri(a, r, r, n); }

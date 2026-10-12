@@ -961,20 +961,32 @@ void ms_emit_box(Masm *m, Slow *sp) {
    for the primitive's C to read). d's does not: the result goes there.
    The call is through the function's trampoline, whose move of the VM
    into the first general argument the function never reads. */
-void ms_call_pure(Masm *m, MsHelper f, uint32_t after, int32_t d) {
+/* a home that waits in its cell around a lean call: live at the start or
+   at after, not d, and in a register C does not keep */
+static int waits(const Masm *m, uint32_t r, uint32_t after, int32_t d) {
+    const Home *h = &m->homes[r];
+    return h->kind != HOME_SLOT && (int32_t)r != d && !kept(m, h) && (live_at(m, m->cur_pc, r) || live_at(m, after, r));
+}
+void ms_save_volatile(Masm *m, uint32_t after, int32_t d) {
     for (uint32_t r = 0; m->homes && r < m->nlocals; r++) {
+        if (!waits(m, r, after, d)) continue;
         const Home *h = &m->homes[r];
-        if (h->kind == HOME_SLOT || (int32_t)r == d || kept(m, h) || !(live_at(m, m->cur_pc, r) || live_at(m, after, r))) continue;
         if (h->kind == HOME_GPR) as_st64(&m->a, VMR, gspill(h->reg), h->reg);
         else as_fst(&m->a, VMR, fspill(h->reg), h->reg);
     }
-    ms_call(m, f);
+}
+void ms_restore_volatile(Masm *m, uint32_t after, int32_t d) {
     for (uint32_t r = 0; m->homes && r < m->nlocals; r++) {
+        if (!waits(m, r, after, d)) continue;
         const Home *h = &m->homes[r];
-        if (h->kind == HOME_SLOT || (int32_t)r == d || kept(m, h) || !(live_at(m, m->cur_pc, r) || live_at(m, after, r))) continue;
         if (h->kind == HOME_GPR) as_ld64(&m->a, h->reg, VMR, gspill(h->reg));
         else as_fld(&m->a, h->reg, VMR, fspill(h->reg));
     }
+}
+void ms_call_pure(Masm *m, MsHelper f, uint32_t after, int32_t d) {
+    ms_save_volatile(m, after, d);
+    ms_call(m, f);
+    ms_restore_volatile(m, after, d);
 }
 void ms_reload_clobbered(Masm *m, uint32_t pc) {
     if (!m->homes) return;
@@ -1045,6 +1057,124 @@ void ms_load_obj_tested(Masm *m, int r, int32_t s, int kind, AsmLabel *unless) {
     ms_load_obj(m, r, s, kind, unless);
     m->reps = reps;
 }
+void ms_load_kind(Masm *m, int r, int obj) {
+    as_ld8(&m->a, r, obj, (int32_t)offsetof(Obj, kind));
+#ifdef RUNE_GC_BITS
+    as_and_ri(&m->a, r, OBJ_KIND_MASK);
+#endif
+}
+/* `=` in line (masm.h): values_equal's answers that need no walk. A
+   string's bytes are compared a word at a time, its last word's bytes past
+   the length -- the high ones on the JIT's machines, which are
+   little-endian -- shifted out of the difference, since nothing says what
+   they hold; a string of n bytes has a payload of n rounded up to 8, so
+   that every word read is the string's own. */
+void ms_equal_heap(Masm *m, int a, int b, AsmLabel *yes, AsmLabel *no, AsmLabel *walk) {
+    enum { KA = R_S2, KB = R_S3 };
+    if (a != R_S0 || b != R_S1) bug("ms_equal_heap: the words are not in R_S0 and R_S1", a, b);
+    AsmLabel differ, strings;
+    as_label_init(&differ); as_label_init(&strings);
+    as_mov_rr(&m->a, KA, a);
+    as_xor_rr(&m->a, KA, b);
+    as_test_ri(&m->a, KA, 1);
+    as_jcc(&m->a, CC_NE, no);                    /* an immediate against a pointer */
+    as_cmp_rr(&m->a, a, b);
+    as_jcc(&m->a, CC_NE, &differ);
+    ms_load_kind(m, KA, a);                      /* a pointer against itself: equal, but for a real's box (a NaN) */
+    as_cmp_ri(&m->a, KA, K_REAL);
+    as_jcc(&m->a, CC_E, walk);
+    as_jmp(&m->a, yes);
+    as_bind(&m->a, &differ);
+    ms_load_kind(m, KA, a);
+    ms_load_kind(m, KB, b);
+    as_cmp_rr(&m->a, KA, KB);
+    as_jcc(&m->a, CC_NE, no);                    /* of different kinds */
+    as_cmp_ri(&m->a, KA, K_STRING);
+    as_jcc(&m->a, CC_E, &strings);
+    static const int identity[] = { K_REF, K_ARRAY, K_BYTES, K_REALS };   /* equal by their address alone */
+    for (size_t i = 0; i < sizeof identity / sizeof identity[0]; i++) {
+        as_cmp_ri(&m->a, KA, identity[i]);
+        as_jcc(&m->a, CC_E, no);
+    }
+    as_cmp_ri(&m->a, KA, K_BOX);
+    as_jcc(&m->a, CC_NE, walk);
+    as_ld64(&m->a, KA, a, (int32_t)sizeof(Obj));   /* two boxes of numbers: their bits */
+    as_cmp_rm(&m->a, KA, b, (int32_t)sizeof(Obj));
+    as_jcc(&m->a, CC_E, yes);
+    as_jmp(&m->a, no);
+    as_bind(&m->a, &strings);
+    ms_string_equal(m, a, b, yes, no);
+    as_label_free(&differ); as_label_free(&strings);
+}
+void ms_string_equal(Masm *m, int a, int b, AsmLabel *yes, AsmLabel *no) {
+    enum { KA = R_S2, KB = R_S3, T = R_S6 };
+    if (a != R_S0 || b != R_S1) bug("ms_string_equal: the strings are not in R_S0 and R_S1", a, b);
+    AsmLabel loop, last;
+    as_label_init(&loop); as_label_init(&last);
+    as_ld32(&m->a, KA, a, (int32_t)offsetof(Obj, len));
+    as_ld32(&m->a, KB, b, (int32_t)offsetof(Obj, len));
+    as_cmp_rr(&m->a, KA, KB);
+    as_jcc(&m->a, CC_NE, no);
+    as_test_rr(&m->a, KA, KA);
+    as_jcc(&m->a, CC_E, yes);                    /* two empty strings */
+    as_bind(&m->a, &loop);
+    as_ld64(&m->a, KB, a, (int32_t)sizeof(Obj));
+    as_ld64(&m->a, T, b, (int32_t)sizeof(Obj));
+    as_xor_rr(&m->a, KB, T);
+    as_cmp_ri(&m->a, KA, 8);
+    as_jcc(&m->a, CC_BE, &last);
+    as_test_rr(&m->a, KB, KB);
+    as_jcc(&m->a, CC_NE, no);
+    as_add_ri(&m->a, a, 8);
+    as_add_ri(&m->a, b, 8);
+    as_sub_ri(&m->a, KA, 8);
+    as_jmp(&m->a, &loop);
+    as_bind(&m->a, &last);
+    /* the difference of the last word, of which KA bytes (1 to 8) count:
+       the others shifted out, by 64 - 8 KA */
+    as_shl_ri(&m->a, KA, 3);
+    as_mov_ri(&m->a, R_S1, 64);
+    as_sub_rr(&m->a, R_S1, KA);
+    as_shl_rr(&m->a, KB);
+    as_test_rr(&m->a, KB, KB);
+    as_jcc(&m->a, CC_E, yes);
+    as_jmp(&m->a, no);
+    as_label_free(&loop); as_label_free(&last);
+}
+/* the order of two short strings in line (masm.h): str_cmp's, on the
+   bytes as unsigned (runtime/prims.c) */
+void ms_string_order_short(Masm *m, AsmLabel *longer) {
+    enum { SA = R_S0, SB = R_S2, LA = R_S3, LB = R_S6, N = R_S1 };
+    AsmLabel min, lengths, done;
+    as_label_init(&min); as_label_init(&lengths); as_label_init(&done);
+    as_ld32(&m->a, LA, SA, (int32_t)offsetof(Obj, len));
+    as_ld32(&m->a, LB, SB, (int32_t)offsetof(Obj, len));
+    as_mov_rr(&m->a, N, LA);
+    as_cmp_rr(&m->a, LA, LB);
+    as_jcc(&m->a, CC_BE, &min);
+    as_mov_rr(&m->a, N, LB);
+    as_bind(&m->a, &min);
+    as_cmp_ri(&m->a, N, 8);
+    as_jcc(&m->a, CC_A, longer);
+    as_test_rr(&m->a, N, N);
+    as_jcc(&m->a, CC_E, &lengths);               /* one is empty */
+    as_ld64(&m->a, SA, SA, (int32_t)sizeof(Obj));
+    as_ld64(&m->a, SB, SB, (int32_t)sizeof(Obj));
+    as_bswap(&m->a, SA);
+    as_bswap(&m->a, SB);
+    as_shl_ri(&m->a, N, 3);                      /* the bytes past the shorter's length shifted out: by 64 - 8 N */
+    as_neg(&m->a, N);
+    as_add_ri(&m->a, N, 64);
+    as_shr_rr(&m->a, SA);
+    as_shr_rr(&m->a, SB);
+    as_cmp_rr(&m->a, SA, SB);
+    as_jcc(&m->a, CC_NE, &done);
+    as_bind(&m->a, &lengths);
+    as_cmp_rr(&m->a, LA, LB);                    /* the same bytes: the shorter first */
+    as_bind(&m->a, &done);
+    as_label_free(&min); as_label_free(&lengths); as_label_free(&done);
+}
+
 /* a nullary constructor's tag is its immediate; one with an argument's is
    in the object's header */
 void ms_load_tag_of_con(Masm *m, int r, int32_t s, AsmLabel *unless) {
