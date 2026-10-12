@@ -65,13 +65,14 @@ struct
   fun glob (dir, suffix) =
     List.map (fn n => dir ^ "/" ^ n) (sort (List.filter (fn n => String.isSuffix suffix n) (entries dir)))
 
-  (* run CMD (its program first: on PATH when it has no directory, and
-     from the root when its path is relative and DIR is another directory)
+  (* execEnv ENVF: run CMD in the environment ENVF makes of this one (its
+     program first: on PATH when it has no directory, and from the root
+     when its path is relative and DIR is another directory)
      in DIR, its streams to and from files ("" for /dev/null; stderr may be
      the file of stdout), for at most TIMEOUT seconds (0 for no limit); its
      exit status as the shell gives it: 128 and the signal for a signal,
      and 124 for the time *)
-  fun exec {cmd, dir, stdin, stdout, stderr, timeout} =
+  fun execEnv envf {cmd, dir, stdin, stdout, stderr, timeout} =
     let
       val mode = Posix.FileSys.S.flags [Posix.FileSys.S.irusr, Posix.FileSys.S.iwusr, Posix.FileSys.S.irgrp,
                                         Posix.FileSys.S.iroth]
@@ -89,7 +90,7 @@ struct
       val search = not (CharVector.exists (fn c => c = #"/") (hd cmd))
       val program = if search orelse not (isSome dir) then hd cmd else fromRoot (hd cmd)
       val pid =
-        Subprocess.spawn {program = program, args = cmd, env = NONE, search = search, dir = dir, stdin = SOME (n i),
+        Subprocess.spawn {program = program, args = cmd, env = SOME (envf (Posix.ProcEnv.environ ())), search = search, dir = dir, stdin = SOME (n i),
                           stdout = SOME (n out), stderr = SOME (n err), group = true, limits = Subprocess.unlimited}
       val () = (Posix.IO.close i; Posix.IO.close out; if stderr = stdout andalso stdout <> "" then () else Posix.IO.close err)
       fun code status =
@@ -110,6 +111,12 @@ struct
     in
       if timeout <= 0 then code (#status (Subprocess.wait (SOME pid))) else waitFor ()
     end
+
+  fun exec x = execEnv (fn e => e) x
+
+  (* an environment with a variable set, and without some *)
+  fun setEnv (k, v) env = (k ^ "=" ^ v) :: List.filter (fn kv => not (String.isPrefix (k ^ "=") kv)) env
+  fun unsetEnv ks env = List.filter (fn kv => not (List.exists (fn k => String.isPrefix (k ^ "=") kv) ks)) env
 
   (* what runevm --count says at exit, from its standard error *)
   fun countOf f =

@@ -35,7 +35,7 @@ What it rests on:
 | M8 | Laws on the runner || done 2026-10-12 |
 | M9 | The differential checks as oracles || done 2026-10-12 |
 | M10 | The tools' suites || done 2026-10-12 |
-| M11 | The protocol suites in SML | |
+| M11 | The protocol suites in SML || done 2026-10-12 |
 | M12 | Requirements and the doctor | |
 | M13 | The matrix, and the other machines | |
 | M14 | The rest, and the tools for flaky tests | |
@@ -1723,6 +1723,11 @@ M1 and M2 are independent of each other and of the rest.
   | `incremental/run.sh` | 805 |
   | `mutate.py` | 488 |
 * **Kept:** `notebook_client.py`, which is Jupyter's own client and so an oracle from outside, and `term.py`.
+
+* **Done** (2026-10-12):
+  - **In SML** (`tests/runner/protocols.sml`, specified by an agent from the drivers): the REPL's transcripts in the four ways of make test-repl, each way a job, with drive.py's interrupts (a pipe to the REPL, the output watched, `SIGINT` to its process); the diagnostics, a job each, in colour, plain, short and JSON; and `rune --serve` over JSON-RPC, with the UTF-8 request sent in `\u` escapes as Python sends it. `--accept` writes the transcripts' and the diagnostics' expected files. Retired: `repl/run.sh`, `drive.py`, `diagnostics/run.sh`, `serve/run.py`.
+  - **Drivers kept, run as jobs:** the REPL's protocol a script at a time (`repl-protocol/run.py`, whose transcripts compare Python's JSON text byte for byte), DAP and the kernel with the engine's channel a pipe and a connection (`dap/run.py`; `kernel/run.sh` and its ZMTP client), the 51 incremental scenarios one at a time (`run.sh` has `INCREMENTAL_EXACT=1` for that) and `mutate.py` (whose projects share Python's generator). Writing these in SML is a port of their protocols and of Python's Mersenne Twister, for the same verdicts; it is left for when they change. The terminal's `run.sh` stays a step: `term.py` stays (G8), and its `--windows` half is M13's.
+  - **Planted:** a transcript and a diagnostic that differ from what is expected, both found.
 
 ### M12. Requirements and the doctor (S–M, about 500)
 

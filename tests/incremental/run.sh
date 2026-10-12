@@ -72,7 +72,12 @@ fails() {
 }
 edit() { f=$dir/$1; shift; sed "$@" "$f" > "$f.new" && mv "$f.new" "$f"; }
 all="a.sml b.sml c.sml d.sml main.sml"
-run() { case "$1" in *"$filter"*) return 0 ;; esac; return 1; }
+# with INCREMENTAL_EXACT=1 the filter names one scenario, as the runner's
+# jobs give it (tests/runner/protocols.sml)
+run() {
+  if [ "${INCREMENTAL_EXACT:-}" = 1 ]; then [ "$1" = "$filter" ]; return; fi
+  case "$1" in *"$filter"*) return 0 ;; esac; return 1
+}
 
 # S1, cold then warm: the second compiles nothing, and is the same bytes
 if run S1; then

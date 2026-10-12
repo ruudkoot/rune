@@ -155,7 +155,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build test-install check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps test-incremental-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64 test-laws-hosts
+.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build test-install check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps test-diagnostics-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64 test-laws-hosts
 
 all: vm boot runedoc runeopt manifests basis-cache
 
@@ -944,11 +944,8 @@ bin/rune-repl.cmd: Makefile
 repl: bin/rune-repl bin/rune-repl.cmd
 
 # The REPL's transcripts, on every mode of the JIT (docs/repl.md)
-test-repl: bin/rune-repl bin/runevm
-	sh tests/repl/run.sh
-	sh tests/repl/run.sh --vm-opts --jit=off --out tests/out/repl-off
-	sh tests/repl/run.sh --vm-opts --jit=all --out tests/out/repl-all
-	sh tests/repl/run.sh --vm-opts "--jit=all --jit-tier=2" --out tests/out/repl-tier2
+test-repl: bin/rune-repl bin/runevm bin/rune-test
+	$(RUNE_TEST) --tier test-repl
 
 # rune-kernel, a Jupyter kernel for Standard ML (docs/kernel.md): a bridge
 # in SML over lib/jupyter that drives the REPL's engine as its child
@@ -961,9 +958,8 @@ bin/rune-kernel: bin/rune-kernel.rbc bin/rune-repl.img bin/runevm Makefile
 kernel: bin/rune-kernel
 # and again with the engine's channel a connection, as on Windows
 # (src/front/engine.sml)
-test-kernel: bin/rune-kernel
-	sh tests/kernel/run.sh
-	RUNE_ENGINE_CONNECT=1 sh tests/kernel/run.sh
+test-kernel: bin/rune-kernel bin/rune-test
+	$(RUNE_TEST) --tier test-kernel
 
 # rune-dap, the Debug Adapter Protocol for Standard ML (docs/dap.md): an
 # adapter in SML over lib/dap that drives the REPL's engine as its child;
@@ -974,14 +970,13 @@ bin/rune-dap: bin/rune-dap.rbc bin/rune-repl.img bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-dap.rbc" --vm "$$d/runevm" --image "$$d/rune-repl.img" "$$@"\n' > $@
 	chmod +x $@
 dap: bin/rune-dap
-test-dap: bin/rune-dap bin/rune-repl
-	python3 tests/dap/run.py
-	RUNE_ENGINE_CONNECT=1 python3 tests/dap/run.py
+test-dap: bin/rune-dap bin/rune-repl bin/rune-test
+	$(RUNE_TEST) --tier test-dap
 
 # The REPL's engine and its protocol (docs/repl-protocol.md): each script
 # of tests/repl-protocol played to rune-repl --engine, as a front drives it
-test-repl-protocol: bin/rune-repl bin/runevm
-	python3 tests/repl-protocol/run.py
+test-repl-protocol: bin/rune-repl bin/runevm bin/rune-test
+	$(RUNE_TEST) --tier test-repl-protocol
 
 # Programs on a terminal (docs/plans/repl.md, M1): each script of
 # tests/terminal starts a program in a tmux pane, types at it and waits for
@@ -990,8 +985,9 @@ test-terminal: bin/rune-repl bin/runevm $(RUNE)
 	sh tests/terminal/run.sh
 
 # diagnostics rendered with colour, and the palette's contrast (docs/diagnostics.md)
-test-diagnostics: $(RUNE)
-	sh tests/diagnostics/run.sh
+test-diagnostics: test-diagnostics-steps bin/rune-test
+	$(RUNE_TEST) --tier test-diagnostics
+test-diagnostics-steps: $(RUNE)
 	python3 tests/color/contrast.py
 
 # the cache's scenarios (tests/incremental/SCENARIOS.md; docs/units.md, The cache)
@@ -1011,18 +1007,15 @@ test-install: all repl dap kernel mlton smlnj-legacy bin/runedoc-mlton bin/runeo
 	RUNE_HEAP=$(RUNE_HEAP) SMLNJ=$(SMLNJ) sh tests/install/run.sh --host mlton --host smlnj-legacy
 
 # the compiler as a service, a prototype (src/driver/serve.sml)
-test-serve: $(RUNE) vm basis-cache
-	python3 tests/serve/run.py --rune $(RUNE)
+test-serve: $(RUNE) vm basis-cache bin/rune-test
+	$(RUNE_TEST) --tier test-serve
 
 # the compiler the same bytes every way it is built (docs/units.md, Parallel builds)
 check-reproducible: $(RUNE) vm basis-cache bin/rune.rbc bin/rune-test
 	$(RUNE_TEST) --tier check-reproducible
 
-test-incremental: test-incremental-steps bin/rune-test
+test-incremental: $(RUNE) vm basis-cache bin/rune-repl bin/rune-test
 	$(RUNE_TEST) --tier test-incremental
-test-incremental-steps: $(RUNE) vm basis-cache bin/rune-repl
-	sh tests/incremental/run.sh --rune $(RUNE)
-	python3 tests/incremental/mutate.py --rune $(RUNE) --steps 30 tests/incremental/functors tests/incremental/project
 
 check-positions: $(RUNE) $(RUNEVM) bin/rune-test
 	$(RUNE_TEST) --tier check-positions
@@ -1385,10 +1378,10 @@ bootstrap: bin/rune-boot bin/rune.stack.rbc bin/rune-test
 # the tests): the inventory of tests/runner over lib/test/runner, compiled
 # by $(RUNE) and run on the register VM with its JIT.
 RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.sml tests/runner/laws.sml tests/runner/sh.sml \
-               tests/runner/oracles.sml tests/runner/tools.sml tests/runner/main.sml
+               tests/runner/oracles.sml tests/runner/tools.sml tests/runner/protocols.sml tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
-                   $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml)
-	$(RUNE) --library test/runner $(RUNNER_SRCS) -o $@
+                   $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml)
+	$(RUNE) --library test/runner --library json $(RUNNER_SRCS) -o $@
 bin/rune-test: bin/rune-test.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-test.rbc" "$$@"\n' > $@
 	chmod +x $@

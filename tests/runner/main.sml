@@ -100,15 +100,9 @@ struct
        step ("test-heap-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}, ["layout"], ["tests/runtime/*"]),
        some ("check-docs", ["docs"], ["*.md", "docs/*", "tests/basis/*", "lib/random/*", "lib/test/property/*"]),
        step ("check-layouts", {cpus = Int.min (2, few), memory = 500, pools = [], after = []}, ["layout"], ["tests/layouts/*"]),
-       alone ("test-incremental-steps", ["test-incremental"], ["tests/incremental/*", "examples/hello.sml"]),
        alone ("test-install", [], ["tests/install/*", "examples/hello.sml"]),
-       alone ("test-serve", [], ["tests/serve/*", "examples/hello.sml"]),
-       alone ("test-repl", [], ["tests/repl/*"]),
        alone ("test-terminal", [], ["tests/terminal/*"]),
-       alone ("test-diagnostics", [], ["tests/diagnostics/*", "tests/color/*"]),
-       alone ("test-repl-protocol", [], ["tests/repl-protocol/*"]),
-       alone ("test-kernel", [], ["tests/kernel/*"]),
-       alone ("test-dap", [], ["tests/dap/*"]),
+       alone ("test-diagnostics-steps", ["test-diagnostics"], ["tests/color/*"]),
        alone ("test-census", [], perfFiles @ ["tools/heapsim/*"]),
        alone ("check-heapsim", [], ["tools/heapsim/*"]),
        alone ("check-gcsim", [], ["tools/heapsim/*"]),
@@ -162,7 +156,7 @@ struct
        expectations ("mlton-skip", "tests/external/mlton-skip.txt", NONE),
        expectations ("lib-deviations", "tests/lib/deviations.txt", NONE)]
 
-  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, Oracles.tree, Tools.tree, Canary.tests]
+  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, Oracles.tree, Tools.tree, Protocols.tree, Canary.tests]
 end
 
 (* laws-one RBC STRUCTURE is the command of a job of the laws
@@ -173,4 +167,7 @@ val () =
   | args =>
       case Oracles.command args of
         SOME f => f ()
-      | NONE => case Tools.command args of SOME f => f () | NONE => Cli.main Inventory.tests
+      | NONE =>
+          case Tools.command args of
+            SOME f => f ()
+          | NONE => case Protocols.command args of SOME f => f () | NONE => Cli.main Inventory.tests
