@@ -94,10 +94,13 @@ def main():
     parser.add_argument('--vm-options', default='')
     parser.add_argument('--bench', action='store_true')
     parser.add_argument('--paired-oracle', action='store_true', help='alternate current and saved-oracle runs')
+    parser.add_argument('--paired-sml', action='store_true', help='alternate this bytecode between the selected backend and forced SML')
     parser.add_argument('--compiler-workloads', action='store_true')
     parser.add_argument('--samples', type=int, default=5)
     parser.add_argument('--out', default='tests/out/intinf/current')
     args = parser.parse_args()
+    if args.paired_sml and args.paired_oracle:
+        parser.error('choose one paired reference')
     if args.samples < 2:
         parser.error('at least two samples are required')
     os.chdir(ROOT)
@@ -178,7 +181,9 @@ def main():
     report['tool_hashes'] = {p:hashlib.sha256(Path(p).read_bytes()).hexdigest()
                             for p in (compiler,vm[0],str(ROOT/'bin/rune.rbc'))}
     report['loadavg'] = list(os.getloadavg())
+    report['affinity'] = sorted(os.sched_getaffinity(0))
     report['paired_oracle'] = args.paired_oracle
+    report['paired_sml'] = args.paired_sml
     report['versions'] = {p:subprocess.check_output([p,'--version'],text=True).strip() for p in (compiler,vm[0])}
     report['cpu'] = next((line.split(':',1)[1].strip() for line in Path('/proc/cpuinfo').read_text().splitlines()
                           if line.startswith('model name')), 'unknown')
@@ -204,25 +209,34 @@ def main():
             oracle, _ = compile(oracle_path, w['name']+'-oracle', [HERE/'oracle.sml'])
         measurements = []
         oracle_measurements = []
+        sml_measurements = []
         for i in range(args.samples+1):
             runs = [(rbc, measurements, 'current')]
+            if args.paired_sml:
+                runs.append((rbc,sml_measurements,'sml'))
             if oracle:
                 runs.append((oracle, oracle_measurements, 'oracle'))
             for program, samples, backend in (runs if i % 2 else list(reversed(runs))):
-                stdout, usage = execute([*vm,program], w['name']+f'-{backend}-{i}')
+                stdout, usage = execute([*vm,*(['--intinf=sml'] if backend == 'sml' else []),program], w['name']+f'-{backend}-{i}')
                 timing, answer = stdout.split('\n',1)
                 assert timing.startswith('TIMING ') and answer == expected, (w['name'],stdout,expected)
                 usage['kernel_seconds'] = float(timing[7:])
                 assert usage['kernel_seconds'] >= 0
                 if i:
                     samples.append(usage)
-        stdout, instrumented = execute([*vm,'--count','--stats',rbc], w['name']+'-instrumented')
+        stdout, instrumented = execute([*vm,'--count','--stats',*(['--intinf-stats'] if args.paired_sml else []),rbc], w['name']+'-instrumented')
         # The instrumented transcript is separate from all headline timing samples.
         assert stdout.split('\n',1)[1] == expected
         report['workloads'][w['name']] = {**w, 'compile':compile_usage, 'runs':measurements,
                                          'source_sha256':hashlib.sha256(source.encode()).hexdigest(),
                                          'expected':expected, 'instrumented':instrumented['stderr'],
                                          'median_seconds':statistics.median(x['kernel_seconds'] for x in measurements)}
+        if args.paired_sml:
+            entry = report['workloads'][w['name']]
+            entry['sml_runs'] = sml_measurements
+            entry['paired_sml_speedup'] = statistics.median(o['kernel_seconds']/c['kernel_seconds'] for o,c in zip(sml_measurements,measurements))
+            _, stats = execute([*vm,'--intinf=sml','--count','--stats','--intinf-stats',rbc],w['name']+'-sml-instrumented')
+            entry['sml_instrumented'] = stats['stderr']
         if oracle:
             entry = report['workloads'][w['name']]
             entry['oracle_runs'] = oracle_measurements

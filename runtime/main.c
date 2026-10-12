@@ -204,7 +204,7 @@ int main(int argc, char **argv) {
         else if (strcmp(t, "2") == 0) jit.tier = 2;
         else { fprintf(stderr, "runevm: RUNEVM_JIT_TIER=%s: 1 or 2\n", t); return 2; }
     }
-    if (!intinf_given && getenv("RUNEVM_INTINF") &&
+    if (!resume && !intinf_given && getenv("RUNEVM_INTINF") &&
         !vm_intinf_mode(getenv("RUNEVM_INTINF"), &intinf_mode)) {
         fputs("runevm: RUNEVM_INTINF must be auto, gmp or sml\n", stderr);
         return 2;

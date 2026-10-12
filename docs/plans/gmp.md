@@ -9,8 +9,8 @@ check on GMP results.
 Written on 2026-10-06 against `ca87fa07d239a072cff24bac03ce72b74ff93a7a`.
 The owner approved the design below, including runtime backend selection,
 representation changes, finite default limits, and pinned GMP release builds.
-This document completes the design milestone only. No GMP integration,
-replacement arithmetic, or performance measurement is claimed here.
+The original design was recorded before implementation. The status table and
+dated evidence below distinguish that plan from completed work and measurements.
 
 ## Status and requirements
 
@@ -20,7 +20,7 @@ replacement arithmetic, or performance measurement is claimed here.
 | M1: establish correctness and performance baselines | M0 | done 2026-10-06; fixed corpus and baseline below |
 | M2: replace the SML representation and kernels | M1 | done 2026-10-08; implementation and acceptance evidence below |
 | M3: add GMP behind the shared interface | M2 | done 2026-10-11; integration and acceptance evidence below |
-| M4: harden runtime integration and tune dispatch | M3 | planned |
+| M4: harden runtime integration and tune dispatch | M3 | done 2026-10-12; hardening, performance and acceptance evidence below |
 | M5: complete portability and release validation | M4 | planned |
 
 Each completed milestone is committed separately, with its commands, results,
@@ -721,3 +721,154 @@ checks for each VM, eight dependency-configuration probes, and build switching
 from pinned GMP to disabled and back to the identical pinned VM binary.
 `git diff --check` and local roadmap links passed. Raw local evidence is under
 `tests/out/intinf/m3`; remote CI has not been executed from this worktree.
+
+## M4: runtime hardening and measured dispatch
+
+Image format 12 adds requested-mode and reporting policy for emulated forks.
+A reproduced failure showed a parent forced to SML resuming its child with
+GMP; another showed an invalid inherited `RUNEVM_INTINF` default breaking the
+child before its image could restore the parent's choice. Forks now inherit
+policy, while saved-world restoration still selects from the current VM.
+Native output observes the same option precedence. Neither path serializes
+GMP objects or pointers.
+
+The hardening harness rejects malformed primitive arguments and image policy
+fields, including negative zero before division. A zero divisor raises `Div`
+before any GMP allocation. Dedicated tests invoke the real allocator hooks
+with injected `malloc` and `realloc` failures; both terminate with the runtime
+limit diagnostic. Successful resize/shrink/zero-size calls leave no tracked
+allocations. These tests and native fork checks are part of `make check`.
+
+The operation/shape sweep found GMP faster for addition, multiplication and
+bit operations at the first measured large sizes, but slower for a small
+dividend divided by a much larger divisor (0.617x SML at 31/65 bits). Unit
+and clearly smaller-dividend cases now return their direct SML answers; GMP
+handles the remaining eligible large arithmetic. There is no measured case
+for an extra arbitrary bit-count cutoff in the tested add/multiply/bit range.
+The fallback's right shift works over indexed arithmetic digits and safely
+saturates counts that cannot fit a machine int.
+
+Initial measurements found a reproducible forced-SML compiler regression on
+the signature workload. Profiling showed unnecessary initialization code:
+Word and Word64 built powers of two with general power/multiply/divide
+operations, retaining those kernels even for a program naming only signatures.
+Their conversion constants now use exact shifts. Boundary and conversion
+checks pass on both backends; a 50-pair rerun reduced the signature ratio to
+1.0313 for SML versus M1 (GMP: 0.9559). Final measurements and acceptance
+are recorded below. Earlier noisy timings and the reproduced failures remain
+under `tests/out/intinf/m4`; they have not been relabelled as passes.
+
+The final pre-acceptance run then reproduced a small-addition regression against
+M2 (100 pairs each: GMP 1.0805 and 1.0845; SML 1.0582 and 1.0723).
+The small-path bytecode still allocated temporary argument tuples. Binding the
+two operands once lets Rune's existing worker transformation pass them directly;
+no compiler or public interface change is needed. A separate 100-pair experiment
+measured M4/M2 ratios of 0.8303/0.8406 for SML addition/multiplication and
+0.8586/0.8695 for GMP. These are exploratory measurements; the full fixed corpus
+and acceptance were rerun after integrating the change.
+
+
+### M4 measured results
+
+[The portable performance record](../../tests/intinf/gmp-performance.json)
+retains the final commands, source/tool hashes, raw samples, counts, memory,
+load and CPU affinity, conversion measurements, exploratory dispatch sweep,
+and the earlier small-arithmetic regressions. The fixed corpus, expected
+answers, iteration counts and 5% gate were unchanged. Arithmetic uses seven
+alternating pairs; the separate small-kernel comparison uses 100 pairs.
+
+| Workload | New SML / old list speedup | GMP / new SML speedup |
+|---|---:|---:|
+| small-add | 3.367 | 0.976 |
+| small-mul | 4.170 | 1.028 |
+| mul-512 | 2.314 | 4.946 |
+| mul-4096 | 3.015 | 36.604 |
+| mul-unbalanced | 1.582 | 4.038 |
+| div-1024 | 43.245 | 4.321 |
+| div-4096 | 59.812 | 9.983 |
+| div-unbalanced | 29.241 | 5.663 |
+| bits-4096 | 0.787 | 2.310 |
+| convert-4096 | 1.870 | 1.000 |
+| power-1024 | 11.096 | 36.134 |
+| factorial-300 | 0.762 | 1.877 |
+
+The SML multiplication/division geometric mean is **9.703x**; the GMP
+large-arithmetic geometric mean is **5.555x**. Both exceed 2x. The SML bit
+workload and factorial remain slower than the original list implementation;
+formatting is still SML-owned and gains essentially nothing from selecting
+GMP. These individual limitations are retained alongside the aggregates.
+No Karatsuba implementation or crossover is claimed.
+
+Compared to M2 in 100 paired runs, small-add/small-mul elapsed ratios are
+0.8444/0.8593 with GMP selected and 0.8291/0.8678 with SML selected. The direct
+argument calls remove approximately half the managed allocation in these
+workloads: small-add falls from 144 MB to 72 MB, small-mul from 96 MB to 48 MB.
+Counts are recorded separately from uninstrumented timings, including the
+backend-dependent initialization work.
+
+Compiler comparisons use 25 pairs after two warmup pairs, each revision's
+own Basis, and hash-verified baseline artifacts. Every output matches its
+reference. Ratios below mean current elapsed time divided by baseline time.
+
+| Compiler workload | GMP / M1 | SML / M1 | GMP / M2 | SML / M2 |
+|---|---:|---:|---:|---:|
+| compile-hello | 0.9606 | 0.9410 | 0.9993 | 1.0294 (pooled) |
+| compile-sigs | 1.0290 | 1.0492 | 0.9367 | 0.9575 |
+| bootstrap | 1.0030 | 1.0255 | 1.0457 | 1.0169 |
+
+The initial SML/M2 hello wall-time ratio was 1.0945 while its CPU-time ratio
+was 0.9839. A prescribed 100-pair repeat measured 0.9999 wall time; pooling
+all 125 pairs gives 1.0294. Both the repeat and pooled wall medians must pass;
+CPU time is diagnostic and does not replace the wall-time gate. Original,
+repeat and pooled evidence are retained. No reproducible small/compiler
+regression above 5% remains in these measurements; this is evidence on the
+recorded machine, not a timing guarantee on every host.
+
+Conversion measurements use 50,000 roundtrips and seven pairs. The GMP
+primitive imports, copies through power-one, exports and allocates its result;
+the storage path unpacks and repacks with scratch allocation. These are
+whole-boundary costs, not isolated import latency.
+
+| Magnitude bits | GMP roundtrip microseconds | Storage roundtrip microseconds |
+|---|---:|---:|
+| 8 | 0.327 | 0.102 |
+| 32 | 0.328 | 0.155 |
+| 64 | 0.439 | 0.181 |
+| 128 | 0.471 | 0.265 |
+| 256 | 0.602 | 0.355 |
+| 1024 | 1.552 | 0.885 |
+| 4096 | 4.891 | 2.588 |
+| 16384 | 24.129 | 12.266 |
+
+### M4 acceptance
+
+[The hardening record](../../tests/intinf/gmp-hardening.json) records source,
+dependency and transcript hashes. All checks ran outside the syscall sandbox:
+
+* `make check JOBS=8`: 343 language tests, 139,218 Basis checks (existing
+  explained deviations retained), bootstrap, native/register/JIT checks,
+  documentation and ISA checks, and identical bytecode for 513 programs
+  across all seven compiler builds. Host builds of `runedoc` and `runeopt`
+  also agree.
+* `make matrix-quick JOBS=8`: Rune's Basis on Rune and all six host
+  configurations; the report is retained at
+  `tests/out/intinf/m4/host-report.md`. Existing documented host failures
+  remain explained, not silently converted into passes.
+* GMP ASan/UBSan stress: 76 bounded subprocesses, equal counts within each
+  backend across register tiers, zero live GMP allocations after returning
+  calls. The preserved full oracle uses GC interval 101; compact cases use
+  interval 1, as established after M3's recorded interval-1 timeout.
+* Hardening: 53 subprocesses including native fork policy, 35 with the
+  GMP-free VM, and 47 through the sanitizer VM. The separate allocator
+  harness passes success/accounting cases and predictable allocation and
+  reallocation failures.
+* Stack, register (including deoptimization) and native sanitizer suites;
+  `make test-stress JOBS=8`; `make test-heap JOBS=8`;
+  `make test-windows JOBS=2`; and `make test-portability JOBS=8` all pass.
+  The cross-platform builds remain GMP-free here. GMP-enabled cross builds
+  and release CPU provisioning belong to M5.
+* `make docs`, documentation consistency, local roadmap links and
+  `git diff --check` pass. No persistent GMP arithmetic objects were added.
+
+Raw local evidence is under `tests/out/intinf/m4`. Remote CI has not run
+from this worktree. The main checkout and collector draft remain untouched.

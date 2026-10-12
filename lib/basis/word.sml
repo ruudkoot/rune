@@ -23,8 +23,10 @@ struct
   val toLarge = _prim "word64_from_word" : word -> _prim "word64"
   val toLargeX = _prim "word64_from_word_x" : word -> _prim "word64"
   val fromLarge = _prim "word64_to_word" : _prim "word64" -> word
-  val two64 = IntInf.pow (IntInf.fromInt 2, wordSize)             (* 2^wordSize *)
-  val two63 = IntInf.pow (IntInf.fromInt 2, Int.- (wordSize, 1))  (* 2^(wordSize - 1) *)
+  (* Powers of two need only a shift. In particular, loading WORD's types
+     should not keep general multiplication/division kernels alive. *)
+  val two64 = IntInf.<< (IntInf.fromInt 1, fromInt wordSize)
+  val two63 = IntInf.<< (IntInf.fromInt 1, fromInt (Int.- (wordSize, 1)))
   fun toLargeInt w = let val i = toIntX w in if Int.< (i, 0) then IntInf.+ (IntInf.fromInt i, two64) else IntInf.fromInt i end
   fun toLargeIntX w = IntInf.fromInt (toIntX w)
   fun fromLargeInt x =

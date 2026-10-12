@@ -12,6 +12,7 @@ enum { INTINF_AUTO, INTINF_SML, INTINF_GMP };
 size_t vm_intinf_max_bits(const VM *vm);
 size_t vm_intinf_gmp_memory(const VM *vm);
 void vm_intinf_check(VM *vm, uint64_t bits);
+uint64_t vm_intinf_validate(VM *vm, Value magnitude, int negative);
 int vm_intinf_mode(const char *text, int *mode);
 int vm_intinf_available(const VM *vm);
 int vm_intinf_configure(VM *vm);

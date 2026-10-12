@@ -1426,7 +1426,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
                build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
-check-tools: $(CHECK_TOOLS) bin/runevm-sml
+check-tools: $(CHECK_TOOLS) bin/runevm-sml build/intinf-alloc-test
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what
@@ -1519,3 +1519,11 @@ test-intinf-backends: $(RUNE) bin/runevm bin/runevm-sml
 	python3 tests/intinf/build-config.py
 	python3 tests/intinf/options.py --vm bin/runevm
 	python3 tests/intinf/options.py --vm bin/runevm-sml
+
+build/intinf-alloc-test: tests/intinf/alloc-failure.c runtime/intinf.c build/librune.a $(VM_HDRS) $(GMP_DIR)/config.mk build/gmp/selected
+	$(CC) $(CFLAGS) $(RT_INC) $(GMP_FLAGS) -o $@ tests/intinf/alloc-failure.c build/librune.a $(GMP_LDLIBS) -lm
+
+.PHONY: test-intinf-hardening
+test-intinf-hardening: $(RUNE) $(RUNEOPT) vm bin/runevm-sml build/intinf-alloc-test
+	python3 tests/intinf/hardening.py $(if $(filter yes,$(NATIVE_HOST)),--native)
+	python3 tests/intinf/hardening.py --vm bin/runevm-sml --out tests/out/intinf/hardening-sml

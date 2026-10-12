@@ -47,9 +47,12 @@ with other GMP users needs an allocator ownership protocol.
 `--intinf-stats` reports selection, limits, GMP calls, cumulative requested
 bytes, peak live requested bytes, and live bytes at exit. `--version` reports
 both header and linked-library versions plus target and build provenance.
-Image format 11 adds both arithmetic limits. Backend availability and native
-arithmetic state are not serialized. Native programs accept the same policy
-options through `RUNEVM_OPTIONS` (an explicit `gmp` request fails there).
+Image format 14 carries both arithmetic limits and fork policy. Emulated
+fork inherits the requested mode and reporting flag; it does not reapply an
+inherited environment default. A saved world's backend selection comes from
+the restoring VM. Availability and native arithmetic objects are not
+serialized. GMP counters restart when an image is read. Native programs accept
+the same policy options through `RUNEVM_OPTIONS` (an explicit `gmp` request fails there).
 
 ## Values and objects
 

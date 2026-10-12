@@ -3006,9 +3006,13 @@ static int p_intinf_binary(VM *vm) {
 static int p_intinf_divmod(VM *vm) {
     int floor = intinf_boolean(vm, ARG(4));
     int na = intinf_boolean(vm, ARG(3)), nb = intinf_boolean(vm, ARG(1));
-    check_obj(vm, ARG(2), K_STRING, "intinf_divmod");
-    Obj *b = check_obj(vm, ARG(0), K_STRING, "intinf_divmod");
-    if (obj_len(b) == 0) return raise_with(vm, 5, EXN_DIV);
+    Obj *divisor = check_obj(vm, ARG(0), K_STRING, "intinf_divmod");
+    if (obj_len(divisor) == 0) {
+        vm_intinf_validate(vm, ARG(2), na);
+        vm_intinf_validate(vm, ARG(0), nb);
+        return raise_with(vm, 5, EXN_DIV);
+    }
+    /* The nonzero path validates both operands in the shared binding. */
     Value v = vm_intinf_divmod(vm, floor, na, ARG(2), nb, ARG(0));
     return ret(vm, 5, v);
 }

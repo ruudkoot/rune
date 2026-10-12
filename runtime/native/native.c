@@ -274,7 +274,7 @@ typedef struct Options {
     int stats, count, emulate_fork, checked, gc_verify, gc_compact, gc_stress_cycles, low_pause, nursery_max_set;
     char *restore, *gc_log;
     size_t intinf_bits, intinf_memory;
-    int intinf_mode, intinf_stats;
+    int intinf_mode, intinf_stats, intinf_given;
 } Options;
 
 /* A size in bytes or a count, as runevm-stack takes it (runtime/main.c). */
@@ -312,7 +312,7 @@ static void options(const char *text, const char *where, Options *o) {
             i++;
         else if (strcmp(w, "--equality-work") == 0 && i + 1 < n && size_arg(words[i + 1], &o->equality_work) && o->equality_work > 0)
             i++;
-        else if (strncmp(w, "--intinf=", 9) == 0 && vm_intinf_mode(w + 9, &o->intinf_mode)) { }
+        else if (strncmp(w, "--intinf=", 9) == 0 && vm_intinf_mode(w + 9, &o->intinf_mode)) o->intinf_given = 1;
         else if (strcmp(w, "--intinf-stats") == 0) o->intinf_stats = 1;
         else if (strcmp(w, "--intinf-max-bits") == 0 && i + 1 < n && size_arg(words[i + 1], &o->intinf_bits)
                  && o->intinf_bits >= 64 && o->intinf_bits <= INTINF_MAX_BITS) i++;
@@ -360,9 +360,7 @@ static char *program_name;
 
 int main(int argc, char **argv) {
     Options o = { .heap = 4u << 20, .heap_fill = 50, .nursery = (size_t)1 << 20, .nursery_max = (size_t)8 << 20, .old_kind = OLD_IMMIX };
-    if (getenv("RUNEVM_INTINF") && !vm_intinf_mode(getenv("RUNEVM_INTINF"), &o.intinf_mode)) {
-        fputs("runevm: RUNEVM_INTINF must be auto, gmp or sml\n", stderr); return 2;
-    }
+    int child = argc == 3 && strcmp(argv[0], "runevm") == 0 && strcmp(argv[1], "--resume") == 0;
     vm_same_program = same_program;
     options(rune_options, "runeopt --options", &o);
     /* The options are the runtime's, as runevm-stack's are, and not part of what
@@ -370,15 +368,18 @@ int main(int argc, char **argv) {
     const char *env = getenv("RUNEVM_OPTIONS");
     if (env) { options(env, "RUNEVM_OPTIONS", &o); unsetenv("RUNEVM_OPTIONS"); }
     if (o.low_pause && !o.nursery_max_set) o.nursery_max = 0;   /* the low-pause collector's nursery stays --nursery N */
+    if (!child && !o.intinf_given && getenv("RUNEVM_INTINF") &&
+        !vm_intinf_mode(getenv("RUNEVM_INTINF"), &o.intinf_mode)) {
+        fputs("runevm: RUNEVM_INTINF must be auto, gmp or sml\n", stderr); return 2;
+    }
     VM arithmetic = {0};
     arithmetic.intinf_mode = o.intinf_mode;
-    if (!vm_intinf_configure(&arithmetic)) return 2;
+    if (!child && !vm_intinf_configure(&arithmetic)) return 2;
 
     /* A world to carry on: an image Runtime.save wrote (--restore FILE), or
        the child of a fork emulated by a second process (runtime/image.c), which is
        started as `runevm --resume TOKEN` whichever program it is. Its state,
        flags and arguments included, are the image's. */
-    int child = argc == 3 && strcmp(argv[0], "runevm") == 0 && strcmp(argv[1], "--resume") == 0;
     if (o.restore || child) {
         VM *vm = calloc(1, sizeof(VM));
         char err[256];

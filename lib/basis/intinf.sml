@@ -187,8 +187,13 @@ struct
        else if na = nb then make(na,addMag(ma,mb))
        else if cmpMag(ma,mb) = LESS then make(nb,subMag(mb,ma))
        else make(na,subMag(ma,mb)) end
-  fun addI (S a,S b) = (S(a+b) handle Overflow => addBig(S a,S b))
-    | addI (a,S 0) = a | addI (S 0,b) = b | addI p = addBig p
+  (* Destructure the arguments once so known calls can pass the operands
+     directly, without allocating an argument tuple on the small path. *)
+  fun addI (a,b) =
+    case a of
+      S x => (case b of S y => (S(x+y) handle Overflow => addBig(a,b))
+                     | _ => if x = 0 then b else addBig(a,b))
+    | _ => (case b of S 0 => a | _ => addBig(a,b))
   fun subI (S a,S b) = (S(a-b) handle Overflow => addBig(S a,negI(S b)))
     | subI (a,b) = addI(a,negI b)
   fun mulBig (a,b) =
@@ -196,29 +201,48 @@ struct
         val () = checkBits(magBits ma+magBits mb-1)
     in if gmpAvailable() then make(gmpBinary(2,negative a,ma,negative b,mb))
        else make(negative a <> negative b,mulMag(ma,mb)) end
-  fun mulI (S a,S b) = (S(a*b) handle Overflow => mulBig(S a,S b))
-    | mulI (S 0,_) = zero | mulI (_,S 0) = zero
-    | mulI (S 1,b) = b | mulI (a,S 1) = a | mulI p = mulBig p
+  fun mulI (a,b) =
+    case a of
+      S x => (case b of S y => (S(x*y) handle Overflow => mulBig(a,b))
+                     | _ => if x = 0 then zero else if x = 1 then b else mulBig(a,b))
+    | _ => (case b of S 0 => zero | S 1 => a | _ => mulBig(a,b))
   fun quotBig (a,b) =
     if isZero b then raise Div
-    else if gmpAvailable() then
-      let val (q,r) = gmpDivMod(false,negative a,magnitude a,negative b,magnitude b)
-      in (make q,make r) end
-    else let val (q,r) = divModMag(magnitude a,magnitude b)
-         in (make(negative a <> negative b,q),make(negative a,r)) end
-  fun quotRemI (S a,S b) = ((S(intQuot(a,b)),S(intRem(a,b)))
+    else let val ma = magnitude a and mb = magnitude b
+         in if strSize ma < strSize mb then (zero,a)
+            else if gmpAvailable() then
+              let val (q,r) = gmpDivMod(false,negative a,ma,negative b,mb)
+              in (make q,make r) end
+            else let val (q,r) = divModMag(ma,mb)
+                 in (make(negative a <> negative b,q),make(negative a,r)) end
+         end
+  fun quotRemI (a,S 1) = (a,zero)
+    | quotRemI (a,S (~1)) = (negI a,zero)
+    | quotRemI (S a,S b) = ((S(intQuot(a,b)),S(intRem(a,b)))
                            handle Overflow => quotBig(S a,S b))
+    (* A canonical large magnitude exceeds every nonnegative small value.
+       A negative small value can tie the positive large boundary, so that
+       case still uses the general division path. *)
+    | quotRemI (a as S n,b as B (neg,s)) =
+        if n >= 0 orelse neg orelse strSize s > smallBytes then (zero,a)
+        else quotBig(a,b)
     | quotRemI p = quotBig p
   fun floorFromTrunc (a,b) =
     let val (q,r) = quotRemI(a,b)
     in if isZero r orelse negative a = negative b then (q,r)
        else (subI(q,one),addI(r,b)) end
-  fun divModI (a as S _,b as S _) = floorFromTrunc(a,b)
+  fun divModI (a,S 1) = (a,zero)
+    | divModI (a,S (~1)) = (negI a,zero)
+    | divModI (a as S _,b) = floorFromTrunc(a,b)
     | divModI (a,b) =
       if isZero b then raise Div
       else if gmpAvailable() then
-        let val (q,r) = gmpDivMod(true,negative a,magnitude a,negative b,magnitude b)
-        in (make q,make r) end
+        let val ma = magnitude a and mb = magnitude b
+        in if strSize ma < strSize mb then
+             if negative a = negative b then (zero,a) else (S (~1),addI(a,b))
+           else let val (q,r) = gmpDivMod(true,negative a,ma,negative b,mb)
+                in (make q,make r) end
+        end
       else floorFromTrunc(a,b)
   fun compare (S a,S b) = if a < b then LESS else if a > b then GREATER else EQUAL
     (* Canonical large values lie outside the machine range. Mixed
@@ -399,20 +423,22 @@ struct
     if w = 0w0 then x
     else if isZero x then zero
     else if gmpAvailable() then make(gmpShift(false,negative x,magnitude x,w))
-    else let val k = wordToIntX w
+    else let val k = wordToInt w handle Overflow => ~1
         val neg = negative x
         val m = magnitude(if neg then subI(absI x,one) else x)
-        val n = strSize m
         fun shifted () =
-          if k < 0 orelse k div 8 >= n then zero
-          else let val whole = k div 8 and bits = k mod 8
+          if k < 0 orelse k >= magBits m then zero
+          else let val (digits,n) = unpack m
+                   val whole = k div limbBits and bits = k mod limbBits
                    val factor = pow2 bits
-                   val out = RuneBytes.new(n-whole,0)
+                   val highFactor = base div factor
+                   val out = anew(n-whole,0)
                    fun loop i = if i = n-whole then ()
-                     else let val v = byte(m,i+whole) + (if i+whole+1 < n then byte(m,i+whole+1)*256 else 0)
-                          in bput(out,i,(v div factor) mod 256); loop(i+1) end
+                     else let val low = at(digits,i+whole) div factor
+                              val high = if i+whole+1 < n then at(digits,i+whole+1) mod factor else 0
+                          in put(out,i,low+high*highFactor); loop(i+1) end
                    val () = loop 0
-               in make(false,RuneBytes.extract(out,0,n-whole)) end
+               in make(false,pack(out,n-whole)) end
         val v = shifted()
     in if neg then negI(addI(v,one)) else v end
 

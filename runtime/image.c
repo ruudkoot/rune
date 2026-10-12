@@ -185,6 +185,10 @@ static void write_image(VM *vm, Stream *s, int kind) {
     put_u32(s, (uint32_t)vm->emulate_fork);
     put_u32(s, (uint32_t)fegetround());
     put_u32(s, (uint32_t)vm->heap_fill);
+    /* A fork inherits policy. A saved world deliberately leaves selection
+       to its restoring VM; only canonical values and budgets persist. */
+    put_u32(s, kind == IMAGE_FORK ? (uint32_t)vm->intinf_mode : INTINF_AUTO);
+    put_u32(s, kind == IMAGE_FORK ? (uint32_t)vm->intinf_stats : 0);
     put_u64(s, (uint64_t)vm->heap_limit);
     put_u64(s, (uint64_t)(vm->equality_work ? vm->equality_work : 1000000));
     put_u64(s, (uint64_t)vm_intinf_max_bits(vm));
@@ -561,6 +565,15 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     vm->heap_fill = get_u32(&s);
     if (s.ok && (vm->heap_fill < 1 || vm->heap_fill > 100))
         return failed(&s, err, errlen, "the image is not sound");
+    uint32_t intinf_mode = get_u32(&s), intinf_stats = get_u32(&s);
+    if (!s.ok || intinf_mode > INTINF_GMP || intinf_stats > 1)
+        return failed(&s, err, errlen, "bad IntInf policy in the image");
+    if (kind == IMAGE_FORK) {
+        vm->intinf_mode = (int)intinf_mode;
+        vm->intinf_stats = (int)intinf_stats;
+        if (!vm_intinf_configure(vm))
+            return failed(&s, err, errlen, "requested GMP backend unavailable in resumed VM");
+    }
     uint64_t heap_limit = get_u64(&s), equality_work = get_u64(&s);
     if (!s.ok || heap_limit > SIZE_MAX || (heap_limit && heap_limit < 4096) ||
         equality_work == 0 || equality_work > SIZE_MAX)

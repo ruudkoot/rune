@@ -21,6 +21,25 @@ int vm_intinf_mode(const char *text, int *mode) {
     return 1;
 }
 
+uint64_t vm_intinf_validate(VM *vm, Value value, int negative) {
+    if (!val_is(value, T_PTR) || obj_kind(val_ptr(value)) != K_STRING)
+        vm_fatal(vm, "intinf GMP primitive: wrong magnitude type");
+    Obj *s = val_ptr(value);
+    const unsigned char *bytes = (const unsigned char *)obj_bytes(s);
+    uint32_t length = obj_len(s);
+    if (length && bytes[length - 1] == 0)
+        vm_fatal(vm, "intinf GMP primitive: noncanonical magnitude");
+    if (!length && negative) vm_fatal(vm, "intinf GMP primitive: negative zero");
+    uint64_t bits = 0;
+    if (length) {
+        unsigned top = bytes[length - 1], top_bits = 0;
+        while (top) { top >>= 1; top_bits++; }
+        bits = ((uint64_t)length - 1) * 8 + top_bits;
+    }
+    vm_intinf_check(vm, bits);
+    return bits;
+}
+
 #if defined(RUNE_HAVE_GMP) && RUNE_HAVE_GMP
 #include <gmp.h>
 #if __GNU_MP_VERSION < 6 || (__GNU_MP_VERSION == 6 && __GNU_MP_VERSION_MINOR < 3)
@@ -112,23 +131,9 @@ typedef struct Magnitude {
 } Magnitude;
 
 static Magnitude magnitude(VM *vm, Value value, int negative) {
-    if (!val_is(value, T_PTR) || obj_kind(val_ptr(value)) != K_STRING)
-        vm_fatal(vm, "intinf GMP primitive: wrong magnitude type");
+    uint64_t bits = vm_intinf_validate(vm, value, negative);
     Obj *s = val_ptr(value);
-    Magnitude m;
-    m.bytes = (const unsigned char *)obj_bytes(s);
-    m.length = obj_len(s);
-    m.negative = negative;
-    if (m.length && m.bytes[m.length - 1] == 0)
-        vm_fatal(vm, "intinf GMP primitive: noncanonical magnitude");
-    if (!m.length && negative) vm_fatal(vm, "intinf GMP primitive: negative zero");
-    m.bits = 0;
-    if (m.length) {
-        unsigned top = m.bytes[m.length - 1], bits = 0;
-        while (top) { top >>= 1; bits++; }
-        m.bits = ((uint64_t)m.length - 1) * 8 + bits;
-    }
-    vm_intinf_check(vm, m.bits);
+    Magnitude m = { (const unsigned char *)obj_bytes(s), obj_len(s), bits, negative };
     return m;
 }
 static void import(mpz_t value, Magnitude m) {

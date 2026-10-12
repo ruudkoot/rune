@@ -22,6 +22,8 @@
    enforce a finite operational magnitude budget (134217728 bits by default),
    with a runtime-limit failure rather than `Overflow` when it is exceeded.
    The budget is configurable and does not change `precision = NONE`.
+   Unit divisors and clearly smaller dividends use direct SML results;
+   large right shifts in the fallback use indexed arithmetic digits.
 
    Implementation: `INT_INF/constants`. An integer constant may have the type
    `IntInf.int`, and then be of any size, and the overloaded operators work

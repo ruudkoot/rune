@@ -50,3 +50,27 @@ The benchmark result is printed and checked after every run. Operands vary
 through a fixed 17-value cycle and every result is stored, so arithmetic
 cannot disappear as an unused expression. The final iteration and therefore
 its expected value are determined independently before running Rune.
+
+M4 adds `run.py --paired-sml --vm-options=--intinf=gmp` to alternate identical
+bytecode between GMP and forced SML. `dispatch.py` explores operation sizes
+and operand shapes separately from the unchanged acceptance corpus.
+`conversion.py` measures import/copy/export through a power-one primitive
+and packed-storage roundtrips; the former includes result allocation and is
+not an isolated import measurement. Both retain input hashes and raw samples.
+
+`compare-kernels.py` pairs recorded bytecodes with hash-verified baseline
+VMs. `compare-compilers.py --baseline-record FILE --vm-options OPTIONS`
+also supports comparisons to M2 and a selected current backend. Affinity,
+all paired samples, and compiler CPU times accompany wall timings; retain
+noisy or unsuccessful runs when investigating the 5% regression gate.
+
+`make test-intinf-hardening` checks malformed arguments, fork policy, native
+option precedence, malformed images, and allocator failures in bounded
+subprocesses. `alloc-failure.c` redirects allocation only inside its included
+IntInf implementation, leaving the ordinary VM allocator intact.
+
+M4's committed measurements are in [gmp-performance.json](gmp-performance.json),
+including all final samples, flagged/repeated comparisons and conversion costs.
+[gmp-hardening.json](gmp-hardening.json) indexes the acceptance evidence and
+source hashes. Raw local transcripts remain under `tests/out/intinf/m4`;
+GMP-enabled cross builds and release validation follow in M5.
