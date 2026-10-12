@@ -40,12 +40,18 @@ struct
     if (OS.FileSys.isLink path handle OS.SysErr _ => false) then OS.FileSys.remove path
     else if isDir path then (List.app (fn n => rmTree (path ^ "/" ^ n)) (entries path); OS.FileSys.rmDir path)
     else OS.FileSys.remove path handle OS.SysErr _ => ()
+  (* a directory and its parents. Two jobs may create one directory at the
+     same time: the second finds it there, which is what it wanted. *)
   fun mkdirs path =
     let
       fun go (_, []) = ()
         | go (pre, a :: rest) =
             let val p = if pre = "" then (if a = "" then "/" else a) else if pre = "/" then "/" ^ a else pre ^ "/" ^ a
-            in (if a = "" orelse isDir p then () else OS.FileSys.mkDir p); go (p, rest) end
+            in
+              if a = "" orelse isDir p then ()
+              else (OS.FileSys.mkDir p handle e as OS.SysErr _ => if isDir p then () else raise e);
+              go (p, rest)
+            end
     in go ("", String.fields (fn c => c = #"/") path) end
 
   (* merge sort of strings *)
