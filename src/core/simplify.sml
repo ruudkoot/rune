@@ -260,6 +260,192 @@ struct
     else if isString t then SOME "string_eq"
     else NONE
 
+  fun freshStamp () = Elaborate.freshStamp ()
+
+  fun tyKey (t : Ty.ty) : string =
+    case t of
+      Ty.Gen x => "G" ^ Int.toString x
+    | Ty.Var x => "V" ^ Int.toString x
+    | Ty.Con (stamp, _, ts) => "C" ^ Int.toString stamp ^ "(" ^ String.concatWith "," (List.map tyKey ts) ^ ")"
+    | Ty.Tuple ts => "T(" ^ String.concatWith "," (List.map tyKey ts) ^ ")"
+    | Ty.Arrow (a, b) => "A(" ^ tyKey a ^ "," ^ tyKey b ^ ")"
+    | Ty.ExnCon => "E"
+
+  val inlinable : fundef IntTable.table ref = ref (IntTable.table 16)
+  (* whether inlining is on, for the local functions registered as they are
+     met (keepFun) *)
+  val inlining = ref false
+
+  (* ---- equality functions (performance M5, D7 C) ---- *)
+
+  (* The optional pass `equality`, from -O2 (D7 C, an opt-in by the owner's
+     decision of 2026-10-12): `=` of a datatype at a type with no type
+     variable, or of a tuple of such parts, is a call of a function made for
+     that type, as MLton's poly-equal pass makes them: identity first, in a
+     wrapper small enough to be put where it is called, then in a worker the
+     tags, then each field by its own type -- imm_eq, ptr_eq, string_eq, the
+     function of its type, or poly_eq where the type is not known. One
+     function for each type (by tyKey), made where `=` is first used at it
+     and put before the definition with the copies of specialisation
+     (withCopies). Such a comparison is compiled code, which
+     --equality-work's limit on the runtime's walk does not stop. Measured
+     against B: HOL's kernel work 0.49% and boyer 2.2% fewer machine
+     instructions, the compiler compiling itself 0.44% more, in 1% more
+     code (docs/plans/performance.md, M5). *)
+  val equalities = ref false
+  val eqFuns : var StringMap.map ref = ref StringMap.empty
+  val pendingEqs : fundef list ref = ref []
+
+  fun groundTy (t : Ty.ty) : bool =
+    case t of
+      Ty.Con (_, _, ts) => List.all groundTy ts
+    | Ty.Tuple ts => List.all groundTy ts
+    | _ => false
+
+  (* The constructors of a datatype at the arguments given, each its tag and
+     its argument's type. *)
+  fun consAt (t : Ty.ty) : (int * Ty.ty option) list option =
+    case t of
+      Ty.Con (stamp, _, args) =>
+        (case Ty.datatypeOf stamp of
+           SOME {params, cons = cons as _ :: _} =>
+             if List.length params <> List.length args then NONE
+             else
+               let val s = ListPair.foldl (fn (p, a, m) => IntMap.insert (m, p, a)) IntMap.empty (params, args)
+               in SOME (List.map (fn (tag, _, arg) => (tag, Option.map (Ty.subst s) arg)) cons) end
+         | _ => NONE)
+    | _ => NONE
+
+  datatype eqKind = EqPrim of string | EqTrue | EqFun | EqTuple of Ty.ty list
+
+  fun eqKindOf (t : Ty.ty) : eqKind =
+    case eqByType (t, []) of
+      SOME p => EqPrim p
+    | NONE =>
+        (case t of
+           Ty.Tuple [] => EqTrue
+         | Ty.Tuple ts => EqTuple ts
+         | _ => if groundTy t andalso isSome (consAt t) then EqFun else EqPrim "poly_eq")
+
+  fun eqTy t = Ty.Arrow (Ty.Tuple [t, t], Ty.bool)
+
+  (* the function of `=` at t, made where there is none yet *)
+  fun eqFunOf (t : Ty.ty) : var =
+    let val key = tyKey t
+    in
+      case StringMap.find (!eqFuns, key) of
+        SOME h => h
+      | NONE =>
+          let
+            val h = freshStamp ()
+            val () = eqFuns := StringMap.insert (!eqFuns, key, h)
+            val x = freshStamp ()
+            val y = freshStamp ()
+            val () = Translate.funNames := IntMap.insert (!Translate.funNames, x, "=")
+            val cons = case consAt t of SOME cs => cs | NONE => []
+            val withArg = List.filter (fn (_, a) => isSome a) cons
+            fun arm (tag, arg) =
+              let val a = freshStamp () val b = freshStamp () val at = valOf arg
+              in
+                Let (a, ([], at), Decon (tag, t, Var (x, [])),
+                     Let (b, ([], at), Decon (tag, t, Var (y, [])), eqReturn (at, Var (a, []), Var (b, []))))
+              end
+            (* x's constructor, tested against each of those with an
+               argument; the last needs no test where every constructor has
+               one, and a nullary one, the same in both, would have been
+               the same immediate *)
+            fun dispatch [] = Return (Atom (boolAtom false))
+              | dispatch [c] = if List.length withArg = List.length cons then arm c else test c (dispatch [])
+              | dispatch (c :: rest) = test c (dispatch rest)
+            and test (c as (tag, _)) no =
+              let val k = freshStamp () val e = freshStamp ()
+              in
+                Let (k, ([], Ty.int), ConTag (Var (x, [])),
+                     Let (e, ([], Ty.bool), Prim ("imm_eq", eqTy Ty.int, [Var (k, []), Const (Lambda.CInt (IntInf.fromInt tag), Ty.int)]),
+                          If (Var (e, []), arm c, no)))
+              end
+            val same = freshStamp ()
+            val tx = freshStamp ()
+            val ty = freshStamp ()
+            val tags = freshStamp ()
+            (* a tuple: its fields; a datatype: the tags, then the
+               argument of the constructor *)
+            val rest =
+              case t of
+                Ty.Tuple ts => fields (ts, 0, Var (x, []), Var (y, []), NONE)
+              | _ =>
+                  Let (tx, ([], Ty.int), ConTag (Var (x, [])),
+                       Let (ty, ([], Ty.int), ConTag (Var (y, [])),
+                            Let (tags, ([], Ty.bool), Prim ("imm_eq", eqTy Ty.int, [Var (tx, []), Var (ty, [])]),
+                                 If (Var (tags, []), dispatch withArg, Return (Atom (boolAtom false))))))
+            (* identity first, in a wrapper small enough to be put where
+               it is called; the rest in a worker *)
+            val w = freshStamp ()
+            val a = freshStamp ()
+            val b = freshStamp ()
+            val () = Translate.funNames := IntMap.insert (!Translate.funNames, a, "=")
+            val wrapper =
+              {name = h, tyvars = [], params = [(a, t), (b, t)], result = Ty.bool,
+               body = Let (same, ([], Ty.bool), Prim ("ptr_eq", eqTy t, [Var (a, []), Var (b, [])]),
+                           If (Var (same, []), Return (Atom (boolAtom true)),
+                               Return (App (Global (w, []), [Var (a, []), Var (b, [])]))))}
+            val worker = {name = w, tyvars = [], params = [(x, t), (y, t)], result = Ty.bool, body = rest}
+          in
+            if !inlining then IntTable.insert (!inlinable, h, wrapper) else ();
+            pendingEqs := wrapper :: worker :: !pendingEqs;
+            h
+          end
+    end
+
+  (* whether a and b, of type t, are equal, as what is returned *)
+  and eqReturn (t : Ty.ty, a : atom, b : atom) : exp =
+    case eqKindOf t of
+      EqPrim p => Return (Prim (p, eqTy t, [a, b]))
+    | EqTrue => Return (Atom (boolAtom true))
+    | EqFun => Return (App (Global (eqFunOf t, []), [a, b]))
+    | EqTuple ts => fields (ts, 0, a, b, NONE)
+
+  (* whether a and b, of type t, are equal: yes () where they are, else false
+     returned *)
+  and eqTest (t : Ty.ty, a : atom, b : atom, yes : unit -> exp) : exp =
+    let
+      fun test r = let val c = freshStamp () in Let (c, ([], Ty.bool), r, If (Var (c, []), yes (), Return (Atom (boolAtom false)))) end
+    in
+      case eqKindOf t of
+        EqPrim p => test (Prim (p, eqTy t, [a, b]))
+      | EqTrue => yes ()
+      | EqFun => test (App (Global (eqFunOf t, []), [a, b]))
+      | EqTuple ts => fields (ts, 0, a, b, SOME yes)
+    end
+
+  (* the fields of two tuples from i, each tested in turn: then yes (),
+     or, where there is none, the last one's equality returned *)
+  and fields (ts : Ty.ty list, i : int, a : atom, b : atom, yes : (unit -> exp) option) : exp =
+    case ts of
+      [] => (case yes of SOME k => k () | NONE => Return (Atom (boolAtom true)))
+    | t :: rest =>
+        let
+          val fa = freshStamp ()
+          val fb = freshStamp ()
+          val (va, vb) = (Var (fa, []), Var (fb, []))
+        in
+          Let (fa, ([], t), Select (i, a),
+               Let (fb, ([], t), Select (i, b),
+                    case (rest, yes) of
+                      ([], NONE) => eqReturn (t, va, vb)
+                    | ([], SOME k) => eqTest (t, va, vb, k)
+                    | _ => eqTest (t, va, vb, fn () => fields (rest, i + 1, a, b, yes))))
+        end
+
+  (* `=` at t, where its type says no more (eqByType): a call of t's
+     function, for a datatype or a tuple whose parts are known *)
+  fun eqCallable (t : Ty.ty) : bool =
+    !equalities andalso
+    (case eqKindOf t of
+       EqFun => true
+     | EqTuple ts => groundTy t andalso List.exists (fn u => case eqKindOf u of EqPrim "poly_eq" => false | _ => true) ts
+     | _ => false)
+
   fun known (env : env, r : rhs) : rhs =
     let
       fun madeOf (Var (x, [])) = IntTable.find (#known env, x)
@@ -273,7 +459,7 @@ struct
       | Prim ("poly_eq", pty as Ty.Arrow (Ty.Tuple [t, _], _), xs) =>
           (case eqByType (t, xs) of
              SOME p => if spend () then Prim (p, pty, xs) else r
-           | NONE => r)
+           | NONE => if eqCallable t andalso spend () then App (Global (eqFunOf t, []), xs) else r)
       | Decon (tag, _, a) =>
           (case madeOf a of
              SOME (Made (Con (tag', _, x))) => if tag = tag' andalso spend () then Atom x else r
@@ -348,8 +534,6 @@ struct
   (* e with the variable x, which abstracts over no type, replaced by b. *)
   fun substVar (x : var, b : atom) (e : exp) : exp =
     mapExp (fn a as Var (y, []) => if y = x then b else a | a => a, fn t => t) e
-
-  fun freshStamp () = Elaborate.freshStamp ()
 
   (* ---- inlining (M10) ---- *)
 
@@ -512,10 +696,6 @@ struct
     | Mark (_, a) => raises a
     | _ => false
 
-  val inlinable : fundef IntTable.table ref = ref (IntTable.table 16)
-  (* whether inlining is on, for the local functions registered as they are
-     met (keepFun) *)
-  val inlining = ref false
   val once : fundef option IntTable.table ref = ref (IntTable.table 16)     (* NONE: put in place already *)
   fun onceOf g = case IntTable.find (!once, g) of SOME (SOME f) => SOME f | _ => NONE
   val budget = ref 0
@@ -639,15 +819,6 @@ struct
     | Ty.Tuple ts => List.all closedTy ts
     | Ty.Arrow (a, b) => closedTy a andalso closedTy b
     | Ty.ExnCon => true
-
-  fun tyKey (t : Ty.ty) : string =
-    case t of
-      Ty.Gen x => "G" ^ Int.toString x
-    | Ty.Var x => "V" ^ Int.toString x
-    | Ty.Con (stamp, _, ts) => "C" ^ Int.toString stamp ^ "(" ^ String.concatWith "," (List.map tyKey ts) ^ ")"
-    | Ty.Tuple ts => "T(" ^ String.concatWith "," (List.map tyKey ts) ^ ")"
-    | Ty.Arrow (a, b) => "A(" ^ tyKey a ^ "," ^ tyKey b ^ ")"
-    | Ty.ExnCon => "E"
 
   fun dropFixed (fixed : (int * atom) list, xs : 'a list) : 'a list =
     List.mapPartial (fn (i, x) => if List.exists (fn (j, _) => j = i) fixed then NONE else SOME x)
@@ -1233,6 +1404,9 @@ struct
                          if calledOnce (#name f) andalso not (names (#name f, #body f))
                          then IntTable.insert (!once, #name f, SOME f) else ()
                      | _ => ()) p
+      val () = equalities := Pass.enabled ("equality", 2)
+      val () = eqFuns := StringMap.empty
+      val () = pendingEqs := []
       val specialise = Pass.enabled ("specialise", 1)
       val () = specialisable := IntTable.table 64
       val () = copies := StringMap.empty
@@ -1264,9 +1438,9 @@ struct
       fun withCopies d =
         let
           fun drain acc =
-            case !pendingCopies of
+            case !pendingCopies @ !pendingEqs of
               [] => acc
-            | fs => (pendingCopies := []; drain (List.map fundef (List.rev fs) @ acc))
+            | fs => (pendingCopies := []; pendingEqs := []; drain (List.map fundef (List.rev fs) @ acc))
         in
           case drain [] of
             [] => [d]

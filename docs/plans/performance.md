@@ -48,7 +48,7 @@ is the page of timings, stale until M1.
 | M2 | Signatures: sharing and `where` in one realisation | done (2026-10-12): a run of sharing by union-find, a chain of `where` at once, realisations that keep what they do not change (nothing allocated where nothing changes), matching's fast paths (equal schemes, its messages made only for an error, a merge sort, a set of the flexible names). MLton's 606 units type-checked by MLton's build: 476.0G to 153.0G instructions:u (`perf stat`, `max-heap 5g` as E20; repeatable only where the heap allows: with a fixed heap of 7 GB, 425.4G to 149.2G, E20's prototype 187.9G); `BASIS_EXTRA` 1.48-1.57 s to 0.016-0.024 s; type-checked by the compiler on `runevm --count`: 200 specs shared 16 ways 2,367M to 21.2M, nested 2,839M to 19.4M, `where` 1,000 by 400 317M to 13.3M, 2,000 specs 846M to 22.4M, one signature instantiated 256 times 90.6M to 75.4M (E20's regression gone); every output byte for byte the base's (bootstrap, Basis cache, suites, every error test's messages, xc2, MLton's 1,582 unit files); M1's budgets on the module language tightened to these counts (`compile-share`, `-sharenest`, `-where`, `-sig`, `-funsig`) |
 | M3 | Functors: typed from their signature, copies only for code (D3 decided), cheaper matching, MidCanon's quadratic | done (2026-10-12): every application typed by the functor's signature (rule 54) -- inside a functor's declaration by its summary, with the counters replayed; one that makes code by the summary realised with its copy's names -- the signature in the export basis (`UnitBasis.version` 6), a use of a functor holding by the signature's fingerprint and an application that makes code using the unit the functor is from, MidCanon's quadratic gone. MLton's 606 units type-checked by MLton's build: 476.0G to 89.1G instructions:u (`max-heap 5g`; 96.9G with a fixed heap of 7 GB, against 425.4G); Rune at tier 2 compiling MLton's compiler: elaboration 82.1 s, the compile 99 s and 5.8 GB (one run, load average 14 to 25); the compiler type-checking on `runevm --count`: a functor applied 80 times 193.9M to 44.9M, nested functors 785M to 137M (compiled), M1's budgets `compile-funapp` and `-funnest` tightened to these counts. Gate as [functors.md](functors.md)'s *A contradiction in M3*: the whole program's output the base's byte for byte (bootstrap, suites, error messages, xc2, MLton's 606 files compiled whole); every unit's code the same with identities masked, and the linked program too (it carries the identities, all new with the version); a build through the cache the same as a fresh one; `used` the base's in 780 of 791 units, 11 recording 14 to 84 fewer type variables (the base's copies, elaborated with arguments whose types drop a parameter, were more general than the signature); scenarios S65 to S67. The equality program rejected (`tests/errors/err.functor_equality.sml`), and an application that makes code no more polymorphic than its signature (`err.functor_signature_types.sml`). HOL4 built by this compiler in a fresh clone (`$D/hol` of the drafts): `hol.state` in 1,419 s (at a low priority, under load), then 210 targets more in the two hours given and none failing, as with M3's earlier builds (218 and 182) |
 | M4 | Types shared: `Ty.ty` hash-consed, `exponential.sml` compiled | not started; partial prototypes E23 (not enough) |
-| M5 | Runtime calls in line: equality, `ptr_eq`, strings, handlers, raise | D7 B done (2026-10-12, "Compare by type in the middle end, and match strings by their length"): *M5*, as built; A, `TextIO` and C not yet |
+| M5 | Runtime calls in line: equality, `ptr_eq`, strings, handlers, raise | D7 B done (2026-10-12, "Compare by type in the middle end, and match strings by their length"); D7 C benchmarked and kept, opt-in under `-O2` (2026-10-12, "Compare closed datatypes by equality functions of their own at -O2"): *M5*, as built; A and `TextIO` not yet |
 | M6 | The call made lean | not started; prototypes E9 |
 | M7 | Pointers in registers | not started; prototype E12 |
 | M8 | Allocation in the middle end | not started |
@@ -1612,7 +1612,17 @@ well, and implemented if it shows gains** (the owner's addendum).
 
 **Recommendation: A, then B.** C was recommended against on the counts.
 The decision adds it as a benchmark: built and timed after A and B, and
-kept if it gains. Targets:
+kept if it gains.
+
+**C, benchmarked (2026-10-12): kept, opt-in.** Built on B, C gains a
+little where structural equality is frequent and costs the compiler a
+little everywhere (*M5*, D7 C as built): HOL's kernel work −0.49% of
+machine instructions, `boyer` −2.2% (−4.4% with A's prototypes), `mlyacc`
+−1.1%, the compiler compiling itself +0.44% of instructions and +1% of
+code. The owner kept it as an option: the pass `equality`, which `-O2`
+runs and `-O1` does not (`-O2` was `-O1` until then), so that the default
+compiler, its bytecode and the limit of `--equality-work` stay as they
+were. Targets:
 
 * `poly_eq` that reaches C at most 5% of its calls (99.8% on HOL today);
 * `ptr_eq`, a handler's push and `String.<` never on the generic path of a
@@ -2009,6 +2019,36 @@ memory, as MLton's, SML/NJ's and Moscow ML's are.
   compiler's sources grew, and the base's compiler compiling them takes
   1,045,522,524 and 1,499,456,240. The bootstrap's budgets are measured
   again; the other programs of tests/perf move by 0.2% or less.
+
+**D7 C as built (2026-10-12): the pass `equality`, under `-O2`.**
+
+* `Simplify` makes, for each datatype at a type with no type variable
+  that `=` compares, and for tuples of such parts, a function of that
+  type, as MLton's `poly-equal` pass does: a wrapper that tests identity
+  (`ptr_eq`) and is small enough to be put where it is called, and a
+  worker that compares the tags and then each field by its own type
+  (`imm_eq`, `ptr_eq`, `string_eq`, the function of the field's type, or
+  `poly_eq` where the type is not known). A recursive datatype's worker
+  calls itself. Without the wrapper (a first variant) it was worse on
+  every program.
+* Measured against B (machine instructions, `perf stat -e
+  instructions:u`, three runs each at tier 2; HOL's kernel work, MLton's
+  programs where structural equality is most frequent, and the bootstrap):
+  HOL's kernel work 86,854,176,117 to 86,425,697,858 (−0.49%); `boyer`
+  −2.2% and `mlyacc` −1.1% (−4.4% and −1.2% with A's prototypes), every
+  other program of the set 0; the base's compiler compiling the sources
+  +0.07%. The bytecode instructions grow where the machine instructions
+  fall (`boyer` 159,200,248 to 170,098,539, `mlyacc` 230,914,393 to
+  235,084,346: a call of compiled code where one `PRIM` walked the
+  values), and the compiler, which runs the pass, compiling itself +0.44%
+  of instructions, +0.63% of bytecode, +1% of code.
+* Decided (the owner, 2026-10-12): kept, but not by default. `equality` is
+  a named pass that `-O2` runs (and `--passes` selects); `-O1`, the
+  default, compiles as B does. Under `-O2` `=` at such a type is compiled
+  code, which the limit of `--equality-work` does not stop; the test of
+  that limit is compiled at `-O1`. tests/ir/equality-functions shows the
+  functions made, and `check-levels` runs the tests of the language at
+  `-O2` with them.
 
 ### M6. The call (M-L)
 

@@ -33,13 +33,14 @@ optimises, says from which level it runs (`Pass.enabled`): `trees`, which
 is how `translate` compiles a match (see *Matches*), then `shake`, `lift`,
 `workers` and `simplify`, in that order, and `shake` again where `simplify`
 inlined (see *The optimisations of Mid*); `inline` and `specialise` are
-what `simplify` does besides shrinking, each of which may be left out.
+what `simplify` does besides shrinking, each of which may be left out, as
+is `equality`, which only `-O2` runs.
 
 ## Options
 
 | Option | What it does |
 |---|---|
-| `-O0`, `-O1`, `-O2` | the level; `-O1` when none is given |
+| `-O0`, `-O1`, `-O2` | the level; `-O1` when none is given; `-O2` adds `equality` (see *The optimisations of Mid*) |
 | `--passes=P,...` | run these optional passes, whatever the level |
 | `--dump-before=P`, `--dump-after=P` | print what the pass `P` is given or makes (`all`: every pass); `--dump-lambda` and `--dump-code` are `--dump-after=translate` and `--dump-after=registers` (`stack` with `--target=stack`) |
 | `--lint` | check what every pass makes, and stop with `Error.Bug`, which names the pass, at the first breach |
@@ -382,6 +383,15 @@ does.
   is only keeps what could go. Stamps being unique, the census and what a
   round knows are tables (`IntTable`), which forget nothing, and a round
   that rewrites nothing is the last.
+* **`equality`** (in `simplify`, from `-O2`;
+  [plans/performance.md](plans/performance.md), M5, D7 C): `=` of a
+  datatype at a type with no type variable, or of a tuple of such parts, is
+  a call of a function made for that type, as MLton's poly-equal pass makes
+  them: identity first, in a wrapper small enough to be put where it is
+  called, then in a worker the tags, then each field by its own type --
+  `imm_eq`, `ptr_eq`, `string_eq`, the function of its type, or `poly_eq`
+  where the type is not known. Such a comparison is compiled code: the
+  limit of `--equality-work` on the runtime's walk does not stop it.
 * **`inline`** (in `simplify`, M10): a call of a function of the top level
   of no more than 12 nodes that does not call itself, and does not always
   raise -- a call on the way to an error costs nothing worth saving -- is

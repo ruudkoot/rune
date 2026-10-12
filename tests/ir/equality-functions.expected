@@ -1,0 +1,113 @@
+(* after simplify *)
+(datatype t () (0 "A") (1 "B" : int) (2 "C" : string * t list))
+(funs
+  (fn g1 ((v1 : t list) (v2 : t list)) : bool
+    (let (v3 : int) (tag v1)
+    (let (v4 : int) (tag v2)
+    (let (v5 : bool) (prim imm_eq v3 v4 : (int * int) -> bool)
+    (if v5
+      (let (v6 : int) (tag v1)
+      (let (v7 : bool) (prim imm_eq v6 1 : (int * int) -> bool)
+      (if v7
+        (let (v8 : t * t list) (decon 1 v1 : t list)
+        (let (v9 : t * t list) (decon 1 v2 : t list)
+        (let (v10 : t) (select 0 v8)
+        (let (v11 : t) (select 0 v9)
+        (let (v12 : bool) (prim ptr_eq v10 v11 : (t * t) -> bool)
+        (if v12
+          (let (v13 : t list) (select 1 v8)
+          (let (v14 : t list) (select 1 v9)
+          (let (v15 : bool) (prim ptr_eq v13 v14 : (t list * t list) -> bool)
+          (if v15
+            (return (con0 1 : bool))
+            (return (app g1 v13 v14))))))
+          (let (v16 : bool) (app g2 v10 v11)
+          (if v16
+            (let (v17 : t list) (select 1 v8)
+            (let (v18 : t list) (select 1 v9)
+            (let (v19 : bool) (prim ptr_eq v17 v18 : (t list * t list) -> bool)
+            (if v19
+              (return (con0 1 : bool))
+              (return (app g1 v17 v18))))))
+            (return (con0 0 : bool))))))))))
+        (return (con0 0 : bool)))))
+      (return (con0 0 : bool)))))))
+  (fn g3 ((v20 : t list) (v21 : t list)) : bool
+    (let (v22 : bool) (prim ptr_eq v20 v21 : (t list * t list) -> bool)
+    (if v22
+      (return (con0 1 : bool))
+      (return (app g1 v20 v21)))))
+  (fn g2 ((v23 : t) (v24 : t)) : bool
+    (let (v25 : int) (tag v23)
+    (let (v26 : int) (tag v24)
+    (let (v27 : bool) (prim imm_eq v25 v26 : (int * int) -> bool)
+    (if v27
+      (let (v28 : int) (tag v23)
+      (let (v29 : bool) (prim imm_eq v28 1 : (int * int) -> bool)
+      (if v29
+        (let (v30 : int) (decon 1 v23 : t)
+        (let (v31 : int) (decon 1 v24 : t)
+        (return (prim imm_eq v30 v31 : (int * int) -> bool))))
+        (let (v32 : int) (tag v23)
+        (let (v33 : bool) (prim imm_eq v32 2 : (int * int) -> bool)
+        (if v33
+          (let (v34 : string * t list) (decon 2 v23 : t)
+          (let (v35 : string * t list) (decon 2 v24 : t)
+          (let (v36 : string) (select 0 v34)
+          (let (v37 : string) (select 0 v35)
+          (let (v38 : bool) (prim string_eq v36 v37 : (string * string) -> bool)
+          (if v38
+            (let (v39 : t list) (select 1 v34)
+            (let (v40 : t list) (select 1 v35)
+            (let (v41 : bool) (prim ptr_eq v39 v40 : (t list * t list) -> bool)
+            (if v41
+              (return (con0 1 : bool))
+              (return (app g1 v39 v40))))))
+            (return (con0 0 : bool))))))))
+          (return (con0 0 : bool))))))))
+      (return (con0 0 : bool)))))))
+  (fn g4 ((v42 : t) (v43 : t)) : bool
+    (let (v44 : bool) (prim ptr_eq v42 v43 : (t * t) -> bool)
+    (if v44
+      (return (con0 1 : bool))
+      (return (app g2 v42 v43))))))
+(funs
+  (fn g5 ((v45 : t) (v46 : t)) : bool
+    (let (v47 : bool) (prim ptr_eq v45 v46 : (t * t) -> bool)
+    (if v47
+      (return (con0 1 : bool))
+      (return (app g2 v45 v46))))))
+(val g6 : bool * bool
+  (let (v48 : t) (con 1 1 : t)
+  (let (v49 : t) (con 1 1 : t)
+  (let (v50 : bool) (prim ptr_eq v48 v49 : (t * t) -> bool)
+  (if v50
+    (let (v51 : t * t list) (tuple (con0 0 : t) (con0 0 : t list))
+    (let (v52 : t list) (con 1 v51 : t list)
+    (let (v53 : string * t list) (tuple "a" v52)
+    (let (v54 : t) (con 2 v53 : t)
+    (let (v55 : t) (con 1 2 : t)
+    (let (v56 : t * t list) (tuple v55 (con0 0 : t list))
+    (let (v57 : t list) (con 1 v56 : t list)
+    (let (v58 : string * t list) (tuple "a" v57)
+    (let (v59 : t) (con 2 v58 : t)
+    (let (v60 : bool) (prim ptr_eq v54 v59 : (t * t) -> bool)
+    (if v60
+      (return (tuple (con0 1 : bool) (con0 1 : bool)))
+      (let (v61 : bool) (app g2 v54 v59)
+      (return (tuple (con0 1 : bool) v61))))))))))))))
+    (let (v62 : bool) (app g2 v48 v49)
+    (let (v63 : t * t list) (tuple (con0 0 : t) (con0 0 : t list))
+    (let (v64 : t list) (con 1 v63 : t list)
+    (let (v65 : string * t list) (tuple "a" v64)
+    (let (v66 : t) (con 2 v65 : t)
+    (let (v67 : t) (con 1 2 : t)
+    (let (v68 : t * t list) (tuple v67 (con0 0 : t list))
+    (let (v69 : t list) (con 1 v68 : t list)
+    (let (v70 : string * t list) (tuple "a" v69)
+    (let (v71 : t) (con 2 v70 : t)
+    (let (v72 : bool) (prim ptr_eq v66 v71 : (t * t) -> bool)
+    (if v72
+      (return (tuple v62 (con0 1 : bool)))
+      (let (v73 : bool) (app g2 v66 v71)
+      (return (tuple v62 v73))))))))))))))))))))

@@ -204,7 +204,7 @@ Where each part of the Definition is exercised. The rows are the ids above.
 | rt.overflow | `int` arithmetic raises `Overflow`; `word` arithmetic wraps | Supported | At 63 bits, the width of both. |
 | rt.int64 | `Int64.int` arithmetic raises `Overflow` at 64 bits and `Word64.word` arithmetic wraps there; a conversion to `int` raises `Overflow` for what 63 bits do not hold | Supported | |
 | rt.div | `div`/`mod` floor semantics, `quot`/`rem` truncate, `Div` on zero, IEEE reals | Supported | |
-| rt.equality | Structural equality on immutable data, identity on `ref`/`array` | Supported | Uses an explicit worklist with at most 65536 pending comparisons. `--equality-work N` sets the step budget (1000000 by default); exceeding either limit is a VM failure with status 2. |
+| rt.equality | Structural equality on immutable data, identity on `ref`/`array` | Supported | Uses an explicit worklist with at most 65536 pending comparisons. `--equality-work N` sets the step budget (1000000 by default); exceeding either limit is a VM failure with status 2. Under `-O2`, `=` at a datatype or tuple type with no type variable is compiled into an equality function of that type (docs/ir.md, `equality`), which neither limit stops: `rt.equality_work-limit` is compiled at `-O1`. |
 | rt.closure | Closures capture variables by value (refs for mutation), mutual recursion | Supported | |
 | rt.args | Command line arguments after the bytecode file | Supported | |
 | rt.stdin | Reading standard input | Supported | |

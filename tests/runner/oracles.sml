@@ -18,8 +18,8 @@
      errors and the compiler compiling itself; and every instruction must
      occur in some program (check-jit.sh);
    - units: whole, of units at -O0, -O1 and -O2, through the cache, from
-     it, relinked and loaded, the same bytes and the same runs
-     (check-units.sh);
+     it, relinked and loaded, the same bytes and the same runs, each
+     compiled with the program's .cargs after the level (check-units.sh);
    - positions: every instruction's position names a line that exists
      (check-positions.sh);
    - cross: every program, the compiler, runedoc and runeopt compiled by
@@ -402,8 +402,10 @@ struct
       val b = base src and n = name src
       val out = run ^ "/" ^ variant
       fun f x = out ^ "/" ^ n ^ "." ^ x
-      fun c (k, flags) = exec {cmd = [rune] @ flags @ ["--lint", src, "-o", f (k ^ ".rbc")], dir = NONE, stdin = "", stdout = "",
-                               stderr = f (k ^ ".cerr"), timeout = 0} = 0
+      (* its .cargs for the compiler, after the level, as levels gives them *)
+      val cargs = sib (b, ".cargs")
+      fun c (k, flags) = exec {cmd = [rune] @ flags @ cargs @ ["--lint", src, "-o", f (k ^ ".rbc")], dir = NONE, stdin = "",
+                               stdout = "", stderr = f (k ^ ".cerr"), timeout = 0} = 0
       fun failed (flags, k) = (say ("FAIL units." ^ n ^ ": " ^ String.concatWith " " flags ^ ": " ^ firstLine (f (k ^ ".cerr")) ^ "\n"); false)
       val cache = out ^ "/cache"
       val builds =
