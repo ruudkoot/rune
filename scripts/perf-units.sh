@@ -5,15 +5,19 @@
 #                         [phases|mid|globals]...
 # phases (the default) compiles every program with every configuration under
 # --pass-stats, N times (5 unless --runs says otherwise), and keeps the run
-# with the least wall time. Its columns are that run's wall time and the
+# with the least wall time. Its columns are that run's wall time, the
 # processor time of each stage --pass-stats names (both shakes added
-# together). The front end's lines per second are the lines of every file
+# together) and the total it ends with, which the stages add up to
+# (docs/ir.md). The front end's lines per second are the lines of every file
 # the compile reads -- the basis files `--basis-deps` names and the
-# program's own -- over parse and elaborate.
+# program's own -- over lex, parse and elaborate.
 # The configurations are the compiler on: tier2 (bin/runevm as bin/rune runs
 # it, tiering up to tier 2), interp (--jit=off), baseline (--jit=baseline),
 # stack (bin/runevm-stack running bin/rune.stack.rbc) and mlton (MLton's
-# build, bin/rune-mlton). All of them write register bytecode. The programs
+# build, bin/rune-mlton), the five unless --configs says otherwise; and the
+# other hosts' builds, polyml, mlkit, smlnj-legacy, smlnj32 and smlnj-dev
+# (bin/rune-HOST, made by `make host-builds`). All of them write register
+# bytecode. The programs
 # are hello (examples/hello.sml), two (two lines that use List, Int, String
 # and TextIO), basis (hello with --basis all, every file of the basis
 # library), compiler (the compiler's own sources, BOOT_SRCS) and corpus (the
@@ -21,7 +25,7 @@
 # and mlton (MLton's compiler, 606 files and about 198,000 lines, when
 # --mlton DIR or MLTON_SOURCES names a checkout of MLton at 5fe943391 whose
 # mlton/mlton-rune.txt lists the files in the order Rune compiles them, as
-# scripts/gc-eval.sh wants it). mlton runs once, on tier2 and mlton only,
+# scripts/gc-eval.sh wants it: scripts/setup-mlton.sh DIR makes one). mlton runs once, on tier2 and mlton only,
 # under `ulimit -v 12582912` with --heap-limit 5368709120, and only when
 # `free` shows 20 GB available: it takes minutes and gigabytes.
 # mid writes the compiler's own Mid as text (--dump-after mid) and reads it
@@ -60,6 +64,11 @@ boot_srcs="build/config.sml $(sh scripts/build-files.sh rune.build | tr '\n' ' '
 for f in bin/runevm bin/runevm-stack bin/rune.rbc bin/rune.stack.rbc bin/rune-mlton; do
   [ -e "$f" ] || { echo "perf-units: $f is missing (make all bin/rune.stack.rbc)" >&2; exit 2; }
 done
+for c in $(echo "$configs" | tr ',' ' '); do
+  case "$c" in
+    polyml|mlkit|smlnj-legacy|smlnj32|smlnj-dev) [ -x "bin/rune-$c" ] || { echo "perf-units: bin/rune-$c is missing (make host-builds)" >&2; exit 2; } ;;
+  esac
+done
 
 cat > "$out/two.sml" <<'EOF'
 val xs = List.map Int.toString [1, 2, 3]
@@ -74,7 +83,7 @@ compiler() {
     interp) bin/runevm --jit=off --heap-size $heap bin/rune.rbc --lib lib "$@" ;;
     baseline) bin/runevm --jit=baseline --heap-size $heap bin/rune.rbc --lib lib "$@" ;;
     stack) bin/runevm-stack --heap-size $heap bin/rune.stack.rbc --lib lib "$@" ;;
-    mlton) bin/rune-mlton "$@" ;;
+    mlton|polyml|mlkit|smlnj-legacy|smlnj32|smlnj-dev) "bin/rune-$c" "$@" ;;
     *) echo "perf-units: no configuration $c" >&2; exit 2 ;;
   esac
 }
@@ -108,8 +117,8 @@ phases() {
     else echo "perf-units: less than 20 GB available; mlton left out" >&2; fi
   fi
   : > "$out/phases.txt"
-  echo "| Compiler | Program | wall | parse | elaborate | translate | mid | shake | lift | workers | simplify | lower | registers | lines read | lines/s, front end |"
-  echo "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"
+  echo "| Compiler | Program | wall | startup | lex | select | parse | elaborate | translate | mid | midcanon | shake | lift | workers | simplify | lower | registers | emit | total | lines read | lines/s, front end |"
+  echo "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"
   for p in $programs; do
     args=$(program_args $p)
     lines=$(lines_read $args)
@@ -138,10 +147,11 @@ phases() {
       sed "s/^/$c $p /" "$out/$p.$c.stats" >> "$out/phases.txt"
       awk -v c="$c" -v p="$p" -v wall="$best" -v lines="$lines" '
         /^pass / { name = $2; sub(":", "", name); t[name] += $(NF - 1) }
+        /^total: / { t["total"] = $2 }
         END {
-          fe = t["parse"] + t["elaborate"]
+          fe = t["lex"] + t["parse"] + t["elaborate"]
           printf "| %s | %s | %.3f |", c, p, wall / 1000
-          n = split("parse elaborate translate mid shake lift workers simplify lower registers", k, " ")
+          n = split("startup lex select parse elaborate translate mid midcanon shake lift workers simplify lower registers emit total", k, " ")
           for (i = 1; i <= n; i++) printf " %.3f |", t[k[i]]
           printf " %d | %s |\n", lines, (fe > 0 ? sprintf("%.0f", lines / fe) : "-")
         }' "$out/$p.$c.stats"
@@ -153,12 +163,12 @@ mid() {
   # shellcheck disable=SC2086
   compiler mlton --dump-after=mid $boot_srcs -o "$out/compiler.rbc" > "$out/compiler.mid.raw"
   sed '1{/^(\* after mid \*)$/d}' "$out/compiler.mid.raw" > "$out/compiler.mid"
-  echo "| Compiler | parse + elaborate + translate + mid of the sources | --read-mid of their Mid ($(wc -c < "$out/compiler.mid") bytes) |"
+  echo "| Compiler | lex + select + parse + elaborate + translate + mid of the sources | --read-mid of their Mid ($(wc -c < "$out/compiler.mid") bytes) |"
   echo "|---|---:|---:|"
   for c in $(echo "$configs" | tr ',' ' '); do
     # shellcheck disable=SC2086
     src=$(compiler $c --pass-stats $boot_srcs -o "$out/compiler.$c.rbc" 2>&1 >/dev/null |
-          awk '/^pass (parse|elaborate|translate|mid):/ { t += $(NF - 1) } END { printf "%.3f", t }')
+          awk '/^pass (lex|select|parse|elaborate|translate|mid):/ { t += $(NF - 1) } END { printf "%.3f", t }')
     rd=$(compiler $c --pass-stats --read-mid "$out/compiler.mid" 2>&1 >/dev/null |
          awk '/^pass mid:/ { t += $(NF - 1) } END { printf "%.3f", t }')
     echo "| $c | $src | $rd |"

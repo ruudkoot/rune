@@ -310,7 +310,7 @@ minutes. Rune compiling MLton is part of the set but runs only with
 `--mlton-compile`: about 10 minutes a VM, 12 GiB of address space (the heap
 capped at 5 GiB), so 20 GB of free memory, from MLton's sources at
 `5fe943391` in `MLTON_SOURCES` with the order of its files in
-`mlton-rune.txt`. Times need the machine to themselves: `GC_EVAL_LOCK` is a
+`mlton-rune.txt` (`scripts/setup-mlton.sh DIR` makes them). Times need the machine to themselves: `GC_EVAL_LOCK` is a
 command prefix under which each round is made, let go for a minute between
 rounds so that others waiting for it have it, and a run waits until its
 ulimit and 8 GB more are free (`GC_EVAL_MARGIN`). After an interruption,
