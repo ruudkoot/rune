@@ -139,7 +139,7 @@ if "$cc" -O2 -o "$out/random-reference" tests/lib/random/reference.c > "$out/ran
 else
   bad "random: the known answers (diff $out/random-kat.expected $out/random-kat.out)"
 fi
-if "$rune" --library random tests/lib/random/props.sml -o "$out/random-props.rbc" > "$out/random-props.cerr" 2>&1 &&
+if "$rune" --library test/unit tests/lib/random/props.sml -o "$out/random-props.rbc" > "$out/random-props.cerr" 2>&1 &&
    "$runevm" "$out/random-props.rbc" > "$out/random-props.out" 2>&1 &&
    ! grep -q "^FAIL" "$out/random-props.out"; then
   ok
@@ -215,9 +215,18 @@ if "$rune" --library test/property/basis tests/lib/property/laws.sml -o "$out/pr
 else
   bad "property: Check.laws (see $out/property-laws.out, $out/property-laws-only.out)"
 fi
-# the engine and its Basis instances, each a library: its MANIFEST, and the
-# examples of its documentation
-for lib in test/property test/property/basis; do
+# lib/test/unit (docs/plans/unit-testing.md, M1): its own tests, under a
+# harness of their own
+if "$rune" --library test/unit tests/lib/unit/core.sml -o "$out/unit-core.rbc" > "$out/unit-core.cerr" 2>&1 &&
+   "$runevm" "$out/unit-core.rbc" > "$out/unit-core.out" 2>&1 &&
+   grep -q "^PASS" "$out/unit-core.out" && ! grep -q "^FAIL" "$out/unit-core.out"; then
+  ok
+else
+  bad "unit: the core (see $out/unit-core.cerr, $out/unit-core.out)"
+fi
+# the engine, its Basis instances and the unit-testing library, each a
+# library: its MANIFEST, and the examples of its documentation
+for lib in test/property test/property/basis test/unit; do
   tag=$(echo "$lib" | tr / -)
   if "$rune" --library "$lib" --basis-check > "$out/$tag-check.txt" 2>&1; then
     ok

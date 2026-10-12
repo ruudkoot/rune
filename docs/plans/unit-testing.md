@@ -25,7 +25,7 @@ What it rests on:
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done 2026-10-11 |
-| M1 | `lib/test/unit`, and the libraries' tests on it | |
+| M1 | `lib/test/unit`, and the libraries' tests on it | done 2026-10-12 |
 | M2 | The runtime's part: a clock, a child's costs, processors, spawn with limits | |
 | M3 | The runner, with `make check`'s steps as its first jobs | |
 | M4 | `tests/lang` and `tests/errors` in ways, compiled once | |
@@ -833,8 +833,8 @@ signature EXPECT =
 sig
   exception Failure of string
   val that : string * bool -> unit                       (* a soft check *)
-  val eq : ('a -> string) -> string * ''a * ''a -> unit
-  val equal : ('a * 'a -> bool) * ('a -> string) -> string * 'a * 'a -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val equal : ('a * 'a -> bool) * ('a -> string) -> string * 'a * (unit -> 'a) -> unit
   val raises : string * (exn -> bool) * (unit -> 'a) -> unit
   val fail : string -> 'a                                (* stops the test *)
 end
@@ -1541,6 +1541,17 @@ M1 and M2 are independent of each other and of the rest.
   - the pilot suites report what they reported, check by check;
   - `make test-lib-hosts` passes on every host, with any failure a `HOST-BUG` line and a report;
   - `make docs` documents the library in full.
+* **Done** (2026-10-12):
+  - **The library**, `lib/test/unit`, written on `lib/test/property`, every file portable (`host yes`):
+    - `Expect` (`check`, `that`, `eq`, `equal`, `raises`, `fail`, `run`), in the shapes of the Basis suite's `T`;
+    - `Golden` (`check`, `difference`, the accept mode);
+    - `Test` (`it`, `describe`, `tag`, `timeout`, `requires`, `resources`, `pending`, `ways`, `map`, `leaves`, `property`, `golden`);
+    - `TestFilter` (the language of D4);
+    - `Suite` and the functor `Main`, with `--list`, `--list-meta`, `--filter`, `--run`, `--after`, `--events`, `--accept` and `--quiet`.
+  - **Its own tests**, `tests/lib/unit/core.sml`, under a harness of a dozen lines that does not use the library: the tree, the filters, the checks, golden files, the options and the events. They pass on Rune and on the six hosts.
+  - **Two portability findings.** MLKit's `exnMessage (Fail s)` is `"Fail"`, without the message, so `Expect` matches `Fail` itself. SML/NJ wants the type of a record pattern with `...` in a local function written out.
+  - **The pilot.** 17 programs of `tests/lib` are suites on the library: digest, markdown's CommonMark examples (652 tests, one per example), jupyter, dap, jsonrpc, json's round trips and JSONTestSuite (318 tests, one per file), random's properties, terminal's style, key, emulator, probe and edit, pretty, unicode's grapheme breaks (853 tests, one per line) and UTF-8, and zmtp. Every check of each was kept, and each was shown to fail when one of its checks was made to fail. `tests/lib/property` keeps its own form: its outputs are fingerprints that other scripts read.
+  - **Documentation:** `docs/generated/test/unit`, and a section *Writing a test* in `docs/testing.md`. AGENTS.md says a library's tests are suites on the library.
 
 ### M2. The runtime's part (S–M, about 600)
 

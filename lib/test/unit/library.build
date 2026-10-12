@@ -1,0 +1,19 @@
+(* The unit-testing library (docs/plans/unit-testing.md, D1 to D6 and M1):
+   tests as values, the checks inside them, golden files, the filter
+   language and the program of a suite; its files in load order, in the form
+   of lib/basis/library.build. It is written on lib/test/property, for
+   properties as tests: *)
+libraries random test/property end
+(* Every compiler of tests/lib/run-hosts.sh builds every file. *)
+annotate "demand" in
+  expect_sig.sml
+  expect.sml
+  golden_sig.sml
+  golden.sml
+  test_sig.sml
+  test.sml
+  filter_sig.sml
+  filter.sml
+  suite_sig.sml
+  suite.sml
+end

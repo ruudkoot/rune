@@ -1,0 +1,320 @@
+{
+ "signatures": {
+  "EXPECT": {
+   "doc": "Checks inside a test (docs/plans/unit-testing.md, D3): a test is the\nunit of verdict, and the checks in it are soft. A check that fails is\nrecorded with its label and the test goes on; the test fails if any of\nits checks failed, and `fail` ends it at once. A test that raises an\nexception of its own fails with the exception's name and message.\n\nThe checks have the shapes of the Basis Library suite's harness\n(tests/basis/harness.sml): a label, then what is expected, then a\nfunction that computes what is, so that an exception raised while\ncomputing it fails that check alone.\n\n",
+   "page": "sig/EXPECT.md",
+   "members": [
+    {
+     "kind": "exception",
+     "name": "Failure",
+     "spec": "exception Failure of string",
+     "doc": "Raised by `fail`: the test ends, failed, with the message.\n\n",
+     "page": "sig/EXPECT.md#exn-failure"
+    },
+    {
+     "kind": "val",
+     "name": "check",
+     "spec": "val check : string * (unit -> bool) -> unit",
+     "doc": "`check (label, f)` passes if `f ()` is `true`; it fails if it is\n`false` or raises.\n\n**Example** `#checks (run (fn () => check (\"one\", fn () => 1 + 1 = 2))) = 1`\n\n",
+     "page": "sig/EXPECT.md#val-check"
+    },
+    {
+     "kind": "val",
+     "name": "that",
+     "spec": "val that : string * bool -> unit",
+     "doc": "`that (label, b)` passes if `b` is `true`.\n\n**Example** `#outcome (run (fn () => that (\"false\", false))) = Fail [\"false\"]`\n\n",
+     "page": "sig/EXPECT.md#val-that"
+    },
+    {
+     "kind": "val",
+     "name": "eq",
+     "spec": "val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit",
+     "doc": "`eq show (label, expected, f)` passes if `f ()` equals `expected`,\nand otherwise says both, printed by `show`.\n\n**Example** `#outcome (run (fn () => eq Int.toString (\"sum\", 4, fn () => 2 + 3))) = Fail [\"sum: expected 4, got 5\"]`\n\n",
+     "page": "sig/EXPECT.md#val-eq"
+    },
+    {
+     "kind": "val",
+     "name": "equal",
+     "spec": "val equal : ('a * 'a -> bool) * ('a -> string) -> string * 'a * (unit -> 'a) -> unit",
+     "doc": "`equal (same, show) (label, expected, f)` passes if `same (expected, f ())`, for a type whose equality is not `=`.\n\n**Example** `#outcome (run (fn () => equal (Real.==, Real.toString) (\"half\", 0.5, fn () => 1.0 / 2.0))) = Pass`\n\n",
+     "page": "sig/EXPECT.md#val-equal"
+    },
+    {
+     "kind": "val",
+     "name": "raises",
+     "spec": "val raises : string * (exn -> bool) * (unit -> 'a) -> unit",
+     "doc": "`raises (label, isIt, f)` passes if `f ()` raises an exception for\nwhich `isIt` is `true`.\n\n**Example** `#outcome (run (fn () => raises (\"hd\", fn Empty => true | _ => false, fn () => hd []))) = Pass`\n\n",
+     "page": "sig/EXPECT.md#val-raises"
+    },
+    {
+     "kind": "val",
+     "name": "fail",
+     "spec": "val fail : string -> 'a",
+     "doc": "`fail message` ends the test, failed.\n\n**Raises** `Failure` always.\n\n",
+     "page": "sig/EXPECT.md#val-fail"
+    },
+    {
+     "kind": "datatype",
+     "name": "outcome",
+     "spec": "datatype outcome = Pass | Fail of string list | Error of string",
+     "doc": "How a test ended: every check passed; some failed, or `fail` was\ncalled, with the messages in the order they came; or the test raised\nan exception of its own.\n\n",
+     "page": "sig/EXPECT.md#type-outcome"
+    },
+    {
+     "kind": "val",
+     "name": "run",
+     "spec": "val run : (unit -> unit) -> {outcome : outcome, checks : int}",
+     "doc": "`run f` runs the body of a test and counts its checks.\n\n**Example** `run (fn () => ()) = {outcome = Pass, checks = 0}`\n\n",
+     "page": "sig/EXPECT.md#val-run"
+    }
+   ]
+  },
+  "GOLDEN": {
+   "doc": "Golden files (docs/plans/unit-testing.md, D6): what a test produced,\ncompared with a file that holds what it must produce. A difference fails\nthe check and says where the two first differ. In accept mode the file is\nwritten instead, for a person to review before it is committed: an\naccepted file is read line by line, as every expected file is\n(AGENTS.md).\n\n",
+   "page": "sig/GOLDEN.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "accept",
+     "spec": "val accept : bool ref",
+     "doc": "Whether `check` writes the files instead of comparing them: `false`\nunless a suite was run with `--accept`.\n\n",
+     "page": "sig/GOLDEN.md#val-accept"
+    },
+    {
+     "kind": "val",
+     "name": "check",
+     "spec": "val check : string * {expected : string, actual : string} -> unit",
+     "doc": "`check (label, {expected, actual})` checks that the file `expected`\nholds exactly the text `actual`.\n\nA missing file fails the check, unless `accept` is set, when it is\nwritten.\n\n",
+     "page": "sig/GOLDEN.md#val-check"
+    },
+    {
+     "kind": "val",
+     "name": "difference",
+     "spec": "val difference : string * string -> (int * string * string) option",
+     "doc": "`difference (expected, actual)` is where two texts first differ, as a\nline number and the two lines, or `NONE` when they are equal.\n\n**Example** `difference (\"a\\nb\\n\", \"a\\nc\\n\") = SOME (2, \"b\", \"c\")`\n\n",
+     "page": "sig/GOLDEN.md#val-difference"
+    }
+   ]
+  },
+  "SUITE": {
+   "doc": "A suite: a structure that names its tests (docs/plans/unit-testing.md,\nD2 and D10). A structure that ascribes `SUITE` is a suite, and `Main`\nmakes it a program.\n\n",
+   "page": "sig/SUITE.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "name",
+     "spec": "val name : string",
+     "doc": "The suite's name, which its summary line gives.\n\n",
+     "page": "sig/SUITE.md#val-name"
+    },
+    {
+     "kind": "val",
+     "name": "tests",
+     "spec": "val tests : Test.test",
+     "doc": "The suite's tests.\n\n",
+     "page": "sig/SUITE.md#val-tests"
+    }
+   ]
+  },
+  "SUITE_MAIN": {
+   "doc": "The program of a suite: `main ()` runs the suite's tests as `Suite.main`\ndoes.\n\n",
+   "page": "sig/SUITE_MAIN.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "main",
+     "spec": "val main : unit -> unit",
+     "doc": "`main ()` runs the suite's tests with the program's arguments.\n\n",
+     "page": "sig/SUITE_MAIN.md#val-main"
+    }
+   ]
+  },
+  "SUITE_RUN": {
+   "doc": "Running a suite, as a program does (D10). Without options every test\nruns, and each prints a line: `PASS path`, `FAIL path` with the failed\nchecks below it, or `SKIP path` with the reason; a `SUMMARY` line ends\nthe run. The options are:\n\n- `--list`: the paths of the tests that would run, one to a line, and\n  nothing run;\n- `--list-meta`: the same as JSON lines, with each test's metadata;\n- `--filter F`: only the tests that `F` selects (`TestFilter`);\n- `--run P`: only the test of the path `P`, and with several, those;\n- `--after P`: only the tests after the test of the path `P`, in the\n  order they were written, where a run that was stopped goes on;\n- `--events FILE`: a JSON line in `FILE` as each test starts and ends,\n  and for each check that fails, so that a runner whose worker died\n  knows the test it died in;\n- `--accept`: golden files written, not compared (`Golden`);\n- `--quiet`: no line for a test that passes.\n\nWords that do not start with `--` are ignored, so that a compiler that\npasses its own arguments on to the program does not change the run.\n\n",
+   "page": "sig/SUITE_RUN.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "summary",
+     "spec": "type summary = {tests : int, passed : int, failed : int, skipped : int}",
+     "doc": "What a run counted. A failed test is one whose checks failed, that\ncalled `Expect.fail` or that raised; a skipped test is a pending one.\n\n",
+     "page": "sig/SUITE_RUN.md#type-summary"
+    },
+    {
+     "kind": "val",
+     "name": "run",
+     "spec": "val run : {args : string list, print : string -> unit} -> Test.test -> summary",
+     "doc": "`run {args, print} tests` runs the tests that the options `args`\nselect, reporting through `print`.\n\nAn unknown option, and two tests with the same path, are each reported\nas a failure.\n\n**Example** `#failed (run {args = [], print = fn _ => ()} (Test.it \"two\" (fn () => Expect.that (\"2\", 1 + 1 = 2)))) = 0`\n\n**Example** `#failed (run {args = [\"--quiet\"], print = fn _ => ()} (Test.describe \"s\" [Test.it \"t\" (fn () => Expect.fail \"no\")])) = 1`\n\n",
+     "page": "sig/SUITE_RUN.md#val-run"
+    },
+    {
+     "kind": "val",
+     "name": "main",
+     "spec": "val main : Test.test -> unit",
+     "doc": "`main tests` runs `tests` with the program's arguments, printing to\nstandard output, and ends the program with failure if a test failed.\n\n",
+     "page": "sig/SUITE_RUN.md#val-main"
+    }
+   ]
+  },
+  "TEST": {
+   "doc": "Tests as values (docs/plans/unit-testing.md, D2): a tree of named tests\nthat can be listed, filtered and asked what it needs before any of it\nruns.\n\nA leaf is a test and a group names a subtree. The path of a test is the\nnames from the root down to it joined by `/`, as `lib/basis/word64`, and\nis how filters, exclusions and resumption name it. The tree is\npolymorphic in its leaves: the tests that run in this process have\nfunctions as leaves, and a runner can put descriptions of jobs there and\nkeep the listing, the filters and the metadata.\n\n",
+   "page": "sig/TEST.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "tree",
+     "spec": "type 'a tree",
+     "doc": "A tree of tests whose leaves are of type `'a`.\n\n",
+     "page": "sig/TEST.md#type-tree"
+    },
+    {
+     "kind": "type",
+     "name": "meta",
+     "spec": "type meta = {tags : string list, timeout : Time.time option, requires : string list,\n             cpus : int option, memory : int option, pending : string option}",
+     "doc": "What a test says about itself, inherited from the groups above it.\n\nIts tags; the time it may take; the capabilities it needs (programs\nand systems outside Rune, which a doctor can look for); the CPUs and the\nmegabytes of memory it takes; and, for a test that is not run, why. A\ngroup's tags add to its tests', and for the rest the nearest says.\n\n",
+     "page": "sig/TEST.md#type-meta"
+    },
+    {
+     "kind": "type",
+     "name": "test",
+     "spec": "type test = (unit -> unit) tree",
+     "doc": "Tests that run in this process: each is a function that fails by\nraising, or by failing a check of `Expect`.\n\n",
+     "page": "sig/TEST.md#type-test"
+    },
+    {
+     "kind": "val",
+     "name": "it",
+     "spec": "val it : string -> 'a -> 'a tree",
+     "doc": "`it name x` is a test named `name` whose leaf is `x`.\n\n**Example** `List.map #path (leaves (it \"one\" ())) = [\"one\"]`\n\n",
+     "page": "sig/TEST.md#val-it"
+    },
+    {
+     "kind": "val",
+     "name": "describe",
+     "spec": "val describe : string -> 'a tree list -> 'a tree",
+     "doc": "`describe name ts` is the group of the tests `ts`, its name before\neach of their paths.\n\n**Example** `List.map #path (leaves (describe \"lib\" [it \"json\" (), it \"digest\" ()])) = [\"lib/json\", \"lib/digest\"]`\n\n",
+     "page": "sig/TEST.md#val-describe"
+    },
+    {
+     "kind": "val",
+     "name": "tag",
+     "spec": "val tag : string -> 'a tree -> 'a tree",
+     "doc": "`tag t tree` gives every test of `tree` the tag `t`.\n\n**Example** `List.map (#tags o #meta) (leaves (tag \"slow\" (it \"big\" ()))) = [[\"slow\"]]`\n\n",
+     "page": "sig/TEST.md#val-tag"
+    },
+    {
+     "kind": "val",
+     "name": "timeout",
+     "spec": "val timeout : Time.time -> 'a tree -> 'a tree",
+     "doc": "`timeout t tree` says that a test of `tree` may take `t`. A runner\nends a test that takes longer; a suite run in one process cannot, and\nonly lists it.\n\n",
+     "page": "sig/TEST.md#val-timeout"
+    },
+    {
+     "kind": "val",
+     "name": "requires",
+     "spec": "val requires : string list -> 'a tree -> 'a tree",
+     "doc": "`requires cs tree` says that the tests of `tree` need the capabilities\n`cs`, as `\"tmux\"` or `\"mlton\"`.\n\n",
+     "page": "sig/TEST.md#val-requires"
+    },
+    {
+     "kind": "val",
+     "name": "resources",
+     "spec": "val resources : {cpus : int, memory : int} -> 'a tree -> 'a tree",
+     "doc": "`resources {cpus, memory} tree` says that a test of `tree` takes\n`cpus` processors and `memory` megabytes, for a runner's scheduler.\n\n",
+     "page": "sig/TEST.md#val-resources"
+    },
+    {
+     "kind": "val",
+     "name": "pending",
+     "spec": "val pending : string -> 'a tree -> 'a tree",
+     "doc": "`pending reason tree` keeps the tests of `tree` listed but not run,\nand says why.\n\n**Example** `List.map (#pending o #meta) (leaves (pending \"a bug\" (it \"x\" ()))) = [SOME \"a bug\"]`\n\n",
+     "page": "sig/TEST.md#val-pending"
+    },
+    {
+     "kind": "val",
+     "name": "ways",
+     "spec": "val ways : (string * 'w) list -> ('w -> 'a) tree -> 'a tree",
+     "doc": "`ways ws tree` makes every test of `tree` once for each way of `ws`,\na name and a value (D7).\n\nThe test of the way `(n, w)` has the name `name[n]`, the tag `way:n`,\nand the leaf `f w`.\n\n**Example** `List.map #path (leaves (ways [(\"a\", 1), (\"b\", 2)] (it \"t\" (fn w => w)))) = [\"t[a]\", \"t[b]\"]`\n\n",
+     "page": "sig/TEST.md#val-ways"
+    },
+    {
+     "kind": "val",
+     "name": "map",
+     "spec": "val map : ('a -> 'b) -> 'a tree -> 'b tree",
+     "doc": "`map f tree` is `tree` with `f` applied to every leaf.\n\n",
+     "page": "sig/TEST.md#val-map"
+    },
+    {
+     "kind": "val",
+     "name": "leaves",
+     "spec": "val leaves : 'a tree -> {path : string, meta : meta, leaf : 'a} list",
+     "doc": "`leaves tree` is every test of `tree` with its path and its metadata,\nin the order they were written.\n\n",
+     "page": "sig/TEST.md#val-leaves"
+    },
+    {
+     "kind": "val",
+     "name": "property",
+     "spec": "val property : string -> (unit -> Prop.prop) -> test",
+     "doc": "`property name p` is a test that checks the property `p ()` with\n`Check.default` (D5).\n\nWhen the property does not hold, the test fails with its report: the\nshrunk counterexample and the replay token.\n\n",
+     "page": "sig/TEST.md#val-property"
+    },
+    {
+     "kind": "val",
+     "name": "golden",
+     "spec": "val golden : string -> {expected : string, actual : unit -> string} -> test",
+     "doc": "`golden name {expected, actual}` is a test that checks that the file\n`expected` holds the text `actual ()` (`Golden.check`).\n\n",
+     "page": "sig/TEST.md#val-golden"
+    }
+   ]
+  },
+  "TEST_FILTER": {
+   "doc": "Which tests to run (docs/plans/unit-testing.md, D4): a small language of\nfilters over a test's path and tags.\n\nA word is a pattern on the path: with `*` (any run of characters) or `?`\n(one character) it must match the whole path, and without them it need\nonly occur in it, as `run-tests.sh`'s filter does. `tag:T` selects the\ntests tagged `T`, and `way:W` those of the way `W`. `!` negates, `&`\nand `|` combine, `!` binding tightest and `|` loosest, and parentheses\ngroup. The empty filter selects every test.\n\n",
+   "page": "sig/TEST_FILTER.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "filter",
+     "spec": "type filter",
+     "doc": "A filter.\n\n",
+     "page": "sig/TEST_FILTER.md#type-filter"
+    },
+    {
+     "kind": "exception",
+     "name": "Parse",
+     "spec": "exception Parse of string",
+     "doc": "Raised by `parse` for text that is not a filter, with what is wrong.\n\n",
+     "page": "sig/TEST_FILTER.md#exn-parse"
+    },
+    {
+     "kind": "val",
+     "name": "all",
+     "spec": "val all : filter",
+     "doc": "The filter that selects every test.\n\n**Example** `matches all {path = \"any/thing\", tags = []} = true`\n\n",
+     "page": "sig/TEST_FILTER.md#val-all"
+    },
+    {
+     "kind": "val",
+     "name": "parse",
+     "spec": "val parse : string -> filter",
+     "doc": "`parse s` is the filter `s` says.\n\n**Raises** `Parse` if `s` is not a filter, as `\"a &\"`.\n\n**Example** `matches (parse \"lib/* & !tag:slow\") {path = \"lib/json\", tags = []} = true`\n\n**Example** `matches (parse \"json | way:stack\") {path = \"lang/x[stack]\", tags = [\"way:stack\"]} = true`\n\n",
+     "page": "sig/TEST_FILTER.md#val-parse"
+    },
+    {
+     "kind": "val",
+     "name": "matches",
+     "spec": "val matches : filter -> {path : string, tags : string list} -> bool",
+     "doc": "`matches f {path, tags}` says whether `f` selects the test of `path`\nand `tags`.\n\n**Example** `matches (parse \"word\") {path = \"lib/basis/word64\", tags = []} = true`\n\n",
+     "page": "sig/TEST_FILTER.md#val-matches"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Expect": "EXPECT",
+  "Golden": "GOLDEN",
+  "Main": "SUITE_MAIN",
+  "Suite": "SUITE_RUN",
+  "Test": "TEST",
+  "TestFilter": "TEST_FILTER"
+ }
+}

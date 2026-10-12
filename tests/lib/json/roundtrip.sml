@@ -1,11 +1,10 @@
-(* libraries: random *)
+(* libraries: test/unit random *)
 (* Json: random values written and read back, compactly and indented; the
    escapes the writer makes; what decode reports where a text breaks off;
    and the integers of toInt and int at the edges of int. *)
 structure JsonRoundTrip =
 struct
-  val failures = ref 0
-  fun check (name, ok) = if ok then () else (failures := !failures + 1; print ("FAIL " ^ name ^ "\n"))
+  val check = Expect.that
 
   (* a random value of depth at most d *)
   fun draw (d, g) =
@@ -86,9 +85,10 @@ struct
               (SOME lo, SOME hi) => Json.toInt (Json.int lo) = SOME lo andalso Json.toInt (Json.int hi) = SOME hi
             | _ => true))
 
-  fun main () =
-    (roundTrips (); escapes (); errors (); ints ();
-     print ((if !failures = 0 then "PASS" else "FAIL") ^ " json: " ^ Int.toString (!failures) ^ " failed\n"))
+  val tests =
+    Test.describe "json/roundtrip"
+      [Test.it "round-trips" roundTrips, Test.it "escapes" escapes, Test.it "errors" errors, Test.it "ints" ints]
 end
 
-val () = JsonRoundTrip.main ()
+structure JsonRoundTripMain = Main (struct val name = "json/roundtrip" val tests = JsonRoundTrip.tests end)
+val () = JsonRoundTripMain.main ()

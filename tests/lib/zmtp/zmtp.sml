@@ -1,11 +1,11 @@
+(* libraries: test/unit *)
 (* Zmtp: the greeting and frames as ZMTP 3.1 writes them, read back in
    every split; then the kinds of socket talking to each other over the
    loopback interface in one process. tests/lib/zmtp/interop.sh talks to
    a peer written from the specification in Python. *)
 structure ZmtpTest =
 struct
-  val failures = ref 0
-  fun check (name, ok) = if ok then () else (failures := !failures + 1; print ("FAIL " ^ name ^ "\n"))
+  val check = Expect.that
 
   open ZmtpWire
 
@@ -78,9 +78,10 @@ struct
       List.app Zmtp.close [router, dealer, rep, req, pub, sub]
     end
 
-  fun main () =
-    (wire (); sockets ();
-     print ((if !failures = 0 then "PASS" else "FAIL") ^ " zmtp: " ^ Int.toString (!failures) ^ " failed\n"))
+  val tests =
+    Test.describe "zmtp"
+      [Test.it "wire" wire, Test.it "sockets" sockets]
 end
 
-val () = ZmtpTest.main ()
+structure ZmtpMain = Main (struct val name = "zmtp" val tests = ZmtpTest.tests end)
+val () = ZmtpMain.main ()

@@ -334,7 +334,9 @@ keep these invariants:
   `libraries` declaration names the libraries it is written on; its
   generated `MANIFEST` records what each file uses of the basis library as
   well (`rune --basis-check --library NAME` checks it). It may not use `_prim`. The mechanism's tests are in
-  `tests/lib` (`make test-lib`). After a change to such a library, run `make
+  `tests/lib` (`make test-lib`), and a library's own tests, `tests/lib/NAME`, are suites on
+  `lib/test/unit` (`Test`, `Expect`, `Main`; docs/generated/test/unit), whose
+  `PASS`/`FAIL` lines both targets read. After a change to such a library, run `make
   test-lib-hosts`: its tests on MLton, SML/NJ 110.99.9, SML/NJ 2026.2, Poly/ML and MLKit, against their
   own Basis. **Never work around a bug of a compiler other than Rune in such a
   library** (the owner's rule, 2026-09-27): write it plainly, and mark the

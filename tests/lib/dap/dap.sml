@@ -1,10 +1,10 @@
+(* libraries: test/unit *)
 (* Dap: the messages of the protocol's overview, as VS Code's adapters
    exchange them, read and written back; a session of messages framed
    and read back in pieces; replies and the events. *)
 structure DapTest =
 struct
-  val failures = ref 0
-  fun check (name, ok) = if ok then () else (failures := !failures + 1; print ("FAIL " ^ name ^ "\n"))
+  val check = Expect.that
 
   open Dap
 
@@ -50,9 +50,10 @@ struct
                                = "{\"seq\":4,\"type\":\"event\",\"event\":\"exited\",\"body\":{\"exitCode\":0}}")
     end
 
-  fun main () =
-    (readBack (); framed (); replies ();
-     print ((if !failures = 0 then "PASS" else "FAIL") ^ " dap: " ^ Int.toString (!failures) ^ " failed\n"))
+  val tests =
+    Test.describe "dap"
+      [Test.it "read-back" readBack, Test.it "framed" framed, Test.it "replies" replies]
 end
 
-val () = DapTest.main ()
+structure DapMain = Main (struct val name = "dap" val tests = DapTest.tests end)
+val () = DapMain.main ()

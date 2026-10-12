@@ -1,12 +1,11 @@
-(* libraries: random *)
+(* libraries: test/unit random *)
 (* Pretty: golden layouts of a value at several widths, the budgets, the
    annotations; and properties on random documents -- a layout keeps the
    text, a group that fits is on one line, and no line is wider than the
    width but where one piece of text alone is. *)
 structure PrettyTest =
 struct
-  val failures = ref 0
-  fun check (name, ok) = if ok then () else (failures := !failures + 1; print ("FAIL " ^ name ^ "\n"))
+  val check = Expect.that
 
   open Pretty
   fun list xs = sequence {opening = "[", closing = "]", separator = ","} xs
@@ -103,9 +102,11 @@ struct
       check ("random documents", go (500, Random.fromSeed 0w31))
     end
 
-  fun main () =
-    (goldens (); budgets (); annotations (); properties ();
-     print ((if !failures = 0 then "PASS" else "FAIL") ^ " pretty: " ^ Int.toString (!failures) ^ " failed\n"))
+  val tests =
+    Test.describe "pretty"
+      [Test.it "goldens" goldens, Test.it "budgets" budgets, Test.it "annotations" annotations,
+       Test.it "properties" properties]
 end
 
-val () = PrettyTest.main ()
+structure PrettyMain = Main (struct val name = "pretty" val tests = PrettyTest.tests end)
+val () = PrettyMain.main ()

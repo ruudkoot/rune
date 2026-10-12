@@ -1,10 +1,9 @@
-(* libraries: random *)
+(* libraries: test/unit random *)
 (* Style: the escapes of styles, the styles of parameters, and the
    colours a terminal with fewer has instead. *)
 structure StyleTest =
 struct
-  val failures = ref 0
-  fun check (name, ok) = if ok then () else (failures := !failures + 1; print ("FAIL " ^ name ^ "\n"))
+  val check = Expect.that
 
   open Style
 
@@ -67,9 +66,11 @@ struct
   fun choices () =
     check ("always and never", enabled (Always, false) andalso not (enabled (Never, true)))
 
-  fun main () =
-    (roundTrip (); escapes (); downgrades (); choices ();
-     print ((if !failures = 0 then "PASS" else "FAIL") ^ " style: " ^ Int.toString (!failures) ^ " failed\n"))
+  val tests =
+    Test.describe "terminal/style"
+      [Test.it "round-trip" roundTrip, Test.it "escapes" escapes, Test.it "downgrades" downgrades,
+       Test.it "choices" choices]
 end
 
-val () = StyleTest.main ()
+structure StyleMain = Main (struct val name = "terminal/style" val tests = StyleTest.tests end)
+val () = StyleMain.main ()

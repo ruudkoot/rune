@@ -163,7 +163,7 @@ all: vm boot runedoc runeopt manifests basis-cache
 # (rune --basis-index)
 # the libraries of docs/plans/repl.md (The libraries)
 REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter
-manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
+manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
 lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/basis
 lib/random/MANIFEST: lib/random/library.build $(wildcard lib/random/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
@@ -172,6 +172,9 @@ lib/test/property/MANIFEST: lib/test/property/library.build $(wildcard lib/test/
 	bin/rune-$(BOOTHOST) --basis-index lib/test/property
 lib/test/property/basis/MANIFEST: lib/test/property/basis/library.build $(wildcard lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml) lib/test/property/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/test/property/basis
+# the unit-testing library (docs/plans/unit-testing.md, M1), written on test/property
+lib/test/unit/MANIFEST: lib/test/unit/library.build $(wildcard lib/test/unit/*.sml) lib/test/property/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/test/unit
 # the libraries of docs/plans/repl.md (The libraries), each after those it
 # is written on
 lib/unicode/MANIFEST: lib/unicode/library.build $(wildcard lib/unicode/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
@@ -1051,12 +1054,13 @@ check-docs: $(RUNE) $(RUNEDOC) manifests
 	sh scripts/check-docs.sh
 	RUNE=$(RUNE_STACK) sh scripts/gen-basis-sigs.sh --check
 	$(RUNE_STACK) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	sh tests/basis/gen-annotations.sh --check
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	$(RUNEDOC) $(DOCS_RANDOM) --check
 	$(RUNEDOC) $(DOCS_PROPERTY) --check
 	$(RUNEDOC) $(DOCS_PROPERTY_BASIS) --check
+	$(RUNEDOC) $(DOCS_UNIT) --check
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) --check &&) true
 	$(RUNEDOC) --palette docs/generated/palette --check
 	sh tests/basis/check-claims.sh
@@ -1078,6 +1082,9 @@ DOCS_PROPERTY := --lib lib --library test/property --out docs/generated/test/pro
 DOCS_PROPERTY_BASIS := --lib lib --library test/property/basis --out docs/generated/test/property-basis \
                        --basis-docs ../../basis --library-docs test/property ../property \
                        --title "Property testing: the Basis Library's arbitraries"
+# the unit-testing library (docs/plans/unit-testing.md, M1)
+DOCS_UNIT := --lib lib --library test/unit --out docs/generated/test/unit --basis-docs ../../basis \
+             --library-docs test/property ../property --title "Unit testing"
 # the libraries of docs/plans/repl.md (The libraries), each in
 # docs/generated/NAME (REPL_LIBS, with the manifests)
 TITLE_unicode := Unicode
@@ -1097,6 +1104,7 @@ docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_RANDOM)
 	$(RUNEDOC) $(DOCS_PROPERTY)
 	$(RUNEDOC) $(DOCS_PROPERTY_BASIS)
+	$(RUNEDOC) $(DOCS_UNIT)
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) &&) true
 	$(RUNEDOC) --palette docs/generated/palette
 

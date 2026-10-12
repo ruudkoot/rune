@@ -17,6 +17,21 @@ is what a change to the layout of values or objects has to pass;
 *Measuring a collector* below is how a new collector is scored against
 today's.
 
+## Writing a test
+
+A test written in Standard ML is a suite on `lib/test/unit`
+([generated/test/unit](generated/test/unit/README.md); the roadmap
+[plans/unit-testing.md](plans/unit-testing.md)): a tree of named tests,
+`Test.describe "json" [Test.it "decode" (fn () => ...), ...]`, whose checks
+(`Expect.that`, `Expect.eq`, `Expect.raises`) are soft, and a program
+`Main (struct val name = "json" val tests = ... end)`. The program prints
+`PASS path` or `FAIL path` with the failed checks for each test and a
+`SUMMARY` line, and fails when a test failed. `--list` lists the tests
+without running them, `--filter` selects (`lib/* & !tag:slow`), `--after`
+goes on after a test, and `--events FILE` writes a JSON line as each test
+starts and ends. The library builds on every host compiler, so the same
+suite runs in `make test-lib` and `make test-lib-hosts`.
+
 ## The three oracles
 
 **The output.** A program under `tests/` runs with `--checked` and its
