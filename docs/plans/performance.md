@@ -52,7 +52,7 @@ is the page of timings, stale until M1.
 | M6 | The call made lean | not started; prototypes E9 |
 | M7 | Pointers in registers | not started; prototype E12 |
 | M8 | Allocation in the middle end | not started |
-| M9 | Native frames: a gate, then a roadmap of its own | not started |
+| M9 | Native frames: a gate, then a roadmap of its own | roadmap written: [native-frames.md](native-frames.md) (2026-10-12); its gate follows M5 to M7 |
 | M10 | Measure again, and retire this plan | not started |
 
 ## The request
@@ -1946,6 +1946,11 @@ interpreter's protocol, deoptimisation, traces and images over them. Plan
 maps for pointers in registers (D6 C) with them. This is a change of the
 size of the JIT roadmap, and it gets one of its own. Its target to plan
 for: a `fib` call at most 25 instructions and 10 cycles.
+
+The roadmap is [native-frames.md](native-frames.md) (2026-10-12). Its
+prototypes by hand put a `fib` call on frames in the value stack at 21 to
+25.5 instructions and 6 to 10 cycles, MLton's at 17 and 9 to 10; M6's lean
+frames at 39.5 and 17 to 18.
 
 ### M10. Measure again, and retire this plan
 
