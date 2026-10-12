@@ -41,6 +41,24 @@ struct
                                ispeed = ispeed, ospeed = ospeed})
     end
 
+  (* echo off, a return left as typed, signals kept. The undo text is
+     cleared: the caller has written it, and leave would write it again. *)
+  fun quiet () =
+    let
+      val fd = Posix.FileSys.stdin
+      val t = T.TC.getattr fd
+      val () = if isSome (!saved) then () else saved := SOME t
+      val {iflag, oflag, cflag, lflag, cc, ispeed, ospeed} = T.fieldsOf (valOf (!saved))
+      val iflag = T.I.clear (T.I.flags [T.I.inlcr, T.I.igncr, T.I.icrnl], iflag)
+      val lflag = T.L.clear (T.L.flags [T.L.echo, T.L.echonl, T.L.icanon], lflag)
+      val cc = T.V.update (cc, [(T.V.min, #"\001"), (T.V.time, #"\000")])
+    in
+      undoText := "";
+      T.TC.setattr (fd, T.TC.sadrain,
+                    T.termios {iflag = iflag, oflag = oflag, cflag = cflag, lflag = lflag, cc = cc,
+                               ispeed = ispeed, ospeed = ospeed})
+    end
+
   fun leave () =
     case !saved of
       NONE => ()

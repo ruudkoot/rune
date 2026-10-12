@@ -15,6 +15,7 @@ struct
     fun size () = {columns = 80, rows = 24}
     fun resizes () = 0
     fun enter {undo} = undone := undo
+    fun quiet () = undone := ""
     fun leave () = written := !written ^ !undone
     fun read _ = case !reads of [] => NONE | r :: rest => (reads := rest; SOME r)
     fun write s = written := !written ^ s

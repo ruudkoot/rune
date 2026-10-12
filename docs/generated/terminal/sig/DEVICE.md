@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 2 |
-| Documentation | 8 of 8 entries documented |
+| Documentation | 9 of 9 entries documented |
 | Tests | not listed |
 | Source | [lib/terminal/device\_sig.sml](../../../../lib/terminal/device_sig.sml) |
 
@@ -43,6 +43,7 @@ sig
   val <a href="#val-size">size</a> : unit -&gt; {<a href="#fld-size.columns">columns</a> : int, <a href="#fld-size.rows">rows</a> : int}
   val <a href="#val-resizes">resizes</a> : unit -&gt; int
   val <a href="#val-enter">enter</a> : {<a href="#fld-enter.undo">undo</a> : string} -&gt; unit
+  val <a href="#val-quiet">quiet</a> : unit -&gt; unit
   val <a href="#val-leave">leave</a> : unit -&gt; unit
   val <a href="#val-read">read</a> : Time.time option -&gt; string option
   val <a href="#val-write">write</a> : string -&gt; unit
@@ -102,6 +103,22 @@ program turned on with escapes.
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-enter.undo"></a>`undo` | `string` |  |
+
+### <a name="val-quiet"></a>`quiet`
+
+```sml
+val quiet : unit -> unit
+```
+
+`quiet ()` turns the echo off and leaves a return as it was typed,
+and a signal key is a signal again.
+
+Raw mode has taken the signals. [`quiet`](#val-quiet) puts them back without
+turning the echo on. It clears the undo text [`enter`](#val-enter) stored: the
+caller writes that text first, since [`leave`](#val-leave) would otherwise write
+it later.
+
+**Raises** [`OS.SysErr`](../../basis/sig/OS.md#exn-syserr) when the standard input is not a terminal.
 
 ### <a name="val-leave"></a>`leave`
 

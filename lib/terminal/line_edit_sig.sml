@@ -153,13 +153,34 @@ sig
      A program with a basic mode of its own, as the REPL has, asks it
      before it reads. *)
   val basic : config -> bool
+  (* `keepRaw`, when set, asks `readLine` to leave the terminal quiet
+     after an accepted line: the echo off, and Ctrl-C a signal.
+
+     The REPL sets it. Putting the terminal back would turn the echo on,
+     and a key typed before quiet mode would show up in what the code
+     writes. Full raw mode would instead take Ctrl-C as a byte. An
+     interrupt and the end of the input put the terminal back either way. *)
+  val keepRaw : bool ref
+  (* `promptHook` is what to run once the terminal is raw, just before the
+     prompt is drawn. *)
+  type promptHook = unit -> unit
+  (* `beforePrompt`, when set, is run once the terminal is raw, just
+     before the prompt is drawn. The basic mode does not run it.
+
+     The REPL announces the prompt there. A key typed at that
+     announcement is then read as itself: in the cooked mode a return is
+     translated, and echoed, before the editor can see it. *)
+  val beforePrompt : promptHook ref
   (* `readLine (c, h)` reads an input at the terminal with the editor,
      going back through the history `h` and adding the input to it.
 
-     It puts the terminal back before it returns. It is the basic mode when
-     `#basic c`, when the standard input or output is not a terminal,
-     when `TERM` is `dumb`, `unknown`, `cons25` or `emacs`, when
-     `INSIDE_EMACS` names comint, or when `RUNE_BASIC_REPL` is set. *)
+     It puts the terminal back before it returns, unless `keepRaw` is set
+     and it read a line, when the terminal stays quiet. Where `beforePrompt`
+     is set, it is called once the terminal is raw and just before the
+     prompt is drawn. It is the basic mode when `#basic c`, when the
+     standard input or output is not a terminal, when `TERM` is `dumb`,
+     `unknown`, `cons25` or `emacs`, when `INSIDE_EMACS` names comint, or
+     when `RUNE_BASIC_REPL` is set. *)
   val readLine : config * History.history option -> result
 
   (* `terminal ()` is what the terminal said of itself at the first

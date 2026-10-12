@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`DEVICE`](../sig/DEVICE.md) |
 | Status | required |
-| Members | 8 |
+| Members | 9 |
 | Tests | not listed |
 | Source | [lib/terminal/posix\_device.sml](../../../../lib/terminal/posix_device.sml) |
 
@@ -29,6 +29,7 @@ What each means is on [`DEVICE`](../sig/DEVICE.md); the types are this structure
 | val | [`enter`](../sig/DEVICE.md#val-enter) | `{undo : string} -> unit` |
 | val | [`leave`](../sig/DEVICE.md#val-leave) | `unit -> unit` |
 | val | [`policy`](../sig/DEVICE.md#val-policy) | `unit -> Grapheme.policy` |
+| val | [`quiet`](../sig/DEVICE.md#val-quiet) | `unit -> unit` |
 | val | [`read`](../sig/DEVICE.md#val-read) | `Time.time option -> string option` |
 | val | [`resizes`](../sig/DEVICE.md#val-resizes) | `unit -> int` |
 | val | [`size`](../sig/DEVICE.md#val-size) | `unit -> {columns : int, rows : int}` |

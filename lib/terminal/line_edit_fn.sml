@@ -1130,6 +1130,9 @@ struct
     orelse env "RUNE_BASIC_REPL" <> ""
 
   val basic = isBasic
+  val keepRaw = ref false
+  type promptHook = unit -> unit
+  val beforePrompt = ref (fn () => ()) : promptHook ref
 
   fun basicLine (c : config) =
     let
@@ -1307,16 +1310,35 @@ struct
                 end
           end
         val () = Device.enter {undo = pasteOff ^ (if kittyOn then "\027[<u" else "")}
-        val () = Device.write (pasteOn ^ (if kittyOn then "\027[>1u" else ""))
-        val () = if !asked then ()
-                 else (asked := true; Device.write ("\r" ^ probe ^ "\027[6n\r\027[K\027[?u\027[c"))
-        val () = mark ()
-        val s = start (history, "")
-        val result = (shape s; draw (s, true); loop (s, Key.empty))
-                     handle x => (unshape (); Device.leave (); raise x)
+        (* a failure here, including an interrupt at the prompt's
+           announcement, puts the terminal back: the caller does not *)
+        val result =
+          let
+            val () = Device.write (pasteOn ^ (if kittyOn then "\027[>1u" else ""))
+            val () = if !asked then ()
+                     else (asked := true; Device.write ("\r" ^ probe ^ "\027[6n\r\027[K\027[?u\027[c"))
+            val () = mark ()
+            (* announced only once the terminal is raw: a key typed at the
+               announcement is not translated or echoed, as it would be while
+               the terminal is still cooked *)
+            val () = !beforePrompt ()
+            val s = start (history, "")
+          in
+            shape s; draw (s, true); loop (s, Key.empty)
+          end
+          handle x => (unshape (); Device.leave (); raise x)
+        (* an accepted line goes quiet, not back and not full raw. Back
+           turns echo on. Full raw takes Ctrl-C as a byte, through the
+           history write and until the caller is quiet itself. The escapes
+           leave would write go out now: quiet replaces them and would not. *)
+        fun restore () =
+          if !keepRaw andalso (case result of Line _ => true | _ => false) then
+            (Device.write (pasteOff ^ (if kittyOn then "\027[<u" else ""));
+             (Device.quiet () handle x => (Device.leave (); raise x)))
+          else Device.leave ()
       in
         unshape ();
-        Device.leave ();
+        restore ();
         (case (result, h) of (Line t, SOME h) => History.add (h, t) | _ => ());
         result
       end
