@@ -1,5 +1,5 @@
 (* The known answers of lib/random, printed as tests/lib/random/reference.c
-   prints them (tests/lib/run-lib-tests.sh compares the two). *)
+   prints them (the runner compares the two: tests/runner/tools.sml). *)
 fun hex (w : Word64.word) = StringCvt.padLeft #"0" 16 (Word64.fmt StringCvt.HEX w)
 
 fun words (what, g, k) =

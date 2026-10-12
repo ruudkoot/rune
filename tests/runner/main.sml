@@ -90,26 +90,17 @@ struct
     Test.describe "make"
       [lang ("test-opt", [], ["compile/stack-done", "basis-compile/stack-done"],
              langFiles @ perfFiles @ ["tests/opt/*", "tests/runtime/*", "tests/basis/*", "examples/*"]),
-       alone ("check-units-steps", [], ["tests/units/*"]),
+       alone ("check-units-steps", ["check-units"], ["tests/units/*"]),
        lang ("test-native-steps", [], ["compile/stack-done"],
              langFiles @ ["tests/opt/*", "tests/basis/*", "tests/runtime/*", "examples/nqueens.sml"]),
-       step ("test-register-steps", {cpus = 1, memory = 500, pools = [], after = []}, [],
-             ["tests/runtime/*"]),
        step ("test-register-jit-steps", {cpus = 1, memory = 1000, pools = [], after = []}, [],
              ["tests/register/*", "tests/lang/rt.deeprec_stack.*"]),
        step ("test-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}, [],
              ["tests/compiler/*", "tests/runtime/*"]),
        step ("test-heap-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}, ["layout"], ["tests/runtime/*"]),
-       alone ("test-all-steps", [], ["tests/compiler/*"]),
        some ("check-docs", ["docs"], ["*.md", "docs/*", "tests/basis/*", "lib/random/*", "lib/test/property/*"]),
        step ("check-layouts", {cpus = Int.min (2, few), memory = 500, pools = [], after = []}, ["layout"], ["tests/layouts/*"]),
-       alone ("test-doc", ["quick", "docs"], ["tests/doc/*"]),
-       alone ("test-lib", ["quick"], ["tests/lib/*", "lib/random/*", "lib/test/property/*"]),
-       alone ("test-ir", [], ["tests/ir/*"]),
-       alone ("test-incremental", [], ["tests/incremental/*", "tests/flexrec/*", "examples/hello.sml"]),
-       alone ("test-deps", [], ["tests/deps/*"]),
-       alone ("test-dynamic", [], ["tests/dynamic/*"]),
-       alone ("test-build", [], ["tests/buildfile/*"]),
+       alone ("test-incremental-steps", ["test-incremental"], ["tests/incremental/*", "examples/hello.sml"]),
        alone ("test-install", [], ["tests/install/*", "examples/hello.sml"]),
        alone ("test-serve", [], ["tests/serve/*", "examples/hello.sml"]),
        alone ("test-repl", [], ["tests/repl/*"]),
@@ -171,7 +162,7 @@ struct
        expectations ("mlton-skip", "tests/external/mlton-skip.txt", NONE),
        expectations ("lib-deviations", "tests/lib/deviations.txt", NONE)]
 
-  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, Oracles.tree, Canary.tests]
+  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, Oracles.tree, Tools.tree, Canary.tests]
 end
 
 (* laws-one RBC STRUCTURE is the command of a job of the laws
@@ -179,4 +170,7 @@ end
 val () =
   case CommandLine.arguments () of
     ["laws-one", rbc, st] => Laws.one (rbc, st)
-  | args => case Oracles.command args of SOME f => f () | NONE => Cli.main Inventory.tests
+  | args =>
+      case Oracles.command args of
+        SOME f => f ()
+      | NONE => case Tools.command args of SOME f => f () | NONE => Cli.main Inventory.tests

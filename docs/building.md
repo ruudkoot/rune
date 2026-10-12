@@ -40,7 +40,7 @@ hand.
 The acceptance tests also need Python 3. The compiler-driver tests use its
 POSIX resource controls to interrupt a bytecode write and check that the previous
 artifact survives, and the VM tests check saved limits and stricter restore
-policies (`tests/compiler/run-tests.py`, `tests/runtime/run-limits.py`).
+policies (`compiler/*` and `limits/*` of `tests/runner/tools.sml`).
 
 * A C compiler (`cc`; gcc 13 and clang 18 are tested), GNU make 4.3 or later, POSIX `sh`, `awk`. The VMs are built as C17 (`-std=c17`), and what they take from it beyond C99 is behind a test of `__STDC_VERSION__` (the header word of a `Value`, `runtime/vm.h`), so `make CFLAGS='-std=c99 -O2'` builds them too, a little slower. Where the compiler is gcc or clang the VM's loop goes from instruction to instruction by computed goto, a GNU extension; `make CFLAGS='-std=c99 -O2 -DRUNE_SWITCH'` builds the switch every C compiler has.
 * The SML systems that build the compiler, which `make hosts`
@@ -115,7 +115,7 @@ name the tools to check.
 | `make test-terminal` | programs on a terminal: the scripts of `tests/terminal` in a tmux pane, skipped without tmux ([testing.md](testing.md), *Programs on a terminal*) |
 | `make test-diagnostics` | diagnostics rendered with colour and excerpts (`tests/diagnostics`), and the contrast of the palette (`tests/color`) ([diagnostics.md](diagnostics.md)) |
 | `make docs` | write the generated documentation of the basis library, `docs/generated/basis`, with `bin/runedoc`; it is committed, and `make check-docs` fails when it is not what the sources give (`runedoc --check`) |
-| `make test-doc` | run the tests of the documentation generator (`tests/doc/run-doc-tests.sh`) with `bin/runedoc`; `RUNEDOC=bin/runedoc-mlton` is the faster loop |
+| `make test-doc` | run the tests of the documentation generator with `bin/runedoc`, a test each on the runner (`doc/*`, `tests/runner/tools.sml`); `bin/rune-test run --accept 'doc/NAME'` rewrites what one expects |
 | `make test-native` | the suites with every program translated to native code by `runeopt` ([docs/native.md](native.md)): `tests/lang` through `bin/runevm-native` (a VM for the runners that translates and runs; `tests/opt-skip.txt` lists what native code does not do yet), the check that every program of `tests/lang` counts what `runevm-stack` counts (`tests/opt/run-counts.sh`), the Basis Library suite in the `rune:opt` configuration, and the compiler as native code compiling itself (`tests/opt/run-bootstrap.sh`); and `tests/lang` again under the low-pause collector with a cycle of incremental marking always under way (`--gc-stress-cycles`), for the barrier's flag in native code. Linux on x86-64 only; elsewhere it does nothing. `make test-native-stress` runs it with a collection before every `GC_STRESS`-th allocation and `make test-native-asan` with a runtime built with the sanitizers; neither is part of `make check` |
 | `make test-heap` | the collector and its hooks ([runtime.md](runtime.md), What is in place for the collector; [plans/heap-layout.md](plans/heap-layout.md), M7; [plans/garbage-collector-v2.md](plans/garbage-collector-v2.md), M2 and M3): the C test of them (`tests/runtime/heap_test.c`) on the runtime as built, with `-DRUNE_GC_BITS` and with `-DRUNE_BARRIER_CARDS`; `tests/lang` on `bin/runevm-gcbits`, whose collector sets the header's four bits on every object it copies, as it comes and with every function compiled and a collection at every 101st allocation; `tests/lang` on `bin/runevm-cards`, whose barrier also marks a card of the process's table; and `tests/lang` with the heap checked before and after every collection (`--gc-verify`), in a heap of 64 KiB with a nursery of 8 KiB. Part of `make check`; the C test on the runtime as built is part of `make test` too |
 | `make test-gc` | the two collectors ([runtime.md](runtime.md), *The garbage collector*): `tests/lang` under `--gc throughput` and `--gc low-pause` on both VMs with the heap checked before and after every collection of a heap of 64 KiB and a nursery of 8 KiB (`--gc-verify`), under the low-pause collector with every function compiled and a collection at every 101st allocation, under each with the old space compacted at every full collection (`--gc-compact`), and on both VMs under the low-pause collector with a cycle of incremental marking always under way and the heap checked at every minor collection (`--gc-stress-cycles`). Part of `make check` |
@@ -496,7 +496,7 @@ the basis library's form, whose `libraries NAME ... end` names the
 libraries it is written on, and the `MANIFEST` that `make manifests` makes
 of it (`rune --basis-index DIR`); those are compiled first, and the files of all of them are
 chosen as the basis library's are, by what the program names
-(`tests/lib/run-lib-tests.sh`, `make test-lib`). A library other than the
+(`lib/*` of `tests/runner/tools.sml`, `make test-lib`). A library other than the
 basis library may not use `_prim`.
 
 ```

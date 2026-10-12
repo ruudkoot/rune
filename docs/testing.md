@@ -108,7 +108,10 @@ watchdog that skips a case that hangs or runs out of memory and goes on;
 that compares what it compiles and runs across levels, engines, builds and
 hosts (`levels/*`, `register/*`, `jit/*`, `units/*`, `units-stack/*`,
 `positions/*`, `cross/*`, `reproducible/*`, `bootstrap/*`;
-`tests/runner/oracles.sml`); the rest of `make check` is a step each, an
+`tests/runner/oracles.sml`), and the tools' suites (`ir/*`, `doc/*`, `lib/*`,
+`flexrec/*`, `compiler/*`, `limits/*`, `gc-log/*`, and the scenarios of
+`tests/deps`, `tests/dynamic`, `tests/buildfile` and `tests/units` as
+`scenario/*`; `tests/runner/tools.sml`); the rest of `make check` is a step each, an
 opaque `make` of its target (`tests/runner/main.sml`): the steps that run
 the programs of `tests/lang` from the root of the tree share the pool
 `lang` and run one at a time, and the others run beside them. Five canaries, tests that fail on purpose (an exit with 1, a

@@ -2,7 +2,7 @@
 # lib/zmtp against a peer written from the specification in Python
 # (tests/lib/zmtp/interop/peer.py), on the loopback interface: the server
 # of interop/server.sml, compiled with RUNE and run on RUNEVM, and the peer
-# at once. run-lib-tests.sh runs it after the library's tests.
+# at once. the runner runs it after the library's tests (tests/runner/tools.sml).
 #   tests/lib/zmtp/interop.sh RUNE RUNEVM OUT
 set -u
 rune=$1 runevm=$2 out=$3

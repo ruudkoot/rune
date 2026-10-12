@@ -67,7 +67,8 @@ runner's own (`MAKELEVEL`, `MFLAGS`, and the jobs and jobserver of
 `MAKEFLAGS`, whose variables stay) or force colour (`FORCE_COLOR`,
 `CLICOLOR_FORCE`). A command takes no more CPUs than the run has, and
 finds how many it has in `RUNE_TEST_CPUS`, the run's directory in
-`RUNE_TEST_RUN` and the tree's in `RUNE_TEST_ROOT`, both absolute.
+`RUNE_TEST_RUN` and the tree's in `RUNE_TEST_ROOT`, both absolute;
+`RUNE_TEST_ACCEPT` is 1 in a run that accepts ([`accept`](#val-accept)).
 
 | Field | Type | Description |
 | --- | --- | --- |

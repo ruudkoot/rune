@@ -159,7 +159,8 @@ struct
                        mkdirs (jobDir i);
                         {program = #program c, args = #args c,
                          env = ("RUNE_TEST_CPUS=" ^ Int.toString n) :: ("RUNE_TEST_RUN=" ^ absRun)
-                               :: ("RUNE_TEST_ROOT=" ^ absRoot) :: getOpt (#env c, env),
+                               :: ("RUNE_TEST_ROOT=" ^ absRoot)
+                               :: (if !accept then ["RUNE_TEST_ACCEPT=1"] else []) @ getOpt (#env c, env),
                          dir = case #dir c of NONE => jobDir i | SOME d => place d,
                          stdin = getOpt (#stdin c, "/dev/null"), stdout = jobDir i ^ "/stdout",
                          stderr = jobDir i ^ "/stderr", timeout = getOpt (#timeout meta, #timeout c), cap = #cap c,

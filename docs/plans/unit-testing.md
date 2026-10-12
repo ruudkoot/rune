@@ -34,7 +34,7 @@ What it rests on:
 | M7 | The Basis suite on the runner || done 2026-10-12 |
 | M8 | Laws on the runner || done 2026-10-12 |
 | M9 | The differential checks as oracles || done 2026-10-12 |
-| M10 | The tools' suites | |
+| M10 | The tools' suites || done 2026-10-12 |
 | M11 | The protocol suites in SML | |
 | M12 | Requirements and the doctor | |
 | M13 | The matrix, and the other machines | |
@@ -1697,6 +1697,12 @@ M1 and M2 are independent of each other and of the rest.
   | `tests/runtime/run-vm-tests.sh` | 182 |
   | `run-limits.py` | 65 |
   | `run-gc-log.py` | 118 |
+
+* **Done** (2026-10-12):
+  - **`tests/runner/tools.sml`**, as specified by an agent from the scripts: `tests/ir` (25 cases), `tests/doc` (20: its programs and its libraries, written where run-doc-tests.sh wrote them, since a site's links are relative), `tests/lib` (58: the toy libraries, lib/random's known answers and properties, the property library's core, shrinking, instances, mutants and laws, each library's suite file by file, its interop, its MANIFEST and its examples), `tests/flexrec` (53), the compiler's output and budgets on each of seven compilers, and the runtime's saved limits and the collector's log on each VM, each case a job; `--accept` writes the IR's dumps and the documentation's expected files.
+  - **Retired:** `run-ir-tests.sh`, `run-doc-tests.sh`, `run-lib-tests.sh`, `flexrec/run.sh`, `compiler/run-tests.py`, `run-limits.py`, `run-gc-log.py`; `make test-register-steps` and `test-all-steps` are gone, the rest of the steps smaller.
+  - **Kept as scripts, run as jobs:** `tests/deps`, `tests/dynamic`, `tests/buildfile` and `tests/units` are scenarios whose steps build on one another, with their sources written in the scripts (`scenario/*`); a port would retype them, and D6's cram transcripts are the better next form. `tests/install` stays a step of make, which gives it `SMLNJ`. `run-vm-tests.sh` stays while the runners of Windows and portability call it (M13).
+  - **Planted:** a dump and a page that differ from what is expected, both found.
 
 ### M11. The protocol suites in SML (L, about 2,000)
 

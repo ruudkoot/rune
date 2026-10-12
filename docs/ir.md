@@ -477,7 +477,7 @@ stack target.
 
 ## Tests
 
-* **`make test-ir`** (`tests/ir/run-ir-tests.sh`): each `tests/ir/NAME.sml`
+* **`make test-ir`** (`ir/*` of `tests/runner/tools.sml`): each `tests/ir/NAME.sml`
   is compiled without the Basis Library, and each `tests/ir/NAME.mid` read
   as Mid, with the lint on. The first line asks for a dump
   (`(* dump: --dump-after=PASS *)`), which is compared with `NAME.expected`

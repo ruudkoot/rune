@@ -155,7 +155,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build test-install check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-all-steps test-native-steps test-register-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64 test-laws-hosts
+.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build test-install check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps test-incremental-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64 test-laws-hosts
 
 all: vm boot runedoc runeopt manifests basis-cache
 
@@ -840,9 +840,6 @@ RUNE_TEST = GC_STRESS=$(GC_STRESS) $(if $(filter command line environment,$(orig
             NATIVE_HOST=$(NATIVE_HOST) MAKE='$(CHECK_MAKE)' \
             bin/rune-test run $(if $(filter command line environment,$(origin JOBS)),-j $(JOBS))
 test-steps: $(RUNE) vm | build/.doctor-check
-	python3 tests/compiler/run-tests.py --rune $(RUNE_STACK)
-	python3 tests/runtime/run-limits.py --rune $(RUNE_STACK) --vm $(RUNEVM)
-	python3 tests/runtime/run-gc-log.py --rune $(RUNE_STACK) --vm $(RUNEVM)
 	sh tests/runtime/run-vm-tests.sh --vm $(RUNEVM)
 	@mkdir -p build
 	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
@@ -884,14 +881,7 @@ test-heap: test-heap-steps bin/runevm-gcbits bin/runevm-cards $(RUNE) vm bin/run
 test-gc: $(RUNE) vm bin/rune-test | build/.doctor-check
 	$(RUNE_TEST) --tier test-gc
 
-test-all-steps: host-builds vm | build/.doctor-check
-	@for c in mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit; do \
-	  echo "=== testing with $$c build ==="; \
-	  printf '#!/bin/sh\nexec "$(ROOT)/bin/rune-%s" --target=stack "$$@"\n' $$c > build/rune-stack-$$c; \
-	  chmod +x build/rune-stack-$$c; \
-	  python3 tests/compiler/run-tests.py --rune build/rune-stack-$$c || exit 1; \
-	done
-test-all: test-all-steps bin/rune-test
+test-all: host-builds vm bin/rune-test | build/.doctor-check
 	$(RUNE_TEST) --tier test-all
 
 check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/rune.stack.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc bin/rune-test | build/.doctor-check
@@ -901,8 +891,8 @@ check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/rune.stack.rbc bin/r
 # The intermediate representations (docs/ir.md): the dumps of tests/ir, and
 # every program of tests/lang and tests/perf the same at -O0 and -O2 with the
 # lint of every pass on (docs/plans/middle-end.md, M2).
-test-ir: $(RUNE)
-	sh tests/ir/run-ir-tests.sh --rune $(RUNE_STACK)
+test-ir: $(RUNE) bin/rune-test
+	$(RUNE_TEST) --tier test-ir
 
 check-levels: $(RUNE) $(RUNEVM) bin/rune-test
 	$(RUNE_TEST) --tier check-levels
@@ -915,7 +905,6 @@ check-levels: $(RUNE) $(RUNEVM) bin/rune-test
 check-units: check-units-steps bin/rune-test
 	$(RUNE_TEST) --tier check-units
 check-units-steps: $(RUNE) bin/rune-boot bin/runevm bin/runevm-stack
-	sh tests/units/run.sh --rune $(RUNE)
 	bin/rune-boot --units -o bin/rune.units.rbc $(BOOT_SRCS)
 	bin/runevm --heap-size $(RUNE_HEAP) bin/rune.units.rbc --lib bin/../lib -o bin/rune.stage2.units.rbc $(BOOT_SRCS)
 	cmp bin/rune.rbc bin/rune.stage2.units.rbc
@@ -1006,15 +995,15 @@ test-diagnostics: $(RUNE)
 	python3 tests/color/contrast.py
 
 # the cache's scenarios (tests/incremental/SCENARIOS.md; docs/units.md, The cache)
-test-deps: $(RUNE) vm
-	sh tests/deps/run.sh --rune $(RUNE)
+test-deps: $(RUNE) vm bin/rune-test
+	$(RUNE_TEST) --tier test-deps
 
-test-dynamic: $(RUNE) vm
-	sh tests/dynamic/run.sh --rune $(RUNE)
+test-dynamic: $(RUNE) vm bin/rune-test
+	$(RUNE_TEST) --tier test-dynamic
 
 # build files (docs/build.md)
-test-build: $(RUNE) vm
-	sh tests/buildfile/run.sh --rune $(RUNE)
+test-build: $(RUNE) vm bin/rune-test
+	$(RUNE_TEST) --tier test-build
 
 # make install staged and checked (tests/install/run.sh): the bytecode
 # compiler's, and that of a host build of each kind, a program and a heap
@@ -1029,10 +1018,11 @@ test-serve: $(RUNE) vm basis-cache
 check-reproducible: $(RUNE) vm basis-cache bin/rune.rbc bin/rune-test
 	$(RUNE_TEST) --tier check-reproducible
 
-test-incremental: $(RUNE) vm basis-cache bin/rune-repl
+test-incremental: test-incremental-steps bin/rune-test
+	$(RUNE_TEST) --tier test-incremental
+test-incremental-steps: $(RUNE) vm basis-cache bin/rune-repl
 	sh tests/incremental/run.sh --rune $(RUNE)
 	python3 tests/incremental/mutate.py --rune $(RUNE) --steps 30 tests/incremental/functors tests/incremental/project
-	sh tests/flexrec/run.sh --rune $(RUNE)
 
 check-positions: $(RUNE) $(RUNEVM) bin/rune-test
 	$(RUNE_TEST) --tier check-positions
@@ -1123,13 +1113,13 @@ build/basis-examples/.done: $(RUNEDOC) $(wildcard lib/basis/*.sml)
 # --update after a deliberate change). About 10 seconds.
 # The tests of the documentation generator (tests/doc), with bin/runedoc;
 # `make test-doc RUNEDOC=bin/runedoc-mlton` is the faster loop.
-test-doc: $(RUNEDOC) vm manifests
-	RUNEDOC=$(RUNEDOC) sh tests/doc/run-doc-tests.sh
+test-doc: $(RUNEDOC) vm manifests bin/rune-test
+	$(RUNE_TEST) --tier test-doc
 
 # The libraries beside the basis library and rune --library (tests/lib;
 # docs/plans/quickcheck.md, D1).
-test-lib: $(RUNE) $(RUNEDOC) vm manifests
-	RUNE=$(RUNE) RUNEVM=$(RUNEVM_REGISTER) RUNEDOC=$(RUNEDOC) sh tests/lib/run-lib-tests.sh
+test-lib: $(RUNE) $(RUNEDOC) vm manifests bin/rune-test
+	$(RUNE_TEST) --tier test-lib
 
 # The laws of the Basis Library's documentation, each at every structure that
 # implements its signature (docs/plans/quickcheck.md, M8): every law holds,
@@ -1223,8 +1213,6 @@ test-native: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm bin/
 	@$(MAKE) --no-print-directory test-native-steps
 test-native-steps: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm bin/rune.stack.rbc | build/.doctor-native
 	@$(MAKE) --no-print-directory check-templates
-	python3 tests/runtime/run-limits.py --rune $(RUNE_STACK) --vm bin/runevm-native
-	python3 tests/runtime/run-gc-log.py --rune $(RUNE_STACK) --vm bin/runevm-native
 	skip=" $$(sh tests/skipped.sh tests/opt-skip.txt native | tr '\n' ' ') "; \
 	  sh tests/opt/run-counts.sh -j $(JOBS) $$(for t in tests/lang/*.sml; do n=$$(basename $$t .sml); case $$skip in *" $$n "*) ;; *) echo tests/out/$$n.rbc ;; esac; done)
 	RUNE_HEAP=$(RUNE_HEAP) sh tests/opt/run-bootstrap.sh
@@ -1303,11 +1291,8 @@ bin/rune.stack.rbc: bin/rune-$(BOOTHOST) bin/runevm-stack $(BOOT_SRCS) lib/basis
 # The suites through runtime/register's first loop (docs/plans/middle-end.md, M5): the
 # tests of the language, allocation and the bootstrap against runevm-stack, and
 # the Basis Library.
-test-register: test-register-steps bin/rune-test
+test-register: bin/runevm $(RUNE) vm bin/rune.stack.rbc bin/rune-test
 	$(RUNE_TEST) --tier test-register
-test-register-steps: bin/runevm $(RUNE) vm bin/rune.stack.rbc
-	python3 tests/runtime/run-limits.py --rune bin/rune --vm bin/runevm
-	python3 tests/runtime/run-gc-log.py --rune bin/rune --vm bin/runevm
 
 # The suites through runtime/register with every function given to the JIT
 # (--jit=all; docs/plans/jit.md, M3, M4): tests/lang on a wrapper that
@@ -1400,7 +1385,7 @@ bootstrap: bin/rune-boot bin/rune.stack.rbc bin/rune-test
 # the tests): the inventory of tests/runner over lib/test/runner, compiled
 # by $(RUNE) and run on the register VM with its JIT.
 RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.sml tests/runner/laws.sml tests/runner/sh.sml \
-               tests/runner/oracles.sml tests/runner/main.sml
+               tests/runner/oracles.sml tests/runner/tools.sml tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml)
 	$(RUNE) --library test/runner $(RUNNER_SRCS) -o $@

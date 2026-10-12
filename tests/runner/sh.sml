@@ -65,8 +65,8 @@ struct
   fun glob (dir, suffix) =
     List.map (fn n => dir ^ "/" ^ n) (sort (List.filter (fn n => String.isSuffix suffix n) (entries dir)))
 
-  (* run CMD (its program first, from the root when the path is relative
-     and DIR is another directory)
+  (* run CMD (its program first: on PATH when it has no directory, and
+     from the root when its path is relative and DIR is another directory)
      in DIR, its streams to and from files ("" for /dev/null; stderr may be
      the file of stdout), for at most TIMEOUT seconds (0 for no limit); its
      exit status as the shell gives it: 128 and the signal for a signal,
@@ -83,12 +83,13 @@ struct
       val out = openOut stdout
       val err = if stderr = stdout andalso stdout <> "" then out else openOut stderr
       fun n fd = SysWord.toInt (Posix.FileSys.fdToWord fd)
-      (* in the root, a relative program keeps its name, since a wrapper of
-         bin/ finds the library by it and the library's paths reach what it
-         compiles *)
-      val program = case dir of NONE => hd cmd | SOME _ => fromRoot (hd cmd)
+      (* a program named without a directory is looked for on PATH; in the
+         root, a relative one keeps its name, since a wrapper of bin/ finds
+         the library by it and the library's paths reach what it compiles *)
+      val search = not (CharVector.exists (fn c => c = #"/") (hd cmd))
+      val program = if search orelse not (isSome dir) then hd cmd else fromRoot (hd cmd)
       val pid =
-        Subprocess.spawn {program = program, args = cmd, env = NONE, search = false, dir = dir, stdin = SOME (n i),
+        Subprocess.spawn {program = program, args = cmd, env = NONE, search = search, dir = dir, stdin = SOME (n i),
                           stdout = SOME (n out), stderr = SOME (n err), group = true, limits = Subprocess.unlimited}
       val () = (Posix.IO.close i; Posix.IO.close out; if stderr = stdout andalso stdout <> "" then () else Posix.IO.close err)
       fun code status =
