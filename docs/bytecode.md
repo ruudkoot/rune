@@ -221,16 +221,21 @@ source      varint len, bytes   the hash of its source
 mode        varint len, bytes   how the source was read: ascii, unicode or
                                 unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"
-version     varint    5
+version     varint    6 (UnitBasis.version)
 name        varint len, bytes   the unit's name
 units       varint n, n × string   the identities of the units it names
 counts      3 × varint   its own names of each kind
             ... the fixity directives, the environment, the signatures,
-                functors and overloading it declared, and the tables of its
-                own names, each name of a kind written as built in, the
-                unit's own (a number), or another unit's (its place, a
-                number) ...
+                functors (each with its signature: its parameter's, and
+                its body's summary where it has one) and overloading it
+                declared, and the tables of its own names, each name of a
+                kind written as built in, the unit's own (a number), or
+                another unit's (its place, a number) ...
 ```
+
+Version 6 added a functor's summary (performance M3; version 5 the
+source's mode): a cache or a unit file of an earlier version is not read,
+and the unit is compiled again (S67 of `tests/incremental/SCENARIOS.md`).
 
 Numbers are varints (seven bits a byte, the high bit set where another
 follows; an integer zigzagged). The identity of the unit is its name and

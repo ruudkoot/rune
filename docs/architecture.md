@@ -142,13 +142,20 @@ the clauses of a chain of `where type`. A realisation gives back what it
 does not change (`Types.changes`), so that where it changes nothing it
 allocates nothing, and matching skips the unification of a value whose
 scheme is the signature's own. A functor
-body is type-checked once against its parameter signature when declared;
-every application copies the body's AST (`Ast.copyStrexp`, fresh annotation
-slots), elaborates the copy with the parameter bound to the matched argument,
-stores it in the `StrApp` node, and `Translate` emits it in place. Structures
-therefore stay flattened to globals, datatype tags are those of the actual
-argument, and datatypes and exceptions in a body are generative per
-application.
+body is type-checked once against its parameter signature when declared,
+which gives the functor's signature: what the body gave, the type names it
+made, and the counters it used (`Elaborate.summary`). An application is
+typed by that signature (rule 54). Inside a functor's declaration, where
+nothing is translated, it is the summary realised -- the parameter's names
+by the argument's types, the body's names by fresh ones -- and the counters
+moved as a copy of the body would have moved them. An application whose
+code is made copies the body's AST (`Ast.copyStrexp`, fresh annotation
+slots), elaborates the copy with the parameter bound to the matched
+argument, stores it in the `StrApp` node, and `Translate` emits it in place;
+the application is typed by the summary, realised with the names the copy
+made, and takes the copy's stamps and constructors (`signatureTyped`). Structures therefore stay flattened to globals,
+datatype tags are those of the actual argument, and datatypes and
+exceptions in a body are generative per application.
 
 ## Bootstrapping
 

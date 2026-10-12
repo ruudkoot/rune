@@ -853,5 +853,58 @@ if run S64; then
   build --unicode; want ""; linted yes
 fi
 
+# S65, a functor's body changed and not its signature: b.sml applies the
+# functor and is compiled again for its code, and its basis, typed by the
+# functor's signature (rule 54), is the same bytes, so d.sml, which uses
+# B, and main.sml are taken from the cache (performance M3; functors.md,
+# A contradiction in M3)
+if run S65; then
+  own S65 c.sml b.sml d.sml main.sml
+  put c.sml 'functor F (X : sig val n : int end) = struct datatype t = T of int  fun f () = T (X.n + 1)  fun g (T k) = k end'
+  put b.sml 'structure B = F (struct val n = 10 end)'
+  put d.sml 'structure D = struct val v = B.g (B.f ()) * 2 end'
+  put main.sml 'val () = print (Int.toString D.v ^ "\n")'
+  build --emit-units u1; want "c.sml b.sml d.sml main.sml"; prints 22
+  put c.sml 'functor F (X : sig val n : int end) = struct datatype t = T of int  fun f () = T (X.n + 2)  fun g (T k) = k end'
+  build --emit-units u2; want "c.sml b.sml"; prints 24
+  rbi=$(ls "$dir/u1" | grep -- '-b\.rbi$')
+  if [ -n "$rbi" ] && cmp -s "$dir/u1/$rbi" "$dir/u2/$rbi"; then pass=$((pass + 1))
+  else echo "FAIL incremental.S65: b.sml's basis changed with the functor's body (cmp $dir/u1/$rbi $dir/u2/$rbi)"; fail=$((fail + 1)); fi
+fi
+
+# S66, a functor applied in another's body: g.sml's functor G applies
+# c.sml's F, whose body changes and whose signature does not. G's
+# declaration takes F's signature alone, so g.sml is taken from the cache;
+# main.sml, whose copy of G applies F to make code, depends on c.sml and
+# is compiled again (before M3, g.sml was compiled again, and its identity
+# changed with c.sml's)
+if run S66; then
+  own S66 c.sml g.sml main.sml
+  put c.sml 'functor F (X : sig val n : int end) = struct fun f () = X.n + 1 end'
+  put g.sml 'functor G (Y : sig val n : int end) = struct structure S = F (Y)  fun h () = S.f () * 3 end'
+  put main.sml 'structure M = G (struct val n = 1 end)  val () = print (Int.toString (M.h ()) ^ "\n")'
+  build; want "c.sml g.sml main.sml"; prints 6
+  put c.sml 'functor F (X : sig val n : int end) = struct fun f () = X.n + 2 end'
+  build; want "c.sml main.sml"; prints 9
+  put c.sml 'functor F (X : sig val n : int end) = struct fun f () = X.n + 2  val extra = 0 end'
+  build; want "c.sml g.sml main.sml"; prints 9
+fi
+
+# S67, a cache made before the basis's form changed (performance M3: a
+# functor's signature in its unit's basis, UnitBasis.version 6): the entry
+# of c.sml, which declares a functor, made to say version 5, is not read
+# but missed: c.sml is compiled again, to the basis it had, and main.sml's
+# entry is taken
+if run S67; then
+  own S67 c.sml main.sml
+  put c.sml 'functor F (X : sig val n : int end) = struct fun f () = X.n + 1 end'
+  put main.sml 'structure M = F (struct val n = 4 end)  val () = print (Int.toString (M.f ()) ^ "\n")'
+  build; want "c.sml main.sml"; prints 5
+  python3 "$root/tests/incremental/plant.py" --basis-version 5 c.sml $(find "$dir/cache" -type f -not -path '*/units/*')
+  build --explain-rebuild; want "c.sml"; prints 5
+  if grep -q 'c.sml.*of another version' "$dir/build.err"; then pass=$((pass + 1))
+  else echo "FAIL incremental.S67: c.sml's entry was not missed for its version ($dir/build.err)"; fail=$((fail + 1)); fi
+fi
+
 echo "incremental: passed $pass, failed $fail"
 [ $fail = 0 ]

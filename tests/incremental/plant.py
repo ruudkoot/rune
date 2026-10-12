@@ -2,12 +2,14 @@
 """A stale entry planted in the cache, for S55 (tests/incremental/run.sh).
 
     plant.py OLD NEW
+    plant.py --basis-version N UNIT ENTRY...
 
 rewrites the entry NEW (UnitCache, src/driver/unitcache.sml) so that it keeps
 NEW's usages and holds OLD's warnings, source name, basis and code, with the
 hash of what it holds made again: an entry whose usages hold and whose
 content is that of another compile, which a build takes as it is and
---verify-cache finds."""
+--verify-cache finds. With --basis-version, the ENTRY whose basis is UNIT's says
+version N instead (S67): an entry of a cache made before the basis's form changed."""
 import sys
 
 
@@ -60,7 +62,29 @@ def parse(path):
     return version, body[:j], body[j:]
 
 
-if __name__ == '__main__':
+def basis_version(path, unit, n):
+    """The entry at path, where its basis is the unit's, with the version the
+    basis says made n (S67): the basis's header is "RBI", its version
+    (UnitBasis.version) and the unit's name; whether it was changed"""
+    version, usages, rest = parse(path)
+    i = rest.find(b'RBI')
+    if i < 0:
+        return False
+    _, j = rnat(rest, i + 3)
+    name, _ = rstring(rest, j)
+    if name != unit.encode():
+        return False
+    body = usages + rest[:i + 3] + nat(n) + rest[j:]
+    h = content_hash(body)
+    with open(path, 'wb') as out:
+        out.write(b'RCE' + nat(version) + nat(len(h)) + h + body)
+    return True
+
+
+if __name__ == '__main__' and sys.argv[1] == '--basis-version':
+    if not [p for p in sys.argv[4:] if basis_version(p, sys.argv[3], int(sys.argv[2]))]:
+        sys.exit('plant.py: no entry of ' + sys.argv[3])
+elif __name__ == '__main__':
     version, _, rest = parse(sys.argv[1])
     _, usages, _ = parse(sys.argv[2])
     body = usages + rest

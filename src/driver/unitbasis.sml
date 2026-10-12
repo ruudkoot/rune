@@ -39,7 +39,7 @@ struct
   (* a pickle that names a unit the session has not loaded *)
   exception Missing of string
 
-  val version = 5
+  val version = 6
   val magic = "RBI"
 
   (* ---- the kinds of names ---- *)
@@ -314,9 +314,27 @@ struct
                              val f = P.hash (fpSigma sg) handle e => (anchorValues := true; raise e)
                          in anchorValues := true; f end)
 
+  (* the text a fingerprint hashes, of a functor: its signature, the
+     parameter's names and those its body made local to it, its values
+     specifications; nothing where it has no summary *)
+  fun fpFunctor (Elaborate.FunInfo {paramSig = {bound, env = pe}, summary, ...}) : string option =
+    case summary of
+      NONE => NONE
+    | SOME {generated, result, ...} =>
+        let
+          val local' = #2 (List.foldl (fn (c, (i, m)) => (i + 1, IntMap.insert (m, #stamp c, i))) (0, IntMap.empty)
+                                      (bound @ generated))
+          val () = anchorValues := false
+          val f = (Int.toString (List.length bound) ^ fpEnv (local', pe) ^ "->" ^ Int.toString (List.length generated)
+                   ^ fpEnv (local', result))
+                  handle e => (anchorValues := true; raise e)
+        in anchorValues := true; SOME f end
+
   (* The fingerprint of what a usage names in the session as it is now:
-     NONE where nothing does. A functor and an overloading are their
-     binder's identity: what they are is the whole unit's. *)
+     NONE where nothing does. A functor is its signature (fpFunctor): a
+     unit that applies it to make code depends on the unit that declared
+     it as well ("funat"). An overloading is its binder's identity: what it
+     is is the whole unit's. *)
   fun fingerprint (key : string) : string option =
     let
       val (kind, name) = case String.fields (fn c => c = #" ") key of k :: rest => (k, String.concatWith " " rest) | [] => ("", "")
@@ -331,6 +349,7 @@ struct
       | "t" => hash (inStr (fn e => Option.map (fn t => fpTyStr (IntMap.empty, t)) (StringMap.find (Env.tys e, last))))
       | "s" => hash (Option.map (fn e => fpEnv (IntMap.empty, e)) (Env.findStr' (env, path)))
       | "sig" => hash (Option.map fpSigma (StringMap.find (!Elaborate.sigs, name)))
+      | "fun" => hash (Option.mapPartial fpFunctor (StringMap.find (!Elaborate.funs, name)))
       | "fix" => hash (SOME (case StringMap.find (#table (!sessionFixity), name) of
                                NONE => "nonfix"
                              | SOME Fixity.Nonfix => "nonfix"
@@ -352,6 +371,11 @@ struct
      structure's; of a setting of the REPL's, "on" where it is on *)
   fun binderOfKey (key : string) : string =
     if String.isPrefix "p " key orelse String.isPrefix "echo " key then (if !replSetting key then "on" else "")
+    (* the code of a functor's body applied, from the unit IDENTITY: that
+       unit, where the session has it *)
+    else if String.isPrefix "funat " key then
+      let val i = String.extract (key, 6, NONE)
+      in if isSome (StringMap.find (!byIdentity, i)) then i else "" end
     else if key = "whole on" then (if !wholeFingerprints then "on" else "")
     else
     case String.fields (fn c => c = #" ") key of
@@ -750,7 +774,7 @@ struct
       else (P.byte (w, 1); P.nat (w, unitRef (e, origin)); P.nat (w, at))
     end
 
-  and funinfo (e : enc, Elaborate.FunInfo {param, paramSig, body, defEnv, allowPrim, defSigs, defFuns, ...}) : unit =
+  and funinfo (e : enc, Elaborate.FunInfo {param, paramSig, body, defEnv, allowPrim, defSigs, defFuns, summary, ...}) : unit =
     let
       val w = #w e
       val {file, start = at, stop} = bodyAt body
@@ -771,7 +795,12 @@ struct
       env (e, envDelta (#base e, defEnv));
       P.bool (w, allowPrim);
       P.list (fn (w, (n, s)) => (P.string (w, n); sigma (e, s))) (w, declared (!Elaborate.insertedSigs, defSigs));
-      P.list (fn (w, (n, f)) => (P.string (w, n); funref (e, f))) (w, declared (!Elaborate.insertedFuns, defFuns))
+      P.list (fn (w, (n, f)) => (P.string (w, n); funref (e, f))) (w, declared (!Elaborate.insertedFuns, defFuns));
+      (* its summary (Elaborate.summary): the names its body made as a
+         signature's flexible names, what the body gave, its counts *)
+      P.option (fn (w, {generated, result, counts = (a, b, c)} : Elaborate.summary) =>
+                  (sigma (e, {bound = generated, env = result}); P.nat (w, a); P.nat (w, b); P.nat (w, c)))
+               (w, summary)
     end
 
   (* ---- overloading ---- *)
@@ -875,8 +904,16 @@ struct
          had there, so what the body's names were bound to is the functor's
          as much as its text is, and a unit that applies it is compiled
          again where one of them changed, though it names none of them
-         (docs/plans/build-cache-issues.md, issue 1) *)
-      val () = P.list (fn (w, k) => (P.string (w, k); P.string (w, binderOfKey k)))
+         (docs/plans/build-cache-issues.md, issue 1); of a functor the body
+         applied, its signature's fingerprint, which is all a functor's
+         declaration takes of it: a unit that applies this one's to make
+         code depends on the unit of each functor its copy applies itself
+         ("funat"), so that this one's basis is the same as long as their
+         signatures are *)
+      fun binding k =
+        if String.isPrefix "fun " k then (case fingerprint k of SOME f => "fp " ^ f | NONE => binderOfKey k)
+        else binderOfKey k
+      val () = P.list (fn (w, k) => (P.string (w, k); P.string (w, binding k)))
                       (w, if List.null funNames then []
                           else StringMap.listKeys (List.foldl (fn (k, m) => StringMap.insert (m, k, ())) StringMap.empty used))
       val before' = #overloads (#snapshot start)
@@ -1389,10 +1426,18 @@ struct
           val allowPrim = P.rbool r
           val defSigs = P.rlist (fn r => let val n = P.rstring r in (n, rsigma d) end) r
           val defFuns = P.rlist (fn r => let val n = P.rstring r in (n, rfunref r) end) r
+          val summary =
+            P.roption (fn r =>
+                         let
+                           val {bound, env = result} = rsigma d
+                           val a = P.rnat r
+                           val b = P.rnat r
+                           val c = P.rnat r
+                         in {generated = bound, result = result, counts = (a, b, c)} end) r
           val f =
             Elaborate.FunInfo
               {param = param, paramSig = paramSig, body = bodyOf at, defEnv = Env.plus (startEnv, defDelta),
-               allowPrim = allowPrim, origin = identity,
+               allowPrim = allowPrim, origin = identity, summary = summary,
                defSigs = List.foldl (fn ((n, s), m) => StringMap.insert (m, n, s)) startSigs defSigs,
                defFuns = List.foldl (fn ((n, f), m) => StringMap.insert (m, n, f)) startFuns defFuns}
         in ownFuns := IntMap.insert (!ownFuns, at, f); f end

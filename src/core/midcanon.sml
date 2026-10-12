@@ -168,7 +168,12 @@ struct
       fun ty t = renameTy {tycon = tycon, tvar = tvar} t
       val p' = rename {stamp = stamp, tycon = tycon, tvar = tvar} p
       (* each datatype met entered under its new name, its constructors'
-         types renamed too: which may meet more, until none comes *)
+         types renamed too: which may meet more, until none comes. They are
+         entered once all are met: entering one makes Ty work out the extra
+         parameters of every datatype again (Ty.extras) at the next
+         datatypeOf, which was quadratic in the datatypes (performance M3);
+         one entered under a name of its own changes no other's. *)
+      val entered = ref []
       fun enter () =
         case !met of
           [] => ()
@@ -179,10 +184,11 @@ struct
                  let
                    val ps' = List.map tvar ps
                    val cons' = List.map (fn (tag, n, a) => (tag, n, Option.map ty a)) cons
-                 in Ty.bindDatatypeDirect (y, {params = ps', cons = cons'}) end
+                 in entered := (y, {params = ps', cons = cons'}) :: !entered end
              | NONE => ();
              enter ())
       val () = enter ()
+      val () = List.app Ty.bindDatatypeDirect (List.rev (!entered))
       (* each function's name, under its new stamp *)
       val () =
         Translate.funNames :=

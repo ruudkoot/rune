@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `tests/incremental/run.sh` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, and S49 to S64. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, and S49 to S67. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `tests/incremental/mutate.py` edits projects
@@ -26,9 +26,11 @@ what it does, and says so:
 * a usage holds by its binder or by its fingerprint (`docs/units.md`,
   *The cache*, *Fingerprints*), and a type's fingerprint is its definition:
   S11 compiles the unit that only names the type whose representation
-  changed, which is the scenario's correct fallback; a functor and an
-  overloading hold by their binder alone, so S8 compiles every unit that
-  applies the functor and S28o every unit that resolved the overloading;
+  changed, which is the scenario's correct fallback; a functor holds by
+  its signature, but a unit that applies one to make code depends on the
+  unit that declared it too, so S8 compiles every unit that applies the
+  functor; an overloading holds by its binder alone, so S28o compiles every
+  unit that resolved the overloading;
 * a unit is known by its name, which is in its identity: two files of the
   same text and different names are two units (S7 is run as one project
   in two directories), a file renamed is another unit, and the units that
@@ -245,6 +247,24 @@ when the scenarios above were all green
   constructor's information, and the list of its siblings that every one
   of them has, is written once (16 KB; 1.5 MB before, which grew with the
   square of the constructors; docs/plans/build-cache-issues.md, issue 14).
+* **S65, a functor's body changed and not its signature.** `b.sml`
+  applies `c.sml`'s functor, `d.sml` uses `b.sml`'s structure, and the
+  body changes. `c.sml` and `b.sml` are compiled again, `b.sml` for its
+  code; its basis, typed by the functor's signature (rule 54), is the same
+  bytes (`--emit-units`), and `d.sml` and `main.sml` are taken from the
+  cache (performance M3; [functors.md](../../docs/plans/functors.md), *A
+  contradiction in M3*).
+* **S66, a functor applied in another's body.** `g.sml`'s functor applies
+  `c.sml`'s, whose body changes and whose signature does not. `g.sml` is
+  taken from the cache: a functor's declaration takes the signatures of
+  those its body applies. `main.sml`, whose copy of `g.sml`'s functor
+  applies `c.sml`'s to make code, is compiled again. Then a value added to
+  the functor's result changes its signature, and `g.sml` is compiled too.
+  Before M3, `g.sml` was compiled again at each change.
+* **S67, a cache made before the basis's form changed.** M3 put a
+  functor's signature in its unit's basis (`UnitBasis.version` 6). An
+  entry whose basis says version 5 is missed, not misread: `c.sml` is
+  compiled again, to the basis it had, and `main.sml` is taken.
 * **S59, one unit in two sessions.** `c.sml` uses `a.sml` and `b.sml`,
   which do not use each other. Built after them in one order and then in
   the other through one cache, `c.sml`'s entry is taken, and compiled
