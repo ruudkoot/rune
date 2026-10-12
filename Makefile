@@ -321,12 +321,20 @@ bin/rune-smlnj-dev: $(BUILDGEN) $(SOURCES) $(GEN_SML) Makefile | build/.doctor-s
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "%s" @SMLload="$$d/rune-smlnj-dev.heap" --lib "$$d/../lib" "$$@"\n' "$(SMLNJ_DEV)" > $@
 	chmod +x $@
 
+# Poly/ML's programs start with a heap of POLYML_HEAP megabytes (-H): at
+# Poly/ML's own initial size its collector takes most of the compiler's time,
+# the more so the larger the program (the compiler compiling itself: 22G
+# instructions with one collector thread, 3.6G with -H 1024, as many as
+# MLton's build; docs/plans/performance.md, M1). The heap still grows
+# beyond it, and only what is used is resident.
+POLYML_HEAP ?= 1024
+
 bin/rune-polyml.bin: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/polyml-main.sml | build/.doctor-polyml
 	@mkdir -p bin
 	$(POLYC) -o $@ build/polyml-build.sml
 
 bin/rune-polyml: bin/rune-polyml.bin Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "$$d/rune-polyml.bin" --lib "$$d/../lib" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "$$d/rune-polyml.bin" -H $(POLYML_HEAP) --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
 
 # MLKit finds its library through SML_LIB and keeps its object files in MLB/
@@ -381,7 +389,7 @@ bin/runedoc-polyml.bin: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) src/main/runedoc-p
 	$(POLYC) -o $@ build/runedoc-polyml-build.sml
 
 bin/runedoc-polyml: bin/runedoc-polyml.bin Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runedoc-polyml.bin" --lib "$$d/../lib" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runedoc-polyml.bin" -H $(POLYML_HEAP) --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
 
 bin/runedoc-mlkit.bin: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) src/main/runedoc-mlkit-main.sml | build/.doctor-mlkit bin/rune-mlkit.bin
@@ -437,7 +445,7 @@ bin/runeopt-polyml.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-p
 	$(POLYC) -o $@ build/runeopt-polyml-build.sml
 
 bin/runeopt-polyml: bin/runeopt-polyml.bin Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeopt-polyml.bin" --runtime "$$d/../build" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeopt-polyml.bin" -H $(POLYML_HEAP) --runtime "$$d/../build" "$$@"\n' > $@
 	chmod +x $@
 
 bin/runeopt-mlkit.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-mlkit-main.sml | build/.doctor-mlkit bin/runedoc-mlkit.bin

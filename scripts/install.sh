@@ -153,8 +153,10 @@ else
       ;;
     *)
       copy "$root/bin/rune-$host.bin" "$libdir/rune-$host.bin" 755
-      printf '#!/bin/sh\nd=$(dirname "$0")\n'"$rune_i"'exec "$d/../lib/rune/rune-%s.bin" --lib "$d/../lib/rune" "$@"\n' \
-        "$host" > "$bindir/rune-$host"
+      # Poly/ML's heap starts at 1 GB, as bin/rune-polyml's does (Makefile, POLYML_HEAP)
+      rts=""; [ "$host" = polyml ] && rts="-H 1024 "
+      printf '#!/bin/sh\nd=$(dirname "$0")\n'"$rune_i"'exec "$d/../lib/rune/rune-%s.bin" %s--lib "$d/../lib/rune" "$@"\n' \
+        "$host" "$rts" > "$bindir/rune-$host"
       ;;
   esac
   chmod 755 "$bindir/rune-$host"
