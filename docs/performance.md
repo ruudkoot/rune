@@ -1,763 +1,522 @@
 # Performance
 
-What each configuration of Rune costs to run a program and to compile one,
-against the SML systems Rune is built with. Why it costs that, and what is
-being done about it, is in [plans/performance.md](plans/performance.md)
-(the VMs and native code), [plans/jit.md](plans/jit.md) (the JIT of `runtime/register`)
-and [plans/middle-end.md](plans/middle-end.md) (the compiler's
-optimisations); how native code is made is in [native.md](native.md).
+What Rune costs to run a program and to compile one, as it is shipped,
+against the SML systems Rune is built with. Rune as shipped is the register
+bytecode of `bin/rune` on `bin/runevm`, which tiers up to tier 2 of its JIT
+([runtime/register/README.md](../runtime/register/README.md)), with values
+of 8 bytes ([plans/heap-layout.md](plans/heap-layout.md)) and the
+generational collector ([plans/garbage-collector-v2.md](plans/garbage-collector-v2.md)).
+Why it costs what it does, and what is being done about it, is
+[plans/performance.md](plans/performance.md): the compiler's own speed, and
+the speed of the code it makes, with the experiments behind each number
+there. How native code is made is in [native.md](native.md).
+
+**When and how.** Measured on 2026-10-12, 01:30 to 04:45, with the compiler
+and VMs of master `921af2cc` (branch `perf-m1`, whose changes are to the
+tools that measure them, and to the Poly/ML build's initial heap), by the
+commands of *Measuring* below, on a Xeon E5-1680 v3 (Haswell, 8 cores, 16
+threads) under WSL2 with 31 GB.
+
+**The machine was busy.** Other builds and test suites ran beside these
+measurements, at a load average of 20 to 33 on its 16 threads. Each timed
+run was pinned to a core (`taskset`), Poly/ML's collector threads with it,
+but other processes ran on that core too. So the tables lead with what
+holds under load:
+
+* **counts**: machine instructions (`instructions:u` of `perf stat`) and
+  the bytecode instructions and allocation of `runevm --count`, which
+  repeat to within a few thousand in billions;
+* **ratios** of Rune to MLton and to Poly/ML, measured in the same session;
+* **seconds and cycles** only as indications. They are the least of
+  several runs, and still above what the same runs took on a quieter
+  machine on 2026-10-11 ([plans/performance.md](plans/performance.md),
+  *Where we are*): the seconds by 1.5 to 2.5 times (`tak` 0.47 s against
+  0.24, `model-elimination` 113 s against 43), the cycles by up to a third
+  (`fib` 320M against 240M; the compiler compiling itself 12.8G against
+  11.95G).
+
+The roadmap's M10 times them again on a quiet machine.
 
 ## The configurations
 
 | Configuration | What runs |
 |---|---|
-| `rune` | the stack bytecode of the self-hosted compiler, on `runevm-stack` ([bytecode.md](bytecode.md)) |
-| `rune:opt` | the same bytecode translated into x86-64 code by `runeopt` ([native.md](native.md)) |
-| `rune:new` | the register bytecode on `runtime/register` ([bytecode.md](bytecode.md), The register bytecode), at one of the JIT levels below |
-| `native:HOST` | the program on the host's own Basis Library, compiled by the host |
-| `xc1:HOST` | the program on Rune's Basis Library (`lib/basis`), compiled by the host ([basis-compat.md](basis-compat.md)) |
+| `rune` | Rune as shipped: `bin/rune`'s register bytecode on `bin/runevm`, tiering up to tier 2 |
+| `rune:stack` (`stack` in `perf-cycles.sh`) | the stack bytecode on `runevm-stack` ([bytecode.md](bytecode.md)) |
+| `rune:opt` (`opt`) | the stack bytecode translated into x86-64 code by `runeopt` ([native.md](native.md)) |
+| `native:HOST` (`mlton`, `polyml`, ...) | the program on the host's own Basis Library, compiled by the host |
+| `xc1:HOST` | the program on Rune's Basis Library (`lib/basis`), compiled by the host ([basis-compat.md](basis-compat.md)); not timed again here (M10) |
 
 The hosts are MLton 20241230, SML/NJ 110.99.9 (64 and 32 bits), SML/NJ
-2026.2, Poly/ML 5.9.2 and MLKit 4.7.23 (`make hosts`).
+2026.2, Poly/ML 5.9.2 and MLKit 4.7.23 (`make hosts`). `rune:new`, the name
+of the register VM before it was shipped, is `rune`. For the compiler
+itself, `mlton`, `polyml` and the rest are the host's build of it
+(`bin/rune-HOST`, `make host-builds`).
 
-`runtime/register` runs its register bytecode at a JIT level
-([runtime/register/README.md](../runtime/register/README.md), Tier 1 and Tier 2),
-chosen by `--jit=MODE` and `--jit-tier=N`, or by `RUNEVM_JIT` and
-`RUNEVM_JIT_TIER` where the VM is started by a runner:
+`bin/runevm` runs at a JIT level chosen by `--jit=MODE` and `--jit-tier=N`,
+or by `RUNEVM_JIT` and `RUNEVM_JIT_TIER` where a runner starts it
+([runtime/register/README.md](../runtime/register/README.md), Tier 1 and
+Tier 2); `scripts/perf-cycles.sh` names them `jit-MODE`:
 
 | Level | Options | What is compiled |
 |---|---|---|
 | `off` | `--jit=off` | nothing: the interpreter alone |
-| `baseline` | `--jit=baseline` | a function at tier 1, the baseline compiler, when its counters say it is hot |
+| `baseline` | `--jit=baseline` | a function at tier 1, when its counters say it is hot |
 | `opt` | `--jit=opt` (the default) | a function at tier 2, which gives registers homes, when the same counters say so |
 | `all` | `--jit=all` | every function at tier 1, when the program is loaded |
-| `all+t2` | `--jit=all --jit-tier=2` | every function at tier 2, when the program is loaded (`rune:jit` of the matrix) |
-
-`--jit=baseline --jit-tier=2` is `opt` by another name, and is not measured
-apart.
+| `all+t2` | `--jit=all --jit-tier=2` | every function at tier 2, when the program is loaded |
 
 ## Running programs
 
-`make perf` on an x86_64 machine with 16 CPUs (Xeon E5-1680 v3), on
-2026-10-02 at `4652d4a`. One single-threaded job of another worktree and an
-editor's language server were running beside it, so the times are those of a
-machine that is nearly, not wholly, idle. Each cell is the milliseconds of
-one run of a program of `tests/perf`: the program is run R times in a row
-(the `wall R` line of its `.budget` file) in three rounds, and the fastest
-round counts; the SML systems compile it before the timer starts, like the
-others. In parentheses: the time divided by `rune:new opt` for that
-same program, so that column is 1.0.
+### The programs of `tests/perf`, against MLton and Poly/ML
 
-Rune on `runevm-stack`, as native code, and on `runtime/register` at each JIT level:
+Each program wrapped as `make perf` wraps it (its body a function called R
+times, R from the `wall R` line of its `.budget`), and the compiler and
+`runedoc` on the inputs of `compile-sigs`, `runedoc-page` and the
+bootstrap: for those, MLton and Poly/ML are their builds of the compiler
+and of `runedoc`. Machine instructions, and the ratios of instructions and
+of cycles, of the run with the least cycles of five (`scripts/perf-cycles.sh`):
 
-| Program | rune | rune:opt | rune:new off | rune:new baseline | rune:new opt | rune:new all | rune:new all+t2 |
+| Program | Rune, instructions | MLton | Poly/ML | Rune / MLton | Rune / Poly/ML | cycles: Rune / MLton | Rune / Poly/ML |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| array_sieve | 8.69 (3.7) | 4.62 (2.0) | 8.20 (3.5) | 3.93 (1.7) | 2.34 (1.0) | 3.95 (1.7) | 2.38 (1.0) |
-| fib | 6.42 (3.9) | 2.27 (1.4) | 5.49 (3.3) | 2.28 (1.4) | 1.66 (1.0) | 2.20 (1.3) | 1.72 (1.0) |
-| intinf_fact | 52.76 (2.2) | 26.62 (1.1) | 54.98 (2.3) | 24.02 (1.0) | 23.73 (1.0) | 25.04 (1.1) | 23.65 (1.0) |
-| list_ops | 5.79 (2.1) | 2.65 (1.0) | 5.60 (2.0) | 2.81 (1.0) | 2.78 (1.0) | 3.29 (1.2) | 2.51 (0.9) |
-| real_nbody | 2.91 (5.6) | 1.28 (2.5) | 2.17 (4.2) | 0.87 (1.7) | 0.52 (1.0) | 0.87 (1.7) | 0.53 (1.0) |
-| string_ops | 10.77 (1.9) | 5.70 (1.0) | 10.20 (1.8) | 6.14 (1.1) | 5.80 (1.0) | 6.67 (1.2) | 5.91 (1.0) |
-| tak | 1.88 (3.2) | 0.61 (1.1) | 1.89 (3.3) | 0.61 (1.1) | 0.58 (1.0) | 0.62 (1.1) | 0.58 (1.0) |
-| word_bits | 4.67 (10.9) | 1.28 (3.0) | 3.72 (8.7) | 1.00 (2.3) | 0.43 (1.0) | 1.07 (2.5) | 0.43 (1.0) |
+| `array_sieve` | 266M | 55M | 54M | 4.8 | 5.0 | 3.0 | 2.4 |
+| `fib` | 620M | 128M | 112M | 4.9 | 5.5 | 3.4 | 4.7 |
+| `intinf_fact` | 281M | 0.9M | 4.8M | 312.6 | 58.6 | 176.8 | 40.8 |
+| `list_ops` | 329M | 109M | 147M | 3.0 | 2.2 | 2.5 | 1.6 |
+| `real_nbody` | 224M | 54M | 315M | 4.1 | 0.7 | 1.0 | 0.5 |
+| `string_ops` | 1.0G | 232M | 229M | 4.3 | 4.4 | 4.8 | 3.3 |
+| `tak` | 177M | 45M | 47M | 3.9 | 3.7 | 3.4 | 3.2 |
+| `word_bits` | 242M | 53M | 96M | 4.5 | 2.5 | 4.2 | 2.4 |
+| `compile-sigs` | 1.2G | 184M | 120M | 6.5 | 10.0 | 4.2 | 4.4 |
+| `runedoc-page` | 611M | 246M | 92M | 2.5 | 6.6 | 1.9 | 2.6 |
+| `bootstrap` | 17.4G | 4.0G | 3.7G | 4.3 | 4.7 | 2.0 | 2.1 |
 
-The hosts, each on its own Basis Library (`native`) and on Rune's (`xc1`).
-The first column is `rune:new opt` from the table above, the register VM
-that is shipped, so a host can be read against it. A number in parentheses
-is that program's time divided by this column.
+* **Programs of calls are four to five times MLton's instructions** (`fib`,
+  `tak`, `array_sieve`, `word_bits`), and three to five times its cycles;
+  [plans/performance.md](plans/performance.md), *The call*, has where the
+  instructions go.
+* **`real_nbody` runs as fast as MLton's code** in cycles, with four times
+  its instructions, hidden behind the latency of `sqrt` and division, and
+  faster than Poly/ML's.
+* **`intinf_fact` is IntInf**, 313 times MLton's instructions and 59 times
+  Poly/ML's: [plans/gmp.md](plans/gmp.md).
+* **The compiler compiling itself** is 4.3 times the instructions of
+  MLton's build and 4.7 times Poly/ML's. Poly/ML's build is now level with
+  MLton's: its heap starts at 1 GB ([plans/performance.md](plans/performance.md),
+  *Where we are*, Poly/ML's slowdown).
 
-| Program | rune:new opt | native:mlton | native:smlnj-legacy | native:smlnj32 | native:smlnj-dev | native:polyml | native:mlkit |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| array_sieve | 2.34 (1.0) | 0.50 (0.2) | 1.20 (0.5) | 0.97 (0.4) | 0.72 (0.3) | 0.64 (0.3) | 0.86 (0.4) |
-| fib | 1.66 (1.0) | 0.42 (0.3) | 0.43 (0.3) | 0.45 (0.3) | 0.39 (0.2) | 0.33 (0.2) | 1.46 (0.9) |
-| intinf_fact | 23.73 (1.0) | 0.03 (0.0) | 0.25 (0.0) | 0.43 (0.0) | 0.21 (0.0) | 0.13 (0.0) | 2.48 (0.1) |
-| list_ops | 2.78 (1.0) | 1.96 (0.7) | 1.96 (0.7) | 1.40 (0.5) | 1.21 (0.4) | 1.43 (0.5) | 1.43 (0.5) |
-| real_nbody | 0.52 (1.0) | 0.58 (1.1) | 0.51 (1.0) | 0.52 (1.0) | 0.50 (1.0) | 1.28 (2.5) | 1.43 (2.8) |
-| string_ops | 5.80 (1.0) | 1.58 (0.3) | 2.12 (0.4) | 2.14 (0.4) | 1.42 (0.2) | 2.02 (0.3) | 3.03 (0.5) |
-| tak | 0.58 (1.0) | 0.15 (0.3) | 0.25 (0.4) | 0.28 (0.5) | 0.24 (0.4) | 0.15 (0.3) | 0.47 (0.8) |
-| word_bits | 0.43 (1.0) | 0.12 (0.3) | 0.28 (0.7) | 0.25 (0.6) | 0.13 (0.3) | 0.17 (0.4) | 0.30 (0.7) |
+### Rune's engines
 
-| Program | rune:new opt | xc1:mlton | xc1:smlnj-legacy | xc1:smlnj32 | xc1:smlnj-dev | xc1:polyml | xc1:mlkit |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| array_sieve | 2.34 (1.0) | 0.46 (0.2) | 1.33 (0.6) | n/a | 1.15 (0.5) | 0.63 (0.3) | 0.76 (0.3) |
-| fib | 1.66 (1.0) | 0.39 (0.2) | 0.47 (0.3) | n/a | 0.35 (0.2) | 0.34 (0.2) | 1.36 (0.8) |
-| intinf_fact | 23.73 (1.0) | n/a | n/a | n/a | n/a | n/a | n/a |
-| list_ops | 2.78 (1.0) | 1.14 (0.4) | 1.89 (0.7) | n/a | 1.19 (0.4) | 1.53 (0.6) | 1.73 (0.6) |
-| real_nbody | 0.52 (1.0) | 0.59 (1.1) | 0.51 (1.0) | n/a | 0.50 (1.0) | 1.13 (2.2) | 1.45 (2.8) |
-| string_ops | 5.80 (1.0) | 2.62 (0.5) | 3.63 (0.6) | n/a | 2.51 (0.4) | 3.24 (0.6) | 4.35 (0.8) |
-| tak | 0.58 (1.0) | 0.17 (0.3) | 0.25 (0.4) | n/a | 0.24 (0.4) | 0.15 (0.3) | 0.51 (0.9) |
-| word_bits | 0.43 (1.0) | 0.13 (0.3) | 0.53 (1.2) | n/a | 0.13 (0.3) | 0.17 (0.4) | 0.31 (0.7) |
+The same programs on the JIT's levels, on `runevm-stack` and as native code
+(`runeopt`): instructions, then cycles, each with its ratio to tier 2
+(`scripts/perf-cycles.sh --runs 3`).
 
-Not measured: `intinf_fact` in the `xc1` configurations, whose `IntInf`
-constants a host types at its own `IntInf`, not at that of `lib/basis`; and
-anything on `xc1:smlnj32`, where the `LargeInt` the wrapper times with is
-not that of `lib/basis`, which does not load on a 31-bit `int`.
+| Program | tier 2 (default) | tier 1 | interpreter | runevm-stack | runeopt |
+|---|---:|---:|---:|---:|---:|
+| `array_sieve` | 266M | 335M (1.3) | 1.2G (4.5) | 1.6G (6.0) | 333M (1.3) |
+| `fib` | 620M | 673M (1.1) | 2.3G (3.7) | 2.4G (3.9) | 604M (1.0) |
+| `intinf_fact` | 281M | 329M (1.2) | 1.2G (4.3) | 1.5G (5.3) | 319M (1.1) |
+| `list_ops` | 329M | 371M (1.1) | 979M (3.0) | 1.2G (3.6) | 352M (1.1) |
+| `real_nbody` | 224M | 844M (3.8) | 2.4G (10.7) | 3.5G (15.6) | 969M (4.3) |
+| `string_ops` | 1.0G | 1.1G (1.1) | 2.0G (2.0) | 2.0G (2.0) | 929M (0.9) |
+| `tak` | 177M | 185M (1.0) | 606M (3.4) | 710M (4.0) | 167M (0.9) |
+| `word_bits` | 242M | 354M (1.5) | 1.6G (6.6) | 2.3G (9.5) | 389M (1.6) |
+| `compile-sigs` | 1.2G | 1.3G (1.1) | 2.3G (1.9) | 2.7G (2.2) | 868M (0.7) |
+| `runedoc-page` | 611M | 665M (1.1) | 1.5G (2.5) | 1.8G (2.9) | 553M (0.9) |
+| `bootstrap` | 17.4G | 19.3G (1.1) | 49.2G (2.8) | 57.9G (3.3) | 18.8G (1.1) |
 
-What the tables say:
+| Program | cycles: tier 2 | tier 1 | interpreter | runevm-stack | runeopt |
+|---|---:|---:|---:|---:|---:|
+| `array_sieve` | 125M | 165M (1.3) | 554M (4.4) | 673M (5.4) | 177M (1.4) |
+| `fib` | 279M | 260M (0.9) | 896M (3.2) | 1.1G (3.9) | 321M (1.2) |
+| `intinf_fact` | 186M | 231M (1.2) | 452M (2.4) | 692M (3.7) | 252M (1.4) |
+| `list_ops` | 191M | 180M (0.9) | 392M (2.1) | 448M (2.4) | 197M (1.0) |
+| `real_nbody` | 179M | 409M (2.3) | 914M (5.1) | 1.5G (8.4) | 474M (2.6) |
+| `string_ops` | 399M | 468M (1.2) | 882M (2.2) | 872M (2.2) | 484M (1.2) |
+| `tak` | 83M | 83M (1.0) | 277M (3.3) | 325M (3.9) | 96M (1.2) |
+| `word_bits` | 85M | 160M (1.9) | 722M (8.5) | 1.3G (15.3) | 221M (2.6) |
+| `compile-sigs` | 1.2G | 1.3G (1.1) | 1.8G (1.5) | 2.1G (1.8) | 727M (0.6) |
+| `runedoc-page` | 447M | 436M (1.0) | 863M (1.9) | 974M (2.2) | 382M (0.9) |
+| `bootstrap` | 15.1G | 15.4G (1.0) | 29.3G (1.9) | 35.2G (2.3) | 15.4G (1.0) |
 
-* **`runevm-stack` runs plain code 7 to 19 times slower than the native code of
-  MLton, SML/NJ and Poly/ML**: `fib` 6.4 ms against 0.33 to 0.45, `tak`
-  1.9 against 0.15 to 0.28. Against MLKit, whose calls are slow, it is 4
-  times slower. This is the interpreter; [plans/performance.md](plans/performance.md)
-  is about it.
-* **Native code (`rune:opt`) runs these programs 1.9 to 3.6 times faster
-  than `runevm-stack`** (`fib` 2.27 ms, `tak` 0.61, `word_bits` 1.28 against
-  4.67), and 2 to 11 times slower than MLton, SML/NJ and Poly/ML on `fib`,
-  `tak` and `word_bits`.
-* **`runtime/register` interpreting alone (`off`) is as fast as `runevm-stack`**, and up to
-  25% faster where reals are involved (`real_nbody` 2.17 ms against 2.91):
-  `tak` is 1.89 against 1.88, `fib` 5.49 against 6.42.
-* **Tier 1 (`baseline`) is 1.7 to 3.7 times faster than `off`**, the more so
-  the more of the time is in calls and in arithmetic of the program's own:
-  `word_bits` 3.7 times, `tak` 3.1, `fib` 2.4; `string_ops` 1.7.
-* **Tier 2 (`opt`, the default) adds nothing where the time is in the
-  runtime, and up to 2.3 times where it is in arithmetic**: `word_bits`
-  1.00 to 0.43 ms, `array_sieve` 3.93 to 2.34, `real_nbody` 0.87 to 0.52,
-  `fib` 2.28 to 1.66, while `intinf_fact`, `list_ops`, `string_ops` and
-  `tak` change by 6% or less. The default is 1.9 to 11 times faster than
-  `runevm-stack` and is faster than `rune:opt` on all but `list_ops` (2.78 ms
-  against 2.65) and `string_ops` (5.80 against 5.70), which are about equal.
-  On `real_nbody` it is as fast as MLton, SML/NJ and Poly/ML do it (0.52 ms
-  against 0.50 to 0.58, 1.28 for Poly/ML); on `fib` and `tak` it is 4
-  times MLton's.
-* **Compiling every function when the program is loaded (`all`, `all+t2`)
-  gives the code of the counters' levels**: the times of `all` are those of
-  `baseline`, and the times of `all+t2` those of `opt`, to within 20%
-  (`list_ops` 3.29 against 2.81 for the first pair, 2.51 against 2.78 for
-  the second). What it costs is in *Compiling* below, where the
-  whole compiler is compiled at the start.
-* **Relative to the geometric mean of `fib` and `tak`, the library costs
-  Rune less than it costs the hosts**: `list_ops` is 1.7 times that mean on
-  Rune, 3.9 to 7.8 on the hosts but MLKit; `string_ops` 3.1 against 4.6 to
-  9.1 on the same. `IntInf` is the exception: 15 times that mean on
-  `runevm-stack`, 0.1 to 1.2 on the hosts, which use GMP (MLton) or native code,
-  and 3.0 on MLKit. Its limbs of 30 bits are an SML datatype, and every
-  limb operation is a call.
-* **MLKit is slow at calls and relatively quick in its Basis Library**: its
-  `fib` and `tak` are 3 to 4 times MLton's, while `list_ops` takes 0.7 and
-  `array_sieve` 1.7 times as long as MLton's.
-* **The `xc1` columns** run Rune's library compiled by each host, between
-  0.6 and 1.9 times as slow as that host's own library (`list_ops` 1.14 ms
-  on MLton against 1.96 native, `string_ops` 2.62 against 1.58): the
-  algorithms of `lib/basis` are not what makes Rune slow.
+* **On code of calls and on the compiler, tier 2 and `runeopt`'s native
+  code execute about as many instructions**: 0.7 to 1.1 times tier 2's for
+  `runeopt` (`fib`, `tak`, `string_ops`, `compile-sigs`, the bootstrap),
+  and tier 1 1.0 to 1.3 times.
+* **On numbers tier 2 executes far fewer**: `real_nbody` 3.8 times fewer
+  instructions than tier 1 and 4.3 times fewer than `runeopt`, `word_bits`
+  1.5 and 1.6 times.
+* **The interpreter** executes 2.0 (`string_ops`) to 10.7 (`real_nbody`)
+  times tier 2's instructions, and `runevm-stack` as many or more.
+
+### Wall-clock time (`make perf`)
+
+Milliseconds of one run of each program of `tests/perf` (`make perf`): the
+program run R times in a row (the `wall R` line of its `.budget`) in three
+rounds, the fastest round counting, and the least of three such passes;
+the SML systems compile it before the timer starts. In parentheses: Rune's
+time divided by the configuration's. These are the seconds of a busy
+machine (*When and how*): `string_ops` on Rune took 10.8 ms here, with
+about the cycles it had on 2026-10-11 (399M against 367M, of its 40 runs);
+read the cycles and instructions above first. Rune's library compiled by
+the hosts (`xc1`) was not timed again (M10).
+
+| Program | rune | rune:stack | rune:opt | mlton | smlnj-legacy | smlnj32 | smlnj-dev | polyml | mlkit |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `array_sieve` | 2.08 | 9.09 (0.2) | 2.64 (0.8) | 0.44 (4.7) | 1.17 (1.8) | 0.86 (2.4) | 0.80 (2.6) | 0.60 (3.5) | 0.78 (2.7) |
+| `fib` | 1.74 | 6.39 (0.3) | 2.32 (0.8) | 0.50 (3.5) | 0.40 (4.3) | 0.41 (4.2) | 0.43 (4.0) | 0.32 (5.4) | 1.46 (1.2) |
+| `intinf_fact` | 17.68 | 48.25 (0.4) | 27.82 (0.6) | 0.04 (442) | 0.25 (71) | 0.52 (34) | 0.19 (93) | 0.08 (221) | 2.75 (6.4) |
+| `list_ops` | 2.60 | 5.75 (0.5) | 3.93 (0.7) | 1.60 (1.6) | 1.82 (1.4) | 1.57 (1.7) | 1.14 (2.3) | 1.47 (1.8) | 1.47 (1.8) |
+| `real_nbody` | 0.57 | 3.43 (0.2) | 2.38 (0.2) | 0.56 (1.0) | 0.51 (1.1) | 0.50 (1.1) | 0.50 (1.1) | 1.07 (0.5) | 1.83 (0.3) |
+| `string_ops` | 10.83 | 10.43 (1.0) | 10.24 (1.1) | 1.57 (6.9) | 2.42 (4.5) | 2.16 (5.0) | 1.60 (6.8) | 2.00 (5.4) | 3.92 (2.8) |
+| `tak` | 0.76 | 2.25 (0.3) | 0.91 (0.8) | 0.15 (5.1) | 0.26 (2.9) | 0.28 (2.7) | 0.23 (3.3) | 0.14 (5.4) | 0.51 (1.5) |
+| `word_bits` | 0.62 | 4.85 (0.1) | 1.34 (0.5) | 0.12 (5.2) | 0.27 (2.3) | 0.27 (2.3) | 0.13 (4.8) | 0.15 (4.1) | 0.32 (1.9) |
+
+### Where the time goes
+
+The compiler compiling itself (`bootstrap`) on Rune as shipped, by part of
+the runtime: samples of `perf record -e cycles:u` over `runevm
+--jit-perf-map`, grouped by `scripts/perf-groups.awk`.
+
+| Part | Share of the samples |
+|---|---:|
+| the JIT's code, tier 2 | 67.1% |
+| the collector: minor collections (`minor_pass`, `promote_*`, the cards) | 13.4% |
+| the collector: the old generation (marking, Immix's lines, segregated fits, the large objects) | 10.0% |
+| the JIT compiling | 2.3% |
+| string order and equality in the runtime | 2.4% |
+| `memcpy` and `memmove` (not the collector's) | 1.2% |
+| the C library's `malloc` and `printf` (the JIT compiler's, and the perf map) | 1.1% |
+| allocation outside the code (slow paths) | 0.8% |
+| the interpreter | 0.7% |
+| the primitives | 0.5% |
+| the rest | 0.6% |
+
+So two thirds of the compiler's time is the code tier 2 makes, and a
+quarter the collector. Within the code, half the instructions are calls
+and returns: [plans/performance.md](plans/performance.md), *Track B*, has
+the call's cost by role, and the plan for it (M6 and M9). A program of
+small arithmetic is the code alone: `fib` is 99.2% `jit2:fib`.
 
 ## The benchmark suite
 
-The tables above time the eight programs of `tests/perf`. This table times
-the 149 programs of [`examples/benchmarks`](../examples/benchmarks/README.md)
-at the normal input, on the same machine, on 2026-10-03 at `6618017`. Each
-cell is the median of three fresh processes, in seconds, measured by GNU
-time to the hundredth of a second. Compilation is not included. A fresh
-process includes startup and shutdown. The tool's default is ten samples;
-this pass used three. It is a first indicative run, and the machine was not
-wholly idle. In parentheses: the time divided by `rune:new opt` for that
-same program, so that column is 1.0. Where `rune:new opt` is 0.00 the ratio
-is omitted. The columns are the configurations of the first table above,
-and the programs are in the order of the catalogue.
+The 152 programs of [`examples/benchmarks`](../examples/benchmarks/README.md)
+at the normal input (`make bench BENCH_SAMPLES=3`): the median of three
+fresh processes, in seconds by GNU time to the hundredth, startup included
+and compilation not. Rune compiles at `-O2`; the hosts at their defaults.
+In parentheses: Rune's time divided by the host's, where Rune took at least
+0.02 s. The seconds are indications (*When and how*, above): on 2026-10-11
+the same runs on Rune took a third to two thirds of these. The ratios are
+measured in the same session.
 
-The six native hosts are in the tables after the notes on `hamlet` and
-`twenty-four`. The benchmark runner has no `xc1` export, so this pass does
-not time Rune's library on the hosts. The `xc1` columns of the eight
-programs above remain the figures from `make perf`.
+* **Against MLton**, the 86 programs of at least 0.10 s on Rune take 515.5
+  s against 78.5 s, 6.6 times; without `mandelbrot-rat` (IntInf) and `mpuz`,
+  84 programs, 361.7 s against 72.7 s, 5.0 times. The geometric mean of
+  the ratios is 5.1 (median 4.2, the 82 programs of at least 0.05 s on Rune
+  and 0.02 s on MLton). On 2026-10-11, at the same commit, it was 5.2
+  ([plans/performance.md](plans/performance.md), E3).
+* **Against Poly/ML** the geometric mean is 2.6 (median 2.7, 97 programs),
+  and against SML/NJ 110.99.9 2.2 (median 2.0, 102 programs).
+* **The farthest from MLton:** `mandelbrot-rat` 289 and `digits-of-e1-lazy`
+  23, both IntInf ([plans/gmp.md](plans/gmp.md)); `flat-array` 54,
+  `knuth-bendix-smlnj` 24, `ratio-regions_tp` 20, `zebra` 19, `life-smlnj`
+  19, `peek` 18. [plans/performance.md](plans/performance.md), *The Basis's
+  own code* and *Allocation*, has what is known of them.
+* **The closest:** the latency workloads, which measure the collector
+  (`latency-static-map` 0.5, `latency-ring` 0.9), `queens-strict` 1.2,
+  `black-scholes` 1.3, `msort` 1.6, `kittmergesort` 1.7.
+* **Not timed:** on SML/NJ 110.99.9 `aobench`, `barnes-hut`,
+  `black-scholes` and `tsp-smlnj`, which fail their checks, and `id-ray`,
+  which reads its input while it is elaborated; on Poly/ML `id-ray`, and
+  `peek` and `vector64-concat`, which use `Int64`.
 
-| Program | rune | rune:opt | rune:new off | rune:new baseline | rune:new opt | rune:new all | rune:new all+t2 |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| tak | 0.81 (3.4) | 0.23 (1.0) | 0.76 (3.2) | 0.27 (1.1) | 0.24 (1.0) | 0.26 (1.1) | 0.23 (1.0) |
-| kittmergesort | 0.21 (2.3) | 0.11 (1.2) | 0.18 (2.0) | 0.10 (1.1) | 0.09 (1.0) | 0.12 (1.3) | 0.11 (1.2) |
-| primes-lazy | 0.15 (2.5) | 0.07 (1.2) | 0.12 (2.0) | 0.07 (1.2) | 0.06 (1.0) | 0.07 (1.2) | 0.06 (1.0) |
-| primes-strict | 1.48 (2.5) | 0.69 (1.1) | 1.38 (2.3) | 0.68 (1.1) | 0.60 (1.0) | 0.67 (1.1) | 0.60 (1.0) |
-| bdd | 0.40 (3.6) | 0.13 (1.2) | 0.30 (2.7) | 0.13 (1.2) | 0.11 (1.0) | 0.14 (1.3) | 0.12 (1.1) |
-| fib | 0.14 (3.5) | 0.05 (1.2) | 0.12 (3.0) | 0.05 (1.2) | 0.04 (1.0) | 0.06 (1.5) | 0.04 (1.0) |
-| tailfib | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.01 | 0.01 |
-| even-odd | 0.06 (6.0) | 0.03 (3.0) | 0.04 (4.0) | 0.01 (1.0) | 0.01 (1.0) | 0.02 (2.0) | 0.01 (1.0) |
-| merge | 0.12 (2.0) | 0.05 (0.8) | 0.11 (1.8) | 0.06 (1.0) | 0.06 (1.0) | 0.07 (1.2) | 0.06 (1.0) |
-| tailmerge | 0.13 (2.2) | 0.05 (0.8) | 0.10 (1.7) | 0.05 (0.8) | 0.06 (1.0) | 0.07 (1.2) | 0.06 (1.0) |
-| imp-for | 0.01 (1.0) | 0.00 (0.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) |
-| vector-rev | 0.08 (2.0) | 0.03 (0.8) | 0.06 (1.5) | 0.03 (0.8) | 0.04 (1.0) | 0.04 (1.0) | 0.04 (1.0) |
-| vector32-concat | 0.04 (2.0) | 0.01 (0.5) | 0.03 (1.5) | 0.02 (1.0) | 0.02 (1.0) | 0.03 (1.5) | 0.03 (1.5) |
-| vector64-concat | 0.03 (1.5) | 0.01 (0.5) | 0.03 (1.5) | 0.02 (1.0) | 0.02 (1.0) | 0.03 (1.5) | 0.03 (1.5) |
-| string-concat | 0.03 (3.0) | 0.01 (1.0) | 0.02 (2.0) | 0.02 (2.0) | 0.01 (1.0) | 0.02 (2.0) | 0.02 (2.0) |
-| wc-input1 | 0.26 (2.6) | 0.11 (1.1) | 0.20 (2.0) | 0.09 (0.9) | 0.10 (1.0) | 0.10 (1.0) | 0.10 (1.0) |
-| wc-scanStream | 0.24 (2.4) | 0.10 (1.0) | 0.20 (2.0) | 0.10 (1.0) | 0.10 (1.0) | 0.10 (1.0) | 0.09 (0.9) |
-| checksum | 1.99 (3.4) | 0.91 (1.6) | 1.54 (2.7) | 0.73 (1.3) | 0.58 (1.0) | 0.77 (1.3) | 0.60 (1.0) |
-| boyer | 0.50 (1.9) | 0.23 (0.9) | 0.47 (1.8) | 0.24 (0.9) | 0.26 (1.0) | 0.22 (0.8) | 0.23 (0.9) |
-| nucleic | 0.61 (4.7) | 0.19 (1.5) | 0.49 (3.8) | 0.18 (1.4) | 0.13 (1.0) | 0.18 (1.4) | 0.14 (1.1) |
-| life | 0.56 (2.3) | 0.29 (1.2) | 0.53 (2.2) | 0.29 (1.2) | 0.24 (1.0) | 0.29 (1.2) | 0.23 (1.0) |
-| matrix-multiply | 0.06 (6.0) | 0.01 (1.0) | 0.04 (4.0) | 0.01 (1.0) | 0.01 (1.0) | 0.02 (2.0) | 0.02 (2.0) |
-| md5 | 0.06 (3.0) | 0.02 (1.0) | 0.04 (2.0) | 0.02 (1.0) | 0.02 (1.0) | 0.03 (1.5) | 0.02 (1.0) |
-| fft | 0.08 (4.0) | 0.02 (1.0) | 0.05 (2.5) | 0.02 (1.0) | 0.02 (1.0) | 0.03 (1.5) | 0.02 (1.0) |
-| binary-trees | 0.08 (2.7) | 0.03 (1.0) | 0.07 (2.3) | 0.03 (1.0) | 0.03 (1.0) | 0.04 (1.3) | 0.03 (1.0) |
-| flat-array | 2.81 (2.1) | 1.48 (1.1) | 2.35 (1.7) | 1.54 (1.1) | 1.36 (1.0) | 1.35 (1.0) | 1.43 (1.1) |
-| peek | 15.51 (3.5) | 5.22 (1.2) | 15.43 (3.5) | 5.81 (1.3) | 4.41 (1.0) | 5.84 (1.3) | 4.64 (1.1) |
-| psdes-random | 0.88 (4.4) | 0.29 (1.4) | 0.61 (3.0) | 0.25 (1.2) | 0.20 (1.0) | 0.26 (1.3) | 0.20 (1.0) |
-| mandelbrot | 0.27 (6.8) | 0.11 (2.8) | 0.17 (4.2) | 0.08 (2.0) | 0.04 (1.0) | 0.08 (2.0) | 0.05 (1.2) |
-| pidigits | 16.79 (2.8) | 7.61 (1.3) | 13.02 (2.2) | 6.57 (1.1) | 5.99 (1.0) | 6.68 (1.1) | 6.16 (1.0) |
-| logic | 19.24 (2.9) | 8.23 (1.2) | 16.73 (2.5) | 7.45 (1.1) | 6.70 (1.0) | 7.62 (1.1) | 6.90 (1.0) |
-| zebra | 2.65 (2.8) | 1.06 (1.1) | 2.53 (2.7) | 1.10 (1.2) | 0.95 (1.0) | 1.13 (1.2) | 1.24 (1.3) |
-| count-graphs | 0.22 (2.8) | 0.10 (1.2) | 0.19 (2.4) | 0.08 (1.0) | 0.08 (1.0) | 0.10 (1.2) | 0.12 (1.5) |
-| many_refs | 2.96 (3.7) | 1.49 (1.8) | 2.44 (3.0) | 1.26 (1.6) | 0.81 (1.0) | 1.37 (1.7) | 0.93 (1.1) |
-| tensor | 7.02 (2.7) | 3.08 (1.2) | 6.50 (2.5) | 2.94 (1.1) | 2.61 (1.0) | 3.01 (1.2) | 2.87 (1.1) |
-| zern | 0.15 (1.7) | 0.09 (1.0) | 0.14 (1.6) | 0.09 (1.0) | 0.09 (1.0) | 0.10 (1.1) | 0.09 (1.0) |
-| smith-normal-form | 0.01 (1.0) | 0.00 (0.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.02 (2.0) | 0.02 (2.0) |
-| ratio-regions | 0.29 (3.6) | 0.10 (1.2) | 0.20 (2.5) | 0.10 (1.2) | 0.08 (1.0) | 0.10 (1.2) | 0.09 (1.1) |
-| mpuz | 148.47 (3.1) | 64.54 (1.3) | 141.62 (2.9) | 57.61 (1.2) | 48.53 (1.0) | 58.05 (1.2) | 52.53 (1.1) |
-| DLXSimulator | 102.37 (2.9) | 45.76 (1.3) | 90.87 (2.5) | 42.08 (1.2) | 35.66 (1.0) | 42.04 (1.2) | 39.85 (1.1) |
-| knuth-bendix | 4.04 (2.1) | 2.15 (1.1) | 4.59 (2.4) | 2.09 (1.1) | 1.94 (1.0) | 2.08 (1.1) | 2.21 (1.1) |
-| tyan | 3.22 (3.4) | 1.07 (1.1) | 2.93 (3.1) | 1.07 (1.1) | 0.94 (1.0) | 1.02 (1.1) | 1.01 (1.1) |
-| lexgen | 0.76 (2.3) | 0.32 (1.0) | 0.80 (2.4) | 0.35 (1.1) | 0.33 (1.0) | 0.38 (1.2) | 0.38 (1.2) |
-| mlyacc | 0.45 (2.5) | 0.17 (0.9) | 0.42 (2.3) | 0.20 (1.1) | 0.18 (1.0) | 0.19 (1.1) | 0.28 (1.6) |
-| hamlet | 0.04 (0.6) | 0.02 (0.3) | 0.05 (0.7) | 0.05 (0.7) | 0.07 (1.0) | 0.11 (1.6) | 0.16 (2.3) |
-| kitfib35 | 1.77 (3.2) | 0.86 (1.5) | 2.22 (4.0) | 0.85 (1.5) | 0.56 (1.0) | 0.87 (1.6) | 0.72 (1.3) |
-| fib0 | 0.12 (3.0) | 0.05 (1.2) | 0.14 (3.5) | 0.05 (1.2) | 0.04 (1.0) | 0.06 (1.5) | 0.05 (1.2) |
-| kitreynolds2 | 0.63 (2.2) | 0.27 (1.0) | 0.64 (2.3) | 0.29 (1.0) | 0.28 (1.0) | 0.31 (1.1) | 0.30 (1.1) |
-| kitreynolds3 | 0.81 (4.8) | 0.23 (1.4) | 0.65 (3.8) | 0.20 (1.2) | 0.17 (1.0) | 0.21 (1.2) | 0.19 (1.1) |
-| kitloop2 | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) |
-| kitdangle | 0.10 (1.7) | 0.05 (0.8) | 0.13 (2.2) | 0.06 (1.0) | 0.06 (1.0) | 0.07 (1.2) | 0.07 (1.2) |
-| kitdangle3 | 0.30 (1.9) | 0.15 (0.9) | 0.36 (2.2) | 0.19 (1.2) | 0.16 (1.0) | 0.18 (1.1) | 0.18 (1.1) |
-| msort | 0.17 (1.5) | 0.09 (0.8) | 0.17 (1.5) | 0.11 (1.0) | 0.11 (1.0) | 0.12 (1.1) | 0.10 (0.9) |
-| kittmergesort_tp | 3.81 (2.5) | 1.71 (1.1) | 3.76 (2.4) | 1.75 (1.1) | 1.54 (1.0) | 1.70 (1.1) | 1.92 (1.2) |
-| barnes-hut | 1.84 (3.5) | 0.74 (1.4) | 1.77 (3.4) | 0.66 (1.3) | 0.52 (1.0) | 0.70 (1.3) | 0.67 (1.3) |
-| tsp | 0.04 (1.3) | 0.02 (0.7) | 0.04 (1.3) | 0.03 (1.0) | 0.03 (1.0) | 0.03 (1.0) | 0.03 (1.0) |
-| fannkuch | 0.01 (1.0) | 0.00 (0.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) |
-| f-arith | 0.07 (7.0) | 0.03 (3.0) | 0.05 (5.0) | 0.02 (2.0) | 0.01 (1.0) | 0.03 (3.0) | 0.02 (2.0) |
-| stream-sieve | 0.10 (1.7) | 0.05 (0.8) | 0.10 (1.7) | 0.06 (1.0) | 0.06 (1.0) | 0.06 (1.0) | 0.08 (1.3) |
-| twenty-four | 0.68 (2.1) | 0.37 (1.2) | 0.97 (3.0) | 0.35 (1.1) | 0.32 (1.0) | 0.38 (1.2) | 0.41 (1.3) |
-| simple | 2.32 (2.9) | 0.95 (1.2) | 2.04 (2.6) | 0.96 (1.2) | 0.79 (1.0) | 0.92 (1.2) | 1.01 (1.3) |
-| nbody | 6.45 (4.2) | 2.91 (1.9) | 5.35 (3.5) | 2.07 (1.3) | 1.54 (1.0) | 1.94 (1.3) | 1.82 (1.2) |
-| output1 | 0.48 (2.7) | 0.22 (1.2) | 0.43 (2.4) | 0.22 (1.2) | 0.18 (1.0) | 0.26 (1.4) | 0.27 (1.5) |
-| ray | 1.10 (3.4) | 0.43 (1.3) | 0.95 (3.0) | 0.41 (1.3) | 0.32 (1.0) | 0.39 (1.2) | 0.42 (1.3) |
-| raytrace | 10.32 (5.5) | 3.01 (1.6) | 9.20 (4.9) | 2.77 (1.5) | 1.88 (1.0) | 2.79 (1.5) | 2.60 (1.4) |
-| vliw | 0.62 (2.4) | 0.27 (1.0) | 0.63 (2.4) | 0.30 (1.2) | 0.26 (1.0) | 0.30 (1.2) | 0.35 (1.3) |
-| fxp | 1.25 (2.9) | 0.50 (1.2) | 1.26 (2.9) | 0.48 (1.1) | 0.43 (1.0) | 0.56 (1.3) | 0.75 (1.7) |
-| model-elimination | 97.53 (2.3) | 48.47 (1.1) | 105.44 (2.5) | 46.89 (1.1) | 42.84 (1.0) | 47.33 (1.1) | 52.16 (1.2) |
-| sat | 2.43 (3.6) | 0.93 (1.4) | 1.86 (2.7) | 0.85 (1.2) | 0.68 (1.0) | 0.85 (1.2) | 0.79 (1.2) |
-| boyer-smlnj | 5.31 (2.5) | 2.25 (1.1) | 4.88 (2.3) | 2.33 (1.1) | 2.09 (1.0) | 2.23 (1.1) | 2.92 (1.4) |
-| logic-smlnj | 129.52 (2.6) | 58.44 (1.2) | 109.51 (2.2) | 53.70 (1.1) | 49.63 (1.0) | 53.05 (1.1) | 58.06 (1.2) |
-| life-smlnj | 19.95 (2.1) | 10.78 (1.1) | 20.15 (2.1) | 11.05 (1.2) | 9.50 (1.0) | 10.94 (1.2) | 11.64 (1.2) |
-| minimax | 16.74 (2.5) | 7.40 (1.1) | 14.68 (2.2) | 6.91 (1.0) | 6.78 (1.0) | 6.90 (1.0) | 7.37 (1.1) |
-| iter-pidigits | 9.48 (2.9) | 3.98 (1.2) | 6.77 (2.1) | 3.29 (1.0) | 3.22 (1.0) | 3.38 (1.0) | 3.76 (1.2) |
-| mazefun | 1.55 (3.3) | 0.56 (1.2) | 1.24 (2.6) | 0.48 (1.0) | 0.47 (1.0) | 0.54 (1.1) | 0.48 (1.0) |
-| queens-lazy | 0.15 (7.5) | 0.03 (1.5) | 0.09 (4.5) | 0.03 (1.5) | 0.02 (1.0) | 0.04 (2.0) | 0.03 (1.5) |
-| queens-strict | 0.16 (4.0) | 0.05 (1.2) | 0.13 (3.2) | 0.06 (1.5) | 0.04 (1.0) | 0.06 (1.5) | 0.06 (1.5) |
-| nqueens | 0.11 (3.7) | 0.03 (1.0) | 0.09 (3.0) | 0.03 (1.0) | 0.03 (1.0) | 0.03 (1.0) | 0.03 (1.0) |
-| rec_seq_ack | 0.25 (4.2) | 0.07 (1.2) | 0.19 (3.2) | 0.07 (1.2) | 0.06 (1.0) | 0.07 (1.2) | 0.07 (1.2) |
-| klife_eq | 0.48 (2.2) | 0.22 (1.0) | 0.43 (2.0) | 0.19 (0.9) | 0.22 (1.0) | 0.22 (1.0) | 0.23 (1.0) |
-| kitlife35u_smlnj | 0.85 (5.0) | 0.27 (1.6) | 0.62 (3.6) | 0.26 (1.5) | 0.17 (1.0) | 0.26 (1.5) | 0.20 (1.2) |
-| kitqsort_no_basislib | 0.11 (1.6) | 0.06 (0.9) | 0.09 (1.3) | 0.07 (1.0) | 0.07 (1.0) | 0.07 (1.0) | 0.08 (1.1) |
-| tailfib-mlkit | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.01 | 0.01 |
-| tak-mlkit | 0.25 (4.2) | 0.06 (1.0) | 0.18 (3.0) | 0.07 (1.2) | 0.06 (1.0) | 0.07 (1.2) | 0.08 (1.3) |
-| matrix-multiply-mlkit | 0.89 (5.6) | 0.18 (1.1) | 0.53 (3.3) | 0.16 (1.0) | 0.16 (1.0) | 0.20 (1.2) | 0.15 (0.9) |
-| vector-rev-mlkit | 0.14 (2.8) | 0.05 (1.0) | 0.08 (1.6) | 0.04 (0.8) | 0.05 (1.0) | 0.07 (1.4) | 0.05 (1.0) |
-| vector-rev_smlnj | 0.09 (2.2) | 0.04 (1.0) | 0.07 (1.8) | 0.04 (1.0) | 0.04 (1.0) | 0.05 (1.2) | 0.04 (1.0) |
-| vector-concat | 0.02 (2.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.02 (2.0) | 0.02 (2.0) |
-| vector-concat_smlnj | 0.15 (2.5) | 0.05 (0.8) | 0.11 (1.8) | 0.05 (0.8) | 0.06 (1.0) | 0.08 (1.3) | 0.06 (1.0) |
-| peek-mlkit | 0.09 (4.5) | 0.03 (1.5) | 0.07 (3.5) | 0.03 (1.5) | 0.02 (1.0) | 0.04 (2.0) | 0.03 (1.5) |
-| wc-input1-mlkit | 0.16 (2.7) | 0.09 (1.5) | 0.11 (1.8) | 0.06 (1.0) | 0.06 (1.0) | 0.09 (1.5) | 0.07 (1.2) |
-| wc-scanStream-mlkit | 0.16 (2.7) | 0.06 (1.0) | 0.12 (2.0) | 0.06 (1.0) | 0.06 (1.0) | 0.07 (1.2) | 0.06 (1.0) |
-| psdes-random-mlkit | 0.09 (4.5) | 0.03 (1.5) | 0.06 (3.0) | 0.03 (1.5) | 0.02 (1.0) | 0.04 (2.0) | 0.03 (1.5) |
-| safe-for-space | 0.30 (2.1) | 0.13 (0.9) | 0.25 (1.8) | 0.15 (1.1) | 0.14 (1.0) | 0.17 (1.2) | 0.16 (1.1) |
-| pidigits-smlnj | 8.95 (2.9) | 3.94 (1.3) | 6.56 (2.1) | 3.32 (1.1) | 3.12 (1.0) | 3.40 (1.1) | 3.20 (1.0) |
-| fft-smlnj | 0.01 (1.0) | 0.00 (0.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.02 (2.0) | 0.02 (2.0) |
-| nucleic-smlnj | 0.66 (4.7) | 0.21 (1.5) | 0.47 (3.4) | 0.20 (1.4) | 0.14 (1.0) | 0.20 (1.4) | 0.18 (1.3) |
-| count-graphs-smlnj | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.02 (2.0) | 0.03 (3.0) |
-| matrix-multiply-ramp | 0.05 (2.5) | 0.02 (1.0) | 0.04 (2.0) | 0.02 (1.0) | 0.02 (1.0) | 0.03 (1.5) | 0.06 (3.0) |
-| kitreynolds2_no_basislib | 0.03 (1.5) | 0.01 (0.5) | 0.03 (1.5) | 0.02 (1.0) | 0.02 (1.0) | 0.02 (1.0) | 0.04 (2.0) |
-| kitreynolds3_no_basislib | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.01 | 0.01 |
-| kittmergesort_no_basislib | 0.09 (2.2) | 0.05 (1.2) | 0.08 (2.0) | 0.05 (1.2) | 0.04 (1.0) | 0.06 (1.5) | 0.07 (1.8) |
-| hanoi | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.01 | 0.01 |
-| fib-mlkit | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.01 | 0.01 |
-| mandelbrot-smlnj | 0.57 (19.0) | 0.16 (5.3) | 0.31 (10.3) | 0.09 (3.0) | 0.03 (1.0) | 0.10 (3.3) | 0.05 (1.7) |
-| mandelbrot-rat | 219.66 (4.0) | 73.59 (1.3) | 149.92 (2.7) | 66.47 (1.2) | 55.59 (1.0) | 67.35 (1.2) | 70.56 (1.3) |
-| kitmandelbrot | 0.01 | 0.00 | 0.01 | 0.00 | 0.00 | 0.01 | 0.01 |
-| FuhMishra | 0.05 (1.2) | 0.03 (0.8) | 0.05 (1.2) | 0.04 (1.0) | 0.04 (1.0) | 0.04 (1.0) | 0.06 (1.5) |
-| black-scholes | 0.19 (2.7) | 0.08 (1.1) | 0.17 (2.4) | 0.08 (1.1) | 0.07 (1.0) | 0.10 (1.4) | 0.10 (1.4) |
-| professor2 | 0.29 (2.9) | 0.11 (1.1) | 0.25 (2.5) | 0.11 (1.1) | 0.10 (1.0) | 0.12 (1.2) | 0.13 (1.3) |
-| professor2_tp | 0.27 (2.7) | 0.11 (1.1) | 0.26 (2.6) | 0.12 (1.2) | 0.10 (1.0) | 0.13 (1.3) | 0.14 (1.4) |
-| professor_game | 0.28 (2.8) | 0.10 (1.0) | 0.25 (2.5) | 0.12 (1.2) | 0.10 (1.0) | 0.12 (1.2) | 0.14 (1.4) |
-| professor_game-mlkit | 0.29 (2.9) | 0.11 (1.1) | 0.25 (2.5) | 0.13 (1.3) | 0.10 (1.0) | 0.14 (1.4) | 0.15 (1.5) |
-| professor_game_debug | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.01 | 0.01 |
-| kkb_eq | 1.01 (1.9) | 0.52 (1.0) | 0.98 (1.9) | 0.54 (1.0) | 0.52 (1.0) | 0.53 (1.0) | 0.69 (1.3) |
-| kitkbjul9_smlnj | 1.01 (1.9) | 0.50 (0.9) | 0.96 (1.8) | 0.53 (1.0) | 0.53 (1.0) | 0.51 (1.0) | 0.75 (1.4) |
-| kkb36c_smlnj | 1.03 (2.2) | 0.49 (1.0) | 0.97 (2.1) | 0.54 (1.1) | 0.47 (1.0) | 0.54 (1.1) | 0.67 (1.4) |
-| ratio-regions-mlkit | 0.25 (3.1) | 0.10 (1.2) | 0.20 (2.5) | 0.10 (1.2) | 0.08 (1.0) | 0.10 (1.2) | 0.13 (1.6) |
-| ratio-regions_tp | 1.07 (3.8) | 0.38 (1.4) | 0.78 (2.8) | 0.37 (1.3) | 0.28 (1.0) | 0.38 (1.4) | 0.39 (1.4) |
-| ratio-regions-smlnj | 0.25 (3.1) | 0.09 (1.1) | 0.21 (2.6) | 0.10 (1.2) | 0.08 (1.0) | 0.11 (1.4) | 0.12 (1.5) |
-| count-graphs-mlkit | 0.06 (3.0) | 0.03 (1.5) | 0.04 (2.0) | 0.03 (1.5) | 0.02 (1.0) | 0.03 (1.5) | 0.04 (2.0) |
-| mpuz-mlkit | 15.25 (3.2) | 6.31 (1.3) | 12.62 (2.6) | 5.73 (1.2) | 4.82 (1.0) | 5.84 (1.2) | 6.06 (1.3) |
-| knuth-bendix-smlnj | 1.18 (1.8) | 0.67 (1.0) | 1.24 (1.9) | 0.70 (1.1) | 0.64 (1.0) | 0.72 (1.1) | 0.86 (1.3) |
-| tyan-smlnj | 4.62 (3.4) | 1.59 (1.2) | 3.88 (2.8) | 1.57 (1.1) | 1.37 (1.0) | 1.54 (1.1) | 1.93 (1.4) |
-| tyan-mlkit | 3.02 (3.2) | 1.08 (1.2) | 2.48 (2.7) | 1.07 (1.2) | 0.93 (1.0) | 1.05 (1.1) | 1.19 (1.3) |
-| smith-normal-form-mlkit | 0.01 (1.0) | 0.00 (0.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.02 (2.0) | 0.02 (2.0) |
-| smith-nf | 0.01 (1.0) | 0.00 (0.0) | 0.00 (0.0) | 0.01 (1.0) | 0.01 (1.0) | 0.02 (2.0) | 0.03 (3.0) |
-| lexgen-smlnj | 0.54 (2.6) | 0.23 (1.1) | 0.46 (2.2) | 0.24 (1.1) | 0.21 (1.0) | 0.27 (1.3) | 0.25 (1.2) |
-| mlyacc-smlnj | 0.25 (2.3) | 0.11 (1.0) | 0.23 (2.1) | 0.14 (1.3) | 0.11 (1.0) | 0.15 (1.4) | 0.14 (1.3) |
-| kitsimple | 0.07 (2.3) | 0.02 (0.7) | 0.05 (1.7) | 0.03 (1.0) | 0.03 (1.0) | 0.04 (1.3) | 0.04 (1.3) |
-| kitsimple_tp | 0.20 (3.3) | 0.07 (1.2) | 0.16 (2.7) | 0.08 (1.3) | 0.06 (1.0) | 0.08 (1.3) | 0.07 (1.2) |
-| kitsimple_no_basislib | 0.07 (2.3) | 0.02 (0.7) | 0.06 (2.0) | 0.03 (1.0) | 0.03 (1.0) | 0.04 (1.3) | 0.04 (1.3) |
-| simple-smlnj | 0.20 (2.9) | 0.07 (1.0) | 0.18 (2.6) | 0.08 (1.1) | 0.07 (1.0) | 0.09 (1.3) | 0.09 (1.3) |
-| tsp-smlnj | 0.02 (2.0) | 0.01 (1.0) | 0.02 (2.0) | 0.01 (1.0) | 0.01 (1.0) | 0.02 (2.0) | 0.02 (2.0) |
-| DLXSimulator-mlkit | 0.19 (1.9) | 0.10 (1.0) | 0.20 (2.0) | 0.11 (1.1) | 0.10 (1.0) | 0.13 (1.3) | 0.13 (1.3) |
-| aobench | 0.78 (3.4) | 0.33 (1.4) | 0.63 (2.7) | 0.30 (1.3) | 0.23 (1.0) | 0.32 (1.4) | 0.27 (1.2) |
-| id-ray | 22.42 (3.2) | 9.20 (1.3) | 19.37 (2.8) | 8.27 (1.2) | 6.95 (1.0) | 8.43 (1.2) | 7.40 (1.1) |
-| plclub-ray | 0.30 (4.3) | 0.09 (1.3) | 0.22 (3.1) | 0.09 (1.3) | 0.07 (1.0) | 0.11 (1.6) | 0.10 (1.4) |
-| mc-ray | 3.24 (4.2) | 1.27 (1.6) | 2.48 (3.2) | 1.07 (1.4) | 0.77 (1.0) | 1.09 (1.4) | 0.77 (1.0) |
-| ray-smlnj | 0.15 (3.8) | 0.06 (1.5) | 0.12 (3.0) | 0.06 (1.5) | 0.04 (1.0) | 0.07 (1.8) | 0.05 (1.2) |
-| kitmolgard | 0.18 (3.0) | 0.07 (1.2) | 0.14 (2.3) | 0.07 (1.2) | 0.06 (1.0) | 0.09 (1.5) | 0.09 (1.5) |
-| vliw-smlnj | 1.08 (2.5) | 0.45 (1.0) | 0.93 (2.1) | 0.46 (1.0) | 0.44 (1.0) | 0.50 (1.1) | 0.43 (1.0) |
-| rfib | 0.04 (2.0) | 0.02 (1.0) | 0.04 (2.0) | 0.02 (1.0) | 0.02 (1.0) | 0.03 (1.5) | 0.02 (1.0) |
-| tak-nofib-lazy | 0.02 (2.0) | 0.01 (1.0) | 0.02 (2.0) | 0.01 (1.0) | 0.01 (1.0) | 0.02 (2.0) | 0.02 (2.0) |
-| tak-nofib-strict | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.01 | 0.01 |
-| exp3_8-lazy | 1.34 (1.6) | 0.72 (0.9) | 1.41 (1.7) | 0.80 (1.0) | 0.83 (1.0) | 0.80 (1.0) | 0.80 (1.0) |
-| exp3_8-strict | 0.27 (1.7) | 0.14 (0.9) | 0.30 (1.9) | 0.17 (1.1) | 0.16 (1.0) | 0.17 (1.1) | 0.19 (1.2) |
-| digits-of-e1-lazy | 3.29 (3.0) | 1.27 (1.2) | 2.79 (2.5) | 1.22 (1.1) | 1.10 (1.0) | 1.19 (1.1) | 1.11 (1.0) |
-| digits-of-e2-lazy | 7.38 (3.0) | 2.84 (1.2) | 5.95 (2.4) | 2.77 (1.1) | 2.46 (1.0) | 2.77 (1.1) | 2.45 (1.0) |
-
-Two rows are worth reading on their own. The counts are from the bytecode
-this run compiled: the function table of each image, and a decode of every
-instruction. The native-host tables follow these notes.
-
-### `hamlet`
-
-`hamlet` is Andreas Rossberg's HaMLet, an interpreter for Standard ML,
-including the parser ml-yacc generated, in
-`examples/benchmarks/hamlet/benchmark.sml` (22,907 lines). The normal input
-runs it once on `DATA/normal.sml`, nine lines of Peano arithmetic computing
-`(4^2)^2`. The result is 256.
-
-The image has 1608 functions in either bytecode. The register code is
-585752 bytes. The median function is 161 bytes, 1071 functions are under
-200 bytes and 580 are under 100. `Parse.LrVals` is 125138 bytes in 38
-functions, and `Parse.LrVals.ParserData.Actions.actions` alone is 115412
-bytes with 18 locals. `Parse.Lexer` is 23352 bytes in 26 functions. The
-stack code is 432004 bytes, and that same actions function is 103917 bytes
-with 11 locals. The call sites match: 653 `CALL`, 56 `TAILCALL`, 2513
-`CALLK`, 1151 `TAILCALLK`, 970 `CLOSURE` and 3026 `PRIM`. The register
-image has 48560 instructions and the stack image 79452. The difference is
-mostly locals: 1867 `MOVE` against 24091 `LOCAL`, 10185 `SETLOCAL` and
-1438 `TEELOCAL`.
-
-The work inside the timer is that one evaluation. `rune` takes 0.04 s
-(fresh samples 0.04, 0.04, 0.04) and `rune:new off` takes 0.05 s (0.04,
-0.05, 0.05). `rune:opt` takes 0.02 s, all three samples: `runeopt` has
-translated the bytecode before GNU time starts. `rune:new opt` takes 0.07 s,
-`all` 0.11 s and `all+t2` 0.16 s. The fresh samples of `all` are 0.11, 0.12
-and 0.11, and of `all+t2` 0.14, 0.16 and 0.18. Those two ranges sit clear
-of the interpreter samples.
-
-`--jit=all` compiles every function when the program is loaded.
-`runtime/register/jit.c` calls `jit_tier_up` across the function table, and that
-compile is part of the fresh process the table times. `all` compiles each
-of the 1608 functions at tier 1. `all+t2` compiles each at tier 2, the
-larger compile, and that cell is the slowest. `opt` compiles a function
-when its counters say it is hot. On one evaluation of 256 the median is
-0.02 s above `off`, and the fresh samples of the two still meet (0.05 on
-both). The two interpreters land within 0.01 s. `twenty-four` is the
-program where the wider register frames have a run long enough to see.
-
-### `twenty-four`
-
-`twenty-four` counts the ways to make 24. The normal input takes every
-4-card combination from 1 to 10, 210 hands, and counts solutions through
-the continuation passed to `TwentyFour.solve`
-(`examples/benchmarks/twenty-four/benchmark.sml`). It does this once. The
-expected total is 9603. The search is tail calls and `Real` arithmetic.
-
-Both images have 161 functions and the same call sites: 45 `CALL`, 17
-`TAILCALL`, 223 `CALLK`, 46 `TAILCALLK`, 84 `CLOSURE` and 478 `PRIM`. The
-stack bytecode is 5337 instructions and 27509 bytes, 1926 of them `LOCAL`,
-`SETLOCAL` or `TEELOCAL`. The register bytecode is 3819 instructions and
-42607 bytes, with 150 `MOVE`. A register frame keeps every local for the
-whole function, so the search frames are wider. The columns are `nlocals`
-in the stack bytecode and in the register bytecode:
-
-| Function | stack | register |
-|---|---:|---:|
-| `TwentyFour.eval` | 3 | 8 |
-| `TwentyFour.split` | 4 | 13 |
-| `TwentyFour.p` | 5 | 12 |
-| `TwentyFour.allTrees` | 4 | 10 |
-| `TwentyFour.insert` | 6 | 9 |
-| `TwentyFour.permutations` | 4 | 7 |
-| `TwentyFour.solve` | 3 | 6 |
-| `Benchmark.allHands` | 2 | 11 |
-| `Benchmark.one` | 1 | 4 |
-
-A register `TAILCALLK` reads the arguments out of those registers into a
-side buffer, moves them into the callee's frame and fills every remaining
-local with unit (`runtime/register/reg_cases.h`). The stack `TAILCALLK` moves the
-arguments from the operand stack into a smaller frame and fills what that
-frame still has empty (`runtime/stack/interp_cases.h`). A value is 16 bytes in both.
-`rune:new off` takes 0.97 s where `rune` takes 0.68 s. The fresh samples
-are 0.90, 1.05, 0.97 and 0.68, 0.64, 0.72. The slower stack sample is
-0.72 s and the faster register sample is 0.90 s.
-
-The JIT takes that work out of the interpreter. `rune:new baseline` takes
-0.35 s and `rune:new opt` 0.32 s, under `rune:opt` at 0.37 s. `all` takes
-0.38 s and `all+t2` 0.41 s. Those two compile every function at load, as
-`hamlet` does, here across 161 functions. The fresh samples sit above
-`opt`: 0.35, 0.38, 0.38 and 0.41, 0.43, 0.41, against 0.32, 0.32, 0.33.
-
-The hosts, each on its own Basis Library. The first column is `rune:new opt`
-from the table above. In parentheses: the time divided by that column. Where
-that column is 0.00 the ratio is omitted. `n/a` means the host did not compile
-the program, or the program failed its own check, so there is no median of
-three fresh runs.
-
-SML/NJ 110.99.9, 64 bits has no time for `barnes-hut`, `black-scholes`,
-`tsp-smlnj`, `aobench` and `id-ray`. SML/NJ 110.99.9, 32 bits has none for
-`tsp-smlnj`, `aobench`, `mc-ray` and `id-ray`. SML/NJ 2026.2 has none for
-`id-ray`. Poly/ML 5.9.2 has none for `vector64-concat` and `peek`, where
-`Int64` is not declared, and for `id-ray`. On every SML/NJ column and on
-Poly/ML, `id-ray` opens `DATA/spheres.txt` while the source is elaborated.
-MLKit 4.7.23 did not compile `boyer`, `boyer-smlnj`, `knuth-bendix`,
-`knuth-bendix-smlnj`, `tyan`, `tyan-smlnj` and `tyan-mlkit`, and failed its
-check on `raytrace`, `mandelbrot-rat` and `plclub-ray`. MLton passed all 149.
-
-| Program | rune:new opt | native:mlton | native:smlnj-legacy | native:smlnj32 | native:smlnj-dev | native:polyml | native:mlkit |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| tak | 0.24 (1.0) | 0.06 (0.2) | 0.10 (0.4) | 0.12 (0.5) | 0.13 (0.5) | 0.05 (0.2) | 0.18 (0.8) |
-| kittmergesort | 0.09 (1.0) | 0.04 (0.4) | 0.05 (0.6) | 0.04 (0.4) | 0.05 (0.6) | 0.03 (0.3) | 0.05 (0.6) |
-| primes-lazy | 0.06 (1.0) | 0.01 (0.2) | 0.05 (0.8) | 0.04 (0.7) | 0.05 (0.8) | 0.04 (0.7) | 0.03 (0.5) |
-| primes-strict | 0.60 (1.0) | 0.26 (0.4) | 0.38 (0.6) | 0.20 (0.3) | 0.35 (0.6) | 0.27 (0.5) | 0.35 (0.6) |
-| bdd | 0.11 (1.0) | 0.02 (0.2) | 0.06 (0.5) | 0.05 (0.5) | 0.06 (0.5) | 0.03 (0.3) | 0.04 (0.4) |
-| fib | 0.04 (1.0) | 0.01 (0.2) | 0.02 (0.5) | 0.02 (0.5) | 0.03 (0.8) | 0.01 (0.2) | 0.02 (0.5) |
-| tailfib | 0.00 | 0.00 | 0.01 | 0.01 | 0.01 | 0.00 | 0.00 |
-| even-odd | 0.01 (1.0) | 0.00 (0.0) | 0.02 (2.0) | 0.02 (2.0) | 0.02 (2.0) | 0.00 (0.0) | 0.00 (0.0) |
-| merge | 0.06 (1.0) | 0.01 (0.2) | 0.03 (0.5) | 0.02 (0.3) | 0.03 (0.5) | 0.01 (0.2) | 0.02 (0.3) |
-| tailmerge | 0.06 (1.0) | 0.01 (0.2) | 0.02 (0.3) | 0.02 (0.3) | 0.04 (0.7) | 0.01 (0.2) | 0.02 (0.3) |
-| imp-for | 0.01 (1.0) | 0.00 (0.0) | 0.01 (1.0) | 0.01 (1.0) | 0.03 (3.0) | 0.00 (0.0) | 0.00 (0.0) |
-| vector-rev | 0.04 (1.0) | 0.00 (0.0) | 0.02 (0.5) | 0.02 (0.5) | 0.03 (0.8) | 0.00 (0.0) | 0.01 (0.2) |
-| vector32-concat | 0.02 (1.0) | 0.00 (0.0) | 0.02 (1.0) | 0.01 (0.5) | 0.03 (1.5) | 0.00 (0.0) | 0.00 (0.0) |
-| vector64-concat | 0.02 (1.0) | 0.00 (0.0) | 0.02 (1.0) | 0.02 (1.0) | 0.03 (1.5) | n/a | 0.00 (0.0) |
-| string-concat | 0.01 (1.0) | 0.00 (0.0) | 0.01 (1.0) | 0.01 (1.0) | 0.02 (2.0) | 0.00 (0.0) | 0.00 (0.0) |
-| wc-input1 | 0.10 (1.0) | 0.01 (0.1) | 0.05 (0.5) | 0.04 (0.4) | 0.06 (0.6) | 0.07 (0.7) | 0.03 (0.3) |
-| wc-scanStream | 0.10 (1.0) | 0.01 (0.1) | 0.04 (0.4) | 0.03 (0.3) | 0.04 (0.4) | 0.04 (0.4) | 0.10 (1.0) |
-| checksum | 0.58 (1.0) | 0.00 (0.0) | 0.06 (0.1) | 0.08 (0.1) | 0.06 (0.1) | 0.03 (0.1) | 0.09 (0.2) |
-| boyer | 0.26 (1.0) | 0.07 (0.3) | 0.11 (0.4) | 0.12 (0.5) | 0.12 (0.5) | 0.09 (0.3) | n/a |
-| nucleic | 0.13 (1.0) | 0.03 (0.2) | 0.07 (0.5) | 0.06 (0.5) | 0.07 (0.5) | 0.12 (0.9) | 0.06 (0.5) |
-| life | 0.24 (1.0) | 0.02 (0.1) | 0.18 (0.8) | 0.20 (0.8) | 0.17 (0.7) | 0.02 (0.1) | 0.06 (0.2) |
-| matrix-multiply | 0.01 (1.0) | 0.00 (0.0) | 0.01 (1.0) | 0.01 (1.0) | 0.02 (2.0) | 0.00 (0.0) | 0.00 (0.0) |
-| md5 | 0.02 (1.0) | 0.00 (0.0) | 0.01 (0.5) | 0.01 (0.5) | 0.02 (1.0) | 0.00 (0.0) | 0.00 (0.0) |
-| fft | 0.02 (1.0) | 0.00 (0.0) | 0.03 (1.5) | 0.03 (1.5) | 0.04 (2.0) | 0.02 (1.0) | 0.02 (1.0) |
-| binary-trees | 0.03 (1.0) | 0.00 (0.0) | 0.02 (0.7) | 0.02 (0.7) | 0.02 (0.7) | 0.01 (0.3) | 0.02 (0.7) |
-| flat-array | 1.36 (1.0) | 0.02 (0.0) | 0.91 (0.7) | 0.74 (0.5) | 1.20 (0.9) | 0.47 (0.3) | 0.27 (0.2) |
-| peek | 4.41 (1.0) | 0.22 (0.0) | 0.76 (0.2) | 1.21 (0.3) | 0.76 (0.2) | n/a | 3.40 (0.8) |
-| psdes-random | 0.20 (1.0) | 0.01 (0.0) | 0.08 (0.4) | 0.05 (0.2) | 0.09 (0.4) | 0.04 (0.2) | 0.15 (0.7) |
-| mandelbrot | 0.04 (1.0) | 0.01 (0.2) | 0.02 (0.5) | 0.02 (0.5) | 0.02 (0.5) | 0.04 (1.0) | 0.02 (0.5) |
-| pidigits | 5.99 (1.0) | 0.00 (0.0) | 0.02 (0.0) | 0.03 (0.0) | 0.03 (0.0) | 0.00 (0.0) | 0.08 (0.0) |
-| logic | 6.70 (1.0) | 1.42 (0.2) | 2.06 (0.3) | 2.06 (0.3) | 2.00 (0.3) | 1.63 (0.2) | 5.35 (0.8) |
-| zebra | 0.95 (1.0) | 0.05 (0.1) | 0.58 (0.6) | 0.64 (0.7) | 0.54 (0.6) | 0.10 (0.1) | 0.48 (0.5) |
-| count-graphs | 0.08 (1.0) | 0.00 (0.0) | 0.02 (0.2) | 0.03 (0.4) | 0.03 (0.4) | 0.02 (0.2) | 0.03 (0.4) |
-| many_refs | 0.81 (1.0) | 0.03 (0.0) | 0.30 (0.4) | 0.37 (0.5) | 0.55 (0.7) | 0.13 (0.2) | 0.28 (0.3) |
-| tensor | 2.61 (1.0) | 0.06 (0.0) | 0.29 (0.1) | 0.39 (0.1) | 0.31 (0.1) | 0.39 (0.1) | 0.61 (0.2) |
-| zern | 0.09 (1.0) | 0.00 (0.0) | 0.02 (0.2) | 0.02 (0.2) | 0.02 (0.2) | 0.02 (0.2) | 0.01 (0.1) |
-| smith-normal-form | 0.01 (1.0) | 0.00 (0.0) | 0.01 (1.0) | 0.01 (1.0) | 0.02 (2.0) | 0.00 (0.0) | 0.00 (0.0) |
-| ratio-regions | 0.08 (1.0) | 0.01 (0.1) | 0.04 (0.5) | 0.06 (0.8) | 0.06 (0.8) | 0.01 (0.1) | 0.03 (0.4) |
-| mpuz | 48.53 (1.0) | 2.66 (0.1) | 9.86 (0.2) | 15.73 (0.3) | 8.25 (0.2) | 5.35 (0.1) | 9.21 (0.2) |
-| DLXSimulator | 35.66 (1.0) | 10.19 (0.3) | 32.51 (0.9) | 25.47 (0.7) | 17.02 (0.5) | 9.62 (0.3) | 12.55 (0.4) |
-| knuth-bendix | 1.94 (1.0) | 0.20 (0.1) | 0.68 (0.4) | 0.74 (0.4) | 0.43 (0.2) | 0.48 (0.2) | n/a |
-| tyan | 0.94 (1.0) | 0.20 (0.2) | 0.57 (0.6) | 0.30 (0.3) | 0.18 (0.2) | 0.24 (0.3) | n/a |
-| lexgen | 0.33 (1.0) | 0.07 (0.2) | 0.24 (0.7) | 0.18 (0.5) | 0.10 (0.3) | 0.20 (0.6) | 0.22 (0.7) |
-| mlyacc | 0.18 (1.0) | 0.05 (0.3) | 0.15 (0.8) | 0.11 (0.6) | 0.08 (0.4) | 0.06 (0.3) | 0.10 (0.6) |
-| hamlet | 0.07 (1.0) | 0.00 (0.0) | 0.02 (0.3) | 0.01 (0.1) | 0.02 (0.3) | 0.01 (0.1) | 0.01 (0.1) |
-| kitfib35 | 0.56 (1.0) | 0.14 (0.2) | 0.22 (0.4) | 0.16 (0.3) | 0.13 (0.2) | 0.11 (0.2) | 0.51 (0.9) |
-| fib0 | 0.04 (1.0) | 0.01 (0.2) | 0.03 (0.8) | 0.02 (0.5) | 0.02 (0.5) | 0.01 (0.2) | 0.03 (0.8) |
-| kitreynolds2 | 0.28 (1.0) | 0.07 (0.2) | 0.39 (1.4) | 0.36 (1.3) | 0.21 (0.7) | 0.15 (0.5) | 0.10 (0.4) |
-| kitreynolds3 | 0.17 (1.0) | 0.02 (0.1) | 0.31 (1.8) | 0.21 (1.2) | 0.15 (0.9) | 0.09 (0.5) | 0.07 (0.4) |
-| kitloop2 | 0.01 (1.0) | 0.00 (0.0) | 0.02 (2.0) | 0.01 (1.0) | 0.01 (1.0) | 0.00 (0.0) | 0.00 (0.0) |
-| kitdangle | 0.06 (1.0) | 0.00 (0.0) | 0.03 (0.5) | 0.03 (0.5) | 0.02 (0.3) | 0.84 (14.0) | 0.08 (1.3) |
-| kitdangle3 | 0.16 (1.0) | 0.00 (0.0) | 0.07 (0.4) | 0.05 (0.3) | 0.04 (0.2) | 1.11 (6.9) | 0.14 (0.9) |
-| msort | 0.11 (1.0) | 0.03 (0.3) | 0.05 (0.5) | 0.03 (0.3) | 0.03 (0.3) | 0.03 (0.3) | 0.04 (0.4) |
-| kittmergesort_tp | 1.54 (1.0) | 0.59 (0.4) | 1.20 (0.8) | 0.86 (0.6) | 0.60 (0.4) | 0.56 (0.4) | 0.93 (0.6) |
-| barnes-hut | 0.52 (1.0) | 0.08 (0.2) | n/a | 0.24 (0.5) | 0.16 (0.3) | 0.36 (0.7) | 0.37 (0.7) |
-| tsp | 0.03 (1.0) | 0.00 (0.0) | 0.02 (0.7) | 0.02 (0.7) | 0.01 (0.3) | 0.01 (0.3) | 0.01 (0.3) |
-| fannkuch | 0.01 (1.0) | 0.00 (0.0) | 0.02 (2.0) | 0.02 (2.0) | 0.01 (1.0) | 0.00 (0.0) | 0.00 (0.0) |
-| f-arith | 0.01 (1.0) | 0.01 (1.0) | 0.02 (2.0) | 0.02 (2.0) | 0.02 (2.0) | 0.02 (2.0) | 0.02 (2.0) |
-| stream-sieve | 0.06 (1.0) | 0.02 (0.3) | 0.04 (0.7) | 0.03 (0.5) | 0.03 (0.5) | 0.03 (0.5) | 0.06 (1.0) |
-| twenty-four | 0.32 (1.0) | 0.08 (0.2) | 0.19 (0.6) | 0.20 (0.6) | 0.13 (0.4) | 0.11 (0.3) | 0.24 (0.8) |
-| simple | 0.79 (1.0) | 0.16 (0.2) | 0.38 (0.5) | 0.49 (0.6) | 0.19 (0.2) | 0.25 (0.3) | 0.46 (0.6) |
-| nbody | 1.54 (1.0) | 0.46 (0.3) | 0.43 (0.3) | 0.42 (0.3) | 0.36 (0.2) | 1.98 (1.3) | 2.00 (1.3) |
-| output1 | 0.18 (1.0) | 0.00 (0.0) | 0.04 (0.2) | 0.04 (0.2) | 0.02 (0.1) | 0.03 (0.2) | 0.04 (0.2) |
-| ray | 0.32 (1.0) | 0.04 (0.1) | 0.10 (0.3) | 0.10 (0.3) | 0.06 (0.2) | 0.13 (0.4) | 0.23 (0.7) |
-| raytrace | 1.88 (1.0) | 0.48 (0.3) | 1.69 (0.9) | 1.79 (1.0) | 1.19 (0.6) | 1.27 (0.7) | n/a |
-| vliw | 0.26 (1.0) | 0.06 (0.2) | 0.12 (0.5) | 0.08 (0.3) | 0.07 (0.3) | 0.08 (0.3) | 0.17 (0.7) |
-| fxp | 0.43 (1.0) | 0.09 (0.2) | 0.22 (0.5) | 0.18 (0.4) | 0.14 (0.3) | 0.32 (0.7) | 0.58 (1.3) |
-| model-elimination | 42.84 (1.0) | 6.53 (0.2) | 21.60 (0.5) | 17.69 (0.4) | 11.50 (0.3) | 9.24 (0.2) | 36.27 (0.8) |
-| sat | 0.68 (1.0) | 0.06 (0.1) | 0.19 (0.3) | 0.23 (0.3) | 0.14 (0.2) | 0.19 (0.3) | 0.96 (1.4) |
-| boyer-smlnj | 2.09 (1.0) | 0.39 (0.2) | 1.23 (0.6) | 1.25 (0.6) | 0.85 (0.4) | 0.76 (0.4) | n/a |
-| logic-smlnj | 49.63 (1.0) | 9.89 (0.2) | 16.97 (0.3) | 12.58 (0.3) | 9.60 (0.2) | 9.32 (0.2) | 41.03 (0.8) |
-| life-smlnj | 9.50 (1.0) | 0.77 (0.1) | 10.19 (1.1) | 8.31 (0.9) | 4.72 (0.5) | 0.64 (0.1) | 2.18 (0.2) |
-| minimax | 6.78 (1.0) | 0.75 (0.1) | 3.37 (0.5) | 3.33 (0.5) | 2.35 (0.3) | 2.13 (0.3) | 1.82 (0.3) |
-| iter-pidigits | 3.22 (1.0) | 0.00 (0.0) | 0.02 (0.0) | 0.03 (0.0) | 0.02 (0.0) | 0.00 (0.0) | 0.06 (0.0) |
-| mazefun | 0.47 (1.0) | 0.05 (0.1) | 0.16 (0.3) | 0.20 (0.4) | 0.12 (0.3) | 0.07 (0.1) | 0.29 (0.6) |
-| queens-lazy | 0.02 (1.0) | 0.00 (0.0) | 0.02 (1.0) | 0.02 (1.0) | 0.02 (1.0) | 0.01 (0.5) | 0.01 (0.5) |
-| queens-strict | 0.04 (1.0) | 0.02 (0.5) | 0.03 (0.8) | 0.03 (0.8) | 0.03 (0.8) | 0.02 (0.5) | 0.03 (0.8) |
-| nqueens | 0.03 (1.0) | 0.00 (0.0) | 0.01 (0.3) | 0.02 (0.7) | 0.02 (0.7) | 0.01 (0.3) | 0.01 (0.3) |
-| rec_seq_ack | 0.06 (1.0) | 0.01 (0.2) | 0.03 (0.5) | 0.03 (0.5) | 0.03 (0.5) | 0.01 (0.2) | 0.03 (0.5) |
-| klife_eq | 0.22 (1.0) | 0.02 (0.1) | 0.22 (1.0) | 0.19 (0.9) | 0.14 (0.6) | 0.03 (0.1) | 0.08 (0.4) |
-| kitlife35u_smlnj | 0.17 (1.0) | 0.02 (0.1) | 0.06 (0.4) | 0.06 (0.4) | 0.04 (0.2) | 0.03 (0.2) | 0.10 (0.6) |
-| kitqsort_no_basislib | 0.07 (1.0) | 0.01 (0.1) | 0.02 (0.3) | 0.02 (0.3) | 0.02 (0.3) | 0.02 (0.3) | 0.03 (0.4) |
-| tailfib-mlkit | 0.00 | 0.00 | 0.01 | 0.01 | 0.01 | 0.00 | 0.00 |
-| tak-mlkit | 0.06 (1.0) | 0.01 (0.2) | 0.03 (0.5) | 0.05 (0.8) | 0.03 (0.5) | 0.01 (0.2) | 0.05 (0.8) |
-| matrix-multiply-mlkit | 0.16 (1.0) | 0.00 (0.0) | 0.05 (0.3) | 0.09 (0.6) | 0.05 (0.3) | 0.03 (0.2) | 0.05 (0.3) |
-| vector-rev-mlkit | 0.05 (1.0) | 0.00 (0.0) | 0.04 (0.8) | 0.03 (0.6) | 0.03 (0.6) | 0.00 (0.0) | 0.01 (0.2) |
-| vector-rev_smlnj | 0.04 (1.0) | 0.00 (0.0) | 0.02 (0.5) | 0.02 (0.5) | 0.02 (0.5) | 0.00 (0.0) | 0.02 (0.5) |
-| vector-concat | 0.01 (1.0) | 0.00 (0.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.00 (0.0) | 0.00 (0.0) |
-| vector-concat_smlnj | 0.06 (1.0) | 0.00 (0.0) | 0.03 (0.5) | 0.02 (0.3) | 0.02 (0.3) | 0.00 (0.0) | 0.02 (0.3) |
-| peek-mlkit | 0.02 (1.0) | 0.00 (0.0) | 0.01 (0.5) | 0.02 (1.0) | 0.01 (0.5) | 0.01 (0.5) | 0.02 (1.0) |
-| wc-input1-mlkit | 0.06 (1.0) | 0.00 (0.0) | 0.04 (0.7) | 0.04 (0.7) | 0.03 (0.5) | 0.03 (0.5) | 0.02 (0.3) |
-| wc-scanStream-mlkit | 0.06 (1.0) | 0.00 (0.0) | 0.03 (0.5) | 0.03 (0.5) | 0.02 (0.3) | 0.03 (0.5) | 0.07 (1.2) |
-| psdes-random-mlkit | 0.02 (1.0) | 0.00 (0.0) | 0.02 (1.0) | 0.02 (1.0) | 0.02 (1.0) | 0.01 (0.5) | 0.01 (0.5) |
-| safe-for-space | 0.14 (1.0) | 0.01 (0.1) | 0.09 (0.6) | 0.08 (0.6) | 0.05 (0.4) | 0.06 (0.4) | 0.09 (0.6) |
-| pidigits-smlnj | 3.12 (1.0) | 0.00 (0.0) | 0.02 (0.0) | 0.03 (0.0) | 0.02 (0.0) | 0.00 (0.0) | 0.06 (0.0) |
-| fft-smlnj | 0.01 (1.0) | 0.00 (0.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.00 (0.0) | 0.00 (0.0) |
-| nucleic-smlnj | 0.14 (1.0) | 0.06 (0.4) | 0.05 (0.4) | 0.05 (0.4) | 0.03 (0.2) | 0.13 (0.9) | 0.09 (0.6) |
-| count-graphs-smlnj | 0.01 (1.0) | 0.00 (0.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.00 (0.0) | 0.00 (0.0) |
-| matrix-multiply-ramp | 0.02 (1.0) | 0.00 (0.0) | 0.02 (1.0) | 0.02 (1.0) | 0.02 (1.0) | 0.00 (0.0) | 0.00 (0.0) |
-| kitreynolds2_no_basislib | 0.02 (1.0) | 0.00 (0.0) | 0.03 (1.5) | 0.03 (1.5) | 0.02 (1.0) | 0.01 (0.5) | 0.00 (0.0) |
-| kitreynolds3_no_basislib | 0.00 | 0.00 | 0.01 | 0.01 | 0.01 | 0.00 | 0.00 |
-| kittmergesort_no_basislib | 0.04 (1.0) | 0.02 (0.5) | 0.03 (0.8) | 0.03 (0.8) | 0.03 (0.8) | 0.02 (0.5) | 0.03 (0.8) |
-| hanoi | 0.00 | 0.00 | 0.02 | 0.01 | 0.01 | 0.00 | 0.00 |
-| fib-mlkit | 0.00 | 0.00 | 0.02 | 0.01 | 0.01 | 0.00 | 0.00 |
-| mandelbrot-smlnj | 0.03 (1.0) | 0.02 (0.7) | 0.04 (1.3) | 0.03 (1.0) | 0.03 (1.0) | 0.06 (2.0) | 0.02 (0.7) |
-| mandelbrot-rat | 55.59 (1.0) | 0.26 (0.0) | 2.08 (0.0) | 3.85 (0.1) | 1.38 (0.0) | 0.17 (0.0) | n/a |
-| kitmandelbrot | 0.00 | 0.00 | 0.01 | 0.01 | 0.01 | 0.00 | 0.00 |
-| FuhMishra | 0.04 (1.0) | 0.01 (0.2) | 0.03 (0.8) | 0.04 (1.0) | 0.03 (0.8) | 0.02 (0.5) | 0.02 (0.5) |
-| black-scholes | 0.07 (1.0) | 0.03 (0.4) | n/a | 0.05 (0.7) | 0.03 (0.4) | 0.03 (0.4) | 0.07 (1.0) |
-| professor2 | 0.10 (1.0) | 0.03 (0.3) | 0.16 (1.6) | 0.14 (1.4) | 0.08 (0.8) | 0.05 (0.5) | 0.06 (0.6) |
-| professor2_tp | 0.10 (1.0) | 0.03 (0.3) | 0.23 (2.3) | 0.14 (1.4) | 0.08 (0.8) | 0.05 (0.5) | 0.05 (0.5) |
-| professor_game | 0.10 (1.0) | 0.03 (0.3) | 0.33 (3.3) | 0.13 (1.3) | 0.09 (0.9) | 0.04 (0.4) | 0.05 (0.5) |
-| professor_game-mlkit | 0.10 (1.0) | 0.02 (0.2) | 0.23 (2.3) | 0.14 (1.4) | 0.08 (0.8) | 0.04 (0.4) | 0.06 (0.6) |
-| professor_game_debug | 0.00 | 0.00 | 0.01 | 0.01 | 0.01 | 0.00 | 0.00 |
-| kkb_eq | 0.52 (1.0) | 0.05 (0.1) | 0.24 (0.5) | 0.15 (0.3) | 0.10 (0.2) | 0.13 (0.2) | 0.31 (0.6) |
-| kitkbjul9_smlnj | 0.53 (1.0) | 0.06 (0.1) | 0.18 (0.3) | 0.18 (0.3) | 0.12 (0.2) | 0.13 (0.2) | 0.28 (0.5) |
-| kkb36c_smlnj | 0.47 (1.0) | 0.05 (0.1) | 0.12 (0.3) | 0.20 (0.4) | 0.10 (0.2) | 0.14 (0.3) | 0.22 (0.5) |
-| ratio-regions-mlkit | 0.08 (1.0) | 0.01 (0.1) | 0.04 (0.5) | 0.07 (0.9) | 0.04 (0.5) | 0.01 (0.1) | 0.03 (0.4) |
-| ratio-regions_tp | 0.28 (1.0) | 0.02 (0.1) | 0.15 (0.5) | 0.25 (0.9) | 0.14 (0.5) | 0.06 (0.2) | 0.16 (0.6) |
-| ratio-regions-smlnj | 0.08 (1.0) | 0.01 (0.1) | 0.04 (0.5) | 0.06 (0.8) | 0.04 (0.5) | 0.01 (0.1) | 0.03 (0.4) |
-| count-graphs-mlkit | 0.02 (1.0) | 0.00 (0.0) | 0.01 (0.5) | 0.02 (1.0) | 0.02 (1.0) | 0.01 (0.5) | 0.01 (0.5) |
-| mpuz-mlkit | 4.82 (1.0) | 0.28 (0.1) | 1.02 (0.2) | 2.06 (0.4) | 0.80 (0.2) | 0.50 (0.1) | 1.13 (0.2) |
-| knuth-bendix-smlnj | 0.64 (1.0) | 0.06 (0.1) | 0.17 (0.3) | 0.38 (0.6) | 0.15 (0.2) | 0.15 (0.2) | n/a |
-| tyan-smlnj | 1.37 (1.0) | 0.33 (0.2) | 0.35 (0.3) | 0.46 (0.3) | 0.27 (0.2) | 0.32 (0.2) | n/a |
-| tyan-mlkit | 0.93 (1.0) | 0.28 (0.3) | 0.24 (0.3) | 0.28 (0.3) | 0.20 (0.2) | 0.23 (0.2) | n/a |
-| smith-normal-form-mlkit | 0.01 (1.0) | 0.00 (0.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.00 (0.0) | 0.00 (0.0) |
-| smith-nf | 0.01 (1.0) | 0.00 (0.0) | 0.01 (1.0) | 0.01 (1.0) | 0.01 (1.0) | 0.00 (0.0) | 0.00 (0.0) |
-| lexgen-smlnj | 0.21 (1.0) | 0.06 (0.3) | 0.10 (0.5) | 0.11 (0.5) | 0.07 (0.3) | 0.13 (0.6) | 0.13 (0.6) |
-| mlyacc-smlnj | 0.11 (1.0) | 0.04 (0.4) | 0.06 (0.5) | 0.07 (0.6) | 0.05 (0.5) | 0.04 (0.4) | 0.07 (0.6) |
-| kitsimple | 0.03 (1.0) | 0.00 (0.0) | 0.01 (0.3) | 0.02 (0.7) | 0.02 (0.7) | 0.01 (0.3) | 0.01 (0.3) |
-| kitsimple_tp | 0.06 (1.0) | 0.01 (0.2) | 0.02 (0.3) | 0.03 (0.5) | 0.02 (0.3) | 0.02 (0.3) | 0.02 (0.3) |
-| kitsimple_no_basislib | 0.03 (1.0) | 0.00 (0.0) | 0.01 (0.3) | 0.02 (0.7) | 0.02 (0.7) | 0.01 (0.3) | 0.01 (0.3) |
-| simple-smlnj | 0.07 (1.0) | 0.01 (0.1) | 0.03 (0.4) | 0.04 (0.6) | 0.03 (0.4) | 0.03 (0.4) | 0.05 (0.7) |
-| tsp-smlnj | 0.01 (1.0) | 0.00 (0.0) | n/a | n/a | 0.02 (2.0) | 0.01 (1.0) | 0.00 (0.0) |
-| DLXSimulator-mlkit | 0.10 (1.0) | 0.05 (0.5) | 0.09 (0.9) | 0.10 (1.0) | 0.08 (0.8) | 0.03 (0.3) | 0.03 (0.3) |
-| aobench | 0.23 (1.0) | 0.15 (0.7) | n/a | n/a | 0.04 (0.2) | 0.06 (0.3) | 0.26 (1.1) |
-| id-ray | 6.95 (1.0) | 0.33 (0.0) | n/a | n/a | n/a | n/a | 0.74 (0.1) |
-| plclub-ray | 0.07 (1.0) | 0.01 (0.1) | 0.04 (0.6) | 0.06 (0.9) | 0.05 (0.7) | 0.05 (0.7) | n/a |
-| mc-ray | 0.77 (1.0) | 0.10 (0.1) | 0.08 (0.1) | n/a | 0.07 (0.1) | 0.33 (0.4) | 0.29 (0.4) |
-| ray-smlnj | 0.04 (1.0) | 0.00 (0.0) | 0.01 (0.2) | 0.02 (0.5) | 0.02 (0.5) | 0.02 (0.5) | 0.03 (0.8) |
-| kitmolgard | 0.06 (1.0) | 0.01 (0.2) | 0.03 (0.5) | 0.04 (0.7) | 0.04 (0.7) | 0.02 (0.3) | 0.04 (0.7) |
-| vliw-smlnj | 0.44 (1.0) | 0.11 (0.2) | 0.20 (0.5) | 0.23 (0.5) | 0.16 (0.4) | 0.19 (0.4) | 0.51 (1.2) |
-| rfib | 0.02 (1.0) | 0.00 (0.0) | 0.01 (0.5) | 0.02 (1.0) | 0.02 (1.0) | 0.01 (0.5) | 0.01 (0.5) |
-| tak-nofib-lazy | 0.01 (1.0) | 0.00 (0.0) | 0.01 (1.0) | 0.01 (1.0) | 0.02 (2.0) | 0.01 (1.0) | 0.01 (1.0) |
-| tak-nofib-strict | 0.00 | 0.00 | 0.01 | 0.01 | 0.01 | 0.00 | 0.00 |
-| exp3_8-lazy | 0.83 (1.0) | 0.22 (0.3) | 0.72 (0.9) | 0.77 (0.9) | 0.63 (0.8) | 0.81 (1.0) | 0.73 (0.9) |
-| exp3_8-strict | 0.16 (1.0) | 0.06 (0.4) | 0.07 (0.4) | 0.07 (0.4) | 0.06 (0.4) | 0.06 (0.4) | 0.20 (1.2) |
-| digits-of-e1-lazy | 1.10 (1.0) | 0.06 (0.1) | 0.26 (0.2) | 0.45 (0.4) | 0.22 (0.2) | 0.06 (0.1) | 1.11 (1.0) |
-| digits-of-e2-lazy | 2.46 (1.0) | 0.12 (0.0) | 0.84 (0.3) | 0.87 (0.4) | 0.61 (0.2) | 0.18 (0.1) | 2.44 (1.0) |
-
-Of the programs where `rune:new opt` is at least 0.10 s and MLton is above
-0.00 s, there are 69. MLton is faster on every one of them. Together they
-take 307 s against MLton's 39 s, 7.8 times. A figure below is `rune:new opt`
-divided by MLton, the reciprocal of the parentheses in the table. The 4
-times gap of `fib` and `tak`, in the eight-program section, is the common
-case here, and the suite's time lies in a few programs that are much
-further away. The five longest are `mandelbrot-rat`, `logic-smlnj`, `mpuz`,
-`model-elimination` and `DLXSimulator`.
-
-* **Three of the five long programs match `fib`.** `DLXSimulator` is 3.5
-  times (35.66 s against 10.19), `logic-smlnj` 5.0 times (49.63 s against
-  9.89) and `model-elimination` 6.6 times (42.84 s against 6.53).
-  `lexgen`, `mlyacc` and `vliw` are 3.6 to 4.7 times.
-* **`mandelbrot-rat` and `mpuz` are much further away, as are the pi-digit
-  runs.** `mandelbrot-rat` is 214 times (55.59 s against 0.26). It does
-  rational arithmetic in `IntInf`, and the loop counters are `IntInf` too.
-  `mpuz` is 18 times (48.53 s against 2.66): it enumerates decimal
-  assignments and hashes the text. `pidigits`, `iter-pidigits` and
-  `pidigits-smlnj` take 5.99 s, 3.22 s and 3.12 s, and 0.00 s on MLton, so
-  the cell reads `(0.0)`. `digits-of-e1-lazy` and `digits-of-e2-lazy` are
-  18 and 21 times. Without `mandelbrot-rat` and `mpuz`, the other 67
-  programs are 5.6 times.
-* **The tie of `real_nbody` with MLton does not recur.** The closest
-  program at or above 0.10 s is `aobench`, at 1.5 times (0.23 s against
-  0.15). `nbody` is 3.3 times. `tensor`, contractions of real arrays, is
-  44 times (2.61 s against 0.06). `id-ray` is 21 times. `many_refs`, a
-  retained table of boxed real refs, is 27 times (0.81 s against 0.03).
-  In the eight-program table, `list_ops` has MLton close on wall-clock
-  time.
-* **`rune:opt` shows the same split, a little further from MLton.**
-  `mandelbrot-rat` is 283 times, `mpuz` 24 times and `DLXSimulator` 4.5
-  times. On the programs that dominate this suite, both Rune backends
-  carry the gap.
+| Program | Rune | MLton | SML/NJ 110.99.9 | Poly/ML |
+|---|---:|---:|---:|---:|
+| tak | 0.47 | 0.08 (5.9) | 0.17 (2.8) | 0.09 (5.2) |
+| kittmergesort | 0.10 | 0.06 (1.7) | 0.07 (1.4) | 0.05 (2.0) |
+| primes-lazy | 0.09 | 0.01 (9.0) | 0.08 (1.1) | 0.06 (1.5) |
+| primes-strict | 0.80 | 0.36 (2.2) | 0.40 (2.0) | 0.27 (3.0) |
+| bdd | 0.11 | 0.02 (5.5) | 0.07 (1.6) | 0.03 (3.7) |
+| fib | 0.03 | 0.01 (3.0) | 0.02 (1.5) | 0.01 (3.0) |
+| tailfib | 0.00 | 0.00 | 0.01 | 0.00 |
+| even-odd | 0.00 | 0.00 | 0.02 | 0.00 |
+| merge | 0.05 | 0.01 (5.0) | 0.04 (1.2) | 0.01 (5.0) |
+| tailmerge | 0.05 | 0.01 (5.0) | 0.03 (1.7) | 0.01 (5.0) |
+| imp-for | 0.01 | 0.00 | 0.02 | 0.01 |
+| vector-rev | 0.05 | 0.00 | 0.03 (1.7) | 0.00 |
+| vector32-concat | 0.01 | 0.00 | 0.02 | 0.00 |
+| vector64-concat | 0.01 | 0.00 | 0.02 | n/a |
+| string-concat | 0.00 | 0.00 | 0.02 | 0.00 |
+| wc-input1 | 0.10 | 0.04 (2.5) | 0.10 (1.0) | 0.18 (0.6) |
+| wc-scanStream | 0.13 | 0.01 (13) | 0.06 (2.2) | 0.05 (2.6) |
+| checksum | 0.34 | 0.01 (34) | 0.09 (3.8) | 0.06 (5.7) |
+| boyer | 0.26 | 0.08 (3.2) | 0.14 (1.9) | 0.16 (1.6) |
+| nucleic | 0.20 | 0.05 (4.0) | 0.08 (2.5) | 0.14 (1.4) |
+| life | 0.33 | 0.02 (16) | 0.22 (1.5) | 0.03 (11) |
+| matrix-multiply | 0.01 | 0.00 | 0.02 | 0.00 |
+| md5 | 0.02 | 0.00 | 0.02 (1.0) | 0.00 |
+| fft | 0.03 | 0.00 | 0.03 (1.0) | 0.02 (1.5) |
+| binary-trees | 0.03 | 0.01 (3.0) | 0.03 (1.0) | 0.01 (3.0) |
+| flat-array | 1.08 | 0.02 (54) | 1.10 (1.0) | 0.84 (1.3) |
+| peek | 5.72 | 0.32 (18) | 1.09 (5.2) | n/a |
+| psdes-random | 0.20 | 0.01 (20) | 0.11 (1.8) | 0.04 (5.0) |
+| mandelbrot | 0.04 | 0.01 (4.0) | 0.03 (1.3) | 0.06 (0.7) |
+| pidigits | 6.91 | 0.01 (691) | 0.06 (115) | 0.01 (691) |
+| logic | 7.96 | 1.97 (4.0) | 2.67 (3.0) | 2.48 (3.2) |
+| zebra | 1.14 | 0.06 (19) | 0.77 (1.5) | 0.13 (8.8) |
+| count-graphs | 0.10 | 0.01 (10) | 0.03 (3.3) | 0.02 (5.0) |
+| many_refs | 0.69 | 0.04 (17) | 0.40 (1.7) | 0.19 (3.6) |
+| tensor | 1.11 | 0.08 (14) | 0.52 (2.1) | 0.98 (1.1) |
+| zern | 0.05 | 0.02 (2.5) | 0.06 (0.8) | 0.05 (1.0) |
+| smith-normal-form | 0.02 | 0.00 | 0.05 (0.4) | 0.01 (2.0) |
+| ratio-regions | 0.16 | 0.06 (2.7) | 0.14 (1.1) | 0.03 (5.3) |
+| mpuz | 58.56 | 5.43 (11) | 20.67 (2.8) | 8.44 (6.9) |
+| DLXSimulator | 88.34 | 15.01 (5.9) | 63.14 (1.4) | 16.26 (5.4) |
+| knuth-bendix | 2.88 | 0.31 (9.3) | 0.93 (3.1) | 0.89 (3.2) |
+| tyan | 1.02 | 0.34 (3.0) | 0.41 (2.5) | 0.37 (2.8) |
+| lexgen | 0.42 | 0.14 (3.0) | 0.24 (1.8) | 0.30 (1.4) |
+| mlyacc | 0.25 | 0.11 (2.3) | 0.14 (1.8) | 0.09 (2.8) |
+| hamlet | 0.08 | 0.00 | 0.03 (2.7) | 0.03 (2.7) |
+| kitfib35 | 1.04 | 0.26 (4.0) | 0.33 (3.2) | 0.17 (6.1) |
+| fib0 | 0.05 | 0.01 (5.0) | 0.04 (1.2) | 0.02 (2.5) |
+| kitreynolds2 | 0.41 | 0.09 (4.6) | 0.44 (0.9) | 0.20 (2.0) |
+| kitreynolds3 | 0.21 | 0.04 (5.2) | 0.37 (0.6) | 0.13 (1.6) |
+| kitloop2 | 0.00 | 0.00 | 0.02 | 0.01 |
+| kitdangle | 0.05 | 0.01 (5.0) | 0.04 (1.2) | 2.94 (0.0) |
+| kitdangle3 | 0.22 | 0.01 (22) | 0.09 (2.4) | 3.48 (0.1) |
+| msort | 0.08 | 0.05 (1.6) | 0.06 (1.3) | 0.06 (1.3) |
+| kittmergesort_tp | 2.09 | 0.81 (2.6) | 1.37 (1.5) | 0.99 (2.1) |
+| barnes-hut | 0.92 | 0.16 (5.8) | n/a | 0.65 (1.4) |
+| tsp | 0.03 | 0.01 (3.0) | 0.03 (1.0) | 0.01 (3.0) |
+| fannkuch | 0.01 | 0.00 | 0.02 | 0.01 |
+| f-arith | 0.01 | 0.01 | 0.03 | 0.04 |
+| stream-sieve | 0.07 | 0.03 (2.3) | 0.05 (1.4) | 0.05 (1.4) |
+| simple | 0.99 | 0.30 (3.3) | 0.40 (2.5) | 0.73 (1.4) |
+| twenty-four | 0.51 | 0.12 (4.2) | 0.23 (2.2) | 0.14 (3.6) |
+| nbody | 2.53 | 0.61 (4.1) | 0.50 (5.1) | 3.77 (0.7) |
+| output1 | 0.34 | 0.01 (34) | 0.08 (4.2) | 0.04 (8.5) |
+| ray | 0.55 | 0.06 (9.2) | 0.14 (3.9) | 0.23 (2.4) |
+| raytrace | 4.01 | 0.81 (5.0) | 3.31 (1.2) | 3.03 (1.3) |
+| vliw | 0.46 | 0.09 (5.1) | 0.17 (2.7) | 0.12 (3.8) |
+| fxp | 0.56 | 0.15 (3.7) | 0.30 (1.9) | 0.59 (0.9) |
+| model-elimination | 112.53 | 23.13 (4.9) | 17.02 (6.6) | 14.44 (7.8) |
+| sat | 0.68 | 0.09 (7.6) | 0.24 (2.8) | 0.28 (2.4) |
+| boyer-smlnj | 3.46 | 0.78 (4.4) | 1.62 (2.1) | 1.30 (2.7) |
+| logic-smlnj | 39.05 | 11.60 (3.4) | 12.77 (3.1) | 12.14 (3.2) |
+| life-smlnj | 14.69 | 0.78 (19) | 6.10 (2.4) | 0.64 (23) |
+| minimax | 5.15 | 1.21 (4.3) | 3.92 (1.3) | 8.30 (0.6) |
+| iter-pidigits | 3.22 | 0.00 | 0.02 (161) | 0.00 |
+| mazefun | 0.45 | 0.07 (6.4) | 0.21 (2.1) | 0.09 (5.0) |
+| queens-lazy | 0.03 | 0.01 (3.0) | 0.03 (1.0) | 0.01 (3.0) |
+| queens-strict | 0.05 | 0.04 (1.2) | 0.04 (1.2) | 0.03 (1.7) |
+| nqueens | 0.02 | 0.00 | 0.02 (1.0) | 0.01 (2.0) |
+| rec_seq_ack | 0.05 | 0.02 (2.5) | 0.07 (0.7) | 0.06 (0.8) |
+| klife_eq | 0.32 | 0.08 (4.0) | 0.51 (0.6) | 0.08 (4.0) |
+| kitlife35u_smlnj | 0.51 | 0.04 (13) | 0.09 (5.7) | 0.04 (13) |
+| kitqsort_no_basislib | 0.04 | 0.03 (1.3) | 0.05 (0.8) | 0.05 (0.8) |
+| tailfib-mlkit | 0.00 | 0.00 | 0.02 | 0.00 |
+| tak-mlkit | 0.09 | 0.03 (3.0) | 0.07 (1.3) | 0.05 (1.8) |
+| matrix-multiply-mlkit | 0.21 | 0.01 (21) | 0.09 (2.3) | 0.04 (5.2) |
+| vector-rev-mlkit | 0.05 | 0.00 | 0.05 (1.0) | 0.01 (5.0) |
+| vector-rev_smlnj | 0.04 | 0.00 | 0.06 (0.7) | 0.01 (4.0) |
+| vector-concat | 0.03 | 0.01 (3.0) | 0.02 (1.5) | 0.01 (3.0) |
+| vector-concat_smlnj | 0.18 | 0.01 (18) | 0.06 (3.0) | 0.02 (9.0) |
+| peek-mlkit | 0.02 | 0.00 | 0.06 (0.3) | 0.02 (1.0) |
+| wc-input1-mlkit | 0.16 | 0.01 (16) | 0.05 (3.2) | 0.05 (3.2) |
+| wc-scanStream-mlkit | 0.18 | 0.01 (18) | 0.10 (1.8) | 0.04 (4.5) |
+| psdes-random-mlkit | 0.02 | 0.00 | 0.02 (1.0) | 0.01 (2.0) |
+| safe-for-space | 0.13 | 0.02 (6.5) | 0.11 (1.2) | 0.07 (1.9) |
+| pidigits-smlnj | 3.16 | 0.00 | 0.02 (158) | 0.00 |
+| fft-smlnj | 0.00 | 0.00 | 0.02 | 0.01 |
+| nucleic-smlnj | 0.20 | 0.09 (2.2) | 0.07 (2.9) | 0.51 (0.4) |
+| count-graphs-smlnj | 0.04 | 0.00 | 0.02 (2.0) | 0.00 |
+| matrix-multiply-ramp | 0.02 | 0.00 | 0.02 (1.0) | 0.01 (2.0) |
+| kitreynolds2_no_basislib | 0.02 | 0.00 | 0.03 (0.7) | 0.02 (1.0) |
+| kitreynolds3_no_basislib | 0.01 | 0.00 | 0.01 | 0.00 |
+| kittmergesort_no_basislib | 0.03 | 0.02 (1.5) | 0.03 (1.0) | 0.02 (1.5) |
+| hanoi | 0.00 | 0.00 | 0.02 | 0.00 |
+| fib-mlkit | 0.00 | 0.00 | 0.01 | 0.00 |
+| mandelbrot-smlnj | 0.04 | 0.02 (2.0) | 0.04 (1.0) | 0.07 (0.6) |
+| mandelbrot-rat | 95.31 | 0.33 (289) | 3.24 (29) | 0.34 (280) |
+| kitmandelbrot | 0.01 | 0.00 | 0.02 | 0.01 |
+| FuhMishra | 0.04 | 0.01 (4.0) | 0.04 (1.0) | 0.02 (2.0) |
+| black-scholes | 0.08 | 0.06 (1.3) | n/a | 0.11 (0.7) |
+| professor2 | 0.20 | 0.06 (3.3) | 0.35 (0.6) | 0.15 (1.3) |
+| professor2_tp | 0.34 | 0.07 (4.9) | 0.49 (0.7) | 0.16 (2.1) |
+| professor_game | 0.25 | 0.06 (4.2) | 0.22 (1.1) | 0.06 (4.2) |
+| professor_game-mlkit | 0.21 | 0.07 (3.0) | 0.86 (0.2) | 0.20 (1.0) |
+| professor_game_debug | 0.01 | 0.00 | 0.03 | 0.03 |
+| kkb_eq | 2.83 | 0.19 (15) | 0.30 (9.4) | 0.50 (5.7) |
+| kitkbjul9_smlnj | 3.64 | 0.21 (17) | 0.31 (12) | 0.22 (17) |
+| kkb36c_smlnj | 1.89 | 0.20 (9.4) | 0.47 (4.0) | 0.52 (3.6) |
+| ratio-regions-mlkit | 0.36 | 0.04 (9.0) | 0.19 (1.9) | 0.05 (7.2) |
+| ratio-regions_tp | 1.22 | 0.06 (20) | 0.83 (1.5) | 0.12 (10) |
+| ratio-regions-smlnj | 0.12 | 0.01 (12) | 0.07 (1.7) | 0.03 (4.0) |
+| count-graphs-mlkit | 0.03 | 0.00 | 0.03 (1.0) | 0.01 (3.0) |
+| mpuz-mlkit | 5.20 | 0.50 (10) | 2.03 (2.6) | 2.35 (2.2) |
+| knuth-bendix-smlnj | 2.19 | 0.09 (24) | 0.28 (7.8) | 0.25 (8.8) |
+| tyan-smlnj | 1.38 | 0.40 (3.4) | 0.41 (3.4) | 0.41 (3.4) |
+| tyan-mlkit | 0.68 | 0.29 (2.3) | 0.43 (1.6) | 0.29 (2.3) |
+| smith-normal-form-mlkit | 0.01 | 0.00 | 0.02 | 0.00 |
+| smith-nf | 0.01 | 0.00 | 0.01 | 0.01 |
+| lexgen-smlnj | 0.46 | 0.12 (3.8) | 0.18 (2.6) | 0.24 (1.9) |
+| mlyacc-smlnj | 0.22 | 0.08 (2.8) | 0.11 (2.0) | 0.05 (4.4) |
+| kitsimple | 0.03 | 0.01 (3.0) | 0.03 (1.0) | 0.02 (1.5) |
+| kitsimple_tp | 0.08 | 0.02 (4.0) | 0.04 (2.0) | 0.03 (2.7) |
+| kitsimple_no_basislib | 0.04 | 0.01 (4.0) | 0.03 (1.3) | 0.01 (4.0) |
+| simple-smlnj | 0.10 | 0.02 (5.0) | 0.04 (2.5) | 0.03 (3.3) |
+| tsp-smlnj | 0.01 | 0.00 | n/a | 0.01 |
+| DLXSimulator-mlkit | 0.14 | 0.06 (2.3) | 0.20 (0.7) | 0.06 (2.3) |
+| aobench | 0.50 | 0.19 (2.6) | n/a | 0.08 (6.2) |
+| id-ray | 10.29 | 1.10 (9.4) | n/a | n/a |
+| plclub-ray | 0.17 | 0.02 (8.5) | 0.08 (2.1) | 0.08 (2.1) |
+| mc-ray | 1.17 | 0.45 (2.6) | 0.41 (2.9) | 1.11 (1.1) |
+| ray-smlnj | 0.11 | 0.00 | 0.03 (3.7) | 0.03 (3.7) |
+| kitmolgard | 0.08 | 0.01 (8.0) | 0.06 (1.3) | 0.04 (2.0) |
+| vliw-smlnj | 0.56 | 0.16 (3.5) | 0.34 (1.6) | 0.28 (2.0) |
+| rfib | 0.02 | 0.00 | 0.02 (1.0) | 0.03 (0.7) |
+| tak-nofib-strict | 0.00 | 0.00 | 0.02 | 0.00 |
+| tak-nofib-lazy | 0.04 | 0.00 | 0.03 (1.3) | 0.01 (4.0) |
+| exp3_8-lazy | 1.48 | 0.30 (4.9) | 1.27 (1.2) | 4.35 (0.3) |
+| exp3_8-strict | 0.19 | 0.08 (2.4) | 0.12 (1.6) | 0.08 (2.4) |
+| digits-of-e1-lazy | 1.59 | 0.07 (23) | 0.44 (3.6) | 0.08 (20) |
+| digits-of-e2-lazy | 2.95 | 0.17 (17) | 1.43 (2.1) | 0.85 (3.5) |
+| latency-ring | 2.90 | 3.08 (0.9) | 8.04 (0.4) | 4.33 (0.7) |
+| latency-map | 3.85 | 1.83 (2.1) | 7.53 (0.5) | 6.16 (0.6) |
+| latency-static-map | 1.02 | 2.05 (0.5) | 1.79 (0.6) | 1.11 (0.9) |
 
 ## Compiling
 
-Each build of the compiler compiling `examples/hello.sml` to the stack
-bytecode (`--target=stack`, which was the default when this was measured),
-and compiling the compiler itself (`BOOT_SRCS`, the bootstrap's input), the same day at
-the same commit and on the same machine as above: wall-clock time, the
-fastest of three rounds, a round of `hello` being 20 compiles. The builds
-of the hosts are what `make host-builds` makes (`bin/rune-mlton`,
-`bin/rune-smlnj-legacy`, `bin/rune-smlnj32`, `bin/rune-smlnj-dev`,
-`bin/rune-polyml`, `bin/rune-mlkit`); the others are the self-hosted
-compiler, `bin/rune.stack.rbc`, on `runevm-stack` and translated by `runeopt`, and
-`bin/rune.rbc` on `runtime/register` at each JIT level.
+Each build of the compiler compiling `examples/hello.sml`, the signatures
+of `tests/perf/compile-sigs.sml`, and itself (the bootstrap's input), every
+build making the register bytecode: machine instructions of the run with
+the least cycles of five (`scripts/perf-cycles.sh`; `compile-hello`,
+`compile-sigs` and `bootstrap`). The builds of the hosts are what `make
+host-builds` makes; the others run the compiler's own bytecode,
+`bin/rune.rbc` on `bin/runevm` at three JIT levels and `bin/rune.stack.rbc`
+on `runevm-stack` and through `runeopt`.
 
-| Build | `hello` | the compiler |
-|---|---:|---:|
-| MLton | 6.7 ms | 1.12 s |
-| Poly/ML | 9.3 ms | 1.08 s |
-| MLKit | 8.4 ms | 1.90 s |
-| SML/NJ 110.99.9, 64 bits | 21.8 ms | 2.56 s |
-| SML/NJ 110.99.9, 32 bits | 21.2 ms | 2.34 s |
-| SML/NJ 2026.2 | 24.9 ms | 2.38 s |
-| `runevm-stack` (`bin/rune.stack.rbc`) | 26.2 ms | 6.01 s |
-| native code (`runeopt` of `bin/rune.stack.rbc`) | 17.0 ms | 3.12 s |
-| `runtime/register`, `off` | 22.9 ms | 5.44 s |
-| `runtime/register`, `baseline` | 36.1 ms | 3.24 s |
-| `runtime/register`, `opt` (the default; `bin/rune`, what is shipped) | 37.8 ms | 3.04 s |
-| `runtime/register`, `all` | 157.1 ms | 3.23 s |
-| `runtime/register`, `all+t2` | 187.9 ms | 3.18 s |
+| Build | `hello` | `compile-sigs` | the compiler | the compiler / MLton's build | the compiler, cycles (indication) |
+|---|---:|---:|---:|---:|---:|
+| Rune as shipped (tier 2) | 198M | 1.21G | 17.37G | 4.6 | 12.81G |
+| `bin/runevm`, tier 1 | 188M | 1.25G | 19.31G | 5.2 | 12.50G |
+| `bin/runevm`, the interpreter | 148M | 2.35G | 49.21G | 13.2 | 25.83G |
+| `runevm-stack` | 155M | 2.74G | 57.92G | 15.5 | 29.32G |
+| `runeopt`'s native code | 84M | 868M | 18.81G | 5.0 | 13.09G |
+| MLton's build | 8.9M | 183M | 3.74G | 1.0 | 4.75G |
+| Poly/ML's build | 8.5M | 120M | 3.70G | 1.0 | 4.91G |
+| MLKit's build | 24M | 601M | 10.75G | 2.9 | 11.16G |
+| SML/NJ 110.99.9, 64 bits | 25M | 700M | 17.35G | 4.6 | 19.44G |
+| SML/NJ 110.99.9, 32 bits | 24M | 622M | 18.38G | 4.9 | 16.07G |
+| SML/NJ 2026.2 | 26M | 623M | 15.09G | 4.0 | 14.68G |
 
-Not measured: the VMs built for Windows, 32-bit Linux and PowerPC.
+* **The compiler on Rune as shipped executes 4.6 times the instructions of
+  MLton's build** compiling itself, as SML/NJ's builds do (4.0 to 4.9);
+  MLKit's build 2.9 times. Poly/ML's build is level with MLton's since
+  its heap starts at 1 GB.
+* **A small compile pays for starting the compiler and for the JIT:**
+  `hello` is 198M instructions at tier 2 and 148M interpreted, against 9M
+  on MLton's build; at tier 2, 0.02 s of its 0.05 s is `startup`, loading
+  the compiler's bytecode and running its top-level declarations.
+* **`runeopt`'s native code** takes the fewest instructions on the small
+  compiles, and 8% more than tier 2 on the compiler.
 
-* The compiler on `runevm-stack` compiles itself in 6.0 s, 5.4 times as long as
-  the build MLton makes; translated into native code, in 3.1 s, 2.8 times.
-  The shipped one, on `runtime/register`, takes 3.0 s.
-* `runtime/register` with its JIT on (`baseline`, `opt`) compiles the compiler in 3.0
-  to 3.2 s, twice as fast as `runevm-stack`, as fast as native code, 1.2 to 1.3
-  times SML/NJ's builds and 2.7 times MLton's. Tier 2 is no faster than
-  tier 1 here, as on `list_ops` and `string_ops`.
-* A small program costs little on any: `hello` is 26 ms on `runevm-stack`, most
-  of it reading and elaborating the part of the Basis Library it uses. The
-  JIT makes it dearer, 36 to 38 ms against 23 for the interpreter alone,
-  and compiling all of the compiler up front (`all`) costs 157 to 188 ms.
-* The counts that do not depend on the machine -- instructions executed,
-  and bytes and objects allocated, by the compiler compiling `hello`, by
-  the bootstrap and by `runedoc` -- are the budgets of `make perf-check`
-  (`tests/perf/*.budget`). At this commit the bootstrap executes 951
-  million instructions of stack bytecode and 585 million of register
-  bytecode and allocates 1.17 GB in 26.0 million objects; compiling `hello`
-  takes 3.10 million instructions, 3.6 MB and 54.1 thousand objects.
+Where the compile of the compiler goes, by `--pass-stats` (`scripts/perf-units.sh`,
+the run of five with the least wall time; the stages add up to the
+compile's processor time, [ir.md](ir.md)). A collection's time falls in the
+stage it happens in, so one stage of one run can carry a major collection
+(`workers` on Poly/ML's build here):
 
-## Why `runtime/register` at `opt` is slower than MLton
+| Stage | Rune as shipped | MLton's build | Poly/ML's build |
+|---|---:|---:|---:|
+| `startup` | 0.5% | 0.0% | 0.2% |
+| `lex` | 2.5% | 3.8% | 2.6% |
+| `select` | 2.0% | 1.9% | 3.4% |
+| `parse` | 4.4% | 2.6% | 4.3% |
+| `elaborate` | 13.8% | 14.4% | 10.6% |
+| `translate` | 7.3% | 4.7% | 6.4% |
+| `mid` | 6.6% | 9.8% | 4.2% |
+| `midcanon` | 9.8% | 4.3% | 6.9% |
+| `shake` | 2.5% | 2.4% | 2.5% |
+| `lift` | 4.1% | 2.8% | 4.4% |
+| `workers` | 5.2% | 2.4% | 21.5% |
+| `simplify` | 15.1% | 20.4% | 8.8% |
+| `lower` | 8.0% | 7.4% | 6.5% |
+| `registers` | 14.0% | 14.3% | 9.2% |
+| `emit` | 2.5% | 5.7% | 6.1% |
+| `stats` (the sizes `--pass-stats` counts) | 1.7% | 3.1% | 2.2% |
+| the total, seconds (indication) | 5.27 | 3.47 | 2.67 |
 
-Measured on the same day and machine as the tables above, with `perf stat`
-(user cycles and instructions of the wrapped `tests/perf` programs),
-MLton's generated assembly (`-keep g`), and the tier-2 machine code of the
-hot functions, dumped from a running `runevm --jit-perf-map` and
-single-stepped under gdb for 20 to 30 thousand instructions each. The
-traces are samples of the steady state of one function, not of a whole run.
+MLton's compiler, 606 files and 198,458 lines compiled by Rune, is timed
+by `scripts/perf-units.sh --mlton` once `scripts/setup-mlton.sh` has made
+its sources (*Measuring*); [plans/performance.md](plans/performance.md),
+*Large programs*, has its last numbers (elaboration 795 s of 878 s at tier
+2 on a busy machine, 2026-10-11), and its M2 and M3 are about them.
 
-| Program | Time, opt / MLton | Instructions, opt / MLton | IPC, opt and MLton | Dominant cause |
-|---|---:|---:|---:|---|
-| fib | 4.0 | 5.0 | 2.3, 2.0 | call and return protocol |
-| tak | 3.9 | 4.1 | 2.4, 2.1 | call and return protocol |
-| word_bits | 3.6 | 4.7 | 3.4, 3.2 | work around every operation |
-| array_sieve | 4.7 | 4.6 | 1.7, 1.9 | work around every operation, 16-byte elements |
-| real_nbody | 0.9 | 4.0 | 1.2, 0.3 | floating-point latency |
-| string_ops | 3.7 | 2.9 | 1.8, 2.1 | lists of characters, runtime C code |
-| list_ops | 1.4 (user cycles 2.8) | 1.9 | 1.2, 1.8 | cache misses; MLton's page faults |
-| intinf_fact | about 800 | n/a | n/a | the algorithms of `lib/basis/intinf.sml` |
+### The counts
 
-Where the cycle ratio follows the instruction ratio, which it does for
-every program but `real_nbody`, `list_ops` and `intinf_fact`, the cost is
-the number of instructions, not stalls.
+What does not depend on the machine is held by `make perf-check` to
+budgets 10% above it (`tests/perf/*.budget`, on Rune as shipped;
+`tests/perf/stack`, on `runevm-stack`). At this commit the bootstrap
+executes 1,031 million bytecode instructions on `bin/runevm` (1,623
+million on `runevm-stack`) and allocates 1.47 GB in 56.1 million objects
+(1.16 GB in 43.7 million on `runevm-stack`); compiling `hello` takes 1.96
+million instructions, 2.5 MB and 68 thousand objects. The compiler on the
+programs that scale the module language, type-checked only or compiled
+(`compile-*.budget`), is in [plans/performance.md](plans/performance.md),
+M1: the sharing of 200 specifications 16 ways takes 2,369 million
+instructions, and is what M2 is to bring down.
 
-* **`fib` and `tak`: the cost of a call.** A call of `fib` costs 84.5
-  instructions on `runtime/register` and about 17 on MLton. The trace of `fib`
-  divides the 84.5 into 32 for the call (spilling the live registers as
-  16-byte tagged Values, checking the register stack and the frame depth,
-  building a 40-byte frame record on a separate frame stack, jumping, and
-  loading the registers back after the return), 22 for the return (popping
-  the record, storing the result as a Value in the caller's register,
-  an indirect jump), 6 to fill the callee's registers with unit at its
-  entry, 5.5 for the `--count` counter (`lea r15, [r15+N]`), 5 to make a
-  comparison a stored boolean Value and test it, 8 for constants and
-  operands moved through scratch registers, and 6 for the rest. MLton calls
-  with a return address stored in a 16-byte frame, `fib` having a stack
-  check, a compare and a jump; Rune's frame is a window of 6 registers of 16
-  bytes plus the 40-byte record.
-* **`word_bits` and `array_sieve`: work around every operation.** An
-  iteration of `bits` is about 50 instructions against 11 for MLton: 7 are
-  counters, 10 store the tag and payload of each result into its register
-  slot, 3 load constants through a table (two loads each), 4 are tag checks
-  and materialised booleans, and the loop's word goes through its slot in
-  memory, so that an iteration takes 16.8 cycles against 3.8. The `strike`
-  loop of `array_sieve` is 36 instructions per element against about 8: the
-  global `n` is tag-checked each time, and the bounds check, the compare and
-  the store of a 16-byte element are separate. MLton's array holds 4 bytes
-  per element, Rune's 16, so that it allocates 3.4 times as much (37.6 MB
-  against 11.1 MB) and has 2.5 times the L1 load misses. About 40% of
-  `array_sieve` is in `Array.foldli`, `Vector` and `List` code, not in
-  `strike`.
-* **`real_nbody`: latency.** The loop is a chain of `sqrt` and two
-  divisions. A C loop of the same computation at `-O2` takes 80 cycles per
-  iteration on this CPU; `runtime/register` takes 88 and MLton 94. `runtime/register` executes
-  about 108 instructions per iteration and MLton 27, but the instructions
-  are hidden behind the latency.
-* **`string_ops`: lists and the runtime.** `runtime/register` allocates 1.8 times as
-  much (136.6 MB against 77.0 MB), spends about 37% of its cycles in the
-  runtime's C code (`p_string_*`, `vm_alloc`, `vm_cons`, `vm_string_from`)
-  and 10% in the collector, and has 3.5 times the L1 load misses. `String.map`
-  and `String.translate` are `implode (List.map f (explode s))`
-  (`lib/basis/string.sml`), so each character is a list cell.
-* **`list_ops`: the cache, and MLton's page faults.** In user cycles MLton
-  is 2.8 times faster, in wall-clock time 1.4 times. `runtime/register` has 4.3 times
-  the L1 load misses and spends 12.5% of its cycles in the collector, though
-  both allocate the same amount (56.6 MB and 58.0 MB). MLton spends half of
-  its time in the kernel, faulting in 12.1 thousand pages (`runtime/register`: 7.2
-  thousand). A recursion over a list, like `List.filter`, costs about 62
-  instructions per element on `runtime/register`, the call and return being most of
-  it. What makes the misses 4.3 times as many is not isolated.
-* **`intinf_fact`: algorithms.** `runtime/register` allocates 76 MB, MLton (GMP) 0.38
-  MB. An `IntInf` is a list of 30-bit limbs; `mulMag` does, for each limb
-  of its right operand, a `mulSmall`, a `shiftLimbs` that allocates a
-  list of zeros, and an `addMag` that copies the accumulator, so a
-  multiplication is quadratic in the length of the big operand even when the
-  other is one limb, as in `fact`. `divModMag` finds each quotient limb by a
-  binary search of 30 steps, each a `mulSmall` and a `cmpMag` (which takes
-  two `List.length` and two `List.rev`). Of the 15 million VM instructions
-  of one run, about 10 million are `fact 300` and 5 million the `divMod`;
-  `toString` and `pow` are almost nothing.
+## Measuring
 
-What recurs: the tagged 16-byte Values written to memory at every result,
-the frame record of every call, the instruction counter of `--count` in
-compiled code, the registers filled with unit at entry, constants loaded
-through a table; and MLton's whole-program optimisation, which inlines and
-defunctionalises closures, folds `n` in `array_sieve` to a constant, and
-uses 4-byte `bool`, `int` and `word`. None of these was switched off to
-measure its share: the figures are instruction counts of the traces.
+Each table above is one command, from the repository's root, after `make
+all bin/rune.stack.rbc` (and, for the hosts and native code, `make hosts
+host-builds runeopt bin/runevm-native`). The scripts say in their heads
+what they do; `docs/plans/performance.md` (*Measuring*) says how its own
+numbers were taken.
 
-## How to reproduce
+| Table | Command |
+|---|---|
+| `tests/perf`, wall-clock time | `make perf PERF_CONFIGS=rune,rune:stack,rune:opt,hosts` (`tests/out/perf/wall.md`; `xc1` adds Rune's library on the hosts) |
+| `tests/perf`, cycles against MLton and Poly/ML | `scripts/perf-cycles.sh` |
+| Rune's engines | `scripts/perf-cycles.sh --runs 3 --configs rune,jit-baseline,jit-off,stack,opt` |
+| Where the time goes | `scripts/perf-cycles.sh --runs 1 --configs rune --profile rune bootstrap` (any program for `bootstrap`) |
+| MLton's benchmark set | `scripts/perf-cycles.sh --mlton-bench DIR tests/perf/mlton-bench.txt`, DIR MLton's `benchmark/tests` |
+| `examples/benchmarks` | `make bench BENCH_SAMPLES=3` (the report's directory is printed) |
+| The compiler's builds | `scripts/perf-cycles.sh --configs rune,jit-baseline,jit-off,stack,opt,mlton,polyml,mlkit,smlnj-legacy,smlnj32,smlnj-dev bootstrap` (and `compile-hello`, `compile-sigs`) |
+| The compile by stage | `scripts/perf-units.sh --configs tier2,interp,baseline,stack,mlton,polyml,mlkit,smlnj-legacy,smlnj32,smlnj-dev phases` |
+| MLton's compiler compiled by Rune | `scripts/setup-mlton.sh DIR` once, then `scripts/perf-units.sh --mlton DIR --configs tier2,mlton phases` |
+| HOL4's theories | `scripts/hol-theory.py HOL logroot` (or `mergesort`, `string`, `toto`), HOL a built HOL4 tree, Poly/ML's or Rune's |
+| HOL4's kernel | `scripts/hol-kernel.sh HOL` |
+| The counts | `make perf-check` (`tests/perf/run-perf.sh`), `make bench-count` |
 
-```sh
-make                              # bin/rune, bin/runevm, bin/runevm-stack
-make host-builds runeopt bin/runevm-native bin/rune bin/runevm
-make hosts                        # MLton, SML/NJ, Poly/ML and MLKit, once
-make perf PERF_CONFIGS=rune,rune:opt,rune:new,hosts,xc1
-                                  # the tables, in tests/out/perf/wall.md
-```
+**The conventions.**
 
-`rune:new` runs at `--jit=opt` unless the environment names another level:
-the other columns are `RUNEVM_JIT=off`, `RUNEVM_JIT=baseline`,
-`RUNEVM_JIT=all` and `RUNEVM_JIT=all RUNEVM_JIT_TIER=2` before `make perf
-PERF_CONFIGS=rune:new`.
-
-The compile times: `make bin/rune.stack.rbc`, then `bin/runeopt-mlton
---options "--heap-size 67108864" bin/rune.stack.rbc -o bin/rune-native` for the
-native compiler, and each build run as `BUILD -o out.rbc examples/hello.sml`
-and `BUILD -o out.rbc $(BOOT_SRCS)`, where `BUILD` is `bin/rune-HOST`, or
-`bin/runevm-stack --heap-size 67108864 bin/rune.stack.rbc --lib lib` (`bin/rune.rbc` on
-`bin/runevm`, with the JIT options of the level), or `bin/rune-native
---lib lib`. `scripts/perf-cycles.sh` measures cycles and instructions of the
-same runs, with `jit-off`, `jit-baseline`, `jit-all` and `+t2` for the levels.
+* **Counts are the measurements; cycles and seconds are indications.** The
+  instructions and allocation of `runevm --count` depend on the program
+  and its input alone, and `instructions:u` repeats to within a few
+  thousand in billions. Cycles and times vary by up to 40% on a busy
+  machine: take the least of several runs, compare only numbers taken in
+  one session, and pin a single-threaded run to a core of its own
+  (`taskset -c N`).
+* **`rune` is Rune as shipped** in every timing target: `bin/rune`'s
+  register bytecode on `bin/runevm`, tiering up to tier 2. The other
+  engines are named: `rune:stack` and `stack` (the stack VM), `rune:opt`
+  and `opt` (native code), `jit-off`, `jit-baseline`, `jit-all` and
+  `jit-all+t2` (the JIT's levels, `RUNEVM_JIT` in a matrix run).
+* **`--pass-stats`** times every stage of a compile; the stages add up to
+  the process's processor time, which its last line gives (`total: ...`;
+  [ir.md](ir.md)).
+* **`scripts/perf-groups.awk`** groups the samples of `perf record` by part
+  of the runtime (`perf-cycles.sh --profile` uses it): the JIT's code by
+  tier, the interpreter, the collector's minor and major work, allocation,
+  the runtime's equality, strings and exceptions, the primitives, and the
+  JIT compiling.
+* **HOL4**: `hol-theory.py` rebuilds a theory with Holmake on a fresh copy
+  of its directory, under `--out` (`tests/out/hol`), and prints HOL's own
+  clock (`new_theory` to `export_theory`), perf's task-clock, cycles and
+  instructions, and the largest resident set; `hol-kernel.sh` runs
+  `scripts/hol-kernel.sml` in a restored `hol.state` and prints the
+  processor time of each workload, measured inside HOL. Neither writes
+  into the HOL tree: a Rune-built HOL gets a copy of its cache of units,
+  and runs on `--vm` or `$RUNEVM` where given.
