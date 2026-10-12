@@ -127,8 +127,11 @@ struct
       let
         val closed = ref false
         val ({getPos, setPos, endPos, verifyPos}, remember) = positions (fd, name, closed)
-        fun put s = if !closed then closedIo (name, "writeVec") else ignore (RuneFile.writeString (fd, name) s)
-        fun writeVec sl = let val s = CharVectorSlice.vector sl in put s; RuneFile.flush fd (); size s end
+        (* what writeString would raise, as the answer (the stream's device) *)
+        fun write s = if !closed then closedIo (name, "writeVec") else RuneFile.write (fd, s)
+        fun writeVec sl =
+          let val s = CharVectorSlice.vector sl
+          in (case write s of NONE => () | SOME e => raise e); RuneFile.flush fd (); size s end
       in
         (TextPrimIO.WR {name = name, chunkSize = RuneFile.chunkSize,
                         writeVec = SOME writeVec, writeArr = NONE, writeVecNB = NONE, writeArrNB = NONE,
@@ -136,7 +139,7 @@ struct
                         getPos = getPos, setPos = setPos, endPos = endPos, verifyPos = verifyPos,
                         close = fn () => if !closed then () else (remember (); closed := true; RuneFile.close fd ()),
                         ioDesc = SOME (RuneIODesc.FD (RuneFile.descriptor fd))},
-         {write = put, flush = RuneFile.flush fd})
+         {write = write, flush = RuneFile.flush fd})
       end
     fun instreamOf (fd, name) = mkInstream (StreamIO.mkInstream (reader (fd, name), ""))
     (* "When opening a stream for writing, the stream will be block buffered
