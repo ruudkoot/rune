@@ -9,12 +9,12 @@ struct
   val _ = check "measurement/singleton" (close (BenchReport.quantile [7.0] 0.25,7.0))
   val _ = check "measurement/reject-negative-time"
     (fails (fn () => ignore (BenchReport.parse "tak\tsmoke\trune\tO2\tfresh\t1\t1\tpass\t~1.0\t0\t0\t0\t-\t-\t-\trun")))
-  val base : BenchCounts.row = {name="tak",profile="smoke",config="rune",level="O2",instructions=100,bytes=80,objects=10}
+  val base : BenchCounts.row = {name="tak",profile="smoke",config="rune:stack",level="O2",instructions=100,bytes=80,objects=10}
   val native : BenchCounts.row = {name="tak",profile="smoke",config="rune:opt",level="O2",instructions=100,bytes=80,objects=10}
-  val regs : BenchCounts.row = {name="tak",profile="smoke",config="rune:new",level="O2",instructions=50,bytes=80,objects=10}
+  val regs : BenchCounts.row = {name="tak",profile="smoke",config="rune",level="O2",instructions=50,bytes=80,objects=10}
   val badInst : BenchCounts.row = {name="tak",profile="smoke",config="rune:opt",level="O2",instructions=99,bytes=80,objects=10}
-  val badAlloc : BenchCounts.row = {name="tak",profile="smoke",config="rune:new",level="O2",instructions=50,bytes=81,objects=10}
-  val tooLow : BenchCounts.row = {name="tak",profile="smoke",config="rune",level="O2",instructions=99,bytes=80,objects=10}
+  val badAlloc : BenchCounts.row = {name="tak",profile="smoke",config="rune",level="O2",instructions=50,bytes=81,objects=10}
+  val tooLow : BenchCounts.row = {name="tak",profile="smoke",config="rune:stack",level="O2",instructions=99,bytes=80,objects=10}
   val _ = check "measurement/models" (not (fails (fn () => BenchCounts.compare [base,native,regs])))
   val _ = check "measurement/instruction-mismatch" (fails (fn () => BenchCounts.compare [base,badInst]))
   val _ = check "measurement/allocation-mismatch" (fails (fn () => BenchCounts.compare [base,badAlloc]))

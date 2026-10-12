@@ -1260,9 +1260,6 @@ build/basis-examples/.done: $(RUNEDOC) $(wildcard lib/basis/*.sml)
 	  || { cat build/basis-examples.log; exit 1; }
 	touch $@
 
-# Deterministic budgets on what `runevm-stack --count` reports, for benchmark
-# programs, the hello compile and the bootstrap (tests/perf/run-perf.sh;
-# --update after a deliberate change). About 10 seconds.
 # The tests of the documentation generator (tests/doc), with bin/runedoc;
 # `make test-doc RUNEDOC=bin/runedoc-mlton` is the faster loop.
 test-doc: $(RUNEDOC) vm manifests bin/rune-test
@@ -1304,9 +1301,14 @@ test-laws-hosts: $(RUNEDOC) manifests
 test-opt: $(RUNEOPT) $(RUNE) vm build/librune.a bin/rune.stack.rbc bin/runedoc.stack.rbc
 	sh tests/opt/run-opt-tests.sh -j $(JOBS) --runeopt $(RUNEOPT) --rune $(RUNE_STACK) --vm $(RUNEVM)
 
+# Deterministic budgets on what `runevm --count` reports, for benchmark
+# programs, the compiler's compiles (hello, the bootstrap, programs that
+# scale the module language) and runedoc (tests/perf/run-perf.sh; --update
+# after a deliberate change): Rune as shipped, bin/rune and bin/runevm, then
+# the stack bytecode on runevm-stack against tests/perf/stack. About a minute.
 perf-check: $(RUNE) bin/runedoc vm bin/rune.rbc bin/runedoc.rbc bin/rune.stack.rbc bin/runedoc.stack.rbc | build/.doctor-check
-	RUNE=$(RUNE_STACK) RUNEVM=$(RUNEVM) sh tests/perf/run-perf.sh
-	RUNE=$(RUNE_STACK) sh tests/perf/run-perf.sh --new
+	RUNE=$(RUNE) RUNEVM=$(RUNEVM_REGISTER) sh tests/perf/run-perf.sh
+	RUNE=$(RUNE_STACK) RUNEVM=$(RUNEVM) sh tests/perf/run-perf.sh --stack
 
 # Not part of `make check`: a collection before every allocation makes a few
 # tests quadratic. For VM changes, next to `make vm-asan`.
@@ -1418,10 +1420,14 @@ matrix: $(RUNE) vm | $(MATRIX_DOCTOR)
 	RUNE=$(abspath $(RUNE_STACK)) RUNEVM=$(abspath $(RUNEVM)) \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs all
 
+# The wall-clock times of tests/perf (tests/out/perf/wall.md): `rune` is Rune
+# as shipped, bin/rune and bin/runevm at its default JIT level; the stack VM
+# is the configuration rune:stack (PERF_CONFIGS=rune,rune:stack,hosts).
 PERF_CONFIGS ?= all
 
 perf: $(RUNE) vm | $(MATRIX_DOCTOR)
 	RUNE=$(abspath $(RUNE_STACK)) RUNEVM=$(abspath $(RUNEVM)) \
+	  RUNE_NEW=$(abspath $(RUNE)) RUNEVM_NEW=$(abspath $(RUNEVM_REGISTER)) \
 	  sh tests/basis/run-matrix.sh --perf --configs $(PERF_CONFIGS)
 
 # ---------------------------------------------------------------- bootstrap
@@ -1496,7 +1502,7 @@ bin/runedoc.rbc: bin/rune bin/rune.rbc $(DOC_SRCS)
 	bin/rune -o $@ $(DOC_SRCS)
 
 # runedoc in the stack bytecode, which the budgets of runevm-stack measure
-# (tests/perf/run-perf.sh) and runeopt translates (tests/opt).
+# (tests/perf/run-perf.sh --stack) and runeopt translates (tests/opt).
 bin/runedoc.stack.rbc: bin/rune bin/rune.rbc $(DOC_SRCS)
 	bin/rune --target=stack -o $@ $(DOC_SRCS)
 
@@ -1622,8 +1628,10 @@ dist: runtime/version.h manifests bin/rune.rbc bin/rune-repl.img \
 # Portable suite correctness, serial measurements and deterministic counts
 # (docs/plans/benchmarks.md). Timing thresholds stay outside make check.
 BENCH_PROFILE ?= $(if $(filter bench bench-count bench-stats,$(MAKECMDGOALS)),normal,smoke)
+# timed: `rune` is Rune as shipped (scripts/measure-benchmarks.sh); the stack
+# VM is rune:stack
 BENCH_TIMING_CONFIGS = rune,native:mlton,native:smlnj-legacy,native:polyml
-BENCH_COUNT_CONFIGS = rune,rune:opt,rune:new,rune:jit
+BENCH_COUNT_CONFIGS = rune,rune:jit,rune:stack,rune:opt
 BENCH_CHECK_CONFIGS = rune,hosts
 BENCH_CONFIGS ?= $(if $(filter bench-count bench-stats,$(MAKECMDGOALS)),$(BENCH_COUNT_CONFIGS),$(if $(filter bench,$(MAKECMDGOALS)),$(BENCH_TIMING_CONFIGS),$(BENCH_CHECK_CONFIGS)))
 BENCH_FILTER ?=

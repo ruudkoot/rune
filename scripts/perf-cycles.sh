@@ -4,9 +4,14 @@
 #   scripts/perf-cycles.sh [--runs N] [--configs C1,C2,...] [--events LIST] [--vm-opts OPTS]
 #                          [--vm BIN] [--gc] [--profile CONFIG[:PROGRAM]]
 #                          [--mlton-bench DIR NFILE] [--sweep] [FILTER]
-# The configurations are rune (bin/runevm-stack), new (bin/runevm as it
-# runs by default: tiering up, since M6), opt (runeopt's native code) and
-# mlton (MLton's build); all four unless --configs says otherwise. jit is
+# The configurations are rune (Rune as it is shipped: bin/rune's register
+# bytecode on bin/runevm, tiering up to tier 2 by default; new is its older
+# name), mlton (MLton's build) and polyml (Poly/ML 5.9.2's build: the program
+# compiled by polyc and run from `main`, the compiler built by Poly/ML), all
+# three unless --configs says otherwise; and stack (the stack bytecode on
+# bin/runevm-stack) and opt (runeopt's native code of it); and for the
+# compiler's and runedoc's measurements alone, the other hosts' builds,
+# mlkit, smlnj-legacy, smlnj32 and smlnj-dev (`make host-builds`). jit is
 # bin/runevm --jit=all, every function given to the JIT
 # (docs/plans/jit.md, M3), and the same for jit-off (the interpreter
 # alone), -baseline and -opt; jit-baseline+c10+w100 is --jit=baseline
@@ -14,10 +19,14 @@
 # (M9: jit-all+t2 is every function at tier 2). Each program is wrapped as `make perf` wraps it
 # (tests/basis/run-matrix.sh, wall_program): its body as a function called R
 # times, R from the `wall R` line of its .budget, so that a run is long
-# enough to measure and the numbers stand beside docs/performance.md's. The
+# enough to measure and the numbers stand beside docs/performance.md's (for
+# polyml the same body and loop, inside a `local` whose body is `main`, since
+# polyc runs top-level code when it compiles). The
 # bootstrap is the compiler compiling its own sources (BOOT_SRCS), and
 # compile-sigs and runedoc-page are the compiler and runedoc on the inputs
-# their .budget files name, run as the bootstrap is. Each measurement runs
+# their .budget files name, run as the bootstrap is; any other compile-NAME
+# of tests/perf can be named as a FILTER. Every build of the compiler makes
+# the register bytecode, so that all do the same work. Each measurement runs
 # N times (5 unless --runs says otherwise) under `perf stat -e
 # cycles:u,instructions:u` (--events LIST counts LIST instead; cycles:u and
 # instructions:u must be in it, and cycles:uD pins them where LIST would
@@ -43,7 +52,7 @@
 # tests/out/cycles/ (numbers.txt, and sweep.txt for --sweep).
 set -u
 runs=5
-configs="rune,new,opt,mlton"
+configs="rune,mlton,polyml"
 profile=""
 events="cycles:u,instructions:u"
 vmopts=""
@@ -61,7 +70,7 @@ while [ $# -gt 0 ]; do
     --profile) profile=$2; shift 2 ;;
     --events) events=$2; shift 2 ;;
     --vm-opts) vmopts="$vmopts $2"; shift 2 ;;
-    --vm) regvm=$2; shift 2 ;;
+    --vm) regvm=$2; case "$regvm" in /*) ;; *) regvm=$(pwd)/$regvm ;; esac; shift 2 ;;
     --gc) gc=1; shift ;;
     --sweep) sweep=1; gc=1; events="cycles:uD,instructions:uD,task-clock,page-faults"; shift ;;
     --mlton-bench) [ $# -ge 3 ] || { echo "$usage" >&2; exit 2; }; bench_dir=$2; bench_file=$3; shift 3 ;;
@@ -69,6 +78,10 @@ while [ $# -gt 0 ]; do
     *) filter=$1; shift ;;
   esac
 done
+# a VM named by --vm must run: the register bytecode is run on it, never on
+# a bin/runevm in its place
+[ -x "$regvm" ] || { echo "perf-cycles: $regvm is not an executable VM" >&2; exit 2; }
+"$regvm" --version > /dev/null 2>&1 || { echo "perf-cycles: $regvm does not run" >&2; exit 2; }
 [ $gc = 1 ] && vmopts="$vmopts --stats"
 # a native program's options (runtime/native/native.c): after those it was made with
 export RUNEVM_OPTIONS="$vmopts"
@@ -76,6 +89,7 @@ cd "$(dirname "$0")/.."
 perf=${PERF:-perf}
 command -v "$perf" > /dev/null 2>&1 || { echo "perf-cycles: perf is not on the PATH" >&2; exit 2; }
 mlton=${MLTON:-${RUNE_HOSTS:-$HOME/.local/rune-hosts}/mlton/bin/mlton}
+polyc=${POLYC:-${RUNE_HOSTS:-$HOME/.local/rune-hosts}/polyml/bin/polyc}
 rune=${RUNE:-bin/rune}
 out=tests/out/cycles
 mkdir -p "$out"
@@ -86,16 +100,21 @@ boot_sources() {
   echo src/main/rune-main.sml
 }
 
-# wrap NAME R FILE: tests/perf/NAME.sml as the body of a function FILE calls
-# R times, its CommandLine shadowed as make perf shadows it.
+# wrap NAME R FILE [CONFIG]: tests/perf/NAME.sml as the body of a function
+# FILE calls R times, its CommandLine shadowed as make perf shadows it; for
+# polyml all of it in a `local` whose body is `main`, which polyc's program
+# calls (top-level code polyc runs when it compiles)
 wrap() {
   {
+    [ "${4:-}" = polyml ] && echo 'local'
     echo 'structure CommandLine = struct fun name () = "bench" fun arguments () : string list = [] end'
     echo 'fun runeBody__ () = let'
     cat "tests/perf/$1.sml"
     echo 'in () end'
     echo "fun runeLoop__ 0 = () | runeLoop__ k = (runeBody__ (); runeLoop__ (k - 1))"
-    echo "val () = runeLoop__ $2"
+    if [ "${4:-}" = polyml ]; then echo "in fun main () = runeLoop__ $2 end"
+    else echo "val () = runeLoop__ $2"
+    fi
   } > "$3"
 }
 
@@ -104,15 +123,18 @@ wrap() {
 # them from RUNEVM_OPTIONS and MLton's build none.
 vm_command() {
   case "$1" in
-    bin/runevm*) echo "$1" | sed "s| \([^ ]*\.rbc\)| $vmopts \1|" ;;
+    bin/runevm*|"$regvm "*) echo "$1" | sed "s| \([^ ]*\.rbc\)| $vmopts \1|" ;;
     *) echo "$1" ;;
   esac
 }
 
-# bench_wrap DIR NAME N FILE: DIR/NAME.sml, one of MLton's benchmarks, run
-# as MLton's harness runs it: `val () = Main.doit N` after it (--mlton-bench)
+# bench_wrap DIR NAME N FILE [CONFIG]: DIR/NAME.sml, one of MLton's
+# benchmarks, run as MLton's harness runs it: `val () = Main.doit N` after it
+# (--mlton-bench); for polyml `fun main () = Main.doit N`
 bench_wrap() {
-  { cat "$1/$2.sml"; echo "val () = Main.doit $3"; } > "$4"
+  if [ "${5:-}" = polyml ]; then { cat "$1/$2.sml"; echo "fun main () = Main.doit $3"; } > "$4"
+  else { cat "$1/$2.sml"; echo "val () = Main.doit $3"; } > "$4"
+  fi
 }
 
 # jit_mode CONFIG: the --jit option of the jit configurations
@@ -138,12 +160,12 @@ jit_mode() {
 # line on stdout; nothing where the configuration cannot be built.
 build() {
   case "$1" in
-    rune)
-      "$rune" --target=stack "$3" -o "$out/$2.rbc" 2> "$out/$2.rune.err" || return 1
-      echo "bin/runevm-stack $out/$2.rbc" ;;
-    new)
+    rune|new)
       "$rune" --target=registers "$3" -o "$out/$2.new.rbc" 2> "$out/$2.new.err" || return 1
       echo "$regvm $out/$2.new.rbc" ;;
+    stack)
+      "$rune" --target=stack "$3" -o "$out/$2.rbc" 2> "$out/$2.rune.err" || return 1
+      echo "bin/runevm-stack $out/$2.rbc" ;;
     jit|jit-*)
       "$rune" --target=registers "$3" -o "$out/$2.new.rbc" 2> "$out/$2.new.err" || return 1
       echo "$regvm $(jit_mode "$1") $out/$2.new.rbc" ;;
@@ -155,6 +177,10 @@ build() {
       [ -x "$mlton" ] || return 1
       "$mlton" -output "$out/$2.mlton" "$3" > "$out/$2.mlton.err" 2>&1 || return 1
       echo "$out/$2.mlton" ;;
+    polyml)
+      [ -x "$polyc" ] || return 1
+      "$polyc" -o "$out/$2.poly" "$3" > "$out/$2.poly.err" 2>&1 || return 1
+      echo "$out/$2.poly" ;;
     *) return 1 ;;
   esac
 }
@@ -163,15 +189,15 @@ build() {
 bootstrap() {
   srcs=$(boot_sources | tr '\n' ' ')
   case "$1" in
-    rune) echo "bin/runevm-stack --heap-size 67108864 bin/rune.stack.rbc --lib lib --target=stack -o $out/boot.$1.rbc $srcs" ;;
-    new) [ -f bin/rune.rbc ] || return 1
+    rune|new) [ -f bin/rune.rbc ] || return 1
          echo "$regvm --heap-size 67108864 bin/rune.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
+    stack) echo "bin/runevm-stack --heap-size 67108864 bin/rune.stack.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
     jit|jit-*) [ -f bin/rune.rbc ] || return 1
          echo "$regvm $(jit_mode "$1") --heap-size 67108864 bin/rune.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
     opt) bin/runeopt-mlton --options "--heap-size 67108864" bin/rune.stack.rbc -o "$out/rune.native" 2> "$out/rune.native.err" || return 1
-         echo "$out/rune.native --lib lib --target=stack -o $out/boot.$1.rbc $srcs" ;;
-    mlton) [ -x bin/rune-mlton ] || return 1
-           echo "bin/rune-mlton --target=stack -o $out/boot.$1.rbc $srcs" ;;
+         echo "$out/rune.native --lib lib -o $out/boot.$1.rbc $srcs" ;;
+    mlton|polyml|mlkit|smlnj-legacy|smlnj32|smlnj-dev) [ -x "bin/rune-$1" ] || return 1
+           echo "bin/rune-$1 -o $out/boot.$1.rbc $srcs" ;;
     *) return 1 ;;
   esac
 }
@@ -226,32 +252,37 @@ compile_program() {
   [ -f "$spec" ] || return 1
   files=$(sed -n 's/^compile //p' "$spec")
   args=$(sed -n 's/^runedoc //p' "$spec")
-  target=""
+  generate=$(sed -n 's/^generate //p' "$spec")
+  # shellcheck disable=SC2086
+  [ -z "$generate" ] || python3 tests/perf/gen.py $generate > "$out/$2.gen.sml" || return 1
   if [ -n "$args" ]; then
     prog=runedoc
     args="--lib lib $args"
   elif [ -n "$files" ]; then
     prog=rune
-    target=" --target=stack"   # what the stack compiler and its translation are measured making (run-perf.sh)
     args="--lib lib -o $out/$2.$1.rbc"
     for f in $files; do
-      if [ "$f" = @boot ]; then args="$args $(boot_sources | tr '\n' ' ')"; else args="$args $f"; fi
+      case "$f" in
+        @boot) args="$args $(boot_sources | tr '\n' ' ')" ;;
+        @gen) args="$args $out/$2.gen.sml" ;;
+        *) args="$args $f" ;;
+      esac
     done
   else
     return 1
   fi
   case "$1" in
-    rune) [ -f "bin/$prog.stack.rbc" ] || return 1
-          echo "bin/runevm-stack --heap-size 67108864 bin/$prog.stack.rbc$target $args" ;;
-    new) [ -f "bin/$prog.rbc" ] || return 1
+    rune|new) [ -f "bin/$prog.rbc" ] || return 1
          echo "$regvm --heap-size 67108864 bin/$prog.rbc $args" ;;
+    stack) [ -f "bin/$prog.stack.rbc" ] || return 1
+          echo "bin/runevm-stack --heap-size 67108864 bin/$prog.stack.rbc $args" ;;
     jit|jit-*) [ -f "bin/$prog.rbc" ] || return 1
          echo "$regvm $(jit_mode "$1") --heap-size 67108864 bin/$prog.rbc $args" ;;
     opt) [ -f "bin/$prog.stack.rbc" ] || return 1
          bin/runeopt-mlton --options "--heap-size 67108864" "bin/$prog.stack.rbc" -o "$out/$prog.native" 2> "$out/$prog.native.err" || return 1
-         echo "$out/$prog.native$target $args" ;;
-    mlton) [ -x "bin/$prog-mlton" ] || return 1
-           echo "bin/$prog-mlton$target $args" ;;
+         echo "$out/$prog.native $args" ;;
+    mlton|polyml|mlkit|smlnj-legacy|smlnj32|smlnj-dev) [ -x "bin/$prog-$1" ] || return 1
+           echo "bin/$prog-$1 $args" ;;
     *) return 1 ;;
   esac
 }
@@ -265,12 +296,12 @@ command_of() {
     cmd=$(bootstrap "$1") || return 1
   elif [ -n "$bench_dir" ]; then
     n=$(awk -v p="$2" '$1 == p { print $2 }' "$bench_file")
-    bench_wrap "$bench_dir" "$2" "${n:-1}" "$out/$2.wrapped.sml"
-    cmd=$(build "$1" "$2" "$out/$2.wrapped.sml") || return 1
+    bench_wrap "$bench_dir" "$2" "${n:-1}" "$out/$2.$1.wrapped.sml" "$1"
+    cmd=$(build "$1" "$2" "$out/$2.$1.wrapped.sml") || return 1
   elif [ -f "tests/perf/$2.expected" ]; then
     reps=$(sed -n 's/^wall //p' "tests/perf/$2.budget")
-    wrap "$2" "${reps:-1}" "$out/$2.wrapped.sml"
-    cmd=$(build "$1" "$2" "$out/$2.wrapped.sml") || return 1
+    wrap "$2" "${reps:-1}" "$out/$2.$1.wrapped.sml" "$1"
+    cmd=$(build "$1" "$2" "$out/$2.$1.wrapped.sml") || return 1
   else
     cmd=$(compile_program "$1" "$2") || return 1
   fi
@@ -296,7 +327,12 @@ else
     [ -f "tests/perf/$name.expected" ] || continue
     case "$name" in *"$filter"*) programs="$programs $name" ;; esac
   done
-  for name in compile-sigs runedoc-page bootstrap; do
+  # the compiler's and runedoc's measurements: three by default, any that a
+  # FILTER names
+  if [ -z "$filter" ]; then measured="compile-sigs runedoc-page bootstrap"
+  else measured=$(for f in tests/perf/*.budget; do n=$(basename "$f" .budget); [ -f "tests/perf/$n.expected" ] || echo "$n"; done)
+  fi
+  for name in $measured; do
     case "$name" in *"$filter"*) programs="$programs $name" ;; esac
   done
 fi
@@ -309,11 +345,22 @@ for name in $programs; do
   base=""
   for c in $cfgs; do
     cmd=$(command_of "$c" "$name") || { line="$line n/a |"; continue; }
+    rm -f "$out/boot.$c.rbc" "$out/$name.$c.rbc" "$out/$name.$c.stdout"
     # shellcheck disable=SC2086
     got=$(measure "$name.$c" $cmd) || { line="$line FAIL |"; continue; }
     if [ -f "tests/perf/$name.expected" ] && [ -z "$bench_dir" ] && ! grep -q -x -F -f "tests/perf/$name.expected" "$out/$name.$c.stdout"; then
       line="$line WRONG |"; continue
     fi
+    # a compile must have written its bytecode, and runedoc printed: a run
+    # that did nothing is not a measurement
+    case "$name" in
+      bootstrap) [ -s "$out/boot.$c.rbc" ] || { line="$line NO OUTPUT |"; continue; } ;;
+      *) if [ ! -f "tests/perf/$name.expected" ] && [ -z "$bench_dir" ]; then
+           if grep -q '^runedoc ' "tests/perf/$name.budget"; then [ -s "$out/$name.$c.stdout" ] || { line="$line NO OUTPUT |"; continue; }
+           elif ! grep -q -e '--typecheck-only' "tests/perf/$name.budget"; then [ -s "$out/$name.$c.rbc" ] || { line="$line NO OUTPUT |"; continue; }
+           fi
+         fi ;;
+    esac
     cycles=${got%% *}
     instrs=${got#* }
     [ -z "$base" ] && base=$cycles
@@ -342,7 +389,7 @@ if [ -n "$profile" ]; then
   case "$profile" in *:*) pprog=${profile#*:} ;; esac
   cmd=$(command_of "$pconfig" "$pprog") || { echo "perf-cycles: cannot build $pprog in $pconfig" >&2; exit 1; }
   # the JIT's functions named in the report (--jit-perf-map, M7)
-  case "$pconfig" in new|jit*) cmd=$(echo "$cmd" | sed 's|^\([^ ]*\) |\1 --jit-perf-map |') ;; esac
+  case "$pconfig" in rune|new|jit*) cmd=$(echo "$cmd" | sed 's|^\([^ ]*\) |\1 --jit-perf-map |') ;; esac
   graph=""
   frame_pointers "${cmd%% *}" && graph="--call-graph fp"
   # shellcheck disable=SC2086
@@ -351,10 +398,11 @@ if [ -n "$profile" ]; then
   echo "$pprog in $pconfig, by symbol (perf record${graph:+, $graph}):"
   echo
   "$perf" report -i "$out/$pprog.$pconfig.data" --stdio --no-children -g none --sort symbol --percent-limit 0.3 2> /dev/null | grep -v '^#' | grep -v '^$' | head -25
-  # where the time goes, by group (scripts/perf-groups.awk): the collector
-  # with memcpy called from copy_obj, allocation, dispatch, the primitives,
-  # JIT and native code; the callchains of a frame-pointer build tell the
-  # caller of memcpy, else it counts as "memmove/memcpy (other callers)"
+  # where the time goes, by group (scripts/perf-groups.awk): the JIT's code
+  # by tier, the interpreter, the collector's minor and major work,
+  # allocation, the runtime's equality, strings and exceptions, the
+  # primitives and the JIT compiler; the callchains of a frame-pointer build
+  # tell the caller of memcpy, else it counts as "memmove/memcpy (other callers)"
   echo
   echo "$pprog in $pconfig, by group (percent of samples):"
   echo

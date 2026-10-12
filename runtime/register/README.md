@@ -763,8 +763,9 @@ interpreter's output and counts.
 ## What is measured, and how
 
 `runevm --count` counts instructions executed and bytes and objects
-allocated, and `make perf-check` holds them to `tests/perf/new/*.budget`.
-Cycles are `scripts/perf-cycles.sh` (docs/plans/jit.md, *Measuring*).
+allocated, and `make perf-check` holds them to `tests/perf/*.budget`.
+Cycles are `scripts/perf-cycles.sh`, whose configuration `rune` is this VM
+as shipped (docs/plans/jit.md, *Measuring*; docs/performance.md).
 `make test-register-jit` (part of `make check`) runs `tests/lang` and the Basis
 Library suite with every function given to the JIT (`--jit=all`), holds
 every program of `tests/lang` and `tests/perf` and the primitives' edge
