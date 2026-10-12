@@ -27,7 +27,7 @@ What it rests on:
 | M0 | This roadmap | done 2026-10-11 |
 | M1 | `lib/test/unit`, and the libraries' tests on it | done 2026-10-12 |
 | M2 | The runtime's part: a clock, a child's costs, processors, spawn with limits | done 2026-10-12 |
-| M3 | The runner, with `make check`'s steps as its first jobs | |
+| M3 | The runner, with `make check`'s steps as its first jobs | done 2026-10-12 |
 | M4 | `tests/lang` and `tests/errors` in ways, compiled once | |
 | M5 | The first calibration: tiers, profiles, `--affected` | |
 | M6 | One engine for expectations | |
@@ -1582,6 +1582,12 @@ M1 and M2 are independent of each other and of the rest.
   - the same verdicts as the old recipe, on a green tree and with each planted fault;
   - an idle baseline of the old recipe measured first, on the same machine, and the runner no slower than it;
   - every failure's output kept, and CI's artefact the summary of the whole run.
+* **Done** (2026-10-12):
+  - **`lib/test/runner`** (host=no, on `test/unit` and `terminal`): `Scheduler` (pure: critical-path priority with failed-first, admission by CPUs, memory, pools and exclusion, a simulation), `Supervisor` (the loop over `Subprocess`: groups, timeouts TERM then KILL, the output cap by file size and `RLIMIT_FSIZE`, leaks found by a probe of the group, cancellation, Ctrl-C), `History` (TSV), `Report` (terminal, log and agent; the failure block; `events.jsonl`, `summary.md` and GitHub's job summary; `RESULT:`), `Run` (fixed-width job directories, the environment without make's jobserver, retention of failures only and of the last five runs, `RUNE_TEST_CPUS`) and `Cli` (`list`, `run`, `explain`, `stats`; `--tier`, `-j`, `--mem`, `--failed`, `--keep`).
+  - **The inventory** (`tests/runner/main.sml`): the 40 targets of the old recipe, each a job `make TARGET JOBS=$RUNE_TEST_CPUS`, and five canaries. An audit of what each step writes found eleven that run the programs of `tests/lang` from the root and so write `tests/out`'s top level and the images at fixed paths (the pool `lang`, one at a time, on three quarters of the machine), four that rewrite `tests/out/matrix/report.md` (the pool `matrix`), and two hidden orders (test-opt after test, test-all and test-basis; test-native after test and test-basis). The other 29 run beside them.
+  - **Make:** `make check` is `make check-tools`, which builds every step's prerequisites in one make, and `bin/rune-test run --tier check`. `bin/rune-stack` and `scripts/gen-version.sh`'s files are now written by rename, since steps parse the Makefile at once.
+  - **Found on the way:** lldb waits forever in `tests/opt/run-debug.sh` when `DEBUGINFOD_URLS` names a server that does not answer; the script now unsets it.
+  - **Tests:** the scheduler's properties and the history's round trip (`tests/lib/runner/props.sml`, 11 tests, each shown to fail on a planted mutant of the scheduler), the canaries in every run, and a planted fault in `tests/ir` reported with its failing line, its kept output and its rerun command.
 
 ### M4. `tests/lang` and `tests/errors` in ways, compiled once (M, about 800)
 

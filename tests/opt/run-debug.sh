@@ -16,6 +16,10 @@
 # lldb, where they are installed, stop at a line of the first program's own
 # source.
 set -u
+# The debuggers stay off the network: with DEBUGINFOD_URLS set they fetch
+# the symbols of every library first, and lldb waits for a server that does
+# not answer for as long as it does not.
+unset DEBUGINFOD_URLS
 opt=bin/runeopt-mlton
 jobs=""
 one=""

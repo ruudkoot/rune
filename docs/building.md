@@ -128,7 +128,7 @@ name the tools to check.
 | `make test-basis` | run the Basis Library suite (`tests/basis`) with `bin/rune` |
 | `make perf-check` | verify the performance budgets of `tests/perf`: instructions executed and bytes and objects allocated (`runevm-stack --count`) by benchmark programs, by the compiler compiling `examples/hello.sml`, by the bootstrap and by `runedoc`, each at most 10 % above the recorded value, and the growth of the instruction count from n to 4n. The numbers are the same on every machine. `sh tests/perf/run-perf.sh --update` records new values after a deliberate change |
 | `make bootstrap` | compile the compiler with `bin/rune` and check the result equals `bin/rune.rbc`, and again with `--target=stack` against `bin/rune.stack.rbc` |
-| `make check` | all of the above (about 3 minutes on 16 CPUs, most of it spent running the compiler on the interpreter) |
+| `make check` | all of the above: `make check-tools` builds what they need, and `bin/rune-test run --tier check` runs each of them as a test of the runner, at once where they share no files ([testing.md](testing.md), *Running the tests*) |
 | `make doctor` | check that the tools of all targets are installed and work; print how to install missing ones |
 | `make matrix-quick` | the Basis Library suite on Rune and on Rune's library compiled by each host (the `xc1` configurations); not part of `make check` |
 | `make matrix` | `matrix-quick` and the suite on each host's own library |

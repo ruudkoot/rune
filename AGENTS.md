@@ -260,8 +260,12 @@ keep these invariants:
   `test-install`, `check-reproducible`, `test-serve`, `test-repl`, `test-terminal`, `test-diagnostics`, `test-repl-protocol`, `test-kernel`, `test-dap`, `test-native`, `test-register`, `test-register-jit`,
   `test-heap`, `test-gc`, `test-census`, `check-heapsim`, `check-gcsim`,
   `check-layouts`, `check-gcbench`, `perf-check`, `bench-smoke`,
-  `check-positions`, `check-cross`, `check-docs`, `check-isa`; runs on all
-  CPUs, about a quarter of an hour on 16 with nothing else running). `bin/rune` is the self-hosted compiler, so it is what
+  `check-positions`, `check-cross`, `check-docs`, `check-isa`, each a test
+  of the runner `bin/rune-test`, run at once where they share no files; a
+  passing test prints nothing, a failure prints a block with its reason, the
+  directory its output is kept in and the command that reruns it, and the
+  last line begins `RESULT:` (`docs/testing.md`, *Running the tests*).
+  `bin/rune-test run --failed` runs again what failed last time. `bin/rune` is the self-hosted compiler, so it is what
   every test target uses by default; `make test RUNE=bin/rune-mlton` runs the
   same suite with the MLton build and is the faster loop while iterating. For
   VM changes also run the suite with the

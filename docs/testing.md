@@ -32,6 +32,53 @@ goes on after a test, and `--events FILE` writes a JSON line as each test
 starts and ends. The library builds on every host compiler, so the same
 suite runs in `make test-lib` and `make test-lib-hosts`.
 
+## Running the tests
+
+`make check` is `make check-tools`, which builds every tool a test needs,
+and then `bin/rune-test run --tier check`. `bin/rune-test` is the runner
+(`lib/test/runner`, [generated/test/runner](generated/test/runner/README.md)),
+compiled by `bin/rune` from its inventory, `tests/runner/*.sml`, and run on
+`bin/runevm`. Its tests are trees of commands: each runs as a process in a
+group of its own, in a directory of its own under the run's directory
+`tests/out/r/STAMP` or in the one it names, with its output and errors in
+files, its signals at their defaults, a timeout (TERM, then KILL) and a cap
+on its output. A test that ends and leaves processes behind fails with
+`LEAK`. The scheduler starts the jobs whose critical path is longest first,
+and the ones that failed last time before those; it fits them to the CPUs
+and memory of the machine (`-j`, `--mem`; by default its processors less
+its load and its available memory), keeps apart the jobs that name one pool,
+and starts a job only after those it waits for.
+
+* `bin/rune-test list [FILTER]` lists the tests (`make/*`,
+  `tag:check & !runner/*`), and `explain FILTER` shows each one's command,
+  directory, CPUs, pools and edges;
+* `bin/rune-test run [FILTER] [--tier T]` runs them; `--failed` runs those
+  that failed last time and `--keep` keeps the directory of every test;
+* `bin/rune-test stats` lists the slowest and the flakiest tests.
+
+The output depends on who reads it. On a terminal, one status line and a
+block for each failure as it happens; in a log or to an agent (recognised by
+`AI_AGENT`, `CLAUDECODE` and the like), nothing for a test that passes, a
+line every 30 seconds, and the same blocks. A block gives the verdict
+(`FAIL`, `TIMEOUT`, `CRASH`, `LEAK`, `ERROR`), the reason with the lines of
+the output that say what failed, the directory the test's output is kept in
+(`tests/out/r/STAMP/failed/PATH`), the command, and the command that runs it
+again. The last line begins `RESULT:`. Every run writes its events as JSON
+lines (`events.jsonl`) and a summary in Markdown (`summary.md`, and GitHub's
+page of the job) in its directory. The directories of tests that pass are
+removed as they end, and the last five runs are kept. The wall time of each
+test goes into `build/test-history.tsv`, from which the next run orders its
+jobs.
+
+The steps of the old recipe of `make check` are the runner's first tests,
+each an opaque `make` of its targets (`tests/runner/main.sml`): the ones that
+run the programs of `tests/lang` with their output in `tests/out` itself
+share the pool `lang` and run one at a time, as before, and the others run
+beside them. Five canaries, tests that fail on purpose (an exit with 1, a
+run past its time, a crash, a flood of output and a leaked process), pass
+only when the runner sees each fault for what it is; they run in every
+`make check`, since the runner is built by the compiler it tests.
+
 ## The three oracles
 
 **The output.** A program under `tests/` runs with `--checked` and its

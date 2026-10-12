@@ -86,9 +86,11 @@ ROOT    := $(CURDIR)
 RUNE    ?= bin/rune
 # $(RUNE) pinned to the stack bytecode, which the suites that run bin/runevm-stack
 # need: the compiler makes the register bytecode of bin/runevm unless
-# told otherwise. It is written whenever make reads this file.
+# told otherwise. It is written whenever make reads this file, and renamed
+# into place, since the steps of make check that run at once each read
+# this file while the others' tests run it.
 RUNE_STACK := bin/rune-stack
-$(shell mkdir -p bin && printf '#!/bin/sh\nexec "%s" --target=stack "$$@"\n' '$(abspath $(RUNE))' > $(RUNE_STACK) && chmod +x $(RUNE_STACK))
+$(shell mkdir -p bin && printf '#!/bin/sh\nexec "%s" --target=stack "$$@"\n' '$(abspath $(RUNE))' > $(RUNE_STACK).$$$$ && chmod +x $(RUNE_STACK).$$$$ && mv -f $(RUNE_STACK).$$$$ $(RUNE_STACK))
 RUNEVM  ?= bin/runevm-stack
 # The register VM with its JIT, which runs what $(RUNE) makes: the default for
 # the suites of the libraries, the examples and the laws (the owner,
@@ -153,7 +155,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build test-install check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64 test-laws-hosts
+.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build test-install check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64 test-laws-hosts
 
 all: vm boot runedoc runeopt manifests basis-cache
 
@@ -163,7 +165,7 @@ all: vm boot runedoc runeopt manifests basis-cache
 # (rune --basis-index)
 # the libraries of docs/plans/repl.md (The libraries)
 REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter
-manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
+manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST)
 lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/basis
 lib/random/MANIFEST: lib/random/library.build $(wildcard lib/random/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
@@ -175,6 +177,9 @@ lib/test/property/basis/MANIFEST: lib/test/property/basis/library.build $(wildca
 # the unit-testing library (docs/plans/unit-testing.md, M1), written on test/property
 lib/test/unit/MANIFEST: lib/test/unit/library.build $(wildcard lib/test/unit/*.sml) lib/test/property/MANIFEST bin/rune-$(BOOTHOST)
 	bin/rune-$(BOOTHOST) --basis-index lib/test/unit
+# the runner (docs/plans/unit-testing.md, M3), written on test/unit and terminal
+lib/test/runner/MANIFEST: lib/test/runner/library.build $(wildcard lib/test/runner/*.sml) lib/test/unit/MANIFEST lib/terminal/MANIFEST bin/rune-$(BOOTHOST)
+	bin/rune-$(BOOTHOST) --basis-index lib/test/runner
 # the libraries of docs/plans/repl.md (The libraries), each after those it
 # is written on
 lib/unicode/MANIFEST: lib/unicode/library.build $(wildcard lib/unicode/*.sml) lib/basis/MANIFEST bin/rune-$(BOOTHOST)
@@ -1054,13 +1059,14 @@ check-docs: $(RUNE) $(RUNEDOC) manifests
 	sh scripts/check-docs.sh
 	RUNE=$(RUNE_STACK) sh scripts/gen-basis-sigs.sh --check
 	$(RUNE_STACK) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	sh tests/basis/gen-annotations.sh --check
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	$(RUNEDOC) $(DOCS_RANDOM) --check
 	$(RUNEDOC) $(DOCS_PROPERTY) --check
 	$(RUNEDOC) $(DOCS_PROPERTY_BASIS) --check
 	$(RUNEDOC) $(DOCS_UNIT) --check
+	$(RUNEDOC) $(DOCS_RUNNER) --check
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) --check &&) true
 	$(RUNEDOC) --palette docs/generated/palette --check
 	sh tests/basis/check-claims.sh
@@ -1085,6 +1091,9 @@ DOCS_PROPERTY_BASIS := --lib lib --library test/property/basis --out docs/genera
 # the unit-testing library (docs/plans/unit-testing.md, M1)
 DOCS_UNIT := --lib lib --library test/unit --out docs/generated/test/unit --basis-docs ../../basis \
              --library-docs test/property ../property --title "Unit testing"
+# the runner (docs/plans/unit-testing.md, M3)
+DOCS_RUNNER := --lib lib --library test/runner --out docs/generated/test/runner --basis-docs ../../basis \
+               --library-docs test/unit ../unit --library-docs terminal ../../terminal --title "Running tests"
 # the libraries of docs/plans/repl.md (The libraries), each in
 # docs/generated/NAME (REPL_LIBS, with the manifests)
 TITLE_unicode := Unicode
@@ -1105,6 +1114,7 @@ docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_PROPERTY)
 	$(RUNEDOC) $(DOCS_PROPERTY_BASIS)
 	$(RUNEDOC) $(DOCS_UNIT)
+	$(RUNEDOC) $(DOCS_RUNNER)
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) &&) true
 	$(RUNEDOC) --palette docs/generated/palette
 
@@ -1397,42 +1407,37 @@ bootstrap: bin/rune-boot bin/rune.stack.rbc
 	cmp bin/rune.stack.rbc bin/rune.stage2.stack.rbc
 	@echo "bootstrap: bin/rune.rbc and bin/rune.stack.rbc reproduce themselves"
 
-# Steps run one after another: the suite runs share tests/out, and each step
-# keeps JOBS CPUs busy by itself. bootstrap is a single process, so it runs
-# alongside the suite.
-check:
-	@$(MAKE) --no-print-directory host-builds vm boot runedoc runeopt
-	@$(MAKE) --no-print-directory test bootstrap
-	@$(MAKE) --no-print-directory test-doc
-	@$(MAKE) --no-print-directory test-lib
-	@$(MAKE) --no-print-directory test-laws
-	@$(MAKE) --no-print-directory test-all
-	@$(MAKE) --no-print-directory test-basis
-	@$(MAKE) --no-print-directory test-opt
-	@$(MAKE) --no-print-directory test-ir check-levels
-	@$(MAKE) --no-print-directory check-units
-	@$(MAKE) --no-print-directory test-incremental
-	@$(MAKE) --no-print-directory test-deps
-	@$(MAKE) --no-print-directory test-dynamic
-	@$(MAKE) --no-print-directory test-build
-	@$(MAKE) --no-print-directory test-install
-	@$(MAKE) --no-print-directory check-reproducible
-	@$(MAKE) --no-print-directory test-serve
-	@$(MAKE) --no-print-directory test-repl test-terminal test-diagnostics test-repl-protocol test-kernel test-dap
-	@$(MAKE) --no-print-directory test-native
-	@$(MAKE) --no-print-directory test-register
-	@$(MAKE) --no-print-directory test-register-jit
-	@$(MAKE) --no-print-directory test-heap
-	@$(MAKE) --no-print-directory test-gc
-	@$(MAKE) --no-print-directory test-census
-	@$(MAKE) --no-print-directory check-heapsim
-	@$(MAKE) --no-print-directory check-gcsim
-	@$(MAKE) --no-print-directory check-layouts
-	@$(MAKE) --no-print-directory check-gcbench
-	@$(MAKE) --no-print-directory perf-check
-	@$(MAKE) --no-print-directory bench-smoke
-	@$(MAKE) --no-print-directory check-positions
-	@$(MAKE) --no-print-directory check-cross check-docs check-isa
+# The test runner (docs/plans/unit-testing.md, M3; docs/testing.md, Running
+# the tests): the inventory of tests/runner over lib/test/runner, compiled
+# by $(RUNE) and run on the register VM with its JIT.
+RUNNER_SRCS := tests/runner/canary.sml tests/runner/main.sml
+bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
+                   $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml)
+	$(RUNE) --library test/runner $(RUNNER_SRCS) -o $@
+bin/rune-test: bin/rune-test.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-test.rbc" "$$@"\n' > $@
+	chmod +x $@
+
+# Everything a step of make check needs, built before the runner starts, so
+# that two steps that run at once never build one file (each step is a make
+# of its own).
+CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all repl dap kernel mlton smlnj-legacy \
+               bin/rune-boot bin/rune.rbc bin/rune.stack.rbc bin/runedoc.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc \
+               bin/runedoc-mlton bin/runeopt-mlton bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy \
+               build/librune.a bin/runevm-gcbits bin/runevm-cards \
+               bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
+               build/.doctor-check bin/rune-test \
+               $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
+check-tools: $(CHECK_TOOLS)
+
+# The tests of the tier check, each step of the old recipe a test of the
+# runner, run at once where they share no files (tests/runner/main.sml), on
+# the CPUs of the machine less its load from outside, or on JOBS when it is
+# set. Each step is a make of its own, by the make that runs this one (named
+# through a variable of its own, or make would take the runner for a make).
+CHECK_MAKE := $(MAKE)
+check: check-tools
+	MAKE='$(CHECK_MAKE)' bin/rune-test run --tier check $(if $(filter command line environment,$(origin JOBS)),-j $(JOBS))
 
 clean:
 	rm -rf bin build tests/out

@@ -27,7 +27,9 @@
 #     the census of the Basis Library's laws and draw what frozen.expected
 #     says (instances.sml), and its properties kill every mutant of
 #     mutants.sml;
-#   - the examples of both libraries' documentation hold;
+#   - lib/test/unit passes its own tests (tests/lib/unit/core.sml), and
+#     lib/test/runner's scheduler its properties (tests/lib/runner/props.sml);
+#   - the examples of these libraries' documentation hold;
 #   - the libraries of docs/plans/repl.md (The libraries) pass their tests in
 #     tests/lib/NAME, their MANIFESTs and their examples (libsuite).
 # The programs run on the register VM with its JIT (bin/rune, bin/runevm);
@@ -224,9 +226,18 @@ if "$rune" --library test/unit tests/lib/unit/core.sml -o "$out/unit-core.rbc" >
 else
   bad "unit: the core (see $out/unit-core.cerr, $out/unit-core.out)"
 fi
-# the engine, its Basis instances and the unit-testing library, each a
+# lib/test/runner (docs/plans/unit-testing.md, M3): the scheduler's
+# properties and the history read back
+if "$rune" --library test/runner tests/lib/runner/props.sml -o "$out/runner-props.rbc" > "$out/runner-props.cerr" 2>&1 &&
+   "$runevm" "$out/runner-props.rbc" > "$out/runner-props.out" 2>&1 &&
+   grep -q "^PASS" "$out/runner-props.out" && ! grep -q "^FAIL" "$out/runner-props.out"; then
+  ok
+else
+  bad "runner: the properties (see $out/runner-props.cerr, $out/runner-props.out)"
+fi
+# the engine, its Basis instances, the unit-testing library and the runner, each a
 # library: its MANIFEST, and the examples of its documentation
-for lib in test/property test/property/basis test/unit; do
+for lib in test/property test/property/basis test/unit test/runner; do
   tag=$(echo "$lib" | tr / -)
   if "$rune" --library "$lib" --basis-check > "$out/$tag-check.txt" 2>&1; then
     ok

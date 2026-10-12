@@ -15,6 +15,7 @@ __pycache__/
 /lib/test/property/MANIFEST
 /lib/test/property/basis/MANIFEST
 /lib/test/unit/MANIFEST
+/lib/test/runner/MANIFEST
 /lib/unicode/MANIFEST
 /lib/json/MANIFEST
 /lib/terminal/MANIFEST

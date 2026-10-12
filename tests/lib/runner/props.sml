@@ -1,0 +1,192 @@
+(* libraries: test/runner *)
+(* What lib/test/runner's scheduler promises (docs/plans/unit-testing.md,
+   D12 and Testing the tester), on random runs of up to a dozen jobs with
+   edges, pools, exclusive jobs and jobs too big for the machine: that a
+   job starts after the jobs it waits for, that what runs fits the machine,
+   that two jobs of one pool never overlap, that an exclusive job runs
+   alone, that the makespan lies between the lower bounds and list
+   scheduling's upper bound, and that a job that failed last time starts
+   first. Then the history, read back as it was written. *)
+structure RunnerProps =
+struct
+  type job = Scheduler.job
+
+  val pools = Vector.fromList [[], [], [], ["a"], ["b"], ["a", "b"]]
+
+  (* a job that may wait for jobs before it, so that the jobs have no cycle *)
+  fun jobGen i =
+    Gen.bind (Gen.intRange (1, 20)) (fn cost =>
+    Gen.bind (Gen.intRange (1, 6)) (fn cpus =>
+    Gen.bind (Gen.intRange (0, 60)) (fn memory =>
+    Gen.bind (Gen.elements pools) (fn pools =>
+    Gen.bind (Gen.frequency [(9, Gen.return false), (1, Gen.return true)]) (fn exclusive =>
+    Gen.bind (Gen.frequency [(5, Gen.return false), (1, Gen.return true)]) (fn failedLast =>
+    Gen.map (fn deps => {cost = real cost, cpus = cpus, memory = memory, pools = pools, exclusive = exclusive,
+                         failedLast = failedLast, deps = deps})
+            (if i = 0 then Gen.return []
+             else Gen.map (List.filter (fn d => d < i)) (Gen.listOf (Gen.intRange (0, 2)) (Gen.intRange (0, i - 1))))))))))
+
+  val jobsGen =
+    Gen.bind (Gen.intRange (1, 12)) (fn n =>
+      let fun go i = if i = n then Gen.return [] else Gen.map2 (op ::) (jobGen i, go (i + 1))
+      in Gen.map Vector.fromList (go 0) end)
+
+  val machineGen = Gen.pair (Gen.intRange (1, 8), Gen.intRange (40, 200))
+
+  fun showJob ({cost, cpus, memory, pools, exclusive, failedLast, deps} : job) =
+    "{cost " ^ Real.toString cost ^ ", cpus " ^ Int.toString cpus ^ ", memory " ^ Int.toString memory
+    ^ ", pools [" ^ String.concatWith "," pools ^ "]" ^ (if exclusive then ", exclusive" else "")
+    ^ (if failedLast then ", failed" else "") ^ ", deps [" ^ String.concatWith "," (List.map Int.toString deps) ^ "]}"
+  fun showRun (jobs, (cpus, memory)) =
+    "machine " ^ Int.toString cpus ^ " cpus " ^ Int.toString memory ^ " MB: "
+    ^ String.concatWith " " (Vector.foldr (fn (j, acc) => showJob j :: acc) [] jobs)
+
+  val runGen = (Gen.pair (jobsGen, machineGen), showRun)
+
+  fun simulated (jobs, (cpus, memory)) = Scheduler.simulate (Scheduler.plan jobs, {cpus = cpus, memory = memory})
+
+  (* the jobs that run at time t: started at or before it and not yet ended *)
+  fun runningAt (jobs : job vector, starts, t) =
+    List.filter (fn i => Vector.sub (starts, i) <= t andalso t < Vector.sub (starts, i) + #cost (Vector.sub (jobs, i)))
+                (List.tabulate (Vector.length jobs, fn i => i))
+
+  (* every time something starts: what runs then is what runs at its widest *)
+  fun everyStart (jobs, starts, p) =
+    Vector.foldl (fn (t, ok) => ok andalso p (runningAt (jobs, starts, t))) true starts
+
+  fun sum f l = List.foldl (fn (x, s) => s + f x) 0 l
+  fun ids jobs = List.tabulate (Vector.length jobs, fn i => i)
+
+  fun afterItsDeps (jobs, m) =
+    let val (starts, _) = simulated (jobs, m)
+    in Vector.foldli (fn (i, j : job, ok) =>
+                        ok andalso List.all (fn d => Vector.sub (starts, i) >= Vector.sub (starts, d) + #cost (Vector.sub (jobs, d)))
+                                            (#deps j))
+                     true jobs
+    end
+
+  fun fitsTheMachine (jobs : job vector, m as (cpus, memory)) =
+    let val (starts, _) = simulated (jobs, m)
+    in everyStart (jobs, starts, fn rs =>
+                     length rs <= 1
+                     orelse (sum (fn i => #cpus (Vector.sub (jobs, i))) rs <= cpus
+                             andalso sum (fn i => #memory (Vector.sub (jobs, i))) rs <= memory))
+    end
+
+  fun poolsExclude (jobs : job vector, m) =
+    let
+      val (starts, _) = simulated (jobs, m)
+      fun clash rs =
+        List.exists (fn q => length (List.filter (fn i => List.exists (fn x => x = q) (#pools (Vector.sub (jobs, i)))) rs) > 1)
+                    ["a", "b"]
+    in everyStart (jobs, starts, not o clash) end
+
+  fun exclusiveAlone (jobs : job vector, m) =
+    let val (starts, _) = simulated (jobs, m)
+    in everyStart (jobs, starts, fn rs => length rs <= 1 orelse not (List.exists (fn i => #exclusive (Vector.sub (jobs, i))) rs))
+    end
+
+  (* the longest chain of costs, and the work spread over every CPU *)
+  fun lowerBound (jobs : job vector, (cpus, _)) =
+    let
+      val memo = Array.array (Vector.length jobs, 0.0)
+      val () = Vector.appi (fn (i, j : job) =>
+                              Array.update (memo, i, #cost j + List.foldl (fn (d, b) => Real.max (b, Array.sub (memo, d))) 0.0 (#deps j)))
+                           jobs
+      val chain = Array.foldl Real.max 0.0 memo
+      val work = Vector.foldl (fn (j : job, s) => s + #cost j * real (Int.min (#cpus j, cpus))) 0.0 jobs
+    in Real.max (chain, work / real cpus) end
+
+  fun withinBounds (jobs : job vector, m) =
+    let val (_, makespan) = simulated (jobs, m)
+    in makespan >= lowerBound (jobs, m) - 1.0e~9 andalso makespan <= Vector.foldl (fn (j : job, s) => s + #cost j) 0.0 jobs + 1.0e~9
+    end
+
+  (* jobs of one CPU each with no edges, pools or exclusion: Graham's bound
+     for list scheduling, the work over the CPUs and the longest job *)
+  fun graham (costs, cpus) =
+    let
+      val jobs = Vector.fromList (List.map (fn c => {cost = real c, cpus = 1, memory = 0, pools = [], exclusive = false,
+                                                       failedLast = false, deps = []}) costs)
+      val (_, makespan) = Scheduler.simulate (Scheduler.plan jobs, {cpus = cpus, memory = 100})
+      val total = real (List.foldl op+ 0 costs)
+      val longest = real (List.foldl Int.max 0 costs)
+    in makespan <= total / real cpus + longest + 1.0e~9 end
+
+  (* a job that failed last time, waits for nothing and fits, starts at 0 *)
+  fun failedFirst (jobs : job vector, m as (cpus, memory)) =
+    let
+      val (starts, _) = simulated (jobs, m)
+      val candidates = List.filter (fn i => let val j = Vector.sub (jobs, i)
+                                            in #failedLast j andalso null (#deps j) andalso not (#exclusive j)
+                                               andalso #cpus j <= cpus andalso #memory j <= memory andalso null (#pools j) end)
+                                   (ids jobs)
+    in
+      (* the first such job by number, since two of them may not both fit *)
+      case candidates of [] => true | i :: _ => Real.== (Vector.sub (starts, i), 0.0) orelse
+        (* or every CPU or megabyte went to jobs that failed too *)
+        List.exists (fn k => k <> i andalso #failedLast (Vector.sub (jobs, k))) (runningAt (jobs, starts, 0.0))
+    end
+
+  (* a job's priority is its cost and the most of its dependents', with the
+     bonus of a job that failed last time taken off *)
+  fun criticalPath (jobs : job vector, _) =
+    let
+      val p = Scheduler.plan jobs
+      fun level i = Scheduler.priority (p, i) - (if #failedLast (Vector.sub (jobs, i)) then 1.0e12 else 0.0)
+      fun dependents i = List.filter (fn k => List.exists (fn d => d = i) (#deps (Vector.sub (jobs, k)))) (ids jobs)
+    in
+      List.all (fn i => Real.abs (level i - (#cost (Vector.sub (jobs, i))
+                                             + List.foldl (fn (k, b) => Real.max (b, level k)) 0.0 (dependents i))) < 1.0e~3)
+               (ids jobs)
+    end
+
+  fun prop f = fn () => Prop.forAllGen runGen (fn r => Prop.holds (f r))
+
+  fun historyRoundTrip entries =
+    let
+      val file = OS.FileSys.tmpName ()
+      val h = List.foldl (fn ((p, w, ok), h) => History.record (h, {path = p, wall = real w / 8.0, passed = ok})) History.empty entries
+      val () = History.write (file, h)
+      val back = History.read file
+      val () = OS.FileSys.remove file
+      fun same (a : History.entry, b : History.entry) =
+        #path a = #path b andalso #passed a = #passed b andalso #flips a = #flips b
+        andalso ListPair.allEq (fn (x, y) => Real.abs (x - y) < 0.001) (#walls a, #walls b)
+    in ListPair.allEq same (History.entries h, History.entries back) end
+
+  val pathGen = Gen.map (fn k => "suite/" ^ Int.toString k) (Gen.intRange (0, 5))
+  val showEntries = Show.list (Show.triple (Show.string, Show.int, Show.bool))
+
+  val tests =
+    Test.describe "runner/props"
+      [Test.property "Scheduler.simulate/after-its-dependencies" (prop afterItsDeps),
+       Test.property "Scheduler.simulate/fits-the-machine" (prop fitsTheMachine),
+       Test.property "Scheduler.simulate/pools-exclude" (prop poolsExclude),
+       Test.property "Scheduler.simulate/exclusive-alone" (prop exclusiveAlone),
+       Test.property "Scheduler.simulate/within-bounds" (prop withinBounds),
+       Test.property "Scheduler.simulate/failed-first" (prop failedFirst),
+       Test.property "Scheduler.priority/the-critical-path" (prop criticalPath),
+       Test.property "Scheduler.simulate/graham" (fn () =>
+         Prop.forAllGen (Gen.pair (Gen.list (Gen.intRange (1, 30)), Gen.intRange (1, 8)),
+                         Show.pair (Show.list Show.int, Show.int))
+                        (Prop.holds o graham)),
+       Test.it "Scheduler.plan/a-cycle" (fn () =>
+         Expect.raises ("a cycle", fn Fail _ => true | _ => false, fn () =>
+           Scheduler.plan (Vector.fromList [{cost = 1.0, cpus = 1, memory = 0, pools = [], exclusive = false, failedLast = false, deps = [1]},
+                                            {cost = 1.0, cpus = 1, memory = 0, pools = [], exclusive = false, failedLast = false, deps = [0]}]))),
+       Test.it "Scheduler.priority/critical-path" (fn () =>
+         let
+           fun job (c, ds) = {cost = c, cpus = 1, memory = 0, pools = [], exclusive = false, failedLast = false, deps = ds}
+           val p = Scheduler.plan (Vector.fromList [job (1.0, []), job (5.0, [0]), job (2.0, [])])
+         in
+           Expect.that ("the chain of 1 and 5", Real.== (Scheduler.priority (p, 0), 6.0));
+           Expect.that ("alone", Real.== (Scheduler.priority (p, 2), 2.0))
+         end),
+       Test.property "History.write/read-back" (fn () =>
+         Prop.forAllGen (Gen.list (Gen.triple (pathGen, Gen.intRange (0, 4000), Gen.bool)), showEntries)
+                        (Prop.holds o historyRoundTrip))]
+end
+
+structure RunnerPropsMain = Main (struct val name = "runner/props" val tests = RunnerProps.tests end)
+val () = RunnerPropsMain.main ()
