@@ -381,10 +381,18 @@ struct
 
   and compileSources (inputs : string list) : OS.Process.status =
     let
-      val userToks = List.map loadTokens inputs
+      (* the input files read and lexed, and the files of the libraries
+         they need chosen: stages of --pass-stats, whose sizes are the
+         tokens and the files chosen *)
+      val userToks =
+        Pass.stage {name = "lex", showIn = NONE, show = fn _ => "", check = fn _ => (),
+                    size = List.foldl (fn (toks, n) => n + Vector.length toks) 0}
+                   (List.map loadTokens) inputs
       val () = if !Options.noPrelude andalso not (List.null (!Options.libraries))
                then raise Options.Usage "--library needs the basis library (not --no-prelude)" else ()
       val basis =
+        Pass.stage {name = "select", showIn = NONE, show = fn _ => "", check = fn _ => (), size = List.length}
+                   (fn () =>
         if !Options.noPrelude then []
         else
           let
@@ -400,7 +408,7 @@ struct
           in
             if !Options.basisAll then entries
             else select (entries, mentioned)
-          end
+          end) ()
     in
       if !Options.basisDeps
       then (List.app (fn e : entry => println (if inBasis e then #file e else BasisManifest.path e)) basis;
@@ -484,7 +492,7 @@ struct
       val unverified = ref 0
       fun explain msg = if !Options.explainRebuild then TextIO.output (TextIO.stdErr, msg ^ "\n") else ()
       (* the cache's work, for --pass-stats *)
-      fun timed name f = Pass.stage {name = name, showIn = NONE, show = fn _ => "", check = fn _ => (), size = fn _ => 0} f ()
+      val timed = Pass.timed
       (* the input files' settings, which the libraries are compiled
          without: in their units' keys, so that a unit compiled under them is
          not taken for one compiled without (--default-type, --or-patterns) *)
@@ -867,7 +875,9 @@ struct
         (* one program of the units' Mid, with the passes of a whole one *)
         let
           val () = refuseDynamic ()
-          val prog = MidCanon.concat (List.rev (!mids))
+          val prog = Pass.stage {name = "midcanon", showIn = NONE, show = MidText.show, check = MidLint.check,
+                                 size = Mid.size}
+                                MidCanon.concat (List.rev (!mids))
           val () = Pass.whole := true
           val low = Pipeline.lowOfMid prog
         in
@@ -1026,16 +1036,18 @@ struct
                    ((OS.FileSys.fileId p = OS.FileSys.fileId out) handle OS.SysErr _ => false)
       val () = if List.exists same inputs then raise Options.Usage "output must differ from every input file" else ()
     in
-      Emit.writeFileAs (fingerprint, out, prog);
+      Pass.stage {name = "emit", showIn = NONE, show = fn _ => "", check = fn _ => (), size = fn () => Code.size prog}
+                 Emit.writeFileAs (fingerprint, out, prog);
       OS.Process.success
     end
 
   fun main (name : string, args : string list) : OS.Process.status =
     let val status = main' (name, args)
-    in Diagnostic.finish (OS.Process.isSuccess status); status end
+    in Pass.finish (); Diagnostic.finish (OS.Process.isSuccess status); status end
 
   and main' (_ : string, args : string list) : OS.Process.status =
     (Options.parse args;
+     Pass.startup ();
      Parser.orPatterns := !Options.orPatterns;
      Diagnostic.install {color = !Options.color, full = !Options.diagnostics, json = !Options.diagnosticsJson};
      if !Options.showHelp then (print Options.usage; OS.Process.success)

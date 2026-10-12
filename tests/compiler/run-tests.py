@@ -81,3 +81,39 @@ with tempfile.TemporaryDirectory(dir=out) as d:
     result = run('--no-prelude', '--type-work=1000000', '-o', target, source)
     assert result.returncode == 0, result.stderr
 print('PASS compiler output protection and resource budgets')
+
+# --pass-stats accounts for the whole compile (docs/plans/performance.md, M1):
+# a line `pass NAME: N nodes, T s` per stage, then
+# `total: T s processor time, S s in the stages (P%)`, the process's processor
+# time from its start and the sum of the outermost stages. The stages must add
+# up to the total, to within the rounding of the lines and 2%, and the process
+# must have taken no more than the total, but for what the VM does after the
+# last line (it exits). A piece of the compile that no stage times shows here.
+# (SML/NJ's processor time counts the collector's twice, so a total may be
+# more than what the process took.)
+with tempfile.TemporaryDirectory(dir=out) as d:
+    before = resource.getrusage(resource.RUSAGE_CHILDREN)
+    result = run('--pass-stats', '-o', Path(d) / 'sigs.rbc', 'tests/perf/compile-sigs.sml')
+    after = resource.getrusage(resource.RUSAGE_CHILDREN)
+    assert result.returncode == 0, result.stderr
+    process = (after.ru_utime - before.ru_utime) + (after.ru_stime - before.ru_stime)
+    lines = result.stderr.decode().splitlines()
+    stages = []
+    for line in lines[:-1]:
+        name, rest = line.split(': ', 1)
+        nodes, seconds = rest.split(', ')
+        assert name.startswith('pass ') and nodes.endswith(' nodes') and seconds.endswith(' s'), line
+        stages.append((name[5:], float(seconds[:-2].replace('~', '-'))))
+    names = [n for n, _ in stages]
+    for wanted in ('startup', 'lex', 'select', 'parse', 'elaborate', 'translate', 'mid', 'midcanon',
+                   'lower', 'stack', 'emit', 'stats'):
+        assert wanted in names, (wanted, names)
+    words = lines[-1].split()
+    assert words[0] == 'total:' and words[2:5] == ['s', 'processor', 'time,'], lines[-1]
+    total, inside = float(words[1]), float(words[5])
+    added = sum(t for _, t in stages)
+    assert abs(added - inside) <= 0.0005 * len(stages) + 0.001, (added, inside)
+    assert total - added <= 0.001 * len(stages) + 0.02 * total, (total, added, lines)
+    assert all(t >= 0 for _, t in stages), lines
+    assert process <= 1.10 * total + 0.05, (total, process)
+print('PASS --pass-stats: the stages add up to the compile')
