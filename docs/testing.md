@@ -184,7 +184,7 @@ the two compilers' bytecodes allocate the same bytes and objects
 (the oracle `register` of `tests/runner/oracles.sml`), that the interpreter and every JIT mode report
 identical counts (the oracle `jit` of `tests/runner/oracles.sml`), that the 32-bit and the
 big-endian VM agree with this machine's to the byte
-(`tests/run-portability.sh:97-111`), that the three Windows VMs do
+(`portability/count/*`, `tests/runner/portability.sml`), that the three Windows VMs do
 (`tests/run-windows.sh:184-191`), that native code does (`AGENTS.md`, the
 native rule), and that the compiler, `runedoc` and the benchmark programs
 stay within their budgets (`tests/perf/*.budget`, `make perf-check`,
@@ -246,7 +246,7 @@ program, `runevm --jit=off --count`, one thing changed at a time):
    error to files (`tests/run-tests.sh:69-74`, the oracle `register` of `tests/runner/oracles.sml`,
    the oracle `jit` of `tests/runner/oracles.sml`, `tests/run-windows.sh:88-91`). The
    portability runner lets the VMs inherit its own standard input
-   (`tests/run-portability.sh:107-109`), which is fine because every VM in
+   (`tests/runner/portability.sml`), which is fine because every VM in
    the comparison gets the same one; that is the rule: both sides of a
    comparison get the same three streams, whatever they are.
 

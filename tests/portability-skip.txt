@@ -1,4 +1,4 @@
-# Programs that `make test-portability` leaves out (tests/run-portability.sh),
+# Programs that `make test-portability` leaves out (tests/runner/lang.sml),
 # an expectation to a line in the one format (docs/testing.md, Expectations):
 #
 #   WAY-GLOB | PROGRAM | CATEGORY | reason

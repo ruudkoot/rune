@@ -60,6 +60,9 @@ struct
   fun bootSrcs () = toolSrcs "rune"
   (* the VM of the JIT's checks: bin/runevm, or another (portability's) *)
   fun jitVm () = env ("JIT_VM", "bin/runevm")
+  (* the directory of the JIT's checks on a VM: jit for bin/runevm, and one
+     of each other's name, so that two VMs' checks run at once *)
+  fun jitDir () = run ^ (if jitVm () = "bin/runevm" then "/jit" else "/jit-" ^ OS.Path.file (jitVm ()))
 
   (* ---- levels *)
   fun levelsOne src =
@@ -213,7 +216,7 @@ struct
   fun jitOne src =
     let
       val b = base src and n = jitName src
-      val dir = run ^ "/jit/" ^ n
+      val dir = jitDir () ^ "/" ^ n
       val () = mkdirs dir
       fun f x = dir ^ "/" ^ x
     in
@@ -260,7 +263,7 @@ struct
 
   fun jitEveryOpcode () =
     let
-      val dir = run ^ "/jit/every-opcode"
+      val dir = jitDir () ^ "/every-opcode"
       val () = mkdirs dir
       fun f x = dir ^ "/" ^ x
       val modes = List.filter (fn (m, _, _) => List.exists (fn x => x = m) ["off", "all", "odd", "stress", "opt", "deopt"]) jitModes
@@ -284,7 +287,7 @@ struct
 
   fun jitFatal which =
     let
-      val dir = run ^ "/jit/fatal-" ^ which
+      val dir = jitDir () ^ "/fatal-" ^ which
       val () = mkdirs dir
       fun f x = dir ^ "/" ^ x
       val modes = [("off", ["--jit=off"]), ("all", ["--jit=all"]), ("opt", ["--jit=all", "--jit-tier=2"])]
@@ -325,8 +328,8 @@ struct
           then SOME (Substring.string (Substring.takel (fn c => Char.isAlphaNum c orelse c = #"_") (Substring.triml 2 s)))
           else NONE
         end
-      val seen = List.concat (List.map (fn d => List.mapPartial opOf (lines (read (run ^ "/jit/" ^ d ^ "/disasm"))))
-                                       (entries (run ^ "/jit")))
+      val seen = List.concat (List.map (fn d => List.mapPartial opOf (lines (read (jitDir () ^ "/" ^ d ^ "/disasm"))))
+                                       (entries (jitDir ())))
       val missing = List.filter (fn x => not (List.exists (fn y => y = x) seen)) ops
     in
       if null missing then ()
@@ -342,7 +345,7 @@ struct
      ("6", "deopt", ["--jit=all", "--jit-tier=2", "--deopt-stress=7"])]
 
   fun jitBootCompile () =
-    let val out = run ^ "/jitboot"
+    let val out = jitDir () ^ "-boot"
     in
       mkdirs out;
       if exec {cmd = ["bin/rune", "-o", out ^ "/rune.rbc"] @ bootSrcs (), dir = NONE, stdin = "", stdout = out ^ "/cerr",
@@ -355,16 +358,16 @@ struct
       NONE => say ("FAIL jit.bootstrap: no mode " ^ mode ^ "\n")
     | SOME (d, _, jit) =>
         let
-          val dir = run ^ "/jitboot/" ^ d
+          val dir = jitDir () ^ "-boot/" ^ d
           val () = mkdirs dir
-          val code = exec {cmd = [jitVm (), "--count"] @ jit @ ["--heap-size", "67108864", run ^ "/jitboot/rune.rbc", "--lib",
+          val code = exec {cmd = [jitVm (), "--count"] @ jit @ ["--heap-size", "67108864", jitDir () ^ "-boot/rune.rbc", "--lib",
                                                                   root ^ "/lib", "-o", "compiled.rbc"] @ List.map fromRoot (bootSrcs ()),
                            dir = SOME dir, stdin = "", stdout = "", stderr = dir ^ "/stderr", timeout = 0}
         in append (dir ^ "/stderr", "exit " ^ Int.toString code ^ "\n") end
 
   fun jitBootCompare () =
     let
-      fun f (d, x) = run ^ "/jitboot/" ^ d ^ "/" ^ x
+      fun f (d, x) = jitDir () ^ "-boot/" ^ d ^ "/" ^ x
     in
       List.app (fn (d, mode, _) =>
                   if d = "1" then ()
@@ -790,12 +793,31 @@ struct
     | _ => NONE
 
   (* ---- the tree *)
-  fun job (path, args, after, cpus, memory, timeout) =
+  fun jobIn (prefix, path, args, after, cpus, memory, timeout) =
     Test.it path
       {program = "/bin/sh",
-       args = ["sh", "-c", "exec \"$RUNE_TEST_ROOT\"/bin/rune-test " ^ String.concatWith " " (List.map quote args)],
+       args = ["sh", "-c", prefix ^ "exec \"$RUNE_TEST_ROOT\"/bin/rune-test " ^ String.concatWith " " (List.map quote args)],
        env = NONE, dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds timeout, cap = 0, cpus = cpus, memory = memory,
        pools = [], exclusive = false, after = after, judge = failLines} : Run.command Test.tree
+  fun job (path, args, after, cpus, memory, timeout) = jobIn ("", path, args, after, cpus, memory, timeout)
+
+  (* the JIT's checks on a VM, under NAME: every program in every mode, every
+     opcode, the fatal errors, every instruction and the bootstrap *)
+  fun jitTree (vm, nm) =
+    let
+      val prefix = if vm = "bin/runevm" then "" else "JIT_VM=" ^ vm ^ " "
+      fun j (path, args, after, memory, timeout) = jobIn (prefix, path, args, after, 1, memory, timeout)
+    in
+      Test.describe nm
+        (List.map (fn src => j (jitName src, ["jit-one", src], [], 600, 3600)) (langPerf @ ["tests/opt/prims.sml"])
+         @ [j ("@every-opcode", ["jit-every-opcode"], [], 500, 600)]
+         @ List.map (fn w => j ("@fatal-" ^ w, ["jit-fatal", w], [], 200, 600)) ["call", "decon", "global"]
+         @ [j ("@every-instruction", ["jit-every-instruction"],
+               (nm ^ "/@every-opcode") :: List.map (fn s => nm ^ "/" ^ jitName s) (langPerf @ ["tests/opt/prims.sml"]), 200, 600),
+            j ("@boot-compile", ["jit-boot-compile"], [], 1500, 3600)]
+         @ List.map (fn (_, m, _) => j ("@boot-" ^ m, ["jit-boot", m], [nm ^ "/@boot-compile"], 1500, 3600)) bootModes
+         @ [j ("@boot-compare", ["jit-boot-compare"], List.map (fn (_, m, _) => nm ^ "/@boot-" ^ m) bootModes, 100, 600)])
+    end
 
   fun perProgram (cmd, srcs, after, name) = List.map (fn src => job (name src, [cmd, src], after, 1, 600, 3600)) srcs
 
@@ -819,15 +841,7 @@ struct
                 job ("@prims", ["register-prims"], [], 1, 500, 600),
                 job ("@dead-roots", ["register-dead-roots"], [], 1, 500, 600)])),
        tagged (["check", "test-register-jit", "covers:tests/register/*", "covers:tests/opt/*"] @ langCovers)
-         (Test.describe "jit"
-            (perProgram ("jit-one", langPerf @ ["tests/opt/prims.sml"], [], jitName)
-             @ [job ("@every-opcode", ["jit-every-opcode"], [], 1, 500, 600)]
-             @ List.map (fn w => job ("@fatal-" ^ w, ["jit-fatal", w], [], 1, 200, 600)) ["call", "decon", "global"]
-             @ [job ("@every-instruction", ["jit-every-instruction"],
-                     "jit/@every-opcode" :: List.map (fn s => "jit/" ^ jitName s) (langPerf @ ["tests/opt/prims.sml"]), 1, 200, 600),
-                job ("@boot-compile", ["jit-boot-compile"], [], 1, 1500, 3600)]
-             @ List.map (fn (_, m, _) => job ("@boot-" ^ m, ["jit-boot", m], ["jit/@boot-compile"], 1, 1500, 3600)) bootModes
-             @ [job ("@boot-compare", ["jit-boot-compare"], List.map (fn (_, m, _) => "jit/@boot-" ^ m) bootModes, 1, 100, 600)])),
+         (jitTree ("bin/runevm", "jit")),
        tagged (["check", "check-units", "covers:tests/units/*"] @ langCovers)
          (Test.describe ""
             (List.map (fn (variant, rune, vm) =>

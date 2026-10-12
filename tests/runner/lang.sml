@@ -82,13 +82,14 @@ struct
     @ List.map (fn h => (h, "bin/rune-" ^ h ^ " --target=stack", "test-all")) hosts
 
   (* a way: its name, its compiler, its VM with the options before the
-     program's, the tag of the make target it comes from, and whether it is
-     native code, whose expectations are tests/opt-skip.txt's *)
-  type way = {name : string, compiler : string, vm : string, tag : string, skip : bool}
+     program's, the tag of the make target it comes from, and the file of
+     its expectations, if it has one (native code's tests/opt-skip.txt, the
+     other machines' tests/portability-skip.txt) *)
+  type way = {name : string, compiler : string, vm : string, tag : string, skip : string option}
 
   val gcStress = env ("GC_STRESS", "101")
   val small = " --gc-verify --heap-size 65536 --nursery 8192 --nursery-max 0"
-  fun way (name, compiler, vm, tag) = {name = name, compiler = compiler, vm = vm, tag = tag, skip = false} : way
+  fun way (name, compiler, vm, tag) = {name = name, compiler = compiler, vm = vm, tag = tag, skip = NONE} : way
   val native = case OS.Process.getEnv "NATIVE_HOST" of
                  SOME v => v = "yes"
                | NONE => exists "bin/runevm-native"
@@ -115,11 +116,26 @@ struct
      way ("register-opt", "register", "bin/runevm --jit=all --jit-tier=2", "test-register-jit")]
     @ List.map (fn h => way ("host-" ^ h, h, "bin/runevm-stack", "test-all")) hosts
     @ (if native then
-         [{name = "native", compiler = stackCompiler, vm = "bin/runevm-native", tag = "test-native", skip = true},
+         [{name = "native", compiler = stackCompiler, vm = "bin/runevm-native", tag = "test-native", skip = SOME "tests/opt-skip.txt"},
           {name = "native-cycles", compiler = stackCompiler,
            vm = "bin/runevm-native --gc low-pause --nursery 4096 --gc-stress " ^ gcStress ^ " --gc-stress-cycles",
-           tag = "test-native", skip = true}]
+           tag = "test-native", skip = SOME "tests/opt-skip.txt"}]
        else [])
+    (* the VMs of other machines (make test-portability), which are not
+       make check's: a 32-bit x86, a big-endian PowerPC and an aarch64 under
+       qemu, each also with a cycle of incremental marking always under way *)
+    @ List.concat (List.map (fn (name, compiler, vm) =>
+                               let val cycles = " --gc low-pause --gc-stress " ^ gcStress ^ " --gc-stress-cycles"
+                               in
+                                 {name = "port-" ^ name, compiler = compiler, vm = vm, tag = "test-portability",
+                                  skip = SOME "tests/portability-skip.txt"}
+                                 :: (if String.isSuffix "aarch64" vm then []
+                                     else [{name = "port-" ^ name ^ "-cycles", compiler = compiler, vm = vm ^ cycles,
+                                            tag = "test-portability", skip = SOME "tests/portability-skip.txt"}])
+                               end)
+                            [("stack32", stackCompiler, "bin/runevm-stack32"), ("stack-ppc64", stackCompiler, "bin/runevm-stack-ppc64"),
+                             ("32", "register", "bin/runevm32"), ("ppc64", "register", "bin/runevm-ppc64"),
+                             ("aarch64", "register", "bin/runevm-aarch64")])
 
   (* ---- the commands *)
   val tz = "TZ='NST3:30NDT,M3.2.0,M11.1.0'; export TZ; "
@@ -263,7 +279,7 @@ struct
     in
       Test.it name
         ({program = "/bin/sh", args = ["sh", "-c", script], env = NONE, dir = NONE, stdin = stdin,
-          timeout = Time.fromSeconds 900, cap = 0, cpus = 1, memory = if #skip w then 300 else 100, pools = [],
+          timeout = Time.fromSeconds 900, cap = 0, cpus = 1, memory = if isSome (#skip w) then 300 else 100, pools = [],
           exclusive = false, after = after, judge = runJudge (#name w = "test", name)} : Run.command)
     end
 
@@ -272,6 +288,8 @@ struct
   val errorPrograms = programs "tests/errors"
   (* the programs native code does not run (docs/testing.md, Expectations) *)
   val optSkip = Expectations.read "tests/opt-skip.txt"
+  val portabilitySkip = Expectations.read "tests/portability-skip.txt"
+  fun expectationsOf file = if file = "tests/opt-skip.txt" then optSkip else portabilitySkip
 
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
   (* what the programs cover, for --affected; the tier quick has the
@@ -280,6 +298,13 @@ struct
   (* a host's compiler needs the host's build *)
   fun needs compiler t = if List.exists (fn h => h = compiler) hosts then Test.requires [compiler] t else t
   fun extraTags tag = (if tag = "test" then ["quick"] else []) @ (if tag = "test-heap" then ["layout"] else [])
+                      @ (if tag = "test-portability" then ["portability", "vm"] else [])
+  (* a way of another machine is not make check's, and one under qemu needs qemu *)
+  fun portable (w : way) = #tag w = "test-portability"
+  fun wayTags (w : way) = (if portable w then [] else ["check"]) @ [#tag w] @ extraTags (#tag w)
+  fun wayNeeds (w : way) t =
+    if portable w andalso (String.isSubstring "ppc64" (#vm w) orelse String.isSubstring "aarch64" (#vm w))
+    then Test.requires ["qemu"] t else t
 
   val tests =
     Test.describe ""
@@ -295,12 +320,13 @@ struct
                                                        (Test.describe c (List.map (error (c, command)) errorPrograms))))
                    compilers),
        Test.describe "lang"
-         (List.map (fn w => needs (#compiler w) (tagged (["check", #tag w] @ extraTags (#tag w) @ covers)
+         (List.map (fn w => wayNeeds w (needs (#compiler w) (tagged (wayTags w @ covers)
                               (Test.describe (#name w)
                                  (List.map (fn n =>
-                                              case (#skip w, Expectations.skipped (optSkip, {way = #name w, path = n})) of
-                                                (true, SOME l) => Test.pending (#category l ^ ": " ^ #reason l) (run w n)
-                                              | _ => run w n)
-                                           langPrograms))))
+                                              case Option.mapPartial (fn f => Expectations.skipped (expectationsOf f, {way = #name w, path = n}))
+                                                                     (#skip w) of
+                                                SOME l => Test.pending (#category l ^ ": " ^ #reason l) (run w n)
+                                              | NONE => run w n)
+                                           langPrograms)))))
                    ways)]
 end

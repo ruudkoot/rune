@@ -121,7 +121,6 @@ struct
       [extra ("test-register-asan", ["vm"]),
        extra ("test-stress", ["vm"]),
        Test.requires ["windows"] (extra ("test-windows", ["vm", "windows"])),
-       Test.requires ["qemu"] (extra ("test-portability", ["vm", "portability"])),
        Test.requires Lang.hosts (extra ("matrix-quick", ["library"])),
        Test.requires Lang.hosts (extra ("test-lib-hosts", ["library"]))]
 
@@ -131,8 +130,10 @@ struct
     [{name = "tmux", probe = "command -v tmux", hint = "install tmux (apt, dnf, pacman, brew: tmux)"},
      {name = "python3", probe = "command -v python3", hint = "install python3 (apt, dnf: python3; pacman, brew: python)"},
      {name = "cc", probe = "command -v ${CC:-cc}", hint = "install a C compiler (apt: build-essential; dnf: gcc; pacman: base-devel; brew: gcc)"},
-     {name = "qemu", probe = "command -v qemu-ppc64 || command -v qemu-ppc64-static",
-      hint = "install qemu-user (apt, dnf: qemu-user), registered for the PowerPC (tests/portability-skip.txt)"},
+     (* registered with the kernel too: a fork by a VM under qemu is an exec
+        of its own binary, which hangs where the kernel cannot start it *)
+     {name = "qemu", probe = "{ command -v qemu-ppc64 || command -v qemu-ppc64-static; } && [ -e /proc/sys/fs/binfmt_misc/qemu-ppc64 ] && [ -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]",
+      hint = "install qemu-user (apt, dnf: qemu-user) and register it: sudo sh -c 'cat /usr/lib/binfmt.d/qemu-ppc64.conf > /proc/sys/fs/binfmt_misc/register' (and qemu-aarch64.conf)"},
      {name = "windows", probe = "sh tests/windows-dir.sh && command -v x86_64-w64-mingw32-gcc",
       hint = "Windows under WSL with interop (RUNE_WINDOWS_DIR names a directory there) and mingw-w64 (apt: gcc-mingw-w64-x86-64 gcc-mingw-w64-i686)"}]
     @ List.map (fn h => {name = h, probe = "test -x bin/rune-" ^ h, hint = "run: make hosts, then make " ^ h}) Lang.hosts
@@ -168,7 +169,7 @@ struct
        expectations ("mlton-skip", "tests/external/mlton-skip.txt", NONE),
        expectations ("lib-deviations", "tests/lib/deviations.txt", NONE)]
 
-  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, Oracles.tree, Tools.tree, Protocols.tree, Canary.tests]
+  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, Oracles.tree, Tools.tree, Protocols.tree, Portability.tree, Canary.tests]
 end
 
 (* laws-one RBC STRUCTURE is the command of a job of the laws
@@ -184,4 +185,7 @@ val () =
             SOME f => f ()
           | NONE => case Protocols.command args of
                       SOME f => f ()
-                    | NONE => Cli.mainWith {tests = Inventory.tests, capabilities = Inventory.capabilities}
+                    | NONE =>
+                  case Portability.command args of
+                    SOME f => f ()
+                  | NONE => Cli.mainWith {tests = Inventory.tests, capabilities = Inventory.capabilities}

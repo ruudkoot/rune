@@ -279,9 +279,10 @@ it ships `ConditionVirtualization=!wsl` for `systemd-binfmt.service` to keep
 its own `WSLInterop` registration, which `make test-windows` needs; register
 qemu beside that one rather than by starting the service, which flushes every
 registration first (`tests/portability-skip.txt` has the command). Without it
-`tests/run-portability.sh` refuses to start, naming the command, since the
-child would never start and the parent would wait for it for ever; `make
-doctor` checks the registration too. It does not survive a restart of WSL
+the runner's capability `qemu` is missing, and the tests under qemu are not
+run (`bin/rune-test doctor --tier test-portability` names the command),
+since the child would never start and the parent would wait for it for
+ever; `make doctor` checks the registration too. It does not survive a restart of WSL
 unless the boot command in `/etc/wsl.conf` redoes it.
 
 It found two bugs when it was written. A `Value` was 12 bytes on a 32-bit

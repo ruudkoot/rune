@@ -37,7 +37,7 @@ What it rests on:
 | M10 | The tools' suites || done 2026-10-12 |
 | M11 | The protocol suites in SML || done 2026-10-12 |
 | M12 | Requirements and the doctor || done 2026-10-12 |
-| M13 | The matrix, and the other machines | |
+| M13 | The matrix, and the other machines || done 2026-10-12 |
 | M14 | The rest, and the tools for flaky tests | |
 | M15 | The final calibration | |
 
@@ -1754,6 +1754,10 @@ M1 and M2 are independent of each other and of the rest.
   | `run-laws-hosts.py` | 557 |
   | `run-tests.sh` | 242 |
 * **Why so late:** most of its worth is outside `make check`, and it is the most host knowledge in one file. Its generators (`gen-host-basis.sh`, the `xc2` rewriters) stay as steps.
+
+* **Done** (2026-10-12), for the machines; the matrix's port is still to come:
+  - **Portability** (`tests/runner/portability.sml`): tests/lang on the 32-bit, PowerPC and aarch64 VMs and their variants under incremental marking are ten more ways of M4 (`lang/port-*`), compiled once; the counts of --count on every VM and this one, the image of each VM read by every other, the bytecode each VM must refuse (`run-vm-tests.sh`, a job a VM), the JIT's checks on the aarch64 (the oracle of M9 on another VM, `port-jit/*`), and the matrix's configuration `portability`, as jobs of the tier `test-portability`, outside `check`. The capability `qemu` probes the kernel's registration of qemu as well, which run-portability.sh checked before it started. `run-portability.sh` is gone.
+  - **Not yet:** the matrix's configurations as ways (`run-matrix.sh`, its probes, sections and images), the Windows runner (`run-windows.sh`, `windows-dir.sh`, and so `run-tests.sh` and `run-vm-tests.sh`), and the hosts' runs of the libraries and the laws (`run-hosts.sh`, `run-laws-hosts.py`). They hold most of the knowledge of the hosts and of Windows; each still runs, as a make target and as a profile's job. Their port is the next work of this roadmap (*Later*).
 
 ### M14. The rest, and the tools for flaky tests (L, about 1,500)
 

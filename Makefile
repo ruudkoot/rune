@@ -813,20 +813,8 @@ bin/runevm-aarch64: bin/runevm-aarch64.bin Makefile
 # Basis suite gets longer than the two minutes a program is otherwise given:
 # the largest of the monomorphic tests takes 34 s here and about six minutes
 # there.
-test-portability: portability $(RUNE) vm
-	sh tests/run-portability.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack32 --vm bin/runevm-stack-ppc64
-	sh tests/run-portability.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
-	  --vm bin/runevm32 --vm bin/runevm-ppc64 --vm bin/runevm-aarch64
-	JIT_VM=bin/runevm-aarch64 $(RUNE_TEST) --tier test-register-jit 'jit/*'
-	RUNE=$(abspath $(RUNE_STACK)) RUNE_MATRIX_TIMEOUT=$(PORT_TIMEOUT) \
-	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs portability
-	@for v in runevm-stack32 runevm-stack-ppc64 runevm32 runevm-ppc64; do \
-	  printf '#!/bin/sh\nexec "$(ROOT)/bin/%s" --gc low-pause --gc-stress $(GC_STRESS) --gc-stress-cycles "$$@"\n' $$v > bin/$$v-cycles; \
-	  chmod +x bin/$$v-cycles; \
-	done
-	sh tests/run-portability.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack32-cycles --vm bin/runevm-stack-ppc64-cycles
-	sh tests/run-portability.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
-	  --vm bin/runevm32-cycles --vm bin/runevm-ppc64-cycles
+test-portability: portability $(RUNE) vm bin/rune-test
+	$(RUNE_TEST) --tier test-portability
 
 # ---------------------------------------------------------------- tests
 # Depending on $(RUNE) builds whichever compiler the override names. The
@@ -1378,7 +1366,8 @@ bootstrap: bin/rune-boot bin/rune.stack.rbc bin/rune-test
 # the tests): the inventory of tests/runner over lib/test/runner, compiled
 # by $(RUNE) and run on the register VM with its JIT.
 RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.sml tests/runner/laws.sml tests/runner/sh.sml \
-               tests/runner/oracles.sml tests/runner/tools.sml tests/runner/protocols.sml tests/runner/main.sml
+               tests/runner/oracles.sml tests/runner/tools.sml tests/runner/protocols.sml tests/runner/portability.sml \
+               tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml)
 	$(RUNE) --library test/runner --library json $(RUNNER_SRCS) -o $@

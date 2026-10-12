@@ -4,8 +4,8 @@
 #
 # make check and the test targets run these programs on bin/rune-test, in
 # their ways (tests/runner/lang.sml, which judges them as this script does);
-# this script stays for the runners of other machines (run-portability.sh,
-# run-windows.sh) and for runs by hand.
+# this script stays for the runner of Windows (run-windows.sh) and for runs
+# by hand.
 #
 # tests/lang/<id>_<name>.sml : compiled and run; stdout must equal the
 #   matching .expected file. Optional siblings: .cargs (options for the
@@ -196,7 +196,7 @@ fi
 [ -n "$jobs" ] || jobs=$(sh scripts/ncpus.sh)
 # A skip file names the programs to leave out, one to a line, with a reason
 # after the name; a line beginning with # is a comment. Only a runner that
-# gives the VM of another machine uses it (tests/run-portability.sh).
+# gives the VM of another machine uses it (tests/run-windows.sh).
 skipped=""
 nskip=0
 if [ -n "$skip" ]; then
