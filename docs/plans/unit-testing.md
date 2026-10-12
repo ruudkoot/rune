@@ -32,7 +32,7 @@ What it rests on:
 | M5 | The first calibration: tiers, profiles, `--affected` | done 2026-10-12 |
 | M6 | One engine for expectations | done 2026-10-12 |
 | M7 | The Basis suite on the runner || done 2026-10-12 |
-| M8 | Laws on the runner | |
+| M8 | Laws on the runner || done 2026-10-12 |
 | M9 | The differential checks as oracles | |
 | M10 | The tools' suites | |
 | M11 | The protocol suites in SML | |
@@ -1645,6 +1645,10 @@ M1 and M2 are independent of each other and of the rest.
 * **What:** runedoc's law programs as suites. The runner's filter, resume and worker restart replace `Check.laws`' environment variables and `run-laws.sh`'s watchdog. `law-skips.txt` is read by the engine of M6.
 * **Retires:** `tests/basis/run-laws.sh` (205 lines).
 * **Done when:** the laws' results are those of `run-laws.sh`, and a law that hangs is stopped and the run goes on after it.
+* **Done** (2026-10-12):
+  - **`tests/runner/laws.sml`:** `runedoc --laws` writes the programs into `build/laws` (make check-tools); each is compiled (`laws-compile/NAME`) and run a structure at a time (`laws/NAME@STRUCTURE`, 169 jobs of 48 programs) by `bin/rune-test laws-one`, run-laws.sh's loop in SML over `Subprocess`: the memory bound, a watchdog that stops a case with no line for `LAWS_TIMEOUT` seconds, and the restart with the case skipped from the law it was in, ten stops or fifty skips making a law STOPPED. `law-skips.txt` is read by the engine of M6, which now takes a line of three fields as one of every way, so runedoc reads the file as it did.
+  - **The same results:** all 169 pass, as with run-laws.sh; a planted program whose first case loops is stopped after the timeout, its case skipped, and both its laws judged. `run-laws.sh` is gone; the runner's filters replace `LAWS_AT` and its history the order of `laws.times`.
+  - **Found on the way:** `tests/lang/basis.subprocess` counted differently from run to run, which check-jit on aarch64 found: `Subprocess` and `Runtime.clock` made times through `IntInf`, whose cost depends on the value. They use `Time.ofMicros` now (amended into M2).
 
 ### M9. The differential checks as oracles (M, about 900)
 

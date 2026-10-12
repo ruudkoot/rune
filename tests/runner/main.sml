@@ -5,7 +5,8 @@
    The programs of tests/lang and tests/errors are the runner's own tests,
    in every way make check ran them (tests/runner/lang.sml), and so are the
    Basis Library suite's in make check's four configurations of Rune
-   (tests/runner/basis.sml). The rest of
+   (tests/runner/basis.sml), and the laws of its documentation
+   (tests/runner/laws.sml). The rest of
    what the old recipe of `make check` ran is a step each, an opaque `make`
    of its target. make check-tools builds what any of them needs before the
    runner starts, so that no two steps build one file at once; then the
@@ -103,7 +104,6 @@ struct
              ["tests/compiler/*", "tests/runtime/*"]),
        step ("test-heap-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}, ["layout"], ["tests/runtime/*"]),
        alone ("test-all-steps", [], ["tests/compiler/*"]),
-       some ("test-laws", [], ["tests/basis/*", "lib/test/property/*", "lib/random/*"]),
        some ("check-positions", [], langFiles @ ["examples/*"]),
        some ("check-docs", ["docs"], ["*.md", "docs/*", "tests/basis/*", "lib/random/*", "lib/test/property/*"]),
        step ("check-reproducible", {cpus = Int.min (2, few), memory = 500, pools = [], after = []}, [], ["examples/hello.sml"]),
@@ -177,7 +177,12 @@ struct
        expectations ("mlton-skip", "tests/external/mlton-skip.txt", NONE),
        expectations ("lib-deviations", "tests/lib/deviations.txt", NONE)]
 
-  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Canary.tests]
+  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Laws.tree, Canary.tests]
 end
 
-val () = Cli.main Inventory.tests
+(* laws-one RBC STRUCTURE is the command of a job of the laws
+   (tests/runner/laws.sml); every other command is the runner's *)
+val () =
+  case CommandLine.arguments () of
+    ["laws-one", rbc, st] => Laws.one (rbc, st)
+  | _ => Cli.main Inventory.tests

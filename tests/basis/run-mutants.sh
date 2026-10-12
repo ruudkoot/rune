@@ -8,14 +8,14 @@
 # Library with that one change, beside lib/test/property and lib/random:
 # the programs of `runedoc --laws` that hold a law at the structure are
 # compiled against it and run with RUNE_PROPERTY_AT, under the memory bound
-# and the watchdog of run-laws.sh. A mutant is KILLED when a law that passes
+# and a watchdog as the laws have (tests/runner/laws.sml). A mutant is KILLED when a law that passes
 # at the structure on the Basis Library does not pass on the mutant (it
 # fails, is stopped, or never runs), SURVIVED when every such law passes, and
 # STILLBORN when a program does not compile. In
 # tests/out/mutants: results.txt, a line for each mutant with the laws that
 # killed it, and summary.txt, the counts of each target.
 # The programs run on the register VM with its JIT (bin/rune, bin/runevm),
-# as run-laws.sh's do. Override the tools with RUNE=, RUNEVM= and RUNEDOC=.
+# as the laws' do in make check. Override the tools with RUNE=, RUNEVM= and RUNEDOC=.
 set -u
 cd "$(dirname "$0")/../.."
 top=$(pwd)

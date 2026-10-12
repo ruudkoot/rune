@@ -101,7 +101,10 @@ The programs of `tests/lang` and `tests/errors` are the runner's own tests
 `tests/runner/lang.sml`), and so are the Basis Library suite's in Rune's four
 configurations and the examples of its documentation
 (`basis-compile/COMPILER/TEST`, `basis/CONFIG/TEST`, `basis/CONFIG/@stale`,
-`basis-examples/NAME`; `tests/runner/basis.sml`); the rest of `make check` is a step each, an
+`basis-examples/NAME`; `tests/runner/basis.sml`) and the laws of its
+documentation (`laws-compile/NAME`, `laws/NAME@STRUCTURE`, each under a
+watchdog that skips a case that hangs or runs out of memory and goes on;
+`tests/runner/laws.sml`); the rest of `make check` is a step each, an
 opaque `make` of its target (`tests/runner/main.sml`): the steps that run
 the programs of `tests/lang` from the root of the tree share the pool
 `lang` and run one at a time, and the others run beside them. Five canaries, tests that fail on purpose (an exit with 1, a
@@ -134,8 +137,9 @@ to parse and to name programs that exist (`expectations/*`).
 `tests/basis/deviations.txt` is read by the engine for the Basis suite in
 Rune's configurations (`tests/runner/basis.sml`, with run-matrix.sh's rule
 that any line explains a failure and a line that explains none is stale),
-and by `run-matrix.sh` for the hosts; the laws' lists have their own reader
-until the laws are on the runner.
+and by `run-matrix.sh` for the hosts; `tests/basis/law-skips.txt` (lines of
+three fields, of every way) by the engine for the laws
+(`tests/runner/laws.sml`).
 
 ## The three oracles
 

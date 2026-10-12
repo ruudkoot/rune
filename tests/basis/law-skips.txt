@@ -9,7 +9,7 @@
 # it is not run, because the tester gives up on it or it is no Standard ML at
 # the structure. `runedoc --law-skips` marks every law listed here on its page,
 # with the reason, and fails on a line that names no law.
-# tests/basis/run-laws.sh counts a listed law's failure as known, and a listed
+# make check (tests/runner/laws.sml) counts a listed law's failure as known, and a listed
 # law that passes as a line to remove.
 
 # ---- Real arithmetic: laws that hold over the reals and not in floating point

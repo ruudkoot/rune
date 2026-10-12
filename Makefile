@@ -1135,8 +1135,15 @@ test-lib: $(RUNE) $(RUNEDOC) vm manifests
 # implements its signature (docs/plans/quickcheck.md, M8): every law holds,
 # or tests/basis/law-skips.txt lists it (D12). In `make check` since the end
 # of the hunt (M9); RUNE_PROPERTY_DEEP=1 runs the deep mode.
-test-laws: $(RUNE) $(RUNEDOC) vm manifests
-	RUNE=$(RUNE) RUNEVM=$(RUNEVM_REGISTER) RUNEDOC=$(RUNEDOC) sh tests/basis/run-laws.sh -j $(JOBS)
+test-laws: $(RUNE) $(RUNEDOC) vm manifests build/laws/.done bin/rune-test
+	$(RUNE_TEST) --tier test-laws
+
+# The programs of the laws, one for each signature with a law (runedoc
+# --laws), which the runner compiles and runs (tests/runner/laws.sml)
+build/laws/.done: $(RUNEDOC) $(wildcard lib/basis/*.sml)
+	rm -rf build/laws && mkdir -p build/laws
+	$(RUNEDOC) --lib lib --library basis --laws build/laws > build/laws.log 2>&1 || { cat build/laws.log; exit 1; }
+	touch $@
 
 # The same libraries on the hosts, against their own Basis Library (after a
 # change to a library, as matrix-quick is after one to lib/basis).
@@ -1398,7 +1405,7 @@ bootstrap: bin/rune-boot bin/rune.stack.rbc
 # The test runner (docs/plans/unit-testing.md, M3; docs/testing.md, Running
 # the tests): the inventory of tests/runner over lib/test/runner, compiled
 # by $(RUNE) and run on the register VM with its JIT.
-RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.sml tests/runner/main.sml
+RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.sml tests/runner/laws.sml tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml)
 	$(RUNE) --library test/runner $(RUNNER_SRCS) -o $@
@@ -1414,7 +1421,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runedoc-mlton bin/runeopt-mlton bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy \
                build/librune.a bin/runevm-gcbits bin/runevm-cards \
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
-               build/.doctor-check bin/rune-test build/basis-examples/.done \
+               build/.doctor-check bin/rune-test build/basis-examples/.done build/laws/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
 check-tools: $(CHECK_TOOLS)
 
