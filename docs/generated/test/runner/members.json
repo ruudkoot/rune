@@ -14,7 +14,7 @@
    ]
   },
   "EXPECTATIONS": {
-   "doc": "What a suite expects of its tests in some ways (docs/plans/unit-testing.md,\nD16; docs/testing.md, Expectations): one format, and one meaning for\neach category, for every list of deviations and skips.\n\nA file has a line for each expectation, and `#` begins a comment:\n\n```sml\nWAY-GLOB | PATH-GLOB[::LABEL-GLOB] | CATEGORY | reason\n```\n\nThe globs have `*` (any run of characters) and `?` (one character), and\nmust match the whole way, path or label. A category's meaning is one of\nfour:\n\n- strict: the test must fail where the line says (`RUNE-DEV`, `HOST-BUG`,\n  `WIDTH`, `SPEC-AMBIGUOUS`, `WINDOWS`, `EMULATED`, `FAILS`). A test that\n  passes there fails, and a line that matches no failure in a way that\n  ran is stale;\n- lenient: the test may pass or fail (`HOST-FLAKY`, `FLAKY`);\n- skip: the test is not run, for the reason given (`HOST-ABSENT`,\n  `XC1-NA`, `XC2-NA`, `UNTESTED`, `UNSUPPORTED`). A line that names no\n  test is stale;\n- quarantine: the test runs and is reported, and its failure fails\n  nothing until the date the reason begins with (`QUARANTINE`, with\n  `until YYYY-MM-DD:`); after it the line is stale.\n\n",
+   "doc": "What a suite expects of its tests in some ways (docs/plans/unit-testing.md,\nD16; docs/testing.md, Expectations): one format, and one meaning for\neach category, for every list of deviations and skips.\n\nA file has a line for each expectation, and `#` begins a comment:\n\n```sml\nWAY-GLOB | PATH-GLOB[::LABEL-GLOB] | CATEGORY | reason\n```\n\nThe globs have `*` (any run of characters), `?` (one character) and\n`[...]` (one of the characters, or ranges such as `0-9`, that it holds;\n`[!...]` one that it does not), as the shell has them, and must match the\nwhole way, path or label. A line of three fields,\n`PATH-GLOB | CATEGORY | reason`, is of every way. A category's meaning is one of\nfour:\n\n- strict: the test must fail where the line says (`RUNE-DEV`, `HOST-BUG`,\n  `WIDTH`, `SPEC-AMBIGUOUS`, `WINDOWS`, `EMULATED`, `FAILS`). A test that\n  passes there fails, and a line that matches no failure in a way that\n  ran is stale;\n- lenient: the test may pass or fail (`HOST-FLAKY`, `FLAKY`);\n- skip: the test is not run, for the reason given (`HOST-ABSENT`,\n  `XC1-NA`, `XC2-NA`, `UNTESTED`, `UNSUPPORTED`). A line that names no\n  test is stale;\n- quarantine: the test runs and is reported, and its failure fails\n  nothing until the date the reason begins with (`QUARANTINE`, with\n  `until YYYY-MM-DD:`); after it the line is stale.\n\n",
    "page": "sig/EXPECTATIONS.md",
    "members": [
     {
@@ -63,7 +63,7 @@
      "kind": "val",
      "name": "glob",
      "spec": "val glob : string * string -> bool",
-     "doc": "`glob (g, s)` says whether the glob `g` matches the whole of `s`.\n\n**Example** `glob (\"lang/*/rt.?\", \"lang/native/rt.a\")`\n\n",
+     "doc": "`glob (g, s)` says whether the glob `g` matches the whole of `s`.\n\n**Example** `glob (\"lang/*/rt.?\", \"lang/native/rt.a\")`\n\n**Example** `glob (\"*.scan/DEC-[avfr]*\", \"Int.scan/DEC-v1\") andalso not (glob (\"[!o]x\", \"ox\"))`\n\n",
      "page": "sig/EXPECTATIONS.md#val-glob"
     },
     {

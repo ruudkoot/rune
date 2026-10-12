@@ -167,8 +167,9 @@ checked twice. When the documentation is made it is elaborated against the
 library, so that an example that is no Standard ML, is not a `bool`, names
 what is not there or compares what has no equality is an error at its
 comment. And `runedoc --examples DIR` writes the examples of each signature
-as a program, which `make test-basis` compiles and runs
-(`tests/basis/run-examples.sh`): an example that is false, or raises an
+as a program, which `make test-basis` compiles and runs (into
+`build/basis-examples`, as the runner's tests `basis-examples/*`;
+`tests/runner/basis.sml`): an example that is false, or raises an
 exception, fails it.
 
 The members of the signature are in scope as they are inside a structure that
@@ -311,7 +312,7 @@ bin/runedoc --lint FILE...      # what is wrong with the comments of the files
 bin/runedoc --page FILE...      # the pages of the signatures of the files, on the standard output
 bin/runedoc --dump-ir FILE...   # what the generator makes of them, before any rendering
 bin/runedoc --library basis --examples DIR   # the examples, as programs
-sh tests/basis/run-examples.sh  # write them, compile them and run them
+make build/basis-examples/.done && bin/rune-test run 'basis-examples/*'  # write them, compile and run them
 make docs                       # write docs/generated/basis; commit the result
 ```
 

@@ -174,7 +174,11 @@ struct
     [Test.it "Expectations.parse/the-lines" (fn () =>
        (Expect.that ("five lines", length sample = 5);
         Expect.that ("the label", #label (at 1) = SOME "overflow" andalso #path (at 1) = "Word64.toInt");
-        Expect.that ("the reason", #reason (at 3) = "until 2026-11-01: being fixed"))),
+        Expect.that ("the reason", #reason (at 3) = "until 2026-11-01: being fixed");
+        Expect.that ("a line of every way",
+                     case Expectations.parse ("e", "MATH.atan2/law-1@* | FAILS | the reals\n") of
+                       [l] => #way l = "*" andalso #path l = "MATH.atan2/law-1@*" andalso #category l = "FAILS"
+                     | _ => false))),
      Test.it "Expectations.parse/refuses" (fn () =>
        (Expect.raises ("no category", fn Expectations.Parse _ => true | _ => false,
                        fn () => Expectations.parse ("e", "* | a | NOPE | why\n"));
@@ -186,6 +190,10 @@ struct
        (Expect.that ("a star", Expectations.glob ("native*", "native-cycles"));
         Expect.that ("the whole", not (Expectations.glob ("native", "native-cycles")));
         Expect.that ("a question mark", Expectations.glob ("rt.?", "rt.a") andalso not (Expectations.glob ("rt.?", "rt.ab")));
+        Expect.that ("a class", Expectations.glob ("*[Ss]tring.x", "WideString.x") andalso not (Expectations.glob ("[Ss]x", "tx")));
+        Expect.that ("a range and a negation", Expectations.glob ("v[0-9]", "v7") andalso Expectations.glob ("[!o]x", "ax")
+                                                andalso not (Expectations.glob ("[!o]x", "ox")));
+        Expect.that ("a hyphen at the end", Expectations.glob ("[+-]1", "-1") andalso Expectations.glob ("[+-]1", "+1"));
         Expect.that ("stars between", Expectations.glob ("a*b*c", "axxbyyc") andalso not (Expectations.glob ("a*b*c", "axxbyy"))))),
      Test.it "Expectations.skipped/skip" (fn () =>
        (Expect.that ("skipped where it says", isSome (Expectations.skipped (sample, {way = "native", path = "rt.interrupt_self"})));

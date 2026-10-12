@@ -31,7 +31,7 @@ What it rests on:
 | M4 | `tests/lang` and `tests/errors` in ways, compiled once | done 2026-10-12 |
 | M5 | The first calibration: tiers, profiles, `--affected` | done 2026-10-12 |
 | M6 | One engine for expectations | done 2026-10-12 |
-| M7 | The Basis suite on the runner | |
+| M7 | The Basis suite on the runner || done 2026-10-12 |
 | M8 | Laws on the runner | |
 | M9 | The differential checks as oracles | |
 | M10 | The tools' suites | |
@@ -1634,6 +1634,11 @@ M1 and M2 are independent of each other and of the rest.
   - `tests/basis/run-examples.sh`.
 * **Retires:** `run-examples.sh` (51 lines), and `run-matrix.sh`'s part in `make check`.
 * **Done when:** the same checks pass and fail, the same deviation lines are used and stale, and the per-program times are in the history.
+* **Done** (2026-10-12):
+  - **`tests/runner/basis.sml`:** each of the 232 programs of `tests/basis` compiled once by the stack compiler (for `rune` and `rune:opt`, into `tests/out/matrix/rune`, where test-opt reads it) and once by `bin/rune` (for `rune:new` and `rune:jit`), and run in each configuration in a directory of its own, for at most `RUNE_MATRIX_TIMEOUT` seconds. The judge is run-matrix.sh's, as an agent read it off the script: the check lines, the SUMMARY's count, duplicate labels, and every failure explained by the first line of `deviations.txt` that matches it (a `rune` RUNE-DEV or SPEC-AMBIGUOUS line explains the other three too, and is not marked used). `basis/CONFIG/@stale` fails on a line that explained no failure, but a HOST-FLAKY line or one that matches a skipped check or one after a timeout.
+  - **The examples** of the documentation: `runedoc --examples` writes them into `build/basis-examples` (make check-tools), a test each. `tests/basis/run-examples.sh` is gone, and run-matrix.sh runs in no step of `make check`; the pool `matrix` is left to the profiles' extras.
+  - **Planted:** a deviation line removed (its failure unexplained) and a line that names no failure (stale), both found. On a green tree the four configurations pass, and `rune:new`'s and `rune:jit`'s RUNE-DEV lines are used.
+  - **Not done:** `T` stays as it is, on nothing but the Basis: the matrix compiles it on every host as plain source, which the unit-testing library would make a library on each (M13 is where the matrix comes to the runner). A program's compile error fails its compile, where run-matrix.sh cut the test into the sections that load: on a green tree every test loads in Rune, which is meant to be complete.
 
 ### M8. Laws on the runner (S–M, about 500)
 

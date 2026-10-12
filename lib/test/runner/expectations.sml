@@ -34,7 +34,9 @@ struct
         in
           if l = "" then NONE
           else
-            case List.map trim (String.fields (fn c => c = #"|") l) of
+            (* a line whose second field is a category names no way: every way *)
+            case (fn fs as (_ :: c :: _) => if isSome (meaning c) then "*" :: fs else fs | fs => fs)
+                   (List.map trim (String.fields (fn c => c = #"|") l)) of
               way :: target :: category :: rest =>
                 let
                   val where' = file ^ ":" ^ Int.toString number
@@ -68,15 +70,51 @@ struct
     in parse (file, TextIO.inputAll s) before TextIO.closeIn s end
     handle IO.Io _ => []
 
+  (* a glob's parts: a character, any one, any run, or a class (negated or
+     not, of ranges) *)
+  datatype part = Char of char | One | Run | Class of bool * (char * char) list
+
+  fun parts g =
+    let
+      val n = size g
+      fun class (i, neg) =
+        let
+          (* the ranges up to the closing bracket, or NONE when there is none *)
+          fun go (k, acc) =
+            if k >= n then NONE
+            else if String.sub (g, k) = #"]" andalso k > i then SOME (rev acc, k + 1)
+            else if k + 2 < n andalso String.sub (g, k + 1) = #"-" andalso String.sub (g, k + 2) <> #"]"
+            then go (k + 3, (String.sub (g, k), String.sub (g, k + 2)) :: acc)
+            else go (k + 1, (String.sub (g, k), String.sub (g, k)) :: acc)
+        in go (i, []) end
+      fun go i =
+        if i >= n then []
+        else case String.sub (g, i) of
+               #"*" => Run :: go (i + 1)
+             | #"?" => One :: go (i + 1)
+             | #"[" =>
+                 let val neg = i + 1 < n andalso String.sub (g, i + 1) = #"!"
+                 in case class (if neg then i + 2 else i + 1, neg) of
+                      SOME (ranges, k) => Class (neg, ranges) :: go k
+                    | NONE => Char #"[" :: go (i + 1)
+                 end
+             | c => Char c :: go (i + 1)
+    in Vector.fromList (go 0) end
+
   fun glob (g, s) =
     let
-      val n = size g and m = size s
-      (* the classic two pointers, with the last star to come back to *)
+      val ps = parts g
+      val n = Vector.length ps and m = size s
+      fun one (Char c, x) = c = x
+        | one (One, _) = true
+        | one (Class (neg, ranges), x) = neg <> List.exists (fn (a, b) => a <= x andalso x <= b) ranges
+        | one (Run, _) = false
+      (* the classic two pointers, with the last run to come back to *)
       fun go (i, j, star) =
         if j = m then
-          let fun stars k = k = n orelse (String.sub (g, k) = #"*" andalso stars (k + 1)) in stars i end
-        else if i < n andalso (String.sub (g, i) = #"?" orelse String.sub (g, i) = String.sub (s, j)) then go (i + 1, j + 1, star)
-        else if i < n andalso String.sub (g, i) = #"*" then go (i + 1, j, SOME (i + 1, j))
+          let fun runs k = k = n orelse (Vector.sub (ps, k) = Run andalso runs (k + 1)) in runs i end
+        else if i < n andalso one (Vector.sub (ps, i), String.sub (s, j)) then go (i + 1, j + 1, star)
+        else if i < n andalso Vector.sub (ps, i) = Run then go (i + 1, j, SOME (i + 1, j))
         else case star of
                SOME (si, sj) => go (si, sj + 1, SOME (si, sj + 1))
              | NONE => false

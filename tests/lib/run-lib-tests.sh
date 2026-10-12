@@ -155,7 +155,7 @@ else
 fi
 
 # the examples of lib/random's documentation, which must hold as the Basis
-# Library's do (tests/basis/run-examples.sh): one program for its signature
+# Library's do (basis-examples/*, tests/runner/basis.sml): one program for its signature
 ex=$out/random-examples
 mkdir -p "$ex"
 if "$runedoc" --lib lib --library random --examples "$ex" > "$ex/runedoc.log" 2>&1; then

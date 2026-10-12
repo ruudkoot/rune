@@ -6,8 +6,11 @@
 
        WAY-GLOB | PATH-GLOB[::LABEL-GLOB] | CATEGORY | reason
 
-   The globs have `*` (any run of characters) and `?` (one character), and
-   must match the whole way, path or label. A category's meaning is one of
+   The globs have `*` (any run of characters), `?` (one character) and
+   `[...]` (one of the characters, or ranges such as `0-9`, that it holds;
+   `[!...]` one that it does not), as the shell has them, and must match the
+   whole way, path or label. A line of three fields,
+   `PATH-GLOB | CATEGORY | reason`, is of every way. A category's meaning is one of
    four:
 
    - strict: the test must fail where the line says (`RUNE-DEV`, `HOST-BUG`,
@@ -54,7 +57,9 @@ sig
 
   (* `glob (g, s)` says whether the glob `g` matches the whole of `s`.
 
-     Example: `glob ("lang/*/rt.?", "lang/native/rt.a")` *)
+     Example: `glob ("lang/*/rt.?", "lang/native/rt.a")`
+
+     Example: `glob ("*.scan/DEC-[avfr]*", "Int.scan/DEC-v1") andalso not (glob ("[!o]x", "ox"))` *)
   val glob : string * string -> bool
 
   (* `find (ls, {way, path, label})` is the first line of `ls` that matches

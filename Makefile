@@ -1101,15 +1101,22 @@ docs: $(RUNEDOC) manifests
 	$(RUNEDOC) --palette docs/generated/palette
 
 # ---------------------------------------------------------------- Basis Library suite
-# tests/basis/README.md. The matrix targets compare Rune with other systems
-# and are not part of `make check`.
-# run-matrix.sh runs each program in its own directory, so $(RUNE) goes in absolute.
-# Then the examples of the documentation that are equations are tried
-# (tests/basis/run-examples.sh).
-test-basis: $(RUNE) $(RUNEDOC) vm | build/.doctor-check
-	RUNE=$(abspath $(RUNE_STACK)) RUNEVM=$(abspath $(RUNEVM)) \
-	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune
-	RUNE=$(RUNE) RUNEVM=$(RUNEVM_REGISTER) RUNEDOC=$(RUNEDOC) sh tests/basis/run-examples.sh
+# tests/basis/README.md. make test-basis is the suite in the configuration
+# rune on the runner, and the examples of the documentation that are
+# equations (tests/runner/basis.sml). The matrix targets compare Rune with
+# other systems and are not part of `make check`; run-matrix.sh runs each
+# program in its own directory, so $(RUNE) goes in absolute.
+test-basis: $(RUNE) $(RUNEDOC) vm build/basis-examples/.done bin/rune-test | build/.doctor-check
+	$(RUNE_TEST) --tier test-basis
+
+# The examples of the Basis Library's documentation that are equations, a
+# program for each signature that has them (runedoc --examples), which the
+# runner compiles and runs (tests/runner/basis.sml)
+build/basis-examples/.done: $(RUNEDOC) $(wildcard lib/basis/*.sml)
+	rm -rf build/basis-examples && mkdir -p build/basis-examples
+	$(RUNEDOC) --lib lib --library basis --examples build/basis-examples > build/basis-examples.log 2>&1 \
+	  || { cat build/basis-examples.log; exit 1; }
+	touch $@
 
 # Deterministic budgets on what `runevm-stack --count` reports, for benchmark
 # programs, the hello compile and the bootstrap (tests/perf/run-perf.sh;
@@ -1213,8 +1220,6 @@ test-native-steps: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) v
 	python3 tests/runtime/run-gc-log.py --rune $(RUNE_STACK) --vm bin/runevm-native
 	skip=" $$(sh tests/skipped.sh tests/opt-skip.txt native | tr '\n' ' ') "; \
 	  sh tests/opt/run-counts.sh -j $(JOBS) $$(for t in tests/lang/*.sml; do n=$$(basename $$t .sml); case $$skip in *" $$n "*) ;; *) echo tests/out/$$n.rbc ;; esac; done)
-	RUNE=$(abspath $(RUNE_STACK)) RUNE_MATRIX_BYTECODE="$(ROOT)/tests/out/matrix/rune" \
-	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:opt
 	RUNE_HEAP=$(RUNE_HEAP) sh tests/opt/run-bootstrap.sh
 	@mkdir -p tests/out/opt-debug
 	$(RUNE_STACK) examples/nqueens.sml -o tests/out/opt-debug/nqueens.rbc
@@ -1297,7 +1302,6 @@ test-register-steps: bin/runevm $(RUNE) vm bin/rune.stack.rbc
 	python3 tests/runtime/run-limits.py --rune bin/rune --vm bin/runevm
 	python3 tests/runtime/run-gc-log.py --rune bin/rune --vm bin/runevm
 	sh scripts/check-register.sh -j $(JOBS)
-	RUNE_NEW=$(abspath bin/rune) RUNEVM_NEW=$(abspath bin/runevm) sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:new
 
 # The suites through runtime/register with every function given to the JIT
 # (--jit=all; docs/plans/jit.md, M3, M4): tests/lang on a wrapper that
@@ -1319,7 +1323,6 @@ test-register-jit-steps: bin/runevm $(RUNE)
 	@! grep -n "\bx64_\|\ba64_\|\bX64\|\bA64" runtime/register/jit/emit.c runtime/register/jit/masm.c runtime/register/jit/masm.h runtime/register/jit/compile.c runtime/register/jit/compile.h runtime/register/jit.c \
 	  || { echo "check-asm: the emitters, the macro-assembler and the compiler name an encoder: they are written over runtime/register/jit/asm.h alone (M12)"; false; }
 	@echo "check-asm: the emitters name no encoder"
-	RUNE_NEW=$(abspath bin/rune) RUNEVM_NEW_JIT=$(abspath bin/runevm-opt) sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:jit
 	bin/runevm --jit-check
 	@mkdir -p build/register
 	$(CC) $(CFLAGS) $(RT_INC) -o build/register/x64_test tests/register/x64_test.c runtime/register/jit/x64.c runtime/sys/sys_$(SYS).c
@@ -1395,7 +1398,7 @@ bootstrap: bin/rune-boot bin/rune.stack.rbc
 # The test runner (docs/plans/unit-testing.md, M3; docs/testing.md, Running
 # the tests): the inventory of tests/runner over lib/test/runner, compiled
 # by $(RUNE) and run on the register VM with its JIT.
-RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/main.sml
+RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/basis.sml tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml)
 	$(RUNE) --library test/runner $(RUNNER_SRCS) -o $@
@@ -1411,7 +1414,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runedoc-mlton bin/runeopt-mlton bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy \
                build/librune.a bin/runevm-gcbits bin/runevm-cards \
                bin/runevm-census heapsim bin/runeisa-mlton bin/runeisa.rbc build/bench-catalog.rbc \
-               build/.doctor-check bin/rune-test \
+               build/.doctor-check bin/rune-test build/basis-examples/.done \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
 check-tools: $(CHECK_TOOLS)
 

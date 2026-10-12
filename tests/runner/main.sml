@@ -3,7 +3,9 @@
    check-tools` and then `bin/rune-test run --tier check`.
 
    The programs of tests/lang and tests/errors are the runner's own tests,
-   in every way make check ran them (tests/runner/lang.sml). The rest of
+   in every way make check ran them (tests/runner/lang.sml), and so are the
+   Basis Library suite's in make check's four configurations of Rune
+   (tests/runner/basis.sml). The rest of
    what the old recipe of `make check` ran is a step each, an opaque `make`
    of its target. make check-tools builds what any of them needs before the
    runner starts, so that no two steps build one file at once; then the
@@ -14,12 +16,13 @@
      root of the tree, and so write the files those programs write at fixed
      paths (tests/out/rt.*.img, basis.*.tmp). They run one at a time, each
      on most of the machine;
-   - the pool `matrix`: the steps that rewrite tests/out/matrix/report.md
-     and timings.tsv;
    - the pool `heap_test`: the steps that build and run build/heap_test;
-   - test-opt and test-native-steps read the stack compiler's bytecode in
-     tests/out and test-basis's in tests/out/matrix/rune: they wait for
-     them.
+   - test-opt reads the stack compiler's bytecode of tests/lang in tests/out
+     and of the Basis suite in tests/out/matrix/rune, and test-native-steps
+     the first: they wait for them.
+
+   The profiles' extras that run tests/basis/run-matrix.sh share the pool
+   `matrix`, for its report.
 
    Every other step writes only a directory of its own under tests/out, and
    runs beside the rest. A step is told its CPUs as JOBS, from
@@ -84,23 +87,22 @@ struct
 
   val make =
     Test.describe "make"
-      [lang ("test-opt", [], ["compile/stack-done", "make/test-basis"],
+      [lang ("test-opt", [], ["compile/stack-done", "basis-compile/stack-done"],
              langFiles @ perfFiles @ ["tests/opt/*", "tests/runtime/*", "tests/basis/*", "examples/*"]),
        lang ("check-levels", [], [], langFiles @ perfFiles),
        lang ("check-units", [], [], langFiles @ perfFiles @ ["tests/units/*"]),
-       lang ("test-native-steps", ["matrix"], ["compile/stack-done", "make/test-basis"],
+       lang ("test-native-steps", [], ["compile/stack-done"],
              langFiles @ ["tests/opt/*", "tests/basis/*", "tests/runtime/*", "examples/nqueens.sml"]),
-       lang ("test-register-steps", ["matrix"], [],
+       lang ("test-register-steps", [], [],
              langFiles @ perfFiles @ ["tests/opt/*", "tests/register/*", "tests/runtime/*", "tests/basis/*"]),
        lang ("check-cross", [], [],
              langFiles @ ["examples/*", "tests/basis/*", "tests/incremental/*", "tests/lib/*", "tests/doc/*", "tests/opt/*"]),
-       step ("test-register-jit-steps", {cpus = half, memory = 1000, pools = ["matrix"], after = []}, [],
+       step ("test-register-jit-steps", {cpus = half, memory = 1000, pools = [], after = []}, [],
              langFiles @ perfFiles @ ["tests/opt/*", "tests/register/*", "tests/basis/*"]),
        step ("test-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}, [],
              ["tests/compiler/*", "tests/runtime/*"]),
        step ("test-heap-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}, ["layout"], ["tests/runtime/*"]),
        alone ("test-all-steps", [], ["tests/compiler/*"]),
-       step ("test-basis", {cpus = few, memory = 1000, pools = ["matrix"], after = []}, [], ["tests/basis/*"]),
        some ("test-laws", [], ["tests/basis/*", "lib/test/property/*", "lib/random/*"]),
        some ("check-positions", [], langFiles @ ["examples/*"]),
        some ("check-docs", ["docs"], ["*.md", "docs/*", "tests/basis/*", "lib/random/*", "lib/test/property/*"]),
@@ -169,12 +171,13 @@ struct
   val expected =
     Test.describe "expectations"
       [expectations ("opt-skip", "tests/opt-skip.txt", SOME Lang.langPrograms),
+       expectations ("basis-deviations", "tests/basis/deviations.txt", NONE),
        expectations ("windows-skip", "tests/windows-skip.txt", SOME Lang.langPrograms),
        expectations ("portability-skip", "tests/portability-skip.txt", SOME Lang.langPrograms),
        expectations ("mlton-skip", "tests/external/mlton-skip.txt", NONE),
        expectations ("lib-deviations", "tests/lib/deviations.txt", NONE)]
 
-  val tests = Test.describe "" [make, extras, expected, Lang.tests, Canary.tests]
+  val tests = Test.describe "" [make, extras, expected, Lang.tests, Basis.tree, Canary.tests]
 end
 
 val () = Cli.main Inventory.tests

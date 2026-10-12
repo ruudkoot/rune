@@ -27,7 +27,7 @@ is one a program can name and nothing explains: it is a name beyond the signatur
 ## Examples that are run
 
 Every example is a closed expression of type `bool` that is true, and every counterexample a closed claim
-that does not hold: each is elaborated when these pages are made and tried by the test suite: 11 of them, in [`EXPECTATIONS`](sig/EXPECTATIONS.md) (4), [`HISTORY`](sig/HISTORY.md) (3), [`RUN`](sig/RUN.md) (1), [`SCHEDULER`](sig/SCHEDULER.md) (2), [`SUPERVISOR`](sig/SUPERVISOR.md) (1).
+that does not hold: each is elaborated when these pages are made and tried by the test suite: 12 of them, in [`EXPECTATIONS`](sig/EXPECTATIONS.md) (5), [`HISTORY`](sig/HISTORY.md) (3), [`RUN`](sig/RUN.md) (1), [`SCHEDULER`](sig/SCHEDULER.md) (2), [`SUPERVISOR`](sig/SUPERVISOR.md) (1).
 
 ---
 
