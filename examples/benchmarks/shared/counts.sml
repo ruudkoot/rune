@@ -18,8 +18,8 @@ struct
       | _ => raise Fail "invalid counter sample row") (List.tl (BenchCatalog.lines path))
   fun key (r:row) = (#name r,#profile r,#config r,#level r)
   fun model config =
-    if List.exists (fn c => c = config) ["rune","rune:opt"] then "stack"
-    else if List.exists (fn c => c = config) ["rune:new","rune:jit"] then "register"
+    if List.exists (fn c => c = config) ["rune:stack","rune:opt"] then "stack"
+    else if List.exists (fn c => c = config) ["rune","rune:new","rune:jit"] then "register"
     else raise Fail "unknown counter execution model"
   fun compare rows =
     let

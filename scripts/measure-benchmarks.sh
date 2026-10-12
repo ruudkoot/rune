@@ -1,6 +1,9 @@
 #!/bin/sh
 # Serial process/OS adapter. Manifest checks, workload validation and reports
 # are SML97. No instrumented run supplies a headline timing sample.
+# Configurations are resolved by tests/basis/run-matrix.sh --timing: `rune` is
+# Rune as shipped, bin/rune's register bytecode on bin/runevm at its default
+# JIT level, and rune:stack the stack bytecode on bin/runevm-stack.
 set -eu
 cd "$(dirname "$0")/.."
 root=$(pwd)
@@ -43,7 +46,7 @@ for value in "$samples" "$rounds"; do
 done
 if [ "$action" != time ]; then
   samples=1; rounds=1; mode=fresh
-  [ "$configs" != rune,native:mlton,native:smlnj-legacy,native:polyml ] || configs=rune,rune:opt,rune:new,rune:jit
+  [ "$configs" != rune,native:mlton,native:smlnj-legacy,native:polyml ] || configs=rune,rune:jit,rune:stack,rune:opt
 fi
 [ "$action" = count ] || [ "$update" = 0 ] || { echo 'budgets apply only to count runs' >&2; exit 2; }
 LC_ALL=C; export LC_ALL
@@ -141,7 +144,7 @@ while IFS="$(printf '\t')" read -r name seconds memory sources args expected inp
     config_dir=$out/$name/$(printf '%s' "$spec" | tr ':/' '--')
     mkdir -p "$config_dir"
     id=$spec; counters=$(printf '%s\t%s\t%s' - - -)
-    if ! sh tests/basis/run-matrix.sh --configs "$spec" --resolve-out "$config_dir/config.tsv" < /dev/null > "$config_dir/resolve.log" 2>&1; then
+    if ! sh tests/basis/run-matrix.sh --timing --configs "$spec" --resolve-out "$config_dir/config.tsv" < /dev/null > "$config_dir/resolve.log" 2>&1; then
       phase_dir=$config_dir; record configuration 0 0 missing-configuration 0; status=1; continue
     fi
     # Alias groups are expanded by the caller into one row per configuration.
@@ -249,7 +252,6 @@ while IFS="$(printf '\t')" read -r name seconds memory sources args expected inp
         cp "$bundle/prog" "$work/work/prog"; run_command=./prog
       fi
       set -- "$run_command"
-      [ "$host" != new ] || set -- "$@" --jit=off
       [ "$action" != count ] || set -- "$@" --count
       [ "$action" != stats ] || set -- "$@" --stats
       [ -z "$run_file" ] || set -- "$@" "$run_file"
