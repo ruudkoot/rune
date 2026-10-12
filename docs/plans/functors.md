@@ -222,8 +222,10 @@ names for the datatypes its body makes. That is MLton's `functorClosure`.
     time MLton takes to type-check its own sources.
 * **The whole program's output** for MLton's first 219 and 420 files is
   identical.
-* **The bytes of 645 of 1,582 unit files differ.** Fewer fresh names are
-  made, so the counters and datatype entries written into the files move.
+* **The bytes of 645 of 1,582 unit files differ.** At first this was put
+  down to fewer fresh names, so that the counters and datatype entries
+  written into the files move. Building M3 showed it is more than that:
+  *A contradiction in M3, found while building it*, below.
 
 ## What the others do
 
@@ -290,8 +292,9 @@ Static interpretation for code, and the functor's signature for types.
     types, and on the body's hash for code. An applying unit's basis is
     then the same as long as the functor's signature is, so the cut-off
     after it holds.
-  * the counters replayed so that unit files stay byte for byte the same,
-    or the gate taught to compare canonical output (E21's 645 files).
+  * the counters replayed, and M3 gated as *A contradiction in M3* below
+    says. Its first wording, unit files byte for byte the same as before,
+    cannot hold.
 * **Matching made cheaper**: the fast path for equal schemes, a cheaper
   `checkEnrich` and `mergeInfo`. It is most of `main.sml`'s cost.
 * **The equality program rejected**, with a test, and docs/language.md's
@@ -304,6 +307,62 @@ What A does not change: a change to a functor's body still recompiles every
 unit that applies it, since each has a copy of the body's code. Elaborating
 the copies that make code also stays: 15% of MLton's elaboration, plus the
 back end's work on each copy.
+
+### A contradiction in M3, found while building it
+
+performance.md's M3, and this file's *A, extended*, asked for two things
+that cannot both hold:
+
+* the functor's signature added to the export basis;
+* unit files kept byte for byte the same as before M3, by replaying the
+  counters.
+
+The front-end agent found it on 2026-10-12, while implementing M3, by
+looking at why E21's 645 unit files differed.
+
+* **The counters were the smaller part.** 323 of the 645 are code files
+  (`.rbu`), and they differ because the identities of the units they name
+  changed.
+* **The identities changed because the hashed bases changed.** Before M3,
+  a copy made only to check a functor's declaration recorded a usage for
+  every name the applied body looked up. A summary records none. So the
+  basis of a unit that only applies functors changes too:
+  `0292-integer.rbi` went from 6,240 bytes to 6,178.
+* **And the signature changes the rest.** Adding the functor's signature
+  to the export basis changes the interface file of every unit that
+  declares a functor, then its identity, then every code file that names
+  that unit.
+
+So replaying the counters cannot make the files equal. The difference is
+what M3 asks for, not a fault in it.
+
+**The gate M3 is held to instead** (the lead's ruling, 2026-10-12):
+
+1. **The whole program's output is byte for byte the base's:** the
+   bootstrap, the suites' outputs and bytecode, every error test's
+   messages, the five xc2 configurations, and MLton's 606 files compiled
+   whole. Static interpretation stays, so the code does not change.
+2. **Unit files are equal in their code.** The `.rbu` files are compared
+   with units' identities masked, and the linked program of a build in
+   units is identical.
+3. **M3 is reproducible against itself.** A fresh build and one through
+   the cache give the same unit files (`check-units`,
+   `check-reproducible`, `test-incremental`, and MLton's units compiled
+   twice, once through the cache).
+4. **The cut-off is tested.** A scenario changes a functor's body and not
+   its signature. The applying units' interface files are byte for byte
+   the same across the change, and the units after them come from the
+   cache.
+5. **Old caches are invalidated.** The version keys of the cache and of
+   unit files are bumped, so that a cache made before M3 is a miss rather
+   than misread.
+
+The counters are still replayed, so that `used` matches.
+
+**Rejected:** keeping identities equal to the base's, by leaving the
+functor's signature out of the identity's hash and replaying the body's
+usages at checks. It would weaken the cut-off that M3 is meant to
+improve.
 
 ### B, functors as functions: to revisit
 
@@ -361,8 +420,8 @@ To be measured first:
 
 ## Open questions
 
-* **Unit files.** Replaying the counters so that unit files stay the same,
-  or comparing canonical output: E21 did neither.
+* **Unit files.** Settled: *A contradiction in M3, found while building
+  it*.
 * **What depends on the leak.** Whether MLton's sources, HOL4 or the
   libraries rely on equality leaking through a functor's result. M3
   answers it by compiling them.
