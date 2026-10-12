@@ -2788,6 +2788,7 @@ static int p_rt_link_error(VM *vm) {
 static int p_rt_interrupt_catch(VM *vm) {
     Obj *e = check_obj(vm, ARG(0), K_EXN, "rt_interrupt_catch");
     vm->interrupt_exn = e;
+    sys_interrupt_limit(&vm->stack_room);   /* the calls' poll (vm.h, M6) */
     return ret(vm, 1, mk_bool(sys_interrupt_catch(&vm->interrupt) == 0));
 }
 

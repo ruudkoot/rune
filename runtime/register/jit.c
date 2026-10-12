@@ -23,6 +23,7 @@
 static void free_tables(JitProgram *jit) {
     for (uint32_t i = 0; jit->codes && i < jit->nfuncs; i++) {
         free(jit->codes[i].osr_pcs); free(jit->codes[i].osr_offs); free(jit->codes[i].callers);
+        free(jit->codes[i].pending);
         free(jit->codes[i].sites);
         if (jit->names) free(jit->names[i]);
     }
@@ -90,6 +91,13 @@ static VM *the_vm;
 
 static void jit_make(VM *vm, JitProgram *jit) {
     Program *p = &vm->prog;
+    /* a world Runtime.restore made has a VM of its own, which the region's
+       return trampoline is given again, and its frames with it (M6) */
+    if (jit->ret_tramp && vm->ret_tramp != jit->ret_tramp) {
+        vm->ret_tramp = jit->ret_tramp;
+        for (size_t i = 0; vm->frames_active && i <= vm->fp; i++)
+            if (!vm->frames[i].native_ret) vm->frames[i].native_ret = vm->ret_tramp;
+    }
     /* the code made for the program before goes first: its frames return
        into the interpreter (jit_invalidate), since that code names the
        tables made again here. After Runtime.restore no frame returns into
@@ -107,6 +115,15 @@ static void jit_make(VM *vm, JitProgram *jit) {
     jit->code = p->code;
     jit->nfuncs = p->nfuncs;
     jit->compiled = 0;
+    /* where calls go (M6): every function interpreted, its room */
+    free(jit->calls);
+    jit->calls = malloc((p->nfuncs ? p->nfuncs : 1) * sizeof *jit->calls);
+    if (!jit->calls) { fprintf(stderr, "runevm: out of memory (code objects)\n"); exit(2); }
+    for (uint32_t i = 0; i < p->nfuncs; i++) {
+        jit->calls[i].entry = jit->call_interp;
+        jit->calls[i].need = (uint64_t)p->funcs[i].nlocals + p->funcs[i].maxstack;
+    }
+    vm->jit_calls = jit->calls;
     /* the code of the program before is left where it is: a frame of an
        image never returns into it, since native_ret is not carried */
     jit->code_used = jit->code_mem ? jit->code_used : 0;
@@ -192,13 +209,17 @@ void jit_invalidate(VM *vm, JitProgram *jit, uint32_t f) {
     uintptr_t lo = (uintptr_t)co->entry, hi = lo + co->size;
     for (size_t i = 0; i <= vm->fp; i++) {
         uintptr_t r = (uintptr_t)vm->frames[i].native_ret;
-        if (r >= lo && r < hi) vm->frames[i].native_ret = NULL;
+        if (r >= lo && r < hi) {
+            vm->frames[i].native_ret = vm->ret_tramp;
+            vm->frames[i].result = UINT32_MAX;   /* the loop's RET reads it from the code (vm.h, Frame; M6) */
+        }
     }
     for (size_t i = 0; i < vm->hp; i++) {
         uintptr_t r = (uintptr_t)vm->handlers[i].native;
         if (r >= lo && r < hi) vm->handlers[i].native = NULL;
     }
     co->entry = NULL;
+    jit->calls[f].entry = jit->call_interp;   /* calls go to the interpreter (M6) */
     co->tier = 0;
     co->calls = co->work = 0;
     free(co->osr_pcs); free(co->osr_offs);
@@ -228,6 +249,14 @@ static void jit_grow(VM *vm, JitProgram *jit) {
     if (!codes) { fprintf(stderr, "runevm: out of memory (code objects)\n"); exit(2); }
     jit->codes = codes;
     memset(codes + old, 0, (n - old) * sizeof(CodeObject));
+    CallInfo *calls = realloc(jit->calls, n * sizeof(CallInfo));
+    if (!calls) { fprintf(stderr, "runevm: out of memory (code objects)\n"); exit(2); }
+    jit->calls = calls;
+    for (uint32_t i = old; i < n; i++) {
+        calls[i].entry = jit->call_interp;
+        calls[i].need = (uint64_t)p->funcs[i].nlocals + p->funcs[i].maxstack;
+    }
+    vm->jit_calls = calls;
     if (jit->fill_from) {
         uint32_t *fill = realloc(jit->fill_from, n * sizeof *fill);
         if (!fill) { fprintf(stderr, "runevm: out of memory (code objects)\n"); exit(2); }
@@ -275,6 +304,7 @@ int jit_run(VM *vm, JitProgram *jit, const void *at) {
     int (*enter)(VM *, const void *);
     memcpy(&enter, &jit->enter_at, sizeof enter);
     int r = enter(vm, at);
+    vm->top_frame = NULL;   /* what compiled code said is live is of no frame the interpreter runs (VM.top_live, M6) */
     if (r == RUN_INTERP) jit->handed_interp++;
     return r;
 }

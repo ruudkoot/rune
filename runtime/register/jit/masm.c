@@ -7,6 +7,7 @@
 #include <string.h>
 
 #define OFF(field) ((int32_t)offsetof(VM, field))
+static void store_top_live(Masm *m);
 #define SLOT(k) slot(m, k)
 
 /* The layout as the code here writes it (runtime/value.h has it in C; this
@@ -466,6 +467,12 @@ void ms_cmp_bits(Masm *m, int r, int32_t s) {
     if (h && !is_raw(h)) as_cmp_rr(&m->a, r, h->reg);
     else as_cmp_rm(&m->a, r, BASER, SLOT(s));
 }
+void ms_cmp_words(Masm *m, int32_t x, int32_t y) {
+    const Home *hx = ms_home(m, x);
+    if (hx && !is_raw(hx)) { ms_cmp_bits(m, hx->reg, y); return; }
+    ms_load_bits(m, R_S0, x);
+    ms_cmp_bits(m, R_S0, y);
+}
 void ms_test_false(Masm *m, int32_t s) {
     const Home *h = ms_home(m, s);
     if (is_raw(h)) bug("a real or a number tested as a bool", s, 0);
@@ -494,6 +501,10 @@ static int imm_tested(const Masm *m, int32_t s, int tag) {
     (void)tag;
     return 0;
 #endif
+}
+int ms_imm_trusted(const Masm *m, int32_t s, int tag) {
+    const Home *h = ms_home(m, s);
+    return h && !is_raw(h) && !imm_tested(m, s, tag);
 }
 void ms_check_tag(Masm *m, int32_t s, int tag, AsmLabel *unless) {
     const Home *h = ms_home(m, s);
@@ -711,6 +722,26 @@ void ms_int_arith(Masm *m, int op, AsmLabel *slow) {
     default: bug("an operation ints do not have", op, MS_MUL);
     }
 }
+/* 2a+1 + 2b+1 - 1 and 2a+1 - (2b+1) + 1, as ms_int_arith, with the second
+   operand from its home (or its slot, its word loaded) and the result into
+   d's home (or its slot) */
+void ms_int_addsub_homes(Masm *m, int op, int32_t d, int32_t x, int32_t y, AsmLabel *slow) {
+    const Home *hx = ms_word_home(m, x), *hy = ms_word_home(m, y), *hd = ms_word_home(m, d);
+    int ry = hy ? hy->reg : R_S1;
+    if (!hy) ms_load_bits(m, R_S1, y);
+    if (op == MS_ADD) {
+        as_lea(&m->a, R_S0, hx->reg, -1, 1, -1);
+        as_add_rr(&m->a, R_S0, ry);
+        as_jcc(&m->a, CC_O, slow);
+        if (hd) as_mov_rr(&m->a, hd->reg, R_S0); else ms_set_bits(m, d, R_S0);
+    } else {
+        as_mov_rr(&m->a, R_S0, hx->reg);
+        as_sub_rr(&m->a, R_S0, ry);
+        as_jcc(&m->a, CC_O, slow);
+        if (hd) as_lea(&m->a, hd->reg, R_S0, -1, 1, 1);
+        else { as_lea(&m->a, R_S0, R_S0, -1, 1, 1); ms_set_bits(m, d, R_S0); }
+    }
+}
 void ms_int_neg(Masm *m, AsmLabel *slow) {
     as_mov_ri(&m->a, R_S1, 2);   /* 2 - (2n+1) = 2(-n)+1 */
     as_sub_rr(&m->a, R_S1, R_S0);
@@ -854,6 +885,13 @@ static int may_move(const Home *h) {
     return 0;
 #endif
 }
+/* the count to the VM: what the instructions so far make, the rest of the
+   run, counted where it began, less (Masm.ahead; R_S0 clobbered) */
+static void store_count(Masm *m) {
+    if (!m->ahead) { as_st64(&m->a, VMR, OFF(instructions), COUNTR); return; }
+    as_lea(&m->a, R_S0, COUNTR, -1, 1, -(int32_t)m->ahead);
+    as_st64(&m->a, VMR, OFF(instructions), R_S0);
+}
 static void writeback(Masm *m, uint32_t pc, int pushed) {
     if (!m->homes) return;
 #ifdef RUNE_JIT_CONV
@@ -933,9 +971,11 @@ void ms_emit_box(Masm *m, Slow *sp) {
     /* the one to box, live or not: the helper takes it from there */
     if (real) as_fst(&m->a, VMR, at, s.b); else as_st64(&m->a, VMR, at, s.b);
     as_st32i(&m->a, VMR, OFF(pc), (int32_t)s.pc);
-    as_lea(&m->a, R_S0, BASEI, -1, 1, (int32_t)(m->nlocals + (uint32_t)s.c));
+    ms_base_index(m, R_S0, m->nlocals + (uint32_t)s.c);
     as_st64(&m->a, VMR, OFF(sp), R_S0);
-    as_st64(&m->a, VMR, OFF(instructions), COUNTR);
+    store_count(m);
+    ms_store_fp(m);
+    store_top_live(m);
     as_mov_ri(&m->a, ms_arg(m, 1), s.a);
     as_ld64(&m->a, ms_arg(m, 2), VMR, at);
     ms_call(m, (MsHelper)(real ? m->box_real : m->box_num));
@@ -999,6 +1039,30 @@ void ms_reload_clobbered(Masm *m, uint32_t pc) {
 #ifdef RUNE_JIT_CONV
     m->conv_ctx = ctx;
 #endif
+}
+void ms_reload_homes_but(Masm *m, uint32_t pc, int32_t d) {
+    if (!m->homes) return;
+    for (uint32_t r = 0; r < m->nlocals; r++)
+        if (m->homes[r].kind != HOME_SLOT && (int32_t)r != d && live_at(m, pc, r)) slot_to_home(m, (int32_t)r, &m->homes[r]);
+}
+void ms_frame_back(Masm *m) {
+    as_sub_ri(&m->a, BASEI, (int32_t)sizeof(Frame));
+    as_sub_ri(&m->a, BASER, VALUE_SIZE * (int32_t)m->nlocals);
+}
+void ms_room(Masm *m, uint32_t need, AsmLabel *slow) {
+    ms_slot_end(m, R_S0, need);
+    as_cmp_rm(&m->a, R_S0, VMR, OFF(stack_room));
+    as_jcc(&m->a, CC_A, slow);
+}
+void ms_room_dynamic(Masm *m, int r, uint32_t above, AsmLabel *slow) {
+    as_lea(&m->a, R_S0, BASER, r, VALUE_SIZE, VALUE_SIZE * (int32_t)above);
+    as_cmp_rm(&m->a, R_S0, VMR, OFF(stack_room));
+    as_jcc(&m->a, CC_A, slow);
+}
+void ms_slot_end(Masm *m, int r, uint32_t k) { as_lea(&m->a, r, BASER, -1, 1, VALUE_SIZE * (int32_t)k); }
+void ms_base_index(Masm *m, int r, uint32_t k) {
+    as_ld64(&m->a, r, BASEI, (int32_t)offsetof(Frame, base));
+    if (k) as_add_ri(&m->a, r, (int32_t)k);
 }
 void ms_reload_homes(Masm *m, uint32_t pc) {
     if (!m->homes) return;
@@ -1198,30 +1262,65 @@ void ms_load_tag_of_con(Masm *m, int r, int32_t s, AsmLabel *unless) {
 }
 
 /* ---- the VM ---- */
+/* The frame index of the record at the address in r, into the word at
+   [base + off], r clobbered (M6). Compiled code keeps its frame in rbp alone --
+   a call and a return touch no frame index -- and tells the VM at every
+   sync, on the way into the interpreter and in the trampolines; C's
+   VM.fp is the truth only there, and after a call into C rbp is made from
+   it again (ms_reload). A record's address less the frames' over the
+   record's size, which is 2^k times an odd number: shifted by k, then
+   times the odd one's inverse modulo 2^32 -- exact for a multiple, and
+   no index reaches 2^32 -- and stored as the low half of the field and a
+   0 for the high one. */
+void ms_frame_index_to(Masm *m, int r, int base, int32_t off) {
+    uint32_t size = (uint32_t)sizeof(Frame), k = 0;
+    while (!(size & 1)) { size >>= 1; k++; }
+    uint32_t inv = size;   /* Newton's iteration: each step doubles the bits right */
+    for (int i = 0; i < 5; i++) inv *= 2 - size * inv;
+    as_sub_rm(&m->a, r, VMR, OFF(frames));
+    if (k) as_shr_ri(&m->a, r, (int)k);
+    if (size != 1) as_mul_ri(&m->a, r, r, (int32_t)inv);
+    as_st32(&m->a, base, off, r);
+    as_st32i(&m->a, base, off + 4, 0);
+}
+/* the registers live at the instruction's entry and the frame, for a
+   collection the call into C may make: VM.top_live (M6); R_S0 clobbered */
+static void store_top_live(Masm *m) {
+    if (!m->sync_live) return;
+    as_mov_ri(&m->a, R_S0, (int64_t)m->sync_live[m->cur_pc - m->from]);
+    as_st64(&m->a, VMR, OFF(top_live), R_S0);
+    as_st64(&m->a, VMR, OFF(top_frame), BASEI);
+}
+/* vm->fp := rbp's frame's index, R_S0 clobbered */
+void ms_store_fp(Masm *m) {
+    as_mov_rr(&m->a, R_S0, BASEI);
+    ms_frame_index_to(m, R_S0, VMR, OFF(fp));
+}
 void ms_sync(Masm *m, uint32_t pc, int pushed) {
     int role = ms_role(m, MR_SYNC);
     writeback(m, m->cur_pc, pushed);
     m->sync_pc = pc;
     as_st32i(&m->a, VMR, OFF(pc), (int32_t)pc);
-    as_lea(&m->a, R_S0, BASEI, -1, 1, (int32_t)(m->nlocals + (uint32_t)pushed));
+    ms_base_index(m, R_S0, m->nlocals + (uint32_t)pushed);
     as_st64(&m->a, VMR, OFF(sp), R_S0);
-    as_st64(&m->a, VMR, OFF(instructions), COUNTR);
+    store_count(m);
+    ms_store_fp(m);
+    store_top_live(m);
     ms_role(m, role);
 }
-/* r := &vm->frames[vm->fp] */
-void ms_frame(Masm *m, int r) {
-    as_ld64(&m->a, r, VMR, OFF(fp));
-    as_mul_ri(&m->a, r, r, (int32_t)sizeof(Frame));
-    as_add_rm(&m->a, r, VMR, OFF(frames));
-}
+/* r := &vm->frames[vm->fp]: rbp's (M6) */
+void ms_frame(Masm *m, int r) { if (r != BASEI) as_mov_rr(&m->a, r, BASEI); }
+/* the frame's record and registers from the VM: after a call into C, which
+   may have moved the stack or the frames, or raised */
 void ms_reload(Masm *m) {
     int role = ms_role(m, MR_SYNC);
     m->nfields = UINT32_MAX;
-    ms_frame(m, R_S1);
-    as_ld64(&m->a, BASEI, R_S1, (int32_t)offsetof(Frame, base));
-    as_mov_rr(&m->a, BASER, BASEI);
+    as_ld64(&m->a, BASEI, VMR, OFF(fp));
+    as_mul_ri(&m->a, BASEI, BASEI, (int32_t)sizeof(Frame));
+    as_add_rm(&m->a, BASEI, VMR, OFF(frames));
+    as_ld64(&m->a, BASER, BASEI, (int32_t)offsetof(Frame, base));
     as_shl_ri(&m->a, BASER, VALUE_SHIFT);
-    as_add_rm(&m->a, BASER, VMR, OFF(stack));   /* the stack itself has no register: only this and a RET want it */
+    as_add_rm(&m->a, BASER, VMR, OFF(stack));   /* the stack itself has no register: only this wants it */
     /* the homes live at the instruction's entry (the call clobbered them)
        and at its end (the helper may have written the slot of the one it
        defines) */
@@ -1285,8 +1384,9 @@ void ms_count(Masm *m, uint32_t k) {
 void ms_exit(Masm *m, uint32_t pc, uint32_t remaining) {
     ms_writeback(m, pc);
     as_st32i(&m->a, VMR, OFF(pc), (int32_t)pc);
-    as_lea(&m->a, R_S0, BASEI, -1, 1, (int32_t)m->nlocals);
+    ms_base_index(m, R_S0, m->nlocals);
     as_st64(&m->a, VMR, OFF(sp), R_S0);
+    ms_store_fp(m);
     as_lea(&m->a, R_S0, COUNTR, -1, 1, -(int32_t)remaining);
     as_st64(&m->a, VMR, OFF(instructions), R_S0);
     ms_handback(m, RUN_INTERP);
@@ -1430,6 +1530,7 @@ void ms_set_element(Masm *m, int obj, int index, int32_t s) {
 void ms_store_field_imm(Masm *m, int obj, uint32_t i, int tag, int32_t payload) {
     as_st64i(&m->a, obj, FIELD_OFF(i), (int32_t)word_of(tag, payload));
 }
+void ms_load_field_bits(Masm *m, int r, int obj, uint32_t i) { as_ld64(&m->a, r, obj, FIELD_OFF(i)); }
 void ms_load_field_payload(Masm *m, int r, int obj, uint32_t i) {
     as_ld64(&m->a, r, obj, FIELD_OFF(i));
     as_sar_ri(&m->a, r, 1);
@@ -1488,6 +1589,7 @@ Slow *ms_slow(Masm *m, int kind, uint32_t pc) {
     s->kind = kind;
     s->pc = pc;
     s->cur = m->cur_pc;
+    s->ahead = m->ahead;
     return s;
 }
 void ms_emit_slow_paths(Masm *m, void (*emit)(Masm *m, Slow *s)) {
@@ -1496,6 +1598,7 @@ void ms_emit_slow_paths(Masm *m, void (*emit)(Masm *m, Slow *s)) {
     for (int i = 0; i < m->nslow; i++) {
         as_bind(&m->a, &m->slow[i]->here);
         m->cur_pc = m->slow[i]->cur;
+        m->ahead = m->slow[i]->ahead;
         ms_mark_pc(m, m->slow[i]->cur);
         emit(m, m->slow[i]);
     }
@@ -1522,10 +1625,39 @@ void ms_emit_fatal(Asm *a, int win, MsHelper helper) {
     Masm m;
     memset(&m, 0, sizeof m);
     m.a = *a; m.win = win; m.nfields = UINT32_MAX;
+    as_mov_rr(&m.a, R_S2, BASEI);   /* the frame index, for the error's report (rdx: neither argument yet) */
+    ms_frame_index_to(&m, R_S2, VMR, OFF(fp));
     as_mov_rr(&m.a, ms_arg(&m, 2), R_S1);   /* first: rcx is the first argument on Windows */
     as_mov_rr(&m.a, ms_arg(&m, 1), R_S0);
     ms_call(&m, helper);
     as_trap(&m.a);
+    *a = m.a;
+}
+void ms_emit_ret_tramp(Asm *a, int win, MsHelper helper, AsmLabel *leave) {
+    Masm m;
+    memset(&m, 0, sizeof m);
+    m.a = *a; m.win = win; m.nfields = UINT32_MAX;
+    as_st64(&m.a, VMR, OFF(instructions), COUNTR);
+    as_mov_rr(&m.a, R_S2, BASEI);   /* the frame that returns, or the callee's */
+    ms_frame_index_to(&m, R_S2, VMR, OFF(fp));
+    as_mov_rr(&m.a, ms_arg(&m, 1), R_S0);
+    ms_call(&m, helper);
+    as_jmp(&m.a, leave);   /* with the answer in R_S0 */
+    *a = m.a;
+}
+void ms_emit_low(Asm *a, int win) {
+    Masm m;
+    memset(&m, 0, sizeof m);
+    m.a = *a; m.win = win; m.nfields = UINT32_MAX;
+    AsmLabel top; as_label_init(&top);
+    as_lea(&m.a, R_S2, BASEI, -1, 1, -(int32_t)sizeof(Frame));
+    as_cmp_rm(&m.a, R_S2, VMR, OFF(frames));
+    as_jcc(&m.a, CC_B, &top);
+    as_st64(&m.a, VMR, OFF(frame_low), R_S2);
+    ms_frame_index_to(&m, R_S2, VMR, OFF(fp_low));
+    as_bind(&m.a, &top);
+    as_jmp_r(&m.a, R_S1);
+    as_label_free(&top);
     *a = m.a;
 }
 void ms_emit_leave(Asm *a, int win) {

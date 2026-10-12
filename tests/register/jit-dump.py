@@ -15,7 +15,7 @@ import os, shutil, struct, subprocess, sys
 
 ROLES = {'body', 'count', 'poll', 'writeback', 'args', 'room', 'frameroom', 'frame', 'jump',
          'fill', 'land', 'ret', 'slow', 'sync', 'closure', 'ptrload', 'tag', 'alloc'}
-CALL = {'count', 'body', 'poll', 'writeback', 'args', 'room', 'frameroom', 'frame', 'jump', 'ret', 'fill', 'land', 'slow'}
+CALL = {'count', 'body', 'writeback', 'args', 'room', 'frame', 'jump', 'ret', 'land', 'slow'}   # since M6: no fill, no frames' room, the poll the room check's
 
 
 def fail(msg):

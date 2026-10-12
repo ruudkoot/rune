@@ -131,12 +131,19 @@ typedef struct Frame {
     size_t base;     /* stack index of local 0 */
     Obj *closure;    /* NULL for the toplevel */
     /* In a program runeopt made (runtime/native/native.c), the native code at ret_pc.
-       An image does not carry it: it is an address of one process. */
+       In runtime/register, where compiled code's RET goes (performance M6):
+       the landing of a caller's compiled call, which takes the value in a
+       register, or VM.ret_tramp, which hands the return to the
+       interpreter. An image does not carry it: it is an address of one
+       process. */
     const void *native_ret;
     /* In runtime/register, the register of the caller's RESULT, which the return
        writes into, or UINT32_MAX where the caller takes the value from the
-       stack (docs/plans/jit.md, M7). Not in an image: made again from the
-       code at ret_pc when one is read (runtime/register/interp.c, make_room). */
+       stack (docs/plans/jit.md, M7) -- or where the loop's RET is to read it
+       from the code at ret_pc: a frame compiled code pushed records none
+       (M6), and one made to return to the interpreter says UINT32_MAX. Not
+       in an image: made again from the code at ret_pc when one is read
+       (runtime/register/interp.c, make_room). */
     uint32_t result;
 } Frame;
 
@@ -290,7 +297,11 @@ typedef struct VM {
     uint32_t pc;
     int checked;             /* --checked: DECON tests its tag (decision D14), for the test suites */
     Frame *frames;
-    size_t fp, frames_cap;   /* fp = index of current frame; frames_cap capacity */
+    size_t fp;               /* the index of the current frame */
+    /* the address of the end of the stack's clean part (stack_clean, below),
+       which compiled code's room checks compare with; 0 where an interrupt
+       waits (the calls' poll, M6) */
+    uintptr_t stack_room;
     Value *stack;
     size_t sp, stack_cap;
     AllocState alloc;        /* where the next object goes (runtime/gc/) */
@@ -302,6 +313,10 @@ typedef struct VM {
        its slots hold no young pointer; every pop of a frame lowers it to
        the frame it returns to (vm_frame_pop) */
     size_t fp_low;
+    /* &frames[fp_low], which compiled code's RET compares its frame's
+       address with (runtime/register, M6): set with fp_low (vm_set_fp_low)
+       and where the frames move */
+    const Frame *frame_low;
     Value *globals;
     uint8_t *global_set;
     int gc_verify;           /* --gc-verify: the heap checked before and after every collection (runtime/gc/check.c) */
@@ -309,6 +324,37 @@ typedef struct VM {
     Program prog;
 
     size_t stack_limit;      /* the most bytes the value stack, the frames or the handlers may take (--stack-size): a runaway recursion stops here, not at the machine's memory */
+    size_t frames_cap;       /* the frames' capacity: a frame per slot of the stack's clean part at least (stack_clean) */
+    /* The stack's clean part (docs/plans/performance.md, M6): the slots
+       from sp up to here hold unit, or a value written since the last
+       collection -- never what a collection left behind -- so that a
+       frame made there needs no unit in its registers, every one being
+       a root already; and the frames have room for a frame per slot below
+       here. Compiled code's room checks claim from it, by its end's
+       address (stack_room); jit_h_grow claims more (unit, and the frames
+       grown), every collection makes the slots above sp unit and claims
+       no further than CLEAN_AHEAD past sp, and an image's stack is clean
+       to its sp. It is also the poll of the calls of compiled code: the
+       user's interrupt, and the debugger's, make stack_room 0
+       (sys_interrupt_limit, vm_poll_soon), so that the next room check
+       goes to its slow path, which looks at VM.interrupt. */
+    size_t stack_clean;
+    /* runtime/register's JIT (performance M6): where compiled code's RET
+       goes for a caller that is not compiled code, which a frame the
+       interpreter or the runtime pushes keeps as its native_ret; NULL until
+       the JIT's region is made, and in every other VM */
+    const void *ret_tramp;
+    const void *jit_calls;   /* runtime/register's JIT: the table of where calls go (CallInfo, register/jit.h; M6) */
+    /* runtime/register's JIT (M6): the registers live at the instruction
+       compiled code made the VM exact at (a sync, before a call into C),
+       and its frame's record. Where that frame is the one that runs, a
+       collection takes its registers as it takes those of a frame that
+       waits for a call -- a dead one is no root -- since compiled code
+       does not fill a frame's registers with unit and one it has not
+       written yet may hold what an earlier frame there wrote. The driver
+       forgets it whenever compiled code hands back (jit_run). */
+    uint64_t top_live;
+    const Frame *top_frame;
 
     int frames_active;       /* 1 once the toplevel frame exists */
 
@@ -549,6 +595,18 @@ VM_NORETURN void vm_fatal(VM *vm, const char *fmt, ...);
 VM_NORETURN void vm_limit(VM *vm, const char *message);
 void vm_grow_stack(VM *vm, size_t need);     /* make room for `need` values in total */
 void vm_grow_frames(VM *vm);                 /* make room for another frame */
+/* The stack's clean part (VM.stack_clean, performance M6): claimed to
+   need at least, the stack grown, the slots claimed made unit and the
+   frames grown to a frame per slot; and, after a collection, the slots
+   above sp made unit again, as far as CLEAN_AHEAD past sp, which is then
+   all that stays claimed */
+#define CLEAN_AHEAD 4096
+void vm_claim_stack(VM *vm, size_t need);
+void vm_clean_stack(VM *vm);
+/* an interrupt waits that the program is to take (VM.interrupt, not held
+   by the mask): compiled code's calls see it at their room checks, the
+   stack's clean part claimed afresh after */
+void vm_poll_soon(VM *vm);
 static inline void vm_push(VM *vm, Value v) {
     if (vm->sp >= vm->stack_cap) vm_grow_stack(vm, vm->sp + 1);
     vm->stack[vm->sp++] = v;
@@ -574,16 +632,20 @@ static inline void vm_push_frame(VM *vm, uint32_t func, Obj *closure, uint32_t r
     vm->frames[idx].closure = closure;
     vm->frames[idx].ret_pc = ret_pc;
     vm->frames[idx].base = base;
-    vm->frames[idx].native_ret = NULL;   /* native code sets its own (runtime/native/native.c, runtime/register) */
+    vm->frames[idx].native_ret = vm->ret_tramp;   /* native code sets its own (runtime/native/native.c, runtime/register) */
     vm->frames[idx].result = UINT32_MAX; /* runtime/register's loop and code set it */
     vm->fp = idx;
     vm->frames_active = 1;
 }
 /* The frame on top popped, in every engine (and the frames down to a
    handler's, vm_raise): the watermark follows the frame that runs again */
+static inline void vm_set_fp_low(VM *vm, size_t low) {
+    vm->fp_low = low;
+    vm->frame_low = vm->frames ? vm->frames + low : NULL;
+}
 static inline void vm_frame_pop(VM *vm) {
     vm->fp--;
-    if (vm->fp < vm->fp_low) vm->fp_low = vm->fp;
+    if (vm->fp < vm->fp_low) vm_set_fp_low(vm, vm->fp);
 }
 /* Every normal end of a run (halt, the exit primitive, an uncaught exception)
    goes through vm_exit, which flushes and prints what --count and --stats ask for. */

@@ -53,8 +53,12 @@ void dbg_set_on(VM *vm, int on) {
            at its next poll; every register is a root (nothing dead points
            anywhere: the collector made what it found dead unit) */
         if (vm->frames_active)
-            for (size_t i = 0; i <= vm->fp; i++) vm->frames[i].native_ret = NULL;
+            for (size_t i = 0; i <= vm->fp; i++) {
+                vm->frames[i].native_ret = vm->ret_tramp;
+                vm->frames[i].result = UINT32_MAX;   /* the loop's RET reads it from the code (vm.h, Frame) */
+            }
         vm->interrupt |= 2;
+        vm_poll_soon(vm);   /* compiled code's calls see it too (vm.h, M6) */
         if (!was) { d->frame_live = vm->frame_live; vm->frame_live = NULL; }
     } else {
         vm->interrupt &= ~2;
@@ -77,6 +81,7 @@ int dbg_pause(VM *vm) {
     d->pending = 1;
     dbg_set_on(vm, 1);
     vm->interrupt = 2;   /* the user's taken */
+    vm_poll_soon(vm);
     return 1;
 }
 

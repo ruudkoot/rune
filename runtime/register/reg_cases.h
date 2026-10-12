@@ -157,8 +157,12 @@ CASE(RET) {
     Value v = R(a);
     CENSUS_CALL(4, v, CENSUS_REP(p, fr->func, a));
     uint32_t back = fr->ret_pc;
-    const void *back_native = fr->native_ret;
-    uint32_t result = fr->result;   /* the register of the caller's RESULT, if it has one */
+    /* the register of the caller's RESULT, if it has one, as the loop's
+       calls record it; a frame that compiled code pushed records none,
+       nor one made to return to the interpreter: the code says (M6) */
+    uint32_t result = fr->result;
+    if (result == UINT32_MAX || (fr->native_ret && fr->native_ret != vm->ret_tramp))
+      result = code[back] == ROP_RESULT ? (uint32_t)read_i32(code + back + 1) : UINT32_MAX;
     size_t top = fr->base;   /* the caller's stack pointer, where the callee's registers began */
     if (vm->fp == 0) { vm->sp = top; vm->pc = back; vm->instructions = count; vm_push(vm, v); return 0; }
     vm_frame_pop(vm);
@@ -170,9 +174,9 @@ CASE(RET) {
        the stack, as an image resumed at RESULT does */
     if (result != UINT32_MAX) { R(result) = v; pc = back + 5; }
     else { PUSH(v); pc = back; }
-    /* a caller in native code takes the frame back where it left it (M5);
-       one that kept no address, but whose function has code, goes on in it (M6) */
-    if (back_native) RETURN_NATIVE(back_native);
+    /* a caller whose function has code goes on in it where a run begins
+       (M6): its native_ret is the landing of compiled code's own return,
+       which takes the value in a register */
     RESUME_NATIVE(fr->func, pc);
     NEXT;
 }

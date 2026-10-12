@@ -10,11 +10,11 @@ from a callgrind run of the same process, how many times each ran.
       instruction: offset, bytecode pc, role, instruction
   jit-dump.py --roles DIR
       the code of all of them by role: machine instructions and bytes
-  jit-dump.py --callgrind CALLGRIND.OUT DIR [--by role|op|op/role] [--calls N] [--list FUNCTION]
+  jit-dump.py --callgrind CALLGRIND.OUT DIR [--by role|op|op/role|store] [--calls N] [--list FUNCTION]
       the instructions callgrind counted in the compiled code, by role (or
-      by bytecode instruction, or both), in total and per call where N
+      by bytecode instruction, or both, or the stores apart), in total and per call where N
       calls are given; --list prints one function's code with the counts
-  jit-dump.py --diff RUN1 RUN2 CALLS [role|op|op/role]
+  jit-dump.py --diff RUN1 RUN2 CALLS [role|op|op/role|store]
       what RUN2 executed in compiled code beyond RUN1, per call: the cost
       of CALLS more calls, where RUN1 and RUN2 are directories of the
       program run at two sizes, each with callgrind.out and dump/
@@ -175,7 +175,20 @@ def parse_callgrind(path):
     return counts
 
 
+def stores(text):
+    """whether a machine instruction (objdump's text, Intel syntax on x86-64)
+    writes memory: a destination in brackets, or aarch64's str and stp"""
+    mnem, _, ops = text.partition(' ')
+    if mnem.startswith(('str', 'stp', 'stur')):
+        return True
+    if mnem.startswith(('cmp', 'test', 'j', 'call', 'lea', 'nop', 'push', 'ucomi')):
+        return mnem.startswith('push')
+    return '[' in ops.split(',')[0]
+
+
 def key(r, by):
+    if by == 'store':
+        return 'stores' if stores(r['text']) else 'other'
     return r['role'] if by == 'role' else r['op'] if by == 'op' else '%s/%s' % (r['op'], r['role'])
 
 

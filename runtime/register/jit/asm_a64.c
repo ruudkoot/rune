@@ -1,6 +1,7 @@
 /* The portable assembler (asm.h) for aarch64, over the encoder (a64.h):
    x17 is the implementation's own register, x16 the encoder's. */
 #include "asm.h"
+#include <string.h>
 #if JIT_TARGET == 2
 
 void as_init(Asm *a) { a64_init(a); }
@@ -37,6 +38,11 @@ void as_lea(Asm *a, int rd, int base, int index, int scale, int32_t disp) {
     } else a64_add_ri(a, rd, base, disp);
 }
 void as_lea_label(Asm *a, int rd, AsmLabel *l) { a64_adr(a, rd, l); }
+void as_ld64x(Asm *a, int rd, int base, int index, int scale, int32_t disp) {
+    int shift = scale == 8 ? 3 : scale == 4 ? 2 : scale == 2 ? 1 : 0;
+    a64_add_rr_lsl(a, R_T, base, index, shift);   /* x17, the implementation's own */
+    a64_ldr(a, rd, R_T, disp);
+}
 void as_ld128(Asm *a, int f, int base, int32_t disp) { a64_ldrq(a, f, base, disp); }
 void as_st128(Asm *a, int base, int32_t disp, int f) { a64_strq(a, f, base, disp); }
 void as_ld128x(Asm *a, int f, int base, int index) { a64_ldrq_rr(a, f, base, index); }
@@ -97,6 +103,7 @@ void as_udivmod(Asm *a, int divisor) {
 }
 void as_add_mi(Asm *a, int base, int32_t disp, int32_t v) { a64_ldr(a, R_T, base, disp); a64_add_ri(a, R_T, R_T, v); a64_str(a, R_T, base, disp); }
 void as_add_rm(Asm *a, int rd, int base, int32_t disp) { a64_ldr(a, R_T, base, disp); a64_add_rr(a, rd, rd, R_T); }
+void as_sub_rm(Asm *a, int rd, int base, int32_t disp) { a64_ldr(a, R_T, base, disp); a64_sub_rr(a, rd, rd, R_T); }
 void as_cmp_rm(Asm *a, int r, int base, int32_t disp) { a64_ldr(a, R_T, base, disp); a64_cmp_rr(a, r, R_T); }
 void as_cmp_mi(Asm *a, int base, int32_t disp, int32_t v) { a64_ldr(a, R_T, base, disp); a64_cmp_ri(a, R_T, v); }
 void as_cmp8_mi(Asm *a, int base, int32_t disp, int v) { a64_ldrb(a, R_T, base, disp); a64_cmp_ri(a, R_T, v); }
@@ -107,6 +114,11 @@ void as_jmp(Asm *a, AsmLabel *l) { a64_b(a, l); }
 void as_jcc(Asm *a, int cc, AsmLabel *l) { a64_bcond(a, cond(cc), l); }
 void as_jmp_r(Asm *a, int r) { a64_br(a, r); }
 void as_jmp_to(Asm *a, const void *at) { a64_b_to(a, at); }
+size_t as_jmp_site(Asm *a, AsmLabel *l) { size_t at = a->n; a64_b(a, l); return at; }   /* b: the instruction */
+void as_patch_jmp(uint8_t *site, const void *to) {
+    uint32_t w = 0x14000000u | ((uint32_t)(((intptr_t)to - (intptr_t)site) >> 2) & 0x3FFFFFFu);
+    memcpy(site, &w, 4);
+}
 void as_call_to(Asm *a, const void *at) { a64_bl_to(a, at); }
 void as_call_r(Asm *a, int r) { a64_blr(a, r); }
 void as_ret(Asm *a) { a64_ret(a); }

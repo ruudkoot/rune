@@ -150,6 +150,7 @@ size_t as_align4(Asm *a);                                   /* the buffer padded
 void as_mov_rr(Asm *a, int rd, int rs);
 void as_mov_ri(Asm *a, int rd, int64_t v);
 void as_ld64(Asm *a, int rd, int base, int32_t disp);
+void as_ld64x(Asm *a, int rd, int base, int index, int scale, int32_t disp);   /* rd := [base + index * scale + disp]; scale 1, 2, 4, 8 */
 void as_ld32(Asm *a, int rd, int base, int32_t disp);       /* zero-extended */
 void as_ld32s(Asm *a, int rd, int base, int32_t disp);      /* sign-extended */
 void as_ld32sx(Asm *a, int rd, int base, int index);        /* rd := [base + 4 * index], sign-extended: a table's entry */
@@ -200,6 +201,7 @@ void as_divmod(Asm *a, int divisor);                        /* signed: R_S0 / di
 void as_udivmod(Asm *a, int divisor);
 void as_add_mi(Asm *a, int base, int32_t disp, int32_t v);
 void as_add_rm(Asm *a, int rd, int base, int32_t disp);
+void as_sub_rm(Asm *a, int rd, int base, int32_t disp);
 void as_cmp_rm(Asm *a, int r, int base, int32_t disp);
 void as_cmp_mi(Asm *a, int base, int32_t disp, int32_t v);
 void as_cmp8_mi(Asm *a, int base, int32_t disp, int v);
@@ -209,6 +211,12 @@ void as_jmp(Asm *a, AsmLabel *l);
 void as_jcc(Asm *a, int cc, AsmLabel *l);
 void as_jmp_r(Asm *a, int r);
 void as_jmp_to(Asm *a, const void *at);
+/* a jump to l that as_patch_jmp may make a jump elsewhere once the code is
+   placed (a known call to a function compiled after it, performance M6):
+   the offset of what the patch writes; and the patch, to an address in
+   reach (the region's) */
+size_t as_jmp_site(Asm *a, AsmLabel *l);
+void as_patch_jmp(uint8_t *site, const void *to);
 void as_call_to(Asm *a, const void *at);                    /* a call of code at an address the code reaches: its region's */
 size_t as_trampoline(Asm *a, int win, uint64_t addr);       /* here, aligned: code that a call of it makes a call of C's addr with R_VM its first argument, by the convention; its offset */
 void as_call_r(Asm *a, int r);

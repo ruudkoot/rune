@@ -1,6 +1,7 @@
 /* The portable assembler (asm.h) for x86-64: each operation is the
    encoder's, but for the few the conventions of asm.h shape. */
 #include "asm.h"
+#include <string.h>
 /* also the build of a machine the JIT does not run on (JIT_TARGET 0: a
    32-bit x86, PowerPC), where the emitters are compiled and never
    called, as x64.c always was */
@@ -33,6 +34,7 @@ void as_st64i(Asm *a, int base, int32_t disp, int32_t v) { x64_mov_mi(a, base, d
 void as_st32i(Asm *a, int base, int32_t disp, int32_t v) { x64_mov32_mi(a, base, disp, v); }
 void as_st8i(Asm *a, int base, int32_t disp, int v) { x64_mov8_mi(a, base, disp, v); }
 void as_lea(Asm *a, int rd, int base, int index, int scale, int32_t disp) { x64_lea(a, rd, base, index, scale, disp); }
+void as_ld64x(Asm *a, int rd, int base, int index, int scale, int32_t disp) { x64_mov_rmx(a, rd, base, index, scale, disp); }
 void as_lea_label(Asm *a, int rd, AsmLabel *l) { x64_lea_rip(a, rd, l); }
 void as_ld128(Asm *a, int f, int base, int32_t disp) { x64_movups_xm(a, f, base, disp); }
 void as_st128(Asm *a, int base, int32_t disp, int f) { x64_movups_mx(a, base, disp, f); }
@@ -71,6 +73,7 @@ void as_divmod(Asm *a, int divisor) { x64_cqo(a); x64_idiv_r(a, divisor); }
 void as_udivmod(Asm *a, int divisor) { x64_xor_rr(a, RDX, RDX); x64_div_r(a, divisor); }
 void as_add_mi(Asm *a, int base, int32_t disp, int32_t v) { x64_add_mi(a, base, disp, v); }
 void as_add_rm(Asm *a, int rd, int base, int32_t disp) { x64_add_rm(a, rd, base, disp); }
+void as_sub_rm(Asm *a, int rd, int base, int32_t disp) { x64_sub_rm(a, rd, base, disp); }
 void as_cmp_rm(Asm *a, int r, int base, int32_t disp) { x64_cmp_rm(a, r, base, disp); }
 void as_cmp_mi(Asm *a, int base, int32_t disp, int32_t v) { x64_cmp_mi(a, base, disp, v); }
 void as_cmp8_mi(Asm *a, int base, int32_t disp, int v) { x64_cmp8_mi(a, base, disp, v); }
@@ -90,6 +93,11 @@ void as_jcc(Asm *a, int cc, AsmLabel *l) {
 }
 void as_jmp_r(Asm *a, int r) { x64_jmp_r(a, r); }
 void as_jmp_to(Asm *a, const void *at) { x64_jmp_to(a, at); }
+size_t as_jmp_site(Asm *a, AsmLabel *l) { size_t at = a->n + 1; x64_jmp(a, l); return at; }   /* jmp rel32: the rel32 */
+void as_patch_jmp(uint8_t *site, const void *to) {
+    int32_t rel = (int32_t)((intptr_t)to - (intptr_t)(site + 4));
+    memcpy(site, &rel, 4);
+}
 void as_call_to(Asm *a, const void *at) { x64_call_to(a, at); }
 void as_call_r(Asm *a, int r) { x64_call_r(a, r); }
 void as_ret(Asm *a) { x64_ret(a); }

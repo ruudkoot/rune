@@ -763,6 +763,8 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     vm_grow_stack(vm, (size_t)sp + 1);
     vm->sp = (size_t)sp;
     for (size_t i = 0; i < vm->sp; i++) vm->stack[i] = get_value(&s);
+    vm->stack_clean = vm->sp;   /* nothing above it claimed (vm.h, M6) */
+    vm->stack_room = (uintptr_t)(vm->stack + vm->sp);
 
     vm->frames_active = (int)get_u32(&s);
     vm->fp = (size_t)get_u64(&s);
@@ -771,11 +773,14 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
         vm->frames_cap = vm->fp + 1 < 256 ? 256 : vm->fp + 1;
         vm->frames = malloc(vm->frames_cap * sizeof(Frame));
         if (!vm->frames) return failed(&s, err, errlen, "out of memory");
+        vm->frame_low = vm->frames + vm->fp_low;
         for (size_t i = 0; i <= vm->fp && s.ok; i++) {
             vm->frames[i].func = get_u32(&s);
             vm->frames[i].ret_pc = get_u32(&s);
             vm->frames[i].base = (size_t)get_u64(&s);
             vm->frames[i].closure = get_obj(&s);
+            vm->frames[i].native_ret = NULL;          /* not in an image: the VM's return trampoline (vm_become, make_room) */
+            vm->frames[i].result = UINT32_MAX;        /* the loop reads it from the code at ret_pc */
         }
     }
     vm->hp = (size_t)get_u64(&s);
@@ -880,6 +885,7 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
    and given back to the system where it did not */
 static void interrupt_again(VM *vm) {
     vm->interrupt = 0;
+    sys_interrupt_limit(vm->interrupt_exn ? &vm->stack_room : NULL);   /* the calls' poll (vm.h, M6) */
     sys_interrupt_catch(vm->interrupt_exn ? &vm->interrupt : NULL);
 }
 
@@ -938,6 +944,10 @@ int vm_become(VM *vm, const char *path) {
     /* the JIT's options are this process's, not the image's (runtime/register),
        and so are the collector's log and its check (runtime/gc/) */
     next->jit = vm->jit;
+    /* and so is runtime/register's return trampoline, where the frames of
+       the image return when compiled code runs them (M6) */
+    next->ret_tramp = vm->ret_tramp;
+    for (size_t i = 0; next->frames_active && i <= next->fp; i++) next->frames[i].native_ret = next->ret_tramp;
     next->gc_log = vm->gc_log;
     next->gc_log_t0 = vm->gc_log_t0;
     next->gc_verify = vm->gc_verify;

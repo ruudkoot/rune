@@ -81,15 +81,59 @@ void vm_grow_stack(VM *vm, size_t need) {
     if (!ns) { fprintf(stderr, "runevm: out of memory (stack)\n"); exit(2); }
     vm->stack = ns;
     vm->stack_cap = ncap;
+    if (vm->stack_room) vm->stack_room = (uintptr_t)(ns + vm->stack_clean);   /* where the clean part ends now */
 }
 
+/* (frames as many as the stack's slots may be: a frame has a slot at least,
+   and the frames keep pace with the stack's clean part, VM.stack_clean) */
 void vm_grow_frames(VM *vm) {
+    size_t most = stack_limit(vm) / sizeof(Value) + 256;
     size_t ncap = vm->frames_cap ? vm->frames_cap * 2 : 256;
-    if (ncap > stack_limit(vm) / sizeof(Frame)) stack_overflow(vm);
+    if (ncap > most) ncap = most;
+    if (ncap <= vm->frames_cap) stack_overflow(vm);
     Frame *nf = realloc(vm->frames, ncap * sizeof(Frame));
     if (!nf) { fprintf(stderr, "runevm: out of memory (frames)\n"); exit(2); }
     vm->frames = nf;
     vm->frames_cap = ncap;
+    vm->frame_low = nf + vm->fp_low;
+}
+
+/* The stack's clean part is the calls' poll too (vm.h): an interrupt that
+   comes as it is written (the system's handler makes it 0) is seen after
+   it, the flag read again once the write is done */
+static void clean_written(VM *vm) {
+#if defined(__GNUC__)
+    __atomic_thread_fence(__ATOMIC_SEQ_CST);
+#endif
+    if (vm->interrupt) vm_poll_soon(vm);
+}
+void vm_poll_soon(VM *vm) {
+    if (!(vm->interrupt & 2) && vm->interrupt_mask) return;   /* held by the mask, which raises it as it goes */
+    vm->stack_room = 0;
+}
+void vm_claim_stack(VM *vm, size_t need) {
+    vm_grow_stack(vm, need);
+    size_t to = need + CLEAN_AHEAD < vm->stack_cap ? need + CLEAN_AHEAD : vm->stack_cap;
+    if (to <= vm->stack_clean) {   /* claimed already, but for an interrupt's 0 */
+        vm->stack_room = (uintptr_t)(vm->stack + vm->stack_clean);
+        clean_written(vm);
+        return;
+    }
+    /* from the clean part's end, which an interrupt may have made 0 */
+    for (size_t k = vm->stack_clean > vm->sp ? vm->stack_clean : vm->sp; k < to; k++) vm->stack[k] = mk_unit();
+    while (vm->frames_cap <= to) vm_grow_frames(vm);
+    vm->stack_clean = to;
+    vm->stack_room = (uintptr_t)(vm->stack + to);
+    clean_written(vm);
+}
+void vm_clean_stack(VM *vm) {
+    size_t to = vm->sp + CLEAN_AHEAD < vm->stack_clean ? vm->sp + CLEAN_AHEAD : vm->stack_clean;
+    for (size_t k = vm->sp; k < to; k++) vm->stack[k] = mk_unit();
+    if (to > vm->sp) {
+        vm->stack_clean = to;
+        if (vm->stack_room) vm->stack_room = (uintptr_t)(vm->stack + to);
+        clean_written(vm);
+    }
 }
 
 void vm_push_handler(VM *vm, uint32_t pc) {
@@ -250,7 +294,7 @@ int vm_raise(VM *vm, Value exn) {
     }
     Handler h = vm->handlers[--vm->hp];
     vm->fp = h.fp;
-    if (vm->fp < vm->fp_low) vm->fp_low = vm->fp;
+    if (vm->fp < vm->fp_low) vm_set_fp_low(vm, vm->fp);
     CENSUS_UNWIND(vm);
     vm->sp = h.sp;
     vm_push(vm, exn);

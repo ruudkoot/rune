@@ -63,12 +63,34 @@ typedef struct CodeObject {
        go with it when it is invalidated */
     uint32_t ncallers, callers_cap;
     uint32_t *callers;
+    /* the known calls compiled while this function had no code, each a
+       jump to the table of calls in its caller's code, patched into a
+       jump here when this one is compiled (performance M6): where the
+       patch goes, and the caller and its code then (a caller compiled
+       again since is not patched) */
+    uint32_t npending, pending_cap;
+    struct PendingCall { uint8_t *site; uint32_t caller; const void *caller_entry; } *pending;
     /* the profile of the code, under --jit-profile (M8): a site per call
        through a closure, per branch and per jump back, in the order the
        code was emitted; NULL otherwise */
     uint32_t nsites;
     struct Site *sites;
 } CodeObject;
+
+/* Where compiled code's calls go (performance M6): per function, the
+   entry of its code, or the region's stub that hands the frame, pushed
+   and its registers made, to the interpreter (JitProgram.call_interp);
+   and the room its frame wants, its registers and its deepest stack above
+   them. A call through a closure finds both by the word of the closure's
+   function (2f + 1: the entry at 8 times it less 8, the room at 8 times
+   it), a known call to a function that had no code when the call was
+   compiled its entry; compiling a function puts its entry here,
+   invalidating it the stub. VM.jit_calls is the table, which a unit
+   loaded grows (jit_grow). */
+typedef struct CallInfo {
+    const void *entry;
+    uint64_t need;
+} CallInfo;
 
 /* A site of a profile: what a call through a closure called (the first
    two functions, and how often each, and how often anything else), which
@@ -105,6 +127,7 @@ typedef struct JitProgram {
     uint8_t *code_mem;
     size_t code_cap, code_used;
     const void *enter_at, *leave_at;
+    const void *low_at;         /* the watermark's stub (masm.h, ms_emit_low; M6), in the region */
     const void *fatal_at;       /* the stub of the fatal errors, beside them */
     JitFatalSite *fatals;           /* the fatal errors of the code, by the number it gives the stub; the process's */
     uint32_t nfatals, fatals_cap;
@@ -151,6 +174,9 @@ typedef struct JitProgram {
     uint32_t *fill_from;
     int all_meta;               /* every function has its arity in the section: a callee's code fills its own registers (M10) */
     struct JitDump *dump;       /* --jit-dump=DIR: where the code goes (jit/dump.c); NULL until the first function */
+    CallInfo *calls;            /* per function, where calls go in (M6); VM.jit_calls */
+    const void *call_interp;    /* the stub a call goes to where the callee has no code (M6), in the region */
+    const void *ret_tramp;      /* the return trampoline (VM.ret_tramp, M6), in the region: a new world's VM is given it again (jit_make) */
     uint32_t deopt_stress;      /* --deopt-stress=N (M11): the code counts instruction boundaries here and leaves at every Nth */
     uint64_t deopt_count;
     uint64_t deopts;            /* how many times it left so */

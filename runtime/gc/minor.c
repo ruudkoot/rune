@@ -188,7 +188,22 @@ static void minor_stack(VM *vm, size_t low) {
             }
             vm->gc_counts.frames++;
         }
+    if (vm->frame_live && vm->frames_active && vm->top_frame == &vm->frames[vm->fp]) {
+        /* the frame that runs, where compiled code said what of it is live
+           (VM.top_live, M6): as a frame that waits */
+        const Frame *f = &vm->frames[vm->fp];
+        uint32_t n = vm->prog.funcs[f->func].nlocals;
+        for (; at < f->base && at < vm->sp; at++) promote_value(vm, &vm->stack[at]);
+        for (uint32_t r = 0; r < n && at < vm->sp; r++, at++) {
+            if (r >= 64 || ((vm->top_live >> r) & 1)) promote_value(vm, &vm->stack[at]);
+            else {
+                dead++;
+                if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
+            }
+        }
+    }
     for (; at < vm->sp; at++) promote_value(vm, &vm->stack[at]);
+    vm_clean_stack(vm);   /* the stack's clean part, above sp (gc_stack_roots, M6) */
     vm->gc_counts.slots += vm->sp - from;
     vm->gc_counts.live_slots += vm->sp - from - dead;
 }
@@ -311,7 +326,7 @@ static void minor_into(VM *vm) {
         scan_object(vm, vm->gc.queue[--vm->gc.nqueue]);
     }
     vm->alloc.used = 0;
-    vm->fp_low = vm->fp;
+    vm_set_fp_low(vm, vm->fp);
     vm->box_bytes_live = vm->gc.old_boxes;
     vm->gc_count++;
     vm->gc.minors++;

@@ -314,6 +314,12 @@ int sys_code_marker(const char *path);
    EINTR (sys_read_fd). NULL: the interrupt ends the process again. 0, or
    -1 and the error (ENOSYS in sys_none, which has no interrupt). */
 int sys_interrupt_catch(volatile int *flag);
+/* where the interrupt is caught, it also makes *limit 0, after the flag
+   (NULL: nothing): a word that code compares with on its way, which then
+   finds the interrupt where it would otherwise poll for it (runtime/register's
+   compiled code: the end of the stack's clean part, VM.stack_room;
+   performance M6) */
+void sys_interrupt_limit(volatile uintptr_t *limit);
 /* An interrupt from another process on Windows, which has no SIGINT to
    send one (docs/repl.md; the REPL roadmap's M13): sys_event_new makes an
    event a child inherits, by its handle's number, and sys_event_set sets

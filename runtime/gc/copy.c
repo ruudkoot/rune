@@ -85,7 +85,9 @@ static void copy_value(VM *vm, Value *v) {
    and a dead one that holds a pointer is made unit: it is not copied, and it
    must not stay behind pointing into the space that is left, since the frame
    becomes the one that runs again, whose registers are all roots (what it is
-   doing when a collection comes is not known here). */
+   doing when a collection comes is not known here). Above sp the stack's
+   clean part is made unit (vm_clean_stack, performance M6): a frame made
+   there later takes its slots as they are. */
 void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *)) {
     size_t at = 0, dead = 0;
     if (vm->frame_live && vm->frames_active)
@@ -104,7 +106,24 @@ void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *)) {
             }
             vm->gc_counts.frames++;
         }
+    if (vm->frame_live && vm->frames_active && vm->top_frame == &vm->frames[vm->fp]) {
+        /* the frame that runs, where runtime/register's compiled code said
+           what of it is live (VM.top_live, M6): as a frame that waits, since
+           a register it has not written may hold what an earlier frame there
+           wrote, and none is filled with unit */
+        const Frame *f = &vm->frames[vm->fp];
+        uint32_t n = vm->prog.funcs[f->func].nlocals;
+        for (; at < f->base && at < vm->sp; at++) visit(vm, &vm->stack[at]);
+        for (uint32_t r = 0; r < n && at < vm->sp; r++, at++) {
+            if (r >= 64 || ((vm->top_live >> r) & 1)) visit(vm, &vm->stack[at]);
+            else {
+                dead++;
+                if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
+            }
+        }
+    }
     for (; at < vm->sp; at++) visit(vm, &vm->stack[at]);
+    vm_clean_stack(vm);   /* above sp nothing is to point into what the collection leaves (M6) */
     vm->gc_counts.slots += vm->sp;
     vm->gc_counts.live_slots += vm->sp - dead;
 }
@@ -172,7 +191,7 @@ static void collect_into(VM *vm, size_t new_size) {
         vm->gc.nborn = 0;
         los_sweep(vm);
         vm->gc.old_boxes = vm->gc.to_boxes;
-        vm->fp_low = vm->fp;   /* nothing young is left on the stack */
+        vm_set_fp_low(vm, vm->fp);   /* nothing young is left on the stack */
         vm->gc.fulls++;
     } else vm->gc.closed = vm->gc.to_used - vm->gc.last->used;
     alloc_view(vm);

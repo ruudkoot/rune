@@ -1393,7 +1393,12 @@ int sys_code_marker(const char *path) {
    before. */
 static struct sigaction interrupt_before;
 static int interrupt_caught;
-static void on_interrupt(int sig) { (void)sig; if (interrupt_flag) *interrupt_flag = 1; }
+static volatile uintptr_t *interrupt_limit;
+static void on_interrupt(int sig) {
+    (void)sig;
+    if (interrupt_flag) { *interrupt_flag = 1; if (interrupt_limit) *interrupt_limit = 0; }
+}
+void sys_interrupt_limit(volatile uintptr_t *limit) { interrupt_limit = limit; }
 int64_t sys_event_new(void) { errno = ENOSYS; return -1; }
 int sys_event_set(int64_t handle) { (void)handle; errno = ENOSYS; return -1; }
 

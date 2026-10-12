@@ -48,6 +48,7 @@ int x64_bound(const X64Label *l);
 void x64_mov_rr(X64 *a, int dst, int src);                      /* dst := src, 64 bits */
 void x64_mov_ri(X64 *a, int dst, int64_t imm);                  /* dst := imm */
 void x64_mov_rm(X64 *a, int dst, int base, int32_t disp);       /* dst := [base + disp], 64 bits */
+void x64_mov_rmx(X64 *a, int dst, int base, int index, int scale, int32_t disp);   /* dst := [base + index * scale + disp] */
 void x64_mov_mr(X64 *a, int base, int32_t disp, int src);       /* [base + disp] := src, 64 bits */
 void x64_mov_mi(X64 *a, int base, int32_t disp, int32_t imm);   /* [base + disp] := imm, sign-extended to 64 bits */
 void x64_mov32_mi(X64 *a, int base, int32_t disp, int32_t imm); /* [base + disp] := imm, 32 bits */
@@ -100,6 +101,7 @@ void x64_div_r(X64 *a, int r);
 void x64_add_mi(X64 *a, int base, int32_t disp, int32_t imm);   /* [base + disp] += imm, 64 bits */
 void x64_add_mr(X64 *a, int base, int32_t disp, int src);
 void x64_add_rm(X64 *a, int dst, int base, int32_t disp);       /* dst += [base + disp] */
+void x64_sub_rm(X64 *a, int dst, int base, int32_t disp);       /* dst -= [base + disp] */
 void x64_sub_mr(X64 *a, int base, int32_t disp, int src);
 void x64_cmp_mr(X64 *a, int base, int32_t disp, int src);       /* [base + disp] against src */
 void x64_cmp_rm(X64 *a, int r, int base, int32_t disp);         /* r against [base + disp] */

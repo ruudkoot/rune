@@ -250,7 +250,7 @@ void mark_full(VM *vm) {
     vm->gc.nborn = 0;
     vm->gc.old_boxes = vm->gc.to_boxes;
     vm->box_bytes_live = vm->gc.to_boxes;
-    vm->fp_low = vm->fp;
+    vm_set_fp_low(vm, vm->fp);
     vm->gc.fulls++;
     vm->gc_count++;
     vm->copied += vm->gc.to_used;

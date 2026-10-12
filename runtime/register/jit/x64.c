@@ -143,6 +143,7 @@ void x64_mov_ri(X64 *a, int dst, int64_t imm) {
     else { rex(a, 1, 0, -1, dst); x64_byte(a, (uint8_t)(0xB8 + (dst & 7))); x64_u64(a, (uint64_t)imm); }
 }
 void x64_mov_rm(X64 *a, int dst, int base, int32_t disp) { op_rm(a, 1, 0x8B, -1, dst, base, -1, 1, disp); }
+void x64_mov_rmx(X64 *a, int dst, int base, int index, int scale, int32_t disp) { op_rm(a, 1, 0x8B, -1, dst, base, index, scale, disp); }
 void x64_mov_mr(X64 *a, int base, int32_t disp, int src) { op_rm(a, 1, 0x89, -1, src, base, -1, 1, disp); }
 void x64_mov_mi(X64 *a, int base, int32_t disp, int32_t imm) { op_rm(a, 1, 0xC7, -1, 0, base, -1, 1, disp); x64_u32(a, (uint32_t)imm); }
 void x64_mov32_mi(X64 *a, int base, int32_t disp, int32_t imm) { op_rm(a, 0, 0xC7, -1, 0, base, -1, 1, disp); x64_u32(a, (uint32_t)imm); }
@@ -230,6 +231,7 @@ void x64_add_mi(X64 *a, int base, int32_t disp, int32_t imm) {
 }
 void x64_add_mr(X64 *a, int base, int32_t disp, int src) { op_rm(a, 1, 0x01, -1, src, base, -1, 1, disp); }
 void x64_add_rm(X64 *a, int dst, int base, int32_t disp) { op_rm(a, 1, 0x03, -1, dst, base, -1, 1, disp); }
+void x64_sub_rm(X64 *a, int dst, int base, int32_t disp) { op_rm(a, 1, 0x2B, -1, dst, base, -1, 1, disp); }
 void x64_sub_mr(X64 *a, int base, int32_t disp, int src) { op_rm(a, 1, 0x29, -1, src, base, -1, 1, disp); }
 void x64_cmp_mr(X64 *a, int base, int32_t disp, int src) { op_rm(a, 1, 0x39, -1, src, base, -1, 1, disp); }
 void x64_cmp_rm(X64 *a, int r, int base, int32_t disp) { op_rm(a, 1, 0x3B, -1, r, base, -1, 1, disp); }

@@ -26,6 +26,12 @@ typedef struct Jit {
        hold (ZF: it is false) after the instruction just emitted, or -1;
        and the same for the instruction before this one */
     int32_t flags_for, flags_prev;
+    /* the condition of the flags where they are a comparison's own, its
+       bool made for the branch alone and not into its register (M6), for
+       the instruction just emitted and the one before; -1: the flags are
+       the bool's (ZF: false) */
+    int cc_for, cc_prev;
+    const uint8_t *target;  /* the scan's: 1 where control arrives from elsewhere, by pc - from */
     /* the profile's sites (--jit-profile, M8): as many as the scan counted
        calls through a closure, branches and jumps back, filled as the
        code is emitted */
@@ -42,6 +48,10 @@ typedef struct Jit {
     Home *homes;
     uint64_t *live_in;
     AsmLabel *landings;
+    /* the known calls to functions without code, jumps to patch (M6): the
+       offset of each patch in this function's code, and the callee */
+    struct { uint32_t off, f; } *pending;
+    uint32_t npending, pending_cap;
 } Jit;
 
 /* what native code says on a fatal error: the message of the interpreter */
@@ -52,6 +62,9 @@ enum JitFatal {
     FATAL_POPHANDLER, FATAL_RAISE, FATAL_CALL, FATAL_FUNCTION, FATAL_NEW_WORLD
 };
 
+/* a known call to function f, which has no code yet: its jump at off in
+   the code, patched when f is compiled (M6) */
+void jit_pending(Jit *j, size_t off, uint32_t f);
 /* the label of the instruction at pc, for a jump */
 AsmLabel *jit_label(Jit *j, uint32_t pc);
 /* a fatal error at the instruction being emitted, out of line: the label to
@@ -78,14 +91,12 @@ Site *jit_site(Jit *j, int kind, uint32_t pc);
 int jit_h_prim(VM *vm, int prim, int32_t d, uint32_t at);
 Obj *jit_h_alloc(VM *vm, int kind, int contag, uint32_t n);
 void jit_h_setenv(VM *vm, int32_t c, int32_t e, int32_t v);
-int jit_h_ret(VM *vm, int32_t s);
+int jit_h_return(VM *vm, uint64_t value);
+int jit_h_enter_interp(VM *vm);
 void jit_h_fatal(VM *vm, int what, int32_t a, int32_t b);
 void jit_h_fatal_at(VM *vm, uint32_t k, int64_t value);
 MsHelper jit_libm_of(int32_t prim);   /* emit.c: the C library's function a primitive on reals is, or NULL */
-void jit_h_grow(VM *vm, size_t need);
-void jit_h_grow_frames(VM *vm);
-const void *jit_h_call(VM *vm, int32_t a, int32_t b, const void *after);
-const void *jit_h_tailcall(VM *vm, int32_t a, int32_t b);
+void jit_h_grow(VM *vm, const Value *end);
 void jit_h_push_handler(VM *vm, int32_t pc, const void *native);
 const void *jit_h_raise(VM *vm, int32_t s);
 /* what jit_h_interrupt answers beside a handler's native code or NULL:

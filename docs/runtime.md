@@ -407,7 +407,12 @@ expects:
   primitive, done in the frame of the function that calls it: it does not
   drop what that function still has in a dead register (the one explained
   check of the Basis suite on the register VM,
-  `Runtime.collect/drops-what-is-unreachable`).
+  `Runtime.collect/drops-what-is-unreachable`). Where the frame runs in the
+  JIT's code it is told: compiled code says which registers are live where
+  it calls into C (`VM.top_live`), and the collector takes the frame as one
+  that waits -- since docs/plans/performance.md's M6, which leaves a
+  frame's registers as an earlier frame wrote them rather than filling them
+  with unit, a register not written yet may hold what is long dead.
 * **Registers past a function's 64th are roots.** The liveness follows 64
   registers a function. Two of the compiler's 2,263 functions have more;
   the top level of a program is one function and usually does (the

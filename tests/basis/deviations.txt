@@ -900,8 +900,10 @@ rune:windows* | Posix.Process.* | WINDOWS | stays: the child the test forks runs
 rune:windows* | Posix.Signal.*/kill-l | WINDOWS | stays: the test asks sh (kill -l)
 rune:windows* | Posix.Signal.* | WINDOWS | stays: the test signals a /bin/sh that a child made by fork runs, and Windows has no /bin/sh
 rune:windows* | Unix.* | WINDOWS | stays: the programs the test starts (/bin/sh, /bin/cat, /bin/echo, /usr/bin/env) are POSIX's; basis.unix_pipes starts cmd.exe on Windows
-rune:*new* | Runtime.collect/drops-what-is-unreachable | RUNE-DEV | runtime/register keeps every register of the frame that runs a root until it is written again (docs/runtime.md, The garbage collector): the test calls Runtime.collect in the function whose register held the list, dead but not yet reused, since a register is shared only among values of one representation (plans/jit.md, M8). A frame that waits for a call is precise (plans/heap-layout.md, M6; tests/register/dead-roots.sml)
-rune:jit | Runtime.collect/drops-what-is-unreachable | RUNE-DEV | the same, with every function compiled
+rune:new | Runtime.collect/drops-what-is-unreachable | RUNE-DEV | runtime/register keeps every register of the frame that runs a root until it is written again where the interpreter runs it (docs/runtime.md, The garbage collector): the test calls Runtime.collect in the function whose register held the list, dead but not yet reused, since a register is shared only among values of one representation (plans/jit.md, M8). A frame that waits for a call is precise (plans/heap-layout.md, M6; tests/register/dead-roots.sml), and so is one that compiled code runs (VM.top_live, performance M6): rune:jit and rune:windows-new, whose functions are all compiled, pass; the configurations here run the function in the interpreter (by the default thresholds, or with no JIT)
+rune:*32-new | Runtime.collect/drops-what-is-unreachable | RUNE-DEV | the same, with no JIT
+rune:ppc64-new | Runtime.collect/drops-what-is-unreachable | RUNE-DEV | the same, with no JIT
+rune:aarch64-new | Runtime.collect/drops-what-is-unreachable | RUNE-DEV | the same, by the default thresholds
 
 # ---- coverage enabled by the portable IntInf (gmp M2)
 # These exact Date/Time checks did not run on smlnj32 at bf5ac2c5.

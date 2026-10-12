@@ -1450,6 +1450,7 @@ int sys_pipe(int out[2]) {
 /* The flag the user's interrupt sets, where the program catches it
    (sys_interrupt_catch) */
 static volatile int *interrupt_flag;
+static void interrupt_now(void);   /* the flag set, and the limit (below) */
 
 /* the end of a file is 0 bytes with the error cleared, as on POSIX */
 /* A pipe that does not block and has nothing in it says EAGAIN; one whose
@@ -2708,7 +2709,7 @@ int sys_kill(int64_t pid, int signal) {
     int running = GetExitCodeProcess(h, &code) && code == STILL_ACTIVE;
     int r = 0;
     if (!running && !own && h != GetCurrentProcess()) { last = ESRCH; r = -1; }
-    else if (signal == 2 && h == GetCurrentProcess() && interrupt_flag) *interrupt_flag = 1;   /* SIGINT to itself, caught: as Ctrl-C */
+    else if (signal == 2 && h == GetCurrentProcess() && interrupt_flag) interrupt_now();   /* SIGINT to itself, caught: as Ctrl-C */
     else if (running && signal != 0 && signal != 17 && signal != 18) {
         /* nothing is flushed, as nothing is when a signal ends a process */
         if (!TerminateProcess(h, SIGNALLED_BY | (DWORD)signal)) r = win_failed(NULL);
@@ -3284,8 +3285,17 @@ int sys_code_marker(const char *path) { (void)path; last = ENOSYS; return -1; }
    Ctrl-C and Ctrl-Break at the console, by a handler that Windows runs on a
    thread of its own; the flag is all it touches. NULL takes the handler
    away, and the console ends the process again. */
+static volatile uintptr_t *interrupt_limit;
+void sys_interrupt_limit(volatile uintptr_t *limit) { interrupt_limit = limit; }
+/* the user's interrupt: the flag, then the limit, each seen by the
+   program's thread in that order (the handlers' threads are others) */
+static void interrupt_now(void) {
+    *interrupt_flag = 1;
+    MemoryBarrier();
+    if (interrupt_limit) *interrupt_limit = 0;
+}
 static BOOL WINAPI on_interrupt(DWORD event) {
-    if ((event == CTRL_C_EVENT || event == CTRL_BREAK_EVENT) && interrupt_flag) { *interrupt_flag = 1; return TRUE; }
+    if ((event == CTRL_C_EVENT || event == CTRL_BREAK_EVENT) && interrupt_flag) { interrupt_now(); return TRUE; }
     return FALSE;
 }
 /* the events of RUNE_INTERRUPT_EVENT and JPY_INTERRUPT_EVENT (sys.h),
@@ -3313,7 +3323,7 @@ static DWORD WINAPI watch_events(LPVOID unused) {
         DWORD r = WaitForMultipleObjects(n, hs, FALSE, INFINITE);
         if (r >= WAIT_OBJECT_0 + n) return 0;   /* WAIT_OBJECT_0 is 0: a failure, or an abandoned wait */
         ResetEvent(hs[r - WAIT_OBJECT_0]);
-        if (interrupt_flag) *interrupt_flag = 1;
+        if (interrupt_flag) interrupt_now();
     }
 }
 int sys_interrupt_catch(volatile int *flag) {

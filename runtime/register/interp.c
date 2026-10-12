@@ -138,7 +138,7 @@ static void make_room(VM *vm) {
         Function *fn = &vm->prog.funcs[f->func];
         size_t n = f->base + fn->nlocals + fn->maxstack;
         if (n > need) need = n;
-        f->native_ret = NULL;   /* a frame of an image, or of vm_start, returns into the interpreter */
+        f->native_ret = vm->ret_tramp;   /* a frame of an image, or of vm_start, returns into the interpreter */
         /* where its return goes: the RESULT at its ret_pc, if that is one */
         f->result = f->ret_pc < vm->prog.code_len && vm->prog.code[f->ret_pc] == ROP_RESULT
                     ? (uint32_t)read_i32(vm->prog.code + f->ret_pc + 1) : UINT32_MAX;

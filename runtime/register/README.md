@@ -56,7 +56,12 @@ has nothing that points into the space left behind. The answer for a
 function is made from its code when first asked for -- the pcs its calls
 return to and a word of 64 registers for each (`Function.live_pc`,
 `live_at`) -- and goes with the program. The frame that runs keeps every
-register, and so does a register past the 64th. The liveness is the one
+register where the interpreter runs it; where compiled code does, the code
+said which are live at the call into C it made (`VM.top_live`, at every
+sync; the driver forgets it when the code hands back), and the frame is
+taken as one that waits -- since M6 of docs/plans/performance.md a frame's
+registers are not filled with unit, and one not written yet may hold what
+an earlier frame there left. A register past the 64th is a root. The liveness is the one
 tier 2 writes its homes back by, so an instruction's registers are its
 operands, as the tables say (`reg_uses_defs`): one that read a register
 its operands do not name would lose it at a collection. `-DRUNE_ROOTS_ALL`
@@ -75,23 +80,44 @@ fast path bumps `alloc.used` against `alloc.size`.
 
 A frame is `{func, ret_pc, base, closure, native_ret, result}` in the
 array `vm->frames` -- `result` the register of the caller's `RESULT`,
-recorded when the frame is pushed, so that a return writes into it
+recorded when the loop pushes the frame, so that a return writes into it
 without decoding the caller's code (M7; `UINT32_MAX` where the caller
-takes the value from the stack; not in an image, made again from the
+takes the value from the stack, or where the code says it: a frame
+compiled code pushes records none; not in an image, made again from the
 code at `ret_pc` when one is read); the handlers `{pc, sp, fp, native}`
-are a second array; the value stack a third. All three grow by doubling (`realloc`), which moves the
-value stack.
+are a second array; the value stack a third. All three grow by doubling
+(`realloc`), which moves the value stack; the frames keep pace with the
+stack's clean part (below).
 
 A function's registers are its slots on the value stack from its frame's
 base, `nlocals` of them (the function table; the last is the scratch
-register the compiler uses for a value nothing reads). They start as
-`unit`, and a register no longer used still holds a value, which the
-collector sees. Above the registers a frame pushes only the arguments of
+register the compiler uses for a value nothing reads). The loop's calls
+make them `unit`, compiled code's take them as the stack's *clean part*
+has them (below), and a register no longer used still holds a value,
+which the collector sees. Above the registers a frame pushes only the arguments of
 a primitive, the value a call returns and the exception a raise leaves
 for `CATCH`: the checker works out how deep that goes for each function
 (`maxstack`: the arity of its widest `PRIM` or `PRIMPUSH`, or 1), a call
 makes room for `nlocals + maxstack` (`ROOM`), and a push does not check.
 `make_room` does the same for the frames of an image or of `vm_start`.
+
+**The stack's clean part** (docs/plans/performance.md, M6; `VM.stack_clean`):
+the slots from the stack pointer up to it hold `unit`, or a value
+written since the last collection -- never what a collection left behind
+-- so a frame compiled code makes there needs no `unit` in its
+registers, every one being a root as it is. Compiled code's room checks
+claim from it, comparing an address with its end's (`VM.stack_room`);
+their slow path claims more (`vm_claim_stack`: the stack grown, the slots
+made `unit`, `CLEAN_AHEAD` past what is wanted) and grows the frames to
+one per slot claimed, so that a call checks the frames no more (a frame
+has a slot at least, so there are never more frames than slots below
+the clean part's end); every collection makes the slots above the stack
+pointer `unit` and keeps claimed no more than `CLEAN_AHEAD` of them
+(`vm_clean_stack`), and an image's stack is clean to its pointer. The
+clean part is the calls' poll too: the user's interrupt and the
+debugger's make `VM.stack_room` 0 (`sys_interrupt_limit`,
+`vm_poll_soon`), so that the next room check goes to its slow path,
+which claims and then looks at `VM.interrupt`.
 
 Calls: `CALL f x` and `CALLK f n a...` push a frame whose base is the
 caller's stack pointer, make the callee's registers there (the argument,
@@ -155,9 +181,9 @@ at that frame's tier -- the interpreter's, or the native code the JIT
 made -- and no engine calls another. The interpreter hands the VM back
 to the driver, exact, when the function it is about to enter has a
 native entry (`HANDOVER` in `CALL`, `CALLK`, `TAILCALL` and `TAILCALLK`)
-and when a `RET` lands in a frame whose caller left a native return
-address (`RETURN_NATIVE`); native code hands it back when it must run an
-interpreted frame or returns into one. So the machine stack is one C
+and when a `RET` lands in a frame whose function has code, which goes on
+at the place a run begins after its call (`RESUME_NATIVE`); native code
+hands it back when it must run an interpreted frame or returns into one. So the machine stack is one C
 frame deep whatever the program does, plus the call into C in progress:
 `make test-register-jit` runs a recursion 200,000 deep under a machine stack
 of 1 MB with every function handed to the JIT. That is what lets frames
@@ -219,11 +245,11 @@ loop and compiled code answer as they do for `Runtime.restore`: the VM is
 handed to the driver, which asks `jit_program` for the view again. Where
 the program is the same one grown (`VM.prog_epoch`, a new number for each
 program read, the same while units are loaded), `jit_grow` extends the
-code objects, the fills and the names and keeps all the code: compiled
-code never holds the address of a table that grows -- `entry_of`,
-`to_callee_dynamic` and `fill_unit_dynamic` load the table's address from
-the JitProgram, `closure_function` the functions' table and their number
-from the VM -- and the primitives' helpers (`jit_h_prim`,
+code objects, the fills, the table of calls and the names and keeps all
+the code: compiled code never holds the address of a table that grows --
+a call loads the table of calls from the VM (`VM.jit_calls`), and
+`fill_unit_dynamic` the fills' from the JitProgram, `closure_function`
+the number of functions from the VM -- and the primitives' helpers (`jit_h_prim`,
 `jit_h_primpush`) are given where their operands are in the code, which a
 load may move. Where it became another, `jit_make` invalidates every
 function that has code and makes the view again. `--jit-stress=N` invalidates the
@@ -271,9 +297,13 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   constant has it in a byte.
 * **`masm.h`, `masm.c`**: the macro-assembler, and the conventions the
   code keeps. `r13` is the VM (`r12` would make every memory operand
-  based on it a byte longer), `rbp` the frame's base as an index into
-  the value stack, `r14` its registers (the stack plus `8 rbp`), `r15`
-  the count of instructions; register k is the 8 bytes at `[r14 + 8 k]`.
+  based on it a byte longer), `rbp` the frame's record, `&vm->frames[vm->fp]`
+  (since M6 of docs/plans/performance.md; it was the frame's base, an
+  index into the value stack, which is the record's `base` now: a
+  call's frame is the record after it, and `ENV`, `RET` and a tail call
+  find the record there), `r14` the frame's registers (the stack plus
+  8 times the base), `r15` the count of instructions; register k is the
+  8 bytes at `[r14 + 8 k]`.
   The stack itself has no register: what moves between frames reads it
   from the VM. The fields of the VM that the code names most are the
   VM's first 128 bytes (`vm.h`), where an offset is one byte of an
@@ -281,8 +311,12 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   machine stack holds only the call into C in progress, aligned by the
   enter stub; the code never pushes. `SYNC` writes the stack pointer (the
   frame's base plus its registers, plus what a primitive's arguments
-  push), the pc after the instruction and the count to the VM before any
-  call into C; `RELOAD` takes the stack, the frame and its registers back
+  push), the pc after the instruction, the count and the frame index to
+  the VM before any call into C -- the code keeps the frame in `rbp`
+  alone, a call and a return touching no `VM.fp` (M6), so the index is
+  made from it there (`ms_store_fp`: the record's offset in the frames
+  over the record's size), as on the way into the interpreter and in
+  the trampolines; `RELOAD` takes the stack, the frame and its registers back
   after one, since a call may move the stack and a raise the frame. A
   call into C takes the System V or the Windows convention (`ms_call`;
   the VM is argument 0). The allocation fast path is `vm_alloc`'s in
@@ -339,24 +373,34 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   run; every instruction is compiled (since M5; a `RESULT` after a call
   is a phantom, which the callee's `RET` does, and the instruction after
   it a target). Then each instruction's emitter, with a run's length
-  added to the count where the run begins (docs/native.md, *Counting*),
+  added to the count where the run begins (docs/native.md, *Counting*) --
+  a run ends where control goes elsewhere or comes from elsewhere, not
+  where it may leave (a raise: M6 of docs/plans/performance.md, counting
+  per extended block), so a sync in its middle gives the VM the count
+  less the rest of the run (`Masm.ahead`), and a raise into a handler's
+  code takes the count back from the VM --
   the slow paths, and the code copied into the region, which is one
   64 MB mapping, executable, made writable to add a function's code. At
   its start (`jit_region_init`) are the enter and leave stubs, the stub
-  of fatal errors and a trampoline for every call into C the code makes
+  of fatal errors, the return trampoline, the stub of a call into the
+  interpreter, the watermark's stub (`ms_emit_low`: where a `RET` goes
+  that pops below the watermark) and a trampoline for every call into C the code makes
   -- every primitive and every helper -- where a function anywhere in
   the region reaches them by a direct jump or call (`ms_call`,
   `ms_handback`; `placed` in the masm says the code knows where it will
   run). A code object's entry is
   written last. The helpers native code calls: `jit_h_prim` (the
   primitive from the registers, `fastprim.h`'s way, or pushed and
-  called), `jit_h_alloc`, `jit_h_ret` (the frame of the top level's
-  `RET`, answering what the driver is to do next), `jit_h_fatal_at` (the
-  loop's message, from the stub), `jit_h_call` and `jit_h_tailcall` (a call through a
-  closure), `jit_h_push_handler`, `jit_h_raise`, `jit_h_interrupt` (the
-  user's interrupt raised from a poll, `SLOW_INTERRUPT`), `jit_h_primpush`,
-  and `jit_h_grow` and `jit_h_grow_frames` (the stack and the frames grown
-  where a call finds no room).
+  called), `jit_h_alloc`, `jit_h_return` (a `RET` into a caller that is
+  not compiled code, and the top level's, through the return trampoline
+  `VM.ret_tramp`, answering what the driver is to do next),
+  `jit_h_enter_interp` (a call into a function that has no code, through
+  the stub the table of calls gives it), `jit_h_fatal_at` (the
+  loop's message, from the stub), `jit_h_push_handler` (where the
+  table of handlers is full), `jit_h_raise`, `jit_h_interrupt` (the
+  user's interrupt raised from a poll), `jit_h_primpush`,
+  and `jit_h_grow` (the stack's clean part claimed where a call finds no
+  room, and the frames grown with it).
 * **`emit.c`**: the emitters, one per instruction, over the
   macro-assembler. `runeisa` writes `runtime/register/jit_emit.h`, their
   prototypes, so that an instruction without one does not build, and
@@ -364,31 +408,60 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   the loop reads them and calls its emitter; the flow, raises and handlers
   of each instruction are the tables of `regops.h`.
 
-Calls, returns, handlers and `PRIMPUSH` in tier 1 (M5): a known call
-(`CALLK`, `TAILCALLK`) is in line -- the room checked (a slow path grows
-the stack, another the frames), the callee's registers made above the
-frame from the caller's, the frame pushed with the address of the code
-after the caller's `RESULT` as its `native_ret`, the callee's registers
-made the code's own (`rbp`, `r14`), and its entry read from its code
-object and jumped to, or, where it has none, the VM made exact for the
-interpreter and handed back. A call through a closure (`CALL`,
-`TAILCALL`) is in line too since M7: the closure checked, its function
-found, the room made (a slow path grows the stack and starts the
-instruction over; the frames are checked first, since their slow path
-clobbers what was found), the registers made and the frame pushed, and
-the entry read from the callee's code object. A known call whose callee
-has code jumps straight into it (M7): a call to the function itself to
-its entry's label, another's by `jmp rel32` to its address, the code's
-placement being known before it is emitted; a function whose code jumps
-into another's goes with it when that one is invalidated (`jit_depend`:
-the callers are recorded at the jump, and `jit_invalidate` walks them),
-rather than its code being patched. `RET` writes the value into the
-register of the caller's `RESULT` -- which the frame records when it is
-pushed (`Frame.result`), as the loop's `RET` reads it too -- pops the
-frame, lowering the watermark as `vm_frame_pop` does, and jumps straight
-into the caller's code where the frame kept a
-`native_ret`, else hands back to the interpreter; the frame of the top
-level returns through `jit_h_ret`.
+Calls, returns, handlers and `PRIMPUSH` in tier 1 (M5, made lean by M6
+of docs/plans/performance.md): a known call (`CALLK`, `TAILCALLK`) is in
+line -- the room checked in the stack's clean part (whose slow path
+claims more, and is the call's poll), the callee's registers made above
+the frame from the caller's (the rest as the clean part has them), the
+frame pushed in the record after `rbp`'s -- the function and the pc after
+the call in one word, the base, no closure, and as its `native_ret` the
+call's *landing* in line after it -- the callee's record and registers
+made the code's own (`rbp`, `r14`; no frame index, which `SYNC` makes
+from `rbp`), and its
+code jumped to: a call to the function itself to its entry's label,
+another's that has code by `jmp rel32` to its address, the code's
+placement being known before it is emitted (a function whose code jumps
+into another's goes with it when that one is invalidated: `jit_depend`,
+the callers recorded at the jump, `jit_invalidate` walking them), and
+another's by a `jmp rel32` to a slow path that jumps where the *table of
+calls* says (`JitProgram.calls`, `VM.jit_calls`; `CallInfo`): per
+function where a call goes in -- its code's entry, which compiling it
+puts there, or the stub that hands the frame, pushed and its registers
+made, to the interpreter (`jit_h_enter_interp`) -- and the room its
+frame wants. That jump is recorded with the callee (`CodeObject.pending`)
+and made a jump into the callee's code when the callee is compiled
+(`patch_pending`, unless the caller's code is gone or compiled again;
+the caller then depends on the callee as above). A tail call writes the
+arguments straight into the slots that are the callee's registers where
+no argument is read from a slot an earlier one wrote, else above the
+frame first and then down. A call through a
+closure (`CALL`, `TAILCALL`) finds both in that table by the word of the
+closure's function (`2f + 1`: the entry at 8 times it less 8, the room
+at 8 times it; checked against the number of functions where the section
+does not vouch for the closure), the room claimed (a slow path claims
+and starts the instruction over), the registers made, the frame pushed
+and the entry jumped to. `RET` takes the value's word into `rax` and
+jumps where the frame says (`native_ret`), testing nothing but the
+watermark -- `rbp` against `VM.frame_low`, the address of the record at
+`VM.fp_low`, which every change of `fp_low` keeps (`vm_set_fp_low`); a
+frame at or below it goes through the watermark's stub, which lowers it
+to the frame returned to as `vm_frame_pop` does: five instructions --
+to the landing of the caller's compiled call -- which pops the frame,
+making `rbp` and
+`r14` the caller's again, the callee's registers having begun past the
+caller's, loads the homes needed after the call and stores the value
+into the register of the `RESULT` -- or, for a caller that is not
+compiled code and for the top level, to the return trampoline
+`VM.ret_tramp`, which every frame the interpreter or the runtime pushes
+keeps (`vm_push_frame`, `make_room`, `jit_invalidate`, the debugger's
+debug mode; frames there before the region was made get it then), and
+which hands the return to the interpreter (`jit_h_return`, given the
+index of the frame that returns, which it pops; the top level's pop
+takes the frame index one below 0, which it puts back). A
+frame compiled code pushes records no `RESULT` register (`Frame.result`):
+the landing knows it, and the loop's `RET` into such a frame reads it
+from the code and goes on in the caller's code at the place a run begins
+after the `RESULT` (`jit_osr`), never at the landing.
 So a `RESULT` after a `CALL` or `CALLK` is passed over by every engine
 and counted by none (compile.c, a phantom), where a `RESULT` after a
 `PRIMPUSH` runs and takes the value the primitive left above the
@@ -407,10 +480,12 @@ lowered to it, the exception at its stack pointer, and on into its code,
 which loads its homes from the slots (written back first in a function
 with handlers). `--trace`
 runs the interpreter alone. The user's interrupt is polled where the loop
-polls it (`POLL`), at a jump back and at a call: a compare of
-`VM.interrupt` and a branch, before the instruction does anything, to a
-slow path that goes back while the mask holds it and else raises it
-through `jit_h_interrupt`, as `RAISE` raises
+polls it (`POLL`): at a jump back, a compare of `VM.interrupt` and a
+branch, before the instruction does anything, to a slow path that goes
+back while the mask holds it and else raises it through
+`jit_h_interrupt`, as `RAISE` raises; at a call, by its room check,
+whose slow path claims and then looks at the flag the same way (the
+stack's clean part above: the interrupt makes its end 0)
 ([docs/runtime.md](../../docs/runtime.md), *Interrupts*).
 
 Made fast (M7): **the primitives of `fastprim.h` are in line**
@@ -445,12 +520,19 @@ and its branch are one:** the comparison leaves its bool in the flags
 (`flags_for`), the count of a run is added with `lea`, which leaves the
 flags alone, and a `JUMPIF` or `JUMPIFNOT` on that register right after
 branches on them, with no tag test and no load; a comparison's slow path
-puts the bool back into the flags. **Unit goes only where it is
-needed:** a call fills the callee's registers from the lowest one not
-provably written before the first instruction at which a collection
-could see it or control could arrive from elsewhere (`jit_fill_from`,
-from the generator's `rop_dest`, the operand an instruction writes;
-little in practice, since a `PRIM` that may raise allocates). And
+puts the bool back into the flags. At tier 2, where the bool goes to
+that branch alone -- dead after it either way, and the branch reached
+from the comparison only -- and the section vouches for both words in
+their homes, no bool is made at all: the words are compared where they
+are and the branch reads the comparison's own condition (`cc_for`,
+performance M6), as `int_add` and `int_sub` on two such words compute
+where they are, `rax` the one scratch. **Unit goes only where it is
+needed:** for a callee without an arity in the section, a call fills
+its registers from the lowest one not provably written before the
+first instruction at which a collection could see it or control could
+arrive from elsewhere (`jit_fill_from`, from the generator's
+`rop_dest`, the operand an instruction writes); every other frame is
+made in the stack's clean part and needs none (M6). And
 `--jit-stats` counts the calls of each primitive from code, most called
 first, and `--jit-perf-map` writes `/tmp/perf-PID.map` for `perf record`.
 
@@ -590,13 +672,14 @@ that is not nullary is a pointer to a constructor,
 values of one immediate representation compares the payloads alone
 (`ms_immediate`). The loader's lint holds a program to its section; a
 program that lies to it runs wrongly at tier 2 where the interpreter
-and tier 1 would have stopped it. **A function's code fills its own
-registers with unit** at its entry (M10), from its arity up
-(`jit_fill_from` says from where), so a call to a function with an
-arity in the section does not; a caller fills for a callee without one,
-and for the interpreter where the callee has no code (`fill_unit`,
-`fill_unit_dynamic`; `jit->all_meta` says every function has an
-arity). `Math.sqrt` is in line (`sqrtsd`).
+and tier 1 would have stopped it. **A function's code fills none of its
+registers with unit** (M6 of docs/plans/performance.md; M10 to M5 of
+it, the code filled from its arity up): its caller made its frame in the
+stack's clean part, whose slots are unit or values written since the
+last collection, roots as they are; a caller fills for a callee without
+an arity in the section (`fill_unit`, `fill_unit_dynamic`;
+`jit->all_meta` says every function has an arity). `Math.sqrt` is in
+line (`sqrtsd`).
 
 `--jit=opt`, the default since M10, compiles at tier 2 what
 `--jit=baseline` would at tier 1, by the same counters; `--jit-tier=N` fixes the tier under any mode, so
