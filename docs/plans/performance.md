@@ -44,7 +44,7 @@ is the page of timings, stale until M1.
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done (2026-10-11); every decision taken on 2026-10-12, D7 with an addendum |
-| M1 | Measure: the JIT's code dumped, the elaborator's counters, the register VM in every timing target, HOL and MLton as scripts, new budgets | in part (2026-10-12, branch `perf-m1`): `--pass-stats` complete, the timing targets on Rune as shipped, Poly/ML in `perf-cycles.sh`, HOL's and MLton's measurements as scripts, the module language's budgets, Poly/ML's slowdown found and fixed (*M1*, *Done so far*); `docs/performance.md` re-timed next; the JIT's code dumped and the elaborator's counters on their own branches |
+| M1 | Measure: the JIT's code dumped, the elaborator's counters, the register VM in every timing target, HOL and MLton as scripts, new budgets | in part (2026-10-12, branch `perf-m1`): `--pass-stats` complete, the timing targets on Rune as shipped, Poly/ML in `perf-cycles.sh`, HOL's and MLton's measurements as scripts, the module language's budgets, Poly/ML's slowdown found and fixed, `docs/performance.md` re-timed in counts and ratios under load (its seconds again at M10) (*M1*, *Done so far*); the JIT's code dumped and the elaborator's counters on their own branches |
 | M2 | Signatures: sharing and `where` in one realisation | not started; prototype E20 |
 | M3 | Functors: typed from their signature, copies only for code (D3 decided), cheaper matching, MidCanon's quadratic | not started; prototypes E21, E24 |
 | M4 | Types shared: `Ty.ty` hash-consed, `exponential.sml` compiled | not started; partial prototypes E23 (not enough) |
@@ -1866,6 +1866,14 @@ M1)"):
 * **Poly/ML's slowdown** is its collector at its initial heap, not a
   commit (*Where we are*, *The compiler compiling itself*): its builds now
   start with a heap of 1 GB.
+* **`docs/performance.md` re-timed** on Rune as shipped, with these tools,
+  on 2026-10-12 at a load of 20 to 33: its tables lead with instructions
+  and with ratios to MLton and Poly/ML measured in the same session, and
+  give seconds as indications. The ratios agree with *Where we are*
+  (`examples/benchmarks` 5.1 times MLton by geometric mean, against E3's
+  5.2; the compiler compiling itself 4.6 times the instructions of MLton's
+  build, against E4's 4.6). The seconds, 1.5 to 2.5 times a quiet
+  machine's, are M10's to take again, with `xc1`, which was not timed.
 
 ### M2. Signatures (M)
 
