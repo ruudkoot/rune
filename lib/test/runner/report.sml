@@ -98,8 +98,9 @@ struct
       TextIO.flushOut (#events r);
       if verdict = "PASS" orelse verdict = "SKIP" then ()
       else
-        (#failed r := !(#failed r) + 1;
-         #failures r := (path, verdict, reason, kept) :: !(#failures r);
+        ((* a golden file written is told, and is no failure *)
+         if verdict = "ACCEPTED" then ()
+         else (#failed r := !(#failed r) + 1; #failures r := (path, verdict, reason, kept) :: !(#failures r));
          clear r;
          say (paint (r, verdict) ^ " " ^ path ^ ": " ^ reason ^ "\n"
               ^ String.concat (List.map (fn d => "  kept:    " ^ d ^ "\n") kept)

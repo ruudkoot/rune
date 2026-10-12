@@ -97,7 +97,7 @@ name the tools to check.
 | `make vm-asan` | `bin/runevm-stack-asan` and `bin/runevm-asan` with AddressSanitizer/UBSan; `make test-register-asan` runs `tests/lang` on the latter |
 | `make test-register-jit` | `runtime/register` with every function compiled (`--jit=all`): `tests/lang` and the Basis Library suite (`rune:jit`), every program of `tests/lang` and `tests/perf`, `tests/opt/prims.sml` and the compiler compiling itself printing and counting the same interpreted, compiled, with every other function compiled (`--jit-only=odd`, so that calls, returns and raises cross between the tiers both ways) and under `--jit-stress` (tiered up at the lowest thresholds and invalidated every fifth call) and every instruction occurring in them (`scripts/check-jit.sh`), `runevm --jit-check`, and a recursion 200,000 deep under a machine stack of 1 MB, which holds the driver to never nesting ([plans/jit.md](plans/jit.md), M3-M5); part of `make check`. `make RUNE_JIT=0` builds `runtime/register` without the JIT. `RUNEVM_JIT=MODE` in the environment is the mode where no `--jit=` is given |
 | `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-$(BOOTHOST)`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot`; `bin/rune.stack.rbc` is the same compiler in the stack bytecode |
-| `make test` | run `tests/run-tests.sh` with `bin/rune-stack` (`bin/rune --target=stack`, written by every `make`, for `RUNE=` if you give one), and `tests/runtime/run-vm-tests.sh`: bytecode files and options the VM must refuse with a message |
+| `make test` | the programs of `tests/lang` and `tests/errors` compiled by `bin/rune-stack` (`bin/rune --target=stack`, written by every `make`, for `RUNE=` if you give one) and run on `bin/runevm-stack`, on the runner (`bin/rune-test run --tier test`; `tests/runner/lang.sml`), and `make test-steps`: the compiler's own tests, the runtime's limits and collector log, `tests/runtime/run-vm-tests.sh` (bytecode files and options the VM must refuse with a message) and the C test of the heap. `make test-heap`, `test-gc`, `test-all`, `test-native`, `test-register` and `test-register-jit` run `tests/lang` in their ways the same way, each by its tag, and the rest of what they run as `make TARGET-steps` |
 | `make test-all` | run the suite with each of the six host builds |
 | `make isa` | write the tables of the instruction set and the primitives again from their descriptions in `src/isa`, with `runeisa` built by MLton: `runtime/stack/opcodes.def`, `runtime/prims.def`, `runtime/isa.h`, `runtime/stack/opcodes.h`, `runtime/prims_table.h`, `src/backend/opcodes.sml`, `src/backend/prims.sml`; they are committed |
 | `make check-isa` | fail when one of those files is not what `src/isa` gives, with `runeisa` built by MLton and by the self-hosted compiler; part of `make check` |
@@ -144,8 +144,8 @@ shows in the test targets (the suite takes about 15 s at `-j16` instead of
 is the loop to use while iterating. `RUNEVM=` selects the VM the same way.
 
 Make runs recipes, and the test scripts run test programs, in parallel on
-all available CPUs; `make JOBS=4 check` limits that to 4 (`tests/run-tests.sh`
-and `scripts/check-cross.sh` take `-j N`).
+all available CPUs; `make JOBS=4 check` limits that to 4 (`bin/rune-test`,
+`tests/run-tests.sh` and `scripts/check-cross.sh` take `-j N`).
 
 The matrix targets are described in [basis-compat.md](basis-compat.md) and
 `tests/basis/README.md`. `RUNE_HOSTS` (or `make HOSTS=...`) is where the hosts

@@ -1,6 +1,6 @@
 # Index: L
 
-[Overview](../README.md) &middot; [a](a.md) [c](c.md) [e](e.md) [f](f.md) [h](h.md) [j](j.md) **l** [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [c](c.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [j](j.md) **l** [m](m.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [w](w.md)
 
 - `Log` (con): [REPORT](../sig/REPORT.md#con-log)
 

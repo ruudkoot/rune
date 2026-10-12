@@ -49,15 +49,15 @@ sig
   val outcomeName : outcome -> string
 
   (* `run {commands, cpus, memory, finished, tick}` runs `commands` as
-     `Scheduler.next` admits them, and tells `finished` each one's result.
+     `Scheduler.admit` admits them, and tells `finished` each one's result.
 
      The machine has `cpus` processors and `memory` megabytes. `tick` is
      called with the number running whenever the loop has nothing to do,
      for a display.
 
-     A command that waits for one that did not exit with 0 is not started,
-     and is `Cancelled`. An interrupt (`SML90.Interrupt`) kills every
+     `finished` says whether the command passed. A command that waits for
+     one that did not pass is not started, and is `Cancelled`. An interrupt (`SML90.Interrupt`) kills every
      running group and is raised again. *)
   val run : {commands : command vector, cpus : int, memory : int,
-             finished : int * result -> unit, tick : int -> unit} -> unit
+             finished : int * result -> bool, tick : int -> unit} -> unit
 end

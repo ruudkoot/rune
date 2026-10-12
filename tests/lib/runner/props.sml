@@ -183,6 +183,16 @@ struct
            Expect.that ("the chain of 1 and 5", Real.== (Scheduler.priority (p, 0), 6.0));
            Expect.that ("alone", Real.== (Scheduler.priority (p, 2), 2.0))
          end),
+       Test.it "History.record/many-in-order" (fn () =>
+         (* 5000 paths in order, which a tree that is not balanced makes a list *)
+         let
+           val paths = List.tabulate (5000, fn i => "t/" ^ StringCvt.padLeft #"0" 5 (Int.toString i))
+           val h = List.foldl (fn (p, h) => History.record (h, {path = p, wall = 1.0, passed = p <> "t/02500"})) History.empty paths
+         in
+           Expect.that ("every one found", List.all (fn p => isSome (History.cost (h, p))) paths);
+           Expect.that ("the failed one", History.failedLast (h, "t/02500") andalso not (History.failedLast (h, "t/02501")));
+           Expect.that ("in order", List.map #path (History.entries h) = paths)
+         end),
        Test.property "History.write/read-back" (fn () =>
          Prop.forAllGen (Gen.list (Gen.triple (pathGen, Gen.intRange (0, 4000), Gen.bool)), showEntries)
                         (Prop.holds o historyRoundTrip))]

@@ -1,7 +1,9 @@
 # Index: A
 
-[Overview](../README.md) &middot; **a** [c](c.md) [e](e.md) [f](f.md) [h](h.md) [j](j.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [w](w.md)
+[Overview](../README.md) &middot; **a** [c](c.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [j](j.md) [l](l.md) [m](m.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [w](w.md)
 
+- `accept` (val): [RUN](../sig/RUN.md#val-accept)
+- `admit` (val): [SCHEDULER](../sig/SCHEDULER.md#val-admit)
 - `Agent` (con): [REPORT](../sig/REPORT.md#con-agent)
 
 ---

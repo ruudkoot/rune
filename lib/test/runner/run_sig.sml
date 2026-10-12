@@ -18,7 +18,8 @@ sig
      runner's own (`MAKELEVEL`, `MFLAGS`, and the jobs and jobserver of
      `MAKEFLAGS`, whose variables stay) or force colour (`FORCE_COLOR`,
      `CLICOLOR_FORCE`). A command takes no more CPUs than the run has, and
-     finds how many it has in `RUNE_TEST_CPUS`. *)
+     finds how many it has in `RUNE_TEST_CPUS`, the run's directory in
+     `RUNE_TEST_RUN` and the tree's in `RUNE_TEST_ROOT`, both absolute. *)
   type command = {program : string, args : string list, env : string list option, dir : string option,
                   stdin : string option, timeout : Time.time, cap : int, cpus : int, memory : int,
                   pools : string list, exclusive : bool, after : string list,
@@ -37,9 +38,21 @@ sig
      Its timeout is an hour, and its output has no cap. *)
   val shell : string * int -> command
 
+  (* `index names` finds a name among `names`: its place, or `NONE`.
+
+     Example: `index (Vector.fromList ["b", "a"]) "a" = SOME 1` *)
+  val index : string vector -> string -> int option
+
   (* `tail (n, file)` is the last `n` lines of `file`, or "" when there is
      none. *)
   val tail : int * string -> string
+
+  (* Whether the run accepts what its tests printed as what they should
+     print (`--accept`).
+
+     A judge that reads a golden file writes it instead, and says
+     `ACCEPTED`. It is `false` unless the command line sets it. *)
+  val accept : bool ref
 
   (* `run {tests, root, out, history, cpus, memory, keep, reader}` runs
      `tests` in a new directory under `out`, and is whether every test

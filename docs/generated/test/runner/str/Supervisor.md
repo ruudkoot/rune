@@ -29,7 +29,7 @@ What each means is on [`SUPERVISOR`](../sig/SUPERVISOR.md); the types are this s
 | datatype | [`outcome`](../sig/SUPERVISOR.md#type-outcome) | `Exited` &#124; `Signalled` &#124; `TimedOut` &#124; `Capped` &#124; `Cancelled` &#124; `Failed` |
 | type | [`result`](../sig/SUPERVISOR.md#type-result) | `{leaked : bool, outcome : outcome, outputBytes : int, peakResident : int, system : Time.time, user : Time.time, wall : Time.time}` |
 | val | [`outcomeName`](../sig/SUPERVISOR.md#val-outcomename) | `outcome -> string` |
-| val | [`run`](../sig/SUPERVISOR.md#val-run) | `{commands : command vector, cpus : int, finished : int * result -> unit, memory : int, tick : int -> unit} -> unit` |
+| val | [`run`](../sig/SUPERVISOR.md#val-run) | `{commands : command vector, cpus : int, finished : int * result -> bool, memory : int, tick : int -> unit} -> unit` |
 
 ---
 

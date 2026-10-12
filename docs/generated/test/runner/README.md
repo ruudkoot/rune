@@ -1,6 +1,6 @@
 # Running tests
 
-[How to read these pages](conventions.md) &middot; [the top-level environment](top-level.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [types that are one type](types.md) &middot; [readings of the specification](readings.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [c](index/c.md) [e](index/e.md) [f](index/f.md) [h](index/h.md) [j](index/j.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [w](index/w.md)
+[How to read these pages](conventions.md) &middot; [the top-level environment](top-level.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [types that are one type](types.md) &middot; [readings of the specification](readings.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [c](index/c.md) [e](index/e.md) [f](index/f.md) [h](index/h.md) [i](index/i.md) [j](index/j.md) [l](index/l.md) [m](index/m.md) [o](index/o.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [w](index/w.md)
 
 ## Running tests
 
@@ -9,8 +9,8 @@
 | [`CLI`](sig/CLI.md) | The runner's command line (docs/plans/unit-testing.md, D19): | required | 1 of 1 |
 | [`HISTORY`](sig/HISTORY.md) | What earlier runs found (docs/plans/unit-testing.md, D13): per test, the last wall times, the last outcome and how often it flipped, in a table of tab-separated lines that each run rewrites. A fresh tree reads a seed instead, which only a run of every test may write, since a test missing from it would look cheap (HOL4's rule). | required | 9 of 9 |
 | [`REPORT`](sig/REPORT.md) | What a run says, to the reader it has (docs/plans/unit-testing.md, D14). | required | 8 of 8 |
-| [`RUN`](sig/RUN.md) | A run of tests that are commands (docs/plans/unit-testing.md, M3): each in a directory of its own of a fixed width under the run's directory, or in a directory it names; judged when it ends; its directory removed when it passed and kept when it did not; its wall time recorded in the history; and every outcome reported. | required | 5 of 5 |
-| [`SCHEDULER`](sig/SCHEDULER.md) | Which jobs to start (docs/plans/unit-testing.md, D12): a pure function of the jobs, what has finished, what runs and what is free, so that it can be tested on a simulated clock. | required | 7 of 7 |
+| [`RUN`](sig/RUN.md) | A run of tests that are commands (docs/plans/unit-testing.md, M3): each in a directory of its own of a fixed width under the run's directory, or in a directory it names; judged when it ends; its directory removed when it passed and kept when it did not; its wall time recorded in the history; and every outcome reported. | required | 7 of 7 |
+| [`SCHEDULER`](sig/SCHEDULER.md) | Which jobs to start (docs/plans/unit-testing.md, D12): the jobs of a run, what has ended and what is free decide it, so that it can be tested on a simulated clock. | required | 10 of 10 |
 | [`SUPERVISOR`](sig/SUPERVISOR.md) | Running jobs as children (docs/plans/unit-testing.md, D9 and D11): one loop that starts what the scheduler admits, reaps what ended, ends what ran too long or wrote too much, and sleeps a little when nothing happened. There are no threads and no handlers of signals but the interrupt, so this loop is the runner. | required | 5 of 5 |
 
 ---

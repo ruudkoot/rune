@@ -57,6 +57,7 @@ struct
                           | SOME t => if filterText = "" then "tag:" ^ t else "(" ^ filterText ^ ") & tag:" ^ t)
         handle TestFilter.Parse m => raise Usage ("the filter: " ^ m)
       val root = getOpt (option ("--root", rest), ".")
+      val () = Run.accept := flag ("--accept", rest)
       val history = getOpt (option ("--history", rest), "build/test-history.tsv")
       val all = Test.leaves tree
       val selected = List.filter (fn {path, meta, ...} => TestFilter.matches filter {path = path, tags = #tags meta}) all
@@ -65,6 +66,20 @@ struct
           let val h = History.read history
           in List.filter (fn {path, ...} => History.failedLast (h, path)) selected end
         else selected
+      (* and the tests they wait for, and those they wait for: a test runs
+         with what it needs *)
+      val selected =
+        let
+          val allV = Vector.fromList all
+          val find = Run.index (Vector.map #path allV)
+          val chosen = Array.array (Vector.length allV, false)
+          fun choose i =
+            if Array.sub (chosen, i) then ()
+            else (Array.update (chosen, i, true);
+                  List.app (fn p => case find p of SOME j => choose j | NONE => ())
+                           (#after (#leaf (Vector.sub (allV, i)) : Run.command)))
+          val () = List.app (fn {path, ...} => case find path of SOME i => choose i | NONE => ()) selected
+        in Vector.foldri (fn (i, x, acc) => if Array.sub (chosen, i) then x :: acc else acc) [] allV end
     in
       case command of
         "list" =>

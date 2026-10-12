@@ -3,24 +3,47 @@ structure History :> HISTORY =
 struct
   type entry = {path : string, walls : real list, passed : bool, flips : int}
 
-  (* by path, in the order of a binary tree of strings *)
-  datatype history = Leaf | Node of history * entry * history
+  (* by path, in an AVL tree of strings, each node with its height: a
+     history is read in the order of its paths, which would make a plain
+     tree a list *)
+  datatype history = Leaf | Node of history * entry * history * int
 
   val empty = Leaf
 
+  fun height Leaf = 0
+    | height (Node (_, _, _, h)) = h
+  fun node (l, e, r) = Node (l, e, r, 1 + Int.max (height l, height r))
+  fun rotateRight (Node (Node (a, x, b, _), y, c, _)) = node (a, x, node (b, y, c))
+    | rotateRight t = t
+  fun rotateLeft (Node (a, x, Node (b, y, c, _), _)) = node (node (a, x, b), y, c)
+    | rotateLeft t = t
+  fun balance (l, e, r) =
+    let val d = height l - height r
+    in
+      if d > 1 then
+        (case l of
+           Node (ll, _, lr, _) => rotateRight (node (if height lr > height ll then rotateLeft l else l, e, r))
+         | Leaf => node (l, e, r))
+      else if d < ~1 then
+        (case r of
+           Node (rl, _, rr, _) => rotateLeft (node (l, e, if height rl > height rr then rotateRight r else r))
+         | Leaf => node (l, e, r))
+      else node (l, e, r)
+    end
+
   fun find (Leaf, _) = NONE
-    | find (Node (l, e, r), p) =
+    | find (Node (l, e, r, _), p) =
         case String.compare (p, #path e) of LESS => find (l, p) | GREATER => find (r, p) | EQUAL => SOME e
 
-  fun insert (Leaf, e) = Node (Leaf, e, Leaf)
-    | insert (Node (l, x, r), e) =
+  fun insert (Leaf, e) = node (Leaf, e, Leaf)
+    | insert (Node (l, x, r, h), e) =
         case String.compare (#path e, #path x) of
-          LESS => Node (insert (l, e), x, r)
-        | GREATER => Node (l, x, insert (r, e))
-        | EQUAL => Node (l, e, r)
+          LESS => balance (insert (l, e), x, r)
+        | GREATER => balance (l, x, insert (r, e))
+        | EQUAL => Node (l, e, r, h)
 
   fun entries h =
-    let fun go (Leaf, acc) = acc | go (Node (l, e, r), acc) = go (l, e :: go (r, acc)) in go (h, []) end
+    let fun go (Leaf, acc) = acc | go (Node (l, e, r, _), acc) = go (l, e :: go (r, acc)) in go (h, []) end
 
   fun record (h, {path, wall, passed}) =
     case find (h, path) of

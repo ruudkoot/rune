@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 5 of 5 entries documented |
+| Documentation | 7 of 7 entries documented |
 | Tests | not listed |
 | Source | [lib/test/runner/run\_sig.sml](../../../../../lib/test/runner/run_sig.sml) |
 
@@ -38,7 +38,9 @@ sig
                   <a href="#fld-command.judge">judge</a> : Supervisor.result * {stdout : string, stderr : string} -&gt; (string * string) option}
   val <a href="#val-exitzero">exitZero</a> : Supervisor.result * {<a href="#fld-exitzero.stdout">stdout</a> : string, <a href="#fld-exitzero.stderr">stderr</a> : string} -&gt; (string * string) option
   val <a href="#val-shell">shell</a> : string * int -&gt; command
+  val <a href="#val-index">index</a> : string vector -&gt; string -&gt; int option
   val <a href="#val-tail">tail</a> : int * string -&gt; string
+  val <a href="#val-accept">accept</a> : bool ref
   val <a href="#val-run">run</a> : {<a href="#fld-run.tests">tests</a> : (string * Test.meta * command) list, <a href="#fld-run.root">root</a> : string, <a href="#fld-run.out">out</a> : string, <a href="#fld-run.history">history</a> : string,
              <a href="#fld-run.cpus">cpus</a> : int, <a href="#fld-run.memory">memory</a> : int, <a href="#fld-run.keep">keep</a> : bool, <a href="#fld-run.reader">reader</a> : Report.reader} -&gt; bool
 end
@@ -64,7 +66,8 @@ environment without what would make a `make` inside it a part of the
 runner's own (`MAKELEVEL`, `MFLAGS`, and the jobs and jobserver of
 `MAKEFLAGS`, whose variables stay) or force colour (`FORCE_COLOR`,
 `CLICOLOR_FORCE`). A command takes no more CPUs than the run has, and
-finds how many it has in `RUNE_TEST_CPUS`.
+finds how many it has in `RUNE_TEST_CPUS`, the run's directory in
+`RUNE_TEST_RUN` and the tree's in `RUNE_TEST_ROOT`, both absolute.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -110,6 +113,16 @@ in the directory of the tree, judged by [`exitZero`](#val-exitzero).
 
 Its timeout is an hour, and its output has no cap.
 
+### <a name="val-index"></a>`index`
+
+```sml
+val index : string vector -> string -> int option
+```
+
+`index names` finds a name among `names`: its place, or `NONE`.
+
+**Example** `index (Vector.fromList ["b", "a"]) "a" = SOME 1`
+
 ### <a name="val-tail"></a>`tail`
 
 ```sml
@@ -118,6 +131,18 @@ val tail : int * string -> string
 
 `tail (n, file)` is the last `n` lines of `file`, or "" when there is
 none.
+
+### <a name="val-accept"></a>`accept`
+
+```sml
+val accept : bool ref
+```
+
+Whether the run accepts what its tests printed as what they should
+print (`--accept`).
+
+A judge that reads a golden file writes it instead, and says
+`ACCEPTED`. It is `false` unless the command line sets it.
 
 ### <a name="val-run"></a>`run`
 

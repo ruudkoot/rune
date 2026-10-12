@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`RUN`](../sig/RUN.md) |
 | Status | required |
-| Members | 5 |
+| Members | 7 |
 | Tests | not listed |
 | Source | [lib/test/runner/run.sml](../../../../../lib/test/runner/run.sml) |
 
@@ -26,7 +26,9 @@ What each means is on [`RUN`](../sig/RUN.md); the types are this structure's own
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`command`](../sig/RUN.md#type-command) | `{after : string list, args : string list, cap : int, cpus : int, dir : string option, env : string list option, exclusive : bool, judge : {leaked : bool, outcome : Supervisor.outcome, outputBytes : int, peakResident : int, system : Time.time, user : Time.time, wall : Time.time} * {stderr : string, stdout : string} -> (string * string) option, memory : int, pools : string list, program : string, stdin : string option, timeout : Time.time}` |
+| val | [`accept`](../sig/RUN.md#val-accept) | `bool ref` |
 | val | [`exitZero`](../sig/RUN.md#val-exitzero) | `{leaked : bool, outcome : Supervisor.outcome, outputBytes : int, peakResident : int, system : Time.time, user : Time.time, wall : Time.time} * {stderr : string, stdout : string} -> (string * string) option` |
+| val | [`index`](../sig/RUN.md#val-index) | `string vector -> string -> int option` |
 | val | [`run`](../sig/RUN.md#val-run) | `{cpus : int, history : string, keep : bool, memory : int, out : string, reader : Report.reader, root : string, tests : (string * {cpus : int option, memory : int option, pending : string option, requires : string list, tags : string list, timeout : Time.time option} * command) list} -> bool` |
 | val | [`shell`](../sig/RUN.md#val-shell) | `string * int -> command` |
 | val | [`tail`](../sig/RUN.md#val-tail) | `int * string -> string` |

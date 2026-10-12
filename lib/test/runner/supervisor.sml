@@ -60,49 +60,34 @@ struct
                                       {cost = #cost c, cpus = #cpus c, memory = #memory c, pools = #pools c,
                                        exclusive = #exclusive c, failedLast = #failedLast c, deps = #deps c})
                                    commands)
+      val sched = Scheduler.start plan
       val state = Array.array (n, Waiting)
-      val waiting = ref (List.tabulate (n, fn i => i))
-      val finishedIds : int list ref = ref []
       val running : (int * int) list ref = ref []   (* pid, index *)
       val lastLook = ref (Runtime.clock ())
       fun command i = Vector.sub (commands, i)
-      fun used () =
-        List.foldl (fn ((_, i), (c, m, h)) => let val x = command i in (c + #cpus x, m + #memory x, #pools x @ h) end)
-                   (0, 0, []) (!running)
       fun nothing () = {outcome = Cancelled, wall = Time.zeroTime, user = Time.zeroTime, system = Time.zeroTime,
                         peakResident = 0, outputBytes = 0, leaked = false}
-      fun finish (i, ok, r) =
-        (Array.update (state, i, Done ok); finishedIds := i :: !finishedIds; finished (i, r))
-      fun good i = case Array.sub (state, i) of Done ok => ok | _ => false
-      fun ended i = case Array.sub (state, i) of Done _ => true | _ => false
-      (* cancel the waiting jobs whose dependencies ended badly *)
-      fun cancel () =
-        let
-          val (doomed, rest) =
-            List.partition (fn i => List.exists (fn d => ended d andalso not (good d)) (#deps (command i))) (!waiting)
+      (* a job ended: told, and the jobs that waited for it cancelled when
+         it did not end well *)
+      fun finish (i, r) =
+        let val ok = finished (i, r)
         in
-          waiting := rest;
-          List.app (fn i => finish (i, false, nothing ())) doomed;
-          if null doomed then () else cancel ()
+          Array.update (state, i, Done ok);
+          List.app (fn j => (Array.update (state, j, Done false); ignore (finished (j, nothing ()))))
+                   (Scheduler.ended (sched, i, ok))
         end
       fun admit () =
         let
-          val () = cancel ()
-          val (c, m, held) = used ()
-          val starting = Scheduler.next (plan, {waiting = !waiting, finished = List.filter good (!finishedIds),
-                                                running = List.map #2 (!running),
-                                                free = {cpus = cpus - c, memory = memory - m, held = held}})
           fun launch i =
             (let val pid = start (command i)
              in Array.update (state, i, Running {pid = pid, start = Runtime.clock (), killedAt = NONE, why = NONE});
                 running := (pid, i) :: !running
              end)
-            handle OS.SysErr (m, _) => finish (i, false, {outcome = Failed m, wall = Time.zeroTime, user = Time.zeroTime,
+            handle OS.SysErr (m, _) => finish (i, {outcome = Failed m, wall = Time.zeroTime, user = Time.zeroTime,
                                                           system = Time.zeroTime, peakResident = 0, outputBytes = 0,
                                                           leaked = false})
         in
-          waiting := List.filter (fn i => not (List.exists (fn j => j = i) starting)) (!waiting);
-          List.app launch starting
+          List.app launch (Scheduler.admit (sched, {cpus = cpus, memory = memory}))
         end
       fun reap () =
         if null (!running) then false
@@ -137,7 +122,7 @@ struct
                      val r = {outcome = outcome, wall = Time.- (Runtime.clock (), start), user = user, system = system,
                               peakResident = peakResident, outputBytes = bytes, leaked = leaked}
                    in
-                     finish (i, outcome = Exited 0 andalso not leaked, r); true
+                     finish (i, r); true
                    end)
       fun watch () =
         let
@@ -168,7 +153,7 @@ struct
         in
           List.app one (!running)
         end
-      fun busy () = not (null (!running)) orelse not (null (!waiting))
+      fun busy () = not (Scheduler.finished sched)
       fun loop () =
         if not (busy ()) then ()
         else

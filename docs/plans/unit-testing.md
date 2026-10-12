@@ -28,7 +28,7 @@ What it rests on:
 | M1 | `lib/test/unit`, and the libraries' tests on it | done 2026-10-12 |
 | M2 | The runtime's part: a clock, a child's costs, processors, spawn with limits | done 2026-10-12 |
 | M3 | The runner, with `make check`'s steps as its first jobs | done 2026-10-12 |
-| M4 | `tests/lang` and `tests/errors` in ways, compiled once | |
+| M4 | `tests/lang` and `tests/errors` in ways, compiled once | done 2026-10-12 |
 | M5 | The first calibration: tiers, profiles, `--affected` | |
 | M6 | One engine for expectations | |
 | M7 | The Basis suite on the runner | |
@@ -1595,6 +1595,12 @@ M1 and M2 are independent of each other and of the rest.
 * **Retires:** the Makefile's calls of `run-tests.sh`, and the wrapper VMs it writes into `bin/`. `run-tests.sh` stays for the portability and Windows runners until M13.
 * **Why now:** it is the largest saving measured (E3). The prototype did it in about 250 lines, with a third fewer compiles and every verdict kept (E9).
 * **Done when:** the same verdicts, and E1 measured again.
+* **Done** (2026-10-12):
+  - **`tests/runner/lang.sml`:** every program of `tests/lang` compiled once by each of eight compilers (the stack and register targets of `bin/rune`, and the six host builds) as `compile/COMPILER/NAME`, run in each of the 25 ways of the old `run-tests.sh` calls of `make check` as `lang/WAY/NAME` (a VM and its options: the wrapper VMs the Makefile wrote into `bin/` are gone), and every program of `tests/errors` compiled by each compiler as `errors/COMPILER/NAME`. 9,279 tests where `make check` ran 8,775 compiles; 2,248 compiles.
+  - **The judges** read the siblings as `run-tests.sh` did, in its order, and a failure shows the first line that differs. Each run has a directory of its own with `tests/out` and `tests/lang` in it, so the ways run at once. The host compilers' bytes, the stack compiler's where check-cross holds them to be, are not run again: such a run passes with the stack way's.
+  - **`--accept FILTER`** (D6) writes the `.expected`, `.cwarn` and error files of the selected tests, from the stack compiler and the default way.
+  - **Make:** `make test`, `test-heap`, `test-gc`, `test-all`, `test-native`, `test-register` and `test-register-jit` run their ways on the runner by their tags, and the rest of what they ran as `make TARGET-steps`; the check inventory has those steps, and test-opt and test-native-steps wait for `compile/stack-done`. The pool `lang` keeps six steps.
+  - **The runner** keeps its state for thousands of jobs: the scheduler counts down what each job waits for and keeps the ready ones by priority, a job's dependents wait for its verdict, selection brings the tests a test waits for, the history is balanced, and a failure's command can be pasted into a shell.
 
 ### M5. The first calibration (S, about 300, and documents)
 

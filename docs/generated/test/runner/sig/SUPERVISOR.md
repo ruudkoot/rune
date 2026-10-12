@@ -50,7 +50,7 @@ sig
                  <a href="#fld-result.peakresident">peakResident</a> : int, <a href="#fld-result.outputbytes">outputBytes</a> : int, <a href="#fld-result.leaked">leaked</a> : bool}
   val <a href="#val-outcomename">outcomeName</a> : outcome -&gt; string
   val <a href="#val-run">run</a> : {<a href="#fld-run.commands">commands</a> : command vector, <a href="#fld-run.cpus">cpus</a> : int, <a href="#fld-run.memory">memory</a> : int,
-             <a href="#fld-run.finished">finished</a> : int * result -&gt; unit, <a href="#fld-run.tick">tick</a> : int -&gt; unit} -&gt; unit
+             <a href="#fld-run.finished">finished</a> : int * result -&gt; bool, <a href="#fld-run.tick">tick</a> : int -&gt; unit} -&gt; unit
 end
 </pre>
 
@@ -148,18 +148,18 @@ val outcomeName : outcome -> string
 
 ```sml
 val run : {commands : command vector, cpus : int, memory : int,
-           finished : int * result -> unit, tick : int -> unit} -> unit
+           finished : int * result -> bool, tick : int -> unit} -> unit
 ```
 
 `run {commands, cpus, memory, finished, tick}` runs `commands` as
-[`Scheduler.next`](../sig/SCHEDULER.md#val-next) admits them, and tells `finished` each one's result.
+[`Scheduler.admit`](../sig/SCHEDULER.md#val-admit) admits them, and tells `finished` each one's result.
 
 The machine has `cpus` processors and `memory` megabytes. `tick` is
 called with the number running whenever the loop has nothing to do,
 for a display.
 
-A command that waits for one that did not exit with 0 is not started,
-and is [`Cancelled`](#con-cancelled). An interrupt ([`SML90.Interrupt`](../../../basis/sig/SML90.md#exn-interrupt)) kills every
+`finished` says whether the command passed. A command that waits for
+one that did not pass is not started, and is [`Cancelled`](#con-cancelled). An interrupt ([`SML90.Interrupt`](../../../basis/sig/SML90.md#exn-interrupt)) kills every
 running group and is raised again.
 
 | Field | Type | Description |
@@ -167,7 +167,7 @@ running group and is raised again.
 | <a name="fld-run.commands"></a>`commands` | `command vector` |  |
 | <a name="fld-run.cpus"></a>`cpus` | `int` |  |
 | <a name="fld-run.memory"></a>`memory` | `int` |  |
-| <a name="fld-run.finished"></a>`finished` | `int * result -> unit` |  |
+| <a name="fld-run.finished"></a>`finished` | `int * result -> bool` |  |
 | <a name="fld-run.tick"></a>`tick` | `int -> unit` |  |
 
 ---

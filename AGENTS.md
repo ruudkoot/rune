@@ -361,7 +361,8 @@ keep these invariants:
   `tests/doc` (`make test-doc`): an input and the expected `.ir`, `.md` and `.diag` next to it,
   reviewed line by line like any `.expected` file.
 * `.expected` files are written by hand or reviewed line by line after
-  `tests/run-tests.sh --update <filter>`; never accept generated output
+  `bin/rune-test run --accept 'lang/test/<name>'` (or
+  `tests/run-tests.sh --update <filter>`); never accept generated output
   blindly.
 
 ## Conventions

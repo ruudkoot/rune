@@ -1,9 +1,10 @@
 # Index: E
 
-[Overview](../README.md) &middot; [a](a.md) [c](c.md) **e** [f](f.md) [h](h.md) [j](j.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [c](c.md) **e** [f](f.md) [h](h.md) [i](i.md) [j](j.md) [l](l.md) [m](m.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [w](w.md)
 
 - `empty` (val): [HISTORY](../sig/HISTORY.md#val-empty)
 - `ended` (type): [REPORT](../sig/REPORT.md#type-ended)
+- `ended` (val): [SCHEDULER](../sig/SCHEDULER.md#val-ended)
 - `entries` (val): [HISTORY](../sig/HISTORY.md#val-entries)
 - `entry` (type): [HISTORY](../sig/HISTORY.md#type-entry)
 - `Exited` (con): [SUPERVISOR](../sig/SUPERVISOR.md#con-exited)

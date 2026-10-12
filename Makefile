@@ -155,7 +155,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build test-install check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64 test-laws-hosts
+.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build test-install check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools test-steps test-heap-steps test-all-steps test-native-steps test-register-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64 test-laws-hosts
 
 all: vm boot runedoc runeopt manifests basis-cache
 
@@ -829,16 +829,26 @@ test-portability: portability $(RUNE) vm
 	  --vm bin/runevm32-cycles --vm bin/runevm-ppc64-cycles
 
 # ---------------------------------------------------------------- tests
-# Depending on $(RUNE) builds whichever compiler the override names.
-test: $(RUNE) vm | build/.doctor-check
+# Depending on $(RUNE) builds whichever compiler the override names. The
+# programs of tests/lang and tests/errors run on bin/rune-test, in the ways
+# of the targets below (tests/runner/lang.sml), each target's by its tag:
+# make test is test-steps, the rest of what it ran, and the runner's tier
+# test. RUNE_TEST is the runner as these targets run it. RUNEVM goes into
+# its environment only when it is overridden, as make would put it there:
+# the scripts of the steps it runs read a RUNEVM, from other directories.
+RUNE_TEST = GC_STRESS=$(GC_STRESS) $(if $(filter command line environment,$(origin RUNEVM)),RUNEVM=$(RUNEVM)) \
+            NATIVE_HOST=$(NATIVE_HOST) MAKE='$(CHECK_MAKE)' \
+            bin/rune-test run $(if $(filter command line environment,$(origin JOBS)),-j $(JOBS))
+test-steps: $(RUNE) vm | build/.doctor-check
 	python3 tests/compiler/run-tests.py --rune $(RUNE_STACK)
 	python3 tests/runtime/run-limits.py --rune $(RUNE_STACK) --vm $(RUNEVM)
 	python3 tests/runtime/run-gc-log.py --rune $(RUNE_STACK) --vm $(RUNEVM)
-	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm $(RUNEVM)
 	sh tests/runtime/run-vm-tests.sh --vm $(RUNEVM)
 	@mkdir -p build
 	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
 	build/heap_test
+test: test-steps bin/rune-test
+	$(RUNE_TEST) --tier test
 
 # The collector and its hooks (docs/plans/heap-layout.md, M7;
 # docs/plans/garbage-collector-v2.md, M2 and M3). The C
@@ -853,7 +863,7 @@ test: $(RUNE) vm | build/.doctor-check
 # of the second; and on bin/runevm with the heap checked before and after
 # every collection of a heap of 64 KiB and a nursery of 8 KiB (--gc-verify),
 # the barrier's cards with it. Part of make check.
-test-heap: bin/runevm-gcbits bin/runevm-cards $(RUNE) vm | build/.doctor-check
+test-heap-steps: | build/.doctor-check
 	@mkdir -p build
 	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
 	build/heap_test
@@ -861,14 +871,8 @@ test-heap: bin/runevm-gcbits bin/runevm-cards $(RUNE) vm | build/.doctor-check
 	build/heap_test-gcbits
 	$(CC) $(CFLAGS) -DRUNE_BARRIER_CARDS $(RT_INC) -o build/heap_test-cards tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
 	build/heap_test-cards
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-gcbits" --jit=all --gc-stress $(GC_STRESS) "$$@"\n' > bin/runevm-gcbits-stress
-	chmod +x bin/runevm-gcbits-stress
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gcbits --out tests/out/register-gcbits
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gcbits-stress --out tests/out/register-gcbits-stress
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-cards --out tests/out/register-cards
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc-verify --heap-size 65536 --nursery 8192 --nursery-max 0 "$$@"\n' > bin/runevm-verify
-	chmod +x bin/runevm-verify
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-verify --out tests/out/register-verify
+test-heap: test-heap-steps bin/runevm-gcbits bin/runevm-cards $(RUNE) vm bin/rune-test
+	$(RUNE_TEST) --tier test-heap
 
 # The two collectors (docs/runtime.md, *The garbage collector*;
 # docs/plans/garbage-collector-v2.md, D3): tests/lang under each, on both
@@ -877,40 +881,18 @@ test-heap: bin/runevm-gcbits bin/runevm-cards $(RUNE) vm | build/.doctor-check
 # compiled and a collection at every GC_STRESS-th allocation (make
 # test-stress runs the default, throughput); and each with the old space
 # compacted at every full collection (--gc-compact, D4). Part of make check.
-test-gc: $(RUNE) vm | build/.doctor-check
-	@mkdir -p bin
-	@for g in throughput low-pause; do \
-	  printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc %s --gc-verify --heap-size 65536 --nursery 8192 --nursery-max 0 "$$@"\n' $$g > bin/runevm-gc-$$g; \
-	  printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-stack" --gc %s --gc-verify --heap-size 65536 --nursery 8192 --nursery-max 0 "$$@"\n' $$g > bin/runevm-stack-gc-$$g; \
-	  chmod +x bin/runevm-gc-$$g bin/runevm-stack-gc-$$g; \
-	done
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc low-pause --jit=all --nursery 4096 --nursery-max 0 --gc-stress $(GC_STRESS) "$$@"\n' > bin/runevm-gc-low-pause-stress
-	chmod +x bin/runevm-gc-low-pause-stress
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-throughput --out tests/out/register-gc-throughput
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-low-pause --out tests/out/register-gc-low-pause
-	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack-gc-throughput --out tests/out/gc-throughput
-	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack-gc-low-pause --out tests/out/gc-low-pause
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-low-pause-stress --out tests/out/register-gc-low-pause-stress
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc low-pause --gc-verify --nursery 65536 --gc-stress $(GC_STRESS) --gc-stress-cycles "$$@"\n' > bin/runevm-gc-low-pause-cycles
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-stack" --gc low-pause --gc-verify --nursery 65536 --gc-stress $(GC_STRESS) --gc-stress-cycles "$$@"\n' > bin/runevm-stack-gc-low-pause-cycles
-	chmod +x bin/runevm-gc-low-pause-cycles bin/runevm-stack-gc-low-pause-cycles
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-low-pause-cycles --out tests/out/register-gc-low-pause-cycles
-	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack-gc-low-pause-cycles --out tests/out/gc-low-pause-cycles
-	@for g in throughput low-pause; do \
-	  printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc %s --gc-compact --gc-verify --heap-size 65536 --nursery 8192 --nursery-max 0 "$$@"\n' $$g > bin/runevm-gc-$$g-compact; \
-	  chmod +x bin/runevm-gc-$$g-compact; \
-	done
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-throughput-compact --out tests/out/register-gc-throughput-compact
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-gc-low-pause-compact --out tests/out/register-gc-low-pause-compact
+test-gc: $(RUNE) vm bin/rune-test | build/.doctor-check
+	$(RUNE_TEST) --tier test-gc
 
-test-all: host-builds vm | build/.doctor-check
+test-all-steps: host-builds vm | build/.doctor-check
 	@for c in mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit; do \
 	  echo "=== testing with $$c build ==="; \
 	  printf '#!/bin/sh\nexec "$(ROOT)/bin/rune-%s" --target=stack "$$@"\n' $$c > build/rune-stack-$$c; \
 	  chmod +x build/rune-stack-$$c; \
 	  python3 tests/compiler/run-tests.py --rune build/rune-stack-$$c || exit 1; \
-	  sh tests/run-tests.sh -j $(JOBS) --rune build/rune-stack-$$c --vm bin/runevm-stack || exit 1; \
 	done
+test-all: test-all-steps bin/rune-test
+	$(RUNE_TEST) --tier test-all
 
 check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/rune.stack.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc | build/.doctor-check
 	sh scripts/check-cross.sh -j $(JOBS)
@@ -1220,14 +1202,15 @@ bin/runevm-native: scripts/runevm-native.sh
 	chmod +x $@
 
 ifeq ($(NATIVE_HOST),yes)
-test-native: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm bin/rune.stack.rbc | build/.doctor-native
+# test-native-steps reads the stack compiler's bytecode of every program of
+# tests/lang in tests/out, which the runner's tier makes first.
+test-native: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm bin/rune.stack.rbc bin/rune-test | build/.doctor-native
+	$(RUNE_TEST) --tier test-native compile/stack-done
+	@$(MAKE) --no-print-directory test-native-steps
+test-native-steps: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm bin/rune.stack.rbc | build/.doctor-native
 	@$(MAKE) --no-print-directory check-templates
 	python3 tests/runtime/run-limits.py --rune $(RUNE_STACK) --vm bin/runevm-native
 	python3 tests/runtime/run-gc-log.py --rune $(RUNE_STACK) --vm bin/runevm-native
-	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-native --skip tests/opt-skip.txt
-	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-native" --gc low-pause --nursery 4096 --gc-stress $(GC_STRESS) --gc-stress-cycles "$$@"\n' > bin/runevm-native-cycles
-	chmod +x bin/runevm-native-cycles
-	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-native-cycles --skip tests/opt-skip.txt --out tests/out/native-cycles
 	sh tests/opt/run-counts.sh -j $(JOBS) $$(for t in tests/lang/*.sml; do n=$$(basename $$t .sml); grep -q "^$$n " tests/opt-skip.txt || echo tests/out/$$n.rbc; done)
 	RUNE=$(abspath $(RUNE_STACK)) RUNE_MATRIX_BYTECODE="$(ROOT)/tests/out/matrix/rune" \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:opt
@@ -1265,7 +1248,7 @@ test-native-asan: bin/runevm-native bin/runeopt-mlton build/asan/librune.a $(RUN
 	RUNEOPT_RUNTIME="$(ROOT)/build/asan" RUNEOPT_CC="$(ROOT)/build/asan/cc" RUNEOPT_CACHE="$(ROOT)/tests/out/opt-cache-asan" \
 	  sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-native --skip tests/opt-skip.txt
 else
-test-native test-native-stress test-native-asan:
+test-native test-native-steps test-native-stress test-native-asan:
 	@echo "$@: runeopt makes programs for Linux on x86-64, and this is not one: nothing to test"
 endif
 
@@ -1307,10 +1290,11 @@ bin/rune.stack.rbc: bin/rune-$(BOOTHOST) bin/runevm-stack $(BOOT_SRCS) lib/basis
 # The suites through runtime/register's first loop (docs/plans/middle-end.md, M5): the
 # tests of the language, allocation and the bootstrap against runevm-stack, and
 # the Basis Library.
-test-register: bin/runevm $(RUNE) vm bin/rune.stack.rbc
+test-register: test-register-steps bin/rune-test
+	$(RUNE_TEST) --tier test-register
+test-register-steps: bin/runevm $(RUNE) vm bin/rune.stack.rbc
 	python3 tests/runtime/run-limits.py --rune bin/rune --vm bin/runevm
 	python3 tests/runtime/run-gc-log.py --rune bin/rune --vm bin/runevm
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm --out tests/out/register
 	sh scripts/check-register.sh -j $(JOBS)
 	RUNE_NEW=$(abspath bin/rune) RUNEVM_NEW=$(abspath bin/runevm) sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:new
 
@@ -1323,13 +1307,13 @@ test-register: bin/runevm $(RUNE) vm bin/rune.stack.rbc
 # and a recursion 200,000 deep under a machine stack of 1 MB, which holds
 # the driver to never nesting, compiled at load and while tiering up and
 # invalidating (M6).
-test-register-jit: bin/runevm $(RUNE)
+test-register-jit: test-register-jit-steps bin/rune-test
+	$(RUNE_TEST) --tier test-register-jit
+test-register-jit-steps: bin/runevm $(RUNE)
 	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all "$$@"\n' > bin/runevm-jit
 	chmod +x bin/runevm-jit
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-jit --out tests/out/register-jit
 	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --jit-tier=2 "$$@"\n' > bin/runevm-opt
 	chmod +x bin/runevm-opt
-	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-opt --out tests/out/register-opt
 	sh scripts/check-jit.sh -j $(JOBS)
 	@! grep -n "\bx64_\|\ba64_\|\bX64\|\bA64" runtime/register/jit/emit.c runtime/register/jit/masm.c runtime/register/jit/masm.h runtime/register/jit/compile.c runtime/register/jit/compile.h runtime/register/jit.c \
 	  || { echo "check-asm: the emitters, the macro-assembler and the compiler name an encoder: they are written over runtime/register/jit/asm.h alone (M12)"; false; }
@@ -1410,7 +1394,7 @@ bootstrap: bin/rune-boot bin/rune.stack.rbc
 # The test runner (docs/plans/unit-testing.md, M3; docs/testing.md, Running
 # the tests): the inventory of tests/runner over lib/test/runner, compiled
 # by $(RUNE) and run on the register VM with its JIT.
-RUNNER_SRCS := tests/runner/canary.sml tests/runner/main.sml
+RUNNER_SRCS := tests/runner/canary.sml tests/runner/lang.sml tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml)
 	$(RUNE) --library test/runner $(RUNNER_SRCS) -o $@
@@ -1437,7 +1421,7 @@ check-tools: $(CHECK_TOOLS)
 # through a variable of its own, or make would take the runner for a make).
 CHECK_MAKE := $(MAKE)
 check: check-tools
-	MAKE='$(CHECK_MAKE)' bin/rune-test run --tier check $(if $(filter command line environment,$(origin JOBS)),-j $(JOBS))
+	$(RUNE_TEST) --tier check
 
 clean:
 	rm -rf bin build tests/out

@@ -2,6 +2,11 @@
 # Rune test runner.
 #   tests/run-tests.sh [--rune BIN] [--vm BIN] [--out DIR] [--skip FILE] [--update] [-j N] [FILTER]
 #
+# make check and the test targets run these programs on bin/rune-test, in
+# their ways (tests/runner/lang.sml, which judges them as this script does);
+# this script stays for the runners of other machines (run-portability.sh,
+# run-windows.sh) and for runs by hand.
+#
 # tests/lang/<id>_<name>.sml : compiled and run; stdout must equal the
 #   matching .expected file. Optional siblings: .cargs (options for the
 #   compiler, such as --or-patterns), .args (command line words for the

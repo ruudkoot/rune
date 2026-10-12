@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`SCHEDULER`](../sig/SCHEDULER.md) |
 | Status | required |
-| Members | 7 |
+| Members | 10 |
 | Tests | not listed |
 | Source | [lib/test/runner/scheduler.sml](../../../../../lib/test/runner/scheduler.sml) |
 
@@ -25,13 +25,16 @@ What each means is on [`SCHEDULER`](../sig/SCHEDULER.md); the types are this str
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`free`](../sig/SCHEDULER.md#type-free) | `{cpus : int, held : string list, memory : int}` |
 | type | [`job`](../sig/SCHEDULER.md#type-job) | `{cost : real, cpus : int, deps : int list, exclusive : bool, failedLast : bool, memory : int, pools : string list}` |
 | type | [`plan`](../sig/SCHEDULER.md#type-plan) | *a type of its own* |
-| val | [`next`](../sig/SCHEDULER.md#val-next) | `plan * {finished : int list, free : free, running : int list, waiting : int list} -> int list` |
+| type | [`state`](../sig/SCHEDULER.md#type-state) | *a type of its own* |
+| val | [`admit`](../sig/SCHEDULER.md#val-admit) | `state * {cpus : int, memory : int} -> int list` |
+| val | [`ended`](../sig/SCHEDULER.md#val-ended) | `state * int * bool -> int list` |
+| val | [`finished`](../sig/SCHEDULER.md#val-finished) | `state -> bool` |
 | val | [`plan`](../sig/SCHEDULER.md#val-plan) | `job vector -> plan` |
 | val | [`priority`](../sig/SCHEDULER.md#val-priority) | `plan * int -> real` |
 | val | [`simulate`](../sig/SCHEDULER.md#val-simulate) | `plan * {cpus : int, memory : int} -> real vector * real` |
+| val | [`start`](../sig/SCHEDULER.md#val-start) | `plan -> state` |
 
 ---
 

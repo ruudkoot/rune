@@ -70,11 +70,12 @@ removed as they end, and the last five runs are kept. The wall time of each
 test goes into `build/test-history.tsv`, from which the next run orders its
 jobs.
 
-The steps of the old recipe of `make check` are the runner's first tests,
-each an opaque `make` of its targets (`tests/runner/main.sml`): the ones that
-run the programs of `tests/lang` with their output in `tests/out` itself
-share the pool `lang` and run one at a time, as before, and the others run
-beside them. Five canaries, tests that fail on purpose (an exit with 1, a
+The programs of `tests/lang` and `tests/errors` are the runner's own tests
+(`compile/COMPILER/NAME`, `lang/WAY/NAME`, `errors/COMPILER/NAME`;
+`tests/runner/lang.sml`), and the rest of `make check` is a step each, an
+opaque `make` of its target (`tests/runner/main.sml`): the steps that run
+the programs of `tests/lang` from the root of the tree share the pool
+`lang` and run one at a time, and the others run beside them. Five canaries, tests that fail on purpose (an exit with 1, a
 run past its time, a crash, a flood of output and a leaked process), pass
 only when the runner sees each fault for what it is; they run in every
 `make check`, since the runner is built by the compiler it tests.
@@ -84,7 +85,12 @@ only when the runner sees each fault for what it is; they run in every
 **The output.** A program under `tests/` runs with `--checked` and its
 standard output is compared with its `.expected` sibling; `.args`,
 `.vmargs`, `.stdin` and `.exitcode` siblings fix the rest of the run
-(`tests/run-tests.sh:6-7,66-74`). This is the ordinary test.
+(`tests/runner/lang.sml`, and `tests/run-tests.sh:6-7,66-74` for the runners
+of other machines). This is the ordinary test. Each program is compiled
+once by each compiler and run in every way (a VM and its options) that
+`make check` has, each run in a directory of its own; `bin/rune-test run
+--accept FILTER` writes what the selected tests printed into their
+`.expected`, `.cwarn` and error files, to be read line by line.
 
 **The counts.** `runevm --count` prints, at exit, the instructions
 executed and the bytes and objects allocated (`runtime/runtime.c:285`). The

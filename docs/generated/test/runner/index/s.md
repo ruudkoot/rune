@@ -1,11 +1,12 @@
 # Index: S
 
-[Overview](../README.md) &middot; [a](a.md) [c](c.md) [e](e.md) [f](f.md) [h](h.md) [j](j.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) **s** [t](t.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [c](c.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [j](j.md) [l](l.md) [m](m.md) [o](o.md) [p](p.md) [r](r.md) **s** [t](t.md) [w](w.md)
 
 - `shell` (val): [RUN](../sig/RUN.md#val-shell)
 - `Signalled` (con): [SUPERVISOR](../sig/SUPERVISOR.md#con-signalled)
 - `simulate` (val): [SCHEDULER](../sig/SCHEDULER.md#val-simulate)
-- `start` (val): [REPORT](../sig/REPORT.md#val-start)
+- `start` (val): [REPORT](../sig/REPORT.md#val-start), [SCHEDULER](../sig/SCHEDULER.md#val-start)
+- `state` (type): [SCHEDULER](../sig/SCHEDULER.md#type-state)
 
 ---
 

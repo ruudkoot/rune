@@ -1,7 +1,7 @@
 {
  "signatures": {
   "CLI": {
-   "doc": "The runner's command line (docs/plans/unit-testing.md, D19):\n\n- `list [FILTER]`: the tests, with their tags, and nothing run;\n- `run [FILTER] [--tier T] [-j N] [--mem MB] [--keep] [--failed]`: the\n  tests the filter selects (and the tier, a tag), on `N` processors\n  (by default those of the machine less its load from outside) and `MB`\n  megabytes; `--failed` runs the tests that failed last time, and\n  `--keep` keeps every test's directory;\n- `explain PATH`: a test's command, directory and needs;\n- `stats`: the slowest and the flakiest tests in the history.\n\nA filter is the language of `TestFilter`; two or more of them select\nthe tests any of them selects. `--root DIR` is the directory of the tree (default `.`), `--out DIR` where\nruns go (default `tests/out/r`), `--history FILE` the history (default\n`build/test-history.tsv`). A run ends the program with success when every\ntest passed, with failure otherwise, and with 2 for a mistake in the\ncommand line.\n\n",
+   "doc": "The runner's command line (docs/plans/unit-testing.md, D19):\n\n- `list [FILTER]`: the tests, with their tags, and nothing run;\n- `run [FILTER] [--tier T] [-j N] [--mem MB] [--keep] [--failed]`: the\n  tests the filter selects (and the tier, a tag), on `N` processors\n  (by default those of the machine less its load from outside) and `MB`\n  megabytes; `--failed` runs the tests that failed last time,\n  `--keep` keeps every test's directory, and `--accept` writes what the\n  tests printed into their golden files (`Run.accept`);\n- `explain PATH`: a test's command, directory and needs;\n- `stats`: the slowest and the flakiest tests in the history.\n\nA filter is the language of `TestFilter`; two or more of them select\nthe tests any of them selects. The tests a selected test waits for are\nselected with it. `--root DIR` is the directory of the tree (default `.`), `--out DIR` where\nruns go (default `tests/out/r`), `--history FILE` the history (default\n`build/test-history.tsv`). A run ends the program with success when every\ntest passed, with failure otherwise, and with 2 for a mistake in the\ncommand line.\n\n",
    "page": "sig/CLI.md",
    "members": [
     {
@@ -125,7 +125,7 @@
      "kind": "type",
      "name": "ended",
      "spec": "type ended = {path : string, verdict : string, reason : string, wall : Time.time, user : Time.time,\n              system : Time.time, peakResident : int, outputBytes : int, kept : string list,\n              command : string, rerun : string}",
-     "doc": "What a test ended with: its path, its verdict and why, what it cost,\nwhere its outputs are kept, and the command that reruns it.\n\nThe verdict is one of `PASS`, `FAIL`, `TIMEOUT`, `CRASH`, `LEAK`,\n`ERROR` and `SKIP`.\n\n",
+     "doc": "What a test ended with: its path, its verdict and why, what it cost,\nwhere its outputs are kept, and the command that reruns it.\n\nThe verdict is one of `PASS`, `FAIL`, `TIMEOUT`, `CRASH`, `LEAK`,\n`ERROR`, `SKIP` and `ACCEPTED` (a golden file written, `Run.accept`);\nthe first, the last and `SKIP` are not failures.\n\n",
      "page": "sig/REPORT.md#type-ended"
     },
     {
@@ -152,7 +152,7 @@
      "kind": "type",
      "name": "command",
      "spec": "type command = {program : string, args : string list, env : string list option, dir : string option,\n                stdin : string option, timeout : Time.time, cap : int, cpus : int, memory : int,\n                pools : string list, exclusive : bool, after : string list,\n                judge : Supervisor.result * {stdout : string, stderr : string} -> (string * string) option}",
-     "doc": "A test that is a command: what runs, where, what it may take, what it\nwaits for, and how its verdict is found.\n\n`after` names the tests it waits for by path. `judge` finds the\nverdict from how the command ended and the files of its output and\nerrors: `NONE` passes, and `SOME (verdict, reason)` does not. `dir` is\n`NONE` for a directory of its own. `env` is `NONE` for the runner's\nenvironment without what would make a `make` inside it a part of the\nrunner's own (`MAKELEVEL`, `MFLAGS`, and the jobs and jobserver of\n`MAKEFLAGS`, whose variables stay) or force colour (`FORCE_COLOR`,\n`CLICOLOR_FORCE`). A command takes no more CPUs than the run has, and\nfinds how many it has in `RUNE_TEST_CPUS`.\n\n",
+     "doc": "A test that is a command: what runs, where, what it may take, what it\nwaits for, and how its verdict is found.\n\n`after` names the tests it waits for by path. `judge` finds the\nverdict from how the command ended and the files of its output and\nerrors: `NONE` passes, and `SOME (verdict, reason)` does not. `dir` is\n`NONE` for a directory of its own. `env` is `NONE` for the runner's\nenvironment without what would make a `make` inside it a part of the\nrunner's own (`MAKELEVEL`, `MFLAGS`, and the jobs and jobserver of\n`MAKEFLAGS`, whose variables stay) or force colour (`FORCE_COLOR`,\n`CLICOLOR_FORCE`). A command takes no more CPUs than the run has, and\nfinds how many it has in `RUNE_TEST_CPUS`, the run's directory in\n`RUNE_TEST_RUN` and the tree's in `RUNE_TEST_ROOT`, both absolute.\n\n",
      "page": "sig/RUN.md#type-command"
     },
     {
@@ -171,10 +171,24 @@
     },
     {
      "kind": "val",
+     "name": "index",
+     "spec": "val index : string vector -> string -> int option",
+     "doc": "`index names` finds a name among `names`: its place, or `NONE`.\n\n**Example** `index (Vector.fromList [\"b\", \"a\"]) \"a\" = SOME 1`\n\n",
+     "page": "sig/RUN.md#val-index"
+    },
+    {
+     "kind": "val",
      "name": "tail",
      "spec": "val tail : int * string -> string",
      "doc": "`tail (n, file)` is the last `n` lines of `file`, or \"\" when there is\nnone.\n\n",
      "page": "sig/RUN.md#val-tail"
+    },
+    {
+     "kind": "val",
+     "name": "accept",
+     "spec": "val accept : bool ref",
+     "doc": "Whether the run accepts what its tests printed as what they should\nprint (`--accept`).\n\nA judge that reads a golden file writes it instead, and says\n`ACCEPTED`. It is `false` unless the command line sets it.\n\n",
+     "page": "sig/RUN.md#val-accept"
     },
     {
      "kind": "val",
@@ -186,7 +200,7 @@
    ]
   },
   "SCHEDULER": {
-   "doc": "Which jobs to start (docs/plans/unit-testing.md, D12): a pure function of\nthe jobs, what has finished, what runs and what is free, so that it can be\ntested on a simulated clock.\n\nA job takes CPUs and megabytes of memory while it runs, may hold named\npools (mutexes: two jobs that name one never overlap), may be exclusive\n(it runs alone), and may wait for other jobs. Its priority is the critical\npath: the longest chain of costs from it to the end of the run, so that\namong jobs with no edges the longest starts first (Graham's LPT). A job\nthat failed last time starts before any other. An exclusive job that is\nnext lets the running jobs drain, and nothing starts in front of it.\n\n",
+   "doc": "Which jobs to start (docs/plans/unit-testing.md, D12): the jobs of a run,\nwhat has ended and what is free decide it, so that it can be tested on a\nsimulated clock.\n\nA job takes CPUs and megabytes of memory while it runs, may hold named\npools (mutexes: two jobs that name one never overlap), may be exclusive\n(it runs alone), and may wait for other jobs. Its priority is the critical\npath: the longest chain of costs from it to the end of the run, so that\namong jobs with no edges the longest starts first (Graham's LPT). A job\nthat failed last time starts before any other. An exclusive job that is\nnext lets the running jobs drain, and nothing starts in front of it.\n\nA run's state is kept as it goes, so that a run of thousands of jobs costs\nlittle at each start and end: the jobs each waits for are counted down,\nand the jobs that may start are kept in the order of their priorities.\n\n",
    "page": "sig/SCHEDULER.md",
    "members": [
     {
@@ -195,13 +209,6 @@
      "spec": "type job = {cost : real, cpus : int, memory : int, pools : string list, exclusive : bool,\n            failedLast : bool, deps : int list}",
      "doc": "A job as the scheduler sees it: its cost, what it takes and holds, and\nthe jobs it waits for.\n\nThe cost is in seconds, from the history. `deps` are the indices of\nthe jobs it waits for; `exclusive` runs it alone.\n\n",
      "page": "sig/SCHEDULER.md#type-job"
-    },
-    {
-     "kind": "type",
-     "name": "free",
-     "spec": "type free = {cpus : int, memory : int, held : string list}",
-     "doc": "What the machine has free: CPUs and megabytes, and the pools held.\n\n",
-     "page": "sig/SCHEDULER.md#type-free"
     },
     {
      "kind": "type",
@@ -214,7 +221,7 @@
      "kind": "val",
      "name": "plan",
      "spec": "val plan : job vector -> plan",
-     "doc": "`plan jobs` is the plan of `jobs`, numbered by their places.\n\n**Raises** `Fail` if a job waits for itself, or for one that waits for\nit.\n\n",
+     "doc": "`plan jobs` is the plan of `jobs`, numbered by their places.\n\n**Raises** `Fail` if a job waits for itself, or for one that waits for\nit, or for no job.\n\n",
      "page": "sig/SCHEDULER.md#val-plan"
     },
     {
@@ -225,17 +232,45 @@
      "page": "sig/SCHEDULER.md#val-priority"
     },
     {
+     "kind": "type",
+     "name": "state",
+     "spec": "type state",
+     "doc": "A run under way: which jobs wait, run and have ended, and what the\nrunning ones take.\n\n",
+     "page": "sig/SCHEDULER.md#type-state"
+    },
+    {
      "kind": "val",
-     "name": "next",
-     "spec": "val next : plan * {waiting : int list, finished : int list, running : int list, free : free} -> int list",
-     "doc": "`next (p, {waiting, finished, running, free})` is the jobs among\n`waiting` to start now, the highest priority first.\n\nA job may start once every job it waits for is in `finished`, when it\nfits what is free, and when no job in `running` holds a pool of its.\n\nA job that takes more than the machine has starts alone when nothing\nruns, so that no job waits forever.\n\n",
-     "page": "sig/SCHEDULER.md#val-next"
+     "name": "start",
+     "spec": "val start : plan -> state",
+     "doc": "`start p` is the state of a run of `p` before any job has started.\n\n",
+     "page": "sig/SCHEDULER.md#val-start"
+    },
+    {
+     "kind": "val",
+     "name": "admit",
+     "spec": "val admit : state * {cpus : int, memory : int} -> int list",
+     "doc": "`admit (s, {cpus, memory})` is the jobs to start now, the highest\npriority first, on a machine of `cpus` and `memory`; they are running\nfrom then on.\n\nA job may start once every job it waits for has ended well, when it\nfits what the running jobs leave free, and when no running job holds a\npool of its. A job that takes more than the machine has starts alone\nwhen nothing runs, so that no job waits forever.\n\n",
+     "page": "sig/SCHEDULER.md#val-admit"
+    },
+    {
+     "kind": "val",
+     "name": "ended",
+     "spec": "val ended : state * int * bool -> int list",
+     "doc": "`ended (s, i, ok)` records that job `i` ended, well when `ok`, and is\nthe jobs that will now never start.\n\nThose are the jobs that wait, directly or not, for a job that did not\nend well.\n\n",
+     "page": "sig/SCHEDULER.md#val-ended"
+    },
+    {
+     "kind": "val",
+     "name": "finished",
+     "spec": "val finished : state -> bool",
+     "doc": "`finished s` says whether no job waits or runs.\n\n",
+     "page": "sig/SCHEDULER.md#val-finished"
     },
     {
      "kind": "val",
      "name": "simulate",
      "spec": "val simulate : plan * {cpus : int, memory : int} -> real vector * real",
-     "doc": "`simulate (p, {cpus, memory})` is when each job would start, and the\nmakespan, in the schedule `next` makes.\n\nThe machine has `cpus` and `memory`, and each job takes its cost.\n\n**Example** `Real.== (#2 (simulate (plan (Vector.fromList [{cost = 1.0, cpus = 1, memory = 0, pools = [], exclusive = false, failedLast = false, deps = []}]), {cpus = 4, memory = 100})), 1.0)`\n\n",
+     "doc": "`simulate (p, {cpus, memory})` is when each job would start, and the\nmakespan, in the schedule `admit` makes.\n\nThe machine has `cpus` and `memory`, and each job takes its cost.\n\n**Example** `Real.== (#2 (simulate (plan (Vector.fromList [{cost = 1.0, cpus = 1, memory = 0, pools = [], exclusive = false, failedLast = false, deps = []}]), {cpus = 4, memory = 100})), 1.0)`\n\n",
      "page": "sig/SCHEDULER.md#val-simulate"
     }
    ]
@@ -275,8 +310,8 @@
     {
      "kind": "val",
      "name": "run",
-     "spec": "val run : {commands : command vector, cpus : int, memory : int,\n           finished : int * result -> unit, tick : int -> unit} -> unit",
-     "doc": "`run {commands, cpus, memory, finished, tick}` runs `commands` as\n`Scheduler.next` admits them, and tells `finished` each one's result.\n\nThe machine has `cpus` processors and `memory` megabytes. `tick` is\ncalled with the number running whenever the loop has nothing to do,\nfor a display.\n\nA command that waits for one that did not exit with 0 is not started,\nand is `Cancelled`. An interrupt (`SML90.Interrupt`) kills every\nrunning group and is raised again.\n\n",
+     "spec": "val run : {commands : command vector, cpus : int, memory : int,\n           finished : int * result -> bool, tick : int -> unit} -> unit",
+     "doc": "`run {commands, cpus, memory, finished, tick}` runs `commands` as\n`Scheduler.admit` admits them, and tells `finished` each one's result.\n\nThe machine has `cpus` processors and `memory` megabytes. `tick` is\ncalled with the number running whenever the loop has nothing to do,\nfor a display.\n\n`finished` says whether the command passed. A command that waits for\none that did not pass is not started, and is `Cancelled`. An interrupt (`SML90.Interrupt`) kills every\nrunning group and is raised again.\n\n",
      "page": "sig/SUPERVISOR.md#val-run"
     }
    ]

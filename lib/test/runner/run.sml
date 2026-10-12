@@ -7,6 +7,38 @@ struct
                   pools : string list, exclusive : bool, after : string list,
                   judge : Supervisor.result * {stdout : string, stderr : string} -> (string * string) option}
 
+  (* merge sort, by a strict order *)
+  fun sort less xs =
+    let
+      fun merge ([], ys) = ys
+        | merge (xs, []) = xs
+        | merge (x :: xs, y :: ys) = if less (y, x) then y :: merge (x :: xs, ys) else x :: merge (xs, y :: ys)
+      fun split (x :: y :: rest) = let val (a, b) = split rest in (x :: a, y :: b) end
+        | split xs = (xs, [])
+      fun go [] = []
+        | go [x] = [x]
+        | go xs = let val (a, b) = split xs in merge (go a, go b) end
+    in go xs end
+
+  fun index names =
+    let
+      val order = Vector.fromList (sort (fn (a, b) => Vector.sub (names, a) < Vector.sub (names, b))
+                                        (List.tabulate (Vector.length names, fn i => i)))
+      fun find p =
+        let
+          fun go (lo, hi) =
+            if lo >= hi then NONE
+            else
+              let val mid = (lo + hi) div 2
+                  val i = Vector.sub (order, mid)
+              in case String.compare (p, Vector.sub (names, i)) of
+                   EQUAL => SOME i
+                 | LESS => go (lo, mid)
+                 | GREATER => go (mid + 1, hi)
+              end
+        in go (0, Vector.length order) end
+    in find end
+
   fun lines file =
     let val s = TextIO.openIn file
     in String.fields (fn c => c = #"\n") (TextIO.inputAll s) before TextIO.closeIn s end
@@ -66,8 +98,15 @@ struct
             in (if a = "" orelse isDir p then () else OS.FileSys.mkDir p); go (p, rest) end
     in go ("", String.fields (fn c => c = #"/") path) end
 
+  val accept = ref false
+
   (* the runs kept in the directory of runs, this one among them *)
   val keepRuns = 5
+
+  (* a word as the shell reads it back *)
+  fun quote w =
+    if w <> "" andalso CharVector.all (fn c => Char.isAlphaNum c orelse Char.contains "/._-=+:,@%" c) w then w
+    else "'" ^ String.translate (fn #"'" => "'\\''" | c => str c) w ^ "'"
 
   fun pad5 i = StringCvt.padLeft #"0" 5 (Int.toString i)
   fun safe path = String.translate (fn #"/" => "__" | #" " => "_" | c => str c) path
@@ -100,16 +139,17 @@ struct
                                                in ins acc end) [] earlier
       val () = List.app (fn n => rmTree (out ^ "/" ^ n)) (List.drop (earlier, Int.min (length earlier, keepRuns - 1)))
       val () = mkdirs (runDir ^ "/j")
+      (* the run's directory and the tree's, as a job finds them *)
+      val absRun = OS.FileSys.fullPath runDir
+      val absRoot = OS.FileSys.fullPath root
       val hist = ref (History.read history)
       val (pending, runnable) = List.partition (fn (_, m : Test.meta, _) => isSome (#pending m)) tests
       val runnable = Vector.fromList runnable
       val n = Vector.length runnable
-      fun index p =
-        let fun go i = if i >= n then NONE else if #1 (Vector.sub (runnable, i)) = p then SOME i else go (i + 1)
-        in go 0 end
+      val index = index (Vector.map #1 runnable)
       val env = defaultEnv ()
       fun jobDir i = runDir ^ "/j/" ^ pad5 i
-      fun place d = if String.isPrefix "/" d then d else if d = "." then root else root ^ "/" ^ d
+      fun place d = if String.isPrefix "/" d then d else if d = "." then absRoot else absRoot ^ "/" ^ d
       val commands =
         Vector.mapi (fn (i, (path, meta : Test.meta, c : command)) =>
                        let
@@ -118,7 +158,8 @@ struct
                        in
                        mkdirs (jobDir i);
                         {program = #program c, args = #args c,
-                         env = ("RUNE_TEST_CPUS=" ^ Int.toString n) :: getOpt (#env c, env),
+                         env = ("RUNE_TEST_CPUS=" ^ Int.toString n) :: ("RUNE_TEST_RUN=" ^ absRun)
+                               :: ("RUNE_TEST_ROOT=" ^ absRoot) :: getOpt (#env c, env),
                          dir = case #dir c of NONE => jobDir i | SOME d => place d,
                          stdin = getOpt (#stdin c, "/dev/null"), stdout = jobDir i ^ "/stdout",
                          stderr = jobDir i ^ "/stderr", timeout = getOpt (#timeout meta, #timeout c), cap = #cap c,
@@ -141,20 +182,26 @@ struct
           val (path, _, c) = Vector.sub (runnable, i)
           val sc = Vector.sub (commands, i)
           val files = {stdout = #stdout sc, stderr = #stderr sc}
-          val verdict = #judge c (r, files)
+          val cancelled = #outcome r = Supervisor.Cancelled
+          val verdict = if cancelled then SOME ("SKIP", "a test it waits for did not pass") else #judge c (r, files)
           val bytes = treeBytes (jobDir i)
           val keptDirs =
-            if not (isSome verdict) andalso not keep then (freed := !freed + bytes; rmTree (jobDir i); [])
+            if cancelled orelse (not (isSome verdict) andalso not keep) then (freed := !freed + bytes; rmTree (jobDir i); [])
             else
               let val target = runDir ^ "/" ^ (if isSome verdict then "failed/" else "passed/") ^ safe path
               in kept := !kept + bytes; mkdirs (OS.Path.dir target); OS.FileSys.rename {old = jobDir i, new = target}; [target] end
               handle OS.SysErr _ => [jobDir i]
           val (v, reason) = getOpt (verdict, ("PASS", ""))
         in
-          hist := History.record (!hist, {path = path, wall = Time.toReal (#wall r), passed = not (isSome verdict)});
-          Report.test (report, {path = path, verdict = v, reason = reason, wall = #wall r, user = #user r,
+          if cancelled then ()
+          else hist := History.record (!hist, {path = path, wall = Time.toReal (#wall r), passed = not (isSome verdict)});
+          not (isSome verdict) before Report.test (report, {path = path, verdict = v, reason = reason, wall = #wall r, user = #user r,
                                 system = #system r, peakResident = #peakResident r, outputBytes = #outputBytes r,
-                                kept = keptDirs, command = "cd " ^ #dir sc ^ " && " ^ String.concatWith " " (#args c),
+                                kept = keptDirs,
+                                command = "cd " ^ (if #dir sc = jobDir i then (case keptDirs of [d] => d | _ => #dir sc)
+                                                   else #dir sc)
+                                          ^ " && RUNE_TEST_ROOT=" ^ quote absRoot ^ " RUNE_TEST_RUN="
+                                          ^ quote absRun ^ " " ^ String.concatWith " " (List.map quote (#args c)),
                                 rerun = "bin/rune-test run '" ^ path ^ "'"})
         end
       (* Ctrl-C raises Interrupt in the loop, which ends every group *)
