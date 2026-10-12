@@ -155,7 +155,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build test-install check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools test-steps test-heap-steps test-all-steps test-native-steps test-register-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64 test-laws-hosts
+.PHONY: manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build test-install check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick test-steps test-heap-steps test-all-steps test-native-steps test-register-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall test-int64 test-laws-hosts
 
 all: vm boot runedoc runeopt manifests basis-cache
 
@@ -1413,6 +1413,12 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                build/.doctor-check bin/rune-test \
                $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/runeopt-templates build/.doctor-native)
 check-tools: $(CHECK_TOOLS)
+
+# The tier quick: tests/lang in its first way, the libraries, tests/doc and
+# the canaries, under a minute (docs/testing.md, Tiers, profiles and what
+# changed).
+quick: $(RUNE) vm runedoc manifests bin/rune-test | build/.doctor-check
+	$(RUNE_TEST) --tier quick
 
 # The tests of the tier check, each step of the old recipe a test of the
 # runner, run at once where they share no files (tests/runner/main.sml), on

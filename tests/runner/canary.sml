@@ -11,10 +11,10 @@ struct
                                              ^ (if #leaked r then ", left processes behind" else ""))
 
   fun canary (name, script, timeout, cap, expect) =
-    Test.tag "check"
+    Test.tag "always" (Test.tag "quick" (Test.tag "check"
       (Test.it name {program = "/bin/sh", args = ["sh", "-c", script], env = NONE, dir = NONE, stdin = NONE,
                      timeout = timeout, cap = cap, cpus = 1, memory = 10, pools = [], exclusive = false, after = [],
-                     judge = judge expect} : Run.command Test.tree)
+                     judge = judge expect} : Run.command Test.tree)))
 
   val tests =
     Test.describe "runner/canary"

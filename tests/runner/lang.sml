@@ -280,21 +280,26 @@ struct
   val optSkip = skipped "tests/opt-skip.txt"
 
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
+  (* what the programs cover, for --affected; the tier quick has the
+     default way, and the profile layout test-heap's ways *)
+  val covers = ["covers:tests/lang/*", "covers:tests/errors/*", "covers:tests/opt-skip.txt"]
+  fun extraTags tag = (if tag = "test" then ["quick"] else []) @ (if tag = "test-heap" then ["layout"] else [])
 
   val tests =
     Test.describe ""
       [Test.describe "compile"
-         (List.map (fn (c, command, _) => tagged ["check"] (Test.describe c (List.map (compile (c, command)) langPrograms)))
+         (List.map (fn (c, command, _) => tagged ("check" :: covers) (Test.describe c (List.map (compile (c, command)) langPrograms)))
                    compilers
-          @ [tagged ["check"]
+          @ [tagged ("check" :: covers)
                (Test.it "stack-done"
                   (shell ("true", SOME ".", 60, 10, List.map (fn n => "compile/" ^ stackCompiler ^ "/" ^ n) langPrograms,
                           Run.exitZero)))]),
        Test.describe "errors"
-         (List.map (fn (c, command, tag) => tagged ["check", tag] (Test.describe c (List.map (error (c, command)) errorPrograms)))
+         (List.map (fn (c, command, tag) => tagged (["check", tag] @ extraTags tag @ covers)
+                                              (Test.describe c (List.map (error (c, command)) errorPrograms)))
                    compilers),
        Test.describe "lang"
-         (List.map (fn w => tagged ["check", #tag w]
+         (List.map (fn w => tagged (["check", #tag w] @ extraTags (#tag w) @ covers)
                               (Test.describe (#name w)
                                  (List.map (run w)
                                     (if #skip w then List.filter (fn n => not (List.exists (fn s => s = n) optSkip)) langPrograms

@@ -265,7 +265,17 @@ keep these invariants:
   passing test prints nothing, a failure prints a block with its reason, the
   directory its output is kept in and the command that reruns it, and the
   last line begins `RESULT:` (`docs/testing.md`, *Running the tests*).
-  `bin/rune-test run --failed` runs again what failed last time. `bin/rune` is the self-hosted compiler, so it is what
+  `bin/rune-test run --failed` runs again what failed last time. While
+  iterating, `bin/rune-test run --affected` runs the tests that cover what
+  changed since `HEAD` (all of them when a change is to the compiler, the
+  runtime or the Basis), `make quick` the tier `quick` (`tests/lang` in its
+  first way, the libraries, `tests/doc`; under a minute), and a filter any
+  test (`bin/rune-test list` names them). A profile adds what a kind of
+  change also needs beyond `make check`: `bin/rune-test run --profile vm`
+  (`runtime/register` and the VMs: the sanitizers, stress, Windows,
+  portability), `--profile layout` (the heap and its headers),
+  `--profile library` (the matrix and the hosts) and `--profile docs`
+  (`docs/testing.md`, *Profiles*). `bin/rune` is the self-hosted compiler, so it is what
   every test target uses by default; `make test RUNE=bin/rune-mlton` runs the
   same suite with the MLton build and is the faster loop while iterating. For
   VM changes also run the suite with the

@@ -70,6 +70,32 @@ removed as they end, and the last five runs are kept. The wall time of each
 test goes into `build/test-history.tsv`, from which the next run orders its
 jobs.
 
+### Tiers, profiles and what changed
+
+A tier or a profile is a tag (`--tier T`, `--profile P`):
+
+| Tag | What it selects |
+|---|---|
+| `quick` | `tests/lang` and `tests/errors` compiled by `bin/rune-stack` and run on `bin/runevm-stack`, `make test-lib`, `make test-doc` and the canaries: under a minute (`make quick`) |
+| `check` | all of `make check` |
+| `test`, `test-heap`, `test-gc`, `test-all`, `test-native`, `test-register`, `test-register-jit` | the ways of `tests/lang` of that make target |
+| `vm` | `make test-register-asan`, `test-stress`, `test-windows` and `test-portability`, for a change to `runtime/register` or the VMs |
+| `layout` | `tests/lang` in `test-heap`'s ways, `make test-heap-steps` and `check-layouts`, for the heap, the headers and the emitters |
+| `library` | `make matrix-quick` and `test-lib-hosts`, for a library |
+| `windows`, `portability` | `make test-windows`, `test-portability` |
+| `docs` | `make check-docs` and `test-doc` |
+
+The profiles `vm` and `library` hold what `make check` does not run; the
+others are parts of it, to run alone while iterating.
+
+`--affected` keeps the tests that cover what changed since `HEAD`
+(`--since REV`, `--changed FILE`): each group of tests names the paths it
+covers (`covers:GLOB`, in `tests/runner/*.sml`), and a changed path that no
+group covers (the compiler, the runtime, the Basis Library, the Makefile,
+the scripts) keeps every test. Of the 156 commits before 2026-10-12, 97 select
+every test, 48 (documentation) `make check-docs` alone and 11 a few hundred
+tests.
+
 The programs of `tests/lang` and `tests/errors` are the runner's own tests
 (`compile/COMPILER/NAME`, `lang/WAY/NAME`, `errors/COMPILER/NAME`;
 `tests/runner/lang.sml`), and the rest of `make check` is a step each, an

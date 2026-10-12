@@ -58,62 +58,93 @@ struct
           else SOME (verdict, head ^ "\n" ^ String.concatWith "\n" said)
         end
 
-  fun step (target, {cpus, memory, pools, after}) =
-    Test.tag "check"
-      (Test.it target
+  (* a make of a target: a test of the tier check with `tags` besides, that
+     covers the paths `covers` names (for --affected; a step that covers
+     none is selected by every change) *)
+  fun target (name, {cpus, memory, pools, after, tags, covers}) =
+    List.foldl (fn (t, tree) => Test.tag t tree)
+      (Test.it name
          {program = "/bin/sh",
-          args = ["sh", "-c", "exec \"${MAKE:-make}\" --no-print-directory " ^ target ^ " JOBS=\"$RUNE_TEST_CPUS\""],
+          args = ["sh", "-c", "exec \"${MAKE:-make}\" --no-print-directory " ^ name ^ " JOBS=\"$RUNE_TEST_CPUS\""],
           env = NONE, dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds 3600, cap = 0, cpus = cpus,
           memory = memory, pools = pools, exclusive = false, after = after,
           judge = judge} : Run.command Test.tree)
+      (tags @ List.map (fn g => "covers:" ^ g) covers)
 
-  fun lang (target, more, after) = step (target, {cpus = wide, memory = 2000, pools = "lang" :: more, after = after})
-  fun alone target = step (target, {cpus = 1, memory = 500, pools = [], after = []})
-  fun some target = step (target, {cpus = few, memory = 500, pools = [], after = []})
+  fun step (name, {cpus, memory, pools, after}, tags, covers) =
+    target (name, {cpus = cpus, memory = memory, pools = pools, after = after, tags = "check" :: tags, covers = covers})
+  fun lang (name, more, after, covers) =
+    step (name, {cpus = wide, memory = 2000, pools = "lang" :: more, after = after}, [], covers)
+  fun alone (name, tags, covers) = step (name, {cpus = 1, memory = 500, pools = [], after = []}, tags, covers)
+  fun some (name, tags, covers) = step (name, {cpus = few, memory = 500, pools = [], after = []}, tags, covers)
+
+  (* what reads the programs of tests/lang, and what reads tests/perf's *)
+  val langFiles = ["tests/lang/*", "tests/errors/*", "tests/opt-skip.txt"]
+  val perfFiles = ["tests/perf/*"]
 
   val make =
     Test.describe "make"
-      [lang ("test-opt", [], ["compile/stack-done", "make/test-basis"]),
-       lang ("check-levels", [], []),
-       lang ("check-units", [], []),
-       lang ("test-native-steps", ["matrix"], ["compile/stack-done", "make/test-basis"]),
-       lang ("test-register-steps", ["matrix"], []),
-       lang ("check-cross", [], []),
-       step ("test-register-jit-steps", {cpus = half, memory = 1000, pools = ["matrix"], after = []}),
-       step ("test-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}),
-       step ("test-heap-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}),
-       alone "test-all-steps",
-       step ("test-basis", {cpus = few, memory = 1000, pools = ["matrix"], after = []}),
-       some "test-laws",
-       some "check-positions",
-       some "check-docs",
-       step ("check-reproducible", {cpus = Int.min (2, few), memory = 500, pools = [], after = []}),
-       step ("check-layouts", {cpus = Int.min (2, few), memory = 500, pools = [], after = []}),
-       alone "bootstrap",
-       alone "test-doc",
-       alone "test-lib",
-       alone "test-ir",
-       alone "test-incremental",
-       alone "test-deps",
-       alone "test-dynamic",
-       alone "test-build",
-       alone "test-install",
-       alone "test-serve",
-       alone "test-repl",
-       alone "test-terminal",
-       alone "test-diagnostics",
-       alone "test-repl-protocol",
-       alone "test-kernel",
-       alone "test-dap",
-       alone "test-census",
-       alone "check-heapsim",
-       alone "check-gcsim",
-       alone "check-gcbench",
-       alone "perf-check",
-       alone "bench-smoke",
-       alone "check-isa"]
+      [lang ("test-opt", [], ["compile/stack-done", "make/test-basis"],
+             langFiles @ perfFiles @ ["tests/opt/*", "tests/runtime/*", "tests/basis/*", "examples/*"]),
+       lang ("check-levels", [], [], langFiles @ perfFiles),
+       lang ("check-units", [], [], langFiles @ perfFiles @ ["tests/units/*"]),
+       lang ("test-native-steps", ["matrix"], ["compile/stack-done", "make/test-basis"],
+             langFiles @ ["tests/opt/*", "tests/basis/*", "tests/runtime/*", "examples/nqueens.sml"]),
+       lang ("test-register-steps", ["matrix"], [],
+             langFiles @ perfFiles @ ["tests/opt/*", "tests/register/*", "tests/runtime/*", "tests/basis/*"]),
+       lang ("check-cross", [], [],
+             langFiles @ ["examples/*", "tests/basis/*", "tests/incremental/*", "tests/lib/*", "tests/doc/*", "tests/opt/*"]),
+       step ("test-register-jit-steps", {cpus = half, memory = 1000, pools = ["matrix"], after = []}, [],
+             langFiles @ perfFiles @ ["tests/opt/*", "tests/register/*", "tests/basis/*"]),
+       step ("test-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}, [],
+             ["tests/compiler/*", "tests/runtime/*"]),
+       step ("test-heap-steps", {cpus = 1, memory = 500, pools = ["heap_test"], after = []}, ["layout"], ["tests/runtime/*"]),
+       alone ("test-all-steps", [], ["tests/compiler/*"]),
+       step ("test-basis", {cpus = few, memory = 1000, pools = ["matrix"], after = []}, [], ["tests/basis/*"]),
+       some ("test-laws", [], ["tests/basis/*", "lib/test/property/*", "lib/random/*"]),
+       some ("check-positions", [], langFiles @ ["examples/*"]),
+       some ("check-docs", ["docs"], ["*.md", "docs/*", "tests/basis/*", "lib/random/*", "lib/test/property/*"]),
+       step ("check-reproducible", {cpus = Int.min (2, few), memory = 500, pools = [], after = []}, [], ["examples/hello.sml"]),
+       step ("check-layouts", {cpus = Int.min (2, few), memory = 500, pools = [], after = []}, ["layout"], ["tests/layouts/*"]),
+       alone ("bootstrap", [], []),
+       alone ("test-doc", ["quick", "docs"], ["tests/doc/*"]),
+       alone ("test-lib", ["quick"], ["tests/lib/*", "lib/random/*", "lib/test/property/*"]),
+       alone ("test-ir", [], ["tests/ir/*"]),
+       alone ("test-incremental", [], ["tests/incremental/*", "tests/flexrec/*", "examples/hello.sml"]),
+       alone ("test-deps", [], ["tests/deps/*"]),
+       alone ("test-dynamic", [], ["tests/dynamic/*"]),
+       alone ("test-build", [], ["tests/buildfile/*"]),
+       alone ("test-install", [], ["tests/install/*", "examples/hello.sml"]),
+       alone ("test-serve", [], ["tests/serve/*", "examples/hello.sml"]),
+       alone ("test-repl", [], ["tests/repl/*"]),
+       alone ("test-terminal", [], ["tests/terminal/*"]),
+       alone ("test-diagnostics", [], ["tests/diagnostics/*", "tests/color/*"]),
+       alone ("test-repl-protocol", [], ["tests/repl-protocol/*"]),
+       alone ("test-kernel", [], ["tests/kernel/*"]),
+       alone ("test-dap", [], ["tests/dap/*"]),
+       alone ("test-census", [], perfFiles @ ["tools/heapsim/*"]),
+       alone ("check-heapsim", [], ["tools/heapsim/*"]),
+       alone ("check-gcsim", [], ["tools/heapsim/*"]),
+       alone ("check-gcbench", [], ["tests/gcbench/*"]),
+       alone ("perf-check", [], perfFiles),
+       alone ("bench-smoke", [], ["examples/benchmarks/*", "tests/benchmarks/*"]),
+       alone ("check-isa", [], [])]
 
-  val tests = Test.describe "" [make, Lang.tests, Canary.tests]
+  (* the profiles' extras (docs/testing.md, Profiles): AGENTS.md's targets
+     for a kind of change, beyond make check. Each runs alone, as it always
+     has: they run tests/lang from the root and the matrix *)
+  fun extra (name, tags) =
+    target (name, {cpus = processors, memory = 4000, pools = ["lang", "matrix"], after = [], tags = tags, covers = []})
+  val extras =
+    Test.describe "make"
+      [extra ("test-register-asan", ["vm"]),
+       extra ("test-stress", ["vm"]),
+       extra ("test-windows", ["vm", "windows"]),
+       extra ("test-portability", ["vm", "portability"]),
+       extra ("matrix-quick", ["library"]),
+       extra ("test-lib-hosts", ["library"])]
+
+  val tests = Test.describe "" [make, extras, Lang.tests, Canary.tests]
 end
 
 val () = Cli.main Inventory.tests

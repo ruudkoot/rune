@@ -29,7 +29,7 @@ What it rests on:
 | M2 | The runtime's part: a clock, a child's costs, processors, spawn with limits | done 2026-10-12 |
 | M3 | The runner, with `make check`'s steps as its first jobs | done 2026-10-12 |
 | M4 | `tests/lang` and `tests/errors` in ways, compiled once | done 2026-10-12 |
-| M5 | The first calibration: tiers, profiles, `--affected` | |
+| M5 | The first calibration: tiers, profiles, `--affected` | done 2026-10-12 |
 | M6 | One engine for expectations | |
 | M7 | The Basis suite on the runner | |
 | M8 | Laws on the runner | |
@@ -1610,6 +1610,11 @@ M1 and M2 are independent of each other and of the rest.
   - AGENTS.md's paragraph on what to run, rewritten for the profiles (*What changes for agents*).
 * **Why now:** part 3 of the brief should not wait for part 2 to finish. Agents spend the most time in tests now.
 * **Done when:** each profile's selection is listed in `docs/testing.md`, and E11 is repeated on the commits since this roadmap.
+* **Done** (2026-10-12):
+  - **Tiers and profiles are tags:** `quick` (640 tests: `tests/lang` and `tests/errors` in the default way, `test-lib`, `test-doc`, the canaries; `make quick`), `check`, a tag per make target of `tests/lang`'s ways, and the profiles `vm`, `layout`, `library`, `windows`, `portability` and `docs`. The extras of `vm` and `library` are the targets AGENTS.md asked for beyond `make check`, each run alone. `--profile` is `--tier`; tests tagged `always`, the canaries, join every run.
+  - **`--affected`** (`--since REV`, `--changed FILE`): each group names the paths it covers (`covers:GLOB`, beside the tests in `tests/runner/*.sml`), from what the steps' recipes and scripts read; a changed path that no group covers keeps every test.
+  - **E11 again**, on the 150 commits of master before the roadmap and the branch's six: 97 of 156 select every test, 48 (documentation alone) `make check-docs` only, 11 a few hundred tests; a commit selects 62% of the tier on average. The roadmap said a third of the commits; it is 38%.
+  - **AGENTS.md** says what to run while iterating (`--affected`, `make quick`, a filter) and names the profiles; `docs/testing.md` lists each one's selection.
 
 ### M6. One engine for expectations (M, about 600)
 

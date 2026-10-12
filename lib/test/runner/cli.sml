@@ -8,7 +8,7 @@ struct
   fun option (name, args) =
     let fun go (a :: v :: rest) = if a = name then SOME v else go (v :: rest) | go _ = NONE in go args end
   fun flag (name, args) = List.exists (fn a => a = name) args
-  val valued = ["--tier", "-j", "--mem", "--root", "--out", "--history"]
+  val valued = ["--tier", "--profile", "-j", "--mem", "--root", "--out", "--history", "--since", "--changed"]
   fun words args =
     let
       fun go (a :: v :: rest) = if List.exists (fn x => x = a) valued then go rest
@@ -45,6 +45,46 @@ struct
     in go () before TextIO.closeIn s end
     handle IO.Io _ => 8000
 
+  (* the lines of a file, without empty ones *)
+  fun fileLines file =
+    let val s = TextIO.openIn file
+    in List.filter (fn l => l <> "") (String.tokens (fn c => c = #"\n") (TextIO.inputAll s)) before TextIO.closeIn s end
+    handle IO.Io _ => raise Usage ("cannot read " ^ file)
+
+  (* the paths that changed since a revision, in the work tree and not yet
+     known to git, by git *)
+  fun changedSince rev =
+    let
+      val tmp = OS.FileSys.tmpName ()
+      val ok = OS.Process.isSuccess (OS.Process.system ("{ git diff --name-only '" ^ rev ^ "' -- && git ls-files --others --exclude-standard; } > "
+                                                         ^ tmp ^ " 2> /dev/null"))
+      val paths = if ok then fileLines tmp else raise Usage ("git cannot say what changed since " ^ rev)
+    in (OS.FileSys.remove tmp handle OS.SysErr _ => ()); paths end
+
+  (* the tests that cover a changed path, by their tags covers:GLOB; every
+     test when a path is covered by none *)
+  fun affected (all : {path : string, meta : Test.meta, leaf : 'a} list, changed) =
+    let
+      fun covers ({meta, ...} : {path : string, meta : Test.meta, leaf : 'a}) =
+        List.mapPartial (fn t => if String.isPrefix "covers:" t then SOME (String.extract (t, size "covers:", NONE)) else NONE)
+                        (#tags meta)
+      (* every glob once, and the globs that match a changed path *)
+      val globs = List.foldl (fn (g, acc) => if List.exists (fn x => x = g) acc then acc else g :: acc) []
+                             (List.concat (List.map covers all))
+      val parsed = List.map (fn g => (g, TestFilter.parse g)) globs
+      fun matching p = List.mapPartial (fn (g, f) => if TestFilter.matches f {path = p, tags = []} then SOME g else NONE) parsed
+      val per = List.map (fn p => (p, matching p)) changed
+    in
+      case List.find (fn (_, gs) => null gs) per of
+        SOME (p, _) => (say ("affected: " ^ p ^ " is covered by no test, so every test is\n"); all)
+      | NONE =>
+          let val hit = List.concat (List.map #2 per)
+          in
+            say ("affected: " ^ Int.toString (length changed) ^ " paths changed\n");
+            List.filter (fn x => List.exists (fn g => List.exists (fn h => h = g) hit) (covers x)) all
+          end
+    end
+
   fun main (tree : Run.command Test.tree) =
     let
       val args = CommandLine.arguments ()
@@ -52,7 +92,7 @@ struct
       (* each word a filter, and the tests of any of them *)
       val filterText = String.concatWith " | " (List.map (fn w => "(" ^ w ^ ")") (words rest))
       val filter =
-        TestFilter.parse (case option ("--tier", rest) of
+        TestFilter.parse (case (case option ("--tier", rest) of NONE => option ("--profile", rest) | t => t) of
                             NONE => filterText
                           | SOME t => if filterText = "" then "tag:" ^ t else "(" ^ filterText ^ ") & tag:" ^ t)
         handle TestFilter.Parse m => raise Usage ("the filter: " ^ m)
@@ -61,6 +101,12 @@ struct
       val history = getOpt (option ("--history", rest), "build/test-history.tsv")
       val all = Test.leaves tree
       val selected = List.filter (fn {path, meta, ...} => TestFilter.matches filter {path = path, tags = #tags meta}) all
+      val selected =
+        case (option ("--changed", rest), option ("--since", rest), flag ("--affected", rest)) of
+          (SOME file, _, _) => affected (selected, fileLines file)
+        | (NONE, SOME rev, _) => affected (selected, changedSince rev)
+        | (NONE, NONE, true) => affected (selected, changedSince "HEAD")
+        | (NONE, NONE, false) => selected
       val selected =
         if flag ("--failed", rest) then
           let val h = History.read history
@@ -79,11 +125,19 @@ struct
                   List.app (fn p => case find p of SOME j => choose j | NONE => ())
                            (#after (#leaf (Vector.sub (allV, i)) : Run.command)))
           val () = List.app (fn {path, ...} => case find path of SOME i => choose i | NONE => ()) selected
+          (* the tests that run in every run: the canaries *)
+          val () = if command = "run" then
+                     Vector.appi (fn (i, {meta, ...}) => if List.exists (fn t => t = "always") (#tags meta) then choose i else ())
+                                 allV
+                   else ()
         in Vector.foldri (fn (i, x, acc) => if Array.sub (chosen, i) then x :: acc else acc) [] allV end
     in
       case command of
         "list" =>
-          (List.app (fn {path, meta, ...} => say (path ^ (case #tags meta of [] => "" | ts => "  [" ^ String.concatWith "," ts ^ "]")
+          (List.app (fn {path, meta, ...} =>
+                       say (path ^ (case List.filter (fn t => not (String.isPrefix "covers:" t)) (#tags meta) of
+                                      [] => ""
+                                    | ts => "  [" ^ String.concatWith "," ts ^ "]")
                                                   ^ "\n")) selected;
            say (Int.toString (length selected) ^ " tests\n"))
       | "run" =>

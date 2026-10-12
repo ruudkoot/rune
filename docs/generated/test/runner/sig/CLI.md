@@ -35,7 +35,14 @@ The runner's command line (docs/plans/unit-testing.md, D19):
 
 A filter is the language of [`TestFilter`](../../unit/str/TestFilter.md); two or more of them select
 the tests any of them selects. The tests a selected test waits for are
-selected with it. `--root DIR` is the directory of the tree (default `.`), `--out DIR` where
+selected with it, and a run runs the tests tagged `always` as well.
+`--profile P` is `--tier P`.
+
+`--affected` keeps, of what is selected, the tests that cover a path
+changed since `HEAD` (in the work tree, or not yet known to git);
+`--since REV` since `REV`, and `--changed FILE` the paths that `FILE`
+lists, one to a line. A test covers the paths its tags `covers:GLOB`
+match; a changed path that no test covers keeps every test. `--root DIR` is the directory of the tree (default `.`), `--out DIR` where
 runs go (default `tests/out/r`), `--history FILE` the history (default
 `build/test-history.tsv`). A run ends the program with success when every
 test passed, with failure otherwise, and with 2 for a mistake in the
