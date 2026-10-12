@@ -134,7 +134,14 @@ to a set of flexible type names plus an environment; `where type` and
 `sharing` are realisations of those names, and ascription matches the
 structure against the signature (instantiation, then enrichment) and returns
 the signature's environment with the structure's stamps and constructor
-tags. Opaque ascription renames the flexible names to fresh ones. A functor
+tags. Opaque ascription renames the flexible names to fresh ones. A run of
+sharing specifications is realised at once: its equations make classes of
+flexible names by union-find, each named as the equations one at a time
+would have named it, and the signature is realised once at the end; so are
+the clauses of a chain of `where type`. A realisation gives back what it
+does not change (`Types.changes`), so that where it changes nothing it
+allocates nothing, and matching skips the unification of a value whose
+scheme is the signature's own. A functor
 body is type-checked once against its parameter signature when declared;
 every application copies the body's AST (`Ast.copyStrexp`, fresh annotation
 slots), elaborates the copy with the parameter bound to the matched argument,

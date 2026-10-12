@@ -1267,21 +1267,35 @@ struct
            SOME sg => ElabStats.during ElabStats.Inst (fn () => SigMatch.instantiate sg)
          | NONE => err (sp, "unbound signature: " ^ n))
     | SigSig (specs, sp) => elabSpecs (env, specs)
-    | SigWhere (se, clauses, _) =>
-        List.foldl (fn ((tvs, longid, ty, csp), sigma) =>
-                       let
-                         val params = List.map paramVar tvs
-                         val scope = ref (StringMap.fromList (ListPair.zip (tvs, List.map #2 params)))
-                         val body = elabTy (env, scope, 0, ty)
-                       in ElabStats.during ElabStats.Where (fn () => SigMatch.whereType (sigma, longid, TAbbrev (List.map #1 params, body), csp)) end)
-                   (elabSigexp (env, se)) clauses
+    | SigWhere _ =>
+        (* the clauses of a chain of where's, the innermost first, realised
+           at once (SigMatch.whereStep) *)
+        let
+          fun chain (SigWhere (se, clauses, _), acc) = chain (se, clauses @ acc)
+            | chain (se, acc) = (se, acc)
+          val (base, clauses) = chain (se, [])
+          val sigma = elabSigexp (env, base)
+          fun clause ((tvs, longid, ty, csp), phi) =
+            let
+              val params = List.map paramVar tvs
+              val scope = ref (StringMap.fromList (ListPair.zip (tvs, List.map #2 params)))
+              val body = elabTy (env, scope, 0, ty)
+            in SigMatch.whereStep (sigma, phi, longid, TAbbrev (List.map #1 params, body), csp) end
+        in
+          ElabStats.during ElabStats.Where (fn () => SigMatch.whereFinish (sigma, List.foldl clause IntMap.empty clauses))
+        end
 
   and elabSpecs (env, specs : spec list) : SigMatch.sigma =
     let
+      (* rule 77: later specifications see the earlier ones, in env plus the
+         signature so far, which each specification extends by what it
+         specifies (which names nothing the signature has) and a run of
+         sharing realises *)
+      val current = ref env
       fun add (sigma : SigMatch.sigma, bound', delta, sp) : SigMatch.sigma =
-        {bound = #bound sigma @ bound', env = plusDisjoint (#env sigma, delta, sp)}
-      (* rule 77: later specifications see the earlier ones *)
-      fun cur (sigma : SigMatch.sigma) = plus (env, #env sigma)
+        let val sigma' = {bound = #bound sigma @ bound', env = plusDisjoint (#env sigma, delta, sp)}
+        in current := plus (!current, delta); sigma' end
+      fun cur (_ : SigMatch.sigma) = !current
       fun one (spec, sigma) =
         case spec of
           SpecVal (descs, _) =>
@@ -1331,10 +1345,27 @@ struct
         | SpecInclude (sg, sp) =>
             let val sg' = elabSigexp (cur sigma, sg)
             in add (sigma, #bound sg', #env sg', sp) end
-        | SpecSharingType (ids, sp) => ElabStats.during ElabStats.Share (fn () => SigMatch.shareTypes (sigma, ids, sp))
-        | SpecSharing (ids, sp) => ElabStats.during ElabStats.Share (fn () => SigMatch.shareStructures (sigma, ids, sp))
+        | SpecSharingType _ => Error.bug "elabSpecs: sharing outside a run"
+        | SpecSharing _ => Error.bug "elabSpecs: sharing outside a run"
+      fun equation (SpecSharingType (ids, sp)) = SOME (SigMatch.ShareTypes (ids, sp))
+        | equation (SpecSharing (ids, sp)) = SOME (SigMatch.ShareStructures (ids, sp))
+        | equation _ = NONE
+      (* a run of sharing specifications, realised at once (SigMatch.shareRun) *)
+      fun run (acc, rest) =
+        case rest of
+          spec :: more => (case equation spec of SOME e => run (e :: acc, more) | NONE => (List.rev acc, rest))
+        | [] => (List.rev acc, rest)
+      fun loop (sigma, []) = sigma
+        | loop (sigma, spec :: rest) =
+          case equation spec of
+            NONE => loop (one (spec, sigma), rest)
+          | SOME e =>
+              let
+                val (eqns, rest') = run ([e], rest)
+                val sigma' = ElabStats.during ElabStats.Share (fn () => SigMatch.shareRun (sigma, eqns))
+              in current := plus (env, #env sigma'); loop (sigma', rest') end
     in
-      ElabStats.during ElabStats.Specs (fn () => List.foldl one {bound = [], env = Env.empty} specs)
+      ElabStats.during ElabStats.Specs (fn () => loop ({bound = [], env = Env.empty}, specs))
     end
 
   (* ------------------------------------------------------------------ *)

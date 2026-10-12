@@ -45,7 +45,7 @@ is the page of timings, stale until M1.
 |---|---|---|
 | M0 | This roadmap | done (2026-10-11); every decision taken on 2026-10-12, D7 with an addendum |
 | M1 | Measure: the JIT's code dumped, the elaborator's counters, the register VM in every timing target, HOL and MLton as scripts, new budgets | in part (2026-10-12, branch `perf-m1`): `--pass-stats` complete, the timing targets on Rune as shipped, Poly/ML in `perf-cycles.sh`, HOL's and MLton's measurements as scripts, the module language's budgets, Poly/ML's slowdown found and fixed, `docs/performance.md` re-timed in counts and ratios under load (its seconds again at M10) (*M1*, *Done so far*); the elaborator's counters (2026-10-12, branch `perf-front`): `--pass-stats=elab`, a line per top-level declaration (docs/ir.md); on MLton's 606 units, type-checked by MLton's build, the lines add up to 159.005 s against the elaborate stages' 158.991 s, with E18's counters (1.82G type nodes realised, 113M unifications, 400 applications that make code and 1,206 made to check); off, the counters cost 0.03% of those units' instructions (425.52G against 425.38G, fixed heap of 7 GB); the JIT's code dumped on its own branch |
-| M2 | Signatures: sharing and `where` in one realisation | not started; prototype E20 |
+| M2 | Signatures: sharing and `where` in one realisation | done (2026-10-12): a run of sharing by union-find, a chain of `where` at once, realisations that keep what they do not change (nothing allocated where nothing changes), matching's fast paths (equal schemes, its messages made only for an error, a merge sort, a set of the flexible names). MLton's 606 units type-checked by MLton's build: 476.0G to 153.0G instructions:u (`perf stat`, `max-heap 5g` as E20; repeatable only where the heap allows: with a fixed heap of 7 GB, 425.4G to 149.2G, E20's prototype 187.9G); `BASIS_EXTRA` 1.48-1.57 s to 0.016-0.024 s; type-checked by the compiler on `runevm --count`: 200 specs shared 16 ways 2,367M to 21.2M, nested 2,839M to 19.4M, `where` 1,000 by 400 317M to 13.3M, 2,000 specs 846M to 22.4M, one signature instantiated 256 times 90.6M to 75.4M (E20's regression gone); every output byte for byte the base's (bootstrap, Basis cache, suites, every error test's messages, xc2, MLton's 1,582 unit files); M1's budgets on the module language tightened to these counts (`compile-share`, `-sharenest`, `-where`, `-sig`, `-funsig`) |
 | M3 | Functors: typed from their signature, copies only for code (D3 decided), cheaper matching, MidCanon's quadratic | not started; prototypes E21, E24 |
 | M4 | Types shared: `Ty.ty` hash-consed, `exponential.sml` compiled | not started; partial prototypes E23 (not enough) |
 | M5 | Runtime calls in line: equality, `ptr_eq`, strings, handlers, raise | not started; prototypes E11 a to e |
@@ -1894,7 +1894,15 @@ path that allocates where nothing changes free of allocation.
   * every application typed from the functor's signature (rule 54), with a
     copy of the body elaborated only for each code-producing application's
     code;
-  * the counters replayed so that unit files stay byte for byte the same;
+  * the counters replayed, and the gate of [functors.md](functors.md), *A
+    contradiction in M3, found while building it*: the whole program's
+    output byte for byte the base's; units' code the same with their
+    identities masked; a build through the cache the same as a fresh one;
+    a functor's body changed and not its signature leaving the applying
+    units' interface files the same; the versions of the cache and of unit
+    files bumped. Unit files cannot stay the same as before, since M3 adds
+    the functor's signature to the export basis and a check no longer
+    records the usages of the applied body;
   * the functor's signature in the export basis;
   * a use of a functor depending on the signature's fingerprint for types
     and on the body's hash for code;
@@ -2108,10 +2116,9 @@ frames at 39.5 and 17 to 18.
    up to 40% between busy and quiet periods today. Every target is
    therefore a count; cycles and seconds are quoted as best-of-N
    indications, and only beside numbers taken in the same session.
-2. **The units gate of M3.** E21's summaries change the counters and so the
-   bytes of unit files. Replaying the counters may turn out awkward, in
-   which case the gate must compare canonical output, and the cache's
-   reproducibility needs care.
+2. **The units gate of M3.** E21's summaries change the bytes of unit
+   files, and not only by the counters: settled in [functors.md](functors.md),
+   *A contradiction in M3, found while building it*, and M3's gate above.
 3. **Programs that rely on the equality leak.** Typing by rule 54 rejects
    programs Rune accepts today: a datatype made in a functor body
    compared with `=` where only the actual argument admits equality.

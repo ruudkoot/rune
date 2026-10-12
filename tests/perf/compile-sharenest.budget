@@ -1,6 +1,6 @@
 generate sharenest 200 16
 compile --typecheck-only @gen
 nostack the front end's cost on the module language, the same on both VMs: measured on Rune as shipped alone
-instructions 3125480466
-bytes 5325508795
-objects 204871103
+instructions 23198225
+bytes 20967892
+objects 657592
