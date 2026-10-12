@@ -32,7 +32,7 @@ plan's.
 
 | Milestone | What | State |
 |---|---|---|
-| M0 | This roadmap | done (2026-10-12) |
+| M0 | This roadmap | done (2026-10-12); every decision taken as recommended the same day |
 | M1 | The gate: the call measured after performance M5 to M7 | not started |
 | M2 | The body: tier 2's code for an instruction | not started |
 | M3 | Frames walked, not indexed | not started |
@@ -43,7 +43,7 @@ plan's.
 | M8 | The allocation pointer in a register | not started |
 | M9 | Measure again: the owner's goal | not started |
 
-No decision is taken yet (*Decisions*).
+The owner took every decision as recommended on 2026-10-12 (*Decisions*).
 
 ## The request
 
@@ -825,9 +825,14 @@ is not).
 
 Each decision gives the options, the evidence, and a recommendation.
 "Measured" means an experiment of this plan or of performance.md;
-"estimated" means reasoned from the measurements. None is decided yet.
+"estimated" means reasoned from the measurements.
+
+The owner took every recommendation on 2026-10-12. Each decision records
+it.
 
 ### D1. Where frames live
+
+**Decided (2026-10-12): as recommended.**
 
 * **A. In the value stack.** The frame's record becomes a header below
   the callee's registers, written by the caller, holding the return
@@ -859,6 +864,8 @@ A.
 
 ### D2. What the header holds, and who writes it
 
+**Decided (2026-10-12): as recommended.**
+
 * **A. Three words, all written by every call:** the return address, the
   closure or unit, the caller's function and pc. A walk reads the frame
   and searches nothing. Measured: two more instructions a call than C
@@ -879,6 +886,8 @@ A.
 uniform layout of A.
 
 ### D3. How a function returns
+
+**Decided (2026-10-12): as recommended.**
 
 * **A. `jmp [r14-8]`** (MLton, Chez, GHC; F1's variant 5).
 * **B. Returns the processor predicts, `rsp` unmoved:** `call`, the
@@ -904,6 +913,8 @@ interleaved), with A behind a flag for a machine that wants it.
 
 ### D4. The watermark
 
+**Decided (2026-10-12): as recommended.**
+
 * **A. A compare in every return**, as today (three instructions;
   HotSpot's return poll is two, `macroAssembler_x86.cpp:2578-2588`).
 * **B. A return barrier:** after a minor collection, the return word of
@@ -917,6 +928,8 @@ returns (F4).
 through one function that sees through the barrier's word.
 
 ### D5. Arguments and results
+
+**Decided (2026-10-12): as recommended.**
 
 The result in `rax`: performance M6 makes it so, and it stays.
 
@@ -936,6 +949,8 @@ the bootstrap's instructions; otherwise dropped, and the result recorded
 here.
 
 ### D6. Which registers a callee saves
+
+**Decided (2026-10-12): as recommended.**
 
 * **A. None.** Every value live across a call is in its slot at the call
   (OCaml, MLton, Chez, GHC). The tags stay the stack map; deoptimisation,
@@ -957,6 +972,8 @@ of the three with none.
 
 ### D7. The allocation pointer
 
+**Decided (2026-10-12): as recommended.**
+
 * **A. As today:** `alloc.used` in the VM, the two counters of `--count`
   read-modify-written per object, `--gc-stress` tested per object: 12
   instructions before the header and the fields.
@@ -977,6 +994,8 @@ engine (performance D10 A).
 
 ### D8. The body
 
+**Decided (2026-10-12): as recommended.**
+
 Which of F5's items this plan takes, and when.
 
 * **A. In this plan, first (M2), item by item, each measured:** a
@@ -995,6 +1014,8 @@ else stands between Rune and OCaml*).
 
 ### D9. One layout for every engine of `runevm`
 
+**Decided (2026-10-12): as recommended.**
+
 * **A. The interpreter and both tiers on the same headers**; `vm->frames`
   gone from `runevm`.
 * **B. The interpreter keeps `vm->frames`; compiled code has headers;** a
@@ -1008,6 +1029,8 @@ debugger and deoptimisation, which then converts too.
 where today's record takes seven.
 
 ### D10. The runtime that `runevm-stack` and `runeopt` share
+
+**Decided (2026-10-12): as recommended.**
 
 * **A. A walk of frames per instruction set,** which every reader of frames
   in the shared runtime uses: over the array in `runtime/stack/isa_stack.c`,
