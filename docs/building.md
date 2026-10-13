@@ -336,7 +336,7 @@ The PowerPC and ARM VMs are linked with an rpath as well as `-L`, so that they l
 when the wrapper starts it and when the kernel does. That second way is what a
 fork by a second VM needs: it starts the child by exec of the VM's own binary,
 and qemu-user does not emulate a program it is handed by exec -- the kernel has
-to know what a PowerPC binary is, which means qemu registered under
+to know what a PowerPC or ARM binary is, which means qemu registered under
 `/proc/sys/fs/binfmt_misc`. On WSL systemd will not do that for itself, since
 it ships `ConditionVirtualization=!wsl` for `systemd-binfmt.service` to keep
 its own `WSLInterop` registration, which `make test-windows` needs; register

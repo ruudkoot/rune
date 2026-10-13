@@ -60,13 +60,16 @@ windows` and `make portability` and their tests need them (see `AGENTS.md`).
 
     apt-get install -y gcc-mingw-w64-x86-64 gcc-mingw-w64-i686 \
       libc6-dev-ppc64-cross binutils-powerpc64-linux-gnu \
-      libgcc-13-dev-ppc64-cross qemu-user
+      libgcc-13-dev-ppc64-cross \
+      libc6-dev-arm64-cross binutils-aarch64-linux-gnu \
+      libgcc-13-dev-arm64-cross qemu-user
 
-`libgcc-13-dev-ppc64-cross` (13 is the version of `gcc`) is there for clang,
-which finds the crt files and `libgcc` of the PowerPC sysroot only through a
-GCC cross installation; without it the check fails with `cannot find
-Scrt1.o` (`make doctor` names the package). Do not install
-`gcc-powerpc64-linux-gnu` for it: that compiler conflicts with
+`libgcc-13-dev-ppc64-cross` and `libgcc-13-dev-arm64-cross` (13 is the
+version of `gcc`) are there for clang, which finds the crt files and
+`libgcc` of the PowerPC and ARM sysroots only through a GCC cross
+installation; without them the check fails with `cannot find Scrt1.o`
+(`make doctor` names the package). Do not install
+`gcc-powerpc64-linux-gnu` for the PowerPC one: that compiler conflicts with
 `gcc-multilib`, and apt removes whichever of the two came first. `-m32`
 keeps working without `gcc-multilib` itself, but the package list no longer
 says so, and installing it again takes the cross compiler away. Then all

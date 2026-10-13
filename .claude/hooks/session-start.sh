@@ -49,13 +49,15 @@ if [ "$(git config --global author.email 2>/dev/null)" != inbox@ruudkoot.nl ] ||
   say "git identity set: author Ruud Koot <inbox@ruudkoot.nl>, committer Claude <noreply@anthropic.com>"
 fi
 
-# 2. Packages (cloud/SETUP.md). libgcc-N-dev-ppc64-cross rather than
+# 2. Packages (cloud/SETUP.md). libgcc-N-dev-*-cross rather than
 #    gcc-powerpc64-linux-gnu, which conflicts with gcc-multilib.
 if command -v apt-get > /dev/null 2>&1; then
   v=$(gcc -dumpversion 2> /dev/null | cut -d . -f 1)
   pkgs="libgmp-dev gcc-multilib dwarfdump linux-tools-generic \
         gcc-mingw-w64-x86-64 gcc-mingw-w64-i686 libc6-dev-ppc64-cross \
-        binutils-powerpc64-linux-gnu libgcc-${v:-13}-dev-ppc64-cross qemu-user"
+        binutils-powerpc64-linux-gnu libgcc-${v:-13}-dev-ppc64-cross \
+        libc6-dev-arm64-cross binutils-aarch64-linux-gnu \
+        libgcc-${v:-13}-dev-arm64-cross qemu-user"
   missing=""
   for p in $pkgs; do dpkg -s "$p" > /dev/null 2>&1 || missing="$missing $p"; done
   if [ -n "$missing" ]; then
