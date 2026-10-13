@@ -1,6 +1,7 @@
 # The tier nightly (docs/testing.md, Tiers, profiles and what changed) once a
-# day, on a machine set up as check.yml's: what make check does not run --
-# the sanitizers, stress, the VMs of other machines under qemu, every
+# day, on a machine set up as check.yml's plus the portability sysroots
+# (cloud/SETUP.md, Optional tools): what make check does not run -- the
+# sanitizers, stress, the VMs of other machines under qemu, every
 # configuration of the matrix, the hosts' runs of the libraries, native code
 # under stress. A test whose capability the machine lacks (Windows, here) is
 # skipped with its reason. The runner's summary goes to the job's page, and
@@ -25,9 +26,17 @@ jobs:
       - name: Packages
         run: |
           sudo apt-get update -q
+          # libgcc-N follows this gcc. The full gcc-*-linux-gnu cross
+          # compilers are not installed: gcc-powerpc64-linux-gnu conflicts
+          # with gcc-multilib, which the 32-bit VM needs.
+          v=$(gcc -dumpversion | cut -d. -f1)
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
             libgmp-dev gcc-multilib cmake g++ python3 gdb lldb dwarfdump valgrind \
-            qemu-user clang tmux
+            qemu-user clang tmux \
+            libc6-dev-ppc64-cross binutils-powerpc64-linux-gnu \
+            libgcc-${v:-13}-dev-ppc64-cross \
+            libc6-dev-arm64-cross binutils-aarch64-linux-gnu \
+            libgcc-${v:-13}-dev-arm64-cross
           sudo sh -c 'cat /usr/lib/binfmt.d/qemu-ppc64.conf > /proc/sys/fs/binfmt_misc/register' || true
           sudo sh -c 'cat /usr/lib/binfmt.d/qemu-aarch64.conf > /proc/sys/fs/binfmt_misc/register' || true
 
