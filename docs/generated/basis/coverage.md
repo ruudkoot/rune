@@ -119,7 +119,6 @@ be pinned: many are about the text and not about behaviour.
 - `Posix.Process.fork/read-ahead-of-a-pipe` (Limitation), POSIX_PROCESS
 - `REPL/not-in-the-specification` (Deviation), REPL
 - `RUNTIME/not-in-the-specification` (Deviation), RUNTIME
-- `SML90.Interrupt/never-raised` (Limitation), SML90
 - `SML90/is-history` (Limitation), SML90
 - `StreamIO/takes-the-slice-structures` (Deviation), in `StreamIO`
 - `TERMINAL/not-in-the-specification` (Deviation), TERMINAL

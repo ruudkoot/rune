@@ -89,10 +89,11 @@ sig
   (* Raised when an I/O operation fails, carrying the message alone. *)
   exception Io of string
 
-  (* Meant for a program that is interrupted.
+  (* Raised by the user's interrupt, Ctrl-C, in a program that has asked
+     for it with `Runtime.catchInterrupt`.
 
-     Limitation: `SML90.Interrupt/never-raised`. It is declared and nothing
-     raises it: the VM handles no signal, so an interrupt ends the program. *)
+     Implementation: `SML90.Interrupt/when-caught`. Until a program asks,
+     the interrupt ends it, as the system ends any process. *)
   exception Interrupt
 
   (* `sqrt x` is the square root of `x`.

@@ -224,7 +224,12 @@ date it gives.
   * The two halves still give the types in opposite orders, and neither
     says which type was expected.
   * `fun f x = case x of 0 => "a" | n => n` still says "no common type for
-    overloaded operators", though the program has no operator.
+    overloaded operators", though the program has no operator. *Fixed on
+    2026-10-13:* two overloaded types of one kind each, such as those of
+    two constants, now clash as "type constructor mismatch: string vs
+    int". An operator used at a kind it lacks gives "overloaded operator
+    not defined at type char", as it already did at a type that is not
+    overloaded.
 * **First step:**
   1. A datatype of errors, with "expected ... found ..." for every mismatch.
      [errror-messages.md](errror-messages.md) is the brief.
@@ -279,7 +284,8 @@ date it gives.
 
 * **No licence:** the repository has no `LICENSE`, so nobody else may use,
   change or redistribute Rune. This is the cheapest item on the list, and
-  only the owner can do it.
+  only the owner can do it. *Done on 2026-10-13:* Rune is under CC0 1.0
+  Universal (`LICENSE`).
 * **No language server:**
   * `rune --serve` is a JSON-RPC prototype with diagnostics and hover,
     not LSP (`src/driver/serve.sml`).
@@ -291,7 +297,7 @@ date it gives.
   the owner ([incremental-compilation.md](incremental-compilation.md),
   M12).
 * **First step:**
-  1. A licence.
+  1. A licence (done).
   2. Then `--serve` as LSP, which every editor can use.
 
 ## 9. The prose falls behind the code
@@ -303,18 +309,23 @@ this pace it falls behind within days. Found while writing this review:
 * This file said "no optimiser" and a Cheney collector a week after both
   had changed.
 * `docs/building.md` gives `make check` as about 3 minutes (it is about
-  15) and `make test-windows` as 8 (it is about 15).
+  15) and `make test-windows` as 8 (it is about 15). *Fixed on
+  2026-10-13:* it no longer times `make check`, and `make test-windows`
+  is timed and counted again: 11 minutes with 16 jobs.
 * `docs/performance.md`:
   * It says "a value is 16 bytes".
   * Its tables predate the word layout and the collector.
 * [performance.md](performance.md) estimates 6x to 8x MLton for the
   compiler compiling itself. `docs/performance.md` measures 2.7x.
 * [limitations-review.md](limitations-review.md) says `SML90.Interrupt` is
-  never raised. It is, since `0dd79e33`.
+  never raised. It is, since `0dd79e33`. *Fixed on 2026-10-13*, there and
+  in the note of `SML90.Interrupt` in `lib/basis`, which said the same.
 * [ide.md](ide.md) gives every milestone as not started, while `rune-ide`
-  has done M1 to M3 and most of M4.
+  has done M1 to M3 and most of M4. *Fixed on 2026-10-13:* the states are
+  `rune-ide`'s own.
 * [compiler-library.md](compiler-library.md) has M0 waiting for the merge
-  of branches that are merged.
+  of branches that are merged. *Fixed on 2026-10-13:* M0 is done, and its
+  numbers were measured again.
 * The README of `rune-corpus-sml97` says that Rune does not compile SML/NJ,
   MLton or Poly/ML.
 

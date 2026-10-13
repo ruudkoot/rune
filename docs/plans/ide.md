@@ -18,13 +18,21 @@ in isolation do not complete a milestone.
 | Milestone | Deliverable | Depends on | State |
 |---|---|---|---|
 | M0 | This roadmap and the stack decision | — | planned and documented |
-| M1 | Desktop shell connected to an SML service | M0 | not started |
-| M2 | File browser and source editor | M1 | not started |
-| M3 | Rune compilation with structured IDE feedback | M2 | not started |
-| M4 | Reliable daily editing, recovery, and distribution | M3 | not started |
-| M5 | Shared SML presentation logic and interactive compiler services | M3; incremental interfaces where available | not started |
+| M1 | Desktop shell connected to an SML service | M0 | complete on Linux |
+| M2 | File browser and source editor | M1 | complete on Linux |
+| M3 | Rune compilation with structured IDE feedback | M2 | complete on Linux |
+| M4 | Reliable daily editing, recovery, and distribution | M3 | M4.1–M4.6 implemented with Linux and native Windows portable-package checks; publication/accessibility gates remain |
+| M5 | Shared SML presentation logic and interactive compiler services | M3; incremental interfaces where available | M5.1–M5.2 complete with Linux/Windows checks; M5.3 semantic queries remain |
 | M6 | Execution, evaluation, and runtime inspection | M4; M5 for semantic evaluation; runtime prerequisites | not started |
 | M7 | Advanced compiler tools and measured product polish | relevant parts of M4–M6 | not started |
+
+The IDE is built in a separate repository, `rune-ide`, which uses this
+checkout as a read-only toolchain. Its `docs/plans/ide.md` is this roadmap
+as it is being carried out. It differs from this copy where the work
+decided otherwise: for example, M3's structured diagnostics come from an
+adapter of the IDE's own, not from a new flag of Rune. The states above are
+those of `rune-ide` at `d4b3552` (2026-09-28). The rest of this file is the
+roadmap as first proposed.
 
 **M2 is the first visible deliverable. M3 is the first useful IDE release.**
 Keep M1 small enough to support those two milestones directly. M4 can proceed
