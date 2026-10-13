@@ -331,12 +331,14 @@ struct
              in (line :: acc, List.foldl (fn (n, m) => StringMap.insert (m, n, ())) earlier provides) end)
           ([], provided) analysed
       val out = OS.Path.joinDirFile {dir = dir, file = "MANIFEST"}
-      val o' = TextIO.openOut out
+      (* in bytes, so that every host writes the same file (Emit.writeFileAs) *)
+      val o' = BinIO.openOut out
+      fun put s = BinIO.output (o', Byte.stringToBytes s)
     in
-      TextIO.output (o', "# Generated from library.build by rune --basis-index -- do not edit.\n");
-      List.app (fn l => TextIO.output (o', "# library: " ^ l ^ "\n")) (!libs);
-      List.app (fn l => TextIO.output (o', l ^ "\n")) (List.rev lines);
-      TextIO.closeOut o';
+      put "# Generated from library.build by rune --basis-index -- do not edit.\n";
+      List.app (fn l => put ("# library: " ^ l ^ "\n")) (!libs);
+      List.app (fn l => put (l ^ "\n")) (List.rev lines);
+      BinIO.closeOut o';
       OS.Process.success
     end
 
@@ -910,8 +912,8 @@ struct
                         end)
                      (ListPair.zip (names, units), List.tabulate (List.length units, fn i => i))
       fun write (file, lines) =
-        let val out = TextIO.openOut (OS.Path.joinDirFile {dir = dir, file = file})
-        in List.app (fn l => TextIO.output (out, l ^ "\n")) lines; TextIO.closeOut out end
+        let val out = BinIO.openOut (OS.Path.joinDirFile {dir = dir, file = file})
+        in List.app (fn l => BinIO.output (out, Byte.stringToBytes (l ^ "\n"))) lines; BinIO.closeOut out end
     in
       (* the units' files in order, and the source of each, as named here *)
       write ("units", files);
@@ -1022,8 +1024,12 @@ struct
     let
       val out = case !Options.output of SOME f => f | NONE => defaultOutput (List.hd inputs)
       fun absolute p = OS.Path.mkCanonical (OS.Path.mkAbsolute {path = p, relativeTo = OS.FileSys.getDir ()})
-      fun same p = absolute p = absolute out orelse
-                   ((OS.FileSys.fileId p = OS.FileSys.fileId out) handle OS.SysErr _ => false)
+      fun idOf p = SOME (OS.FileSys.fileId p) handle OS.SysErr _ => NONE
+      (* a file id names a file only where it tells the output from its
+         directory: MLton under MinGW gives every file of a drive one *)
+      val outId = idOf out
+      val ids = isSome outId andalso outId <> idOf (OS.Path.dir (absolute out))
+      fun same p = absolute p = absolute out orelse (ids andalso idOf p = outId)
       val () = if List.exists same inputs then raise Options.Usage "output must differ from every input file" else ()
     in
       Emit.writeFileAs (fingerprint, out, prog);

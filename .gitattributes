@@ -1,1 +1,9 @@
+# A file is checked out with the LF it is stored with, whatever core.autocrlf
+# says (Git for Windows sets it): the tools compare and compile files byte
+# for byte (docs/building.md, MSYS2). These three keep the CRLF they are
+# stored with, which is what they are about.
+* text=auto eol=lf
+tests/diagnostics/crlf.sml -text
+examples/benchmarks/plclub-ray/upstream/test.gml -text
+examples/benchmarks/raytrace/upstream/chess.gml -text
 docs/generated/** linguist-generated=true

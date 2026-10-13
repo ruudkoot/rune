@@ -197,11 +197,12 @@ struct
       val temporary = OS.Path.joinDirFile {dir = dir, file = "." ^ file ^ "." ^ OS.Path.file reservation}
       fun remove p = OS.FileSys.remove p handle _ => ()
       fun clean () = (remove temporary; remove reservation)
+      (* bytes, which a text stream of Windows would give a CR before each LF *)
       fun write () =
-        let val out = TextIO.openOut temporary
+        let val out = BinIO.openOut temporary
         in
-          (List.app (fn s => TextIO.output (out, s)) chunks; TextIO.closeOut out)
-          handle ex => (TextIO.closeOut out handle _ => (); raise ex)
+          (List.app (fn s => BinIO.output (out, Byte.stringToBytes s)) chunks; BinIO.closeOut out)
+          handle ex => (BinIO.closeOut out handle _ => (); raise ex)
         end
     in
       (write (); OS.FileSys.rename {old = temporary, new = path}; remove reservation)

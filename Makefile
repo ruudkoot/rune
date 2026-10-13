@@ -118,7 +118,19 @@ BUILDGEN := $(BUILDFILES) $(VERSIONGEN)
 # the command line on top (runtime/stack/interp.c, runtime/main.c). The runtime is also
 # build/librune.a, which bin/runevm-stack links, and so will a program runeopt
 # makes (docs/native.md); the other VMs compile the same list.
+#
+# Under MSYS2 the compiler of a MinGW environment (UCRT64, MINGW64,
+# CLANG64) makes programs of Windows, so the VMs are built there as `make
+# windows` builds them: with the system layer of Windows, mingw-w64's printf
+# and the libraries of Windows that layer calls (docs/building.md, MSYS2).
+MINGW   := $(if $(filter MINGW%,$(shell uname -s)),yes)
+ifeq ($(MINGW),yes)
+SYS     ?= win
+CFLAGS  += -D__USE_MINGW_ANSI_STDIO=1
+endif
 SYS ?= posix
+# what a VM links beside the runtime
+VM_LIBS  = -lm $(if $(MINGW),$(WIN_LIBS))
 RT_SRCS := runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
 VM_SRCS := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_$(SYS).c
 VM_HDRS := runtime/vm.h runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
@@ -466,9 +478,12 @@ build/librune/%.o: runtime/%.c $(VM_HDRS) | build/.doctor-vm
 # native.o is the main of a program runeopt makes and what its code calls
 # (runtime/native/native.c): it is in the library, but nothing of runevm-stack refers to it,
 # so no VM links it. rune-offsets.s is the layout of the VM for the code.
-build/librune.a: $(RT_OBJS) build/librune/native/native.o build/rune-offsets.s
+# Under MinGW the library goes without it: a program of runeopt is for Linux
+# on x86-64, and native.c is written against POSIX.
+NATIVE_OBJ := $(if $(MINGW),,build/librune/native/native.o)
+build/librune.a: $(RT_OBJS) $(NATIVE_OBJ) build/rune-offsets.s
 	rm -f $@
-	$(AR) rcs $@ $(RT_OBJS) build/librune/native/native.o
+	$(AR) rcs $@ $(RT_OBJS) $(NATIVE_OBJ)
 	rm -rf tests/out/opt-cache
 
 build/rune-offsets.s: runtime/native/native_offsets.c runtime/native/native_offsets.h $(VM_HDRS) | build/.doctor-vm
@@ -478,7 +493,7 @@ build/rune-offsets.s: runtime/native/native_offsets.c runtime/native/native_offs
 
 bin/runevm-stack: runtime/main.c runtime/stack/interp.c build/librune.a $(VM_HDRS) | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) $(RT_INC) -o $@ runtime/main.c runtime/stack/interp.c build/librune.a -lm
+	$(CC) $(CFLAGS) $(RT_INC) -o $@ runtime/main.c runtime/stack/interp.c build/librune.a $(VM_LIBS)
 
 # runtime/register's first loop (docs/plans/middle-end.md, M5): the register bytecode,
 # on the runtime of runevm-stack. Its own instruction set's part (runtime/register/isa_regs.c)
@@ -492,7 +507,7 @@ JIT_HDRS := runtime/register/jit.h runtime/register/jit/x64.h runtime/register/j
 NEW_LOOP := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS)
 bin/runevm: $(NEW_LOOP) build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) $(RT_INC) -o $@ $(NEW_LOOP) build/librune.a -lm
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) $(RT_INC) -o $@ $(NEW_LOOP) build/librune.a $(VM_LIBS)
 
 vm-asan: bin/runevm-stack-asan bin/runevm-asan
 
@@ -525,7 +540,7 @@ bin/runevm-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-asan
 # Not part of make check.
 bin/runevm-int64: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 $(RT_INC) -o $@ $(NEW_SRCS) -lm
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 $(RT_INC) -o $@ $(NEW_SRCS) $(VM_LIBS)
 # The JIT on the first (tests/register/int64-box-home.sml), at every tier,
 # and with raw homes: a word past 63 bits is a box, which a home that holds
 # the word must not keep across a collection. Not part of make check.
@@ -540,30 +555,30 @@ test-int64: bin/runevm-int64 bin/runevm-rawhomes $(RUNE)
 	@echo "test-int64: a word's box in a home survives the collection"
 bin/runevm-realboxed: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_REAL_BOXED $(RT_INC) -o $@ $(NEW_SRCS) -lm
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_REAL_BOXED $(RT_INC) -o $@ $(NEW_SRCS) $(VM_LIBS)
 # D2 A with tier 2's homes of ints and words holding the 64 bits (D5 A as the
 # roadmap states it): faster where words pass 63 bits, slower where a small
 # int crosses a slot at every call.
 bin/runevm-rawhomes: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 -DRUNE_RAW_HOMES $(RT_INC) -o $@ $(NEW_SRCS) -lm
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_INT64 -DRUNE_RAW_HOMES $(RT_INC) -o $@ $(NEW_SRCS) $(VM_LIBS)
 # The hooks for the collector to come (docs/plans/heap-layout.md, M7), each a
 # VM of its own to test or to measure with: the collector sets the header's
 # four bits on every object it copies and every reader of a kind masks them;
 # and the barrier marks a card at every store into an object that exists.
 bin/runevm-gcbits: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_GC_BITS $(RT_INC) -o $@ $(NEW_SRCS) -lm
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_GC_BITS $(RT_INC) -o $@ $(NEW_SRCS) $(VM_LIBS)
 bin/runevm-cards: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_BARRIER_CARDS $(RT_INC) -o $@ $(NEW_SRCS) -lm
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_BARRIER_CARDS $(RT_INC) -o $@ $(NEW_SRCS) $(VM_LIBS)
 # The instrument of docs/plans/performance-64bit.md's experiments 1 and 5
 # (x86-64): compiled code counts every conversion between a raw number in a
 # home and its word, by the instruction that makes it; runevm-conv
 # --jit-stats prints the table.
 bin/runevm-conv: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_JIT_CONV $(RT_INC) -o $@ $(NEW_SRCS) -lm
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -DRUNE_JIT_CONV $(RT_INC) -o $@ $(NEW_SRCS) $(VM_LIBS)
 
 # The census VM (docs/census.md; docs/plans/heap-layout.md, M1, and
 # docs/plans/garbage-collector-v2.md, M1): runtime/register's loop on the runtime
@@ -574,7 +589,7 @@ CENSUS_SRCS := $(NEW_SRCS) runtime/census/census.c runtime/census/census_static.
 vm-census: bin/runevm-census
 bin/runevm-census: $(CENSUS_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/census/census.h runtime/census/layouts.h | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -DRUNE_JIT=1 -DRUNE_CENSUS $(RT_INC) -o $@ $(CENSUS_SRCS) -lm
+	$(CC) $(CFLAGS) -DRUNE_JIT=1 -DRUNE_CENSUS $(RT_INC) -o $@ $(CENSUS_SRCS) $(VM_LIBS)
 
 # The census VM against the stock one on a small program: the same --count
 # line, every byte and object in census.txt, the trace's own consistency
@@ -830,7 +845,7 @@ RUNE_TEST = GC_STRESS=$(GC_STRESS) $(if $(filter command line environment,$(orig
 test-steps: $(RUNE) vm | build/.doctor-check
 	sh tests/runtime/run-vm-tests.sh --vm $(RUNEVM)
 	@mkdir -p build
-	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
+	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c $(VM_LIBS)
 	build/heap_test
 test: test-steps bin/rune-test
 	$(RUNE_TEST) --tier test
@@ -850,11 +865,11 @@ test: test-steps bin/rune-test
 # the barrier's cards with it. Part of make check.
 test-heap-steps: | build/.doctor-check
 	@mkdir -p build
-	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
+	$(CC) $(CFLAGS) $(RT_INC) -o build/heap_test tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c $(VM_LIBS)
 	build/heap_test
-	$(CC) $(CFLAGS) -DRUNE_GC_BITS $(RT_INC) -o build/heap_test-gcbits tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
+	$(CC) $(CFLAGS) -DRUNE_GC_BITS $(RT_INC) -o build/heap_test-gcbits tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c $(VM_LIBS)
 	build/heap_test-gcbits
-	$(CC) $(CFLAGS) -DRUNE_BARRIER_CARDS $(RT_INC) -o build/heap_test-cards tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c -lm
+	$(CC) $(CFLAGS) -DRUNE_BARRIER_CARDS $(RT_INC) -o build/heap_test-cards tests/runtime/heap_test.c $(RT_SRCS) runtime/sys/sys_$(SYS).c $(VM_LIBS)
 	build/heap_test-cards
 test-heap: test-heap-steps bin/runevm-gcbits bin/runevm-cards $(RUNE) vm bin/rune-test
 	$(RUNE_TEST) --tier test-heap
