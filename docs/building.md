@@ -180,9 +180,10 @@ Windows. The link is refused if an `.exe` imports a DLL of the toolchain
 rather than of Windows.
 
 The runner starts the VMs in a directory on the Windows side
-(`$RUNE_WINDOWS_DIR`, or `rune-test-windows` in the `TEMP` directory of
-Windows), not in the tree, which WSL would hand them as a network path, and
-passes `TZ` to them through `WSLENV`. It also runs a few programs with
+(`$RUNE_WINDOWS_DIR`, or one for each tree under `rune-test-windows` in the
+`TEMP` directory of Windows, so that two worktrees can run the tests at
+once; `tests/windows-dir.sh`), not in the tree, which WSL would hand them as
+a network path, and passes `TZ` to them through `WSLENV`. It also runs a few programs with
 `--count` on each VM and on `bin/runevm-stack`: the counts must agree.
 
 `runtime/sys/sys_win.c` gives what Windows has -- the clock, the calendar, files,
