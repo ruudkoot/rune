@@ -222,10 +222,14 @@ those to leave out, with a reason for each, and is empty. The checks of the
 Basis Library suite that do not pass are the `WINDOWS` lines of
 `tests/basis/deviations.txt`, each saying what Windows does instead.
 
-A healthy `make test-windows` takes about 8 minutes and reports, for each
-VM, all 141 programs of `tests/lang` passing with none skipped, `tests/runtime`
-11 of 11, and 194 of the 137,240 checks of the Basis Library suite failing,
-every one of them explained by a `WINDOWS` line.
+A healthy `make test-windows` takes about 11 minutes with 16 jobs
+(2026-10-13). For each of the four VMs it reports all 281 programs of
+`tests/lang` passing with none skipped, and `tests/runtime` 30 of 30; the
+64-bit register VM runs both twice, at tier 1 and at tier 2. Of the
+139,287 checks of the Basis Library suite, 194 fail on the stack bytecode
+and 195 on the register bytecode, every one of them explained by a
+`WINDOWS` line, and 6 are skipped as POSIX's alone. The tests of the
+terminal, the debug adapter and the Jupyter kernel pass too.
 
 What Windows does not get: `OS.Path` keeps the rules of POSIX rather than
 the drive letters and backslashes of Windows, which is why a path of a drive

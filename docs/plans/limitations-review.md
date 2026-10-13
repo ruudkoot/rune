@@ -5,6 +5,10 @@ A review of 2026-09-21. `readings.md` listed five `Limitation:` notes and
 twelve are fixed**, leaving four, and the limitations are down to two. What
 is left is below with what it would take.
 
+One more was fixed later: since `0dd79e33` (2026-10-09) the user's interrupt
+raises `SML90.Interrupt`. That leaves three of the twelve, and one of the
+two limitations.
+
 ## Fixed
 
 | Note | What was wrong | What it is now |
@@ -17,6 +21,7 @@ is left is below with what it would take.
 | `WideTextIO/file-streams-have-no-positions` (Limitation) | no check pinned it | pinned by `WideTextIO.openIn/the-reader-has-no-positions` |
 | `ImperativeIO/not-sealed` (Deviation) | the public functor was not ascribed `IMPERATIVE_IO` | `sig_imperative_io.sml` moved before `io_functors.sml` in the MANIFEST and the functor is ascribed; a program now sees what the signature names |
 | `IMPERATIVE_IO/functor-not-sealed` (Deviation) | the same from the signature's side | an `Implementation:` note saying the public functor is sealed and the library's own `RuneImperativeIOFn` is not, because `TextIO`, `BinIO` and `WideTextIO` take the streams apart and the constructors are not in the signature |
+| `SML90.Interrupt/never-raised` (Limitation; fixed 2026-10-09) | nothing raised it: the VM handled no signal, so an interrupt ended the program | Ctrl-C raises it in a program that has asked with `Runtime.catchInterrupt` (`rt.interrupt`, `docs/runtime.md`, *Interrupts*), built for the REPL (incremental D11). The note is an `Implementation:`, `SML90.Interrupt/when-caught` |
 
 ## Left open, and why
 
@@ -29,7 +34,6 @@ documentation, which `make check` compares with the library as it stands.
 | `MONO_VECTOR_EQ/not-in-the-specification` | **left open** | The library has a signature the specification does not, so that `WideString.string` can be a type name and its constants can be overloaded at it. Nothing to fix: the signature is needed, and its absence from the specification is a fact about the specification. A program never sees it -- the seal files show `MONO_VECTOR`. |
 | `StreamIO/takes-the-slice-structures` | **left open** | The specification's functor is given no way to make the vector slices its writer takes, so MLton's takes them too and so does this one. Fixing it means the specification changing. A check cannot see a functor's argument list. |
 | `SML90/is-history` | **left open** | The page that defined `SML90` is no longer among the specification's; this one is transcribed from MLton's library. There is nothing to fix and nothing to check. |
-| `SML90.Interrupt/never-raised` | **hard** | The exception is declared and nothing raises it, because the VM handles no signal: an interrupt ends the program. Raising it needs the VM to catch `SIGINT` and the interpreter to check a flag at safe points -- a real change to the runtime, with a cost on every loop, for an exception the specification itself calls obsolete. A check cannot prove that something is never raised either. |
 
 ## What was learned doing the `ImperativeIO` one
 
@@ -42,8 +46,9 @@ program sees the signature.
 
 ## Recommendation
 
-Leave the four: two are facts about the specification (`SML90`'s page is
+Leave the three: two are facts about the specification (`SML90`'s page is
 gone; the `StreamIO` functor has to take slice structures the specification
-gives it no way to make), one is a signature the library needs and a program
-never sees (`MONO_VECTOR_EQ`), and one is a signal handler the runtime does
-not have (`SML90.Interrupt`).
+gives it no way to make), and one is a signature the library needs and a
+program never sees (`MONO_VECTOR_EQ`). The fourth this review left was a
+signal handler the runtime did not have (`SML90.Interrupt`); the REPL
+needed one, and it was built.

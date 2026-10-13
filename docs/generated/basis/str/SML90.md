@@ -82,8 +82,8 @@ What each means is on [`SML90`](../sig/SML90.md); the types are this structure's
 
 ### Interrupt
 
-> **Limitation** `SML90.Interrupt/never-raised`. It is declared and nothing
-> raises it: the VM handles no signal, so an interrupt ends the program.
+> **Implementation** `SML90.Interrupt/when-caught`. Until a program asks,
+> the interrupt ends it, as the system ends any process.
 
 ### Ln
 

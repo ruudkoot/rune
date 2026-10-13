@@ -309,18 +309,23 @@ this pace it falls behind within days. Found while writing this review:
 * This file said "no optimiser" and a Cheney collector a week after both
   had changed.
 * `docs/building.md` gives `make check` as about 3 minutes (it is about
-  15) and `make test-windows` as 8 (it is about 15).
+  15) and `make test-windows` as 8 (it is about 15). *Fixed on
+  2026-10-13:* it no longer times `make check`, and `make test-windows`
+  is timed and counted again: 11 minutes with 16 jobs.
 * `docs/performance.md`:
   * It says "a value is 16 bytes".
   * Its tables predate the word layout and the collector.
 * [performance.md](performance.md) estimates 6x to 8x MLton for the
   compiler compiling itself. `docs/performance.md` measures 2.7x.
 * [limitations-review.md](limitations-review.md) says `SML90.Interrupt` is
-  never raised. It is, since `0dd79e33`.
+  never raised. It is, since `0dd79e33`. *Fixed on 2026-10-13*, there and
+  in the note of `SML90.Interrupt` in `lib/basis`, which said the same.
 * [ide.md](ide.md) gives every milestone as not started, while `rune-ide`
-  has done M1 to M3 and most of M4.
+  has done M1 to M3 and most of M4. *Fixed on 2026-10-13:* the states are
+  `rune-ide`'s own.
 * [compiler-library.md](compiler-library.md) has M0 waiting for the merge
-  of branches that are merged.
+  of branches that are merged. *Fixed on 2026-10-13:* M0 is done, and its
+  numbers were measured again.
 * The README of `rune-corpus-sml97` says that Rune does not compile SML/NJ,
   MLton or Poly/ML.
 

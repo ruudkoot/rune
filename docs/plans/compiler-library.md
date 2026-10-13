@@ -23,22 +23,21 @@ it.
 
 | Milestone | What | State |
 |---|---|---|
-| M0 | The REPL's branch and `incremental` merged; this plan's numbers measured again | waiting for the merge |
+| M0 | The REPL's branch and `incremental` merged; this plan's numbers measured again | done 2026-10-13: both on `master` since 2026-10-11 (#38, #39), the numbers measured again at `2e2351ba` |
 | M1 | The compiler moved to `lib/compiler`, the driver left in `src` | planned |
 | M2 | A library's names: export lists for `rune --library` | planned |
 | M3 | The compiler's state: a session that starts from nothing | planned |
 | M4 | `RuneCompiler`: the API, its tests, its frozen cache | planned |
 | M5 | The clients: the REPL's engine, `rune --serve`, the Basis's `Compiler` | planned |
 
-Size: L, about 2,000 lines of SML beside the move of about 18,000.
+Size: L, about 2,000 lines of SML beside the move of about 19,000.
 
 ## Before it starts: the REPL's work merged
 
-The `repl` branch (worktree `.worktrees/repl`, roadmap
-`docs/plans/repl.md`) changes the files this plan moves, and is being
-merged with `incremental` as this is written; its M6 to M11 are built in
-its worktree and not yet committed. What it adds that this plan builds
-on:
+The `repl` branch (roadmap `docs/plans/repl.md`) changed the files this
+plan moves. It was merged with `incremental`, and both have been on
+`master` since 2026-10-11 (#38 and #39). What it added that this plan
+builds on:
 
 * **The engine**: `src/repl/engine.sml`, the signature `ENGINE`
   (`ReplEngine`: `eval`, `use`, `reload`, `check`, `typeAt`, `complete`,
@@ -54,21 +53,23 @@ on:
   library under `lib` (repl M0). `rune --serve` keeps a JSON codec of its
   own (`src/driver/serve.sml`) that `lib/json` replaces in M5.
 
-The merge itself has work this plan depends on: M10 of `incremental`
-replaced `sources.txt` by `rune.build` and the hand-written MANIFESTs by
-`library.build` and `rune --basis-index`, while the REPL's branch adds
-files to `sources.txt` and libraries with hand-written MANIFESTs. M0 is
-done when both branches are on `master`, `make check` passes there, and
-the numbers below are measured again on it (they are `incremental` at
-`6e9d11b9`).
+The merge itself did work this plan depends on. M10 of `incremental` had
+replaced `sources.txt` by `rune.build`, and the hand-written MANIFESTs by
+`library.build` and `rune --basis-index`. The REPL's branch had added
+files to `sources.txt`, and libraries with hand-written MANIFESTs. M0 is
+done: both branches are on `master`, and `make check` passes there. The
+numbers below are `master`'s at `2e2351ba`; they were `incremental`'s at
+`6e9d11b9`.
 
 ## Where it starts
 
-* **The compiler** is 63 files and 19,886 lines (`rune --build-list
-  rune.build`): `src/util` 8 files and 652 lines, `src/frontend` 5 and
-  2,151, `src/elab` 8 and 2,886, `src/core` 15 and 5,654, `src/backend` 14
-  and 4,018, `src/driver` 12 and 4,525. `runedoc` shares 22 of the files,
-  `runeopt` 3, `runeisa` 1.
+* **The compiler** is 75 files and 22,543 lines (`rune --build-list
+  rune.build`): `src/util` 10 files and 1,246 lines, `src/frontend` 5 and
+  2,300, `src/elab` 8 and 2,963, `src/core` 15 and 5,703, `src/backend` 14
+  and 4,132, `src/driver` 12 and 4,719, `src/main` 1. The rest are two
+  libraries that it is written on, `lib/unicode` (8 files, 1,162 lines)
+  and `lib/json` (2 files, 315 lines). `runedoc` shares 34 of the files,
+  24 of `src` and the two libraries; `runeopt` shares 3 and `runeisa` 1.
 * **Compiling in-process and running the result** is what the REPL's
   session does already (`src/repl/session.sml`, `compile`): a declaration
   is elaborated, made into a unit's code (`Pipeline.unitThrough`), kept in
@@ -80,9 +81,10 @@ the numbers below are measured again on it (they are `incremental` at
 * **The Basis's `Compiler`** (`lib/basis/compiler.sml`) has hooks that
   the REPL fills (`use`, `compile`); in a program that `rune` compiled
   nothing fills them, and they raise `Fail`.
-* **The compiler's state is global**: 210 top-level `ref`s and tables in
-  30 of its files -- the environment, the elaborator's signatures and
-  functors, the tables by stamp, the counters, the options, the errors.
+* **The compiler's state is global**: about 205 top-level `ref`s and
+  tables in 32 of its files (*M0*, below) -- the environment, the
+  elaborator's signatures and functors, the tables by stamp, the
+  counters, the options, the errors.
   That is why `docs/plans/ide.md` says not to call `Main.main` twice and
   expect two compiles to be independent, and why `rune --serve` forks a
   child for each request.
@@ -97,15 +99,16 @@ the numbers below are measured again on it (they are `incremental` at
 * **To `lib/compiler`**: `src/util`, `src/frontend`, `src/elab`,
   `src/core`, `src/backend`, and of `src/driver` the compiler proper --
   `basismanifest.sml`, `buildfile.sml`, `unitbasis.sml`, `pipeline.sml`,
-  `unitmid.sml`, `unitcache.sml`, `deps.sml` (2,765 lines): 57 files, about
-  18,100 lines.
+  `unitmid.sml`, `unitcache.sml`, `deps.sml` (2,865 lines): 59 files, about
+  19,200 lines.
 * **In `src`**: the driver -- `options.sml` (the command line),
   `main.sml`, `parallel.sml`, `serve.sml` and `serveexn.sml` -- with
   `src/main`, `src/repl` (the terminal front and the protocol; the engine's
   core moves in M5 if M4 makes it the library's session), `src/doc`,
   `src/opt` and `src/isa`.
 * **What the moved files take from the driver**: `pipeline.sml` and
-  `unitcache.sml` read nine of the command line's options (`Options.*`).
+  `unitcache.sml` read seven of the command line's options (`Options.*`),
+  in nine places.
   They become the library's own settings, which `options.sml` sets.
 * **`build/config.sml`** (the compiler's version and its identity, the
   hash of its sources that names a cache's configuration) stays
@@ -121,7 +124,7 @@ used, and a program sees the exports only. (b) The library is used only
 through build files, whose export lists work today. (c) Every structure
 renamed with a prefix (`RuneAst`, ...). Recommended: (a); it is what a
 library needs anyway (`lib/json` will have the same problem), and (c)
-renames 57 files for nothing a program can use.
+renames 59 files for nothing a program can use.
 
 **D2. The compiler's state.** (a) One session at a time, which
 `RuneCompiler.session` starts from nothing: every top-level `ref` and table
@@ -202,10 +205,22 @@ session is the REPL engine's, made a library's.
   pull requests); `make check` there; this plan's numbers and file lists
   measured again.
 * **Done when:** both are merged and this file is updated.
+* **Done** (2026-10-13):
+  * Both branches were merged on 2026-10-11 (#38, #39). CI's `check`
+    passes on `master` at `2e2351ba`, where the numbers of *Where it
+    starts* and *What moves and what stays* were measured.
+  * The compiler's state was counted as the `val`s at the top of a
+    structure, in the files of `src`, bound to a `ref`, an
+    `IntTable.table` or an `Array.array`. This plan first said 210 and
+    did not say how it counted. The same count gives 184 at `6e9d11b9`,
+    so the state has grown by about a tenth.
+  * Two things changed besides the sizes. The compiler is now written on
+    two libraries, `lib/unicode` and `lib/json`. The moved files read
+    seven options, in nine places, where this plan said nine options.
 
 ### M1. The move (M, the files and their build)
 
-* **What:** the 57 files moved with `git mv` to `lib/compiler/...`,
+* **What:** the 59 files moved with `git mv` to `lib/compiler/...`,
   keeping their directories (`lib/compiler/elab/unify.sml`);
   `lib/compiler/library.build` lists them in their order; `rune.build`,
   `runedoc.build`, `runeopt.build` and `runeisa.build` `use` it;
@@ -236,8 +251,8 @@ session is the REPL engine's, made a library's.
 ### M3. The compiler's state (M, about 400 SML)
 
 * **What:** D2's (a): `CompilerState` in the library, where each of the
-  210 `ref`s and tables registers with its initial value or a function
-  that makes it again; `RuneCompiler.session` puts them back; a script in
+  about 205 `ref`s and tables registers with its initial value or a
+  function that makes it again; `RuneCompiler.session` puts them back; a script in
   `make check` that lists the top-level `ref`s and tables of
   `lib/compiler` and fails on one not registered. D2's (b) as
   `RuneCompiler.isolated`, where there is a fork.
@@ -253,7 +268,7 @@ session is the REPL engine's, made a library's.
   `writeProgram` through `UnitFile`, `UnitMid`, `Link` and `Emit`;
   diagnostics as data; the type at an offset. `lib/cache`, the frozen
   cache, takes `lib/compiler`'s units too (`make basis-cache`), so a
-  program that uses the library does not compile 18,000 lines first.
+  program that uses the library does not compile 19,000 lines first.
   `tests/lib/compiler`: a program that compiles a string and runs it
   in-process, writes a `.rbu` and reads it back, writes a `.rbc` and runs
   it with `runevm`, compiles a unit's Mid from a cache entry, and gets its

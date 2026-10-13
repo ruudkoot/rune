@@ -8745,7 +8745,7 @@
      "kind": "exception",
      "name": "Interrupt",
      "spec": "exception Interrupt",
-     "doc": "Meant for a program that is interrupted.\n\n> **Limitation** `SML90.Interrupt/never-raised`. It is declared and nothing\nraises it: the VM handles no signal, so an interrupt ends the program.\n\n",
+     "doc": "Raised by the user's interrupt, Ctrl-C, in a program that has asked\nfor it with `Runtime.catchInterrupt`.\n\n> **Implementation** `SML90.Interrupt/when-caught`. Until a program asks,\nthe interrupt ends it, as the system ends any process.\n\n",
      "page": "sig/SML90.md#exn-interrupt"
     },
     {

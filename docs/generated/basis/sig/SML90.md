@@ -312,10 +312,11 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `car
 exception Interrupt
 ```
 
-Meant for a program that is interrupted.
+Raised by the user's interrupt, Ctrl-C, in a program that has asked
+for it with [`Runtime.catchInterrupt`](../sig/RUNTIME.md#val-catchinterrupt).
 
-> **Limitation** `SML90.Interrupt/never-raised`. It is declared and nothing
-> raises it: the VM handles no signal, so an interrupt ends the program.
+> **Implementation** `SML90.Interrupt/when-caught`. Until a program asks,
+> the interrupt ends it, as the system ends any process.
 
 <details><summary>Tests (1)</summary>
 
