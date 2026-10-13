@@ -284,7 +284,8 @@ date it gives.
 
 * **No licence:** the repository has no `LICENSE`, so nobody else may use,
   change or redistribute Rune. This is the cheapest item on the list, and
-  only the owner can do it.
+  only the owner can do it. *Done on 2026-10-13:* Rune is under CC0 1.0
+  Universal (`LICENSE`).
 * **No language server:**
   * `rune --serve` is a JSON-RPC prototype with diagnostics and hover,
     not LSP (`src/driver/serve.sml`).
@@ -296,7 +297,7 @@ date it gives.
   the owner ([incremental-compilation.md](incremental-compilation.md),
   M12).
 * **First step:**
-  1. A licence.
+  1. A licence (done).
   2. Then `--serve` as LSP, which every editor can use.
 
 ## 9. The prose falls behind the code
