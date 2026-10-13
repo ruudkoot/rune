@@ -1,4 +1,4 @@
-tests/units/errors/a.sml:1:9: error: function argument: type mismatch between int * int and int * string (no common type for overloaded operators (int vs string))
+tests/units/errors/a.sml:1:9: error: function argument: type mismatch between int * int and int * string (type constructor mismatch: int vs string)
 tests/units/errors/a.sml:3:11: error: function argument: type mismatch between int * int and int * bool (overloaded operator not defined at type bool)
 tests/units/errors/b.sml:2:9: error: unbound variable or constructor: x
 compile: 1

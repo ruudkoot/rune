@@ -1,0 +1,1 @@
+result of match rule: type mismatch between string and int (type constructor mismatch: string vs int)

@@ -1,6 +1,6 @@
 - List.map : ('a -> 'b) -> 'a list -> 'b list
 - fn x => (x, [x]) : 'a -> 'a * 'a list
-- stdIn:1:1: error: function argument: type mismatch between int * int and int * string (no common type for overloaded operators (int vs string))
+- stdIn:1:1: error: function argument: type mismatch between int * int and int * string (type constructor mismatch: int vs string)
 - con SOME : 'a -> 'a option
   datatype 'a option = NONE | SOME of 'a
 - datatype 'a option = NONE | SOME of 'a  (* from lib/basis/initial.sml *)

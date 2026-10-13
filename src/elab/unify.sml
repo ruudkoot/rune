@@ -118,9 +118,16 @@ struct
                      let
                        val common = List.filter (fn n => List.exists (fn m => m = n) names2) names
                      in
-                       case common of
-                         [] => raise Unify ("no common type for overloaded operators (" ^
-                                            String.concatWith "/" names ^ " vs " ^ String.concatWith "/" names2 ^ ")")
+                       (* a variable of one kind reads like its default type,
+                          whether a constant or an operator made it; one of
+                          several kinds stands for an operator *)
+                       case (common, names, names2) of
+                         ([], [k1], [k2]) => raise Unify ("type constructor mismatch: " ^ k1 ^ " vs " ^ k2)
+                       | ([], [k], _) => raise Unify ("overloaded operator not defined at type " ^ k)
+                       | ([], _, [k]) => raise Unify ("overloaded operator not defined at type " ^ k)
+                       | ([], _, _) =>
+                           raise Unify ("no common type for overloaded operators (" ^
+                                        String.concatWith "/" names ^ " vs " ^ String.concatWith "/" names2 ^ ")")
                        | _ =>
                          (r2 := Unbound {id = id2, level = Int.min (level, level2), kind = KOverload common, eq = eq orelse eq2};
                           r := Bound (TVar r2))

@@ -224,7 +224,12 @@ date it gives.
   * The two halves still give the types in opposite orders, and neither
     says which type was expected.
   * `fun f x = case x of 0 => "a" | n => n` still says "no common type for
-    overloaded operators", though the program has no operator.
+    overloaded operators", though the program has no operator. *Fixed on
+    2026-10-13:* two overloaded types of one kind each, such as those of
+    two constants, now clash as "type constructor mismatch: string vs
+    int". An operator used at a kind it lacks gives "overloaded operator
+    not defined at type char", as it already did at a type that is not
+    overloaded.
 * **First step:**
   1. A datatype of errors, with "expected ... found ..." for every mismatch.
      [errror-messages.md](errror-messages.md) is the brief.

@@ -11,7 +11,7 @@ val it = () : unit
 - val rest = fn : unit -> unit
 - val it = () : unit
 - val bad = fn : unit -> unit
-- bad.sml:5:9: error: function argument: type mismatch between int * int and int * string (no common type for overloaded operators (int vs string))
+- bad.sml:5:9: error: function argument: type mismatch between int * int and int * string (type constructor mismatch: int vs string)
 uncaught exception Fail: Static errors in bad.sml
 - val it = () : unit
 - - - val it = 42 : int

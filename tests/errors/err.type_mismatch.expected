@@ -1,1 +1,1 @@
-no common type for overloaded operators (int vs string)
+type constructor mismatch: int vs string
