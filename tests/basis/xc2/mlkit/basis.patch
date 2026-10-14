@@ -450,15 +450,6 @@ diff -ruN a/Posix.sml b/Posix.sml
          in if r = ~1 then raiseSys "sml_writeArr" NONE "" else r
          end
  
-@@ -1079,7 +1081,7 @@
-       type pid = Process.pid
-       type file_desc = ProcEnv.file_desc
- 
--      fun getT i = prim("@sml_getTty", i : int) : word
-+      fun getT i = Word.fromInt (prim("@sml_getTty", i : int) : int) (* xc2: the int of Rune's primitive, as a word *)
-       fun getTi i = prim("@sml_getTty", i : int) : int
- 
-       structure V =
 diff -ruN a/Socket.sml b/Socket.sml
 --- a/Socket.sml
 +++ b/Socket.sml

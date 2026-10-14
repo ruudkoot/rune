@@ -48,7 +48,7 @@ policies (`compiler/*` and `limits/*` of `tests/runner/tools.sml`).
   MLton 20241230 (the binary release), SML/NJ 110.99.9 built for 64 bits and
   for 32 bits, SML/NJ 2026.2 (the development line, 64-bit only; `build.sh`
   compiles its bundled LLVM and needs CMake 3.23, a C++17 compiler and
-  python3), Poly/ML 5.9.2 (built from source) and MLKit 4.7.23 (the
+  python3), Poly/ML 5.9.2 (built from source) and MLKit 4.7.25 (the
   binary release, whose SHA-256 is checked, on Linux x86-64; elsewhere built
   from the release's tag with the MLton just installed, which needs more
   memory than a machine of 16 GB has, so that this way is untested). An SML system the machine has on its `PATH` is never used,
@@ -87,7 +87,7 @@ name the tools to check.
 
 | Command | Result |
 |---|---|
-| `make hosts` | install MLton 20241230, SML/NJ 110.99.9 (64- and 32-bit), SML/NJ 2026.2, Poly/ML 5.9.2 and MLKit 4.7.23 under `${RUNE_HOSTS:-~/.local/rune-hosts}`; needed once, before anything else |
+| `make hosts` | install MLton 20241230, SML/NJ 110.99.9 (64- and 32-bit), SML/NJ 2026.2, Poly/ML 5.9.2 and MLKit 4.7.25 under `${RUNE_HOSTS:-~/.local/rune-hosts}`; needed once, before anything else |
 | `make` | `bin/rune` (the self-hosted compiler), `bin/runevm`, `bin/runevm-stack`, `bin/runedoc` and `bin/runeopt` |
 | `make mlton` / `make smlnj-legacy` / `make smlnj32` / `make smlnj-dev` / `make polyml` / `make mlkit` | `bin/rune-mlton`, `bin/rune-smlnj-legacy`, `bin/rune-smlnj32`, `bin/rune-smlnj-dev`, `bin/rune-polyml`, `bin/rune-mlkit`; none of them is `bin/rune` |
 | `make host-builds` | all six host builds, of the compiler, of `runedoc` and of `runeopt` |
