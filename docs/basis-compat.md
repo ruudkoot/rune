@@ -46,7 +46,10 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
   (`tests/basis/host/rune-prim.sml`). This checks that Rune's library is
   portable Standard ML, that its `_prim` annotations agree with
   `runtime/prims.def`, and that its code is right independently of Rune's compiler
-  and VM.
+  and VM. A host's overloading is closed, so `Position` and `SysWord`, which
+  `_overload` gives constants on Rune, are sealed transparently there: their
+  constants and operators are those of the host's `IntInf.int` and
+  `Word64.word` behind them (`tests/basis/host/gen-host-basis.sh`).
 * `xc2:mlton`, `xc2:mlkit`, `xc2:smlnj-legacy`, `xc2:smlnj-dev` and
   `xc2:polyml`: the suite
   on the host's own library compiled by Rune, with the host's primitives
