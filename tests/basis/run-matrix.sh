@@ -876,12 +876,16 @@ save_image() {
         sep=""
         for f in $1 $2; do printf '%suse "%s"' "$sep" "$f"; sep="; "; done
         printf ');\n'
-        printf 'val resumed__ = SMLofNJ.exportML "%s";\n' "$cfgout/basis.heap"
         # The program is driver.sml of the directory the test runs in and
         # not an argument: CommandLine.arguments is one of the things the
-        # suite checks, and it must be empty under the runner.
+        # suite checks, and it must be empty under the runner. What the
+        # image does when it resumes is in the declaration that exports it:
+        # the resumed process cannot read on in this file, whose descriptor
+        # is not open there, and SML/NJ has read only as far as its buffer
+        # (4 KiB) reaches, so that a declaration after exportML was there or
+        # not depending on the length of the paths before it.
         printf 'val () =\n'
-        printf '  if resumed__ then\n'
+        printf '  if SMLofNJ.exportML "%s" then\n' "$cfgout/basis.heap"
         printf '    ((use "driver.sml"\n'
         printf '        handle e => (print ("uncaught exception " ^ exnName e ^ " [" ^ exnMessage e ^ "]\\n");\n'
         printf '                     OS.Process.exit OS.Process.failure));\n'
