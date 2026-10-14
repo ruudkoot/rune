@@ -12,7 +12,8 @@ Poly/ML compile it every time.
 `tests/lib/run-hosts.sh mlkit`, from a tree without `MLB` directories,
 builds `unicode.utf8` and `terminal.emulator` after the programs before
 them, and both pass. The libraries and the runner's order have changed
-since; whether the bug is still in MLKit is not known.
+since; whether the bug is still in MLKit is not known. The two lines of
+`tests/lib/deviations.txt` are gone (2026-10-14).
 
 This has not been sent to MLKit, and the program has not been reduced to a
 few lines: every smaller program tried compiled (below).

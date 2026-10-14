@@ -44,4 +44,6 @@ code (`L_selLab_...`).
 `jsonrpc.jsonrpc`, `dap.dap` and `markdown.spec` (all of which decode JSON
 objects or encode random values), and `pretty.pretty`, which dies in its
 random documents. Each of them passes when built with `-no_ri`. The
-libraries are not changed for it (AGENTS.md).
+libraries are not changed for it (AGENTS.md). `markdown.spec` has passed
+since, with MLKit 4.7.23 and 4.7.25 alike, and its line is gone
+(2026-10-14).
