@@ -472,7 +472,7 @@ native:polyml@5.9.2 | Unix.exit/status | HOST-BUG | a forked child that calls Un
 native:smlnj*@* | Unix.exit/runs-atExit | HOST-BUG | Unix.exit does not run the actions of OS.Process.atExit
 *:mlkit@* | @load/posix_procenv | HOST-BUG | compiler bug: the X64 backend pushes a word constant between 0wx40000000 and 0wx7FFFFFFF that is passed on the stack (here 0w1999999999) as a 32-bit immediate of its tagged value, which the assembler rejects ("invalid instruction suffix for `push'")
 native:mlkit@* | Posix.Error.notty/ttyname-of-dev-null | HOST-BUG | compiler bug: the X64 backend compares the pointer of __is_null with the address of a boxed 0, so the library never sees that a C function returned NULL: ttyname of a descriptor that is not a terminal returns NULL as its string instead of raising OS.SysErr
-native:mlkit@* | Posix.SysDB.*/* | HOST-BUG | getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid_r (and the IDs of getpw*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+*:mlkit@* | Posix.SysDB.*/* | HOST-BUG | getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid_r (and the IDs of getpw*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it; in xc1 the shim's posix_getpwuid and the others are these functions (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
 *:mlkit@* | Posix.SysDB:POSIX_SYS_DB/[ug]id-is-ProcEnv.[ug]id | HOST-BUG | getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid_r (and the IDs of getpw*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it
 native:mlkit@* | Posix.Error.badf/close-twice | HOST-BUG | Posix.IO.close never raises OS.SysErr: the library calls C's close, which returns an int, by auto-conversion, which reads the result as a long, so -1 comes back as 4294967295
 native:mlkit@* | Posix.Error.spipe/lseek-on-pipe | HOST-BUG | lseek of a pipe returns 2147483647 instead of raising OS.SysErr: the runtime's sml_lseek takes and returns C ints, so -1 comes back as 2^31-1 (and an offset of 2^30 or more is cut to 32 bits)
@@ -595,6 +595,7 @@ native:mlkit@* | Posix.FileSys.readdir/* | HOST-FLAKY | as Posix.FileSys.A_*
 native:mlkit@* | Posix.FileSys.rewinddir/* | HOST-FLAKY | as Posix.FileSys.A_*
 native:mlkit@* | Posix.Process.execp/with-slash | HOST-FLAKY | as the xc1 line: chmod sets every mode to 1001, so the owner may not run the script the check makes; root passes the check (docs/bugreport/mlkit/Posix.FileSys.chmod/open-flags-as-mode)
 native:mlkit@* | Posix.Error.perm/setuid-root | HOST-FLAKY | setuid of 0 does not raise SysErr with perm: Posix.ProcEnv.setuid passes no user id (docs/bugreport/mlkit/Posix.ProcEnv.setuid/argument-ignored); the check does not call it when the process is root
+xc1:mlkit@* | Posix.ProcEnv.set[ug]id/root-raises | HOST-FLAKY | setuid and setgid of 0 by an ordinary user raise nothing: the shim's posix_setuid and posix_setgid are MLKit's, whose C call returns an int that auto-conversion reads as a long, so -1 is never seen (docs/bugreport/mlkit/Posix.FileSys.unlink/int-result-read-as-long), and setuid passes no user id (docs/bugreport/mlkit/Posix.ProcEnv.setuid/argument-ignored); the check does not call them when the process is root
 native:mlkit@* | Posix.Error.noexec/exec-of-data | HOST-FLAKY | chmod to S.irwxu sets 01001, so the owner cannot execute the file and the child reports another error than noexec; root can execute it and the child reports noexec (docs/bugreport/mlkit/Posix.FileSys.chmod/open-flags-as-mode)
 
 # ---- PRIM_IO, STREAM_IO, IMPERATIVE_IO, TEXT_IO, BIN_IO (io group)
@@ -763,14 +764,6 @@ xc1:smlnj-legacy@110.99.9 | Int[0-9]*.+/overloaded-Overflow | XC1-NA | the const
 xc1:smlnj-dev@2026.2 | Int[0-9]*.+/overloaded-Overflow | XC1-NA | the constants of the section are typed at the host's own int (its overloading is closed), whose + does not overflow at the precision of the IntN of lib/basis
 xc1:smlnj-legacy@110.99.9 | Word[0-9]*.+/wraps | XC1-NA | the constants of the section are typed at the host's own word (its overloading is closed), whose + does not wrap at the size of the WordN of lib/basis
 xc1:smlnj-dev@2026.2 | Word[0-9]*.+/wraps | XC1-NA | the constants of the section are typed at the host's own word (its overloading is closed), whose + does not wrap at the size of the WordN of lib/basis
-xc1:polyml@* | Int64*precision* | WIDTH | Int64 of lib/basis is Int, whose precision is that of the host's int, 63 bits
-xc1:polyml@* | Word64.wordSize/64 | WIDTH | Word64 of lib/basis is Word, whose size is that of the host's word, 63 bits
-xc1:smlnj-legacy@110.99.9 | Int64*precision* | WIDTH | Int64 of lib/basis is Int, whose precision is that of the host's int, 63 bits
-xc1:smlnj-dev@2026.2 | Int64*precision* | WIDTH | Int64 of lib/basis is Int, whose precision is that of the host's int, 63 bits
-xc1:smlnj-legacy@110.99.9 | Word64.wordSize/64 | WIDTH | Word64 of lib/basis is Word, whose size is that of the host's word, 63 bits
-xc1:smlnj-dev@2026.2 | Word64.wordSize/64 | WIDTH | Word64 of lib/basis is Word, whose size is that of the host's word, 63 bits
-xc1:mlkit@* | Int64*precision* | WIDTH | Int64 of lib/basis is Int, whose precision is that of the host's int, 63 bits
-xc1:mlkit@* | Word64.wordSize/64 | WIDTH | Word64 of lib/basis is Word, whose size is that of the host's word, 63 bits
 native:mlkit@* | @section/intn_*[68]/constants | HOST-BUG | no integer or word constant and no overloaded operator at Int8.int, Int16.int and Word16.word: they are abstract types made by the functors IntN and WordN, and the overloading classes of the compiler hold only its primitive types
 native:mlkit@* | @load/intn_int[36][24] | HOST-BUG | mod (minInt, ~1) of Int32 and Int64 (mod/minInt-by-minus-one) kills the program with SIGFPE: the runtime's __mod_int32ub and __mod_int64ub compute x % y without taking out y = -1
 
@@ -795,9 +788,7 @@ native:mlkit@* | @load/mono.largeint_sig | HOST-BUG | the structures LargeIntVec
 native:smlnj32@* | PackReal64*.update/element-1 | HOST-BUG | update writes nothing into the array
 native:polyml@* | PackReal*.update/Subscript-past-the-end | HOST-BUG | update of an element that runs past the end of the array raises nothing ("Subscript if Word8Array.length arr < bytesPerElem * (i + 1)")
 native:smlnj*@* | PackReal64*.* | HOST-BUG | PackReal64Big and PackReal64Little are swapped: Big packs the least significant byte first, Little the most significant
-xc1:polyml@* | PackReal*.* | WIDTH | the shim's real_to_bits and real_from_bits pass the 64 bits of a real in the host's word, which has 63
 xc1:smlnj*@* | PackReal*.* | WIDTH | the shim's real_to_bits and real_from_bits pass the 64 bits of a real in the host's word, which has 31 (110.79) or 63 (110.99.9) bits
-xc1:mlkit@* | PackReal*.* | WIDTH | the shim's real_to_bits and real_from_bits pass the 64 bits of a real in the host's word, which has 63
 native:polyml@* | PackWord*.*/Subscript-maxInt | HOST-BUG | subVec, subVecX, subArr, subArrX and update raise Overflow for an index near the largest int (bytesPerElem * (i + 1) overflows), not Subscript
 native:mlkit@* | PackWord32*.sub[VA]*X/sign-extended-* | HOST-BUG | subVecX and subArrX do not extend the sign: the code, from SML/NJ, assumes a LargeWord of 32 bits ("no sign extension is required"), but MLKit's has 64
 native:mlkit@* | PackReal*Big.fromBytes/longer-uses-the-first | HOST-BUG | PackRealBig.fromBytes reverses the whole vector and reads the first 8 bytes of that: of a longer vector it reads the last 8 bytes
@@ -812,6 +803,10 @@ native:smlnj*@* | SML90.lookahead/* | HOST-BUG | lookahead raises Io at the end 
 native:polyml@* | SML90.Sqrt/new | SPEC-AMBIGUOUS | Sqrt, Ln and Ord are Overflow; the test takes MLton's and SML/NJ's reading, exceptions of their own
 native:polyml@* | SML90.Ln/new | SPEC-AMBIGUOUS | as SML90.Sqrt/new
 native:polyml@* | SML90.ln/Ln-zero | HOST-BUG | ln 0.0 is ~inf instead of raising Ln
+
+# ---- Compiler (Rune's own signature COMPILER; the other hosts have no
+# structure of that name, and its tests are absent there)
+native:smlnj*@* | @load/compiler* | HOST-ABSENT | SML/NJ's Compiler is the interface of its own compiler, which has none of the members of COMPILER (use, compile, printDepth, ...)
 
 # ---- Real32, PackReal32Big, PackReal32Little (Poly/ML 5.7.1 and SML/NJ have
 # no Real32)
@@ -840,6 +835,13 @@ native:smlnj32@* | PackWord*.update/* | HOST-BUG | update writes the wrong bytes
 native:smlnj32@* | Posix.IO.SEEK_[CE]*/negative | HOST-BUG | lseek with a negative offset from the current position or the end gives a position of its own (2^30 + the offset), not the one it moved to: the release's boot files are cross-compiled on amd64, which builds their IntInf constants with 62-bit digits; a native fixed point of 110.99.9 is right (docs/bugreport/smlnj/Word64-low-half)
 xc1:smlnj32@* | Unix.exit/flushes | HOST-FLAKY | what a forked child writes before Unix.exit is now and then not there when the parent has reaped it (about one run in three)
 xc1:smlnj32@* | Unix.exit/runs-atExit | HOST-FLAKY | as Unix.exit/flushes
+xc1:smlnj32@* | @section/os.io/posix | WIDTH | the section makes descriptors with Posix, and Posix of lib/basis rests on SysWord and Position, Word64 and Int64 behind, which a host whose int has 31 bits does not compile (their literals and conversions need 63 bits): the host's own Posix stays, and its descriptors are not those of lib/basis's OS.IO
+xc1:smlnj32@* | @section/os.io/input-and-output | WIDTH | as @section/os.io/posix
+xc1:smlnj32@* | @section/os.io_std/posix | WIDTH | as @section/os.io/posix
+xc1:smlnj32@* | @section/os.io_std/hash-compare | WIDTH | as @section/os.io/posix
+xc1:smlnj32@* | @section/os.process_os/posix | WIDTH | as @section/os.io/posix: the section compares OS.syserror of lib/basis with the host's Posix.Error
+xc1:smlnj32@* | @section/signatures/posix* | WIDTH | the section matches Posix and its structures with the signatures of lib/basis, and Posix of lib/basis rests on SysWord and Position, which a host whose int has 31 bits does not compile (as @section/os.io/posix): the host's own Posix stays, whose types are not those of the signatures
+xc1:smlnj32@* | @section/signatures/unix | WIDTH | as @section/signatures/posix*: Unix of lib/basis is written on its Posix
 
 # ---- WideChar, WideString, WideSubstring, WideText (only MLton has them)
 native:mlton@* | @load/widestring_sig | SPEC-AMBIGUOUS | WideString.scan reads a stream of char, where the signature of the page writes the structure's own character ("val scan : (char, 'a) StringCvt.reader -> (string, 'a) StringCvt.reader"); the test takes the page

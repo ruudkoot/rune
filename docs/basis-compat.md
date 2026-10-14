@@ -67,9 +67,10 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
 
 ## Summary
 
-The last run of `make matrix` (every configuration), on 2026-09-28. A check
-that fails is explained by a line of `tests/basis/deviations.txt` or fails
-the run. A test is absent where the system lacks a structure it requires (an
+The last run of every configuration (`make matrix` and the `xc2` ones), on
+2026-10-14, MLKit 4.7.25 among the hosts. A check that fails is explained
+by a line of `tests/basis/deviations.txt` or fails the run. A test is absent
+where the system lacks a structure it requires (an
 optional one: the hosts lack most of the monomorphic families and some of
 `IntN`, `WordN` and `Pack*`; see the table of structures below), and N/A in
 an `xc1` configuration whose host does not load the file of lib/basis it
@@ -77,35 +78,35 @@ needs.
 
 | Configuration | Checks | Pass | Explained | Skipped | Tests absent | Tests N/A |
 |---|---:|---:|---:|---:|---:|---:|
-| `rune` | 139,211 | 139,211 | 0 | 0 | 0 | 0 |
-| `native:mlton@20241230` | 138,613 | 138,246 | 367 | 0 | 11 | 0 |
-| `native:smlnj-legacy@110.99.9` | 61,677 | 61,008 | 669 | 0 | 64 | 0 |
-| `native:smlnj32@110.99.9` | 48,968 | 47,502 | 1,466 | 0 | 64 | 0 |
-| `native:smlnj-dev@2026.2` | 61,677 | 61,011 | 666 | 0 | 64 | 0 |
-| `native:polyml@5.9.2` | 68,572 | 67,810 | 762 | 0 | 53 | 0 |
+| `rune` | 139,287 | 139,287 | 0 | 0 | 0 | 0 |
+| `native:mlton@20241230` | 138,614 | 138,247 | 367 | 0 | 22 | 0 |
+| `native:smlnj-legacy@110.99.9` | 61,680 | 61,010 | 670 | 0 | 73 | 0 |
+| `native:smlnj32@110.99.9` | 48,971 | 47,503 | 1,468 | 0 | 73 | 0 |
+| `native:smlnj-dev@2026.2` | 61,680 | 61,012 | 668 | 0 | 73 | 0 |
+| `native:polyml@5.9.2` | 68,573 | 67,811 | 762 | 0 | 64 | 0 |
 | `native:mlkit@4.7.25` | 111,926 | 110,872 | 1,054 | 0 | 55 | 0 |
-| `xc1:mlton@20241230` | 139,155 | 138,831 | 313 | 11 | 2 | 0 |
-| `xc1:smlnj-legacy@110.99.9` | 139,175 | 138,749 | 415 | 11 | 2 | 0 |
-| `xc1:smlnj32@110.99.9` | 95,200 | 93,080 | 2,109 | 11 | 2 | 38 |
-| `xc1:smlnj-dev@2026.2` | 139,175 | 138,752 | 412 | 11 | 2 | 0 |
-| `xc1:polyml@5.9.2` | 139,125 | 138,750 | 364 | 11 | 2 | 0 |
-| `xc1:mlkit@4.7.23` | 139,054 | 138,524 | 519 | 11 | 2 | 0 |
-| `xc2:mlton@20241230` | 138,668 | 138,072 | 596 | 0 | 9 | 0 |
+| `xc1:mlton@20241230` | 139,156 | 138,832 | 313 | 11 | 13 | 0 |
+| `xc1:smlnj-legacy@110.99.9` | 139,181 | 138,786 | 384 | 11 | 13 | 0 |
+| `xc1:smlnj32@110.99.9` | 79,780 | 77,913 | 1,856 | 11 | 13 | 82 |
+| `xc1:smlnj-dev@2026.2` | 139,181 | 138,789 | 381 | 11 | 13 | 0 |
+| `xc1:polyml@5.9.2` | 139,131 | 138,791 | 329 | 11 | 13 | 0 |
+| `xc1:mlkit@4.7.25` | 139,115 | 138,596 | 508 | 11 | 13 | 0 |
+| `xc2:mlton@20241230` | 138,669 | 138,073 | 596 | 0 | 20 | 0 |
 | `xc2:mlkit@4.7.25` | 116,569 | 115,608 | 961 | 0 | 55 | 0 |
-| `xc2:smlnj-legacy@110.99.9` | 62,012 | 61,321 | 691 | 0 | 63 | 0 |
-| `xc2:smlnj-dev@2026.2` | 62,012 | 61,321 | 691 | 0 | 63 | 0 |
-| `xc2:polyml@5.9.2` | 68,572 | 67,901 | 671 | 0 | 53 | 0 |
+| `xc2:smlnj-legacy@110.99.9` | 62,013 | 61,322 | 691 | 0 | 74 | 0 |
+| `xc2:smlnj-dev@2026.2` | 62,013 | 61,322 | 691 | 0 | 74 | 0 |
+| `xc2:polyml@5.9.2` | 68,573 | 67,902 | 671 | 0 | 64 | 0 |
 
-The `xc2` rows are of a run of those configurations alone, on
-2026-10-09 (under WSL2), `xc2:smlnj-dev` on its own. The `native:mlkit`
-and `xc2:mlkit` rows are of MLKit 4.7.25, run alone on 2026-10-14, when the
-suite had more tests than on 2026-09-28; `xc1:mlkit` is still the row of
-4.7.23. `xc2:mlkit` runs more checks than `native:mlkit`: MLKit's compiler
-cannot load `posix_procenv`, which Rune compiles; `xc2:smlnj-legacy` and
+`xc2:mlkit` runs more checks than `native:mlkit`: MLKit's compiler cannot
+load `posix_procenv`, which Rune compiles; `xc2:smlnj-legacy` and
 `xc2:smlnj-dev` run more than their `native` configurations, whose runtime
 ends in the sections of `array2` and `string` that the library's bugs with
 regions near `Int.maxInt` or without elements lead to. The two SML/NJ
-libraries fail the same checks on Rune.
+libraries fail the same checks on Rune. On the 32-bit SML/NJ, `xc1` has
+fewer tests than on 2026-09-28 (82 N/A, 38 then): `Position` and `SysWord`
+are `Int64` and `Word64` behind since 2026-10-11, whose files a host with a
+31-bit `int` does not compile, so `Posix`, `Unix` and what is written on
+them stay the host's there.
 
 On Rune every check passes. The `xc1` configurations skip the 11 checks of
 `INet6Sock` that open a socket, which the shim declines, and fail the checks

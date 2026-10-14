@@ -111,7 +111,7 @@ val name : passwd -> string
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it; in xc1 the shim's posix\_getpwuid and the others are these functions (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
 
 </details>
 
@@ -131,7 +131,7 @@ val uid : passwd -> uid
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it; in xc1 the shim's posix\_getpwuid and the others are these functions (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
 
 </details>
 
@@ -151,7 +151,7 @@ val gid : passwd -> gid
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it; in xc1 the shim's posix\_getpwuid and the others are these functions (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
 
 </details>
 
@@ -171,7 +171,7 @@ val home : passwd -> string
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it; in xc1 the shim's posix\_getpwuid and the others are these functions (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
 
 </details>
 
@@ -191,7 +191,7 @@ val shell : passwd -> string
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it; in xc1 the shim's posix\_getpwuid and the others are these functions (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
 
 </details>
 
@@ -223,7 +223,7 @@ val name : group -> string
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it; in xc1 the shim's posix\_getpwuid and the others are these functions (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
 
 </details>
 
@@ -243,7 +243,7 @@ val gid : group -> gid
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it; in xc1 the shim's posix\_getpwuid and the others are these functions (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
 
 </details>
 
@@ -263,7 +263,7 @@ val members : group -> string list
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it; in xc1 the shim's posix\_getpwuid and the others are these functions (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
 
 </details>
 
@@ -289,7 +289,7 @@ val getgrgid : gid -> Group.group
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it; in xc1 the shim's posix\_getpwuid and the others are these functions (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
 
 </details>
 
@@ -312,7 +312,7 @@ name.
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it; in xc1 the shim's posix\_getpwuid and the others are these functions (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
 
 </details>
 
@@ -343,7 +343,7 @@ val getpwuid : uid -> Passwd.passwd
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it; in xc1 the shim's posix\_getpwuid and the others are these functions (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
 
 </details>
 
@@ -369,7 +369,7 @@ number.
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it; in xc1 the shim's posix\_getpwuid and the others are these functions (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
 
 </details>
 
