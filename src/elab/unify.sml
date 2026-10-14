@@ -3,8 +3,7 @@ structure Unify =
 struct
   open Types
 
-  (* declared in unifyexn.sml, which says why *)
-  exception Unify = UnifyExn.Unify
+  exception Unify of string
 
   fun kindName KPlain = "type variable"
     | kindName (KRigid n) = "explicit type variable " ^ n

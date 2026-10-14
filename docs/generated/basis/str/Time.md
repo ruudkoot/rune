@@ -100,9 +100,8 @@ What each means is on [`TIME`](../sig/TIME.md); the types are this structure's o
 > point for all time values"; the suite takes it to lie in the past, so
 > `now ()` is greater.
 
-<details><summary>Other implementations (12)</summary>
+<details><summary>Other implementations (11)</summary>
 
-- **MLKit** &mdash; toSeconds raises Overflow for a time of 2^31 seconds or more, which + and - make without raising Time: IntInf.fromInt and IntInf.toInt go through Int32, so that the conversions of Time hold 32 bits of seconds
 - **SML/NJ, Poly/ML** &mdash; fromReal of an infinite real raises Overflow, not Time
 - **Poly/ML** &mdash; fmt with a negative number of digits does not raise Size
 - **Poly/ML** &mdash; fmt goes through a real: fmt 6 of 12345678901.234567 s gives 12345678901.234568 ("Time values are required to have fixed-point semantics")

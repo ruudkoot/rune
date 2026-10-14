@@ -2,12 +2,23 @@
 
 **Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The runtime returns its numbers untagged, so an entry that exists raises `Overflow`.
 
-## Status: not reported upstream
+## Status: known upstream, not reported as an issue of its own; unfixed in 4.7.25
 
-This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`
-(2026-09-25) has the same `src/Runtime/Posix.c` and `basis/Posix.sml` as
-the tag `v4.7.23`, byte for byte, so the code below is unchanged there;
-`master` was not built.
+This report has not been sent to MLKit as an issue of its own. The report
+`X64/c-call-alignment`, sent as
+[melsman/mlkit#233](https://github.com/melsman/mlkit/issues/233)
+(2026-09-27), mentions it, and the pull request that fixed #233,
+[melsman/mlkit#234](https://github.com/melsman/mlkit/pull/234), says that
+it remains: "The separate SysDB result-tagging defect described in #233
+remains: Basis wrappers can still raise `Overflow`." Its tests call
+`sml_getgrnam` and `sml_getpwnam` directly to get past it.
+
+MLKit 4.7.25 (2026-10-09) has the same `src/Runtime/Posix.c` and
+`basis/Posix.sml` code for these functions as 4.7.23, and `bug.sml`
+prints the same four lines with it (2026-10-13). Since 4.7.24 a first
+`getpwnam` or `getgrnam` no longer crashes, so this bug is the first that
+a program meets in `Posix.SysDB`. What is worth sending MLKit: `fix.patch`,
+as an issue of its own.
 
 ## Summary
 
@@ -208,4 +219,13 @@ first check (report `X64/c-call-alignment`). The line of
 
 ```
 native:mlkit@* | Posix.SysDB:POSIX_SYS_DB/[ug]id-is-ProcEnv.[ug]id | HOST-BUG | getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid_r (and the IDs of getpw*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it
+```
+
+Since MLKit 4.7.24 `tests/basis/posix_sysdb.sml` runs to its end, and
+the 24 of its checks that look up an entry that exists raise `Overflow`;
+the five that look up a user or a group that does not exist pass. A
+second line explains the 24 (2026-10-13):
+
+```
+native:mlkit@* | Posix.SysDB.*/* | HOST-BUG | getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid_r (and the IDs of getpw*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
 ```

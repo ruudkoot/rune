@@ -130,7 +130,7 @@ What each means is on [`DATE`](../sig/DATE.md); the types are this structure's o
 > its own time zone": one at offset `t` west of UTC is the UTC reading of
 > its fields plus `t`. A local date is converted by the C library.
 
-<details><summary>Other implementations (30)</summary>
+<details><summary>Other implementations (28)</summary>
 
 - **MLton, SML/NJ (32-bit)** &mdash; date of year 10^8 raises Overflow, not Date
 - **SML/NJ** &mdash; toTime ignores the offset of a date
@@ -152,7 +152,7 @@ What each means is on [`DATE`](../sig/DATE.md); the types are this structure's o
 - **SML/NJ, MLKit** &mdash; scan reads a year of five digits (19956), not the 24-character date ("scan a 24-character date")
 - **MLton** &mdash; date with an offset of more than a day east moves the date a day the wrong way
 - **MLton** &mdash; toTime of a date after 2038 raises Overflow ("A conforming Date structure should support date values ranging from around 1900 to 2200")
-- **MLton** &mdash; toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200")
+- **MLton, MLKit** &mdash; toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200")
 - **SML/NJ (32-bit)** &mdash; date does not add the whole days of an offset of 24 hours or more to the hours, so that the date is another time
 - **SML/NJ** &mdash; toTime of a UTC date from fromTimeUniv is not the time converted: it is off by the local offset
 - **SML/NJ 110.99.9 (64-bit), SML/NJ development 2026.2** &mdash; toTime of a date of year 10^8 gives a time of the year 2092 instead of raising Date
@@ -160,8 +160,6 @@ What each means is on [`DATE`](../sig/DATE.md); the types are this structure's o
 - **SML/NJ** &mdash; toTime ignores the offset of a date (12:00 at 5 hours west is 12:00 UTC)
 - **Poly/ML, MLKit** &mdash; toTime of a date of year 10^8 raises Time, not Date ("It raises Date if the date date cannot be represented as a Time.time value")
 - **MLKit** &mdash; date keeps an offset of more than a day east whole while it moves the date back a day, so that the date is a day earlier than the time given
-- **MLKit** &mdash; toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200"), and of one after 2038-01-19 03:14:07 UTC raises Time
-- **MLKit** &mdash; toTime of a date after 2038-01-19 03:14:07 UTC raises Time: IntInf.toInt goes through Int32, so that Time.fromReal raises Time for 2^31 seconds or more
 
 </details>
 

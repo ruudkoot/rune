@@ -13,6 +13,10 @@ closed on 2026-09-10 before 4.7.23 was released, fixed the same crash of
 `Int64.quot (minInt, ~1)`. `mod` of the same operands still crashes in
 4.7.23.
 
+**Still there in MLKit 4.7.25** (2026-10-09), the release that `make
+hosts` installs since 2026-10-13: the program below gives the same
+output with it as with 4.7.23.
+
 ## Summary
 
 * **The trigger:** `Int32.mod (valOf Int32.minInt, ~1)`,

@@ -529,12 +529,12 @@ val toTime : date -> Time.time
 
 **Example** `Time.toSeconds (toTime (date {year = 1970, month = Jan, day = 2, hour = 0, minute = 0, second = 0, offset = SOME Time.zeroTime})) = 86400`
 
-<details><summary>Other implementations (14)</summary>
+<details><summary>Other implementations (12)</summary>
 
 - **MLton** &mdash; date with an offset of more than a day east moves the date a day the wrong way
 - **MLton, SML/NJ (32-bit)** &mdash; date of year 10^8 raises Overflow, not Date
 - **MLton** &mdash; toTime of a date after 2038 raises Overflow ("A conforming Date structure should support date values ranging from around 1900 to 2200")
-- **MLton** &mdash; toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200")
+- **MLton, MLKit** &mdash; toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200")
 - **MLton, SML/NJ** &mdash; toTime of a date before 1970 raises Date
 - **SML/NJ (32-bit)** &mdash; date does not add the whole days of an offset of 24 hours or more to the hours, so that the date is another time
 - **SML/NJ** &mdash; toTime of a UTC date from fromTimeUniv is not the time converted: it is off by the local offset
@@ -543,8 +543,6 @@ val toTime : date -> Time.time
 - **SML/NJ** &mdash; toTime ignores the offset of a date (12:00 at 5 hours west is 12:00 UTC)
 - **Poly/ML, MLKit** &mdash; toTime of a date of year 10^8 raises Time, not Date ("It raises Date if the date date cannot be represented as a Time.time value")
 - **MLKit** &mdash; date keeps an offset of more than a day east whole while it moves the date back a day, so that the date is a day earlier than the time given
-- **MLKit** &mdash; toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200"), and of one after 2038-01-19 03:14:07 UTC raises Time
-- **MLKit** &mdash; toTime of a date after 2038-01-19 03:14:07 UTC raises Time: IntInf.toInt goes through Int32, so that Time.fromReal raises Time for 2^31 seconds or more
 
 </details>
 

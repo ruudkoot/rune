@@ -8,6 +8,10 @@ Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)
 has the same `basis/Pack32Big.sml` and `basis/Pack32Little.sml` as 4.7.23
 (the files are identical), so the bug is not fixed there either.
 
+**Still there in MLKit 4.7.25** (2026-10-09), the release that `make
+hosts` installs since 2026-10-13: the program below gives the same
+output with it as with 4.7.23.
+
 ## Summary
 
 * **The trigger:** `PackWord32Big.subVecX`, `PackWord32Big.subArrX`,

@@ -7,7 +7,12 @@
 #                   with the type of its TYPE column
 #   basis/*.sml     lib/basis with `_prim "name"` replaced by `RunePrim.name`
 #                   and without its `_overload` declarations (a host has its
-#                   own, closed, overloading)
+#                   own, closed, overloading); Position and SysWord, which
+#                   are sealed opaquely and given constants by `_overload`,
+#                   sealed transparently, so that the host's own types behind
+#                   them (IntInf.int, as RunePrim.int64 is, and Word64.word)
+#                   take the constants and the overloaded operators that the
+#                   suite applies to them
 #   hide.sml        rebinds the top-level values of the Basis Library to a
 #                   value of no use, so that a test cannot pass with the
 #                   host's `exnName` where lib/basis does not define one
@@ -92,7 +97,9 @@ grep -v -E '^[[:space:]]*(#|$)' lib/basis/MANIFEST | while IFS='|' read -r f _ h
          { print }' "lib/basis/$f"
   else
     cat "lib/basis/$f"
-  fi | sed -e 's/_prim "\([a-z_0-9]*\)"/RunePrim.\1/g' -e 's/^_overload .*//' > "$dest"
+  fi | sed -e 's/_prim "\([a-z_0-9]*\)"/RunePrim.\1/g' -e 's/^_overload .*//' \
+           -e 's/^structure Position :> /structure Position : /' \
+           -e 's/^structure SysWord :> /structure SysWord : /' > "$dest"
   structures=$(sed -n 's/^structure \([A-Za-z0-9_]*\).*/\1/p' "lib/basis/$f" | tr '\n' ' ')
   printf '%s\t%s\n' "$dest" "${structures% }" >> "$out/files"
 done

@@ -2,14 +2,22 @@
 
 **Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The elaborator rejects a program that the Definition accepts; MLton, SML/NJ and Poly/ML compile it.
 
-## Status: not reported upstream
+## Status: reported and fixed upstream, in MLKit 4.7.24
 
-This has not been sent to MLKit. MLKit's `master` at `c49fbea`
-(2026-09-25) has the same `src/Common/EfficientElab/StatObject.sml` as the
-tag `v4.7.23`, so the bug is still there.
+* **The report:** [melsman/mlkit#231](https://github.com/melsman/mlkit/issues/231)
+  (2026-09-27), this text with its programs.
+* **The fix:** [melsman/mlkit#234](https://github.com/melsman/mlkit/pull/234),
+  commit `3eaa1a07` (2026-09-29), is the fix proposed below: `ref` and
+  `array` are taken out first in `violates_equality0`. It adds
+  `test/datatype_ref_equality.sml` (this report's three programs and a
+  recursive datatype) and `test/datatype_function_no_equality.sml` (a
+  datatype that must still have no equality) to MLKit's tests. The first
+  release with it is 4.7.24 (2026-10-07).
+* **Checked** (2026-10-13) with MLKit 4.7.25, the binary release that
+  `make hosts` installs: `run.sh` prints `equal when the same` for all five
+  programs.
 
-A search of MLKit's issues and pull requests, their titles, texts and
-comments, up to #229 of 2026-09-25, found no report of it (2026-09-27).
+What follows is the report as it was sent.
 
 ## Summary
 
@@ -151,3 +159,6 @@ Rune documents, then does not compile. It compiles with MLton, SML/NJ and
 Poly/ML. It is the line `xc1:mlkit@* | @section/textio/instream-equality`
 of `tests/basis/deviations.txt`. Nothing in Rune works around it, since
 only that check needs the equality.
+
+With MLKit 4.7.25 the section compiles and its check passes, and that line
+is gone (2026-10-13).

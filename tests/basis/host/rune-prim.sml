@@ -82,16 +82,9 @@ struct
     fun int64_rem (a, b) = held (IntInf.rem (a, b))
     fun int64_neg a = held (IntInf.~ a)
     fun int64_abs a = held (IntInf.abs a)
-    (* to and from the host's int by fifteen bits at a time: MLKit 4.7's
-       IntInf.toInt and IntInf.fromInt raise Overflow from 2^31 on, where
-       its int has 63 bits. Overflow is the host's own, where its int does
-       not hold the number. *)
-    fun int64_to_int (i : IntInf.int) : int =
-      if IntInf.< (IntInf.abs i, two15) then IntInf.toInt i
-      else let val (q, r) = IntInf.quotRem (i, two15) in int64_to_int q * 32768 + IntInf.toInt r end
-    fun int64_from_int (i : int) : IntInf.int =
-      if i > ~32768 andalso i < 32768 then IntInf.fromInt i
-      else IntInf.+ (IntInf.* (int64_from_int (Int.quot (i, 32768)), two15), IntInf.fromInt (Int.rem (i, 32768)))
+    (* Overflow is the host's own, where its int does not hold the number *)
+    val int64_to_int = IntInf.toInt
+    val int64_from_int = IntInf.fromInt
   end
   val int64_lt = IntInf.<
   val int64_le = IntInf.<=
@@ -473,7 +466,7 @@ struct
   val vector_sub = Vector.sub
 
   (* ---- what the host's Posix may lack ----
-     MLKit 4.7.23 leaves out of its Posix FileSys.utime, the times of
+     MLKit 4.7.25 leaves out of its Posix FileSys.utime, the times of
      FileSys.ST, IO.fsync and the locks of IO. Each is defined here, and the
      host's own structure, opened after the default, takes its place where
      the host has it, so nothing changes on a host that has them. The

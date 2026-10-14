@@ -11,6 +11,10 @@ unbound identifier Socket.acceptNB.
 
 ## Status: not reported upstream
 
+**Still so in MLKit 4.7.25** (2026-10-09): `acceptNB`, like `connectNB`,
+is commented out of its `SOCKET` signature, and `zmtp.zmtp` does not
+compile (2026-10-13).
+
 ## What it breaks
 
 `lib/zmtp` serves the peers of a bound socket from one loop and accepts

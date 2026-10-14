@@ -13,6 +13,11 @@ by [#215](https://github.com/melsman/mlkit/pull/215) on 2026-09-11, stopped
 `Date.fmt ""` from crashing in the same runtime function, `sml_strftime`.
 That fix did not touch `tm_zone`, which this report is about.
 
+**Still there in MLKit 4.7.25** (2026-10-09), the release that `make
+hosts` installs since 2026-10-13: with it `bug.sml` gave six bytes of
+garbage for `%Z` of the UTC date, different in each of three runs; the
+local date printed `NST` and did not crash.
+
 ## Summary
 
 * **The trigger:** `Date.fmt` (or `Date.toString`'s kin) with the directive

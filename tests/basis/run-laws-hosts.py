@@ -25,11 +25,17 @@ which is STOPPED. A law that fails is run again by itself, three times at most
 where the host stops before a verdict: as the programs are deterministic, a
 verdict that changes is FLAKY, the host's.
 
-The verdicts are compared with Rune's (tests/out/laws/results.txt, or
-$LAWS_RESULTS): a law that passes on one and fails on the other is a
-DIFFERENCE, which the hunt classifies -- the law, Rune, or the host (a host's
-bug is a line of tests/basis/law-deviations.txt). A law that fails on both is
-AGREED. In tests/out/laws-hosts: HOST.structures, what the host lacks of the
+The verdicts are compared with Rune's: `make test-laws`, part of `make
+check`, holds every law on Rune but those tests/basis/law-skips.txt lists,
+and fails on a listed law that passes, so a law passes on Rune exactly when
+law-skips.txt does not list it ($LAWS_RESULTS names a file of Rune's own
+PASS and FAIL lines instead). A law that passes on one and fails on the
+other is a DIFFERENCE, which the hunt classifies -- the law, Rune, or the
+host (a host's bug is a line of tests/basis/law-deviations.txt). A law that
+fails on both is AGREED. A line of law-deviations.txt that names a host
+which ran, and matches none of the laws that host did not pass, is stale
+and fails the run as a difference does (a HOST-FLAKY line need not match).
+In tests/out/laws-hosts: HOST.structures, what the host lacks of the
 names the programs use; HOST.library, the files it builds; HOST/, each
 program as the host builds it and its output; HOST.alternatives, the laws
 it holds by their alternative entries; HOST.results; and
@@ -57,7 +63,7 @@ BIN = {
 }
 MLKIT_LIB = os.environ.get("MLKIT_LIB", HOSTS_DIR + "/mlkit/lib/mlkit")
 RUNEDOC = os.environ.get("RUNEDOC", "bin/runedoc")
-RESULTS = os.environ.get("LAWS_RESULTS", "tests/out/laws/results.txt")
+RESULTS = os.environ.get("LAWS_RESULTS", "")    # Rune's verdicts; by default those of law-skips.txt
 DEVIATIONS = os.environ.get("LAWS_DEVIATIONS", "tests/basis/law-deviations.txt")
 SKIPS = os.environ.get("LAWS_SKIPS", "tests/basis/law-skips.txt")
 TIMEOUT = int(os.environ.get("LAWS_HOST_TIMEOUT", "600"))      # seconds for a program to build and run, each time
@@ -366,20 +372,57 @@ def listed(label):
     return False
 
 
+def rune_verdicts():
+    """label -> Rune's verdict and its line: those of $LAWS_RESULTS, or for
+    every label, by rune_verdict"""
+    if RESULTS:
+        if not os.path.exists(RESULTS):
+            raise SystemExit("test-laws-hosts: LAWS_RESULTS names no file: " + RESULTS)
+        return verdicts(open(RESULTS).read())
+    return None
+
+
+def rune_verdict(rune, label):
+    """Rune's verdict of a law and its line, or None: from the results given,
+    or what make test-laws holds Rune to (the module's text)"""
+    if rune is not None:
+        return rune.get(label)
+    if listed(label):
+        return ("FAIL", "listed in %s" % SKIPS)
+    return ("PASS", "not listed in %s, so make test-laws holds it" % SKIPS)
+
+
+def stale(hosts_results, devs):
+    """the lines of the deviations that name a host which ran and match none
+    of the laws it did not pass; a HOST-FLAKY line need not match"""
+    out = []
+    for c, l, cat, why in devs:
+        if cat == "HOST-FLAKY":
+            continue
+        named = [h for h in hosts_results if fnmatch.fnmatchcase("native:" + h, c)]
+        for h in named:
+            failed = [m.group(2) for m in (re.match(r"(FAIL|FLAKY|STOPPED|NOT BUILT|NOT RUN) (\S+?):? ", x)
+                                           for x in hosts_results[h]) if m]
+            if not any(fnmatch.fnmatchcase(label, l) for label in failed):
+                out.append("stale deviation: %s (%s | %s) matches no law that %s did not pass" % (DEVIATIONS, c, l, h))
+    return out
+
+
 def compare(host, lines_out, rune, devs):
     """the differences from Rune of a host's results: explained by a line of
     the deviations, or not; a law Rune fails and law-skips.txt lists is no
     difference where the host passes it"""
     explained, unexplained = [], []
     for label, (v, line) in sorted(verdicts("\n".join(lines_out)).items()):
-        if label not in rune or rune[label][0] == v:
+        theirs = rune_verdict(rune, label)
+        if theirs is None or theirs[0] == v:
             continue
-        if rune[label][0] == "FAIL" and v == "PASS" and listed(label):
+        if theirs[0] == "FAIL" and v == "PASS" and listed(label):
             continue
         why = next(("%s: %s" % (cat, w) for c, l, cat, w in devs
                     if fnmatch.fnmatchcase("native:" + host, c) and fnmatch.fnmatchcase(label, l)), None)
-        text = "%s %s: Rune %s, %s %s\n    Rune: %s\n    %s: %s" % (host, label, rune[label][0], host, v,
-                                                                       rune[label][1], host, line)
+        text = "%s %s: Rune %s, %s %s\n    Rune: %s\n    %s: %s" % (host, label, theirs[0], host, v,
+                                                                       theirs[1], host, line)
         (explained if why else unexplained).append(text + ("\n    explained: " + why if why else ""))
     return explained, unexplained
 
@@ -389,18 +432,23 @@ def main():
         # judge the results already in tests/out/laws-hosts again, as after a
         # change to the deviations
         hosts = [h for h in sys.argv[2:] or BIN if os.path.exists(os.path.join(OUT, h + ".results"))]
-        rune = verdicts(open(RESULTS).read()) if os.path.exists(RESULTS) else {}
-        devs, total = deviations(), 0
+        rune = rune_verdicts()
+        devs, total, results = deviations(), 0, {}
         for host in hosts:
             lines_out = open(os.path.join(OUT, host + ".results")).read().strip().split("\n")
+            results[host] = lines_out
             explained, unexplained = compare(host, lines_out, rune, devs)
             open(os.path.join(OUT, host + ".differences"), "w").write("\n".join(explained + unexplained) + "\n")
             print("%s: %d differences from Rune explained, %d not" % (host, len(explained), len(unexplained)))
             for u in unexplained:
                 print(u)
             total += len(unexplained)
-        print("test-laws-hosts: %d differences from Rune that no deviation explains" % total)
-        sys.exit(1 if total else 0)
+        old = stale(results, devs)
+        for l in old:
+            print(l)
+        print("test-laws-hosts: %d differences from Rune that no deviation explains, %d stale deviations"
+              % (total, len(old)))
+        sys.exit(1 if total or old else 0)
     hosts = sys.argv[1:] or ["mlton", "smlnj-legacy", "smlnj32", "smlnj-dev", "polyml", "mlkit"]
     subprocess.run(["rm", "-rf", OUT])
     os.makedirs(OUT + "/programs")
@@ -430,9 +478,7 @@ def main():
     for _, _, _, requires in files:
         wanted.update(requires)
     basis_names = {p for n in wanted for p in prefixes(n) if p.split(".")[0] not in lib_names}
-    rune = {}
-    if os.path.exists(RESULTS):
-        rune = verdicts(open(RESULTS).read())
+    rune = rune_verdicts()
     devs = deviations()
     def one(host):
         if not os.path.exists(BIN[host]):
@@ -542,15 +588,21 @@ def main():
                       % (host, counts["PASS"], counts["FAIL"], counts["FLAKY"], counts["STOPPED"], counts["NOT BUILT"],
                          counts["NOT RUN"], len(on_alternative), len(explained), len(diffs))), diffs
 
-    differences = []
+    differences, results = [], {}
     with concurrent.futures.ThreadPoolExecutor(max_workers=min(JOBS, len(hosts))) as pool:
         for host, summary, diffs in pool.map(one, hosts):
             print(summary, flush=True)
             differences += diffs
-    open(os.path.join(OUT, "differences.txt"), "w").write("\n".join(differences) + ("\n" if differences else ""))
-    print("test-laws-hosts: %d differences from Rune that no deviation explains (see %s/differences.txt)" %
-          (len(differences), OUT))
-    sys.exit(1 if differences else 0)
+            path = os.path.join(OUT, host + ".results")
+            if os.path.exists(path):
+                results[host] = open(path).read().strip().split("\n")
+    old = stale(results, devs)
+    for l in old:
+        print(l)
+    open(os.path.join(OUT, "differences.txt"), "w").write("".join(x + "\n" for x in differences + old))
+    print("test-laws-hosts: %d differences from Rune that no deviation explains, %d stale deviations (see %s/differences.txt)"
+          % (len(differences), len(old), OUT))
+    sys.exit(1 if differences or old else 0)
 
 
 if __name__ == "__main__":

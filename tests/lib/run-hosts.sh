@@ -7,7 +7,10 @@
 # A library is plain Standard ML '97 and is never changed to work around a
 # host's bug: a failure on a host is a line of tests/lib/deviations.txt
 # (config | label | CATEGORY | reason, in the form of
-# tests/basis/deviations.txt), with a report in docs/bugreport/HOST.
+# tests/basis/deviations.txt), with a report in docs/bugreport/HOST. A line
+# that names a host which ran and matches none of its failures is stale and
+# fails the run, as tests/basis/run-matrix.sh has it (a HOST-FLAKY line need
+# not match).
 # `make test-lib-hosts` runs this; it is not part of `make check`, as the
 # Basis suite's matrix is not.
 set -u
@@ -97,7 +100,9 @@ deviation() {
 # build HOST NAME FILES...: the program of the files, built by the host,
 # written to $out/NAME.out when it runs; a build error to $out/NAME.err.
 # A program has ten minutes, so that one a host's bug hangs (a socket that
-# blocks where it must not) fails rather than stopping the run.
+# blocks where it must not) fails rather than stopping the run; on a host
+# that keeps a session, as on the others, a program that runs out of time
+# or ends with a failure has failed, whatever it printed before.
 limit="timeout 600"
 build() {
   host=$1; name=$2; shift 2
@@ -112,13 +117,15 @@ build() {
       fi
       echo 'val () = OS.Process.exit OS.Process.success' > "$out/exit.sml"
       $limit "$sml" "$@" "$out/exit.sml" < /dev/null > "$out/$name.raw" 2>&1
+      status=$?
       grep -v -E '^(\[|Standard ML|val |- |structure |signature |type |datatype |exception |fun )' "$out/$name.raw" > "$out/$name.out"
-      ! grep -q -E 'Error:|uncaught exception' "$out/$name.raw" ;;
+      [ "$status" -eq 0 ] && ! grep -q -E 'Error:|uncaught exception' "$out/$name.raw" ;;
     polyml)
       { for f in "$@"; do echo "use \"$f\";"; done; echo 'OS.Process.exit OS.Process.success;'; } > "$out/$name.use"
       $limit "$poly" -q < "$out/$name.use" > "$out/$name.raw" 2>&1
+      status=$?
       grep -v -E '^(val |structure |signature |type |datatype |exception |fun |> )' "$out/$name.raw" > "$out/$name.out"
-      ! grep -q -E 'Error-|Exception-' "$out/$name.raw" ;;
+      [ "$status" -eq 0 ] && ! grep -q -E 'Error-|Exception-' "$out/$name.raw" ;;
     mlkit)
       { echo '$(SML_LIB)/basis/basis.mlb'; for f in "$@"; do echo "$top/$f"; done; } > "$out/$name.mlb"
       (cd "$out" && SML_LIB=$mlkit_lib "$mlkit" -o "$name" "$name.mlb" > "$name.err" 2>&1) && $limit "$out/$name" > "$out/$name.out" 2>&1 ;;
@@ -156,9 +163,33 @@ for host in $hosts; do
   done
 done > "$out/results.txt"
 
+# explained HOST LABEL-GLOB: a failure of the host that a line explained
+# has a label the glob matches
+explained() {
+  for lab in $(awk -v h="$1" '$1 == "EXPLAINED" && $2 == h { sub(/:$/, "", $3); print $3 }' "$out/results.txt"); do
+    # shellcheck disable=SC2254
+    case "$lab" in $2) return 0 ;; esac
+  done
+  return 1
+}
+
+# The stale lines: of a host that ran, matching none of its failures.
+while IFS='|' read -r c l cat why; do
+  c=$(echo $c); l=$(echo $l); cat=$(echo $cat)
+  case "$c" in ""|\#*) continue ;; esac
+  [ "$cat" = HOST-FLAKY ] && continue
+  for host in $hosts; do
+    # shellcheck disable=SC2254
+    case "native:$host" in $c) ;; *) continue ;; esac
+    grep -q "^$host: not installed" "$out/results.txt" && continue
+    explained "$host" "$l" || echo "STALE $host $l: tests/lib/deviations.txt has a line ($c | $l) that matches no failure"
+  done
+done < tests/lib/deviations.txt >> "$out/results.txt"
+
 cat "$out/results.txt"
 passed=$(grep -c '^PASS' "$out/results.txt")
 explained=$(grep -c '^EXPLAINED' "$out/results.txt")
 failed=$(grep -c '^FAIL' "$out/results.txt")
-echo "test-lib-hosts: $passed pass, $explained explained, $failed FAILED"
-[ "$failed" -eq 0 ]
+stale=$(grep -c '^STALE' "$out/results.txt")
+echo "test-lib-hosts: $passed pass, $explained explained, $failed FAILED, $stale stale"
+[ "$failed" -eq 0 ] && [ "$stale" -eq 0 ]

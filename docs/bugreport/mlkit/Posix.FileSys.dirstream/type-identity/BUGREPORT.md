@@ -9,6 +9,10 @@ This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`
 `basis/POSIX_FILE_SYS.sml` as the tag `v4.7.23`, byte for byte, so the
 code below is unchanged there; `master` was not built.
 
+**Still there in MLKit 4.7.25** (2026-10-09), the release that `make
+hosts` installs since 2026-10-13: the programs below give the same
+output with it as with 4.7.23.
+
 ## Summary
 
 * **The trigger:** a program that uses a `Posix.FileSys.dirstream` as an

@@ -32,7 +32,6 @@ files
   src/frontend/ast.sml
   src/frontend/fixity.sml
   src/frontend/parser.sml
-  src/elab/unifyexn.sml
   src/elab/unify.sml
   src/elab/env.sml
   src/elab/sigmatch.sml
@@ -76,7 +75,6 @@ files
   src/driver/deps.sml
   src/driver/parallel.sml
   src/driver/main.sml
-  src/driver/serveexn.sml
   src/driver/serve.sml
 end
 src/main/rune-main.sml

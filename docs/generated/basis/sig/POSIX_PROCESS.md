@@ -501,12 +501,6 @@ val sleep : Time.time -> Time.time
 
 **Example** `sleep Time.zeroTime = Time.zeroTime`
 
-<details><summary>Other implementations (1)</summary>
-
-- **MLKit** &mdash; sleep raises Time after it has slept: the runtime returns the time left from the rem of nanosleep, which nanosleep writes only when a signal interrupts it (and in nanoseconds where microseconds are expected)
-
-</details>
-
 <details><summary>Tests (2)</summary>
 
 For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `one-second` &middot; `zero`

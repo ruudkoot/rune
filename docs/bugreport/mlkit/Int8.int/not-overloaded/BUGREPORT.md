@@ -10,6 +10,10 @@ has the same `basis/IntN.sml`, `basis/Ints.sml`, `basis/WordN.sml`,
 `src/Common/EfficientElab/Environments.sml` as 4.7.23 (the files are
 identical), so it is not fixed there either.
 
+**Still there in MLKit 4.7.25** (2026-10-09), the release that `make
+hosts` installs since 2026-10-13: the programs below give the same
+output with it as with 4.7.23.
+
 ## Summary
 
 * **The trigger:** an integer constant at type `Int8.int` or `Int16.int`,

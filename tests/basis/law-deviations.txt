@@ -15,10 +15,8 @@ native:polyml | MONO_ARRAY2.nRows/law-1@* | HOST-BUG | dimensions of an empty ar
 native:polyml | INT_INF.~>>/law-1@IntInf | HOST-BUG | IntInf.~>> rounds a negative number of more than 62 bits towards zero: ~>> (~4611686018427387905, 0w1) is ~2305843009213693952, where the floor is ~2305843009213693953 (docs/bugreport/polyml/IntInf/shift-right-rounds-towards-zero)
 native:polyml | OS_PATH.splitDirFile/law-1@OS.Path | SPEC-AMBIGUOUS | joinDirFile raises InvalidArc for an arc that is NUL, as SML/NJ does; Rune, MLton and MLKit take it. The specification leaves which arcs are valid to the system, and POSIX names hold no NUL
 
-# ---- MLKit 4.7.23
+# ---- MLKit 4.7.25
 native:mlkit | INT_INF.~>>/law-1@IntInf | HOST-BUG | IntInf.~>> rounds towards zero: ~>> (~1, 0w1) is 0, not ~1, and so for the negative numbers of more than 62 bits (docs/bugreport/mlkit/IntInf/shift-right-rounds-towards-zero)
-native:mlkit | INTEGER.toInt/law-1@IntInf | HOST-BUG | IntInf.toInt raises Overflow at 2^31, although int has 63 bits (docs/bugreport/mlkit/Time.toSeconds/beyond-2^31-seconds)
-native:mlkit | INTEGER.toInt/law-1@LargeInt | HOST-BUG | LargeInt is IntInf, whose toInt raises Overflow at 2^31, although int has 63 bits (docs/bugreport/mlkit/Time.toSeconds/beyond-2^31-seconds)
 native:mlkit | SOCKET.SOCK.fromString/law-1@Socket | HOST-BUG | Socket.SOCK.toString of the raw type is "RAM", which fromString does not read back (docs/bugreport/mlkit/Socket.SOCK.toString/raw-is-RAM)
 native:mlkit | POSIX_SYS_DB.getgrgid/law-1@Posix.SysDB | HOST-BUG | Posix.SysDB.getgrgid of the group 1000 raises Overflow (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
 native:mlkit | POSIX_SYS_DB.getpwuid/law-1@Posix.SysDB | HOST-BUG | Posix.SysDB.getpwuid of the user 1000 raises Overflow (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
@@ -55,6 +53,7 @@ native:smlnj-legacy | MONO_VECTOR.tabulate/law-1@Real64Vector | HOST-FLAKY | a d
 native:smlnj-legacy | LIST.mapPartial/law-1@List | HOST-FLAKY | a drawn pure function gave two outcomes for one argument (fn ~2781978662954296116 => SOME ~15 | ~2781978662954296116 => SOME 19), and its runs by itself stopped three times before a verdict; by itself the law has stopped ("bogus overflow fault"), failed at another case, and passed with @SMLalloc=64M
 native:smlnj-legacy | MONO_ARRAY.array/law-1@RealArray | HOST-FLAKY | two reals that both print 0.5 compared unequal at case 102; by itself the law fails so again, and with @SMLalloc=64M it passes
 native:smlnj-legacy | MONO_ARRAY.foldl/law-1@CharArray | HOST-FLAKY | a drawn function gave two outcomes for one argument, and its runs by itself stopped three times before a verdict; by itself the host stops ("bogus fault not in ML"), and with @SMLalloc=64M the law passes
+native:smlnj-legacy | MONO_ARRAY.foldr/law-1@RealArray | HOST-FLAKY | the two sides differed at case 62, one of them 4270397887045132046, a number that nothing in the law makes, and the law's runs by itself stopped three times before a verdict (2026-10-14)
 native:smlnj-legacy | MONO_VECTOR.foldr/law-1@RealVector | HOST-FLAKY | a drawn function gave two outcomes for one argument at case 82; by itself the law fails so again, and with @SMLalloc=64M it passes
 native:smlnj-legacy | MONO_ARRAY.fromList/law-1@Real64Array | HOST-FLAKY | List.nth of a list whose element is 0 gave 1.0675005574680372E~229 after the program's other laws; by itself the law passes, at three sizes of @SMLalloc
 

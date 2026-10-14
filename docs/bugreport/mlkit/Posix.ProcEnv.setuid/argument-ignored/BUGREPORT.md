@@ -11,6 +11,10 @@ byte, so the code below is unchanged there; `master` was not built.
 A search of MLKit's issues and pull requests, their titles, texts and
 comments, up to #229 of 2026-09-25, found no report of it (2026-09-27).
 
+**Still there in MLKit 4.7.25** (2026-10-09), the release that `make
+hosts` installs since 2026-10-13: the program below gives the same
+output with it as with 4.7.23.
+
 ## Summary
 
 * **The trigger:** any call of `Posix.ProcEnv.setuid u`.

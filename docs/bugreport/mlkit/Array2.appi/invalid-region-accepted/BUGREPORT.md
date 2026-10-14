@@ -10,6 +10,10 @@ It has not been reported upstream from here, and a search of the issues of
 `master` at `c49fbea` (2026-09-25) has the same `basis/Array2.sml` as
 4.7.23, byte for byte, so the bug is not fixed there either.
 
+**Still there in MLKit 4.7.25** (2026-10-09), the release that `make
+hosts` installs since 2026-10-13: the program below gives the same
+output with it as with 4.7.23.
+
 ## Summary
 
 * **The trigger:** a region `{base, row, col, nrows, ncols}` given to

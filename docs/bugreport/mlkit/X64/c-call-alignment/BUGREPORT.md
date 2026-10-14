@@ -2,16 +2,27 @@
 
 **Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The code generator calls C with the stack misaligned, and `getgrnam` crashes.
 
-## Status: not reported upstream
+## Status: reported and fixed upstream, in MLKit 4.7.24
 
-This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`
-(2026-09-25) has the same `src/Compiler/Backend/CodeGenUtil.sml` and
-`X64/CodeGenUtilX64.sml` as the tag `v4.7.23` (the whole
-`src/Compiler/Backend` directory is identical), so the code below is
-unchanged there; `master` was not built.
+* **The report:** [melsman/mlkit#233](https://github.com/melsman/mlkit/issues/233)
+  (2026-09-27), this text with its programs.
+* **The fix:** [melsman/mlkit#234](https://github.com/melsman/mlkit/pull/234),
+  commit `3eaa1a07` (2026-09-29): a function `with_stack_args` of
+  `X64/CodeGenUtilX64.sml` pads the stack with a word, above the
+  arguments, when their number is odd, for ordinary calls
+  (`compile_c_call_prim`) and auto-converted ones (`compile_c_call_auto`)
+  alike, as the fix proposed below does for the first. It adds an
+  assembly and C probe of the alignment, and the first look-up of
+  `sml_getgrnam` and `sml_getpwnam` in a fresh process, to MLKit's tests.
+  The first release with it is 4.7.24 (2026-10-07).
+* **Checked** (2026-10-13) with MLKit 4.7.25, the binary release that
+  `make hosts` installs: `bug.sml` no longer crashes. It stops with
+  `uncaught exception Overflow` from `getgrnam`, which is the bug of the
+  report `Posix.SysDB.getpwuid/untagged-results`, still there: #234 says
+  so, and calls the runtime's functions directly in its tests to get past
+  it.
 
-A search of MLKit's issues and pull requests, their titles, texts and
-comments, up to #229 of 2026-09-25, found no report of it (2026-09-27).
+What follows is the report as it was sent.
 
 Related upstream: [#192](https://github.com/melsman/mlkit/issues/192),
 closed in December 2025 by commit `7d8b815a`, lifted the limit of six
@@ -210,3 +221,8 @@ load"). The checks after it would meet the bug of the report
 ```
 native:mlkit@* | @load/posix_sysdb | HOST-BUG | the program crashes in its first check, getpwnam "root": the X64 backend calls a C function of seven arguments (here the runtime's sml_getpwnam) with the stack misaligned, and glibc's first look-up in the user database faults on movaps; the entries of getpwuid, getgrgid and getgrnam are unusable as well (their C functions store ints untagged)
 ```
+
+With MLKit 4.7.25 (2026-10-13) the program runs to its end, and its checks
+of entries that exist fail on `Overflow` instead: the line has given way to
+one for `Posix.SysDB.*/*` that cites the report
+`Posix.SysDB.getpwuid/untagged-results`.

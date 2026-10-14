@@ -25,8 +25,7 @@ struct
 
   datatype json = Null | Bool of bool | Num of string | Str of string | Arr of json list | Obj of (string * json) list
 
-  (* declared in a unit of its own, for MLKit (serveexn.sml) *)
-  exception Bad = ServeExn.Bad
+  exception Bad of string
 
   fun parse (s : string) : json =
     let

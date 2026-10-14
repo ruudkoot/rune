@@ -356,7 +356,6 @@ native:polyml@* | Time.fmt/fixed-point-semantics | HOST-BUG | fmt goes through a
 native:mlton@* | Time.fmt/fixed-point-semantics | HOST-BUG | fmt is Real.fmt of toReal: fmt 6 of 12345678901.234567 s gives 12345678901.234568 ("Time values are required to have fixed-point semantics")
 native:mlton@* | Time.fromString/trailing-point | HOST-BUG | fromString "1." is NONE, although its prefix "1" denotes a time ("SOME(t) where t is the time value denoted by a prefix of s")
 native:smlnj*@* | Time.fromString/trailing-point | HOST-BUG | fromString "1." is NONE, although its prefix "1" denotes a time ("SOME(t) where t is the time value denoted by a prefix of s")
-native:mlkit@* | Time.[+-]/Time-when-not-representable* | HOST-BUG | toSeconds raises Overflow for a time of 2^31 seconds or more, which + and - make without raising Time: IntInf.fromInt and IntInf.toInt go through Int32, so that the conversions of Time hold 32 bits of seconds
 native:mlkit@* | Time.fromString/nanoseconds-lost-or-kept | SPEC-AMBIGUOUS | fromString rounds a fraction beyond the microsecond to the nearest microsecond (0.000000999 is 1 microsecond); the test takes the reading of MLton, SML/NJ and Poly/ML, that a fraction below the resolution is dropped or kept, as fromReal's "fractions of a microsecond may be lost"
 # ---- Date. The suite runs in one time zone on every machine, 3:30 west of UTC
 # with summer time (tests/basis/run-matrix.sh); the hosts other than Poly/ML
@@ -405,9 +404,8 @@ xc1:smlnj32@* | Date.fromString/* | WIDTH | the strings the checks read are toSt
 native:mlkit@* | Date.offset/east | HOST-BUG | offset reports the time west of UTC modulo a day, never negative: 5:30 east gives 18:30 west (66600 s)
 native:mlkit@* | Date.offset/modulo-24-hours-negative | HOST-BUG | date keeps an offset of more than a day east whole while it moves the date back a day, and offset reports it modulo a day (82800 s)
 native:mlkit@* | Date.toTime/offset-modulo-24-hours-negative-is-the-same-time | HOST-BUG | date keeps an offset of more than a day east whole while it moves the date back a day, so that the date is a day earlier than the time given
-native:mlkit@* | Date.toTime/*19[06][09]* | HOST-BUG | toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200"), and of one after 2038-01-19 03:14:07 UTC raises Time
+native:mlkit@* | Date.toTime/*19[06][09]* | HOST-BUG | toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200")
 native:mlkit@* | Date.fromTimeUniv/*19[06][09]* | HOST-BUG | toTime of a date before 1970 raises Date, and fromTimeUniv truncates a negative time towards zero instead of flooring it to its second
-native:mlkit@* | Date.toTime/century-to-2100-beyond-2038 | HOST-BUG | toTime of a date after 2038-01-19 03:14:07 UTC raises Time: IntInf.toInt goes through Int32, so that Time.fromReal raises Time for 2^31 seconds or more
 native:mlkit@* | Date.toTime/Date-or-a-year-far-away | HOST-BUG | toTime of a date of year 10^8 raises Time, not Date ("It raises Date if the date date cannot be represented as a Time.time value")
 native:mlkit@* | Date.fmt/%Z-UTC | HOST-BUG | fmt "%Z" of a UTC date gives the name of the local time zone ("NST") or garbage: the runtime's sml_strftime leaves tm_zone unset, and strftime reads it (for a local date it may crash)
 native:mlkit@* | Date.scan/24-characters | HOST-BUG | scan reads a year of five digits (19956), not the 24-character date ("scan a 24-character date")
@@ -474,14 +472,14 @@ native:polyml@5.9.2 | Unix.exit/status | HOST-BUG | a forked child that calls Un
 native:smlnj*@* | Unix.exit/runs-atExit | HOST-BUG | Unix.exit does not run the actions of OS.Process.atExit
 *:mlkit@* | @load/posix_procenv | HOST-BUG | compiler bug: the X64 backend pushes a word constant between 0wx40000000 and 0wx7FFFFFFF that is passed on the stack (here 0w1999999999) as a 32-bit immediate of its tagged value, which the assembler rejects ("invalid instruction suffix for `push'")
 native:mlkit@* | Posix.Error.notty/ttyname-of-dev-null | HOST-BUG | compiler bug: the X64 backend compares the pointer of __is_null with the address of a boxed 0, so the library never sees that a C function returned NULL: ttyname of a descriptor that is not a terminal returns NULL as its string instead of raising OS.SysErr
-*:mlkit@* | @load/posix_sysdb | HOST-BUG | the program crashes in its first check, getpwnam "root": the X64 backend calls a C function of seven arguments (here the runtime's sml_getpwnam) with the stack misaligned, and glibc's first look-up in the user database faults on movaps; the entries of getpwuid, getgrgid and getgrnam are unusable as well (their C functions store ints untagged)
+*:mlkit@* | Posix.SysDB.*/* | HOST-BUG | getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid_r (and the IDs of getpw*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it; in xc1 the shim's posix_getpwuid and the others are these functions (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
 *:mlkit@* | Posix.SysDB:POSIX_SYS_DB/[ug]id-is-ProcEnv.[ug]id | HOST-BUG | getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid_r (and the IDs of getpw*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it
 native:mlkit@* | Posix.Error.badf/close-twice | HOST-BUG | Posix.IO.close never raises OS.SysErr: the library calls C's close, which returns an int, by auto-conversion, which reads the result as a long, so -1 comes back as 4294967295
 native:mlkit@* | Posix.Error.spipe/lseek-on-pipe | HOST-BUG | lseek of a pipe returns 2147483647 instead of raising OS.SysErr: the runtime's sml_lseek takes and returns C ints, so -1 comes back as 2^31-1 (and an offset of 2^30 or more is cut to 32 bits)
 native:mlkit@* | @section/posix_sig/whole | HOST-ABSENT | Posix.IO lacks fsync and file locks (FLock, getlk, setlk, setlkw), and Posix.FileSys lacks ST.atime, ST.mtime, ST.ctime and utime
 *:mlkit@* | Posix.Error.again/errorName | HOST-BUG | errorName again is "wouldblock" and errorName notsup is "opnotsupp" ("errorName badmsg = "badmsg""): the runtime's table from numbers to names has both names of EAGAIN = EWOULDBLOCK and ENOTSUP = EOPNOTSUPP, and its binary search finds the other one
 *:mlkit@* | Posix.Error.notsup/errorName | HOST-BUG | errorName again is "wouldblock" and errorName notsup is "opnotsupp" ("errorName badmsg = "badmsg""): the runtime's table from numbers to names has both names of EAGAIN = EWOULDBLOCK and ENOTSUP = EOPNOTSUPP, and its binary search finds the other one
-native:mlkit@* | Posix.Process.sleep/* | HOST-BUG | sleep raises Time after it has slept: the runtime returns the time left from the rem of nanosleep, which nanosleep writes only when a signal interrupts it (and in nanoseconds where microseconds are expected)
+native:mlkit@* | Posix.Process.sleep/* | HOST-FLAKY | sleep returns, or raises Time for, whatever the stack held: the runtime returns the time left from the rem of nanosleep, which nanosleep writes only when a signal interrupts it (and in nanoseconds where microseconds are expected); on MLKit 4.7.25 the stack held zeros where the suite calls it, and the checks passed (docs/bugreport/mlkit/Posix.Process.sleep/uninitialised-remainder)
 *:mlkit@* | *exec*/empty-environment | HOST-BUG | exece (and so Unix.executeInEnv) with the environment [] passes on the environment of the process: the runtime installs the list only when it is not empty
 *:mlkit@* | *.fromStatus/s[iy]* | HOST-BUG | the status of a process that did not succeed is W_EXITSTATUS 0w255 whatever its exit status or signal: OS.Process.system and Unix.reap reduce every failure to OS.Process.failure (an int, ~1), which fromStatus maps to W_EXITSTATUS 0wxFF
 native:mlkit@* | Unix.reap/[st]* | HOST-BUG | the status of a process that did not succeed is W_EXITSTATUS 0w255 whatever its exit status or signal: reap reduces every failure to OS.Process.failure (an int, ~1), which fromStatus maps to W_EXITSTATUS 0wxFF
@@ -597,6 +595,7 @@ native:mlkit@* | Posix.FileSys.readdir/* | HOST-FLAKY | as Posix.FileSys.A_*
 native:mlkit@* | Posix.FileSys.rewinddir/* | HOST-FLAKY | as Posix.FileSys.A_*
 native:mlkit@* | Posix.Process.execp/with-slash | HOST-FLAKY | as the xc1 line: chmod sets every mode to 1001, so the owner may not run the script the check makes; root passes the check (docs/bugreport/mlkit/Posix.FileSys.chmod/open-flags-as-mode)
 native:mlkit@* | Posix.Error.perm/setuid-root | HOST-FLAKY | setuid of 0 does not raise SysErr with perm: Posix.ProcEnv.setuid passes no user id (docs/bugreport/mlkit/Posix.ProcEnv.setuid/argument-ignored); the check does not call it when the process is root
+xc1:mlkit@* | Posix.ProcEnv.set[ug]id/root-raises | HOST-FLAKY | setuid and setgid of 0 by an ordinary user raise nothing: the shim's posix_setuid and posix_setgid are MLKit's, whose C call returns an int that auto-conversion reads as a long, so -1 is never seen (docs/bugreport/mlkit/Posix.FileSys.unlink/int-result-read-as-long), and setuid passes no user id (docs/bugreport/mlkit/Posix.ProcEnv.setuid/argument-ignored); the check does not call them when the process is root
 native:mlkit@* | Posix.Error.noexec/exec-of-data | HOST-FLAKY | chmod to S.irwxu sets 01001, so the owner cannot execute the file and the child reports another error than noexec; root can execute it and the child reports noexec (docs/bugreport/mlkit/Posix.FileSys.chmod/open-flags-as-mode)
 
 # ---- PRIM_IO, STREAM_IO, IMPERATIVE_IO, TEXT_IO, BIN_IO (io group)
@@ -663,7 +662,6 @@ native:mlton@* | @section/textio/instream-equality | HOST-ABSENT | TextIO.instre
 native:smlnj*@* | @section/textio/instream-equality | HOST-ABSENT | TextIO.instream admits no equality, as the specification's `type instream` allows; the section pins Rune's, which is a deviation that Rune documents (IMPERATIVE_IO.instream/admits-equality)
 native:polyml@* | @section/textio/instream-equality | HOST-ABSENT | TextIO.instream admits no equality, as the specification's `type instream` allows; the section pins Rune's, which is a deviation that Rune documents (IMPERATIVE_IO.instream/admits-equality)
 native:mlkit@* | @section/textio/instream-equality | HOST-ABSENT | TextIO.instream admits no equality, as the specification's `type instream` allows; the section pins Rune's, which is a deviation that Rune documents (IMPERATIVE_IO.instream/admits-equality)
-xc1:mlkit@* | @section/textio/instream-equality | HOST-BUG | the instream of lib/basis is a datatype holding a ref of a functor's abstract stream, and MLKit gives such a datatype no equality, although t ref admits it for every t (docs/bugreport/mlkit/Elab/datatype-ref-equality)
 
 # ---- Socket, INetSock, UnixSock, GenericSock (net group)
 native:mlton@* | Socket.Ctl.setLINGER/negative | HOST-BUG | setLINGER takes a negative time without raising Time
@@ -766,14 +764,6 @@ xc1:smlnj-legacy@110.99.9 | Int[0-9]*.+/overloaded-Overflow | XC1-NA | the const
 xc1:smlnj-dev@2026.2 | Int[0-9]*.+/overloaded-Overflow | XC1-NA | the constants of the section are typed at the host's own int (its overloading is closed), whose + does not overflow at the precision of the IntN of lib/basis
 xc1:smlnj-legacy@110.99.9 | Word[0-9]*.+/wraps | XC1-NA | the constants of the section are typed at the host's own word (its overloading is closed), whose + does not wrap at the size of the WordN of lib/basis
 xc1:smlnj-dev@2026.2 | Word[0-9]*.+/wraps | XC1-NA | the constants of the section are typed at the host's own word (its overloading is closed), whose + does not wrap at the size of the WordN of lib/basis
-xc1:polyml@* | Int64*precision* | WIDTH | Int64 of lib/basis is Int, whose precision is that of the host's int, 63 bits
-xc1:polyml@* | Word64.wordSize/64 | WIDTH | Word64 of lib/basis is Word, whose size is that of the host's word, 63 bits
-xc1:smlnj-legacy@110.99.9 | Int64*precision* | WIDTH | Int64 of lib/basis is Int, whose precision is that of the host's int, 63 bits
-xc1:smlnj-dev@2026.2 | Int64*precision* | WIDTH | Int64 of lib/basis is Int, whose precision is that of the host's int, 63 bits
-xc1:smlnj-legacy@110.99.9 | Word64.wordSize/64 | WIDTH | Word64 of lib/basis is Word, whose size is that of the host's word, 63 bits
-xc1:smlnj-dev@2026.2 | Word64.wordSize/64 | WIDTH | Word64 of lib/basis is Word, whose size is that of the host's word, 63 bits
-xc1:mlkit@* | Int64*precision* | WIDTH | Int64 of lib/basis is Int, whose precision is that of the host's int, 63 bits
-xc1:mlkit@* | Word64.wordSize/64 | WIDTH | Word64 of lib/basis is Word, whose size is that of the host's word, 63 bits
 native:mlkit@* | @section/intn_*[68]/constants | HOST-BUG | no integer or word constant and no overloaded operator at Int8.int, Int16.int and Word16.word: they are abstract types made by the functors IntN and WordN, and the overloading classes of the compiler hold only its primitive types
 native:mlkit@* | @load/intn_int[36][24] | HOST-BUG | mod (minInt, ~1) of Int32 and Int64 (mod/minInt-by-minus-one) kills the program with SIGFPE: the runtime's __mod_int32ub and __mod_int64ub compute x % y without taking out y = -1
 
@@ -798,9 +788,7 @@ native:mlkit@* | @load/mono.largeint_sig | HOST-BUG | the structures LargeIntVec
 native:smlnj32@* | PackReal64*.update/element-1 | HOST-BUG | update writes nothing into the array
 native:polyml@* | PackReal*.update/Subscript-past-the-end | HOST-BUG | update of an element that runs past the end of the array raises nothing ("Subscript if Word8Array.length arr < bytesPerElem * (i + 1)")
 native:smlnj*@* | PackReal64*.* | HOST-BUG | PackReal64Big and PackReal64Little are swapped: Big packs the least significant byte first, Little the most significant
-xc1:polyml@* | PackReal*.* | WIDTH | the shim's real_to_bits and real_from_bits pass the 64 bits of a real in the host's word, which has 63
 xc1:smlnj*@* | PackReal*.* | WIDTH | the shim's real_to_bits and real_from_bits pass the 64 bits of a real in the host's word, which has 31 (110.79) or 63 (110.99.9) bits
-xc1:mlkit@* | PackReal*.* | WIDTH | the shim's real_to_bits and real_from_bits pass the 64 bits of a real in the host's word, which has 63
 native:polyml@* | PackWord*.*/Subscript-maxInt | HOST-BUG | subVec, subVecX, subArr, subArrX and update raise Overflow for an index near the largest int (bytesPerElem * (i + 1) overflows), not Subscript
 native:mlkit@* | PackWord32*.sub[VA]*X/sign-extended-* | HOST-BUG | subVecX and subArrX do not extend the sign: the code, from SML/NJ, assumes a LargeWord of 32 bits ("no sign extension is required"), but MLKit's has 64
 native:mlkit@* | PackReal*Big.fromBytes/longer-uses-the-first | HOST-BUG | PackRealBig.fromBytes reverses the whole vector and reads the first 8 bytes of that: of a longer vector it reads the last 8 bytes
@@ -815,6 +803,10 @@ native:smlnj*@* | SML90.lookahead/* | HOST-BUG | lookahead raises Io at the end 
 native:polyml@* | SML90.Sqrt/new | SPEC-AMBIGUOUS | Sqrt, Ln and Ord are Overflow; the test takes MLton's and SML/NJ's reading, exceptions of their own
 native:polyml@* | SML90.Ln/new | SPEC-AMBIGUOUS | as SML90.Sqrt/new
 native:polyml@* | SML90.ln/Ln-zero | HOST-BUG | ln 0.0 is ~inf instead of raising Ln
+
+# ---- Compiler (Rune's own signature COMPILER; the other hosts have no
+# structure of that name, and its tests are absent there)
+native:smlnj*@* | @load/compiler* | HOST-ABSENT | SML/NJ's Compiler is the interface of its own compiler, which has none of the members of COMPILER (use, compile, printDepth, ...)
 
 # ---- Real32, PackReal32Big, PackReal32Little (Poly/ML 5.7.1 and SML/NJ have
 # no Real32)
@@ -843,6 +835,13 @@ native:smlnj32@* | PackWord*.update/* | HOST-BUG | update writes the wrong bytes
 native:smlnj32@* | Posix.IO.SEEK_[CE]*/negative | HOST-BUG | lseek with a negative offset from the current position or the end gives a position of its own (2^30 + the offset), not the one it moved to: the release's boot files are cross-compiled on amd64, which builds their IntInf constants with 62-bit digits; a native fixed point of 110.99.9 is right (docs/bugreport/smlnj/Word64-low-half)
 xc1:smlnj32@* | Unix.exit/flushes | HOST-FLAKY | what a forked child writes before Unix.exit is now and then not there when the parent has reaped it (about one run in three)
 xc1:smlnj32@* | Unix.exit/runs-atExit | HOST-FLAKY | as Unix.exit/flushes
+xc1:smlnj32@* | @section/os.io/posix | WIDTH | the section makes descriptors with Posix, and Posix of lib/basis rests on SysWord and Position, Word64 and Int64 behind, which a host whose int has 31 bits does not compile (their literals and conversions need 63 bits): the host's own Posix stays, and its descriptors are not those of lib/basis's OS.IO
+xc1:smlnj32@* | @section/os.io/input-and-output | WIDTH | as @section/os.io/posix
+xc1:smlnj32@* | @section/os.io_std/posix | WIDTH | as @section/os.io/posix
+xc1:smlnj32@* | @section/os.io_std/hash-compare | WIDTH | as @section/os.io/posix
+xc1:smlnj32@* | @section/os.process_os/posix | WIDTH | as @section/os.io/posix: the section compares OS.syserror of lib/basis with the host's Posix.Error
+xc1:smlnj32@* | @section/signatures/posix* | WIDTH | the section matches Posix and its structures with the signatures of lib/basis, and Posix of lib/basis rests on SysWord and Position, which a host whose int has 31 bits does not compile (as @section/os.io/posix): the host's own Posix stays, whose types are not those of the signatures
+xc1:smlnj32@* | @section/signatures/unix | WIDTH | as @section/signatures/posix*: Unix of lib/basis is written on its Posix
 
 # ---- WideChar, WideString, WideSubstring, WideText (only MLton has them)
 native:mlton@* | @load/widestring_sig | SPEC-AMBIGUOUS | WideString.scan reads a stream of char, where the signature of the page writes the structure's own character ("val scan : (char, 'a) StringCvt.reader -> (string, 'a) StringCvt.reader"); the test takes the page

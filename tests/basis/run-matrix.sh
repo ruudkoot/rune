@@ -91,10 +91,10 @@
 # and in a rune:windows one, which shares the library and the compiler.
 # Exit status 1: an unexplained failure, or a line that matches no failure of
 # a configuration it names (so the file never goes stale; not checked when a
-# FILTER is given, nor, in a configuration where a test timed out, for a line
-# that matches one of the test's checks as the rune configuration reports
-# them: those after the point where it stopped did not run). A test that is
-# ABSENT for the rune configuration is the
+# FILTER is given, nor, in a configuration, for a line that matches a check
+# that the rune configuration reports and that configuration does not: it did
+# not run there, as its test timed out, is absent or N/A, or it or its section
+# did not load). A test that is ABSENT for the rune configuration is the
 # failed check @absent/TEST, to be explained likewise: Rune's library is
 # meant to be complete.
 #
@@ -876,12 +876,16 @@ save_image() {
         sep=""
         for f in $1 $2; do printf '%suse "%s"' "$sep" "$f"; sep="; "; done
         printf ');\n'
-        printf 'val resumed__ = SMLofNJ.exportML "%s";\n' "$cfgout/basis.heap"
         # The program is driver.sml of the directory the test runs in and
         # not an argument: CommandLine.arguments is one of the things the
-        # suite checks, and it must be empty under the runner.
+        # suite checks, and it must be empty under the runner. What the
+        # image does when it resumes is in the declaration that exports it:
+        # the resumed process cannot read on in this file, whose descriptor
+        # is not open there, and SML/NJ has read only as far as its buffer
+        # (4 KiB) reaches, so that a declaration after exportML was there or
+        # not depending on the length of the paths before it.
         printf 'val () =\n'
-        printf '  if resumed__ then\n'
+        printf '  if SMLofNJ.exportML "%s" then\n' "$cfgout/basis.heap"
         printf '    ((use "driver.sml"\n'
         printf '        handle e => (print ("uncaught exception " ^ exnName e ^ " [" ^ exnMessage e ^ "]\\n");\n'
         printf '                     OS.Process.exit OS.Process.failure));\n'
@@ -1534,9 +1538,11 @@ BEGIN {
     for (b = 1; b <= ntests; b++) {
       t = tests[b]; r = d "/" t ".result"
       pass = xfail = fail = skipped = 0; absent = ""; na = ""; nfails = 0
+      split("", seen)
       rc = (getline l < r)
       if (rc < 0) { unexplained[++nun] = id " @load/" t " -- no result"; tf++; continue }
       while (rc > 0) {
+        if (l ~ /^(PASS|FAIL|SKIP) /) { split(l, f, " "); seen[f[2]] = 1 }
         if (l ~ /^PASS /) pass++
         else if (l ~ /^SKIP /) {
           # a check the machine cannot run: not a failure, and a deviation
@@ -1546,13 +1552,21 @@ BEGIN {
         }
         else if (l ~ /^ABSENT /) absent = absent substr(l, 8) " "
         else if (l ~ /^NA /) na = na substr(l, 4) " "
-        else if (l ~ /^FAIL /) {
-          fails[++nfails] = l
-          if (l ~ /^FAIL @load\/[^ ]* -- timed out after /) timedout[id, t] = 1
-        }
+        else if (l ~ /^FAIL /) fails[++nfails] = l
         rc = (getline l < r)
       }
       close(r)
+      # the checks of the test that the rune configuration reports and this
+      # one does not: they did not run here (the test timed out, is absent
+      # or N/A, or it or a section of it did not load)
+      if (filter == "" && id != "rune" && ("rune" in dir)) {
+        if (!(t in nrune)) {
+          nrune[t] = 0; rr = dir["rune"] "/" t ".result"
+          while ((getline l < rr) > 0) if (l ~ /^(PASS|FAIL|SKIP) /) { split(l, f, " "); runelab[t, ++nrune[t]] = f[2] }
+          close(rr)
+        }
+        for (k = 1; k <= nrune[t]; k++) if (!(runelab[t, k] in seen)) unrun[id, ++nunrun[id]] = runelab[t, k]
+      }
       printf "" > (d "/" t ".fails")
       for (k = 1; k <= nfails; k++) {
         print fails[k] >> (d "/" t ".fails")
@@ -1603,15 +1617,10 @@ BEGIN {
   # Stale deviations: a line must match a failure in every configuration of
   # this run that its configuration glob names (not a HOST-FLAKY line: that
   # failure comes and goes; nor, for xc2:HOST, a line that does not name
-  # xc2). The checks of a test that timed out in a configuration, as the
-  # rune configuration reports them, may not have run: a line that matches
-  # one of them is not stale there.
+  # xc2). A check that the rune configuration reports and a configuration
+  # does not did not run there (above), nor did one it skipped: a line that
+  # matches one of them is not stale there.
   if (filter == "") {
-    for (key in timedout) {
-      split(key, kk, SUBSEP); r = dir["rune"] "/" kk[2] ".result"
-      while ((getline l < r) > 0) if (l ~ /^(PASS|FAIL|SKIP) /) { split(l, f, " "); unrun[kk[1], ++nunrun[kk[1]]] = f[2] }
-      close(r)
-    }
     for (i = 1; i <= ndev; i++) {
       if (cat[i] == "HOST-FLAKY") continue
       for (a = 1; a <= nids; a++) {

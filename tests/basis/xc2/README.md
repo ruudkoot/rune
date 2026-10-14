@@ -248,11 +248,13 @@ What differs from MLKit, and why:
   `setuid` no argument (the patch passes it), and a scanning buffer of
   `TextIO` written in place.
 * **The compiler's bugs.** A failure of MLKit's X64 backend (a word
-  constant on the stack, a misaligned stack, `__is_null`) or of the way it
-  calls C (an `int` result read as a `long`, so that a failure is never
-  seen) does not happen here. `posix_procenv` and `posix_sysdb`, which MLKit
-  cannot load, run here, and show the library's own bugs
-  (`Posix.ProcEnv.time`).
+  constant on the stack, `__is_null`, and before 4.7.24 a misaligned stack)
+  or of the way it calls C (an `int` result read as a `long`, so that a
+  failure is never seen) does not happen here. `posix_procenv`, which MLKit
+  cannot load, runs here, and shows the library's own bugs
+  (`Posix.ProcEnv.time`). `posix_sysdb`, which MLKit runs since 4.7.24 and
+  where its runtime's untagged numbers make every entry raise `Overflow`,
+  passes here: the shim gives the numbers as numbers.
 * **Not made.** The sockets of the file system (`sml_sock_*_unix`: MLKit has
   no `UnixSock` to make one), and the primitives of the code the patch
   leaves out; their stubs raise.
@@ -419,10 +421,12 @@ defect of the shim or of Rune's compiler.
   changed lines across the shims and patches. A change to Rune's Basis
   Library or to the specification does not reach them.
 * **The hosts' versions.** Each patch is of one release: MLton 20241230,
-  MLKit 4.7.23, SML/NJ 110.99.9 and 2026.2, and Poly/ML 5.9.2. A new
+  MLKit 4.7.25, SML/NJ 110.99.9 and 2026.2, and Poly/ML 5.9.2. A new
   release means applying the patch again and fixing what does not apply.
   For SML/NJ 2026.2 that was one hunk, and a file for what its `InlineT`
-  adds (`xc2:smlnj-dev`, above).
+  adds (`xc2:smlnj-dev`, above). For MLKit 4.7.25 it was one hunk taken
+  out: `Posix.TTY` reads its constants from `Initial`, whose hunk covers
+  them, instead of calling `sml_getTty` itself.
 * **Working on a patch.** Each `gen.sh` takes a directory with the patch
   already applied instead of applying it (`XC2_MLTON_BASIS`,
   `XC2_SMLNJ_BASIS`, `XC2_POLYML_BASIS`): keep the release's sources in
