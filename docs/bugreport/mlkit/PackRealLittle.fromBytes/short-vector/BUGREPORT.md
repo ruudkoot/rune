@@ -8,6 +8,10 @@ Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)
 has the same code: `basis/PackRealLittle.sml`, `basis/PackRealBig.sml` and
 `src/Runtime/Math.c` are identical to 4.7.23's.
 
+**Still there in MLKit 4.7.25** (2026-10-09), the release that `make
+hosts` installs since 2026-10-13: the program below gives the same
+output with it as with 4.7.23.
+
 ## Summary
 
 * **The trigger:** `PackRealLittle.fromBytes v` or `PackRealBig.fromBytes v`

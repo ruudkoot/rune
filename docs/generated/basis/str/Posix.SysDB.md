@@ -49,9 +49,10 @@ What each means is on [`POSIX_SYS_DB`](../sig/POSIX_SYS_DB.md); the types are th
 > [`OS.SysErr`](../sig/OS.md#exn-syserr) for it all the same, since the alternative would be to
 > return something that names nobody.
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (2)</summary>
 
 - **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
 
 </details>
 

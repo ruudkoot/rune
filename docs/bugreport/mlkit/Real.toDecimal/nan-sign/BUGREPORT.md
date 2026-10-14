@@ -9,6 +9,10 @@ has the same code: `basis/Real.sml` is identical to 4.7.23's. The behaviour
 is deliberate (a comment says "a NaN has no sign to report"); this report
 argues that the specification asks otherwise.
 
+**Still there in MLKit 4.7.25** (2026-10-09), the release that `make
+hosts` installs since 2026-10-13: the program below gives the same
+output with it as with 4.7.23.
+
 ## Summary
 
 * **The trigger:** `Real.toDecimal r` for a NaN `r` whose sign bit is set,

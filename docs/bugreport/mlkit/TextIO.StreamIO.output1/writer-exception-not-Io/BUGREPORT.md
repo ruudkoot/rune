@@ -10,6 +10,10 @@ byte for byte, so the code below is unchanged there; `master` was not
 built here. The code comes from MLton's Basis Library, whose release
 20241230 has the same `output1` and fails Rune's check in the same way.
 
+**Still there in MLKit 4.7.25** (2026-10-09), the release that `make
+hosts` installs since 2026-10-13: the program below gives the same
+output with it as with 4.7.23.
+
 ## Summary
 
 * **The trigger:** `output1` on an unbuffered (`IO.NO_BUF`) output stream

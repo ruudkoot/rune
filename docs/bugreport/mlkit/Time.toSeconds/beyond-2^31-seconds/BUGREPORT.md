@@ -2,14 +2,22 @@
 
 **Class 2 of 4: the specification is explicit, and none of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does this.** SML/NJ and Poly/ML, whose `int` has 63 bits as MLKit's does, convert these numbers.
 
-## Status
+## Status: reported and fixed upstream, in MLKit 4.7.24
 
-Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)
-has the same code: `basis/IntInf.sml` and `basis/Time.sml` are identical
-to 4.7.23's.
+* **The report:** [melsman/mlkit#230](https://github.com/melsman/mlkit/issues/230)
+  (2026-09-27), this text with its program.
+* **The fix:** [melsman/mlkit#234](https://github.com/melsman/mlkit/pull/234),
+  commit `3eaa1a07` (2026-09-29), is the fix proposed below: `IntInf.toInt`
+  and `fromInt` are `Int.fromLarge` and `Int.toLarge`, and the conversions
+  through `Int32` are gone. It adds `test/intinf_full_int.sml` (the bounds
+  of `int`, 2^31, `Time` and a date of 2100) to MLKit's tests. The first
+  release with it is 4.7.24 (2026-10-07).
+* **Checked** (2026-10-13) with MLKit 4.7.25, the binary release that
+  `make hosts` installs: `bug.sml` prints the numbers on every line below
+  (`Date.toTime` gives `2147483648.000`), and the checks of Rune's suite
+  named under *Relation to Rune* pass.
 
-A search of MLKit's issues and pull requests, their titles, texts and
-comments, up to #229 of 2026-09-25, found no report of it (2026-09-27).
+What follows is the report as it was sent.
 
 ## Summary
 
@@ -174,3 +182,10 @@ lines of `tests/basis/deviations.txt`:
 native:mlkit@* | Time.[+-]/Time-when-not-representable* | HOST-BUG | toSeconds raises Overflow for a time of 2^31 seconds or more, which + and - make without raising Time: IntInf.fromInt and IntInf.toInt go through Int32, so that the conversions of Time hold 32 bits of seconds
 native:mlkit@* | Date.toTime/century-to-2100-beyond-2038 | HOST-BUG | toTime of a date after 2038-01-19 03:14:07 UTC raises Time: IntInf.toInt goes through Int32, so that Time.fromReal raises Time for 2^31 seconds or more
 ```
+
+Both lines went with MLKit 4.7.25 (2026-10-13), and so did the two lines
+of `tests/basis/law-deviations.txt` about `INTEGER.toInt` at `IntInf` and
+`LargeInt`. `tests/basis/host/rune-prim.sml`, the primitives of the `xc1`
+configurations, converted `IntInf.int` to and from the host's `int` fifteen
+bits at a time to get round the bug; it calls `IntInf.toInt` and
+`IntInf.fromInt` now.

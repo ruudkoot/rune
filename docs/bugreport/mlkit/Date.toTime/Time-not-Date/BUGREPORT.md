@@ -7,6 +7,12 @@
 Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)
 has the same code: `basis/Date.sml` is identical to 4.7.23's.
 
+**Still there in MLKit 4.7.25** (2026-10-09), the release that `make
+hosts` installs since 2026-10-13: `toTime` of the year 10^8 raises
+`Time` with it. The year 2100 converts since 4.7.24, which fixed the
+report `Time.toSeconds/beyond-2^31-seconds`, so the second line of
+`bug.sml` is `no exception` now.
+
 ## Summary
 
 * **The trigger:** `Date.toTime d` for a date whose time `Time.fromReal`

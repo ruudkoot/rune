@@ -20,7 +20,7 @@ The hosts are the releases `make hosts` installs under
 | SML/NJ | 110.99.9, 32-bit build (`smlnj32`) | 31 bits | 31 bits |
 | SML/NJ | 2026.2, development line (`smlnj-dev`) | 63 bits | 63 bits |
 | Poly/ML | 5.9.2 | 63 bits | 63 bits |
-| MLKit | 4.7.23 | 63 bits | 63 bits |
+| MLKit | 4.7.25 | 63 bits | 63 bits |
 
 The 32-bit SML/NJ is there for its narrow `int` and `word`, which have found
 many places where the library or a test depended on their width.
@@ -80,7 +80,7 @@ needs.
 | `native:smlnj32@110.99.9` | 48,968 | 47,502 | 1,466 | 0 | 64 | 0 |
 | `native:smlnj-dev@2026.2` | 61,677 | 61,011 | 666 | 0 | 64 | 0 |
 | `native:polyml@5.9.2` | 68,572 | 67,810 | 762 | 0 | 53 | 0 |
-| `native:mlkit@4.7.23` | 111,897 | 110,859 | 1,038 | 0 | 44 | 0 |
+| `native:mlkit@4.7.25` | 111,926 | 110,872 | 1,054 | 0 | 55 | 0 |
 | `xc1:mlton@20241230` | 139,155 | 138,831 | 313 | 11 | 2 | 0 |
 | `xc1:smlnj-legacy@110.99.9` | 139,175 | 138,749 | 415 | 11 | 2 | 0 |
 | `xc1:smlnj32@110.99.9` | 95,200 | 93,080 | 2,109 | 11 | 2 | 38 |
@@ -88,19 +88,21 @@ needs.
 | `xc1:polyml@5.9.2` | 139,125 | 138,750 | 364 | 11 | 2 | 0 |
 | `xc1:mlkit@4.7.23` | 139,054 | 138,524 | 519 | 11 | 2 | 0 |
 | `xc2:mlton@20241230` | 138,668 | 138,072 | 596 | 0 | 9 | 0 |
-| `xc2:mlkit@4.7.23` | 116,568 | 115,602 | 966 | 0 | 44 | 0 |
+| `xc2:mlkit@4.7.25` | 116,569 | 115,608 | 961 | 0 | 55 | 0 |
 | `xc2:smlnj-legacy@110.99.9` | 62,012 | 61,321 | 691 | 0 | 63 | 0 |
 | `xc2:smlnj-dev@2026.2` | 62,012 | 61,321 | 691 | 0 | 63 | 0 |
 | `xc2:polyml@5.9.2` | 68,572 | 67,901 | 671 | 0 | 53 | 0 |
 
 The `xc2` rows are of a run of those configurations alone, on
-2026-10-09 (under WSL2), `xc2:smlnj-dev` on its own. `xc2:mlkit` runs more checks than
-`native:mlkit`: MLKit's compiler cannot load `posix_procenv` and
-`posix_sysdb`, which Rune compiles; `xc2:smlnj-legacy` and `xc2:smlnj-dev`
-run more than their `native` configurations, whose runtime ends in the
-sections of `array2` and `string` that the library's bugs with regions
-near `Int.maxInt` or without elements lead to. The two SML/NJ libraries
-fail the same checks on Rune.
+2026-10-09 (under WSL2), `xc2:smlnj-dev` on its own. The `native:mlkit`
+and `xc2:mlkit` rows are of MLKit 4.7.25, run alone on 2026-10-14, when the
+suite had more tests than on 2026-09-28; `xc1:mlkit` is still the row of
+4.7.23. `xc2:mlkit` runs more checks than `native:mlkit`: MLKit's compiler
+cannot load `posix_procenv`, which Rune compiles; `xc2:smlnj-legacy` and
+`xc2:smlnj-dev` run more than their `native` configurations, whose runtime
+ends in the sections of `array2` and `string` that the library's bugs with
+regions near `Int.maxInt` or without elements lead to. The two SML/NJ
+libraries fail the same checks on Rune.
 
 On Rune every check passes. The `xc1` configurations skip the 11 checks of
 `INet6Sock` that open a socket, which the shim declines, and fail the checks
@@ -116,7 +118,7 @@ structure of the specification on each system (the 32-bit SML/NJ has the
 library of the 64-bit one, and SML/NJ 2026.2 provides the same structures
 as 110.99.9):
 
-| Structure | Rune | MLton 20241230 | SML/NJ 110.99.9 | Poly/ML 5.9.2 | MLKit 4.7.23 |
+| Structure | Rune | MLton 20241230 | SML/NJ 110.99.9 | Poly/ML 5.9.2 | MLKit 4.7.25 |
 |---|:---:|:---:|:---:|:---:|:---:|
 | `BoolArray` | yes | yes | | yes | yes |
 | `BoolArray2` | yes | yes | | yes | yes |
@@ -375,7 +377,7 @@ documentation has every line under the member it is about, in a block
   `closeIn` are still read after it. `OS.Path` mishandles the root and the
   current arc; `OS.errorName` gives the C name. A forked child that calls
   `Posix.Process.exit` never ends, and the runtime ignores `SIGPIPE`.
-* **MLKit 4.7.23** (107 lines). Most of its library departs somewhere, and
+* **MLKit 4.7.25** (143 lines). Most of its library departs somewhere, and
   the suite found about sixty bugs, each written up under
   `docs/bugreport/mlkit/` with a program and, mostly, a patch. `Array2.copy`
   and that of the monomorphic `Array2`s check the destination against the
@@ -384,34 +386,37 @@ documentation has every line under the member it is about, in a block
   of slices raise `Overflow` for `Subscript`. `LargeIntVector` and its kin
   hold `Word64.word`. `Word.fromLargeInt` raises `Overflow` for a negative
   number, `Word.scan` reads `0w` as `0wx`, `IntInf.scan` reads a sign inside
-  the digits (and makes numbers that `toString` never ends on), and
-  `IntInf.fromInt` goes through 32 bits, so that `Time` ends in 2038. `0.0 +
+  the digits (and makes numbers that `toString` never ends on). `0.0 +
   ~0.0` is `~0.0` (the optimiser), `ceil` and `trunc` fail at `minInt`,
   `toString` and `GEN` are C's `%g` with `.0` added, the signs of NaNs are
   lost or reversed, and `Math.ln` of a NaN is `~inf`; `PackReal` reads past
-  a short vector. `Date.toTime` fails before 1970 and after 2038, `offset`
-  reports zones east of UTC as west, and `fmt "%Z"` reads memory it never
-  set. At an end of stream `inputAll` and `input1` stop before it rather
-  than past it, `getOutstream` and `setOutstream` do not flush, and
+  a short vector. `Date.toTime` fails before 1970, `offset` reports zones
+  east of UTC as west, and `fmt "%Z"` reads memory it never set. At an end
+  of stream `inputAll` and `input1` stop before it rather than past it,
+  `getOutstream` and `setOutstream` do not flush, and
   `output1` on a closed stream names `output`; all but the first are in
   MLton's library too, which MLKit's streams come from. In `Posix`:
   `unlink`, `rmdir`, `rename`, `link` and `close` never raise, `S` codes the
   modes its own way and `chmod` ignores the mode, `ST` has no times and `IO`
   no locks or `fsync`, `errorName again` is `"wouldblock"`, and a `SysErr`
-  carries a message of its own; `Unix.reap` and `OS.Process.system` lose the
-  exit status, and `exece` with `[]` passes the environment on. The x86-64
-  code generator pushes a word constant as an immediate that the assembler
-  rejects, never sees a `NULL` from C, and calls some C functions with the
-  stack misaligned; and the compiler stops on a function passed to itself
-  that raises an exception with an argument (worked around in
-  `src/elab/unifyexn.sml`), gives a datatype holding `t ref` no equality,
-  and gives a large literal the wrong default type.
+  carries a message of its own; `Posix.SysDB` raises `Overflow` for every
+  entry that exists; `Unix.reap` and `OS.Process.system` lose the exit
+  status, and `exece` with `[]` passes the environment on. The x86-64 code
+  generator pushes a word constant as an immediate that the assembler
+  rejects and never sees a `NULL` from C, and the compiler gives a large
+  literal the wrong default type. Four of the bugs it found were reported
+  (melsman/mlkit#230 to #233) and are fixed in 4.7.24: `IntInf.fromInt`
+  went through 32 bits, so that `Time` ended in 2038; some C functions were
+  called with the stack misaligned; the compiler stopped on a function
+  passed to itself that raises an exception with an argument (worked around
+  in `src/elab/unifyexn.sml` and `src/driver/serveexn.sml` until then); and
+  a datatype holding `t ref` had no equality.
 * **Only in `xc2`.** Where the host's compiler cannot load a test, or its
   runtime ends the run first, the library's own code runs to the end in the
   `xc2` configuration, which compiles it with Rune
   ([tests/basis/xc2/README.md](../tests/basis/xc2/README.md)); these bugs of
   the libraries show only there:
-  * MLKit 4.7.23: `Posix.ProcEnv.time` is always 1,000,000,000 seconds
+  * MLKit 4.7.25: `Posix.ProcEnv.time` is always 1,000,000,000 seconds
     (until 2033): the runtime splits the seconds into a quotient and a
     remainder of 10^9, and the library adds a status field to the quotient
     where it means the remainder (`posix_procenv`, which MLKit's compiler
@@ -566,7 +571,7 @@ reach inside it. The note is
   `failure` is the host's (MLKit's is ~1, an exit status of 255), so
   `RunePrim.exit` maps 0 to `success` and ends with any other status as
   `Posix.Process.exit` does, once it has flushed `stdOut`.
-* MLKit 4.7.23 leaves out of its `Posix` `FileSys.utime`, the times of
+* MLKit 4.7.25 leaves out of its `Posix` `FileSys.utime`, the times of
   `FileSys.ST`, `IO.fsync` and the locks of `IO`. The shim defines each of
   them to fail with `ENOSYS` and then opens the host's structure, whose
   member takes the place of the default where the host has one; so on MLKit

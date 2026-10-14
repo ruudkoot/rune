@@ -18,6 +18,11 @@ error of the same kind ("operand type mismatch for push") for the `int`
 constant `~1073741825`. The `word` constants of this report still produce a
 `pushq` that the assembler rejects.
 
+**Still there in MLKit 4.7.25** (2026-10-09), the release that `make
+hosts` installs since 2026-10-13: the programs below give the same
+output with it as with 4.7.23 (MLKit's message now quotes the file names of the
+assembler's command).
+
 ## Summary
 
 * **The trigger:** a call that passes a `word` constant between

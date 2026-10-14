@@ -109,6 +109,12 @@ val name : passwd -> string
 
 `name pw` is the login name of `pw`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+
+</details>
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root`
@@ -122,6 +128,12 @@ val uid : passwd -> uid
 ```
 
 `uid pw` is the number of the user `pw`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+
+</details>
 
 <details><summary>Tests (2)</summary>
 
@@ -137,6 +149,12 @@ val gid : passwd -> gid
 
 `gid pw` is the number of that user's own group.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+
+</details>
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-user`
@@ -151,6 +169,12 @@ val home : passwd -> string
 
 `home pw` is the path of that user's home directory.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+
+</details>
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-user`
@@ -164,6 +188,12 @@ val shell : passwd -> string
 ```
 
 `shell pw` is the path of the program that user gets at login.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+
+</details>
 
 <details><summary>Tests (2)</summary>
 
@@ -191,6 +221,12 @@ val name : group -> string
 
 `name gr` is the name of `gr`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+
+</details>
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-group`
@@ -205,6 +241,12 @@ val gid : group -> gid
 
 `gid gr` is the number of the group `gr`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+
+</details>
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-group`
@@ -218,6 +260,12 @@ val members : group -> string list
 ```
 
 `members gr` is the login names of the users that belong to `gr` besides those whose own group it is.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+
+</details>
 
 <details><summary>Tests (3)</summary>
 
@@ -239,6 +287,12 @@ val getgrgid : gid -> Group.group
 
 **Example** `let val g = Posix.ProcEnv.wordToGid 0w0 in Group.gid (getgrgid g) = g end = true`
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+
+</details>
+
 <details><summary>Tests (3)</summary>
 
 For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-group` &middot; `unknown` (raises)
@@ -255,6 +309,12 @@ val getgrnam : string -> Group.group
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if there is no such group, and at once for an empty
 name.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+
+</details>
 
 <details><summary>Tests (3)</summary>
 
@@ -281,6 +341,12 @@ val getpwuid : uid -> Passwd.passwd
 
 **Example** `Passwd.name (getpwuid (Posix.ProcEnv.wordToUid 0w0)) = "root"`
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+
+</details>
+
 <details><summary>Tests (3)</summary>
 
 For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-user` &middot; `unknown` (raises)
@@ -300,6 +366,12 @@ name, which the primitive would otherwise take for a lookup by
 number.
 
 **Example** `Passwd.uid (getpwnam "root") = Posix.ProcEnv.wordToUid 0w0`
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it (docs/bugreport/mlkit/Posix.SysDB.getpwuid/untagged-results)
+
+</details>
 
 <details><summary>Tests (4)</summary>
 

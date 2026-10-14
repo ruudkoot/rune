@@ -11,6 +11,10 @@ was not built here. MLton's Basis Library, which the file comes from,
 fails Rune's checks of this in the same way (release 20241230), and so do
 SML/NJ 110.99.9 and Poly/ML 5.9.2.
 
+**Still there in MLKit 4.7.25** (2026-10-09), the release that `make
+hosts` installs since 2026-10-13: the program below gives the same
+output with it as with 4.7.23.
+
 ## Summary
 
 * **The trigger:** `getOutstream strm` or `setOutstream (strm, strm')` of

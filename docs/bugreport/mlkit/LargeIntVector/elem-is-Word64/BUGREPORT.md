@@ -10,6 +10,10 @@ array`) found no report of it. MLKit's `master` at `c49fbea` (2026-09-25)
 has the same `basis/inttables.sml` as 4.7.23, byte for byte, so the bug is
 not fixed there either.
 
+**Still there in MLKit 4.7.25** (2026-10-09), the release that `make
+hosts` installs since 2026-10-13: the programs below give the same
+output with it as with 4.7.23.
+
 ## Summary
 
 * **The trigger:** any use of `LargeIntVector`, `LargeIntVectorSlice`,

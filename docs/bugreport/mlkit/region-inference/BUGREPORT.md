@@ -9,6 +9,14 @@ they do on MLton, SML/NJ, Poly/ML and Rune.
 
 ## Status: not reported upstream, not reduced below lib/json
 
+**Still there in MLKit 4.7.25** (2026-10-09), the release that `make
+hosts` installs since 2026-10-13: `repro.sml`, built as below, dies with
+`SIGSEGV` as with 4.7.23, and so do `json.roundtrip`, `jsonrpc.jsonrpc`,
+`dap.dap` and `pretty.pretty` in `tests/lib/run-hosts.sh mlkit`. The fix
+of melsman/mlkit#234 to region inference, about the effect of an
+exception constructor, does not reach it. `markdown.spec` passes there,
+with 4.7.23 as well as 4.7.25, on the tree of 2026-10-13.
+
 ## What happens
 
 `repro.sml` decodes the JSON text `{"ab":1}` with `lib/json` and prints the

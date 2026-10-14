@@ -9,6 +9,16 @@ This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`
 tag `v4.7.23`, byte for byte, so the code below is unchanged there;
 `master` was not built.
 
+**Still there in MLKit 4.7.25** (2026-10-09), the release that `make
+hosts` installs since 2026-10-13: `sml_microsleep` is unchanged, and
+`prim ("sml_microsleep", (0, 1000))` gave `(0, 3, 11263)` and then
+`(0, 10, 132538774462488)`, called twice in one program. What `sleep`
+makes of the garbage depends on what the stack held: `bug.sml` happens to print
+`returned 0.000` three times with 4.7.25, and a `Time.time` of
+2^31 seconds or more no longer raises `Time` since 4.7.24 (report
+`Time.toSeconds/beyond-2^31-seconds`), so a wrong result may now come
+back where 4.7.23 raised.
+
 ## Summary
 
 * **The trigger:** any call of `Posix.Process.sleep`, `Time.zeroTime`
@@ -138,3 +148,7 @@ of `tests/basis/deviations.txt`:
 ```
 native:mlkit@* | Posix.Process.sleep/* | HOST-BUG | sleep raises Time after it has slept: the runtime returns the time left from the rem of nanosleep, which nanosleep writes only when a signal interrupts it (and in nanoseconds where microseconds are expected)
 ```
+
+With MLKit 4.7.25 both checks passed (2026-10-13): the stack held zeros
+where the suite calls `sleep`. The line is `HOST-FLAKY` since then, which
+a run does not require to match.

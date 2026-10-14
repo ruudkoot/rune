@@ -13,6 +13,10 @@ Related upstream: [#79](https://github.com/melsman/mlkit/issues/79), closed
 in 2021, fixed a segmentation fault of `exece`. This report is about a
 different matter, the empty environment.
 
+**Still there in MLKit 4.7.25** (2026-10-09), the release that `make
+hosts` installs since 2026-10-13: the program below gives the same
+output with it as with 4.7.23.
+
 ## Summary
 
 * **The trigger:** `Posix.Process.exece (path, args, [])`, and so also

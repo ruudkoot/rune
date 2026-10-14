@@ -8,6 +8,12 @@ Poly/ML compile it every time.
 
 ## Status: not reported upstream, not reduced
 
+**Not seen on the tree of 2026-10-13**, with MLKit 4.7.23 or 4.7.25:
+`tests/lib/run-hosts.sh mlkit`, from a tree without `MLB` directories,
+builds `unicode.utf8` and `terminal.emulator` after the programs before
+them, and both pass. The libraries and the runner's order have changed
+since; whether the bug is still in MLKit is not known.
+
 This has not been sent to MLKit, and the program has not been reduced to a
 few lines: every smaller program tried compiled (below).
 
