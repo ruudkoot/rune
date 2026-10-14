@@ -99,10 +99,10 @@ numbers below are `master`'s at `2e2351ba`; they were `incremental`'s at
 * **To `lib/compiler`**: `src/util`, `src/frontend`, `src/elab`,
   `src/core`, `src/backend`, and of `src/driver` the compiler proper --
   `basismanifest.sml`, `buildfile.sml`, `unitbasis.sml`, `pipeline.sml`,
-  `unitmid.sml`, `unitcache.sml`, `deps.sml` (2,865 lines): 59 files, about
+  `unitmid.sml`, `unitcache.sml`, `deps.sml` (2,865 lines): 58 files, about
   19,200 lines.
 * **In `src`**: the driver -- `options.sml` (the command line),
-  `main.sml`, `parallel.sml`, `serve.sml` and `serveexn.sml` -- with
+  `main.sml`, `parallel.sml` and `serve.sml` -- with
   `src/main`, `src/repl` (the terminal front and the protocol; the engine's
   core moves in M5 if M4 makes it the library's session), `src/doc`,
   `src/opt` and `src/isa`.
@@ -124,7 +124,7 @@ used, and a program sees the exports only. (b) The library is used only
 through build files, whose export lists work today. (c) Every structure
 renamed with a prefix (`RuneAst`, ...). Recommended: (a); it is what a
 library needs anyway (`lib/json` will have the same problem), and (c)
-renames 59 files for nothing a program can use.
+renames 58 files for nothing a program can use.
 
 **D2. The compiler's state.** (a) One session at a time, which
 `RuneCompiler.session` starts from nothing: every top-level `ref` and table
@@ -157,11 +157,13 @@ program's Mid, as `MidText` prints it, which needs no basis. Recommended:
 **D5. The rules for libraries.** `AGENTS.md` forbids a library `_prim`
 (the compiler uses none) and a work-around of another compiler's bug
 (`lib/NAME`, the owner's rule of 2026-09-27); the compiler must still build
-with every host, and carries two for MLKit (`UnifyExn`, and `ServeExn`,
-which stays in `src`). (a) `lib/compiler` is excepted from the second rule,
-said so in `AGENTS.md`. (b) The work-arounds stay in `src`, with a stub in
-the library that the hosts' builds replace. Recommended: (a); (b) splits
-one structure across two trees for one host.
+with every host. It carried two for MLKit 4.7.23 (`UnifyExn`, and
+`ServeExn` in `src`), which MLKit 4.7.24 made unneeded and which are gone
+(2026-10-13), so the rule bites again only with a host's next bug. (a)
+`lib/compiler` is excepted from the second rule, said so in `AGENTS.md`.
+(b) The work-arounds stay in `src`, with a stub in the library that the
+hosts' builds replace. Recommended: (a); (b) splits one structure across
+two trees for one host.
 
 **D6. The API's name and the Basis's `Compiler`.** The Basis has
 `Compiler : COMPILER`, the REPL's controls. (a) The library is
@@ -220,7 +222,7 @@ session is the REPL engine's, made a library's.
 
 ### M1. The move (M, the files and their build)
 
-* **What:** the 59 files moved with `git mv` to `lib/compiler/...`,
+* **What:** the 58 files moved with `git mv` to `lib/compiler/...`,
   keeping their directories (`lib/compiler/elab/unify.sml`);
   `lib/compiler/library.build` lists them in their order; `rune.build`,
   `runedoc.build`, `runeopt.build` and `runeisa.build` `use` it;

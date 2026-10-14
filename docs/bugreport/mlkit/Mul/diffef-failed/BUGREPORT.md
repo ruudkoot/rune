@@ -2,16 +2,29 @@
 
 **Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The compiler stops with `Impossible: Mul: diffef failed` on a valid program.
 
-## Status: not reported upstream
+## Status: reported and fixed upstream, in MLKit 4.7.24
 
-This has not been sent to MLKit. No release has a fix: 4.7.21, 4.7.22 and
-4.7.23 all crash on these programs. MLKit's `master` at `c49fbea`
-(2026-09-25) has the same `src/Compiler/Regions` as the tag `v4.7.23`,
-`Mul.sml` included. It was not built here, so the bug has not been seen
-on `master` itself.
+* **The report:** [melsman/mlkit#232](https://github.com/melsman/mlkit/issues/232)
+  (2026-09-27), this text with its programs.
+* **The fix:** [melsman/mlkit#234](https://github.com/melsman/mlkit/pull/234),
+  commit `3eaa1a07` (2026-09-29). The cause was not in `Mul.sml` but in
+  region inference (`src/Compiler/Regions/RegInf.sml`): the type of a
+  unary exception constructor is an arrow, and the fresh effect of that
+  outer arrow, which building the exception value never invokes, escaped
+  into the effect of the closure that builds it. The fix keeps the
+  annotations of the argument and result types and leaves that effect out.
+  It adds `bug.sml`, `bug-tree.sml` and `bug-helper.sml` (as
+  `test/mul_exception_*.sml`) and an exception carrying a closure to
+  MLKit's tests. The first release with it is 4.7.24 (2026-10-07).
+* **Checked** (2026-10-13) with MLKit 4.7.25, the binary release that
+  `make hosts` installs: `run.sh` builds every program in all three ways,
+  and each prints what it should (`1`, or `leaf` for `bug-tree.sml`).
+  MLKit 4.7.25 also builds Rune's compiler, `runedoc` and `runeopt` with
+  both work-arounds below taken out, and they are gone (2026-10-13).
+  Without them MLKit 4.7.23 still stops on `src/driver/serve.sml` (it
+  compiles `src/elab/unify.sml` as that file is now).
 
-A search of MLKit's issues and pull requests, their titles, texts and
-comments, up to #229 of 2026-09-25, found no report of it (2026-09-27).
+What follows is the report as it was sent, and what Rune did about it.
 
 ## Summary
 
@@ -195,7 +208,8 @@ code generator (`runeopt`) that MLKit rejected.
   same (3,428,576 bytes) to compile `examples/hello.sml`, with or without
   the change.
 * **When it can go:** once `make hosts` installs a release of MLKit that
-  compiles `bug.sml`.
+  compiles `bug.sml`. That was 4.7.25 (2026-10-13), and `unifyexn.sml` is
+  gone: `unify.sml` declares `exception Unify of string` again.
 
 **Met again** (2026-10-10): MLKit 4.7.23 stopped the same way at
 `src/driver/serve.sml`, the JSON parser of the compiler as a service.
@@ -206,4 +220,6 @@ a stub let MLKit through, and so did declaring the exception elsewhere, so
 the trigger is wider than the summary's first point says. This shape is
 not yet reduced to a program of its own. The workaround is the same:
 `src/driver/serveexn.sml` declares the exception, and `serve.sml` binds it
-again with `exception Bad = ServeExn.Bad`.
+again with `exception Bad = ServeExn.Bad`. MLKit 4.7.25 compiles
+`serve.sml` with `exception Bad of string` in it, so the fix of #234
+covers this shape as well, and `serveexn.sml` is gone too (2026-10-13).
