@@ -529,6 +529,7 @@ before the property runs, which a case's single draw keeps
 - A program that does not build after twelve attempts gives NOT BUILT, not NOT RUN.
 - A failing law's run by itself is tried three times where the host stops before a verdict.
 - At most `$LAWS_HOST_JOBS` hosts at once (default 3): a run with all six at once, MLton building beside another session's MLton builds, ended in a crash of the machine seven minutes in (memory, most likely; not shown).
+- Rune's verdicts came from `tests/out/laws/results.txt`, which `run-laws.sh` wrote and the runner that replaced it (unit-testing M8) does not, so from 2026-10-12 every comparison was empty and passed. They are now those that `make test-laws` holds Rune to, a pass for every law that `law-skips.txt` does not list (`$LAWS_RESULTS` still names a file of Rune's own verdicts), and a line of `law-deviations.txt` that names a host which ran and matches none of its laws that did not pass is stale and fails the run (2026-10-14).
 
 **What is still not built** is what a host lacks (`Int8`, `WideChar`,
 `Real32`, the arrays of two dimensions, ...) and the hosts' own identities
