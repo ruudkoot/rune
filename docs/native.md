@@ -389,3 +389,10 @@ What could still go wrong, and what would notice:
   differently): `check-opt-cross`.
 * **A missing toolchain:** `runeopt` needs `cc` and `as` when it runs, and
   the doctor's `native` scope reports them.
+
+
+The optional GMP dependency is linked into register VMs only. Native output
+continues to use the SML IntInf implementation in `librune.a`, including when
+`runeopt` itself runs on a GMP-enabled register VM. The installed runtime and
+wrapper remain relocatable; the register VM's GMP provenance and relinking
+material are described in [building.md](building.md#gmp-dependency).

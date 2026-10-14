@@ -75,10 +75,10 @@ def main():
                 provenance = 'checked system installation; source and build options not supplied'
             (out/'probe.c').write_text(PROBE)
             command = [*shlex.split(a.cc),*shlex.split(a.cflags),*cpp,
-                       str(out/'probe.c'),*libs,'-o',str(out/'probe')]
+                       str(out/'probe.c'),*libs,'-o',str(out/'probe.exe')]
             record['probe_command'] = command
             run(command)
-            fields = run([*shlex.split(a.runner),str((out/'probe').resolve())]).splitlines()
+            fields = run([*shlex.split(a.runner),str((out/'probe.exe').resolve())]).splitlines()
             h,l = (tuple(map(int,s.split('.'))) for s in fields[:2])
             record.update(header_version=fields[0],library_version=fields[1],
                           header_limb_bits=int(fields[2]),library_limb_bits=int(fields[3]),
@@ -87,7 +87,8 @@ def main():
                 raise RuntimeError('unsupported or mismatched GMP header/library: '+repr(fields))
             record.update(enabled=True,header_version=fields[0],library_version=fields[1],
                           limb_bits=int(fields[2]),nail_bits=int(fields[4]),provenance=provenance,
-                          target=run([*shlex.split(a.cc),'-dumpmachine']),
+                          target=(record.get('dependency') or {}).get('configured', {}).get('host') or
+                                 run([*shlex.split(a.cc),*shlex.split(a.cflags),'-dumpmachine']),
                           compiler=run([*shlex.split(a.cc),'--version']).splitlines()[0])
             reason = provenance
         except (OSError,ValueError,KeyError,RuntimeError,subprocess.TimeoutExpired) as e:
@@ -95,7 +96,7 @@ def main():
             if a.mode == 'yes':
                 raise SystemExit('GMP=yes: '+reason)
             cpp = []; libs = []
-    record['reason'] = reason
+    record.update(reason=reason, cppflags=cpp, ldlibs=libs)
     (out/'config.json').write_text(json.dumps(record,indent=2)+'\n')
     options = record.get('dependency',{} ) or {}
     options = {'requested':options['config'], 'configured':options.get('configured',{})} if options else {'unknown':True}

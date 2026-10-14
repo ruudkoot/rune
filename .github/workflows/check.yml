@@ -42,7 +42,7 @@ jobs:
           key: rune-hosts-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/fetch-hosts.sh') }}
 
       - name: Pinned GMP (build and upstream checks)
-        run: python3 scripts/build-gmp.py --jobs 4
+        run: python3 scripts/build-gmp.py --enable-fat --jobs 4
 
       - name: make hosts
         run: make hosts

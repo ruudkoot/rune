@@ -791,3 +791,11 @@ no GMP pointers. GMP objects are scoped to a primitive call and its allocator
 is separately budgeted. See `docs/runtime.md` and `docs/plans/gmp.md`. Count
 comparisons across stack, native and register engines force SML; comparisons
 across register tiers also run separately with GMP.
+
+
+Cross builds select a separately checked GMP prefix for each ABI. Build
+availability changes no primitive identity or bytecode fingerprint. Image
+format 14 keeps only canonical Rune values, finite arithmetic limits, and
+fork policy; a saved world's backend is selected by the restoring VM.
+The cross-platform arithmetic suite compares counts within each backend,
+with distinct records for GMP's native allocations and conversion costs.

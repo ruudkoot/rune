@@ -96,6 +96,7 @@ need() { [ -e "$1" ] || missing="$missing $1"; }
 
 need "$root/bin/runevm-stack"
 need "$root/bin/runevm"
+need "$root/build/gmp/native-build.json"
 if [ -z "$host" ]; then
   need "$root/bin/rune.rbc"
 elif sml_for_host "$host" > /dev/null; then
@@ -131,6 +132,8 @@ manpage() { # args PROG
 }
 
 mkdir -p "$bindir" "$libdir/basis" "$mandir" "$bashdir" "$zshdir"
+
+python3 "$root/scripts/package-runtime.py" --out "$libdir/rebuild"
 
 copy "$root/bin/runevm-stack" "$bindir/runevm-stack" 755
 copy "$root/bin/runevm" "$bindir/runevm" 755

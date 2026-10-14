@@ -22,6 +22,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--baseline-root', default='tests/out/intinf/baseline-tree')
 parser.add_argument('--baseline-record', default='tests/intinf/baseline.json')
 parser.add_argument('--vm-options',default='')
+parser.add_argument('--baseline-options',default='')
 parser.add_argument('--samples', type=int, default=15)
 parser.add_argument('--current-record', help='reuse expected hashes from an existing run.py report')
 parser.add_argument('--reference-compiler', default='bin/rune-mlton')
@@ -48,7 +49,7 @@ for name in ('runevm','rune.rbc'):
         raise SystemExit('baseline '+name+' does not match the recorded baseline artifact')
 environment = {k:v for k,v in os.environ.items() if not k.startswith('RUNEVM_') and k != 'RUNE_GC_STRESS'}
 environment['LC_ALL'] = 'C'
-report = {'samples':args.samples, 'warmup_pairs':2, 'vm_options':args.vm_options,
+report = {'baseline_options':args.baseline_options, 'samples':args.samples, 'warmup_pairs':2, 'vm_options':args.vm_options,
           'machine':platform.uname()._asdict(), 'affinity':sorted(os.sched_getaffinity(0)), 'load_start':os.getloadavg(),
           'baseline_record_sha256':sha(ROOT/args.baseline_record),
           'current_record_sha256':sha(ROOT/args.current_record) if args.current_record else None,
@@ -83,7 +84,7 @@ for name,original in record['compiler_workloads'].items():
             directory = base if side == 'baseline' else ROOT
             target = out/(name+'-'+side+'.rbc')
             target.unlink(missing_ok=True)
-            command = [str(directory/'bin/runevm'),*(shlex.split(args.vm_options) if side == 'current' else []),'--heap-size','67108864',
+            command = [str(directory/'bin/runevm'),*(shlex.split(args.vm_options if side == 'current' else args.baseline_options)),'--heap-size','67108864',
                        str(directory/'bin/rune.rbc'),'--lib','lib','--target=registers',
                        '-o',str(target),*original['inputs']]
             def limits():

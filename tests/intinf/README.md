@@ -63,6 +63,9 @@ VMs. `compare-compilers.py --baseline-record FILE --vm-options OPTIONS`
 also supports comparisons to M2 and a selected current backend. Affinity,
 all paired samples, and compiler CPU times accompany wall timings; retain
 noisy or unsuccessful runs when investigating the 5% regression gate.
+Both comparison drivers accept `--baseline-options` to force the same backend
+on M4 and the current build, or to compare SML and GMP using the same VM and
+bytecode. Leave it empty for M1, whose VM predates backend selection.
 
 `make test-intinf-hardening` checks malformed arguments, fork policy, native
 option precedence, malformed images, and allocator failures in bounded
@@ -74,3 +77,34 @@ including all final samples, flagged/repeated comparisons and conversion costs.
 [gmp-hardening.json](gmp-hardening.json) indexes the acceptance evidence and
 source hashes. Raw local transcripts remain under `tests/out/intinf/m4`;
 GMP-enabled cross builds and release validation follow in M5.
+
+
+M5's `make test-intinf-cross` preserves physical GMP-free VMs and rebuilds the
+enabled counterparts, then runs `dependency.py --require-all` and `cross.py`.
+The same arithmetic bytecode runs on native Linux, Linux32, big-endian
+PowerPC64, AArch64, and Windows64/32. JIT tiers are tested only where supported;
+image producers and consumers cross architectures, builds and runtime backend
+choices, checking stricter saved/invocation limits. Every process is bounded.
+The dependency probe retains the minimized PowerPC division failure; the
+runtime itself continues to use only public `mpz` operations.
+
+`install.py --mode gmp|sml --out DIR` tests the currently built installation
+in a fresh staging directory, moves it to a path containing spaces, compiles
+and runs arithmetic and native output, rebuilds the VM from the installed
+source material, and checks removal preserves an unrelated marker. The M5
+acceptance sequence builds each mode and restores the pinned enabled build.
+
+
+`cpu-family.py` tests the fat native x86-64 package under QEMU's baseline,
+Conroe, Opteron G1 and maximum-feature models, across the interpreter and both
+JIT tiers. The recipe uses a generic host triple as well as fat assembly
+selection: a CPU-specific auto-detected host can enable instructions in C
+helpers that are unsuitable for older processors.
+
+
+M5's final acceptance is indexed by [gmp-release.json](gmp-release.json).
+[gmp-release-performance.json](gmp-release-performance.json) retains the fixed
+arithmetic and compiler samples, direct same-bytecode backend comparisons,
+flagged/repeated measurements and final-package conversion costs. Raw local
+transcripts are under `tests/out/intinf/m5`. Initial host-matrix and Windows
+failures remain recorded alongside successful reruns; remote CI is unrun.

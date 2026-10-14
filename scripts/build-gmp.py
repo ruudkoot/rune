@@ -29,13 +29,20 @@ def main():
     parser.add_argument('--cflags', default='-O2')
     parser.add_argument('--ldflags', default='')
     parser.add_argument('--host', default='')
+    parser.add_argument('--build', default='')
+    parser.add_argument('--cc-for-build', default='cc')
     parser.add_argument('--runner', default='')
     parser.add_argument('--jobs', type=int, default=4)
     parser.add_argument('--timeout', type=int, default=1800)
     parser.add_argument('--disable-assembly', action='store_true')
+    parser.add_argument('--enable-fat', action='store_true', help='runtime CPU selection for x86 packages')
+    parser.add_argument('--with-pic', action='store_true', help='position-independent static objects')
+    parser.add_argument('--abi', choices=('', '32', '64'), default='')
     args = parser.parse_args()
     if args.jobs < 1 or args.timeout < 1:
         parser.error('jobs and timeout must be positive')
+    if args.enable_fat and args.disable_assembly:
+        parser.error('fat CPU selection requires assembly')
     os.chdir(ROOT)
     prefix = Path(args.prefix).resolve()
     config = {**vars(args), 'prefix':str(prefix), 'version':VERSION, 'sha256':SHA256,
@@ -101,12 +108,33 @@ def main():
             elif member.issym() and (not installed.is_symlink() or os.readlink(installed) != member.linkname):
                 raise RuntimeError(f'GMP source symlink differs from the pinned archive: {member.name}')
 
-    environment = {**os.environ,'CC':args.cc,'CFLAGS':args.cflags,'LDFLAGS':args.ldflags}
+    environment = {**os.environ,'CC':args.cc,'CFLAGS':args.cflags,'LDFLAGS':args.ldflags,
+                   'CC_FOR_BUILD':args.cc_for_build}
+    environment.pop('ABI', None)
+    environment['CPPFLAGS'] = ''
+    if args.abi:
+        environment['ABI'] = args.abi
     configure = [source/'configure', '--prefix='+str(prefix),'--disable-shared','--enable-static']
-    if args.host:
-        configure += ['--host='+args.host]
+    # Fat assembly dispatch does not neutralize CPU-specific inline helpers
+    # in C. A native package must also name a generic compiler target, rather
+    # than let GMP's config.guess select e.g. haswell and enable LZCNT/MULX.
+    host_target = args.host
+    if args.enable_fat and not host_target:
+        host_target = subprocess.check_output([*shlex.split(args.cc),'-dumpmachine'],text=True).strip()
+    if host_target:
+        configure += ['--host='+host_target]
+    # WSL can execute Windows targets, and binfmt can execute emulated targets.
+    # That does not make them suitable build-machine generators. Giving both
+    # triples keeps configure's cross-compilation decision independent of that.
+    if host_target or args.build:
+        build_target = args.build or subprocess.check_output([*shlex.split(args.cc_for_build),'-dumpmachine'],text=True).strip()
+        configure += ['--build='+build_target]
     if args.disable_assembly:
         configure += ['--disable-assembly']
+    if args.enable_fat:
+        configure += ['--enable-fat']
+    if args.with_pic:
+        configure += ['--with-pic']
     run(configure,'configure',env=environment)
     run(['make',f'-j{args.jobs}'],'build',env=environment)
     check = ['make',f'-j{args.jobs}','check']

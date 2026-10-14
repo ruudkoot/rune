@@ -21,7 +21,7 @@ dated evidence below distinguish that plan from completed work and measurements.
 | M2: replace the SML representation and kernels | M1 | done 2026-10-08; implementation and acceptance evidence below |
 | M3: add GMP behind the shared interface | M2 | done 2026-10-11; integration and acceptance evidence below |
 | M4: harden runtime integration and tune dispatch | M3 | done 2026-10-12; hardening, performance and acceptance evidence below |
-| M5: complete portability and release validation | M4 | planned |
+| M5: complete portability and release validation | M4 | done 2026-10-14; local release acceptance below; remote CI not run |
 
 Each completed milestone is committed separately, with its commands, results,
 limitations, and comparison to the preceding milestone recorded here. A failed
@@ -39,7 +39,7 @@ The original brief is accounted for as follows:
 | Keep MLton compatibility and other hosts where practical, without sacrificing Rune performance | M2's width-specific kernels and host tests; M5's matrix |
 | Account for the Lean soundness failures involving GMP | dependency provenance in M3, limits and independent checks in M2-M4 |
 
-## Where we are
+## Baseline at ca87fa07
 
 At the baseline, [intinf.sml](../../lib/basis/intinf.sml) represents a value
 as a sign and a little-endian list of base-2^30 limbs. It normalizes zero and
@@ -447,7 +447,7 @@ The source baseline and the cited specification, GMP documentation, and
 Lean postmortem were read on 2026-10-06. This milestone edits only this file.
 
 * The document check passed: all seven local links resolve, M0-M5 each have
-  dependencies, deliverables, and a completion gate, M1-M5 are marked planned,
+  dependencies, deliverables, and a completion gate, M1-M5 were initially marked planned,
   and there is no trailing whitespace. The external source links above were
   opened and read. The unrelated collector draft's content is unchanged.
 * `make check JOBS=4` first stopped inside the syscall sandbox when the
@@ -872,3 +872,182 @@ dependency and transcript hashes. All checks ran outside the syscall sandbox:
 
 Raw local evidence is under `tests/out/intinf/m4`. Remote CI has not run
 from this worktree. The main checkout and collector draft remain untouched.
+
+
+## M5: platform packages and release validation
+
+Completed on 2026-10-14. The [release acceptance record](../../tests/intinf/gmp-release.json)
+and [release measurements](../../tests/intinf/gmp-release-performance.json) retain
+the final artifacts, dependency provenance, commands, samples and failures
+followed by successful reruns. Remote CI remains unrun.
+
+Each register target now configures and links its own checked GMP ABI. The
+native, Windows64/32, Linux32, PowerPC64 and AArch64 dependencies are built from
+the same pinned archive and run the upstream suites before installation.
+Cross configuration is lazy per requested target, preserves exact flags and
+artifact hashes, and relinks when the selection or inputs change. Physical
+GMP-free builds retain the same primitive identities. Count comparisons
+propagate forced SML into Windows through `WSLENV`.
+
+Two release problems were found and retained:
+
+* The optimized clang/PowerPC64 dependency failed upstream division. The
+  [minimal case](../bugreport/gmp/ppc64-division/BUGREPORT.md) reduces the
+  failure to a 256-bit numerator. The public mpz division passes that case;
+  the internal upstream kernel does not. The default PowerPC package uses
+  `--disable-assembly`, which passes the complete upstream suite and the
+  retained probe. No source patch or extra test filter was used.
+* Native fat assembly dispatch alone left Haswell-specific helpers in C.
+  [The packaging regression](../bugreport/gmp/fat-package-target/BUGREPORT.md)
+  produced a wrong shift and an unsupported instruction on older emulated
+  CPUs. Fat packages now also use a generic target triple. The full
+  independent corpus passes on baseline, Conroe, Opteron G1 and maximum
+  x86-64 CPU models, across the interpreter and both JIT tiers, with equal
+  counts. Linux32 additionally builds position-independent GMP objects so
+  the PIE VM does not acquire text relocations.
+
+Explicit build/host triples and a build-machine compiler also prevent WSL's
+ability to execute Windows binaries from confusing configure's cross-build
+detection. All upstream failures remain in the local evidence; a failed
+upstream build is never installed as an accepted dependency.
+
+Installations retain the register VM's source and transitive headers, exact
+flags, binary/source hashes and a tested relinking script. Pinned builds also
+retain GMP's source archive, header/static library, notices, provisioning
+record and exact recipe. The installer checks those records before copying.
+Both enabled and disabled staged installs have passed relocation, native
+output, relinking and removal checks; altered pinned headers are rejected.
+System builds retain explicitly unknown source/build provenance.
+
+The cross-platform suite passed 557 bounded subprocesses, including the same
+arithmetic bytecode, backend-specific counts, finite limits, real/emulated
+forks, and 216 image producer/consumer combinations. Each combination tests
+both stricter invocation and stricter saved limits. JIT checks run only on
+architectures that implement those tiers. These checks establish functional
+coverage under the recorded emulators, not native performance on every CPU.
+
+### M5 measurements (2026-10-14)
+
+The final package retains the fixed M1 inputs and iteration counts. Seven
+alternating pairs measure an **8.9905x** geometric-mean SML improvement over
+the original list implementation on the multiplication/division suite, and
+**6.2623x** for GMP over the fallback on the large-arithmetic suite. Both
+exceed their proposed 2x targets. These are measured results on the recorded
+native machine, separate from the original targets.
+
+| Workload | New SML / list speedup | GMP / new SML speedup |
+|---|---:|---:|
+| small-add | 3.0244 | 1.0533 |
+| small-mul | 4.0462 | 0.8014 |
+| mul-512 | 1.9963 | 3.6036 |
+| mul-4096 | 2.8033 | 43.0507 |
+| mul-unbalanced | 1.7841 | 4.7048 |
+| div-1024 | 31.5414 | 4.3360 |
+| div-4096 | 59.5133 | 26.5124 |
+| div-unbalanced | 28.1776 | 5.6581 |
+| bits-4096 | 0.9546 | 2.2754 |
+| convert-4096 | 1.9519 | 1.0282 |
+| power-1024 | 10.9288 | 41.9879 |
+| factorial-300 | 0.8235 | 1.9888 |
+
+The fallback bit-operation and factorial results remain visible even though
+neither belongs to its multiplication/division gate. The seven-pair small
+multiplication result triggers a larger direct-backend comparison below;
+it is not dismissed by the passing aggregate.
+
+One hundred paired small-arithmetic comparisons to M4, forcing the same
+backend on both sides, give elapsed-time ratios 1.0099/0.9967 for GMP
+addition/multiplication and 0.9909/0.9870 for SML. Compiler comparisons use
+25 pairs after two warmup pairs, each revision's own Basis, verified baseline
+artifacts, and matching output hashes. Ratios below are current elapsed time
+divided by baseline time.
+
+| Compiler workload | GMP / M1 | SML / M1 | GMP / M4 | SML / M4 |
+|---|---:|---:|---:|---:|
+| compile-hello | 1.0069 | 0.9852 | 0.9974 | 0.9986 |
+| compile-sigs | 0.9505 | 1.0100 | 1.0470 | 1.0006 |
+| bootstrap | 1.0285 | 1.0372 (pooled) | 0.9816 | 1.0096 (pooled) |
+
+The initial SML bootstrap ratios were 1.0827 against M1 and 1.0572 against
+M4. The prescribed 100-pair repeats gave 1.0292 and 0.9932; pooling all 125
+pairs gives the table above. Both repeat and pooled medians must pass the
+1.05 gate. Initial and repeat samples remain retained.
+
+A direct comparison of the same final VM and bytecode, alternating forced
+GMP and SML, resolves the earlier small-multiplication flag. One hundred
+pairs give GMP/SML elapsed-time ratios **1.0057** for addition and **0.9983**
+for multiplication. Twenty-five compiler pairs give **0.9983** for hello,
+**0.9729** for signatures and **1.0004** for bootstrap. None exceeds 1.05.
+No workload, iteration count, threshold or arithmetic implementation changed
+between the initial measurements and these comparisons.
+
+The final package's conversion measurements use the same 50,000 roundtrips
+and seven pairs as M4. GMP includes import, copy through power-one, export
+and result allocation; storage includes unpacking, scratch allocation and
+repacking. These are complete boundary costs, not isolated import latency.
+
+| Magnitude bits | GMP roundtrip microseconds | Storage roundtrip microseconds |
+|---|---:|---:|
+| 8 | 0.166 | 0.071 |
+| 32 | 0.179 | 0.076 |
+| 64 | 0.191 | 0.089 |
+| 128 | 0.235 | 0.119 |
+| 256 | 0.329 | 0.181 |
+| 1024 | 0.858 | 0.485 |
+| 4096 | 2.766 | 1.606 |
+| 16384 | 10.942 | 6.360 |
+
+Operation-specific dispatch thresholds remain as measured in M4. The release
+record retains individual results, allocation counts, process memory, timing
+samples and the limitations of the recorded machine; aggregate improvements
+are not a speed guarantee for every operand or platform.
+
+### M5 acceptance
+
+All required local gates pass on the final pinned packages:
+
+* `make check JOBS=8`: 343 language cases, 139,218 Basis checks, compiler
+  bootstrap, documentation/ISA checks, register/JIT/native suites and
+  identical bytecode for 513 programs across seven compiler builds.
+  Host-built `runedoc` and `runeopt` outputs also agree.
+* `make matrix-quick JOBS=8`: Rune and all six host configurations pass with
+  their existing explained deviations. The initial run had one unexplained
+  Rune `waitpid-without-it` exception. Four isolated rechecks and a full
+  same-concurrency rerun passed, without changing tests or deviation ledgers.
+  The initial failure's cause is not established; its report is retained.
+* GMP backend and hardening checks under ASan/UBSan; stack, register and
+  native sanitizer suites; `make test-stress JOBS=8`; and
+  `make test-heap JOBS=8` all pass. GC stress retains the bounded M3/M4
+  policy: the full original oracle at interval 101, compact cases at 1.
+* `make test-windows JOBS=1` passes on all four VMs, including available
+  register JIT tiers, runtime diagnostics, layout counts, images and the
+  Windows Basis matrix. The first shared-directory attempt failed with
+  empty diagnostics and wrong-bytecode errors. A dedicated-directory
+  parallel rerun passed the four VMs but hit two WSL
+  `UtilAcceptVsock: accept4 failed 110` launch errors in tier 2. The complete
+  serial rerun passed without runtime or test changes. Both failed attempts
+  remain recorded; the shared-directory failure's cause is not established.
+* `make test-portability JOBS=8` passes for Linux32, big-endian PowerPC64
+  and AArch64, including supported JIT tiers, count and image comparisons
+  and all five stack/register Basis configurations. Existing explained
+  platform deviations remain visible.
+* All six pinned dependencies pass their upstream suites: 177 passes and
+  one upstream `t-addaddmul` skip each, because these configurations do not
+  provide `mpn_addaddmul_1msb0`. The separate retained division probe also
+  passes on all six. The cross-backend suite passes 557 bounded subprocesses and 216
+  image combinations with both limit orderings. Twelve older/current x86
+  CPU-model and JIT combinations pass the independent arithmetic corpus.
+* Enabled and disabled installations pass staging, relocation to a path
+  containing spaces, compilation, native output, source relinking and
+  removal. Altered pinned headers are rejected. Runtime sources, transitive
+  headers, dependency sources/notices, options and hashes are retained.
+* Generated Basis documentation is current; build, runtime, native,
+  register-architecture and bytecode documentation describe the final
+  configuration. Roadmap links, milestone consistency and whitespace pass.
+
+The committed records index raw evidence under `tests/out/intinf/m5`,
+including the original failures and successful repeats. Existing host Basis
+limitations remain documented, and emulated architecture/CPU checks establish
+functional coverage rather than native performance. Remote CI and external
+publication have not run from this worktree and remain outstanding for a
+release or pull request. The unrelated collector draft is unchanged by this work.

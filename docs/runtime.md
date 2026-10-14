@@ -47,6 +47,9 @@ with other GMP users needs an allocator ownership protocol.
 `--intinf-stats` reports selection, limits, GMP calls, cumulative requested
 bytes, peak live requested bytes, and live bytes at exit. `--version` reports
 both header and linked-library versions plus target and build provenance.
+The same packed encoding is used on 32-bit, 64-bit, little-endian and big-endian
+VMs. Each GMP-enabled ABI uses its own checked header and library; deployment
+and relinking records are described in [building.md](building.md#gmp-dependency).
 Image format 14 carries both arithmetic limits and fork policy. Emulated
 fork inherits the requested mode and reporting flag; it does not reapply an
 inherited environment default. A saved world's backend selection comes from

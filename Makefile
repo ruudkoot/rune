@@ -155,7 +155,7 @@ build/gmp/selected: gmp-force
 	@printf '%s\n' '$(GMP_KEY)' > $@.tmp
 	@cmp -s $@.tmp $@ && rm $@.tmp || mv $@.tmp $@
 gmp-dep:
-	python3 scripts/build-gmp.py --jobs $(JOBS)
+	python3 scripts/build-gmp.py $(if $(filter x86_64 i686 i386,$(shell uname -m)),--enable-fat) --jobs $(JOBS)
 $(GMP_DIR)/intinf.o: runtime/intinf.c $(VM_HDRS) $(GMP_DIR)/config.mk
 	$(CC) $(CFLAGS) $(RT_INC) $(GMP_FLAGS) -c -o $@ runtime/intinf.c
 
@@ -527,9 +527,11 @@ RUNE_JIT ?= 1
 JIT_SRCS := runtime/register/jit.c runtime/register/jit/x64.c runtime/register/jit/asm_x64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c
 JIT_HDRS := runtime/register/jit.h runtime/register/jit/x64.h runtime/register/jit/asm.h runtime/register/jit/masm.h runtime/register/jit/compile.h runtime/register/jit_emit.h runtime/register/jit_cases.h
 NEW_LOOP := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS)
-bin/runevm: $(NEW_LOOP) $(GMP_DIR)/intinf.o build/gmp/selected build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
+bin/runevm: $(NEW_LOOP) $(GMP_DIR)/intinf.o build/gmp/selected build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) scripts/record-vm-build.py scripts/runtime_inputs.py | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) $(RT_INC) -o $@ $(NEW_LOOP) $(GMP_DIR)/intinf.o build/librune.a $(GMP_LDLIBS) $(VM_LIBS)
+	python3 scripts/record-vm-build.py --vm $@ --cc '$(CC)' --cflags='$(CFLAGS) -DRUNE_JIT=$(RUNE_JIT)' \
+	  --ldlibs='$(VM_LIBS)' --config $(GMP_DIR) --out build/gmp/native-build.json --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS)
 
 bin/runevm-sml: $(NEW_LOOP) build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) $(RT_INC) -o $@ $(NEW_LOOP) build/librune.a $(VM_LIBS)
@@ -717,6 +719,15 @@ WIN_SRCS    := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_
 # the stack bytecode's (runtime/stack/isa_stack.c), as bin/runevm-asan is built
 WIN_NEW_SRCS := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_win.c
 WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32 -lpsapi
+GMP_CROSS_PREFIX ?= build/deps/gmp
+GMP_WIN64_PREFIX ?= $(GMP_CROSS_PREFIX)/windows64
+GMP_WIN32_PREFIX ?= $(GMP_CROSS_PREFIX)/windows32
+GMP_CROSS_TOOL := scripts/build-gmp-vm.py scripts/configure-gmp.py scripts/runtime_inputs.py
+
+.PHONY: gmp-dep-windows
+gmp-dep-windows:
+	python3 scripts/build-gmp.py --prefix '$(GMP_WIN64_PREFIX)' --cc '$(WINCC)' --host x86_64-w64-mingw32 --enable-fat --jobs $(JOBS)
+	python3 scripts/build-gmp.py --prefix '$(GMP_WIN32_PREFIX)' --cc '$(WINCC32)' --host i686-w64-mingw32 --enable-fat --abi 32 --jobs $(JOBS)
 
 # windows_dlls CC: refuse $@ when it imports a DLL whose name starts with lib
 define windows_dlls
@@ -738,15 +749,15 @@ bin/runevm-stack32.exe: $(VM_SRCS) $(VM_HDRS) runtime/sys/sys_win.c | build/.doc
 	$(WINCC32) $(WINCFLAGS) $(WINCFLAGS32) -o $@ $(WIN_SRCS) $(RT_INC) $(WIN_LIBS)
 	$(call windows_dlls,$(WINCC32))
 
-bin/runevm.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-windows
-	@mkdir -p bin
-	$(WINCC) $(WINCFLAGS) -o $@ $(WIN_NEW_SRCS) $(RT_INC) $(WIN_LIBS)
-	$(call windows_dlls,$(WINCC))
+bin/runevm.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_CROSS_TOOL) gmp-force | build/.doctor-windows
+	python3 scripts/build-gmp-vm.py --mode '$(GMP)' --prefix '$(GMP_WIN64_PREFIX)' --cc '$(WINCC)' \
+	  --cflags='$(WINCFLAGS)' --ldlibs='$(WIN_LIBS)' --config build/gmp/windows64 --out $@ --windows \
+	  --sources $(WIN_NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
-bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-windows
-	@mkdir -p bin
-	$(WINCC32) $(WINCFLAGS) $(WINCFLAGS32) -o $@ $(WIN_NEW_SRCS) $(RT_INC) $(WIN_LIBS)
-	$(call windows_dlls,$(WINCC32))
+bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_CROSS_TOOL) gmp-force | build/.doctor-windows
+	python3 scripts/build-gmp-vm.py --mode '$(GMP)' --prefix '$(GMP_WIN32_PREFIX)' --cc '$(WINCC32)' \
+	  --cflags='$(WINCFLAGS) $(WINCFLAGS32)' --ldlibs='$(WIN_LIBS)' --config build/gmp/windows32 --out $@ --windows \
+	  --sources $(WIN_NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
 # The suites on the Windows VMs of both bytecodes: the stack one compiled
 # by bin/rune-stack, the register one by bin/rune, each on its two VMs
@@ -758,11 +769,11 @@ bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-windows
 # convention is what the suites test there.
 test-windows: windows $(RUNE) bin/rune-repl bin/rune-repl.cmd bin/rune-dap bin/rune-kernel
 	sh tests/run-windows.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-stack.exe --vm bin/runevm-stack32.exe
-	WSLENV=RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all sh tests/run-windows.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
+	WSLENV=RUNEVM_INTINF:RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all sh tests/run-windows.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
 	  --vm bin/runevm.exe --vm bin/runevm32.exe
-	WSLENV=RUNEVM_JIT:RUNEVM_JIT_TIER:$$WSLENV RUNEVM_JIT=all RUNEVM_JIT_TIER=2 sh tests/run-windows.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
+	WSLENV=RUNEVM_INTINF:RUNEVM_JIT:RUNEVM_JIT_TIER:$$WSLENV RUNEVM_JIT=all RUNEVM_JIT_TIER=2 sh tests/run-windows.sh -j $(JOBS) --rune bin/rune --native bin/runevm --def runtime/register/regs.def \
 	  --vm bin/runevm.exe
-	WSLENV=RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all RUNE=$(abspath $(RUNE_STACK)) sh tests/basis/run-matrix.sh -j $(JOBS) --configs windows
+	WSLENV=RUNEVM_INTINF:RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all RUNE=$(abspath $(RUNE_STACK)) sh tests/basis/run-matrix.sh -j $(JOBS) --configs windows
 	sh tests/terminal/run.sh --windows
 	python3 tests/dap/run.py --windows
 	sh tests/kernel/run.sh --windows
@@ -807,6 +818,17 @@ QEMUA64    ?= qemu-aarch64
 JIT_SRCS_A64 := runtime/register/jit.c runtime/register/jit/a64.c runtime/register/jit/asm_a64.c runtime/register/jit/masm.c runtime/register/jit/compile.c runtime/register/jit/emit.c
 NEW_SRCS_A64 := runtime/main.c runtime/register/interp.c runtime/register/debug_loop.c runtime/register/isa_regs.c runtime/register/live.c $(JIT_SRCS_A64) $(filter-out runtime/stack/isa_stack.c,$(RT_SRCS)) runtime/sys/sys_$(SYS).c
 PORT_TIMEOUT ?= 900
+GMP_LINUX32_PREFIX ?= $(GMP_CROSS_PREFIX)/linux32
+GMP_PPC64_PREFIX ?= $(GMP_CROSS_PREFIX)/ppc64
+# The clang/PPC optimized GMP build fails the retained division probe.
+GMP_PPC64_FLAGS ?= --disable-assembly
+GMP_AARCH64_PREFIX ?= $(GMP_CROSS_PREFIX)/aarch64
+
+.PHONY: gmp-dep-portability
+gmp-dep-portability:
+	python3 scripts/build-gmp.py --prefix '$(GMP_LINUX32_PREFIX)' --cc '$(PORTCC32)' --cflags='-O2 $(PORTFLAGS32)' --host i686-pc-linux-gnu --abi 32 --enable-fat --with-pic --jobs $(JOBS)
+	python3 scripts/build-gmp.py --prefix '$(GMP_PPC64_PREFIX)' --cc '$(PPCCC)' --cflags='-O2 $(PPCFLAGS)' --host powerpc64-linux-gnu --runner '$(QEMUPPC) -L $(PPCROOT)' $(GMP_PPC64_FLAGS) --jobs $(JOBS)
+	python3 scripts/build-gmp.py --prefix '$(GMP_AARCH64_PREFIX)' --cc '$(A64CC)' --cflags='-O2 $(A64FLAGS)' --host aarch64-linux-gnu --runner '$(QEMUA64) -L $(A64ROOT)' --jobs $(JOBS)
 
 portability: bin/runevm-stack32 bin/runevm-stack-ppc64 bin/runevm32 bin/runevm-ppc64 bin/runevm-aarch64
 
@@ -827,13 +849,15 @@ bin/runevm-stack-ppc64: bin/runevm-stack-ppc64.bin Makefile
 
 # runtime/register for the same two machines, from the sources bin/runevm-asan is
 # built from (its instruction set's part in place of the stack bytecode's)
-bin/runevm32: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile | build/.doctor-portability
-	@mkdir -p bin
-	$(PORTCC32) $(CFLAGS) $(PORTFLAGS32) $(RT_INC) -o $@ $(NEW_SRCS) -lm
+bin/runevm32: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force | build/.doctor-portability
+	python3 scripts/build-gmp-vm.py --mode '$(GMP)' --prefix '$(GMP_LINUX32_PREFIX)' --cc '$(PORTCC32)' \
+	  --cflags='$(CFLAGS) $(PORTFLAGS32)' --runner '' --config build/gmp/linux32 --out $@ \
+	  --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
-bin/runevm-ppc64.bin: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile | build/.doctor-portability
-	@mkdir -p bin
-	$(PPCCC) $(CFLAGS) $(PPCFLAGS) $(RT_INC) -o $@ $(NEW_SRCS) -lm
+bin/runevm-ppc64.bin: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CROSS_TOOL) gmp-force | build/.doctor-portability
+	python3 scripts/build-gmp-vm.py --mode '$(GMP)' --prefix '$(GMP_PPC64_PREFIX)' --cc '$(PPCCC)' \
+	  --cflags='$(CFLAGS) $(PPCFLAGS)' --runner '$(QEMUPPC) -L $(PPCROOT)' --config build/gmp/ppc64 --out $@ \
+	  --sources $(NEW_SRCS) --headers $(VM_HDRS) $(NEW_HDRS) Makefile
 
 bin/runevm-ppc64: bin/runevm-ppc64.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-ppc64.bin" "$$@"\n' '$(QEMUPPC) -L $(PPCROOT)' > $@
@@ -841,9 +865,10 @@ bin/runevm-ppc64: bin/runevm-ppc64.bin Makefile
 
 # the register VM for aarch64, its JIT included (M12): the encoder a64.c
 # and the portable assembler's aarch64 side in place of x64.c's
-bin/runevm-aarch64.bin: $(NEW_SRCS_A64) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/register/jit/a64.h runtime/register/jit/asm.h Makefile | build/.doctor-portability
-	@mkdir -p bin
-	$(A64CC) $(CFLAGS) $(A64FLAGS) -DRUNE_JIT=1 $(RT_INC) -o $@ $(NEW_SRCS_A64) -lm
+bin/runevm-aarch64.bin: $(NEW_SRCS_A64) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/register/jit/a64.h runtime/register/jit/asm.h Makefile $(GMP_CROSS_TOOL) gmp-force | build/.doctor-portability
+	python3 scripts/build-gmp-vm.py --mode '$(GMP)' --prefix '$(GMP_AARCH64_PREFIX)' --cc '$(A64CC)' \
+	  --cflags='$(CFLAGS) $(A64FLAGS) -DRUNE_JIT=1' --runner '$(QEMUA64) -L $(A64ROOT)' --config build/gmp/aarch64 --out $@ \
+	  --sources $(NEW_SRCS_A64) --headers $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) runtime/register/jit/a64.h runtime/register/jit/asm.h Makefile
 
 bin/runevm-aarch64: bin/runevm-aarch64.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-aarch64.bin" "$$@"\n' '$(QEMUA64) -L $(A64ROOT)' > $@
@@ -1527,3 +1552,14 @@ build/intinf-alloc-test: tests/intinf/alloc-failure.c runtime/intinf.c build/lib
 test-intinf-hardening: $(RUNE) $(RUNEOPT) vm bin/runevm-sml build/intinf-alloc-test
 	python3 tests/intinf/hardening.py $(if $(filter yes,$(NATIVE_HOST)),--native)
 	python3 tests/intinf/hardening.py --vm bin/runevm-sml --out tests/out/intinf/hardening-sml
+
+
+.PHONY: test-intinf-cross
+test-intinf-cross:
+	python3 tests/intinf/prepare-cross.py --jobs $(JOBS) --prefix '$(if $(GMP_PREFIX),$(GMP_PREFIX),build/deps/gmp/native)'
+	python3 tests/intinf/dependency.py --require-all
+	python3 tests/intinf/cross.py --sml-vms tests/out/intinf/cross-builds/sml-vms
+
+.PHONY: test-intinf-dependency
+test-intinf-dependency:
+	python3 tests/intinf/dependency.py

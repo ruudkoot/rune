@@ -18,6 +18,7 @@ p.add_argument('--baseline-run',default='tests/out/intinf/m2-final4')
 p.add_argument('--current-run',required=True)
 p.add_argument('--vm',default='bin/runevm')
 p.add_argument('--vm-options',default='--intinf=gmp')
+p.add_argument('--baseline-options',default='')
 p.add_argument('--group',default='small')
 p.add_argument('--samples',type=int,default=25)
 p.add_argument('--out',required=True)
@@ -31,14 +32,14 @@ expected=next(v for k,v in b['tool_hashes'].items() if k.endswith('/runevm'))
 assert sha(a.baseline_vm)==expected,'baseline VM differs from the recorded binary'
 report={'samples':a.samples,'warmup_pairs':2,'affinity':sorted(os.sched_getaffinity(0)),'load_start':os.getloadavg(),
         'baseline_record_sha256':sha(base/'report.json'),'current_record_sha256':sha(current/'report.json'),
-        'vm_sha256':sha(a.vm),'baseline_vm_sha256':sha(a.baseline_vm),'vm_options':a.vm_options,'workloads':{}}
+        'baseline_options':a.baseline_options,'vm_sha256':sha(a.vm),'baseline_vm_sha256':sha(a.baseline_vm),'vm_options':a.vm_options,'workloads':{}}
 for name,entry in b['workloads'].items():
     if entry['group']!=a.group:continue
     assert entry['source_sha256']==c['workloads'][name]['source_sha256']
     measurements={'baseline':[],'current':[]}
     for i in range(a.samples+2):
         for side in (['baseline','current'] if i%2 else ['current','baseline']):
-            directory,vm,flags=(base,a.baseline_vm,[]) if side=='baseline' else (current,a.vm,shlex.split(a.vm_options))
+            directory,vm,flags=(base,a.baseline_vm,shlex.split(a.baseline_options)) if side=='baseline' else (current,a.vm,shlex.split(a.vm_options))
             command=[vm,*flags,str(directory/(name+'.rbc'))]
             prefix=out/(name+'-'+side+'-'+str(i))
             def limits():
