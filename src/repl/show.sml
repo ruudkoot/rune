@@ -76,8 +76,8 @@ struct
   (* the shortest path that names the type constructor in the session: its
      own name at the top where that is it, else the structures breadth
      first, a path that ends in its own name before one that does not, then
-     the first in order; NONE where none does *)
-  fun pathOf (env : Env.env, c : tycon) : string option =
+     the first in order; only names satisfying accepts are considered *)
+  fun pathOfWhen (env : Env.env, c : tycon, accepts : string -> bool) : string option =
     let
       val stamp = #stamp c
       fun named e n = case StringMap.find (Env.tys e, n) of SOME ts => tyconOf ts = SOME stamp | NONE => false
@@ -85,11 +85,12 @@ struct
         | search (_, 0) = NONE
         | search (level : (string * Env.env) list, depth : int) =
             let
-              fun own (p, e) = if named e (#name c) then SOME (p ^ #name c) else NONE
+              fun own (p, e) = if named e (#name c) andalso accepts (p ^ #name c) then SOME (p ^ #name c) else NONE
               fun other (p, e) =
                 StringMap.foldli (fn (n, ts, found) => case found of
                                                          SOME _ => found
-                                                       | NONE => if tyconOf ts = SOME stamp then SOME (p ^ n) else NONE)
+                                                       | NONE => if tyconOf ts = SOME stamp andalso accepts (p ^ n)
+                                                                 then SOME (p ^ n) else NONE)
                                  NONE (Env.tys e)
               (* the library's own structures (Rune...) after the others *)
               fun private p = String.isPrefix "Rune" p orelse String.isPrefix "RUNE" p
@@ -109,8 +110,10 @@ struct
                               depth - 1)
             end
     in
-      if named env (#name c) then SOME (#name c) else search ([("", env)], 5)
+      if named env (#name c) andalso accepts (#name c) then SOME (#name c) else search ([("", env)], 5)
     end
+
+  fun pathOf (env : Env.env, c : tycon) = pathOfWhen (env, c, fn _ => true)
 
   (* a type as the session names it, the type constructors of `local` by
      the names given there first *)
@@ -194,12 +197,14 @@ struct
                          [] (Env.strs e)
     in tys @ vals @ strs end
 
-  (* A type the session names S.t, of no arguments, whose structure has
+  (* A type with a visible name S.t, of no arguments, whose structure has
      S.toString : t -> string, prints by it: Word8.word, IntInf.int,
-     Time.time; a word with 0wx before it, as a word prints *)
+     Time.time; a word with 0wx before it, as a word prints. Search names
+     with a matching formatter independently of the shortest displayed
+     type name: a top-level abbreviation has no structure of its own. *)
   fun shownBy (env : Env.env, c : tycon, args : ty list) : string option =
-    case (args, pathOf (env, c)) of
-      ([], SOME path) =>
+    let
+      fun at path =
         let
           val parts = String.fields (fn ch => ch = #".") path
           val structure' = List.take (parts, List.length parts - 1)
@@ -216,9 +221,11 @@ struct
                           if #stamp c' = #stamp c andalso #stamp s = #stamp stringTycon then
                             let
                               val name = String.concatWith "." structure' ^ ".toString"
-                              val word = String.isPrefix "Word" (List.last structure') orelse List.last structure' = "LargeWord"
+                              val kind = Overload.kindOf c
+                              val word = kind = SOME "word" orelse String.isPrefix "Word" (List.last structure') orelse List.last structure' = "LargeWord"
                                          orelse List.last structure' = "SysWord"
-                              val numeric = word orelse String.isPrefix "Int" (List.last structure')
+                              val numeric = word orelse kind = SOME "int" orelse kind = SOME "real"
+                                            orelse String.isPrefix "Int" (List.last structure')
                                             orelse List.last structure' = "LargeInt" orelse List.last structure' = "Position"
                                             orelse String.isPrefix "Real" (List.last structure')
                                             orelse List.last structure' = "LargeReal"
@@ -231,7 +238,10 @@ struct
                  | _ => NONE)
             | _ => NONE
         end
-    | _ => NONE
+    in
+      if not (List.null args) then NONE
+      else Option.mapPartial at (pathOfWhen (env, c, fn path => isSome (at path)))
+    end
 
   (* SML text of an `int -> t -> RuneCompiler.pretty` printer for t *)
   fun printer (g : gen, t : ty) : string =
@@ -270,9 +280,11 @@ struct
             | (_, _, true, _, [a]) => "(RuneShow.array " ^ printer (g, a) ^ ")"
             | (_, _, _, true, [a]) => "(RuneShow.vector " ^ printer (g, a) ^ ")"
             | _ =>
-                case IntMap.find (!Elaborate.dataCons, s) of
-                  SOME cons => datatypeAt (g, c, cons, args)
-                | NONE => case shownBy (#env g, c, args) of SOME p => p | NONE => "RuneShow.hidden"
+                case shownBy (#env g, c, args) of
+                  SOME p => p
+                | NONE => case IntMap.find (!Elaborate.dataCons, s) of
+                            SOME cons => datatypeAt (g, c, cons, args)
+                          | NONE => "RuneShow.hidden"
         end
 
   (* the printer Compiler.addPrettyPrinter installed for the type key

@@ -92,6 +92,8 @@ cases=[
  ('div-negative-zero',f'val f = _prim "intinf_divmod" : {divmod}\nval _ = f(true,false,"\\001",true,"")','negative zero'),
  ('div-leading-zero',f'val f = _prim "intinf_divmod" : {divmod}\nval _ = f(true,false,"\\001\\000",false,"")','noncanonical magnitude'),
  ('exponent','val f = _prim "intinf_power" : bool * string * int -> bool * string\nval _ = f(false,"\\001",~1)','negative exponent'),
+ ('decimal-type','val f = _prim "intinf_decimal" : int ref -> string\nval _ = f(ref 1)','wrong magnitude type'),
+ ('decimal-leading-zero','val f = _prim "intinf_decimal" : string -> string\nval _ = f "\\001\\000"','noncanonical magnitude'),
 ]
 for name,source,message in cases:
     if not has_gmp and name not in ['operation','boolean','unit','bitcount','div-negative-zero','div-leading-zero','exponent']:
@@ -102,6 +104,25 @@ for name,source,message in cases:
 zero=compile('div-zero',f'val f = _prim "intinf_divmod" : {divmod}\nval () = (f(true,false,"\\001",false,""); raise Fail "missing Div") handle Div => print "Div before GMP\\n"\n')
 code,stdout,stderr=run([a.vm,'--intinf='+('gmp' if has_gmp else 'sml'),'--intinf-gmp-memory','1',zero])
 if code!=0 or stdout!=b'Div before GMP\n':failures.append(('zero divisor',code,stdout.decode(),stderr.decode()))
+
+decimal=compile('decimal-primitive', '''val f = _prim "intinf_decimal" : string -> string
+val () = print(f "" ^ " " ^ f "\\255\\255\\255\\255\\255\\255\\255\\255" ^ "\\n")
+''')
+if has_gmp:
+    code,stdout,stderr=run([a.vm,'--intinf=gmp','--gc-stress','1','--gc-verify','--intinf-stats',decimal])
+    if code!=0 or stdout!=b'0 18446744073709551615\n' or b'0 GMP live' not in stderr:
+        failures.append(('decimal primitive',code,stdout.decode(),stderr.decode()))
+    large_decimal=compile('decimal-limits', '''val f = _prim "intinf_decimal" : string -> string
+val () = print(f (String.implode(List.tabulate(125,fn _ => #"\\255"))))
+''')
+    for options,message in [(['--intinf-max-bits','128'],'intinf magnitude limit exceeded'),
+                            (['--intinf-gmp-memory','256'],'intinf GMP memory limit exceeded')]:
+        code,stdout,stderr=run([a.vm,'--intinf=gmp',*options,large_decimal])
+        if code!=2 or stdout or message.encode() not in stderr:
+            failures.append(('decimal limit',options,code,stdout.decode(),stderr.decode()))
+code,stdout,stderr=run([a.vm,'--intinf=sml',decimal])
+if code!=2 or stdout or b'GMP backend is unavailable' not in stderr:
+    failures.append(('decimal unavailable',code,stdout.decode(),stderr.decode()))
 
 # Reject malformed policy/limits before reading the heap. A larger saved
 # memory cap is valid and is narrowed to the current invocation's cap.

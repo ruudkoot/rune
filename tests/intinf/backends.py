@@ -203,6 +203,28 @@ for writer_mode,writer in ([('gmp',a.vm)] if has_gmp else []) + [('sml',a.sml_vm
                 assert status == 2 and b'intinf magnitude limit exceeded' in stderr,stderr
             status,_,stderr = invoke(reader,mode,image,'--intinf-max-bits','64','--restore')
             assert status == 2 and b'intinf magnitude limit exceeded' in stderr,stderr
+
+# Formatting alone must observe a stricter restored magnitude limit, and
+# select the restoring VM's backend rather than the image producer's.
+formatted_world = compile('format-world', f'''structure I = IntInf
+val x = I.pow(I.fromInt 2,200)
+val text = I.toString x
+val () = case Runtime.save {json.dumps(str(image))} of
+ Runtime.Saved => print "saved\\n"
+ | Runtime.Restored => if I.toString x=text then print "formatted\\n" else raise Fail "image formatting"
+''')
+for writer_mode,writer in ([('gmp',a.vm)] if has_gmp else []) + [('sml',a.sml_vm)]:
+    status,stdout,stderr = invoke(writer,writer_mode,formatted_world,'--intinf-max-bits','1024')
+    assert status == 0 and stdout == b'saved\n',stderr
+    for mode,reader in backends:
+        for limit in [512,128]:
+            status,stdout,stderr = invoke(reader,mode,image,'--intinf-max-bits',str(limit),'--restore')
+            if limit == 512:
+                assert status == 0 and stdout == b'formatted\n',stderr
+                calls = int(re.search(rb'(\d+) GMP calls',stderr).group(1))
+                assert (calls > 0) == (mode == 'gmp'),stderr
+            else:
+                assert status == 2 and not stdout and b'intinf magnitude limit exceeded' in stderr,stderr
 (out/'report.json').write_text(json.dumps({'checks':'pass','subprocesses':sequence,
     'bytecode_sha256':hashlib.sha256(bytecode.read_bytes()).hexdigest(),
     'counts':{mode:counts[mode,'off'].decode() for mode,_ in backends},

@@ -426,14 +426,18 @@ and styles on a terminal ([plans/repl.md](plans/repl.md), D16):
   them, a `word` with `0wx`, a `char` and a `string` quoted; a `real` so
   that it reads back as a real (`5.0`, `1E10`);
 * a type `S.t` of a structure that has `S.toString : t -> string` by it:
-  `0wx3 : Word8.word`, an `IntInf.int`, a `Time.time`;
+  `0wx3 : Word8.word`, an `IntInf.int`, a `Time.time`. A matching formatter
+  takes precedence over datatype constructors, so both small and large
+  `IntInf` values print as decimal integers. Formatter lookup follows type
+  identity through visible aliases independently of the displayed type name;
 * a tuple, a record, a list, `ref`, an array (`fromList[...]`) and a vector
   (`#[...]`) by their parts; a list, an array and a vector filling its lines
   where it is wider than the line, a tuple and a record one part to a line;
-* a datatype by its constructors, an argument that is an application in
-  parentheses, whether or not the constructors are in scope: the printer
-  names them by names of its own (`rune'c<stamp>'<tag>`), bound to the
-  constructors the elaborator registered for the type (`Elaborate.dataCons`);
+* a datatype without a matching formatter by its constructors, an argument
+  that is an application in parentheses, whether or not the constructors are
+  in scope: the printer names them by names of its own
+  (`rune'c<stamp>'<tag>`), bound to the constructors the elaborator registered
+  for the type (`Elaborate.dataCons`);
 * an exception with its argument: each declaration that declares an
   exception constructor with an argument registers a printer of it with
   `RuneShow.addExn`, compiled where the constructor is in scope, and the

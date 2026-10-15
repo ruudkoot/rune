@@ -476,6 +476,7 @@ struct
   fun intinf_divmod _ : (bool * string) * (bool * string) = raise Fail "GMP unavailable on this host"
   fun intinf_shift _ : bool * string = raise Fail "GMP unavailable on this host"
   fun intinf_power _ : bool * string = raise Fail "GMP unavailable on this host"
+  fun intinf_decimal _ : string = raise Fail "GMP unavailable on this host"
 
   (* Packed storage, independently of the runtime's C implementation. A
      narrow host's IntInf kernel requests 15-bit digits, a wide one 30. *)

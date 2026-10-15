@@ -44,7 +44,13 @@ process-global, installed before any arithmetic object; the current runtime
 has one executing VM and no concurrent native arithmetic. Future embedding
 with other GMP users needs an allocator ownership protocol.
 
-`--intinf-stats` reports selection, limits, GMP calls, cumulative requested
+Decimal conversion uses the selected arithmetic backend too: GMP supplies
+unsigned decimal digits and SML supplies the sign. The independent SML
+formatter reuses a private quotient array. Formatting large values checks
+the magnitude budget, including after an image is restored with a stricter
+limit; GMP conversion buffers count against the tracked allocation limit.
+
+`--intinf-stats` reports selection, limits, GMP calls (including decimal conversion), cumulative requested
 bytes, peak live requested bytes, and live bytes at exit. `--version` reports
 both header and linked-library versions plus target and build provenance.
 The same packed encoding is used on 32-bit, 64-bit, little-endian and big-endian

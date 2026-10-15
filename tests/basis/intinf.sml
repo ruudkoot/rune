@@ -68,6 +68,18 @@ struct
   val () = eqI ("IntInf.fromString/factorial-30", fn () => factorial 30, fn () => num text30f)
   val () = eqI ("IntInf.fromString/~2^128", fn () => I.~ (p2 128), fn () => num ("~" ^ text2p128))
   val () = eqT ("IntInf.toString/10^30", "1000000000000000000000000000000", fn () => tenTo 30)
+  (* Exercise both arithmetic widths on hosts, including zero-padded chunks. *)
+  val () = List.app (fn n =>
+    let val p = I.pow(i 10,n)
+        val zeros = String.implode(List.tabulate(n,fn _ => #"0"))
+        val text = "1" ^ zeros
+        val suffix = Int.toString n
+    in eqS ("IntInf.toString/power-" ^ suffix,text,fn () => I.toString p);
+       eqS ("IntInf.toString/negative-power-" ^ suffix,"~" ^ text,fn () => I.toString(I.~ p));
+       eqS ("IntInf.toString/below-power-" ^ suffix,
+            String.implode(List.tabulate(n,fn _ => #"9")),fn () => I.toString(I.-(p,one)));
+       eqS ("IntInf.toString/immutable-" ^ suffix,text,fn () => I.toString p)
+    end) [4,9,18,19,20,27,36,64,128,257]
   val () = eqT ("IntInf.toString/~10^30", "~1000000000000000000000000000000", fn () => I.~ (tenTo 30))
   (* 30!/25! = 26 * 27 * 28 * 29 * 30 *)
   val () = eqK ("IntInf.div/factorial-30-by-factorial-25", 17100720, fn () => I.div (factorial 30, factorial 25))

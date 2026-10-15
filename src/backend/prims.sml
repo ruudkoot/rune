@@ -403,7 +403,8 @@ struct
     ("intinf_binary", 397, 5),
     ("intinf_divmod", 398, 5),
     ("intinf_shift", 399, 4),
-    ("intinf_power", 400, 3)
+    ("intinf_power", 400, 3),
+    ("intinf_decimal", 401, 1)
   ]
   val byName =
     List.foldl (fn ((n, i, a), m) => StringMap.insert (m, n, (i, a))) StringMap.empty table
@@ -953,7 +954,8 @@ struct
            ("intinf_binary", ([1, 5, 6, 5, 6], 0)),
            ("intinf_divmod", ([5, 5, 6, 5, 6], 0)),
            ("intinf_shift", ([5, 5, 6, 2], 0)),
-           ("intinf_power", ([5, 6, 1], 0))
+           ("intinf_power", ([5, 6, 1], 0)),
+           ("intinf_decimal", ([6], 6))
          ]);
          repsOf name)
 end

@@ -230,6 +230,26 @@ Value vm_intinf_power(VM *vm, int negative, Value a, uint64_t exponent) {
     leave(vm);
     return result;
 }
+Value vm_intinf_decimal(VM *vm, Value a) {
+    Magnitude m = magnitude(vm, a, 0);
+    enter(vm);
+    mpz_t x;
+    import(x, m);
+    /* NULL asks GMP to allocate through our tracked hooks. Its documented
+       final allocation is exactly strlen(text)+1, including the terminator. */
+    char *text = mpz_get_str(NULL, 10, x);
+    size_t length = strlen(text);
+    mpz_clear(x);
+    if (length > UINT32_C(0x3fffffff))
+        vm_limit(vm, "intinf decimal text exceeds string representation");
+    /* No borrowed Rune pointer is used after this allocation. The input
+       remains on the primitive's argument stack; text is independent. */
+    Obj *result = vm_alloc_string(vm, (uint32_t)length);
+    memcpy(obj_bytes(result), text, length);
+    release(text, length + 1);
+    leave(vm);
+    return mk_ptr(result);
+}
 #else
 static int supported(void) { return 0; }
 static Value unavailable(VM *vm) {
@@ -250,6 +270,10 @@ Value vm_intinf_shift(VM *vm, int left, int negative, Value a, uint64_t count) {
 }
 Value vm_intinf_power(VM *vm, int negative, Value a, uint64_t exponent) {
     (void)negative; (void)a; (void)exponent;
+    return unavailable(vm);
+}
+Value vm_intinf_decimal(VM *vm, Value a) {
+    (void)a;
     return unavailable(vm);
 }
 #endif

@@ -1,5 +1,19 @@
 # IntInf correctness and performance corpus
 
+`decimal-workload.sml` isolates multiplication, decimal conversion, document
+layout and writing an already-rendered result. Compile it with
+`bin/rune --allow-prim --library pretty tests/intinf/decimal-workload.sml -o
+build/intinf-decimal.rbc`, then run, for example,
+`bin/runevm --intinf=gmp build/intinf-decimal.rbc -1 100 /tmp/decimal.txt`.
+The negative first argument selects `(2^83047-1)^2`, exactly 50,000 decimal
+digits; nonnegative values repeatedly square 3472347895 before the measured
+square. The second argument controls multiplication repetitions (use 1 for
+large SML operands); the last file receives the complete decimal result for
+independent checking. Each line reports repetitions, nanoseconds, managed
+allocation bytes and collections. Setup, one warm-up and a collection precede
+each phase. Writes go to `/dev/null`, so this does not measure a terminal
+emulator. The GMP roadmap records paired measurements and the REPL timings.
+
 `python3 tests/intinf/run.py` compiles the current Basis implementation and
 the saved list oracle into one program. It checks independent exact answers
 and identities on bounded operands, including signs and representation

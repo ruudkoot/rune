@@ -46,6 +46,7 @@ struct
   val gmpDivMod = _prim "intinf_divmod" : bool * bool * string * bool * string -> (bool * string) * (bool * string)
   val gmpShift = _prim "intinf_shift" : bool * bool * string * word -> bool * string
   val gmpPower = _prim "intinf_power" : bool * string * limb -> bool * string
+  val gmpDecimal = _prim "intinf_decimal" : string -> string
   fun digitBits 0 = 0 | digitBits n = 1 + digitBits(n div 2)
   fun magBits s =
     let val n = strSize s in if n = 0 then 0 else (n-1)*8+digitBits(byte(s,n-1)) end
@@ -374,19 +375,30 @@ struct
 
   val decimalChunk = if limbBits = 30 then 1000000000 else 10000
   val decimalDigits = if limbBits = 30 then 9 else 4
-  fun toString (S n) = intToString n
-    | toString (B (neg,s)) =
+  (* Only this private copy is overwritten. Keeping one quotient workspace
+     avoids quadratic temporary allocation while extracting decimal chunks. *)
+  fun decimalSml s =
       let
-        fun chunks (m as (_,n),acc) = if n = 0 then acc
-          else let val (q,r) = divideSmall(m,decimalChunk) in chunks(q,r::acc) end
+        val (a,n) = unpack s
+        fun divide (i,r) = if i < 0 then r
+          else let val v = r*base+at(a,i)
+               in put(a,i,v div decimalChunk); divide(i-1,v mod decimalChunk) end
+        fun chunks (0,acc) = acc
+          | chunks (n,acc) =
+              let val r = divide(n-1,0)
+              in chunks(#2(trim(a,n)),r::acc) end
         fun zeros(n,ss) = if n <= 0 then ss else zeros(n-1,"0"::ss)
         fun render(_,[]) = []
           | render(first,c::cs) =
               let val t = intToString c
                   val t = if first then t else concat(zeros(decimalDigits-strSize t,[t]))
               in t::render(false,cs) end
-        val texts = render(true,chunks(unpack s,[]))
-      in concat(if neg then "~"::texts else texts) end
+      in concat(render(true,chunks(n,[]))) end
+  fun toString (S n) = intToString n
+    | toString (B (neg,s)) =
+      let val () = checkBits(magBits s)
+          val text = if gmpAvailable() then gmpDecimal s else decimalSml s
+      in if neg then "~" ^ text else text end
   fun log2 x = if sign x <= 0 then raise Domain else magBits(magnitude x)-1
   fun radixBase StringCvt.BIN = 2 | radixBase StringCvt.OCT = 8
     | radixBase StringCvt.DEC = 10 | radixBase StringCvt.HEX = 16

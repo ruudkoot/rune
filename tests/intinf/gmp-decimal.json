@@ -1,0 +1,1004 @@
+{
+  "baseline_commit": "7a324e2b9babf56ed5667db3c4e5979d8f556135",
+  "description": "Complete decimal formatting of (2^83047-1)^2: 50000 digits; values checked independently with Python integers.",
+  "method": "Five alternating before/after process pairs. Each phase warms once and collects before timing. Multiply uses100GMP/1SML repetitions, decimal1, layout10, /dev/null writes10. Console REPL has three identical echoed squares per process. Terminal-emulator rendering is excluded.",
+  "managed_allocation_note": "Allocation values count Rune-managed bytes, not GMP native buffers or peak process memory.",
+  "source_sha256": {
+    "lib/basis/intinf.sml": "55270ceb1600d8083be335c4bf707238f5b5c429d1e38d6eb2551d92a56c3a4c",
+    "runtime/intinf.c": "737090166e4b0b6e2a08709c9a1fe6353371d02eaa91364250c391b3d00c422c",
+    "runtime/intinf.h": "9af3e165d3c4c979c966bcfcb391c49ea11aa1136b99aa40a5bb2bb6896dfe0d",
+    "runtime/prims.c": "7c668edada1dca36d94c30a0ef8a108f72752f55d0ed7a4fc0306a536e655f00",
+    "src/isa/prims.sml": "5c803884765c3d66372fa2cff9b8b9c54b8d09145e98c7fd3a2adad35f0db974",
+    "tests/basis/host/rune-prim.sml": "b5610fe7e0f6dfda0a742fe31db185b90ff835f9b8433b3982c0de0610245961",
+    "tests/basis/intinf.sml": "001577ff8ac0dedfd692f699d0dd307f4ec2ff4bf32749b2038dc92bed02f9c8",
+    "tests/intinf/backends.py": "0ba67cefc944d847d300af4450c3bf9af6c8bf5f994a4a1b62a5f1b8f79412f3",
+    "tests/intinf/hardening.py": "39e1393b79a93a5d6596d95bc5d881554bb76d012b4157c9fec77403fa24005e",
+    "tests/intinf/cross.py": "1a1b806e7c9f6c9847b25aa5fc6fb4b32d1533b446bf311f9c81ae8cc6e835a9",
+    "tests/intinf/decimal-workload.sml": "1782953ae94fd1659927a26e3c09454c92c84ce8b08858ea51802cd62da8a5b2",
+    "tests/lang/basis.intinf_decimal.sml": "9e11a92ed65751c5ecb7da2296aa7eec64ea4daa1c18dc0477e5768707a6122d",
+    "tests/lang/basis.intinf_decimal.expected": "36768a89e8faf166700f48bc8df99361609e43956dd7d2bffebde9439ea5033c",
+    "lib/basis/sig_int_inf.sml": "908bee96a8561d83d0dabe412275dd7b688e095b305ff491dfcd815de595f58c",
+    "runtime/isa.h": "ca5e10eea6b5f826e27e8d1a180ed4393956fd5f4715f5f7b85cd6edc7ad3086",
+    "runtime/prims.def": "7cf1ae4ad08962a7a1a29834969ce1bfece708d1e6462f54ae72e2d25008f4a8",
+    "runtime/prims_table.h": "4d2fb4e5b6d6ffe4f38d9cd955252d00c92fecbf26c72a1c0a68715c7f267fad",
+    "src/backend/prims.sml": "dd9f671e3ef4bdd8c3a0d93b988be1cd2739790ee6d207c4a66c003edfed6a64"
+  },
+  "artifact_sha256": {
+    "bin/runevm": "49e0c6325e33d78945aaf5f5d52c1d25800d4d1e7e50fc8baa0f6c905e819540",
+    "bin/rune-repl.img": "7fec2d8b7557ca34f8e61dd5f1f9e383d835f68b443b4a14d7a86b907aafbd07",
+    "/home/ruud/rune/.worktrees/gmp/tests/out/intinf/decimal/before/runevm": "b178b018fee91e5d1f65ff72b91cea510ed9990c9962ccb009d21d715733d069",
+    "/home/ruud/rune/.worktrees/gmp/tests/out/intinf/decimal/before/rune-repl.img": "a1475a7e257852acec6e99501a92c73d679c8f3daf33afc68322abda5f12c0f3",
+    "/home/ruud/rune/.worktrees/gmp/tests/out/intinf/decimal/before/phases.rbc": "5c4d65d59d958e6ac18e7bab2ba3ab68b7659c24ee250e09fb61ad78256b790a",
+    "tests/out/intinf/decimal-after/phases.rbc": "a4d9d8c54c81f87c34342f94ba88402cd5f9b9b091de0023d6f875acb6365cd0"
+  },
+  "workload": "tests/intinf/decimal-workload.sml",
+  "vm_version": "runevm 7a324e2b-dirty\nGMP headers 6.3.0, library 6.3.0, 64-bit limbs, supported\nGMP target: x86_64-pc-linux-gnu\nGMP provenance: pinned a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898\nGMP build: {\"configured\": {\"ABI\": \"64\", \"CC\": \"cc\", \"CFLAGS\": \"-O2\", \"CPPFLAGS\": \"\", \"GMP_LDFLAGS\": \"\", \"build\": \"x86_64-pc-linux-gnu\", \"host\": \"x86_64-pc-linux-gnu\"}, \"requested\": {\"abi\": \"\", \"build\": \"\", \"cc\": \"cc\", \"cc_for_build\": \"cc\", \"cflags\": \"-O2\", \"disable_assembly\": false, \"download_urls\": [\"https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz\", \"https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz\"], \"enable_fat\": true, \"host\": \"\", \"jobs\": 4, \"ldflags\": \"\", \"linkage\": \"static\", \"prefix\": \"/home/ruud/rune/.worktrees/gmp/build/deps/gmp/native\", \"recipe_sha256\": \"48b7983fc2c93fc1ef9a7732c1f557015375a743fb2caafb9cc56963a068a7c9\", \"runner\": \"\", \"sha256\": \"a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898\", \"timeout\": 1800, \"upstream_tests\": \"required\", \"url\": \"https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz\", \"version\": \"6.3.0\", \"with_pic\": false}}\n",
+  "compiler_sha256": "e8c0c8f9f377359087bcbac0e4e2170ce07c0b1f8f2870fc6fbf9f9874754527",
+  "median_phases": {
+    "gmp": {
+      "before": {
+        "multiply": {
+          "seconds": 0.00034507179999999996,
+          "allocated_bytes": 20824.8
+        },
+        "decimal": {
+          "seconds": 0.564170071,
+          "allocated_bytes": 124158424.0
+        },
+        "layout": {
+          "seconds": 0.0032391731,
+          "allocated_bytes": 5253672.0
+        },
+        "write": {
+          "seconds": 3.2205e-06,
+          "allocated_bytes": 56.0
+        }
+      },
+      "after": {
+        "multiply": {
+          "seconds": 0.00042744333,
+          "allocated_bytes": 20824.8
+        },
+        "decimal": {
+          "seconds": 0.001348867,
+          "allocated_bytes": 50088.0
+        },
+        "layout": {
+          "seconds": 0.0027359618999999997,
+          "allocated_bytes": 5253672.0
+        },
+        "write": {
+          "seconds": 3.1479e-06,
+          "allocated_bytes": 56.0
+        }
+      }
+    },
+    "sml": {
+      "before": {
+        "multiply": {
+          "seconds": 0.279993577,
+          "allocated_bytes": 109584.0
+        },
+        "decimal": {
+          "seconds": 0.532894186,
+          "allocated_bytes": 124158424.0
+        },
+        "layout": {
+          "seconds": 0.0028494753,
+          "allocated_bytes": 5253672.0
+        },
+        "write": {
+          "seconds": 2.0653000000000004e-06,
+          "allocated_bytes": 56.0
+        }
+      },
+      "after": {
+        "multiply": {
+          "seconds": 0.301709164,
+          "allocated_bytes": 109584.0
+        },
+        "decimal": {
+          "seconds": 0.545741572,
+          "allocated_bytes": 905448.0
+        },
+        "layout": {
+          "seconds": 0.003043475,
+          "allocated_bytes": 5253672.0
+        },
+        "write": {
+          "seconds": 2.9525e-06,
+          "allocated_bytes": 56.0
+        }
+      }
+    }
+  },
+  "median_repl": {
+    "before": {
+      "total_ms": 607.0,
+      "compile_ms": 6.7,
+      "run_ms": 593.3
+    },
+    "after": {
+      "total_ms": 13.8,
+      "compile_ms": 7.8,
+      "run_ms": 5.8
+    }
+  },
+  "paired_samples": {
+    "phases": [
+      {
+        "side": "before",
+        "mode": "gmp",
+        "sample": 0,
+        "phases": {
+          "multiply": {
+            "seconds": 0.00030933990000000004,
+            "allocated_bytes": 20824.8
+          },
+          "decimal": {
+            "seconds": 0.533539277,
+            "allocated_bytes": 124158424.0
+          },
+          "layout": {
+            "seconds": 0.0034909065,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 6.287600000000001e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "after",
+        "mode": "gmp",
+        "sample": 0,
+        "phases": {
+          "multiply": {
+            "seconds": 0.00032393520000000004,
+            "allocated_bytes": 20824.8
+          },
+          "decimal": {
+            "seconds": 0.001433178,
+            "allocated_bytes": 50088.0
+          },
+          "layout": {
+            "seconds": 0.0027359618999999997,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 2.1991999999999996e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "before",
+        "mode": "sml",
+        "sample": 0,
+        "phases": {
+          "multiply": {
+            "seconds": 0.273236862,
+            "allocated_bytes": 109584.0
+          },
+          "decimal": {
+            "seconds": 0.483334649,
+            "allocated_bytes": 124158424.0
+          },
+          "layout": {
+            "seconds": 0.002384367,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 2.0345e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "after",
+        "mode": "sml",
+        "sample": 0,
+        "phases": {
+          "multiply": {
+            "seconds": 0.274816623,
+            "allocated_bytes": 109584.0
+          },
+          "decimal": {
+            "seconds": 0.477095051,
+            "allocated_bytes": 905448.0
+          },
+          "layout": {
+            "seconds": 0.0024367318,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 2.0346e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "after",
+        "mode": "gmp",
+        "sample": 1,
+        "phases": {
+          "multiply": {
+            "seconds": 0.00031458853000000003,
+            "allocated_bytes": 20824.8
+          },
+          "decimal": {
+            "seconds": 0.001341585,
+            "allocated_bytes": 50088.0
+          },
+          "layout": {
+            "seconds": 0.0025815949,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 2.0328e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "before",
+        "mode": "gmp",
+        "sample": 1,
+        "phases": {
+          "multiply": {
+            "seconds": 0.00033934285,
+            "allocated_bytes": 20824.8
+          },
+          "decimal": {
+            "seconds": 0.481480093,
+            "allocated_bytes": 124158424.0
+          },
+          "layout": {
+            "seconds": 0.00264199,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 2.9235e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "after",
+        "mode": "sml",
+        "sample": 1,
+        "phases": {
+          "multiply": {
+            "seconds": 0.259125684,
+            "allocated_bytes": 109584.0
+          },
+          "decimal": {
+            "seconds": 0.513047171,
+            "allocated_bytes": 905448.0
+          },
+          "layout": {
+            "seconds": 0.0026949408999999997,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 2.9525e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "before",
+        "mode": "sml",
+        "sample": 1,
+        "phases": {
+          "multiply": {
+            "seconds": 0.279993577,
+            "allocated_bytes": 109584.0
+          },
+          "decimal": {
+            "seconds": 0.532894186,
+            "allocated_bytes": 124158424.0
+          },
+          "layout": {
+            "seconds": 0.0028238624,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 2.0329e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "before",
+        "mode": "gmp",
+        "sample": 2,
+        "phases": {
+          "multiply": {
+            "seconds": 0.00034898478,
+            "allocated_bytes": 20824.8
+          },
+          "decimal": {
+            "seconds": 0.567368701,
+            "allocated_bytes": 124158424.0
+          },
+          "layout": {
+            "seconds": 0.0032391731,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 3.2454000000000003e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "after",
+        "mode": "gmp",
+        "sample": 2,
+        "phases": {
+          "multiply": {
+            "seconds": 0.00045620743,
+            "allocated_bytes": 20824.8
+          },
+          "decimal": {
+            "seconds": 0.002186984,
+            "allocated_bytes": 50088.0
+          },
+          "layout": {
+            "seconds": 0.003110566,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 3.1479e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "before",
+        "mode": "sml",
+        "sample": 2,
+        "phases": {
+          "multiply": {
+            "seconds": 0.278414488,
+            "allocated_bytes": 109584.0
+          },
+          "decimal": {
+            "seconds": 0.541007257,
+            "allocated_bytes": 124158424.0
+          },
+          "layout": {
+            "seconds": 0.0029995696,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 2.2026e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "after",
+        "mode": "sml",
+        "sample": 2,
+        "phases": {
+          "multiply": {
+            "seconds": 0.321974555,
+            "allocated_bytes": 109584.0
+          },
+          "decimal": {
+            "seconds": 0.551066605,
+            "allocated_bytes": 905448.0
+          },
+          "layout": {
+            "seconds": 0.003043475,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 3.1187e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "after",
+        "mode": "gmp",
+        "sample": 3,
+        "phases": {
+          "multiply": {
+            "seconds": 0.00042744333,
+            "allocated_bytes": 20824.8
+          },
+          "decimal": {
+            "seconds": 0.001335971,
+            "allocated_bytes": 50088.0
+          },
+          "layout": {
+            "seconds": 0.0026864332000000003,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 3.567e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "before",
+        "mode": "gmp",
+        "sample": 3,
+        "phases": {
+          "multiply": {
+            "seconds": 0.00034507179999999996,
+            "allocated_bytes": 20824.8
+          },
+          "decimal": {
+            "seconds": 0.564170071,
+            "allocated_bytes": 124158424.0
+          },
+          "layout": {
+            "seconds": 0.0025126303999999998,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 2.036e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "after",
+        "mode": "sml",
+        "sample": 3,
+        "phases": {
+          "multiply": {
+            "seconds": 0.301709164,
+            "allocated_bytes": 109584.0
+          },
+          "decimal": {
+            "seconds": 0.545741572,
+            "allocated_bytes": 905448.0
+          },
+          "layout": {
+            "seconds": 0.0047941328,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 3.2596e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "before",
+        "mode": "sml",
+        "sample": 3,
+        "phases": {
+          "multiply": {
+            "seconds": 0.331339192,
+            "allocated_bytes": 109584.0
+          },
+          "decimal": {
+            "seconds": 0.489186882,
+            "allocated_bytes": 124158424.0
+          },
+          "layout": {
+            "seconds": 0.0033472536,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 2.0653000000000004e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "before",
+        "mode": "gmp",
+        "sample": 4,
+        "phases": {
+          "multiply": {
+            "seconds": 0.00043137484999999996,
+            "allocated_bytes": 20824.8
+          },
+          "decimal": {
+            "seconds": 0.631881263,
+            "allocated_bytes": 124158424.0
+          },
+          "layout": {
+            "seconds": 0.0042645020999999995,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 3.2205e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "after",
+        "mode": "gmp",
+        "sample": 4,
+        "phases": {
+          "multiply": {
+            "seconds": 0.00048834438,
+            "allocated_bytes": 20824.8
+          },
+          "decimal": {
+            "seconds": 0.001348867,
+            "allocated_bytes": 50088.0
+          },
+          "layout": {
+            "seconds": 0.0035579037,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 3.6022e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "before",
+        "mode": "sml",
+        "sample": 4,
+        "phases": {
+          "multiply": {
+            "seconds": 0.335782393,
+            "allocated_bytes": 109584.0
+          },
+          "decimal": {
+            "seconds": 0.594553395,
+            "allocated_bytes": 124158424.0
+          },
+          "layout": {
+            "seconds": 0.0028494753,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 2.2075e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      },
+      {
+        "side": "after",
+        "mode": "sml",
+        "sample": 4,
+        "phases": {
+          "multiply": {
+            "seconds": 0.307346764,
+            "allocated_bytes": 109584.0
+          },
+          "decimal": {
+            "seconds": 0.589756457,
+            "allocated_bytes": 905448.0
+          },
+          "layout": {
+            "seconds": 0.0035266804,
+            "allocated_bytes": 5253672.0
+          },
+          "write": {
+            "seconds": 2.2266e-06,
+            "allocated_bytes": 56.0
+          }
+        }
+      }
+    ],
+    "repl": [
+      {
+        "side": "before",
+        "sample": 0,
+        "timings": [
+          [
+            527.8,
+            6.2,
+            521.5
+          ],
+          [
+            508.3,
+            6.4,
+            501.8
+          ],
+          [
+            537.8,
+            5.5,
+            532.2
+          ]
+        ]
+      },
+      {
+        "side": "after",
+        "sample": 0,
+        "timings": [
+          [
+            12.4,
+            6.6,
+            5.6
+          ],
+          [
+            10.7,
+            5.5,
+            5.1
+          ],
+          [
+            10.8,
+            5.8,
+            4.9
+          ]
+        ]
+      },
+      {
+        "side": "after",
+        "sample": 1,
+        "timings": [
+          [
+            17.3,
+            9.6,
+            7.5
+          ],
+          [
+            17.6,
+            7.8,
+            9.7
+          ],
+          [
+            14.7,
+            8.8,
+            5.8
+          ]
+        ]
+      },
+      {
+        "side": "before",
+        "sample": 1,
+        "timings": [
+          [
+            559.7,
+            6.5,
+            553.0
+          ],
+          [
+            576.6,
+            6.9,
+            569.7
+          ],
+          [
+            587.6,
+            5.4,
+            582.1
+          ]
+        ]
+      },
+      {
+        "side": "before",
+        "sample": 2,
+        "timings": [
+          [
+            656.6,
+            7.2,
+            649.2
+          ],
+          [
+            607.7,
+            14.3,
+            593.3
+          ],
+          [
+            586.9,
+            8.0,
+            578.7
+          ]
+        ]
+      },
+      {
+        "side": "after",
+        "sample": 2,
+        "timings": [
+          [
+            12.5,
+            6.9,
+            5.4
+          ],
+          [
+            11.9,
+            5.6,
+            6.2
+          ],
+          [
+            18.4,
+            9.0,
+            9.3
+          ]
+        ]
+      },
+      {
+        "side": "after",
+        "sample": 3,
+        "timings": [
+          [
+            14.9,
+            7.0,
+            7.7
+          ],
+          [
+            11.6,
+            5.7,
+            5.8
+          ],
+          [
+            13.8,
+            7.8,
+            5.8
+          ]
+        ]
+      },
+      {
+        "side": "before",
+        "sample": 3,
+        "timings": [
+          [
+            644.7,
+            6.7,
+            637.8
+          ],
+          [
+            629.5,
+            16.1,
+            613.2
+          ],
+          [
+            607.0,
+            5.5,
+            601.4
+          ]
+        ]
+      },
+      {
+        "side": "before",
+        "sample": 4,
+        "timings": [
+          [
+            639.4,
+            6.6,
+            632.6
+          ],
+          [
+            622.0,
+            8.3,
+            613.4
+          ],
+          [
+            623.7,
+            9.3,
+            614.3
+          ]
+        ]
+      },
+      {
+        "side": "after",
+        "sample": 4,
+        "timings": [
+          [
+            18.4,
+            10.3,
+            8.0
+          ],
+          [
+            19.0,
+            9.5,
+            9.4
+          ],
+          [
+            13.8,
+            8.0,
+            5.7
+          ]
+        ]
+      }
+    ],
+    "load_start": [
+      9.2451171875,
+      12.08544921875,
+      9.8203125
+    ],
+    "pairs": 5,
+    "hashes": {
+      "bin/runevm": "49e0c6325e33d78945aaf5f5d52c1d25800d4d1e7e50fc8baa0f6c905e819540",
+      "bin/rune-repl.img": "7fec2d8b7557ca34f8e61dd5f1f9e383d835f68b443b4a14d7a86b907aafbd07",
+      "/home/ruud/rune/.worktrees/gmp/tests/out/intinf/decimal/before/runevm": "b178b018fee91e5d1f65ff72b91cea510ed9990c9962ccb009d21d715733d069",
+      "/home/ruud/rune/.worktrees/gmp/tests/out/intinf/decimal/before/rune-repl.img": "a1475a7e257852acec6e99501a92c73d679c8f3daf33afc68322abda5f12c0f3",
+      "/home/ruud/rune/.worktrees/gmp/tests/out/intinf/decimal/before/phases.rbc": "5c4d65d59d958e6ac18e7bab2ba3ab68b7659c24ee250e09fb61ad78256b790a",
+      "tests/out/intinf/decimal-after/phases.rbc": "a4d9d8c54c81f87c34342f94ba88402cd5f9b9b091de0023d6f875acb6365cd0"
+    }
+  },
+  "validation": [
+    {
+      "name": "check",
+      "command": [
+        "env",
+        "--default-signal=PIPE",
+        "make",
+        "check",
+        "JOBS=8"
+      ],
+      "exit": 0,
+      "seconds": 1826.4575972179882
+    },
+    {
+      "name": "matrix",
+      "command": [
+        "make",
+        "matrix-quick",
+        "JOBS=8"
+      ],
+      "exit": 0,
+      "seconds": 1668.0803303580033
+    },
+    {
+      "name": "asan-build",
+      "command": [
+        "make",
+        "vm-asan",
+        "JOBS=8"
+      ],
+      "exit": 0,
+      "seconds": 68.50570678798249
+    },
+    {
+      "name": "asan-backends",
+      "command": [
+        "python3",
+        "tests/intinf/backends.py",
+        "--vm",
+        "bin/runevm-asan",
+        "--stress",
+        "--out",
+        "tests/out/intinf/decimal/validation/asan-backends"
+      ],
+      "exit": 0,
+      "seconds": 8.438364078989252
+    },
+    {
+      "name": "gmp-cycles",
+      "command": [
+        "python3",
+        "tests/intinf/backends.py",
+        "--vm-options=--gc low-pause --nursery 4096 --gc-stress-cycles --gc-verify",
+        "--out",
+        "tests/out/intinf/decimal/validation/cycles-backends"
+      ],
+      "exit": 0,
+      "seconds": 91.49679802800529
+    },
+    {
+      "name": "gmp-copy",
+      "command": [
+        "python3",
+        "tests/intinf/backends.py",
+        "--stress",
+        "--vm-options=--gc throughput --nursery 0 --gc-verify",
+        "--out",
+        "tests/out/intinf/decimal/validation/copy-backends"
+      ],
+      "exit": 0,
+      "seconds": 26.732358890003525
+    },
+    {
+      "name": "hardening-asan",
+      "command": [
+        "python3",
+        "tests/intinf/hardening.py",
+        "--vm",
+        "bin/runevm-asan",
+        "--out",
+        "tests/out/intinf/decimal/validation/asan-hardening"
+      ],
+      "exit": 0,
+      "seconds": 3.172154830012005
+    },
+    {
+      "name": "stack-asan",
+      "command": [
+        "sh",
+        "tests/run-tests.sh",
+        "-j",
+        "8",
+        "--vm",
+        "bin/runevm-stack-asan",
+        "--out",
+        "tests/out/intinf/decimal/validation/stack-asan"
+      ],
+      "exit": 0,
+      "seconds": 18.563317180029117
+    },
+    {
+      "name": "register-asan",
+      "command": [
+        "make",
+        "test-register-asan",
+        "JOBS=8"
+      ],
+      "exit": 0,
+      "seconds": 89.15131674800068
+    },
+    {
+      "name": "native-asan",
+      "command": [
+        "make",
+        "test-native-asan",
+        "JOBS=8"
+      ],
+      "exit": 0,
+      "seconds": 58.94917179096956
+    },
+    {
+      "name": "stress",
+      "command": [
+        "make",
+        "test-stress",
+        "JOBS=8"
+      ],
+      "exit": 0,
+      "seconds": 210.92331551399548
+    },
+    {
+      "name": "cross",
+      "command": [
+        "python3",
+        "tests/intinf/cross.py",
+        "--sml-vms",
+        "tests/out/intinf/decimal/cross-builds/sml-vms",
+        "--out",
+        "tests/out/intinf/decimal/validation/cross"
+      ],
+      "exit": 0,
+      "seconds": 532.3971502410132
+    },
+    {
+      "name": "windows",
+      "command": [
+        "make",
+        "test-windows",
+        "JOBS=2"
+      ],
+      "exit": 0,
+      "seconds": 2663.497013994027
+    },
+    {
+      "name": "portability",
+      "command": [
+        "make",
+        "test-portability",
+        "JOBS=8"
+      ],
+      "exit": 0,
+      "seconds": 752.7254211960244
+    }
+  ],
+  "validation_environment": {
+    "GMP": "yes",
+    "GMP_PREFIX": "build/deps/gmp/native",
+    "MLKIT": "/home/ruud/.local/rune-hosts/mlkit-4.7.25/bin/mlkit",
+    "MLKIT_LIB": "/home/ruud/.local/rune-hosts/mlkit-4.7.25/lib/mlkit"
+  },
+  "full_check_summary": "# rune-test\n\nRESULT: PASS 14474 of 14474 tests (2 SKIP, 14472 PASS), 1489.6 s wall, 11175.1 s CPU (94% of 8)\n\nSlowest: errors/smlnj-legacy/err.ty_astra-inference-limit 212.5 s, errors/smlnj-dev/err.ty_astra-inference-limit 159.7 s, laws/MONO_ARRAY2@LargeIntArray2 141.1 s, lang/register-gc-low-pause-cycles/rt.gc_stress 112.8 s, lang/register-gc-low-pause-compact/rt.gc_stress 109.9 s\n",
+  "matrix_summary": [
+    "rune                         139327 checks: 139327 pass,    0 explained,    0 FAILED, 0 skipped; of 232 tests 0 absent, 0 n/a",
+    "xc1:mlton@20241230           139196 checks: 138872 pass,  313 explained,    0 FAILED, 11 skipped; of 232 tests 13 absent, 0 n/a",
+    "xc1:smlnj-legacy@110.99.9    139221 checks: 138826 pass,  384 explained,    0 FAILED, 11 skipped; of 232 tests 13 absent, 0 n/a",
+    "xc1:smlnj32@110.99.9         100245 checks:  98217 pass, 2017 explained,    0 FAILED, 11 skipped; of 232 tests 13 absent, 67 n/a",
+    "xc1:smlnj-dev@2026.2         139221 checks: 138829 pass,  381 explained,    0 FAILED, 11 skipped; of 232 tests 13 absent, 0 n/a",
+    "xc1:polyml@5.9.2             139171 checks: 138831 pass,  329 explained,    0 FAILED, 11 skipped; of 232 tests 13 absent, 0 n/a",
+    "xc1:mlkit@4.7.25             139155 checks: 138636 pass,  508 explained,    0 FAILED, 11 skipped; of 232 tests 13 absent, 0 n/a"
+  ],
+  "limitations": [
+    "Native performance timings on this machine; cross-platform checks establish functional portability.",
+    "Existing native-interrupt skips and recorded host deviations/absences remain visible.",
+    "Bytecode and image fingerprints change with the new primitive; all tested artifacts were rebuilt.",
+    "Remote CI and publication have not been run."
+  ],
+  "raw_evidence": "tests/out/intinf/decimal"
+}
