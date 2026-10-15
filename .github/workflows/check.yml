@@ -71,5 +71,8 @@ jobs:
             tests/out/*.stdout
             tests/out/*.stderr
             tests/out/*.expected
+            build/deps/gmp-build/*/commands.json
+            build/deps/gmp-build/*/*.log
+            build/deps/gmp-build/*/*.status
           if-no-files-found: ignore
           retention-days: 7

@@ -65,7 +65,15 @@ The recipe verifies GMP 6.3.0's source archive SHA-256
 builds a static library, runs upstream tests, and records the source URL,
 checksum, compiler, requested and configured options, target, commands and
 installed library/header hashes. Reusing its cache verifies those installed
-hashes. `GMP_PREFIX` can also select a checked local prefix; absent pinned
+hashes. Downloads try GNU's HTTPS release site, then `gmplib.org`, with two
+retries for transient failures at each site (15-second connection and
+60-second transfer timeouts, a 180-second retry window). Every source must
+match the same pinned checksum before an atomic cache update; a checksum
+mismatch fails immediately. The record distinguishes a fresh download's URL
+from reuse of a checksum-verified archive (`download_url: null`). Separate
+download logs and statuses are kept under `build/deps/gmp-build/KEY/`; CI
+uploads these with failed-run reports, and curl errors appear in its console.
+`GMP_PREFIX` can also select a checked local prefix; absent pinned
 metadata, provenance is explicitly local/unknown. System builds report
 unknown source/build options instead of attributing them to the pinned recipe.
 The recipe retains license notices beside the dependency. `--cc`, `--host`,

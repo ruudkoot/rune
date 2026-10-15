@@ -9,17 +9,59 @@ import re
 import shlex
 import signal
 import subprocess
+import sys
 import tarfile
+import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = '6.3.0'
 SHA256 = 'a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898'
 URL = f'https://gmplib.org/download/gmp/gmp-{VERSION}.tar.xz'
+# Both release sites are listed at https://gmplib.org/#DOWNLOAD. Prefer GNU
+# so CI does not depend on access to the GMP project's own server.
+DOWNLOAD_URLS = (f'https://ftp.gnu.org/gnu/gmp/gmp-{VERSION}.tar.xz', URL)
+
+
+class CommandFailed(RuntimeError):
+    pass
 
 
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def download_archive(archive, run):
+    """Return the download URL, or None for a checksum-verified cached file."""
+    if archive.exists():
+        if digest(archive) != SHA256:
+            raise RuntimeError('GMP cached source checksum mismatch')
+        return None
+    archive.parent.mkdir(parents=True, exist_ok=True)
+    failures = []
+    # A private partial file also permits independent cross builds to fetch
+    # the same archive without overwriting each other's incomplete transfers.
+    with tempfile.TemporaryDirectory(prefix=archive.name+'.', dir=archive.parent) as temporary:
+        part = Path(temporary)/archive.name
+        for index, url in enumerate(DOWNLOAD_URLS, 1):
+            part.unlink(missing_ok=True)
+            try:
+                run(['curl', '--fail', '--location', '--silent', '--show-error',
+                     '--connect-timeout', '15', '--max-time', '60',
+                     '--retry', '2', '--retry-delay', '2', '--retry-max-time', '180',
+                     '--retry-connrefused', url, '-o', part], f'download-{index}')
+            except (CommandFailed, subprocess.TimeoutExpired) as error:
+                failures.append(f'{url}: {error}')
+                print(f'GMP download failed: {failures[-1]}', file=sys.stderr, flush=True)
+                continue
+            # A successful HTTP response is not enough. A mismatch is fatal,
+            # including on mirrors, and never publishes anything to the cache.
+            if digest(part) != SHA256:
+                raise RuntimeError(f'GMP source checksum mismatch from {url}')
+            part.replace(archive)
+            print(f'GMP source verified: {url}', flush=True)
+            return url
+    raise RuntimeError('GMP download failed from all release sites:\n'+'\n'.join(failures))
 
 
 def main():
@@ -46,7 +88,8 @@ def main():
     os.chdir(ROOT)
     prefix = Path(args.prefix).resolve()
     config = {**vars(args), 'prefix':str(prefix), 'version':VERSION, 'sha256':SHA256,
-              'url':URL, 'linkage':'static', 'upstream_tests':'required',
+              'url':URL, 'download_urls':list(DOWNLOAD_URLS),
+              'linkage':'static', 'upstream_tests':'required',
               'recipe_sha256':digest(Path(__file__))}
     key = hashlib.sha256(json.dumps(config,sort_keys=True).encode()).hexdigest()[:16]
     build = ROOT/'build/deps/gmp-build'/key
@@ -77,20 +120,17 @@ def main():
                 raise
         (build/(name+'.status')).write_text(f'exit:{code}\nseconds:{time.time()-started:.3f}\n')
         if code:
-            raise RuntimeError(f'GMP {name} failed ({code}); see {build/(name+".log")}')
+            # Keep a bounded diagnostic in the CI console as well as the full
+            # artifact, which is especially useful before any tests can start.
+            with (build/(name+'.log')).open('rb') as log:
+                log.seek(max(0, log.seek(0, os.SEEK_END)-4096))
+                print(log.read().decode(errors='replace'), file=sys.stderr, flush=True)
+            raise CommandFailed(f'GMP {name} failed ({code}); see {build/(name+".log")}')
 
     downloads = ROOT/'build/deps/downloads'
     downloads.mkdir(parents=True,exist_ok=True)
     archive = downloads/f'gmp-{VERSION}.tar.xz'
-    if not archive.exists():
-        part = archive.with_suffix(archive.suffix+'.part')
-        if not part.exists() or digest(part) != SHA256:
-            run(['curl','--fail','--location','--connect-timeout','15','--max-time','180',URL,'-o',part], 'download')
-        if digest(part) != SHA256:
-            raise RuntimeError('GMP source checksum mismatch')
-        part.replace(archive)
-    if digest(archive) != SHA256:
-        raise RuntimeError('GMP cached source checksum mismatch')
+    download_url = download_archive(archive, run)
     source_root = build/'source'
     source = source_root/f'gmp-{VERSION}'
     if not (source/'configure').exists():
@@ -145,6 +185,7 @@ def main():
     configured = dict(re.findall(r'^(ABI|CC|CFLAGS|CPPFLAGS|GMP_LDFLAGS|build|host) = (.*)$',
                                 (build/'Makefile').read_text(),re.MULTILINE))
     record = {'config':config,'configured':configured,'commands':commands,'build_directory':str(build),
+              'source_archive':{'path':str(archive), 'sha256':SHA256, 'download_url':download_url},
               'c_compiler':subprocess.check_output([*shlex.split(args.cc),'--version'],text=True).splitlines()[0],
               'library_sha256':digest(prefix/'lib/libgmp.a'),
               'header_sha256':digest(prefix/'include/gmp.h'), 'upstream_check':'pass'}

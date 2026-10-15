@@ -1422,3 +1422,35 @@ machine-code section is identical to the preceding implementation's; its
 generated revision header differs. Emulated checks establish functional
 portability, not native hardware timings. Remote CI and publication remain
 unrun, and expanded M4 performance acceptance remains open.
+
+### CI download follow-up (2026-10-15)
+
+A reported GitHub Actions run stopped before compilation because the sole
+download from `gmplib.org` timed out (curl exit 28). The provisioning recipe
+now tries the GNU release site first and `gmplib.org` second, with bounded
+transient-error retries. Both sites are listed on [GMP's download page](https://gmplib.org/#DOWNLOAD).
+GMP 6.3.0 and its SHA-256 pin are unchanged. A source checksum mismatch is
+fatal on either site; verified files enter the cache by atomic rename, and
+separate partial files keep concurrent cross-build downloads independent.
+The build record identifies a fresh download's URL or verified cache reuse.
+CI retains command, download, configure, build and test logs on failure,
+with the last 4 KiB of failed-command output also shown in the console.
+
+[The downloader regression suite](../../tests/intinf/download.py), included
+in `make test-intinf-dependency` and `make check`, passes 12 checks covering
+timeouts, fallback, checksum rejection, partial files, interruption, cache
+reuse and command diagnostics. A live GNU download returned the expected
+2,094,196-byte archive and pinned hash. A bounded loopback HTTP check observed
+three failed requests followed by a successful fallback using the real curl
+executable. Rebuilding the native fat GMP package passed 177 upstream tests
+with one existing skip; a repeated build verified and reused its cache.
+Local evidence is retained under `tests/out/intinf/download-*`.
+
+Full acceptance of the download and REPL follow-ups passes with
+`make check GMP=yes GMP_PREFIX=build/deps/gmp/native JOBS=8`: **14,432 passes
+and two existing native-interrupt skips**, across 14,434 entries in 1,381.3
+seconds. The report is `tests/out/r/20261015-212059-3415469`; a copy is retained
+under `tests/out/intinf/ci-repl-followup`. The preceding run was deliberately
+interrupted to incorporate the reported REPL bug, after 937 passes and two
+skips; it is retained as incomplete evidence. Remote CI with the download
+fix still needs a rerun after publication.

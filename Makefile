@@ -1562,4 +1562,5 @@ test-intinf-cross:
 
 .PHONY: test-intinf-dependency
 test-intinf-dependency:
+	python3 tests/intinf/download.py
 	python3 tests/intinf/dependency.py
