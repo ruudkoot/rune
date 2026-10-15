@@ -44,6 +44,13 @@ ints, which are never listed, so their order cannot reach the output),
 `Bug`), `pass.sml` (the passes' options, lints and fuel).
 
 
+Literal range checking reuses immutable signed and unsigned limits for widths
+0 through 64 in a bounded table in `Elaborate`. Every literal is still checked
+against its own type and source position; other widths use the ordinary
+arithmetic. This avoids repeating the same `IntInf` calculations while loading
+the Basis and checking declarations.
+
+
 ## The documentation generator
 
 `runedoc` ([docs/plans/docgen.md](plans/docgen.md)) is a second program built

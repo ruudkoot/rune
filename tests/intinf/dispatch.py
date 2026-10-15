@@ -15,6 +15,7 @@ ROOT=Path(__file__).resolve().parents[2]
 p=argparse.ArgumentParser();p.add_argument('--samples',type=int,default=7);p.add_argument('--out',default='tests/out/intinf/dispatch')
 p.add_argument('--baseline-root',help='also compare the same operands with this compiler and VM')
 p.add_argument('--workload',action='append',help='repeat only a named operation/shape case')
+p.add_argument('--reuse-run',help='repeat a hash-verified run without rebuilding its bytecodes')
 a=p.parse_args();os.chdir(ROOT)
 if a.samples < 2:p.error('at least two measured pairs are required')
 out=Path(a.out).resolve();out.mkdir(parents=True,exist_ok=True)
@@ -52,6 +53,13 @@ if baseline:
 report['vm_sha256']=hashlib.sha256(Path('bin/runevm').read_bytes()).hexdigest()
 report['compiler_sha256']=hashlib.sha256(Path('bin/rune.rbc').read_bytes()).hexdigest()
 report['source_hashes']={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in [Path('runtime/intinf.c'),Path('lib/basis/intinf.sml')]}
+reuse=Path(a.reuse_run).resolve() if a.reuse_run else None
+if reuse:
+    original=json.loads((reuse/'report.json').read_text())
+    for key in ['vm_sha256','compiler_sha256','source_hashes']:
+        assert original[key]==report[key],('changed reuse input',key)
+    assert original.get('baseline')==report.get('baseline'),'changed reuse baseline'
+    report['reused_report_sha256']=hashlib.sha256((reuse/'report.json').read_bytes()).hexdigest()
 for op,operands in shapes.items():
     for bits,other in operands:
         n=max(1000,100000//max(1,bits//64))
@@ -60,12 +68,19 @@ for op,operands in shapes.items():
         if a.workload and name not in a.workload:continue
         w={'bits':bits,'other_bits':other,'op':op,'iterations':n}
         source,expected=corpus.workload(w)
-        path=out/(name+'.sml');path.write_text(source);rbc=path.with_suffix('.rbc')
-        execute(['bin/rune','--lib','lib','-o',rbc,path])
+        path=(reuse or out)/(name+'.sml');rbc=path.with_suffix('.rbc')
+        if reuse:
+            assert hashlib.sha256(path.read_bytes()).hexdigest()==hashlib.sha256(source.encode()).hexdigest()
+            assert hashlib.sha256(rbc.read_bytes()).hexdigest()==original['workloads'][name]['bytecode_sha256']['current']
+        else:
+            path.write_text(source)
+            execute(['bin/rune','--lib','lib','-o',rbc,path])
         runs={'gmp':[],'sml':[]}
         if baseline:
-            old=out/(name+'-baseline.rbc')
-            execute([baseline/'bin/rune','--lib','lib','-o',old,path],baseline)
+            old=(reuse or out)/(name+'-baseline.rbc')
+            if reuse:
+                assert hashlib.sha256(old.read_bytes()).hexdigest()==original['workloads'][name]['bytecode_sha256']['baseline']
+            else:execute([baseline/'bin/rune','--lib','lib','-o',old,path],baseline)
             runs['baseline']=[]
         for i in range(a.samples+1):
             order=list(runs)

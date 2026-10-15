@@ -82,7 +82,13 @@ What each means is on [`INT_INF`](../sig/INT_INF.md) and [`INTEGER`](../sig/INTE
 > with a runtime-limit failure rather than [`Overflow`](../sig/GENERAL.md#exn-overflow) when it is exceeded.
 > The budget is configurable and does not change `precision = NONE`.
 > Unit divisors and clearly smaller dividends use direct SML results;
-> large right shifts in the fallback use indexed arithmetic digits.
+> small/large addition updates a private byte copy, and machine multiply
+> overflow converts directly to arithmetic digits. Normalization checks
+> the machine boundary without raising an exception. The fallback reuses
+> private scratch digits for addition, subtraction, single-digit scaling,
+> bit operations and right shifts, returning small results without packing
+> them first. Positive OR/XOR with a small operand visits only low bytes.
+> Public values remain immutable.
 
 <details><summary>Other implementations (11)</summary>
 

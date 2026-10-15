@@ -90,26 +90,54 @@ struct
 
   fun power2 (n : int) : IntInf.int = IntInf.pow (IntInf.fromInt 2, n)
 
+  (* Reuse immutable limits for common literal widths, not acceptance
+     decisions. The bounded cache cannot grow with user-defined widths. *)
+  local
+    val one = IntInf.fromInt 1
+    val zero = IntInf.fromInt 0
+    val known : (IntInf.int * IntInf.int) option array = Array.array (130, NONE)
+  in
+    fun literalBounds (signed, n) =
+      let
+        fun calculate () =
+          if signed then
+            let val half = power2 (n - 1)
+            in (IntInf.~ half, IntInf.- (half, one)) end
+          else (zero, IntInf.- (power2 n, one))
+      in
+        if n < 0 orelse n >= 65 then calculate ()
+        else let val index = n + n + (if signed then 0 else 1)
+             in case Array.sub (known, index) of
+                  SOME limits => limits
+                | NONE => let val limits = calculate ()
+                          in Array.update (known, index, SOME limits); limits end
+             end
+      end
+  end
+
   fun checkLiteral (sc, t, sp) =
     let
       fun check (what, v, lo, hi) =
         if IntInf.< (v, lo) orelse IntInf.> (v, hi)
         then err (sp, what ^ " constant " ^ Ast.sconToString sc ^ " is out of range for the type " ^ toString t)
         else ()
+      fun bounded (what, v, signed, n) =
+        let val (lo, hi) = literalBounds (signed, n)
+        in check (what, v, lo, hi) end
     in
       case prune t of
         TCon (c, _) =>
           (case (sc, Overload.literalOf c) of
              (SInt v, SOME (Overload.Bits n)) =>
-               check ("integer", v, IntInf.~ (power2 (n - 1)), IntInf.- (power2 (n - 1), IntInf.fromInt 1))
+               bounded ("integer", v, true, n)
            | (SWord v, SOME (Overload.Bits n)) =>
-               check ("word", v, IntInf.fromInt 0, IntInf.- (power2 n, IntInf.fromInt 1))
+               bounded ("word", v, false, n)
            | (SChar v, SOME (Overload.Bits n)) =>
-               check ("character", IntInf.fromInt v, IntInf.fromInt 0, IntInf.- (power2 n, IntInf.fromInt 1))
+               bounded ("character", IntInf.fromInt v, false, n)
            | (SWideString cs, SOME (Overload.Bits n)) =>
-               List.app (fn v => check ("string", IntInf.fromInt v, IntInf.fromInt 0,
-                                        IntInf.- (power2 n, IntInf.fromInt 1)))
-                        cs
+               (case cs of [] => ()
+                | _ => let val (lo, hi) = literalBounds (false, n)
+                       in List.app (fn v => check ("string", IntInf.fromInt v, lo, hi)) cs end)
            | _ => ())
       | _ => ()
     end
