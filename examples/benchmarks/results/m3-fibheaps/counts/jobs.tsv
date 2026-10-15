@@ -1,0 +1,2 @@
+fibheaps-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-fibheaps.sml fibheaps-lazy/benchmark.sml shared/main.sml	30000 expected/normal-histogram.txt	fibheaps-lazy/normal.expected	expected/normal-histogram.txt
+fibheaps-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-fibheaps.sml fibheaps-strict/benchmark.sml shared/main.sml	30000 expected/normal-histogram.txt	fibheaps-strict/normal.expected	expected/normal-histogram.txt

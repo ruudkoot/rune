@@ -1,0 +1,26 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (651 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=native:mlkit,native:smlnj32 BENCH_FILTER='fibheaps-' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.8kLCiJ
+BENCH fibheaps-lazy smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 100:51818
+PASS fibheaps-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 100:51818
+PASS fibheaps-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+BENCH fibheaps-strict smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 100:51818
+PASS fibheaps-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 100:51818
+PASS fibheaps-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9

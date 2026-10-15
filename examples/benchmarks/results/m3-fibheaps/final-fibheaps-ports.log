@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-fibheaps.lb87_iax
+PASS fibheaps-lazy smoke O0
+PASS fibheaps-lazy smoke O2
+PASS fibheaps-lazy smoke hosts
+PASS fibheaps-lazy normal O0
+PASS fibheaps-lazy normal O2
+PASS fibheaps-lazy normal hosts
+PASS fibheaps-strict smoke O0
+PASS fibheaps-strict smoke O2
+PASS fibheaps-strict smoke hosts
+PASS fibheaps-strict normal O0
+PASS fibheaps-strict normal O2
+PASS fibheaps-strict normal hosts

@@ -1,0 +1,165 @@
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 30000:15346904
+PASS fibheaps-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a sequence
+  val value : 'a -> 'a D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.node D.t -> 'a
+  val tail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val delayedTail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromCell : 'a D.t D.t -> 'a D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val replicate : int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val init :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> ('a D.t * 'b D.t * 'c D.t) <BaseFct>.<resultStr>.node D.t
+  val equal :
+      ('a * 'b -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t -> bool
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-fibheaps.sml]
+[autoloading]
+[autoloading done]
+functor BenchFibHeapsFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure Q : <sig>
+  type tree
+  type tagged
+  type bag
+  type heap
+  val value : 'a -> 'a D.t
+  val emptyBag : unit -> <BaseFct>.<resultStr>.bag D.t
+  val emptyHeap : unit -> <BaseFct>.<resultStr>.heap D.t
+  val root : <BaseFct>.<resultStr>.tree D.t -> int
+  val taggedRoot : ('a * <BaseFct>.<resultStr>.tree D.t) D.t -> int
+  val link :
+      <BaseFct>.<resultStr>.tree D.t
+       -> <BaseFct>.<resultStr>.tree D.t -> <BaseFct>.<resultStr>.tree D.t
+  val children :
+      (int D.t * <BaseFct>.<resultStr>.tree D.t) D.t
+       -> (int D.t * <BaseFct>.<resultStr>.tree D.t) 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val flatten :
+      <BaseFct>.<resultStr>.bag D.t
+       -> <BaseFct>.<resultStr>.tagged 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.tagged 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val apply :
+      (<BaseFct>.<resultStr>.tagged -> 'a)
+       -> <BaseFct>.<resultStr>.bag D.t -> unit
+  val singleton : int D.t -> <BaseFct>.<resultStr>.heap D.t
+  val meld :
+      <BaseFct>.<resultStr>.heap D.t
+       -> <BaseFct>.<resultStr>.heap D.t -> <BaseFct>.<resultStr>.heap D.t
+  val make :
+      int <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.heap D.t
+  val app :
+      ('a -> 'b) -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t -> unit
+  val log2 : int -> int
+  val deleteMutable :
+      <BaseFct>.<resultStr>.heap D.t -> <BaseFct>.<resultStr>.heap D.t
+  val deleteFunctional :
+      <BaseFct>.<resultStr>.heap D.t -> <BaseFct>.<resultStr>.heap D.t
+  val toList :
+      (<BaseFct>.<resultStr>.heap D.t -> <BaseFct>.<resultStr>.heap D.t)
+       -> <BaseFct>.<resultStr>.heap D.t
+       -> int <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val randoms : int -> int <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val sorted :
+      (<BaseFct>.<resultStr>.heap D.t -> <BaseFct>.<resultStr>.heap D.t)
+       -> int -> int <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/fibheaps-strict/benchmark.sml]
+[autoloading]
+[autoloading done]
+structure Benchmark : sig
+  structure K : <sig>
+  val name : string
+  val histogram : string -> int array
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 30000:15346904
+PASS fibheaps-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
