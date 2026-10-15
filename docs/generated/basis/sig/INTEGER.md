@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 9 |
 | Documentation | 30 of 30 entries documented |
-| Tests | 433 checks of 30 entries |
+| Tests | 437 checks of 30 entries |
 | Source | [lib/basis/int\_sig.sml](../../../../lib/basis/int_sig.sml) |
 
 ## Synopsis
@@ -866,9 +866,9 @@ val toString : int -> string
 
 </details>
 
-<details><summary>Tests (12)</summary>
+<details><summary>Tests (16)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `10^30` &middot; `~10^30` &middot; `as-Int*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `10^30` &middot; `power-*` &middot; `negative-power-*` &middot; `below-power-*` &middot; `immutable-*` &middot; `~10^30` &middot; `as-Int*`
 
 In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), applied to `IntInf`, `Int`, `Int8`, `Int16`, `Int32`, `Int64`: `*` &middot; `minInt` &middot; `maxInt` &middot; `next-to-minInt` &middot; `2^200` &middot; `~2^200` &middot; `2^200-1` &middot; `model*`
 

@@ -404,6 +404,7 @@ enum Prim {
   PRIM_intinf_divmod = 398,
   PRIM_intinf_shift = 399,
   PRIM_intinf_power = 400,
+  PRIM_intinf_decimal = 401,
   PRIM__COUNT
 };
 
@@ -809,6 +810,7 @@ static const char *const prim_names[] = {
   "intinf_divmod",
   "intinf_shift",
   "intinf_power",
+  "intinf_decimal",
 };
 
 static const unsigned char prim_arity[] = {
@@ -1213,6 +1215,7 @@ static const unsigned char prim_arity[] = {
   5,
   4,
   3,
+  1,
 };
 
 /* what each primitive's result is (the representations of
@@ -1620,6 +1623,7 @@ static const unsigned char prim_result[] = {
   0,
   0,
   0,
+  6,
 };
 
 #define RUNE_PRIM_LIST(X) \
@@ -2023,6 +2027,7 @@ static const unsigned char prim_result[] = {
   X(intinf_binary) \
   X(intinf_divmod) \
   X(intinf_shift) \
-  X(intinf_power)
+  X(intinf_power) \
+  X(intinf_decimal)
 
 #endif

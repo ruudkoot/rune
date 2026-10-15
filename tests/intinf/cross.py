@@ -75,11 +75,12 @@ val available = _prim "intinf_gmp_available" : unit -> bool
 val limit = _prim "intinf_max_bits" : unit -> int
 val x = I.+(I.pow(I.fromInt 2,500),I.fromInt 17)
 val values = [x,I.~ x,I.fromInt 0]
+val texts = List.map I.toString values
 val () = case Runtime.save "saved.img" of
   Runtime.Saved => print "saved\\n"
 | Runtime.Restored =>
     let val (q,r) = I.divMod(x,I.fromInt (~7))
-    in if values=[x,I.~ x,I.fromInt 0] andalso
+    in if values=[x,I.~ x,I.fromInt 0] andalso List.map I.toString values=texts andalso
           I.+(I.*(q,I.fromInt (~7)),r)=x andalso
           I.<=(I.fromInt (~6),r) andalso I.<=(r,I.fromInt 0)
        then print("restored " ^ Bool.toString(available()) ^ " " ^ Int.toString(limit()) ^ "\\n")

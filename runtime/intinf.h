@@ -24,4 +24,6 @@ Value vm_intinf_binary(VM *vm, unsigned op, int na, Value a, int nb, Value b);
 Value vm_intinf_divmod(VM *vm, int floor, int na, Value a, int nb, Value b);
 Value vm_intinf_shift(VM *vm, int left, int neg, Value a, uint64_t count);
 Value vm_intinf_power(VM *vm, int neg, Value a, uint64_t exponent);
+/* Decimal digits of an unsigned magnitude; SML supplies any sign. */
+Value vm_intinf_decimal(VM *vm, Value a);
 #endif

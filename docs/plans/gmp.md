@@ -1489,3 +1489,86 @@ Focused evidence is under `tests/out/intinf/repl-printer`; suite logs and
 preserved acceptance reports are under `tests/out/intinf/ci-repl-followup`
 and `tests/out/intinf/repl-*.log`. Existing REPL sessions must be restarted
 with the rebuilt image to use the new printer.
+
+### Fast decimal formatting follow-up (2026-10-16)
+
+Repeated squaring exposed a separate bottleneck: decimal formatting always
+used SML, repeatedly dividing into nine-digit chunks and allocating a new
+quotient array each time. At 50,000 digits this dominated the REPL entry.
+
+The generated `intinf_decimal` primitive now converts a canonical unsigned
+magnitude with GMP's documented `mpz_get_str` API. Its temporary integer and
+text buffer use the tracked allocation hooks. The native text is copied into
+a Rune string and freed before returning; no borrowed Rune pointer is read
+after the managed allocation. SML retains backend selection and the `~` sign.
+The buffer is released with its documented `strlen(text)+1` allocation size
+([GMP conversion contract](https://gmplib.org/manual/Converting-Integers)).
+Both backends check the magnitude budget when formatting a large value,
+including under a stricter restored limit. The SML formatter now divides one
+private scratch array in place. Public values remain immutable and all digits
+are retained.
+
+The primitive is present in GMP-enabled and GMP-free builds, with the same
+identity and fingerprint. Adding it changes the fingerprint from the preceding
+build, so bytecode, compiler and REPL images were rebuilt together. The public
+`INT_INF` interface, `LargeInt` sharing, equality and scanning rules are unchanged.
+
+#### Measured performance
+
+[The measurement record](../../tests/intinf/gmp-decimal.json) retains all five
+alternating process pairs, source and binary hashes, commands and acceptance
+results. [The workload](../../tests/intinf/decimal-workload.sml) measures
+`(2^83047-1)^2`, whose complete 50,000-digit output was independently checked
+with Python integers. Each phase has a warm-up and a collection before timing;
+the console REPL comparison evaluates three identical squares per process.
+Results below are medians against `7a324e2b` on this machine.
+
+| Measurement | Before | After |
+|---|---:|---:|
+| GMP-backed decimal conversion | 564.17 ms | 1.35 ms |
+| Whole GMP-backed REPL entry, including compilation and echo | 607.0 ms | 13.8 ms |
+| SML decimal conversion | 532.89 ms | 545.74 ms |
+| Managed allocation per conversion, GMP selected | 124,158,424 bytes | 50,088 bytes |
+| Managed allocation per conversion, SML selected | 124,158,424 bytes | 905,448 bytes |
+
+Decimal conversion is about **418× faster with GMP**, and the complete REPL
+entry about **44× faster**. SML conversion time is similar; its temporary
+managed allocation falls from about 118 MiB to 0.86 MiB. Managed allocation
+figures exclude GMP buffers and are not peak-process-memory measurements.
+The separate multiplication and layout measurements are retained in the
+record. This follow-up measures formatting at this input size; the expanded
+arithmetic performance gate remains as recorded above.
+
+The REPL output was captured through a pipe, so terminal-emulator rendering
+is additional. A separate check using the ordinary `bin/rune-repl` wrapper
+and default backend selection printed every digit in 14.8–17.8 ms per entry.
+Raw evidence is retained under `tests/out/intinf/decimal`, including the
+preceding VM, compiler, REPL image and bytecode under `before/`, and the final
+paired samples under `final-paired/`.
+
+#### Acceptance
+
+* `make check JOBS=8`: **14,472 passes and two existing native-interrupt skips**
+  across 14,474 entries. Bootstrap, generated documentation, ISA, heap and
+  engine-equivalence checks pass.
+* `make matrix-quick JOBS=8`: Rune and all six host configurations have **zero
+  unexplained failures**. Existing deviations, absent sections and unavailable
+  checks remain visible; the deviation ledger was not changed. The current
+  MLton and MLKit IntInf suites each pass **4,884 checks**.
+* The new decimal fixture passes nine backend/tier combinations with a
+  collection at every allocation. ASan/UBSan and both collector configurations
+  each pass **107 bounded backend subprocesses**; sanitizer hardening passes
+  **57 subprocesses**, including malformed magnitudes, output-buffer limits
+  and stricter restored formatting limits.
+* Stack and register sanitizer suites pass **364 cases** per configuration;
+  native-output sanitizers pass **363 cases with one expected skip**. General
+  GC stress passes.
+* Cross-platform arithmetic, formatting, limits and restoration pass **557
+  bounded subprocesses and 216 image combinations**, including GMP-free VMs.
+* Windows passes on all four VMs: **289 language and 30 runtime cases** per
+  run, available JIT tiers, layout, images, Basis, terminal, debugger and kernel.
+* Portability passes **3,514 checks**, covering supported widths, byte orders,
+  JIT modes, counts and image transfers.
+
+Acceptance logs and preserved reports are under
+`tests/out/intinf/decimal/validation`. Remote CI and publication remain unrun.

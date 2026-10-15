@@ -447,3 +447,4 @@ intinf_binary    5  int * bool * string * bool * string -> bool * string   Trans
 intinf_divmod    5  bool * bool * string * bool * string -> (bool * string) * (bool * string)   GMP quotient/remainder; first bool chooses floor rather than truncation. Check zero divisor before GMP and raise Div.
 intinf_shift     4  bool * bool * string * word -> bool * string   GMP signed-magnitude shift, first bool true for left; right shifts round down.
 intinf_power     3  bool * string * int -> bool * string   GMP power with nonnegative exponent; negative-exponent semantics remain in SML.
+intinf_decimal   1  string -> string         GMP decimal digits of a canonical unsigned little-endian magnitude, empty for zero; returns 0 for zero. SML supplies the sign. Magnitude and GMP allocation budgets apply; no native state escapes.

@@ -841,5 +841,7 @@ struct
          {name = "intinf_shift", arity = 4, ty = "bool * bool * string * word -> bool * string", effects = [ReadsHeap, Raises, Allocates],
           doc = "GMP signed-magnitude shift, first bool true for left; right shifts round down."},
          {name = "intinf_power", arity = 3, ty = "bool * string * int -> bool * string", effects = [ReadsHeap, Raises, Allocates],
-          doc = "GMP power with nonnegative exponent; negative-exponent semantics remain in SML."}]]
+          doc = "GMP power with nonnegative exponent; negative-exponent semantics remain in SML."},
+         {name = "intinf_decimal", arity = 1, ty = "string -> string", effects = [ReadsHeap, Raises, Allocates],
+          doc = "GMP decimal digits of a canonical unsigned little-endian magnitude, empty for zero; returns 0 for zero. SML supplies the sign. Magnitude and GMP allocation budgets apply; no native state escapes."}]]
 end

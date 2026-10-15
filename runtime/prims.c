@@ -3030,6 +3030,10 @@ static int p_intinf_power(VM *vm) {
     Value v = vm_intinf_power(vm, neg, ARG(1), (uint64_t)exponent);
     return ret(vm, 3, v);
 }
+static int p_intinf_decimal(VM *vm) {
+    Value v = vm_intinf_decimal(vm, ARG(0));
+    return ret(vm, 1, v);
+}
 
 const PrimFn prim_table[PRIM__COUNT] = {
     RUNE_PRIM_LIST(PRIM_ENTRY)

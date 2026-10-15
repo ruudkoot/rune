@@ -31,6 +31,12 @@
    them first. Positive OR/XOR with a small operand visits only low bytes.
    Public values remain immutable.
 
+   Decimal formatting uses GMP's conversion when that backend is selected.
+   The independent SML formatter overwrites one private quotient workspace
+   while extracting decimal chunks, avoiding quadratic temporary allocation.
+   SML supplies the sign in both cases; zero prints as `0` and a negative
+   value starts with `~`. Formatting a large value obeys the magnitude budget.
+
    Implementation: `INT_INF/constants`. An integer constant may have the type
    `IntInf.int`, and then be of any size, and the overloaded operators work
    at it. The specification promises neither, so the suite builds its numbers
