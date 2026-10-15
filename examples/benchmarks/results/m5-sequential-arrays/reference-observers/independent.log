@@ -1,0 +1,12 @@
+PASS independent/reference summary quicksort smoke 128:7759:2038BDF7
+PASS independent/reference summary quicksort normal 100000:5002903351:BB8FD335
+PASS independent/reference summary quicksort large 4000000:8000333923441:443261DD
+PASS independent/reference summary mergesort smoke 128:8625:887CE5DB
+PASS independent/reference summary mergesort normal 262144:34386005232:61712C26
+PASS independent/reference summary mergesort large 67108864:2251917857586973:8C6D3BDD
+PASS independent/reference summary matrix_multiplication smoke 64:1232917:B41D5E03
+PASS independent/reference summary matrix_multiplication normal 16384:5161538109:D6B1E1C1
+PASS independent/reference summary matrix_multiplication large 1048576:2629083025373:E3771CB3
+PASS independent/reference summary floyd_warshall smoke 64:6016:83290D80
+PASS independent/reference summary floyd_warshall normal 16384:123178:C11140D8
+PASS independent/reference summary floyd_warshall large 262144:63803:4715258B

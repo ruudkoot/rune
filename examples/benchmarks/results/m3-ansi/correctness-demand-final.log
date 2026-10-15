@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-ansi-demand.o5y5xfuq
+PASS ansi-lazy smoke O0
+PASS ansi-lazy smoke O2
+PASS ansi-lazy smoke hosts
+PASS ansi-lazy normal O0
+PASS ansi-lazy normal O2
+PASS ansi-lazy normal hosts
+PASS ansi-strict smoke O0
+PASS ansi-strict smoke O2
+PASS ansi-strict smoke hosts
+PASS ansi-strict normal O0
+PASS ansi-strict normal O2
+PASS ansi-strict normal hosts

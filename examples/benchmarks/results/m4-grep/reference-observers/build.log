@@ -1,0 +1,11 @@
+[1 of 4] Compiling NofibUtils       ( /home/ruud/reference/ghc/nofib/real/grep/NofibUtils.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/build/NofibUtils.o )
+[2 of 4] Compiling Parsers          ( /home/ruud/reference/ghc/nofib/real/grep/Parsers.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/build/Parsers.o )
+
+/home/ruud/reference/ghc/nofib/real/grep/Parsers.hs:35:1: warning: [-Wtabs]
+    Tab character found here, and in 11 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+35 |                          | otherwise = []
+   | ^^^^^^^^
+[3 of 4] Compiling Main             ( /home/ruud/reference/ghc/nofib/real/grep/Main.lhs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/build/Main.o )
+[4 of 4] Linking /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/original

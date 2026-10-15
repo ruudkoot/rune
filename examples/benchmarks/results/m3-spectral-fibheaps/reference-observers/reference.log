@@ -1,0 +1,3 @@
+PASS original 200 repetitions and full histogram smoke 500
+PASS original 200 repetitions and full histogram normal 3500
+PASS original 200 repetitions and full histogram large 16000

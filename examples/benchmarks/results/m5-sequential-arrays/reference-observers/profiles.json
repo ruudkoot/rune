@@ -1,0 +1,58 @@
+{
+  "quicksort": [
+    [
+      "smoke",
+      128
+    ],
+    [
+      "normal",
+      100000
+    ],
+    [
+      "large",
+      4000000
+    ]
+  ],
+  "mergesort": [
+    [
+      "smoke",
+      128
+    ],
+    [
+      "normal",
+      262144
+    ],
+    [
+      "large",
+      67108864
+    ]
+  ],
+  "matrix_multiplication": [
+    [
+      "smoke",
+      8
+    ],
+    [
+      "normal",
+      128
+    ],
+    [
+      "large",
+      1024
+    ]
+  ],
+  "floyd_warshall": [
+    [
+      "smoke",
+      8
+    ],
+    [
+      "normal",
+      128
+    ],
+    [
+      "large",
+      512
+    ]
+  ]
+}

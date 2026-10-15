@@ -1,0 +1,6 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-ansi.jt5gk9tw
+PASS ansi-lazy smoke O0
+PASS ansi-lazy smoke O2
+PASS ansi-lazy smoke hosts
+PASS ansi-lazy normal O0
+PASS ansi-lazy normal O2

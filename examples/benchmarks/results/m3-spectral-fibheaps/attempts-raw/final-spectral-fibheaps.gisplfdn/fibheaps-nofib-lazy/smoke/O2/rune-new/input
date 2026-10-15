@@ -1,0 +1,3 @@
+fibheaps-nofib-lazy
+500 200 expected/smoke-histogram.txt
+200x500:258610

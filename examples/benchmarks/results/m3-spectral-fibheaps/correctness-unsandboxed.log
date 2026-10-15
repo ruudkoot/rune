@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-spectral-fibheaps.ooykbd4k
+PASS fibheaps-nofib-lazy smoke O0
+PASS fibheaps-nofib-lazy smoke O2
+PASS fibheaps-nofib-lazy smoke hosts
+PASS fibheaps-nofib-lazy normal O0
+PASS fibheaps-nofib-lazy normal O2
+PASS fibheaps-nofib-lazy normal hosts
+PASS fibheaps-nofib-strict smoke O0
+PASS fibheaps-nofib-strict smoke O2
+PASS fibheaps-nofib-strict smoke hosts
+PASS fibheaps-nofib-strict normal O0
+PASS fibheaps-nofib-strict normal O2
+PASS fibheaps-nofib-strict normal hosts

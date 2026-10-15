@@ -1,0 +1,3 @@
+RESULT 200x500:258610
+PASS fibheaps-nofib-lazy
+SUMMARY 1 checks, 0 failed

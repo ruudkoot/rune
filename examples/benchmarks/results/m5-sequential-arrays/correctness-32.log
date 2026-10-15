@@ -1,0 +1,9 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-sandmark-arrays.a9g6vdea
+PASS quicksort smoke hosts
+PASS quicksort normal hosts
+PASS mergesort smoke hosts
+PASS mergesort normal hosts
+PASS matrix_multiplication smoke hosts
+PASS matrix_multiplication normal hosts
+PASS floyd_warshall smoke hosts
+PASS floyd_warshall normal hosts

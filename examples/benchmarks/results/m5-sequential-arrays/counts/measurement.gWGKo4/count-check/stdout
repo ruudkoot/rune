@@ -1,0 +1,5 @@
+COUNT unbudgeted matrix_multiplication normal rune
+COUNT unbudgeted matrix_multiplication normal rune:opt
+COUNT unbudgeted matrix_multiplication normal rune:new
+COUNT unbudgeted matrix_multiplication normal rune:jit
+COUNT comparisons agree

@@ -1,0 +1,8 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-spectral-fibheaps.gisplfdn
+PASS fibheaps-nofib-lazy smoke O0
+PASS fibheaps-nofib-lazy smoke O2
+Traceback (most recent call last):
+  File "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/spectral-fibheaps-originals/check-final.py", line 18, in <module>
+    assert result.returncode==0,job
+           ^^^^^^^^^^^^^^^^^^^^
+AssertionError: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-spectral-fibheaps.gisplfdn/fibheaps-nofib-lazy/smoke/hosts

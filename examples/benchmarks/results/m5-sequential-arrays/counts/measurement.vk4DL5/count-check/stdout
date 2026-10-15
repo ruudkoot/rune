@@ -1,0 +1,5 @@
+COUNT unbudgeted quicksort normal rune
+COUNT unbudgeted quicksort normal rune:opt
+COUNT unbudgeted quicksort normal rune:new
+COUNT unbudgeted quicksort normal rune:jit
+COUNT comparisons agree

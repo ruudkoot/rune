@@ -1,0 +1,938 @@
+PROGRAM LIMIT AS 4194304 KiB
+PASS grep/literal/accept-0
+PASS grep/literal/reject-0
+PASS grep/literal/reject-1
+PASS grep/star/accept-0
+PASS grep/star/accept-1
+PASS grep/star/accept-2
+PASS grep/star/reject-0
+PASS grep/star/reject-1
+PASS grep/plus/accept-0
+PASS grep/plus/accept-1
+PASS grep/plus/reject-0
+PASS grep/plus/reject-1
+PASS grep/optional/accept-0
+PASS grep/optional/accept-1
+PASS grep/optional/reject-0
+PASS grep/literal-caret/accept-0
+PASS grep/literal-caret/reject-0
+PASS grep/ignored-suffix/accept-0
+PASS grep/ignored-suffix/reject-0
+PASS grep/literal-dollar/accept-0
+PASS grep/literal-dollar/reject-0
+PASS grep/group-and-anchor/accept-0
+PASS grep/group-and-anchor/accept-1
+PASS grep/group-and-anchor/accept-2
+PASS grep/group-and-anchor/reject-0
+PASS grep/group-and-anchor/reject-1
+PASS grep/group-and-anchor/reject-2
+PASS grep/selected-pattern/accept-0
+PASS grep/selected-pattern/accept-1
+PASS grep/selected-pattern/accept-2
+PASS grep/selected-pattern/reject-0
+PASS grep/selected-pattern/reject-1
+PASS grep/selected-pattern/reject-2
+PASS utf8/non-ascii
+PASS utf8/overlong-rejected
+PASS utf8/scalar-boundaries
+PASS utf8/bad-continuation
+PASS utf8/truncated
+PASS utf8/surrogate
+PASS utf8/overlong-three
+PASS utf8/overlong-four
+PASS utf8/out-of-range
+PASS utf8/line-boundaries
+PASS grep/literal-label-defers-successor
+PASS grep/node-memoization
+SUMMARY 45 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+PASS grep/literal/accept-0
+PASS grep/literal/reject-0
+PASS grep/literal/reject-1
+PASS grep/star/accept-0
+PASS grep/star/accept-1
+PASS grep/star/accept-2
+PASS grep/star/reject-0
+PASS grep/star/reject-1
+PASS grep/plus/accept-0
+PASS grep/plus/accept-1
+PASS grep/plus/reject-0
+PASS grep/plus/reject-1
+PASS grep/optional/accept-0
+PASS grep/optional/accept-1
+PASS grep/optional/reject-0
+PASS grep/literal-caret/accept-0
+PASS grep/literal-caret/reject-0
+PASS grep/ignored-suffix/accept-0
+PASS grep/ignored-suffix/reject-0
+PASS grep/literal-dollar/accept-0
+PASS grep/literal-dollar/reject-0
+PASS grep/group-and-anchor/accept-0
+PASS grep/group-and-anchor/accept-1
+PASS grep/group-and-anchor/accept-2
+PASS grep/group-and-anchor/reject-0
+PASS grep/group-and-anchor/reject-1
+PASS grep/group-and-anchor/reject-2
+PASS grep/selected-pattern/accept-0
+PASS grep/selected-pattern/accept-1
+PASS grep/selected-pattern/accept-2
+PASS grep/selected-pattern/reject-0
+PASS grep/selected-pattern/reject-1
+PASS grep/selected-pattern/reject-2
+PASS utf8/non-ascii
+PASS utf8/overlong-rejected
+PASS utf8/scalar-boundaries
+PASS utf8/bad-continuation
+PASS utf8/truncated
+PASS utf8/surrogate
+PASS utf8/overlong-three
+PASS utf8/overlong-four
+PASS utf8/out-of-range
+PASS utf8/line-boundaries
+PASS grep/literal-label-defers-successor
+PASS grep/node-memoization
+SUMMARY 45 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+PASS grep/literal/accept-0
+PASS grep/literal/reject-0
+PASS grep/literal/reject-1
+PASS grep/star/accept-0
+PASS grep/star/accept-1
+PASS grep/star/accept-2
+PASS grep/star/reject-0
+PASS grep/star/reject-1
+PASS grep/plus/accept-0
+PASS grep/plus/accept-1
+PASS grep/plus/reject-0
+PASS grep/plus/reject-1
+PASS grep/optional/accept-0
+PASS grep/optional/accept-1
+PASS grep/optional/reject-0
+PASS grep/literal-caret/accept-0
+PASS grep/literal-caret/reject-0
+PASS grep/ignored-suffix/accept-0
+PASS grep/ignored-suffix/reject-0
+PASS grep/literal-dollar/accept-0
+PASS grep/literal-dollar/reject-0
+PASS grep/group-and-anchor/accept-0
+PASS grep/group-and-anchor/accept-1
+PASS grep/group-and-anchor/accept-2
+PASS grep/group-and-anchor/reject-0
+PASS grep/group-and-anchor/reject-1
+PASS grep/group-and-anchor/reject-2
+PASS grep/selected-pattern/accept-0
+PASS grep/selected-pattern/accept-1
+PASS grep/selected-pattern/accept-2
+PASS grep/selected-pattern/reject-0
+PASS grep/selected-pattern/reject-1
+PASS grep/selected-pattern/reject-2
+PASS utf8/non-ascii
+PASS utf8/overlong-rejected
+PASS utf8/scalar-boundaries
+PASS utf8/bad-continuation
+PASS utf8/truncated
+PASS utf8/surrogate
+PASS utf8/overlong-three
+PASS utf8/overlong-four
+PASS utf8/out-of-range
+PASS utf8/line-boundaries
+PASS grep/literal-label-defers-successor
+PASS grep/node-memoization
+SUMMARY 45 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+PASS grep/literal/accept-0
+PASS grep/literal/reject-0
+PASS grep/literal/reject-1
+PASS grep/star/accept-0
+PASS grep/star/accept-1
+PASS grep/star/accept-2
+PASS grep/star/reject-0
+PASS grep/star/reject-1
+PASS grep/plus/accept-0
+PASS grep/plus/accept-1
+PASS grep/plus/reject-0
+PASS grep/plus/reject-1
+PASS grep/optional/accept-0
+PASS grep/optional/accept-1
+PASS grep/optional/reject-0
+PASS grep/literal-caret/accept-0
+PASS grep/literal-caret/reject-0
+PASS grep/ignored-suffix/accept-0
+PASS grep/ignored-suffix/reject-0
+PASS grep/literal-dollar/accept-0
+PASS grep/literal-dollar/reject-0
+PASS grep/group-and-anchor/accept-0
+PASS grep/group-and-anchor/accept-1
+PASS grep/group-and-anchor/accept-2
+PASS grep/group-and-anchor/reject-0
+PASS grep/group-and-anchor/reject-1
+PASS grep/group-and-anchor/reject-2
+PASS grep/selected-pattern/accept-0
+PASS grep/selected-pattern/accept-1
+PASS grep/selected-pattern/accept-2
+PASS grep/selected-pattern/reject-0
+PASS grep/selected-pattern/reject-1
+PASS grep/selected-pattern/reject-2
+PASS utf8/non-ascii
+PASS utf8/overlong-rejected
+PASS utf8/scalar-boundaries
+PASS utf8/bad-continuation
+PASS utf8/truncated
+PASS utf8/surrogate
+PASS utf8/overlong-three
+PASS utf8/overlong-four
+PASS utf8/out-of-range
+PASS utf8/line-boundaries
+PASS grep/literal-label-defers-successor
+PASS grep/node-memoization
+SUMMARY 45 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 4194304 KiB
+PASS grep/literal/accept-0
+PASS grep/literal/reject-0
+PASS grep/literal/reject-1
+PASS grep/star/accept-0
+PASS grep/star/accept-1
+PASS grep/star/accept-2
+PASS grep/star/reject-0
+PASS grep/star/reject-1
+PASS grep/plus/accept-0
+PASS grep/plus/accept-1
+PASS grep/plus/reject-0
+PASS grep/plus/reject-1
+PASS grep/optional/accept-0
+PASS grep/optional/accept-1
+PASS grep/optional/reject-0
+PASS grep/literal-caret/accept-0
+PASS grep/literal-caret/reject-0
+PASS grep/ignored-suffix/accept-0
+PASS grep/ignored-suffix/reject-0
+PASS grep/literal-dollar/accept-0
+PASS grep/literal-dollar/reject-0
+PASS grep/group-and-anchor/accept-0
+PASS grep/group-and-anchor/accept-1
+PASS grep/group-and-anchor/accept-2
+PASS grep/group-and-anchor/reject-0
+PASS grep/group-and-anchor/reject-1
+PASS grep/group-and-anchor/reject-2
+PASS grep/selected-pattern/accept-0
+PASS grep/selected-pattern/accept-1
+PASS grep/selected-pattern/accept-2
+PASS grep/selected-pattern/reject-0
+PASS grep/selected-pattern/reject-1
+PASS grep/selected-pattern/reject-2
+PASS utf8/non-ascii
+PASS utf8/overlong-rejected
+PASS utf8/scalar-boundaries
+PASS utf8/bad-continuation
+PASS utf8/truncated
+PASS utf8/surrogate
+PASS utf8/overlong-three
+PASS utf8/overlong-four
+PASS utf8/out-of-range
+PASS utf8/line-boundaries
+PASS grep/literal-label-defers-successor
+PASS grep/node-memoization
+SUMMARY 45 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a sequence
+  val value : 'a -> 'a D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.node D.t -> 'a
+  val tail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val delayedTail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromCell : 'a D.t D.t -> 'a D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val replicate : int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val init :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> ('a D.t * 'b D.t * 'c D.t) <BaseFct>.<resultStr>.node D.t
+  val equal :
+      ('a * 'b -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t -> bool
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/utf8.sml]
+structure BenchUTF8 : sig
+  val decode : string -> int list
+  val lines : int list -> int list list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/parsers.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/parsers.sml:10.35 Warning: calling polyEqual
+functor BenchGrepParsersFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure Q : <sig>
+  type 'a parser
+  val singleton : 'a -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val succeed :
+      'a -> 'b -> ('a * 'b) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val satisfy :
+      ('a -> bool)
+       -> 'a list
+       -> ('a * 'a list) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val literal :
+      ''a
+       -> ''a list
+       -> (''a * ''a list) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val bind :
+      'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> ('a -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val thn :
+      ('a -> ('b * 'c) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> ('c -> ('d * 'e) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a -> (('b * 'd) * 'e) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val thnx :
+      ('a -> ('b * 'c) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> ('c -> ('d * 'e) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a -> ('b * 'e) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val xthn :
+      ('a -> ('b * 'c) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> ('c -> 'd <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a -> 'd <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val alt :
+      ('a -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> ('a -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val using :
+      ('a -> ('b * 'c) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> ('b -> 'd)
+       -> 'a -> ('d * 'c) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val plus :
+      ('a -> ('b * 'a) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a -> ('b list * 'a) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val rpt :
+      ('a -> ('b * 'a) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a -> ('b list * 'a) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val opt :
+      ('a -> ('b * 'a) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a -> ('b list * 'a) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val followedBy :
+      ('a -> ('b * 'c) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> ('c -> 'd <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a -> ('b * 'c) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/kernel.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/kernel.sml:55.6-55.32 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/kernel.sml:58.8-62.49 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int list -> 'Z Q.node D.t
+  operand:         ?.X1 list -> (?.X1 * ?.X1 list) Q.node D.t
+  in expression:
+    (P.followedBy (lit #"$")) anyC
+uncaught exception CompileError [CompileError]
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/kernel.sml:58.8-62.49 Error: operator and operand do not agree [tycon mismatch]
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a sequence
+  val value : 'a -> 'a D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.node D.t -> 'a
+  val tail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val delayedTail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromCell : 'a D.t D.t -> 'a D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val replicate : int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val init :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> ('a D.t * 'b D.t * 'c D.t) <BaseFct>.<resultStr>.node D.t
+  val equal :
+      ('a * 'b -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t -> bool
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/utf8.sml]
+structure BenchUTF8 : sig
+  val decode : string -> int list
+  val lines : int list -> int list list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/parsers.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/parsers.sml:10.35 Warning: calling polyEqual
+functor BenchGrepParsersFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure Q : <sig>
+  type 'a parser
+  val singleton : 'a -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val succeed :
+      'a -> 'b -> ('a * 'b) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val satisfy :
+      ('a -> bool)
+       -> 'a list
+       -> ('a * 'a list) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val literal :
+      ''a
+       -> ''a list
+       -> (''a * ''a list) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val bind :
+      'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> ('a -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val thn :
+      ('a -> ('b * 'c) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> ('c -> ('d * 'e) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a -> (('b * 'd) * 'e) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val thnx :
+      ('a -> ('b * 'c) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> ('c -> ('d * 'e) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a -> ('b * 'e) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val xthn :
+      ('a -> ('b * 'c) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> ('c -> 'd <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a -> 'd <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val alt :
+      ('a -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> ('a -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val using :
+      ('a -> ('b * 'c) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> ('b -> 'd)
+       -> 'a -> ('d * 'c) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val plus :
+      ('a -> ('b * 'a) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a -> ('b list * 'a) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val rpt :
+      ('a -> ('b * 'a) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a -> ('b list * 'a) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val opt :
+      ('a -> ('b * 'a) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a -> ('b list * 'a) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val followedBy :
+      ('a -> ('b * 'c) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> ('c -> 'd <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a -> ('b * 'c) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/kernel.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/kernel.sml:55.6-55.32 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/kernel.sml:58.8-62.49 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int list -> 'Z Q.node D.t
+  operand:         ?.X1 list -> (?.X1 * ?.X1 list) Q.node D.t
+  in expression:
+    (P.followedBy (lit #"$")) anyC
+uncaught exception CompileError [CompileError]
+PROGRAM FAIL native:smlnj32@110.99.9 (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/kernel.sml:58.8-62.49 Error: operator and operand do not agree [tycon mismatch]
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+                               type 'a t
+                               val delay : (unit -> 'a) -> 'a t
+                               val force : 'a t -> 'a
+                             end) :
+                           
+                             sig
+                               type 'a node
+                               type 'a sequence
+                               val value : 'a -> 'a D.t
+                               val empty : unit -> 'a node D.t
+                               val cons : 'a D.t -> 'a node D.t -> 'a node D.t
+                               val fromList : 'a list -> 'a node D.t
+                               val head : 'a node D.t -> 'a
+                               val tail : 'a node D.t -> 'a node D.t
+                               val delayedTail : 'a node D.t -> 'a node D.t
+                               val fromCell : 'a D.t D.t -> 'a D.t
+                               val map : ('a -> 'b)
+                                          -> 'a node D.t -> 'b node D.t
+                               val append : 'a node D.t
+                                             -> 'a node D.t -> 'a node D.t
+                               val take : int -> 'a node D.t -> 'a node D.t
+                               val replicate : int -> 'a D.t -> 'a node D.t
+                               val init : 'a node D.t -> 'a node D.t
+                               val zipWith3 : ('a * 'b * 'c -> 'd)
+                                               -> 'a node D.t
+                                               -> 'b node D.t
+                                               -> 'c node D.t -> 'd node D.t
+                               val zip3 : 'a node D.t
+                                           -> 'b node D.t
+                                           -> 'c node D.t
+                                           -> ('a D.t * 'b D.t * 'c D.t) node 
+                                             D.t
+                               val equal : ('a * 'b -> bool)
+                                            -> 'a node D.t
+                                            -> 'b node D.t -> bool
+                               val toList : 'a node D.t -> 'a list
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/utf8.sml]
+structure BenchUTF8 : 
+  sig
+    val decode : string -> int list
+    val lines : int list -> int list list
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/parsers.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/parsers.sml:10.35 Warning: calling polyEqual
+functor BenchGrepParsersFn(D: sig
+                              type 'a t
+                              val delay : (unit -> 'a) -> 'a t
+                              val force : 'a t -> 'a
+                            end) :
+                          
+                            sig
+                              structure Q : <sig>
+                              type 'a parser
+                              val singleton : 'a -> 'a Q.node D.t
+                              val succeed : 'a -> 'b -> ('a * 'b) Q.node D.t
+                              val satisfy : ('a -> bool)
+                                             -> 'a list
+                                             -> ('a * 'a list) Q.node D.t
+                              val literal : ''a
+                                             -> ''a list
+                                             -> (''a * ''a list) Q.node D.t
+                              val bind : 'a Q.node D.t
+                                          -> ('a -> 'b Q.node D.t)
+                                          -> 'b Q.node D.t
+                              val thn : ('a -> ('b * 'c) Q.node D.t)
+                                         -> ('c -> ('d * 'e) Q.node D.t)
+                                         -> 'a -> (('b * 'd) * 'e) Q.node D.t
+                              val thnx : ('a -> ('b * 'c) Q.node D.t)
+                                          -> ('c -> ('d * 'e) Q.node D.t)
+                                          -> 'a -> ('b * 'e) Q.node D.t
+                              val xthn : ('a -> ('b * 'c) Q.node D.t)
+                                          -> ('c -> 'd Q.node D.t)
+                                          -> 'a -> 'd Q.node D.t
+                              val alt : ('a -> 'b Q.node D.t)
+                                         -> ('a -> 'b Q.node D.t)
+                                         -> 'a -> 'b Q.node D.t
+                              val using : ('a -> ('b * 'c) Q.node D.t)
+                                           -> ('b -> 'd)
+                                           -> 'a -> ('d * 'c) Q.node D.t
+                              val rpt : ('a -> ('b * 'a) Q.node D.t)
+                                         -> 'a -> ('b list * 'a) Q.node D.t
+                              val plus : ('a -> ('b * 'a) Q.node D.t)
+                                          -> 'a -> ('b list * 'a) Q.node D.t
+                              val opt : ('a -> ('b * 'a) Q.node D.t)
+                                         -> 'a -> ('b list * 'a) Q.node D.t
+                              val followedBy : ('a -> ('b * 'c) Q.node D.t)
+                                                -> ('c -> 'd Q.node D.t)
+                                                -> 'a -> ('b * 'c) Q.node D.t
+                            end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/kernel.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/kernel.sml:55.6-55.32 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/kernel.sml:58.8-62.49 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int list -> 'Z Q.node D.t
+  operand:         ?.X1 list -> (?.X1 * ?.X1 list) Q.node D.t
+  in expression:
+    (P.followedBy (lit #"$")) anyC
+uncaught exception CompileError [CompileError]
+PROGRAM FAIL native:smlnj-dev@2026.2 (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/kernel.sml:58.8-62.49 Error: operator and operand do not agree [tycon mismatch]
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+PASS grep/literal/accept-0
+PASS grep/literal/reject-0
+PASS grep/literal/reject-1
+PASS grep/star/accept-0
+PASS grep/star/accept-1
+PASS grep/star/accept-2
+PASS grep/star/reject-0
+PASS grep/star/reject-1
+PASS grep/plus/accept-0
+PASS grep/plus/accept-1
+PASS grep/plus/reject-0
+PASS grep/plus/reject-1
+PASS grep/optional/accept-0
+PASS grep/optional/accept-1
+PASS grep/optional/reject-0
+PASS grep/literal-caret/accept-0
+PASS grep/literal-caret/reject-0
+PASS grep/ignored-suffix/accept-0
+PASS grep/ignored-suffix/reject-0
+PASS grep/literal-dollar/accept-0
+PASS grep/literal-dollar/reject-0
+PASS grep/group-and-anchor/accept-0
+PASS grep/group-and-anchor/accept-1
+PASS grep/group-and-anchor/accept-2
+PASS grep/group-and-anchor/reject-0
+PASS grep/group-and-anchor/reject-1
+PASS grep/group-and-anchor/reject-2
+PASS grep/selected-pattern/accept-0
+PASS grep/selected-pattern/accept-1
+PASS grep/selected-pattern/accept-2
+PASS grep/selected-pattern/reject-0
+PASS grep/selected-pattern/reject-1
+PASS grep/selected-pattern/reject-2
+PASS utf8/non-ascii
+PASS utf8/overlong-rejected
+PASS utf8/scalar-boundaries
+PASS utf8/bad-continuation
+PASS utf8/truncated
+PASS utf8/surrogate
+PASS utf8/overlong-three
+PASS utf8/overlong-four
+PASS utf8/out-of-range
+PASS utf8/line-boundaries
+PASS grep/literal-label-defers-successor
+PASS grep/node-memoization
+SUMMARY 45 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+PASS grep/literal/accept-0
+PASS grep/literal/reject-0
+PASS grep/literal/reject-1
+PASS grep/star/accept-0
+PASS grep/star/accept-1
+PASS grep/star/accept-2
+PASS grep/star/reject-0
+PASS grep/star/reject-1
+PASS grep/plus/accept-0
+PASS grep/plus/accept-1
+PASS grep/plus/reject-0
+PASS grep/plus/reject-1
+PASS grep/optional/accept-0
+PASS grep/optional/accept-1
+PASS grep/optional/reject-0
+PASS grep/literal-caret/accept-0
+PASS grep/literal-caret/reject-0
+PASS grep/ignored-suffix/accept-0
+PASS grep/ignored-suffix/reject-0
+PASS grep/literal-dollar/accept-0
+PASS grep/literal-dollar/reject-0
+PASS grep/group-and-anchor/accept-0
+PASS grep/group-and-anchor/accept-1
+PASS grep/group-and-anchor/accept-2
+PASS grep/group-and-anchor/reject-0
+PASS grep/group-and-anchor/reject-1
+PASS grep/group-and-anchor/reject-2
+PASS grep/selected-pattern/accept-0
+PASS grep/selected-pattern/accept-1
+PASS grep/selected-pattern/accept-2
+PASS grep/selected-pattern/reject-0
+PASS grep/selected-pattern/reject-1
+PASS grep/selected-pattern/reject-2
+PASS utf8/non-ascii
+PASS utf8/overlong-rejected
+PASS utf8/scalar-boundaries
+PASS utf8/bad-continuation
+PASS utf8/truncated
+PASS utf8/surrogate
+PASS utf8/overlong-three
+PASS utf8/overlong-four
+PASS utf8/out-of-range
+PASS utf8/line-boundaries
+PASS grep/literal-label-defers-successor
+PASS grep/node-memoization
+SUMMARY 45 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

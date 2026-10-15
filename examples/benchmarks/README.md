@@ -235,6 +235,16 @@ inventory entry.
 | [constraints-strict](#constraints-strict) | [nofib GC/spectral constraints](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/constraints) | Solve the same five CSP methods with eagerly materialized finite trees and tables. |
 | [fibheaps-lazy](#fibheaps-lazy) | [nofib fibheaps](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/fibheaps) | Compare both Fibonacci-heap consolidations with memoized fields and interleaved outputs. |
 | [fibheaps-strict](#fibheaps-strict) | [nofib fibheaps](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/fibheaps) | Compare the same two consolidations with eagerly evaluated finite heaps and outputs. |
+| [fibheaps-nofib-lazy](#fibheaps-nofib-lazy) | [nofib spectral/fibheaps](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/fibheaps) | Compare both Fibonacci-heap consolidations on 200 repeated memoized sorts. |
+| [fibheaps-nofib-strict](#fibheaps-nofib-strict) | [nofib spectral/fibheaps](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/fibheaps) | Compare both Fibonacci-heap consolidations on 200 repeated eager sorts. |
+| [quicksort](#quicksort) | [Sandmark quicksort](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-numerical/quicksort.ml) | Sort random integer arrays with last-pivot Lomuto partitioning. |
+| [mergesort](#mergesort) | [Sandmark mergesort](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-numerical/mergesort.ml) | Sort seeded integer arrays with alternating buffers and the original small-array threshold. |
+| [matrix_multiplication](#matrix_multiplication) | [Sandmark matrix_multiplication](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-numerical/matrix_multiplication.ml) | Multiply two deterministic dense integer matrices with an i/j/k loop nest. |
+| [floyd_warshall](#floyd_warshall) | [Sandmark floyd_warshall](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-numerical/floyd_warshall.ml) | Compute all-pairs shortest paths with explicit absent-edge constructors. |
+| [ansi-lazy](#ansi-lazy) | [nofib ANSI](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/ansi) | Compose character-stream screen interactions with memoized intermediate output. |
+| [ansi-strict](#ansi-strict) | [nofib ANSI](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/ansi) | Compose character-stream screen interactions with eager intermediate output. |
+| [grep-lazy](#grep-lazy) | [nofib grep](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/grep) | Parse a regex and interpret an epsilon-compressed cyclic NFA over UTF-8 lines with memoized sequences. |
+| [grep-strict](#grep-strict) | [nofib grep](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/grep) | Parse a regex and interpret an epsilon-compressed cyclic NFA over UTF-8 lines with eager sequences. |
 
 ## Running and interpreting checks
 
@@ -7491,3 +7501,576 @@ plus the shared nofib/GC/measurement survey. The source's functional heap subset
 and consolidation comparison remain distinct from the paper's broader heap API.
 
 [Complete provenance](fibheaps-strict/PROVENANCE.md).
+
+## fibheaps-nofib-lazy
+
+The nofib revision is `b7391df4540ac8b11b35e1b2e2c15819b5171798`,
+`spectral/fibheaps/Main.lhs` and `Makefile`. Chris Okasaki's July 1995
+correspondence, source comments, library dependencies and byte identities are
+retained under `upstream/`; no individual license grant is stated. All inputs
+are generated in source; independent histogram fixtures have no external data.
+
+This variant runs the same mutable-array and functional degree-consolidation
+comparison as the GC version, 200 times per invocation. Preserve its FAST/NORM/
+SLOW sizes 500/3,500/16,000 as smoke/normal/large, all 200 repetitions, and the
+first seed 1967 followed by `(77*seed+1) rem 1024`. These driver parameters differ
+materially from GC's single 300,000-element run, so both provenances and names
+remain separate. The `-nofib` suffix distinguishes the spectral profile variant
+from `fibheaps-lazy` and `fibheaps-strict`.
+
+The shared SML97 functor preserves cached size/minimum, binomial trees, degree
+tags, bag forests, traversal order, tie rules and both deletion algorithms.
+See [the GC port](../fibheaps-lazy/PROVENANCE.md) for the algorithm, demand and
+representation audit. Memoized and eager finite structures are separately named.
+Portable arrays replace the encapsulated ST array and accumArray operations.
+Inputs and selected scalar sums fit 31-bit integers. No arbitrary-width or
+modular arithmetic substitution is needed.
+
+The original forces its equality result with `seq` but does not print or reject
+a false result. The driver consumes and compares both sorted streams on every
+repetition and additionally checks ordering, a complete independent histogram,
+length and sum. It loads the expected histogram once and copies its counters
+for each repetition. Result reporting states repetition count, element count
+and the per-repetition sum; it checks agreement without summing all repetitions.
+Input generation remains within each repeated sort; immutable template loading
+and validation overhead are documented adaptations. These are repeated
+in-process workloads; fresh-process measurement wraps the entire invocation
+and makes no steady-state assumption.
+
+Nine shared semantic checks cover RNG prefixes, consolidation, forest orders,
+ties and demand. Original GHC observers and independent histogram generation
+provide expected results; large SML validation is recorded only when run.
+Memo-cell retention, array lifetime, degree carries and compiler sharing are
+source-based diagnostic hypotheses until measured. Algorithm reference:
+[Fredman and Tarjan (1987)](https://www.cs.princeton.edu/courses/archive/fall03/cs528/handouts/fibonacci%20heaps.pdf);
+Okasaki's retained correspondence describes this smaller persistent interface
+and its amortization caveats. See the shared nofib and measurement survey.
+
+[Complete provenance](fibheaps-nofib-lazy/PROVENANCE.md).
+
+## fibheaps-nofib-strict
+
+The nofib revision is `b7391df4540ac8b11b35e1b2e2c15819b5171798`,
+`spectral/fibheaps/Main.lhs` and `Makefile`. Chris Okasaki's July 1995
+correspondence, source comments, library dependencies and byte identities are
+retained under `upstream/`; no individual license grant is stated. All inputs
+are generated in source; independent histogram fixtures have no external data.
+
+This variant runs the same mutable-array and functional degree-consolidation
+comparison as the GC version, 200 times per invocation. Preserve its FAST/NORM/
+SLOW sizes 500/3,500/16,000 as smoke/normal/large, all 200 repetitions, and the
+first seed 1967 followed by `(77*seed+1) rem 1024`. These driver parameters differ
+materially from GC's single 300,000-element run, so both provenances and names
+remain separate. The `-nofib` suffix distinguishes the spectral profile variant
+from `fibheaps-lazy` and `fibheaps-strict`.
+
+The shared SML97 functor preserves cached size/minimum, binomial trees, degree
+tags, bag forests, traversal order, tie rules and both deletion algorithms.
+See [the GC port](../fibheaps-lazy/PROVENANCE.md) for the algorithm, demand and
+representation audit. Memoized and eager finite structures are separately named.
+Portable arrays replace the encapsulated ST array and accumArray operations.
+Inputs and selected scalar sums fit 31-bit integers. No arbitrary-width or
+modular arithmetic substitution is needed.
+
+The original forces its equality result with `seq` but does not print or reject
+a false result. The driver consumes and compares both sorted streams on every
+repetition and additionally checks ordering, a complete independent histogram,
+length and sum. It loads the expected histogram once and copies its counters
+for each repetition. Result reporting states repetition count, element count
+and the per-repetition sum; it checks agreement without summing all repetitions.
+Input generation remains within each repeated sort; immutable template loading
+and validation overhead are documented adaptations. These are repeated
+in-process workloads; fresh-process measurement wraps the entire invocation
+and makes no steady-state assumption.
+
+Nine shared semantic checks cover RNG prefixes, consolidation, forest orders,
+ties and demand. Original GHC observers and independent histogram generation
+provide expected results; large SML validation is recorded only when run.
+Memo-cell retention, array lifetime, degree carries and compiler sharing are
+source-based diagnostic hypotheses until measured. Algorithm reference:
+[Fredman and Tarjan (1987)](https://www.cs.princeton.edu/courses/archive/fall03/cs528/handouts/fibonacci%20heaps.pdf);
+Okasaki's retained correspondence describes this smaller persistent interface
+and its amortization caveats. See the shared nofib and measurement survey.
+
+[Complete provenance](fibheaps-nofib-strict/PROVENANCE.md).
+
+## quicksort
+
+## Algorithm and workload
+
+In-place Lomuto partitioning uses the last element as pivot, <= comparison,
+a mutable partition index and swaps. Preserve the wrapper and recursive worker,
+left recursion before right, and the default OCaml random state. This is distinct
+from classic list quicksorts and nofib sorting implementations.
+
+### History, sources and variants
+
+Sandmark revision `5605805954a00497ed197c930641cddd580e1507`,
+`benchmarks/multicore-numerical/quicksort.ml` and its sequential dune
+executable. The individual program's author is unstated. Retain source, build
+manifest, run-configuration extract, aggregate Unlicense text and byte hashes.
+The directory also contains parallel/multiprocess programs with their own
+inventory dispositions; they are not part of this sequential port. Established
+upstream name is preserved; there are no aliases requiring renaming here.
+
+### Portable translation and library changes
+
+Kernels, inputs and checks use SML97. Inclusive for loops become tail-recursive
+loop helpers; array-bound hoisting remains a compiler optimization. Arrays remain mutable; row arrays remain distinct. The random
+library replacement follows Damien Doligez/INRIA's OCaml 4.14.1 source at
+`99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93`, `stdlib/random.ml`; the installed
+reference matches it byte for byte. Retain its copyright header and full LGPL
+2.1 license with OCaml's linking exception. Word32 expresses the 30-bit masked
+additions without overflowing 31-bit SML int; bounded rejection draws retain
+the source's state advancement. Fixed states for default, seed 42 and seed 512
+are derived with the pinned library and retained derivation code. Precomputing
+the two MD5 seed initializations removes that setup cost; per-invocation state
+copying and all subsequent random draws remain within the driver. No library
+substitution changes the generated inputs. These profiles use only Random.int;
+the helper's floating-point draws are separately checked for future users.
+
+### Inputs and correctness
+
+Profiles: smoke 128, normal 100,000, large 4,000,000. Large preserves the published run
+configuration 4,000,000; smoke and normal are deliberately smaller portable
+correctness/comparison profiles. All seeds, ranges, kernel stopping conditions
+and data distributions remain fixed. No external dataset is used.
+
+The original discards its result. The driver consumes every output element,
+checks monotone ordering and the complete input multiplicity histogram, then
+reports length, arbitrary-precision sum and a 32-bit rolling fingerprint.
+Histogram construction and validation are measured additions. Original OCaml
+observers produce the reviewed scalar results; independent Python sorting of
+the same generated inputs agrees for smoke and normal. Kernel values/indices
+fit 31 bits, totals use explicit IntInf, and the fingerprint wraps modulo 2^32.
+
+The reference programs were run with explicit 8 GiB/3,600-second bounds,
+including the original large inputs. Large SML coverage is claimed only for
+recorded runs, independently of the reference results. Integer checks use
+exact equality. Twenty-one shared semantic checks cover 10,000 draws per
+seed/mode, rejection behavior, fresh state, perturbed floating-point checks,
+sort thresholds/odd sizes, rectangular multiplication and disconnected paths.
+
+### Runtime questions and references
+
+Array bounds checks, loop lowering, mutable accumulator representation, branch
+behavior, allocation during validation, and the copied RNG state are diagnostic
+hypotheses from source inspection. Compiler comparisons use identical SML
+sources; original OCaml results are correctness references. No measured speed
+sensitivity is asserted here. See the shared Sandmark and measurement survey,
+the retained program, and [the pinned Random implementation](https://github.com/ocaml/ocaml/blob/99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93/stdlib/random.ml).
+For literature on the partitioning choice, see Aumüller and Hass,
+[*Simple and Fast BlockQuicksort using Lomuto’s Partitioning Scheme*](https://arxiv.org/abs/1810.12047).
+Its block algorithms differ from this direct implementation; no performance
+claim from that paper is transferred to the port.
+
+[Complete provenance](quicksort/PROVENANCE.md).
+
+## mergesort
+
+## Algorithm and workload
+
+Top-down integer array mergesort alternates source/destination arrays using
+the original move flag, stable <= merge, block copies and threshold 32. The
+upstream function named bubble_sort actually compares each later element against
+the current position; retain that exact small-array algorithm. Seed is 42.
+
+### History, sources and variants
+
+Sandmark revision `5605805954a00497ed197c930641cddd580e1507`,
+`benchmarks/multicore-numerical/mergesort.ml` and its sequential dune
+executable. The individual program's author is unstated. Retain source, build
+manifest, run-configuration extract, aggregate Unlicense text and byte hashes.
+The directory also contains parallel/multiprocess programs with their own
+inventory dispositions; they are not part of this sequential port. Established
+upstream name is preserved; there are no aliases requiring renaming here.
+
+### Portable translation and library changes
+
+Kernels, inputs and checks use SML97. Inclusive for loops become tail-recursive
+loop helpers; array-bound hoisting remains a compiler optimization. Arrays remain mutable; row arrays remain distinct. The random
+library replacement follows Damien Doligez/INRIA's OCaml 4.14.1 source at
+`99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93`, `stdlib/random.ml`; the installed
+reference matches it byte for byte. Retain its copyright header and full LGPL
+2.1 license with OCaml's linking exception. Word32 expresses the 30-bit masked
+additions without overflowing 31-bit SML int; bounded rejection draws retain
+the source's state advancement. Fixed states for default, seed 42 and seed 512
+are derived with the pinned library and retained derivation code. Precomputing
+the two MD5 seed initializations removes that setup cost; per-invocation state
+copying and all subsequent random draws remain within the driver. No library
+substitution changes the generated inputs. These profiles use only Random.int;
+the helper's floating-point draws are separately checked for future users.
+
+### Inputs and correctness
+
+Profiles: smoke 128, normal 262,144, large 67,108,864. Large preserves the published run
+configuration 67,108,864; smoke and normal are deliberately smaller portable
+correctness/comparison profiles. All seeds, ranges, kernel stopping conditions
+and data distributions remain fixed. No external dataset is used.
+
+The original discards its result. The driver consumes every output element,
+checks monotone ordering and the complete input multiplicity histogram, then
+reports length, arbitrary-precision sum and a 32-bit rolling fingerprint.
+Histogram construction and validation are measured additions. Original OCaml
+observers produce the reviewed scalar results; independent Python sorting of
+the same generated inputs agrees for smoke and normal. Kernel values/indices
+fit 31 bits, totals use explicit IntInf, and the fingerprint wraps modulo 2^32.
+
+The reference programs were run with explicit 8 GiB/3,600-second bounds,
+including the original large inputs. Large SML coverage is claimed only for
+recorded runs, independently of the reference results. Integer checks use
+exact equality. Twenty-one shared semantic checks cover 10,000 draws per
+seed/mode, rejection behavior, fresh state, perturbed floating-point checks,
+sort thresholds/odd sizes, rectangular multiplication and disconnected paths.
+
+### Runtime questions and references
+
+Array bounds checks, loop lowering, mutable accumulator representation, branch
+behavior, allocation during validation, and the copied RNG state are diagnostic
+hypotheses from source inspection. Compiler comparisons use identical SML
+sources; original OCaml results are correctness references. No measured speed
+sensitivity is asserted here. See the shared Sandmark and measurement survey,
+the retained program, and [the pinned Random implementation](https://github.com/ocaml/ocaml/blob/99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93/stdlib/random.ml).
+
+[Complete provenance](mergesort/PROVENANCE.md).
+
+## matrix_multiplication
+
+## Algorithm and workload
+
+Dense square integer matrices use arrays of rows. Preserve the i/j/k loop
+nest, mutable scalar accumulator, integer multiply/add, and two sequentially
+generated matrices of values 0..99 from the default OCaml random state. This is
+distinct from floating-point and classic matrix workloads.
+
+### History, sources and variants
+
+Sandmark revision `5605805954a00497ed197c930641cddd580e1507`,
+`benchmarks/multicore-numerical/matrix_multiplication.ml` and its sequential dune
+executable. The individual program's author is unstated. Retain source, build
+manifest, run-configuration extract, aggregate Unlicense text and byte hashes.
+The directory also contains parallel/multiprocess programs with their own
+inventory dispositions; they are not part of this sequential port. Established
+upstream name is preserved; there are no aliases requiring renaming here.
+
+### Portable translation and library changes
+
+Kernels, inputs and checks use SML97. Inclusive for loops become tail-recursive
+loop helpers; array-bound hoisting remains a compiler optimization. Arrays remain mutable; row arrays remain distinct. The random
+library replacement follows Damien Doligez/INRIA's OCaml 4.14.1 source at
+`99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93`, `stdlib/random.ml`; the installed
+reference matches it byte for byte. Retain its copyright header and full LGPL
+2.1 license with OCaml's linking exception. Word32 expresses the 30-bit masked
+additions without overflowing 31-bit SML int; bounded rejection draws retain
+the source's state advancement. Fixed states for default, seed 42 and seed 512
+are derived with the pinned library and retained derivation code. Precomputing
+the two MD5 seed initializations removes that setup cost; per-invocation state
+copying and all subsequent random draws remain within the driver. No library
+substitution changes the generated inputs. These profiles use only Random.int;
+the helper's floating-point draws are separately checked for future users.
+
+### Inputs and correctness
+
+Profiles: smoke 8, normal 128, large 1,024. Large preserves the published run
+configuration 1,024; smoke and normal are deliberately smaller portable
+correctness/comparison profiles. All seeds, ranges, kernel stopping conditions
+and data distributions remain fixed. No external dataset is used.
+
+The original discards its result. The driver consumes every cell against a
+reviewed complete OCaml result fixture and returns length, arbitrary-precision
+sum and a 32-bit rolling fingerprint. Fixture parsing/checking is measured
+validation work. Infinity is serialized as -1 in the reference, ~1 in portable
+SML fixtures, without changing the kernel's constructor representation.
+Independent smoke/normal checks use column dot products.
+All selected kernel integer operations fit signed 31 bits. Validation totals
+use explicit IntInf; fingerprint arithmetic wraps modulo 2^32.
+
+The reference programs were run with explicit 8 GiB/3,600-second bounds,
+including the original large inputs. Large SML coverage is claimed only for
+recorded runs, independently of the reference results. Integer checks use
+exact equality. Twenty-one shared semantic checks cover 10,000 draws per
+seed/mode, rejection behavior, fresh state, perturbed floating-point checks,
+sort thresholds/odd sizes, rectangular multiplication and disconnected paths.
+
+### Runtime questions and references
+
+Array bounds checks, loop lowering, mutable accumulator representation, branch
+behavior, allocation during validation, and the copied RNG state are diagnostic
+hypotheses from source inspection. Compiler comparisons use identical SML
+sources; original OCaml results are correctness references. No measured speed
+sensitivity is asserted here. See the shared Sandmark and measurement survey,
+the retained program, and [the pinned Random implementation](https://github.com/ocaml/ocaml/blob/99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93/stdlib/random.ml).
+
+[Complete provenance](matrix_multiplication/PROVENANCE.md).
+
+## floyd_warshall
+
+## Algorithm and workload
+
+In-place all-pairs shortest paths retain Infinity/Value constructors,
+arrays of rows, k/i/j order, the cached a_ik value and both original update cases.
+Seed 512 generates each edge by Random.int 2, then a separate Random.int 100
+only for present edges. Generation precedes zeroing the diagonal. Distances
+are nonnegative; absent edges are not replaced with a large integer sentinel.
+
+### History, sources and variants
+
+Sandmark revision `5605805954a00497ed197c930641cddd580e1507`,
+`benchmarks/multicore-numerical/floyd_warshall.ml` and its sequential dune
+executable. The individual program's author is unstated. Retain source, build
+manifest, run-configuration extract, aggregate Unlicense text and byte hashes.
+The directory also contains parallel/multiprocess programs with their own
+inventory dispositions; they are not part of this sequential port. Established
+upstream name is preserved; there are no aliases requiring renaming here.
+
+### Portable translation and library changes
+
+Kernels, inputs and checks use SML97. Inclusive for loops become tail-recursive
+loop helpers; array-bound hoisting remains a compiler optimization. Arrays remain mutable; row arrays remain distinct. The random
+library replacement follows Damien Doligez/INRIA's OCaml 4.14.1 source at
+`99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93`, `stdlib/random.ml`; the installed
+reference matches it byte for byte. Retain its copyright header and full LGPL
+2.1 license with OCaml's linking exception. Word32 expresses the 30-bit masked
+additions without overflowing 31-bit SML int; bounded rejection draws retain
+the source's state advancement. Fixed states for default, seed 42 and seed 512
+are derived with the pinned library and retained derivation code. Precomputing
+the two MD5 seed initializations removes that setup cost; per-invocation state
+copying and all subsequent random draws remain within the driver. No library
+substitution changes the generated inputs. These profiles use only Random.int;
+the helper's floating-point draws are separately checked for future users.
+
+### Inputs and correctness
+
+Profiles: smoke 8, normal 128, large 512. Large preserves the published run
+configuration 512; smoke and normal are deliberately smaller portable
+correctness/comparison profiles. All seeds, ranges, kernel stopping conditions
+and data distributions remain fixed. No external dataset is used.
+
+The original discards its result. The driver consumes every cell against a
+reviewed complete OCaml result fixture and returns length, arbitrary-precision
+sum and a 32-bit rolling fingerprint. Fixture parsing/checking is measured
+validation work. Infinity is serialized as -1 in the reference, ~1 in portable
+SML fixtures, without changing the kernel's constructor representation.
+Independent smoke/normal checks use repeated Bellman-Ford relaxation on the original graph.
+All selected kernel integer operations fit signed 31 bits. Validation totals
+use explicit IntInf; fingerprint arithmetic wraps modulo 2^32.
+
+The reference programs were run with explicit 8 GiB/3,600-second bounds,
+including the original large inputs. Large SML coverage is claimed only for
+recorded runs, independently of the reference results. Integer checks use
+exact equality. Twenty-one shared semantic checks cover 10,000 draws per
+seed/mode, rejection behavior, fresh state, perturbed floating-point checks,
+sort thresholds/odd sizes, rectangular multiplication and disconnected paths.
+
+### Runtime questions and references
+
+Array bounds checks, loop lowering, mutable accumulator representation, branch
+behavior, allocation during validation, and the copied RNG state are diagnostic
+hypotheses from source inspection. Compiler comparisons use identical SML
+sources; original OCaml results are correctness references. No measured speed
+sensitivity is asserted here. See the shared Sandmark and measurement survey,
+the retained program, and [the pinned Random implementation](https://github.com/ocaml/ocaml/blob/99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93/stdlib/random.ml).
+Algorithm anchor: Floyd, [*Algorithm 97: Shortest path*](https://doi.org/10.1145/367766.368168),
+1962. The source audit establishes this port's loop order and representations.
+
+[Complete provenance](floyd_warshall/PROVENANCE.md).
+
+## ansi-lazy
+
+## Algorithm and workload
+
+Compose the source's functional ANSI interaction program with itself. Preserve
+cursor addressing, screen clearing, highlighting, input-character consumption,
+backspace/delete editing, 18-character input limits, overflow bells, greeting
+centering and EOF continuations. The workload is nested stream transformation,
+not a loop of independent screen renderings. With composed programs, generated
+control bytes become the next program's input and overlong lines generate bells.
+
+### History, source and variants
+
+nofib revision `b7391df4540ac8b11b35e1b2e2c15819b5171798`,
+`spectral/ansi/Main.hs` and `Makefile`. The source presents Hugs-style functional
+interaction and credits Partain's benchmark main; no individual original author
+or license grant is stated. Retain all source text, comments, fixtures, the blub
+artifact and hashes. The unused screen/helper definitions are not in the
+reachable benchmark; the port retains the combinators used by program/main.
+No aliases are established. Memoized and strict variants share one functor and
+retain separate names because intermediate stream demand/allocation differ.
+
+### Translation decisions
+
+SML97 uses explicit memoized character heads and spines for the lazy variant,
+and eager finite sequences for the strict variant. String literals, short
+editing buffers and integer-to-text cursor coordinates use portable character
+lists/strings. Constant opening text is shared; emitted prefix spines are copied.
+The program continuation is shared; EOF callbacks are applied only at EOF.
+Continuations delay output construction, including the nested program input,
+where needed to preserve demand. The strict variant deliberately evaluates the
+same finite transformations eagerly. Used coordinate and length arithmetic fits
+31 bits. Fingerprinting uses explicit Word32 arithmetic modulo 2^32.
+
+### Profiles and result validation
+
+Smoke composes 3 programs; normal and large preserve upstream 400 and 900.
+The original FAST size 150 is also independently checked as a reference point.
+There is no external input dataset: the original consumes EOF on stdin for
+these runs. Control bytes are generated by the program itself. The driver
+supplies that empty input, consumes every output byte against a reviewed exact
+fixture and reports length/fingerprint. It does not send the generated escape
+sequences to a live terminal. Byte checking and fixture loading are measured
+validation additions; kernel output semantics remain unchanged.
+
+Original GHC output agrees byte for byte with upstream fixtures at all three
+original sizes and with an independent iterative byte-transducer model at
+0,1,2,3,150,400,900. Fourteen semantic checks cover editing, limit bells, input
+consumption, zero composition, variant agreement and the different continuation
+demand boundary. Large SML execution is claimed only for recorded runs.
+
+### Runtime questions and references
+
+Explicit memo cells, retained intermediate prefixes, higher-order composition,
+character representation and list/string conversion are source-based diagnostic
+hypotheses until measurements or IR analysis establish their effects. The
+[maintained nofib source](https://github.com/ghc/nofib/blob/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/ansi/Main.hs)
+and retained comments explain this program's ancestry and interaction design;
+see Partain's suite paper and the shared demand/measurement survey. No historical
+or cross-language timing result is claimed from the program's description.
+
+[Complete provenance](ansi-lazy/PROVENANCE.md).
+
+## ansi-strict
+
+## Algorithm and workload
+
+Compose the source's functional ANSI interaction program with itself. Preserve
+cursor addressing, screen clearing, highlighting, input-character consumption,
+backspace/delete editing, 18-character input limits, overflow bells, greeting
+centering and EOF continuations. The workload is nested stream transformation,
+not a loop of independent screen renderings. With composed programs, generated
+control bytes become the next program's input and overlong lines generate bells.
+
+### History, source and variants
+
+nofib revision `b7391df4540ac8b11b35e1b2e2c15819b5171798`,
+`spectral/ansi/Main.hs` and `Makefile`. The source presents Hugs-style functional
+interaction and credits Partain's benchmark main; no individual original author
+or license grant is stated. Retain all source text, comments, fixtures, the blub
+artifact and hashes. The unused screen/helper definitions are not in the
+reachable benchmark; the port retains the combinators used by program/main.
+No aliases are established. Memoized and strict variants share one functor and
+retain separate names because intermediate stream demand/allocation differ.
+
+### Translation decisions
+
+SML97 uses explicit memoized character heads and spines for the lazy variant,
+and eager finite sequences for the strict variant. String literals, short
+editing buffers and integer-to-text cursor coordinates use portable character
+lists/strings. Constant opening text is shared; emitted prefix spines are copied.
+The program continuation is shared; EOF callbacks are applied only at EOF.
+Continuations delay output construction, including the nested program input,
+where needed to preserve demand. The strict variant deliberately evaluates the
+same finite transformations eagerly. Used coordinate and length arithmetic fits
+31 bits. Fingerprinting uses explicit Word32 arithmetic modulo 2^32.
+
+### Profiles and result validation
+
+Smoke composes 3 programs; normal and large preserve upstream 400 and 900.
+The original FAST size 150 is also independently checked as a reference point.
+There is no external input dataset: the original consumes EOF on stdin for
+these runs. Control bytes are generated by the program itself. The driver
+supplies that empty input, consumes every output byte against a reviewed exact
+fixture and reports length/fingerprint. It does not send the generated escape
+sequences to a live terminal. Byte checking and fixture loading are measured
+validation additions; kernel output semantics remain unchanged.
+
+Original GHC output agrees byte for byte with upstream fixtures at all three
+original sizes and with an independent iterative byte-transducer model at
+0,1,2,3,150,400,900. Fourteen semantic checks cover editing, limit bells, input
+consumption, zero composition, variant agreement and the different continuation
+demand boundary. Large SML execution is claimed only for recorded runs.
+
+### Runtime questions and references
+
+Explicit memo cells, retained intermediate prefixes, higher-order composition,
+character representation and list/string conversion are source-based diagnostic
+hypotheses until measurements or IR analysis establish their effects. The
+[maintained nofib source](https://github.com/ghc/nofib/blob/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/ansi/Main.hs)
+and retained comments explain this program's ancestry and interaction design;
+see Partain's suite paper and the shared demand/measurement survey. No historical
+or cross-language timing result is claimed from the program's description.
+
+[Complete provenance](ansi-strict/PROVENANCE.md).
+
+## grep-lazy
+
+The workload parses an expression with ordered list-of-successes combinators,
+compresses epsilon transitions and interprets a cyclic NFA over complete lines.
+It retains transition order, duplicate active states, special end transitions
+and the source's regex syntax, including literal ^ and first-parse selection.
+
+The pin is nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `real/grep`.
+The parser log names thiemann's 1993/1994 work and Partain's import; the retained
+unused StringMatch module names Peter Thiemann. Main's original author is
+unstated. Original modules, data, notices and hashes remain available.
+
+Memoized and eager finite parser/state sequences are separately named. Both
+retain memoized cyclic graph edges: eagerly unfolding those edges would not
+terminate. Shared SML97 functors implement the same producer and interpreter.
+Portable references tie the graph knots; no host regex engine or DFA replaces
+the NFA. UTF-8 decoding produces Unicode scalar integers, preserving non-ASCII
+input semantics. Full strict acquisition and copied line buffers replace lazy
+handle input; code points remain shared across repetitions. Hashing explicitly
+wraps signed 64-bit GHC Int semantics, with an IntInf repetition total.
+
+Smoke uses FAST data once; normal/large retain NORM/SLOW data and 150/250
+repetitions. Original FAST's 100 repetitions remain in provenance. Every matched
+line is compared with a reviewed ordered fixture before hashing. Unchanged GHC,
+pinned hash fixtures, a full-line GHC observer and an independent Unicode filter
+agree. The source datasets contain Wikipedia XML and contributor metadata;
+[complete provenance](grep-lazy/PROVENANCE.md) records the inferred corpus origin,
+individual notice gap, every input identity and all acquisition/checking changes.
+
+Parser specialization, graph sharing, duplicate states and sequence retention
+are source-based diagnostic hypotheses until measured. Forty-five semantic
+checks cover syntax, quantifiers, memoization, demand and UTF-8 validation.
+Related background: Hutton and Meijer,
+[*Monadic Parsing in Haskell*](https://nottingham-repository.worktribe.com/output/1024100),
+1998; it is not asserted as the ancestry of the earlier source. See the shared
+nofib/measurement survey and the program's own revision comments.
+
+## grep-strict
+
+The workload parses an expression with ordered list-of-successes combinators,
+compresses epsilon transitions and interprets a cyclic NFA over complete lines.
+It retains transition order, duplicate active states, special end transitions
+and the source's regex syntax, including literal ^ and first-parse selection.
+
+The pin is nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, `real/grep`.
+The parser log names thiemann's 1993/1994 work and Partain's import; the retained
+unused StringMatch module names Peter Thiemann. Main's original author is
+unstated. Original modules, data, notices and hashes remain available.
+
+Memoized and eager finite parser/state sequences are separately named. Both
+retain memoized cyclic graph edges: eagerly unfolding those edges would not
+terminate. Shared SML97 functors implement the same producer and interpreter.
+Portable references tie the graph knots; no host regex engine or DFA replaces
+the NFA. UTF-8 decoding produces Unicode scalar integers, preserving non-ASCII
+input semantics. Full strict acquisition and copied line buffers replace lazy
+handle input; code points remain shared across repetitions. Hashing explicitly
+wraps signed 64-bit GHC Int semantics, with an IntInf repetition total.
+
+Smoke uses FAST data once; normal/large retain NORM/SLOW data and 150/250
+repetitions. Original FAST's 100 repetitions remain in provenance. Every matched
+line is compared with a reviewed ordered fixture before hashing. Unchanged GHC,
+pinned hash fixtures, a full-line GHC observer and an independent Unicode filter
+agree. The source datasets contain Wikipedia XML and contributor metadata;
+[complete provenance](grep-strict/PROVENANCE.md) records the inferred corpus origin,
+individual notice gap, every input identity and all acquisition/checking changes.
+
+Parser specialization, graph sharing, duplicate states and sequence retention
+are source-based diagnostic hypotheses until measured. Forty-five semantic
+checks cover syntax, quantifiers, memoization, demand and UTF-8 validation.
+Related background: Hutton and Meijer,
+[*Monadic Parsing in Haskell*](https://nottingham-repository.worktribe.com/output/1024100),
+1998; it is not asserted as the ancestry of the earlier source. See the shared
+nofib/measurement survey and the program's own revision comments.

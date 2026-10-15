@@ -1,0 +1,3 @@
+PASS exact Unicode line selection smoke 11913
+PASS exact Unicode line selection normal 50574
+PASS exact Unicode line selection large 123547

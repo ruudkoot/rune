@@ -1,0 +1,64 @@
+PROGRAM LIMIT AS 4194304 KiB
+PASS grep/match-a-a
+PASS grep/reject-a-
+PASS grep/reject-a-ab
+PASS grep/match-a*-
+PASS grep/match-a*-a
+PASS grep/match-a*-aaa
+PASS grep/reject-a*-b
+PASS grep/reject-a*-ab
+PASS grep/match-a+-a
+PASS grep/match-a+-aaa
+PASS grep/reject-a+-
+PASS grep/reject-a+-b
+PASS grep/match-a?-
+PASS grep/match-a?-a
+PASS grep/reject-a?-aa
+PASS grep/match-\(a\|b\)*c$-c
+PASS grep/match-\(a\|b\)*c$-abc
+PASS grep/match-\(a\|b\)*c$-bbac
+PASS grep/reject-\(a\|b\)*c$-
+PASS grep/reject-\(a\|b\)*c$-ab
+PASS grep/reject-\(a\|b\)*c$-acc
+PASS grep/match-.*:..*-x:y
+PASS grep/match-.*:..*-: 
+PASS grep/match-.*:..*-abc:de
+PASS grep/reject-.*:..*-
+PASS grep/reject-.*:..*-:
+PASS grep/reject-.*:..*-abc:
+PASS utf8/non-ascii
+PASS utf8/overlong-rejected
+SUMMARY 29 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+PASS grep/match-a-a
+PASS grep/reject-a-
+PASS grep/reject-a-ab
+PASS grep/match-a*-
+PASS grep/match-a*-a
+PASS grep/match-a*-aaa
+PASS grep/reject-a*-b
+PASS grep/reject-a*-ab
+PASS grep/match-a+-a
+PASS grep/match-a+-aaa
+PASS grep/reject-a+-
+PASS grep/reject-a+-b
+PASS grep/match-a?-
+PASS grep/match-a?-a
+PASS grep/reject-a?-aa
+PASS grep/match-\(a\|b\)*c$-c
+PASS grep/match-\(a\|b\)*c$-abc
+PASS grep/match-\(a\|b\)*c$-bbac
+PASS grep/reject-\(a\|b\)*c$-
+PASS grep/reject-\(a\|b\)*c$-ab
+PASS grep/reject-\(a\|b\)*c$-acc
+PASS grep/match-.*:..*-x:y
+PASS grep/match-.*:..*-: 
+PASS grep/match-.*:..*-abc:de
+PASS grep/reject-.*:..*-
+PASS grep/reject-.*:..*-:
+PASS grep/reject-.*:..*-abc:
+PASS utf8/non-ascii
+PASS utf8/overlong-rejected
+SUMMARY 29 checks, 0 failed
+PROGRAM PASS native:mlton@20241230

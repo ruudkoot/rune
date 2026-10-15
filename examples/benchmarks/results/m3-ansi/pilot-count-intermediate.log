@@ -1,0 +1,7 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (675 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='ansi-' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.XT90DF
+BENCH MEASURE ansi-lazy normal count
+BENCH MEASURE ansi-strict normal count
+make: *** [Makefile:1010: bench-count] Terminated

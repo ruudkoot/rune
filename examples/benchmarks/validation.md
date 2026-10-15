@@ -841,3 +841,52 @@ set, 331 language fixtures per compiler, performance budgets, bootstrap and
 bytecode agreement for 498 programs across seven builds. runedoc and runeopt
 also agree. The [complete transcript](validation/oct04-fibheaps-acceptance.log)
 records the run; all 35 inventory tests pass.
+
+## M3/M4/M5 imports and routine coverage, 2026-10-15
+
+Ten imports bring the catalogue to 229 programs and 681 profiles. The repeated
+spectral heap pair, ANSI pair and grep pair each pass 56 smoke/normal cases on
+four Rune engines at both levels and all six managed native hosts. Sandmark's
+four sequential array kernels pass 104 cases on Rune and five native hosts.
+The [spectral heaps](results/m3-spectral-fibheaps/), [ANSI](results/m3-ansi/),
+[grep](results/m4-grep/) and [array](results/m5-sequential-arrays/) archives
+retain complete case ledgers, raw results, provenance and source/input/tool
+identities. All ten count groups agree across applicable Rune engines.
+
+ANSI preserves source stream composition and exact control-byte output. A GHC
+demand observer and two new regression checks establish that EOF callbacks
+remain deferred until selected. The final 14-check semantic suite passes all
+ten configurations at both levels. An interrupted draft with eager callback
+construction, resource failures and its failing new regression test is explicitly
+intermediate. Final source retains normal400/large900 and the standard limits.
+
+Grep retains ordered parser combinators, epsilon-compressed cyclic NFAs and
+Unicode character hashing. Every matched line is checked against complete
+fixtures. Forty-five semantic checks pass all ten configurations at both levels;
+unchanged GHC, independent Unicode filtering and pinned fixtures agree. Strict
+input acquisition and copied line buffers are documented adaptations.
+
+The OCaml-compatible array generator retains exact modified lagged-Fibonacci
+transitions, rejection sampling and reviewed fixed states. Twenty-one semantic
+checks pass nine configurations at both levels. Managed 32-bit SML/NJ fails all
+eight array cases with spurious Overflow in a representable integer expression;
+[the independent checked probe](validation/smlnj32-random.md) records three failures,
+passing variable-maximum controls and six passing comparison configurations.
+Portable source and reviewed expected results remain unchanged. Those failures
+cannot contribute measurements. Scratch-runner setup errors and an earlier
+sandbox SIGSYS termination are separate in their attempt ledgers.
+
+The routine set grows from 14 to 16 with seeded Floyd-Warshall and UTF-8/NFA grep.
+Broader explicit targets retain every imported program. All 35 inventory tests
+pass. No headline timing, steady state or universal large SML coverage is claimed.
+M3, M4 and M5 remain in progress; M8 remains planned.
+
+Final `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 after the ANSI demand
+correction, grep imports and 16-program routine expansion. It validates all
+681 catalogue profiles and negative metadata checks, 331 language fixtures
+per compiler, existing performance budgets, bootstrap and bytecode agreement
+for 498 programs across seven builds. runedoc and runeopt builds also agree;
+GDB and LLDB checks run with remote debuginfo lookup disabled. The
+[full final transcript](validation/oct15-benchmarks-681-acceptance.log) and
+[environment record](validation/oct15-debugger-environment.md) distinguish this
+run from the pre-final 675-profile baseline and interrupted debugger wait.

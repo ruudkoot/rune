@@ -1,0 +1,36 @@
+ M docs/plans/benchmarks.md
+ M examples/benchmarks/README.md
+ M examples/benchmarks/literature.md
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/routine.tsv
+ M examples/benchmarks/validation.md
+?? examples/benchmarks/ansi-lazy/
+?? examples/benchmarks/ansi-strict/
+?? examples/benchmarks/fibheaps-nofib-lazy/
+?? examples/benchmarks/fibheaps-nofib-strict/
+?? examples/benchmarks/floyd_warshall/
+?? examples/benchmarks/grep-lazy/
+?? examples/benchmarks/grep-strict/
+?? examples/benchmarks/matrix_multiplication/
+?? examples/benchmarks/mergesort/
+?? examples/benchmarks/quicksort/
+?? examples/benchmarks/results/m3-spectral-fibheaps/
+?? examples/benchmarks/results/m5-sequential-arrays/
+?? examples/benchmarks/shared/nofib-ansi.sml
+?? examples/benchmarks/shared/nofib-grep-parsers.sml
+?? examples/benchmarks/shared/nofib-grep.sml
+?? examples/benchmarks/shared/ocaml-array-checks.sml
+?? examples/benchmarks/shared/ocaml-array-kernels.sml
+?? examples/benchmarks/shared/ocaml-random.sml
+?? examples/benchmarks/shared/utf8.sml
+?? examples/benchmarks/validation/oct15-debugger-environment.md
+?? examples/benchmarks/validation/oct15-heaps-ansi-arrays-acceptance.log
+?? examples/benchmarks/validation/oct15-heaps-ansi-arrays-debugger-wait.log
+?? examples/benchmarks/validation/smlnj32-random.md
+?? tests/benchmarks/ansi.sml
+?? tests/benchmarks/check-ansi.sh
+?? tests/benchmarks/check-grep.sh
+?? tests/benchmarks/check-ocaml-arrays.sh
+?? tests/benchmarks/data/ocaml-random/
+?? tests/benchmarks/grep.sml
+?? tests/benchmarks/ocaml-array-semantics.sml

@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+floyd_warshall	normal	rune	O2	compile	0	0	pass	2.19	2.06	0.15	135352	-	-	-	floyd_warshall/rune/build/compile
+floyd_warshall	normal	rune	O2	correctness	0	0	pass	0.61	0.60	0.01	20048	103544721	21973456	612584	floyd_warshall/rune/correctness.0
+floyd_warshall	normal	rune	O2	count	1	1	pass	0.67	0.66	0.02	20140	103544721	21973456	612584	floyd_warshall/rune/fresh.1
+floyd_warshall	normal	rune:opt	O2	compile	0	0	pass	2.82	1.99	0.12	135316	-	-	-	floyd_warshall/rune-opt/build/compile
+floyd_warshall	normal	rune:opt	O2	native-compile	0	0	pass	0.47	0.20	0.06	12376	-	-	-	floyd_warshall/rune-opt/build/native-compile
+floyd_warshall	normal	rune:opt	O2	correctness	0	0	pass	0.23	0.21	0.01	20504	103544721	21973456	612584	floyd_warshall/rune-opt/correctness.0
+floyd_warshall	normal	rune:opt	O2	count	1	1	pass	0.23	0.21	0.02	20484	103544721	21973456	612584	floyd_warshall/rune-opt/fresh.1
+floyd_warshall	normal	rune:new	O2	compile	0	0	pass	2.09	1.94	0.13	135188	-	-	-	floyd_warshall/rune-new/build/compile
+floyd_warshall	normal	rune:new	O2	correctness	0	0	pass	0.83	0.78	0.06	21592	60366314	21973456	612584	floyd_warshall/rune-new/correctness.0
+floyd_warshall	normal	rune:new	O2	count	1	1	pass	1.24	1.22	0.04	21648	60366314	21973456	612584	floyd_warshall/rune-new/fresh.1
+floyd_warshall	normal	rune:jit	O2	compile	0	0	pass	2.10	1.98	0.16	135252	-	-	-	floyd_warshall/rune-jit/build/compile
+floyd_warshall	normal	rune:jit	O2	correctness	0	0	pass	0.28	0.27	0.02	22608	60366314	21973456	612584	floyd_warshall/rune-jit/correctness.0
+floyd_warshall	normal	rune:jit	O2	count	1	1	pass	0.24	0.22	0.02	22720	60366314	21973456	612584	floyd_warshall/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

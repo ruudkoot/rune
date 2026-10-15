@@ -1,0 +1,6 @@
+PROGRAM LIMIT AS 4194304 KiB
+PROGRAM FAIL rune (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/kernel.sml:57:54: error: function argument: type mismatch between 'a -> ('b * 'c) node t and (int list -> (int * int list) node t) * (int list -> (int * int list) node t) (type mismatch)
+PROGRAM LIMIT AS 4194304 KiB
+PROGRAM FAIL native:mlton@20241230 (load 1, exit 0)
+Error: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/kernel.sml 57.54-57.77.

@@ -1,0 +1,16 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (681 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='ansi-' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.BaATgs
+BENCH MEASURE ansi-lazy normal count
+BENCH MEASURE ansi-strict normal count
+COUNT unbudgeted ansi-lazy normal rune
+COUNT unbudgeted ansi-lazy normal rune:opt
+COUNT unbudgeted ansi-lazy normal rune:new
+COUNT unbudgeted ansi-lazy normal rune:jit
+COUNT unbudgeted ansi-strict normal rune
+COUNT unbudgeted ansi-strict normal rune:opt
+COUNT unbudgeted ansi-strict normal rune:new
+COUNT unbudgeted ansi-strict normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.BaATgs/report.md

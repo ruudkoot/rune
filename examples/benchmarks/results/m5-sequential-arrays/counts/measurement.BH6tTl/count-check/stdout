@@ -1,0 +1,5 @@
+COUNT unbudgeted mergesort normal rune
+COUNT unbudgeted mergesort normal rune:opt
+COUNT unbudgeted mergesort normal rune:new
+COUNT unbudgeted mergesort normal rune:jit
+COUNT comparisons agree

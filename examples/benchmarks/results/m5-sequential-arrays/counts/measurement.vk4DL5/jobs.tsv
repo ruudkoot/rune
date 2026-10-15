@@ -1,0 +1,1 @@
+quicksort	600	4194304	shared/input.sml shared/ocaml-random.sml shared/ocaml-array-kernels.sml shared/ocaml-array-checks.sml quicksort/benchmark.sml shared/main.sml	100000	quicksort/normal.expected	-

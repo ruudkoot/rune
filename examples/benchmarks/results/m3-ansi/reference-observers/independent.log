@@ -1,0 +1,7 @@
+PASS exact independent transducer 0 0
+PASS exact independent transducer 1 346
+PASS exact independent transducer 2 708
+PASS exact independent transducer 3 1070
+PASS exact independent transducer 150 54284
+PASS exact independent transducer 400 144784
+PASS exact independent transducer 900 325784

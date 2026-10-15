@@ -1,0 +1,123 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 44362e3b..01b98b6d 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -227,6 +227,8 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [constraints-strict](#constraints-strict) | [nofib GC/spectral constraints](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/constraints) | Solve the same five CSP methods with eagerly materialized finite trees and tables. |
+ | [fibheaps-lazy](#fibheaps-lazy) | [nofib fibheaps](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/fibheaps) | Compare both Fibonacci-heap consolidations with memoized fields and interleaved outputs. |
+ | [fibheaps-strict](#fibheaps-strict) | [nofib fibheaps](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/fibheaps) | Compare the same two consolidations with eagerly evaluated finite heaps and outputs. |
++| [fibheaps-nofib-lazy](#fibheaps-nofib-lazy) | [nofib spectral/fibheaps](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/fibheaps) | Compare both Fibonacci-heap consolidations on 200 repeated memoized sorts. |
++| [fibheaps-nofib-strict](#fibheaps-nofib-strict) | [nofib spectral/fibheaps](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/fibheaps) | Compare both Fibonacci-heap consolidations on 200 repeated eager sorts. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -7393,3 +7395,95 @@ plus the shared nofib/GC/measurement survey. The source's functional heap subset
+ and consolidation comparison remain distinct from the paper's broader heap API.
+ 
+ [Complete provenance](fibheaps-strict/PROVENANCE.md).
++
++## fibheaps-nofib-lazy
++
++The nofib revision is `b7391df4540ac8b11b35e1b2e2c15819b5171798`,
++`spectral/fibheaps/Main.lhs` and `Makefile`. Chris Okasaki's July 1995
++correspondence, source comments, library dependencies and byte identities are
++retained under `upstream/`; no individual license grant is stated. All inputs
++are generated in source; independent histogram fixtures have no external data.
++
++This variant runs the same mutable-array and functional degree-consolidation
++comparison as the GC version, 200 times per invocation. Preserve its FAST/NORM/
++SLOW sizes 500/3,500/16,000 as smoke/normal/large, all 200 repetitions, and the
++first seed 1967 followed by `(77*seed+1) rem 1024`. These driver parameters differ
++materially from GC's single 300,000-element run, so both provenances and names
++remain separate. The `-nofib` suffix distinguishes the spectral profile variant
++from `fibheaps-lazy` and `fibheaps-strict`.
++
++The shared SML97 functor preserves cached size/minimum, binomial trees, degree
++tags, bag forests, traversal order, tie rules and both deletion algorithms.
++See [the GC port](../fibheaps-lazy/PROVENANCE.md) for the algorithm, demand and
++representation audit. Memoized and eager finite structures are separately named.
++Portable arrays replace the encapsulated ST array and accumArray operations.
++Inputs and selected scalar sums fit 31-bit integers. No arbitrary-width or
++modular arithmetic substitution is needed.
++
++The original forces its equality result with `seq` but does not print or reject
++a false result. The driver consumes and compares both sorted streams on every
++repetition and additionally checks ordering, a complete independent histogram,
++length and sum. It loads the expected histogram once and copies its counters
++for each repetition. Result reporting states repetition count, element count
++and the per-repetition sum; it checks agreement without summing all repetitions.
++Input generation remains within each repeated sort; immutable template loading
++and validation overhead are documented adaptations. These are repeated
++in-process workloads; fresh-process measurement wraps the entire invocation
++and makes no steady-state assumption.
++
++Nine shared semantic checks cover RNG prefixes, consolidation, forest orders,
++ties and demand. Original GHC observers and independent histogram generation
++provide expected results; large SML validation is recorded only when run.
++Memo-cell retention, array lifetime, degree carries and compiler sharing are
++source-based diagnostic hypotheses until measured. Algorithm reference:
++[Fredman and Tarjan (1987)](https://www.cs.princeton.edu/courses/archive/fall03/cs528/handouts/fibonacci%20heaps.pdf);
++Okasaki's retained correspondence describes this smaller persistent interface
++and its amortization caveats. See the shared nofib and measurement survey.
++
++[Complete provenance](fibheaps-nofib-lazy/PROVENANCE.md).
++
++## fibheaps-nofib-strict
++
++The nofib revision is `b7391df4540ac8b11b35e1b2e2c15819b5171798`,
++`spectral/fibheaps/Main.lhs` and `Makefile`. Chris Okasaki's July 1995
++correspondence, source comments, library dependencies and byte identities are
++retained under `upstream/`; no individual license grant is stated. All inputs
++are generated in source; independent histogram fixtures have no external data.
++
++This variant runs the same mutable-array and functional degree-consolidation
++comparison as the GC version, 200 times per invocation. Preserve its FAST/NORM/
++SLOW sizes 500/3,500/16,000 as smoke/normal/large, all 200 repetitions, and the
++first seed 1967 followed by `(77*seed+1) rem 1024`. These driver parameters differ
++materially from GC's single 300,000-element run, so both provenances and names
++remain separate. The `-nofib` suffix distinguishes the spectral profile variant
++from `fibheaps-lazy` and `fibheaps-strict`.
++
++The shared SML97 functor preserves cached size/minimum, binomial trees, degree
++tags, bag forests, traversal order, tie rules and both deletion algorithms.
++See [the GC port](../fibheaps-lazy/PROVENANCE.md) for the algorithm, demand and
++representation audit. Memoized and eager finite structures are separately named.
++Portable arrays replace the encapsulated ST array and accumArray operations.
++Inputs and selected scalar sums fit 31-bit integers. No arbitrary-width or
++modular arithmetic substitution is needed.
++
++The original forces its equality result with `seq` but does not print or reject
++a false result. The driver consumes and compares both sorted streams on every
++repetition and additionally checks ordering, a complete independent histogram,
++length and sum. It loads the expected histogram once and copies its counters
++for each repetition. Result reporting states repetition count, element count
++and the per-repetition sum; it checks agreement without summing all repetitions.
++Input generation remains within each repeated sort; immutable template loading
++and validation overhead are documented adaptations. These are repeated
++in-process workloads; fresh-process measurement wraps the entire invocation
++and makes no steady-state assumption.
++
++Nine shared semantic checks cover RNG prefixes, consolidation, forest orders,
++ties and demand. Original GHC observers and independent histogram generation
++provide expected results; large SML validation is recorded only when run.
++Memo-cell retention, array lifetime, degree carries and compiler sharing are
++source-based diagnostic hypotheses until measured. Algorithm reference:
++[Fredman and Tarjan (1987)](https://www.cs.princeton.edu/courses/archive/fall03/cs528/handouts/fibonacci%20heaps.pdf);
++Okasaki's retained correspondence describes this smaller persistent interface
++and its amortization caveats. See the shared nofib and measurement survey.
++
++[Complete provenance](fibheaps-nofib-strict/PROVENANCE.md).
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 62305ce8..0723e661 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -650,3 +650,9 @@ fibheaps-lazy	large	nofib	gc/fibheaps	300000 expected/large-histogram.txt	fibhea
+ fibheaps-strict	smoke	nofib	gc/fibheaps	100 expected/smoke-histogram.txt	fibheaps-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-fibheaps.sml,fibheaps-strict/benchmark.sml,shared/main.sml	30	1048576	priority-queues,trees,arrays,laziness,sharing,allocation	expected/smoke-histogram.txt	exact	implemented
+ fibheaps-strict	normal	nofib	gc/fibheaps	30000 expected/normal-histogram.txt	fibheaps-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-fibheaps.sml,fibheaps-strict/benchmark.sml,shared/main.sml	600	4194304	priority-queues,trees,arrays,laziness,sharing,allocation	expected/normal-histogram.txt	exact	implemented
+ fibheaps-strict	large	nofib	gc/fibheaps	300000 expected/large-histogram.txt	fibheaps-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-fibheaps.sml,fibheaps-strict/benchmark.sml,shared/main.sml	3600	8388608	priority-queues,trees,arrays,laziness,sharing,allocation	expected/large-histogram.txt	exact	implemented
++fibheaps-nofib-lazy	smoke	nofib	spectral/fibheaps	500 200 expected/smoke-histogram.txt	fibheaps-nofib-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-fibheaps.sml,fibheaps-nofib-lazy/benchmark.sml,shared/main.sml	30	1048576	priority-queues,trees,arrays,laziness,sharing,allocation,repeated-in-process	expected/smoke-histogram.txt	exact	implemented
++fibheaps-nofib-lazy	normal	nofib	spectral/fibheaps	3500 200 expected/normal-histogram.txt	fibheaps-nofib-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-fibheaps.sml,fibheaps-nofib-lazy/benchmark.sml,shared/main.sml	600	4194304	priority-queues,trees,arrays,laziness,sharing,allocation,repeated-in-process	expected/normal-histogram.txt	exact	implemented
++fibheaps-nofib-lazy	large	nofib	spectral/fibheaps	16000 200 expected/large-histogram.txt	fibheaps-nofib-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-fibheaps.sml,fibheaps-nofib-lazy/benchmark.sml,shared/main.sml	3600	8388608	priority-queues,trees,arrays,laziness,sharing,allocation,repeated-in-process	expected/large-histogram.txt	exact	implemented
++fibheaps-nofib-strict	smoke	nofib	spectral/fibheaps	500 200 expected/smoke-histogram.txt	fibheaps-nofib-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-fibheaps.sml,fibheaps-nofib-strict/benchmark.sml,shared/main.sml	30	1048576	priority-queues,trees,arrays,laziness,sharing,allocation,repeated-in-process	expected/smoke-histogram.txt	exact	implemented
++fibheaps-nofib-strict	normal	nofib	spectral/fibheaps	3500 200 expected/normal-histogram.txt	fibheaps-nofib-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-fibheaps.sml,fibheaps-nofib-strict/benchmark.sml,shared/main.sml	600	4194304	priority-queues,trees,arrays,laziness,sharing,allocation,repeated-in-process	expected/normal-histogram.txt	exact	implemented
++fibheaps-nofib-strict	large	nofib	spectral/fibheaps	16000 200 expected/large-histogram.txt	fibheaps-nofib-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-fibheaps.sml,fibheaps-nofib-strict/benchmark.sml,shared/main.sml	3600	8388608	priority-queues,trees,arrays,laziness,sharing,allocation,repeated-in-process	expected/large-histogram.txt	exact	implemented

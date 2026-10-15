@@ -1,0 +1,3 @@
+grep-lazy
+150 .*:..* data/normal.txt expected/normal.txt
+150:268:236201672964711575700

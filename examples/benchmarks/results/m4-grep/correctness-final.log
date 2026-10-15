@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-grep.s1juruq0
+PASS grep-lazy smoke O0
+PASS grep-lazy smoke O2
+PASS grep-lazy smoke hosts
+PASS grep-lazy normal O0
+PASS grep-lazy normal O2
+PASS grep-lazy normal hosts
+PASS grep-strict smoke O0
+PASS grep-strict smoke O2
+PASS grep-strict smoke hosts
+PASS grep-strict normal O0
+PASS grep-strict normal O2
+PASS grep-strict normal hosts

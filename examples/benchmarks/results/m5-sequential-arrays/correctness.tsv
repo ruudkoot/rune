@@ -1,0 +1,105 @@
+benchmark	profile	optimization	configuration	arguments	status	artifact_directory
+floyd_warshall	normal	O0	rune	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/normal/O0/rune
+floyd_warshall	normal	O0	rune-jit	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/normal/O0/rune-jit
+floyd_warshall	normal	O0	rune-new	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/normal/O0/rune-new
+floyd_warshall	normal	O0	rune-opt	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/normal/O0/rune-opt
+floyd_warshall	normal	O2	rune	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/normal/O2/rune
+floyd_warshall	normal	O2	rune-jit	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/normal/O2/rune-jit
+floyd_warshall	normal	O2	rune-new	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/normal/O2/rune-new
+floyd_warshall	normal	O2	rune-opt	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/normal/O2/rune-opt
+floyd_warshall	normal	host-default	native-mlkit-4.7.23	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/normal/host-default/native-mlkit-4.7.23
+floyd_warshall	normal	host-default	native-mlton-20241230	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/normal/host-default/native-mlton-20241230
+floyd_warshall	normal	host-default	native-polyml-5.9.2	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/normal/host-default/native-polyml-5.9.2
+floyd_warshall	normal	host-default	native-smlnj-dev-2026.2	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/normal/host-default/native-smlnj-dev-2026.2
+floyd_warshall	normal	host-default	native-smlnj-legacy-110.99.9	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/normal/host-default/native-smlnj-legacy-110.99.9
+floyd_warshall	smoke	O0	rune	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/smoke/O0/rune
+floyd_warshall	smoke	O0	rune-jit	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/smoke/O0/rune-jit
+floyd_warshall	smoke	O0	rune-new	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/smoke/O0/rune-new
+floyd_warshall	smoke	O0	rune-opt	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/smoke/O0/rune-opt
+floyd_warshall	smoke	O2	rune	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/smoke/O2/rune
+floyd_warshall	smoke	O2	rune-jit	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/smoke/O2/rune-jit
+floyd_warshall	smoke	O2	rune-new	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/smoke/O2/rune-new
+floyd_warshall	smoke	O2	rune-opt	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/smoke/O2/rune-opt
+floyd_warshall	smoke	host-default	native-mlkit-4.7.23	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/smoke/host-default/native-mlkit-4.7.23
+floyd_warshall	smoke	host-default	native-mlton-20241230	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/smoke/host-default/native-mlton-20241230
+floyd_warshall	smoke	host-default	native-polyml-5.9.2	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/smoke/host-default/native-polyml-5.9.2
+floyd_warshall	smoke	host-default	native-smlnj-dev-2026.2	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/smoke/host-default/native-smlnj-dev-2026.2
+floyd_warshall	smoke	host-default	native-smlnj-legacy-110.99.9	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/floyd_warshall/smoke/host-default/native-smlnj-legacy-110.99.9
+matrix_multiplication	normal	O0	rune	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/normal/O0/rune
+matrix_multiplication	normal	O0	rune-jit	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/normal/O0/rune-jit
+matrix_multiplication	normal	O0	rune-new	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/normal/O0/rune-new
+matrix_multiplication	normal	O0	rune-opt	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/normal/O0/rune-opt
+matrix_multiplication	normal	O2	rune	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/normal/O2/rune
+matrix_multiplication	normal	O2	rune-jit	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/normal/O2/rune-jit
+matrix_multiplication	normal	O2	rune-new	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/normal/O2/rune-new
+matrix_multiplication	normal	O2	rune-opt	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/normal/O2/rune-opt
+matrix_multiplication	normal	host-default	native-mlkit-4.7.23	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/normal/host-default/native-mlkit-4.7.23
+matrix_multiplication	normal	host-default	native-mlton-20241230	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/normal/host-default/native-mlton-20241230
+matrix_multiplication	normal	host-default	native-polyml-5.9.2	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/normal/host-default/native-polyml-5.9.2
+matrix_multiplication	normal	host-default	native-smlnj-dev-2026.2	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/normal/host-default/native-smlnj-dev-2026.2
+matrix_multiplication	normal	host-default	native-smlnj-legacy-110.99.9	128 expected/normal.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/normal/host-default/native-smlnj-legacy-110.99.9
+matrix_multiplication	smoke	O0	rune	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/smoke/O0/rune
+matrix_multiplication	smoke	O0	rune-jit	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/smoke/O0/rune-jit
+matrix_multiplication	smoke	O0	rune-new	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/smoke/O0/rune-new
+matrix_multiplication	smoke	O0	rune-opt	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/smoke/O0/rune-opt
+matrix_multiplication	smoke	O2	rune	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/smoke/O2/rune
+matrix_multiplication	smoke	O2	rune-jit	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/smoke/O2/rune-jit
+matrix_multiplication	smoke	O2	rune-new	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/smoke/O2/rune-new
+matrix_multiplication	smoke	O2	rune-opt	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/smoke/O2/rune-opt
+matrix_multiplication	smoke	host-default	native-mlkit-4.7.23	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/smoke/host-default/native-mlkit-4.7.23
+matrix_multiplication	smoke	host-default	native-mlton-20241230	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/smoke/host-default/native-mlton-20241230
+matrix_multiplication	smoke	host-default	native-polyml-5.9.2	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/smoke/host-default/native-polyml-5.9.2
+matrix_multiplication	smoke	host-default	native-smlnj-dev-2026.2	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/smoke/host-default/native-smlnj-dev-2026.2
+matrix_multiplication	smoke	host-default	native-smlnj-legacy-110.99.9	8 expected/smoke.txt	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/matrix_multiplication/smoke/host-default/native-smlnj-legacy-110.99.9
+mergesort	normal	O0	rune	262144	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/normal/O0/rune
+mergesort	normal	O0	rune-jit	262144	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/normal/O0/rune-jit
+mergesort	normal	O0	rune-new	262144	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/normal/O0/rune-new
+mergesort	normal	O0	rune-opt	262144	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/normal/O0/rune-opt
+mergesort	normal	O2	rune	262144	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/normal/O2/rune
+mergesort	normal	O2	rune-jit	262144	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/normal/O2/rune-jit
+mergesort	normal	O2	rune-new	262144	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/normal/O2/rune-new
+mergesort	normal	O2	rune-opt	262144	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/normal/O2/rune-opt
+mergesort	normal	host-default	native-mlkit-4.7.23	262144	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/normal/host-default/native-mlkit-4.7.23
+mergesort	normal	host-default	native-mlton-20241230	262144	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/normal/host-default/native-mlton-20241230
+mergesort	normal	host-default	native-polyml-5.9.2	262144	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/normal/host-default/native-polyml-5.9.2
+mergesort	normal	host-default	native-smlnj-dev-2026.2	262144	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/normal/host-default/native-smlnj-dev-2026.2
+mergesort	normal	host-default	native-smlnj-legacy-110.99.9	262144	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/normal/host-default/native-smlnj-legacy-110.99.9
+mergesort	smoke	O0	rune	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/smoke/O0/rune
+mergesort	smoke	O0	rune-jit	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/smoke/O0/rune-jit
+mergesort	smoke	O0	rune-new	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/smoke/O0/rune-new
+mergesort	smoke	O0	rune-opt	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/smoke/O0/rune-opt
+mergesort	smoke	O2	rune	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/smoke/O2/rune
+mergesort	smoke	O2	rune-jit	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/smoke/O2/rune-jit
+mergesort	smoke	O2	rune-new	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/smoke/O2/rune-new
+mergesort	smoke	O2	rune-opt	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/smoke/O2/rune-opt
+mergesort	smoke	host-default	native-mlkit-4.7.23	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/smoke/host-default/native-mlkit-4.7.23
+mergesort	smoke	host-default	native-mlton-20241230	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/smoke/host-default/native-mlton-20241230
+mergesort	smoke	host-default	native-polyml-5.9.2	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/smoke/host-default/native-polyml-5.9.2
+mergesort	smoke	host-default	native-smlnj-dev-2026.2	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/smoke/host-default/native-smlnj-dev-2026.2
+mergesort	smoke	host-default	native-smlnj-legacy-110.99.9	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/mergesort/smoke/host-default/native-smlnj-legacy-110.99.9
+quicksort	normal	O0	rune	100000	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/normal/O0/rune
+quicksort	normal	O0	rune-jit	100000	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/normal/O0/rune-jit
+quicksort	normal	O0	rune-new	100000	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/normal/O0/rune-new
+quicksort	normal	O0	rune-opt	100000	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/normal/O0/rune-opt
+quicksort	normal	O2	rune	100000	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/normal/O2/rune
+quicksort	normal	O2	rune-jit	100000	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/normal/O2/rune-jit
+quicksort	normal	O2	rune-new	100000	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/normal/O2/rune-new
+quicksort	normal	O2	rune-opt	100000	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/normal/O2/rune-opt
+quicksort	normal	host-default	native-mlkit-4.7.23	100000	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/normal/host-default/native-mlkit-4.7.23
+quicksort	normal	host-default	native-mlton-20241230	100000	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/normal/host-default/native-mlton-20241230
+quicksort	normal	host-default	native-polyml-5.9.2	100000	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/normal/host-default/native-polyml-5.9.2
+quicksort	normal	host-default	native-smlnj-dev-2026.2	100000	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/normal/host-default/native-smlnj-dev-2026.2
+quicksort	normal	host-default	native-smlnj-legacy-110.99.9	100000	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/normal/host-default/native-smlnj-legacy-110.99.9
+quicksort	smoke	O0	rune	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/smoke/O0/rune
+quicksort	smoke	O0	rune-jit	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/smoke/O0/rune-jit
+quicksort	smoke	O0	rune-new	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/smoke/O0/rune-new
+quicksort	smoke	O0	rune-opt	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/smoke/O0/rune-opt
+quicksort	smoke	O2	rune	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/smoke/O2/rune
+quicksort	smoke	O2	rune-jit	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/smoke/O2/rune-jit
+quicksort	smoke	O2	rune-new	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/smoke/O2/rune-new
+quicksort	smoke	O2	rune-opt	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/smoke/O2/rune-opt
+quicksort	smoke	host-default	native-mlkit-4.7.23	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/smoke/host-default/native-mlkit-4.7.23
+quicksort	smoke	host-default	native-mlton-20241230	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/smoke/host-default/native-mlton-20241230
+quicksort	smoke	host-default	native-polyml-5.9.2	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/smoke/host-default/native-polyml-5.9.2
+quicksort	smoke	host-default	native-smlnj-dev-2026.2	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/smoke/host-default/native-smlnj-dev-2026.2
+quicksort	smoke	host-default	native-smlnj-legacy-110.99.9	128	pass	results/m5-sequential-arrays/attempts-raw/final-sandmark-arrays.fuubduhd/quicksort/smoke/host-default/native-smlnj-legacy-110.99.9

@@ -1,0 +1,11 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (669 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=matrix_multiplication' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.gWGKo4
+BENCH MEASURE matrix_multiplication normal count
+COUNT unbudgeted matrix_multiplication normal rune
+COUNT unbudgeted matrix_multiplication normal rune:opt
+COUNT unbudgeted matrix_multiplication normal rune:new
+COUNT unbudgeted matrix_multiplication normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.gWGKo4/report.md

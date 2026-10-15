@@ -1,0 +1,9 @@
+COUNT unbudgeted grep-lazy normal rune
+COUNT unbudgeted grep-lazy normal rune:opt
+COUNT unbudgeted grep-lazy normal rune:new
+COUNT unbudgeted grep-lazy normal rune:jit
+COUNT unbudgeted grep-strict normal rune
+COUNT unbudgeted grep-strict normal rune:opt
+COUNT unbudgeted grep-strict normal rune:new
+COUNT unbudgeted grep-strict normal rune:jit
+COUNT comparisons agree

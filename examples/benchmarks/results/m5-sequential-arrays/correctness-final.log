@@ -1,0 +1,6 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-sandmark-arrays.x931lm7d
+Traceback (most recent call last):
+  File "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sandmark-arrays-originals/check-final.py", line 18, in <module>
+    assert result.returncode==0,job
+           ^^^^^^^^^^^^^^^^^^^^
+AssertionError: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-sandmark-arrays.x931lm7d/quicksort/smoke/O0

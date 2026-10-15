@@ -1,0 +1,6 @@
+PROGRAM LIMIT AS 4194304 KiB
+PROGRAM FAIL rune (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/kernel.sml:46:9: error: expected declaration but found '7'
+PROGRAM LIMIT AS 4194304 KiB
+PROGRAM FAIL native:mlton@20241230 (load 1, exit 0)
+Error: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/grep-originals/kernel.sml 45.17-45.17.

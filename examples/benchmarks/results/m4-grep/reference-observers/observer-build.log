@@ -1,0 +1,12 @@
+[1 of 5] Compiling NofibUtils       ( /home/ruud/reference/ghc/nofib/real/grep/NofibUtils.hs, tests/out/benchmarks/grep-originals/observer-build/NofibUtils.o )
+[2 of 5] Compiling Parsers          ( /home/ruud/reference/ghc/nofib/real/grep/Parsers.hs, tests/out/benchmarks/grep-originals/observer-build/Parsers.o )
+
+/home/ruud/reference/ghc/nofib/real/grep/Parsers.hs:35:1: warning: [-Wtabs]
+    Tab character found here, and in 11 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+35 |                          | otherwise = []
+   | ^^^^^^^^
+[3 of 5] Compiling Kernel           ( tests/out/benchmarks/grep-originals/Kernel.lhs, tests/out/benchmarks/grep-originals/observer-build/Kernel.o )
+[4 of 5] Compiling Main             ( tests/out/benchmarks/grep-originals/full_observer.hs, tests/out/benchmarks/grep-originals/observer-build/Main.o )
+[5 of 5] Linking tests/out/benchmarks/grep-originals/full-observer

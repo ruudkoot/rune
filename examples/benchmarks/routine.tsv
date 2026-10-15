@@ -13,3 +13,5 @@ kahan	Unsigned Word64 generation, compensated real-array updates and exact input
 wheel-sieve2-lazy	Circular prime streams, delayed folds and shared span projections.
 maillist	File creation/appending, paragraph parsing and complete application output checks.
 sequence_cps	OCaml CPS translation, unfolder records, callbacks and exact wide sums.
+floyd_warshall	Seeded OCaml-compatible generation, mutable row arrays and datatype graph updates.
+grep-lazy	UTF-8 acquisition, ordered parsers, cyclic NFA sharing and complete application output checks.

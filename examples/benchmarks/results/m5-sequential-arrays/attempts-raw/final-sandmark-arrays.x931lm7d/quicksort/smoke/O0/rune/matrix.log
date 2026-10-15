@@ -1,0 +1,12 @@
+PROGRAM LIMIT AS 1048576 KiB
+cp: cannot stat '/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/quicksort/-': No such file or directory
+PROGRAM FAIL rune (load 1, exit 0)
+PROGRAM LIMIT AS 1048576 KiB
+cp: cannot stat '/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/quicksort/-': No such file or directory
+PROGRAM FAIL rune:new (load 1, exit 0)
+PROGRAM LIMIT AS 1048576 KiB
+cp: cannot stat '/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/quicksort/-': No such file or directory
+PROGRAM FAIL rune:jit (load 1, exit 0)
+PROGRAM LIMIT AS 1048576 KiB
+cp: cannot stat '/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/quicksort/-': No such file or directory
+PROGRAM FAIL rune:opt (load 1, exit 0)

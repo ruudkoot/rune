@@ -1,0 +1,18 @@
+PROGRAM LIMIT AS 4194304 KiB
+PASS ansi/empty-eof
+PASS ansi/newline
+PASS ansi/backspace
+PASS ansi/delete
+PASS ansi/empty-delete-bell
+PASS ansi/overlong-bells
+PASS ansi/press-key-discards-one
+PASS ansi/unread
+PASS ansi/zero-composition-identity
+PASS ansi/lazy-strict-composition
+PASS ansi/lazy-prefix-defers-continuation
+PASS ansi/strict-prefix-demands-continuation
+FAIL ansi/lazy-prefix-defers-EOF-callback -- raised an exception
+PASS ansi/EOF-callback-demanded-after-prefix
+SUMMARY 14 checks, 1 failed
+PROGRAM FAIL rune (load 0, exit 1)
+FAIL ansi/lazy-prefix-defers-EOF-callback -- raised an exception

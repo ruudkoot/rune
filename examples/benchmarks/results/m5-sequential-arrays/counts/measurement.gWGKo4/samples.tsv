@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+matrix_multiplication	normal	rune	O2	compile	0	0	pass	2.45	2.42	0.13	135320	-	-	-	matrix_multiplication/rune/build/compile
+matrix_multiplication	normal	rune	O2	correctness	0	0	pass	0.85	0.87	0.01	11992	86095522	28499656	769423	matrix_multiplication/rune/correctness.0
+matrix_multiplication	normal	rune	O2	count	1	1	pass	0.77	0.78	0.01	11880	86095522	28499656	769423	matrix_multiplication/rune/fresh.1
+matrix_multiplication	normal	rune:opt	O2	compile	0	0	pass	2.34	2.22	0.15	135192	-	-	-	matrix_multiplication/rune-opt/build/compile
+matrix_multiplication	normal	rune:opt	O2	native-compile	0	0	pass	0.54	0.25	0.08	12332	-	-	-	matrix_multiplication/rune-opt/build/native-compile
+matrix_multiplication	normal	rune:opt	O2	correctness	0	0	pass	0.24	0.24	0.00	12248	86095522	28499656	769423	matrix_multiplication/rune-opt/correctness.0
+matrix_multiplication	normal	rune:opt	O2	count	1	1	pass	0.24	0.21	0.01	12244	86095522	28499656	769423	matrix_multiplication/rune-opt/fresh.1
+matrix_multiplication	normal	rune:new	O2	compile	0	0	pass	2.63	2.54	0.15	135228	-	-	-	matrix_multiplication/rune-new/build/compile
+matrix_multiplication	normal	rune:new	O2	correctness	0	0	pass	0.65	0.60	0.05	21496	60050965	28499656	769423	matrix_multiplication/rune-new/correctness.0
+matrix_multiplication	normal	rune:new	O2	count	1	1	pass	0.62	0.58	0.04	21540	60050965	28499656	769423	matrix_multiplication/rune-new/fresh.1
+matrix_multiplication	normal	rune:jit	O2	compile	0	0	pass	2.36	2.23	0.18	135364	-	-	-	matrix_multiplication/rune-jit/build/compile
+matrix_multiplication	normal	rune:jit	O2	correctness	0	0	pass	0.20	0.17	0.04	22628	60050965	28499656	769423	matrix_multiplication/rune-jit/correctness.0
+matrix_multiplication	normal	rune:jit	O2	count	1	1	pass	0.23	0.20	0.03	22644	60050965	28499656	769423	matrix_multiplication/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

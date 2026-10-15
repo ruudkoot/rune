@@ -1,0 +1,2 @@
+ansi-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-ansi.sml ansi-lazy/benchmark.sml shared/main.sml	400 expected/normal.stdout	ansi-lazy/normal.expected	expected/normal.stdout
+ansi-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-ansi.sml ansi-strict/benchmark.sml shared/main.sml	400 expected/normal.stdout	ansi-strict/normal.expected	expected/normal.stdout

@@ -1,0 +1,9 @@
+COUNT unbudgeted ansi-lazy normal rune
+COUNT unbudgeted ansi-lazy normal rune:opt
+COUNT unbudgeted ansi-lazy normal rune:new
+COUNT unbudgeted ansi-lazy normal rune:jit
+COUNT unbudgeted ansi-strict normal rune
+COUNT unbudgeted ansi-strict normal rune:opt
+COUNT unbudgeted ansi-strict normal rune:new
+COUNT unbudgeted ansi-strict normal rune:jit
+COUNT comparisons agree

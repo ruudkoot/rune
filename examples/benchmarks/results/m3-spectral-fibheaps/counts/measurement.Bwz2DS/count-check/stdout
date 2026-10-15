@@ -1,0 +1,9 @@
+COUNT unbudgeted fibheaps-nofib-lazy normal rune
+COUNT unbudgeted fibheaps-nofib-lazy normal rune:opt
+COUNT unbudgeted fibheaps-nofib-lazy normal rune:new
+COUNT unbudgeted fibheaps-nofib-lazy normal rune:jit
+COUNT unbudgeted fibheaps-nofib-strict normal rune
+COUNT unbudgeted fibheaps-nofib-strict normal rune:opt
+COUNT unbudgeted fibheaps-nofib-strict normal rune:new
+COUNT unbudgeted fibheaps-nofib-strict normal rune:jit
+COUNT comparisons agree

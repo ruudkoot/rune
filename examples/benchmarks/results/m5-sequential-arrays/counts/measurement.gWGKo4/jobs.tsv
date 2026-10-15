@@ -1,0 +1,1 @@
+matrix_multiplication	600	4194304	shared/input.sml shared/ocaml-random.sml shared/ocaml-array-kernels.sml shared/ocaml-array-checks.sml matrix_multiplication/benchmark.sml shared/main.sml	128 expected/normal.txt	matrix_multiplication/normal.expected	expected/normal.txt
