@@ -910,3 +910,25 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and bytecode agreement for 498 programs across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct15-lu-684-acceptance.log)
 records that acceptance run; all 35 inventory tests pass.
+
+## M3 calendar pictures, 2026-10-15
+
+Two imports bring the catalogue to 232 programs and 690 profiles. [All 56
+smoke/normal cases](results/m3-calendar/correctness.tsv) pass on Rune's four
+engines at both levels and all six managed native hosts. Twenty-one semantic
+checks pass all ten configurations at both levels, and count comparisons agree.
+
+The source's length-only observation is retained, including unforced glyph
+payload and delayed grouping. Full rendered fixtures separately agree with GHC
+and independent Gregorian formatting at11years. Normal10000/large50000 original
+year-offset parameters remain intact. Length's limited discrimination, strict/
+memoized representations and driver parsing changes are explicit. No external
+dataset, universal large SML claim or headline timing is introduced. M3 remains
+in progress.
+
+The final `DEBUGINFOD_URLS= make JOBS=4 check` started on15October and completed
+on16October with exit0:690 catalogue profiles,16 routine workloads,331 language
+fixtures per compiler, existing budgets, bootstrap and498 matching bytecode
+comparisons across seven compiler builds. runedoc and runeopt also agree.
+[The full transcript](validation/oct16-calendar-690-acceptance.log) records the
+run; all35 inventory tests pass.

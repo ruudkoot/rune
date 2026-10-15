@@ -1,0 +1,2 @@
+# Full fixed-width layout references preserve row padding.
+*.txt -whitespace
