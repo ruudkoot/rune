@@ -1,0 +1,2 @@
+calendar-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-calendar.sml calendar-lazy/benchmark.sml shared/main.sml	1993 10000	calendar-lazy/normal.expected	-
+calendar-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-calendar.sml calendar-strict/benchmark.sml shared/main.sml	1993 10000	calendar-strict/normal.expected	-

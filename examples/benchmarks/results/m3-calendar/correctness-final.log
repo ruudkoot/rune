@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-calendar.tm95a93t
+PASS calendar-lazy smoke O0
+PASS calendar-lazy smoke O2
+PASS calendar-lazy smoke hosts
+PASS calendar-lazy normal O0
+PASS calendar-lazy normal O2
+PASS calendar-lazy normal hosts
+PASS calendar-strict smoke O0
+PASS calendar-strict smoke O2
+PASS calendar-strict smoke hosts
+PASS calendar-strict normal O0
+PASS calendar-strict normal O2
+PASS calendar-strict normal hosts

@@ -1,0 +1,9 @@
+COUNT unbudgeted calendar-lazy normal rune
+COUNT unbudgeted calendar-lazy normal rune:opt
+COUNT unbudgeted calendar-lazy normal rune:new
+COUNT unbudgeted calendar-lazy normal rune:jit
+COUNT unbudgeted calendar-strict normal rune
+COUNT unbudgeted calendar-strict normal rune:opt
+COUNT unbudgeted calendar-strict normal rune:new
+COUNT unbudgeted calendar-strict normal rune:jit
+COUNT comparisons agree

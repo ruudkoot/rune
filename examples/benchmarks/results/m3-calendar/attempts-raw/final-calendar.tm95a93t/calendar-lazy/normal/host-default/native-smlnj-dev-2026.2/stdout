@@ -1,0 +1,155 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+                               type 'a t
+                               val delay : (unit -> 'a) -> 'a t
+                               val force : 'a t -> 'a
+                             end) :
+                           
+                             sig
+                               type 'a node
+                               type 'a sequence
+                               val value : 'a -> 'a D.t
+                               val empty : unit -> 'a node D.t
+                               val cons : 'a D.t -> 'a node D.t -> 'a node D.t
+                               val fromList : 'a list -> 'a node D.t
+                               val head : 'a node D.t -> 'a
+                               val tail : 'a node D.t -> 'a node D.t
+                               val delayedTail : 'a node D.t -> 'a node D.t
+                               val fromCell : 'a D.t D.t -> 'a D.t
+                               val map : ('a -> 'b)
+                                          -> 'a node D.t -> 'b node D.t
+                               val append : 'a node D.t
+                                             -> 'a node D.t -> 'a node D.t
+                               val take : int -> 'a node D.t -> 'a node D.t
+                               val replicate : int -> 'a D.t -> 'a node D.t
+                               val init : 'a node D.t -> 'a node D.t
+                               val zipWith3 : ('a * 'b * 'c -> 'd)
+                                               -> 'a node D.t
+                                               -> 'b node D.t
+                                               -> 'c node D.t -> 'd node D.t
+                               val zip3 : 'a node D.t
+                                           -> 'b node D.t
+                                           -> 'c node D.t
+                                           -> ('a D.t * 'b D.t * 'c D.t) node 
+                                             D.t
+                               val equal : ('a * 'b -> bool)
+                                            -> 'a node D.t
+                                            -> 'b node D.t -> bool
+                               val toList : 'a node D.t -> 'a list
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-calendar.sml]
+functor BenchCalendarFn(D: sig
+                           type 'a t
+                           val delay : (unit -> 'a) -> 'a t
+                           val force : 'a t -> 'a
+                         end) :
+                       
+                         sig
+                           structure Q : <sig>
+                           type row
+                           type picture
+                           val length : 'a Q.node D.t -> int
+                           val singleton : 'a -> 'a Q.node D.t
+                           val chars : string -> char Q.node D.t
+                           val spaces : int -> char Q.node D.t
+                           val emptyPic : int
+                                           -> int
+                                           -> char Q.node D.t Q.node D.t
+                           val zipWith : ('a * 'b -> 'c)
+                                          -> 'a Q.node D.t
+                                          -> 'b Q.node D.t -> 'c Q.node D.t
+                           val drop : int -> 'a Q.node D.t -> 'a Q.node D.t
+                           val group : int
+                                        -> 'a Q.node D.t
+                                        -> 'a Q.node D.t Q.node D.t
+                           val above : 'a Q.node D.t
+                                        -> 'a Q.node D.t -> 'a Q.node D.t
+                           val beside : 'a Q.node D.t Q.node D.t
+                                         -> 'a Q.node D.t Q.node D.t
+                                         -> 'a Q.node D.t Q.node D.t
+                           val foldr1 : ('a D.t -> 'a D.t -> 'a D.t)
+                                         -> 'a D.t Q.node D.t -> 'a D.t
+                           val stack : 'a Q.node D.t Q.node D.t
+                                        -> 'a Q.node D.t
+                           val spread : 'a Q.node D.t Q.node D.t Q.node D.t
+                                         -> 'a Q.node D.t Q.node D.t
+                           val block : int
+                                        -> 'a Q.node D.t Q.node D.t Q.node D.t
+                                        -> 'a Q.node D.t Q.node D.t
+                           val blockT : int
+                                         -> 'a Q.node D.t Q.node D.t Q.node 
+                                           D.t
+                                         -> 'a Q.node D.t Q.node D.t
+                           val height : 'a Q.node D.t -> int
+                           val width : 'a Q.node D.t Q.node D.t -> int
+                           val lframe : int
+                                         -> int
+                                         -> char Q.node D.t Q.node D.t
+                                         -> char Q.node D.t Q.node D.t
+                           val show : int -> char Q.node D.t
+                           val cjustify : int
+                                           -> char Q.node D.t
+                                           -> char Q.node D.t
+                           val rjustify : int
+                                           -> char Q.node D.t
+                                           -> char Q.node D.t
+                           val leap : int -> bool
+                           val monthLengths : int -> int Q.node D.t
+                           val monthNames : char Q.node D.t Q.node D.t
+                           val jan1st : int -> int
+                           val firstDays : int -> int Q.node D.t
+                           val dates : int
+                                        -> int
+                                        -> char Q.node D.t Q.node D.t Q.node 
+                                          D.t
+                           val zip3 : 'a Q.node D.t
+                                       -> 'b Q.node D.t
+                                       -> 'c Q.node D.t
+                                       -> ('a * 'b * 'c) Q.node D.t
+                           val daynames : char Q.node D.t Q.node D.t
+                           val cal : int -> char Q.node D.t Q.node D.t
+                           val unlines : char Q.node D.t Q.node D.t
+                                          -> char Q.node D.t
+                           val rendered : int -> char Q.node D.t
+                           val text : int -> string
+                           val size : int -> int
+                         end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/calendar-lazy/benchmark.sml]
+structure Benchmark : 
+  sig
+    structure K : <sig>
+    val name : string
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 10000:28880000
+PASS calendar-lazy
+SUMMARY 1 checks, 0 failed

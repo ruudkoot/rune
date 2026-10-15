@@ -1,0 +1,978 @@
+PROGRAM LIMIT AS 4194304 KiB
+PASS calendar/leap-rules
+PASS calendar/weekday
+PASS calendar/length
+PASS calendar/variants
+PASS calendar/payload-demand
+PASS calendar/group-prefix-defers-tail
+PASS calendar/full-render-1
+PASS calendar/full-render-4
+PASS calendar/full-render-100
+PASS calendar/full-render-400
+PASS calendar/full-render-1900
+PASS calendar/full-render-1994
+PASS calendar/full-render-2000
+PASS calendar/full-render-2024
+PASS calendar/full-render-9999
+PASS calendar/full-render-11993
+PASS calendar/full-render-51993
+PASS calendar/justification-keeps-payload-lazy
+PASS calendar/unlines-keeps-payload-lazy
+PASS calendar/negative-padding
+PASS calendar/negative-drop
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+PASS calendar/leap-rules
+PASS calendar/weekday
+PASS calendar/length
+PASS calendar/variants
+PASS calendar/payload-demand
+PASS calendar/group-prefix-defers-tail
+PASS calendar/full-render-1
+PASS calendar/full-render-4
+PASS calendar/full-render-100
+PASS calendar/full-render-400
+PASS calendar/full-render-1900
+PASS calendar/full-render-1994
+PASS calendar/full-render-2000
+PASS calendar/full-render-2024
+PASS calendar/full-render-9999
+PASS calendar/full-render-11993
+PASS calendar/full-render-51993
+PASS calendar/justification-keeps-payload-lazy
+PASS calendar/unlines-keeps-payload-lazy
+PASS calendar/negative-padding
+PASS calendar/negative-drop
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+PASS calendar/leap-rules
+PASS calendar/weekday
+PASS calendar/length
+PASS calendar/variants
+PASS calendar/payload-demand
+PASS calendar/group-prefix-defers-tail
+PASS calendar/full-render-1
+PASS calendar/full-render-4
+PASS calendar/full-render-100
+PASS calendar/full-render-400
+PASS calendar/full-render-1900
+PASS calendar/full-render-1994
+PASS calendar/full-render-2000
+PASS calendar/full-render-2024
+PASS calendar/full-render-9999
+PASS calendar/full-render-11993
+PASS calendar/full-render-51993
+PASS calendar/justification-keeps-payload-lazy
+PASS calendar/unlines-keeps-payload-lazy
+PASS calendar/negative-padding
+PASS calendar/negative-drop
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+PASS calendar/leap-rules
+PASS calendar/weekday
+PASS calendar/length
+PASS calendar/variants
+PASS calendar/payload-demand
+PASS calendar/group-prefix-defers-tail
+PASS calendar/full-render-1
+PASS calendar/full-render-4
+PASS calendar/full-render-100
+PASS calendar/full-render-400
+PASS calendar/full-render-1900
+PASS calendar/full-render-1994
+PASS calendar/full-render-2000
+PASS calendar/full-render-2024
+PASS calendar/full-render-9999
+PASS calendar/full-render-11993
+PASS calendar/full-render-51993
+PASS calendar/justification-keeps-payload-lazy
+PASS calendar/unlines-keeps-payload-lazy
+PASS calendar/negative-padding
+PASS calendar/negative-drop
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 4194304 KiB
+PASS calendar/leap-rules
+PASS calendar/weekday
+PASS calendar/length
+PASS calendar/variants
+PASS calendar/payload-demand
+PASS calendar/group-prefix-defers-tail
+PASS calendar/full-render-1
+PASS calendar/full-render-4
+PASS calendar/full-render-100
+PASS calendar/full-render-400
+PASS calendar/full-render-1900
+PASS calendar/full-render-1994
+PASS calendar/full-render-2000
+PASS calendar/full-render-2024
+PASS calendar/full-render-9999
+PASS calendar/full-render-11993
+PASS calendar/full-render-51993
+PASS calendar/justification-keeps-payload-lazy
+PASS calendar/unlines-keeps-payload-lazy
+PASS calendar/negative-padding
+PASS calendar/negative-drop
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a sequence
+  val value : 'a -> 'a D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.node D.t -> 'a
+  val tail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val delayedTail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromCell : 'a D.t D.t -> 'a D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val replicate : int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val init :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> ('a D.t * 'b D.t * 'c D.t) <BaseFct>.<resultStr>.node D.t
+  val equal :
+      ('a * 'b -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t -> bool
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-calendar.sml]
+functor BenchCalendarFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure Q : <sig>
+  type row
+  type picture
+  val length : 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t -> int
+  val singleton : 'a -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val chars : string -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val spaces : int -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val emptyPic :
+      int
+       -> int
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val group :
+      int
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val above :
+      'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val beside :
+      'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val foldr1 :
+      ('a D.t -> 'a D.t -> 'a D.t)
+       -> 'a D.t <BaseFct>.<resultStr>.Q.<returnStr>.node D.t -> 'a D.t
+  val stack :
+      'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val spread :
+      'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+               <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val block :
+      int
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+               <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val blockT :
+      int
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+               <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val height : 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t -> int
+  val width :
+      'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> int
+  val lframe :
+      int
+       -> int
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val show : int -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val cjustify :
+      int
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val rjustify :
+      int
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val leap : int -> bool
+  val monthLengths : int -> int <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val monthNames :
+      char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val jan1st : int -> int
+  val firstDays : int -> int <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val dates :
+      int
+       -> int
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+               <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> ('a * 'b * 'c) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val daynames :
+      char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val cal :
+      int
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val unlines :
+      char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val rendered : int -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val text : int -> string
+  val size : int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/calendar.sml]
+[autoloading]
+[autoloading done]
+PASS calendar/leap-rules
+PASS calendar/weekday
+PASS calendar/length
+PASS calendar/variants
+PASS calendar/payload-demand
+PASS calendar/group-prefix-defers-tail
+PASS calendar/full-render-1
+PASS calendar/full-render-4
+PASS calendar/full-render-100
+PASS calendar/full-render-400
+PASS calendar/full-render-1900
+PASS calendar/full-render-1994
+PASS calendar/full-render-2000
+PASS calendar/full-render-2024
+PASS calendar/full-render-9999
+PASS calendar/full-render-11993
+PASS calendar/full-render-51993
+PASS calendar/justification-keeps-payload-lazy
+PASS calendar/unlines-keeps-payload-lazy
+PASS calendar/negative-padding
+PASS calendar/negative-drop
+structure CalendarPilot : sig
+  structure N : <sig>
+  structure S : <sig>
+  val fixture : int -> TextIO.vector
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a sequence
+  val value : 'a -> 'a D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.node D.t -> 'a
+  val tail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val delayedTail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromCell : 'a D.t D.t -> 'a D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val replicate : int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val init :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> ('a D.t * 'b D.t * 'c D.t) <BaseFct>.<resultStr>.node D.t
+  val equal :
+      ('a * 'b -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t -> bool
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-calendar.sml]
+functor BenchCalendarFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure Q : <sig>
+  type row
+  type picture
+  val length : 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t -> int
+  val singleton : 'a -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val chars : string -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val spaces : int -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val emptyPic :
+      int
+       -> int
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val group :
+      int
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val above :
+      'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val beside :
+      'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val foldr1 :
+      ('a D.t -> 'a D.t -> 'a D.t)
+       -> 'a D.t <BaseFct>.<resultStr>.Q.<returnStr>.node D.t -> 'a D.t
+  val stack :
+      'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val spread :
+      'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+               <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val block :
+      int
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+               <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val blockT :
+      int
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+               <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val height : 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t -> int
+  val width :
+      'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> int
+  val lframe :
+      int
+       -> int
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val show : int -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val cjustify :
+      int
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val rjustify :
+      int
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val leap : int -> bool
+  val monthLengths : int -> int <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val monthNames :
+      char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val jan1st : int -> int
+  val firstDays : int -> int <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val dates :
+      int
+       -> int
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+               <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> ('a * 'b * 'c) <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val daynames :
+      char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val cal :
+      int
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val unlines :
+      char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val rendered : int -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val text : int -> string
+  val size : int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/calendar.sml]
+[autoloading]
+[autoloading done]
+PASS calendar/leap-rules
+PASS calendar/weekday
+PASS calendar/length
+PASS calendar/variants
+PASS calendar/payload-demand
+PASS calendar/group-prefix-defers-tail
+PASS calendar/full-render-1
+PASS calendar/full-render-4
+PASS calendar/full-render-100
+PASS calendar/full-render-400
+PASS calendar/full-render-1900
+PASS calendar/full-render-1994
+PASS calendar/full-render-2000
+PASS calendar/full-render-2024
+PASS calendar/full-render-9999
+PASS calendar/full-render-11993
+PASS calendar/full-render-51993
+PASS calendar/justification-keeps-payload-lazy
+PASS calendar/unlines-keeps-payload-lazy
+PASS calendar/negative-padding
+PASS calendar/negative-drop
+structure CalendarPilot : sig
+  structure N : <sig>
+  structure S : <sig>
+  val fixture : int -> TextIO.vector
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+                               type 'a t
+                               val delay : (unit -> 'a) -> 'a t
+                               val force : 'a t -> 'a
+                             end) :
+                           
+                             sig
+                               type 'a node
+                               type 'a sequence
+                               val value : 'a -> 'a D.t
+                               val empty : unit -> 'a node D.t
+                               val cons : 'a D.t -> 'a node D.t -> 'a node D.t
+                               val fromList : 'a list -> 'a node D.t
+                               val head : 'a node D.t -> 'a
+                               val tail : 'a node D.t -> 'a node D.t
+                               val delayedTail : 'a node D.t -> 'a node D.t
+                               val fromCell : 'a D.t D.t -> 'a D.t
+                               val map : ('a -> 'b)
+                                          -> 'a node D.t -> 'b node D.t
+                               val append : 'a node D.t
+                                             -> 'a node D.t -> 'a node D.t
+                               val take : int -> 'a node D.t -> 'a node D.t
+                               val replicate : int -> 'a D.t -> 'a node D.t
+                               val init : 'a node D.t -> 'a node D.t
+                               val zipWith3 : ('a * 'b * 'c -> 'd)
+                                               -> 'a node D.t
+                                               -> 'b node D.t
+                                               -> 'c node D.t -> 'd node D.t
+                               val zip3 : 'a node D.t
+                                           -> 'b node D.t
+                                           -> 'c node D.t
+                                           -> ('a D.t * 'b D.t * 'c D.t) node 
+                                             D.t
+                               val equal : ('a * 'b -> bool)
+                                            -> 'a node D.t
+                                            -> 'b node D.t -> bool
+                               val toList : 'a node D.t -> 'a list
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-calendar.sml]
+functor BenchCalendarFn(D: sig
+                           type 'a t
+                           val delay : (unit -> 'a) -> 'a t
+                           val force : 'a t -> 'a
+                         end) :
+                       
+                         sig
+                           structure Q : <sig>
+                           type row
+                           type picture
+                           val length : 'a Q.node D.t -> int
+                           val singleton : 'a -> 'a Q.node D.t
+                           val chars : string -> char Q.node D.t
+                           val spaces : int -> char Q.node D.t
+                           val emptyPic : int
+                                           -> int
+                                           -> char Q.node D.t Q.node D.t
+                           val zipWith : ('a * 'b -> 'c)
+                                          -> 'a Q.node D.t
+                                          -> 'b Q.node D.t -> 'c Q.node D.t
+                           val drop : int -> 'a Q.node D.t -> 'a Q.node D.t
+                           val group : int
+                                        -> 'a Q.node D.t
+                                        -> 'a Q.node D.t Q.node D.t
+                           val above : 'a Q.node D.t
+                                        -> 'a Q.node D.t -> 'a Q.node D.t
+                           val beside : 'a Q.node D.t Q.node D.t
+                                         -> 'a Q.node D.t Q.node D.t
+                                         -> 'a Q.node D.t Q.node D.t
+                           val foldr1 : ('a D.t -> 'a D.t -> 'a D.t)
+                                         -> 'a D.t Q.node D.t -> 'a D.t
+                           val stack : 'a Q.node D.t Q.node D.t
+                                        -> 'a Q.node D.t
+                           val spread : 'a Q.node D.t Q.node D.t Q.node D.t
+                                         -> 'a Q.node D.t Q.node D.t
+                           val block : int
+                                        -> 'a Q.node D.t Q.node D.t Q.node D.t
+                                        -> 'a Q.node D.t Q.node D.t
+                           val blockT : int
+                                         -> 'a Q.node D.t Q.node D.t Q.node 
+                                           D.t
+                                         -> 'a Q.node D.t Q.node D.t
+                           val height : 'a Q.node D.t -> int
+                           val width : 'a Q.node D.t Q.node D.t -> int
+                           val lframe : int
+                                         -> int
+                                         -> char Q.node D.t Q.node D.t
+                                         -> char Q.node D.t Q.node D.t
+                           val show : int -> char Q.node D.t
+                           val cjustify : int
+                                           -> char Q.node D.t
+                                           -> char Q.node D.t
+                           val rjustify : int
+                                           -> char Q.node D.t
+                                           -> char Q.node D.t
+                           val leap : int -> bool
+                           val monthLengths : int -> int Q.node D.t
+                           val monthNames : char Q.node D.t Q.node D.t
+                           val jan1st : int -> int
+                           val firstDays : int -> int Q.node D.t
+                           val dates : int
+                                        -> int
+                                        -> char Q.node D.t Q.node D.t Q.node 
+                                          D.t
+                           val zip3 : 'a Q.node D.t
+                                       -> 'b Q.node D.t
+                                       -> 'c Q.node D.t
+                                       -> ('a * 'b * 'c) Q.node D.t
+                           val daynames : char Q.node D.t Q.node D.t
+                           val cal : int -> char Q.node D.t Q.node D.t
+                           val unlines : char Q.node D.t Q.node D.t
+                                          -> char Q.node D.t
+                           val rendered : int -> char Q.node D.t
+                           val text : int -> string
+                           val size : int -> int
+                         end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/calendar.sml]
+PASS calendar/leap-rules
+PASS calendar/weekday
+PASS calendar/length
+PASS calendar/variants
+PASS calendar/payload-demand
+PASS calendar/group-prefix-defers-tail
+PASS calendar/full-render-1
+PASS calendar/full-render-4
+PASS calendar/full-render-100
+PASS calendar/full-render-400
+PASS calendar/full-render-1900
+PASS calendar/full-render-1994
+PASS calendar/full-render-2000
+PASS calendar/full-render-2024
+PASS calendar/full-render-9999
+PASS calendar/full-render-11993
+PASS calendar/full-render-51993
+PASS calendar/justification-keeps-payload-lazy
+PASS calendar/unlines-keeps-payload-lazy
+PASS calendar/negative-padding
+PASS calendar/negative-drop
+structure CalendarPilot : 
+  sig
+    structure N : <sig>
+    structure S : <sig>
+    val fixture : int -> TextIO.vector
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+PASS calendar/leap-rules
+PASS calendar/weekday
+PASS calendar/length
+PASS calendar/variants
+PASS calendar/payload-demand
+PASS calendar/group-prefix-defers-tail
+PASS calendar/full-render-1
+PASS calendar/full-render-4
+PASS calendar/full-render-100
+PASS calendar/full-render-400
+PASS calendar/full-render-1900
+PASS calendar/full-render-1994
+PASS calendar/full-render-2000
+PASS calendar/full-render-2024
+PASS calendar/full-render-9999
+PASS calendar/full-render-11993
+PASS calendar/full-render-51993
+PASS calendar/justification-keeps-payload-lazy
+PASS calendar/unlines-keeps-payload-lazy
+PASS calendar/negative-padding
+PASS calendar/negative-drop
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+PASS calendar/leap-rules
+PASS calendar/weekday
+PASS calendar/length
+PASS calendar/variants
+PASS calendar/payload-demand
+PASS calendar/group-prefix-defers-tail
+PASS calendar/full-render-1
+PASS calendar/full-render-4
+PASS calendar/full-render-100
+PASS calendar/full-render-400
+PASS calendar/full-render-1900
+PASS calendar/full-render-1994
+PASS calendar/full-render-2000
+PASS calendar/full-render-2024
+PASS calendar/full-render-9999
+PASS calendar/full-render-11993
+PASS calendar/full-render-51993
+PASS calendar/justification-keeps-payload-lazy
+PASS calendar/unlines-keeps-payload-lazy
+PASS calendar/negative-padding
+PASS calendar/negative-drop
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

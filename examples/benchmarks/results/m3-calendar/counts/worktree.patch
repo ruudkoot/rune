@@ -1,0 +1,163 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 9914f0af..b80333c2 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -238,6 +238,8 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [grep-lazy](#grep-lazy) | [nofib grep](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/grep) | Parse a regex and interpret an epsilon-compressed cyclic NFA over UTF-8 lines with memoized sequences. |
+ | [grep-strict](#grep-strict) | [nofib grep](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/grep) | Parse a regex and interpret an epsilon-compressed cyclic NFA over UTF-8 lines with eager sequences. |
+ | [LU_decomposition](#lu_decomposition) | [Sandmark LU](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-numerical/LU_decomposition.ml) | Factor a deterministic dense real matrix with flat, unpivoted Gaussian elimination. |
++| [calendar-lazy](#calendar-lazy) | [nofib calendar](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/calendar) | Build Gregorian calendar pictures with memoized sequences and preserve the source length observation. |
++| [calendar-strict](#calendar-strict) | [nofib calendar](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/calendar) | Build Gregorian calendar pictures with eager sequences and preserve the source length observation. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -8059,3 +8061,135 @@ leading-principal-minor conditions. This benchmark preserves its row-major
+ k/i/j order. See the shared Sandmark/measurement survey and retained source.
+ 
+ [Complete provenance](LU_decomposition/PROVENANCE.md).
++
++## calendar-lazy
++
++The pin is nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`,
++`spectral/calendar/Main.hs` and `Makefile`. The source identifies a modification
++of section4.5 of Bird and Wadler's Introduction to Functional Programming, with
++two picture formats. Main selects the Unix-cal-style cal. The unused alternate
++calendar formatter remains in retained source, outside the selected invocation.
++Partain's appended helpers and SDM's length-only output change remain attributed
++in the comments. Original modifier and individual license grant are unstated;
++all original source, fixtures, build settings and identities are retained.
++
++### Algorithm, variants and portable representation
++
++Preserve nested character/row/picture lists, append/zipWith composition, right
++folds, grouping, weekday scans, Gregorian leap rules,42 date positions, exact
++centering and padding. Both variants share one SML97 functor. Memoized sequences
++keep character payload separate from spine demand; eager sequences materialize
++those finite structures. Source length observation does not force date glyphs.
++Decimal conversion therefore delays character heads, while exposing the digit
++spines needed for justification. Group tail/drop work is delayed until selected.
++Constant month/day text remains shared. Explicit cells, portable list helpers
++and custom decimal conversion are representation/library adaptations.
++
++The GHC type audit identifies calFor as String -> Int -> IO(), despite cal's
++Integral-polymorphic helper type. atoi uses fromEnum, hence the actual main
++uses machine Int. All selected values fit signed31bits, including the largest
++sum144,400,000. The port retains exact arithmetic over that domain. Selected
++text is ASCII, so SML97 chars preserve the original character values.
++
++### Inputs, validation and forcing
++
++Arguments retain base-year and repetition count. Base1993 plus i in1..count
++gives firstyear1994, normal's lastyear11993 and large's lastyear51993.
++Smoke2 is deliberately small; normal10000 and large50000 retain original NORM/
++SLOW parameters. Original FAST1000 remains in provenance. No external dataset
++is used; layouts are generated from arithmetic and fixed English names.
++
++The source prints length(cal year) each iteration. The driver preserves that
++observation, checks each length2888 (38rows of75characters plus LF), and consumes
++it in a checked count/sum. It validates base/count once, replacing the source's
++per-calFor span/atoi at source level. Compilers may hoist invariant parsing.
++There is no added full-character forcing inside measured work. Length has limited
++discrimination for wrong glyphs; full layout correctness is checked separately.
++
++Twenty-one semantic checks cover complete rendered fixtures at11 years, leap/
++weekday rules, grouping demand, negative padding/drop and unforced character
++payload through justification/unlines. Original GHC and an independent Python
++Gregorian renderer agree byte for byte on those layouts. The renderer uses the
++source's floor-left centering, rather than Python str.center's different odd-gap
++rule. GHC demand observers independently confirm the unforced-payload properties.
++Original length fixtures/runs agree for selected profiles. Large SML execution
++is claimed only for recorded cases.
++
++### Runtime questions and references
++
++Memo-cell retention, shared picture fragments, digit conversion, grouping and
++constant-length optimization are source-based diagnostic hypotheses until
++measured or established by IR inspection. Every selected calendar has the same
++length, which permits benchmark-specific optimization. Comparisons use identical
++SML sources; original Haskell is a correctness reference. Source comments provide
++the Bird/Wadler ancestry; see also the [pinned implementation](https://github.com/ghc/nofib/blob/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/calendar/Main.hs)
++and the shared nofib/measurement literature survey. No historical timing claim
++is transferred to this port.
++
++[Complete provenance](calendar-lazy/PROVENANCE.md).
++
++## calendar-strict
++
++The pin is nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`,
++`spectral/calendar/Main.hs` and `Makefile`. The source identifies a modification
++of section4.5 of Bird and Wadler's Introduction to Functional Programming, with
++two picture formats. Main selects the Unix-cal-style cal. The unused alternate
++calendar formatter remains in retained source, outside the selected invocation.
++Partain's appended helpers and SDM's length-only output change remain attributed
++in the comments. Original modifier and individual license grant are unstated;
++all original source, fixtures, build settings and identities are retained.
++
++### Algorithm, variants and portable representation
++
++Preserve nested character/row/picture lists, append/zipWith composition, right
++folds, grouping, weekday scans, Gregorian leap rules,42 date positions, exact
++centering and padding. Both variants share one SML97 functor. Memoized sequences
++keep character payload separate from spine demand; eager sequences materialize
++those finite structures. Source length observation does not force date glyphs.
++Decimal conversion therefore delays character heads, while exposing the digit
++spines needed for justification. Group tail/drop work is delayed until selected.
++Constant month/day text remains shared. Explicit cells, portable list helpers
++and custom decimal conversion are representation/library adaptations.
++
++The GHC type audit identifies calFor as String -> Int -> IO(), despite cal's
++Integral-polymorphic helper type. atoi uses fromEnum, hence the actual main
++uses machine Int. All selected values fit signed31bits, including the largest
++sum144,400,000. The port retains exact arithmetic over that domain. Selected
++text is ASCII, so SML97 chars preserve the original character values.
++
++### Inputs, validation and forcing
++
++Arguments retain base-year and repetition count. Base1993 plus i in1..count
++gives firstyear1994, normal's lastyear11993 and large's lastyear51993.
++Smoke2 is deliberately small; normal10000 and large50000 retain original NORM/
++SLOW parameters. Original FAST1000 remains in provenance. No external dataset
++is used; layouts are generated from arithmetic and fixed English names.
++
++The source prints length(cal year) each iteration. The driver preserves that
++observation, checks each length2888 (38rows of75characters plus LF), and consumes
++it in a checked count/sum. It validates base/count once, replacing the source's
++per-calFor span/atoi at source level. Compilers may hoist invariant parsing.
++There is no added full-character forcing inside measured work. Length has limited
++discrimination for wrong glyphs; full layout correctness is checked separately.
++
++Twenty-one semantic checks cover complete rendered fixtures at11 years, leap/
++weekday rules, grouping demand, negative padding/drop and unforced character
++payload through justification/unlines. Original GHC and an independent Python
++Gregorian renderer agree byte for byte on those layouts. The renderer uses the
++source's floor-left centering, rather than Python str.center's different odd-gap
++rule. GHC demand observers independently confirm the unforced-payload properties.
++Original length fixtures/runs agree for selected profiles. Large SML execution
++is claimed only for recorded cases.
++
++### Runtime questions and references
++
++Memo-cell retention, shared picture fragments, digit conversion, grouping and
++constant-length optimization are source-based diagnostic hypotheses until
++measured or established by IR inspection. Every selected calendar has the same
++length, which permits benchmark-specific optimization. Comparisons use identical
++SML sources; original Haskell is a correctness reference. Source comments provide
++the Bird/Wadler ancestry; see also the [pinned implementation](https://github.com/ghc/nofib/blob/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/calendar/Main.hs)
++and the shared nofib/measurement literature survey. No historical timing claim
++is transferred to this port.
++
++[Complete provenance](calendar-strict/PROVENANCE.md).
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 517c89ad..e1dfdecf 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -683,3 +683,9 @@ grep-strict	large	nofib	real/grep	250 .*:..* data/large.txt expected/large.txt	g
+ LU_decomposition	smoke	sandmark	benchmarks/multicore-numerical/LU_decomposition.exe	4 expected/smoke.txt	LU_decomposition/smoke.expected	shared/input.sml,shared/ocaml-random.sml,shared/sandmark-lu.sml,LU_decomposition/benchmark.sml,shared/main.sml	30	1048576	numerical,arrays,floating-point,loops,deterministic-rng	expected/smoke.txt	checked-numerical	implemented
+ LU_decomposition	normal	sandmark	benchmarks/multicore-numerical/LU_decomposition.exe	256 expected/normal.txt	LU_decomposition/normal.expected	shared/input.sml,shared/ocaml-random.sml,shared/sandmark-lu.sml,LU_decomposition/benchmark.sml,shared/main.sml	600	4194304	numerical,arrays,floating-point,loops,deterministic-rng	expected/normal.txt	checked-numerical	implemented
+ LU_decomposition	large	sandmark	benchmarks/multicore-numerical/LU_decomposition.exe	1024 expected/large.txt	LU_decomposition/large.expected	shared/input.sml,shared/ocaml-random.sml,shared/sandmark-lu.sml,LU_decomposition/benchmark.sml,shared/main.sml	3600	8388608	numerical,arrays,floating-point,loops,deterministic-rng	expected/large.txt	checked-numerical	implemented
++calendar-lazy	smoke	nofib	spectral/calendar	1993 2	calendar-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-calendar.sml,calendar-lazy/benchmark.sml,shared/main.sml	30	1048576	picture-combinators,lists,laziness,sharing,layout,limited-observation	-	exact	implemented
++calendar-lazy	normal	nofib	spectral/calendar	1993 10000	calendar-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-calendar.sml,calendar-lazy/benchmark.sml,shared/main.sml	600	4194304	picture-combinators,lists,laziness,sharing,layout,limited-observation	-	exact	implemented
++calendar-lazy	large	nofib	spectral/calendar	1993 50000	calendar-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-calendar.sml,calendar-lazy/benchmark.sml,shared/main.sml	3600	8388608	picture-combinators,lists,laziness,sharing,layout,limited-observation	-	exact	implemented
++calendar-strict	smoke	nofib	spectral/calendar	1993 2	calendar-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-calendar.sml,calendar-strict/benchmark.sml,shared/main.sml	30	1048576	picture-combinators,lists,laziness,sharing,layout,limited-observation	-	exact	implemented
++calendar-strict	normal	nofib	spectral/calendar	1993 10000	calendar-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-calendar.sml,calendar-strict/benchmark.sml,shared/main.sml	600	4194304	picture-combinators,lists,laziness,sharing,layout,limited-observation	-	exact	implemented
++calendar-strict	large	nofib	spectral/calendar	1993 50000	calendar-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-calendar.sml,calendar-strict/benchmark.sml,shared/main.sml	3600	8388608	picture-combinators,lists,laziness,sharing,layout,limited-observation	-	exact	implemented

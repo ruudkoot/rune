@@ -1,0 +1,10 @@
+[1 of 3] Compiling Kernel           ( tests/out/benchmarks/calendar-originals/Kernel.hs, tests/out/benchmarks/calendar-originals/demand-build/Kernel.o )
+
+tests/out/benchmarks/calendar-originals/Kernel.hs:50:1: warning: [-Wtabs]
+    Tab character found here, and in 11 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+50 |                  where h = height p
+   | ^^^^^^^^
+[2 of 3] Compiling Main             ( tests/out/benchmarks/calendar-originals/Demand.hs, tests/out/benchmarks/calendar-originals/demand-build/Main.o )
+[3 of 3] Linking tests/out/benchmarks/calendar-originals/demand

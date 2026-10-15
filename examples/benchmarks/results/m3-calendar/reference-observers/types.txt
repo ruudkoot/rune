@@ -1,0 +1,9 @@
+
+/home/ruud/reference/ghc/nofib/spectral/calendar/Main.hs:49:1: warning: [-Wtabs]
+    Tab character found here, and in 11 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+49 |                  where h = height p
+   | ^^^^^^^^
+calFor :: [Char] -> Int -> IO ()
+cal :: (Show a, Integral a) => a -> String

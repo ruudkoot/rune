@@ -1,0 +1,8 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/calendar-lazy/
+?? examples/benchmarks/calendar-strict/
+?? examples/benchmarks/shared/nofib-calendar.sml
+?? tests/benchmarks/calendar.sml
+?? tests/benchmarks/check-calendar.sh
+?? tests/benchmarks/data/calendar/
