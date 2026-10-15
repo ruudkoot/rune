@@ -165,3 +165,33 @@ The pinned nofib SCC main identifies its graph as Figure 6.4 of
 Prentice Hall, 1987. The author provides a searchable edition. The port's lazy
 tuple-field explanation is established by its source and GHC demand observer;
 its performance implications remain hypotheses for measurements.
+
+## Heap consolidation and sequential array imports
+
+Okasaki's retained July 1995 correspondence identifies nofib's Fibonacci-heap
+example and its mutable-array versus functional consolidation comparison.
+[Fredman and Tarjan (1987)](https://www.cs.princeton.edu/courses/archive/fall03/cs528/handouts/fibonacci%20heaps.pdf)
+provide the algorithmic reference; the port implements the source's smaller
+persistent interface and retains its amortization caveats. GC's single large
+run and spectral's 200 smaller sorts remain separately named profile variants.
+
+Sandmark's sequential quicksort uses last-pivot Lomuto partitioning, while its
+mergesort uses alternating buffers and the original threshold-32 small-array
+routine. Aumüller and Hass's [*Simple and Fast BlockQuicksort using Lomuto's
+Partitioning Scheme*](https://arxiv.org/abs/1810.12047) (2018 preprint, accepted
+ALENEX 2019) supplies related partitioning literature. Its block algorithms
+are different from this direct port; the paper's performance findings are
+not measurements of this benchmark.
+
+Floyd's [*Algorithm 97: Shortest path*](https://doi.org/10.1145/367766.368168)
+(1962) anchors the all-pairs graph workload. The pinned Sandmark source, rather
+than the algorithm name alone, establishes Infinity/Value representation,
+update cases and the k/i/j loop order. Matrix multiplication preserves its
+integer row arrays and i/j/k loop nest.
+
+The [pinned OCaml Random source](https://github.com/ocaml/ocaml/blob/99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93/stdlib/random.ml)
+defines the input generator. Its modified lagged-Fibonacci transition,
+rejection sampling and selected initial states are reproduced in SML97.
+Reference streams establish input identity; they do not establish performance
+sensitivity to a compiler transformation. Setup precomputation, validation
+work and the isolated 32-bit SML/NJ arithmetic failure are recorded separately.

@@ -1,0 +1,15 @@
+[
+  {
+    "executable": "benchmarks/multicore-numerical/floyd_warshall.exe",
+    "name": "floyd_warshall",
+    "tags": [
+      "1s_10s",
+      "macro_bench"
+    ],
+    "runs": [
+      {
+        "params": "512"
+      }
+    ]
+  }
+]

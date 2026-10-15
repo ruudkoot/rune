@@ -1,0 +1,2 @@
+# Preserve the reviewed OCaml observer's row spacing.
+expected/*.txt whitespace=-trailing-space

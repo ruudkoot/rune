@@ -1,0 +1,2 @@
+# ANSI results contain literal terminal control bytes.
+expected/*.stdout binary
