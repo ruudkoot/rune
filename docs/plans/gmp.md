@@ -1454,3 +1454,38 @@ under `tests/out/intinf/ci-repl-followup`. The preceding run was deliberately
 interrupted to incorporate the reported REPL bug, after 937 passes and two
 skips; it is retained as incomplete evidence. Remote CI with the download
 fix still needs a rerun after publication.
+
+### REPL value-printing follow-up (2026-10-15)
+
+The packed representation exposed a missing printer regression: the REPL
+selected datatype constructors before a structure's `toString`, showing
+`S 3472347895` and `B (false, "...")` for `IntInf` values. Printer selection
+now prefers a visible formatter with the matching argument and result types.
+It searches aliases independently of the shortest displayed type name, so a
+top-level abbreviation or shadowed `IntInf`/`LargeInt` structure does not hide
+a formatter available through another alias. Installed custom printers keep
+priority. Overloading metadata preserves numeric styling and word prefixes
+through structure aliases.
+
+[The transcript regression](../../tests/repl/intinf.in) covers the reported
+small values and large product, zero, negative packed values, `LargeInt`,
+nested containers, type aliases, shadowing, matching and mismatched datatype
+formatters, word aliases and an installed custom printer. Its expected large
+product was independently checked with Python integer arithmetic; the entire
+expected transcript was reviewed.
+
+* The transcript passes all **nine combinations** of GMP, forced SML and a
+  GMP-free VM with the interpreter and both JIT tiers.
+* `make test-repl` passes **9/9** entries (four REPL configurations and runner
+  canaries); `make test-repl-protocol` passes **12/12**. An initial concurrent
+  invocation failed during protocol-runner startup; its separate rerun and
+  the full acceptance run pass. Both transcripts are retained.
+* An engine-protocol probe verifies decimal values, numeric HTML styling and
+  empty scalar children after the original structure names are shadowed.
+* The full acceptance run recorded above passes **14,432 checks with two
+  existing skips**, including the new transcript in every REPL configuration.
+
+Focused evidence is under `tests/out/intinf/repl-printer`; suite logs and
+preserved acceptance reports are under `tests/out/intinf/ci-repl-followup`
+and `tests/out/intinf/repl-*.log`. Existing REPL sessions must be restarted
+with the rebuilt image to use the new printer.

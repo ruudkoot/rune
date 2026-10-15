@@ -1,0 +1,25 @@
+- val x = 3472347895 : IntInf.int
+- val y = 823908470298354 : IntInf.int
+- val it = 66989817343622970344799946684934082465201223115264607749968744344853565874062475817268700855210000
+  : IntInf.int
+- val zero = 0 : IntInf.int
+- val negative = ~18446744073709551616 : IntInf.int
+- val large = 18446744073709551616 : IntInf.int
+- val nested = (SOME 18446744073709551616, [0, ~3472347895])
+  : IntInf.int option * IntInf.int list
+- type bigint
+- val alias = 3472347895 : bigint
+- structure Numbers
+- structure IntInf
+- val shadowed = 18446744073709551616 : bigint
+- structure LargeInt
+- val retained = ~18446744073709551616 : bigint
+- structure Byte
+- type byte
+- val byte = 0wxAB : byte
+- structure Printable
+- val printable = v3 : Printable.t
+- structure Mismatch
+- val plain = M 4 : Mismatch.t
+- - val it = <integer> : bigint
+- 
