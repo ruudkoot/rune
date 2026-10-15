@@ -23,26 +23,26 @@ and custom decimal conversion are representation/library adaptations.
 
 The GHC type audit identifies calFor as String -> Int -> IO(), despite cal's
 Integral-polymorphic helper type. atoi uses fromEnum, hence the actual main
-uses machine Int. All selected values fit signed31bits, including the largest
-sum144,400,000. The port retains exact arithmetic over that domain. Selected
+uses machine Int. All selected values fit signed 31 bits, including the largest
+sum 144,400,000. The port retains exact arithmetic over that domain. Selected
 text is ASCII, so SML97 chars preserve the original character values.
 
 ## Inputs, validation and forcing
 
-Arguments retain base-year and repetition count. Base1993 plus i in1..count
-gives firstyear1994, normal's lastyear11993 and large's lastyear51993.
-Smoke2 is deliberately small; normal10000 and large50000 retain original NORM/
-SLOW parameters. Original FAST1000 remains in provenance. No external dataset
+Arguments retain base-year and repetition count. Base 1993 plus i in1..count
+gives first year 1994, normal's last year 11993 and large's last year 51993.
+Smoke 2 is deliberately small; normal 10,000 and large 50,000 retain original NORM/
+SLOW parameters. Original FAST 1,000 remains in provenance. No external dataset
 is used; layouts are generated from arithmetic and fixed English names.
 
 The source prints length(cal year) each iteration. The driver preserves that
-observation, checks each length2888 (38rows of75characters plus LF), and consumes
+observation, checks each length2888 (38 rows of75 characters plus LF), and consumes
 it in a checked count/sum. It validates base/count once, replacing the source's
 per-calFor span/atoi at source level. Compilers may hoist invariant parsing.
 There is no added full-character forcing inside measured work. Length has limited
 discrimination for wrong glyphs; full layout correctness is checked separately.
 
-Twenty-one semantic checks cover complete rendered fixtures at11 years, leap/
+Twenty-one semantic checks cover complete rendered fixtures at 11 years, leap/
 weekday rules, grouping demand, negative padding/drop and unforced character
 payload through justification/unlines. Original GHC and an independent Python
 Gregorian renderer agree byte for byte on those layouts. The renderer uses the

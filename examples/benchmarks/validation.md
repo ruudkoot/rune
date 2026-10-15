@@ -902,7 +902,7 @@ Flat unpivoted elimination and separate L/U setup remain intact. A streaming
 checker consumes all packed and expanded factors against finite binary64
 reference fixtures, with explicit absolute/relative replay bounds. Independent
 60-digit arithmetic and scaled residuals validate smoke/normal reference
-accuracy separately. Normal256 and original large1024 are documented; no universal
+accuracy separately. Normal 256 and original large 1,024 are documented; no universal
 large SML validation or headline timing is claimed. M5 remains in progress.
 
 Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 684 catalogue profiles,
@@ -920,15 +920,36 @@ checks pass all ten configurations at both levels, and count comparisons agree.
 
 The source's length-only observation is retained, including unforced glyph
 payload and delayed grouping. Full rendered fixtures separately agree with GHC
-and independent Gregorian formatting at11years. Normal10000/large50000 original
+and independent Gregorian formatting at 11 years. Normal 10,000/large 50,000 original
 year-offset parameters remain intact. Length's limited discrimination, strict/
 memoized representations and driver parsing changes are explicit. No external
 dataset, universal large SML claim or headline timing is introduced. M3 remains
 in progress.
 
-The final `DEBUGINFOD_URLS= make JOBS=4 check` started on15October and completed
-on16October with exit0:690 catalogue profiles,16 routine workloads,331 language
-fixtures per compiler, existing budgets, bootstrap and498 matching bytecode
+The final `DEBUGINFOD_URLS= make JOBS=4 check` started on 15 October and completed
+on 16 October with exit 0:690 catalogue profiles, 16 routine workloads, 331 language
+fixtures per compiler, existing budgets, bootstrap and 498 matching bytecode
 comparisons across seven compiler builds. runedoc and runeopt also agree.
 [The full transcript](validation/oct16-calendar-690-acceptance.log) records the
-run; all35 inventory tests pass.
+run; all 35 inventory tests pass.
+
+## M3 banner pictures, 2026-10-16
+
+Two imports bring the catalogue to 234 programs and 696 profiles. [All 56
+smoke/normal cases](results/m3-banner/correctness.tsv) pass on Rune's four engines
+at both levels and all six managed native hosts. Twelve semantic checks pass all
+ten configurations at both levels; count comparisons agree.
+
+Original templates and boot counts preserve logical input/output identities.
+SML stream generation inside measured execution replaces boot-file expansion;
+that adaptation and per-line output checking are explicit. Both variants retain
+the font/picture algorithm, while Need preserves cyclic fallback sharing and its
+productive infinite prefix. Original GHC, independent rendering and exact glyph
+fixtures agree. No external dataset, universal large SML claim or headline
+measurement is introduced. M3 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 696 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-banner-696-acceptance.log)
+records the run; all 35 inventory tests pass.

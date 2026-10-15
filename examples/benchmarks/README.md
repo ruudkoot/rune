@@ -248,6 +248,8 @@ inventory entry.
 | [LU_decomposition](#lu_decomposition) | [Sandmark LU](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-numerical/LU_decomposition.ml) | Factor a deterministic dense real matrix with flat, unpivoted Gaussian elimination. |
 | [calendar-lazy](#calendar-lazy) | [nofib calendar](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/calendar) | Build Gregorian calendar pictures with memoized sequences and preserve the source length observation. |
 | [calendar-strict](#calendar-strict) | [nofib calendar](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/calendar) | Build Gregorian calendar pictures with eager sequences and preserve the source length observation. |
+| [banner-lazy](#banner-lazy) | [nofib banner](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/banner) | Render repeated ASCII messages with memoized glyph-picture sequences and exact byte checks. |
+| [banner-strict](#banner-strict) | [nofib banner](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/banner) | Render repeated ASCII messages with eager glyph-picture sequences and exact byte checks. |
 
 ## Running and interpreting checks
 
@@ -8110,14 +8112,14 @@ conditioning transform or generator substitution changes the original algorithm.
 The shared generator follows pinned OCaml 4.14.1 Random at
 `99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93`. Preserve its modified lagged-Fibonacci
 transition, floating draw order and exact default state. Input uses the original
-expression Random.float 100.0 + 1.0. The original library source and full LGPL2.1
+expression Random.float 100.0 + 1.0. The original library source and full LGPL 2.1
 notice with OCaml linking exception are retained locally. Fixed state setup is
 precomputed as documented in the shared array ports; draws occur within run.
 All selected sizes and flat indices fit 31 bits; arithmetic values use real.
 
 ### Profiles, correctness and numerical bounds
 
-Smoke4, normal256 and large1024. Large preserves the published run configuration;
+Smoke 4, normal 256 and large 1,024. Large preserves the published run configuration;
 the source's CLI fallback1200 is retained in provenance and the portable argument
 range. Normal is smaller for practical comparisons and larger than the initial
 64 pilot, reducing fixture parsing's share of total work. There is no external
@@ -8185,26 +8187,26 @@ and custom decimal conversion are representation/library adaptations.
 
 The GHC type audit identifies calFor as String -> Int -> IO(), despite cal's
 Integral-polymorphic helper type. atoi uses fromEnum, hence the actual main
-uses machine Int. All selected values fit signed31bits, including the largest
-sum144,400,000. The port retains exact arithmetic over that domain. Selected
+uses machine Int. All selected values fit signed 31 bits, including the largest
+sum 144,400,000. The port retains exact arithmetic over that domain. Selected
 text is ASCII, so SML97 chars preserve the original character values.
 
 ### Inputs, validation and forcing
 
-Arguments retain base-year and repetition count. Base1993 plus i in1..count
-gives firstyear1994, normal's lastyear11993 and large's lastyear51993.
-Smoke2 is deliberately small; normal10000 and large50000 retain original NORM/
-SLOW parameters. Original FAST1000 remains in provenance. No external dataset
+Arguments retain base-year and repetition count. Base 1993 plus i in1..count
+gives first year 1994, normal's last year 11993 and large's last year 51993.
+Smoke 2 is deliberately small; normal 10,000 and large 50,000 retain original NORM/
+SLOW parameters. Original FAST 1,000 remains in provenance. No external dataset
 is used; layouts are generated from arithmetic and fixed English names.
 
 The source prints length(cal year) each iteration. The driver preserves that
-observation, checks each length2888 (38rows of75characters plus LF), and consumes
+observation, checks each length2888 (38 rows of75 characters plus LF), and consumes
 it in a checked count/sum. It validates base/count once, replacing the source's
 per-calFor span/atoi at source level. Compilers may hoist invariant parsing.
 There is no added full-character forcing inside measured work. Length has limited
 discrimination for wrong glyphs; full layout correctness is checked separately.
 
-Twenty-one semantic checks cover complete rendered fixtures at11 years, leap/
+Twenty-one semantic checks cover complete rendered fixtures at 11 years, leap/
 weekday rules, grouping demand, negative padding/drop and unforced character
 payload through justification/unlines. Original GHC and an independent Python
 Gregorian renderer agree byte for byte on those layouts. The renderer uses the
@@ -8251,26 +8253,26 @@ and custom decimal conversion are representation/library adaptations.
 
 The GHC type audit identifies calFor as String -> Int -> IO(), despite cal's
 Integral-polymorphic helper type. atoi uses fromEnum, hence the actual main
-uses machine Int. All selected values fit signed31bits, including the largest
-sum144,400,000. The port retains exact arithmetic over that domain. Selected
+uses machine Int. All selected values fit signed 31 bits, including the largest
+sum 144,400,000. The port retains exact arithmetic over that domain. Selected
 text is ASCII, so SML97 chars preserve the original character values.
 
 ### Inputs, validation and forcing
 
-Arguments retain base-year and repetition count. Base1993 plus i in1..count
-gives firstyear1994, normal's lastyear11993 and large's lastyear51993.
-Smoke2 is deliberately small; normal10000 and large50000 retain original NORM/
-SLOW parameters. Original FAST1000 remains in provenance. No external dataset
+Arguments retain base-year and repetition count. Base 1993 plus i in1..count
+gives first year 1994, normal's last year 11993 and large's last year 51993.
+Smoke 2 is deliberately small; normal 10,000 and large 50,000 retain original NORM/
+SLOW parameters. Original FAST 1,000 remains in provenance. No external dataset
 is used; layouts are generated from arithmetic and fixed English names.
 
 The source prints length(cal year) each iteration. The driver preserves that
-observation, checks each length2888 (38rows of75characters plus LF), and consumes
+observation, checks each length2888 (38 rows of75 characters plus LF), and consumes
 it in a checked count/sum. It validates base/count once, replacing the source's
 per-calFor span/atoi at source level. Compilers may hoist invariant parsing.
 There is no added full-character forcing inside measured work. Length has limited
 discrimination for wrong glyphs; full layout correctness is checked separately.
 
-Twenty-one semantic checks cover complete rendered fixtures at11 years, leap/
+Twenty-one semantic checks cover complete rendered fixtures at 11 years, leap/
 weekday rules, grouping demand, negative padding/drop and unforced character
 payload through justification/unlines. Original GHC and an independent Python
 Gregorian renderer agree byte for byte on those layouts. The renderer uses the
@@ -8291,3 +8293,137 @@ and the shared nofib/measurement literature survey. No historical timing claim
 is transferred to this port.
 
 [Complete provenance](calendar-strict/PROVENANCE.md).
+
+## banner-lazy
+
+nofib revision `b7391df4540ac8b11b35e1b2e2c15819b5171798`,
+`spectral/banner/Main.hs`, `boot.sh`, `Makefile` and both templates. Mark P Jones's
+1992 header describes a Basic predecessor and a Hugs version; retain the complete
+explanation, font data and identities. An individual license grant is unstated.
+The font is embedded program data, with no separately acquired dataset. Boot's
+3500/35000/180000 template repetitions and its shootout-setting comment remain
+provenance, without assuming identical implementations elsewhere.
+
+### Algorithm, variants and source fidelity
+
+Preserve ordered letter/digit list indexing, case mapping, punctuation lookup,
+blank/slant/reversed-slant glyphs, ragged transpose, right-fold two-space joining,
+leading blank line and exact output rows. Memoized and eager finite sequences
+share one SML97 functor. The private suspension policy ties the source's cyclic
+infinite empty-row fallback in Need and caches it across requests. That fallback
+is not replaced by a finite blank glyph. Eagerly evaluating the infinite branch
+cannot terminate; every fixed profile uses recognized finite ASCII glyphs.
+
+Glyph/row heads remain delayed in Need. The transpose replacement shares its
+head/tail partition; punctuation search returns its first match directly instead
+of allocating a filtered candidate list. Portable list/string operations replace
+library calls. Explicit memo cells, table construction and suspension policies
+change representation/allocation; no compiler/runtime feature is added. The
+fixed template's ASCII domain preserves the source character classifications.
+
+### Profiles, acquisition and result checks
+
+Smoke repeats the template 2 times. Normal 35,000 and large 180,000 preserve boot's
+NORM/SLOW settings; original FAST 3,500 is also checked. The exact35-byte input and
+1147-byte output templates are retained. To avoid storing repeated megabyte
+files, profiles identify those templates and the original repetition count.
+SML97 generates the exact logical input stream within measured execution.
+This replaces boot-time file expansion/getContents with template acquisition
+and explicit stream generation: generation work, IO and chunk representation
+are documented measurement adaptations. Expanded input/output SHA256 identities
+are recorded for each profile.
+
+Per-line execution preserves Main's mapM_ putStr ordering and consumes each
+output before moving to the next line. Every output byte is compared against
+the periodically indexed original expected template, then contributes to an
+explicit modulo 2^32 fingerprint. Count, ordering and EOF are checked. A profile
+guard requires an ASCII, line-terminated input template, matching the pinned data.
+The largest 206,460,000-byte output count fits31 bits. Control is ordinary SML97;
+the driver returns count/hash after validation rather than printing the artwork.
+
+Unchanged GHC, an independent glyph renderer and pinned templates agree. Bounded
+GHC runs check all selected profiles plus original FAST, including 40,145,000
+normal and 206,460,000 large output bytes. Twelve semantic checks cover full
+alphabets, digits, punctuation, both slashes, whitespace, empty/mixed lines,
+case mapping, variants, knot sharing and the productive lazy unknown-glyph
+newline prefix. A GHC observer independently confirms that infinite prefix.
+Large SML execution is claimed only for recorded cases.
+
+### Runtime questions and references
+
+Shared table memoization, input generation, transpose partition sharing,
+finite-sequence evaluation, per-line retention and byte checking are source-based
+diagnostic hypotheses until established by measurements or IR inspection.
+Compiler comparisons use identical SML; original Haskell supplies correctness
+references. Jones's retained explanation and the [pinned implementation](https://github.com/ghc/nofib/blob/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/banner/Main.hs)
+provide program-specific history. See Partain's suite paper and the shared
+measurement survey. No historical timing claim is transferred to these ports.
+
+[Complete provenance](banner-lazy/PROVENANCE.md).
+
+## banner-strict
+
+nofib revision `b7391df4540ac8b11b35e1b2e2c15819b5171798`,
+`spectral/banner/Main.hs`, `boot.sh`, `Makefile` and both templates. Mark P Jones's
+1992 header describes a Basic predecessor and a Hugs version; retain the complete
+explanation, font data and identities. An individual license grant is unstated.
+The font is embedded program data, with no separately acquired dataset. Boot's
+3500/35000/180000 template repetitions and its shootout-setting comment remain
+provenance, without assuming identical implementations elsewhere.
+
+### Algorithm, variants and source fidelity
+
+Preserve ordered letter/digit list indexing, case mapping, punctuation lookup,
+blank/slant/reversed-slant glyphs, ragged transpose, right-fold two-space joining,
+leading blank line and exact output rows. Memoized and eager finite sequences
+share one SML97 functor. The private suspension policy ties the source's cyclic
+infinite empty-row fallback in Need and caches it across requests. That fallback
+is not replaced by a finite blank glyph. Eagerly evaluating the infinite branch
+cannot terminate; every fixed profile uses recognized finite ASCII glyphs.
+
+Glyph/row heads remain delayed in Need. The transpose replacement shares its
+head/tail partition; punctuation search returns its first match directly instead
+of allocating a filtered candidate list. Portable list/string operations replace
+library calls. Explicit memo cells, table construction and suspension policies
+change representation/allocation; no compiler/runtime feature is added. The
+fixed template's ASCII domain preserves the source character classifications.
+
+### Profiles, acquisition and result checks
+
+Smoke repeats the template 2 times. Normal 35,000 and large 180,000 preserve boot's
+NORM/SLOW settings; original FAST 3,500 is also checked. The exact35-byte input and
+1147-byte output templates are retained. To avoid storing repeated megabyte
+files, profiles identify those templates and the original repetition count.
+SML97 generates the exact logical input stream within measured execution.
+This replaces boot-time file expansion/getContents with template acquisition
+and explicit stream generation: generation work, IO and chunk representation
+are documented measurement adaptations. Expanded input/output SHA256 identities
+are recorded for each profile.
+
+Per-line execution preserves Main's mapM_ putStr ordering and consumes each
+output before moving to the next line. Every output byte is compared against
+the periodically indexed original expected template, then contributes to an
+explicit modulo 2^32 fingerprint. Count, ordering and EOF are checked. A profile
+guard requires an ASCII, line-terminated input template, matching the pinned data.
+The largest 206,460,000-byte output count fits31 bits. Control is ordinary SML97;
+the driver returns count/hash after validation rather than printing the artwork.
+
+Unchanged GHC, an independent glyph renderer and pinned templates agree. Bounded
+GHC runs check all selected profiles plus original FAST, including 40,145,000
+normal and 206,460,000 large output bytes. Twelve semantic checks cover full
+alphabets, digits, punctuation, both slashes, whitespace, empty/mixed lines,
+case mapping, variants, knot sharing and the productive lazy unknown-glyph
+newline prefix. A GHC observer independently confirms that infinite prefix.
+Large SML execution is claimed only for recorded cases.
+
+### Runtime questions and references
+
+Shared table memoization, input generation, transpose partition sharing,
+finite-sequence evaluation, per-line retention and byte checking are source-based
+diagnostic hypotheses until established by measurements or IR inspection.
+Compiler comparisons use identical SML; original Haskell supplies correctness
+references. Jones's retained explanation and the [pinned implementation](https://github.com/ghc/nofib/blob/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/banner/Main.hs)
+provide program-specific history. See Partain's suite paper and the shared
+measurement survey. No historical timing claim is transferred to these ports.
+
+[Complete provenance](banner-strict/PROVENANCE.md).

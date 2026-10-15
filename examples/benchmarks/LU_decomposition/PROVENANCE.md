@@ -30,14 +30,14 @@ conditioning transform or generator substitution changes the original algorithm.
 The shared generator follows pinned OCaml 4.14.1 Random at
 `99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93`. Preserve its modified lagged-Fibonacci
 transition, floating draw order and exact default state. Input uses the original
-expression Random.float 100.0 + 1.0. The original library source and full LGPL2.1
+expression Random.float 100.0 + 1.0. The original library source and full LGPL 2.1
 notice with OCaml linking exception are retained locally. Fixed state setup is
 precomputed as documented in the shared array ports; draws occur within run.
 All selected sizes and flat indices fit 31 bits; arithmetic values use real.
 
 ## Profiles, correctness and numerical bounds
 
-Smoke4, normal256 and large1024. Large preserves the published run configuration;
+Smoke 4, normal 256 and large 1,024. Large preserves the published run configuration;
 the source's CLI fallback1200 is retained in provenance and the portable argument
 range. Normal is smaller for practical comparisons and larger than the initial
 64 pilot, reducing fixture parsing's share of total work. There is no external
