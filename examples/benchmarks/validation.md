@@ -819,3 +819,25 @@ bytecode agreement for 498 programs across seven builds. runedoc and runeopt
 also agree. The [complete transcript](validation/oct04-constraints-acceptance.log)
 records that run. After the final timeout-only metadata update, catalogue
 validation/negative checks and the recorded normal retries pass.
+
+## M3 Fibonacci heaps, 2026-10-04
+
+Two variants bring the catalogue to 219 programs and 651 profiles. [All 56
+smoke/normal cases](results/m3-fibheaps/correctness.tsv) pass on four Rune engines
+at both levels and all six managed native hosts. Nine semantic checks pass all
+ten configurations at both levels. Original GHC observers and independent
+histograms agree for selected inputs; separate demand observations distinguish
+mutable from functional consolidation.
+
+The [attempt ledger](results/m3-fibheaps/correctness-attempts.tsv) preserves the
+strict original-size -O0 pilot's 4 GiB memory failure. Paired normal inputs use
+30,000 elements; large retains the original 300,000. Both sorting algorithms,
+forest orders and sharing remain explicit. Count comparisons agree. No headline
+timing or universal large validation is claimed; the repeated spectral variant
+remains scheduled. M3 remains in progress.
+
+Full `make JOBS=4 check` passes with 651 catalogue profiles, the bounded routine
+set, 331 language fixtures per compiler, performance budgets, bootstrap and
+bytecode agreement for 498 programs across seven builds. runedoc and runeopt
+also agree. The [complete transcript](validation/oct04-fibheaps-acceptance.log)
+records the run; all 35 inventory tests pass.
