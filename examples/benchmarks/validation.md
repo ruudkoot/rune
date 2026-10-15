@@ -890,3 +890,23 @@ GDB and LLDB checks run with remote debuginfo lookup disabled. The
 [full final transcript](validation/oct15-benchmarks-681-acceptance.log) and
 [environment record](validation/oct15-debugger-environment.md) distinguish this
 run from the pre-final 675-profile baseline and interrupted debugger wait.
+
+## M5 sequential LU, 2026-10-15
+
+One import brings the catalogue to 230 programs and 684 profiles. [All 28
+smoke/normal cases](results/m5-lu/correctness.tsv) pass on four Rune engines at
+both levels and all six managed native hosts. Fourteen numerical/perturbation
+checks pass all ten configurations at both levels; count comparisons agree.
+
+Flat unpivoted elimination and separate L/U setup remain intact. A streaming
+checker consumes all packed and expanded factors against finite binary64
+reference fixtures, with explicit absolute/relative replay bounds. Independent
+60-digit arithmetic and scaled residuals validate smoke/normal reference
+accuracy separately. Normal256 and original large1024 are documented; no universal
+large SML validation or headline timing is claimed. M5 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 684 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and bytecode agreement for 498 programs across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct15-lu-684-acceptance.log)
+records that acceptance run; all 35 inventory tests pass.

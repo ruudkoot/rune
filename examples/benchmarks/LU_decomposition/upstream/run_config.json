@@ -1,0 +1,15 @@
+[
+  {
+    "executable": "benchmarks/multicore-numerical/LU_decomposition.exe",
+    "name": "LU_decomposition",
+    "tags": [
+      "1s_10s",
+      "macro_bench"
+    ],
+    "runs": [
+      {
+        "params": "1024"
+      }
+    ]
+  }
+]
