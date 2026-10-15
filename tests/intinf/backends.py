@@ -145,12 +145,41 @@ for backend,vm in backends:
     for name,program in programs.items():
         status,stdout,stderr = invoke(vm,backend,program,'--intinf-max-bits','128')
         assert status == 2 and b'intinf magnitude limit exceeded' in stderr,(backend,name,status,stderr.decode())
-        assert b'Overflow' not in stderr and not stdout,(name,stdout,stderr)
+        assert b'uncaught exception Overflow' not in stderr and not stdout,(name,stdout,stderr)
 if has_gmp:
     status,_,stderr = invoke(a.vm,'gmp',programs['multiply'],'--intinf-gmp-memory','1')
     assert status == 2 and b'intinf GMP memory limit exceeded' in stderr,stderr
 status,_,stderr = invoke(a.sml_vm,'gmp',special)
 assert status == 2 and b'GMP backend is unavailable' in stderr,stderr
+
+# A non-byte-aligned limit exercises the packed fast paths' exact final
+# bit check. 65 bits also permits Word64's Basis initialization above.
+budget_paths = compile('budget-paths', '''structure I = IntInf
+val one = I.fromInt 1
+val a = valOf(I.fromString "18446744073709551615")
+val b = I.+(a,one)
+val top = valOf(I.fromString "36893488147419103231")
+val checks = [I.+(a,b)=top, I.*(a,I.fromInt 2)=I.-(top,one),
+ I.andb(top,b)=b, I.orb(b,one)=I.+(b,one), I.xorb(b,one)=I.+(b,one),
+ I.~>>(I.~ b,0w64)=I.fromInt (~1),
+ I.~>>(I.~(I.+(b,one)),0w64)=I.fromInt (~2)]
+val () = if List.all (fn x => x) checks then print "65-bit paths pass\\n" else raise Fail "65-bit paths"
+''')
+budget_failures = {
+    'small-product':'I.*(I.fromInt(valOf Int.maxInt),I.fromInt(valOf Int.maxInt))',
+    'packed-carry':'I.+(valOf(I.fromString "36893488147419103231"),I.fromInt 1)',
+    'single-digit-product':'I.*(valOf(I.fromString "18446744073709551615"),I.fromInt 3)',
+}
+budget_programs = {name:compile(name,'structure I = IntInf\nval answer = '+expr+'\nval () = print "unexpected result\\n"\n')
+                   for name,expr in budget_failures.items()}
+for backend,vm in backends:
+    status,stdout,stderr = invoke(vm,backend,budget_paths,'--intinf-max-bits','65')
+    assert status == 0 and stdout == b'65-bit paths pass\n',(backend,status,stderr.decode())
+    for name,program in budget_programs.items():
+        status,stdout,stderr = invoke(vm,backend,program,'--intinf-max-bits','65')
+        assert status == 2 and b'intinf magnitude limit exceeded' in stderr,(backend,name,status,stderr.decode())
+        # A stack frame named mulOverflow is not an uncaught SML exception.
+        assert b'uncaught exception Overflow' not in stderr and not stdout,(name,stdout,stderr)
 
 image = out/'world.img'
 world = compile('world', f'''structure I = IntInf

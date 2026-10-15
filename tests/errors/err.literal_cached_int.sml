@@ -1,0 +1,5 @@
+val _ = (0w255 : Word8.word)
+val _ = (0w65535 : Word16.word)
+val _ = (32767 : Int16.int)
+val _ = (127 : Int8.int)
+val bad = (128 : Int8.int)

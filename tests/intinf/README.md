@@ -135,6 +135,9 @@ source paths consistent. `--workload OP-BITS-OTHER` selects a case for a repeat;
 it does not change its inputs or iteration count. Reports retain raw samples,
 source and bytecode hashes, and ratios to the baseline. Names describe the
 main operation, but the timed loop also perturbs operands with small additions.
+`--reuse-run DIR` verifies the compiler, VM, implementation, source and bytecode
+hashes before repeating those exact bytecodes, avoiding a rebuild between an
+initial run and its follow-up samples.
 
 The rebase onto upstream `3220230c` is indexed by
 [gmp-rebase.json](gmp-rebase.json) and
@@ -147,3 +150,23 @@ and corrected repeats are not pooled with it. Raw evidence is under
 `tests/out/intinf/rebase/final`. Correctness validation passes; medium-size
 arithmetic and SML bitwise/factorial performance regressions remain open in
 the [roadmap](../../docs/plans/gmp.md#performance-acceptance-still-open).
+
+`compare-paths.py --baseline-run DIR --baseline-vm VM --out FRESH_DIR`
+measures changes to the arithmetic paths against retained bytecodes from
+`run.py` or `dispatch.py`. It verifies the baseline VM hash and source hashes,
+compiles those exact source paths using the current Basis and `--lib lib`,
+and alternates old/new executions of each backend. Reports retain raw samples,
+bytecode hashes and separate instruction, Rune heap and GMP allocation counts.
+Use `--workload NAME` or `--mode gmp|sml` for focused experiments; final
+acceptance includes both modes and the full fixed and boundary suites.
+
+The optimization following `f729aa6d` is indexed by
+[gmp-optimization.json](gmp-optimization.json) and
+[gmp-optimization-performance.json](gmp-optimization-performance.json).
+The final compiler recreated all 56 measured arithmetic/oracle bytecodes
+exactly, with an identical VM binary and arithmetic-library hash, so those
+arithmetic measurements are retained with that reproduction proof. Compiler
+timings were rerun after caching literal limits. The records distinguish
+initial flags, repeats, rejected experiments, known host limitations and the
+remaining medium-arithmetic regressions against upstream. Raw final evidence
+is under `tests/out/intinf/optimization/final4`.

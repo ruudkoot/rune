@@ -1271,3 +1271,154 @@ image, budget and engine-equivalence checks continue to pass. Retain the
 fallback and shared immutable values; a different persistent native
 representation needs a separate design and measurement, not an inference
 from these controls.
+
+### Follow-up optimization: validated locally
+
+This work starts from `f729aa6d`, with its sources, compiler and VM retained
+under `tests/out/intinf/optimization/baseline-tree`. It keeps the canonical
+small/signed-byte representation and both independent arithmetic backends.
+The changes remove redundant result normalization, use explicit
+signed-boundary checks, update private byte copies for large/small addition,
+and reuse scratch digits in fallback arithmetic. Small scratch results can
+return directly without an intermediate packed string; overflowing machine
+products convert directly to digits. No runtime primitive or image layout
+change is needed.
+
+`tests/intinf/compare-paths.py` compiles the exact retained workload sources
+with normalized library paths, verifies expected answers, and compares both
+backends with the retained bytecodes. Every exploratory iteration is kept;
+its short measurements guided implementation and are not final acceptance.
+The final evidence includes paired performance measurements, regression checks,
+independent arithmetic and boundary tests, host-library validation, bootstrap
+and the full required local checks. The performance gate above remains unchanged.
+
+The implementation keeps `S of limb | B of bool * string`; it changes how
+arithmetic reaches that representation. Known large results avoid another
+small-range test. Small scratch results become `S` directly, without packing
+and decoding a temporary string. Large/small addition and positive OR/XOR
+copy bytes in bulk and visit the changing low bytes. The SML kernels reuse
+private scratch arrays, handle carry with comparisons where possible, and
+scale by a single digit without the general multiplication loop. Right shifts
+round negative results from the discarded bits; byte-aligned left shifts copy
+in bulk. Exact result-budget checks precede immutable result allocation.
+
+The promoted multiplication path retains its boxed input arguments until
+overflow and orders their magnitudes with a single tail swap. Besides putting
+the shorter operand in the outer multiplication loop, this keeps the cold
+routine separate: a measured prototype had inlined it into `mulI`, increasing
+the hot function's register frame from 10 slots to 18 and slowing ordinary
+small multiplication. The adopted form restores 10 slots. A separate shared
+addition/subtraction/multiplication promotion experiment moved the cost into
+addition and was rejected. A constant-30-bit configuration did not consistently
+improve SML timings, so the portable width selection remains.
+
+The tests add signed carry/borrow, operand ordering, minimum machine integers,
+unchanged input values, exact and inexact shifts, and non-byte-aligned 65-bit
+budget boundaries. An expanded deterministic corpus compares 622 pairs, up to
+4096 bits, against Python answers and the retained list oracle: 3,114 checks
+per implementation in each run. The focused and full local correctness checks
+pass; the remaining performance gaps are listed below.
+
+The compiler also reuses literal limits in a bounded table keyed by signedness
+and widths 0 through 64. Each literal is still checked, other widths use the
+ordinary arithmetic, and empty wide strings do not calculate unused limits.
+This removes repeated `IntInf` work in the caller. The cached compiler agrees
+byte for byte with its host-built reference and reproduces itself under both
+backends. Mixed-width tests accept the endpoints and reject subsequent
+out-of-range literals after the cache has been populated.
+
+#### Follow-up measurements
+
+The final compiler reproduced **all 56 measured arithmetic and oracle
+bytecodes exactly**, using the same source paths, and the VM binary and
+arithmetic library hash were unchanged. Those arithmetic samples are retained;
+compiler timings were repeated with the new compiler. A separate bootstrap
+check uses the build's `bin/../lib` spelling, while compiler benchmarks use
+`lib` consistently. Confusing those debug paths caused an extra harness
+assertion to fail; matching-path self-bootstrap passes in both modes.
+
+The fixed large suites measure **11.48× SML over the saved list implementation**
+and **6.91× GMP over the optimized SML fallback**, as geometric means. Direct
+paired comparisons with `f729aa6d` show:
+
+| Workload | GMP speedup | SML speedup |
+|---|---:|---:|
+| addition, 63/63 bits | 2.27× | 3.25× |
+| addition, 128/128 bits | 2.96× | 4.03× |
+| multiplication, 31/33 bits | 1.78× | 2.22× |
+| bit operations, 128/128 bits | 2.56× | 2.97× |
+| fixed bit operations, 4096 bits | 1.43× | 2.47× |
+| factorial-300 | 1.45× | 1.83× |
+
+For 128-bit addition, GMP's VM instruction count falls from 31.1 million to
+8.0 million, and SML's from 59.5 million to 17.0 million. Rune heap allocation
+falls from 9.7 to 8.6 MB and from 27.6 to 17.0 MB, respectively. GMP's native
+allocations remain separately reported. The fixed small-arithmetic suite has
+no repeat-confirmed regression above 5% against `f729aa6d`.
+
+Compiler elapsed-time ratios, above one meaning slower, are:
+
+| Workload | GMP / f729 | SML / f729 | GMP / upstream | SML / upstream |
+|---|---:|---:|---:|---:|
+| compile-hello | 1.0429 | 0.9344 | 1.0194 | 0.9980 |
+| compile-sigs | 1.0279 | 1.0216 | 1.0421 | 1.0282 |
+| bootstrap | 1.0401 | 1.0008 | 1.0134 | 1.0400 |
+
+The flagged signature comparisons received 100-pair repeats; the table uses
+pooled medians for those cases. Both repeat and pooled medians pass 1.05.
+The earlier SML signatures regression of 6.6% motivated the literal-limit
+cache and remains recorded with its superseded compiler.
+
+The broader no-regression goal is still open. Remaining time ratios against
+upstream `3220230c`, with repeated cases pooled, are:
+
+| Workload | GMP / upstream | SML / upstream |
+|---|---:|---:|
+| addition, 63/63 bits | 1.3740 | 1.3621 |
+| addition, 128/128 bits | 1.2364 | 1.2442 |
+| multiplication, 31/33 bits | 1.1493 | 1.1113 |
+| bit operations, 128/128 bits | 0.8374 | 1.0733 |
+
+These losses are much smaller than the preceding implementation's, but they
+still exceed the unchanged expanded gate. M4 remains open for that work;
+the aggregate gains do not erase individual regressions.
+
+#### Follow-up acceptance
+
+[The acceptance record](../../tests/intinf/gmp-optimization.json) and
+[performance record](../../tests/intinf/gmp-optimization-performance.json)
+retain commands, versions, source and binary hashes, raw samples, repeat
+results and rejected experiments. Raw local evidence is under
+`tests/out/intinf/optimization/final4`; earlier candidates remain alongside it.
+
+* `make check JOBS=4`: **14,432 passes and two existing native-interrupt skips**
+  across 14,434 entries. Bootstrap, generated documentation, ISA checks,
+  engine equivalence, heap checks and the new accepted/rejected literal probes
+  pass.
+* `make matrix-quick JOBS=4`: Rune and all six host configurations have
+  **zero unexplained failures**. Existing host deviations and unavailable
+  sections remain visible. The MLKit probe and filesystem diagnostics match
+  existing limitations; the deviation ledger was not changed.
+* ASan/UBSan backend and hardening suites, standalone stack sanitizer checks,
+  register interpreter/JIT/deoptimization sanitizer checks, native sanitizer
+  checks, both collector configurations and general GC stress pass.
+  Backend suites run **92 bounded subprocesses**, and hardening runs **47**.
+* Cross-build arithmetic, limits, fork and restore checks pass **557 bounded
+  subprocesses and 216 image combinations**, including physical GMP-free VMs.
+* `make test-windows JOBS=2` passes on all four VMs: **288 supported language
+  cases and 30 runtime cases** per run, available JIT tiers, layout and image
+  checks, the Windows Basis matrix, terminal, debugger and kernel checks.
+* `make test-portability JOBS=4` passes **3,502 checks**, including supported
+  widths, byte orders, JIT modes, counts and image transfers.
+
+An initial limit-test assertion mistook the function name `mulOverflow` in a
+stack trace for an uncaught `Overflow` exception. Its diagnostic and exit code
+were correct; the assertion now identifies the exception diagnostic precisely.
+The initial failure and successful rerun are retained. The bootstrap-path
+assertion and superseded performance candidates are also preserved.
+
+No C arithmetic, primitive identity or image layout changed. The native VM's
+machine-code section is identical to the preceding implementation's; its
+generated revision header differs. Emulated checks establish functional
+portability, not native hardware timings. Remote CI and publication remain
+unrun, and expanded M4 performance acceptance remains open.
