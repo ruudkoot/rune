@@ -434,3 +434,16 @@ rt_processors    1  unit -> int              The processors this process may run
 proc_spawn       7  string * string list * string list * int * int list * string * int list -> int   Start a program as posix_spawn does (path, arguments, environment, flags, descriptors), in a directory ("": this process's), with flags bit 2 a process group of its own (a job on Windows) and bit 3 the signals at their default actions, and limits [address space bytes, processor seconds, file bytes, core bytes], ~1 leaving one as it is; its process, or ~1.
 proc_wait        2  int * int -> int list    Wait for a child (~1: any), not at all when bit 0 of the flags is set: [process (0 when none has ended), 0 exited or 1 signalled or 2 stopped, status or signal, user microseconds, system microseconds, peak resident kilobytes]; [] on failure.
 proc_kill        2  int * int -> int         Send a signal to a child's process group, or end its job on Windows; 0, or ~1.
+
+# --- packed integer storage (arithmetic remains in SML) ---
+intinf_unpack    2  string * int -> int array   Decode little-endian magnitude bytes into 15- or 30-bit digits; raises Size above Array.maxLen. Invalid digit width is a bytecode error.
+intinf_pack      3  int array * int * int -> string   Encode the first n 15- or 30-bit digits as canonical little-endian magnitude bytes; raises Size above String.maxSize. Invalid width, count or digit is a bytecode error.
+
+# --- IntInf runtime policy and optional GMP arithmetic ---
+intinf_gmp_available 1  unit -> bool             Whether this VM currently selects a supported GMP backend; never cache across image restoration.
+intinf_max_bits  1  unit -> int              Current finite arithmetic magnitude budget in bits.
+intinf_check_bits 1  int -> unit              Fail with a runtime limit when a nonnegative bit count exceeds the current budget.
+intinf_binary    5  int * bool * string * bool * string -> bool * string   Transient GMP add, subtract, multiply, and, or, xor (op 0..5) of canonical signed magnitudes; little-endian bytes.
+intinf_divmod    5  bool * bool * string * bool * string -> (bool * string) * (bool * string)   GMP quotient/remainder; first bool chooses floor rather than truncation. Check zero divisor before GMP and raise Div.
+intinf_shift     4  bool * bool * string * word -> bool * string   GMP signed-magnitude shift, first bool true for left; right shifts round down.
+intinf_power     3  bool * string * int -> bool * string   GMP power with nonnegative exponent; negative-exponent semantics remain in SML.

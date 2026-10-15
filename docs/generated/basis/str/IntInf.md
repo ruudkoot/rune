@@ -17,15 +17,9 @@ structure IntInf : INT_INF
 structure IntInf : INTEGER
 ```
 
-IntInf: arbitrary precision integers implemented in SML on top of the
-VM's int (63 bits). A value is a sign and a little-endian list of base-2^30 limbs
-without high zero limbs; zero is never negative. The representation is
-therefore canonical and structural equality is value equality.
-
-This file is compiled before int.sml (Int.toLarge/fromLarge use it), so it
-relies on the builtin overloaded operators and VM primitives only. Every
-helper that uses int arithmetic is defined before the IntInf operators
-shadow + - \* div mod \~ \< \<= \> \>= inside the structure.
+IntInf: canonical small integers or signed immutable packed magnitudes.
+The bytes are little endian, independent of the arithmetic workspace's
+limb width. Arrays below are private scratch and never escape in a value.
 
 ## Members
 
@@ -78,9 +72,17 @@ What each means is on [`INT_INF`](../sig/INT_INF.md) and [`INTEGER`](../sig/INTE
 
 ### 
 
-> **Implementation** `IntInf.int/limbs`. A sign and a list of digits in base
-> 2^30, written in SML on top of [`int`](../sig/INTEGER.md#type-int); equal numbers are equal
-> values, so `=` compares them. [`LargeInt`](IntInf.md) is [`IntInf`](IntInf.md).
+> **Implementation** `IntInf.int/limbs`. A small machine integer or a sign
+> and immutable little-endian magnitude bytes. The register VM optionally
+> uses GMP through temporary native objects; the independent SML backend
+> uses indexed 30-bit scratch digits (15-bit on narrow hosts). Storage
+> primitives pack and unpack the bytes. Normalization gives equal numbers
+> equal values, so `=` compares them. [`LargeInt`](IntInf.md) is [`IntInf`](IntInf.md). Both backends
+> enforce a finite operational magnitude budget (134217728 bits by default),
+> with a runtime-limit failure rather than [`Overflow`](../sig/GENERAL.md#exn-overflow) when it is exceeded.
+> The budget is configurable and does not change `precision = NONE`.
+> Unit divisors and clearly smaller dividends use direct SML results;
+> large right shifts in the fallback use indexed arithmetic digits.
 
 <details><summary>Other implementations (11)</summary>
 

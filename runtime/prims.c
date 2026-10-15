@@ -4,6 +4,7 @@
    that a garbage collection during allocation keeps them alive. */
 #include "version.h"
 #include "vm.h"
+#include "intinf.h"
 #include <math.h>
 #include <errno.h>
 #include <fenv.h>
@@ -2888,6 +2889,146 @@ static int p_proc_kill(VM *vm) {
     check_tag(vm, ARG(1), T_INT, "proc_kill");
     check_tag(vm, ARG(0), T_INT, "proc_kill");
     return ret(vm, 2, mk_int(sys_kill_group(val_imm(ARG(1)), (int)val_imm(ARG(0)))));
+}
+
+/* Packed storage for the SML IntInf kernels. These functions only change
+   the digit encoding; signs and all arithmetic stay in the library. The
+   width is explicit so the host adapter can use 15-bit digits on a narrow
+   int. No native limb width or byte order is part of the representation. */
+static unsigned intinf_width(VM *vm, Value v, const char *name) {
+    check_tag(vm, v, T_INT, name);
+    int64_t width = val_int(v);
+    if (width != 15 && width != 30) vm_fatal(vm, "primitive %s: invalid limb width", name);
+    return (unsigned)width;
+}
+static int p_intinf_unpack(VM *vm) {
+    Obj *s = check_obj(vm, ARG(1), K_STRING, "intinf_unpack");
+    unsigned width = intinf_width(vm, ARG(0), "intinf_unpack");
+    uint32_t len = obj_len(s);
+    uint64_t count = ((uint64_t)len * 8 + width - 1) / width;
+    if (count > 100000000) return raise_with(vm, 2, EXN_SIZE);
+    Obj *a = vm_alloc_fields(vm, K_ARRAY, 0, (uint32_t)count);
+    s = val_ptr(ARG(1)); /* allocation may have moved the input */
+    const unsigned char *p = (const unsigned char *)obj_bytes(s);
+    uint64_t acc = 0, mask = (UINT64_C(1) << width) - 1;
+    unsigned bits = 0;
+    uint32_t at = 0;
+    for (uint32_t i = 0; i < len; i++) {
+        acc |= (uint64_t)p[i] << bits;
+        bits += 8;
+        if (bits >= width) {
+            /* Digits fit an immediate even under RUNE_INT64: no allocation. */
+            obj_fill_field(a, at++, mk_int((int64_t)(acc & mask)));
+            acc >>= width;
+            bits -= width;
+        }
+    }
+    if (bits) obj_fill_field(a, at++, mk_int((int64_t)acc));
+    if (at != count) vm_fatal(vm, "primitive intinf_unpack: internal length mismatch");
+    return ret(vm, 2, mk_ptr(a));
+}
+static int p_intinf_pack(VM *vm) {
+    Obj *a = check_obj(vm, ARG(2), K_ARRAY, "intinf_pack");
+    check_tag(vm, ARG(1), T_INT, "intinf_pack");
+    unsigned width = intinf_width(vm, ARG(0), "intinf_pack");
+    int64_t requested = val_int(ARG(1));
+    if (requested < 0 || (uint64_t)requested > obj_len(a))
+        vm_fatal(vm, "primitive intinf_pack: invalid limb count");
+    uint32_t n = (uint32_t)requested;
+    uint64_t base = UINT64_C(1) << width;
+    for (uint32_t i = 0; i < n; i++) {
+        Value d = obj_field(a, i);
+        check_tag(vm, d, T_INT, "intinf_pack");
+        if (val_int(d) < 0 || (uint64_t)val_int(d) >= base)
+            vm_fatal(vm, "primitive intinf_pack: invalid limb");
+    }
+    while (n && val_int(obj_field(a, n - 1)) == 0) n--;
+    unsigned top_bits = 0;
+    if (n) {
+        uint64_t top = (uint64_t)val_int(obj_field(a, n - 1));
+        while (top) { top_bits++; top >>= 1; }
+    }
+    uint64_t length = n ? (((uint64_t)n - 1) * width + top_bits + 7) / 8 : 0;
+    if (length > MAX_STRING) return raise_with(vm, 3, EXN_SIZE);
+    Obj *s = vm_alloc_string(vm, (uint32_t)length);
+    a = val_ptr(ARG(2)); /* allocation may have moved the input */
+    unsigned char *p = (unsigned char *)obj_bytes(s);
+    uint64_t acc = 0;
+    unsigned bits = 0;
+    uint32_t at = 0;
+    for (uint32_t i = 0; i < n; i++) {
+        acc |= (uint64_t)val_int(obj_field(a, i)) << bits;
+        bits += width;
+        while (bits >= 8) {
+            if (at < length) p[at++] = (unsigned char)acc;
+            acc >>= 8;
+            bits -= 8;
+        }
+    }
+    if (at < length) p[at++] = (unsigned char)acc;
+    if (at != length) vm_fatal(vm, "primitive intinf_pack: internal length mismatch");
+    return ret(vm, 3, mk_ptr(s));
+}
+
+/* The SML layer owns exceptions, normalization, and backend dispatch. */
+static int intinf_boolean(VM *vm, Value v) {
+    if (!val_is(v, T_CON0) || val_imm(v) < 0 || val_imm(v) > 1)
+        vm_fatal(vm, "intinf primitive: invalid boolean");
+    return (int)val_imm(v);
+}
+static void intinf_unit(VM *vm, Value v) {
+    if (!val_is(v, T_UNIT) || val_imm(v) != 0)
+        vm_fatal(vm, "intinf primitive: expected unit");
+}
+static int p_intinf_gmp_available(VM *vm) {
+    intinf_unit(vm, ARG(0));
+    return ret(vm, 1, mk_bool(vm_intinf_available(vm)));
+}
+static int p_intinf_max_bits(VM *vm) {
+    intinf_unit(vm, ARG(0));
+    return ret(vm, 1, mk_int((int64_t)vm_intinf_max_bits(vm)));
+}
+static int p_intinf_check_bits(VM *vm) {
+    check_tag(vm, ARG(0), T_INT, "intinf_check_bits");
+    int64_t bits = val_int(ARG(0));
+    if (bits < 0) vm_fatal(vm, "intinf primitive: negative bit count");
+    vm_intinf_check(vm, (uint64_t)bits);
+    return ret(vm, 1, mk_unit());
+}
+static int p_intinf_binary(VM *vm) {
+    check_tag(vm, ARG(4), T_INT, "intinf_binary");
+    int64_t op = val_int(ARG(4));
+    if (op < 0 || op > 5) vm_fatal(vm, "intinf primitive: invalid operation");
+    int na = intinf_boolean(vm, ARG(3)), nb = intinf_boolean(vm, ARG(1));
+    Value v = vm_intinf_binary(vm, (unsigned)op, na, ARG(2), nb, ARG(0));
+    return ret(vm, 5, v);
+}
+static int p_intinf_divmod(VM *vm) {
+    int floor = intinf_boolean(vm, ARG(4));
+    int na = intinf_boolean(vm, ARG(3)), nb = intinf_boolean(vm, ARG(1));
+    Obj *divisor = check_obj(vm, ARG(0), K_STRING, "intinf_divmod");
+    if (obj_len(divisor) == 0) {
+        vm_intinf_validate(vm, ARG(2), na);
+        vm_intinf_validate(vm, ARG(0), nb);
+        return raise_with(vm, 5, EXN_DIV);
+    }
+    /* The nonzero path validates both operands in the shared binding. */
+    Value v = vm_intinf_divmod(vm, floor, na, ARG(2), nb, ARG(0));
+    return ret(vm, 5, v);
+}
+static int p_intinf_shift(VM *vm) {
+    int left = intinf_boolean(vm, ARG(3)), neg = intinf_boolean(vm, ARG(2));
+    check_tag(vm, ARG(0), T_WORD, "intinf_shift");
+    Value v = vm_intinf_shift(vm, left, neg, ARG(1), val_word(ARG(0)));
+    return ret(vm, 4, v);
+}
+static int p_intinf_power(VM *vm) {
+    int neg = intinf_boolean(vm, ARG(2));
+    check_tag(vm, ARG(0), T_INT, "intinf_power");
+    int64_t exponent = val_int(ARG(0));
+    if (exponent < 0) vm_fatal(vm, "intinf primitive: negative exponent");
+    Value v = vm_intinf_power(vm, neg, ARG(1), (uint64_t)exponent);
+    return ret(vm, 3, v);
 }
 
 const PrimFn prim_table[PRIM__COUNT] = {

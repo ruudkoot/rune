@@ -13,9 +13,17 @@
 
    See also: `INTEGER`, `WORD`
 
-   Implementation: `IntInf.int/limbs`. A sign and a list of digits in base
-   2^30, written in SML on top of `int`; equal numbers are equal
-   values, so `=` compares them. `LargeInt` is `IntInf`.
+   Implementation: `IntInf.int/limbs`. A small machine integer or a sign
+   and immutable little-endian magnitude bytes. The register VM optionally
+   uses GMP through temporary native objects; the independent SML backend
+   uses indexed 30-bit scratch digits (15-bit on narrow hosts). Storage
+   primitives pack and unpack the bytes. Normalization gives equal numbers
+   equal values, so `=` compares them. `LargeInt` is `IntInf`. Both backends
+   enforce a finite operational magnitude budget (134217728 bits by default),
+   with a runtime-limit failure rather than `Overflow` when it is exceeded.
+   The budget is configurable and does not change `precision = NONE`.
+   Unit divisors and clearly smaller dividends use direct SML results;
+   large right shifts in the fallback use indexed arithmetic digits.
 
    Implementation: `INT_INF/constants`. An integer constant may have the type
    `IntInf.int`, and then be of any size, and the overloaded operators work

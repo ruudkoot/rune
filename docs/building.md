@@ -35,6 +35,86 @@ Makefile, and is where the scripts of `tests/` look when they are run by
 hand.
 
 
+## GMP dependency
+
+`make GMP=auto|yes|no` controls the register VM's optional arithmetic backend.
+`auto` checks a system installation through pkg-config; `yes` requires a
+successful compile/link/run check, and `no` builds without GMP. Rune requires
+GMP 6.3.0 or newer, matching header/library major versions and limb widths,
+and no nails. Explicit unsupported requests fail clearly. Switching the mode
+relinks the VM; it does not change bytecode primitive identities. The stack
+VM and `build/librune.a` remain GMP-free. `bin/runevm-sml` is a GMP-free
+register VM useful for checking the same bytecode on both builds.
+
+CI and release builds use the pinned recipe rather than the system package:
+
+```
+python3 scripts/build-gmp.py --enable-fat --jobs 4
+make GMP=yes GMP_PREFIX=build/deps/gmp/native
+```
+
+The x86 package uses `--enable-fat` to select suitable low-level routines at
+runtime. The recipe also selects a generic compiler target triple: fat
+assembly dispatch alone does not remove CPU-specific inline helpers from C. This follows
+[GMP's package-build guidance](https://gmplib.org/manual/Notes-for-Package-Builds).
+On non-x86 native machines omit that flag and select the intended target.
+The provisioning recipe needs Python 3.12 or newer.
+
+The recipe verifies GMP 6.3.0's source archive SHA-256
+`a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898`,
+builds a static library, runs upstream tests, and records the source URL,
+checksum, compiler, requested and configured options, target, commands and
+installed library/header hashes. Reusing its cache verifies those installed
+hashes. `GMP_PREFIX` can also select a checked local prefix; absent pinned
+metadata, provenance is explicitly local/unknown. System builds report
+unknown source/build options instead of attributing them to the pinned recipe.
+The recipe retains license notices beside the dependency. `--cc`, `--host`,
+`--runner` and `--prefix` support separate cross-build trees; platform release
+validation is recorded in the GMP roadmap.
+
+Configuration evidence is in `build/gmp/KEY/config.json`; `runevm --version`
+reports the header and linked-library versions and embedded provenance. The
+runtime rechecks compatibility too. The pin is dependency provenance, not a
+correctness proof: independent SML arithmetic and bounded oracle tests remain
+required.
+
+Each cross ABI has its own GMP prefix and generated header. Provision the
+canonical packages before requesting GMP-enabled cross VMs:
+
+```
+make gmp-dep-windows gmp-dep-portability GMP=no JOBS=4
+make windows portability GMP=yes GMP_PREFIX=build/deps/gmp/native
+make test-intinf-cross GMP=yes GMP_PREFIX=build/deps/gmp/native JOBS=4
+```
+
+`GMP=no` on the provisioning command prevents a preexisting local GMP from
+being required while the dependencies themselves are being built. It does not
+disable those dependency builds or their upstream tests. Their prefixes are
+`build/deps/gmp/{windows64,windows32,linux32,ppc64,aarch64}`; override
+`GMP_CROSS_PREFIX`, or `GMP_WIN64_PREFIX`, `GMP_WIN32_PREFIX`,
+`GMP_LINUX32_PREFIX`, `GMP_PPC64_PREFIX`, and `GMP_AARCH64_PREFIX` individually.
+The native prefix remains `GMP_PREFIX`. Explicit `GMP=yes` fails if the requested
+ABI's dependency cannot be checked; `auto` can use the SML fallback.
+
+The x86 packages use fat builds. Linux32 also uses `--with-pic`, avoiding text
+relocations when linked into the PIE VM. PowerPC defaults to
+`GMP_PPC64_FLAGS=--disable-assembly`: the clang 18 optimized build failed an
+upstream division check. The portable build passes the full upstream suite
+and the [retained minimal case](bugreport/gmp/ppc64-division/BUGREPORT.md).
+The failed library is not provisioned. AArch64 uses its explicit target.
+Cross recipes specify both build and host triples and `CC_FOR_BUILD`, so WSL
+or binfmt execution support cannot turn a target compiler into a build-tool
+compiler. `--runner` runs the upstream checks under the selected emulator.
+
+`build/gmp/PLATFORM/config.json` and `linked.json` record cross configuration,
+inputs and output hashes. Unchanged links are reused; changing the backend,
+headers, library or flags invalidates them. Windows links continue to reject
+non-system DLL imports. The standard engine/count suites force SML on every
+VM, including through `WSLENV`; `test-intinf-cross` separately checks GMP and
+SML across architectures, available JIT tiers, actual GMP-free builds, limits,
+forks and saved-world restoration. It preserves the free binaries before
+rebuilding the enabled ones.
+
 ## Prerequisites
 
 The acceptance tests also need Python 3. The compiler-driver tests use its
@@ -418,6 +498,28 @@ starts ([repl.md](repl.md)).
 
 `scripts/install.sh` does the work and takes the same settings as
 `--prefix`, `--destdir`, `--host` and `--uninstall`.
+
+An install also retains `lib/rune/rebuild`: the register VM's source and
+transitive headers, compiler/link flags, binary and source hashes, and a
+`rebuild.py` script. Copy that directory to a writable location and run
+`python3 rebuild.py` to relink the VM. A pinned GMP install includes the
+verified source archive, installed header/static library, license notices,
+provisioning record and exact build recipe. The accompanying README describes
+rebuilding GMP with the recorded target and options. Checked system builds
+retain their known configuration and explicitly unknown source/build options.
+GMP-free installs do not bundle a GMP library or source archive. This material
+is removed with the rest of the installation by `--uninstall`.
+
+On native MSYS2 builds, the provenance recorder and package builder resolve
+the `.exe` file produced for a make target named without that suffix.
+
+The installer verifies that the VM, runtime source and dependency artifacts
+match their build records before packaging them; build again if they differ.
+Staged installation, relocation to a path containing spaces, native output,
+source relinking and removal are checked by `tests/intinf/install.py` in the
+release acceptance sequence. Release builds must use the pinned provisioning
+commands above; installing a checked system build does not turn it into a
+pinned release.
 
 ## How the build works
 

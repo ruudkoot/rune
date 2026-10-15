@@ -394,7 +394,16 @@ struct
     ("rt_processors", 388, 1),
     ("proc_spawn", 389, 7),
     ("proc_wait", 390, 2),
-    ("proc_kill", 391, 2)
+    ("proc_kill", 391, 2),
+    ("intinf_unpack", 392, 2),
+    ("intinf_pack", 393, 3),
+    ("intinf_gmp_available", 394, 1),
+    ("intinf_max_bits", 395, 1),
+    ("intinf_check_bits", 396, 1),
+    ("intinf_binary", 397, 5),
+    ("intinf_divmod", 398, 5),
+    ("intinf_shift", 399, 4),
+    ("intinf_power", 400, 3)
   ]
   val byName =
     List.foldl (fn ((n, i, a), m) => StringMap.insert (m, n, (i, a))) StringMap.empty table
@@ -529,7 +538,9 @@ struct
     "word64_to_int64",
     "word64_from_int64",
     "bytes_length",
-    "reals_length"
+    "reals_length",
+    "intinf_gmp_available",
+    "intinf_max_bits"
   ])
   fun removable name = StringMap.member (removables, name)
   (* what each primitive takes and gives, from the type of its
@@ -933,7 +944,16 @@ struct
            ("rt_processors", ([8], 1)),
            ("proc_spawn", ([6, 7, 7, 1, 7, 6, 7], 1)),
            ("proc_wait", ([1, 1], 7)),
-           ("proc_kill", ([1, 1], 1))
+           ("proc_kill", ([1, 1], 1)),
+           ("intinf_unpack", ([6, 1], 6)),
+           ("intinf_pack", ([6, 1, 1], 6)),
+           ("intinf_gmp_available", ([8], 5)),
+           ("intinf_max_bits", ([8], 1)),
+           ("intinf_check_bits", ([1], 8)),
+           ("intinf_binary", ([1, 5, 6, 5, 6], 0)),
+           ("intinf_divmod", ([5, 5, 6, 5, 6], 0)),
+           ("intinf_shift", ([5, 5, 6, 2], 0)),
+           ("intinf_power", ([5, 6, 1], 0))
          ]);
          repsOf name)
 end

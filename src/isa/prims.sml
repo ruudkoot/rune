@@ -821,5 +821,25 @@ struct
          {name = "proc_wait", arity = 2, ty = "int * int -> int list", effects = anything,
           doc = "Wait for a child (~1: any), not at all when bit 0 of the flags is set: [process (0 when none has ended), 0 exited or 1 signalled or 2 stopped, status or signal, user microseconds, system microseconds, peak resident kilobytes]; [] on failure."},
          {name = "proc_kill", arity = 2, ty = "int * int -> int", effects = anything,
-          doc = "Send a signal to a child's process group, or end its job on Windows; 0, or ~1."}]]
+          doc = "Send a signal to a child's process group, or end its job on Windows; 0, or ~1."}],
+       group "packed integer storage (arithmetic remains in SML)"
+        [{name = "intinf_unpack", arity = 2, ty = "string * int -> int array", effects = [Raises, Allocates],
+          doc = "Decode little-endian magnitude bytes into 15- or 30-bit digits; raises Size above Array.maxLen. Invalid digit width is a bytecode error."},
+         {name = "intinf_pack", arity = 3, ty = "int array * int * int -> string", effects = [Raises, ReadsHeap, Allocates],
+          doc = "Encode the first n 15- or 30-bit digits as canonical little-endian magnitude bytes; raises Size above String.maxSize. Invalid width, count or digit is a bytecode error."}],
+       group "IntInf runtime policy and optional GMP arithmetic"
+        [{name = "intinf_gmp_available", arity = 1, ty = "unit -> bool", effects = [ReadsHeap],
+          doc = "Whether this VM currently selects a supported GMP backend; never cache across image restoration."},
+         {name = "intinf_max_bits", arity = 1, ty = "unit -> int", effects = [ReadsHeap],
+          doc = "Current finite arithmetic magnitude budget in bits."},
+         {name = "intinf_check_bits", arity = 1, ty = "int -> unit", effects = [ReadsHeap, Raises],
+          doc = "Fail with a runtime limit when a nonnegative bit count exceeds the current budget."},
+         {name = "intinf_binary", arity = 5, ty = "int * bool * string * bool * string -> bool * string", effects = [ReadsHeap, Raises, Allocates],
+          doc = "Transient GMP add, subtract, multiply, and, or, xor (op 0..5) of canonical signed magnitudes; little-endian bytes."},
+         {name = "intinf_divmod", arity = 5, ty = "bool * bool * string * bool * string -> (bool * string) * (bool * string)", effects = [ReadsHeap, Raises, Allocates],
+          doc = "GMP quotient/remainder; first bool chooses floor rather than truncation. Check zero divisor before GMP and raise Div."},
+         {name = "intinf_shift", arity = 4, ty = "bool * bool * string * word -> bool * string", effects = [ReadsHeap, Raises, Allocates],
+          doc = "GMP signed-magnitude shift, first bool true for left; right shifts round down."},
+         {name = "intinf_power", arity = 3, ty = "bool * string * int -> bool * string", effects = [ReadsHeap, Raises, Allocates],
+          doc = "GMP power with nonnegative exponent; negative-exponent semantics remain in SML."}]]
 end

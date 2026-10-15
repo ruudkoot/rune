@@ -1,0 +1,167 @@
+{
+  "observed": "2026-10-13",
+  "classification": "packaging configuration error; corrected by generic host triple",
+  "operations": {
+    "native/gmp": {
+      "command": [
+        "tests/out/intinf/m5/cpu-probe/runevm",
+        "--intinf=gmp",
+        "--jit=off",
+        "tests/out/intinf/m5/cpu-probe/operations.rbc"
+      ],
+      "exit": 0,
+      "stdout": "~16\n~2\n63\n1\n~2\n1\n~2\n~15\n~1\n14\n8\n~19327352832\n~1\n",
+      "stderr": ""
+    },
+    "native/sml": {
+      "command": [
+        "tests/out/intinf/m5/cpu-probe/runevm",
+        "--intinf=sml",
+        "--jit=off",
+        "tests/out/intinf/m5/cpu-probe/operations.rbc"
+      ],
+      "exit": 0,
+      "stdout": "~16\n~2\n63\n1\n~2\n1\n~2\n~15\n~1\n14\n8\n~19327352832\n~1\n",
+      "stderr": ""
+    },
+    "qemu64/gmp": {
+      "command": [
+        "qemu-x86_64",
+        "-cpu",
+        "qemu64",
+        "tests/out/intinf/m5/cpu-probe/runevm",
+        "--intinf=gmp",
+        "--jit=off",
+        "tests/out/intinf/m5/cpu-probe/operations.rbc"
+      ],
+      "exit": 0,
+      "stdout": "~16\n~2\n63\n1\n~2\n1\n~2\n~15\n~1\n14\n8\n~2147483648\n~1\n",
+      "stderr": ""
+    },
+    "qemu64/sml": {
+      "command": [
+        "qemu-x86_64",
+        "-cpu",
+        "qemu64",
+        "tests/out/intinf/m5/cpu-probe/runevm",
+        "--intinf=sml",
+        "--jit=off",
+        "tests/out/intinf/m5/cpu-probe/operations.rbc"
+      ],
+      "exit": 0,
+      "stdout": "~16\n~2\n63\n1\n~2\n1\n~2\n~15\n~1\n14\n8\n~19327352832\n~1\n",
+      "stderr": ""
+    },
+    "max/gmp": {
+      "command": [
+        "qemu-x86_64",
+        "-cpu",
+        "max",
+        "tests/out/intinf/m5/cpu-probe/runevm",
+        "--intinf=gmp",
+        "--jit=off",
+        "tests/out/intinf/m5/cpu-probe/operations.rbc"
+      ],
+      "exit": 0,
+      "stdout": "~16\n~2\n63\n1\n~2\n1\n~2\n~15\n~1\n14\n8\n~19327352832\n~1\n",
+      "stderr": ""
+    },
+    "max/sml": {
+      "command": [
+        "qemu-x86_64",
+        "-cpu",
+        "max",
+        "tests/out/intinf/m5/cpu-probe/runevm",
+        "--intinf=sml",
+        "--jit=off",
+        "tests/out/intinf/m5/cpu-probe/operations.rbc"
+      ],
+      "exit": 0,
+      "stdout": "~16\n~2\n63\n1\n~2\n1\n~2\n~15\n~1\n14\n8\n~19327352832\n~1\n",
+      "stderr": ""
+    }
+  },
+  "standalone": {
+    "qemu64": {
+      "command": [
+        "qemu-x86_64",
+        "-cpu",
+        "qemu64",
+        "tests/out/intinf/m5/cpu-probe/shift"
+      ],
+      "exit": -4,
+      "stdout": "",
+      "stderr": "qemu: uncaught target signal 4 (Illegal instruction) - core dumped\n"
+    },
+    "max": {
+      "command": [
+        "qemu-x86_64",
+        "-cpu",
+        "max",
+        "tests/out/intinf/m5/cpu-probe/shift"
+      ],
+      "exit": 0,
+      "stdout": "-19327352832\n",
+      "stderr": ""
+    },
+    "kvm64": {
+      "command": [
+        "qemu-x86_64",
+        "-cpu",
+        "kvm64",
+        "tests/out/intinf/m5/cpu-probe/shift"
+      ],
+      "exit": -4,
+      "stdout": "",
+      "stderr": "qemu: uncaught target signal 4 (Illegal instruction) - core dumped\n"
+    },
+    "phenom": {
+      "command": [
+        "qemu-x86_64",
+        "-cpu",
+        "phenom",
+        "tests/out/intinf/m5/cpu-probe/shift"
+      ],
+      "exit": -4,
+      "stdout": "",
+      "stderr": "qemu: uncaught target signal 4 (Illegal instruction) - core dumped\n"
+    },
+    "Opteron_G1": {
+      "command": [
+        "qemu-x86_64",
+        "-cpu",
+        "Opteron_G1",
+        "tests/out/intinf/m5/cpu-probe/shift"
+      ],
+      "exit": -4,
+      "stdout": "",
+      "stderr": "qemu: uncaught target signal 4 (Illegal instruction) - core dumped\n"
+    },
+    "Conroe": {
+      "command": [
+        "qemu-x86_64",
+        "-cpu",
+        "Conroe",
+        "tests/out/intinf/m5/cpu-probe/shift"
+      ],
+      "exit": -4,
+      "stdout": "",
+      "stderr": "qemu: uncaught target signal 4 (Illegal instruction) - core dumped\n"
+    },
+    "Nehalem": {
+      "command": [
+        "qemu-x86_64",
+        "-cpu",
+        "Nehalem",
+        "tests/out/intinf/m5/cpu-probe/shift"
+      ],
+      "exit": -4,
+      "stdout": "",
+      "stderr": "qemu: uncaught target signal 4 (Illegal instruction) - core dumped\n"
+    }
+  },
+  "old_recipe_sha256": "b995f5929ecb813ef959d35702ec5ea7dedcc34e5b3285ac057a6812cbc247de",
+  "old_vm_sha256": "0456600bb7cf1b5b6227553ca88af457b555d86c0be0179d01ea48f4fc5cc6b7",
+  "old_build_directory": "build/deps/gmp-build/acabc289d148c54f",
+  "instruction_trace_sha256": "cf28b8506f71c00eec531a19758e2903328f2abd8aa30f65e7328aa2265a9415"
+}

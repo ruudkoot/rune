@@ -43,8 +43,8 @@ struct
   (* through the two halves, each of which an int holds *)
   local
     val two32 = IntInf.fromInt 4294967296
-    val two64 = IntInf.* (two32, two32)
-    val two63 = IntInf.div (two64, IntInf.fromInt 2)
+    val two64 = IntInf.<< (IntInf.fromInt 1, 0w64)
+    val two63 = IntInf.<< (IntInf.fromInt 1, 0w63)
   in
     fun toLargeInt (w : word) =
       IntInf.+ (IntInf.* (IntInf.fromInt (toInt (>> (w, 0w32))), two32), IntInf.fromInt (toInt (andb (w, 0wxFFFFFFFF))))

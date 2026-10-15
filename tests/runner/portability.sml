@@ -17,6 +17,10 @@ structure Portability =
 struct
   open Sh
 
+  (* Count comparisons use one arithmetic backend across every engine.
+     tests/intinf checks GMP and forced SML separately. *)
+  fun exec args = execEnv (setEnv ("RUNEVM_INTINF", "sml")) args
+
   (* the VMs of each bytecode: this machine's, and the others' *)
   val families =
     [("stack", "bin/rune-stack", "bin/runevm-stack", ["bin/runevm-stack32", "bin/runevm-stack-ppc64"], "runtime/stack/opcodes.def"),

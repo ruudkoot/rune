@@ -1,0 +1,211 @@
+{
+  "reviewed": "2026-10-11",
+  "implementation_parent": "5e8fb06fb793d6743e412efbbef08fd72d072d14",
+  "arithmetic": {
+    "checks": "pass",
+    "subprocesses": 76,
+    "bytecode_sha256": "7bafcc2de4e7e8a58ea0f4a32248f64e764978d9f6ebe3a05f1b3c0d0178c5e7",
+    "counts": {
+      "gmp": "12311116 instructions, 16653440 bytes, 709683 objects",
+      "sml": "13449131 instructions, 17163952 bytes, 726456 objects",
+      "auto": "13449131 instructions, 17163952 bytes, 726456 objects"
+    },
+    "has_gmp": true,
+    "stress": false
+  },
+  "arithmetic_asan": {
+    "checks": "pass",
+    "subprocesses": 76,
+    "bytecode_sha256": "aca1a49799d8a939aed1ba9f337e3a435c0571ba4ae91a60e73ef8d915759554",
+    "counts": {
+      "gmp": "12311116 instructions, 16653440 bytes, 709683 objects",
+      "sml": "13449131 instructions, 17163952 bytes, 726456 objects",
+      "auto": "13449131 instructions, 17163952 bytes, 726456 objects"
+    },
+    "has_gmp": true,
+    "stress": true
+  },
+  "dependency": {
+    "config": {
+      "prefix": "/home/ruud/rune/.worktrees/gmp/build/deps/gmp/native",
+      "cc": "cc",
+      "cflags": "-O2",
+      "ldflags": "",
+      "host": "",
+      "runner": "",
+      "jobs": 4,
+      "timeout": 1800,
+      "disable_assembly": false,
+      "version": "6.3.0",
+      "sha256": "a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898",
+      "url": "https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz",
+      "linkage": "static",
+      "upstream_tests": "required",
+      "recipe_sha256": "f2e95b4e4703eb004e54c41f10a3708b509827f7eb85ab08c53229d88f86cb9d"
+    },
+    "configured": {
+      "ABI": "64",
+      "CC": "cc",
+      "CFLAGS": "-O2",
+      "CPPFLAGS": "",
+      "GMP_LDFLAGS": "",
+      "build": "haswell-pc-linux-gnu",
+      "host": "haswell-pc-linux-gnu"
+    },
+    "commands": [
+      {
+        "name": "configure",
+        "argv": [
+          "/home/ruud/rune/.worktrees/gmp/build/deps/gmp-build/d345698f323c3a5d/source/gmp-6.3.0/configure",
+          "--prefix=/home/ruud/rune/.worktrees/gmp/build/deps/gmp/native",
+          "--disable-shared",
+          "--enable-static"
+        ],
+        "cwd": "/home/ruud/rune/.worktrees/gmp/build/deps/gmp-build/d345698f323c3a5d"
+      },
+      {
+        "name": "build",
+        "argv": [
+          "make",
+          "-j4"
+        ],
+        "cwd": "/home/ruud/rune/.worktrees/gmp/build/deps/gmp-build/d345698f323c3a5d"
+      },
+      {
+        "name": "check",
+        "argv": [
+          "make",
+          "-j4",
+          "check"
+        ],
+        "cwd": "/home/ruud/rune/.worktrees/gmp/build/deps/gmp-build/d345698f323c3a5d"
+      },
+      {
+        "name": "install",
+        "argv": [
+          "make",
+          "install"
+        ],
+        "cwd": "/home/ruud/rune/.worktrees/gmp/build/deps/gmp-build/d345698f323c3a5d"
+      }
+    ],
+    "build_directory": "/home/ruud/rune/.worktrees/gmp/build/deps/gmp-build/d345698f323c3a5d",
+    "c_compiler": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "library_sha256": "2f1e706ea273db9645c3f11a3187d378b1afadaded6dcf838d799a09b2de94cc",
+    "header_sha256": "8d8fec565bf5f5df188bf23988f3451bcdc601a3c1ba6d29f318b48824541888",
+    "upstream_check": "pass"
+  },
+  "version": "runevm 0.3.0\nGMP headers 6.3.0, library 6.3.0, 64-bit limbs, supported\nGMP target: x86_64-linux-gnu\nGMP provenance: pinned a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898\nGMP build: {\"configured\": {\"ABI\": \"64\", \"CC\": \"cc\", \"CFLAGS\": \"-O2\", \"CPPFLAGS\": \"\", \"GMP_LDFLAGS\": \"\", \"build\": \"haswell-pc-linux-gnu\", \"host\": \"haswell-pc-linux-gnu\"}, \"requested\": {\"cc\": \"cc\", \"cflags\": \"-O2\", \"disable_assembly\": false, \"host\": \"\", \"jobs\": 4, \"ldflags\": \"\", \"linkage\": \"static\", \"prefix\": \"/home/ruud/rune/.worktrees/gmp/build/deps/gmp/native\", \"recipe_sha256\": \"f2e95b4e4703eb004e54c41f10a3708b509827f7eb85ab08c53229d88f86cb9d\", \"runner\": \"\", \"sha256\": \"a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898\", \"timeout\": 1800, \"upstream_tests\": \"required\", \"url\": \"https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz\", \"version\": \"6.3.0\"}}\n",
+  "checks": {
+    "matrix2": {
+      "result": "pass",
+      "log": "tests/out/intinf/m3/matrix2.log",
+      "sha256": "85295cc55f1b3880b4c87f65620e7947095e7a9da78fe364eebcf8bd95b4b35f"
+    },
+    "gmp-asan3": {
+      "result": "pass",
+      "log": "tests/out/intinf/m3/gmp-asan3.log",
+      "sha256": "80cefa8c697a577d3d609585cf84a3eafd52ea1234597dbd2063d9c10eecfb0e"
+    },
+    "stack-asan": {
+      "result": "pass",
+      "log": "tests/out/intinf/m3/stack-asan.log",
+      "sha256": "207aa66d9ef37d6c5fba2dd5ade94c8e9e8519e6e630dd5a108492fef33a7dc6"
+    },
+    "register-asan": {
+      "result": "pass",
+      "log": "tests/out/intinf/m3/register-asan.log",
+      "sha256": "7ea8bd5f0a030b1a096784b2a34b3d8e703482408e1f7b74af397a070a4cc5f6"
+    },
+    "stress": {
+      "result": "pass",
+      "log": "tests/out/intinf/m3/stress.log",
+      "sha256": "c2ac3d01047458779cede268b78f23b61cd975a75cb946bfc2ad3b0dbc885e80"
+    },
+    "heap": {
+      "result": "pass",
+      "log": "tests/out/intinf/m3/heap.log",
+      "sha256": "505e35a04d219418d501153bda0518ceceece616cf2fe064eb3106d23335277c"
+    },
+    "windows": {
+      "result": "pass",
+      "log": "tests/out/intinf/m3/windows.log",
+      "sha256": "a6fcb18f9edccd723203e8e0120f9629b1f6d585d78420518e62062247644edc"
+    },
+    "portability": {
+      "result": "pass",
+      "log": "tests/out/intinf/m3/portability.log",
+      "sha256": "8d011043ee6d800e26009c54540286a235417c7ecca3c94c585bfb491c6fe947"
+    },
+    "check3": {
+      "result": "pass",
+      "log": "tests/out/intinf/m3/check3.log",
+      "sha256": "7f3ef42410a0deef5babbde55ae5d4f7c5d975d0c6b33f04a39aadf4fa35cac0"
+    }
+  },
+  "build_mode_checks": [
+    {
+      "name": "pinned",
+      "exit": 0,
+      "version": "runevm 0.3.0\nGMP headers 6.3.0, library 6.3.0, 64-bit limbs, supported\nGMP target: x86_64-linux-gnu\nGMP provenance: pinned a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898\nGMP build: {\"configured\": {\"ABI\": \"64\", \"CC\": \"cc\", \"CFLAGS\": \"-O2\", \"CPPFLAGS\": \"\", \"GMP_LDFLAGS\": \"\", \"build\": \"haswell-pc-linux-gnu\", \"host\": \"haswell-pc-linux-gnu\"}, \"requested\": {\"cc\": \"cc\", \"cflags\": \"-O2\", \"disable_assembly\": false, \"host\": \"\", \"jobs\": 4, \"ldflags\": \"\", \"linkage\": \"static\", \"prefix\": \"/home/ruud/rune/.worktrees/gmp/build/deps/gmp/native\", \"recipe_sha256\": \"f2e95b4e4703eb004e54c41f10a3708b509827f7eb85ab08c53229d88f86cb9d\", \"runner\": \"\", \"sha256\": \"a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898\", \"timeout\": 1800, \"upstream_tests\": \"required\", \"url\": \"https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz\", \"version\": \"6.3.0\"}}\n",
+      "vm_sha256": "1d73e2f325d08e11c700a0e08f216aa30891517962496039da5c8326383110a1"
+    },
+    {
+      "name": "disabled",
+      "exit": 0,
+      "version": "runevm 0.3.0\nGMP disabled; SML arithmetic\n",
+      "vm_sha256": "ca0f929e7b91a2d359fb44b77c0457502821615be056d2852cbf891269b35e85"
+    },
+    {
+      "name": "pinned-again",
+      "exit": 0,
+      "version": "runevm 0.3.0\nGMP headers 6.3.0, library 6.3.0, 64-bit limbs, supported\nGMP target: x86_64-linux-gnu\nGMP provenance: pinned a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898\nGMP build: {\"configured\": {\"ABI\": \"64\", \"CC\": \"cc\", \"CFLAGS\": \"-O2\", \"CPPFLAGS\": \"\", \"GMP_LDFLAGS\": \"\", \"build\": \"haswell-pc-linux-gnu\", \"host\": \"haswell-pc-linux-gnu\"}, \"requested\": {\"cc\": \"cc\", \"cflags\": \"-O2\", \"disable_assembly\": false, \"host\": \"\", \"jobs\": 4, \"ldflags\": \"\", \"linkage\": \"static\", \"prefix\": \"/home/ruud/rune/.worktrees/gmp/build/deps/gmp/native\", \"recipe_sha256\": \"f2e95b4e4703eb004e54c41f10a3708b509827f7eb85ab08c53229d88f86cb9d\", \"runner\": \"\", \"sha256\": \"a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898\", \"timeout\": 1800, \"upstream_tests\": \"required\", \"url\": \"https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz\", \"version\": \"6.3.0\"}}\n",
+      "vm_sha256": "1d73e2f325d08e11c700a0e08f216aa30891517962496039da5c8326383110a1"
+    },
+    {
+      "name": "automatic-missing",
+      "exit": 0,
+      "version": "runevm 0.3.0\nGMP disabled; SML arithmetic\n",
+      "vm_sha256": "ca0f929e7b91a2d359fb44b77c0457502821615be056d2852cbf891269b35e85"
+    },
+    {
+      "name": "required-missing",
+      "exit": 2
+    }
+  ],
+  "source_hashes": {
+    "runtime/intinf.c": "8c852cbbb2aef040280cf9762ba8aa7f545650bdc599960d6780c78c25604f89",
+    "runtime/intinf.h": "696a56c693cc154c585ff879340bcf0c7d9c40c34d7107eddb58e45837699064",
+    "runtime/main.c": "3673c732a6c06373081da97a425066325d465c2e3f74521c2aebe07b8370a44b",
+    "runtime/image.c": "f132531325e8590882d93cbb4bff56284579cc251db7e07d9a3dd3a65d5867ca",
+    "runtime/native/native.c": "026f1efd26e5d0e120018cb76581fdf4163b8b25827b0c7a596fb38fa4374bb7",
+    "runtime/prims.c": "ac0db9a3b912305eb27c18f91a3edc99d66dfd169541ec057a9a2246b0964e91",
+    "runtime/vm.h": "ae9e7f16b7fabf6f655cf7c28ef3a245894b6d38caa89c6c38b5c7fa6b4fb4c0",
+    "lib/basis/intinf.sml": "ac20a717a0bb2b7c2075eaa4728c0dec17fbff100c05cbcf6de9e1103d51dd83",
+    "src/isa/prims.sml": "a51cd3722895860f30e1aa0670c82307116119fa08597b31c28bb53f66fefadd",
+    "tests/basis/host/rune-prim.sml": "999455bc8140c2ff21d30687b183e0c588f5e4de56a68319d9b8a8ff24320cc7",
+    "scripts/build-gmp.py": "f2e95b4e4703eb004e54c41f10a3708b509827f7eb85ab08c53229d88f86cb9d",
+    "scripts/configure-gmp.py": "61536fb6fb13d69859822f117276057141c7132c03588184ca8759015e904b9e"
+  },
+  "limitations": [
+    "Remote CI has not been run here.",
+    "Cross-platform VM suites in M3 use the GMP-free backend; GMP-enabled cross builds remain M5.",
+    "The entire saved list oracle with ASan and collection every allocation exceeded the 180-second subprocess limit. Full semantic stress uses interval 101; compact cases still collect every allocation."
+  ],
+  "commands": [
+    "make check JOBS=8",
+    "make matrix-quick JOBS=8",
+    "make vm-asan JOBS=4",
+    "python3 tests/intinf/backends.py --vm bin/runevm-asan --stress --out tests/out/intinf/m3/asan-backends3",
+    "sh tests/run-tests.sh -j 8 --vm bin/runevm-stack-asan",
+    "make test-register-asan JOBS=8",
+    "make test-stress JOBS=8",
+    "make test-heap JOBS=8",
+    "make test-windows JOBS=2",
+    "make test-portability JOBS=8"
+  ],
+  "build_environment": {
+    "GMP": "yes",
+    "GMP_PREFIX": "build/deps/gmp/native"
+  }
+}

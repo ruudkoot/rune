@@ -12,6 +12,51 @@ instruction set, the primitives and the command line;
 [architecture.md](architecture.md) is which file of `runtime/` does what.
 [building.md](building.md) covers building the VM, including for Windows.
 
+## IntInf arithmetic
+
+`--intinf=auto|gmp|sml` selects arithmetic in the current VM. The default
+`auto` uses a supported GMP build when present, otherwise the independent
+SML implementation. An explicit unavailable `gmp` request fails at startup.
+`RUNEVM_INTINF` supplies a default for wrappers; the command-line option wins.
+The stack VM and native output use SML. The same register bytecode works in
+both builds; images contain canonical Rune values, never GMP pointers.
+
+`--intinf-max-bits N` sets the finite magnitude budget (default 134217728;
+range 64 through 1073741822). This is an operational limit, not a mathematical
+precision bound. The minimum keeps machine integers within the budget; the
+upper bound keeps binary formatting (including its sign) within a Rune
+string and geometric scanner scratch growth below Array.maxLen.
+Very low limits can reject Basis initialization itself: Word64 constructs
+2^64, which needs 65 magnitude bits. `--intinf-gmp-memory N` separately caps
+tracked live GMP allocations (default 268435456 bytes). Neither option is a
+total-process memory guarantee: Rune's managed heap, GMP's stack temporaries,
+allocator metadata, and system overhead are separate. Both limits remain
+finite, and restoration preserves the stricter saved/invocation value.
+
+SML handles parsing, normalization, small values, exception rules and dispatch.
+The C bindings use documented `mpz` import/export with one-byte words in
+little-endian order, floor division for `div`/`mod`, and truncation for
+`quot`/`rem`. Zero divisors are rejected before entering GMP. Each returning
+primitive clears all its GMP objects; allocation hooks enforce the budget
+and terminate through the runtime-limit path on exhaustion or allocation
+failure. They never return NULL or unwind through `longjmp`. Hooks are
+process-global, installed before any arithmetic object; the current runtime
+has one executing VM and no concurrent native arithmetic. Future embedding
+with other GMP users needs an allocator ownership protocol.
+
+`--intinf-stats` reports selection, limits, GMP calls, cumulative requested
+bytes, peak live requested bytes, and live bytes at exit. `--version` reports
+both header and linked-library versions plus target and build provenance.
+The same packed encoding is used on 32-bit, 64-bit, little-endian and big-endian
+VMs. Each GMP-enabled ABI uses its own checked header and library; deployment
+and relinking records are described in [building.md](building.md#gmp-dependency).
+Image format 14 carries both arithmetic limits and fork policy. Emulated
+fork inherits the requested mode and reporting flag; it does not reapply an
+inherited environment default. A saved world's backend selection comes from
+the restoring VM. Availability and native arithmetic objects are not
+serialized. GMP counters restart when an image is read. Native programs accept
+the same policy options through `RUNEVM_OPTIONS` (an explicit `gmp` request fails there).
+
 ## Values and objects
 
 A `Value` is one 64-bit word, on every machine. Its low bit says what it
