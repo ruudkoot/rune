@@ -1,0 +1,6 @@
+PASS original glyph fixture alphabet 1812
+PASS original glyph fixture digits 346
+PASS original glyph fixture punctuation 316
+PASS original glyph fixture whitespace 171
+PASS original glyph fixture empty 1
+PASS original glyph fixture mixed 1147

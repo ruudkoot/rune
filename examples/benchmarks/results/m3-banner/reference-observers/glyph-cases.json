@@ -1,0 +1,1 @@
+[["alphabet", "ABCDEFGHIJKLMNOPQRSTUVWXYZ\nabcdefghijklmnopqrstuvwxyz\n"], ["digits", "0123456789\n"], ["punctuation", ".?!-+:; /\\\n"], ["whitespace", " \t\r\u000b\f\n"], ["empty", "\n"], ["mixed", "Hello.\nIs this not a great banner?\n"]]

@@ -1,0 +1,50 @@
+{
+  "source_revision": "b7391df4540ac8b11b35e1b2e2c15819b5171798",
+  "ghc": "9.4.7",
+  "profiles": [
+    {
+      "profile": "smoke",
+      "repetitions": 2,
+      "input_bytes": 70,
+      "output_bytes": 2294,
+      "input_sha256": "d6664f2c2e87c84ad56e27e64fdd12679b78dae49202f5d9808109e13982f1f5",
+      "output_sha256": "8cc4ae503066afcc8a9b65116a04fa889a231977b6344b3df012e43e3a113115",
+      "output_hash32": "3478B044",
+      "timeout": 30,
+      "memory_bytes": 1073741824
+    },
+    {
+      "profile": "fast",
+      "repetitions": 3500,
+      "input_bytes": 122500,
+      "output_bytes": 4014500,
+      "input_sha256": "bd51e4d904926eb9b15941daad3a6cbf556ebd5366e29b400076b732425f462c",
+      "output_sha256": "b127cebf5f6400e488da6fa61680cda84027a24a8e1113a5a0634190e25acc1e",
+      "output_hash32": "66EFEF78",
+      "timeout": 600,
+      "memory_bytes": 4294967296
+    },
+    {
+      "profile": "normal",
+      "repetitions": 35000,
+      "input_bytes": 1225000,
+      "output_bytes": 40145000,
+      "input_sha256": "a7cb4f5c2998c64c1d431327a006f2f523923b02bf85eee7a25c3ae67f33c397",
+      "output_sha256": "76126b8298e857e76793240021c3e205d143d922bcd04edb81a05068d31072a7",
+      "output_hash32": "FCB59E30",
+      "timeout": 600,
+      "memory_bytes": 4294967296
+    },
+    {
+      "profile": "large",
+      "repetitions": 180000,
+      "input_bytes": 6300000,
+      "output_bytes": 206460000,
+      "input_sha256": "31af4449b000152da129a81960df8958d541c71162be423f11ece71abaa1cc58",
+      "output_sha256": "7016cb8ce56244d79b07f4f4b7edf880b480174c0e558a8faa2d65633863bfdd",
+      "output_hash32": "8FB9F740",
+      "timeout": 3600,
+      "memory_bytes": 8589934592
+    }
+  ]
+}

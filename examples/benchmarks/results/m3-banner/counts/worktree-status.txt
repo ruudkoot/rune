@@ -1,0 +1,9 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/banner-lazy/
+?? examples/benchmarks/banner-strict/
+?? examples/benchmarks/shared/banner-suspend.sml
+?? examples/benchmarks/shared/nofib-banner.sml
+?? tests/benchmarks/banner.sml
+?? tests/benchmarks/check-banner.sh
+?? tests/benchmarks/data/banner/

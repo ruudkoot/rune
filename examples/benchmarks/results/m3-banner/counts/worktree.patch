@@ -1,0 +1,165 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index b80333c2..d6cf287e 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -240,6 +240,8 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [LU_decomposition](#lu_decomposition) | [Sandmark LU](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-numerical/LU_decomposition.ml) | Factor a deterministic dense real matrix with flat, unpivoted Gaussian elimination. |
+ | [calendar-lazy](#calendar-lazy) | [nofib calendar](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/calendar) | Build Gregorian calendar pictures with memoized sequences and preserve the source length observation. |
+ | [calendar-strict](#calendar-strict) | [nofib calendar](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/calendar) | Build Gregorian calendar pictures with eager sequences and preserve the source length observation. |
++| [banner-lazy](#banner-lazy) | [nofib banner](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/banner) | Render repeated ASCII messages with memoized glyph-picture sequences and exact byte checks. |
++| [banner-strict](#banner-strict) | [nofib banner](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/banner) | Render repeated ASCII messages with eager glyph-picture sequences and exact byte checks. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -8193,3 +8195,137 @@ and the shared nofib/measurement literature survey. No historical timing claim
+ is transferred to this port.
+ 
+ [Complete provenance](calendar-strict/PROVENANCE.md).
++
++## banner-lazy
++
++nofib revision `b7391df4540ac8b11b35e1b2e2c15819b5171798`,
++`spectral/banner/Main.hs`, `boot.sh`, `Makefile` and both templates. Mark P Jones's
++1992 header describes a Basic predecessor and a Hugs version; retain the complete
++explanation, font data and identities. An individual license grant is unstated.
++The font is embedded program data, with no separately acquired dataset. Boot's
++3500/35000/180000 template repetitions and its shootout-setting comment remain
++provenance, without assuming identical implementations elsewhere.
++
++### Algorithm, variants and source fidelity
++
++Preserve ordered letter/digit list indexing, case mapping, punctuation lookup,
++blank/slant/reversed-slant glyphs, ragged transpose, right-fold two-space joining,
++leading blank line and exact output rows. Memoized and eager finite sequences
++share one SML97 functor. The private suspension policy ties the source's cyclic
++infinite empty-row fallback in Need and caches it across requests. That fallback
++is not replaced by a finite blank glyph. Eagerly evaluating the infinite branch
++cannot terminate; every fixed profile uses recognized finite ASCII glyphs.
++
++Glyph/row heads remain delayed in Need. The transpose replacement shares its
++head/tail partition; punctuation search returns its first match directly instead
++of allocating a filtered candidate list. Portable list/string operations replace
++library calls. Explicit memo cells, table construction and suspension policies
++change representation/allocation; no compiler/runtime feature is added. The
++fixed template's ASCII domain preserves the source character classifications.
++
++### Profiles, acquisition and result checks
++
++Smoke repeats the template2times. Normal35000 and large180000 preserve boot's
++NORM/SLOW settings; original FAST3500 is also checked. The exact35-byte input and
++1147-byte output templates are retained. To avoid storing repeated megabyte
++files, profiles identify those templates and the original repetition count.
++SML97 generates the exact logical input stream within measured execution.
++This replaces boot-time file expansion/getContents with template acquisition
++and explicit stream generation: generation work, IO and chunk representation
++are documented measurement adaptations. Expanded input/output SHA256 identities
++are recorded for each profile.
++
++Per-line execution preserves Main's mapM_ putStr ordering and consumes each
++output before moving to the next line. Every output byte is compared against
++the periodically indexed original expected template, then contributes to an
++explicit modulo2^32 fingerprint. Count, ordering and EOF are checked. A profile
++guard requires an ASCII, line-terminated input template, matching the pinned data.
++The largest206,460,000-byte output count fits31 bits. Control is ordinary SML97;
++the driver returns count/hash after validation rather than printing the artwork.
++
++Unchanged GHC, an independent glyph renderer and pinned templates agree. Bounded
++GHC runs check all selected profiles plus original FAST, including40,145,000
++normal and206,460,000 large output bytes. Twelve semantic checks cover full
++alphabets, digits, punctuation, both slashes, whitespace, empty/mixed lines,
++case mapping, variants, knot sharing and the productive lazy unknown-glyph
++newline prefix. A GHC observer independently confirms that infinite prefix.
++Large SML execution is claimed only for recorded cases.
++
++### Runtime questions and references
++
++Shared table memoization, input generation, transpose partition sharing,
++finite-sequence evaluation, per-line retention and byte checking are source-based
++diagnostic hypotheses until established by measurements or IR inspection.
++Compiler comparisons use identical SML; original Haskell supplies correctness
++references. Jones's retained explanation and the [pinned implementation](https://github.com/ghc/nofib/blob/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/banner/Main.hs)
++provide program-specific history. See Partain's suite paper and the shared
++measurement survey. No historical timing claim is transferred to these ports.
++
++[Complete provenance](banner-lazy/PROVENANCE.md).
++
++## banner-strict
++
++nofib revision `b7391df4540ac8b11b35e1b2e2c15819b5171798`,
++`spectral/banner/Main.hs`, `boot.sh`, `Makefile` and both templates. Mark P Jones's
++1992 header describes a Basic predecessor and a Hugs version; retain the complete
++explanation, font data and identities. An individual license grant is unstated.
++The font is embedded program data, with no separately acquired dataset. Boot's
++3500/35000/180000 template repetitions and its shootout-setting comment remain
++provenance, without assuming identical implementations elsewhere.
++
++### Algorithm, variants and source fidelity
++
++Preserve ordered letter/digit list indexing, case mapping, punctuation lookup,
++blank/slant/reversed-slant glyphs, ragged transpose, right-fold two-space joining,
++leading blank line and exact output rows. Memoized and eager finite sequences
++share one SML97 functor. The private suspension policy ties the source's cyclic
++infinite empty-row fallback in Need and caches it across requests. That fallback
++is not replaced by a finite blank glyph. Eagerly evaluating the infinite branch
++cannot terminate; every fixed profile uses recognized finite ASCII glyphs.
++
++Glyph/row heads remain delayed in Need. The transpose replacement shares its
++head/tail partition; punctuation search returns its first match directly instead
++of allocating a filtered candidate list. Portable list/string operations replace
++library calls. Explicit memo cells, table construction and suspension policies
++change representation/allocation; no compiler/runtime feature is added. The
++fixed template's ASCII domain preserves the source character classifications.
++
++### Profiles, acquisition and result checks
++
++Smoke repeats the template2times. Normal35000 and large180000 preserve boot's
++NORM/SLOW settings; original FAST3500 is also checked. The exact35-byte input and
++1147-byte output templates are retained. To avoid storing repeated megabyte
++files, profiles identify those templates and the original repetition count.
++SML97 generates the exact logical input stream within measured execution.
++This replaces boot-time file expansion/getContents with template acquisition
++and explicit stream generation: generation work, IO and chunk representation
++are documented measurement adaptations. Expanded input/output SHA256 identities
++are recorded for each profile.
++
++Per-line execution preserves Main's mapM_ putStr ordering and consumes each
++output before moving to the next line. Every output byte is compared against
++the periodically indexed original expected template, then contributes to an
++explicit modulo2^32 fingerprint. Count, ordering and EOF are checked. A profile
++guard requires an ASCII, line-terminated input template, matching the pinned data.
++The largest206,460,000-byte output count fits31 bits. Control is ordinary SML97;
++the driver returns count/hash after validation rather than printing the artwork.
++
++Unchanged GHC, an independent glyph renderer and pinned templates agree. Bounded
++GHC runs check all selected profiles plus original FAST, including40,145,000
++normal and206,460,000 large output bytes. Twelve semantic checks cover full
++alphabets, digits, punctuation, both slashes, whitespace, empty/mixed lines,
++case mapping, variants, knot sharing and the productive lazy unknown-glyph
++newline prefix. A GHC observer independently confirms that infinite prefix.
++Large SML execution is claimed only for recorded cases.
++
++### Runtime questions and references
++
++Shared table memoization, input generation, transpose partition sharing,
++finite-sequence evaluation, per-line retention and byte checking are source-based
++diagnostic hypotheses until established by measurements or IR inspection.
++Compiler comparisons use identical SML; original Haskell supplies correctness
++references. Jones's retained explanation and the [pinned implementation](https://github.com/ghc/nofib/blob/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/banner/Main.hs)
++provide program-specific history. See Partain's suite paper and the shared
++measurement survey. No historical timing claim is transferred to these ports.
++
++[Complete provenance](banner-strict/PROVENANCE.md).
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index e1dfdecf..15f8db28 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -689,3 +689,9 @@ calendar-lazy	large	nofib	spectral/calendar	1993 50000	calendar-lazy/large.expec
+ calendar-strict	smoke	nofib	spectral/calendar	1993 2	calendar-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-calendar.sml,calendar-strict/benchmark.sml,shared/main.sml	30	1048576	picture-combinators,lists,laziness,sharing,layout,limited-observation	-	exact	implemented
+ calendar-strict	normal	nofib	spectral/calendar	1993 10000	calendar-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-calendar.sml,calendar-strict/benchmark.sml,shared/main.sml	600	4194304	picture-combinators,lists,laziness,sharing,layout,limited-observation	-	exact	implemented
+ calendar-strict	large	nofib	spectral/calendar	1993 50000	calendar-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-calendar.sml,calendar-strict/benchmark.sml,shared/main.sml	3600	8388608	picture-combinators,lists,laziness,sharing,layout,limited-observation	-	exact	implemented
++banner-lazy	smoke	nofib	spectral/banner	2 data/input-template expected/output-template	banner-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/banner-suspend.sml,shared/nofib-banner.sml,banner-lazy/benchmark.sml,shared/main.sml	30	1048576	picture-combinators,lists,laziness,cyclic-data,streaming,characters	data/input-template,expected/output-template	exact	implemented
++banner-lazy	normal	nofib	spectral/banner	35000 data/input-template expected/output-template	banner-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/banner-suspend.sml,shared/nofib-banner.sml,banner-lazy/benchmark.sml,shared/main.sml	600	4194304	picture-combinators,lists,laziness,cyclic-data,streaming,characters	data/input-template,expected/output-template	exact	implemented
++banner-lazy	large	nofib	spectral/banner	180000 data/input-template expected/output-template	banner-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/banner-suspend.sml,shared/nofib-banner.sml,banner-lazy/benchmark.sml,shared/main.sml	3600	8388608	picture-combinators,lists,laziness,cyclic-data,streaming,characters	data/input-template,expected/output-template	exact	implemented
++banner-strict	smoke	nofib	spectral/banner	2 data/input-template expected/output-template	banner-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/banner-suspend.sml,shared/nofib-banner.sml,banner-strict/benchmark.sml,shared/main.sml	30	1048576	picture-combinators,lists,laziness,cyclic-data,streaming,characters	data/input-template,expected/output-template	exact	implemented
++banner-strict	normal	nofib	spectral/banner	35000 data/input-template expected/output-template	banner-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/banner-suspend.sml,shared/nofib-banner.sml,banner-strict/benchmark.sml,shared/main.sml	600	4194304	picture-combinators,lists,laziness,cyclic-data,streaming,characters	data/input-template,expected/output-template	exact	implemented
++banner-strict	large	nofib	spectral/banner	180000 data/input-template expected/output-template	banner-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/banner-suspend.sml,shared/nofib-banner.sml,banner-strict/benchmark.sml,shared/main.sml	3600	8388608	picture-combinators,lists,laziness,cyclic-data,streaming,characters	data/input-template,expected/output-template	exact	implemented

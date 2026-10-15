@@ -7,8 +7,8 @@ relative perturbations and nonfinite values. All four normal count samples pass;
 allocation and applicable instruction comparisons agree.
 
 The kernel preserves flat row-major unpivoted elimination, cached multipliers,
-input copying and separate L/U constructions. Normal256 balances computation
-and validation; large1024 preserves the published run configuration. The driver
+input copying and separate L/U constructions. Normal 256 balances computation
+and validation; large 1,024 preserves the published run configuration. The driver
 streams original-OCaml packed factors and checks packed/L/U values within
 absolute1e-9 plus relative1e-10 of finite references. This replay bound is distinct
 from true forward accuracy. Checking work and generic-array boxing are explicit
@@ -16,8 +16,8 @@ adaptations, with fixed generator/state provenance retained.
 
 Bounded original OCaml observers produce all three selected fixtures. Independent
 60-digit elimination and residual reconstruction validate smoke/normal. Normal
-scaled residual is about1.50e-16, while the maximum packed discrepancy against
-high precision is about7.52e-10. Those reference accuracy findings do not change
+scaled residual is about 1.50e-16, while the maximum packed discrepancy against
+high precision is about 7.52e-10. Those reference accuracy findings do not change
 the runtime replay criterion. Large SML execution is not universally claimed.
 Raw samples retain source/input/tool identities; instrumented times are not
 headline timing results. M5 remains in progress.

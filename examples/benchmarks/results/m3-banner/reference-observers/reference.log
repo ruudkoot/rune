@@ -1,0 +1,4 @@
+PASS original GHC, independent renderer and pinned repeated template smoke 2 70 2294
+PASS original GHC, independent renderer and pinned repeated template fast 3500 122500 4014500
+PASS original GHC, independent renderer and pinned repeated template normal 35000 1225000 40145000
+PASS original GHC, independent renderer and pinned repeated template large 180000 6300000 206460000

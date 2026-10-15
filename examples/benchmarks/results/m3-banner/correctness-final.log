@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-banner.j_zgzq3u
+PASS banner-lazy smoke O0
+PASS banner-lazy smoke O2
+PASS banner-lazy smoke hosts
+PASS banner-lazy normal O0
+PASS banner-lazy normal O2
+PASS banner-lazy normal hosts
+PASS banner-strict smoke O0
+PASS banner-strict smoke O2
+PASS banner-strict smoke hosts
+PASS banner-strict normal O0
+PASS banner-strict normal O2
+PASS banner-strict normal hosts

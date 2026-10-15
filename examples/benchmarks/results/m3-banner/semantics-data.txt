@@ -1,0 +1,12 @@
+alphabet.input
+alphabet.output
+digits.input
+digits.output
+punctuation.input
+punctuation.output
+whitespace.input
+whitespace.output
+empty.input
+empty.output
+mixed.input
+mixed.output

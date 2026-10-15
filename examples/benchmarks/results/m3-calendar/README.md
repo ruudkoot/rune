@@ -10,12 +10,12 @@ observation. Memoized character heads remain unforced during length calculation;
 eager sequences supply a separately named evaluation/allocation variant. Every
 iteration checks2888 and contributes to the validated total. This observation
 has limited discrimination for wrong glyphs, so complete rendered layouts are
-checked separately against GHC and independent Gregorian formatting for11years.
+checked separately against GHC and independent Gregorian formatting for 11 years.
 The source's alternate formatter remains provenance, outside Main's selected cal.
 
-Original normal10000/large50000 year offsets remain unchanged; smoke2 is small.
+Original normal 10,000/large 50,000 year offsets remain unchanged; smoke 2 is small.
 GHC demand observers establish justification/unlines/grouping non-demand. Integer
-arithmetic and largest summed length fit31bits for selected inputs. Input parsing
+arithmetic and largest summed length fit 31 bits for selected inputs. Input parsing
 once per invocation and explicit memo/list representations are documented changes.
 No external dataset is used. Raw samples preserve identities and settings;
 instrumented times are not headline timings. Large SML coverage is not universally

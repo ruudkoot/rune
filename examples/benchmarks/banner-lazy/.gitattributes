@@ -1,0 +1,2 @@
+# Preserve font output row padding.
+expected/output-template -whitespace
