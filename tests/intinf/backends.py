@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import re
 import resource
+import shlex
 import signal
 import subprocess
 
@@ -17,6 +18,7 @@ p.add_argument('--sml-vm', default='bin/runevm-sml')
 p.add_argument('--rune', default='bin/rune')
 p.add_argument('--out', default='tests/out/intinf/backends')
 p.add_argument('--stress', action='store_true')
+p.add_argument('--vm-options', default='', help='collector options applied to both VM builds')
 a = p.parse_args()
 os.chdir(ROOT)
 out = Path(a.out).resolve(); out.mkdir(parents=True,exist_ok=True)
@@ -28,6 +30,8 @@ def run(command):
     global sequence
     sequence += 1
     command = list(map(str,command))
+    if command[0] in [a.vm, a.sml_vm]:
+        command[1:1] = shlex.split(a.vm_options)
     prefix = out/f'{sequence:03d}'
     prefix.with_suffix('.command.json').write_text(json.dumps(command)+'\n')
     def limits():
@@ -174,5 +178,5 @@ for writer_mode,writer in ([('gmp',a.vm)] if has_gmp else []) + [('sml',a.sml_vm
     'bytecode_sha256':hashlib.sha256(bytecode.read_bytes()).hexdigest(),
     'counts':{mode:counts[mode,'off'].decode() for mode,_ in backends},
     'has_gmp':has_gmp,
-    'stress':a.stress},indent=2)+'\n')
+    'stress':a.stress, 'vm_options':a.vm_options},indent=2)+'\n')
 print(f'IntInf backends: {sequence} bounded subprocesses pass')

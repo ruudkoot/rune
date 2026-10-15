@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+from runtime_inputs import executable_path
 
 ROOT=Path(__file__).resolve().parents[1]
 sha=lambda p:hashlib.sha256(Path(p).read_bytes()).hexdigest()
@@ -20,11 +21,12 @@ p.add_argument('--build-info',default=str(ROOT/'build/gmp/native-build.json'))
 p.add_argument('--out',required=True)
 a=p.parse_args()
 record=json.loads(Path(a.build_info).read_text())
-require(sha(a.vm)==record['vm_sha256'],'VM differs from its build record; rebuild before installing')
+vm=executable_path(a.vm)
+require(sha(vm)==record['vm_sha256'],'VM differs from its build record; rebuild before installing')
 for name,digest in record['source_hashes'].items():
     require(sha(ROOT/name)==digest, f'runtime source differs from its build record: {name}')
 config=record['configuration']
-version=subprocess.check_output([str(Path(a.vm).resolve()),'--version'],text=True)
+version=subprocess.check_output([str(vm.resolve()),'--version'],text=True)
 require(('GMP headers ' in version)==config['enabled'],'VM and dependency configuration disagree')
 if config['enabled']:
     expected=f"GMP headers {config['header_version']}, library {config['library_version']}, {config['limb_bits']}-bit limbs, supported\n"

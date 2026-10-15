@@ -5,7 +5,7 @@ import hashlib
 import json
 from pathlib import Path
 import shlex
-from runtime_inputs import runtime_inputs
+from runtime_inputs import executable_path, runtime_inputs
 
 p = argparse.ArgumentParser()
 p.add_argument('--vm',required=True)
@@ -22,7 +22,7 @@ config=Path(a.config)
 configuration=json.loads((config/'config.json').read_text())
 inputs=runtime_inputs(shlex.split(a.cc),shlex.split(a.cflags),configuration['cppflags'],
                       config/'config.h',a.sources,a.headers)
-record={'vm_sha256':sha(a.vm),'configuration':configuration,
+record={'vm_file':str(executable_path(a.vm)), 'vm_sha256':sha(executable_path(a.vm)),'configuration':configuration,
         'cc':shlex.split(a.cc),'cflags':shlex.split(a.cflags),'ldlibs':shlex.split(a.ldlibs),
         'sources':a.sources,'headers':a.headers,
         'source_hashes':{f:sha(f) for f in inputs}}

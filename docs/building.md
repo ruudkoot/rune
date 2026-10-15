@@ -510,6 +510,9 @@ retain their known configuration and explicitly unknown source/build options.
 GMP-free installs do not bundle a GMP library or source archive. This material
 is removed with the rest of the installation by `--uninstall`.
 
+On native MSYS2 builds, the provenance recorder and package builder resolve
+the `.exe` file produced for a make target named without that suffix.
+
 The installer verifies that the VM, runtime source and dependency artifacts
 match their build records before packaging them; build again if they differ.
 Staged installation, relocation to a path containing spaces, native output,

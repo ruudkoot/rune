@@ -86,7 +86,7 @@ for name,original in record['compiler_workloads'].items():
             target.unlink(missing_ok=True)
             command = [str(directory/'bin/runevm'),*(shlex.split(args.vm_options if side == 'current' else args.baseline_options)),'--heap-size','67108864',
                        str(directory/'bin/rune.rbc'),'--lib','lib','--target=registers',
-                       '-o',str(target),*original['inputs']]
+                       '-o',str(target),*(current['compiler_workloads'][name]['inputs'] if side == 'current' and current else original['inputs'])]
             def limits():
                 resource.setrlimit(resource.RLIMIT_CORE,(0,0))
                 resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3))
@@ -120,7 +120,8 @@ for name,original in record['compiler_workloads'].items():
         'median_cpu_ratio':statistics.median(c/b for c,b in zip(cpu_measurements['current'],cpu_measurements['baseline'])),
         'median_ratio':statistics.median(ratios), 'output_hashes':expected,
         'baseline_median':statistics.median(measurements['baseline']),
-        'current_median':statistics.median(measurements['current'])}
+        'current_median':statistics.median(measurements['current']),
+        'inputs':{'baseline':original['inputs'],'current':current['compiler_workloads'][name]['inputs'] if current else original['inputs']}}
     print(name, report['workloads'][name]['median_ratio'],flush=True)
     report['load_end'] = os.getloadavg()
     (out/'report.json').write_text(json.dumps(report,indent=2)+'\n')

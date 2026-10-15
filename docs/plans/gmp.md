@@ -11,6 +11,8 @@ The owner approved the design below, including runtime backend selection,
 representation changes, finite default limits, and pinned GMP release builds.
 The original design was recorded before implementation. The status table and
 dated evidence below distinguish that plan from completed work and measurements.
+The original M1-M5 records retain their pre-rebase source and binary hashes;
+post-rebase validation is recorded separately at the end.
 
 ## Status and requirements
 
@@ -20,8 +22,8 @@ dated evidence below distinguish that plan from completed work and measurements.
 | M1: establish correctness and performance baselines | M0 | done 2026-10-06; fixed corpus and baseline below |
 | M2: replace the SML representation and kernels | M1 | done 2026-10-08; implementation and acceptance evidence below |
 | M3: add GMP behind the shared interface | M2 | done 2026-10-11; integration and acceptance evidence below |
-| M4: harden runtime integration and tune dispatch | M3 | done 2026-10-12; hardening, performance and acceptance evidence below |
-| M5: complete portability and release validation | M4 | done 2026-10-14; local release acceptance below; remote CI not run |
+| M4: harden runtime integration and tune dispatch | M3 | implementation done 2026-10-12; expanded performance acceptance reopened 2026-10-15, below |
+| M5: complete portability and release validation | M4 | local checks done 2026-10-14 and repeated after rebase; release acceptance awaits performance follow-up and remote CI |
 
 Each completed milestone is committed separately, with its commands, results,
 limitations, and comparison to the preceding milestone recorded here. A failed
@@ -1051,3 +1053,221 @@ limitations remain documented, and emulated architecture/CPU checks establish
 functional coverage rather than native performance. Remote CI and external
 publication have not run from this worktree and remain outstanding for a
 release or pull request. The unrelated collector draft is unchanged by this work.
+
+
+## Rebase onto origin/master
+
+The implementation was first rebased onto `aeb6779788406ff25d7eebdff57f6b69c820712d`.
+Its full check passed, but the host matrix found the existing upstream
+`SysWord` literal-overloading issue. While validation ran, upstream supplied
+the transparent host sealing fix and MLKit 4.7.25 integration. The branch and
+comparison checkout were then advanced to
+`3220230c1e026d9feb5af43f55c49e7917dd71fa`; the initial failure remains retained.
+The original roadmap commit was already upstream. The pre-rebase branch is
+retained as `gmp-before-master-rebase-20261014`; its sources and measured
+binaries are also archived locally for paired comparisons.
+
+This integrates the newer collector, debugger, test runner and MSYS2 build
+support. `RuneBytes` now loads early through `lib/basis/library.build`;
+`MANIFEST` is generated. Primitive tables and Basis documentation are
+regenerated from the merged sources. Image format **14** combines upstream's
+image changes with arithmetic limits and fork policy. Differential count
+checks force SML even when the test runner is invoked directly; dedicated
+IntInf tests exercise GMP separately.
+
+The native UCRT64 build exposed a packaging bug: MinGW produced `runevm.exe`
+while the provenance script tried to read `runevm`. The recorder and package
+builder now resolve the executable suffix. Native MSYS2 bootstrap reproduces
+both bytecode formats; both backends, a physical GMP-free build and the
+relinked runtime pass the independent corpus. This uses a checked system GMP
+installation and does not claim pinned-package provenance. The existing
+upstream limitation of launching `/bin/sh` jobs from the native Windows test
+runner remains; these checks run directly.
+
+### Rebased validation, 2026-10-15
+
+[The acceptance record](../../tests/intinf/gmp-rebase.json) indexes commands,
+versions, source and binary hashes, failures and reruns. Raw evidence is under
+`tests/out/intinf/rebase/final`. All required local correctness checks pass:
+
+* `make check JOBS=4`: **14,336 passes and two existing native-interrupt skips**,
+  including bootstrap, heap checks, generated documentation, ISA checks and
+  engine equivalence. The report contains 14,338 test entries; skips are not
+  counted as passes here.
+* `make matrix-quick JOBS=4`: Rune and all six host configurations have no
+  unexplained failures. Existing explained deviations remain, including the
+  MLKit POSIX limitations. MLKit 4.7.25 was selected explicitly for this run.
+* ASan/UBSan arithmetic, malformed-argument and allocation-failure tests;
+  stack, register, both JIT tiers and native sanitizer suites; general stress;
+  and GMP backend tests under both collectors pass. The low-pause check uses
+  a 4 KiB nursery, cyclic stress and heap verification; the throughput check
+  disables the nursery and verifies collections.
+* `make test-windows JOBS=2`: all four VMs, supported JIT tiers, runtime and
+  Basis cases, layout and image checks, terminal, debugger and kernel checks
+  pass. Native MSYS2 checks described above pass separately.
+* `make test-portability JOBS=4`: **3,478 passes**, including width, byte order,
+  supported JIT tiers, counts and image transfers. The dedicated arithmetic
+  cross-build suite passes **557 bounded subprocesses and 216 image
+  combinations**. Dependency regression probes pass on all six targets;
+  twelve x86 CPU-family/JIT combinations pass under emulation.
+* GMP-enabled and GMP-free installation, relocation, native output, source
+  relinking and removal pass. Restoring the enabled build reproduces its
+  previously measured VM hash.
+
+Remote CI and publication remain unrun. Emulated checks establish functional
+portability, not native hardware performance. Native MSYS2 uses the installed
+checked system GMP; pinned cross packages have separate evidence.
+
+### Rebased performance review
+
+[The performance record](../../tests/intinf/gmp-rebase-performance.json) retains
+all individual results and paired samples. Historical speedups above remain
+evidence of the earlier runtime. These measurements compare with the same
+upstream revision, the preserved pre-rebase branch, and experimental constant
+backend selection. Workloads retain their operands and iteration counts;
+measurements run sequentially with CPU affinity. Initial flags are retained
+alongside 100-pair repeats.
+
+The fixed suites still exceed both large-arithmetic targets: SML is **9.85×**
+faster than the saved list implementation on the multiplication/division
+geometric mean, and GMP is **5.72×** faster than the new SML fallback on the
+large-arithmetic geometric mean. The fixed small-integer suite improves over
+upstream, and neither backend has a reproducible compiler regression above
+5% against the same upstream revision:
+
+| Compiler workload | GMP / upstream time | SML / upstream time |
+|---|---:|---:|
+| compile-hello | 1.0160 (pooled; repeat 1.0140) | 1.0240 |
+| compile-sigs | 0.9846 | 1.0056 |
+| bootstrap | 0.9977 | 1.0153 |
+
+Ratios above one mean slower. The initial GMP hello ratio was 1.0716; the
+100-pair repeat and pooled median both pass the 1.05 gate. Direct selection
+between GMP and SML in the same VM and bytecode also passes that gate: ratios
+are 0.9719/0.9939 for small addition/multiplication and
+0.9887/0.9965/1.0132 for hello/signatures/bootstrap.
+
+There are nevertheless real regressions. On the fixed suite, forced SML's
+4096-bit bit operations are **15.0% slower** and factorial-300 **24.3% slower**
+than upstream in 100-pair repeats (pooled medians: 16.6% and 23.7%). GMP improves
+those two workloads. The broader operand-shape sweep also finds losses with
+GMP, especially around the small/large boundary. Its initial run used different
+library path spellings; every case with a ratio above 1.05 was rebuilt with
+`--lib lib` on both sides and repeated for 100 pairs. Those corrected repeats,
+not a pool with the initial builds, determine the boundary findings below.
+
+| Operation and operand bits | GMP / upstream time | SML / upstream time |
+|---|---:|---:|
+| add 63/63 | 3.202 | 3.950 |
+| add 128/128 | 3.638 | 4.827 |
+| add 512/512 | 1.666 | 2.353 |
+| add 4096/4096 | 0.869 | 1.624 |
+| mul 31/33 | 1.943 | 2.339 |
+| mul 63/63 | 1.263 | 1.754 |
+| mul 128/128 | 0.829 | 1.335 |
+| div 128/256 | 3.016 | 4.165 |
+| bits 63/63 | 1.698 | 2.629 |
+| bits 128/128 | 2.196 | 3.256 |
+| bits 512/512 | 0.988 | 1.551 |
+| bits 4096/4096 | 0.492 | 1.111 |
+
+The 128/256-bit division case returns a zero quotient. Its timed loop includes
+large/small operand preparation and the early return; it does not exercise
+normalized long division. The fixed 18/12-bit small-add and small-multiply
+workloads remain faster than upstream. The boundary regressions were missing
+from those two acceptance workloads, which is why the expanded cases matter.
+
+For the 128-bit addition workload, GMP executes 31.1 million VM instructions
+and allocates 9.7 MB in Rune's heap, compared with upstream's 11.0 million
+instructions and 16.7 MB. SML executes 59.5 million instructions and allocates
+27.6 MB. These counters exclude GMP's native allocations and work inside C;
+they show that reduced Rune heap allocation alone does not guarantee speed.
+
+The pre-rebase comparison answers a different question. It includes the new
+collector, compiler and other upstream changes. GMP's 1024-bit division,
+4096-bit bit operations and power workload repeat at roughly 5.1%, 5.9% and
+5.1% slower than the preserved runtime. Their cause has not been isolated.
+Compiler hello is about 31% slower and bootstrap about 48% slower for both
+backends in that comparison; each revision compiles its own input library
+and compiler sources, and the compiler has grown. Those figures must not be
+attributed to IntInf. The same-upstream comparisons above control for that
+growth. An initial 22.8% SML unbalanced-division flag falls to 2.2% on repeat;
+it is not a reproducible 5% regression.
+
+### Costs of the shared design
+
+The constant-selection experiment keeps packed values, normalization, limits
+and GMP import/export. Both specialized copies pass the independent 1,154
+current and 1,154 oracle checks, and disassembly confirms that capability
+queries disappear. Compiler controls compile the same normal input library
+and reproduce its output hashes. They retain the cost of parsing fallback
+definitions; they do not measure persistent GMP objects.
+
+Two boundary controls use the same source and normalized paths as the
+corrected sweep, with 100 pairs each. Normal GMP selection divided by
+constant-GMP time is **0.9943** for add-128/128 and **0.9663** for mul-31/33.
+Removing runtime selection and unused fallback code therefore does not fix
+either large regression. Both copies still use the shared representation
+and arithmetic paths.
+
+On the fixed arithmetic suite, normal GMP selection takes **6.5% longer**
+than constant-GMP selection for div-1024 in the 100-pair repeat. Other initial
+slowdown flags fall below 5% on repeat. Conversely, normal small-add is
+about **10.3% faster** than the constant-GMP copy. All compiler controls are
+within 5% after repeating the initial SML hello flag (repeat 1.0102, pooled
+1.0021). The full record includes improvements as well as slowdowns.
+
+Small arithmetic avoids capability queries on its hot path. For example,
+normal and GMP-specialized small-add runs differ by only nine instructions
+and one startup allocation, despite different code sizes and timings.
+Changing selection also changes code layout, so the measured timing
+difference cannot all be charged to the predicate. Removing the unused
+backend shrinks the compiler bytecode by about 0.49% for GMP specialization
+and 0.084% for SML specialization.
+
+The bounded machine-`Int` control runs small addition **3.34×** and
+multiplication **3.79×** faster than current IntInf. These workloads allocate
+about 72 MB/4.5 million objects and 48 MB/3 million objects with IntInf,
+respectively; the corresponding Int workloads allocate only about 2.7 KiB.
+This measures remaining representation and checking costs on operands that
+fit `Int`; it is neither an IntInf regression nor an equivalent arbitrary
+precision implementation.
+
+The final-package conversion experiment measures complete import/copy-through-
+power-one/export and result allocation, not isolated import latency:
+
+| Magnitude bits | GMP roundtrip microseconds | Storage roundtrip microseconds |
+|---|---:|---:|
+| 64 | 0.229 | 0.098 |
+| 4096 | 4.151 | 2.123 |
+| 16384 | 15.547 | 8.294 |
+
+Nontrivial GMP calls in this design import operands and export results;
+their exact costs depend on the operation and its sizes. SML instead unpacks
+immutable bytes into scratch limbs and repacks the result. The old list
+implementation operated directly on stored limbs without those conversions.
+Normalization can also raise and catch an internal machine overflow
+for values just outside the small range. These source observations identify
+work to investigate; the timings do not separately assign a percentage to
+each cost. The dispatch workloads include operand perturbations using small
+additions, so their names do not describe isolated primitive latency.
+
+### Performance acceptance still open
+
+The fixed M1 performance gates pass, but the expanded small-arithmetic
+no-regression goal is not met. M4 performance acceptance is therefore open
+again; the successful M5 correctness evidence remains valid. Keeping an SML
+fallback is not by itself an explanation for the losses: both modes share
+the packed representation, and constant-selection controls retain its costs.
+
+The next performance work depends on this recorded baseline. Deliverables
+are improvements to boundary arithmetic and SML bitwise/factorial paths,
+with individual timing and allocation comparisons. Candidate work includes
+avoiding exception-driven normalization, specialized large/small arithmetic,
+and reducing repeated unpacking or import/export where the ownership contract
+allows it. Completion requires the original fixed suites plus the expanded
+boundary cases to meet the unchanged 5% regression threshold, while semantic,
+image, budget and engine-equivalence checks continue to pass. Retain the
+fallback and shared immutable values; a different persistent native
+representation needs a separate design and measurement, not an inference
+from these controls.

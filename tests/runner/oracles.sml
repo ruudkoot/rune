@@ -39,6 +39,10 @@ structure Oracles =
 struct
   open Sh
 
+  (* Count comparisons use one arithmetic backend across every engine.
+     tests/intinf checks GMP and forced SML separately. *)
+  fun exec args = execEnv (setEnv ("RUNEVM_INTINF", "sml")) args
+
   val langPerf = glob ("tests/lang", ".sml") @ glob ("tests/perf", ".sml")
   fun base src = String.substring (src, 0, size src - 4)
   fun name src = basename src

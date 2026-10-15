@@ -19,7 +19,7 @@ structure IntInf : INT_INF  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`IntInf`](../str/IntInf.md) | IntInf: arbitrary precision integers implemented in SML on top of the VM's int (63 bits). A value is a sign and a little-endian list of base-2^30 limbs without high zero limbs; zero is never negative. The representation is therefore canonical and structural equality is value equality. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
+| [`IntInf`](../str/IntInf.md) | IntInf: canonical small integers or signed immutable packed magnitudes. The bytes are little endian, independent of the arithmetic workspace's limb width. Arrays below are private scratch and never escape in a value. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
 
 Integers of arbitrary precision: everything [`INTEGER`](../sig/INTEGER.md) has, and the
 operations that make sense only, or mostly, without a bound.
@@ -30,9 +30,17 @@ conversions to a bounded type. The bit operations treat an integer as an
 infinite string of bits in two's complement, so that a negative number has
 infinitely many leading ones and `notb i` is `~(i + 1)`.
 
-> **Implementation** `IntInf.int/limbs`. A sign and a list of digits in base
-> 2^30, written in SML on top of [`int`](../sig/INTEGER.md#type-int); equal numbers are equal
-> values, so `=` compares them. [`LargeInt`](../str/IntInf.md) is [`IntInf`](../str/IntInf.md).
+> **Implementation** `IntInf.int/limbs`. A small machine integer or a sign
+> and immutable little-endian magnitude bytes. The register VM optionally
+> uses GMP through temporary native objects; the independent SML backend
+> uses indexed 30-bit scratch digits (15-bit on narrow hosts). Storage
+> primitives pack and unpack the bytes. Normalization gives equal numbers
+> equal values, so `=` compares them. [`LargeInt`](../str/IntInf.md) is [`IntInf`](../str/IntInf.md). Both backends
+> enforce a finite operational magnitude budget (134217728 bits by default),
+> with a runtime-limit failure rather than [`Overflow`](../sig/GENERAL.md#exn-overflow) when it is exceeded.
+> The budget is configurable and does not change `precision = NONE`.
+> Unit divisors and clearly smaller dividends use direct SML results;
+> large right shifts in the fallback use indexed arithmetic digits.
 
 > **Implementation** `INT_INF/constants`. An integer constant may have the type
 > [`IntInf.int`](../sig/INTEGER.md#type-int), and then be of any size, and the overloaded operators work

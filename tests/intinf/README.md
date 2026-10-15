@@ -108,3 +108,42 @@ arithmetic and compiler samples, direct same-bytecode backend comparisons,
 flagged/repeated measurements and final-package conversion costs. Raw local
 transcripts are under `tests/out/intinf/m5`. Initial host-matrix and Windows
 failures remain recorded alongside successful reruns; remote CI is unrun.
+
+
+`compare-design.py --run DIR --out FRESH_DIR` compares the measured normal
+bytecodes with experimental copies of the same Basis whose backend predicate
+is constant true or false. The exact-answer corpus must pass first, and
+disassembly must show that the capability queries disappeared. It records
+paired timings, allocation counts, bytecode sizes and compiler output hashes.
+Compiler controls compile the same normal input library, preserving output
+hashes; they do not remove the cost of parsing fallback definitions in that
+library. It preserves logical library source paths and retains the packed representation,
+limits and GMP import/export. These copies are not deployable backends; the
+experiment does not measure a persistent-GMP representation. Its small-`Int`
+control uses only the fixed operands that fit a machine integer.
+
+After the rebase, `run.py` reads compiler sources from `rune.build`, with a
+`sources.txt` fallback for older baselines. Compiler comparisons record each
+revision's own source list. Comparing with the same upstream compiler isolates
+the IntInf change; comparing an older compiler also includes upstream growth.
+`backends.py --vm-options OPTIONS` applies collector verification options to
+both VM builds, keeping those checks distinct from arithmetic timings.
+
+`dispatch.py --baseline-root DIR` compares the operand-shape sweep with that
+revision's compiler and VM. Both compilers use `--lib lib` to keep logical
+source paths consistent. `--workload OP-BITS-OTHER` selects a case for a repeat;
+it does not change its inputs or iteration count. Reports retain raw samples,
+source and bytecode hashes, and ratios to the baseline. Names describe the
+main operation, but the timed loop also perturbs operands with small additions.
+
+The rebase onto upstream `3220230c` is indexed by
+[gmp-rebase.json](gmp-rebase.json) and
+[gmp-rebase-performance.json](gmp-rebase-performance.json). The latter includes
+same-upstream and pre-rebase comparisons, independent-list and backend pairs,
+constant-selection and bounded machine-`Int` controls, conversion costs and
+the expanded boundary sweep. Initial flags and their repeats are retained;
+the initial boundary run's differing library path spellings are documented,
+and corrected repeats are not pooled with it. Raw evidence is under
+`tests/out/intinf/rebase/final`. Correctness validation passes; medium-size
+arithmetic and SML bitwise/factorial performance regressions remain open in
+the [roadmap](../../docs/plans/gmp.md#performance-acceptance-still-open).

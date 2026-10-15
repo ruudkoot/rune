@@ -19,7 +19,8 @@ p.add_argument('--current-run',required=True)
 p.add_argument('--vm',default='bin/runevm')
 p.add_argument('--vm-options',default='--intinf=gmp')
 p.add_argument('--baseline-options',default='')
-p.add_argument('--group',default='small')
+p.add_argument('--group',default='small',help='workload group, or all')
+p.add_argument('--workload',action='append')
 p.add_argument('--samples',type=int,default=25)
 p.add_argument('--out',required=True)
 a=p.parse_args();os.chdir(ROOT)
@@ -34,7 +35,8 @@ report={'samples':a.samples,'warmup_pairs':2,'affinity':sorted(os.sched_getaffin
         'baseline_record_sha256':sha(base/'report.json'),'current_record_sha256':sha(current/'report.json'),
         'baseline_options':a.baseline_options,'vm_sha256':sha(a.vm),'baseline_vm_sha256':sha(a.baseline_vm),'vm_options':a.vm_options,'workloads':{}}
 for name,entry in b['workloads'].items():
-    if entry['group']!=a.group:continue
+    if a.group!='all' and entry['group']!=a.group:continue
+    if a.workload and name not in a.workload:continue
     assert entry['source_sha256']==c['workloads'][name]['source_sha256']
     measurements={'baseline':[],'current':[]}
     for i in range(a.samples+2):

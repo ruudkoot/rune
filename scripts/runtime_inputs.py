@@ -16,3 +16,13 @@ def runtime_inputs(cc, flags, cppflags, config_header, sources, headers):
         if path.is_relative_to(runtime):
             files.add(str(path.relative_to(root)))
     return sorted(files)
+
+
+def executable_path(name):
+    """Find the file MinGW produced for a make target named without .exe."""
+    path = Path(name)
+    if not path.is_file() and path.suffix.lower() != '.exe':
+        candidate = Path(str(path) + '.exe')
+        if candidate.is_file():
+            return candidate
+    return path

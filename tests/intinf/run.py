@@ -175,6 +175,8 @@ def main():
                ROOT/'lib/basis/intinf.sml',ROOT/'lib/basis/MANIFEST',ROOT/'Makefile',
                ROOT/'runtime/prims.c',ROOT/'runtime/value.h',ROOT/'runtime/vm.h',
                ROOT/'runtime/image.c',ROOT/'src/isa/prims.sml',ROOT/'tests/basis/host/rune-prim.sml']
+    if (ROOT/'lib/basis/library.build').exists():
+        sources.extend([ROOT/'lib/basis/library.build',ROOT/'rune.build'])
     if (ROOT/'runtime/intinf.c').exists():
         sources.extend([ROOT/'runtime/intinf.c'])
     report['source_hashes'] = {str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
@@ -246,7 +248,10 @@ def main():
         (out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
         print(w['name'], report['workloads'][w['name']]['median_seconds'], flush=True)
     if args.compiler_workloads:
-        sources = [line for line in (ROOT/'sources.txt').read_text().splitlines() if line and not line.startswith('#')]
+        if (ROOT/'rune.build').exists():
+            sources = subprocess.check_output(['sh','scripts/build-files.sh','rune.build'],text=True).splitlines()
+        else:
+            sources = [line for line in (ROOT/'sources.txt').read_text().splitlines() if line and not line.startswith('#')]
         for name, inputs in [('compile-hello',['examples/hello.sml']),
                              ('compile-sigs',['tests/perf/compile-sigs.sml']),
                              ('bootstrap',['build/config.sml',*sources,'src/main/rune-main.sml'])]:
