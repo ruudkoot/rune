@@ -1,0 +1,170 @@
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 256:checked
+PASS LU_decomposition
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-random.sml]
+[autoloading]
+[autoloading done]
+structure BenchOCamlRandom : sig
+  type state = {index:int ref, words:Word32.word array}
+  val defaultWords : Word32.word vector
+  val seed42Words : Word32.word vector
+  val seed512Words : Word32.word vector
+  val make : Word32.word vector -> state
+  val default : unit -> state
+  val seed42 : unit -> state
+  val seed512 : unit -> state
+  val bits : state -> int
+  val integer : state -> int -> int
+  val real : state -> real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-lu.sml]
+structure BenchSandmarkLU : sig
+  val for : int -> int -> (int -> 'a) -> unit
+  val get : int -> 'a array -> int -> int -> 'a
+  val set : int -> 'a array -> int -> int -> 'a -> unit
+  val create : int -> (int -> int -> 'a) -> 'a array
+  val lup : int -> real array -> real array
+  val split : int -> real array -> real array * real array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/LU_decomposition/benchmark.sml]
+[autoloading]
+[autoloading done]
+structure Benchmark : sig
+  structure K : <sig>
+  val name : string
+  val close : real -> real -> bool
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 256:checked
+PASS LU_decomposition
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-random.sml]
+[autoloading]
+[autoloading done]
+structure BenchOCamlRandom : sig
+  type state = {index:int ref, words:Word32.word array}
+  val defaultWords : Word32.word vector
+  val seed42Words : Word32.word vector
+  val seed512Words : Word32.word vector
+  val make : Word32.word vector -> state
+  val default : unit -> state
+  val seed42 : unit -> state
+  val seed512 : unit -> state
+  val bits : state -> int
+  val integer : state -> int -> int
+  val real : state -> real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-lu.sml]
+structure BenchSandmarkLU : sig
+  val for : int -> int -> (int -> 'a) -> unit
+  val get : int -> 'a array -> int -> int -> 'a
+  val set : int -> 'a array -> int -> int -> 'a -> unit
+  val create : int -> (int -> int -> 'a) -> 'a array
+  val lup : int -> real array -> real array
+  val split : int -> real array -> real array * real array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/LU_decomposition/benchmark.sml]
+[autoloading]
+[autoloading done]
+structure Benchmark : sig
+  structure K : <sig>
+  val name : string
+  val close : real -> real -> bool
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 256:checked
+PASS LU_decomposition
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-random.sml]
+structure BenchOCamlRandom : 
+  sig
+    type state = {index:int ref, words:Word32.word array}
+    val defaultWords : Word32.word vector
+    val seed42Words : Word32.word vector
+    val seed512Words : Word32.word vector
+    val make : Word32.word vector -> state
+    val default : unit -> state
+    val seed42 : unit -> state
+    val seed512 : unit -> state
+    val bits : state -> int
+    val integer : state -> int -> int
+    val real : state -> real -> real
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-lu.sml]
+structure BenchSandmarkLU : 
+  sig
+    val for : int -> int -> (int -> 'a) -> unit
+    val get : int -> 'a array -> int -> int -> 'a
+    val set : int -> 'a array -> int -> int -> 'a -> unit
+    val create : int -> (int -> int -> 'a) -> 'a array
+    val lup : int -> real array -> real array
+    val split : int -> real array -> real array * real array
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/LU_decomposition/benchmark.sml]
+structure Benchmark : 
+  sig
+    structure K : <sig>
+    val name : string
+    val close : real -> real -> bool
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 256:checked
+PASS LU_decomposition
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 256:checked
+PASS LU_decomposition
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 256:checked
+PASS LU_decomposition
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

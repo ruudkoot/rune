@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+LU_decomposition	normal	rune	O2	compile	0	0	pass	1.24	1.21	0.06	135256	-	-	-	LU_decomposition/rune/build/compile
+LU_decomposition	normal	rune	O2	correctness	0	0	pass	1.99	2.01	0.02	41512	422116283	499721024	9534450	LU_decomposition/rune/correctness.0
+LU_decomposition	normal	rune	O2	count	1	1	pass	2.21	2.23	0.03	41684	422116283	499721024	9534450	LU_decomposition/rune/fresh.1
+LU_decomposition	normal	rune:opt	O2	compile	0	0	pass	1.77	1.71	0.10	135260	-	-	-	LU_decomposition/rune-opt/build/compile
+LU_decomposition	normal	rune:opt	O2	native-compile	0	0	pass	0.38	0.18	0.06	12420	-	-	-	LU_decomposition/rune-opt/build/native-compile
+LU_decomposition	normal	rune:opt	O2	correctness	0	0	pass	0.88	0.87	0.02	42180	422116283	499721024	9534450	LU_decomposition/rune-opt/correctness.0
+LU_decomposition	normal	rune:opt	O2	count	1	1	pass	0.87	0.85	0.03	42204	422116283	499721024	9534450	LU_decomposition/rune-opt/fresh.1
+LU_decomposition	normal	rune:new	O2	compile	0	0	pass	1.66	1.60	0.09	135112	-	-	-	LU_decomposition/rune-new/build/compile
+LU_decomposition	normal	rune:new	O2	correctness	0	0	pass	1.98	1.97	0.05	48056	276422527	499721024	9534450	LU_decomposition/rune-new/correctness.0
+LU_decomposition	normal	rune:new	O2	count	1	1	pass	1.99	1.99	0.04	48036	276422527	499721024	9534450	LU_decomposition/rune-new/fresh.1
+LU_decomposition	normal	rune:jit	O2	compile	0	0	pass	1.69	1.65	0.08	135224	-	-	-	LU_decomposition/rune-jit/build/compile
+LU_decomposition	normal	rune:jit	O2	correctness	0	0	pass	0.76	0.72	0.05	49244	276422527	499721024	9534450	LU_decomposition/rune-jit/correctness.0
+LU_decomposition	normal	rune:jit	O2	count	1	1	pass	0.71	0.67	0.05	49240	276422527	499721024	9534450	LU_decomposition/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

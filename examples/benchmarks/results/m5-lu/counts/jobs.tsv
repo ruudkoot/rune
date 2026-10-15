@@ -1,0 +1,1 @@
+LU_decomposition	600	4194304	shared/input.sml shared/ocaml-random.sml shared/sandmark-lu.sml LU_decomposition/benchmark.sml shared/main.sml	256 expected/normal.txt	LU_decomposition/normal.expected	expected/normal.txt

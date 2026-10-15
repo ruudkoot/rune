@@ -1,0 +1,42 @@
+{
+  "upstream": "5605805954a00497ed197c930641cddd580e1507",
+  "source": "tests/out/benchmarks/upstreams/sandmark/benchmarks/multicore-numerical/LU_decomposition.ml",
+  "source_sha256": "54036c2481ede5412de0432a37ba6f8fdd49a3f758db6121d10c14fa9ea7fd69",
+  "compile": [
+    "ocamlopt",
+    "-O2",
+    "-o",
+    "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sandmark-lu-originals/final-observer",
+    "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sandmark-lu-originals/lu_final_observer.ml"
+  ],
+  "ocamlopt": "4.14.1",
+  "profiles": [
+    {
+      "profile": "smoke",
+      "size": 4,
+      "timeout": 30,
+      "memory_bytes": 1073741824,
+      "exit": 0,
+      "factors_sha256": "e4c4653cc8446a23fa67c01de40a3b2138e3f3301dbaa765a8e2e6b2b62ddd0e",
+      "input_sha256": "a103f36e56af8288426dd709e250edf486cb22f4dc831a9c012e71a57ff2429e"
+    },
+    {
+      "profile": "normal",
+      "size": 256,
+      "timeout": 600,
+      "memory_bytes": 4294967296,
+      "exit": 0,
+      "factors_sha256": "a835c83d2c983ee40f6330b7b58d4f70abf89e7aaa7918964b6f7aeb3f528842",
+      "input_sha256": "3152aa6718530f1c18dbd7968efca8e40fc911cf467ab542bc8639d1d2d7f4d9"
+    },
+    {
+      "profile": "large",
+      "size": 1024,
+      "timeout": 3600,
+      "memory_bytes": 8589934592,
+      "exit": 0,
+      "factors_sha256": "ad5bd87dd380694970512bde5e8cba73a65368198576c39bc6ed6eb27ffc7b5e",
+      "input_sha256": "4a9da5a5ddba60e31d0e62861087ee5284638ca689364925f3753ef58840ca05"
+    }
+  ]
+}

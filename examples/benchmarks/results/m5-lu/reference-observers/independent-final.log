@@ -1,0 +1,2 @@
+PASS LU reconstruction and 60-digit elimination smoke scaled residual 6.875955821959174e-17 relative packed discrepancy 4.194847745937813e-16
+PASS LU reconstruction and 60-digit elimination normal scaled residual 1.497146293205216e-16 relative packed discrepancy 7.521345768424226e-10

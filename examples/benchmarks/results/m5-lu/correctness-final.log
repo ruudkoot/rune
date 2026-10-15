@@ -1,0 +1,7 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-lu.tojd5e5y
+PASS LU_decomposition smoke O0
+PASS LU_decomposition smoke O2
+PASS LU_decomposition smoke hosts
+PASS LU_decomposition normal O0
+PASS LU_decomposition normal O2
+PASS LU_decomposition normal hosts

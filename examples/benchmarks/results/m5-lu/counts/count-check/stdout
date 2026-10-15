@@ -1,0 +1,5 @@
+COUNT unbudgeted LU_decomposition normal rune
+COUNT unbudgeted LU_decomposition normal rune:opt
+COUNT unbudgeted LU_decomposition normal rune:new
+COUNT unbudgeted LU_decomposition normal rune:jit
+COUNT comparisons agree
