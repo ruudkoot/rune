@@ -1,0 +1,5 @@
+{
+  "kernel_sha256": "5e5b1d77a35b58c2a24645f40ce7dc4131b698f6b66d511fc30b53a375ccf089",
+  "bytecode_sha256": "c521783ea134e60461ec51ef22cb77d6265d7acaf45ca57b24f88d9a5280c1ff",
+  "meaning": "bounded calibration of the source 934 grid; intermediate enumeration forces next arithmetic one cell ahead; not canonical validation"
+}

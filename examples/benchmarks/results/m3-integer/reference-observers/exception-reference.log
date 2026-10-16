@@ -1,0 +1,6 @@
+machine-min-quot-minus-one
+<interactive>: arithmetic overflow
+PASS expected source arithmetic exception
+machine-zero-divisor
+<interactive>: divide by zero
+PASS expected source arithmetic exception

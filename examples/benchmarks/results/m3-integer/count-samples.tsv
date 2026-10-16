@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+integer-lazy	normal	rune	O2	count	1	1	pass	18.20	18.68	0.01	10576	4576013587	7791064504	208997645	counts/measurement.u9kKGX/integer-lazy/rune/fresh.1
+integer-lazy	normal	rune:opt	O2	count	1	1	pass	6.69	6.86	0.02	10952	4576013587	7791064504	208997645	counts/measurement.u9kKGX/integer-lazy/rune-opt/fresh.1
+integer-lazy	normal	rune:new	O2	count	1	1	pass	20.55	18.92	0.83	963084	2645802621	7791064504	208997645	counts/measurement.u9kKGX/integer-lazy/rune-new/fresh.1
+integer-lazy	normal	rune:jit	O2	count	1	1	pass	7.97	7.37	0.81	964532	2645802621	7791064504	208997645	counts/measurement.u9kKGX/integer-lazy/rune-jit/fresh.1
+integer-strict	normal	rune	O2	count	1	1	pass	14.58	14.97	0.01	35064	4085283853	5645494328	148282219	counts/measurement.HJAOhv/integer-strict/rune/fresh.1
+integer-strict	normal	rune:opt	O2	count	1	1	pass	7.26	6.31	0.03	35596	4085283853	5645494328	148282219	counts/measurement.HJAOhv/integer-strict/rune-opt/fresh.1
+integer-strict	normal	rune:new	O2	count	1	1	pass	14.00	13.12	0.23	264552	2316949921	5645494328	148282219	counts/measurement.HJAOhv/integer-strict/rune-new/fresh.1
+integer-strict	normal	rune:jit	O2	count	1	1	pass	5.62	5.53	0.20	265628	2316949921	5645494328	148282219	counts/measurement.HJAOhv/integer-strict/rune-jit/fresh.1

@@ -1,0 +1,12 @@
+{
+  "arguments": [
+    "-2100000000",
+    "14000001",
+    "2100000000"
+  ],
+  "source_profile": "FAST",
+  "suite_profile": "normal",
+  "grid_size": 300,
+  "pairs_per_pass": 90000,
+  "reason": "bounded cross-host normal comparison; original NORM and SLOW retained as references"
+}

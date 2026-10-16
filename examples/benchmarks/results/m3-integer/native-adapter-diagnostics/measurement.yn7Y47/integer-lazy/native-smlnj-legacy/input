@@ -1,0 +1,4 @@
+integer-lazy
+~2100000000 700000001 2100000000 expected/smoke.results
+6:checked
+1

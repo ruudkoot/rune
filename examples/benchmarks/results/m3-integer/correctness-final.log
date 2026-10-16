@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-integer.8tq2r5hh
+PASS integer-lazy smoke O0
+PASS integer-lazy smoke O2
+PASS integer-lazy smoke hosts
+PASS integer-lazy normal O0
+PASS integer-lazy normal O2
+PASS integer-lazy normal hosts
+PASS integer-strict smoke O0
+PASS integer-strict smoke O2
+PASS integer-strict smoke hosts
+PASS integer-strict normal O0
+PASS integer-strict normal O2
+PASS integer-strict normal hosts

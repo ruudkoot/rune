@@ -1469,3 +1469,44 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-revcomp-knucleotide-825-acceptance.log)
 records the run. All 41 inventory tests pass and all 861 entries validate.
+
+## M3 machine and arbitrary-precision integer grids, 2026-10-16
+
+Two imports bring the catalogue to 279 programs and 831 profiles. [All 56
+smoke/normal cases](results/m3-integer/correctness.tsv) pass across Rune's four
+engines at both levels and all six managed native hosts. Of 114 semantic/
+negative checks, native32 fails only constant subtraction/multiplication wrap
+at both levels; its other 112 and every other configuration's 114 pass.
+A separate runtime-input probe passes its two checks on all ten configurations.
+[The exact constant/dynamic results](validation/integer-smlnj32.md) preserve
+the known low-half pattern without changing expressions or expected values.
+These diagnostics remain distinct from the fully passing selected profiles.
+
+Eight normal count samples agree across Rune engines. Existing budgets are
+unchanged; these new profiles are currently unbudgeted. Six serial native smoke
+samples validate MLton, SML/NJ and Poly/ML adapters. Instrumented counts and
+single-sample diagnostics remain separate from headline timings.
+
+The ports retain all 14 operations, separate machine64/arbitrary-precision
+passes, Cartesian order and forcing. Explicit Word64 helpers avoid default-Int
+width assumptions, while IntInf separately performs arbitrary-precision work.
+Memoized list heads/spines preserve lazy demand and sharing; the strict variant
+constructs finite result lists eagerly. Every result contributes to 28 checked
+pair-count/digest lines, followed by EOF. Digest/helper costs and the bounded
+positive-stride driver domain are explicit translation choices.
+
+Unmodified GHC originals terminate with empty output. A Show-only value observer
+and independent exact model agree at smoke, upstream FAST 300 (selected normal),
+upstream NORM 934 and upstream SLOW 2100 (selected large). Separate original/
+independent observers verify 98 arithmetic results, wrap and exceptional division.
+Earlier 934-grid calibration with a one-cell-ahead enumeration is explicitly
+intermediate; final demand tests and canonical results use fully delayed tails.
+Source/library identities, notices, inputs, complete logs and references are
+retained. No prerequisite compiler/runtime feature or universal large SML
+execution is introduced or claimed. M3 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 831 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-integer-831-acceptance.log)
+records the run. All 41 inventory tests pass and all 861 entries validate.

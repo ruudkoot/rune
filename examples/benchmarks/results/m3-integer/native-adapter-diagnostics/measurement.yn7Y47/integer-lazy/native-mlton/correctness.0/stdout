@@ -1,0 +1,4 @@
+RESULT 6:checked
+PASS integer-lazy
+SAMPLE 1 0.000420000
+SUMMARY 1 checks, 0 failed

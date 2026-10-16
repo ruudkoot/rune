@@ -1,0 +1,1 @@
+integer-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/signed64.sml shared/nofib-integer.sml shared/integer-check.sml shared/integer-driver.sml integer-strict/benchmark.sml shared/main.sml	~2100000000 700000001 2100000000 expected/smoke.results	integer-strict/smoke.expected	expected/smoke.results

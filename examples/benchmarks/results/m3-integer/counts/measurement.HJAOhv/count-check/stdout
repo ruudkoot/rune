@@ -1,0 +1,5 @@
+COUNT unbudgeted integer-strict normal rune
+COUNT unbudgeted integer-strict normal rune:opt
+COUNT unbudgeted integer-strict normal rune:new
+COUNT unbudgeted integer-strict normal rune:jit
+COUNT comparisons agree

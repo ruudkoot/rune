@@ -1,0 +1,3833 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+PASS integer/signed64-sub-wrap
+PASS integer/signed64-multiply-wrap
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+SUMMARY 114 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+PASS integer/signed64-sub-wrap
+PASS integer/signed64-multiply-wrap
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+SUMMARY 114 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+PASS integer/signed64-sub-wrap
+PASS integer/signed64-multiply-wrap
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+SUMMARY 114 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+PASS integer/signed64-sub-wrap
+PASS integer/signed64-multiply-wrap
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+SUMMARY 114 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+PASS integer/signed64-sub-wrap
+PASS integer/signed64-multiply-wrap
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+SUMMARY 114 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a sequence
+  val value : 'a -> 'a D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.node D.t -> 'a
+  val tail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val delayedTail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromCell : 'a D.t D.t -> 'a D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val replicate : int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val init :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> ('a D.t * 'b D.t * 'c D.t) <BaseFct>.<resultStr>.node D.t
+  val equal :
+      ('a * 'b -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t -> bool
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/signed64.sml]
+structure BenchSigned64 : sig
+  structure W : <sig>
+  val sign : Word64.word
+  val minusOne : Word64.word
+  val negative : Word64.word -> bool
+  val negate : Word64.word -> Word64.word
+  val magnitude : Word64.word -> Word64.word
+  val less : Word64.word * Word64.word -> bool
+  val leq : Word64.word * Word64.word -> bool
+  val quotient : Word64.word * ?.word64 -> Word64.word
+  val remainder : Word64.word * ?.word64 -> Word64.word
+  val divide : Word64.word * ?.word64 -> Word64.word
+  val modulo : Word64.word * ?.word64 -> Word64.word
+  val gcd : Word64.word * Word64.word -> Word64.word
+  val lcm : ?.word64 * ?.word64 -> ?.word64
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-integer.sml]
+functor BenchIntegerFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure S : <sig>
+  structure W : <sig>
+  structure I : <sig>
+  structure M : <sig>
+  val bool : bool -> Word64.word
+  val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+  val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+  val machine : (Word64.word * Word64.word -> Word64.word) list
+  val arbitrary : (IntInf.int * IntInf.int -> Word64.word) list
+  val enum :
+      ('a * 'b -> 'a)
+       -> ('a * 'c -> bool)
+       -> 'a * 'b * 'c -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val concatMap :
+      ('a -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val pairs :
+      ('a * 'a -> 'b)
+       -> ('a * 'c -> 'a)
+       -> ('a * 'd -> bool)
+       -> 'a * 'c * 'd -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val consume :
+      Word64.word <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> int * Word64.word
+  val run : IntInf.int * IntInf.int * IntInf.int -> (int * Word64.word) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/integer-check.sml]
+[autoloading]
+[autoloading done]
+structure IntegerCheck : sig
+  val validate : (int * Word64.word) list -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/integer-tests.sml]
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+PASS integer/signed64-sub-wrap
+PASS integer/signed64-multiply-wrap
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+structure IntegerNeed : sig
+  structure S : <sig>
+  structure W : <sig>
+  structure I : <sig>
+  structure M : <sig>
+  val bool : bool -> Word64.word
+  val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+  val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+  val machine : (Word64.word * Word64.word -> Word64.word) list
+  val arbitrary : (IntInf.int * IntInf.int -> Word64.word) list
+  val enum :
+      ('a * 'b -> 'a)
+       -> ('a * 'c -> bool)
+       -> 'a * 'b * 'c -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val concatMap :
+      ('a -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val pairs :
+      ('a * 'a -> 'b)
+       -> ('a * 'c -> 'a)
+       -> ('a * 'd -> bool)
+       -> 'a * 'c * 'd -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val consume :
+      Word64.word <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> int * Word64.word
+  val run : IntInf.int * IntInf.int * IntInf.int -> (int * Word64.word) list
+end
+structure IntegerStrict : sig
+  structure S : <sig>
+  structure W : <sig>
+  structure I : <sig>
+  structure M : <sig>
+  val bool : bool -> Word64.word
+  val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+  val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+  val machine : (Word64.word * Word64.word -> Word64.word) list
+  val arbitrary : (IntInf.int * IntInf.int -> Word64.word) list
+  val enum :
+      ('a * 'b -> 'a)
+       -> ('a * 'c -> bool)
+       -> 'a * 'b * 'c -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val concatMap :
+      ('a -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val pairs :
+      ('a * 'a -> 'b)
+       -> ('a * 'c -> 'a)
+       -> ('a * 'd -> bool)
+       -> 'a * 'c * 'd -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val consume :
+      Word64.word <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> int * Word64.word
+  val run : IntInf.int * IntInf.int * IntInf.int -> (int * Word64.word) list
+end
+structure IntegerTests : sig
+  structure M : <sig>
+  val read : string -> TextIO.vector
+  val operations : string list
+  val word : string -> Word64.word
+  val operation : string -> Word64.word * Word64.word -> Word64.word
+  val lazyResult : (int * Word64.word) list
+  val strictResult : (int * Word64.word) list
+  val validates : (int * Word64.word) list -> string -> bool
+  val rejects : string -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 114 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a sequence
+  val value : 'a -> 'a D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.node D.t -> 'a
+  val tail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val delayedTail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromCell : 'a D.t D.t -> 'a D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val replicate : int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val init :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> ('a D.t * 'b D.t * 'c D.t) <BaseFct>.<resultStr>.node D.t
+  val equal :
+      ('a * 'b -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t -> bool
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/signed64.sml]
+structure BenchSigned64 : sig
+  structure W : <sig>
+  val sign : Word64.word
+  val minusOne : Word64.word
+  val negative : Word64.word -> bool
+  val negate : Word64.word -> Word64.word
+  val magnitude : Word64.word -> Word64.word
+  val less : Word64.word * Word64.word -> bool
+  val leq : Word64.word * Word64.word -> bool
+  val quotient : Word64.word * ?.word64 -> Word64.word
+  val remainder : Word64.word * ?.word64 -> Word64.word
+  val divide : Word64.word * ?.word64 -> Word64.word
+  val modulo : Word64.word * ?.word64 -> Word64.word
+  val gcd : Word64.word * Word64.word -> Word64.word
+  val lcm : ?.word64 * ?.word64 -> ?.word64
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-integer.sml]
+functor BenchIntegerFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure S : <sig>
+  structure W : <sig>
+  structure I : <sig>
+  structure M : <sig>
+  val bool : bool -> Word64.word
+  val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+  val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+  val machine : (Word64.word * Word64.word -> Word64.word) list
+  val arbitrary : (IntInf.int * IntInf.int -> Word64.word) list
+  val enum :
+      ('a * 'b -> 'a)
+       -> ('a * 'c -> bool)
+       -> 'a * 'b * 'c -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val concatMap :
+      ('a -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val pairs :
+      ('a * 'a -> 'b)
+       -> ('a * 'c -> 'a)
+       -> ('a * 'd -> bool)
+       -> 'a * 'c * 'd -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val consume :
+      Word64.word <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> int * Word64.word
+  val run : IntInf.int * IntInf.int * IntInf.int -> (int * Word64.word) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/integer-check.sml]
+[autoloading]
+[autoloading done]
+structure IntegerCheck : sig
+  val validate : (int * Word64.word) list -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/integer-tests.sml]
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+FAIL integer/signed64-sub-wrap -- false
+FAIL integer/signed64-multiply-wrap -- false
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+structure IntegerNeed : sig
+  structure S : <sig>
+  structure W : <sig>
+  structure I : <sig>
+  structure M : <sig>
+  val bool : bool -> Word64.word
+  val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+  val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+  val machine : (Word64.word * Word64.word -> Word64.word) list
+  val arbitrary : (IntInf.int * IntInf.int -> Word64.word) list
+  val enum :
+      ('a * 'b -> 'a)
+       -> ('a * 'c -> bool)
+       -> 'a * 'b * 'c -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val concatMap :
+      ('a -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val pairs :
+      ('a * 'a -> 'b)
+       -> ('a * 'c -> 'a)
+       -> ('a * 'd -> bool)
+       -> 'a * 'c * 'd -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val consume :
+      Word64.word <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> int * Word64.word
+  val run : IntInf.int * IntInf.int * IntInf.int -> (int * Word64.word) list
+end
+structure IntegerStrict : sig
+  structure S : <sig>
+  structure W : <sig>
+  structure I : <sig>
+  structure M : <sig>
+  val bool : bool -> Word64.word
+  val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+  val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+  val machine : (Word64.word * Word64.word -> Word64.word) list
+  val arbitrary : (IntInf.int * IntInf.int -> Word64.word) list
+  val enum :
+      ('a * 'b -> 'a)
+       -> ('a * 'c -> bool)
+       -> 'a * 'b * 'c -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val concatMap :
+      ('a -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val pairs :
+      ('a * 'a -> 'b)
+       -> ('a * 'c -> 'a)
+       -> ('a * 'd -> bool)
+       -> 'a * 'c * 'd -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val consume :
+      Word64.word <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> int * Word64.word
+  val run : IntInf.int * IntInf.int * IntInf.int -> (int * Word64.word) list
+end
+structure IntegerTests : sig
+  structure M : <sig>
+  val read : string -> TextIO.vector
+  val operations : string list
+  val word : string -> Word64.word
+  val operation : string -> Word64.word * Word64.word -> Word64.word
+  val lazyResult : (int * Word64.word) list
+  val strictResult : (int * Word64.word) list
+  val validates : (int * Word64.word) list -> string -> bool
+  val rejects : string -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 114 checks, 2 failed
+PROGRAM FAIL native:smlnj32@110.99.9 (load 0, exit 1)
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+                               type 'a t
+                               val delay : (unit -> 'a) -> 'a t
+                               val force : 'a t -> 'a
+                             end) :
+                           
+                             sig
+                               type 'a node
+                               type 'a sequence
+                               val value : 'a -> 'a D.t
+                               val empty : unit -> 'a node D.t
+                               val cons : 'a D.t -> 'a node D.t -> 'a node D.t
+                               val fromList : 'a list -> 'a node D.t
+                               val head : 'a node D.t -> 'a
+                               val tail : 'a node D.t -> 'a node D.t
+                               val delayedTail : 'a node D.t -> 'a node D.t
+                               val fromCell : 'a D.t D.t -> 'a D.t
+                               val map : ('a -> 'b)
+                                          -> 'a node D.t -> 'b node D.t
+                               val append : 'a node D.t
+                                             -> 'a node D.t -> 'a node D.t
+                               val take : int -> 'a node D.t -> 'a node D.t
+                               val replicate : int -> 'a D.t -> 'a node D.t
+                               val init : 'a node D.t -> 'a node D.t
+                               val zipWith3 : ('a * 'b * 'c -> 'd)
+                                               -> 'a node D.t
+                                               -> 'b node D.t
+                                               -> 'c node D.t -> 'd node D.t
+                               val zip3 : 'a node D.t
+                                           -> 'b node D.t
+                                           -> 'c node D.t
+                                           -> ('a D.t * 'b D.t * 'c D.t) node 
+                                             D.t
+                               val equal : ('a * 'b -> bool)
+                                            -> 'a node D.t
+                                            -> 'b node D.t -> bool
+                               val toList : 'a node D.t -> 'a list
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/signed64.sml]
+structure BenchSigned64 : 
+  sig
+    structure W : <sig>
+    val sign : Word64.word
+    val minusOne : Word64.word
+    val negative : Word64.word -> bool
+    val negate : Word64.word -> Word64.word
+    val magnitude : Word64.word -> Word64.word
+    val less : Word64.word * Word64.word -> bool
+    val leq : Word64.word * Word64.word -> bool
+    val quotient : Word64.word * ?.word64 -> Word64.word
+    val remainder : Word64.word * ?.word64 -> Word64.word
+    val divide : Word64.word * ?.word64 -> Word64.word
+    val modulo : Word64.word * ?.word64 -> Word64.word
+    val gcd : Word64.word * Word64.word -> Word64.word
+    val lcm : ?.word64 * ?.word64 -> ?.word64
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-integer.sml]
+functor BenchIntegerFn(D: sig
+                          type 'a t
+                          val delay : (unit -> 'a) -> 'a t
+                          val force : 'a t -> 'a
+                        end) :
+                      
+                        sig
+                          structure S : <sig>
+                          structure W : <sig>
+                          structure I : <sig>
+                          structure M : <sig>
+                          val bool : bool -> Word64.word
+                          val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+                          val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+                          val machine : (Word64.word * Word64.word
+                                            -> Word64.word) list
+                          val arbitrary : (IntInf.int * IntInf.int
+                                              -> Word64.word) list
+                          val enum : ('a * 'b -> 'a)
+                                      -> ('a * 'c -> bool)
+                                      -> 'a * 'b * 'c -> 'a S.node D.t
+                          val concatMap : ('a -> 'b S.node D.t)
+                                           -> 'a S.node D.t -> 'b S.node D.t
+                          val pairs : ('a * 'a -> 'b)
+                                       -> ('a * 'c -> 'a)
+                                       -> ('a * 'd -> bool)
+                                       -> 'a * 'c * 'd -> 'b S.node D.t
+                          val consume : Word64.word S.node D.t
+                                         -> int * Word64.word
+                          val run : IntInf.int * IntInf.int * IntInf.int
+                                     -> (int * Word64.word) list
+                        end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/integer-check.sml]
+structure IntegerCheck : sig
+  val validate : (int * Word64.word) list -> string -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/integer-tests.sml]
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+PASS integer/signed64-sub-wrap
+PASS integer/signed64-multiply-wrap
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+structure IntegerNeed : 
+  sig
+    structure S : <sig>
+    structure W : <sig>
+    structure I : <sig>
+    structure M : <sig>
+    val bool : bool -> Word64.word
+    val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+    val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+    val machine : (Word64.word * Word64.word -> Word64.word) list
+    val arbitrary : (IntInf.int * IntInf.int -> Word64.word) list
+    val enum : ('a * 'b -> 'a)
+                -> ('a * 'c -> bool) -> 'a * 'b * 'c -> 'a S.node D.t
+    val concatMap : ('a -> 'b S.node D.t) -> 'a S.node D.t -> 'b S.node D.t
+    val pairs : ('a * 'a -> 'b)
+                 -> ('a * 'c -> 'a)
+                 -> ('a * 'd -> bool) -> 'a * 'c * 'd -> 'b S.node D.t
+    val consume : Word64.word S.node D.t -> int * Word64.word
+    val run : IntInf.int * IntInf.int * IntInf.int -> (int * Word64.word) list
+  end
+structure IntegerStrict : 
+  sig
+    structure S : <sig>
+    structure W : <sig>
+    structure I : <sig>
+    structure M : <sig>
+    val bool : bool -> Word64.word
+    val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+    val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+    val machine : (Word64.word * Word64.word -> Word64.word) list
+    val arbitrary : (IntInf.int * IntInf.int -> Word64.word) list
+    val enum : ('a * 'b -> 'a)
+                -> ('a * 'c -> bool) -> 'a * 'b * 'c -> 'a S.node D.t
+    val concatMap : ('a -> 'b S.node D.t) -> 'a S.node D.t -> 'b S.node D.t
+    val pairs : ('a * 'a -> 'b)
+                 -> ('a * 'c -> 'a)
+                 -> ('a * 'd -> bool) -> 'a * 'c * 'd -> 'b S.node D.t
+    val consume : Word64.word S.node D.t -> int * Word64.word
+    val run : IntInf.int * IntInf.int * IntInf.int -> (int * Word64.word) list
+  end
+structure IntegerTests : 
+  sig
+    structure M : <sig>
+    val read : string -> TextIO.vector
+    val operations : string list
+    val word : string -> Word64.word
+    val operation : string -> Word64.word * Word64.word -> Word64.word
+    val lazyResult : (int * Word64.word) list
+    val strictResult : (int * Word64.word) list
+    val validates : (int * Word64.word) list -> string -> bool
+    val rejects : string -> bool
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 114 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+PASS integer/signed64-sub-wrap
+PASS integer/signed64-multiply-wrap
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+SUMMARY 114 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+PASS integer/signed64-sub-wrap
+PASS integer/signed64-multiply-wrap
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+SUMMARY 114 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+PROGRAM LIMIT AS 1048576 KiB
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+PASS integer/signed64-sub-wrap
+PASS integer/signed64-multiply-wrap
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+SUMMARY 114 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+PASS integer/signed64-sub-wrap
+PASS integer/signed64-multiply-wrap
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+SUMMARY 114 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+PASS integer/signed64-sub-wrap
+PASS integer/signed64-multiply-wrap
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+SUMMARY 114 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+PASS integer/signed64-sub-wrap
+PASS integer/signed64-multiply-wrap
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+SUMMARY 114 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+PASS integer/signed64-sub-wrap
+PASS integer/signed64-multiply-wrap
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+SUMMARY 114 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a sequence
+  val value : 'a -> 'a D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.node D.t -> 'a
+  val tail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val delayedTail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromCell : 'a D.t D.t -> 'a D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val replicate : int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val init :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> ('a D.t * 'b D.t * 'c D.t) <BaseFct>.<resultStr>.node D.t
+  val equal :
+      ('a * 'b -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t -> bool
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/signed64.sml]
+structure BenchSigned64 : sig
+  structure W : <sig>
+  val sign : Word64.word
+  val minusOne : Word64.word
+  val negative : Word64.word -> bool
+  val negate : Word64.word -> Word64.word
+  val magnitude : Word64.word -> Word64.word
+  val less : Word64.word * Word64.word -> bool
+  val leq : Word64.word * Word64.word -> bool
+  val quotient : Word64.word * ?.word64 -> Word64.word
+  val remainder : Word64.word * ?.word64 -> Word64.word
+  val divide : Word64.word * ?.word64 -> Word64.word
+  val modulo : Word64.word * ?.word64 -> Word64.word
+  val gcd : Word64.word * Word64.word -> Word64.word
+  val lcm : ?.word64 * ?.word64 -> ?.word64
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-integer.sml]
+functor BenchIntegerFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure S : <sig>
+  structure W : <sig>
+  structure I : <sig>
+  structure M : <sig>
+  val bool : bool -> Word64.word
+  val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+  val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+  val machine : (Word64.word * Word64.word -> Word64.word) list
+  val arbitrary : (IntInf.int * IntInf.int -> Word64.word) list
+  val enum :
+      ('a * 'b -> 'a)
+       -> ('a * 'c -> bool)
+       -> 'a * 'b * 'c -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val concatMap :
+      ('a -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val pairs :
+      ('a * 'a -> 'b)
+       -> ('a * 'c -> 'a)
+       -> ('a * 'd -> bool)
+       -> 'a * 'c * 'd -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val consume :
+      Word64.word <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> int * Word64.word
+  val run : IntInf.int * IntInf.int * IntInf.int -> (int * Word64.word) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/integer-check.sml]
+[autoloading]
+[autoloading done]
+structure IntegerCheck : sig
+  val validate : (int * Word64.word) list -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/integer-tests.sml]
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+PASS integer/signed64-sub-wrap
+PASS integer/signed64-multiply-wrap
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+structure IntegerNeed : sig
+  structure S : <sig>
+  structure W : <sig>
+  structure I : <sig>
+  structure M : <sig>
+  val bool : bool -> Word64.word
+  val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+  val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+  val machine : (Word64.word * Word64.word -> Word64.word) list
+  val arbitrary : (IntInf.int * IntInf.int -> Word64.word) list
+  val enum :
+      ('a * 'b -> 'a)
+       -> ('a * 'c -> bool)
+       -> 'a * 'b * 'c -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val concatMap :
+      ('a -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val pairs :
+      ('a * 'a -> 'b)
+       -> ('a * 'c -> 'a)
+       -> ('a * 'd -> bool)
+       -> 'a * 'c * 'd -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val consume :
+      Word64.word <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> int * Word64.word
+  val run : IntInf.int * IntInf.int * IntInf.int -> (int * Word64.word) list
+end
+structure IntegerStrict : sig
+  structure S : <sig>
+  structure W : <sig>
+  structure I : <sig>
+  structure M : <sig>
+  val bool : bool -> Word64.word
+  val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+  val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+  val machine : (Word64.word * Word64.word -> Word64.word) list
+  val arbitrary : (IntInf.int * IntInf.int -> Word64.word) list
+  val enum :
+      ('a * 'b -> 'a)
+       -> ('a * 'c -> bool)
+       -> 'a * 'b * 'c -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val concatMap :
+      ('a -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val pairs :
+      ('a * 'a -> 'b)
+       -> ('a * 'c -> 'a)
+       -> ('a * 'd -> bool)
+       -> 'a * 'c * 'd -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val consume :
+      Word64.word <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> int * Word64.word
+  val run : IntInf.int * IntInf.int * IntInf.int -> (int * Word64.word) list
+end
+structure IntegerTests : sig
+  structure M : <sig>
+  val read : string -> TextIO.vector
+  val operations : string list
+  val word : string -> Word64.word
+  val operation : string -> Word64.word * Word64.word -> Word64.word
+  val lazyResult : (int * Word64.word) list
+  val strictResult : (int * Word64.word) list
+  val validates : (int * Word64.word) list -> string -> bool
+  val rejects : string -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 114 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a sequence
+  val value : 'a -> 'a D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.node D.t -> 'a
+  val tail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val delayedTail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromCell : 'a D.t D.t -> 'a D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val replicate : int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val init :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> ('a D.t * 'b D.t * 'c D.t) <BaseFct>.<resultStr>.node D.t
+  val equal :
+      ('a * 'b -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t -> bool
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/signed64.sml]
+structure BenchSigned64 : sig
+  structure W : <sig>
+  val sign : Word64.word
+  val minusOne : Word64.word
+  val negative : Word64.word -> bool
+  val negate : Word64.word -> Word64.word
+  val magnitude : Word64.word -> Word64.word
+  val less : Word64.word * Word64.word -> bool
+  val leq : Word64.word * Word64.word -> bool
+  val quotient : Word64.word * ?.word64 -> Word64.word
+  val remainder : Word64.word * ?.word64 -> Word64.word
+  val divide : Word64.word * ?.word64 -> Word64.word
+  val modulo : Word64.word * ?.word64 -> Word64.word
+  val gcd : Word64.word * Word64.word -> Word64.word
+  val lcm : ?.word64 * ?.word64 -> ?.word64
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-integer.sml]
+functor BenchIntegerFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure S : <sig>
+  structure W : <sig>
+  structure I : <sig>
+  structure M : <sig>
+  val bool : bool -> Word64.word
+  val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+  val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+  val machine : (Word64.word * Word64.word -> Word64.word) list
+  val arbitrary : (IntInf.int * IntInf.int -> Word64.word) list
+  val enum :
+      ('a * 'b -> 'a)
+       -> ('a * 'c -> bool)
+       -> 'a * 'b * 'c -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val concatMap :
+      ('a -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val pairs :
+      ('a * 'a -> 'b)
+       -> ('a * 'c -> 'a)
+       -> ('a * 'd -> bool)
+       -> 'a * 'c * 'd -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val consume :
+      Word64.word <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> int * Word64.word
+  val run : IntInf.int * IntInf.int * IntInf.int -> (int * Word64.word) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/integer-check.sml]
+[autoloading]
+[autoloading done]
+structure IntegerCheck : sig
+  val validate : (int * Word64.word) list -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/integer-tests.sml]
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+FAIL integer/signed64-sub-wrap -- false
+FAIL integer/signed64-multiply-wrap -- false
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+structure IntegerNeed : sig
+  structure S : <sig>
+  structure W : <sig>
+  structure I : <sig>
+  structure M : <sig>
+  val bool : bool -> Word64.word
+  val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+  val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+  val machine : (Word64.word * Word64.word -> Word64.word) list
+  val arbitrary : (IntInf.int * IntInf.int -> Word64.word) list
+  val enum :
+      ('a * 'b -> 'a)
+       -> ('a * 'c -> bool)
+       -> 'a * 'b * 'c -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val concatMap :
+      ('a -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val pairs :
+      ('a * 'a -> 'b)
+       -> ('a * 'c -> 'a)
+       -> ('a * 'd -> bool)
+       -> 'a * 'c * 'd -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val consume :
+      Word64.word <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> int * Word64.word
+  val run : IntInf.int * IntInf.int * IntInf.int -> (int * Word64.word) list
+end
+structure IntegerStrict : sig
+  structure S : <sig>
+  structure W : <sig>
+  structure I : <sig>
+  structure M : <sig>
+  val bool : bool -> Word64.word
+  val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+  val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+  val machine : (Word64.word * Word64.word -> Word64.word) list
+  val arbitrary : (IntInf.int * IntInf.int -> Word64.word) list
+  val enum :
+      ('a * 'b -> 'a)
+       -> ('a * 'c -> bool)
+       -> 'a * 'b * 'c -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val concatMap :
+      ('a -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val pairs :
+      ('a * 'a -> 'b)
+       -> ('a * 'c -> 'a)
+       -> ('a * 'd -> bool)
+       -> 'a * 'c * 'd -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val consume :
+      Word64.word <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> int * Word64.word
+  val run : IntInf.int * IntInf.int * IntInf.int -> (int * Word64.word) list
+end
+structure IntegerTests : sig
+  structure M : <sig>
+  val read : string -> TextIO.vector
+  val operations : string list
+  val word : string -> Word64.word
+  val operation : string -> Word64.word * Word64.word -> Word64.word
+  val lazyResult : (int * Word64.word) list
+  val strictResult : (int * Word64.word) list
+  val validates : (int * Word64.word) list -> string -> bool
+  val rejects : string -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 114 checks, 2 failed
+PROGRAM FAIL native:smlnj32@110.99.9 (load 0, exit 1)
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+                               type 'a t
+                               val delay : (unit -> 'a) -> 'a t
+                               val force : 'a t -> 'a
+                             end) :
+                           
+                             sig
+                               type 'a node
+                               type 'a sequence
+                               val value : 'a -> 'a D.t
+                               val empty : unit -> 'a node D.t
+                               val cons : 'a D.t -> 'a node D.t -> 'a node D.t
+                               val fromList : 'a list -> 'a node D.t
+                               val head : 'a node D.t -> 'a
+                               val tail : 'a node D.t -> 'a node D.t
+                               val delayedTail : 'a node D.t -> 'a node D.t
+                               val fromCell : 'a D.t D.t -> 'a D.t
+                               val map : ('a -> 'b)
+                                          -> 'a node D.t -> 'b node D.t
+                               val append : 'a node D.t
+                                             -> 'a node D.t -> 'a node D.t
+                               val take : int -> 'a node D.t -> 'a node D.t
+                               val replicate : int -> 'a D.t -> 'a node D.t
+                               val init : 'a node D.t -> 'a node D.t
+                               val zipWith3 : ('a * 'b * 'c -> 'd)
+                                               -> 'a node D.t
+                                               -> 'b node D.t
+                                               -> 'c node D.t -> 'd node D.t
+                               val zip3 : 'a node D.t
+                                           -> 'b node D.t
+                                           -> 'c node D.t
+                                           -> ('a D.t * 'b D.t * 'c D.t) node 
+                                             D.t
+                               val equal : ('a * 'b -> bool)
+                                            -> 'a node D.t
+                                            -> 'b node D.t -> bool
+                               val toList : 'a node D.t -> 'a list
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/signed64.sml]
+structure BenchSigned64 : 
+  sig
+    structure W : <sig>
+    val sign : Word64.word
+    val minusOne : Word64.word
+    val negative : Word64.word -> bool
+    val negate : Word64.word -> Word64.word
+    val magnitude : Word64.word -> Word64.word
+    val less : Word64.word * Word64.word -> bool
+    val leq : Word64.word * Word64.word -> bool
+    val quotient : Word64.word * ?.word64 -> Word64.word
+    val remainder : Word64.word * ?.word64 -> Word64.word
+    val divide : Word64.word * ?.word64 -> Word64.word
+    val modulo : Word64.word * ?.word64 -> Word64.word
+    val gcd : Word64.word * Word64.word -> Word64.word
+    val lcm : ?.word64 * ?.word64 -> ?.word64
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-integer.sml]
+functor BenchIntegerFn(D: sig
+                          type 'a t
+                          val delay : (unit -> 'a) -> 'a t
+                          val force : 'a t -> 'a
+                        end) :
+                      
+                        sig
+                          structure S : <sig>
+                          structure W : <sig>
+                          structure I : <sig>
+                          structure M : <sig>
+                          val bool : bool -> Word64.word
+                          val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+                          val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+                          val machine : (Word64.word * Word64.word
+                                            -> Word64.word) list
+                          val arbitrary : (IntInf.int * IntInf.int
+                                              -> Word64.word) list
+                          val enum : ('a * 'b -> 'a)
+                                      -> ('a * 'c -> bool)
+                                      -> 'a * 'b * 'c -> 'a S.node D.t
+                          val concatMap : ('a -> 'b S.node D.t)
+                                           -> 'a S.node D.t -> 'b S.node D.t
+                          val pairs : ('a * 'a -> 'b)
+                                       -> ('a * 'c -> 'a)
+                                       -> ('a * 'd -> bool)
+                                       -> 'a * 'c * 'd -> 'b S.node D.t
+                          val consume : Word64.word S.node D.t
+                                         -> int * Word64.word
+                          val run : IntInf.int * IntInf.int * IntInf.int
+                                     -> (int * Word64.word) list
+                        end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/integer-check.sml]
+structure IntegerCheck : sig
+  val validate : (int * Word64.word) list -> string -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/integer-tests.sml]
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+PASS integer/signed64-sub-wrap
+PASS integer/signed64-multiply-wrap
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+structure IntegerNeed : 
+  sig
+    structure S : <sig>
+    structure W : <sig>
+    structure I : <sig>
+    structure M : <sig>
+    val bool : bool -> Word64.word
+    val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+    val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+    val machine : (Word64.word * Word64.word -> Word64.word) list
+    val arbitrary : (IntInf.int * IntInf.int -> Word64.word) list
+    val enum : ('a * 'b -> 'a)
+                -> ('a * 'c -> bool) -> 'a * 'b * 'c -> 'a S.node D.t
+    val concatMap : ('a -> 'b S.node D.t) -> 'a S.node D.t -> 'b S.node D.t
+    val pairs : ('a * 'a -> 'b)
+                 -> ('a * 'c -> 'a)
+                 -> ('a * 'd -> bool) -> 'a * 'c * 'd -> 'b S.node D.t
+    val consume : Word64.word S.node D.t -> int * Word64.word
+    val run : IntInf.int * IntInf.int * IntInf.int -> (int * Word64.word) list
+  end
+structure IntegerStrict : 
+  sig
+    structure S : <sig>
+    structure W : <sig>
+    structure I : <sig>
+    structure M : <sig>
+    val bool : bool -> Word64.word
+    val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+    val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+    val machine : (Word64.word * Word64.word -> Word64.word) list
+    val arbitrary : (IntInf.int * IntInf.int -> Word64.word) list
+    val enum : ('a * 'b -> 'a)
+                -> ('a * 'c -> bool) -> 'a * 'b * 'c -> 'a S.node D.t
+    val concatMap : ('a -> 'b S.node D.t) -> 'a S.node D.t -> 'b S.node D.t
+    val pairs : ('a * 'a -> 'b)
+                 -> ('a * 'c -> 'a)
+                 -> ('a * 'd -> bool) -> 'a * 'c * 'd -> 'b S.node D.t
+    val consume : Word64.word S.node D.t -> int * Word64.word
+    val run : IntInf.int * IntInf.int * IntInf.int -> (int * Word64.word) list
+  end
+structure IntegerTests : 
+  sig
+    structure M : <sig>
+    val read : string -> TextIO.vector
+    val operations : string list
+    val word : string -> Word64.word
+    val operation : string -> Word64.word * Word64.word -> Word64.word
+    val lazyResult : (int * Word64.word) list
+    val strictResult : (int * Word64.word) list
+    val validates : (int * Word64.word) list -> string -> bool
+    val rejects : string -> bool
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 114 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+PASS integer/signed64-sub-wrap
+PASS integer/signed64-multiply-wrap
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+SUMMARY 114 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS integer/add/-7/3
+PASS integer/sub/-7/3
+PASS integer/mul/-7/3
+PASS integer/div/-7/3
+PASS integer/mod/-7/3
+PASS integer/quot/-7/3
+PASS integer/rem/-7/3
+PASS integer/gcd/-7/3
+PASS integer/lcm/-7/3
+PASS integer/eq/-7/3
+PASS integer/lt/-7/3
+PASS integer/le/-7/3
+PASS integer/gt/-7/3
+PASS integer/ge/-7/3
+PASS integer/add/7/-3
+PASS integer/sub/7/-3
+PASS integer/mul/7/-3
+PASS integer/div/7/-3
+PASS integer/mod/7/-3
+PASS integer/quot/7/-3
+PASS integer/rem/7/-3
+PASS integer/gcd/7/-3
+PASS integer/lcm/7/-3
+PASS integer/eq/7/-3
+PASS integer/lt/7/-3
+PASS integer/le/7/-3
+PASS integer/gt/7/-3
+PASS integer/ge/7/-3
+PASS integer/add/-7/-3
+PASS integer/sub/-7/-3
+PASS integer/mul/-7/-3
+PASS integer/div/-7/-3
+PASS integer/mod/-7/-3
+PASS integer/quot/-7/-3
+PASS integer/rem/-7/-3
+PASS integer/gcd/-7/-3
+PASS integer/lcm/-7/-3
+PASS integer/eq/-7/-3
+PASS integer/lt/-7/-3
+PASS integer/le/-7/-3
+PASS integer/gt/-7/-3
+PASS integer/ge/-7/-3
+PASS integer/add/0/3
+PASS integer/sub/0/3
+PASS integer/mul/0/3
+PASS integer/div/0/3
+PASS integer/mod/0/3
+PASS integer/quot/0/3
+PASS integer/rem/0/3
+PASS integer/gcd/0/3
+PASS integer/lcm/0/3
+PASS integer/eq/0/3
+PASS integer/lt/0/3
+PASS integer/le/0/3
+PASS integer/gt/0/3
+PASS integer/ge/0/3
+PASS integer/add/2147483647/17
+PASS integer/sub/2147483647/17
+PASS integer/mul/2147483647/17
+PASS integer/div/2147483647/17
+PASS integer/mod/2147483647/17
+PASS integer/quot/2147483647/17
+PASS integer/rem/2147483647/17
+PASS integer/gcd/2147483647/17
+PASS integer/lcm/2147483647/17
+PASS integer/eq/2147483647/17
+PASS integer/lt/2147483647/17
+PASS integer/le/2147483647/17
+PASS integer/gt/2147483647/17
+PASS integer/ge/2147483647/17
+PASS integer/add/-2147483648/17
+PASS integer/sub/-2147483648/17
+PASS integer/mul/-2147483648/17
+PASS integer/div/-2147483648/17
+PASS integer/mod/-2147483648/17
+PASS integer/quot/-2147483648/17
+PASS integer/rem/-2147483648/17
+PASS integer/gcd/-2147483648/17
+PASS integer/lcm/-2147483648/17
+PASS integer/eq/-2147483648/17
+PASS integer/lt/-2147483648/17
+PASS integer/le/-2147483648/17
+PASS integer/gt/-2147483648/17
+PASS integer/ge/-2147483648/17
+PASS integer/add/2100000000/-2100000000
+PASS integer/sub/2100000000/-2100000000
+PASS integer/mul/2100000000/-2100000000
+PASS integer/div/2100000000/-2100000000
+PASS integer/mod/2100000000/-2100000000
+PASS integer/quot/2100000000/-2100000000
+PASS integer/rem/2100000000/-2100000000
+PASS integer/gcd/2100000000/-2100000000
+PASS integer/lcm/2100000000/-2100000000
+PASS integer/eq/2100000000/-2100000000
+PASS integer/lt/2100000000/-2100000000
+PASS integer/le/2100000000/-2100000000
+PASS integer/gt/2100000000/-2100000000
+PASS integer/ge/2100000000/-2100000000
+PASS integer/signed64-add-wrap
+PASS integer/signed64-sub-wrap
+PASS integer/signed64-multiply-wrap
+PASS integer/division-zero
+PASS integer/quotient-overflow
+PASS integer/gcd-zero
+PASS integer/lcm-zero
+PASS integer/complete-lazy-smoke
+PASS integer/complete-strict-smoke
+PASS integer/lazy-strict-agree
+PASS integer/wrong-count-rejected
+PASS integer/wrong-digest-rejected
+PASS integer/truncated-rejected
+PASS integer/extra-rejected
+PASS integer/memoized-lazy-tail-demand
+PASS integer/strict-enumeration-eager
+SUMMARY 114 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+bench-integer: validation failures (/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/integer-checks.9U30ei)

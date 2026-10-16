@@ -1,0 +1,47 @@
+[
+  {
+    "profile": "smoke",
+    "arguments": [
+      "-2100000000",
+      "700000001",
+      "2100000000"
+    ],
+    "grid_size": 6,
+    "pairs_per_pass": 36,
+    "total_passes": 28,
+    "original_exit": 0,
+    "original_stdout": "empty",
+    "observer": "Show-only value observer; source operation order and separate machine/arbitrary passes retained",
+    "independent": "Python exact integer model; selected values/products fit signed64"
+  },
+  {
+    "profile": "normal",
+    "arguments": [
+      "-2100000000",
+      "4500001",
+      "2100000000"
+    ],
+    "grid_size": 934,
+    "pairs_per_pass": 872356,
+    "total_passes": 28,
+    "original_exit": 0,
+    "original_stdout": "empty",
+    "observer": "Show-only value observer; source operation order and separate machine/arbitrary passes retained",
+    "independent": "Python exact integer model; selected values/products fit signed64"
+  },
+  {
+    "profile": "large",
+    "arguments": [
+      "-2100000000",
+      "2000001",
+      "2100000000"
+    ],
+    "grid_size": 2100,
+    "pairs_per_pass": 4410000,
+    "total_passes": 28,
+    "original_exit": 0,
+    "original_stdout": "empty",
+    "observer": "Show-only value observer; source operation order and separate machine/arbitrary passes retained",
+    "independent": "Python exact integer model; selected values/products fit signed64"
+  }
+]

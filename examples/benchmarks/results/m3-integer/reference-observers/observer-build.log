@@ -1,0 +1,9 @@
+[1 of 2] Compiling Main             ( Observer.hs, Observer.o )
+
+Observer.hs:18:1: warning: [-Wtabs]
+    Tab character found here, and in 18 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+18 |         :: Integer -> Integer -> Integer
+   | ^^^^^^^^
+[2 of 2] Linking observer [Objects changed]
