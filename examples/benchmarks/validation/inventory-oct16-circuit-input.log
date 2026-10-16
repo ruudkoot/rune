@@ -1,0 +1,14 @@
+Regression fixtures
+..............................................
+----------------------------------------------------------------------
+Ran 46 tests in 0.343s
+
+OK
+
+Complete clean pinned-source replay
+mlton: 48 import
+smlnj: 8 defer, 2 exclude, 35 import
+mlkit: 16 defer, 35 duplicate, 336 exclude, 51 import
+nofib: 48 defer, 1 duplicate, 11 exclude, 127 import
+sandmark: 82 defer, 61 import
+inventory: OK (861 entries)

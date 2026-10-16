@@ -324,6 +324,13 @@ class InventoryTest(unittest.TestCase):
         self.assertEqual(self.build("nofib")[0]["inputs"],
                          "spectral/graphs/data/input graph.bin;spectral/graphs/names.tbl")
 
+    def test_nofib_input_stems_retain_circuit_files(self):
+        self.nofib_roots()
+        self.file("real/scs/Main.hs", 'main = readFile (file ++ ".in")\n')
+        self.file("real/scs/Makefile", "NORM_OPTS = runtime_files/inverter 345 2n 4u 1\n")
+        self.file("real/scs/runtime_files/inverter.in", "circuit data\n")
+        self.assertEqual(self.build("nofib")[0]["inputs"], "real/scs/runtime_files/inverter.in")
+
     def test_nofib_profile_paths_stay_inside_pinned_tree(self):
         self.nofib_roots()
         self.file("spectral/graphs/Main.hs", "main = return ()\n")

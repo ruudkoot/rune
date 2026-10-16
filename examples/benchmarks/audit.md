@@ -1,5 +1,10 @@
 # Initial source audit
 
+The [2026-10-16 circuit-input review](validation/inventory-oct16-circuit-input.md)
+adds the SCS inverter fixture whose .in suffix is added by the program. All 46
+inventory regressions pass, and the full clean pinned-source replay reproduces
+all 861 entries without changing dispositions or source identities.
+
 The [2026-10-16 profile-input review](validation/inventory-oct16-profile-inputs.md)
 records 22 additional input references across nine nofib entries and normalizes
 related-name ordering. All 861 entries reproduce from clean pinned trees and all 45
