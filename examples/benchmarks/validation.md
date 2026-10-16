@@ -1604,3 +1604,46 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-mandel-855-acceptance.log)
 records the run. All 41 inventory tests pass and all 861 entries validate.
+
+## M3 Lisp-like Boyer2 rewriting and pretty printing, 2026-10-16
+
+Four imports bring the catalogue to 291 programs and 867 profiles. All 112
+smoke/normal cases pass across Rune's four engines at both levels and all six
+managed native hosts. [Boyer2 coverage](results/m3-boyer2/correctness.tsv) and
+[pretty coverage](results/m3-pretty/correctness.tsv) each record 56 cases.
+Twenty-five Boyer2 and 42 formatting semantic/negative checks pass all ten
+configurations twice, with Rune O0/O2 and native defaults. Sixteen normal
+count samples agree across Rune engines. Existing budgets are unchanged;
+new profiles are unbudgeted. Twelve serial native smoke samples validate
+MLton, SML/NJ and Poly/ML adapters. Instrumented counts and single-sample
+diagnostics remain separate from headline timings.
+
+Boyer2 retains binary Lisp terms, association lists, unbalanced LUTs, ordered
+rule buckets, argument rewriting and Boolean short circuiting. All 106 exact
+rule strings and source parser/unification quirks remain, including the accepted
+missing-RHS rule. Immutable runtime-deferred caches preserve initialization
+and repeated-mode behavior. Every theorem result is checked. Original full
+outputs agree with fixtures through 3000; four complete normalized forms/LUTs
+agree with an independent model and all 32 truth assignments. Complete-form
+forcing belongs to validation, not the timed theorem workload.
+
+The formatting ports retain higher-order document functions, metadata/child
+sharing, layout alternatives, CharSeq constructors, indentation worklists and
+output lists. Strict fields/nodes differ explicitly from memoized evaluation;
+both retain the finite boundary on cyclic word input. Exact original and
+independent layouts preserve tabs, trailing spaces, empty-document behavior
+and newlines. Forty-two checks include edge layouts and demand failures;
+incorrect bytes/whitespace and truncated/extra output are rejected. Original
+normal width80/50 words produces 343 checked bytes; larger reference/preflight
+coverage remains distinct from canonical large validation on every host.
+
+Source notices, history, exact dependency/data origins, representation/output
+adaptations, raw reference observers, complete results and all samples are
+retained. No prerequisite compiler/runtime feature or universal large execution
+is introduced or claimed. M3 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 867 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-boyer-pretty-867-acceptance.log)
+records the run. All 41 inventory tests pass and all 861 entries validate.
