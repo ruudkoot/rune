@@ -6,4 +6,4 @@
 tests/diagnostics/crlf.sml -text
 examples/benchmarks/plclub-ray/upstream/test.gml -text
 examples/benchmarks/raytrace/upstream/chess.gml -text
-docs/generated/** linguist-generated=true
+docs/lib/** linguist-generated=true

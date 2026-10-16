@@ -1,5 +1,5 @@
 (* `:doc` (docs/plans/repl.md, M8): the documentation of the Basis Library as
-   runedoc wrote it for programs to read (docs/generated/basis/members.json,
+   runedoc wrote it for programs to read (docs/lib/basis/members.json,
    DocSite.membersIndex), read once before the REPL's image is saved, and
    shown with its Markdown rendered for the terminal by lib/markdown, in the
    palette's roles. A name is a member of a structure (`List.map`,
@@ -66,7 +66,7 @@ struct
   fun spec' (s : string) : string = ReplHighlight.paint (!ReplSession.env, s, ReplHighlight.code)
 
   fun showMember (structure' : string, sigName : string, {spec, doc, page, ...} : member) : string =
-    spec' spec ^ "\n" ^ paint "repl.ui" ("  " ^ structure' ^ " : " ^ sigName ^ ", docs/generated/basis/" ^ page) ^ "\n"
+    spec' spec ^ "\n" ^ paint "repl.ui" ("  " ^ structure' ^ " : " ^ sigName ^ ", docs/lib/basis/" ^ page) ^ "\n"
     ^ (if doc = "" then "" else "\n" ^ render doc ^ "\n")
 
   fun memberOf (sigName : string, name : string) : member option =
@@ -101,7 +101,7 @@ struct
       fun show (title, sigName) =
         case StringMap.find (!signatures, sigName) of
           SOME {doc, page, members} =>
-            SOME (paint "doc.heading" title ^ "\n" ^ paint "repl.ui" ("  docs/generated/basis/" ^ page) ^ "\n\n"
+            SOME (paint "doc.heading" title ^ "\n" ^ paint "repl.ui" ("  docs/lib/basis/" ^ page) ^ "\n\n"
                   ^ (if doc = "" then "" else render doc ^ "\n\n")
                   ^ String.concatWith "\n" (List.map (fn m => "  " ^ spec' (#spec m))
                                                      (List.filter (fn m => #kind m <> "include") members)) ^ "\n")

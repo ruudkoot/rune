@@ -240,14 +240,14 @@ Provided by all of them: `Array`, `ArraySlice`, `BinIO`, `BinPrimIO`, `Bool`, `B
 
 What the specification leaves to the implementation is written on the member
 it belongs to, as an `Implementation:` note, and collected in
-[generated/basis/readings.md](generated/basis/readings.md). The widths are in
+[lib/basis/readings.md](lib/basis/readings.md). The widths are in
 the table at the top of this page.
 
 ## Where Rune departs from the specification
 
 Every departure is written on the member it is about, as a `Deviation:` or a
 `Limitation:` note, and is collected in
-[generated/basis/readings.md](generated/basis/readings.md). Every structure
+[lib/basis/readings.md](lib/basis/readings.md). Every structure
 of the specification is implemented; `Windows`, which is Windows' own,
 raises `OS.SysErr` with `ENOSYS` for every call of the system on another
 system. IPv6 is not in the specification either -- it
@@ -268,7 +268,7 @@ the version, and `save`, which writes the whole running program to a file for
 `runevm --restore` to carry on. Nothing there ports, and nothing there is
 needed to write Standard ML: a program that only wants the time a computation
 took should use `Timer`, which is the specification's
-([generated/basis/sig/RUNTIME.md](generated/basis/sig/RUNTIME.md),
+([lib/basis/sig/RUNTIME.md](lib/basis/sig/RUNTIME.md),
 [../examples/runtime](../examples/runtime)).
 
 No check of the suite fails on Rune.
@@ -456,7 +456,7 @@ documentation has every line under the member it is about, in a block
 
 Where the specification is silent, ambiguous or contradictory, the reading
 Rune takes is written on the member it is about, in the library's
-documentation; [generated/basis/readings.md](generated/basis/readings.md)
+documentation; [lib/basis/readings.md](lib/basis/readings.md)
 collects them all, with the checks that pin each one. The errata of the
 specification are there too, under the members they belong to.
 

@@ -194,7 +194,7 @@ and any unique prefix of a command's name names it (`:t` for `:type`).
 | `:frame [n, up or down]`, `:locals` | at a stop: the frame looked at; its variables |
 
 `:doc` reads what runedoc wrote of the Basis for programs to read
-(`docs/generated/basis/members.json`), once, before the REPL's image is
+(`docs/lib/basis/members.json`), once, before the REPL's image is
 saved. `:bt` reads the frames the VM recorded as the exception left the code
 the REPL ran (`RuneRuntime.raiseMark`, `raiseTrace`;
 [runtime.md](runtime.md), *Stacks, calls and exceptions*); on a terminal, an

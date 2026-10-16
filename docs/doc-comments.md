@@ -121,7 +121,7 @@ structure Int = struct ... end
 ```
 
 The claim puts `Int` on the page of `INTEGER`, sends `Int.toString` there, and
-is written to `docs/generated/basis/claims.tsv`. `tests/basis/check-claims.sh`
+is written to `docs/lib/basis/claims.tsv`. `tests/basis/check-claims.sh`
 (part of `make check-docs`) wants every claim to be backed by a line
 `structure C : SPEC_INTEGER = Int` of a `tests/basis/*_sig.sml`, and every such
 line to be claimed. `runedoc` also elaborates the library and checks every
@@ -141,13 +141,45 @@ id is `scope/slug` (`Char.fromString/unescaped-double-quote`,
 `LIST/list-spec`); when one check pins the note, its label is the id, and
 otherwise `Pinned by:` lists the labels, which must exist in the suite. An id
 names one note. The notes are collected in
-`docs/generated/basis/readings.md` and exported as `notes.tsv`, which
+`docs/lib/basis/readings.md` and exported as `notes.tsv`, which
 `tests/basis/check-notes.sh` (part of `make check-docs`) holds against
 `tests/basis/deviations.txt`: a check that fails on Rune because Rune reads
 the specification differently needs a `Reading (the suite differs):` that the
 check pins (and the other way round), and what a host reads differently in a
 signature that is documented in full needs a `Reading:` of that member.
 `coverage.md` lists the deviations and limitations that no check pins.
+
+## The overview of a library
+
+`README.md`, beside the library's sources, is the overview of the library.
+GitHub renders it when the library's directory is browsed, and `runedoc`
+reads the same file.
+
+```markdown
+# Debug Adapter Protocol
+
+<!-- Area: Protocols -->
+
+The Debug Adapter Protocol's messages. Requests, responses and events are
+values, read from JSON and written to it, framed as the protocol frames them.
+```
+
+* The heading is the library's name. [docs/lib/README.md](lib/README.md)
+  lists the library under that name, and the library's own page is headed
+  the same way.
+* `<!-- Area: Testing -->` names the section of that overview the library
+  belongs in. The comment is hidden when the file is rendered, so the page
+  is the heading and the prose. A paragraph `Area: Testing` names the area
+  the same way, and that paragraph is then part of the rendered page.
+* The first paragraph is the short description, one paragraph. The overview
+  of the libraries shows it, and the library's page begins with it.
+* Whatever follows is the long description, optional. The library's page
+  shows it after the short one.
+
+The prose is text in this language, so a name in backquotes becomes a link
+on the generated page. `make docs` writes both pages from the file. A library
+without the file, or without a heading, an area and a first paragraph, fails
+that run.
 
 ## Libraries beside the Basis Library
 
@@ -156,7 +188,7 @@ elaborated on top of it, and its comments may name what it has: a
 reference that the library does not resolve, and a `Raises:` exception, are
 looked up in the Basis Library. `--basis-docs DIR` says where the Basis
 Library's pages are, from the `--out` directory, and such a name then links
-there; `make docs` writes `docs/generated/random` with `--basis-docs
+there; `make docs` writes `docs/lib/random` with `--basis-docs
 ../basis`.
 
 ## Examples that run
@@ -295,7 +327,7 @@ that it is up to date, so `runedoc` never reads `deviations.txt`.
 ## Documented in full
 
 Every signature of a library is documented in full: `runedoc` makes an error
-of what it only counts elsewhere (`docs/generated/basis/coverage.md`): an
+of what it only counts elsewhere (`docs/lib/basis/coverage.md`): an
 entry without a comment (one that is documented together with the entry
 before it counts as documented), a function without a usage head, a first
 paragraph of more than 160 characters (it is the summary of the index pages:
@@ -313,7 +345,7 @@ bin/runedoc --page FILE...      # the pages of the signatures of the files, on t
 bin/runedoc --dump-ir FILE...   # what the generator makes of them, before any rendering
 bin/runedoc --library basis --examples DIR   # the examples, as programs
 make build/basis-examples/.done && bin/rune-test run 'basis-examples/*'  # write them, compile and run them
-make docs                       # write docs/generated/basis; commit the result
+make docs                       # write docs/lib, including its overview; commit the result
 ```
 
 `bin/runedoc-mlton` does the same at once; `bin/runedoc` runs on the VM.

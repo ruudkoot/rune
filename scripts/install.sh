@@ -285,8 +285,8 @@ for manifest in $(cd "$root/lib" && find . -name MANIFEST | sort); do
     mkdir -p "$(dirname "$libdir/$l/$f")"
     copy "$root/lib/$l/$f" "$libdir/$l/$f" 644
   done < "$root/lib/$l/MANIFEST"
-  # what runedoc reads besides: the overview
-  for f in overview.doc; do
+  # what runedoc reads besides the sources: the overview
+  for f in README.md; do
     if [ -e "$root/lib/$l/$f" ]; then copy "$root/lib/$l/$f" "$libdir/$l/$f" 644; fi
   done
 done

@@ -23,7 +23,7 @@ that gets hot to machine code as the program runs.
   file) and `INet6Sock`. The Basis suite also runs against MLton, SML/NJ,
   Poly/ML and MLKit, and where each of them differs from the specification,
   Rune included, is documented per member in
-  [docs/generated/basis](docs/generated/basis/README.md).
+  [docs/lib/basis](docs/lib/basis/README.md).
 
 ## Hello world
 
@@ -61,7 +61,7 @@ slower on `IntInf`. The compiler compiles itself in 3.0 s, MLton's build in
 | `runtime/` | the runtime in C, shared by both VMs; `runtime/register/` is the register VM and its JIT, `runtime/stack/` the stack VM |
 | `lib/` | the Basis Library in `lib/basis/`, and libraries beside it |
 | `tests/` | `lang/` run tests, `errors/` compile-error tests, `basis/` the Basis Library suite, `perf/` benchmarks with budgets |
-| `docs/` | the documentation; `docs/generated/basis/` is generated from `lib/basis` |
+| `docs/` | the documentation; `docs/lib/` is generated from the libraries in `lib/` |
 | `examples/` | small programs and benchmarks |
 | `scripts/` | generators, consistency checks, `doctor.sh`, `install.sh` |
 | `share/` | man pages and shell completions |
@@ -69,7 +69,8 @@ slower on `IntInf`. The compiler compiles itself in 3.0 s, MLton's build in
 ## Documentation
 
 * [language.md](docs/language.md): what Rune accepts, feature by feature.
-* [generated/basis](docs/generated/basis/README.md): the Basis Library, a page per signature.
+* [lib](docs/lib/README.md): the libraries.
+* [lib/basis](docs/lib/basis/README.md): the Basis Library, a page per signature.
 * [building.md](docs/building.md): prerequisites, every `make` target, installing.
 * [architecture.md](docs/architecture.md): how the compiler is organised.
 * [ir.md](docs/ir.md): the intermediate representations.

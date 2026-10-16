@@ -111,7 +111,7 @@ end
   Every `val` and `exception` of the signature has at least one check whose
   label starts with `Structure.member/`. `runedoc` reads the labels out of
   the sources of this suite with the compiler's parser, lists the checks of
-  every member in the library's documentation (`docs/generated/basis`), and
+  every member in the library's documentation (`docs/lib/basis`), and
   fails `make docs` and `make check-docs` for a member of a structure that
   has none. That makes the form of a label a convention to keep
   (`bin/runedoc --tests tests/basis --labels` prints what it finds):

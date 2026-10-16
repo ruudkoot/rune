@@ -1533,7 +1533,7 @@ M1 and M2 are independent of each other and of the rest.
 * **What:**
   - The core of D1 to D6 (*The tree*): `TEST`, `EXPECT`, `GOLDEN`, `Test.property`, and the functor `Main` with plain and event output.
   - Its own tests, run on the five hosts.
-  - runedoc pages, `docs/generated/test/unit`.
+  - runedoc pages, `docs/lib/test/unit`.
   - The pilot: the hand-written `check` functions of `tests/lib` (about twenty: digest, json, jsonrpc, dap, zmtp, jupyter, markdown, pretty, unicode, terminal, random, property) become suites on it.
   - `tests/lib/run-lib-tests.sh` still runs the programs, and reads their `PASS`/`FAIL` lines as it does today.
 * **Why now:** it needs nothing else, and the libraries' tests are real users that will shake out the API before the runner is built on it.
@@ -1551,7 +1551,7 @@ M1 and M2 are independent of each other and of the rest.
   - **Its own tests**, `tests/lib/unit/core.sml`, under a harness of a dozen lines that does not use the library: the tree, the filters, the checks, golden files, the options and the events. They pass on Rune and on the six hosts.
   - **Two portability findings.** MLKit's `exnMessage (Fail s)` is `"Fail"`, without the message, so `Expect` matches `Fail` itself. SML/NJ wants the type of a record pattern with `...` in a local function written out.
   - **The pilot.** 17 programs of `tests/lib` are suites on the library: digest, markdown's CommonMark examples (652 tests, one per example), jupyter, dap, jsonrpc, json's round trips and JSONTestSuite (318 tests, one per file), random's properties, terminal's style, key, emulator, probe and edit, pretty, unicode's grapheme breaks (853 tests, one per line) and UTF-8, and zmtp. Every check of each was kept, and each was shown to fail when one of its checks was made to fail. `tests/lib/property` keeps its own form: its outputs are fingerprints that other scripts read.
-  - **Documentation:** `docs/generated/test/unit`, and a section *Writing a test* in `docs/testing.md`. AGENTS.md says a library's tests are suites on the library.
+  - **Documentation:** `docs/lib/test/unit`, and a section *Writing a test* in `docs/testing.md`. AGENTS.md says a library's tests are suites on the library.
 
 ### M2. The runtime's part (S–M, about 600)
 

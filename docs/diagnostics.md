@@ -165,7 +165,7 @@ rune-ide reads (`/home/ruud/rune-ide/docs/ide-protocol.md`):
 * `palette.json`: the rules of a Monaco theme, dark and light, for the
   tokens rune-ide's highlighter names.
 
-`make docs` writes them to `docs/generated/palette`, and `make check-docs`
+`make docs` writes them to `docs/lib/palette`, and `make check-docs`
 fails when they are not what the table gives. `RUNE_COLORS` does not
 change them.
 

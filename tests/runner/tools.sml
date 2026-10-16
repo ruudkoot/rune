@@ -140,6 +140,29 @@ struct
       else ()
     end
 
+  (* The overview of several libraries, docs/lib/README.md. *)
+  fun docOverview () =
+    let
+      val out = docOut ^ "/overview"
+      val err = docOut ^ "/overview.err"
+      val args = ["bin/runedoc", "--lib", "tests/doc/overview", "--overview", out,
+                  "--library-page", "red", "red",
+                  "--library-page", "blue", "blue"]
+      val () = rmTree out
+      val () = mkdirs out
+      val code = exec {cmd = args, dir = NONE, stdin = "", stdout = "", stderr = err, timeout = 0}
+      val () =
+        if code <> 0 orelse size (read err) > 0 then
+          fail ("doc: overview: runedoc failed: " ^ firstLine err)
+        else ()
+      val () = sameDoc ("overview.md", out ^ "/README.md", "tests/doc/overview.md")
+      val code2 = exec {cmd = args @ ["--check"], dir = NONE, stdin = "", stdout = "", stderr = err, timeout = 0}
+    in
+      if code2 <> 0 orelse size (read err) > 0 then
+        fail ("doc: overview: --check failed: " ^ firstLine err)
+      else ()
+    end
+
   (* ---- tests/lib *)
   val libOut = run ^ "/lib"
 
@@ -603,6 +626,7 @@ struct
       ["ir-one", src] => SOME (fn () => irOne src)
     | ["doc-one", n] => SOME (fn () => docOne n)
     | ["doc-lib", n] => SOME (fn () => docLib n)
+    | ["doc-overview"] => SOME docOverview
     | ["lib-toy"] => SOME libToy
     | ["lib-random-kat"] => SOME libRandomKat
     | ["lib-check", kind, n, lib, src] => SOME (fn () => libCheck (kind, n, ["--library", lib], src))
@@ -630,7 +654,8 @@ struct
                                        (glob ("tests/ir", ".sml") @ glob ("tests/ir", ".mid")))),
        tagged ["check", "test-doc", "quick", "docs", "covers:tests/doc/*"]
          (Test.describe "doc"
-            (List.map (fn s => job (basename s, ["doc-one", basename s], [], 300, 600)) (glob ("tests/doc", ".sml"))
+            (job ("overview", ["doc-overview"], [], 300, 600)
+             :: List.map (fn s => job (basename s, ["doc-one", basename s], [], 300, 600)) (glob ("tests/doc", ".sml"))
              @ List.map (fn d => let val n = String.substring (d, 0, size d - 4)
                                  in job (d, ["doc-lib", n], [], 300, 600) end)
                         (List.filter (fn d => String.isSuffix ".lib" d andalso isDir ("tests/doc/" ^ d)) (sort (entries "tests/doc"))))),

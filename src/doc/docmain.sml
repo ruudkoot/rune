@@ -9,6 +9,8 @@ struct
 
   val usage =
     "usage: runedoc --library NAME --out DIR [--check] [--title TEXT]\n\
+    \       runedoc --overview DIR [--check]\n\
+    \               --library-page NAME [REL]...\n\
     \       runedoc --library NAME --examples DIR\n\
     \       runedoc --library NAME --laws DIR\n\
     \       runedoc (--page | --dump-ir | --lint) FILE...\n\
@@ -24,7 +26,24 @@ struct
     \  --out DIR       write the documentation there, and remove the pages\n\
     \                  that are no longer generated\n\
     \  --check         write nothing: fail if DIR is not what would be written\n\
-    \  --title TEXT    the title of the overview page\n\
+    \  --title TEXT    the title of the pages when the library has no README.md.\n\
+    \                  A README.md that begins with a heading names the library,\n\
+    \                  and that heading is the title; TEXT then has to be the same\n\
+    \  --overview DIR  write DIR/README.md, the overview of the libraries named\n\
+    \                  with --library-page, grouped by the Area of each\n\
+    \                  library's README.md, and stop; with --check, fail if\n\
+    \                  it is not what would be written. A library's row is the\n\
+    \                  heading of that file and its first paragraph\n\
+    \  --library-page NAME [REL]\n\
+    \                  one library of that overview: NAME as --library takes it,\n\
+    \                  and REL the directory of its pages under DIR (NAME, when\n\
+    \                  REL is left out). Its name is the heading of its README.md.\n\
+    \                  Repeat it, in the order the overview lists the libraries\n\
+    \                  within an area\n\
+    \  --conventions REL  link the conventions page to REL, and do not write\n\
+    \                  conventions.md in the library's own tree\n\
+    \  --emit-conventions  also write that page at REL (the Basis Library writes\n\
+    \                  the one copy, docs/lib/conventions.md)\n\
     \  --tests DIR     the test suite whose checks the pages list (its labels\n\
     \                  name the members they check)\n\
     \  --annotations FILE  what others say about the members, as lines\n\
@@ -81,6 +100,10 @@ struct
   val checkCoverage = ref false
   val lint = ref false
   val palette : string option ref = ref NONE
+  val overview : string option ref = ref NONE
+  val libraryPages : (string * string) list ref = ref []
+  val conventionsHref : string option ref = ref NONE
+  val emitConventions = ref false
   val color = ref Color.WhenTerminal
   val diagnostics : bool option ref = ref NONE
   val diagnosticsJson : string option ref = ref NONE
@@ -109,6 +132,22 @@ struct
     | "--check-coverage" :: rest => (checkCoverage := true; parse rest)
     | "--lint" :: rest => (lint := true; parse rest)
     | "--palette" :: dir :: rest => (palette := SOME dir; parse rest)
+    | "--overview" :: dir :: rest => (overview := SOME dir; parse rest)
+    | "--overview" :: [] => raise Usage "--overview needs a directory"
+    | "--library-page" :: name :: rest =>
+        let
+          val (rel, rest') =
+            case rest of
+              r :: rs => if String.size r > 0 andalso String.sub (r, 0) = #"-" then (name, rest) else (r, rs)
+            | [] => (name, [])
+        in
+          libraryPages := !libraryPages @ [(name, rel)];
+          parse rest'
+        end
+    | "--library-page" :: _ => raise Usage "--library-page needs a library"
+    | "--conventions" :: rel :: rest => (conventionsHref := SOME rel; parse rest)
+    | "--conventions" :: [] => raise Usage "--conventions needs the path of the page"
+    | "--emit-conventions" :: rest => (emitConventions := true; parse rest)
     | "--diagnostics-json" :: file :: rest => (diagnosticsJson := SOME file; parse rest)
     | "--diagnostics=full" :: rest => (diagnostics := SOME true; parse rest)
     | "--diagnostics=short" :: rest => (diagnostics := SOME false; parse rest)
@@ -194,10 +233,12 @@ struct
     let
       val lib = directoryOf name
       val dir = case !out of SOME d => d | NONE => raise Usage "no output directory (use --out DIR)"
-      val shown = List.last (String.tokens (fn c => c = #"/") name) handle Empty => name
+      val href = case !conventionsHref of SOME h => h | NONE => "conventions.md"
       val files = DocSite.build {dir = lib, prelude = preludeOf lib, out = dir, tests = !tests, annotations = !annotations, lawSkips = !lawSkips,
-                                 title = (case !title of SOME t => t | NONE => shown), basisDocs = !basisDocs,
-                                 libraryDocs = List.map (fn (n, d) => (directoryOf n, d)) (!libraryDocs)}
+                                 title = !title, basisDocs = !basisDocs,
+                                 libraryDocs = List.map (fn (n, d) => (directoryOf n, d)) (!libraryDocs),
+                                 basisLibrary = name = "basis",
+                                 shared = {href = href, emit = !emitConventions orelse not (isSome (!conventionsHref))}}
                   handle BasisManifest.Usage why => raise Usage why
       val status = report ()
     in
@@ -245,10 +286,44 @@ struct
          println ("runedoc: wrote the palette to " ^ dir); OS.Process.success)
     end
 
+  (* --overview: DIR/README.md, one row per --library-page. Unlike a library's
+     tree, this writes that one file and leaves the libraries' pages beside it. *)
+  fun writeOverview (dir : string) : OS.Process.status =
+    let
+      val pages = !libraryPages
+      val () = if List.null pages then raise Usage "--overview needs --library-page NAME" else ()
+      val text =
+        DocSite.librariesPage
+          (List.map (fn (name, rel) => {name = name, dir = directoryOf name, rel = rel}) pages)
+        handle BasisManifest.Usage why => raise Usage why
+      val status = report ()
+      val path = dir ^ "/README.md"
+      fun read p =
+        let val i = TextIO.openIn p in TextIO.inputAll i before TextIO.closeIn i end
+        handle IO.Io _ => ""
+    in
+      if not (OS.Process.isSuccess status) then status
+      else if !check then
+        if read path = text then
+          (println ("runedoc: " ^ path ^ " is up to date"); OS.Process.success)
+        else
+          (eprintln ("runedoc: " ^ path ^ " is not what the sources give (run `make docs`)");
+           OS.Process.failure)
+      else
+        ((OS.FileSys.mkDir dir handle OS.SysErr _ => ());
+         if read path = text then ()
+         else let val outs = TextIO.openOut path in TextIO.output (outs, text); TextIO.closeOut outs end;
+         println ("runedoc: wrote " ^ path);
+         OS.Process.success)
+    end
+
   fun run () : OS.Process.status =
     case !palette of
       SOME dir => writePalette dir
-    | NONE => (readInstances (); run' ())
+    | NONE =>
+        case !overview of
+          SOME dir => writeOverview dir
+        | NONE => (readInstances (); run' ())
 
   and run' () : OS.Process.status =
     if !labels then

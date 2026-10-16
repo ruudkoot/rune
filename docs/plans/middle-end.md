@@ -568,7 +568,7 @@ generate everything else from that.
   * it is the compiler's own language, checked by the same five builds.
 * **`vm/portable` still builds with a C compiler alone,** which is what it
   is for. So the generated C and SML are committed, and `make check`
-  fails when they are stale, as it does for `docs/generated`. The
+  fails when they are stale, as it does for `docs/lib`. The
   generator runs on any host, or on Rune itself.
 
 **The description:**

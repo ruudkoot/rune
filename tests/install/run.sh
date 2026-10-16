@@ -67,8 +67,8 @@ installed() {
               f=$(echo $f)
               case "$f" in ""|\#*) ;; *) echo "$f" ;; esac
             done < "lib/$l/MANIFEST")
-    for f in MANIFEST $files overview.doc; do
-      [ "$f" = overview.doc ] && [ ! -e "lib/$l/$f" ] && continue
+    for f in MANIFEST $files README.md; do
+      [ "$f" = README.md ] && [ ! -e "lib/$l/$f" ] && continue
       cmp -s "lib/$l/$f" "$lib/$l/$f" || missing="$missing $f"
     done
     if [ -z "$missing" ]; then ok; else bad "lib/$l not installed as it is:$missing"; fi

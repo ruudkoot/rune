@@ -4,7 +4,11 @@ _arguments -s \
   '--library[document the library LIBDIR/NAME, or the directory NAME]:library:_files -/' \
   '--out[write the pages to DIR]:output directory:_files -/' \
   '--check[write nothing, fail if DIR is not what would be written]' \
-  '--title[the title of the overview page]:title:' \
+  '--title[the title of the pages when the library has no README.md]:title:' \
+  '--overview[write DIR/README.md, the overview of the libraries]:directory:_files -/' \
+  '--library-page[one library of that overview: NAME [REL]]' \
+  '--conventions[link how to read these pages to REL]:relative path:' \
+  '--emit-conventions[write the conventions page at that path]' \
   '--tests[the test suite whose checks the pages list]:suite directory:_files -/' \
   '--annotations[remarks about the members, by the labels of checks]:annotations file:_files' \
   '--examples[write the examples that are equations as programs to DIR]:output directory:_files -/' \

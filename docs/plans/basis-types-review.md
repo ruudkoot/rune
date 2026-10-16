@@ -33,7 +33,7 @@ The rest of this document is the evidence the decisions were taken on. It
 holds three things:
 
 1. what the network and position change did (done, on the branch);
-2. every equality that `docs/generated/basis/types.md` calls **the
+2. every equality that `docs/lib/basis/types.md` calls **the
    implementation's choice**, with what the specification says, what the
    three hosts do, and a recommendation for each;
 3. the measured cost of making `Word8Vector.vector` and the monomorphic

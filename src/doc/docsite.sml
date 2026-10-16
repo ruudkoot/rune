@@ -3,7 +3,9 @@
    read a page, and what is documented so far. A library is a directory with
    a MANIFEST; what it provides, without the names that begin with Rune, is
    public. Everything is made in memory first: `write` puts it on disk and
-   removes what it no longer makes, `check` only compares. *)
+   removes what it no longer makes, `check` only compares. `librariesPage`
+   is the overview of every library, grouped by area, one page above those
+   trees. *)
 structure DocSite =
 struct
   structure I = DocIR
@@ -304,32 +306,36 @@ struct
       @ (case List.filter (fn s => areaOf s = NONE) sigs of [] => [] | rest => [(NONE, rest)])
     end
 
-  (* hasTypes: the page of the types that are one type is made (the library elaborates). *)
+  (* hasTypes: the page of the types that are one type is made (the library elaborates).
+     basisLibrary: the top-level environment, the types that are one type, the
+     readings and the status of each signature are that library's. Any other
+     library is required throughout, and an undocumented entry is an error, so
+     its overview does not repeat a status or a count of what is documented.
+     conventionsHref: where "how to read these pages" is, one copy for the
+     whole tree. *)
   fun readme (env : P.env, title : string, overview : I.doc, sigs : I.signatureRecord list,
-              functors : (string * I.doc) list, letters : string list, hasTypes : bool) : string =
+              functors : (string * I.doc) list, letters : string list, hasTypes : bool,
+              basisLibrary : bool, conventionsHref : string) : string =
     let
       fun link c = case R.resolve (#index env, "", [], []) c of
                      R.Target t => SOME (P.href (env, "README.md", t, Source.noSpan))
                    | _ => NONE
       fun row (s : I.signatureRecord) =
-        let val es = P.entriesOf (#body s)
-        in
-          ["[" ^ M.code (#name s) ^ "](" ^ P.href (env, "README.md", {page = R.sigPage (#name s), anchor = ""}, #span s) ^ ")",
-           M.cell link (P.summaryOf (#doc s)),
-           M.escape (P.statusOf (#doc s)),
-           Int.toString (List.length (List.filter P.isDocumented es)) ^ " of " ^ Int.toString (List.length es)]
-        end
+        ["[" ^ M.code (#name s) ^ "](" ^ P.href (env, "README.md", {page = R.sigPage (#name s), anchor = ""}, #span s) ^ ")",
+         M.cell link (P.summaryOf (#doc s))]
+        @ (if basisLibrary then [M.escape (P.statusOf (#doc s))] else [])
       fun area (a, members) =
         "## " ^ (case a of SOME t => M.escape t | NONE => "Not yet assigned to an area") ^ "\n\n"
-        ^ M.table (["Signature", "", "Status", "Documented"], List.map row members)
+        ^ M.table (["Signature", ""] @ (if basisLibrary then ["Status"] else []), List.map row members)
     in
       "# " ^ M.escape title ^ "\n\n"
       ^ String.concat (List.map (M.block link) overview)
-      ^ "[How to read these pages](conventions.md) &middot; [the top-level environment](top-level.md)"
+      ^ "[How to read these pages](" ^ conventionsHref ^ ")"
+      ^ (if basisLibrary then " &middot; [the top-level environment](top-level.md)" else "")
       ^ " &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md)"
       ^ " &middot; [what depends on what](depends.md)"
-      ^ (if hasTypes then " &middot; [types that are one type](types.md)" else "")
-      ^ " &middot; [readings of the specification](readings.md)"
+      ^ (if basisLibrary andalso hasTypes then " &middot; [types that are one type](types.md)" else "")
+      ^ (if basisLibrary then " &middot; [readings of the specification](readings.md)" else "")
       ^ " &middot; [what is documented](coverage.md) &middot; index: "
       ^ String.concatWith " " (List.map (fn l => "[" ^ l ^ "](index/" ^ l ^ ".md)") letters) ^ "\n\n"
       ^ String.concat (List.map area (byArea sigs))
@@ -459,7 +465,7 @@ struct
     ^ "  they are written for, or by the test functor and the structures it is applied to.\n"
     ^ (case annotated of
          SOME (title, intro) =>
-           "- **" ^ M.escape title ^ "**, folded, is not from the comments of the library"
+           "- **" ^ M.escape title ^ "**, folded, when `--annotations` was given, is not from the comments of the library"
            ^ (if intro = "" then "." else ": " ^ M.escape intro) ^ "\n"
        | NONE => "")
     ^ "\n"
@@ -478,7 +484,7 @@ struct
     ^ "- **Notes**: the notes whose id names this structure, wherever they are written. A reading of the\n"
     ^ "  specification is written in the signature's file, since it holds for every structure that\n"
     ^ "  implements it, and its id names the structure whose checks pin it.\n"
-    ^ "- A member that no signature describes is not linked; [coverage.md](coverage.md) counts them.\n\n"
+    ^ "- A member that no signature describes is not linked; the library's page of what is documented counts them.\n\n"
     ^ "## Anchors\n\n"
     ^ "Every entry has an anchor `kind-name`, where the kind is one of `val`, `type`, `exn`, `con`\n"
     ^ "(constructor), `fld` (field) and `str` (substructure), and the name is in lower case. A prime is\n"
@@ -503,7 +509,8 @@ struct
                 (R.bodyOf (index, sigName)))
 
   (* namesOf: what elaboration knows a structure to declare, if the library
-     was elaborated. *)
+     was elaborated. basisLibrary: only the Basis mixes required, optional and
+     extension, so only its table names a status. *)
   (* A structure that shows a program more than its signatures name is an
      error: it needs a seal file in the MANIFEST. *)
   (* rows: every structure that has a page, with the claims it makes and the
@@ -512,7 +519,8 @@ struct
                       rows' : {name : string, rhs : I.rhs, file : string, mine : DocClaims.claim list,
                                (* the signature that specifies it, when it claims none itself *)
                                within : string option, status : string} list,
-                      namesOf : (string list -> string list option) option) : string =
+                      namesOf : (string list -> string list option) option,
+                      basisLibrary : bool) : string =
     let
       val claims = sort (fn (a : DocClaims.claim, b : DocClaims.claim) =>
                            case String.compare (#name a, #name b) of
@@ -524,20 +532,28 @@ struct
         | I.Apply (f, _) => "an application of " ^ M.code f
         | _ => ""
       fun sigLink s = "[" ^ M.code s ^ "](" ^ P.href (env, "structures.md", {page = R.sigPage s, anchor = ""}, Source.noSpan) ^ ")"
-      (* one row per claim; a structure that claims nothing has one of its own *)
+      fun statusCell st = if basisLibrary then [st] else []
+      (* one row per claim; a structure that claims nothing has one of its own.
+         The ascription (: or :>) is its own column, with no heading. *)
       fun rowsOf {name, rhs, file, mine, within, status} =
-        case mine of
-          [] => [[P.strLink (env, "structures.md", name),
-                  (case within of SOME sg => "*in* " ^ sigLink sg | NONE => "*none*"),
-                  "", status, definedAs rhs, P.sourceLink (env, "", file)]]
-        | _ => List.map (fn c : DocClaims.claim =>
-                           [P.strLink (env, "structures.md", name),
-                            (if #opaque c then ":> " else ": ") ^ sigLink (#signat c),
-                            if #realisations c = "" then "" else M.code (#realisations c),
-                            (case #status c of SOME st => st | NONE => sigStatus (#signat c)),
-                            definedAs rhs,
-                            P.sourceLink (env, "", file)])
-                        mine
+        let
+          val lead = P.strLink (env, "structures.md", name)
+          val tail = [definedAs rhs, P.sourceLink (env, "", file)]
+        in
+          case mine of
+            [] => [[lead,
+                    (case within of SOME _ => "*in*" | NONE => ""),
+                    (case within of SOME sg => sigLink sg | NONE => "*none*"),
+                    ""] @ statusCell status @ tail]
+          | _ => List.map (fn c : DocClaims.claim =>
+                             [lead,
+                              if #opaque c then ":>" else ":",
+                              sigLink (#signat c),
+                              if #realisations c = "" then "" else M.code (#realisations c)]
+                             @ statusCell (case #status c of SOME st => st | NONE => sigStatus (#signat c))
+                             @ tail)
+                          mine
+        end
       (* What a structure declares beyond the signatures it claims: of a
          written-out structure what its body declares, in the order of the
          source; of one that is another by name, or an application of a
@@ -589,13 +605,15 @@ struct
       ^ "[" ^ M.escape title ^ "](README.md)\n\n"
       ^ "Every public structure of the library, with the signature it says it implements. Each has a page of\n"
       ^ "its own, which shows its members with the types it gives them; the signature's page says what they\n"
-      ^ "mean. A signature of *none* means that no signature of the library names the structure, or that the\n"
-      ^ "signature of the structure around it specifies it: its own page is then the only place it is\n"
-      ^ "described.\n\n"
-      ^ "`:>` means that the source seals the structure with the signature, so that its types are its own;\n"
-      ^ "`:` that it matches it, which the test suite checks. Either way a program sees the members that the\n"
-      ^ "signature names and no others.\n\n"
-      ^ M.table (["Structure", "Signature", "Realisations", "Status", "", "Source"],
+      ^ "mean. A signature of *none* means that no signature of the library names the structure: its own page\n"
+      ^ "is then the only place it is described. *in* before a signature means that the signature of the\n"
+      ^ "structure around it specifies this one.\n\n"
+      ^ "`:>` before a signature means that the source seals the structure with it, so that its types are its\n"
+      ^ "own; `:` that it matches it, which the test suite checks. Either way a program sees the members that\n"
+      ^ "the signature names and no others.\n\n"
+      ^ M.table (["Structure", "", "Signature", "Realisations"]
+                 @ (if basisLibrary then ["Status"] else [])
+                 @ ["", "Source"],
                  List.concat (List.map rowsOf (sort (fn (a, b) => String.compare (#name a, #name b) = LESS) rows')))
       ^ "---\n\n<sub>Generated by runedoc; do not edit.</sub>\n"
     end
@@ -840,16 +858,149 @@ struct
      sources are relative to. *)
   fun upFrom (out : string) : string = String.concat (List.map (fn _ => "../") (components out))
 
-  fun overviewOf (dir : string) : I.doc =
+  (* The first paragraph of a comment, which is the sentence an index uses. *)
+  fun firstPara (doc : I.doc) : T.inline list option =
+    case List.find (fn T.Para _ => true | _ => false) doc of
+      SOME (T.Para is) => if List.null is then NONE else SOME is
+    | _ => NONE
+
+  (* README.md is the overview of the library, and the page GitHub renders for
+     its directory. The heading is the library's name. An HTML comment
+     `<!-- Area: NAME -->` names the area and is not rendered; a paragraph
+     `Area: NAME` names it the same way. The first paragraph is the short
+     description and the rest is the long one. A missing file is NONE. A file
+     that does not begin with a heading is reported here, with an empty name. *)
+  fun loadReadme (dir : string) : {title : string, doc : I.doc} option =
     let
-      val path = dir ^ "/overview.doc"
+      val path = dir ^ "/README.md"
       val ins = TextIO.openIn path
       val text = TextIO.inputAll ins before TextIO.closeIn ins
       val span = {file = path, start = 0, stop = 0}
+      val lines = String.fields (fn c => c = #"\n") text
+      fun blank l = List.all Char.isSpace (String.explode l)
+      fun dropBlanks ls =
+        case ls of
+          l :: rest => if blank l then dropBlanks rest else ls
+        | [] => []
+      fun trim s =
+        Substring.string (Substring.dropl Char.isSpace (Substring.dropr Char.isSpace (Substring.full s)))
+      fun heading l =
+        if String.isPrefix "# " l then SOME (trim (String.extract (l, 2, NONE))) else NONE
+      (* A whole line `<!-- Area: NAME -->`. GitHub does not render it. *)
+      fun areaComment l =
+        let
+          val t = trim l
+          val openC = "<!--"
+          val closeC = "-->"
+          val key = "Area:"
+        in
+          if String.size t >= String.size openC + String.size closeC
+             andalso String.isPrefix openC t andalso String.isSuffix closeC t then
+            let
+              val inner = trim (String.substring (t, String.size openC,
+                                                  String.size t - String.size openC - String.size closeC))
+            in
+              if String.isPrefix key inner then SOME (trim (String.extract (inner, String.size key, NONE)))
+              else NONE
+            end
+          else NONE
+        end
+      fun bodyOf rest =
+        case dropBlanks rest of
+          l :: more =>
+            (case areaComment l of
+               SOME area => "Area: " ^ area ^ "\n\n" ^ String.concatWith "\n" more
+             | NONE => String.concatWith "\n" (l :: more))
+        | [] => ""
+      fun parsed body = T.parse (fn why => DocDiag.error (span, why)) body
+      fun bad () =
+        (DocDiag.error (span, "a library's README.md begins with its name, `# Debug Adapter Protocol`");
+         {title = "", doc = []})
     in
-      T.parse (fn why => DocDiag.error (span, why)) text
+      case dropBlanks lines of
+        [] => SOME (bad ())
+      | l :: rest =>
+          SOME (case heading l of
+                  SOME t => if t = "" then bad () else {title = t, doc = parsed (bodyOf rest)}
+                | NONE => bad ())
     end
-    handle IO.Io _ => []
+    handle IO.Io _ => NONE
+
+  (* The name, the area and the short description of a library, from its
+     README.md. The rest of the file is the long description, which the
+     library's own page shows after the short one and the overview does not.
+     An empty area means the library is left out of the overview; the reason
+     has been reported. *)
+  fun described (dir : string) : {area : string, title : string, blurb : string} =
+    let
+      val path = dir ^ "/README.md"
+      val span = {file = path, start = 0, stop = 0}
+      fun fail () = {area = "", title = "", blurb = ""}
+      fun areaOf doc = case P.areaOf doc of SOME a => if a = "" then NONE else SOME a | NONE => NONE
+    in
+      case loadReadme dir of
+        NONE =>
+          (DocDiag.error (span, "a library's README.md is its overview, and begins with its name, `# Debug Adapter Protocol`");
+           fail ())
+      | SOME {title = "", ...} => fail ()
+      | SOME {title, doc} =>
+          (case (areaOf doc, firstPara doc) of
+             (SOME a, SOME is) => {area = a, title = title, blurb = M.cell (fn _ => NONE) is}
+           | (area, short) =>
+               (if not (isSome area) then
+                  DocDiag.error (span, "a library's README.md names its area, `<!-- Area: Testing -->`")
+                else ();
+                if not (isSome short) then
+                  DocDiag.error (span, "a library's README.md gives its short description, one paragraph")
+                else ();
+                fail ()))
+    end
+
+  (* The title of the library's pages. The heading of README.md is that name.
+     `--title` is the name of a library that has no README.md, and when both
+     are given they are the same heading. *)
+  fun pageTitle (dir : string, asked : string option) : {title : string, overview : I.doc} =
+    let
+      val span = {file = dir ^ "/README.md", start = 0, stop = 0}
+      fun fallback asked' =
+        case asked' of SOME t => t | NONE => List.last (String.tokens (fn c => c = #"/") dir) handle Empty => dir
+    in
+      case (loadReadme dir, asked) of
+        (NONE, asked') => {title = fallback asked', overview = []}
+      | (SOME {title = "", doc}, asked') => {title = fallback asked', overview = doc}
+      | (SOME {title = t, doc}, NONE) => {title = t, overview = doc}
+      | (SOME {title = t, doc}, SOME asked') =>
+          if t = asked' then {title = t, overview = doc}
+          else (DocDiag.error (span, "--title gives " ^ asked' ^ " and the heading of README.md is " ^ t);
+                {title = t, overview = doc})
+    end
+
+  (* docs/lib/README.md: the libraries grouped by area. The order of the areas,
+     and of the libraries in one, is the order they were asked for. The name
+     of a row is the heading of the library's README.md, and the name in code
+     is what `rune --library` takes. *)
+  fun librariesPage (pages : {name : string, dir : string, rel : string} list) : string =
+    let
+      fun insert ((area, row), []) = [(area, [row])]
+        | insert ((area, row), (a, rows) :: rest) =
+            if a = area then (a, rows @ [row]) :: rest
+            else (a, rows) :: insert ((area, row), rest)
+      val groups =
+        List.foldl (fn (p, acc) =>
+                      let val {area, title, blurb} = described (#dir p)
+                          val row = ["[" ^ M.escape title ^ "](" ^ #rel p ^ "/README.md) " ^ M.code (#name p), blurb]
+                      in if area = "" then acc else insert ((area, row), acc) end)
+                   [] pages
+      fun section (area, rows) = "## " ^ M.escape area ^ "\n\n" ^ M.table (["Library", ""], rows)
+    in
+      "# Libraries\n\n"
+      ^ "The libraries that come with Rune, grouped by what they are for. Each is a\n"
+      ^ "directory of `lib/` with a MANIFEST, documented from the signatures it is\n"
+      ^ "built from. A program asks for one by name, `rune --library NAME`; the Basis\n"
+      ^ "Library is what every program starts with.\n\n"
+      ^ String.concat (List.map section groups)
+      ^ "---\n\n<sub>Generated by runedoc; do not edit.</sub>\n"
+    end
 
   (* Every anchor of a page once, and every link to a page and an anchor that
      are there. pages: the pages that exist, or NONE when only some pages were
@@ -1489,10 +1640,12 @@ struct
                            entries)
     end
 
-  fun build {dir : string, prelude : DocElab.prelude, title : string, out : string, tests : string option,
+  fun build {dir : string, prelude : DocElab.prelude, title : string option, out : string, tests : string option,
              annotations : string option, lawSkips : string option, basisDocs : string option,
-             libraryDocs : (string * string) list} : file list =
+             libraryDocs : (string * string) list, basisLibrary : bool,
+             shared : {href : string, emit : bool}} : file list =
     let
+      val {title, overview} = pageTitle (dir, title)
       val modules = load dir
       val sigs = sort (fn (a : I.signatureRecord, b : I.signatureRecord) => String.compare (#name a, #name b) = LESS) (signaturesOf modules)
       val own = List.map #name sigs
@@ -1865,11 +2018,24 @@ struct
                                  (R.funPage name, functorPage (env "../", title) (name, file, span, doc, param, result)))
                               functors
       val (indexFiles, letters) = indexPages (env "", sigs)
+      (* The top-level environment, the types that are one type and the readings
+         of the specification are the Basis Library's. conventions.md is one
+         copy for every library; the Basis Library writes it, and the others
+         link to it. *)
+      val basisPages =
+        if not basisLibrary then []
+        else ("top-level.md", topLevelPage (env "", title, modules))
+             :: ("readings.md", readingsPage (env "", title, notes, labels))
+             :: (case elaborated of
+                   SOME lib => [("types.md", typesPage (env "", title, modules, lib, DocElab.typeNames (lib, isPublic)))]
+                 | NONE => [])
       val files =
-        ("README.md", readme (env "", title, overviewOf dir, sigs, List.map (fn f => (#name f, #doc f)) functors, letters,
-                              isSome elaborated))
-        :: ("conventions.md", conventions (Option.map (fn a : DocAnnot.file => (#title a, #intro a)) annotated))
-        :: ("coverage.md", coverage (sigs, structureCoverage,
+        ("README.md", readme (env "", title, overview, sigs, List.map (fn f => (#name f, #doc f)) functors, letters,
+                              isSome elaborated, basisLibrary, #href shared))
+        :: (if #emit shared then
+              [(#href shared, conventions (Option.map (fn a : DocAnnot.file => (#title a, #intro a)) annotated))]
+            else [])
+        @ (("coverage.md", coverage (sigs, structureCoverage,
                                      case labels of
                                                   SOME ls => List.filter (fn n : DocNotes.note =>
                                                                             (#kind n = "Deviation" orelse #kind n = "Limitation")
@@ -1877,11 +2043,9 @@ struct
                                                 | NONE => []))
         :: ("structures.md",
             structuresPage (env "", title, modules, sigStatus, indexRows,
-                            Option.map DocElab.namesOf elaborated))
+                            Option.map DocElab.namesOf elaborated, basisLibrary))
         :: ("depends.md", dependsPage (env "", title, BasisManifest.readManifest dir, areaOfModule))
-        :: ("top-level.md", topLevelPage (env "", title, modules))
         :: ("exceptions.md", exceptionsPage (env "", title, sigs))
-        :: ("readings.md", readingsPage (env "", title, notes, labels))
         :: ("notes.tsv", DocNotes.tsv labels notes)
         :: ("members.json", membersIndex (sigs, sort (fn (a : DocClaims.claim, b : DocClaims.claim) =>
                                                         case String.compare (#name a, #name b) of
@@ -1894,10 +2058,7 @@ struct
                                          List.map (fn s : I.signatureRecord => (#name s, #file s))
                                                   (List.filter (fn s : I.signatureRecord => isPublic (#name s)) sigs)))
         :: sigPages @ strPages @ funPages @ indexFiles
-        (* what only elaboration knows *)
-        @ (case elaborated of
-             SOME lib => [("types.md", typesPage (env "", title, modules, lib, DocElab.typeNames (lib, isPublic)))]
-           | NONE => [])
+        @ basisPages)
       val () = verify (env "", SOME (List.map #1 files))
       (* file names differ in more than case, for the file systems that ignore it *)
       val () =
