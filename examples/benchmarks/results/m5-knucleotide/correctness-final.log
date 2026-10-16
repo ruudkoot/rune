@@ -1,0 +1,7 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-knucleotide.jxehfj24
+PASS knucleotide smoke O0
+PASS knucleotide smoke O2
+FAIL knucleotide smoke hosts
+PASS knucleotide normal O0
+PASS knucleotide normal O2
+FAIL knucleotide normal hosts

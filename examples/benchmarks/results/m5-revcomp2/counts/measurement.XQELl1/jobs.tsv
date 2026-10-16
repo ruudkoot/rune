@@ -1,0 +1,1 @@
+revcomp2	600	4194304	shared/input.sml shared/sandmark-revcomp2.sml shared/revcomp-check.sml revcomp2/benchmark.sml shared/main.sml	data/normal.fasta data/normal.output	revcomp2/normal.expected	data/normal.fasta data/normal.output

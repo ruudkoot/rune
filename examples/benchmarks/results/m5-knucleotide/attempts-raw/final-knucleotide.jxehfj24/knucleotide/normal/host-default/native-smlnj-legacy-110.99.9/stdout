@@ -1,0 +1,52 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-knucleotide.sml]
+[autoloading]
+[autoloading done]
+structure BenchKnucleotide : sig
+  val for : int -> int -> (int -> 'a) -> unit
+  val dna : string -> CharArray.array
+  datatype bucket
+    = Empty
+    | Entry of {count:int ref, key:CharArray.array, next:bucket ref}
+  type table = {buckets:bucket array ref, size:int ref}
+  val create : unit -> table
+  val hash : CharArray.array -> Word64.word
+  val index : 'a array -> CharArray.array -> int
+  val equal : CharArray.array * CharArray.array -> bool
+  val find : table -> CharArray.array -> int ref option
+  val clear : table -> unit
+  val resize : table -> unit
+  val add : table -> CharArray.array -> unit
+  val fold : table -> (CharArray.array * int * 'a -> 'a) -> 'a -> 'a
+  val counts : table -> int -> CharArray.array -> unit
+  val keyString : CharArray.array -> string
+  val sort : (string * real) list -> (string * real) list
+  val run : string -> (string -> unit) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/knucleotide-check.sml]
+[autoloading]
+[autoloading done]
+structure KnucleotideCheck : sig
+  val run : string -> string -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/knucleotide/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 246
+PASS knucleotide
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,203 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 400371e8..7cb58bf9 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -283,6 +283,8 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [pidigits5](#pidigits5) | [Sandmark pidigits5](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/pidigits5.ml) | Generate pi with three arbitrary-precision transformation components and check every digit and output column. |
+ | [evolutionary_algorithm](#evolutionary_algorithm) | [Sandmark evolutionary search](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-numerical/evolutionary_algorithm.ml) | Run seeded sequential tournament selection and copying mutation, checking every final chromosome and fitness. |
+ | [smallpt](#smallpt) | [nofib smallpt](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/smallpt) | Trace the deterministic nine-sphere scene with diffuse, mirror and glass paths, checking every RGB component. |
++| [revcomp2](#revcomp2) | [Sandmark revcomp2](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/revcomp2.ml) | Reverse and complement FASTA records through a line list and 61-byte buffer, checking every output byte. |
++| [knucleotide](#knucleotide) | [Sandmark knucleotide](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/knucleotide.ml) | Count overlapping DNA substrings using reusable byte keys and mutable chained-table counts, checking sorted frequencies and all queries. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -393,6 +395,8 @@ sh tests/benchmarks/check-game-numerical.sh
+ sh tests/benchmarks/check-pidigits5.sh
+ sh tests/benchmarks/check-evolutionary.sh
+ sh tests/benchmarks/check-smallpt.sh
++sh tests/benchmarks/check-revcomp2.sh
++sh tests/benchmarks/check-knucleotide.sh
+ python3 tests/benchmarks/test-inventory.py
+ python3 scripts/benchmark-inventory.py --check
+ ```
+@@ -11006,3 +11010,166 @@ until supported by inspection or measurement. Standard reports compare identical
+ SML. Original C++ OpenMP behavior is outside this sequential Haskell port.
+ 
+ [Complete provenance](smallpt/PROVENANCE.md).
++
++## revcomp2
++
++## Algorithm and workload
++
++Reverse each FASTA record's sequence, complement uppercase and lowercase ASCII
++through a 256-byte lookup table, and emit at most 60 sequence bytes per line.
++The source retains a reversed list of input lines, walks each line backwards,
++and writes through a 61-byte mutable buffer whose first byte is a newline.
++The port keeps that algorithm, buffer index convention and retained record.
++
++## History, authorship and aliases
++
++Sandmark 5605805954a00497ed197c930641cddd580e1507,
++benchmarks/benchmarksgame/revcomp2.ml credits Ingo Bormuth and the Computer
++Language Benchmarks Game. Preserve the complete source, directory Revised BSD
++notice, aggregate Unlicense, Dune build and directory README. The established
++revcomp2 name identifies this implementation; other reverse-complement algorithms
++are not silently substituted. No upstream timing claim is transferred.
++
++## Known variants and exact source behavior
++
++This variant stores strings in a list and uses a small byte buffer rather than
++reversing a whole contiguous record in place. Preserve its handling of header-only
++records (no added newline), consecutive headers (concatenated), a sequence without
++a header (leading newline), blank lines (record flush), terminal lines without LF,
++60/61-byte boundaries, ambiguous IUPAC codes and unknown bytes (space).
++OCaml input_line removes only LF: CR remains in headers and maps to space in
++sequence data. These source behaviors are recorded rather than normalized to a
++different FASTA reader's conventions.
++
++## Portable translation and adaptations
++
++SML97 TextIO.inputLine replaces OCaml input_line, explicitly removing its terminal
++LF. String lists, Word8Array lookup/buffer storage and descending indexed loops
++preserve traversal and output order. An output callback replaces stdout; the
++streaming BinIO reference checker consumes every emitted byte and verifies EOF.
++Its I/O and validation are measured work. The source's catch-all read termination
++is retained, and the input is closed at the end or after a callback exception.
++All mutable buffers and indices are reconstructed on each invocation.
++
++The source hardcodes input25000000.txt. The suite accepts an explicit controlled
++input path and reference path. Reference runs keep the original fixed filename
++in fresh working directories; no source algorithm edit is required. Output is
++reported as a validated byte count only after full equality, not a hash-only test.
++
++## Compiler/runtime questions
++
++Record retention, list nodes, generic byte-array representation, input strings,
++buffer accesses, tail calls and callback/checker overhead are source-based
++performance questions until established by compiler inspection or measurement.
++SML comparisons use identical sources. OCaml supplies correctness references.
++The workload is sequential and needs no FFI, parallelism or runtime extensions.
++
++## Inputs, validation and references
++
++Fixed smoke/normal/large inputs are generated by the same pinned Sandmark fasta3
++with parameters 1,000 / 50,000 / 500,000, seed 42, width 60 and sequence lengths
++2n/3n/5n. The ALU sequence and distributions are embedded source literals;
++there is no separately acquired dataset. Retain the generator's original author
++credits, notice, source identity and every generated input/output identity.
++Large is an explicitly reduced scaling profile. Dune's 25,000,000 default and
++5,000,000 auxiliary input remain documented; neither full generator input is
++claimed as an executed revcomp2 profile in this import.
++
++Original OCaml outputs agree byte for byte with an independent implementation
++that joins each generated record, reverses/complements it and wraps at 60.
++Eleven original edge fixtures specify the unusual source formatting. Semantic
++checks consume these fixtures and the complete smoke output; deliberately
++corrupted, truncated and extra references must fail. Large SML execution is
++claimed only when separately recorded. The retained source/header and suite
++measurement survey provide history and methodology; FASTA itself does not define
++this implementation's exceptional-input behavior.
++
++[Complete provenance](revcomp2/PROVENANCE.md).
++
++## knucleotide
++
++## Algorithm and workload
++
++Extract the FASTA sequence whose header begins with >THREE, uppercase it, and
++count overlapping nucleotide substrings. For each length, clear a chained hash
++table, reuse a mutable lookup key, copy the key only on insertion, and increment
++a reference on a hit. Emit sorted one-/two-base frequencies and counts for the
++five source queries of lengths 3, 4, 6, 12 and 18. Preserve the inclusive final
++window and the original descending-frequency/ascending-key ordering.
++
++## History, authorship and aliases
++
++Sandmark 5605805954a00497ed197c930641cddd580e1507,
++benchmarks/benchmarksgame/knucleotide.ml credits Troestler Christophe and Mauricio
++Fernandez, with Computer Language Benchmarks Game ancestry. Preserve that file,
++Dune, directory README, Revised BSD notice and aggregate Unlicense. OCaml 4.14.1
++library sources are separately pinned at 99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93;
++the installed hashtbl.ml and buffer.ml match those exact source bytes. Their
++Xavier Leroy/INRIA copyrights, LGPL 2.1 notice and linking exception are retained.
++The replacement buffer/table support follows those algorithms; the corresponding
++notice also appears in the SML source.
++
++## Differences between known variants
++
++The separately inventoried knucleotide3 packs nucleotide values into integers,
++uses width-dependent key thresholds and retains its tables across query lengths.
++Its loop also omits the last window. These are material differences; do not
++replace the present byte-key/clear-per-length implementation or its expected
++frequencies with that version. Original full outputs and independent replays of
++both variants document the differences. knucleotide3 is not claimed imported here.
++
++## Portable translation and adaptations
++
++SML97 CharArray keys replace OCaml Bytes; integer references retain mutable counts.
++A self-contained chained table starts with 262144 buckets, uses the source
++polynomial hash h*5+byte, inserts at the head, and doubles above two entries per
++bucket. Rehashing preserves chain order with mutable links and tail arrays.
++Word64 retains the source's 63-bit hash arithmetic without host-Int-width
++assumptions; bucket indices/counts fit every selected SML host's Int. SML's
++record/reference and generic array layouts may add indirections or initialization.
++
++The input buffer starts at 1000, doubles as required, retains its existing bytes,
++and makes the final sequence copy. ASCII uppercasing and terminal-LF removal
++preserve source input semantics. The first-data-line catch-all and comment skip
++remain, as do rejection of an empty subsequent line and missing THREE header.
++Closing the file on return/error supports repeated invocation. All mutable
++sequence/table state moves from process initialization into Benchmark.run,
++restoring fresh-process semantics on every repetition and avoiding file I/O
++while native hosts export their entry points.
++
++SML97 has no standard sort, so portable merge sort replaces List.sort. The exact
++comparison, binary64 operation association and fixed three-decimal formatting
++remain; sort implementation/allocation is an explicit library adaptation.
++A callback replaces stdout and the BinIO checker consumes every output byte plus
++EOF before returning its byte count. Input loading, table allocation, formatting
++and reference I/O/checking are measured work. No precomputed frequency replaces
++execution of any count pass.
++
++## Compiler/runtime behavior to investigate
++
++Byte-key copying, collision chains, mutable counters, clearing cost, table growth,
++string/buffer retention, boxing, Word64 arithmetic and sorting/formatting are
++source-based performance questions until supported by inspection or measurement.
++Standard reports compare identical SML; OCaml supplies correctness references.
++No parallelism, effect handlers or FFI are required.
++
++## Inputs, checks and references
++
++Smoke/normal/large reuse pinned fasta3 inputs with n=1000/50000/500000, seed 42,
++width 60 and the embedded ALU/probability tables. THREE contains 5000/250000/2500000
++bases. Source Dune uses n=25000000 and also generates n=5000000; those complete
++revcomp/nucleotide defaults are not claimed executed here. Large is an explicit
++reduced scaling input. No separately acquired dataset or dataset notice is added.
++
++Complete original outputs agree with an independent dictionary-based substring
++counter for every selected input, including the large reference. Original edge
++fixtures cover case conversion, prefix header matching, initial comments, record
++termination, short input, absent terminal LF, initial empty lines and unusual
++characters. Tests also cover rejected malformed inputs, deliberately wrong/
++truncated/extra references, per-length clearing, and 256 independent four-mer
++counts through forced collisions and multiple table resizes. Large SML execution
++is claimed only where separately recorded. The retained source headers and suite
++measurement survey provide the history/methodology; no historical timing claim
++is transferred to this translation.
++
++[Complete provenance](knucleotide/PROVENANCE.md).
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 75c5ce6a..b7dc11fc 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -818,3 +818,9 @@ evolutionary_algorithm	large	sandmark	benchmarks/multicore-numerical/evolutionar
+ smallpt	smoke	nofib	real/smallpt	16 12 1 expected/smoke.rgb	smallpt/smoke.expected	shared/input.sml,shared/nofib-smallpt.sml,shared/smallpt-check.sml,smallpt/benchmark.sml,shared/main.sml	30	1048576	rendering,floating-point,deterministic-rng,recursion,strict-vectors	expected/smoke.rgb	checked-numerical	implemented
+ smallpt	normal	nofib	real/smallpt	64 48 1 expected/normal.rgb	smallpt/normal.expected	shared/input.sml,shared/nofib-smallpt.sml,shared/smallpt-check.sml,smallpt/benchmark.sml,shared/main.sml	600	4194304	rendering,floating-point,deterministic-rng,recursion,strict-vectors	expected/normal.rgb	checked-numerical	implemented
+ smallpt	large	nofib	real/smallpt	512 384 6 expected/large.rgb	smallpt/large.expected	shared/input.sml,shared/nofib-smallpt.sml,shared/smallpt-check.sml,smallpt/benchmark.sml,shared/main.sml	3600	8388608	rendering,floating-point,deterministic-rng,recursion,strict-vectors	expected/large.rgb	checked-numerical	implemented
++revcomp2	smoke	sandmark	benchmarks/benchmarksgame/revcomp2.exe	data/smoke.fasta data/smoke.output	revcomp2/smoke.expected	shared/input.sml,shared/sandmark-revcomp2.sml,shared/revcomp-check.sml,revcomp2/benchmark.sml,shared/main.sml	30	1048576	bioinformatics,lists,byte-arrays,streaming,io	data/smoke.fasta,data/smoke.output	exact	implemented
++revcomp2	normal	sandmark	benchmarks/benchmarksgame/revcomp2.exe	data/normal.fasta data/normal.output	revcomp2/normal.expected	shared/input.sml,shared/sandmark-revcomp2.sml,shared/revcomp-check.sml,revcomp2/benchmark.sml,shared/main.sml	600	4194304	bioinformatics,lists,byte-arrays,streaming,io	data/normal.fasta,data/normal.output	exact	implemented
++revcomp2	large	sandmark	benchmarks/benchmarksgame/revcomp2.exe	data/large.fasta data/large.output	revcomp2/large.expected	shared/input.sml,shared/sandmark-revcomp2.sml,shared/revcomp-check.sml,revcomp2/benchmark.sml,shared/main.sml	3600	8388608	bioinformatics,lists,byte-arrays,streaming,io	data/large.fasta,data/large.output	exact	implemented
++knucleotide	smoke	sandmark	benchmarks/benchmarksgame/knucleotide.exe	data/smoke.fasta data/smoke.output	knucleotide/smoke.expected	shared/input.sml,shared/sandmark-knucleotide.sml,shared/knucleotide-check.sml,knucleotide/benchmark.sml,shared/main.sml	30	1048576	bioinformatics,hash-tables,byte-arrays,mutable-counts,io	data/smoke.fasta,data/smoke.output	exact	implemented
++knucleotide	normal	sandmark	benchmarks/benchmarksgame/knucleotide.exe	data/normal.fasta data/normal.output	knucleotide/normal.expected	shared/input.sml,shared/sandmark-knucleotide.sml,shared/knucleotide-check.sml,knucleotide/benchmark.sml,shared/main.sml	600	4194304	bioinformatics,hash-tables,byte-arrays,mutable-counts,io	data/normal.fasta,data/normal.output	exact	implemented
++knucleotide	large	sandmark	benchmarks/benchmarksgame/knucleotide.exe	data/large.fasta data/large.output	knucleotide/large.expected	shared/input.sml,shared/sandmark-knucleotide.sml,shared/knucleotide-check.sml,knucleotide/benchmark.sml,shared/main.sml	3600	8388608	bioinformatics,hash-tables,byte-arrays,mutable-counts,io	data/large.fasta,data/large.output	exact	implemented

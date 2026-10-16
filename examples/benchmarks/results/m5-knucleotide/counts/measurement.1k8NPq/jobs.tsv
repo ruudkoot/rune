@@ -1,0 +1,1 @@
+knucleotide	600	4194304	shared/input.sml shared/sandmark-knucleotide.sml shared/knucleotide-check.sml knucleotide/benchmark.sml shared/main.sml	data/normal.fasta data/normal.output	knucleotide/normal.expected	data/normal.fasta data/normal.output

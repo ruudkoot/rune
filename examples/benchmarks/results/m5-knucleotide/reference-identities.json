@@ -1,0 +1,9 @@
+{
+  "ocamlopt_version": "4.14.1",
+  "options": [
+    "-O2"
+  ],
+  "sandmark_revision": "5605805954a00497ed197c930641cddd580e1507",
+  "working_directory": "fresh per profile with exact input25000000.txt filename",
+  "references": "original executable plus independent complete-output comparison"
+}

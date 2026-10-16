@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+revcomp2	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.04	3.87	1.13	672988	-	-	-	revcomp2/native-mlton/build/compile
+revcomp2	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2044	-	-	-	revcomp2/native-mlton/correctness.0
+revcomp2	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2104	-	-	-	revcomp2/native-mlton/fresh.1
+revcomp2	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.17	0.13	0.03	31452	-	-	-	revcomp2/native-smlnj-legacy/build/compile
+revcomp2	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.02	0.00	3960	-	-	-	revcomp2/native-smlnj-legacy/correctness.0
+revcomp2	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.00	0.01	3952	-	-	-	revcomp2/native-smlnj-legacy/fresh.1
+revcomp2	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.27	0.10	0.06	29384	-	-	-	revcomp2/native-polyml/build/compile
+revcomp2	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.00	0.00	7136	-	-	-	revcomp2/native-polyml/correctness.0
+revcomp2	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.01	0.01	0.00	7152	-	-	-	revcomp2/native-polyml/fresh.1

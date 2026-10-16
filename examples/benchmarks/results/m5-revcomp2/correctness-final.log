@@ -1,0 +1,7 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-revcomp2.8g069rfh
+PASS revcomp2 smoke O0
+PASS revcomp2 smoke O2
+FAIL revcomp2 smoke hosts
+PASS revcomp2 normal O0
+PASS revcomp2 normal O2
+FAIL revcomp2 normal hosts

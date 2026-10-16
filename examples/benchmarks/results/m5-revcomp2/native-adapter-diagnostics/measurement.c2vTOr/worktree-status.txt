@@ -1,0 +1,14 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/knucleotide/
+?? examples/benchmarks/revcomp2/
+?? examples/benchmarks/shared/knucleotide-check.sml
+?? examples/benchmarks/shared/revcomp-check.sml
+?? examples/benchmarks/shared/sandmark-knucleotide.sml
+?? examples/benchmarks/shared/sandmark-revcomp2.sml
+?? tests/benchmarks/check-knucleotide.sh
+?? tests/benchmarks/check-revcomp2.sh
+?? tests/benchmarks/data/knucleotide/
+?? tests/benchmarks/data/revcomp2/
+?? tests/benchmarks/knucleotide-tests.sml
+?? tests/benchmarks/revcomp2-tests.sml

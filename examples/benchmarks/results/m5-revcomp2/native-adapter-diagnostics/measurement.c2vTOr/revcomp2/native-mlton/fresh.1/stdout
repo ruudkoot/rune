@@ -1,0 +1,4 @@
+RESULT 10245
+PASS revcomp2
+SAMPLE 1 0.000604000
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,5 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+revcomp2	normal	rune	O2	count	1	1	pass	0.54	0.54	0.01	10468	96413744	169489552	3744886	counts/measurement.XQELl1/revcomp2/rune/fresh.1
+revcomp2	normal	rune:opt	O2	count	1	1	pass	0.16	0.16	0.00	10852	96413744	169489552	3744886	counts/measurement.XQELl1/revcomp2/rune-opt/fresh.1
+revcomp2	normal	rune:new	O2	count	1	1	pass	0.42	0.42	0.00	10436	58450141	169489552	3744886	counts/measurement.XQELl1/revcomp2/rune-new/fresh.1
+revcomp2	normal	rune:jit	O2	count	1	1	pass	0.15	0.13	0.02	11596	58450141	169489552	3744886	counts/measurement.XQELl1/revcomp2/rune-jit/fresh.1

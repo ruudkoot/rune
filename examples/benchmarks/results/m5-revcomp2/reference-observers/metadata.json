@@ -1,0 +1,32 @@
+[
+  {
+    "profile": "smoke",
+    "generator": "pinnedSandmarkfasta3",
+    "parameter": 1000,
+    "input_bytes": 10245,
+    "output_bytes": 10245,
+    "input_sha256": "62d1e8d0df7938d2aefda9a37887e0389231ea72c099c29a51afb6edca1bdc73",
+    "output_sha256": "549dcdcc7df2685145e6cbdfd682469bd9c12ff1beec93c270f8ba447acd4855",
+    "comparison": "complete independent record reversal/complement/wrap60"
+  },
+  {
+    "profile": "normal",
+    "generator": "pinnedSandmarkfasta3",
+    "parameter": 50000,
+    "input_bytes": 508411,
+    "output_bytes": 508411,
+    "input_sha256": "6b40f34703840e073cef7fd62cc95a65f280ba1cf3891aa189a820fe0e081f06",
+    "output_sha256": "b8334d1f7d5fb1c98ec418b11f8aca13381b79336b83677b2ca12b257b19f9e6",
+    "comparison": "complete independent record reversal/complement/wrap60"
+  },
+  {
+    "profile": "large",
+    "generator": "pinnedSandmarkfasta3",
+    "parameter": 500000,
+    "input_bytes": 5083411,
+    "output_bytes": 5083411,
+    "input_sha256": "1dc21045102d2131a8ad4ee8cc426053b17bde4fe108539af7da33eb317fca93",
+    "output_sha256": "0051559c5d8f93220a2bf0cd0ced290cca4487c8579b6f68279ede611663822f",
+    "comparison": "complete independent record reversal/complement/wrap60"
+  }
+]

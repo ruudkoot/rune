@@ -1,0 +1,1 @@
+revcomp2	30	1048576	shared/sandmark-revcomp2.sml shared/revcomp-check.sml revcomp2/benchmark.sml shared/main.sml	data/smoke.fasta data/smoke.output	revcomp2/smoke.expected	data/smoke.fasta data/smoke.output

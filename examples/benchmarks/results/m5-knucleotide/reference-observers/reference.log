@@ -1,0 +1,6 @@
+PASS full original/independent knucleotide smoke 5000 bases
+PASS full original/independent knucleotide3 smoke 5000 bases
+PASS full original/independent knucleotide normal 250000 bases
+PASS full original/independent knucleotide3 normal 250000 bases
+PASS full original/independent knucleotide large 2500000 bases
+PASS full original/independent knucleotide3 large 2500000 bases

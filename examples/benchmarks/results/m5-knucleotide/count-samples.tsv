@@ -1,0 +1,5 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+knucleotide	normal	rune	O2	count	1	1	pass	8.11	7.86	0.46	521352	1706714870	3072129112	68953237	counts/measurement.1k8NPq/knucleotide/rune/fresh.1
+knucleotide	normal	rune:opt	O2	count	1	1	pass	4.47	4.06	0.51	522656	1706714870	3072129112	68953237	counts/measurement.1k8NPq/knucleotide/rune-opt/fresh.1
+knucleotide	normal	rune:new	O2	count	1	1	pass	8.23	7.85	0.59	588016	1163477316	3072129112	68953237	counts/measurement.1k8NPq/knucleotide/rune-new/fresh.1
+knucleotide	normal	rune:jit	O2	count	1	1	pass	3.85	3.42	0.52	589152	1163477316	3072129112	68953237	counts/measurement.1k8NPq/knucleotide/rune-jit/fresh.1

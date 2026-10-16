@@ -1429,3 +1429,43 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-smallpt-819-acceptance.log)
 records the run. All 41 inventory tests pass and all 861 entries validate.
+
+## M5 reverse complement and byte-key nucleotide counts, 2026-10-16
+
+Two imports bring the catalogue to 277 programs and 825 profiles. Each port's
+[28 smoke/normal cases](results/m5-revcomp2/correctness.tsv) pass across Rune's four
+engines at both levels and all six managed native hosts; [nucleotide coverage](results/m5-knucleotide/correctness.tsv)
+is also complete. Fifteen reverse-complement and sixteen nucleotide semantic/
+negative checks pass all ten configurations at both levels. Initial native32
+launches hit sandbox SIGSYS; exact replays outside that filter pass. Original
+attempts remain in separate ledgers. Eight normal count samples agree across
+Rune engines. Existing budgets are unchanged; these new profiles are currently
+unbudgeted. Six serial native smoke samples validate MLton, SML/NJ and Poly/ML
+adapters. Instrumented counts and single-sample diagnostics remain separate
+from headline timings.
+
+Revcomp2 preserves reversed line lists, 61-byte buffering, complement mapping,
+header/blank-line/CR behavior and complete byte output. Knucleotide preserves
+reusable/copied byte keys, mutable counts, per-length clearing, source hash,
+chain order, growth threshold and frequency ordering/formatting. Its option
+lookup replaces the source Not_found boundary explicitly, with that library
+cost difference documented. Both recreate state and close inputs per call.
+Every output byte and EOF is checked. Bad/truncated/extra outputs are rejected;
+256 independent four-mer counts exercise collisions and multiple resizes.
+
+Original OCaml and independent complete-output references agree at all selected
+input sizes. Fixed fasta3 parameters 1000/50000/500000 preserve deterministic
+sequence distributions; large is explicitly reduced from the source default.
+The source's 25000000 default is not claimed executed. Knucleotide3's separate
+packed representation, omitted final window and cumulative tables are recorded
+with original/independent outputs; it is not claimed imported by this wave.
+Pinned original sources, library revisions/notices, fixture identities, raw
+attempts and corrected reference/adaptor attempts are retained. No prerequisite
+compiler/runtime feature or universal large SML execution is introduced or
+claimed. M5 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 825 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-revcomp-knucleotide-825-acceptance.log)
+records the run. All 41 inventory tests pass and all 861 entries validate.

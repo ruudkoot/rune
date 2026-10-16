@@ -1,0 +1,10 @@
+PASS original complete edge 0
+PASS original complete edge 1
+PASS original complete edge 2
+PASS original complete edge 3
+PASS original complete edge 4
+PASS original complete edge 5
+PASS original complete edge 6
+PASS original complete edge 7
+PASS original rejects missing-header
+PASS original rejects empty-later-line

@@ -1,0 +1,11 @@
+{
+  "profile": "large",
+  "generator": "pinnedfasta3",
+  "parameter": 500000,
+  "input_bytes": 5083411,
+  "output_bytes": 5083411,
+  "input_sha256": "1dc21045102d2131a8ad4ee8cc426053b17bde4fe108539af7da33eb317fca93",
+  "output_sha256": "0051559c5d8f93220a2bf0cd0ced290cca4487c8579b6f68279ede611663822f",
+  "source_default_parameter": 25000000,
+  "selection": "explicit reduced scaling profile; source full defaultnotexecuted"
+}

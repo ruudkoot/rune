@@ -1,0 +1,1 @@
+knucleotide	30	1048576	shared/input.sml shared/sandmark-knucleotide.sml shared/knucleotide-check.sml knucleotide/benchmark.sml shared/main.sml	data/smoke.fasta data/smoke.output	knucleotide/smoke.expected	data/smoke.fasta data/smoke.output

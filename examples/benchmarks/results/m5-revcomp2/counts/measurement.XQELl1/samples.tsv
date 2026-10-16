@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+revcomp2	normal	rune	O2	compile	0	0	pass	2.01	1.96	0.10	135240	-	-	-	revcomp2/rune/build/compile
+revcomp2	normal	rune	O2	correctness	0	0	pass	0.50	0.50	0.01	10484	96413744	169489552	3744886	revcomp2/rune/correctness.0
+revcomp2	normal	rune	O2	count	1	1	pass	0.54	0.54	0.01	10468	96413744	169489552	3744886	revcomp2/rune/fresh.1
+revcomp2	normal	rune:opt	O2	compile	0	0	pass	1.59	1.56	0.07	135252	-	-	-	revcomp2/rune-opt/build/compile
+revcomp2	normal	rune:opt	O2	native-compile	0	0	pass	0.34	0.16	0.04	12336	-	-	-	revcomp2/rune-opt/build/native-compile
+revcomp2	normal	rune:opt	O2	correctness	0	0	pass	0.17	0.17	0.00	10788	96413744	169489552	3744886	revcomp2/rune-opt/correctness.0
+revcomp2	normal	rune:opt	O2	count	1	1	pass	0.16	0.16	0.00	10852	96413744	169489552	3744886	revcomp2/rune-opt/fresh.1
+revcomp2	normal	rune:new	O2	compile	0	0	pass	1.60	1.56	0.07	135084	-	-	-	revcomp2/rune-new/build/compile
+revcomp2	normal	rune:new	O2	correctness	0	0	pass	0.40	0.41	0.00	10436	58450141	169489552	3744886	revcomp2/rune-new/correctness.0
+revcomp2	normal	rune:new	O2	count	1	1	pass	0.42	0.42	0.00	10436	58450141	169489552	3744886	revcomp2/rune-new/fresh.1
+revcomp2	normal	rune:jit	O2	compile	0	0	pass	1.90	1.85	0.10	135132	-	-	-	revcomp2/rune-jit/build/compile
+revcomp2	normal	rune:jit	O2	correctness	0	0	pass	0.15	0.14	0.01	11596	58450141	169489552	3744886	revcomp2/rune-jit/correctness.0
+revcomp2	normal	rune:jit	O2	count	1	1	pass	0.15	0.13	0.02	11596	58450141	169489552	3744886	revcomp2/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

@@ -1,0 +1,44 @@
+[
+  {
+    "name": "knucleotide",
+    "profile": "smoke",
+    "input_sha256": "62d1e8d0df7938d2aefda9a37887e0389231ea72c099c29a51afb6edca1bdc73",
+    "dna_bytes": 5000,
+    "output_sha256": "baa63c46addb89c63e68ea0055952847fbccf450e89997b2b62234c90e66f500"
+  },
+  {
+    "name": "knucleotide3",
+    "profile": "smoke",
+    "input_sha256": "62d1e8d0df7938d2aefda9a37887e0389231ea72c099c29a51afb6edca1bdc73",
+    "dna_bytes": 5000,
+    "output_sha256": "aea9363c721c64088b5cf5f587bfc5304f21f00f1f37cb4f4b41e7c4ad0c4833"
+  },
+  {
+    "name": "knucleotide",
+    "profile": "normal",
+    "input_sha256": "6b40f34703840e073cef7fd62cc95a65f280ba1cf3891aa189a820fe0e081f06",
+    "dna_bytes": 250000,
+    "output_sha256": "c8d65f4f2b271a27a1b97f4539e732fcec8f1a2f1fa307e1e75430a5c487c2f3"
+  },
+  {
+    "name": "knucleotide3",
+    "profile": "normal",
+    "input_sha256": "6b40f34703840e073cef7fd62cc95a65f280ba1cf3891aa189a820fe0e081f06",
+    "dna_bytes": 250000,
+    "output_sha256": "03c48f7061e703a884b9878ec37c1f7ea554909f4dad93ceb9a369561c6056d9"
+  },
+  {
+    "name": "knucleotide",
+    "profile": "large",
+    "input_sha256": "1dc21045102d2131a8ad4ee8cc426053b17bde4fe108539af7da33eb317fca93",
+    "dna_bytes": 2500000,
+    "output_sha256": "856703931d584112132a1ec97e34d25f781a07a206bfbb5362f7a6a47503e78e"
+  },
+  {
+    "name": "knucleotide3",
+    "profile": "large",
+    "input_sha256": "1dc21045102d2131a8ad4ee8cc426053b17bde4fe108539af7da33eb317fca93",
+    "dna_bytes": 2500000,
+    "output_sha256": "8e0ad3c21a1e9d42049451b50f5138f13359648c9cf6d68d22de517d927ccab5"
+  }
+]
