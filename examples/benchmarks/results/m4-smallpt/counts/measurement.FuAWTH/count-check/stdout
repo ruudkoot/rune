@@ -1,0 +1,5 @@
+COUNT unbudgeted smallpt normal rune
+COUNT unbudgeted smallpt normal rune:opt
+COUNT unbudgeted smallpt normal rune:new
+COUNT unbudgeted smallpt normal rune:jit
+COUNT comparisons agree

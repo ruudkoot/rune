@@ -1,0 +1,19 @@
+{
+  "ghc": "9.4.7",
+  "adapter": "boxed STRef, strict initialize/write; correctness-only",
+  "adapter_sha256": "5ea66fa39b45f334c4c6a0a345c662430451643a106355320736313ddeb46b83",
+  "pinned_originals": [
+    {
+      "samples": 1,
+      "fixture": "smallpt.stdout",
+      "raw_stdout": "42517.595058",
+      "comparison": "fixture has one terminalLF absent from source hPutStr output"
+    },
+    {
+      "samples": 6,
+      "fixture": "smallpt.slowstdout",
+      "raw_stdout": "106985.997119",
+      "comparison": "fixture has one terminalLF absent from source hPutStr output"
+    }
+  ]
+}

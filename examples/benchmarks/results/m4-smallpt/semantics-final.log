@@ -1,0 +1,1017 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+PASS smallpt/full-rng-states-and-values
+PASS smallpt/complete-smoke-rgb
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+SUMMARY 13 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+PASS smallpt/full-rng-states-and-values
+PASS smallpt/complete-smoke-rgb
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+SUMMARY 13 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+PASS smallpt/full-rng-states-and-values
+PASS smallpt/complete-smoke-rgb
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+SUMMARY 13 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+PASS smallpt/full-rng-states-and-values
+PASS smallpt/complete-smoke-rgb
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+SUMMARY 13 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+PASS smallpt/full-rng-states-and-values
+PASS smallpt/complete-smoke-rgb
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+SUMMARY 13 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-smallpt.sml]
+[autoloading]
+[autoloading done]
+structure BenchSmallpt : sig
+  type vector = real * real * real
+  type ray = vector * vector
+  datatype reflection = Diffuse | Refract | Specular
+  datatype sphere = Sphere of real * vector * vector * vector * reflection
+  val zero : vector
+  val add : vector * vector -> real * real * real
+  val sub : vector * vector -> real * real * real
+  val mul : vector * vector -> real * real * real
+  val cross : vector * vector -> real * real * real
+  val scale : vector -> real -> real * real * real
+  val dot : vector * vector -> real
+  val length : real * real * real -> real
+  val normalize : vector -> real * real * real
+  val maximum : real * real * real -> real
+  val clamp : real -> real
+  val scene : sphere Vector.vector
+  val intersect : ray -> sphere -> real
+  val intersects : ray -> real * sphere
+  val seed : int -> Word64.word
+  val randomStep : Word64.word -> Word64.word * Word64.word
+  val random : Word64.word ref -> real
+  val radiance :
+      (real * real * real) * (real * real * real)
+       -> int -> Word64.word ref -> vector
+  val render : int -> int -> int -> (int -> vector list -> 'a) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/smallpt-check.sml]
+[autoloading]
+[autoloading done]
+structure SmallptCheck : sig
+  structure K : <sig>
+  val real : string -> real
+  val line : TextIO.instream -> string
+  val run : int -> int -> int -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/smallpt-tests.sml]
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+PASS smallpt/full-rng-states-and-values
+PASS smallpt/complete-smoke-rgb
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+structure SmallptTests : sig
+  structure K : <sig>
+  structure C : <sig>
+  val close : real * real -> bool
+  val vector : real * real * real -> real * real * real -> bool
+  val rejects : (unit -> 'a) -> bool
+  val sphere : BenchSmallpt.sphere
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 13 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-smallpt.sml]
+[autoloading]
+[autoloading done]
+structure BenchSmallpt : sig
+  type vector = real * real * real
+  type ray = vector * vector
+  datatype reflection = Diffuse | Refract | Specular
+  datatype sphere = Sphere of real * vector * vector * vector * reflection
+  val zero : vector
+  val add : vector * vector -> real * real * real
+  val sub : vector * vector -> real * real * real
+  val mul : vector * vector -> real * real * real
+  val cross : vector * vector -> real * real * real
+  val scale : vector -> real -> real * real * real
+  val dot : vector * vector -> real
+  val length : real * real * real -> real
+  val normalize : vector -> real * real * real
+  val maximum : real * real * real -> real
+  val clamp : real -> real
+  val scene : sphere Vector.vector
+  val intersect : ray -> sphere -> real
+  val intersects : ray -> real * sphere
+  val seed : int -> Word64.word
+  val randomStep : Word64.word -> Word64.word * Word64.word
+  val random : Word64.word ref -> real
+  val radiance :
+      (real * real * real) * (real * real * real)
+       -> int -> Word64.word ref -> vector
+  val render : int -> int -> int -> (int -> vector list -> 'a) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/smallpt-check.sml]
+[autoloading]
+[autoloading done]
+structure SmallptCheck : sig
+  structure K : <sig>
+  val real : string -> real
+  val line : TextIO.instream -> string
+  val run : int -> int -> int -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/smallpt-tests.sml]
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+FAIL smallpt/full-rng-states-and-values -- false
+FAIL smallpt/complete-smoke-rgb -- raised an exception
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+structure SmallptTests : sig
+  structure K : <sig>
+  structure C : <sig>
+  val close : real * real -> bool
+  val vector : real * real * real -> real * real * real -> bool
+  val rejects : (unit -> 'a) -> bool
+  val sphere : BenchSmallpt.sphere
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 13 checks, 2 failed
+PROGRAM FAIL native:smlnj32@110.99.9 (load 0, exit 1)
+FAIL smallpt/complete-smoke-rgb -- raised an exception
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-smallpt.sml]
+structure BenchSmallpt : 
+  sig
+    type vector = real * real * real
+    type ray = vector * vector
+    datatype reflection = Diffuse | Refract | Specular
+    datatype sphere = Sphere of real * vector * vector * vector * reflection
+    val zero : vector
+    val add : vector * vector -> real * real * real
+    val sub : vector * vector -> real * real * real
+    val mul : vector * vector -> real * real * real
+    val cross : vector * vector -> real * real * real
+    val scale : vector -> real -> real * real * real
+    val dot : vector * vector -> real
+    val length : real * real * real -> real
+    val normalize : vector -> real * real * real
+    val maximum : real * real * real -> real
+    val clamp : real -> real
+    val scene : sphere Vector.vector
+    val intersect : ray -> sphere -> real
+    val intersects : ray -> real * sphere
+    val seed : int -> Word64.word
+    val randomStep : Word64.word -> Word64.word * Word64.word
+    val random : Word64.word ref -> real
+    val radiance : (real * real * real) * (real * real * real)
+                    -> int -> Word64.word ref -> vector
+    val render : int -> int -> int -> (int -> vector list -> 'a) -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/smallpt-check.sml]
+structure SmallptCheck : 
+  sig
+    structure K : <sig>
+    val real : string -> real
+    val line : TextIO.instream -> string
+    val run : int -> int -> int -> string -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/smallpt-tests.sml]
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+PASS smallpt/full-rng-states-and-values
+PASS smallpt/complete-smoke-rgb
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+structure SmallptTests : 
+  sig
+    structure K : <sig>
+    structure C : <sig>
+    val close : real * real -> bool
+    val vector : real * real * real -> real * real * real -> bool
+    val rejects : (unit -> 'a) -> bool
+    val sphere : BenchSmallpt.sphere
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 13 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+PASS smallpt/full-rng-states-and-values
+PASS smallpt/complete-smoke-rgb
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+SUMMARY 13 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+PASS smallpt/full-rng-states-and-values
+PASS smallpt/complete-smoke-rgb
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+SUMMARY 13 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+PROGRAM LIMIT AS 1048576 KiB
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+PASS smallpt/full-rng-states-and-values
+PASS smallpt/complete-smoke-rgb
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+SUMMARY 13 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+PASS smallpt/full-rng-states-and-values
+PASS smallpt/complete-smoke-rgb
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+SUMMARY 13 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+PASS smallpt/full-rng-states-and-values
+PASS smallpt/complete-smoke-rgb
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+SUMMARY 13 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+PASS smallpt/full-rng-states-and-values
+PASS smallpt/complete-smoke-rgb
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+SUMMARY 13 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+PASS smallpt/full-rng-states-and-values
+PASS smallpt/complete-smoke-rgb
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+SUMMARY 13 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-smallpt.sml]
+[autoloading]
+[autoloading done]
+structure BenchSmallpt : sig
+  type vector = real * real * real
+  type ray = vector * vector
+  datatype reflection = Diffuse | Refract | Specular
+  datatype sphere = Sphere of real * vector * vector * vector * reflection
+  val zero : vector
+  val add : vector * vector -> real * real * real
+  val sub : vector * vector -> real * real * real
+  val mul : vector * vector -> real * real * real
+  val cross : vector * vector -> real * real * real
+  val scale : vector -> real -> real * real * real
+  val dot : vector * vector -> real
+  val length : real * real * real -> real
+  val normalize : vector -> real * real * real
+  val maximum : real * real * real -> real
+  val clamp : real -> real
+  val scene : sphere Vector.vector
+  val intersect : ray -> sphere -> real
+  val intersects : ray -> real * sphere
+  val seed : int -> Word64.word
+  val randomStep : Word64.word -> Word64.word * Word64.word
+  val random : Word64.word ref -> real
+  val radiance :
+      (real * real * real) * (real * real * real)
+       -> int -> Word64.word ref -> vector
+  val render : int -> int -> int -> (int -> vector list -> 'a) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/smallpt-check.sml]
+[autoloading]
+[autoloading done]
+structure SmallptCheck : sig
+  structure K : <sig>
+  val real : string -> real
+  val line : TextIO.instream -> string
+  val run : int -> int -> int -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/smallpt-tests.sml]
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+PASS smallpt/full-rng-states-and-values
+PASS smallpt/complete-smoke-rgb
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+structure SmallptTests : sig
+  structure K : <sig>
+  structure C : <sig>
+  val close : real * real -> bool
+  val vector : real * real * real -> real * real * real -> bool
+  val rejects : (unit -> 'a) -> bool
+  val sphere : BenchSmallpt.sphere
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 13 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-smallpt.sml]
+[autoloading]
+[autoloading done]
+structure BenchSmallpt : sig
+  type vector = real * real * real
+  type ray = vector * vector
+  datatype reflection = Diffuse | Refract | Specular
+  datatype sphere = Sphere of real * vector * vector * vector * reflection
+  val zero : vector
+  val add : vector * vector -> real * real * real
+  val sub : vector * vector -> real * real * real
+  val mul : vector * vector -> real * real * real
+  val cross : vector * vector -> real * real * real
+  val scale : vector -> real -> real * real * real
+  val dot : vector * vector -> real
+  val length : real * real * real -> real
+  val normalize : vector -> real * real * real
+  val maximum : real * real * real -> real
+  val clamp : real -> real
+  val scene : sphere Vector.vector
+  val intersect : ray -> sphere -> real
+  val intersects : ray -> real * sphere
+  val seed : int -> Word64.word
+  val randomStep : Word64.word -> Word64.word * Word64.word
+  val random : Word64.word ref -> real
+  val radiance :
+      (real * real * real) * (real * real * real)
+       -> int -> Word64.word ref -> vector
+  val render : int -> int -> int -> (int -> vector list -> 'a) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/smallpt-check.sml]
+[autoloading]
+[autoloading done]
+structure SmallptCheck : sig
+  structure K : <sig>
+  val real : string -> real
+  val line : TextIO.instream -> string
+  val run : int -> int -> int -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/smallpt-tests.sml]
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+FAIL smallpt/full-rng-states-and-values -- false
+FAIL smallpt/complete-smoke-rgb -- raised an exception
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+structure SmallptTests : sig
+  structure K : <sig>
+  structure C : <sig>
+  val close : real * real -> bool
+  val vector : real * real * real -> real * real * real -> bool
+  val rejects : (unit -> 'a) -> bool
+  val sphere : BenchSmallpt.sphere
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 13 checks, 2 failed
+PROGRAM FAIL native:smlnj32@110.99.9 (load 0, exit 1)
+FAIL smallpt/complete-smoke-rgb -- raised an exception
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-smallpt.sml]
+structure BenchSmallpt : 
+  sig
+    type vector = real * real * real
+    type ray = vector * vector
+    datatype reflection = Diffuse | Refract | Specular
+    datatype sphere = Sphere of real * vector * vector * vector * reflection
+    val zero : vector
+    val add : vector * vector -> real * real * real
+    val sub : vector * vector -> real * real * real
+    val mul : vector * vector -> real * real * real
+    val cross : vector * vector -> real * real * real
+    val scale : vector -> real -> real * real * real
+    val dot : vector * vector -> real
+    val length : real * real * real -> real
+    val normalize : vector -> real * real * real
+    val maximum : real * real * real -> real
+    val clamp : real -> real
+    val scene : sphere Vector.vector
+    val intersect : ray -> sphere -> real
+    val intersects : ray -> real * sphere
+    val seed : int -> Word64.word
+    val randomStep : Word64.word -> Word64.word * Word64.word
+    val random : Word64.word ref -> real
+    val radiance : (real * real * real) * (real * real * real)
+                    -> int -> Word64.word ref -> vector
+    val render : int -> int -> int -> (int -> vector list -> 'a) -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/smallpt-check.sml]
+structure SmallptCheck : 
+  sig
+    structure K : <sig>
+    val real : string -> real
+    val line : TextIO.instream -> string
+    val run : int -> int -> int -> string -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/smallpt-tests.sml]
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+PASS smallpt/full-rng-states-and-values
+PASS smallpt/complete-smoke-rgb
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+structure SmallptTests : 
+  sig
+    structure K : <sig>
+    structure C : <sig>
+    val close : real * real -> bool
+    val vector : real * real * real -> real * real * real -> bool
+    val rejects : (unit -> 'a) -> bool
+    val sphere : BenchSmallpt.sphere
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 13 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+PASS smallpt/full-rng-states-and-values
+PASS smallpt/complete-smoke-rgb
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+SUMMARY 13 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS smallpt/vector-operations
+PASS smallpt/normalization
+PASS smallpt/sphere-near-hit
+PASS smallpt/sphere-inside-far-hit
+PASS smallpt/sphere-miss
+PASS smallpt/intersection-epsilon
+PASS smallpt/full-rng-states-and-values
+PASS smallpt/complete-smoke-rgb
+PASS smallpt/zero-samples-stay-black
+PASS smallpt/perturbed-pixel-rejected
+PASS smallpt/perturbed-channel-sum-rejected
+PASS smallpt/truncated-reference-rejected
+PASS smallpt/extra-reference-rejected
+SUMMARY 13 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+bench-smallpt: validation failures (/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smallpt-checks.bXxpPl)

@@ -1,0 +1,198 @@
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 16:12:1:checked
+PASS smallpt
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-smallpt.sml]
+[autoloading]
+[autoloading done]
+structure BenchSmallpt : sig
+  type vector = real * real * real
+  type ray = vector * vector
+  datatype reflection = Diffuse | Refract | Specular
+  datatype sphere = Sphere of real * vector * vector * vector * reflection
+  val zero : vector
+  val add : vector * vector -> real * real * real
+  val sub : vector * vector -> real * real * real
+  val mul : vector * vector -> real * real * real
+  val cross : vector * vector -> real * real * real
+  val scale : vector -> real -> real * real * real
+  val dot : vector * vector -> real
+  val length : real * real * real -> real
+  val normalize : vector -> real * real * real
+  val maximum : real * real * real -> real
+  val clamp : real -> real
+  val scene : sphere Vector.vector
+  val intersect : ray -> sphere -> real
+  val intersects : ray -> real * sphere
+  val seed : int -> Word64.word
+  val randomStep : Word64.word -> Word64.word * Word64.word
+  val random : Word64.word ref -> real
+  val radiance :
+      (real * real * real) * (real * real * real)
+       -> int -> Word64.word ref -> vector
+  val render : int -> int -> int -> (int -> vector list -> 'a) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/smallpt-check.sml]
+[autoloading]
+[autoloading done]
+structure SmallptCheck : sig
+  structure K : <sig>
+  val real : string -> real
+  val line : TextIO.instream -> string
+  val run : int -> int -> int -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/smallpt/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 16:12:1:checked
+PASS smallpt
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-smallpt.sml]
+[autoloading]
+[autoloading done]
+structure BenchSmallpt : sig
+  type vector = real * real * real
+  type ray = vector * vector
+  datatype reflection = Diffuse | Refract | Specular
+  datatype sphere = Sphere of real * vector * vector * vector * reflection
+  val zero : vector
+  val add : vector * vector -> real * real * real
+  val sub : vector * vector -> real * real * real
+  val mul : vector * vector -> real * real * real
+  val cross : vector * vector -> real * real * real
+  val scale : vector -> real -> real * real * real
+  val dot : vector * vector -> real
+  val length : real * real * real -> real
+  val normalize : vector -> real * real * real
+  val maximum : real * real * real -> real
+  val clamp : real -> real
+  val scene : sphere Vector.vector
+  val intersect : ray -> sphere -> real
+  val intersects : ray -> real * sphere
+  val seed : int -> Word64.word
+  val randomStep : Word64.word -> Word64.word * Word64.word
+  val random : Word64.word ref -> real
+  val radiance :
+      (real * real * real) * (real * real * real)
+       -> int -> Word64.word ref -> vector
+  val render : int -> int -> int -> (int -> vector list -> 'a) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/smallpt-check.sml]
+[autoloading]
+[autoloading done]
+structure SmallptCheck : sig
+  structure K : <sig>
+  val real : string -> real
+  val line : TextIO.instream -> string
+  val run : int -> int -> int -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/smallpt/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+FAIL smallpt -- Fail: incorrect result: rendered pixel differs
+SUMMARY 1 checks, 1 failed
+PROGRAM FAIL native:smlnj32@110.99.9 (load 0, exit 1)
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-smallpt.sml]
+structure BenchSmallpt : 
+  sig
+    type vector = real * real * real
+    type ray = vector * vector
+    datatype reflection = Diffuse | Refract | Specular
+    datatype sphere = Sphere of real * vector * vector * vector * reflection
+    val zero : vector
+    val add : vector * vector -> real * real * real
+    val sub : vector * vector -> real * real * real
+    val mul : vector * vector -> real * real * real
+    val cross : vector * vector -> real * real * real
+    val scale : vector -> real -> real * real * real
+    val dot : vector * vector -> real
+    val length : real * real * real -> real
+    val normalize : vector -> real * real * real
+    val maximum : real * real * real -> real
+    val clamp : real -> real
+    val scene : sphere Vector.vector
+    val intersect : ray -> sphere -> real
+    val intersects : ray -> real * sphere
+    val seed : int -> Word64.word
+    val randomStep : Word64.word -> Word64.word * Word64.word
+    val random : Word64.word ref -> real
+    val radiance : (real * real * real) * (real * real * real)
+                    -> int -> Word64.word ref -> vector
+    val render : int -> int -> int -> (int -> vector list -> 'a) -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/smallpt-check.sml]
+structure SmallptCheck : 
+  sig
+    structure K : <sig>
+    val real : string -> real
+    val line : TextIO.instream -> string
+    val run : int -> int -> int -> string -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/smallpt/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 16:12:1:checked
+PASS smallpt
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+RESULT 16:12:1:checked
+PASS smallpt
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 16:12:1:checked
+PASS smallpt
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

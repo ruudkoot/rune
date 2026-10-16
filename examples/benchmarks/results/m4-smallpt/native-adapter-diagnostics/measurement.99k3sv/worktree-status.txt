@@ -1,0 +1,8 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/shared/nofib-smallpt.sml
+?? examples/benchmarks/shared/smallpt-check.sml
+?? examples/benchmarks/smallpt/
+?? tests/benchmarks/check-smallpt.sh
+?? tests/benchmarks/data/smallpt/
+?? tests/benchmarks/smallpt-tests.sml

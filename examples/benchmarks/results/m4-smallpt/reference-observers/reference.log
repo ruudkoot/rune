@@ -1,0 +1,4 @@
+PASS source scene 16 12 1
+PASS source scene 64 48 1
+PASS source scene 512 384 1
+PASS source scene 512 384 6

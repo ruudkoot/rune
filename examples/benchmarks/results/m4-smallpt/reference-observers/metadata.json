@@ -1,0 +1,38 @@
+[
+  {
+    "width": 16,
+    "height": 12,
+    "samples": 1,
+    "seconds": 0.014150353032164276,
+    "bytes": 3569,
+    "sha256": "50caeb426900bd95865c6f4f68fb21a464c2304f95439b063f4cf979155169e6",
+    "adapter": "boxed STRef correctness-only"
+  },
+  {
+    "width": 64,
+    "height": 48,
+    "samples": 1,
+    "seconds": 0.05432308395393193,
+    "bytes": 54292,
+    "sha256": "ee0f139cdd6c2d4f8574e5a1f6c7671cc23dd9affdc22a6c8fd8b1cc09de962b",
+    "adapter": "boxed STRef correctness-only"
+  },
+  {
+    "width": 512,
+    "height": 384,
+    "samples": 1,
+    "seconds": 2.5561070410185494,
+    "bytes": 3459478,
+    "sha256": "54e99275183d3d548cf31bf94d9e1244e17978f511dd64af5ad69172b723745c",
+    "adapter": "boxed STRef correctness-only"
+  },
+  {
+    "width": 512,
+    "height": 384,
+    "samples": 6,
+    "seconds": 13.94543664099183,
+    "bytes": 7531150,
+    "sha256": "28f60442efa3b8f039e1d6b706608cde03f7018b7d0b5f690194b648ebf24431",
+    "adapter": "boxed STRef correctness-only"
+  }
+]

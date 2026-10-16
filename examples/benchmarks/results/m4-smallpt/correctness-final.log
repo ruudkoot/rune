@@ -1,0 +1,7 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-smallpt.69tv46s_
+PASS smallpt smoke O0
+PASS smallpt smoke O2
+FAIL smallpt smoke hosts
+PASS smallpt normal O0
+PASS smallpt normal O2
+FAIL smallpt normal hosts

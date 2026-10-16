@@ -1,0 +1,5 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+smallpt	normal	rune	O2	count	1	1	pass	1.24	1.29	0.00	10696	288537317	221726608	4179492	counts/measurement.FuAWTH/smallpt/rune/fresh.1
+smallpt	normal	rune:opt	O2	count	1	1	pass	0.36	0.38	0.00	11160	288537317	221726608	4179492	counts/measurement.FuAWTH/smallpt/rune-opt/fresh.1
+smallpt	normal	rune:new	O2	count	1	1	pass	0.88	0.92	0.00	10672	129460863	221726608	4179492	counts/measurement.FuAWTH/smallpt/rune-new/fresh.1
+smallpt	normal	rune:jit	O2	count	1	1	pass	0.20	0.21	0.00	12076	129460863	221726608	4179492	counts/measurement.FuAWTH/smallpt/rune-jit/fresh.1

@@ -1397,3 +1397,35 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-evolutionary-816-acceptance.log)
 records the run. All 41 inventory tests pass and all 861 entries validate.
+
+## M4 sequential smallpt rendering, 2026-10-16
+
+One import brings the catalogue to 275 programs and 819 profiles. [All 28
+smoke/normal cases](results/m4-smallpt/coverage.tsv) are accounted for: 26 pass;
+both native32 profiles reject different pixels. All Rune engines pass both
+profiles at both levels; the other five native hosts pass. Thirteen semantic/
+negative checks run on all ten configurations at both levels. Native32 fails
+the complete RNG-state/value and smoke-image checks; its other eleven and all
+other configurations pass. Four normal count samples agree with unchanged
+budgets. Three serial native smoke samples validate MLton, SML/NJ and Poly/ML
+adapters. These diagnostics and instrumented counts remain separate from
+headline timings. Incorrect pixels supply no accepted measurements.
+
+The port preserves scene geometry, strict vectors, branch/draw/row order,
+roulette/splitting, subpixels, jitter, averaging and clamping. Exact dyadic
+conversion replaces the bitcast; all 50 selected full RNG states/draws agree
+with an independent integer recurrence on passing configurations. Complete
+original smoke/normal/full upstream normal/large scenes and strict boxed-STRef
+adapter evidence are retained. The adapter changes reference representation
+and supplies correctness evidence only. The source hash omits terminal LF;
+pinned fixtures add LF, explicitly normalized in their comparison. No RNG
+arithmetic workaround or expected-image change hides the native32 finding.
+Notices, authorship, input/checking costs and numerical bounds are explicit.
+No prerequisite compiler/runtime feature or universal large SML execution
+is introduced or claimed. M4 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 819 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-smallpt-819-acceptance.log)
+records the run. All 41 inventory tests pass and all 861 entries validate.

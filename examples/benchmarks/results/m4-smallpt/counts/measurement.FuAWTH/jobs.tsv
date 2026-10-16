@@ -1,0 +1,1 @@
+smallpt	600	4194304	shared/input.sml shared/nofib-smallpt.sml shared/smallpt-check.sml smallpt/benchmark.sml shared/main.sml	64 48 1 expected/normal.rgb	smallpt/normal.expected	expected/normal.rgb

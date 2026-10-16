@@ -1,0 +1,1 @@
+smallpt	30	1048576	shared/input.sml shared/nofib-smallpt.sml shared/smallpt-check.sml smallpt/benchmark.sml shared/main.sml	16 12 1 expected/smoke.rgb	smallpt/smoke.expected	expected/smoke.rgb

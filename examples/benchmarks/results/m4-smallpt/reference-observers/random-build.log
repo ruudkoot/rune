@@ -1,0 +1,4 @@
+[1 of 4] Compiling Data.STRef.Unboxed ( /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smallpt-originals/Data/STRef/Unboxed.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smallpt-originals/ghc-random/Data/STRef/Unboxed.o )
+[2 of 4] Compiling Kernel           ( /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smallpt-originals/Kernel.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smallpt-originals/ghc-random/Kernel.o )
+[3 of 4] Compiling Main             ( /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smallpt-originals/RandomObserver.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smallpt-originals/ghc-random/Main.o )
+[4 of 4] Linking /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smallpt-originals/random-observer

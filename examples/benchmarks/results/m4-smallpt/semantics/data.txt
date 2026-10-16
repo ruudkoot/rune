@@ -1,0 +1,6 @@
+16-12-1.rgb
+extra.rgb
+random.expected
+truncated.rgb
+wrong-pixel.rgb
+wrong-sum.rgb

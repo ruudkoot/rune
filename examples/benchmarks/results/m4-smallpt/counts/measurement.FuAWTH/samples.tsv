@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+smallpt	normal	rune	O2	compile	0	0	pass	1.52	1.47	0.10	135256	-	-	-	smallpt/rune/build/compile
+smallpt	normal	rune	O2	correctness	0	0	pass	1.18	1.23	0.00	10680	288537317	221726608	4179492	smallpt/rune/correctness.0
+smallpt	normal	rune	O2	count	1	1	pass	1.24	1.29	0.00	10696	288537317	221726608	4179492	smallpt/rune/fresh.1
+smallpt	normal	rune:opt	O2	compile	0	0	pass	1.51	1.51	0.06	135256	-	-	-	smallpt/rune-opt/build/compile
+smallpt	normal	rune:opt	O2	native-compile	0	0	pass	0.35	0.19	0.04	12896	-	-	-	smallpt/rune-opt/build/native-compile
+smallpt	normal	rune:opt	O2	correctness	0	0	pass	0.36	0.37	0.00	11288	288537317	221726608	4179492	smallpt/rune-opt/correctness.0
+smallpt	normal	rune:opt	O2	count	1	1	pass	0.36	0.38	0.00	11160	288537317	221726608	4179492	smallpt/rune-opt/fresh.1
+smallpt	normal	rune:new	O2	compile	0	0	pass	1.57	1.51	0.12	135252	-	-	-	smallpt/rune-new/build/compile
+smallpt	normal	rune:new	O2	correctness	0	0	pass	0.87	0.90	0.00	10812	129460863	221726608	4179492	smallpt/rune-new/correctness.0
+smallpt	normal	rune:new	O2	count	1	1	pass	0.88	0.92	0.00	10672	129460863	221726608	4179492	smallpt/rune-new/fresh.1
+smallpt	normal	rune:jit	O2	compile	0	0	pass	1.54	1.52	0.08	135324	-	-	-	smallpt/rune-jit/build/compile
+smallpt	normal	rune:jit	O2	correctness	0	0	pass	0.24	0.24	0.01	12036	129460863	221726608	4179492	smallpt/rune-jit/correctness.0
+smallpt	normal	rune:jit	O2	count	1	1	pass	0.20	0.21	0.00	12076	129460863	221726608	4179492	smallpt/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

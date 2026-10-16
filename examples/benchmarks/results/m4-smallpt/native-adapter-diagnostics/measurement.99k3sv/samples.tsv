@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+smallpt	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.24	4.01	1.25	672904	-	-	-	smallpt/native-mlton/build/compile
+smallpt	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2704	-	-	-	smallpt/native-mlton/correctness.0
+smallpt	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2580	-	-	-	smallpt/native-mlton/fresh.1
+smallpt	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.24	0.21	0.03	38124	-	-	-	smallpt/native-smlnj-legacy/build/compile
+smallpt	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.01	0.00	4016	-	-	-	smallpt/native-smlnj-legacy/correctness.0
+smallpt	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.01	0.00	4016	-	-	-	smallpt/native-smlnj-legacy/fresh.1
+smallpt	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	2.23	0.15	0.05	36844	-	-	-	smallpt/native-polyml/build/compile
+smallpt	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.02	0.00	0.01	16340	-	-	-	smallpt/native-polyml/correctness.0
+smallpt	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.02	0.01	0.00	17524	-	-	-	smallpt/native-polyml/fresh.1

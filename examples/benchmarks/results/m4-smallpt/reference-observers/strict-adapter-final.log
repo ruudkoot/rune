@@ -1,0 +1,6 @@
+PASS pinned original hash value/finalLF adaptation 1
+PASS pinned original hash value/finalLF adaptation 6
+PASS strict boxed adapter unchanged full scene 16 12 1
+PASS strict boxed adapter unchanged full scene 64 48 1
+PASS strict boxed adapter unchanged full scene 512 384 1
+PASS strict boxed adapter unchanged full scene 512 384 6
