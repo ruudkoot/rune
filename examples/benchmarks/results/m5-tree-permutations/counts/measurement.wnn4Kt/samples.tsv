@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+fannkuchredux	normal	rune	O2	compile	0	0	pass	1.15	1.11	0.07	135300	-	-	-	fannkuchredux/rune/build/compile
+fannkuchredux	normal	rune	O2	correctness	0	0	pass	1.13	1.15	0.00	10476	299383859	150345928	5537677	fannkuchredux/rune/correctness.0
+fannkuchredux	normal	rune	O2	count	1	1	pass	1.09	1.11	0.00	10372	299383859	150345928	5537677	fannkuchredux/rune/fresh.1
+fannkuchredux	normal	rune:opt	O2	compile	0	0	pass	1.33	1.29	0.07	135352	-	-	-	fannkuchredux/rune-opt/build/compile
+fannkuchredux	normal	rune:opt	O2	native-compile	0	0	pass	0.27	0.16	0.01	12248	-	-	-	fannkuchredux/rune-opt/build/native-compile
+fannkuchredux	normal	rune:opt	O2	correctness	0	0	pass	0.42	0.44	0.00	10856	299383859	150345928	5537677	fannkuchredux/rune-opt/correctness.0
+fannkuchredux	normal	rune:opt	O2	count	1	1	pass	0.39	0.39	0.00	10808	299383859	150345928	5537677	fannkuchredux/rune-opt/fresh.1
+fannkuchredux	normal	rune:new	O2	compile	0	0	pass	1.27	1.24	0.07	135248	-	-	-	fannkuchredux/rune-new/build/compile
+fannkuchredux	normal	rune:new	O2	correctness	0	0	pass	0.88	0.90	0.00	10444	177601780	150345928	5537677	fannkuchredux/rune-new/correctness.0
+fannkuchredux	normal	rune:new	O2	count	1	1	pass	0.95	0.97	0.01	10432	177601780	150345928	5537677	fannkuchredux/rune-new/fresh.1
+fannkuchredux	normal	rune:jit	O2	compile	0	0	pass	1.24	1.22	0.06	135108	-	-	-	fannkuchredux/rune-jit/build/compile
+fannkuchredux	normal	rune:jit	O2	correctness	0	0	pass	0.20	0.20	0.00	11508	177601780	150345928	5537677	fannkuchredux/rune-jit/correctness.0
+fannkuchredux	normal	rune:jit	O2	count	1	1	pass	0.22	0.21	0.01	11536	177601780	150345928	5537677	fannkuchredux/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

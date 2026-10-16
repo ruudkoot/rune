@@ -1,0 +1,110 @@
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 16383 649904 8191
+PASS binary-trees
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/binary-tree.sml]
+structure BenchBinaryTree : sig
+  datatype tree = Empty | Node of tree * tree
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/binary-trees/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  datatype tree = Empty | Node of tree * tree
+  val make : int -> tree
+  val checksum : tree -> int
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 16383 649904 8191
+PASS binary-trees
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/binary-tree.sml]
+structure BenchBinaryTree : sig
+  datatype tree = Empty | Node of tree * tree
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/binary-trees/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  datatype tree = Empty | Node of tree * tree
+  val make : int -> tree
+  val checksum : tree -> int
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 16383 649904 8191
+PASS binary-trees
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/binary-tree.sml]
+structure BenchBinaryTree : sig
+  datatype tree = Empty | Node of tree * tree
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/binary-trees/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    datatype tree = Empty | Node of tree * tree
+    val make : int -> tree
+    val checksum : tree -> int
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 16383 649904 8191
+PASS binary-trees
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 16383 649904 8191
+PASS binary-trees
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 16383 649904 8191
+PASS binary-trees
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

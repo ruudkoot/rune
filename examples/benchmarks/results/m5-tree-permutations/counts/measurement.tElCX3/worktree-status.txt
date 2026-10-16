@@ -1,0 +1,14 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/binary-trees/benchmark.sml
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/binarytrees5/
+?? examples/benchmarks/fannkuchredux/
+?? examples/benchmarks/shared/binary-tree.sml
+?? examples/benchmarks/shared/sandmark-binarytrees5.sml
+?? examples/benchmarks/shared/sandmark-fannkuchredux.sml
+?? tests/benchmarks/check-sandmark-binarytrees5.sh
+?? tests/benchmarks/check-sandmark-fannkuchredux.sh
+?? tests/benchmarks/data/binarytrees5/
+?? tests/benchmarks/data/fannkuchredux/
+?? tests/benchmarks/sandmark-binarytrees5.sml
+?? tests/benchmarks/sandmark-fannkuchredux.sml

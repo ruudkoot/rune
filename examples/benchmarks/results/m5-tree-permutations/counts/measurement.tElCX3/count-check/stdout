@@ -1,0 +1,5 @@
+COUNT unbudgeted binary-trees normal rune
+COUNT unbudgeted binary-trees normal rune:opt
+COUNT unbudgeted binary-trees normal rune:new
+COUNT unbudgeted binary-trees normal rune:jit
+COUNT comparisons agree

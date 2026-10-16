@@ -1,0 +1,13 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+binary-trees	normal	rune	O2	count	1	1	pass	0.07	0.07	0.00	10440	18174639	27871608	696811	counts/measurement.tElCX3/binary-trees/rune/fresh.1
+binary-trees	normal	rune:opt	O2	count	1	1	pass	0.03	0.03	0.00	10736	18174639	27871608	696811	counts/measurement.tElCX3/binary-trees/rune-opt/fresh.1
+binary-trees	normal	rune:new	O2	count	1	1	pass	0.09	0.09	0.00	10452	11169163	27871608	696811	counts/measurement.tElCX3/binary-trees/rune-new/fresh.1
+binary-trees	normal	rune:jit	O2	count	1	1	pass	0.04	0.03	0.01	11408	11169163	27871608	696811	counts/measurement.tElCX3/binary-trees/rune-jit/fresh.1
+binarytrees5	normal	rune	O2	count	1	1	pass	2.34	2.37	0.04	67664	496382352	599463680	14986574	counts/measurement.aBxpg5/binarytrees5/rune/fresh.1
+binarytrees5	normal	rune:opt	O2	count	1	1	pass	0.91	0.89	0.04	68104	496382352	599463680	14986574	counts/measurement.aBxpg5/binarytrees5/rune-opt/fresh.1
+binarytrees5	normal	rune:new	O2	count	1	1	pass	3.04	2.03	0.05	67880	300861697	599463680	14986574	counts/measurement.aBxpg5/binarytrees5/rune-new/fresh.1
+binarytrees5	normal	rune:jit	O2	count	1	1	pass	0.75	0.69	0.07	68848	300861697	599463680	14986574	counts/measurement.aBxpg5/binarytrees5/rune-jit/fresh.1
+fannkuchredux	normal	rune	O2	count	1	1	pass	1.09	1.11	0.00	10372	299383859	150345928	5537677	counts/measurement.wnn4Kt/fannkuchredux/rune/fresh.1
+fannkuchredux	normal	rune:opt	O2	count	1	1	pass	0.39	0.39	0.00	10808	299383859	150345928	5537677	counts/measurement.wnn4Kt/fannkuchredux/rune-opt/fresh.1
+fannkuchredux	normal	rune:new	O2	count	1	1	pass	0.95	0.97	0.01	10432	177601780	150345928	5537677	counts/measurement.wnn4Kt/fannkuchredux/rune-new/fresh.1
+fannkuchredux	normal	rune:jit	O2	count	1	1	pass	0.22	0.21	0.01	11536	177601780	150345928	5537677	counts/measurement.wnn4Kt/fannkuchredux/rune-jit/fresh.1

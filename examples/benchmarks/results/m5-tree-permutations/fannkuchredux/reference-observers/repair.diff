@@ -1,0 +1,15 @@
+--- upstream/fannkuchredux.ml
++++ repaired/fannkuchredux.ml
+@@ -61,8 +61,10 @@
+         p.(!i) <- !f; 
+         f := n; 
+       end else ();
+-      aug_c := c.(!i) + 1;
+-      c.(!i) <- !aug_c
++      if !i < plen then begin
++        aug_c := c.(!i) + 1;
++        c.(!i) <- !aug_c
++      end else aug_c := 0
+     done
+   (* Counting the number of flips *)
+   let count { p = p ; pp = pp; _ } =

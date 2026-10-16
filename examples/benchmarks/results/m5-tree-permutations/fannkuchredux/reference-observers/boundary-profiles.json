@@ -1,0 +1,23 @@
+[
+  {
+    "program": "checked",
+    "input": 3,
+    "exit": 2,
+    "timeout": 30,
+    "memory_bytes": 1073741824
+  },
+  {
+    "program": "unsafe",
+    "input": 3,
+    "exit": 0,
+    "timeout": 30,
+    "memory_bytes": 1073741824
+  },
+  {
+    "program": "repaired",
+    "input": 3,
+    "exit": 0,
+    "timeout": 30,
+    "memory_bytes": 1073741824
+  }
+]

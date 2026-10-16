@@ -1,0 +1,1 @@
+fannkuchredux	600	4194304	shared/input.sml shared/sandmark-fannkuchredux.sml fannkuchredux/benchmark.sml shared/main.sml	9 expected/9.txt	fannkuchredux/normal.expected	expected/9.txt

@@ -1,0 +1,5 @@
+COUNT unbudgeted binarytrees5 normal rune
+COUNT unbudgeted binarytrees5 normal rune:opt
+COUNT unbudgeted binarytrees5 normal rune:new
+COUNT unbudgeted binarytrees5 normal rune:jit
+COUNT comparisons agree

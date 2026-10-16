@@ -1,0 +1,85 @@
+benchmark	profile	optimization	configuration	arguments	status	artifact_directory
+binary-trees	smoke	O0	rune-jit	6	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/smoke/O0/rune-jit
+binary-trees	smoke	O0	rune	6	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/smoke/O0/rune
+binary-trees	smoke	O0	rune-opt	6	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/smoke/O0/rune-opt
+binary-trees	smoke	O0	rune-new	6	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/smoke/O0/rune-new
+binary-trees	smoke	O2	rune-jit	6	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/smoke/O2/rune-jit
+binary-trees	smoke	O2	rune	6	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/smoke/O2/rune
+binary-trees	smoke	O2	rune-opt	6	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/smoke/O2/rune-opt
+binary-trees	smoke	O2	rune-new	6	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/smoke/O2/rune-new
+binary-trees	smoke	host-default	native-mlkit-4.7.23	6	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/smoke/host-default/native-mlkit-4.7.23
+binary-trees	smoke	host-default	native-polyml-5.9.2	6	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/smoke/host-default/native-polyml-5.9.2
+binary-trees	smoke	host-default	native-smlnj-legacy-110.99.9	6	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/smoke/host-default/native-smlnj-legacy-110.99.9
+binary-trees	smoke	host-default	native-smlnj-dev-2026.2	6	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/smoke/host-default/native-smlnj-dev-2026.2
+binary-trees	smoke	host-default	native-mlton-20241230	6	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/smoke/host-default/native-mlton-20241230
+binary-trees	smoke	host-default	native-smlnj32-110.99.9	6	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/smoke/host-default/native-smlnj32-110.99.9
+binary-trees	normal	O0	rune-jit	12	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/normal/O0/rune-jit
+binary-trees	normal	O0	rune	12	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/normal/O0/rune
+binary-trees	normal	O0	rune-opt	12	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/normal/O0/rune-opt
+binary-trees	normal	O0	rune-new	12	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/normal/O0/rune-new
+binary-trees	normal	O2	rune-jit	12	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/normal/O2/rune-jit
+binary-trees	normal	O2	rune	12	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/normal/O2/rune
+binary-trees	normal	O2	rune-opt	12	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/normal/O2/rune-opt
+binary-trees	normal	O2	rune-new	12	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/normal/O2/rune-new
+binary-trees	normal	host-default	native-mlkit-4.7.23	12	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/normal/host-default/native-mlkit-4.7.23
+binary-trees	normal	host-default	native-polyml-5.9.2	12	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/normal/host-default/native-polyml-5.9.2
+binary-trees	normal	host-default	native-smlnj-legacy-110.99.9	12	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/normal/host-default/native-smlnj-legacy-110.99.9
+binary-trees	normal	host-default	native-smlnj-dev-2026.2	12	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/normal/host-default/native-smlnj-dev-2026.2
+binary-trees	normal	host-default	native-mlton-20241230	12	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/normal/host-default/native-mlton-20241230
+binary-trees	normal	host-default	native-smlnj32-110.99.9	12	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binary-trees/normal/host-default/native-smlnj32-110.99.9
+binarytrees5	smoke	O0	rune-jit	6 expected/6.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/smoke/O0/rune-jit
+binarytrees5	smoke	O0	rune	6 expected/6.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/smoke/O0/rune
+binarytrees5	smoke	O0	rune-opt	6 expected/6.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/smoke/O0/rune-opt
+binarytrees5	smoke	O0	rune-new	6 expected/6.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/smoke/O0/rune-new
+binarytrees5	smoke	O2	rune-jit	6 expected/6.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/smoke/O2/rune-jit
+binarytrees5	smoke	O2	rune	6 expected/6.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/smoke/O2/rune
+binarytrees5	smoke	O2	rune-opt	6 expected/6.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/smoke/O2/rune-opt
+binarytrees5	smoke	O2	rune-new	6 expected/6.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/smoke/O2/rune-new
+binarytrees5	smoke	host-default	native-mlkit-4.7.23	6 expected/6.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/smoke/host-default/native-mlkit-4.7.23
+binarytrees5	smoke	host-default	native-polyml-5.9.2	6 expected/6.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/smoke/host-default/native-polyml-5.9.2
+binarytrees5	smoke	host-default	native-smlnj-legacy-110.99.9	6 expected/6.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/smoke/host-default/native-smlnj-legacy-110.99.9
+binarytrees5	smoke	host-default	native-smlnj-dev-2026.2	6 expected/6.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/smoke/host-default/native-smlnj-dev-2026.2
+binarytrees5	smoke	host-default	native-mlton-20241230	6 expected/6.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/smoke/host-default/native-mlton-20241230
+binarytrees5	smoke	host-default	native-smlnj32-110.99.9	6 expected/6.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/smoke/host-default/native-smlnj32-110.99.9
+binarytrees5	normal	O0	rune-jit	16 expected/16.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/normal/O0/rune-jit
+binarytrees5	normal	O0	rune	16 expected/16.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/normal/O0/rune
+binarytrees5	normal	O0	rune-opt	16 expected/16.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/normal/O0/rune-opt
+binarytrees5	normal	O0	rune-new	16 expected/16.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/normal/O0/rune-new
+binarytrees5	normal	O2	rune-jit	16 expected/16.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/normal/O2/rune-jit
+binarytrees5	normal	O2	rune	16 expected/16.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/normal/O2/rune
+binarytrees5	normal	O2	rune-opt	16 expected/16.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/normal/O2/rune-opt
+binarytrees5	normal	O2	rune-new	16 expected/16.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/normal/O2/rune-new
+binarytrees5	normal	host-default	native-mlkit-4.7.23	16 expected/16.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/normal/host-default/native-mlkit-4.7.23
+binarytrees5	normal	host-default	native-polyml-5.9.2	16 expected/16.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/normal/host-default/native-polyml-5.9.2
+binarytrees5	normal	host-default	native-smlnj-legacy-110.99.9	16 expected/16.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/normal/host-default/native-smlnj-legacy-110.99.9
+binarytrees5	normal	host-default	native-smlnj-dev-2026.2	16 expected/16.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/normal/host-default/native-smlnj-dev-2026.2
+binarytrees5	normal	host-default	native-mlton-20241230	16 expected/16.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/normal/host-default/native-mlton-20241230
+binarytrees5	normal	host-default	native-smlnj32-110.99.9	16 expected/16.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/binarytrees5/normal/host-default/native-smlnj32-110.99.9
+fannkuchredux	smoke	O0	rune-jit	5 expected/5.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/smoke/O0/rune-jit
+fannkuchredux	smoke	O0	rune	5 expected/5.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/smoke/O0/rune
+fannkuchredux	smoke	O0	rune-opt	5 expected/5.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/smoke/O0/rune-opt
+fannkuchredux	smoke	O0	rune-new	5 expected/5.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/smoke/O0/rune-new
+fannkuchredux	smoke	O2	rune-jit	5 expected/5.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/smoke/O2/rune-jit
+fannkuchredux	smoke	O2	rune	5 expected/5.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/smoke/O2/rune
+fannkuchredux	smoke	O2	rune-opt	5 expected/5.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/smoke/O2/rune-opt
+fannkuchredux	smoke	O2	rune-new	5 expected/5.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/smoke/O2/rune-new
+fannkuchredux	smoke	host-default	native-mlkit-4.7.23	5 expected/5.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/smoke/host-default/native-mlkit-4.7.23
+fannkuchredux	smoke	host-default	native-polyml-5.9.2	5 expected/5.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/smoke/host-default/native-polyml-5.9.2
+fannkuchredux	smoke	host-default	native-smlnj-legacy-110.99.9	5 expected/5.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/smoke/host-default/native-smlnj-legacy-110.99.9
+fannkuchredux	smoke	host-default	native-smlnj-dev-2026.2	5 expected/5.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/smoke/host-default/native-smlnj-dev-2026.2
+fannkuchredux	smoke	host-default	native-mlton-20241230	5 expected/5.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/smoke/host-default/native-mlton-20241230
+fannkuchredux	smoke	host-default	native-smlnj32-110.99.9	5 expected/5.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/smoke/host-default/native-smlnj32-110.99.9
+fannkuchredux	normal	O0	rune-jit	9 expected/9.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/normal/O0/rune-jit
+fannkuchredux	normal	O0	rune	9 expected/9.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/normal/O0/rune
+fannkuchredux	normal	O0	rune-opt	9 expected/9.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/normal/O0/rune-opt
+fannkuchredux	normal	O0	rune-new	9 expected/9.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/normal/O0/rune-new
+fannkuchredux	normal	O2	rune-jit	9 expected/9.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/normal/O2/rune-jit
+fannkuchredux	normal	O2	rune	9 expected/9.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/normal/O2/rune
+fannkuchredux	normal	O2	rune-opt	9 expected/9.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/normal/O2/rune-opt
+fannkuchredux	normal	O2	rune-new	9 expected/9.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/normal/O2/rune-new
+fannkuchredux	normal	host-default	native-mlkit-4.7.23	9 expected/9.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/normal/host-default/native-mlkit-4.7.23
+fannkuchredux	normal	host-default	native-polyml-5.9.2	9 expected/9.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/normal/host-default/native-polyml-5.9.2
+fannkuchredux	normal	host-default	native-smlnj-legacy-110.99.9	9 expected/9.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/normal/host-default/native-smlnj-legacy-110.99.9
+fannkuchredux	normal	host-default	native-smlnj-dev-2026.2	9 expected/9.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/normal/host-default/native-smlnj-dev-2026.2
+fannkuchredux	normal	host-default	native-mlton-20241230	9 expected/9.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/normal/host-default/native-mlton-20241230
+fannkuchredux	normal	host-default	native-smlnj32-110.99.9	9 expected/9.txt	pass	results/m5-tree-permutations/attempts-raw/final-tree-fann.jbedpw85/fannkuchredux/normal/host-default/native-smlnj32-110.99.9

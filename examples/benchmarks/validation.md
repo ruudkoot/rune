@@ -1100,3 +1100,34 @@ bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-cryptarithm1-756-acceptance.log)
 records the run. Later resource-budget adjustments pass catalogue validation;
 benchmark sources and expected results remain the validated implementations.
+
+## M5 sequential trees and indexed permutations, 2026-10-16
+
+Two imports bring the catalogue to 256 programs and 762 profiles. [All 84
+smoke/normal cases](results/m5-tree-permutations/correctness.tsv) pass for the
+new programs and refactored classic binary-trees on Rune's four engines at both
+levels and all six managed native hosts. Twelve normal count samples pass the
+combined comparison with unchanged budgets. Eight tree and ten permutation
+semantic/negative checks pass all ten configurations at both levels. These
+instrumented counts remain separate from headline timings.
+
+Only the tree datatype is extracted from the classic program; its generator,
+leaf shortcut and profiles are unchanged. Sandmark's variant preserves right-first
+construction/traversal and Empty-child checks. The permutation port preserves
+32 sequential chunks and its optimized flip/count convention, with a reviewed
+terminal-counter guard replacing an invalid access hidden by upstream -unsafe.
+Original/checked/repaired evidence, exact repair diff, complete fixtures,
+independent references and selected numeric bounds are retained. Large original
+references are available; large execution of the new SML programs is not claimed.
+No prerequisite compiler/runtime feature is added. M5 remains in progress.
+
+An initial ML Kit 4.7.23 test-adapter compilation crashes in DropRegions when
+kernel and test share a basename. Distinct test filenames compile and pass;
+the original failure transcript is retained and no broader cause is asserted.
+Benchmark kernels were unchanged for that naming correction.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 762 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-tree-permutations-762-acceptance.log)
+records the run. All 41 inventory tests pass and all 861 entries validate.

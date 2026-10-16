@@ -1,0 +1,5 @@
+COUNT unbudgeted fannkuchredux normal rune
+COUNT unbudgeted fannkuchredux normal rune:opt
+COUNT unbudgeted fannkuchredux normal rune:new
+COUNT unbudgeted fannkuchredux normal rune:jit
+COUNT comparisons agree

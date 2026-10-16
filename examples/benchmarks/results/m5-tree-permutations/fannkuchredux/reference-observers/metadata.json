@@ -1,0 +1,70 @@
+{
+  "source_sha256": "4df125ea02d717c1ec918439fb65adc2a91549f0069ba2b83bd5bc286d129fc5",
+  "repaired_sha256": "b306d37c9cea375567a83fd41ad47b6dcb3ee283e48d6883ff6f1cd34bf4e05a",
+  "ocaml_version": "4.14.1",
+  "mlton": "/home/ruud/.local/rune-hosts/mlton-20241230/bin/mlton",
+  "mlton_options": [
+    "-default-type",
+    "int64",
+    "-default-type",
+    "word64"
+  ],
+  "profiles": [
+    {
+      "profile": "edge",
+      "n": 3,
+      "timeout": 30,
+      "memory_bytes": 1073741824,
+      "maximum": 2,
+      "checksum": 2,
+      "chunk_partial_bound": 2,
+      "global_prefix_range": [
+        0,
+        3
+      ],
+      "output_sha256": "31152f8a6982e8b4f33d07b4b40d1eb35fe34f459422489aca029c3876942166"
+    },
+    {
+      "profile": "smoke",
+      "n": 5,
+      "timeout": 30,
+      "memory_bytes": 1073741824,
+      "maximum": 7,
+      "checksum": 11,
+      "chunk_partial_bound": 28,
+      "global_prefix_range": [
+        0,
+        19
+      ],
+      "output_sha256": "d4d6e9e6570ec4d5db73e38122c8b9b40664748fcdcf8a84f92a43d0de520ebe"
+    },
+    {
+      "profile": "normal",
+      "n": 9,
+      "timeout": 600,
+      "memory_bytes": 4294967296,
+      "maximum": 30,
+      "checksum": 8629,
+      "chunk_partial_bound": 340200,
+      "global_prefix_range": [
+        -1192,
+        10155
+      ],
+      "output_sha256": "3e876d0e5d45941328a01e0178146ff3b82a03c963896d31d4f94e65760d13d2"
+    },
+    {
+      "profile": "large",
+      "n": 12,
+      "timeout": 3600,
+      "memory_bytes": 8589934592,
+      "maximum": 65,
+      "checksum": 3968050,
+      "chunk_partial_bound": 972972000,
+      "global_prefix_range": [
+        -2680568,
+        5718674
+      ],
+      "output_sha256": "8bd8aecdb90630b13fa508ed2562f6c79d7ee8f32be7962cf8d7a1b9845f70b1"
+    }
+  ]
+}

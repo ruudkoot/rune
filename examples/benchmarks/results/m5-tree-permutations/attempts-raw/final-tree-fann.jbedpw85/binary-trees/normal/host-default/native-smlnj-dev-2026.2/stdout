@@ -1,0 +1,27 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/binary-tree.sml]
+structure BenchBinaryTree : sig
+  datatype tree = Empty | Node of tree * tree
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/binary-trees/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    datatype tree = Empty | Node of tree * tree
+    val make : int -> tree
+    val checksum : tree -> int
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 16383 649904 8191
+PASS binary-trees
+SUMMARY 1 checks, 0 failed

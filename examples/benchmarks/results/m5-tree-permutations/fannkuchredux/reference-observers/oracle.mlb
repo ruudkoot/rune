@@ -1,0 +1,4 @@
+$(SML_LIB)/basis/basis.mlb
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/fannkuch/benchmark.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/fannkuchredux-originals/oracle.sml

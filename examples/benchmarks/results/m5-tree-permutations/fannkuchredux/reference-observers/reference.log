@@ -1,0 +1,4 @@
+PASS repaired checked OCaml and independent managed MLton reference edge 3 2 2
+PASS repaired checked OCaml and independent managed MLton reference smoke 5 7 11
+PASS repaired checked OCaml and independent managed MLton reference normal 9 30 8629
+PASS repaired checked OCaml and independent managed MLton reference large 12 65 3968050

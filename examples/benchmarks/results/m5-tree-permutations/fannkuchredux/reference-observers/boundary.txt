@@ -1,0 +1,4 @@
+counter-length=3 zero-first-count=1
+BOUNDS index out of bounds
+Raised by primitive operation at Kernel_original.Perm.next in file "kernel_original.ml", line 64, characters 15-21
+Called from Boundary in file "boundary.ml", line 6, characters 6-12

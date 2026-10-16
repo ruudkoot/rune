@@ -1,0 +1,1 @@
+binarytrees5	600	4194304	shared/input.sml shared/binary-tree.sml shared/sandmark-binarytrees5.sml binarytrees5/benchmark.sml shared/main.sml	16 expected/16.txt	binarytrees5/normal.expected	expected/16.txt

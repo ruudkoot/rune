@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+binary-trees	normal	rune	O2	compile	0	0	pass	1.06	1.02	0.07	135300	-	-	-	binary-trees/rune/build/compile
+binary-trees	normal	rune	O2	correctness	0	0	pass	0.06	0.06	0.00	10356	18174639	27871608	696811	binary-trees/rune/correctness.0
+binary-trees	normal	rune	O2	count	1	1	pass	0.07	0.07	0.00	10440	18174639	27871608	696811	binary-trees/rune/fresh.1
+binary-trees	normal	rune:opt	O2	compile	0	0	pass	1.35	1.30	0.09	135256	-	-	-	binary-trees/rune-opt/build/compile
+binary-trees	normal	rune:opt	O2	native-compile	0	0	pass	0.30	0.14	0.03	12120	-	-	-	binary-trees/rune-opt/build/native-compile
+binary-trees	normal	rune:opt	O2	correctness	0	0	pass	0.03	0.02	0.01	10796	18174639	27871608	696811	binary-trees/rune-opt/correctness.0
+binary-trees	normal	rune:opt	O2	count	1	1	pass	0.03	0.03	0.00	10736	18174639	27871608	696811	binary-trees/rune-opt/fresh.1
+binary-trees	normal	rune:new	O2	compile	0	0	pass	1.41	1.36	0.10	135240	-	-	-	binary-trees/rune-new/build/compile
+binary-trees	normal	rune:new	O2	correctness	0	0	pass	0.07	0.07	0.00	10508	11169163	27871608	696811	binary-trees/rune-new/correctness.0
+binary-trees	normal	rune:new	O2	count	1	1	pass	0.09	0.09	0.00	10452	11169163	27871608	696811	binary-trees/rune-new/fresh.1
+binary-trees	normal	rune:jit	O2	compile	0	0	pass	1.28	1.26	0.06	135260	-	-	-	binary-trees/rune-jit/build/compile
+binary-trees	normal	rune:jit	O2	correctness	0	0	pass	0.04	0.03	0.01	11516	11169163	27871608	696811	binary-trees/rune-jit/correctness.0
+binary-trees	normal	rune:jit	O2	count	1	1	pass	0.04	0.03	0.01	11408	11169163	27871608	696811	binary-trees/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

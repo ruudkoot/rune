@@ -1,0 +1,3 @@
+PASS original binarytrees5 and independent complete-tree formulas smoke 6
+PASS original binarytrees5 and independent complete-tree formulas normal 16
+PASS original binarytrees5 and independent complete-tree formulas large 21
