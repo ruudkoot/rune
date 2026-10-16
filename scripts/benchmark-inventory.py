@@ -382,6 +382,18 @@ def classify(source, root, item, files, text):
             disposition, reason = "defer", "source uses OCaml-specific effects, concurrency, GC/weak-reference introspection, unsafe objects or C bindings; reconsider with equivalent runtime facilities"
         elif "multicore" in name or "parallel" in name or "multiprocess" in name or group in {"mpl", "multicore-gcroots", "multicore-structures", "multicore-grammatrix"}:
             disposition, reason = "defer", "parallel/runtime-specific executable; retain its original execution model"
+        # This pinned microbenchmark measures calls held behind %opaque, not
+        # an algorithm whose result validation can replace that barrier.
+        if disposition == "import" and path == "benchmarks/simple-tests/morestacks.exe":
+            kernel = root / "benchmarks/simple-tests/morestacks.ml"
+            if (kernel.is_file() and hashlib.sha256(kernel.read_bytes()).hexdigest()
+                    == "b4153c8f1a4c4e9ea948113ee300fe62a7aee31e1ae0b69d79e121d4232eb946"):
+                disposition, reason = "defer", (
+                    "pinned call-overhead microbenchmark relies on Sys.opaque_identity to retain "
+                    "calls to the otherwise inlineable n+5 function; portable SML97 has no "
+                    "equivalent optimization barrier; reconsider with a reviewed portable "
+                    "barrier protocol or observable upstream workload, without adding "
+                    "prerequisite compiler/runtime features through this roadmap")
         if disposition == "import" and path in {
                 "benchmarks/multicore-effects/rec_seq_fib.exe",
                 "benchmarks/multicore-effects/rec_seq_tak.exe"}:

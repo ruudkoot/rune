@@ -1,0 +1,74 @@
+
+cmm:
+(data)
+(data
+ int 3063
+ "camlMorestacks__2":
+ addr "camlMorestacks__bar_267"
+ int 72057594037927941)
+(data
+ int 3063
+ "camlMorestacks__1":
+ addr "camlMorestacks__foo_270"
+ int 72057594037927941)
+(data int 2816 global "camlMorestacks" "camlMorestacks": int 1 int 1)
+(data
+ global "camlMorestacks__gc_roots"
+ "camlMorestacks__gc_roots":
+ addr "camlMorestacks"
+ int 0)
+(function{tests/out/benchmarks/opaque-audit/morestacks.ml:1,8-19} camlMorestacks__bar_267
+     (n/269: val)
+ (+ n/269 10))
+
+(function{tests/out/benchmarks/opaque-audit/morestacks.ml:4,8-79} camlMorestacks__foo_270
+     (param/346: val)
+ (let_mut a/272: int 1
+   (catch
+     (if (> a/272 2000001) (exit 7)
+       (catch rec (exit 8) with(8)
+         (let fun/406 (opaque (load_mut val "camlMorestacks"))
+           (app{tests/out/benchmarks/opaque-audit/morestacks.ml:5,8-35}
+             (load_mut val fun/406) a/272 fun/406 unit))
+         (let *id_prev*/405 a/272 (assign a/272 (+ a/272 2))
+           (if (== *id_prev*/405 2000001) (exit 7) []))
+         (exit 8)))
+   with(7) []))
+ 1)
+
+(function camlMorestacks__entry ()
+ (let bar/267 "camlMorestacks__2"
+   (store val(root-init) "camlMorestacks" bar/267))
+ (let foo/270 "camlMorestacks__1"
+   (store val(root-init) (+a "camlMorestacks" 8) foo/270))
+ (let
+   *match*/399
+     (seq
+       (let_mut _for/394: int 1
+         (let
+           bound/404
+             (try
+               (extcall "caml_int_of_string"{tests/out/benchmarks/opaque-audit/morestacks.ml:8,27-62}
+                 (let
+                   arr/403
+                     (extcall "caml_sys_argv"{tests/out/benchmarks/opaque-audit/morestacks.ml:8,51-59}
+                       1 int->val)
+                   (checkbound{tests/out/benchmarks/opaque-audit/morestacks.ml:8,40-62}
+                     (load_mut int (+a arr/403 -8)) 2047)
+                   (load_mut val (+a arr/403 8)))
+                 int->val)
+             with exn/397 20001)
+           (catch
+             (if (> _for/394 bound/404) (exit 5)
+               (catch rec (exit 6) with(6)
+                 (app{tests/out/benchmarks/opaque-audit/morestacks.ml:9,2-7}
+                   "camlMorestacks__foo_270" 1 unit)
+                 (let *id_prev*/402 _for/394 (assign _for/394 (+ _for/394 2))
+                   (if (== *id_prev*/402 bound/404) (exit 5) []))
+                 (exit 6)))
+           with(5) [])))
+       1)
+   [])
+ 1)
+
+(data)

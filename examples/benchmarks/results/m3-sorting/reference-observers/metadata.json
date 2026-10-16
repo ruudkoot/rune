@@ -1,0 +1,26 @@
+[
+  {
+    "profile": "smoke",
+    "repetitions": 1,
+    "source_file": "Main.hs",
+    "lines": 31,
+    "hash": "-3115287188714445675",
+    "sum": "-3115287188714445675"
+  },
+  {
+    "profile": "normal",
+    "repetitions": 600,
+    "source_file": "Sort.hs",
+    "lines": 140,
+    "hash": "3029099120745958987",
+    "sum": "1817459472447575392200"
+  },
+  {
+    "profile": "large",
+    "repetitions": 3000,
+    "source_file": "Sort.hs",
+    "lines": 140,
+    "hash": "3029099120745958987",
+    "sum": "9087297362237876961000"
+  }
+]

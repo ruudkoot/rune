@@ -1,0 +1,2 @@
+sorting-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/utf8.sml shared/nofib-sorting.sml sorting-lazy/benchmark.sml shared/main.sml	600 data/Sort.hs expected/Sort.txt	sorting-lazy/normal.expected	data/Sort.hs expected/Sort.txt
+sorting-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/utf8.sml shared/nofib-sorting.sml sorting-strict/benchmark.sml shared/main.sml	600 data/Sort.hs expected/Sort.txt	sorting-strict/normal.expected	data/Sort.hs expected/Sort.txt

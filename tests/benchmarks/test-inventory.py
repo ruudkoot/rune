@@ -208,6 +208,27 @@ class InventoryTest(unittest.TestCase):
         self.file("benchmarks/kernels/dune", "(executable (name " + name + ") (modes native byte))\n")
         self.file("benchmarks/kernels/" + name + ".ml", text)
 
+    def opaque_call_probe(self, text):
+        self.file("benchmarks/simple-tests/morestacks.ml", text)
+        self.file("benchmarks/simple-tests/dune", "(executable (name morestacks) (modes native byte))\n")
+        return self.build("sandmark")[0]
+
+    def test_pinned_opaque_call_probe_has_a_capability_blocker(self):
+        original = (ROOT / "tests/benchmarks/data/sandmark-morestacks.ml").read_text()
+        row = self.opaque_call_probe(original)
+        self.assertEqual(row["disposition"], "defer")
+        self.assertIn("optimization barrier", row["reason"])
+        self.assertIn("reconsider", row["reason"])
+
+    def test_changed_opaque_call_probe_requires_fresh_review(self):
+        original = (ROOT / "tests/benchmarks/data/sandmark-morestacks.ml").read_text()
+        row = self.opaque_call_probe(original.replace("n + 5", "n * n + 5"))
+        self.assertEqual(row["disposition"], "import")
+
+    def test_algorithmic_opacity_is_not_blanket_deferred(self):
+        self.sandmark_program("kernel", "let f n = n * n\nlet result = Sys.opaque_identity f 13\n")
+        self.assertEqual(self.build("sandmark")[0]["disposition"], "import")
+
     def test_nested_comments_do_not_invent_runtime_dependencies(self):
         self.sandmark_program("trees", '(* Gc.set { (* nested *) } *)\nlet label = "Effect.perform x"\nlet result = 42\n')
         self.assertEqual(self.build("sandmark")[0]["disposition"], "import")

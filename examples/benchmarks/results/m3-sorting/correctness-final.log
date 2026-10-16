@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-sorting._t5uuh9t
+PASS sorting-lazy smoke O0
+PASS sorting-lazy smoke O2
+PASS sorting-lazy smoke hosts
+PASS sorting-lazy normal O0
+PASS sorting-lazy normal O2
+PASS sorting-lazy normal hosts
+PASS sorting-strict smoke O0
+PASS sorting-strict smoke O2
+PASS sorting-strict smoke hosts
+PASS sorting-strict normal O0
+PASS sorting-strict normal O2
+PASS sorting-strict normal hosts

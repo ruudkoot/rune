@@ -217,3 +217,13 @@ Native reference builds create source-looking cache filenames. Discovery
 now excludes `.cm`, `MLB`, `_build`, `.git`, `dist-newstyle` and Python cache
 directories from workload members, fixtures/notices and recursive discovery.
 Tests verify that native caches cannot change the pinned source inventory.
+
+## Opaque-call review, 2026-10-16
+
+The [morestacks review](validation/sandmark-opaque-call.md) identifies an unavailable
+optimization barrier for this call-overhead microbenchmark. Its source-guarded
+entry moves from import to defer under the existing feature policy, with an
+explicit reconsideration condition. All 143 pinned Sandmark entries were rebuilt
+and all 861 inventory entries reconcile; alias relationships and ordering are unchanged.
+All 38 discovery/classification tests pass. Other uses of opaque wrappers remain
+subject to individual algorithm/observation review.

@@ -1,0 +1,3 @@
+# Preserve original source-as-data and exact sorted rows.
+data/*.hs -whitespace
+expected/*.txt -whitespace

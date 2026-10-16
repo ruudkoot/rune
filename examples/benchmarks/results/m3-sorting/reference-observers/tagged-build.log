@@ -1,0 +1,18 @@
+[1 of 3] Compiling Sort             ( /home/ruud/reference/ghc/nofib/spectral/sorting/Sort.hs, tests/out/benchmarks/sorting-originals/tagged-build/Sort.o )
+
+/home/ruud/reference/ghc/nofib/spectral/sorting/Sort.hs:14:13: warning: [-Wtabs]
+    Tab character found here, and in 86 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+14 | quickSort []     = []
+   |             ^^^^
+[2 of 3] Compiling Main             ( tests/out/benchmarks/sorting-originals/Tagged.hs, tests/out/benchmarks/sorting-originals/tagged-build/Main.o )
+
+tests/out/benchmarks/sorting-originals/Tagged.hs:10:41: warning: [-Woperator-whitespace-ext-conflict]
+    The prefix use of a ‘$’ would denote an untyped splice
+      were the TemplateHaskell extension enabled.
+    Suggested fix: Add whitespace after the ‘$’.
+   |
+10 |  mapM_ (print.map(\(T _ label)->label).($input)) sorts
+   |                                         ^
+[3 of 3] Linking tests/out/benchmarks/sorting-originals/tagged

@@ -1,0 +1,9 @@
+COUNT unbudgeted sorting-lazy normal rune
+COUNT unbudgeted sorting-lazy normal rune:opt
+COUNT unbudgeted sorting-lazy normal rune:new
+COUNT unbudgeted sorting-lazy normal rune:jit
+COUNT unbudgeted sorting-strict normal rune
+COUNT unbudgeted sorting-strict normal rune:opt
+COUNT unbudgeted sorting-strict normal rune:new
+COUNT unbudgeted sorting-strict normal rune:jit
+COUNT comparisons agree

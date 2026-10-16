@@ -1,0 +1,11 @@
+[1 of 4] Compiling NofibUtils       ( /home/ruud/reference/ghc/nofib/spectral/sorting/NofibUtils.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sorting-originals/build/NofibUtils.o )
+[2 of 4] Compiling Sort             ( /home/ruud/reference/ghc/nofib/spectral/sorting/Sort.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sorting-originals/build/Sort.o )
+
+/home/ruud/reference/ghc/nofib/spectral/sorting/Sort.hs:14:13: warning: [-Wtabs]
+    Tab character found here, and in 86 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+14 | quickSort []     = []
+   |             ^^^^
+[3 of 4] Compiling Main             ( /home/ruud/reference/ghc/nofib/spectral/sorting/Main.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sorting-originals/build/Main.o )
+[4 of 4] Linking /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sorting-originals/original

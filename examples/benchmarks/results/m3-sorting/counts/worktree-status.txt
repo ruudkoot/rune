@@ -1,0 +1,8 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/literature.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/shared/nofib-sorting.sml
+?? examples/benchmarks/sorting-lazy/
+?? examples/benchmarks/sorting-strict/
+?? tests/benchmarks/check-sorting.sh
+?? tests/benchmarks/sorting.sml
